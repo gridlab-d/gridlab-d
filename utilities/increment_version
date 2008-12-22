@@ -1,0 +1,79 @@
+#!/bin/bash
+# $Id$
+#
+# script to modify the current release version
+#
+
+# check for existence of version file
+if [ ! -f VERSION ]; then
+	echo "ERROR: VERSION file not found; `pwd` is probably not a source folder"
+	exit 1
+fi
+
+# read version file
+. ./VERSION
+
+# check version file entries
+if [ -z "$MAJOR" -o -z "$MINOR" -o -z "$NAME" ]; then
+	echo "ERROR: VERSION file does define proper version info; recommend doing 'svn update' first"
+	exit 1
+fi
+
+# setup for default increment behavior
+COMMIT="no"
+NAME=""
+MINOR=$(($MINOR+1))
+
+# process command line args
+while [ $# -gt 0 ]; do
+	case $1 in
+
+	# basic help
+	-h|--help) echo "Syntax: $(basename $0) [--commit] [--major] NAME"
+		exit 0
+		;;
+
+	# commit option
+	--commit) COMMIT="yes"
+		shift
+		;;
+
+	# major increment option
+	--major) MAJOR=$(($MAJOR+1))
+		MINOR=0
+		shift 1
+		;;
+
+	# unrecognized options
+	--*) echo "ERROR: option '$1' not recognized"
+		exit 1
+		;;
+
+	# name
+	*)	if [ -z "$NAME" ]; then
+			NAME="$1"
+			shift
+		else
+			echo "ERROR: '$1' is unexpected"
+			exit 1
+		fi
+		;;
+	esac
+done
+
+if [ -z "$NAME" ]; then
+	echo "ERROR: NAME not specified"
+	exit 1
+fi
+
+# output new version
+echo "# \$Id\$
+MAJOR=$MAJOR
+MINOR=$MINOR
+NAME=$NAME
+" > VERSION
+
+# commit changes
+if [ "$COMMIT" == "yes" ]; then
+	svn commit -m "Incremented version number" VERSION
+fi

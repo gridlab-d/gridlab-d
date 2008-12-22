@@ -1,0 +1,153 @@
+
+########################################################
+# BEGIN
+########################################################
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow {
+	require_voltage_control TRUE;
+}
+module tape;
+module plc {
+	incpath "..\rt\include";
+	libpath "..\rt\lib";
+}
+
+object overhead_line_conductor {
+	name OLC100;
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor {
+	name OLC101;
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing {
+	name LS200;
+	distance_AtoB 2.5;
+	distance_BtoC 4.5;
+	distance_AtoC 7.0;
+	distance_AtoN 5.656854;
+	distance_BtoN 4.272002;
+	distance_CtoN 5.0;
+}
+
+object line_configuration {
+	name LC300;
+	phaseA_conductor OLC100;
+	phaseB_conductor OLC100;
+	phaseC_conductor OLC100;
+	phaseN_conductor OLC101;
+	line_spacing LS200;
+}
+
+object transformer_configuration {
+	name TC400;
+	connect_type 1;
+	kVA_rating 6000;
+	V_primary 12470;
+	V_secondary 4160;
+	R_pu 0.01;
+	X_pu 0.06;
+}
+
+##########################################################
+object node {
+	name Node1;
+	phases "ABCN";
+	bustype SWING;
+	phaseA_V +7200+0.000j;
+	phaseB_V -3600-6235.000j;
+	phaseC_V -3600+6235.000j;
+}
+
+object overhead_line {
+    name Line12;
+	phases "ABCN";
+	from Node1;
+	to Node2;
+	length 2000;
+	configuration LC300;
+}
+
+object node {
+    name Node2;
+	phases "ABCN";
+}
+
+object transformer {
+	name xfrm1;
+	phases "ABCN";
+	from Node2;
+	to Node3;
+	configuration TC400;
+}
+
+object node {
+    name Node3;
+	phases "ABCN";
+}
+
+object switch {
+	name Switch34;
+	phases "ABCN";
+	from DummyNode4;
+	to Node4;
+	status CLOSED;
+}
+object node {
+	name DummyNode4;
+}
+
+object overhead_line {
+	name Line34;
+	phases "ABCN";
+	from Node3;
+	to DummyNode4;
+	length 2000;
+	configuration LC300;
+}
+
+object load {
+    name Node4;
+	phases "ABCN";
+	phaseA_V +2401.777+0.000j;
+	phaseB_V -1200.889-2080.000j;
+	phaseC_V -1200.889+2080.000j;
+	phaseA_VA +127500.0000+790174.031j;
+	phaseB_VA +180000.0000+871779.789j;
+	phaseC_VA +237500.0000+780624.750j;
+	sync_V_limit 0.001;
+}
+
+object plc {
+	parent Switch34;
+	source switch34.plc;
+}
+
+object recorder {
+	parent Node2;
+	property phaseA_V,phaseB_V,phaseC_V;
+	interval 300;
+	file node2.csv;
+	limit 20;
+}
+
+object recorder {
+	parent Switch34;
+	property status;
+	interval 300;
+	file switch12.csv;
+	limit 20;
+}
+
+########################################################
+# END
+########################################################

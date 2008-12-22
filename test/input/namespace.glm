@@ -1,0 +1,15 @@
+clock { 
+	 timestamp '2000-01-01 0:00:00';
+	 timezone EST+5EDT;
+}
+
+module powerflow;
+module network;
+
+object powerflow.meter:0{
+	name Bob;
+}
+
+object network.meter:1{
+	name Sam;
+}

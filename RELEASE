@@ -1,0 +1,62 @@
+RELEASE INFO
+============
+
+$Id$
+Copyright (C) 2008 Battelle Memorial Institute
+
+This document describes how to release a build source of GridLAB-D.
+This only applies to systems that support autoconf.  Windows builds
+are released by a different method not documented here.
+
+Step 1 - Mark all folders for release
+-------------------------------------
+
+This is done by creating three files in each folder that are used to detect
+whether the contents of the folder is to be release.  These are
+
+	COPYRIGHT	This file must contain the copyright information of the
+	         	original author.
+	LICENSE		This file must contain the license granted to user's by
+	        	the original copyright author.
+	STATUS  	This file contains general status information
+
+Step 2 - Run the release script
+-------------------------------
+
+The release script is in the utilities folder. It should be run from the
+folder that will be the base of release, e.g.:
+
+	linux% cd source
+	linux% utilities/release-src
+
+The resulting tar.gz file will be written to the parent folder.
+
+Step 3 - Publish the tar.gz file
+--------------------------------
+
+This file can be distributed freely in compliance with the terms of the
+GridLAB-D license.
+
+Step 4 - Update the version number
+----------------------------------
+
+After a release is published, the version number should be updated.  Generally
+only the minor number is incremented.  The major number is only incremented if
+there is a significant core imcompatibility that makes modules and/or data
+files misbehave when working with the previous version.  To increment the
+MINOR version you must do the following
+
+	linux% cd <source-folder>
+	linux% utilities/increment_version --commit NAME
+
+where NAME is the code name of the next release (see core/legal.c for a list
+of names).
+	
+To increment the MAJOR version, do the following
+
+	linux% cd <source-folder>
+	linux% utilities/increment_version --major --commit NAME
+
+Don't forget to update core/legal.c with the release number and name in the
+VERSION file once it is incremented.
+

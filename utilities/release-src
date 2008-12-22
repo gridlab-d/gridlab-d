@@ -1,0 +1,97 @@
+#!/bin/bash
+# $Id$
+#
+# Release script for Linux source
+#
+
+# defaults and behaviors
+SRC=.
+DSTDIR=..
+verbose=""
+action="eval"
+
+# command line args
+while [ $# -gt 0 ]; do
+	case $1 in
+	-h) echo "Syntax: $(basename $0) [-s <source>] [-t <target>]"
+		exit 0
+		;;
+	-t) DSTDIR=$2
+		shift 2
+		;;
+	-s) SRC=$2
+		shift 2
+		;;
+	*)	echo "ERROR: option '$1' not recognized"
+		exit 1
+		;;
+	esac
+done
+
+# check path to source
+if [ ! -d "$SRC" ]; then
+	echo "ERROR: source '$SRC' does not exist"
+	exit 1
+fi
+
+# obtain rev number to release
+BUILD=`echo $(svn -R info "$SRC" | grep Revision | cut -f2 -d: | sort -ur | head -n 1)`
+
+# get the version info
+if [ ! -f "$SRC/VERSION" ]; then
+	echo "This does not appear to be a releasable source tree.  VERSION not found"
+	exit 1
+fi
+. "$SRC/VERSION"
+
+# mark the version info for release
+if [ -z "$MAJOR" -o -z "$MINOR" ]; then
+	echo "ERROR: the VERSION file does not define MAJOR and MINOR"
+	exit 1
+else
+	echo "BUILD=$BUILD" > "$SRC/REV"
+	VERSION="${MAJOR}_${MINOR}_${BUILD}"
+fi
+
+DST=$DSTDIR/gridlabd-src-$VERSION.tar
+DIRLIST=`find $SRC -name '.??*' -prune -o -type d -print`
+RELEASEFILES="COPYRIGHT,LICENSE,STATUS"
+
+if [ ! -d "$DSTDIR" ]; then
+	echo "Creating target directory $DSTDIR"
+	mkdir -p "$DSTDIR"
+fi
+echo "Releasing source from $SRC to $DST"
+echo "Required files for release are $RELEASEFILES"
+
+if [ -f $DST ]; then
+	echo "Destroying old $DST"
+fi
+
+echo "Creating the initial ./configure file"
+echo "#!/bin/bash
+./checkpkgs
+autoreconf -is
+./configure" >$SRC/configure
+chmod +x $SRC/configure
+
+for DIR in $DIRLIST; do
+	if [ -s $DIR/${RELEASEFILES//,/ -a -s $DIR/} -a ! -f "$DIR/PROPRIETARY" ]; then
+		FILES=`find "$DIR"/* -type d -prune -o -name '.??*' -prune -o -print`
+		if [ -f "$DST" ]; then
+			echo "Adding files in $DIR to $DST"
+			op="u"
+		else
+		echo "Creating files in $DIR to $DST"
+			op="c"
+		fi
+		$action tar ${op}f "$DST" $FILES
+	elif [ "$verbose" == "yes" ]; then
+		echo "Skipping $DIR because required release files not all present" 
+	fi
+done
+echo "Removing old releases of this version"
+rm -f "$DSTDIR/gridlabd-src-${MAJOR}_${MINOR}_*.tar.gz"
+echo "Compressing $DST"
+gzip -f "$DST"
+echo "Target $DST.gz is available for distribution"

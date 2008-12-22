@@ -1,0 +1,64 @@
+// $Id$
+//
+// Powerflow module self-test
+
+#set include="../../core"
+#include "../../core/rt/msvc_debugger.glm"
+
+#include "assert.glm"
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 00:00:00 EST';
+}
+
+module powerflow;
+
+///////////////////////////////////////////////////////
+// test 1: overhead line 
+// A phase
+object overhead_line {
+	phases BN;
+	length 300 ft;
+	configuration object line_configuration {
+		conductor_B object overhead_line_conductor {
+			geometric_mean_radius 0.00446 in;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		conductor_N object overhead_line_conductor {
+			geometric_mean_radius 0.00446 in;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		spacing object line_spacing {
+			distance_BN 5.0249 ft;
+		};
+	};
+	from object node {
+		name fB;
+		phases BN;
+		voltage_B -3600 - 6235.4j;
+		nominal_voltage 7200;
+		maximum_voltage_error 1;
+		
+	};
+	to object load {
+		name tB;
+		phases BN;
+		voltage_B -3600 - 6235.4j;
+		constant_current_B  1;
+		constant_power_B 1500 + 750j;
+		constant_impedance_B 1000 + 2000j;
+		nominal_voltage 7200;
+	//	maximum_voltage_error 1;		
+		
+	};
+	object complex_assert {
+		target "power_out";
+		value 8.267 + 15.249;
+		within 0.01;
+	};		
+};
+
+

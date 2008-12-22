@@ -1,0 +1,47 @@
+#!/bin/bash
+# $Id: add_class,v 1.2 2008/02/12 18:58:18 d3g637 Exp $
+#
+# Add new classes to the current module
+#
+
+if [ $# -eq 0 ]; then
+	echo "Syntax: $(basename $0) <class1> <class2> ... <classN>"
+	exit 1
+fi
+
+while [ $# -gt 0 ]; do
+	CLASSNAME="$1"
+	shift
+
+	if [ -f $CLASSNAME.h ]; then
+		echo "Class $CLASSNAME already exists"
+		continue;
+	fi
+
+	MODULENAME=$(grep 'MODULE:' main.cpp | cut -d: -f2)
+	if [ ${#MODULENAME} -eq 0 ]; then
+		echo "ERROR: MODULE name not found in main.cpp (looking for comment 'MODULE:$MODULENAME')"
+		exit 1
+	fi
+	echo "Adding $CLASSNAME to $MODULENAME..."
+
+	echo "  updating init.cpp..."
+	sed -e "s://NEWCLASSDEF:new $CLASSNAME(module);\n\t//NEWCLASSDEF:" <init.cpp |\
+		sed -e "s://NEWCLASSINC:#include \"$CLASSNAME.h\"\n//NEWCLASSINC:" |\
+		sed -e "s/CLASSNAME/$CLASSNAME/g" >.init.cpp
+	mv .init.cpp init.cpp
+
+	echo "  updating Makefile.am..."
+	awk "/# NEWCLASS/ { print \"\t$CLASSNAME.cpp $CLASSNAME.h \\\\\";} { print \$0 }" <Makefile.am >.Makefile.am
+	mv .Makefile.am Makefile.am
+
+	echo "  updating $MODULENAME.h..."
+	cat $MODULENAME.h | sed -e "s://NEWCLASSINC:#include \"$CLASSNAME.h\"\n//NEWCLASSINC:" >.$MODULENAME.h
+	mv .$MODULENAME.h $MODULENAME.h
+
+	for F in $0.d/*.*; do
+		FN=$(basename $F | sed -e "s/CLASSNAME/$CLASSNAME/g")
+		echo "  creating $FN..."
+		sed -e "s/CLASSNAME/$CLASSNAME/g" <$F >$FN
+	done
+done

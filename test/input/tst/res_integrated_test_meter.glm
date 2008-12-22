@@ -1,0 +1,265 @@
+# $Id: res_integrated_test_meter.glm 683 2008-06-18 20:16:29Z d3g637 $
+#
+# Model file for integrated testing
+# One house with each enduse represented for verifying power aggregation
+# at the feeder/meter 
+# 
+
+module powerflow;
+module climate;
+module residential;
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+########################################################
+# 4 Node Feeder: Balanced step-down delta-delta
+########################################################
+
+object overhead_line_conductor {
+	name OH100;
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor {
+	name OH101;
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing {
+	name LS200;
+	distance_AtoB 2.5;
+	distance_BtoC 4.5;
+	distance_AtoC 7.0;
+	distance_AtoN 5.656854;
+	distance_BtoN 4.272002;
+	distance_CtoN 5.0;
+}
+
+object line_configuration {
+	name LC300;
+	phaseA_conductor OH100;
+	phaseB_conductor OH100;
+	phaseC_conductor OH100;
+	phaseN_conductor OH101;
+	line_spacing LS200;
+}
+
+object transformer_configuration {
+	name XFC400;
+	connect_type 2;
+	kVA_rating 6000;
+	V_primary 12470;
+	V_secondary 4160;
+	R_pu 0.01;
+	X_pu 0.06;
+}
+
+object transformer_configuration {
+	name PoleTop;
+	connect_type 5;
+	kVA_rating 400;
+	phaseA_kVA_rating 400;
+	V_primary 2402;
+	V_secondary 120;
+	R_pu 0.01;
+	X_pu 0.06;
+}
+
+object node {
+	name Node1;
+	phases A|B|C;
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object overhead_line {
+	name Link12;
+	phases A|B|C;
+	from Node1;
+	to Node2;
+	length 2000;
+	configuration LC300;
+}
+
+object node {
+	name Node2;
+	phases A|B|C;
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object transformer {
+	name Link23;
+	phases A|B|C;
+	from Node2;
+	to Node3;
+	configuration XFC400;
+}
+
+object meter {
+	name Node3;
+#        parent Link23;
+	type 2;
+	phases A|B|C;
+#	phaseA_V +2401.777+0.000j;
+#	phaseB_V -1200.889-2080.000j;
+#	phaseC_V -1200.889+2080.000j;
+	line1_voltage +2401.777+0.000j;
+	line2_voltage -1200.889-2080.000j;
+	line3_voltage -1200.889+2080.000j;
+#	line12_voltage 240 V;
+#	line23_voltage -120 V;
+#	line31_voltage -120 V;
+}
+
+
+
+object overhead_line {
+	name Link34;
+	phases A|B|C;
+#        parent Node3;
+	from Node3;
+	to Node4;
+	length 2500;
+	configuration LC300;
+}
+
+#object load {
+#	name Load;
+#	parent Node4;
+#	phases A|B|C|D;
+#	phaseA_V +2401.777+0.000j;
+#	phaseB_V -1200.889-2080.000j;
+#	phaseC_V -1200.889+2080.000j;
+#	phaseA_VA +1800000.000+871779.789j;
+#	phaseB_VA +1800000.000+871779.789j;
+#	phaseC_VA +1800000.000+871779.789j;
+#	sync_V_limit 0.001;
+#}
+
+object node {
+	name Node4;
+	phases A|B|C|D;
+	phaseA_V +2401.777+0.000j;
+	phaseB_V -1200.889-2080.000j;
+	phaseC_V -1200.889+2080.000j;
+}
+
+object transformer {
+	name Link45;
+	phases A|B|C;
+	from Node4;
+	to Meter;
+	configuration PoleTop;
+}
+	
+module tape;
+
+########################################################
+
+object recorder{
+	name MeterCorder2;
+	parent Node3;
+	property energy,power,demand,line1_voltage,line2_voltage,line3_voltage,line1_current,line2_current,line3_current;
+#       property phaseA_V,phaseB_V,phaseC_V,phaseA_I_in,phaseB_I_in,phaseC_I_in;
+	file meter2.csv;
+	interval 3600;
+	limit 1000;
+}
+
+
+object meter {
+	name Meter;
+	parent Link45;
+	type 1;
+	line1_voltage +120+0.000j;
+	line2_voltage +120.0+0.0j;
+	line3_voltage +0.0+00.000j;
+	line12_voltage 240 V;
+	line23_voltage -120 V;
+	line31_voltage -120 V;
+}
+
+#object node {
+#	name Meter;
+#	phase A|B|C;
+#	phaseA_V 120+0j;
+#	phaseB_V 120+0j;
+#	phaseC_V 120+0j;
+#}
+
+object recorder{
+	name MeterCorder;
+	parent Meter;
+	property energy,power,demand,line1_voltage,line2_voltage,line3_voltage,line1_current,line2_current,line3_current;
+#	property phaseA_V,phaseB_V,phaseC_V,phaseA_I_in,phaseB_I_in,phaseC_I_in;
+	file meter.csv;
+	interval 3600;
+	limit 1000;
+}
+
+object house {
+	name House;
+	parent Meter;
+	latitude "48N";
+	longitude "125W";
+	floor_area 1500.0 sf;
+#	floor_area random.normal(1500, 300);
+	envelope_UA 450.0;
+	window_wall_ratio 0.25;
+	glazing_shgc 0.40;
+	heating_setpoint 72.0;
+	cooling_setpoint 76.0;
+}
+
+object recorder{
+	name HouseCorder;
+	parent House;
+	property air_temperature,power;
+	file house.csv;
+	interval 3600;
+	limit 1000;
+}
+
+
+#object waterheater {
+#	name Waterheater;
+#	parent House;
+#	tank_volume 60;
+#	tank_UA 2.0;
+#	water_demand random.uniform(0, 5);  
+#	water_demand 0.25 gpm;
+#	heating_element_capacity 4500 W;
+#	location INSIDE;
+#	tank_setpoint 120 degF;
+#}
+
+object lights {
+	name Lights;
+	type INCANDESCENT;
+	parent House;
+	placement INDOOR;
+	demand 0.50;
+	installed_power 1.5 kW;
+}
+
+#this tape is set to loop 100 times to cycle through the synchronization
+#object player {
+#	name Player;
+#	parent Lights;
+#	property demand;
+#	file ../test/input/lightingDemand.glt;
+#	loop 100;
+#}
+
+
+########################################################
+# END
+########################################################

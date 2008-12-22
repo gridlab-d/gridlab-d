@@ -1,0 +1,128 @@
+// $Id: residential_5home.glm 1182 2008-12-22 22:08:36Z dchassin $
+// Copyright (C) 2008 Battelle Memorial Institute
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module tape;
+module climate;
+module residential;
+module powerflow;
+
+object climate {
+}
+
+object house:1..5 {
+	parent meter:*
+	floor_area random.normal(1500,300);
+}
+
+object lights:6..10 {
+	parent house:id-5;
+}
+
+object range:11..15 {
+	parent house:id-10;
+}
+
+object clotheswasher:16..20 {
+	parent house:id-15;
+}
+
+object waterheater:21..25 {
+	parent house:id-20;
+}
+
+object player:26..30{
+	parent lights:id-20;
+	property demand;
+	file lightingDemand.glt;
+	loop 100;
+}
+
+object player:31..35{
+	parent range:id-20;
+	property demand;
+	file rangeDemand.glt;
+	loop 100;
+}
+
+object player:36..40{
+	parent clotheswasher:id-20;
+	property demand;
+	file clotheswasherDemand.glt;
+	loop 100;
+}
+
+object player:41..45{
+	parent waterheater:id-20;
+	property demand;
+	file hotwaterDemand.glt;
+	loop 100;
+}
+
+object microwave:46..50 {
+	parent house:id-45;
+}
+
+object plugload:51..55 {
+	parent house:id-50;
+}
+
+object dishwasher:56..60 {
+	parent house:id-55;
+}
+
+object player:61..65{
+	parent microwave:id-15;
+	property demand;
+	file microwaveDemand.glt;
+	loop 100;
+}
+
+object player:66..70{
+	parent plugload:id-15;
+	property demand;
+	file plugloadDemand.glt;
+	loop 100;
+}
+
+
+object player:71..75{
+	parent dishwasher:id-15;
+	property demand;
+	file dishwasherDemand.glt;
+	loop 100;
+}
+
+object occupantload:76..80{
+	parent house:id-75;
+	number_of_occupants 4;
+}
+
+object player:81..85{
+	parent occupantload:id-5;
+	property occupancy_fraction;
+	file occupancyFraction.glt;
+	loop 100;
+}
+
+object recorder:..5{
+	parent house:*;
+	property total_internal_gain;
+	file kgrecorder.txt;
+	interval 0;
+	limit 1000;
+	}
+
+object meter
+{
+	line1_voltage 120 V;
+	line2_voltage 0 V;
+	line3_voltage 120 V;
+	line12_voltage 120 V;
+	line23_voltage 120 V;
+	line31_voltage 240 V;
+}

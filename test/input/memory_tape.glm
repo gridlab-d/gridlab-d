@@ -1,0 +1,31 @@
+// $Id: memory_tape.glm 1182 2008-12-22 22:08:36Z dchassin $
+// Copyright (C) 2008 Battelle Memorial Institute
+// test to verify proper operation of memory tapes
+// 
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow;
+module tape;
+
+object meter:0 {
+	name "Meter 1";
+	type SINGLEPHASE;
+	line1_voltage 120 V;
+	line2_voltage 0 V;
+	line3_voltage 120 V;
+	line12_voltage 120 V;
+	line23_voltage 120 V;
+	line31_voltage 240 V;
+	
+}
+
+object player:2 {
+	parent meter:0;
+	property line1_voltage;
+	file memory:player_1;
+	loop 10;
+}

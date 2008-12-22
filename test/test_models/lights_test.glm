@@ -1,0 +1,107 @@
+//#include "../powerflow/test/assert.glm"
+
+#set include="/Documents and Settings/d3p988/Desktop/GLD Clean SVN/source/core/"
+#set force_compile=0
+#set debug=1
+#set iteration_limit=6
+module residential;
+module tape;
+
+clock {
+	 timezone EST+5EDT;
+	 timestamp '2000-01-01 0:00:00';
+}
+
+class complex_assert {
+	char32 target;
+	complex value;
+	double within;
+	intrinsic postsync(TIMESTAMP t0, TIMESTAMP t1)
+	{
+		if (t0>0)
+		{
+			complex x;
+			gl_get_value(my->parent,target, x);
+			complex m = (x-value).Mag();
+			if (!m.IsFinite() || m>within){
+				//gl_throw("assert failed on %s: %s (%g%+gi) not within %f of %g%+gi", 
+				gl_error("assert failed on %s: %s (%g%+gi) not within %f of %g%+gi", 
+					gl_name(my->parent), target, x.Re(), x.Im(), within, value.Re(), value.Im());
+				return t1;
+			} else {
+				//gl_debug("asserted on %s: %s (%g+%gi) at %s", gl_name(my->parent), target, x.Re(), x.Im(), gl_strftime(t1));
+			}
+			return TS_NEVER;
+		} else {
+			return t1+1;
+		}
+	};
+}; 
+
+
+class double_assert {
+	char32 target;
+	double value;
+	double within;
+	intrinsic postsync(TIMESTAMP t0, TIMESTAMP t1)
+	{
+		if (t0>0)
+		{
+			double x;
+			gl_get_value(my->parent,target, x);
+			double m = abs(x-value);
+			if (_isnan(m) || m>within){				
+				gl_error("assert failed on %s: %s %g not within %f of %g", 
+					gl_name(my->parent), target, x, within, value);
+				return t1;
+			} else {
+				//gl_debug("asserted on %s: %s %g and %g at %s", gl_name(my->parent), target, x, value, gl_strftime(t1));
+			}
+			return TS_NEVER;
+		} else {
+			return t1+1;
+		}
+	};
+};
+
+object house{
+	name TestHouse;
+}
+
+object lights{
+	parent TestHouse;
+	installed_power 1500;
+	type INCANDESCENT;
+	placement INDOOR;
+	object player{
+		property demand;
+		file ../test/test_models/lights_demand.txt;
+	};
+	object recorder{
+		property power,internal_heat;
+		limit 96;
+		interval 900;
+		file ../test/test_models/light_out.csv;
+	};
+	object complex_assert{
+		target power;
+		value 0.0;
+		within 0.01;
+		object player{
+			property value;
+			file ../test/test_models/lights_power.txt;
+		};
+	};
+	object double_assert{
+		target internal_heat;
+		value 0.0;
+		within 0.01;
+		object player{
+			property value;
+			file ../test/test_models/lights_heat.txt;
+		};
+	};
+};
+
+
+// EOF

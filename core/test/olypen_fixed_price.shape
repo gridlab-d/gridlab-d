@@ -1,0 +1,13 @@
+# $Id$
+# Copyright (C) 2008 Battelle Memorial Institute
+#
+# This is the shape file for fixed price energy
+#
+# Time entries are "minutes hours days months weekdays"
+# Shape magnitude are automatically normalized within each group
+#
+
+fixed-price-energy-2006 {
+	* * * * *, 81.0
+}
+

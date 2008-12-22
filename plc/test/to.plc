@@ -1,0 +1,19 @@
+// $id$
+// Copyright (C) 2008 Battelle Memorial Institute
+BEGIN_DATA
+END_DATA
+
+INIT 
+{
+	return 0;
+}
+
+CODE(dt,dev)
+{
+	char buf[1024];
+	char src[64];
+	if (RCVMSG(src,buf))
+		printf("message from %s is %s", src,buf);
+	
+	return NEVER;
+}

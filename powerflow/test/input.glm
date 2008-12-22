@@ -1,0 +1,8117 @@
+//*********************************************
+// BEGIN 
+//*********************************************
+// filename... 12EG-1.glm 
+
+clock { 
+	 timestamp '2000-01-01 0:00:00';
+	 timezone EST+5EDT;
+}
+
+//*********************************************
+// modules
+module powerflow;
+
+
+object triplex_line_conductor: {
+	name 1/0 AA triplex;
+	resistance 0.97;
+	geometric_mean_radius 0.0111;
+}
+
+object triplex_line_configuration:1 {
+	l1_conductor 1/0 AA triplex;
+	l2_conductor 1/0 AA triplex;
+	lN_conductor 1/0 AA triplex;
+	insulation_thickness 0.08;
+	diameter 0.368;
+}
+
+object transformer:116  {
+	phases "B|N";
+	from 181_76778;
+	to 181_76778_CB_TX1;
+	configuration transformer_configuration:64;
+}
+
+object triplex_node:117 {
+	name 181_76778_CB_TX1;
+	phases "B|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:118 {
+	name 181_76778_CB_TX1_M;
+	phases "BN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:119 {
+	name 181_76778_CB_TXL;
+	from 181_76778_CB_TX1;
+	to 181_76778_CB_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:120 {
+	name 181_76778_CB_TX2;
+	parent 181_76778_CB_TX1_M;
+	latitude 51N32'55.352";
+	longitude 113W50'58.401";
+	phases "B|N";
+	phaseB_VA 6435.22304524123+1906.93630401834j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:121  {
+	phases "A|N";
+	from 181_4312;
+	to 181_4312_CA_TX1;
+	configuration transformer_configuration:51;
+}
+
+object triplex_node:122 {
+	name 181_4312_CA_TX1;
+	phases "A|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:123 {
+	name 181_4312_CA_TX1_M;
+	phases "AN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:124 {
+	name 181_4312_CA_TXL;
+	from 181_4312_CA_TX1;
+	to 181_4312_CA_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:125 {
+	name 181_4312_CA_TX2;
+	parent 181_4312_CA_TX1_M;
+	latitude 51N33'13.363";
+	longitude 113W51'41.310";
+	phases "A|N";
+	phaseA_VA 6156.22569516731+1836.75230329455j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:126  {
+	phases "A|N";
+	from 181_4413;
+	to 181_4413_CA_TX1;
+	configuration transformer_configuration:52;
+}
+
+object triplex_node:127 {
+	name 181_4413_CA_TX1;
+	phases "A|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:128 {
+	name 181_4413_CA_TX1_M;
+	phases "AN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:129 {
+	name 181_4413_CA_TXL;
+	from 181_4413_CA_TX1;
+	to 181_4413_CA_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:130 {
+	name 181_4413_CA_TX2;
+	parent 181_4413_CA_TX1_M;
+	latitude 51N33'5.422";
+	longitude 113W51'36.817";
+	phases "A|N";
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:131  {
+	phases "B|N";
+	from 181_148478;
+	to 181_148478_IB_TX1;
+	configuration transformer_configuration:65;
+}
+
+object triplex_node:132 {
+	name 181_148478_IB_TX1;
+	phases "B|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:133 {
+	name 181_148478_IB_TX1_M;
+	phases "BN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:134 {
+	name 181_148478_IB_TXL;
+	from 181_148478_IB_TX1;
+	to 181_148478_IB_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:135 {
+	name 181_148478_IB_TX2;
+	parent 181_148478_IB_TX1_M;
+	latitude 51N33'2.712";
+	longitude 113W51'12.119";
+	phases "B|N";
+	phaseB_VA 429.014869682749+127.129086934556j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:136  {
+	phases "B|N";
+	from 181_21567;
+	to 181_21567_CB_TX1;
+	configuration transformer_configuration:66;
+}
+
+object triplex_node:137 {
+	name 181_21567_CB_TX1;
+	phases "B|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:138 {
+	name 181_21567_CB_TX1_M;
+	phases "BN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:139 {
+	name 181_21567_CB_TXL;
+	from 181_21567_CB_TX1;
+	to 181_21567_CB_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:140 {
+	name 181_21567_CB_TX2;
+	parent 181_21567_CB_TX1_M;
+	latitude 51N33'0.507";
+	longitude 113W51'4.447";
+	phases "B|N";
+	phaseB_VA 10725.3717420687+3178.22717336391j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:141  {
+	phases "A|N";
+	from 181_21580;
+	to 181_21580_CA_TX1;
+	configuration transformer_configuration:51;
+}
+
+object triplex_node:142 {
+	name 181_21580_CA_TX1;
+	phases "A|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:143 {
+	name 181_21580_CA_TX1_M;
+	phases "AN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:144 {
+	name 181_21580_CA_TXL;
+	from 181_21580_CA_TX1;
+	to 181_21580_CA_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:145 {
+	name 181_21580_CA_TX2;
+	parent 181_21580_CA_TX1_M;
+	latitude 51N32'57.655";
+	longitude 113W51'32.679";
+	phases "A|N";
+	phaseA_VA 6156.22569516731+1836.75230329455j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:146  {
+	phases "A|N";
+	from 181_4516;
+	to 181_4516_CA_TX1;
+	configuration transformer_configuration:51;
+}
+
+object triplex_node:147 {
+	name 181_4516_CA_TX1;
+	phases "A|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:148 {
+	name 181_4516_CA_TX1_M;
+	phases "AN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:149 {
+	name 181_4516_CA_TXL;
+	from 181_4516_CA_TX1;
+	to 181_4516_CA_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:150 {
+	name 181_4516_CA_TX2;
+	parent 181_4516_CA_TX1_M;
+	latitude 51N32'52.077";
+	longitude 113W51'33.177";
+	phases "A|N";
+	phaseA_VA 6156.22569516731+1836.75230329455j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:151  {
+	phases "B|N";
+	from 181_4546;
+	to 181_4546_CB_TX1;
+	configuration transformer_configuration:67;
+}
+
+object triplex_node:152 {
+	name 181_4546_CB_TX1;
+	phases "B|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:153 {
+	name 181_4546_CB_TX1_M;
+	phases "BN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:154 {
+	name 181_4546_CB_TXL;
+	from 181_4546_CB_TX1;
+	to 181_4546_CB_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:155 {
+	name 181_4546_CB_TX2;
+	parent 181_4546_CB_TX1_M;
+	latitude 51N32'48.958";
+	longitude 113W50'56.835";
+	phases "B|N";
+	phaseB_VA 4290.14869682749+1271.29086934556j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:156  {
+	phases "A|B|C|N";
+	from 181_4551;
+	to 181_4551_C_M;
+	configuration transformer_configuration:98;
+}
+
+object meter:157 {
+	name 181_4551_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:158  {
+	phases "A|B|C|N";
+	from 181_4586;
+	to 181_4586_C_M;
+	configuration transformer_configuration:99;
+}
+
+object meter:159 {
+	name 181_4586_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:160  {
+	phases "A|N";
+	from 181_4621;
+	to 181_4621_CA_TX1;
+	configuration transformer_configuration:51;
+}
+
+object triplex_node:161 {
+	name 181_4621_CA_TX1;
+	phases "A|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:162 {
+	name 181_4621_CA_TX1_M;
+	phases "AN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:163 {
+	name 181_4621_CA_TXL;
+	from 181_4621_CA_TX1;
+	to 181_4621_CA_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:164 {
+	name 181_4621_CA_TX2;
+	parent 181_4621_CA_TX1_M;
+	latitude 51N32'39.518";
+	longitude 113W51'3.080";
+	phases "A|N";
+	phaseA_VA 6156.22569516731+1836.75230329455j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:165  {
+	phases "A|B|C|N";
+	from 181_4622;
+	to 181_4622_C_M;
+	configuration transformer_configuration:99;
+}
+
+object meter:166 {
+	name 181_4622_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:167  {
+	phases "A|N";
+	from 181_21630;
+	to 181_21630_CA_TX1;
+	configuration transformer_configuration:54;
+}
+
+object triplex_node:168 {
+	name 181_21630_CA_TX1;
+	phases "A|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:169 {
+	name 181_21630_CA_TX1_M;
+	phases "AN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:170 {
+	name 181_21630_CA_TXL;
+	from 181_21630_CA_TX1;
+	to 181_21630_CA_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:171 {
+	name 181_21630_CA_TX2;
+	parent 181_21630_CA_TX1_M;
+	latitude 51N32'38.770";
+	longitude 113W51'9.331";
+	phases "A|N";
+	phaseA_VA 2052.07523172243+612.250767764851j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:172  {
+	phases "A|B|C|N";
+	from 181_4633;
+	to 181_4633_C_M;
+	configuration transformer_configuration:101;
+}
+
+object meter:173 {
+	name 181_4633_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:174  {
+	phases "A|B|C|N";
+	from 181_4645;
+	to 181_4645_C_M;
+	configuration transformer_configuration:102;
+}
+
+object meter:175 {
+	name 181_4645_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:176  {
+	phases "B|N";
+	from 181_4646;
+	to 181_4646_CB_TX1;
+	configuration transformer_configuration:64;
+}
+
+object triplex_node:177 {
+	name 181_4646_CB_TX1;
+	phases "B|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:178 {
+	name 181_4646_CB_TX1_M;
+	phases "BN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:179 {
+	name 181_4646_CB_TXL;
+	from 181_4646_CB_TX1;
+	to 181_4646_CB_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:180 {
+	name 181_4646_CB_TX2;
+	parent 181_4646_CB_TX1_M;
+	latitude 51N32'36.647";
+	longitude 113W51'3.073";
+	phases "B|N";
+	phaseB_VA 6435.22304524123+1906.93630401834j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:181  {
+	phases "A|B|C|N";
+	from 181_4659;
+	to 181_4659_C_M;
+	configuration transformer_configuration:102;
+}
+
+object meter:182 {
+	name 181_4659_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:183  {
+	phases "A|B|C|N";
+	from 181_4661;
+	to 181_4661_C_M;
+	configuration transformer_configuration:98;
+}
+
+object meter:184 {
+	name 181_4661_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:185  {
+	phases "A|B|C|N";
+	from 181_4695;
+	to 181_4695_C_M;
+	configuration transformer_configuration:102;
+}
+
+object meter:186 {
+	name 181_4695_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:187  {
+	phases "A|B|C|N";
+	from 181_4696;
+	to 181_4696_C_M;
+	configuration transformer_configuration:101;
+}
+
+object meter:188 {
+	name 181_4696_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:189  {
+	phases "B|N";
+	from 181_4736;
+	to 181_4736_CB_TX1;
+	configuration transformer_configuration:64;
+}
+
+object triplex_node:190 {
+	name 181_4736_CB_TX1;
+	phases "B|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:191 {
+	name 181_4736_CB_TX1_M;
+	phases "BN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:192 {
+	name 181_4736_CB_TXL;
+	from 181_4736_CB_TX1;
+	to 181_4736_CB_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:193 {
+	name 181_4736_CB_TX2;
+	parent 181_4736_CB_TX1_M;
+	latitude 51N32'27.419";
+	longitude 113W51'18.625";
+	phases "B|N";
+	phaseB_VA 6435.22304524123+1906.93630401834j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:194  {
+	phases "A|B|C|N";
+	from 181_73247;
+	to 181_73247_C_M;
+	configuration transformer_configuration:105;
+}
+
+object meter:195 {
+	name 181_73247_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:196  {
+	phases "A|B|C|N";
+	from 181_75803;
+	to 181_75803_C_M;
+	configuration transformer_configuration:106;
+}
+
+object meter:197 {
+	name 181_75803_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:198  {
+	phases "A|N";
+	from 181_76777;
+	to 181_76777_CA_TX1;
+	configuration transformer_configuration:58;
+}
+
+object triplex_node:199 {
+	name 181_76777_CA_TX1;
+	phases "A|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:200 {
+	name 181_76777_CA_TX1_M;
+	phases "AN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:201 {
+	name 181_76777_CA_TXL;
+	from 181_76777_CA_TX1;
+	to 181_76777_CA_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:202 {
+	name 181_76777_CA_TX2;
+	parent 181_76777_CA_TX1_M;
+	latitude 51N33'18.987";
+	longitude 113W51'23.186";
+	phases "A|N";
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:203  {
+	phases "A|B|C|N";
+	from 181_26659;
+	to 181_26659_C_M;
+	configuration transformer_configuration:108;
+}
+
+object meter:204 {
+	name 181_26659_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:205  {
+	phases "A|B|C|N";
+	from 181_26721;
+	to 181_26721_C_M;
+	configuration transformer_configuration:109;
+}
+
+object meter:206 {
+	name 181_26721_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:207  {
+	phases "A|B|C|N";
+	from 181_104923;
+	to 181_104923_I_M;
+	configuration transformer_configuration:108;
+}
+
+object meter:208 {
+	name 181_104923_I_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:209  {
+	phases "A|N";
+	from 181_132780;
+	to 181_132780_CA_TX1;
+	configuration transformer_configuration:58;
+}
+
+object triplex_node:210 {
+	name 181_132780_CA_TX1;
+	phases "A|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:211 {
+	name 181_132780_CA_TX1_M;
+	phases "AN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:212 {
+	name 181_132780_CA_TXL;
+	from 181_132780_CA_TX1;
+	to 181_132780_CA_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:213 {
+	name 181_132780_CA_TX2;
+	parent 181_132780_CA_TX1_M;
+	latitude 51N33'19.279";
+	longitude 113W51'29.731";
+	phases "A|N";
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:214  {
+	phases "A|B|C|N";
+	from 181_16240;
+	to 181_16240_C_M;
+	configuration transformer_configuration:110;
+}
+
+object meter:215 {
+	name 181_16240_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:216  {
+	phases "A|B|C|N";
+	from 181_16223;
+	to 181_16223_C_M;
+	configuration transformer_configuration:110;
+}
+
+object meter:217 {
+	name 181_16223_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:218  {
+	phases "A|N";
+	from 181_16249;
+	to 181_16249_CA_TX1;
+	configuration transformer_configuration:58;
+}
+
+object triplex_node:219 {
+	name 181_16249_CA_TX1;
+	phases "A|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:220 {
+	name 181_16249_CA_TX1_M;
+	phases "AN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:221 {
+	name 181_16249_CA_TXL;
+	from 181_16249_CA_TX1;
+	to 181_16249_CA_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:222 {
+	name 181_16249_CA_TX2;
+	parent 181_16249_CA_TX1_M;
+	latitude 51N33'41.292";
+	longitude 113W51'6.462";
+	phases "A|N";
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:223  {
+	phases "A|B|C|N";
+	from 181_16300;
+	to 181_16300_C_M;
+	configuration transformer_configuration:106;
+}
+
+object meter:224 {
+	name 181_16300_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:225  {
+	phases "A|B|C|N";
+	from 181_16329;
+	to 181_16329_C_M;
+	configuration transformer_configuration:110;
+}
+
+object meter:226 {
+	name 181_16329_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:227  {
+	phases "B|N";
+	from 181_16335;
+	to 181_16335_CB_TX1;
+	configuration transformer_configuration:74;
+}
+
+object triplex_node:228 {
+	name 181_16335_CB_TX1;
+	phases "B|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:229 {
+	name 181_16335_CB_TX1_M;
+	phases "BN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:230 {
+	name 181_16335_CB_TXL;
+	from 181_16335_CB_TX1;
+	to 181_16335_CB_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:231 {
+	name 181_16335_CB_TX2;
+	parent 181_16335_CB_TX1_M;
+	latitude 51N33'35.957";
+	longitude 113W50'52.652";
+	phases "B|N";
+	phaseB_VA 10725.3717420687+3178.22717336391j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:232  {
+	phases "A|B|C|N";
+	from 181_16348;
+	to 181_16348_C_M;
+	configuration transformer_configuration:106;
+}
+
+object meter:233 {
+	name 181_16348_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:234  {
+	phases "B|N";
+	from 181_16371;
+	to 181_16371_CB_TX1;
+	configuration transformer_configuration:74;
+}
+
+object triplex_node:235 {
+	name 181_16371_CB_TX1;
+	phases "B|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:236 {
+	name 181_16371_CB_TX1_M;
+	phases "BN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:237 {
+	name 181_16371_CB_TXL;
+	from 181_16371_CB_TX1;
+	to 181_16371_CB_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:238 {
+	name 181_16371_CB_TX2;
+	parent 181_16371_CB_TX1_M;
+	latitude 51N33'33.438";
+	longitude 113W51'1.432";
+	phases "B|N";
+	phaseB_VA 10725.3717420687+3178.22717336391j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:239  {
+	phases "A|B|C|N";
+	from 181_16499;
+	to 181_16499_C_M;
+	configuration transformer_configuration:106;
+}
+
+object meter:240 {
+	name 181_16499_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:241  {
+	phases "B|N";
+	from 181_16605;
+	to 181_16605_CB_TX1;
+	configuration transformer_configuration:75;
+}
+
+object triplex_node:242 {
+	name 181_16605_CB_TX1;
+	phases "B|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:243 {
+	name 181_16605_CB_TX1_M;
+	phases "BN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:244 {
+	name 181_16605_CB_TXL;
+	from 181_16605_CB_TX1;
+	to 181_16605_CB_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:245 {
+	name 181_16605_CB_TX2;
+	parent 181_16605_CB_TX1_M;
+	latitude 51N33'17.439";
+	longitude 113W51'31.562";
+	phases "B|N";
+	phaseB_VA 4290.14869682749+1271.29086934556j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:246  {
+	phases "A|B|C|N";
+	from 181_16624;
+	to 181_16624_C_M;
+	configuration transformer_configuration:105;
+}
+
+object meter:247 {
+	name 181_16624_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:248  {
+	phases "B|N";
+	from 181_16702;
+	to 181_16702_CB_TX1;
+	configuration transformer_configuration:75;
+}
+
+object triplex_node:249 {
+	name 181_16702_CB_TX1;
+	phases "B|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:250 {
+	name 181_16702_CB_TX1_M;
+	phases "BN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:251 {
+	name 181_16702_CB_TXL;
+	from 181_16702_CB_TX1;
+	to 181_16702_CB_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:252 {
+	name 181_16702_CB_TX2;
+	parent 181_16702_CB_TX1_M;
+	latitude 51N33'8.287";
+	longitude 113W51'9.365";
+	phases "B|N";
+	phaseB_VA 4290.14869682749+1271.29086934556j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:253  {
+	phases "A|B|C|N";
+	from 181_26597;
+	to 181_26597_I_M;
+	configuration transformer_configuration:113;
+}
+
+object meter:254 {
+	name 181_26597_I_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:255  {
+	phases "A|B|C|N";
+	from 181_17019;
+	to 181_17019_I_M;
+	configuration transformer_configuration:105;
+}
+
+object meter:256 {
+	name 181_17019_I_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:257  {
+	phases "A|B|C|N";
+	from 181_26643;
+	to 181_26643_C_M;
+	configuration transformer_configuration:108;
+}
+
+object meter:258 {
+	name 181_26643_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:259  {
+	phases "A|N";
+	from 181_17142;
+	to 181_17142_CA_TX1;
+	configuration transformer_configuration:58;
+}
+
+object triplex_node:260 {
+	name 181_17142_CA_TX1;
+	phases "A|N";
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object meter:261 {
+	name 181_17142_CA_TX1_M;
+	phases "AN";
+	type SINGLEPHASE;
+	line1_voltage 120;
+	line2_voltage 120;
+	line3_voltage 0;
+}
+
+object triplex_line:262 {
+	name 181_17142_CA_TXL;
+	from 181_17142_CA_TX1;
+	to 181_17142_CA_TX1_M;
+	length 30;
+	configuration triplex_line_configuration:1;
+}
+
+object triplex_node:263 {
+	name 181_17142_CA_TX2;
+	parent 181_17142_CA_TX1_M;
+	latitude 51N32'37.058";
+	longitude 113W51'12.019";
+	phases "A|N";
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	line1_voltage 120;
+	line2_voltage 120;
+	lineN_voltage 0;
+}
+
+object transformer:264  {
+	phases "A|B|C|N";
+	from 181_17187;
+	to 181_17187_C_M;
+	configuration transformer_configuration:106;
+}
+
+object meter:265 {
+	name 181_17187_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:266  {
+	phases "A|B|C|N";
+	from 181_17191;
+	to 181_17191_C_M;
+	configuration transformer_configuration:105;
+}
+
+object meter:267 {
+	name 181_17191_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:268  {
+	phases "A|B|C|N";
+	from 181_17194;
+	to 181_17194_C_M;
+	configuration transformer_configuration:110;
+}
+
+object meter:269 {
+	name 181_17194_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:270  {
+	phases "A|B|C|N";
+	from 181_26685;
+	to 181_26685_C_M;
+	configuration transformer_configuration:106;
+}
+
+object meter:271 {
+	name 181_26685_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:272  {
+	phases "A|B|C|N";
+	from 181_17209;
+	to 181_17209_C_M;
+	configuration transformer_configuration:105;
+}
+
+object meter:273 {
+	name 181_17209_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:274  {
+	phases "A|B|C|N";
+	from 181_17222;
+	to 181_17222_C_M;
+	configuration transformer_configuration:113;
+}
+
+object meter:275 {
+	name 181_17222_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:276  {
+	phases "A|B|C|N";
+	from 181_17286;
+	to 181_17286_C_M;
+	configuration transformer_configuration:113;
+}
+
+object meter:277 {
+	name 181_17286_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:278  {
+	phases "A|B|C|N";
+	from 181_17323;
+	to 181_17323_C_M;
+	configuration transformer_configuration:114;
+}
+
+object meter:279 {
+	name 181_17323_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:280  {
+	phases "A|B|C|N";
+	from 181_17324;
+	to 181_17324_C_M;
+	configuration transformer_configuration:114;
+}
+
+object meter:281 {
+	name 181_17324_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:282  {
+	phases "A|B|C|N";
+	from 181_17331;
+	to 181_17331_C_M;
+	configuration transformer_configuration:110;
+}
+
+object meter:283 {
+	name 181_17331_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:284  {
+	phases "A|B|C|N";
+	from 181_16622;
+	to 181_16622_C_M;
+	configuration transformer_configuration:115;
+}
+
+object meter:285 {
+	name 181_16622_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:286  {
+	phases "A|B|C|N";
+	from 181_26710;
+	to 181_26710_C_M;
+	configuration transformer_configuration:113;
+}
+
+object meter:287 {
+	name 181_26710_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object transformer:288  {
+	phases "A|B|C|N";
+	from 181_31356;
+	to 181_31356_C_M;
+	configuration transformer_configuration:110;
+}
+
+object meter:289 {
+	name 181_31356_C_M;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}
+object overhead_line_conductor:19 {
+	name 123.3 AAAC;
+	rating.summer.continuous 256.0 ;
+	geometric_mean_radius 0.012 ft;
+	resistance 0.18;
+}
+
+object overhead_line_conductor:35 {
+	name 559.5 AAAC;
+	rating.summer.continuous 663.0 ;
+	geometric_mean_radius 0.0271 ft;
+	resistance 0.045;
+}
+
+object overhead_line_conductor:14 {
+	name 4 CW;
+	rating.summer.continuous 180.0 ;
+	geometric_mean_radius 0.0034 ft;
+	resistance 0.286;
+}
+
+object overhead_line_conductor:11 {
+	name 4 CU;
+	rating.summer.continuous 149.0 ;
+	geometric_mean_radius 0.244 ft;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:20 {
+	name 1/0 AAAC;
+	rating.summer.continuous 266.0 ;
+	geometric_mean_radius 0.368 ft;
+	resistance 1.94304;
+}
+
+object overhead_line_conductor:16 {
+	name 2 CU;
+	rating.summer.continuous 204.0 ;
+	geometric_mean_radius 0.292 ft;
+	resistance 1.5418;
+}
+
+object overhead_line_conductor:28 {
+	name 312.8 AAAC;
+	rating.summer.continuous 460.0 ;
+	geometric_mean_radius 0.0202 ft;
+	resistance 0.071;
+}
+
+object overhead_line_conductor:27 {
+	name 336.4 AAC;
+	rating.summer.continuous 443.0 ;
+	geometric_mean_radius 0.666 ft;
+	resistance 3.5165;
+}
+
+object underground_line_conductor:43 {
+	name 1/0 AAC (Conc);
+	rating.summer.continuous 142.0 ;
+	outer_diameter 1.27;
+	conductor_gmr 0.01142 ft;
+	conductor_diameter 0.362;
+	conductor_resistance 0.88704;
+	neutral_gmr 0.0489686771417213 ft;
+	neutral_resistance 13.86528;
+	neutral_diameter 0.0641;
+	neutral_strands 16.0;
+	shield_gmr 0.00;
+	shield_resistance 0.00;
+}
+
+object underground_line_conductor:42 {
+	name 2 AL (Conc);
+	rating.summer.continuous 112.0 ;
+	outer_diameter 1.09;
+	conductor_gmr 0.0088 ft;
+	conductor_diameter 0.292;
+	conductor_resistance 1.38336;
+	neutral_gmr 0.0348162687755351 ft;
+	neutral_resistance 13.5696;
+	neutral_diameter 0.0641;
+	neutral_strands 6.0;
+	shield_gmr 0.00;
+	shield_resistance 0.00;
+}
+
+object underground_line_conductor:44 {
+	name 4/0 AAC (Conc);
+	rating.summer.continuous 214.0 ;
+	outer_diameter 1.32;
+	conductor_gmr 0.0177 ft;
+	conductor_diameter 0.528;
+	conductor_resistance 0.433488;
+	neutral_gmr 0.0485380344339232 ft;
+	neutral_resistance 13.5696;
+	neutral_diameter 0.0641;
+	neutral_strands 11.0;
+	shield_gmr 0.00;
+	shield_resistance 0.00;
+}
+
+object underground_line_conductor:49 {
+	name 1000 AAC (Tape);
+	rating.summer.continuous 775.0 ;
+	outer_diameter 1.87;
+	conductor_gmr 0.0371 ft;
+	conductor_diameter 1.15;
+	conductor_resistance 0.0222;
+	neutral_gmr 0.0732739718442675 ft;
+	neutral_resistance 0.05;
+	neutral_diameter 0.102;
+	neutral_strands 20.0;
+	shield_gmr 0.00;
+	shield_resistance 0.00;
+}
+
+object overhead_line_conductor:33 {
+	name 556.5 AAC;
+	rating.summer.continuous 605.0 ;
+	geometric_mean_radius 0.865 ft;
+	resistance 4.5672;
+}
+
+object overhead_line_conductor:32 {
+	name Busbar;
+	rating.summer.continuous 600.0 ;
+	geometric_mean_radius 0.2441 ft;
+	resistance 0.3059;
+}
+
+object line_spacing:610 {
+	distance_BtoN 36.0 in;
+}
+
+object line_spacing:612 {
+	distance_AtoB 48.0 in;
+	distance_BtoC 48.0 in;
+	distance_AtoC 48.0 in;
+	distance_AtoN 36.0 in;
+	distance_BtoN 36.0 in;
+	distance_CtoN 36.0 in;
+}
+
+object line_spacing:615 {
+	distance_AtoN 36.0 in;
+}
+
+object line_spacing:620 {
+	distance_AtoB 48.0 in;
+	distance_AtoN 36.0 in;
+	distance_BtoN 36.0 in;
+}
+
+object line_spacing:626 {
+	distance_CtoN 36.0 in;
+}
+
+object line_configuration:611 {
+	phaseB_conductor overhead_line_conductor:19;
+	phaseN_conductor overhead_line_conductor:19;
+	line_spacing line_spacing:610;
+}
+
+object line_configuration:613 {
+	phaseA_conductor overhead_line_conductor:35;
+	phaseB_conductor overhead_line_conductor:35;
+	phaseC_conductor overhead_line_conductor:35;
+	phaseN_conductor overhead_line_conductor:35;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:614 {
+	phaseA_conductor overhead_line_conductor:19;
+	phaseB_conductor overhead_line_conductor:19;
+	phaseC_conductor overhead_line_conductor:19;
+	phaseN_conductor overhead_line_conductor:19;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:616 {
+	phaseA_conductor overhead_line_conductor:19;
+	phaseN_conductor overhead_line_conductor:19;
+	line_spacing line_spacing:615;
+}
+
+object line_configuration:617 {
+	phaseB_conductor overhead_line_conductor:14;
+	phaseN_conductor overhead_line_conductor:14;
+	line_spacing line_spacing:610;
+}
+
+object line_configuration:618 {
+	phaseB_conductor overhead_line_conductor:11;
+	phaseN_conductor overhead_line_conductor:11;
+	line_spacing line_spacing:610;
+}
+
+object line_configuration:619 {
+	phaseA_conductor overhead_line_conductor:35;
+	phaseN_conductor overhead_line_conductor:35;
+	line_spacing line_spacing:615;
+}
+
+object line_configuration:621 {
+	phaseA_conductor overhead_line_conductor:35;
+	phaseB_conductor overhead_line_conductor:35;
+	phaseN_conductor overhead_line_conductor:35;
+	line_spacing line_spacing:620;
+}
+
+object line_configuration:622 {
+	phaseA_conductor overhead_line_conductor:35;
+	phaseN_conductor overhead_line_conductor:35;
+	line_spacing line_spacing:615;
+}
+
+object line_configuration:623 {
+	phaseA_conductor overhead_line_conductor:11;
+	phaseB_conductor overhead_line_conductor:11;
+	phaseC_conductor overhead_line_conductor:11;
+	phaseN_conductor overhead_line_conductor:11;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:624 {
+	phaseB_conductor overhead_line_conductor:20;
+	phaseN_conductor overhead_line_conductor:20;
+	line_spacing line_spacing:610;
+}
+
+object line_configuration:625 {
+	phaseA_conductor overhead_line_conductor:35;
+	phaseB_conductor overhead_line_conductor:35;
+	phaseC_conductor overhead_line_conductor:35;
+	phaseN_conductor overhead_line_conductor:35;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:627 {
+	phaseC_conductor overhead_line_conductor:16;
+	phaseN_conductor overhead_line_conductor:16;
+	line_spacing line_spacing:626;
+}
+
+object line_configuration:628 {
+	phaseA_conductor overhead_line_conductor:20;
+	phaseB_conductor overhead_line_conductor:20;
+	phaseC_conductor overhead_line_conductor:20;
+	phaseN_conductor overhead_line_conductor:20;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:629 {
+	phaseA_conductor overhead_line_conductor:28;
+	phaseB_conductor overhead_line_conductor:28;
+	phaseC_conductor overhead_line_conductor:28;
+	phaseN_conductor overhead_line_conductor:28;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:630 {
+	phaseA_conductor overhead_line_conductor:27;
+	phaseB_conductor overhead_line_conductor:27;
+	phaseC_conductor overhead_line_conductor:27;
+	phaseN_conductor overhead_line_conductor:27;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:631 {
+	phaseA_conductor overhead_line_conductor:35;
+	phaseB_conductor overhead_line_conductor:35;
+	phaseC_conductor overhead_line_conductor:35;
+	phaseN_conductor overhead_line_conductor:35;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:632 {
+	phaseC_conductor underground_line_conductor:43;
+	phaseN_conductor underground_line_conductor:43;
+	line_spacing line_spacing:626;
+}
+
+object line_configuration:633 {
+	phaseA_conductor underground_line_conductor:43;
+	phaseB_conductor underground_line_conductor:43;
+	phaseC_conductor underground_line_conductor:43;
+	phaseN_conductor underground_line_conductor:43;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:634 {
+	phaseA_conductor underground_line_conductor:43;
+	phaseN_conductor underground_line_conductor:43;
+	line_spacing line_spacing:615;
+}
+
+object line_configuration:635 {
+	phaseA_conductor underground_line_conductor:42;
+	phaseB_conductor underground_line_conductor:42;
+	phaseC_conductor underground_line_conductor:42;
+	phaseN_conductor underground_line_conductor:42;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:636 {
+	phaseA_conductor underground_line_conductor:44;
+	phaseB_conductor underground_line_conductor:44;
+	phaseC_conductor underground_line_conductor:44;
+	phaseN_conductor underground_line_conductor:44;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:637 {
+	phaseA_conductor underground_line_conductor:49;
+	phaseB_conductor underground_line_conductor:49;
+	phaseC_conductor underground_line_conductor:49;
+	phaseN_conductor underground_line_conductor:49;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:638 {
+	phaseB_conductor underground_line_conductor:43;
+	phaseN_conductor underground_line_conductor:43;
+	line_spacing line_spacing:610;
+}
+
+object line_configuration:639 {
+	phaseC_conductor underground_line_conductor:42;
+	phaseN_conductor underground_line_conductor:42;
+	line_spacing line_spacing:626;
+}
+
+object line_configuration:640 {
+	phaseA_conductor overhead_line_conductor:33;
+	phaseB_conductor overhead_line_conductor:33;
+	phaseC_conductor overhead_line_conductor:33;
+	phaseN_conductor overhead_line_conductor:33;
+	line_spacing line_spacing:612;
+}
+
+object line_configuration:641 {
+	phaseB_conductor overhead_line_conductor:33;
+	phaseN_conductor overhead_line_conductor:33;
+	line_spacing line_spacing:610;
+}
+
+object transformer_configuration:51 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 15;
+	phaseA_rating 15;
+	resistance 0.01;
+	reactance 0.00666666666666667;
+}
+
+object transformer_configuration:52 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 25;
+	phaseA_rating 25;
+	resistance 0.006;
+	reactance 0.004;
+}
+
+object transformer_configuration:53 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 20;
+	phaseA_rating 20;
+	resistance 0.0075;
+	reactance 0.005;
+}
+
+object transformer_configuration:54 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 5;
+	phaseA_rating 5;
+	resistance 0.015;
+	reactance 0.01;
+}
+
+object transformer_configuration:55 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 50;
+	phaseA_rating 50;
+	resistance 0.003;
+	reactance 0.002;
+}
+
+object transformer_configuration:56 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 15;
+	phaseA_rating 15;
+	resistance 0.01;
+	reactance 0.00666666666666667;
+}
+
+object transformer_configuration:57 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 50;
+	phaseA_rating 50;
+	resistance 0.003;
+	reactance 0.002;
+}
+
+object transformer_configuration:58 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 25;
+	phaseA_rating 25;
+	resistance 0.006;
+	reactance 0.004;
+}
+
+object transformer_configuration:59 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 100;
+	phaseA_rating 100;
+	resistance 0.0015;
+	reactance 0.001;
+}
+
+object transformer_configuration:60 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 333;
+	phaseA_rating 333;
+	resistance 0.00045045045045045;
+	reactance 0.0003003003003003;
+}
+
+object transformer_configuration:61 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 166.666666666667;
+	phaseA_rating 166.666666666667;
+	resistance 0.000899999999999998;
+	reactance 0.000599999999999999;
+}
+
+object transformer_configuration:62 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 500;
+	phaseA_rating 500;
+	resistance 0.0003;
+	reactance 0.0002;
+}
+
+object transformer_configuration:63 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 250;
+	phaseA_rating 250;
+	resistance 0.0006;
+	reactance 0.0004;
+}
+
+object transformer_configuration:64 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 15;
+	phaseB_rating 15;
+	resistance 0.01;
+	reactance 0.00666666666666667;
+}
+
+object transformer_configuration:65 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 1;
+	phaseB_rating 1;
+	resistance 0.015;
+	reactance 0.01;
+}
+
+object transformer_configuration:66 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 25;
+	phaseB_rating 25;
+	resistance 0.006;
+	reactance 0.004;
+}
+
+object transformer_configuration:67 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 10;
+	phaseB_rating 10;
+	resistance 0.015;
+	reactance 0.01;
+}
+
+object transformer_configuration:68 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 20;
+	phaseB_rating 20;
+	resistance 0.0075;
+	reactance 0.005;
+}
+
+object transformer_configuration:69 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 50;
+	phaseB_rating 50;
+	resistance 0.003;
+	reactance 0.002;
+}
+
+object transformer_configuration:70 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 15;
+	phaseB_rating 15;
+	resistance 0.01;
+	reactance 0.00666666666666667;
+}
+
+object transformer_configuration:71 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 50;
+	phaseB_rating 50;
+	resistance 0.003;
+	reactance 0.002;
+}
+
+object transformer_configuration:72 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 100;
+	phaseB_rating 100;
+	resistance 0.0015;
+	reactance 0.001;
+}
+
+object transformer_configuration:73 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 333;
+	phaseB_rating 333;
+	resistance 0.00045045045045045;
+	reactance 0.0003003003003003;
+}
+
+object transformer_configuration:74 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 25;
+	phaseB_rating 25;
+	resistance 0.006;
+	reactance 0.004;
+}
+
+object transformer_configuration:75 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 10;
+	phaseB_rating 10;
+	resistance 0.015;
+	reactance 0.01;
+}
+
+object transformer_configuration:76 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 166.666666666667;
+	phaseB_rating 166.666666666667;
+	resistance 0.000899999999999998;
+	reactance 0.000599999999999999;
+}
+
+object transformer_configuration:77 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 500;
+	phaseB_rating 500;
+	resistance 0.0003;
+	reactance 0.0002;
+}
+
+object transformer_configuration:78 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 250;
+	phaseB_rating 250;
+	resistance 0.0006;
+	reactance 0.0004;
+}
+
+object transformer_configuration:79 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 15;
+	phaseC_rating 15;
+	resistance 0.01;
+	reactance 0.00666666666666667;
+}
+
+object transformer_configuration:80 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 25;
+	phaseC_rating 25;
+	resistance 0.006;
+	reactance 0.004;
+}
+
+object transformer_configuration:81 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 20;
+	phaseC_rating 20;
+	resistance 0.0075;
+	reactance 0.005;
+}
+
+object transformer_configuration:82 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 5;
+	phaseC_rating 5;
+	resistance 0.015;
+	reactance 0.01;
+}
+
+object transformer_configuration:83 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 50;
+	phaseC_rating 50;
+	resistance 0.003;
+	reactance 0.002;
+}
+
+object transformer_configuration:84 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 15;
+	phaseC_rating 15;
+	resistance 0.01;
+	reactance 0.00666666666666667;
+}
+
+object transformer_configuration:85 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 50;
+	phaseC_rating 50;
+	resistance 0.003;
+	reactance 0.002;
+}
+
+object transformer_configuration:86 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 25;
+	phaseC_rating 25;
+	resistance 0.006;
+	reactance 0.004;
+}
+
+object transformer_configuration:87 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 100;
+	phaseC_rating 100;
+	resistance 0.0015;
+	reactance 0.001;
+}
+
+object transformer_configuration:88 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 333;
+	phaseC_rating 333;
+	resistance 0.00045045045045045;
+	reactance 0.0003003003003003;
+}
+
+object transformer_configuration:89 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 166.666666666667;
+	phaseC_rating 166.666666666667;
+	resistance 0.000899999999999998;
+	reactance 0.000599999999999999;
+}
+
+object transformer_configuration:90 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 500;
+	phaseC_rating 500;
+	resistance 0.0003;
+	reactance 0.0002;
+}
+
+object transformer_configuration:91 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7199.6 V;
+	secondary_voltage 120 V;
+	kVA_rating 250;
+	phaseC_rating 250;
+	resistance 0.0006;
+	reactance 0.0004;
+}
+
+object transformer_configuration:113 {
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 500.000000000001;
+	phaseA_rating 166.666666666667;
+	phaseB_rating 166.666666666667;
+	phaseC_rating 166.666666666667;
+	resistance 0.0002;
+	reactance 0.000999999999999998;
+}
+
+object transformer_configuration:96 {
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 25;
+	phaseA_rating 0;
+	phaseB_rating 25;
+	phaseC_rating 0;
+	resistance 0.004;
+	reactance 0.02;
+}
+
+object transformer_configuration:112 {
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 10;
+	phaseA_rating 0;
+	phaseB_rating 10;
+	phaseC_rating 0;
+	resistance 0.01;
+	reactance 0.05;
+}
+
+object transformer_configuration:99 {
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 60;
+	phaseA_rating 20;
+	phaseB_rating 20;
+	phaseC_rating 20;
+	resistance 0.00166666666666667;
+	reactance 0.00833333333333333;
+}
+
+object transformer_configuration:111 {
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 25;
+	phaseA_rating 0;
+	phaseB_rating 25;
+	phaseC_rating 0;
+	resistance 0.004;
+	reactance 0.02;
+}
+
+object transformer_configuration:101 {
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 45;
+	phaseA_rating 15;
+	phaseB_rating 15;
+	phaseC_rating 15;
+	resistance 0.00222222222222222;
+	reactance 0.0111111111111111;
+}
+
+object transformer_configuration:94 {
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 50;
+	phaseA_rating 25;
+	phaseB_rating 0;
+	phaseC_rating 25;
+	resistance 0.002;
+	reactance 0.01;
+}
+
+object transformer_configuration:97 {
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 10;
+	phaseA_rating 0;
+	phaseB_rating 10;
+	phaseC_rating 0;
+	resistance 0.01;
+	reactance 0.05;
+}
+
+object transformer_configuration:108 {
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 300;
+	phaseA_rating 100;
+	phaseB_rating 100;
+	phaseC_rating 100;
+	resistance 0.000333333333333333;
+	reactance 0.00166666666666667;
+}
+
+object transformer_configuration:106 {
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 150;
+	phaseA_rating 50;
+	phaseB_rating 50;
+	phaseC_rating 50;
+	resistance 0.000666666666666667;
+	reactance 0.00333333333333333;
+}
+
+object transformer_configuration:98 {
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 75;
+	phaseA_rating 25;
+	phaseB_rating 25;
+	phaseC_rating 25;
+	resistance 0.00133333333333333;
+	reactance 0.00666666666666667;
+}
+
+object transformer_configuration:114 {
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 1500;
+	phaseA_rating 500;
+	phaseB_rating 500;
+	phaseC_rating 500;
+	resistance 6.66666666666667e-005;
+	reactance 0.000333333333333333;
+}
+
+object transformer_configuration:102 {
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 150;
+	phaseA_rating 50;
+	phaseB_rating 50;
+	phaseC_rating 50;
+	resistance 0.000666666666666667;
+	reactance 0.00333333333333333;
+}
+
+object transformer_configuration:110 {
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 75;
+	phaseA_rating 25;
+	phaseB_rating 25;
+	phaseC_rating 25;
+	resistance 0.00133333333333333;
+	reactance 0.00666666666666667;
+}
+
+object transformer_configuration:105 {
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 45;
+	phaseA_rating 15;
+	phaseB_rating 15;
+	phaseC_rating 15;
+	resistance 0.00222222222222222;
+	reactance 0.0111111111111111;
+}
+
+object transformer_configuration:107 {
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 50;
+	phaseA_rating 25;
+	phaseB_rating 0;
+	phaseC_rating 25;
+	resistance 0.002;
+	reactance 0.01;
+}
+
+object transformer_configuration:92 {
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 15;
+	phaseA_rating 0;
+	phaseB_rating 15;
+	phaseC_rating 0;
+	resistance 0.00666666666666667;
+	reactance 0.0333333333333333;
+}
+
+object transformer_configuration:109 {
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 999;
+	phaseA_rating 333;
+	phaseB_rating 333;
+	phaseC_rating 333;
+	resistance 0.0001001001001001;
+	reactance 0.000500500500500501;
+}
+
+object transformer_configuration:100 {
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 10;
+	phaseA_rating 5;
+	phaseB_rating 0;
+	phaseC_rating 5;
+	resistance 0.01;
+	reactance 0.05;
+}
+
+object transformer_configuration:95 {
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 1;
+	phaseA_rating 0;
+	phaseB_rating 1;
+	phaseC_rating 0;
+	resistance 0.01;
+	reactance 0.05;
+}
+
+object transformer_configuration:93 {
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 30;
+	phaseA_rating 15;
+	phaseB_rating 0;
+	phaseC_rating 15;
+	resistance 0.00333333333333333;
+	reactance 0.0166666666666667;
+}
+
+object transformer_configuration:115 {
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 12470 V;
+	secondary_voltage 480 V;
+	kVA_rating 750;
+	phaseA_rating 250;
+	phaseB_rating 250;
+	phaseC_rating 250;
+	resistance 0.000133333333333333;
+	reactance 0.000666666666666667;
+}
+
+object overhead_line:642 {
+	name 188.111736_L;
+	phases "B|N";
+	from node:515;
+	to node:405;
+	length 25.9935103054654;
+	configuration line_configuration:611;
+}
+
+object overhead_line:643 {
+	name 188.111737_L;
+	phases "B|N";
+	from node:515;
+	to node:507;
+	length 285.281784279698;
+	configuration line_configuration:611;
+}
+
+object overhead_line:644 {
+	name 188.111738_L;
+	phases "B|N";
+	from node:534;
+	to node:515;
+	length 937.673893631437;
+	configuration line_configuration:611;
+}
+
+object overhead_line:645 {
+	name 188.135738_L;
+	phases "A|B|C|N";
+	from node:574;
+	to node:471;
+	length 38.0637095537992;
+	configuration line_configuration:613;
+}
+
+object overhead_line:646 {
+	name 188.135739_L;
+	phases "A|B|C|N";
+	from node:471;
+	to node:544;
+	length 120.922362716798;
+	configuration line_configuration:613;
+}
+
+object overhead_line:647 {
+	name 188.135740_L;
+	phases "A|B|C|N";
+	from node:471;
+	to node:439;
+	length 29.8888873829444;
+	configuration line_configuration:614;
+}
+
+object overhead_line:648 {
+	name 188.135741_L;
+	phases "A|B|C|N";
+	from node:439;
+	to node:429;
+	length 333.600319629854;
+	configuration line_configuration:614;
+}
+
+object overhead_line:649 {
+	name 188.135742_L;
+	phases "A|B|C|N";
+	from node:429;
+	to node:450;
+	length 16.4680728986709;
+	configuration line_configuration:614;
+}
+
+object overhead_line:650 {
+	name 188.17642_L;
+	phases "A|N";
+	from node:517;
+	to node:342;
+	length 42.2577927134979;
+	configuration line_configuration:616;
+}
+
+object overhead_line:651 {
+	name 188.17892_L;
+	phases "A|N";
+	from node:464;
+	to node:324;
+	length 36.9732674373889;
+	configuration line_configuration:616;
+}
+
+object overhead_line:652 {
+	name 188.179581_L;
+	phases "B|N";
+	from node:511;
+	to node:530;
+	length 153.784354682433;
+	configuration line_configuration:617;
+}
+
+object overhead_line:653 {
+	name 188.179582_L;
+	phases "B|N";
+	from node:488;
+	to node:511;
+	length 558.40009179096;
+	configuration line_configuration:617;
+}
+
+object overhead_line:654 {
+	name 188.179583_L;
+	phases "B|N";
+	from node:511;
+	to node:335;
+	length 20.2575984016017;
+	configuration line_configuration:618;
+}
+
+object overhead_line:655 {
+	name 188.18009_L;
+	phases "B|N";
+	from node:488;
+	to node:401;
+	length 37.478735157522;
+	configuration line_configuration:617;
+}
+
+object overhead_line:656 {
+	name 188.18079_L;
+	phases "B|N";
+	from node:507;
+	to node:488;
+	length 360.665491841474;
+	configuration line_configuration:617;
+}
+
+object overhead_line:657 {
+	name 188.18084_L;
+	phases "A|N";
+	from node:544;
+	to node:305;
+	length 30.4214157625711;
+	configuration line_configuration:619;
+}
+
+object overhead_line:658 {
+	name 188.18245_L;
+	phases "A|N";
+	from node:489;
+	to node:417;
+	length 27.535936537739;
+	configuration line_configuration:619;
+}
+
+object overhead_line:659 {
+	name 188.18342_L;
+	phases "B|N";
+	from node:534;
+	to node:411;
+	length 39.7149729952331;
+	configuration line_configuration:611;
+}
+
+object overhead_line:660 {
+	name 188.18363_L;
+	phases "A|B|C|N";
+	from node:473;
+	to node:379;
+	length 26.0741410020213;
+	configuration line_configuration:613;
+}
+
+object overhead_line:661 {
+	name 188.18418_L;
+	phases "B|N";
+	from node:424;
+	to node:534;
+	length 461.911096126731;
+	configuration line_configuration:611;
+}
+
+object overhead_line:662 {
+	name 188.18421_L;
+	phases "B|N";
+	from node:461;
+	to node:424;
+	length 20.3368989032308;
+	configuration line_configuration:611;
+}
+
+object overhead_line:663 {
+	name 188.18463_L;
+	phases "A|B|N";
+	from node:559;
+	to node:392;
+	length 29.1820850009577;
+	configuration line_configuration:621;
+}
+
+object overhead_line:664 {
+	name 188.18555_L;
+	phases "A|B|C|N";
+	from node:428;
+	to node:509;
+	length 12.4997809978856;
+	configuration line_configuration:614;
+}
+
+object overhead_line:665 {
+	name 188.18574_L;
+	phases "A|N";
+	from node:495;
+	to node:332;
+	length 46.7785108891823;
+	configuration line_configuration:622;
+}
+
+object overhead_line:666 {
+	name 188.18577_L;
+	phases "A|B|N";
+	from node:481;
+	to node:357;
+	length 29.0245592905553;
+	configuration line_configuration:621;
+}
+
+object overhead_line:667 {
+	name 188.18589_L;
+	phases "A|B|C|N";
+	from node:474;
+	to node:428;
+	length 166.477662030685;
+	configuration line_configuration:614;
+}
+
+object overhead_line:668 {
+	name 188.18596_L;
+	phases "A|N";
+	from node:474;
+	to node:400;
+	length 41.4596893621099;
+	configuration line_configuration:616;
+}
+
+object overhead_line:669 {
+	name 188.18609_L;
+	phases "A|B|C|N";
+	from node:483;
+	to node:474;
+	length 130.83212876426;
+	configuration line_configuration:614;
+}
+
+object overhead_line:670 {
+	name 188.18611_L;
+	phases "A|B|C|N";
+	from node:524;
+	to node:327;
+	length 30.8219243071654;
+	configuration line_configuration:623;
+}
+
+object overhead_line:671 {
+	name 188.18616_L;
+	phases "A|B|C|N";
+	from node:483;
+	to node:425;
+	length 24.1987377563081;
+	configuration line_configuration:614;
+}
+
+object overhead_line:672 {
+	name 188.18618_L;
+	phases "A|B|C|N";
+	from node:425;
+	to node:520;
+	length 12.4995828730476;
+	configuration line_configuration:614;
+}
+
+object overhead_line:673 {
+	name 188.18623_L;
+	phases "A|B|C|N";
+	from node:435;
+	to node:483;
+	length 81.9435145534088;
+	configuration line_configuration:614;
+}
+
+object overhead_line:674 {
+	name 188.18629_L;
+	phases "A|B|C|N";
+	from node:523;
+	to node:435;
+	length 12.7299399059344;
+	configuration line_configuration:614;
+}
+
+object overhead_line:675 {
+	name 188.18641_L;
+	phases "A|B|C|N";
+	from node:442;
+	to node:524;
+	length 126.573700605532;
+	configuration line_configuration:623;
+}
+
+object overhead_line:676 {
+	name 188.18642_L;
+	phases "A|B|C|N";
+	from node:442;
+	to node:350;
+	length 30.1685677484587;
+	configuration line_configuration:623;
+}
+
+object overhead_line:677 {
+	name 188.18644_L;
+	phases "B|N";
+	from node:452;
+	to node:377;
+	length 34.7853050582299;
+	configuration line_configuration:624;
+}
+
+object overhead_line:678 {
+	name 188.18674_L;
+	phases "A|B|C|N";
+	from node:512;
+	to node:442;
+	length 171.755886350359;
+	configuration line_configuration:623;
+}
+
+object overhead_line:679 {
+	name 188.18675_L;
+	phases "A|B|C|N";
+	from node:512;
+	to node:326;
+	length 30.3988852591676;
+	configuration line_configuration:623;
+}
+
+object overhead_line:680 {
+	name 188.18676_L;
+	phases "A|B|C|N";
+	from node:453;
+	to node:396;
+	length 29.5811928258364;
+	configuration line_configuration:614;
+}
+
+object overhead_line:681 {
+	name 188.18714_L;
+	phases "A|B|C|N";
+	from node:528;
+	to node:447;
+	length 155.863310275277;
+	configuration line_configuration:625;
+}
+
+object overhead_line:682 {
+	name 188.18721_L;
+	phases "A|B|C|N";
+	from node:436;
+	to node:512;
+	length 168.252331862132;
+	configuration line_configuration:623;
+}
+
+object overhead_line:683 {
+	name 188.18763_L;
+	phases "A|B|C|N";
+	from node:558;
+	to node:331;
+	length 35.2946190232443;
+	configuration line_configuration:625;
+}
+
+object overhead_line:684 {
+	name 188.18765_L;
+	phases "A|B|C|N";
+	from node:480;
+	to node:362;
+	length 30.0762894319914;
+	configuration line_configuration:625;
+}
+
+object overhead_line:685 {
+	name 188.18772_L;
+	phases "B|N";
+	from node:459;
+	to node:434;
+	length 27.322820498623;
+	configuration line_configuration:618;
+}
+
+object overhead_line:686 {
+	name 188.18875_L;
+	phases "B|N";
+	from node:434;
+	to node:346;
+	length 339.084291266945;
+	configuration line_configuration:618;
+}
+
+object overhead_line:687 {
+	name 188.22574_L;
+	phases "C|N";
+	from node:524;
+	to node:399;
+	length 321.664898280767;
+	configuration line_configuration:627;
+}
+
+object overhead_line:688 {
+	name 188.2525_L;
+	phases "A|B|C|N";
+	from node:585;
+	to node:536;
+	length 12.500092679634;
+	configuration line_configuration:613;
+}
+
+object overhead_line:689 {
+	name 188.25352_L;
+	phases "A|B|C|N";
+	from node:438;
+	to node:497;
+	length 12.1196407948949;
+	configuration line_configuration:628;
+}
+
+object overhead_line:690 {
+	name 188.25353_L;
+	phases "A|B|C|N";
+	from node:461;
+	to node:570;
+	length 186.18961155244;
+	configuration line_configuration:629;
+}
+
+object overhead_line:691 {
+	name 188.25354_L;
+	phases "A|B|C|N";
+	from node:570;
+	to node:438;
+	length 21.0571449391733;
+	configuration line_configuration:628;
+}
+
+object overhead_line:692 {
+	name 188.25370_L;
+	phases "A|B|C|N";
+	from node:495;
+	to node:461;
+	length 577.318855871813;
+	configuration line_configuration:614;
+}
+
+object overhead_line:693 {
+	name 188.25383_L;
+	phases "A|B|C|N";
+	from node:570;
+	to node:427;
+	length 840.423062780036;
+	configuration line_configuration:629;
+}
+
+object overhead_line:694 {
+	name 188.25387_L;
+	phases "A|B|C|N";
+	from node:427;
+	to node:572;
+	length 13.8230364605988;
+	configuration line_configuration:629;
+}
+
+object overhead_line:695 {
+	name 188.25389_L;
+	phases "A|B|C|N";
+	from node:452;
+	to node:495;
+	length 279.714916173502;
+	configuration line_configuration:614;
+}
+
+object overhead_line:696 {
+	name 188.25395_L;
+	phases "A|B|C|N";
+	from node:453;
+	to node:452;
+	length 178.840581105184;
+	configuration line_configuration:614;
+}
+
+object overhead_line:697 {
+	name 188.25408_L;
+	phases "A|B|C|N";
+	from node:433;
+	to node:453;
+	length 115.103698637876;
+	configuration line_configuration:614;
+}
+
+object overhead_line:698 {
+	name 188.25410_L;
+	phases "A|B|C|N";
+	from node:528;
+	to node:433;
+	length 43.2681194645273;
+	configuration line_configuration:614;
+}
+
+object overhead_line:699 {
+	name 188.25418_L;
+	phases "A|B|C|N";
+	from node:426;
+	to node:528;
+	length 167.93233413792;
+	configuration line_configuration:625;
+}
+
+object overhead_line:700 {
+	name 188.25423_L;
+	phases "A|B|C|N";
+	from node:498;
+	to node:426;
+	length 38.0450739254684;
+	configuration line_configuration:625;
+}
+
+object overhead_line:701 {
+	name 188.2632_L;
+	phases "A|B|C|N";
+	from node:508;
+	to node:430;
+	length 373.031278550344;
+	configuration line_configuration:625;
+}
+
+object overhead_line:702 {
+	name 188.2635_L;
+	phases "A|B|C|N";
+	from node:508;
+	to node:543;
+	length 109.840317083281;
+	configuration line_configuration:625;
+}
+
+object overhead_line:703 {
+	name 188.2636_L;
+	phases "A|B|C|N";
+	from node:543;
+	to node:513;
+	length 455.692939144709;
+	configuration line_configuration:625;
+}
+
+object overhead_line:704 {
+	name 188.2648_L;
+	phases "A|B|C|N";
+	from node:589;
+	to node:508;
+	length 198.376629198185;
+	configuration line_configuration:625;
+}
+
+object overhead_line:705 {
+	name 188.2722_L;
+	phases "A|B|C|N";
+	from node:496;
+	to node:582;
+	length 81.1774668747188;
+	configuration line_configuration:625;
+}
+
+object overhead_line:706 {
+	name 188.2729_L;
+	phases "A|B|C|N";
+	from node:496;
+	to node:517;
+	length 193.753084974603;
+	configuration line_configuration:625;
+}
+
+object overhead_line:707 {
+	name 188.2755_L;
+	phases "A|B|C|N";
+	from node:517;
+	to node:464;
+	length 1080.54610956624;
+	configuration line_configuration:625;
+}
+
+object overhead_line:708 {
+	name 188.2756_L;
+	phases "A|B|C|N";
+	from node:464;
+	to node:598;
+	length 180.78775471792;
+	configuration line_configuration:625;
+}
+
+object overhead_line:709 {
+	name 188.2758_L;
+	phases "A|B|C|N";
+	from node:581;
+	to node:499;
+	length 12.5000643997421;
+	configuration line_configuration:625;
+}
+
+object overhead_line:710 {
+	name 188.2761_L;
+	phases "A|B|C|N";
+	from node:518;
+	to node:581;
+	length 54.2310098102169;
+	configuration line_configuration:625;
+}
+
+object overhead_line:711 {
+	name 188.2784_L;
+	phases "A|B|C|N";
+	from node:494;
+	to node:574;
+	length 12.5717938256661;
+	configuration line_configuration:613;
+}
+
+object overhead_line:712 {
+	name 188.2852_L;
+	phases "A|B|C|N";
+	from node:544;
+	to node:489;
+	length 589.858334413358;
+	configuration line_configuration:613;
+}
+
+object overhead_line:713 {
+	name 188.2861_L;
+	phases "A|B|C|N";
+	from node:489;
+	to node:473;
+	length 436.670803175709;
+	configuration line_configuration:613;
+}
+
+object overhead_line:714 {
+	name 188.2869_L;
+	phases "A|B|C|N";
+	from node:473;
+	to node:599;
+	length 237.853216794377;
+	configuration line_configuration:613;
+}
+
+object overhead_line:715 {
+	name 188.2881_L;
+	phases "A|B|C|N";
+	from node:599;
+	to node:559;
+	length 208.867176045018;
+	configuration line_configuration:613;
+}
+
+object overhead_line:716 {
+	name 188.2896_L;
+	phases "A|B|C|N";
+	from node:559;
+	to node:481;
+	length 452.186355253514;
+	configuration line_configuration:613;
+}
+
+object overhead_line:717 {
+	name 188.2912_L;
+	phases "A|B|C|N";
+	from node:518;
+	to node:578;
+	length 3404.76333069281;
+	configuration line_configuration:625;
+}
+
+object overhead_line:718 {
+	name 188.2921_L;
+	phases "A|B|C|N";
+	from node:481;
+	to node:506;
+	length 678.426456510639;
+	configuration line_configuration:613;
+}
+
+object overhead_line:719 {
+	name 188.2922_L;
+	phases "A|B|C|N";
+	from node:506;
+	to node:436;
+	length 21.1091036285098;
+	configuration line_configuration:613;
+}
+
+object overhead_line:720 {
+	name 188.2929_L;
+	phases "A|B|C|N";
+	from node:441;
+	to node:537;
+	length 12.475784424167;
+	configuration line_configuration:625;
+}
+
+object overhead_line:721 {
+	name 188.2933_L;
+	phases "A|B|C|N";
+	from node:535;
+	to node:498;
+	length 313.915921288062;
+	configuration line_configuration:625;
+}
+
+object overhead_line:722 {
+	name 188.2934_L;
+	phases "A|B|C|N";
+	from node:535;
+	to node:437;
+	length 34.8267528918771;
+	configuration line_configuration:625;
+}
+
+object overhead_line:723 {
+	name 188.2935_L;
+	phases "A|B|C|N";
+	from node:531;
+	to node:535;
+	length 377.562143891574;
+	configuration line_configuration:625;
+}
+
+object overhead_line:724 {
+	name 188.2936_L;
+	phases "A|B|C|N";
+	from node:531;
+	to node:441;
+	length 34.6458421170775;
+	configuration line_configuration:625;
+}
+
+object overhead_line:725 {
+	name 188.2937_L;
+	phases "A|B|C|N";
+	from node:558;
+	to node:531;
+	length 50.6990199708267;
+	configuration line_configuration:625;
+}
+
+object overhead_line:726 {
+	name 188.2938_L;
+	phases "A|B|C|N";
+	from node:480;
+	to node:558;
+	length 223.552370633629;
+	configuration line_configuration:625;
+}
+
+object overhead_line:727 {
+	name 188.2940_L;
+	phases "A|B|C|N";
+	from node:506;
+	to node:459;
+	length 220.247815085649;
+	configuration line_configuration:613;
+}
+
+object overhead_line:728 {
+	name 188.2947_L;
+	phases "A|B|C|N";
+	from node:498;
+	to node:470;
+	length 191.025379952648;
+	configuration line_configuration:625;
+}
+
+object overhead_line:729 {
+	name 188.2948_L;
+	phases "A|B|C|N";
+	from node:470;
+	to node:418;
+	length 29.495435528178;
+	configuration line_configuration:625;
+}
+
+object overhead_line:730 {
+	name 188.2950_L;
+	phases "A|B|C|N";
+	from node:418;
+	to node:565;
+	length 13.8846759055492;
+	configuration line_configuration:625;
+}
+
+object overhead_line:731 {
+	name 188.2956_L;
+	phases "A|B|C|N";
+	from node:470;
+	to node:547;
+	length 60.5961208080865;
+	configuration line_configuration:625;
+}
+
+object overhead_line:732 {
+	name 188.2957_L;
+	phases "A|B|C|N";
+	from node:547;
+	to node:421;
+	length 31.184542917997;
+	configuration line_configuration:625;
+}
+
+object overhead_line:733 {
+	name 188.2959_L;
+	phases "A|B|C|N";
+	from node:421;
+	to node:458;
+	length 13.3390570132999;
+	configuration line_configuration:625;
+}
+
+object overhead_line:734 {
+	name 188.2964_L;
+	phases "A|B|C|N";
+	from node:547;
+	to node:592;
+	length 121.187241628173;
+	configuration line_configuration:625;
+}
+
+object overhead_line:735 {
+	name 188.2971_L;
+	phases "A|B|C|N";
+	from node:423;
+	to node:490;
+	length 11.7512204046381;
+	configuration line_configuration:625;
+}
+
+object overhead_line:736 {
+	name 188.2973_L;
+	phases "A|B|C|N";
+	from node:556;
+	to node:423;
+	length 33.1240800778064;
+	configuration line_configuration:625;
+}
+
+object overhead_line:737 {
+	name 188.2974_L;
+	phases "A|B|C|N";
+	from node:592;
+	to node:556;
+	length 175.871350266588;
+	configuration line_configuration:625;
+}
+
+object overhead_line:738 {
+	name 188.2983_L;
+	phases "A|B|C|N";
+	from node:556;
+	to node:605;
+	length 161.084319835949;
+	configuration line_configuration:625;
+}
+
+object overhead_line:739 {
+	name 188.3801_L;
+	phases "A|B|C|N";
+	from node:594;
+	to node:518;
+	length 296.256771785723;
+	configuration line_configuration:625;
+}
+
+object overhead_line:740 {
+	name 188.3813_L;
+	phases "A|B|C|N";
+	from node:459;
+	to node:480;
+	length 304.754458384058;
+	configuration line_configuration:613;
+}
+
+object overhead_line:741 {
+	name 188.40088_L;
+	phases "A|B|C|N";
+	from node:502;
+	to node:589;
+	length 12.1090846061498;
+	configuration line_configuration:625;
+}
+
+object overhead_line:742 {
+	name 188.40090_L;
+	phases "A|B|C|N";
+	from node:598;
+	to node:456;
+	length 14.4589398297381;
+	configuration line_configuration:625;
+}
+
+object overhead_line:743 {
+	name 188.40408_L;
+	phases "A|B|C|N";
+	from node:454;
+	to node:607;
+	length 12.4407105902645;
+	configuration line_configuration:630;
+}
+
+object overhead_line:744 {
+	name 188.40410_L;
+	phases "A|B|C|N";
+	from node:561;
+	to node:594;
+	length 15.2100064430909;
+	configuration line_configuration:625;
+}
+
+object overhead_line:745 {
+	name 188.43611_L;
+	phases "A|B|C|N";
+	from node:430;
+	to node:552;
+	length 12.1784091738475;
+	configuration line_configuration:625;
+}
+
+object overhead_line:746 {
+	name 188.54481_L;
+	phases "A|B|C|N";
+	from meter:290;
+	to node:597;
+	length 9.97424307915923;
+	configuration line_configuration:625;
+}
+
+object overhead_line:747 {
+	name 188.54483_L;
+	phases "A|B|C|N";
+	from node:597;
+	to node:555;
+	length 13.7284812345367;
+	configuration line_configuration:631;
+}
+
+object overhead_line:748 {
+	name 188.54486_L;
+	phases "A|B|C|N";
+	from node:555;
+	to node:587;
+	length 8.93842514063326;
+	configuration line_configuration:631;
+}
+
+object overhead_line:749 {
+	name 188.54517_L;
+	phases "A|B|C|N";
+	from node:516;
+	to node:585;
+	length 76.7248890647049;
+	configuration line_configuration:613;
+}
+
+object overhead_line:750 {
+	name 188.54518_L;
+	phases "A|B|C|N";
+	from node:555;
+	to node:516;
+	length 9.32707376394155;
+	configuration line_configuration:613;
+}
+
+object overhead_line:751 {
+	name 188.90296_L;
+	phases "A|B|C|N";
+	from node:543;
+	to node:590;
+	length 565.63828847295;
+	configuration line_configuration:625;
+}
+
+object overhead_line:752 {
+	name 188.90297_L;
+	phases "A|B|C|N";
+	from node:590;
+	to node:496;
+	length 161.083815838272;
+	configuration line_configuration:625;
+}
+
+object underground_line:753 {
+	name 191.104557_L;
+	phases "C|N";
+	from node:500;
+	to node:369;
+	length 321.180232433611;
+	configuration line_configuration:632;
+}
+
+object underground_line:754 {
+	name 191.176542_L;
+	phases "A|B|C|N";
+	from node:527;
+	to node:412;
+	length 269.966424345919;
+	configuration line_configuration:633;
+}
+
+object underground_line:755 {
+	name 191.182941_L;
+	phases "A|B|C|N";
+	from node:457;
+	to node:415;
+	length 141.727495368699;
+	configuration line_configuration:633;
+}
+
+object underground_line:756 {
+	name 191.185822_L;
+	phases "A|N";
+	from node:564;
+	to node:341;
+	length 38.3713290491109;
+	configuration line_configuration:634;
+}
+
+object underground_line:757 {
+	name 191.240548_L;
+	phases "A|B|C|N";
+	from node:520;
+	to node:328;
+	length 84.6240540331109;
+	configuration line_configuration:635;
+}
+
+object underground_line:758 {
+	name 191.240549_L;
+	phases "A|B|C|N";
+	from node:431;
+	to node:355;
+	length 58.2628369543025;
+	configuration line_configuration:635;
+}
+
+object underground_line:759 {
+	name 191.244701_L;
+	phases "A|B|C|N";
+	from node:450;
+	to node:493;
+	length 37.4810829216881;
+	configuration line_configuration:636;
+}
+
+object underground_line:760 {
+	name 191.244702_L;
+	phases "A|B|C|N";
+	from node:493;
+	to node:532;
+	length 675.314808515462;
+	configuration line_configuration:636;
+}
+
+object underground_line:761 {
+	name 191.244703_L;
+	phases "A|B|C|N";
+	from node:532;
+	to node:388;
+	length 32.8550276364635;
+	configuration line_configuration:633;
+}
+
+object underground_line:762 {
+	name 191.2738_L;
+	phases "A|B|C|N";
+	from node:609;
+	to node:454;
+	length 120.804902732267;
+	configuration line_configuration:637;
+}
+
+object underground_line:763 {
+	name 191.2745_L;
+	phases "A|B|C|N";
+	from node:536;
+	to node:584;
+	length 163.854624870655;
+	configuration line_configuration:637;
+}
+
+object underground_line:764 {
+	name 191.2763_L;
+	phases "A|B|C|N";
+	from node:596;
+	to node:549;
+	length 743.353506647766;
+	configuration line_configuration:637;
+}
+
+object underground_line:765 {
+	name 191.2766_L;
+	phases "A|B|C|N";
+	from node:549;
+	to node:486;
+	length 704.285984323503;
+	configuration line_configuration:637;
+}
+
+object underground_line:766 {
+	name 191.2773_L;
+	phases "A|B|C|N";
+	from node:486;
+	to node:571;
+	length 290.079999999842;
+	configuration line_configuration:637;
+}
+
+object underground_line:767 {
+	name 191.2797_L;
+	phases "A|B|C|N";
+	from node:571;
+	to node:504;
+	length 640.203158414838;
+	configuration line_configuration:637;
+}
+
+object underground_line:768 {
+	name 191.2839_L;
+	phases "A|B|C|N";
+	from node:504;
+	to node:443;
+	length 811.148256211139;
+	configuration line_configuration:637;
+}
+
+object underground_line:769 {
+	name 191.2855_L;
+	phases "A|B|C|N";
+	from node:586;
+	to node:462;
+	length 45.8150293755459;
+	configuration line_configuration:637;
+}
+
+object underground_line:770 {
+	name 191.2856_L;
+	phases "A|B|C|N";
+	from node:462;
+	to node:502;
+	length 655.080803581222;
+	configuration line_configuration:637;
+}
+
+object underground_line:771 {
+	name 191.2857_L;
+	phases "A|B|C|N";
+	from node:576;
+	to node:541;
+	length 31.6191992986083;
+	configuration line_configuration:637;
+}
+
+object underground_line:772 {
+	name 191.2861_L;
+	phases "A|B|C|N";
+	from node:443;
+	to node:542;
+	length 565.359245494518;
+	configuration line_configuration:637;
+}
+
+object underground_line:773 {
+	name 191.2872_L;
+	phases "A|B|C|N";
+	from node:573;
+	to node:541;
+	length 949.648705816749;
+	configuration line_configuration:637;
+}
+
+object underground_line:774 {
+	name 191.2873_L;
+	phases "A|B|C|N";
+	from node:542;
+	to node:540;
+	length 426.443054574112;
+	configuration line_configuration:637;
+}
+
+object underground_line:775 {
+	name 191.2878_L;
+	phases "A|B|C|N";
+	from node:591;
+	to node:563;
+	length 30.0971687870252;
+	configuration line_configuration:637;
+}
+
+object underground_line:776 {
+	name 191.2879_L;
+	phases "A|B|C|N";
+	from node:475;
+	to node:583;
+	length 577.028498010119;
+	configuration line_configuration:637;
+}
+
+object underground_line:777 {
+	name 191.2881_L;
+	phases "A|B|C|N";
+	from node:579;
+	to node:475;
+	length 732.100639722281;
+	configuration line_configuration:637;
+}
+
+object underground_line:778 {
+	name 191.2882_L;
+	phases "A|B|C|N";
+	from node:540;
+	to node:604;
+	length 347.39618644331;
+	configuration line_configuration:637;
+}
+
+object underground_line:779 {
+	name 191.2888_L;
+	phases "A|B|C|N";
+	from node:563;
+	to node:491;
+	length 304.118117620794;
+	configuration line_configuration:637;
+}
+
+object underground_line:780 {
+	name 191.288899_L;
+	phases "A|N";
+	from node:505;
+	to node:395;
+	length 26.9173294553667;
+	configuration line_configuration:634;
+}
+
+object underground_line:781 {
+	name 191.2892_L;
+	phases "A|B|C|N";
+	from node:491;
+	to node:561;
+	length 154.665277075969;
+	configuration line_configuration:637;
+}
+
+object underground_line:782 {
+	name 191.2897_L;
+	phases "A|B|C|N";
+	from node:554;
+	to node:451;
+	length 629.714264218351;
+	configuration line_configuration:637;
+}
+
+object underground_line:783 {
+	name 191.2898_L;
+	phases "A|B|C|N";
+	from node:456;
+	to node:522;
+	length 55.9740169007209;
+	configuration line_configuration:637;
+}
+
+object underground_line:784 {
+	name 191.2907_L;
+	phases "A|B|C|N";
+	from node:448;
+	to node:525;
+	length 593.170019439667;
+	configuration line_configuration:637;
+}
+
+object underground_line:785 {
+	name 191.2953_L;
+	phases "A|B|C|N";
+	from node:519;
+	to node:602;
+	length 888.713290598865;
+	configuration line_configuration:637;
+}
+
+object underground_line:786 {
+	name 191.30938_L;
+	phases "A|B|C|N";
+	from node:546;
+	to node:361;
+	length 302.21529518674;
+	configuration line_configuration:633;
+}
+
+object underground_line:787 {
+	name 191.30941_L;
+	phases "A|B|C|N";
+	from node:553;
+	to node:303;
+	length 128.005138299669;
+	configuration line_configuration:633;
+}
+
+object underground_line:788 {
+	name 191.30973_L;
+	phases "A|N";
+	from node:539;
+	to node:386;
+	length 73.809707696593;
+	configuration line_configuration:634;
+}
+
+object underground_line:789 {
+	name 191.31055_L;
+	phases "B|N";
+	from node:548;
+	to node:440;
+	length 33.4047251298529;
+	configuration line_configuration:638;
+}
+
+object underground_line:790 {
+	name 191.31064_L;
+	phases "A|B|C|N";
+	from node:562;
+	to node:406;
+	length 41.9494594601868;
+	configuration line_configuration:635;
+}
+
+object underground_line:791 {
+	name 191.31066_L;
+	phases "A|B|C|N";
+	from node:468;
+	to node:562;
+	length 238.001510171538;
+	configuration line_configuration:636;
+}
+
+object underground_line:792 {
+	name 191.31086_L;
+	phases "C|N";
+	from node:492;
+	to node:485;
+	length 30.8966058493751;
+	configuration line_configuration:639;
+}
+
+object underground_line:793 {
+	name 191.31091_L;
+	phases "C|N";
+	from node:485;
+	to node:336;
+	length 32.8729688500785;
+	configuration line_configuration:639;
+}
+
+object underground_line:794 {
+	name 191.31112_L;
+	phases "C|N";
+	from node:444;
+	to node:380;
+	length 62.8477400465859;
+	configuration line_configuration:632;
+}
+
+object underground_line:795 {
+	name 191.31127_L;
+	phases "A|B|C|N";
+	from node:449;
+	to node:381;
+	length 189.201144120778;
+	configuration line_configuration:635;
+}
+
+object underground_line:796 {
+	name 191.31134_L;
+	phases "B|N";
+	from node:476;
+	to node:309;
+	length 54.5550000001676;
+	configuration line_configuration:638;
+}
+
+object underground_line:797 {
+	name 191.31164_L;
+	phases "A|B|C|N";
+	from node:444;
+	to node:409;
+	length 289.928733995534;
+	configuration line_configuration:633;
+}
+
+object underground_line:798 {
+	name 191.31244_L;
+	phases "B|N";
+	from node:466;
+	to node:301;
+	length 478.189285288794;
+	configuration line_configuration:638;
+}
+
+object underground_line:799 {
+	name 191.31619_L;
+	phases "A|B|C|N";
+	from node:552;
+	to node:460;
+	length 207.072581096062;
+	configuration line_configuration:633;
+}
+
+object underground_line:800 {
+	name 191.31628_L;
+	phases "A|B|C|N";
+	from node:460;
+	to node:569;
+	length 28.3127512262107;
+	configuration line_configuration:633;
+}
+
+object underground_line:801 {
+	name 191.31636_L;
+	phases "A|B|C|N";
+	from node:432;
+	to node:338;
+	length 308.227492301419;
+	configuration line_configuration:633;
+}
+
+object underground_line:802 {
+	name 191.31798_L;
+	phases "B|N";
+	from node:568;
+	to node:345;
+	length 40.8806030408704;
+	configuration line_configuration:638;
+}
+
+object underground_line:803 {
+	name 191.31842_L;
+	phases "A|B|C|N";
+	from node:482;
+	to node:383;
+	length 46.9074830706706;
+	configuration line_configuration:633;
+}
+
+object underground_line:804 {
+	name 191.32025_L;
+	phases "B|N";
+	from node:514;
+	to node:373;
+	length 44.2088651062817;
+	configuration line_configuration:638;
+}
+
+object underground_line:805 {
+	name 191.32625_L;
+	phases "A|B|C|N";
+	from node:500;
+	to node:408;
+	length 63.6706008217165;
+	configuration line_configuration:633;
+}
+
+object underground_line:806 {
+	name 191.32706_L;
+	phases "A|B|C|N";
+	from node:529;
+	to node:367;
+	length 271.1;
+	configuration line_configuration:633;
+}
+
+object underground_line:807 {
+	name 191.32927_L;
+	phases "A|B|C|N";
+	from node:509;
+	to node:334;
+	length 73.4743230526634;
+	configuration line_configuration:635;
+}
+
+object underground_line:808 {
+	name 191.33030_L;
+	phases "A|N";
+	from node:467;
+	to node:364;
+	length 165.192893166328;
+	configuration line_configuration:634;
+}
+
+object underground_line:809 {
+	name 191.33066_L;
+	phases "A|B|C|N";
+	from node:484;
+	to node:315;
+	length 22.2322620081941;
+	configuration line_configuration:633;
+}
+
+object underground_line:810 {
+	name 191.33068_L;
+	phases "A|B|C|N";
+	from node:550;
+	to node:523;
+	length 265.297236824456;
+	configuration line_configuration:633;
+}
+
+object underground_line:811 {
+	name 191.33134_L;
+	phases "A|B|C|N";
+	from node:550;
+	to node:321;
+	length 336.150160183167;
+	configuration line_configuration:633;
+}
+
+object underground_line:812 {
+	name 191.33138_L;
+	phases "A|B|C|N";
+	from node:560;
+	to node:397;
+	length 245.421503245803;
+	configuration line_configuration:633;
+}
+
+object underground_line:813 {
+	name 191.33149_L;
+	phases "A|B|C|N";
+	from node:538;
+	to node:354;
+	length 131.626953823379;
+	configuration line_configuration:633;
+}
+
+object underground_line:814 {
+	name 191.33182_L;
+	phases "A|B|C|N";
+	from node:545;
+	to node:370;
+	length 168.108948473751;
+	configuration line_configuration:633;
+}
+
+object underground_line:815 {
+	name 191.33202_L;
+	phases "A|B|C|N";
+	from node:478;
+	to node:414;
+	length 200.871259983321;
+	configuration line_configuration:633;
+}
+
+object underground_line:816 {
+	name 191.33287_L;
+	phases "A|B|C|N";
+	from node:510;
+	to node:308;
+	length 292.758609340796;
+	configuration line_configuration:635;
+}
+
+object underground_line:817 {
+	name 191.33372_L;
+	phases "A|B|C|N";
+	from node:510;
+	to node:407;
+	length 214.049793461557;
+	configuration line_configuration:635;
+}
+
+object underground_line:818 {
+	name 191.33460_L;
+	phases "A|B|C|N";
+	from node:446;
+	to node:319;
+	length 89.8240000000224;
+	configuration line_configuration:635;
+}
+
+object underground_line:819 {
+	name 191.33461_L;
+	phases "A|B|C|N";
+	from node:526;
+	to node:306;
+	length 92.3982818723802;
+	configuration line_configuration:635;
+}
+
+object underground_line:820 {
+	name 191.33505_L;
+	phases "A|B|C|N";
+	from node:501;
+	to node:329;
+	length 158.999313160928;
+	configuration line_configuration:635;
+}
+
+object underground_line:821 {
+	name 191.33506_L;
+	phases "A|B|C|N";
+	from node:501;
+	to node:445;
+	length 27.8367924160996;
+	configuration line_configuration:635;
+}
+
+object underground_line:822 {
+	name 191.41277_L;
+	phases "A|B|C|N";
+	from node:564;
+	to node:322;
+	length 457.875047420156;
+	configuration line_configuration:633;
+}
+
+object underground_line:823 {
+	name 191.4220_L;
+	phases "A|B|C|N";
+	from node:600;
+	to node:593;
+	length 470.538805551518;
+	configuration line_configuration:637;
+}
+
+object underground_line:824 {
+	name 191.4238_L;
+	phases "A|B|C|N";
+	from node:451;
+	to node:573;
+	length 948.840563585505;
+	configuration line_configuration:637;
+}
+
+object underground_line:825 {
+	name 191.4243_L;
+	phases "A|B|C|N";
+	from node:522;
+	to node:557;
+	length 521.321310685702;
+	configuration line_configuration:637;
+}
+
+object underground_line:826 {
+	name 191.4246_L;
+	phases "A|B|C|N";
+	from node:499;
+	to node:554;
+	length 44.0266349497387;
+	configuration line_configuration:637;
+}
+
+object underground_line:827 {
+	name 191.4247_L;
+	phases "A|B|C|N";
+	from node:575;
+	to node:448;
+	length 966.305067263512;
+	configuration line_configuration:637;
+}
+
+object underground_line:828 {
+	name 191.47648_L;
+	phases "A|B|C|N";
+	from node:420;
+	to node:503;
+	length 21.036991609981;
+	configuration line_configuration:636;
+}
+
+object underground_line:829 {
+	name 191.47683_L;
+	phases "A|B|C|N";
+	from node:553;
+	to node:551;
+	length 337.082284709524;
+	configuration line_configuration:636;
+}
+
+object underground_line:830 {
+	name 191.47699_L;
+	phases "A|B|C|N";
+	from node:539;
+	to node:546;
+	length 120.288246673785;
+	configuration line_configuration:636;
+}
+
+object underground_line:831 {
+	name 191.47700_L;
+	phases "A|B|C|N";
+	from node:503;
+	to node:539;
+	length 497.082920247588;
+	configuration line_configuration:636;
+}
+
+object underground_line:832 {
+	name 191.47728_L;
+	phases "A|B|C|N";
+	from node:539;
+	to node:548;
+	length 336.605766321787;
+	configuration line_configuration:636;
+}
+
+object underground_line:833 {
+	name 191.47743_L;
+	phases "A|B|C|N";
+	from node:468;
+	to node:553;
+	length 253.496147765566;
+	configuration line_configuration:636;
+}
+
+object underground_line:834 {
+	name 191.47748_L;
+	phases "A|B|C|N";
+	from node:492;
+	to node:577;
+	length 35.3116602272485;
+	configuration line_configuration:636;
+}
+
+object underground_line:835 {
+	name 191.47751_L;
+	phases "A|B|C|N";
+	from node:449;
+	to node:492;
+	length 350.100855188849;
+	configuration line_configuration:636;
+}
+
+object underground_line:836 {
+	name 191.47753_L;
+	phases "A|B|C|N";
+	from node:444;
+	to node:472;
+	length 820.379551216667;
+	configuration line_configuration:636;
+}
+
+object underground_line:837 {
+	name 191.47756_L;
+	phases "A|B|C|N";
+	from node:465;
+	to node:444;
+	length 212.220741328112;
+	configuration line_configuration:636;
+}
+
+object underground_line:838 {
+	name 191.47757_L;
+	phases "A|B|C|N";
+	from node:548;
+	to node:463;
+	length 574.752769606306;
+	configuration line_configuration:636;
+}
+
+object underground_line:839 {
+	name 191.47758_L;
+	phases "A|B|C|N";
+	from node:476;
+	to node:465;
+	length 694.121453111228;
+	configuration line_configuration:636;
+}
+
+object underground_line:840 {
+	name 191.47759_L;
+	phases "A|B|C|N";
+	from node:476;
+	to node:468;
+	length 148.130713780053;
+	configuration line_configuration:636;
+}
+
+object underground_line:841 {
+	name 191.47760_L;
+	phases "A|B|C|N";
+	from node:463;
+	to node:476;
+	length 134.782999999821;
+	configuration line_configuration:636;
+}
+
+object underground_line:842 {
+	name 191.47775_L;
+	phases "A|B|C|N";
+	from node:463;
+	to node:566;
+	length 169.878000000026;
+	configuration line_configuration:636;
+}
+
+object underground_line:843 {
+	name 191.47870_L;
+	phases "A|B|C|N";
+	from node:566;
+	to node:479;
+	length 763.591817130644;
+	configuration line_configuration:636;
+}
+
+object underground_line:844 {
+	name 191.47874_L;
+	phases "A|B|C|N";
+	from node:479;
+	to node:601;
+	length 22.2084100509964;
+	configuration line_configuration:636;
+}
+
+object underground_line:845 {
+	name 191.47993_L;
+	phases "A|B|C|N";
+	from node:505;
+	to node:422;
+	length 56.5701216759069;
+	configuration line_configuration:636;
+}
+
+object underground_line:846 {
+	name 191.47996_L;
+	phases "A|B|C|N";
+	from node:564;
+	to node:505;
+	length 461.55030839215;
+	configuration line_configuration:636;
+}
+
+object underground_line:847 {
+	name 191.48009_L;
+	phases "A|B|C|N";
+	from node:505;
+	to node:568;
+	length 231.598001643966;
+	configuration line_configuration:636;
+}
+
+object underground_line:848 {
+	name 191.48029_L;
+	phases "A|B|C|N";
+	from node:482;
+	to node:457;
+	length 320.24343225829;
+	configuration line_configuration:636;
+}
+
+object underground_line:849 {
+	name 191.48047_L;
+	phases "A|B|C|N";
+	from node:568;
+	to node:567;
+	length 934.195676745776;
+	configuration line_configuration:636;
+}
+
+object underground_line:850 {
+	name 191.48053_L;
+	phases "A|B|C|N";
+	from node:527;
+	to node:482;
+	length 448.788752717442;
+	configuration line_configuration:636;
+}
+
+object underground_line:851 {
+	name 191.48059_L;
+	phases "A|B|C|N";
+	from node:469;
+	to node:533;
+	length 385.913536361273;
+	configuration line_configuration:636;
+}
+
+object underground_line:852 {
+	name 191.48073_L;
+	phases "A|B|C|N";
+	from node:595;
+	to node:527;
+	length 25.8435069601874;
+	configuration line_configuration:636;
+}
+
+object underground_line:853 {
+	name 191.48077_L;
+	phases "A|B|C|N";
+	from node:419;
+	to node:469;
+	length 280.26645366514;
+	configuration line_configuration:636;
+}
+
+object underground_line:854 {
+	name 191.48083_L;
+	phases "A|B|C|N";
+	from node:533;
+	to node:477;
+	length 293.411742806748;
+	configuration line_configuration:636;
+}
+
+object underground_line:855 {
+	name 191.48090_L;
+	phases "A|B|C|N";
+	from node:477;
+	to node:595;
+	length 542.50971552327;
+	configuration line_configuration:636;
+}
+
+object underground_line:856 {
+	name 191.48293_L;
+	phases "A|B|C|N";
+	from node:487;
+	to node:500;
+	length 236.225986760555;
+	configuration line_configuration:636;
+}
+
+object underground_line:857 {
+	name 191.48309_L;
+	phases "A|B|C|N";
+	from node:497;
+	to node:529;
+	length 52.2427428289729;
+	configuration line_configuration:636;
+}
+
+object underground_line:858 {
+	name 191.48341_L;
+	phases "A|B|C|N";
+	from node:572;
+	to node:487;
+	length 307.637191738975;
+	configuration line_configuration:636;
+}
+
+object underground_line:859 {
+	name 191.48347_L;
+	phases "A|B|C|N";
+	from node:484;
+	to node:467;
+	length 189.054580740818;
+	configuration line_configuration:636;
+}
+
+object underground_line:860 {
+	name 191.48348_L;
+	phases "A|B|C|N";
+	from node:467;
+	to node:550;
+	length 111.914656160237;
+	configuration line_configuration:636;
+}
+
+object underground_line:861 {
+	name 191.48358_L;
+	phases "A|B|C|N";
+	from node:560;
+	to node:484;
+	length 90.737282396301;
+	configuration line_configuration:636;
+}
+
+object underground_line:862 {
+	name 191.48371_L;
+	phases "A|B|C|N";
+	from node:538;
+	to node:467;
+	length 540.96340498546;
+	configuration line_configuration:636;
+}
+
+object underground_line:863 {
+	name 191.48378_L;
+	phases "A|B|C|N";
+	from node:545;
+	to node:560;
+	length 413.059630998091;
+	configuration line_configuration:636;
+}
+
+object underground_line:864 {
+	name 191.48380_L;
+	phases "A|B|C|N";
+	from node:588;
+	to node:545;
+	length 17.270647063939;
+	configuration line_configuration:636;
+}
+
+object underground_line:865 {
+	name 191.48381_L;
+	phases "A|B|C|N";
+	from node:437;
+	to node:521;
+	length 13.0870000002906;
+	configuration line_configuration:636;
+}
+
+object underground_line:866 {
+	name 191.48382_L;
+	phases "A|B|C|N";
+	from node:478;
+	to node:538;
+	length 155.968879111179;
+	configuration line_configuration:636;
+}
+
+object underground_line:867 {
+	name 191.48383_L;
+	phases "A|B|C|N";
+	from node:521;
+	to node:478;
+	length 61.0719999996945;
+	configuration line_configuration:636;
+}
+
+object underground_line:868 {
+	name 191.48399_L;
+	phases "A|B|C|N";
+	from node:565;
+	to node:510;
+	length 207.331999999937;
+	configuration line_configuration:636;
+}
+
+object underground_line:869 {
+	name 191.48418_L;
+	phases "A|B|C|N";
+	from node:458;
+	to node:366;
+	length 436.721432567058;
+	configuration line_configuration:636;
+}
+
+object underground_line:870 {
+	name 191.48419_L;
+	phases "A|B|C|N";
+	from node:455;
+	to node:526;
+	length 189.043956295542;
+	configuration line_configuration:636;
+}
+
+object underground_line:871 {
+	name 191.48420_L;
+	phases "A|B|C|N";
+	from node:606;
+	to node:526;
+	length 25.2691328300557;
+	configuration line_configuration:636;
+}
+
+object underground_line:872 {
+	name 191.48421_L;
+	phases "A|B|C|N";
+	from node:446;
+	to node:606;
+	length 32.5003195216178;
+	configuration line_configuration:636;
+}
+
+object underground_line:873 {
+	name 191.48422_L;
+	phases "A|B|C|N";
+	from node:366;
+	to node:446;
+	length 63.7875575639664;
+	configuration line_configuration:636;
+}
+
+object underground_line:874 {
+	name 191.48426_L;
+	phases "A|B|C|N";
+	from node:490;
+	to node:455;
+	length 108.032358977229;
+	configuration line_configuration:636;
+}
+
+object underground_line:875 {
+	name 191.48437_L;
+	phases "A|B|C|N";
+	from node:510;
+	to node:501;
+	length 556.194268770288;
+	configuration line_configuration:636;
+}
+
+object underground_line:876 {
+	name 191.50817_L;
+	phases "A|B|C|N";
+	from node:472;
+	to node:449;
+	length 861.349189537886;
+	configuration line_configuration:636;
+}
+
+object underground_line:877 {
+	name 191.50833_L;
+	phases "A|B|C|N";
+	from node:457;
+	to node:564;
+	length 952.350800335615;
+	configuration line_configuration:636;
+}
+
+object underground_line:878 {
+	name 191.50835_L;
+	phases "A|B|C|N";
+	from node:567;
+	to node:514;
+	length 787.927240539455;
+	configuration line_configuration:636;
+}
+
+object underground_line:879 {
+	name 191.50888_L;
+	phases "A|B|C|N";
+	from node:537;
+	to node:588;
+	length 65.3493684747232;
+	configuration line_configuration:636;
+}
+
+object underground_line:880 {
+	name 191.50904_L;
+	phases "A|B|C|N";
+	from node:501;
+	to node:603;
+	length 325.412922790071;
+	configuration line_configuration:636;
+}
+
+object overhead_line:881 {
+	name 191.64683_L;
+	phases "A|B|C|N";
+	from node:296;
+	to node:431;
+	length 12.5;
+	configuration line_configuration:640;
+}
+
+object overhead_line:882 {
+	name 191.64684_L;
+	phases "A|B|C|N";
+	from node:445;
+	to node:296;
+	length 12.5;
+	configuration line_configuration:640;
+}
+
+object overhead_line:883 {
+	name 191.64732_L;
+	phases "A|B|C|N";
+	from node:297;
+	to node:432;
+	length 12.4999115600094;
+	configuration line_configuration:640;
+}
+
+object overhead_line:884 {
+	name 191.64781_L;
+	phases "A|B|C|N";
+	from node:569;
+	to node:297;
+	length 12.4999115596086;
+	configuration line_configuration:640;
+}
+
+object underground_line:885 {
+	name 191.67213_L;
+	phases "A|B|C|N";
+	from node:557;
+	to node:494;
+	length 79.6202165816993;
+	configuration line_configuration:637;
+}
+
+object overhead_line:886 {
+	name 191.67486_L;
+	phases "A|B|C|N";
+	from node:298;
+	to node:580;
+	length 12.5;
+	configuration line_configuration:640;
+}
+
+object overhead_line:887 {
+	name 191.67487_L;
+	phases "A|B|C|N";
+	from node:298;
+	to node:600;
+	length 12.5;
+	configuration line_configuration:640;
+}
+
+object overhead_line:888 {
+	name 191.67488_L;
+	phases "A|B|C|N";
+	from node:584;
+	to node:298;
+	length 12.5;
+	configuration line_configuration:640;
+}
+
+object overhead_line:889 {
+	name 191.67741_L;
+	phases "A|B|C|N";
+	from node:294;
+	to node:608;
+	length 12.4999486797253;
+	configuration line_configuration:640;
+}
+
+object overhead_line:890 {
+	name 191.67742_L;
+	phases "A|B|C|N";
+	from node:604;
+	to node:294;
+	length 12.4999486797892;
+	configuration line_configuration:640;
+}
+
+object overhead_line:891 {
+	name 191.67743_L;
+	phases "A|B|C|N";
+	from node:294;
+	to node:575;
+	length 12.4999486797253;
+	configuration line_configuration:640;
+}
+
+object overhead_line:892 {
+	name 191.67744_L;
+	phases "A|B|C|N";
+	from node:294;
+	to node:579;
+	length 12.3565394833435;
+	configuration line_configuration:640;
+}
+
+object overhead_line:893 {
+	name 191.67797_L;
+	phases "A|B|C|N";
+	from node:583;
+	to node:295;
+	length 12.49916673241;
+	configuration line_configuration:640;
+}
+
+object overhead_line:894 {
+	name 191.67798_L;
+	phases "A|B|C|N";
+	from node:295;
+	to node:419;
+	length 12.499536791273;
+	configuration line_configuration:640;
+}
+
+object overhead_line:895 {
+	name 191.67799_L;
+	phases "A|B|C|N";
+	from node:295;
+	to node:591;
+	length 12.5000957595363;
+	configuration line_configuration:640;
+}
+
+object overhead_line:896 {
+	name 191.67803_L;
+	phases "A|B|C|N";
+	from node:293;
+	to node:576;
+	length 11.9962447458065;
+	configuration line_configuration:640;
+}
+
+object overhead_line:897 {
+	name 191.67804_L;
+	phases "A|B|C|N";
+	from node:422;
+	to node:293;
+	length 12.5003623947101;
+	configuration line_configuration:640;
+}
+
+object overhead_line:898 {
+	name 191.67981_L;
+	phases "A|B|C|N";
+	from node:293;
+	to node:586;
+	length 12.4998731595566;
+	configuration line_configuration:640;
+}
+
+object overhead_line:899 {
+	name 191.68796_L;
+	phases "A|B|C|N";
+	from node:593;
+	to node:291;
+	length 12.9733237450042;
+	configuration line_configuration:640;
+}
+
+object overhead_line:900 {
+	name 191.68797_L;
+	phases "A|B|C|N";
+	from node:291;
+	to node:420;
+	length 12.4998375992637;
+	configuration line_configuration:640;
+}
+
+object overhead_line:901 {
+	name 191.68798_L;
+	phases "A|B|C|N";
+	from node:291;
+	to node:596;
+	length 12.4997037566691;
+	configuration line_configuration:640;
+}
+
+object overhead_line:902 {
+	name 191.69671_L;
+	phases "B|N";
+	from node:440;
+	to node:292;
+	length 12.4998419990106;
+	configuration line_configuration:641;
+}
+
+object overhead_line:903 {
+	name 191.69672_L;
+	phases "B|N";
+	from node:292;
+	to node:466;
+	length 12.4998419989749;
+	configuration line_configuration:641;
+}
+
+object underground_line:904 {
+	name 191.72265_L;
+	phases "A|B|C|N";
+	from node:525;
+	to node:519;
+	length 720.998158322471;
+	configuration line_configuration:637;
+}
+
+object underground_line:905 {
+	name 191.81602_L;
+	phases "A|B|C|N";
+	from node:527;
+	to node:360;
+	length 32.8369378747033;
+	configuration line_configuration:633;
+}
+
+object overhead_line:906 {
+	name 191.84389_L;
+	phases "A|B|C|N";
+	from node:298;
+	to node:609;
+	length 12.5;
+	configuration line_configuration:640;
+}
+
+object node:291 {
+	name 180_19304;
+	latitude 51N33'45.311";
+	longitude 113W51'11.091";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:292 {
+	name 180_20544;
+	latitude 51N33'38.489";
+	longitude 113W51'2.022";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:293 {
+	name 180_18645;
+	latitude 51N33'18.579";
+	longitude 113W51'30.294";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:294 {
+	name 180_18619;
+	latitude 51N33'9.515";
+	longitude 113W50'35.808";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:295 {
+	name 180_18643;
+	latitude 51N33'10.641";
+	longitude 113W50'54.579";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:296 {
+	name 180_15825;
+	latitude 51N32'24.658";
+	longitude 113W50'57.024";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:297 {
+	name 180_15754;
+	latitude 51N33'24.845";
+	longitude 113W51'45.776";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:298 {
+	name 180_18064;
+	latitude 51N33'48.100";
+	longitude 113W51'9.838";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:301 {
+	name 181_16371;
+	latitude 51N33'33.438";
+	longitude 113W51'1.432";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:303 {
+	name 181_16223;
+	latitude 51N33'40.240";
+	longitude 113W50'54.589";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:305 {
+	name 181_21580;
+	latitude 51N32'57.655";
+	longitude 113W51'32.679";
+	phases "A|N";
+	phaseA_V 7199.558+0.0j;
+}
+
+object node:306 {
+	name 181_17324;
+	latitude 51N32'25.736";
+	longitude 113W51'4.370";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:308 {
+	name 181_17222;
+	latitude 51N32'31.106";
+	longitude 113W50'59.818";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:309 {
+	name 181_16335;
+	latitude 51N33'35.957";
+	longitude 113W50'52.652";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:315 {
+	name 181_17156;
+	latitude 51N32'36.066";
+	longitude 113W51'12.793";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:319 {
+	name 181_17323;
+	latitude 51N32'25.751";
+	longitude 113W51'5.179";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:321 {
+	name 181_17187;
+	latitude 51N32'33.741";
+	longitude 113W51'7.313";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:322 {
+	name 181_16622;
+	latitude 51N33'16.164";
+	longitude 113W51'17.101";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:324 {
+	name 181_4413;
+	latitude 51N33'5.422";
+	longitude 113W51'36.817";
+	phases "A|N";
+	phaseA_V 7199.558+0.0j;
+}
+
+object node:326 {
+	name 181_4659;
+	latitude 51N32'35.116";
+	longitude 113W51'21.827";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:328 {
+	name 181_26659;
+	latitude 51N32'37.201";
+	longitude 113W51'8.916";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:327 {
+	name 181_4633;
+	latitude 51N32'38.269";
+	longitude 113W51'21.302";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:329 {
+	name 181_17331;
+	latitude 51N32'25.397";
+	longitude 113W50'54.427";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:331 {
+	name 181_4695;
+	latitude 51N32'31.436";
+	longitude 113W51'13.088";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:332 {
+	name 181_4621;
+	latitude 51N32'39.518";
+	longitude 113W51'3.080";
+	phases "A|N";
+	phaseA_V 7199.558+0.0j;
+}
+
+object node:334 {
+	name 181_26643;
+	latitude 51N32'39.472";
+	longitude 113W51'11.517";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:335 {
+	name 181_148478;
+	latitude 51N33'2.712";
+	longitude 113W51'12.119";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:336 {
+	name 181_26374;
+	latitude 51N33'37.113";
+	longitude 113W50'9.435";
+	phases "C|N";
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:338 {
+	name 181_16499;
+	latitude 51N33'26.957";
+	longitude 113W51'48.432";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:341 {
+	name 181_76777;
+	latitude 51N33'18.987";
+	longitude 113W51'23.186";
+	phases "A|N";
+	phaseA_V 7199.558+0.0j;
+}
+
+object node:342 {
+	name 181_4312;
+	latitude 51N33'13.363";
+	longitude 113W51'41.310";
+	phases "A|N";
+	phaseA_V 7199.558+0.0j;
+}
+
+object node:345 {
+	name 181_16605;
+	latitude 51N33'17.439";
+	longitude 113W51'31.562";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:346 {
+	name 181_4736;
+	latitude 51N32'27.419";
+	longitude 113W51'18.625";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:350 {
+	name 181_4645;
+	latitude 51N32'36.890";
+	longitude 113W51'21.857";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:354 {
+	name 181_17194;
+	latitude 51N32'33.062";
+	longitude 113W51'3.492";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:355 {
+	name 181_26721;
+	latitude 51N32'24.630";
+	longitude 113W50'58.069";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:357 {
+	name 181_4622;
+	latitude 51N32'39.374";
+	longitude 113W51'25.802";
+	phases "A|B|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:360 {
+	name 181_31356;
+	latitude 51N33'11.001";
+	longitude 113W51'9.571";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:361 {
+	name 181_16240;
+	latitude 51N33'42.432";
+	longitude 113W51'0.148";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:362 {
+	name 181_4696;
+	latitude 51N32'31.361";
+	longitude 113W51'15.722";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:364 {
+	name 181_17142;
+	latitude 51N32'37.058";
+	longitude 113W51'12.019";
+	phases "A|N";
+	phaseA_V 7199.558+0.0j;
+}
+
+object node:366 {
+	name 181_26710;
+	latitude 51N32'26.736";
+	longitude 113W51'6.118";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:367 {
+	name 181_17019;
+	latitude 51N32'45.257";
+	longitude 113W50'57.534";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:369 {
+	name 181_43163;
+	latitude 51N32'38.606";
+	longitude 113W50'42.515";
+	phases "C|N";
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:370 {
+	name 181_26685;
+	latitude 51N32'32.107";
+	longitude 113W51'9.968";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:373 {
+	name 181_16702;
+	latitude 51N33'8.287";
+	longitude 113W51'9.365";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:377 {
+	name 181_4646;
+	latitude 51N32'36.647";
+	longitude 113W51'3.073";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:379 {
+	name 181_4551;
+	latitude 51N32'47.883";
+	longitude 113W51'31.324";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:380 {
+	name 181_16325;
+	latitude 51N33'36.398";
+	longitude 113W50'40.034";
+	phases "C|N";
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:381 {
+	name 181_16329;
+	latitude 51N33'36.141";
+	longitude 113W50'12.920";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:383 {
+	name 181_16624;
+	latitude 51N33'15.982";
+	longitude 113W51'8.656";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:386 {
+	name 181_16249;
+	latitude 51N33'41.292";
+	longitude 113W51'6.462";
+	phases "A|N";
+	phaseA_V 7199.558+0.0j;
+}
+
+object node:388 {
+	name 181_104923;
+	latitude 51N32'58.018";
+	longitude 113W51'15.834";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:392 {
+	name 181_4586;
+	latitude 51N32'43.585";
+	longitude 113W51'28.692";
+	phases "A|B|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:395 {
+	name 181_132780;
+	latitude 51N33'19.279";
+	longitude 113W51'29.731";
+	phases "A|N";
+	phaseA_V 7199.558+0.0j;
+}
+
+object node:396 {
+	name 181_4661;
+	latitude 51N32'35.016";
+	longitude 113W51'2.997";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:397 {
+	name 181_17191;
+	latitude 51N32'33.516";
+	longitude 113W51'14.702";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:399 {
+	name 181_4637;
+	latitude 51N32'37.923";
+	longitude 113W51'16.784";
+	phases "C|N";
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:400 {
+	name 181_21630;
+	latitude 51N32'38.770";
+	longitude 113W51'9.331";
+	phases "A|N";
+	phaseA_V 7199.558+0.0j;
+}
+
+object node:401 {
+	name 181_21567;
+	latitude 51N33'0.507";
+	longitude 113W51'4.447";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:405 {
+	name 181_76778;
+	latitude 51N32'55.352";
+	longitude 113W50'58.401";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:406 {
+	name 181_16300;
+	latitude 51N33'38.980";
+	longitude 113W50'50.850";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:407 {
+	name 181_17286;
+	latitude 51N32'27.698";
+	longitude 113W50'59.717";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:408 {
+	name 181_26597;
+	latitude 51N32'40.273";
+	longitude 113W50'47.213";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:409 {
+	name 181_16348;
+	latitude 51N33'34.881";
+	longitude 113W50'37.513";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:411 {
+	name 181_4546;
+	latitude 51N32'48.958";
+	longitude 113W50'56.835";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:412 {
+	name 181_73247;
+	latitude 51N33'13.280";
+	longitude 113W51'7.461";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:415 {
+	name 181_75803;
+	latitude 51N33'18.431";
+	longitude 113W51'10.763";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:414 {
+	name 181_17209;
+	latitude 51N32'32.017";
+	longitude 113W51'8.104";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:417 {
+	name 181_4516;
+	latitude 51N32'52.077";
+	longitude 113W51'33.177";
+	phases "A|N";
+	phaseA_V 7199.558+0.0j;
+}
+
+object node:418 {
+	name 182_384;
+	latitude 51N32'29.335";
+	longitude 113W51'1.310";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:419 {
+	name 182_3249;
+	latitude 51N33'10.761";
+	longitude 113W50'54.647";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:420 {
+	name 182_4213;
+	latitude 51N33'45.212";
+	longitude 113W51'10.974";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:421 {
+	name 182_86;
+	latitude 51N32'28.697";
+	longitude 113W51'1.287";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:422 {
+	name 182_3251;
+	latitude 51N33'18.692";
+	longitude 113W51'30.204";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:423 {
+	name 182_385;
+	latitude 51N32'25.660";
+	longitude 113W51'1.267";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:424 {
+	name 183_908;
+	latitude 51N32'45.636";
+	longitude 113W51'1.807";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:425 {
+	name 183_2263;
+	latitude 51N32'37.877";
+	longitude 113W51'7.856";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:427 {
+	name 183_2264;
+	latitude 51N32'37.730";
+	longitude 113W50'52.577";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:426 {
+	name 183_938;
+	latitude 51N32'31.704";
+	longitude 113W51'1.739";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:428 {
+	name 183_2260;
+	latitude 51N32'40.052";
+	longitude 113W51'10.556";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:429 {
+	name 183_68527;
+	latitude 51N32'58.403";
+	longitude 113W51'26.798";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:430 {
+	name 183_810;
+	latitude 51N33'26.107";
+	longitude 113W51'43.743";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:431 {
+	name 183_14813;
+	latitude 51N32'24.658";
+	longitude 113W50'57.208";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:432 {
+	name 183_14847;
+	latitude 51N33'24.780";
+	longitude 113W51'45.935";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:433 {
+	name 183_2271;
+	latitude 51N32'33.772";
+	longitude 113W51'2.159";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:434 {
+	name 183_943;
+	latitude 51N32'30.700";
+	longitude 113W51'20.379";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:435 {
+	name 183_2265;
+	latitude 51N32'37.450";
+	longitude 113W51'7.493";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:436 {
+	name 183_933;
+	latitude 51N32'33.181";
+	longitude 113W51'21.594";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:437 {
+	name 183_939;
+	latitude 51N32'31.611";
+	longitude 113W51'6.379";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:438 {
+	name 183_910;
+	latitude 51N32'43.694";
+	longitude 113W51'1.128";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:439 {
+	name 183_68528;
+	latitude 51N32'58.724";
+	longitude 113W51'31.710";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:440 {
+	name 183_19252;
+	latitude 51N33'38.617";
+	longitude 113W51'2.036";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:441 {
+	name 183_2272;
+	latitude 51N32'31.538";
+	longitude 113W51'11.998";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:442 {
+	name 184_9266;
+	latitude 51N32'36.690";
+	longitude 113W51'21.514";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:443 {
+	name 184_30149;
+	latitude 51N33'21.008";
+	longitude 113W50'45.976";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:444 {
+	name 184_23714;
+	latitude 51N33'36.750";
+	longitude 113W50'39.253";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:445 {
+	name 184_42284;
+	latitude 51N32'24.658";
+	longitude 113W50'56.839";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:446 {
+	name 184_24958;
+	latitude 51N32'26.679";
+	longitude 113W51'5.179";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:447 {
+	name 184_11158;
+	latitude 51N32'35.047";
+	longitude 113W51'1.730";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:448 {
+	name 184_27880;
+	latitude 51N32'59.992";
+	longitude 113W50'31.922";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:449 {
+	name 184_23708;
+	latitude 51N33'37.239";
+	longitude 113W50'14.394";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:450 {
+	name 184_146287;
+	latitude 51N32'58.404";
+	longitude 113W51'26.554";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:451 {
+	name 184_27875;
+	latitude 51N33'7.971";
+	longitude 113W51'7.811";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:452 {
+	name 184_9267;
+	latitude 51N32'36.661";
+	longitude 113W51'2.559";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:453 {
+	name 184_9285;
+	latitude 51N32'34.816";
+	longitude 113W51'2.667";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:454 {
+	name 184_28963;
+	latitude 51N33'49.155";
+	longitude 113W51'9.940";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:455 {
+	name 184_24955;
+	latitude 51N32'26.725";
+	longitude 113W51'1.529";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:456 {
+	name 184_934;
+	latitude 51N33'4.942";
+	longitude 113W51'34.124";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:458 {
+	name 184_1008;
+	latitude 51N32'28.560";
+	longitude 113W51'1.288";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:457 {
+	name 184_24121;
+	latitude 51N33'18.628";
+	longitude 113W51'8.757";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:459 {
+	name 184_9347;
+	latitude 51N32'30.964";
+	longitude 113W51'20.520";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:460 {
+	name 184_24022;
+	latitude 51N33'25.043";
+	longitude 113W51'45.243";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:461 {
+	name 184_9153;
+	latitude 51N32'45.504";
+	longitude 113W51'2.041";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:462 {
+	name 184_28576;
+	latitude 51N33'18.372";
+	longitude 113W51'30.824";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:463 {
+	name 184_23719;
+	latitude 51N33'36.520";
+	longitude 113W50'54.645";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:464 {
+	name 184_8861;
+	latitude 51N33'5.063";
+	longitude 113W51'37.004";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:465 {
+	name 184_23717;
+	latitude 51N33'36.696";
+	longitude 113W50'42.390";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:466 {
+	name 184_47408;
+	latitude 51N33'38.360";
+	longitude 113W51'2.008";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:467 {
+	name 184_24762;
+	latitude 51N32'36.711";
+	longitude 113W51'10.085";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:468 {
+	name 184_23695;
+	latitude 51N33'38.045";
+	longitude 113W50'52.834";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:469 {
+	name 184_30154;
+	latitude 51N33'13.369";
+	longitude 113W50'56.444";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:470 {
+	name 184_9364;
+	latitude 51N32'29.338";
+	longitude 113W51'1.746";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:471 {
+	name 184_146286;
+	latitude 51N32'58.856";
+	longitude 113W51'32.109";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:472 {
+	name 184_23712;
+	latitude 51N33'36.954";
+	longitude 113W50'27.125";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:473 {
+	name 184_9123;
+	latitude 51N32'47.770";
+	longitude 113W51'31.674";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:474 {
+	name 184_9243;
+	latitude 51N32'39.057";
+	longitude 113W51'8.877";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:475 {
+	name 184_30158;
+	latitude 51N33'10.417";
+	longitude 113W50'46.065";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:477 {
+	name 184_24260;
+	latitude 51N33'10.269";
+	longitude 113W51'4.425";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:476 {
+	name 184_23720;
+	latitude 51N33'36.520";
+	longitude 113W50'52.652";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:478 {
+	name 184_24853;
+	latitude 51N32'31.611";
+	longitude 113W51'5.282";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:479 {
+	name 184_23968;
+	latitude 51N33'27.120";
+	longitude 113W50'52.939";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:480 {
+	name 184_9344;
+	latitude 51N32'31.130";
+	longitude 113W51'16.020";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:481 {
+	name 184_9229;
+	latitude 51N32'39.568";
+	longitude 113W51'25.476";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:482 {
+	name 184_24170;
+	latitude 51N33'15.571";
+	longitude 113W51'8.288";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:483 {
+	name 184_9253;
+	latitude 51N32'38.047";
+	longitude 113W51'7.592";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:485 {
+	name 184_23707;
+	latitude 51N33'37.251";
+	longitude 113W50'8.991";
+	phases "C|N";
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:484 {
+	name 184_24780;
+	latitude 51N32'35.893";
+	longitude 113W51'12.576";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:487 {
+	name 184_24589;
+	latitude 51N32'39.323";
+	longitude 113W50'50.499";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:486 {
+	name 184_30138;
+	latitude 51N33'37.017";
+	longitude 113W50'54.392";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:489 {
+	name 184_9065;
+	latitude 51N32'52.022";
+	longitude 113W51'33.577";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:488 {
+	name 184_8935;
+	latitude 51N33'0.249";
+	longitude 113W51'4.861";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:490 {
+	name 184_1012;
+	latitude 51N32'25.781";
+	longitude 113W51'1.275";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:491 {
+	name 184_29607;
+	latitude 51N33'8.293";
+	longitude 113W50'56.526";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:493 {
+	name 184_155244;
+	latitude 51N32'58.390";
+	longitude 113W51'26.000";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:492 {
+	name 184_23703;
+	latitude 51N33'37.518";
+	longitude 113W50'9.240";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:494 {
+	name 184_945;
+	latitude 51N32'59.290";
+	longitude 113W51'31.692";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:495 {
+	name 184_9231;
+	latitude 51N32'39.547";
+	longitude 113W51'2.390";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:496 {
+	name 184_8676;
+	latitude 51N33'15.205";
+	longitude 113W51'41.957";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:497 {
+	name 184_976;
+	latitude 51N32'43.815";
+	longitude 113W51'1.174";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:498 {
+	name 184_9337;
+	latitude 51N32'31.311";
+	longitude 113W51'1.740";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:499 {
+	name 184_935;
+	latitude 51N33'4.498";
+	longitude 113W50'59.179";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:500 {
+	name 184_77163;
+	latitude 51N32'39.628";
+	longitude 113W50'47.033";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:501 {
+	name 184_25007;
+	latitude 51N32'24.679";
+	longitude 113W50'56.428";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:503 {
+	name 184_23554;
+	latitude 51N33'45.055";
+	longitude 113W51'10.758";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:502 {
+	name 184_28974;
+	latitude 51N33'21.357";
+	longitude 113W51'38.471";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:504 {
+	name 184_30144;
+	latitude 51N33'27.967";
+	longitude 113W50'52.621";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:505 {
+	name 184_24117;
+	latitude 51N33'19.007";
+	longitude 113W51'29.649";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:506 {
+	name 184_9315;
+	latitude 51N32'33.044";
+	longitude 113W51'21.837";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:507 {
+	name 184_29271;
+	latitude 51N32'57.787";
+	longitude 113W51'0.860";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:508 {
+	name 184_8532;
+	latitude 51N33'22.937";
+	longitude 113W51'40.608";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:510 {
+	name 184_24896;
+	latitude 51N32'29.334";
+	longitude 113W50'58.038";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:509 {
+	name 184_986;
+	latitude 51N32'39.976";
+	longitude 113W51'10.705";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:511 {
+	name 184_199424;
+	latitude 51N33'2.503";
+	longitude 113W51'12.104";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:512 {
+	name 184_9284;
+	latitude 51N32'34.917";
+	longitude 113W51'21.480";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:513 {
+	name 184_11114;
+	latitude 51N33'27.414";
+	longitude 113W51'42.292";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:514 {
+	name 184_24278;
+	latitude 51N33'8.629";
+	longitude 113W51'8.933";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:515 {
+	name 184_120045;
+	latitude 51N32'55.541";
+	longitude 113W50'58.128";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:516 {
+	name 184_55445;
+	latitude 51N33'48.394";
+	longitude 113W51'12.041";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:517 {
+	name 184_8713;
+	latitude 51N33'13.205";
+	longitude 113W51'41.892";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:518 {
+	name 184_8869;
+	latitude 51N33'4.118";
+	longitude 113W50'58.355";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:519 {
+	name 184_94133;
+	latitude 51N32'59.734";
+	longitude 113W50'15.124";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:520 {
+	name 184_992;
+	latitude 51N32'37.790";
+	longitude 113W51'7.992";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:521 {
+	name 184_1001;
+	latitude 51N32'31.611";
+	longitude 113W51'6.185";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:522 {
+	name 184_27878;
+	latitude 51N33'4.979";
+	longitude 113W51'33.298";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:523 {
+	name 184_993;
+	latitude 51N32'37.364";
+	longitude 113W51'7.635";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:524 {
+	name 184_9254;
+	latitude 51N32'37.997";
+	longitude 113W51'21.540";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:525 {
+	name 184_28583;
+	latitude 51N33'2.162";
+	longitude 113W50'24.705";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:526 {
+	name 184_24957;
+	latitude 51N32'26.690";
+	longitude 113W51'4.324";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:527 {
+	name 184_24234;
+	latitude 51N33'11.137";
+	longitude 113W51'10.016";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:528 {
+	name 184_9310;
+	latitude 51N32'33.438";
+	longitude 113W51'1.734";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:529 {
+	name 184_24619;
+	latitude 51N32'44.340";
+	longitude 113W51'1.322";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:530 {
+	name 184_146285;
+	latitude 51N33'2.736";
+	longitude 113W51'14.354";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:531 {
+	name 184_9343;
+	latitude 51N32'31.181";
+	longitude 113W51'11.965";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:532 {
+	name 184_155243;
+	latitude 51N32'57.717";
+	longitude 113W51'16.060";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:533 {
+	name 184_24227;
+	latitude 51N33'11.674";
+	longitude 113W51'1.091";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:534 {
+	name 184_9112;
+	latitude 51N32'48.628";
+	longitude 113W50'56.486";
+	phases "B|N";
+	phaseB_V -3599.779-6235.000j;
+}
+
+object node:535 {
+	name 184_9340;
+	latitude 51N32'31.252";
+	longitude 113W51'6.382";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:536 {
+	name 184_28964;
+	latitude 51N33'47.543";
+	longitude 113W51'11.729";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:537 {
+	name 184_1002;
+	latitude 51N32'31.540";
+	longitude 113W51'12.182";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:538 {
+	name 184_24825;
+	latitude 51N32'33.222";
+	longitude 113W51'5.317";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:539 {
+	name 184_23637;
+	latitude 51N33'41.392";
+	longitude 113W51'5.608";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:540 {
+	name 184_30156;
+	latitude 51N33'12.694";
+	longitude 113W50'37.476";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:541 {
+	name 184_30151;
+	latitude 51N33'18.172";
+	longitude 113W51'30.346";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:542 {
+	name 184_30152;
+	latitude 51N33'16.468";
+	longitude 113W50'40.723";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:543 {
+	name 184_8535;
+	latitude 51N33'22.708";
+	longitude 113W51'42.199";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:544 {
+	name 184_8972;
+	latitude 51N32'57.805";
+	longitude 113W51'33.075";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:545 {
+	name 184_24844;
+	latitude 51N32'31.938";
+	longitude 113W51'12.442";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:546 {
+	name 184_23609;
+	latitude 51N33'42.254";
+	longitude 113W51'4.327";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:547 {
+	name 184_9384;
+	latitude 51N32'28.712";
+	longitude 113W51'1.748";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:548 {
+	name 184_23677;
+	latitude 51N33'38.962";
+	longitude 113W51'2.048";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:549 {
+	name 184_30136;
+	latitude 51N33'40.437";
+	longitude 113W51'3.122";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:550 {
+	name 184_24782;
+	latitude 51N32'35.716";
+	longitude 113W51'9.492";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:551 {
+	name 184_23573;
+	latitude 51N33'44.143";
+	longitude 113W50'52.984";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:552 {
+	name 184_899;
+	latitude 51N33'26.222";
+	longitude 113W51'43.814";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:553 {
+	name 184_23622;
+	latitude 51N33'40.662";
+	longitude 113W50'52.928";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:554 {
+	name 184_27877;
+	latitude 51N33'4.708";
+	longitude 113W50'59.756";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:555 {
+	name 184_55436;
+	latitude 51N33'48.490";
+	longitude 113W51'12.047";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:556 {
+	name 184_9433;
+	latitude 51N32'25.644";
+	longitude 113W51'1.757";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:557 {
+	name 184_27881;
+	latitude 51N32'59.871";
+	longitude 113W51'30.892";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:558 {
+	name 184_9342;
+	latitude 51N32'31.182";
+	longitude 113W51'12.714";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:559 {
+	name 184_9175;
+	latitude 51N32'43.780";
+	longitude 113W51'28.363";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:560 {
+	name 184_24795;
+	latitude 51N32'35.138";
+	longitude 113W51'13.365";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:561 {
+	name 184_931;
+	latitude 51N33'7.122";
+	longitude 113W50'57.343";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:562 {
+	name 184_23687;
+	latitude 51N33'39.120";
+	longitude 113W50'50.263";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:563 {
+	name 184_28578;
+	latitude 51N33'10.472";
+	longitude 113W50'55.161";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:564 {
+	name 184_24120;
+	latitude 51N33'18.674";
+	longitude 113W51'22.840";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:565 {
+	name 184_1006;
+	latitude 51N32'29.334";
+	longitude 113W51'1.105";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:566 {
+	name 184_28565;
+	latitude 51N33'34.766";
+	longitude 113W50'54.645";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:567 {
+	name 184_24206;
+	latitude 51N33'12.678";
+	longitude 113W51'19.040";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:568 {
+	name 184_24137;
+	latitude 51N33'17.537";
+	longitude 113W51'30.974";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:569 {
+	name 184_42294;
+	latitude 51N33'24.911";
+	longitude 113W51'45.617";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:570 {
+	name 184_9180;
+	latitude 51N32'43.630";
+	longitude 113W51'1.426";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:571 {
+	name 184_28566;
+	latitude 51N33'34.441";
+	longitude 113W50'53.791";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:572 {
+	name 184_28988;
+	latitude 51N32'37.637";
+	longitude 113W50'52.422";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:573 {
+	name 184_30155;
+	latitude 51N33'13.012";
+	longitude 113W51'19.134";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:574 {
+	name 187_3184;
+	latitude 51N32'59.187";
+	longitude 113W51'31.805";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:575 {
+	name 187_13241;
+	latitude 51N33'9.391";
+	longitude 113W50'35.758";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:576 {
+	name 187_13342;
+	latitude 51N33'18.470";
+	longitude 113W51'30.378";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:577 {
+	name 187_2923;
+	latitude 51N33'37.485";
+	longitude 113W50'8.720";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:578 {
+	name 187_109565;
+	latitude 51N32'35.326";
+	longitude 113W50'29.514";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:579 {
+	name 187_13243;
+	latitude 51N33'9.637";
+	longitude 113W50'35.861";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:580 {
+	name 187_12684;
+	latitude 51N33'48.100";
+	longitude 113W51'10.023";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:581 {
+	name 187_3183;
+	latitude 51N33'4.427";
+	longitude 113W50'59.024";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:582 {
+	name 187_76925;
+	latitude 51N33'15.680";
+	longitude 113W51'42.503";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:583 {
+	name 187_13338;
+	latitude 51N33'10.689";
+	longitude 113W50'54.407";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:584 {
+	name 187_12681;
+	latitude 51N33'47.971";
+	longitude 113W51'9.838";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:585 {
+	name 187_3174;
+	latitude 51N33'47.609";
+	longitude 113W51'11.888";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:587 {
+	name 187_22260;
+	latitude 51N33'48.494";
+	longitude 113W51'11.915";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:586 {
+	name 187_13341;
+	latitude 51N33'18.643";
+	longitude 113W51'30.456";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:588 {
+	name 187_1674;
+	latitude 51N32'31.780";
+	longitude 113W51'12.562";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:589 {
+	name 187_2201;
+	latitude 51N33'21.441";
+	longitude 113W51'38.604";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:590 {
+	name 187_2205;
+	latitude 51N33'16.868";
+	longitude 113W51'42.010";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:591 {
+	name 187_13337;
+	latitude 51N33'10.593";
+	longitude 113W50'54.751";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:593 {
+	name 187_13940;
+	latitude 51N33'45.406";
+	longitude 113W51'11.227";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:592 {
+	name 187_2226;
+	latitude 51N32'27.461";
+	longitude 113W51'1.751";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:594 {
+	name 187_2208;
+	latitude 51N33'7.122";
+	longitude 113W50'57.568";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:595 {
+	name 187_1611;
+	latitude 51N33'10.895";
+	longitude 113W51'10.176";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:596 {
+	name 187_13939;
+	latitude 51N33'45.393";
+	longitude 113W51'10.949";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:597 {
+	name 187_22258;
+	latitude 51N33'48.488";
+	longitude 113W51'12.250";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:598 {
+	name 187_2209;
+	latitude 51N33'4.932";
+	longitude 113W51'34.337";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:599 {
+	name 187_2355;
+	latitude 51N32'45.624";
+	longitude 113W51'29.964";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:600 {
+	name 187_12682;
+	latitude 51N33'48.100";
+	longitude 113W51'9.653";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:601 {
+	name 187_2928;
+	latitude 51N33'26.932";
+	longitude 113W50'52.751";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:602 {
+	name 187_11323;
+	latitude 51N32'55.163";
+	longitude 113W50'4.717";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:603 {
+	name 187_1698;
+	latitude 51N32'21.382";
+	longitude 113W50'57.338";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:604 {
+	name 187_13242;
+	latitude 51N33'9.550";
+	longitude 113W50'35.631";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:605 {
+	name 187_109564;
+	latitude 51N32'23.981";
+	longitude 113W51'1.761";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:606 {
+	name 187_1686;
+	latitude 51N32'26.685";
+	longitude 113W51'4.698";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:607 {
+	name 187_3238;
+	latitude 51N33'49.175";
+	longitude 113W51'10.122";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:608 {
+	name 187_13244;
+	latitude 51N33'9.479";
+	longitude 113W50'35.986";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node:609 {
+	name 187_12683;
+	latitude 51N33'48.229";
+	longitude 113W51'9.838";
+	phases "A|B|C|N";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object load {
+	name 181_4551_C;
+	parent 181_4551_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	phaseB_VA 10725.3717420687+3178.22717336391j;
+	phaseC_VA 10432.0447055071+3103.77658804627j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_4586_C;
+	parent 181_4586_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 8208.30092688974+2449.0030710594j;
+	phaseB_VA 8580.29739365497+2542.58173869112j;
+	phaseC_VA 0+0j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_4622_C;
+	parent 181_4622_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 8208.30092688974+2449.0030710594j;
+	phaseB_VA 8580.29739365497+2542.58173869112j;
+	phaseC_VA 0+0j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_4633_C;
+	parent 181_4633_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 6156.22569516731+1836.75230329455j;
+	phaseB_VA 6435.22304524123+1906.93630401834j;
+	phaseC_VA 6259.22682330427+1862.26595282776j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_4645_C;
+	parent 181_4645_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 20520.7523172244+6122.50767764851j;
+	phaseB_VA 21450.7434841374+6356.45434672781j;
+	phaseC_VA 20864.0894110142+6207.55317609255j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_4659_C;
+	parent 181_4659_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 20520.7523172244+6122.50767764851j;
+	phaseB_VA 21450.7434841374+6356.45434672781j;
+	phaseC_VA 20864.0894110142+6207.55317609255j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_4661_C;
+	parent 181_4661_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	phaseB_VA 10725.3717420687+3178.22717336391j;
+	phaseC_VA 10432.0447055071+3103.77658804627j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_4695_C;
+	parent 181_4695_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 20520.7523172244+6122.50767764851j;
+	phaseB_VA 21450.7434841374+6356.45434672781j;
+	phaseC_VA 20864.0894110142+6207.55317609255j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_4696_C;
+	parent 181_4696_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 6156.22569516731+1836.75230329455j;
+	phaseB_VA 6435.22304524123+1906.93630401834j;
+	phaseC_VA 6259.22682330427+1862.26595282776j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_73247_C;
+	parent 181_73247_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 6156.22569516731+1836.75230329455j;
+	phaseB_VA 6435.22304524123+1906.93630401834j;
+	phaseC_VA 6259.22682330427+1862.26595282776j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_75803_C;
+	parent 181_75803_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 20520.7523172244+6122.50767764851j;
+	phaseB_VA 21450.7434841374+6356.45434672781j;
+	phaseC_VA 20864.0894110142+6207.55317609255j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_26659_C;
+	parent 181_26659_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 41041.5046344487+12245.015355297j;
+	phaseB_VA 42901.4869682749+12712.9086934556j;
+	phaseC_VA 41728.1788220285+12415.1063521851j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_26721_C;
+	parent 181_26721_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 136668.210432714+40775.9011331391j;
+	phaseB_VA 142861.951604355+42333.9859492072j;
+	phaseC_VA 138954.835477355+41342.3041527764j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_104923_I;
+	parent 181_104923_I_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 41041.5046344487+12245.015355297j;
+	phaseB_VA 42901.4869682749+12712.9086934556j;
+	phaseC_VA 41728.1788220285+12415.1063521851j;
+	load_class "I";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_16240_C;
+	parent 181_16240_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	phaseB_VA 10725.3717420687+3178.22717336391j;
+	phaseC_VA 10432.0447055071+3103.77658804627j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_16223_C;
+	parent 181_16223_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	phaseB_VA 10725.3717420687+3178.22717336391j;
+	phaseC_VA 10432.0447055071+3103.77658804627j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_16300_C;
+	parent 181_16300_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 20520.7523172244+6122.50767764851j;
+	phaseB_VA 21450.7434841374+6356.45434672781j;
+	phaseC_VA 20864.0894110142+6207.55317609255j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_16329_C;
+	parent 181_16329_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	phaseB_VA 10725.3717420687+3178.22717336391j;
+	phaseC_VA 10432.0447055071+3103.77658804627j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_16348_C;
+	parent 181_16348_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 20520.7523172244+6122.50767764851j;
+	phaseB_VA 21450.7434841374+6356.45434672781j;
+	phaseC_VA 20864.0894110142+6207.55317609255j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_16499_C;
+	parent 181_16499_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 20520.7523172244+6122.50767764851j;
+	phaseB_VA 21450.7434841374+6356.45434672781j;
+	phaseC_VA 20864.0894110142+6207.55317609255j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_16624_C;
+	parent 181_16624_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 6156.22569516731+1836.75230329455j;
+	phaseB_VA 6435.22304524123+1906.93630401834j;
+	phaseC_VA 6259.22682330427+1862.26595282776j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_26597_I;
+	parent 181_26597_I_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 68402.5077240813+20408.3589254951j;
+	phaseB_VA 71502.4782804582+21188.1811557594j;
+	phaseC_VA 69546.964703381+20691.8439203085j;
+	load_class "I";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_17019_I;
+	parent 181_17019_I_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 6200+1800j;
+	phaseB_VA 6400+1900j;
+	phaseC_VA 6300+1900j;
+	load_class "I";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_26643_C;
+	parent 181_26643_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 41041.5046344487+12245.015355297j;
+	phaseB_VA 42901.4869682749+12712.9086934556j;
+	phaseC_VA 41728.1788220285+12415.1063521851j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_17187_C;
+	parent 181_17187_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 20520.7523172244+6122.50767764851j;
+	phaseB_VA 21450.7434841374+6356.45434672781j;
+	phaseC_VA 20864.0894110142+6207.55317609255j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_17191_C;
+	parent 181_17191_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 6156.22569516731+1836.75230329455j;
+	phaseB_VA 6435.22304524123+1906.93630401834j;
+	phaseC_VA 6259.22682330427+1862.26595282776j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_17194_C;
+	parent 181_17194_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	phaseB_VA 10725.3717420687+3178.22717336391j;
+	phaseC_VA 10432.0447055071+3103.77658804627j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_26685_C;
+	parent 181_26685_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 20520.7523172244+6122.50767764851j;
+	phaseB_VA 21450.7434841374+6356.45434672781j;
+	phaseC_VA 20864.0894110142+6207.55317609255j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_17209_C;
+	parent 181_17209_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 6156.22569516731+1836.75230329455j;
+	phaseB_VA 6435.22304524123+1906.93630401834j;
+	phaseC_VA 6259.22682330427+1862.26595282776j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_17222_C;
+	parent 181_17222_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 68402.5077240813+20408.3589254951j;
+	phaseB_VA 71502.4782804582+21188.1811557594j;
+	phaseC_VA 69546.964703381+20691.8439203085j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_17286_C;
+	parent 181_17286_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 68402.5077240813+20408.3589254951j;
+	phaseB_VA 71502.4782804582+21188.1811557594j;
+	phaseC_VA 69546.964703381+20691.8439203085j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_17323_C;
+	parent 181_17323_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 205207.523172243+61225.0767764851j;
+	phaseB_VA 214507.434841374+63564.5434672781j;
+	phaseC_VA 208640.894110142+62075.5317609255j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_17324_C;
+	parent 181_17324_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 205207.523172243+61225.0767764851j;
+	phaseB_VA 214507.434841374+63564.5434672781j;
+	phaseC_VA 208640.894110142+62075.5317609255j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_17331_C;
+	parent 181_17331_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	phaseB_VA 10725.3717420687+3178.22717336391j;
+	phaseC_VA 10432.0447055071+3103.77658804627j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_16622_C;
+	parent 181_16622_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 102603.761586122+30612.5383882426j;
+	phaseB_VA 107253.717420687+31782.2717336391j;
+	phaseC_VA 104320.447055071+31037.7658804627j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_26710_C;
+	parent 181_26710_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 68402.5077240813+20408.3589254951j;
+	phaseB_VA 71502.4782804582+21188.1811557594j;
+	phaseC_VA 69546.964703381+20691.8439203085j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+object load {
+	name 181_31356_C;
+	parent 181_31356_C_M;
+	latitude 0N0'0.000";
+	longitude 0E0'0.000";
+	phases "ABCN";
+	phaseA_V 7199.558+0.0j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+	phaseA_VA 10260.3761586122+3061.25383882426j;
+	phaseB_VA 10725.3717420687+3178.22717336391j;
+	phaseC_VA 10432.0447055071+3103.77658804627j;
+	load_class "C";
+	sync_V_limit 0.0001;
+}
+
+// Meter at feeder
+object meter:290 {
+	name 12EG-1;
+	type POLYPHASE;
+	phases "ABCN";
+	nominal_voltage 240;
+	line1_voltage 7199.558+0.0j;
+	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+}

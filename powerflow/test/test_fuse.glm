@@ -1,0 +1,72 @@
+// $Id$
+//
+// Powerflow module self-test
+
+#set include="../../core"
+#include "../../core/rt/msvc_debugger.glm"
+
+#include "assert.glm"
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 00:00:00 EST';
+}
+
+module powerflow;
+
+///////////////////////////////////////////////////////
+// test 9: fuse
+///////////////////////////////////////////////////////
+// A phase current_limit = 1
+
+object fuse {
+	phases AN;
+	name fuse_AN_1;
+	current_limit 0.1;
+	from object node {
+		name fuse_fAN_1;
+		phases AN;
+		voltage_A 7200 + 0j;
+		nominal_voltage 7200;
+	};		
+	to object load {
+		name fuse_tAN_1;
+		phases AN;
+		voltage_A 7200 + 0j;
+		nominal_voltage 7200;
+		object complex_assert {
+			target "current_A";
+			value 0 + 0j;
+			within 0.01;
+		};	
+	};
+};	
+
+// A phase current_limit = 1000
+
+object fuse {
+	phases AN;
+	name fuse_AN_2;
+	current_limit 1000;
+	from object node {
+		name fuse_fAN_2;
+		phases AN;
+		voltage_A 7200 + 0j;
+		nominal_voltage 7200;
+		
+	};		
+	to object load {
+		name fuse_tAN_2;
+		phases AN;
+		voltage_A 7200 + 0j;
+		constant_current_A  1;
+		constant_power_A 1500 + 750j;
+		constant_impedance_A 1000 + 2000j;
+		nominal_voltage 7200;
+		object complex_assert {
+			target "current_A";
+			value 2.6483 - 2.9840j;
+			within 0.01;
+		};	
+	};
+};	

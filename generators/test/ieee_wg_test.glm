@@ -1,0 +1,195 @@
+# $Id: powerflow_IEEE_4node.glm 683 2008-06-18 20:16:29Z d3g637 $
+# IEEE 4 Node Feeder
+#
+# Note: This model is for reference purposes as a basis for other models
+# It does not produce output in its current form because there are
+# no load objects attached to cause time to advance and there are no
+# recorders attached to gather the output.  See residential_loads.glm
+# for an example model that produces output.
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow;
+module generators;
+module tape;
+module climate;
+
+object climate {
+	name climate1;
+	tmyfile ../test/weather/tulsa_ok;
+}
+
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AtoB 2.5;
+	distance_BtoC 4.5;
+	distance_AtoC 7.0;
+	distance_AtoN 5.656854;
+	distance_BtoN 4.272002;
+	distance_CtoN 5.0;
+}
+
+object line_configuration:300 {
+	phaseA_conductor overhead_line_conductor:100;
+	phaseB_conductor overhead_line_conductor:100;
+	phaseC_conductor overhead_line_conductor:100;
+	phaseN_conductor overhead_line_conductor:101;
+	line_spacing line_spacing:200;
+}
+
+object transformer_configuration:400 {
+	connect_type 1;
+	kVA_rating 6000;
+	V_primary 12470;
+	V_secondary 600;				#change to 690 for GE
+	R_pu 0.01;
+	X_pu 0.06;
+}
+
+object node {
+	name node1;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object overhead_line {
+	name overline12;
+	phases "ABCN";
+	from node1;
+	to node2;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object transformer {
+	name trans23;
+	phases "ABCN";
+	from node2;
+	to node3;
+	configuration transformer_configuration:400;
+}
+
+object node {
+	name node3;
+	phases "ABCN";
+	voltage_A 398.371 + 0.000j;				#rated voltage of 690 for GE_25MW
+	voltage_B -199.186 + 345.000j;
+	voltage_C -199.186 - 345.000j;
+	#voltage_A 346.410 + 0.000j;
+	#voltage_B -173.205 - 300.000j;
+	#voltage_C -173.205 + 300.000j;
+}
+
+object overhead_line {
+	name OHL3L;
+	phases "ABCN";
+	from node3;
+	to load1;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object load {
+	name load1;
+	phases "ABCN";
+	#voltage_A 398.371 + 0.000j;				#rated voltage of 690 for GE_25MW
+	#voltage_B -199.186 + 345.000j;
+	#voltage_C -199.186 - 345.000j;
+	voltage_A 346.410 + 0.000j;
+	voltage_B -173.205 - 300.000j;
+	voltage_C -173.205 + 300.000j;
+	#power_A +20000+8720j;				#balanced load
+	#power_B +20000+8720j;
+	#power_C +20000+8720j;
+	power_A +14167+8780j;					#unbalanced load
+	power_B +20000+9686j;
+	power_C +26389+8674j;
+	maximum_voltage_error 0.001;
+}
+
+
+object windturb_dg {
+	parent node4;
+	name windturb;
+	phases "ABCN";
+	Gen_status 1;
+	Turbine_Model GENERIC_SYNCH; #GE_25MW;  #VESTAS_V82 #GENERIC_IND  #note: must change voltages for GE
+	Gen_mode CONSTANTpf;
+}
+
+object meter {
+	name node4;
+	type POLYPHASE;
+	nominal_voltage 690;
+	line1_voltage 398.371 + 0.000j;		#rated voltage of 690 for GE_25MW
+	line2_voltage -199.186 + 345.000j;
+	line3_voltage -199.186 - 345.000j;
+	#nominal_voltage 600;	
+	#line1_voltage 346.410 + 0.000j;
+	#line2_voltage -173.205 + 300.000j;
+	#line3_voltage -173.205 - 300.000j;
+}
+
+object overhead_line {
+	name OHL34;
+	phases "ABCN";
+	from node3;
+	to node4;
+	length 25;
+	configuration line_configuration:300;
+}
+
+object recorder {
+	parent load1;
+	property pA_V_Mag,pB_V_Mag,pC_V_Mag;
+	file load.txt;
+	interval 3600;
+	limit 80;
+}
+	
+object recorder {
+	parent windturb;
+	property Wind_Speed,TotalRealPow;
+	file wd_turbine.txt;
+	interval 3600;
+	limit 80;
+}
+
+#object recorder {
+#	parent node1;
+#	property voltage_A;
+#	file node1.txt;
+#	interval 0;
+#	limit 80;
+#}
+
+#object recorder {
+#	parent node4;
+#	property voltage_A,line1_current,status;
+#	file meter.txt;
+#	interval 0;
+#	limit 80;
+#}

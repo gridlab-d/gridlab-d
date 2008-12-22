@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema targetNamespace="http://tempuri.org/XMLSchema.xsd" elementFormDefault="qualified" xmlns="http://tempuri.org/XMLSchema.xsd" xmlns:mstns="http://tempuri.org/XMLSchema.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="GridLABD">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="property" type="Property" maxOccurs="unbounded" minOccurs="0" />
+        <xs:element name="modules" type="Module" maxOccurs="unbounded" minOccurs="0" />
+        <xs:element name="objects" type="Object" maxOccurs="unbounded" minOccurs="0" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="Object">
+    <xs:sequence>
+      <xs:element name="size" type="xs:unsignedShort" />
+      <xs:element name="id" type="xs:unsignedInt" />
+      <xs:element name="rank" type="xs:unsignedInt" />
+      <xs:element name="clock" type="xs:string" />
+      <xs:element name="latitude" type="xs:string" />
+      <xs:element name="longitude" type="xs:string" />
+      <xs:element name="in_svc" type="xs:string" />
+      <xs:element name="out_svc" type="xs:string" />
+      <xs:element name="parent" type="xs:string" />
+      <xs:element name="properties" type="Property" maxOccurs="unbounded" minOccurs="0" />
+      <xs:element name="objects" type="Object" maxOccurs="unbounded" minOccurs="0" />
+      <xs:element name="type" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Module">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string" />
+      <xs:element name="file" type="xs:string" />
+      <xs:element name="major" type="xs:unsignedShort" />
+      <xs:element name="minor" type="xs:unsignedShort" />
+      <xs:element name="property" type="Property" maxOccurs="unbounded" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Property">
+    <xs:sequence>
+      <xs:element name="value" type="xs:string" />
+      <xs:element name="name" type="xs:string" />
+      <xs:element name="type" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

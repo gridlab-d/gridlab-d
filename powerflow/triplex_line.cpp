@@ -1,0 +1,246 @@
+/** $Id: triplex_line.cpp 1182 2008-12-22 22:08:36Z dchassin $
+	Copyright (C) 2008 Battelle Memorial Institute
+	@file triplex_line.cpp
+	@addtogroup triplex_line 
+	@ingroup line
+
+	@{
+**/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <math.h>
+#include <iostream>
+using namespace std;
+
+#include "line.h"
+
+CLASS* triplex_line::oclass = NULL;
+CLASS* triplex_line::pclass = NULL;
+
+triplex_line::triplex_line(MODULE *mod) : line(mod)
+{
+	if(oclass == NULL)
+	{
+		pclass = line::oclass;
+		
+		oclass = gl_register_class(mod,"triplex_line",sizeof(triplex_line),PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
+        if(oclass == NULL)
+            GL_THROW("unable to register object class implemented by %s",__FILE__);
+        
+        if(gl_publish_variable(oclass,
+			PT_INHERIT, "line",
+            NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+        
+    }
+}
+
+int triplex_line::create(void)
+{
+	int result = line::create();
+	return result;
+}
+
+int triplex_line::isa(char *classname)
+{
+	return strcmp(classname,"triplex_line")==0 || line::isa(classname);
+}
+
+int triplex_line::init(OBJECT *parent)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	if (!has_phase(PHASE_S))
+		gl_warning("%s (%s:%d) is triplex but doesn't have phases S set", obj->name, obj->oclass->name, obj->id);
+
+	// create local variables that will be used to calculate matrices.
+	double dcond,ins_thick,D12,D13,D23;
+	double r1,r2,rn,gmr1,gmr2,gmrn;
+	complex zp11,zp22,zp33,zp12,zp13,zp23;
+	complex zs[3][3];
+	complex tn[2];
+
+	int result = line::init(parent);
+
+	// Gather data stored in configuration objects
+	triplex_line_configuration *line_config = OBJECTDATA(configuration,triplex_line_configuration);
+	dcond = line_config->diameter;
+	ins_thick = line_config->ins_thickness;
+
+	triplex_line_conductor *l1 = OBJECTDATA(line_config->phaseA_conductor,triplex_line_conductor);
+	triplex_line_conductor *l2 = OBJECTDATA(line_config->phaseB_conductor,triplex_line_conductor);
+	triplex_line_conductor *lN = OBJECTDATA(line_config->phaseC_conductor,triplex_line_conductor);
+
+	r1 = l1->resistance;
+	r2 = l2->resistance;
+	rn = lN->resistance;
+	gmr1 = l1->geometric_mean_radius;
+	gmr2 = l2->geometric_mean_radius;
+	gmrn = lN->geometric_mean_radius;
+
+	// Perform calculations and fill in values in the matrices
+	D12 = (dcond + 2 * ins_thick)/12;
+	D13 = (dcond + ins_thick)/12;
+	D23 = D13;
+
+	zp11 = complex(r1,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmr1) + 7.93402);
+	zp22 = complex(r2,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmr2) + 7.93402);
+	zp33 = complex(rn,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmrn) + 7.93402);
+	zp12 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D12) + 7.93402);
+	zp13 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D13) + 7.93402);
+	zp23 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D23) + 7.93402);
+	
+	zs[0][0] = zp11-((zp13^2)/zp33);
+	zs[0][1] = zp12-((zp13*zp23)/zp33);
+	zs[1][0] = zp12-((zp13*zp23)/zp33);
+	zs[1][1] = zp22-((zp23*zp23)/zp33);
+	zs[0][2] = complex(0,0);
+	zs[1][2] = complex(0,0);
+	zs[2][2] = complex(0,0);
+	zs[2][1] = complex(0,0);
+	zs[2][0] = complex(0,0);
+
+	a_mat[0][0] = complex(1,0);
+	a_mat[0][1] = complex(0,0);
+	a_mat[0][2] = complex(0,0);
+	a_mat[1][0] = complex(0,0);
+	a_mat[1][1] = complex(1,0);
+	a_mat[1][2] = complex(0,0);
+	a_mat[2][0] = complex(0,0);
+	a_mat[2][1] = complex(0,0);
+	a_mat[2][2] = complex(1,0); 
+	
+	c_mat[0][0] = complex(0,0);
+	c_mat[0][1] = complex(0,0);
+	c_mat[0][2] = complex(0,0);
+	c_mat[1][0] = complex(0,0);
+	c_mat[1][1] = complex(0,0);
+	c_mat[1][2] = complex(0,0);
+	c_mat[2][0] = complex(0,0);
+	c_mat[2][1] = complex(0,0);
+	c_mat[2][2] = complex(0,0);
+	
+	d_mat[0][0] = complex(1,0);
+	d_mat[0][1] = complex(0,0);
+	d_mat[0][2] = complex(0,0);
+	d_mat[1][0] = complex(0,0);
+	d_mat[1][1] = complex(1,0);
+	d_mat[1][2] = complex(0,0);
+	d_mat[2][0] = complex(0,0);
+	d_mat[2][1] = complex(0,0);
+	d_mat[2][2] = complex(1,0);
+	
+	A_mat[0][0] = complex(1,0);
+	A_mat[0][1] = complex(0,0);
+	A_mat[0][2] = complex(0,0);
+	A_mat[1][0] = complex(0,0);
+	A_mat[1][1] = complex(1,0);
+	A_mat[1][2] = complex(0,0);
+	A_mat[2][0] = complex(0,0);
+	A_mat[2][1] = complex(0,0);
+	A_mat[2][2] = complex(1,0);
+	
+	multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
+	multiply(length/5280.0,zs,B_mat);
+	
+	// print out matrices when testing.
+#ifdef _TESTING
+	if (show_matrix_values)
+	{
+		gl_testmsg("triplex_line: a matrix");
+		print_matrix(a_mat);
+
+		gl_testmsg("triplex_line: A matrix");
+		print_matrix(A_mat);
+
+		gl_testmsg("triplex_line: b matrix");
+		print_matrix(b_mat);
+
+		gl_testmsg("triplex_line: B matrix");
+		print_matrix(B_mat);
+
+		gl_testmsg("triplex_line: c matrix");
+		print_matrix(c_mat);
+
+		gl_testmsg("triplex_line: d matrix");
+		print_matrix(d_mat);
+	}
+#endif
+	return result;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF CORE LINKAGE: triplex_line
+//////////////////////////////////////////////////////////////////////////
+
+/**
+* REQUIRED: allocate and initialize an object.
+*
+* @param obj a pointer to a pointer of the last object in the list
+* @param parent a pointer to the parent of this object
+* @return 1 for a successfully created object, 0 for error
+*/
+EXPORT int create_triplex_line(OBJECT **obj, OBJECT *parent)
+{
+	try
+	{
+		*obj = gl_create_object(triplex_line::oclass);
+		if (*obj!=NULL)
+		{
+			triplex_line *my = OBJECTDATA(*obj,triplex_line);
+			gl_set_parent(*obj,parent);
+			return my->create();
+		}
+	}
+	catch (char *msg)
+	{
+		gl_error("create_triplex_line: %s", msg);
+	}
+	return 0;
+}
+
+EXPORT TIMESTAMP sync_triplex_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	triplex_line *pObj = OBJECTDATA(obj,triplex_line);
+	try {
+		TIMESTAMP t1 = TS_NEVER;
+		switch (pass) {
+		case PC_PRETOPDOWN:
+			return pObj->presync(t0);
+		case PC_BOTTOMUP:
+			return pObj->sync(t0);
+		case PC_POSTTOPDOWN:
+			t1 = pObj->postsync(t0);
+			obj->clock = t0;
+			return t1;
+		default:
+			throw "invalid pass request";
+		}
+	} catch (const char *error) {
+		GL_THROW("%s (triplex_line:%d): %s", pObj->get_name(), pObj->get_id(), error);
+		return 0; 
+	} catch (...) {
+		GL_THROW("%s (triplex_line:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
+		return 0;
+	}
+}
+
+EXPORT int init_triplex_line(OBJECT *obj)
+{
+	triplex_line *my = OBJECTDATA(obj,triplex_line);
+	try {
+		return my->init(obj->parent);
+	}
+	catch (char *msg)
+	{
+		GL_THROW("%s (triplex_line:%d): %s", my->get_name(), my->get_id(), msg);
+		return 0; 
+	}
+}
+
+EXPORT int isa_triplex_line(OBJECT *obj, char *classname)
+{
+	return OBJECTDATA(obj,triplex_line)->isa(classname);
+}
+
+/**@}**/

@@ -1,0 +1,476 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core", "..\core\core.vcproj", "{11E2543D-382E-4F7D-B76D-A6EC571F2D27}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+		{152CE948-F659-4206-A50A-1D2B9658EF96} = {152CE948-F659-4206-A50A-1D2B9658EF96}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "climate", "..\climate\climate.vcproj", "{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "commercial", "..\commercial\commercial.vcproj", "{921BB65C-380D-4982-A9F4-8F0C97FA93D2}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tape", "..\tape\tape.vcproj", "{A06A3354-CB45-40E3-851A-E77408EC6244}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "network", "..\network\network.vcproj", "{543A6584-4A21-464D-ACF3-1B378AF7D373}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "powerflow", "..\powerflow\powerflow.vcproj", "{D685626B-BEB1-47B8-970A-45041514A9C5}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plc", "..\plc\plc.vcproj", "{457E6DBB-6C2B-40C2-9C8B-387F72797839}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doxygen-doc", "..\doxygen\doxygen-doc.vcproj", "{A1ACE681-2E56-4812-9E22-E19CC0E4E716}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "residential", "..\residential\residential.vcproj", "{603E4678-2160-4D61-99CF-1DB0D1C6196B}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xerces", "xerces.vcproj", "{152CE948-F659-4206-A50A-1D2B9658EF96}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cppunit", "cppunit.vcproj", "{76052AD0-2F8A-4E6F-855E-6920C6CE4493}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glmjava", "..\java\java.vcproj", "{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "generators", "..\generators\generators.vcproj", "{D233512D-C227-46A2-B03B-70E9DE024307}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "reliability", "..\reliability\reliability.vcproj", "{D79A1ED5-DED5-4081-8389-FF773392DB54}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tape_file", "..\tape_file\tape_file.vcproj", "{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tape_memory", "..\tape_memory\tape_memory.vcproj", "{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tape_odbc", "..\tape_odbc\tape_odbc.vcproj", "{F917B893-1A20-4540-B2AD-CA46D3322A21}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kill", "..\core\kill\kill.vcproj", "{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "market", "..\market\market.vcproj", "{B99E7151-0A71-412A-9D3F-7D5F82887F14}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tape_plot", "..\tape_plot\tape_plot.vcproj", "{32E73464-5973-4CA1-845C-753BE646CE77}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		MatlabDebug|Win32 = MatlabDebug|Win32
+		MatlabDebug|x64 = MatlabDebug|x64
+		QuickDebug|Win32 = QuickDebug|Win32
+		QuickDebug|x64 = QuickDebug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.Debug|Win32.ActiveCfg = Debug|Win32
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.Debug|Win32.Build.0 = Debug|Win32
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.Debug|x64.ActiveCfg = Debug|x64
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.Debug|x64.Build.0 = Debug|x64
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.MatlabDebug|x64.Build.0 = Debug|x64
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.Release|Win32.ActiveCfg = Release|Win32
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.Release|Win32.Build.0 = Release|Win32
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.Release|x64.ActiveCfg = Release|x64
+		{11E2543D-382E-4F7D-B76D-A6EC571F2D27}.Release|x64.Build.0 = Release|x64
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.Debug|Win32.Build.0 = Debug|Win32
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.Debug|x64.ActiveCfg = Debug|x64
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.Debug|x64.Build.0 = Debug|x64
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.MatlabDebug|x64.Build.0 = Debug|x64
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.Release|Win32.ActiveCfg = Release|Win32
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.Release|Win32.Build.0 = Release|Win32
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.Release|x64.ActiveCfg = Release|x64
+		{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}.Release|x64.Build.0 = Release|x64
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.Debug|Win32.Build.0 = Debug|Win32
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.Debug|x64.ActiveCfg = Debug|x64
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.Debug|x64.Build.0 = Debug|x64
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.MatlabDebug|x64.Build.0 = Debug|x64
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.Release|Win32.ActiveCfg = Release|Win32
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.Release|Win32.Build.0 = Release|Win32
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.Release|x64.ActiveCfg = Release|x64
+		{921BB65C-380D-4982-A9F4-8F0C97FA93D2}.Release|x64.Build.0 = Release|x64
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.Debug|Win32.Build.0 = Debug|Win32
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.Debug|x64.ActiveCfg = Debug|x64
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.Debug|x64.Build.0 = Debug|x64
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.MatlabDebug|x64.Build.0 = Debug|x64
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.Release|Win32.ActiveCfg = Release|Win32
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.Release|Win32.Build.0 = Release|Win32
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.Release|x64.ActiveCfg = Release|x64
+		{A06A3354-CB45-40E3-851A-E77408EC6244}.Release|x64.Build.0 = Release|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Debug|Win32.ActiveCfg = Debug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Debug|Win32.Build.0 = Debug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Debug|x64.ActiveCfg = Debug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Debug|x64.Build.0 = Debug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.MatlabDebug|x64.Build.0 = Debug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Release|Win32.ActiveCfg = Release|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Release|Win32.Build.0 = Release|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Release|x64.ActiveCfg = Release|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Release|x64.Build.0 = Release|x64
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.Debug|Win32.Build.0 = Debug|Win32
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.Debug|x64.ActiveCfg = Debug|x64
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.Debug|x64.Build.0 = Debug|x64
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.MatlabDebug|x64.Build.0 = Debug|x64
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.Release|Win32.ActiveCfg = Release|Win32
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.Release|Win32.Build.0 = Release|Win32
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.Release|x64.ActiveCfg = Release|x64
+		{D685626B-BEB1-47B8-970A-45041514A9C5}.Release|x64.Build.0 = Release|x64
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.Debug|Win32.ActiveCfg = Debug|Win32
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.Debug|Win32.Build.0 = Debug|Win32
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.Debug|x64.ActiveCfg = Debug|x64
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.Debug|x64.Build.0 = Debug|x64
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.MatlabDebug|x64.Build.0 = Debug|x64
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.Release|Win32.ActiveCfg = Release|Win32
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.Release|Win32.Build.0 = Release|Win32
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.Release|x64.ActiveCfg = Release|x64
+		{457E6DBB-6C2B-40C2-9C8B-387F72797839}.Release|x64.Build.0 = Release|x64
+		{A1ACE681-2E56-4812-9E22-E19CC0E4E716}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A1ACE681-2E56-4812-9E22-E19CC0E4E716}.Debug|x64.ActiveCfg = Debug|x64
+		{A1ACE681-2E56-4812-9E22-E19CC0E4E716}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{A1ACE681-2E56-4812-9E22-E19CC0E4E716}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{A1ACE681-2E56-4812-9E22-E19CC0E4E716}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{A1ACE681-2E56-4812-9E22-E19CC0E4E716}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{A1ACE681-2E56-4812-9E22-E19CC0E4E716}.Release|Win32.ActiveCfg = Release|Win32
+		{A1ACE681-2E56-4812-9E22-E19CC0E4E716}.Release|x64.ActiveCfg = Release|x64
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.Debug|Win32.Build.0 = Debug|Win32
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.Debug|x64.ActiveCfg = Debug|x64
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.Debug|x64.Build.0 = Debug|x64
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.MatlabDebug|x64.Build.0 = Debug|x64
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.Release|Win32.ActiveCfg = Release|Win32
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.Release|Win32.Build.0 = Release|Win32
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.Release|x64.ActiveCfg = Release|x64
+		{603E4678-2160-4D61-99CF-1DB0D1C6196B}.Release|x64.Build.0 = Release|x64
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.Debug|Win32.ActiveCfg = Debug|Win32
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.Debug|Win32.Build.0 = Debug|Win32
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.Debug|x64.ActiveCfg = Debug|x64
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.Debug|x64.Build.0 = Debug|x64
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.MatlabDebug|x64.Build.0 = Debug|x64
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.Release|Win32.ActiveCfg = Release|Win32
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.Release|Win32.Build.0 = Release|Win32
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.Release|x64.ActiveCfg = Release|x64
+		{152CE948-F659-4206-A50A-1D2B9658EF96}.Release|x64.Build.0 = Release|x64
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.Debug|Win32.ActiveCfg = Debug|Win32
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.Debug|Win32.Build.0 = Debug|Win32
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.Debug|x64.ActiveCfg = Debug|x64
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.Debug|x64.Build.0 = Debug|x64
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.MatlabDebug|x64.Build.0 = Debug|x64
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.Release|Win32.ActiveCfg = Release|Win32
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.Release|Win32.Build.0 = Release|Win32
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.Release|x64.ActiveCfg = Release|x64
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493}.Release|x64.Build.0 = Release|x64
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.Debug|Win32.Build.0 = Debug|Win32
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.Debug|x64.ActiveCfg = Debug|Win32
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.MatlabDebug|x64.ActiveCfg = Debug|Win32
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.QuickDebug|x64.ActiveCfg = QuickDebug|Win32
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.Release|Win32.ActiveCfg = Release|Win32
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.Release|Win32.Build.0 = Release|Win32
+		{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}.Release|x64.ActiveCfg = Release|Win32
+		{D233512D-C227-46A2-B03B-70E9DE024307}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D233512D-C227-46A2-B03B-70E9DE024307}.Debug|Win32.Build.0 = Debug|Win32
+		{D233512D-C227-46A2-B03B-70E9DE024307}.Debug|x64.ActiveCfg = Debug|x64
+		{D233512D-C227-46A2-B03B-70E9DE024307}.Debug|x64.Build.0 = Debug|x64
+		{D233512D-C227-46A2-B03B-70E9DE024307}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{D233512D-C227-46A2-B03B-70E9DE024307}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{D233512D-C227-46A2-B03B-70E9DE024307}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{D233512D-C227-46A2-B03B-70E9DE024307}.MatlabDebug|x64.Build.0 = Debug|x64
+		{D233512D-C227-46A2-B03B-70E9DE024307}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{D233512D-C227-46A2-B03B-70E9DE024307}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{D233512D-C227-46A2-B03B-70E9DE024307}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{D233512D-C227-46A2-B03B-70E9DE024307}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{D233512D-C227-46A2-B03B-70E9DE024307}.Release|Win32.ActiveCfg = Release|Win32
+		{D233512D-C227-46A2-B03B-70E9DE024307}.Release|Win32.Build.0 = Release|Win32
+		{D233512D-C227-46A2-B03B-70E9DE024307}.Release|x64.ActiveCfg = Release|x64
+		{D233512D-C227-46A2-B03B-70E9DE024307}.Release|x64.Build.0 = Release|x64
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.Debug|Win32.Build.0 = Debug|Win32
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.Debug|x64.ActiveCfg = Debug|x64
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.Debug|x64.Build.0 = Debug|x64
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.MatlabDebug|x64.Build.0 = Debug|x64
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.Release|Win32.ActiveCfg = Release|Win32
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.Release|Win32.Build.0 = Release|Win32
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.Release|x64.ActiveCfg = Release|x64
+		{D79A1ED5-DED5-4081-8389-FF773392DB54}.Release|x64.Build.0 = Release|x64
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.Debug|Win32.Build.0 = Debug|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.Debug|x64.ActiveCfg = Debug|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.Debug|x64.Build.0 = Debug|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.MatlabDebug|x64.ActiveCfg = Debug|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.QuickDebug|x64.ActiveCfg = QuickDebug|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.Release|Win32.ActiveCfg = Release|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.Release|Win32.Build.0 = Release|Win32
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.Release|x64.ActiveCfg = Release|x64
+		{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}.Release|x64.Build.0 = Release|x64
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.Debug|Win32.Build.0 = Debug|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.Debug|x64.ActiveCfg = Debug|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.Debug|x64.Build.0 = Debug|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.MatlabDebug|x64.ActiveCfg = Debug|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.QuickDebug|x64.ActiveCfg = QuickDebug|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.Release|Win32.ActiveCfg = Release|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.Release|Win32.Build.0 = Release|Win32
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.Release|x64.ActiveCfg = Release|x64
+		{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}.Release|x64.Build.0 = Release|x64
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.Debug|Win32.Build.0 = Debug|Win32
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.Debug|x64.ActiveCfg = Debug|Win32
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.MatlabDebug|x64.ActiveCfg = Debug|Win32
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.QuickDebug|x64.ActiveCfg = QuickDebug|Win32
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.Release|Win32.ActiveCfg = Release|Win32
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.Release|Win32.Build.0 = Release|Win32
+		{F917B893-1A20-4540-B2AD-CA46D3322A21}.Release|x64.ActiveCfg = Release|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.Debug|Win32.Build.0 = Debug|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.Debug|x64.ActiveCfg = Debug|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.MatlabDebug|x64.ActiveCfg = Debug|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.QuickDebug|Win32.ActiveCfg = Debug|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.QuickDebug|Win32.Build.0 = Debug|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.QuickDebug|x64.ActiveCfg = Debug|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.Release|Win32.ActiveCfg = Release|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.Release|Win32.Build.0 = Release|Win32
+		{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}.Release|x64.ActiveCfg = Release|Win32
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.Debug|Win32.Build.0 = Debug|Win32
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.Debug|x64.ActiveCfg = Debug|x64
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.Debug|x64.Build.0 = Debug|x64
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.MatlabDebug|x64.Build.0 = Debug|x64
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.Release|Win32.ActiveCfg = Release|Win32
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.Release|Win32.Build.0 = Release|Win32
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.Release|x64.ActiveCfg = Release|x64
+		{B99E7151-0A71-412A-9D3F-7D5F82887F14}.Release|x64.Build.0 = Release|x64
+		{32E73464-5973-4CA1-845C-753BE646CE77}.Debug|Win32.ActiveCfg = Debug|Win32
+		{32E73464-5973-4CA1-845C-753BE646CE77}.Debug|Win32.Build.0 = Debug|Win32
+		{32E73464-5973-4CA1-845C-753BE646CE77}.Debug|x64.ActiveCfg = Debug|x64
+		{32E73464-5973-4CA1-845C-753BE646CE77}.Debug|x64.Build.0 = Debug|x64
+		{32E73464-5973-4CA1-845C-753BE646CE77}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{32E73464-5973-4CA1-845C-753BE646CE77}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{32E73464-5973-4CA1-845C-753BE646CE77}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{32E73464-5973-4CA1-845C-753BE646CE77}.MatlabDebug|x64.Build.0 = Debug|x64
+		{32E73464-5973-4CA1-845C-753BE646CE77}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{32E73464-5973-4CA1-845C-753BE646CE77}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{32E73464-5973-4CA1-845C-753BE646CE77}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{32E73464-5973-4CA1-845C-753BE646CE77}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{32E73464-5973-4CA1-845C-753BE646CE77}.Release|Win32.ActiveCfg = Release|Win32
+		{32E73464-5973-4CA1-845C-753BE646CE77}.Release|Win32.Build.0 = Release|Win32
+		{32E73464-5973-4CA1-845C-753BE646CE77}.Release|x64.ActiveCfg = Release|x64
+		{32E73464-5973-4CA1-845C-753BE646CE77}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

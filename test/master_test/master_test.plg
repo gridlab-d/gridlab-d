@@ -1,0 +1,75 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: master_test - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\natet\LOCALS~1\Temp\RSP982.tmp" with contents
+[
+/nologo /MDd /W3 /Gm /GR /GX /ZI /Od /I "..\cppunit\include" /I "..\core_test" /I "..\..\core" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\projects\gridlab-d\GridlabD\source\test\master_test\master_test.cpp"
+"C:\projects\gridlab-d\GridlabD\source\test\master_test\master_testDlg.cpp"
+"C:\projects\gridlab-d\GridlabD\source\test\master_test\MasterUnitTest.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\natet\LOCALS~1\Temp\RSP982.tmp" 
+Creating temporary file "C:\DOCUME~1\natet\LOCALS~1\Temp\RSP983.tmp" with contents
+[
+/nologo /MDd /W3 /Gm /GR /GX /ZI /Od /I "..\cppunit\include" /I "..\core_test" /I "..\..\core" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/master_test.pch" /Yc"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\projects\gridlab-d\GridlabD\source\test\master_test\StdAfx.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\natet\LOCALS~1\Temp\RSP983.tmp" 
+Creating temporary file "C:\DOCUME~1\natet\LOCALS~1\Temp\RSP984.tmp" with contents
+[
+..\cppunit\lib\cppunitd.lib ..\cppunit\lib\testrunnerd.lib /nologo /subsystem:windows /incremental:yes /pdb:"Debug/master_test.pdb" /debug /machine:I386 /out:"Debug/master_test.exe" /pdbtype:sept 
+".\Debug\master_test.obj"
+".\Debug\master_testDlg.obj"
+".\Debug\MasterUnitTest.obj"
+".\Debug\StdAfx.obj"
+".\Debug\master_test.res"
+]
+Creating command line "link.exe @C:\DOCUME~1\natet\LOCALS~1\Temp\RSP984.tmp"
+<h3>Output Window</h3>
+Compiling...
+StdAfx.cpp
+Compiling...
+master_test.cpp
+c:\program files\microsoft visual studio\vc98\include\xlocinfo(55) : error C2143: syntax error : missing ';' before '*'
+c:\program files\microsoft visual studio\vc98\include\xlocinfo(56) : error C2501: '_Getlconv' : missing storage-class or type specifiers
+c:\program files\microsoft visual studio\vc98\include\xlocinfo(56) : warning C4183: '_Getlconv': member function definition looks like a ctor, but name does not match enclosing class
+c:\program files\microsoft visual studio\vc98\include\xlocale(22) : error C2065: 'LC_COLLATE' : undeclared identifier
+c:\program files\microsoft visual studio\vc98\include\xlocale(22) : error C2057: expected constant expression
+c:\program files\microsoft visual studio\vc98\include\xlocale(22) : error C2065: 'LC_CTYPE' : undeclared identifier
+c:\program files\microsoft visual studio\vc98\include\xlocale(22) : error C2057: expected constant expression
+c:\program files\microsoft visual studio\vc98\include\xlocale(23) : error C2065: 'LC_MONETARY' : undeclared identifier
+c:\program files\microsoft visual studio\vc98\include\xlocale(23) : error C2057: expected constant expression
+c:\program files\microsoft visual studio\vc98\include\xlocale(23) : error C2065: 'LC_NUMERIC' : undeclared identifier
+c:\program files\microsoft visual studio\vc98\include\xlocale(23) : error C2057: expected constant expression
+c:\program files\microsoft visual studio\vc98\include\xlocale(24) : error C2065: 'LC_TIME' : undeclared identifier
+c:\program files\microsoft visual studio\vc98\include\xlocale(24) : error C2057: expected constant expression
+master_testDlg.cpp
+MasterUnitTest.cpp
+c:\program files\microsoft visual studio\vc98\include\xlocinfo(55) : error C2143: syntax error : missing ';' before '*'
+c:\program files\microsoft visual studio\vc98\include\xlocinfo(56) : error C2501: '_Getlconv' : missing storage-class or type specifiers
+c:\program files\microsoft visual studio\vc98\include\xlocinfo(56) : warning C4183: '_Getlconv': member function definition looks like a ctor, but name does not match enclosing class
+c:\program files\microsoft visual studio\vc98\include\xlocale(22) : error C2065: 'LC_COLLATE' : undeclared identifier
+c:\program files\microsoft visual studio\vc98\include\xlocale(22) : error C2057: expected constant expression
+c:\program files\microsoft visual studio\vc98\include\xlocale(22) : error C2065: 'LC_CTYPE' : undeclared identifier
+c:\program files\microsoft visual studio\vc98\include\xlocale(22) : error C2057: expected constant expression
+c:\program files\microsoft visual studio\vc98\include\xlocale(23) : error C2065: 'LC_MONETARY' : undeclared identifier
+c:\program files\microsoft visual studio\vc98\include\xlocale(23) : error C2057: expected constant expression
+c:\program files\microsoft visual studio\vc98\include\xlocale(23) : error C2065: 'LC_NUMERIC' : undeclared identifier
+c:\program files\microsoft visual studio\vc98\include\xlocale(23) : error C2057: expected constant expression
+c:\program files\microsoft visual studio\vc98\include\xlocale(24) : error C2065: 'LC_TIME' : undeclared identifier
+c:\program files\microsoft visual studio\vc98\include\xlocale(24) : error C2057: expected constant expression
+Generating Code...
+Error executing cl.exe.
+
+
+
+<h3>Results</h3>
+master_test.exe - 24 error(s), 2 warning(s)
+</pre>
+</body>
+</html>

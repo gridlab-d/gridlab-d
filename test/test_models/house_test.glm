@@ -1,0 +1,104 @@
+//#include "../powerflow/test/assert.glm"
+
+#set include="/Documents and Settings/d3p988/Desktop/GLD Clean SVN/source/core/"
+#set force_compile=0
+#set debug=1
+#set iteration_limit=6
+module residential;
+module tape;
+module climate;
+
+clock { 
+	 timestamp '2000-01-01 0:00:00';
+	 timezone EST+5EDT;
+}
+
+class complex_assert {
+	char32 target;
+	complex value;
+	double within;
+	intrinsic postsync(TIMESTAMP t0, TIMESTAMP t1)
+	{
+		if (t0>0)
+		{
+			complex x;
+			gl_get_value(my->parent,target, x);
+			complex m = (x-value).Mag();
+			if (!m.IsFinite() || m>within){
+				//gl_throw("assert failed on %s: %s (%g%+gi) not within %f of %g%+gi", 
+				gl_error("assert failed on %s: %s (%g%+gi) not within %f of %g%+gi", 
+					gl_name(my->parent), target, x.Re(), x.Im(), within, value.Re(), value.Im());
+				return t1;
+			}
+			return TS_NEVER;
+		} else {
+			return t1+1;
+		}
+	};
+}; 
+
+
+class double_assert {
+	char32 target;
+	double value;
+	double within;
+	intrinsic postsync(TIMESTAMP t0, TIMESTAMP t1)
+	{
+		if (t0>0)
+		{
+			double x;
+			gl_get_value(my->parent,target, x);
+			double m = abs(x-value);
+			if (_isnan(m) || m>within){				
+				gl_error("assert failed on %s: %s %g not within %f of %g", 
+					gl_name(my->parent), target, x, within, value);
+				return t1;
+			} else {
+				//gl_debug("asserted on %s: %s %g and %g at %s", gl_name(my->parent), target, x, value, gl_strftime(t1));
+			}
+			return TS_NEVER;
+		} else {
+			return t1+1;
+		}
+	};
+};
+
+object climate{
+	temperature 95.0;
+	humidity 0.75;
+	object player{
+		property temperature;
+		loop 7;
+		file ../test/test_models/house_Tout.txt;
+	};
+}
+
+object house{
+	name TestHouse;
+	floor_area 2500 sf;
+	gross_wall_area 6400 sf;
+	ceiling_height 8 ft;
+	aspect_ratio 1.0;
+	air_temperature 74.0 degF;
+	airchange_per_hour 5;
+	thermostat_deadband 1 degF;
+	cooling_setpoint 74 degF;
+	heating_setpoint 70 degF;
+	envelope_UA 437.5 Btu/degF;
+	mass_heat_coeff 1875;
+	COP_coeff 1.0;
+	design_heating_capacity 18.0;
+	design_cooling_capacity 18.0;
+	cooling_COP 3.0;
+	heating_COP 1.0;
+	object recorder{
+		property power,air_temperature;
+		limit 1000;
+		interval -1;
+		file /samp.csv;
+	};
+}
+
+
+
+// EOF

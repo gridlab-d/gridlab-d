@@ -1,0 +1,42 @@
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow;
+module generators;
+
+object windturb_dg {
+	name test_wdg;
+	#phases "ABCN"
+	#Gen_status 1;
+	#Gen_type 0;
+	#Cp_data 0; 
+	#Rated_kVA 150;
+	#Rated_kV 0.690;
+	#voltage_A 240.000+000j;
+	#voltage_B 120.000+207.840j;
+	#voltage_C 120.000-207.840j;
+	#PT_enumeration,"Gen_mode",PADDR(Gen_mode),
+	#PT_enumeration,"Gen_Status",PADDR(Gen_status),
+	#PT_enumeration,"Gen_type",PADDR(Gen_type),
+	#PT_enumeration,"Cp_data",PADDR(Cp_data),
+	#PT_double, "Rated_kVA[kVA]", PADDR(Rated_kVA),
+	#PT_double, "Rated_kV[kV]", PADDR(Rated_kV),
+	#PT_complex, "voltage_A[V]", PADDR(voltage_A),
+	#PT_complex, "voltage_B[V]", PADDR(voltage_B),
+	#PT_complex, "voltage_C[V]", PADDR(voltage_C),
+	#PT_complex, "current_A[A]", PADDR(current_A),
+	#PT_complex, "current_B[A]", PADDR(current_B),
+	#PT_complex, "current_C[A]", PADDR(current_C),
+	#PT_complex, "EfA[V]", PADDR(EfA),			//Synchronous Generator
+	#PT_complex, "EfB[V]", PADDR(EfB),
+	#PT_complex, "EfC[V]", PADDR(EfC),
+	#PT_complex, "Vrotor_A[V]", PADDR(Vrotor_A), //Induction Generator
+	#PT_complex, "Vrotor_B[V]", PADDR(Vrotor_B),
+	#PT_complex, "Vrotor_C[V]", PADDR(Vrotor_C),
+	#PT_complex, "Irotor_A[V]", PADDR(Irotor_A),
+	#PT_complex, "Irotor_B[V]", PADDR(Irotor_B),
+	#PT_complex, "Irotor_C[V]", PADDR(Irotor_C),
+}

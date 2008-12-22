@@ -1,0 +1,306 @@
+/** $Id: overhead_line.cpp 1182 2008-12-22 22:08:36Z dchassin $
+	Copyright (C) 2008 Battelle Memorial Institute
+	@file overhead_line.cpp
+	@addtogroup overhead_line 
+	@ingroup line
+
+	@{
+**/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <math.h>
+#include <iostream>
+using namespace std;
+
+#include "line.h"
+
+CLASS* overhead_line::oclass = NULL;
+CLASS* overhead_line::pclass = NULL;
+
+overhead_line::overhead_line(MODULE *mod) : line(mod)
+{
+	if(oclass == NULL)
+	{
+		pclass = line::oclass;
+		
+		oclass = gl_register_class(mod,"overhead_line",sizeof(overhead_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
+        if(oclass == NULL)
+            GL_THROW("unable to register overhead_line class implemented by %s",__FILE__);
+        
+        if(gl_publish_variable(oclass,
+			PT_INHERIT, "line",
+			NULL) < 1) GL_THROW("unable to publish overhead_line properties in %s",__FILE__);
+    }
+}
+
+int overhead_line::create(void)
+{
+	int result = line::create();
+
+	return result;
+}
+
+int overhead_line::init(OBJECT *parent)
+{
+	line::init(parent);
+
+	if (!configuration)
+		throw "no overhead line configuration specified.";
+
+	if (!gl_object_isa(configuration, "line_configuration"))
+		throw "invalid line configuration for overhead line";
+
+	line_configuration *config = OBJECTDATA(configuration, line_configuration);
+
+	#define TEST_CONFIG(ph)                                                       \
+		if (config->phase##ph##_conductor &&                                       \
+				!gl_object_isa(config->phase##ph##_conductor, "overhead_line_conductor")) \
+			throw "invalid conductor for phase " #ph " of overhead line";           \
+		else if ((!config->phase##ph##_conductor) && has_phase(PHASE_##ph))                 \
+			throw "missing conductor for phase " #ph " of overhead line";
+
+	TEST_CONFIG(A)
+	TEST_CONFIG(B)
+	TEST_CONFIG(C)
+	TEST_CONFIG(N)
+	
+	#undef TEST_CONFIG
+
+	if (!config->line_spacing || !gl_object_isa(config->line_spacing, "line_spacing"))
+		throw "invalid or missing line spacing on overhead line";
+
+	recalc();
+
+	return 1;
+}
+
+void overhead_line::recalc(void)
+{
+	double dab, dbc, dac, dan, dbn, dcn;
+	double gmr_a, gmr_b, gmr_c, gmr_n, res_a, res_b, res_c, res_n;
+	complex z_aa, z_ab, z_ac, z_an, z_bb, z_bc, z_bn, z_cc, z_cn, z_nn;
+	double miles = length / 5280.0;
+
+	line_configuration *config = OBJECTDATA(configuration, line_configuration);
+
+	#define GMR(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
+		OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->geometric_mean_radius : 0.0)
+	#define RES(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
+		OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->resistance : 0.0)
+	#define DIST(ph1, ph2) (has_phase(PHASE_##ph1) && has_phase(PHASE_##ph2) && config->line_spacing ? \
+		OBJECTDATA(config->line_spacing, line_spacing)->distance_##ph1##to##ph2 : 0.0)
+
+	gmr_a = GMR(A);
+	gmr_b = GMR(B);
+	gmr_c = GMR(C);
+	gmr_n = GMR(N);
+	//res_a = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(A);
+	//res_b = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(B);
+	//res_c = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(C);
+	//res_n = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(N);
+	res_a = RES(A);
+	res_b = RES(B);
+	res_c = RES(C);
+	res_n = RES(N);
+	dab = DIST(A, B);
+	dbc = DIST(B, C);
+	dac = DIST(A, C);
+	dan = DIST(A, N);
+	dbn = DIST(B, N);
+	dcn = DIST(C, N);
+
+	#undef GMR
+	#undef RES
+	#undef DIST
+
+	if (has_phase(PHASE_A)) {
+		if (gmr_a > 0.0 && res_a > 0.0)
+			z_aa = complex(res_a + 0.0953, 0.12134 * (log(1.0 / gmr_a) + 7.93402));
+		else
+			z_aa = 0.0;
+		if (has_phase(PHASE_B) && dab > 0.0)
+			z_ab = complex(0.0953, 0.12134 * (log(1.0 / dab) + 7.93402));
+		else
+			z_ab = 0.0;
+		if (has_phase(PHASE_C) && dac > 0.0)
+			z_ac = complex(0.0953, 0.12134 * (log(1.0 / dac) + 7.93402));
+		else
+			z_ac = 0.0;
+		if (has_phase(PHASE_N) && dan > 0.0)
+			z_an = complex(0.0953, 0.12134 * (log(1.0 / dan) + 7.93402));
+		else
+			z_an = 0.0;
+	} else {
+		z_aa = z_ab = z_ac = z_an = 0.0;
+	}
+
+	if (has_phase(PHASE_B)) {
+		if (gmr_b > 0.0 && res_b > 0.0)
+			z_bb = complex(res_b + 0.0953, 0.12134 * (log(1.0 / gmr_b) + 7.93402));
+		else
+			z_bb = 0.0;
+		if (has_phase(PHASE_C) && dbc > 0.0)
+			z_bc = complex(0.0953, 0.12134 * (log(1.0 / dbc) + 7.93402));
+		else
+			z_bc = 0.0;
+		if (has_phase(PHASE_N) && dbn > 0.0)
+			z_bn = complex(0.0953, 0.12134 * (log(1.0 / dbn) + 7.93402));
+		else
+			z_bn = 0.0;
+	} else {
+		z_bb = z_bc = z_bn = 0.0;
+	}
+
+	if (has_phase(PHASE_C)) {
+		if (gmr_c > 0.0 && res_c > 0.0)
+			z_cc = complex(res_c + 0.0953, 0.12134 * (log(1.0 / gmr_c) + 7.93402));
+		else
+			z_cc = 0.0;
+		if (has_phase(PHASE_N) && dcn > 0.0)
+			z_cn = complex(0.0953, 0.12134 * (log(1.0 / dcn) + 7.93402));
+		else
+			z_cn = 0.0;
+	} else {
+		z_cc = z_cn = 0.0;
+	}
+
+	complex z_nn_inv = 0;
+	if (has_phase(PHASE_N) && gmr_n > 0.0 && res_n > 0.0){
+		z_nn = complex(res_n + 0.0953, 0.12134 * (log(1.0 / gmr_n) + 7.93402));
+		z_nn_inv = z_nn^(-1.0);
+	}
+	else
+		z_nn = 0.0;
+
+	b_mat[0][0] = (z_aa - z_an * z_an * z_nn_inv) * miles;
+	b_mat[0][1] = (z_ab - z_an * z_bn * z_nn_inv) * miles;
+	b_mat[0][2] = (z_ac - z_an * z_cn * z_nn_inv) * miles;
+	b_mat[1][0] = (z_ab - z_bn * z_an * z_nn_inv) * miles;
+	b_mat[1][1] = (z_bb - z_bn * z_bn * z_nn_inv) * miles;
+	b_mat[1][2] = (z_bc - z_bn * z_cn * z_nn_inv) * miles;
+	b_mat[2][0] = (z_ac - z_cn * z_an * z_nn_inv) * miles;
+	b_mat[2][1] = (z_bc - z_cn * z_bn * z_nn_inv) * miles;
+	b_mat[2][2] = (z_cc - z_cn * z_cn * z_nn_inv) * miles;
+
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0); // TODO: Initialize these to zero
+			c_mat[i][j] = 0.0;
+			B_mat[i][j] = b_mat[i][j];
+		}
+	}
+
+
+	OBJECT *obj = GETOBJECT(this);
+
+#ifdef _TESTING
+	if (show_matrix_values)
+	{
+		gl_testmsg("overhead_line: %d a matrix",obj->id);
+		print_matrix(a_mat);
+
+		gl_testmsg("overhead_line: %d A matrix",obj->id);
+		print_matrix(A_mat);
+
+		gl_testmsg("overhead_line: %d b matrix",obj->id);
+		print_matrix(b_mat);
+
+		gl_testmsg("overhead_line: %d B matrix",obj->id);
+		print_matrix(B_mat);
+
+		gl_testmsg("overhead_line: %d c matrix",obj->id);
+		print_matrix(c_mat);
+
+		gl_testmsg("overhead_line: %d d matrix",obj->id);
+		print_matrix(d_mat);
+	}
+#endif
+}
+
+int overhead_line::isa(char *classname)
+{
+	return strcmp(classname,"overhead_line")==0 || line::isa(classname);
+}
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF CORE LINKAGE: overhead_line
+//////////////////////////////////////////////////////////////////////////
+
+/**
+* REQUIRED: allocate and initialize an object.
+*
+* @param obj a pointer to a pointer of the last object in the list
+* @param parent a pointer to the parent of this object
+* @return 1 for a successfully created object, 0 for error
+*/
+EXPORT int create_overhead_line(OBJECT **obj, OBJECT *parent)
+{
+	try
+	{
+		*obj = gl_create_object(overhead_line::oclass);
+		if (*obj!=NULL)
+		{
+			overhead_line *my = OBJECTDATA(*obj,overhead_line);
+			gl_set_parent(*obj,parent);
+			return my->create();
+		}
+	}
+	catch (char *msg)
+	{
+		gl_error("create_overhead_line: %s", msg);
+	}
+	return 0;
+}
+
+EXPORT TIMESTAMP sync_overhead_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	overhead_line *pObj = OBJECTDATA(obj,overhead_line);
+	try {
+		TIMESTAMP t1 = TS_NEVER;
+		switch (pass) {
+		case PC_PRETOPDOWN:
+			return pObj->presync(t0);
+		case PC_BOTTOMUP:
+			return pObj->sync(t0);
+		case PC_POSTTOPDOWN:
+			t1 = pObj->postsync(t0);
+			obj->clock = t0;
+			return t1;
+		default:
+			throw "invalid pass request";
+		}
+	} catch (const char *error) {
+		GL_THROW("%s (overhead_line:%d): %s", pObj->get_name(), pObj->get_id(), error);
+		return 0; 
+	} catch (...) {
+		GL_THROW("%s (overhead_line:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
+		return 0;
+	}
+}
+
+EXPORT int init_overhead_line(OBJECT *obj)
+{
+	overhead_line *my = OBJECTDATA(obj,overhead_line);
+	try {
+		return my->init(obj->parent);
+	}
+	catch (char *msg)
+	{
+		GL_THROW("%s (overhead_line:%d): %s", my->get_name(), my->get_id(), msg);
+		return 0; 
+	}
+}
+
+EXPORT int isa_overhead_line(OBJECT *obj, char *classname)
+{
+	return OBJECTDATA(obj,line)->isa(classname);
+}
+
+EXPORT int recalc_overhead_line(OBJECT *obj)
+{
+	OBJECTDATA(obj,overhead_line)->recalc();
+	return 1;
+}
+
+/**@}**/

@@ -1,0 +1,348 @@
+/** $Id: underground_line.cpp 1182 2008-12-22 22:08:36Z dchassin $
+	Copyright (C) 2008 Battelle Memorial Institute
+	@file underground_line.cpp
+	@addtogroup underground_line 
+	@ingroup line
+
+	@{
+**/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <math.h>
+#include <iostream>
+using namespace std;
+
+#include "line.h"
+
+CLASS* underground_line::oclass = NULL;
+CLASS* underground_line::pclass = NULL;
+
+underground_line::underground_line(MODULE *mod) : line(mod)
+{
+	if(oclass == NULL)
+	{
+		pclass = line::oclass;
+		
+		oclass = gl_register_class(mod,"underground_line",sizeof(underground_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
+        if(oclass == NULL)
+            GL_THROW("unable to register object class implemented by %s",__FILE__);
+        
+        if(gl_publish_variable(oclass,
+			PT_INHERIT, "line",
+			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+    }
+}
+
+int underground_line::create(void)
+{
+	int result = line::create();
+	return result;
+}
+
+
+int underground_line::init(OBJECT *parent)
+{
+	int result = line::init(parent);
+
+	/// @todo implement recalc just like overhead_line (ticket #197)
+
+	if (!configuration)
+		throw "no underground line configuration specified.";
+
+	if (!gl_object_isa(configuration, "line_configuration"))
+		throw "invalid line configuration for underground line";
+	line_configuration *config = OBJECTDATA(configuration, line_configuration);
+
+	#define TEST_CONFIG(ph)                                                       \
+		if (config->phase##ph##_conductor &&                                       \
+				!gl_object_isa(config->phase##ph##_conductor, "underground_line_conductor")) \
+			throw "invalid conductor for phase " #ph " of underground line";           \
+		else if ((!config->phase##ph##_conductor) && (has_phase(PHASE_##ph)))         \
+			throw "missing conductor for phase " #ph " of underground line";
+
+	TEST_CONFIG(A)
+	TEST_CONFIG(B)
+	TEST_CONFIG(C)
+	TEST_CONFIG(N)
+
+	#undef TEST_CONFIG
+
+	if (!config->line_spacing || !gl_object_isa(config->line_spacing, "line_spacing"))
+		throw "invalid or missing line spacing on underground line";
+
+	double dia_od1, dia_od2, dia_od3;
+	int16 strands_4, strands_5, strands_6;
+	double rad_14, rad_25, rad_36;
+	double dia[7], res[7], gmr[7], gmrcn[3], rcn[3];
+	double d[6][6];
+	complex z[6][6]; //, z_ij[3][3], z_in[3][3], z_nj[3][3], z_nn[3][3], z_abc[3][3];
+
+	complex test;///////////////
+
+	#define DIA(i) (dia[i - 1])
+	#define RES(i) (res[i - 1])
+	#define GMR(i) (gmr[i - 1])
+	#define GMRCN(i) (gmrcn[i - 4])
+	#define RCN(i) (rcn[i - 4])
+	#define D(i, j) (d[i - 1][j - 1])
+	#define Z(i, j) (z[i - 1][j - 1])
+
+#define UG_GET(ph, name) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
+		OBJECTDATA(config->phase##ph##_conductor, underground_line_conductor)->name : 0)
+
+	dia_od1 = UG_GET(A, outer_diameter);
+	dia_od2 = UG_GET(B, outer_diameter);
+	dia_od3 = UG_GET(C, outer_diameter);
+	GMR(1) = UG_GET(A, conductor_gmr);
+	GMR(2) = UG_GET(B, conductor_gmr);
+	GMR(3) = UG_GET(C, conductor_gmr);
+	GMR(7) = UG_GET(N, conductor_gmr);
+	DIA(1) = UG_GET(A, conductor_diameter);
+	DIA(2) = UG_GET(B, conductor_diameter);
+	DIA(3) = UG_GET(C, conductor_diameter);
+	DIA(7) = UG_GET(N, conductor_diameter);
+	RES(1) = UG_GET(A, conductor_resistance);
+	RES(2) = UG_GET(B, conductor_resistance);
+	RES(3) = UG_GET(C, conductor_resistance);
+	RES(7) = UG_GET(N, conductor_resistance);
+	GMR(4) = UG_GET(A, neutral_gmr);
+	GMR(5) = UG_GET(B, neutral_gmr);
+	GMR(6) = UG_GET(C, neutral_gmr);
+	DIA(4) = UG_GET(A, neutral_diameter);
+	DIA(5) = UG_GET(B, neutral_diameter);
+	DIA(6) = UG_GET(C, neutral_diameter);
+	RES(4) = UG_GET(A, neutral_resistance);
+	RES(5) = UG_GET(B, neutral_resistance);
+	RES(6) = UG_GET(C, neutral_resistance);
+	strands_4 = UG_GET(A, neutral_strands);
+	strands_5 = UG_GET(B, neutral_strands);
+	strands_6 = UG_GET(C, neutral_strands);
+	rad_14 = (dia_od1 - DIA(4)) / 24.0;
+	rad_25 = (dia_od2 - DIA(5)) / 24.0;
+	rad_36 = (dia_od3 - DIA(6)) / 24.0;
+
+	RCN(4) = has_phase(PHASE_A) && strands_4 > 0 ? RES(4) / strands_4 : 0.0;
+	RCN(5) = has_phase(PHASE_B) && strands_5 > 0 ? RES(5) / strands_5 : 0.0;
+	RCN(6) = has_phase(PHASE_C) && strands_6 > 0 ? RES(6) / strands_6 : 0.0;
+
+	GMRCN(4) = !(has_phase(PHASE_A) && strands_4 > 0) ? 0.0 :
+		pow(GMR(4) * strands_4 * pow(rad_14, (strands_4 - 1)), (1.0 / strands_4));
+	GMRCN(5) = !(has_phase(PHASE_B) && strands_5 > 0) ? 0.0 :
+		pow(GMR(5) * strands_5 * pow(rad_25, (strands_5 - 1)), (1.0 / strands_5));
+	GMRCN(6) = !(has_phase(PHASE_C) && strands_6 > 0) ? 0.0 :
+		pow(GMR(6) * strands_6 * pow(rad_36, (strands_6 - 1)), (1.0 / strands_6));
+
+	#define DIST(ph1, ph2) (has_phase(PHASE_##ph1) && has_phase(PHASE_##ph2) && config->line_spacing ? \
+		OBJECTDATA(config->line_spacing, line_spacing)->distance_##ph1##to##ph2 : 0.0)
+
+	D(1, 2) = DIST(A, B);
+	D(1, 3) = DIST(A, C);
+	D(1, 4) = rad_14;
+	D(1, 5) = D(1, 2);
+	D(1, 6) = D(1, 3);
+	D(2, 1) = D(1, 2);
+	D(2, 3) = DIST(B, C);
+	D(2, 4) = D(2, 1);
+	D(2, 5) = rad_25;
+	D(2, 6) = D(2, 3);
+	D(3, 1) = D(1, 3);
+	D(3, 2) = D(2, 3);
+	D(3, 4) = D(3, 1);
+	D(3, 5) = D(3, 2);
+	D(3, 6) = rad_36;
+	D(4, 1) = D(1, 4);
+	D(4, 2) = D(2, 4);
+	D(4, 3) = D(3, 4);
+	D(4, 5) = D(1, 2);
+	D(4, 6) = D(1, 3);
+	D(5, 1) = D(1, 5);
+	D(5, 2) = D(2, 5);
+	D(5, 3) = D(3, 5);
+	D(5, 4) = D(4, 5);
+	D(5, 6) = D(2, 3);
+	D(6, 1) = D(1, 6);
+	D(6, 2) = D(2, 6);
+	D(6, 3) = D(3, 6);
+	D(6, 4) = D(4, 6);
+	D(6, 5) = D(5, 6);
+
+	#undef DIST
+	#undef DIA
+	#undef UG_GET
+
+	#define Z_GMR(i) (GMR(i) == 0.0 ? complex(0.0) : complex(0.0953 + RES(i), 0.12134 * (log(1.0 / GMR(i)) + 7.93402)))
+	#define Z_GMRCN(i) (GMRCN(i) == 0.0 ? complex(0.0) : complex(0.0953 + RCN(i), 0.12134 * (log(1.0 / GMRCN(i)) + 7.93402)))
+	#define Z_DIST(i, j) (D(i, j) == 0.0 ? complex(0.0) : complex(0.0953, 0.12134 * (log(1.0 / D(i, j)) + 7.93402)))
+
+	for (int i = 1; i < 7; i++) {
+		for (int j = 1; j < 7; j++) {
+			if (i == j) {
+				if (i > 3){
+					Z(i, j) = Z_GMRCN(i);
+				    test=Z_GMRCN(i);
+				}
+				else
+					Z(i, j) = Z_GMR(i);
+			}
+			else
+				Z(i, j) = Z_DIST(i, j);
+		}
+	}	
+
+
+	#undef RES
+	#undef GMR
+	#undef GMRCN
+	#undef RCN
+	#undef D
+	#undef Z_GMR
+	#undef Z_GMRCN
+	#undef Z_DIST
+
+	complex z_ij[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
+	                      {Z(2, 1), Z(2, 2), Z(2, 3)},
+	                      {Z(3, 1), Z(3, 2), Z(3, 3)}};
+	complex z_in[3][3] = {{Z(1, 4), Z(1, 5), Z(1, 6)},
+	                      {Z(2, 4), Z(2, 5), Z(2, 6)},
+	                      {Z(3, 4), Z(3, 5), Z(3, 6)}};
+	complex z_nj[3][3] = {{Z(1, 4), Z(2, 4), Z(3, 4)},
+	                      {Z(1, 5), Z(2, 5), Z(3, 5)},
+	                      {Z(1, 6), Z(2, 6), Z(3, 6)}};
+	complex z_nn[3][3] = {{Z(4, 4), Z(4, 5), Z(4, 6)},
+	                      {Z(5, 4), Z(5, 5), Z(5, 6)},
+	                      {Z(6, 4), Z(6, 5), Z(6, 6)}};
+	complex z_nn_inv[3][3], z_p1[3][3], z_p2[3][3], z_abc[3][3];
+
+	#undef Z
+
+	if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
+		if (!has_phase(PHASE_A))
+			z_nn[0][0]=complex(1.0);
+		if (!has_phase(PHASE_B))
+			z_nn[1][1]=complex(1.0);
+		if (!has_phase(PHASE_C))
+			z_nn[2][2]=complex(1.0);
+	}
+	
+	inverse(z_nn,z_nn_inv);
+	multiply(z_in, z_nn_inv, z_p1);
+	multiply(z_p1, z_nj, z_p2);
+	subtract(z_ij, z_p2, z_abc);
+	multiply(length / 5280.0, z_abc, b_mat);
+
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
+			c_mat[i][j] = 0.0;
+			B_mat[i][j] = b_mat[i][j];
+		}
+	}
+
+#ifdef _TESTING
+	/// @todo use output_test() instead of cout (powerflow, high priority) (ticket #137)
+	if (show_matrix_values)
+	{
+		gl_testmsg("underground_line: %d a matrix");
+		print_matrix(a_mat);
+
+		gl_testmsg("underground_line: %d A matrix");
+		print_matrix(A_mat);
+
+		gl_testmsg("underground_line: %d b matrix");
+		print_matrix(b_mat);
+
+		gl_testmsg("underground_line: %d B matrix");
+		print_matrix(B_mat);
+
+		gl_testmsg("underground_line: %d c matrix");
+		print_matrix(c_mat);
+
+		gl_testmsg("underground_line: %d d matrix");
+		print_matrix(d_mat);
+	}
+#endif
+	return result;
+}
+
+int underground_line::isa(char *classname)
+{
+	return strcmp(classname,"underground_line")==0 || line::isa(classname);
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF CORE LINKAGE: underground_line
+//////////////////////////////////////////////////////////////////////////
+
+/**
+* REQUIRED: allocate and initialize an object.
+*
+* @param obj a pointer to a pointer of the last object in the list
+* @param parent a pointer to the parent of this object
+* @return 1 for a successfully created object, 0 for error
+*/
+EXPORT int create_underground_line(OBJECT **obj, OBJECT *parent)
+{
+	try
+	{
+		*obj = gl_create_object(underground_line::oclass);
+		if (*obj!=NULL)
+		{
+			underground_line *my = OBJECTDATA(*obj,underground_line);
+			gl_set_parent(*obj,parent);
+			return my->create();
+		}	}
+	catch (char *msg)
+	{
+		gl_error("create_underground_line: %s", msg);
+	}
+	return 0;
+}
+
+EXPORT TIMESTAMP sync_underground_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	underground_line *pObj = OBJECTDATA(obj,underground_line);
+	try {
+		TIMESTAMP t1 = TS_NEVER;
+		switch (pass) {
+		case PC_PRETOPDOWN:
+			return pObj->presync(t0);
+		case PC_BOTTOMUP:
+			return pObj->sync(t0);
+		case PC_POSTTOPDOWN:
+			t1 = pObj->postsync(t0);
+			obj->clock = t0;
+			return t1;
+		default:
+			throw "invalid pass request";
+		}
+	} catch (const char *error) {
+		GL_THROW("%s (underground_line:%d): %s", pObj->get_name(), pObj->get_id(), error);
+		return 0; 
+	} catch (...) {
+		GL_THROW("%s (underground_line:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
+		return 0;
+	}
+}
+
+EXPORT int init_underground_line(OBJECT *obj)
+{
+	underground_line *my = OBJECTDATA(obj,underground_line);
+	try {
+		return my->init(obj->parent);
+	}
+	catch (char *msg)
+	{
+		GL_THROW("%s (underground_line:%d): %s", my->get_name(), my->get_id(), msg);
+		return 0; 
+	}
+}
+
+EXPORT int isa_underground_line(OBJECT *obj, char *classname)
+{
+	return OBJECTDATA(obj,underground_line)->isa(classname);
+}
+
+/**@}**/

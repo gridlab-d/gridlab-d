@@ -1,0 +1,25 @@
+H1 {
+	font-family: arial;
+	background-color: gray;
+}
+H2 {
+	font-family: arial;
+	background-color: lightgreen;
+}
+H3 {
+	font-family: arial;
+	background-color: yellow;
+}
+TD {
+	font-family: courier;
+	vertical-align: top;
+}
+TH {
+	font-family: arial;
+	background-color: lightblue;
+	text-align: left;
+}
+
+BODY {
+	background-color: lightyellow;
+}

@@ -1,0 +1,58 @@
+Getting Started with GridLAB-D
+Copyright (C) 2008 Battelle Memorial Institute
+
+Building GridLAB-D with the Auto-Toolset Under Linux and Other Unix Variants
+You must have autoconf, automake, libtool, xerces-c and cppunit install to
+build GridLAB-D in this way.
+
+If you are building from a release distribution you must first run:
+
+      % cd <source-path>
+      % ./configure
+      % make 
+
+Build GridLAB-D from the makefiles provided in the distribution, which will
+create targets in the same directory as the input source.  Libraries are
+created using libtool which outputs libraries in a directory named '.libs' in
+the input's source directory.  Use 'make install' to install GridLAB-D on the
+system.  You must be superuser (or use sudo) to install to the system. If you
+want to install GridLAB-D to a different location, use:
+
+      % make install prefix=<install-path>.  
+
+where <install-path> is the full path to the installation directory.
+
+Whenever changes have been made to configure.ac or any of the makefile.am
+files, the following build steps must be executed from the source-path folder:  
+	1. Use 'autoreconf -isf' to update the configure script.
+	2. Use './configure' to create the makefiles.
+	3. Repeat the above command to make the project as usual.
+
+Make should detect changes to configure.ac and makefile.am files and
+automatically rerun steps 1 and 2 as needed.  If files are added to a module,
+add the filename to makefile.am in that module's directory and remake. If make
+does not automatically perform the required steps, rerun autoreconf -isf and
+./configure manually.
+
+To distribute the source code, it is best to check out a clean copy of the
+source code and then package the resulting source tree using the
+utilities/release-src command from the <source-path> directory.
+
+On Apple OS-X, the GNU libtools are prefixed with a 'g' to differentiate them
+from the NeXTStep libtool.  Before performing the steps above, tell the
+autotoolset where to find libtool and libtoolize by setting the LIBTOOL and
+LIBTOOLIZE environment variables.  The following lines are an example:
+
+    % export LIBTOOL=/usr/bin/glibtool
+    % export LIBTOOLIZE=/usr/bin/glibtoolize
+    % autoreconf -isf
+ 
+For information on the sample models, see samples/README.
+
+On HP Superdome you may run into a problem with rpl_malloc being undefined
+during the build.  If so, set the following environment before running
+./configure
+
+    % export ac_cv_func_malloc_0_nonnull=yes 
+
+

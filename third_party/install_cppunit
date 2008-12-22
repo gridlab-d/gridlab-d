@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ -f cppunit*.gz -a ! -d cppunit* ]; then
+	echo "Uncompressing cppunit*.gz..."
+	gunzip cppunit*.gz
+fi
+if [ -f cppunit*.tar -a ! -d cppunit* ]; then
+	echo "Extracting cppunit*.tar..."
+	tar xvf cppunit*.tar
+fi
+cd cppunit*
+./configure
+make
+sudo make install

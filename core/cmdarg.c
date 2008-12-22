@@ -1,0 +1,448 @@
+/** $Id: cmdarg.c 1182 2008-12-22 22:08:36Z dchassin $
+	Copyright (C) 2008 Battelle Memorial Institute
+	@file cmdarg.c
+	@addtogroup cmdarg Command-line arguments
+	@ingroup core
+
+	The command-line argument processing module processes arguments as they are encountered.
+
+	The following command-line toggles are supported
+	- \p --warn		toggles the warning mode
+	- \p --check	toggles calls to module check functions
+	- \p --debug	toggles debug messages
+	- \p --debugger	enables the debugger and turns on debug messages
+	- \p --dumpall	toggles a complete model dump when the simulation exits
+	- \p --quiet	toggles all messages except \b error and \b fatal messages
+	- \p --profile	toggles performance profiling
+
+	The following command-line processes can be called
+	- \p --license	prints the software license
+	- \p --dsttest	performs a daylight saving time definitions in \b tzinfo.txt
+	- \p --unitstest	performs a test of the units in \b unitfile.txt
+	- \p --randtest	performs a test of the random number generators
+	- \p --testall \e file	performs module selftests of modules those listed in \e file
+	- \p --test	run the internal core self-test routines
+	- \p --define	define a global variable
+	- \p --libinfo \e module	prints information about the \e module
+	- \p --xsd \e module[:object]	prints the xsd of a module or object
+	- \p --xsl        creates the xsl for this version of gridlab-d
+	- \p --kml=file   output kml (Google Earth) file of model
+
+	The following system options may be changed
+	- \p --threadcount \e n		changes the number of thread to use during simulation (default is 0, meaning as many as useful)
+	- \p --output \e file		saves dump output to \e file (default is \p gridlabd.glm)
+	- \p --environment \e app	start the \e app as the processing environment (default is \p batch)
+	- \p --xmlencoding \e num	sets the XML encoding (8, 16, or 32)
+	- \p --xmlstrict            toggles XML to be strict
+	- \p --relax                allows implicit variable definition when assignments made
+
+	The following are only supported on Linux systems
+	- \p --pidfile[=filename]   creates a process id file while GridLAB-D is running (default is gridlabd.pid)
+	- \p --redirect \e stream[:file] redirects output stream to file
+	- \p --server      runs in server mode (pidfile and redirects all output)
+ @{
+ **/
+
+#include <stdio.h>
+#include <string.h>
+
+#include "globals.h"
+#include "cmdarg.h"
+#include "output.h"
+#include "load.h"
+#include "legal.h"
+#include "timestamp.h"
+#include "random.h"
+
+STATUS load_module_list(FILE *fd,int* test_mod_num)
+{
+	/*
+
+	sprintf(mod_test,"mod_test%d=%s",test_mod_num++,*++argv);
+	if (global_setvar(mod_test)==SUCCESS)
+	*/
+	char mod_test[100];
+	char line[100];
+	while(fscanf(fd,"%s",line) != EOF)
+	{
+		printf("Line: %s",line);
+		sprintf(mod_test,"mod_test%d=%s",(*test_mod_num)++,line);
+		if (global_setvar(mod_test)!=SUCCESS)
+		{
+			output_fatal("Unable to store module name");
+			return FAILED;
+		}
+	}
+
+	return SUCCESS;
+}
+
+/** Load and process the command-line arguments
+	@return a STATUS value
+
+	Arguments are processed immediately as they are seen.  This means that
+	models are loaded when they are encountered, and in relation to the
+	other flags.  Thus
+	@code
+	gridlabd --warn model1 --warn model2
+	@endcode
+	will load \p model1 with warnings on, and \p model2 with warnings off.
+ **/
+STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
+				   char *argv[]) /**< a list pointers to the argument string */
+{
+	int test_mod_num = 1;
+	unsigned int pos=0;
+	int i;
+	char *pd1, *pd2;
+
+	/* capture the execdir */
+	strcpy(global_execname,argv[0]);
+	strcpy(global_execdir,argv[0]);
+	pd1 = strrchr(global_execdir,'/');
+	pd2 = strrchr(global_execdir,'\\');
+	if (pd1>pd2) *pd1='\0';
+	else if (pd2>pd1) *pd2='\0';
+
+	/* capture the command line */
+	for (i=0; i<argc; i++)
+	{
+		if (pos<sizeof(global_command_line)-strlen(argv[i]))
+			pos += sprintf(global_command_line+pos,"%s%s",pos>0?" ":"",argv[i]);
+	}
+
+	while (argv++,--argc>0)
+	{
+		if (strcmp(*argv,"-w")==0 || strcmp(*argv,"--warn")==0)
+			global_warn_mode=!global_warn_mode;
+		else if (strcmp(*argv,"--bothstdout")==0)
+			output_both_stdout();
+		else if (strcmp(*argv,"-c")==0 || strcmp(*argv,"--check")==0)
+			global_runchecks=!global_runchecks;
+		else if (strcmp(*argv,"--debug")==0)
+			global_debug_output=!global_debug_output;
+		else if (strcmp(*argv,"--debugger")==0){
+			global_debug_mode=1;
+			global_debug_output=!global_debug_output;
+		}
+		else if (strcmp(*argv,"--dumpall")==0)
+			global_dumpall=!global_dumpall;
+		else if (strcmp(*argv,"-q")==0 || strcmp(*argv,"--quiet")==0)
+			global_quiet_mode=!global_quiet_mode;
+		else if (strcmp(*argv,"-v")==0 || strcmp(*argv,"--verbose")==0)
+			global_verbose_mode=!global_verbose_mode;
+		else if (strcmp(*argv,"--profile")==0)
+			global_profiler=!global_profiler;
+		else if (strcmp(*argv,"--pause")==0)
+			global_pauseatexit=!global_pauseatexit;
+		else if (strcmp(*argv,"--license")==0)
+			legal_license();
+		else if (strcmp(*argv, "-V")==0 ||strcmp(*argv, "--version")==0)
+			legal_notice();
+		else if (strcmp(*argv,"--dsttest")==0)
+			timestamp_test();
+		else if (strcmp(*argv,"--randtest")==0)
+			random_test();
+		else if (strcmp(*argv,"--unitstest")==0)
+			unit_test();
+		else if (strcmp(*argv,"--xmlstrict")==0)
+			global_xmlstrict = !global_xmlstrict;
+		else if (strcmp(*argv,"--globaldump")==0)
+		{
+			global_dump();
+			exit(0);
+		}
+		else if (strcmp(*argv,"--relax")==0)
+			global_strictnames = FALSE;
+		else if (strncmp(*argv,"--pidfile",9)==0)
+		{
+			char *filename = strchr(*argv,'=');
+			if (filename==NULL)
+				strcpy(global_pidfile,"gridlabd.pid");
+			else
+				strcpy(global_pidfile,filename+1);
+		}
+		else if (strncmp(*argv,"--kml",5)==0)
+		{
+			char *filename = strchr(*argv,'=');
+			if (filename)
+				strcpy(global_kmlfile,filename+1);
+			else
+				strcpy(global_kmlfile,"gridlabd.kml");
+		}
+		else if (strcmp(*argv, "--avlbalance") == 0){
+			global_no_balance = !global_no_balance;
+		}
+		else if (strcmp(*argv,"--testall")==0){
+			FILE *fd = NULL;
+			if(*++argv != NULL)
+				fd = fopen(*argv,"r");
+			else {
+				output_fatal("no filename for testall");
+				return FAILED;
+			}
+			argc--;
+			global_test_mode=TRUE;
+
+			if(fd == NULL)
+			{
+				output_fatal("incorrect module list file name");
+				return FAILED;
+			}
+			if(load_module_list(fd,&test_mod_num) == FAILED)
+				return FAILED;
+		}
+		else if (strcmp(*argv,"--modtest")==0)
+		{
+			if (argc-1>0)
+			{
+				MODULE *mod = module_load(argv[1],0,NULL);
+				if (mod==NULL)
+					output_fatal("module %s is not found",argv[1]);
+				else 
+				{
+					argv++;argc--;
+					if (mod->test==NULL)
+						output_fatal("module %s does not implement a test routine", argv[0]);
+					else
+					{
+						output_test("*** modtest of %s beginning ***", argv[0]);
+						mod->test(0,NULL);
+						output_test("*** modtest of %s ended ***", argv[0]);
+					}
+				}			
+			}
+			else
+			{
+				output_fatal("definition is missing");
+				return FAILED;
+			}
+		}
+		else if (strcmp(*argv,"--test")==0){
+			global_test_mode=TRUE;
+			global_strictnames = FALSE;
+			output_debug("disabling strict naming for tests");
+			if (argc-1>0)
+			{
+				char mod_test[100];
+				sprintf(mod_test,"mod_test%d=%s",test_mod_num++,*++argv);
+				if (global_setvar(mod_test)==SUCCESS)
+					argc--;
+			}
+			else
+			{
+				output_fatal("test module name is missing");
+				return FAILED;
+			}
+
+		}
+		else if (strcmp(*argv,"-D")==0 || strcmp(*argv,"--define")==0)
+		{
+			if (argc-1>0)
+			{
+				bool namestate = global_strictnames;
+				global_strictnames = FALSE;
+				if (global_setvar(*++argv)==SUCCESS){
+					argc--;
+				}
+				global_strictnames = namestate;
+			}
+			else
+			{
+				output_fatal("definition is missing");
+				return FAILED;
+			}
+		}
+		else if (strcmp(*argv,"--redirect")==0)
+		{
+			if (argc-1>0)
+			{
+				char buffer[1024]; char *p;
+				strcpy(buffer,*++argv); argc--;
+				if (strcmp(buffer,"all")==0)
+				{
+					if (output_redirect("output",NULL)==NULL ||
+						output_redirect("error",NULL)==NULL ||
+						output_redirect("warning",NULL)==NULL ||
+						output_redirect("debug",NULL)==NULL ||
+						output_redirect("verbose",NULL)==NULL ||
+						output_redirect("profile",NULL)==NULL ||
+						output_redirect("progress",NULL)==NULL)
+					{
+						output_fatal("redirection of all failed");
+						return FAILED;
+					}
+				}
+				else if ((p=strchr(buffer,':'))!=NULL)
+				{
+					*p++='\0';
+					if (output_redirect(buffer,p)==NULL)
+					{
+						output_fatal("redirection of %s to '%s' failed: %s",buffer,p, strerror(errno));
+						return FAILED;
+					}
+				}
+				else if (output_redirect(buffer,NULL)==NULL)
+				{
+						output_fatal("default redirection of %s failed: %s",buffer, strerror(errno));
+						return FAILED;
+				}
+			}
+			else
+			{
+				output_fatal("redirection is missing");
+				return FAILED;
+			}
+		}
+		else if (strcmp(*argv,"-L")==0 || strcmp(*argv,"--libinfo")==0)
+		{
+			if (argc-1>0)
+			{	argc--;
+				module_libinfo(*++argv);
+				exit(0);
+			}
+			else
+			{
+				output_fatal("missing library name");
+				return FAILED;
+			}
+		}
+		else if (strcmp(*argv,"-T")==0 || strcmp(*argv,"--threadcount")==0)
+		{
+			if (argc-1>0)
+				global_threadcount = (argc--,atoi(*++argv));
+			else
+			{
+				output_fatal("missing thread count");
+				return FAILED;
+			}
+		}
+		else if (strcmp(*argv,"-o")==0 || strcmp(*argv,"--output")==0)
+		{
+			if (argc-1>0)
+				strcpy(global_savefile,(argc--,*++argv));
+			else
+			{
+				output_fatal("missing output file");
+				return FAILED;
+			}
+		}
+		else if (strcmp(*argv,"-e")==0 || strcmp(*argv,"--environment")==0)
+		{
+			if (argc-1>0)
+				strcpy(global_environment,(argc--,*++argv));
+			else
+			{
+				output_fatal("environment not specified");
+				return FAILED;
+			}
+		}
+		else if (strcmp(*argv,"--xmlencoding")==0)
+		{
+			if (argc-1>0)
+			{
+				global_xml_encoding = atoi(*++argv);
+				argc--;
+			}
+			else
+			{
+				output_fatal("xml encoding not specified");
+				return FAILED;
+			}
+		}
+		else if (strcmp(*argv,"--xsd")==0)
+		{
+			if (argc-1>0)
+			{
+				argc--;
+				exit(output_xsd(*++argv));
+			}
+			else
+			{
+				MODULE *mod;
+				for (mod=module_get_first(); mod!=NULL; mod=mod->next)
+					output_xsd(mod->name);
+				return SUCCESS;
+			}
+		}
+		else if (strcmp(*argv,"--xsl")==0)
+		{
+			if (argc-1>0)
+			{
+				char fname[1024];
+				char *p_arg = *++argv;
+				char n_args=1;
+				char **p_args;
+				argc--;
+				while (*p_arg++!='\0') if (*p_arg==',')	n_args++;
+				p_args = (char**)malloc(sizeof(char*)*n_args);
+				p_arg = strtok(*argv,",");
+				n_args=0;
+				while (p_arg!=NULL)
+				{
+					p_args[n_args++] = p_arg;
+					p_arg = strtok(NULL,",");
+				}
+				sprintf(fname,"gridlabd-%d_%d.xsl",global_version_major,global_version_minor);
+				exit(output_xsl(fname,n_args,p_args));
+			}
+			else
+			{
+				output_fatal("module list not specified");
+				return FAILED;
+			}
+		}
+		else if (strcmp(*argv,"-h")==0 || strcmp(*argv,"--help")==0)
+		{
+			printf("Syntax: gridlabd [OPTIONS ...] <file> ... \nOptions:\n"
+				"  --avlbalance              toggles AVL tree balancing\n"
+				"  -c|--check                toggles module checks after model loads\n"
+				"  -D|--define <def>         defines a macro value\n"
+				"  --debug                   toggles debug output (prints internal messages)\n"
+				"  --debugger                toggles debugger mode (generates internal messages)\n"
+				"  --dumpall                 toggles module data dump after run completes\n"
+				"  -e|--environment <name>   specifies user environment (default none)\n"
+				"  --license                 print license information\n"
+				"  -L|--libinfo <module>     print module library information\n"
+				"  -o|--output <file>        specifies model should be output after run\n"
+				"  --profile                 toggles profilers\n"
+				"  -q|--quiet                toggles quiet mode (suppresses startup banner)\n"
+				"  --test                    toggles test mode (activate testing procedures)\n"
+				"  -T|--threadcount <n>      specifies the number of processor threads to use\n"
+				"  -v|--verbose              toggles verbose mode (active verbose messages)\n"
+				"  -V|--version              prints the GridlabD version information\n"
+				"  -w|--warn                 toggles warning mode (generates warning messages)\n"
+				"  --xmlencoding <num>       set the XML encoding (8, 16, or 32)\n"
+				"  --xmlstrict               toggles XML encoding to be strict\n"
+				"  --xsd <module>[:<object>] prints the xsd of an object\n"
+				"  --xsl <modlist>           prints the xsl for the modules listed\n"
+				);
+			exit(0);
+		}
+		else if (**argv!='-')
+		{
+			if (global_test_mode)
+				output_warning("file '%s' ignored in test mode", *argv);
+			else {
+				if (!loadall(*argv))
+					return FAILED;
+				/* preserve name of first model only */
+				if (strcmp(global_modelname,"")==0)
+					strcpy(global_modelname,*argv);
+			}
+		}
+		else
+		{
+			int n = module_cmdargs(argc,argv);
+			if (n==0)
+			{
+				output_error("command line option '%s' is not recognized",*argv);
+				return FAILED;
+			}
+		}
+	}
+	/*debug_traverse_tree(NULL);*/  /* for checking the name tree & getting a test file. -mh */
+	return SUCCESS;
+}
+
+/**@}**/

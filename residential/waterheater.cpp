@@ -1,0 +1,720 @@
+/** $Id: waterheater.cpp,v 1.51 2008/02/15 00:24:14 d3j168 Exp $
+	Copyright (C) 2008 Battelle Memorial Institute
+	@file waterheater.cpp
+	@addtogroup waterheater Electric waterheater
+	@ingroup residential
+
+	The residential electric waterheater uses a hybrid thermal model that is capable
+	of tracking either a single-mass of water, or a dual-mass with a varying thermocline.
+
+	The driving dynamic parameters of the waterheater are
+	- <b>demand</b>: the current consumption of water in gallons/minute; the higher
+	  the demand, the more quickly the thermocline drops.
+	- <b>voltage</b>: the line voltage for the coil; the lower the voltage, the
+	  more slowly the thermocline rises.
+	- <b>inlet water temperature</b>: the inlet water temperature; the lower the inlet
+	  water temperature, the more heat is needed to raise it to the set point
+	- <b>indoor air temperature</b>: the higher the indoor temperature, the less heat
+	  loss through the jacket.
+ @{
+ **/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <math.h>
+
+#include "house.h"
+#include "waterheater.h"
+
+#define TSTAT_PRECISION 0.01
+#define HEIGHT_PRECISION 0.01
+
+//////////////////////////////////////////////////////////////////////////
+// underground_line_conductor CLASS FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
+CLASS* waterheater::oclass = NULL;
+waterheater *waterheater::defaults = NULL;
+
+/**  Register the class and publish water heater object properties
+ **/
+waterheater::waterheater(MODULE *module) 
+{
+	// first time init
+	if (oclass==NULL)
+	{
+		// register the class definition
+		oclass = gl_register_class(module,"waterheater",sizeof(waterheater),PC_BOTTOMUP);
+		if (oclass==NULL)
+			GL_THROW("unable to register object class implemented by %s",__FILE__);
+
+		// publish the class properties
+		if (gl_publish_variable(oclass,
+			PT_double,"tank_volume[gal]",PADDR(tank_volume),
+			PT_double,"tank_UA[Btu/h]",PADDR(tank_UA),
+			PT_double,"tank_diameter[ft]",PADDR(tank_diameter),
+			PT_double,"water_demand[gpm]",PADDR(water_demand),
+			PT_double,"heating_element_capacity[W]",PADDR(heating_element_capacity),
+			PT_double,"inlet_water_temperature[degF]",PADDR(Tinlet),
+			PT_enumeration,"heat_mode",PADDR(heat_mode),
+				PT_KEYWORD,"ELECTRIC",ELECTRIC,
+				PT_KEYWORD,"GASHEAT",GASHEAT,
+			PT_enumeration,"location",PADDR(location),
+				PT_KEYWORD,"INSIDE",INSIDE,
+				PT_KEYWORD,"GARAGE",GARAGE,
+			PT_double,"tank_setpoint[degF]",PADDR(tank_setpoint),
+			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),
+			PT_complex,"power[kW]",PADDR(power_kw),
+			PT_double,"meter[kWh]",PADDR(kwh_meter),
+			PT_double,"temperature[degF]",PADDR(Tw),
+			NULL)<1) 
+			GL_THROW("unable to publish properties in %s",__FILE__);
+
+		// setup the default values
+		defaults = this;
+		memset(this,0,sizeof(waterheater));
+
+		// initialize public values
+		tank_volume = 50.0;
+		tank_UA = 0.0;
+		tank_diameter	= 1.5;  // All heaters are 1.5-ft wide for now...
+		Tinlet = 60.0;		// default set here, but published by the model for users to set this value
+		water_demand = 0.0;	// in gpm
+		heating_element_capacity = 0.0;
+		heat_needed = FALSE;
+		location = GARAGE;
+		heat_mode = ELECTRIC;
+		tank_setpoint = 0.0;
+		thermostat_deadband = 0.0;
+		power_kw = complex(0,0);
+		kwh_meter = 0.0;
+		Tw = 0.0;
+	}
+}
+
+waterheater::~waterheater()
+{
+}
+
+int waterheater::create() 
+{
+	// copy the defaults
+	memcpy(this,defaults,sizeof(waterheater));
+
+	// location...mostly in garage, a few inside...
+	location = gl_random_bernoulli(0.80) ? GARAGE : INSIDE;
+
+	// initialize randomly distributed values
+	tank_setpoint 		= clip(gl_random_normal(130,10),100,160);
+	thermostat_deadband	= clip(gl_random_normal(5, 1),1,10);
+	return 1;
+}
+
+/** Initialize water heater model properties - randomized defaults for all published variables
+ **/
+int waterheater::init(OBJECT *parent)
+{
+	OBJECT *hdr = OBJECTHDR(this);
+	hdr->flags |= OF_SKIPSAFE;
+
+	if (parent==NULL || !gl_object_isa(parent,"house"))
+	{
+		gl_error("dishwasher must have a parent house");
+		return 0;
+	}
+
+	// attach object to house panel
+	house *pHouse = OBJECTDATA(parent,house);
+	pVoltage = (pHouse->attach(OBJECTHDR(this),30,TRUE))->pV; // 220V 30amp breaker
+
+	// basic randomized defaults for published variables, if user has not set any of these
+	// Assuming a 50-gal heater with a UA of 2.0 Btu/hr-F for a 2000-sf house.  
+	if (tank_volume <= 0.0)
+		tank_volume = 5*floor((1.0/5.0)*gl_random_uniform(0.90, 1.10) * 50.0 * (pHouse->get_floor_area() /2000.0));  // [gal]
+
+	// truncate tank volume distribution
+	if (tank_volume > 100.0)
+		tank_volume = 100.0;		
+	else if (tank_volume < 40.0) 
+		tank_volume = 40.0;
+
+	// initial tank UA
+	if (tank_UA <= 0.0)
+
+		// UA-2.0 represents R-13; assume UA varies directly with volume...
+		tank_UA = clip(gl_random_normal(2.0, 0.20),0.1,10) * tank_volume/50;  
+
+	// Set heating element capacity if not provided by the user
+	if (heating_element_capacity <= 0.0)
+	{
+		if (tank_volume >= 50)
+			heating_element_capacity = 4500;
+		else 
+		{
+			// Smaller tanks can be either 3200, 3500, or 4500...
+			double randVal = gl_random_uniform(0,1);
+			if (randVal < 0.33)
+				heating_element_capacity = 3200;
+			else if (randVal < 0.67)
+				heating_element_capacity = 3500;
+			else
+				heating_element_capacity = 4500;
+		}
+	}
+
+	// Other initial conditions
+	if (tank_setpoint==0)
+		tank_setpoint = gl_random_normal(125,5);
+	if (tank_setpoint<90) tank_setpoint = 90;
+	if (tank_setpoint>160) tank_setpoint = 160;
+
+	if (thermostat_deadband<=0)
+		thermostat_deadband = fabs(gl_random_normal(2,1))+1;
+	if (thermostat_deadband>10)
+		thermostat_deadband = 10;
+
+	if(Tw < Tinlet){ // uninit'ed temperature
+		Tw = gl_random_uniform(tank_setpoint - thermostat_deadband, tank_setpoint + thermostat_deadband);
+	}
+	current_model = NONE;
+	load_state = STABLE;
+
+	// initial demand
+	Tset_curtail	= tank_setpoint - thermostat_deadband/2 - 10;  // Allow T to drop only 10 degrees below lower cut-in T...
+
+	// Setup derived characteristics...
+	area 		= (pi * pow(tank_diameter,2))/4;
+	height 		= tank_volume/GALPCF / area;
+	Cw 			= tank_volume/GALPCF * RHOWATER * Cp;  // [Btu/F]
+
+	// initial demand
+	cur_water_demand = last_water_demand = water_demand;
+
+	// @todo initial tank charge should be based on demand, which is time dependent and must wait until sync from t0=0
+	if (gl_random_uniform(0,1) < 0.8)
+		h = height;
+	else
+		h = 10 * floor(0.1 * gl_random_uniform(0,height));
+
+	// initial water temperature
+	if (h == 0)
+
+		// discharged
+		Tw = Tupper = Tlower = Tinlet;  // Note that Tw gets reset, too...
+	else 
+	{
+		Tupper = Tw;
+		Tlower = Tinlet;
+	}
+
+	return 1;
+}
+
+/** Water heater plc control code to set the water heater 'heat_needed' state
+	The thermostat set point, deadband, tank state(height of hot water column) and 
+	current water temperature are used to determine 'heat_needed' state.
+ **/
+void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1)
+{
+	/* Update power and internal gain for the current time to synch and set the tank state */
+	double internal_gain = 0.0;
+	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
+
+	// determine the power used
+	if (heat_needed == TRUE)
+		power_kw = actual_kW() * (heat_mode == GASHEAT ? 0.01 : 1.0);
+	else
+		power_kw = 0.0;
+
+	// determine internal gains
+	if (location == INSIDE)
+		internal_gain = actual_kW() * nHours; // DPC: this is wrong!!!  Where's the UA?
+	else
+		internal_gain = 0;
+
+	// get context of object
+	OBJECT *parent = (OBJECTHDR(this))->parent;
+	house *pHouse = OBJECTDATA(parent,house);
+
+	// post internal gains
+	load.heatgain = internal_gain;
+
+	// calculate temperatures
+	Ton	= tank_setpoint - thermostat_deadband/2;
+	Toff = tank_setpoint + thermostat_deadband/2;
+
+	// calculate water demand
+	cur_water_demand = water_demand;
+	water_demand = last_water_demand;
+
+	// update temperature and height
+	update_T_and_or_h(nHours);
+
+	// determine tank state
+	WHQSTATE current_tank_state = tank_state();
+	switch (current_tank_state) {
+		case FULL:
+			if (Tw-TSTAT_PRECISION < Ton)
+				heat_needed = TRUE;
+			else if (Tw+TSTAT_PRECISION > Toff)
+				heat_needed = FALSE;
+			else 
+			{	// We're in the deadband...leave heat like it was.	
+			}
+			break;
+		case EMPTY:
+		case PARTIAL:
+			heat_needed = TRUE;
+			break;
+	}
+}
+
+
+/** Water heater synchronization determines the time to next
+	synchronization state and the power drawn since last synch
+ **/
+TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1) 
+{
+
+	// Now find our current temperatures and boundary height...
+	// And compute the time to the next transition...
+	water_demand = cur_water_demand;
+	set_time_to_transition();
+	last_water_demand = cur_water_demand;
+
+	if (time_to_transition >= 0.0167)	// 0.0167 represents one second
+		return (TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND);
+	// less than one second means never
+	else
+		return TS_NEVER; 
+}
+
+/** Tank state determined based on the height of the hot water column
+ **/
+waterheater::WHQSTATE waterheater::tank_state(void)
+{
+	if ( h >= height-HEIGHT_PRECISION )
+		return FULL;
+	else if ( h <= HEIGHT_PRECISION)
+		return EMPTY;
+	else
+		return PARTIAL;
+}
+
+/** Calculate the time to transition from the current state to new state
+ **/
+void waterheater::set_time_to_transition(void)
+{
+	// set the model and load state
+	set_current_model_and_load_state();
+
+	time_to_transition = -1;
+
+	switch (current_model) {
+		case ONENODE:
+			if (heat_needed == FALSE)
+				time_to_transition = new_time_1node(Tw, Ton);
+			else if (load_state == RECOVERING)
+				time_to_transition = new_time_1node(Tw, Toff);
+			else
+				time_to_transition = -1;
+			break;
+
+		case TWONODE:
+			switch (load_state) {
+				case STABLE:
+					time_to_transition = -1; // Negative implies TS_NEVER;
+					break;
+				case DEPLETING:
+					time_to_transition = new_time_2zone(h, 0);
+					break;
+				case RECOVERING:
+					time_to_transition = new_time_2zone(h, height);
+					break;
+			}
+	}
+	return;
+}
+
+/** Set the water heater model and tank state based on the estimated
+	temperature differential along the height of the water column when it is full, 
+	emplty or partial at the current height, given the current water draw.
+ **/
+waterheater::WHQFLOW waterheater::set_current_model_and_load_state(void)
+{
+	double dhdt_now = dhdt(h);
+	double dhdt_full = dhdt(height);
+	double dhdt_empty = dhdt(0.0);
+	current_model = NONE;		// by default set it to onenode
+	load_state = STABLE;		// by default
+
+	WHQSTATE tank_status = tank_state();
+
+	switch(tank_status) 
+	{
+		case EMPTY:
+			if (dhdt_empty <= 0.0) 
+			{
+				// If the tank is empty, a negative dh/dt means we're still
+				// drawing water, so we'll be switching to the 1-zone model...
+				current_model = NONE;
+				load_state = DEPLETING;
+			}
+			else if (dhdt_full > 0)
+			{
+				// overriding the plc code ignoring thermostat logic
+				// heating will always be on while in two zone model
+				heat_needed = TRUE;
+				current_model = TWONODE;
+				load_state = RECOVERING;
+			}
+			else
+				load_state = STABLE;
+			break;
+
+		case FULL:
+			// If the tank is full, a negative dh/dt means we're depleting, so
+			// we'll also be switching to the 2-zone model...
+			if (dhdt_full < 0)
+			{
+				// overriding the plc code ignoring thermostat logic
+				// heating will always be on while in two zone model
+				bool cur_heat_needed = heat_needed;
+				heat_needed = TRUE;
+				double dhdt_full_temp = dhdt(height);
+				if (dhdt_full_temp < 0)
+				{
+					current_model = TWONODE;
+					load_state = DEPLETING;
+				}
+				else
+				{
+					current_model = ONENODE;
+					
+					heat_needed = cur_heat_needed;
+					load_state = heat_needed ? RECOVERING : DEPLETING;
+				}
+			}
+			else if (dhdt_empty > 0)
+			{
+				current_model = ONENODE;
+				load_state = RECOVERING;
+			}
+			else
+				load_state = STABLE;
+			break;
+
+		case PARTIAL:
+			// We're definitely in 2-zone mode.  We have to watch for the
+			// case where h's movement stalls out...
+			current_model = TWONODE;
+			// overriding the plc code ignoring thermostat logic
+			// heating will always be on while in two zone model
+			heat_needed = TRUE;
+
+			if (dhdt_now < 0 && (dhdt_now * dhdt_empty) >= 0)
+				load_state = DEPLETING;
+			else if (dhdt_now > 0 && (dhdt_now * dhdt_full) >= 0) 
+				load_state = RECOVERING;
+			else 
+			{
+				// dhdt_now is 0, so nothing's happening...
+				current_model = NONE;
+				load_state = STABLE;
+			}
+			break;
+	}
+
+	return load_state;
+}
+
+void waterheater::update_T_and_or_h(double nHours)
+{
+	/*
+		When this gets called (right after the waterheater gets sync'd),
+		all states are exactly as they were at the end of the last sync.
+		We calculate what has happened to the water temperature (or the
+		warm/cold boundarly location, depending on the current state)
+		in the interim.  If nHours equals our previously requested
+		timeToTransition, we should find things landing on a new state.
+		If not, we should find ourselves in the same state again.  But
+		this routine doesn't try to figure that out...it just calculates
+		the new T/h.
+	*/
+
+	// set the model and load state
+	switch (current_model) 
+	{
+		case ONENODE:
+			// Handy that the 1-node model doesn't care which way
+			// things are moving (RECOVERING vs DEPLETING)...
+SingleZone:
+			Tw = new_temp_1node(Tw, nHours);
+			Tupper = Tw;
+			Tlower = Tinlet;
+			break;
+
+		case TWONODE:
+			// overriding the plc code ignoring thermostat logic
+			// heating will always be on while in two zone model
+			heat_needed = TRUE;
+			switch (load_state) 
+			{
+				case STABLE:
+					// Change nothing...
+					break;
+				case DEPLETING:
+					// Fall through...
+				case RECOVERING:
+					try {
+						h = new_h_2zone(h, nHours);
+					} catch (WRONGMODEL m)
+					{
+						if (m==MODEL_NOT_2ZONE)
+						{
+							current_model = ONENODE;
+							goto SingleZone;
+						}
+						else
+							GL_THROW("unexpected exception in update_T_and_or_h(%+.1f hrs)", nHours);
+					}
+					break;
+			}
+
+			// Correct h if it overshot...
+			if (h < ROUNDOFF) 
+			{
+				// We've over-depleted the tank slightly.  Make a quickie
+				// adjustment to Tlower/Tw to account for it...
+
+				double vol_over = tank_volume/GALPCF * h/height;  // Negative...
+				double energy_over = vol_over * RHOWATER * Cp * (Tupper - Tlower);
+				double Tnew = Tlower + energy_over/Cw;
+				Tw = Tlower = Tnew;
+				h = 0;
+			} 
+			else if (h > height) 
+			{
+				// Ditto for over-recovery...
+				double vol_over = tank_volume/GALPCF * (h-height)/height;
+				double energy_over = vol_over * RHOWATER * Cp * (Tupper - Tlower);
+				double Tnew = Tupper + energy_over/Cw;
+				Tw = Tupper = Tnew;
+				Tlower = Tinlet;
+				h = height;
+			} 
+			else 
+			{
+				// Note that as long as h stays between 0 and height, we don't
+				// adjust Tlower, even if the Tinlet has changed.  This avoids
+				// the headache of adjusting h and is of minimal consequence because
+				// Tinlet changes so slowly...
+				Tupper = Tw;
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	return;
+}
+
+double waterheater::dhdt(double h)
+{
+	if (Tupper - Tlower < ROUNDOFF)
+		return 0.0; // if Tupper and Tlower are same then dh/dt = 0.0;
+
+	// Pre-set some algebra just for efficiency...
+	const double mdot = water_demand * 60 * RHOWATER / GALPCF;		// lbm/hr...
+    const double c1 = RHOWATER * Cp * area * (Tupper - Tlower);
+	
+    // check c1 before dividing by it
+    if (c1 <= ROUNDOFF)
+        return 0.0; //Possible only when Tupper and Tlower are very close, and the difference is negligible
+
+	const double cA = -mdot / (RHOWATER * area) + (actual_kW() + tank_UA * (get_Tambient(location) - Tlower)) / c1;
+	const double cb = (tank_UA / height) * (Tupper - Tlower) / c1;
+
+	// Returns the rate of change of 'h'
+	return cA + cb*h;
+}
+
+double waterheater::actual_kW(void)
+{
+	const double nominal_voltage = 240.0; //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
+    static int trip_counter = 0;
+
+	// calculate rated heat capacity adjusted for the current line voltage
+	if (heat_needed)
+    {
+		const double actual_voltage = pVoltage->Mag();
+        if (actual_voltage > 2.0*nominal_voltage)
+        {
+            if (trip_counter++ > 10)
+                GL_THROW("Water heater line voltage is too high, exceeds twice nominal voltage.");
+            else
+                return 0.0;         // @TODO:  This condition should trip the breaker with a counter
+        }
+		return heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage) / 1000; /* convert heater[W] to kW */
+    }
+	else
+		return 0.0;
+}
+
+inline double waterheater::new_time_1node(double T0, double T1)
+{
+	const double mdot_Cp = Cp * water_demand * 60 * RHOWATER / GALPCF;
+
+    if (Cw <= ROUNDOFF)
+        return -1.0;
+
+	const double c1 = ((actual_kW()*BTUPHPKW + tank_UA * get_Tambient(location)) + mdot_Cp*Tinlet) / Cw;
+	const double c2 = -(tank_UA + mdot_Cp) / Cw;
+
+    if (fabs(c1 + c2*T1) <= ROUNDOFF || fabs(c1 + c2*T0) <= ROUNDOFF || fabs(c2) <= ROUNDOFF)
+        return -1.0;
+
+	const double new_time = (log(fabs(c1 + c2 * T1)) - log(fabs(c1 + c2 * T0))) / c2;	// [hr]
+	return new_time;
+}
+
+inline double waterheater::new_temp_1node(double T0, double delta_t)
+{
+	const double mdot_Cp = Cp * water_demand * 60 * RHOWATER / GALPCF;
+
+    if (Cw <= ROUNDOFF || (tank_UA+mdot_Cp) <= ROUNDOFF)
+        return T0;
+
+	const double c1 = (tank_UA + mdot_Cp) / Cw;
+	const double c2 = (actual_kW()*BTUPHPKW + mdot_Cp*Tinlet + tank_UA*get_Tambient(location)) / (tank_UA + mdot_Cp);
+
+	return  c2 - (c2 - T0) * exp(-c1 * delta_t);	// [F]
+}
+
+
+inline double waterheater::new_time_2zone(double h0, double h1)
+{
+	const double c0 = RHOWATER * Cp * area * (Tupper - Tlower);
+
+    if (fabs(c0) <= ROUNDOFF || height <= ROUNDOFF)
+        return -1.0;    // c0 or height should never be zero.  if one of these is zero, there is no definite time to transition
+
+	const double cb = (tank_UA / height) * (Tupper - Tlower) / c0;
+
+    if (fabs(cb) <= ROUNDOFF)
+        return -1.0;
+
+	return (log(fabs(dhdt(h1))) - log(fabs(dhdt(h0)))) / cb;	// [hr]
+}
+
+inline double waterheater::new_h_2zone(double h0, double delta_t)
+{
+	if (delta_t <= ROUNDOFF)
+		return h0;
+
+	const double mdot = water_demand * 60 * RHOWATER / GALPCF;		// lbm/hr...
+	const double c1 = RHOWATER * Cp * area * (Tupper - Tlower);
+
+	// check c1 before division
+	if (fabs(c1) <= ROUNDOFF)
+        return height;      // if Tupper and Tlower are real close, then the new height is the same as tank height
+//		throw MODEL_NOT_2ZONE;
+		
+
+	const double cA = -mdot / (RHOWATER * area) + (actual_kW()*BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
+	const double cb = (tank_UA / height) * (Tupper - Tlower) / c1;
+
+    if (fabs(cb) <= ROUNDOFF)
+        return height;
+
+	return ((exp(cb * delta_t) * (cA + cb * h0)) - cA) / cb;	// [ft]
+}
+
+double waterheater::get_Tambient(WHLOCATION loc)
+{
+	double ratio;
+
+	switch (loc) {
+	case GARAGE: // temperature is about 1/2 way between indoor and outdoor
+		ratio = 0.5;
+		break;
+	case INSIDE: // temperature is all indoor
+	default:
+		ratio = 1.0;
+		break;
+	}
+
+	// return temperature of location
+	house *pHouse = OBJECTDATA(OBJECTHDR(this)->parent,house);
+	return pHouse->get_Tair()*ratio + pHouse->get_Tout()*(1-ratio);
+}
+
+void waterheater::wrong_model(WRONGMODEL msg)
+{
+	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
+	OBJECT *obj = OBJECTHDR(this);
+	gl_warning("%s (waterheater:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
+	throw msg; // this must be caught by the waterheater code, not by the core
+}
+
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF CORE LINKAGE
+//////////////////////////////////////////////////////////////////////////
+
+EXPORT int create_waterheater(OBJECT **obj, OBJECT *parent)
+{
+	*obj = gl_create_object(waterheater::oclass);
+	if (*obj!=NULL)
+	{
+		waterheater *my = OBJECTDATA(*obj,waterheater);;
+		gl_set_parent(*obj,parent);
+		my->create();
+		return 1;
+	}
+	return 0;
+}
+
+EXPORT int init_waterheater(OBJECT *obj)
+{
+	waterheater *my = OBJECTDATA(obj,waterheater);
+	return my->init(obj->parent);
+}
+
+EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0)
+{
+	waterheater *my = OBJECTDATA(obj, waterheater);
+	if (obj->clock <= ROUNDOFF)
+		obj->clock = t0;  //set the object clock if it has not been set yet
+
+	try {
+		TIMESTAMP t1 = my->sync(obj->clock, t0);
+		obj->clock = t0;
+		return t1;
+	}
+	catch (int m)
+	{
+		gl_error("%s (waterheater:%d) model zone exception (code %d) not caught", obj->name?obj->name:"(anonymous waterheater)", obj->id, m);
+	}
+	catch (char *msg)
+	{
+		gl_error("%s (waterheater:%d) %s", obj->name?obj->name:"(anonymous waterheater)", obj->id, msg);
+	}
+	return TS_INVALID;
+}
+
+EXPORT TIMESTAMP plc_waterheater(OBJECT *obj, TIMESTAMP t0)
+{
+	// this will be disabled if a PLC object is attached to the waterheater
+	if (obj->clock <= ROUNDOFF)
+		obj->clock = t0;  //set the clock if it has not been set yet
+
+	waterheater *my = OBJECTDATA(obj,waterheater);
+	my->thermostat(obj->clock, t0);
+	
+	// no changes to timestamp will be made by the internal water heater thermostat
+	/// @todo If external plc codes return a timestamp, it will allow sync sooner but not later than water heater time to transition (ticket #147)
+	return TS_NEVER;  
+}
+
+/**@}**/

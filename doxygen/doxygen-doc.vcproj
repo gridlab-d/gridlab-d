@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="doxygen-doc"
+	ProjectGUID="{A1ACE681-2E56-4812-9E22-E19CC0E4E716}"
+	RootNamespace="doxygen-doc"
+	Keyword="MakeFileProj"
+	>
+	<Platforms>
+		<Platform
+			Name="Win32"
+		/>
+		<Platform
+			Name="x64"
+		/>
+	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
+	<Configurations>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="..\VS2005\$(ProjectDir)$(ProjectName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;../gridlabd-docs&quot; SEARCHENGINE=NO"
+				ReBuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;../gridlabd-docs&quot; SEARCHENGINE=NO"
+				CleanCommandLine="cmd.exe /c rmdir /s /q &quot;$(OutDir)&quot;"
+				Output=""
+				PreprocessorDefinitions="WIN32;_DEBUG"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="..\VS2005\$(ProjectDir)$(ProjectName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				ReBuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				CleanCommandLine="cmd.exe /c rmdir /s /q &quot;$(OutDir)&quot;"
+				Output=""
+				PreprocessorDefinitions="WIN32;_DEBUG"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="..\VS2005\$(ProjectDir)$(ProjectName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				ReBuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				CleanCommandLine="cmd.exe /c rmdir /s /q &quot;$(OutDir)&quot;"
+				Output=""
+				PreprocessorDefinitions="WIN32;NDEBUG"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			OutputDirectory="..\VS2005\$(ProjectDir)$(ProjectName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				ReBuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				CleanCommandLine="cmd.exe /c rmdir /s /q &quot;$(OutDir)&quot;"
+				Output=""
+				PreprocessorDefinitions="WIN32;NDEBUG"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Matlab debug|Win32"
+			OutputDirectory="..\VS2005\$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				ReBuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				CleanCommandLine="cmd.exe /c rmdir /s /q &quot;$(OutDir)&quot;"
+				Output=""
+				PreprocessorDefinitions="WIN32;_DEBUG"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Matlab debug|x64"
+			OutputDirectory="..\VS2005\$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				ReBuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				CleanCommandLine="cmd.exe /c rmdir /s /q &quot;$(OutDir)&quot;"
+				Output=""
+				PreprocessorDefinitions="WIN32;_DEBUG"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="MatlabDebug|Win32"
+			OutputDirectory="..\VS2005\$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				ReBuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				CleanCommandLine="cmd.exe /c rmdir /s /q &quot;$(OutDir)&quot;"
+				Output=""
+				PreprocessorDefinitions="WIN32;_DEBUG"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="MatlabDebug|x64"
+			OutputDirectory="..\VS2005\$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				ReBuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				CleanCommandLine="cmd.exe /c rmdir /s /q &quot;$(OutDir)&quot;"
+				Output=""
+				PreprocessorDefinitions="WIN32;_DEBUG"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="QuickDebug|Win32"
+			OutputDirectory="..\VS2005\$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				ReBuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				CleanCommandLine="cmd.exe /c rmdir /s /q &quot;$(OutDir)&quot;"
+				Output=""
+				PreprocessorDefinitions="WIN32;_DEBUG"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="QuickDebug|x64"
+			OutputDirectory="..\VS2005\$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				ReBuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
+				CleanCommandLine="cmd.exe /c rmdir /s /q &quot;$(OutDir)&quot;"
+				Output=""
+				PreprocessorDefinitions="WIN32;_DEBUG"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="conf;bat;html;cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
+			<File
+				RelativePath="..\doxygen\build.bat"
+				>
+			</File>
+			<File
+				RelativePath="..\doxygen\footer.html"
+				>
+			</File>
+			<File
+				RelativePath="..\doxygen\gridlabd.conf"
+				>
+			</File>
+			<File
+				RelativePath="..\doxygen\user_manual.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Output Files"
+			Filter="html"
+			ParseFiles="false"
+			SourceControlFiles="false"
+			>
+			<File
+				RelativePath=".\doxygen-doc\html\index.html"
+				>
+			</File>
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

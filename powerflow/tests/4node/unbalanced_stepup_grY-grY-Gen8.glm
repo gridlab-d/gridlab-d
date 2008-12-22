@@ -1,0 +1,214 @@
+
+# 4 Node Feeder: Unbalanced step-up grY-grY
+
+########################################################
+# BEGIN
+########################################################
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow;
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AtoB 2.5;
+	distance_BtoC 4.5;
+	distance_AtoC 7.0;
+	distance_AtoN 5.656854;
+	distance_BtoN 4.272002;
+	distance_CtoN 5.0;
+}
+
+object line_configuration:300 {
+	phaseA_conductor overhead_line_conductor:100;
+	phaseB_conductor overhead_line_conductor:100;
+	phaseC_conductor overhead_line_conductor:100;
+	phaseN_conductor overhead_line_conductor:101;
+	line_spacing line_spacing:200;
+}
+
+object transformer_configuration:400 {
+	connect_type 1;
+	kVA_rating 6000;
+	V_primary 12470;
+	V_secondary 24900;
+	R_pu 0.01;
+	X_pu 0.06;
+}
+
+object transformer_configuration:500 {
+	connect_type 1;
+	kVA_rating 1000;
+	V_primary 24900;
+	V_secondary 12470;
+	R_pu 0.01;
+	X_pu 0.06;
+}
+
+object node:1 {
+	phases "ABCN";
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object overhead_line:12 {
+	phases "ABCN";
+	from node:1;
+	to node:2;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node:2 {
+	phases "ABCN";
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object transformer:23 {
+	phases "ABCN";
+	from node:2;
+	to node:3;
+	configuration transformer_configuration:400;
+}
+
+object node:3 {
+	phases "ABCN";
+	phaseA_V +14376.022+0.000j;
+	phaseB_V -7188.011-12450.000j;
+	phaseC_V -7188.011+12450.000j;
+}
+
+object overhead_line:34 {
+	phases "ABCN";
+	from node:3;
+	to meter:44;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object meter:44 {
+	type POLYPHASE;
+	phases "ABCN";
+	line1_voltage +14376.022+0.000j;
+	line2_voltage -7188.011-12450.000j;
+	line3_voltage -7188.011+12450.000j;
+#	phaseA_V +14376.022+0.000j;
+#	phaseB_V -7188.011-12450.000j;
+#	phaseC_V -7188.011+12450.000j;
+}
+
+object overhead_line:444 {
+	phases "ABCN";
+	from meter:44;
+	to load:4;
+	length 0.0;
+	configuration line_configuration:300;
+}
+
+object load:4 {
+#	parent meter:44;
+	phases "ABCN";
+	phaseA_V +14376.022+0.000j;
+	phaseB_V -7188.011-12450.000j;
+	phaseC_V -7188.011+12450.000j;
+	phaseA_VA +1275000.000+790174.031j;
+	phaseB_VA +1800000.000+871779.789j;
+	phaseC_VA +2375000.000+780624.750j;
+	sync_V_limit 0.001;
+}
+
+object meter:55 {
+	type POLYPHASE;
+	phases "ABCN";
+	line1_voltage +7199.558+0.000j;
+ 	line2_voltage -3599.779-6235.000j;
+	line3_voltage -3599.779+6235.000j;
+#	phaseA_V +7199.558+0.000j;
+#	phaseB_V -3599.779-6235.000j;
+#	phaseC_V -3599.779+6235.000j;
+}
+
+
+object transformer:45 {
+	phases "ABCN";
+	from meter:44;
+	to meter:55;
+	configuration transformer_configuration:500;
+}
+
+
+#object overhead_line:555 {
+#	phases "ABCN";
+#	from meter:55;
+#	to load:5;
+#	length 0.0;
+#	configuration line_configuration:300;
+#}
+
+
+module generators;
+
+object diesel_dg:555 {
+        name dg555;
+        parent meter:55;
+	phases "ABCN";
+	Gen_mode CONSTANTPQ; 
+	Gen_status online;
+	Rs  0.01;
+	Xs  0.06;
+	Rg  0.01;
+	Xg  0.02;
+	Rated_kVA 800;
+	Rated_kV 12.47;
+	phaseA_VA_sch 63750+39508.7j;
+	phaseB_VA_sch 63750+39508.7j;
+	phaseC_VA_sch 63750+39508.7j;
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+#object load:5 {
+#	parent meter:55;
+#	phases "ABCN";
+#	phaseA_V +7199.558+0.000j;
+#	phaseB_V -3599.779-6235.000j;
+#	phaseC_V -3599.779+6235.000j;
+#	phaseA_VA -63750-39508.7j;
+#	phaseB_VA -63750-39508.7j;
+#	phaseC_VA -63750-39508.7j;
+#	sync_V_limit 0.001;
+#}
+
+
+
+module tape;
+
+object recorder{
+	name dg5Rec;
+	parent dg555;
+        property phaseA_V,phaseB_V,phaseC_V,phaseA_I,phaseB_I,phaseC_I,phaseA_VA,phaseB_VA,phaseC_VA;
+	file NLD.csv;
+	interval 3600;
+	limit 1000;
+}
+
+
+########################################################
+# END
+########################################################

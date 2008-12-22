@@ -1,0 +1,118 @@
+// $Id: powerflow_IEEE_4node.glm 1182 2008-12-22 22:08:36Z dchassin $
+// Copyright (C) 2008 Battelle Memorial Institute
+// IEEE 4 Node Feeder
+// Note: This model is for reference purposes as a basis for other models
+// It does not produce output in its current form because there are
+// no load objects attached to cause time to advance and there are no
+// recorders attached to gather the output.  See residential_loads.glm
+// for an example model that produces output.
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow;
+
+// library objects
+object overhead_line_conductor {
+	name lc100;
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+object overhead_line_conductor {
+	name lc101;
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+object line_spacing {
+	name ls200;
+	distance_AtoB 2.5;
+	distance_BtoC 4.5;
+	distance_AtoC 7.0;
+	distance_AtoN 5.656854;
+	distance_BtoN 4.272002;
+	distance_CtoN 5.0;
+}
+object line_configuration {
+	name lc300;
+	phaseA_conductor lc100;
+	phaseB_conductor lc100;
+	phaseC_conductor lc100;
+	phaseN_conductor lc101;
+	line_spacing ls200;
+}
+object transformer_configuration {
+	name tc400;
+	connect_type 1;
+	kVA_rating 6000;
+	V_primary 12470;
+	V_secondary 4160;
+	R_pu 0.01;
+	X_pu 0.06;
+}
+
+// bus objects
+object node {
+	name bus1;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+object node {
+	name bus2;
+	phases "ABCN";
+	// these are the answers given by the reference test
+	//voltage_A +7199.558+0.000j;
+	//voltage_B -3599.779-6235.000j;
+	//voltage_C -3599.779+6235.000j;
+}
+object node {
+	name bus3;
+	phases "ABCN";
+	// these are the answers given by the reference test
+	//voltage_A +2401.777+0.000j;
+	//voltage_B -1200.889-2080.000j;
+	//voltage_C -1200.889+2080.000j;
+}
+object load {
+	name load1;
+	phases "ABCN";
+	voltage_A +1275000.000+790174.031j;
+	voltage_B +1800000.000+871779.789j;
+	voltage_C +2375000.000+780624.750j;
+	maximum_voltage_error 0.001;
+	// these are the answers given by the reference test
+	//voltage_A +2401.777+0.000j;
+	//voltage_B -1200.889-2080.000j;
+	//voltage_C -1200.889+2080.000j;
+}
+
+// branch objects
+object overhead_line {
+	name line1;
+	phases "ABCN";
+	from bus1;
+	to bus2;
+	length 2000;
+	configuration lc300;
+}
+object transformer {
+	name xfrm1;
+	phases "ABCN";
+	from bus2;
+	to bus3;
+	configuration tc400;
+}
+object overhead_line {
+	name line2;
+	phases "ABCN";
+	from bus3;
+	to load1;
+	length 2500;
+	configuration lc300;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// END
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////

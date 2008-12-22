@@ -1,0 +1,89 @@
+#!/bin/bash
+# $Id$
+# @file autotest
+# @defgroup autotest Automatated Testing
+# @ingroup utilities
+#
+# @par Linux systems
+#
+# Automated testing performs testing and validation procedures
+#
+# The automated testing system is implemented by the \p utilities\autotest
+# script.  It runs model files and compares the latest output to the baseline
+# output.  Any differences between the outputs is reported and the test
+# fails. 
+#
+# @par Windows systems
+#
+# Automated testing is not supported for Windows at this time.
+#
+
+PGM="$(basename $0)"
+LOG="$PGM.log"
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-h)	echo "syntax: $PGM -b -v FILES"
+		echo "  -v  enables verbose output to stderr instead of $LOG"
+		echo "  -b  establish current test results as baseline for future test"
+		;;
+	-v) LOG="/dev/stderr"
+		;;
+	-b) BASELINE="yes"
+		;;
+	*) FILES="$FILES $1"
+		;;
+	esac
+	shift
+done
+
+echo "$PGM run started $(date)" >$LOG
+nerr=0
+nglm=0
+for glm in $FILES; do
+	rm -f gridlabd.{out,err,xml}
+	nglm=$(($nglm+1))
+	if ( gridlabd $GLOPTS -o gridlabd.xml -q -w $glm 1>gridlabd.out 2>gridlabd.err ); then
+		if [ -s gridlabd.err ]; then
+			echo "" >> $LOG
+			echo "$glm: error found" >> $LOG
+			cat gridlabd.err >> $LOG
+			nerr=$(($nerr+1))
+		elif [ -s gridlabd.xml ]; then
+			REF=${glm/%.glm/.xml}
+			if [ "$REF" == "$glm" ]; then
+				echo "ERROR: baseline model '$REF' is same as input model '$glm'"
+				exit 2;
+			fi
+			if [ "$BASELINE" == "yes" ]; then
+				mv gridlabd.xml $REF
+			elif [ -s "$REF" ]; then
+				diff gridlabd.xml $REF >> $LOG
+			else
+				echo "No baseline model for $glm is available" >> $LOG
+			fi
+		else
+			echo "" >> $LOG
+			echo "$glm: no output found" >> $LOG
+			nerr=$(($nerr+1))
+		fi
+	else
+			echo "" >> $LOG
+			echo "$glm: failed" >> $LOG
+			cat gridlabd.err >> $LOG
+			nerr=$(($nerr+1))
+	fi
+	rm -f gridlabd.{out,err,xml}
+done
+echo "" >>$LOG
+echo "$nglm GLM files tested" >>$LOG
+echo "$nerr problems found" >>$LOG
+echo "$PGM run completed $(date)" >>$LOG
+if [ $nerr -gt 0 ]; then
+	if [ "$LOG" != "/dev/stderr" ]; then
+		echo "$nerr problems found; see $LOG for details"
+	fi
+	exit 1
+else
+	exit 0
+fi

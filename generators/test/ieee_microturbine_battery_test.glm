@@ -1,0 +1,277 @@
+# $Id: powerflow_IEEE_4node.glm 683 2008-06-18 20:16:29Z d3g637 $
+# IEEE 4 Node Feeder
+#
+# Note: This model is for reference purposes as a basis for other models
+# It does not produce output in its current form because there are
+# no load objects attached to cause time to advance and there are no
+# recorders attached to gather the output.  See residential_loads.glm
+# for an example model that produces output.
+#
+#
+# Important! note that to work with this, ALL objects must be in the SAME mode, which
+# CAN ONLY be either CONSTANT_V or CONSTANT_PQ.  Theoretically, you can mix modules of
+# these two modes, but this has not been thoroughly tested.
+#
+# example run:
+# C:\>gridlabd ieee_microturbine_battery_test.glm -o mbt_test_output -v -w --bothstdout > mbt\out.txt
+#
+# This assumes that the folder "mbt" already exists in your working folder
+#
+#
+
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow;
+module generators;
+module tape;
+module climate;
+
+object climate {
+	tmyfile ../../../test/weather/ca.los_angeles.23174;
+}
+
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AtoB 2.5;
+	distance_BtoC 4.5;
+	distance_AtoC 7.0;
+	distance_AtoN 5.656854;
+	distance_BtoN 4.272002;
+	distance_CtoN 5.0;
+}
+
+object line_configuration:300 {
+	phaseA_conductor overhead_line_conductor:100;
+	phaseB_conductor overhead_line_conductor:100;
+	phaseC_conductor overhead_line_conductor:100;
+	phaseN_conductor overhead_line_conductor:101;
+	line_spacing line_spacing:200;
+}
+
+object transformer_configuration:400 {
+	connect_type 1;
+	kVA_rating 6000;
+	V_primary 12470;
+	V_secondary 600;
+	R_pu 0.01;
+	X_pu 0.06;
+}
+
+#object transformer_configuration:500 {
+#	connect_type 1;
+#	kVA_rating 6000;
+#	V_primary 600;
+#	V_secondary 4160;
+#	R_pu 0.01;
+#	X_pu 0.06;
+#}
+
+object node {
+	name node1;
+	phases "ABCN";
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object overhead_line {
+	name overline12;
+	phases "ABCN";
+	from node1;
+	to node2;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object transformer {
+	name trans23;
+	phases "ABCN";
+	from node2;
+	to node3;
+	configuration transformer_configuration:400;
+}
+
+
+object node {
+	name node3;
+	phases "ABCN";
+	phaseA_V 346.410 + 0.000j;
+	phaseB_V -173.205 - 300.000j;
+	phaseC_V -173.205 + 300.000j;
+}
+
+object overhead_line {
+	name OHL3L;
+	phases "ABCN";
+	from node3;
+	to load1;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object load {
+	name load1;
+	phases "ABCN";
+	#phaseA_V 445.8 + 0.000j;	#1.12 rated voltage for 690
+	#phaseB_V -193.990 - 336.000j;
+	#phaseC_V -193.990 + 336.000j;
+	phaseA_V 346.410 + 0.000j;
+	phaseB_V -173.205 - 300.000j;
+	phaseC_V -173.205 + 300.000j;
+	phaseA_VA +20000+11500j;
+	phaseB_VA +20000+11500j;
+	phaseC_VA +20000+11500j;
+	sync_V_limit 0.001;
+}
+
+
+object inverter {
+	parent node4;
+	GENERATOR_MODE CONSTANT_V;
+	name inv;
+}
+
+object battery {
+	parent inv;
+	GENERATOR_MODE CONSTANT_V;
+	name b;
+}
+
+object rectifier {
+	parent b;
+	GENERATOR_MODE CONSTANT_V;
+	name r;
+}
+
+object microturbine {
+	parent r;
+	GENERATOR_MODE CONSTANT_V;
+	name m;
+}
+
+object meter {
+	name node4;
+	type POLYPHASE;
+	nominal_voltage 600;	
+	line1_voltage 346.410 + 0.000j;
+	line2_voltage -173.205 + 300.000j;
+	line3_voltage -173.205 - 300.000j;
+}
+
+object overhead_line {
+	name OHL34;
+	phases "ABCN";
+	from node3;
+	to node4;
+	length 25;
+	configuration line_configuration:300;
+}
+
+object recorder {
+	parent load1;
+	property phaseA_V,phaseA_VA;
+	file mbt\test3.txt;
+	interval 3600;
+	limit 20;
+}
+	
+
+
+object recorder {
+	parent node3;
+	property phaseA_V,phaseB_V,phaseC_V,power_in;
+	file mbt\node3_test_v.txt;
+	interval 3600;
+	limit 20;
+}
+
+
+
+
+object recorder {
+	parent node4;
+	property power_in,phaseA_V,phaseB_V,phaseC_V;
+	file mbt\test_node_4v.txt;
+	interval 3600;
+	limit 20;
+}
+
+object recorder {
+	parent node4;
+	property power,line1_current,line2_current,line3_current;
+	file mbt\test_node_4i.txt;
+	interval 3600;
+	limit 20;
+}
+
+
+object recorder {
+	parent inv;
+	property VA_In,I_In,V_In;
+	file mbt\inverter_testin.txt;
+	interval 3600;
+	limit 20;
+}
+
+object recorder {
+	parent inv;
+	property phaseA_V_Out,phaseB_V_Out,phaseC_V_Out,phaseA_I_Out,phaseB_I_Out,phaseC_I_Out;
+	file mbt\inverter_testout.txt;
+	interval 3600;
+	limit 20;
+}
+
+object recorder {
+	parent r;
+	property phaseA_VA_In,phaseB_VA_In,phaseC_VA_In,VA_Out,I_Out,V_Out;
+	file mbt\rectifier_testin.txt;
+	interval 3600;
+	limit 20;
+}
+
+
+object recorder {
+	parent r;
+	property phaseA_V_In,phaseB_V_In,phaseC_V_In,phaseA_I_In,phaseB_I_In,phaseC_I_In;
+	file mbt\rectifier_testout.txt;
+	interval 3600;
+	limit 20;
+}
+
+object recorder {
+	parent b;
+	property VA_Out,I_Out,V_Out,V_In,I_In,Energy;
+	file mbt\battery_tests.txt;
+	interval 3600;
+	limit 20;
+}
+
+object recorder {
+	parent m;
+	property VA_Out,phaseA_VA_Out,phaseB_VA_Out,phaseC_VA_Out,frequency;
+	file mbt\microturbine_tests.txt;
+	interval 3600;
+	limit 20;
+}

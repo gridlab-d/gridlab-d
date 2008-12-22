@@ -1,0 +1,239 @@
+// $Id$
+//
+// Powerflow module self-test
+
+#set include="../../core"
+#include "../../core/rt/msvc_debugger.glm"
+
+#include "assert.glm"
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 00:00:00 EST';
+}
+
+module powerflow;
+
+///////////////////////////////////////////////////////
+// test 7: triplx line meter (TPmeter)
+///////////////////////////////////////////////////////
+// AS phase
+
+
+object triplex_line {
+	phases AN;
+	length 100 ft;	
+	configuration object triplex_line_configuration {
+		conductor_1 object triplex_line_conductor {
+			resistance 0.97;
+			geometric_mean_radius 0.0111;		
+		};
+		conductor_2 object triplex_line_conductor {
+			resistance 0.97;
+			geometric_mean_radius 0.0111;		
+		};
+		conductor_N object triplex_line_conductor {
+			resistance 0.97;
+			geometric_mean_radius 0.0111;		
+		};
+		insulation_thickness 0.08 in;
+		diameter 0.368 in;
+	};
+	from object triplex_node {
+		name TPmeter_fAS;
+		phases AS;
+		voltage_1 120 + 0j;		
+		voltage_2 120 + 0j;
+		voltage_N 0;
+		nominal_voltage 120;
+	};
+	to object triplex_meter {
+		name TPmeter_tAS;
+		phases AS;
+		voltage_1 120 + 0j;
+		voltage_2 120 + 0j;
+		voltage_N 0 + 0j;
+		nominal_voltage 120;	
+		object triplex_node {
+			name TPmeter_tAS;
+			phases AS;
+			voltage_1 120 + 0j;		
+			voltage_2 120 + 0j;
+			voltage_N 0;
+			//current_1  1;
+			power_1 1000+2000j;	
+			//shunt_1 5.3333e-004 -2.6667e-004i;		
+			impedance_2 1500 + 750j;
+		};
+		object complex_assert {
+			target "measured_current_1";			
+			value 8.43187 - 16.6773j;
+			//value 8.4964-16.709j;
+			within 0.01;
+		};				
+		object complex_assert {
+			target "measured_current_2";			
+			value 0.06393 + -0.03183j;
+			within 0.01;
+		};		
+		object complex_assert {
+			target "measured_current_N";			
+			value -8.4964+16.709j;
+			within 0.01;
+		};		
+		object double_assert {
+			target "measured_power";
+			value 2.2429;
+			within 0.01;
+		};	
+	};	
+};
+
+
+
+
+// BS phase
+
+
+object triplex_line {
+	phases BN;
+	length 100 ft;	
+	configuration object triplex_line_configuration {
+		conductor_1 object triplex_line_conductor {
+			resistance 0.97;
+			geometric_mean_radius 0.0111;		
+		};
+		conductor_2 object triplex_line_conductor {
+			resistance 0.97;
+			geometric_mean_radius 0.0111;		
+		};
+		conductor_N object triplex_line_conductor {
+			resistance 0.97;
+			geometric_mean_radius 0.0111;		
+		};
+		insulation_thickness 0.08 in;
+		diameter 0.368 in;
+	};
+	from object triplex_node {
+		name TPmeter_fBS;
+		phases BS;
+		voltage_1 -60-103.923j;	
+		voltage_2 -60-103.923j;
+		voltage_N 0;
+		nominal_voltage 120;
+	};
+	to object triplex_meter {
+		name TPmeter_tBS;
+		phases BS;
+		voltage_1 -60-103.923j;
+		voltage_2 -60-103.923j;
+		voltage_N 0 + 0j;
+		nominal_voltage 120;	
+		object triplex_node {
+			name TPmeter_tBS;
+			phases BS;
+			voltage_1 -60-103.923j;
+			voltage_2 -60-103.923j;
+			voltage_N 0;
+			//current_1  1;
+			power_1 1000+2000j;	
+			//shunt_1 5.3333e-004 -2.6667e-004i;		
+			impedance_2 1500 + 750j;
+		};
+		object complex_assert {
+			target "measured_current_1";			
+			value -18.659+1.0365j;
+			within 0.01;
+		};				
+		object complex_assert {
+			target "measured_current_2";			
+			value -0.05953 - 0.03945j;
+			within 0.01;
+		};		
+		object complex_assert {
+			target "measured_current_N";			
+			value 18.7185 -0.9970j;
+			within 0.01;
+		};		
+		object double_assert {
+			target "measured_power";
+			value 2.2429;
+			within 0.01;
+		};	
+	};	
+};
+
+
+
+
+
+// CS phase
+
+
+object triplex_line {
+	phases CN;
+	length 100 ft;	
+	configuration object triplex_line_configuration {
+		conductor_1 object triplex_line_conductor {
+			resistance 0.97;
+			geometric_mean_radius 0.0111;		
+		};
+		conductor_2 object triplex_line_conductor {
+			resistance 0.97;
+			geometric_mean_radius 0.0111;		
+		};
+		conductor_N object triplex_line_conductor {
+			resistance 0.97;
+			geometric_mean_radius 0.0111;		
+		};
+		insulation_thickness 0.08 in;
+		diameter 0.368 in;
+	};
+	from object triplex_node {
+		name TPmeter_fCS;
+		phases CS;
+		voltage_1 -60+103.923j;	
+		voltage_2 -60+103.923j;
+		voltage_N 0;
+		nominal_voltage 120;
+	};
+	to object triplex_meter {
+		name TPmeter_tCS;
+		phases CS;
+		voltage_1 -60+103.923j;
+		voltage_2 -60+103.923j;
+		voltage_N 0 + 0j;
+		nominal_voltage 120;	
+		object triplex_node {
+			name TPmeter_tCS;
+			phases CS;
+			voltage_1 -60+103.923j;
+			voltage_2 -60+103.923j;
+			voltage_N 0;
+			//current_1  1;
+			power_1 1000+2000j;	
+			//shunt_1 5.3333e-004 -2.6667e-004i;		
+			impedance_2 1500 + 750j;
+		};
+		object complex_assert {
+			target "measured_current_1";			
+			value 10.227+15.641j;
+			within 0.01;
+		};				
+		object complex_assert {
+			target "measured_current_2";			
+			value -0.0044 + 0.0713j;
+			within 0.01;
+		};		
+		object complex_assert {
+			target "measured_current_N";			
+			value -10.2226-15.7122j;
+			within 0.01;
+		};		
+		object double_assert {
+			target "measured_power";
+			value 2.2429;
+			within 0.01;
+		};	
+	};	
+};

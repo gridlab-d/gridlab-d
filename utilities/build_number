@@ -1,0 +1,18 @@
+#!/bin/bash
+# $Id$
+#
+# Release script for Linux source
+#
+
+# command line args
+while [ $# -gt 0 ]; do
+	case $1 in
+	-h) echo "Syntax: $(basename $0) [DIR]"
+		exit 0
+		;;
+	*)	echo $(svn -R info "$1" | grep Revision | cut -f2 -d: | sort -ur | head -n 1)
+		shift
+		;;
+	esac
+done
+

@@ -1,0 +1,41 @@
+# $Id$
+# Copyright (C) 2008 Battelle Memorial Institute
+# This is the STATUS file for GridLAB-D distributions.
+# 
+# The latest information is available online at http://www.gridlabd.org/
+#
+# Entries are encoded as follows:
+#
+# name:description:copyright:contact
+# 	key:major:minor:platform:date:status[:codename[:filename]]
+core:GridLAB-D system core:Battelle Memorial Institute:david.chassin@pnl.gov
+	hide:1:0:win32:2008-02-14:obsolete:Allston:gridlabd-win32-1_0.exe
+	hide:1:0:x64:2008-02-14:obsolete:Allston:gridlabd-x64-1_0.exe
+	show:1:1:win32:2008-05-08:stable:Buckley:gridlabd-win32-1_1.exe
+	show:1:1:x64:2008-05-08:stable:Buckley:gridlabd-x64-1_1.exe
+	show:1:2:win32:2008-05-29:experimental:Coulee:gridlabd-win32-1_2.exe
+	show:1:2:x64:2008-05-29:experimental:Coulee:gridlabd-x64-1_2.exe
+	show:1:2:src:2008-05-29:experimental:Coulee:gridlabd-src-1_2.exe
+	hide:1:3:win32|x64|src:(na):developmental:Coyote
+climate:GridLAB-D climate module:Battelle Memorial Institute:david.chassin@pnl.gov
+	show:1:0:win32|x64|src:2008-05-29:stable
+commercial:GridLAB-D commercial building module:Battelle Memorial Institute:david.chassin@pnl.gov
+	show:1:0:win32|x64|src:2008-05-29:experimental
+generators:GridLAB-D generators module:Battelle Memorial Institute:david.chassin@pnl.gov
+	show:1:0:win32|x64|src:2008-05-29:experimental
+market:GridLAB-D market operations module:Battelle Memorial Institute:david.chassin@pnl.gov
+	show:1:0:win32|x64|src:2008-05-29:experimental
+network:GridLAB-D transmission network module:Battelle Memorial Institute:david.chassin@pnl.gov
+	show:1:0:win32|x64|src:2008-05-29:experimental
+plc:GridLAB-D programmable logic controllers module:Battelle Memorial Institute:david.chassin@pnl.gov
+	show:1:0:win32|x64|src:2008-05-29:experimental
+powerflow:GridLAB-D distribution power flow module:Battelle Memorial Institute:david.chassin@pnl.gov
+	show:1:0:win32|x64|src:2008-05-29:stable
+reliability:GridLAB-D reliability analysis module:Battelle Memorial Institute:david.chassin@pnl.gov
+	show:1:0:win32|x64|src:2008-05-29:experimental
+residential:GridLAB-D residential building module:Battelle Memorial Institute:david.chassin@pnl.gov
+	show:1:0:win32|x64|src:2008-05-29:stable
+smartgrid:GridLAB-D proprietary module:Battelle Memorial Institute:david.chassin@pnl.gov
+	internal:1:0:win32|x64|src:2008-05-29:proprietary
+tape:GridLAB-D data collection module:Battelle Memorial Institute:david.chassin@pnl.gov
+	show:1:0:win32|x64|src:2008-05-29:stable

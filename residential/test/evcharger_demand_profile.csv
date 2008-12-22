@@ -1,0 +1,38 @@
+# $Id$
+# electric/hybrid vehicle demand profile
+#
+# Allowed daytypes are [WEEKDAY] and [WEEKEND]
+[WEEKDAY]
+
+# Header format is "DIRTRIP" where DIR is either ARR or DEP
+# and TRIP is one of HOME, WORK, SHRT, LONG
+# Both ARR and DEP must be included for any TRIP
+ARRHOME,DEPHOME,ARRWORK,DEPWORK
+
+# There must be one row per hour 0-24 in each daytype
+# and there must be as many DIRTRIP entries per hour 
+# as there are DIRTRIP header items
+0.005,0.000,0.000,0.004
+0.006,0.000,0.000,0.004
+0.004,0.000,0.000,0.003
+0.001,0.024,0.011,0.000
+0.000,0.089,0.048,0.001
+0.000,0.202,0.139,0.002
+0.001,0.325,0.261,0.008
+0.001,0.171,0.246,0.014
+0.002,0.063,0.089,0.022
+0.003,0.031,0.040,0.027
+0.007,0.019,0.025,0.062
+0.012,0.014,0.025,0.100
+0.015,0.013,0.026,0.052
+0.027,0.013,0.025,0.073
+0.068,0.009,0.020,0.141
+0.133,0.009,0.019,0.164
+0.196,0.006,0.015,0.151
+0.149,0.005,0.007,0.061
+0.102,0.003,0.003,0.030
+0.092,0.001,0.001,0.021
+0.081,0.001,0.001,0.020
+0.054,0.001,0.000,0.022
+0.037,0.000,0.000,0.018
+0.003,0.000,0.000,0.000

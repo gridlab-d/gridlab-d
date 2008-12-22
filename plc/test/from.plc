@@ -1,0 +1,15 @@
+// $Id$
+//	Copyright (C) 2008 Battelle Memorial Institute
+BEGIN_DATA
+END_DATA
+
+INIT 
+{
+	return 0;
+}
+
+CODE(dt,dev)
+{
+	if (dt>0) SNDMSG("to","test");
+	return 60;
+}

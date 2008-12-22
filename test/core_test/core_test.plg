@@ -1,0 +1,45 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: core_test - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Debug/core_test.res" /d "_DEBUG" /d "_AFXDLL" "C:\GridlabD\source\test\core_test\core_test.rc"" 
+Creating temporary file "C:\DOCUME~1\d3g844\LOCALS~1\Temp\RSP13F.tmp" with contents
+[
+/nologo /MDd /W3 /Gm /GR /GX /ZI /Od /I "..\cppunit\include" /I "..\..\core" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\GridlabD\source\test\core_test\core_test.cpp"
+"C:\GridlabD\source\test\core_test\core_testDlg.cpp"
+"C:\GridlabD\source\test\core_test\CoreUnitTest.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\d3g844\LOCALS~1\Temp\RSP13F.tmp" 
+Creating temporary file "C:\DOCUME~1\d3g844\LOCALS~1\Temp\RSP140.tmp" with contents
+[
+/nologo /MDd /W3 /Gm /GR /GX /ZI /Od /I "..\cppunit\include" /I "..\..\core" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/core_test.pch" /Yc"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\GridlabD\source\test\core_test\StdAfx.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\d3g844\LOCALS~1\Temp\RSP140.tmp" 
+Creating temporary file "C:\DOCUME~1\d3g844\LOCALS~1\Temp\RSP141.tmp" with contents
+[
+..\cppunit\lib\cppunitd.lib ..\cppunit\lib\testrunnerd.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /incremental:yes /pdb:"Debug/core_test.pdb" /debug /machine:I386 /out:"Debug/core_test.exe" /pdbtype:sept 
+.\Debug\core_test.obj
+.\Debug\core_testDlg.obj
+.\Debug\CoreUnitTest.obj
+.\Debug\StdAfx.obj
+.\Debug\core_test.res
+]
+Creating command line "link.exe @C:\DOCUME~1\d3g844\LOCALS~1\Temp\RSP141.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+C:\GridlabD\source\test\core_test\core_test.rc(166) : fatal error RC1015: cannot open include file 'res\\core_test.rc2'.
+Error executing rc.exe.
+
+
+
+<h3>Results</h3>
+core_test.exe - 1 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

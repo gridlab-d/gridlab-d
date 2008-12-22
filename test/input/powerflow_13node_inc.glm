@@ -1,0 +1,404 @@
+# $Id: powerflow_13node_inc.glm 683 2008-06-18 20:16:29Z d3g637 $
+#
+# IEEE 13-node feeder model.
+#
+# "inc" ~ incomplete.  Still needs the capacitor and the regulator to be filled in and tested.
+#
+
+module powerflow;
+module climate;
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+########################################################
+# 13 Node Feeder: Balanced step-down delta-delta
+########################################################
+
+# 556,500 26/7 ACSR
+object overhead_line_conductor:100 {
+	name 556,500 26/7 ACSR;
+	geometric_mean_radius 0.0244 ft;
+	resistance 0.306;
+}
+
+# 4/0 6/1 ACSR
+object overhead_line_conductor:101 {
+	name 4/0 6/1 ACSR;
+	geometric_mean_radius 0.00814 ft;
+	resistance 0.592;
+}
+
+# 1/0 ACSR
+object overhead_line_conductor:102{
+	name 1/0 ACSR;
+	geometric_mean_radius 0.0045 ft;
+	resistance 1.12;
+}
+
+# 250,000 AA, CN
+object underground_line_conductor:103{
+	name 250,000 AA, CN;
+	outer_diameter 1.29;
+	conductor_gmr 0.0171;
+	conductor_diameter 0.567;
+	conductor_resistance 0.41;
+	neutral_gmr 0.00208;
+	neutral_diameter 0.0641;
+	neutral_resistance 14.8722;
+	neutral_strands 13;
+}
+
+# 1/0 AA, TS
+object underground_line_conductor:104{
+	name 1/0 AA, TS UG;
+	conductor_gmr 0.0111;
+	conductor_diameter 0.368;
+	conductor_resistance 0.97;
+	shield_gmr 0.0365;
+	shield_resistance 4.2785;
+}
+
+# 1/0 CU
+object underground_line_conductor:105{
+	name 1/0 CU UG;
+	neutral_gmr 0.01113;
+	neutral_diameter 0.368;
+	neutral_resistance 0.607;
+	neutral_strands 1;
+
+}
+
+object line_spacing:500{
+	name LS500;
+	distance_AtoB 2.5;
+	distance_BtoC 7.0;
+	distance_AtoC 4.5;
+	distance_AtoN 4.12;
+	distance_BtoN 5.32;
+	distance_CtoN 5.66;
+}
+
+object line_spacing:505{
+	name LS505;
+	distance_BtoC 7.0;
+	distance_BtoN 5.0;
+	distance_CtoN 5.66;
+}
+
+object line_spacing:506{
+	name LS506;
+	distance_AtoC 7.0;
+	distance_CtoN 5.0;
+	distance_AtoN 5.66;
+}
+
+object line_spacing:510{
+	name LS510;
+	distance_CtoN 5.02;
+}
+
+object line_spacing:515{
+	name LS515;
+	distance_AtoB 0.5;
+	distance_BtoC 0.5;
+	distance_AtoC 1.0;
+}
+
+object line_spacing:520{
+	name LS520;
+	distance_AtoN 0.083;
+}
+
+object line_configuration:601{
+	name LC601;
+	phaseA_conductor 556,500 26/7 ACSR;
+	phaseB_conductor 556,500 26/7 ACSR;
+	phaseC_conductor 556,500 26/7 ACSR;
+	phaseN_conductor 4/0 6/1 ACSR;
+	line_spacing LS500;
+}
+
+object line_configuration:602{
+	name LC602;
+	phaseA_conductor 4/0 6/1 ACSR;
+	phaseB_conductor 4/0 6/1 ACSR;
+	phaseC_conductor 4/0 6/1 ACSR;
+	phaseN_conductor 4/0 6/1 ACSR;
+	line_spacing LS500;
+}
+
+object line_configuration:603{
+	name LC603;
+	phaseB_conductor 1/0 ACSR;
+	phaseC_conductor 1/0 ACSR;
+	phaseN_conductor 1/0 ACSR;
+	line_spacing LS505;
+}
+
+object line_configuration:604{
+	name LC604;
+	phaseA_conductor 1/0 ACSR;
+	phaseC_conductor 1/0 ACSR;
+	phaseN_conductor 1/0 ACSR;
+	line_spacing LS506;
+}	
+
+object line_configuration:605{
+	name LC605;
+	phaseC_conductor 1/0 ACSR;
+	phaseN_conductor 1/0 ACSR;
+	line_spacing LS510;
+}
+
+object line_configuration:606{
+	name LC606;
+	phaseA_conductor 250,000 AA, CN;
+	phaseB_conductor 250,000 AA, CN;
+	phaseC_conductor 250,000 AA, CN;
+	line_spacing LS515;
+}
+
+object line_configuration:607{
+	name LC607;
+	phaseA_conductor 1/0 AA, TS UG;
+	phaseN_conductor 1/0 CU UG;
+	line_spacing LS520;
+}
+
+object transformer_configuration {
+	name XFC400;
+	connect_type 1;
+	kVA_rating 500;
+	V_primary 4160;
+	V_secondary 120;
+	R_pu 0.011;
+	X_pu 0.02;
+}
+
+object transformer_configuration {
+	name SubstationConfig;
+	connect_type 1; #nfc -mh
+	kVA_rating 5000;
+	V_primary 115000;
+	V_secondary 4160;
+	R_pu 0.01;
+	X_pu 0.08;
+}
+
+object transformer_configuration {
+	name XFM-1;
+	connect_type 1; #nfc -mh
+	kVA_rating 500;
+	V_primary 4160;
+	V_secondary 480;
+	R_pu 0.011;
+	X_pu 0.02;
+}
+
+object regulator_configuration {
+	connect_type 1;
+	band_center 122;
+	band_width 2;
+	time_delay 30;
+	raise_taps 16;
+	lower_taps 16;
+	CT_ratio 700;
+	PT_ratio 20;
+	#pt_node b; #unimplemented?
+	ldc_R_V 3;
+	ldc_X_V 9;
+	CT_phase ABC; #string, not set
+	PT_phase ABC; #string, not set
+	regulation 0.1;
+	V_high 122000;
+	#tap_pos
+}
+
+#root node
+object node {
+	name Node650;
+	phase A|B|C;
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node {
+	name Node632;
+	phase A|B|C;
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node {
+	name Node633;
+	phase A|B|C;
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object load {
+	name Node634;
+	phase A|B|C;
+	phaseA_VA +160000+110000j;
+	phaseB_VA +120000+90000j;
+	phaseC_VA +120000+90000j;
+}
+
+object load {
+	name Node645;
+	phase B;
+	phaseB_VA +170000+125000j;
+}
+
+object load {
+	name Node646;
+	phase B;
+	phaseB_VA +230000+132000j;
+}
+
+object load {
+	name Node652;
+	phase A;
+	phaseA_VA +128000+86000j;
+}
+
+object load {
+	name Node671;
+	phase A|B|C;
+	phaseA_VA +385000+220000j;
+	phaseB_VA +385000+220000j;
+	phaseC_VA +385000+220000j;
+}
+
+object capacitor {
+	name Node675;
+	phases ABC;
+	phaseA_cap 200;
+	phaseB_cap 200;
+	phaseC_cap 200;
+	#ieee13node sez there's load, but we can't model it straight.  making a note.
+	#phaseA_VA 485000+190000j;
+	#phaseB_VA 68000+60000j;
+	#phaseC_VA 290000+212000j;
+}
+
+object node {
+	name Node680;
+	phases A|B|C;
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node {
+	name Node684;
+	phase A|B|C;
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object node {
+	name Node692;
+	phase A|B|C;
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object capacitor {
+	name Node611;
+	phases C;
+	phaseC_cap 100;
+}
+
+object overhead_line {
+	#phase A|B|C;
+	from Node632;
+	to Node645;
+	length 500;
+	configuration LC603;
+}
+
+object overhead_line {
+	#phase A|B|C;
+	from Node632;
+	to Node633;
+	length 500;
+	configuration LC602;
+}
+
+object transformer {
+	from Node633;
+	to Node634;
+	configuration XFM-1;
+}
+
+object overhead_line {
+	from Node645;
+	to Node646;
+	length 300;
+	configuration LC603;
+}
+
+object overhead_line {
+	from Node650;
+	to Node632;
+	length 2000;
+	configuration LC601;
+}
+
+object underground_line {
+	from Node684;
+	to Node652;
+	length 800;
+	configuration LC607;
+}
+
+object overhead_line {
+	from Node632;
+	to Node671;
+	length 2000;
+	configuration LC601;
+}
+
+object overhead_line {
+	from Node671;
+	to Node684;
+	length 300;
+	configuration LC604;
+}
+
+object overhead_line {
+	from Node671;
+	to Node680;
+	length 1000;
+	configuration LC601;
+}
+
+object relay {
+	from Node671;
+	to Node692;
+}
+
+object overhead_line {
+	from Node684;
+	to Node611;
+	length 300;
+	configuration LC605;
+}
+
+object underground_line {
+	from Node692;
+	to Node675;
+	length 500;
+	configuration LC606;
+}
+
+# EOF

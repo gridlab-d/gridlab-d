@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema targetNamespace="http://tempuri.org/XMLSchema.xsd" elementFormDefault="qualified" xmlns="http://tempuri.org/XMLSchema.xsd" xmlns:mstns="http://tempuri.org/XMLSchema.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="GridLABD">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="global_clock" type="Clock" />
+        <xs:element name="global_starttime" minOccurs="0" type="xs:string" />
+        <xs:element name="objects" type="Object" maxOccurs="unbounded" minOccurs="0" />
+        <xs:element name="global_version_major" type="xs:unsignedInt" />
+        <xs:element name="global_version_minor" type="xs:unsignedInt" />
+        <xs:element name="global_command_line" type="xs:string" />
+        <xs:element name="global_environment" type="xs:string" />
+        <xs:element name="global_quiet_mode" type="xs:boolean" />
+        <xs:element name="global_warn_mode" type="xs:boolean" />
+        <xs:element name="global_debug_mode" type="xs:boolean" />
+        <xs:element name="global_test_mode" type="xs:boolean" />
+        <xs:element name="global_verbose_mode" type="xs:boolean" />
+        <xs:element name="global_iteration_limit" type="xs:unsignedInt" />
+        <xs:element name="global_workdir" type="xs:string" />
+        <xs:element name="global-dumpfile" type="xs:string" />
+        <xs:element name="global_savefile" type="xs:string" />
+        <xs:element name="global_dumpall" type="xs:boolean" />
+        <xs:element name="global_runchecks" type="xs:boolean" />
+        <xs:element name="global_threadcount" type="xs:int" />
+        <xs:element name="global_profiler" type="xs:int" />
+        <xs:element name="global_pauseatexit" type="xs:int" />
+        <xs:element name="modules" type="Module" maxOccurs="unbounded" minOccurs="0" />
+        <xs:element name="global_user" type="xs:string" />
+        <xs:element name="global_created" type="xs:string" />
+        <xs:element name="global_host" type="xs:string" />
+        <xs:element name="global_class_count" type="xs:int" />
+        <xs:element name="global_object_count" type="xs:int" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="Clock">
+    <xs:sequence>
+      <xs:element name="timestamp" type="xs:string" />
+      <xs:element name="tick" type="xs:int" />
+      <xs:element name="timezone" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Object">
+    <xs:sequence>
+      <xs:element name="size" type="xs:unsignedShort" />
+      <xs:element name="id" type="xs:unsignedInt" />
+      <xs:element name="rank" type="xs:unsignedInt" />
+      <xs:element name="clock" type="xs:string" />
+      <xs:element name="latitude" type="xs:string" />
+      <xs:element name="longitude" type="xs:string" />
+      <xs:element name="in_svc" type="xs:string" />
+      <xs:element name="out_svc" type="xs:string" />
+      <xs:element name="objects" type="Object" />
+      <xs:element name="parent" type="Object" />
+      <xs:element name="timezone" type="xs:string" maxOccurs="unbounded" minOccurs="0" />
+      <xs:element name="type" type="xs:string" />
+      <xs:element name="name" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Module">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string" />
+      <xs:element name="file" type="xs:string" />
+      <xs:element name="major" type="xs:unsignedShort" />
+      <xs:element name="minor" type="xs:unsignedShort" />
+      <xs:element name="next" type="Module" maxOccurs="unbounded" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

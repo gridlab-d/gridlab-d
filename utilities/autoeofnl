@@ -1,0 +1,10 @@
+#!/bin/bash
+
+FILES=$(ls -1 $*)
+
+for f in $FILES; do
+	nl=$(tail -n 1 $f | wc -l)
+	if [ $nl -eq 0 ]; then
+		echo "" >> $f
+	fi
+done

@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<VisualStudioToolFile
+	Name="GridLAB-D"
+	Version="8.00"
+	>
+	<Rules>
+		<CustomBuildRule
+			Name="GridLAB-D"
+			DisplayName="GridLAB-D"
+			CommandLine="c:\projects\gridlabd\source\vs2005\win32\debug\gridlabd.exe --quiet [inputs]"
+			Outputs="$(InputName).out"
+			FileExtensions="*.glm"
+			ExecutionDescription="Testing $(InputFileName)"
+			>
+			<Properties>
+			</Properties>
+		</CustomBuildRule>
+	</Rules>
+</VisualStudioToolFile>

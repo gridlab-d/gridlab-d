@@ -1,0 +1,314 @@
+// $Id$
+// Created by DP Chassin 
+// Created on 2008-09-18
+//
+// Olympic Peninsula Project Test File
+//
+// This file contains a model that approximately replicated
+// the GridWise Olympic Peninsula Demonstration Testbed
+// performed from April 2006 through March 2007.
+//
+// For more information on the Olypen project, see
+// http://gridwise.pnl.gov/docs/op_project_final_report_pnnl17167.pdf
+//
+
+// setup GridLAB-D for a standard run
+//#include "C:\Documents and Settings\d3p988\Desktop\GLD Clean SVN\source\core\test\rt\gridlabd.conf"
+//#include "../rt/gridlabd.conf"
+
+//#set debugger=1 // set this to 1 to enable model debugger
+
+///////////////////////////////////////////////////////////////////////////////
+// setup the simulation clock
+clock {
+	// set the clock to the beginning of the Olypen project
+	timestamp '2006-04-01 0:00:00';
+
+	// set the timezone to Pacific with daylight savings active
+	timezone PST+8PDT;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// load the climate module
+module climate {
+
+	// set climate module global parameters here (if any)
+}
+object climate {
+	// Note: some GFA homes were in Yakima WA some were in Gresham OR
+	// and the rest in Clallam County WA and Port Angeles WA
+	tmyfile "../core/test/US OR Medford.tmy"; // using medford until we find Clallam's TMY
+	city "Clallam County WA"; 
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// setup up the power distribution system
+#include "../core/test/olypen_library.glm"
+object node {
+	name SupplyBus;
+	phases ABCN;
+	phaseA_V 37500+0d;
+	phaseB_V 37500-120d;
+	phaseC_V 37500+120d;
+}
+object transformer {
+	name Feeder;
+	configuration Feeder_2000kVA;
+	from SupplyBus;
+	to MainBus;
+	phases ABCN;
+}
+object node {
+	name MainBus;
+	phases ABCN;
+	phaseA_V 12500+0d;
+	phaseB_V 12500-120d;
+	phaseC_V 12500+120d;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// setup up the power market system
+
+// tou price feed
+#ifdef USE_MARKET // disabled until the market module is compiled for Win32
+module market;
+object market {
+};
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+// setup up the homes
+
+class house{
+	double second_floor;
+};
+
+// fixed price group on phase A - don't have to do this, but it's easy that way
+object transformer:..25 {
+	from MainBus;
+	configuration Poletop_40kVA;
+	phases AS;
+	to object meter {
+		type SINGLEPHASE;
+		line1_voltage 120-0d;
+		line2_voltage 0-0d;
+		line3_voltage -120-0d;
+		object house {
+			second_floor random.bernoulli(0.5, 0.0);
+			
+			floor_area (this.second_floor * random.uniform(2000,3100) + (this.second_floor - 1) * random.uniform(900,2500) );
+			ceiling_height 8.0;
+			aspect_ratio random.uniform(1.0, 4.0);
+			window_wall_ratio random.uniform(0.08, 0.20);
+			heating_setpoint random.normal(69.1, 2.5);
+			cooling_setpoint random.normal(74.5, 3.0);
+			air_temperature random.normal(72.0, 1.0);
+			
+			contract FIXED;
+			price 81 $/MWh;
+			heating_setpoint random.normal(70,5);
+			cooling_setpoint (this.heating_setpoint+5);
+			object lights {
+			};
+			object clotheswasher {
+			};
+			object occupantload {
+			};
+			object microwave {
+				installed_power random.uniform(800, 1250);
+			};
+			object plugload {
+				installed_power (700 + 1300.0 * (parent.floor_area-900)/2200);
+			};
+			object range {
+				installed_power random.uniform(10000, 14000); // preferred element variation
+			};
+			object waterheater {
+				//tank_volume random.sample(40, 50, 60, 90);
+				//tank_volume (floor(parent.floor_area / 2000) * 60 + 30 * random.bernoulli(0.5, 0.0) +
+					//(( 1 - floor(parent.floor_area / 2000) ) * (40 + random.bernoulli(0.5, 0.0) * 10)));			
+				//Water heater UA – (see Todd (or me); EF range .88 - .98, mean at code)
+				//tank_setpoint random.normal(130, 4);
+			};
+		};
+	};
+}
+
+// tou price group on phase B - don't have to do this, but it's easy that way
+object transformer:..25 {
+	from MainBus;
+	configuration Poletop_40kVA;
+	phases BS;
+	to object meter {
+		type SINGLEPHASE;
+		line1_voltage 120-120d;
+		line2_voltage 0-120d;
+		line3_voltage -120-120d;
+		object house {
+			contract TOU;
+			air_temperature random.normal(72.0, 1.0);
+			object player {
+				file "../core/test/olypen_tou_price.tape";
+				property "price";
+			};
+			heating_setpoint random.normal(70,5);
+			cooling_setpoint (this.heating_setpoint+5);
+			object lights {
+				installed_power 500 W;
+			};
+			object clotheswasher {
+			};
+			object occupantload {
+			};
+			object microwave {
+			};
+			object plugload {
+			};
+			object range {
+			};
+			object waterheater {
+			};
+		};
+	};
+}
+
+// rtp price group on phase C - don't have to do this, but it's easy that way
+object transformer:..25 {
+	from MainBus;
+	configuration Poletop_40kVA;
+	phases CS;
+	to object meter {
+		type SINGLEPHASE;
+		
+		line1_voltage 120+120d;
+		line2_voltage 0+120d;
+		line3_voltage -120+120d;
+		object house {
+			contract RTP;
+			air_temperature random.normal(72.0, 1.0);
+			price 50.0 $/MWh;
+			heating_setpoint random.normal(70,5);
+			cooling_setpoint (this.heating_setpoint+5);
+			object lights {
+				installed_power 500 W;
+			};
+			object clotheswasher {
+			};
+			object occupantload {
+			};
+			object microwave {
+			};
+			object plugload {
+			};
+			object range {
+			};
+			object waterheater {
+			};
+		};
+	};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// end-use load shapes
+object shaper {
+	file "../test/shapes/foodprep.shape";
+	group "class=range";
+	property "demand";
+};
+
+#ifdef IGNORE
+object shaper {
+	file "../test/shapes/lights.shape";
+	group "class=lights";
+	property "demand";
+};
+
+object shaper {
+	file "../test/shapes/clotheswasher.shape";
+	group "class=clotheswasher";
+	property "demand";
+};
+
+object shaper {
+	file "../core/test/olypen_occupancy.shape";
+	group "class=occupantload";
+	property "demand";
+};
+
+object shaper {
+	file "../test/shapes/other-base.shape";
+	group "class=plugload";
+	property "demand";
+};
+
+object shaper {
+	file "../core/test/hotwater-base.shape";
+	group "class=waterheater";
+	property "demand";
+};
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+// data collection
+object collector {
+	file "../core/test/olypen_feeder.csv";
+	group "class=node and name=SupplyBus";
+	property "max(power_in.mag)";
+	interval 900;
+	limit 1000;
+}
+
+object collector {
+	file "../core/test/olypen_hvac.csv";
+	group "class=house";
+	property "sum(power.mag)";
+	interval 900;
+	limit 1000;
+}
+
+object collector {
+	file "../core/test/olypen_plugs.csv";
+	group "class=plugload";
+	property "sum(power.mag)";
+	interval 900;
+	limit 1000;
+}
+
+object collector {
+	file "../core/test/olypen_lights.csv";
+	group "class=lights";
+	property "sum(power.mag)";
+	interval 900;
+	limit 1000;
+}
+
+object collector {
+	file "../core/test/olypen_cooking.csv";
+	group "class=range";
+	property "sum(power.mag)";
+	interval 900;
+	limit 1000;
+}
+
+object collector {
+	file "../core/test/olypen_washing.csv";
+	group "class=clotheswasher";
+	property "sum(power.mag)";
+	interval 900;
+	limit 1000;
+}
+
+object collector {
+	file "../core/test/olypen_waterheater.csv";
+	group "class=waterheater";
+	property "sum(power.mag)";
+	interval 900;
+	limit 1000;
+}
+
+object collector {
+	file "../core/test/olypen_tou_price.csv";
+	group "class=house and contract=TOU";
+	property "min(price),mean(price),max(price),count(price)";
+	interval 3600;
+}

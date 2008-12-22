@@ -1,0 +1,13 @@
+// $Id$
+// Copyright (C) 2008 Battelle Memorial Institute
+// Configuration to use when debugging GLM files with MSVC
+
+// enable use of MSVC instead of GNUtools
+#define use_msvc=1 
+#set force_compile=1
+
+// custome to your local setup
+#setenv ld_library_path="."
+#setenv path=C:\Program Files\Microsoft Visual Studio 8\Common7\IDE;C:\Program Files\Microsoft Visual Studio 8\VC\bin
+#setenv include=C:\Program Files\Microsoft Visual Studio 8\VC\include
+#setenv lib=c:\windows\system32;C:\Program Files\Microsoft Visual Studio 8\VC\lib;C:\Program Files\Microsoft Visual Studio 8\VC\PlatformSDK\Lib

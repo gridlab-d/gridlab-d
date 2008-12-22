@@ -1,0 +1,271 @@
+
+# 8 Node Feeder: 2 Unbalanced step-down grY-grY feeder
+
+########################################################
+# BEGIN
+########################################################
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow;
+module tape;
+module plc {
+	incpath "..\rt\include";
+	libpath "..\rt\lib";
+}
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AtoB 2.5;
+	distance_BtoC 4.5;
+	distance_AtoC 7.0;
+	distance_AtoN 5.656854;
+	distance_BtoN 4.272002;
+	distance_CtoN 5.0;
+}
+
+object line_configuration:300 {
+	phaseA_conductor overhead_line_conductor:100;
+	phaseB_conductor overhead_line_conductor:100;
+	phaseC_conductor overhead_line_conductor:100;
+	phaseN_conductor overhead_line_conductor:101;
+	line_spacing line_spacing:200;
+}
+
+object transformer_configuration:400 {
+	connect_type 1;
+	kVA_rating 6000;
+	V_primary 12470;
+	V_secondary 4160;
+	R_pu 0.01;
+	X_pu 0.06;
+}
+
+object node:1 {
+	name Node1;
+	phases "ABCN";
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object overhead_line:12 {
+    name Line12;
+	phases "ABCN";
+	from node:1;
+	to DummyNode1;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node:2 {
+    name Node2;
+	phases "ABCN";
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object transformer:23 {
+	name xfrm1;
+	phases "ABCN";
+	from node:3;
+	to node:2;
+	configuration transformer_configuration:400;
+}
+
+object node:3 {
+    name Node3;
+	phases "ABCN";
+	phaseA_V +2401.777+0.000j;
+	phaseB_V -1200.889-2080.000j;
+	phaseC_V -1200.889+2080.000j;
+}
+
+object overhead_line:34 {
+	phases "ABCN";
+	from node:3;
+	to load:4;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object load:4 {
+    name Node4;
+	phases "ABCN";
+	phaseA_V +2401.777+0.000j;
+	phaseB_V -1200.889-2080.000j;
+	phaseC_V -1200.889+2080.000j;
+	phaseA_VA +127500.0000+790174.031j;
+	phaseB_VA +180000.0000+871779.789j;
+	phaseC_VA +237500.0000+780624.750j;
+	sync_V_limit 0.001;
+}
+
+object node {
+	name DummyNode1;
+	phases "ABCN";
+	}
+	
+object node {
+	name DummyNode5;
+	phases "ABCN";
+	}
+	
+#object node {
+#	name DummyNode3;
+#	phases "ABCN";
+#	}
+	
+
+object node:5 {
+    name Node5;
+	phases "ABCN";
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object overhead_line:56 {
+	phases "ABCN";
+	from node:5;
+	to DummyNode5;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node:6 {
+    name Node6;
+	phases "ABCN";
+	phaseA_V +7199.558+0.000j;
+	phaseB_V -3599.779-6235.000j;
+	phaseC_V -3599.779+6235.000j;
+}
+
+object transformer:67 {
+	phases "ABCN";
+	from node:6;
+	to node:7;
+	configuration transformer_configuration:400;
+}
+
+object node:7 {
+    name Node7;
+	phases "ABCN";
+	phaseA_V +2401.777+0.000j;
+	phaseB_V -1200.889-2080.000j;
+	phaseC_V -1200.889+2080.000j;
+}
+
+
+object overhead_line:37 {
+    name Line37;
+	phases "ABCN";
+    from node:3; 
+#	from DummyNode3;
+#	to node:3;
+	to node:7;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object overhead_line:78 {
+	phases "ABCN";
+	from node:7;
+	to load:8;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object load:8 {
+    name Node8;
+	phases "ABCN";
+	phaseA_V +2401.777+0.000j;
+	phaseB_V -1200.889-2080.000j;
+	phaseC_V -1200.889+2080.000j;
+	phaseA_VA +127500.0000+790174.031j;
+	phaseB_VA +180000.0000+871779.789j;
+	phaseC_VA +237500.0000+780624.750j;
+	sync_V_limit 0.001;
+}
+
+object switch_object: {
+	name Switch12;
+	from DummyNode1;
+	to node:2;
+	status OPEN;
+	phases "ABCN";
+	}
+
+object switch_object: {
+    name Switch56;
+    from DummyNode5;
+    to node:6;
+    phases "ABCN";
+    status CLOSED;
+}
+
+#object switch_object: {
+#	name Switch37;
+#	from node:7;
+#	to DummyNode3;
+#	status CLOSED;
+#	phases "ABCN";
+#	}
+	
+
+#object player{ 
+#        parent Switch56; 
+#        property status; 
+#        file switchPlayer1.glt; 
+#} 
+#
+#object player{ 
+#        parent Switch12; 
+#        property status; 
+#        file switchPlayer2.glt; 
+#} 
+#
+#object player{ 
+#        parent Switch37; 
+#        property status; 
+#        file switchPlayer3.glt; 
+#} 
+
+object plc {
+	name switch12plc;
+	parent Switch12;
+    source switch12plc.plc;
+}
+
+object recorder {
+	parent Node2;
+	property phaseA_V,phaseB_V,phaseC_V;
+	interval 300;
+	file node2.csv;
+	limit 20;
+}
+
+object recorder {
+	parent Switch12;
+	property status;
+	interval 300;
+	file switch12.csv;
+	limit 20;
+}
+
+########################################################
+# END
+########################################################

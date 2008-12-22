@@ -1,0 +1,93 @@
+<load>
+<clock>
+	<timestamp>'2000-01-01 0:00:00'</timestamp>
+	<timezone>PST+8PDT</timezone>
+</clock>
+<module type="tape">
+</module>
+<module type="climate">
+	<object type="climate">
+		<tmyfile>ca.los_angeles.23174</tmyfile>
+	</object>
+</module>
+<module type="residential">
+	<object type="house" id="1">
+		<floor_area>random.normal(1500,300) sf</floor_area>
+	</object>
+	<object type="lights" id="2">
+		<parent>house:1</parent>
+	</object>
+	<object type="range" id="3">
+		<parent>house:1</parent>
+	</object>
+	<object type="clotheswasher" id="4">
+		<parent>house:1</parent>
+	</object>
+	<object type="waterheater" id="5">
+		<parent>house:1</parent>
+		<tank_setpoint>135.0 degF</tank_setpoint>
+	</object>
+	<object type="player">
+		<parent>lights:2</parent>
+		<property>demand</property>
+		<file>lightingDemand.glt</file>
+		<loop>100</loop>
+	</object>
+	<object type="player">
+		<parent>range:3</parent>
+		<property>demand</property>
+		<file>clotheswasherDemand.glt</file>
+		<loop>100</loop>
+	</object>
+	<object type="player">
+		<parent>waterheater:5</parent>
+		<property>demand</property>
+		<file>hotwaterDemand.glt</file>
+		<loop>100</loop>
+	</object>
+	<object type="microwave" id="6">
+		<parent>house:1</parent>
+	</object>
+	<object type="player">
+		<parent>microwave:6</parent>
+		<property>demand</property>
+		<file>microwaveDemand.glt</file>
+		<loop>100</loop>
+	</object>
+	<object type="plugload" id="7">
+		<parent>house:1</parent>
+	</object>
+	<object type="player">
+		<parent>plugload:7</parent>
+		<property>demand</property>
+		<file>plugloadDemand.glt</file>
+		<loop>100</loop>
+	</object>
+	<object type="dishwasher" id="8">
+		<parent>house:1</parent>
+	</object>
+	<object type="player">
+		<parent>dishwasher:8</parent>
+		<property>demand</property>
+		<file>dishwasherDemand.glt</file>
+		<loop>100</loop>
+	</object>
+	<object type="occupantload" id="9">
+		<parent>house:1</parent>
+		<number_of_occupants>4</number_of_occupants>
+	</object>
+	<object type="player">
+		<parent>occupantload:9</parent>
+		<property>occupancy_fraction</property>
+		<file>occupancyFraction.glt</file>
+		<loop>100</loop>
+	</object>
+	<object type="recorder">
+		<parent>house:*</parent>
+		<property>total_internal_gain</property>
+		<file>kgrecorder.txt</file>
+		<interval>0</interval>
+		<limit>1000</limit>
+	</object>
+</module>
+</load>

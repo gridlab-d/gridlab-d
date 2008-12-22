@@ -1,0 +1,33 @@
+# $Id$
+# Copyright (C) 2008 Battelle Memorial Institute
+#
+# This is the shape file for tou price energy
+#
+# Time entries are "minutes hours days months weekdays"
+# Shape magnitude are automatically normalized within each group
+#
+
+tou-price-energy-spring {
+	* 0-5;9-17;21-23 * 4-6 *, 41.19
+	* 6-8;18-20 * 4-6 *, 121.50
+	
+}
+
+tou-price-energy-summer {
+	* 0-14;21-23 * 7-9 *, 50.00
+	* 15-20 * 7-9 *, 135.00
+	
+}
+
+tou-price-energy-fall {
+	* 0-5;9-17;21-23 * 10-12 *, 41.19
+	* 6-8;18-20 * 10-12 *, 121.50
+	
+}
+
+tou-price-energy-summer {
+	* 0-3;9-23 * 1-3 *, 50.00
+	* 6-9 * 1-3 *, 135.00
+	
+}
+

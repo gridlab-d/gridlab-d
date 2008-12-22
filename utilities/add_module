@@ -1,0 +1,48 @@
+#!/bin/bash
+# $Id: add_module,v 1.3 2008/02/12 18:58:18 d3g637 Exp $
+#
+# Add GridLAB-D modules to the current directory
+#
+
+if [ $# -eq 0 ]; then
+	echo "Syntax: $(basename $0) <mod1> <mod2> ... <modN>"
+	exit 1
+elif [ ! -d core -o ! -f core/gridlabd.h ]; then
+	echo "The current directory doesn't look like a GridlabD source folder"
+	exit 2
+fi
+
+while [ $# -gt 0 ]; do
+	MODULENAME="$1"
+	shift
+
+	if [ -d $MODULENAME ]; then
+		echo "Module $MODULENAME already exists"
+		continue
+	fi
+
+	echo "Creating module directory $MODULENAME..."
+	mkdir $MODULENAME
+
+	echo "Creating files..."
+	for F in $0.d/*.*; do
+		FN=$(basename $F)
+		if [ "$FN" == "CVS" ]; then
+			continue;
+		fi
+		if [ $FN == "MODULENAME.h" ]; then
+			FN=$MODULENAME.h
+		fi
+		echo "  $FN..."
+		sed -e "s/MODULENAME/$MODULENAME/g" <$F >$MODULENAME/$FN
+	done
+
+	echo "Adding module to configure.ac..."	
+	sed -e "s:AC_CONFIG_FILES(\[./Makefile:AC_CONFIG_FILES(\[./Makefile $MODULENAME/Makefile:" <configure.ac >.configure.ac
+	if [ -s .configure.ac ]; then
+		mv .configure.ac configure.ac
+	else
+		echo "ERROR: edit of configure.ac failed"
+		exit 1
+	fi
+done

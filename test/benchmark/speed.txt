@@ -1,0 +1,32 @@
+# speed.txt
+# depends: speed.tape
+#
+# This benchmark test create 1000 commercial buildings
+# with no objects inside them.  It plays a simple 6 hr
+# weather tape that is not connected.  The result
+# should be a test of the system ability to exploit
+# the implicit parallelism of the model.  The more
+# processors are used, the faster the simulation 
+# should run.
+#
+
+%define a=6
+%if a < 5
+%print a
+%endif
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+}
+
+module commercial;
+object office:..1000 {
+}
+
+module tape;
+object player {
+	file speed.tape;
+	loop 1000;
+}
+
+

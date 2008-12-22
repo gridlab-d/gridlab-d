@@ -1,0 +1,26 @@
+GridLAB-D installs with three gridlab model sample files:
+
+residential_loads.glm
+powerflow_IEEE_4node.glm
+powerflow_IEEE_37node.glm
+
+To run GridLAB-D, change to the models folder and specify a model file as input
+
+   % gridlabd.exe residential_loads
+   
+Other command-line options can be used to provide information about the model run. For examples, the following command-line outputs the model in an xml format after the run:
+
+   % gridlabd.exe residential_loads -o <filename.xml>
+   
+To list additional command-line options, use:
+
+   % gridlabd.exe -h
+
+The residential_loads model will produce outputs files with .csv extensions.
+The powerflow_IEEE_*node models do not produce any output files unless requested using additional command-line optinos.  See the comments in the files for details on what they do.
+
+If the current directory is not set to the location of the model file, a full
+path to the model file can be given on the command line. However, some models
+include additional input files specified using only relative paths. These
+models may require editing to provide a full path. All models shipped with
+GridLAB-D are set up to run correctly from the models current directory.

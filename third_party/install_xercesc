@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [ -f xerces*.gz -a ! -d xerces* ]; then
+	echo "Uncompressing xerces*.gz..."
+	gunzip xerces*.gz
+fi
+if [ -f xerces*.tar -a ! -d xerces* ]; then
+	echo "Extracting xerces*.tar..."
+	tar xvf xerces*.tar
+fi
+cd xerces*
+export XERCESCROOT=`pwd`
+cd src/xercesc
+./runConfigure -plinux -cgcc -xg++ -minmem -nsocket -tnative -rpthread
+make
+cd ../..
+sudo cp -r include/xercesc /usr/include
+sudo cp -lf cp -l lib/* /usr/lib
+sudo /sbin/ldconfig
+
