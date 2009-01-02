@@ -269,24 +269,28 @@ evcharger::evcharger(MODULE *module)
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_enumeration,"charger_type",PADDR(charger_type),
-				PT_KEYWORD,"LOW",LOW,
-				PT_KEYWORD,"MEDIUM",MEDIUM,
-				PT_KEYWORD,"HIGH",HIGH,
+				PT_KEYWORD,"LOW",CT_LOW,
+				PT_KEYWORD,"MEDIUM",CT_MEDIUM,
+				PT_KEYWORD,"HIGH",CT_HIGH,
 			PT_enumeration,"vehicle_type",PADDR(vehicle_type),
-				PT_KEYWORD,"ELECTRIC",ELECTRIC,
-				PT_KEYWORD,"HYBRID",HYBRID,
-			PT_enumeration,"state",PADDR(state),
-				PT_KEYWORD,"HOME",HOME,
-				PT_KEYWORD,"WORK",WORK,
-				PT_KEYWORD,"SHORTTRIP",SHORTTRIP,
-				PT_KEYWORD,"LONGTRIP",LONGTRIP,
+				PT_KEYWORD,"ELECTRIC",VT_ELECTRIC,
+				PT_KEYWORD,"HYBRID",VT_HYBRID,
+			PT_enumeration,"state",PADDR(vehicle_state),
+				PT_KEYWORD,"UNKNOWN",VS_UNKNOWN,
+				PT_KEYWORD,"HOME",VS_HOME,
+				PT_KEYWORD,"WORK",VS_WORK,
+			// these are not yet supported
+			//	PT_KEYWORD,"SHORTTRIP",SHORTTRIP,
+			//	PT_KEYWORD,"LONGTRIP",LONGTRIP,
 			PT_double,"p_go_home[unit/h]",PADDR(demand.home),
 			PT_double,"p_go_work[unit/h]",PADDR(demand.work),
-			PT_double,"p_go_shorttrip[unit/h]",PADDR(demand.shorttrip),
-			PT_double,"p_go_longtrip[unit/h]",PADDR(demand.longtrip),
+			// these are not yet supported
+			//PT_double,"p_go_shorttrip[unit/h]",PADDR(demand.shorttrip),
+			//PT_double,"p_go_longtrip[unit/h]",PADDR(demand.longtrip),
 			PT_double,"work_dist[mile]",PADDR(distance.work),
-			PT_double,"shorttrip_dist[mile]",PADDR(distance.shorttrip),
-			PT_double,"longtrip_dist[mile]",PADDR(distance.longtrip),
+			// these are not yet supported
+			//PT_double,"shorttrip_dist[mile]",PADDR(distance.shorttrip),
+			//PT_double,"longtrip_dist[mile]",PADDR(distance.longtrip),
 			PT_double,"capacity[kWh]",PADDR(capacity),
 			PT_double,"charge[unit]",PADDR(charge),
 			PT_bool,"charge_at_work",PADDR(charge_at_work),
@@ -310,6 +314,7 @@ evcharger::evcharger(MODULE *module)
 		defaults = this;
 		memset(this,0,sizeof(evcharger));
 		load.power = load.admittance = load.current = load.total = complex(0,0,J);
+		vehicle_type = VT_HYBRID;
 	}
 }
 
@@ -326,7 +331,8 @@ int evcharger::create()
 }
 
 // LOW, MEDIUM, HIGH settings
-static double amps[] = {12,30,60};
+static double fuse[] = {15,35,70};
+static double amps[] = {12,28,55};
 static bool hiV[] = {false,true,true};
 
 int evcharger::init(OBJECT *parent)
@@ -338,8 +344,9 @@ int evcharger::init(OBJECT *parent)
 	if (charge_throttle==0) charge_throttle = 1.0;
 	if (mileage==0) mileage = gl_random_uniform(0.8,1.2);
 	if (distance.work==0) distance.work = gl_random_lognormal(3,1);
-	if (distance.shorttrip==0) distance.shorttrip = gl_random_lognormal(3,1);
-	if (distance.longtrip==0) distance.longtrip = gl_random_lognormal(4,2);
+	// these are not yet supported
+	//if (distance.shorttrip==0) distance.shorttrip = gl_random_lognormal(3,1);
+	//if (distance.longtrip==0) distance.longtrip = gl_random_lognormal(4,2);
 
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
@@ -349,7 +356,7 @@ int evcharger::init(OBJECT *parent)
 	house *pHouse = OBJECTDATA(parent,house);
 
 	// attach object to house panel
-	pVoltage = (pHouse->attach(OBJECTHDR(this),amps[charger_type],hiV[charger_type]))->pV;
+	pVoltage = (pHouse->attach(OBJECTHDR(this),fuse[charger_type],hiV[charger_type]))->pV;
 
 	// load demand profile
 	if (strcmp(demand_profile,"")!=0)
@@ -360,10 +367,10 @@ int evcharger::init(OBJECT *parent)
 	return 1;
 }
 
-double evcharger::update_state(double dt) 
+double evcharger::update_state(double dt /* seconds */) 
 {
 	OBJECT *obj = OBJECTHDR(this);
-	if (obj->clock>0)
+	if (obj->clock>TS_ZERO && dt>0)
 	{
 		DATETIME now;
 		if (!gl_localtime(obj->clock,&now))
@@ -375,33 +382,39 @@ double evcharger::update_state(double dt)
 		demand.work = pDemand->home[daytype][ARRIVE][hour];
 
 		// implement any state change (arrival/departure)
-		switch (state) {
-		case HOME:
-			if (gl_random_bernoulli(demand.home))
-				state = WORK;
-			break;
-		case WORK:
-			if (gl_random_bernoulli(demand.work))
+		switch (vehicle_state) {
+		case VS_HOME:
+			if (gl_random_bernoulli(demand.home*dt/3600))
 			{
-				state = HOME;
+				gl_debug("%s (%s:%d) leaves for work with %.0f%% charge",obj->name?obj->name:"anonymous",obj->oclass->name,obj->id,charge*100);
+				vehicle_state = VS_WORK;
+			}
+			break;
+		case VS_WORK:
+			if (gl_random_bernoulli(demand.work*dt/3600))
+			{
+				vehicle_state = VS_HOME;
 				if (charge_at_work)
 					charge -= (distance.work / mileage)/capacity;
 				else
 					charge -= 2 * (distance.work / mileage)/capacity;
-				if (charge<0.25 && vehicle_type==HYBRID)
+				if (charge<0.25 && vehicle_type==VT_HYBRID)
 					charge = 0.25;
 				if (charge<=0)
 					gl_warning("%s (%s:%d) vehicle has run out of charge while away from home", obj->name?obj->name:"anonymous",obj->oclass->name,obj->id);
+				else
+					gl_debug("%s (%s:%d) returns from work with %.0f%% charge",obj->name?obj->name:"anonymous",obj->oclass->name,obj->id, charge*100);
 			}
 			break;
-		case SHORTTRIP:
-			// TODO - return home after short trip
-			// charge -= distance.shorttrip / mileage / capacity;
-			break;
-		case LONGTRIP:
-			// TODO - return home after long trip
-			// charge = 0.25;
-			break;
+		// these are not yet supported
+		//case SHORTTRIP:
+		// TODO - return home after short trip
+		//	charge -= distance.shorttrip / mileage / capacity;
+		//	break;
+		//case LONGTRIP:
+		// TODO - return home after long trip
+		//	charge = 0.25;
+		//	break;
 		default:
 			throw "invalid state";
 			break;
@@ -409,21 +422,17 @@ double evcharger::update_state(double dt)
 	}
 
 	// evaluate effect of current state on home
-	switch (state) {
-	case HOME:
+	switch (vehicle_state) {
+	case VS_HOME:
 		if (charge<1.0 && obj->clock>0)
 		{
 			// compute the charging power
 			double charge_kw;
 			switch (charger_type) {
-			case LOW:
-				charge_kw = 15 * pVoltage->Mag() * charge_throttle /1000;
-				break;
-			case MEDIUM:
-				charge_kw = 30 * pVoltage->Mag() * charge_throttle /1000;
-				break;
-			case HIGH:
-				charge_kw = 60 * pVoltage->Mag() * charge_throttle /1000;
+			case CT_LOW:
+			case CT_MEDIUM:
+			case CT_HIGH:
+				charge_kw = amps[(int)charger_type] * pVoltage->Mag() * charge_throttle /1000;
 				break;
 			default:
 				throw "invalid charger_type";
@@ -435,10 +444,16 @@ double evcharger::update_state(double dt)
 
 			// compute the charge added to the battery
 			charge += d_charge_kWh/capacity;
-			if (charge>1.0)
-				throw "charge state error (overcharge)"; // this shouldn't happen--it means that a dt calculate is wrong somewhere
-			if (charge<0)
+			if (charge>1.001)
+				throw "charge state error (overcharge)"; // this shouldn't happen--it means that a dt calculation is wrong somewhere
+			else if (charge<0.0)
 				throw "charge state error (undercharge)"; // this shouldn't happen either
+			else if (charge>0.999)
+			{
+				gl_debug("%s (%s:%d) charge complete",obj->name?obj->name:"anonymous",obj->oclass->name,obj->id);
+				charge = 1.0;
+			}
+
 
 			// compute the time it will take to finish charging to full capacity
 			if (charge_kw>0)
@@ -452,22 +467,26 @@ double evcharger::update_state(double dt)
 			}
 
 			else
-				dt = -1; //never
+				dt = -1; // never
 
 			load.power.SetPowerFactor(charge_kw,power_factor,J);
 		}
 		else
+		{
 			load.power = complex(0,0,J);
+			dt = -1; // never
+		}
 		break;
-	case WORK:
+	case VS_WORK:
 		load.power = complex(0,0,J);
 		break;
-	case SHORTTRIP:
-		load.power = complex(0,0,J);
-		break;
-	case LONGTRIP:
-		load.power = complex(0,0,J);
-		break;
+	// these are not yet supported
+	//case SHORTTRIP:
+	//	load.power = complex(0,0,J);
+	//	break;
+	//case LONGTRIP:
+	//	load.power = complex(0,0,J);
+	//	break;
 	default:
 		throw "invalid state";
 		break;
@@ -484,11 +503,20 @@ double evcharger::update_state(double dt)
 TIMESTAMP evcharger::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	// compute the total load and heat gain
-	if (t0>0 && t1>t0)
-		load.energy += (load.total * gl_tohours(t1-t0)).Mag();
-	double dt = update_state(gl_toseconds(t1-t0));
+	if (t1>t0)
+	{	
+		if (t0>0)
+			load.energy += (load.total * gl_tohours(t1-t0)).Mag();
+		double dt = update_state(gl_toseconds(t1-t0));
 
-	return dt<0 ? TS_NEVER : (TIMESTAMP)(t1+dt*TS_SECOND); 
+		return dt<0 ? TS_NEVER : (TIMESTAMP)(t1+dt*TS_SECOND); 
+	}
+	else
+	{
+		double dt = update_state(gl_toseconds(t1-t0));
+
+		return dt<0 ? TS_NEVER : (TIMESTAMP)(t1+dt*TS_SECOND); 
+	}
 }
 
 void evcharger::load_demand_profile(void)

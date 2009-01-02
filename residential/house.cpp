@@ -303,8 +303,8 @@ int house::init(OBJECT *parent)
 		gl_error("house:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
 
 		// attach meter variables to each circuit in the default_meter
-			*(map[0].var) = &default_line_voltage[0];
-			*(map[1].var) = &default_line_current[0];
+		*(map[0].var) = &default_line_voltage[0];
+		*(map[1].var) = &default_line_current[0];
 	}
 		// Set defaults for published variables nor provided by model definition
 	while (floor_area <= 500)
@@ -511,7 +511,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// compute circuit current
 			if ((c->pV)->Mag() == 0)
 			{
-				gl_debug("house:%d circuit voltage is zero", obj->id);
+				gl_debug("house:%d circuit %d (%s:%d) voltage is zero", obj->id, c->id, c->enduse->oclass->name, c->enduse->id);
 				break;
 			}
 			
@@ -528,8 +528,8 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 					// average five minutes before reclosing, exponentially distributed
 					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(1/300.0)*TS_SECOND); 
-					gl_debug("house:%d panel breaker %d tripped - %s (%s:%d) overload", obj->id, c->id,
-						c->enduse->name?c->enduse->name:"unnamed object", c->enduse->oclass->name, c->enduse->id);
+					gl_debug("house:%d circuit breaker %d tripped - %s (%s:%d) overload at %.0f A", obj->id, c->id,
+						c->enduse->name?c->enduse->name:"unnamed object", c->enduse->oclass->name, c->enduse->id, current.Mag());
 				}
 
 				// breaker fails from too frequent operation
@@ -537,7 +537,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					c->status = BRK_FAULT;
 					c->reclose = TS_NEVER;
-					gl_debug("house:%d panel breaker %d failed", obj->id, c->id);
+					gl_debug("house:%d circuit breaker %d failed", obj->id, c->id);
 				}
 
 				// must immediately reevaluate everything

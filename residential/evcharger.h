@@ -31,37 +31,45 @@ typedef struct s_evdemand {
 
 class evcharger  
 {
+	typedef enum {
+		VS_UNKNOWN=-1,				///< vehicle state is unknown
+		VS_HOME=0,					///< vehicle is at home (charging is active)
+		VS_WORK=1,					///< vehicle is at work (charging is possible)
+	// these are not yet supported
+	//	VS_SHORTTRIP=2,				///< vehicle is on short trip (<50 miles -- discharging to 25%)
+	//	VS_LONGTRIP=3,				///< vehicle is on long trip (>50 miles -- discharged to 25%)
+	} VEHICLESTATE;
+	typedef enum {
+		CT_LOW=0,					///< low power charger (120V/15A)
+		CT_MEDIUM=1,				///< med power charger (240V/30A)
+		CT_HIGH=2,					///< high power charger (240V/70A)
+	} CHARGERTYPE;
+	typedef enum {
+		VT_ELECTRIC=0,				///< vehicle is pure electric (no long trips)
+		VT_HYBRID=1,				///< vehicle is hybrid (long trip possible)
+	} VEHICLETYPE;
 private:
-	complex *pVoltage;			///< ref voltage the charge is getting
-	EVDEMAND *pDemand;			///< ref demand profile for this vehicle
+	complex *pVoltage;				///< ref voltage the charge is getting
+	EVDEMAND *pDemand;				///< ref demand profile for this vehicle
+
 public:
-	ENDUSELOAD load;			///< enduse load structure
-	double heat_fraction;		///< fraction of the evcharger that is transferred as heat (default = 0.90)
-	enum {
-		LOW=0,						///< low power charger (120V/15A)
-		MEDIUM=1,					///< med power charger (240V/30A)
-		HIGH=2,						///< high power charger (240V/70A)
-	} charger_type;				///< EV charger power
-	enum {
-		ELECTRIC=0,					///< vehicle is pure electric (no long trips)
-		HYBRID=1,					///< vehicle is hybrid (long trip possible)
-	} vehicle_type;				///< vehicle type
-	enum {
-		HOME=0,						///< vehicle is at home (charging is active)
-		WORK=1,						///< vehicle is at work (charging is possible)
-		SHORTTRIP=2,				///< vehicle is on short trip (<50 miles -- discharging to 25%)
-		LONGTRIP=3,					///< vehicle is on long trip (>50 miles -- discharged to 25%)
-	} state;					///< current state of EV
+	ENDUSELOAD load;				///< enduse load structure
+	double heat_fraction;			///< fraction of the evcharger that is transferred as heat (default = 0.90)
+	CHARGERTYPE charger_type;		///< EV charger power
+	VEHICLETYPE vehicle_type;		///< vehicle type
+	VEHICLESTATE vehicle_state;		///< current state of EV
 	struct {
 		double home;				///< probability of coming home
 		double work;				///< probability of leaving at work
-		double shorttrip;			///< probability of leaving on a short trip
-		double longtrip;			///< probability of leaving on a long trip
+	// these are not yet supported
+	//	double shorttrip;			///< probability of leaving on a short trip
+	//	double longtrip;			///< probability of leaving on a long trip
 	} demand;					///< vehicle demand characteristics
 	struct {
 		double work;				///< distance to work
-		double shorttrip;			///< typical distance for short trip
-		double longtrip;			///< typical distance for long trip
+	// these are not yet supported
+	//	double shorttrip;			///< typical distance for short trip
+	//	double longtrip;			///< typical distance for long trip
 	} distance;					///< trip distances
 	bool charge_at_work;		///< allow charging at work
 	double capacity;			///< maximum capacity of battery
