@@ -1,4 +1,4 @@
-/** $Id: timestamp.c 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: timestamp.c 1187 2009-01-02 18:58:48Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file timestamp.c
 	@addtogroup timestamp Time management
@@ -483,8 +483,8 @@ int convert_from_timestamp(TIMESTAMP ts, char *buffer, int size)
 	if (len<size) 
 	{
 		if(ts == TS_NEVER){
-			strcpy(buffer, "TS_NEVER");
-			return (int)strlen("TS_NEVER");
+			strcpy(buffer, "NEVER");
+			return (int)strlen("NEVER");
 		}
 		strcpy(buffer,temp);
 		return len;
@@ -510,7 +510,7 @@ TIMESTAMP convert_to_timestamp(char *value)
 	}
 	else if (strcmp(value,"INIT")==0)
 		return 0;
-	else if (strcmp(value, "TS_NEVER")==0)
+	else if (strcmp(value, "NEVER")==0)
 		return TS_NEVER;
 	else if (strcmp(value, "NOW") == 0)
 		return global_clock;

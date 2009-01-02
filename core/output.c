@@ -1,4 +1,4 @@
-/** $Id: output.c 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: output.c 1188 2009-01-02 21:51:07Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file output.c
 	@author David P. Chassin
@@ -237,6 +237,16 @@ PRINTFUNCTION output_set_stderr(PRINTFUNCTION call) /**< The \b printf style fun
 	return old;
 }
 
+static char time_context[256]="INIT";
+void output_set_time_context(TIMESTAMP ts)
+{
+	convert_from_timestamp(ts,time_context,sizeof(time_context)-1);
+}
+char *output_get_time_context(void)
+{
+	return time_context;
+}
+
 /** Output a fatal error message
 	
 	output_fatal() will produce output to the standard output stream.  
@@ -252,9 +262,9 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 	va_end(ptr);
 
 	if (redirect.error)
-		return fprintf(redirect.error,"FATAL: %s\n",buffer);
+		return fprintf(redirect.error,"FATAL [%s] : %s\n", time_context, buffer);
 	else
-		return (*printerr)("FATAL: %s\n",buffer);
+		return (*printerr)("FATAL [%s] : %s\n", time_context, buffer);
 }
 
 /** Output an error message to the stdout stream using printf style argument processing
@@ -275,9 +285,9 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 		(*notify_error)();
 
 	if (redirect.error)
-		return fprintf(redirect.error,"ERROR: %s\n",buffer);
+		return fprintf(redirect.error,"ERROR [%s] : %s\n",time_context, buffer);
 	else
-		return (*printerr)("ERROR: %s\n",buffer);
+		return (*printerr)("ERROR [%s] : %s\n", time_context, buffer);
 }
 
 /** Output an test message to the stdout stream using printf style argument processing
@@ -332,9 +342,9 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 		va_end(ptr);
 
 		if (redirect.warning)
-			return fprintf(redirect.warning,"WARNING: %s\n",buffer);
+			return fprintf(redirect.warning,"WARNING [%s] : %s\n",time_context, buffer);
 		else
-			return (*printerr)("WARNING: %s\n",buffer);
+			return (*printerr)("WARNING [%s] : %s\n", time_context, buffer);
 	}
 	return 0;
 }
@@ -356,9 +366,9 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 		va_end(ptr);
 
 		if (redirect.debug)
-			return fprintf(redirect.debug,"DEBUG: %s\n",buffer);
+			return fprintf(redirect.debug,"DEBUG [%s] : %s\n",time_context, buffer);
 		else
-			return (*printerr)("DEBUG: %s\n",buffer);
+			return (*printerr)("DEBUG [%s] : %s\n", time_context, buffer);
 	}
 	return 0;
 }

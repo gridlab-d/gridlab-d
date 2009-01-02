@@ -1,4 +1,4 @@
-/** $Id: output.h 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: output.h 1188 2009-01-02 21:51:07Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file output.h
 	@addtogroup output
@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+
+#include "timestamp.h"
 
 typedef int (*PRINTFUNCTION)(char *,...);
 
@@ -39,6 +41,9 @@ int output_progress(void);
 int output_profile(char *format,...);
 
 int output_notify_error(void (*)(void));
+
+void output_set_time_context(TIMESTAMP ts);
+char *output_get_time_context(void);
 
 int output_xsd(char *spec);
 int output_xsl(char *fname, int n_mods, char *p_mods[]);

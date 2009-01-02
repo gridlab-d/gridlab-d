@@ -1,4 +1,4 @@
-/** $Id: exec.c 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: exec.c 1188 2009-01-02 21:51:07Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file exec.c
 	@addtogroup exec Main execution loop
@@ -359,6 +359,9 @@ STATUS exec_start(void)
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
 		while (iteration_counter>0 && sync.step_to<min(global_stoptime,TS_NEVER) && sync.hard_event>0 && !stop_now) 
 		{
+			/* set time context */
+			output_set_time_context(sync.step_to);
+
 			sync.hard_event = 0;
 			global_clock = sync.step_to;
 			sync.step_to = TS_NEVER;
