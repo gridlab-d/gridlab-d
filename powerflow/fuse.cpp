@@ -1,4 +1,4 @@
-// $Id: fuse.cpp 1182 2008-12-22 22:08:36Z dchassin $
+// $Id: fuse.cpp 1186 2009-01-02 18:15:30Z dchassin $
 /**	Copyright (C) 2008 Battelle Memorial Institute
 
 	@file fuse.cpp
@@ -32,7 +32,7 @@ fuse::fuse(MODULE *mod) : link(mod)
 	{
 		pclass = relay::oclass;
 		
-		oclass = gl_register_class(mod,"fuse",sizeof(fuse),PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
+		oclass = gl_register_class(mod,"fuse",sizeof(fuse),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
         if(oclass == NULL)
             GL_THROW("unable to register object class implemented by %s",__FILE__);
         

@@ -1,4 +1,4 @@
-/** $Id: triplex_line.cpp 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: triplex_line.cpp 1186 2009-01-02 18:15:30Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file triplex_line.cpp
 	@addtogroup triplex_line 
@@ -25,7 +25,7 @@ triplex_line::triplex_line(MODULE *mod) : line(mod)
 	{
 		pclass = line::oclass;
 		
-		oclass = gl_register_class(mod,"triplex_line",sizeof(triplex_line),PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
+		oclass = gl_register_class(mod,"triplex_line",sizeof(triplex_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
         if(oclass == NULL)
             GL_THROW("unable to register object class implemented by %s",__FILE__);
         

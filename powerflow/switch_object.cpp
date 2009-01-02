@@ -62,7 +62,7 @@ switch_object::switch_object(MODULE *mod) : link(mod)
 	{
 		pclass = link::oclass;
 
-		oclass = gl_register_class(mod,"switch",sizeof(switch_object),PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
+		oclass = gl_register_class(mod,"switch",sizeof(switch_object),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
         if(oclass == NULL)
             GL_THROW("unable to register object class implemented by %s",__FILE__);
 

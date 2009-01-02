@@ -1,4 +1,4 @@
-/** $Id: triplex_node.cpp 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: triplex_node.cpp 1186 2009-01-02 18:15:30Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file triplex_node.cpp
 	@addtogroup triplex_node
@@ -18,7 +18,7 @@
 CLASS* triplex_node::oclass = NULL;
 CLASS* triplex_node::pclass = NULL;
 
-triplex_node::triplex_node(MODULE *mod):node(mod)
+triplex_node::triplex_node(MODULE *mod) : node(mod)
 {
 	if(oclass == NULL)
 	{
@@ -37,7 +37,6 @@ triplex_node::triplex_node(MODULE *mod):node(mod)
 			PT_set, "busflags", PADDR(busflags),
 				PT_KEYWORD, "HASSOURCE", NF_HASSOURCE,
 			PT_object, "reference_bus", PADDR(reference_bus),
-			PT_double,"nominal_voltage[V]",PADDR(nominal_voltage),
 			PT_double,"maximum_voltage_error[V]",PADDR(maximum_voltage_error),
 
  			PT_complex, "voltage_1[V]", PADDR(voltage1),
