@@ -139,7 +139,6 @@ GLD_GET_NPROCS
 
 # DO NOT EDIT THE FOLLOWING LINE
 AC_CONFIG_FILES([./Makefile \
-	smartgrid/Makefile \
 	core/Makefile \
 	climate/Makefile \
 	commercial/Makefile \
