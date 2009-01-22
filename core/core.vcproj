@@ -103,7 +103,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Updating XSL file"
-				CommandLine="$(TargetPath) --xsl climate,commercial,generators,market,network,plc,powerflow,residential,tape"
+				CommandLine="&quot;$(TargetPath)&quot; --xsl climate,commercial,generators,market,network,plc,powerflow,residential,tape"
 			/>
 		</Configuration>
 		<Configuration
@@ -845,15 +845,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
