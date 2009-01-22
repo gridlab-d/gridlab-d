@@ -419,7 +419,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		phasespresent = 8*has_phase(PHASE_D)+4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 
 		//Assign acceleration factor to a complex (it's picky)
-		AccelFactor=GS_Acceleration_Factor;
+		AccelFactor=acceleration_factor;
 		
 		//init dV as zero
 		dV[0] = dV[1] = dV[2] = complex(0,0);

@@ -46,6 +46,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::warning_voltageangle",PT_double,&warning_voltageangle,NULL);
 	gl_global_create("powerflow::maximum_voltage_error",PT_double,&default_maximum_voltage_error,NULL);
 	gl_global_create("powerflow::solver_method",PT_enumeration,&solver_method,PT_KEYWORD,"FBS",SM_FBS,PT_KEYWORD,"GS",SM_GS,NULL);
+	gl_global_create("powerflow::acceleration_factor",PT_double,&acceleration_factor,NULL);
+	gl_global_create("powerflow::default_maximum_voltage_error",PT_double,&default_maximum_voltage_error,NULL);
 
 	// register each object class by creating the default instance
 	new powerflow_object(module);
