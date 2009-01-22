@@ -1,4 +1,4 @@
-/** $Id: aggregate.h 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: aggregate.h 1206 2009-01-12 21:10:23Z d3p988 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file aggregate.h
 	@addtogroup aggregate
@@ -20,6 +20,8 @@ typedef struct s_aggregate {
 	AGGREGATOR op; /**< the aggregation operator (min, max, etc.) */
 	struct s_findpgm *group; /**< the find program used to build the aggregation */
 	PROPERTY *pinfo; /**< the property over which the aggregation is done */
+	UNIT *punit; /**< the unit we want to output the property in */
+	double scale; /**< the scalar to convert from the old units to the desired units */
 	AGGRPART part; /**< the property part (complex only) */
 	unsigned char flags; /**< aggregation flags (e.g., AF_ABS) */
 	struct s_findlist *last; /**< the result of the last run */

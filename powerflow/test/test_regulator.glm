@@ -47,14 +47,16 @@ object regulator {
 		phases ABCN;
 		voltage_A 7200 + 0j;		
 		voltage_B -3600 - 6235.4j;
-		voltage_C -3600 + 6235.4j;		
+		voltage_C -3600 + 6235.4j;	
+		nominal_voltage 7200;
 	};
 	to object node {
 		name reg_tABC;
 		phases ABCN;
 		voltage_A 7200 + 0j;		
 		voltage_B -3600 - 6235.4j;
-		voltage_C -3600 + 6235.4j;		
+		voltage_C -3600 + 6235.4j;	
+		nominal_voltage 7200;
 		object complex_assert {
 			target "voltage_A";
 			value 7384.62 + 0j;

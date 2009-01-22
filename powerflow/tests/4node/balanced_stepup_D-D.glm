@@ -21,40 +21,41 @@ object overhead_line_conductor:101 {
 }
 
 object line_spacing:200 {
-	distance_AtoB 2.5;
-	distance_BtoC 4.5;
-	distance_AtoC 7.0;
-	distance_AtoN 5.656854;
-	distance_BtoN 4.272002;
-	distance_CtoN 5.0;
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
 }
 
 object line_configuration:300 {
-	phaseA_conductor overhead_line_conductor:100;
-	phaseB_conductor overhead_line_conductor:100;
-	phaseC_conductor overhead_line_conductor:100;
-	phaseN_conductor overhead_line_conductor:101;
-	line_spacing line_spacing:200;
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
 }
 
 object transformer_configuration:400 {
-	connect_type 2;
-	kVA_rating 6000;
-	V_primary 12470;
-	V_secondary 24900;
-	R_pu 0.01;
-	X_pu 0.06;
+	connect_type DELTA_DELTA;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 24900;
+	resistance 0.01;
+	reactance 0.06;
 }
 
 object node:1 {
-	phases "ABC";
+	phases "ABCD";
 	voltage_A +7199.558+0.000j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
 }
 
 object overhead_line:12 {
-	phases "ABC";
+	phases "ABCD";
 	from node:1;
 	to node:2;
 	length 2000;
@@ -62,28 +63,30 @@ object overhead_line:12 {
 }
 
 object node:2 {
-	phases "ABC";
+	phases "ABCD";
 	voltage_A +7199.558+0.000j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
 }
 
 object transformer:23 {
-	phases "ABC";
+	phases "ABCD";
 	from node:2;
 	to node:3;
 	configuration transformer_configuration:400;
 }
 
 object node:3 {
-	phases "ABC";
+	phases "ABCD";
 	voltage_A +14376.022+0.000j;
 	voltage_B -7188.011-12450.000j;
 	voltage_C -7188.011+12450.000j;
+	nominal_voltage 14376;
 }
 
 object overhead_line:34 {
-	phases "ABC";
+	phases "ABCD";
 	from node:3;
 	to load:4;
 	length 2500;
@@ -95,9 +98,10 @@ object load:4 {
 	voltage_A +14376.022+0.000j;
 	voltage_B -7188.011-12450.000j;
 	voltage_C -7188.011+12450.000j;
-	power_A +1800000.000+871779.789j;
-	power_B +1800000.000+871779.789j;
-	power_C +1800000.000+871779.789j;
+	constant_power_A +1800000.000+871779.789j;
+	constant_power_B +1800000.000+871779.789j;
+	constant_power_C +1800000.000+871779.789j;
 	maximum_voltage_error 0.001;
+	nominal_voltage 14376;
 }
 

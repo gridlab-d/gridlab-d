@@ -77,7 +77,8 @@ object underground_line {
 		phases ABCN;
 		voltage_A 7200 + 0j;		
 		voltage_B -3600 - 6235.4j;
-		voltage_C -3600 + 6235.4j;		
+		voltage_C -3600 + 6235.4j;	
+		nominal_voltage 7200;
 	};
 	to object load {
 		name UG_tABC;
@@ -94,11 +95,12 @@ object underground_line {
 		constant_current_C  -0.5+0.866j;
 		constant_power_C 1000+2000j;	
 		constant_impedance_C 1500 + 750j;
+		nominal_voltage 7200;
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 107.457+47.4307j;
-		within 0.01;
+		value 117459.3;
+		within 0.1;
 	};	
 };
 

@@ -34,7 +34,8 @@ object transformer {
 	from object node {
 		name SPCT_fAN;
 		phases AN;
-		voltage_A 7200 + 0j;		
+		voltage_A 7200 + 0j;	
+		nominal_voltage 7200;
 		
 	};
 	to object triplex_node {
@@ -45,17 +46,18 @@ object transformer {
 		voltage_N 0;
 		//current_1  1;
 		power_1 1000+2000j;	
-		shunt_1 5.3333e-004 -2.6667e-004i;		
+		shunt_1 5.3333e-004 -2.6667e-004i;
+		nominal_voltage 120;
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 1.0076 + 2.0038j;
-		within 0.01;
+		value 2242.9;
+		within 0.1;
 	};		
-	object complex_assert {
+	object double_assert {
 		target "power_in";
-		value 1.0093 + 2.006j;
-		within 0.01;
+		value 2245.6;
+		within 0.1;
 	};	
 };
 
@@ -77,7 +79,8 @@ object transformer {
 	from object node {
 		name SPCT_fBN;
 		phases BN;
-		voltage_B -3600 - 6235.4j;		
+		voltage_B -3600 - 6235.4j;	
+		nominal_voltage 7200;
 		
 	};
 	to object triplex_node {
@@ -87,18 +90,19 @@ object transformer {
 		voltage_2 -60 - 103.92j;
 		voltage_N 0;
 		//current_1  1;
-		power_2 1000+2000j;	
-		shunt_1 5.3333e-004 -2.6667e-004i;		
+		power_1 1000+2000j;	
+		shunt_1 5.3333e-004 -2.6667e-004i;
+		nominal_voltage 120;
 	};
-	object complex_assert {	
+	object double_assert {	
 		target "power_out";
-		value 1.0077 + 2.0038j;
-		within 0.01;
+		value 2242.9;
+		within 0.1;
 	};
-	object complex_assert {	
+	object double_assert {	
 		target "power_in";
-		value -0.9907 - 1.9940j;
-		within 0.01;
+		value 2245.6;
+		within 0.1;
 	};
 };
 
@@ -120,8 +124,8 @@ object transformer {
 	from object node {
 		name SPCT_fCN;
 		phases CN;
-		voltage_C -3600 + 6235.4j;		
-		
+		voltage_C -3600 + 6235.4j;	
+		nominal_voltage 7200;		
 	};
 	to object triplex_node {
 		name SPCT_tCS;
@@ -131,16 +135,17 @@ object transformer {
 		voltage_N 0;
 		//current_1  1;
 		power_1 1000+2000j;	
-		shunt_2 5.3333e-004 -2.6667e-004i;		
+		shunt_1 5.3333e-004 -2.6667e-004i;	
+		nominal_voltage 120;
 	};
-	object complex_assert {	
+	object double_assert {	
 		target "power_out";
-		value 1.0077 + 2.0038j;
-		within 0.01;
+		value 2242.9;
+		within 0.1;
 	};	
-	object complex_assert {	
+	object double_assert {	
 		target "power_in";
-		value  0.9940 + 1.9983j;
-		within 0.01;
+		value  2245.6;
+		within 0.1;
 	};	
 };

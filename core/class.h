@@ -1,4 +1,4 @@
-/** $Id: class.h 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: class.h 1207 2009-01-12 22:47:29Z d3p988 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file class.h
 	@addtogroup class
@@ -215,6 +215,7 @@ CLASS *class_get_first_class(void);
 CLASS *class_get_last_class(void);
 CLASS *class_get_class_from_classname(char *name);
 CLASS *class_get_class_from_classname_in_module(char *name, MODULE *mod);
+CLASS *class_get_class_from_objecttype(OBJECTTYPE type);
 char *class_get_property_typename(PROPERTYTYPE type);
 int class_saveall(FILE *fp);
 int class_saveall_xml(FILE *fp);

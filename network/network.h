@@ -1,4 +1,4 @@
-/** $Id: network.h 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: network.h 1197 2009-01-07 01:31:53Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
  **/
 
@@ -33,7 +33,7 @@ GLOBAL_EXPORT int minor INIT(MINOR);
 GLOBAL double nominal_frequency_Hz INIT(60.0);
 
 /* Gauss-Seidel solver default controls */
-GLOBAL double acceleration_factor INIT(1.0);
+GLOBAL double acceleration_factor INIT(1.4);
 GLOBAL double convergence_limit INIT(0.001);
 GLOBAL double mvabase INIT(1.0);
 GLOBAL double kvbase INIT(12.5);

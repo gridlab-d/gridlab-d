@@ -67,6 +67,8 @@ waterheater::waterheater(MODULE *module)
 			PT_complex,"power[kW]",PADDR(power_kw),
 			PT_double,"meter[kWh]",PADDR(kwh_meter),
 			PT_double,"temperature[degF]",PADDR(Tw),
+			PT_complex,"enduse_load[kW]",PADDR(load.total),
+			PT_double,"height[ft]",PADDR(h),
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -119,7 +121,7 @@ int waterheater::init(OBJECT *parent)
 
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 	{
-		gl_error("dishwasher must have a parent house");
+		gl_error("waterheater must have a parent house");
 		return 0;
 	}
 
@@ -282,7 +284,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	set_time_to_transition();
 	last_water_demand = cur_water_demand;
 
-	if (time_to_transition >= 0.0167)	// 0.0167 represents one second
+	if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
 		return (TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND);
 	// less than one second means never
 	else
@@ -533,7 +535,7 @@ double waterheater::dhdt(double h)
     if (c1 <= ROUNDOFF)
         return 0.0; //Possible only when Tupper and Tlower are very close, and the difference is negligible
 
-	const double cA = -mdot / (RHOWATER * area) + (actual_kW() + tank_UA * (get_Tambient(location) - Tlower)) / c1;
+	const double cA = -mdot / (RHOWATER * area) + (actual_kW() * BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
 	const double cb = (tank_UA / height) * (Tupper - Tlower) / c1;
 
 	// Returns the rate of change of 'h'
@@ -596,6 +598,7 @@ inline double waterheater::new_temp_1node(double T0, double delta_t)
 inline double waterheater::new_time_2zone(double h0, double h1)
 {
 	const double c0 = RHOWATER * Cp * area * (Tupper - Tlower);
+	double dhdt0, dhdt1;
 
     if (fabs(c0) <= ROUNDOFF || height <= ROUNDOFF)
         return -1.0;    // c0 or height should never be zero.  if one of these is zero, there is no definite time to transition
@@ -604,8 +607,10 @@ inline double waterheater::new_time_2zone(double h0, double h1)
 
     if (fabs(cb) <= ROUNDOFF)
         return -1.0;
-
-	return (log(fabs(dhdt(h1))) - log(fabs(dhdt(h0)))) / cb;	// [hr]
+	dhdt1 = fabs(dhdt(h1));
+	dhdt0 = fabs(dhdt(h0));
+	double last_timestep = (log(dhdt1) - log(dhdt0)) / cb;	// [hr]
+	return last_timestep;
 }
 
 inline double waterheater::new_h_2zone(double h0, double delta_t)

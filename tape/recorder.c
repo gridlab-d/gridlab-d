@@ -1,4 +1,4 @@
-/** $Id: recorder.c 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: recorder.c 1208 2009-01-12 22:48:16Z d3p988 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file tape.c
 	@addtogroup recorder Recorders
@@ -123,17 +123,42 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 {
 	char *item;
 	PROPERTY *first=NULL, *last=NULL;
+	UNIT *unit = NULL;
 	char1024 list;
 	strcpy(list,property_list); /* avoid destroying orginal list */
 	for (item=strtok(list,","); item!=NULL; item=strtok(NULL,","))
 	{
-		PROPERTY *prop = (PROPERTY*)malloc(sizeof(PROPERTY));
-		PROPERTY *target = gl_get_property(obj,item);
+		char256 pstr, ustr;
+		PROPERTY *prop = NULL;
+		PROPERTY *target = NULL;
+		double scale = 1.0;
+
+		// everything that looks like a property name, then read units up to ]
+		if(2 == sscanf(item,"%[A-Za-z0-9_][%[^]\n,\0]", pstr, ustr)){
+			unit = gl_find_unit(ustr);
+			if(unit == NULL){
+				gl_error("recorder:%d: unable to find unit '%s' for property '%s'",obj->id, ustr,pstr);
+				return NULL;
+			}
+			item = pstr;
+		}
+		prop = (PROPERTY*)malloc(sizeof(PROPERTY));
+		target = gl_get_property(obj,item);
+
 		if (prop!=NULL && target!=NULL)
 		{
+			if(unit != NULL && target->unit == NULL){
+				gl_error("recorder:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
+			}
+			else if(unit != NULL && 0 == gl_convert_ex(target->unit, unit, &scale))
+			{
+				gl_error("recorder:%d: unable to convert property '%s' units to '%s'", obj->id, item, ustr);
+				return NULL;
+			}
 			if (first==NULL) first=prop; else last->next=prop;
 			last=prop;
 			memcpy(prop,target,sizeof(PROPERTY));
+			if(unit) prop->unit = unit;
 			prop->next = NULL;
 		}
 		else
@@ -219,6 +244,7 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			|| (my->interval>0 && my->last.ts+my->interval<=t0)) /* sample regularly */
 		{
 			my->last.ts = t0;
+			//my->last.ts = obj->parent;
 			strncpy(my->last.value,buffer,sizeof(my->last.value));
 			recorder_write(obj);
 		}

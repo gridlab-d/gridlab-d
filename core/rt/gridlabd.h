@@ -603,6 +603,7 @@ typedef struct s_callbacks {
 	} create;
 	int (*define_map)(CLASS*,...);
 	CLASS *(*class_getname)(char*);
+	CLASS *(*class_getobjnum)(OBJECTTYPE);
 	struct {
 		FUNCTION *(*define)(CLASS*,FUNCTIONNAME,FUNCTIONADDR);
 		FUNCTIONADDR (*get)(char*,char*);
@@ -664,6 +665,7 @@ typedef struct s_callbacks {
 	} time;
 	int (*unit_convert)(char *from, char *to, double *value);
 	int (*unit_convert_ex)(UNIT *pFrom, UNIT *pTo, double *pValue);
+	UNIT *(*unit_find)(char *unit_name);
 	struct {
 		EXCEPTIONHANDLER *(*create_exception_handler)();
 		void (*delete_exception_handler)(EXCEPTIONHANDLER *ptr);

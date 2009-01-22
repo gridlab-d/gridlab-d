@@ -1,4 +1,4 @@
-/** $Id: gridlabd.h 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: gridlabd.h 1207 2009-01-12 22:47:29Z d3p988 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file gridlabd.h
 	@author David P. Chassin
@@ -318,6 +318,15 @@ inline int gl_module_depends(char *name, /**< module name */
 #define gl_module_depends (*callback->depends)
 #endif
 
+
+#ifdef __cplusplus
+inline CLASS *gl_find_classnum(OBJECTTYPE num){
+	return (*callback->class_getobjnum)(num);
+}
+#else
+#define gl_find_classnum (*class_getobjnum)
+#endif
+
 /** @} **/
 
 /******************************************************************************
@@ -540,6 +549,8 @@ inline int gl_get_value_by_name(OBJECT *obj,
 	@see unit_convert_ex()
  **/
 #define gl_convert_ex (*callback->unit_convert_ex)
+
+#define gl_find_unit (*callback->unit_find)
 
 #define gl_get_object (*callback->get_object)
 

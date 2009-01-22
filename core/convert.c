@@ -1,4 +1,4 @@
-/** $Id: convert.c 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: convert.c 1207 2009-01-12 22:47:29Z d3p988 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file convert.c
 	@author David P. Chassin
@@ -54,7 +54,21 @@ int convert_from_double(char *buffer, /**< pointer to the string buffer */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
 	char temp[1025];
-	int count = sprintf(temp, global_double_format, *(double *)data);
+	int count = 0;
+
+	double scale = 1.0;
+	if(prop->unit != NULL){
+		CLASS *ctmp = class_get_class_from_objecttype(prop->otype);
+		PROPERTY *ptmp = class_find_property(ctmp, prop->name);
+		if(prop->unit != ptmp->unit){
+			if(0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)){
+				printf("ERROR: convert_from_complex: unable to convert unit '%s' to '%s' for property '%s' (tape experiment error)", ptmp->unit->name, prop->unit->name, prop->name);
+				scale = 1.0;
+			}
+		}
+	}
+
+	count = sprintf(temp, global_double_format, *(double *)data * scale);
 	if(count < size+1){
 		memcpy(buffer, temp, count);
 		buffer[count] = 0;
@@ -89,14 +103,27 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 	int count = 0;
 	char temp[1025];
 	complex *v = data;
+
+	double scale = 1.0;
+	if(prop->unit != NULL){
+		CLASS *ctmp = class_get_class_from_objecttype(prop->otype);
+		PROPERTY *ptmp = class_find_property(ctmp, prop->name);
+		if(prop->unit != ptmp->unit){
+			if(0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)){
+				printf("ERROR: convert_from_complex: unable to convert unit '%s' to '%s' for property '%s' (tape experiment error)", ptmp->unit->name, prop->unit->name, prop->name);
+				scale = 1.0;
+			}
+		}
+	}
+
 	if (v->f==A)
 	{
-		double m = sqrt(v->r*v->r+v->i*v->i);
+		double m = sqrt(v->r*v->r+v->i*v->i)*scale;
 		double a = (v->r==0) ? (v->i>0 ? PI/2 : (v->i==0 ? 0 : -PI/2)) : (v->r>0 ? atan(v->i/v->r) : PI+atan(v->i/v->r));
 		if (a>PI) a-=(2*PI);
 		count = sprintf(temp,global_complex_format,m,a*180/PI,A);
 	} else {
-		count = sprintf(temp,global_complex_format,v->r,v->i,v->f?v->f:'i');
+		count = sprintf(temp,global_complex_format,v->r*scale,v->i*scale,v->f?v->f:'i');
 	}
 	if(count < size - 1){
 		memcpy(buffer, temp, count);
@@ -465,7 +492,7 @@ int convert_to_char8(char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	char c=((char*)data)[0];
+	char c=((char*)buffer)[0];
 	switch (c) {
 	case '"':
 		return sscanf(buffer+1,"%8[^\"]",data);
@@ -506,7 +533,7 @@ int convert_to_char32(char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	char c=((char*)data)[0];
+	char c=((char*)buffer)[0];
 	switch (c) {
 	case '"':
 		return sscanf(buffer+1,"%32[^\"]",data);
@@ -547,7 +574,7 @@ int convert_to_char256(char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	char c=((char*)data)[0];
+	char c=((char*)buffer)[0];
 	switch (c) {
 	case '"':
 		return sscanf(buffer+1,"%256[^\"]",data);

@@ -1,4 +1,4 @@
-// $Id: link.h 1182 2008-12-22 22:08:36Z dchassin $
+// $Id: link.h 1211 2009-01-17 00:45:28Z d3x593 $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _LINK_H
@@ -24,6 +24,7 @@ public: /// @todo make this private and create interfaces to control values
 	complex From_Y[3][3];  // From_Y - 3x3 matrix, object from admittance
 	double voltage_ratio;	   // voltage ratio (normally 1.0)
 	complex phaseadjust;	//Phase adjustment term for GS transformers
+	unsigned char Regulator_Link;	//Flag for regulator object.
 
 public:
 	typedef enum {LS_CLOSED=0, LS_OPEN=1} LINKSTATUS;
@@ -37,6 +38,7 @@ public:
 
 	int create(void);
 	int init(OBJECT *parent);
+	TIMESTAMP prev_T0;
 	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);

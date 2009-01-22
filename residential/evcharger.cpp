@@ -444,10 +444,18 @@ double evcharger::update_state(double dt /* seconds */)
 
 			// compute the charge added to the battery
 			charge += d_charge_kWh/capacity;
-			if (charge>1.001)
-				throw "charge state error (overcharge)"; // this shouldn't happen--it means that a dt calculation is wrong somewhere
+			if (charge>1.0)
+			{
+				gl_warning("%s (%s:%d) overcharge by %.0f%% truncated",obj->name?obj->name:"anonymous",obj->oclass->name,obj->id, (charge-1)*100);
+				// TODO: the balance of charge should be dumped as heat into the garage
+				charge = 1.0;
+			}
 			else if (charge<0.0)
-				throw "charge state error (undercharge)"; // this shouldn't happen either
+			{
+				gl_warning("%s (%s:%d) 100%% discharged", obj->name?obj->name:"anonymous",obj->oclass->name,obj->id);
+				// TODO: the balance of charge should be dumped as heat into the garage
+				charge = 0.0;
+			}
 			else if (charge>0.999)
 			{
 				gl_debug("%s (%s:%d) charge complete",obj->name?obj->name:"anonymous",obj->oclass->name,obj->id);
@@ -479,6 +487,7 @@ double evcharger::update_state(double dt /* seconds */)
 		break;
 	case VS_WORK:
 		load.power = complex(0,0,J);
+		dt = -1; // never
 		break;
 	// these are not yet supported
 	//case SHORTTRIP:
@@ -502,21 +511,16 @@ double evcharger::update_state(double dt /* seconds */)
 
 TIMESTAMP evcharger::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
+	OBJECT *obj = OBJECTHDR(this);
 	// compute the total load and heat gain
-	if (t1>t0)
-	{	
-		if (t0>0)
+	if (t0>TS_ZERO && t1>t0)
 			load.energy += (load.total * gl_tohours(t1-t0)).Mag();
-		double dt = update_state(gl_toseconds(t1-t0));
+	double dt = update_state(gl_toseconds(t1-t0));
+	if (dt==0)
+		gl_warning("%s (%s:%d) didn't advance the clock",obj->name?obj->name:"anonymous",obj->oclass->name,obj->id);
 
-		return dt<0 ? TS_NEVER : (TIMESTAMP)(t1+dt*TS_SECOND); 
-	}
-	else
-	{
-		double dt = update_state(gl_toseconds(t1-t0));
 
-		return dt<0 ? TS_NEVER : (TIMESTAMP)(t1+dt*TS_SECOND); 
-	}
+	return dt<0 ? TS_NEVER : (TIMESTAMP)(t1+dt*TS_SECOND); 
 }
 
 void evcharger::load_demand_profile(void)

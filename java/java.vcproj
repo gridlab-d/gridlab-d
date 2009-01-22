@@ -108,7 +108,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\climateview\include;..\climateview\include\win32;..\core;..\third_party\cppunit-1.12.0\include"
+				AdditionalIncludeDirectories="..\climateview\include;..\climateview\include\win32;..\core;..\third_party\cppunit-1.12.0\include;$(JAVA_HOME)\include;$(JAVA_HOME)\include\win32"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE"
 			/>
 			<Tool

@@ -161,8 +161,8 @@ house::house(MODULE *mod)
 			PT_enumeration,"heat_mode",PADDR(heat_mode),
 				PT_KEYWORD,"ELECTRIC",ELECTRIC,
 				PT_KEYWORD,"GASHEAT",GASHEAT,
-			PT_double,"total_load[kW]",PADDR(tload.total),
-			PT_double,"enduse_load[kW]",PADDR(load.total),
+			PT_complex,"total_load[kW]",PADDR(tload.total),
+			PT_complex,"enduse_load[kW]",PADDR(load.total),
 			PT_complex,"power[kW]",PADDR(load.power),
 			PT_complex,"current[A]",PADDR(load.current),
 			PT_complex,"admittance[1/Ohm]",PADDR(load.admittance),
@@ -415,11 +415,12 @@ CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
 
 	// get address of load values (if any)
 	c->pLoad = (ENDUSELOAD*)gl_get_addr(obj,"enduse_load");
-	if (c->pLoad==NULL)
-		throw "end-use load couldn't be connected because it does not publish ENDUSELOAD structure";
+	if (c->pLoad==NULL){
+		GL_THROW("end-use load %s couldn't be connected because it does not publish ENDUSELOAD structure", c->enduse->name);
+	}
 	
 	// choose circuit
-	if (is220) // 220V circuit is on x12
+	if (is220 == 1) // 220V circuit is on x12
 	{
 		c->type = X12;
 		c->id++; // use two circuits
@@ -547,10 +548,10 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// add to panel current
 			else
 			{
-				tload.power += c->pLoad->power;
+				tload.power += c->pLoad->power;	// reminder: |a| + |b| != |a+b|
 				tload.current += c->pLoad->current;
-				tload.admittance = c->pLoad->admittance;
-				tload.total = c->pLoad->total;
+				tload.admittance += c->pLoad->admittance; // should this be additive? I don't buy t.a = c->pL->a ... -MH
+				tload.total += c->pLoad->total;
 				tload.heatgain += c->pLoad->heatgain;
 				I[n] += current;
 				c->reclose = TS_NEVER;
@@ -655,6 +656,9 @@ TIMESTAMP house::sync_hvac_load(TIMESTAMP t1, double nHours)
 	}
 
 	load.power = hvac_rated_power*KWPBTUPH * ((heat_cool_mode == HEAT) && (heat_mode == GASHEAT) ? 0.01 : 1.0);
+	load.total = load.power;
+	load.heatgain = 0.0;
+	//load.heatgain = hvac_rater_power;		/* factored in at netHeatrate */
 	hvac_kWh_use = load.power.Mag()*nHours;  // this updates the energy usage of the elapsed time since last synch
 
 	DATETIME tv;
@@ -667,7 +671,7 @@ TIMESTAMP house::sync_hvac_load(TIMESTAMP t1, double nHours)
 	{
 		solar_load += (gross_wall_area*window_wall_ratio/8.0) * glazing_shgc * pSolar[i];
 	}
-	double netHeatrate = hvac_rated_capacity + load.heatgain*BTUPHPW + solar_load;
+	double netHeatrate = hvac_rated_capacity + tload.heatgain*BTUPHPW + solar_load;
 	double Q1 = M_inv11*Tair + M_inv12*Tmaterials;
 	double Q2 = M_inv21*Tair + M_inv22*Tmaterials;
 

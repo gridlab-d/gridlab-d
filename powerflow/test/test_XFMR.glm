@@ -34,7 +34,8 @@ object transformer {
 	from object node {
 		name XFMR_fAN;
 		phases AN;
-		voltage_A 7200 + 0j;		
+		voltage_A 7200 + 0j;	
+		nominal_voltage 7200;
 		
 	};
 	to object load {
@@ -45,17 +46,18 @@ object transformer {
 		voltage_C 0;
 		constant_current_A  1;
 		constant_power_A 1000+2000j;	
-		constant_impedance_A 1500 + 750j;		
+		constant_impedance_A 1500 + 750j;	
+		nominal_voltage 4160;
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 14.3876 + 6.6134j;
-		within 0.01;
+		value 15834.8;
+		within 0.1;
 	};		
-	object complex_assert {
+	object double_assert {
 		target "power_in";
-		value 14.3880 + 6.6160j;
-		within 0.01;
+		value 15836.2;
+		within 0.1;
 	};	
 };
 
@@ -77,7 +79,8 @@ object transformer {
 	from object node {
 		name XFMR_fBN;
 		phases BN;
-		voltage_B -3600 - 6235.383j;		
+		voltage_B -3600 - 6235.383j;
+		nominal_voltage 7200;
 		
 	};
 	to object load {
@@ -86,17 +89,18 @@ object transformer {
 		voltage_B -2080-3602.666j;		
 		constant_current_B -0.5-0.866j;
 		constant_power_B 1000+2000j;	
-		constant_impedance_B 1500+750j;		
+		constant_impedance_B 1500+750j;	
+		nominal_voltage 4160;
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 14.3876 + 6.6134j;
-		within 0.01;
+		value 15834.8;
+		within 0.1;
 	};		
-	object complex_assert {
+	object double_assert {
 		target "power_in";
-		value 14.3880 + 6.6160j;
-		within 0.01;
+		value 15836.2;
+		within 0.1;
 	};	
 };
 
@@ -119,6 +123,7 @@ object transformer {
 		name XFMR_fCN;
 		phases CN;
 		voltage_C -3600 + 6235.383j;		
+		nominal_voltage 7200;
 		
 	};
 	to object load {
@@ -127,17 +132,18 @@ object transformer {
 		voltage_C -2080 + 3602.666j;		
 		constant_current_C -0.5+0.866j;
 		constant_power_C 1000+2000j;	
-		constant_impedance_C 1500+750j;		
+		constant_impedance_C 1500+750j;
+		nominal_voltage 4160;
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 14.3876 + 6.6134j;
-		within 0.01;
+		value 15834.8;
+		within 0.1;
 	};		
-	object complex_assert {
+	object double_assert {
 		target "power_in";
-		value 14.3880 + 6.6160j;
-		within 0.01;
+		value 15836.2;
+		within 0.1;
 	};	
 };
 
@@ -163,7 +169,8 @@ object transformer {
 		phases ABCN;
 		voltage_A 7200 + 0j;		
 		voltage_B -3600 - 6235.383j;		
-		voltage_C -3600 + 6235.383j;		
+		voltage_C -3600 + 6235.383j;	
+		nominal_voltage 7200;
 		
 	};
 	to object load {
@@ -180,16 +187,17 @@ object transformer {
 		constant_power_C 1000+2000j;	
 		constant_impedance_A 1500+750j;		
 		constant_impedance_B 1500+750j;		
-		constant_impedance_C 1500+750j;		
+		constant_impedance_C 1500+750j;	
+		nominal_voltage 4160;
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 43.1628 + 19.8403j;
-		within 0.01;
+		value 47504.3;
+		within 0.1;
 	};		
-	object complex_assert {
+	object double_assert {
 		target "power_in";
-		value 43.1641 + 19.8479j;
-		within 0.01;
+		value 47508.5;
+		within 0.1;
 	};	
 };

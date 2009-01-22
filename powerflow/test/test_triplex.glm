@@ -46,6 +46,7 @@ object triplex_line {
 		voltage_1 120 + 0j;		
 		voltage_2 120 + 0j;
 		voltage_N 0;
+		nominal_voltage 120;
 	};
 	to object triplex_node {
 		name TPL_tAS;
@@ -55,12 +56,13 @@ object triplex_line {
 		voltage_N 0;
 		//current_1  1;
 		power_1 1000+2000j;	
-		shunt_1 5.3333e-004 -2.6667e-004i;		
+		shunt_1 5.3333e-004 -2.6667e-004i;	
+		nominal_voltage 120;
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 1.0076 + 2.0038j;
-		within 0.01;
+		value 2242.9;
+		within 0.1;
 	};	
 };
 
@@ -93,6 +95,7 @@ object triplex_line {
 		voltage_1 120 + 0j;		
 		voltage_2 120 + 0j;
 		voltage_N 0;
+		nominal_voltage 120;
 	};
 	to object triplex_node {
 		name TPL_tBS;
@@ -102,12 +105,13 @@ object triplex_line {
 		voltage_N 0;
 		//current_1  1;
 		power_1 1000+2000j;	
-		shunt_1 5.3333e-004 -2.6667e-004i;		
+		shunt_1 5.3333e-004 -2.6667e-004i;	
+		nominal_voltage 120;
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 1.0076 + 2.0038j;
-		within 0.01;
+		value 2242.9;
+		within 0.1;
 	};	
 };
 
@@ -140,6 +144,7 @@ object triplex_line {
 		voltage_1 120 + 0j;		
 		voltage_2 120 + 0j;
 		voltage_N 0;
+		nominal_voltage 120;
 	};
 	to object triplex_node {
 		name TPL_tCS;
@@ -149,12 +154,13 @@ object triplex_line {
 		voltage_N 0;
 		//current_1  1;
 		power_1 1000+2000j;	
-		shunt_1 5.3333e-004 -2.6667e-004i;		
+		shunt_1 5.3333e-004 -2.6667e-004i;
+		nominal_voltage 120;
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 1.0076 + 2.0038j;
-		within 0.01;
+		value 2242.9;
+		within 0.1;
 	};	
 };
 

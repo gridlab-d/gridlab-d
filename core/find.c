@@ -1,4 +1,4 @@
-/** $Id: find.c 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: find.c 1204 2009-01-12 17:07:32Z d3p988 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file find.c
 	@author David P. Chassin
@@ -758,6 +758,14 @@ static int value(PARSER, char *result, int size)
 	return _n;
 }
 
+static int token(PARSER, char *result, int size)
+{	/* everything to a semicolon */
+	START;
+	while (size>1 && *_p!='\0' && *_p!=';' && *_p!='\n' && !isspace(*_p) ) COPY(result);
+	result[_n]='\0';
+	return _n;
+}
+
 static int integer(PARSER, int64 *value)
 {
 	char result[256];
@@ -915,7 +923,7 @@ static int expression(PARSER, FINDPGM **pgm)
 	FINDOP op = EQ;
 	START;
 	if WHITE ACCEPT;
-	if (TERM(name(HERE,pname,sizeof(pname))) && WHITE,TERM(compare_op(HERE,&op)) && WHITE,TERM(value(HERE,pvalue,sizeof(pvalue))))
+	if (TERM(name(HERE,pname,sizeof(pname))) && WHITE,TERM(compare_op(HERE,&op)) && WHITE,TERM(token(HERE,pvalue,sizeof(pvalue))))
 	{
 		/* NOTE: this will seg fault if op's value is an invalid index! */
 		OBJECT _t;
@@ -1108,6 +1116,7 @@ static int expression_list(PARSER, FINDPGM **pgm)
 	START;
 	if TERM(expression(HERE,pgm)) ACCEPT;
 	if (WHITE,LITERAL(";") && TERM(expression_list(HERE,pgm))) { ACCEPT; DONE; }
+	if (WHITE,LITERAL("AND") && TERM(expression_list(HERE,pgm))) {ACCEPT; DONE; }
 	DONE;
 }
 

@@ -42,7 +42,7 @@ GLOBAL double warning_voltageangle INIT(2.0);		/**< voltage angle (over link) ab
 GLOBAL bool require_voltage_control INIT(false);	/**< flag to enable voltage control source requirement */
 GLOBAL double geographic_degree INIT(0.0);			/**< topological degree factor */
 GLOBAL complex fault_Z INIT(complex(1e-6,0));		/**< fault impedance */
-GLOBAL double default_maximum_voltage_error INIT(0.001);	/**< default sync voltage convergence limit [puV] */
+GLOBAL double default_maximum_voltage_error INIT(1e-8);	/**< default sync voltage convergence limit [puV] */
 
 /* used by many powerflow enums */
 #define UNKNOWN 0

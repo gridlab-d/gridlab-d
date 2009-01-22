@@ -54,10 +54,10 @@ object overhead_line {
 	//	maximum_voltage_error 1;		
 		
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 19.066 + 21.4836j;
-		within 0.01;
+		value 28724;
+		within 0.1;
 	};		
 };
 
@@ -100,10 +100,10 @@ object overhead_line {
 	//	maximum_voltage_error 1;		
 		
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 19.0663 + 21.4836j;
-		within 0.01;
+		value 28724;
+		within 0.1;
 	};		
 };
 
@@ -130,6 +130,7 @@ object overhead_line {
 		name OH_fC;
 		phases CN;
 		voltage_C -3600 + 6235.4j;
+		nominal_voltage 7200;
 		
 	};
 	to object load {
@@ -138,12 +139,13 @@ object overhead_line {
 		voltage_C -3600 + 6235.4j;
 		constant_current_C  -0.5+0.866j;
 		constant_power_C 1500 + 750j;
-		constant_impedance_C 1000+2000j;		
+		constant_impedance_C 1000+2000j;
+		nominal_voltage 7200;
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 19.0663 + 21.4836j;
-		within 0.01;
+		value 28724;
+		within 0.1;
 	};		
 };
 
@@ -184,7 +186,8 @@ object overhead_line {
 		phases ABCN;
 		voltage_A 7200 + 0j;		
 		voltage_B -3600 - 6235.4j;
-		voltage_C -3600 + 6235.4j;		
+		voltage_C -3600 + 6235.4j;
+		nominal_voltage 7200;
 	};
 	to object load {
 		name OH_tABC;
@@ -200,12 +203,13 @@ object overhead_line {
 		constant_power_C 1500 + 750j;
 		constant_impedance_A 1000+2000j;
 		constant_impedance_B 1000+2000j;
-		constant_impedance_C 1000+2000j;	
+		constant_impedance_C 1000+2000j;
+		nominal_voltage 7200;
 	};
-	object complex_assert {
+	object double_assert {
 		target "power_out";
-		value 57.200 + 64.453j;
-		within 0.01;
+		value 86174.4;
+		within 0.1;
 	};	
 };
 

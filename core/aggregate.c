@@ -1,4 +1,4 @@
-/** $Id: aggregate.c 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: aggregate.c 1206 2009-01-12 21:10:23Z d3p988 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file aggregate.c
 	@addtogroup aggregate Aggregation of object properties
@@ -44,17 +44,31 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 	AGGREGATOR op = AGGR_NOP;
 	AGGREGATION *result=NULL;
 	char aggrop[9], aggrval[33], aggrpart[9]="";
+	char aggrprop[33], aggrunit[9];
 	unsigned char flags=0x00;
-	if (sscanf(aggregator,"%8[A-Za-z0-9_](%32[A-Za-z0-9_].%8[A-Za-z0-9_])",aggrop,aggrval,aggrpart)!=3 &&
-		sscanf(aggregator,"%8[A-Za-z0-9_](%32[A-Za-z0-9_])",aggrop,aggrval)!=2 &&
+	UNIT *from_unit = NULL, *to_unit = NULL;
+	double scale = 1.0;
+
+	if (sscanf(aggregator,"%8[A-Za-z0-9_](%32[][A-Za-z0-9_].%8[A-Za-z0-9_])",aggrop,aggrval,aggrpart)!=3 &&
+		sscanf(aggregator,"%8[A-Za-z0-9_](%32[][A-Za-z0-9_])",aggrop,aggrval)!=2 &&
 		(flags|=AF_ABS,
-		sscanf(aggregator,"%8[A-Za-z0-9_]|%32[A-Za-z0-9_].%8[A-Za-z0-9_]|",aggrop,aggrval,aggrpart)!=3) &&
-		sscanf(aggregator,"%8[A-Za-z0-9_]|%32[A-Za-z0-9_]|",aggrop,aggrval)!=2 
+		sscanf(aggregator,"%8[A-Za-z0-9_]|%32[][A-Za-z0-9_].%8[A-Za-z0-9_]|",aggrop,aggrval,aggrpart)!=3) &&
+		sscanf(aggregator,"%8[A-Za-z0-9_]|%32[][A-Za-z0-9_]|",aggrop,aggrval)!=2 
 		)
 	{
 		output_error("aggregate group '%s' is not valid", aggregator);
 		errno = EINVAL;
 		return NULL;
+	}
+
+	if(sscanf(aggrval, "%32[A-Za-z0-9_][%[A-Za-z0-9_]]", aggrprop, aggrunit) == 2){
+		to_unit = unit_find(aggrunit);
+		if(to_unit == NULL){
+			output_error("aggregate group '%s' has invalid units (%s)\n", aggrval, aggrunit);
+			errno = EINVAL;
+			return NULL;
+		}
+		strcpy(aggrval, aggrprop); // write property back into value, sans unit
 	}
 
 	if (stricmp(aggrop,"min")==0) op=AGGR_MIN;
@@ -171,6 +185,21 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 					free(list);
 					return NULL;
 				}
+				from_unit = pinfo->unit;
+				if(to_unit != NULL && from_unit == NULL){
+					output_error("aggregate group property '%s' is unitless and cannot be converted", aggrval);
+					errno = EINVAL;
+					free(pgm);
+					free(list);
+					return NULL;
+				}
+				if (from_unit != NULL && to_unit != NULL && unit_convert_ex(from_unit, to_unit, &scale) == 0){
+					output_error("aggregate group property '%s' cannot use units '%s'", aggrval, aggrunit);
+					errno = EINVAL;
+					free(pgm);
+					free(list);
+					return NULL;
+				}
 			}
 		}
 
@@ -185,6 +214,8 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 			result->last = list;
 			result->next = NULL;
 			result->flags = flags;
+			result->punit = to_unit;
+			result->scale = scale;
 		}
 		else
 		{
@@ -214,6 +245,7 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 {
 	OBJECT *obj;
 	double numerator=0, denominator=0, secondary=0;
+	double scale = (aggr->punit ? aggr->scale : 1.0);
 
 	/* non-constant groups need search program rerun */
 	if ((aggr->group->constflags&CF_CONSTANT)!=CF_CONSTANT)
@@ -300,9 +332,9 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 	case AGGR_GAMMA:
 		return 1 + numerator/(denominator-numerator*log(secondary));
 	case AGGR_STD:
-		return sqrt((secondary + numerator*numerator/denominator)/(denominator-1));
+		return sqrt((secondary + numerator*numerator/denominator)/(denominator-1)) * scale;
 	case AGGR_VAR:
-		return (secondary + numerator*numerator/denominator) / (denominator-1);
+		return (secondary + numerator*numerator/denominator) / (denominator-1) * scale;
 	case AGGR_MBE:
 		v = 0.0;
 		m = numerator/denominator;
@@ -315,7 +347,7 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 		/** @todo implement kurtosis aggregate (no ticket) */
 		throw_exception("kurtosis aggregation is not implemented");
 	default:
-		return numerator/denominator;
+		return numerator/denominator * scale;
 	}
 }
 /**@}**/

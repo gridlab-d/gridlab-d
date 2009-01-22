@@ -1,4 +1,4 @@
-/** $Id: node.h 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: node.h 1201 2009-01-08 22:31:37Z d3x593 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@addtogroup powerflow_node Node
 	@ingroup powerflow_object
@@ -80,10 +80,8 @@ public:
 	// status
 	enum {
 		PQ=0,		/**< defines an uncontrolled bus */
-		PQI=1,		/**< defines an uncontrolled bus that has a constant current load */
-		PQZ=2,		/**< defines an uncontrolled bus that has a constant impedance load */
-		PV=3,		/**< defines a constrained voltage controlled bus */
-		SWING=4		/**< defines an unconstrained voltage controlled bus */
+		PV=1,		/**< defines a constrained voltage controlled bus */
+		SWING=2		/**< defines an unconstrained voltage controlled bus */
 	} bustype;
 	enum {	NOMINAL=1,		///< bus voltage is nominal
 			UNDERVOLT,		///< bus voltage is too low

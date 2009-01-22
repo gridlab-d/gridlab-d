@@ -1,4 +1,4 @@
-/** $Id: module.c 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: module.c 1212 2009-01-17 01:42:30Z d3m998 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file module.cpp
 	@addtogroup modules Runtime modules
@@ -399,25 +399,25 @@
 #define STR(x) _STR(x)
 
 #ifdef WIN32
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
-#define _WIN32_WINNT 0x0400
-#include <windows.h>
-#define LIBPREFIX
-#ifndef LIBEXT
-#define LIBEXT .dll
-#endif
-#define DLLOAD(P) LoadLibrary(P)
-#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
-#define snprintf _snprintf
+	#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+	#define _WIN32_WINNT 0x0400
+	#include <windows.h>
+	#define LIBPREFIX
+	#ifndef LIBEXT
+		#define LIBEXT .dll
+	#endif
+	#define DLLOAD(P) LoadLibrary(P)
+	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
+	#define snprintf _snprintf
 #else /* ANSI */
-#include "dlfcn.h"
-#define LIBPREFIX "lib"
-#ifndef LIBEXT
-#define LIBEXT .so
-#else
-#endif
-#define DLLOAD(P) dlopen(P,RTLD_LAZY)
-#define DLSYM(H,S) dlsym(H,S)
+	#include "dlfcn.h"
+	#define LIBPREFIX "lib"
+	#ifndef LIBEXT
+		#define LIBEXT .so
+	#else
+	#endif
+	#define DLLOAD(P) dlopen(P,RTLD_LAZY)
+	#define DLSYM(H,S) dlsym(H,S)
 #endif
 
 #if !defined(HAVE_CONFIG_H) || defined(HAVE_MALLOC_H)
@@ -508,6 +508,7 @@ static CALLBACKS callbacks = {
 	{object_create_single,object_create_array,object_create_foreign},
 	class_define_map,
 	class_get_class_from_classname,
+	class_get_class_from_objecttype,
 	{class_define_function,class_get_function},
 	class_define_enumeration_member,
 	class_define_set_member,
@@ -527,7 +528,7 @@ static CALLBACKS callbacks = {
 	class_register_type,
 	class_define_type,
 	{mkdatetime,strdatetime,timestamp_to_days,timestamp_to_hours,timestamp_to_minutes,timestamp_to_seconds,local_datetime,convert_to_timestamp},
-	unit_convert, unit_convert_ex,
+	unit_convert, unit_convert_ex, unit_find,
 	{create_exception_handler,delete_exception_handler,throw_exception,exception_msg},
 	{global_create, global_setvar, global_getvar, global_find},
 #ifndef NOLOCKS
@@ -788,13 +789,34 @@ void* module_getvar(MODULE *mod, char *varname, char *value, unsigned int size)
 	return global_getvar(modvarname,value,size);
 }
 
+void* module_getvar_old(MODULE *mod, char *varname, char *value, unsigned int size)
+{
+	if (mod->getvar!=NULL)
+	{
+		if (strcmp(varname,"major")==0)
+		{
+			sprintf(value,"%d",mod->major);
+			return value;
+		}
+		else if (strcmp(varname,"minor")==0)
+		{
+			sprintf(value,"%d",mod->minor);
+			return value;
+		}
+		else
+			return (*mod->getvar)(varname,value,size);
+	}
+	else
+		return 0;
+}
+
 double* module_getvar_addr(MODULE *mod, char *varname)
 {
 	char modvarname[1024];
 	GLOBALVAR *var;
 	sprintf(modvarname,"%s::%s",mod->name,varname);
 	var = global_find(modvarname);
-	if (var!=NULL && var->prop->ptype==PT_double)
+	if (var!=NULL)
 		return var->prop->addr;
 	else
 		return NULL;

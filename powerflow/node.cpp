@@ -1,4 +1,4 @@
-/** $Id: node.cpp 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: node.cpp 1215 2009-01-22 00:54:37Z d3x593 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file node.cpp
 	@addtogroup powerflow_node Node
@@ -57,6 +57,7 @@
 
 CLASS *node::oclass = NULL;
 CLASS *node::pclass = NULL;
+int iter_counter = 0;
 
 unsigned int node::n = 0; 
 
@@ -73,8 +74,6 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_INHERIT, "powerflow_object",
 			PT_enumeration, "bustype", PADDR(bustype),
 				PT_KEYWORD, "PQ", PQ,
-				PT_KEYWORD, "PQI", PQI,
-				PT_KEYWORD, "PQZ", PQZ,
 				PT_KEYWORD, "PV", PV,
 				PT_KEYWORD, "SWING", SWING,
 			PT_set, "busflags", PADDR(busflags),
@@ -138,8 +137,32 @@ int node::init(OBJECT *parent)
 	if (solver_method==SM_GS)
 	{
 		OBJECT *obj = OBJECTHDR(this);
+
 		// check that a parent is defined */
-		if (parent==NULL) // need to find a swing bus to be this node's parent
+		if (obj->parent!=NULL)	//Has a parent, let's see if it is a node and link it up
+		{
+			node *parNode = OBJECTDATA(obj->parent,node);
+
+			OBJECT *newlink = gl_create_object(link::oclass);
+			link *test = OBJECTDATA(newlink,link);
+			test->from = OBJECTHDR(parNode);
+			test->to = OBJECTHDR(this);
+			test->phases = parNode->phases;
+			test->b_mat[0][0] = test->b_mat[1][1] = test->b_mat[2][2] = 1.0; //fault_Z;
+			test->a_mat[0][0] = test->a_mat[1][1] = test->a_mat[2][2] = 1.0;
+			test->A_mat[0][0] = test->A_mat[1][1] = test->A_mat[2][2] = 1.0;
+			test->B_mat[0][0] = test->B_mat[1][1] = test->B_mat[2][2] = 1.0;
+			test->d_mat[0][0] = test->d_mat[1][1] = test->d_mat[2][2] = 1.0;
+			test->voltage_ratio = 1.0;
+
+			//int tester = 0;
+			//tester++;
+
+			//Give us no parent now, and let it go to SWING
+			obj->parent=NULL;
+		}
+		
+		if (obj->parent==NULL) // need to find a swing bus to be this node's parent
 		{
 			FINDLIST *buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
 			if (buslist==NULL)
@@ -148,6 +171,7 @@ int node::init(OBJECT *parent)
 				throw "more than one swing bus found, you must specify which is this node's parent";
 			gl_set_parent(obj,gl_find_next(buslist,NULL));
 		}
+
 		/* Make sure we aren't the swing bus */
 		if (this->bustype!=SWING)
 		{
@@ -161,7 +185,8 @@ int node::init(OBJECT *parent)
 			else 
 			{
 				node *pNode = OBJECTDATA(obj->parent,node);
-				if (pNode->bustype!=SWING)
+
+				if (pNode->bustype!=SWING)	//Originally checks to see if is swing bus...nto sure how to handle this yet
 					throw "node parent is not a swing bus";
 			}
 		}
@@ -175,16 +200,6 @@ int node::init(OBJECT *parent)
 		YVs[0] = complex(0,0);
 		YVs[1] = complex(0,0);
 		YVs[2] = complex(0,0);
-
-		if (this->bustype==PQ)	//See what kind of PQ bus we are
-		{
-			if ((current[0]!=0) | (current[1]!=0) | (current[2]!=0))	//Constant current type
-				this->bustype=PQI;
-			else if ((shunt[0]!=0) | (shunt[1]!=0) | (shunt[2]!=0))		//Constant impedance type
-				this->bustype=PQZ;
-			else
-				this->bustype=PQ;	//Just re-assign back.  We're a constant power node
-		}
 	}
 
 	/* initialize the powerflow base object */
@@ -237,6 +252,30 @@ int node::init(OBJECT *parent)
 	if (bustype==SWING || bustype==PV)
 		busflags |= NF_HASSOURCE;
 
+	if (has_phase(PHASE_A) & has_phase(PHASE_B) & has_phase(PHASE_C))
+	{
+		if (voltage[0] == 0)
+		{
+			voltage[0].SetPolar(nominal_voltage,0.0);
+		}
+		if (voltage[1] == 0)
+		{
+			voltage[1].SetPolar(nominal_voltage,120.0);
+		}
+		if (voltage[2] == 0)
+		{
+			voltage[2].SetPolar(nominal_voltage,-120.0);
+		}
+	}
+
+
+	if (has_phase(PHASE_D) & voltageAB==0)
+	{	// compute 3phase voltage differences
+		voltageAB = voltageA - voltageB;
+		voltageBC = voltageB - voltageC;
+		voltageCA = voltageC - voltageA;
+	}
+
 	return result;
 }
 
@@ -282,31 +321,49 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	{
 	case SM_FBS:
 		{
-
 		// add power and shunt to current injection
 		if (phases&PHASE_S)
 		{	// Split phase
-			current_inj[0] = (voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ? current1 : current1 + ~(power1/voltage1) + voltage1*shunt1;
-			current_inj[1] = (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero())) ? current2 : current2 + ~(power2/voltage2) + voltage2*shunt2;
-			current_inj[2] = -(current_inj[0]+current_inj[1]);
+			current_inj[0] += (voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ? current1 : current1 + ~(power1/voltage1) + voltage1*shunt1;
+			current_inj[1] += (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero())) ? current2 : current2 + ~(power2/voltage2) + voltage2*shunt2;
+			current_inj[2] += -(current_inj[0]+current_inj[1]);
 		}
 		else if (has_phase(PHASE_D)) 
 		{   // 'Delta' connected load
-			current_inj[0] = (voltageAB.IsZero() || (powerA.IsZero() && shuntA.IsZero())) ? currentA : currentA + ~powerA/voltageAB + voltageAB*shuntA;
-			current_inj[1] = (voltageBC.IsZero() || (powerB.IsZero() && shuntB.IsZero())) ? currentB : currentB + ~powerB/voltageBC + voltageBC*shuntB;
-			current_inj[2] = (voltageCA.IsZero() || (powerC.IsZero() && shuntC.IsZero())) ? currentC : currentC + ~powerC/voltageCA + voltageCA*shuntC;
-		} 
+			
+			//Convert delta connected power to appropriate line current
+			complex delta_current[3];
+			complex power_current[3];
+			complex delta_shunt[3];
+			complex delta_shunt_curr[3];
+
+			delta_current[0]= (voltageAB.IsZero()) ? 0 : ~(powerA/voltageAB);
+			delta_current[1]= (voltageBC.IsZero()) ? 0 : ~(powerB/voltageBC);
+			delta_current[2]= (voltageCA.IsZero()) ? 0 : ~(powerC/voltageCA);
+
+			power_current[0]=delta_current[0]-delta_current[2];
+			power_current[1]=delta_current[1]-delta_current[0];
+			power_current[2]=delta_current[2]-delta_current[1];
+
+			//Convert delta connected load to appropriate line current
+			delta_shunt[0] = voltageAB*shuntA;
+			delta_shunt[1] = voltageBC*shuntB;
+			delta_shunt[2] = voltageCA*shuntC;
+
+			delta_shunt_curr[0] = delta_shunt[0]-delta_shunt[2];
+			delta_shunt_curr[1] = delta_shunt[1]-delta_shunt[0];
+			delta_shunt_curr[2] = delta_shunt[2]-delta_shunt[1];
+			
+			current_inj[0] += (voltageAB.IsZero() || (powerA.IsZero() && delta_shunt_curr[0].IsZero())) ? currentA : currentA + power_current[0] + delta_shunt_curr[0];
+			current_inj[1] += (voltageBC.IsZero() || (powerB.IsZero() && delta_shunt_curr[1].IsZero())) ? currentB : currentB + power_current[1] + delta_shunt_curr[1];
+			current_inj[2] += (voltageCA.IsZero() || (powerC.IsZero() && delta_shunt_curr[2].IsZero())) ? currentC : currentC + power_current[2] + delta_shunt_curr[2];
+		}
 		else 
 		{	// 'WYE' connected load
-			current_inj[0] = (voltageA.IsZero() || (powerA.IsZero() && shuntA.IsZero())) ? currentA : currentA + ~(powerA/voltageA) + voltageA*shuntA;
-			current_inj[1] = (voltageB.IsZero() || (powerB.IsZero() && shuntB.IsZero())) ? currentB : currentB + ~(powerB/voltageB) + voltageB*shuntB;
-			current_inj[2] = (voltageC.IsZero() || (powerC.IsZero() && shuntC.IsZero())) ? currentC : currentC + ~(powerC/voltageC) + voltageC*shuntC;
+			current_inj[0] += (voltageA.IsZero() || (powerA.IsZero() && shuntA.IsZero())) ? currentA : currentA + ~(powerA/voltageA) + voltageA*shuntA;
+			current_inj[1] += (voltageB.IsZero() || (powerB.IsZero() && shuntB.IsZero())) ? currentB : currentB + ~(powerB/voltageB) + voltageB*shuntB;
+			current_inj[2] += (voltageC.IsZero() || (powerC.IsZero() && shuntC.IsZero())) ? currentC : currentC + ~(powerC/voltageC) + voltageC*shuntC;
 		}
-
-		//// reassigned to current
-		//current[0]=current_inj[0];
-		//current[1]=current_inj[1];
-		//current[2]=current_inj[2];
 
 #ifdef SUPPORT_OUTAGES
 	if (is_open_any())
@@ -357,7 +414,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		OBJECT *linkupdate;
 		link *linkref;
 		char phasespresent;
-
+		
 		//Determine which phases are present for later
 		phasespresent = 8*has_phase(PHASE_D)+4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 
@@ -368,44 +425,38 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		dV[0] = dV[1] = dV[2] = complex(0,0);
 
 		switch (bustype) {
-			case PV:
+			case PV:	//PV bus only supports Y-Y connections at this time.  Easier to handle the oddity of power that way.
 				{
-				//Update self admittance matrix to include any shunt specified for us
-				Ys[0][0]+=shunt[0];
-				Ys[1][1]+=shunt[1];
-				Ys[2][2]+=shunt[2];
-
 				//Check for NaNs (single phase problem)
-				if ((phasespresent!=7) | (phasespresent!=15) | (phasespresent!=8))	//Not three phase or delta
+				if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
 				{
 					//Calculate reactive power - apply GS update (do phase iteratively)
-					power[0].Im() = ((~voltage[0]*(Ys[0][0]*voltage[0]+Ys[0][1]*voltage[1]+Ys[0][2]*voltage[2]-YVs[0])).Im());
-					Vnew[0] = (-(~power[0]/~voltage[0])-voltage[0]*shunt[0]+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
+					power[0].Im() = ((~voltage[0]*(Ys[0][0]*voltage[0]+Ys[0][1]*voltage[1]+Ys[0][2]*voltage[2]-YVs[0]+current[0]+voltage[0]*shunt[0])).Im());
+					Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
 					Vnew[0] = (isnan(Vnew[0].Re())) ? complex(0,0) : Vnew[0];
 
-					power[1].Im() = ((~voltage[1]*(Ys[1][0]*Vnew[0]+Ys[1][1]*voltage[1]+Ys[1][2]*voltage[2]-YVs[1])).Im());
-					Vnew[1] = (-(~power[1]/~voltage[1])-voltage[1]*shunt[1]+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
+					power[1].Im() = ((~voltage[1]*(Ys[1][0]*Vnew[0]+Ys[1][1]*voltage[1]+Ys[1][2]*voltage[2]-YVs[1]+current[1]+voltage[1]*shunt[1])).Im());
+					Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
 					Vnew[1] = (isnan(Vnew[1].Re())) ? complex(0,0) : Vnew[1];
 
-					power[2].Im() = ((~voltage[2]*(Ys[2][0]*Vnew[0]+Ys[2][1]*Vnew[1]+Ys[2][2]*voltage[2]-YVs[2])).Im());
-					Vnew[2] = (-(~power[2]/~voltage[2])-voltage[2]*shunt[2]+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+					power[2].Im() = ((~voltage[2]*(Ys[2][0]*Vnew[0]+Ys[2][1]*Vnew[1]+Ys[2][2]*voltage[2]-YVs[2]+current[2]+voltage[2]*shunt[2])).Im());
+					Vnew[2] = (-(~power[2]/~voltage[2]+current[2]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
 					Vnew[2] = (isnan(Vnew[2].Re())) ? complex(0,0) : Vnew[2];
 				}
 				else	//Three phase
 				{
 					//Calculate reactive power - apply GS update (do phase iteratively)
-					power[0].Im() = ((~voltage[0]*(Ys[0][0]*voltage[0]+Ys[0][1]*voltage[1]+Ys[0][2]*voltage[2]-YVs[0])).Im());
-					Vnew[0] = (-(~power[0]/~voltage[0])-voltage[0]*shunt[0]+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
+					power[0].Im() = ((~voltage[0]*(Ys[0][0]*voltage[0]+Ys[0][1]*voltage[1]+Ys[0][2]*voltage[2]-YVs[0]+current[0]+voltage[0]*shunt[0])).Im());
+					Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
 
-					power[1].Im() = ((~voltage[1]*(Ys[1][0]*Vnew[0]+Ys[1][1]*voltage[1]+Ys[1][2]*voltage[2]-YVs[1])).Im());
-					Vnew[1] = (-(~power[1]/~voltage[1])-voltage[1]*shunt[1]+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
+					power[1].Im() = ((~voltage[1]*(Ys[1][0]*Vnew[0]+Ys[1][1]*voltage[1]+Ys[1][2]*voltage[2]-YVs[1]+current[1]+voltage[1]*shunt[1])).Im());
+					Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
 
-
-					power[2].Im() = ((~voltage[2]*(Ys[2][0]*Vnew[0]+Ys[2][1]*Vnew[1]+Ys[2][2]*voltage[2]-YVs[2])).Im());
-					Vnew[2] = (-(~power[2]/~voltage[2])-voltage[2]*shunt[2]+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+					power[2].Im() = ((~voltage[2]*(Ys[2][0]*Vnew[0]+Ys[2][1]*Vnew[1]+Ys[2][2]*voltage[2]-YVs[2]+current[2]+voltage[2]*shunt[2])).Im());
+					Vnew[2] = (-(~power[2]/~voltage[2]+current[2]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
 				}
 
-				//Apply correction - only use magnitudes (angle is unaffected)
+				//Apply correction - only use angles (magnitude is unaffected)
 				Vnew[0].SetPolar(voltage[0].Mag(),Vnew[0].Arg());
 				Vnew[1].SetPolar(voltage[1].Mag(),Vnew[1].Arg());
 				Vnew[2].SetPolar(voltage[2].Mag(),Vnew[2].Arg());
@@ -424,105 +475,59 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				}
 			case PQ:
 				{
-				//Update self impedance matrix to include any shunt specified for us
-				Ys[0][0]+=shunt[0];
-				Ys[1][1]+=shunt[1];
-				Ys[2][2]+=shunt[2];
-
 				//Check for NaNs (single phase problem)
-				if ((phasespresent!=7) | (phasespresent!=15) | (phasespresent!=8))	//Not three phase or delta
+				if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
 				{
 					//Update node voltage
-					Vnew[0] = (-(~power[0]/~voltage[0])-voltage[0]*shunt[0]+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
+					Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
 					Vnew[0] = (isnan(Vnew[0].Re())) ? complex(0,0) : Vnew[0];
 
-					Vnew[1] = (-(~power[1]/~voltage[1])-voltage[1]*shunt[1]+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
+					Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
 					Vnew[1] = (isnan(Vnew[1].Re())) ? complex(0,0) : Vnew[1];
 
-					Vnew[2] = (-(~power[2]/~voltage[2])-voltage[2]*shunt[2]+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+					Vnew[2] = (-(~power[2]/~voltage[2]+current[1]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
 					Vnew[2] = (isnan(Vnew[2].Re())) ? complex(0,0) : Vnew[2];
 				}
 				else	//Three phase
 				{
-					//Update node voltage
-					Vnew[0] = (-(~power[0]/~voltage[0])-voltage[0]*shunt[0]+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
-					Vnew[1] = (-(~power[1]/~voltage[1])-voltage[1]*shunt[1]+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
-					Vnew[2] = (-(~power[2]/~voltage[2])-voltage[2]*shunt[2]+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
-				}
+					if (has_phase(PHASE_D))	//Delta connected
+					{
+						complex delta_current[3];
+						complex power_current[3];
+						complex delta_shunt[3];
+						complex delta_shunt_curr[3];
 
-				//Find step amount for convergence check
-				dV[0]=Vnew[0]-voltage[0];
-				dV[1]=Vnew[1]-voltage[1];
-				dV[2]=Vnew[2]-voltage[2];
+						//Convert delta connected power load
+						delta_current[0]= (voltageAB.IsZero()) ? 0 : ~(powerA/voltageAB);
+						delta_current[1]= (voltageBC.IsZero()) ? 0 : ~(powerB/voltageBC);
+						delta_current[2]= (voltageCA.IsZero()) ? 0 : ~(powerC/voltageCA);
 
-				//Apply update
-				voltage[0]=voltage[0]+AccelFactor*dV[0];
-				voltage[1]=voltage[1]+AccelFactor*dV[1];
-				voltage[2]=voltage[2]+AccelFactor*dV[2];
+						power_current[0]=delta_current[0]-delta_current[2];
+						power_current[1]=delta_current[1]-delta_current[0];
+						power_current[2]=delta_current[2]-delta_current[1];
 
-				break;
-				}
-			case PQI:
-				{
-				//Update self impedance matrix to include any shunt specified for us
-				Ys[0][0]+=shunt[0];
-				Ys[1][1]+=shunt[1];
-				Ys[2][2]+=shunt[2];
+						//Convert delta connected impedance
+						delta_shunt[0] = voltageAB*shuntA;
+						delta_shunt[1] = voltageBC*shuntB;
+						delta_shunt[2] = voltageCA*shuntC;
 
-				//Check for NaNs (single phase problem)
-				if ((phasespresent!=7) | (phasespresent!=15) | (phasespresent!=8))	//Not three phase or delta
-				{
-					//Update node voltage
-					Vnew[0] = (-current[0]-voltage[0]*shunt[0]+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
-					Vnew[0] = (isnan(Vnew[0].Re())) ? complex(0,0) : Vnew[0];
+						delta_shunt_curr[0] = delta_shunt[0]-delta_shunt[2];
+						delta_shunt_curr[1] = delta_shunt[1]-delta_shunt[0];
+						delta_shunt_curr[2] = delta_shunt[2]-delta_shunt[1];
 
-					Vnew[1] = (-current[1]-voltage[1]*shunt[1]+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
-					Vnew[1] = (isnan(Vnew[1].Re())) ? complex(0,0) : Vnew[1];
+						//Update node voltage
+						Vnew[0] = (-(power_current[0]+current[0]+delta_shunt_curr[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
+						Vnew[1] = (-(power_current[1]+current[1]+delta_shunt_curr[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
+						Vnew[2] = (-(power_current[2]+current[2]+delta_shunt_curr[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+					}
+					else
+					{
+						//Update node voltage
+						Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
+						Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
+						Vnew[2] = (-(~power[2]/~voltage[2]+current[2]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
 
-					Vnew[2] = (-current[2]-voltage[2]*shunt[2]+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
-					Vnew[2] = (isnan(Vnew[2].Re())) ? complex(0,0) : Vnew[2];
-				}
-				else	//Three phase
-				{
-					//Update node voltage
-					Vnew[0] = (-current[0]-voltage[0]*shunt[0]+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
-					Vnew[1] = (-current[1]-voltage[1]*shunt[1]+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
-					Vnew[2] = (-current[2]-voltage[2]*shunt[2]+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
-				}
-
-				//Find step amount for convergence check
-				dV[0]=Vnew[0]-voltage[0];
-				dV[1]=Vnew[1]-voltage[1];
-				dV[2]=Vnew[2]-voltage[2];
-
-				//Apply update
-				voltage[0]=voltage[0]+AccelFactor*dV[0];
-				voltage[1]=voltage[1]+AccelFactor*dV[1];
-				voltage[2]=voltage[2]+AccelFactor*dV[2];
-
-				break;
-				}
-			case PQZ:
-				{
-				//Check for NaNs (single phase problem)
-				if ((phasespresent!=7) | (phasespresent!=15) | (phasespresent!=8))	//Not three phase or delta
-				{
-					//Update node voltage
-					Vnew[0] = (-(voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
-					Vnew[0] = (isnan(Vnew[0].Re())) ? complex(0,0) : Vnew[0];
-
-					Vnew[1] = (-(voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
-					Vnew[1] = (isnan(Vnew[1].Re())) ? complex(0,0) : Vnew[1];
-
-					Vnew[2] = (-(voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
-					Vnew[2] = (isnan(Vnew[2].Re())) ? complex(0,0) : Vnew[2];
-				}
-				else	//Three phase
-				{
-					//Update node voltage
-					Vnew[0] = (-(voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
-					Vnew[1] = (-(voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
-					Vnew[2] = (-(voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+					}
 				}
 
 				//Find step amount for convergence check
@@ -540,6 +545,12 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			case SWING:
 				{
 				//Nothing to do here :(
+					iter_counter++;
+
+					//if ((iter_counter % 1000)==1)
+					//{
+					//	printf("\nIteration %d\n",iter_counter);
+					//}
 				break;
 				}
 			default:
@@ -646,6 +657,8 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		OBJECT *currlinkobj;	//Temp variable for link of interest
 		link *currlink;			//temp Reference to link of interest
 
+		// Commented out - not needed if only do initial calculation on new timesteps (screws things up)
+		/*
 		//Zero out admittance matrix - get ready for next passes
 		Ys[0][0] = Ys[0][1] = Ys[0][2] = complex(0,0);
 		Ys[1][0] = Ys[1][1] = Ys[1][2] = complex(0,0);
@@ -655,49 +668,65 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		YVs[0] = complex(0,0);
 		YVs[1] = complex(0,0);
 		YVs[2] = complex(0,0);
+		*/
 
 		//Zero current for below calcuations.  May mess with tape (will have values at end of Postsync)
 		current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
 
 		//Calculate current if it has one
-		if (bustype==PQI)
+		if ((bustype==PQ) | (bustype==PV)) //PQ and PV busses need current updates
 		{
-			power[0]=voltage[0]*~current[0];	//PQI needs power calculated
-			power[1]=voltage[1]*~current[1];
-			power[2]=voltage[2]*~current[2];
-
-			current_inj[0]=current[0];		//Update load current values
-			current_inj[1]=current[1];		
-			current_inj[2]=current[2];
-		}
-		else if (bustype==PQZ)
-		{
-			power[0]=voltage[0]*~voltage[0]*shunt[0];	//PQZ needs power calculated
-			power[1]=voltage[1]*~voltage[1]*shunt[1];
-			power[2]=voltage[2]*~voltage[2]*shunt[2];
-
-			current_inj[0]=voltage[0]*shunt[0];			//needs load currents calculated as well
-			current_inj[1]=voltage[1]*shunt[1];
-			current_inj[2]=voltage[2]*shunt[2];
-		}
-		else if (bustype==SWING)
-		{
-			current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);	//Swing has no load current or anything else
-		}
-		else	//PQ and PV busses
-		{
-			if ((phasespresent!=7) | (phasespresent!=15) | (phasespresent!=8))	//Not three phase or delta
+			if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
 			{
-				current_inj[0]= (voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0]);
-				current_inj[1]= (voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1]);
-				current_inj[2]= (voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2]);
+				current_inj[0] = (voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0]);
+				current_inj[1] = (voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1]);
+				current_inj[2] = (voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2]);
 			}
 			else //Three phase
 			{
-				current_inj[0]=~(power[0]/voltage[0]);
-				current_inj[1]=~(power[1]/voltage[1]);
-				current_inj[2]=~(power[2]/voltage[2]);
+				if (has_phase(PHASE_D))	//Delta connection
+				{
+					complex delta_shunt[3];
+					complex delta_current[3];
+
+					//Convert delta connected impedance
+					delta_shunt[0] = voltageAB*shunt[0];
+					delta_shunt[1] = voltageBC*shunt[1];
+					delta_shunt[2] = voltageCA*shunt[2];
+
+					//Convert delta connected power
+					delta_current[0]= ~(power[0]/voltageAB);
+					delta_current[1]= ~(power[1]/voltageBC);
+					delta_current[2]= ~(power[2]/voltageCA);
+
+					current_inj[0] += delta_shunt[0]-delta_shunt[2];	//calculate "load" current (line current) - PQZ
+					current_inj[1] += delta_shunt[1]-delta_shunt[0];
+					current_inj[2] += delta_shunt[2]-delta_shunt[1];
+
+					current_inj[0] +=delta_current[0]-delta_current[2];	//Calculate "load" current (line current) - PQP
+					current_inj[1] +=delta_current[1]-delta_current[0];
+					current_inj[2] +=delta_current[2]-delta_current[1];
+				}
+				else					//Wye connection
+				{
+					current_inj[0] +=~(power[0]/voltage[0]);			//PQP needs power converted to current
+					current_inj[1] +=~(power[1]/voltage[1]);
+					current_inj[2] +=~(power[2]/voltage[2]);
+
+					current_inj[0] +=voltage[0]*shunt[0];			//PQZ needs load currents calculated as well
+					current_inj[1] +=voltage[1]*shunt[1];
+					current_inj[2] +=voltage[2]*shunt[2];
+
+				}
+
+				current_inj[0] +=current[0];		//Update load current values if PQI
+				current_inj[1] +=current[1];		
+				current_inj[2] +=current[2];
 			}
+		}
+		else	//Swing bus - just make sure it is zero
+		{
+			current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);	//Swing has no load current or anything else
 		}
 
 		//Now accumulate branch currents, so can see what "flows" passes through the node

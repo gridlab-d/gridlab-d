@@ -1,4 +1,4 @@
-/** $Id: object.h 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: object.h 1207 2009-01-12 22:47:29Z d3p988 $
 	Copyright (C) 2008 Battelle Memorial Institute	@file object.h
 	@addtogroup object
  @{
@@ -67,6 +67,7 @@ typedef struct s_callbacks {
 	} create;
 	int (*define_map)(CLASS*,...);
 	CLASS *(*class_getname)(char*);
+	CLASS *(*class_getobjnum)(OBJECTTYPE);
 	struct {
 		FUNCTION *(*define)(CLASS*,FUNCTIONNAME,FUNCTIONADDR);
 		FUNCTIONADDR (*get)(char*,char*);
@@ -99,7 +100,7 @@ typedef struct s_callbacks {
 	struct s_aggregate *(*create_aggregate)(char *aggregator, char *group_expression);
 	//struct s_aggregate *(*create_aggregate_zwei)(char *aggregator, struct s_aggregate *aggr);
 	double (*run_aggregate)(struct s_aggregate *aggregate);
-	double *(*get_module_var)(MODULE *module, char *varname);
+	void *(*get_module_var)(MODULE *module, char *varname);
 	int (*depends)(char *name, unsigned char major, unsigned char minor, unsigned short build);
 	struct {
 		double (*uniform)(double a, double b);
@@ -128,6 +129,7 @@ typedef struct s_callbacks {
 	} time;
 	int (*unit_convert)(char *from, char *to, double *value);
 	int (*unit_convert_ex)(UNIT *pFrom, UNIT *pTo, double *pValue);
+	UNIT *(*unit_find)(char *unit_name);
 	struct {
 		EXCEPTIONHANDLER *(*create_exception_handler)();
 		void (*delete_exception_handler)(EXCEPTIONHANDLER *ptr);

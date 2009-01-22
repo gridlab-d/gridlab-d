@@ -1,4 +1,4 @@
-/** $Id: node.cpp 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: node.cpp 1194 2009-01-06 20:50:47Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file node.cpp
 	@addtogroup node Network node (bus)
@@ -78,7 +78,7 @@ node::node(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		node_class = oclass = gl_register_class(mod,"node",sizeof(node),PC_BOTTOMUP);
+		node_class = oclass = gl_register_class(mod,"node",sizeof(node),PC_PRETOPDOWN|PC_BOTTOMUP|PC_UNSAFE_OVERRIDE_OMIT);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 

@@ -1,4 +1,4 @@
-/** $Id: import.cpp 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: import.cpp 1197 2009-01-07 01:31:53Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file import.cpp
 	@addtogroup import Model import
@@ -79,6 +79,7 @@ int import_cdf(char *file)
 					p->Qmin_MVAR = Ql;
 					p->G = G;
 					p->B = B;
+					/** @todo using remote_bus_id is just plain wrong, try using a lookup based on getting object node:bus_id **/
 					p->remote_bus_id = (OBJECT*)remote;
 					if (p->type==SWING)	swing[area]=obj;
 					count[area]++;
