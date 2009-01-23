@@ -144,19 +144,16 @@ int node::init(OBJECT *parent)
 			node *parNode = OBJECTDATA(obj->parent,node);
 
 			OBJECT *newlink = gl_create_object(link::oclass);
-			link *test = OBJECTDATA(newlink,link);
-			test->from = OBJECTHDR(parNode);
-			test->to = OBJECTHDR(this);
-			test->phases = parNode->phases;
-			test->b_mat[0][0] = test->b_mat[1][1] = test->b_mat[2][2] = 1.0; //fault_Z;
-			test->a_mat[0][0] = test->a_mat[1][1] = test->a_mat[2][2] = 1.0;
-			test->A_mat[0][0] = test->A_mat[1][1] = test->A_mat[2][2] = 1.0;
-			test->B_mat[0][0] = test->B_mat[1][1] = test->B_mat[2][2] = 1.0;
-			test->d_mat[0][0] = test->d_mat[1][1] = test->d_mat[2][2] = 1.0;
-			test->voltage_ratio = 1.0;
-
-			//int tester = 0;
-			//tester++;
+			link *conlink = OBJECTDATA(newlink,link);
+			conlink->from = OBJECTHDR(parNode);
+			conlink->to = OBJECTHDR(this);
+			conlink->phases = parNode->phases;
+			conlink->b_mat[0][0] = conlink->b_mat[1][1] = conlink->b_mat[2][2] = 1.0; //unit impedance (??)
+			conlink->a_mat[0][0] = conlink->a_mat[1][1] = conlink->a_mat[2][2] = 1.0;
+			conlink->A_mat[0][0] = conlink->A_mat[1][1] = conlink->A_mat[2][2] = 1.0;
+			conlink->B_mat[0][0] = conlink->B_mat[1][1] = conlink->B_mat[2][2] = 1.0;
+			conlink->d_mat[0][0] = conlink->d_mat[1][1] = conlink->d_mat[2][2] = 1.0;
+			conlink->voltage_ratio = 1.0;
 
 			//Give us no parent now, and let it go to SWING
 			obj->parent=NULL;
@@ -286,11 +283,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 
 	if (solver_method==SM_FBS)
 	{
-		/* reset the accumulators for the coming pass (don't do this on bottom-up pass or else tape won't work */
-		//current[0] = current[1] = current[2] = complex(0,0);
-		//power[0] = power[1] = power[2] = complex(0,0);
-		//shunt[0] = shunt[1] = shunt[2] = complex(0,0);
-
 		/* reset the current accumulator */
 		current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
 
@@ -407,7 +399,6 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		{
 		OBJECT *hdr = OBJECTHDR(this);
 		node *swing = hdr->parent?OBJECTDATA(hdr->parent,node):this;
-		complex AccelFactor;
 		complex Vnew[3];
 		complex dV[3];
 		LINKCONNECTED *linktable;
@@ -418,9 +409,6 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		//Determine which phases are present for later
 		phasespresent = 8*has_phase(PHASE_D)+4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 
-		//Assign acceleration factor to a complex (it's picky)
-		AccelFactor=acceleration_factor;
-		
 		//init dV as zero
 		dV[0] = dV[1] = dV[2] = complex(0,0);
 
@@ -435,13 +423,22 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
 					Vnew[0] = (isnan(Vnew[0].Re())) ? complex(0,0) : Vnew[0];
 
+					//Apply acceleration to Vnew
+					Vnew[0]=voltage[0]+(Vnew[0]-voltage[0])*acceleration_factor;
+
 					power[1].Im() = ((~voltage[1]*(Ys[1][0]*Vnew[0]+Ys[1][1]*voltage[1]+Ys[1][2]*voltage[2]-YVs[1]+current[1]+voltage[1]*shunt[1])).Im());
 					Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
 					Vnew[1] = (isnan(Vnew[1].Re())) ? complex(0,0) : Vnew[1];
 
+					//Apply acceleration to Vnew
+					Vnew[1]=voltage[1]+(Vnew[1]-voltage[1])*acceleration_factor;
+
 					power[2].Im() = ((~voltage[2]*(Ys[2][0]*Vnew[0]+Ys[2][1]*Vnew[1]+Ys[2][2]*voltage[2]-YVs[2]+current[2]+voltage[2]*shunt[2])).Im());
 					Vnew[2] = (-(~power[2]/~voltage[2]+current[2]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
 					Vnew[2] = (isnan(Vnew[2].Re())) ? complex(0,0) : Vnew[2];
+
+					//Apply acceleration to Vnew
+					Vnew[2]=voltage[2]+(Vnew[2]-voltage[2])*acceleration_factor;
 				}
 				else	//Three phase
 				{
@@ -449,11 +446,20 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					power[0].Im() = ((~voltage[0]*(Ys[0][0]*voltage[0]+Ys[0][1]*voltage[1]+Ys[0][2]*voltage[2]-YVs[0]+current[0]+voltage[0]*shunt[0])).Im());
 					Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
 
+					//Apply acceleration to Vnew
+					Vnew[0]=voltage[0]+(Vnew[0]-voltage[0])*acceleration_factor;
+
 					power[1].Im() = ((~voltage[1]*(Ys[1][0]*Vnew[0]+Ys[1][1]*voltage[1]+Ys[1][2]*voltage[2]-YVs[1]+current[1]+voltage[1]*shunt[1])).Im());
 					Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
 
+					//Apply acceleration to Vnew
+					Vnew[1]=voltage[1]+(Vnew[1]-voltage[1])*acceleration_factor;
+
 					power[2].Im() = ((~voltage[2]*(Ys[2][0]*Vnew[0]+Ys[2][1]*Vnew[1]+Ys[2][2]*voltage[2]-YVs[2]+current[2]+voltage[2]*shunt[2])).Im());
 					Vnew[2] = (-(~power[2]/~voltage[2]+current[2]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+
+					//Apply acceleration to Vnew
+					Vnew[2]=voltage[2]+(Vnew[2]-voltage[2])*acceleration_factor;
 				}
 
 				//Apply correction - only use angles (magnitude is unaffected)
@@ -467,9 +473,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				dV[2]=Vnew[2]-voltage[2];
 
 				//Apply update
-				voltage[0]=voltage[0]+AccelFactor*dV[0];
-				voltage[1]=voltage[1]+AccelFactor*dV[1];
-				voltage[2]=voltage[2]+AccelFactor*dV[2];
+				voltage[0]=Vnew[0];
+				voltage[1]=Vnew[1];
+				voltage[2]=Vnew[2];
 
 				break;
 				}
@@ -482,11 +488,20 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
 					Vnew[0] = (isnan(Vnew[0].Re())) ? complex(0,0) : Vnew[0];
 
+					//Apply acceleration to Vnew
+					Vnew[0]=voltage[0]+(Vnew[0]-voltage[0])*acceleration_factor;
+
 					Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
 					Vnew[1] = (isnan(Vnew[1].Re())) ? complex(0,0) : Vnew[1];
 
+					//Apply acceleration to Vnew
+					Vnew[1]=voltage[1]+(Vnew[1]-voltage[1])*acceleration_factor;
+
 					Vnew[2] = (-(~power[2]/~voltage[2]+current[1]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
 					Vnew[2] = (isnan(Vnew[2].Re())) ? complex(0,0) : Vnew[2];
+
+					//Apply acceleration to Vnew
+					Vnew[2]=voltage[2]+(Vnew[2]-voltage[2])*acceleration_factor;
 				}
 				else	//Three phase
 				{
@@ -517,15 +532,37 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 
 						//Update node voltage
 						Vnew[0] = (-(power_current[0]+current[0]+delta_shunt_curr[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
+
+						//Apply acceleration to Vnew
+						Vnew[0]=voltage[0]+(Vnew[0]-voltage[0])*acceleration_factor;
+
 						Vnew[1] = (-(power_current[1]+current[1]+delta_shunt_curr[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
+
+						//Apply acceleration to Vnew
+						Vnew[1]=voltage[1]+(Vnew[1]-voltage[1])*acceleration_factor;
+
 						Vnew[2] = (-(power_current[2]+current[2]+delta_shunt_curr[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+
+						//Apply acceleration to Vnew
+						Vnew[2]=voltage[2]+(Vnew[2]-voltage[2])*acceleration_factor;
 					}
 					else
 					{
 						//Update node voltage
 						Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
+
+						//Apply acceleration to Vnew
+						Vnew[0]=voltage[0]+(Vnew[0]-voltage[0])*acceleration_factor;
+
 						Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
+
+						//Apply acceleration to Vnew
+						Vnew[1]=voltage[1]+(Vnew[1]-voltage[1])*acceleration_factor;
+
 						Vnew[2] = (-(~power[2]/~voltage[2]+current[2]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+
+						//Apply acceleration to Vnew
+						Vnew[2]=voltage[2]+(Vnew[2]-voltage[2])*acceleration_factor;
 
 					}
 				}
@@ -536,9 +573,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				dV[2]=Vnew[2]-voltage[2];
 
 				//Apply update
-				voltage[0]=voltage[0]+AccelFactor*dV[0];
-				voltage[1]=voltage[1]+AccelFactor*dV[1];
-				voltage[2]=voltage[2]+AccelFactor*dV[2];
+				voltage[0]=Vnew[0];
+				voltage[1]=Vnew[1];
+				voltage[2]=Vnew[2];
 
 				break;
 				}
@@ -547,10 +584,10 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				//Nothing to do here :(
 					iter_counter++;
 
-					//if ((iter_counter % 1000)==1)
-					//{
-					//	printf("\nIteration %d\n",iter_counter);
-					//}
+					if ((iter_counter % 1000)==1)
+					{
+						printf("\nIteration %d\n",iter_counter);
+					}
 				break;
 				}
 			default:
