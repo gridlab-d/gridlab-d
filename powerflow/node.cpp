@@ -122,6 +122,9 @@ int node::create(void)
 	maximum_voltage_error = 0.0;
 	frequency = nominal_frequency;
 	fault_Z = 1e-6;
+	prev_NTime = 0;
+	SubNode = NONE;
+	SubNodeParent = NULL;
 
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
@@ -138,26 +141,38 @@ int node::init(OBJECT *parent)
 	{
 		OBJECT *obj = OBJECTHDR(this);
 
-		// check that a parent is defined */
+		// check that a parent is defined
 		if (obj->parent!=NULL)	//Has a parent, let's see if it is a node and link it up
 		{
+			char *ndtest;
+			ndtest = obj->parent->oclass->name;
+
+			//See if it is a node
+			if (((ndtest[0]!=110) && (ndtest[0]!=108)) & (ndtest[1]!=111) & ((ndtest[2]!=100) && (ndtest[2]!=97)) & ((ndtest[3]!=101) && (ndtest[3]!=102)))
+				throw("Parent is not a load or node!");
+
 			node *parNode = OBJECTDATA(obj->parent,node);
 
-			OBJECT *newlink = gl_create_object(link::oclass);
-			link *conlink = OBJECTDATA(newlink,link);
-			conlink->from = OBJECTHDR(parNode);
-			conlink->to = OBJECTHDR(this);
-			conlink->phases = parNode->phases;
-			conlink->b_mat[0][0] = conlink->b_mat[1][1] = conlink->b_mat[2][2] = 1.0; //unit impedance (??)
-			conlink->a_mat[0][0] = conlink->a_mat[1][1] = conlink->a_mat[2][2] = 1.0;
-			conlink->A_mat[0][0] = conlink->A_mat[1][1] = conlink->A_mat[2][2] = 1.0;
-			conlink->B_mat[0][0] = conlink->B_mat[1][1] = conlink->B_mat[2][2] = 1.0;
-			conlink->d_mat[0][0] = conlink->d_mat[1][1] = conlink->d_mat[2][2] = 1.0;
-			conlink->voltage_ratio = 1.0;
+			//Make sure our phases align, otherwise become angry
+			if (parNode->phases!=this->phases)
+				throw("Parent and child node phases do not match!");
 
-			//Give us no parent now, and let it go to SWING
+			//Set appropriate flags (store parent name and flag self & parent)
+			SubNode = CHILD;
+			SubNodeParent = obj->parent;
+			
+			parNode->SubNode = PARENT_NOINIT;
+			parNode->SubNodeParent = obj;
+
+			//Give us no parent now, and let it go to SWING (otherwise generic check fails)
 			obj->parent=NULL;
-		}
+
+			//Zero out last child power vector (used for updates)
+			last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = complex(0,0);
+			last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
+			last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
+
+		} 
 		
 		if (obj->parent==NULL) // need to find a swing bus to be this node's parent
 		{
@@ -300,7 +315,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			frequency = pRef->frequency;
 		}
 	}
-
 	return t1;
 }
 
@@ -399,12 +413,127 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		{
 		OBJECT *hdr = OBJECTHDR(this);
 		node *swing = hdr->parent?OBJECTDATA(hdr->parent,node):this;
+		complex Vtemp[3];
+		complex YVsTemp[3];
 		complex Vnew[3];
 		complex dV[3];
 		LINKCONNECTED *linktable;
 		OBJECT *linkupdate;
 		link *linkref;
 		char phasespresent;
+
+		if (SubNode==PARENT_NOINIT)	//First run of a "parented" node
+		{
+			//Grab the linked list from the child object
+			node *childNode = OBJECTDATA(SubNodeParent,node);
+
+			linktable = &childNode->nodelinks;
+
+			if (linktable->next!=NULL)	//See if it was empty
+			{
+				while (linktable->next!=NULL)		//Parse through the linked list
+				{
+					linktable = linktable->next;
+
+					LINKCONNECTED *lnewconnected = new LINKCONNECTED;
+					if (lnewconnected==NULL)
+					{
+						gl_error("memory allocation failure");
+						return 0;
+					}
+
+					lnewconnected->next = nodelinks.next;
+
+					// attach to node list
+					nodelinks.next = lnewconnected;
+
+					// attach the link object identifier
+					lnewconnected->connectedlink = linktable->connectedlink;
+
+					// attach to and from nodes - substitute us for the appropriate link
+					if (linktable->fnodeconnected==SubNodeParent)	//Sub node was the from node, so now we are
+					{
+						lnewconnected->fnodeconnected = hdr;
+						lnewconnected->tnodeconnected = linktable->tnodeconnected;
+					}
+					else	//Sub node was to node, so now we are
+					{
+						lnewconnected->fnodeconnected = linktable->fnodeconnected;
+						lnewconnected->tnodeconnected = hdr;
+					}
+				}
+
+				//clear child Node's linked list so it doesn't try to update things
+				childNode->nodelinks.next=NULL;
+			}
+
+			SubNode=PARENT_INIT;	//Flag as having been initialized, hence done
+		}
+		
+		if ((SubNode==PARENT_INIT) & (prev_NTime!=t0)) //new time step of "parented" node - update values
+		{
+			//Grab all the appropriate load parameters from our child.  Will mess with the output in terms of power/shunt/current
+			//attached to this particular node, but answers should be accurate
+			node *childLoad = OBJECTDATA(SubNodeParent,node);
+
+			//Import power and "load" characteristics
+			power[0]+=childLoad->power[0]-last_child_power[0][0];
+			power[1]+=childLoad->power[1]-last_child_power[0][1];
+			power[2]+=childLoad->power[2]-last_child_power[0][2];
+
+			shunt[0]+=childLoad->shunt[0];
+			shunt[1]+=childLoad->shunt[1];
+			shunt[2]+=childLoad->shunt[2];
+
+			current[0]+=childLoad->current[0];
+			current[1]+=childLoad->current[1];
+			current[2]+=childLoad->current[2];
+
+			//Update previous power tracker
+			last_child_power[0][0] = childLoad->power[0];
+			last_child_power[0][1] = childLoad->power[1];
+			last_child_power[0][2] = childLoad->power[2];
+
+			last_child_power[1][0] = childLoad->shunt[0];
+			last_child_power[1][1] = childLoad->shunt[1];
+			last_child_power[1][2] = childLoad->shunt[2];
+
+			last_child_power[2][0] = childLoad->current[0];
+			last_child_power[2][1] = childLoad->current[1];
+			last_child_power[2][2] = childLoad->current[2];
+
+			if (prev_NTime==0)	//First run, additional housekeeping
+			{
+				//Import Admittance and YVs terms
+				Ys[0][0]+=childLoad->Ys[0][0];
+				Ys[0][1]+=childLoad->Ys[0][1];
+				Ys[0][2]+=childLoad->Ys[0][2];
+				Ys[1][0]+=childLoad->Ys[1][0];
+				Ys[1][1]+=childLoad->Ys[1][1];
+				Ys[1][2]+=childLoad->Ys[1][2];
+				Ys[2][0]+=childLoad->Ys[2][0];
+				Ys[2][1]+=childLoad->Ys[2][1];
+				Ys[2][2]+=childLoad->Ys[2][2];
+
+				YVs[0]+=childLoad->YVs[0];
+				YVs[1]+=childLoad->YVs[1];
+				YVs[2]+=childLoad->YVs[2];
+			}
+
+			//Update time tracking variable
+			prev_NTime=t0;
+		}
+
+
+		//Pull voltages and admittance into temporary variable
+		LOCK_OBJECT(hdr);
+		Vtemp[0]=voltage[0];
+		Vtemp[1]=voltage[1];
+		Vtemp[2]=voltage[2];
+		YVsTemp[0] = YVs[0];
+		YVsTemp[1] = YVs[1];
+		YVsTemp[2] = YVs[2];
+		UNLOCK_OBJECT(hdr);
 		
 		//Determine which phases are present for later
 		phasespresent = 8*has_phase(PHASE_D)+4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
@@ -412,212 +541,239 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		//init dV as zero
 		dV[0] = dV[1] = dV[2] = complex(0,0);
 
-		switch (bustype) {
-			case PV:	//PV bus only supports Y-Y connections at this time.  Easier to handle the oddity of power that way.
-				{
-				//Check for NaNs (single phase problem)
-				if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
-				{
-					//Calculate reactive power - apply GS update (do phase iteratively)
-					power[0].Im() = ((~voltage[0]*(Ys[0][0]*voltage[0]+Ys[0][1]*voltage[1]+Ys[0][2]*voltage[2]-YVs[0]+current[0]+voltage[0]*shunt[0])).Im());
-					Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
-					Vnew[0] = (isnan(Vnew[0].Re())) ? complex(0,0) : Vnew[0];
-
-					//Apply acceleration to Vnew
-					Vnew[0]=voltage[0]+(Vnew[0]-voltage[0])*acceleration_factor;
-
-					power[1].Im() = ((~voltage[1]*(Ys[1][0]*Vnew[0]+Ys[1][1]*voltage[1]+Ys[1][2]*voltage[2]-YVs[1]+current[1]+voltage[1]*shunt[1])).Im());
-					Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
-					Vnew[1] = (isnan(Vnew[1].Re())) ? complex(0,0) : Vnew[1];
-
-					//Apply acceleration to Vnew
-					Vnew[1]=voltage[1]+(Vnew[1]-voltage[1])*acceleration_factor;
-
-					power[2].Im() = ((~voltage[2]*(Ys[2][0]*Vnew[0]+Ys[2][1]*Vnew[1]+Ys[2][2]*voltage[2]-YVs[2]+current[2]+voltage[2]*shunt[2])).Im());
-					Vnew[2] = (-(~power[2]/~voltage[2]+current[2]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
-					Vnew[2] = (isnan(Vnew[2].Re())) ? complex(0,0) : Vnew[2];
-
-					//Apply acceleration to Vnew
-					Vnew[2]=voltage[2]+(Vnew[2]-voltage[2])*acceleration_factor;
-				}
-				else	//Three phase
-				{
-					//Calculate reactive power - apply GS update (do phase iteratively)
-					power[0].Im() = ((~voltage[0]*(Ys[0][0]*voltage[0]+Ys[0][1]*voltage[1]+Ys[0][2]*voltage[2]-YVs[0]+current[0]+voltage[0]*shunt[0])).Im());
-					Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
-
-					//Apply acceleration to Vnew
-					Vnew[0]=voltage[0]+(Vnew[0]-voltage[0])*acceleration_factor;
-
-					power[1].Im() = ((~voltage[1]*(Ys[1][0]*Vnew[0]+Ys[1][1]*voltage[1]+Ys[1][2]*voltage[2]-YVs[1]+current[1]+voltage[1]*shunt[1])).Im());
-					Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
-
-					//Apply acceleration to Vnew
-					Vnew[1]=voltage[1]+(Vnew[1]-voltage[1])*acceleration_factor;
-
-					power[2].Im() = ((~voltage[2]*(Ys[2][0]*Vnew[0]+Ys[2][1]*Vnew[1]+Ys[2][2]*voltage[2]-YVs[2]+current[2]+voltage[2]*shunt[2])).Im());
-					Vnew[2] = (-(~power[2]/~voltage[2]+current[2]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
-
-					//Apply acceleration to Vnew
-					Vnew[2]=voltage[2]+(Vnew[2]-voltage[2])*acceleration_factor;
-				}
-
-				//Apply correction - only use angles (magnitude is unaffected)
-				Vnew[0].SetPolar(voltage[0].Mag(),Vnew[0].Arg());
-				Vnew[1].SetPolar(voltage[1].Mag(),Vnew[1].Arg());
-				Vnew[2].SetPolar(voltage[2].Mag(),Vnew[2].Arg());
-
-				//Find step amount for convergence check
-				dV[0]=Vnew[0]-voltage[0];
-				dV[1]=Vnew[1]-voltage[1];
-				dV[2]=Vnew[2]-voltage[2];
-
-				//Apply update
-				voltage[0]=Vnew[0];
-				voltage[1]=Vnew[1];
-				voltage[2]=Vnew[2];
-
-				break;
-				}
-			case PQ:
-				{
-				//Check for NaNs (single phase problem)
-				if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
-				{
-					//Update node voltage
-					Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
-					Vnew[0] = (isnan(Vnew[0].Re())) ? complex(0,0) : Vnew[0];
-
-					//Apply acceleration to Vnew
-					Vnew[0]=voltage[0]+(Vnew[0]-voltage[0])*acceleration_factor;
-
-					Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
-					Vnew[1] = (isnan(Vnew[1].Re())) ? complex(0,0) : Vnew[1];
-
-					//Apply acceleration to Vnew
-					Vnew[1]=voltage[1]+(Vnew[1]-voltage[1])*acceleration_factor;
-
-					Vnew[2] = (-(~power[2]/~voltage[2]+current[1]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
-					Vnew[2] = (isnan(Vnew[2].Re())) ? complex(0,0) : Vnew[2];
-
-					//Apply acceleration to Vnew
-					Vnew[2]=voltage[2]+(Vnew[2]-voltage[2])*acceleration_factor;
-				}
-				else	//Three phase
-				{
-					if (has_phase(PHASE_D))	//Delta connected
-					{
-						complex delta_current[3];
-						complex power_current[3];
-						complex delta_shunt[3];
-						complex delta_shunt_curr[3];
-
-						//Convert delta connected power load
-						delta_current[0]= (voltageAB.IsZero()) ? 0 : ~(powerA/voltageAB);
-						delta_current[1]= (voltageBC.IsZero()) ? 0 : ~(powerB/voltageBC);
-						delta_current[2]= (voltageCA.IsZero()) ? 0 : ~(powerC/voltageCA);
-
-						power_current[0]=delta_current[0]-delta_current[2];
-						power_current[1]=delta_current[1]-delta_current[0];
-						power_current[2]=delta_current[2]-delta_current[1];
-
-						//Convert delta connected impedance
-						delta_shunt[0] = voltageAB*shuntA;
-						delta_shunt[1] = voltageBC*shuntB;
-						delta_shunt[2] = voltageCA*shuntC;
-
-						delta_shunt_curr[0] = delta_shunt[0]-delta_shunt[2];
-						delta_shunt_curr[1] = delta_shunt[1]-delta_shunt[0];
-						delta_shunt_curr[2] = delta_shunt[2]-delta_shunt[1];
-
-						//Update node voltage
-						Vnew[0] = (-(power_current[0]+current[0]+delta_shunt_curr[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
-
-						//Apply acceleration to Vnew
-						Vnew[0]=voltage[0]+(Vnew[0]-voltage[0])*acceleration_factor;
-
-						Vnew[1] = (-(power_current[1]+current[1]+delta_shunt_curr[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
-
-						//Apply acceleration to Vnew
-						Vnew[1]=voltage[1]+(Vnew[1]-voltage[1])*acceleration_factor;
-
-						Vnew[2] = (-(power_current[2]+current[2]+delta_shunt_curr[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
-
-						//Apply acceleration to Vnew
-						Vnew[2]=voltage[2]+(Vnew[2]-voltage[2])*acceleration_factor;
-					}
-					else
-					{
-						//Update node voltage
-						Vnew[0] = (-(~power[0]/~voltage[0]+current[0]+voltage[0]*shunt[0])+YVs[0]-voltage[1]*Ys[0][1]-voltage[2]*Ys[0][2])/Ys[0][0];
-
-						//Apply acceleration to Vnew
-						Vnew[0]=voltage[0]+(Vnew[0]-voltage[0])*acceleration_factor;
-
-						Vnew[1] = (-(~power[1]/~voltage[1]+current[1]+voltage[1]*shunt[1])+YVs[1]-Vnew[0]*Ys[1][0]-voltage[2]*Ys[1][2])/Ys[1][1];
-
-						//Apply acceleration to Vnew
-						Vnew[1]=voltage[1]+(Vnew[1]-voltage[1])*acceleration_factor;
-
-						Vnew[2] = (-(~power[2]/~voltage[2]+current[2]+voltage[2]*shunt[2])+YVs[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
-
-						//Apply acceleration to Vnew
-						Vnew[2]=voltage[2]+(Vnew[2]-voltage[2])*acceleration_factor;
-
-					}
-				}
-
-				//Find step amount for convergence check
-				dV[0]=Vnew[0]-voltage[0];
-				dV[1]=Vnew[1]-voltage[1];
-				dV[2]=Vnew[2]-voltage[2];
-
-				//Apply update
-				voltage[0]=Vnew[0];
-				voltage[1]=Vnew[1];
-				voltage[2]=Vnew[2];
-
-				break;
-				}
-			case SWING:
-				{
-				//Nothing to do here :(
-					iter_counter++;
-
-					if ((iter_counter % 1000)==1)
-					{
-						printf("\nIteration %d\n",iter_counter);
-					}
-				break;
-				}
-			default:
-				{
-				/* unknown type fails */
-				gl_error("invalid bus type");
-				return TS_ZERO;
-				}
-		}
-
-		//Update YVs terms for connected nodes - exclude swing bus (or if nothing changed)
-		if ((dV[0].Mag()!=0) | (dV[1].Mag()!=0) | (dV[2].Mag()!=0))
+		if (SubNode!=CHILD) //If is a child node, don't do any updates (waste of computations)
 		{
-			linktable = &nodelinks;
+			switch (bustype) {
+				case PV:	//PV bus only supports Y-Y connections at this time.  Easier to handle the oddity of power that way.
+					{
+					//Check for NaNs (single phase problem)
+					if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
+					{
+						//Calculate reactive power - apply GS update (do phase iteratively)
+						power[0].Im() = ((~Vtemp[0]*(Ys[0][0]*Vtemp[0]+Ys[0][1]*Vtemp[1]+Ys[0][2]*Vtemp[2]-YVsTemp[0]+current[0]+Vtemp[0]*shunt[0])).Im());
+						Vnew[0] = (-(~power[0]/~Vtemp[0]+current[0]+Vtemp[0]*shunt[0])+YVsTemp[0]-Vtemp[1]*Ys[0][1]-Vtemp[2]*Ys[0][2])/Ys[0][0];
+						Vnew[0] = (isnan(Vnew[0].Re())) ? complex(0,0) : Vnew[0];
 
-			while (linktable->next!=NULL)		//Parse through the linked list
+						//Apply acceleration to Vnew
+						Vnew[0]=Vtemp[0]+(Vnew[0]-Vtemp[0])*acceleration_factor;
+
+						power[1].Im() = ((~Vtemp[1]*(Ys[1][0]*Vnew[0]+Ys[1][1]*Vtemp[1]+Ys[1][2]*Vtemp[2]-YVsTemp[1]+current[1]+Vtemp[1]*shunt[1])).Im());
+						Vnew[1] = (-(~power[1]/~Vtemp[1]+current[1]+Vtemp[1]*shunt[1])+YVsTemp[1]-Vnew[0]*Ys[1][0]-Vtemp[2]*Ys[1][2])/Ys[1][1];
+						Vnew[1] = (isnan(Vnew[1].Re())) ? complex(0,0) : Vnew[1];
+
+						//Apply acceleration to Vnew
+						Vnew[1]=Vtemp[1]+(Vnew[1]-Vtemp[1])*acceleration_factor;
+
+						power[2].Im() = ((~Vtemp[2]*(Ys[2][0]*Vnew[0]+Ys[2][1]*Vnew[1]+Ys[2][2]*Vtemp[2]-YVsTemp[2]+current[2]+Vtemp[2]*shunt[2])).Im());
+						Vnew[2] = (-(~power[2]/~Vtemp[2]+current[2]+Vtemp[2]*shunt[2])+YVsTemp[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+						Vnew[2] = (isnan(Vnew[2].Re())) ? complex(0,0) : Vnew[2];
+
+						//Apply acceleration to Vnew
+						Vnew[2]=Vtemp[2]+(Vnew[2]-Vtemp[2])*acceleration_factor;
+					}
+					else	//Three phase
+					{
+						//Calculate reactive power - apply GS update (do phase iteratively)
+						power[0].Im() = ((~Vtemp[0]*(Ys[0][0]*Vtemp[0]+Ys[0][1]*Vtemp[1]+Ys[0][2]*Vtemp[2]-YVsTemp[0]+current[0]+Vtemp[0]*shunt[0])).Im());
+						Vnew[0] = (-(~power[0]/~Vtemp[0]+current[0]+Vtemp[0]*shunt[0])+YVsTemp[0]-Vtemp[1]*Ys[0][1]-Vtemp[2]*Ys[0][2])/Ys[0][0];
+
+						//Apply acceleration to Vnew
+						Vnew[0]=Vtemp[0]+(Vnew[0]-Vtemp[0])*acceleration_factor;
+
+						power[1].Im() = ((~Vtemp[1]*(Ys[1][0]*Vnew[0]+Ys[1][1]*Vtemp[1]+Ys[1][2]*Vtemp[2]-YVsTemp[1]+current[1]+Vtemp[1]*shunt[1])).Im());
+						Vnew[1] = (-(~power[1]/~Vtemp[1]+current[1]+Vtemp[1]*shunt[1])+YVsTemp[1]-Vnew[0]*Ys[1][0]-Vtemp[2]*Ys[1][2])/Ys[1][1];
+
+						//Apply acceleration to Vnew
+						Vnew[1]=Vtemp[1]+(Vnew[1]-Vtemp[1])*acceleration_factor;
+
+						power[2].Im() = ((~Vtemp[2]*(Ys[2][0]*Vnew[0]+Ys[2][1]*Vnew[1]+Ys[2][2]*Vtemp[2]-YVsTemp[2]+current[2]+Vtemp[2]*shunt[2])).Im());
+						Vnew[2] = (-(~power[2]/~Vtemp[2]+current[2]+Vtemp[2]*shunt[2])+YVsTemp[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+
+						//Apply acceleration to Vnew
+						Vnew[2]=Vtemp[2]+(Vnew[2]-Vtemp[2])*acceleration_factor;
+					}
+
+					//Apply correction - only use angles (magnitude is unaffected)
+					Vnew[0].SetPolar(Vtemp[0].Mag(),Vnew[0].Arg());
+					Vnew[1].SetPolar(Vtemp[1].Mag(),Vnew[1].Arg());
+					Vnew[2].SetPolar(Vtemp[2].Mag(),Vnew[2].Arg());
+
+					//Find step amount for convergence check
+					dV[0]=Vnew[0]-Vtemp[0];
+					dV[1]=Vnew[1]-Vtemp[1];
+					dV[2]=Vnew[2]-Vtemp[2];
+
+					//Apply update
+					Vtemp[0]=Vnew[0];
+					Vtemp[1]=Vnew[1];
+					Vtemp[2]=Vnew[2];
+
+					break;
+					}
+				case PQ:
+					{
+					//Check for NaNs (single phase problem)
+					if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
+					{
+						//Update node Vtemp
+						Vnew[0] = (-(~power[0]/~Vtemp[0]+current[0]+Vtemp[0]*shunt[0])+YVsTemp[0]-Vtemp[1]*Ys[0][1]-Vtemp[2]*Ys[0][2])/Ys[0][0];
+						Vnew[0] = (isnan(Vnew[0].Re())) ? complex(0,0) : Vnew[0];
+
+						//Apply acceleration to Vnew
+						Vnew[0]=Vtemp[0]+(Vnew[0]-Vtemp[0])*acceleration_factor;
+
+						Vnew[1] = (-(~power[1]/~Vtemp[1]+current[1]+Vtemp[1]*shunt[1])+YVsTemp[1]-Vnew[0]*Ys[1][0]-Vtemp[2]*Ys[1][2])/Ys[1][1];
+						Vnew[1] = (isnan(Vnew[1].Re())) ? complex(0,0) : Vnew[1];
+
+						//Apply acceleration to Vnew
+						Vnew[1]=Vtemp[1]+(Vnew[1]-Vtemp[1])*acceleration_factor;
+
+						Vnew[2] = (-(~power[2]/~Vtemp[2]+current[1]+Vtemp[2]*shunt[2])+YVsTemp[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+						Vnew[2] = (isnan(Vnew[2].Re())) ? complex(0,0) : Vnew[2];
+
+						//Apply acceleration to Vnew
+						Vnew[2]=Vtemp[2]+(Vnew[2]-Vtemp[2])*acceleration_factor;
+					}
+					else	//Three phase
+					{
+						if (has_phase(PHASE_D))	//Delta connected
+						{
+							complex delta_current[3];
+							complex power_current[3];
+							complex delta_shunt[3];
+							complex delta_shunt_curr[3];
+
+							//Convert delta connected power load
+							delta_current[0]= (voltageAB.IsZero()) ? 0 : ~(powerA/voltageAB);
+							delta_current[1]= (voltageBC.IsZero()) ? 0 : ~(powerB/voltageBC);
+							delta_current[2]= (voltageCA.IsZero()) ? 0 : ~(powerC/voltageCA);
+
+							power_current[0]=delta_current[0]-delta_current[2];
+							power_current[1]=delta_current[1]-delta_current[0];
+							power_current[2]=delta_current[2]-delta_current[1];
+
+							//Convert delta connected impedance
+							delta_shunt[0] = voltageAB*shuntA;
+							delta_shunt[1] = voltageBC*shuntB;
+							delta_shunt[2] = voltageCA*shuntC;
+
+							delta_shunt_curr[0] = delta_shunt[0]-delta_shunt[2];
+							delta_shunt_curr[1] = delta_shunt[1]-delta_shunt[0];
+							delta_shunt_curr[2] = delta_shunt[2]-delta_shunt[1];
+
+							//Update node Vtemp
+							Vnew[0] = (-(power_current[0]+current[0]+delta_shunt_curr[0])+YVsTemp[0]-Vtemp[1]*Ys[0][1]-Vtemp[2]*Ys[0][2])/Ys[0][0];
+
+							//Apply acceleration to Vnew
+							Vnew[0]=Vtemp[0]+(Vnew[0]-Vtemp[0])*acceleration_factor;
+
+							Vnew[1] = (-(power_current[1]+current[1]+delta_shunt_curr[1])+YVsTemp[1]-Vnew[0]*Ys[1][0]-Vtemp[2]*Ys[1][2])/Ys[1][1];
+
+							//Apply acceleration to Vnew
+							Vnew[1]=Vtemp[1]+(Vnew[1]-Vtemp[1])*acceleration_factor;
+
+							Vnew[2] = (-(power_current[2]+current[2]+delta_shunt_curr[2])+YVsTemp[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+
+							//Apply acceleration to Vnew
+							Vnew[2]=Vtemp[2]+(Vnew[2]-Vtemp[2])*acceleration_factor;
+						}
+						else
+						{
+							//Update node Vtemp
+							Vnew[0] = (-(~power[0]/~Vtemp[0]+current[0]+Vtemp[0]*shunt[0])+YVsTemp[0]-Vtemp[1]*Ys[0][1]-Vtemp[2]*Ys[0][2])/Ys[0][0];
+
+							//Apply acceleration to Vnew
+							Vnew[0]=Vtemp[0]+(Vnew[0]-Vtemp[0])*acceleration_factor;
+
+							Vnew[1] = (-(~power[1]/~Vtemp[1]+current[1]+Vtemp[1]*shunt[1])+YVsTemp[1]-Vnew[0]*Ys[1][0]-Vtemp[2]*Ys[1][2])/Ys[1][1];
+
+							//Apply acceleration to Vnew
+							Vnew[1]=Vtemp[1]+(Vnew[1]-Vtemp[1])*acceleration_factor;
+
+							Vnew[2] = (-(~power[2]/~Vtemp[2]+current[2]+Vtemp[2]*shunt[2])+YVsTemp[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+
+							//Apply acceleration to Vnew
+							Vnew[2]=Vtemp[2]+(Vnew[2]-Vtemp[2])*acceleration_factor;
+
+						}
+					}
+
+					//Find step amount for convergence check
+					dV[0]=Vnew[0]-Vtemp[0];
+					dV[1]=Vnew[1]-Vtemp[1];
+					dV[2]=Vnew[2]-Vtemp[2];
+
+					//Apply update
+					Vtemp[0]=Vnew[0];
+					Vtemp[1]=Vnew[1];
+					Vtemp[2]=Vnew[2];
+
+					break;
+					}
+				case SWING:
+					{
+					//Nothing to do here :(
+						iter_counter++;
+
+						if ((iter_counter % 1000)==1)
+						{
+							//printf("\nIteration %d",iter_counter);
+						}
+					break;
+					}
+				default:
+					{
+					/* unknown type fails */
+					gl_error("invalid bus type");
+					return TS_ZERO;
+					}
+			}
+
+			//Update YVsTemp terms for connected nodes - exclude swing bus (or if nothing changed) or if child object
+			if ((dV[0].Mag()!=0) | (dV[1].Mag()!=0) | (dV[2].Mag()!=0))
 			{
-				linktable = linktable->next;
+				linktable = &nodelinks;
+				//node *tempnodeinfo = OBJECTDATA(this,node);
+				OBJECT *datanode;
+				char tempdir = 0;
 
-				linkupdate = linktable->connectedlink;
+				while (linktable->next!=NULL)		//Parse through the linked list
+				{
+					linktable = linktable->next;
 
-				linkref = OBJECTDATA(linkupdate,link);
-				linkref->UpdateYVs(OBJECTHDR(this), dV);	//Call link YVs updating function
+					linkupdate = linktable->connectedlink;
+					linkref = OBJECTDATA(linkupdate,link);
+
+					if (obj==linktable->fnodeconnected)
+					{
+						tempdir = 1;	//We are the from node
+						datanode = (linktable->tnodeconnected);
+					}
+					else if (obj==linktable->tnodeconnected)
+					{
+						tempdir = 2;	//We are the to node
+						datanode = (linktable->fnodeconnected);
+					}
+
+					linkref->UpdateYVs(datanode, tempdir, dV);	//Call link YVsTemp updating function as a from
+				}
 			}
 		}
+
+		//Update voltages and admittances back into proper place
+		LOCK_OBJECT(hdr);
+		voltage[0] = Vtemp[0];
+		voltage[1] = Vtemp[1];
+		voltage[2] = Vtemp[2];
+		//YVs[0] = YVsTemp[0];
+		//YVs[1] = YVsTemp[1];
+		//YVs[2] = YVsTemp[2];
+		UNLOCK_OBJECT(hdr);
 
 		if ((dV[0].Mag()>maximum_voltage_error) | (dV[1].Mag()>maximum_voltage_error) | (dV[2].Mag()>maximum_voltage_error))
 			return t0;	//No convergence, loop again
 		else
-			return TS_NEVER;	//converged, no more loops needed
+			return t1;	//converged, no more loops needed
 		break;
 		}
 	default:
@@ -694,18 +850,16 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		OBJECT *currlinkobj;	//Temp variable for link of interest
 		link *currlink;			//temp Reference to link of interest
 
-		// Commented out - not needed if only do initial calculation on new timesteps (screws things up)
-		/*
-		//Zero out admittance matrix - get ready for next passes
-		Ys[0][0] = Ys[0][1] = Ys[0][2] = complex(0,0);
-		Ys[1][0] = Ys[1][1] = Ys[1][2] = complex(0,0);
-		Ys[2][0] = Ys[2][1] = Ys[2][2] = complex(0,0);
+		
+		//See if we are a child node - if so, steal our parent's voltage values
+		if (SubNode==CHILD)
+		{
+			node *parNode = OBJECTDATA(SubNodeParent,node);
 
-		//Zero out current accummulator
-		YVs[0] = complex(0,0);
-		YVs[1] = complex(0,0);
-		YVs[2] = complex(0,0);
-		*/
+			voltage[0]=parNode->voltage[0];
+			voltage[1]=parNode->voltage[1];
+			voltage[2]=parNode->voltage[2];
+		}
 
 		//Zero current for below calcuations.  May mess with tape (will have values at end of Postsync)
 		current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
@@ -777,6 +931,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 			currlink = OBJECTDATA(currlinkobj,link);
 			
+			//Update branch currents - explicitly check to and from in case this is a parent structure
 			if (((currlink->from)->id) == (OBJECTHDR(this)->id))	//see if we are the from end
 			{
 				if  ((currlink->power_in) > (currlink->power_out))	//Make sure current flowing right direction
@@ -786,7 +941,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 					current_inj[2] += currlink->current_in[2];
 				}
 			}
-			else						//must be the to link then
+			else if (((currlink->to)->id) == (OBJECTHDR(this)->id))	//see if we are the to end
 			{
 				if ((currlink->power_in) < (currlink->power_out))	//Current is reversed, so this is a from to
 				{
@@ -1029,6 +1184,9 @@ EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 */
 LINKCONNECTED *node::attachlink(OBJECT *obj) ///< object to attach
 {
+	//Pull link information
+	link *templink = OBJECTDATA(obj,link);
+
 	// construct and id the new circuit
 	LINKCONNECTED *lconnected = new LINKCONNECTED;
 	if (lconnected==NULL)
@@ -1046,6 +1204,10 @@ LINKCONNECTED *node::attachlink(OBJECT *obj) ///< object to attach
 
 	// attach the link object identifier
 	lconnected->connectedlink = obj;
+	
+	// attach to and from nodes
+	lconnected->fnodeconnected = templink->from;
+	lconnected->tnodeconnected = templink->to;
 
 	return 0;
 }

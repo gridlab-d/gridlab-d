@@ -140,7 +140,7 @@ int link::create(void)
 	voltage_ratio = 1.0;
 	phaseadjust = complex(1,0);
 	Regulator_Link = 0;
-	prev_T0=0;
+	prev_LTime=0;
 
 	current_in[0] = current_in[1] = current_in[2] = complex(0,0);
 
@@ -173,8 +173,7 @@ int link::init(OBJECT *parent)
 			else 
 				throw "link from reference not a node";
 		}
-		else if (solver_method==SM_FBS)
-
+		else
 			/* promote 'from' object if necessary */
 			gl_set_rank(from,obj->rank+1);
 		
@@ -261,7 +260,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = powerflow_object::presync(t0); 
 
-	if ((solver_method==SM_GS) & (is_closed()) & (prev_T0!=t0))	//Initial YVs calculations
+	if ((solver_method==SM_GS) & (is_closed()) & (prev_LTime!=t0))	//Initial YVs calculations
 	{
 		node *fnode = OBJECTDATA(from,node);
 		node *tnode = OBJECTDATA(to,node);
@@ -284,7 +283,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 		double invratio;
 
 		//Update t0 variable
-		prev_T0=t0;
+		prev_LTime=t0;
 
 		// compute admittance - invert b matrix
 		inverse(b_mat,Y);
@@ -303,39 +302,10 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 		multiply(Y,Ylinecharge,Ylinecharge);
 
 		addition(Ylinecharge,Y,Ytot);
-
+		
 		if ((voltage_ratio!=1) | (Regulator_Link!=0))	//Handle transformers slightly different
 		{
 			invratio=1/voltage_ratio;
-			/* //Trying new approach - this is old approach that worked
-			phasespresent = 8*has_phase(PHASE_D)+4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
-
-			if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Single or double phase - not three - special handling
-			{	
-				multiply(voltage_ratio,b_mat,Ylefttemp);
-				inverse(Ylefttemp,Yfrom);
-
-				if (isnan(Yfrom[0][0].Re()))
-				{
-					minverter(Ylefttemp,Yfrom);
-				}
-
-				multiply(invratio,b_mat,Ylefttemp);
-				inverse(Ylefttemp,Yto);
-
-				if (isnan(Yto[0][0].Re()))
-				{
-					minverter(Ylefttemp,Yto);
-				}
-			}
-			else	//Three phase
-			{
-				multiply(voltage_ratio,b_mat,Ylefttemp);
-				inverse(Ylefttemp,Yfrom);
-
-				multiply(invratio,b_mat,Ylefttemp);
-				inverse(Ylefttemp,Yto);
-			} */
 
 			if (Regulator_Link==2)	//Not really, is really Delta-Gwye implementation - temp variable to see if this even works
 			{
@@ -347,54 +317,10 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = -1.0 / voltage_ratio;
 				tempmat[0][2] = tempmat[1][0] = tempmat[2][1] = 0.0;
 
-				//Pre-admittancized matrix
-				//equalm(b_mat,Yto);
-				//equalm(c_mat,Yfrom);
-				//equalm(b_mat,Yto);
-				//equalm(c_mat,Yfrom);
-				
+			
 				equalm(b_mat,Yto);
 
 				multiply(b_mat,tempmat,To_Y);
-
-				//tempmat[0][0] = tempmat[1][1] = tempmat[2][2] = 1.0;
-				//tempmat[0][2] = tempmat[1][0] = tempmat[2][1] = -1.0;
-				//tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = 0.0;
-				//tempmat[0][0] = tempmat[1][1] = tempmat[2][2] = 1.0 / 3.0;
-				//tempmat[0][2] = tempmat[1][0] = tempmat[2][1] = -1.0 / 3.0;
-				//tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = 0.0;
-
-				//multiply(tempmat,c_mat,Yfrom);
-
-				//DelVolts[0]=tnode->voltage[0]-tnode->voltage[1];
-				//DelVolts[1]=tnode->voltage[1]-tnode->voltage[2];
-				//DelVolts[2]=tnode->voltage[2]-tnode->voltage[0];
-
-/*
-				////Massive 6x6 update
-				//Ifrom[0] = c_mat[0][0]*tnode->voltage[0]+c_mat[0][1]*tnode->voltage[1]+c_mat[0][2]*tnode->voltage[2]+a_mat[0][0]*fnode->voltage[0]+a_mat[0][1]*fnode->voltage[1]+a_mat[0][2]*fnode->voltage[2];
-				//Ifrom[1] = c_mat[1][0]*tnode->voltage[0]+c_mat[1][1]*tnode->voltage[1]+c_mat[1][2]*tnode->voltage[2]+a_mat[1][0]*fnode->voltage[0]+a_mat[1][1]*fnode->voltage[1]+a_mat[1][2]*fnode->voltage[2];
-				//Ifrom[2] = c_mat[2][0]*tnode->voltage[0]+c_mat[2][1]*tnode->voltage[1]+c_mat[2][2]*tnode->voltage[2]+a_mat[2][0]*fnode->voltage[0]+a_mat[2][1]*fnode->voltage[1]+a_mat[2][2]*fnode->voltage[2];
-				//Ito[0] = a_mat[0][0]*tnode->voltage[0]+a_mat[1][0]*tnode->voltage[1]+a_mat[2][0]*tnode->voltage[2]+b_mat[0][0]*fnode->voltage[0]+b_mat[0][1]*fnode->voltage[1]+b_mat[0][2]*fnode->voltage[2];
-				//Ito[1] = a_mat[0][1]*tnode->voltage[0]+a_mat[1][1]*tnode->voltage[1]+a_mat[2][1]*tnode->voltage[2]+b_mat[1][0]*fnode->voltage[0]+b_mat[1][1]*fnode->voltage[1]+b_mat[1][2]*fnode->voltage[2];
-				//Ito[2] = a_mat[0][2]*tnode->voltage[0]+a_mat[1][2]*tnode->voltage[1]+a_mat[2][2]*tnode->voltage[2]+b_mat[2][0]*fnode->voltage[0]+b_mat[2][1]*fnode->voltage[1]+b_mat[2][2]*fnode->voltage[2];
-
-				//Massive 6x6 update
-				Ifrom[0] = c_mat[0][0]*fnode->voltage[0]+c_mat[0][1]*fnode->voltage[1]+c_mat[0][2]*fnode->voltage[2]+a_mat[0][0]*tnode->voltage[0]+a_mat[0][1]*tnode->voltage[1]+a_mat[0][2]*tnode->voltage[2];
-				Ifrom[1] = c_mat[1][0]*fnode->voltage[0]+c_mat[1][1]*fnode->voltage[1]+c_mat[1][2]*fnode->voltage[2]+a_mat[1][0]*tnode->voltage[0]+a_mat[1][1]*tnode->voltage[1]+a_mat[1][2]*tnode->voltage[2];
-				Ifrom[2] = c_mat[2][0]*fnode->voltage[0]+c_mat[2][1]*fnode->voltage[1]+c_mat[2][2]*fnode->voltage[2]+a_mat[2][0]*tnode->voltage[0]+a_mat[2][1]*tnode->voltage[1]+a_mat[2][2]*tnode->voltage[2];
-				Ito[0] = a_mat[0][0]*fnode->voltage[0]+a_mat[1][0]*fnode->voltage[1]+a_mat[2][0]*fnode->voltage[2]+b_mat[0][0]*tnode->voltage[0]+b_mat[0][1]*tnode->voltage[1]+b_mat[0][2]*tnode->voltage[2];
-				Ito[1] = a_mat[0][1]*fnode->voltage[0]+a_mat[1][1]*fnode->voltage[1]+a_mat[2][1]*fnode->voltage[2]+b_mat[1][0]*tnode->voltage[0]+b_mat[1][1]*tnode->voltage[1]+b_mat[1][2]*tnode->voltage[2];
-				Ito[2] = a_mat[0][2]*fnode->voltage[0]+a_mat[1][2]*fnode->voltage[1]+a_mat[2][2]*fnode->voltage[2]+b_mat[2][0]*tnode->voltage[0]+b_mat[2][1]*tnode->voltage[1]+b_mat[2][2]*tnode->voltage[2];
-
-				////Massive 6x6 update
-				//Ifrom[0] = c_mat[0][0]*DelVolts[0]+c_mat[0][1]*DelVolts[1]+c_mat[0][2]*DelVolts[2]+a_mat[0][0]*tnode->voltage[0]+a_mat[0][1]*tnode->voltage[1]+a_mat[0][2]*tnode->voltage[2];
-				//Ifrom[1] = c_mat[1][0]*DelVolts[0]+c_mat[1][1]*DelVolts[1]+c_mat[1][2]*DelVolts[2]+a_mat[1][0]*tnode->voltage[0]+a_mat[1][1]*tnode->voltage[1]+a_mat[1][2]*tnode->voltage[2];
-				//Ifrom[2] = c_mat[2][0]*DelVolts[0]+c_mat[2][1]*DelVolts[1]+c_mat[2][2]*DelVolts[2]+a_mat[2][0]*tnode->voltage[0]+a_mat[2][1]*tnode->voltage[1]+a_mat[2][2]*tnode->voltage[2];
-				//Ito[0] = a_mat[0][0]*DelVolts[0]+a_mat[1][0]*DelVolts[1]+a_mat[2][0]*DelVolts[2]+b_mat[0][0]*tnode->voltage[0]+b_mat[0][1]*tnode->voltage[1]+b_mat[0][2]*tnode->voltage[2];
-				//Ito[1] = a_mat[0][1]*DelVolts[0]+a_mat[1][1]*DelVolts[1]+a_mat[2][1]*DelVolts[2]+b_mat[1][0]*tnode->voltage[0]+b_mat[1][1]*tnode->voltage[1]+b_mat[1][2]*tnode->voltage[2];
-				//Ito[2] = a_mat[0][2]*DelVolts[0]+a_mat[1][2]*DelVolts[1]+a_mat[2][2]*DelVolts[2]+b_mat[2][0]*tnode->voltage[0]+b_mat[2][1]*tnode->voltage[1]+b_mat[2][2]*tnode->voltage[2];
-				*/
 
 				equalm(c_mat,Yfrom);
 
@@ -412,10 +338,6 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				a_mat[2][2] = voltage_ratio;
 
 
-				//equalm(Yto,To_Y);
-				//equalm(Yfrom,From_Y);
-				//invratio *= sqrt(3.0);
-				//multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
 				
 				//This gives an answer, just appears offset by sqrt(3)
 				tempmat[0][0] = tempmat[1][1] = tempmat[2][2] = voltage_ratio;
@@ -423,20 +345,6 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = 0.0;
 				multiply(tempmat,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
 				
-/*
-				tempmat[0][0] = tempmat[1][1] = tempmat[2][2] = -voltage_ratio * 2.0 / 3.0;
-				tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = -voltage_ratio / 3.0;
-				tempmat[0][2] = tempmat[1][0] = tempmat[2][1] = 0.0;
-				multiply(Yfrom,tempmat,From_Y);
-
-*/
-				//tempmat[0][0] = tempmat[1][1] = tempmat[2][2] = -voltage_ratio * 2.0 / 3.0;
-				//tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = -voltage_ratio / 3.0;
-				//tempmat[0][2] = tempmat[1][0] = tempmat[2][1] = 0.0;
-				//multiply(Yfrom,tempmat,From_Y); //Scales voltages to same "level" for GS //uncomment me
-				//multiply(tempmat,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
-				//multiply(voltage_ratio,Yfrom,From_Y);
-
 				//below are mods
 				From_Y[0][0] /= phaseadjust;
 				From_Y[0][1] /= phaseadjust;
@@ -539,27 +447,13 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			{
 				//Pre-admittancized matrix
 				equalm(b_mat,Yto);
-				//equalm(c_mat,Yfrom);				//comment me
-				//multiply(0.1,b_mat,Yto);
-				//multiply(0.1,c_mat,Yfrom);
-				//c_mat[0][0] = c_mat[0][1] = c_mat[0][2] = complex(0,0);	//comment me
-				//c_mat[1][0] = c_mat[1][1] = c_mat[1][2] = complex(0,0);	//comment me
-				//c_mat[2][0] = c_mat[2][1] = c_mat[2][2] = complex(0,0);	//comment me
 
-				multiply(invratio,Yto,Ylefttemp);			//uncommment me
-				multiply(invratio,Ylefttemp,Yfrom);		// uncomment me
+				multiply(invratio,Yto,Ylefttemp);		//Scale from admittance by turns ratio
+				multiply(invratio,Ylefttemp,Yfrom);
 
-				//equalm(Yto,To_Y);
-				//equalm(Yfrom,From_Y);
 				multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
 				multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
 
-				//multiply(voltage_ratio,Yfrom,Ylefttemp); //Scales voltages to same "level" for GS //comment me
-				//multiply(sqrt(3.0),Ylefttemp,From_Y);	//comment me
-				
-
-				//multiply(voltage_ratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
-				//multiply(invratio,Yfrom,From_Y); //Scales voltages to same "level" for GS
 
 				Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
 						 From_Y[0][1]*tnode->voltage[1]+
@@ -1046,55 +940,97 @@ EXPORT int isa_link(OBJECT *obj, char *classname)
 * UpdateYVs is called by node functions when their voltage changes to update the "current"
 * for future nodes.
 *
-* @param fobj the object that is calling the update
+* @param snode is the object to update
+* @param snodesite is the type the calling node is (1=from, 2=to)
 * @param deltaV the voltage update to apply to YVs terms
 */
-void *link::UpdateYVs(OBJECT *fobj, complex *deltaV)
+void *link::UpdateYVs(OBJECT *snode, char snodeside, complex *deltaV)
 {
-	node *fnode = OBJECTDATA(from,node);
-	node *tnode = OBJECTDATA(to,node);
 	complex YVsNew[3];
 
-	if ((from!=fobj) & (to!=fobj))
-	{
-		GL_THROW("Attempt to update a node that isn't attached to current link!");
-	}
+	node *worknode = OBJECTDATA(snode,node);
 
-	if (fobj==from)	//From node
+	//Check to see if we are a subnode (fixes backpostings)
+	if (worknode->SubNode!=1)
 	{
-		YVsNew[0]=To_Y[0][0]*deltaV[0]+
-				  To_Y[0][1]*deltaV[1]+
-				  To_Y[0][2]*deltaV[2];
-		YVsNew[1]=To_Y[1][0]*deltaV[0]+
-				  To_Y[1][1]*deltaV[1]+
-				  To_Y[1][2]*deltaV[2];
-		YVsNew[2]=To_Y[2][0]*deltaV[0]+
-				  To_Y[2][1]*deltaV[1]+
-				  To_Y[2][2]*deltaV[2];
-	
-		LOCK_OBJECT(to);
-		tnode->YVs[0] += YVsNew[0];
-		tnode->YVs[1] += YVsNew[1];
-		tnode->YVs[2] += YVsNew[2];
-		UNLOCK_OBJECT(to);
+		if (snodeside==1)		//From node
+		{
+			YVsNew[0]=To_Y[0][0]*deltaV[0]+
+					  To_Y[0][1]*deltaV[1]+
+					  To_Y[0][2]*deltaV[2];
+			YVsNew[1]=To_Y[1][0]*deltaV[0]+
+					  To_Y[1][1]*deltaV[1]+
+					  To_Y[1][2]*deltaV[2];
+			YVsNew[2]=To_Y[2][0]*deltaV[0]+
+					  To_Y[2][1]*deltaV[1]+
+					  To_Y[2][2]*deltaV[2];
+		
+			LOCK_OBJECT(snode);
+			worknode->YVs[0] += YVsNew[0];
+			worknode->YVs[1] += YVsNew[1];
+			worknode->YVs[2] += YVsNew[2];
+			UNLOCK_OBJECT(snode);
+		}
+		else if (snodeside==2)		//To node
+		{
+			YVsNew[0]=From_Y[0][0]*deltaV[0]+
+					  From_Y[0][1]*deltaV[1]+
+					  From_Y[0][2]*deltaV[2];
+			YVsNew[1]=From_Y[1][0]*deltaV[0]+
+					  From_Y[1][1]*deltaV[1]+
+					  From_Y[1][2]*deltaV[2];
+			YVsNew[2]=From_Y[2][0]*deltaV[0]+
+					  From_Y[2][1]*deltaV[1]+
+					  From_Y[2][2]*deltaV[2];
+
+			LOCK_OBJECT(snode);
+			worknode->YVs[0] += YVsNew[0];
+			worknode->YVs[1] += YVsNew[1];
+			worknode->YVs[2] += YVsNew[2];
+			UNLOCK_OBJECT(snode);
+		}
 	}
-	else				//To node
+	else	//Child update
 	{
-		YVsNew[0]=From_Y[0][0]*deltaV[0]+
-				  From_Y[0][1]*deltaV[1]+
-				  From_Y[0][2]*deltaV[2];
-		YVsNew[1]=From_Y[1][0]*deltaV[0]+
-				  From_Y[1][1]*deltaV[1]+
-				  From_Y[1][2]*deltaV[2];
-		YVsNew[2]=From_Y[2][0]*deltaV[0]+
-				  From_Y[2][1]*deltaV[1]+
-				  From_Y[2][2]*deltaV[2];
-	
-		LOCK_OBJECT(from);
-		fnode->YVs[0] += YVsNew[0];
-		fnode->YVs[1] += YVsNew[1];
-		fnode->YVs[2] += YVsNew[2];
-		UNLOCK_OBJECT(from);
+		OBJECT *newnode = worknode->SubNodeParent;
+		node *newworknode = OBJECTDATA(newnode,node);
+
+		if (snodeside==1)		//From node
+		{
+			YVsNew[0]=To_Y[0][0]*deltaV[0]+
+					  To_Y[0][1]*deltaV[1]+
+					  To_Y[0][2]*deltaV[2];
+			YVsNew[1]=To_Y[1][0]*deltaV[0]+
+					  To_Y[1][1]*deltaV[1]+
+					  To_Y[1][2]*deltaV[2];
+			YVsNew[2]=To_Y[2][0]*deltaV[0]+
+					  To_Y[2][1]*deltaV[1]+
+					  To_Y[2][2]*deltaV[2];
+		
+			LOCK_OBJECT(newnode);
+			newworknode->YVs[0] += YVsNew[0];
+			newworknode->YVs[1] += YVsNew[1];
+			newworknode->YVs[2] += YVsNew[2];
+			UNLOCK_OBJECT(newnode);
+		}
+		else if (snodeside==2)		//To node
+		{
+			YVsNew[0]=From_Y[0][0]*deltaV[0]+
+					  From_Y[0][1]*deltaV[1]+
+					  From_Y[0][2]*deltaV[2];
+			YVsNew[1]=From_Y[1][0]*deltaV[0]+
+					  From_Y[1][1]*deltaV[1]+
+					  From_Y[1][2]*deltaV[2];
+			YVsNew[2]=From_Y[2][0]*deltaV[0]+
+					  From_Y[2][1]*deltaV[1]+
+					  From_Y[2][2]*deltaV[2];
+
+			LOCK_OBJECT(newnode);
+			newworknode->YVs[0] += YVsNew[0];
+			newworknode->YVs[1] += YVsNew[1];
+			newworknode->YVs[2] += YVsNew[2];
+			UNLOCK_OBJECT(newnode);
+		}
 	}
 	return 0;
 }

@@ -38,7 +38,7 @@ public:
 
 	int create(void);
 	int init(OBJECT *parent);
-	TIMESTAMP prev_T0;
+	TIMESTAMP prev_LTime;
 	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);
@@ -71,7 +71,7 @@ public:
 
 	int kmldump(FILE *fp);
 
-	void *UpdateYVs(OBJECT *fobj, complex *deltaV);
+	void *UpdateYVs(OBJECT *snode, char snodeside, complex *deltaV);
 };
 
 void inverse(complex in[3][3], complex out[3][3]);
