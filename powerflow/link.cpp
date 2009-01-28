@@ -281,262 +281,296 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 		complex outcurrent[3];
 		complex tempvar[3];
 		double invratio;
+		char jindex, kindex;
+		char zerosum = 0;
 
 		//Update t0 variable
 		prev_LTime=t0;
 
-		// compute admittance - invert b matrix
-		inverse(b_mat,Y);
-
-		if (isnan(Y[0][0].Re()))
+		for (jindex=0;jindex<3;jindex++)	//Check to see if b_mat is all zeros (0 length line)
 		{
-			minverter(b_mat,Y);
+			for (kindex=0;kindex<3;kindex++)
+			{
+				if (b_mat[jindex][kindex]==0)
+					zerosum++;
+			}
 		}
 
-		//Compute total self admittance - include line charging capacitance
-		equalm(a_mat,Ylinecharge);
-		Ylinecharge[0][0]-=1;
-		Ylinecharge[1][1]-=1;
-		Ylinecharge[2][2]-=1;
-		multiply(2,Ylinecharge,Ylinecharge);
-		multiply(Y,Ylinecharge,Ylinecharge);
-
-		addition(Ylinecharge,Y,Ytot);
-		
-		if ((voltage_ratio!=1) | (Regulator_Link!=0))	//Handle transformers slightly different
+		if (zerosum==9) //Zero length line
 		{
-			invratio=1/voltage_ratio;
-
-			if (Regulator_Link==2)	//Not really, is really Delta-Gwye implementation - temp variable to see if this even works
-			{
-				complex DelVolts[3];
-				complex CurrentCalcs[6][6];
-				complex tempmat[3][3];
-
-				tempmat[0][0] = tempmat[1][1] = tempmat[2][2] = 1.0 / voltage_ratio;
-				tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = -1.0 / voltage_ratio;
-				tempmat[0][2] = tempmat[1][0] = tempmat[2][1] = 0.0;
-
+			//put some values in the matrices first - these need to be fixed to get accurate power flow...but it's length 0!?!
+			b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = fault_Z;
+			d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = 1.0;
+			A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = 1.0;
+			B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = 1.0;
 			
-				equalm(b_mat,Yto);
 
-				multiply(b_mat,tempmat,To_Y);
+			//Set up from node as parent
+			fnode->SubNode=(SUBNODETYPE)2;
+			fnode->SubNodeParent=to;
 
-				equalm(c_mat,Yfrom);
-
-				c_mat[0][0] = c_mat[0][1] = c_mat[0][2] = complex(0,0);	//comment me
-				c_mat[1][0] = c_mat[1][1] = c_mat[1][2] = complex(0,0);	//comment me
-				c_mat[2][0] = c_mat[2][1] = c_mat[2][2] = complex(0,0);	//comment me
-
-				a_mat[0][0] = a_mat[0][1] = a_mat[0][2] = complex(0,0);	//comment me
-				a_mat[1][0] = a_mat[1][1] = a_mat[1][2] = complex(0,0);	//comment me
-				a_mat[2][0] = a_mat[2][1] = a_mat[2][2] = complex(0,0);	//comment me
-
-				//Repopulate a matrix
-				a_mat[0][0] = voltage_ratio;
-				a_mat[1][1] = voltage_ratio;
-				a_mat[2][2] = voltage_ratio;
-
-
-				
-				//This gives an answer, just appears offset by sqrt(3)
-				tempmat[0][0] = tempmat[1][1] = tempmat[2][2] = voltage_ratio;
-				tempmat[0][2] = tempmat[1][0] = tempmat[2][1] = -voltage_ratio;
-				tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = 0.0;
-				multiply(tempmat,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
-				
-				//below are mods
-				From_Y[0][0] /= phaseadjust;
-				From_Y[0][1] /= phaseadjust;
-				From_Y[0][2] /= phaseadjust;
-				From_Y[1][0] /= phaseadjust;
-				From_Y[1][1] /= phaseadjust;
-				From_Y[1][2] /= phaseadjust;
-				From_Y[2][0] /= phaseadjust;
-				From_Y[2][1] /= phaseadjust;
-				From_Y[2][2] /= phaseadjust;
-
-				To_Y[0][0] *= phaseadjust;
-				To_Y[0][1] *= phaseadjust;
-				To_Y[0][2] *= phaseadjust;
-				To_Y[1][0] *= phaseadjust;
-				To_Y[1][1] *= phaseadjust;
-				To_Y[1][2] *= phaseadjust;
-				To_Y[2][0] *= phaseadjust;
-				To_Y[2][1] *= phaseadjust;
-				To_Y[2][2] *= phaseadjust;
-
-				Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
-						 From_Y[0][1]*tnode->voltage[1]+
-						 From_Y[0][2]*tnode->voltage[2];
-				Ifrom[1]=From_Y[1][0]*tnode->voltage[0]+
-						 From_Y[1][1]*tnode->voltage[1]+
-						 From_Y[1][2]*tnode->voltage[2];
-				Ifrom[2]=From_Y[2][0]*tnode->voltage[0]+
-						 From_Y[2][1]*tnode->voltage[1]+
-						 From_Y[2][2]*tnode->voltage[2];
-				Ito[0] = To_Y[0][0]*fnode->voltage[0]+
-						 To_Y[0][1]*fnode->voltage[1]+
-						 To_Y[0][2]*fnode->voltage[2];
-				Ito[1] = To_Y[1][0]*fnode->voltage[0]+
-						 To_Y[1][1]*fnode->voltage[1]+
-						 To_Y[1][2]*fnode->voltage[2];
-				Ito[2] = To_Y[2][0]*fnode->voltage[0]+
-						 To_Y[2][1]*fnode->voltage[1]+
-						 To_Y[2][2]*fnode->voltage[2];
-
-
-			}
-			else if (Regulator_Link==1)	//Regulator
+			for (jindex=0;jindex<3;jindex++)	//zero out load tracking matrix (just in case)
 			{
-				equalm(b_mat,Yto);
-				equalm(c_mat,Yfrom);
-
-				equalm(Yto,To_Y);
-
-				To_Y[0][0] *= B_mat[0][0];
-				To_Y[0][1] *= B_mat[0][1];
-				To_Y[0][2] *= B_mat[0][2];
-				To_Y[1][0] *= B_mat[1][0];
-				To_Y[1][1] *= B_mat[1][1];
-				To_Y[1][2] *= B_mat[1][2];
-				To_Y[2][0] *= B_mat[2][0];
-				To_Y[2][1] *= B_mat[2][1];
-				To_Y[2][2] *= B_mat[2][2];
-
-				equalm(Yfrom,From_Y);
-
-				From_Y[0][0] = (B_mat[0][0]==0.0) ? 0.0 : From_Y[0][0]*B_mat[0][0];
-				From_Y[0][1] = (B_mat[0][1]==0.0) ? 0.0 : From_Y[0][1]*B_mat[0][1];
-				From_Y[0][2] = (B_mat[0][2]==0.0) ? 0.0 : From_Y[0][2]*B_mat[0][2];
-				From_Y[1][0] = (B_mat[1][0]==0.0) ? 0.0 : From_Y[1][0]*B_mat[1][0];
-				From_Y[1][1] = (B_mat[1][1]==0.0) ? 0.0 : From_Y[1][1]*B_mat[1][1];
-				From_Y[1][2] = (B_mat[1][2]==0.0) ? 0.0 : From_Y[1][2]*B_mat[1][2];
-				From_Y[2][0] = (B_mat[2][0]==0.0) ? 0.0 : From_Y[2][0]*B_mat[2][0];
-				From_Y[2][1] = (B_mat[2][1]==0.0) ? 0.0 : From_Y[2][1]*B_mat[2][1];
-				From_Y[2][2] = (B_mat[2][2]==0.0) ? 0.0 : From_Y[2][2]*B_mat[2][2];
-
-				//Zero the used matrices
-				b_mat[0][0] = b_mat[0][1] = b_mat[0][2] = complex(0,0);
-				b_mat[1][0] = b_mat[1][1] = b_mat[1][2] = complex(0,0);
-				b_mat[2][0] = b_mat[2][1] = b_mat[2][2] = complex(0,0);
-
-				equalm(b_mat,c_mat);
-				equalm(b_mat,B_mat);
-
-				Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
-						 From_Y[0][1]*tnode->voltage[1]+
-						 From_Y[0][2]*tnode->voltage[2];
-				Ifrom[1]=From_Y[1][0]*tnode->voltage[0]+
-						 From_Y[1][1]*tnode->voltage[1]+
-						 From_Y[1][2]*tnode->voltage[2];
-				Ifrom[2]=From_Y[2][0]*tnode->voltage[0]+
-						 From_Y[2][1]*tnode->voltage[1]+
-						 From_Y[2][2]*tnode->voltage[2];
-				Ito[0] = To_Y[0][0]*fnode->voltage[0]+
-						 To_Y[0][1]*fnode->voltage[1]+
-						 To_Y[0][2]*fnode->voltage[2];
-				Ito[1] = To_Y[1][0]*fnode->voltage[0]+
-						 To_Y[1][1]*fnode->voltage[1]+
-						 To_Y[1][2]*fnode->voltage[2];
-				Ito[2] = To_Y[2][0]*fnode->voltage[0]+
-						 To_Y[2][1]*fnode->voltage[1]+
-						 To_Y[2][2]*fnode->voltage[2];
-			}
-			else	//Other xformers
-			{
-				//Pre-admittancized matrix
-				equalm(b_mat,Yto);
-
-				multiply(invratio,Yto,Ylefttemp);		//Scale from admittance by turns ratio
-				multiply(invratio,Ylefttemp,Yfrom);
-
-				multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
-				multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
-
-
-				Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
-						 From_Y[0][1]*tnode->voltage[1]+
-						 From_Y[0][2]*tnode->voltage[2];
-				Ifrom[1]=From_Y[1][0]*tnode->voltage[0]+
-						 From_Y[1][1]*tnode->voltage[1]+
-						 From_Y[1][2]*tnode->voltage[2];
-				Ifrom[2]=From_Y[2][0]*tnode->voltage[0]+
-						 From_Y[2][1]*tnode->voltage[1]+
-						 From_Y[2][2]*tnode->voltage[2];
-				Ito[0] = To_Y[0][0]*fnode->voltage[0]+
-						 To_Y[0][1]*fnode->voltage[1]+
-						 To_Y[0][2]*fnode->voltage[2];
-				Ito[1] = To_Y[1][0]*fnode->voltage[0]+
-						 To_Y[1][1]*fnode->voltage[1]+
-						 To_Y[1][2]*fnode->voltage[2];
-				Ito[2] = To_Y[2][0]*fnode->voltage[0]+
-						 To_Y[2][1]*fnode->voltage[1]+
-						 To_Y[2][2]*fnode->voltage[2];
-
-
+				for (kindex=0;kindex<3;kindex++)
+				{
+					fnode->last_child_power[jindex][kindex]=0.0;
+				}
 			}
 
-			LOCK_OBJECT(from);
-			addition(fnode->Ys,Yfrom,fnode->Ys);
-			fnode->YVs[0] += Ifrom[0];
-			fnode->YVs[1] += Ifrom[1];
-			fnode->YVs[2] += Ifrom[2];
-			UNLOCK_OBJECT(from);
-
-			LOCK_OBJECT(to);
-			addition(tnode->Ys,Yto,tnode->Ys);
-			tnode->YVs[0] += Ito[0];
-			tnode->YVs[1] += Ito[1];
-			tnode->YVs[2] += Ito[2];
-			UNLOCK_OBJECT(to);
-		
+			//Set up to node as child
+			tnode->SubNode=(SUBNODETYPE)1;
+			tnode->SubNodeParent=from;
 		}
-		else					//Simple lines
+		else	//normal b_mat (or at least, not all zeros)
 		{
-			//Compute "currents"
-			//Individual phases
-			Ifrom[0]=Ytot[0][0]*tnode->voltage[0]+
-					 Ytot[0][1]*tnode->voltage[1]+
-					 Ytot[0][2]*tnode->voltage[2];
-			Ifrom[1]=Ytot[1][0]*tnode->voltage[0]+
-					 Ytot[1][1]*tnode->voltage[1]+
-					 Ytot[1][2]*tnode->voltage[2];
-			Ifrom[2]=Ytot[2][0]*tnode->voltage[0]+
-					 Ytot[2][1]*tnode->voltage[1]+
-					 Ytot[2][2]*tnode->voltage[2];
-			Ito[0] = Ytot[0][0]*fnode->voltage[0]+
-					 Ytot[0][1]*fnode->voltage[1]+
-					 Ytot[0][2]*fnode->voltage[2];
-			Ito[1] = Ytot[1][0]*fnode->voltage[0]+
-					 Ytot[1][1]*fnode->voltage[1]+
-					 Ytot[1][2]*fnode->voltage[2];
-			Ito[2] = Ytot[2][0]*fnode->voltage[0]+
-					 Ytot[2][1]*fnode->voltage[1]+
-					 Ytot[2][2]*fnode->voltage[2];
-		
-			//Update admittance tracking - separate matrices (transformer support)
-			equalm(Ytot,To_Y);
-			equalm(Ytot,From_Y);
+			// compute admittance - invert b matrix
+			inverse(b_mat,Y);
 
-			//Update from node YVs
-			LOCK_OBJECT(from);
-			addition(fnode->Ys,Ytot,fnode->Ys);
-			fnode->YVs[0] += Ifrom[0];
-			fnode->YVs[1] += Ifrom[1];
-			fnode->YVs[2] += Ifrom[2];
-			UNLOCK_OBJECT(from);
+			if (isnan(Y[0][0].Re()))
+			{
+				minverter(b_mat,Y);
+			}
 
-			//Update to node YVs
-			LOCK_OBJECT(to);
-			addition(tnode->Ys,Ytot,tnode->Ys);
-			tnode->YVs[0] += Ito[0];
-			tnode->YVs[1] += Ito[1];
-			tnode->YVs[2] += Ito[2];
-			UNLOCK_OBJECT(to);
+			//Compute total self admittance - include line charging capacitance
+			equalm(a_mat,Ylinecharge);
+			Ylinecharge[0][0]-=1;
+			Ylinecharge[1][1]-=1;
+			Ylinecharge[2][2]-=1;
+			multiply(2,Ylinecharge,Ylinecharge);
+			multiply(Y,Ylinecharge,Ylinecharge);
+
+			addition(Ylinecharge,Y,Ytot);
+			
+			if ((voltage_ratio!=1) | (Regulator_Link!=0))	//Handle transformers slightly different
+			{
+				invratio=1/voltage_ratio;
+
+				if (Regulator_Link==2)	//Not really, is really Delta-Gwye implementation - temp variable to see if this even works
+				{
+					complex DelVolts[3];
+					complex CurrentCalcs[6][6];
+					complex tempmat[3][3];
+
+					tempmat[0][0] = tempmat[1][1] = tempmat[2][2] = 1.0 / voltage_ratio;
+					tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = -1.0 / voltage_ratio;
+					tempmat[0][2] = tempmat[1][0] = tempmat[2][1] = 0.0;
+
+					equalm(b_mat,Yto);
+
+					multiply(b_mat,tempmat,To_Y);
+
+					equalm(c_mat,Yfrom);
+
+					c_mat[0][0] = c_mat[0][1] = c_mat[0][2] = complex(0,0);	//comment me
+					c_mat[1][0] = c_mat[1][1] = c_mat[1][2] = complex(0,0);	//comment me
+					c_mat[2][0] = c_mat[2][1] = c_mat[2][2] = complex(0,0);	//comment me
+
+					a_mat[0][0] = a_mat[0][1] = a_mat[0][2] = complex(0,0);	//comment me
+					a_mat[1][0] = a_mat[1][1] = a_mat[1][2] = complex(0,0);	//comment me
+					a_mat[2][0] = a_mat[2][1] = a_mat[2][2] = complex(0,0);	//comment me
+
+					//Repopulate a matrix
+					a_mat[0][0] = voltage_ratio;
+					a_mat[1][1] = voltage_ratio;
+					a_mat[2][2] = voltage_ratio;
+
+
+					//This gives an answer, just appears offset by sqrt(3)
+					tempmat[0][0] = tempmat[1][1] = tempmat[2][2] = voltage_ratio;
+					tempmat[0][2] = tempmat[1][0] = tempmat[2][1] = -voltage_ratio;
+					tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = 0.0;
+					multiply(tempmat,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
+					
+					From_Y[0][0] /= phaseadjust;
+					From_Y[0][1] /= phaseadjust;
+					From_Y[0][2] /= phaseadjust;
+					From_Y[1][0] /= phaseadjust;
+					From_Y[1][1] /= phaseadjust;
+					From_Y[1][2] /= phaseadjust;
+					From_Y[2][0] /= phaseadjust;
+					From_Y[2][1] /= phaseadjust;
+					From_Y[2][2] /= phaseadjust;
+
+					To_Y[0][0] *= phaseadjust;
+					To_Y[0][1] *= phaseadjust;
+					To_Y[0][2] *= phaseadjust;
+					To_Y[1][0] *= phaseadjust;
+					To_Y[1][1] *= phaseadjust;
+					To_Y[1][2] *= phaseadjust;
+					To_Y[2][0] *= phaseadjust;
+					To_Y[2][1] *= phaseadjust;
+					To_Y[2][2] *= phaseadjust;
+
+					Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
+							 From_Y[0][1]*tnode->voltage[1]+
+							 From_Y[0][2]*tnode->voltage[2];
+					Ifrom[1]=From_Y[1][0]*tnode->voltage[0]+
+							 From_Y[1][1]*tnode->voltage[1]+
+							 From_Y[1][2]*tnode->voltage[2];
+					Ifrom[2]=From_Y[2][0]*tnode->voltage[0]+
+							 From_Y[2][1]*tnode->voltage[1]+
+							 From_Y[2][2]*tnode->voltage[2];
+					Ito[0] = To_Y[0][0]*fnode->voltage[0]+
+							 To_Y[0][1]*fnode->voltage[1]+
+							 To_Y[0][2]*fnode->voltage[2];
+					Ito[1] = To_Y[1][0]*fnode->voltage[0]+
+							 To_Y[1][1]*fnode->voltage[1]+
+							 To_Y[1][2]*fnode->voltage[2];
+					Ito[2] = To_Y[2][0]*fnode->voltage[0]+
+							 To_Y[2][1]*fnode->voltage[1]+
+							 To_Y[2][2]*fnode->voltage[2];
+
+
+				}
+				else if (Regulator_Link==1)	//Regulator
+				{
+					equalm(b_mat,Yto);
+					equalm(c_mat,Yfrom);
+
+					equalm(Yto,To_Y);
+
+					To_Y[0][0] *= B_mat[0][0];
+					To_Y[0][1] *= B_mat[0][1];
+					To_Y[0][2] *= B_mat[0][2];
+					To_Y[1][0] *= B_mat[1][0];
+					To_Y[1][1] *= B_mat[1][1];
+					To_Y[1][2] *= B_mat[1][2];
+					To_Y[2][0] *= B_mat[2][0];
+					To_Y[2][1] *= B_mat[2][1];
+					To_Y[2][2] *= B_mat[2][2];
+
+					equalm(Yfrom,From_Y);
+
+					From_Y[0][0] = (B_mat[0][0]==0.0) ? 0.0 : From_Y[0][0]*B_mat[0][0];
+					From_Y[0][1] = (B_mat[0][1]==0.0) ? 0.0 : From_Y[0][1]*B_mat[0][1];
+					From_Y[0][2] = (B_mat[0][2]==0.0) ? 0.0 : From_Y[0][2]*B_mat[0][2];
+					From_Y[1][0] = (B_mat[1][0]==0.0) ? 0.0 : From_Y[1][0]*B_mat[1][0];
+					From_Y[1][1] = (B_mat[1][1]==0.0) ? 0.0 : From_Y[1][1]*B_mat[1][1];
+					From_Y[1][2] = (B_mat[1][2]==0.0) ? 0.0 : From_Y[1][2]*B_mat[1][2];
+					From_Y[2][0] = (B_mat[2][0]==0.0) ? 0.0 : From_Y[2][0]*B_mat[2][0];
+					From_Y[2][1] = (B_mat[2][1]==0.0) ? 0.0 : From_Y[2][1]*B_mat[2][1];
+					From_Y[2][2] = (B_mat[2][2]==0.0) ? 0.0 : From_Y[2][2]*B_mat[2][2];
+
+					//Zero the used matrices
+					b_mat[0][0] = b_mat[0][1] = b_mat[0][2] = complex(0,0);
+					b_mat[1][0] = b_mat[1][1] = b_mat[1][2] = complex(0,0);
+					b_mat[2][0] = b_mat[2][1] = b_mat[2][2] = complex(0,0);
+
+					equalm(b_mat,c_mat);
+					equalm(b_mat,B_mat);
+
+					Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
+							 From_Y[0][1]*tnode->voltage[1]+
+							 From_Y[0][2]*tnode->voltage[2];
+					Ifrom[1]=From_Y[1][0]*tnode->voltage[0]+
+							 From_Y[1][1]*tnode->voltage[1]+
+							 From_Y[1][2]*tnode->voltage[2];
+					Ifrom[2]=From_Y[2][0]*tnode->voltage[0]+
+							 From_Y[2][1]*tnode->voltage[1]+
+							 From_Y[2][2]*tnode->voltage[2];
+					Ito[0] = To_Y[0][0]*fnode->voltage[0]+
+							 To_Y[0][1]*fnode->voltage[1]+
+							 To_Y[0][2]*fnode->voltage[2];
+					Ito[1] = To_Y[1][0]*fnode->voltage[0]+
+							 To_Y[1][1]*fnode->voltage[1]+
+							 To_Y[1][2]*fnode->voltage[2];
+					Ito[2] = To_Y[2][0]*fnode->voltage[0]+
+							 To_Y[2][1]*fnode->voltage[1]+
+							 To_Y[2][2]*fnode->voltage[2];
+				}
+				else	//Other xformers
+				{
+					//Pre-admittancized matrix
+					equalm(b_mat,Yto);
+
+					multiply(invratio,Yto,Ylefttemp);		//Scale from admittance by turns ratio
+					multiply(invratio,Ylefttemp,Yfrom);
+
+					multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
+					multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
+
+					Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
+							 From_Y[0][1]*tnode->voltage[1]+
+							 From_Y[0][2]*tnode->voltage[2];
+					Ifrom[1]=From_Y[1][0]*tnode->voltage[0]+
+							 From_Y[1][1]*tnode->voltage[1]+
+							 From_Y[1][2]*tnode->voltage[2];
+					Ifrom[2]=From_Y[2][0]*tnode->voltage[0]+
+							 From_Y[2][1]*tnode->voltage[1]+
+							 From_Y[2][2]*tnode->voltage[2];
+					Ito[0] = To_Y[0][0]*fnode->voltage[0]+
+							 To_Y[0][1]*fnode->voltage[1]+
+							 To_Y[0][2]*fnode->voltage[2];
+					Ito[1] = To_Y[1][0]*fnode->voltage[0]+
+							 To_Y[1][1]*fnode->voltage[1]+
+							 To_Y[1][2]*fnode->voltage[2];
+					Ito[2] = To_Y[2][0]*fnode->voltage[0]+
+							 To_Y[2][1]*fnode->voltage[1]+
+							 To_Y[2][2]*fnode->voltage[2];
+
+
+				}
+
+				LOCK_OBJECT(from);
+				addition(fnode->Ys,Yfrom,fnode->Ys);
+				fnode->YVs[0] += Ifrom[0];
+				fnode->YVs[1] += Ifrom[1];
+				fnode->YVs[2] += Ifrom[2];
+				UNLOCK_OBJECT(from);
+
+				LOCK_OBJECT(to);
+				addition(tnode->Ys,Yto,tnode->Ys);
+				tnode->YVs[0] += Ito[0];
+				tnode->YVs[1] += Ito[1];
+				tnode->YVs[2] += Ito[2];
+				UNLOCK_OBJECT(to);
+			
+			}
+			else					//Simple lines
+			{
+				//Compute "currents"
+				//Individual phases
+				Ifrom[0]=Ytot[0][0]*tnode->voltage[0]+
+						 Ytot[0][1]*tnode->voltage[1]+
+						 Ytot[0][2]*tnode->voltage[2];
+				Ifrom[1]=Ytot[1][0]*tnode->voltage[0]+
+						 Ytot[1][1]*tnode->voltage[1]+
+						 Ytot[1][2]*tnode->voltage[2];
+				Ifrom[2]=Ytot[2][0]*tnode->voltage[0]+
+						 Ytot[2][1]*tnode->voltage[1]+
+						 Ytot[2][2]*tnode->voltage[2];
+				Ito[0] = Ytot[0][0]*fnode->voltage[0]+
+						 Ytot[0][1]*fnode->voltage[1]+
+						 Ytot[0][2]*fnode->voltage[2];
+				Ito[1] = Ytot[1][0]*fnode->voltage[0]+
+						 Ytot[1][1]*fnode->voltage[1]+
+						 Ytot[1][2]*fnode->voltage[2];
+				Ito[2] = Ytot[2][0]*fnode->voltage[0]+
+						 Ytot[2][1]*fnode->voltage[1]+
+						 Ytot[2][2]*fnode->voltage[2];
+			
+				//Update admittance tracking - separate matrices (transformer support)
+				equalm(Ytot,To_Y);
+				equalm(Ytot,From_Y);
+
+				//Update from node YVs
+				LOCK_OBJECT(from);
+				addition(fnode->Ys,Ytot,fnode->Ys);
+				fnode->YVs[0] += Ifrom[0];
+				fnode->YVs[1] += Ifrom[1];
+				fnode->YVs[2] += Ifrom[2];
+				UNLOCK_OBJECT(from);
+
+				//Update to node YVs
+				LOCK_OBJECT(to);
+				addition(tnode->Ys,Ytot,tnode->Ys);
+				tnode->YVs[0] += Ito[0];
+				tnode->YVs[1] += Ito[1];
+				tnode->YVs[2] += Ito[2];
+				UNLOCK_OBJECT(to);
+			}
 		}
 	}
-
 	return t1;
 }
 
@@ -671,7 +705,7 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		inverse(B_mat,Binv);
 
 		//if ((phasespresent!=7) & (isnan(Binv[0][0].Re())))	//Single or double phase - not three - special handling
-		if ((phasespresent!=7) | (isnan(Binv[0][0].Re())))	//Single or double phase - not three - special handling
+		if (((phasespresent!=7) & (phasespresent!=8) & (phasespresent!=15)) | (isnan(Binv[0][0].Re())))	//Single or double phase - not three - special handling
 		{	
 			minverter(B_mat,Binv);
 			

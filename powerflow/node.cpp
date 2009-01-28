@@ -421,7 +421,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		OBJECT *linkupdate;
 		link *linkref;
 		char phasespresent;
-
+		
 		if (SubNode==PARENT_NOINIT)	//First run of a "parented" node
 		{
 			//Grab the linked list from the child object
@@ -470,58 +470,81 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			SubNode=PARENT_INIT;	//Flag as having been initialized, hence done
 		}
 		
-		if ((SubNode==PARENT_INIT) & (prev_NTime!=t0)) //new time step of "parented" node - update values
+		if ((SubNode==PARENT_INIT) && (prev_NTime==0))	//First run, additional housekeeping
 		{
-			//Grab all the appropriate load parameters from our child.  Will mess with the output in terms of power/shunt/current
-			//attached to this particular node, but answers should be accurate
+			node *childNodeAdmit = OBJECTDATA(SubNodeParent,node);
+
+			//Import Admittance and YVs terms
+			Ys[0][0]+=childNodeAdmit->Ys[0][0];
+			Ys[0][1]+=childNodeAdmit->Ys[0][1];
+			Ys[0][2]+=childNodeAdmit->Ys[0][2];
+			Ys[1][0]+=childNodeAdmit->Ys[1][0];
+			Ys[1][1]+=childNodeAdmit->Ys[1][1];
+			Ys[1][2]+=childNodeAdmit->Ys[1][2];
+			Ys[2][0]+=childNodeAdmit->Ys[2][0];
+			Ys[2][1]+=childNodeAdmit->Ys[2][1];
+			Ys[2][2]+=childNodeAdmit->Ys[2][2];
+
+			YVs[0]+=childNodeAdmit->YVs[0];
+			YVs[1]+=childNodeAdmit->YVs[1];
+			YVs[2]+=childNodeAdmit->YVs[2];
+		}
+		
+		
+		if (SubNode==PARENT_INIT)
+		{
 			node *childLoad = OBJECTDATA(SubNodeParent,node);
+			
 
-			//Import power and "load" characteristics
-			power[0]+=childLoad->power[0]-last_child_power[0][0];
-			power[1]+=childLoad->power[1]-last_child_power[0][1];
-			power[2]+=childLoad->power[2]-last_child_power[0][2];
-
-			shunt[0]+=childLoad->shunt[0];
-			shunt[1]+=childLoad->shunt[1];
-			shunt[2]+=childLoad->shunt[2];
-
-			current[0]+=childLoad->current[0];
-			current[1]+=childLoad->current[1];
-			current[2]+=childLoad->current[2];
-
-			//Update previous power tracker
-			last_child_power[0][0] = childLoad->power[0];
-			last_child_power[0][1] = childLoad->power[1];
-			last_child_power[0][2] = childLoad->power[2];
-
-			last_child_power[1][0] = childLoad->shunt[0];
-			last_child_power[1][1] = childLoad->shunt[1];
-			last_child_power[1][2] = childLoad->shunt[2];
-
-			last_child_power[2][0] = childLoad->current[0];
-			last_child_power[2][1] = childLoad->current[1];
-			last_child_power[2][2] = childLoad->current[2];
-
-			if (prev_NTime==0)	//First run, additional housekeeping
+			if ((prev_NTime!=t0) && gl_object_isa(OBJECTHDR(this),"node")) //new time step of "parented" node - update values
 			{
-				//Import Admittance and YVs terms
-				Ys[0][0]+=childLoad->Ys[0][0];
-				Ys[0][1]+=childLoad->Ys[0][1];
-				Ys[0][2]+=childLoad->Ys[0][2];
-				Ys[1][0]+=childLoad->Ys[1][0];
-				Ys[1][1]+=childLoad->Ys[1][1];
-				Ys[1][2]+=childLoad->Ys[1][2];
-				Ys[2][0]+=childLoad->Ys[2][0];
-				Ys[2][1]+=childLoad->Ys[2][1];
-				Ys[2][2]+=childLoad->Ys[2][2];
+				//Grab all the appropriate load parameters from our child.  Will mess with the output in terms of power/shunt/current
+				//attached to this particular node, but answers should be accurate
 
-				YVs[0]+=childLoad->YVs[0];
-				YVs[1]+=childLoad->YVs[1];
-				YVs[2]+=childLoad->YVs[2];
+				//Import power and "load" characteristics
+				power[0]+=childLoad->power[0]-last_child_power[0][0];
+				power[1]+=childLoad->power[1]-last_child_power[0][1];
+				power[2]+=childLoad->power[2]-last_child_power[0][2];
+
+				shunt[0]+=childLoad->shunt[0]-last_child_power[1][0];
+				shunt[1]+=childLoad->shunt[1]-last_child_power[1][1];
+				shunt[2]+=childLoad->shunt[2]-last_child_power[1][2];
+
+				current[0]+=childLoad->current[0]-last_child_power[2][0];
+				current[1]+=childLoad->current[1]-last_child_power[2][1];
+				current[2]+=childLoad->current[2]-last_child_power[2][2];
+
+				//Update previous power tracker
+				last_child_power[0][0] = childLoad->power[0];
+				last_child_power[0][1] = childLoad->power[1];
+				last_child_power[0][2] = childLoad->power[2];
+
+				last_child_power[1][0] = childLoad->shunt[0];
+				last_child_power[1][1] = childLoad->shunt[1];
+				last_child_power[1][2] = childLoad->shunt[2];
+
+				last_child_power[2][0] = childLoad->current[0];
+				last_child_power[2][1] = childLoad->current[1];
+				last_child_power[2][2] = childLoad->current[2];
+				
+				//Update time tracking variable
+				prev_NTime=t0;
 			}
+			else if (gl_object_isa(OBJECTHDR(this),"load"))	//Load gets cleared at every presync, so reaggregate :(
+			{
+				//Import power and "load" characteristics
+				power[0]+=childLoad->power[0];
+				power[1]+=childLoad->power[1];
+				power[2]+=childLoad->power[2];
 
-			//Update time tracking variable
-			prev_NTime=t0;
+				shunt[0]+=childLoad->shunt[0];
+				shunt[1]+=childLoad->shunt[1];
+				shunt[2]+=childLoad->shunt[2];
+
+				current[0]+=childLoad->current[0];
+				current[1]+=childLoad->current[1];
+				current[2]+=childLoad->current[2];
+			}
 		}
 
 
@@ -717,7 +740,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 
 						if ((iter_counter % 1000)==1)
 						{
-							//printf("\nIteration %d",iter_counter);
+							printf("\nIteration %d",iter_counter);
 						}
 					break;
 					}

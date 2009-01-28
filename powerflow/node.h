@@ -67,6 +67,14 @@ typedef struct s_linkconnected {
 	struct s_linkconnected *next; /// next link connected to the node
 } LINKCONNECTED; /// connected link definition
 
+typedef enum {
+		NONE=0,				///< defines not a child node
+		CHILD=1,			///< defines is a child node
+		PARENT_NOINIT=2,	///< defines is a parent of a child node that has not been linked
+		PARENT_INIT=3		///< defines is a parent of a child that that has been linked
+		} SUBNODETYPE;
+
+
 class node : public powerflow_object
 {
 private:
@@ -91,12 +99,7 @@ public:
 			UNDERVOLT,		///< bus voltage is too low
 			OVERVOLT,		///< bus voltage is too high
 	} status;
-	enum {
-		NONE=0,				///< defines not a child node
-		CHILD=1,			///< defines is a child node
-		PARENT_NOINIT=2,	///< defines is a parent of a child node that has not been linked
-		PARENT_INIT=3		///< defines is a parent of a child that that has been linked
-	} SubNode;
+	SUBNODETYPE SubNode;
 	set busflags;			///< node flags (see NF_*)
 	double maximum_voltage_error;  // convergence voltage limit
 
