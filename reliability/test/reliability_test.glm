@@ -1,10 +1,4 @@
-// $Id: reliability_test.glm 1182 2008-12-22 22:08:36Z dchassin $
-//	Copyright (C) 2008 Battelle Memorial Institute
-//
-// Model file for integrated testing
-// One house with each enduse represented for verifying power aggregation
-// at the feeder/meter 
-// 
+
 
 module powerflow;
 module climate;
@@ -12,6 +6,8 @@ module residential;
 module reliability {
 	report_event_log TRUE;
 }
+
+
 
 clock {
 	timestamp '2000-01-01 0:00:00';
@@ -25,25 +21,25 @@ object load {
 	voltage_A +2401.777+0.000j;
 	voltage_B -1200.889-2080.000j;
 	voltage_C -1200.889+2080.000j;
-	power_A +1800000.000+871779.789j;
-	power_B +1800000.000+871779.789j;
-	power_C +1800000.000+871779.789j;
-	maximum_voltage_error 0.001;
+	constant_power_A +1800000.000+871779.789j;
+	constant_power_B +1800000.000+871779.789j;
+	constant_power_C +1800000.000+871779.789j;
+	nominal_voltage 2400;
 }
 
-object metrics:0 {
-	name Metrics;
-}
+//object metrics:0 {
+//	name Metrics;
+//}
 
-object eventgen {
-	name OpenLine;
-	parent Metrics;
-	frequency 25;
-	duration 4;
-	group "class=overhead_line";
-	targets "condition";
-	values "OPEN|A|B|C";
-}	
+//object eventgen {
+//	name OpenLine;
+//	parent Metrics;
+//	frequency 25;
+//	duration 4;
+//	group "class=overhead_line";
+//	targets "condition";
+//	values "OPEN|A|B|C";
+//}		
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 4 Node Feeder: Balanced step-down delta-delta
@@ -63,42 +59,42 @@ object overhead_line_conductor {
 
 object line_spacing {
 	name LS200;
-	distance_AtoB 2.5;
-	distance_BtoC 4.5;
-	distance_AtoC 7.0;
-	distance_AtoN 5.656854;
-	distance_BtoN 4.272002;
-	distance_CtoN 5.0;
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
 }
 
 object line_configuration {
 	name LC300;
-	phaseA_conductor OH100;
-	phaseB_conductor OH100;
-	phaseC_conductor OH100;
-	phaseN_conductor OH101;
-	line_spacing LS200;
+	conductor_A OH100;
+	conductor_B OH100;
+	conductor_C OH100;
+	conductor_N OH101;
+	spacing LS200;
 }
 
 object transformer_configuration {
 	name XFC400;
 	connect_type 2;
-	kVA_rating 6000;
-	V_primary 12470;
-	V_secondary 4160;
-	R_pu 0.01;
-	X_pu 0.06;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
 }
 
 object transformer_configuration {
 	name PoleTop;
 	connect_type 5;
-	kVA_rating 400;
-	phaseA_kVA_rating 400;
-	V_primary 2402;
-	V_secondary 120;
-	R_pu 0.01;
-	X_pu 0.06;
+	power_rating 400;
+	powerA_rating 400;
+	primary_voltage 2402;
+	secondary_voltage 120;
+	resistance 0.01;
+	reactance 0.06;
 }
 
 object node {
@@ -107,6 +103,7 @@ object node {
 	voltage_A +7199.558+0.000j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
 }
 
 object overhead_line {
@@ -124,6 +121,7 @@ object node {
 	voltage_A +7199.558+0.000j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
 }
 
 object transformer {
@@ -140,6 +138,7 @@ object node {
 	voltage_A +2401.777+0.000j;
 	voltage_B -1200.889-2080.000j;
 	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
 }
 
 object overhead_line {
@@ -157,11 +156,12 @@ object node {
 	voltage_A +2401.777+0.000j;
 	voltage_B -1200.889-2080.000j;
 	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
 }
 
 object transformer {
 	name Link45;
-	phases A|B|C;
+	phases AS;
 	from Node4;
 	to Meter;
 	configuration PoleTop;
@@ -171,27 +171,18 @@ module tape;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-object meter:..10 {
-	type SINGLEPHASE;
-	parent Link45;
-	line1_voltage +120+0.000j;
-	line2_voltage +120.0+0.0j;
-	line3_voltage +0.0+00.000j;
-	line12_voltage 240 V;
-	line23_voltage -120 V;
-	line31_voltage -120 V;
-}
 
-object meter: {
+object triplex_meter: {
 	name Meter;
-	type SINGLEPHASE;
-	parent Link45;
-	line1_voltage +120+0.000j;
-	line2_voltage +120.0+0.0j;
-	line3_voltage +0.0+00.000j;
-	line12_voltage 240 V;
-	line23_voltage -120 V;
-	line31_voltage -120 V;
+// 	type SINGLEPHASE;
+//	parent Link45;
+//	line1_voltage +120+0.000j;
+//	line2_voltage +120.0+0.0j;
+//	line3_voltage +0.0+00.000j;
+//	line12_voltage 240 V;
+//	line23_voltage -120 V;
+//	line31_voltage -120 V;
+
 }
 
 //object node {
