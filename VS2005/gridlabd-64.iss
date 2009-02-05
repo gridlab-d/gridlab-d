@@ -100,7 +100,7 @@ Source: tape.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\
 Source: tape_file.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: tape_memory.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
 Source: ..\..\..\models\residential_loads.glm; DestDir: {app}\samples
 Source: ..\..\..\models\powerflow_IEEE_37node.glm; DestDir: {app}\samples
