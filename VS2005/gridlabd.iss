@@ -88,7 +88,7 @@ Source: unitfile.txt; DestDir: {app}\etc; Components: core
 Source: tzinfo.txt; DestDir: {app}\etc; Components: core
 Source: climate.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\climate
 Source: commercial.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\commercial
-Source: climateview.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: climateview.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\network
 Source: plc.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\plc
 Source: powerflow.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\powerflow
