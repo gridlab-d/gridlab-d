@@ -100,7 +100,7 @@ Source: tape_memory.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: tape_odbc.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: glmjava.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: reliability.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: ..\..\..\market\Win32\Release\market.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
