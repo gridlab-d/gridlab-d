@@ -77,6 +77,30 @@ STATUS load_module_list(FILE *fd,int* test_mod_num)
 	return SUCCESS;
 }
 
+void print_class(CLASS *oclass){
+	PROPERTY *prop;
+	FUNCTION *func;
+	printf("class %s {\n",oclass->name,oclass->type);
+	if (oclass->parent){
+		printf("\tparent %s;\n", oclass->parent->name);
+		print_class(oclass->parent);
+	}
+	for (func=oclass->fmap; func!=NULL && func->otype==oclass->type; func=func->next)
+		printf( "\tfunction %s();\n", func->name);
+	for (prop=oclass->pmap; prop!=NULL && prop->otype==oclass->type; prop=prop->next)
+	{
+		char *propname = class_get_property_typename(prop->ptype);
+		if (propname!=NULL){
+			if(prop->unit != NULL){
+				printf("\t%s %s [%s];\n", propname, prop->name, prop->unit->name);
+			} else {
+				printf("\t%s %s;\n", propname, prop->name);
+			}
+		}
+	}
+	printf("}\n");
+}
+
 /** Load and process the command-line arguments
 	@return a STATUS value
 
@@ -191,6 +215,43 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			}
 			if(load_module_list(fd,&test_mod_num) == FAILED)
 				return FAILED;
+		}
+		else if (strcmp(*argv,"--modhelp")==0)
+		{
+			if(argc-1 > 0){
+				MODULE *mod = NULL;
+				CLASS *oclass = NULL;
+				argv++;
+				argc--;
+				if(strchr(argv[0], ':') == 0){ // no class
+					mod = module_load(argv[0],0,NULL);
+				} else {
+					char *cname;
+					cname = strchr(argv[0], ':')+1;
+					mod = module_load(strtok(argv[0],":"),0,NULL);
+					oclass = class_get_class_from_classname(cname);
+					if(oclass == NULL){
+						output_fatal("Unable to find class \'%s\' in module \'%s\'", cname, argv[0]);
+						return FAILED;
+					}
+				}
+				if(mod == NULL){
+					output_fatal("module %s is not found",*argv);
+					return FAILED;
+				}
+				if(oclass != NULL)
+				{
+					print_class(oclass);
+				}
+				else
+				{
+					CLASS	*oclass;
+					for (oclass=class_get_first_class(); oclass!=NULL; oclass=oclass->next)
+					{
+						print_class(oclass);
+					}
+				}
+			}
 		}
 		else if (strcmp(*argv,"--modtest")==0)
 		{
