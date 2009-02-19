@@ -1,4 +1,4 @@
-/** $Id: transformer.cpp 1211 2009-01-17 00:45:28Z d3x593 $
+/** $Id: transformer.cpp 1211 2009-01-17 00:45:29Z d3x593 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file transformer.cpp
 	@addtogroup powerflow_transformer Transformer
@@ -235,164 +235,66 @@ int transformer::init(OBJECT *parent)
 			{
 				Regulator_Link = 2;
 
-
-
 				complex Izt = complex(1.0,0) / zt;
 
-				complex btemp_mat[3][3];
-				double scaleval = 3.0 / ( voltage_ratio * voltage_ratio);
+				complex alphaval = voltage_ratio * sqrt(3.0);
 
-				b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
-				btemp_mat[0][0] = btemp_mat[0][1] = btemp_mat[0][2] = 0.0;
-				btemp_mat[1][0] = btemp_mat[1][1] = btemp_mat[1][2] = 0.0;
-				btemp_mat[2][0] = btemp_mat[2][1] = btemp_mat[2][2] = 0.0;
+				nt *=sqrt(3.0);	//Adjustment for other matrices
 
-				//c_mat[0][0] = c_mat[1][1] = c_mat[2][2] = complex(2.0) * complex(scaleval) * Izt / 3.0;
-				//c_mat[0][1] = c_mat[0][2] = c_mat[1][0] = c_mat[1][2] = c_mat[2][0] = c_mat[2][1] = complex(-scaleval) * Izt / 3.0;
-
-				//c_mat[0][0] = c_mat[1][1] = c_mat[2][2] = Izt * scaleval;
-
-				//btemp_mat[0][0] = btemp_mat[1][1] = btemp_mat[2][2] = 0.0;
-				//btemp_mat[0][1] = btemp_mat[1][2] = btemp_mat[2][0] = zt * voltage_ratio * voltage_ratio * -2.0 / 3.0 ;
-				//btemp_mat[0][2] = btemp_mat[1][0] = btemp_mat[2][1] = zt * voltage_ratio * voltage_ratio * -1.0 / 3.0;
-				inverse(btemp_mat,c_mat);
-
-
-				btemp_mat[0][0] = btemp_mat[1][1] = btemp_mat[2][2] = 0.0;
-				btemp_mat[0][1] = btemp_mat[1][2] = btemp_mat[2][0] = Izt * 2.0 / voltage_ratio / voltage_ratio / 3.0;
-				btemp_mat[0][2] = btemp_mat[1][0] = btemp_mat[2][1] = Izt * -1.0 / voltage_ratio / voltage_ratio / 3.0;;
-				equalm(btemp_mat,c_mat);
-
-				//a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = -Izt / sqrt(3.0) / (alpha_val*beta_val);
-				//a_mat[0][2] = a_mat[1][0] = a_mat[2][1] = Izt / sqrt(3.0) / (alpha_val * beta_val);
-
-				//b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = -Izt/sqrt(3.0);
-				//b_mat[0][2] = b_mat[1][0] = b_mat[2][1] = Izt/sqrt(3.0);
-
-				//multiply(scaleval,b_mat,c_mat);
-
-				//voltage_ratio /=sqrt(3.0);
-
-
-				if (nt>1.0)
+				if (voltage_ratio>1.0) //Step down
 				{
-					//Apply delta phase shift
-					//phaseadjust = complex(sqrt(3.0),-1.0);
-					//phaseadjust /=2.0;
-					phaseadjust = complex(1.0, -1.0 * sqrt(3.0));
-					phaseadjust /=2.0;
+					//High->low voltage change
+					c_mat[0][0] = c_mat[1][1] = c_mat[2][2] = complex(1.0) / alphaval;
+					c_mat[0][2] = c_mat[1][0] = c_mat[2][1] = complex(-1.0) / alphaval;
+					c_mat[0][1] = c_mat[1][2] = c_mat[2][0] = 0.0;
+
+					//Y-based impedance model
+					b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
+					b_mat[0][1] = b_mat[0][2] = b_mat[1][0] = 0.0;
+					b_mat[1][2] = b_mat[2][0] = b_mat[2][1] = 0.0;
+
+					//I-low to I-high change
+					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = complex(1.0) / alphaval;
+					B_mat[0][1] = B_mat[1][2] = B_mat[2][0] = complex(-1.0) / alphaval;
+					B_mat[0][2] = B_mat[1][0] = B_mat[2][1] = 0.0;
+
+					//Other matrices (stolen from above)
+					a_mat[0][1] = a_mat[1][2] = a_mat[2][0] = -nt * 2.0 / 3.0;
+					a_mat[0][2] = a_mat[1][0] = a_mat[2][1] = -nt / 3.0;
+
+					d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
+					d_mat[0][1] = d_mat[1][2] = d_mat[2][0] = complex(-1.0) / nt;
+
+					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
+					A_mat[0][2] = A_mat[1][0] = A_mat[2][1] = complex(-1.0) / nt;
 				}
-				else
+				else //assume step up
 				{
-					//Apply delta phase shift
-					phaseadjust = complex(sqrt(3.0),+1.0);
-					phaseadjust /=2.0;
+					//Low->high voltage change
+					c_mat[0][0] = c_mat[1][1] = c_mat[2][2] = complex(1.0) / alphaval;
+					c_mat[0][1] = c_mat[1][2] = c_mat[2][0] = complex(-1.0) / alphaval;
+					c_mat[0][2] = c_mat[1][0] = c_mat[2][1] = 0.0;
+
+					//Impedance matrix
+					b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
+					b_mat[0][1] = b_mat[0][2] = b_mat[1][0] = 0.0;
+					b_mat[1][2] = b_mat[2][0] = b_mat[2][1] = 0.0;
+
+					//I-high to I-low change
+					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = complex(1.0) / alphaval;
+					B_mat[0][2] = B_mat[1][0] = B_mat[2][1] = complex(-1.0) / alphaval;
+					B_mat[0][1] = B_mat[1][2] = B_mat[2][0] = 0.0;
+
+					//Other matrices (stolen from above)
+					a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = nt * 2.0 / 3.0;
+					a_mat[0][1] = a_mat[1][2] = a_mat[2][0] = nt / 3.0;
+
+					d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
+					d_mat[0][2] = d_mat[1][0] = d_mat[2][1] = complex(-1.0) / nt;
+
+					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
+					A_mat[0][1] = A_mat[1][2] = A_mat[2][0] = complex(-1.0) / nt;
 				}
-
-				//Commented out to use this matrix for transferrals
-				//a_mat[0][0] = nt;
-				//a_mat[1][1] = nt;
-				//a_mat[2][2] = nt;
-
-				B_mat[0][0] = zt;
-				B_mat[1][1] = zt;
-				B_mat[2][2] = zt;
-
-				d_mat[0][0] = A_mat[0][0] = 1.0 / nt;
-				d_mat[1][1] = A_mat[1][1] = 1.0 / nt;
-				d_mat[2][2] = A_mat[2][2] = 1.0 / nt;
-
-				//Below is non-working code
-				//if (nt>1.0)
-				//{
-				//	//Apply delta phase shift
-				//	phaseadjust = complex(sqrt(3.0),-1.0);
-				//	phaseadjust /=2.0;
-
-
-				//	
-
-				//	nt *= sqrt(3.0);
-
-				//	a_mat[0][1] = a_mat[1][2] = a_mat[2][0] = -nt * 2.0 / 3.0;
-				//	a_mat[0][2] = a_mat[1][0] = a_mat[2][1] = -nt / 3.0;
-				//
-				//	d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
-				//	d_mat[0][1] = d_mat[1][2] = d_mat[2][0] = complex(-1.0) / nt;
-
-				//	A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
-				//	A_mat[0][2] = A_mat[1][0] = A_mat[2][1] = complex(-1.0) / nt;
-
-				//	B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = zt;
-
-
-				//}
-				//else
-				//{
-				//	//Apply delta phase shift
-				//	phaseadjust = complex(sqrt(3.0),+1.0);
-				//	phaseadjust /=2.0;
-
-				//	nt *= sqrt(3.0);
-				//	
-				//	a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = nt * 2.0 / 3.0;
-				//	a_mat[0][1] = a_mat[1][2] = a_mat[2][0] = nt / 3.0;
-
-				//	d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
-				//	d_mat[0][2] = d_mat[1][0] = d_mat[2][1] = complex(-1.0) / nt;
-
-				//	A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
-				//	A_mat[0][1] = A_mat[1][2] = A_mat[2][0] = complex(-1.0) / nt;
-
-				//	B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = zt;
-				//}
-
-				//Below is different attempt
-				//complex Izt = complex(1,0) / zt;
-				//complex Hzt = Izt / voltage_ratio / voltage_ratio;
-				//complex temp = complex(3.0, sqrt(3.0));
-				//temp /=2.0;
-
-				//complex y[6][6];
-				//complex t[6][3];
-
-				//y[0][0] = y[1][1] = y[2][2] = y[3][3] = y[4][4] = y[5][5] = complex(2.0) * Izt; /// complex(3.0) * Izt;
-				//y[3][0] = y[4][1] = y[5][2] = y[0][3] = y[1][4] = y[2][5] = 0.0; //complex(-2.0) / complex(3.0) * Izt;
-				//
-				//y[0][1] = y[0][2] = y[1][0] = y[1][2] = y[2][0] = y[2][1] = -Izt; /// 3.0;
-				//y[3][4] = y[3][5] = y[4][3] = y[4][5] = y[5][3] = y[5][4] = -Izt; /// 3.0;
-				//y[3][1] = y[3][2] = y[4][0] = y[4][2] = y[5][0] = y[5][1] = 0.0; //Izt / 3.0;
-				//y[0][4] = y[0][5] = y[1][3] = y[1][5] = y[2][3] = y[2][4] = 0.0; //Izt / 3.0;
-
-				////t[0][0] = t[2][1] = t[4][2] = complex(1.0);
-				////t[0][1] = t[2][2] = t[4][0] = complex(-1.0);
-				////t[1][0] = t[3][1] = t[5][2] = complex(1.0) / nt;
-				////t[1][1] = t[3][2] = t[5][0] = complex(-1.0) / nt;
-				////t[0][2] = t[1][2] = t[2][0] = t[3][0] = t[4][1] = t[5][1] = 0;
-				//t[0][1] = t[0][2] = t[1][1] = t[1][2] = t[2][0] = t[2][2] = t[3][0] = t[3][2] = t[4][0] = t[4][1] = t[5][0] = t[5][1] = 0;
-				//t[0][0] = t[2][1] = t[4][2] = nt;
-				//t[1][0] = t[3][1] = t[5][2] = 1;
-
-				//b_mat[0][0] = (t[0][0]*y[0][0]+t[1][0]*y[1][0]+t[2][0]*y[2][0]+t[3][0]*y[3][0]+t[4][0]*y[4][0]+t[5][0]*y[5][0])*t[0][0]+(t[0][0]*y[0][1]+t[1][0]*y[1][1]+t[2][0]*y[2][1]+t[3][0]*y[3][1]+t[4][0]*y[4][1]+t[5][0]*y[5][1])*t[1][0]+(t[0][0]*y[0][2]+t[1][0]*y[1][2]+t[2][0]*y[2][2]+t[3][0]*y[3][2]+t[4][0]*y[4][2]+t[5][0]*y[5][2])*t[2][0]+(t[0][0]*y[0][3]+t[1][0]*y[1][3]+t[2][0]*y[2][3]+t[3][0]*y[3][3]+t[4][0]*y[4][3]+t[5][0]*y[5][3])*t[3][0]+(t[0][0]*y[0][4]+t[1][0]*y[1][4]+t[2][0]*y[2][4]+t[3][0]*y[3][4]+t[4][0]*y[4][4]+t[5][0]*y[5][4])*t[4][0]+(t[0][0]*y[0][5]+t[1][0]*y[1][5]+t[2][0]*y[2][5]+t[3][0]*y[3][5]+t[4][0]*y[4][5]+t[5][0]*y[5][5])*t[5][0];
-				//b_mat[0][1] = (t[0][0]*y[0][0]+t[1][0]*y[1][0]+t[2][0]*y[2][0]+t[3][0]*y[3][0]+t[4][0]*y[4][0]+t[5][0]*y[5][0])*t[0][1]+(t[0][0]*y[0][1]+t[1][0]*y[1][1]+t[2][0]*y[2][1]+t[3][0]*y[3][1]+t[4][0]*y[4][1]+t[5][0]*y[5][1])*t[1][1]+(t[0][0]*y[0][2]+t[1][0]*y[1][2]+t[2][0]*y[2][2]+t[3][0]*y[3][2]+t[4][0]*y[4][2]+t[5][0]*y[5][2])*t[2][1]+(t[0][0]*y[0][3]+t[1][0]*y[1][3]+t[2][0]*y[2][3]+t[3][0]*y[3][3]+t[4][0]*y[4][3]+t[5][0]*y[5][3])*t[3][1]+(t[0][0]*y[0][4]+t[1][0]*y[1][4]+t[2][0]*y[2][4]+t[3][0]*y[3][4]+t[4][0]*y[4][4]+t[5][0]*y[5][4])*t[4][1]+(t[0][0]*y[0][5]+t[1][0]*y[1][5]+t[2][0]*y[2][5]+t[3][0]*y[3][5]+t[4][0]*y[4][5]+t[5][0]*y[5][5])*t[5][1];
-				//b_mat[0][2] = (t[0][0]*y[0][0]+t[1][0]*y[1][0]+t[2][0]*y[2][0]+t[3][0]*y[3][0]+t[4][0]*y[4][0]+t[5][0]*y[5][0])*t[0][2]+(t[0][0]*y[0][1]+t[1][0]*y[1][1]+t[2][0]*y[2][1]+t[3][0]*y[3][1]+t[4][0]*y[4][1]+t[5][0]*y[5][1])*t[1][2]+(t[0][0]*y[0][2]+t[1][0]*y[1][2]+t[2][0]*y[2][2]+t[3][0]*y[3][2]+t[4][0]*y[4][2]+t[5][0]*y[5][2])*t[2][2]+(t[0][0]*y[0][3]+t[1][0]*y[1][3]+t[2][0]*y[2][3]+t[3][0]*y[3][3]+t[4][0]*y[4][3]+t[5][0]*y[5][3])*t[3][2]+(t[0][0]*y[0][4]+t[1][0]*y[1][4]+t[2][0]*y[2][4]+t[3][0]*y[3][4]+t[4][0]*y[4][4]+t[5][0]*y[5][4])*t[4][2]+(t[0][0]*y[0][5]+t[1][0]*y[1][5]+t[2][0]*y[2][5]+t[3][0]*y[3][5]+t[4][0]*y[4][5]+t[5][0]*y[5][5])*t[5][2];
-				//b_mat[1][0] = (t[0][1]*y[0][0]+t[1][1]*y[1][0]+t[2][1]*y[2][0]+t[3][1]*y[3][0]+t[4][1]*y[4][0]+t[5][1]*y[5][0])*t[0][0]+(t[0][1]*y[0][1]+t[1][1]*y[1][1]+t[2][1]*y[2][1]+t[3][1]*y[3][1]+t[4][1]*y[4][1]+t[5][1]*y[5][1])*t[1][0]+(t[0][1]*y[0][2]+t[1][1]*y[1][2]+t[2][1]*y[2][2]+t[3][1]*y[3][2]+t[4][1]*y[4][2]+t[5][1]*y[5][2])*t[2][0]+(t[0][1]*y[0][3]+t[1][1]*y[1][3]+t[2][1]*y[2][3]+t[3][1]*y[3][3]+t[4][1]*y[4][3]+t[5][1]*y[5][3])*t[3][0]+(t[0][1]*y[0][4]+t[1][1]*y[1][4]+t[2][1]*y[2][4]+t[3][1]*y[3][4]+t[4][1]*y[4][4]+t[5][1]*y[5][4])*t[4][0]+(t[0][1]*y[0][5]+t[1][1]*y[1][5]+t[2][1]*y[2][5]+t[3][1]*y[3][5]+t[4][1]*y[4][5]+t[5][1]*y[5][5])*t[5][0];
-				//b_mat[1][1] = (t[0][1]*y[0][0]+t[1][1]*y[1][0]+t[2][1]*y[2][0]+t[3][1]*y[3][0]+t[4][1]*y[4][0]+t[5][1]*y[5][0])*t[0][1]+(t[0][1]*y[0][1]+t[1][1]*y[1][1]+t[2][1]*y[2][1]+t[3][1]*y[3][1]+t[4][1]*y[4][1]+t[5][1]*y[5][1])*t[1][1]+(t[0][1]*y[0][2]+t[1][1]*y[1][2]+t[2][1]*y[2][2]+t[3][1]*y[3][2]+t[4][1]*y[4][2]+t[5][1]*y[5][2])*t[2][1]+(t[0][1]*y[0][3]+t[1][1]*y[1][3]+t[2][1]*y[2][3]+t[3][1]*y[3][3]+t[4][1]*y[4][3]+t[5][1]*y[5][3])*t[3][1]+(t[0][1]*y[0][4]+t[1][1]*y[1][4]+t[2][1]*y[2][4]+t[3][1]*y[3][4]+t[4][1]*y[4][4]+t[5][1]*y[5][4])*t[4][1]+(t[0][1]*y[0][5]+t[1][1]*y[1][5]+t[2][1]*y[2][5]+t[3][1]*y[3][5]+t[4][1]*y[4][5]+t[5][1]*y[5][5])*t[5][1];
-				//b_mat[1][2] = (t[0][1]*y[0][0]+t[1][1]*y[1][0]+t[2][1]*y[2][0]+t[3][1]*y[3][0]+t[4][1]*y[4][0]+t[5][1]*y[5][0])*t[0][2]+(t[0][1]*y[0][1]+t[1][1]*y[1][1]+t[2][1]*y[2][1]+t[3][1]*y[3][1]+t[4][1]*y[4][1]+t[5][1]*y[5][1])*t[1][2]+(t[0][1]*y[0][2]+t[1][1]*y[1][2]+t[2][1]*y[2][2]+t[3][1]*y[3][2]+t[4][1]*y[4][2]+t[5][1]*y[5][2])*t[2][2]+(t[0][1]*y[0][3]+t[1][1]*y[1][3]+t[2][1]*y[2][3]+t[3][1]*y[3][3]+t[4][1]*y[4][3]+t[5][1]*y[5][3])*t[3][2]+(t[0][1]*y[0][4]+t[1][1]*y[1][4]+t[2][1]*y[2][4]+t[3][1]*y[3][4]+t[4][1]*y[4][4]+t[5][1]*y[5][4])*t[4][2]+(t[0][1]*y[0][5]+t[1][1]*y[1][5]+t[2][1]*y[2][5]+t[3][1]*y[3][5]+t[4][1]*y[4][5]+t[5][1]*y[5][5])*t[5][2];
-				//b_mat[2][0] = (t[0][2]*y[0][0]+t[1][2]*y[1][0]+t[2][2]*y[2][0]+t[3][2]*y[3][0]+t[4][2]*y[4][0]+t[5][2]*y[5][0])*t[0][0]+(t[0][2]*y[0][1]+t[1][2]*y[1][1]+t[2][2]*y[2][1]+t[3][2]*y[3][1]+t[4][2]*y[4][1]+t[5][2]*y[5][1])*t[1][0]+(t[0][2]*y[0][2]+t[1][2]*y[1][2]+t[2][2]*y[2][2]+t[3][2]*y[3][2]+t[4][2]*y[4][2]+t[5][2]*y[5][2])*t[2][0]+(t[0][2]*y[0][3]+t[1][2]*y[1][3]+t[2][2]*y[2][3]+t[3][2]*y[3][3]+t[4][2]*y[4][3]+t[5][2]*y[5][3])*t[3][0]+(t[0][2]*y[0][4]+t[1][2]*y[1][4]+t[2][2]*y[2][4]+t[3][2]*y[3][4]+t[4][2]*y[4][4]+t[5][2]*y[5][4])*t[4][0]+(t[0][2]*y[0][5]+t[1][2]*y[1][5]+t[2][2]*y[2][5]+t[3][2]*y[3][5]+t[4][2]*y[4][5]+t[5][2]*y[5][5])*t[5][0];
-				//b_mat[2][1] = (t[0][2]*y[0][0]+t[1][2]*y[1][0]+t[2][2]*y[2][0]+t[3][2]*y[3][0]+t[4][2]*y[4][0]+t[5][2]*y[5][0])*t[0][1]+(t[0][2]*y[0][1]+t[1][2]*y[1][1]+t[2][2]*y[2][1]+t[3][2]*y[3][1]+t[4][2]*y[4][1]+t[5][2]*y[5][1])*t[1][1]+(t[0][2]*y[0][2]+t[1][2]*y[1][2]+t[2][2]*y[2][2]+t[3][2]*y[3][2]+t[4][2]*y[4][2]+t[5][2]*y[5][2])*t[2][1]+(t[0][2]*y[0][3]+t[1][2]*y[1][3]+t[2][2]*y[2][3]+t[3][2]*y[3][3]+t[4][2]*y[4][3]+t[5][2]*y[5][3])*t[3][1]+(t[0][2]*y[0][4]+t[1][2]*y[1][4]+t[2][2]*y[2][4]+t[3][2]*y[3][4]+t[4][2]*y[4][4]+t[5][2]*y[5][4])*t[4][1]+(t[0][2]*y[0][5]+t[1][2]*y[1][5]+t[2][2]*y[2][5]+t[3][2]*y[3][5]+t[4][2]*y[4][5]+t[5][2]*y[5][5])*t[5][1];
-				//b_mat[2][2] = (t[0][2]*y[0][0]+t[1][2]*y[1][0]+t[2][2]*y[2][0]+t[3][2]*y[3][0]+t[4][2]*y[4][0]+t[5][2]*y[5][0])*t[0][2]+(t[0][2]*y[0][1]+t[1][2]*y[1][1]+t[2][2]*y[2][1]+t[3][2]*y[3][1]+t[4][2]*y[4][1]+t[5][2]*y[5][1])*t[1][2]+(t[0][2]*y[0][2]+t[1][2]*y[1][2]+t[2][2]*y[2][2]+t[3][2]*y[3][2]+t[4][2]*y[4][2]+t[5][2]*y[5][2])*t[2][2]+(t[0][2]*y[0][3]+t[1][2]*y[1][3]+t[2][2]*y[2][3]+t[3][2]*y[3][3]+t[4][2]*y[4][3]+t[5][2]*y[5][3])*t[3][2]+(t[0][2]*y[0][4]+t[1][2]*y[1][4]+t[2][2]*y[2][4]+t[3][2]*y[3][4]+t[4][2]*y[4][4]+t[5][2]*y[5][4])*t[4][2]+(t[0][2]*y[0][5]+t[1][2]*y[1][5]+t[2][2]*y[2][5]+t[3][2]*y[3][5]+t[4][2]*y[4][5]+t[5][2]*y[5][5])*t[5][2];
-
-				//b_mat[0][0] *=temp;
-				//b_mat[0][1] *=temp;
-				//b_mat[0][2] *=temp;
-				//b_mat[1][0] *=temp;
-				//b_mat[1][1] *=temp;
-				//b_mat[1][2] *=temp;
-				//b_mat[2][0] *=temp;
-				//b_mat[2][1] *=temp;
-				//b_mat[2][2] *=temp;
-
 			}
 			else
 			{
@@ -401,92 +303,192 @@ int transformer::init(OBJECT *parent)
 		
 			break;
 		case transformer_configuration::SINGLE_PHASE_CENTER_TAPPED:
-			if (has_phase(PHASE_A|PHASE_B)) // delta AB
+			if (solver_method==SM_FBS)
 			{
-				throw "delta split tap is not supported yet";
+				if (has_phase(PHASE_A|PHASE_B)) // delta AB
+				{
+					throw "delta split tap is not supported yet";
+				}
+				else if (has_phase(PHASE_B|PHASE_C)) // delta AB
+				{
+					throw "delta split tap is not supported yet";
+				}
+				else if (has_phase(PHASE_A|PHASE_C)) // delta AB
+				{
+					throw "delta split tap is not supported yet";
+				}
+				else if (has_phase(PHASE_A)) // wye-A
+				{
+					V_basehi = config->V_primary;
+					sa_base = config->phaseA_kVA_rating;
+					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
+					za_baselo = (V_base * V_base)/(sa_base*1000);
+					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
+					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					zt_b = complex(0,0);
+					zt_c = complex(0,0);
+					a_mat[0][0] = a_mat[1][0] = nt;
+				
+					d_mat[0][0] = complex(1,0)/nt;
+					d_mat[0][1] = complex(-1,0)/nt;
+
+					A_mat[0][0] = complex(1,0)/nt;
+					A_mat[1][0] = complex(1,0)/nt;
+				}
+
+				else if (has_phase(PHASE_B)) // wye-B
+				{
+					V_basehi = config->V_primary;
+					sa_base = config->phaseB_kVA_rating;
+					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
+					za_baselo = (V_base * V_base)/(sa_base*1000);
+					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
+					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					zt_b = complex(0,0);
+					zt_c = complex(0,0);
+					a_mat[0][1] = a_mat[1][1] = nt;
+				
+					d_mat[1][0] = complex(1,0)/nt;
+					d_mat[1][1] = complex(-1,0)/nt;
+
+					A_mat[0][1] = complex(1,0)/nt;
+					A_mat[1][1] = complex(1,0)/nt;
+				
+				}
+				else if (has_phase(PHASE_C)) // wye-C
+				{
+					V_basehi = config->V_primary;
+					sa_base = config->phaseC_kVA_rating;
+					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
+					za_baselo = (V_base * V_base)/(sa_base*1000);
+					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
+					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					zt_b = complex(0,0);
+					zt_c = complex(0,0);
+					a_mat[0][2] = a_mat[1][2] = nt;
+				
+					d_mat[2][0] = complex(1,0)/nt;
+					d_mat[2][1] = complex(-1,0)/nt;
+
+					A_mat[0][2] = complex(1,0)/nt;
+					A_mat[1][2] = complex(1,0)/nt;
+				}
+
+				b_mat[0][0] = (z1*nt)+(z0/nt);
+				b_mat[0][1] = complex(-1,0) * (z0/nt);
+				b_mat[0][2] = complex(0,0);
+				b_mat[1][0] = (z0/nt);
+				b_mat[1][1] = complex(-1,0) * ((z2*nt) + z0/nt);
+				b_mat[1][2] = complex(0,0);
+				b_mat[2][0] = complex(0,0);
+				b_mat[2][1] = complex(0,0);
+				b_mat[2][2] = complex(0,0);
+
+				B_mat[0][0] = (z1) + (z0/(nt*nt));
+				B_mat[0][1] = complex(-1,0) * (z0/(nt*nt));
+				B_mat[1][0] = (z0/(nt*nt));
+				B_mat[1][1] = complex(-1,0) * ((z2) + (z0/(nt*nt)));
 			}
-			else if (has_phase(PHASE_B|PHASE_C)) // delta AB
+			else if (solver_method==SM_GS)
 			{
-				throw "delta split tap is not supported yet";
+				if (has_phase(PHASE_A|PHASE_B)) // delta AB
+				{
+					throw "delta split tap is not supported yet";
+				}
+				else if (has_phase(PHASE_B|PHASE_C)) // delta AB
+				{
+					throw "delta split tap is not supported yet";
+				}
+				else if (has_phase(PHASE_A|PHASE_C)) // delta AB
+				{
+					throw "delta split tap is not supported yet";
+				}
+				else if (has_phase(PHASE_A)) // wye-A
+				{
+					V_basehi = config->V_primary;
+					sa_base = config->phaseA_kVA_rating;
+					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
+					za_baselo = (V_base * V_base)/(sa_base*1000);
+					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
+					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					zt_b = complex(0,0);
+					zt_c = complex(0,0);
+					a_mat[0][0] = a_mat[1][0] = nt;
+				
+					d_mat[0][0] = complex(1,0)/nt;
+					d_mat[0][1] = complex(-1,0)/nt;
+
+					A_mat[0][0] = complex(1,0)/nt;
+					A_mat[1][0] = complex(1,0)/nt;
+				}
+
+				else if (has_phase(PHASE_B)) // wye-B
+				{
+					V_basehi = config->V_primary;
+					sa_base = config->phaseB_kVA_rating;
+					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
+					za_baselo = (V_base * V_base)/(sa_base*1000);
+					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
+					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					zt_b = complex(0,0);
+					zt_c = complex(0,0);
+					a_mat[0][1] = a_mat[1][1] = nt;
+				
+					d_mat[1][0] = complex(1,0)/nt;
+					d_mat[1][1] = complex(-1,0)/nt;
+
+					A_mat[0][1] = complex(1,0)/nt;
+					A_mat[1][1] = complex(1,0)/nt;
+				
+				}
+				else if (has_phase(PHASE_C)) // wye-C
+				{
+					V_basehi = config->V_primary;
+					sa_base = config->phaseC_kVA_rating;
+					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
+					za_baselo = (V_base * V_base)/(sa_base*1000);
+					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
+					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					zt_b = complex(0,0);
+					zt_c = complex(0,0);
+					a_mat[0][2] = a_mat[1][2] = nt;
+				
+					d_mat[2][0] = complex(1,0)/nt;
+					d_mat[2][1] = complex(-1,0)/nt;
+
+					A_mat[0][2] = complex(1,0)/nt;
+					A_mat[1][2] = complex(1,0)/nt;
+				}
+
+				Regulator_Link = 3;
+
+				//Phase A stuff - move when done
+				complex Izt0 = complex(1.0,0) / z0;
+				complex Izt1 = complex(1.0,0) / z1;
+
+				b_mat[0][0] = Izt0 + Izt1;
+				b_mat[1][0] = complex(-1.0,0) * (Izt0 + Izt1);
+
+				c_mat[0][0] = Izt1/Izt0;
+				c_mat[0][1] = Izt1/Izt0;
+
+
+				B_mat[0][0] = (z1) + (z0/(nt*nt)) / nt;
+				B_mat[0][1] = complex(-1,0) * (z0/(nt*nt)) / nt;
+				B_mat[1][0] = (z0/(nt*nt)) / nt;
+				B_mat[1][1] = complex(-1,0) * ((z2) + (z0/(nt*nt))) /nt;
+
 			}
-			else if (has_phase(PHASE_A|PHASE_C)) // delta AB
+			else
 			{
-				throw "delta split tap is not supported yet";
+				throw "Invalid solver type";
 			}
-			else if (has_phase(PHASE_A)) // wye-A
-			{
-				V_basehi = config->V_primary;
-				sa_base = config->phaseA_kVA_rating;
-				za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
-				za_baselo = (V_base * V_base)/(sa_base*1000);
-				z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-				z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-				z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-				zt_b = complex(0,0);
-				zt_c = complex(0,0);
-				a_mat[0][0] = a_mat[1][0] = nt;
-			
-				d_mat[0][0] = complex(1,0)/nt;
-				d_mat[0][1] = complex(-1,0)/nt;
-
-				A_mat[0][0] = complex(1,0)/nt;
-				A_mat[1][0] = complex(1,0)/nt;
-			}
-
-			else if (has_phase(PHASE_B)) // wye-B
-			{
-				V_basehi = config->V_primary;
-				sa_base = config->phaseB_kVA_rating;
-				za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
-				za_baselo = (V_base * V_base)/(sa_base*1000);
-				z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-				z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-				z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-				zt_b = complex(0,0);
-				zt_c = complex(0,0);
-				a_mat[0][1] = a_mat[1][1] = nt;
-			
-				d_mat[1][0] = complex(1,0)/nt;
-				d_mat[1][1] = complex(-1,0)/nt;
-
-				A_mat[0][1] = complex(1,0)/nt;
-				A_mat[1][1] = complex(1,0)/nt;
-			
-			}
-			else if (has_phase(PHASE_C)) // wye-C
-			{
-				V_basehi = config->V_primary;
-				sa_base = config->phaseC_kVA_rating;
-				za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
-				za_baselo = (V_base * V_base)/(sa_base*1000);
-				z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-				z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-				z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-				zt_b = complex(0,0);
-				zt_c = complex(0,0);
-				a_mat[0][2] = a_mat[1][2] = nt;
-			
-				d_mat[2][0] = complex(1,0)/nt;
-				d_mat[2][1] = complex(-1,0)/nt;
-
-				A_mat[0][2] = complex(1,0)/nt;
-				A_mat[1][2] = complex(1,0)/nt;
-			}
-
-			b_mat[0][0] = (z1*nt)+(z0/nt);
-			b_mat[0][1] = complex(-1,0) * (z0/nt);
-			b_mat[0][2] = complex(0,0);
-			b_mat[1][0] = (z0/nt);
-			b_mat[1][1] = complex(-1,0) * ((z2*nt) + z0/nt);
-			b_mat[1][2] = complex(0,0);
-			b_mat[2][0] = complex(0,0);
-			b_mat[2][1] = complex(0,0);
-			b_mat[2][2] = complex(0,0);
-
-			B_mat[0][0] = (z1) + (z0/(nt*nt));
-			B_mat[0][1] = complex(-1,0) * (z0/(nt*nt));
-			B_mat[1][0] = (z0/(nt*nt));
-			B_mat[1][1] = complex(-1,0) * ((z2) + (z0/(nt*nt)));
 
 			break;
 		default:

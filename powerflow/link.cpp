@@ -323,12 +323,25 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 		}
 		else	//normal b_mat (or at least, not all zeros)
 		{
-			// compute admittance - invert b matrix
-			inverse(b_mat,Y);
-
-			if (isnan(Y[0][0].Re()))
+			//See if we're triplexy
+			/*if (gl_object_isa(OBJECTHDR(this),"triplex_line"))
 			{
-				minverter(b_mat,Y);
+				complex det = (b_mat[0][0] * b_mat[1][1]) - (b_mat[0][1]*b_mat[1][0]);
+				Y[0][0] = b_mat[1][1] * det;
+				Y[0][1] = b_mat[0][1] * det * -1.0;
+				Y[1][0] = b_mat[1][0] * det * -1.0;
+				Y[1][1] = b_mat[0][0] * det;
+				Y[0][2] = Y[1][2] = Y[2][0] = Y[2][1] = Y[2][2] = 0.0;
+			}
+			else */
+			{
+				// compute admittance - invert b matrix
+				inverse(b_mat,Y);
+
+				if (isnan(Y[0][0].Re()))
+				{
+					minverter(b_mat,Y);
+				}
 			}
 
 			//Compute total self admittance - include line charging capacitance
@@ -344,63 +357,67 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			if ((voltage_ratio!=1) | (Regulator_Link!=0))	//Handle transformers slightly different
 			{
 				invratio=1/voltage_ratio;
+				/* //Trying new approach - this is old approach that worked
+				phasespresent = 8*has_phase(PHASE_D)+4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
+
+				if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Single or double phase - not three - special handling
+				{	
+					multiply(voltage_ratio,b_mat,Ylefttemp);
+					inverse(Ylefttemp,Yfrom);
+
+					if (isnan(Yfrom[0][0].Re()))
+					{
+						minverter(Ylefttemp,Yfrom);
+					}
+
+					multiply(invratio,b_mat,Ylefttemp);
+					inverse(Ylefttemp,Yto);
+
+					if (isnan(Yto[0][0].Re()))
+					{
+						minverter(Ylefttemp,Yto);
+					}
+				}
+				else	//Three phase
+				{
+					multiply(voltage_ratio,b_mat,Ylefttemp);
+					inverse(Ylefttemp,Yfrom);
+
+					multiply(invratio,b_mat,Ylefttemp);
+					inverse(Ylefttemp,Yto);
+				} */
 
 				if (Regulator_Link==2)	//Not really, is really Delta-Gwye implementation - temp variable to see if this even works
 				{
-					complex DelVolts[3];
-					complex CurrentCalcs[6][6];
-					complex tempmat[3][3];
+					complex tempImped;
 
-					tempmat[0][0] = tempmat[1][1] = tempmat[2][2] = 1.0 / voltage_ratio;
-					tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = -1.0 / voltage_ratio;
-					tempmat[0][2] = tempmat[1][0] = tempmat[2][1] = 0.0;
-
+					//Pre-admittancized matrix
 					equalm(b_mat,Yto);
 
-					multiply(b_mat,tempmat,To_Y);
+					//Adjust for To_Y
+					multiply(Yto,c_mat,To_Y);
 
-					equalm(c_mat,Yfrom);
+					//Scale to other size
+					multiply(invratio,Yto,Ylefttemp);
+					multiply(invratio,Ylefttemp,Yfrom);
 
-					c_mat[0][0] = c_mat[0][1] = c_mat[0][2] = complex(0,0);	//comment me
-					c_mat[1][0] = c_mat[1][1] = c_mat[1][2] = complex(0,0);	//comment me
-					c_mat[2][0] = c_mat[2][1] = c_mat[2][2] = complex(0,0);	//comment me
+					//Adjust for From_Y
+					multiply(B_mat,Yto,From_Y);
 
-					a_mat[0][0] = a_mat[0][1] = a_mat[0][2] = complex(0,0);	//comment me
-					a_mat[1][0] = a_mat[1][1] = a_mat[1][2] = complex(0,0);	//comment me
-					a_mat[2][0] = a_mat[2][1] = a_mat[2][2] = complex(0,0);	//comment me
+					//Fix what I broke
+					for(jindex=0;jindex<2;jindex++)
+					{
+						for(kindex=0;kindex<2;kindex++)
+						{
+							c_mat[jindex][kindex]=0.0;
+							B_mat[jindex][kindex]=0.0;
+						}
+					}
 
-					//Repopulate a matrix
-					a_mat[0][0] = voltage_ratio;
-					a_mat[1][1] = voltage_ratio;
-					a_mat[2][2] = voltage_ratio;
+					tempImped = complex(1.0) / b_mat[0][0];
+					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = tempImped;
 
-
-					//This gives an answer, just appears offset by sqrt(3)
-					tempmat[0][0] = tempmat[1][1] = tempmat[2][2] = voltage_ratio;
-					tempmat[0][2] = tempmat[1][0] = tempmat[2][1] = -voltage_ratio;
-					tempmat[0][1] = tempmat[1][2] = tempmat[2][0] = 0.0;
-					multiply(tempmat,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
-					
-					From_Y[0][0] /= phaseadjust;
-					From_Y[0][1] /= phaseadjust;
-					From_Y[0][2] /= phaseadjust;
-					From_Y[1][0] /= phaseadjust;
-					From_Y[1][1] /= phaseadjust;
-					From_Y[1][2] /= phaseadjust;
-					From_Y[2][0] /= phaseadjust;
-					From_Y[2][1] /= phaseadjust;
-					From_Y[2][2] /= phaseadjust;
-
-					To_Y[0][0] *= phaseadjust;
-					To_Y[0][1] *= phaseadjust;
-					To_Y[0][2] *= phaseadjust;
-					To_Y[1][0] *= phaseadjust;
-					To_Y[1][1] *= phaseadjust;
-					To_Y[1][2] *= phaseadjust;
-					To_Y[2][0] *= phaseadjust;
-					To_Y[2][1] *= phaseadjust;
-					To_Y[2][2] *= phaseadjust;
-
+					//Calculate YVs terms
 					Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
 							 From_Y[0][1]*tnode->voltage[1]+
 							 From_Y[0][2]*tnode->voltage[2];
@@ -419,7 +436,6 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 					Ito[2] = To_Y[2][0]*fnode->voltage[0]+
 							 To_Y[2][1]*fnode->voltage[1]+
 							 To_Y[2][2]*fnode->voltage[2];
-
 
 				}
 				else if (Regulator_Link==1)	//Regulator
@@ -477,6 +493,37 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 					Ito[2] = To_Y[2][0]*fnode->voltage[0]+
 							 To_Y[2][1]*fnode->voltage[1]+
 							 To_Y[2][2]*fnode->voltage[2];
+				}
+				else if (Regulator_Link==3)	//Split phase
+				{
+					equalm(b_mat,Yto);
+					equalm(c_mat,Yfrom);
+					c_mat[0][0] = c_mat[0][1] = c_mat[0][2] = 0.0;
+					c_mat[1][0] = c_mat[1][1] = c_mat[1][2] = 0.0;
+					c_mat[2][0] = c_mat[2][1] = c_mat[2][2] = 0.0;
+
+					multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
+					multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
+
+					Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
+							 From_Y[0][1]*tnode->voltage[1]+
+							 From_Y[0][2]*tnode->voltage[2];
+					Ifrom[1]=From_Y[1][0]*tnode->voltage[0]+
+							 From_Y[1][1]*tnode->voltage[1]+
+							 From_Y[1][2]*tnode->voltage[2];
+					Ifrom[2]=From_Y[2][0]*tnode->voltage[0]+
+							 From_Y[2][1]*tnode->voltage[1]+
+							 From_Y[2][2]*tnode->voltage[2];
+					Ito[0] = To_Y[0][0]*fnode->voltage[0]+
+							 To_Y[0][1]*fnode->voltage[1]+
+							 To_Y[0][2]*fnode->voltage[2];
+					Ito[1] = To_Y[1][0]*fnode->voltage[0]+
+							 To_Y[1][1]*fnode->voltage[1]+
+							 To_Y[1][2]*fnode->voltage[2];
+					Ito[2] = To_Y[2][0]*fnode->voltage[0]+
+							 To_Y[2][1]*fnode->voltage[1]+
+							 To_Y[2][2]*fnode->voltage[2];
+
 				}
 				else	//Other xformers
 				{
@@ -750,20 +797,20 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 						 Binv[2][2]*current_temp[2];
 
 		//Calculate input currents
-		current_in[0] = complex(-1.0)*c_mat[0][0]*tnode->voltage[0]-
-						c_mat[0][1]*tnode->voltage[1]-
+		current_in[0] = c_mat[0][0]*tnode->voltage[0]+
+						c_mat[0][1]*tnode->voltage[1]+
 						c_mat[0][2]*tnode->voltage[2]+
 						d_mat[0][0]*current_out[0]+
 						d_mat[0][1]*current_out[1]+
 						d_mat[0][2]*current_out[2];
-		current_in[1] = complex(-1.0)*c_mat[1][0]*tnode->voltage[0]-
-						c_mat[1][1]*tnode->voltage[1]-
+		current_in[1] = c_mat[1][0]*tnode->voltage[0]+
+						c_mat[1][1]*tnode->voltage[1]+
 						c_mat[1][2]*tnode->voltage[2]+
 						d_mat[1][0]*current_out[0]+
 						d_mat[1][1]*current_out[1]+
 						d_mat[1][2]*current_out[2];
-		current_in[2] = complex(-1.0)*c_mat[2][0]*tnode->voltage[0]-
-						c_mat[2][1]*tnode->voltage[1]-
+		current_in[2] = c_mat[2][0]*tnode->voltage[0]+
+						c_mat[2][1]*tnode->voltage[1]+
 						c_mat[2][2]*tnode->voltage[2]+
 						d_mat[2][0]*current_out[0]+
 						d_mat[2][1]*current_out[1]+
@@ -1107,7 +1154,6 @@ void minverter(complex in[3][3], complex out[3][3])
 		}
 	}
 }
-
 
 void multiply(double a, complex b[3][3], complex c[3][3])
 {
