@@ -360,9 +360,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			delta_shunt_curr[1] = delta_shunt[1]-delta_shunt[0];
 			delta_shunt_curr[2] = delta_shunt[2]-delta_shunt[1];
 			
-			current_inj[0] += (voltageAB.IsZero() || (powerA.IsZero() && delta_shunt_curr[0].IsZero())) ? currentA : currentA + power_current[0] + delta_shunt_curr[0];
-			current_inj[1] += (voltageBC.IsZero() || (powerB.IsZero() && delta_shunt_curr[1].IsZero())) ? currentB : currentB + power_current[1] + delta_shunt_curr[1];
-			current_inj[2] += (voltageCA.IsZero() || (powerC.IsZero() && delta_shunt_curr[2].IsZero())) ? currentC : currentC + power_current[2] + delta_shunt_curr[2];
+			current_inj[0] += currentA + power_current[0] + delta_shunt_curr[0];
+			current_inj[1] += currentB + power_current[1] + delta_shunt_curr[1];
+			current_inj[2] += currentC + power_current[2] + delta_shunt_curr[2];
 		}
 		else 
 		{	// 'WYE' connected load
