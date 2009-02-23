@@ -3,6 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #set savefile="pnnl300bus.xml"
+#set iteration_limit=10000
 
 clock {
 	timestamp '2000-01-01 0:00:00';
@@ -12,7 +13,7 @@ clock {
 // modules
 module tape;
 module network {
-	acceleration_factor 1.0;
+	acceleration_factor 1.4;
 	convergence_limit 0.5;
 }
 

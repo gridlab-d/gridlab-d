@@ -14,7 +14,7 @@
 //
 
 // setup GridLAB-D for a standard run
-//#define NHOUSES=1
+#define NHOUSES=1
 //#define ALLOW_TOU
 //#define ALLOW_RTP
 //#define USE_SHAPES

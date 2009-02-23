@@ -7,7 +7,7 @@
 // - recorder collect 8760 hours
 
 #set include="../../core"
-#include "../../core/rt/msvc_debugger.glm"
+// #include "../../core/rt/msvc_debugger.glm"
 module tape;
 
 clock {

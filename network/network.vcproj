@@ -631,6 +631,22 @@
 			Name="Test Files"
 			Filter="glm;cdf"
 			>
+			<File
+				RelativePath=".\test\ieee14bus.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\ieee300bus.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\pnnl14bus.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\pnnl300bus.glm"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

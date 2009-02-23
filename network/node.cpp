@@ -252,6 +252,8 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	node *swing = hdr->parent?OBJECTDATA(hdr->parent,node):this;
 	complex dV(0.0);
 	complex YY = Ys + complex(G,B);
+	// copy values that might get updated while we work on this object
+	complex old_YVs = YVs;
 #ifdef HYBRID
 	swing->del_inj_residual(this);
 #endif
@@ -259,14 +261,14 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	{
 		switch (type) {
 		case PV:
-			S.Im() = -((~V*(YY*V+YVs)).Im());
+			S.Im() = -((~V*(YY*V+old_YVs)).Im());
 			if (Qmin_MVAR<Qmax_MVAR && S.Im()<Qmin_MVAR) 
 				S.Im() = Qmin_MVAR;
 			else if (Qmax_MVAR>Qmin_MVAR && S.Im()>Qmax_MVAR) 
 				S.Im() = Qmax_MVAR;
 			else
 			{
-				complex Vnew = (~S/~V - YVs) / YY;
+				complex Vnew = (~S/~V - old_YVs) / YY;
 				Vnew.SetPolar(V.Mag(),Vnew.Arg());
 #ifdef HYBRID
 				if (Vstdev>0)
@@ -289,7 +291,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		case PQ:
 			if (!V.IsZero())
 			{
-				complex Vnew = (~S/~V - YVs) / YY;
+				complex Vnew = (~S/~V - old_YVs) / YY;
 #ifdef HYBRID
 				if (Vstdev>0) // need to consider observation
 				{
