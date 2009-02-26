@@ -21,6 +21,7 @@
 #include "gridlabd.h"
 #include "object.h"
 #include "aggregate.h"
+#include "histogram.h"
 
 #define _TAPE_C
 
@@ -134,6 +135,12 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_recorder");
 	ops->rewind = NULL;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_recorder");
+	ops = fptr->histogram = malloc(sizeof(TAPEOPS));
+	ops->open = (OPENFUNC)DLSYM(lib, "open_histogram");
+	ops->read = NULL;
+	ops->write = (WRITEFUNC)DLSYM(lib, "write_histogram");
+	ops->rewind = NULL;
+	ops->close = (CLOSEFUNC)DLSYM(lib, "close_histogram");
 	ops = fptr->shaper = malloc(sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_shaper");
 	ops->read = (READFUNC)DLSYM(lib, "read_shaper");
@@ -201,6 +208,9 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(collector,int64,interval);
 	PUBLISH_STRUCT(collector,int32,limit);
 	PUBLISH_STRUCT(collector,char256,group);
+
+	/* new histogram() */
+	new_histogram(module);
 
 	/* always return the first class registered */
 	return player_class;

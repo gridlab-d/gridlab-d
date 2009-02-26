@@ -33,10 +33,11 @@ typedef struct s_tape_funcs {
 	TAPEOPS *shaper;
 	TAPEOPS *recorder;
 	TAPEOPS *collector;
+	TAPEOPS *histogram;
 	struct s_tape_funcs *next;
 } TAPEFUNCS;
 
-TAPEFUNCS *get_ftable(char *mode);
+CDECL TAPEFUNCS *get_ftable(char *mode);
 
 typedef struct {
 	char *name;

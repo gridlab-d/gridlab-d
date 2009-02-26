@@ -23,10 +23,15 @@ histogram *histogram::defaults = NULL;
 // histogram CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
+void new_histogram(MODULE *mod){
+	new histogram(mod);
+}
+
 histogram::histogram(MODULE *mod)
 {
 	if(oclass == NULL)
 	{
+		gl_error("constructor");
 		oclass = gl_register_class(mod,"histogram",sizeof(histogram), PC_PRETOPDOWN);
         if(oclass == NULL)
             GL_THROW("unable to register object class implemented by %s",__FILE__);
@@ -41,7 +46,7 @@ histogram::histogram(MODULE *mod)
 			PT_int32, "samplerate", PADDR(sampling_interval),
 			PT_int32, "countrate", PADDR(counting_interval),
 			PT_int32, "bin_count", PADDR(bin_count),
-			PT_int32, "count", PADDR(line_count),
+			PT_int32, "count", PADDR(limit),
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(filename, 0, 1025);
@@ -53,23 +58,26 @@ histogram::histogram(MODULE *mod)
 		bin_count = -1;
 		sampling_interval = -1;
 		counting_interval = -1;
-		line_count = 0;
+		limit = 0;
 		bin_list = NULL;
 		group_list = NULL;
 		binctr = NULL;
+		prop_ptr = NULL;
+		next_count = t_count = next_sample = t_sample = TS_ZERO;
     }
 }
 
 int histogram::create()
 {
+	gl_error("create");
 	memcpy(this, defaults, sizeof(histogram));
-	return 0;
+	return 1;
 }
 
 
 /* consume spaces */
 void eat_white(char **pos){
-	while(**pos == ' ')
+	while(**pos == ' ' || **pos == '\t')
 		++(*pos);
 }
 
@@ -81,15 +89,18 @@ int parse_bin_val(char *tok, BIN *bin){
 	char *pos = tok;
 	int low_set = 0, high_set = 0;
 	
+	eat_white(&pos);
+
 	/* check for bracket or parenthesis */
-	if(*pos == '['){
+	printf("first: %c (%i)\n", pos[0], pos[0]);
+	if(pos[0] == '['){
 		++pos;
 		bin->low_inc = 1;
-	} else if (*pos == '('){
+	} else if (pos[0] == '('){
 		++pos;
 		bin->low_inc = 0;
 	} else {
-		bin->low_inc = 0;	/* default inclusive on lower bound */
+		bin->low_inc = 1;	/* default inclusive on lower bound */
 	}
 	
 	/* consume whitespace */
@@ -100,17 +111,19 @@ int parse_bin_val(char *tok, BIN *bin){
 		bin->low_val = strtod(pos, &pos);
 		low_set = 1;
 	} else if(*pos == '.' && pos[1] == '.'){ /* "everything less than the other value" */
-		pos += 2;
 		bin->low_val = -DBL_MAX;
 		bin->low_inc = 0;
-		low_set = 1;
+	} else if(*pos == '-') {
+		bin->low_val = -DBL_MAX;
+		bin->low_inc = 0;
+
 	}
 	
 	eat_white(&pos);
 	
-	if(low_set && *pos == '.' && pos[1] == '.'){
+	if(*pos == '.' && pos[1] == '.'){
 		pos+=2;
-	} else if (low_set && *pos == '-'){
+	} else if (*pos == '-'){
 		++pos;
 	} else {
 		gl_error("parse_bin failure");
@@ -119,7 +132,16 @@ int parse_bin_val(char *tok, BIN *bin){
 	
 	eat_white(&pos);
 	
-	if(*pos == 0 || *pos == '\n' || *pos == ';'){
+	if(isdigit(*pos)){
+		bin->high_val = strtod(pos, &pos);
+		high_set = 1;
+		if(low_set == 0)
+			bin->high_inc = 1;
+	} else {
+		bin->high_val = DBL_MAX;
+	}
+
+	if(*pos == 0 || *pos == '\n' || *pos == ','){
 		return 1;	/* reached the end of the bin definition*/
 	} else if (*pos == ')'){
 		bin->high_inc = 0;
@@ -129,6 +151,51 @@ int parse_bin_val(char *tok, BIN *bin){
 		return 1;
 	}
 	return 0;
+}
+
+int parse_bin_enum(char *cptr, BIN *bin, PROPERTY *prop){
+	/* cptr should just be one token */
+	char *pos = cptr;
+	KEYWORD *kw = NULL;
+	
+	if(prop->keywords == NULL){
+		gl_error("parse_bin_enum error: property has no keywords");
+		return 0;
+	}
+	
+	eat_white(&pos);
+	
+	for(kw = prop->keywords; kw != NULL; kw = kw->next){
+		if(strcmp(kw->name, pos) == 0){
+			bin->low_inc = bin->high_inc = 1;
+			bin->low_val = bin->high_val = kw->value;
+			return 1;
+		}
+	}
+	
+	gl_error("parse_bin_enum error: unable to find property \'%s\'", pos);
+	return 0;
+}
+
+/**
+ *	Local convenience function, used to extract the complex part of a property string (if any) and
+ *	add a null character to the property string accordingly.
+ *	@param tprop a pointer to the buffer for the property name
+ *	@param tpart a pointer to the buffer for the property complex type
+ */
+void histogram::test_for_complex(char *tprop, char *tpart){
+	if(sscanf(property, "%[^.\0\t\n].%s", tprop, tpart) == 2){
+		if(0 == memcmp(tpart, "real", 4)){comp_part = REAL;}
+		else if(0 == memcmp(tpart, "imag", 3)){comp_part = IMAG;}
+		else if(0 == memcmp(tpart, "mag", 3)){comp_part = MAG;}
+		else if(0 == memcmp(tpart, "ang", 3)){comp_part = ANG;}
+		else {
+			comp_part = NONE;
+			throw("Unable to resolve complex part for \'%s\'", property);
+			return;
+		}
+		strtok(property, "."); /* "quickly" replaces the dot with a space */
+	}
 }
 
 /**
@@ -141,11 +208,15 @@ int histogram::init(OBJECT *parent)
 {
 	PROPERTY *prop = NULL;
 	OBJECT *obj = OBJECTHDR(this);
+	char tprop[64], tpart[8];
 
+	gl_error("init");
 	if(parent == NULL) /* better have a group... */
 	{
 		OBJECT *group_obj = NULL;
-		if(group[0] = 0){
+		int cid = -1;
+		gl_error("group");
+		if(group[0] == 0){
 			throw("Histogram has no parent and no group");
 			return 0;
 		}
@@ -159,21 +230,42 @@ int histogram::init(OBJECT *parent)
 			return 0;
 		}
 		/* non-empty set */
+		
+		/* parse complex part of property */
+		test_for_complex(tprop, tpart);
+		
 		while(group_obj = gl_find_next(group_list, group_obj)){
-			if(gl_find_property(group_obj->oclass, property) == NULL){
+			prop = gl_find_property(group_obj->oclass, property);
+			if(prop == NULL){
 				throw("Histogram group is unable to find prop '%s' in class '%d' for group '%s'", property, group_obj->oclass->name, group);
 				return 0;
 			}
+			/* check to see if all the group objects are in the same class, allowing us to cache the target property */
+			if (cid == -1){
+				cid = group_obj->oclass->type;
+				prop_ptr = prop;
+			}
+			if(cid != group_obj->oclass->type){
+				prop_ptr = NULL;
+			} 
+			
 		}
+		gl_error("end group");
 	} else { /* if we have a parent, we only focus on that one object */
+		test_for_complex(tprop, tpart);
+		
 		prop = gl_find_property(parent->oclass, property);
+		
 		if(prop == NULL){
 			throw("Histogram parent '%s' of class '%s' does not contain property '%s'", parent->name ? parent->name : "(anon)", parent->oclass->name, property);
 			return 0;
+		} else {
+			prop_ptr = prop; /* saved for later */
 		}
 	}
-	/* generate bins */
-	/* - min, max, bincount?*/
+	/*
+	 *	This will create a uniform partition over the specified range
+	 */
 	if((bin_count > 0) && (min < max))
 	{
 		int i=0;
@@ -192,14 +284,27 @@ int histogram::init(OBJECT *parent)
 			bin_list[i].high_inc = 0;
 		}
 		bin_list[i].high_inc = 1;	/* tail value capture */
+		binctr = (int *)malloc(sizeof(int) * bin_count);
+		memset(binctr, 0, sizeof(int) * bin_count);
 	}
 	else if (bins[0] != 0)
+	/*
+	 *	This will parse the bin strings as specified.  The valid basic form is "(a..b)".  Brackets are optional, [ & ] are inclusive.  A dash may replace the '..'.
+	 *	If a or b is not present, the bin will fill in a positve/negative infinity.
+	 */
 	{
 		char *cptr = bins;
 		char1024 bincpy;
 		int i = 0;
-		while(cptr != 0)
-			if(*cptr == ';') ++bin_count;
+		bin_count = 1; /* assume at least one */
+		/* would be better to count the number of times strtok succeeds, but this should work -mh */
+		//while(*cptr != 0){
+		for(cptr = bins; *cptr != 0; ++cptr){
+			if(*cptr == ',' && cptr[1] != 0){
+				++bin_count;
+			}
+		//	++cptr;
+		}
 		bin_list = (BIN *)malloc(sizeof(BIN) * bin_count);
 		if(bin_list == NULL){
 			throw("Histogram malloc error: unable to alloc %i * %i bytes for %s", bin_count, sizeof(BIN), obj->name ? obj->name : "(anon. histogram)");
@@ -207,70 +312,162 @@ int histogram::init(OBJECT *parent)
 		}
 		memset(bin_list, 0, sizeof(BIN) * bin_count);
 		memcpy(bincpy, bins, 1024);
-		cptr = strtok(bincpy, ";\n");
-		if(prop->ptype == PT_double || prop->ptype == PT_int16 || prop->ptype == PT_int32 || prop->ptype == PT_int64 || prop->ptype == PT_float || || prop->ptype == PT_real){
+		cptr = strtok(bincpy, ",\t\r\n\0");
+		if(prop->ptype == PT_complex || prop->ptype == PT_double || prop->ptype == PT_int16 || prop->ptype == PT_int32 || prop->ptype == PT_int64 || prop->ptype == PT_float || prop->ptype == PT_real){
 			for(i = 0; i < bin_count && cptr != NULL; ++i){
 				if(parse_bin_val(cptr, bin_list+i) == 0){
 					throw("Histogram unable to parse \'%s\' in %s", cptr, obj->name ? obj->name : "(unnamed histogram)");
 				}
+				cptr = strtok(NULL, ",\t\r\n\0"); /* minor efficiency gain to use the incremented pointer from parse_bin */
 			}
-		} else if (prop->ptype == PT_enum){
+		} else if (prop->ptype == PT_enumeration || prop->ptype == PT_set){
 			for(i = 0; i < bin_count && cptr != NULL; ++i){
-				if(parse_bin_enum(cptr, bin_list+i) == 0){
+				if(parse_bin_enum(cptr, bin_list+i, prop) == 0){
 					throw("Histogram unable to parse \'%s\' in %s", cptr, obj->name ? obj->name : "(unnamed histogram)");
 				}
+				cptr = strtok(NULL, ",\t\r\n\0"); /* minor efficiency gain to use the incremented pointer from parse_bin */
 			}
-		} else if (prop->ptype == PT_set){
-			;
 		}
 
 		if(i < bin_count){
 			throw("Histrogram encountered a problem parsing bins for %s", obj->name ? obj->name : "(unnamed histogram)");
 		}
+		binctr = (int *)malloc(sizeof(int) * bin_count);
+		memset(binctr, 0, sizeof(int) * bin_count);
 	}
-	return 1;
+	/* open file ~ copied from recorder.c */
+		/* if prefix is omitted (no colons found) */
+	if (sscanf(filename,"%32[^:]:%1024[^:]:%[^:]",ftype,fname,flags)==1)
+	{
+		/* filename is file by default */
+		strcpy(fname,filename);
+		strcpy(ftype,"file");
+	}
+
+	/* if no filename given */
+	if (strcmp(fname,"")==0)
+
+		/* use object name-id as default file name */
+		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, ftype);
+
+	/* if type is file or file is stdin */
+	ops = get_ftable(ftype)->histogram; /* same mentality as a recorder, 'cept for the header properties */
+	gl_error("end init");
+	if(ops == NULL)
+		return 0;
+	return ops->open(this, fname, flags);
+}
+
+int histogram::feed_bins(OBJECT *obj){
+	double value = 0.0;
+	complex cval = 0.0; //gl_get_complex(obj, ;
+	int64 ival = 0;
+	int i = 0;
+
+	switch(prop_ptr->ptype){
+		case PT_complex:
+			cval = (prop_ptr ? *gl_get_complex(obj, prop_ptr) : *gl_get_complex_by_name(obj, property) );
+			switch(this->comp_part){
+				case REAL:
+					value = cval.Re();
+					break;
+				case IMAG:
+					value = cval.Im();
+					break;
+				case MAG:
+					value = cval.Mag();
+					break;
+				case ANG:
+					value = cval.Arg();
+					break;
+				default:
+					gl_error("Complex property with no part defined in %s", (obj->name ? obj->name : "(unnamed)"));
+			}
+			ival = 1;
+			/* fall through */
+		case PT_double:
+			if(ival == 0) 
+				value = (prop_ptr ? *gl_get_double(obj, prop_ptr) : *gl_get_double_by_name(obj, property) );
+			for(i = 0; i < bin_count; ++i){
+				if(value > bin_list[i].low_val && value < bin_list[i].high_val){
+					++binctr[i];
+				} else if(bin_list[i].low_inc && bin_list[i].low_val == value){
+					++binctr[i];
+				} else if(bin_list[i].high_inc && bin_list[i].high_val == value){
+					++binctr[i];
+				}
+			}
+			break;
+		case PT_int16:
+			ival = (prop_ptr ? *gl_get_int16(obj, prop_ptr) : *gl_get_int16_by_name(obj, property) );
+			value = 1.0;
+		case PT_int32:
+			if(value == 0.0){
+				ival = (prop_ptr ? *gl_get_int32(obj, prop_ptr) : *gl_get_int32_by_name(obj, property) );
+				value = 1.0;
+			}
+		case PT_int64:
+			if(value == 0.0){
+				ival = (prop_ptr ? *gl_get_int64(obj, prop_ptr) : *gl_get_int64_by_name(obj, property) );
+				value = 1.0;
+			}
+		case PT_enumeration:
+			if(value == 0.0){
+				ival = (prop_ptr ? *gl_get_int64(obj, prop_ptr) : *gl_get_int64_by_name(obj, property) );
+				value = 1.0;
+			}
+		case PT_set:
+			if(value == 0.0){
+				ival = (prop_ptr ? *gl_get_int64(obj, prop_ptr) : *gl_get_int64_by_name(obj, property) );
+				value = 1.0;
+			}
+			
+			/* may be prone to fractional errors */
+			for(i = 0; i < bin_count; ++i){
+				if(ival > bin_list[i].low_val && ival < bin_list[i].high_val){
+					++binctr[i];
+				} else if(bin_list[i].low_inc && bin_list[i].low_val == ival){
+					++binctr[i];
+				} else if(bin_list[i].high_inc && bin_list[i].high_val == ival){
+					++binctr[i];
+				}
+			}
+			break;
+	}
+
+	return 0;
 }
 
 TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	int i = 0;
-	
-	if(t1 >= next_sample){
-		if(prop->ptype == PT_double || prop->ptype == PT_complex)
-		{
-			double value = 0.0;
-			/* get value */
-			for(i = 0; i < bin_count; ++i){
-				if(value > bin_list[i].low_val && value < bin_list[i].high_val){
-					++binctr[i];
-				} else if(bin_list[i].low_inc && bin_list[i].low_val == value){
-					++binctr[i];
-				} else if(bin_list[i].high_inc && bin_list[i].high_val == value){
-					++binctr[i];
-				}
+	double value = 0.0;
+	OBJECT *obj = OBJECTHDR(this);
+
+	gl_error("sync");
+	if((sampling_interval == 0 && t_count > t1) ||
+		sampling_interval == -1 ||
+		(sampling_interval > 0 && t1 >= next_sample))
+	{
+		if(group_list == NULL){
+			feed_bins(obj->parent);
+		} else {
+			OBJECT *obj = gl_find_next(group_list, NULL);
+			for(; obj != NULL; obj = gl_find_next(group_list, obj)){
+				feed_bins(obj);
 			}
 		}
-		else if(prop->ptype == PT_int16 || prop->ptype == PT_int32 || prop->ptype == PT_int64 || prop->ptype == PT_enum || prop->ptype == PT_set)
-		{
-			int value = 0;
-			/* get value */
-			for(i = 0; i < bin_count; ++i){
-				if(value > bin_list[i].low_val && value < bin_list[i].high_val){
-					++binctr[i];
-				} else if(bin_list[i].low_inc && bin_list[i].low_val == value){
-					++binctr[i];
-				} else if(bin_list[i].high_inc && bin_list[i].high_val == value){
-					++binctr[i];
-				}
-			}
-		}
-		next_sample += sampling_interval;
+		t_sample = t1;
+		next_sample = t1 + sampling_interval;
 	}
 
-	if(t1 >= next_count){
+	if((counting_interval == 0 && t_count > t1) ||
+		counting_interval == -1 ||
+		(counting_interval > 0 && t1 >= next_count))
+	{
 		char1024 line;
 		char ts[64];
-		int off, i;
+		int off=0, i=0;
 		DATETIME dt;
 
 		/* write the timestamp */
@@ -279,13 +476,27 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 		
 		/* write bins */
 		for(i = 0; i < bin_count; ++i){
-			off += sprintf(line, "%i", binctr[i]);
+			off += sprintf(line+off, "%i", binctr[i]);
 			if(i != bin_count){
-				off += sprintf(line, ",");
+				off += sprintf(line+off, ",");
 			}
 		}
 
-		next_count += counting_interval;
+		/* write line */
+		ops->write(this, ts, line);
+		
+		/* cleanup */
+		for(i = 0; i < bin_count; ++i){
+			binctr[i] = 0;
+		}
+		t_count = t1;
+		next_count = t_count + counting_interval;
+
+		if(--limit < 1){
+			ops->close(this);
+			next_count = TS_NEVER;
+			next_sample = TS_NEVER;
+		}
 	}
 	return ( next_count < next_sample ? next_count : next_sample );
 }

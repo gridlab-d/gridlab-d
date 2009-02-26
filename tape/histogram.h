@@ -8,6 +8,9 @@
 
 #include "tape.h"
 
+EXPORT void new_histogram(MODULE *mod);
+
+#ifdef __cplusplus
 typedef struct s_histogram_bin {
 	double low_val;
 	double high_val;
@@ -15,20 +18,35 @@ typedef struct s_histogram_bin {
 	int high_inc;
 } BIN;
 
+typedef enum e_complex_part {
+	NONE = 0,
+	REAL,
+	IMAG,
+	MAG,
+	ANG
+} CPLPT;
+
 class histogram
 {
 protected:
 	FINDLIST *group_list;
-	BIN *bin_list;
 	int *binctr;
-	TIMESTAMP next_count;
-	TIMESTAMP next_sample;
+	CPLPT comp_part;
+	PROPERTY *prop_ptr;
+	TAPEOPS *ops;
+
 public:
     static CLASS *oclass;
     static CLASS *pclass;
 	static histogram *defaults;
 
+	TIMESTAMP next_count, t_count;
+	TIMESTAMP next_sample, t_sample;
+
 	char1024 filename;
+	char1024 fname;
+	char32 ftype;
+	char8 flags;
 	char1024 group;
 	char32 property;
 	char1024 bins;
@@ -37,13 +55,28 @@ public:
 	double max;
 	int32 sampling_interval;	//	add values into bins
 	int32 counting_interval;	//	dump the bins into a row
-	int32 line_count;			//	number of lines to write
+	int32 limit;			//	number of lines to write
+	
+	FILETYPE type;
+	union {
+		FILE *fp;
+		MEMORY *memory;
+		void *tsp;
+		/** add handles for other type of sources as needed */
+	};
+
+	BIN *bin_list;
 public:
 	histogram(MODULE *mod);
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	int isa(char *classname);
+protected:
+	void test_for_complex(char *, char *);
+	int feed_bins(OBJECT *);
 };
+
+#endif // C++
 
 #endif // _HISTOGRAM_H_

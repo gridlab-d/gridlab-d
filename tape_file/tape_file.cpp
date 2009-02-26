@@ -20,6 +20,7 @@
 
 #include "gridlabd.h"
 #include "../tape/tape.h"
+#include "../tape/histogram.h"
 #include "tape_file.h"
 
 /*******************************************************************
@@ -362,6 +363,79 @@ EXPORT void close_recorder(struct recorder *my)
 		fclose(my->fp);
 		my->fp = NULL; // Defensive programming. For some reason GridlabD was 
 		// closing the same pointer twice, causing it to crash.
+	}
+}
+
+/*******************************************************************
+ * histograms 
+ */
+EXPORT int open_histogram(histogram *my, char *fname, char *flags)
+{
+	time_t now=time(NULL);
+	OBJECT *obj=OBJECTHDR(my);
+	
+	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,"w"));
+	if (my->fp==NULL)
+	{
+		//gl_error(
+		fprintf(stderr, "histogram file %s: %s", fname, strerror(errno));
+		return 0;
+	}
+	my->type = FT_FILE;
+	my->t_count = TS_ZERO;
+	my->t_sample = TS_ZERO;
+
+	/* put useful header information in file first */
+	fprintf(my->fp,"# file...... %s\n", my->fname);
+	fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
+#ifdef WIN32
+	fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
+	fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
+#else
+	fprintf(my->fp,"# user...... %s\n", getenv("USER"));
+	fprintf(my->fp,"# host...... %s\n", getenv("HOST"));
+#endif
+	if(obj->parent != NULL){
+		fprintf(my->fp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
+	} else {
+		fprintf(my->fp,"# group.... %s\n", my->group);
+	}
+//	fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
+	fprintf(my->fp,"# counting interval.. %d\n", my->counting_interval);
+	fprintf(my->fp,"# sampling interval.. %d\n", my->sampling_interval);
+	fprintf(my->fp,"# limit..... %d\n", my->limit);
+	if(my->bins[0] != 0){
+		fprintf(my->fp,"# timestamp,%s\n", my->bins);
+	} else {
+		int i = 0;
+		for(i = 0; i < my->bin_count; ++i){
+			fprintf(my->fp,"%s%f..%f%s",(my->bin_list[i].low_inc ? "[" : "("), my->bin_list[i].low_val, my->bin_list[i].high_val, (my->bin_list[i].high_inc ? "]" : ")"));
+			if(i+1 < my->bin_count){
+				fprintf(my->fp,",");
+			}
+		}
+		fprintf(my->fp, "\n");
+	}
+	
+
+	return 1;
+}
+
+EXPORT int write_histogram(histogram *my, char *timestamp, char *value)
+{ 
+	return fprintf(my->fp,"%s,%s\n", timestamp, value);
+}
+
+EXPORT void close_histogram(histogram *my)
+{
+	if (my->fp)
+	{
+		fprintf(my->fp,"# end of tape\n");
+		fclose(my->fp);
+		my->fp = NULL;
+		/* Defensive programming. For some reason GridlabD was 
+		 * closing the same pointer twice, causing it to crash.
+		 */
 	}
 }
 
