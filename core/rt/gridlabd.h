@@ -631,6 +631,7 @@ typedef struct s_callbacks {
 		void (*del)(struct s_findlist*, OBJECT*);
 		void (*clear)(struct s_findlist*);
 	} find;
+	PROPERTY *(*find_property)(CLASS *, PROPERTYNAME);
 	void *(*malloc)(size_t);
 	void (*free)(void*);
 	struct s_aggregate *(*create_aggregate)(char *aggregator, char *group_expression);

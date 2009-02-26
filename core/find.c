@@ -279,7 +279,7 @@ FINDPGM *find_mkpgm(char *expression);
 
 	OBJECT *find_next(FINDLIST *list, OBJECT *previous) returns the next object in the result list
 
-	@return a pointer for FINDLIST structure used by find_first(), find_next, and find_makearray()
+	@return a pointer for FINDLIST structure used by find_first(), find_next, and find_makearray(), will return NULL if an error occurs.
 **/
 FINDLIST *find_objects(FINDLIST *start, ...)
 {

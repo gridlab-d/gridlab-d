@@ -302,6 +302,8 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 
 #define gl_find_module (*callback->module_find)
 
+#define gl_find_property (*callback->find_property)
+
 /** Declare a module dependency.  This will automatically load
     the module if it is not already loaded.
 	@return 1 on success, 0 on failure

@@ -153,6 +153,7 @@ static CALLBACKS callbacks = {
 	object_set_rank,
 	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr},
 	{find_objects,find_next,findlist_copy,findlist_add,findlist_del,findlist_clear},
+	class_find_property,
 	malloc,
 	free,
 	aggregate_mkgroup,
