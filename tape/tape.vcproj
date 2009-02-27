@@ -521,6 +521,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\histogram.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\tape\main.cpp"
 				>
 			</File>
@@ -545,7 +549,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\tape\tape.c"
+				RelativePath=".\tape.c"
 				>
 			</File>
 		</Filter>
@@ -556,6 +560,10 @@
 			>
 			<File
 				RelativePath="..\tape\file.h"
+				>
+			</File>
+			<File
+				RelativePath=".\histogram.h"
 				>
 			</File>
 			<File
