@@ -72,6 +72,7 @@ RANDOMTYPE random_type(char *name) /**< the name of the distribution */
 		{"gamma",RT_GAMMA},
 		{"beta",RT_BETA},
 		/** @todo Add some other distributions (e.g., Cauchy, Laplace)  (ticket #56)*/
+		{"triangle",RT_TRIANGLE},
 	};
 	for (p=map; p<map+sizeof(map)/sizeof(map[0]); p++)
 	{
@@ -288,7 +289,7 @@ double random_exponential(double lambda) /**< the rate parameter lambda */
 
 	\f[ \varphi\left(x;k,\lambda\right) = \frac{k}{\lambda} \left( \frac{x}{\lambda} \right)^{k-1} e^{-\left(\frac{x}{\lambda}\right)^k} \f]
 
-	@note This distribution is not tested because the test requires the Gamma function, which itself would have to be implemented and test.
+	@note This distribution is not tested because the test requires the Gamma function, which itself would have to be implemented and tested.
 
  **/
 double random_weibull(double lambda, /**< scale parameter */
@@ -382,6 +383,26 @@ double random_beta(double alpha, double beta) /**< event parameters */
 	return x1 / (x1+x2);
 }
 
+/** Generate a symmetric triangle distributed random number
+
+    The triangle probability density function is
+
+	\f[ \varphi\left(x|a,b\right) = \left\{
+		\begin{array}{c c}
+			\frac{4(x-a)}{(b-a)^2} & a < x \leq (a+b)/2 \\
+			\frac{4(b-x)}{(b-a)^2} & (a+b)/2 < x \leq b \\
+			0 & x \leq a | x > b
+		\end{array}
+		\right\}
+	\f]
+
+ **/
+
+double random_triangle(double a, double b)
+{
+	return (randunit() + randunit())*(b-a)/2 + a;
+}
+
 /* internal function that generates a random number */
 static double _random_value(RANDOMTYPE type, va_list ptr)
 {
@@ -437,6 +458,11 @@ static double _random_value(RANDOMTYPE type, va_list ptr)
 		{	double alpha = va_arg(ptr,double);
 			double beta = va_arg(ptr,double);
 			return random_beta(alpha,beta);
+		}
+	case RT_TRIANGLE: /* ... double a, double b */
+		{	double a = va_arg(ptr,double);
+			double b = va_arg(ptr,double);
+			return random_triangle(a,b);
 		}
 	default:
 		throw_exception("_random_value(type=%d,...); type is not valid",type);
@@ -728,6 +754,20 @@ int random_test(void)
 	report(NULL,0,0);
 	report("Mean",mean(sample,count),a*b);
 	report("Stdev",stdev(sample,count),sqrt(a*b*b));
+
+	/* triangle distribution test */
+	a = -randunit()*10;
+	b = randunit()*10;
+	output_test("\nTriangle(a=%f,b=%f)",a,b);
+	for (i=0; i<count; i++)
+	{
+		sample[i] = random_triangle(a,b);
+		if (!finite(sample[i]))
+			output_test("Sample %d is not a finite number!",i--);
+	}
+	report(NULL,0,0);
+	report("Mean",mean(sample,count),(a+b)/2);
+	report("Stdev",stdev(sample,count),sqrt((a-b)*(a-b)/24));
 
 	/* sampled distribution test */
 	output_test("\nSampled(count=10, sample=[0..9])");

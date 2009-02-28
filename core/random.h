@@ -25,6 +25,7 @@ typedef enum {
 	RT_WEIBULL,		/**< Weibull distribution; double lambda, double k */
 	RT_GAMMA,		/**< Gamma distribution; double alpha, double beta */
 	RT_BETA,		/**< Beta distribution; double alpha, double beta */
+	RT_TRIANGLE,	/**< Triangle distribution; double a, double b */
 } RANDOMTYPE;
 
 #ifdef __cplusplus
@@ -43,6 +44,8 @@ extern "C" {
 	double random_exponential(double lambda);
 	double random_functional(char *text);
 	double random_beta(double alpha, double beta);
+	double random_triangle(double a, double b);
+	double random_triangle_asy(double a, double b, double c);
 	int random_apply(char *group_expression, char *property, RANDOMTYPE type, ...);
 	RANDOMTYPE random_type(char *name);
 	double random_value(RANDOMTYPE type, ...);
