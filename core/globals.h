@@ -51,7 +51,7 @@ GLOBAL unsigned global_version_minor INIT(REV_MINOR); /**< The software's minor 
 GLOBAL char global_command_line[1024]; /**< The current command-line */
 GLOBAL char global_environment[1024] INIT("batch"); /**< The processing environment in use */
 GLOBAL int global_quiet_mode INIT(FALSE); /**< The quiet mode flag */
-GLOBAL int global_warn_mode INIT(FALSE); /**< The warning mode flag */
+GLOBAL int global_warn_mode INIT(TRUE); /**< The warning mode flag */
 GLOBAL int global_debug_mode INIT(FALSE); /**< Enables the debugger */
 GLOBAL int global_test_mode INIT(FALSE); /**< The test mode flag */
 GLOBAL int global_verbose_mode INIT(FALSE); /**< The verbose mode flag */

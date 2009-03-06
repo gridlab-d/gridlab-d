@@ -941,21 +941,110 @@ static int real_value(PARSER, double *value)
 static int functional(PARSER, double *pValue)
 {
 	char32 fname;
-	double a, b;
 	START;
 	if WHITE ACCEPT;
-	if (LITERAL("random.") && TERM(name(HERE,fname,sizeof(fname))) && LITERAL("(") && (WHITE,TERM(real_value(HERE,&a))) && LITERAL(",") && (WHITE,TERM(real_value(HERE,&b))) && (WHITE,LITERAL(")")))
+	if (LITERAL("random.") && TERM(name(HERE,fname,sizeof(fname))))
 	{
 		RANDOMTYPE rtype = random_type(fname);
-		if (rtype==RT_INVALID)
+		int nargs = random_nargs(fname);
+		double a;
+		if (rtype==RT_INVALID || nargs==0 || WHITE,!LITERAL("("))
 		{
 			output_message("%s(%d): %s is not a valid random distribution", filename,linenum,fname);
 			REJECT;
 		}
-		else
+		if (nargs==-1)
 		{
-			*pValue = random_value(rtype,a,b);
-			ACCEPT;
+			if (WHITE,TERM(real_value(HERE,&a)))
+			{
+				double b[1024];
+				int maxb = sizeof(b)/sizeof(b[0]);
+				int n;
+				b[0] = a;
+				for (n=1; n<maxb && WHITE,LITERAL(","); n++)
+				{
+					if (WHITE,TERM(real_value(HERE,&b[n])))
+						continue;
+					else
+					{
+						// variable arg list
+						output_message("%s(%d): expected a %s distribution term after ,", filename,linenum, fname);
+						REJECT;
+					}
+				}
+				if (WHITE,LITERAL(")"))
+				{
+					*pValue = random_value(rtype,n,b);
+					ACCEPT;
+				}
+				else
+				{
+					output_message("%s(%d): missing ) after %s distribution terms", filename,linenum, fname);
+					REJECT;
+				}
+			}
+			else
+			{
+				output_message("%s(%d): expected first term of %s distribution", filename,linenum, fname);
+				REJECT;
+			}
+		}
+		else 
+		{
+			if (WHITE,TERM(real_value(HERE,&a)))
+			{
+				// fixed arg list
+				double b,c;
+				if (nargs==1)
+				{
+					if (WHITE,LITERAL(")"))
+					{
+						*pValue = random_value(rtype,a);
+						ACCEPT;
+					}
+					else
+					{
+						output_message("%s(%d): expected ) after %s distribution term", filename,linenum, fname);
+						REJECT;
+					}
+				}
+				else if (nargs==2)
+				{
+					if ( WHITE,LITERAL(",") && (WHITE,TERM(real_value(HERE,&b))) && (WHITE,LITERAL(")")))
+					{
+						*pValue = random_value(rtype,a,b);
+						ACCEPT;
+					}
+					else
+					{
+						output_message("%s(%d): missing second %s distribution term and/or )", filename,linenum, fname);
+						REJECT;
+					}
+				}
+				else if (nargs==3)
+				{
+					if ( WHITE,LITERAL(",") && (WHITE,TERM(real_value(HERE,&b))) && WHITE,LITERAL(",") && (WHITE,TERM(real_value(HERE,&c))) && (WHITE,LITERAL(")")))
+					{
+						*pValue = random_value(rtype,a,b,c);
+						ACCEPT;
+					}
+					else
+					{
+						output_message("%s(%d): missing terms and/or ) in %s distribution ", filename,linenum, fname);
+						REJECT;
+					}
+				}
+				else
+				{
+					output_message("%s(%d): %d terms is not supported", filename,linenum, nargs);
+					REJECT;
+				}
+			}
+			else
+			{
+				output_message("%s(%d): expected first term of %s distribution", filename,linenum, fname);
+				REJECT;
+			}
 		}
 	} else if TERM(real_value(HERE,pValue)){
 		ACCEPT;

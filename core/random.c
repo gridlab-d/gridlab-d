@@ -51,35 +51,49 @@ int random_init(void)
 
 /** Converts a distribution name to a #RANDOMTYPE
  **/
+static struct {
+	char *name;
+	RANDOMTYPE type;
+	int nargs;
+} *p, map[] = {
+	/* tested */
+	{"degenerate", RT_DEGENERATE,1},
+	{"uniform",RT_UNIFORM,2},
+	{"normal",RT_NORMAL,2},
+	{"bernoulli",RT_BERNOULLI,1},
+	{"sampled",RT_SAMPLED,-1},
+	{"pareto",RT_PARETO,2},
+	{"lognormal",RT_LOGNORMAL,2},
+	{"exponential",RT_EXPONENTIAL,1},
+	{"rayleigh",RT_RAYLEIGH,1},
+	/* untested */
+	{"weibull",RT_WEIBULL,2},
+	{"gamma",RT_GAMMA,1},
+	{"beta",RT_BETA,2},
+	{"triangle",RT_TRIANGLE,2},
+	/** @todo Add some other distributions (e.g., Cauchy, Laplace)  (ticket #56)*/
+};
+/** Converts a distribution name to a #RANDOMTYPE
+ **/
 RANDOMTYPE random_type(char *name) /**< the name of the distribution */
 {
-	struct {
-		char *name;
-		RANDOMTYPE type;
-	} *p, map[] = {
-		/* tested */
-		{"degenerate", RT_DEGENERATE},
-		{"uniform",RT_UNIFORM},
-		{"normal",RT_NORMAL},
-		{"bernoulli",RT_BERNOULLI},
-		{"sampled",RT_SAMPLED},
-		{"pareto",RT_PARETO},
-		{"lognormal",RT_LOGNORMAL},
-		{"exponential",RT_EXPONENTIAL},
-		{"rayleigh",RT_RAYLEIGH},
-		/* untested */
-		{"weibull",RT_WEIBULL},
-		{"gamma",RT_GAMMA},
-		{"beta",RT_BETA},
-		/** @todo Add some other distributions (e.g., Cauchy, Laplace)  (ticket #56)*/
-		{"triangle",RT_TRIANGLE},
-	};
 	for (p=map; p<map+sizeof(map)/sizeof(map[0]); p++)
 	{
 		if (strcmp(p->name,name)==0)
 			return p->type;
 	}
 	return RT_INVALID;
+}
+/** Gets the number of arguments required by distribution (0=failed, -1=variable)
+ **/
+int random_nargs(char *name)
+{
+	for (p=map; p<map+sizeof(map)/sizeof(map[0]); p++)
+	{
+		if (strcmp(p->name,name)==0)
+			return p->nargs;
+	}
+	return 0;
 }
 
 /* uniform distribution in range (0,1( */
@@ -408,11 +422,13 @@ static double _random_value(RANDOMTYPE type, va_list ptr)
 {
 	switch (type) {
 	case RT_DEGENERATE:/* ... double value */
-		return random_degenerate(va_arg(ptr,double));
+		{	double a = va_arg(ptr,double);
+			return random_degenerate(a);
+		}
 	case RT_UNIFORM:		/* ... double min, double max */
 		{	double min = va_arg(ptr,double);
 			double max = va_arg(ptr,double);
-			return random_normal(min,max);
+			return random_uniform(min,max);
 		}
 	case RT_NORMAL:		/* ... double mean, double stdev */
 		{	double mu = va_arg(ptr,double);

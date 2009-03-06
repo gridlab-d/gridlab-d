@@ -48,6 +48,7 @@ extern "C" {
 	double random_triangle_asy(double a, double b, double c);
 	int random_apply(char *group_expression, char *property, RANDOMTYPE type, ...);
 	RANDOMTYPE random_type(char *name);
+	int random_nargs(char *name);
 	double random_value(RANDOMTYPE type, ...);
 	double pseudorandom_value(RANDOMTYPE, unsigned int *state, ...);
 #ifdef __cplusplus

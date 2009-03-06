@@ -332,10 +332,11 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 	case AGGR_GAMMA:
 		return 1 + numerator/(denominator-numerator*log(secondary));
 	case AGGR_STD:
-		return sqrt((secondary + numerator*numerator/denominator)/(denominator-1)) * scale;
+		return sqrt((secondary - numerator*numerator/denominator)/(denominator-1)) * scale;
 	case AGGR_VAR:
-		return (secondary + numerator*numerator/denominator) / (denominator-1) * scale;
+		return (secondary - numerator*numerator/denominator) / (denominator-1) * scale;
 	case AGGR_MBE:
+		/** @todo the MBE should be done without a secondary loop (e.g., compute the mean from sum/count already collected) */
 		v = 0.0;
 		m = numerator/denominator;
 		for (obj=find_first(aggr->last); obj!=NULL; obj=find_next(aggr->last,obj)){
