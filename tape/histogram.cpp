@@ -31,7 +31,7 @@ histogram::histogram(MODULE *mod)
 {
 	if(oclass == NULL)
 	{
-		gl_error("constructor");
+		gl_debug("construction histogram class");
 		oclass = gl_register_class(mod,"histogram",sizeof(histogram), PC_PRETOPDOWN);
         if(oclass == NULL)
             GL_THROW("unable to register object class implemented by %s",__FILE__);
