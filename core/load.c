@@ -948,7 +948,7 @@ static int functional(PARSER, double *pValue)
 		RANDOMTYPE rtype = random_type(fname);
 		int nargs = random_nargs(fname);
 		double a;
-		if (rtype==RT_INVALID || nargs==0 || WHITE,!LITERAL("("))
+		if (rtype==RT_INVALID || nargs==0 || (WHITE,!LITERAL("(")))
 		{
 			output_message("%s(%d): %s is not a valid random distribution", filename,linenum,fname);
 			REJECT;
@@ -961,7 +961,7 @@ static int functional(PARSER, double *pValue)
 				int maxb = sizeof(b)/sizeof(b[0]);
 				int n;
 				b[0] = a;
-				for (n=1; n<maxb && WHITE,LITERAL(","); n++)
+				for (n=1; n<maxb && (WHITE,LITERAL(",")); n++)
 				{
 					if (WHITE,TERM(real_value(HERE,&b[n])))
 						continue;
@@ -1010,7 +1010,7 @@ static int functional(PARSER, double *pValue)
 				}
 				else if (nargs==2)
 				{
-					if ( WHITE,LITERAL(",") && (WHITE,TERM(real_value(HERE,&b))) && (WHITE,LITERAL(")")))
+					if ( (WHITE,LITERAL(",")) && (WHITE,TERM(real_value(HERE,&b))) && (WHITE,LITERAL(")")))
 					{
 						*pValue = random_value(rtype,a,b);
 						ACCEPT;
@@ -1023,7 +1023,7 @@ static int functional(PARSER, double *pValue)
 				}
 				else if (nargs==3)
 				{
-					if ( WHITE,LITERAL(",") && (WHITE,TERM(real_value(HERE,&b))) && WHITE,LITERAL(",") && (WHITE,TERM(real_value(HERE,&c))) && (WHITE,LITERAL(")")))
+					if ( (WHITE,LITERAL(",")) && (WHITE,TERM(real_value(HERE,&b))) && WHITE,LITERAL(",") && (WHITE,TERM(real_value(HERE,&c))) && (WHITE,LITERAL(")")))
 					{
 						*pValue = random_value(rtype,a,b,c);
 						ACCEPT;
@@ -1703,6 +1703,110 @@ static int pathname(PARSER, char *path, int size)
 	DONE;
 }
 
+/** Expanded values support in-place expansion of special context sensitive variables.
+	Expanded values are enclosed in backquotes. The variables are specified using the 
+	{varname} syntax.  The following variables are supported:
+
+	{file} embeds the current file (full path,name,extension)
+	{filename} embeds the name of the file (no path, no extension)
+	{fileext} embeds the extension of the file (no path, no name)
+	{filepath} embeds the path of the file (no name, no extension)
+	{line} embeds the current line number
+	{namespace} embeds the name of the current namespace
+	{class}	embeds the classname of the current object
+	{id} embeds the id of the current object
+	{var} embeds the current value of the current object's variable <var>
+
+ **/
+static OBJECT *current_object = NULL; /* context object */
+static MODULE *current_module = NULL; /* context module */
+static int expanded_value(char *text, char *result, int size)
+{
+	int n=0;
+	if (text[n] == '`')
+	{
+		n++;
+		memset(result,0,size--); /* preserve the string terminator even when buffer is full */
+		for ( ; text[n]!='`'; n++)
+		{
+			if (size==0)
+			{
+				output_message("%s(%d): string expansion buffer overrun", filename, linenum);
+				return 0;
+			}
+			if (text[n]=='{')
+			{
+				char varname[256];
+				char value[1024];
+				if (sscanf(text+n+1,"%255[a-zA-Z0-9_]",varname)==0)
+				{
+					output_message("%s(%d): expanded string variable syntax error", filename, linenum);
+					return 0;
+				}
+				n+=(int)strlen(varname)+1;
+				if (text[n]!='}')
+				{
+					output_message("%s(%d): expanded string variable missing closing }", filename, linenum);
+					return 0;
+				}
+
+				/* expanded specials variables */
+				if (strcmp(varname,"file")==0)
+					strcpy(value,filename);
+				else if (strcmp(varname,"filename")==0)
+					strcpy(value,filename); /** @todo get base name */
+				else if (strcmp(varname,"filepath")==0)
+					strcpy(value,filename); /** @todo get path name */
+				else if (strcmp(varname,"fileext")==0)
+					strcpy(value,filename); /** @todo get extension */
+				else if (strcmp(varname,"namespace")==0)
+					object_namespace(value,sizeof(value));
+				else if (strcmp(varname,"class")==0)
+					strcpy(value,current_object?current_object->oclass->name:"");
+				else if (strcmp(varname,"id")==0)
+				{
+					if (current_object)
+						sprintf(value,"%d",current_object->id);
+					else
+						strcpy(value,"");
+				}
+				else if (!object_get_value_by_name(current_object,varname,value,sizeof(value)))
+				{
+					output_message("%s(%d): variable '%s' not found in this context", filename, linenum, varname);
+					return 0;
+				}
+
+				/* accept the value */
+				if ((int)strlen(value)>=size)
+				{
+					output_message("%s(%d): string expansion buffer overrun", filename, linenum);
+					return 0;
+				}
+				strcat(result,value);
+				size -= (int)strlen(value);
+				result += strlen(value);
+			}
+			else
+			{
+				*result++ = text[n];
+				size--;
+			}
+		}
+		if (text[n+1]==';')
+			return n+1;
+		else
+		{
+			output_message("%s(%d): missing terminating ;", filename, linenum);
+			return 0;
+		}
+	}
+	else
+		return value(text,result,size);
+}
+
+/** Line specs are generated internally to maintain proper filename and line number context. 
+	Line specs are always alone on a line and take the form @pathname;linenum
+ **/
 static int line_spec(PARSER)
 {
 	char fname[1024];
@@ -1842,7 +1946,9 @@ static int module_properties(PARSER, MODULE *mod)
 	}
 	OR if (TERM(name(HERE,propname,sizeof(propname))) && (WHITE))
 	{
-		if TERM(value(HERE,propvalue,sizeof(propvalue)))
+		current_object = NULL; /* object context */
+		current_module = mod; /* module context */
+		if TERM(expanded_value(HERE,propvalue,sizeof(propvalue)))
 		{
 			if WHITE ACCEPT;
 			if LITERAL(";")
@@ -2721,6 +2827,8 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	{
 		PROPERTY *prop = class_find_property(oclass,propname);
 		OBJECT *subobj=NULL;
+		current_object = obj; /* object context */
+		current_module = obj->oclass->module; /* module context */
 		if (prop!=NULL && prop->ptype==PT_object && TERM(object_block(HERE,NULL,&subobj)))
 		{
 			char objname[64];
@@ -2778,7 +2886,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			else
 				ACCEPT;
 		}
-		else if TERM(value(HERE,propval,sizeof(propval)))
+		else if TERM(expanded_value(HERE,propval,sizeof(propval)))
 		{
 			if (prop==NULL)
 			{
@@ -2966,11 +3074,36 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 #ifdef NAMEOBJ
 	static OBJECT nameobj;
 #endif
+	FULLNAME space;
 	CLASSNAME classname;
 	CLASS *oclass;
 	OBJECT *obj=NULL;
 	int64 id=-1, id2=-1;
 	START;
+
+	if WHITE ACCEPT;
+	if (LITERAL("namespace") && (WHITE,TERM(name(HERE,space,sizeof(space)))) && (WHITE,LITERAL("{")))
+	{
+		if (!object_open_namespace(space))
+		{
+			output_message("%s(%d): namespace %s could not be opened", filename, linenum, space);
+			REJECT;
+		}
+
+		while (TERM(object_block(HERE,parent,subobj))) {LITERAL(";");}
+		while (WHITE);
+		if (LITERAL("}"))
+		{	object_close_namespace();
+			ACCEPT;
+			DONE;
+		}
+		else
+		{
+			output_message("%s(%d): namespace %s missing closing }", filename, linenum, space);
+			REJECT;
+		}
+	}
+
 	if WHITE ACCEPT;
 	if (LITERAL("object") && WHITE) ACCEPT else REJECT /* enforced whitespace */
 	//if WHITE ACCEPT;
@@ -3082,7 +3215,9 @@ static int import(PARSER)
 	{
 		if (TERM(name(HERE,modname,sizeof(modname))) && WHITE) /* enforced whitespace */
 		{
-			if TERM(value(HERE,fname,sizeof(fname)))
+			current_object = NULL; /* object context */
+			current_module = NULL; /* module context */
+			if TERM(expanded_value(HERE,fname,sizeof(fname)))
 			{
 				if LITERAL(";")
 				{

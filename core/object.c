@@ -222,6 +222,7 @@ OBJECT *object_create_single(CLASS *oclass) /**< the class of the object */
 	obj->longitude = QNAN;
 	obj->in_svc = TS_ZERO;
 	obj->out_svc = TS_NEVER;
+	obj->space = object_current_namespace();
 	obj->flags = OF_NONE;
 	if (first_object==NULL)
 		first_object = obj;
@@ -1552,6 +1553,92 @@ void remove_objects()
 	}
 
 	next_object_id = 0;
+}
+
+/*****************************************************************************************************
+ * name space support
+ *****************************************************************************************************/
+NAMESPACE *current_namespace = NULL;
+static int _object_namespace(NAMESPACE *space,char *buffer,int size)
+{
+	int n=0;
+	if (space==NULL)
+		return 0;
+	n += _object_namespace(space->next,buffer,size);
+	if (buffer[0]!='\0') 
+	{
+		strcat(buffer,"::"); 
+		n++;
+	}
+	strcat(buffer,space->name);
+	n+=(int)strlen(space->name);
+	return n;
+}
+/** Get the full namespace of current space
+	@return the full namespace spec
+ **/
+void object_namespace(char *buffer, int size)
+{
+	strcpy(buffer,"");
+	_object_namespace(current_namespace,buffer,size);
+}
+
+/** Get full namespace of object's space
+	@return 1 if in subspace, 0 if global namespace
+ **/
+int object_get_namespace(OBJECT *obj, char *buffer, int size)
+{
+	strcpy(buffer,"");
+	_object_namespace(obj->space,buffer,size);
+	return obj->space!=NULL;
+}
+
+/** Get the current namespace
+    @return pointer to namespace or NULL is global
+ **/
+NAMESPACE *object_current_namespace()
+{
+	return current_namespace;
+}
+
+/** Opens a new namespace within the current name space
+	@return 1 on success, 0 on failure
+ **/
+int object_open_namespace(char *space)
+{
+	NAMESPACE *ns = malloc(sizeof(NAMESPACE));
+	if (ns==NULL)
+	{
+		throw_exception("object_open_namespace(char *space='%s'): memory allocation failure", space);
+		return 0;
+	}
+	strncpy(ns->name,space,sizeof(ns->name));
+	ns->next = current_namespace;
+	current_namespace = ns;
+	return 1;
+}
+
+/** Closes the current namespace
+    @return 1 on success, 0 on failure
+ **/
+int object_close_namespace()
+{
+	if (current_namespace==NULL)
+	{
+		throw_exception("object_close_namespace(): no current namespace to close");
+		return 0;
+	}
+	current_namespace = current_namespace->next;
+	return 1;
+}
+
+/** Makes the namespace active
+    @return 1 on success, 0 on failure
+ **/
+int object_select_namespace(char *space)
+{
+	output_error("namespace selection not yet supported");
+	return 0;
 }
 
 /** @} **/

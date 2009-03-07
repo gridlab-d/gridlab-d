@@ -542,6 +542,17 @@ Retry:
 				}
 			}
 		}
+		else if (strncmp(cmd,"namespace",max(2,strlen(cmd)))==0)
+		{
+			char space[1024];
+			if (sscanf(buffer,"%*s %s", space)==0)
+			{
+				object_namespace(space,sizeof(space));
+				output_debug("%s",space[0]=='\0'?space:"(global)");
+			}
+			else if (!object_select_namespace(space))
+				output_debug("unable to select namespace '%s'", space);
+		}
 		else if (strncmp(cmd,"list",max(1,strlen(cmd)))==0)
 		{
 			char lclass[256]="";
@@ -611,7 +622,7 @@ Retry:
 			else
 				output_error("unnamed command syntax error");
 		}
-		else if (strncmp(cmd,"nsync",max(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"nsync",max(2,strlen(cmd)))==0)
 		{
 			char cmd[1024];
 			int n = sscanf(buffer,"%*s %[^\0]", cmd);

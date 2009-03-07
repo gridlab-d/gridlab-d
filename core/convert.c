@@ -637,14 +637,26 @@ int convert_from_object(char *buffer, /**< pointer to the string buffer */
 	char temp[256];
 	if (obj==NULL)
 		return 0;
+
+	/* get the object's namespace */
+	if (object_current_namespace()!=obj->space)
+	{
+		if (object_get_namespace(obj,buffer,size))
+			strcat(buffer,"::");
+	}
+	else
+		strcpy(buffer,"");
+
 	if (obj->name != NULL){
 		if ((strlen(obj->name) != 0) && (strlen(obj->name) < (size_t)(size - 1))){
-			strcpy(buffer, obj->name);
+			strcat(buffer, obj->name);
 			return 1;
 		}
 	}
+
+	/* construct the object's name */
 	if (sprintf(temp,global_object_format,obj->oclass->name,obj->id)<size)
-		strcpy(buffer,temp);
+		strcat(buffer,temp);
 	else
 		return 0;
 	return 1;

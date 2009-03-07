@@ -21,6 +21,7 @@ typedef unsigned int OBJECTRANK; /**< Object rank number */
 typedef unsigned short OBJECTSIZE; /** Object data size */
 typedef unsigned int OBJECTNUM; /** Object id number */
 typedef char * OBJECTNAME; /** Object name */
+typedef char FULLNAME[1024]; /** Full object name (including space name) */
 
 /* object flags */
 #define OF_NONE		0x0000 /**< Object flag; none set */
@@ -30,6 +31,11 @@ typedef char * OBJECTNAME; /** Object name */
 #define OF_FOREIGN	0x0010 /**< Object flag; indicates that object was created in a DLL and memory cannot be freed by core */
 #define OF_SKIPSAFE	0x0020 /**< Object flag; indicates that skipping updates is safe */
 #define OF_RERANK	0x4000 /**< Internal use only */
+
+typedef struct s_namespace {
+	FULLNAME name;
+	struct s_namespace *next;
+} NAMESPACE;
 
 typedef struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
@@ -44,6 +50,7 @@ typedef struct s_object_list {
 		out_svc; /**< time at which object ceases operating */
 	OBJECTNAME name;
 	int tp_affinity; /**< threadpool processor affinity */
+	NAMESPACE *space; /**< namespace of object */
 	unsigned long flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 } OBJECT; /**< Object header structure */
@@ -241,10 +248,18 @@ double convert_to_longitude(char *buffer);
 PROPERTY *object_flag_property(void);
 PROPERTY *object_access_property(void);
 
+NAMESPACE *object_current_namespace(); /**< access the current namespace */
+void object_namespace(char *buffer, int size); /**< get the namespace */
+int object_get_namespace(OBJECT *obj, char *buffer, int size); /**< get the object's namespace */
+int object_open_namespace(char *space); /**< open a new namespace and make it current */
+int object_close_namespace(); /**< close the current namespace and restore the previous one */
+int object_select_namespace(char *space); /**< change to another namespace */
+int object_push_namespace(char *space); /**< change to another namespace and push the one onto a stack */
+NAMESPACE *object_pop_namespace(); /**< restore the previous namespace from stack */
+
 #ifdef __cplusplus
 }
 #endif
-
 
 #define object_size(X) ((X)?(X)->size:-1) /**< get the size of the object X */
 #define object_id(X) ((X)?(X)->id:-1) /**< get the id of the object X */
