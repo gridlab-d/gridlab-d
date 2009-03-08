@@ -218,6 +218,51 @@ static char *forward_slashes(char *a)
 	return buffer;
 }
 
+/* extract parts of a filename */
+static void filename_parts(char *fullname, char *path, char *name, char *ext)
+{
+	/* fix delimiters (result is a static copy) */
+	char *file = forward_slashes(fullname);
+
+	/* find the last delimiter */
+	char *s = strrchr(file,'/');
+
+	/* find the last dot */
+	char *e = strrchr(file,'.');
+
+	/* clear results */
+	path[0] = name[0] = ext[0] = '\0';
+	
+	/* if both found but dot is before delimiter */
+	if (e && s && e<s) 
+		
+		/* there is not extension */
+		e = NULL;
+	
+	/* copy extension (if any) and terminate filename at dot */
+	if (e)
+	{
+		strcpy(ext,e+1);
+		*e = '\0';
+	}
+
+	/* if path is given */
+	if (s)
+	{
+		/* copy name and terminate path */
+		strcpy(name,s+1);
+		*s = '\0';
+
+		/* copy path */
+		strcpy(path,file);
+	}
+
+	/* otherwise copy everything */
+	else
+		strcpy(name,file);
+}
+
+
 static int append_init(char* format,...)
 {
 	char code[1024];
@@ -1738,6 +1783,9 @@ static int expanded_value(char *text, char *result, int size)
 			{
 				char varname[256];
 				char value[1024];
+				char path[1024], name[1024], ext[1024];
+				filename_parts(filename,path,name,ext);
+
 				if (sscanf(text+n+1,"%255[a-zA-Z0-9_]",varname)==0)
 				{
 					output_message("%s(%d): expanded string variable syntax error", filename, linenum);
@@ -1754,11 +1802,11 @@ static int expanded_value(char *text, char *result, int size)
 				if (strcmp(varname,"file")==0)
 					strcpy(value,filename);
 				else if (strcmp(varname,"filename")==0)
-					strcpy(value,filename); /** @todo get base name */
+					strcpy(value,name);
 				else if (strcmp(varname,"filepath")==0)
-					strcpy(value,filename); /** @todo get path name */
+					strcpy(value,path); 
 				else if (strcmp(varname,"fileext")==0)
-					strcpy(value,filename); /** @todo get extension */
+					strcpy(value,ext);
 				else if (strcmp(varname,"namespace")==0)
 					object_namespace(value,sizeof(value));
 				else if (strcmp(varname,"class")==0)

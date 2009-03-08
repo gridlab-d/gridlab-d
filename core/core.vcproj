@@ -845,15 +845,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -894,6 +894,10 @@
 			</File>
 			<File
 				RelativePath="..\core\test\metronome.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\namespace.glm"
 				>
 			</File>
 			<File
