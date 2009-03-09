@@ -41,7 +41,9 @@ typedef struct s_tmy {
  * to pull specific information from the TMY2 raw format, including latitude
  * information contained in the TMY2 header.  Header information will be 
  * maintained for the lifetime of the reader, as it may be needed to populate
- * columns of the TMY2 structure for later use.
+ * columns of the TMY2 structure for later use.  Leap years are handled by 
+ * treating February 29th and March 1 as numerically equivalent.  IE on a
+ * leap year, March 1 data is repeated for February 29th.
  */
 class tmy2_reader{
 private:
