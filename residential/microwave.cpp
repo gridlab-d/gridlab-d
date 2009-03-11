@@ -123,7 +123,7 @@ double microwave::update_state(double dt)
 		if (state_time>runtime)
 		{
 			state = ON;
-			runtime = gl_random_sampled(sizeof(rt),rt);
+			runtime = gl_random_sampled(sizeof(rt)/sizeof(rt[0]),rt);
 			state_time = 0;
 		}
 		else
@@ -158,7 +158,7 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	double dt = update_state(gl_toseconds(t1-t0));
 
-	return dt>0?(TIMESTAMP)(dt*TS_SECOND):TS_NEVER; 
+	return dt>0?(TIMESTAMP)(t0+dt*TS_SECOND):TS_NEVER; 
 }
 
 //////////////////////////////////////////////////////////////////////////

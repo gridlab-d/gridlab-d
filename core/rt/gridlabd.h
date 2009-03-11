@@ -534,6 +534,11 @@ struct s_class_list {
 	CLASS *next;
 };
 
+typedef struct s_namespace {
+	FULLNAME name;
+	struct s_namespace *next;
+} NAMESPACE;
+
 struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
 	CLASS *oclass; /**< object class; determine structure of object data */
@@ -547,6 +552,7 @@ struct s_object_list {
 		out_svc; /**< time at which object ceases operating */
 	OBJECTNAME name;
 	int tp_affinity; /**< threadpool processor affinity */
+	NAMESPACE *space; /**< namespace of object */
 	unsigned long flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 }; /**< Object header structure */
