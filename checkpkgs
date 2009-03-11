@@ -53,7 +53,7 @@ if [ -f VERSION ]; then
 	elif [ ! -f REV ]; then
 		echo "ERROR: REV file not found; this release is faulty"
 	elif [ -f core/version.h ]; then
-		. REV
+		. ./REV
 		if [ -z "$BUILD" ]; then
 			echo "ERROR: REV file does not specify BUILD"
 		else
