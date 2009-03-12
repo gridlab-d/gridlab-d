@@ -126,7 +126,7 @@ int freezer::init(OBJECT *parent)
 
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 	{
-		gl_error("dishwasher must have a parent house");
+		gl_error("freezer must have a parent house");
 		return 0;
 	}
 
