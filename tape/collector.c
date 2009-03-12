@@ -98,36 +98,11 @@ static int collector_open(OBJECT *obj)
 	if(my->ops == NULL)
 		return 0;
 	return my->ops->open(my, fname, flags);
-	/*
-	if (strcmp(type,"file")==0)
-		return file_open_collector(my,fname,flags);
-	else if (strcmp(type,"odbc")==0)
-		return odbc_open_collector(my,fname,flags);
-	else if (strcmp(type,"memory")==0)
-		return memory_open_collector(my,fname,flags);
-	else
-		return 0;
-	*/
 }
 
 static int write_collector(struct collector *my, char *ts, char *value)
 {
 	return my->ops->write(my, ts, value);
-
-	switch (my->type) {
-	case FT_FILE:
-		return file_write_collector(my,ts,value);
-		break;
-	case FT_ODBC:
-		return odbc_write_collector(my,ts,value);
-		break;
-	case FT_MEMORY:
-		return memory_write_collector(my,ts,value);
-		break;
-	default:
-		return 0;
-		break;
-	}
 }
 
 static TIMESTAMP collector_write(OBJECT *obj)
@@ -144,18 +119,10 @@ static TIMESTAMP collector_write(OBJECT *obj)
 	if ((my->limit>0 && my->samples>my->limit) /* limit reached */
 		|| write_collector(my,ts,my->last.value)==0) /* write failed */
 	{
-		switch (my->type) {
-		case FT_FILE:
-			file_close_collector(my);
-			break;
-		case FT_ODBC:
-			odbc_close_collector(my);
-			break;
-		case FT_MEMORY:
-			memory_close_collector(my);
-			break;
-		default:
-			break;
+		if (my->ops){
+			my->ops->close(my);
+		} else {
+			gl_error("collector_write: no TAPEOP structure when closing the tape");
 		}
 		my->status = TS_DONE;
 	}

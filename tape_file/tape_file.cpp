@@ -491,6 +491,7 @@ EXPORT void close_collector(struct collector *my)
 		fprintf(my->fp,"# end of tape\n");
 		fclose(my->fp);
 	}
+	my->fp = 0;
 }
 
 /**@}*/
