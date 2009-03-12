@@ -31,9 +31,12 @@ public:
 	double Qr;		///< heat rate from the cooling system
 	double COPcoef;	///< compressor COP
 
-	complex power_kw;				// total power demand [kW]
+	//complex power_kw;				// total power demand [kW]
 	double power_factor;
-	double kwh_meter;				// energy used since start of simulation [kWh] 
+	//double kwh_meter;				// energy used since start of simulation [kWh] 
+
+	ENDUSELOAD load;
+	TIMESTAMP last_time;
 
 public:
 

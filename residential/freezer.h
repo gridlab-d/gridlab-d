@@ -35,6 +35,8 @@ public:
 	double power_factor;
 	double kwh_meter;				// energy used since start of simulation [kWh] 
 
+	ENDUSELOAD load;
+	TIMESTAMP last_time;
 public:
 
 	static CLASS *oclass;

@@ -78,9 +78,17 @@ refrigerator::refrigerator(MODULE *module)
 		if (gl_publish_variable(oclass,
 			PT_double, "size [cf]", PADDR(size),
 			PT_double, "rated_capacity [Btu/h]", PADDR(rated_capacity),
-			PT_complex,"power[kW]",PADDR(power_kw),
+			//PT_complex,"power[kW]",PADDR(power_kw),
 			PT_double,"power_factor[pu]",PADDR(power_factor),
-			PT_double,"meter[kWh]",PADDR(kwh_meter),
+			//PT_double,"meter[kWh]",PADDR(kwh_meter),
+
+			PT_complex,"enduse_load[kW]",PADDR(load.total),
+			PT_complex,"constant_power[kW]",PADDR(load.power),
+			PT_complex,"constant_current[A]",PADDR(load.current),
+			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
+			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
+			PT_double,"energy_meter[kWh]",PADDR(load.energy),
+
 			NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -118,7 +126,7 @@ int refrigerator::init(OBJECT *parent)
 
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 	{
-		gl_error("dishwasher must have a parent house");
+		gl_error("refrigerator must have a parent house");
 		return 0;
 	}
 
@@ -139,11 +147,9 @@ int refrigerator::init(OBJECT *parent)
 	else
 		Qr = 0;
 
-	// attach object to house panel
-	pVoltage = (pHouse->attach(OBJECTHDR(this),20,false))->pV;
-
 	// initial demand
-	power_kw = rated_capacity*KWPBTUPH;  //stubbed-in default
+	//power_kw = rated_capacity*KWPBTUPH;  //stubbed-in default
+	load.total = rated_capacity * KWPBTUPH;
 
 	return 1;
 }
@@ -152,8 +158,15 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	double nHours = (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND;
 
+	if(t0 == t1)
+		return last_time;
+
 	// sync to house
-	Tout = pHouse->get_Tair();
+	if(pHouse){
+		Tout = pHouse->get_Tair();
+	} else {
+		Tout = 70.0;
+	}
 
 	// compute control event temperatures
 	const double Ton = Tset+thermostat_deadband;
@@ -164,8 +177,10 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 	const double COP = COPcoef*((-3.5/45)*(Tout-70)+4.5);
 
 	// accumulate energy
-	kwh_meter = Qr*KWPBTUPH*COP*nHours;
-	power_kw = kwh_meter/nHours;
+	//kwh_meter = Qr*KWPBTUPH*COP*nHours;
+	load.energy = Qr * KWPBTUPH * COP * nHours;
+	//power_kw = kwh_meter/nHours;
+	load.total = load.energy/nHours;
 
 	// process all events
 	// change control mode if appropriate
@@ -200,12 +215,14 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (Tair < 32 || Tair > 55)
 			throw "refrigerator air temperature out of control";
 
-		return (TIMESTAMP)(t1+dt*3600.0/TS_SECOND);
+		last_time = (TIMESTAMP)(t1+dt*3600.0/TS_SECOND);
+		return last_time;
 	}
 	// internal event
 	else
 	{
 		Tair = Tevent;
+		last_time = TS_NEVER;
 		return TS_NEVER; 
 	}
 }
