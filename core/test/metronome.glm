@@ -4,10 +4,11 @@
 // and implemented as a runtime class by David Chassin
 //
 
-#set include="c:\projects\gridlab-d\trunk\source\core"
-#set debug=1
+#setenv path=c:\mingw\bin
+#set include="c:\projects\gridlab-d\trunk\core"
+//#set debug=1
 
-#include "msvc_debugger.glm"
+//#include "msvc_debugger.glm"
 
 // METRONOME
 

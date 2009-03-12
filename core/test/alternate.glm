@@ -1,0 +1,20 @@
+// $Id$
+// Copyright (C) 2008 Battelle Memorial Institute
+//
+// This can be used as an example and a test of namespaces 
+//
+
+#setenv path=c:\mingw\bin
+#set include="c:\projects\gridlab-d\trunk\core"
+#set savefile="namespace.xml"
+#set debugger=1
+#set debug=1
+
+module residential;
+
+object house:..100 {
+	object waterheater {
+		location (random.bernoulli(0.8)) ? INSIDE : GARAGE ;
+	};
+}
+

@@ -914,6 +914,22 @@ static int dotted_name(PARSER, char *result, int size)
 	DONE;
 }
 
+static int delim_value(PARSER, char *result, int size, char *delims)
+{
+	/* everything to any of delims */
+	int quote=0;
+	char *start=_p;
+	START;
+	if (*_p=='"')
+	{
+		quote=1;
+		*_p++;
+		size--;
+	}
+	while (size>1 && *_p!='\0' && ((quote&&*_p!='"') || strchr(delims,*_p)==NULL) && *_p!='\n') COPY(result);
+	result[_n]='\0';
+	return (int)(_p - start);
+}
 static int value(PARSER, char *result, int size)
 {
 	/* everything to a semicolon */
@@ -1765,7 +1781,7 @@ static int pathname(PARSER, char *path, int size)
  **/
 static OBJECT *current_object = NULL; /* context object */
 static MODULE *current_module = NULL; /* context module */
-static int expanded_value(char *text, char *result, int size)
+static int expanded_value(char *text, char *result, int size, char *delims)
 {
 	int n=0;
 	if (text[n] == '`')
@@ -1848,8 +1864,71 @@ static int expanded_value(char *text, char *result, int size)
 			return 0;
 		}
 	}
-	else
+	else if (delims==NULL)
 		return value(text,result,size);
+	else
+		return delim_value(text,result,size,delims);
+}
+
+/** alternate_value allows the use of ternary operations, e.g.,
+
+		 property (expression) ? negzero_value : positive_value ;
+
+ **/
+
+static int alternate_value(PARSER, char *value, int size)
+{
+	double test;
+	char value1[1024];
+	char value2[1024];
+	START;
+	if (WHITE) ACCEPT;
+	if (TERM(expression(HERE,&test,NULL,current_object)) && (WHITE,LITERAL("?")))
+	{
+		if ((WHITE,TERM(expanded_value(HERE,value1,sizeof(value1)," \t\n:"))) && (WHITE,LITERAL(":")) && (WHITE,TERM(expanded_value(HERE,value2,sizeof(value2)," \n\t;"))))
+		{
+			ACCEPT;
+			if (test>0)
+			{
+				if ((int)strlen(value1)>size)
+				{
+					output_message("%s(%d): alternate value 1 is too large ;", filename, linenum);
+					REJECT;
+				}
+				else
+				{
+					strcpy(value,value1);
+					ACCEPT;
+				}
+			}
+			else
+			{
+				if ((int)strlen(value2)>size)
+				{
+					output_message("%s(%d): alternate value 2 is too large ;", filename, linenum);
+					REJECT;
+				}
+				else
+				{
+					strcpy(value,value2);
+					ACCEPT;
+				}
+			}
+		}
+		else
+		{
+			output_message("%s(%d): missing or invalid alternate values;", filename, linenum);
+			REJECT;
+		}
+		DONE;
+	}
+	OR if (TERM(expanded_value(HERE,value,size,NULL)))
+	{
+		ACCEPT;
+		DONE
+	}
+	REJECT;
+	DONE;
 }
 
 /** Line specs are generated internally to maintain proper filename and line number context. 
@@ -1996,7 +2075,7 @@ static int module_properties(PARSER, MODULE *mod)
 	{
 		current_object = NULL; /* object context */
 		current_module = mod; /* module context */
-		if TERM(expanded_value(HERE,propvalue,sizeof(propvalue)))
+		if TERM(alternate_value(HERE,propvalue,sizeof(propvalue)))
 		{
 			if WHITE ACCEPT;
 			if LITERAL(";")
@@ -2934,7 +3013,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			else
 				ACCEPT;
 		}
-		else if TERM(expanded_value(HERE,propval,sizeof(propval)))
+		else if TERM(alternate_value(HERE,propval,sizeof(propval)))
 		{
 			if (prop==NULL)
 			{
@@ -3265,7 +3344,7 @@ static int import(PARSER)
 		{
 			current_object = NULL; /* object context */
 			current_module = NULL; /* module context */
-			if TERM(expanded_value(HERE,fname,sizeof(fname)))
+			if TERM(alternate_value(HERE,fname,sizeof(fname)))
 			{
 				if LITERAL(";")
 				{

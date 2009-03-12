@@ -315,8 +315,8 @@
 <xsl:for-each select="residential/lights_list/lights"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="type"/></TD><TD><xsl:value-of select="placement"/></TD><TD><xsl:value-of select="installed_power"/></TD><TD><xsl:value-of select="circuit_split"/></TD><TD><xsl:value-of select="demand"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="internal_gains"/></TD><TD><xsl:value-of select="energy_meter"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>refrigerator objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>size </TH><TH>rated_capacity </TH><TH>power</TH><TH>power_factor</TH><TH>meter</TH></TR>
-<xsl:for-each select="residential/refrigerator_list/refrigerator"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="size "/></TD><TD><xsl:value-of select="rated_capacity "/></TD><TD><xsl:value-of select="power"/></TD><TD><xsl:value-of select="power_factor"/></TD><TD><xsl:value-of select="meter"/></TD></TR>
+<TR><TH>Name</TH><TH>size </TH><TH>rated_capacity </TH><TH>power_factor</TH><TH>enduse_load</TH><TH>constant_power</TH><TH>constant_current</TH><TH>constant_admittance</TH><TH>internal_gains</TH><TH>energy_meter</TH></TR>
+<xsl:for-each select="residential/refrigerator_list/refrigerator"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="size "/></TD><TD><xsl:value-of select="rated_capacity "/></TD><TD><xsl:value-of select="power_factor"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="internal_gains"/></TD><TD><xsl:value-of select="energy_meter"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>clotheswasher objects</H4><TABLE BORDER="1">
 <TR><TH>Name</TH><TH>motor_power</TH><TH>power_factor</TH><TH>circuit_split</TH><TH>heat_fraction</TH><TH>enduse_demand</TH><TH>enduse_queue</TH><TH>enduse_load</TH><TH>constant_power</TH><TH>constant_current</TH><TH>constant_admittance</TH><TH>internal_gains</TH><TH>energy_meter</TH><TH>stall_voltage</TH><TH>start_voltage</TH><TH>stall_impedance</TH><TH>trip_delay</TH><TH>reset_delay</TH><TH>state</TH></TR>
@@ -343,8 +343,8 @@
 <xsl:for-each select="residential/range_list/range"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="installed_power"/></TD><TD><xsl:value-of select="circuit_split"/></TD><TD><xsl:value-of select="demand"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="internal_gains"/></TD><TD><xsl:value-of select="energy_meter"/></TD><TD><xsl:value-of select="heat_fraction"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>freezer objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>size </TH><TH>rated_capacity </TH><TH>power</TH><TH>power_factor</TH><TH>meter</TH></TR>
-<xsl:for-each select="residential/freezer_list/freezer"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="size "/></TD><TD><xsl:value-of select="rated_capacity "/></TD><TD><xsl:value-of select="power"/></TD><TD><xsl:value-of select="power_factor"/></TD><TD><xsl:value-of select="meter"/></TD></TR>
+<TR><TH>Name</TH><TH>size </TH><TH>rated_capacity </TH><TH>power</TH><TH>power_factor</TH><TH>meter</TH><TH>enduse_load</TH><TH>constant_power</TH><TH>constant_current</TH><TH>constant_admittance</TH><TH>internal_gains</TH><TH>energy_meter</TH></TR>
+<xsl:for-each select="residential/freezer_list/freezer"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="size "/></TD><TD><xsl:value-of select="rated_capacity "/></TD><TD><xsl:value-of select="power"/></TD><TD><xsl:value-of select="power_factor"/></TD><TD><xsl:value-of select="meter"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="internal_gains"/></TD><TD><xsl:value-of select="energy_meter"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>dryer objects</H4><TABLE BORDER="1">
 <TR><TH>Name</TH><TH>motor_power</TH><TH>power_factor</TH><TH>coil_power</TH><TH>circuit_split</TH><TH>heat_fraction</TH><TH>enduse_demand</TH><TH>enduse_queue</TH><TH>enduse_load</TH><TH>constant_power</TH><TH>constant_current</TH><TH>constant_admittance</TH><TH>internal_gains</TH><TH>energy_meter</TH><TH>stall_voltage</TH><TH>start_voltage</TH><TH>stall_impedance</TH><TH>trip_delay</TH><TH>reset_delay</TH><TH>state</TH></TR>
@@ -1689,9 +1689,13 @@ module residential {
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
 </xsl:if><xsl:if test="size ">	size  <xsl:value-of select="size "/>;
 </xsl:if><xsl:if test="rated_capacity ">	rated_capacity  <xsl:value-of select="rated_capacity "/>;
-</xsl:if><xsl:if test="power">	power <xsl:value-of select="power"/>;
 </xsl:if><xsl:if test="power_factor">	power_factor <xsl:value-of select="power_factor"/>;
-</xsl:if><xsl:if test="meter">	meter <xsl:value-of select="meter"/>;
+</xsl:if><xsl:if test="enduse_load">	enduse_load <xsl:value-of select="enduse_load"/>;
+</xsl:if><xsl:if test="constant_power">	constant_power <xsl:value-of select="constant_power"/>;
+</xsl:if><xsl:if test="constant_current">	constant_current <xsl:value-of select="constant_current"/>;
+</xsl:if><xsl:if test="constant_admittance">	constant_admittance <xsl:value-of select="constant_admittance"/>;
+</xsl:if><xsl:if test="internal_gains">	internal_gains <xsl:value-of select="internal_gains"/>;
+</xsl:if><xsl:if test="energy_meter">	energy_meter <xsl:value-of select="energy_meter"/>;
 </xsl:if>}
 </xsl:for-each>
 # residential::clotheswasher objects
@@ -1847,6 +1851,12 @@ module residential {
 </xsl:if><xsl:if test="power">	power <xsl:value-of select="power"/>;
 </xsl:if><xsl:if test="power_factor">	power_factor <xsl:value-of select="power_factor"/>;
 </xsl:if><xsl:if test="meter">	meter <xsl:value-of select="meter"/>;
+</xsl:if><xsl:if test="enduse_load">	enduse_load <xsl:value-of select="enduse_load"/>;
+</xsl:if><xsl:if test="constant_power">	constant_power <xsl:value-of select="constant_power"/>;
+</xsl:if><xsl:if test="constant_current">	constant_current <xsl:value-of select="constant_current"/>;
+</xsl:if><xsl:if test="constant_admittance">	constant_admittance <xsl:value-of select="constant_admittance"/>;
+</xsl:if><xsl:if test="internal_gains">	internal_gains <xsl:value-of select="internal_gains"/>;
+</xsl:if><xsl:if test="energy_meter">	energy_meter <xsl:value-of select="energy_meter"/>;
 </xsl:if>}
 </xsl:for-each>
 # residential::dryer objects

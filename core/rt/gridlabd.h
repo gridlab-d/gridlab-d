@@ -534,6 +534,7 @@ struct s_class_list {
 	CLASS *next;
 };
 
+typedef char FULLNAME[1024]; /** Full object name (including space name) */
 typedef struct s_namespace {
 	FULLNAME name;
 	struct s_namespace *next;
