@@ -3,7 +3,7 @@
 // commercial single-zone office test
 //
 
-#define NOFFICES=100
+#define NOFFICES=1
 
 clock {
 	timestamp '2001-01-01 0:00:00';

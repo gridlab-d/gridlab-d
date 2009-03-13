@@ -128,6 +128,7 @@ private:
 	double Qi, Qh, Qs, Qz;
 	double Teq, Tevent;
 	double r1, r2, k1, k2;
+	double c1, c2, c3, c6, dTi;
 	void update_control_setpoints();
 	double update_lighting(double dt);
 	double update_plugs(double dt);

@@ -239,7 +239,7 @@ int office::init(OBJECT *parent)
 	// link to climate data
 	static FINDLIST *climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
 	if (climates==NULL)
-		gl_warning("house: no climate data found, using static data");
+		gl_warning("office: no climate data found, using static data");
 	else if (climates->hit_count>1)
 		gl_warning("house: %d climates found, using first one defined", climates->hit_count);
 	if (climates->hit_count>0)
@@ -306,8 +306,25 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 	const double dt1 = t0>0 ? (double)(t1-t0)*TS_SECOND : 0;
 	if (dt1>0)
 	{
-		const double Ca = 0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area;
 		const double dt = dt1/3600;
+
+		/* calculate model update */
+		if (c2!=0)
+		{
+			/* update temperatures */
+			const double e1 = k1*exp(r1*dt);
+			const double e2 = k2*exp(r2*dt);
+			Ti = e1 + e2 + Teq;
+			Tm = ((r1-c1)*e1 + (r2-c1)*e2 + c6)/c2 + Teq;
+			if (Ti<55 || Ti>85)
+				gl_warning("office temperature excursion");
+
+
+			/* calculate the power consumption */
+			zone.total.energy = zone.total.power * dt;
+		}
+
+		const double Ca = 0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area;
 
 		/* update enduses and get internal heat gains */
 		Qi = update_lighting(dt) + update_plugs(dt);
@@ -333,11 +350,11 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 		double Qa = Qh + 0.5*Qi + 0.5*Qs;
 		double Qm = 0.5*Qi + 0.5*Qs;
 
-		double c3 = (Qa + Tout*Ua)/Ca;
-		double c6 = Qm/Cm;
+		c1 = -(Ua + Um)/Ca;
+		c2 = Um/Ca;
+		c3 = (Qa + Tout*Ua)/Ca;
+		c6 = Qm/Cm;
 		double c7 = Qa/Ca;
-		double c1 = -(Ua + Um)/Ca;
-		double c2 = Um/Ca;
 		double p1 = 1/c2;
 		if (Cm<=0)
 			throw "Cm must be positive";
@@ -366,42 +383,33 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (r1>0 || r2>0)
 			throw "thermal solution has runaway condition";
 	
-		/* compute initial condition */
+		/* compute next initial condition */
 		dTi = c2*Tm + c1*Ti - (c1+c2)*Tout + c7;
 		k1 = (r2*Ti - r2*Teq - dTi)/(r2-r1);
 		k2 = (dTi - r1*k1)/r2;
 
-		/* calculate final conditions */
-		Tm = (dTi - c1*Ti -c3)/c2;
-		Ti = k1*exp(r1*dt) + k2*exp(r2*dt) + Teq;
-
-		/* calculate the power consumption */
+		/* calculate power */
 		zone.total.power = zone.lights.enduse.power + zone.plugs.enduse.power + zone.hvac.enduse.power;
-		zone.total.energy = zone.total.power * dt;
 	}
 
 	/* determine the temperature of the next event */
-#define TPREC 0.01
-	unsigned int Nevents = 0;
-	double dt2=(double)TS_NEVER;
-	Tevent = Teq;
-	if (Qh<0) /* cooling active */
-		Tevent = TcoolOff;
-	else if (Qh>0) /* heating active */
-		Tevent = TheatOff;
-	else if (Teq<=TheatOn+TPREC) /* heating deadband */
-		Tevent = TheatOn;
-	else if (Teq>=TcoolOn-TPREC) /* cooling deadband */
-		Tevent = TcoolOn;
-	else /* equilibrium */
+	if (Tevent == Teq)
 		return TS_NEVER;
 
 	/* solve for the time to the next event */
-	dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent);
-	if (isnan(dt2) || !isfinite(dt2) || dt2<=TS_SECOND)
-		return TS_NEVER;
+	double dt2=(double)TS_NEVER;
+	dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+	if (isnan(dt2) || !isfinite(dt2) || dt2<0)
+	{
+		if (dTi==0)
+			return TS_NEVER;
+		/* do not allow more than 1 degree/hour temperature change before solving again */
+		dt2 = fabs(3600/dTi);
+	}
+	if (dt2<TS_SECOND)
+		return t1+1; /* need to do a second pass to get next state */
 	else
-		return t1+(TIMESTAMP)(dt2*3600*TS_SECOND); /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+		return t1+(TIMESTAMP)(dt2*TS_SECOND); /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
 void office::update_control_setpoints()
@@ -426,6 +434,8 @@ double office::update_plugs(double dt)
 
 double office::update_hvac(double dt)
 {
+	const double &Ti = (zone.current.air_temperature);
+	const double &dTi = (zone.current.temperature_change);
 	const double &Tout = (*(zone.current.pTemperature));
 	const double Trange = 40;	/* range over which HP works in heating mode */
 	const double Taux = zone.hvac.heating.balance_temperature-Trange;
@@ -438,23 +448,45 @@ double office::update_hvac(double dt)
 	case HC_OFF:
 		cop = 0;
 		Qrated = 0;
+		if (dTi<0 && Ti<TcoolOn)
+			Tevent = TheatOn;
+		else if (dTi>0 && Ti>TheatOn)
+			Tevent = TcoolOn;
+		else
+			Tevent = Teq;
 		break;
 	case HC_HEAT:
 		cop = 1.0 + (zone.hvac.heating.cop-1)*(Tout-Taux)/Trange;
 		Qrated = zone.hvac.heating.capacity + zone.hvac.heating.capacity_perF*(zone.hvac.heating.balance_temperature-Tout);
+		if (dTi>0)
+			Tevent = TheatOff;
+		else
+			Tevent = Teq;
 		break;
 	case HC_AUX:
 		cop = 1.0;
 		Qrated = zone.hvac.heating.capacity;
+		if (dTi>0)
+			Tevent = TheatOff;
+		else
+			Tevent = Teq;
 		break;
 	case HC_COOL:
 		cop = -1.0 - (zone.hvac.cooling.cop+1)*(Tout-TmaxCool)/(TmaxCool-Tecon);
 		Qrated = zone.hvac.cooling.capacity - zone.hvac.cooling.capacity_perF*(Tout-zone.hvac.cooling.balance_temperature);
+		if (dTi<0)
+			Tevent = TcoolOff;
+		else
+			Tevent = Teq;
 		break;
 	case HC_ECON:
 		cop = 0.0;
 		/* compute the effective economizer cooling capacity based on ventilation rate and outdoor air temperature */
 		Qrated = ((*zone.current.pTemperature) - zone.current.air_temperature) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.control.ventilation_fraction;
+		if (dTi<0)
+			Tevent = TcoolOff;
+		else
+			Tevent = Teq;
 		break;
 	default:
 		throw "hvac mode is invalid";
