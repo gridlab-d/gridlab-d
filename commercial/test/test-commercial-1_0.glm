@@ -3,6 +3,8 @@
 // commercial single-zone office test
 //
 
+#define NOFFICES=100
+
 clock {
 	timestamp '2001-01-01 0:00:00';
 	timezone PST+8PDT;
@@ -15,7 +17,7 @@ object climate {
 }
 
 module commercial;
-object office:..10 {
+object office:..${NOFFICES} {
 	floor_area random.normal(100000,10000) sf;
 	floor_height 10 ft;
 	interior_mass random.normal(500000,50000) Btu/degF;
@@ -44,18 +46,10 @@ object recorder {
 	file weather.csv;
 }
 
-#ifdef recorder
 object collector {
 	group class=office;
 	property sum(power.real),max(air_temperature,min(air_temperature),avg(air_temperature),max(mass_temperature),min(mass_temperature),avg(mass_temperature);
-	interval 3600; # hourly samples
-	limit 8760; # 1 year of data
+	interval 3600; // hourly samples
+	limit 8760; // 1 year of data
 	file total.csv;
 }
-object recorder {
-	parent office:1;
-	property hvac.mode,air_temperature,mass_temperature,temperature_change,Qh,Qs,Qi,power;
-	interval 0;
-	file office.csv;
-}
-#endif

@@ -319,8 +319,8 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 		Qs = 0; 
 		int i;
 		for (i=0; i<9; i++)
-			Qs += 3.412 * zone.design.window_area[i] * zone.current.pSolar[i]/10;
-		Qs *= dt;
+			Qs += zone.design.window_area[i] * zone.current.pSolar[i]/10;
+		Qs *= 3.412 * dt;
 		if (Qs<0)
 			throw "solar gain is negative?!?";
 
@@ -371,6 +371,10 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 		k1 = (r2*Ti - r2*Teq - dTi)/(r2-r1);
 		k2 = (dTi - r1*k1)/r2;
 
+		/* calculate final conditions */
+		Tm = (dTi - c1*Ti -c3)/c2;
+		Ti = k1*exp(r1*dt) + k2*exp(r2*dt) + Teq;
+
 		/* calculate the power consumption */
 		zone.total.power = zone.lights.enduse.power + zone.plugs.enduse.power + zone.hvac.enduse.power;
 		zone.total.energy = zone.total.power * dt;
@@ -394,7 +398,7 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	/* solve for the time to the next event */
 	dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent);
-	if (isnan(dt2) || !isfinite(dt2) || dt2<=0)
+	if (isnan(dt2) || !isfinite(dt2) || dt2<=TS_SECOND)
 		return TS_NEVER;
 	else
 		return t1+(TIMESTAMP)(dt2*3600*TS_SECOND); /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
@@ -449,7 +453,8 @@ double office::update_hvac(double dt)
 		break;
 	case HC_ECON:
 		cop = 0.0;
-		Qrated = zone.hvac.cooling.capacity;
+		/* compute the effective economizer cooling capacity based on ventilation rate and outdoor air temperature */
+		Qrated = ((*zone.current.pTemperature) - zone.current.air_temperature) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.control.ventilation_fraction;
 		break;
 	default:
 		throw "hvac mode is invalid";
@@ -460,6 +465,11 @@ double office::update_hvac(double dt)
 		zone.hvac.enduse.power.SetPowerFactor(Qrated/cop/1000,zone.hvac.enduse.power_factor);
 	else
 		zone.hvac.enduse.power = complex(0,0);
+
+	/* add fan power */
+	if (Qrated!=0 || zone.current.occupancy>0)
+		zone.hvac.enduse.power += complex(0.01,0.0002) * zone.design.floor_area;
+
 	if (zone.hvac.enduse.power.Re()<0)
 		throw "hvac unit is generating electricity!?!";
 	else if (!isfinite(zone.hvac.enduse.power.Re()) || !isfinite(zone.hvac.enduse.power.Im()))
