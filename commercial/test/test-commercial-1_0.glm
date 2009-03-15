@@ -3,12 +3,15 @@
 // commercial single-zone office test
 //
 
-#define NOFFICES=1
+#define NOFFICES=100
+#define GET_WEATHER
 
 clock {
-	timestamp '2001-01-01 0:00:00';
+	timestamp '2001-01-01 00:00:00';
 	timezone PST+8PDT;
 }
+
+#set stoptime=2002-01-01 00:00:00
 
 module climate;
 object climate {
@@ -16,19 +19,21 @@ object climate {
 	tmyfile LosAngeles.tmy2;
 }
 
-module commercial;
+module commercial {
+//	warn_control FALSE;
+}
+
 object office:..${NOFFICES} {
-	floor_area random.normal(100000,10000) sf;
-	floor_height 10 ft;
-	interior_mass random.normal(500000,50000) Btu/degF;
-	interior_ua random.normal(75000,7500) Btu/degF/h;
-	exterior_ua random.normal(15000,1500) Btu/degF/h;
-	hvac.heating.balance_temperature random.normal(60,2) degF;
-	hvac.heating.design_temperature random.normal(25,2) degF;
-	hvac.cooling.balance_temperature random.normal(70,2) degF;
-	hvac.cooling.design_temperature random.normal(100,2) degF;
-	air_temperature random.normal(75,1) degF;
-	mass_temperature random.normal(75,1) degF;
+	name `office_{id}`;
+	floor_area random.triangle(10000,100000) sf;
+	floor_height random.triangle(10,15) ft;
+	interior_mass (random.triangle(1,2)*this.floor_area);
+	interior_ua (this.floor_area/random.triangle(30,40));
+	exterior_ua (this.floor_area/random.triangle(5,10));
+	hvac.heating.design_temperature random.triangle(20,30);
+	hvac.cooling.design_temperature random.triangle(95,105);
+	air_temperature random.triangle(70,75) degF;
+	mass_temperature random.triangle(70,75) degF;
 	glazing.south 5000 sf;
 	glazing.east 5000 sf;
 	glazing.west 5000 sf;
@@ -38,6 +43,7 @@ object office:..${NOFFICES} {
 
 module tape;
 
+#ifdef GET_WEATHER
 object recorder {
 	parent weather;
 	property temperature,solar_flux;
@@ -45,11 +51,21 @@ object recorder {
 	limit 8760;
 	file weather.csv;
 }
+#endif
+
+#ifdef BUILDING
+object recorder {
+	parent office_1;
+	property air_temperature,hvac.mode,mass_temperature,Qh,Qs,Qi,Qz,occupancy,control.ventilation_fraction,control.cooling_setpoint,control.heating_setpoint,power;
+	file office_1.csv;
+	interval 0;
+}
+#endif
 
 object collector {
 	group class=office;
 	property sum(power.real),max(air_temperature,min(air_temperature),avg(air_temperature),max(mass_temperature),min(mass_temperature),avg(mass_temperature);
-	interval 3600; // hourly samples
-	limit 8760; // 1 year of data
+	interval 0; // every transient
+	limit 50000;
 	file total.csv;
 }

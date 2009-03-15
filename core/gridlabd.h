@@ -693,7 +693,7 @@ inline int gl_get_value_by_name(OBJECT *obj,
 	@see random_exponential()
  **/
 #define gl_random_exponential (*callback->random.exponential)
-
+#define gl_random_triangle (*callback->random.triangle)
 #define gl_random_gamma (*callback->random.gamma)
 #define gl_random_beta (*callback->random.beta)
 #define gl_random_weibull (*callback->random.weibull)

@@ -12,6 +12,8 @@
 
 class mytest {
 	
+	char1024 test;
+	
 	intrinsic create(object parent)
 	{
 		return SUCCESS;
@@ -39,7 +41,7 @@ namespace space2 {
 	object mytest {
 		namespace space1 {
 			object mytest {
-				name `{namespace}:{class}:{id}`;
+				test `{namespace}:{class}:{id}`;
 			};
 		};
 	};

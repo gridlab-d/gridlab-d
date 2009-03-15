@@ -31,6 +31,7 @@ typedef enum {
 	HC_AUX,						/**< HVAC is supplemental heating */
 	HC_COOL,					/**< HVAC is cooling */
 	HC_ECON,					/**< HVAC is economizing */
+	HC_VENT,					/**< HVAC is ventilating */
 } HCMODE;
 
 /* HVAC design parameters */
@@ -49,6 +50,7 @@ typedef struct s_hvac {
 	HCMODE mode;				/**< HVAC mode */
 	HVACDESIGN cooling;			/**< HVAC cooling data */
 	HVACDESIGN heating;			/**< HVAC heating data */
+	double minimum_ach;			/**< minimum air-changes per hour needed when occupied */
 } HVAC;
 
 /*****************************************************
@@ -87,7 +89,9 @@ typedef struct s_conditions {
  *****************************************************/
 typedef struct s_controls {
 	double cooling_setpoint;		/**< cooling setpoint (F) */
+	double economizer_cutin;		/**< outdoor temperature at which economizer starts (F) */
 	double heating_setpoint;		/**< heating setpoint (F) */
+	double auxiliary_cutin;			/**< temperature difference at which aux heat starts (F) */
 	double setpoint_deadband;		/**< deadband temperature (F) */
 	double ventilation_fraction;	/**< ventilation fraction (pu) */
 	double lighting_fraction;		/**< lighting fraction (pu) */
@@ -118,21 +122,25 @@ typedef struct s_zonedata {
 
 class office {
 public:
+	static double warn_low_temp;
+	static double warn_high_temp;
+	static bool warn_control;
+public:
 	complex *pVoltage;
 	complex *pCurrent;
 	ZONEDATA zone;
 private:
 	double TcoolOn, TcoolOff;
 	double TheatOn, TheatOff;
-	double cop, Qrated;
+	double cop;
 	double Qi, Qh, Qs, Qz;
 	double Teq, Tevent;
 	double r1, r2, k1, k2;
-	double c1, c2, c3, c6, dTi;
+	double c1, c2, c3, c4, c5, c6, c7, dTi;
 	void update_control_setpoints();
-	double update_lighting(double dt);
-	double update_plugs(double dt);
-	double update_hvac(double dt);
+	double update_lighting();
+	double update_plugs();
+	double update_hvac();
 public:
 	static CLASS *oclass;
 	static office *defaults;

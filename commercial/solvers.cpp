@@ -70,13 +70,17 @@ double e2solve(double a,/**< the parameter \p a */
 		else // no solution possible (includes tm==0 and ti==0)
 			return NaN;
 	}
+	else if (f*c>0) // solution is not reachable from t=0 (same sign)
+	{
+		return NaN;
+	}
 
 	// solve using Newton's method
 	int iter = 100;
 	if (t!=0) // initial t changed to inflexion point
 		double f = EVAL(t,a,n,b,m,c);
 	double dfdt = EVAL(t,a*n,n,b*m,m,0); 
-	while ( fabs(f)>p && isfinite(t) && iter-->0 )
+	while ( fabs(f)>p && isfinite(t) && iter-->0)
 	{
 		t -= f/dfdt;
 		f = EVAL(t,a,n,b,m,c);
@@ -84,7 +88,7 @@ double e2solve(double a,/**< the parameter \p a */
 	}
 	if (iter==0)
 	{
-		gl_warning("etp::solve(a=%.4f,n=%.4f,b=%.4f,m=%.4f,c=%.4f,prec=%.g) failed to converge",a,n,b,m,c,p);
+		gl_error("etp::solve(a=%.4f,n=%.4f,b=%.4f,m=%.4f,c=%.4f,prec=%.g) failed to converge",a,n,b,m,c,p);
 		return NaN;	// failed to catch limit condition above
 	}
 	if (e!=NULL)

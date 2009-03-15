@@ -74,6 +74,11 @@
 #include "office.h"
 #include "../climate/climate.h"
 
+/* module globals */
+double office::warn_low_temp = 50.0;
+double office::warn_high_temp = 90.0;
+bool office::warn_control = true;
+
 /* the object class definition */
 CLASS *office::oclass = NULL;
 
@@ -128,6 +133,7 @@ office::office(MODULE *module)
 				PT_KEYWORD, "AUX", HC_AUX,
 				PT_KEYWORD, "COOL", HC_COOL,
 				PT_KEYWORD, "ECON", HC_ECON,
+				PT_KEYWORD, "VENT", HC_VENT,
 				PT_KEYWORD, "OFF", HC_OFF,
 			PT_double, "hvac.cooling.balance_temperature[degF]", PADDR(zone.hvac.cooling.balance_temperature),
 			PT_double, "hvac.cooling.capacity[Btu/h]", PADDR(zone.hvac.cooling.capacity),
@@ -216,22 +222,31 @@ int office::create(void)
 /* Object initialization is called once after all object have been created */
 int office::init(OBJECT *parent)
 {
+	double oversize = 1.2; /* oversizing factor */
 	update_control_setpoints();
 
 	/** @todo set the dynamic initial value of properties (no ticket) */
+	if (zone.hvac.minimum_ach==0)
+		zone.hvac.minimum_ach = gl_random_triangle(1.0,2.0);
+	if (zone.control.economizer_cutin==0)
+		zone.control.economizer_cutin=60;
+	if (zone.control.auxiliary_cutin==0)
+		zone.control.auxiliary_cutin=2;
 
-	/* automatic sizing of equipment */
+	/* automatic sizing of HVAC equipment */
 	if (zone.hvac.heating.capacity==0)
-		zone.hvac.heating.capacity = zone.design.exterior_ua*(zone.control.heating_setpoint-zone.hvac.heating.design_temperature);
+		zone.hvac.heating.capacity = oversize*(zone.design.exterior_ua*(zone.control.heating_setpoint-zone.hvac.heating.design_temperature) /* envelope */
+			- (zone.hvac.heating.design_temperature - zone.control.heating_setpoint) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.hvac.minimum_ach); /* vent */
 	if (zone.hvac.cooling.capacity==0)
-		zone.hvac.cooling.capacity = -zone.design.exterior_ua*(zone.hvac.cooling.design_temperature-zone.control.cooling_setpoint) /* losses */
+		zone.hvac.cooling.capacity = oversize*(-zone.design.exterior_ua*(zone.hvac.cooling.design_temperature-zone.control.cooling_setpoint) /* envelope */
 			- (zone.design.window_area[0]+zone.design.window_area[1]+zone.design.window_area[2]+zone.design.window_area[3]+zone.design.window_area[4]
 				+zone.design.window_area[5]+zone.design.window_area[6]+zone.design.window_area[7]+zone.design.window_area[8])*100*3.412*zone.design.glazing_coeff /* solar */
-			- (zone.lights.capacity + zone.plugs.capacity)*3.412;
+			- (zone.hvac.cooling.design_temperature - zone.control.cooling_setpoint) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.hvac.minimum_ach /* vent */
+			- (zone.lights.capacity + zone.plugs.capacity)*3.412); /* lights and plugs */
 	if (zone.hvac.cooling.cop==0)
-		zone.hvac.cooling.cop=-3.5;
+		zone.hvac.cooling.cop=-gl_random_triangle(2,4);
 	if (zone.hvac.heating.cop==0)
-		zone.hvac.heating.cop=1.5;
+		zone.hvac.heating.cop=gl_random_triangle(1,1.5);
 
 	/** @todo link climate data (no ticket) */
 	OBJECT *hdr = OBJECTHDR(this);
@@ -265,12 +280,13 @@ int office::init(OBJECT *parent)
 		{"floor area is not valid",zone.design.floor_area<=0},
 		{"control setpoint deadpoint is invalid", zone.control.setpoint_deadband<=0},
 		{"heating and cooling setpoints conflict",TheatOn>=TcoolOff},
-		{"heating balance temperature is not greater than heating design temperature",zone.hvac.heating.design_temperature>=zone.hvac.heating.balance_temperature},
-		{"cooling balance temperature is not less than cooling design temperature",zone.hvac.cooling.design_temperature<=zone.hvac.cooling.balance_temperature},
 		{"cooling capacity is not negative", zone.hvac.cooling.capacity>=0},
 		{"heating capacity is not positive", zone.hvac.heating.capacity<=0},
 		{"cooling cop is not negative", zone.hvac.cooling.cop>=0},
 		{"heating cop is not positive", zone.hvac.heating.cop<=0},
+		{"minimum ach is not positive", zone.hvac.minimum_ach<=0},
+		{"auxiliary cutin is not positive", zone.control.auxiliary_cutin<=0},
+		{"economizer cutin is above cooling setpoint deadband", zone.control.economizer_cutin>=zone.control.cooling_setpoint-zone.control.setpoint_deadband},
 	};
 	int i;
 	for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
@@ -306,7 +322,7 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 	const double dt1 = t0>0 ? (double)(t1-t0)*TS_SECOND : 0;
 	if (dt1>0)
 	{
-		const double dt = dt1/3600;
+		const double dt = dt1/3600; /* model operates in units of hours */
 
 		/* calculate model update */
 		if (c2!=0)
@@ -316,9 +332,35 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 			const double e2 = k2*exp(r2*dt);
 			Ti = e1 + e2 + Teq;
 			Tm = ((r1-c1)*e1 + (r2-c1)*e2 + c6)/c2 + Teq;
-			if (Ti<55 || Ti>85)
-				gl_warning("office temperature excursion");
 
+			if (warn_control)
+			{
+				/* check for air temperature excursion */
+				if (Ti<warn_low_temp || Ti>warn_high_temp)
+				{
+					OBJECT *obj = OBJECTHDR(this);
+					DATETIME dt0, dt1;
+					gl_localtime(t0,&dt0);
+					gl_localtime(t1,&dt1);
+					char ts0[64], ts1[64];
+					gl_warning("office:%d (%s) air temperature excursion (%.1f degF) at between %s and %s", 
+						obj->id, obj->name?obj->name:"anonymous", Ti,
+						gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN", gl_strtime(&dt1,ts1,sizeof(ts1))?ts1:"UNKNOWN");
+				}
+
+				/* check for mass temperature excursion */
+				if (Tm<warn_low_temp || Tm>warn_high_temp)
+				{
+					OBJECT *obj = OBJECTHDR(this);
+					DATETIME dt0, dt1;
+					gl_localtime(t0,&dt0);
+					gl_localtime(t1,&dt1);
+					char ts0[64], ts1[64];
+					gl_warning("office:%d (%s) mass temperature excursion (%.1f degF) at between %s and %s", 
+						obj->id, obj->name?obj->name:"anonymous", Tm,
+						gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN", gl_strtime(&dt1,ts1,sizeof(ts1))?ts1:"UNKNOWN");
+				}
+			}
 
 			/* calculate the power consumption */
 			zone.total.energy = zone.total.power * dt;
@@ -327,19 +369,19 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 		const double Ca = 0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area;
 
 		/* update enduses and get internal heat gains */
-		Qi = update_lighting(dt) + update_plugs(dt);
+		Qi = update_lighting() + update_plugs();
 
-		/* compute heating/cooling effect */
-		Qh = update_hvac(dt); 
-
-		/** @todo compute solar gains (no ticket) */
+		/* compute solar gains */
 		Qs = 0; 
 		int i;
 		for (i=0; i<9; i++)
 			Qs += zone.design.window_area[i] * zone.current.pSolar[i]/10;
-		Qs *= 3.412 * dt;
+		Qs *= 3.412;
 		if (Qs<0)
 			throw "solar gain is negative?!?";
+
+		/* compute heating/cooling effect */
+		Qh = update_hvac(); 
 
 		if (Ca<=0)
 			throw "Ca must be positive";
@@ -347,19 +389,20 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 			throw "Cm must be positive";
 
 		// split gains to air and mass
-		double Qa = Qh + 0.5*Qi + 0.5*Qs;
-		double Qm = 0.5*Qi + 0.5*Qs;
+		double f_air = 1.0; /* adjust the fraction of gains that goes to air vs mass */
+		double Qa = Qh + f_air*(Qi + Qs);
+		double Qm = (1-f_air)*(Qi + Qs);
 
 		c1 = -(Ua + Um)/Ca;
 		c2 = Um/Ca;
 		c3 = (Qa + Tout*Ua)/Ca;
 		c6 = Qm/Cm;
-		double c7 = Qa/Ca;
+		c7 = Qa/Ca;
 		double p1 = 1/c2;
 		if (Cm<=0)
 			throw "Cm must be positive";
-		double c4 = Um/Cm;
-		double c5 = -c4;
+		c4 = Um/Cm;
+		c5 = -c4;
 		if (c2<=0)
 			throw "Um must be positive";
 		double p2 = -(c5+c1)/c2;
@@ -390,6 +433,46 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		/* calculate power */
 		zone.total.power = zone.lights.enduse.power + zone.plugs.enduse.power + zone.hvac.enduse.power;
+
+		if (warn_control)
+		{
+			/* check for heating equipment sizing problem */
+			if ((mode==HC_HEAT || mode==HC_AUX) && Teq<TheatOff)
+			{
+				OBJECT *obj = OBJECTHDR(this);
+				DATETIME dt0, dt1;
+				gl_localtime(t0,&dt0);
+				gl_localtime(t1,&dt1);
+				char ts0[64], ts1[64];
+				gl_warning("office:%d (%s) %s heating undersized between %s and %s", 
+					obj->id, obj->name?obj->name:"anonymous", mode==HC_HEAT?"primary":"auxiliary", 
+					gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN", gl_strtime(&dt1,ts1,sizeof(ts1))?ts1:"UNKNOWN");
+			}
+
+			/* check for cooling equipment sizing problem */
+			else if (mode==HC_COOL && Teq>TcoolOff)
+			{
+				OBJECT *obj = OBJECTHDR(this);
+				DATETIME dt0, dt1;
+				gl_localtime(t0,&dt0);
+				gl_localtime(t1,&dt1);
+				char ts0[64], ts1[64];
+				gl_warning("office:%d (%s) cooling undersized between %s and %s", 
+					obj->id, obj->name?obj->name:"anonymous", mode==HC_COOL?"COOL":"ECON", 
+					gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN", gl_strtime(&dt1,ts1,sizeof(ts1))?ts1:"UNKNOWN");
+			}
+
+			/* check for economizer control problem */
+			else if (mode==HC_ECON && Teq>TcoolOff)
+			{
+				OBJECT *obj = OBJECTHDR(this);
+				DATETIME dt;
+				gl_localtime(t1,&dt);
+				char ts[64];
+				gl_warning("office:%d (%s) insufficient economizer control at %s", 
+					obj->id, obj->name?obj->name:"anonymous", gl_strtime(&dt,ts,sizeof(ts))?ts:"UNKNOWN");
+			}
+		}
 	}
 
 	/* determine the temperature of the next event */
@@ -418,21 +501,22 @@ void office::update_control_setpoints()
 	TcoolOff = zone.control.cooling_setpoint - zone.control.setpoint_deadband;
 	TheatOn = zone.control.heating_setpoint - zone.control.setpoint_deadband;
 	TheatOff = zone.control.heating_setpoint + zone.control.setpoint_deadband;
+	zone.control.ventilation_fraction = zone.current.occupancy>0 ? zone.hvac.minimum_ach : 0;
 }
 
-double office::update_lighting(double dt)
+double office::update_lighting()
 {
 	/** @todo compute lighting enduse (no ticket) */
-	return zone.lights.enduse.power.Mag() * dt;
+	return zone.lights.enduse.power.Mag();
 }
 
-double office::update_plugs(double dt)
+double office::update_plugs()
 {
 	/** @todo compute plugs enduse (no ticket) */
-	return zone.plugs.enduse.power.Mag() * dt;
+	return zone.plugs.enduse.power.Mag();
 }
 
-double office::update_hvac(double dt)
+double office::update_hvac()
 {
 	const double &Ti = (zone.current.air_temperature);
 	const double &dTi = (zone.current.temperature_change);
@@ -444,10 +528,14 @@ double office::update_hvac(double dt)
 	const double &TmaxCool = zone.hvac.cooling.design_temperature;
 	HCMODE &mode = zone.hvac.mode;
 
+	/* active/passive heat gain/loss */
+	double Qvent = 0;
+	double Qactive = 0;
+
 	switch (mode) {
-	case HC_OFF:
+	case HC_OFF: /* system is off */
 		cop = 0;
-		Qrated = 0;
+		Qactive = Qvent = 0;
 		if (dTi<0 && Ti<TcoolOn)
 			Tevent = TheatOn;
 		else if (dTi>0 && Ti>TheatOn)
@@ -455,87 +543,118 @@ double office::update_hvac(double dt)
 		else
 			Tevent = Teq;
 		break;
-	case HC_HEAT:
+	case HC_HEAT: /* system is heating normally */
 		cop = 1.0 + (zone.hvac.heating.cop-1)*(Tout-Taux)/Trange;
-		Qrated = zone.hvac.heating.capacity + zone.hvac.heating.capacity_perF*(zone.hvac.heating.balance_temperature-Tout);
-		if (dTi>0)
-			Tevent = TheatOff;
-		else
-			Tevent = Teq;
+		Qactive = zone.hvac.heating.capacity + zone.hvac.heating.capacity_perF*(zone.hvac.heating.balance_temperature-Tout);
+		Qvent = ((*zone.current.pTemperature) - zone.current.air_temperature) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.control.ventilation_fraction;
+		Tevent = TheatOff;
 		break;
-	case HC_AUX:
+	case HC_AUX: /* system is heating aggressively */
 		cop = 1.0;
-		Qrated = zone.hvac.heating.capacity;
-		if (dTi>0)
-			Tevent = TheatOff;
-		else
-			Tevent = Teq;
+		Qactive = zone.hvac.heating.capacity;
+		Qvent = ((*zone.current.pTemperature) - zone.current.air_temperature) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.control.ventilation_fraction;
+		Tevent = TheatOff;
 		break;
-	case HC_COOL:
+	case HC_COOL: /* system is actively cooling */
 		cop = -1.0 - (zone.hvac.cooling.cop+1)*(Tout-TmaxCool)/(TmaxCool-Tecon);
-		Qrated = zone.hvac.cooling.capacity - zone.hvac.cooling.capacity_perF*(Tout-zone.hvac.cooling.balance_temperature);
-		if (dTi<0)
-			Tevent = TcoolOff;
+		Qactive = zone.hvac.cooling.capacity - zone.hvac.cooling.capacity_perF*(Tout-zone.hvac.cooling.balance_temperature);
+		Qvent = ((*zone.current.pTemperature) - zone.current.air_temperature) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.control.ventilation_fraction;
+		Tevent = TcoolOff;
+		break;
+	case HC_VENT: /* system is ventilation (occupied but floating) */
+		cop = 0;
+		Qactive = 0;
+		Qvent = ((*zone.current.pTemperature) - zone.current.air_temperature) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.control.ventilation_fraction;
+		if (dTi<0 && Ti<TcoolOn)
+			Tevent = TheatOn;
+		else if (dTi>0 && Ti>TheatOn)
+			Tevent = TcoolOn;
 		else
 			Tevent = Teq;
 		break;
-	case HC_ECON:
+	case HC_ECON: /* system is passively cooling */
 		cop = 0.0;
-		/* compute the effective economizer cooling capacity based on ventilation rate and outdoor air temperature */
-		Qrated = ((*zone.current.pTemperature) - zone.current.air_temperature) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.control.ventilation_fraction;
-		if (dTi<0)
-			Tevent = TcoolOff;
-		else
-			Tevent = Teq;
+		Qactive = 0;
+		Qvent = ((*zone.current.pTemperature) - zone.current.air_temperature) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.control.ventilation_fraction;
+		Tevent = TcoolOff;
 		break;
 	default:
 		throw "hvac mode is invalid";
 		break;
 	}
-	/** @todo convert to power (no ticket) */
-	if (cop!=0)
-		zone.hvac.enduse.power.SetPowerFactor(Qrated/cop/1000,zone.hvac.enduse.power_factor);
+
+	/* calculate active system power */
+	if (Qactive!=0)
+		zone.hvac.enduse.power.SetPowerFactor(Qactive/cop/1000,zone.hvac.enduse.power_factor);
 	else
 		zone.hvac.enduse.power = complex(0,0);
 
 	/* add fan power */
-	if (Qrated!=0 || zone.current.occupancy>0)
-		zone.hvac.enduse.power += complex(0.01,0.0002) * zone.design.floor_area;
+	if (Qvent!=0)
+		zone.hvac.enduse.power += complex(1,-0.1)*0.1/1000 * zone.design.floor_area; /* ~ 1 W/sf */
 
 	if (zone.hvac.enduse.power.Re()<0)
-		throw "hvac unit is generating electricity!?!";
+		throw "hvac unit is generating electricity";
 	else if (!isfinite(zone.hvac.enduse.power.Re()) || !isfinite(zone.hvac.enduse.power.Im()))
-		throw "hvac power is not finite!?!";
-	return Qrated*dt;
+		throw "hvac power is not finite";
+	return Qvent + Qactive;
 }
 
 TIMESTAMP office::plc(TIMESTAMP t0, TIMESTAMP t1)
 {
-#define Tout (*(zone.current.pTemperature))
-#define Ti (zone.current.air_temperature)
-#define DUTY_CYCLE 0.5 /** @todo compute duty cycle properly (no ticket) */
-#define mode (zone.hvac.mode)
-#define Taux (zone.hvac.heating.balance_temperature-40)
-#define Tecon (zone.hvac.cooling.balance_temperature)
-#define DELAY (TS_SECOND*120)
-	TIMESTAMP t2=TS_NEVER;
+	const double &Tout = *(zone.current.pTemperature);
+	const double &Tair = zone.current.air_temperature;
+	const double &Tmass = zone.current.mass_temperature;
+	const double &Tecon = zone.control.economizer_cutin;
+	const double &Taux = zone.control.heating_setpoint-zone.control.auxiliary_cutin;
+	const double &MinAch = zone.hvac.minimum_ach;
+	HCMODE &mode = zone.hvac.mode;
+	double &vent = zone.control.ventilation_fraction;
 
 	/* compute the new control temperature */
 	update_control_setpoints();
 
-	if (Ti<TheatOn) 
+	vent = MinAch;
+	if (Tair<TheatOn) 
 	{
-		if (Tout<=Taux)
+		if (Tair<=Taux)
 			mode = HC_AUX;
 		else
 			mode = HC_HEAT;
 	}
-	else if (Ti>TheatOff && Ti<TcoolOff) 
-		mode = HC_OFF;
-	else if (Ti>TcoolOn) 
+	else if (Tair>TheatOff && Tair<TcoolOff) 
 	{
-		if (Tout<=Tecon)
-			mode = HC_ECON;
+		if (vent>0)
+			mode = HC_VENT;
+		else
+		{
+			mode = HC_OFF;
+			vent = 0.0;
+		}
+	}
+	else if (Tair>TcoolOn) 
+	{
+		if (Tout<Tecon)
+		{
+			/* compute ventilation needed to meet cooling demand */
+			double Qgain = Qs + Qi - zone.design.exterior_ua*(Tair - Tout) - zone.design.interior_ua*(Tair-Tmass);
+			vent = Qgain / ((Tair - Tout) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area)); 
+			if (vent<MinAch)
+			{
+				vent = MinAch;
+				mode = HC_ECON;
+			}
+			else if (vent>5.0)
+			{
+				if (Tout>Tair) /* no free cooling */
+					vent = MinAch;
+				mode = HC_COOL;
+			}
+			else
+			{
+				mode = HC_ECON;
+			}
+		}
 		else
 			mode = HC_COOL;
 	}

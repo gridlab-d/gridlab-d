@@ -121,6 +121,11 @@ typedef struct s_callbacks {
 		RANDOMTYPE (*type)(char *name);
 		double (*value)(RANDOMTYPE type, ...);
 		double (*pseudo)(RANDOMTYPE type, unsigned int *state, ...);
+		double (*triangle)(double a, double b);
+		double (*beta)(double a, double b);
+		double (*gamma)(double a);
+		double (*weibull)(double a, double b);
+		double (*rayleigh)(double a);
 	} random;
 	int (*object_isa)(OBJECT *obj, char *type);
 	DELEGATEDTYPE* (*register_type)(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));

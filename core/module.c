@@ -160,7 +160,7 @@ static CALLBACKS callbacks = {
 	aggregate_value,
 	module_getvar_addr,
 	module_depends,
-	{random_uniform, random_normal, random_bernoulli, random_pareto, random_lognormal, random_sampled, random_exponential, random_type, random_value, pseudorandom_value},
+	{random_uniform, random_normal, random_bernoulli, random_pareto, random_lognormal, random_sampled, random_exponential, random_type, random_value, pseudorandom_value, random_triangle, random_beta, random_gamma, random_weibull, random_rayleigh},
 	object_isa,
 	class_register_type,
 	class_define_type,
