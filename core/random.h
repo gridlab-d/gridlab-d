@@ -44,7 +44,7 @@ extern "C" {
 	double random_exponential(double lambda);
 	double random_functional(char *text);
 	double random_beta(double alpha, double beta);
-	double random_gamma(double gamma);
+	double random_gamma(double alpha, double beta);
 	double random_weibull(double l, double k);
 	double random_rayleigh(double s);
 	double random_triangle(double a, double b);
