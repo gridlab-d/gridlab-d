@@ -118,6 +118,12 @@ typedef struct s_zonedata {
 	ENDUSE total;				/**< total enduses */
 	CONDITIONS current;			/**< current conditions */
 	CONTROLS control;			/**< controllers */
+
+	/* buffers */
+#define SET_OCCUPIED(D,H) (occupied[H]|=(1<<D)) /* Sunday=0, ..., Holiday=7 */
+#define CLR_OCCUPIED(D,H) (occupied[H]&=~(1<<D))
+#define IS_OCCUPIED(D,H) ((occupied[H]&(1<<D))?1:0)
+	char occupied[24];		/**< internal bitmap buffer for occupancy schedule */
 } ZONEDATA;
 
 class office {

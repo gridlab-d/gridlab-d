@@ -234,8 +234,8 @@ int office::init(OBJECT *parent)
 		zone.control.auxiliary_cutin=2;
 
 	/* schedule */
-	if (strcmp(schedule,""))
-		strcpy(schedule,"M-F,8-17");
+	if (strcmp(zone.design.schedule,""))
+		strcpy(zone.design.schedule,"1-5,8-17:1"); /* default is unoccupied, MTWRF 8a-5p is occupied */
 
 	/* automatic sizing of HVAC equipment */
 	if (zone.hvac.heating.capacity==0)
