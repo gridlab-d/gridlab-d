@@ -7,8 +7,8 @@
 #define GET_WEATHER
 
 clock {
-	timestamp '2001-01-01 00:00:00';
 	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00 PST';
 }
 
 #set stoptime=2002-01-01 00:00:00
@@ -64,8 +64,8 @@ object recorder {
 
 object collector {
 	group class=office;
-	property sum(power.real),max(air_temperature,min(air_temperature),avg(air_temperature),max(mass_temperature),min(mass_temperature),avg(mass_temperature);
-	interval 0; // every transient
-	limit 50000;
+	property sum(energy.mag),sum(power.mag),max(air_temperature,min(air_temperature),avg(air_temperature),max(mass_temperature),min(mass_temperature),avg(mass_temperature);
+	interval 3600; // hourly
+	limit 8760;
 	file total.csv;
 }

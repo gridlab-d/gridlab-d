@@ -69,6 +69,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <ctype.h>
 #include "gridlabd.h"
 #include "solvers.h"
 #include "office.h"
@@ -219,6 +220,90 @@ int office::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
+/* convert a schedule into an occupancy buffer 
+   syntax: DAYS,HOURS
+   where DAYS is a range of day numbers and HOURS is a range of hours
+   e.g.,
+	"1-5 8-17;6,7 10,11,13,14" means Mon-Fri 8a-5p, and Sat & Holidays 10a-noon and 1p-3p
+   with
+	Day 0 = Sunday, etc., day 7 = holiday
+	Hour 0 = midnight to 1am
+ */
+static void occupancy_schedule(char *text, char occupied[24])
+{
+	char days[8];
+	memset(days,0,sizeof(days));
+
+	char hours[24];
+	memset(hours,0,sizeof(hours));
+
+	char *p = text;
+	char next=-1;
+	char start=-1, stop=-1;
+	char *target = days;
+
+	for (p=text; true; p++)
+	{
+		if (*p==';')
+		{	/* recursion on the rest of the schedule */
+			occupancy_schedule(p+1,occupied);
+		}
+		if (isdigit(*p))
+		{
+			if (next==-1) next = 0;
+			next += (next*10+(*p-'0'));
+			continue;
+		}
+		else if (*p=='*')
+		{
+			start = 0; next = -1;
+			continue;
+		}
+		else if (*p==',' || *p==' ' || *p==';' || *p=='\0')
+		{
+			char n;
+			stop = next;
+			for (n=start; n<=(stop>=0?stop:(target==days?8:24)); n++)
+				target[n]=1;
+			if (*p==',')
+				continue;
+			else if (*p==' ')
+			{
+				target = hours;
+				start = -1; stop = -1; next = -1;
+				continue;
+			}
+			else if (*p==';' || *p=='\0')
+			{
+				char d,h;
+				for (d=0; d<8; d++)
+					for (h=0; h<24; h++)
+						if (days[d] && hours[h])
+							SET_OCCUPIED(d,h);
+				if (*p=='\0')
+					break;
+				else
+				{
+					start = -1; stop = -1; next = -1;
+					continue;
+				}
+			}
+			else 
+				throw "office/occupancy_schedule(): invalid parser state";
+
+		}
+		else if (*p=='-')
+		{
+			start = next;
+			stop = -1;
+			next = -1;
+			continue;
+		}
+		else
+			throw "office/occupancy_schedule(): schedule syntax error";
+	}
+}
+
 /* Object initialization is called once after all object have been created */
 int office::init(OBJECT *parent)
 {
@@ -234,8 +319,9 @@ int office::init(OBJECT *parent)
 		zone.control.auxiliary_cutin=2;
 
 	/* schedule */
-	if (strcmp(zone.design.schedule,""))
-		strcpy(zone.design.schedule,"1-5,8-17:1"); /* default is unoccupied, MTWRF 8a-5p is occupied */
+	if (strcmp(zone.design.schedule,"")==0)
+		strcpy(zone.design.schedule,"1-5 8-17"); /* default is unoccupied, MTWRF 8a-5p is occupied */
+	occupancy_schedule(zone.design.schedule,occupied);
 
 	/* automatic sizing of HVAC equipment */
 	if (zone.hvac.heating.capacity==0)
@@ -306,6 +392,15 @@ TIMESTAMP office::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	/* reset the multizone heat transfer */
 	Qz = 0;
+	
+	/* get the occupancy mode from the schedule, if any */
+	if (t0>0)
+	{
+		int day = gl_getweekday(t0);
+		int hour = gl_gethour(t0);
+		if (zone.design.schedule[0]!='\0' )
+			zone.current.occupancy = IS_OCCUPIED(day,hour);
+	}
 	return TS_NEVER;
 }
 
@@ -367,7 +462,7 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			/* calculate the power consumption */
-			zone.total.energy = zone.total.power * dt;
+			zone.total.energy += zone.total.power * dt;
 		}
 
 		const double Ca = 0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area;
@@ -481,7 +576,7 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	/* determine the temperature of the next event */
 	if (Tevent == Teq)
-		return TS_NEVER;
+		return -(t1+(TIMESTAMP)(3600*TS_SECOND)); /* soft return not more than an hour */
 
 	/* solve for the time to the next event */
 	double dt2=(double)TS_NEVER;
@@ -489,9 +584,14 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (isnan(dt2) || !isfinite(dt2) || dt2<0)
 	{
 		if (dTi==0)
-			return TS_NEVER;
+			/* never more than an hour because of the occupancy schedule */
+			return -(t1+(TIMESTAMP)(3600*TS_SECOND)); /* soft return */
+
 		/* do not allow more than 1 degree/hour temperature change before solving again */
 		dt2 = fabs(3600/dTi);
+		if (dt2>3600)
+			dt2 = 3600; /* never more than an hour because of the occupancy schedule */
+		return -(t1+(TIMESTAMP)(dt2*TS_SECOND)); /* soft return */
 	}
 	if (dt2<TS_SECOND)
 		return t1+1; /* need to do a second pass to get next state */

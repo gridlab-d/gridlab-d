@@ -748,6 +748,21 @@ inline int gl_get_value_by_name(OBJECT *obj,
 	@see local_datetime()
  **/
 #define gl_localtime (*callback->time.local_datetime)
+
+#ifdef __cplusplus
+inline int gl_getweekday(TIMESTAMP t)
+{
+	DATETIME dt;
+	gl_localtime(t, &dt);
+	return dt.weekday;
+}
+inline int gl_gethour(TIMESTAMP t)
+{
+	DATETIME dt;
+	gl_localtime(t, &dt);
+	return dt.hour;
+}
+#endif
 /**@}*/
 /******************************************************************************
  * Global variables

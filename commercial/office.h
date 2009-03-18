@@ -110,7 +110,7 @@ typedef struct s_zonedata {
 		double window_area[9];	/**< windows areas (sf); see climate::CLTD for index order */
 		double glazing_coeff;	/**< windows glazing coefficient (pu) */
 		double occupants;		/**< occupants design capacity */
-		char256 schedule;		/**< occupancy schedule */
+		char256 schedule;		/**< occupancy schedule (e.g., "ddd hhh; ddd hhh..." */
 	} design;
 	HVAC hvac;					/**< HVAC enduse */
 	LIGHTS lights;				/**< LIGHTS enduse */
@@ -118,12 +118,6 @@ typedef struct s_zonedata {
 	ENDUSE total;				/**< total enduses */
 	CONDITIONS current;			/**< current conditions */
 	CONTROLS control;			/**< controllers */
-
-	/* buffers */
-#define SET_OCCUPIED(D,H) (occupied[H]|=(1<<D)) /* Sunday=0, ..., Holiday=7 */
-#define CLR_OCCUPIED(D,H) (occupied[H]&=~(1<<D))
-#define IS_OCCUPIED(D,H) ((occupied[H]&(1<<D))?1:0)
-	char occupied[24];		/**< internal bitmap buffer for occupancy schedule */
 } ZONEDATA;
 
 class office {
@@ -132,6 +126,11 @@ public:
 	static double warn_high_temp;
 	static bool warn_control;
 public:
+	/* buffers */
+#define SET_OCCUPIED(D,H) (occupied[H]|=(1<<D)) /* Sunday=0, ..., Holiday=7 */
+#define CLR_OCCUPIED(D,H) (occupied[H]&=~(1<<D))
+#define IS_OCCUPIED(D,H) ((occupied[H]&(1<<D))?1:0)
+	char occupied[24];		/**< internal bitmap buffer for occupancy schedule */
 	complex *pVoltage;
 	complex *pCurrent;
 	ZONEDATA zone;
