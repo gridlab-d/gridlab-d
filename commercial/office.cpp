@@ -206,7 +206,7 @@ office::office(MODULE *module)
 		zone.control.heating_setpoint = 70;
 		zone.control.cooling_setpoint = 75;
 		zone.control.setpoint_deadband = 1;
-		zone.control.ventilation_fraction = 0.2;
+		zone.control.ventilation_fraction = 1;
 		zone.control.lighting_fraction = 0.5;
 	}
 }
@@ -232,6 +232,10 @@ int office::init(OBJECT *parent)
 		zone.control.economizer_cutin=60;
 	if (zone.control.auxiliary_cutin==0)
 		zone.control.auxiliary_cutin=2;
+
+	/* schedule */
+	if (strcmp(schedule,""))
+		strcpy(schedule,"M-F,8-17");
 
 	/* automatic sizing of HVAC equipment */
 	if (zone.hvac.heating.capacity==0)
