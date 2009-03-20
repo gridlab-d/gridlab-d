@@ -845,15 +845,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\x86\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1087,6 +1087,10 @@
 		</File>
 		<File
 			RelativePath="..\core\gridlabd.conf"
+			>
+		</File>
+		<File
+			RelativePath=".\rt\gridlabd.syn"
 			>
 		</File>
 		<File

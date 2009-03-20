@@ -3,8 +3,10 @@
 // commercial single-zone office test
 //
 
-#define NOFFICES=100
+#define NOFFICES=10
 #define GET_WEATHER
+#set threadcount=0
+#set profiler=1
 
 clock {
 	timezone PST+8PDT;
