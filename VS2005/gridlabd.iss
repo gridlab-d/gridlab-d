@@ -129,6 +129,8 @@ Source: ..\..\..\models\lighting.player; DestDir: {app}\samples
 ; --DEBUG--
 Source: ..\..\..\models\dryer.shape; DestDir: {app}\samples
 Source: ..\..\..\README-WINDOWS.txt; DestDir: {app}
+Source: ..\..\..\core\rt\msvc_debugger.glm; DestDir: {app}\etc
+Source: ..\..\..\core\rt\gridlabd.syn; DestDir: {app}\etc
 
 [Registry]
 Root: HKCU; SubKey: Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples"; Flags: uninsdeletevalue; Check: not (IsAdminLoggedOn() or IsPowerUserLoggedOn()); AfterInstall: InstallEnvironment()
@@ -222,4 +224,3 @@ begin
   if (CurUninstallStep = usPostUninstall) then
     UnInstallEnvironment();
 end;
-
