@@ -752,6 +752,7 @@ int convert_from_boolean(char *buffer, int size, void *data, PROPERTY *prop){
 	Converts a string to a \e boolean data type property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
+/* booleans are handled internally as 1-byte uchar's. -MH */
 int convert_to_boolean(char *buffer, void *data, PROPERTY *prop){
 	char str[32];
 	int i = 0;
@@ -764,11 +765,11 @@ int convert_to_boolean(char *buffer, void *data, PROPERTY *prop){
 		str[i] = toupper(str[i]);
 	}
 	if(0 == strcmp(str, "TRUE")){
-		*(unsigned int *)data = 1;
+		*(unsigned char *)data = 1;
 		return 1;
 	}
 	if(0 == strcmp(str, "FALSE")){
-		*(unsigned int *)data = 0;
+		*(unsigned char *)data = 0;
 		return 1;
 	}
 	return 0;
