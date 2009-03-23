@@ -80,7 +80,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_char1024, /**< the data is \p NULL -terminated string up to 1024 characters in length */
 	PT_object, /**< the data is a pointer to a GridLAB object */
 	PT_delegated, /**< the data is delegated to a module for implementation */
-	PT_bool, /**< the data is a true/false value */
+	PT_bool, /**< the data is a true/false value, implemented as a C++ bool */
 	PT_timestamp, /**< timestamp value */
 	PT_double_array, /**< the data is a fixed length double[] */
 	PT_complex_array, /**< the data is a fixed length complex[] */

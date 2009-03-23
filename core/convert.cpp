@@ -102,7 +102,7 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 {
 	int count = 0;
 	char temp[1025];
-	complex *v = data;
+	complex *v = (complex*)data;
 
 	double scale = 1.0;
 	if(prop->unit != NULL){
@@ -116,14 +116,14 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 		}
 	}
 
-	if (v->f==A)
+	if (v->Notation()==A)
 	{
-		double m = sqrt(v->r*v->r+v->i*v->i)*scale;
-		double a = (v->r==0) ? (v->i>0 ? PI/2 : (v->i==0 ? 0 : -PI/2)) : (v->r>0 ? atan(v->i/v->r) : PI+atan(v->i/v->r));
+		double m = v->Mag()*scale;
+		double a = v->Arg();
 		if (a>PI) a-=(2*PI);
 		count = sprintf(temp,global_complex_format,m,a*180/PI,A);
 	} else {
-		count = sprintf(temp,global_complex_format,v->r*scale,v->i*scale,v->f?v->f:'i');
+		count = sprintf(temp,global_complex_format,v->Re()*scale,v->Im()*scale,v->Notation()?v->Notation():'i');
 	}
 	if(count < size - 1){
 		memcpy(buffer, temp, count);
@@ -159,16 +159,10 @@ int convert_to_complex(char *buffer, /**< a pointer to the string buffer */
 	if (n>0)
 	{
 		if (n>1 && notation[0]==A)
-		{
-			v->r = a*cos(b*PI/180);
-			v->i = a*sin(b*PI/180);
-		}
+			v->SetPolar(a,b);
 		else
-		{
-			v->r = a;
-			v->i = (n>1?b:0);
-		}
-		v->f = notation[0];
+			v->SetRect(a,n>1?b:0);
+		v->SetNotation((CNOTATION)notation[0]);
 		return 1;
 	}
 	else
@@ -737,8 +731,7 @@ int convert_from_boolean(char *buffer, int size, void *data, PROPERTY *prop){
 	unsigned int b = 0;
 	if(buffer == NULL || data == NULL || prop == NULL)
 		return 0;
-//	b = *(unsigned int *)data;
-	b = *(unsigned char *)data;
+	b = *(bool *)data;
 	if(b == 1 && (size > 4)){
 		return sprintf(buffer, "TRUE");
 	}
@@ -765,11 +758,11 @@ int convert_to_boolean(char *buffer, void *data, PROPERTY *prop){
 		str[i] = toupper(str[i]);
 	}
 	if(0 == strcmp(str, "TRUE")){
-		*(unsigned char *)data = 1;
+		*(bool *)data = 1;
 		return 1;
 	}
 	if(0 == strcmp(str, "FALSE")){
-		*(unsigned char *)data = 0;
+		*(bool *)data = 0;
 		return 1;
 	}
 	return 0;

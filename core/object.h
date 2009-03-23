@@ -123,7 +123,7 @@ typedef struct s_callbacks {
 		double (*pseudo)(RANDOMTYPE type, unsigned int *state, ...);
 		double (*triangle)(double a, double b);
 		double (*beta)(double a, double b);
-		double (*gamma)(double a);
+		double (*gamma)(double a, double b);
 		double (*weibull)(double a, double b);
 		double (*rayleigh)(double a);
 	} random;
