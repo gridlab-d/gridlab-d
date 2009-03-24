@@ -114,7 +114,7 @@ int freezer::init(OBJECT *parent)
 	// defaults for unset values */
 	if (size==0)				size = gl_random_uniform(20,40); // cf
 	if (thermostat_deadband==0) thermostat_deadband = gl_random_uniform(2,3);
-	if (Tset==0)				Tset = gl_random_uniform(35,39);
+	if (Tset==0)				Tset = gl_random_triangle(10,20);
 	if (UAr==0)					UAr = 1.5+size/40*gl_random_uniform(0.9,1.1);
 	if (UAf==0)					UAf = gl_random_uniform(0.9,1.1);
 	if (COPcoef==0)				COPcoef = gl_random_uniform(0.9,1.1);
@@ -209,7 +209,7 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		// update temperature of air
 		Tair = (Tair-C2)*exp(-dt/C1)+C2;
-		if (Tair < 32 || Tair > 55)
+		if (Tair < 0 || Tair > 32)
 			throw "freezer air temperature out of control";
 		last_time = (TIMESTAMP)(t1+dt*3600.0/TS_SECOND);
 		return last_time;

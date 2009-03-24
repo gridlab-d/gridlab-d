@@ -159,7 +159,7 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	double dt = update_state(gl_toseconds(t1-t0));
 
-	return dt>0?(TIMESTAMP)(t1 + dt*TS_SECOND):TS_NEVER; 
+	return dt>0?-(TIMESTAMP)(t1 + dt*TS_SECOND):TS_NEVER; // negative time means soft transition
 }
 
 //////////////////////////////////////////////////////////////////////////

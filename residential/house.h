@@ -64,15 +64,18 @@ private:
 	complex *pLine_I; ///< pointer to the three current on three lines
 
 public:  //definitions
-	typedef enum {	HEAT, ///< heating mode
-					AUX, ///< supplemental heating
-					COOL, ///< cooling mode
-					OFF  ///< off
-				}HCMODE; ///< heating/cooling mode
+	typedef enum {	
+		HC_UNKNOWN=0, ///< unknown mode
+		HC_OFF=1,  ///< off
+		HC_HEAT=2, ///< heating mode
+		HC_AUX=3, ///< supplemental heating
+		HC_COOL=4, ///< cooling mode
+	} HCMODE; ///< heating/cooling mode
 	typedef enum {
-		ELECTRIC,	///< tank heats with an electric resistance element
-		GASHEAT		///< tank heats with natural gas
-	} HEATMODE;		///<
+		HT_UNKNOWN=0,
+		HT_ELECTRIC=1,	///< tank heats with an electric resistance element
+		HT_GASHEAT=2,	///< tank heats with natural gas
+	} HEATTYPE;		///<
 
 public:
 	// published variables
@@ -104,6 +107,10 @@ public:
 	double air_heat_capacity;		///< heat capacity of air
 	double house_content_thermal_mass; ///< house thermal mass (BTU/F)
 
+	double cooling_design_temperature, heating_design_temperature, design_peak_solar, design_internal_gains;
+
+	double Rroof, Rwall, Rfloor, Rwindows;
+
 	double *pTout;
 	double vTout;
 	double *pRhout;
@@ -112,42 +119,24 @@ public:
 	double Tair;
 	double Tsolar;
 	double Tmaterials;
-
+		
 	HCMODE heat_cool_mode;			///< heating cooling mode at t1
-	HEATMODE heat_mode;				///< method of heating the water (gas or electric) [enum]
+	HEATTYPE heat_type;				///< method of heating the water (gas or electric) [enum]
 	double hvac_rated_power;
 	double hvac_rated_capacity;
 	double rated_heating_capacity;
 	double rated_cooling_capacity;
 
-	double internal_gain;
 	double hvac_kWh_use;
 	ENDUSELOAD load;  /* hvac load */
 	ENDUSELOAD tload; /* total load */
 
 private:
-	double A11;
-	double A12;
-	double A21;
-	double A22;
 
-	double B11;
-	double B12;
-	double B21;
-	double B22;
-
-	double s1;
-	double s2;
-
-	double M_inv11;
-	double M_inv12;
-	double M_inv21;
-	double M_inv22;
-
-	double BB11;
-	double BB21;
-	double BB12;
-	double BB22;
+	double dTair;
+	double c1,c2,c3,c4,c5,c6,c7,r1,r2,k1,k2,Teq, Tevent;
+	static bool warn_control;
+	static double warn_low_temp, warn_high_temp;
 
 public:
 	static CLASS *oclass;
@@ -158,10 +147,12 @@ public:
 	int create();
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync_hvac_load(TIMESTAMP t0, double nHours);
 	TIMESTAMP sync_billing(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_thermostat(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_panel(TIMESTAMP t0, TIMESTAMP t1);
+	void update_hvac(double dt=0);
+	void update_model(double dt=0);
+	void check_controls(void);
 
 	int init(OBJECT *parent);
 	int init_climate(void);
@@ -170,13 +161,19 @@ public:
 
 // access methods
 public:
-	double get_floor_area () { return floor_area; };
-	double get_Tout () { return *pTout; };
-	double get_Tair () { return Tair; };
-	double get_Tsolar(int hour, int month, double Tair, double Tout);
-	int set_Eigen_values();
+	inline double get_floor_area () { return floor_area; };
+	inline double get_Tout () { return *pTout; };
+	inline double get_Tair () { return Tair; };
+
 	complex *get_complex(OBJECT *obj, char *name);
 };
+
+inline double sgn(double x) 
+{
+	if (x<0) return -1;
+	if (x>0) return 1;
+	return 0;
+}
 
 #endif
 

@@ -285,7 +285,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	last_water_demand = cur_water_demand;
 
 	if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
-		return (TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND);
+		return -(TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND); // negative means soft transition
 	// less than one second means never
 	else
 		return TS_NEVER; 

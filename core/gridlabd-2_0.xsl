@@ -93,8 +93,8 @@
 <H3><A NAME="modules_climate">climate</A></H3><TABLE BORDER="1">
 <TR><TH>version.major</TH><TD><xsl:value-of select="climate/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="climate/version.minor"/></TD></TR></TABLE>
 <H4>climate objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>city</TH><TH>tmyfile</TH><TH>temperature</TH><TH>humidity</TH><TH>solar_flux</TH><TH>wind_speed</TH><TH>wind_dir</TH><TH>wind_gust</TH></TR>
-<xsl:for-each select="climate/climate_list/climate"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="city"/></TD><TD><xsl:value-of select="tmyfile"/></TD><TD><xsl:value-of select="temperature"/></TD><TD><xsl:value-of select="humidity"/></TD><TD><xsl:value-of select="solar_flux"/></TD><TD><xsl:value-of select="wind_speed"/></TD><TD><xsl:value-of select="wind_dir"/></TD><TD><xsl:value-of select="wind_gust"/></TD></TR>
+<TR><TH>Name</TH><TH>city</TH><TH>tmyfile</TH><TH>temperature</TH><TH>humidity</TH><TH>solar_flux</TH><TH>wind_speed</TH><TH>wind_dir</TH><TH>wind_gust</TH><TH>record.low</TH><TH>record.high</TH><TH>record.solar</TH></TR>
+<xsl:for-each select="climate/climate_list/climate"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="city"/></TD><TD><xsl:value-of select="tmyfile"/></TD><TD><xsl:value-of select="temperature"/></TD><TD><xsl:value-of select="humidity"/></TD><TD><xsl:value-of select="solar_flux"/></TD><TD><xsl:value-of select="wind_speed"/></TD><TD><xsl:value-of select="wind_dir"/></TD><TD><xsl:value-of select="wind_gust"/></TD><TD><xsl:value-of select="record.low"/></TD><TD><xsl:value-of select="record.high"/></TD><TD><xsl:value-of select="record.solar"/></TD></TR>
 </xsl:for-each></TABLE>
 <H3><A NAME="modules_commercial">commercial</A></H3><TABLE BORDER="1">
 <TR><TH>version.major</TH><TD><xsl:value-of select="commercial/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="commercial/version.minor"/></TD></TR><TR><TH>warn_control</TH><TD><xsl:value-of select="commercial/warn_control"/></TD></TR><TR><TH>warn_low_temp</TH><TD><xsl:value-of select="commercial/warn_low_temp"/></TD></TR><TR><TH>warn_high_temp</TH><TD><xsl:value-of select="commercial/warn_high_temp"/></TD></TR></TABLE>
@@ -303,8 +303,8 @@
 <H3><A NAME="modules_residential">residential</A></H3><TABLE BORDER="1">
 <TR><TH>version.major</TH><TD><xsl:value-of select="residential/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="residential/version.minor"/></TD></TR><TR><TH>default_line_voltage</TH><TD><xsl:value-of select="residential/default_line_voltage"/></TD></TR><TR><TH>default_line_current</TH><TD><xsl:value-of select="residential/default_line_current"/></TD></TR></TABLE>
 <H4>house objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>floor_area</TH><TH>gross_wall_area</TH><TH>ceiling_height</TH><TH>aspect_ratio</TH><TH>envelope_UA</TH><TH>window_wall_ratio</TH><TH>glazing_shgc</TH><TH>airchange_per_hour</TH><TH>internal_gain</TH><TH>thermostat_deadband</TH><TH>heating_setpoint</TH><TH>cooling_setpoint</TH><TH>design_heating_capacity</TH><TH>design_cooling_capacity</TH><TH>heating_COP</TH><TH>cooling_COP</TH><TH>COP_coeff</TH><TH>air_temperature</TH><TH>mass_heat_coeff</TH><TH>heat_mode</TH><TH>total_load</TH><TH>enduse_load</TH><TH>power</TH><TH>current</TH><TH>admittance</TH></TR>
-<xsl:for-each select="residential/house_list/house"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="floor_area"/></TD><TD><xsl:value-of select="gross_wall_area"/></TD><TD><xsl:value-of select="ceiling_height"/></TD><TD><xsl:value-of select="aspect_ratio"/></TD><TD><xsl:value-of select="envelope_UA"/></TD><TD><xsl:value-of select="window_wall_ratio"/></TD><TD><xsl:value-of select="glazing_shgc"/></TD><TD><xsl:value-of select="airchange_per_hour"/></TD><TD><xsl:value-of select="internal_gain"/></TD><TD><xsl:value-of select="thermostat_deadband"/></TD><TD><xsl:value-of select="heating_setpoint"/></TD><TD><xsl:value-of select="cooling_setpoint"/></TD><TD><xsl:value-of select="design_heating_capacity"/></TD><TD><xsl:value-of select="design_cooling_capacity"/></TD><TD><xsl:value-of select="heating_COP"/></TD><TD><xsl:value-of select="cooling_COP"/></TD><TD><xsl:value-of select="COP_coeff"/></TD><TD><xsl:value-of select="air_temperature"/></TD><TD><xsl:value-of select="mass_heat_coeff"/></TD><TD><xsl:value-of select="heat_mode"/></TD><TD><xsl:value-of select="total_load"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="power"/></TD><TD><xsl:value-of select="current"/></TD><TD><xsl:value-of select="admittance"/></TD></TR>
+<TR><TH>Name</TH><TH>floor_area</TH><TH>gross_wall_area</TH><TH>ceiling_height</TH><TH>aspect_ratio</TH><TH>envelope_UA</TH><TH>window_wall_ratio</TH><TH>glazing_shgc</TH><TH>airchange_per_hour</TH><TH>internal_gain</TH><TH>solar_gain</TH><TH>heat_cool_gain</TH><TH>thermostat_deadband</TH><TH>heating_setpoint</TH><TH>cooling_setpoint</TH><TH>design_heating_capacity</TH><TH>design_cooling_capacity</TH><TH>cooling_design_temperature</TH><TH>heating_design_temperature</TH><TH>design_peak_solar</TH><TH>design_internal_gains</TH><TH>heating_COP</TH><TH>cooling_COP</TH><TH>COP_coeff</TH><TH>air_temperature</TH><TH>mass_heat_capacity</TH><TH>mass_heat_coeff</TH><TH>mass_temperature</TH><TH>heat_mode</TH><TH>total_load</TH><TH>enduse_load</TH><TH>power</TH><TH>current</TH><TH>admittance</TH><TH>hc_mode</TH><TH>Rroof</TH><TH>Rwall</TH><TH>Rfloor</TH><TH>Rwindows</TH></TR>
+<xsl:for-each select="residential/house_list/house"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="floor_area"/></TD><TD><xsl:value-of select="gross_wall_area"/></TD><TD><xsl:value-of select="ceiling_height"/></TD><TD><xsl:value-of select="aspect_ratio"/></TD><TD><xsl:value-of select="envelope_UA"/></TD><TD><xsl:value-of select="window_wall_ratio"/></TD><TD><xsl:value-of select="glazing_shgc"/></TD><TD><xsl:value-of select="airchange_per_hour"/></TD><TD><xsl:value-of select="internal_gain"/></TD><TD><xsl:value-of select="solar_gain"/></TD><TD><xsl:value-of select="heat_cool_gain"/></TD><TD><xsl:value-of select="thermostat_deadband"/></TD><TD><xsl:value-of select="heating_setpoint"/></TD><TD><xsl:value-of select="cooling_setpoint"/></TD><TD><xsl:value-of select="design_heating_capacity"/></TD><TD><xsl:value-of select="design_cooling_capacity"/></TD><TD><xsl:value-of select="cooling_design_temperature"/></TD><TD><xsl:value-of select="heating_design_temperature"/></TD><TD><xsl:value-of select="design_peak_solar"/></TD><TD><xsl:value-of select="design_internal_gains"/></TD><TD><xsl:value-of select="heating_COP"/></TD><TD><xsl:value-of select="cooling_COP"/></TD><TD><xsl:value-of select="COP_coeff"/></TD><TD><xsl:value-of select="air_temperature"/></TD><TD><xsl:value-of select="mass_heat_capacity"/></TD><TD><xsl:value-of select="mass_heat_coeff"/></TD><TD><xsl:value-of select="mass_temperature"/></TD><TD><xsl:value-of select="heat_mode"/></TD><TD><xsl:value-of select="total_load"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="power"/></TD><TD><xsl:value-of select="current"/></TD><TD><xsl:value-of select="admittance"/></TD><TD><xsl:value-of select="hc_mode"/></TD><TD><xsl:value-of select="Rroof"/></TD><TD><xsl:value-of select="Rwall"/></TD><TD><xsl:value-of select="Rfloor"/></TD><TD><xsl:value-of select="Rwindows"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>waterheater objects</H4><TABLE BORDER="1">
 <TR><TH>Name</TH><TH>tank_volume</TH><TH>tank_UA</TH><TH>tank_diameter</TH><TH>water_demand</TH><TH>heating_element_capacity</TH><TH>inlet_water_temperature</TH><TH>heat_mode</TH><TH>location</TH><TH>tank_setpoint</TH><TH>thermostat_deadband</TH><TH>power</TH><TH>meter</TH><TH>temperature</TH><TH>enduse_load</TH><TH>height</TH></TR>
@@ -413,6 +413,9 @@ module climate {
 </xsl:if><xsl:if test="wind_speed">	wind_speed <xsl:value-of select="wind_speed"/>;
 </xsl:if><xsl:if test="wind_dir">	wind_dir <xsl:value-of select="wind_dir"/>;
 </xsl:if><xsl:if test="wind_gust">	wind_gust <xsl:value-of select="wind_gust"/>;
+</xsl:if><xsl:if test="record.low">	record.low <xsl:value-of select="record.low"/>;
+</xsl:if><xsl:if test="record.high">	record.high <xsl:value-of select="record.high"/>;
+</xsl:if><xsl:if test="record.solar">	record.solar <xsl:value-of select="record.solar"/>;
 </xsl:if>}
 </xsl:for-each></xsl:for-each><xsl:for-each select="commercial">
 ##############################################
@@ -1612,22 +1615,35 @@ module residential {
 </xsl:if><xsl:if test="glazing_shgc">	glazing_shgc <xsl:value-of select="glazing_shgc"/>;
 </xsl:if><xsl:if test="airchange_per_hour">	airchange_per_hour <xsl:value-of select="airchange_per_hour"/>;
 </xsl:if><xsl:if test="internal_gain">	internal_gain <xsl:value-of select="internal_gain"/>;
+</xsl:if><xsl:if test="solar_gain">	solar_gain <xsl:value-of select="solar_gain"/>;
+</xsl:if><xsl:if test="heat_cool_gain">	heat_cool_gain <xsl:value-of select="heat_cool_gain"/>;
 </xsl:if><xsl:if test="thermostat_deadband">	thermostat_deadband <xsl:value-of select="thermostat_deadband"/>;
 </xsl:if><xsl:if test="heating_setpoint">	heating_setpoint <xsl:value-of select="heating_setpoint"/>;
 </xsl:if><xsl:if test="cooling_setpoint">	cooling_setpoint <xsl:value-of select="cooling_setpoint"/>;
 </xsl:if><xsl:if test="design_heating_capacity">	design_heating_capacity <xsl:value-of select="design_heating_capacity"/>;
 </xsl:if><xsl:if test="design_cooling_capacity">	design_cooling_capacity <xsl:value-of select="design_cooling_capacity"/>;
+</xsl:if><xsl:if test="cooling_design_temperature">	cooling_design_temperature <xsl:value-of select="cooling_design_temperature"/>;
+</xsl:if><xsl:if test="heating_design_temperature">	heating_design_temperature <xsl:value-of select="heating_design_temperature"/>;
+</xsl:if><xsl:if test="design_peak_solar">	design_peak_solar <xsl:value-of select="design_peak_solar"/>;
+</xsl:if><xsl:if test="design_internal_gains">	design_internal_gains <xsl:value-of select="design_internal_gains"/>;
 </xsl:if><xsl:if test="heating_COP">	heating_COP <xsl:value-of select="heating_COP"/>;
 </xsl:if><xsl:if test="cooling_COP">	cooling_COP <xsl:value-of select="cooling_COP"/>;
 </xsl:if><xsl:if test="COP_coeff">	COP_coeff <xsl:value-of select="COP_coeff"/>;
 </xsl:if><xsl:if test="air_temperature">	air_temperature <xsl:value-of select="air_temperature"/>;
+</xsl:if><xsl:if test="mass_heat_capacity">	mass_heat_capacity <xsl:value-of select="mass_heat_capacity"/>;
 </xsl:if><xsl:if test="mass_heat_coeff">	mass_heat_coeff <xsl:value-of select="mass_heat_coeff"/>;
+</xsl:if><xsl:if test="mass_temperature">	mass_temperature <xsl:value-of select="mass_temperature"/>;
 </xsl:if><xsl:if test="heat_mode">	heat_mode <xsl:value-of select="heat_mode"/>;
 </xsl:if><xsl:if test="total_load">	total_load <xsl:value-of select="total_load"/>;
 </xsl:if><xsl:if test="enduse_load">	enduse_load <xsl:value-of select="enduse_load"/>;
 </xsl:if><xsl:if test="power">	power <xsl:value-of select="power"/>;
 </xsl:if><xsl:if test="current">	current <xsl:value-of select="current"/>;
 </xsl:if><xsl:if test="admittance">	admittance <xsl:value-of select="admittance"/>;
+</xsl:if><xsl:if test="hc_mode">	hc_mode <xsl:value-of select="hc_mode"/>;
+</xsl:if><xsl:if test="Rroof">	Rroof <xsl:value-of select="Rroof"/>;
+</xsl:if><xsl:if test="Rwall">	Rwall <xsl:value-of select="Rwall"/>;
+</xsl:if><xsl:if test="Rfloor">	Rfloor <xsl:value-of select="Rfloor"/>;
+</xsl:if><xsl:if test="Rwindows">	Rwindows <xsl:value-of select="Rwindows"/>;
 </xsl:if>}
 </xsl:for-each>
 # residential::waterheater objects

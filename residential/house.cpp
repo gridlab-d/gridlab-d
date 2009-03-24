@@ -124,6 +124,10 @@
 CLASS* house::oclass = NULL;
 house *house::defaults = NULL;
 
+double house::warn_low_temp = 55;
+double house::warn_high_temp = 95;
+bool house::warn_control = true;
+
 /** House object constructor:  Registers the class and publishes the variables that can be set by the user. 
 Sets default randomized values for published variables.
 **/
@@ -143,61 +147,55 @@ house::house(MODULE *mod)
 			PT_double,"gross_wall_area[sf]",PADDR(gross_wall_area),
 			PT_double,"ceiling_height[ft]",PADDR(ceiling_height),
 			PT_double,"aspect_ratio",PADDR(aspect_ratio),
-			PT_double,"envelope_UA[Btu/degF]",PADDR(envelope_UA),
+			PT_double,"envelope_UA[Btu/degF.h]",PADDR(envelope_UA),
 			PT_double,"window_wall_ratio",PADDR(window_wall_ratio),
 			PT_double,"glazing_shgc",PADDR(glazing_shgc),
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),
-			PT_double,"internal_gain[Btu/h]",PADDR(internal_gain),
+			PT_double,"internal_gain[Btu/h]",PADDR(tload.heatgain),
+			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),
+			PT_double,"heat_cool_gain[Btu/h]",PADDR(load.heatgain),
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),
 			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),
 			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),
 			PT_double, "design_heating_capacity[Btu.h/sf]",PADDR(design_heating_capacity),
 			PT_double,"design_cooling_capacity[Btu.h/sf]",PADDR(design_cooling_capacity),
+			PT_double, "cooling_design_temperature[degF]", PADDR(cooling_design_temperature),
+			PT_double, "heating_design_temperature[degF]", PADDR(heating_design_temperature),
+			PT_double, "design_peak_solar[W/sf]", PADDR(design_peak_solar),
+			PT_double, "design_internal_gains[W/sf]", PADDR(design_peak_solar),
+
 			PT_double,"heating_COP",PADDR(heating_COP),
 			PT_double,"cooling_COP",PADDR(cooling_COP),
 			PT_double,"COP_coeff",PADDR(COP_coeff),
 			PT_double,"air_temperature[degF]",PADDR(Tair),
-			PT_double,"mass_heat_coeff",PADDR(house_content_heat_transfer_coeff),
-			PT_enumeration,"heat_mode",PADDR(heat_mode),
-				PT_KEYWORD,"ELECTRIC",ELECTRIC,
-				PT_KEYWORD,"GASHEAT",GASHEAT,
+			PT_double,"mass_heat_capacity[Btu/F]",PADDR(house_content_thermal_mass),
+			PT_double,"mass_heat_coeff[Btu/F.h]",PADDR(house_content_heat_transfer_coeff),
+			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),
+			PT_enumeration,"heat_mode",PADDR(heat_type),
+				PT_KEYWORD,"UNKNOWN",HT_UNKNOWN,
+				PT_KEYWORD,"ELECTRIC",HT_ELECTRIC,
+				PT_KEYWORD,"GASHEAT",HT_GASHEAT,
 			PT_complex,"total_load[kW]",PADDR(tload.total),
 			PT_complex,"enduse_load[kW]",PADDR(load.total),
 			PT_complex,"power[kW]",PADDR(load.power),
 			PT_complex,"current[A]",PADDR(load.current),
 			PT_complex,"admittance[1/Ohm]",PADDR(load.admittance),
+			PT_enumeration,"hc_mode",PADDR(heat_cool_mode),
+				PT_KEYWORD,"UNKNOWN",HC_UNKNOWN,
+				PT_KEYWORD,"HEAT",HC_HEAT,
+				PT_KEYWORD,"OFF",HC_OFF,
+				PT_KEYWORD,"COOL",HC_COOL,
+				PT_KEYWORD,"OFF",HC_OFF,
+			PT_double, "Rroof[degF.h/Btu]", PADDR(Rroof),
+			PT_double, "Rwall[degF.h/Btu]", PADDR(Rwall),
+			PT_double, "Rfloor[degF.h/Btu]", PADDR(Rfloor),
+			PT_double, "Rwindows[degF.h/Btu]", PADDR(Rwindows),
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// deafults set during class creation
 		defaults = this;
 		memset(this,0,sizeof(house));
-
-		// initalize published variables.  The model definition can set any of this.
-		heat_mode = ELECTRIC;
-		floor_area = 0.0;
-		ceiling_height = 0.0;
-		envelope_UA = 0.0;
-		airchange_per_hour = 0.0;
-		thermostat_deadband = 0.0;
-		heating_setpoint = 0.0;
-		cooling_setpoint = 0.0;
-		window_wall_ratio = 0.0;
-		gross_wall_area = 0.0;
-		glazing_shgc = 0.0;
-		design_heating_capacity = 0.0;
-		design_cooling_capacity = 0.0;
-		heating_COP = 3.0;
-		cooling_COP = 3.0;
-		aspect_ratio = 1.0;
-
-		// set defaults for panel/meter variables
-		panel.circuits=NULL;
-		panel.max_amps=200;
-
-		load.power = complex(0,0,J);
-		load.admittance = complex(0,0,J);
-		load.current = complex(0,0,J);
 	}	
 }
 
@@ -258,6 +256,21 @@ int house::init_climate()
 			pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
 			pRhout = (double*)GETADDR(obj,gl_get_property(obj,"humidity"));
 			pSolar = (double*)GETADDR(obj,gl_get_property(obj,"solar_flux"));
+			struct {
+				char *name;
+				double *dst;
+			} map[] = {
+				{"record.high",&cooling_design_temperature},
+				{"record.low",&heating_design_temperature},
+				{"record.solar",&design_peak_solar},
+			};
+			int i;
+			for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
+			{
+				double *src = (double*)GETADDR(obj,gl_get_property(obj,map[i].name));
+				if (src) *map[i].dst = *src;
+			}
+
 		}
 	}
 	return 1;
@@ -300,94 +313,196 @@ int house::init(OBJECT *parent)
 	}
 	else
 	{
-		gl_error("house:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
+		gl_warning("house:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
 
 		// attach meter variables to each circuit in the default_meter
 		*(map[0].var) = &default_line_voltage[0];
 		*(map[1].var) = &default_line_current[0];
 	}
-		// Set defaults for published variables nor provided by model definition
-	while (floor_area <= 500)
-		floor_area = gl_random_normal(2500,300);		// house size (sf) by 100 ft incs;
 
-	if (ceiling_height <= ROUNDOFF)
-		ceiling_height = 8.0;
+	// set defaults for panel/meter variables
+	if (panel.max_amps==0) panel.max_amps = 200; 
+	load.power = complex(0,0,J);
+	load.admittance = complex(0,0,J);
+	load.current = complex(0,0,J);
 
-	if (envelope_UA <= ROUNDOFF)
-		envelope_UA = gl_random_uniform(0.15,0.2)*floor_area;	// UA of house envelope [BTU/h.F]
+	// Set defaults for published variables nor provided by model definition
+	if (heat_type==HT_UNKNOWN)	heat_type = HT_ELECTRIC;
+	if (heating_COP==0.0)		heating_COP = gl_random_triangle(1,2);
+	if (cooling_COP==0.0)		cooling_COP = gl_random_triangle(2,4);
 
-	if (aspect_ratio <= ROUNDOFF)
-		aspect_ratio = 1.0;
+	if (aspect_ratio==0.0)		aspect_ratio = gl_random_triangle(1,2);
+	if (floor_area==0)			floor_area = gl_random_triangle(1500,2500);
+	if (ceiling_height==0)		ceiling_height = gl_random_triangle(7,9);
+	if (gross_wall_area==0)		gross_wall_area = 4.0 * 2.0 * (aspect_ratio + 1.0) * ceiling_height * sqrt(floor_area/aspect_ratio);
+	if (window_wall_ratio==0)	window_wall_ratio = 0.15;
+	if (glazing_shgc==0)		glazing_shgc = 0.65; // assuming generic double glazing
 
-	if (gross_wall_area <= ROUNDOFF)
-		gross_wall_area = 4.0 * 2.0 * (aspect_ratio + 1.0) * ceiling_height * sqrt(floor_area/aspect_ratio);
+	if (Rroof==0)				Rroof = gl_random_triangle(50,70);
+	if (Rwall==0)				Rwall = gl_random_triangle(15,25);
+	if (Rfloor==0)				Rfloor = gl_random_triangle(100,150);
+	if (Rwindows==0)			Rwindows = gl_random_triangle(2,4);
 
-	if (airchange_per_hour <= ROUNDOFF)
-		airchange_per_hour = gl_random_uniform(4,6);			// air changes per hour [cf/h]
+	if (envelope_UA==0)			envelope_UA = floor_area*(1/Rroof+1/Rfloor) + gross_wall_area*((1-window_wall_ratio)/Rwall + window_wall_ratio/Rwindows);
 
-	if (thermostat_deadband <= ROUNDOFF)
-		thermostat_deadband = 2;							// thermostat hysteresis [F]
+	if (airchange_per_hour==0)	airchange_per_hour = gl_random_triangle(4,6);
 
-	if (heating_setpoint <= ROUNDOFF)
-		heating_setpoint = gl_random_uniform(68,72);	// heating setpoint [F]
-
-	if (cooling_setpoint <= ROUNDOFF)
-		cooling_setpoint = gl_random_uniform(76,80);	// cooling setpoint [F]
-
-	if (window_wall_ratio <= ROUNDOFF)
-		window_wall_ratio = 0.15;						// assuming 15% window wall ratio
-
-	if (glazing_shgc <= ROUNDOFF)
-		glazing_shgc = 0.65;								// assuming generic double glazing
-
-	if (design_cooling_capacity <= ROUNDOFF)
-		design_cooling_capacity = gl_random_uniform(18,24); // Btuh/sf
-
-	if (design_heating_capacity <= ROUNDOFF)
-		design_heating_capacity = gl_random_uniform(18,24); // Btuh/sf
-	
-	
 	// initalize/set hvac model parameters
-    if (COP_coeff <= ROUNDOFF)
-	    COP_coeff = gl_random_uniform(0.9,1.1);	// coefficient of cops [scalar]
-    
-    if (Tair <= ROUNDOFF)
-	    Tair = gl_random_uniform(heating_setpoint+thermostat_deadband, cooling_setpoint-thermostat_deadband);	// air temperature [F]
-	
-    if (over_sizing_factor <= ROUNDOFF)
-        over_sizing_factor = gl_random_uniform(0.98,1.3);
-
-    heat_cool_mode = house::OFF;							// heating/cooling mode {HEAT, COOL, OFF}
+    if (COP_coeff==0)			COP_coeff = gl_random_uniform(0.9,1.1);	// coefficient of cops [scalar]
+    if (Tair==0)				Tair = gl_random_uniform(heating_setpoint, cooling_setpoint);	// air temperature [F]
+	if (over_sizing_factor==0)  over_sizing_factor = gl_random_uniform(0.98,1.3);
+	if (thermostat_deadband==0)	thermostat_deadband = gl_random_triangle(2,3);
+	if (heating_setpoint==0)	heating_setpoint = gl_random_triangle(68,72);
+	if (cooling_setpoint==0)	cooling_setpoint = gl_random_triangle(75,79);
+	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * gl_random_triangle(4,6); // ~5 W/sf estimated
+	if (design_cooling_capacity==0)	design_cooling_capacity = envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (1 - glazing_shgc)) + design_internal_gains;
+	if (design_heating_capacity==0)	design_heating_capacity = envelope_UA * (heating_setpoint - heating_design_temperature);
+    if (heat_cool_mode==HC_UNKNOWN) heat_cool_mode = HC_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
 
     air_density = 0.0735;			// density of air [lb/cf]
 	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
 
-	house_content_thermal_mass = 10000.0;		// thermal mass of house [BTU/F]
-    
-    if (house_content_heat_transfer_coeff <= ROUNDOFF)
-	    house_content_heat_transfer_coeff = gl_random_uniform(0.5,1.0)*floor_area;	// heat transfer coefficient of house contents [BTU/hr.F]
+	if (house_content_thermal_mass==0) house_content_thermal_mass = gl_random_triangle(4,6)*floor_area;		// thermal mass of house [BTU/F]
+    if (house_content_heat_transfer_coeff==0) house_content_heat_transfer_coeff = gl_random_uniform(0.5,1.0)*floor_area;	// heat transfer coefficient of house contents [BTU/hr.F]
+
+	if (heat_cool_mode==HC_OFF)
+		Tair = gl_random_uniform(heating_setpoint,cooling_setpoint);
+	else if (heat_cool_mode==HC_HEAT || heat_cool_mode==HC_AUX)
+		Tair = gl_random_uniform(heating_setpoint-thermostat_deadband/2,heating_setpoint+thermostat_deadband/2);
+	else if (heat_cool_mode==HC_COOL)
+		Tair = gl_random_uniform(cooling_setpoint-thermostat_deadband/2,cooling_setpoint+thermostat_deadband/2);
 
 	//house properties for HVAC
-	volume = 8*floor_area;									// volume of air [cf]
+	volume = ceiling_height*floor_area;									// volume of air [cf]
 	air_mass = air_density*volume;							// mass of air [lb]
 	air_thermal_mass = air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]
 	Tmaterials = Tair;										// material temperture [F]
-	hvac_rated_power = 24*floor_area*over_sizing_factor;	// rated heating/cooling output [BTU/h]
 
-	if (set_Eigen_values() == FALSE)
-		return 0;
-
-	if (hdr->latitude < 24 || hdr->latitude > 48)
-	{
-		// for unknown latitude, warn the user and set it midway at 36
-		hdr->latitude = hdr->latitude<24 ? 24 : 48;
-		gl_error("Latitude beyond the currently supported range 24 - 48 N, Simulations will continue assuming latitude %.0fN",hdr->latitude);
-	}
+	update_hvac();
+	update_model();
 
 	// attach the house HVAC to the panel
 	attach(OBJECTHDR(this),50, TRUE);
 	
 	return 1;
+}
+
+/** The PLC control code for house thermostat.  The heat or cool mode is based
+	on the house air temperature, thermostat setpoints and deadband.
+**/
+TIMESTAMP house::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
+{
+	double tdead = thermostat_deadband/2;
+	double terr = dTair/3600; // this is the time-error of 1 second uncertainty
+	const double TcoolOn = cooling_setpoint+tdead;
+	const double TcoolOff = cooling_setpoint-tdead;
+	const double TheatOn = heating_setpoint-tdead;
+	const double TheatOff = heating_setpoint+tdead;
+
+	// check for deadband overlap
+	if (TcoolOff<TheatOff)
+	{
+		gl_error("house: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", TcoolOff,TheatOff);
+		return TS_INVALID;
+	}
+
+	// change control mode if appropriate
+	if (Tair<TheatOn-terr/2 && heat_cool_mode!=HC_HEAT) 
+	{	// heating on
+		// TODO: check for AUX
+		heat_cool_mode = HC_HEAT;
+		Tevent = TheatOff;
+	}
+	else if (Tair>TcoolOn-terr/2 && heat_cool_mode!=HC_COOL)
+	{	// cooling on
+		heat_cool_mode = HC_COOL;
+		Tevent = TcoolOff;
+	}
+	else 
+	{	// floating
+		heat_cool_mode = HC_OFF;
+		Tevent = ( dTair<0 ? TheatOn : TcoolOn );
+	}
+
+	return TS_NEVER;
+}
+
+/**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time
+**/
+TIMESTAMP house::presync(TIMESTAMP t0, TIMESTAMP t1) 
+{
+	const double dt1 = (double)(t1-t0)*TS_SECOND;
+
+	/* advance the thermal state of the building */
+	if (t0>0 && dt1>0)
+	{
+		const double dt = dt1/3600; /* model operates in units of hours */
+		load.energy += load.total.Mag() * dt;
+
+		/* calculate model update, if possible */
+		if (c2!=0)
+		{
+			/* update temperatures */
+			const double e1 = k1*exp(r1*dt);
+			const double e2 = k2*exp(r2*dt);
+			Tair = e1 + e2 + Teq;
+			Tmaterials = ((r1-c1)*e1 + (r2-c1)*e2 + c6)/c2 + Teq;
+		}
+	}
+
+	// reset accumulators for the next sync
+	/* HVAC accumulators */
+	load.heatgain = 0;
+	load.total = complex(0,0,J);
+	load.admittance = complex(0,0,J);
+	load.current = complex(0,0,J);
+
+	/* main panel accumulators */
+	tload.heatgain = 0;
+	tload.total = complex(0,0,J);
+	tload.admittance = complex(0,0,J);
+	tload.current = complex(0,0,J);
+
+	return TS_NEVER;
+}
+
+/** Updates the total internal gain and synchronizes with the hvac equipment load.  
+Also synchronizes the voltages and current in the panel with the meter.
+**/
+
+TIMESTAMP house::sync(TIMESTAMP t0, TIMESTAMP t1)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	TIMESTAMP t2 = TS_NEVER;
+	const double dt1 = (double)(t1-t0)*TS_SECOND;
+
+	if (t0==0 || t1>t0)
+	{
+		update_hvac(dt1);
+		update_model(dt1);
+		check_controls();
+	}
+
+	/* solve for the time to the next event */
+	double dt2=(double)TS_NEVER;
+	dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+	if (isnan(dt2) || !isfinite(dt2) || dt2<0)
+	{
+		if (sgn(dTair)==sgn(Tair-Tevent)) // imminent control event
+			t2 = t1+1;
+	}
+	else if (dt2<TS_SECOND)
+		t2 = t1+1; /* need to do a second pass to get next state */
+	else
+		t2 = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+
+	// sync circuit panel
+	TIMESTAMP panel_time = sync_panel(t0,t1);
+	if (panel_time < t2)
+		t2 = panel_time;
+
+	return t2;
+	
 }
 
 /// Attaches an end-use object to a house panel
@@ -447,34 +562,6 @@ CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
 	c->enduse = obj;
 
 	return c;
-}
-
-/**  The PLC control code for house thermostat.  The heat or cool mode is based
-on the house air temperature, thermostat setpoints and deadband.
-**/
-TIMESTAMP house::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
-{
-	const double TcoolOn = cooling_setpoint+thermostat_deadband;
-	const double TcoolOff = cooling_setpoint-thermostat_deadband;
-	const double TheatOn = heating_setpoint-thermostat_deadband;
-	const double TheatOff = heating_setpoint+thermostat_deadband;
-
-	// check for deadband overlap
-	if (TcoolOff<TheatOff)
-	{
-		gl_error("house: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", TcoolOff,TheatOff);
-		return TS_INVALID;
-	}
-
-	// change control mode if appropriate
-	if (Tair<=TheatOn+0.01) // heating turns on
-		heat_cool_mode = HEAT;
-	else if (Tair>=TheatOff-0.01 && Tair<=TcoolOff+0.01) // heating/cooling turns off
-		heat_cool_mode = OFF;
-	else if (Tair>=TcoolOn-0.01) // cooling turns on
-		heat_cool_mode = COOL;
-
-	return TS_NEVER;
 }
 
 TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
@@ -577,49 +664,83 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	return sync_time;
 }
 
-
-/**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time
-**/
-
-TIMESTAMP house::presync(TIMESTAMP t0, TIMESTAMP t1) 
+void house::update_model(double dt)
 {
-	if (t0>0 && t1>t0)
-		load.energy += load.total.Mag() * gl_tohours(t1-t0);
+		/* local aliases */
+	const double &Tout = (*(pTout));
+	const double &Ua = (envelope_UA);
+	const double &Cm = (house_content_thermal_mass);
+	const double &Um = (house_content_heat_transfer_coeff);
+	const double &Qi = (tload.heatgain);
+	double &Qs = (solar_load);
+	double &Qh = (load.heatgain);
+	double &Ti = (Tair);
+	double &dTi = (dTair);
+	double &Tm = (Tmaterials);
+	HCMODE &mode = (heat_cool_mode);
+	const double tdead = thermostat_deadband/2;
+	const double TheatOff = heating_setpoint + tdead;
+	const double TheatOn = heating_setpoint - tdead;
+	const double TcoolOff = cooling_setpoint - tdead;
+	const double TcoolOn = cooling_setpoint + tdead;
+	const double Ca = 0.2402 * 0.0735 * ceiling_height * floor_area;
 
-	// reset accumulators for the next sync
-	/* HVAC accumulators */
-	load.heatgain = 0;
-	load.total = complex(0,0,J);
-	load.admittance = complex(0,0,J);
-	load.current = complex(0,0,J);
+	/* compute solar gains */
+	Qs = 0; 
+	int i;
+	for (i=0; i<9; i++)
+		Qs += (gross_wall_area*window_wall_ratio/8.0) * glazing_shgc * pSolar[i];
+	Qs *= 3.412;
+	if (Qs<0)
+		throw "solar gain is negative?!?";
 
-	/* main panel accumulators */
-	tload.heatgain = 0;
-	tload.total = complex(0,0,J);
-	tload.admittance = complex(0,0,J);
-	tload.current = complex(0,0,J);
+	if (Ca<=0)
+		throw "Ca must be positive";
+	if (Cm<=0)
+		throw "Cm must be positive";
 
-	return TS_NEVER;
-}
+	// split gains to air and mass
+	double f_air = 1.0; /* adjust the fraction of gains that goes to air vs mass */
+	double Qa = Qh + f_air*(Qi + Qs);
+	double Qm = (1-f_air)*(Qi + Qs);
 
-/** Updates the total internal gain and synchronizes with the hvac equipment load.  
-Also synchronizes the voltages and current in the panel with the meter.
-**/
+	c1 = -(Ua + Um)/Ca;
+	c2 = Um/Ca;
+	c3 = (Qa + Tout*Ua)/Ca;
+	c6 = Qm/Cm;
+	c7 = Qa/Ca;
+	double p1 = 1/c2;
+	if (Cm<=0)
+		throw "Cm must be positive";
+	c4 = Um/Cm;
+	c5 = -c4;
+	if (c2<=0)
+		throw "Um must be positive";
+	double p2 = -(c5+c1)/c2;
+	double p3 = c1*c5/c2 - c4;
+	double p4 = -c3*c5/c2 + c6;
+	if (p3==0)
+		throw "Teq is not finite";
+	Teq = p4/p3;
 
-TIMESTAMP house::sync(TIMESTAMP t0, TIMESTAMP t1)
-{
-	OBJECT *obj = OBJECTHDR(this);
+	/* compute solution roots */
+	if (p1==0)
+		throw "internal error (p1==0 -> Ca==0 which should have caught)";
+	const double ra = 2*p1;
+	const double rb = -p2/ra;
+	const double rr = p2*p2-4*p1*p3;
+	if (rr<0)
+		throw "thermal solution does not exist";
+	const double rc = sqrt(rr)/ra;
+	r1 = rb+rc;
+	r2 = rb-rc;
+	if (r1>0 || r2>0)
+		throw "thermal solution has runaway condition";
 
-	TIMESTAMP sync_time = sync_hvac_load(t1, (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND);
-
-	// sync circuit panel
-	TIMESTAMP panel_time = sync_panel(t0,t1);
-	if (panel_time < sync_time)
-		sync_time = panel_time;
-
-	/// @todo check panel main breaker (residential, medium priority) (ticket #140)
-	return sync_time;
-	
+	/* compute next initial condition */
+	dTi = c2*Tm + c1*Ti - (c1+c2)*Tout + c7;
+	k1 = (r2*Ti - r2*Teq - dTi)/(r2-r1);
+	k2 = (dTi - r1*k1)/r2;
 }
 
 /** HVAC load synchronizaion is based on the equipment capacity, COP, solar loads and total internal gain
@@ -629,7 +750,7 @@ a dual decay solver to obtain the time for next state change based on the thermo
 This synchronization function updates the HVAC equipment load and power draw.
 **/
 
-TIMESTAMP house::sync_hvac_load(TIMESTAMP t1, double nHours)
+void house::update_hvac(double dt)
 {
 	// compute hvac performance
 	const double heating_cop_adj = (-0.0063*(*pTout)+1.5984);
@@ -637,204 +758,78 @@ TIMESTAMP house::sync_hvac_load(TIMESTAMP t1, double nHours)
 	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
 	const double cooling_capacity_adj = -(-0.0063*(*pTout)+1.5984);
 
-	double t = 0.0;
-
-	if (heat_cool_mode == HEAT)
-	{
-		hvac_rated_capacity = design_heating_capacity*floor_area*heating_capacity_adj;
+	switch (heat_cool_mode) {
+	case HC_HEAT:
+	case HC_AUX:
+		hvac_rated_capacity = design_heating_capacity*heating_capacity_adj;
 		hvac_rated_power = hvac_rated_capacity/(heating_COP * heating_cop_adj);
-	}
-	else if (heat_cool_mode == COOL)
-	{
-		hvac_rated_capacity = design_cooling_capacity*floor_area*cooling_capacity_adj;
+		break;
+	case HC_COOL:
+		hvac_rated_capacity = design_cooling_capacity*cooling_capacity_adj;
 		hvac_rated_power = hvac_rated_capacity/(cooling_COP * cooling_cop_adj);
-	}
-	else
-	{
+		break;
+	default:
 		hvac_rated_capacity = 0.0;
 		hvac_rated_power = 0.0;
 	}
 
-	load.power = hvac_rated_power*KWPBTUPH * ((heat_cool_mode == HEAT) && (heat_mode == GASHEAT) ? 0.01 : 1.0);
+	/* calculate the power consumption */
+	load.power = hvac_rated_power*KWPBTUPH * ((heat_cool_mode == HC_HEAT) && (heat_type == HT_GASHEAT) ? 0.01 : 1.0);
+	load.admittance = 0;
+	load.current = 0;
 	load.total = load.power;
-	load.heatgain = 0.0;
-	//load.heatgain = hvac_rater_power;		/* factored in at netHeatrate */
-	hvac_kWh_use = load.power.Mag()*nHours;  // this updates the energy usage of the elapsed time since last synch
-
-	DATETIME tv;
-	gl_localtime(t1, &tv);
-
-	Tsolar = get_Tsolar(tv.hour, tv.month, Tair, *pTout);
-	solar_load = 0.0;
-
-	for (int i = 1; i<9; i++)
-	{
-		solar_load += (gross_wall_area*window_wall_ratio/8.0) * glazing_shgc * pSolar[i];
-	}
-	double netHeatrate = hvac_rated_capacity + tload.heatgain*BTUPHPW + solar_load;
-	double Q1 = M_inv11*Tair + M_inv12*Tmaterials;
-	double Q2 = M_inv21*Tair + M_inv22*Tmaterials;
-
-	if (nHours > ROUNDOFF)
-	{
-		double q1 = exp(s1*nHours)*(Q1 + BB11*Tsolar/s1 + BB12*netHeatrate/s1) - BB11*Tsolar/s1 
-			- BB12*netHeatrate/s1;
-		double q2 = exp(s2*nHours)*(Q2 - BB11*Tsolar/s2 - BB12*netHeatrate/s2) + BB11*Tsolar/s2 
-			+ BB12*netHeatrate/s2;
-
-		Tair = q1*(s1-A22)/A21 + q2*(s2-A22)/A21;
-		Tmaterials = q1 + q2;
-	}
-    else
-        return TS_NEVER;
-
-	// calculate constants for solving time "t" to reach Tevent
-	const double W = (Q1 + (BB11*Tsolar)/s1 + BB12*netHeatrate/s1)*(s1-A22)/A21;
-	const double X = (BB11*Tsolar/s1 + BB12*netHeatrate/s1)*(s1-A22)/A21;
-	const double Y = (Q2 - (BB11*Tsolar)/s2 - BB12*netHeatrate/s2)*(s2-A22)/A21;
-	const double Z = (BB11*Tsolar/s2 + BB12*netHeatrate/s2)*(s2-A22)/A21;
-	// end new solution
-
-	// determine next internal event temperature
-	int n_solutions = 0;
-	double Tevent;
-	const double TcoolOn = cooling_setpoint+thermostat_deadband;
-	const double TcoolOff = cooling_setpoint-thermostat_deadband;
-	const double TheatOn = heating_setpoint-thermostat_deadband;
-	const double TheatOff = heating_setpoint+thermostat_deadband;
-
-	/* determine the temperature of the next event */
-#define TPREC 0.01
-	if (hvac_rated_capacity < 0.0)
-		Tevent = TcoolOff;
-	else if (hvac_rated_capacity > 0.0)
-		Tevent = TheatOff;
-	else if (Tair <= TheatOn+TPREC)
-		Tevent = TheatOn;
-	else if (Tair >= TcoolOn-TPREC)
-		Tevent = TcoolOn;
-	else
-		return TS_NEVER;
-
-#ifdef OLD_SOLVER
-    if (nHours > TPREC)
-		// int dual_decay_solve(double *ans, double prec, double start, double end, int f, double a, double n, double b, double m, double c)
-		n_solutions = dual_decay_solve(&t,TPREC,0.0 ,nHours,W,s1,Y,s2,Z-X-Tevent);
-
-	Tair = Tevent;
-
-	if (n_solutions<0)
-		gl_error("house: solver error");
-	else if (n_solutions == 0)
-		return TS_NEVER;
-	else if (t == 0)
-		t = 1.0/3600.0;  // one second
-	return t1+(TIMESTAMP)(t*3600*TS_SECOND);
-#else
-	t =  e2solve(W,s1,Y,s2,Z-X-Tevent);
-	    Tair = Tevent;
-
-	if (isfinite(t))
-    {
-		return t1+(TIMESTAMP)(t*3600*TS_SECOND);
-    }
-	else
-		return TS_NEVER;
-#endif
-	    
-
+	load.heatgain = hvac_rated_capacity;
 }
 
-int house::set_Eigen_values()
+void house::check_controls(void)
 {
-	// The eigen values and constants are calculated once and stored as part of the object
-	// based on new solution to house etp network // April 06, 2004
-
-	if (envelope_UA <= ROUNDOFF || house_content_heat_transfer_coeff <= ROUNDOFF || 
-		air_thermal_mass <= ROUNDOFF || house_content_thermal_mass <= ROUNDOFF)
+	if (warn_control)
 	{
-		gl_error("House thermal mass or UA invalid.  Eigen values not set.");
-		return FALSE;
+		/* check for air temperature excursion */
+		if (Tair<warn_low_temp || Tair>warn_high_temp)
+		{
+			OBJECT *obj = OBJECTHDR(this);
+			DATETIME dt0;
+			gl_localtime(obj->clock,&dt0);
+			char ts0[64];
+			gl_warning("house:%d (%s) air temperature excursion (%.1f degF) at %s", 
+				obj->id, obj->name?obj->name:"anonymous", Tair, gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");
+		}
+
+		/* check for mass temperature excursion */
+		if (Tmaterials<warn_low_temp || Tmaterials>warn_high_temp)
+		{
+			OBJECT *obj = OBJECTHDR(this);
+			DATETIME dt0;
+			gl_localtime(obj->clock,&dt0);
+			char ts0[64];
+			gl_warning("house:%d (%s) mass temperature excursion (%.1f degF) at %s", 
+				obj->id, obj->name?obj->name:"anonymous", Tmaterials, gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");
+		}
+
+		/* check for heating equipment sizing problem */
+		if ((heat_cool_mode==HC_HEAT || heat_cool_mode==HC_AUX) && Teq<heating_setpoint)
+		{
+			OBJECT *obj = OBJECTHDR(this);
+			DATETIME dt0;
+			gl_localtime(obj->clock,&dt0);
+			char ts0[64];
+			gl_warning("house:%d (%s) heating equipement undersized at %s", 
+				obj->id, obj->name?obj->name:"anonymous", gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");
+		}
+
+		/* check for cooling equipment sizing problem */
+		else if (heat_cool_mode==HC_COOL && Teq>cooling_setpoint)
+		{
+			OBJECT *obj = OBJECTHDR(this);
+			DATETIME dt0;
+			gl_localtime(obj->clock,&dt0);
+			char ts0[64];
+			gl_warning("house:%d (%s) cooling equipement undersized at %s", 
+				obj->id, obj->name?obj->name:"anonymous", gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");
+		}
 	}
-
-	double ra = 1/envelope_UA;
-	double rm = 1/house_content_heat_transfer_coeff;
-
-	A11 = -1.0/(air_thermal_mass*rm) - 1.0/(ra*air_thermal_mass);
-	A12 = 1.0/(rm*air_thermal_mass);
-	A21 = 1.0/(rm*house_content_thermal_mass);
-	A22 = -1.0/(rm*house_content_thermal_mass);
-
-	B11 = 1.0/(air_thermal_mass*ra);
-	B12 = 1.0/air_thermal_mass;
-	B21 = 0.0;
-	B22 = 0.0;
-
-	/* calculate eigen values */
-	s1 = (A11 + A22 + sqrt((A11 + A22)*(A11 + A22) - 4*(A11*A22 - A21*A12)))/2.0;
-	s2 = (A11 + A22 - sqrt((A11 + A22)*(A11 + A22) - 4*(A11*A22 - A21*A12)))/2.0;
-
-	/* calculate egien vectors */
-	double M11 = (s1 - A22)/A21;
-	double M12 = (s2 - A22)/A21;
-	double M21 = 1.0;
-	double M22 = 1.0;
-
-	double demoninator = (s1 - A22)/A21 - (s2-A22)/A21;
-	M_inv11 = 1.0/demoninator;
-	M_inv12 = -((s2 - A22)/A21)/demoninator;
-	M_inv21 = -1.0/demoninator;
-	M_inv22 = ((s1-A22)/A21)/demoninator;
-
-	BB11 = M_inv11*B11 + M_inv12*B21;
-	BB21 = M_inv21*B11 + M_inv22*B21;
-	BB12 = M_inv11*B12 + M_inv12*B22;
-	BB22 = M_inv21*B12 + M_inv22*B22;
-
-	return TRUE;
 }
-/**  This function calculates the solar air temperature based on the envelope construction,
-reflectivity of the color of envelope surface (assumed to be 0.75) and latitude adjustment factor based on time of day.
-@return returns the calculated solar air temperature
-**/
-
-double house::get_Tsolar(int hour, int month, double Tair, double Tout)
-{
-	// Wood frame wall CLTD values from ASHRAE 1989 (for sunlighted walls in the north latitude)
-	static double CLTD[] = {4.25, 2.75, 1.63, 0.50, -0.50, 3.50, 11.25, 17.88, 22.50, 25.88, 27.88, 29.25, 31.63, 35.13, 38.50, 40.38, 36.88, 28.00, 19.00, 14.00, 11.13, 8.63, 6.25};
-
-	static double LM[4][24] =	{	
-		{-1.33, -1.44, -0.89, -1.00, -0.67, -0.44, -0.67, -1.00, -0.89, -1.44, -1.33, -1.22},  // latitude 24
-		{-2.89, -1.89, -0.78, -0.44, -0.11, -0.11, -0.11, -0.44, -0.78, -1.89, -2.89, -4.67},  // latitude 32
-		{-5.44, -3.22, -1.11, -0.11, 0.22, 0.67, 0.22, -0.11, -1.11, -3.22, -5.44, -6.33},  // latitude 40
-		{-7.56, -5.11, -1.78, -0.11, 1.33, 2.00, 1.33, -0.11, -1.78, -5.11, -7.56} // latitude 48
-	};
-
-	static double ColorSurface = 0.75;
-	static double DR = 15.0;
-	double solarTemp = Tair;
-	double LMnow = 0.0;
-	int LMcol = month-1;
-
-	OBJECT *hdr = OBJECTHDR(this);
-
-	if (hdr->latitude <= 24.0)
-		LMnow = LM[0][LMcol];
-	else if (hdr->latitude <= 32.)
-		LMnow = LM[0][LMcol] + ((LM[1][LMcol]-LM[0][LMcol])*(hdr->latitude-24.0)/12.0);
-	else if (hdr->latitude <= 40.)
-		LMnow = LM[1][LMcol] + ((LM[2][LMcol]-LM[1][LMcol])*(hdr->latitude-32.0)/12.0);
-	else if (hdr->latitude <= 48.)
-		LMnow = LM[2][LMcol] + ((LM[3][LMcol]-LM[2][LMcol])*(hdr->latitude-40.0)/12.0);
-	else // if (hdr->latitude > 48.0)
-		LMnow = LM[3][LMcol];
-
-	solarTemp += (CLTD[hour] + LMnow)*ColorSurface + (78. - Tair) + ((*pTout) - DR/2. - 85.);
-
-	return solarTemp;
-}
-
-
 
 complex *house::get_complex(OBJECT *obj, char *name)
 {

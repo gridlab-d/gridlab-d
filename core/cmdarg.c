@@ -92,10 +92,18 @@ void print_class(CLASS *oclass){
 		char *propname = class_get_property_typename(prop->ptype);
 		if (propname!=NULL){
 			if(prop->unit != NULL){
-				printf("\t%s %s [%s];\n", propname, prop->name, prop->unit->name);
+				printf("\t%s %s [%s];", propname, prop->name, prop->unit->name);
 			} else {
-				printf("\t%s %s;\n", propname, prop->name);
+				printf("\t%s %s;", propname, prop->name);
 			}
+			if (prop->ptype==PT_set || prop->ptype==PT_enumeration)
+			{
+				KEYWORD *key;
+				printf (" // {");
+				for (key=prop->keywords; key!=NULL; key=key->next)
+					printf("%s%s", key->name, key->next==NULL?"}":", ");
+			}
+			printf("\n");
 		}
 	}
 	printf("}\n");

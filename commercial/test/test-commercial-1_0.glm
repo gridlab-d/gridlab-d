@@ -5,7 +5,7 @@
 
 #define NOFFICES=10
 #define GET_WEATHER
-#set threadcount=0
+#set threadcount=1
 #set profiler=1
 
 clock {
@@ -22,7 +22,7 @@ object climate {
 }
 
 module commercial {
-//	warn_control FALSE;
+	warn_control FALSE;
 }
 
 object office:..${NOFFICES} {
