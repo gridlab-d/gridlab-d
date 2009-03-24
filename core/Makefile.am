@@ -14,7 +14,7 @@ gridlabd_SOURCES =    \
 	aggregate.c        \
 	class.c            \
 	cmdarg.c           \
-	convert.c          \
+	convert.cpp          \
 	debug.c            \
 	environment.c      \
 	exception.c        \
