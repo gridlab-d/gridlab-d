@@ -67,10 +67,8 @@ int load::create(void)
     return res;
 }
 
-TIMESTAMP load::presync(TIMESTAMP t0)
+TIMESTAMP load::sync(TIMESTAMP t0)
 {
-	TIMESTAMP result = node::presync(t0);
-
 	if(constant_impedance[0].IsZero())
 		shunt[0] = 0.0;
 	else
@@ -92,6 +90,10 @@ TIMESTAMP load::presync(TIMESTAMP t0)
 	current[0] = constant_current[0];
 	current[1] = constant_current[1];
 	current[2] = constant_current[2];
+
+	//Must be at the bottom, or the new values will be calculated after the fact
+	TIMESTAMP result = node::sync(t0);
+	
 	return result;
 }
 

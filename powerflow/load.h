@@ -20,7 +20,7 @@ public:
 	int create(void);
 
 	load(MODULE *mod);
-	TIMESTAMP presync(TIMESTAMP t0);
+	TIMESTAMP sync(TIMESTAMP t0);
 	inline load(CLASS *cl=oclass):node(cl){};
 	int isa(char *classname);
 };
