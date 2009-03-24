@@ -108,7 +108,12 @@ int tmy2_reader::read_data(double *dnr, double *dhr, double *tdb, double *rh, in
 				/* 3__5__7__9___23_27__29_33___67_71_79__82___95_98_ */
 	if(dnr) *dnr = tmp_dnr;
 	if(dhr) *dhr = tmp_dhr;
-	if(tdb) *tdb = ((double)tmp_tdb)/10.0;
+	if(tdb) 
+	{
+		*tdb = ((double)tmp_tdb)/10.0;
+		if (*tdb<low_temp || low_temp==0) low_temp = *tdb;
+		else if (*tdb>high_temp || high_temp==0) high_temp = *tdb;
+	}
 	/* *tdb = ((double)tmp_tdb)/10.0 * 9.0 / 5.0 + 32.0; */
 	if(rh) *rh = ((double)tmp_rh)/100.0;
 	if(wind) *wind = tmp_ws/10.0;
@@ -132,9 +137,10 @@ double tmy2_reader::calc_solar(COMPASS_PTS cpt, short doy, double lat, double so
 	double surface_angle = surface_angles[cpt];
 	double cos_incident = sa->cos_incident(lat,RAD(vert_angle),RAD(surface_angle),sol_time,doy);
 
-	return (double)dnr * cos_incident + dhr;
+	double solar = (double)dnr * cos_incident + dhr;
+	if (peak_solar==0 || solar>peak_solar) peak_solar = solar;
+	return solar;
 }
-
 /**
 	Closes the readers internal file pointer
 */
@@ -168,7 +174,11 @@ climate::climate(MODULE *module)
 			PT_double,"wind_speed[mph]", PADDR(wind_speed),
 			PT_double,"wind_dir[deg]", PADDR(wind_dir),
 			PT_double,"wind_gust[mph]", PADDR(wind_gust),
+			PT_double,"record.low[degF]", PADDR(record.low),
+			PT_double,"record.high[degF]", PADDR(record.high),
+			PT_double,"record.solar[W/sf]", PADDR(record.solar),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+		memset(this,0,sizeof(climate));
 		strcpy(city,"");
 		strcpy(tmyfile,"");
 		temperature = 59.0;
@@ -258,6 +268,11 @@ int climate::init(OBJECT *parent)
 					return 0;
 				}
 				tmy[hoy].solar[c_point] = sol_rad;
+
+				/* track records */
+				if (sol_rad>record.solar || record.solar==0) record.solar = sol_rad;
+				if (temperature>record.high || record.high==0) record.high = temperature;
+				if (temperature<record.low || record.low==0) record.low = temperature;
 			}
 			
 		}

@@ -54,8 +54,9 @@ private:
 	int lat_minutes;
 	int long_degrees;
 	int long_minutes;
-
-	
+	double low_temp;
+	double high_temp;
+	double peak_solar;	
 
 	FILE *fp;
 	char buf[500]; // buffer to hold line data.
@@ -107,6 +108,8 @@ public:
 	 */
 	int read_data(double *dnr, double *dhr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind=0);
 
+	/** obtain records **/
+
 	double calc_solar(COMPASS_PTS cpt, short doy, double lat, double sol_time, double dnr, double dhr,double vert_angle);
 
 };
@@ -126,6 +129,11 @@ public:
 	double wind_speed; ///< wind speed (m/s)
 	double wind_dir; ///< wind direction (0-360)
 	double wind_gust; ///< wind gusts (m/s)
+	struct {
+		double low;
+		double high;
+		double solar;
+	} record;
 private:
 	SolarAngles *sa;
 	tmy2_reader file;
