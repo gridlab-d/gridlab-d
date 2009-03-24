@@ -137,7 +137,7 @@ double tmy2_reader::calc_solar(COMPASS_PTS cpt, short doy, double lat, double so
 	double surface_angle = surface_angles[cpt];
 	double cos_incident = sa->cos_incident(lat,RAD(vert_angle),RAD(surface_angle),sol_time,doy);
 
-	double solar = (double)dnr * cos_incident + dhr;
+	double solar = ((double)dnr * cos_incident + dhr)/4; // TODO: remove /4 for non-ET solar
 	if (peak_solar==0 || solar>peak_solar) peak_solar = solar;
 	return solar;
 }
