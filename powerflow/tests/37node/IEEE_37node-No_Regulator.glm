@@ -580,8 +580,7 @@ object load:814 {
 	 voltage_B -2400.000000 -1385.640646j;
 	 voltage_C 0.000000+2771.281292j;
 	 constant_current_A 3.541667 -1.666667j;
-	 constant_current_B -7.53339-1.080527j;
-	 constant_current_C 3.991720+2.747194j;
+	 constant_current_B -3.991720 -2.747194j;
 	 nominal_voltage 4800;
 }
 
@@ -611,9 +610,8 @@ object load:822 {
 	 voltage_A 2400.000000 -1385.640646j;
 	 voltage_B -2400.000000 -1385.640646j;
 	 voltage_C 0.000000+2771.281292j;
-	 constant_current_A 0.383280-4.830528j;
-	 constant_current_B -27.212870-17.967408j;
-	 constant_current_C 26.82959+22.797936j;
+	 constant_current_B -27.212870 -17.967408j;
+	 constant_current_C -0.383280+4.830528j;
 	 nominal_voltage 4800;
 }
 
@@ -666,7 +664,6 @@ object load:829 {
 	 voltage_B -2400.000000 -1385.640646j;
 	 voltage_C 0.000000+2771.281292j;
 	 constant_current_A 8.750000 -4.375000j;
-	 constant_current_B -8.750000+4.375000j;
 	 nominal_voltage 4800;
 }
 
@@ -707,7 +704,6 @@ object load:833 {
 	 voltage_B -2400.000000 -1385.640646j;
 	 voltage_C 0.000000+2771.281292j;
 	 constant_current_A 17.708333 -8.333333j;
-	 constant_current_B -17.708333+8.333333j;
 	 nominal_voltage 4800;
 }
 
@@ -748,7 +744,6 @@ object load:837 {
 	 voltage_B -2400.000000 -1385.640646j;
 	 voltage_C 0.000000+2771.281292j;
 	 constant_current_A 29.166667 -14.583333j;
-	 constant_current_B -29.166667 +14.583333j;
 	 nominal_voltage 4800;
 }
 
@@ -778,7 +773,6 @@ object load:841 {
 	 voltage_A 2400.000000 -1385.640646j;
 	 voltage_B -2400.000000 -1385.640646j;
 	 voltage_C 0.000000+2771.281292j;
-	 constant_current_A +0.586139-9.765222j;
 	 constant_current_C -0.586139+9.765222j;
 	 nominal_voltage 4800;
 }
