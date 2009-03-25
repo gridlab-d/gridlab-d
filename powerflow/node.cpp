@@ -57,7 +57,6 @@
 
 CLASS *node::oclass = NULL;
 CLASS *node::pclass = NULL;
-int iter_counter = 0;
 
 unsigned int node::n = 0; 
 
@@ -126,6 +125,8 @@ int node::create(void)
 	SubNode = NONE;
 	SubNodeParent = NULL;
 
+	GS_converged=false;
+
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
 	memset(current,0,sizeof(current));
@@ -141,14 +142,21 @@ int node::init(OBJECT *parent)
 	{
 		OBJECT *obj = OBJECTHDR(this);
 
-		// check that a parent is defined
-		if (obj->parent!=NULL)	//Has a parent, let's see if it is a node and link it up
-		{
-			char *ndtest;
-			ndtest = obj->parent->oclass->name;
+		FINDLIST *buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
+		if (buslist==NULL)
+			throw "no swing bus found";
+		if (buslist->hit_count>1)
+			GL_THROW("more than one swing bus found, you must specify which is this node's parent");
 
-			//See if it is a node
-			if (((ndtest[0]!=110) && (ndtest[0]!=108)) & (ndtest[1]!=111) & ((ndtest[2]!=100) && (ndtest[2]!=97)) & ((ndtest[3]!=101) && (ndtest[3]!=102)))
+		OBJECT *SwingBusObj = gl_find_next(buslist,NULL);
+
+		// check that a parent is defined
+		if ((obj->parent!=NULL) && (OBJECTDATA(obj->parent,node)->bustype!=SWING))	//Has a parent that isn't a swing bus, let's see if it is a node and link it up 
+		{																			//(this will break anything intentionally done this way - e.g. switch between two nodes)
+			gl_warning("Parent/child implementation marginally tested, use at your own risk!");
+
+			//See if it is a node/load/meter
+			if (!(gl_object_isa(obj->parent,"load") | gl_object_isa(obj->parent,"node") | gl_object_isa(obj->parent,"meter")))
 				throw("Parent is not a load or node!");
 
 			node *parNode = OBJECTDATA(obj->parent,node);
@@ -157,12 +165,24 @@ int node::init(OBJECT *parent)
 			if (parNode->phases!=this->phases)
 				throw("Parent and child node phases do not match!");
 
-			//Set appropriate flags (store parent name and flag self & parent)
-			SubNode = CHILD;
-			SubNodeParent = obj->parent;
-			
-			parNode->SubNode = PARENT_NOINIT;
-			parNode->SubNodeParent = obj;
+			if ((parNode->SubNode==CHILD_NOINIT) | ((obj->parent->parent!=SwingBusObj) && (obj->parent->parent!=NULL)))	//Our parent is another child
+			{
+				//Set appropriate flags (store parent name and flag self & parent)
+				SubNode = CHILD_NOINIT;
+				if (parNode->SubNode==CHILD_NOINIT)	//already parsed child object
+					SubNodeParent = parNode->SubNodeParent;
+				else	//Parented object that will be parsed soon, but hasn't yet
+					SubNodeParent = obj->parent->parent;
+			}
+			else	//Our parent is unchilded
+			{
+				//Set appropriate flags (store parent name and flag self & parent)
+				SubNode = CHILD_NOINIT;
+				SubNodeParent = obj->parent;
+				
+				parNode->SubNode = PARENT;
+				parNode->SubNodeParent = obj;
+			}
 
 			//Give us no parent now, and let it go to SWING (otherwise generic check fails)
 			obj->parent=NULL;
@@ -176,12 +196,7 @@ int node::init(OBJECT *parent)
 		
 		if (obj->parent==NULL) // need to find a swing bus to be this node's parent
 		{
-			FINDLIST *buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
-			if (buslist==NULL)
-				throw "no swing bus found";
-			if (buslist->hit_count>1)
-				throw "more than one swing bus found, you must specify which is this node's parent";
-			gl_set_parent(obj,gl_find_next(buslist,NULL));
+			gl_set_parent(obj,SwingBusObj);
 		}
 
 		/* Make sure we aren't the swing bus */
@@ -216,6 +231,25 @@ int node::init(OBJECT *parent)
 
 	/* initialize the powerflow base object */
 	int result = powerflow_object::init(parent);
+
+	/* Ranking stuff for GS parent/child relationship - needs to be rethought - premise of loads/nodes above links MUST remain true */
+	if (solver_method==SM_GS)
+	{
+		OBJECT *obje = OBJECTHDR(this);
+
+		if (bustype==SWING)
+		{
+			gl_set_rank(obje,5);
+		}
+		else if (SubNode!=CHILD_NOINIT)
+		{
+			gl_set_rank(obje,1);
+		}
+		else	//We are a child, put us right above links (rank 1)
+		{		//This puts us to execute before all nodes/loads in sync, but still before links in postsync
+			gl_set_rank(obje,1);
+		}
+	}
 
 	/* unspecified phase inherits from parent, if any */
 	if (nominal_voltage==0 && parent)
@@ -264,7 +298,21 @@ int node::init(OBJECT *parent)
 	if (bustype==SWING || bustype==PV)
 		busflags |= NF_HASSOURCE;
 
-	if (has_phase(PHASE_A) & has_phase(PHASE_B) & has_phase(PHASE_C))
+	//Pre-zero non existant phases
+	if (has_phase(PHASE_S))	//Single phase
+	{
+		if (voltage[0] == 0)
+		{
+			voltage[0].SetPolar(nominal_voltage,0.0);
+		}
+		if (voltage[1] == 0)
+		{
+			voltage[1].SetPolar(nominal_voltage,0.0);
+		}
+		voltage[2] = 0.0;	//Ground always assumed it seems
+
+	}
+	else if ((has_phase(PHASE_A|PHASE_B|PHASE_C)) || (has_phase(PHASE_D)))	//three phase or delta
 	{
 		if (voltage[0] == 0)
 		{
@@ -279,7 +327,17 @@ int node::init(OBJECT *parent)
 			voltage[2].SetPolar(nominal_voltage,-120.0);
 		}
 	}
+	else	//Not three phase - check for individual phases and zero them if they aren't already
+	{
+		if (!has_phase(PHASE_A))
+			voltage[0]=0.0;
 
+		if (!has_phase(PHASE_B))
+			voltage[1]=0.0;
+
+		if (!has_phase(PHASE_C))
+			voltage[2]=0.0;
+	}
 
 	if (has_phase(PHASE_D) & voltageAB==0)
 	{	// compute 3phase voltage differences
@@ -306,8 +364,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		last_voltage[1] = voltage[1];
 		last_voltage[2] = voltage[2];
 
-
-
 		/* get frequency from reference bus */
 		if (reference_bus!=NULL)
 		{
@@ -315,6 +371,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			frequency = pRef->frequency;
 		}
 	}
+	
 	return t1;
 }
 
@@ -322,7 +379,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = powerflow_object::sync(t0);
 	OBJECT *obj = OBJECTHDR(this);
-
+	
 	switch (solver_method)
 	{
 	case SM_FBS:
@@ -359,10 +416,15 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			delta_shunt_curr[0] = delta_shunt[0]-delta_shunt[2];
 			delta_shunt_curr[1] = delta_shunt[1]-delta_shunt[0];
 			delta_shunt_curr[2] = delta_shunt[2]-delta_shunt[1];
+
+			//Convert delta-current into a phase current - reuse temp variable
+			delta_current[0]=current[0]-current[2];
+			delta_current[1]=current[1]-current[0];
+			delta_current[2]=current[2]-current[1];
 			
-			current_inj[0] += currentA + power_current[0] + delta_shunt_curr[0];
-			current_inj[1] += currentB + power_current[1] + delta_shunt_curr[1];
-			current_inj[2] += currentC + power_current[2] + delta_shunt_curr[2];
+			current_inj[0] += delta_current[0] + power_current[0] + delta_shunt_curr[0];
+			current_inj[1] += delta_current[1] + power_current[1] + delta_shunt_curr[1];
+			current_inj[2] += delta_current[2] + power_current[2] + delta_shunt_curr[2];
 		}
 		else 
 		{	// 'WYE' connected load
@@ -411,8 +473,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		}
 	case SM_GS:
 		{
-		OBJECT *hdr = OBJECTHDR(this);
-		node *swing = hdr->parent?OBJECTDATA(hdr->parent,node):this;
+		//node *swing = hdr->parent?OBJECTDATA(hdr->parent,node):this;
 		complex Vtemp[3];
 		complex YVsTemp[3];
 		complex Vnew[3];
@@ -420,17 +481,21 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		LINKCONNECTED *linktable;
 		OBJECT *linkupdate;
 		link *linkref;
-		char phasespresent;
-		
-		if (SubNode==PARENT_NOINIT)	//First run of a "parented" node
+
+		if (SubNode==CHILD_NOINIT)	//First run of a "parented" node
 		{
 			//Grab the linked list from the child object
-			node *childNode = OBJECTDATA(SubNodeParent,node);
+			node *ParOfChildNode = OBJECTDATA(SubNodeParent,node);
+			LINKCONNECTED *parlink = &ParOfChildNode->nodelinks;
 
-			linktable = &childNode->nodelinks;
+			linktable = &nodelinks;
 
 			if (linktable->next!=NULL)	//See if it was empty
 			{
+				//Need working variable for updating down/upstream links (those that refer to us)
+				LINKCONNECTED *ltemp;
+				node *tempnode;
+
 				while (linktable->next!=NULL)		//Parse through the linked list
 				{
 					linktable = linktable->next;
@@ -442,124 +507,155 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 						return 0;
 					}
 
-					lnewconnected->next = nodelinks.next;
+					lnewconnected->next = parlink->next;
 
 					// attach to node list
-					nodelinks.next = lnewconnected;
+					parlink->next = lnewconnected;
 
 					// attach the link object identifier
 					lnewconnected->connectedlink = linktable->connectedlink;
 
 					// attach to and from nodes - substitute us for the appropriate link
-					if (linktable->fnodeconnected==SubNodeParent)	//Sub node was the from node, so now we are
+					if (linktable->fnodeconnected==obj)	//We were the from node, so now parent is
 					{
-						lnewconnected->fnodeconnected = hdr;
+						lnewconnected->fnodeconnected = SubNodeParent;
 						lnewconnected->tnodeconnected = linktable->tnodeconnected;
+
+						//Now go search that node and update its back links to our parent
+						tempnode = OBJECTDATA(linktable->tnodeconnected,node);
+						ltemp = &tempnode->nodelinks;
+
+						while (ltemp->next!=NULL)		//Parse through the linked list
+						{
+							ltemp = ltemp->next;
+							
+							if (ltemp->fnodeconnected==obj)	//We were the from node, so now parent is from node
+								ltemp->fnodeconnected=SubNodeParent;
+							else if (ltemp->tnodeconnected==obj)	//We were somehow the to node...shouldn't happen, but just in case
+								ltemp->tnodeconnected=SubNodeParent;
+						}
 					}
-					else	//Sub node was to node, so now we are
+					else	//We were to node, so now parent is
 					{
 						lnewconnected->fnodeconnected = linktable->fnodeconnected;
-						lnewconnected->tnodeconnected = hdr;
+						lnewconnected->tnodeconnected = SubNodeParent;
+
+						//Now go search that node and update its back links to our parent
+						tempnode = OBJECTDATA(linktable->fnodeconnected,node);
+						ltemp = &tempnode->nodelinks;
+
+						while (ltemp->next!=NULL)		//Parse through the linked list
+						{
+							ltemp = ltemp->next;
+							
+							if (ltemp->fnodeconnected==obj)	//We were the from node, so now parent is from node
+								ltemp->fnodeconnected=SubNodeParent;
+							else if (ltemp->tnodeconnected==obj)	//We were somehow the to node...shouldn't happen, but just in case
+								ltemp->tnodeconnected=SubNodeParent;
+						}
 					}
 				}
 
 				//clear child Node's linked list so it doesn't try to update things
-				childNode->nodelinks.next=NULL;
+				nodelinks.next=NULL;
 			}
 
-			SubNode=PARENT_INIT;	//Flag as having been initialized, hence done
+			SubNode=CHILD;	//Flag as having been initialized, hence done
 		}
-		
-		if ((SubNode==PARENT_INIT) && (prev_NTime==0))	//First run, additional housekeeping
+
+		if ((SubNode==CHILD) && (prev_NTime!=t0))	//First run, additional housekeeping
 		{
-			node *childNodeAdmit = OBJECTDATA(SubNodeParent,node);
+			node *ParNodeAdmit = OBJECTDATA(SubNodeParent,node);
 
 			//Import Admittance and YVs terms
-			Ys[0][0]+=childNodeAdmit->Ys[0][0];
-			Ys[0][1]+=childNodeAdmit->Ys[0][1];
-			Ys[0][2]+=childNodeAdmit->Ys[0][2];
-			Ys[1][0]+=childNodeAdmit->Ys[1][0];
-			Ys[1][1]+=childNodeAdmit->Ys[1][1];
-			Ys[1][2]+=childNodeAdmit->Ys[1][2];
-			Ys[2][0]+=childNodeAdmit->Ys[2][0];
-			Ys[2][1]+=childNodeAdmit->Ys[2][1];
-			Ys[2][2]+=childNodeAdmit->Ys[2][2];
+			ParNodeAdmit->Ys[0][0]+=Ys[0][0];
+			ParNodeAdmit->Ys[0][1]+=Ys[0][1];
+			ParNodeAdmit->Ys[0][2]+=Ys[0][2];
+			ParNodeAdmit->Ys[1][0]+=Ys[1][0];
+			ParNodeAdmit->Ys[1][1]+=Ys[1][1];
+			ParNodeAdmit->Ys[1][2]+=Ys[1][2];
+			ParNodeAdmit->Ys[2][0]+=Ys[2][0];
+			ParNodeAdmit->Ys[2][1]+=Ys[2][1];
+			ParNodeAdmit->Ys[2][2]+=Ys[2][2];
 
-			YVs[0]+=childNodeAdmit->YVs[0];
-			YVs[1]+=childNodeAdmit->YVs[1];
-			YVs[2]+=childNodeAdmit->YVs[2];
+			ParNodeAdmit->YVs[0]+=YVs[0];
+			ParNodeAdmit->YVs[1]+=YVs[1];
+			ParNodeAdmit->YVs[2]+=YVs[2];
 		}
 		
-		
-		if (SubNode==PARENT_INIT)
+		if (SubNode==CHILD)
 		{
-			node *childLoad = OBJECTDATA(SubNodeParent,node);
-			
+			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
-			if ((prev_NTime!=t0) && gl_object_isa(OBJECTHDR(this),"node")) //new time step of "parented" node - update values
+			if (gl_object_isa(SubNodeParent,"load"))	//Load gets cleared at every presync, so reaggregate :(
 			{
-				//Grab all the appropriate load parameters from our child.  Will mess with the output in terms of power/shunt/current
-				//attached to this particular node, but answers should be accurate
-
 				//Import power and "load" characteristics
-				power[0]+=childLoad->power[0]-last_child_power[0][0];
-				power[1]+=childLoad->power[1]-last_child_power[0][1];
-				power[2]+=childLoad->power[2]-last_child_power[0][2];
+				ParToLoad->power[0]+=power[0];
+				ParToLoad->power[1]+=power[1];
+				ParToLoad->power[2]+=power[2];
 
-				shunt[0]+=childLoad->shunt[0]-last_child_power[1][0];
-				shunt[1]+=childLoad->shunt[1]-last_child_power[1][1];
-				shunt[2]+=childLoad->shunt[2]-last_child_power[1][2];
+				ParToLoad->shunt[0]+=shunt[0];
+				ParToLoad->shunt[1]+=shunt[1];
+				ParToLoad->shunt[2]+=shunt[2];
 
-				current[0]+=childLoad->current[0]-last_child_power[2][0];
-				current[1]+=childLoad->current[1]-last_child_power[2][1];
-				current[2]+=childLoad->current[2]-last_child_power[2][2];
+				ParToLoad->current[0]+=current[0];
+				ParToLoad->current[1]+=current[1];
+				ParToLoad->current[2]+=current[2];
+			}
+			else if (gl_object_isa(SubNodeParent,"node"))	//"parented" node - update values - This has to go to the bottom
+			{												//since load/meter share with node (and load handles power in presync)
+				//Import power and "load" characteristics
+				ParToLoad->power[0]+=power[0]-last_child_power[0][0];
+				ParToLoad->power[1]+=power[1]-last_child_power[0][1];
+				ParToLoad->power[2]+=power[2]-last_child_power[0][2];
 
-				//Update previous power tracker
-				last_child_power[0][0] = childLoad->power[0];
-				last_child_power[0][1] = childLoad->power[1];
-				last_child_power[0][2] = childLoad->power[2];
+				ParToLoad->shunt[0]+=shunt[0]-last_child_power[1][0];
+				ParToLoad->shunt[1]+=shunt[1]-last_child_power[1][1];
+				ParToLoad->shunt[2]+=shunt[2]-last_child_power[1][2];
 
-				last_child_power[1][0] = childLoad->shunt[0];
-				last_child_power[1][1] = childLoad->shunt[1];
-				last_child_power[1][2] = childLoad->shunt[2];
+				ParToLoad->current[0]+=current[0]-last_child_power[2][0];
+				ParToLoad->current[1]+=current[1]-last_child_power[2][1];
+				ParToLoad->current[2]+=current[2]-last_child_power[2][2];
+			}
+			else
+				throw("Object %d is a child of something that it shouldn't be!",obj->id);
 
-				last_child_power[2][0] = childLoad->current[0];
-				last_child_power[2][1] = childLoad->current[1];
-				last_child_power[2][2] = childLoad->current[2];
-				
+			//Update previous power tracker
+			last_child_power[0][0] = power[0];
+			last_child_power[0][1] = power[1];
+			last_child_power[0][2] = power[2];
+
+			last_child_power[1][0] = shunt[0];
+			last_child_power[1][1] = shunt[1];
+			last_child_power[1][2] = shunt[2];
+
+			last_child_power[2][0] = current[0];
+			last_child_power[2][1] = current[1];
+			last_child_power[2][2] = current[2];
+		}
+
+		//House keeping items - if time step has changed update variable and reset our convergence flag
+		if (t0!=prev_NTime)
+		{
 				//Update time tracking variable
 				prev_NTime=t0;
-			}
-			else if (gl_object_isa(OBJECTHDR(this),"load"))	//Load gets cleared at every presync, so reaggregate :(
-			{
-				//Import power and "load" characteristics
-				power[0]+=childLoad->power[0];
-				power[1]+=childLoad->power[1];
-				power[2]+=childLoad->power[2];
 
-				shunt[0]+=childLoad->shunt[0];
-				shunt[1]+=childLoad->shunt[1];
-				shunt[2]+=childLoad->shunt[2];
-
-				current[0]+=childLoad->current[0];
-				current[1]+=childLoad->current[1];
-				current[2]+=childLoad->current[2];
-			}
+				//Reset convergence flag
+				GS_converged=false;
 		}
 
-
 		//Pull voltages and admittance into temporary variable
-		LOCK_OBJECT(hdr);
+		LOCK_OBJECT(obj);
 		Vtemp[0]=voltage[0];
 		Vtemp[1]=voltage[1];
 		Vtemp[2]=voltage[2];
 		YVsTemp[0] = YVs[0];
 		YVsTemp[1] = YVs[1];
 		YVsTemp[2] = YVs[2];
-		UNLOCK_OBJECT(hdr);
-		
-		//Determine which phases are present for later
-		phasespresent = 8*has_phase(PHASE_D)+4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
+		UNLOCK_OBJECT(obj);
+
+		////Determine which phases are present for later
+		//phasespresent = 8*has_phase(PHASE_D)+4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 
 		//init dV as zero
 		dV[0] = dV[1] = dV[2] = complex(0,0);
@@ -570,7 +666,8 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				case PV:	//PV bus only supports Y-Y connections at this time.  Easier to handle the oddity of power that way.
 					{
 					//Check for NaNs (single phase problem)
-					if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
+					//if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
+					if ((!has_phase(PHASE_A|PHASE_B|PHASE_C)) && (!has_phase(PHASE_D)))
 					{
 						//Calculate reactive power - apply GS update (do phase iteratively)
 						power[0].Im() = ((~Vtemp[0]*(Ys[0][0]*Vtemp[0]+Ys[0][1]*Vtemp[1]+Ys[0][2]*Vtemp[2]-YVsTemp[0]+current[0]+Vtemp[0]*shunt[0])).Im());
@@ -635,8 +732,27 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					}
 				case PQ:
 					{
-					//Check for NaNs (single phase problem)
-					if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
+					if (has_phase(PHASE_S)) //Split phase
+					{
+						//Update node Vtemp
+						Vnew[0] = (-(~power[0]/~Vtemp[0]+current[0]+Vtemp[0]*shunt[0])+YVsTemp[0]-Vtemp[1]*Ys[0][1]-Vtemp[2]*Ys[0][2])/Ys[0][0];
+
+						//Apply acceleration to Vnew
+						Vnew[0]=Vtemp[0]+(Vnew[0]-Vtemp[0])*acceleration_factor;
+
+						Vnew[1] = (-(~power[1]/~Vtemp[1]+current[1]+Vtemp[1]*shunt[1])+YVsTemp[1]-Vnew[0]*Ys[1][0]-Vtemp[2]*Ys[1][2])/Ys[1][1];
+
+						//Apply acceleration to Vnew
+						Vnew[1]=Vtemp[1]+(Vnew[1]-Vtemp[1])*acceleration_factor;
+
+						//Vnew[2] = (-(~power[2]/~Vtemp[2]+current[2]+Vtemp[2]*shunt[2])+YVsTemp[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+
+						//Apply acceleration to Vnew
+						//Vnew[2]=Vtemp[2]+(Vnew[2]-Vtemp[2])*acceleration_factor;
+						Vnew[2] = Vtemp[2];
+					}
+					//else if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
+					else if ((!has_phase(PHASE_A|PHASE_B|PHASE_C)) && (!has_phase(PHASE_D)))
 					{
 						//Update node Vtemp
 						Vnew[0] = (-(~power[0]/~Vtemp[0]+current[0]+Vtemp[0]*shunt[0])+YVsTemp[0]-Vtemp[1]*Ys[0][1]-Vtemp[2]*Ys[0][2])/Ys[0][0];
@@ -684,18 +800,23 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 							delta_shunt_curr[1] = delta_shunt[1]-delta_shunt[0];
 							delta_shunt_curr[2] = delta_shunt[2]-delta_shunt[1];
 
+							//Convert delta connected current
+							delta_current[0]=current[0]-current[2];
+							delta_current[1]=current[1]-current[0];
+							delta_current[2]=current[2]-current[1];
+
 							//Update node Vtemp
-							Vnew[0] = (-(power_current[0]+current[0]+delta_shunt_curr[0])+YVsTemp[0]-Vtemp[1]*Ys[0][1]-Vtemp[2]*Ys[0][2])/Ys[0][0];
+							Vnew[0] = (-(power_current[0]+delta_current[0]+delta_shunt_curr[0])+YVsTemp[0]-Vtemp[1]*Ys[0][1]-Vtemp[2]*Ys[0][2])/Ys[0][0];
 
 							//Apply acceleration to Vnew
 							Vnew[0]=Vtemp[0]+(Vnew[0]-Vtemp[0])*acceleration_factor;
 
-							Vnew[1] = (-(power_current[1]+current[1]+delta_shunt_curr[1])+YVsTemp[1]-Vnew[0]*Ys[1][0]-Vtemp[2]*Ys[1][2])/Ys[1][1];
+							Vnew[1] = (-(power_current[1]+delta_current[1]+delta_shunt_curr[1])+YVsTemp[1]-Vnew[0]*Ys[1][0]-Vtemp[2]*Ys[1][2])/Ys[1][1];
 
 							//Apply acceleration to Vnew
 							Vnew[1]=Vtemp[1]+(Vnew[1]-Vtemp[1])*acceleration_factor;
-
-							Vnew[2] = (-(power_current[2]+current[2]+delta_shunt_curr[2])+YVsTemp[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
+							
+							Vnew[2] = (-(power_current[2]+delta_current[2]+delta_shunt_curr[2])+YVsTemp[2]-Vnew[0]*Ys[2][0]-Vnew[1]*Ys[2][1])/Ys[2][2];
 
 							//Apply acceleration to Vnew
 							Vnew[2]=Vtemp[2]+(Vnew[2]-Vtemp[2])*acceleration_factor;
@@ -717,7 +838,6 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 
 							//Apply acceleration to Vnew
 							Vnew[2]=Vtemp[2]+(Vnew[2]-Vtemp[2])*acceleration_factor;
-
 						}
 					}
 
@@ -733,15 +853,8 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 
 					break;
 					}
-				case SWING:
+				case SWING: 						//Nothing to do here :(
 					{
-					//Nothing to do here :(
-						iter_counter++;
-
-						if ((iter_counter % 1000)==1)
-						{
-							printf("\nIteration %d",iter_counter);
-						}
 					break;
 					}
 				default:
@@ -756,7 +869,6 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			if ((dV[0].Mag()!=0) | (dV[1].Mag()!=0) | (dV[2].Mag()!=0))
 			{
 				linktable = &nodelinks;
-				//node *tempnodeinfo = OBJECTDATA(this,node);
 				OBJECT *datanode;
 				char tempdir = 0;
 
@@ -771,32 +883,41 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					{
 						tempdir = 1;	//We are the from node
 						datanode = (linktable->tnodeconnected);
+						linkref->UpdateYVs(datanode, tempdir, dV);	//Call link YVsTemp updating function as a from
 					}
 					else if (obj==linktable->tnodeconnected)
 					{
 						tempdir = 2;	//We are the to node
 						datanode = (linktable->fnodeconnected);
+						linkref->UpdateYVs(datanode, tempdir, dV);	//Call link YVsTemp updating function as a from
 					}
-
-					linkref->UpdateYVs(datanode, tempdir, dV);	//Call link YVsTemp updating function as a from
 				}
 			}
 		}
 
 		//Update voltages and admittances back into proper place
-		LOCK_OBJECT(hdr);
+		LOCK_OBJECT(obj);
 		voltage[0] = Vtemp[0];
 		voltage[1] = Vtemp[1];
 		voltage[2] = Vtemp[2];
 		//YVs[0] = YVsTemp[0];
 		//YVs[1] = YVsTemp[1];
 		//YVs[2] = YVsTemp[2];
-		UNLOCK_OBJECT(hdr);
+		UNLOCK_OBJECT(obj);
 
+		//See if we've converged
 		if ((dV[0].Mag()>maximum_voltage_error) | (dV[1].Mag()>maximum_voltage_error) | (dV[2].Mag()>maximum_voltage_error))
+		{
+			GS_all_converged=false;			//Set to false
+			GS_converged=false;				//Reflag us, in case we were converged and suddenly aren't
 			return t0;	//No convergence, loop again
-		else
+		}
+		else	//We're done, let's check to make sure everyone else is
+		{
+			GS_converged=true;	//Flag us
+			GS_all_converged=true;	//Flag global.  If we are last and it wasn't supposed to go off, will be caught in Post-Sync
 			return t1;	//converged, no more loops needed
+		}
 		break;
 		}
 	default:
@@ -809,11 +930,8 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 TIMESTAMP node::postsync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = powerflow_object::postsync(t0);
+	TIMESTAMP RetValue=t1;
 	OBJECT *obj = OBJECTHDR(this);
-	char phasespresent;
-
-	//Determine which phases are present for later
-	phasespresent = 8*has_phase(PHASE_D)+4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 
 #ifdef SUPPORT_OUTAGES
 	if (is_contact_any())
@@ -869,109 +987,159 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	}
 	else //GS items - solver and misc. related
 	{
-		LINKCONNECTED *linkscanner;	//Temp variable for connected links list - used to find currents flowing out of node
-		OBJECT *currlinkobj;	//Temp variable for link of interest
-		link *currlink;			//temp Reference to link of interest
-
-		
-		//See if we are a child node - if so, steal our parent's voltage values
-		if (SubNode==CHILD)
+		if (GS_all_converged)
 		{
-			node *parNode = OBJECTDATA(SubNodeParent,node);
-
-			voltage[0]=parNode->voltage[0];
-			voltage[1]=parNode->voltage[1];
-			voltage[2]=parNode->voltage[2];
-		}
-
-		//Zero current for below calcuations.  May mess with tape (will have values at end of Postsync)
-		current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
-
-		//Calculate current if it has one
-		if ((bustype==PQ) | (bustype==PV)) //PQ and PV busses need current updates
-		{
-			if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
+			if (GS_converged)
+				RetValue=t1;
+			else	//Not converged
 			{
-				current_inj[0] = (voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0]);
-				current_inj[1] = (voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1]);
-				current_inj[2] = (voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2]);
-			}
-			else //Three phase
-			{
-				if (has_phase(PHASE_D))	//Delta connection
-				{
-					complex delta_shunt[3];
-					complex delta_current[3];
-
-					//Convert delta connected impedance
-					delta_shunt[0] = voltageAB*shunt[0];
-					delta_shunt[1] = voltageBC*shunt[1];
-					delta_shunt[2] = voltageCA*shunt[2];
-
-					//Convert delta connected power
-					delta_current[0]= ~(power[0]/voltageAB);
-					delta_current[1]= ~(power[1]/voltageBC);
-					delta_current[2]= ~(power[2]/voltageCA);
-
-					current_inj[0] += delta_shunt[0]-delta_shunt[2];	//calculate "load" current (line current) - PQZ
-					current_inj[1] += delta_shunt[1]-delta_shunt[0];
-					current_inj[2] += delta_shunt[2]-delta_shunt[1];
-
-					current_inj[0] +=delta_current[0]-delta_current[2];	//Calculate "load" current (line current) - PQP
-					current_inj[1] +=delta_current[1]-delta_current[0];
-					current_inj[2] +=delta_current[2]-delta_current[1];
-				}
-				else					//Wye connection
-				{
-					current_inj[0] +=~(power[0]/voltage[0]);			//PQP needs power converted to current
-					current_inj[1] +=~(power[1]/voltage[1]);
-					current_inj[2] +=~(power[2]/voltage[2]);
-
-					current_inj[0] +=voltage[0]*shunt[0];			//PQZ needs load currents calculated as well
-					current_inj[1] +=voltage[1]*shunt[1];
-					current_inj[2] +=voltage[2]*shunt[2];
-
-				}
-
-				current_inj[0] +=current[0];		//Update load current values if PQI
-				current_inj[1] +=current[1];		
-				current_inj[2] +=current[2];
+				GS_all_converged=false;
+				GS_converged=false;
+				
+				RetValue=t0;
 			}
 		}
-		else	//Swing bus - just make sure it is zero
+		else	//Not converged
+			RetValue=t0;
+
+		//Check to see if we think we're converged.  If so, do miscellaneous final calc
+		if (RetValue==t1)
 		{
-			current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);	//Swing has no load current or anything else
-		}
+			LINKCONNECTED *linkscanner;	//Temp variable for connected links list - used to find currents flowing out of node
+			OBJECT *currlinkobj;	//Temp variable for link of interest
+			link *currlink;			//temp Reference to link of interest
 
-		//Now accumulate branch currents, so can see what "flows" passes through the node
-		linkscanner = &nodelinks;
-
-		while (linkscanner->next!=NULL)		//Parse through the linked list
-		{
-			linkscanner = linkscanner->next;
-
-			currlinkobj = linkscanner->connectedlink;
-
-			currlink = OBJECTDATA(currlinkobj,link);
-			
-			//Update branch currents - explicitly check to and from in case this is a parent structure
-			if (((currlink->from)->id) == (OBJECTHDR(this)->id))	//see if we are the from end
+			//See if we are a child node - if so, steal our parent's voltage values
+			if (SubNode==CHILD)
 			{
-				if  ((currlink->power_in) > (currlink->power_out))	//Make sure current flowing right direction
+				node *parNode = OBJECTDATA(SubNodeParent,node);
+
+				voltage[0]=parNode->voltage[0];
+				voltage[1]=parNode->voltage[1];
+				voltage[2]=parNode->voltage[2];
+			}
+
+			//Zero current for below calcuations.  May mess with tape (will have values at end of Postsync)
+			current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
+
+			//Calculate current if it has one
+			if ((bustype==PQ) | (bustype==PV)) //PQ and PV busses need current updates
+			{
+				//if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
+				if ((!has_phase(PHASE_A|PHASE_B|PHASE_C)) && (!has_phase(PHASE_D)))
 				{
-					current_inj[0] += currlink->current_in[0];
-					current_inj[1] += currlink->current_in[1];
-					current_inj[2] += currlink->current_in[2];
+					current_inj[0] = (voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0]);
+					current_inj[1] = (voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1]);
+					current_inj[2] = (voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2]);
+				}
+				else //Three phase
+				{
+					if (has_phase(PHASE_D))	//Delta connection
+					{
+						complex delta_shunt[3];
+						complex delta_current[3];
+
+						//Convert delta connected impedance
+						delta_shunt[0] = voltageAB*shunt[0];
+						delta_shunt[1] = voltageBC*shunt[1];
+						delta_shunt[2] = voltageCA*shunt[2];
+
+						//Convert delta connected power
+						delta_current[0]= ~(power[0]/voltageAB);
+						delta_current[1]= ~(power[1]/voltageBC);
+						delta_current[2]= ~(power[2]/voltageCA);
+
+						current_inj[0] += delta_shunt[0]-delta_shunt[2];	//calculate "load" current (line current) - PQZ
+						current_inj[1] += delta_shunt[1]-delta_shunt[0];
+						current_inj[2] += delta_shunt[2]-delta_shunt[1];
+
+						current_inj[0] +=delta_current[0]-delta_current[2];	//Calculate "load" current (line current) - PQP
+						current_inj[1] +=delta_current[1]-delta_current[0];
+						current_inj[2] +=delta_current[2]-delta_current[1];
+
+						current_inj[0] +=current[0]-current[2];	//Calculate "load" current (line current) - PQI
+						current_inj[1] +=current[1]-current[0];
+						current_inj[2] +=current[2]-current[1];
+					}
+					else					//Wye connection
+					{
+						current_inj[0] +=~(power[0]/voltage[0]);			//PQP needs power converted to current
+						current_inj[1] +=~(power[1]/voltage[1]);
+						current_inj[2] +=~(power[2]/voltage[2]);
+
+						current_inj[0] +=voltage[0]*shunt[0];			//PQZ needs load currents calculated as well
+						current_inj[1] +=voltage[1]*shunt[1];
+						current_inj[2] +=voltage[2]*shunt[2];
+
+						current_inj[0] +=current[0];		//Update load current values if PQI
+						current_inj[1] +=current[1];		
+						current_inj[2] +=current[2];
+					}
 				}
 			}
-			else if (((currlink->to)->id) == (OBJECTHDR(this)->id))	//see if we are the to end
+			else	//Swing bus - just make sure it is zero
 			{
-				if ((currlink->power_in) < (currlink->power_out))	//Current is reversed, so this is a from to
+				current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);	//Swing has no load current or anything else
+			}
+
+			//Now accumulate branch currents, so can see what "flows" passes through the node
+			linkscanner = &nodelinks;
+
+			while (linkscanner->next!=NULL)		//Parse through the linked list
+			{
+				linkscanner = linkscanner->next;
+
+				currlinkobj = linkscanner->connectedlink;
+
+				currlink = OBJECTDATA(currlinkobj,link);
+				
+				//Update branch currents - explicitly check to and from in case this is a parent structure
+				if (((currlink->from)->id) == (OBJECTHDR(this)->id))	//see if we are the from end
 				{
-					current_inj[0] -= currlink->current_out[0];
-					current_inj[1] -= currlink->current_out[1];
-					current_inj[2] -= currlink->current_out[2];
+					if  ((currlink->power_in) > (currlink->power_out))	//Make sure current flowing right direction
+					{
+						current_inj[0] += currlink->current_in[0];
+						current_inj[1] += currlink->current_in[1];
+						current_inj[2] += currlink->current_in[2];
+					}
 				}
+				else if (((currlink->to)->id) == (OBJECTHDR(this)->id))	//see if we are the to end
+				{
+					if ((currlink->power_in) < (currlink->power_out))	//Current is reversed, so this is a from to
+					{
+						current_inj[0] -= currlink->current_out[0];
+						current_inj[1] -= currlink->current_out[1];
+						current_inj[2] -= currlink->current_out[2];
+					}
+				}
+			}
+
+			if (SubNode==CHILD)	//Remove child contributions
+			{
+				node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+
+				//Remove power and "load" characteristics
+				ParToLoad->power[0]-=last_child_power[0][0];
+				ParToLoad->power[1]-=last_child_power[0][1];
+				ParToLoad->power[2]-=last_child_power[0][2];
+
+				ParToLoad->shunt[0]-=last_child_power[1][0];
+				ParToLoad->shunt[1]-=last_child_power[1][1];
+				ParToLoad->shunt[2]-=last_child_power[1][2];
+
+				ParToLoad->current[0]-=last_child_power[2][0];
+				ParToLoad->current[1]-=last_child_power[2][1];
+				ParToLoad->current[2]-=last_child_power[2][2];
+
+				//Update previous power tracker - if we haven't really converged, things will mess up without this
+				//Power
+				last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = 0.0;
+
+				//Shunt
+				last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = 0.0;
+
+				//Current
+				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = 0.0;
 			}
 		}
 	}
@@ -1015,7 +1183,6 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			status=NOMINAL;
 	}
 #endif
-
 	if (solver_method==SM_FBS)
 	{
 		/* compute the sync voltage change */
@@ -1025,12 +1192,12 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		if (sync_V > maximum_voltage_error){
 
 			/* request another pass */
-			return t0;
+			RetValue=t0;
 		}
 	}
 
 	/* the solution is satisfactory */
-	return t1;
+	return RetValue;
 }
 
 int node::kmldump(FILE *fp)
@@ -1231,7 +1398,7 @@ LINKCONNECTED *node::attachlink(OBJECT *obj) ///< object to attach
 	// attach to and from nodes
 	lconnected->fnodeconnected = templink->from;
 	lconnected->tnodeconnected = templink->to;
-
+	
 	return 0;
 }
 

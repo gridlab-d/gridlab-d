@@ -29,6 +29,7 @@ void print_matrix(complex mat[3][3]);
 
 typedef enum {SM_FBS=0, SM_GS=1} SOLVERMETHOD;		/**< powerflow solver methodology */
 GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodology */
+GLOBAL bool GS_all_converged INIT(false);			/**< Gauss-Seidel convergence indicator (for post-convergence calculations */
 GLOBAL double acceleration_factor INIT(1.4);		/**< Acceleration factor for Gauss-Seidel to increase convergence speed */
 GLOBAL bool show_matrix_values INIT(false);			/**< flag to enable dumping matrix calculations as they occur */
 GLOBAL double primary_voltage_ratio INIT(60.0);		/**< primary voltage ratio (@todo explain primary_voltage_ratio in powerflow (ticket #131) */

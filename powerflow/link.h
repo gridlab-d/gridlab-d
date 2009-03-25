@@ -11,6 +11,14 @@ EXPORT int isa_link(OBJECT *obj, char *classname);
 
 #define impedance(X) (B_mat[X][X])
 
+typedef enum {
+		NORMAL=0,			///< defines just a normal link/transformer
+		REGULATOR=1,		///< defines the link is a regulator
+		DELTAGWYE=2,		///< defines the link is actually a Delta-Gwye transformer
+		SPLITPHASE=3		///< defines the link is a split-phase transformer
+		} SPECIAL_LINK;
+
+
 class link : public powerflow_object
 {
 public: /// @todo make this private and create interfaces to control values
@@ -22,9 +30,9 @@ public: /// @todo make this private and create interfaces to control values
 	complex B_mat[3][3];   // B_mat - 3x3 matrix, 'B' matrix
 	complex To_Y[3][3];	   // To_Y  - 3x3 matrix, object to admittance
 	complex From_Y[3][3];  // From_Y - 3x3 matrix, object from admittance
-	double voltage_ratio;	   // voltage ratio (normally 1.0)
+	double voltage_ratio;	// voltage ratio (normally 1.0)
 	complex phaseadjust;	//Phase adjustment term for GS transformers
-	unsigned char Regulator_Link;	//Flag for regulator object.
+	SPECIAL_LINK SpecialLnk;	//Flag for exceptions to the normal handling
 
 public:
 	typedef enum {LS_CLOSED=0, LS_OPEN=1} LINKSTATUS;
@@ -75,7 +83,6 @@ public:
 };
 
 void inverse(complex in[3][3], complex out[3][3]);
-void minverter(complex in[3][3], complex out[3][3]);
 void multiply(double a, complex b[3][3], complex c[3][3]);
 void multiply(complex a[3][3], complex b[3][3], complex c[3][3]);
 void subtract(complex a[3][3], complex b[3][3], complex c[3][3]);

@@ -67,29 +67,66 @@ int load::create(void)
     return res;
 }
 
+TIMESTAMP load::presync(TIMESTAMP t0)
+{
+	if ((solver_method==SM_GS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented node
+	{
+		shunt[0] = shunt[1] = shunt[2] = 0.0;
+		power[0] = power[1] = power[2] = 0.0;
+		current[0] = current[1] = current[2] = 0.0;
+	}
+	
+	//Must be at the bottom, or the new values will be calculated after the fact
+	TIMESTAMP result = node::presync(t0);
+	
+	return result;
+}
+
 TIMESTAMP load::sync(TIMESTAMP t0)
 {
-	if(constant_impedance[0].IsZero())
-		shunt[0] = 0.0;
-	else
-		shunt[0] = complex(1)/constant_impedance[0];
+	if ((solver_method==SM_GS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented load
+	{													//associated with change due to player methods
 
-	if(constant_impedance[1].IsZero())
-		shunt[1] = 0.0;
+		if (!(constant_impedance[0].IsZero()))
+			shunt[0] += complex(1.0)/constant_impedance[0];
+
+		if (!(constant_impedance[1].IsZero()))
+			shunt[1] += complex(1.0)/constant_impedance[1];
+		
+		if (!(constant_impedance[2].IsZero()))
+			shunt[2] += complex(1.0)/constant_impedance[2];
+		
+		power[0] += constant_power[0];
+		power[1] += constant_power[1];	
+		power[2] += constant_power[2];
+		current[0] += constant_current[0];
+		current[1] += constant_current[1];
+		current[2] += constant_current[2];
+	}
 	else
-		shunt[1] = complex(1)/constant_impedance[1];
-	
-	if(constant_impedance[2].IsZero())
-		shunt[2] = 0.0;
-	else
-		shunt[2] = complex(1)/constant_impedance[2];
-	
-	power[0] = constant_power[0];
-	power[1] = constant_power[1];	
-	power[2] = constant_power[2];
-	current[0] = constant_current[0];
-	current[1] = constant_current[1];
-	current[2] = constant_current[2];
+	{
+		if(constant_impedance[0].IsZero())
+			shunt[0] = 0.0;
+		else
+			shunt[0] = complex(1)/constant_impedance[0];
+
+		if(constant_impedance[1].IsZero())
+			shunt[1] = 0.0;
+		else
+			shunt[1] = complex(1)/constant_impedance[1];
+		
+		if(constant_impedance[2].IsZero())
+			shunt[2] = 0.0;
+		else
+			shunt[2] = complex(1)/constant_impedance[2];
+		
+		power[0] = constant_power[0];
+		power[1] = constant_power[1];	
+		power[2] = constant_power[2];
+		current[0] = constant_current[0];
+		current[1] = constant_current[1];
+		current[2] = constant_current[2];
+	}
 
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = node::sync(t0);

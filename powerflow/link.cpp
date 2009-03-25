@@ -139,7 +139,7 @@ int link::create(void)
 	power_out = 0;
 	voltage_ratio = 1.0;
 	phaseadjust = complex(1,0);
-	Regulator_Link = 0;
+	SpecialLnk = NORMAL;
 	prev_LTime=0;
 
 	current_in[0] = current_in[1] = current_in[2] = complex(0,0);
@@ -287,62 +287,182 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 		//Update t0 variable
 		prev_LTime=t0;
 
+		//Reset global convergence variable
+		GS_all_converged=false;
+
 		for (jindex=0;jindex<3;jindex++)	//Check to see if b_mat is all zeros (0 length line)
 		{
 			for (kindex=0;kindex<3;kindex++)
 			{
 				if (b_mat[jindex][kindex]==0)
+				{
 					zerosum++;
+				}
 			}
 		}
 
-		if (zerosum==9) //Zero length line
+		if ((zerosum==9)) // && (fnode->bustype!=2)) //Zero length line & from is not the swing bus
 		{
 			//put some values in the matrices first - these need to be fixed to get accurate power flow...but it's length 0!?!
 			b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = fault_Z;
 			d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = 1.0;
 			A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = 1.0;
-			B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = 1.0;
+			B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = fault_Z;
+
+			//Remove ourselves from from and to node's linked lists, otherwise it may reference itself
 			
+			//Grab the linked list from the from object
+			LINKCONNECTED *parlink = &fnode->nodelinks;
 
-			//Set up from node as parent
-			fnode->SubNode=(SUBNODETYPE)2;
-			fnode->SubNodeParent=to;
+			LINKCONNECTED *prevlink = new LINKCONNECTED;
+			if (prevlink==NULL)
+			{
+				gl_error("memory allocation failure");
+				return 0;
+			}
 
-			for (jindex=0;jindex<3;jindex++)	//zero out load tracking matrix (just in case)
+			while (parlink->next!=NULL)		//Parse through the linked list
+			{
+				prevlink = parlink;
+				parlink = parlink->next;
+				
+				if ((parlink->fnodeconnected==from) & (parlink->tnodeconnected==to)) //this is us
+				{
+					prevlink->next=parlink->next;
+				}
+			}
+			
+			prevlink = NULL;
+			parlink = &tnode->nodelinks;
+
+			if (parlink->next->next!=NULL)	//Was the only line in, so just get rid of us
+			{
+				while (parlink->next!=NULL)
+				{
+					prevlink = parlink;
+					parlink = parlink->next;
+					
+					if ((parlink->fnodeconnected==from) & (parlink->tnodeconnected==to)) //this is us
+					{
+						prevlink->next=parlink->next;
+					}
+				}
+			}
+			else
+				parlink->next=NULL;
+
+			prevlink=NULL;
+			delete prevlink;
+
+			OBJECT *obj = OBJECTHDR(this);
+
+			//Essentially setting from as parent - follow basic idea of node:init
+
+			//See if it is a node/load/meter
+			if (!(gl_object_isa(from,"load") | gl_object_isa(from,"node") | gl_object_isa(from,"meter")))
+				GL_THROW("Attempt to substitue 0 length line %d failed: from is not a node device!",obj->id);
+
+			//Make sure our phases align, otherwise become angry
+			if (fnode->phases!=tnode->phases)
+				GL_THROW("Attempt to substitue 0 length line %d failed: endpoint phases do not match!",obj->id);
+
+			//Additional check not needed in node - make sure To isn't a parent (no easy way to fix this, if multiple children gets wonky)
+			if (tnode->SubNode==(SUBNODETYPE)3)
+			{
+				//Reference its child
+				node *SubNodeObj = OBJECTDATA(tnode->SubNodeParent,node);
+				gl_warning("0 Length Line %d has child-linked object as the end.  If more than one child existed, earlier children have been lost!",obj->id);
+			
+				//Now have to handle based on what the from node of the line is
+				if (fnode->SubNode==(SUBNODETYPE)2)	//From node is another child
+				{
+					GL_THROW("Attempt to substitute 0 length line %d failed: Would result in great-grandchilren nesting which is unsupported in GS!",obj->id);
+				}
+				else	//From node is unchilded
+				{
+					//Set appropriate flags (store parent name and flag from & to)
+					tnode->SubNode = (SUBNODETYPE)2;
+					tnode->SubNodeParent = from;
+					
+					fnode->SubNode = (SUBNODETYPE)3;
+					fnode->SubNodeParent = to;
+
+					//Set to's subnode (or the one we found) to from node as well
+					SubNodeObj->SubNodeParent = from;
+				}
+			}
+			else	//Normal To node
+			{
+				if (fnode->SubNode==(SUBNODETYPE)2)	//From node is another child
+				{
+					//Set appropriate flags (store parent name and flag)
+					tnode->SubNode = (SUBNODETYPE)2;
+					tnode->SubNodeParent = fnode->SubNodeParent;
+				}
+				else	//From node is unchilded
+				{
+					//Set appropriate flags (store parent name and flag from & to)
+					tnode->SubNode = (SUBNODETYPE)2;
+					tnode->SubNodeParent = from;
+					
+					fnode->SubNode = (SUBNODETYPE)3;
+					fnode->SubNodeParent = to;
+				}
+			}
+
+			for (jindex=0;jindex<3;jindex++)	//zero out load tracking matrix (just in case) (do both in case to was parent too)
 			{
 				for (kindex=0;kindex<3;kindex++)
 				{
 					fnode->last_child_power[jindex][kindex]=0.0;
+					tnode->last_child_power[jindex][kindex]=0.0;
 				}
 			}
 
-			//Set up to node as child
-			tnode->SubNode=(SUBNODETYPE)1;
-			tnode->SubNodeParent=from;
 		}
 		else	//normal b_mat (or at least, not all zeros)
 		{
-			//See if we're triplexy
-			/*if (gl_object_isa(OBJECTHDR(this),"triplex_line"))
+			//Ensure have zeroed out the Y at first
+			for (jindex=0;jindex<3;jindex++)
 			{
-				complex det = (b_mat[0][0] * b_mat[1][1]) - (b_mat[0][1]*b_mat[1][0]);
-				Y[0][0] = b_mat[1][1] * det;
-				Y[0][1] = b_mat[0][1] * det * -1.0;
-				Y[1][0] = b_mat[1][0] * det * -1.0;
-				Y[1][1] = b_mat[0][0] * det;
-				Y[0][2] = Y[1][2] = Y[2][0] = Y[2][1] = Y[2][2] = 0.0;
-			}
-			else */
-			{
-				// compute admittance - invert b matrix
-				inverse(b_mat,Y);
-
-				if (isnan(Y[0][0].Re()))
+				for (kindex=0;kindex<3;kindex++)
 				{
-					minverter(b_mat,Y);
+					Y[jindex][kindex] = 0.0;
 				}
 			}
+
+			// compute admittance - invert b matrix - special circumstances given different methods
+			if (has_phase(PHASE_S)) //Triplexy
+			{
+				inverse(b_mat,Y);
+			}
+			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+				Y[0][0] = complex(1.0) / b_mat[0][0];
+			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+				Y[1][1] = complex(1.0) / b_mat[1][1];
+			else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+				Y[2][2] = complex(1.0) / b_mat[2][2];
+			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+			{
+				complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
+
+				Y[0][0] = b_mat[2][2] / detvalue;
+				Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
+				Y[2][0] = b_mat[2][0] * -1.0 / detvalue;
+				Y[2][2] = b_mat[0][0] / detvalue;
+			}
+			else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+			{
+				complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+
+				Y[0][0] = b_mat[1][1] / detvalue;
+				Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
+				Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
+				Y[1][1] = b_mat[0][0] / detvalue;
+			}
+			else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+				inverse(b_mat,Y);
+			// defaulted else - No phases (e.g., the line does not exist) - just = 0
 
 			//Compute total self admittance - include line charging capacitance
 			equalm(a_mat,Ylinecharge);
@@ -354,40 +474,11 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 
 			addition(Ylinecharge,Y,Ytot);
 			
-			if ((voltage_ratio!=1) | (Regulator_Link!=0))	//Handle transformers slightly different
+			if ((voltage_ratio!=1) | (SpecialLnk!=NORMAL))	//Handle transformers slightly different
 			{
-				invratio=1/voltage_ratio;
-				/* //Trying new approach - this is old approach that worked
-				phasespresent = 8*has_phase(PHASE_D)+4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
+				invratio=1.0/voltage_ratio;
 
-				if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Single or double phase - not three - special handling
-				{	
-					multiply(voltage_ratio,b_mat,Ylefttemp);
-					inverse(Ylefttemp,Yfrom);
-
-					if (isnan(Yfrom[0][0].Re()))
-					{
-						minverter(Ylefttemp,Yfrom);
-					}
-
-					multiply(invratio,b_mat,Ylefttemp);
-					inverse(Ylefttemp,Yto);
-
-					if (isnan(Yto[0][0].Re()))
-					{
-						minverter(Ylefttemp,Yto);
-					}
-				}
-				else	//Three phase
-				{
-					multiply(voltage_ratio,b_mat,Ylefttemp);
-					inverse(Ylefttemp,Yfrom);
-
-					multiply(invratio,b_mat,Ylefttemp);
-					inverse(Ylefttemp,Yto);
-				} */
-
-				if (Regulator_Link==2)	//Not really, is really Delta-Gwye implementation - temp variable to see if this even works
+				if (SpecialLnk==DELTAGWYE)	//Delta-Gwye implementation
 				{
 					complex tempImped;
 
@@ -405,9 +496,9 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 					multiply(B_mat,Yto,From_Y);
 
 					//Fix what I broke
-					for(jindex=0;jindex<2;jindex++)
+					for(jindex=0;jindex<3;jindex++)
 					{
-						for(kindex=0;kindex<2;kindex++)
+						for(kindex=0;kindex<3;kindex++)
 						{
 							c_mat[jindex][kindex]=0.0;
 							B_mat[jindex][kindex]=0.0;
@@ -438,9 +529,11 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 							 To_Y[2][2]*fnode->voltage[2];
 
 				}
-				else if (Regulator_Link==1)	//Regulator
+				else if (SpecialLnk==REGULATOR)	//Regulator
 				{
-					equalm(b_mat,Yto);
+					GL_THROW("Regulator not implemented in Gauss-Seidel Solver yet!");
+
+					equalm(b_mat,Yto);	//Initial code.  Very untested
 					equalm(c_mat,Yfrom);
 
 					equalm(Yto,To_Y);
@@ -494,16 +587,36 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 							 To_Y[2][1]*fnode->voltage[1]+
 							 To_Y[2][2]*fnode->voltage[2];
 				}
-				else if (Regulator_Link==3)	//Split phase
+				else if (SpecialLnk==SPLITPHASE)	//Split phase - non working
 				{
 					equalm(b_mat,Yto);
 					equalm(c_mat,Yfrom);
-					c_mat[0][0] = c_mat[0][1] = c_mat[0][2] = 0.0;
-					c_mat[1][0] = c_mat[1][1] = c_mat[1][2] = 0.0;
-					c_mat[2][0] = c_mat[2][1] = c_mat[2][2] = 0.0;
 
-					multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
-					multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
+					for (jindex=0;jindex<3;jindex++)
+					{
+						for (kindex=0;kindex<3;kindex++)
+						{
+							c_mat[jindex][kindex] = 0.0;
+						}
+					}
+
+/*					Old version - works?? - fixing assignments so can generalize
+					equalm(b_mat,Yto);
+					Yto[2][0] = Yto[2][1] = 0.0;
+
+					equalm(b_mat,Ylefttemp);
+					Ylefttemp[1][0] = Ylefttemp[1][1];
+					Ylefttemp[1][1] = 0.0;
+					multiply(invratio,Ylefttemp,To_Y);
+
+					equalm(c_mat,Yfrom);
+					equalm(c_mat,From_Y);
+					Yfrom[0][0] = Yfrom[2][2];
+					Yfrom[2][2] = Yfrom[0][1] = 0.0;
+
+					c_mat[0][0] = c_mat[0][1] = c_mat[2][2] = 0.0;*/
+
+					//multiply(invratio,Yfrom,From_Y);
 
 					Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
 							 From_Y[0][1]*tnode->voltage[1]+
@@ -618,6 +731,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			}
 		}
 	}
+
 	return t1;
 }
 
@@ -672,6 +786,7 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 #endif
 
 	}
+
 	return TS_NEVER;
 }
 
@@ -738,39 +853,46 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
 		power_out = (t->voltage[0]*~t->current_inj[0]).Mag() + (t->voltage[1]*~t->current_inj[1]).Mag() + (t->voltage[2]*~t->current_inj[2]).Mag();
 	}
-	else if ((!is_open()) && (solver_method==SM_GS))
+	else if ((!is_open()) && (solver_method==SM_GS) && GS_all_converged)
 	{
 		node *fnode = OBJECTDATA(from,node);
 		node *tnode = OBJECTDATA(to,node);
 		complex current_temp[3];
 		complex Binv[3][3];
-		char phasespresent;
+		char jindex, kindex;
 
-		phasespresent = 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
+		for (jindex=0; jindex<3; jindex++)
+			for (kindex=0; kindex<3; kindex++)
+				Binv[jindex][kindex] = 0.0;
 
-		//Invert b matrix
-		inverse(B_mat,Binv);
+		// invert B matrix - special circumstances given different methods
+		if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+			Binv[0][0] = complex(1.0) / B_mat[0][0];
+		else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+			Binv[1][1] = complex(1.0) / B_mat[1][1];
+		else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+			Binv[2][2] = complex(1.0) / B_mat[2][2];
+		else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+		{
+			complex detvalue = B_mat[0][0]*B_mat[2][2] - B_mat[0][2]*B_mat[2][0];
 
-		//if ((phasespresent!=7) & (isnan(Binv[0][0].Re())))	//Single or double phase - not three - special handling
-		if (((phasespresent!=7) & (phasespresent!=8) & (phasespresent!=15)) | (isnan(Binv[0][0].Re())))	//Single or double phase - not three - special handling
-		{	
-			minverter(B_mat,Binv);
-			
-			if (!has_phase(PHASE_A))
-			{
-				A_mat[0][0] = d_mat[0][0] = complex(0,0);
-			}
-
-			if (!has_phase(PHASE_B))
-			{
-				A_mat[1][1] = d_mat[1][1] = complex(0,0);
-			}
-
-			if (!has_phase(PHASE_C))
-			{
-				A_mat[2][2] = d_mat[2][2] = complex(0,0);
-			}
+			Binv[0][0] = B_mat[2][2] / detvalue;
+			Binv[0][2] = B_mat[0][2] * -1.0 / detvalue;
+			Binv[2][0] = B_mat[2][0] * -1.0 / detvalue;
+			Binv[2][2] = B_mat[0][0] / detvalue;
 		}
+		else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+		{
+			complex detvalue = B_mat[0][0]*B_mat[1][1] - B_mat[0][1]*B_mat[1][0];
+
+			Binv[0][0] = B_mat[1][1] / detvalue;
+			Binv[0][1] = B_mat[0][1] * -1.0 / detvalue;
+			Binv[1][0] = B_mat[1][0] * -1.0 / detvalue;
+			Binv[1][1] = B_mat[0][0] / detvalue;
+		}
+		else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+			inverse(B_mat,Binv);
+		// defaulted else - No phases (e.g., the line does not exist) - just = 0
 
 		//Calculate output currents
 		current_temp[0] = A_mat[0][0]*fnode->voltage[0]+
@@ -815,11 +937,21 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 						d_mat[2][0]*current_out[0]+
 						d_mat[2][1]*current_out[1]+
 						d_mat[2][2]*current_out[2];
-
+		
 		//power_in = ((fnode->voltage[0]*~current_in[0]) + (fnode->voltage[1]*~current_in[1]) + (fnode->voltage[2]*~current_in[2])).Mag();
 		//power_out = ((tnode->voltage[0]*~current_out[0]) + (tnode->voltage[1]*~current_out[1]) + (tnode->voltage[2]*~current_out[2])).Mag();
 		power_in = ((fnode->voltage[0]*~current_in[0]).Mag() + (fnode->voltage[1]*~current_in[1]).Mag() + (fnode->voltage[2]*~current_in[2]).Mag());
 		power_out = ((tnode->voltage[0]*~current_out[0]).Mag() + (tnode->voltage[1]*~current_out[1]).Mag() + (tnode->voltage[2]*~current_out[2]).Mag());
+
+		//Zero out admittance and YVs terms of To/From nodes for next cycle.  Rank should take care of all problems here.  If not, need to flag prev_LTime as well
+		fnode->YVs[0] = fnode->YVs[1] = fnode->YVs[2] = 0.0;
+		tnode->YVs[0] = tnode->YVs[1] = tnode->YVs[2] = 0.0;
+
+		fnode->Ys[0][0] = fnode->Ys[0][1] = fnode->Ys[0][2] = 0.0;
+		fnode->Ys[1][0] = fnode->Ys[1][1] = fnode->Ys[1][2] = 0.0;
+		fnode->Ys[2][0] = fnode->Ys[2][1] = fnode->Ys[2][2] = 0.0;
+
+		equalm(fnode->Ys,tnode->Ys);
 	}
 
 	return TS_NEVER;
@@ -1028,90 +1160,78 @@ EXPORT int isa_link(OBJECT *obj, char *classname)
 void *link::UpdateYVs(OBJECT *snode, char snodeside, complex *deltaV)
 {
 	complex YVsNew[3];
-
 	node *worknode = OBJECTDATA(snode,node);
+
+	//Zero the accumulator
+	YVsNew[0] = YVsNew[1] = YVsNew[2] = 0.0;
+
+	//Calculate YVs update - gets done regardless of who we are
+	if (snodeside==1)		//From node
+	{
+		if (deltaV[0]!=0.0)	//Non-zero
+		{
+			YVsNew[0] = To_Y[0][0]*deltaV[0];
+			YVsNew[1] = To_Y[1][0]*deltaV[0];
+			YVsNew[2] = To_Y[2][0]*deltaV[0];
+		}
+
+		if (deltaV[1]!=0.0)	//Non-zero
+		{
+			YVsNew[0] += To_Y[0][1]*deltaV[1];
+			YVsNew[1] += To_Y[1][1]*deltaV[1];
+			YVsNew[2] += To_Y[2][1]*deltaV[1];
+		}
+
+		if (deltaV[2]!=0.0)	//Non-zero
+		{
+			YVsNew[0] += To_Y[0][2]*deltaV[2];
+			YVsNew[1] += To_Y[1][2]*deltaV[2];
+			YVsNew[2] += To_Y[2][2]*deltaV[2];
+		}
+	}
+	else if (snodeside==2)		//To node
+	{
+		if (deltaV[0]!=0.0)	//Non-zero
+		{
+			YVsNew[0] = From_Y[0][0]*deltaV[0];
+			YVsNew[1] = From_Y[1][0]*deltaV[0];
+			YVsNew[2] = From_Y[2][0]*deltaV[0];
+		}
+
+		if (deltaV[1]!=0.0)	//Non-zero
+		{
+			YVsNew[0] += From_Y[0][1]*deltaV[1];
+			YVsNew[1] += From_Y[1][1]*deltaV[1];
+			YVsNew[2] += From_Y[2][1]*deltaV[1];
+		}
+
+		if (deltaV[2]!=0.0)	//Non-zero
+		{
+			YVsNew[0] += From_Y[0][2]*deltaV[2];
+			YVsNew[1] += From_Y[1][2]*deltaV[2];
+			YVsNew[2] += From_Y[2][2]*deltaV[2];
+		}
+	}
 
 	//Check to see if we are a subnode (fixes backpostings)
 	if (worknode->SubNode!=1)
 	{
-		if (snodeside==1)		//From node
-		{
-			YVsNew[0]=To_Y[0][0]*deltaV[0]+
-					  To_Y[0][1]*deltaV[1]+
-					  To_Y[0][2]*deltaV[2];
-			YVsNew[1]=To_Y[1][0]*deltaV[0]+
-					  To_Y[1][1]*deltaV[1]+
-					  To_Y[1][2]*deltaV[2];
-			YVsNew[2]=To_Y[2][0]*deltaV[0]+
-					  To_Y[2][1]*deltaV[1]+
-					  To_Y[2][2]*deltaV[2];
-		
-			LOCK_OBJECT(snode);
-			worknode->YVs[0] += YVsNew[0];
-			worknode->YVs[1] += YVsNew[1];
-			worknode->YVs[2] += YVsNew[2];
-			UNLOCK_OBJECT(snode);
-		}
-		else if (snodeside==2)		//To node
-		{
-			YVsNew[0]=From_Y[0][0]*deltaV[0]+
-					  From_Y[0][1]*deltaV[1]+
-					  From_Y[0][2]*deltaV[2];
-			YVsNew[1]=From_Y[1][0]*deltaV[0]+
-					  From_Y[1][1]*deltaV[1]+
-					  From_Y[1][2]*deltaV[2];
-			YVsNew[2]=From_Y[2][0]*deltaV[0]+
-					  From_Y[2][1]*deltaV[1]+
-					  From_Y[2][2]*deltaV[2];
-
-			LOCK_OBJECT(snode);
-			worknode->YVs[0] += YVsNew[0];
-			worknode->YVs[1] += YVsNew[1];
-			worknode->YVs[2] += YVsNew[2];
-			UNLOCK_OBJECT(snode);
-		}
+		LOCK_OBJECT(snode);
+		worknode->YVs[0] += YVsNew[0];
+		worknode->YVs[1] += YVsNew[1];
+		worknode->YVs[2] += YVsNew[2];
+		UNLOCK_OBJECT(snode);
 	}
 	else	//Child update
 	{
 		OBJECT *newnode = worknode->SubNodeParent;
 		node *newworknode = OBJECTDATA(newnode,node);
 
-		if (snodeside==1)		//From node
-		{
-			YVsNew[0]=To_Y[0][0]*deltaV[0]+
-					  To_Y[0][1]*deltaV[1]+
-					  To_Y[0][2]*deltaV[2];
-			YVsNew[1]=To_Y[1][0]*deltaV[0]+
-					  To_Y[1][1]*deltaV[1]+
-					  To_Y[1][2]*deltaV[2];
-			YVsNew[2]=To_Y[2][0]*deltaV[0]+
-					  To_Y[2][1]*deltaV[1]+
-					  To_Y[2][2]*deltaV[2];
-		
-			LOCK_OBJECT(newnode);
-			newworknode->YVs[0] += YVsNew[0];
-			newworknode->YVs[1] += YVsNew[1];
-			newworknode->YVs[2] += YVsNew[2];
-			UNLOCK_OBJECT(newnode);
-		}
-		else if (snodeside==2)		//To node
-		{
-			YVsNew[0]=From_Y[0][0]*deltaV[0]+
-					  From_Y[0][1]*deltaV[1]+
-					  From_Y[0][2]*deltaV[2];
-			YVsNew[1]=From_Y[1][0]*deltaV[0]+
-					  From_Y[1][1]*deltaV[1]+
-					  From_Y[1][2]*deltaV[2];
-			YVsNew[2]=From_Y[2][0]*deltaV[0]+
-					  From_Y[2][1]*deltaV[1]+
-					  From_Y[2][2]*deltaV[2];
-
-			LOCK_OBJECT(newnode);
-			newworknode->YVs[0] += YVsNew[0];
-			newworknode->YVs[1] += YVsNew[1];
-			newworknode->YVs[2] += YVsNew[2];
-			UNLOCK_OBJECT(newnode);
-		}
+		LOCK_OBJECT(newnode);
+		newworknode->YVs[0] += YVsNew[0];
+		newworknode->YVs[1] += YVsNew[1];
+		newworknode->YVs[2] += YVsNew[2];
+		UNLOCK_OBJECT(newnode);
 	}
 	return 0;
 }
@@ -1138,21 +1258,6 @@ void inverse(complex in[3][3], complex out[3][3])
 	out[2][0] = x * (in[1][0] * in[2][1] - in[1][1] * in[2][0]);
 	out[2][1] = x * (in[0][1] * in[2][0] - in[0][0] * in[2][1]);
 	out[2][2] = x * (in[0][0] * in[1][1] - in[0][1] * in[1][0]);
-}
-
-void minverter(complex in[3][3], complex out[3][3])
-{
-	char i, j;
-	for (i=0;i<3;i++)
-	{
-		for (j=0;j<3;j++)
-		{
-			if (in[i][j]!=0)
-				out[i][j]=complex(1,0)/in[i][j];
-			else
-				out[i][j]=0;
-		}
-	}
 }
 
 void multiply(double a, complex b[3][3], complex c[3][3])

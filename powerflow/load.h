@@ -21,6 +21,7 @@ public:
 
 	load(MODULE *mod);
 	TIMESTAMP sync(TIMESTAMP t0);
+	TIMESTAMP presync(TIMESTAMP t0);
 	inline load(CLASS *cl=oclass):node(cl){};
 	int isa(char *classname);
 };

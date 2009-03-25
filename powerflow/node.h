@@ -70,10 +70,9 @@ typedef struct s_linkconnected {
 typedef enum {
 		NONE=0,				///< defines not a child node
 		CHILD=1,			///< defines is a child node
-		PARENT_NOINIT=2,	///< defines is a parent of a child node that has not been linked
-		PARENT_INIT=3		///< defines is a parent of a child that that has been linked
+		CHILD_NOINIT=2,	///< defines is a child node that has not been linked
+		PARENT=3		///< defines is a parent of a child
 		} SUBNODETYPE;
-
 
 class node : public powerflow_object
 {
@@ -83,6 +82,7 @@ private:
 	complex current_inj[3];			///< current injection (total of current+shunt+power)
 	TIMESTAMP prev_NTime;			///< Previous timestep - used for propogating child properties
 	complex last_child_power[3][3];	///< Previous power values - used for child object propogation
+	bool GS_converged;				///< Flag for if we are converged
 public:
 	double frequency;			///< frequency (only valid on reference bus) */
 	object reference_bus;		///< reference bus from which frequency is defined */

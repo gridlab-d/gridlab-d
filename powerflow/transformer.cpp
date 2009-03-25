@@ -233,7 +233,7 @@ int transformer::init(OBJECT *parent)
 			}
 			else if (solver_method==SM_GS)
 			{
-				Regulator_Link = 2;
+				SpecialLnk = DELTAGWYE;
 
 				complex Izt = complex(1.0,0) / zt;
 
@@ -392,98 +392,9 @@ int transformer::init(OBJECT *parent)
 				B_mat[1][0] = (z0/(nt*nt));
 				B_mat[1][1] = complex(-1,0) * ((z2) + (z0/(nt*nt)));
 			}
-			else if (solver_method==SM_GS)
+			else if (solver_method==SM_GS)	// This doesn't work yet
 			{
-				if (has_phase(PHASE_A|PHASE_B)) // delta AB
-				{
-					throw "delta split tap is not supported yet";
-				}
-				else if (has_phase(PHASE_B|PHASE_C)) // delta AB
-				{
-					throw "delta split tap is not supported yet";
-				}
-				else if (has_phase(PHASE_A|PHASE_C)) // delta AB
-				{
-					throw "delta split tap is not supported yet";
-				}
-				else if (has_phase(PHASE_A)) // wye-A
-				{
-					V_basehi = config->V_primary;
-					sa_base = config->phaseA_kVA_rating;
-					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
-					za_baselo = (V_base * V_base)/(sa_base*1000);
-					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					zt_b = complex(0,0);
-					zt_c = complex(0,0);
-					a_mat[0][0] = a_mat[1][0] = nt;
-				
-					d_mat[0][0] = complex(1,0)/nt;
-					d_mat[0][1] = complex(-1,0)/nt;
-
-					A_mat[0][0] = complex(1,0)/nt;
-					A_mat[1][0] = complex(1,0)/nt;
-				}
-
-				else if (has_phase(PHASE_B)) // wye-B
-				{
-					V_basehi = config->V_primary;
-					sa_base = config->phaseB_kVA_rating;
-					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
-					za_baselo = (V_base * V_base)/(sa_base*1000);
-					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					zt_b = complex(0,0);
-					zt_c = complex(0,0);
-					a_mat[0][1] = a_mat[1][1] = nt;
-				
-					d_mat[1][0] = complex(1,0)/nt;
-					d_mat[1][1] = complex(-1,0)/nt;
-
-					A_mat[0][1] = complex(1,0)/nt;
-					A_mat[1][1] = complex(1,0)/nt;
-				
-				}
-				else if (has_phase(PHASE_C)) // wye-C
-				{
-					V_basehi = config->V_primary;
-					sa_base = config->phaseC_kVA_rating;
-					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
-					za_baselo = (V_base * V_base)/(sa_base*1000);
-					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					zt_b = complex(0,0);
-					zt_c = complex(0,0);
-					a_mat[0][2] = a_mat[1][2] = nt;
-				
-					d_mat[2][0] = complex(1,0)/nt;
-					d_mat[2][1] = complex(-1,0)/nt;
-
-					A_mat[0][2] = complex(1,0)/nt;
-					A_mat[1][2] = complex(1,0)/nt;
-				}
-
-				Regulator_Link = 3;
-
-				//Phase A stuff - move when done
-				complex Izt0 = complex(1.0,0) / z0;
-				complex Izt1 = complex(1.0,0) / z1;
-
-				b_mat[0][0] = Izt0 + Izt1;
-				b_mat[1][0] = complex(-1.0,0) * (Izt0 + Izt1);
-
-				c_mat[0][0] = Izt1/Izt0;
-				c_mat[0][1] = Izt1/Izt0;
-
-
-				B_mat[0][0] = (z1) + (z0/(nt*nt)) / nt;
-				B_mat[0][1] = complex(-1,0) * (z0/(nt*nt)) / nt;
-				B_mat[1][0] = (z0/(nt*nt)) / nt;
-				B_mat[1][1] = complex(-1,0) * ((z2) + (z0/(nt*nt))) /nt;
-
+				GL_THROW("Gauss-Seidel Implementation of Split-Phase is not complete");
 			}
 			else
 			{

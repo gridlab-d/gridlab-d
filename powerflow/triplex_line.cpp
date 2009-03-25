@@ -90,15 +90,35 @@ int triplex_line::init(OBJECT *parent)
 	zp13 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D13) + 7.93402);
 	zp23 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D23) + 7.93402);
 	
-	zs[0][0] = zp11-((zp13^2)/zp33);
-	zs[0][1] = zp12-((zp13*zp23)/zp33);
-	zs[1][0] = zp12-((zp13*zp23)/zp33);
-	zs[1][1] = zp22-((zp23*zp23)/zp33);
-	zs[0][2] = complex(0,0);
-	zs[1][2] = complex(0,0);
-	zs[2][2] = complex(0,0);
-	zs[2][1] = complex(0,0);
-	zs[2][0] = complex(0,0);
+	if (solver_method==SM_FBS)
+	{
+		zs[0][0] = zp11-((zp13^2)/zp33);
+		zs[0][1] = zp12-((zp13*zp23)/zp33);
+		zs[1][0] = zp12-((zp13*zp23)/zp33);
+		zs[1][1] = zp22-((zp23*zp23)/zp33);
+		zs[0][2] = complex(0,0);
+		zs[1][2] = complex(0,0);
+		zs[2][2] = complex(0,0);
+		zs[2][1] = complex(0,0);
+		zs[2][0] = complex(0,0);
+	}
+	else if (solver_method==SM_GS)
+	{
+		zs[0][0] = zp11;
+		zs[0][1] = zp12;
+		zs[0][2] = zp13;
+		zs[1][0] = zp12;
+		zs[1][1] = zp22;
+		zs[1][2] = zp23;
+		zs[2][0] = zp13;
+		zs[2][1] = zp23;
+		zs[2][2] = zp33;
+
+	}
+	else
+	{
+		throw "unsupported solver method";
+	}
 
 	a_mat[0][0] = complex(1,0);
 	a_mat[0][1] = complex(0,0);
