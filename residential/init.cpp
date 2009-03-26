@@ -12,7 +12,7 @@
 #include <math.h>
 #include "residential.h"
 
-#include "house.h"
+#include "house_a.h"
 #include "clotheswasher.h"
 #include "dishwasher.h"
 #include "lights.h"

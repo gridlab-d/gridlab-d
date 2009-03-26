@@ -81,7 +81,7 @@
 
 #include <gridlabd.h>
 
-#include "house.h"
+#include "house_a.h"
 #include "evcharger.h"
 
 /////////////////////////////////////////////////////////////////////

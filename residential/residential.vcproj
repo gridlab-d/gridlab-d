@@ -527,7 +527,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\residential\house.cpp"
+				RelativePath=".\house_a.cpp"
 				>
 			</File>
 			<File
@@ -601,7 +601,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\residential\house.h"
+				RelativePath=".\house_a.h"
 				>
 			</File>
 			<File

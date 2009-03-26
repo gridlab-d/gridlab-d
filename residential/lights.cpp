@@ -42,7 +42,7 @@
 #include <errno.h>
 #include <math.h>
 #include "lock.h"
-#include "house.h"
+#include "house_a.h"
 #include "lights.h"
 
 //////////////////////////////////////////////////////////////////////////

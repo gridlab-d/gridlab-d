@@ -1,6 +1,6 @@
 pkglib_LTLIBRARIES = libresidential.la
 libresidential_la_SOURCES = \
-	house.cpp house.h \
+	house_a.cpp house_a.h \
 	house_e.cpp house_e.h \
 	solvers.cpp solvers.h \
 	clotheswasher.cpp clotheswasher.h \

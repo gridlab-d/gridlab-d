@@ -10,7 +10,7 @@
 #ifndef _HOUSE_E_H
 #define _HOUSE_E_H
 
-#include "house.h"
+#include "house_a.h"
 #include "residential.h"
 
 #define LST_DIRECT		0x00 ///< shape is absolute direct shape - scalar is multiplier
