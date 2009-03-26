@@ -1,13 +1,13 @@
-/** $Id: house.cpp,v 1.71 2008/02/13 02:22:35 d3j168 Exp $
+/** $Id: house_e.cpp,v 1.71 2008/02/13 02:22:35 d3j168 Exp $
 	Copyright (C) 2008 Battelle Memorial Institute
-	@file house.cpp
-	@addtogroup house
+	@file house_e.cpp
+	@addtogroup house_e
 	@ingroup residential
 
-	The house object implements a single family home.  The house
+	The house_e object implements a single family home.  The house_e
 	only includes the heating/cooling system and the power panel.
 	All other end-uses must be explicitly defined and attached to the
-	panel using the house::attach() method.
+	panel using the house_e::attach() method.
 
 	Residential panels use a split secondary transformer:
 
@@ -23,55 +23,17 @@
 	in which they call attach. 240V objects are assigned to circuit 1-2
 
 	Circuit breakers will open on over-current with respect to the maximum current
-	given by load when house::attach() was called.  After a breaker opens, it is
+	given by load when house_e::attach() was called.  After a breaker opens, it is
 	reclosed within an average of 5 minutes (on an exponential distribution).  Each
 	time the breaker is reclosed, the breaker failure probability is increased.
 	The probability of failure is always 1/N where N is initially a large number (e.g., 100). 
 	N is progressively decremented until it reaches 1 and the probability of failure is 100%.
-	
-	The house model considers the following four major heat gains/losses that contribute to 
-	the building heating/cooling load:
-
-	1.  Conduction through exterior walls, roof and fenestration (based on envelope UA)
-
-	2.  Air infiltration (based on specified air change rate)
-
-	3.  Solar radiation (based on CLTD model and using tmy data)
-
-	4.  Internal gains from lighting, people, equipment and other end use objects.
-
-	The heating/cooling load is calculated as below:
-
-		 Q = U x A x \f$ CLTD_c \f$
-
-		where
-
-		Q = cooling load for roof, wall or fenestration (Btu/h)
-
-		U = overall heat transfer coefficient for roof, wall or fenestration  \f$ (Btu/h.ft^2.degF) \f$
-
-		A = area of wall, roof or fenestration \f$ (ft^2) \f$
-
-		\f$ CLTD_c  \f$ = corrected cooling load temperature difference (degF)
-
-
-		\f$ CLTD_c = CLTD + LM + (78 - T_{air}) + (T_{out} - 85) \f$
-
-		where
-
-		CLTD = temperature difference based on construction types (taken from ASHRAE Handbook)
-
-		LM = correction for latitude based on tables from ASHRAE Handbook
-
-		\f$ T_{air} \f$ = room air temperature (degF)
-
-		\f$ T_{out} \f$ = average outdoor air temperature on a design day (degF)
 
 	The Equivalent Thermal Parameter (ETP) approach is used to model the residential loads
 	and energy consumption.  Solving the ETP model simultaneously for T_{air} and T_{mass},
 	the heating/cooling loads can be obtained as a function of time.
 
-	In the current implementation, the HVAC equipment is defined as part of the house and
+	In the current implementation, the HVAC equipment is defined as part of the house_e and
 	attached to the electrical panel with a 50 amp/220-240V circuit.
 
 	@par Credits
@@ -115,29 +77,111 @@
 #include <errno.h>
 #include <math.h>
 #include "solvers.h"
-#include "house.h"
+#include "house_e.h"
 #include "lock.h"
 
 //////////////////////////////////////////////////////////////////////////
-// house CLASS FUNCTIONS
+// implicit loadshapes
 //////////////////////////////////////////////////////////////////////////
-CLASS* house::oclass = NULL;
-house *house::defaults = NULL;
+static LOADSHAPE default_loadshapes[] = {
 
-double house::warn_low_temp = 55;
-double house::warn_high_temp = 95;
-bool house::warn_control = true;
+	{"clotheswasher",
+		LST_SEASONAL|LST_WEEKDAY, // pulsed with different seasonal/weekday components
+		1.0, 0.0, // scalar (pu or kW) and event (kW)
+		0.8, 0.25, // magnitude (kW) and duration (h)
+		{	// winter weekday
+			0.0036,0.0024,0.0020,0.0019,0.0026,0.0040,0.0062,0.0118,0.0177,0.0211,0.0215,0.0203,0.0176,0.0155,0.0133,0.0130,0.0145,0.0159,0.0166,0.0164,0.0154,0.0149,0.0110,0.0065,
+			// winter weekend
+			0.0044,0.0030,0.0022,0.0020,0.0021,0.0021,0.0030,0.0067,0.0145,0.0244,0.0310,0.0323,0.0308,0.0285,0.0251,0.0224,0.0215,0.0203,0.0194,0.0188,0.0180,0.0151,0.0122,0.0073,
+			// summer weekday
+			0.0029,0.0019,0.0014,0.0013,0.0018,0.0026,0.0055,0.0126,0.0181,0.0208,0.0229,0.0216,0.0193,0.0170,0.0145,0.0135,0.0135,0.0142,0.0145,0.0148,0.0146,0.0141,0.0110,0.0062,
+			// summer weekend
+			0.0031,0.0019,0.0013,0.0012,0.0012,0.0016,0.0027,0.0066,0.0157,0.0220,0.0258,0.0251,0.0231,0.0217,0.0186,0.0157,0.0156,0.0151,0.0147,0.0150,0.0156,0.0148,0.0106,0.0065,
+		},
+		0.95, // power factor
+		0.0, 0.0, // current and impedance fractions
+		0.5, // heat fraction
+		20, false, // 20 amps, 110V
+		NULL // no linkage for defaults
+	},
+
+	{"dryer",
+		LST_WEEKDAY, // pulsed with different seasonal/weekday components
+		1.0, 0.0, // scalar (pu or kW) and event (kW)
+		4.5, 0.75, // magnitude (kW) and duration (h)
+		{	// weekday
+			0.034,0.0145,0.0085,0.0065,0.0075,0.0225,0.0625,0.1075,0.1325,0.1715,0.1945,0.1955,0.1765,0.1635,0.1465,0.1415,0.1465,0.1525,0.1495,0.1495,0.1605,0.1685,0.1385,0.079,
+			0.036,0.017,0.0106,0.0066,0.0066,0.0086,0.0186,0.0506,0.1106,0.1836,0.2446,0.2696,0.2686,0.2586,0.2376,0.2236,0.2156,0.2036,0.1906,0.1826,0.1806,0.1786,0.1436,0.086,
+		},
+		0.99, // power factor
+		0.0, 0.9, // current and impedance fractions
+		0.2, // heat fraction
+		30, true, // 30 amps, 220V
+		NULL // no linkage for defaults
+	},
+
+	{"dishwasher",
+		LST_WEEKDAY, // pulsed with different seasonal/weekday components
+		1.0, 0.0, // scalar (pu or kW) and event (kW)
+		4.5, 0.75, // magnitude (kW) and duration (h)
+		{	// weekday
+			0.0068,0.0029,0.0016,0.0013,0.0012,0.0037,0.0075,0.0129,0.0180,0.0177,0.0144,0.0113,0.0116,0.0128,0.0109,0.0105,0.0124,0.0156,0.0278,0.0343,0.0279,0.0234,0.0194,0.0131,
+			0.0093,0.0045,0.0021,0.0015,0.0013,0.0015,0.0026,0.0067,0.0142,0.0221,0.0259,0.0238,0.0214,0.0214,0.0188,0.0169,0.0156,0.0166,0.0249,0.0298,0.0267,0.0221,0.0174,0.0145,
+		},
+		0.99, // power factor
+		0.0, 0.5, // current and impedance fractions
+		0.2, // heat fraction
+		20, false, // 20 amps, 110V
+		NULL // no linkage for defaults
+	},
+
+	{"refrigerator",
+		LST_DIRECT, // absolute load, single shape
+		1.0, 0.0,
+		0.3, 0.0,
+			{	0.163,0.1605,0.1555,0.1515,0.1485,0.1525,0.1615,0.1655,0.1635,0.1645,0.1635,0.1645,0.1715,0.1715,0.1695,0.1725,0.1805,0.1945,0.2025,0.1965,0.1915,0.1885,0.1805,
+			},
+		0.97,// power factor
+		0.0, 0.5, // current and impedance fractions
+		0.5, // heat fraction
+		20, false, // 20 amps, 110V
+		NULL // no linkage for defaults
+	},
+
+	{"freezer",
+		LST_DIRECT, // absolute load, single shape
+		1.0, 0.0,
+		0.3, 0.0,
+			{	0.163,0.1605,0.1555,0.1515,0.1485,0.1525,0.1615,0.1655,0.1635,0.1645,0.1635,0.1645,0.1715,0.1715,0.1695,0.1725,0.1805,0.1945,0.2025,0.1965,0.1915,0.1885,0.1805,
+			},
+		0.97,// power factor
+		0.0, 0.5, // current and impedance fractions
+		0.5, // heat fraction
+		20, false, // 20 amps, 110V
+		NULL // no linkage for defaults
+	},
+};
+
+//////////////////////////////////////////////////////////////////////////
+// house_e CLASS FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
+CLASS* house_e::oclass = NULL;
+house_e *house_e::defaults = NULL;
+
+double house_e::warn_low_temp = 55;
+double house_e::warn_high_temp = 95;
+bool house_e::warn_control = true;
 
 /** House object constructor:  Registers the class and publishes the variables that can be set by the user. 
 Sets default randomized values for published variables.
 **/
-house::house(MODULE *mod) 
+house_e::house_e(MODULE *mod) 
 {
 	// first time init
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"house",sizeof(house),PC_PRETOPDOWN|PC_BOTTOMUP);
+		oclass = gl_register_class(mod,"house_e",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
@@ -154,8 +198,6 @@ house::house(MODULE *mod)
 			PT_double,"internal_gain[Btu/h]",PADDR(tload.heatgain),
 			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),
 			PT_double,"heat_cool_gain[Btu/h]",PADDR(load.heatgain),
-			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),
-			PT_double,"heat_cool_gain[Btu/h]",PADDR(hvac_rated_capacity),
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),
 			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),
 			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),
@@ -170,13 +212,6 @@ house::house(MODULE *mod)
 			PT_double,"cooling_COP",PADDR(cooling_COP),
 			PT_double,"COP_coeff",PADDR(COP_coeff),
 			PT_double,"air_temperature[degF]",PADDR(Tair),
-<<<<<<< .mine
-			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),
-			PT_double,"mass_heat_coeff[Btu/degF]",PADDR(house_content_heat_transfer_coeff),
-			PT_enumeration,"heat_mode",PADDR(heat_mode),
-				PT_KEYWORD,"ELECTRIC",ELECTRIC,
-				PT_KEYWORD,"GASHEAT",GASHEAT,
-=======
 			PT_double,"mass_heat_capacity[Btu/F]",PADDR(house_content_thermal_mass),
 			PT_double,"mass_heat_coeff[Btu/F.h]",PADDR(house_content_heat_transfer_coeff),
 			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),
@@ -184,11 +219,6 @@ house::house(MODULE *mod)
 				PT_KEYWORD,"UNKNOWN",HT_UNKNOWN,
 				PT_KEYWORD,"ELECTRIC",HT_ELECTRIC,
 				PT_KEYWORD,"GASHEAT",HT_GASHEAT,
->>>>>>> .r72
-			PT_enumeration,"hc_mode",PADDR(heat_cool_mode),
-				PT_KEYWORD, "OFF", OFF,
-				PT_KEYWORD, "HEAT", HEAT,
-				PT_KEYWORD, "COOL", COOL,
 			PT_complex,"total_load[kW]",PADDR(tload.total),
 			PT_complex,"enduse_load[kW]",PADDR(load.total),
 			PT_complex,"power[kW]",PADDR(load.power),
@@ -204,28 +234,30 @@ house::house(MODULE *mod)
 			PT_double, "Rwall[degF.h/Btu]", PADDR(Rwall),
 			PT_double, "Rfloor[degF.h/Btu]", PADDR(Rfloor),
 			PT_double, "Rwindows[degF.h/Btu]", PADDR(Rwindows),
+			PT_char256, "implicit_enduses", PADDR(implicit_enduses),
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// deafults set during class creation
 		defaults = this;
-		memset(this,0,sizeof(house));
+		memset(this,0,sizeof(house_e));
+		strcpy(implicit_enduses,"clotheswasher,dishwasher,dryer,freezer,light,microwave,occupants,plugs,refrigerator,waterheater");
 	}	
 }
 
-int house::create() 
+int house_e::create() 
 {
 	// copy the defaults
-	memcpy(this,defaults,sizeof(house));
+	memcpy(this,defaults,sizeof(house_e));
 
 	return 1;
 }
 
-/** Checks for climate object and maps the climate variables to the house object variables.  
+/** Checks for climate object and maps the climate variables to the house_e object variables.  
 Currently Tout, RHout and solar flux data from TMY files are used.  If no climate object is linked,
 then Tout will be set to 59 degF, RHout is set to 75% and solar flux will be set to zero for all orientations.
 **/
-int house::init_climate()
+int house_e::init_climate()
 {
 	OBJECT *hdr = OBJECTHDR(this);
 
@@ -238,7 +270,7 @@ int house::init_climate()
 		if (climates==NULL)
 		{
 			not_found = 1;
-			gl_warning("house: no climate data found, using static data");
+			gl_warning("house_e: no climate data found, using static data");
 
 			//default to mock data
 			static double tout=74.0, rhout=0.75, solar[8] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -248,7 +280,7 @@ int house::init_climate()
 		}
 		else if (climates->hit_count>1)
 		{
-			gl_warning("house: %d climates found, using first one defined", climates->hit_count);
+			gl_warning("house_e: %d climates found, using first one defined", climates->hit_count);
 		}
 	}
 	if (climates!=NULL)
@@ -290,11 +322,11 @@ int house::init_climate()
 	return 1;
 }
 
-/** Map circuit variables to meter.  Initalize house and HVAC model properties,
+/** Map circuit variables to meter.  Initalize house_e and HVAC model properties,
 and internal gain variables.
 **/
 
-int house::init(OBJECT *parent)
+int house_e::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
@@ -321,13 +353,13 @@ int house::init(OBJECT *parent)
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 		{
 			if ((*(map[i].var) = get_complex(parent,map[i].varname))==NULL)
-				GL_THROW("%s (%s:%d) does not implement triplex_meter variable %s for %s (house:%d)", 
+				GL_THROW("%s (%s:%d) does not implement triplex_meter variable %s for %s (house_e:%d)", 
 					parent->name?parent->name:"unnamed object", parent->oclass->name, parent->id, map[i].varname, obj->name?obj->name:"unnamed", obj->id);
 		}
 	}
 	else
 	{
-		gl_warning("house:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
+		gl_warning("house_e:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
 
 		// attach meter variables to each circuit in the default_meter
 		*(map[0].var) = &default_line_voltage[0];
@@ -376,8 +408,8 @@ int house::init(OBJECT *parent)
     air_density = 0.0735;			// density of air [lb/cf]
 	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
 
-	if (house_content_thermal_mass==0) house_content_thermal_mass = gl_random_triangle(4,6)*floor_area;		// thermal mass of house [BTU/F]
-    if (house_content_heat_transfer_coeff==0) house_content_heat_transfer_coeff = gl_random_uniform(0.5,1.0)*floor_area;	// heat transfer coefficient of house contents [BTU/hr.F]
+	if (house_content_thermal_mass==0) house_content_thermal_mass = gl_random_triangle(4,6)*floor_area;		// thermal mass of house_e [BTU/F]
+    if (house_content_heat_transfer_coeff==0) house_content_heat_transfer_coeff = gl_random_uniform(0.5,1.0)*floor_area;	// heat transfer coefficient of house_e contents [BTU/hr.F]
 
 	if (heat_cool_mode==HC_OFF)
 		Tair = gl_random_uniform(heating_setpoint,cooling_setpoint);
@@ -386,25 +418,27 @@ int house::init(OBJECT *parent)
 	else if (heat_cool_mode==HC_COOL)
 		Tair = gl_random_uniform(cooling_setpoint-thermostat_deadband/2,cooling_setpoint+thermostat_deadband/2);
 
-	//house properties for HVAC
+	//house_e properties for HVAC
 	volume = ceiling_height*floor_area;									// volume of air [cf]
 	air_mass = air_density*volume;							// mass of air [lb]
 	air_thermal_mass = air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]
 	Tmaterials = Tair;										// material temperture [F]
 
+	// connect any implicit loads
+	attach_implicit_enduses();
 	update_hvac();
 	update_model();
 
-	// attach the house HVAC to the panel
-	attach(OBJECTHDR(this),50, TRUE);
-	
+	// attach the house_e HVAC to the panel
+	attach(OBJECTHDR(this),50, true);
+
 	return 1;
 }
 
-/** The PLC control code for house thermostat.  The heat or cool mode is based
-	on the house air temperature, thermostat setpoints and deadband.
+/** The PLC control code for house_e thermostat.  The heat or cool mode is based
+	on the house_e air temperature, thermostat setpoints and deadband.
 **/
-TIMESTAMP house::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
+TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 {
 	double tdead = thermostat_deadband/2;
 	double terr = dTair/3600; // this is the time-error of 1 second uncertainty
@@ -416,7 +450,7 @@ TIMESTAMP house::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	// check for deadband overlap
 	if (TcoolOff<TheatOff)
 	{
-		gl_error("house: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", TcoolOff,TheatOff);
+		gl_error("house_e: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", TcoolOff,TheatOff);
 		return TS_INVALID;
 	}
 
@@ -443,7 +477,7 @@ TIMESTAMP house::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 
 /**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time
 **/
-TIMESTAMP house::presync(TIMESTAMP t0, TIMESTAMP t1) 
+TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
 
@@ -484,14 +518,16 @@ TIMESTAMP house::presync(TIMESTAMP t0, TIMESTAMP t1)
 Also synchronizes the voltages and current in the panel with the meter.
 **/
 
-TIMESTAMP house::sync(TIMESTAMP t0, TIMESTAMP t1)
+TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t2 = TS_NEVER;
+	TIMESTAMP te = TS_NEVER;
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
 
 	if (t0==0 || t1>t0)
 	{
+		te = sync_enduses(t0,t1);
 		update_hvac(dt1);
 		update_model(dt1);
 		check_controls();
@@ -515,17 +551,53 @@ TIMESTAMP house::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (panel_time < t2)
 		t2 = panel_time;
 
-	return t2;
+	return (te!=TS_NEVER&&te<t2)?(t2<TS_NEVER?te:-te):t2;
 	
 }
 
-/// Attaches an end-use object to a house panel
+void house_e::attach_implicit_enduses(char *enduses)
+{
+	char list[256], *next=NULL;
+	strcpy(list,enduses?enduses:implicit_enduses);
+	if (strcmp(list,"none")==0)
+		return;
+	while ((next=strtok(next?NULL:list,",; \t\n"))!=NULL)
+	{
+		LOADSHAPE *shape = NULL;
+		int i;
+		for (i=0; i<sizeof(default_loadshapes)/sizeof(default_loadshapes[0]); i++)
+		{
+			if (strcmp(default_loadshapes[i].name,next)==0)
+			{
+				shape = default_loadshapes+i;
+				break;
+			}
+		}
+		if (shape==NULL)
+			gl_warning("implicit enduse '%s' is not defined in the default loadshapes", next);
+		else
+		{
+			LOADSHAPE *ls = new LOADSHAPE;
+			if (ls==NULL)
+				throw "house_e::attach_implicity_enduses(char *enduses): memory allocation failure";
+			memcpy(ls,shape,sizeof(LOADSHAPE));
+			memset(&(ls->load),0,sizeof(ENDUSELOAD));
+			ls->next = implicit_loads;
+			implicit_loads = ls;
+			attach(NULL,ls->breaker_amps,ls->is220,&(ls->load));
+		}
+	}
+	return;
+}
+
+/// Attaches an end-use object to a house_e panel
 /// The attach() method automatically assigns an end-use load
 /// to the first appropriate available circuit.
 /// @return pointer to the voltage on the assigned circuit
-CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
+CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 					   double breaker_amps, ///< breaker capacity (in Amps)
-					   int is220) ///< 0 for 120V, 1 for 240V load
+					   int is220, ///< 0 for 120V, 1 for 240V load
+					   ENDUSELOAD *pLoad) ///< reference to load structure
 {
 	// construct and id the new circuit
 	CIRCUIT *c = new CIRCUIT;
@@ -543,7 +615,10 @@ CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
 	c->max_amps = breaker_amps;
 
 	// get address of load values (if any)
-	c->pLoad = (ENDUSELOAD*)gl_get_addr(obj,"enduse_load");
+	if (pLoad)
+		c->pLoad = pLoad;
+	else 
+		c->pLoad = (ENDUSELOAD*)gl_get_addr(obj,"enduse_load");
 	if (c->pLoad==NULL){
 		GL_THROW("end-use load %s couldn't be connected because it does not publish ENDUSELOAD structure", c->enduse->name);
 	}
@@ -578,7 +653,7 @@ CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
 	return c;
 }
 
-TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
+TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP sync_time = TS_NEVER;
 	OBJECT *obj = OBJECTHDR(this);
@@ -604,7 +679,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			c->status = BRK_CLOSED;
 			c->reclose = TS_NEVER;
 			sync_time = t1; // must immediately reevaluate devices affected
-			gl_debug("house:%d panel breaker %d closed", obj->id, c->id);
+			gl_debug("house_e:%d panel breaker %d closed", obj->id, c->id);
 		}
 
 		// if breaker is closed
@@ -613,7 +688,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// compute circuit current
 			if ((c->pV)->Mag() == 0)
 			{
-				gl_debug("house:%d circuit %d (%s:%d) voltage is zero", obj->id, c->id, c->enduse->oclass->name, c->enduse->id);
+				gl_debug("house_e:%d circuit %d (%s:%d) voltage is zero", obj->id, c->id, c->enduse->oclass->name, c->enduse->id);
 				break;
 			}
 			
@@ -630,7 +705,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 					// average five minutes before reclosing, exponentially distributed
 					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(1/300.0)*TS_SECOND); 
-					gl_debug("house:%d circuit breaker %d tripped - %s (%s:%d) overload at %.0f A", obj->id, c->id,
+					gl_debug("house_e:%d circuit breaker %d tripped - %s (%s:%d) overload at %.0f A", obj->id, c->id,
 						c->enduse->name?c->enduse->name:"unnamed object", c->enduse->oclass->name, c->enduse->id, current.Mag());
 				}
 
@@ -639,7 +714,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					c->status = BRK_FAULT;
 					c->reclose = TS_NEVER;
-					gl_debug("house:%d circuit breaker %d failed", obj->id, c->id);
+					gl_debug("house_e:%d circuit breaker %d failed", obj->id, c->id);
 				}
 
 				// must immediately reevaluate everything
@@ -678,7 +753,105 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	return sync_time;
 }
 
-void house::update_model(double dt)
+TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
+{
+	double duration = (double)(3600-t1%3600)/3600.0;
+	double dt = (double)(t1-t0)/3600;
+	TIMESTAMP t2 = t1 + 3600 - t1%3600;
+	OBJECT *obj = OBJECTHDR(this);
+	DATETIME t;
+	gl_localtime(obj->clock,&t);
+	int season = (t.month<5 || t.month>10) ? LS_WINTER : LS_SUMMER;
+	int daytype = (t.weekday<1 || t.weekday>5) ? LS_WEEKEND : LS_WEEKDAY;
+	int quad = season*2 + daytype;
+	int hour = t.hour;
+	LOADSHAPE *ls;
+	for (ls=implicit_loads; ls!=NULL; ls=ls->next)
+	{
+		/* shut off load */
+		if (ls->stopat>0 && ls->stopat<=t1)
+		{
+			ls->stopat = 0;
+			ls->value = 0;
+		}
+		else if (ls->stopat>t1 && ls->stopat<TS_NEVER)
+		{
+			// keep load on
+		}
+
+		/* possible new load */
+		else if (dt>0)
+		{
+			// get the value based on which shape is current
+			double value=0;
+
+			// get the time until which this load is active
+			TIMESTAMP stopat = t1 + (TIMESTAMP)(duration*3600);
+
+			register int type = ls->type;
+			if (type&(LST_SEASONAL|LST_WEEKDAY))
+				value = ls->shape[quad][hour];
+			else if (type&LST_SEASONAL)
+				value = ls->shape[season][hour];
+			else if (type&LST_WEEKDAY)
+				value = ls->shape[daytype][hour];
+			else
+				value = ls->shape[0][hour];
+
+			// implement queue
+			if (ls->event>0)
+			{
+				ls->queue += value*dt; // fraction of value to posted by now
+				double action = ls->queue - ls->event;
+				if (action>0 && gl_random_bernoulli(action))
+					value = ls->event;
+				else
+					value = 0;
+			}
+
+			// pulse width modulated load
+			if (ls->magnitude>0)
+			{
+				if (gl_random_bernoulli(value/ls->magnitude*dt))
+				{
+					double trun;
+					if (ls->duration==0)
+						trun = value *ls->scalar / ls->magnitude;
+					else
+						trun = ls->duration;
+					value = ls->magnitude * trun;
+					stopat = t1 + (TIMESTAMP)(trun*3600);
+				}
+				else
+				{
+					value = 0;
+					stopat = 0;
+				}
+			}
+
+			// apply scaling factor
+			else if (type&LST_NORMAL) 
+				value *= ls->scalar;
+
+			// apply floor_area factor
+			if (type&LST_RELATIVE) 
+				value *= floor_area;
+
+			// else amplitude modulated load
+			ls->value = value;
+			ls->stopat = stopat;
+		}
+
+		ls->load.heatgain = ls->value * 3412 * ls->heat_fraction;
+		ls->load.total.SetPowerFactor(ls->value,ls->power_factor);
+		ls->load.admittance = ls->load.total * ls->impedance_fraction;
+		ls->load.current = ls->load.total *ls->current_fraction;
+		ls->load.power = ls->load.total * (1-ls->impedance_fraction-ls->current_fraction);
+	}
+	return t2;
+}
+
+void house_e::update_model(double dt)
 {
 		/* local aliases */
 	const double &Tout = (*(pTout));
@@ -764,7 +937,7 @@ a dual decay solver to obtain the time for next state change based on the thermo
 This synchronization function updates the HVAC equipment load and power draw.
 **/
 
-void house::update_hvac(double dt)
+void house_e::update_hvac(double dt)
 {
 	// compute hvac performance
 	const double heating_cop_adj = (-0.0063*(*pTout)+1.5984);
@@ -795,7 +968,7 @@ void house::update_hvac(double dt)
 	load.heatgain = hvac_rated_capacity;
 }
 
-void house::check_controls(void)
+void house_e::check_controls(void)
 {
 	if (warn_control)
 	{
@@ -806,7 +979,7 @@ void house::check_controls(void)
 			DATETIME dt0;
 			gl_localtime(obj->clock,&dt0);
 			char ts0[64];
-			gl_warning("house:%d (%s) air temperature excursion (%.1f degF) at %s", 
+			gl_warning("house_e:%d (%s) air temperature excursion (%.1f degF) at %s", 
 				obj->id, obj->name?obj->name:"anonymous", Tair, gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");
 		}
 
@@ -817,7 +990,7 @@ void house::check_controls(void)
 			DATETIME dt0;
 			gl_localtime(obj->clock,&dt0);
 			char ts0[64];
-			gl_warning("house:%d (%s) mass temperature excursion (%.1f degF) at %s", 
+			gl_warning("house_e:%d (%s) mass temperature excursion (%.1f degF) at %s", 
 				obj->id, obj->name?obj->name:"anonymous", Tmaterials, gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");
 		}
 
@@ -828,7 +1001,7 @@ void house::check_controls(void)
 			DATETIME dt0;
 			gl_localtime(obj->clock,&dt0);
 			char ts0[64];
-			gl_warning("house:%d (%s) heating equipement undersized at %s", 
+			gl_warning("house_e:%d (%s) heating equipement undersized at %s", 
 				obj->id, obj->name?obj->name:"anonymous", gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");
 		}
 
@@ -839,13 +1012,13 @@ void house::check_controls(void)
 			DATETIME dt0;
 			gl_localtime(obj->clock,&dt0);
 			char ts0[64];
-			gl_warning("house:%d (%s) cooling equipement undersized at %s", 
+			gl_warning("house_e:%d (%s) cooling equipement undersized at %s", 
 				obj->id, obj->name?obj->name:"anonymous", gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");
 		}
 	}
 }
 
-complex *house::get_complex(OBJECT *obj, char *name)
+complex *house_e::get_complex(OBJECT *obj, char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==NULL || p->ptype!=PT_complex)
@@ -857,12 +1030,12 @@ complex *house::get_complex(OBJECT *obj, char *name)
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int create_house(OBJECT **obj, OBJECT *parent)
+EXPORT int create_house_e(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(house::oclass);
+	*obj = gl_create_object(house_e::oclass);
 	if (*obj!=NULL)
 	{
-		house *my = OBJECTDATA(*obj,house);;
+		house_e *my = OBJECTDATA(*obj,house_e);;
 		gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
@@ -870,16 +1043,23 @@ EXPORT int create_house(OBJECT **obj, OBJECT *parent)
 	return 0;
 }
 
-EXPORT int init_house(OBJECT *obj)
+EXPORT int init_house_e(OBJECT *obj)
 {
-	house *my = OBJECTDATA(obj,house);
-	my->init_climate();
-	return my->init(obj->parent);
+	try {
+		house_e *my = OBJECTDATA(obj,house_e);
+		my->init_climate();
+		return my->init(obj->parent);
+	}
+	catch (char *msg)
+	{
+		gl_error("house_e:%d (%s) %s", obj->id, obj->name?obj->name:"anonymous", msg);
+		return 0;
+	}
 }
 
-EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+EXPORT TIMESTAMP sync_house_e(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	house *my = OBJECTDATA(obj,house);
+	house_e *my = OBJECTDATA(obj,house_e);
 	TIMESTAMP t1 = TS_NEVER;
 	if (obj->clock <= ROUNDOFF)
 		obj->clock = t0;  //set the object clock if it has not been set yet
@@ -897,30 +1077,30 @@ EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				break;
 
 			default:
-				gl_error("house::sync- invalid pass configuration");
+				gl_error("house_e::sync- invalid pass configuration");
 				t1 = TS_INVALID; // serious error in exec.c
 		}
 	} 
 	catch (char *msg)
 	{
-		gl_error("house::sync exception caught: %s", msg);
+		gl_error("house_e::sync exception caught: %s", msg);
 		t1 = TS_INVALID;
 	}
 	catch (...)
 	{
-		gl_error("house::sync exception caught: no info");
+		gl_error("house_e::sync exception caught: no info");
 		t1 = TS_INVALID;
 	}
 	return t1;
 }
 
-EXPORT TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP plc_house_e(OBJECT *obj, TIMESTAMP t0)
 {
 	// this will be disabled if a PLC object is attached to the waterheater
 	if (obj->clock <= ROUNDOFF)
 		obj->clock = t0;  //set the clock if it has not been set yet
 
-	house *my = OBJECTDATA(obj,house);
+	house_e *my = OBJECTDATA(obj,house_e);
 	return my->sync_thermostat(obj->clock, t0);
 }
 
