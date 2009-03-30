@@ -115,12 +115,12 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 	set trip = (f->is_contact_any() || t->is_contact_any());
 
 	/* perform switch_object operation if any line contact has occurred */
-	if (status==RS_CLOSED && trip)
+	if (status==LS_CLOSED && trip)
 	{
-		status = RS_OPEN;
+		status = LS_OPEN;
 		t1 = TS_NEVER;
 	}
-	else if (status==RS_OPEN)
+	else if (status==LS_OPEN)
 	{
 		if (trip)
 		{

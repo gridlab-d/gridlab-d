@@ -88,7 +88,7 @@ int metrics::init(OBJECT *parent)
 	}
 	char buffer[1024];
 	fprintf(fp,"Reliability report for %s\n", gl_global_getvar("modelname",buffer,sizeof(buffer)));
-	customers = gl_find_objects(FL_GROUP,"class=meter");
+	customers = gl_find_objects(FL_GROUP,("class=triplex_meter"));
 	interrupted = gl_find_objects(FL_NEW,NULL);
 	fprintf(fp,"Number of customers: %d\n", customers->hit_count);
 	first_year = true;
@@ -204,7 +204,7 @@ OBJECT *metrics::start_event(EVENT *pEvent,			/**< a pointer to the EVENT struct
 			{
 				fprintf(fp, "\nEVENT LOG FOR YEAR %d\n", dt.year);
 				fprintf(fp, "=======================\n");
-				fprintf(fp,"Event\tDateTime\tAffects\tProperties\tValues\tT_interrupted\tL_interrupted\tN_interrupted\n");
+				fprintf(fp,"Event\tDateTime\t\tAffects\tProperties\tValues\tT_interrupted\tL_interrupted\tN_interrupted\n");
 			}
 			fprintf(fp,"%d\t", totals.Nevents);
 			gl_strtime(&dt,buffer,sizeof(buffer));
@@ -253,7 +253,7 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 		gl_verbose("old values = '%s'",old_values);
 
 		FINDLIST *candidates = gl_findlist_copy(customers);
-		FINDLIST *unserved = gl_find_objects(candidates,FT_PROPERTY,"condition",NOT,SAME,"NORMAL",NULL);
+		FINDLIST *unserved = gl_find_objects(candidates,FT_PROPERTY,"condition",NOT,SAME,"OC_NORMAL",NULL);
 		if (report_event_log)
 			fprintf(fp,"%8d\n", unserved->hit_count);
 

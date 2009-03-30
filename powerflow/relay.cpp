@@ -83,16 +83,16 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 	set trip = (f->is_contact_any() || t->is_contact_any());
 
 	/* perform relay operation if any line contact has occurred */
-	if (status==RS_CLOSED && trip)
+	if (status==LS_CLOSED && trip)
 	{
-		status = RS_OPEN;
+		status = LS_OPEN;
 
 		/* schedule recloser operation */
 		t1 = t0+(TIMESTAMP)(recloser_delay*TS_SECOND);
 	}
 
 	/* recloser time has arrived */
-	else if (status==RS_OPEN && t0>=reclose_time)
+	else if (status==LS_OPEN && t0>=reclose_time)
 	{
 		/* still have contact */
 		if (trip)
@@ -111,7 +111,7 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 			}
 		}
 		else
-			status = RS_CLOSED;
+			status = LS_CLOSED;
 	}
 #endif
 

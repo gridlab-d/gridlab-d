@@ -776,10 +776,10 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 #ifdef SUPPORT_OUTAGES
 	else if (is_open_any())
 	{
-		/* compute for consequences of open link conditions */
-		if (has_phase(PHASE_A))	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = is_open(PHASE_A) ? 0.0 : 1.0;
-		if (has_phase(PHASE_B))	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = is_open(PHASE_B) ? 0.0 : 1.0;
-		if (has_phase(PHASE_C))	a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = is_open(PHASE_C) ? 0.0 : 1.0;
+		/* compute for consequences of open link conditions -- Only supports 3-phase fault at the moment */
+		if (has_phase(PHASE_A))	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = is_open() ? 0.0 : 1.0;
+		if (has_phase(PHASE_B))	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = is_open() ? 0.0 : 1.0;
+		if (has_phase(PHASE_C))	a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = is_open() ? 0.0 : 1.0;
 	}
 	else if (is_contact_any())
 		throw "unable to handle link contact condition";
@@ -792,6 +792,7 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 
 TIMESTAMP link::postsync(TIMESTAMP t0)
 {
+	TIMESTAMP TRET=TS_NEVER;
 	if ((!is_open()) && (solver_method==SM_FBS))
 	{
 		node *f;
@@ -845,7 +846,7 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 			if ((t->busflags&NF_HASSOURCE)!=of)
 
 				/* force the solver to make another pass */
-				t1 = t0;
+				TRET = t0;
 		}
 #endif
 
@@ -954,7 +955,7 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		equalm(fnode->Ys,tnode->Ys);
 	}
 
-	return TS_NEVER;
+	return TRET;
 }
 
 int link::kmldump(FILE *fp)

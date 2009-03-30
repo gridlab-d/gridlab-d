@@ -441,21 +441,21 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	{
 		/* phase-phase contact */
 		if (is_contact(PHASE_A|PHASE_B|PHASE_C))
-			voltage_A = voltage_B = voltage_C = (voltage_A + voltage_B + voltage_C)/3;
+			voltageA = voltageB = voltageC = (voltageA + voltageB + voltageC)/3;
 		else if (is_contact(PHASE_A|PHASE_B))
-			voltage_A = voltage_B = (voltage_A + voltage_B)/2;
+			voltageA = voltageB = (voltageA + voltageB)/2;
 		else if (is_contact(PHASE_B|PHASE_C))
-			voltage_B = voltage_C = (voltage_B + voltage_C)/2;
+			voltageB = voltageC = (voltageB + voltageC)/2;
 		else if (is_contact(PHASE_A|PHASE_C))
-			voltage_A = voltage_C = (voltage_A + voltage_C)/2;
+			voltageA = voltageC = (voltageA + voltageC)/2;
 
 		/* phase-neutral/ground contact */
 		if (is_contact(PHASE_A|PHASE_N) || is_contact(PHASE_A|GROUND))
-			voltage_A /= 2;
+			voltageA /= 2;
 		if (is_contact(PHASE_B|PHASE_N) || is_contact(PHASE_B|GROUND))
-			voltage_B /= 2;
+			voltageB /= 2;
 		if (is_contact(PHASE_C|PHASE_N) || is_contact(PHASE_C|GROUND))
-			voltage_C /= 2;
+			voltageC /= 2;
 	}
 #endif
 
@@ -936,32 +936,32 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 #ifdef SUPPORT_OUTAGES
 	if (is_contact_any())
 	{
-		complex dVAB = voltage_A - voltage_B;
-		complex dVBC = voltage_B - voltage_C;
-		complex dVCA = voltage_C - voltage_A;
+		complex dVAB = voltageA - voltageB;
+		complex dVBC = voltageB - voltageC;
+		complex dVCA = voltageC - voltageA;
 
 		/* phase-phase contact */
 		if (is_contact(PHASE_A|PHASE_B|PHASE_C))
 			/** @todo calculate three-way contact fault current */
 			throw "three-way contact not supported yet";
 		else if (is_contact(PHASE_A|PHASE_B))
-			phaseA_I_in = - phaseB_I_in = dVAB/fault_Z;
+			current_inj[0] = - current_inj[1] = dVAB/fault_Z;
 		else if (is_contact(PHASE_B|PHASE_C))
-			phaseB_I_in = - phaseC_I_in = dVBC/fault_Z;
+			current_inj[1] = - current_inj[2] = dVBC/fault_Z;
 		else if (is_contact(PHASE_A|PHASE_C))
-			phaseC_I_in = - phaseA_I_in = dVCA/fault_Z;
+			current_inj[2] = - current_inj[0] = dVCA/fault_Z;
 
 		/* phase-neutral/ground contact */
 		if (is_contact(PHASE_A|PHASE_N) || is_contact(PHASE_A|GROUND))
-			phaseA_I_in = voltage_A / fault_Z;
+			current_inj[0] = voltageA / fault_Z;
 		if (is_contact(PHASE_B|PHASE_N) || is_contact(PHASE_B|GROUND))
-			phaseB_I_in = voltage_B / fault_Z;
+			current_inj[1] = voltageB / fault_Z;
 		if (is_contact(PHASE_C|PHASE_N) || is_contact(PHASE_C|GROUND))
-			phaseC_I_in = voltage_C / fault_Z;
+			current_inj[2] = voltageC / fault_Z;
 	}
 
 	/* record the power in for posterity */
-	kva_in = (voltage_A*~phaseA_I_in + voltage_B*~phaseB_I_in + voltage_C*~phaseC_I_in)/1000;
+	//kva_in = (voltageA*~current[0] + voltageB*~current[1] + voltageC*~current[2])/1000; /*...or not.  Note sure how this works for a node*/
 
 #endif
 
