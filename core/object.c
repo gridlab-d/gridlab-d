@@ -834,8 +834,10 @@ int object_set_rank(OBJECT *obj, /**< the object to set */
 int object_set_parent(OBJECT *obj, /**< the object to set */
 					  OBJECT *parent) /**< the new parent of the object */
 {
-	if(obj == parent)
+	if(obj == parent){
+		output_error("object %s tried to set itself as its parent", object_name(obj));
 		return -1;
+	}
 	obj->parent = parent;
 	if (parent!=NULL)
 		return set_rank(parent,obj->rank,NULL);
