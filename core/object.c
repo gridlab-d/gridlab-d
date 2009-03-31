@@ -1532,6 +1532,10 @@ OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name)
 		object_tree_delete(obj,name);
 	if (name!=NULL)
 	{
+		if(object_find_name(name) != NULL){
+			output_error("An object named \"%s\" already exists!", name);
+			return NULL;
+		}
 		item = object_tree_add(obj,name);
 		if (item!=NULL)
 			obj->name = item->name;
