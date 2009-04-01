@@ -138,7 +138,11 @@ int node::create(void)
 
 int node::init(OBJECT *parent)
 {
-	if (solver_method==SM_GS)
+	if (solver_method==SM_NR)
+	{
+		throw "Newton-Raphson solution method is not yet supported";
+	}
+	else if (solver_method==SM_GS)
 	{
 		OBJECT *obj = OBJECTHDR(this);
 
@@ -354,7 +358,11 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t1 = powerflow_object::presync(t0); 
 
-	if (solver_method==SM_FBS)
+	if (solver_method==SM_NR)
+	{
+		throw "Newton-Raphson solution method is not yet supported";
+	}
+	else if (solver_method==SM_FBS)
 	{
 		/* reset the current accumulator */
 		current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
@@ -920,6 +928,8 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		}
 		break;
 		}
+	case SM_NR:
+		throw "Newton-Raphson solution method is not yet supported";
 	default:
 		throw "unsupported solver method";
 		break;
@@ -973,7 +983,11 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			voltage[0] = voltage[1] = voltage[2] = complex(0,0);
 	}
 
-	if (solver_method==SM_FBS)
+	if (solver_method==SM_NR)
+	{
+		throw "Newton-Raphson solution method is not yet supported";
+	}
+	else if (solver_method==SM_FBS)
 	{
 		// if the parent object is a node
 		if (obj->parent!=NULL && gl_object_isa(obj->parent,"node"))
@@ -1183,7 +1197,11 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			status=NOMINAL;
 	}
 #endif
-	if (solver_method==SM_FBS)
+	if (solver_method==SM_NR)
+	{
+		throw "Newton-Raphson solution method is not yet supported";
+	}
+	else if (solver_method==SM_FBS)
 	{
 		/* compute the sync voltage change */
 		double sync_V = (last_voltage[0]-voltage[0]).Mag() + (last_voltage[1]-voltage[1]).Mag() + (last_voltage[2]-voltage[2]).Mag();

@@ -27,7 +27,7 @@ void print_matrix(complex mat[3][3]);
 #define GETOBJECT(obj) ((OBJECT *) obj - 1)
 #define IMPORT_CLASS(name) extern CLASS *name##_class
 
-typedef enum {SM_FBS=0, SM_GS=1} SOLVERMETHOD;		/**< powerflow solver methodology */
+typedef enum {SM_FBS=0, SM_GS=1, SM_NR=2} SOLVERMETHOD;		/**< powerflow solver methodology */
 GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodology */
 GLOBAL bool GS_all_converged INIT(false);			/**< Gauss-Seidel convergence indicator (for post-convergence calculations */
 GLOBAL double acceleration_factor INIT(1.4);		/**< Acceleration factor for Gauss-Seidel to increase convergence speed */

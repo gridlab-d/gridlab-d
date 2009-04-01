@@ -134,7 +134,11 @@ int transformer::init(OBJECT *parent)
 
 				b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
 			}
-			else
+			else if (solver_method==SM_NR)
+			{
+				throw "Newton-Raphson solution method is not yet supported";
+			}
+			else 
 			{
 				GL_THROW("Unsupported solver method");
 			}
@@ -187,7 +191,11 @@ int transformer::init(OBJECT *parent)
 				B_mat[0][0] = B_mat[1][1] = zt;
 				B_mat[2][0] = B_mat[2][1] = -zt;
 			}
-			else
+			else if (solver_method==SM_NR)
+			{
+				throw "Newton-Raphson solution method is not yet supported";
+			}
+			else 
 			{
 				GL_THROW("Unsupported solver method");
 			}
@@ -296,7 +304,11 @@ int transformer::init(OBJECT *parent)
 					A_mat[0][1] = A_mat[1][2] = A_mat[2][0] = complex(-1.0) / nt;
 				}
 			}
-			else
+			else if (solver_method==SM_NR)
+			{
+				throw "Newton-Raphson solution method is not yet supported";
+			}
+			else 
 			{
 				GL_THROW("Unsupported solver method");
 			}
@@ -396,7 +408,11 @@ int transformer::init(OBJECT *parent)
 			{
 				GL_THROW("Gauss-Seidel Implementation of Split-Phase is not complete");
 			}
-			else
+			else if (solver_method==SM_NR)
+			{
+				throw "Newton-Raphson solution method is not yet supported";
+			}
+			else 
 			{
 				throw "Invalid solver type";
 			}

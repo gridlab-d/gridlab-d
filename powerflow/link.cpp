@@ -209,6 +209,8 @@ int link::init(OBJECT *parent)
 
 		break;
 		}
+	case SM_NR:
+		throw "Newton-Raphson solution method is not yet supported";
 	default:
 		throw "unsupported solver method";
 		break;
@@ -260,7 +262,11 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = powerflow_object::presync(t0); 
 
-	if ((solver_method==SM_GS) & (is_closed()) & (prev_LTime!=t0))	//Initial YVs calculations
+	if (solver_method==SM_NR)
+	{
+		throw "Newton-Raphson solution method is not yet supported";
+	}
+	else if ((solver_method==SM_GS) & (is_closed()) & (prev_LTime!=t0))	//Initial YVs calculations
 	{
 		node *fnode = OBJECTDATA(from,node);
 		node *tnode = OBJECTDATA(to,node);
@@ -739,7 +745,11 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 {
 	if (is_closed())
 	{
-		if (solver_method==SM_FBS)
+		if (solver_method==SM_NR)
+		{
+			throw "Newton-Raphson solution method is not yet supported";
+		}
+		else if (solver_method==SM_FBS)
 		{
 			node *f;
 			node *t;
@@ -793,7 +803,11 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 TIMESTAMP link::postsync(TIMESTAMP t0)
 {
 	TIMESTAMP TRET=TS_NEVER;
-	if ((!is_open()) && (solver_method==SM_FBS))
+	if (solver_method==SM_NR)
+	{
+		throw "Newton-Raphson solution method is not yet supported";
+	}
+	else if ((!is_open()) && (solver_method==SM_FBS))
 	{
 		node *f;
 		node *t;

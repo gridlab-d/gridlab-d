@@ -589,6 +589,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\solver_nr.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\powerflow\switch_object.cpp"
 				>
 			</File>
@@ -720,6 +724,10 @@
 			</File>
 			<File
 				RelativePath="..\powerflow\relay_test.h"
+				>
+			</File>
+			<File
+				RelativePath=".\solver_nr.h"
 				>
 			</File>
 			<File
