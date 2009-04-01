@@ -57,6 +57,7 @@ Name: samples; Description: Sample Models; Types: typical custom
 
 [Tasks]
 Name: environment; Description: Add GridLAB-D to &PATH environment variable; GroupDescription: Environment
+Name: overwriteglpath; Description: Create GLPATH, overwrite if exists (recommended); GroupDescription: Environment; Components: 
 Name: desktopicon; Description: Create a &desktop icon; GroupDescription: Additional icons:
 Name: desktopicon\common; Description: For all users; GroupDescription: Additional icons:; Flags: exclusive
 Name: desktopicon\user; Description: For the current user only; GroupDescription: Additional icons:; Flags: exclusive unchecked
@@ -125,8 +126,8 @@ Source: ..\..\..\core\rt\msvc_debugger.glm; DestDir: {app}\etc
 Source: ..\..\..\core\rt\gridlabd.syn; DestDir: {app}\etc
 
 [Registry]
-Root: HKCU; SubKey: Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples"; Flags: uninsdeletevalue; Check: not (IsAdminLoggedOn() or IsPowerUserLoggedOn()); AfterInstall: InstallEnvironment()
-Root: HKLM; SubKey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\etc;{app}\lib"; Flags: uninsdeletevalue; Check: IsAdminLoggedOn() or IsPowerUserLoggedOn(); AfterInstall: InstallEnvironment()
+Root: HKCU; SubKey: Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples"; Flags: uninsdeletevalue deletevalue; Check: not (IsAdminLoggedOn() or IsPowerUserLoggedOn()); AfterInstall: InstallEnvironment(); Tasks: overwriteglpath
+Root: HKLM; SubKey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\etc;{app}\lib"; Flags: uninsdeletevalue deletevalue; Check: IsAdminLoggedOn() or IsPowerUserLoggedOn(); AfterInstall: InstallEnvironment(); Tasks: overwriteglpath
 
 [Icons]
 Name: {group}\GridLAB-D Console; Filename: {cmd}; WorkingDir: {app}; Comment: Launch GridLAB-D Command Prompt
