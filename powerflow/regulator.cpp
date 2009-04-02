@@ -67,22 +67,31 @@ int regulator::init(OBJECT *parent)
 	node *pTo = OBJECTDATA(to, node);
 
 	// D_mat - 3x3 matrix, 'D' matrix
-	complex D_mat[3][3] = {{complex(1,0),complex(-1,0),complex(0,0)},
-	                       {complex(0,0), complex(1,0),complex(-1,0)},
-					       {complex(-1,0), complex(0,0), complex(1,0)}};   
-	complex W_mat[3][3] = {{complex(2,0),complex(1,0),complex(0,0)},
-	                       {complex(0,0),complex(2,0),complex(1,0)},
-	                       {complex(1,0),complex(0,0),complex(2,0)}};
-	multiply(1.0/3.0,W_mat,W_mat);
-	
-	complex volt[3] = {0.0, 0.0, 0.0};
-	double tapChangePer = pConfig->regulation / (double) pConfig->raise_taps;
-	double VtapChange = (pConfig->V_high / ((double) pConfig->PT_ratio * sqrt(3.0))) * tapChangePer;
-	double Vlow = pConfig->band_center - pConfig->band_width / 2.0;
-	double Vhigh = pConfig->band_center + pConfig->band_width / 2.0;
-	complex V2[3], Vcomp[3];
+	D_mat[0][0] = D_mat[1][1] = D_mat[2][2] = complex(1,0);
+	D_mat[0][1] = D_mat[2][0] = D_mat[1][2] = complex(-1,0);
+	D_mat[0][2] = D_mat[2][1] = D_mat[1][0] = complex(0,0);
 
-	for (int i = 0; i < 3; i++) 
+	//D_mat[3][3] = {{complex(1,0),complex(-1,0),complex(0,0)},
+	//               {complex(0,0), complex(1,0),complex(-1,0)},
+	//			   {complex(-1,0), complex(0,0), complex(1,0)}};   
+	
+	W_mat[0][0] = W_mat[1][1] = W_mat[2][2] = complex(2,0);
+	W_mat[0][1] = W_mat[2][0] = W_mat[1][2] = complex(1,0);
+	W_mat[0][2] = W_mat[2][1] = W_mat[1][0] = complex(0,0);
+	
+	multiply(1.0/3.0,W_mat,W_mat);
+	//W_mat[3][3] = {{complex(2,0),complex(1,0),complex(0,0)},
+	//               {complex(0,0),complex(2,0),complex(1,0)},
+	//               {complex(1,0),complex(0,0),complex(2,0)}};
+	
+	volt[0] = volt[1] = volt[2] = 0.0;
+
+	tapChangePer = pConfig->regulation / (double) pConfig->raise_taps;
+	Vlow = pConfig->band_center - pConfig->band_width / 2.0;
+	Vhigh = pConfig->band_center + pConfig->band_width / 2.0;
+	VtapChange = pConfig->band_center * tapChangePer;
+	
+		for (int i = 0; i < 3; i++) 
 	{
 		for (int j = 0; j < 3; j++) 
 		{
@@ -101,11 +110,16 @@ int regulator::init(OBJECT *parent)
 		volt[0] = volt[1] = volt[2] = 0.0;
 
 	for (int i = 0; i < 3; i++) 
-	{
-		V2[i] = volt[i] / ((double) pConfig->PT_ratio * sqrt(3.0));
-		complex tI = volt[i] / B_mat[i][i];
-		Vcomp[i] = V2[i] - (tI / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V, pConfig->ldc_X_V);
-		a_mat[i][i] = 1.0 - pConfig->tap_pos[i] * tapChangePer;
+	{	
+		tap[i] = pConfig->tap_pos[i];
+
+		if (pConfig->Type == pConfig->A)
+			a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);
+		else if (pConfig->Type == pConfig->B)
+			a_mat[i][i] = 1.0 - tap[i] * tapChangePer;
+		else
+			throw "invalid regulator type";
+
 	}
 
 	complex tmp_mat[3][3] = {{complex(1,0)/a_mat[0][0],complex(0,0),complex(0,0)},
@@ -142,8 +156,12 @@ int regulator::init(OBJECT *parent)
 			throw "unknown regulator connect type";
 			break;
 	}
+
 	return result;
 }
+
+
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: regulator
 //////////////////////////////////////////////////////////////////////////

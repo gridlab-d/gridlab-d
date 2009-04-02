@@ -50,8 +50,12 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 			PT_int16, "lower_taps",PADDR(lower_taps),
 			PT_double, "current_transducer_ratio[pu]",PADDR(CT_ratio),	
 			PT_double, "power_transducer_ratio[pu]",PADDR(PT_ratio),	
-			PT_double, "compensator_r_setting[V]",PADDR(ldc_R_V),	
-			PT_double, "compensator_x_setting[V]",PADDR(ldc_X_V),	
+			PT_double, "compensator_r_setting_A[V]",PADDR(ldc_R_V_A),
+			PT_double, "compensator_r_setting_B[V]",PADDR(ldc_R_V_B),
+			PT_double, "compensator_r_setting_C[V]",PADDR(ldc_R_V_C),
+			PT_double, "compensator_x_setting_A[V]",PADDR(ldc_X_V_A),
+			PT_double, "compensator_x_setting_B[V]",PADDR(ldc_X_V_B),
+			PT_double, "compensator_x_setting_C[V]",PADDR(ldc_X_V_C),
 			PT_set, "CT_phase",PADDR(CT_phase),
 				PT_KEYWORD, "A",PHASE_A,
 				PT_KEYWORD, "B",PHASE_B,
@@ -61,7 +65,12 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 				PT_KEYWORD, "B",PHASE_B,
 				PT_KEYWORD, "C",PHASE_C,
 			PT_double, "regulation",PADDR(regulation),	// what unit?
-			PT_double, "high_voltage[V]",PADDR(V_high),	
+			PT_enumeration, "Control",PADDR(Control),
+				PT_KEYWORD, "MANUAL", MANUAL,
+				PT_KEYWORD, "AUTO", AUTO,
+			PT_enumeration, "Type",PADDR(Type),
+				PT_KEYWORD, "A", A,
+				PT_KEYWORD, "B", B,
 			PT_int16, "tap_pos_A",PADDR(tap_posA),
 			PT_int16, "tap_pos_B",PADDR(tap_posB),
 			PT_int16, "tap_pos_C",PADDR(tap_posC),
@@ -89,12 +98,13 @@ int regulator_configuration::create(void)
 	lower_taps = 0;
 	CT_ratio = 0;
 	PT_ratio = 0;
-	ldc_R_V = 0.0;
-	ldc_X_V = 0.0;
+	ldc_R_V[0] = ldc_R_V[1] = ldc_R_V[2] = 0.0;
+	ldc_X_V[0] = ldc_X_V[1] = ldc_X_V[2] = 0.0;
 	CT_phase = PHASE_ABC;
 	PT_phase = PHASE_ABC;
+	Control = MANUAL;
+	Type = A;
 	regulation = 0.0;
-	V_high = 0.0;
 	tap_pos[0] = tap_pos[1] = tap_pos[2] = 0;
 	return result;
 }

@@ -11,6 +11,18 @@
 class regulator : public link
 {
 public:
+	double VtapChange;
+	double tapChangePer;
+	double Vlow;
+	double Vhigh;
+	complex V2[3], Vcomp[3];
+	int16 tap[3];
+	complex volt[3];
+	complex D_mat[3][3];
+	complex W_mat[3][3];
+	complex curr[3];
+
+public:
 	static CLASS *oclass;
 	static CLASS *pclass;
 	
@@ -20,6 +32,9 @@ public:
 	inline regulator(CLASS *cl=oclass):link(cl){};
 	int create(void);
 	int init(OBJECT *parent);
+	//TIMESTAMP presync(TIMESTAMP t0);
+	//TIMESTAMP sync(TIMESTAMP t0);
+	//TIMESTAMP postsync(TIMESTAMP t0);
 	int isa(char *classname);
 };
 

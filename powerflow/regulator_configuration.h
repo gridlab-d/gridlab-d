@@ -18,6 +18,17 @@ public:
 		CLOSED_DELTA,
 		CONNECT_TYPE_MAX
 	} connect_type;
+				
+	enum Contro1 {
+		MANUAL=1,
+		AUTO
+	} Control;
+
+	enum Type {
+		A = 1,
+		B
+	} Type;
+
 	/* get_name acquires the name of an object or 'unnamed' if non set */
 	inline const char *get_name(void) const { static char tmp[64]; OBJECT *obj=OBJECTHDR(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};
 	/* get_id acquires the object's id */
@@ -30,14 +41,19 @@ public:
 	int16 lower_taps;     // number of regulator lower taps
 	double CT_ratio;       // primary rating of current transformer (x:5)
 	double PT_ratio;       // potential transformer rating (x:1)
-	double ldc_R_V;       // Line Drop Compensation R setting of regulator control (in volts)
-	double ldc_X_V;       // Line Drop Compensation X setting of regulator control (in volts)
+	double ldc_R_V[3];       // Line Drop Compensation R setting of regulator control (in volts)
+	double ldc_X_V[3];       // Line Drop Compensation X setting of regulator control (in volts)
 	set CT_phase;		  // phase(s) monitored by CT
 	set PT_phase;		  // phase(s) monitored by PT
 	double regulation;    // regulation of voltage regulator in %
-	double V_high;
 	int16 tap_pos[3];
 
+	#define ldc_R_V_A ldc_R_V[0]	// R for each phase
+	#define ldc_R_V_B ldc_R_V[1]
+	#define ldc_R_V_C ldc_R_V[2]
+	#define ldc_X_V_A ldc_X_V[0]	// X for each phase
+	#define ldc_X_V_B ldc_X_V[1]
+	#define ldc_X_V_C ldc_X_V[2]
 	#define tap_posA tap_pos[0]		/// tap_pos of phase A
 	#define tap_posB tap_pos[1]		/// tap_pos of phase B
 	#define tap_posC tap_pos[2]		/// tap_pos of phase C
