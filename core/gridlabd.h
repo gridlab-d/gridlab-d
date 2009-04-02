@@ -381,8 +381,11 @@ inline CLASS *gl_find_classnum(OBJECTTYPE num){
  **/
 #ifdef __cplusplus
 inline bool gl_object_isa(OBJECT *obj, /**< object to test */
-						  char *type) /**< type to test */
-{ return (*callback->object_isa)(obj,type)!=0;}
+						  char *type,
+						  char *modname=NULL) /**< type to test */
+{	bool rv = (*callback->object_isa)(obj,type)!=0;
+	rv = modname ? obj->oclass->module == (*callback->module_find)(modname) : rv;
+	return rv;}
 #else
 #define gl_object_isa (*callback->object_isa)
 #endif
