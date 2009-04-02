@@ -12,10 +12,11 @@ typedef struct  {
 	complex *S[3];	///< constant power
 	complex *Z[3];	///< constant impedance
 	complex *I[3];	///< constant current
+	char *BusType;	///< bus type designation (PQ, PV, Swing/slack)
 } BUSDATA;
 
 typedef struct {
-	complex Y[3]; ///< branch admittance
+	complex *Y[3][3]; ///< branch admittance
 	int from; ///< index into bus data
 	int to; ///< index into bus data
 } BRANCHDATA;
