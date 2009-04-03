@@ -160,7 +160,7 @@ int node::init(OBJECT *parent)
 			gl_warning("Parent/child implementation marginally tested, use at your own risk!");
 
 			//See if it is a node/load/meter
-			if (!(gl_object_isa(obj->parent,"load") | gl_object_isa(obj->parent,"node") | gl_object_isa(obj->parent,"meter")))
+			if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow")))
 				throw("Parent is not a load or node!");
 
 			node *parNode = OBJECTDATA(obj->parent,node);
@@ -324,11 +324,11 @@ int node::init(OBJECT *parent)
 		}
 		if (voltage[1] == 0)
 		{
-			voltage[1].SetPolar(nominal_voltage,120.0);
+			voltage[1].SetPolar(nominal_voltage,-120.0);
 		}
 		if (voltage[2] == 0)
 		{
-			voltage[2].SetPolar(nominal_voltage,-120.0);
+			voltage[2].SetPolar(nominal_voltage,120.0);
 		}
 	}
 	else	//Not three phase - check for individual phases and zero them if they aren't already
@@ -468,7 +468,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 #endif
 
 		// if the parent object is another node
-		if (obj->parent!=NULL && gl_object_isa(obj->parent,"node"))
+		if (obj->parent!=NULL && gl_object_isa(obj->parent,"node","powerflow"))
 		{
 			// add the injections on this node to the parent
 			node *pNode = OBJECTDATA(obj->parent,node);
@@ -990,7 +990,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	else if (solver_method==SM_FBS)
 	{
 		// if the parent object is a node
-		if (obj->parent!=NULL && gl_object_isa(obj->parent,"node"))
+		if (obj->parent!=NULL && (gl_object_isa(obj->parent,"node","powerflow")))
 		{
 			// copy the voltage from the parent
 			node *pNode = OBJECTDATA(obj->parent,node);

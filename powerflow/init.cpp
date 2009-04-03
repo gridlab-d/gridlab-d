@@ -24,6 +24,7 @@
 #include "relay.h"
 #include "transformer.h"
 #include "switch_object.h"
+#include "substation.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -80,6 +81,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new triplex_line_configuration(module);
 	new triplex_line_conductor(module);
 	new switch_object(module);
+	new substation(module);
 
 	/* always return the first class registered */
 	return node::oclass;
