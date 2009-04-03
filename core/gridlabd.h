@@ -388,8 +388,8 @@ inline bool gl_object_isa(OBJECT *obj, /**< object to test */
 						  char *type,
 						  char *modname=NULL) /**< type to test */
 {	bool rv = (*callback->object_isa)(obj,type)!=0;
-	rv = modname ? obj->oclass->module == (*callback->module_find)(modname) : rv;
-	return rv;}
+	bool mv = modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
+	return (rv && mv);}
 #else
 #define gl_object_isa (*callback->object_isa)
 #endif
