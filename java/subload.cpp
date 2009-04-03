@@ -185,7 +185,7 @@ EXPORT int recalc_java(OBJECT *obj){
 	return 0;
 }
 
-CLASS *java_init(CALLBACKS *fntable, JAVACALLBACKS *jfntable, MODULE *module, char *MODULENAME, int argc, char *argv[])
+CLASS *java_init(CALLBACKS *fntable, JAVACALLBACKS *jfntable, MODULE *module, char *modulename, int argc, char *argv[])
 {
 	JavaVM *jvm = NULL;
 	JNIEnv *jnienv = NULL;
@@ -195,7 +195,7 @@ CLASS *java_init(CALLBACKS *fntable, JAVACALLBACKS *jfntable, MODULE *module, ch
 	}
 	JAVACALLBACKS *jcallback = jfntable;
 	if(jcallback == NULL){
-		gl_error("%s:java_init() - unable to find jcallback", MODULENAME);
+		gl_error("%s:java_init() - unable to find jcallback", modulename);
 		return NULL;
 	}
 	if(jvm == NULL)
@@ -206,22 +206,22 @@ CLASS *java_init(CALLBACKS *fntable, JAVACALLBACKS *jfntable, MODULE *module, ch
 	int i = 0;
 	gl_output("javamod init entered\n");
 
-	jclass cls = jnienv->FindClass(MODULENAME);
+	jclass cls = jnienv->FindClass(modulename);
 	if(cls == NULL){
-		gl_error("javamod:init.cpp: unable to find %s.class", MODULENAME);
+		gl_error("javamod:init.cpp: unable to find %s.class", modulename);
 		return NULL;
 	}
 
 	jmethodID init_mid = jnienv->GetStaticMethodID(cls, "init", "(JLjava/lang/String;I[Ljava/lang/String;)J");
 
 	if(init_mid == NULL){
-		gl_error("javamod:init.cpp: unable to find \"int %s.init(long, string, int, string[])\"", MODULENAME);
+		gl_error("javamod:init.cpp: unable to find \"int %s.init(long, string, int, string[])\"", modulename);
 		return NULL;
 	}
 
 	jobjectArray args = jnienv->NewObjectArray(argc, jnienv->FindClass("[Ljava/lang/String;"), NULL);
 	if(args == NULL){
-		gl_error("javamod:init.cpp: unable to allocate args[] for %s.init()", MODULENAME);
+		gl_error("javamod:init.cpp: unable to allocate args[] for %s.init()", modulename);
 		return NULL;
 	}
 	
@@ -230,9 +230,9 @@ CLASS *java_init(CALLBACKS *fntable, JAVACALLBACKS *jfntable, MODULE *module, ch
 		jnienv->SetObjectArrayElement(args, i, jargv[i]);
 	}
 
-	jstring jmodname = jnienv->NewStringUTF(MODULENAME);
+	jstring jmodname = jnienv->NewStringUTF(modulename);
 	if(jmodname == NULL){
-		gl_error("javamod:init.cpp: unable to allocate jmodname for %s.init()", MODULENAME);
+		gl_error("javamod:init.cpp: unable to allocate jmodname for %s.init()", modulename);
 	}
 
 	gl_output("javamod:init.cpp(): moduleaddr = %x", module);
