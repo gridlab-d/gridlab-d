@@ -2527,7 +2527,7 @@ object load:92 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      constant_power_C 40000+20000j;
-     constant_impedance_A 0.00-115.7067j;         //Shunt Capacitor
+     constant_impedance_C 0.00-115.7067j;         //Shunt Capacitor
      nominal_voltage 2401.7771;
 }
  
