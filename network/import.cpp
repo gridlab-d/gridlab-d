@@ -72,7 +72,7 @@ int import_cdf(char *file)
 					p->loss_zone_num = zone;
 					p->type = (BUSTYPE)type;
 					p->V.SetPolar(Vm,Va*PI/180);
-					p->S.SetRect((Gr-Lr)/mvabase,(Gi-Li)/mvabase); /* loads are negative, gen is positive */
+					p->S.SetRect((Lr-Gr)/mvabase,(Li-Gi)/mvabase); /* loads are positive, gen is negative */
 					p->base_kV = bV;
 					p->desired_kV = dV;
 					p->Qmax_MVAR = Qh;

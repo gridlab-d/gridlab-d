@@ -36,7 +36,7 @@ public:
 	meter(MODULE *mod);
 	int create();
 	int init(OBJECT *parent);
-	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
+	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
 };
 

@@ -63,7 +63,7 @@ public:
 	double get_inj_probability(void) const;
 
 	TIMESTAMP presync(TIMESTAMP t0);
-	TIMESTAMP sync(TIMESTAMP t0);
+	TIMESTAMP postsync(TIMESTAMP t0);
 	friend class link;
 };
 

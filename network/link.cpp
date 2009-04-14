@@ -128,25 +128,26 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 
 	// Note: n!=1 <=> B==0
 	// compute line currents (note from/to switched)
-	complex Ifrom = t->V * Y * c;
-	complex Ito = f->V * Y * c;
+	complex Ifrom = t->V * Yc;
+	complex Ito = f->V * Yc;
 
 	// add to self admittance (contribution diagonal terms)
 	// add to current injections (contribution to off-diagonal terms)
 	complex Ys = Yc + Yc*(c-1);
 	LOCK_OBJECT(from);
 	f->Ys += Ys;
-	f->YVs -= Ifrom;
+	f->YVs += Ifrom;
 	UNLOCK_OBJECT(from);
 
 	Ys = Yc + Yeff*(1-c);
 	LOCK_OBJECT(to);
-	t->YVs -= Ito;
+	t->YVs += Ito;
 	t->Ys += Ys;
 	UNLOCK_OBJECT(to);
 
 	// compute current over line (from->to)
 	I = Ito - Ifrom;
+
 
 #ifdef _DEBUG
 	// link debugging

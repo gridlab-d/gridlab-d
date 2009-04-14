@@ -105,7 +105,7 @@ int meter::init(OBJECT *parent)
 	return node::init(parent);
 }
 
-TIMESTAMP meter::sync(TIMESTAMP t0, TIMESTAMP t1) 
+TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	switch (type) {
 	case MT_ONEPHASE:
@@ -122,7 +122,7 @@ TIMESTAMP meter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		return TS_NEVER;
 	}
 	meterkWh = S * (double)((t1-t0)/TS_SECOND/3600);
-	return node::sync(t1);
+	return node::postsync(t1);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -152,7 +152,7 @@ EXPORT int init_meter(OBJECT *obj)
 
 EXPORT TIMESTAMP sync_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	TIMESTAMP t1 = OBJECTDATA(obj,meter)->sync(obj->clock,t0);
+	TIMESTAMP t1 = OBJECTDATA(obj,meter)->postsync(obj->clock,t0);
 	obj->clock = t0;
 	return t1;
 }

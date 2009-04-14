@@ -78,7 +78,7 @@ node::node(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		node_class = oclass = gl_register_class(mod,"node",sizeof(node),PC_PRETOPDOWN|PC_BOTTOMUP|PC_UNSAFE_OVERRIDE_OMIT);
+		node_class = oclass = gl_register_class(mod,"node",sizeof(node),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
@@ -246,7 +246,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	return TS_NEVER;
 }
 
-TIMESTAMP node::sync(TIMESTAMP t0) 
+TIMESTAMP node::postsync(TIMESTAMP t0) 
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	node *swing = hdr->parent?OBJECTDATA(hdr->parent,node):this;
@@ -261,14 +261,14 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	{
 		switch (type) {
 		case PV:
-			S.Im() = -((~V*(YY*V+old_YVs)).Im());
+			S.Im() = ((~V*(YY*V-old_YVs)).Im());
 			if (Qmin_MVAR<Qmax_MVAR && S.Im()<Qmin_MVAR) 
 				S.Im() = Qmin_MVAR;
 			else if (Qmax_MVAR>Qmin_MVAR && S.Im()>Qmax_MVAR) 
 				S.Im() = Qmax_MVAR;
-			else
+			//else
 			{
-				complex Vnew = (~S/~V - old_YVs) / YY;
+				complex Vnew = (-(~S/~V) + old_YVs) / YY;
 				Vnew.SetPolar(V.Mag(),Vnew.Arg());
 #ifdef HYBRID
 				if (Vstdev>0)
@@ -291,7 +291,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		case PQ:
 			if (!V.IsZero())
 			{
-				complex Vnew = (~S/~V - old_YVs) / YY;
+				complex Vnew = (-(~S/~V) + old_YVs) / YY;
 #ifdef HYBRID
 				if (Vstdev>0) // need to consider observation
 				{
@@ -311,7 +311,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			}
 			break;
 		case SWING:
-			S = ~(~V*(YY*V + YVs));
+			S = ~(~V*(YY*V - YVs));
 			S.Notation() = J;
 			break;
 		default:
@@ -406,8 +406,8 @@ EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		{
 		case PC_PRETOPDOWN:
 			return OBJECTDATA(obj,node)->presync(t0);
-		case PC_BOTTOMUP:
-			t1 = OBJECTDATA(obj,node)->sync(t0);
+		case PC_POSTTOPDOWN:
+			t1 = OBJECTDATA(obj,node)->postsync(t0);
 			obj->clock = t0;
 			return t1;
 		default:
