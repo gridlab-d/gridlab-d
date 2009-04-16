@@ -743,10 +743,12 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 
 TIMESTAMP link::sync(TIMESTAMP t0)
 {
+#ifdef SUPPORT_OUTAGES
 	node *fNode;
 	node *tNode;
 	fNode=OBJECTDATA(from,node);
 	tNode=OBJECTDATA(to,node);
+#endif
 
 	if (is_closed())
 	{
@@ -760,7 +762,9 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 			node *t;
 			set reverse = get_flow(&f,&t);
 
+#ifdef SUPPORT_OUTAGES
 			tNode->condition=fNode->condition;
+#endif
 			/* compute currents */
 			complex i;
 			current_in[0] = 
@@ -848,27 +852,14 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 				B_mat[2][1] * t->current_inj[1] -
 				B_mat[2][2] * t->current_inj[2];
 			LOCKED(to, t->voltage[2] = v);
+#ifdef SUPPORT_OUTAGES		
 			t->condition=f->condition;
 		}
-		else //open
+		else if (is_open()) //open
 		{
-			/* compute and update voltages */
-			complex v;
-			v = A_mat[0][0] * f->voltage[0] +
-				A_mat[0][1] * f->voltage[1] +
-				A_mat[0][2] * f->voltage[2];
-			LOCKED(to, t->voltage[0] = v);
-			v = A_mat[1][0] * f->voltage[0] +
-				A_mat[1][1] * f->voltage[1] +
-				A_mat[1][2] * f->voltage[2];
-			LOCKED(to, t->voltage[1] = v);
-			v = A_mat[2][0] * f->voltage[0] +
-				A_mat[2][1] * f->voltage[1] +
-				A_mat[2][2] * f->voltage[2];
-			LOCKED(to, t->voltage[2] = v);
 			t->condition=!OC_NORMAL;
 		}
-#ifdef SUPPORT_OUTAGES		
+
 		/* propagate voltage source flag from to-bus to from-bus */
 		if (t->bustype==node::PQ)
 		{
@@ -892,6 +883,8 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 
 				/* force the solver to make another pass */
 				TRET = t0;
+		}
+#else
 		}
 #endif
 
