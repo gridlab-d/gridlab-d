@@ -237,6 +237,8 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 					}
 					else
 						gl_warning("object %s:%d property %s is not a double", item->oclass->name,item->id, prop->name);
+				} else {
+					gl_error("object %s:%d property %s not found in object %s", obj->oclass->name,obj->id, my->property, item->oclass->name,item->id);
 				}
 			}
 		}
@@ -270,6 +272,10 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		}
 	}
 	obj->clock = t0;
+	if(t1 == 0){
+		char buf[65];
+		gl_error("shaper:%i will return t1==0 ~ check the shaper's target property, \"%s\"", obj->id, my->property);
+	}
 	return t1!=TS_NEVER?-t1:TS_NEVER; /* negative indicates a "soft" event which is only considered for stepping, not for stopping */
 }
 
