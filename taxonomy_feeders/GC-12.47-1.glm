@@ -1,129 +1,43 @@
-//*********************************************
 // $Id: GC-12.47-1.glm 1132 2008-11-18 22:36:10Z dchassin $ 
 //*********************************************
 
 clock { 
 	 timezone EST+5EDT;
-}	 timestamp '2000-01-01 0:00:00';
-
+	 timestamp '2000-01-01 0:00:00';
+}
 
 //*********************************************
 // modules
 module powerflow;
 
 
-object triplex_line_conductor: {
-	name 1/0 AA triplex;
-	resistance 0.97;
-	geometric_mean_radius 0.0111;
-}
-
-object triplex_line_configuration:1 {
-	conductor_1 1/0 AA triplex;
-	conductor_2 1/0 AA triplex;
-	conductor_N 1/0 AA triplex;
-	insulation_thickness 0.08;
-	diameter 0.368;
-}
-
-object transformer:55  {
-	phases "A|B|C|N";
-	from 15478;
-	to 15478_I_M;
-	configuration transformer_configuration:54;
-}
-
-object meter:56 {
-	name 15478_I_M;
+object fuse:115 {
+	name GC-12-47-1_fuse_1;
 	phases "ABCN";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-object transformer:57  {
-	phases "A|B|C|N";
-	from 15483;
-	to 15483_I_M;
-	configuration transformer_configuration:54;
+	from node:75;
+	to node:76;
+	current_limit 10000.0;
+	status CLOSED;
 }
 
-object meter:58 {
-	name 15483_I_M;
+object fuse:117 {
+	name GC-12-47-1_fuse_2;
 	phases "ABCN";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-object transformer:59  {
-	phases "A|B|C|N";
-	from 15471;
-	to 15471_I_M;
-	configuration transformer_configuration:54;
+	from node:80;
+	to node:79;
+	current_limit 10000.0;
+	status CLOSED;
 }
 
-object meter:60 {
-	name 15471_I_M;
+object fuse:118 {
+	name GC-12-47-1_fuse_3;
 	phases "ABCN";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-object underground_line_conductor:46 {
-	name 1000 AAC (Conc);
-	rating.summer.continuous 488.0 ;
-	outer_diameter 2.15;
-	conductor_gmr 0.0371 ft;
-	conductor_diameter 1.152;
-	conductor_resistance 0.091872;
-	neutral_gmr 0.0842565914341201 ft;
-	neutral_resistance 5.3856;
-	neutral_diameter 0.1019;
-	neutral_strands 20.0;
-	shield_gmr 0.00;
-	shield_resistance 0.00;
+	from node:80;
+	to node:81;
+	current_limit 10000.0;
+	status CLOSED;
 }
 
-object underground_line_conductor:42 {
-	name 2 AL (Conc);
-	rating.summer.continuous 112.0 ;
-	outer_diameter 1.09;
-	conductor_gmr 0.0088 ft;
-	conductor_diameter 0.292;
-	conductor_resistance 1.38336;
-	neutral_gmr 0.0348162687755351 ft;
-	neutral_resistance 13.5696;
-	neutral_diameter 0.0641;
-	neutral_strands 6.0;
-	shield_gmr 0.00;
-	shield_resistance 0.00;
-}
-
-object underground_line_conductor:49 {
-	name 1000 AAC (Tape);
-	rating.summer.continuous 775.0 ;
-	outer_diameter 1.87;
-	conductor_gmr 0.0371 ft;
-	conductor_diameter 1.15;
-	conductor_resistance 0.0222;
-	neutral_gmr 0.0732739718442675 ft;
-	neutral_resistance 0.05;
-	neutral_diameter 0.102;
-	neutral_strands 20.0;
-	shield_gmr 0.00;
-	shield_resistance 0.00;
-}
-
-object line_spacing:91 {
-	distance_AB 3.0 in;
-	distance_BC 3.0 in;
-	distance_AC 3.0 in;
-	distance_AN 2.0 in;
-	distance_BN 2.0 in;
-	distance_CN 2.0 in;
-}
 
 object line_configuration:92 {
 	conductor_A underground_line_conductor:46;
@@ -148,6 +62,441 @@ object line_configuration:94 {
 	conductor_N underground_line_conductor:49;
 	spacing line_spacing:91;
 }
+
+
+object line_spacing:91 {
+	distance_AB 3.0 in;
+	distance_BC 3.0 in;
+	distance_AC 3.0 in;
+	distance_AN 2.0 in;
+	distance_BN 2.0 in;
+	distance_CN 2.0 in;
+}
+
+
+object load {
+	name GC-12-47-1_load_1;
+	parent GC-12-47-1_meter_1;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	constant_power_A 585277.750+357997.618j;
+	constant_power_B 596917.157+361239.541j;
+	constant_power_C 592476.619+358995.694j;
+	load_class "I";
+}
+
+object load {
+	name GC-12-47-1_load_2;
+	parent GC-12-47-1_meter_2;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	constant_power_A 585277.750+357997.618j;
+	constant_power_B 596917.157+361239.541j;
+	constant_power_C 592476.619+358995.694j;
+	load_class "I";
+}
+
+object load {
+	name GC-12-47-1_load_3;
+	parent GC-12-47-1_meter_3;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	constant_power_A 585277.750+357997.618j;
+	constant_power_B 596917.157+361239.541j;
+	constant_power_C 592476.619+358995.694j;
+	load_class "I";
+}
+
+
+object meter:56 {
+	name GC-12-47-1_meter_1;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object meter:58 {
+	name GC-12-47-1_meter_2;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object meter:60 {
+	name GC-12-47-1_meter_3;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+// Meter at feeder
+object meter:61 {
+	name GC-12-47-1_meter_4;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+
+object node:62 {
+	name GC-12-47-1_node_1;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:63 {
+	name GC-12-47-1_node_2;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:64 {
+	name GC-12-47-1_node_3;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:65 {
+	name GC-12-47-1_node_4;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:66 {
+	name GC-12-47-1_node_5;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:67 {
+	name GC-12-47-1_node_6;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:69 {
+	name GC-12-47-1_node_7;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:71 {
+	name GC-12-47-1_node_8;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:72 {
+	name GC-12-47-1_node_9;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:74 {
+	name GC-12-47-1_node_10;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:75 {
+	name GC-12-47-1_node_11;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:76 {
+	name GC-12-47-1_node_12;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:77 {
+	name GC-12-47-1_node_13;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:78 {
+	name GC-12-47-1_node_14;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:79 {
+	name GC-12-47-1_node_15;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:80 {
+	name GC-12-47-1_node_16;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:81 {
+	name GC-12-47-1_node_17;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:82 {
+	name GC-12-47-1_node_18;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:83 {
+	name GC-12-47-1_node_19;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:84 {
+	name GC-12-47-1_node_20;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:85 {
+	name GC-12-47-1_node_21;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:86 {
+	name GC-12-47-1_node_22;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:87 {
+	name GC-12-47-1_node_23;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:88 {
+	name GC-12-47-1_node_24;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:89 {
+	name GC-12-47-1_node_25;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node:90 {
+	name GC-12-47-1_node_26;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+}
+
+object node {
+	name reg_fABC;
+	phases ABCN;
+	nominal_voltage 7199.558;
+	voltage_A 7199.558+0.0j;
+	voltage_B -3599.779-6235.000 j;
+	voltage_C -3599.779+6235.000 j;	
+}
+
+
+object regulator {
+	from reg_fABC; 
+	to GC-12-47-1_meter_4;
+	phases ABCN;
+	configuration regulator_cfg;
+}
+
+
+object regulator_configuration {
+	name regulator_cfg;
+	connect_type WYE_WYE;
+	band_center 120;
+	band_width 2;
+	time_delay 30;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio  600;
+	power_transducer_ratio   60;
+	compensator_r_setting_A   6.0;
+	compensator_r_setting_B   6.0;
+	compensator_r_setting_C   6.0;
+	compensator_x_setting_A   12.0;
+	compensator_x_setting_B   12.0;
+	compensator_x_setting_C   12.0;
+	CT_phase "ABC";
+	PT_phase "ABC";
+	regulation 0.10;
+	tap_pos_A 0;
+	tap_pos_B 0;
+	tap_pos_C 0;
+}
+
+
+object switch:95 {
+	name GC-12-47-1_switch_1;
+	phases "ABCN";
+	from node:85;
+	to node:84;
+	status CLOSED;
+}
+
+object switch:96 {
+	name GC-12-47-1_switch_2;
+	phases "ABCN";
+	from node:86;
+	to node:87;
+	status CLOSED;
+}
+
+object switch:97 {
+	name GC-12-47-1_switch_3;
+	phases "ABCN";
+	from node:74;
+	to node:89;
+	status OPEN;
+}
+
+object switch:114 {
+	name GC-12-47-1_switch_4;
+	phases "ABCN";
+	from node:78;
+	to node:77;
+	status CLOSED;
+}
+
+object switch:116 {
+	name GC-12-47-1_switch_5;
+	phases "ABCN";
+	from node:83;
+	to node:82;
+	status CLOSED;
+}
+
+
+object transformer:55  {
+	name GC-12-47-1_xfmr_1;
+	phases "ABCN";
+	from GC-12-47-1_node_8;
+	to GC-12-47-1_meter_1;
+	configuration transformer_configuration:54;
+}
+
+object transformer:57  {
+	name GC-12-47-1_xfmr_2;
+	phases "ABCN";
+	from GC-12-47-1_node_9;
+	to GC-12-47-1_meter_2;
+	configuration transformer_configuration:54;
+}
+
+object transformer:59  {
+	name GC-12-47-1_xfmr_3;
+	phases "ABCN";
+	from GC-12-47-1_node_7;
+	to GC-12-47-1_meter_3;
+	configuration transformer_configuration:54;
+}
+
 
 object transformer_configuration:51 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
@@ -195,36 +544,26 @@ object transformer_configuration:54 {
 	reactance 0.0002;
 }
 
-// switch: Device ID FW2-14L
-object switch:95 {
-	name 500537A_L;
-	phases "A|B|C|N";
-	from node:85;
-	to node:84;
-	status CLOSED;
+
+object triplex_line_conductor: {
+	name 1/0 AA triplex;
+	resistance 0.97;
+	geometric_mean_radius 0.0111;
 }
 
-// switch: Device ID FW2-17L
-object switch:96 {
-	name 500539A_L;
-	phases "A|B|C|N";
-	from node:86;
-	to node:87;
-	status CLOSED;
+
+object triplex_line_configuration:1 {
+	conductor_1 1/0 AA triplex;
+	conductor_2 1/0 AA triplex;
+	conductor_N 1/0 AA triplex;
+	insulation_thickness 0.08;
+	diameter 0.368;
 }
 
-// switch: Device ID FW4-25L
-object switch:97 {
-	name 500571A_L;
-	phases "A|B|C|N";
-	from node:74;
-	to node:89;
-	status OPEN;
-}
 
 object underground_line:98 {
-	name 63835_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_1;
+	phases "ABCN";
 	from node:66;
 	to node:67;
 	length 340.88861380658;
@@ -232,8 +571,8 @@ object underground_line:98 {
 }
 
 object underground_line:99 {
-	name 63837_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_2;
+	phases "ABCN";
 	from node:65;
 	to node:66;
 	length 448.867421915455;
@@ -241,8 +580,8 @@ object underground_line:99 {
 }
 
 object underground_line:100 {
-	name 63840_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_3;
+	phases "ABCN";
 	from node:67;
 	to node:85;
 	length 494.712986766415;
@@ -250,8 +589,8 @@ object underground_line:100 {
 }
 
 object underground_line:101 {
-	name 63844_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_4;
+	phases "ABCN";
 	from node:87;
 	to node:74;
 	length 10.4071976054578;
@@ -259,8 +598,8 @@ object underground_line:101 {
 }
 
 object underground_line:102 {
-	name 63850_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_5;
+	phases "ABCN";
 	from node:82;
 	to node:78;
 	length 59.8154412104793;
@@ -268,8 +607,8 @@ object underground_line:102 {
 }
 
 object underground_line:103 {
-	name 63851_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_6;
+	phases "ABCN";
 	from node:79;
 	to node:71;
 	length 102.238983007429;
@@ -277,8 +616,8 @@ object underground_line:103 {
 }
 
 object underground_line:104 {
-	name 63852_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_7;
+	phases "ABCN";
 	from node:81;
 	to node:72;
 	length 101.838066273906;
@@ -286,8 +625,8 @@ object underground_line:104 {
 }
 
 object underground_line:105 {
-	name 63853_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_8;
+	phases "ABCN";
 	from node:76;
 	to node:69;
 	length 89.6051926901407;
@@ -295,8 +634,8 @@ object underground_line:105 {
 }
 
 object underground_line:106 {
-	name 63864_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_9;
+	phases "ABCN";
 	from node:64;
 	to node:65;
 	length 441.532888510082;
@@ -304,8 +643,8 @@ object underground_line:106 {
 }
 
 object underground_line:107 {
-	name 63872_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_10;
+	phases "ABCN";
 	from node:63;
 	to node:64;
 	length 222.527820378055;
@@ -313,8 +652,8 @@ object underground_line:107 {
 }
 
 object underground_line:108 {
-	name 63873_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_11;
+	phases "ABCN";
 	from node:62;
 	to node:63;
 	length 385.576812936181;
@@ -322,8 +661,8 @@ object underground_line:108 {
 }
 
 object underground_line:109 {
-	name 63905_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_12;
+	phases "ABCN";
 	from node:64;
 	to node:88;
 	length 17.0869734006854;
@@ -331,8 +670,8 @@ object underground_line:109 {
 }
 
 object underground_line:110 {
-	name 63918_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_13;
+	phases "ABCN";
 	from node:75;
 	to node:86;
 	length 14.14027612891;
@@ -340,8 +679,8 @@ object underground_line:110 {
 }
 
 object underground_line:111 {
-	name 63919_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_14;
+	phases "ABCN";
 	from node:77;
 	to node:75;
 	length 12.9578882924305;
@@ -349,8 +688,8 @@ object underground_line:111 {
 }
 
 object underground_line:112 {
-	name 63920_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_15;
+	phases "ABCN";
 	from node:84;
 	to node:80;
 	length 14.8288157989869;
@@ -358,65 +697,17 @@ object underground_line:112 {
 }
 
 object underground_line:113 {
-	name 63921_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_16;
+	phases "ABCN";
 	from node:80;
 	to node:83;
 	length 12.4749125047096;
 	configuration line_configuration:92;
 }
 
-// switch: Device ID FW2-16L
-object switch:114 {
-	name 64103A_L;
-	phases "A|B|C|N";
-	from node:78;
-	to node:77;
-	status CLOSED;
-}
-
-// fuse: Device ID 64105
-object fuse:115 {
-	name 64105A_L;
-	phases "A|B|C|N";
-	from node:75;
-	to node:76;
-	current_limit 10000.0;
-	status CLOSED;
-}
-
-// switch: Device ID FW2-15L
-object switch:116 {
-	name 64109A_L;
-	phases "A|B|C|N";
-	from node:83;
-	to node:82;
-	status CLOSED;
-}
-
-// fuse: Device ID 64111
-object fuse:117 {
-	name 64111A_L;
-	phases "A|B|C|N";
-	from node:80;
-	to node:79;
-	current_limit 10000.0;
-	status CLOSED;
-}
-
-// fuse: Device ID 64112
-object fuse:118 {
-	name 64112A_L;
-	phases "A|B|C|N";
-	from node:80;
-	to node:81;
-	current_limit 10000.0;
-	status CLOSED;
-}
-
 object underground_line:119 {
-	name 64558_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_17;
+	phases "ABCN";
 	from meter:61;
 	to node:90;
 	length 138.440264922178;
@@ -424,386 +715,58 @@ object underground_line:119 {
 }
 
 object underground_line:120 {
-	name 64570_L;
-	phases "A|B|C|N";
+	name GC-12-47-1_ul_18;
+	phases "ABCN";
 	from node:90;
 	to node:62;
 	length 401.610134330402;
 	configuration line_configuration:92;
 }
 
-object node:62 {
-	name 15370;
-	latitude 48N39'45.476";
-	longitude 118W48'35.766";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
+
+object underground_line_conductor:46 {
+	name 1000 AAC (Conc);
+	rating.summer.continuous 488.0 ;
+	outer_diameter 2.15;
+	conductor_gmr 0.0371 ft;
+	conductor_diameter 1.152;
+	conductor_resistance 0.091872;
+	neutral_gmr 0.0842565914341201 ft;
+	neutral_resistance 5.3856;
+	neutral_diameter 0.1019;
+	neutral_strands 20.0;
+	shield_gmr 0.00;
+	shield_resistance 0.00;
 }
 
-object node:63 {
-	name 15381;
-	latitude 48N39'48.063";
-	longitude 118W48'31.431";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
+object underground_line_conductor:42 {
+	name 2 AL (Conc);
+	rating.summer.continuous 112.0 ;
+	outer_diameter 1.09;
+	conductor_gmr 0.0088 ft;
+	conductor_diameter 0.292;
+	conductor_resistance 1.38336;
+	neutral_gmr 0.0348162687755351 ft;
+	neutral_resistance 13.5696;
+	neutral_diameter 0.0641;
+	neutral_strands 6.0;
+	shield_gmr 0.00;
+	shield_resistance 0.00;
 }
 
-object node:64 {
-	name 15404;
-	latitude 48N39'49.556";
-	longitude 118W48'28.930";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
+object underground_line_conductor:49 {
+	name 1000 AAC (Tape);
+	rating.summer.continuous 775.0 ;
+	outer_diameter 1.87;
+	conductor_gmr 0.0371 ft;
+	conductor_diameter 1.15;
+	conductor_resistance 0.0222;
+	neutral_gmr 0.0732739718442675 ft;
+	neutral_resistance 0.05;
+	neutral_diameter 0.102;
+	neutral_strands 20.0;
+	shield_gmr 0.00;
+	shield_resistance 0.00;
 }
 
-object node:65 {
-	name 15416;
-	latitude 48N39'52.519";
-	longitude 118W48'23.966";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
 
-object node:66 {
-	name 15441;
-	latitude 48N39'55.530";
-	longitude 118W48'18.920";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:67 {
-	name 15442;
-	latitude 48N39'53.639";
-	longitude 118W48'15.322";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:69 {
-	name 15471;
-	latitude 48N39'49.448";
-	longitude 118W48'11.468";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:71 {
-	name 15478;
-	latitude 48N39'49.293";
-	longitude 118W48'11.246";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:72 {
-	name 15483;
-	latitude 48N39'49.147";
-	longitude 118W48'11.037";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:74 {
-	name 15485;
-	latitude 48N39'50.316";
-	longitude 118W48'10.773";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:75 {
-	name 15493;
-	latitude 48N39'50.218";
-	longitude 118W48'10.457";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:76 {
-	name 15494;
-	latitude 48N39'50.120";
-	longitude 118W48'10.562";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:77 {
-	name 15498;
-	latitude 48N39'50.099";
-	longitude 118W48'10.442";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:78 {
-	name 15499;
-	latitude 48N39'50.085";
-	longitude 118W48'10.441";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:79 {
-	name 15500;
-	latitude 48N39'49.970";
-	longitude 118W48'10.127";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:80 {
-	name 15501;
-	latitude 48N39'50.026";
-	longitude 118W48'9.954";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:81 {
-	name 15502;
-	latitude 48N39'49.929";
-	longitude 118W48'10.069";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:82 {
-	name 15504;
-	latitude 48N39'49.916";
-	longitude 118W48'9.961";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:83 {
-	name 15505;
-	latitude 48N39'49.897";
-	longitude 118W48'9.963";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:84 {
-	name 500415;
-	latitude 48N39'50.043";
-	longitude 118W48'10.172";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:85 {
-	name 500416;
-	latitude 48N39'50.054";
-	longitude 118W48'10.184";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:86 {
-	name 500417;
-	latitude 48N39'50.240";
-	longitude 118W48'10.664";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:87 {
-	name 500418;
-	latitude 48N39'50.238";
-	longitude 118W48'10.643";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:88 {
-	name 500421;
-	latitude 48N39'49.493";
-	longitude 118W48'29.166";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:89 {
-	name 500448;
-	latitude 48N39'50.496";
-	longitude 118W48'10.562";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object node:90 {
-	name 660512;
-	latitude 48N39'42.706";
-	longitude 118W48'38.146";
-	phases "A|B|C|N";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object load {
-	name 15478_I;
-	parent 15478_I_M;
-	latitude 48N39'49.293";
-	longitude 118W48'11.246";
-	phases "ABCN";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	constant_power_A 585.277750398954+357.99761804821j;
-	constant_power_B 596.917156974581+361.23954144241j;
-	constant_power_C 592.476618922916+358.995693860111j;
-	load_class "I";
-}
-
-object load {
-	name 15483_I;
-	parent 15483_I_M;
-	latitude 48N39'49.147";
-	longitude 118W48'11.037";
-	phases "ABCN";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	constant_power_A 585.277750398954+357.99761804821j;
-	constant_power_B 596.917156974581+361.23954144241j;
-	constant_power_C 592.476618922916+358.995693860111j;
-	load_class "I";
-}
-
-object load {
-	name 15471_I;
-	parent 15471_I_M;
-	latitude 48N39'49.448";
-	longitude 118W48'11.468";
-	phases "ABCN";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	constant_power_A 585.277750398954+357.99761804821j;
-	constant_power_B 596.917156974581+361.23954144241j;
-	constant_power_C 592.476618922916+358.995693860111j;
-	load_class "I";
-}
-
-// Meter at feeder
-object meter:61 {
-	name feeder_meter;
-	phases "ABCN";
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-}
-
-object regulator {
-	phases ABCN;
-	configuration object regulator_configuration {
-		connect_type WYE_WYE;
-		band_center 120;
-		band_width 2;
-		time_delay 30;
-		raise_taps 16;
-		lower_taps 16;
-		current_transducer_ratio  600;
-		power_transducer_ratio   60;
-		compensator_r_setting   6.0;
-		compensator_x_setting   12.0;
-		CT_phase "ABC";
-		PT_phase "ABC";
-		regulation 0.10;
-		high_voltage 7199.558;
-		tap_pos_A 0;
-		tap_pos_B 0;
-		tap_pos_C 0;
-	};
-	from object node {
-		name reg_fABC;
-		phases ABCN;
-		nominal_voltage 7199.558;
-		voltage_A 7199.558+0.0j;
-		voltage_B -3599.779-6235.000 j;
-		voltage_C -3599.779+6235.000 j;	
-	};
-	to meter:61;
-};
