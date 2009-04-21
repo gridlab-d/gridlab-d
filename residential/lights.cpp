@@ -118,7 +118,7 @@ int lights::create(void)
 	power_density = gl_random_normal(1.0, 0.075);  // W/sf
 	
 	// other initial conditions
-	demand = 1.0;
+	demand = 0.2;
 	return 1;
 }
 
@@ -142,7 +142,7 @@ int lights::init(OBJECT *parent)
 	if (installed_power==0) 
 		installed_power = power_density * pHouse->floor_area;
 
-	// initial demand (assume power factor is 1.0
+	// initial demand (assume power factor is 1.0)
 	load.power = installed_power * demand / 1000;
 
 	return 1;
@@ -154,7 +154,7 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 	load.admittance = load.current = load.power = complex(0,0,J);
 	
 	// compute nominal power consumption (adjust with power factor)
-	complex power; power.SetPowerFactor(installed_power/power_factor[type] * demand / 1000.0, power_factor[type],J);
+	load.power.SetPowerFactor(installed_power/power_factor[type] * demand / 1000.0, power_factor[type],J);
 	double VM2 = ((*pVoltage) * ~(*pVoltage)).Re();
 
 	// adjust power based on lamp type's response to voltage
