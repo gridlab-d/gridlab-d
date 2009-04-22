@@ -12,7 +12,7 @@
 #include "gridlabd.h"
 
 // DPC: this is to remain undefined until GS solver method is reconciled with reliability module
-#define SUPPORT_OUTAGES /**< defined when reliability module is supported */
+//#define SUPPORT_OUTAGES /**< defined when reliability module is supported */
 
 #ifdef SUPPORT_OUTAGES
 /** Operating condition flags 
