@@ -33,19 +33,19 @@ object load {
 	nominal_voltage 2400;
 }
 
-//object metrics:0 {
-//	name Metrics;
-//}
+object metrics {
+	name Metrics;
+}
 
-//object eventgen {
-//	name OpenLine;
-//	parent Metrics;
-//	frequency 25;
-//	duration 4;
-//	group "class=overhead_line";
-//	targets "condition";
-//	values "OPEN|A|B|C";
-//}		
+object eventgen {
+	name OpenLine;
+	parent Metrics;
+	frequency 25;
+	duration 4;
+	group "class=overhead_line";
+	targets "condition";
+	values "OPEN|A|B|C";
+}		
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 4 Node Feeder: Balanced step-down delta-delta
