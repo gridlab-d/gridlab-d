@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xml-stylesheet href="http://gridlabd.pnl.gov/source/VS2005/gridlabd-2_0.xsl" type="text/xsl"?>
+<gridlabd>
+	<version.major>2</version.major>
+	<version.minor>0</version.minor>
+	<command_line>"c:\Documents and Settings\d3x289\Desktop\GridLAB-D\trunk\VS2005\Win32\Debug\gridlabd.exe test_UGLine.glm --output test.xml --debug"</command_line>
+	<environment>batch</environment>
+	<quiet>0</quiet>
+	<warn>1</warn>
+	<debugger>0</debugger>
+	<gdb>0</gdb>
+	<debug>1</debug>
+	<test>0</test>
+	<verbose>0</verbose>
+	<iteration_limit>1000</iteration_limit>
+	<workdir>"C:\Documents and Settings\d3x289\Desktop\GridLAB-D\trunk\powerflow\auto_test"</workdir>
+	<dumpfile>gridlabd.xml</dumpfile>
+	<savefile>test.xml</savefile>
+	<dumpall>0</dumpall>
+	<runchecks>0</runchecks>
+	<threadcount>1</threadcount>
+	<profiler>0</profiler>
+	<pauseatexit>0</pauseatexit>
+	<testoutputfile>test.txt</testoutputfile>
+	<xml_encoding>8</xml_encoding>
+	<clock>2000-01-01 00:00:00 EST</clock>
+	<starttime>2009-04-24 15:42:58 EDT</starttime>
+	<stoptime>NEVER</stoptime>
+	<double_format>%+lg</double_format>
+	<complex_format>%+lg%+lg%c</complex_format>
+	<object_format>%s:%d</object_format>
+	<object_scan>%[^:]:%d</object_scan>
+	<object_tree_balance>FALSE</object_tree_balance>
+	<kmlfile>""</kmlfile>
+	<modelname>test_UGLine.glm</modelname>
+	<execdir>"c:\Documents and Settings\d3x289\Desktop\GridLAB-D\trunk\VS2005\Win32\Debug"</execdir>
+	<strictnames>TRUE</strictnames>
+	<website>http://gridlabd.pnl.gov/source/VS2005/</website>
+	<urlbase>http://gridlabd.pnl.gov/source/VS2005/</urlbase>
+	<randomseed>0</randomseed>
+	<include>../../core</include>
+	<trace>""</trace>
+	<gdb_window>0</gdb_window>
+	<tmp>c:/temp</tmp>
+	<force_compile>1</force_compile>
+	<nolocks>0</nolocks>
+	<skipsafe>0</skipsafe>
+	<use_msvc>"1 "</use_msvc>
+	<timezone>EST5EDT</timezone>
+	<sync-order>
+		<pass>
+			<name>pretopdown</name>
+			<rank>
+				<ordinal>2</ordinal>
+				<object>
+					<name>UG_fABC</name>
+					<id>7</id>
+				</object>
+			</rank>
+			<rank>
+				<ordinal>1</ordinal>
+				<object>
+					<name>(underground_line:0)</name>
+					<id>0</id>
+				</object>
+			</rank>
+			<rank>
+				<ordinal>0</ordinal>
+				<object>
+					<name>UG_tABC</name>
+					<id>8</id>
+				</object>
+			</rank>
+		</pass>
+		<pass>
+			<name>bottomup</name>
+			<rank>
+				<ordinal>0</ordinal>
+				<object>
+					<name>UG_tABC</name>
+					<id>8</id>
+				</object>
+			</rank>
+			<rank>
+				<ordinal>1</ordinal>
+				<object>
+					<name>(underground_line:0)</name>
+					<id>0</id>
+				</object>
+			</rank>
+			<rank>
+				<ordinal>2</ordinal>
+				<object>
+					<name>UG_fABC</name>
+					<id>7</id>
+				</object>
+			</rank>
+		</pass>
+		<pass>
+			<name>posttopdown</name>
+			<rank>
+				<ordinal>2</ordinal>
+				<object>
+					<name>UG_fABC</name>
+					<id>7</id>
+				</object>
+			</rank>
+			<rank>
+				<ordinal>1</ordinal>
+				<object>
+					<name>(underground_line:0)</name>
+					<id>0</id>
+				</object>
+			</rank>
+			<rank>
+				<ordinal>0</ordinal>
+				<object>
+					<name>UG_tABC</name>
+					<id>8</id>
+				</object>
+				<object>
+					<name>(double_assert:10)</name>
+					<id>10</id>
+				</object>
+				<object>
+					<name>(double_assert:9)</name>
+					<id>9</id>
+				</object>
+			</rank>
+		</pass>
+	</sync-order>
+	<complex_assert>
+		<version.major>0</version.major>
+		<version.minor>0</version.minor>
+		<complex_assert_list>
+		</complex_assert_list>
+	</complex_assert>
+	<double_assert>
+		<version.major>0</version.major>
+		<version.minor>0</version.minor>
+		<double_assert_list>
+			<double_assert>
+				<id>9</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>underground_line:0</parent>
+				<clock>NEVER</clock>
+				<name>(double_assert:9)</name>
+				<target>power_out</target>
+				<value>+117459</value>
+				<within>+0.1</within>
+			</double_assert>
+			<double_assert>
+				<id>10</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>underground_line:0</parent>
+				<clock>NEVER</clock>
+				<name>(double_assert:10)</name>
+				<target>power_in</target>
+				<value>+117514</value>
+				<within>+0.1</within>
+			</double_assert>
+		</double_assert_list>
+	</double_assert>
+	<powerflow>
+		<version.major>2</version.major>
+		<version.minor>0</version.minor>
+		<node_list>
+			<inherits_from>powerflow_object</inherits_from>
+			<node>
+				<id>7</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<clock>2000-01-01 00:00:00 EST</clock>
+				<name>UG_fABC</name>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+7.2e-005 V</maximum_voltage_error>
+				<voltage_A>+7200+0d V</voltage_A>
+				<voltage_B>+7200.01-120d V</voltage_B>
+				<voltage_C>+7200.01+120d V</voltage_C>
+				<voltage_AB>+12470.8+30.0001d V</voltage_AB>
+				<voltage_BC>+12470.8-90d V</voltage_BC>
+				<voltage_CA>+12470.8+150d V</voltage_CA>
+				<current_A>+0+0i A</current_A>
+				<current_B>+0+0i A</current_B>
+				<current_C>+0+0i A</current_C>
+				<power_A>+0+0i W</power_A>
+				<power_B>+0+0i W</power_B>
+				<power_C>+0+0i W</power_C>
+				<shunt_A>+0+0i S</shunt_A>
+				<shunt_B>+0+0i S</shunt_B>
+				<shunt_C>+0+0i S</shunt_C>
+				<phases>ABCN</phases>
+				<nominal_voltage>+7200 V</nominal_voltage>
+			</node>
+		</node_list>
+		<link_list>
+			<inherits_from>powerflow_object</inherits_from>
+		</link_list>
+		<capacitor_list>
+			<inherits_from>node</inherits_from>
+		</capacitor_list>
+		<fuse_list>
+			<inherits_from>link</inherits_from>
+		</fuse_list>
+		<meter_list>
+			<inherits_from>node</inherits_from>
+		</meter_list>
+		<line_list>
+			<inherits_from>link</inherits_from>
+		</line_list>
+		<line_spacing_list>
+			<line_spacing>
+				<id>6</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(line_spacing:6)</name>
+				<distance_AB>+0.5 ft</distance_AB>
+				<distance_BC>+0.5 ft</distance_BC>
+				<distance_AC>+1 ft</distance_AC>
+				<distance_AN>+0 ft</distance_AN>
+				<distance_BN>+0 ft</distance_BN>
+				<distance_CN>+0 ft</distance_CN>
+			</line_spacing>
+		</line_spacing_list>
+		<overhead_line_list>
+			<inherits_from>line</inherits_from>
+		</overhead_line_list>
+		<underground_line_list>
+			<inherits_from>line</inherits_from>
+			<underground_line>
+				<id>0</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>UG_fABC</parent>
+				<clock>2000-01-01 00:00:00 EST</clock>
+				<name>(underground_line:0)</name>
+				<configuration>line_configuration:1</configuration>
+				<length>+5280 ft</length>
+				<status>CLOSED</status>
+				<from>UG_fABC</from>
+				<to>UG_tABC</to>
+				<power_in>+117514 W</power_in>
+				<power_out>+117459 W</power_out>
+				<phases>ABCN</phases>
+				<nominal_voltage>+7200 V</nominal_voltage>
+			</underground_line>
+		</underground_line_list>
+		<overhead_line_conductor_list>
+		</overhead_line_conductor_list>
+		<underground_line_conductor_list>
+			<underground_line_conductor>
+				<id>2</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(underground_line_conductor:2)</name>
+				<outer_diameter>+1.29 in</outer_diameter>
+				<conductor_gmr>+0.0171 ft</conductor_gmr>
+				<conductor_diameter>+0.567 in</conductor_diameter>
+				<conductor_resistance>+0.41 Ohm/mile</conductor_resistance>
+				<neutral_gmr>+0.00208 ft</neutral_gmr>
+				<neutral_diameter>+0.0641 in</neutral_diameter>
+				<neutral_resistance>+14.8722 Ohm/mile</neutral_resistance>
+				<neutral_strands>13</neutral_strands>
+				<shield_gmr>+0 ft</shield_gmr>
+				<shield_resistance>+0 Ohm/mile</shield_resistance>
+				<rating.summer.continuous>+1000 A</rating.summer.continuous>
+				<rating.summer.emergency>+2000 A</rating.summer.emergency>
+				<rating.winter.continuous>+1000 A</rating.winter.continuous>
+				<rating.winter.emergency>+2000 A</rating.winter.emergency>
+			</underground_line_conductor>
+			<underground_line_conductor>
+				<id>3</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(underground_line_conductor:3)</name>
+				<outer_diameter>+1.29 in</outer_diameter>
+				<conductor_gmr>+0.0171 ft</conductor_gmr>
+				<conductor_diameter>+0.567 in</conductor_diameter>
+				<conductor_resistance>+0.41 Ohm/mile</conductor_resistance>
+				<neutral_gmr>+0.00208 ft</neutral_gmr>
+				<neutral_diameter>+0.0641 in</neutral_diameter>
+				<neutral_resistance>+14.8722 Ohm/mile</neutral_resistance>
+				<neutral_strands>13</neutral_strands>
+				<shield_gmr>+0 ft</shield_gmr>
+				<shield_resistance>+0 Ohm/mile</shield_resistance>
+				<rating.summer.continuous>+1000 A</rating.summer.continuous>
+				<rating.summer.emergency>+2000 A</rating.summer.emergency>
+				<rating.winter.continuous>+1000 A</rating.winter.continuous>
+				<rating.winter.emergency>+2000 A</rating.winter.emergency>
+			</underground_line_conductor>
+			<underground_line_conductor>
+				<id>4</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(underground_line_conductor:4)</name>
+				<outer_diameter>+1.29 in</outer_diameter>
+				<conductor_gmr>+0.0171 ft</conductor_gmr>
+				<conductor_diameter>+0.567 in</conductor_diameter>
+				<conductor_resistance>+0.41 Ohm/mile</conductor_resistance>
+				<neutral_gmr>+0.00208 ft</neutral_gmr>
+				<neutral_diameter>+0.0641 in</neutral_diameter>
+				<neutral_resistance>+14.8722 Ohm/mile</neutral_resistance>
+				<neutral_strands>13</neutral_strands>
+				<shield_gmr>+0 ft</shield_gmr>
+				<shield_resistance>+0 Ohm/mile</shield_resistance>
+				<rating.summer.continuous>+1000 A</rating.summer.continuous>
+				<rating.summer.emergency>+2000 A</rating.summer.emergency>
+				<rating.winter.continuous>+1000 A</rating.winter.continuous>
+				<rating.winter.emergency>+2000 A</rating.winter.emergency>
+			</underground_line_conductor>
+			<underground_line_conductor>
+				<id>5</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(underground_line_conductor:5)</name>
+				<outer_diameter>+1.29 in</outer_diameter>
+				<conductor_gmr>+0.0171 ft</conductor_gmr>
+				<conductor_diameter>+0.567 in</conductor_diameter>
+				<conductor_resistance>+0.41 Ohm/mile</conductor_resistance>
+				<neutral_gmr>+0.00208 ft</neutral_gmr>
+				<neutral_diameter>+0.0641 in</neutral_diameter>
+				<neutral_resistance>+14.8722 Ohm/mile</neutral_resistance>
+				<neutral_strands>13</neutral_strands>
+				<shield_gmr>+0 ft</shield_gmr>
+				<shield_resistance>+0 Ohm/mile</shield_resistance>
+				<rating.summer.continuous>+1000 A</rating.summer.continuous>
+				<rating.summer.emergency>+2000 A</rating.summer.emergency>
+				<rating.winter.continuous>+1000 A</rating.winter.continuous>
+				<rating.winter.emergency>+2000 A</rating.winter.emergency>
+			</underground_line_conductor>
+		</underground_line_conductor_list>
+		<line_configuration_list>
+			<line_configuration>
+				<id>1</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(line_configuration:1)</name>
+				<conductor_A>underground_line_conductor:2</conductor_A>
+				<conductor_B>underground_line_conductor:3</conductor_B>
+				<conductor_C>underground_line_conductor:4</conductor_C>
+				<conductor_N>underground_line_conductor:5</conductor_N>
+				<spacing>line_spacing:6</spacing>
+			</line_configuration>
+		</line_configuration_list>
+		<relay_list>
+			<inherits_from>link</inherits_from>
+		</relay_list>
+		<transformer_configuration_list>
+		</transformer_configuration_list>
+		<transformer_list>
+			<inherits_from>link</inherits_from>
+		</transformer_list>
+		<load_list>
+			<inherits_from>node</inherits_from>
+			<load>
+				<id>8</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>underground_line:0</parent>
+				<clock>2000-01-01 00:00:00 EST</clock>
+				<name>UG_tABC</name>
+				<load_class>U</load_class>
+				<constant_power_A>+1000+2000j W</constant_power_A>
+				<constant_power_B>+1000+2000j W</constant_power_B>
+				<constant_power_C>+1000+2000j W</constant_power_C>
+				<constant_current_A>+1+0j A</constant_current_A>
+				<constant_current_B>-0.5-0.866j A</constant_current_B>
+				<constant_current_C>-0.5+0.866j A</constant_current_C>
+				<constant_impedance_A>+1500+750j Ohm</constant_impedance_A>
+				<constant_impedance_B>+1500+750j Ohm</constant_impedance_B>
+				<constant_impedance_C>+1500+750j Ohm</constant_impedance_C>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+7.2e-005 V</maximum_voltage_error>
+				<voltage_A>+7196.43-0.847561j V</voltage_A>
+				<voltage_B>-3599.13-6232.26j V</voltage_B>
+				<voltage_C>-3597.21+6233.21j V</voltage_C>
+				<voltage_AB>+10795.6+6231.41j V</voltage_AB>
+				<voltage_BC>-1.91942-12465.5j V</voltage_BC>
+				<voltage_CA>-10793.6+6234.06j V</voltage_CA>
+				<current_A>+1+0j A</current_A>
+				<current_B>-0.5-0.866j A</current_B>
+				<current_C>-0.5+0.866j A</current_C>
+				<power_A>+1000+2000j W</power_A>
+				<power_B>+1000+2000j W</power_B>
+				<power_C>+1000+2000j W</power_C>
+				<shunt_A>+0.000533333-0.000266667j S</shunt_A>
+				<shunt_B>+0.000533333-0.000266667j S</shunt_B>
+				<shunt_C>+0.000533333-0.000266667j S</shunt_C>
+				<phases>ABCN</phases>
+				<nominal_voltage>+7200 V</nominal_voltage>
+			</load>
+		</load_list>
+		<regulator_configuration_list>
+		</regulator_configuration_list>
+		<regulator_list>
+			<inherits_from>link</inherits_from>
+		</regulator_list>
+		<triplex_node_list>
+			<inherits_from>powerflow_object</inherits_from>
+		</triplex_node_list>
+		<triplex_meter_list>
+			<inherits_from>triplex_node</inherits_from>
+		</triplex_meter_list>
+		<triplex_line_list>
+			<inherits_from>line</inherits_from>
+		</triplex_line_list>
+		<triplex_line_configuration_list>
+		</triplex_line_configuration_list>
+		<triplex_line_conductor_list>
+		</triplex_line_conductor_list>
+		<switch_list>
+			<inherits_from>link</inherits_from>
+		</switch_list>
+		<substation_list>
+			<inherits_from>node</inherits_from>
+		</substation_list>
+	</powerflow>
+</gridlabd>
