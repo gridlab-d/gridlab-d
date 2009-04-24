@@ -1065,158 +1065,162 @@
 			Name="Runtime Files"
 			>
 			<File
-				RelativePath="..\core\rt\gridlabd.conf"
+				RelativePath=".\rt\debugger.conf"
 				>
 			</File>
 			<File
-				RelativePath="..\core\rt\gridlabd.h"
+				RelativePath=".\rt\gnuplot.conf"
 				>
 			</File>
 			<File
-				RelativePath="..\core\rt\msvc_debugger.glm"
+				RelativePath=".\rt\gridlabd.conf"
+				>
+			</File>
+			<File
+				RelativePath=".\rt\gridlabd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\rt\mingw.conf"
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\core\debugger.conf"
+		<Filter
+			Name="Support Files"
 			>
-		</File>
-		<File
-			RelativePath="..\core\gridlabd.conf"
-			>
-		</File>
-		<File
-			RelativePath=".\rt\gridlabd.syn"
-			>
-		</File>
-		<File
-			RelativePath="..\core\tzinfo.txt"
-			>
-			<FileConfiguration
-				Name="Debug|Win32"
+			<File
+				RelativePath=".\rt\gridlabd.syn"
 				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying $(InputPath)"
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|x64"
+			</File>
+			<File
+				RelativePath="..\core\tzinfo.txt"
 				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying runtime file."
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release|Win32"
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying $(InputPath)"
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying runtime file."
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying runtime file."
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying runtime file."
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="QuickDebug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying runtime file."
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="QuickDebug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying runtime file."
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\core\unitfile.txt"
 				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying runtime file."
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying runtime file."
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="QuickDebug|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying runtime file."
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="QuickDebug|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying runtime file."
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="..\core\unitfile.txt"
-			>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying $(InputPath)"
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying runtime file"
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying runtime file"
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying runtime file"
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="QuickDebug|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying runtime file"
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="QuickDebug|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Copying runtime file"
-					CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-					Outputs="$(OutDir)\$(InputFileName)"
-				/>
-			</FileConfiguration>
-		</File>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying $(InputPath)"
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying runtime file"
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying runtime file"
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying runtime file"
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="QuickDebug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying runtime file"
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="QuickDebug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Copying runtime file"
+						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+						Outputs="$(OutDir)\$(InputFileName)"
+					/>
+				</FileConfiguration>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

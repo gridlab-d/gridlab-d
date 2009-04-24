@@ -4052,6 +4052,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 	if (FSTAT(fileno(fp),&stat)==0)
 	{
 		modtime = stat.st_mtime;
+		fsize = stat.st_size;
 		buffer = malloc(BUFFERSIZE); /* lots of space */
 	}
 	output_verbose("file '%s' is %d bytes long", file,fsize);
