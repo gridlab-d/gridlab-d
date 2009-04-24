@@ -38,7 +38,7 @@
 /** This function builds an collection of objects into an aggregation.  
 	The aggregation can be run using aggregate_value(AGGREGATION*)
  **/
-AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,std,sum,prod,mbe,mean,var,kur,count,gamma) */
+AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,std,sum,prod,mbe,mean,var,skew,kur,count,gamma) */
 							   char *group_expression) /**< grouping rule; see find_mkpgm(char *)*/
 {
 	AGGREGATOR op = AGGR_NOP;
@@ -80,6 +80,7 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 	else if (stricmp(aggrop,"mbe")==0) op=AGGR_MBE;
 	else if (stricmp(aggrop,"mean")==0) op=AGGR_MEAN;
 	else if (stricmp(aggrop,"var")==0) op=AGGR_VAR;
+	else if (stricmp(aggrop,"skew")==0) op=AGGR_SKEW;
 	else if (stricmp(aggrop,"kur")==0) op=AGGR_KUR;
 	else if (stricmp(aggrop,"count")==0) op=AGGR_COUNT;
 	else if (stricmp(aggrop,"gamma")==0) op=AGGR_GAMMA;
@@ -244,7 +245,7 @@ double arg(complex *x)
 double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 {
 	OBJECT *obj;
-	double numerator=0, denominator=0, secondary=0;
+	double numerator=0, denominator=0, secondary=0, third=0, fourth=0;
 	double scale = (aggr->punit ? aggr->scale : 1.0);
 
 	/* non-constant groups need search program rerun */
@@ -295,6 +296,10 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 				denominator=1;
 				break;
 			case AGGR_MBE:
+				denominator++;
+				numerator += value;
+				secondary += (value-secondary)/denominator;
+				break;
 			case AGGR_AVG:
 			case AGGR_MEAN:
 				numerator+=value;
@@ -317,11 +322,15 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 			case AGGR_STD:
 			case AGGR_VAR:
 				denominator++;
-				numerator += value;
-				secondary += value*value;
+				// note this uses a compensated on-line algorithm (see Knuth 1998)
+				// it's better than the obvious method because it doesn't suffer from numerical instability when mean(x)-x is near zero
+				{	double delta = value-secondary;
+					secondary += delta/denominator;
+					numerator += delta*(value-secondary);
+				}
 				break;
+			case AGGR_SKEW:
 			case AGGR_KUR:
-				/* not yet supported (see below for todos) */
 			default:
 				break;
 			}
@@ -332,18 +341,12 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 	case AGGR_GAMMA:
 		return 1 + numerator/(denominator-numerator*log(secondary));
 	case AGGR_STD:
-		return sqrt((secondary - numerator*numerator/denominator)/(denominator-1)) * scale;
-	case AGGR_VAR:
-		return (secondary - numerator*numerator/denominator) / (denominator-1) * scale;
+		return sqrt(numerator/(denominator-1)) * scale;
 	case AGGR_MBE:
-		/** @todo the MBE should be done without a secondary loop (e.g., compute the mean from sum/count already collected) */
-		v = 0.0;
-		m = numerator/denominator;
-		for (obj=find_first(aggr->last); obj!=NULL; obj=find_next(aggr->last,obj)){
-			t = *(object_get_double(obj,aggr->pinfo)) - m;
-			v += ((t > 0) ? t : -t);
-		}
-		return v/denominator;
+		return numerator/denominator - secondary;
+	case AGGR_SKEW:
+		/** @todo implement skewness aggregate (no ticket) */
+		throw_exception("skewness aggregation is not implemented");
 	case AGGR_KUR:
 		/** @todo implement kurtosis aggregate (no ticket) */
 		throw_exception("kurtosis aggregation is not implemented");
