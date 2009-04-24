@@ -322,12 +322,12 @@ typedef int64 TIMESTAMP;
 #define MINYEAR 1970
 #define MAXYEAR 2969
 
-#define gl_timestamp(T) ((TIMESTAMP)(T)*TS_TPS)
-#define gl_seconds(T) ((double)(T)/(double)TS_TPS)
-#define gl_minutes(X) (gl_seconds(T)/60.0)
-#define gl_hours(X) (gl_minutes(T)/60.0)
-#define gl_days(X) {gl_hours(T)/24.0)
-#define gl_weeks(X) (gl_days(T)/7.0)
+inline TIMESTAMP gl_timestamp(double t) { return (TIMESTAMP)(t*TS_TPS);}
+inline double gl_seconds(TIMESTAMP t) { return (double)t/(double)TS_TPS;}
+inline double gl_minutes(TIMESTAMP t) { return (double)t/(double)(TS_TPS*60);}
+inline double gl_hours(TIMESTAMP t) { return (double)t/(double)(TS_TPS*60*60);}
+inline double gl_days(TIMESTAMP t) { return (double)t/(double)(TS_TPS*60*60*24);}
+inline double gl_weeks(TIMESTAMP t) { return (double)t/(double)(TS_TPS*60*60*24*7);}
 
 typedef char char1024[1025]; /**< strings up to 1024 characters */
 typedef char char256[257]; /**< strings up to 256 characters */
@@ -642,7 +642,6 @@ typedef struct s_callbacks {
 	void *(*malloc)(size_t);
 	void (*free)(void*);
 	struct s_aggregate *(*create_aggregate)(char *aggregator, char *group_expression);
-	//struct s_aggregate *(*create_aggregate_zwei)(char *aggregator, struct s_aggregate *aggr);
 	double (*run_aggregate)(struct s_aggregate *aggregate);
 	double *(*get_module_var)(MODULE *module, char *varname);
 	int (*depends)(char *name, unsigned char major, unsigned char minor, unsigned short build);
@@ -762,7 +761,7 @@ inline char *gl_global_getvar(char *name) {return callback->global.getvar(name,N
 inline OBJECT *gl_create_object(CLASS *oclass) {return (*callback->create.single)(oclass);};
 inline OBJECT *gl_create_foreign(OBJECT *obj) {return (*callback->create.foreign)(obj);};
 inline int gl_set_parent(OBJECT *obj, OBJECT *parent) { return (*callback->set_parent)(obj,parent);};
-
+inline int gl_set_rank(OBJECT* obj,unsigned int rank) { return (*callback->set_rank)(obj,rank);}; 
 inline void *gl_get_addr(OBJECT *obj, char *name)
 {
 	return callback->properties.get_addr(obj,name);
@@ -785,8 +784,36 @@ inline double gl_random_normal(const double mu, const double sigma) { return cal
 inline double gl_random_lognormal(const double gmu, const double gsigma) { return callback->random.lognormal(gmu,gsigma);};
 inline double gl_random_exponential(const double lambda) { return callback->random.exponential(lambda);};
 inline double gl_random_pareto(const double m, const double k) { return callback->random.pareto(m,k);};
+inline double gl_random_bernoulli(double p) { return callback->random.bernoulli(p);};
+inline double gl_random_sampled(unsigned int n, double *x) { return callback->random.sampled(n,x);};
+inline double gl_random_triangle(double a, double b) { return callback->random.triangle(a,b);};
+inline double gl_random_beta(double a, double b) { return callback->random.beta(a,b);};
+inline double gl_random_gamma(double a) { return callback->random.gamma(a);};
+inline double gl_random_weibull(double a, double b) { return callback->random.weibull(a,b);};
+inline double gl_random_rayleigh(double a) { return callback->random.rayleigh(a);};
 
+inline bool gl_object_isa(OBJECT *obj, char *type) { return callback->object_isa(obj,type)==1;};
 inline DATETIME *gl_localtime(TIMESTAMP ts,DATETIME *dt) { return callback->time.local_datetime(ts,dt)?dt:NULL;};
+inline TIMESTAMP gl_mkdatetime(DATETIME *dt) { return callback->time.mkdatetime(dt);};
+inline TIMESTAMP gl_mkdatetime(short year, short month, short day, short hour=0, short minute=0, short second=0, char *tz=NULL, short usec=0) 
+{ 
+	DATETIME dt;
+	dt.year = year;
+	dt.month = month;
+	dt.day = day;
+	dt.hour = hour;
+	dt.minute = minute;
+	dt.second = second;
+	dt.microsecond = usec;
+	strncpy(dt.tz,tz,sizeof(dt.tz));
+	return callback->time.mkdatetime(&dt);
+};
+
+inline int gl_unit_convert(char *from, char *to, double &value) { return callback->unit_convert(from, to, &value);};
+inline int gl_unit_convert(UNIT *from, UNIT *to, double &value) { return callback->unit_convert_ex(from, to, &value);};
+inline UNIT *gl_unit_find(char *name) { return callback->unit_find(name);};
+inline char *gl_find_file(char *name, char *path, int mode) { return callback->file.find_file(name,path,mode); };
+
 inline char *gl_strftime(DATETIME *dt, char *buffer, int size) { return callback->time.strdatetime(dt,buffer,size)?buffer:NULL;};
 inline char *gl_strftime(TIMESTAMP ts)
 {
@@ -802,3 +829,13 @@ inline void trace(char *fn, OBJECT *obj)
 {
 	callback->output_message("TRACE: %s(%s[%s:%d])", fn, obj->name?obj->name:"<unnamed>", obj->oclass->name,obj->id);
 }
+
+inline void *gl_malloc(size_t size) { return callback->malloc(size);};
+inline void gl_free(void *ptr) { return callback->free(ptr);};
+
+#define gl_find_objects (*callback->find.object)
+inline OBJECT *gl_find_next(struct s_findlist *list,OBJECT *obj) { return callback->find.next(list,obj);};
+inline struct s_findlist *gl_find_copy(struct s_findlist *list) { return callback->find.copy(list);};
+inline void gl_find_add(struct s_findlist *list, OBJECT *obj) { callback->find.add(list,obj);};
+inline void gl_find_del(struct s_findlist *list, OBJECT *obj) { callback->find.del(list,obj);};
+inline void gl_find_clear(struct s_findlist *list) { callback->find.clear(list);};
