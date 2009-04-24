@@ -3962,7 +3962,7 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %sprint missing expression",filename,linenum,MACRO);
+			output_message("%s(%d): %sprint missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -3991,13 +3991,13 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		}
 		if (sscanf(term+1,"%[^\n]",value)==1)
 		{
-			output_error("%s(%d): %s", filename, linenum, value);
+			output_message("%s(%d): %s", filename, linenum, value);
 			strcpy(line,"\n");
 			return FALSE;
 		}
 		else
 		{
-			output_message("%s(%d): %serror missing expression",filename,linenum,MACRO);
+			output_message("%s(%d): %serror missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4008,13 +4008,13 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %swarning missing expression",filename,linenum,MACRO);
+			output_message("%s(%d): %swarning missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
 		if (sscanf(term+1,"%[^\n]",value)==1)
 		{
-			output_warning("%s(%d): %s", filename, linenum, value);
+			output_message("%s(%d): %s", filename, linenum, value);
 			strcpy(line,"\n");
 			return FALSE;
 		}
