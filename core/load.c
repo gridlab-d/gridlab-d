@@ -1827,6 +1827,8 @@ static int expanded_value(char *text, char *result, int size, char *delims)
 					object_namespace(value,sizeof(value));
 				else if (strcmp(varname,"class")==0)
 					strcpy(value,current_object?current_object->oclass->name:"");
+				else if (strcmp(varname,"gridlabd")==0)
+					strcpy(value,global_execdir);
 				else if (strcmp(varname,"id")==0)
 				{
 					if (current_object)
@@ -3991,7 +3993,7 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		}
 		if (sscanf(term+1,"%[^\n]",value)==1)
 		{
-			output_message("%s(%d): %s", filename, linenum, value);
+			output_message("%s(%d): ERROR - %s", filename, linenum, value);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4014,9 +4016,9 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		}
 		if (sscanf(term+1,"%[^\n]",value)==1)
 		{
-			output_message("%s(%d): %s", filename, linenum, value);
+			output_message("%s(%d): WARNING - %s", filename, linenum, value);
 			strcpy(line,"\n");
-			return FALSE;
+			return TRUE;
 		}
 		else
 		{

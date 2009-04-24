@@ -2,15 +2,9 @@
 // Copyright (C) 2008 Battelle Memorial Institute
 // This example was original conceived by Matt Hauer
 // and implemented as a runtime class by David Chassin
-//
-
-#setenv path=c:\mingw\bin
-#set include="c:\projects\gridlab-d\trunk\core"
-//#set debug=1
-
-//#include "msvc_debugger.glm"
-
-// METRONOME
+// 
+// By default this requires that -D include=<gridlabd folder> 
+// be given on command line so that rt/gridlabd.h can be found/
 
 class metronome {
 	enumeration {TIC=0, TOC=1} sound;
