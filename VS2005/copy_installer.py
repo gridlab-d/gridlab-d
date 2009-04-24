@@ -12,7 +12,9 @@ else:
 	print "Too few arguments"
 
 (y,m,d) = time.localtime()[:3]
-y = str(y)[2:]
-installer_name = installer_prefix + "_%02d%02d%s"%(m,d,y)
+#y = str(y)[2:]
+#installer_name = installer_prefix + "_%02d%02d%s"%(m,d,y)
+
+installer_name = installer_prefix + "-%4d_%02d_%02d-nightly"%(y,m,d)
 
 subprocess.call(["copy","Win32\\Release\\"+installer_name+".exe" ,to_dir],shell=True) 
