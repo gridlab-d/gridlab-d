@@ -294,7 +294,7 @@ int class_string_to_property(PROPERTY *prop, /**< the type of the property at th
 		output_error("unable to convert to delegated property value");
 		/*	TROUBLESHOOT
 			Property delegation is not yet fully implemented, so you should never get this error.
-			If you do, there is a problem with the system that is causing to become unstable.
+			If you do, there is a problem with the system that is causing it to become unstable.
 		 */
 		return 0;
 	}
@@ -318,7 +318,7 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 		output_error("unable to convert from delegated property value");
 		/*	TROUBLESHOOT
 			Property delegation is not yet fully implemented, so you should never get this error.
-			If you do, there is a problem with the system that is causing to become unstable.
+			If you do, there is a problem with the system that is causing it to become unstable.
 		 */
 		return 0;
 	}
@@ -600,18 +600,39 @@ int class_define_map(CLASS *oclass, /**< the object class */
 							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT) 
 							&& no_override&PC_PRETOPDOWN)
 						output_warning("class_map_define(oclass='%s',...): class '%s' suppresses parent class '%s' PRETOPDOWN sync behavior by omitting override", oclass->name, oclass->name, oclass->parent->name);
+						/*	TROUBLESHOOT
+							A class is suppressing the <i>presync</i> event implemented by its parent 
+							even though the parent is published with a flag that indicates this is unsafe.  Presumably
+							this is deliberate, but the warning is given just in case it's not intended.
+						 */
 					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT 
 							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT) 
 							&& no_override&PC_BOTTOMUP)
 						output_warning("class_map_define(oclass='%s',...): class '%s' suppresses parent class '%s' BOTTOMUP sync behavior by omitting override", oclass->name, oclass->name, oclass->parent->name);
+						/*	TROUBLESHOOT
+							A class is suppressing the <i>sync</i> event implemented by its parent 
+							even though the parent is published with a flag that indicates this is unsafe.  Presumably
+							this is deliberate, but the warning is given just in case it's not intended.
+						 */
 					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT 
 							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT) 
 							&& no_override&PC_POSTTOPDOWN)
 						output_warning("class_map_define(oclass='%s',...): class '%s' suppresses parent class '%s' POSTTOPDOWN sync behavior by omitting override", oclass->name, oclass->name, oclass->parent->name);
+						/*	TROUBLESHOOT
+							A class is suppressing the <i>postsync</i> event implemented by its parent 
+							even though the parent is published with a flag that indicates this is unsafe.  Presumably
+							this is deliberate, but the warning is given just in case it's not intended.
+						 */
 					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT 
 							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT) 
 							&& no_override&PC_UNSAFE_OVERRIDE_OMIT)
 						output_warning("class_map_define(oclass='%s',...): class '%s' does not assert UNSAFE_OVERRIDE_OMIT when parent class '%s' does", oclass->name, oclass->name, oclass->parent->name);
+						/*	TROUBLESHOOT
+							A class is not asserting that it is unsafe to suppress synchronization behavior
+							but its parent does assert that this is unsafe.  This permits stealth omission
+							by any classes that inherits behavior from this class and the warning is given
+							in case this is not intended.
+						 */
 					count++;
 				}
 			}
@@ -762,33 +783,48 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			}
 			if (strcmp(name,"parent")==0){
 				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				/*	TROUBLESHOOT
+					A class is attempting to publish a variable with a name normally reserved for object headers.  
+					This is not allowed.  If the class is implemented in a module, this is problem with the module.
+					If the class is declared in a GLM file, you must correct the problem to avoid unpredictable
+					simulation behavior.
+				 */
 				//goto Error;
 			} else if (strcmp(name,"rank")==0) {
 				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				/* no need to repeat troubleshoot message */
 				//goto Error;
 			} else if (strcmp(name,"clock")==0) {
 				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				/* no need to repeat troubleshoot message */
 				//goto Error;
 			} else if (strcmp(name,"valid_to")==0) {
 				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				/* no need to repeat troubleshoot message */
 				//goto Error;
 			} else if (strcmp(name,"latitude")==0) {
 				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				/* no need to repeat troubleshoot message */
 				//goto Error;
 			} else if (strcmp(name,"longitude")==0) {
 				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				/* no need to repeat troubleshoot message */
 				//goto Error;
-			} else if (strcmp(name,"in")==0) {
+			} else if (strcmp(name,"in_svc")==0) {
 				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				/* no need to repeat troubleshoot message */
 				//goto Error;
-			} else if (strcmp(name,"out")==0) {
+			} else if (strcmp(name,"out_svc")==0) {
 				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				/* no need to repeat troubleshoot message */
 				//goto Error;
 			} else if (strcmp(name,"name")==0) {
 				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				/* no need to repeat troubleshoot message */
 				//goto Error;
 			} else if (strcmp(name,"flags")==0) {
 				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				/* no need to repeat troubleshoot message */
 				//goto Error;
 			}
 			prop = (PROPERTY*)malloc(sizeof(PROPERTY));
@@ -847,6 +883,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			/* check for already existing property by same name */
 			if (class_find_property(oclass,prop->name))
 				output_warning("class_map_define(oclass='%s',...): property name '%s' is defined more than once", oclass->name, prop->name);
+				/*	TROUBLESHOOT
+					A class is attempting to publish a variable more than once.  
+					This is caused by an repeated specification for a variable publication (in C++) or declaration (in GLM).
+				 */
 
 			/* attach to property list */
 			class_add_property(oclass,prop);
