@@ -71,7 +71,8 @@ BEGIN {
 
 
 END {
-        print "This troubleshooting guide lists all the error and warning messages from GridLAB-D.  Simply search for you message and following the recommendations given"
+        print "This troubleshooting guide lists all the errors and warning messages from GridLAB-D.  Simply search for you message and following the recommendations given."
+	print "<CITE>Last updated $(date)</CITE>."
         for (group in output) {
                 print "<H1>" group "</H1>\n<DL>" output[group] "</DL>";
         }
