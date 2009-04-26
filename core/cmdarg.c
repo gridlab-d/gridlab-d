@@ -257,7 +257,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 					if(oclass == NULL){
 						output_fatal("Unable to find class \'%s\' in module \'%s\'", cname, argv[0]);
 						/*	TROUBLESHOOT
-							The --modhelp parameter was found on the command line, but
+							The <b>--modhelp</b> parameter was found on the command line, but
 							if was followed by a class specification that isn't valid.
 							Verify that the class exists in the module you specified.
 						*/
@@ -267,9 +267,9 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				if(mod == NULL){
 					output_fatal("module %s is not found",*argv);
 					/*	TROUBLESHOOT
-						The --modhelp parameter was found on the command line, but
+						The <b>--modhelp</b> parameter was found on the command line, but
 						if was followed by a module specification that isn't valid.
-						Verify that the module exists in GridLAB-D's lib folder.
+						Verify that the module exists in GridLAB-D's <b>lib</b> folder.
 					*/
 					return FAILED;
 				}
@@ -295,7 +295,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				if (mod==NULL)
 					output_fatal("module %s is not found",argv[1]);
 					/*	TROUBLESHOOT
-						The --modtest parameter was found on the command line, but
+						The <b>--modtest</b> parameter was found on the command line, but
 						if was followed by a module specification that isn't valid.
 						Verify that the module exists in GridLAB-D's <b>lib</b> folder.
 					*/
@@ -305,7 +305,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 					if (mod->test==NULL)
 						output_fatal("module %s does not implement a test routine", argv[0]);
 						/*	TROUBLESHOOT
-							The --modtest parameter was found on the command line, but
+							The <b>--modtest</b> parameter was found on the command line, but
 							if was followed by a specification for a module that doesn't
 							implement any test procedures.  See the <b>--libinfo</b> command
 							line parameter for information on which procedures the
@@ -323,7 +323,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			{
 				output_fatal("definition is missing");
 				/*	TROUBLESHOOT
-					The --modtest parameter was found on the command line, but
+					The <b>--modtest</b> parameter was found on the command line, but
 					if was not followed by a module specification.  The correct
 					syntax is <b>gridlabd --modtest <i>module_name</i></b>.
 				*/
@@ -345,7 +345,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			{
 				output_fatal("test module name is missing");
 				/*	TROUBLESHOOT
-					The --test parameter was found on the command line, but
+					The <b>--test</b> parameter was found on the command line, but
 					if was not followed by a module specification that is valid.
 					The correct syntax is <b>gridlabd --test <i>module_name</i></b>.
 				*/
@@ -368,7 +368,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			{
 				output_fatal("definition is missing");
 				/* TROUBLESHOOT
-					The -D or --define command line parameters was given, but
+					The <b>-D</b> or <b>--define</b> command line parameters was given, but
 					it was not followed by a variable definition.  The correct syntax
 					<b>-D </i>variable</i>=<i>value</i></b> or
 					<b>--define </i>variable</i>=<i>value</i></b>
@@ -437,7 +437,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				/*	TROUBLESHOOT
 					A <b>--redirect</b> directive on the command line is missing
 					its redirection specification.  The correct syntax is
-					<b>--redirect <i>stream</i>[:<i>destination</i>].
+					<b>--redirect <i>stream</i>[:<i>destination</i>]</b>.
 				 */
 				return FAILED;
 			}
@@ -452,6 +452,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			else
 			{
 				output_fatal("missing library name");
+				/*	TROUBLESHOOT
+					The <b>-L</b> or <b>--libinfo</b> command line directive
+					was not followed by a module name.  The correct syntax is
+					<b>-L <i>module_name</i></b> or <b>--libinfo <i>module_name</i></b>.
+				 */
 				return FAILED;
 			}
 		}
@@ -462,6 +467,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			else
 			{
 				output_fatal("missing thread count");
+				/*	TROUBLESHOOT
+					The <b>-T</b> or <b>--threadcount</b> command line directive
+					was not followed by a valid number.  The correct syntax is
+					<b>-T <i>number</i></b> or <b>--threadcount <i>number</i></b>.
+				 */
 				return FAILED;
 			}
 		}
@@ -472,6 +482,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			else
 			{
 				output_fatal("missing output file");
+				/* TROUBLESHOOT
+					The <b>-o</b> or <b>--output</b> command line directive
+					was not followed by a valid filename.  The correct syntax is
+					<b>-o <i>file</i></b> or <b>--output <i>file</i></b>.
+				 */
 				return FAILED;
 			}
 		}
@@ -482,6 +497,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			else
 			{
 				output_fatal("environment not specified");
+				/*	TROUBLESHOOT
+					The <b>-e</b> or <b>--environment</b> command line directive
+					was not followed by a valid environment specification.  The
+					correct syntax is <b>-e <i>keyword</i></b> or <b>--environment <i>keyword</i></b>.
+				 */
 				return FAILED;
 			}
 		}
@@ -495,6 +515,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			else
 			{
 				output_fatal("xml encoding not specified");
+				/*	TROUBLESHOOT
+					The <b>--xmlencoding</b> command line directive
+					was not followed by a encoding specification.  The
+					correct syntax is <b>--xmlencoding <i>keyword</i></b>.
+				 */
 				return FAILED;
 			}
 		}
@@ -537,6 +562,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			else
 			{
 				output_fatal("module list not specified");
+				/*	TROUBLESHOOT
+					The <b>--xsl</b> command line directive
+					was not followed by a validlist of modules.  The
+					correct syntax is <b>--xsl <i>module1</i>[,<i>module2</i>[,...]]</b>.
+				 */
 				return FAILED;
 			}
 		}
