@@ -132,6 +132,12 @@ STATUS original_test_start(int argc, char *argv[])
 	if (node==NULL)
 	{
 		output_fatal("network module does not implement class node");
+		/*	TROUBLESHOOT
+			The <b>network</b> module test can't find the <b>node</b>
+			class definition.  This is probably caused by either
+			an internal system error or a version of the network module
+			that doesn't implement node object as expected (or at all).
+		 */
 		return FAILED;
 	}
 	output_verbose("class node implementation loaded ok");
@@ -140,6 +146,12 @@ STATUS original_test_start(int argc, char *argv[])
 	if (node==NULL || link==NULL)
 	{
 		output_fatal("network module does not implement class link");
+		/*	TROUBLESHOOT
+			The <b>network</b> module test can't find the <b>link</b>
+			class definition.  This is probably caused by either
+			an internal system error or a version of the network module
+			that doesn't implement link object as expected (or at all).
+		 */
 		return FAILED;
 	}
 	output_verbose("class link implementation loaded ok");
@@ -159,18 +171,36 @@ STATUS original_test_start(int argc, char *argv[])
 	if (player==NULL)
 	{
 		output_fatal("tape module does not implement class player");
+		/*	TROUBLESHOOT
+			The <b>tape</b> module test can't find the <b>player</b>
+			class definition.  This is probably caused by either
+			an internal system error or a version of the tape module
+			that doesn't implement player object as expected (or at all).
+		 */
 		return FAILED;
 	}
 	recorder = class_get_class_from_classname("recorder");
 	if (recorder==NULL)
 	{
 		output_fatal("tape module does not implement class recorder");
+		/*	TROUBLESHOOT
+			The <b>tape</b> module test can't find the <b>recorder</b>
+			class definition.  This is probably caused by either
+			an internal system error or a version of the tape module
+			that doesn't implement recorder object as expected (or at all).
+		 */
 		return FAILED;
 	}
 	collector = class_get_class_from_classname("collector");
 	if (collector==NULL)
 	{
 		output_fatal("tape module does not implement class collector");
+		/*	TROUBLESHOOT
+			The <b>tape</b> module test can't find the <b>collector</b>
+			class definition.  This is probably caused by either
+			an internal system error or a version of the tape module
+			that doesn't implement collector object as expected (or at all).
+		 */
 		return FAILED;
 	}
 
@@ -181,6 +211,12 @@ STATUS original_test_start(int argc, char *argv[])
 	if ((*player->create)(&obj[3],object_get_first())==FAILED)
 	{
 		output_fatal("player creation failed");
+		/*	TROUBLESHOOT
+			The <b>tape</b> module test can't create a <b>player</b>
+			object.  This is probably caused by either
+			an internal system error or a version of the tape module
+			that doesn't implement player object as expected (or at all).
+		 */
 		return FAILED;
 	}
 	object_set_value_by_name(obj[3],"loop","3600"); /* 18000 is about 12y at 1h steps */
@@ -190,6 +226,12 @@ STATUS original_test_start(int argc, char *argv[])
 	if ((*recorder->create)(&obj[4],object_get_first())==FAILED)
 	{
 		output_fatal("recorder creation failed");
+		/*	TROUBLESHOOT
+			The <b>tape</b> module test can't create a <b>recorder</b>
+			object.  This is probably caused by either
+			an internal system error or a version of the tape module
+			that doesn't implement recorder object as expected (or at all).
+		 */
 		return FAILED;
 	}
 	object_set_value_by_name(obj[4],"property","V,S");
@@ -200,6 +242,12 @@ STATUS original_test_start(int argc, char *argv[])
 	if ((*collector->create)(&obj[5],NULL)==FAILED)
 	{
 		output_fatal("collector creation failed");
+		/*	TROUBLESHOOT
+			The <b>tape</b> module test can't create a <b>collector</b>
+			object.  This is probably caused by either
+			an internal system error or a version of the tape module
+			that doesn't implement collector object as expected (or at all).
+		 */
 		return FAILED;
 	}
 	object_set_value_by_name(obj[5],"property","count(V.mag),min(V.mag),avg(V.mag),std(V.mag),max(V.mag),min(V.ang),avg(V.ang),std(V.ang),max(V.ang)");

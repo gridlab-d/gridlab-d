@@ -152,6 +152,13 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 		n = (daysinmonth[dt->month] + (dt->month==1 && ISLEAPYEAR(dt->year) ? 1:0)) * 86400 * TS_SECOND;
 		if(n < 86400 * 28){ /**/
 			output_fatal("Breaking an infinite loop in local_datetime! (ts = %"FMT_INT64"ds", ts);
+			/*	TROUBLESHOOT
+				An internal protection against infinite loops in the time calculation 
+				module has encountered a critical problem.  This is often caused by
+				an incorrectly initialized timezone system, a missing timezone specification before
+				a timestamp was used, or a missing timezone localization in your system.
+				Correct the timezone problem and try again.
+			 */
 			return 0;
 		}
 	}

@@ -120,7 +120,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 				A self-test procedure failed and the system stopped.
 				Check the output of the test stream and correct the 
 				indicated problem.  If the test stream is not redirected
-				so as to save the output, try using the <b>--redirect<b>
+				so as to save the output, try using the <b>--redirect</b>
 				command line option.
 			 */
 			exit(3);
