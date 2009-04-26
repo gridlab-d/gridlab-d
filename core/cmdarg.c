@@ -70,7 +70,8 @@ STATUS load_module_list(FILE *fd,int* test_mod_num)
 		if (global_setvar(mod_test)!=SUCCESS)
 		{
 			output_fatal("Unable to store module name");
-			/*	This error is caused by a failure to set up a module test, which
+			/*	TROUBLESHOOT
+				This error is caused by a failure to set up a module test, which
 				requires that the name module being tested be stored in a global
 				variable called mod_test<num>.  The root cause will be identified
 				by determining what error in the global_setvar call occurred.
@@ -216,6 +217,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				fd = fopen(*argv,"r");
 			else {
 				output_fatal("no filename for testall");
+				/*	TROUBLESHOOT
+					The --testall parameter was found on the command line, but
+					if was not followed by a filename containing the test
+					description file.
+				*/
 				return FAILED;
 			}
 			argc--;
@@ -224,6 +230,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			if(fd == NULL)
 			{
 				output_fatal("incorrect module list file name");
+				/*	TROUBLESHOOT
+					The --testall parameter was found on the command line, but
+					if was not followed by a valid filename containing the test
+					description file.
+				*/
 				return FAILED;
 			}
 			if(load_module_list(fd,&test_mod_num) == FAILED)
@@ -245,11 +256,21 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 					oclass = class_get_class_from_classname(cname);
 					if(oclass == NULL){
 						output_fatal("Unable to find class \'%s\' in module \'%s\'", cname, argv[0]);
+						/*	TROUBLESHOOT
+							The --modhelp parameter was found on the command line, but
+							if was followed by a class specification that isn't valid.
+							Verify that the class exists in the module you specified.
+						*/
 						return FAILED;
 					}
 				}
 				if(mod == NULL){
 					output_fatal("module %s is not found",*argv);
+					/*	TROUBLESHOOT
+						The --modhelp parameter was found on the command line, but
+						if was followed by a module specification that isn't valid.
+						Verify that the module exists in GridLAB-D's lib folder.
+					*/
 					return FAILED;
 				}
 				if(oclass != NULL)
@@ -273,11 +294,23 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				MODULE *mod = module_load(argv[1],0,NULL);
 				if (mod==NULL)
 					output_fatal("module %s is not found",argv[1]);
+					/*	TROUBLESHOOT
+						The --modtest parameter was found on the command line, but
+						if was followed by a module specification that isn't valid.
+						Verify that the module exists in GridLAB-D's <b>lib</b> folder.
+					*/
 				else 
 				{
 					argv++;argc--;
 					if (mod->test==NULL)
 						output_fatal("module %s does not implement a test routine", argv[0]);
+						/*	TROUBLESHOOT
+							The --modtest parameter was found on the command line, but
+							if was followed by a specification for a module that doesn't
+							implement any test procedures.  See the <b>--libinfo</b> command
+							line parameter for information on which procedures the
+							module supports.
+						*/
 					else
 					{
 						output_test("*** modtest of %s beginning ***", argv[0]);
@@ -289,6 +322,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			else
 			{
 				output_fatal("definition is missing");
+				/*	TROUBLESHOOT
+					The --modtest parameter was found on the command line, but
+					if was not followed by a module specification.  The correct
+					syntax is <b>gridlabd --modtest <i>module_name</i></b>.
+				*/
 				return FAILED;
 			}
 		}
@@ -306,6 +344,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			else
 			{
 				output_fatal("test module name is missing");
+				/*	TROUBLESHOOT
+					The --test parameter was found on the command line, but
+					if was not followed by a module specification that is valid.
+					The correct syntax is <b>gridlabd --test <i>module_name</i></b>.
+				*/
 				return FAILED;
 			}
 
@@ -324,6 +367,12 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			else
 			{
 				output_fatal("definition is missing");
+				/* TROUBLESHOOT
+					The -D or --define command line parameters was given, but
+					it was not followed by a variable definition.  The correct syntax
+					<b>-D </i>variable</i>=<i>value</i></b> or
+					<b>--define </i>variable</i>=<i>value</i></b>
+				 */
 				return FAILED;
 			}
 		}
@@ -344,6 +393,13 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 						output_redirect("progress",NULL)==NULL)
 					{
 						output_fatal("redirection of all failed");
+						/* TROUBLESHOOT
+							An attempt to close all standard stream from the
+							command line using <b>--redirect all</b> has failed.
+							One of the streams cannot be closed.  Try redirecting
+							each stream separately until the problem stream is
+							identified and the correct the problem with that stream.
+						 */
 						return FAILED;
 					}
 				}
@@ -353,18 +409,36 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 					if (output_redirect(buffer,p)==NULL)
 					{
 						output_fatal("redirection of %s to '%s' failed: %s",buffer,p, strerror(errno));
+						/*	TROUBLESHOOT
+							An attempt to redirect a standard stream from the 
+							command line using <b>--redirect <i>stream</i>:<i>destination</i></b>
+							has failed.  The message should provide an indication of why the
+							attempt failed. The remedy will depend on the nature of the problem.
+						 */
 						return FAILED;
 					}
 				}
 				else if (output_redirect(buffer,NULL)==NULL)
 				{
 						output_fatal("default redirection of %s failed: %s",buffer, strerror(errno));
+						/*	TROUBLESHOOT
+							An attempt to close a standard stream from the 
+							command line using <b>--redirect <i>stream</i></b>
+							has failed.  The message should provide an indication of why the
+							attempt failed. The remedy will depend on the nature of the problem.
+							
+						 */
 						return FAILED;
 				}
 			}
 			else
 			{
 				output_fatal("redirection is missing");
+				/*	TROUBLESHOOT
+					A <b>--redirect</b> directive on the command line is missing
+					its redirection specification.  The correct syntax is
+					<b>--redirect <i>stream</i>[:<i>destination</i>].
+				 */
 				return FAILED;
 			}
 		}
