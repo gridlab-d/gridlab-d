@@ -151,7 +151,11 @@ PROPERTY *class_find_property_rec(CLASS *oclass, PROPERTYNAME name, CLASS *pclas
 			return prop;
 	}
 	if (oclass->parent==pclass){
-		output_error("class_find_property(oclass='%s', name='%s') causes an infinite class inheritance loop", oclass->name, name);
+		output_error("class_find_property_rec(CLASS *oclass='%s', PROPERTYNAME name='%s', CLASS *pclass='%s') causes an infinite class inheritance loop", oclass->name, name, pclass->name);
+		/*	TROUBLESHOOT
+			A class has somehow specified itself as a parent class, either directly or indirectly.
+			This means there is a problem with the module that publishes the class.
+		 */
 		return NULL;
 	}
 	else if (oclass->parent!=NULL)
@@ -177,6 +181,10 @@ PROPERTY *class_find_property(CLASS *oclass,		/**< the object class */
 	if (oclass->parent==oclass)
 	{
 		output_error("class_find_property(oclass='%s', name='%s') causes an infinite class inheritance loop", oclass->name, name);
+		/*	TROUBLESHOOT
+			A class has somehow specified itself as a parent class, either directly or indirectly.
+			This means there is a problem with the module that publishes the class.
+		 */
 		return NULL;
 	}
 	else if (oclass->parent!=NULL)
@@ -284,6 +292,10 @@ int class_string_to_property(PROPERTY *prop, /**< the type of the property at th
 	if (prop->ptype==PT_delegated)
 	{
 		output_error("unable to convert to delegated property value");
+		/*	TROUBLESHOOT
+			Property delegation is not yet fully implemented, so you should never get this error.
+			If you do, there is a problem with the system that is causing to become unstable.
+		 */
 		return 0;
 	}
 	else if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
@@ -304,6 +316,10 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 	if (prop->ptype==PT_delegated)
 	{
 		output_error("unable to convert from delegated property value");
+		/*	TROUBLESHOOT
+			Property delegation is not yet fully implemented, so you should never get this error.
+			If you do, there is a problem with the system that is causing to become unstable.
+		 */
 		return 0;
 	}
 	else if (prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
@@ -545,8 +561,9 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					errno = EINVAL;
 					output_error("class_map_define(oclass='%s',...): PT_INHERIT unexpected; class already inherits properties from class %s", oclass->name, oclass->parent);
 					/* TROUBLESHOOT
-						This error is caused by an attempt to incorrectly public a variable.  This
-						is almost always caused by a bug in the module's constructor for that class.
+						This error is caused by an attempt to incorrectly specify a class that
+						inherits variables from more than one other class.  This is almost 
+						always caused by a bug in the module's constructor for that class.
 					 */
 					goto Error;
 				}
@@ -559,11 +576,23 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					{
 						errno = EINVAL;
 						output_error("class_map_define(oclass='%s',...): parent property class name '%s' is not defined", oclass->name, classname);
+						/*	TROUBLESHOOT
+							A class is trying to inherit properties from another class that has not been defined.
+							This is usually caused by a problem in the module(s) that publishes the classes.  Either
+							the child class is in not specifying the parent class correctly, or the parent class is
+							not created before the child class.  If the child class depends on a class implemented
+							in another module, the module publishing the child class must load the module publishing
+							the parent class before attempting to use it.
+						 */
 						goto Error;
 					}
 					if (oclass->parent == oclass){
 						errno = EINVAL;
 						output_error("class_map_define(oclass='%s',...): parent property class name '%s' attempting to inherit from self!", oclass->name, classname);
+						/*	TROUBLESHOOT
+							A class is attempting to directly inherit properties from itself.  This is caused by
+							a problem with the module that publishes the class.
+						 */
 						goto Error;
 					}
 					no_override = ~(~oclass->parent->passconfig|oclass->passconfig); /* parent bool-implies child (p->q=~p|q) */
@@ -592,6 +621,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			{
 				errno = EINVAL;
 				output_error("class_map_define(oclass='%s',...): expected keyword missing after '%s'", oclass->name, class_get_property_typename(proptype));
+				/*	TROUBLESHOOT
+					The structure of class is being published with some special properties that only work in the context 
+					of a published variable.  This is caused by a problem with the module that publishes the class.
+				 */
 				goto Error;
 			}
 			else if (proptype==PT_KEYWORD && prop->ptype==PT_enumeration)
@@ -602,6 +635,11 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				{
 					errno = EINVAL;
 					output_error("class_map_define(oclass='%s',...): property keyword '%s' could not be defined as value %d", oclass->name, keyword,keyvalue);
+					/*	TROUBLESHOOT
+						An attempt to define an <i>enumeration</i> property is using a value that cannot be used, either because it is
+						already being used, or because it is outside of range of allowed values for that property.  That is caused
+						by a problem in the module that publishes the class.
+					 */
 					goto Error;
 				}
 			}
@@ -613,6 +651,11 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				{
 					errno = EINVAL;
 					output_error("class_map_define(oclass='%s',...): property keyword '%s' could not be defined as value %d", oclass->name, keyword,keyvalue);
+					/*	TROUBLESHOOT
+						An attempt to define an <i>set</i> property is using a value that cannot be used, either because it is
+						already being used, or because it is outside of range of allowed values for that property.  That is caused
+						by a problem in the module that publishes the class.
+					 */
 					goto Error;
 				}
 			}
@@ -629,6 +672,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				default:
 					errno = EINVAL;
 					output_error("class_map_define(oclass='%s',...): unrecognized property access code (value=%d is not valid)", oclass->name, pa);
+					/*	TROUBLESHOOT
+						A class is attempting specify a type variable access that is unknown.  This is caused by a problem
+						in the module that publishes the class.
+					 */
 					goto Error;
 					break;
 				}
@@ -640,6 +687,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				{
 					errno = EINVAL;
 					output_error("class_map_define(oclass='%s',...): property size must be greater than 0", oclass->name, proptype);
+					/*	TROUBLESHOOT
+						A class is attempting to define a repeated variable (such as an array) that contains less than 1 item.  
+						This is caused by a problem in the module that published the class.
+					 */
 					goto Error;
 				}
 			}
@@ -661,8 +712,19 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				TRY {
 					if ((prop->unit = unit_find(unitspec))==NULL)
 						output_error("class_map_define(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
+						/*	TROUBLESHOOT
+							A class is attempting to publish a variable using a unit that is not defined.  
+							This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
+							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+						 */
 				} CATCH (char *msg) {
 						output_error("class_map_define(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
+						/*	TROUBLESHOOT
+							A class is attempting to publish a variable using a unit that is not defined.  
+							This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
+							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+							This error immediately follows a throw event with the same message.
+						 */
 				} ENDCATCH;
 			}
 			else
@@ -674,6 +736,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					ptypestr = tcode;
 				errno = EINVAL;
 				output_error("class_map_define(oclass='%s',...): unrecognized extended property (PROPERTYTYPE=%s)", oclass->name, ptypestr?ptypestr:tcode);
+				/*	TROUBLESHOOT
+					A property extension given in a published class specification uses a property type (PT_*) is that not valid.
+					This is caused by a problem in the module that publishes the class.
+				 */
 				goto Error;
 			}
 		}
@@ -686,6 +752,11 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			if (prop!=NULL && strlen(name)>=sizeof(prop->name))
 			{
 				output_error("class_map_define(oclass='%s',...): property name '%s' is too big", oclass->name, prop->name);
+				/*	TROUBLESHOOT
+					A class is publishing a property using a name that is too big for the system.  
+					Property names are limited in length.  
+					This must be corrected in the code the declares the property or publishes the class.
+				 */
 				errno = E2BIG;
 				goto Error;
 			}
@@ -724,6 +795,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			if (prop==NULL)
 			{
 				output_error("class_map_define(oclass='%s',...): memory allocation failed", oclass->name, prop->name);
+				/*	TROUBLESHOOT
+					This means that the system has run out of memory while trying to define a class.  Trying freeing
+					up some memory by unloading applications or configuring your system so it has more memory.
+				 */
 				errno = ENOMEM;
 				goto Error;
 			}
@@ -739,6 +814,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				/* detect when a unit is associated with non-double/complex property */
 				if (prop->ptype!=PT_double && prop->ptype!=PT_complex)
 					output_error("class_map_define(oclass='%s',...): property %s cannot have unit '%s' because it is not a double or complex value",oclass->name, prop->name,unitspec);
+					/*	TROUBLESHOOT
+						Only <b>double</b> and <b>complex</b> properties can have units.  
+						Either change the type of the property or remove the unit specification from the property's declaration.
+					 */
 
 				/* verify that the requested unit exists or can be derived */
 				else 
@@ -746,8 +825,18 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					TRY {
 						if ((prop->unit = unit_find(unitspec))==NULL)
 							output_error("class_map_define(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
+							/*	TROUBLESHOOT
+								A class is attempting to publish a variable using a unit that is not defined.  
+								This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
+								Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+							 */
 					} CATCH (char *msg) {
 							output_error("class_map_define(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
+							/*	TROUBLESHOOT
+								A class is attempting to publish a variable using a unit that is not defined.  
+								This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
+								Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+							 */
 					} ENDCATCH;
 				}
 			}
@@ -990,6 +1079,10 @@ DELEGATEDTYPE *class_register_type(CLASS *oclass, /**< the object class */
 	}
 	else
 		output_error("unable to register delegated type (memory allocation failed)");
+		/*	TROUBLESHOOT
+			Property delegation is not supported yet so this should never happen.
+			This is most likely caused by a lack of memory or an unstable system.
+		 */
 	return dt;
 }
 
@@ -997,6 +1090,10 @@ DELEGATEDTYPE *class_register_type(CLASS *oclass, /**< the object class */
 int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...)
 {
 	output_error("delegated types not supported using class_define_type (use class_define_map instead)");
+	/*	TROUBLESHOOT
+			Property delegation is not supported yet so this should never happen.
+			This is most likely caused by a lack of memory or an unstable system.
+	 */
 	return 0;
 }
 
