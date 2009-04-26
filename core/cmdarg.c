@@ -70,6 +70,11 @@ STATUS load_module_list(FILE *fd,int* test_mod_num)
 		if (global_setvar(mod_test)!=SUCCESS)
 		{
 			output_fatal("Unable to store module name");
+			/*	This error is caused by a failure to set up a module test, which
+				requires that the name module being tested be stored in a global
+				variable called mod_test<num>.  The root cause will be identified
+				by determining what error in the global_setvar call occurred.
+			 */
 			return FAILED;
 		}
 	}

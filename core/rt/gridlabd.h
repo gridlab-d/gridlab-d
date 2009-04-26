@@ -1,5 +1,13 @@
-// $Id$
-// Copyright (C) 2008 Battelle Memorial Institute
+/** $Id$
+    Copyright (C) 2008 Battelle Memorial Institute
+	@file rt/gridlabd.h
+	@defgroup runtime Runtime Class API
+
+	The Runtime Class API is a programming library for inline C++ embedded
+	within GLM files.
+	
+ @{
+ **/
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
@@ -507,7 +515,7 @@ struct s_module_list {
 	MODULE *next;
 }; 
 
-typedef enum {CLASSVALID=0xc44d822e} CLASSMAGIC; /* this is used to uniquely identify classes */
+typedef enum {CLASSVALID=0xc44d822e} CLASSMAGIC; ///< this is used to uniquely identify class structure
 
 struct s_class_list {
 	CLASSMAGIC magic;
@@ -538,7 +546,7 @@ typedef char FULLNAME[1024]; /** Full object name (including space name) */
 typedef struct s_namespace {
 	FULLNAME name;
 	struct s_namespace *next;
-} NAMESPACE;
+} NAMESPACE; ///< Namespaces are used to disambiguate class and object names
 
 struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
@@ -559,13 +567,13 @@ struct s_object_list {
 }; /**< Object header structure */
 
 struct s_function_map {
-	OBJECTTYPE otype;
-	FUNCTIONNAME name;
-	FUNCTIONADDR addr;
-	FUNCTION *next;
-};
+	OBJECTTYPE otype; ///< the object type to which this function applies
+	FUNCTIONNAME name; ///< the name of the function
+	FUNCTIONADDR addr; ///< the call address of the function
+	FUNCTION *next; ///< the next function in the function map
+}; ///< The function map structure
 
-typedef struct s_datetime {
+typedef struct s_datetime { ///< The s_datetime structure
 	unsigned short year; /**< year (1970 to 2970 is allowed) */
 	unsigned short month; /**< month (1-12) */
 	unsigned short day; /**< day (1 to 28/29/30/31) */
@@ -578,7 +586,7 @@ typedef struct s_datetime {
 	unsigned short weekday; /**< 0=Sunday */
 	unsigned short yearday; /**< 0=Jan 1 */
 	TIMESTAMP timestamp; /**< GMT timestamp */
-} DATETIME; /**< the s_datetime structure */
+} DATETIME; ///< A typedef for struct s_datetime
 
 typedef enum {
 	RT_INVALID=-1,	/**< used to flag bad random types */
@@ -592,7 +600,7 @@ typedef enum {
 	RT_SAMPLED,		/**< sampled distribution; unsigned number_of_samples, double samples[n_samples] */
 	RT_RAYLEIGH,	/**< Rayleigh distribution; double sigma */
 	RT_WEIBULL,		/**< Weibull distribution; double lambda, double k */
-} RANDOMTYPE;
+} RANDOMTYPE; ///< The random distribution types
 
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;
@@ -727,16 +735,18 @@ extern CALLBACKS *callback;
 
 typedef FUNCTIONADDR function;
 
-#define gl_verbose (*callback->output_verbose)
-#define gl_output (*callback->output_message)
-#define gl_warning (*callback->output_warning)
-#define gl_error (*callback->output_error)
-#define gl_debug (*callback->output_debug)
-#define gl_testmsg (*callback->output_test)
+#define gl_verbose (*callback->output_verbose) ///< Send a printf-style message to the verbose stream
+#define gl_output (*callback->output_message) ///< Send a printf-style message to the output stream
+#define gl_warning (*callback->output_warning) ///< Send a printf-style message to the warning stream
+#define gl_error (*callback->output_error) ///< Send a printf-style message to the error stream
+#define gl_debug (*callback->output_debug) ///< Send a printf-style message to the debug stream
+#define gl_testmsg (*callback->output_test) ///< Send a printf-style message to the testmsg stream
 
-#define gl_globalclock (*(callback->global_clock))
+#define gl_globalclock (*(callback->global_clock)) ///< Get the current value of the global clock
 
-inline char* gl_name(OBJECT *my)
+/// Get the name of an object
+/// @return a pointer to a static buffer containing the object's name
+inline char* gl_name(OBJECT *my) ///< pointer to the object
 {
 	static char buffer[1024];
 	if (my->name==NULL)
@@ -746,7 +756,8 @@ inline char* gl_name(OBJECT *my)
 	return buffer;
 }
 
-inline void gl_throw(char *msg, ...)
+/// Throw an exception using printf-style arguments
+inline void gl_throw(char *msg, ...) ///< printf-style argument list
 {
 	va_list ptr;
 	va_start(ptr,msg);
@@ -839,3 +850,5 @@ inline struct s_findlist *gl_find_copy(struct s_findlist *list) { return callbac
 inline void gl_find_add(struct s_findlist *list, OBJECT *obj) { callback->find.add(list,obj);};
 inline void gl_find_del(struct s_findlist *list, OBJECT *obj) { callback->find.del(list,obj);};
 inline void gl_find_clear(struct s_findlist *list) { callback->find.clear(list);};
+
+/**@}**/

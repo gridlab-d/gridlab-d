@@ -89,9 +89,9 @@ static struct s_property_specs { /**<	the property type conversion specification
 };
 
 /* object class list */
-OBJECTTYPE last_object_type = 0;
-static CLASS *first_class = NULL;
-static CLASS *last_class = NULL;
+OBJECTTYPE last_object_type = 0; /**< last object type assigned */
+static CLASS *first_class = NULL; /**< first class in class list */
+static CLASS *last_class = NULL; /**< last class in class list */
 
 /** Get the first property in a class's property list.
 	All subsequent properties that have the same class
@@ -334,6 +334,10 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 	if (_PT_LAST-_PT_FIRST-1!=sizeof(property_type)/sizeof(property_type[0]))
 	{
 		output_fatal("property_type[] in class.c has an incorrect number of members (%i vs %i)", a/b, c);
+		/*	This error occurs when an improper definition of a class is used.  This is not usually
+			caused by an error in a GLM file but is most likely caused by a bug in a module
+			or incorrectly defined class.
+		 */
 		exit(1);
 	}
 	if (oclass!=NULL)
