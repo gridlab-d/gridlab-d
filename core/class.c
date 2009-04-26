@@ -334,7 +334,8 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 	if (_PT_LAST-_PT_FIRST-1!=sizeof(property_type)/sizeof(property_type[0]))
 	{
 		output_fatal("property_type[] in class.c has an incorrect number of members (%i vs %i)", a/b, c);
-		/*	This error occurs when an improper definition of a class is used.  This is not usually
+		/* TROUBLESHOOT
+			This error occurs when an improper definition of a class is used.  This is not usually
 			caused by an error in a GLM file but is most likely caused by a bug in a module
 			or incorrectly defined class.
 		 */
@@ -344,6 +345,11 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 	{
 		if(strcmp(oclass->module->name, module->name) == 0){
 			output_error("module %s cannot register class %s, it is already registered by module %s", module->name,name,oclass->module->name);
+			/*	TROUBLESHOOT
+				This error is caused by an attempt to define a new class which is already
+				defined in the module or namespace given.  This is generally caused by 
+				bug in a module or an incorrectly defined class.
+			 */
 			return NULL;
 		} else {
 			output_verbose("module %s is registering a 2nd class %s, previous one in module %s", module->name, name, oclass->module->name);
@@ -538,6 +544,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				{
 					errno = EINVAL;
 					output_error("class_map_define(oclass='%s',...): PT_INHERIT unexpected; class already inherits properties from class %s", oclass->name, oclass->parent);
+					/* TROUBLESHOOT
+						This error is caused by an attempt to incorrectly public a variable.  This
+						is almost always caused by a bug in the module's constructor for that class.
+					 */
 					goto Error;
 				}
 				else 
