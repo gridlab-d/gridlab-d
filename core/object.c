@@ -916,8 +916,14 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 	{
 		char buffer[64];
 		char *passname = (pass==PC_PRETOPDOWN?"PC_PRETOPDOWN":(pass==PC_BOTTOMUP?"PC_BOTTOMUP":(pass==PC_POSTTOPDOWN?"PC_POSTTOPDOWN":"<unknown>")));
-		output_fatal("object_sync(OBJECT *obj='%s', TIMESTAMP ts='%s', PASSCONFIG pass=%s): int64 sync_%s(OBJECT*,TIMESTAMP,PASSCONFIG) is not implemented in module %s", 
-			object_name(obj), convert_from_timestamp(ts,buffer,sizeof(buffer))?buffer:"<invalid>", passname, oclass->name, oclass->module->name);
+		output_fatal("object_sync(OBJECT *obj='%s', TIMESTAMP ts='%s', PASSCONFIG pass=%s): int64 sync_%s(OBJECT*,TIMESTAMP,PASSCONFIG) is not implemented in module %s", object_name(obj), convert_from_timestamp(ts,buffer,sizeof(buffer))?buffer:"<invalid>", passname, oclass->name, oclass->module->name);
+		/*	TROUBLESHOOT
+			The indicated sync function is not implemented by the class given.  
+			This happens when the PASSCONFIG flag indicates a particular sync
+			(presync/sync/postsync) needs to be called, but the class does not
+			actually implement it.  This is a problem with the module that
+			implements the class.
+		 */
 		return TS_INVALID;
 	}
 
@@ -1505,6 +1511,9 @@ void object_tree_delete(OBJECT *obj, OBJECTNAME name)
 				*item = temp;
 			} else {
 				output_fatal("unexpected branch result in object_tree_delete");
+				/*	TROUBLESHOOT
+					This should never happen and if it does, the system has become unstable and the problem should be reported.
+				 */
 			}
 		}
 

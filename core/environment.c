@@ -31,6 +31,14 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 		if (exec_start()==FAILED)
 		{
 			output_fatal("shutdown after simulation stopped prematurely");
+			/*	TROUBLESHOOT
+				The simulation stopped because an unexpected condition was encountered.
+				This can be caused by a wide variety of things, but most often it is
+				because one of the objects in the model could not be synchronized 
+				propertly and its clock stopped.  This message usually follows a
+				more specific message that indicates what caused the simulation to
+				stop.
+			 */
 			if (global_dumpfile[0]!='\0')
 			{
 				if (!saveall(global_dumpfile))
@@ -50,6 +58,11 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	else
 	{
 		output_fatal("%s environment not recognized or supported",global_environment);
+		/*	TROUBLESHOOT
+			The environment specified isn't supported. Currently only
+			the <b>batch</b> environment is normally supported, although 
+			some builds can support other environments, such as <b>matlab</b>.
+		*/
 		return FAILED;
 	}
 }

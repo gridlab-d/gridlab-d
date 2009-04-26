@@ -273,7 +273,14 @@ static int append_init(char* format,...)
 
 	if (strlen(init_block)+strlen(code)>sizeof(init_block))
 	{
-		output_fatal("insufficient buffer space to compile source code");
+		output_fatal("insufficient buffer space to compile init code");
+		/*	TROUBLESHOOT
+			The loader creates a buffer in which it can temporarily hold source
+			initialization code from your GLM file.  This error occurs when the buffer space
+			has been exhausted.  There are only two ways to fix this problem,
+			1) make the code smaller (which can be difficult to do), or 
+			2) increase the buffer space (which requires a rebuild).
+		*/
 		return 0;
 	}
 	strcat(init_block,code);
@@ -290,6 +297,13 @@ static int append_code(char* format,...)
 	if (strlen(code_block)+strlen(code)>sizeof(code_block))
 	{
 		output_fatal("insufficient buffer space to compile source code");
+		/*	TROUBLESHOOT
+			The loader creates a buffer in which it can temporarily hold source
+			runtime code from your GLM file.  This error occurs when the buffer space
+			has been exhausted.  There are only two ways to fix this problem,
+			1) make the code smaller (which can be difficult to do), or 
+			2) increase the buffer space (which requires a rebuild).
+		*/
 		return 0;
 	}
 	strcat(code_block,code);
@@ -305,7 +319,14 @@ static int append_global(char* format,...)
 
 	if (strlen(global_block)+strlen(code)>sizeof(global_block))
 	{
-		output_fatal("insufficient buffer space to compile source code");
+		output_fatal("insufficient buffer space to compile global code");
+		/*	TROUBLESHOOT
+			The loader creates a buffer in which it can temporarily hold source
+			global code from your GLM file.  This error occurs when the buffer space
+			has been exhausted.  There are only two ways to fix this problem,
+			1) make the code smaller (which can be difficult to do), or 
+			2) increase the buffer space (which requires a rebuild).
+		*/
 		return 0;
 	}
 	strcat(global_block,code);
@@ -479,6 +500,12 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			if (fp==NULL)
 			{
 				output_fatal("unable to open '%s' for writing", cfile);
+				/*	TROUBLESHOOT
+					The internal compiler cannot write a temporary C or C++ that
+					it needs to build your model.  The message indicates where
+					the file is.  To remedy the problem you must make sure that
+					the system allows full access to the file.
+				 */
 				return FAILED;
 			}
 			outfilename = cfile;
@@ -513,6 +540,12 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				)
 			{
 				output_fatal("unable to write to '%s'", cfile);
+				/*	TROUBLESHOOT
+					The internal compiler cannot write a temporary C or C++ that
+					it needs to build your model.  The message indicates where
+					the file is.  To remedy the problem you must make sure that
+					the system allows full access to the file.
+				 */
 				return FAILED;
 			}
 			fclose(fp);

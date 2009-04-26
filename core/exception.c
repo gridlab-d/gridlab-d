@@ -104,6 +104,12 @@ void throw_exception(char *format, /**< the format string */
 	else
 	{
 		output_fatal("unhandled exception: %s", buffer);
+		/*	TROUBLESHOOT
+			An exception was generated that can't be handled by
+			the system.  This usually occurs because some part
+			of a module or external library isn't properly
+			compiled or linked.
+		*/
 		exit(-1);
 	}
 }

@@ -70,6 +70,11 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	if (cmdarg_load(argc,argv)==FAILED)
 	{
 		output_fatal("shutdown after command line rejected");
+		/*	TROUBLESHOOT
+			The command line is not valid and the system did not
+			complete its startup procedure.  Correct the problem
+			with the command line and try again.
+		 */
 		exit(1);
 	}
 
@@ -83,6 +88,11 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 		if (fp==NULL)
 		{
 			output_fatal("unable to create pidfile '%s'", global_pidfile);
+			/*	TROUBLESHOOT
+				The system must allow creation of the process id file at
+				the location indicated in the message.  Create and/or
+				modify access rights to the path for that file and try again.
+			 */
 			exit(1);
 		}
 #ifdef WIN32
@@ -106,6 +116,13 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 		if (test_start(argc,argv)==FAILED)
 		{
 			output_fatal("shutdown after startup test failed");
+			/*	TROUBLESHOOT
+				A self-test procedure failed and the system stopped.
+				Check the output of the test stream and correct the 
+				indicated problem.  If the test stream is not redirected
+				so as to save the output, try using the <b>--redirect<b>
+				command line option.
+			 */
 			exit(3);
 		}
 		exit(0); /* There is no environment to speak of, so exit. */
@@ -119,6 +136,11 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	if (environment_start(argc,argv)==FAILED)
 	{
 		output_fatal("environment startup failed: %s", strerror(errno));
+		/*	TROUBLESHOOT
+			The requested environment could not be started.  This usually
+			follows a more specific message regarding the startup problem.
+			Follow the recommendation for the indicated problem.
+		 */
 		exit(2);
 	}
 

@@ -77,12 +77,23 @@ STATUS test_start(int argc, char *argv[])
 		if(mod == NULL)
 		{
 			output_fatal("Invalid module name");
+			/*	TROUBLESHOOT
+				The test_start procedure was given an invalid module name.
+				Check the command line argument and/or the unit test sequence
+				to be sure the test is requested properly.
+			 */
 			return FAILED;
 		}
 
 		if (mod->module_test==NULL)
 		{
 			output_fatal("Module %s does not implement cppunit test", mod->name);
+			/*	TROUBLESHOOT
+				The test_start procedure was given the name of a module that doesn't
+				implement unit testing.
+				Check the command line argument and/or the test configuration file
+				to be sure the test is requested properly.				
+			 */
 			return FAILED;
 		}
 

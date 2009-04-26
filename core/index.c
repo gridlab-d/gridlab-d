@@ -73,6 +73,15 @@ STATUS index_insert(INDEX *index,	/**< the index to which the item is added */
 		/** @todo allow resizing indexes when ordinal is before first (ticket #28) */
 		/* (this is very unusual and shouldn't happen the way things are now) */
 		output_fatal("ordinal %d is too small (first is %d)",ordinal, index->first_ordinal);
+		/*	TROUBLESHOOT
+			This is an internal error caused by an attempt to index something improperly.
+			Because the indexing system start at index 0, this means a negative index
+			number was attempting, which is most likely a bug.  This usually occurs
+			during object initialization and might be caused by invalid object numbers,
+			either negative or greater than about 2 billion.  If your model is using a
+			the <b><i>class</i>:<i>id</i></b> naming convention, check the object id numbers
+			to make sure they are correct.
+		*/
 		errno = EINVAL;
 		return FAILED;
 	}
@@ -87,6 +96,11 @@ STATUS index_insert(INDEX *index,	/**< the index to which the item is added */
 		if (newblock==NULL)
 		{
 			output_fatal("unable to grow index %d: %s",index->id, strerror(errno));
+			/*	TROUBLESHOOT
+				An internal memory allocation error cause an index operation to fail.
+				The message will usually include some explanation as to what cause
+				the failure.  Remedy the indicated memory problem to fix the indexing problem.
+			*/
 			return FAILED;
 		}
 		output_verbose("growing index %d to %d ordinals", index->id, newsize);

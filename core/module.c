@@ -394,6 +394,10 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			if ((*(map[i].func) = (FUNCTIONADDR)DLSYM(hLib,fname))==NULL && !map[i].optional)
 			{
 				output_fatal("intrinsic %s is not defined in class %s", fname,file);
+				/*	TROUBLESHOOT
+					An intrinsic function was declared in a class, but that particular
+					function is not supported.  Check for a syntax error in your GLM file(s).
+				 */
 				errno=EINVAL;
 				return NULL;
 			}
