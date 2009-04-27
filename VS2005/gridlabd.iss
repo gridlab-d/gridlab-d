@@ -106,7 +106,7 @@ Source: reliability.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: ..\..\..\market\Win32\Release\market.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: tape_plot.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: ..\..\..\core\gridlabd.conf; DestDir: {app}\etc; Flags: ignoreversion
+Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\etc; Flags: ignoreversion
 Source: ..\..\..\core\debugger.conf; DestDir: {app}\etc; Flags: ignoreversion
 
 ;; sample files
