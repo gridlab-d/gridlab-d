@@ -125,6 +125,7 @@ Source: ..\..\..\README-WINDOWS.txt; DestDir: {app}
 Source: ..\..\..\core\rt\msvc_debugger.glm; DestDir: {app}\etc
 Source: ..\..\..\core\rt\gridlabd.syn; DestDir: {app}\etc
 Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\etc
+Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\etc
 
 [Registry]
 Root: HKCU; SubKey: Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples"; Flags: uninsdeletevalue deletevalue; Check: not (IsAdminLoggedOn() or IsPowerUserLoggedOn()); AfterInstall: InstallEnvironment(); Tasks: overwriteglpath

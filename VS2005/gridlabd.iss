@@ -107,7 +107,7 @@ Source: ..\..\..\market\Win32\Release\market.dll; DestDir: {app}\lib; Flags: ign
 Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: tape_plot.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\etc; Flags: ignoreversion
-Source: ..\..\..\core\debugger.conf; DestDir: {app}\etc; Flags: ignoreversion
+Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\etc; Flags: ignoreversion
 
 ;; sample files
 Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
