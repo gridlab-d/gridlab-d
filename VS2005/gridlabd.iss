@@ -130,7 +130,7 @@ Source: ..\..\..\models\lighting.player; DestDir: {app}\samples
 ; --DEBUG--
 Source: ..\..\..\models\dryer.shape; DestDir: {app}\samples
 Source: ..\..\..\README-WINDOWS.txt; DestDir: {app}
-Source: ..\..\..\core\rt\msvc_debugger.glm; DestDir: {app}\etc
+Source: ..\..\..\core\rt\mingw.conf; DestDir: {app}\etc
 Source: ..\..\..\core\rt\gridlabd.syn; DestDir: {app}\etc
 
 [Registry]
