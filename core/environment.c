@@ -43,6 +43,11 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 			{
 				if (!saveall(global_dumpfile))
 					output_error("dump to '%s' failed", global_dumpfile);
+					/* TROUBLESHOOT
+						An attempt to create a dump file failed.  This message should be
+						preceded by a more detailed message explaining why if failed.
+						Follow the guidance for that message and try again.
+					 */
 				else
 					output_message("dump to '%s' complete", global_dumpfile);
 			}

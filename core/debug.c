@@ -285,11 +285,23 @@ void exec_sighandler(int sig) /**< the signal number, see \p <signal.h> */
 	if (sig==SIGTERM)
 	{
 		output_error("received SIGTERM; exiting now");
+		/* TROUBLESHOOT
+			A signal from the operating system was caught, which halts
+			the current simulation.  This is not normal, but may be intentional.
+			If it is not intentional, make sure that the signal is not being
+			raised accidentally by another application.
+		 */
 		exit(1);
 	}
 	else if (sig==SIGABRT)
 	{
 		output_error("received SIGABRT; exiting now");
+		/* TROUBLESHOOT
+			A signal from the operating system was caught, which aborts
+			the current simulation.   This is not normal, but may be intentional.
+			If it is not intentional, make sure that the signal is not being
+			raised accidentally by another application.
+		 */
 		exit(1);
 	}
 	else if (sig==SIGINT)
@@ -305,6 +317,7 @@ void exec_sighandler(int sig) /**< the signal number, see \p <signal.h> */
 			else
 			{
 				output_debug("debugger activation failed, signal processing disabled");
+				debug_active=1;
 				signal(sig,NULL);
 			}
 		}
@@ -313,6 +326,12 @@ void exec_sighandler(int sig) /**< the signal number, see \p <signal.h> */
 	}
 	else
 		output_error("ignored signal %d", sig);
+		/* TROUBLESHOOT
+			A signal was received that is not handled.  This is not serious, but
+			may indicate that a behavior was expected by another application that
+			GridLAB-D does not support.  If this is unexpected, make sure that 
+			the signal is not being	raised accidentally by another application.
+		*/
 }
 
 #ifdef WIN32
@@ -359,7 +378,12 @@ static int exec_add_breakpoint(BREAKPOINTTYPE type, /**< the breakpoint type */
 	BREAKPOINT *bp = (BREAKPOINT*)malloc(sizeof(BREAKPOINT));
 	if (bp==NULL)
 	{
-		output_error("memory allocation failed");
+		output_error("exec_add_breakpoint() - memory allocation failed");
+		/* TROUBLESHOOT
+			The <b>add breakpoint</b> debugger command failed because the
+			system ran out of memory.  Follow the usual procedure for freeing
+			up memory before trying again.
+		 */
 		return 0;
 	}
 	bp->type = type;
@@ -395,7 +419,12 @@ static int exec_add_watchpoint(OBJECT *obj, /**< the object being watched */
 	WATCHPOINT *wp = (WATCHPOINT*)malloc(sizeof(WATCHPOINT));
 	if (wp==NULL)
 	{
-		output_error("memory allocation failed");
+		output_error("exec_add_watchpoint() - memory allocation failed");
+		/* TROUBLESHOOT
+			The <b>add breakpoint</b> debugger command failed because the
+			system ran out of memory.  Follow the usual procedure for freeing
+			up memory before trying again.
+		 */
 		return 0;
 	}
 	wp->enabled = 1;
@@ -579,12 +608,21 @@ Retry:
 				else if (strcmp(cmd,"off")==0)
 					list_details = 0;
 				else
-					output_error("'%s' is an invalid details command", cmd);
+					output_error("'%s' is an invalid option to details command", cmd);
+					/* TROUBLESHOOT
+						The <b>details</b> debugger command was given an option
+						that isn't valid.  Check the syntax and try again.
+					 */
 			}
 			else if (n==0)
 				output_debug("Details are %s", list_details?"on":"off");
 			else
 				output_error("details command syntax error");
+				/* TROUBLESHOOT
+					The <b>details</b> debugger command support only one option,
+					but somehow more than one option was read.  Check the syntax
+					and try again.
+				 */
 		}
 		else if (strncmp(cmd,"inactive",max(1,strlen(cmd)))==0)
 		{
@@ -597,12 +635,21 @@ Retry:
 				else if (strcmp(cmd,"off")==0)
 					list_inactive = 0;
 				else
-					output_error("'%s' is an invalid inactive command", cmd);
+					output_error("'%s' is an invalid option to inactive command", cmd);
+					/* TROUBLESHOOT
+						The <b>inactive</b> debugger command was given an option
+						that isn't valid.  Check the syntax and try again.
+					 */
 			}
 			else if (n==0)
 				output_debug("Inactive objects are %s", list_details?"on":"off");
 			else
 				output_error("inactive command syntax error");
+				/* TROUBLESHOOT
+					The <b>inactive</b> debugger command support only one option,
+					but somehow more than one option was read.  Check the syntax
+					and try again.
+				 */
 		}
 		else if (strncmp(cmd,"unnamed",max(1,strlen(cmd)))==0)
 		{
@@ -615,12 +662,21 @@ Retry:
 				else if (strcmp(cmd,"off")==0)
 					list_unnamed = 0;
 				else
-					output_error("'%s' is an unnamed hidden command", cmd);
+					output_error("'%s' is an invalid option to unnamed command", cmd);
+					/* TROUBLESHOOT
+						The <b>unnamed</b> debugger command was given an option
+						that isn't valid.  Check the syntax and try again.
+					 */
 			}
 			else if (n==0)
 				output_debug("Unnamed objects are %s", list_details?"on":"off");
 			else
 				output_error("unnamed command syntax error");
+				/* TROUBLESHOOT
+					The <b>unnamed</b> debugger command support only one option,
+					but somehow more than one option was read.  Check the syntax
+					and try again.
+				 */
 		}
 		else if (strncmp(cmd,"nsync",max(2,strlen(cmd)))==0)
 		{
@@ -634,23 +690,40 @@ Retry:
 					list_sync = 0;
 				else
 					output_error("'%s' is an invalid nsync command", cmd);
+					/* TROUBLESHOOT
+						The <b>nsync</b> debugger command was given an option
+						that isn't valid.  Check the syntax and try again.
+					 */
 			}
 			else if (n==0)
 				output_debug("Sync objects are %s", list_details?"on":"off");
 			else
 				output_error("nsync command syntax error");
+				/* TROUBLESHOOT
+					The <b>nsync</b> debugger command support only one option,
+					but somehow more than one option was read.  Check the syntax
+					and try again.
+				 */
 		}
 		else if (strncmp(cmd,"script",max(1,strlen(cmd)))==0)
 		{
 			char load_filename[_MAX_PATH+32]; /* Made it a little longer than max_path to be safe */
 			if(sscanf(buffer,"%*s %[^\x20]",load_filename) <=0) /* use \n since we are using fgets to load buffer */
 			{
-				output_error("Missing file name for script command");
+				output_error("missing file name for script command");
+				/* TROUBLESHOOT
+					The <b>script</b> command requires a filename, but non was
+					provided in the command.  Identify the file and try again.
+				 */
 			}
 			load_fp = fopen(load_filename,"r");
 			if(load_fp == NULL)
 			{
-				output_error("Unable to open file %s for reading",load_filename);
+				output_error("unable to open file %s for reading",load_filename);
+				/* TROUBLESHOOT
+					The file specified is not available.  Make sure the filename
+					is correct and has the required access rights and try again.
+				 */
 			}
 			load_from_file = 1;
 		}
@@ -718,6 +791,12 @@ Retry:
 			{
 				if (!exec_add_breakpoint(BP_ERROR,0))
 					output_error("unable to add error breakpoint");
+					/* TROUBLESHOOT
+						The <b>break error</b> could not be completed because of a 
+						problem with the internal operation needed to perform it.
+						Follow the guidance for the message which precedes this message
+						and try again.
+					 */
 				error_caught = 0;
 				output_notify_error(debug_notify_error);
 			}
@@ -725,6 +804,12 @@ Retry:
 			{
 				if (!exec_add_breakpoint(BP_CLOCK,global_clock))
 					output_error("unable to add clock breakpoint");
+					/* TROUBLESHOOT
+						The <b>break clock</b> could not be completed because of a 
+						problem with the internal operation needed to perform it.
+						Follow the guidance for the message which precedes this message
+						and try again.
+					 */
 			}
 			else if (strncmp(bptype,"object",strlen(bptype))==0)
 			{	/* create object breakpoint */
@@ -733,9 +818,19 @@ Retry:
 				{
 					if (!exec_add_breakpoint(BP_OBJECT,(int64)obj)) /* warning: cast from pointer to integer of different size */
 						output_error("unable to add object breakpoint");
+						/* TROUBLESHOOT
+							The <b>break <i>object</i></b> could not be completed because of a 
+							problem with the internal operation needed to perform it.
+							Follow the guidance for the message which precedes this message
+							and try again.
+						 */
 				}
 				else
 					output_error("object %s does not exist",bpval);
+					/* TROUBLESHOOT
+						The <b>break error</b> refers to an object that does not
+						exist.  Find the correct object name and try again.
+					 */
 			}
 			else if (strncmp(bptype,"module",strlen(bptype))==0)
 			{	/* create module breakpoint */
@@ -744,9 +839,19 @@ Retry:
 				{
 					if (!exec_add_breakpoint(BP_MODULE,(int64)mod)) /* warning: cast from pointer to integer of different size */
 						output_error("unable to add module breakpoint");
+						/* TROUBLESHOOT
+							The <b>break module</b> could not be completed because of a 
+							problem with the internal operation needed to perform it.
+							Follow the guidance for the message which precedes this message
+							and try again.
+						 */
 				}
 				else
 					output_error("module %s does not exist",bpval);
+					/* TROUBLESHOOT
+						The <b>break module</b> refers to a module that does not exist.
+						Identify the correct name of the module and try again.
+					 */
 			}
 			else if (strncmp(bptype,"class",strlen(bptype))==0)
 			{	/* create class breakpoint */
@@ -755,6 +860,12 @@ Retry:
 				{
 					if (!exec_add_breakpoint(BP_CLASS,(int64)oclass)) /* warning: cast from pointer to integer of different size */
 						output_error("unable to add class breakpoint");
+						/* TROUBLESHOOT
+							The <b>break error</b> could not be completed because of a 
+							problem with the internal operation needed to perform it.
+							Follow the guidance for the message which precedes this message
+							and try again.
+						 */
 				}
 				else
 					output_debug("class %s does not exist",bpval);
@@ -767,24 +878,49 @@ Retry:
 				else if (strnicmp(bpval,"posttopdown",max(2,strlen(bpval)))==0) pass=PC_POSTTOPDOWN;
 				else
 				{
-					output_error("undefined pass type");
+					output_error("undefined pass type for add breakpoint");
+					/* TROUBLESHOOT
+						The <b>break pass</b> specifies a pass type that isn't
+						valid.  Only <b>pretopdown</b>, <b>bottomup</b>, and <b>posttopdown</b>
+						are supported.
+					 */
 					continue;
 				}
 				if (!exec_add_breakpoint(BP_PASS,(int64)pass))
 					output_error("unable to add pass breakpoint");
+				/* TROUBLESHOOT
+					The <b>break pass</b> could not be completed because of a 
+					problem with the internal operation needed to perform it.
+					Follow the guidance for the message which precedes this message
+					and try again.
+				 */
 			}
 			else if (strncmp(bptype,"rank",strlen(bptype))==0)
 			{	/* create rank breakpoint */
 				if (!exec_add_breakpoint(BP_RANK,(int64)atoi(bpval)))
 					output_error("unable to add rank breakpoint");
+					/* TROUBLESHOOT
+						The <b>break rank</b> specifies a rank that isn't
+						valid.  Check the command syntax and try again.
+					 */
 			}
 			else if (strncmp(bptype,"time",strlen(bptype))==0)
 			{	/* create time breakpoint */
 				TIMESTAMP ts = convert_to_timestamp(bpval);
 				if (ts==TS_NEVER)
 					output_error("invalid time");
+					/* TROUBLESHOOT
+						The <b>break time</b> specifies a timestamp that isn't
+						valid.  Check the command syntax and try again.
+					 */
 				else if (!exec_add_breakpoint(BP_TIME,(int64)ts))
 					output_error("unable to add timestamp breakpoint");
+					/* TROUBLESHOOT
+						The <b>break time</b> could not be completed because of a 
+						problem with the internal operation needed to perform it.
+						Follow the guidance for the message which precedes this message
+						and try again.
+					 */
 			}
 			else if (strncmp(bptype,"disable",strlen(bptype))==0)
 			{
@@ -797,6 +933,10 @@ Retry:
 					else
 					{
 						output_error("invalid breakpoint number");
+						/* TROUBLESHOOT
+							The <b>break disable</b> command specified a breakpoint number
+							that doesn't exist.  Check the list of breakpoints and try again.
+						 */
 						continue;
 					}
 				}
@@ -817,6 +957,7 @@ Retry:
 					else
 					{
 						output_error("invalid breakpoint number");
+						/* repeat of last troubleshooting */
 						continue;
 					}
 				}
@@ -827,7 +968,11 @@ Retry:
 				}
 			}
 			else
-				output_error("%s is not recognized", bptype);
+				output_error("%s is not a recognized breakpoint subcommand", bptype);
+				/* TROUBLESHOOT
+					The <b>break</b> subcommand isn't recognized.  
+					Check the command syntax and try again.
+				 */
 		}
 		else if (strncmp(cmd,"watch",max(2,strlen(cmd)))==0)
 		{
@@ -875,6 +1020,10 @@ Retry:
 					else
 					{
 						output_error("invalid watchpoint number");
+						/* TROUBLESHOOT
+							The <b>watch</b> command refers to a watchpoint that doesn't exist.
+							Check the list of watchpoints and try again.
+						 */
 						continue;
 					}
 				}
@@ -895,6 +1044,7 @@ Retry:
 					else
 					{
 						output_error("invalid watchpoint number");
+						/* repeat of last troubleshoot */
 						continue;
 					}
 				}
@@ -911,14 +1061,29 @@ Retry:
 					PROPERTY *prop = object_get_property(obj,wpval);
 					if (prop==NULL)
 						output_error("object %s does not have a property named '%s'", wptype,wpval);
+					/* TROUBLESHOOT
+						The <b>watch</b> command refers to an object property that isn't defined.
+						Check the list of properties for that class of object and try again.
+					 */
 					else if (!exec_add_watchpoint(obj,prop))
 						output_error("unable to add object watchpoint");
+					/* TROUBLESHOOT
+						The <b>watch</b> could not be completed because of a 
+						problem with the internal operation needed to perform it.
+						Follow the guidance for the message that precedes this message
+						and try again.
+					 */
 				}
 				else if (!exec_add_watchpoint(obj,NULL))
 					output_error("unable to add object watchpoint");
+				/* repeat last TROUBLESHOOT */
 			}
 			else
 				output_error("%s is not recognized", wptype);		
+			/* TROUBLESHOOT
+				The <b>watch</b> subcommand isn't recognized.  
+				Check the command syntax and try again.
+			 */
 		}
 		else if (strncmp(cmd,"where",max(1,strlen(cmd)))==0)
 		{
@@ -940,6 +1105,11 @@ Retry:
 					output_debug("%s",tmp);
 				else
 					output_error("object dump failed");
+				/* TROUBLESHOOT
+					The <b>print</b> was unable to complete the dump of the specified object
+					because of an internal error.  						
+					Follow the guidance for the message that precedes this message and try again.
+				 */
 			}
 			else
 			{
@@ -950,9 +1120,14 @@ Retry:
 						output_debug("%s",tmp);
 					else
 						output_error("object dump failed");
+					/* repeat last TROUBLESHOOT */
 				}
 				else
 					output_error("object %s undefined", tmp);
+				/* TROUBLESHOOT
+					The <b>print</b> command refers to an object that doesn't exist.
+					Check the list of objects and try again.
+				 */
 			}
 		}
 		else if (strncmp(cmd,"globals",max(1,strlen(cmd)))==0)
@@ -980,19 +1155,44 @@ Retry:
 				{
 					if (global_setvar(propname,value)==FAILED)
 						output_error("unable to set global value %s", propname);
+						/* TROUBLESHOOT
+							The <b>set</b> debug command was unable to set the specified global variable because
+							of an internal error. 
+							Follow the guidance for the message that precedes this message
+							and try again.
+						 */
 				}
 				else if ((obj=object_find_name(objname)) || convert_to_object(objname,&obj,NULL))
 				{
 					if (!object_set_value_by_name(obj,propname,value))
 						output_error("unable to set value of object %s property %s", objname,propname);
+						/* TROUBLESHOOT
+							The <b>set</b> debug command was unable to set the value given could not be
+							converted to the type required for the property.  Check the command
+							syntax and try again.
+						 */
 					else if (!object_get_property(obj,propname))
 						output_error("invalid property for object %s",objname);
+						/* TROUBLESHOOT
+							This error should not occur and in harmless.  
+							If it does occur, please report the problem to the core development team.
+						 */
 				}
 				else
-					output_error("invalid object");
+					output_error("invalid object or value");
+					/* TROUBLESHOOT
+						The <b>set</b> debug command was unable to set the specified property
+						either because the object could not be found, or the value given could not be
+						converted to the type required for the property.  Check the command
+						syntax and try again.
+					 */
 			}
 			else{
 				output_error("set syntax error (%i items)", scanct);
+				/* TROUBLESHOOT
+					The <b>set</b> syntax doesn't have the correct number of arguments.
+					Check the command syntax and try again.
+				 */
 			}
 		}
 		else if (strncmp(cmd,"find ",max(1,strlen(cmd)))==0)
@@ -1060,6 +1260,10 @@ Retry:
 		}
 		else if (strcmp(buffer,"")!=0)
 			output_error("invalid debug command, try 'help'");
+			/* TROUBLESHOOT
+				The debug command given is not recognized.  Use the <b>help</b>
+				to check the command syntax and try again.
+			 */
 		else
 			return last;
 	}
@@ -1192,6 +1396,12 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 		case DBG_NEXT: break;
 		default: 
 			output_error("invalid debug state");
+			/* TROUBLESHOOT
+				The debugger has entered a state the indicates the system
+				has become unstable.  Please submit a problem report to the
+				core development and include both the input and output files,
+				including the XML dump file.
+			 */
 			return FAILED;
 			break;
 		}
@@ -1227,7 +1437,12 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 
 	/* check for stopped clock */
 	if (this_t < global_clock) {
-		output_error("%s: object %s stopped its clock!", simtime(), object_name(obj));
+		output_error("%s: object %s stopped its clock (debug)!", simtime(), object_name(obj));
+		/* TROUBLESHOOT
+			This indicates that one of the objects in the simulator has encountered a
+			state where it cannot calculate the time to the next state.  This usually
+			is caused by a bug in the module that implements that object's class.
+		 */
 		if (error_caught)
 			data->status = SUCCESS;	/* this will let the debugger handle the error */
 		else
@@ -1239,7 +1454,13 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 								simtime(), object_name(obj));
 		}
 		else if (iteration_counter == 1 && this_t == global_clock) {
-			output_error("convergence iteration limit reached for object %s", get_objname(obj));
+			output_error("convergence iteration limit reached for object %s (debug)", get_objname(obj));
+			/* TROUBLESHOOT
+				This indicates that the core's solver was unable to determine
+				a steady state for all objects for any time horizon.  Identify
+				the object that is causing the convergence problem and contact
+				the developer of the module that implements that object's class.
+			 */
 		}
 
 		/* if this event precedes next step, next step is now this event */

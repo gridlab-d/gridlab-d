@@ -615,6 +615,10 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			if (n==0)
 			{
 				output_error("command line option '%s' is not recognized",*argv);
+				/* TROUBLESHOOT
+					The command line option given is not valid where it was found.
+					Check the command line for correct syntax and order of options.
+				 */
 				return FAILED;
 			}
 		}

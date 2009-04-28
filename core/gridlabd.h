@@ -201,7 +201,11 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 	within the block.  Calls to GL_THROW(Msg,...) within this try block will be transfer
 	control to the GL_CATCH(Msg) block.
  **/
-#define GL_TRY { EXCEPTIONHANDLER *_handler = (*callback->exception.create_exception_handler)(); if (_handler==NULL) (*callback->output_error)("%s(%d): exception handler creation failed",__FILE__,__LINE__); else if (setjmp(_handler->buf)==0) {
+#define GL_TRY { EXCEPTIONHANDLER *_handler = (*callback->exception.create_exception_handler)(); if (_handler==NULL) (*callback->output_error)("%s(%d): module exception handler creation failed",__FILE__,__LINE__); else if (setjmp(_handler->buf)==0) {
+/* TROUBLESHOOT
+	This error is caused when the system is unable to implement an exception handler for a module. 
+	This is an internal error and should be reported to the module developer.
+ */
 /** The behavior of GL_THROW(Msg,...) differs depending on the situation:
 	- Inside a #GL_TRY block, program flow is transfered to the GL_CATCH(Msg) block that follows.
 	- Inside a GL_CATCH(Msg) block, GL_THROW(Msg,...) behavior is undefined (read \em bad).

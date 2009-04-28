@@ -198,7 +198,12 @@ static void do_object_sync(int thread, void *item)
 
 	/* check for stopped clock */
 	if (this_t < global_clock) {
-		output_error("%s: object %s stopped its clock!", simtime(), object_name(obj));
+		output_error("%s: object %s stopped its clock (exec)!", simtime(), object_name(obj));
+		/* TROUBLESHOOT
+			This indicates that one of the objects in the simulator has encountered a
+			state where it cannot calculate the time to the next state.  This usually
+			is caused by a bug in the module that implements that object's class.
+		 */
 		data->status = FAILED;
 	} else {
 		/* check for iteration limit approach */
@@ -207,8 +212,13 @@ static void do_object_sync(int thread, void *item)
 								simtime(), object_name(obj));
 		}
 		else if (iteration_counter == 1 && this_t == global_clock) {
-			output_error("convergence iteration limit reached for object %s:%d",
-			               obj->oclass->name, obj->id);
+			output_error("convergence iteration limit reached for object %s:%d", obj->oclass->name, obj->id);
+			/* TROUBLESHOOT
+				This indicates that the core's solver was unable to determine
+				a steady state for all objects for any time horizon.  Identify
+				the object that is causing the convergence problem and contact
+				the developer of the module that implements that object's class.
+			 */
 		}
 
 		/* if this event precedes next step, next step is now this event */
@@ -235,6 +245,11 @@ static STATUS init_all(void)
 		}
 	} CATCH (char *msg) {
 		output_error("init failure: %s", msg);
+		/* TROUBLESHOOT
+			The initialization procedure failed.  This is usually preceded 
+			by a more detailed message that explains why it failed.  Follow
+			the guidance for that message and try again.
+		 */
 		return FAILED;
 	} ENDCATCH;
 	return SUCCESS;
@@ -293,6 +308,11 @@ STATUS exec_start(void)
 	if (init_all() == FAILED)
 	{
 		output_error("model initialization failed");
+		/* TROUBLESHOOT
+			The initialization procedure failed.  This is usually preceded 
+			by a more detailed message that explains why it failed.  Follow
+			the guidance for that message and try again.
+		 */
 		return FAILED;
 	}
 
@@ -300,6 +320,11 @@ STATUS exec_start(void)
 	if (ranks == NULL && setup_ranks() == FAILED)
 	{
 		output_error("ranks setup failed");
+		/* TROUBLESHOOT
+			The rank setup procedure failed.  This is usually preceded 
+			by a more detailed message that explains why it failed.  Follow
+			the guidance for that message and try again.
+		 */
 		return FAILED;
 	}
 
@@ -322,6 +347,11 @@ STATUS exec_start(void)
 		threadpool = tp_alloc(&global_threadcount, do_object_sync);
 		if (threadpool == INVALID_THREADPOOL) {
 			output_error("threadpool creation failed");
+			/* TROUBLESHOOT
+				The multithreading setup procedure failed.  This is usually preceded 
+				by a more detailed message that explains why it failed.  Follow
+				the guidance for that message and try again.
+			 */
 			return FAILED;
 		}
 		output_verbose("using %d helper thread(s)", global_threadcount);
@@ -330,7 +360,11 @@ STATUS exec_start(void)
 		thread_data = (struct thread_data *) malloc(sizeof(struct thread_data) +
 					  sizeof(struct sync_data) * global_threadcount);
 		if (!thread_data) {
-			output_error("thread data allocation failed");
+			output_error("thread memory allocation failed");
+			/* TROUBLESHOOT
+				A thread memory allocation failed.  
+				Follow the standard process for freeing up memory ang try again.
+			 */
 			return FAILED;
 		}
 		thread_data->count = global_threadcount;
@@ -436,7 +470,13 @@ STATUS exec_start(void)
 			/* check iteration limit */
 			else if (--iteration_counter == 0)
 			{
-				output_error("convergence iteration limit reached at %s", simtime());
+				output_error("convergence iteration limit reached at %s (exec)", simtime());
+				/* TROUBLESHOOT
+					This indicates that the core's solver was unable to determine
+					a steady state for all objects for any time horizon.  Identify
+					the object that is causing the convergence problem and contact
+					the developer of the module that implements that object's class.
+				 */
 				sync.status = FAILED;
 				THROW("convergence failure");
 			}
@@ -455,6 +495,11 @@ STATUS exec_start(void)
 	CATCH(char *msg)
 	{
 		output_error("exec halted: %s", msg);
+		/* TROUBLESHOOT
+			This indicates that the core's solver shut down.  This message
+			is usually preceded by more detailed messages.  Follow the guidance
+			for those messages and try again.
+		 */
 	}
 	ENDCATCH
 
@@ -535,7 +580,12 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 
 	/* check for stopped clock */
 	if (this_t < global_clock) {
-		output_error("%s: object %s stopped its clock!", simtime(), object_name(obj));
+		output_error("%s: object %s stopped its clock! (test)", simtime(), object_name(obj));
+		/* TROUBLESHOOT
+			This indicates that one of the objects in the simulator has encountered a
+			state where it cannot calculate the time to the next state.  This usually
+			is caused by a bug in the module that implements that object's class.
+		 */
 		data->status = FAILED;
 	} else {
 		/* check for iteration limit approach */
@@ -544,8 +594,12 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 								simtime(), object_name(obj));
 		}
 		else if (iteration_counter == 1 && this_t == global_clock) {
-			output_error("convergence iteration limit reached for object %s:%d",
-			               obj->oclass->name, obj->id);
+			output_error("convergence iteration limit reached for object %s:%d (test)", obj->oclass->name, obj->id);
+			/* TROUBLESHOOT
+				This indicates that one of the objects in the simulator has encountered a
+				state where it cannot calculate the time to the next state.  This usually
+				is caused by a bug in the module that implements that object's class.
+			 */
 		}
 
 		/* if this event precedes next step, next step is now this event */

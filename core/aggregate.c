@@ -57,6 +57,10 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 		)
 	{
 		output_error("aggregate group '%s' is not valid", aggregator);
+		/* TROUBLESHOOT
+			An aggregation expression does not have the required syntax, e.g., <i>aggregation</i>(<i>value</i>[.<i>part</i>]).
+			Check the aggregation's syntax and make sure it conforms to the required syntax.
+		 */
 		errno = EINVAL;
 		return NULL;
 	}
@@ -65,6 +69,10 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 		to_unit = unit_find(aggrunit);
 		if(to_unit == NULL){
 			output_error("aggregate group '%s' has invalid units (%s)\n", aggrval, aggrunit);
+			/* TROUBLESHOOT
+				An aggregation expression include a unit specification in the value expression, but the unit is not found.
+				Check your aggregations and make sure all the units are defined.
+			 */
 			errno = EINVAL;
 			return NULL;
 		}
@@ -87,6 +95,10 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 	else
 	{
 		output_error("aggregate group '%s' does not use a known aggregator", aggregator);
+		/* TROUBLESHOOT
+			An aggregation expression uses an aggregator that is not defined.  
+			Check that all your aggregators used allowed functions (e.g., min, max, avg, std, sum, count, etc.).
+		 */
 		errno = EINVAL;
 		return NULL;
 	}
@@ -100,7 +112,11 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 		FINDPGM *pgm = find_mkpgm(group_expression);
 		if (pgm==NULL)
 		{
-			output_error("aggregate group expression '%s' is not valid", group_expression);
+			output_error("aggregate group expression '%s' failed", group_expression);
+			/* TROUBLESHOOT
+				A group expression failed to generate a useful group.  
+				Check that all your groups are correctly defined.
+			 */
 			errno = EINVAL;
 			return NULL;
 		}
@@ -112,6 +128,11 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 			if ((flags&CF_CLASS)!=CF_CLASS)
 			{
 				output_error("aggregate group expression '%s' does not result in a set with a fixed class", group_expression);
+				/* TROUBLESHOOT
+					A group expression generated a group whose members vary over time.  
+					This is not allowed.  
+					Check that all your groups are defined such that the group membership is constant.
+				 */
 				errno = EINVAL;
 				free(pgm);
 				return NULL;
@@ -123,6 +144,10 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 				if (list==NULL)
 				{
 					output_error("aggregate group expression '%s' does not result is a usable object list", group_expression);
+					/* TROUBLESHOOT
+						A group expression failed to generate a useful group.  
+						Check that all your groups are correctly defined.
+					 */
 					free(pgm);
 					errno=EINVAL;
 					return NULL;
@@ -131,6 +156,10 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 				if (obj==NULL)
 				{
 					output_error("aggregate group expression '%s' results is an empty object list", group_expression);
+					/* TROUBLESHOOT
+						A group expression generated an empty group.  
+						Check that all your groups are correctly defined.
+					 */
 					free(pgm);
 					free(list);
 					errno=EINVAL;
@@ -140,6 +169,10 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 				if (pinfo==NULL)
 				{
 					output_error("aggregate group property '%s' is not found in the objects satisfying search criteria '%s'", aggrval, group_expression);
+					/* TROUBLESHOOT
+						A group expression failed to generate a group that contains objects that meet the required criteria.  
+						Check that all your groups are correctly defined.
+					 */
 					errno = EINVAL;
 					free(pgm);
 					free(list);
@@ -150,6 +183,10 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 					if (strcmp(aggrpart,"")!=0)
 					{	/* doubles cannot have parts */
 						output_error("aggregate group property '%s' cannot have part '%s'", aggrval, aggrpart);
+						/* TROUBLESHOOT
+							An aggregate part refers to a property that is a real number and does not have any parts.  
+							Check that all your aggregate parts refer a property with parts, e.g., a complex value.
+						 */
 						errno = EINVAL;
 						free(pgm);
 						free(list);
@@ -172,6 +209,10 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 					else
 					{
 						output_error("aggregate group property '%s' cannot have part '%s'", aggrval, aggrpart);
+						/* TROUBLESHOOT
+							The aggregate part requested is not recognized for the property given.  
+							Check that your aggregate part is defined for a complex value.
+						 */
 						errno = EINVAL;
 						free(pgm);
 						free(list);
@@ -181,6 +222,10 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 				else
 				{
 					output_error("aggregate group property '%s' cannot be aggregated", aggrval);
+					/* TROUBLESHOOT
+						The aggregate referred to a type of property that cannot be aggregated.  
+						Check that your aggregate part refers to a numeric value.
+					 */
 					errno = EINVAL;
 					free(pgm);
 					free(list);
@@ -189,6 +234,10 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 				from_unit = pinfo->unit;
 				if(to_unit != NULL && from_unit == NULL){
 					output_error("aggregate group property '%s' is unitless and cannot be converted", aggrval);
+					/* TROUBLESHOOT
+						The aggregate attempted to convert the units of a property that is unitless.  
+						Check that your aggregate part does not include a unit specification.
+					 */
 					errno = EINVAL;
 					free(pgm);
 					free(list);
@@ -196,6 +245,11 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 				}
 				if (from_unit != NULL && to_unit != NULL && unit_convert_ex(from_unit, to_unit, &scale) == 0){
 					output_error("aggregate group property '%s' cannot use units '%s'", aggrval, aggrunit);
+					/* TROUBLESHOOT
+						The aggregate attempted to convert a property to a unit that is not compatible with the
+						property's original unit.  Check that your aggregate uses a unit that is fundamentally 
+						compatible.
+					 */
 					errno = EINVAL;
 					free(pgm);
 					free(list);
