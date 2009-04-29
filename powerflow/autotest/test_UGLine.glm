@@ -2,11 +2,7 @@
 //Tests power in and power out of a three-phase underground
 //  line.  Must agree within .1 W of correct answer.
 
-#set include="../../core"
-#include "../../core/rt/msvc_debugger.glm"
-
-#include "assert.glm"
-#set iteration_limit=1000
+#set iteration_limit=100
 
 clock {
 	timezone EST+5EDT;
@@ -14,6 +10,7 @@ clock {
 }
 
 module powerflow;
+module assert;
 
 ///////////////////////////////////////////////////////
 // test 2: underground line 

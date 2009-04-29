@@ -2,163 +2,88 @@
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core", "..\core\core.vcproj", "{11E2543D-382E-4F7D-B76D-A6EC571F2D27}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 		{152CE948-F659-4206-A50A-1D2B9658EF96} = {152CE948-F659-4206-A50A-1D2B9658EF96}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "climate", "..\climate\climate.vcproj", "{8AB5B9CB-F1CF-41C0-BF4A-FC04EC85B4BB}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "commercial", "..\commercial\commercial.vcproj", "{921BB65C-380D-4982-A9F4-8F0C97FA93D2}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tape", "..\tape\tape.vcproj", "{A06A3354-CB45-40E3-851A-E77408EC6244}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "network", "..\network\network.vcproj", "{543A6584-4A21-464D-ACF3-1B378AF7D373}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "powerflow", "..\powerflow\powerflow.vcproj", "{D685626B-BEB1-47B8-970A-45041514A9C5}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plc", "..\plc\plc.vcproj", "{457E6DBB-6C2B-40C2-9C8B-387F72797839}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "doxygen-doc", "..\doxygen\doxygen-doc.vcproj", "{A1ACE681-2E56-4812-9E22-E19CC0E4E716}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "residential", "..\residential\residential.vcproj", "{603E4678-2160-4D61-99CF-1DB0D1C6196B}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xerces", "xerces.vcproj", "{152CE948-F659-4206-A50A-1D2B9658EF96}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cppunit", "cppunit.vcproj", "{76052AD0-2F8A-4E6F-855E-6920C6CE4493}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glmjava", "..\java\java.vcproj", "{2F21ACDB-9FE4-46FA-B9A8-EC395F639D5B}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "generators", "..\generators\generators.vcproj", "{D233512D-C227-46A2-B03B-70E9DE024307}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "reliability", "..\reliability\reliability.vcproj", "{D79A1ED5-DED5-4081-8389-FF773392DB54}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tape_file", "..\tape_file\tape_file.vcproj", "{07608C8F-EF3E-4BB6-B072-6CE4BCE489AA}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tape_memory", "..\tape_memory\tape_memory.vcproj", "{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tape_odbc", "..\tape_odbc\tape_odbc.vcproj", "{F917B893-1A20-4540-B2AD-CA46D3322A21}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kill", "..\core\kill\kill.vcproj", "{90EDF80B-CB7E-4266-BAED-5AE552F3E62B}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "market", "..\market\market.vcproj", "{B99E7151-0A71-412A-9D3F-7D5F82887F14}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tape_plot", "..\tape_plot\tape_plot.vcproj", "{32E73464-5973-4CA1-845C-753BE646CE77}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "assert", "..\assert\assert.vcproj", "{055153BA-D011-4193-9AE7-7134280028A8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{76052AD0-2F8A-4E6F-855E-6920C6CE4493} = {76052AD0-2F8A-4E6F-855E-6920C6CE4493}
 	EndProjectSection
 EndProject
 Global
@@ -469,6 +394,18 @@ Global
 		{32E73464-5973-4CA1-845C-753BE646CE77}.Release|Win32.Build.0 = Release|Win32
 		{32E73464-5973-4CA1-845C-753BE646CE77}.Release|x64.ActiveCfg = Release|x64
 		{32E73464-5973-4CA1-845C-753BE646CE77}.Release|x64.Build.0 = Release|x64
+		{055153BA-D011-4193-9AE7-7134280028A8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{055153BA-D011-4193-9AE7-7134280028A8}.Debug|Win32.Build.0 = Debug|Win32
+		{055153BA-D011-4193-9AE7-7134280028A8}.Debug|x64.ActiveCfg = Debug|Win32
+		{055153BA-D011-4193-9AE7-7134280028A8}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{055153BA-D011-4193-9AE7-7134280028A8}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{055153BA-D011-4193-9AE7-7134280028A8}.MatlabDebug|x64.ActiveCfg = Debug|Win32
+		{055153BA-D011-4193-9AE7-7134280028A8}.QuickDebug|Win32.ActiveCfg = Debug|Win32
+		{055153BA-D011-4193-9AE7-7134280028A8}.QuickDebug|Win32.Build.0 = Debug|Win32
+		{055153BA-D011-4193-9AE7-7134280028A8}.QuickDebug|x64.ActiveCfg = Debug|Win32
+		{055153BA-D011-4193-9AE7-7134280028A8}.Release|Win32.ActiveCfg = Release|Win32
+		{055153BA-D011-4193-9AE7-7134280028A8}.Release|Win32.Build.0 = Release|Win32
+		{055153BA-D011-4193-9AE7-7134280028A8}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

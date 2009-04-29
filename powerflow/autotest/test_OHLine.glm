@@ -3,10 +3,8 @@
 //Power in and power out must be within .1 W  
 //  of correct values
 
-#set include="../../core"
-#include "../../core/rt/msvc_debugger.glm"
+//#include "../../core/rt/debugger.conf"
 
-#include "assert.glm"
 #set iteration_limit=100
 
 clock {
@@ -15,6 +13,7 @@ clock {
 }
 
 module powerflow;
+module assert;
 
 ///////////////////////////////////////////////////////
 // test 1: overhead line 
@@ -59,12 +58,12 @@ object overhead_line {
 	object double_assert {
 		target "power_out";
 		value 28724.003011;
-		within 0.1;
+		within .1;
 	};
 	object double_assert {
 		target "power_in";
 		value 28725.712418;
-		within 0.1;
+		within .1;
 	};	
 };
 
@@ -110,12 +109,12 @@ object overhead_line {
 	object double_assert {
 		target "power_out";
 		value 28724.003011;
-		within 0.1;
+		within .1;
 	};
 	object double_assert {
 		target "power_in";
 		value 28725.712418;
-		within 0.1;
+		within .1;
 	};	
 };
 
@@ -155,12 +154,12 @@ object overhead_line {
 	object double_assert {
 		target "power_out";
 		value 28724.003011;
-		within 0.1;
+		within .1;
 	};
 	object double_assert {
 		target "power_in";
 		value 28725.712418;
-		within 0.1;
+		within .1;
 	};		
 };
 
@@ -223,11 +222,11 @@ object overhead_line {
 	object double_assert {
 		target "power_out";
 		value 86174.32449;
-		within 0.1;
+		within .1;
 	};
 	object double_assert {
 		target "power_in";
 		value 86178.15360;
-		within 0.1;
+		within .1;
 	};	
 };
