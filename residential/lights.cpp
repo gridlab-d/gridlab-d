@@ -131,6 +131,11 @@ int lights::init(OBJECT *parent)
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 	{
 		gl_error("lights must have a parent house");
+		/*	TROUBLESHOOT
+			The lights object, being an enduse for the house model, must have a parent house
+			that it is connected to.  Create a house object and set it as the parent of the
+			offending lights object.
+		*/
 		return 0;
 	}
 
@@ -142,6 +147,14 @@ int lights::init(OBJECT *parent)
 	if (installed_power==0) 
 		installed_power = power_density * pHouse->floor_area;
 
+	if(demand > 1.0){
+		gl_warning("lights demand reset from %f to 1.0", demand);
+		demand = 1.0;
+	} else if (demand < 0.0){
+		gl_warning("lights demand reset from %f to 0.0", demand);
+		demand = 0.0;
+	}
+
 	// initial demand (assume power factor is 1.0)
 	load.power = installed_power * demand / 1000;
 
@@ -152,7 +165,16 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	// reset load
 	load.admittance = load.current = load.power = complex(0,0,J);
-	
+
+	// sanity check demand
+	if(demand > 1.0){
+		gl_warning("lights demand reset from %f to 1.0", demand);
+		demand = 1.0;
+	} else if (demand < 0.0){
+		gl_warning("lights demand reset from %f to 0.0", demand);
+		demand = 0.0;
+	}
+
 	// compute nominal power consumption (adjust with power factor)
 	load.power.SetPowerFactor(installed_power/power_factor[type] * demand / 1000.0, power_factor[type],J);
 	double VM2 = ((*pVoltage) * ~(*pVoltage)).Re();

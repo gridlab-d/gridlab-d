@@ -302,12 +302,23 @@ int house::init(OBJECT *parent)
 		{
 			if ((*(map[i].var) = get_complex(parent,map[i].varname))==NULL)
 				GL_THROW("%s (%s:%d) does not implement triplex_meter variable %s for %s (house:%d)", 
+				/*	TROUBLESHOOT
+					The House requires that the triplex_meter contains certain published properties in order to properly connect
+					the house circuit panel to the meter.  If the triplex_meter does not contain those properties, GridLAB-D may
+					suffer fatal pointer errors.  If you encounter this error, please report it to the developers, along with
+					the version of GridLAB-D that raised this error.
+				*/
 					parent->name?parent->name:"unnamed object", parent->oclass->name, parent->id, map[i].varname, obj->name?obj->name:"unnamed", obj->id);
 		}
 	}
 	else
 	{
 		gl_error("house:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
+		/*	TROUBLESHOOT
+			The House model relies on a triplex_meter as a parent to calculate voltages based on
+			events within the powerflow module.  Create a triplex_meter object and set it as
+			the parent of the house object.
+		*/
 
 		// attach meter variables to each circuit in the default_meter
 		*(map[0].var) = &default_line_voltage[0];
@@ -389,6 +400,10 @@ int house::init(OBJECT *parent)
 		// for unknown latitude, warn the user and set it midway at 36
 		hdr->latitude = hdr->latitude<24 ? 24 : 48;
 		gl_error("Latitude beyond the currently supported range 24 - 48 N, Simulations will continue assuming latitude %.0fN",hdr->latitude);
+		/*	TROUBLESHOOT
+			GridLAB-D currently only supports latitudes within a temperate band in the northern hemisphere for the building models.
+			Latitudes outside 24N to 48N may not correctly calculate solar input.
+		*/
 	}
 
 	// attach the house HVAC to the panel
@@ -424,6 +439,11 @@ CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
 	c->pLoad = (ENDUSELOAD*)gl_get_addr(obj,"enduse_load");
 	if (c->pLoad==NULL){
 		GL_THROW("end-use load %s couldn't be connected because it does not publish ENDUSELOAD structure", c->enduse->name);
+		/*	TROUBLESHOOT
+			The house model expects all enduse load models to publish an 'enduse_load' property that points to the top
+			of the load aggregator for the appliance.  Please verify that the specified load class publishes an
+			'enduse_load' property.
+		*/
 	}
 	
 	// choose circuit
@@ -470,6 +490,12 @@ TIMESTAMP house::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	if (TcoolOff<TheatOff)
 	{
 		gl_error("house: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", TcoolOff,TheatOff);
+		/*	TROUBLESHOOT
+			The house models the thermostat with explicit heating and cooling on and off points, dependent on the device
+			setpoints and the thermostat's activation deadband.  If the heating and cooling points are too close to each
+			other, the device will not emulate a real thermostat.  To remedy this error, either make the thermostat
+			deadband smaller, or set the heating and cooling setpoints further apart.
+		*/
 		return TS_INVALID;
 	}
 
@@ -503,6 +529,11 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 		int n = (int)c->type;
 		if (n<0 || n>2)
 			GL_THROW("%s:%d circuit %d has an invalid circuit type (%d)", obj->oclass->name, obj->id, c->id, (int)c->type);
+		/*	TROUBLESHOOT
+			Invalid circuit types are an internal error for the house panel.  Please report this error.  The likely causes
+			include an object that is not a house is being processed by the house model, or the panel was not correctly
+			initialized.
+		*/
 
 		// if breaker is open and reclose time has arrived
 		if (c->status==BRK_OPEN && t1>=c->reclose)
@@ -761,6 +792,10 @@ int house::set_Eigen_values()
 		air_thermal_mass <= ROUNDOFF || house_content_thermal_mass <= ROUNDOFF)
 	{
 		gl_error("House thermal mass or UA invalid.  Eigen values not set.");
+		/*	TROUBLESHOOT
+			The house envelope_UA, mass_heat_coeff, or floor_area have not been set to legitimate values.
+			Please review these properties and set them to values greater than 1e-6.
+		*/
 		return FALSE;
 	}
 
