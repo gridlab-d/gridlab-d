@@ -89,6 +89,11 @@ int microwave::init(OBJECT *parent)
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 	{
 		gl_error("microwave must have a parent house");
+		/*	TROUBLESHOOT
+			The microwave object, being an enduse for the house model, must have a parent house
+			that it is connected to.  Create a house object and set it as the parent of the
+			offending microwave object.
+		*/
 		return 0;
 	}
 
@@ -142,6 +147,10 @@ double microwave::update_state(double dt)
 		break;
 	default:
 		throw "unknown microwave state";
+		/*	TROUBLESHOOT
+			The microwave is neither on nor off.  Please initialize the "state" variable
+			to either "ON" or "OFF".
+		*/
 	}
 
 	load.power.SetPowerFactor( (state==ON?installed_power:standby_power)/1000,power_factor);

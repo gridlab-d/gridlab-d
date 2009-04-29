@@ -122,6 +122,11 @@ int waterheater::init(OBJECT *parent)
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 	{
 		gl_error("waterheater must have a parent house");
+		/*	TROUBLESHOOT
+			The waterheater object, being an enduse for the house model, must have a parent
+			house that it is connected to.  Create a house object and set it as the parent
+			of the offending waterheater object.
+		*/
 		return 0;
 	}
 
@@ -271,6 +276,10 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	}
 }
 
+TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
+	/* time has passed ~ calculate internal gains, height change, temperature change */
+	return TS_NEVER;
+}
 
 /** Water heater synchronization determines the time to next
 	synchronization state and the power drawn since last synch
@@ -289,6 +298,10 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// less than one second means never
 	else
 		return TS_NEVER; 
+}
+
+TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	return TS_NEVER;
 }
 
 /** Tank state determined based on the height of the hot water column
@@ -555,6 +568,11 @@ double waterheater::actual_kW(void)
         {
             if (trip_counter++ > 10)
                 GL_THROW("Water heater line voltage is too high, exceeds twice nominal voltage.");
+			/*	TROUBLESHOOT
+				The waterheater is receiving twice the nominal voltage consistantly, or about 480V on what
+				should be a 240V circuit.  Please sanity check your powerflow model as it feeds to the
+				meter and to the house.
+			*/
             else
                 return 0.0;         // @TODO:  This condition should trip the breaker with a counter
         }
@@ -686,16 +704,25 @@ EXPORT int init_waterheater(OBJECT *obj)
 	return my->init(obj->parent);
 }
 
-EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	waterheater *my = OBJECTDATA(obj, waterheater);
 	if (obj->clock <= ROUNDOFF)
 		obj->clock = t0;  //set the object clock if it has not been set yet
-
 	try {
-		TIMESTAMP t1 = my->sync(obj->clock, t0);
-		obj->clock = t0;
-		return t1;
+		TIMESTAMP t1 = TS_NEVER;
+		switch (pass) {
+		case PC_PRETOPDOWN:
+			return my->presync(obj->clock, t0);
+		case PC_BOTTOMUP:
+			return my->sync(obj->clock, t0);
+		case PC_POSTTOPDOWN:
+			t1 = my->postsync(obj->clock, t0);
+			obj->clock = t0;
+			return t1;
+		default:
+			throw "invalid pass request";
+		}
 	}
 	catch (int m)
 	{

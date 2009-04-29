@@ -107,6 +107,11 @@ int dryer::init(OBJECT *parent)
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 	{
 		gl_error("dryer must have a parent house");
+		/*	TROUBLESHOOT
+			The dryer object, being an enduse for the house model, must have a parent house
+			that it is connected to.  Create a house object and set it as the parent of the
+			offending dryer object.
+		*/
 		return 0;
 	}
 
@@ -240,6 +245,10 @@ double dryer::update_state(double dt)
 		break;
 	default:
 		throw "unexpected motor state";
+		/*	TROUBLESHOOT
+			This is an error.  Please submit a bug report along with at the dryer
+			object & class sections from the relevant GLM file, and from the dump file.
+		*/
 		break;
 	}
 

@@ -79,6 +79,11 @@ int plugload::init(OBJECT *parent)
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 	{
 		gl_error("plugload must have a parent house");
+		/*	TROUBLESHOOT
+			The plugload object, being an enduse for the house model, must have a parent house
+			that it is connected to.  Create a house object and set it as the parent of the
+			offending plugload object.
+		*/
 		return 0;
 	}
 	house *pHouse = OBJECTDATA(parent,house);

@@ -127,6 +127,11 @@ int refrigerator::init(OBJECT *parent)
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 	{
 		gl_error("refrigerator must have a parent house");
+		/*	TROUBLESHOOT
+			The refrigerator object, being an enduse for the house model, must have a parent
+			house that it is connected to.  Create a house object and set it as the parent of
+			the offending refrigerator object.
+		*/
 		return 0;
 	}
 

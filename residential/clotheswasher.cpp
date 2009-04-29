@@ -104,6 +104,11 @@ int clotheswasher::init(OBJECT *parent)
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 	{
 		gl_error("clotheswasher must have a parent house");
+		/*	TROUBLESHOOT
+			The clotheswasher object, being an enduse for the house model, must have a parent house
+			that it is connected to.  Create a house object and set it as the parent of the
+			offending clotheswasher object.
+		*/
 		return 0;
 	}
 
@@ -236,6 +241,10 @@ double clotheswasher::update_state(double dt)
 		break;
 	default:
 		throw "unexpected motor state";
+		/*	TROUBLESHOOT
+			This is an error.  Please submit a bug report along with at the clotheswasher
+			object & class sections from the relevant GLM file, and from the dump file.
+		*/
 		break;
 	}
 

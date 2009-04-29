@@ -81,6 +81,11 @@ int dishwasher::init(OBJECT *parent)
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 	{
 		gl_error("dishwasher must have a parent house");
+		/*	TROUBLESHOOT
+			The dishwasher object, being an enduse for the house model, must have a parent house
+			that it is connected to.  Create a house object and set it as the parent of the
+			offending dishwasher object.
+		*/
 		return 0;
 	}
 

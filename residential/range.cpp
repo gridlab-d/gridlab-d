@@ -80,6 +80,11 @@ int range::init(OBJECT *parent)
 	if (parent==NULL)
 	{
 		gl_error("range must have a parent house");
+		/*	TROUBLESHOOT
+			The range object, being an enduse for the house model, must have a parent house
+			that it is connected to.  Create a house object and set it as the parent of the
+			offending range object.
+		*/
 		return 0;
 	}
 

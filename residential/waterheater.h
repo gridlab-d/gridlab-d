@@ -90,7 +90,9 @@ public:
 	int create();
 	int init(OBJECT *parent);
 	void thermostat(TIMESTAMP t0, TIMESTAMP t1);					// Thermostat plc control code - determines whether to heat...
+	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
+	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
 
 public:

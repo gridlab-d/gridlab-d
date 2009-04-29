@@ -353,6 +353,11 @@ int evcharger::init(OBJECT *parent)
 
 	if (parent==NULL || !gl_object_isa(parent,"house"))
 		throw "evcharger must have a parent house";
+		/*	TROUBLESHOOT
+			The evcharger object, being an enduse for the house model, must have a parent house
+			that it is connected to.  Create a house object and set it as the parent of the
+			offending evcharger object.
+		*/
 	house *pHouse = OBJECTDATA(parent,house);
 
 	// attach object to house panel
@@ -375,6 +380,10 @@ double evcharger::update_state(double dt /* seconds */)
 		DATETIME now;
 		if (!gl_localtime(obj->clock,&now))
 			throw "unable to obtain current time";
+		/*	TROUBLESHOOT
+			The clock likely was not properly initialized, or the object clock has been overwritten with
+			garbage.  Please verify that the clock is set by the input model.
+		*/
 
 		int hour = now.hour;
 		int daytype = pDemand->n_daytypes>0 ? (now.weekday>0&&now.weekday<6) : 0;
@@ -417,6 +426,12 @@ double evcharger::update_state(double dt /* seconds */)
 		//	break;
 		default:
 			throw "invalid state";
+			/*	TROUBLESHOOT
+				The evcharger vehicle has found itself in an ambiguous state while calculating its state
+				and level of charge.  Please verify that the object was initialized with "state" as either
+				"HOME" or "WORK".  If it is, please fill out a bug report and include the relevant sections
+				of the evcharger objects and class blocks from your input model.
+			*/
 			break;
 		}
 	}
@@ -436,6 +451,13 @@ double evcharger::update_state(double dt /* seconds */)
 				break;
 			default:
 				throw "invalid charger_type";
+				/*	TROUBLESHOOT
+					The vehicle charger is not in a valid state.  It may not have been declared properly in
+					the model file.  Please verify that the "charger_type" property is either "LOW", "MEDIUM",
+					or "HIGH" in the model file.  If it is defined properly, please fill out a bug report and
+					include the relevant sections with the evcharger objects and class blocks from your
+					input model.
+				*/
 				break;
 			}
 
@@ -498,11 +520,23 @@ double evcharger::update_state(double dt /* seconds */)
 	//	break;
 	default:
 		throw "invalid state";
+		/*	TROUBLESHOOT
+			The evcharger vehicle has found itself in an ambiguous state while calculating its
+			effects on its parent house.  Please verify that the object was initialized with 
+			"state" as either "HOME" or "WORK".  If it is, please fill out a bug report and 
+			include the relevant sections of the evcharger objects and class blocks from your
+			input model.
+		*/
 		break;
 	}
 
 	if (!isfinite(charge))
 		throw "charge state error (not a number)"; // this is really bad
+	/*	TROUBLESHOOT
+		The charge value is no longer a finite value.  Please submit a bug report with the
+		entire offending model file, or create a simplified model using subsections of the
+		offending model to isolate or eradicate the error.
+	*/
 	load.total = load.power;
 	load.heatgain = load.total.Mag() * heat_fraction;
 

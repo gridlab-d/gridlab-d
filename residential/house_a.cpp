@@ -397,7 +397,7 @@ int house::init(OBJECT *parent)
 
 	if (hdr->latitude < 24 || hdr->latitude > 48)
 	{
-		// for unknown latitude, warn the user and set it midway at 36
+		/* bind latitudes to [24N, 48N] */
 		hdr->latitude = hdr->latitude<24 ? 24 : 48;
 		gl_error("Latitude beyond the currently supported range 24 - 48 N, Simulations will continue assuming latitude %.0fN",hdr->latitude);
 		/*	TROUBLESHOOT
