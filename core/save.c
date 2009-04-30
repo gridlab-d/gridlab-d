@@ -55,6 +55,11 @@ int saveall(char *filename)
 	}
 
 	output_error("saveall: extension '.%s' not a known format", ext);
+	/*	TROUBLESHOOT
+		Only the format extensions ".txt", ".gld", and ".xml" are recognized by
+		GridLAB-D.  Please end the specified output field accordingly, or omit the
+		extension entirely to force use of the default format.
+	*/
 	errno = EINVAL;
 	return FAILED;
 }
@@ -259,60 +264,16 @@ int savexml_strict(char *filename,FILE *fp)
 
 	count += fprintf(fp,"</gridlabd>\n");
 
-/* the following uses the global_* vars, which are going away. the code is being kept for
- * reference and posterity. -mh */
-#if 0
-	count += fprintf(fp,"\t\t<version_major>%d</version_major>\n", global_version_major);
-	count += fprintf(fp,"\t\t<version_minor>%d</version_minor>\n", global_version_minor);
-	count += fprintf(fp,"\t\t<savefilename>%s</savefilename>\n", filename);
-	count += fprintf(fp,"\t\t<workdir>%s</workdir>\n", global_workdir);
-	count += fprintf(fp,"\t\t<command_line>%s</command_line>\n", global_command_line);
-	count += fprintf(fp,"\t\t<created>%s</created>\n", convert_from_timestamp(now*TS_SECOND,buffer,sizeof(buffer))>0?buffer:"(invalid)");
-	count += fprintf(fp,"\t\t<user>%s</user>\n", 
-#ifdef WIN32
-		getenv("USERNAME")
-#else
-		getenv("USER")
-#endif
-		);
-	count += fprintf(fp,"\t\t<host>%s</host>\n", 
-#ifdef WIN32
-		getenv("COMPUTERNAME")
-#else
-		getenv("HOSTNAME")
-#endif
-		);
-
-	count += fprintf(fp,"\t\t<class_count>%d</class_count>\n", class_get_count());
-	count += fprintf(fp,"\t\t<object_count>%d</object_count>\n", object_get_count());
-	/** @todo add global variables here (ticket #57) */
-	while(gvptr != NULL){
-		char *testp = strchr(gvptr->name, ':');
-		if(testp == NULL){
-			count += fprintf(fp, "\t\t<%s>%s</%s>\n", gvptr->name, class_property_to_string(gvptr->prop,(void*)gvptr->prop->addr,buffer,1024)>0 ? buffer : "...", gvptr->name);
-		} // else we have a module::prop name
-		gvptr = global_getnext(gvptr);
-	}
-	count += fprintf(fp, "\t</global>\n");
-
-	/* save clock */
-	count += fprintf(fp,"\t<clock>\n");
-	count += fprintf(fp,"\t\t<tick>1e%+d</tick>\n",TS_SCALE);
-	count += fprintf(fp,"\t\t<timestamp>%s</timestamp>\n", convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"(invalid)");
-	if (getenv("TZ"))
-		count += fprintf(fp,"\t\t<timezone>%s</timezone>\n", getenv("TZ"));
-	count += fprintf(fp,"\t</clock>\n");
-
-	/* save parts */
-	module_saveall_xml(fp);
-
-	count += fprintf(fp,"</load>\n");
-#endif
 	if (fp!=stdout)
 		fclose(fp);
 	return count;
 }
 
+/*
+ *	savexml() results in an XML file that can be reflexively read by the XML loader.  Note that the output
+ *	of savexml_strict results in output that cannot be parsed back in, but can be parsed by automatically
+ *	generated XSD files.
+ */
 int savexml(char *filename,FILE *fp)
 {
 	unsigned int count = 0;
@@ -328,7 +289,7 @@ int savexml(char *filename,FILE *fp)
 	count += fprintf(fp, "\t<global>\n");
 	count += fprintf(fp,"\t\t<class_count>%d</class_count>\n", class_get_count());
 	count += fprintf(fp,"\t\t<object_count>%d</object_count>\n", object_get_count());
-	/** add global variables */
+	/* add global variables */
 	while(gvptr != NULL){
 		char *testp = strchr(gvptr->name, ':');
 		if(testp == NULL){

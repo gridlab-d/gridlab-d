@@ -501,6 +501,10 @@ static PROPERTY *get_property_at_addr(OBJECT *obj, void *addr)
 				return prop;
 			else {
 				output_error("trying to get the private property %s in %s", prop->name, obj->oclass->name);
+				/*	TROUBLESHOOT
+					The specified property was published by its object as private.  Though it may be read at the end of the simulation
+					and by other classes in the module, other modules do not have permission to access that property.
+				*/
 				return 0;
 			}
 	}
@@ -520,6 +524,9 @@ int object_set_value_by_addr(OBJECT *obj, /**< the object to alter */
 		return 0;
 	if(prop->access != PA_PUBLIC){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
+		/*	TROUBLESHOOT
+			The specified property was published by its object as private.  It may not be modified by other modules.
+		*/
 		return 0;
 	}
 
@@ -548,6 +555,10 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 		if (obj->name!=NULL)
 		{
 			output_error("object %s:d name already set to %s", obj->oclass->name, obj->id, obj->name);
+			/*	TROUBLESHOOT
+				Object definitions within model files may only have name specifiers once.  They may not be named multiple
+				times within the object file.
+			*/
 			return FAILED;
 		}
 		else
@@ -607,6 +618,12 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 		if ((obj->latitude = convert_to_latitude(value))==QNAN)
 		{
 			output_error("object %s:%d latitude '%s' is invalid", obj->oclass->name, obj->id, value);
+			/*	TROUBLESHOOT
+				Latitudes are expected to be in the format of X{N,S, }Y'Z".  The seconds may be excluded.
+				If the seconds are excluded, minutes may be excluded.  If minutes are excluded, the
+				north/south indicator may be excluded.  There must be only one space between the degree
+				value and the minute value.  Negative degrees are valid.
+			*/
 			return FAILED;
 		}
 		else 
@@ -617,6 +634,12 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 		if ((obj->longitude = convert_to_longitude(value))==QNAN)
 		{
 			output_error("object %s:d longitude '%s' is invalid", obj->oclass->name, obj->id, value);
+			/*	TROUBLESHOOT
+				Latitudes are expected to be in the format of X{E,W, }Y'Z".  The seconds may be excluded.
+				If the seconds are excluded, minutes may be excluded.  If minutes are excluded, the
+				north/south indicator may be excluded.  There must be only one space between the degree
+				value and the minute value.  Negative degrees are valid.
+			*/
 			return FAILED;
 		}
 		else 
@@ -624,31 +647,55 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 	}
 	else if (strcmp(name,"in_svc")==0)
 	{
-		if ((obj->in_svc = convert_to_timestamp(value))==TS_INVALID)
+		TIMESTAMP t = convert_to_timestamp(value);
+		if (t == TS_INVALID)
 		{
 			output_error("object %s:%d in_svc timestamp '%s' is invalid", obj->oclass->name, obj->id, value);
 			return FAILED;
 		}
+		else if(t >= obj->out_svc)
+		{
+			output_error("object %s:%d in_svc timestamp '%s' overlaps out_svc timestamp", obj->oclass->name, obj->id, value);
+			return FAILED;
+		}
 		else
+		{
+			obj->in_svc = t;
 			return SUCCESS;
+		}
 	}
 	else if (strcmp(name,"out_svc")==0)
 	{
-		if ((obj->out_svc = convert_to_timestamp(value))==TS_INVALID)
+		TIMESTAMP t = convert_to_timestamp(value);
+		if (t == TS_INVALID)
 		{
 			output_error("object %s:%d out_svc timestamp '%s' is invalid", obj->oclass->name, obj->id, value);
 			return FAILED;
 		}
+		else if(t <= obj->in_svc)
+		{
+			output_error("object %s:%d out_svc timestamp '%s' overlaps in_svc timestamp", obj->oclass->name, obj->id, value);
+			return FAILED;
+		}
 		else
+		{
+			obj->out_svc = t;
 			return SUCCESS;
+		}
 	}
 	else if (strcmp(name,"flags")==0)
 	{
 		/* flags should be ignored */
 		return SUCCESS;
 	}
-	else
+	else{
+		output_error("object %s:%d called set_header_value() for invalid field \'%s\'", name);
+		/*	TROUBLESHOOT
+			The valid header fields are "name", "parent", "rank", "clock", "valid_to", "latitude",
+			"longitude", "in_svc", "out_svc", and "flags".
+		*/
 		return FAILED;
+	}
 	/* should never get here */
 }
 
@@ -676,6 +723,9 @@ int object_set_value_by_name(OBJECT *obj, /**< the object to change */
 	}
 	if(prop->access != PA_PUBLIC){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
+		/*	TROUBLESHOOT
+			The specified property was published by its object as private.  It may not be modified by other modules.
+		*/
 		return 0;
 	}
 	addr = (void*)((char *)(obj+1)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
@@ -694,6 +744,9 @@ int object_set_double_by_name(OBJECT *obj, PROPERTYNAME name, double value)
 	}
 	if(prop->access != PA_PUBLIC){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
+		/*	TROUBLESHOOT
+			The specified property was published by its object as private.  It may not be modified by other modules.
+		*/
 		return 0;
 	}
 	*(double*)((char *)(obj+1)+(int64)(prop->addr)) = value; /* warning: cast from pointer to integer of different size */
@@ -712,6 +765,9 @@ int object_set_complex_by_name(OBJECT *obj, PROPERTYNAME name, complex value)
 	}
 	if(prop->access != PA_PUBLIC){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
+		/*	TROUBLESHOOT
+			The specified property was published by its object as private.  It may not be modified by other modules.
+		*/
 		return 0;
 	}
 	*(complex*)((char *)(obj+1)+(int64)(prop->addr)) = value; /* warning: cast from pointer to integer of different size */
@@ -730,6 +786,9 @@ int object_get_value_by_addr(OBJECT *obj, /**< the object from which to get the 
 	prop = prop ? prop : get_property_at_addr(obj,addr);
 	if(prop->access == PA_PRIVATE){
 		output_error("trying to read the value of private property %s in %s", prop->name, obj->oclass->name);
+		/*	TROUBLESHOOT
+			The specified property was published by its object as private.  It may not be modified by other modules.
+		*/
 		return 0;
 	}
 	return class_property_to_string(prop,addr,value,size);
@@ -754,6 +813,9 @@ OBJECT *object_get_reference(OBJECT *obj, char *name)
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if (prop==NULL || prop->access==PA_PRIVATE || prop->ptype!=PT_object)
 	{
+		if(prop == NULL){
+			;
+		}
 		errno = EINVAL;
 		return NULL;
 	} 
