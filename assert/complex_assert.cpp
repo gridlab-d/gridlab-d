@@ -20,7 +20,7 @@ complex_assert::complex_assert(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			// TO DO:  publish your variables here
-			PT_double, "value", PADDR(value),
+			PT_complex, "value", PADDR(value),
 			PT_double, "within", PADDR(within),
 			PT_char32, "target", PADDR(target),	
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);

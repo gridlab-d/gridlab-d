@@ -1,0 +1,240 @@
+//Fuse Self-Test
+//Test 1: Test whether fuse blows when over-current is applied
+//  by checking power_in & power_out = 0
+//Test 2: Test whether fuse behaves properly during normal 
+//  operation by checking power_in = power_out
+//Later implementations may include degraded functionality 
+//  over time.
+
+#set iteration_limit=100
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 00:00:00 EST';
+}
+
+module powerflow;
+module assert;
+
+
+///////////////////////////////////////////////////////
+// test 9: fuse
+///////////////////////////////////////////////////////
+// A phase current_limit = 1
+// Overload the fuse
+// Should blow fuse and let zero power pass through
+
+object fuse {
+	phases AN;
+	name fuse_AN_1;
+	current_limit 0.1;
+	from object node {
+		name fuse_fAN_1;
+		phases AN;
+		voltage_A 7200 + 0j;
+		nominal_voltage 7200;
+	};		
+	to object load {
+		name fuse_tAN_1;
+		phases AN;
+		voltage_A 7200 + 0j;
+		constant_current_A  1;
+		constant_power_A 1500 + 750j;
+		constant_impedance_A 1000 + 2000j;
+		nominal_voltage 7200;
+	};
+	object double_assert {
+		parent fuse_AN_1;
+		target "power_in";
+		value 28726.9;
+		within 0.1;
+	};
+	object double_assert {
+		parent fuse_AN_1;
+		target "power_out";
+		value 0.0;
+		within 0.1;
+	};
+};	
+
+// A phase current_limit = 1000
+// Should act as ideal link
+// power_in = power_out
+
+object fuse {
+	phases AN;
+	name fuse_AN_2;
+	current_limit 1000;
+	from object node {
+		name fuse_fAN_2;
+		phases AN;
+		voltage_A 7200 + 0j;
+		nominal_voltage 7200;
+		
+	};		
+	to object load {
+		name fuse_tAN_2;
+		phases AN;
+		voltage_A 7200 + 0j;
+		constant_current_A  1;
+		constant_power_A 1500 + 750j;
+		constant_impedance_A 1000 + 2000j;
+		nominal_voltage 7200;
+	};
+	object double_assert {
+		target "power_in";
+		value 28726.9;
+		within 0.01;
+	};
+	object double_assert {
+		target "power_out";
+		value 28726.9;
+		within 0.01;
+	};
+};
+
+// B phase current_limit = 1
+// Overload the fuse
+// Should blow fuse and let zero power pass through
+
+object fuse {
+	phases BN;
+	name fuse_BN_1;
+	current_limit 0.1;
+	from object node {
+		name fuse_fBN_1;
+		phases BN;
+		voltage_B 7200 + 0j;
+		nominal_voltage 7200;
+	};		
+	to object load {
+		name fuse_tBN_1;
+		phases BN;
+		voltage_B 7200 + 0j;
+		constant_current_B  1;
+		constant_power_B 1500 + 750j;
+		constant_impedance_B 1000 + 2000j;
+		nominal_voltage 7200;
+	};
+	object double_assert {
+		parent fuse_BN_1;
+		target "power_in";
+		value 28726.9;
+		within 0.1;
+	};
+	object double_assert {
+		parent fuse_BN_1;
+		target "power_out";
+		value 0.0;
+		within 0.1;
+	};
+};	
+
+// B phase current_limit = 1000
+// Should act as ideal link
+// power_in = power_out
+
+object fuse {
+	phases BN;
+	name fuse_BN_2;
+	current_limit 1000;
+	from object node {
+		name fuse_fBN_2;
+		phases BN;
+		voltage_B 7200 + 0j;
+		nominal_voltage 7200;
+		
+	};		
+	to object load {
+		name fuse_tBN_2;
+		phases BN;
+		voltage_B 7200 + 0j;
+		constant_current_B  1;
+		constant_power_B 1500 + 750j;
+		constant_impedance_B 1000 + 2000j;
+		nominal_voltage 7200;
+	};
+	object double_assert {
+		target "power_in";
+		value 28726.9;
+		within 0.01;
+	};
+	object double_assert {
+		target "power_out";
+		value 28726.9;
+		within 0.01;
+	};
+};	
+
+// C phase current_limit = 1
+// Overload fuse
+// Should blow fuse and let zero power pass through
+
+object fuse {
+	phases CN;
+	name fuse_CN_1;
+	current_limit 0.1;
+	from object node {
+		name fuse_fCN_1;
+		phases CN;
+		voltage_C 7200 + 0j;
+		nominal_voltage 7200;
+	};		
+	to object load {
+		name fuse_tCN_1;
+		phases CN;
+		voltage_C 7200 + 0j;
+		constant_current_C  1;
+		constant_power_C 1500 + 750j;
+		constant_impedance_C 1000 + 2000j;
+		nominal_voltage 7200;
+	};
+	object double_assert {
+		parent fuse_CN_1;
+		target "power_in";
+		value 28726.9;
+		within 0.1;
+	};
+	object double_assert {
+		parent fuse_CN_1;
+		target "power_out";
+		value 0.0;
+		within 0.1;
+	};
+};	
+
+// C phase current_limit = 1000
+// Should act as ideal link
+// power_in = power_out
+
+object fuse {
+	phases CN;
+	name fuse_CN_2;
+	current_limit 1000;
+	from object node {
+		name fuse_fCN_2;
+		phases CN;
+		voltage_C 7200 + 0j;
+		nominal_voltage 7200;
+		
+	};		
+	to object load {
+		name fuse_tCN_2;
+		phases CN;
+		voltage_C 7200 + 0j;
+		constant_current_C  1;
+		constant_power_C 1500 + 750j;
+		constant_impedance_C 1000 + 2000j;
+		nominal_voltage 7200;
+	};
+	object double_assert {
+		target "power_in";
+		value 28726.9;
+		within 0.01;
+	};
+	object double_assert {
+		target "power_out";
+		value 28726.9;
+		within 0.01;
+	};
+};	

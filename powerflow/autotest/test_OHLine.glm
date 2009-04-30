@@ -1,9 +1,7 @@
 //Overhead Line Self-Test
-//Tests phases A, B, C and ABC
-//Power in and power out must be within .1 W  
-//  of correct values
-
-//#include "../../core/rt/debugger.conf"
+//Tests phases AN, BN, CN and ABCN
+//Power_in and power_out must agree with losses expected along
+//  a distribution line.  Losses calculated in Matlab script.
 
 #set iteration_limit=100
 

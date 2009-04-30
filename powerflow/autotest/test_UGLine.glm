@@ -1,6 +1,6 @@
 //Underground Line Self-Test
 //Tests power in and power out of a three-phase underground
-//  line.  Must agree within .1 W of correct answer.
+//  line.
 
 #set iteration_limit=100
 
