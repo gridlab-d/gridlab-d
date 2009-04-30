@@ -18,7 +18,7 @@
 #ifndef _COMPLEX_H
 #define _COMPLEX_H
 
-typedef enum {I='i',J='j',A='d'} CNOTATION; /**< complex number notation to use */
+typedef enum {I='i',J='j',A='d', R='r'} CNOTATION; /**< complex number notation to use */
 #define CNOTATION_DEFAULT J /* never set this to A */
 #define PI 3.1415926535897932384626433832795
 #define E 2.71828182845905

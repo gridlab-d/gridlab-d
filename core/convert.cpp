@@ -111,6 +111,11 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 		if(prop->unit != ptmp->unit){
 			if(0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)){
 				printf("ERROR: convert_from_complex: unable to convert unit '%s' to '%s' for property '%s' (tape experiment error)", ptmp->unit->name, prop->unit->name, prop->name);
+				/*	TROUBLESHOOTINGprobablywon'tactuallyfindthishmmm.
+					This is an error with the conversion of units from the complex property's units to the requested units.
+					Please double check the units of the property and compare them to the units defined in the
+					offending tape object.
+				*/
 				scale = 1.0;
 			}
 		}
@@ -122,6 +127,13 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 		double a = v->Arg();
 		if (a>PI) a-=(2*PI);
 		count = sprintf(temp,global_complex_format,m,a*180/PI,A);
+	} 
+	if (v->Notation()==R)
+	{
+		double m = v->Mag()*scale;
+		double a = v->Arg();
+		if (a>PI) a-=(2*PI);
+		count = sprintf(temp,global_complex_format,m,a,R);
 	} else {
 		count = sprintf(temp,global_complex_format,v->Re()*scale,v->Im()*scale,v->Notation()?v->Notation():'i');
 	}
@@ -152,14 +164,16 @@ int convert_to_complex(char *buffer, /**< a pointer to the string buffer */
 	{
 		char signage[2] = {0, 0};
 		/* printf("alt complex form?"); */
-		n = sscanf(buffer, "%lg %1[+-] %lg%1[ijd]", &a, signage, &b, notation);
+		n = sscanf(buffer, "%lg %1[+-] %lg%1[ijdr]", &a, signage, &b, notation);
 		if (n > 0 && signage[0] == '-')
 			b *= -1.0;
 	}
 	if (n>0)
 	{
 		if (n>1 && notation[0]==A)
-			v->SetPolar(a,b);
+			v->SetPolar(a,b*PI/180.0); /* convert deg -> radian*/
+		if (n>1 && notation[0]==R)
+			v->SetPolar(a,b); /* convert deg -> radian*/
 		else
 			v->SetRect(a,n>1?b:0);
 		v->SetNotation((CNOTATION)notation[0]);
