@@ -1198,7 +1198,11 @@ char *find_file(char *name, /**< the name of the file to find */
 		if (dir==NULL)
 			break;
 		strcpy(filepath,dir);
+#ifdef WIN32
+		strcat(filepath,"\\");
+#else
 		strcat(filepath,"/");
+#endif
 		strcat(filepath,name);
 	}
 	return found?filepath:NULL;
