@@ -4,7 +4,7 @@
 	@addtogroup globals Global variables
 	@ingroup core
 
-	The GridLAB-D core maintains a group of global variables that can be accessed 
+	The GridLAB-D core maintains a group of global variables that can be accessed
 	by both core functions and runtime modules using the core API.
 
  @{
@@ -83,11 +83,17 @@ STATUS global_init(void)
 		struct s_varmap *p = &(map[i]);
 		if (global_create(p->name,p->type,p->addr,PT_ACCESS,p->access,NULL)==NULL)
 			output_error("global_init(): global variable '%s' registration failed", p->name);
+			/* TROUBLESHOOT
+				The global variable initialization process was unable to register
+				the indicated global variable.  This error usually follows a more
+				detailed explanation of the error.  Follow the troubleshooting for
+				that message and try again.
+			*/
 	}
 	return SUCCESS;
 }
 
-/** Find a global variable 
+/** Find a global variable
 	@return a pointer to the GLOBALVAR struct if found, NULL if not found
  **/
 GLOBALVAR *global_find(char *name) /**< name of global variable to find */
@@ -116,7 +122,7 @@ GLOBALVAR *global_getnext(GLOBALVAR *previous) /**< a pointer to the previous va
 
 /** Creates a user-defined global variable
 	@return a pointer to GLOBALVAR struct or NULL is failed
-	
+
 	User defined variables can be created using a syntax similar to
 	that of class_define_map().  However
 	- addresses are absolute rather	than relative to the object
@@ -124,7 +130,7 @@ GLOBALVAR *global_getnext(GLOBALVAR *previous) /**< a pointer to the previous va
 	  at the address
 
 	@todo this does not support module globals but needs to (no ticket)
-    
+
  **/
 GLOBALVAR *global_create(char *name, ...)
 {
@@ -136,7 +142,12 @@ GLOBALVAR *global_create(char *name, ...)
 	/* don't create duplicate entries */
 	if(global_find(name) != NULL){
 		errno = EINVAL;
-		output_error("Tried to create global variable '%s' a second time", name);
+		output_error("tried to create global variable '%s' a second time", name);
+		/* TROUBLESHOOT
+			An attempt to create a global variable failed because the
+			indicated variable already exists.  Find out what is attempting
+			to create the variable and fix the problem and try again.
+		*/
 		return NULL;
 	}
 
@@ -165,7 +176,7 @@ GLOBALVAR *global_create(char *name, ...)
 				char *keyword = va_arg(arg,char*);
 				long keyvalue = va_arg(arg,long);
 				KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
-				if (key==NULL) 
+				if (key==NULL)
 					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
 				key->next = property->keywords;
 				strncpy(key->name,keyword,sizeof(key->name));
@@ -177,9 +188,9 @@ GLOBALVAR *global_create(char *name, ...)
 				char *keyword = va_arg(arg,char*);
 				unsigned char keyvalue = va_arg(arg, int); /* uchars are promoted to int by GCC */
 				KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
-				if (keyvalue>63) 
+				if (keyvalue>63)
 					throw_exception("global_create(char *name='%s',...): set '%s' keyword value '%d' may not exceed 64",name,keyword,keyvalue);
-				if (key==NULL) 
+				if (key==NULL)
 					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
 				key->next = property->keywords;
 				strncpy(key->name,keyword,sizeof(key->name));
@@ -188,7 +199,7 @@ GLOBALVAR *global_create(char *name, ...)
 			}
 			else if (proptype==PT_ACCESS)
 			{
-				PROPERTYACCESS pa = va_arg(arg,PROPERTYACCESS); 
+				PROPERTYACCESS pa = va_arg(arg,PROPERTYACCESS);
 				switch (pa) {
 				case PA_PUBLIC:
 				case PA_REFERENCE:
@@ -249,7 +260,7 @@ GLOBALVAR *global_create(char *name, ...)
 			if (var->prop==NULL)
 				var->prop = property;
 
-			
+
 			/* link map to oclass if not yet done */
 			if (lastprop!=NULL)
 				lastprop->next = property;
@@ -262,8 +273,8 @@ GLOBALVAR *global_create(char *name, ...)
 		}
 	}
 	va_end(arg);
-	
-	if (lastvar==NULL) 
+
+	if (lastvar==NULL)
 		/* first variable */
 		global_varlist = lastvar = var;
 	else
@@ -275,7 +286,7 @@ GLOBALVAR *global_create(char *name, ...)
 	return var;
 }
 
-/** Sets a user-defined global variable 
+/** Sets a user-defined global variable
 	@return STATUS value
 
 	User defined global variables can be set using a syntax similar
@@ -297,6 +308,10 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 		strncpy(value,v,sizeof(value));
 		if (strcmp(value,v)!=0)
 			output_error("global_setvar(char *name='%s',...): value is too long to store");
+			/* TROUBLESHOOT
+				An attempt to set a global variable failed because the value of the variable
+				was too long.
+			 */
 	}
 	if (strcmp(name,"")!=0) /* something was defined */
 	{
@@ -306,6 +321,12 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 			if (global_strictnames)
 			{
 				output_error("strict naming prevents implicit creation of %s", name);
+				/* TROUBLESHOOT
+					The global_strictnames variable prevents the system from implicitly
+					creating a new variable just by setting a value.  Try using the
+					name of a named variable or remove the strict naming setting
+					by setting global_strictnames=0.
+				 */
 				return FAILED;
 			}
 
@@ -319,6 +340,10 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 	else
 	{
 		output_error("global variable definition '%s' not formatted correctedly", def);
+		/* TROUBLESHOOT
+			A request to set a global variable was not formatted properly.  Use the
+			proper format, i.e. name=value, and try again.
+		 */
 		return FAILED;
 	}
 }
