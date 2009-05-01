@@ -4228,6 +4228,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 	else
 		p=buffer;
 
+	buffer[0] = '\0';
 	if (buffer_read(fp,buffer,file,BUFFERSIZE)==0)
 	{
 		fclose(fp);
@@ -4286,6 +4287,7 @@ Done:
 STATUS loadall(char *file){
 	char *buffer = NULL, *p = NULL;
 	char *ext = strrchr(file,'.');
+	char def_ext[] = ".glm";
 	unsigned int old_obj_count = object_get_count();
 	unsigned int new_obj_count = 0;
 	unsigned int i;
@@ -4301,8 +4303,9 @@ STATUS loadall(char *file){
 	strcpy(filename,file);
 	if (ext==NULL || ext<file+strlen(file)-5)
 	{
-		ext = filename+strlen(filename);
-		strcat(filename,".glm");
+		//ext = filename+strlen(filename);
+		//strcat(filename,".glm");
+		ext = def_ext;
 	}
 
 	if (conf==NULL)
