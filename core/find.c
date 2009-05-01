@@ -442,6 +442,12 @@ FINDLIST *find_objects(FINDLIST *start, ...)
 				break;
 			default:
 				output_error("invalid findtype means search is specified incorrectly or FT_END is probably missing");
+				/*	TROUBLESHOOT
+					The search rule is invalid because it contains a term that isn't recognized or the 
+					search rule is not correctly terminated by the FT_END term.  Check the syntax of
+					the search rule and try again.  If the search rule comes from a module, report the 
+					problem.
+				 */
 				if (start == FL_NEW) free(result);
 				return NULL;
 			}
@@ -987,6 +993,10 @@ static int expression(PARSER, FINDPGM **pgm)
 		if WHITE ACCEPT;
 		if(op < 0 || op >= FINDOP_END){
 			output_error("expression(): invalid find op!");
+			/*	TROUBLESHOOT
+				A search rule used a term that isn't valid.  
+				Check the search rule syntax and try again.
+			 */
 			REJECT;
 		}
 		if (strcmp(pname,"class")==0)
@@ -995,6 +1005,10 @@ static int expression(PARSER, FINDPGM **pgm)
 			CLASS *oclass = class_get_class_from_classname(pvalue);
 			if (oclass==NULL)
 				output_error("class '%s' not found", pvalue);
+				/*	TROUBLESHOOT
+					A search rule specified a class that doesn't exist.  
+					Check the class name to make sure it exists and try again.
+				 */
 			else
 			{
 				v.pointer=(void*)oclass;
@@ -1009,6 +1023,10 @@ static int expression(PARSER, FINDPGM **pgm)
 			MODULE *mod = module_find(pvalue);
 			if (mod==NULL)
 				output_error("module '%s' not found", pvalue);
+				/* TROUBLESHOOT
+					A search rule specified a module that hasn't been loaded.
+					Check the module name to make sure it's been loaded and try again.
+				 */
 			else
 			{
 				v.pointer=(void*)mod;
@@ -1022,7 +1040,11 @@ static int expression(PARSER, FINDPGM **pgm)
 			FINDVALUE v;
 			int idnum = atoi(pvalue);
 			if(idnum < 0){
-				output_error("ID '#%i' not found", idnum);
+				output_error("object id %d not found", idnum);
+				/* TROUBLESHOOT 
+					A search rule specified an object id that doesn't exist.
+					Check the object list to make it exists and try again.
+				 */
 			} else {
 				v.integer = idnum;
 				add_pgm(pgm,comparemap[op].integer,OFFSET(id),v,NULL,findlist_del);
@@ -1048,6 +1070,10 @@ static int expression(PARSER, FINDPGM **pgm)
 			OBJECT *parent = object_find_name(pvalue);
 			if (parent==NULL && strcmp(pvalue, "root") != 0 && strcmp(pvalue, "ROOT") != 0)
 				output_error("parent '%s' not found", pvalue);
+				/* TROUBLESHOOT 
+					A search rule specified a parent that isn't defined.
+					Check the parent name and try again.
+				 */
 			else
 			{
 				v.pointer = (void*)parent;
@@ -1062,6 +1088,10 @@ static int expression(PARSER, FINDPGM **pgm)
 			int rank = atoi(pvalue);
 			if (rank<0)
 				output_error("rank %s is invalid", pvalue);
+				/* TROUBLESHOOT
+					A search rule specified an object rank that is negative.
+					Make sure the rank is zero or positive and try again.
+				 */
 			else
 			{
 				v.integer = rank;
@@ -1160,9 +1190,17 @@ static int expression(PARSER, FINDPGM **pgm)
 			/** @todo support searches on flags (PLC, lock) */
 			/* still need to think about how to input flags without hardcoding the flag name. -mh */
 			output_error("find expression on %s not supported", pname);
+			/* TROUBLESHOOT
+				A search criteria attempted to search on the flags of an object, which is supported yet.
+				Remove the "flags" criteria and try again.
+			 */
 		}
 		else
 			output_error("find expression refers to unknown or unsupported property '%s'", pname);
+			/* TROUBLESHOOT
+				A search criteria used an expression that isn't recognized.  
+				Fix the search rule and try again.
+			 */
 	}
 	REJECT;
 }
