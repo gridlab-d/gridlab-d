@@ -3675,6 +3675,7 @@ static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 	char line[65536*3];
 	int n=0;
 	int linenum=0;
+	int startnest = nesting;
 	while (fgets(line,sizeof(line),fp)!=NULL)
 	{
 		int len;
@@ -3729,9 +3730,10 @@ static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 			n+=len;
 		}
 	}
-	if (nesting>0)
+	if (nesting != startnest)
 	{
-		output_message("%s(%d): missing %sendif for #if at %s(%d)", filename,linenum,MACRO,filename,macro_line[nesting-1]);
+		//output_message("%s(%d): missing %sendif for #if at %s(%d)", filename,linenum,MACRO,filename,macro_line[nesting-1]);
+		output_message("%s(%d): Unbalanced %sif/%sendif at %s(%d) ~ started with nestlevel %i, ending %i", filename,linenum,MACRO,MACRO,filename,macro_line[nesting-1], startnest, nesting);
 		return -1;
 	}
 	return n;
