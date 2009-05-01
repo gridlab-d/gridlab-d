@@ -1915,7 +1915,7 @@ Next:
 static int pathname(PARSER, char *path, int size)
 {
 	START;
-	if TERM(pattern(HERE,"[-A-Za-z0-9/\\:_,.]",path,size)) {ACCEPT;}
+	if TERM(pattern(HERE,"[-A-Za-z0-9/\\:_,. ]",path,size)) {ACCEPT;}
 	else REJECT;
 	DONE;
 }
