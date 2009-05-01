@@ -4287,11 +4287,11 @@ Done:
 STATUS loadall(char *file){
 	char *buffer = NULL, *p = NULL;
 	char *ext = strrchr(file,'.');
-	char def_ext[] = ".glm";
 	unsigned int old_obj_count = object_get_count();
 	unsigned int new_obj_count = 0;
 	unsigned int i;
 	char *conf = find_file("gridlabd.conf",NULL,R_OK);
+	static int loaded_files = 0;
 	STATUS load_status = FAILED;
 
 	if(old_obj_count > 1 && global_forbid_multiload){
@@ -4299,29 +4299,35 @@ STATUS loadall(char *file){
 		return FAILED; /* not what they expected--do not proceed */
 	}
 
+	/* first time only */
+	if (loaded_files==0)
+	{
+		/* load the gridlabd.conf file */
+		if (conf==NULL)
+			output_warning("gridlabd.conf was not found");
+		else if(loadall_glm(conf)==FAILED)
+			return FAILED;
+
+		/* load the debugger.conf file */
+		if (global_debug_mode)
+		{
+			char *dbg = find_file("debugger.conf",NULL,R_OK);
+			if (dbg==NULL)
+				output_warning("debugger.conf was not found");
+			else if (loadall_glm(dbg)==FAILED)
+				return FAILED;
+		}
+	}
+
 	/* handle default extension */
 	strcpy(filename,file);
 	if (ext==NULL || ext<file+strlen(file)-5)
 	{
-		//ext = filename+strlen(filename);
-		//strcat(filename,".glm");
-		ext = def_ext;
+		ext = filename+strlen(filename);
+		strcat(filename,".glm");
 	}
 
-	if (conf==NULL)
-		output_warning("gridlabd.conf was not found");
-	else if(loadall_glm(conf)==FAILED)
-		return FAILED;
-
-	if (global_debug_mode)
-	{
-		char *dbg = find_file("debugger.conf",NULL,R_OK);
-		if (dbg==NULL)
-			output_warning("debugger.conf was not found");
-		else if (loadall_glm(dbg)==FAILED)
-			return FAILED;
-	}
-
+	/* load the appropriate type of file */
 	if(ext==NULL || strcmp(ext, ".glm")==0)
 		load_status = loadall_glm(filename);
 	else if(strcmp(ext, ".xml")==0)
@@ -4329,14 +4335,15 @@ STATUS loadall(char *file){
 	else
 		output_error("%s: unable to load unknown file type", filename, ext);
 
+	/* handle new objects */
 	new_obj_count = object_get_count();
-
 	if((load_status == FAILED) && (old_obj_count < new_obj_count)){
 		for(i = old_obj_count+1; i <= new_obj_count; ++i){
 			object_remove_by_id(i);
 		}
 	}
 
+	loaded_files++;
 	return load_status;
 }
 
