@@ -34,6 +34,14 @@ static int compare_int(int64 a, FINDOP op, int64 b)
 	case NE: return a!=b;
 	default:
 		output_error("compare op %d not supported on integers", op);
+		/* TROUBLESHOOT
+			This error is caused when an object find procedure uses a comparison operator
+			that isn't allowed on a that type of property.  Make sure the property type
+			and the comparison operator are compatible and try again.  If your GLM file
+			isn't the cause of the problem, try reducing the complexity of the GLM file 
+			you are using to isolate which module is causing the error and file a report 
+			with the GLM file attached.
+		 */
 		return 0;
 	}
 }
@@ -53,6 +61,14 @@ static int compare_int32(int32 a, FINDOP op, int64 b)
 	case NE: return a!=b;
 	default:
 		output_error("compare op %d not supported on integers", op);
+		/* TROUBLESHOOT
+			This error is caused when an object find procedure uses a comparison operator
+			that isn't allowed on a that type of property.  Make sure the property type
+			and the comparison operator are compatible and try again.  If your GLM file
+			isn't the cause of the problem, try reducing the complexity of the GLM file 
+			you are using to isolate which module is causing the error and file a report 
+			with the GLM file attached.
+		 */
 		return 0;
 	}
 }
@@ -68,6 +84,14 @@ static int compare_int16(int16 a, FINDOP op, int64 b)
 	case NE: return a!=b;
 	default:
 		output_error("compare op %d not supported on integers", op);
+		/* TROUBLESHOOT
+			This error is caused when an object find procedure uses a comparison operator
+			that isn't allowed on a that type of property.  Make sure the property type
+			and the comparison operator are compatible and try again.  If your GLM file
+			isn't the cause of the problem, try reducing the complexity of the GLM file 
+			you are using to isolate which module is causing the error and file a report 
+			with the GLM file attached.
+		 */
 		return 0;
 	}
 }
@@ -83,6 +107,14 @@ static int compare_double(double a, FINDOP op, double b)
 	case NE: return a!=b;
 	default:
 		output_error("compare op %d not supported on doubles", op);
+		/* TROUBLESHOOT
+			This error is caused when an object find procedure uses a comparison operator
+			that isn't allowed on a that type of property.  Make sure the property type
+			and the comparison operator are compatible and try again.  If your GLM file
+			isn't the cause of the problem, try reducing the complexity of the GLM file 
+			you are using to isolate which module is causing the error and file a report 
+			with the GLM file attached.
+		 */
 		return 0;
 	}
 }
@@ -106,6 +138,14 @@ static int compare_string(char *a, FINDOP op, char *b)
 		return compare_double(atof(a),op,atof(b));
 	default:
 		output_error("compare op %d not supported on strings", op);
+		/* TROUBLESHOOT
+			This error is caused when an object find procedure uses a comparison operator
+			that isn't allowed on a that type of property.  Make sure the property type
+			and the comparison operator are compatible and try again.  If your GLM file
+			isn't the cause of the problem, try reducing the complexity of the GLM file 
+			you are using to isolate which module is causing the error and file a report 
+			with the GLM file attached.
+		 */
 		return 0;
 	}
 CompareInt:
@@ -181,7 +221,15 @@ static int compare_property_alt(OBJECT *obj, char *propname, FINDOP op, void *va
 			break;
 #endif
 		default:
-			output_error("");
+			output_error("comparison operators not supported for property type %s", class_get_property_typename(prop->ptype));
+			/* TROUBLESHOOT
+				This error is caused when an object find procedure uses a comparison operator
+			that isn't allowed on a that type of property.  Make sure the property type
+			and the comparison operator are compatible and try again.  If your GLM file
+			isn't the cause of the problem, try reducing the complexity of the GLM file 
+			you are using to isolate which module is causing the error and file a report 
+			with the GLM file attached.
+			 */
 			return 0;
 	}
 }
@@ -198,6 +246,14 @@ static int compare(OBJECT *obj, FINDTYPE ftype, FINDOP op, void *value, char *pr
 	case FT_PROPERTY: return compare_property(obj,propname,op,value);
 	default:
 		output_error("findtype %s not supported", ftype);
+		/* TROUBLESHOOT
+			This error is caused when an object find procedure uses a comparison operator
+			that isn't allowed on a that header item.  Make sure the header item
+			and the comparison operator are compatible and try again.  If your GLM file
+			isn't the cause of the problem, try reducing the complexity of the GLM file 
+			you are using to isolate which module is causing the error and file a report 
+			with the GLM file attached.
+		 */
 		return 0;
 	}
 }
