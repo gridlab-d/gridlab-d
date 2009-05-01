@@ -511,13 +511,22 @@ TIMESTAMP convert_to_timestamp(char *value)
 	int Y=0,m=0,d=0,H=0,M=0,S=0;
 	char tz[5]="";
 	if (*value=='\'' || *value=='"') value++;
+	/* scan ISO format date/time */
 	if (sscanf(value,"%d-%d-%d %d:%d:%d %[-+:A-Za-z0-9]",&Y,&m,&d,&H,&M,&S,tz)>=3)
 	{
 		int isdst = (strcmp(tz,tzdst)==0) ? 1 : 0;
-		DATETIME dt = {Y,m,d,H,M,S,0,isdst};
+		DATETIME dt = {Y,m,d,H,M,S,0,isdst}; /* use GMT if tz is omitted */
 		strncpy(dt.tz,tz,sizeof(dt.tz));
 		return mkdatetime(&dt);
 	}
+	/* scan US format date/time */
+	else if (sscanf(value,"%d/%d/%d %d:%d:%d %[-+:A-Za-z0-9]",&m,&d,&Y,&H,&M,&S,tz)>=3)
+	{
+		int isdst = (strcmp(tz,tzdst)==0) ? 1 : 0;
+		DATETIME dt = {Y,m,d,H,M,S,0,isdst,tz}; /* use locale TZ if tz is omitted */
+		return mkdatetime(&dt);
+	}
+	/* @todo support European format date/time using some kind of global flag */
 	else if (strcmp(value,"INIT")==0)
 		return 0;
 	else if (strcmp(value, "NEVER")==0)

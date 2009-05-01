@@ -3955,7 +3955,7 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 	else if (strncmp(line,MACRO "setenv",7)==0)
 	{
 		char *term = strchr(line+7,' ');
-		char value[1024];
+		char value[65536];
 		if (term==NULL)
 		{
 			output_message("%s(%d): %ssetenv macro missing term",filename,linenum,MACRO);
