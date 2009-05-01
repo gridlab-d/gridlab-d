@@ -558,7 +558,11 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			output_debug("LIB=%s", getenv("LIB"));
 			if (!use_msvc)
 			{
-				if (exec("g++ %s -I\"%s\" -c \"%s\" -o \"%s\"", global_debug_output?"-g -O0":"", global_include, cfile, ofile)==FAILED)
+				char execstr[1024];
+				sprintf(execstr, "g++ %s -I\"%s\" -c \"%s\" -o \"%s\"", global_debug_output?"-g -O0":"", global_include, cfile, ofile);
+				output_verbose("compile string: \"%s\"", execstr);
+				//if (exec("g++ %s -I\"%s\" -c \"%s\" -o \"%s\"", global_debug_output?"-g -O0":"", global_include, cfile, ofile)==FAILED)
+				if(exec(execstr)==FAILED)
 					return FAILED;
 				if (!(global_gdb||global_gdb_window))
 					unlink(cfile);
@@ -981,6 +985,125 @@ static int value(PARSER, char *result, int size)
 		while (*_p!='\0' && *_p!=';' && *_p!='\n') _p++;
 	return (int)(_p - start);
 }
+
+#if 0
+static int functional_int(PARSER, int64 *value){
+	char result[256];
+	int size=sizeof(result);
+	double pValue;
+	char32 fname;
+	START;
+//	while (size>1 && isdigit(*_p)) COPY(result);
+//	result[_n]='\0';
+//	*value=atoi64(result);
+	/* copy-pasted from functional */
+	if (LITERAL("random.") && TERM(name(HERE,fname,sizeof(fname))))
+	{
+		RANDOMTYPE rtype = random_type(fname);
+		int nargs = random_nargs(fname);
+		double a;
+		if (rtype==RT_INVALID || nargs==0 || (WHITE,!LITERAL("(")))
+		{
+			output_message("%s(%d): %s is not a valid random distribution", filename,linenum,fname);
+			REJECT;
+		}
+		if (nargs==-1)
+		{
+			if (WHITE,TERM(real_value(HERE,&a)))
+			{
+				double b[1024];
+				int maxb = sizeof(b)/sizeof(b[0]);
+				int n;
+				b[0] = a;
+				for (n=1; n<maxb && (WHITE,LITERAL(",")); n++)
+				{
+					if (WHITE,TERM(real_value(HERE,&b[n])))
+						continue;
+					else
+					{
+						// variable arg list
+						output_message("%s(%d): expected a %s distribution term after ,", filename,linenum, fname);
+						REJECT;
+					}
+				}
+				if (WHITE,LITERAL(")"))
+				{
+					pValue = random_value(rtype,n,b);
+					ACCEPT;
+				}
+				else
+				{
+					output_message("%s(%d): missing ) after %s distribution terms", filename,linenum, fname);
+					REJECT;
+				}
+			}
+			else
+			{
+				output_message("%s(%d): expected first term of %s distribution", filename,linenum, fname);
+				REJECT;
+			}
+		}
+		else 
+		{
+			if (WHITE,TERM(real_value(HERE,&a)))
+			{
+				// fixed arg list
+				double b,c;
+				if (nargs==1)
+				{
+					if (WHITE,LITERAL(")"))
+					{
+						pValue = random_value(rtype,a);
+						ACCEPT;
+					}
+					else
+					{
+						output_message("%s(%d): expected ) after %s distribution term", filename,linenum, fname);
+						REJECT;
+					}
+				}
+				else if (nargs==2)
+				{
+					if ( (WHITE,LITERAL(",")) && (WHITE,TERM(real_value(HERE,&b))) && (WHITE,LITERAL(")")))
+					{
+						pValue = random_value(rtype,a,b);
+						ACCEPT;
+					}
+					else
+					{
+						output_message("%s(%d): missing second %s distribution term and/or )", filename,linenum, fname);
+						REJECT;
+					}
+				}
+				else if (nargs==3)
+				{
+					if ( (WHITE,LITERAL(",")) && (WHITE,TERM(real_value(HERE,&b))) && WHITE,LITERAL(",") && (WHITE,TERM(real_value(HERE,&c))) && (WHITE,LITERAL(")")))
+					{
+						pValue = random_value(rtype,a,b,c);
+						ACCEPT;
+					}
+					else
+					{
+						output_message("%s(%d): missing terms and/or ) in %s distribution ", filename,linenum, fname);
+						REJECT;
+					}
+				}
+				else
+				{
+					output_message("%s(%d): %d terms is not supported", filename,linenum, nargs);
+					REJECT;
+				}
+			}
+			else
+			{
+				output_message("%s(%d): expected first term of %s distribution", filename,linenum, fname);
+				REJECT;
+			}
+		}
+	} // end if "random."
+	return _n;
+}
+#endif
 
 static int integer(PARSER, int64 *value)
 {
@@ -3723,7 +3846,9 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 			output_message("%s(%d): %sifexist macro missing term",filename,linenum,MACRO);
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n]",value)==1 && find_file(value, NULL, 0)==NULL)
+		while(isspace((unsigned char)(*term)))
+			++term;
+		if (sscanf(term,"\"%[^\"\n]",value)==1 && find_file(value, NULL, 0)==NULL)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
 		nesting++;
@@ -3799,7 +3924,9 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		if (sscanf(term+1,"\"%[^\"]\"",value)==1)
+		while(isspace((unsigned char)(*term)))
+			++term;
+		if (sscanf(term,"\"%[^\"]\"",value)==1)
 		{
 			char *start=line;
 			int len = sprintf(line,"@%s;%d\n",value,0);
@@ -4026,7 +4153,8 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		}
 		if (sscanf(term+1,"%[^\n]",value)==1)
 		{
-			output_message("%s(%d): ERROR - %s", filename, linenum, value);
+			//output_message("%s(%d): ERROR - %s", filename, linenum, value);
+			output_error("%s(%d):\t%s", filename, linenum, value);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4136,6 +4264,10 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 Failed:
 	if (errno!=0){
 		output_error("unable to load '%s': %s", file, strerror(errno));
+		/*	TROUBLESHOOT
+			In most cases, strerror(errno) will claim "No such file or directory".  This claim should be ignored in
+			favor of prior error messages.
+		*/
 	}
 Done:
 	free(buffer);
