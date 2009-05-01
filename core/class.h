@@ -185,6 +185,7 @@ struct s_class_list {
 	FUNCTIONADDR create;
 	FUNCTIONADDR init;
 	FUNCTIONADDR sync;
+	FUNCTIONADDR commit;
 	FUNCTIONADDR notify;
 	FUNCTIONADDR isa;
 	FUNCTIONADDR plc;

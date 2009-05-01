@@ -382,6 +382,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			{&c->create,"create",FALSE},
 			{&c->init,"init",TRUE},
 			{&c->sync,"sync",TRUE},
+			{&c->commit,"commit",TRUE},
 			{&c->notify,"notify",TRUE},
 			{&c->isa,"isa",TRUE},
 			{&c->plc,"plc",TRUE},
@@ -395,8 +396,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			{
 				output_fatal("intrinsic %s is not defined in class %s", fname,file);
 				/*	TROUBLESHOOT
-					An intrinsic function was declared in a class, but that particular
-					function is not supported.  Check for a syntax error in your GLM file(s).
+					A required intrinsic function was not found.  Please review and modify the class definition.
 				 */
 				errno=EINVAL;
 				return NULL;
