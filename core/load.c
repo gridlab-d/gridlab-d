@@ -4291,7 +4291,6 @@ STATUS loadall(char *file){
 	unsigned int new_obj_count = 0;
 	unsigned int i;
 	char *conf = find_file("gridlabd.conf",NULL,R_OK);
-	char glm_ext[] = ".glm";
 	static int loaded_files = 0;
 	STATUS load_status = FAILED;
 
@@ -4324,7 +4323,8 @@ STATUS loadall(char *file){
 	strcpy(filename,file);
 	if (ext==NULL || ext<file+strlen(file)-5)
 	{
-		ext = glm_ext;
+		ext = filename+strlen(filename);
+		strcat(filename,".glm");
 	}
 
 	/* load the appropriate type of file */
