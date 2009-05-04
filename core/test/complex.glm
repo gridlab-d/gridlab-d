@@ -1,0 +1,32 @@
+// $Id$
+//
+// Test complex number formatting and processing
+//
+
+//#include "debugger.conf"
+
+class test {
+	complex a;
+	complex b;
+	complex c;
+	complex d;
+	intrinsic create(object parent) {
+		return 1;
+	};
+	intrinsic init(object parent) {
+		#define CHECK_RECT(X,A,B,D) if (fabs((X).Re()-(A))>(D) || fabs((X).Im()-(B))>(D)) gl_error("complex test of "#X" failed: (%lg,%lg)!=("#A","#B")",(X).Re(),(X).Im());
+		#define CHECK_POLAR(X,A,B,D) if (fabs((X).Mag()-(A))>(D) || fabs((X).Arg()-(B))>(D)) gl_error("complex test of "#X" failed: (%lg,%lga)!=("#A","#B"a)",(X).Mag(),(X).Arg());
+		CHECK_RECT(a,12.3,4.56,0.001);
+		CHECK_RECT(b,12.3,4.56,0.001);
+		CHECK_POLAR(c,12.3,4.56*PI/180,0.001);
+		CHECK_POLAR(d,12.3,2.34,0.001);
+		return 1;
+	};
+};
+
+object test {
+	a 12.3+4.56i;
+	b 12.3+4.56j;
+	c 12.3+4.56d;
+	d 12.3+2.34r;
+}

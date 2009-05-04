@@ -1147,9 +1147,12 @@ static int real_value(PARSER, double *value)
 	while (size>1 && isdigit(*_p)) COPY(result);
 	if (*_p=='.') COPY(result);
 	while (size>1 && isdigit(*_p)) COPY(result);
-	if (*_p=='E' || *_p=='e') COPY(result);
-	if (*_p=='+' || *_p=='-') COPY(result);
-	while (size>1 && isdigit(*_p)) COPY(result);
+	if (*_p=='E' || *_p=='e') 
+	{
+		COPY(result);
+		if (*_p=='+' || *_p=='-') COPY(result);
+		while (size>1 && isdigit(*_p)) COPY(result);
+	}
 	result[_n]='\0';
 	*value=atof(result);
 	return _n;
@@ -1648,7 +1651,14 @@ static int complex_value(PARSER, complex *pValue)
 	{
 		pValue->r = m*cos(a*PI/180);
 		pValue->i = m*sin(a*PI/180);
-		pValue->f = J;
+		pValue->f = A;
+		ACCEPT;
+	}
+	else if ((WHITE,TERM(real_value(HERE,&m))) && (WHITE,TERM(real_value(HERE,&a))) && LITERAL("r"))
+	{
+		pValue->r = m*cos(a);
+		pValue->i = m*sin(a);
+		pValue->f = R;
 		ACCEPT;
 	}
 	else 

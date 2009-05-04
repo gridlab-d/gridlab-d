@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
+#include "output.h"
 #include "globals.h"
 #include "convert.h"
 #include "object.h"
@@ -62,7 +63,7 @@ int convert_from_double(char *buffer, /**< pointer to the string buffer */
 		PROPERTY *ptmp = class_find_property(ctmp, prop->name);
 		if(prop->unit != ptmp->unit){
 			if(0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)){
-				printf("ERROR: convert_from_complex: unable to convert unit '%s' to '%s' for property '%s' (tape experiment error)", ptmp->unit->name, prop->unit->name, prop->name);
+				output_error("convert_from_double(): unable to convert unit '%s' to '%s' for property '%s' (tape experiment error)", ptmp->unit->name, prop->unit->name, prop->name);
 				scale = 1.0;
 			}
 		}
@@ -110,8 +111,8 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 		PROPERTY *ptmp = class_find_property(ctmp, prop->name);
 		if(prop->unit != ptmp->unit){
 			if(0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)){
-				printf("ERROR: convert_from_complex: unable to convert unit '%s' to '%s' for property '%s' (tape experiment error)", ptmp->unit->name, prop->unit->name, prop->name);
-				/*	TROUBLESHOOTINGprobablywon'tactuallyfindthishmmm.
+				output_error("convert_from_complex(): unable to convert unit '%s' to '%s' for property '%s' (tape experiment error)", ptmp->unit->name, prop->unit->name, prop->name);
+				/*	TROUBLESHOOTING
 					This is an error with the conversion of units from the complex property's units to the requested units.
 					Please double check the units of the property and compare them to the units defined in the
 					offending tape object.
@@ -135,7 +136,7 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 		if (a>PI) a-=(2*PI);
 		count = sprintf(temp,global_complex_format,m,a,R);
 	} else {
-		count = sprintf(temp,global_complex_format,v->Re()*scale,v->Im()*scale,v->Notation()?v->Notation():'i');
+		count = sprintf(temp,global_complex_format,v->Re()*scale,v->Im()*scale,v->Notation());
 	}
 	if(count < size - 1){
 		memcpy(buffer, temp, count);
@@ -156,31 +157,31 @@ int convert_to_complex(char *buffer, /**< a pointer to the string buffer */
 					   PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
 	complex *v = (complex*)data;
-	char notation[2]={CNOTATION_DEFAULT,'\0'};
+	char notation[2]={'\0','\0'}; /* force detection invalid complex number */
 	int n;
 	double a=0, b=0; 
-	n = sscanf(buffer,"%lg%lg%1[ijd]",&a,&b,notation);
-	if (n < 2)
+	n = sscanf(buffer,"%lg%lg%1[ijdr]",&a,&b,notation);
+	if (n==1) /* only real part */
+		v->SetRect(a,0);
+	else if (n < 3 || strchr("ijdr",notation[0])==NULL) /* incomplete imaginary part or missing notation */
 	{
-		char signage[2] = {0, 0};
-		/* printf("alt complex form?"); */
-		n = sscanf(buffer, "%lg %1[+-] %lg%1[ijdr]", &a, signage, &b, notation);
-		if (n > 0 && signage[0] == '-')
-			b *= -1.0;
-	}
-	if (n>0)
-	{
-		if (n>1 && notation[0]==A)
-			v->SetPolar(a,b*PI/180.0); /* convert deg -> radian*/
-		if (n>1 && notation[0]==R)
-			v->SetPolar(a,b); /* convert deg -> radian*/
-		else
-			v->SetRect(a,n>1?b:0);
-		v->SetNotation((CNOTATION)notation[0]);
-		return 1;
-	}
-	else
+		output_error("convert_to_complex('%s',%s): complex number format is not valid", buffer,prop->name);
+		/* TROUBLESHOOTING
+			A complex number was given that doesn't meet the formatting requirements, e.g., <real><+/-><imaginary><notation>.  
+			Check the format of your complex numbers and try again.
+		 */
 		return 0;
+	}
+	/* appears ok */
+	else if (notation[0]==A) /* polar degrees */
+		v->SetPolar(a,b*PI/180.0); 
+	else if (notation[0]==R) /* polar radians */
+		v->SetPolar(a,b); 
+	else 
+		v->SetRect(a,b); /* rectangular */
+	if (v->Notation()==I) /* only override notation when property is using I */
+		v->Notation() = (CNOTATION)notation[0];
+	return 1;
 }
 
 /** Convert from an \e enumeration
