@@ -75,6 +75,7 @@ extern CLASS *collector_class;
 #endif
 
 static TAPEFUNCS *funcs = NULL;
+static char1024 tape_gnuplot_path;
 
 typedef int (*OPENFUNC)(void *, char *, char *);
 typedef char *(*READFUNC)(void *, char *, unsigned int);
@@ -161,6 +162,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 		errno = EINVAL;
 		return NULL;
 	}
+
+	/* globals for the tape module*/
+	sprintf(tape_gnuplot_path, "c:/Program Files/GnuPlot/bin/wgnuplot.exe");
+	gl_global_create("tape::gnuplot_path",PT_char1024,&tape_gnuplot_path,NULL);
 
 	/* register the first class implemented, use SHARE to reveal variables */
 	player_class = gl_register_class(module,"player",sizeof(struct player),PC_BOTTOMUP); 
