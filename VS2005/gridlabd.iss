@@ -68,6 +68,7 @@ Name: {app}\etc
 Name: {app}\etc\tmy
 Name: {app}\lib
 Name: {userdocs}\GridLAB-D
+Name: {app}\rt
 
 [Files]
 ;; Microsoft CRT redist
@@ -106,8 +107,6 @@ Source: reliability.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: ..\..\..\market\Win32\Release\market.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: tape_plot.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\etc; Flags: ignoreversion
-Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\etc; Flags: ignoreversion
 
 ;; sample files
 Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
@@ -130,8 +129,14 @@ Source: ..\..\..\models\lighting.player; DestDir: {app}\samples
 ; --DEBUG--
 Source: ..\..\..\models\dryer.shape; DestDir: {app}\samples
 Source: ..\..\..\README-WINDOWS.txt; DestDir: {app}
-Source: ..\..\..\core\rt\mingw.conf; DestDir: {app}\etc
-Source: ..\..\..\core\rt\gridlabd.syn; DestDir: {app}\etc
+Source: ..\..\..\core\rt\mingw.conf; DestDir: {app}\rt
+Source: ..\..\..\core\rt\gridlabd.syn; DestDir: {app}\rt
+Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\rt; Flags: ignoreversion
+Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\rt; Flags: ignoreversion
+Source: ..\..\..\core\rt\gnuplot.conf; DestDir: {app}\rt; Flags: ignoreversion
+Source: ..\..\..\core\rt\gridlabd.h; DestDir: {app}\rt; Flags: ignoreversion
+Source: ..\..\..\climate\tmy\*.*; DestDir: {app}\etc\tmy
+
 
 [Registry]
 Root: HKCU; SubKey: Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples"; Flags: uninsdeletevalue deletevalue; Check: not (IsAdminLoggedOn() or IsPowerUserLoggedOn()); AfterInstall: InstallEnvironment(); Tasks: overwriteglpath
