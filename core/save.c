@@ -123,7 +123,10 @@ int savexml_strict(char *filename,FILE *fp)
 	MODULE *module;
 
 	count += fprintf(fp,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
-	count += fprintf(fp,"<?xml-stylesheet href=\"%sgridlabd-%d_%d.xsl\" type=\"text/xsl\"?>\n",global_urlbase,global_version_major,global_version_minor);
+	if (global_getvar("stylesheet",NULL,0)==NULL)
+		count += fprintf(fp,"<?xml-stylesheet href=\"%sgridlabd-%d_%d.xsl\" type=\"text/xsl\"?>\n",global_urlbase,global_version_major,global_version_minor);
+	else
+		count += fprintf(fp,"<?xml-stylesheet href=\"%s.xsl\" type=\"text/xsl\"?>\n",global_getvar("stylesheet",NULL,0));
 	count += fprintf(fp,"<gridlabd>\n");
 	
 		/* globals */

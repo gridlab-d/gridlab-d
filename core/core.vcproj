@@ -845,15 +845,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -993,7 +993,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\test\stylesheet.glm"
+				>
+			</File>
+			<File
 				RelativePath=".\test\timestamp.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\timestamp_euro.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\timestamp_us.glm"
 				>
 			</File>
 			<File

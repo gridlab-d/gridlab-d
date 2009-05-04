@@ -503,6 +503,8 @@ int convert_to_char8(char *buffer, /**< a pointer to the string buffer */
 {
 	char c=((char*)buffer)[0];
 	switch (c) {
+	case '\0':
+		return ((char*)data)[0]='\0', 1;
 	case '"':
 		return sscanf(buffer+1,"%8[^\"]",data);
 	default:
@@ -544,6 +546,8 @@ int convert_to_char32(char *buffer, /**< a pointer to the string buffer */
 {
 	char c=((char*)buffer)[0];
 	switch (c) {
+	case '\0':
+		return ((char*)data)[0]='\0', 1;
 	case '"':
 		return sscanf(buffer+1,"%32[^\"]",data);
 	default:
@@ -585,6 +589,8 @@ int convert_to_char256(char *buffer, /**< a pointer to the string buffer */
 {
 	char c=((char*)buffer)[0];
 	switch (c) {
+	case '\0':
+		return ((char*)data)[0]='\0', 1;
 	case '"':
 		return sscanf(buffer+1,"%256[^\"]",data);
 	default:
@@ -626,6 +632,8 @@ int convert_to_char1024(char *buffer, /**< a pointer to the string buffer */
 {
 	char c=((char*)buffer)[0];
 	switch (c) {
+	case '\0':
+		return ((char*)data)[0]='\0', 1;
 	case '"':
 		return sscanf(buffer+1,"%1024[^\"]",data);
 	default:

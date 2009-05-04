@@ -359,7 +359,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			{
 				bool namestate = global_strictnames;
 				global_strictnames = FALSE;
-				if (global_setvar(*++argv)==SUCCESS){
+				if (global_setvar(*++argv,NULL)==SUCCESS){
 					argc--;
 				}
 				global_strictnames = namestate;

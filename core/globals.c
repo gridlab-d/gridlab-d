@@ -317,13 +317,16 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 		va_start(ptr,def);
 		v = va_arg(ptr,char*);
 		va_end(ptr);
-		strncpy(value,v,sizeof(value));
-		if (strcmp(value,v)!=0)
-			output_error("global_setvar(char *name='%s',...): value is too long to store");
-			/* TROUBLESHOOT
-				An attempt to set a global variable failed because the value of the variable
-				was too long.
-			 */
+		if (v!=NULL) 
+		{
+			strncpy(value,v,sizeof(value));
+			if (strcmp(value,v)!=0)
+				output_error("global_setvar(char *name='%s',...): value is too long to store");
+				/* TROUBLESHOOT
+					An attempt to set a global variable failed because the value of the variable
+					was too long.
+				 */
+		}
 	}
 	if (strcmp(name,"")!=0) /* something was defined */
 	{

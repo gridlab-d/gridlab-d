@@ -589,7 +589,10 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 			fprintf(fp,"<head>\n");
 			{
 				fprintf(fp,"<title>GridLAB-D <xsl:value-of select=\"version.major\"/>.<xsl:value-of select=\"version.minor\"/> - <xsl:value-of select=\"modelname\"/></title>\n");
-				fprintf(fp,"<link rel=\"stylesheet\" href=\"%sgridlabd-%d_%d.css\" type=\"text/css\"/>\n",global_urlbase,global_version_major,global_version_minor);
+				if (global_getvar("stylesheet",NULL,0)==NULL)
+					fprintf(fp,"<link rel=\"stylesheet\" href=\"%sgridlabd-%d_%d.css\" type=\"text/css\"/>\n",global_urlbase,global_version_major,global_version_minor);
+				else
+					fprintf(fp,"<link rel=\"stylesheet\" href=\"%s.css\" type=\"text/css\"/>\n",global_getvar("stylesheet",NULL,0));
 			}
 			fprintf(fp,"</head>\n");
 			fprintf(fp,"<body>\n");

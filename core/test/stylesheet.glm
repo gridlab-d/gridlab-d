@@ -1,0 +1,7 @@
+// $Id$
+//
+// Alternate stylesheet test
+//
+
+#define stylesheet=mystyle
+#set dumpfile=mystyle
