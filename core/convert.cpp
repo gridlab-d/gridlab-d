@@ -160,6 +160,11 @@ int convert_to_complex(char *buffer, /**< a pointer to the string buffer */
 	char notation[2]={'\0','\0'}; /* force detection invalid complex number */
 	int n;
 	double a=0, b=0; 
+	if(buffer[0] == 0){
+		/* empty string */
+		v->SetRect(0.0, 0.0);
+		return 1;
+	}
 	n = sscanf(buffer,"%lg%lg%1[ijdr]",&a,&b,notation);
 	if (n==1) /* only real part */
 		v->SetRect(a,0);
