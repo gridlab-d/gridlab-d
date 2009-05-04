@@ -1,4 +1,7 @@
 //Wye-Wye Transformer Self-Test
+//
+//Tests power in and power out of single and three phase
+//  Wye-Wye Transformers with a balanced load attached.
 
 #set iteration_limit=100
 
@@ -11,7 +14,7 @@ module powerflow;
 module assert;
 
 ///////////////////////////////////////////////////////
-// test 5:  WYE_WYE TRANSFORMER
+// WYE_WYE TRANSFORMER
 ///////////////////////////////////////////////////////
 // AN
 

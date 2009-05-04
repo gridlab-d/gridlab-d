@@ -79,8 +79,8 @@ int triplex_line::init(OBJECT *parent)
 	gmrn = lN->geometric_mean_radius;
 
 	// Perform calculations and fill in values in the matrices
-	D12 = (dcond + 2 * ins_thick)/12;
-	D13 = (dcond + ins_thick)/12;
+	D12 = (dcond + 2 * ins_thick);
+	D13 = (dcond + ins_thick);
 	D23 = D13;
 
 	zp11 = complex(r1,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmr1) + 7.93402);
