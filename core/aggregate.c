@@ -310,6 +310,11 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 		double value=0;
 		double *pdouble = NULL;
 		complex *pcomplex = NULL;
+
+		/* add time-sensitivity to verify that we are only aggregating objects that are in-service and not out-service. */
+		if(obj->in_svc >= global_clock || obj->out_svc <= global_clock)
+			continue;
+
 		switch (aggr->pinfo->ptype) {
 		case PT_complex:
 			pcomplex = object_get_complex(obj,aggr->pinfo);
@@ -333,6 +338,7 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 		default:
 			break;
 		}
+
 		if (pdouble!=NULL || pcomplex!=NULL) /* valid value */
 		{
 			if ((aggr->flags&AF_ABS)==AF_ABS) value=fabs(value);
