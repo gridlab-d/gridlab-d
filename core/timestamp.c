@@ -241,13 +241,34 @@ int strdatetime(DATETIME *t, char *buffer, int size)
 	if(buffer == NULL) return 0;
 	
 	/* choose best format */
-	if (t->microsecond!=0)
-		len = sprintf(tbuffer,"%04d-%02d-%02d %02d:%02d:%02d.%06d %s",
-			t->year,t->month,t->day,t->hour,t->minute,t->second,t->microsecond,t->tz);
-	else 
-		len = sprintf(tbuffer,"%04d-%02d-%02d %02d:%02d:%02d %s",
-			t->year,t->month,t->day,t->hour,t->minute,t->second,t->tz);
-
+	if (global_dateformat==DF_ISO)
+	{
+		if (t->microsecond!=0)
+			len = sprintf(tbuffer,"%04d-%02d-%02d %02d:%02d:%02d.%06d %s",
+				t->year,t->month,t->day,t->hour,t->minute,t->second,t->microsecond,t->tz);
+		else 
+			len = sprintf(tbuffer,"%04d-%02d-%02d %02d:%02d:%02d %s",
+				t->year,t->month,t->day,t->hour,t->minute,t->second,t->tz);
+	}
+	else if (global_dateformat==DF_US)
+	{
+		len = sprintf(tbuffer,"%02d-%02d-%04d %02d:%02d:%02d",
+			t->month,t->day,t->year,t->hour,t->minute,t->second);
+	}
+	else if (global_dateformat==DF_EURO)
+	{
+		len = sprintf(tbuffer,"%02d-%02d-%04d %02d:%02d:%02d",
+			t->day,t->month,t->year,t->hour,t->minute,t->second);
+	}
+	else
+	{
+		throw_exception("global_dateformat=%d is not valid", global_dateformat);
+		/* TROUBLESHOOT
+			The value of the global variable 'global_dateformat' is not valid.  
+			Check for attempts to set this variable and make sure that is one of the valid
+			values (e.g., DF_ISO, DF_US, DF_EURO)
+		 */
+	}
 	if(len < size){
 		strncpy(buffer, tbuffer, len+1);
 		return len;
@@ -519,11 +540,28 @@ TIMESTAMP convert_to_timestamp(char *value)
 		strncpy(dt.tz,tz,sizeof(dt.tz));
 		return mkdatetime(&dt);
 	}
-	/* scan US format date/time */
-	else if (sscanf(value,"%d/%d/%d %d:%d:%d %[-+:A-Za-z0-9]",&m,&d,&Y,&H,&M,&S,tz)>=3)
+	/* scan ISO format date/time */
+	else if (global_dateformat==DF_ISO && sscanf(value,"%d/%d/%d %d:%d:%d %[-+:A-Za-z0-9]",&Y,&m,&d,&H,&M,&S,tz)>=3)
 	{
 		int isdst = (strcmp(tz,tzdst)==0) ? 1 : 0;
-		DATETIME dt = {Y,m,d,H,M,S,0,isdst,tz}; /* use locale TZ if tz is omitted */
+		DATETIME dt = {Y,m,d,H,M,S,0,isdst}; /* use locale TZ if tz is omitted */
+		strncpy(dt.tz,tz,sizeof(dt.tz));
+		return mkdatetime(&dt);
+	}
+	/* scan US format date/time */
+	else if (global_dateformat==DF_US && sscanf(value,"%d/%d/%d %d:%d:%d %[-+:A-Za-z0-9]",&m,&d,&Y,&H,&M,&S,tz)>=3)
+	{
+		int isdst = (strcmp(tz,tzdst)==0) ? 1 : 0;
+		DATETIME dt = {Y,m,d,H,M,S,0,isdst}; /* use locale TZ if tz is omitted */
+		strncpy(dt.tz,tz,sizeof(dt.tz));
+		return mkdatetime(&dt);
+	}
+	/* scan EURO format date/time */
+	else if (global_dateformat==DF_EURO && sscanf(value,"%d/%d/%d %d:%d:%d %[-+:A-Za-z0-9]",&d,&m,&Y,&H,&M,&S,tz)>=3)
+	{
+		int isdst = (strcmp(tz,tzdst)==0) ? 1 : 0;
+		DATETIME dt = {Y,m,d,H,M,S,0,isdst}; /* use locale TZ if tz is omitted */
+		strncpy(dt.tz,tz,sizeof(dt.tz));
 		return mkdatetime(&dt);
 	}
 	/* @todo support European format date/time using some kind of global flag */

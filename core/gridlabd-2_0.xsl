@@ -71,6 +71,7 @@
 <TR><TH>force_compile</TH><TD><xsl:value-of select="force_compile"/></TD></TR>
 <TR><TH>nolocks</TH><TD><xsl:value-of select="nolocks"/></TD></TR>
 <TR><TH>skipsafe</TH><TD><xsl:value-of select="skipsafe"/></TD></TR>
+<TR><TH>dateformat</TH><TD><xsl:value-of select="dateformat"/></TD></TR>
 </TABLE>
 <H2><A NAME="solver_ranks">Solver ranks</A></H2>
 <TABLE BORDER="1">

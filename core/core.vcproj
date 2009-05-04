@@ -845,15 +845,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -874,6 +874,10 @@
 			>
 			<File
 				RelativePath=".\test\alternate.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\complex.glm"
 				>
 			</File>
 			<File
@@ -918,6 +922,10 @@
 			</File>
 			<File
 				RelativePath="..\core\test\olypen_cooking.shape"
+				>
+			</File>
+			<File
+				RelativePath=".\test\olypen_expmt.glm"
 				>
 			</File>
 			<File
@@ -982,6 +990,10 @@
 			</File>
 			<File
 				RelativePath="..\test\input\residential_meter.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\timestamp.glm"
 				>
 			</File>
 			<File

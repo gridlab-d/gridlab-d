@@ -99,8 +99,8 @@ GLOBAL int global_force_compile INIT(0); /** flag to force recompile of GLM file
 GLOBAL int global_nolocks INIT(0); /** flag to disable memory locking */
 GLOBAL int global_forbid_multiload INIT(0); /** flag to disable multiple GLM file loads */
 GLOBAL int global_skipsafe INIT(0); /** flag to allow skipping of safe syncs (see OF_SKIPSAFE) */
-
-//GLOBAL bool global_strictxml INIT(false); /* my flag */
+typedef enum {DF_ISO=0, DF_US=1, DF_EURO=2} DATEFORMAT;
+GLOBAL int global_dateformat INIT(DF_ISO); /** date format (ISO=0, US=1, EURO=2) */
 
 #include "timestamp.h"
 #include "realtime.h"

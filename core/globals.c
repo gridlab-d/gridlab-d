@@ -17,12 +17,18 @@
 
 static GLOBALVAR *global_varlist = NULL, *lastvar = NULL;
 
+static KEYWORD df_keys[] = {
+	{"ISO", DF_ISO, df_keys+1},
+	{"US", DF_US, df_keys+2},
+	{"EURO", DF_EURO, NULL},
+};
+
 static struct s_varmap {
 	char *name;
 	PROPERTYTYPE type;
 	void *addr;
 	PROPERTYACCESS access;
-	char *init; /* this is not used yet */
+	KEYWORD *keys;
 } map[] = {
 	/** @todo make this list the authorative list and retire the global_* list (ticket #25) */
 	{"version.major", PT_int32, &global_version_major, PA_REFERENCE},
@@ -69,6 +75,7 @@ static struct s_varmap {
 	{"force_compile", PT_int32, &global_force_compile, PA_REFERENCE},
 	{"nolocks", PT_int32, &global_nolocks, PA_REFERENCE},
 	{"skipsafe", PT_int32, &global_skipsafe, PA_REFERENCE},
+	{"dateformat", PT_enumeration, &global_dateformat, PA_REFERENCE, df_keys},
 	/* add new global variables here */
 };
 
@@ -81,7 +88,9 @@ STATUS global_init(void)
 	for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 	{
 		struct s_varmap *p = &(map[i]);
-		if (global_create(p->name,p->type,p->addr,PT_ACCESS,p->access,NULL)==NULL)
+		GLOBALVAR *var = global_create(p->name,p->type,p->addr,PT_ACCESS,p->access,NULL);
+		if (var==NULL)
+		{
 			output_error("global_init(): global variable '%s' registration failed", p->name);
 			/* TROUBLESHOOT
 				The global variable initialization process was unable to register
@@ -89,6 +98,9 @@ STATUS global_init(void)
 				detailed explanation of the error.  Follow the troubleshooting for
 				that message and try again.
 			*/
+		}
+		else
+			var->prop->keywords = p->keys;
 	}
 	return SUCCESS;
 }
