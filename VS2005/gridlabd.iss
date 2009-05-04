@@ -135,7 +135,6 @@ Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\gnuplot.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\gridlabd.h; DestDir: {app}\rt; Flags: ignoreversion
-Source: ..\..\..\climate\tmy\*.*; DestDir: {app}\etc\tmy
 
 
 [Registry]

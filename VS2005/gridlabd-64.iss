@@ -129,7 +129,6 @@ Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\gnuplot.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\gridlabd.h; DestDir: {app}\rt; Flags: ignoreversion
-Source: ..\..\..\climate\tmy\*.*; DestDir: {app}\etc\tmy
 
 [Registry]
 Root: HKCU; SubKey: Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples"; Flags: uninsdeletevalue deletevalue; Check: not (IsAdminLoggedOn() or IsPowerUserLoggedOn()); AfterInstall: InstallEnvironment(); Tasks: overwriteglpath
