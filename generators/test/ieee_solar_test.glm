@@ -1,21 +1,21 @@
-# $Id: powerflow_IEEE_4node.glm 683 2008-06-18 20:16:29Z d3g637 $
-# IEEE 4 Node Feeder
-#
-# Note: This model is for reference purposes as a basis for other models
-# It does not produce output in its current form because there are
-# no load objects attached to cause time to advance and there are no
-# recorders attached to gather the output.  See residential_loads.glm
-# for an example model that produces output.
-#
-#
-# Important! note that to work, the inverter AND panel MUST
-# be run in SUPPLY_DRIVEN mode! 
-#
-# example run:
-# C:\>gridlabd ieee_solar_test.glm -o solar_test_output -v -w --bothstdout > solar\out.txt
-#
-# This assumes that the folder "solar" already exists in your working folder
-#
+// $Id: powerflow_IEEE_4node.glm 683 2008-06-18 20:16:29Z d3g637 $
+// IEEE 4 Node Feeder
+//
+// Note: This model is for reference purposes as a basis for other models
+// It does not produce output in its current form because there are
+// no load objects attached to cause time to advance and there are no
+// recorders attached to gather the output.  See residential_loads.glm
+// for an example model that produces output.
+//
+//
+// Important! note that to work, the inverter AND panel MUST
+// be run in SUPPLY_DRIVEN mode! 
+//
+// example run:
+// C:\>gridlabd ieee_solar_test.glm -o solar_test_output -v -w --bothstdout > solar\out.txt
+//
+// This assumes that the folder "solar" already exists in your working folder
+//
 
 
 clock {
@@ -32,7 +32,6 @@ object climate {
 	tmyfile ../../../test/weather/ca.los_angeles.23174;
 }
 
-
 object overhead_line_conductor:100 {
 	geometric_mean_radius 0.0244;
 	resistance 0.306;
@@ -44,46 +43,38 @@ object overhead_line_conductor:101 {
 }
 
 object line_spacing:200 {
-	distance_AtoB 2.5;
-	distance_BtoC 4.5;
-	distance_AtoC 7.0;
-	distance_AtoN 5.656854;
-	distance_BtoN 4.272002;
-	distance_CtoN 5.0;
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
 }
 
 object line_configuration:300 {
-	phaseA_conductor overhead_line_conductor:100;
-	phaseB_conductor overhead_line_conductor:100;
-	phaseC_conductor overhead_line_conductor:100;
-	phaseN_conductor overhead_line_conductor:101;
-	line_spacing line_spacing:200;
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
 }
 
 object transformer_configuration:400 {
 	connect_type 1;
-	kVA_rating 6000;
-	V_primary 12470;
-	V_secondary 600;
-	R_pu 0.01;
-	X_pu 0.06;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 600;
+	resistance 0.01;
+	reactance 0.06;
 }
-
-#object transformer_configuration:500 {
-#	connect_type 1;
-#	kVA_rating 6000;
-#	V_primary 600;
-#	V_secondary 4160;
-#	R_pu 0.01;
-#	X_pu 0.06;
-#}
 
 object node {
 	name node1;
 	phases "ABCN";
-	phaseA_V +7199.558+0.000j;
-	phaseB_V -3599.779-6235.000j;
-	phaseC_V -3599.779+6235.000j;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200.00;
 }
 
 object overhead_line {
@@ -98,9 +89,10 @@ object overhead_line {
 object node {
 	name node2;
 	phases "ABCN";
-	phaseA_V +7199.558+0.000j;
-	phaseB_V -3599.779-6235.000j;
-	phaseC_V -3599.779+6235.000j;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200.00;
 }
 
 object transformer {
@@ -115,9 +107,10 @@ object transformer {
 object node {
 	name node3;
 	phases "ABCN";
-	phaseA_V 346.410 + 0.000j;
-	phaseB_V -173.205 - 300.000j;
-	phaseC_V -173.205 + 300.000j;
+	voltage_A 346.410 + 0.000j;
+	voltage_B -173.205 - 300.000j;
+	voltage_C -173.205 + 300.000j;
+	nominal_voltage 346.000;
 }
 
 object overhead_line {
@@ -132,16 +125,16 @@ object overhead_line {
 object load {
 	name load1;
 	phases "ABCN";
-	#phaseA_V 445.8 + 0.000j;	#1.12 rated voltage for 690
-	#phaseB_V -193.990 - 336.000j;
-	#phaseC_V -193.990 + 336.000j;
-	phaseA_V 346.410 + 0.000j;
-	phaseB_V -173.205 - 300.000j;
-	phaseC_V -173.205 + 300.000j;
-	phaseA_VA +20000+11500j;
-	phaseB_VA +20000+11500j;
-	phaseC_VA +20000+11500j;
-	sync_V_limit 0.001;
+	//voltage_A 445.8 + 0.000j;	//1.12 rated voltage for 690
+	//voltage_B -193.990 - 336.000j;
+	//voltage_C -193.990 + 336.000j;
+	voltage_A 346.410 + 0.000j;
+	voltage_B -173.205 - 300.000j;
+	voltage_C -173.205 + 300.000j;
+	constant_power_A +20000+11500j;
+	constant_power_B +20000+11500j;
+	constant_power_C +20000+11500j;
+	nominal_voltage 346.000;
 }
 
 
@@ -159,11 +152,11 @@ object solar {
 
 object meter {
 	name node4;
-	type POLYPHASE;
-	nominal_voltage 600;	
-	line1_voltage 346.410 + 0.000j;
-	line2_voltage -173.205 + 300.000j;
-	line3_voltage -173.205 - 300.000j;
+	phases "ABCN";
+	nominal_voltage 346.000;	
+	voltage_A 346.410 + 0.000j;
+	voltage_B -173.205 + 300.000j;
+	voltage_C -173.205 - 300.000j;
 }
 
 object overhead_line {
@@ -177,37 +170,32 @@ object overhead_line {
 
 object recorder {
 	parent load1;
-	property phaseA_V,phaseA_VA;
-	file solar\s_test3.txt;
+	property voltage_A,voltage_B;
+	file "s_test3.txt";
 	interval 3600;
 	limit 50;
 }
-	
-
 
 object recorder {
 	parent node3;
-	property phaseA_V,phaseB_V,phaseC_V,power_in;
-	file solar\s_node3_test_v.txt;
-	interval 3600;
-	limit 50;
-}
-
-
-
-
-object recorder {
-	parent node4;
-	property power_in,phaseA_V,phaseB_V,phaseC_V;
-	file solar\s_test_node_4v.txt;
+	property voltage_A,voltage_B,voltage_C;
+	file "s_node3_test_v.txt";
 	interval 3600;
 	limit 50;
 }
 
 object recorder {
 	parent node4;
-	property power,line1_current,line2_current,line3_current;
-	file solar\s_test_node_4i.txt;
+	property voltage_A,voltage_B,voltage_C;
+	file "s_test_node_4v.txt";
+	interval 3600;
+	limit 50;
+}
+
+object recorder {
+	parent node4;
+	property current_A,current_B,current_C;
+	file "s_test_node_4i.txt";
 	interval 3600;
 	limit 50;
 }
@@ -215,7 +203,7 @@ object recorder {
 object recorder {
 	parent s;
 	property VA_Out,I_Out,V_Out;
-	file solar\solar_tests.txt;
+	file "solar_tests.txt";
 	interval 3600;
 	limit 50;
 }
@@ -223,7 +211,7 @@ object recorder {
 object recorder {
 	parent inv;
 	property VA_In,I_In,V_In;
-	file solar\inverter_testin.txt;
+	file "inverter_testin.txt";
 	interval 3600;
 	limit 50;
 }
@@ -231,7 +219,7 @@ object recorder {
 object recorder {
 	parent inv;
 	property phaseA_V_Out,phaseB_V_Out,phaseC_V_Out,phaseA_I_Out,phaseB_I_Out,phaseC_I_Out;
-	file solar\inverter_testout.txt;
+	file "inverter_testout.txt";
 	interval 3600;
 	limit 50;
 }

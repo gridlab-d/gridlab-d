@@ -179,8 +179,8 @@ int inverter::init(OBJECT *parent)
 		char *varname;
 	} map[] = {
 		// local object name,	meter object name
-		{&pCircuit_V,			"line1_voltage"}, // assumes 2 and 3 follow immediately in memory
-		{&pLine_I,				"line1_current"}, // assumes 2 and 3(N) follow immediately in memory
+		{&pCircuit_V,			"voltage_A"}, // assumes 2 and 3 follow immediately in memory
+		{&pLine_I,				"current_A"}, // assumes 2 and 3(N) follow immediately in memory
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	};
 
