@@ -782,50 +782,50 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				goto Error;
 			}
 			if (strcmp(name,"parent")==0){
-				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
 				/*	TROUBLESHOOT
 					A class is attempting to publish a variable with a name normally reserved for object headers.  
 					This is not allowed.  If the class is implemented in a module, this is problem with the module.
 					If the class is declared in a GLM file, you must correct the problem to avoid unpredictable
 					simulation behavior.
 				 */
-				//goto Error;
+				goto Error;
 			} else if (strcmp(name,"rank")==0) {
-				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
 				/* no need to repeat troubleshoot message */
-				//goto Error;
+				goto Error;
 			} else if (strcmp(name,"clock")==0) {
-				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
 				/* no need to repeat troubleshoot message */
-				//goto Error;
+				goto Error;
 			} else if (strcmp(name,"valid_to")==0) {
-				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
 				/* no need to repeat troubleshoot message */
-				//goto Error;
+				goto Error;
 			} else if (strcmp(name,"latitude")==0) {
-				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
 				/* no need to repeat troubleshoot message */
-				//goto Error;
+				goto Error;
 			} else if (strcmp(name,"longitude")==0) {
-				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
 				/* no need to repeat troubleshoot message */
-				//goto Error;
+				goto Error;
 			} else if (strcmp(name,"in_svc")==0) {
-				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
 				/* no need to repeat troubleshoot message */
-				//goto Error;
+				goto Error;
 			} else if (strcmp(name,"out_svc")==0) {
-				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
 				/* no need to repeat troubleshoot message */
-				//goto Error;
+				goto Error;
 			} else if (strcmp(name,"name")==0) {
-				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
 				/* no need to repeat troubleshoot message */
-				//goto Error;
+				goto Error;
 			} else if (strcmp(name,"flags")==0) {
-				output_warning("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_map_define(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
 				/* no need to repeat troubleshoot message */
-				//goto Error;
+				goto Error;
 			}
 			prop = (PROPERTY*)malloc(sizeof(PROPERTY));
 			if (prop==NULL)
