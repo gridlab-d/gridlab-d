@@ -1,0 +1,8 @@
+#!/bin/bash
+
+PKGS=`ls -1 *.glm | cut -c 1-2 | sort -u`
+
+for pkg in $PKGS; do
+	zip -qq -9 $pkg $pkg*.{glm,tmy2}
+done
+
