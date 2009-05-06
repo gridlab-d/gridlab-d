@@ -55,7 +55,7 @@
 #include <math.h>
 
 #include "house_a.h"
-#include "new_refrigerator.h"
+#include "refrigerator.h"
 
 //////////////////////////////////////////////////////////////////////////
 // underground_line_conductor CLASS FUNCTIONS
