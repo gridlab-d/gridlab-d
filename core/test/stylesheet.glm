@@ -3,5 +3,5 @@
 // Alternate stylesheet test
 //
 
-#define stylesheet=mystyle
+#define stylesheet=My Style
 #set dumpfile=mystyle

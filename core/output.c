@@ -588,11 +588,12 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 		{
 			fprintf(fp,"<head>\n");
 			{
+				GLOBALVAR *stylesheet = global_find("stylesheet");
 				fprintf(fp,"<title>GridLAB-D <xsl:value-of select=\"version.major\"/>.<xsl:value-of select=\"version.minor\"/> - <xsl:value-of select=\"modelname\"/></title>\n");
-				if (global_getvar("stylesheet",NULL,0)==NULL)
+				if (stylesheet==NULL || stylesheet->prop->ptype!=PT_char1024) /* only char1024 is allowed */
 					fprintf(fp,"<link rel=\"stylesheet\" href=\"%sgridlabd-%d_%d.css\" type=\"text/css\"/>\n",global_urlbase,global_version_major,global_version_minor);
 				else
-					fprintf(fp,"<link rel=\"stylesheet\" href=\"%s.css\" type=\"text/css\"/>\n",global_getvar("stylesheet",NULL,0));
+					fprintf(fp,"<link rel=\"stylesheet\" href=\"%s.css\" type=\"text/css\"/>\n",stylesheet->prop->addr);
 			}
 			fprintf(fp,"</head>\n");
 			fprintf(fp,"<body>\n");

@@ -121,12 +121,13 @@ int savexml_strict(char *filename,FILE *fp)
 	char buffer[1024];
 	GLOBALVAR *global=NULL;
 	MODULE *module;
+	GLOBALVAR *stylesheet = global_find("stylesheet");
 
 	count += fprintf(fp,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
-	if (global_getvar("stylesheet",NULL,0)==NULL)
+	if (stylesheet==NULL || stylesheet->prop->ptype!=PT_char1024) /* only char1024 is allowed */
 		count += fprintf(fp,"<?xml-stylesheet href=\"%sgridlabd-%d_%d.xsl\" type=\"text/xsl\"?>\n",global_urlbase,global_version_major,global_version_minor);
-	else
-		count += fprintf(fp,"<?xml-stylesheet href=\"%s.xsl\" type=\"text/xsl\"?>\n",global_getvar("stylesheet",NULL,0));
+	else 
+		count += fprintf(fp,"<?xml-stylesheet href=\"%s.xsl\" type=\"text/xsl\"?>\n",stylesheet->prop->addr);
 	count += fprintf(fp,"<gridlabd>\n");
 	
 		/* globals */

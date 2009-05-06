@@ -364,7 +364,7 @@
 <xsl:for-each select="residential/evcharger_list/evcharger"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="charger_type"/></TD><TD><xsl:value-of select="vehicle_type"/></TD><TD><xsl:value-of select="state"/></TD><TD><xsl:value-of select="p_go_home"/></TD><TD><xsl:value-of select="p_go_work"/></TD><TD><xsl:value-of select="work_dist"/></TD><TD><xsl:value-of select="capacity"/></TD><TD><xsl:value-of select="charge"/></TD><TD><xsl:value-of select="charge_at_work"/></TD><TD><xsl:value-of select="power_factor"/></TD><TD><xsl:value-of select="charge_throttle"/></TD><TD><xsl:value-of select="demand_profile"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="internal_gains"/></TD><TD><xsl:value-of select="energy_meter"/></TD><TD><xsl:value-of select="heat_fraction"/></TD></TR>
 </xsl:for-each></TABLE>
 <H3><A NAME="modules_tape">tape</A></H3><TABLE BORDER="1">
-<TR><TH>version.major</TH><TD><xsl:value-of select="tape/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="tape/version.minor"/></TD></TR></TABLE>
+<TR><TH>version.major</TH><TD><xsl:value-of select="tape/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="tape/version.minor"/></TD></TR><TR><TH>gnuplot_path</TH><TD><xsl:value-of select="tape/gnuplot_path"/></TD></TR></TABLE>
 <H4>player objects</H4><TABLE BORDER="1">
 <TR><TH>Name</TH><TH>property</TH><TH>file</TH><TH>filetype</TH><TH>loop</TH></TR>
 <xsl:for-each select="tape/player_list/player"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="property"/></TD><TD><xsl:value-of select="file"/></TD><TD><xsl:value-of select="filetype"/></TD><TD><xsl:value-of select="loop"/></TD></TR>
@@ -2024,6 +2024,7 @@ module residential {
 module tape {
 	version.major <xsl:value-of select="version.major"/>;
 	version.minor <xsl:value-of select="version.minor"/>;
+	gnuplot_path <xsl:value-of select="gnuplot_path"/>;
 }
 
 # tape::player objects
