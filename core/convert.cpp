@@ -129,13 +129,14 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 		if (a>PI) a-=(2*PI);
 		count = sprintf(temp,global_complex_format,m,a*180/PI,A);
 	} 
-	if (v->Notation()==R)
+	else if (v->Notation()==R)
 	{
 		double m = v->Mag()*scale;
 		double a = v->Arg();
 		if (a>PI) a-=(2*PI);
 		count = sprintf(temp,global_complex_format,m,a,R);
-	} else {
+	} 
+	else {
 		count = sprintf(temp,global_complex_format,v->Re()*scale,v->Im()*scale,v->Notation());
 	}
 	if(count < size - 1){
