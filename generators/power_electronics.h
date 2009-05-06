@@ -81,9 +81,9 @@ public:
 	
 	double Vdc;
 	//double Lfilter[3];
-	bool FILTER_120HZ;
-	bool FILTER_180HZ;
-	bool FILTER_240HZ;
+	bool filter_120HZ;
+	bool filter_180HZ;
+	bool filter_240HZ;
 	double pf_in;
 	double pf_out;
 	int number_of_phases_in;

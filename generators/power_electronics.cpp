@@ -42,52 +42,52 @@ power_electronics::power_electronics(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			//should this be "GENERATOR_MODE" OR "gen_mode_v"?
-			PT_enumeration,"GENERATOR_MODE",PADDR(gen_mode_v),
-			PT_KEYWORD,"UNKNOWN",UNKNOWN,
-			PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
-			PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
-			PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
-			PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN,
+			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
+				PT_KEYWORD,"UNKNOWN",UNKNOWN,
+				PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
+				PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
+				PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
+				PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN,
 
-			PT_enumeration,"GENERATOR_STATUS",PADDR(gen_status_v),
-			PT_KEYWORD,"OFFLINE",OFFLINE,
-			PT_KEYWORD,"ONLINE",ONLINE,	
+			PT_enumeration,"generator_status",PADDR(gen_status_v),
+				PT_KEYWORD,"OFFLINE",OFFLINE,
+				PT_KEYWORD,"ONLINE",ONLINE,	
 			
-			PT_enumeration,"CONVERTER_TYPE",PADDR(converter_type_v),
-			PT_KEYWORD,"VOLTAGE_SOURCED",VOLTAGE_SOURCED,
-			PT_KEYWORD,"CURRENT_SOURCED",CURRENT_SOURCED,
+			PT_enumeration,"converter_type",PADDR(converter_type_v),
+				PT_KEYWORD,"VOLTAGE_SOURCED",VOLTAGE_SOURCED,
+				PT_KEYWORD,"CURRENT_SOURCED",CURRENT_SOURCED,
 
-			PT_enumeration,"SWITCH_TYPE",PADDR(switch_type_v),
-			PT_KEYWORD,"IDEAL_SWITCH",IDEAL_SWITCH,
-			PT_KEYWORD,"BJT",BJT,
-			PT_KEYWORD,"MOSFET",MOSFET,
-			PT_KEYWORD,"SCR",SCR,
-			PT_KEYWORD,"JFET",JFET,
-			PT_KEYWORD,"IBJT",IBJT,
-			PT_KEYWORD,"DARLINGTON",DARLINGTON,
+			PT_enumeration,"switch_type",PADDR(switch_type_v),
+				PT_KEYWORD,"IDEAL_SWITCH",IDEAL_SWITCH,
+				PT_KEYWORD,"BJT",BJT,
+				PT_KEYWORD,"MOSFET",MOSFET,
+				PT_KEYWORD,"SCR",SCR,
+				PT_KEYWORD,"JFET",JFET,
+				PT_KEYWORD,"IBJT",IBJT,
+				PT_KEYWORD,"DARLINGTON",DARLINGTON,
 
-			PT_enumeration,"FILTER_TYPE",PADDR(filter_type_v),
-			PT_KEYWORD,"LOW_PASS",LOW_PASS,
-			PT_KEYWORD,"HIGH_PASS",HIGH_PASS,
-			PT_KEYWORD,"BAND_STOP",BAND_STOP,
-			PT_KEYWORD,"BAND_PASS",BAND_PASS,
+			PT_enumeration,"filter_type",PADDR(filter_type_v),
+				PT_KEYWORD,"LOW_PASS",LOW_PASS,
+				PT_KEYWORD,"HIGH_PASS",HIGH_PASS,
+				PT_KEYWORD,"BAND_STOP",BAND_STOP,
+				PT_KEYWORD,"BAND_PASS",BAND_PASS,
 
-			PT_enumeration,"FILTER_IMPLEMENTATION",PADDR(filter_imp_v),
-			PT_KEYWORD,"IDEAL_FILTER",IDEAL_FILTER,
-			PT_KEYWORD,"CAPACITVE",CAPACITIVE,
-			PT_KEYWORD,"INDUCTIVE",INDUCTIVE,
-			PT_KEYWORD,"SERIES_RESONANT",SERIES_RESONANT,
-			PT_KEYWORD,"PARALLEL_RESONANT",PARALLEL_RESONANT,
+			PT_enumeration,"filter_implementation",PADDR(filter_imp_v),
+				PT_KEYWORD,"IDEAL_FILTER",IDEAL_FILTER,
+				PT_KEYWORD,"CAPACITVE",CAPACITIVE,
+				PT_KEYWORD,"INDUCTIVE",INDUCTIVE,
+				PT_KEYWORD,"SERIES_RESONANT",SERIES_RESONANT,
+				PT_KEYWORD,"PARALLEL_RESONANT",PARALLEL_RESONANT,
 
-			PT_enumeration,"FILTER_FREQUENCY",PADDR(filter_freq_v),
-			PT_KEYWORD,"F120HZ",F120HZ,
-			PT_KEYWORD,"F180HZ",F180HZ,
-			PT_KEYWORD,"F240HZ",F240HZ,
+			PT_enumeration,"filter_frequency",PADDR(filter_freq_v),
+				PT_KEYWORD,"F120HZ",F120HZ,
+				PT_KEYWORD,"F180HZ",F180HZ,
+				PT_KEYWORD,"F240HZ",F240HZ,
 
 			
-			PT_enumeration,"POWER_TYPE",PADDR(power_type_v),
-			PT_KEYWORD,"AC",AC,
-			PT_KEYWORD,"DC",DC,
+			PT_enumeration,"power_type",PADDR(power_type_v),
+				PT_KEYWORD,"AC",AC,
+				PT_KEYWORD,"DC",DC,
 
 			PT_double, "Rated_kW[kW]", PADDR(Rated_kW), //< nominal power in kW
 			PT_double, "Max_P[kW]", PADDR(Max_P),//< maximum real power capacity in kW
@@ -118,9 +118,9 @@ power_electronics::power_electronics(MODULE *module)
 			PT_double, Ltotal;
 			PT_double[3], Lfilter;
 
-			PT_bool, FILTER_120HZ;
-			PT_bool, FILTER_180HZ;
-			PT_bool, FILTER_240HZ;
+			PT_bool, filter_120HZ;
+			PT_bool, filter_180HZ;
+			PT_bool, filter_240HZ;
 */
 			//PT_double, "pf_in[double]", PADDR(pf_in),
 			//PT_double, "pf_out[double]", PADDR(pf_out),
@@ -178,19 +178,19 @@ int power_electronics::filter_circuit_impact(power_electronics::FILTER_TYPE filt
 		case BAND_PASS:
 			switch(filter_implementation_choice){
 				case IDEAL_FILTER:
-					if(FILTER_120HZ){
+					if(filter_120HZ){
 					Rsfilter[0] = S_DEFAULT;
 					Rgfilter[0] = G_DEFAULT;
 					Xsfilter[0] = S_DEFAULT;
 					Xgfilter[0] = G_DEFAULT;
 					}
-					if(FILTER_180HZ){
+					if(filter_180HZ){
 					Rsfilter[1] = S_DEFAULT;
 					Rgfilter[1] = G_DEFAULT;
 					Xsfilter[1] = S_DEFAULT;
 					Xgfilter[1] = G_DEFAULT;
 					}
-					if(FILTER_240HZ){
+					if(filter_240HZ){
 					Rsfilter[2] = S_DEFAULT;
 					Rgfilter[2] = G_DEFAULT;
 					Xsfilter[2] = S_DEFAULT;
@@ -198,19 +198,19 @@ int power_electronics::filter_circuit_impact(power_electronics::FILTER_TYPE filt
 					}
 					break;
 				case CAPACITIVE:
-					if(FILTER_120HZ){
+					if(filter_120HZ){
 					Rsfilter[0] = S_DEFAULT;
 					Rgfilter[0] = G_DEFAULT;
 					Xsfilter[0] = S_DEFAULT;
 					Xgfilter[0] = G_DEFAULT;
 					}
-					if(FILTER_180HZ){
+					if(filter_180HZ){
 					Rsfilter[1] = S_DEFAULT;
 					Rgfilter[1] = G_DEFAULT;
 					Xsfilter[1] = S_DEFAULT;
 					Xgfilter[1] = G_DEFAULT;
 					}
-					if(FILTER_240HZ){
+					if(filter_240HZ){
 					Rsfilter[2] = S_DEFAULT;
 					Rgfilter[2] = G_DEFAULT;
 					Xsfilter[2] = S_DEFAULT;
@@ -218,19 +218,19 @@ int power_electronics::filter_circuit_impact(power_electronics::FILTER_TYPE filt
 					}
 					break;
 				case INDUCTIVE:
-					if(FILTER_120HZ){
+					if(filter_120HZ){
 					Rsfilter[0] = S_DEFAULT;
 					Rgfilter[0] = G_DEFAULT;
 					Xsfilter[0] = S_DEFAULT;
 					Xgfilter[0] = G_DEFAULT;
 					}
-					if(FILTER_180HZ){
+					if(filter_180HZ){
 					Rsfilter[1] = S_DEFAULT;
 					Rgfilter[1] = G_DEFAULT;
 					Xsfilter[1] = S_DEFAULT;
 					Xgfilter[1] = G_DEFAULT;
 					}
-					if(FILTER_240HZ){
+					if(filter_240HZ){
 					Rsfilter[2] = S_DEFAULT;
 					Rgfilter[2] = G_DEFAULT;
 					Xsfilter[2] = S_DEFAULT;
@@ -238,19 +238,19 @@ int power_electronics::filter_circuit_impact(power_electronics::FILTER_TYPE filt
 					}
 					break;
 				case SERIES_RESONANT:
-					if(FILTER_120HZ){
+					if(filter_120HZ){
 					Rsfilter[0] = S_DEFAULT;
 					Rgfilter[0] = G_DEFAULT;
 					Xsfilter[0] = S_DEFAULT;
 					Xgfilter[0] = G_DEFAULT;
 					}
-					if(FILTER_180HZ){
+					if(filter_180HZ){
 					Rsfilter[1] = S_DEFAULT;
 					Rgfilter[1] = G_DEFAULT;
 					Xsfilter[1] = S_DEFAULT;
 					Xgfilter[1] = G_DEFAULT;
 					}
-					if(FILTER_240HZ){
+					if(filter_240HZ){
 					Rsfilter[2] = S_DEFAULT;
 					Rgfilter[2] = G_DEFAULT;
 					Xsfilter[2] = S_DEFAULT;
@@ -258,19 +258,19 @@ int power_electronics::filter_circuit_impact(power_electronics::FILTER_TYPE filt
 					}
 					break;
 				case PARALLEL_RESONANT:
-					if(FILTER_120HZ){
+					if(filter_120HZ){
 					Rsfilter[0] = S_DEFAULT;
 					Rgfilter[0] = G_DEFAULT;
 					Xsfilter[0] = S_DEFAULT;
 					Xgfilter[0] = G_DEFAULT;
 					}
-					if(FILTER_180HZ){
+					if(filter_180HZ){
 					Rsfilter[1] = S_DEFAULT;
 					Rgfilter[1] = G_DEFAULT;
 					Xsfilter[1] = S_DEFAULT;
 					Xgfilter[1] = G_DEFAULT;
 					}
-					if(FILTER_240HZ){
+					if(filter_240HZ){
 					Rsfilter[2] = S_DEFAULT;
 					Rgfilter[2] = G_DEFAULT;
 					Xsfilter[2] = S_DEFAULT;

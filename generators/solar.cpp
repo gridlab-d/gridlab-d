@@ -32,30 +32,30 @@ solar::solar(MODULE *module)
 			GL_THROW("unable to register object class implemented by %s", __FILE__); 
 
 		if (gl_publish_variable(oclass,
-			PT_enumeration,"GENERATOR_MODE",PADDR(gen_mode_v),
-			PT_KEYWORD,"UNKNOWN",UNKNOWN,
-			PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
-			PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
-			PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
-			PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN, //PV must operate in this mode
+			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
+				PT_KEYWORD,"UNKNOWN",UNKNOWN,
+				PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
+				PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
+				PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
+				PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN, //PV must operate in this mode
 
-			PT_enumeration,"GENERATOR_STATUS",PADDR(gen_status_v),
-			PT_KEYWORD,"OFFLINE",OFFLINE,
-			PT_KEYWORD,"ONLINE",ONLINE,	
+			PT_enumeration,"generator_status",PADDR(gen_status_v),
+				PT_KEYWORD,"OFFLINE",OFFLINE,
+				PT_KEYWORD,"ONLINE",ONLINE,	
 
-			PT_enumeration,"PANEL_TYPE", PADDR(panel_type_v),
-			PT_KEYWORD, "SINGLE_CRYSTAL_SILICON", SINGLE_CRYSTAL_SILICON, 
-			PT_KEYWORD, "MULTI_CRYSTAL_SILICON", MULTI_CRYSTAL_SILICON,
-			PT_KEYWORD, "AMORPHOUS_SILICON", AMORPHOUS_SILICON,
-			PT_KEYWORD, "THIN_FILM_GA_AS", THIN_FILM_GA_AS,
-			PT_KEYWORD, "CONCENTRATOR", CONCENTRATOR,
+			PT_enumeration,"panel_type", PADDR(panel_type_v),
+				PT_KEYWORD, "SINGLE_CRYSTAL_SILICON", SINGLE_CRYSTAL_SILICON, 
+				PT_KEYWORD, "MULTI_CRYSTAL_SILICON", MULTI_CRYSTAL_SILICON,
+				PT_KEYWORD, "AMORPHOUS_SILICON", AMORPHOUS_SILICON,
+				PT_KEYWORD, "THIN_FILM_GA_AS", THIN_FILM_GA_AS,
+				PT_KEYWORD, "CONCENTRATOR", CONCENTRATOR,
 
-			PT_enumeration,"POWER_TYPE",PADDR(power_type_v),
-			PT_KEYWORD,"AC",AC,
-			PT_KEYWORD,"DC",DC,
+			PT_enumeration,"power_type",PADDR(power_type_v),
+				PT_KEYWORD,"AC",AC,
+				PT_KEYWORD,"DC",DC,
 
 
-			PT_double, "NOCT", PADDR(NOCT),
+			PT_double, "noct", PADDR(NOCT),
 			PT_double, "Tcell", PADDR(Tcell),
 			PT_double, "Tambient", PADDR(Tambient),
 			PT_double, "Insolation", PADDR(Insolation),

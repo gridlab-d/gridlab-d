@@ -39,26 +39,26 @@ battery::battery(MODULE *module)
 			GL_THROW("unable to register object class implemented by %s", __FILE__); 
 
 		if (gl_publish_variable(oclass,
-			PT_enumeration,"GENERATOR_MODE",PADDR(gen_mode_v),
-			PT_KEYWORD,"UNKNOWN",UNKNOWN,
-			PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
-			PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
-			PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
-			PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN, //PV must operate in this mode
+			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
+				PT_KEYWORD,"UNKNOWN",UNKNOWN,
+				PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
+				PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
+				PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
+				PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN, //PV must operate in this mode
 
-			PT_enumeration,"GENERATOR_STATUS",PADDR(gen_status_v),
-			PT_KEYWORD,"OFFLINE",OFFLINE,
-			PT_KEYWORD,"ONLINE",ONLINE,	
+			PT_enumeration,"generator_status",PADDR(gen_status_v),
+				PT_KEYWORD,"OFFLINE",OFFLINE,
+				PT_KEYWORD,"ONLINE",ONLINE,	
 
-			PT_enumeration,"RFB_SIZE", PADDR(rfb_size_v),
-			PT_KEYWORD, "SMALL", SMALL, 
-			PT_KEYWORD, "MED_COMMERCIAL", MED_COMMERCIAL,
-			PT_KEYWORD, "MED_HIGH_ENERGY", MED_HIGH_ENERGY,
-			PT_KEYWORD, "LARGE", LARGE,
+			PT_enumeration,"rfb_size", PADDR(rfb_size_v),
+				PT_KEYWORD, "SMALL", SMALL, 
+				PT_KEYWORD, "MED_COMMERCIAL", MED_COMMERCIAL,
+				PT_KEYWORD, "MED_HIGH_ENERGY", MED_HIGH_ENERGY,
+				PT_KEYWORD, "LARGE", LARGE,
 
-			PT_enumeration,"POWER_TYPE",PADDR(power_type_v),
-			PT_KEYWORD,"AC",AC,
-			PT_KEYWORD,"DC",DC,
+			PT_enumeration,"power_type",PADDR(power_type_v),
+				PT_KEYWORD,"AC",AC,
+				PT_KEYWORD,"DC",DC,
 
 
 			PT_double, "Rinternal", PADDR(Rinternal),
@@ -85,7 +85,7 @@ battery::battery(MODULE *module)
 
 			PT_set, "phases", PADDR(phases),
 
-			PT_KEYWORD, "A",PHASE_A,
+				PT_KEYWORD, "A",PHASE_A,
 				PT_KEYWORD, "B",PHASE_B,
 				PT_KEYWORD, "C",PHASE_C,
 				PT_KEYWORD, "N",PHASE_N,

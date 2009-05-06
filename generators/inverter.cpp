@@ -37,18 +37,18 @@ inverter::inverter(MODULE *module)
 		
 		if (gl_publish_variable(oclass,
 
-			PT_enumeration,"INVERTER_TYPE",PADDR(inverter_type_v),
-			PT_KEYWORD,"TWO_PULSE",TWO_PULSE,
-			PT_KEYWORD,"SIX_PULSE",SIX_PULSE,
-			PT_KEYWORD,"TWELVE_PULSE",TWELVE_PULSE,
-			PT_KEYWORD,"PWM",PWM,
+			PT_enumeration,"inverter_type",PADDR(inverter_type_v),
+				PT_KEYWORD,"TWO_PULSE",TWO_PULSE,
+				PT_KEYWORD,"SIX_PULSE",SIX_PULSE,
+				PT_KEYWORD,"TWELVE_PULSE",TWELVE_PULSE,
+				PT_KEYWORD,"PWM",PWM,
 
-			PT_enumeration,"GENERATOR_MODE",PADDR(gen_mode_v),
-			PT_KEYWORD,"UNKNOWN",UNKNOWN,
-			PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
-			PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
-			PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
-			PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN,
+			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
+				PT_KEYWORD,"UNKNOWN",UNKNOWN,
+				PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
+				PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
+				PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
+				PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN,
 
 			
 			PT_complex, "V_In[V]",PADDR(V_In),
@@ -128,9 +128,9 @@ int inverter::init(OBJECT *parent)
 	Linternal = 0;
 	Lground = 0;
 	Ltotal = 0;
-	FILTER_120HZ = true;
-	FILTER_180HZ = true;
-	FILTER_240HZ = true;
+	filter_120HZ = true;
+	filter_180HZ = true;
+	filter_240HZ = true;
 	pf_in = 0;
 	pf_out = 1;
 	number_of_phases_in = 0;
