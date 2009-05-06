@@ -55,7 +55,7 @@
 #include <math.h>
 
 #include "house_a.h"
-#include "freezer.h"
+#include "new_freezer.h"
 
 //////////////////////////////////////////////////////////////////////////
 // underground_line_conductor CLASS FUNCTIONS
@@ -76,11 +76,19 @@ freezer::freezer(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_double, "size [cf]", PADDR(size),
-			PT_double, "rated_capacity [Btu/h]", PADDR(rated_capacity),
-			PT_complex,"power[kW]",PADDR(power_kw),
+			PT_double, "size[cf]", PADDR(size),
+			PT_double, "rated_capacity[Btu/h]", PADDR(rated_capacity),
 			PT_double,"power_factor[pu]",PADDR(power_factor),
-			PT_double,"meter[kWh]",PADDR(kwh_meter),
+			PT_double,"temperature[degF]",PADDR(Tair),
+			PT_double,"setpoint[degF]",PADDR(Tset),
+			PT_double,"deadband[degF]",PADDR(thermostat_deadband),
+			PT_timestamp,"next_time",PADDR(last_time),
+			PT_double,"output",PADDR(Qr),
+			PT_double,"event_temp",PADDR(Tevent),
+
+			PT_enumeration,"state",PADDR(motor_state),
+				PT_KEYWORD,"OFF",S_OFF,
+				PT_KEYWORD,"ON",S_ON,
 
 			PT_complex,"enduse_load[kW]",PADDR(load.total),
 			PT_complex,"constant_power[kW]",PADDR(load.power),
@@ -114,7 +122,7 @@ int freezer::init(OBJECT *parent)
 	// defaults for unset values */
 	if (size==0)				size = gl_random_uniform(20,40); // cf
 	if (thermostat_deadband==0) thermostat_deadband = gl_random_uniform(2,3);
-	if (Tset==0)				Tset = gl_random_triangle(10,20);
+	if (Tset==0)				Tset = gl_random_uniform(10,20);
 	if (UAr==0)					UAr = 1.5+size/40*gl_random_uniform(0.9,1.1);
 	if (UAf==0)					UAf = gl_random_uniform(0.9,1.1);
 	if (COPcoef==0)				COPcoef = gl_random_uniform(0.9,1.1);
@@ -128,9 +136,9 @@ int freezer::init(OBJECT *parent)
 	{
 		gl_error("freezer must have a parent house");
 		/*	TROUBLESHOOT
-			The freezer object, being an enduse for the house model, must have a parent house
-			that it is connected to.  Create a house object and set it as the parent of the
-			offending freezer object.
+			The freezer object, being an enduse for the house model, must have a parent
+			house that it is connected to.  Create a house object and set it as the parent of
+			the offending freezer object.
 		*/
 		return 0;
 	}
@@ -153,24 +161,47 @@ int freezer::init(OBJECT *parent)
 		Qr = 0;
 
 	// initial demand
-	load.total = rated_capacity*KWPBTUPH;  //stubbed-in default
+	//power_kw = rated_capacity*KWPBTUPH;  //stubbed-in default
+	load.total = rated_capacity * KWPBTUPH;
 
 	return 1;
+}
+
+TIMESTAMP freezer::presync(TIMESTAMP t0, TIMESTAMP t1){
+	// sync to house
+	Tout = pHouse->get_Tair();
+
+	return TS_NEVER;
+}
+
+/* occurs between presync and sync */
+/* exclusively modifies Tevent and motor_state, nothing the reflects current properties
+ * should be affected by the PLC code. */
+void freezer::thermostat(TIMESTAMP t0, TIMESTAMP t1){
+	const double Ton = Tset+thermostat_deadband;
+	const double Toff = Tset-thermostat_deadband;
+
+	if(motor_state == S_OFF){
+		// warm enough to need cooling?
+		if(Tair >= Ton){
+			motor_state = S_ON;
+			Tevent = Toff;
+		}
+	} else if(motor_state == S_ON){
+		// cold enough to let be?
+		if(Tair <= Toff){
+			motor_state = S_OFF;
+			Tevent = Ton;
+		}
+	}
 }
 
 TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	double nHours = (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND;
 
-	if(t0 == t1){
-		return last_time; /* avoid recalc'ing, nothing will have changed. */
-	}
-	// sync to house
-	if(pHouse != NULL){
-		Tout = pHouse->get_Tair();
-	} else {
-		Tout = 70.0;
-	}
+//	if(t0 == t1)
+//		return last_time;
 
 	// compute control event temperatures
 	const double Ton = Tset+thermostat_deadband;
@@ -181,25 +212,37 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 	const double COP = COPcoef*((-3.5/45)*(Tout-70)+4.5);
 
 	// accumulate energy
-	load.energy = Qr*KWPBTUPH*COP*nHours;
+	load.energy = Qr * KWPBTUPH * COP * nHours;
 	load.total = load.energy/nHours;
 
 	// process all events
 	// change control mode if appropriate
+	if(motor_state == S_ON){
+		Qr = rated_capacity;
+	} else if(motor_state == S_OFF){
+		Qr = 0;
+	} else{
+		throw "freezer motor state is ambiguous";
+	}
+
+	/*
 	if (ANE(Qr,0,0.1) && ALT(Tair,Toff,0.1))
 		Qr = 0;
 	else if (AEQ(Qr,0,0.1) && AGT(Tair,Ton,0.1))
 		Qr = rated_capacity;
+	*/
 
 	// compute constants for this time increment
 	const double C2 = Tout - Qr/UAf;
 
 	// determine next internal event temperature
-	double Tevent;
+	/* next internal event temp is now handled by the thermostat. */
+	/*
 	if (AEQ(Qr,0,0.1))
 		Tevent = Ton;
 	else
 		Tevent = Toff;
+	*/
 
 	// compute time to next internal event
 	double t = -log((Tevent - C2)/(Tair-C2))*C1;
@@ -216,7 +259,10 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 		Tair = (Tair-C2)*exp(-dt/C1)+C2;
 		if (Tair < 0 || Tair > 32)
 			throw "freezer air temperature out of control";
-		last_time = (TIMESTAMP)(t1+dt*3600.0/TS_SECOND);
+
+		last_time = (TIMESTAMP)(t1+dt*3600.0/TS_SECOND)+1;
+		/* one second for over-cool fudge factor & avoiding numerical instability/Zeno's dichotomy paradox problems */
+
 		return last_time;
 	}
 	// internal event
@@ -226,6 +272,10 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 		last_time = TS_NEVER;
 		return TS_NEVER; 
 	}
+}
+
+TIMESTAMP freezer::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	return TS_NEVER;
 }
 
 
@@ -245,17 +295,60 @@ EXPORT int create_freezer(OBJECT **obj, OBJECT *parent)
 	return 0;
 }
 
+EXPORT TIMESTAMP sync_freezer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	freezer *my = OBJECTDATA(obj,freezer);
+	TIMESTAMP t1 = TS_NEVER;
+
+	try {
+		switch (pass) 
+		{
+			case PC_PRETOPDOWN:
+				t1 = my->presync(obj->clock, t0);
+				break;
+
+			case PC_BOTTOMUP:
+				t1 = my->sync(obj->clock, t0);
+				obj->clock = t0;
+				break;
+
+			case PC_POSTTOPDOWN:
+				t1 = my->postsync(obj->clock, t0);
+				break;
+
+			default:
+				gl_error("freezer::sync- invalid pass configuration");
+				t1 = TS_INVALID; // serious error in exec.c
+		}
+	} 
+	catch (char *msg)
+	{
+		gl_error("freezer::sync exception caught: %s", msg);
+		t1 = TS_INVALID;
+	}
+	catch (...)
+	{
+		gl_error("freezer::sync exception caught: no info");
+		t1 = TS_INVALID;
+	}
+	return t1;
+}
+
 EXPORT int init_freezer(OBJECT *obj)
 {
 	freezer *my = OBJECTDATA(obj,freezer);
 	return my->init(obj->parent);
 }
 
-EXPORT TIMESTAMP sync_freezer(OBJECT *obj, TIMESTAMP t0)
+/*	determine if we're turning the motor on or off and nothing else. */
+EXPORT TIMESTAMP plc_freezer(OBJECT *obj, TIMESTAMP t0)
 {
-	TIMESTAMP t1 = ((freezer*)(obj+1))->sync(obj->clock, t0);
-	obj->clock = t0;
-	return t1;
+	// this will be disabled if a PLC object is attached to the freezer
+
+	freezer *my = OBJECTDATA(obj,freezer);
+	my->thermostat(obj->clock, t0);
+
+	return TS_NEVER;  
 }
 
 /**@}**/

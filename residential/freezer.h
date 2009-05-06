@@ -14,14 +14,20 @@
 
 class freezer  
 {
+public:
+	typedef enum {
+		S_OFF=0,
+		S_ON=1
+	} MOTORSTATE;
+
 private:
 	complex *pVoltage;		// reference to the assigned panel circuit voltage
 	house *pHouse;			// reference to the parent house
 
 public:
-	double size;  ///< freezer volume (cf) 
+	double size;  ///< refrigerator volume (cf) 
 	double rated_capacity;  ///< rated capacity (Btu/h)
-	double thermostat_deadband;  ///< freezer thermostat hysterisys (degF)
+	double thermostat_deadband;  ///< refrigerator thermostat hysterisys (degF)
 	double UAr;		///< UA of Refrigerator compartment
 	double UAf;		///< UA of the food-air
 	double Tair;	///< Refirgerator air temperature (degF)
@@ -30,13 +36,15 @@ public:
 	double Cf;		///< heat capapcity of the food
 	double Qr;		///< heat rate from the cooling system
 	double COPcoef;	///< compressor COP
+	
+	double Tevent;	///< Temperature we will switch the motor on or off.  Available for SmartGrid PLC code to nudge.
 
-	complex power_kw;				// total power demand [kW]
 	double power_factor;
-	double kwh_meter;				// energy used since start of simulation [kWh] 
 
+	MOTORSTATE motor_state;
 	ENDUSELOAD load;
 	TIMESTAMP last_time;
+
 public:
 
 	static CLASS *oclass;
@@ -46,7 +54,10 @@ public:
 	
 	int create();
 	int init(OBJECT *parent);
+	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
+	void thermostat(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
+	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 };
 
 #endif // _FREEZER_H

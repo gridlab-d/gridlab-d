@@ -14,6 +14,12 @@
 
 class refrigerator  
 {
+public:
+	typedef enum {
+		S_OFF=0,
+		S_ON=1
+	} MOTORSTATE;
+
 private:
 	complex *pVoltage;		// reference to the assigned panel circuit voltage
 	house *pHouse;			// reference to the parent house
@@ -30,11 +36,12 @@ public:
 	double Cf;		///< heat capapcity of the food
 	double Qr;		///< heat rate from the cooling system
 	double COPcoef;	///< compressor COP
+	
+	double Tevent;	///< Temperature we will switch the motor on or off.  Available for SmartGrid PLC code to nudge.
 
-	//complex power_kw;				// total power demand [kW]
 	double power_factor;
-	//double kwh_meter;				// energy used since start of simulation [kWh] 
 
+	MOTORSTATE motor_state;
 	ENDUSELOAD load;
 	TIMESTAMP last_time;
 
@@ -47,7 +54,10 @@ public:
 	
 	int create();
 	int init(OBJECT *parent);
+	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
+	void thermostat(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
+	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 };
 
 #endif // _REFRIGERATOR_H

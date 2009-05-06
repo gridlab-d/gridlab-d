@@ -55,7 +55,7 @@
 #include <math.h>
 
 #include "house_a.h"
-#include "refrigerator.h"
+#include "new_refrigerator.h"
 
 //////////////////////////////////////////////////////////////////////////
 // underground_line_conductor CLASS FUNCTIONS
@@ -76,11 +76,19 @@ refrigerator::refrigerator(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_double, "size [cf]", PADDR(size),
-			PT_double, "rated_capacity [Btu/h]", PADDR(rated_capacity),
-			//PT_complex,"power[kW]",PADDR(power_kw),
+			PT_double, "size[cf]", PADDR(size),
+			PT_double, "rated_capacity[Btu/h]", PADDR(rated_capacity),
 			PT_double,"power_factor[pu]",PADDR(power_factor),
-			//PT_double,"meter[kWh]",PADDR(kwh_meter),
+			PT_double,"temperature[degF]",PADDR(Tair),
+			PT_double,"setpoint[degF]",PADDR(Tset),
+			PT_double,"deadband[degF]",PADDR(thermostat_deadband),
+			PT_timestamp,"next_time",PADDR(last_time),
+			PT_double,"output",PADDR(Qr),
+			PT_double,"event_temp",PADDR(Tevent),
+
+			PT_enumeration,"state",PADDR(motor_state),
+				PT_KEYWORD,"OFF",S_OFF,
+				PT_KEYWORD,"ON",S_ON,
 
 			PT_complex,"enduse_load[kW]",PADDR(load.total),
 			PT_complex,"constant_power[kW]",PADDR(load.power),
@@ -159,19 +167,41 @@ int refrigerator::init(OBJECT *parent)
 	return 1;
 }
 
+TIMESTAMP refrigerator::presync(TIMESTAMP t0, TIMESTAMP t1){
+	// sync to house
+	Tout = pHouse->get_Tair();
+
+	return TS_NEVER;
+}
+
+/* occurs between presync and sync */
+/* exclusively modifies Tevent and motor_state, nothing the reflects current properties
+ * should be affected by the PLC code. */
+void refrigerator::thermostat(TIMESTAMP t0, TIMESTAMP t1){
+	const double Ton = Tset+thermostat_deadband;
+	const double Toff = Tset-thermostat_deadband;
+
+	if(motor_state == S_OFF){
+		// warm enough to need cooling?
+		if(Tair >= Ton){
+			motor_state = S_ON;
+			Tevent = Toff;
+		}
+	} else if(motor_state == S_ON){
+		// cold enough to let be?
+		if(Tair <= Toff){
+			motor_state = S_OFF;
+			Tevent = Ton;
+		}
+	}
+}
+
 TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	double nHours = (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND;
 
-	if(t0 == t1)
-		return last_time;
-
-	// sync to house
-	if(pHouse){
-		Tout = pHouse->get_Tair();
-	} else {
-		Tout = 70.0;
-	}
+//	if(t0 == t1)
+//		return last_time;
 
 	// compute control event temperatures
 	const double Ton = Tset+thermostat_deadband;
@@ -182,27 +212,37 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 	const double COP = COPcoef*((-3.5/45)*(Tout-70)+4.5);
 
 	// accumulate energy
-	//kwh_meter = Qr*KWPBTUPH*COP*nHours;
 	load.energy = Qr * KWPBTUPH * COP * nHours;
-	//power_kw = kwh_meter/nHours;
 	load.total = load.energy/nHours;
 
 	// process all events
 	// change control mode if appropriate
+	if(motor_state == S_ON){
+		Qr = rated_capacity;
+	} else if(motor_state == S_OFF){
+		Qr = 0;
+	} else{
+		throw "refrigerator motor state is ambiguous";
+	}
+
+	/*
 	if (ANE(Qr,0,0.1) && ALT(Tair,Toff,0.1))
 		Qr = 0;
 	else if (AEQ(Qr,0,0.1) && AGT(Tair,Ton,0.1))
 		Qr = rated_capacity;
+	*/
 
 	// compute constants for this time increment
 	const double C2 = Tout - Qr/UAf;
 
 	// determine next internal event temperature
-	double Tevent;
+	/* next internal event temp is now handled by the thermostat. */
+	/*
 	if (AEQ(Qr,0,0.1))
 		Tevent = Ton;
 	else
 		Tevent = Toff;
+	*/
 
 	// compute time to next internal event
 	double t = -log((Tevent - C2)/(Tair-C2))*C1;
@@ -220,7 +260,9 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (Tair < 32 || Tair > 55)
 			throw "refrigerator air temperature out of control";
 
-		last_time = (TIMESTAMP)(t1+dt*3600.0/TS_SECOND);
+		last_time = (TIMESTAMP)(t1+dt*3600.0/TS_SECOND)+1;
+		/* one second for over-cool fudge factor & avoiding numerical instability/Zeno's dichotomy paradox problems */
+
 		return last_time;
 	}
 	// internal event
@@ -230,6 +272,10 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 		last_time = TS_NEVER;
 		return TS_NEVER; 
 	}
+}
+
+TIMESTAMP refrigerator::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	return TS_NEVER;
 }
 
 
@@ -249,17 +295,60 @@ EXPORT int create_refrigerator(OBJECT **obj, OBJECT *parent)
 	return 0;
 }
 
+EXPORT TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	refrigerator *my = OBJECTDATA(obj,refrigerator);
+	TIMESTAMP t1 = TS_NEVER;
+
+	try {
+		switch (pass) 
+		{
+			case PC_PRETOPDOWN:
+				t1 = my->presync(obj->clock, t0);
+				break;
+
+			case PC_BOTTOMUP:
+				t1 = my->sync(obj->clock, t0);
+				obj->clock = t0;
+				break;
+
+			case PC_POSTTOPDOWN:
+				t1 = my->postsync(obj->clock, t0);
+				break;
+
+			default:
+				gl_error("refrigerator::sync- invalid pass configuration");
+				t1 = TS_INVALID; // serious error in exec.c
+		}
+	} 
+	catch (char *msg)
+	{
+		gl_error("refrigerator::sync exception caught: %s", msg);
+		t1 = TS_INVALID;
+	}
+	catch (...)
+	{
+		gl_error("refrigerator::sync exception caught: no info");
+		t1 = TS_INVALID;
+	}
+	return t1;
+}
+
 EXPORT int init_refrigerator(OBJECT *obj)
 {
 	refrigerator *my = OBJECTDATA(obj,refrigerator);
 	return my->init(obj->parent);
 }
 
-EXPORT TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0)
+/*	determine if we're turning the motor on or off and nothing else. */
+EXPORT TIMESTAMP plc_refrigerator(OBJECT *obj, TIMESTAMP t0)
 {
-	TIMESTAMP t1 = ((refrigerator*)(obj+1))->sync(obj->clock, t0);
-	obj->clock = t0;
-	return t1;
+	// this will be disabled if a PLC object is attached to the refrigerator
+
+	refrigerator *my = OBJECTDATA(obj,refrigerator);
+	my->thermostat(obj->clock, t0);
+
+	return TS_NEVER;  
 }
 
 /**@}**/
