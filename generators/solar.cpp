@@ -232,7 +232,7 @@ int solar::init(OBJECT *parent)
 		V_Max = complex(40);
 		Voc = complex(40);
 		Voc_Max = complex(40);
-		area = 100;
+		area = 1000;
 		
 		efficiency = 0;
 		
@@ -355,13 +355,14 @@ int solar::init(OBJECT *parent)
 }
 	void solar::derate_panel(double Tamb, double Insol){
 		Tcell = Tamb + ((NOCT - 20)/0.8) * Insol/1000;
+		Rinternal=.0001*Tcell*Tcell;
 		gl_verbose("solar sync: panel temperature is : %f", Tcell);
 		Voc = Voc_Max * (1 - (0.0037 * (Tcell - 25)));
 
 		if(100.00 > Insol){
 			VA_Out = 0;
 		}else{
-			VA_Out = complex(Max_P * (1 - (0.005 * (Tcell - 25))), 0);
+			VA_Out = kcomplex(Max_P * (1 - (0.005 * (Tcell - 25))), 0);
 		}
 		gl_verbose("solar sync: VA_Out real component is: (%f , %f)", VA_Out.Re()), VA_Out.Im();
 		VA_Out = complex(VA_Out.Re() * 0.97, VA_Out.Im()* 0.97); // mismatch derating
