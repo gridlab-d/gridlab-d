@@ -50,12 +50,19 @@ TIMESTAMP complex_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	if (t0>0)
 	{
 		complex *x = (complex*)gl_get_complex_by_name(obj->parent,target);
-		complex m = (*x-value).Mag();
-		if (!m.IsFinite() || m>within){
-			gl_warning("assert failed on %s: %s (%g%+gi) not within %f of %g%+gi", 
-			gl_name(obj->parent,buff,64), target, x->Re(), x->Im(), within, value.Re(), value.Im());
+		complex error = *x - value;
+		double real_error = error.Re();
+		double imag_error = error.Im();
+		if (_isnan(real_error) || abs(real_error)>within){
+			gl_warning("assert failed on %s: real part of %s %g not within %f of %g", 
+			gl_name(obj->parent,buff,64), target, x->Re(), within, value.Re());
 			return t1;
 		}
+		if (_isnan(imag_error) || abs(imag_error)>within){
+			gl_warning("assert failed on %s: imaginary part of %s %+gi not within %f of %+gi", 
+			gl_name(obj->parent,buff,64), target, x->Re(), x->Im(), within, value.Re(), value.Im());
+			return t1;
+		}		
 		return TS_NEVER;
 	} 
 	else {

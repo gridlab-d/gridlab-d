@@ -1,0 +1,143 @@
+// Transformer Self-Test - Step Up Delta-GroundedY
+
+// Tests are a modification of IEEE 4 node test feeders.
+// Tests three phase voltage at load and power in and
+//   power out of transformer.  Tested values were found
+//   through a Matlab script and fall within the rounding
+//   differences found within IEEE test feeder values.
+
+///////////////////////////////////////////
+// BEGIN
+///////////////////////////////////////////
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow;
+module assert;
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration:300 {
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
+}
+
+object transformer_configuration:400 {
+	connect_type DELTA_GWYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 24900;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object node:1 {
+	phases "ABCD";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line:12 {
+	phases "ABCD";
+	from node:1;
+	to node:2;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node:2 {
+	phases "ABCD";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object transformer:23 {
+	phases "ABCN";
+	from node:2;
+	to node:3;
+	configuration transformer_configuration:400;
+	object double_assert {
+		target "power_in";
+		value 6265904.29;
+		within 0.1;
+	};
+	object double_assert {
+		target "power_out";
+		value 6017103.33;
+		within 0.1;
+	};
+}
+
+object node:3 {
+	phases "ABCN";
+	voltage_A +14376.022+0.000j;
+	voltage_B -7188.011-12450.000j;
+	voltage_C -7188.011+12450.000j;
+	nominal_voltage 143760;
+}
+
+object overhead_line:34 {
+	phases "ABCN";
+	from node:3;
+	to load:4;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object load:4 {
+	phases "ABCN";
+	voltage_A +14376.022+0.000j;
+	voltage_B -7188.011-12450.000j;
+	voltage_C -7188.011+12450.000j;
+	constant_power_A +1275000.000+790174.031j;
+	constant_power_B +1800000.000+871779.789j;
+	constant_power_C +2375000.000+780624.750j;
+	maximum_voltage_error 0.001;
+	nominal_voltage 143760;
+	object complex_assert {
+		target "voltage_A";
+		value 12192.70+6395.84j;
+		within 0.1;
+	};
+	object complex_assert {
+		target "voltage_B";
+		value -848.24-13658.01j;
+		within 0.1;
+	};
+	object complex_assert {
+		target "voltage_C";
+		value -11164.3+7766.86j;
+		within 0.1;
+	};
+}
+
+//////////////////////////////////////////////
+// END
+//////////////////////////////////////////////
