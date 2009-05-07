@@ -362,7 +362,7 @@ int solar::init(OBJECT *parent)
 		if(100.00 > Insol){
 			VA_Out = 0;
 		}else{
-			VA_Out = kcomplex(Max_P * (1 - (0.005 * (Tcell - 25))), 0);
+			VA_Out = complex(Max_P * (1 - (0.005 * (Tcell - 25))), 0);
 		}
 		gl_verbose("solar sync: VA_Out real component is: (%f , %f)", VA_Out.Re()), VA_Out.Im();
 		VA_Out = complex(VA_Out.Re() * 0.97, VA_Out.Im()* 0.97); // mismatch derating
