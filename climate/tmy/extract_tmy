@@ -29,7 +29,7 @@ class climate {
 	double tzoffset[h];
 }
 object climate {
-	city \"$City $STATE\";
+	name \"$City $STATE\";
 	tmyfile \"$tmy2\";
 	tzoffset $tz;
 	elevation $elev;
