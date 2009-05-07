@@ -118,36 +118,36 @@
 <xsl:for-each select="generators/windturb_dg_list/windturb_dg"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="Gen_status"/></TD><TD><xsl:value-of select="Gen_type"/></TD><TD><xsl:value-of select="Gen_mode"/></TD><TD><xsl:value-of select="Turbine_Model"/></TD><TD><xsl:value-of select="Rated_VA"/></TD><TD><xsl:value-of select="Rated_V"/></TD><TD><xsl:value-of select="Pconv"/></TD><TD><xsl:value-of select="WSadj"/></TD><TD><xsl:value-of select="Wind_Speed"/></TD><TD><xsl:value-of select="pf"/></TD><TD><xsl:value-of select="GenElecEff"/></TD><TD><xsl:value-of select="TotalRealPow"/></TD><TD><xsl:value-of select="TotalReacPow"/></TD><TD><xsl:value-of select="voltage_A"/></TD><TD><xsl:value-of select="voltage_B"/></TD><TD><xsl:value-of select="voltage_C"/></TD><TD><xsl:value-of select="current_A"/></TD><TD><xsl:value-of select="current_B"/></TD><TD><xsl:value-of select="current_C"/></TD><TD><xsl:value-of select="EfA"/></TD><TD><xsl:value-of select="EfB"/></TD><TD><xsl:value-of select="EfC"/></TD><TD><xsl:value-of select="Vrotor_A"/></TD><TD><xsl:value-of select="Vrotor_B"/></TD><TD><xsl:value-of select="Vrotor_C"/></TD><TD><xsl:value-of select="Irotor_A"/></TD><TD><xsl:value-of select="Irotor_B"/></TD><TD><xsl:value-of select="Irotor_C"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>power_electronics objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>GENERATOR_MODE</TH><TH>GENERATOR_STATUS</TH><TH>CONVERTER_TYPE</TH><TH>SWITCH_TYPE</TH><TH>FILTER_TYPE</TH><TH>FILTER_IMPLEMENTATION</TH><TH>FILTER_FREQUENCY</TH><TH>POWER_TYPE</TH><TH>Rated_kW</TH><TH>Max_P</TH><TH>Min_P</TH><TH>Rated_kVA</TH><TH>Rated_kV</TH><TH>phases</TH></TR>
-<xsl:for-each select="generators/power_electronics_list/power_electronics"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="GENERATOR_MODE"/></TD><TD><xsl:value-of select="GENERATOR_STATUS"/></TD><TD><xsl:value-of select="CONVERTER_TYPE"/></TD><TD><xsl:value-of select="SWITCH_TYPE"/></TD><TD><xsl:value-of select="FILTER_TYPE"/></TD><TD><xsl:value-of select="FILTER_IMPLEMENTATION"/></TD><TD><xsl:value-of select="FILTER_FREQUENCY"/></TD><TD><xsl:value-of select="POWER_TYPE"/></TD><TD><xsl:value-of select="Rated_kW"/></TD><TD><xsl:value-of select="Max_P"/></TD><TD><xsl:value-of select="Min_P"/></TD><TD><xsl:value-of select="Rated_kVA"/></TD><TD><xsl:value-of select="Rated_kV"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
+<TR><TH>Name</TH><TH>generator_mode</TH><TH>generator_status</TH><TH>converter_type</TH><TH>switch_type</TH><TH>filter_type</TH><TH>filter_implementation</TH><TH>filter_frequency</TH><TH>power_type</TH><TH>Rated_kW</TH><TH>Max_P</TH><TH>Min_P</TH><TH>Rated_kVA</TH><TH>Rated_kV</TH><TH>phases</TH></TR>
+<xsl:for-each select="generators/power_electronics_list/power_electronics"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="generator_mode"/></TD><TD><xsl:value-of select="generator_status"/></TD><TD><xsl:value-of select="converter_type"/></TD><TD><xsl:value-of select="switch_type"/></TD><TD><xsl:value-of select="filter_type"/></TD><TD><xsl:value-of select="filter_implementation"/></TD><TD><xsl:value-of select="filter_frequency"/></TD><TD><xsl:value-of select="power_type"/></TD><TD><xsl:value-of select="Rated_kW"/></TD><TD><xsl:value-of select="Max_P"/></TD><TD><xsl:value-of select="Min_P"/></TD><TD><xsl:value-of select="Rated_kVA"/></TD><TD><xsl:value-of select="Rated_kV"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>energy_storage objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>GENERATOR_MODE</TH><TH>GENERATOR_STATUS</TH><TH>POWER_TYPE</TH><TH>Rinternal</TH><TH>V_Max</TH><TH>I_Max</TH><TH>E_Max</TH><TH>Energy</TH><TH>efficiency</TH><TH>Rated_kVA</TH><TH>V_Out</TH><TH>I_Out</TH><TH>VA_Out</TH><TH>V_In</TH><TH>I_In</TH><TH>V_Internal</TH><TH>I_Internal</TH><TH>I_Prev</TH><TH>phases</TH></TR>
-<xsl:for-each select="generators/energy_storage_list/energy_storage"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="GENERATOR_MODE"/></TD><TD><xsl:value-of select="GENERATOR_STATUS"/></TD><TD><xsl:value-of select="POWER_TYPE"/></TD><TD><xsl:value-of select="Rinternal"/></TD><TD><xsl:value-of select="V_Max"/></TD><TD><xsl:value-of select="I_Max"/></TD><TD><xsl:value-of select="E_Max"/></TD><TD><xsl:value-of select="Energy"/></TD><TD><xsl:value-of select="efficiency"/></TD><TD><xsl:value-of select="Rated_kVA"/></TD><TD><xsl:value-of select="V_Out"/></TD><TD><xsl:value-of select="I_Out"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="V_In"/></TD><TD><xsl:value-of select="I_In"/></TD><TD><xsl:value-of select="V_Internal"/></TD><TD><xsl:value-of select="I_Internal"/></TD><TD><xsl:value-of select="I_Prev"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
+<TR><TH>Name</TH><TH>generator_mode</TH><TH>generator_status</TH><TH>power_type</TH><TH>Rinternal</TH><TH>V_Max</TH><TH>I_Max</TH><TH>E_Max</TH><TH>Energy</TH><TH>efficiency</TH><TH>Rated_kVA</TH><TH>V_Out</TH><TH>I_Out</TH><TH>VA_Out</TH><TH>V_In</TH><TH>I_In</TH><TH>V_Internal</TH><TH>I_Internal</TH><TH>I_Prev</TH><TH>phases</TH></TR>
+<xsl:for-each select="generators/energy_storage_list/energy_storage"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="generator_mode"/></TD><TD><xsl:value-of select="generator_status"/></TD><TD><xsl:value-of select="power_type"/></TD><TD><xsl:value-of select="Rinternal"/></TD><TD><xsl:value-of select="V_Max"/></TD><TD><xsl:value-of select="I_Max"/></TD><TD><xsl:value-of select="E_Max"/></TD><TD><xsl:value-of select="Energy"/></TD><TD><xsl:value-of select="efficiency"/></TD><TD><xsl:value-of select="Rated_kVA"/></TD><TD><xsl:value-of select="V_Out"/></TD><TD><xsl:value-of select="I_Out"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="V_In"/></TD><TD><xsl:value-of select="I_In"/></TD><TD><xsl:value-of select="V_Internal"/></TD><TD><xsl:value-of select="I_Internal"/></TD><TD><xsl:value-of select="I_Prev"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>inverter objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>INVERTER_TYPE</TH><TH>GENERATOR_MODE</TH><TH>V_In</TH><TH>I_In</TH><TH>VA_In</TH><TH>Vdc</TH><TH>phaseA_V_Out</TH><TH>phaseB_V_Out</TH><TH>phaseC_V_Out</TH><TH>phaseA_I_Out</TH><TH>phaseB_I_Out</TH><TH>phaseC_I_Out</TH><TH>power_A</TH><TH>power_B</TH><TH>power_C</TH><TH>phases</TH></TR>
-<xsl:for-each select="generators/inverter_list/inverter"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="INVERTER_TYPE"/></TD><TD><xsl:value-of select="GENERATOR_MODE"/></TD><TD><xsl:value-of select="V_In"/></TD><TD><xsl:value-of select="I_In"/></TD><TD><xsl:value-of select="VA_In"/></TD><TD><xsl:value-of select="Vdc"/></TD><TD><xsl:value-of select="phaseA_V_Out"/></TD><TD><xsl:value-of select="phaseB_V_Out"/></TD><TD><xsl:value-of select="phaseC_V_Out"/></TD><TD><xsl:value-of select="phaseA_I_Out"/></TD><TD><xsl:value-of select="phaseB_I_Out"/></TD><TD><xsl:value-of select="phaseC_I_Out"/></TD><TD><xsl:value-of select="power_A"/></TD><TD><xsl:value-of select="power_B"/></TD><TD><xsl:value-of select="power_C"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
+<TR><TH>Name</TH><TH>inverter_type</TH><TH>generator_mode</TH><TH>V_In</TH><TH>I_In</TH><TH>VA_In</TH><TH>Vdc</TH><TH>phaseA_V_Out</TH><TH>phaseB_V_Out</TH><TH>phaseC_V_Out</TH><TH>phaseA_I_Out</TH><TH>phaseB_I_Out</TH><TH>phaseC_I_Out</TH><TH>power_A</TH><TH>power_B</TH><TH>power_C</TH><TH>phases</TH></TR>
+<xsl:for-each select="generators/inverter_list/inverter"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="inverter_type"/></TD><TD><xsl:value-of select="generator_mode"/></TD><TD><xsl:value-of select="V_In"/></TD><TD><xsl:value-of select="I_In"/></TD><TD><xsl:value-of select="VA_In"/></TD><TD><xsl:value-of select="Vdc"/></TD><TD><xsl:value-of select="phaseA_V_Out"/></TD><TD><xsl:value-of select="phaseB_V_Out"/></TD><TD><xsl:value-of select="phaseC_V_Out"/></TD><TD><xsl:value-of select="phaseA_I_Out"/></TD><TD><xsl:value-of select="phaseB_I_Out"/></TD><TD><xsl:value-of select="phaseC_I_Out"/></TD><TD><xsl:value-of select="power_A"/></TD><TD><xsl:value-of select="power_B"/></TD><TD><xsl:value-of select="power_C"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>dc_dc_converter objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>DC_DC_CONVERTER_TYPE</TH><TH>GENERATOR_MODE</TH><TH>V_Out</TH><TH>I_Out</TH><TH>Vdc</TH><TH>VA_Out</TH><TH>P_Out</TH><TH>Q_Out</TH><TH>service_ratio</TH><TH>V_In</TH><TH>I_In</TH><TH>VA_In</TH><TH>phases</TH></TR>
-<xsl:for-each select="generators/dc_dc_converter_list/dc_dc_converter"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="DC_DC_CONVERTER_TYPE"/></TD><TD><xsl:value-of select="GENERATOR_MODE"/></TD><TD><xsl:value-of select="V_Out"/></TD><TD><xsl:value-of select="I_Out"/></TD><TD><xsl:value-of select="Vdc"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="P_Out"/></TD><TD><xsl:value-of select="Q_Out"/></TD><TD><xsl:value-of select="service_ratio"/></TD><TD><xsl:value-of select="V_In"/></TD><TD><xsl:value-of select="I_In"/></TD><TD><xsl:value-of select="VA_In"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
+<TR><TH>Name</TH><TH>dc_dc_converter_type</TH><TH>generator_mode</TH><TH>V_Out</TH><TH>I_Out</TH><TH>Vdc</TH><TH>VA_Out</TH><TH>P_Out</TH><TH>Q_Out</TH><TH>service_ratio</TH><TH>V_In</TH><TH>I_In</TH><TH>VA_In</TH><TH>phases</TH></TR>
+<xsl:for-each select="generators/dc_dc_converter_list/dc_dc_converter"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="dc_dc_converter_type"/></TD><TD><xsl:value-of select="generator_mode"/></TD><TD><xsl:value-of select="V_Out"/></TD><TD><xsl:value-of select="I_Out"/></TD><TD><xsl:value-of select="Vdc"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="P_Out"/></TD><TD><xsl:value-of select="Q_Out"/></TD><TD><xsl:value-of select="service_ratio"/></TD><TD><xsl:value-of select="V_In"/></TD><TD><xsl:value-of select="I_In"/></TD><TD><xsl:value-of select="VA_In"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>rectifier objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>RECTIFIER_TYPE</TH><TH>GENERATOR_MODE</TH><TH>V_Out</TH><TH>I_Out</TH><TH>VA_Out</TH><TH>P_Out</TH><TH>Q_Out</TH><TH>Vdc</TH><TH>phaseA_V_In</TH><TH>phaseB_V_In</TH><TH>phaseC_V_In</TH><TH>phaseA_I_In</TH><TH>phaseB_I_In</TH><TH>phaseC_I_In</TH><TH>power_A_In</TH><TH>power_B_In</TH><TH>power_C_In</TH><TH>phases</TH></TR>
-<xsl:for-each select="generators/rectifier_list/rectifier"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="RECTIFIER_TYPE"/></TD><TD><xsl:value-of select="GENERATOR_MODE"/></TD><TD><xsl:value-of select="V_Out"/></TD><TD><xsl:value-of select="I_Out"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="P_Out"/></TD><TD><xsl:value-of select="Q_Out"/></TD><TD><xsl:value-of select="Vdc"/></TD><TD><xsl:value-of select="phaseA_V_In"/></TD><TD><xsl:value-of select="phaseB_V_In"/></TD><TD><xsl:value-of select="phaseC_V_In"/></TD><TD><xsl:value-of select="phaseA_I_In"/></TD><TD><xsl:value-of select="phaseB_I_In"/></TD><TD><xsl:value-of select="phaseC_I_In"/></TD><TD><xsl:value-of select="power_A_In"/></TD><TD><xsl:value-of select="power_B_In"/></TD><TD><xsl:value-of select="power_C_In"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
+<TR><TH>Name</TH><TH>rectifier_type</TH><TH>generator_mode</TH><TH>V_Out</TH><TH>I_Out</TH><TH>VA_Out</TH><TH>P_Out</TH><TH>Q_Out</TH><TH>Vdc</TH><TH>phaseA_V_In</TH><TH>phaseB_V_In</TH><TH>phaseC_V_In</TH><TH>phaseA_I_In</TH><TH>phaseB_I_In</TH><TH>phaseC_I_In</TH><TH>power_A_In</TH><TH>power_B_In</TH><TH>power_C_In</TH><TH>phases</TH></TR>
+<xsl:for-each select="generators/rectifier_list/rectifier"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="rectifier_type"/></TD><TD><xsl:value-of select="generator_mode"/></TD><TD><xsl:value-of select="V_Out"/></TD><TD><xsl:value-of select="I_Out"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="P_Out"/></TD><TD><xsl:value-of select="Q_Out"/></TD><TD><xsl:value-of select="Vdc"/></TD><TD><xsl:value-of select="phaseA_V_In"/></TD><TD><xsl:value-of select="phaseB_V_In"/></TD><TD><xsl:value-of select="phaseC_V_In"/></TD><TD><xsl:value-of select="phaseA_I_In"/></TD><TD><xsl:value-of select="phaseB_I_In"/></TD><TD><xsl:value-of select="phaseC_I_In"/></TD><TD><xsl:value-of select="power_A_In"/></TD><TD><xsl:value-of select="power_B_In"/></TD><TD><xsl:value-of select="power_C_In"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>microturbine objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>GENERATOR_MODE</TH><TH>GENERATOR_STATUS</TH><TH>POWER_TYPE</TH><TH>Rinternal</TH><TH>Rload</TH><TH>V_Max</TH><TH>I_Max</TH><TH>frequency</TH><TH>Max_Frequency</TH><TH>Min_Frequency</TH><TH>Fuel_Used</TH><TH>Heat_Out</TH><TH>KV</TH><TH>Power_Angle</TH><TH>Max_P</TH><TH>Min_P</TH><TH>phaseA_V_Out</TH><TH>phaseB_V_Out</TH><TH>phaseC_V_Out</TH><TH>phaseA_I_Out</TH><TH>phaseB_I_Out</TH><TH>phaseC_I_Out</TH><TH>power_A_Out</TH><TH>power_B_Out</TH><TH>power_C_Out</TH><TH>VA_Out</TH><TH>pf_Out</TH><TH>E_A_Internal</TH><TH>E_B_Internal</TH><TH>E_C_Internal</TH><TH>efficiency</TH><TH>Rated_kVA</TH><TH>VA_Out</TH><TH>phases</TH></TR>
-<xsl:for-each select="generators/microturbine_list/microturbine"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="GENERATOR_MODE"/></TD><TD><xsl:value-of select="GENERATOR_STATUS"/></TD><TD><xsl:value-of select="POWER_TYPE"/></TD><TD><xsl:value-of select="Rinternal"/></TD><TD><xsl:value-of select="Rload"/></TD><TD><xsl:value-of select="V_Max"/></TD><TD><xsl:value-of select="I_Max"/></TD><TD><xsl:value-of select="frequency"/></TD><TD><xsl:value-of select="Max_Frequency"/></TD><TD><xsl:value-of select="Min_Frequency"/></TD><TD><xsl:value-of select="Fuel_Used"/></TD><TD><xsl:value-of select="Heat_Out"/></TD><TD><xsl:value-of select="KV"/></TD><TD><xsl:value-of select="Power_Angle"/></TD><TD><xsl:value-of select="Max_P"/></TD><TD><xsl:value-of select="Min_P"/></TD><TD><xsl:value-of select="phaseA_V_Out"/></TD><TD><xsl:value-of select="phaseB_V_Out"/></TD><TD><xsl:value-of select="phaseC_V_Out"/></TD><TD><xsl:value-of select="phaseA_I_Out"/></TD><TD><xsl:value-of select="phaseB_I_Out"/></TD><TD><xsl:value-of select="phaseC_I_Out"/></TD><TD><xsl:value-of select="power_A_Out"/></TD><TD><xsl:value-of select="power_B_Out"/></TD><TD><xsl:value-of select="power_C_Out"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="pf_Out"/></TD><TD><xsl:value-of select="E_A_Internal"/></TD><TD><xsl:value-of select="E_B_Internal"/></TD><TD><xsl:value-of select="E_C_Internal"/></TD><TD><xsl:value-of select="efficiency"/></TD><TD><xsl:value-of select="Rated_kVA"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
+<TR><TH>Name</TH><TH>generator_mode</TH><TH>generator_status</TH><TH>power_type</TH><TH>Rinternal</TH><TH>Rload</TH><TH>V_Max</TH><TH>I_Max</TH><TH>frequency</TH><TH>Max_Frequency</TH><TH>Min_Frequency</TH><TH>Fuel_Used</TH><TH>Heat_Out</TH><TH>KV</TH><TH>Power_Angle</TH><TH>Max_P</TH><TH>Min_P</TH><TH>phaseA_V_Out</TH><TH>phaseB_V_Out</TH><TH>phaseC_V_Out</TH><TH>phaseA_I_Out</TH><TH>phaseB_I_Out</TH><TH>phaseC_I_Out</TH><TH>power_A_Out</TH><TH>power_B_Out</TH><TH>power_C_Out</TH><TH>VA_Out</TH><TH>pf_Out</TH><TH>E_A_Internal</TH><TH>E_B_Internal</TH><TH>E_C_Internal</TH><TH>efficiency</TH><TH>Rated_kVA</TH><TH>VA_Out</TH><TH>phases</TH></TR>
+<xsl:for-each select="generators/microturbine_list/microturbine"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="generator_mode"/></TD><TD><xsl:value-of select="generator_status"/></TD><TD><xsl:value-of select="power_type"/></TD><TD><xsl:value-of select="Rinternal"/></TD><TD><xsl:value-of select="Rload"/></TD><TD><xsl:value-of select="V_Max"/></TD><TD><xsl:value-of select="I_Max"/></TD><TD><xsl:value-of select="frequency"/></TD><TD><xsl:value-of select="Max_Frequency"/></TD><TD><xsl:value-of select="Min_Frequency"/></TD><TD><xsl:value-of select="Fuel_Used"/></TD><TD><xsl:value-of select="Heat_Out"/></TD><TD><xsl:value-of select="KV"/></TD><TD><xsl:value-of select="Power_Angle"/></TD><TD><xsl:value-of select="Max_P"/></TD><TD><xsl:value-of select="Min_P"/></TD><TD><xsl:value-of select="phaseA_V_Out"/></TD><TD><xsl:value-of select="phaseB_V_Out"/></TD><TD><xsl:value-of select="phaseC_V_Out"/></TD><TD><xsl:value-of select="phaseA_I_Out"/></TD><TD><xsl:value-of select="phaseB_I_Out"/></TD><TD><xsl:value-of select="phaseC_I_Out"/></TD><TD><xsl:value-of select="power_A_Out"/></TD><TD><xsl:value-of select="power_B_Out"/></TD><TD><xsl:value-of select="power_C_Out"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="pf_Out"/></TD><TD><xsl:value-of select="E_A_Internal"/></TD><TD><xsl:value-of select="E_B_Internal"/></TD><TD><xsl:value-of select="E_C_Internal"/></TD><TD><xsl:value-of select="efficiency"/></TD><TD><xsl:value-of select="Rated_kVA"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>battery objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>GENERATOR_MODE</TH><TH>GENERATOR_STATUS</TH><TH>RFB_SIZE</TH><TH>POWER_TYPE</TH><TH>Rinternal</TH><TH>V_Max</TH><TH>I_Max</TH><TH>E_Max</TH><TH>Energy</TH><TH>efficiency</TH><TH>base_efficiency</TH><TH>Rated_kVA</TH><TH>V_Out</TH><TH>I_Out</TH><TH>VA_Out</TH><TH>V_In</TH><TH>I_In</TH><TH>V_Internal</TH><TH>I_Internal</TH><TH>I_Prev</TH><TH>phases</TH></TR>
-<xsl:for-each select="generators/battery_list/battery"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="GENERATOR_MODE"/></TD><TD><xsl:value-of select="GENERATOR_STATUS"/></TD><TD><xsl:value-of select="RFB_SIZE"/></TD><TD><xsl:value-of select="POWER_TYPE"/></TD><TD><xsl:value-of select="Rinternal"/></TD><TD><xsl:value-of select="V_Max"/></TD><TD><xsl:value-of select="I_Max"/></TD><TD><xsl:value-of select="E_Max"/></TD><TD><xsl:value-of select="Energy"/></TD><TD><xsl:value-of select="efficiency"/></TD><TD><xsl:value-of select="base_efficiency"/></TD><TD><xsl:value-of select="Rated_kVA"/></TD><TD><xsl:value-of select="V_Out"/></TD><TD><xsl:value-of select="I_Out"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="V_In"/></TD><TD><xsl:value-of select="I_In"/></TD><TD><xsl:value-of select="V_Internal"/></TD><TD><xsl:value-of select="I_Internal"/></TD><TD><xsl:value-of select="I_Prev"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
+<TR><TH>Name</TH><TH>generator_mode</TH><TH>generator_status</TH><TH>rfb_size</TH><TH>power_type</TH><TH>Rinternal</TH><TH>V_Max</TH><TH>I_Max</TH><TH>E_Max</TH><TH>Energy</TH><TH>efficiency</TH><TH>base_efficiency</TH><TH>Rated_kVA</TH><TH>V_Out</TH><TH>I_Out</TH><TH>VA_Out</TH><TH>V_In</TH><TH>I_In</TH><TH>V_Internal</TH><TH>I_Internal</TH><TH>I_Prev</TH><TH>phases</TH></TR>
+<xsl:for-each select="generators/battery_list/battery"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="generator_mode"/></TD><TD><xsl:value-of select="generator_status"/></TD><TD><xsl:value-of select="rfb_size"/></TD><TD><xsl:value-of select="power_type"/></TD><TD><xsl:value-of select="Rinternal"/></TD><TD><xsl:value-of select="V_Max"/></TD><TD><xsl:value-of select="I_Max"/></TD><TD><xsl:value-of select="E_Max"/></TD><TD><xsl:value-of select="Energy"/></TD><TD><xsl:value-of select="efficiency"/></TD><TD><xsl:value-of select="base_efficiency"/></TD><TD><xsl:value-of select="Rated_kVA"/></TD><TD><xsl:value-of select="V_Out"/></TD><TD><xsl:value-of select="I_Out"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="V_In"/></TD><TD><xsl:value-of select="I_In"/></TD><TD><xsl:value-of select="V_Internal"/></TD><TD><xsl:value-of select="I_Internal"/></TD><TD><xsl:value-of select="I_Prev"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>solar objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>GENERATOR_MODE</TH><TH>GENERATOR_STATUS</TH><TH>PANEL_TYPE</TH><TH>POWER_TYPE</TH><TH>NOCT</TH><TH>Tcell</TH><TH>Tambient</TH><TH>Insolation</TH><TH>Rinternal</TH><TH>Rated_Insolation</TH><TH>V_Max</TH><TH>Voc_Max</TH><TH>Voc</TH><TH>efficiency</TH><TH>area</TH><TH>Rated_kVA</TH><TH>V_Out</TH><TH>I_Out</TH><TH>VA_Out</TH><TH>phases</TH></TR>
-<xsl:for-each select="generators/solar_list/solar"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="GENERATOR_MODE"/></TD><TD><xsl:value-of select="GENERATOR_STATUS"/></TD><TD><xsl:value-of select="PANEL_TYPE"/></TD><TD><xsl:value-of select="POWER_TYPE"/></TD><TD><xsl:value-of select="NOCT"/></TD><TD><xsl:value-of select="Tcell"/></TD><TD><xsl:value-of select="Tambient"/></TD><TD><xsl:value-of select="Insolation"/></TD><TD><xsl:value-of select="Rinternal"/></TD><TD><xsl:value-of select="Rated_Insolation"/></TD><TD><xsl:value-of select="V_Max"/></TD><TD><xsl:value-of select="Voc_Max"/></TD><TD><xsl:value-of select="Voc"/></TD><TD><xsl:value-of select="efficiency"/></TD><TD><xsl:value-of select="area"/></TD><TD><xsl:value-of select="Rated_kVA"/></TD><TD><xsl:value-of select="V_Out"/></TD><TD><xsl:value-of select="I_Out"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
+<TR><TH>Name</TH><TH>generator_mode</TH><TH>generator_status</TH><TH>panel_type</TH><TH>power_type</TH><TH>noct</TH><TH>Tcell</TH><TH>Tambient</TH><TH>Insolation</TH><TH>Rinternal</TH><TH>Rated_Insolation</TH><TH>V_Max</TH><TH>Voc_Max</TH><TH>Voc</TH><TH>efficiency</TH><TH>area</TH><TH>Rated_kVA</TH><TH>V_Out</TH><TH>I_Out</TH><TH>VA_Out</TH><TH>phases</TH></TR>
+<xsl:for-each select="generators/solar_list/solar"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="generator_mode"/></TD><TD><xsl:value-of select="generator_status"/></TD><TD><xsl:value-of select="panel_type"/></TD><TD><xsl:value-of select="power_type"/></TD><TD><xsl:value-of select="noct"/></TD><TD><xsl:value-of select="Tcell"/></TD><TD><xsl:value-of select="Tambient"/></TD><TD><xsl:value-of select="Insolation"/></TD><TD><xsl:value-of select="Rinternal"/></TD><TD><xsl:value-of select="Rated_Insolation"/></TD><TD><xsl:value-of select="V_Max"/></TD><TD><xsl:value-of select="Voc_Max"/></TD><TD><xsl:value-of select="Voc"/></TD><TD><xsl:value-of select="efficiency"/></TD><TD><xsl:value-of select="area"/></TD><TD><xsl:value-of select="Rated_kVA"/></TD><TD><xsl:value-of select="V_Out"/></TD><TD><xsl:value-of select="I_Out"/></TD><TD><xsl:value-of select="VA_Out"/></TD><TD><xsl:value-of select="phases"/></TD></TR>
 </xsl:for-each></TABLE>
 <H3><A NAME="modules_market">market</A></H3><TABLE BORDER="1">
 <TR><TH>version.major</TH><TD><xsl:value-of select="market/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="market/version.minor"/></TD></TR></TABLE>
@@ -324,8 +324,8 @@
 <xsl:for-each select="residential/lights_list/lights"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="type"/></TD><TD><xsl:value-of select="placement"/></TD><TD><xsl:value-of select="installed_power"/></TD><TD><xsl:value-of select="circuit_split"/></TD><TD><xsl:value-of select="demand"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="internal_gains"/></TD><TD><xsl:value-of select="energy_meter"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>refrigerator objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>size </TH><TH>rated_capacity </TH><TH>power_factor</TH><TH>enduse_load</TH><TH>constant_power</TH><TH>constant_current</TH><TH>constant_admittance</TH><TH>internal_gains</TH><TH>energy_meter</TH></TR>
-<xsl:for-each select="residential/refrigerator_list/refrigerator"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="size "/></TD><TD><xsl:value-of select="rated_capacity "/></TD><TD><xsl:value-of select="power_factor"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="internal_gains"/></TD><TD><xsl:value-of select="energy_meter"/></TD></TR>
+<TR><TH>Name</TH><TH>size</TH><TH>rated_capacity</TH><TH>power_factor</TH><TH>temperature</TH><TH>setpoint</TH><TH>deadband</TH><TH>next_time</TH><TH>output</TH><TH>event_temp</TH><TH>state</TH><TH>enduse_load</TH><TH>constant_power</TH><TH>constant_current</TH><TH>constant_admittance</TH><TH>internal_gains</TH><TH>energy_meter</TH></TR>
+<xsl:for-each select="residential/refrigerator_list/refrigerator"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="size"/></TD><TD><xsl:value-of select="rated_capacity"/></TD><TD><xsl:value-of select="power_factor"/></TD><TD><xsl:value-of select="temperature"/></TD><TD><xsl:value-of select="setpoint"/></TD><TD><xsl:value-of select="deadband"/></TD><TD><xsl:value-of select="next_time"/></TD><TD><xsl:value-of select="output"/></TD><TD><xsl:value-of select="event_temp"/></TD><TD><xsl:value-of select="state"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="internal_gains"/></TD><TD><xsl:value-of select="energy_meter"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>clotheswasher objects</H4><TABLE BORDER="1">
 <TR><TH>Name</TH><TH>motor_power</TH><TH>power_factor</TH><TH>circuit_split</TH><TH>heat_fraction</TH><TH>enduse_demand</TH><TH>enduse_queue</TH><TH>enduse_load</TH><TH>constant_power</TH><TH>constant_current</TH><TH>constant_admittance</TH><TH>internal_gains</TH><TH>energy_meter</TH><TH>stall_voltage</TH><TH>start_voltage</TH><TH>stall_impedance</TH><TH>trip_delay</TH><TH>reset_delay</TH><TH>state</TH></TR>
@@ -352,8 +352,8 @@
 <xsl:for-each select="residential/range_list/range"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="installed_power"/></TD><TD><xsl:value-of select="circuit_split"/></TD><TD><xsl:value-of select="demand"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="internal_gains"/></TD><TD><xsl:value-of select="energy_meter"/></TD><TD><xsl:value-of select="heat_fraction"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>freezer objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>size </TH><TH>rated_capacity </TH><TH>power</TH><TH>power_factor</TH><TH>meter</TH><TH>enduse_load</TH><TH>constant_power</TH><TH>constant_current</TH><TH>constant_admittance</TH><TH>internal_gains</TH><TH>energy_meter</TH></TR>
-<xsl:for-each select="residential/freezer_list/freezer"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="size "/></TD><TD><xsl:value-of select="rated_capacity "/></TD><TD><xsl:value-of select="power"/></TD><TD><xsl:value-of select="power_factor"/></TD><TD><xsl:value-of select="meter"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="internal_gains"/></TD><TD><xsl:value-of select="energy_meter"/></TD></TR>
+<TR><TH>Name</TH><TH>size</TH><TH>rated_capacity</TH><TH>power_factor</TH><TH>temperature</TH><TH>setpoint</TH><TH>deadband</TH><TH>next_time</TH><TH>output</TH><TH>event_temp</TH><TH>state</TH><TH>enduse_load</TH><TH>constant_power</TH><TH>constant_current</TH><TH>constant_admittance</TH><TH>internal_gains</TH><TH>energy_meter</TH></TR>
+<xsl:for-each select="residential/freezer_list/freezer"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="size"/></TD><TD><xsl:value-of select="rated_capacity"/></TD><TD><xsl:value-of select="power_factor"/></TD><TD><xsl:value-of select="temperature"/></TD><TD><xsl:value-of select="setpoint"/></TD><TD><xsl:value-of select="deadband"/></TD><TD><xsl:value-of select="next_time"/></TD><TD><xsl:value-of select="output"/></TD><TD><xsl:value-of select="event_temp"/></TD><TD><xsl:value-of select="state"/></TD><TD><xsl:value-of select="enduse_load"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="internal_gains"/></TD><TD><xsl:value-of select="energy_meter"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>dryer objects</H4><TABLE BORDER="1">
 <TR><TH>Name</TH><TH>motor_power</TH><TH>power_factor</TH><TH>coil_power</TH><TH>circuit_split</TH><TH>heat_fraction</TH><TH>enduse_demand</TH><TH>enduse_queue</TH><TH>enduse_load</TH><TH>constant_power</TH><TH>constant_current</TH><TH>constant_admittance</TH><TH>internal_gains</TH><TH>energy_meter</TH><TH>stall_voltage</TH><TH>start_voltage</TH><TH>stall_impedance</TH><TH>trip_delay</TH><TH>reset_delay</TH><TH>state</TH></TR>
@@ -626,14 +626,14 @@ module generators {
 </xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
-</xsl:if><xsl:if test="GENERATOR_MODE">	GENERATOR_MODE <xsl:value-of select="GENERATOR_MODE"/>;
-</xsl:if><xsl:if test="GENERATOR_STATUS">	GENERATOR_STATUS <xsl:value-of select="GENERATOR_STATUS"/>;
-</xsl:if><xsl:if test="CONVERTER_TYPE">	CONVERTER_TYPE <xsl:value-of select="CONVERTER_TYPE"/>;
-</xsl:if><xsl:if test="SWITCH_TYPE">	SWITCH_TYPE <xsl:value-of select="SWITCH_TYPE"/>;
-</xsl:if><xsl:if test="FILTER_TYPE">	FILTER_TYPE <xsl:value-of select="FILTER_TYPE"/>;
-</xsl:if><xsl:if test="FILTER_IMPLEMENTATION">	FILTER_IMPLEMENTATION <xsl:value-of select="FILTER_IMPLEMENTATION"/>;
-</xsl:if><xsl:if test="FILTER_FREQUENCY">	FILTER_FREQUENCY <xsl:value-of select="FILTER_FREQUENCY"/>;
-</xsl:if><xsl:if test="POWER_TYPE">	POWER_TYPE <xsl:value-of select="POWER_TYPE"/>;
+</xsl:if><xsl:if test="generator_mode">	generator_mode <xsl:value-of select="generator_mode"/>;
+</xsl:if><xsl:if test="generator_status">	generator_status <xsl:value-of select="generator_status"/>;
+</xsl:if><xsl:if test="converter_type">	converter_type <xsl:value-of select="converter_type"/>;
+</xsl:if><xsl:if test="switch_type">	switch_type <xsl:value-of select="switch_type"/>;
+</xsl:if><xsl:if test="filter_type">	filter_type <xsl:value-of select="filter_type"/>;
+</xsl:if><xsl:if test="filter_implementation">	filter_implementation <xsl:value-of select="filter_implementation"/>;
+</xsl:if><xsl:if test="filter_frequency">	filter_frequency <xsl:value-of select="filter_frequency"/>;
+</xsl:if><xsl:if test="power_type">	power_type <xsl:value-of select="power_type"/>;
 </xsl:if><xsl:if test="Rated_kW">	Rated_kW <xsl:value-of select="Rated_kW"/>;
 </xsl:if><xsl:if test="Max_P">	Max_P <xsl:value-of select="Max_P"/>;
 </xsl:if><xsl:if test="Min_P">	Min_P <xsl:value-of select="Min_P"/>;
@@ -652,9 +652,9 @@ module generators {
 </xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
-</xsl:if><xsl:if test="GENERATOR_MODE">	GENERATOR_MODE <xsl:value-of select="GENERATOR_MODE"/>;
-</xsl:if><xsl:if test="GENERATOR_STATUS">	GENERATOR_STATUS <xsl:value-of select="GENERATOR_STATUS"/>;
-</xsl:if><xsl:if test="POWER_TYPE">	POWER_TYPE <xsl:value-of select="POWER_TYPE"/>;
+</xsl:if><xsl:if test="generator_mode">	generator_mode <xsl:value-of select="generator_mode"/>;
+</xsl:if><xsl:if test="generator_status">	generator_status <xsl:value-of select="generator_status"/>;
+</xsl:if><xsl:if test="power_type">	power_type <xsl:value-of select="power_type"/>;
 </xsl:if><xsl:if test="Rinternal">	Rinternal <xsl:value-of select="Rinternal"/>;
 </xsl:if><xsl:if test="V_Max">	V_Max <xsl:value-of select="V_Max"/>;
 </xsl:if><xsl:if test="I_Max">	I_Max <xsl:value-of select="I_Max"/>;
@@ -683,8 +683,8 @@ module generators {
 </xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
-</xsl:if><xsl:if test="INVERTER_TYPE">	INVERTER_TYPE <xsl:value-of select="INVERTER_TYPE"/>;
-</xsl:if><xsl:if test="GENERATOR_MODE">	GENERATOR_MODE <xsl:value-of select="GENERATOR_MODE"/>;
+</xsl:if><xsl:if test="inverter_type">	inverter_type <xsl:value-of select="inverter_type"/>;
+</xsl:if><xsl:if test="generator_mode">	generator_mode <xsl:value-of select="generator_mode"/>;
 </xsl:if><xsl:if test="V_In">	V_In <xsl:value-of select="V_In"/>;
 </xsl:if><xsl:if test="I_In">	I_In <xsl:value-of select="I_In"/>;
 </xsl:if><xsl:if test="VA_In">	VA_In <xsl:value-of select="VA_In"/>;
@@ -711,8 +711,8 @@ module generators {
 </xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
-</xsl:if><xsl:if test="DC_DC_CONVERTER_TYPE">	DC_DC_CONVERTER_TYPE <xsl:value-of select="DC_DC_CONVERTER_TYPE"/>;
-</xsl:if><xsl:if test="GENERATOR_MODE">	GENERATOR_MODE <xsl:value-of select="GENERATOR_MODE"/>;
+</xsl:if><xsl:if test="dc_dc_converter_type">	dc_dc_converter_type <xsl:value-of select="dc_dc_converter_type"/>;
+</xsl:if><xsl:if test="generator_mode">	generator_mode <xsl:value-of select="generator_mode"/>;
 </xsl:if><xsl:if test="V_Out">	V_Out <xsl:value-of select="V_Out"/>;
 </xsl:if><xsl:if test="I_Out">	I_Out <xsl:value-of select="I_Out"/>;
 </xsl:if><xsl:if test="Vdc">	Vdc <xsl:value-of select="Vdc"/>;
@@ -736,8 +736,8 @@ module generators {
 </xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
-</xsl:if><xsl:if test="RECTIFIER_TYPE">	RECTIFIER_TYPE <xsl:value-of select="RECTIFIER_TYPE"/>;
-</xsl:if><xsl:if test="GENERATOR_MODE">	GENERATOR_MODE <xsl:value-of select="GENERATOR_MODE"/>;
+</xsl:if><xsl:if test="rectifier_type">	rectifier_type <xsl:value-of select="rectifier_type"/>;
+</xsl:if><xsl:if test="generator_mode">	generator_mode <xsl:value-of select="generator_mode"/>;
 </xsl:if><xsl:if test="V_Out">	V_Out <xsl:value-of select="V_Out"/>;
 </xsl:if><xsl:if test="I_Out">	I_Out <xsl:value-of select="I_Out"/>;
 </xsl:if><xsl:if test="VA_Out">	VA_Out <xsl:value-of select="VA_Out"/>;
@@ -766,9 +766,9 @@ module generators {
 </xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
-</xsl:if><xsl:if test="GENERATOR_MODE">	GENERATOR_MODE <xsl:value-of select="GENERATOR_MODE"/>;
-</xsl:if><xsl:if test="GENERATOR_STATUS">	GENERATOR_STATUS <xsl:value-of select="GENERATOR_STATUS"/>;
-</xsl:if><xsl:if test="POWER_TYPE">	POWER_TYPE <xsl:value-of select="POWER_TYPE"/>;
+</xsl:if><xsl:if test="generator_mode">	generator_mode <xsl:value-of select="generator_mode"/>;
+</xsl:if><xsl:if test="generator_status">	generator_status <xsl:value-of select="generator_status"/>;
+</xsl:if><xsl:if test="power_type">	power_type <xsl:value-of select="power_type"/>;
 </xsl:if><xsl:if test="Rinternal">	Rinternal <xsl:value-of select="Rinternal"/>;
 </xsl:if><xsl:if test="Rload">	Rload <xsl:value-of select="Rload"/>;
 </xsl:if><xsl:if test="V_Max">	V_Max <xsl:value-of select="V_Max"/>;
@@ -812,10 +812,10 @@ module generators {
 </xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
-</xsl:if><xsl:if test="GENERATOR_MODE">	GENERATOR_MODE <xsl:value-of select="GENERATOR_MODE"/>;
-</xsl:if><xsl:if test="GENERATOR_STATUS">	GENERATOR_STATUS <xsl:value-of select="GENERATOR_STATUS"/>;
-</xsl:if><xsl:if test="RFB_SIZE">	RFB_SIZE <xsl:value-of select="RFB_SIZE"/>;
-</xsl:if><xsl:if test="POWER_TYPE">	POWER_TYPE <xsl:value-of select="POWER_TYPE"/>;
+</xsl:if><xsl:if test="generator_mode">	generator_mode <xsl:value-of select="generator_mode"/>;
+</xsl:if><xsl:if test="generator_status">	generator_status <xsl:value-of select="generator_status"/>;
+</xsl:if><xsl:if test="rfb_size">	rfb_size <xsl:value-of select="rfb_size"/>;
+</xsl:if><xsl:if test="power_type">	power_type <xsl:value-of select="power_type"/>;
 </xsl:if><xsl:if test="Rinternal">	Rinternal <xsl:value-of select="Rinternal"/>;
 </xsl:if><xsl:if test="V_Max">	V_Max <xsl:value-of select="V_Max"/>;
 </xsl:if><xsl:if test="I_Max">	I_Max <xsl:value-of select="I_Max"/>;
@@ -845,11 +845,11 @@ module generators {
 </xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
-</xsl:if><xsl:if test="GENERATOR_MODE">	GENERATOR_MODE <xsl:value-of select="GENERATOR_MODE"/>;
-</xsl:if><xsl:if test="GENERATOR_STATUS">	GENERATOR_STATUS <xsl:value-of select="GENERATOR_STATUS"/>;
-</xsl:if><xsl:if test="PANEL_TYPE">	PANEL_TYPE <xsl:value-of select="PANEL_TYPE"/>;
-</xsl:if><xsl:if test="POWER_TYPE">	POWER_TYPE <xsl:value-of select="POWER_TYPE"/>;
-</xsl:if><xsl:if test="NOCT">	NOCT <xsl:value-of select="NOCT"/>;
+</xsl:if><xsl:if test="generator_mode">	generator_mode <xsl:value-of select="generator_mode"/>;
+</xsl:if><xsl:if test="generator_status">	generator_status <xsl:value-of select="generator_status"/>;
+</xsl:if><xsl:if test="panel_type">	panel_type <xsl:value-of select="panel_type"/>;
+</xsl:if><xsl:if test="power_type">	power_type <xsl:value-of select="power_type"/>;
+</xsl:if><xsl:if test="noct">	noct <xsl:value-of select="noct"/>;
 </xsl:if><xsl:if test="Tcell">	Tcell <xsl:value-of select="Tcell"/>;
 </xsl:if><xsl:if test="Tambient">	Tambient <xsl:value-of select="Tambient"/>;
 </xsl:if><xsl:if test="Insolation">	Insolation <xsl:value-of select="Insolation"/>;
@@ -1785,9 +1785,16 @@ module residential {
 </xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
-</xsl:if><xsl:if test="size ">	size  <xsl:value-of select="size "/>;
-</xsl:if><xsl:if test="rated_capacity ">	rated_capacity  <xsl:value-of select="rated_capacity "/>;
+</xsl:if><xsl:if test="size">	size <xsl:value-of select="size"/>;
+</xsl:if><xsl:if test="rated_capacity">	rated_capacity <xsl:value-of select="rated_capacity"/>;
 </xsl:if><xsl:if test="power_factor">	power_factor <xsl:value-of select="power_factor"/>;
+</xsl:if><xsl:if test="temperature">	temperature <xsl:value-of select="temperature"/>;
+</xsl:if><xsl:if test="setpoint">	setpoint <xsl:value-of select="setpoint"/>;
+</xsl:if><xsl:if test="deadband">	deadband <xsl:value-of select="deadband"/>;
+</xsl:if><xsl:if test="next_time">	next_time <xsl:value-of select="next_time"/>;
+</xsl:if><xsl:if test="output">	output <xsl:value-of select="output"/>;
+</xsl:if><xsl:if test="event_temp">	event_temp <xsl:value-of select="event_temp"/>;
+</xsl:if><xsl:if test="state">	state <xsl:value-of select="state"/>;
 </xsl:if><xsl:if test="enduse_load">	enduse_load <xsl:value-of select="enduse_load"/>;
 </xsl:if><xsl:if test="constant_power">	constant_power <xsl:value-of select="constant_power"/>;
 </xsl:if><xsl:if test="constant_current">	constant_current <xsl:value-of select="constant_current"/>;
@@ -1944,11 +1951,16 @@ module residential {
 </xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
-</xsl:if><xsl:if test="size ">	size  <xsl:value-of select="size "/>;
-</xsl:if><xsl:if test="rated_capacity ">	rated_capacity  <xsl:value-of select="rated_capacity "/>;
-</xsl:if><xsl:if test="power">	power <xsl:value-of select="power"/>;
+</xsl:if><xsl:if test="size">	size <xsl:value-of select="size"/>;
+</xsl:if><xsl:if test="rated_capacity">	rated_capacity <xsl:value-of select="rated_capacity"/>;
 </xsl:if><xsl:if test="power_factor">	power_factor <xsl:value-of select="power_factor"/>;
-</xsl:if><xsl:if test="meter">	meter <xsl:value-of select="meter"/>;
+</xsl:if><xsl:if test="temperature">	temperature <xsl:value-of select="temperature"/>;
+</xsl:if><xsl:if test="setpoint">	setpoint <xsl:value-of select="setpoint"/>;
+</xsl:if><xsl:if test="deadband">	deadband <xsl:value-of select="deadband"/>;
+</xsl:if><xsl:if test="next_time">	next_time <xsl:value-of select="next_time"/>;
+</xsl:if><xsl:if test="output">	output <xsl:value-of select="output"/>;
+</xsl:if><xsl:if test="event_temp">	event_temp <xsl:value-of select="event_temp"/>;
+</xsl:if><xsl:if test="state">	state <xsl:value-of select="state"/>;
 </xsl:if><xsl:if test="enduse_load">	enduse_load <xsl:value-of select="enduse_load"/>;
 </xsl:if><xsl:if test="constant_power">	constant_power <xsl:value-of select="constant_power"/>;
 </xsl:if><xsl:if test="constant_current">	constant_current <xsl:value-of select="constant_current"/>;

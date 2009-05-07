@@ -37,6 +37,7 @@
 #include "globals.h"
 #include "legal.h"
 #include "output.h"
+#include "find.h"
 
 /* branch names and histories (named after WECC 500kV busses)
 	Allston			Version 1.0 originated at PNNL March 2007, released February 2008
@@ -74,15 +75,25 @@
 STATUS legal_notice(void)
 {
 	char *buildinfo = strstr(BUILD,":");
-	if (buildinfo)
-	{
-		int build = atoi(strstr(BUILD,":")+1);
-		output_message("GridLAB-D Version %d.%02d.%03d (" BRANCH ")\n" COPYRIGHT
-			"", global_version_major, global_version_minor,build);
+
+	/* suppress copyright info if copyright file exists */
+	char copyright[1024] = "GridLAB-D " COPYRIGHT;
+	char *end = strchr(copyright,'\n');
+	while ((end = strchr(copyright,'\n'))!=NULL) {
+		*end = ' ';
 	}
-	else
-		output_message("GridLAB-D Version %d.%02d.??? (" BRANCH ")\n" COPYRIGHT
-			"", global_version_major, global_version_minor);
+	if (find_file(copyright,NULL,FF_EXIST)==NULL)
+	{
+		if (buildinfo)
+		{
+			int build = atoi(strstr(BUILD,":")+1);
+			output_message("GridLAB-D Version %d.%02d.%03d (" BRANCH ")\n" COPYRIGHT
+				"", global_version_major, global_version_minor,build);
+		}
+		else
+			output_message("GridLAB-D Version %d.%02d.??? (" BRANCH ")\n" COPYRIGHT
+				"", global_version_major, global_version_minor);
+	}
 	return SUCCESS; /* conditions of use have been met */
 }
 
