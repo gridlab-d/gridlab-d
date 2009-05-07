@@ -1,4 +1,4 @@
-/* locale.c
+/* $Id$
  * Copyright (C) 2008 Battelle Memorial Institute
  */
 
@@ -28,6 +28,13 @@ void locale_push(void)
 		stack=locale;
 		if (tz==NULL)
 			output_warning("locale TZ is empty");
+			/* TROUBLESHOOT
+				This warning indicates that the TZ environment variable has not be set.  
+				This variable is used to specify the default timezone to use while
+				GridLAB-D is running.  Supported timezones are listed in the 
+				<a href="http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/tzinfo.txt?view=markup">tzinfo.txt</a>
+				file.
+			 */
 		strncpy(locale->tz,tz?tz:"",sizeof(locale->tz));
 		return;
 	}
