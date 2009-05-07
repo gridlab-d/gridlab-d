@@ -10,6 +10,7 @@ INIT
 
 CODE(dt,dev)
 {
+	static int count=100;
 	if (dt>0) SNDMSG("to","test");
-	return 60;
+	if (count-->0) return 60; else return NEVER;
 }

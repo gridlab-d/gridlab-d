@@ -156,13 +156,13 @@ machine::~machine(void)
 //   0 - succeeded
 int machine::compile(char *source)
 {
-	extern char libpath[1024], incpath[1024];
+	extern char libpath[65536], incpath[65536];
 	char cfile[1024];
 	char ofile[1024];
 	char lfile[1024];
 	char name[64], *basename;
 	char *pSlash, *pDot;
-	char oldpath[1024]="", newpath[1024];
+	char oldpath[65536]="", newpath[65536];
 	char buffer[1024];
 	FILE *fp;
 
