@@ -53,14 +53,15 @@ TIMESTAMP complex_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		complex error = *x - value;
 		double real_error = error.Re();
 		double imag_error = error.Im();
-		if (_isnan(real_error) || abs(real_error)>within){
-			gl_warning("assert failed on %s: real part of %s %g not within %f of %g", 
-			gl_name(obj->parent,buff,64), target, x->Re(), within, value.Re());
-			return t1;
-		}
-		if (_isnan(imag_error) || abs(imag_error)>within){
-			gl_warning("assert failed on %s: imaginary part of %s %+gi not within %f of %+gi", 
-			gl_name(obj->parent,buff,64), target, x->Re(), x->Im(), within, value.Re(), value.Im());
+		if ((_isnan(real_error) || abs(real_error)>within)||(_isnan(imag_error) || abs(imag_error)>within)){
+			if (_isnan(real_error) || abs(real_error)>within) {
+				gl_warning("assert failed on %s: real part of %s %g not within %f of %g", 
+				gl_name(obj->parent,buff,64), target, x->Re(), within, value.Re());
+			}
+			if (_isnan(imag_error) || abs(imag_error)>within) {
+				gl_warning("assert failed on %s: imaginary part of %s %+gi not within %f of %+gi", 
+				gl_name(obj->parent,buff,64), target, x->Im(), within, value.Im());
+			}
 			return t1;
 		}		
 		return TS_NEVER;

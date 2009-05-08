@@ -55,13 +55,13 @@ TIMESTAMP double_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		double m = abs(*x-value);
 		if (_isnan(m) || m>within){				
 			gl_warning("assert failed on %s: %s %g not within %f of %g", 
-			gl_name(obj->parent, buff, 64), target, *x, within, value);
+				gl_name(obj->parent, buff, 64), target, *x, within, value);
 			return t1;
 		}
 		return TS_NEVER;
 	} 
 	else {
-			return t1+1;
+		return t1+1;
 	}
 }
 complex *double_assert::get_complex(OBJECT *obj, char *name)
