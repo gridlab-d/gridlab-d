@@ -83,6 +83,7 @@ private:
 	TIMESTAMP prev_NTime;			///< Previous timestep - used for propogating child properties
 	complex last_child_power[3][3];	///< Previous power values - used for child object propogation
 	bool GS_converged;				///< Flag for if we are converged
+	void *GS_P_C_NodeChecks(TIMESTAMP t0, TIMESTAMP t1, OBJECT *obj, LINKCONNECTED *linktable);	///< Subfunction for parent child checks in sync.  Used to clean up code
 public:
 	double frequency;			///< frequency (only valid on reference bus) */
 	object reference_bus;		///< reference bus from which frequency is defined */
@@ -112,6 +113,8 @@ public:
 	complex Ys[3][3];		/// Self-admittance for GS
 	complex YVs[3];			/// "Current" accumulator for GS
 
+	int NR_node_reference;		/// Node's reference in NR_busdata
+
 	inline bool is_split() {return (phases&PHASE_S)!=0;};
 public:
 	static CLASS *oclass;
@@ -127,6 +130,7 @@ public:
 	int isa(char *classname);
 
 	LINKCONNECTED *attachlink(OBJECT *obj);
+	int *NR_populate(void);
 	object SubNodeParent;	/// Child node's original parent or child of parent
 
 	friend class link;

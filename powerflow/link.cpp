@@ -138,9 +138,9 @@ int link::create(void)
 	power_in = 0;
 	power_out = 0;
 	voltage_ratio = 1.0;
-	phaseadjust = complex(1,0);
 	SpecialLnk = NORMAL;
 	prev_LTime=0;
+	NR_branch_reference=-1;
 
 	current_in[0] = current_in[1] = current_in[2] = complex(0,0);
 
@@ -152,6 +152,10 @@ int link::init(OBJECT *parent)
 	OBJECT *obj = GETOBJECT(this);
 
 	powerflow_object::init(parent);
+
+	node *fNode = OBJECTDATA(from,node);
+	node *tNode = OBJECTDATA(to,node);
+
 
 	/* check link from node */
 	if (from==NULL)
@@ -191,6 +195,7 @@ int link::init(OBJECT *parent)
 		else
 			/* promote this object if necessary */
 			gl_set_rank(obj,to->rank+1);
+
 		break;
 	case SM_GS: /* Gauss-Seidel */
 		{
@@ -210,7 +215,42 @@ int link::init(OBJECT *parent)
 		break;
 		}
 	case SM_NR:
-		throw "Newton-Raphson solution method is not yet supported";
+	{
+		NR_branch_count++;		//Update global value of link count
+
+		//Use FBS code to rank objects - do this so swing ends up on one end for consistency
+			if (obj->parent==NULL)
+			{
+				/* make 'from' object parent of this object */
+				if (gl_object_isa(from,"node")) 
+				{
+					if(gl_set_parent(obj, from) < 0)
+						throw "error when setting parent";
+				} 
+				else 
+					throw "link from reference not a node";
+			}
+			else
+				/* promote 'from' object if necessary */
+				gl_set_rank(from,obj->rank+1);
+			
+			if (to->parent==NULL)
+			{
+				/* make this object parent to 'to' object */
+				if (gl_object_isa(to,"node"))
+				{
+					if(gl_set_parent(to, obj) < 0)
+						throw "error when setting parent";
+				} 
+				else 
+					throw "link to reference not a node";
+			}
+			else
+				/* promote this object if necessary */
+				gl_set_rank(obj,to->rank+1);
+
+		break;
+	}
 	default:
 		throw "unsupported solver method";
 		break;
@@ -264,7 +304,116 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 
 	if (solver_method==SM_NR)
 	{
-		throw "Newton-Raphson solution method is not yet supported";
+		if (prev_LTime==0)	//First run, build up the pointer matrices
+		{
+			node *fnode = OBJECTDATA(from,node);
+			node *tnode = OBJECTDATA(to,node);
+			char jval, kval;
+			if (fnode==NULL || tnode==NULL)
+				return TS_NEVER;
+
+			if ((NR_curr_bus!=-1) && (NR_curr_branch!=-1))	//Ensure we've been initialized
+			{
+				//Check our end nodes first - update them if necessary
+				if (fnode->NR_node_reference==-1)	//Uninitialized node
+				{
+					fnode->NR_populate();
+				}
+
+				if (tnode->NR_node_reference==-1)	//Unitialized node
+				{
+					tnode->NR_populate();
+				}
+
+				//Now populate the link's information
+				
+				//Start with admittance matrix
+				for (jval=0; jval<3; jval++)
+					for (kval=0; kval<3; kval++)
+						NR_branchdata[NR_curr_branch].Y[jval][kval] = &From_Y[jval][kval];
+
+				//Populate to/from indices
+				NR_branchdata[NR_curr_branch].from = fnode->NR_node_reference;
+				NR_branchdata[NR_curr_branch].to = tnode->NR_node_reference;
+
+				//Populate voltage ratio
+				NR_branchdata[NR_curr_branch].v_ratio = voltage_ratio;
+
+				//Update our storage value
+				NR_branch_reference = NR_curr_branch;
+
+				//Update pointer
+				NR_curr_branch++;
+			}
+			else
+				GL_THROW("A link was called before NR was initialized by a node.");
+				/*	TROUBLESHOOT
+				This is a bug.  The Newton-Raphson solver method relies on a node being called first.  If GridLAB-D
+				made it this far, you should have a swing bus defined and it should be called before any other objects.
+				Please submit your code and a bug report for this problem.
+				*/
+		}
+
+		if (prev_LTime!=t0)	//New timestep, recalc admittance matrix (does this really need to be done every timestep?)
+		{
+			complex Ylinecharge[3][3];
+			complex Y[3][3];
+			complex Yc[3][3];
+			complex Ylefttemp[3][3];
+			char jindex, kindex;
+
+			//Create initial admittance matrix - use code from GS below - store in From_Y (for now)
+			for (jindex=0; jindex<3; jindex++)
+				for (kindex=0; kindex<3; kindex++)
+					Y[jindex][kindex] = 0.0;
+			
+			// compute admittance - invert b matrix - special circumstances given different methods
+			if (has_phase(PHASE_S)) //Triplexy
+			{
+				inverse(b_mat,Y);
+			}
+			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+				Y[0][0] = complex(1.0) / b_mat[0][0];
+			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+				Y[1][1] = complex(1.0) / b_mat[1][1];
+			else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+				Y[2][2] = complex(1.0) / b_mat[2][2];
+			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+			{
+				complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
+
+				Y[0][0] = b_mat[2][2] / detvalue;
+				Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
+				Y[2][0] = b_mat[2][0] * -1.0 / detvalue;
+				Y[2][2] = b_mat[0][0] / detvalue;
+			}
+			else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+			{
+				complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+
+				Y[0][0] = b_mat[1][1] / detvalue;
+				Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
+				Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
+				Y[1][1] = b_mat[0][0] / detvalue;
+			}
+			else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+				inverse(b_mat,Y);
+			// defaulted else - No phases (e.g., the line does not exist) - just = 0
+
+			//Compute total self admittance - include line charging capacitance
+			equalm(a_mat,Ylinecharge);
+			Ylinecharge[0][0]-=1;
+			Ylinecharge[1][1]-=1;
+			Ylinecharge[2][2]-=1;
+			multiply(2,Ylinecharge,Ylefttemp);
+			multiply(Y,Ylefttemp,Ylinecharge);
+
+			addition(Ylinecharge,Y,From_Y);
+
+			//Update time variable
+			prev_LTime=t0;
+		}
+
 	}
 	else if ((solver_method==SM_GS) & (is_closed()) & (prev_LTime!=t0))	//Initial YVs calculations
 	{
@@ -323,7 +472,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			LINKCONNECTED *prevlink = new LINKCONNECTED;
 			if (prevlink==NULL)
 			{
-				gl_error("memory allocation failure");
+				gl_error("GS: memory allocation failure zero length");
 				return 0;
 			}
 
@@ -366,11 +515,11 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 
 			//See if it is a node/load/meter
 			if (!(gl_object_isa(from,"load") | gl_object_isa(from,"node") | gl_object_isa(from,"meter")))
-				GL_THROW("Attempt to substitue 0 length line %d failed: from is not a node device!",obj->id);
+				GL_THROW("GS: Attempt to substitue 0 length line %d failed: from is not a node device!",obj->id);
 
 			//Make sure our phases align, otherwise become angry
 			if (fnode->phases!=tnode->phases)
-				GL_THROW("Attempt to substitue 0 length line %d failed: endpoint phases do not match!",obj->id);
+				GL_THROW("GS: Attempt to substitue 0 length line %d failed: endpoint phases do not match!",obj->id);
 
 			//Additional check not needed in node - make sure To isn't a parent (no easy way to fix this, if multiple children gets wonky)
 			if (tnode->SubNode==(SUBNODETYPE)3)
@@ -382,7 +531,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				//Now have to handle based on what the from node of the line is
 				if (fnode->SubNode==(SUBNODETYPE)2)	//From node is another child
 				{
-					GL_THROW("Attempt to substitute 0 length line %d failed: Would result in great-grandchilren nesting which is unsupported in GS!",obj->id);
+					GL_THROW("GS: Attempt to substitute 0 length line %d failed: Would result in great-grandchilren nesting which is unsupported in GS!",obj->id);
 				}
 				else	//From node is unchilded
 				{
@@ -475,8 +624,8 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			Ylinecharge[0][0]-=1;
 			Ylinecharge[1][1]-=1;
 			Ylinecharge[2][2]-=1;
-			multiply(2,Ylinecharge,Ylinecharge);
-			multiply(Y,Ylinecharge,Ylinecharge);
+			multiply(2,Ylinecharge,Ylefttemp);
+			multiply(Y,Ylefttemp,Ylinecharge);
 
 			addition(Ylinecharge,Y,Ytot);
 			
@@ -537,7 +686,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				}
 				else if (SpecialLnk==REGULATOR)	//Regulator
 				{
-					GL_THROW("Regulator not implemented in Gauss-Seidel Solver yet!");
+					GL_THROW("GS: Regulator not implemented in Gauss-Seidel Solver yet!");
 
 					equalm(b_mat,Yto);	//Initial code.  Very untested
 					equalm(c_mat,Yfrom);
@@ -754,7 +903,7 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 	{
 		if (solver_method==SM_NR)
 		{
-			throw "Newton-Raphson solution method is not yet supported";
+			//Nothing here yet
 		}
 		else if (solver_method==SM_FBS)
 		{
@@ -818,7 +967,7 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 	TIMESTAMP TRET=TS_NEVER;
 	if (solver_method==SM_NR)
 	{
-		throw "Newton-Raphson solution method is not yet supported";
+		//Nothing here yet
 	}
 	//else if ((!is_open()) && (solver_method==SM_FBS))
 	else if ((solver_method==SM_FBS))
@@ -982,15 +1131,15 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		power_in = ((fnode->voltage[0]*~current_in[0]).Mag() + (fnode->voltage[1]*~current_in[1]).Mag() + (fnode->voltage[2]*~current_in[2]).Mag());
 		power_out = ((tnode->voltage[0]*~current_out[0]).Mag() + (tnode->voltage[1]*~current_out[1]).Mag() + (tnode->voltage[2]*~current_out[2]).Mag());
 
-		//Zero out admittance and YVs terms of To/From nodes for next cycle.  Rank should take care of all problems here.  If not, need to flag prev_LTime as well
-		fnode->YVs[0] = fnode->YVs[1] = fnode->YVs[2] = 0.0;
-		tnode->YVs[0] = tnode->YVs[1] = tnode->YVs[2] = 0.0;
+		////Zero out admittance and YVs terms of To/From nodes for next cycle.  Rank should take care of all problems here.  If not, need to flag prev_LTime as well
+		//fnode->YVs[0] = fnode->YVs[1] = fnode->YVs[2] = 0.0;
+		//tnode->YVs[0] = tnode->YVs[1] = tnode->YVs[2] = 0.0;
 
-		fnode->Ys[0][0] = fnode->Ys[0][1] = fnode->Ys[0][2] = 0.0;
-		fnode->Ys[1][0] = fnode->Ys[1][1] = fnode->Ys[1][2] = 0.0;
-		fnode->Ys[2][0] = fnode->Ys[2][1] = fnode->Ys[2][2] = 0.0;
+		//fnode->Ys[0][0] = fnode->Ys[0][1] = fnode->Ys[0][2] = 0.0;
+		//fnode->Ys[1][0] = fnode->Ys[1][1] = fnode->Ys[1][2] = 0.0;
+		//fnode->Ys[2][0] = fnode->Ys[2][1] = fnode->Ys[2][2] = 0.0;
 
-		equalm(fnode->Ys,tnode->Ys);
+		//equalm(fnode->Ys,tnode->Ys);
 	}
 
 	return TRET;

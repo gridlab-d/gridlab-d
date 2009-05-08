@@ -52,6 +52,7 @@
 #include <errno.h>
 #include <math.h>
 
+#include "solver_nr.h"
 #include "node.h"
 #include "transformer.h"
 
@@ -127,6 +128,8 @@ int node::create(void)
 
 	GS_converged=false;
 
+	NR_node_reference = -1;	//Newton-Raphson bus index, set to -1 initially
+
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
 	memset(current,0,sizeof(current));
@@ -140,7 +143,44 @@ int node::init(OBJECT *parent)
 {
 	if (solver_method==SM_NR)
 	{
-		throw "Newton-Raphson solution method is not yet supported";
+		NR_bus_count++;		//Update global bus count for NR solver
+		
+		OBJECT *obj = OBJECTHDR(this);
+
+		FINDLIST *buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
+
+		if (buslist==NULL)
+			throw "NR: no swing bus found";
+			/*	TROUBLESHOOT
+			No swing bus was located in the test system.  Newton-Raphson requires at least one node
+			be designated "bustype SWING".
+			*/
+		if (buslist->hit_count>1)
+			gl_warning("NR: more than one swing bus found, you must specify which is this node's parent");
+			/*	TROUBLESHOOT
+			More than one swing bus was found.  Newton-Raphson requires you specify the swing
+			bus this node is connected to via the parent property.
+			*/
+
+		OBJECT *SwingBusObj = gl_find_next(buslist,NULL);
+
+		if ((obj->parent==NULL) && (bustype!=SWING)) // need to find a swing bus to be this node's parent
+		{
+			gl_set_parent(obj,SwingBusObj);
+		}
+
+		/* Make sure we aren't the swing bus */
+		if (this->bustype!=SWING)
+		{
+			/* still no swing bus found */
+			if (obj->parent==NULL)
+				throw "NR: no swing bus found or specified";
+				/*	TROUBLESHOOT
+				Newton-Raphson failed to automatically assign a swing bus to the node.  This should
+				have been detected by this point and represents a bug in the solver.  Please submit
+				a bug report detailing how you obtained this message.
+				*/
+		}
 	}
 	else if (solver_method==SM_GS)
 	{
@@ -148,9 +188,17 @@ int node::init(OBJECT *parent)
 
 		FINDLIST *buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
 		if (buslist==NULL)
-			throw "no swing bus found";
+			throw "GS: no swing bus found";
+			/*	TROUBLESHOOT
+			No swing bus was located in the test system.  Gauss-Seidel requires at least one node
+			be designated BUSTYPE SWING.
+			*/
 		if (buslist->hit_count>1)
-			GL_THROW("more than one swing bus found, you must specify which is this node's parent");
+			gl_warning("GS: more than one swing bus found, you must specify which is this node's parent");
+			/*	TROUBLESHOOT
+			More than one swing bus was found.  Gauss-Seidel requires you specify the swing
+			bus this node is connected to via the parent property.
+			*/
 
 		OBJECT *SwingBusObj = gl_find_next(buslist,NULL);
 
@@ -161,13 +209,17 @@ int node::init(OBJECT *parent)
 
 			//See if it is a node/load/meter
 			if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow")))
-				throw("Parent is not a load or node!");
+				throw("GS: Parent is not a load or node!");
 
 			node *parNode = OBJECTDATA(obj->parent,node);
 
 			//Make sure our phases align, otherwise become angry
 			if (parNode->phases!=this->phases)
-				throw("Parent and child node phases do not match!");
+				throw("GS: Parent and child node phases do not match!");
+				/*	TROUBLESHOOT
+				The implementation of parent-child connections in Gauss-Seidel requires the child
+				object have the same phases as the parent.  Match the phases appropriately.
+				*/
 
 			if ((parNode->SubNode==CHILD_NOINIT) | ((obj->parent->parent!=SwingBusObj) && (obj->parent->parent!=NULL)))	//Our parent is another child
 			{
@@ -198,7 +250,7 @@ int node::init(OBJECT *parent)
 
 		} 
 		
-		if (obj->parent==NULL) // need to find a swing bus to be this node's parent
+		if ((obj->parent==NULL) && (bustype!=SWING)) // need to find a swing bus to be this node's parent
 		{
 			gl_set_parent(obj,SwingBusObj);
 		}
@@ -208,17 +260,32 @@ int node::init(OBJECT *parent)
 		{
 			/* still no swing bus found */
 			if (obj->parent==NULL)
-				throw "no swing bus found or specified";
+				throw "GS: no swing bus found or specified";
+				/*	TROUBLESHOOT
+				Gauss-Seidel failed to automatically assign a swing bus to the node.  This should
+				have been detected by this point and represents a bug in the solver.  Please submit
+				a bug report detailing how you obtained this message.
+				*/
 
 			/* check that the parent is a node and that it's a swing bus */
 			if (!gl_object_isa(obj->parent,"node"))
-				throw "node parent is not a node itself";
+				throw "GS: node parent is not a node itself";
+				/*	TROUBLESHOOT
+				A node-based object in the Gauss-Seidel solver has a non-node parent set.  The parent
+				must be set to either a parent node in a parent-child connection or a swing bus of the
+				system.
+				*/
+
 			else 
 			{
 				node *pNode = OBJECTDATA(obj->parent,node);
 
-				if (pNode->bustype!=SWING)	//Originally checks to see if is swing bus...nto sure how to handle this yet
-					throw "node parent is not a swing bus";
+				if (pNode->bustype!=SWING)	//Originally checks to see if is swing bus...not sure how to handle this yet
+					throw "GS: node parent is not a swing bus";
+					/*	TROUBLESHOOT
+					A node-based object has an invalid parent specified.  Unless in a parent-child connect, only swing
+					buses can be specified as a parent object in the Gauss-Seidel solver.
+					*/
 			}
 		}
 
@@ -269,13 +336,14 @@ int node::init(OBJECT *parent)
 			nominal_voltage = pParent->nominal_voltage;
 	}
 
-	/* no nominal voltage */
-	if (nominal_voltage==0)
-		throw "nominal voltage is not specified";
-
 	/* make sure the sync voltage limit is positive */
 	if (maximum_voltage_error<0)
 		throw "negative maximum_voltage_error is invalid";
+		/*	TROUBLESHOOT
+		A negative maximum voltage error was specified.  This can not be checked.  Specify a
+		positive maximum voltage error, or omit this value to let the powerflow solver automatically
+		calculate it for you.
+		*/
 
 	/* set sync_v_limit to default if needed */
 	if (maximum_voltage_error==0.0)
@@ -284,10 +352,18 @@ int node::init(OBJECT *parent)
 	/* make sure fault_Z is positive */
 	if (fault_Z<=0)
 		throw "negative fault impedance is invalid";
+		/*	TROUBLESHOOT
+		The node of interest has a negative or zero fault impedance value.  Specify this value as a
+		positive number to enable proper solver operation.
+		*/
 
 	/* check that nominal voltage is set */
 	if (nominal_voltage<=0)
 		throw "nominal_voltage is not set";
+		/*	TROUBLESHOOT
+		The powerflow solver has detected that a nominal voltage was not specified or is invalid.
+		Specify this voltage as a positive value via nominal_voltage to enable the solver to work.
+		*/
 
 	/* update geographic degree */
 	if (k>1)
@@ -360,7 +436,32 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 
 	if (solver_method==SM_NR)
 	{
-		throw "Newton-Raphson solution method is not yet supported";
+		if (NR_busdata==NULL || NR_branchdata==NULL)	//First time any NR in
+		{
+			NR_busdata = (BUSDATA *)malloc(NR_bus_count * sizeof(BUSDATA));
+			if (NR_busdata==NULL)
+			{
+				gl_error("NR: memory allocation failure for bus table");
+				/*	TROUBLESHOOT
+				This is a bug.  GridLAB-D failed to allocate memory for the bus table for Newton-Raphson.
+				Please submit this bug and your code.
+				*/
+				return 0;
+			}
+			NR_curr_bus = 0;	//Pull pointer off flag so other objects know it's built
+
+			NR_branchdata = (BRANCHDATA *)malloc(NR_branch_count * sizeof(BRANCHDATA));
+			if (NR_branchdata==NULL)
+			{
+				gl_error("NR: memory allocation failure for branch table");
+				/*	TROUBLESHOOT
+				This is a bug.  GridLAB-D failed to allocate memory for the link table for Newton-Raphson.
+				Please submit this bug and your code.
+				*/
+				return 0;
+			}
+			NR_curr_branch = 0;	//Pull pointer off flag so other objects know it's built
+		}
 	}
 	else if (solver_method==SM_FBS)
 	{
@@ -378,6 +479,15 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			node *pRef = OBJECTDATA(reference_bus,node);
 			frequency = pRef->frequency;
 		}
+	}
+	else if ((solver_method==SM_GS) && (prev_NTime!=t0))
+	{
+		//Zero out admittance and YVs terms of new cycle.  Rank should take care of all problems here. 
+		YVs[0] = YVs[1] = YVs[2] = 0.0;
+		
+		Ys[0][0] = Ys[0][1] = Ys[0][2] = 0.0;
+		Ys[1][0] = Ys[1][1] = Ys[1][2] = 0.0;
+		Ys[2][0] = Ys[2][1] = Ys[2][2] = 0.0;
 	}
 	
 	return t1;
@@ -486,160 +596,14 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		complex YVsTemp[3];
 		complex Vnew[3];
 		complex dV[3];
-		LINKCONNECTED *linktable;
+		LINKCONNECTED *linktable=NULL;
 		OBJECT *linkupdate;
 		link *linkref;
 
-		if (SubNode==CHILD_NOINIT)	//First run of a "parented" node
+		//Run parent/child update items
+		if ((SubNode==CHILD_NOINIT) || (SubNode==CHILD))
 		{
-			//Grab the linked list from the child object
-			node *ParOfChildNode = OBJECTDATA(SubNodeParent,node);
-			LINKCONNECTED *parlink = &ParOfChildNode->nodelinks;
-
-			linktable = &nodelinks;
-
-			if (linktable->next!=NULL)	//See if it was empty
-			{
-				//Need working variable for updating down/upstream links (those that refer to us)
-				LINKCONNECTED *ltemp;
-				node *tempnode;
-
-				while (linktable->next!=NULL)		//Parse through the linked list
-				{
-					linktable = linktable->next;
-
-					LINKCONNECTED *lnewconnected = new LINKCONNECTED;
-					if (lnewconnected==NULL)
-					{
-						gl_error("memory allocation failure");
-						return 0;
-					}
-
-					lnewconnected->next = parlink->next;
-
-					// attach to node list
-					parlink->next = lnewconnected;
-
-					// attach the link object identifier
-					lnewconnected->connectedlink = linktable->connectedlink;
-
-					// attach to and from nodes - substitute us for the appropriate link
-					if (linktable->fnodeconnected==obj)	//We were the from node, so now parent is
-					{
-						lnewconnected->fnodeconnected = SubNodeParent;
-						lnewconnected->tnodeconnected = linktable->tnodeconnected;
-
-						//Now go search that node and update its back links to our parent
-						tempnode = OBJECTDATA(linktable->tnodeconnected,node);
-						ltemp = &tempnode->nodelinks;
-
-						while (ltemp->next!=NULL)		//Parse through the linked list
-						{
-							ltemp = ltemp->next;
-							
-							if (ltemp->fnodeconnected==obj)	//We were the from node, so now parent is from node
-								ltemp->fnodeconnected=SubNodeParent;
-							else if (ltemp->tnodeconnected==obj)	//We were somehow the to node...shouldn't happen, but just in case
-								ltemp->tnodeconnected=SubNodeParent;
-						}
-					}
-					else	//We were to node, so now parent is
-					{
-						lnewconnected->fnodeconnected = linktable->fnodeconnected;
-						lnewconnected->tnodeconnected = SubNodeParent;
-
-						//Now go search that node and update its back links to our parent
-						tempnode = OBJECTDATA(linktable->fnodeconnected,node);
-						ltemp = &tempnode->nodelinks;
-
-						while (ltemp->next!=NULL)		//Parse through the linked list
-						{
-							ltemp = ltemp->next;
-							
-							if (ltemp->fnodeconnected==obj)	//We were the from node, so now parent is from node
-								ltemp->fnodeconnected=SubNodeParent;
-							else if (ltemp->tnodeconnected==obj)	//We were somehow the to node...shouldn't happen, but just in case
-								ltemp->tnodeconnected=SubNodeParent;
-						}
-					}
-				}
-
-				//clear child Node's linked list so it doesn't try to update things
-				nodelinks.next=NULL;
-			}
-
-			SubNode=CHILD;	//Flag as having been initialized, hence done
-		}
-
-		if ((SubNode==CHILD) && (prev_NTime!=t0))	//First run, additional housekeeping
-		{
-			node *ParNodeAdmit = OBJECTDATA(SubNodeParent,node);
-
-			//Import Admittance and YVs terms
-			ParNodeAdmit->Ys[0][0]+=Ys[0][0];
-			ParNodeAdmit->Ys[0][1]+=Ys[0][1];
-			ParNodeAdmit->Ys[0][2]+=Ys[0][2];
-			ParNodeAdmit->Ys[1][0]+=Ys[1][0];
-			ParNodeAdmit->Ys[1][1]+=Ys[1][1];
-			ParNodeAdmit->Ys[1][2]+=Ys[1][2];
-			ParNodeAdmit->Ys[2][0]+=Ys[2][0];
-			ParNodeAdmit->Ys[2][1]+=Ys[2][1];
-			ParNodeAdmit->Ys[2][2]+=Ys[2][2];
-
-			ParNodeAdmit->YVs[0]+=YVs[0];
-			ParNodeAdmit->YVs[1]+=YVs[1];
-			ParNodeAdmit->YVs[2]+=YVs[2];
-		}
-		
-		if (SubNode==CHILD)
-		{
-			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
-
-			if (gl_object_isa(SubNodeParent,"load"))	//Load gets cleared at every presync, so reaggregate :(
-			{
-				//Import power and "load" characteristics
-				ParToLoad->power[0]+=power[0];
-				ParToLoad->power[1]+=power[1];
-				ParToLoad->power[2]+=power[2];
-
-				ParToLoad->shunt[0]+=shunt[0];
-				ParToLoad->shunt[1]+=shunt[1];
-				ParToLoad->shunt[2]+=shunt[2];
-
-				ParToLoad->current[0]+=current[0];
-				ParToLoad->current[1]+=current[1];
-				ParToLoad->current[2]+=current[2];
-			}
-			else if (gl_object_isa(SubNodeParent,"node"))	//"parented" node - update values - This has to go to the bottom
-			{												//since load/meter share with node (and load handles power in presync)
-				//Import power and "load" characteristics
-				ParToLoad->power[0]+=power[0]-last_child_power[0][0];
-				ParToLoad->power[1]+=power[1]-last_child_power[0][1];
-				ParToLoad->power[2]+=power[2]-last_child_power[0][2];
-
-				ParToLoad->shunt[0]+=shunt[0]-last_child_power[1][0];
-				ParToLoad->shunt[1]+=shunt[1]-last_child_power[1][1];
-				ParToLoad->shunt[2]+=shunt[2]-last_child_power[1][2];
-
-				ParToLoad->current[0]+=current[0]-last_child_power[2][0];
-				ParToLoad->current[1]+=current[1]-last_child_power[2][1];
-				ParToLoad->current[2]+=current[2]-last_child_power[2][2];
-			}
-			else
-				throw("Object %d is a child of something that it shouldn't be!",obj->id);
-
-			//Update previous power tracker
-			last_child_power[0][0] = power[0];
-			last_child_power[0][1] = power[1];
-			last_child_power[0][2] = power[2];
-
-			last_child_power[1][0] = shunt[0];
-			last_child_power[1][1] = shunt[1];
-			last_child_power[1][2] = shunt[2];
-
-			last_child_power[2][0] = current[0];
-			last_child_power[2][1] = current[1];
-			last_child_power[2][2] = current[2];
+			GS_P_C_NodeChecks(t0, t1, obj, linktable);
 		}
 
 		//House keeping items - if time step has changed update variable and reset our convergence flag
@@ -662,9 +626,6 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		YVsTemp[2] = YVs[2];
 		UNLOCK_OBJECT(obj);
 
-		////Determine which phases are present for later
-		//phasespresent = 8*has_phase(PHASE_D)+4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
-
 		//init dV as zero
 		dV[0] = dV[1] = dV[2] = complex(0,0);
 
@@ -674,8 +635,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				case PV:	//PV bus only supports Y-Y connections at this time.  Easier to handle the oddity of power that way.
 					{
 					//Check for NaNs (single phase problem)
-					//if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
-					if ((!has_phase(PHASE_A|PHASE_B|PHASE_C)) && (!has_phase(PHASE_D)))
+					if ((!has_phase(PHASE_A|PHASE_B|PHASE_C)) && (!has_phase(PHASE_D)))	//Not three phase or delta
 					{
 						//Calculate reactive power - apply GS update (do phase iteratively)
 						power[0].Im() = ((~Vtemp[0]*(Ys[0][0]*Vtemp[0]+Ys[0][1]*Vtemp[1]+Ys[0][2]*Vtemp[2]-YVsTemp[0]+current[0]+Vtemp[0]*shunt[0])).Im());
@@ -759,8 +719,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 						//Vnew[2]=Vtemp[2]+(Vnew[2]-Vtemp[2])*acceleration_factor;
 						Vnew[2] = Vtemp[2];
 					}
-					//else if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
-					else if ((!has_phase(PHASE_A|PHASE_B|PHASE_C)) && (!has_phase(PHASE_D)))
+					else if ((!has_phase(PHASE_A|PHASE_B|PHASE_C)) && (!has_phase(PHASE_D)))  //Not three phase or delta
 					{
 						//Update node Vtemp
 						Vnew[0] = (-(~power[0]/~Vtemp[0]+current[0]+Vtemp[0]*shunt[0])+YVsTemp[0]-Vtemp[1]*Ys[0][1]-Vtemp[2]*Ys[0][2])/Ys[0][0];
@@ -869,6 +828,12 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					{
 					/* unknown type fails */
 					gl_error("invalid bus type");
+					/*	TROUBLESHOOT
+					This is an error.  Ensure you have no specified an invalid bustype on nodes in the
+					system.  Valid types are SWING, PQ, and PV.  Report this error as a bug if no invalid
+					types are found.
+					*/
+
 					return TS_ZERO;
 					}
 			}
@@ -929,9 +894,25 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		break;
 		}
 	case SM_NR:
-		throw "Newton-Raphson solution method is not yet supported";
+		{
+		if ((NR_curr_bus==NR_bus_count) && (bustype==SWING))	//Only run the solver once everything has populated
+		{
+			int result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata);
+			if (result<=0)
+				return TS_INVALID;
+			else
+				return t1;
+		}
+		else	//Population of data busses is not complete.  Flag us for a go-around, they should be ready next time
+			return t0;
+		break;
+		}
 	default:
 		throw "unsupported solver method";
+		/*	TROUBLESHOOT
+		An invalid powerflow solver was specified.  Currently acceptable values are FBS for forward-back
+		sweep (Kersting's method), GS for Gauss-Seidel, and NR for Newton-Raphson.
+		*/
 		break;
 	}
 	return t1;
@@ -983,9 +964,24 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			voltage[0] = voltage[1] = voltage[2] = complex(0,0);
 	}
 
+	//Update appropriate "other" voltages
+	if (phases&PHASE_S) 
+	{	// split-tap voltage diffs are different
+		LOCKED(obj, voltage12 = voltage1 + voltage2);
+		LOCKED(obj, voltage1N = voltage1 - voltageN);
+		LOCKED(obj, voltage2N = voltage2 - voltageN);
+	}
+	else
+	{	// compute 3phase voltage differences
+		LOCKED(obj, voltageAB = voltageA - voltageB);
+		LOCKED(obj, voltageBC = voltageB - voltageC);
+		LOCKED(obj, voltageCA = voltageC - voltageA);
+	}
+
+
 	if (solver_method==SM_NR)
 	{
-		throw "Newton-Raphson solution method is not yet supported";
+		//Nothing here yet
 	}
 	else if (solver_method==SM_FBS)
 	{
@@ -999,7 +995,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			LOCKED(obj, voltage[2] = pNode->voltage[2]);
 		}
 	}
-	else //GS items - solver and misc. related
+	else if (solver_method==SM_GS)//GS items - solver and misc. related
 	{
 		if (GS_all_converged)
 		{
@@ -1031,6 +1027,20 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 				voltage[0]=parNode->voltage[0];
 				voltage[1]=parNode->voltage[1];
 				voltage[2]=parNode->voltage[2];
+
+				//Update single phase/delta computations as necessary
+				if (phases&PHASE_S) 
+				{	// split-tap voltage diffs are different
+					LOCKED(obj, voltage12 = voltage1 + voltage2);
+					LOCKED(obj, voltage1N = voltage1 - voltageN);
+					LOCKED(obj, voltage2N = voltage2 - voltageN);
+				}
+				else
+				{	// compute 3phase voltage differences
+					LOCKED(obj, voltageAB = voltageA - voltageB);
+					LOCKED(obj, voltageBC = voltageB - voltageC);
+					LOCKED(obj, voltageCA = voltageC - voltageA);
+				}
 			}
 
 			//Zero current for below calcuations.  May mess with tape (will have values at end of Postsync)
@@ -1039,8 +1049,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			//Calculate current if it has one
 			if ((bustype==PQ) | (bustype==PV)) //PQ and PV busses need current updates
 			{
-				//if ((phasespresent!=7) & (phasespresent!=15) & (phasespresent!=8))	//Not three phase or delta
-				if ((!has_phase(PHASE_A|PHASE_B|PHASE_C)) && (!has_phase(PHASE_D)))
+				if ((!has_phase(PHASE_A|PHASE_B|PHASE_C)) && (!has_phase(PHASE_D)))  //Not three phase or delta
 				{
 					current_inj[0] = (voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0]);
 					current_inj[1] = (voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1]);
@@ -1059,9 +1068,9 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 						delta_shunt[2] = voltageCA*shunt[2];
 
 						//Convert delta connected power
-						delta_current[0]= ~(power[0]/voltageAB);
-						delta_current[1]= ~(power[1]/voltageBC);
-						delta_current[2]= ~(power[2]/voltageCA);
+						delta_current[0]= (voltaged[0]==0) ? complex(0,0) : ~(power[0]/voltageAB);
+						delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power[1]/voltageBC);
+						delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power[2]/voltageCA);
 
 						current_inj[0] += delta_shunt[0]-delta_shunt[2];	//calculate "load" current (line current) - PQZ
 						current_inj[1] += delta_shunt[1]-delta_shunt[0];
@@ -1077,9 +1086,9 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 					}
 					else					//Wye connection
 					{
-						current_inj[0] +=~(power[0]/voltage[0]);			//PQP needs power converted to current
-						current_inj[1] +=~(power[1]/voltage[1]);
-						current_inj[2] +=~(power[2]/voltage[2]);
+						current_inj[0] += (voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0]);			//PQP needs power converted to current
+						current_inj[1] += (voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1]);
+						current_inj[2] += (voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2]);
 
 						current_inj[0] +=voltage[0]*shunt[0];			//PQZ needs load currents calculated as well
 						current_inj[1] +=voltage[1]*shunt[1];
@@ -1156,19 +1165,6 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = 0.0;
 			}
 		}
-	}
-
-	if (phases&PHASE_S) 
-	{	// split-tap voltage diffs are different
-		LOCKED(obj, voltage12 = voltage1 + voltage2);
-		LOCKED(obj, voltage1N = voltage1 - voltageN);
-		LOCKED(obj, voltage2N = voltage2 - voltageN);
-	}
-	else
-	{	// compute 3phase voltage differences
-		LOCKED(obj, voltageAB = voltageA - voltageB);
-		LOCKED(obj, voltageBC = voltageB - voltageC);
-		LOCKED(obj, voltageCA = voltageC - voltageA);
 	}
 
 #ifdef SUPPORT_OUTAGES
@@ -1385,6 +1381,169 @@ EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 }
 
 /**
+* GS_P_C_NodeChecks performs Gauss-Seidel related parent/child update routines
+* Subfunctioned to help clean up the sync code so it is more readable.
+*/
+void *node::GS_P_C_NodeChecks(TIMESTAMP t0, TIMESTAMP t1, OBJECT *obj, LINKCONNECTED *linktable)
+{
+	if (SubNode==CHILD_NOINIT)	//First run of a "parented" node
+	{
+		//Grab the linked list from the child object
+		node *ParOfChildNode = OBJECTDATA(SubNodeParent,node);
+		LINKCONNECTED *parlink = &ParOfChildNode->nodelinks;
+
+		linktable = &nodelinks;
+
+		if (linktable->next!=NULL)	//See if it was empty
+		{
+			//Need working variable for updating down/upstream links (those that refer to us)
+			LINKCONNECTED *ltemp;
+			node *tempnode;
+
+			while (linktable->next!=NULL)		//Parse through the linked list
+			{
+				linktable = linktable->next;
+
+				LINKCONNECTED *lnewconnected = new LINKCONNECTED;
+				if (lnewconnected==NULL)
+				{
+					gl_error("GS: memory allocation failure");
+					/*	TROUBLESHOOT
+					This is a bug.  GridLAB-D failed to allocate memory for link connections to this node.
+					Please submit this bug and your code.
+					*/
+					return 0;
+				}
+
+				lnewconnected->next = parlink->next;
+
+				// attach to node list
+				parlink->next = lnewconnected;
+
+				// attach the link object identifier
+				lnewconnected->connectedlink = linktable->connectedlink;
+
+				// attach to and from nodes - substitute us for the appropriate link
+				if (linktable->fnodeconnected==obj)	//We were the from node, so now parent is
+				{
+					lnewconnected->fnodeconnected = SubNodeParent;
+					lnewconnected->tnodeconnected = linktable->tnodeconnected;
+
+					//Now go search that node and update its back links to our parent
+					tempnode = OBJECTDATA(linktable->tnodeconnected,node);
+					ltemp = &tempnode->nodelinks;
+
+					while (ltemp->next!=NULL)		//Parse through the linked list
+					{
+						ltemp = ltemp->next;
+						
+						if (ltemp->fnodeconnected==obj)	//We were the from node, so now parent is from node
+							ltemp->fnodeconnected=SubNodeParent;
+						else if (ltemp->tnodeconnected==obj)	//We were somehow the to node...shouldn't happen, but just in case
+							ltemp->tnodeconnected=SubNodeParent;
+					}
+				}
+				else	//We were to node, so now parent is
+				{
+					lnewconnected->fnodeconnected = linktable->fnodeconnected;
+					lnewconnected->tnodeconnected = SubNodeParent;
+
+					//Now go search that node and update its back links to our parent
+					tempnode = OBJECTDATA(linktable->fnodeconnected,node);
+					ltemp = &tempnode->nodelinks;
+
+					while (ltemp->next!=NULL)		//Parse through the linked list
+					{
+						ltemp = ltemp->next;
+						
+						if (ltemp->fnodeconnected==obj)	//We were the from node, so now parent is from node
+							ltemp->fnodeconnected=SubNodeParent;
+						else if (ltemp->tnodeconnected==obj)	//We were somehow the to node...shouldn't happen, but just in case
+							ltemp->tnodeconnected=SubNodeParent;
+					}
+				}
+			}
+
+			//clear child Node's linked list so it doesn't try to update things
+			nodelinks.next=NULL;
+		}
+
+		SubNode=CHILD;	//Flag as having been initialized, hence done
+	}
+
+	if ((SubNode==CHILD) && (prev_NTime!=t0))	//First run, additional housekeeping
+	{
+		node *ParNodeAdmit = OBJECTDATA(SubNodeParent,node);
+
+		//Import Admittance and YVs terms
+		ParNodeAdmit->Ys[0][0]+=Ys[0][0];
+		ParNodeAdmit->Ys[0][1]+=Ys[0][1];
+		ParNodeAdmit->Ys[0][2]+=Ys[0][2];
+		ParNodeAdmit->Ys[1][0]+=Ys[1][0];
+		ParNodeAdmit->Ys[1][1]+=Ys[1][1];
+		ParNodeAdmit->Ys[1][2]+=Ys[1][2];
+		ParNodeAdmit->Ys[2][0]+=Ys[2][0];
+		ParNodeAdmit->Ys[2][1]+=Ys[2][1];
+		ParNodeAdmit->Ys[2][2]+=Ys[2][2];
+
+		ParNodeAdmit->YVs[0]+=YVs[0];
+		ParNodeAdmit->YVs[1]+=YVs[1];
+		ParNodeAdmit->YVs[2]+=YVs[2];
+	}
+	
+	if (SubNode==CHILD)
+	{
+		node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+
+		if (gl_object_isa(SubNodeParent,"load"))	//Load gets cleared at every presync, so reaggregate :(
+		{
+			//Import power and "load" characteristics
+			ParToLoad->power[0]+=power[0];
+			ParToLoad->power[1]+=power[1];
+			ParToLoad->power[2]+=power[2];
+
+			ParToLoad->shunt[0]+=shunt[0];
+			ParToLoad->shunt[1]+=shunt[1];
+			ParToLoad->shunt[2]+=shunt[2];
+
+			ParToLoad->current[0]+=current[0];
+			ParToLoad->current[1]+=current[1];
+			ParToLoad->current[2]+=current[2];
+		}
+		else if (gl_object_isa(SubNodeParent,"node"))	//"parented" node - update values - This has to go to the bottom
+		{												//since load/meter share with node (and load handles power in presync)
+			//Import power and "load" characteristics
+			ParToLoad->power[0]+=power[0]-last_child_power[0][0];
+			ParToLoad->power[1]+=power[1]-last_child_power[0][1];
+			ParToLoad->power[2]+=power[2]-last_child_power[0][2];
+
+			ParToLoad->shunt[0]+=shunt[0]-last_child_power[1][0];
+			ParToLoad->shunt[1]+=shunt[1]-last_child_power[1][1];
+			ParToLoad->shunt[2]+=shunt[2]-last_child_power[1][2];
+
+			ParToLoad->current[0]+=current[0]-last_child_power[2][0];
+			ParToLoad->current[1]+=current[1]-last_child_power[2][1];
+			ParToLoad->current[2]+=current[2]-last_child_power[2][2];
+		}
+		else
+			throw("GS: Object %d is a child of something that it shouldn't be!",obj->id);
+
+		//Update previous power tracker
+		last_child_power[0][0] = power[0];
+		last_child_power[0][1] = power[1];
+		last_child_power[0][2] = power[2];
+
+		last_child_power[1][0] = shunt[0];
+		last_child_power[1][1] = shunt[1];
+		last_child_power[1][2] = shunt[2];
+
+		last_child_power[2][0] = current[0];
+		last_child_power[2][1] = current[1];
+		last_child_power[2][2] = current[2];
+	}
+	return 0;
+}
+/**
 * Attachlink is called by link objects during their creation.  It creates a linked list
 * of links that are attached to the current node.
 *
@@ -1399,7 +1558,7 @@ LINKCONNECTED *node::attachlink(OBJECT *obj) ///< object to attach
 	LINKCONNECTED *lconnected = new LINKCONNECTED;
 	if (lconnected==NULL)
 	{
-		gl_error("memory allocation failure");
+		gl_error("GS: memory allocation failure for link table");
 		return 0;
 		/* Note ~ this returns a null pointer, but iff the malloc fails.  If
 		 * that happens, we're already in SEGFAULT sort of bad territory. */
@@ -1418,6 +1577,49 @@ LINKCONNECTED *node::attachlink(OBJECT *obj) ///< object to attach
 	lconnected->tnodeconnected = templink->to;
 	
 	return 0;
+}
+/**
+* NR_populate is called by link objects during their first presync if a node is not
+* "initialized".  This function "initializes" the node into the Newton-Raphson data
+* structure NR_busdata
+*
+* @param obj the link that has an attachment to this node
+*/
+int *node::NR_populate(void)
+{
+		NR_busdata[NR_curr_bus].type = (int)bustype;
+		
+		//Populate voltage
+		NR_busdata[NR_curr_bus].V[0] = &voltage[0];
+		NR_busdata[NR_curr_bus].V[1] = &voltage[1];
+		NR_busdata[NR_curr_bus].V[2] = &voltage[2];
+		
+		//Populate power
+		NR_busdata[NR_curr_bus].S[0] = &power[0];
+		NR_busdata[NR_curr_bus].S[1] = &power[1];
+		NR_busdata[NR_curr_bus].S[2] = &power[2];
+
+		//Populate admittance
+		NR_busdata[NR_curr_bus].Y[0] = &shunt[0];
+		NR_busdata[NR_curr_bus].Y[1] = &shunt[1];
+		NR_busdata[NR_curr_bus].Y[2] = &shunt[2];
+
+		//Populate current
+		NR_busdata[NR_curr_bus].I[0] = &current[0];
+		NR_busdata[NR_curr_bus].I[1] = &current[1];
+		NR_busdata[NR_curr_bus].I[2] = &current[2];
+
+		//Per unit values
+		NR_busdata[NR_curr_bus].kv_base = -1.0;
+		NR_busdata[NR_curr_bus].mva_base = -1.0;
+
+		//Store our reference value
+		NR_node_reference = NR_curr_bus;
+
+		//Increment pointer bus
+		NR_curr_bus++;
+
+		return 0;
 }
 
 EXPORT int isa_node(OBJECT *obj, char *classname)

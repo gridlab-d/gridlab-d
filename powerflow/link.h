@@ -31,7 +31,7 @@ public: /// @todo make this private and create interfaces to control values
 	complex To_Y[3][3];	   // To_Y  - 3x3 matrix, object to admittance
 	complex From_Y[3][3];  // From_Y - 3x3 matrix, object from admittance
 	double voltage_ratio;	// voltage ratio (normally 1.0)
-	complex phaseadjust;	//Phase adjustment term for GS transformers
+	int NR_branch_reference;	//Index of NR_branchdata this link is contained in
 	SPECIAL_LINK SpecialLnk;	//Flag for exceptions to the normal handling
 
 public:

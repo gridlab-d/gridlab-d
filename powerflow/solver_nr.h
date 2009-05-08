@@ -11,7 +11,7 @@ typedef struct  {
 	int type;		///< bus type (0=PQ, 1=PV, 2=SWING)
 	complex *V[3];	///< bus voltage
 	complex *S[3];	///< constant power
-	complex *Z[3];	///< constant impedance
+	complex *Y[3];	///< constant admittance (impedance loads)
 	complex *I[3];	///< constant current
 	double kv_base; ///< kV basis
 	double mva_base; /// MVA basis
@@ -24,6 +24,6 @@ typedef struct {
 	double v_ratio;   ///< voltage ratio (v_from/v_to)
 } BRANCHDATA;
 
-int solve_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch);
+int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch);
 
 #endif
