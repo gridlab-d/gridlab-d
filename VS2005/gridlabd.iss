@@ -135,9 +135,9 @@ Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\gnuplot.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\gridlabd.h; DestDir: {app}\rt; Flags: ignoreversion
-Source: ..\..\..\climate\tmy\*.zip; DestDir: {app}\tmy
-Source: ..\..\..\climate\tmy\extract_tmy; DestDir: {app}\tmy
-Source: ..\..\..\climate\tmy\build_pkgs; DestDir: {app}\tmy
+;Source: ..\..\..\climate\tmy\*.zip; DestDir: {app}\tmy
+;Source: ..\..\..\climate\tmy\extract_tmy; DestDir: {app}\tmy
+;Source: ..\..\..\climate\tmy\build_pkgs; DestDir: {app}\tmy
 
 
 [Registry]
