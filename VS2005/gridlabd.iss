@@ -65,7 +65,7 @@ Name: quicklaunchicon; Description: Create a &Quick Launch icon; GroupDescriptio
 [Dirs]
 Name: {app}\bin
 Name: {app}\etc
-Name: {app}\etc\tmy
+Name: {app}\tmy
 Name: {app}\lib
 Name: {userdocs}\GridLAB-D
 Name: {app}\rt
@@ -135,6 +135,9 @@ Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\gnuplot.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\gridlabd.h; DestDir: {app}\rt; Flags: ignoreversion
+Source: ..\..\..\climate\tmy\*.zip; DestDir: {app}\tmy
+Source: ..\..\..\climate\tmy\extract_tmy; DestDir: {app}\tmy
+Source: ..\..\..\climate\tmy\build_pkgs; DestDir: {app}\tmy
 
 
 [Registry]
