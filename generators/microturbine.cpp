@@ -101,7 +101,7 @@ microturbine::microturbine(MODULE *module)
 			PT_double, "Rated_kVA[kVA]", PADDR(Rated_kVA),
 			//PT_double, "Rated_kV[kV]", PADDR(Rated_kV),
 		
-			PT_complex, "VA_Out[VA]", PADDR(VA_Out),
+			//PT_complex, "VA_Out[VA]", PADDR(VA_Out),
 
 			//resistances and max P, Q
 
