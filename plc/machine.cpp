@@ -208,13 +208,13 @@ int machine::compile(char *source)
 	/* compile source */
 	gl_verbose("compiling %s from %s using incpath '%s'...", ofile, cfile,incpath);
 	unlink(ofile);
-	if (exec("gcc -I%s -c %s -o %s",incpath,cfile,ofile)!=0)
+	if (exec("gcc -I\"%s\" -c \"%s\" -o \"%s\"",incpath,cfile,ofile)!=0)
 		return -1;
 
 	/* link */
 	gl_verbose("converting %s to dynamic link library...", ofile);
 	unlink(lfile);
-	if (exec("gcc -export-all-symbols -shared -o %s -Wl,%s", lfile,ofile)!=0)
+	if (exec("gcc -export-all-symbols -shared -o \"%s\" -Wl,\"%s\"", lfile,ofile)!=0)
 		return -1;
 
 	/* load the code (loader is in main.cpp) */

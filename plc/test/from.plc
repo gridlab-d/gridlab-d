@@ -11,6 +11,8 @@ INIT
 CODE(dt,dev)
 {
 	static int count=100;
-	if (dt>0) SNDMSG("to","test");
-	if (count-->0) return 60; else return NEVER;
+	static char msg[16];
+	sprintf(msg,"Test %d",count);
+	if (dt>0) SNDMSG("to",msg);
+	if (count-->0) return (int)(rand()*60); else return NEVER;
 }
