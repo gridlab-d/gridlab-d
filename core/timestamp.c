@@ -386,12 +386,17 @@ void set_tzspec(int year,char *tzname,SPEC *pStart, SPEC *pEnd)
 void load_tzspecs(char *tz)
 {
 	char *filepath = find_file(TZFILE,NULL,FF_READ);
+	char *pTzname = 0;
 	FILE *fp;
 	char buffer[1024];
 	int linenum=0;
 	int year=YEAR0;
 	tzvalid=0;
-	strncpy(current_tzname,tz_name(tz),sizeof(current_tzname));
+	pTzname = tz_name(tz);
+	if(pTzname == 0){
+		throw_exception("timezone \'%s\' was not understood by tz_name.", tz);
+	}
+	strncpy(current_tzname,pTzname,sizeof(current_tzname));
 	tzoffset = tz_offset(current_tzname);
 	strncpy(tzstd,tz_std(current_tzname),sizeof(tzstd));
 	strncpy(tzdst,tz_dst(current_tzname),sizeof(tzdst));
@@ -436,7 +441,8 @@ void load_tzspecs(char *tz)
 			&end.month,&end.nth,&end.day,&end.hour,&end.minute);
 
 		/* load only TZ requested */
-		if (tz!=NULL && strcmp(tz_name(tzname),current_tzname)!=0)
+		pTzname = tz_name(tzname);
+		if (tz!=NULL && pTzname!= NULL && strcmp(pTzname,current_tzname)!=0)
 			continue;
 
 		if (form==1) /* no DST */
