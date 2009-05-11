@@ -140,13 +140,13 @@ object load {
 
 object inverter {
 	parent node4;
-	GENERATOR_MODE SUPPLY_DRIVEN;
+	generator_mode SUPPLY_DRIVEN;
 	name inv;
 }
 
 object solar {
 	parent inv;
-	GENERATOR_MODE SUPPLY_DRIVEN;
+	generator_mode SUPPLY_DRIVEN;
 	name s;
 }
 
