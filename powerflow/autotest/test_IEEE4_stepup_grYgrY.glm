@@ -18,6 +18,8 @@ clock {
 module powerflow;
 module assert;
 
+#set iteration_limit=1000;
+
 object overhead_line_conductor:100 {
 	geometric_mean_radius 0.0244;
 	resistance 0.306;

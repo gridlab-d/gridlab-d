@@ -15,6 +15,8 @@ clock {
 	timezone EST+5EDT;
 }
 
+#set iteration_limit=1000;
+
 module powerflow;
 module assert;
 

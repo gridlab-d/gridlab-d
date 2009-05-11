@@ -54,10 +54,11 @@ TIMESTAMP double_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		double *x = (double*)gl_get_double_by_name(obj->parent,target);
 		double m = abs(*x-value);
 		if (_isnan(m) || m>within){				
-			gl_warning("assert failed on %s: %s %g not within %f of %g", 
+			gl_verbose("Assert failed on %s: %s %g not within %f of %g", 
 				gl_name(obj->parent, buff, 64), target, *x, within, value);
 			return t1;
 		}
+		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
 		return TS_NEVER;
 	} 
 	else {
