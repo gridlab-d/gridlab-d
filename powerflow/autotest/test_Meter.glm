@@ -1,0 +1,309 @@
+// Meter Self-Test
+// Tests measured current, power, and energy for the meter
+//  object, on single and three phase systems.  Also performs
+//  quick tests on player and recorder objects.
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 00:00:00 EST';
+}
+
+module assert;
+module powerflow;
+module tape;
+
+#set iteration_limit=100;
+
+// Single phase at phase A
+
+object overhead_line {
+	phases AN;
+	length 300 ft;
+	configuration object line_configuration {
+		conductor_A object overhead_line_conductor {
+			geometric_mean_radius 0.00446 ft;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		conductor_N object overhead_line_conductor {
+			geometric_mean_radius 0.00446 ft;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		spacing object line_spacing {
+			distance_AN 5.0249 ft;
+		};
+	};
+	from object node {
+		name meter_fA;
+		phases AN;
+		voltage_A 7200+0j;
+		nominal_voltage 7200;		
+	};
+	to object meter {
+		name meter_tmeterA;
+		phases AN;
+		voltage_A 7200+0j;
+		nominal_voltage 7200;
+		object load {
+			name meter_tA;
+			phases AN;
+			voltage_A 7200+0j;
+			constant_current_A 1;
+			constant_power_A 1500+750j;
+			constant_impedance_A 1000+2000j;
+			nominal_voltage 7200;		
+		};
+		object complex_assert {
+			target "measured_current_A";			
+			value 3.9897-48.41d;
+			within 0.1;
+		};
+		object complex_assert {
+			target "measured_current_B";			
+			value 0+0j;
+			within 0.1;
+		};
+		object complex_assert {
+			target "measured_current_C";			
+			value 0+0j;
+			within 0.1;
+		};		
+		object double_assert {
+			target "measured_power";			
+			value 28724.00;
+			within 0.1;
+		};		
+	};	
+};
+
+// Single phase at phase B
+
+object overhead_line {
+	phases BN;
+	length 300 ft;
+	configuration object line_configuration {
+		conductor_B object overhead_line_conductor {
+			geometric_mean_radius 0.00446 ft;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		conductor_N object overhead_line_conductor {
+			geometric_mean_radius 0.00446 ft;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		spacing object line_spacing {
+			distance_BN 5.0249 ft;
+		};
+	};
+	from object node {
+		name meter_fB;
+		phases BN;
+		voltage_B -3600.00-6235.383j;
+		nominal_voltage 7200;
+		
+	};
+	to object meter {
+		name meter_tmeterB;
+		phases BN;
+		voltage_B -3600.00-6235.383j;
+		nominal_voltage 7200;
+		object load {
+			name meter_tB;
+			phases BN;
+			voltage_B -3600.00+6235.383j;
+			constant_current_B -0.5-0.866j;
+			constant_power_B 1500+750j;
+			constant_impedance_B 1000+2000j;
+			nominal_voltage 7200;
+		};
+		object complex_assert {
+			target "measured_current_A";			
+			value 0+0j;
+			within 0.1;
+		};	
+		object complex_assert {
+			target "measured_current_B";			
+			value 3.989-168.41d;
+			within 0.1;
+		};	
+		object complex_assert {
+			target "measured_current_C";			
+			value 0+0j;
+			within 0.1;
+		};
+		object double_assert {
+			target "measured_power";			
+			value 28724.0;
+			within 0.1;
+		};		
+	};	
+};
+
+// Single phase at phase C
+
+object overhead_line {
+	phases CN;
+	length 300 ft;
+	configuration object line_configuration {
+		conductor_C object overhead_line_conductor {
+			geometric_mean_radius 0.00446 ft;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		conductor_N object overhead_line_conductor {
+			geometric_mean_radius 0.00446 ft;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		spacing object line_spacing {
+			distance_CN 5.0249 ft;
+		};
+	};
+	from object node {
+		name meter_fC;
+		phases CN;
+		voltage_C -3600.00+6235.383j;
+		nominal_voltage 7200;		
+	};
+	to object meter {
+		name meter_tmeterC;
+		phases CN;
+		voltage_C -3600.00+6235.383j;
+		nominal_voltage 7200;
+		object load {
+			name meter_tC;
+			phases CN;
+			voltage_C -3600.00+6235.383j;
+			constant_current_C -0.5+0.866j;
+			constant_power_C 1500+750j;
+			constant_impedance_C 1000+2000j;
+			nominal_voltage 7200;
+		};
+		object complex_assert {
+			target "measured_current_A";			
+			value  0+0j;
+			within 0.1;
+		};	
+		object complex_assert {
+			target "measured_current_B";			
+			value  0+0j;
+			within 0.1;
+		};	
+		object complex_assert {
+			target "measured_current_C";			
+			value  3.9897+71.589d;
+			within 0.1;
+		};		
+		object double_assert {
+			target "measured_power";			
+			value 28723.8;
+			within 0.1;
+		};		
+	};	
+};
+
+// POLYPHASES
+
+object overhead_line {
+	phases ABCN;
+	length 300 ft;
+	configuration object line_configuration {
+		conductor_A object overhead_line_conductor {
+			geometric_mean_radius 0.00446 ft;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		conductor_B object overhead_line_conductor {
+			geometric_mean_radius 0.00446 ft;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		conductor_C object overhead_line_conductor {
+			geometric_mean_radius 0.00446 ft;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		conductor_N object overhead_line_conductor {
+			geometric_mean_radius 0.00446 ft;
+			resistance 1.12 Ohm/mile;
+			rating.summer.continuous 500;
+		};
+		spacing object line_spacing {
+			distance_AB 7 ft;
+			distance_BC 7 ft;
+			distance_AC 7 ft;
+			distance_AN 5.0249 ft;
+			distance_BN 5.0249 ft;
+			distance_CN 5.0249 ft;			
+		};
+	};
+	from object node {
+		name meter_fABC;
+		phases ABCN;
+		voltage_A 7200+0j;		
+		voltage_B -3600-6235.4j;
+		voltage_C -3600+6235.4j;		
+		nominal_voltage 7200;
+	};
+	to object meter {
+		name meter_tmeterABC;
+		phases ABCN;
+		voltage_A 7200+0j;		
+		voltage_B -3600-6235.4j;
+		voltage_C -3600+6235.4j;		
+		nominal_voltage 7200;
+		object load {
+			name meter_tABC;
+			phases ABCN;
+			voltage_A 7200+0j;		
+			voltage_B -3600-6235.4j;
+			voltage_C -3600+6235.4j;		
+			constant_current_A 1;
+			constant_current_B -0.5-0.866j;
+			constant_current_C -0.5+0.866j;
+			constant_power_A 1500+750j;
+			constant_power_B 1500+750j;
+			constant_power_C 1500+750j;
+			constant_impedance_A 1000+2000j;
+			constant_impedance_B 1000+2000j;
+			constant_impedance_C 1000+2000j;
+			nominal_voltage 7200;
+		};
+		object complex_assert {
+			target "measured_current_A";			
+			value 3.9897-48.41d;
+			within 0.1;
+		};	
+		object complex_assert {
+			target "measured_current_B";			
+			value 3.9897-168.41d;
+			within 0.1;
+		};	
+		object complex_assert {
+			target "measured_current_C";			
+			value 3.9897+71.589d;
+			within 0.1;
+		};		
+		object double_assert {
+			target "measured_power";			
+			value 86174.3;
+			within 0.1;
+		};
+		object double_assert {
+			target "measured_energy";
+			within 0.1;
+			object player {
+				property value;
+				file "Meas_Energy.csv";
+				loop 1;
+     			};
+     		};
+		object recorder {
+     			property measured_energy;
+     			file "..\test_file.csv";
+     			limit 1;
+     			interval 3600;
+     		};
+	};		
+};
