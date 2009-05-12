@@ -282,14 +282,37 @@ int link::init(OBJECT *parent)
 	phase_f_test = (fNode->phases & phases);
 	phase_t_test = (tNode->phases & phases);
 
-	if ((phase_f_test != phases) || (phase_t_test != phases))	//Phase mismatch on the line
-		GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
-		/*  TROUBLESHOOT
-		A line has been configured to carry a certain set of phases.  Either the input node or output
-		node is not providing a source/sink for these different conductors.  The To and From nodes must
-		have at least the phases of the line connecting them.
-		*/
+	if ((SpecialLnk==DELTAGWYE) | (SpecialLnk==SPLITPHASE))	//Delta-Gwye and Split-phase transformers will cause problems, handle special
+	{
+		if (SpecialLnk==SPLITPHASE)
+		{
+			phase_f_test &= ~(PHASE_S);	//Pull off the single phase portion of from node
 
+			if ((phase_f_test != (phases & ~(PHASE_S))) || (phase_t_test != phases))	//Phase mismatch on the line
+				GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
+				/*  TROUBLESHOOT
+				A line has been configured to carry a certain set of phases.  Either the input node or output
+				node is not providing a source/sink for these different conductors.  The To and From nodes must
+				have at least the phases of the line connecting them.
+				*/
+		}
+		else	//Has to be D-Gwye then
+		{
+			phase_t_test &= ~(PHASE_N);	//Pull off the neutral phase portion of from node (no idea if ABCD or ABCN would be convention)
+			phase_f_test &= ~(PHASE_N);	//Pull off the neutral phase portion of from node 
+
+			if ((phase_f_test != (phases & ~(PHASE_N))) || (phase_t_test != (phases & ~(PHASE_N))))	//Phase mismatch on the line
+				GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
+				//Defined above
+		}
+	}
+	else												//Everything else
+	{
+		if ((phase_f_test != phases) || (phase_t_test != phases))	//Phase mismatch on the line
+			GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
+			//Defined above
+	}
+	
 	if (nominal_voltage==0)
 	{
 		node *pFrom = OBJECTDATA(from,node);

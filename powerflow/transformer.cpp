@@ -77,11 +77,16 @@ int transformer::init(OBJECT *parent)
 	double nt, nt_a, nt_b, nt_c, inv_nt_a, inv_nt_b, inv_nt_c;
 	complex zt, zt_a, zt_b, zt_c, z0,z1,z2;
 
-	link::init(parent);
-	OBJECT *obj = OBJECTHDR(this);
-
 	transformer_configuration *config = OBJECTDATA(configuration,
 	                                   transformer_configuration);
+
+	if (config->connect_type==3)		//Flag Delta-Gwye and Split-phase for phase checks
+		SpecialLnk = DELTAGWYE;
+	else if (config->connect_type==5)
+		SpecialLnk = SPLITPHASE;
+
+	link::init(parent);
+	OBJECT *obj = OBJECTHDR(this);
 
 	V_base = config->V_secondary;
 	voltage_ratio = nt = config->V_primary / config->V_secondary;
