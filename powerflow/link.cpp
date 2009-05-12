@@ -153,6 +153,7 @@ int link::init(OBJECT *parent)
 
 	powerflow_object::init(parent);
 
+	set phase_f_test, phase_t_test;
 	node *fNode = OBJECTDATA(from,node);
 	node *tNode = OBJECTDATA(to,node);
 
@@ -160,8 +161,14 @@ int link::init(OBJECT *parent)
 	/* check link from node */
 	if (from==NULL)
 		throw "link from node is not specified";
+		/*  TROUBLESHOOT
+		The from node for a line or link is not connected to anything.
+		*/
 	if (to==NULL)
 		throw "link to node is not specified";
+		/*  TROUBLESHOOT
+		The to node for a line or link is not connected to anything.
+		*/
 	
 	/* adjust ranks according to method in use */
 	switch (solver_method) {
@@ -173,9 +180,17 @@ int link::init(OBJECT *parent)
 			{
 				if(gl_set_parent(obj, from) < 0)
 					throw "error when setting parent";
+					/*  TROUBLESHOOT
+					An error has occurred while setting the parent field of a link.  Please
+					submit a bug report and your code so this error can be diagnosed further.
+					*/
 			} 
 			else 
 				throw "link from reference not a node";
+				/*  TROUBLESHOOT
+				The from connection of a link is not a node-based object.  Ensure that the from object is a
+				node, load, or meter object.  If not, adjust your model accordingly.
+				*/
 		}
 		else
 			/* promote 'from' object if necessary */
@@ -188,9 +203,11 @@ int link::init(OBJECT *parent)
 			{
 				if(gl_set_parent(to, obj) < 0)
 					throw "error when setting parent";
+					//Defined above
 			} 
 			else 
 				throw "link to reference not a node";
+				//Defined above
 		}
 		else
 			/* promote this object if necessary */
@@ -226,9 +243,11 @@ int link::init(OBJECT *parent)
 				{
 					if(gl_set_parent(obj, from) < 0)
 						throw "error when setting parent";
+						//Defined above
 				} 
 				else 
 					throw "link from reference not a node";
+					//Defined above
 			}
 			else
 				/* promote 'from' object if necessary */
@@ -241,9 +260,11 @@ int link::init(OBJECT *parent)
 				{
 					if(gl_set_parent(to, obj) < 0)
 						throw "error when setting parent";
+					//Defined above
 				} 
 				else 
 					throw "link to reference not a node";
+					//Defined above
 			}
 			else
 				/* promote this object if necessary */
@@ -253,8 +274,21 @@ int link::init(OBJECT *parent)
 	}
 	default:
 		throw "unsupported solver method";
+		//Defined elsewhere
 		break;
 	}
+
+	//Simple Phase checks
+	phase_f_test = (fNode->phases & phases);
+	phase_t_test = (tNode->phases & phases);
+
+	if ((phase_f_test != phases) || (phase_t_test != phases))	//Phase mismatch on the line
+		GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
+		/*  TROUBLESHOOT
+		A line has been configured to carry a certain set of phases.  Either the input node or output
+		node is not providing a source/sink for these different conductors.  The To and From nodes must
+		have at least the phases of the line connecting them.
+		*/
 
 	if (nominal_voltage==0)
 	{
@@ -473,6 +507,10 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			if (prevlink==NULL)
 			{
 				gl_error("GS: memory allocation failure zero length");
+				/*  TROUBLESHOOT
+				This is a bug.  Gauss-Seidel attempted to allocate memory for a zero-length substitution and failed.
+				Please submit a bug report and your model files.
+				*/
 				return 0;
 			}
 
@@ -516,10 +554,18 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			//See if it is a node/load/meter
 			if (!(gl_object_isa(from,"load") | gl_object_isa(from,"node") | gl_object_isa(from,"meter")))
 				GL_THROW("GS: Attempt to substitue 0 length line %d failed: from is not a node device!",obj->id);
+				/*  TROUBLESHOOT
+				The from end of a line is not a node, load, or meter.  Gauss-Seidel has failed to do a zero line
+				substitution as a result.  Check the from connection of the link.
+				*/
 
 			//Make sure our phases align, otherwise become angry
 			if (fnode->phases!=tnode->phases)
 				GL_THROW("GS: Attempt to substitue 0 length line %d failed: endpoint phases do not match!",obj->id);
+				/*  TROUBLESHOOT
+				Gauss-Seidel attempted to substitute a 0 length line with a parent-child relationship.  However, the parent and child
+				phases do not explicitly match.  Set them the same to enable the parent child relationship.
+				*/
 
 			//Additional check not needed in node - make sure To isn't a parent (no easy way to fix this, if multiple children gets wonky)
 			if (tnode->SubNode==(SUBNODETYPE)3)
@@ -527,11 +573,19 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				//Reference its child
 				node *SubNodeObj = OBJECTDATA(tnode->SubNodeParent,node);
 				gl_warning("0 Length Line %d has child-linked object as the end.  If more than one child existed, earlier children have been lost!",obj->id);
+				/*  TROUBLESHOOT
+				The end link of a system was attached to a node that already had a parent-child relationship.  If more than one child was connected to
+				this end node, other children may have lost their connection and no longer be connected to the system.
+				*/
 			
 				//Now have to handle based on what the from node of the line is
 				if (fnode->SubNode==(SUBNODETYPE)2)	//From node is another child
 				{
 					GL_THROW("GS: Attempt to substitute 0 length line %d failed: Would result in great-grandchilren nesting which is unsupported in GS!",obj->id);
+					/*  TROUBLESHOOT
+					Gauss-Seidel is only set to implement "grandchildren" relationships.  That is, parent-child connections
+					may only be nested two-deep.  Any further nesting is not supported.
+					*/
 				}
 				else	//From node is unchilded
 				{
@@ -687,6 +741,10 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				else if (SpecialLnk==REGULATOR)	//Regulator
 				{
 					GL_THROW("GS: Regulator not implemented in Gauss-Seidel Solver yet!");
+					/*  TROUBLESHOOT
+					Regulators are not coded into the Gauss-Seidel solver at this time.  Please
+					use a different solver method or find a way to remove the regulator from your model.
+					*/
 
 					equalm(b_mat,Yto);	//Initial code.  Very untested
 					equalm(c_mat,Yfrom);

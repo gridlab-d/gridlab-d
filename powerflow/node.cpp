@@ -206,10 +206,18 @@ int node::init(OBJECT *parent)
 		if ((obj->parent!=NULL) && (OBJECTDATA(obj->parent,node)->bustype!=SWING))	//Has a parent that isn't a swing bus, let's see if it is a node and link it up 
 		{																			//(this will break anything intentionally done this way - e.g. switch between two nodes)
 			gl_warning("Parent/child implementation marginally tested, use at your own risk!");
+			/*  TROUBLESHOOT
+			The Gauss-Seidel parent-child connection type is only marginally tested.  It has not been fully tested and may cause
+			unexpected problems in your model.  Use at your own risk.
+			*/
 
 			//See if it is a node/load/meter
 			if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow")))
 				throw("GS: Parent is not a load or node!");
+				/*  TROUBLESHOOT
+				A Gauss-Seidel parent-child connection was attempted on a non-node.  The parent object must be a node, load, or meter object in the 
+				powerflow module for this connection to be successful.
+				*/
 
 			node *parNode = OBJECTDATA(obj->parent,node);
 
@@ -580,11 +588,22 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		// if the parent object is another node
 		if (obj->parent!=NULL && gl_object_isa(obj->parent,"node","powerflow"))
 		{
-			// add the injections on this node to the parent
 			node *pNode = OBJECTDATA(obj->parent,node);
-			LOCKED(obj->parent, pNode->current_inj[0] += current_inj[0]);
-			LOCKED(obj->parent, pNode->current_inj[1] += current_inj[1]);
-			LOCKED(obj->parent, pNode->current_inj[2] += current_inj[2]);
+
+			//Check to make sure phases are correct
+			if ((pNode->phases & phases) == phases)
+			{
+				// add the injections on this node to the parent
+				LOCKED(obj->parent, pNode->current_inj[0] += current_inj[0]);
+				LOCKED(obj->parent, pNode->current_inj[1] += current_inj[1]);
+				LOCKED(obj->parent, pNode->current_inj[2] += current_inj[2]);
+			}
+			else
+				GL_THROW("Node:%d's parent does not have the proper phase connection to be a parent.",obj->id);
+				/*  TROUBLESHOOT
+				A parent-child relationship was attempted when the parent node does not contain the phases
+				of the child node.  Ensure parent nodes have at least the phases of the child object.
+				*/
 		}
 
 		break;
@@ -988,7 +1007,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		// if the parent object is a node
 		if (obj->parent!=NULL && (gl_object_isa(obj->parent,"node","powerflow")))
 		{
-			// copy the voltage from the parent
+			// copy the voltage from the parent - check for mismatch handled earlier
 			node *pNode = OBJECTDATA(obj->parent,node);
 			LOCKED(obj, voltage[0] = pNode->voltage[0]);
 			LOCKED(obj, voltage[1] = pNode->voltage[1]);
@@ -1527,6 +1546,10 @@ void *node::GS_P_C_NodeChecks(TIMESTAMP t0, TIMESTAMP t1, OBJECT *obj, LINKCONNE
 		}
 		else
 			throw("GS: Object %d is a child of something that it shouldn't be!",obj->id);
+			/*  TROUBLESHOOT
+			A Gauss-Seidel object is childed to something it should not be (not a load, node, or meter).
+			This should have been caught earlier and is likely a bug.  Submit your code and a bug report.
+			*/
 
 		//Update previous power tracker
 		last_child_power[0][0] = power[0];
