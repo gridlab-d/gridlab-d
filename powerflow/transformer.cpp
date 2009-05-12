@@ -60,8 +60,17 @@ int transformer::init(OBJECT *parent)
 {
 	if (!configuration)
 		throw "no transformer configuration specified.";
+		/*  TROUBLESHOOT
+		A transformer configuration was not provided.  Please use object transformer_configuration
+		and define the necessary parameters of your transformer to continue.
+		*/
 	if (!gl_object_isa(configuration, "transformer_configuration"))
 		throw "invalid transformer configuration";
+		/*  TROUBLESHOOT
+		An invalid transformer configuration was provided.  Ensure you have proper values in each field
+		of the transformer_configuration object and that you haven't inadvertantly used a line configuration
+		as the transformer configuration.
+		*/
 
 	double V_base,za_basehi,za_baselo,V_basehi;
 	double sa_base;
@@ -69,6 +78,7 @@ int transformer::init(OBJECT *parent)
 	complex zt, zt_a, zt_b, zt_c, z0,z1,z2;
 
 	link::init(parent);
+	OBJECT *obj = OBJECTHDR(this);
 
 	transformer_configuration *config = OBJECTDATA(configuration,
 	                                   transformer_configuration);
@@ -141,6 +151,11 @@ int transformer::init(OBJECT *parent)
 			else 
 			{
 				GL_THROW("Unsupported solver method");
+				/*  TROUBLESHOOT
+				An unsupported solver type was detected.  Valid solver types are FBS
+				(forward-back sweep), GS (Gauss-Seidel), and NR (Newton-Raphson).  Please use
+				one of these methods and consider submitting a bug report for the solver type you tried.
+				*/
 			}
 
 			a_mat[0][0] = nt_a;
@@ -198,6 +213,7 @@ int transformer::init(OBJECT *parent)
 			else 
 			{
 				GL_THROW("Unsupported solver method");
+				// Defined above
 			}
 			break;
 		case transformer_configuration::DELTA_GWYE:
@@ -311,6 +327,7 @@ int transformer::init(OBJECT *parent)
 			else 
 			{
 				GL_THROW("Unsupported solver method");
+				// Defined above
 			}
 		
 			break;
@@ -333,6 +350,14 @@ int transformer::init(OBJECT *parent)
 				{
 					V_basehi = config->V_primary;
 					sa_base = config->phaseA_kVA_rating;
+					if (sa_base==0)	//Error
+						GL_THROW("Split-phase tranformer:%d trying to attach to phase A not defined in the configuration",obj->id);
+						/*  TROUBLESHOOT
+						A single-phase, center-tapped transformer is attempting to attach to a system with phase A, while
+						its phase A is undefined.  Fix the appropriate link or define a new transformer configuration with
+						powerA_rating property properly defined.
+						*/
+
 					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
 					za_baselo = (V_base * V_base)/(sa_base*1000);
 					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
@@ -353,6 +378,14 @@ int transformer::init(OBJECT *parent)
 				{
 					V_basehi = config->V_primary;
 					sa_base = config->phaseB_kVA_rating;
+					if (sa_base==0)	//Error
+						GL_THROW("Split-phase tranformer:%d trying to attach to phase B not defined in the configuration",obj->id);
+						/*  TROUBLESHOOT
+						A single-phase, center-tapped transformer is attempting to attach to a system with phase B, while
+						its phase B is undefined.  Fix the appropriate link or define a new transformer configuration with
+						powerB_rating property properly defined.
+						*/
+
 					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
 					za_baselo = (V_base * V_base)/(sa_base*1000);
 					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
@@ -373,6 +406,14 @@ int transformer::init(OBJECT *parent)
 				{
 					V_basehi = config->V_primary;
 					sa_base = config->phaseC_kVA_rating;
+					if (sa_base==0)	//Error
+						GL_THROW("Split-phase tranformer:%d trying to attach to phase C not defined in the configuration",obj->id);
+						/*  TROUBLESHOOT
+						A single-phase, center-tapped transformer is attempting to attach to a system with phase C, while
+						its phase C is undefined.  Fix the appropriate link or define a new transformer configuration with
+						powerC_rating property properly defined.
+						*/
+
 					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
 					za_baselo = (V_base * V_base)/(sa_base*1000);
 					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
@@ -407,6 +448,10 @@ int transformer::init(OBJECT *parent)
 			else if (solver_method==SM_GS)	// This doesn't work yet
 			{
 				GL_THROW("Gauss-Seidel Implementation of Split-Phase is not complete");
+				/*  TROUBLESHOOT
+				At this time, the Gauss-Seidel method does not support split-phase transformers.
+				This will hopefully be a feature in future releases.
+				*/
 			}
 			else if (solver_method==SM_NR)
 			{
@@ -414,12 +459,18 @@ int transformer::init(OBJECT *parent)
 			}
 			else 
 			{
-				throw "Invalid solver type";
+				throw "Unsupported solver method";
+				//defined above
 			}
 
 			break;
 		default:
 			throw "unknown transformer connect type";
+			/*  TROUBLESHOOT
+			An unknown transformer configuration was provided.  Please ensure you are using
+			only the defined types of transformer.  Refer to the documentation of use the command flag
+			--modhelp powerflow:transformer_configuration to see valid transformer types.
+			*/
 	}
 
 #ifdef _TESTING
