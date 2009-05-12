@@ -138,6 +138,7 @@ Source: ..\..\..\core\rt\gridlabd.h; DestDir: {app}\rt; Flags: ignoreversion
 ;Source: ..\..\..\climate\tmy\*.zip; DestDir: {app}\tmy
 ;Source: ..\..\..\climate\tmy\extract_tmy; DestDir: {app}\tmy
 ;Source: ..\..\..\climate\tmy\build_pkgs; DestDir: {app}\tmy
+Source: ..\..\..\plc\rt\include\plc.h; DestDir: {app}\rt
 
 
 [Registry]
