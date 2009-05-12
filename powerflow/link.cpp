@@ -1125,21 +1125,10 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 						d_mat[2][0]*current_out[0]+
 						d_mat[2][1]*current_out[1]+
 						d_mat[2][2]*current_out[2];
-		
-		//power_in = ((fnode->voltage[0]*~current_in[0]) + (fnode->voltage[1]*~current_in[1]) + (fnode->voltage[2]*~current_in[2])).Mag();
-		//power_out = ((tnode->voltage[0]*~current_out[0]) + (tnode->voltage[1]*~current_out[1]) + (tnode->voltage[2]*~current_out[2])).Mag();
+
+		//Compute magnitude of power output
 		power_in = ((fnode->voltage[0]*~current_in[0]).Mag() + (fnode->voltage[1]*~current_in[1]).Mag() + (fnode->voltage[2]*~current_in[2]).Mag());
 		power_out = ((tnode->voltage[0]*~current_out[0]).Mag() + (tnode->voltage[1]*~current_out[1]).Mag() + (tnode->voltage[2]*~current_out[2]).Mag());
-
-		////Zero out admittance and YVs terms of To/From nodes for next cycle.  Rank should take care of all problems here.  If not, need to flag prev_LTime as well
-		//fnode->YVs[0] = fnode->YVs[1] = fnode->YVs[2] = 0.0;
-		//tnode->YVs[0] = tnode->YVs[1] = tnode->YVs[2] = 0.0;
-
-		//fnode->Ys[0][0] = fnode->Ys[0][1] = fnode->Ys[0][2] = 0.0;
-		//fnode->Ys[1][0] = fnode->Ys[1][1] = fnode->Ys[1][2] = 0.0;
-		//fnode->Ys[2][0] = fnode->Ys[2][1] = fnode->Ys[2][2] = 0.0;
-
-		//equalm(fnode->Ys,tnode->Ys);
 	}
 
 	return TRET;

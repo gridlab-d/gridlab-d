@@ -105,6 +105,9 @@ TIMESTAMP triplex_meter::presync(TIMESTAMP t0, TIMESTAMP t1)
 	if (measured_power>measured_demand) 
 		measured_demand=measured_power;
 
+	//Zero out current - it is the constant current load (houses will accumulate here)
+	current[0] = current[1] = current[2] = 0.0;
+
 	// compute energy use
 	if (t0>0)
 		measured_energy += measured_power * TO_HOURS(t1 - t0);

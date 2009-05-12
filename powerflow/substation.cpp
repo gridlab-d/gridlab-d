@@ -58,7 +58,7 @@ substation::substation(MODULE *mod) : node(mod)
 			PT_INHERIT, "node",
 			/// @todo three-phase meter should meter Q also (required complex)
 			PT_double, "distribution_energy[Wh]", PADDR(distribution_energy),
-			PT_complex, "distribution_power[W]", PADDR(distribution_power),
+			PT_complex, "distribution_power[VA]", PADDR(distribution_power),
 			PT_double, "distribution_demand[W]", PADDR(distribution_demand),
 			
 			// added to record last voltage/current

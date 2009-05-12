@@ -63,7 +63,7 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_double, "measured_power[W]", PADDR(measured_power),
 			PT_double, "measured_demand[W]", PADDR(measured_demand),
 			PT_double, "measured_real_power[W]", PADDR(measured_real_power),
-			PT_double, "measured_reactive_power[VA]", PADDR(measured_reactive_power),
+			PT_double, "measured_reactive_power[VAr]", PADDR(measured_reactive_power),
 			
 			// added to record last voltage/current
 			PT_complex, "measured_voltage_A[V]", PADDR(measured_voltage[0]),
