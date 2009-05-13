@@ -212,8 +212,11 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 	const double COP = COPcoef*((-3.5/45)*(Tout-70)+4.5);
 
 	// accumulate energy
-	load.energy = Qr * KWPBTUPH * COP * nHours;
-	load.total = load.energy/nHours;
+	if (nHours != 0)	//If something makes us iterate (powerflow), this causes issues.
+	{
+		load.energy = Qr * KWPBTUPH * COP * nHours;
+		load.total = load.energy/nHours;
+	}
 
 	// process all events
 	// change control mode if appropriate
