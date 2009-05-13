@@ -44,7 +44,7 @@ waterheater::waterheater(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(module,"waterheater",sizeof(waterheater),PC_BOTTOMUP);
+		oclass = gl_register_class(module,"waterheater",sizeof(waterheater),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
@@ -109,6 +109,21 @@ int waterheater::create()
 	// initialize randomly distributed values
 	tank_setpoint 		= clip(gl_random_normal(130,10),100,160);
 	thermostat_deadband	= clip(gl_random_normal(5, 1),1,10);
+
+	/* initialize water tank thermostat */
+	tank_setpoint = gl_random_normal(125,5);
+	if (tank_setpoint<90) tank_setpoint = 90;
+	if (tank_setpoint>160) tank_setpoint = 160;
+
+	/* initialize water tank deadband */
+	thermostat_deadband = fabs(gl_random_normal(2,1))+1;
+	if (thermostat_deadband>10)
+		thermostat_deadband = 10;
+
+	tank_UA = clip(gl_random_normal(2.0, 0.20),0.1,10) * tank_volume/50;  
+	if(tank_UA <= 1.0)
+		tank_UA = 2.0;	// "R-13"
+
 	return 1;
 }
 
@@ -134,22 +149,36 @@ int waterheater::init(OBJECT *parent)
 	house *pHouse = OBJECTDATA(parent,house);
 	pVoltage = (pHouse->attach(OBJECTHDR(this),30,TRUE))->pV; // 220V 30amp breaker
 
-	// basic randomized defaults for published variables, if user has not set any of these
-	// Assuming a 50-gal heater with a UA of 2.0 Btu/hr-F for a 2000-sf house.  
-	if (tank_volume <= 0.0)
+	/* sanity checks */
+	/* initialize water tank volume */
+	if(tank_volume <= 0.0){
 		tank_volume = 5*floor((1.0/5.0)*gl_random_uniform(0.90, 1.10) * 50.0 * (pHouse->get_floor_area() /2000.0));  // [gal]
+		if (tank_volume > 100.0)
+			tank_volume = 100.0;		
+		else if (tank_volume < 20.0) 
+			tank_volume = 20.0;
+	} else {
+		if (tank_volume > 100.0 || tank_volume < 20.0){
+			gl_error("watertank volume of %f outside the volume bounds of 20 to 100 gallons.", tank_volume);
+			/*	TROUBLESHOOT
+				All waterheaters must be set between 40 and 100 gallons.  Most waterheaters are assumed to be 50 gallon tanks.
+			*/
+		}
+	}
 
-	// truncate tank volume distribution
-	if (tank_volume > 100.0)
-		tank_volume = 100.0;		
-	else if (tank_volume < 40.0) 
-		tank_volume = 40.0;
+	if (tank_setpoint<90 || tank_setpoint>160)
+		gl_error("watertank thermostat is set to %f and is outside the bounds of 90 to 160 degrees Fahrenheit (32.2 - 71.1 Celsius).", tank_setpoint);
+		/*	TROUBLESHOOT
+			All waterheaters must be set between 90 degF and 160 degF.
+
+	/* initialize water tank deadband */
+	if (thermostat_deadband>10 || thermostat_deadband < 0.0)
+		GL_THROW("watertank deadband of %f is outside accepted bounds of 0 to 10 degrees (5.6 degC).", thermostat_deadband);
 
 	// initial tank UA
 	if (tank_UA <= 0.0)
-
-		// UA-2.0 represents R-13; assume UA varies directly with volume...
-		tank_UA = clip(gl_random_normal(2.0, 0.20),0.1,10) * tank_volume/50;  
+		GL_THROW("Tank UA value is negative.");
+		
 
 	// Set heating element capacity if not provided by the user
 	if (heating_element_capacity <= 0.0)
@@ -170,15 +199,6 @@ int waterheater::init(OBJECT *parent)
 	}
 
 	// Other initial conditions
-	if (tank_setpoint==0)
-		tank_setpoint = gl_random_normal(125,5);
-	if (tank_setpoint<90) tank_setpoint = 90;
-	if (tank_setpoint>160) tank_setpoint = 160;
-
-	if (thermostat_deadband<=0)
-		thermostat_deadband = fabs(gl_random_normal(2,1))+1;
-	if (thermostat_deadband>10)
-		thermostat_deadband = 10;
 
 	if(Tw < Tinlet){ // uninit'ed temperature
 		Tw = gl_random_uniform(tank_setpoint - thermostat_deadband, tank_setpoint + thermostat_deadband);
@@ -198,10 +218,10 @@ int waterheater::init(OBJECT *parent)
 	cur_water_demand = last_water_demand = water_demand;
 
 	// @todo initial tank charge should be based on demand, which is time dependent and must wait until sync from t0=0
-	if (gl_random_uniform(0,1) < 0.8)
+	//if (gl_random_uniform(0,1) < 0.8)
 		h = height;
-	else
-		h = 10 * floor(0.1 * gl_random_uniform(0,height));
+	//else
+	//	h = 10 * floor(0.1 * gl_random_uniform(0,height));
 
 	// initial water temperature
 	if (h == 0)
@@ -217,38 +237,40 @@ int waterheater::init(OBJECT *parent)
 	return 1;
 }
 
+void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
+	OBJECT *parent = (OBJECTHDR(this))->parent;
+	house *pHouse = OBJECTDATA(parent, house);
+
+	double Ton  = tank_setpoint - thermostat_deadband/2;
+	double Toff = tank_setpoint + thermostat_deadband/2;
+
+	switch(tank_state()){
+		case FULL:
+			if(Tw-TSTAT_PRECISION < Ton){
+				heat_needed = TRUE;
+			} else if (Tw+TSTAT_PRECISION > Toff){
+				heat_needed = FALSE;
+			} else {
+				; // no change
+			}
+			break;
+		case PARTIAL:
+		case EMPTY:
+			heat_needed = TRUE; // if we aren't full, fill 'er up!
+			break;
+		default:
+			GL_THROW("waterheater thermostat() detected that the water heater tank is in an unknown state");
+	}
+	//return TS_NEVER; // this thermostat is purely reactive and will never drive the system
+}
+
 /** Water heater plc control code to set the water heater 'heat_needed' state
 	The thermostat set point, deadband, tank state(height of hot water column) and 
 	current water temperature are used to determine 'heat_needed' state.
  **/
-void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1)
-{
-	/* Update power and internal gain for the current time to synch and set the tank state */
-	double internal_gain = 0.0;
+TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
+	/* time has passed ~ calculate internal gains, height change, temperature change */
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
-
-	// determine the power used
-	if (heat_needed == TRUE)
-		power_kw = actual_kW() * (heat_mode == GASHEAT ? 0.01 : 1.0);
-	else
-		power_kw = 0.0;
-
-	// determine internal gains
-	if (location == INSIDE)
-		internal_gain = actual_kW() * nHours; // DPC: this is wrong!!!  Where's the UA?
-	else
-		internal_gain = 0;
-
-	// get context of object
-	OBJECT *parent = (OBJECTHDR(this))->parent;
-	house *pHouse = OBJECTDATA(parent,house);
-
-	// post internal gains
-	load.heatgain = internal_gain;
-
-	// calculate temperatures
-	Ton	= tank_setpoint - thermostat_deadband/2;
-	Toff = tank_setpoint + thermostat_deadband/2;
 
 	// calculate water demand
 	cur_water_demand = water_demand;
@@ -257,27 +279,6 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	// update temperature and height
 	update_T_and_or_h(nHours);
 
-	// determine tank state
-	WHQSTATE current_tank_state = tank_state();
-	switch (current_tank_state) {
-		case FULL:
-			if (Tw-TSTAT_PRECISION < Ton)
-				heat_needed = TRUE;
-			else if (Tw+TSTAT_PRECISION > Toff)
-				heat_needed = FALSE;
-			else 
-			{	// We're in the deadband...leave heat like it was.	
-			}
-			break;
-		case EMPTY:
-		case PARTIAL:
-			heat_needed = TRUE;
-			break;
-	}
-}
-
-TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
-	/* time has passed ~ calculate internal gains, height change, temperature change */
 	return TS_NEVER;
 }
 
@@ -286,6 +287,11 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
  **/
 TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
+	// determine the power used
+	if (heat_needed == TRUE){
+		power_kw = actual_kW() * (heat_mode == GASHEAT ? 0.01 : 1.0);
+	} else
+		power_kw = 0.0;
 
 	// Now find our current temperatures and boundary height...
 	// And compute the time to the next transition...
@@ -301,6 +307,19 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	double internal_gain = 0.0;
+	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
+
+	// determine internal gains
+	if (location == INSIDE){
+		internal_gain = actual_kW() * nHours; // DPC: this is wrong!!!  Where's the UA?
+	} else {
+		internal_gain = 0;
+	}
+	// post internal gains
+	load.heatgain = internal_gain;
+
+
 	return TS_NEVER;
 }
 
