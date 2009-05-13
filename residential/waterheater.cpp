@@ -279,6 +279,14 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 	// update temperature and height
 	update_T_and_or_h(nHours);
 
+	if(this->Tw > 212.0){
+		GL_THROW("the waterheater is boiling!");
+		/*	TROUBLESHOOT
+			The temperature model for the waterheater has broken, or the environment around the
+			waterheater has burst into flames.  Please post this with your model and dump files
+			attached to the bug report.
+		 */
+	}
 	return TS_NEVER;
 }
 
