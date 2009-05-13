@@ -298,10 +298,10 @@ int link::init(OBJECT *parent)
 		}
 		else	//Has to be D-Gwye then
 		{
-			phase_t_test &= ~(PHASE_N);	//Pull off the neutral phase portion of from node (no idea if ABCD or ABCN would be convention)
-			phase_f_test &= ~(PHASE_N);	//Pull off the neutral phase portion of from node 
+			phase_t_test &= ~(PHASE_N | PHASE_D);	//Pull off the neutral and Delta phase portion of from node (no idea if ABCD or ABCN would be convention)
+			phase_f_test &= ~(PHASE_N | PHASE_D);	//Pull off the neutral and Delta phase portion of to node
 
-			if ((phase_f_test != (phases & ~(PHASE_N))) || (phase_t_test != (phases & ~(PHASE_N))))	//Phase mismatch on the line
+			if ((phase_f_test != (phases & ~(PHASE_N | PHASE_D))) || (phase_t_test != (phases & ~(PHASE_N | PHASE_D))))	//Phase mismatch on the line
 				GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
 				//Defined above
 		}
