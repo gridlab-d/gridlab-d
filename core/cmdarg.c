@@ -83,24 +83,40 @@ STATUS load_module_list(FILE *fd,int* test_mod_num)
 	return SUCCESS;
 }
 
-void print_class(CLASS *oclass){
+typedef struct s_pntree{
+	char *name;
+	struct s_pntree *left, *right;
+} pntree;
+
+void print_class_d(CLASS *oclass, int tabdepth){
 	PROPERTY *prop;
 	FUNCTION *func;
-	printf("class %s {\n",oclass->name,oclass->type);
+	char tabs[33];
+
+	if(tabdepth > 32){
+		throw_exception("print_class_d: tabdepth > 32, which is mightily deep!");
+	} else {
+		int i = 0;
+		memset(tabs, 0, 33);
+		for(i = 0; i < tabdepth; ++i)
+			tabs[i] = '\t';
+	}
+
+	printf("%sclass %s {\n", tabs, oclass->name,oclass->type);
 	if (oclass->parent){
-		printf("\tparent %s;\n", oclass->parent->name);
-		print_class(oclass->parent);
+		printf("%s\tparent %s;\n", tabs, oclass->parent->name);
+		print_class_d(oclass->parent, tabdepth+1);
 	}
 	for (func=oclass->fmap; func!=NULL && func->otype==oclass->type; func=func->next)
-		printf( "\tfunction %s();\n", func->name);
+		printf( "%s\tfunction %s();\n", tabs, func->name);
 	for (prop=oclass->pmap; prop!=NULL && prop->otype==oclass->type; prop=prop->next)
 	{
 		char *propname = class_get_property_typename(prop->ptype);
 		if (propname!=NULL){
 			if(prop->unit != NULL){
-				printf("\t%s %s [%s];", propname, prop->name, prop->unit->name);
+				printf("%s\t%s %s [%s];", tabs, propname, prop->name, prop->unit->name);
 			} else {
-				printf("\t%s %s;", propname, prop->name);
+				printf("%s\t%s %s;", tabs, propname, prop->name);
 			}
 			if (prop->ptype==PT_set || prop->ptype==PT_enumeration)
 			{
@@ -112,7 +128,11 @@ void print_class(CLASS *oclass){
 			printf("\n");
 		}
 	}
-	printf("}\n");
+	printf("%s}\n", tabs);
+}
+
+void print_class(CLASS *oclass){
+	print_class_d(oclass, 0);
 }
 
 /** Load and process the command-line arguments
@@ -280,6 +300,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				else
 				{
 					CLASS	*oclass;
+					/* lexographically sort all elements from class_get_first_class & oclass->next */
 					for (oclass=class_get_first_class(); oclass!=NULL; oclass=oclass->next)
 					{
 						print_class(oclass);
