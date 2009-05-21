@@ -161,8 +161,8 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 	//			tempQ[1] = imag(cong(*bus[indexer].I[jindex])*(*bus[indexer].V[jindex]); // constant current component
       //          tempQ[2] = imag(cong(*bus[indexer].Y[jindex])*(abs(*bus[indexer].V[jindex])*abs(*bus[indexer].V[jindex])); // constant impedance component
 	//			*bus[indexer].QL[jindex] = tempQ[0]+tempQ[1]+tempQ[2];
-			}
-	}
+	//		}
+	//}
 
 //////////////////////
 
