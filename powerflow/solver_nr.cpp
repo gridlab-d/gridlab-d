@@ -152,7 +152,7 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 //	for (indexer=0; indexer<bus_count; indexer++)
 	//	{
 	//		for (jindex=0; jindex<3; jindex++)
-			{
+	//		{
 	//			tempP[0] = real(*bus[indexer].S[jindex]); // constant power component
 	//			tempP[1] = real(cong(*bus[indexer].I[jindex])*(*bus[indexer].V[jindex]); // constant current component
      //           tempP[2] = real(cong(*bus[indexer].Y[jindex])*(abs(*bus[indexer].V[jindex])*abs(*bus[indexer].V[jindex])); // constant impedance component
