@@ -52,14 +52,23 @@ TIMESTAMP double_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	if (t0>0)
 	{	
 		double *x = (double*)gl_get_double_by_name(obj->parent,target);
-		double m = abs(*x-value);
-		if (_isnan(m) || m>within){				
-			gl_verbose("Assert failed on %s: %s %g not within %f of %g", 
-				gl_name(obj->parent, buff, 64), target, *x, within, value);
-			return t1;
+		if (x==NULL) {
+			GL_THROW("Specified target %s for %s is not valid.",target,gl_name(obj->parent,buff,64));
+			/*  TROUBLESHOOT
+			Check to make sure the target you are specifying is a published variable.  
+			Refer to the documentation of the command flag --modhelp
+			*/
 		}
-		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
-		return TS_NEVER;
+		else {
+			double m = abs(*x-value);
+			if (_isnan(m) || m>within){				
+				gl_verbose("Assert failed on %s: %s %g not within %f of %g", 
+					gl_name(obj->parent, buff, 64), target, *x, within, value);
+				return t1;
+			}
+			gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+			return TS_NEVER;
+		}
 	} 
 	else {
 		return t1+1;
