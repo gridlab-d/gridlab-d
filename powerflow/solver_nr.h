@@ -13,6 +13,8 @@ typedef struct  {
 	complex *S[3];	///< constant power
 	complex *Y[3];	///< constant admittance (impedance loads)
 	complex *I[3];	///< constant current
+	double *PL[3]; ///< system load at each bus in terms of P
+	double *QL[3]; ///< system load at each bus in terms of Q
 	double kv_base; ///< kV basis
 	double mva_base; /// MVA basis
 } BUSDATA;
