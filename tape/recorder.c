@@ -194,22 +194,37 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	
 	if (my->status==TS_DONE)
 	{
-		close_recorder(my); /* potentially called every sync pass for multiple timesteps -MH */
+		close_recorder(my); /* note: potentially called every sync pass for multiple timesteps, catch fp==NULL in tape ops */
 		return TS_NEVER;
 	}
 
-	/* connect to property */
-	if (my->target==NULL)
-		my->target = link_properties(obj->parent,my->property);
+	if(my->last.ts < 1)
+		my->last.ts = t0;
 
-	/* read property */
+	/* connect to property */
+	if (my->target==NULL){
+		my->target = link_properties(obj->parent,my->property);
+	}
 	if (my->target==NULL)
 	{
 		sprintf(buffer,"'%s' contains a property of %s %d that is not found", my->property, obj->parent->oclass->name, obj->parent->id);
 		close_recorder(my);
 		my->status = TS_ERROR;
 	}
-	else if (read_properties(obj->parent,my->target,buffer,sizeof(buffer))==0)
+
+	// update clock
+	if ((my->status==TS_OPEN) && (t0 > obj->clock)) 
+	{	
+		obj->clock = t0;
+		// if the recorder is clock-based, write the value
+		if((my->interval > 0) && (my->last.ts+my->interval <= t0) && (my->last.value[0] != 0)){
+			my->last.ts = t0;
+			recorder_write(obj);
+		}
+	}
+
+	/* update property value */
+	if ((my->target != NULL) && (read_properties(obj->parent,my->target,buffer,sizeof(buffer))==0))
 	{
 		sprintf(buffer,"unable to read property '%s' of %s %d", my->property, obj->parent->oclass->name, obj->parent->id);
 		close_recorder(my);
@@ -236,20 +251,27 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		return TS_NEVER;
 	}
 
+	if(my->last.ts < 1)
+		my->last.ts = t0;
+
 	/* write tape */
 	if (my->status==TS_OPEN)
 	{	
+		strncpy(my->last.value,buffer,sizeof(my->last.value));
 		if (my->interval==0 /* sample on every pass */
 			|| ((my->interval==-1) && my->last.ts!=t0 && strcmp(buffer,my->last.value)!=0) /* sample only when value changes */
-			|| (my->interval>0 && my->last.ts+my->interval<=t0)) /* sample regularly */
+			)
+//			|| (my->interval>0 && my->last.ts+my->interval<=t0)) /* sample regularly */
+
 		{
 			my->last.ts = t0;
 			//my->last.ts = obj->parent;
-			strncpy(my->last.value,buffer,sizeof(my->last.value));
+//			strncpy(my->last.value,buffer,sizeof(my->last.value));
 			recorder_write(obj);
 		}
 	}
-	else if (my->status==TS_ERROR)
+
+	if (my->status==TS_ERROR)
 	{
 		gl_error("recorder %d %s\n",obj->id, buffer);
 		close_recorder(my);
