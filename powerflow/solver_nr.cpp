@@ -8,7 +8,7 @@
 #include "powerflow.h"
 
 /** Newton-Raphson solver
-	Solves a power flow problem using the Newton-Raphson method
+	Solves a power flow problem using the Newton-Raphson method 
 	
 	@return n=0 on failure to complete a single iteration, 
 	n>0 to indicate success after n interations, or 
@@ -146,21 +146,21 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 
 
 //System load at each bus is represented by second order polynomial equations
-	int indexer,jindex;
-	double tempP[3]; //array tempP store the temporary value of P load at each bus  
-    double tempQ[3]; //array tempQ store the temporary value of Q load at each bus 
-	for (indexer=0; indexer<bus_count; indexer++)
-		{
-			for (jindex=0; jindex<3; jindex++)
+//	int indexer,jindex;
+//	double tempP[3]; //array tempP store the temporary value of P load at each bus  
+  //  double tempQ[3]; //array tempQ store the temporary value of Q load at each bus 
+//	for (indexer=0; indexer<bus_count; indexer++)
+	//	{
+	//		for (jindex=0; jindex<3; jindex++)
 			{
-				tempP[0] = real(*bus[indexer].S[jindex]); // constant power component
-				tempP[1] = real(cong(*bus[indexer].I[jindex])*(*bus[indexer].V[jindex]); // constant current component
-                tempP[2] = real(cong(*bus[indexer].Y[jindex])*(abs(*bus[indexer].V[jindex])*abs(*bus[indexer].V[jindex])); // constant impedance component
-				*bus[indexer].PL[jindex] = tempP[0]+tempP[1]+tempP[2];
-                tempQ[0] = imag(*bus[indexer].S[jindex]); // constant power component
-				tempQ[1] = imag(cong(*bus[indexer].I[jindex])*(*bus[indexer].V[jindex]); // constant current component
-                tempQ[2] = imag(cong(*bus[indexer].Y[jindex])*(abs(*bus[indexer].V[jindex])*abs(*bus[indexer].V[jindex])); // constant impedance component
-				*bus[indexer].QL[jindex] = tempQ[0]+tempQ[1]+tempQ[2];
+	//			tempP[0] = real(*bus[indexer].S[jindex]); // constant power component
+	//			tempP[1] = real(cong(*bus[indexer].I[jindex])*(*bus[indexer].V[jindex]); // constant current component
+     //           tempP[2] = real(cong(*bus[indexer].Y[jindex])*(abs(*bus[indexer].V[jindex])*abs(*bus[indexer].V[jindex])); // constant impedance component
+	//			*bus[indexer].PL[jindex] = tempP[0]+tempP[1]+tempP[2];
+      //          tempQ[0] = imag(*bus[indexer].S[jindex]); // constant power component
+	//			tempQ[1] = imag(cong(*bus[indexer].I[jindex])*(*bus[indexer].V[jindex]); // constant current component
+      //          tempQ[2] = imag(cong(*bus[indexer].Y[jindex])*(abs(*bus[indexer].V[jindex])*abs(*bus[indexer].V[jindex])); // constant impedance component
+	//			*bus[indexer].QL[jindex] = tempQ[0]+tempQ[1]+tempQ[2];
 			}
 	}
 
