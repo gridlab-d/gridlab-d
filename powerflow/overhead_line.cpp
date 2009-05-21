@@ -48,9 +48,17 @@ int overhead_line::init(OBJECT *parent)
 
 	if (!configuration)
 		throw "no overhead line configuration specified.";
+		/*  TROUBLESHOOT
+		No overhead line configuration was specified.  Please use object line_configuration
+		with appropriate values to specify an overhead line configuration
+		*/
 
 	if (!gl_object_isa(configuration, "line_configuration"))
 		throw "invalid line configuration for overhead line";
+		/*  TROUBLESHOOT
+		The object specified as the configuration for the overhead line is not a valid
+		configuration object.  Please ensure you have a line_configuration object selected.
+		*/
 
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 
@@ -58,8 +66,13 @@ int overhead_line::init(OBJECT *parent)
 		if (config->phase##ph##_conductor &&                                       \
 				!gl_object_isa(config->phase##ph##_conductor, "overhead_line_conductor")) \
 			throw "invalid conductor for phase " #ph " of overhead line";           \
+			/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an overhead line conductor, it may be an underground or triplex-line only conductor */	\
 		else if ((!config->phase##ph##_conductor) && has_phase(PHASE_##ph))                 \
 			throw "missing conductor for phase " #ph " of overhead line";
+			/*  TROUBLESHOOT
+			The conductor specified for the indicated phase for the overhead line is missing
+			or invalid.
+			*/
 
 	TEST_CONFIG(A)
 	TEST_CONFIG(B)
@@ -70,6 +83,10 @@ int overhead_line::init(OBJECT *parent)
 
 	if (!config->line_spacing || !gl_object_isa(config->line_spacing, "line_spacing"))
 		throw "invalid or missing line spacing on overhead line";
+		/*  TROUBLESHOOT
+		The configuration object for the overhead line is missing the line_spacing configuration
+		or the item specified in that location is invalid.
+		*/
 
 	recalc();
 
@@ -186,7 +203,7 @@ void overhead_line::recalc(void)
 
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
-			a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0); // TODO: Initialize these to zero
+			a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
 			c_mat[i][j] = 0.0;
 			B_mat[i][j] = b_mat[i][j];
 		}

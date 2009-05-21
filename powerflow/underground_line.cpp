@@ -46,21 +46,34 @@ int underground_line::init(OBJECT *parent)
 {
 	int result = line::init(parent);
 
-	/// @todo implement recalc just like overhead_line (ticket #197)
-
 	if (!configuration)
 		throw "no underground line configuration specified.";
+		/*  TROUBLESHOOT
+		No underground line configuration was specified.  Please use object line_configuration
+		with appropriate values to specify an underground line configuration
+		*/
 
 	if (!gl_object_isa(configuration, "line_configuration"))
 		throw "invalid line configuration for underground line";
+		/*  TROUBLESHOOT
+		The object specified as the configuration for the underground line is not a valid
+		configuration object.  Please ensure you have a line_configuration object selected.
+		*/
+
+
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 
 	#define TEST_CONFIG(ph)                                                       \
 		if (config->phase##ph##_conductor &&                                       \
 				!gl_object_isa(config->phase##ph##_conductor, "underground_line_conductor")) \
 			throw "invalid conductor for phase " #ph " of underground line";           \
+			/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an underground line conductor, it may be an overhead or triplex-line only conductor. */ \
 		else if ((!config->phase##ph##_conductor) && (has_phase(PHASE_##ph)))         \
 			throw "missing conductor for phase " #ph " of underground line";
+			/*  TROUBLESHOOT
+			The conductor specified for the indicated phase for the underground line is missing
+			or invalid.
+			*/
 
 	TEST_CONFIG(A)
 	TEST_CONFIG(B)
@@ -71,13 +84,26 @@ int underground_line::init(OBJECT *parent)
 
 	if (!config->line_spacing || !gl_object_isa(config->line_spacing, "line_spacing"))
 		throw "invalid or missing line spacing on underground line";
+		/*  TROUBLESHOOT
+		The configuration object for the underground line is missing the line_spacing configuration
+		or the item specified in that location is invalid.
+		*/
 
+	recalc();
+
+	return result;
+}
+
+void underground_line::recalc(void)
+{
 	double dia_od1, dia_od2, dia_od3;
 	int16 strands_4, strands_5, strands_6;
 	double rad_14, rad_25, rad_36;
 	double dia[7], res[7], gmr[7], gmrcn[3], rcn[3];
 	double d[6][6];
 	complex z[6][6]; //, z_ij[3][3], z_in[3][3], z_nj[3][3], z_nn[3][3], z_abc[3][3];
+
+	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 
 	complex test;///////////////
 
@@ -263,7 +289,6 @@ int underground_line::init(OBJECT *parent)
 		print_matrix(d_mat);
 	}
 #endif
-	return result;
 }
 
 int underground_line::isa(char *classname)
@@ -345,4 +370,9 @@ EXPORT int isa_underground_line(OBJECT *obj, char *classname)
 	return OBJECTDATA(obj,underground_line)->isa(classname);
 }
 
+EXPORT int recalc_underground_line(OBJECT *obj)
+{
+	OBJECTDATA(obj,underground_line)->recalc();
+	return 1;
+}
 /**@}**/

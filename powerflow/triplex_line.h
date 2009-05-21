@@ -13,6 +13,7 @@ public:
 public:
 	int init(OBJECT *parent);
 	triplex_line(MODULE *mod);
+	void recalc(void);
 	inline triplex_line(CLASS *cl=oclass):line(cl){};
 	int isa(char *classname);
 	int create(void);

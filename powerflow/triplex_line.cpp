@@ -50,17 +50,28 @@ int triplex_line::isa(char *classname)
 int triplex_line::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
+	
+	int result = line::init(parent);
+
 	if (!has_phase(PHASE_S))
 		gl_warning("%s (%s:%d) is triplex but doesn't have phases S set", obj->name, obj->oclass->name, obj->id);
+		/*  TROUBLESHOOT
+		A triplex line has been used, but this triplex line does not have the phase S designated to indicate it
+		contains single-phase components.  Without this specified, you may get invalid results.
+		*/
 
+	recalc();
+
+	return result;
+}
+void triplex_line::recalc(void)
+{
 	// create local variables that will be used to calculate matrices.
 	double dcond,ins_thick,D12,D13,D23;
 	double r1,r2,rn,gmr1,gmr2,gmrn;
 	complex zp11,zp22,zp33,zp12,zp13,zp23;
 	complex zs[3][3];
 	complex tn[2];
-
-	int result = line::init(parent);
 
 	// Gather data stored in configuration objects
 	triplex_line_configuration *line_config = OBJECTDATA(configuration,triplex_line_configuration);
@@ -186,7 +197,6 @@ int triplex_line::init(OBJECT *parent)
 		print_matrix(d_mat);
 	}
 #endif
-	return result;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -261,6 +271,12 @@ EXPORT int init_triplex_line(OBJECT *obj)
 EXPORT int isa_triplex_line(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,triplex_line)->isa(classname);
+}
+
+EXPORT int recalc_triplex_line(OBJECT *obj)
+{
+	OBJECTDATA(obj,triplex_line)->recalc();
+	return 1;
 }
 
 /**@}**/
