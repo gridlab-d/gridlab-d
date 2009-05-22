@@ -125,16 +125,19 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 	PROPERTY *first=NULL, *last=NULL;
 	UNIT *unit = NULL;
 	char1024 list;
+	complex oblig;
 	strcpy(list,property_list); /* avoid destroying orginal list */
 	for (item=strtok(list,","); item!=NULL; item=strtok(NULL,","))
 	{
 		char256 pstr, ustr;
+		char *cpart = 0;
+		int64 cid = -1;
 		PROPERTY *prop = NULL;
 		PROPERTY *target = NULL;
 		double scale = 1.0;
 
 		// everything that looks like a property name, then read units up to ]
-		if(2 == sscanf(item,"%[A-Za-z0-9_][%[^]\n,\0]", pstr, ustr)){
+		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n,\0]", pstr, ustr)){
 			unit = gl_find_unit(ustr);
 			if(unit == NULL){
 				gl_error("recorder:%d: unable to find unit '%s' for property '%s'",obj->id, ustr,pstr);
@@ -143,6 +146,23 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 			item = pstr;
 		}
 		prop = (PROPERTY*)malloc(sizeof(PROPERTY));
+		
+		/* branch: test to see if we're trying to split up a complex property */
+		/* must occur w/ *cpart=0 before gl_get_property in order to properly reformat the property name string */
+		cpart = strchr(item, '.');
+		if(cpart != NULL){
+//			strtok(item, ".");
+			*cpart = 0;
+			++cpart;
+			if(strcmp("imag", cpart) == 0){
+				cid = (int)((int64)&(oblig.i) - (int64)&oblig);
+			} else if(strcmp("real", cpart) == 0){
+				cid = (int)((int64)&(oblig.r) - (int64)&oblig);
+			} else {
+				gl_error("recorder:%d: invalid complex part for \'%s.%s\'", pstr, cpart);
+			}
+		}
+
 		target = gl_get_property(obj,item);
 
 		if (prop!=NULL && target!=NULL)
@@ -165,6 +185,10 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 		{
 			gl_error("recorder:%d: property '%s' not found", obj->id,item);
 			return NULL;
+		}
+		if(cid >= 0){ /* doing the complex part thing */
+			prop->ptype = PT_double;
+			(prop->addr) = (int64)(prop->addr) + cid;
 		}
 	}
 	return first;
