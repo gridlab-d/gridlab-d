@@ -13,8 +13,8 @@ typedef struct  {
 	complex *S[3];	///< constant power
 	complex *Y[3];	///< constant admittance (impedance loads)
 	complex *I[3];	///< constant current
-	double *PL[3]; ///< real power component of total bus load
-	double *QL[3]; ///< reactive power component of total bus load
+	double PL[3]; ///< real power component of total bus load
+	double QL[3]; ///< reactive power component of total bus load
 	double kv_base; ///< kV basis
 	double mva_base; /// MVA basis
 } BUSDATA;

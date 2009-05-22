@@ -156,8 +156,8 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 				tempP += *bus[indexer].V[jindex]*(~(*bus[indexer].I[jindex]));	//Constant current portion
 				tempP += *bus[indexer].V[jindex]*(~(*bus[indexer].V[jindex]*(*bus[indexer].Y[jindex])));	//Constant impedance portion
 
-				*bus[indexer].PL[jindex] = tempP.Re();	//Real power portion
-				*bus[indexer].QL[jindex] = tempP.Im();	//Reactive power portion
+				bus[indexer].PL[jindex] = tempP.Re();	//Real power portion
+				bus[indexer].QL[jindex] = tempP.Im();	//Reactive power portion
 			}
 	}
 
