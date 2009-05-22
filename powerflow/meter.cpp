@@ -69,9 +69,9 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_complex, "measured_voltage_A[V]", PADDR(measured_voltage[0]),
 			PT_complex, "measured_voltage_B[V]", PADDR(measured_voltage[1]),
 			PT_complex, "measured_voltage_C[V]", PADDR(measured_voltage[2]),
-			PT_complex, "measured_current_A[V]", PADDR(measured_current[0]),
-			PT_complex, "measured_current_B[V]", PADDR(measured_current[1]),
-			PT_complex, "measured_current_C[V]", PADDR(measured_current[2]),
+			PT_complex, "measured_current_A[A]", PADDR(measured_current[0]),
+			PT_complex, "measured_current_B[A]", PADDR(measured_current[1]),
+			PT_complex, "measured_current_C[A]", PADDR(measured_current[2]),
 
 
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
