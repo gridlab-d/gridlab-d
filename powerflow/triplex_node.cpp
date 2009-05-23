@@ -48,15 +48,16 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_complex, "current_1[A]", PADDR(current1),
 			PT_complex, "current_2[A]", PADDR(current2),
 			PT_complex, "current_N[A]", PADDR(currentN),
+			PT_complex, "current_12[A]", PADDR(current12),
 			PT_complex, "power_1[VA]", PADDR(power1),
 			PT_complex, "power_2[VA]", PADDR(power2),
-			PT_complex, "power_N[VA]", PADDR(powerN),
+			PT_complex, "power_12[VA]", PADDR(power12),
 			PT_complex, "shunt_1[S]", PADDR(shunt1),
 			PT_complex, "shunt_2[S]", PADDR(shunt2),
-			PT_complex, "shunt_N[S]", PADDR(shuntN),
+			PT_complex, "shunt_12[S]", PADDR(shunt12),
 			PT_complex, "impedance_1[Ohm]", PADDR(impedance[0]),
 			PT_complex, "impedance_2[Ohm]", PADDR(impedance[1]),
-			PT_complex, "impedance_N[Ohm]", PADDR(impedance[2]),
+			PT_complex, "impedance_12[Ohm]", PADDR(impedance[2]),
 
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -73,7 +74,7 @@ int triplex_node::create(void)
 	maximum_voltage_error = 0;
 	shunt1 = complex(0,0);
 	shunt2 = complex(0,0);
-	shuntN = complex(0,0);
+	shunt12 = complex(0,0);
     return result;
 }
 
@@ -83,8 +84,8 @@ int triplex_node::init(OBJECT *parent)
 		shunt1 = complex(1,0)/impedance[0];
 	if ((shunt2.IsZero())&&(impedance[1]!=0))
 		shunt2 = complex(1,0)/impedance[1];
-	if ((shuntN.IsZero())&&(impedance[2]!=0))
-		shuntN = complex(1,0)/impedance[2];
+	if ((shunt12.IsZero())&&(impedance[2]!=0))
+		shunt12 = complex(1,0)/impedance[2];
 	return node::init(parent);
 }
 

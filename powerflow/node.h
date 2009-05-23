@@ -48,17 +48,17 @@
 #define voltage2N voltaged[1]	/// phase 2-N voltage
 #define voltage1N voltaged[2]	/// phase 1-N voltage (note the sign change)
 
-#define current1 current[0]		/// line 1 current accumulator
-#define current2 current[1]		/// line 2 current accumulator
-#define currentN current[2]		/// line 3 current accumulator
+#define current1 current[0]		/// line 1 constant current accumulator
+#define current2 current[1]		/// line 2 constant current accumulator
+#define currentN current[2]	    /// line N constant current accumulator
 
-#define power1 power[0]			/// phase 1 power injection accumulator
-#define power2 power[1]			/// phase 2 power injection accumulator
-#define powerN power[2]			/// phase N power injection accumulator
+#define power1 power[0]			/// phase 1 constant power load
+#define power2 power[1]			/// phase 2 constant power load
+#define power12 power[2]		/// phase 1-2 constant power load
 
-#define shunt1 shunt[0]			/// phase 1 shunt admittance accumulator 
-#define shunt2 shunt[1]			/// phase 2 shunt admittance accumulator 
-#define shuntN shunt[2]			/// phase N shunt admittance accumulator 
+#define shunt1 shunt[0]			/// phase 1 constant admittance load
+#define shunt2 shunt[1]			/// phase 2 constant admittance load
+#define shunt12 shunt[2]		/// phase 1-2 constant admittance load
 
 typedef struct s_linkconnected {
 	OBJECT *connectedlink; /// Link attached to a particular node
@@ -112,6 +112,7 @@ public:
 	complex shunt[3];		/// bus shunt admittance 
 	complex Ys[3][3];		/// Self-admittance for GS
 	complex YVs[3];			/// "Current" accumulator for GS
+	complex current12;		/// Used for phase 1-2 current injections in triplex
 
 	int NR_node_reference;		/// Node's reference in NR_busdata
 

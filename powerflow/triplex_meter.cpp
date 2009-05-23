@@ -61,7 +61,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "triplex_node",
 			PT_double, "measured_energy[Wh]", PADDR(measured_energy),
-			PT_double, "measured_power[W]", PADDR(measured_power),
+			PT_double, "measured_power[VA]", PADDR(measured_power),
 			PT_double, "measured_demand[W]", PADDR(measured_demand),
 			PT_double, "measured_real_power[W]", PADDR(measured_real_power),
 			
@@ -123,13 +123,14 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	measured_current[0] = current_inj[0];
 	measured_current[1] = current_inj[1];
 	measured_current[2] = current_inj[2];
-	measured_power = (measured_voltage[0]*(~measured_current[0])).Mag() 
-				   + (measured_voltage[1]*(~measured_current[1])).Mag()
-				   - (measured_voltage[2]*(~measured_current[2])).Mag();
+	measured_power = (measured_voltage[0]*(~measured_current[0])
+				   - measured_voltage[1]*(~measured_current[1])
+				   + measured_voltage[2]*(~measured_current[2])).Mag();
 	measured_real_power = (measured_voltage[0]*(~measured_current[0])).Re()
-						+ (measured_voltage[1]*(~measured_current[1])).Re()
-						- (measured_voltage[2]*(~measured_current[2])).Re();
-	return triplex_node::postsync(t1);}
+						- (measured_voltage[1]*(~measured_current[1])).Re()
+						+ (measured_voltage[2]*(~measured_current[2])).Re();
+	return triplex_node::postsync(t1);
+}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE

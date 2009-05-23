@@ -28,6 +28,7 @@ public: /// @todo make this private and create interfaces to control values
 	complex d_mat[3][3];   // d_mat - 3x3 matrix, 'd' matrix
 	complex A_mat[3][3];   // A_mat - 3x3 matrix, 'A' matrix
 	complex B_mat[3][3];   // B_mat - 3x3 matrix, 'B' matrix
+	complex tn[3];		   // Used to calculate return current
 	complex To_Y[3][3];	   // To_Y  - 3x3 matrix, object to admittance
 	complex From_Y[3][3];  // From_Y - 3x3 matrix, object from admittance
 	double voltage_ratio;	// voltage ratio (normally 1.0)

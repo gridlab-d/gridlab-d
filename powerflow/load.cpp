@@ -47,6 +47,12 @@ load::load(MODULE *mod) : node(mod)
 			PT_complex, "constant_impedance_A[Ohm]", PADDR(constant_impedance[0]),
 			PT_complex, "constant_impedance_B[Ohm]", PADDR(constant_impedance[1]),
 			PT_complex, "constant_impedance_C[Ohm]", PADDR(constant_impedance[2]),
+			PT_complex,	"measured_voltage_A",PADDR(measured_voltage_A),
+			PT_complex,	"measured_voltage_B",PADDR(measured_voltage_B),
+			PT_complex,	"measured_voltage_C",PADDR(measured_voltage_C),
+			PT_complex,	"measured_voltage_AB",PADDR(measured_voltage_AB),
+			PT_complex,	"measured_voltage_BC",PADDR(measured_voltage_BC),
+			PT_complex,	"measured_voltage_CA",PADDR(measured_voltage_CA),
 
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -130,6 +136,13 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = node::sync(t0);
+
+	measured_voltage_A.SetPolar(voltageA.Mag(),voltageA.Arg());  //Used for testing and xml output
+	measured_voltage_B.SetPolar(voltageB.Mag(),voltageB.Arg());
+	measured_voltage_C.SetPolar(voltageC.Mag(),voltageC.Arg());
+	measured_voltage_AB = measured_voltage_A-measured_voltage_B;
+	measured_voltage_BC = measured_voltage_B-measured_voltage_C;
+	measured_voltage_CA = measured_voltage_C-measured_voltage_A;
 	
 	return result;
 }

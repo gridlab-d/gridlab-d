@@ -71,7 +71,6 @@ void triplex_line::recalc(void)
 	double r1,r2,rn,gmr1,gmr2,gmrn;
 	complex zp11,zp22,zp33,zp12,zp13,zp23;
 	complex zs[3][3];
-	complex tn[2];
 
 	// Gather data stored in configuration objects
 	triplex_line_configuration *line_config = OBJECTDATA(configuration,triplex_line_configuration);
@@ -103,7 +102,7 @@ void triplex_line::recalc(void)
 	
 	if (solver_method==SM_FBS)
 	{
-		zs[0][0] = zp11-((zp13^2)/zp33);
+		zs[0][0] = zp11-((zp13*zp13)/zp33);
 		zs[0][1] = zp12-((zp13*zp23)/zp33);
 		zs[1][0] = zp12-((zp13*zp23)/zp33);
 		zs[1][1] = zp22-((zp23*zp23)/zp33);
@@ -173,6 +172,12 @@ void triplex_line::recalc(void)
 	
 	multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
 	multiply(length/5280.0,zs,B_mat);
+	
+	if (solver_method==SM_FBS) {
+		tn[0] = -zp13/zp33;
+		tn[1] = -zp23/zp33;
+		tn[2] = 0;
+	}
 	
 	// print out matrices when testing.
 #ifdef _TESTING

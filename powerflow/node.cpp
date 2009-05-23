@@ -513,9 +513,25 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		// add power and shunt to current injection
 		if (phases&PHASE_S)
 		{	// Split phase
+			complex temp_inj[2];
+
 			current_inj[0] += (voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ? current1 : current1 + ~(power1/voltage1) + voltage1*shunt1;
-			current_inj[1] += (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero())) ? current2 : current2 + ~(power2/voltage2) + voltage2*shunt2;
-			current_inj[2] += -(current_inj[0]+current_inj[1]);
+			temp_inj[0] = current_inj[0];
+			current_inj[0] += ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? current12 : current12 + ~(power12/(voltage1+voltage2)) + (voltage1+voltage2)*shunt12;
+			
+			current_inj[1] += (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero())) ? -current2 : -current2 - ~(power2/voltage2) - voltage2*shunt2;
+			temp_inj[1] = current_inj[1];
+			current_inj[1] += ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? -current12 : -current12 - ~(power12/(voltage1+voltage2)) - (voltage1+voltage2)*shunt12;
+			
+			if (obj->parent!=NULL && gl_object_isa(obj->parent,"triplex_line","powerflow")) {
+				link *plink = OBJECTDATA(obj->parent,link);
+				current_inj[2] = plink->tn[0]*current_inj[0] + plink->tn[1]*current_inj[1];
+			}
+			else {
+				current_inj[2] += ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
+								   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
+									? currentN : -(temp_inj[0] + temp_inj[1]);
+			}
 		}
 		else if (has_phase(PHASE_D)) 
 		{   // 'Delta' connected load

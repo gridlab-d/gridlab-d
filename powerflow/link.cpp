@@ -117,8 +117,8 @@ link::link(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "OPEN", LS_OPEN,
 			PT_object, "from",PADDR(from),
 			PT_object, "to", PADDR(to),
-			PT_double, "power_in[W]", PADDR(power_in),
-			PT_double, "power_out[W]", PADDR(power_out),
+			PT_double, "power_in[VA]", PADDR(power_in),
+			PT_double, "power_out[VA]", PADDR(power_out),
 			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 	}
 }
@@ -1118,9 +1118,19 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		}
 #endif
 
-		/* compute kva flows */
-		power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
-		power_out = (t->voltage[0]*~t->current_inj[0]).Mag() + (t->voltage[1]*~t->current_inj[1]).Mag() + (t->voltage[2]*~t->current_inj[2]).Mag();
+		/* compute va flows */
+		if (PHASE_S && SpecialLnk!=SPLITPHASE) {
+			power_in = (f->voltage[0]*~current_in[0] - f->voltage[1]*~current_in[1] + f->voltage[2]*~current_in[2]).Mag();
+			power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
+		}
+		else if (SpecialLnk==SPLITPHASE) {
+			power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
+			power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
+		}
+		else {
+			power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
+			power_out = (t->voltage[0]*~t->current_inj[0]).Mag() + (t->voltage[1]*~t->current_inj[1]).Mag() + (t->voltage[2]*~t->current_inj[2]).Mag();
+		}
 	}
 	else if ((!is_open()) && (solver_method==SM_GS) && GS_all_converged)
 	{
