@@ -605,9 +605,9 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	if (obj->parent != NULL)
 		LOCK_OBJECT(obj->parent);
 
-	pLine_I[0] = I[X12]+I[X13];
-	pLine_I[1] = I[X23]+I[X12];
-	pLine_I[2] = -I[X13]-I[X23];
+	pLine_I[0] = I[X13];
+	pLine_I[1] = -I[X23];
+	pLine_I[2] = I[X12];
 
 	if (obj->parent != NULL)
 		UNLOCK_OBJECT(obj->parent);
