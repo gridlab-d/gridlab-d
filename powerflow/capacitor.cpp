@@ -42,14 +42,36 @@ capacitor::capacitor(MODULE *mod):node(mod)
 				PT_KEYWORD, "A",PHASE_A,
 				PT_KEYWORD, "B",PHASE_B,
 				PT_KEYWORD, "C",PHASE_C,
-			PT_enumeration, "switch", switch_state,
+				PT_KEYWORD, "D",PHASE_D,
+				PT_KEYWORD, "N",PHASE_N,
+			PT_set, "phases_connected", PADDR(phases_connected),
+				PT_KEYWORD, "A",PHASE_A,
+				PT_KEYWORD, "B",PHASE_B,
+				PT_KEYWORD, "C",PHASE_C,
+				PT_KEYWORD, "D",PHASE_D,
+				PT_KEYWORD, "N",PHASE_N,
+			PT_enumeration, "switchA", PADDR(switchA_state),
 				PT_KEYWORD, "OPEN", OPEN,
 				PT_KEYWORD, "CLOSED", CLOSED,
-			PT_enumeration, "control", control,
+				PT_enumeration, "switchB", PADDR(switchB_state),
+				PT_KEYWORD, "OPEN", OPEN,
+				PT_KEYWORD, "CLOSED", CLOSED,
+				PT_enumeration, "switchC", PADDR(switchC_state),
+				PT_KEYWORD, "OPEN", OPEN,
+				PT_KEYWORD, "CLOSED", CLOSED,
+			PT_enumeration, "control", PADDR(control),
 				PT_KEYWORD, "MANUAL", MANUAL,
 				PT_KEYWORD, "VAR", VAR,
 				PT_KEYWORD, "VOLT", VOLT,
 				PT_KEYWORD, "VARVOLT", VARVOLT,
+			PT_double, "voltage_set_high[V]", PADDR(voltage_set_high), 
+			PT_double, "voltage_set_low[V]", PADDR(voltage_set_low),
+			PT_double, "capacitor_A[VAr]", PADDR(capacitor_A),
+			PT_double, "capacitor_B[VAr]", PADDR(capacitor_B),
+			PT_double, "capacitor_C[VAr]", PADDR(capacitor_C),
+			PT_enumeration, "control_level", PADDR(control_level),
+				PT_KEYWORD, "BANK", BANK,
+				PT_KEYWORD, "INDIVIDUAL", INDIVIDUAL, 
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -59,59 +81,111 @@ int capacitor::create()
 	int result = node::create();
 		
 	// Set up defaults
-	switch_state = CLOSED;
+	switchA_state = OPEN;
+	switchB_state = OPEN;
+	switchC_state = OPEN;
 	control = MANUAL;
+	control_level = INDIVIDUAL;
+	pt_phase = PHASE_A;
+	voltage_set_high = 0.0;
+	voltage_set_low = 0.0;
 	var_close = 0.0;
 	var_open = 0.0;
 	volt_close = 0.0;
 	volt_open = 0.0;
 	pt_ratio = 60;
-	pt_phase = PHASE_A;
 	time_delay = 0;
 	time_to_change = 0.0;
 
-	throw "capacitor implementation is not complete";
+	//throw "capacitor implementation is not complete"; - removed while debugging
+	return result;
+}
+
+int capacitor::init(OBJECT *parent)
+{
+	int result = node::init();
+
+	//Calculate capacitor values as admittance
+	cap_value[0] = complex(0,capacitor_A/(nominal_voltage * nominal_voltage));
+	cap_value[1] = complex(0,capacitor_B/(nominal_voltage * nominal_voltage));
+	cap_value[2] = complex(0,capacitor_C/(nominal_voltage * nominal_voltage));
+
 	return result;
 }
 
 TIMESTAMP capacitor::sync(TIMESTAMP t0)
 {
-	if (switch_state==CLOSED) {
-		switch (control) {
-			case MANUAL:  // manual
-				/// @todo implement capacity manual control closed (ticket #189)
-				break;
-			case VAR:  // VAr
-				/// @todo implement capacity var control closed (ticket #190)
-				break;
-			case VOLT:  // V
-				/// @todo implement capacity volt control closed (ticket #191)
-				break;
-			case VARVOLT:  // VAr, V
-				/// @todo implement capacity varvolt control closed (ticket #192)
-				break;
-			default:
-				break;
-		}
-	} else {
-		switch (control) {
-			case MANUAL:  // manual
-				/// @todo implement capacity manual control open (ticket #193)
-				break;
-			case VAR:  // VAr
-				/// @todo implement capacity var control open (ticket #194)
-				break;
-			case VOLT:  // V
-				/// @todo implement capacity volt control open (ticket #195)
-				break;
-			case VARVOLT:  // VAr, V
-				/// @todo implement capacity varvolt control open (ticket #196)
-				break;
-			default:
-				break;
-		}
+	switch (control) {
+		case MANUAL:  // manual
+			/// @todo implement capacity manual control closed (ticket #189)
+			break;
+		case VAR:  // VAr
+			/// @todo implement capacity var control closed (ticket #190)
+			break;
+		case VOLT:
+			{// V
+			if ((pt_phase & PHASE_N) == (PHASE_N))// Line to Neutral connections
+			{
+				complex test = voltage[0].Mag();
+				if ((pt_phase & (PHASE_A | PHASE_N)) == (PHASE_A | PHASE_N))
+					if (voltage_set_low <= voltage[0].Mag())
+						switchA_state=CLOSED;
+					else if (voltage_set_high >= voltage[0].Mag())
+						switchA_state=OPEN;
+					else;
+					
+				if ((pt_phase & (PHASE_B | PHASE_N)) == (PHASE_B | PHASE_N))
+					if (voltage_set_low <= voltage[1].Mag())
+						switchB_state=CLOSED;
+					else if (voltage_set_high >= voltage[1].Mag())
+						switchB_state=OPEN;
+					else;
+
+				if ((pt_phase & (PHASE_C | PHASE_N)) == (PHASE_C | PHASE_N))
+					if (voltage_set_low <= voltage[2].Mag())
+						switchC_state=CLOSED;
+					else if (voltage_set_high >= voltage[2].Mag())
+						switchC_state=OPEN;
+					else;
+			}
+			else // Line to Line connections
+			{
+				if ((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B))
+                   voltaged[0];
+				if ((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C))
+                   voltaged[1];
+				if ((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A))
+			    voltaged[2];
+			}
+			/// @todo implement capacity volt control closed (ticket #191)
+			break;
+			}
+		case VARVOLT:  // VAr, V
+			/// @todo implement capacity varvolt control closed (ticket #192)
+			break;
+		default:
+			break;
 	}
-	return node::sync(t0);
+
+	if (control_level == BANK)
+	{
+		if ((switchA_state | switchB_state | switchC_state) == CLOSED)
+			switchA_state = switchB_state = switchC_state = CLOSED;	//Bank control, close them all
+		else
+			switchA_state = switchB_state = switchC_state = OPEN;	//Bank control, open them all (this should never be an issue)
+	}
+
+	if ((pt_phase & (PHASE_A)) == PHASE_A)
+		shunt[0] = switchA_state==CLOSED ? cap_value[0] : complex(0.0);
+		
+	if ((pt_phase & (PHASE_B)) == PHASE_B)
+		shunt[1] = switchB_state==CLOSED ? cap_value[1] : complex(0.0);
+
+	if ((pt_phase & (PHASE_C)) == PHASE_C)
+		shunt[2] = switchC_state==CLOSED ? cap_value[2] : complex(0.0);
+
+
+return node::sync(t0);
 }
 
 int capacitor::isa(char *classname)
