@@ -1,4 +1,4 @@
-// $Id: GC-12.47-1.glm 1132 2008-11-18 22:36:10Z dchassin $ 
+// $Id: GC-12.47-1.glm 228 2009-05-27 18:16:10Z ychen $ 
 //*********************************************
 
 clock { 
@@ -14,8 +14,8 @@ module powerflow;
 object fuse:115 {
 	name GC-12-47-1_fuse_1;
 	phases "ABCN";
-	from node:75;
-	to node:76;
+	from GC-12-47-1_node_11;
+	to GC-12-47-1_node_12;
 	current_limit 10000.0;
 	status CLOSED;
 }
@@ -23,8 +23,8 @@ object fuse:115 {
 object fuse:117 {
 	name GC-12-47-1_fuse_2;
 	phases "ABCN";
-	from node:80;
-	to node:79;
+	from GC-12-47-1_node_16;
+	to GC-12-47-1_node_15;
 	current_limit 10000.0;
 	status CLOSED;
 }
@@ -32,8 +32,8 @@ object fuse:117 {
 object fuse:118 {
 	name GC-12-47-1_fuse_3;
 	phases "ABCN";
-	from node:80;
-	to node:81;
+	from GC-12-47-1_node_16;
+	to GC-12-47-1_node_17;
 	current_limit 10000.0;
 	status CLOSED;
 }
@@ -394,8 +394,8 @@ object node {
 	phases ABCN;
 	nominal_voltage 7199.558;
 	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000 j;
-	voltage_C -3599.779+6235.000 j;	
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;	
 }
 
 
@@ -435,40 +435,40 @@ object regulator_configuration {
 object switch:95 {
 	name GC-12-47-1_switch_1;
 	phases "ABCN";
-	from node:85;
-	to node:84;
+	from GC-12-47-1_node_21;
+	to GC-12-47-1_node_20;
 	status CLOSED;
 }
 
 object switch:96 {
 	name GC-12-47-1_switch_2;
 	phases "ABCN";
-	from node:86;
-	to node:87;
+	from GC-12-47-1_node_22;
+	to GC-12-47-1_node_23;
 	status CLOSED;
 }
 
 object switch:97 {
 	name GC-12-47-1_switch_3;
 	phases "ABCN";
-	from node:74;
-	to node:89;
+	from GC-12-47-1_node_10;
+	to GC-12-47-1_node_25;
 	status OPEN;
 }
 
 object switch:114 {
 	name GC-12-47-1_switch_4;
 	phases "ABCN";
-	from node:78;
-	to node:77;
+	from GC-12-47-1_node_14;
+	to GC-12-47-1_node_13;
 	status CLOSED;
 }
 
 object switch:116 {
 	name GC-12-47-1_switch_5;
 	phases "ABCN";
-	from node:83;
-	to node:82;
+	from GC-12-47-1_node_19;
+	to GC-12-47-1_node_18;
 	status CLOSED;
 }
 
@@ -564,8 +564,8 @@ object triplex_line_configuration:1 {
 object underground_line:98 {
 	name GC-12-47-1_ul_1;
 	phases "ABCN";
-	from node:66;
-	to node:67;
+	from GC-12-47-1_node_5;
+	to GC-12-47-1_node_6;
 	length 340.88861380658;
 	configuration line_configuration:92;
 }
@@ -573,8 +573,8 @@ object underground_line:98 {
 object underground_line:99 {
 	name GC-12-47-1_ul_2;
 	phases "ABCN";
-	from node:65;
-	to node:66;
+	from GC-12-47-1_node_4;
+	to GC-12-47-1_node_5;
 	length 448.867421915455;
 	configuration line_configuration:92;
 }
@@ -582,8 +582,8 @@ object underground_line:99 {
 object underground_line:100 {
 	name GC-12-47-1_ul_3;
 	phases "ABCN";
-	from node:67;
-	to node:85;
+	from GC-12-47-1_node_6;
+	to GC-12-47-1_node_21;
 	length 494.712986766415;
 	configuration line_configuration:92;
 }
@@ -591,8 +591,8 @@ object underground_line:100 {
 object underground_line:101 {
 	name GC-12-47-1_ul_4;
 	phases "ABCN";
-	from node:87;
-	to node:74;
+	from GC-12-47-1_node_23;
+	to GC-12-47-1_node_10;
 	length 10.4071976054578;
 	configuration line_configuration:92;
 }
@@ -600,8 +600,8 @@ object underground_line:101 {
 object underground_line:102 {
 	name GC-12-47-1_ul_5;
 	phases "ABCN";
-	from node:82;
-	to node:78;
+	from GC-12-47-1_node_18;
+	to GC-12-47-1_node_14;
 	length 59.8154412104793;
 	configuration line_configuration:92;
 }
@@ -609,8 +609,8 @@ object underground_line:102 {
 object underground_line:103 {
 	name GC-12-47-1_ul_6;
 	phases "ABCN";
-	from node:79;
-	to node:71;
+	from GC-12-47-1_node_15;
+	to GC-12-47-1_node_8;
 	length 102.238983007429;
 	configuration line_configuration:93;
 }
@@ -618,8 +618,8 @@ object underground_line:103 {
 object underground_line:104 {
 	name GC-12-47-1_ul_7;
 	phases "ABCN";
-	from node:81;
-	to node:72;
+	from GC-12-47-1_node_17;
+	to GC-12-47-1_node_9;
 	length 101.838066273906;
 	configuration line_configuration:93;
 }
@@ -627,8 +627,8 @@ object underground_line:104 {
 object underground_line:105 {
 	name GC-12-47-1_ul_8;
 	phases "ABCN";
-	from node:76;
-	to node:69;
+	from GC-12-47-1_node_12;
+	to GC-12-47-1_node_7;
 	length 89.6051926901407;
 	configuration line_configuration:93;
 }
@@ -636,8 +636,8 @@ object underground_line:105 {
 object underground_line:106 {
 	name GC-12-47-1_ul_9;
 	phases "ABCN";
-	from node:64;
-	to node:65;
+	from GC-12-47-1_node_3;
+	to GC-12-47-1_node_4;
 	length 441.532888510082;
 	configuration line_configuration:94;
 }
@@ -645,8 +645,8 @@ object underground_line:106 {
 object underground_line:107 {
 	name GC-12-47-1_ul_10;
 	phases "ABCN";
-	from node:63;
-	to node:64;
+	from GC-12-47-1_node_2;
+	to GC-12-47-1_node_3;
 	length 222.527820378055;
 	configuration line_configuration:92;
 }
@@ -654,8 +654,8 @@ object underground_line:107 {
 object underground_line:108 {
 	name GC-12-47-1_ul_11;
 	phases "ABCN";
-	from node:62;
-	to node:63;
+	from GC-12-47-1_node_1;
+	to GC-12-47-1_node_2;
 	length 385.576812936181;
 	configuration line_configuration:92;
 }
@@ -663,8 +663,8 @@ object underground_line:108 {
 object underground_line:109 {
 	name GC-12-47-1_ul_12;
 	phases "ABCN";
-	from node:64;
-	to node:88;
+	from GC-12-47-1_node_3;
+	to GC-12-47-1_node_24;
 	length 17.0869734006854;
 	configuration line_configuration:92;
 }
@@ -672,8 +672,8 @@ object underground_line:109 {
 object underground_line:110 {
 	name GC-12-47-1_ul_13;
 	phases "ABCN";
-	from node:75;
-	to node:86;
+	from GC-12-47-1_node_11;
+	to GC-12-47-1_node_22;
 	length 14.14027612891;
 	configuration line_configuration:92;
 }
@@ -681,8 +681,8 @@ object underground_line:110 {
 object underground_line:111 {
 	name GC-12-47-1_ul_14;
 	phases "ABCN";
-	from node:77;
-	to node:75;
+	from GC-12-47-1_node_13;
+	to GC-12-47-1_node_11;
 	length 12.9578882924305;
 	configuration line_configuration:92;
 }
@@ -690,8 +690,8 @@ object underground_line:111 {
 object underground_line:112 {
 	name GC-12-47-1_ul_15;
 	phases "ABCN";
-	from node:84;
-	to node:80;
+	from GC-12-47-1_node_20;
+	to GC-12-47-1_node_16;
 	length 14.8288157989869;
 	configuration line_configuration:92;
 }
@@ -699,8 +699,8 @@ object underground_line:112 {
 object underground_line:113 {
 	name GC-12-47-1_ul_16;
 	phases "ABCN";
-	from node:80;
-	to node:83;
+	from GC-12-47-1_node_16;
+	to GC-12-47-1_node_19;
 	length 12.4749125047096;
 	configuration line_configuration:92;
 }
@@ -708,8 +708,8 @@ object underground_line:113 {
 object underground_line:119 {
 	name GC-12-47-1_ul_17;
 	phases "ABCN";
-	from meter:61;
-	to node:90;
+	from GC-12-47-1_meter_4;
+	to GC-12-47-1_node_26;
 	length 138.440264922178;
 	configuration line_configuration:92;
 }
@@ -717,8 +717,8 @@ object underground_line:119 {
 object underground_line:120 {
 	name GC-12-47-1_ul_18;
 	phases "ABCN";
-	from node:90;
-	to node:62;
+	from GC-12-47-1_node_26;
+	to GC-12-47-1_node_1;
 	length 401.610134330402;
 	configuration line_configuration:92;
 }

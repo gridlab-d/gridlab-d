@@ -1,4 +1,4 @@
-// $Id: R1-12.47-3.glm 1132 2008-11-18 22:36:10Z dchassin $ 
+// $Id: R1-12.47-3.glm 228 2009-05-27 18:16:10Z ychen $ 
 //*********************************************
 
 clock { 
@@ -14,8 +14,8 @@ module powerflow;
 object fuse:1162 {
 	name R1-12-47-3_fuse_1;
 	phases "ABCN";
-	from node:685;
-	to node:686;
+	from R1-12-47-3_node_47;
+	to R1-12-47-3_node_48;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -23,8 +23,8 @@ object fuse:1162 {
 object fuse:1163 {
 	name R1-12-47-3_fuse_2;
 	phases "ABCN";
-	from node:686;
-	to node:687;
+	from R1-12-47-3_node_48;
+	to R1-12-47-3_node_49;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -32,8 +32,8 @@ object fuse:1163 {
 object fuse:1165 {
 	name R1-12-47-3_fuse_3;
 	phases "AN";
-	from node:689;
-	to node:691;
+	from R1-12-47-3_node_50;
+	to R1-12-47-3_node_51;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -41,8 +41,8 @@ object fuse:1165 {
 object fuse:1168 {
 	name R1-12-47-3_fuse_4;
 	phases "AN";
-	from node:696;
-	to node:697;
+	from R1-12-47-3_node_53;
+	to R1-12-47-3_node_54;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -50,8 +50,8 @@ object fuse:1168 {
 object fuse:1170 {
 	name R1-12-47-3_fuse_5;
 	phases "AN";
-	from node:700;
-	to node:702;
+	from R1-12-47-3_node_55;
+	to R1-12-47-3_node_56;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -59,8 +59,8 @@ object fuse:1170 {
 object fuse:1176 {
 	name R1-12-47-3_fuse_6;
 	phases "CN";
-	from node:713;
-	to node:715;
+	from R1-12-47-3_node_61;
+	to R1-12-47-3_node_62;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -68,8 +68,8 @@ object fuse:1176 {
 object fuse:1179 {
 	name R1-12-47-3_fuse_7;
 	phases "BN";
-	from node:718;
-	to node:722;
+	from R1-12-47-3_node_64;
+	to R1-12-47-3_node_65;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -77,8 +77,8 @@ object fuse:1179 {
 object fuse:1182 {
 	name R1-12-47-3_fuse_8;
 	phases "AN";
-	from node:726;
-	to node:727;
+	from R1-12-47-3_node_67;
+	to R1-12-47-3_node_68;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -86,8 +86,8 @@ object fuse:1182 {
 object fuse:1186 {
 	name R1-12-47-3_fuse_9;
 	phases "BCN";
-	from node:733;
-	to node:734;
+	from R1-12-47-3_node_71;
+	to R1-12-47-3_node_72;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -95,8 +95,8 @@ object fuse:1186 {
 object fuse:1191 {
 	name R1-12-47-3_fuse_10;
 	phases "BN";
-	from node:739;
-	to node:742;
+	from R1-12-47-3_node_76;
+	to R1-12-47-3_node_77;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -104,8 +104,8 @@ object fuse:1191 {
 object fuse:1192 {
 	name R1-12-47-3_fuse_11;
 	phases "CN";
-	from node:739;
-	to node:743;
+	from R1-12-47-3_node_76;
+	to R1-12-47-3_node_78;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -113,8 +113,8 @@ object fuse:1192 {
 object fuse:1194 {
 	name R1-12-47-3_fuse_12;
 	phases "CN";
-	from node:744;
-	to node:745;
+	from R1-12-47-3_node_79;
+	to R1-12-47-3_node_80;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -122,8 +122,8 @@ object fuse:1194 {
 object fuse:1197 {
 	name R1-12-47-3_fuse_13;
 	phases "CN";
-	from node:747;
-	to node:748;
+	from R1-12-47-3_node_82;
+	to R1-12-47-3_node_83;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -131,8 +131,8 @@ object fuse:1197 {
 object fuse:1200 {
 	name R1-12-47-3_fuse_14;
 	phases "CN";
-	from node:749;
-	to node:751;
+	from R1-12-47-3_node_84;
+	to R1-12-47-3_node_86;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -140,8 +140,8 @@ object fuse:1200 {
 object fuse:1201 {
 	name R1-12-47-3_fuse_15;
 	phases "CN";
-	from node:750;
-	to node:752;
+	from R1-12-47-3_node_85;
+	to R1-12-47-3_node_87;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -149,8 +149,8 @@ object fuse:1201 {
 object fuse:1203 {
 	name R1-12-47-3_fuse_16;
 	phases "CN";
-	from node:753;
-	to node:754;
+	from R1-12-47-3_node_88;
+	to R1-12-47-3_node_89;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -158,8 +158,8 @@ object fuse:1203 {
 object fuse:1207 {
 	name R1-12-47-3_fuse_17;
 	phases "CN";
-	from node:757;
-	to node:758;
+	from R1-12-47-3_node_92;
+	to R1-12-47-3_node_93;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -167,8 +167,8 @@ object fuse:1207 {
 object fuse:1209 {
 	name R1-12-47-3_fuse_18;
 	phases "CN";
-	from node:759;
-	to node:760;
+	from R1-12-47-3_node_94;
+	to R1-12-47-3_node_95;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -176,8 +176,8 @@ object fuse:1209 {
 object fuse:1210 {
 	name R1-12-47-3_fuse_19;
 	phases "CN";
-	from node:759;
-	to node:761;
+	from R1-12-47-3_node_94;
+	to R1-12-47-3_node_96;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -185,8 +185,8 @@ object fuse:1210 {
 object fuse:1216 {
 	name R1-12-47-3_fuse_20;
 	phases "BN";
-	from node:765;
-	to node:766;
+	from R1-12-47-3_node_100;
+	to R1-12-47-3_node_101;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -194,8 +194,8 @@ object fuse:1216 {
 object fuse:1220 {
 	name R1-12-47-3_fuse_21;
 	phases "BN";
-	from node:770;
-	to node:771;
+	from R1-12-47-3_node_104;
+	to R1-12-47-3_node_105;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -203,8 +203,8 @@ object fuse:1220 {
 object fuse:1226 {
 	name R1-12-47-3_fuse_22;
 	phases "BN";
-	from node:778;
-	to node:780;
+	from R1-12-47-3_node_110;
+	to R1-12-47-3_node_111;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -212,8 +212,8 @@ object fuse:1226 {
 object fuse:1232 {
 	name R1-12-47-3_fuse_23;
 	phases "BN";
-	from node:788;
-	to node:790;
+	from R1-12-47-3_node_116;
+	to R1-12-47-3_node_117;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -221,8 +221,8 @@ object fuse:1232 {
 object fuse:1234 {
 	name R1-12-47-3_fuse_24;
 	phases "BN";
-	from node:793;
-	to node:794;
+	from R1-12-47-3_node_118;
+	to R1-12-47-3_node_119;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -230,8 +230,8 @@ object fuse:1234 {
 object fuse:1237 {
 	name R1-12-47-3_fuse_25;
 	phases "BN";
-	from node:798;
-	to node:799;
+	from R1-12-47-3_node_121;
+	to R1-12-47-3_node_122;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -239,8 +239,8 @@ object fuse:1237 {
 object fuse:1240 {
 	name R1-12-47-3_fuse_26;
 	phases "BN";
-	from node:802;
-	to node:804;
+	from R1-12-47-3_node_124;
+	to R1-12-47-3_node_125;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -248,8 +248,8 @@ object fuse:1240 {
 object fuse:1241 {
 	name R1-12-47-3_fuse_27;
 	phases "BN";
-	from node:802;
-	to node:806;
+	from R1-12-47-3_node_124;
+	to R1-12-47-3_node_126;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -257,8 +257,8 @@ object fuse:1241 {
 object fuse:1243 {
 	name R1-12-47-3_fuse_28;
 	phases "BN";
-	from node:807;
-	to node:808;
+	from R1-12-47-3_node_127;
+	to R1-12-47-3_node_128;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -266,8 +266,8 @@ object fuse:1243 {
 object fuse:1244 {
 	name R1-12-47-3_fuse_29;
 	phases "BN";
-	from node:808;
-	to node:809;
+	from R1-12-47-3_node_128;
+	to R1-12-47-3_node_129;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -275,8 +275,8 @@ object fuse:1244 {
 object fuse:1248 {
 	name R1-12-47-3_fuse_30;
 	phases "BN";
-	from node:814;
-	to node:816;
+	from R1-12-47-3_node_132;
+	to R1-12-47-3_node_133;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -284,8 +284,8 @@ object fuse:1248 {
 object fuse:1253 {
 	name R1-12-47-3_fuse_31;
 	phases "BN";
-	from node:822;
-	to node:826;
+	from R1-12-47-3_node_136;
+	to R1-12-47-3_node_138;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -293,8 +293,8 @@ object fuse:1253 {
 object fuse:1254 {
 	name R1-12-47-3_fuse_32;
 	phases "BN";
-	from node:808;
-	to node:827;
+	from R1-12-47-3_node_128;
+	to R1-12-47-3_node_139;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -302,8 +302,8 @@ object fuse:1254 {
 object fuse:1258 {
 	name R1-12-47-3_fuse_33;
 	phases "BN";
-	from node:829;
-	to node:622;
+	from R1-12-47-3_node_140;
+	to R1-12-47-3_node_7;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -311,8 +311,8 @@ object fuse:1258 {
 object fuse:1260 {
 	name R1-12-47-3_fuse_34;
 	phases "BN";
-	from node:835;
-	to node:839;
+	from R1-12-47-3_node_143;
+	to R1-12-47-3_node_145;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -320,8 +320,8 @@ object fuse:1260 {
 object fuse:1261 {
 	name R1-12-47-3_fuse_35;
 	phases "BN";
-	from node:837;
-	to node:840;
+	from R1-12-47-3_node_144;
+	to R1-12-47-3_node_146;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -329,8 +329,8 @@ object fuse:1261 {
 object fuse:1263 {
 	name R1-12-47-3_fuse_36;
 	phases "BN";
-	from node:833;
-	to node:845;
+	from R1-12-47-3_node_142;
+	to R1-12-47-3_node_148;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -338,8 +338,8 @@ object fuse:1263 {
 object fuse:1265 {
 	name R1-12-47-3_fuse_37;
 	phases "BN";
-	from node:622;
-	to node:670;
+	from R1-12-47-3_node_7;
+	to R1-12-47-3_node_37;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -347,8 +347,8 @@ object fuse:1265 {
 object fuse:1267 {
 	name R1-12-47-3_fuse_38;
 	phases "BN";
-	from node:848;
-	to node:851;
+	from R1-12-47-3_node_150;
+	to R1-12-47-3_node_151;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -356,8 +356,8 @@ object fuse:1267 {
 object fuse:1269 {
 	name R1-12-47-3_fuse_39;
 	phases "BN";
-	from node:853;
-	to node:854;
+	from R1-12-47-3_node_152;
+	to R1-12-47-3_node_153;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -365,8 +365,8 @@ object fuse:1269 {
 object fuse:1270 {
 	name R1-12-47-3_fuse_40;
 	phases "ABCN";
-	from node:765;
-	to node:857;
+	from R1-12-47-3_node_100;
+	to R1-12-47-3_node_154;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -374,8 +374,8 @@ object fuse:1270 {
 object fuse:1272 {
 	name R1-12-47-3_fuse_41;
 	phases "AN";
-	from node:858;
-	to node:859;
+	from R1-12-47-3_node_155;
+	to R1-12-47-3_node_156;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -383,8 +383,8 @@ object fuse:1272 {
 object fuse:1274 {
 	name R1-12-47-3_fuse_42;
 	phases "AN";
-	from node:862;
-	to node:863;
+	from R1-12-47-3_node_157;
+	to R1-12-47-3_node_158;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -392,8 +392,8 @@ object fuse:1274 {
 object fuse:1276 {
 	name R1-12-47-3_fuse_43;
 	phases "BN";
-	from node:865;
-	to node:618;
+	from R1-12-47-3_node_159;
+	to R1-12-47-3_node_4;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -401,8 +401,8 @@ object fuse:1276 {
 object fuse:1278 {
 	name R1-12-47-3_fuse_44;
 	phases "ABN";
-	from node:870;
-	to node:871;
+	from R1-12-47-3_node_161;
+	to R1-12-47-3_node_162;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -410,8 +410,8 @@ object fuse:1278 {
 object fuse:1282 {
 	name R1-12-47-3_fuse_45;
 	phases "BN";
-	from node:879;
-	to node:880;
+	from R1-12-47-3_node_165;
+	to R1-12-47-3_node_166;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -419,8 +419,8 @@ object fuse:1282 {
 object fuse:1287 {
 	name R1-12-47-3_fuse_46;
 	phases "AN";
-	from node:892;
-	to node:890;
+	from R1-12-47-3_node_172;
+	to R1-12-47-3_node_171;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -428,8 +428,8 @@ object fuse:1287 {
 object fuse:1294 {
 	name R1-12-47-3_fuse_47;
 	phases "AN";
-	from node:898;
-	to node:901;
+	from R1-12-47-3_node_176;
+	to R1-12-47-3_node_178;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -437,8 +437,8 @@ object fuse:1294 {
 object fuse:1299 {
 	name R1-12-47-3_fuse_48;
 	phases "AN";
-	from node:908;
-	to node:910;
+	from R1-12-47-3_node_182;
+	to R1-12-47-3_node_183;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -446,8 +446,8 @@ object fuse:1299 {
 object fuse:1300 {
 	name R1-12-47-3_fuse_49;
 	phases "AN";
-	from node:887;
-	to node:912;
+	from R1-12-47-3_node_169;
+	to R1-12-47-3_node_184;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -455,8 +455,8 @@ object fuse:1300 {
 object fuse:1301 {
 	name R1-12-47-3_fuse_50;
 	phases "AN";
-	from node:912;
-	to node:914;
+	from R1-12-47-3_node_184;
+	to R1-12-47-3_node_185;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -464,8 +464,8 @@ object fuse:1301 {
 object fuse:1304 {
 	name R1-12-47-3_fuse_51;
 	phases "AN";
-	from node:917;
-	to node:920;
+	from R1-12-47-3_node_187;
+	to R1-12-47-3_node_188;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -473,8 +473,8 @@ object fuse:1304 {
 object fuse:1308 {
 	name R1-12-47-3_fuse_52;
 	phases "AN";
-	from node:925;
-	to node:633;
+	from R1-12-47-3_node_191;
+	to R1-12-47-3_node_15;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -482,8 +482,8 @@ object fuse:1308 {
 object fuse:1309 {
 	name R1-12-47-3_fuse_53;
 	phases "AN";
-	from node:925;
-	to node:929;
+	from R1-12-47-3_node_191;
+	to R1-12-47-3_node_193;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -491,8 +491,8 @@ object fuse:1309 {
 object fuse:1323 {
 	name R1-12-47-3_fuse_54;
 	phases "CN";
-	from node:870;
-	to node:954;
+	from R1-12-47-3_node_161;
+	to R1-12-47-3_node_207;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -500,8 +500,8 @@ object fuse:1323 {
 object fuse:1324 {
 	name R1-12-47-3_fuse_55;
 	phases "CN";
-	from node:954;
-	to node:955;
+	from R1-12-47-3_node_207;
+	to R1-12-47-3_node_208;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -509,8 +509,8 @@ object fuse:1324 {
 object fuse:1327 {
 	name R1-12-47-3_fuse_56;
 	phases "CN";
-	from node:956;
-	to node:958;
+	from R1-12-47-3_node_209;
+	to R1-12-47-3_node_211;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -518,8 +518,8 @@ object fuse:1327 {
 object fuse:1344 {
 	name R1-12-47-3_fuse_57;
 	phases "BN";
-	from node:976;
-	to node:629;
+	from R1-12-47-3_node_227;
+	to R1-12-47-3_node_11;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -527,8 +527,8 @@ object fuse:1344 {
 object fuse:1346 {
 	name R1-12-47-3_fuse_58;
 	phases "CN";
-	from node:977;
-	to node:978;
+	from R1-12-47-3_node_228;
+	to R1-12-47-3_node_229;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -536,8 +536,8 @@ object fuse:1346 {
 object fuse:1348 {
 	name R1-12-47-3_fuse_59;
 	phases "CN";
-	from node:979;
-	to node:980;
+	from R1-12-47-3_node_230;
+	to R1-12-47-3_node_231;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -545,8 +545,8 @@ object fuse:1348 {
 object fuse:1350 {
 	name R1-12-47-3_fuse_60;
 	phases "CN";
-	from node:981;
-	to node:982;
+	from R1-12-47-3_node_232;
+	to R1-12-47-3_node_233;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -554,8 +554,8 @@ object fuse:1350 {
 object fuse:1369 {
 	name R1-12-47-3_fuse_61;
 	phases "BN";
-	from node:1000;
-	to node:1002;
+	from R1-12-47-3_node_251;
+	to R1-12-47-3_node_252;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -563,8 +563,8 @@ object fuse:1369 {
 object fuse:1371 {
 	name R1-12-47-3_fuse_62;
 	phases "CN";
-	from node:1003;
-	to node:1004;
+	from R1-12-47-3_node_253;
+	to R1-12-47-3_node_254;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -572,8 +572,8 @@ object fuse:1371 {
 object fuse:1376 {
 	name R1-12-47-3_fuse_63;
 	phases "BCN";
-	from node:1008;
-	to node:1010;
+	from R1-12-47-3_node_258;
+	to R1-12-47-3_node_259;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -581,8 +581,8 @@ object fuse:1376 {
 object fuse:1378 {
 	name R1-12-47-3_fuse_64;
 	phases "CN";
-	from node:1011;
-	to node:677;
+	from R1-12-47-3_node_260;
+	to R1-12-47-3_node_40;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -590,8 +590,8 @@ object fuse:1378 {
 object fuse:1379 {
 	name R1-12-47-3_fuse_65;
 	phases "BCN";
-	from node:1011;
-	to node:663;
+	from R1-12-47-3_node_260;
+	to R1-12-47-3_node_33;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -599,8 +599,8 @@ object fuse:1379 {
 object fuse:1384 {
 	name R1-12-47-3_fuse_66;
 	phases "BN";
-	from node:1018;
-	to node:1019;
+	from R1-12-47-3_node_265;
+	to R1-12-47-3_node_266;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -608,8 +608,8 @@ object fuse:1384 {
 object fuse:1394 {
 	name R1-12-47-3_fuse_67;
 	phases "BN";
-	from node:1034;
-	to node:1036;
+	from R1-12-47-3_node_275;
+	to R1-12-47-3_node_276;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -617,8 +617,8 @@ object fuse:1394 {
 object fuse:1397 {
 	name R1-12-47-3_fuse_68;
 	phases "BN";
-	from node:1038;
-	to node:1040;
+	from R1-12-47-3_node_278;
+	to R1-12-47-3_node_279;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -626,8 +626,8 @@ object fuse:1397 {
 object fuse:1400 {
 	name R1-12-47-3_fuse_69;
 	phases "CN";
-	from node:1042;
-	to node:1043;
+	from R1-12-47-3_node_281;
+	to R1-12-47-3_node_282;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -635,8 +635,8 @@ object fuse:1400 {
 object fuse:1401 {
 	name R1-12-47-3_fuse_70;
 	phases "CN";
-	from node:1042;
-	to node:1044;
+	from R1-12-47-3_node_281;
+	to R1-12-47-3_node_283;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -644,8 +644,8 @@ object fuse:1401 {
 object fuse:1404 {
 	name R1-12-47-3_fuse_71;
 	phases "CN";
-	from node:1046;
-	to node:1047;
+	from R1-12-47-3_node_285;
+	to R1-12-47-3_node_286;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -653,8 +653,8 @@ object fuse:1404 {
 object fuse:1413 {
 	name R1-12-47-3_fuse_72;
 	phases "CN";
-	from node:1055;
-	to node:1056;
+	from R1-12-47-3_node_294;
+	to R1-12-47-3_node_295;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -662,8 +662,8 @@ object fuse:1413 {
 object fuse:1416 {
 	name R1-12-47-3_fuse_73;
 	phases "BN";
-	from node:1058;
-	to node:1059;
+	from R1-12-47-3_node_297;
+	to R1-12-47-3_node_298;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -671,8 +671,8 @@ object fuse:1416 {
 object fuse:1421 {
 	name R1-12-47-3_fuse_74;
 	phases "BN";
-	from node:1066;
-	to node:648;
+	from R1-12-47-3_node_302;
+	to R1-12-47-3_node_23;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -680,8 +680,8 @@ object fuse:1421 {
 object fuse:1427 {
 	name R1-12-47-3_fuse_75;
 	phases "CN";
-	from node:1075;
-	to node:1076;
+	from R1-12-47-3_node_308;
+	to R1-12-47-3_node_309;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -689,8 +689,8 @@ object fuse:1427 {
 object fuse:1429 {
 	name R1-12-47-3_fuse_76;
 	phases "CN";
-	from node:1077;
-	to node:1078;
+	from R1-12-47-3_node_310;
+	to R1-12-47-3_node_311;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -698,8 +698,8 @@ object fuse:1429 {
 object fuse:1434 {
 	name R1-12-47-3_fuse_77;
 	phases "BN";
-	from node:1082;
-	to node:1083;
+	from R1-12-47-3_node_315;
+	to R1-12-47-3_node_316;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -707,8 +707,8 @@ object fuse:1434 {
 object fuse:1436 {
 	name R1-12-47-3_fuse_78;
 	phases "BN";
-	from node:1083;
-	to node:1087;
+	from R1-12-47-3_node_316;
+	to R1-12-47-3_node_318;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -716,8 +716,8 @@ object fuse:1436 {
 object fuse:1437 {
 	name R1-12-47-3_fuse_79;
 	phases "BN";
-	from node:1087;
-	to node:1089;
+	from R1-12-47-3_node_318;
+	to R1-12-47-3_node_319;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -725,8 +725,8 @@ object fuse:1437 {
 object fuse:1465 {
 	name R1-12-47-3_fuse_80;
 	phases "BN";
-	from node:868;
-	to node:612;
+	from R1-12-47-3_node_160;
+	to R1-12-47-3_node_1;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -734,8 +734,8 @@ object fuse:1465 {
 object fuse:1474 {
 	name R1-12-47-3_fuse_81;
 	phases "BN";
-	from node:628;
-	to node:679;
+	from R1-12-47-3_node_9;
+	to R1-12-47-3_node_42;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -743,8 +743,8 @@ object fuse:1474 {
 object fuse:1476 {
 	name R1-12-47-3_fuse_82;
 	phases "BN";
-	from node:847;
-	to node:630;
+	from R1-12-47-3_node_149;
+	to R1-12-47-3_node_12;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -752,8 +752,8 @@ object fuse:1476 {
 object fuse:1479 {
 	name R1-12-47-3_fuse_83;
 	phases "BN";
-	from node:663;
-	to node:665;
+	from R1-12-47-3_node_33;
+	to R1-12-47-3_node_34;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -761,8 +761,8 @@ object fuse:1479 {
 object fuse:1493 {
 	name R1-12-47-3_fuse_84;
 	phases "AN";
-	from node:645;
-	to node:644;
+	from R1-12-47-3_node_22;
+	to R1-12-47-3_node_21;
 	current_limit 3000.0;
 	status CLOSED;
 }
@@ -1064,7 +1064,7 @@ object load {
 	voltage_C -3599.779+6235.000j;
 	constant_power_A 4669.342+66.728j;
 	constant_power_B 3335.480+101.551j;
-	constant_power_C 0.000+0.000j;
+	constant_power_C 8000.000+5000.000j;
 	load_class "C";
 }
 
@@ -3544,16 +3544,16 @@ object node {
 	phases ABCN;
 	nominal_voltage 7199.558;
 	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000 j;
-	voltage_C -3599.779+6235.000 j;	
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;	
 }
 
 
 object overhead_line:1160 {
 	name R1-12-47-3_ol_1;
 	phases "ABCN";
-	from node:683;
-	to node:684;
+	from R1-12-47-3_node_45;
+	to R1-12-47-3_node_46;
 	length 123.454912012451;
 	configuration line_configuration:1121;
 }
@@ -3561,8 +3561,8 @@ object overhead_line:1160 {
 object overhead_line:1161 {
 	name R1-12-47-3_ol_2;
 	phases "ABCN";
-	from node:684;
-	to node:685;
+	from R1-12-47-3_node_46;
+	to R1-12-47-3_node_47;
 	length 62.3916861448768;
 	configuration line_configuration:1121;
 }
@@ -3570,8 +3570,8 @@ object overhead_line:1161 {
 object overhead_line:1164 {
 	name R1-12-47-3_ol_3;
 	phases "ABCN";
-	from node:686;
-	to node:689;
+	from R1-12-47-3_node_48;
+	to R1-12-47-3_node_50;
 	length 89.1162162572245;
 	configuration line_configuration:1122;
 }
@@ -3579,8 +3579,8 @@ object overhead_line:1164 {
 object overhead_line:1166 {
 	name R1-12-47-3_ol_4;
 	phases "AN";
-	from node:691;
-	to node:693;
+	from R1-12-47-3_node_51;
+	to R1-12-47-3_node_52;
 	length 186.73005248214;
 	configuration line_configuration:1125;
 }
@@ -3588,8 +3588,8 @@ object overhead_line:1166 {
 object overhead_line:1167 {
 	name R1-12-47-3_ol_5;
 	phases "AN";
-	from node:691;
-	to node:696;
+	from R1-12-47-3_node_51;
+	to R1-12-47-3_node_53;
 	length 281.290287643089;
 	configuration line_configuration:1125;
 }
@@ -3597,8 +3597,8 @@ object overhead_line:1167 {
 object overhead_line:1169 {
 	name R1-12-47-3_ol_6;
 	phases "AN";
-	from node:696;
-	to node:700;
+	from R1-12-47-3_node_53;
+	to R1-12-47-3_node_55;
 	length 112.210075305169;
 	configuration line_configuration:1125;
 }
@@ -3606,8 +3606,8 @@ object overhead_line:1169 {
 object overhead_line:1171 {
 	name R1-12-47-3_ol_7;
 	phases "AN";
-	from node:700;
-	to node:703;
+	from R1-12-47-3_node_55;
+	to R1-12-47-3_node_57;
 	length 358.37408094279;
 	configuration line_configuration:1125;
 }
@@ -3615,8 +3615,8 @@ object overhead_line:1171 {
 object overhead_line:1172 {
 	name R1-12-47-3_ol_8;
 	phases "AN";
-	from node:703;
-	to node:705;
+	from R1-12-47-3_node_57;
+	to R1-12-47-3_node_58;
 	length 96.4299751116214;
 	configuration line_configuration:1125;
 }
@@ -3624,8 +3624,8 @@ object overhead_line:1172 {
 object overhead_line:1173 {
 	name R1-12-47-3_ol_9;
 	phases "AN";
-	from node:703;
-	to node:707;
+	from R1-12-47-3_node_57;
+	to R1-12-47-3_node_59;
 	length 153.124954204049;
 	configuration line_configuration:1125;
 }
@@ -3633,8 +3633,8 @@ object overhead_line:1173 {
 object overhead_line:1174 {
 	name R1-12-47-3_ol_10;
 	phases "ABCN";
-	from node:684;
-	to node:709;
+	from R1-12-47-3_node_46;
+	to R1-12-47-3_node_60;
 	length 308.821978654289;
 	configuration line_configuration:1128;
 }
@@ -3642,8 +3642,8 @@ object overhead_line:1174 {
 object overhead_line:1175 {
 	name R1-12-47-3_ol_11;
 	phases "ABCN";
-	from node:709;
-	to node:713;
+	from R1-12-47-3_node_60;
+	to R1-12-47-3_node_61;
 	length 763.791503427139;
 	configuration line_configuration:1128;
 }
@@ -3651,8 +3651,8 @@ object overhead_line:1175 {
 object overhead_line:1177 {
 	name R1-12-47-3_ol_12;
 	phases "CN";
-	from node:715;
-	to node:716;
+	from R1-12-47-3_node_62;
+	to R1-12-47-3_node_63;
 	length 56.4872746730712;
 	configuration line_configuration:1131;
 }
@@ -3660,8 +3660,8 @@ object overhead_line:1177 {
 object overhead_line:1178 {
 	name R1-12-47-3_ol_13;
 	phases "ABCN";
-	from node:713;
-	to node:718;
+	from R1-12-47-3_node_61;
+	to R1-12-47-3_node_64;
 	length 1076.57762339746;
 	configuration line_configuration:1121;
 }
@@ -3669,8 +3669,8 @@ object overhead_line:1178 {
 object overhead_line:1180 {
 	name R1-12-47-3_ol_14;
 	phases "BN";
-	from node:722;
-	to node:723;
+	from R1-12-47-3_node_65;
+	to R1-12-47-3_node_66;
 	length 513.462963221432;
 	configuration line_configuration:1134;
 }
@@ -3678,8 +3678,8 @@ object overhead_line:1180 {
 object overhead_line:1181 {
 	name R1-12-47-3_ol_15;
 	phases "ABCN";
-	from node:718;
-	to node:726;
+	from R1-12-47-3_node_64;
+	to R1-12-47-3_node_67;
 	length 1175.55685740841;
 	configuration line_configuration:1121;
 }
@@ -3687,8 +3687,8 @@ object overhead_line:1181 {
 object overhead_line:1183 {
 	name R1-12-47-3_ol_16;
 	phases "AN";
-	from node:727;
-	to node:729;
+	from R1-12-47-3_node_68;
+	to R1-12-47-3_node_69;
 	length 447.078157484722;
 	configuration line_configuration:1135;
 }
@@ -3696,8 +3696,8 @@ object overhead_line:1183 {
 object overhead_line:1184 {
 	name R1-12-47-3_ol_17;
 	phases "AN";
-	from node:727;
-	to node:731;
+	from R1-12-47-3_node_68;
+	to R1-12-47-3_node_70;
 	length 565.858230409172;
 	configuration line_configuration:1135;
 }
@@ -3705,8 +3705,8 @@ object overhead_line:1184 {
 object overhead_line:1185 {
 	name R1-12-47-3_ol_18;
 	phases "ABCN";
-	from node:726;
-	to node:733;
+	from R1-12-47-3_node_67;
+	to R1-12-47-3_node_71;
 	length 1301.90331380638;
 	configuration line_configuration:1121;
 }
@@ -3714,8 +3714,8 @@ object overhead_line:1185 {
 object overhead_line:1187 {
 	name R1-12-47-3_ol_19;
 	phases "BCN";
-	from node:734;
-	to node:735;
+	from R1-12-47-3_node_72;
+	to R1-12-47-3_node_73;
 	length 452.472818741642;
 	configuration line_configuration:1137;
 }
@@ -3723,8 +3723,8 @@ object overhead_line:1187 {
 object overhead_line:1188 {
 	name R1-12-47-3_ol_20;
 	phases "CN";
-	from node:735;
-	to node:736;
+	from R1-12-47-3_node_73;
+	to R1-12-47-3_node_74;
 	length 86.7368577941075;
 	configuration line_configuration:1138;
 }
@@ -3732,8 +3732,8 @@ object overhead_line:1188 {
 object overhead_line:1189 {
 	name R1-12-47-3_ol_21;
 	phases "BCN";
-	from node:735;
-	to node:737;
+	from R1-12-47-3_node_73;
+	to R1-12-47-3_node_75;
 	length 1283.03660528455;
 	configuration line_configuration:1137;
 }
@@ -3741,8 +3741,8 @@ object overhead_line:1189 {
 object overhead_line:1190 {
 	name R1-12-47-3_ol_22;
 	phases "BCN";
-	from node:737;
-	to node:739;
+	from R1-12-47-3_node_75;
+	to R1-12-47-3_node_76;
 	length 979.543744454602;
 	configuration line_configuration:1139;
 }
@@ -3750,8 +3750,8 @@ object overhead_line:1190 {
 object overhead_line:1193 {
 	name R1-12-47-3_ol_23;
 	phases "CN";
-	from node:739;
-	to node:744;
+	from R1-12-47-3_node_76;
+	to R1-12-47-3_node_79;
 	length 526.654888971546;
 	configuration line_configuration:1131;
 }
@@ -3759,8 +3759,8 @@ object overhead_line:1193 {
 object overhead_line:1195 {
 	name R1-12-47-3_ol_24;
 	phases "CN";
-	from node:744;
-	to node:746;
+	from R1-12-47-3_node_79;
+	to R1-12-47-3_node_81;
 	length 167.727734140717;
 	configuration line_configuration:1131;
 }
@@ -3768,8 +3768,8 @@ object overhead_line:1195 {
 object overhead_line:1196 {
 	name R1-12-47-3_ol_25;
 	phases "CN";
-	from node:737;
-	to node:747;
+	from R1-12-47-3_node_75;
+	to R1-12-47-3_node_82;
 	length 484.670547176133;
 	configuration line_configuration:1138;
 }
@@ -3777,8 +3777,8 @@ object overhead_line:1196 {
 object overhead_line:1198 {
 	name R1-12-47-3_ol_26;
 	phases "CN";
-	from node:747;
-	to node:749;
+	from R1-12-47-3_node_82;
+	to R1-12-47-3_node_84;
 	length 199.852752045065;
 	configuration line_configuration:1138;
 }
@@ -3786,8 +3786,8 @@ object overhead_line:1198 {
 object overhead_line:1199 {
 	name R1-12-47-3_ol_27;
 	phases "CN";
-	from node:749;
-	to node:750;
+	from R1-12-47-3_node_84;
+	to R1-12-47-3_node_85;
 	length 46.9788133097559;
 	configuration line_configuration:1144;
 }
@@ -3795,8 +3795,8 @@ object overhead_line:1199 {
 object overhead_line:1202 {
 	name R1-12-47-3_ol_28;
 	phases "CN";
-	from node:749;
-	to node:753;
+	from R1-12-47-3_node_84;
+	to R1-12-47-3_node_88;
 	length 144.950101759194;
 	configuration line_configuration:1138;
 }
@@ -3804,8 +3804,8 @@ object overhead_line:1202 {
 object overhead_line:1204 {
 	name R1-12-47-3_ol_29;
 	phases "CN";
-	from node:753;
-	to node:755;
+	from R1-12-47-3_node_88;
+	to R1-12-47-3_node_90;
 	length 135.55606552272;
 	configuration line_configuration:1138;
 }
@@ -3813,8 +3813,8 @@ object overhead_line:1204 {
 object overhead_line:1205 {
 	name R1-12-47-3_ol_30;
 	phases "CN";
-	from node:755;
-	to node:756;
+	from R1-12-47-3_node_90;
+	to R1-12-47-3_node_91;
 	length 242.513864758416;
 	configuration line_configuration:1138;
 }
@@ -3822,8 +3822,8 @@ object overhead_line:1205 {
 object overhead_line:1206 {
 	name R1-12-47-3_ol_31;
 	phases "CN";
-	from node:755;
-	to node:757;
+	from R1-12-47-3_node_90;
+	to R1-12-47-3_node_92;
 	length 42.8410200623756;
 	configuration line_configuration:1138;
 }
@@ -3831,8 +3831,8 @@ object overhead_line:1206 {
 object overhead_line:1208 {
 	name R1-12-47-3_ol_32;
 	phases "CN";
-	from node:757;
-	to node:759;
+	from R1-12-47-3_node_92;
+	to R1-12-47-3_node_94;
 	length 429.720432956156;
 	configuration line_configuration:1138;
 }
@@ -3840,8 +3840,8 @@ object overhead_line:1208 {
 object overhead_line:1211 {
 	name R1-12-47-3_ol_33;
 	phases "ABCN";
-	from node:733;
-	to node:762;
+	from R1-12-47-3_node_71;
+	to R1-12-47-3_node_97;
 	length 192.048495177772;
 	configuration line_configuration:1145;
 }
@@ -3849,8 +3849,8 @@ object overhead_line:1211 {
 object overhead_line:1213 {
 	name R1-12-47-3_ol_34;
 	phases "ABCN";
-	from node:763;
-	to node:764;
+	from R1-12-47-3_node_98;
+	to R1-12-47-3_node_99;
 	length 317.744804048629;
 	configuration line_configuration:1145;
 }
@@ -3858,8 +3858,8 @@ object overhead_line:1213 {
 object overhead_line:1215 {
 	name R1-12-47-3_ol_35;
 	phases "ABCN";
-	from node:764;
-	to node:765;
+	from R1-12-47-3_node_99;
+	to R1-12-47-3_node_100;
 	length 1182.04489411363;
 	configuration line_configuration:1146;
 }
@@ -3867,8 +3867,8 @@ object overhead_line:1215 {
 object overhead_line:1217 {
 	name R1-12-47-3_ol_36;
 	phases "BN";
-	from node:766;
-	to node:767;
+	from R1-12-47-3_node_101;
+	to R1-12-47-3_node_102;
 	length 7970.95343029801;
 	configuration line_configuration:1133;
 }
@@ -3876,8 +3876,8 @@ object overhead_line:1217 {
 object overhead_line:1218 {
 	name R1-12-47-3_ol_37;
 	phases "BN";
-	from node:767;
-	to node:769;
+	from R1-12-47-3_node_102;
+	to R1-12-47-3_node_103;
 	length 80.0;
 	configuration line_configuration:1134;
 }
@@ -3885,8 +3885,8 @@ object overhead_line:1218 {
 object overhead_line:1219 {
 	name R1-12-47-3_ol_38;
 	phases "BN";
-	from node:767;
-	to node:770;
+	from R1-12-47-3_node_102;
+	to R1-12-47-3_node_104;
 	length 60.0;
 	configuration line_configuration:1133;
 }
@@ -3894,8 +3894,8 @@ object overhead_line:1219 {
 object overhead_line:1225 {
 	name R1-12-47-3_ol_39;
 	phases "BN";
-	from node:770;
-	to node:778;
+	from R1-12-47-3_node_104;
+	to R1-12-47-3_node_110;
 	length 735.312620998729;
 	configuration line_configuration:1133;
 }
@@ -3903,8 +3903,8 @@ object overhead_line:1225 {
 object overhead_line:1227 {
 	name R1-12-47-3_ol_40;
 	phases "BN";
-	from node:778;
-	to node:782;
+	from R1-12-47-3_node_110;
+	to R1-12-47-3_node_112;
 	length 355.898935092497;
 	configuration line_configuration:1133;
 }
@@ -3912,8 +3912,8 @@ object overhead_line:1227 {
 object overhead_line:1228 {
 	name R1-12-47-3_ol_41;
 	phases "BN";
-	from node:782;
-	to node:784;
+	from R1-12-47-3_node_112;
+	to R1-12-47-3_node_113;
 	length 387.0;
 	configuration line_configuration:1133;
 }
@@ -3921,8 +3921,8 @@ object overhead_line:1228 {
 object overhead_line:1229 {
 	name R1-12-47-3_ol_42;
 	phases "BN";
-	from node:782;
-	to node:786;
+	from R1-12-47-3_node_112;
+	to R1-12-47-3_node_114;
 	length 89.3;
 	configuration line_configuration:1133;
 }
@@ -3930,8 +3930,8 @@ object overhead_line:1229 {
 object overhead_line:1230 {
 	name R1-12-47-3_ol_43;
 	phases "BN";
-	from node:782;
-	to node:787;
+	from R1-12-47-3_node_112;
+	to R1-12-47-3_node_115;
 	length 507.54804508833;
 	configuration line_configuration:1134;
 }
@@ -3939,8 +3939,8 @@ object overhead_line:1230 {
 object overhead_line:1231 {
 	name R1-12-47-3_ol_44;
 	phases "BN";
-	from node:787;
-	to node:788;
+	from R1-12-47-3_node_115;
+	to R1-12-47-3_node_116;
 	length 417.0;
 	configuration line_configuration:1134;
 }
@@ -3948,8 +3948,8 @@ object overhead_line:1231 {
 object overhead_line:1233 {
 	name R1-12-47-3_ol_45;
 	phases "BN";
-	from node:787;
-	to node:793;
+	from R1-12-47-3_node_115;
+	to R1-12-47-3_node_118;
 	length 926.228928127399;
 	configuration line_configuration:1134;
 }
@@ -3957,8 +3957,8 @@ object overhead_line:1233 {
 object overhead_line:1235 {
 	name R1-12-47-3_ol_46;
 	phases "BN";
-	from node:793;
-	to node:797;
+	from R1-12-47-3_node_118;
+	to R1-12-47-3_node_120;
 	length 146.2;
 	configuration line_configuration:1134;
 }
@@ -3966,8 +3966,8 @@ object overhead_line:1235 {
 object overhead_line:1236 {
 	name R1-12-47-3_ol_47;
 	phases "BN";
-	from node:797;
-	to node:798;
+	from R1-12-47-3_node_120;
+	to R1-12-47-3_node_121;
 	length 51.4146525807233;
 	configuration line_configuration:1147;
 }
@@ -3975,8 +3975,8 @@ object overhead_line:1236 {
 object overhead_line:1238 {
 	name R1-12-47-3_ol_48;
 	phases "BN";
-	from node:797;
-	to node:801;
+	from R1-12-47-3_node_120;
+	to R1-12-47-3_node_123;
 	length 263.306712789425;
 	configuration line_configuration:1134;
 }
@@ -3984,8 +3984,8 @@ object overhead_line:1238 {
 object overhead_line:1239 {
 	name R1-12-47-3_ol_49;
 	phases "BN";
-	from node:801;
-	to node:802;
+	from R1-12-47-3_node_123;
+	to R1-12-47-3_node_124;
 	length 52.9165730182805;
 	configuration line_configuration:1133;
 }
@@ -3993,8 +3993,8 @@ object overhead_line:1239 {
 object overhead_line:1242 {
 	name R1-12-47-3_ol_50;
 	phases "BN";
-	from node:801;
-	to node:807;
+	from R1-12-47-3_node_123;
+	to R1-12-47-3_node_127;
 	length 294.006159289209;
 	configuration line_configuration:1134;
 }
@@ -4002,8 +4002,8 @@ object overhead_line:1242 {
 object overhead_line:1247 {
 	name R1-12-47-3_ol_51;
 	phases "BN";
-	from node:813;
-	to node:814;
+	from R1-12-47-3_node_131;
+	to R1-12-47-3_node_132;
 	length 428.379037418951;
 	configuration line_configuration:1147;
 }
@@ -4011,8 +4011,8 @@ object overhead_line:1247 {
 object overhead_line:1251 {
 	name R1-12-47-3_ol_52;
 	phases "BN";
-	from node:814;
-	to node:822;
+	from R1-12-47-3_node_132;
+	to R1-12-47-3_node_136;
 	length 720.157244009949;
 	configuration line_configuration:1147;
 }
@@ -4020,8 +4020,8 @@ object overhead_line:1251 {
 object overhead_line:1252 {
 	name R1-12-47-3_ol_53;
 	phases "BN";
-	from node:822;
-	to node:824;
+	from R1-12-47-3_node_136;
+	to R1-12-47-3_node_137;
 	length 104.5;
 	configuration line_configuration:1147;
 }
@@ -4029,8 +4029,8 @@ object overhead_line:1252 {
 object overhead_line:1255 {
 	name R1-12-47-3_ol_54;
 	phases "BN";
-	from node:808;
-	to node:829;
+	from R1-12-47-3_node_128;
+	to R1-12-47-3_node_140;
 	length 394.359181077346;
 	configuration line_configuration:1134;
 }
@@ -4038,8 +4038,8 @@ object overhead_line:1255 {
 object overhead_line:1256 {
 	name R1-12-47-3_ol_55;
 	phases "BN";
-	from node:829;
-	to node:831;
+	from R1-12-47-3_node_140;
+	to R1-12-47-3_node_141;
 	length 299.5;
 	configuration line_configuration:1134;
 }
@@ -4047,8 +4047,8 @@ object overhead_line:1256 {
 object overhead_line:1257 {
 	name R1-12-47-3_ol_56;
 	phases "BN";
-	from node:837;
-	to node:833;
+	from R1-12-47-3_node_144;
+	to R1-12-47-3_node_142;
 	length 323.0;
 	configuration line_configuration:1134;
 }
@@ -4056,8 +4056,8 @@ object overhead_line:1257 {
 object overhead_line:1259 {
 	name R1-12-47-3_ol_57;
 	phases "BN";
-	from node:807;
-	to node:837;
+	from R1-12-47-3_node_127;
+	to R1-12-47-3_node_144;
 	length 173.643135481936;
 	configuration line_configuration:1134;
 }
@@ -4065,8 +4065,8 @@ object overhead_line:1259 {
 object overhead_line:1262 {
 	name R1-12-47-3_ol_58;
 	phases "BN";
-	from node:833;
-	to node:842;
+	from R1-12-47-3_node_142;
+	to R1-12-47-3_node_147;
 	length 1394.5;
 	configuration line_configuration:1134;
 }
@@ -4074,8 +4074,8 @@ object overhead_line:1262 {
 object overhead_line:1264 {
 	name R1-12-47-3_ol_59;
 	phases "BN";
-	from node:842;
-	to node:847;
+	from R1-12-47-3_node_147;
+	to R1-12-47-3_node_149;
 	length 320.7;
 	configuration line_configuration:1134;
 }
@@ -4083,8 +4083,8 @@ object overhead_line:1264 {
 object overhead_line:1266 {
 	name R1-12-47-3_ol_60;
 	phases "BN";
-	from node:842;
-	to node:848;
+	from R1-12-47-3_node_147;
+	to R1-12-47-3_node_150;
 	length 1193.7;
 	configuration line_configuration:1134;
 }
@@ -4092,8 +4092,8 @@ object overhead_line:1266 {
 object overhead_line:1268 {
 	name R1-12-47-3_ol_61;
 	phases "BN";
-	from node:848;
-	to node:853;
+	from R1-12-47-3_node_150;
+	to R1-12-47-3_node_152;
 	length 616.1;
 	configuration line_configuration:1134;
 }
@@ -4101,8 +4101,8 @@ object overhead_line:1268 {
 object overhead_line:1271 {
 	name R1-12-47-3_ol_62;
 	phases "AN";
-	from node:857;
-	to node:858;
+	from R1-12-47-3_node_154;
+	to R1-12-47-3_node_155;
 	length 58.6436629143161;
 	configuration line_configuration:1150;
 }
@@ -4110,8 +4110,8 @@ object overhead_line:1271 {
 object overhead_line:1273 {
 	name R1-12-47-3_ol_63;
 	phases "ABCN";
-	from node:857;
-	to node:862;
+	from R1-12-47-3_node_154;
+	to R1-12-47-3_node_157;
 	length 1038.40876419037;
 	configuration line_configuration:1149;
 }
@@ -4119,8 +4119,8 @@ object overhead_line:1273 {
 object overhead_line:1275 {
 	name R1-12-47-3_ol_64;
 	phases "ABCN";
-	from node:862;
-	to node:865;
+	from R1-12-47-3_node_157;
+	to R1-12-47-3_node_159;
 	length 281.169180565715;
 	configuration line_configuration:1149;
 }
@@ -4128,8 +4128,8 @@ object overhead_line:1275 {
 object overhead_line:1277 {
 	name R1-12-47-3_ol_65;
 	phases "ABCN";
-	from node:865;
-	to node:870;
+	from R1-12-47-3_node_159;
+	to R1-12-47-3_node_161;
 	length 981.8;
 	configuration line_configuration:1149;
 }
@@ -4137,8 +4137,8 @@ object overhead_line:1277 {
 object overhead_line:1279 {
 	name R1-12-47-3_ol_66;
 	phases "ABN";
-	from node:871;
-	to node:874;
+	from R1-12-47-3_node_162;
+	to R1-12-47-3_node_163;
 	length 275.038865214149;
 	configuration line_configuration:1153;
 }
@@ -4146,8 +4146,8 @@ object overhead_line:1279 {
 object overhead_line:1280 {
 	name R1-12-47-3_ol_67;
 	phases "ABN";
-	from node:871;
-	to node:876;
+	from R1-12-47-3_node_162;
+	to R1-12-47-3_node_164;
 	length 272.820687815455;
 	configuration line_configuration:1154;
 }
@@ -4155,8 +4155,8 @@ object overhead_line:1280 {
 object overhead_line:1281 {
 	name R1-12-47-3_ol_68;
 	phases "BN";
-	from node:876;
-	to node:879;
+	from R1-12-47-3_node_164;
+	to R1-12-47-3_node_165;
 	length 174.255298341258;
 	configuration line_configuration:1133;
 }
@@ -4164,8 +4164,8 @@ object overhead_line:1281 {
 object overhead_line:1283 {
 	name R1-12-47-3_ol_69;
 	phases "ABN";
-	from node:876;
-	to node:881;
+	from R1-12-47-3_node_164;
+	to R1-12-47-3_node_167;
 	length 639.649467286555;
 	configuration line_configuration:1154;
 }
@@ -4173,8 +4173,8 @@ object overhead_line:1283 {
 object overhead_line:1284 {
 	name R1-12-47-3_ol_70;
 	phases "ABN";
-	from node:881;
-	to node:883;
+	from R1-12-47-3_node_167;
+	to R1-12-47-3_node_168;
 	length 435.9;
 	configuration line_configuration:1154;
 }
@@ -4182,8 +4182,8 @@ object overhead_line:1284 {
 object overhead_line:1285 {
 	name R1-12-47-3_ol_71;
 	phases "AN";
-	from node:881;
-	to node:887;
+	from R1-12-47-3_node_167;
+	to R1-12-47-3_node_169;
 	length 207.907837754939;
 	configuration line_configuration:1150;
 }
@@ -4191,8 +4191,8 @@ object overhead_line:1285 {
 object overhead_line:1286 {
 	name R1-12-47-3_ol_72;
 	phases "AN";
-	from node:887;
-	to node:888;
+	from R1-12-47-3_node_169;
+	to R1-12-47-3_node_170;
 	length 932.9;
 	configuration line_configuration:1150;
 }
@@ -4200,8 +4200,8 @@ object overhead_line:1286 {
 object overhead_line:1288 {
 	name R1-12-47-3_ol_73;
 	phases "AN";
-	from node:888;
-	to node:892;
+	from R1-12-47-3_node_170;
+	to R1-12-47-3_node_172;
 	length 49.9;
 	configuration line_configuration:1150;
 }
@@ -4209,8 +4209,8 @@ object overhead_line:1288 {
 object overhead_line:1290 {
 	name R1-12-47-3_ol_74;
 	phases "AN";
-	from node:888;
-	to node:896;
+	from R1-12-47-3_node_170;
+	to R1-12-47-3_node_174;
 	length 1160.9;
 	configuration line_configuration:1125;
 }
@@ -4218,8 +4218,8 @@ object overhead_line:1290 {
 object overhead_line:1292 {
 	name R1-12-47-3_ol_75;
 	phases "AN";
-	from node:887;
-	to node:640;
+	from R1-12-47-3_node_169;
+	to R1-12-47-3_node_19;
 	length 190.452211438123;
 	configuration line_configuration:1150;
 }
@@ -4227,8 +4227,8 @@ object overhead_line:1292 {
 object overhead_line:1296 {
 	name R1-12-47-3_ol_76;
 	phases "AN";
-	from node:898;
-	to node:639;
+	from R1-12-47-3_node_176;
+	to R1-12-47-3_node_18;
 	length 112.727829930478;
 	configuration line_configuration:1150;
 }
@@ -4236,8 +4236,8 @@ object overhead_line:1296 {
 object overhead_line:1297 {
 	name R1-12-47-3_ol_77;
 	phases "AN";
-	from node:904;
-	to node:906;
+	from R1-12-47-3_node_180;
+	to R1-12-47-3_node_181;
 	length 303.2;
 	configuration line_configuration:1150;
 }
@@ -4245,8 +4245,8 @@ object overhead_line:1297 {
 object overhead_line:1298 {
 	name R1-12-47-3_ol_78;
 	phases "AN";
-	from node:904;
-	to node:908;
+	from R1-12-47-3_node_180;
+	to R1-12-47-3_node_182;
 	length 159.4;
 	configuration line_configuration:1150;
 }
@@ -4254,8 +4254,8 @@ object overhead_line:1298 {
 object overhead_line:1302 {
 	name R1-12-47-3_ol_79;
 	phases "AN";
-	from node:912;
-	to node:916;
+	from R1-12-47-3_node_184;
+	to R1-12-47-3_node_186;
 	length 471.6;
 	configuration line_configuration:1150;
 }
@@ -4263,8 +4263,8 @@ object overhead_line:1302 {
 object overhead_line:1303 {
 	name R1-12-47-3_ol_80;
 	phases "AN";
-	from node:916;
-	to node:917;
+	from R1-12-47-3_node_186;
+	to R1-12-47-3_node_187;
 	length 251.9;
 	configuration line_configuration:1150;
 }
@@ -4272,8 +4272,8 @@ object overhead_line:1303 {
 object overhead_line:1305 {
 	name R1-12-47-3_ol_81;
 	phases "AN";
-	from node:916;
-	to node:922;
+	from R1-12-47-3_node_186;
+	to R1-12-47-3_node_189;
 	length 1204.58349420041;
 	configuration line_configuration:1125;
 }
@@ -4281,8 +4281,8 @@ object overhead_line:1305 {
 object overhead_line:1307 {
 	name R1-12-47-3_ol_82;
 	phases "AN";
-	from node:922;
-	to node:925;
+	from R1-12-47-3_node_189;
+	to R1-12-47-3_node_191;
 	length 450.2;
 	configuration line_configuration:1125;
 }
@@ -4290,8 +4290,8 @@ object overhead_line:1307 {
 object overhead_line:1325 {
 	name R1-12-47-3_ol_83;
 	phases "CN";
-	from node:954;
-	to node:956;
+	from R1-12-47-3_node_207;
+	to R1-12-47-3_node_209;
 	length 1180.19420571358;
 	configuration line_configuration:1138;
 }
@@ -4299,8 +4299,8 @@ object overhead_line:1325 {
 object overhead_line:1326 {
 	name R1-12-47-3_ol_84;
 	phases "CN";
-	from node:956;
-	to node:957;
+	from R1-12-47-3_node_209;
+	to R1-12-47-3_node_210;
 	length 479.585635001829;
 	configuration line_configuration:1138;
 }
@@ -4308,8 +4308,8 @@ object overhead_line:1326 {
 object overhead_line:1342 {
 	name R1-12-47-3_ol_85;
 	phases "ABCN";
-	from node:870;
-	to node:974;
+	from R1-12-47-3_node_161;
+	to R1-12-47-3_node_226;
 	length 226.854634072108;
 	configuration line_configuration:1149;
 }
@@ -4317,8 +4317,8 @@ object overhead_line:1342 {
 object overhead_line:1343 {
 	name R1-12-47-3_ol_86;
 	phases "BCN";
-	from node:974;
-	to node:976;
+	from R1-12-47-3_node_226;
+	to R1-12-47-3_node_227;
 	length 186.690000000002;
 	configuration line_configuration:1137;
 }
@@ -4326,8 +4326,8 @@ object overhead_line:1343 {
 object overhead_line:1345 {
 	name R1-12-47-3_ol_87;
 	phases "BCN";
-	from node:976;
-	to node:977;
+	from R1-12-47-3_node_227;
+	to R1-12-47-3_node_228;
 	length 136.043899164916;
 	configuration line_configuration:1137;
 }
@@ -4335,8 +4335,8 @@ object overhead_line:1345 {
 object overhead_line:1347 {
 	name R1-12-47-3_ol_88;
 	phases "BCN";
-	from node:977;
-	to node:979;
+	from R1-12-47-3_node_228;
+	to R1-12-47-3_node_230;
 	length 192.320926058498;
 	configuration line_configuration:1137;
 }
@@ -4344,8 +4344,8 @@ object overhead_line:1347 {
 object overhead_line:1349 {
 	name R1-12-47-3_ol_89;
 	phases "BCN";
-	from node:979;
-	to node:981;
+	from R1-12-47-3_node_230;
+	to R1-12-47-3_node_232;
 	length 813.850690298937;
 	configuration line_configuration:1137;
 }
@@ -4353,8 +4353,8 @@ object overhead_line:1349 {
 object overhead_line:1368 {
 	name R1-12-47-3_ol_90;
 	phases "BCN";
-	from node:981;
-	to node:1000;
+	from R1-12-47-3_node_232;
+	to R1-12-47-3_node_251;
 	length 505.345638944295;
 	configuration line_configuration:1137;
 }
@@ -4362,8 +4362,8 @@ object overhead_line:1368 {
 object overhead_line:1370 {
 	name R1-12-47-3_ol_91;
 	phases "CN";
-	from node:1000;
-	to node:1003;
+	from R1-12-47-3_node_251;
+	to R1-12-47-3_node_253;
 	length 126.965638264824;
 	configuration line_configuration:1131;
 }
@@ -4371,8 +4371,8 @@ object overhead_line:1370 {
 object overhead_line:1375 {
 	name R1-12-47-3_ol_92;
 	phases "BCN";
-	from node:1000;
-	to node:1008;
+	from R1-12-47-3_node_251;
+	to R1-12-47-3_node_258;
 	length 361.564030290591;
 	configuration line_configuration:1137;
 }
@@ -4380,8 +4380,8 @@ object overhead_line:1375 {
 object overhead_line:1377 {
 	name R1-12-47-3_ol_93;
 	phases "BCN";
-	from node:1008;
-	to node:1011;
+	from R1-12-47-3_node_258;
+	to R1-12-47-3_node_260;
 	length 203.418687686229;
 	configuration line_configuration:1137;
 }
@@ -4389,8 +4389,8 @@ object overhead_line:1377 {
 object overhead_line:1381 {
 	name R1-12-47-3_ol_94;
 	phases "BCN";
-	from node:1011;
-	to node:1016;
+	from R1-12-47-3_node_260;
+	to R1-12-47-3_node_263;
 	length 1165.43505301444;
 	configuration line_configuration:1137;
 }
@@ -4398,8 +4398,8 @@ object overhead_line:1381 {
 object overhead_line:1382 {
 	name R1-12-47-3_ol_95;
 	phases "BN";
-	from node:1020;
-	to node:1017;
+	from R1-12-47-3_node_267;
+	to R1-12-47-3_node_264;
 	length 631.043250577924;
 	configuration line_configuration:1147;
 }
@@ -4407,8 +4407,8 @@ object overhead_line:1382 {
 object overhead_line:1383 {
 	name R1-12-47-3_ol_96;
 	phases "BN";
-	from node:1016;
-	to node:1018;
+	from R1-12-47-3_node_263;
+	to R1-12-47-3_node_265;
 	length 56.9240985875259;
 	configuration line_configuration:1133;
 }
@@ -4416,8 +4416,8 @@ object overhead_line:1383 {
 object overhead_line:1385 {
 	name R1-12-47-3_ol_97;
 	phases "BN";
-	from node:1019;
-	to node:1020;
+	from R1-12-47-3_node_266;
+	to R1-12-47-3_node_267;
 	length 626.622334185583;
 	configuration line_configuration:1147;
 }
@@ -4425,8 +4425,8 @@ object overhead_line:1385 {
 object overhead_line:1388 {
 	name R1-12-47-3_ol_98;
 	phases "BN";
-	from node:1017;
-	to node:1026;
+	from R1-12-47-3_node_264;
+	to R1-12-47-3_node_270;
 	length 322.077997541001;
 	configuration line_configuration:1147;
 }
@@ -4434,8 +4434,8 @@ object overhead_line:1388 {
 object overhead_line:1392 {
 	name R1-12-47-3_ol_99;
 	phases "BCN";
-	from node:1016;
-	to node:1033;
+	from R1-12-47-3_node_263;
+	to R1-12-47-3_node_274;
 	length 551.60627054085;
 	configuration line_configuration:1137;
 }
@@ -4443,8 +4443,8 @@ object overhead_line:1392 {
 object overhead_line:1393 {
 	name R1-12-47-3_ol_100;
 	phases "BN";
-	from node:1033;
-	to node:1034;
+	from R1-12-47-3_node_274;
+	to R1-12-47-3_node_275;
 	length 57.9055800420022;
 	configuration line_configuration:1133;
 }
@@ -4452,8 +4452,8 @@ object overhead_line:1393 {
 object overhead_line:1395 {
 	name R1-12-47-3_ol_101;
 	phases "BCN";
-	from node:1033;
-	to node:1037;
+	from R1-12-47-3_node_274;
+	to R1-12-47-3_node_277;
 	length 1171.19405676101;
 	configuration line_configuration:1137;
 }
@@ -4461,8 +4461,8 @@ object overhead_line:1395 {
 object overhead_line:1396 {
 	name R1-12-47-3_ol_102;
 	phases "BN";
-	from node:1037;
-	to node:1038;
+	from R1-12-47-3_node_277;
+	to R1-12-47-3_node_278;
 	length 159.357534180249;
 	configuration line_configuration:1133;
 }
@@ -4470,8 +4470,8 @@ object overhead_line:1396 {
 object overhead_line:1398 {
 	name R1-12-47-3_ol_103;
 	phases "BCN";
-	from node:1037;
-	to node:1041;
+	from R1-12-47-3_node_277;
+	to R1-12-47-3_node_280;
 	length 768.871888004425;
 	configuration line_configuration:1137;
 }
@@ -4479,8 +4479,8 @@ object overhead_line:1398 {
 object overhead_line:1399 {
 	name R1-12-47-3_ol_104;
 	phases "CN";
-	from node:1041;
-	to node:1042;
+	from R1-12-47-3_node_280;
+	to R1-12-47-3_node_281;
 	length 63.8613161466558;
 	configuration line_configuration:1138;
 }
@@ -4488,8 +4488,8 @@ object overhead_line:1399 {
 object overhead_line:1402 {
 	name R1-12-47-3_ol_105;
 	phases "BCN";
-	from node:1041;
-	to node:1045;
+	from R1-12-47-3_node_280;
+	to R1-12-47-3_node_284;
 	length 817.056878313824;
 	configuration line_configuration:1137;
 }
@@ -4497,8 +4497,8 @@ object overhead_line:1402 {
 object overhead_line:1403 {
 	name R1-12-47-3_ol_106;
 	phases "CN";
-	from node:1045;
-	to node:1046;
+	from R1-12-47-3_node_284;
+	to R1-12-47-3_node_285;
 	length 421.520581155565;
 	configuration line_configuration:1138;
 }
@@ -4506,8 +4506,8 @@ object overhead_line:1403 {
 object overhead_line:1411 {
 	name R1-12-47-3_ol_107;
 	phases "BCN";
-	from node:1045;
-	to node:1054;
+	from R1-12-47-3_node_284;
+	to R1-12-47-3_node_293;
 	length 410.58621165355;
 	configuration line_configuration:1137;
 }
@@ -4515,8 +4515,8 @@ object overhead_line:1411 {
 object overhead_line:1412 {
 	name R1-12-47-3_ol_108;
 	phases "CN";
-	from node:1054;
-	to node:1055;
+	from R1-12-47-3_node_293;
+	to R1-12-47-3_node_294;
 	length 160.911056176967;
 	configuration line_configuration:1131;
 }
@@ -4524,8 +4524,8 @@ object overhead_line:1412 {
 object overhead_line:1414 {
 	name R1-12-47-3_ol_109;
 	phases "BCN";
-	from node:1054;
-	to node:1057;
+	from R1-12-47-3_node_293;
+	to R1-12-47-3_node_296;
 	length 195.548551771756;
 	configuration line_configuration:1137;
 }
@@ -4533,8 +4533,8 @@ object overhead_line:1414 {
 object overhead_line:1415 {
 	name R1-12-47-3_ol_110;
 	phases "BN";
-	from node:1057;
-	to node:1058;
+	from R1-12-47-3_node_296;
+	to R1-12-47-3_node_297;
 	length 57.1911575334327;
 	configuration line_configuration:1133;
 }
@@ -4542,8 +4542,8 @@ object overhead_line:1415 {
 object overhead_line:1419 {
 	name R1-12-47-3_ol_111;
 	phases "BCN";
-	from node:1057;
-	to node:1065;
+	from R1-12-47-3_node_296;
+	to R1-12-47-3_node_301;
 	length 401.856428591061;
 	configuration line_configuration:1137;
 }
@@ -4551,8 +4551,8 @@ object overhead_line:1419 {
 object overhead_line:1420 {
 	name R1-12-47-3_ol_112;
 	phases "BN";
-	from node:1065;
-	to node:1066;
+	from R1-12-47-3_node_301;
+	to R1-12-47-3_node_302;
 	length 239.3545788894;
 	configuration line_configuration:1134;
 }
@@ -4560,8 +4560,8 @@ object overhead_line:1420 {
 object overhead_line:1424 {
 	name R1-12-47-3_ol_113;
 	phases "BCN";
-	from node:1065;
-	to node:1073;
+	from R1-12-47-3_node_301;
+	to R1-12-47-3_node_306;
 	length 243.367796760409;
 	configuration line_configuration:1137;
 }
@@ -4569,8 +4569,8 @@ object overhead_line:1424 {
 object overhead_line:1425 {
 	name R1-12-47-3_ol_114;
 	phases "BCN";
-	from node:1073;
-	to node:1074;
+	from R1-12-47-3_node_306;
+	to R1-12-47-3_node_307;
 	length 233.112780644934;
 	configuration line_configuration:1137;
 }
@@ -4578,8 +4578,8 @@ object overhead_line:1425 {
 object overhead_line:1426 {
 	name R1-12-47-3_ol_115;
 	phases "BCN";
-	from node:1074;
-	to node:1075;
+	from R1-12-47-3_node_307;
+	to R1-12-47-3_node_308;
 	length 585.991784616479;
 	configuration line_configuration:1137;
 }
@@ -4587,8 +4587,8 @@ object overhead_line:1426 {
 object overhead_line:1428 {
 	name R1-12-47-3_ol_116;
 	phases "BCN";
-	from node:1075;
-	to node:1077;
+	from R1-12-47-3_node_308;
+	to R1-12-47-3_node_310;
 	length 422.389437841439;
 	configuration line_configuration:1137;
 }
@@ -4596,8 +4596,8 @@ object overhead_line:1428 {
 object overhead_line:1433 {
 	name R1-12-47-3_ol_117;
 	phases "BN";
-	from node:1081;
-	to node:1082;
+	from R1-12-47-3_node_314;
+	to R1-12-47-3_node_315;
 	length 223.0;
 	configuration line_configuration:1133;
 }
@@ -4605,8 +4605,8 @@ object overhead_line:1433 {
 object overhead_line:1435 {
 	name R1-12-47-3_ol_118;
 	phases "BN";
-	from node:1083;
-	to node:1086;
+	from R1-12-47-3_node_316;
+	to R1-12-47-3_node_317;
 	length 337.263737152598;
 	configuration line_configuration:1133;
 }
@@ -4614,8 +4614,8 @@ object overhead_line:1435 {
 object overhead_line:1452 {
 	name R1-12-47-3_ol_119;
 	phases "BN";
-	from node:1082;
-	to node:1114;
+	from R1-12-47-3_node_315;
+	to R1-12-47-3_node_334;
 	length 421.7;
 	configuration line_configuration:1133;
 }
@@ -4623,8 +4623,8 @@ object overhead_line:1452 {
 object overhead_line:1471 {
 	name R1-12-47-3_ol_120;
 	phases "BN";
-	from node:1087;
-	to node:681;
+	from R1-12-47-3_node_318;
+	to R1-12-47-3_node_43;
 	length 206.493918446085;
 	configuration line_configuration:1133;
 }
@@ -4632,8 +4632,8 @@ object overhead_line:1471 {
 object overhead_line:1472 {
 	name R1-12-47-3_ol_121;
 	phases "BN";
-	from node:681;
-	to node:634;
+	from R1-12-47-3_node_43;
+	to R1-12-47-3_node_16;
 	length 97.4729652664309;
 	configuration line_configuration:1133;
 }
@@ -4641,8 +4641,8 @@ object overhead_line:1472 {
 object overhead_line:1473 {
 	name R1-12-47-3_ol_122;
 	phases "BN";
-	from node:634;
-	to node:628;
+	from R1-12-47-3_node_16;
+	to R1-12-47-3_node_9;
 	length 202.051728581171;
 	configuration line_configuration:1133;
 }
@@ -4650,8 +4650,8 @@ object overhead_line:1473 {
 object overhead_line:1478 {
 	name R1-12-47-3_ol_123;
 	phases "BCN";
-	from node:663;
-	to node:1013;
+	from R1-12-47-3_node_33;
+	to R1-12-47-3_node_261;
 	length 113.5;
 	configuration line_configuration:1137;
 }
@@ -4659,8 +4659,8 @@ object overhead_line:1478 {
 object overhead_line:1481 {
 	name R1-12-47-3_ol_124;
 	phases "BN";
-	from node:618;
-	to node:868;
+	from R1-12-47-3_node_4;
+	to R1-12-47-3_node_160;
 	length 173.4;
 	configuration line_configuration:1133;
 }
@@ -4668,8 +4668,8 @@ object overhead_line:1481 {
 object overhead_line:1485 {
 	name R1-12-47-3_ol_125;
 	phases "BN";
-	from node:622;
-	to node:835;
+	from R1-12-47-3_node_7;
+	to R1-12-47-3_node_143;
 	length 176.6;
 	configuration line_configuration:1134;
 }
@@ -4677,8 +4677,8 @@ object overhead_line:1485 {
 object overhead_line:1487 {
 	name R1-12-47-3_ol_126;
 	phases "AN";
-	from node:632;
-	to node:645;
+	from R1-12-47-3_node_14;
+	to R1-12-47-3_node_22;
 	length 292.254506929393;
 	configuration line_configuration:1150;
 }
@@ -4686,8 +4686,8 @@ object overhead_line:1487 {
 object overhead_line:1488 {
 	name R1-12-47-3_ol_127;
 	phases "AN";
-	from node:653;
-	to node:632;
+	from R1-12-47-3_node_27;
+	to R1-12-47-3_node_14;
 	length 166.201326232567;
 	configuration line_configuration:1150;
 }
@@ -4695,8 +4695,8 @@ object overhead_line:1488 {
 object overhead_line:1489 {
 	name R1-12-47-3_ol_128;
 	phases "AN";
-	from node:640;
-	to node:653;
+	from R1-12-47-3_node_19;
+	to R1-12-47-3_node_27;
 	length 136.208439894534;
 	configuration line_configuration:1150;
 }
@@ -4704,8 +4704,8 @@ object overhead_line:1489 {
 object overhead_line:1490 {
 	name R1-12-47-3_ol_129;
 	phases "AN";
-	from node:659;
-	to node:898;
+	from R1-12-47-3_node_31;
+	to R1-12-47-3_node_176;
 	length 165.403999707985;
 	configuration line_configuration:1150;
 }
@@ -4713,8 +4713,8 @@ object overhead_line:1490 {
 object overhead_line:1491 {
 	name R1-12-47-3_ol_130;
 	phases "AN";
-	from node:645;
-	to node:659;
+	from R1-12-47-3_node_22;
+	to R1-12-47-3_node_31;
 	length 192.522713692408;
 	configuration line_configuration:1150;
 }
@@ -4722,8 +4722,8 @@ object overhead_line:1491 {
 object overhead_line:1492 {
 	name R1-12-47-3_ol_131;
 	phases "AN";
-	from node:639;
-	to node:904;
+	from R1-12-47-3_node_18;
+	to R1-12-47-3_node_180;
 	length 135.295648305343;
 	configuration line_configuration:1150;
 }
@@ -4809,32 +4809,32 @@ object regulator_configuration {
 object switch:1158 {
 	name R1-12-47-3_switch_1;
 	phases "ABCN";
-	from meter:636;
-	to node:682;
+	from R1-12-47-3_meter_4;
+	to R1-12-47-3_node_44;
 	status CLOSED;
 }
 
 object switch:1212 {
 	name R1-12-47-3_switch_2;
 	phases "ABCN";
-	from node:762;
-	to node:763;
+	from R1-12-47-3_node_97;
+	to R1-12-47-3_node_98;
 	status CLOSED;
 }
 
 object switch:1214 {
 	name R1-12-47-3_switch_3;
 	phases "ABCN";
-	from node:764;
-	to node:1117;
+	from R1-12-47-3_node_99;
+	to R1-12-47-3_node_336;
 	status OPEN;
 }
 
 object switch:1483 {
 	name R1-12-47-3_switch_4;
 	phases "ABCN";
-	from node:682;
-	to node:625;
+	from R1-12-47-3_node_44;
+	to R1-12-47-3_node_8;
 	status OPEN;
 }
 
@@ -8477,7 +8477,7 @@ object triplex_node:150 {
 	parent R1-12-47-3_tm_13;
 	phases CS;
 	nominal_voltage 120;
-	power_1 0.000+0.000j;
+	power_1 8000.000+5000.000j;
 	voltage_1 -60.000+103.923j;
 	voltage_2 -60.000+103.923j;
 	voltage_N 0;
@@ -9093,7 +9093,7 @@ object triplex_node:320 {
 	parent R1-12-47-3_tm_69;
 	phases BS;
 	nominal_voltage 120;
-	power_1 0.000+0.000j;
+	power_1 8000.000+5000.000j;
 	voltage_1 -60.000-103.923j;
 	voltage_2 -60.000-103.923j;
 	voltage_N 0;
@@ -9577,7 +9577,7 @@ object triplex_node:452 {
 	parent R1-12-47-3_tm_113;
 	phases CS;
 	nominal_voltage 120;
-	power_1 0.000+0.000j;
+	power_1 8000.000+5000.000j;
 	voltage_1 -60.000+103.923j;
 	voltage_2 -60.000+103.923j;
 	voltage_N 0;
@@ -10127,7 +10127,7 @@ object triplex_node:602 {
 	parent R1-12-47-3_tm_163;
 	phases AS;
 	nominal_voltage 120;
-	power_1 0.000+0.000j;
+	power_1 8000.000+5000.000j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
@@ -10138,7 +10138,7 @@ object triplex_node:605 {
 	parent R1-12-47-3_tm_164;
 	phases BS;
 	nominal_voltage 120;
-	power_1 0.000+0.000j;
+	power_1 8000.000+5000.000j;
 	voltage_1 -60.000-103.923j;
 	voltage_2 -60.000-103.923j;
 	voltage_N 0;
@@ -10160,7 +10160,7 @@ object triplex_node:611 {
 	parent R1-12-47-3_tm_166;
 	phases AS;
 	nominal_voltage 120;
-	power_1 0.000+0.000j;
+	power_1 8000.000+5000.000j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
@@ -10170,8 +10170,8 @@ object triplex_node:611 {
 object underground_line:1159 {
 	name R1-12-47-3_ul_1;
 	phases "ABCN";
-	from node:682;
-	to node:683;
+	from R1-12-47-3_node_44;
+	to R1-12-47-3_node_45;
 	length 51.7304678115138;
 	configuration line_configuration:1119;
 }
@@ -10179,8 +10179,8 @@ object underground_line:1159 {
 object underground_line:1221 {
 	name R1-12-47-3_ul_2;
 	phases "BN";
-	from node:771;
-	to node:772;
+	from R1-12-47-3_node_105;
+	to R1-12-47-3_node_106;
 	length 827.8;
 	configuration line_configuration:1141;
 }
@@ -10188,8 +10188,8 @@ object underground_line:1221 {
 object underground_line:1222 {
 	name R1-12-47-3_ul_3;
 	phases "BN";
-	from node:772;
-	to node:773;
+	from R1-12-47-3_node_106;
+	to R1-12-47-3_node_107;
 	length 70.2;
 	configuration line_configuration:1141;
 }
@@ -10197,8 +10197,8 @@ object underground_line:1222 {
 object underground_line:1223 {
 	name R1-12-47-3_ul_4;
 	phases "BN";
-	from node:771;
-	to node:649;
+	from R1-12-47-3_node_105;
+	to R1-12-47-3_node_24;
 	length 804.5;
 	configuration line_configuration:1141;
 }
@@ -10206,8 +10206,8 @@ object underground_line:1223 {
 object underground_line:1224 {
 	name R1-12-47-3_ul_5;
 	phases "BN";
-	from node:772;
-	to node:777;
+	from R1-12-47-3_node_106;
+	to R1-12-47-3_node_109;
 	length 65.6;
 	configuration line_configuration:1141;
 }
@@ -10215,8 +10215,8 @@ object underground_line:1224 {
 object underground_line:1245 {
 	name R1-12-47-3_ul_6;
 	phases "BN";
-	from node:809;
-	to node:811;
+	from R1-12-47-3_node_129;
+	to R1-12-47-3_node_130;
 	length 276.8;
 	configuration line_configuration:1141;
 }
@@ -10224,8 +10224,8 @@ object underground_line:1245 {
 object underground_line:1246 {
 	name R1-12-47-3_ul_7;
 	phases "BN";
-	from node:809;
-	to node:813;
+	from R1-12-47-3_node_129;
+	to R1-12-47-3_node_131;
 	length 201.7;
 	configuration line_configuration:1141;
 }
@@ -10233,8 +10233,8 @@ object underground_line:1246 {
 object underground_line:1249 {
 	name R1-12-47-3_ul_8;
 	phases "BN";
-	from node:816;
-	to node:817;
+	from R1-12-47-3_node_133;
+	to R1-12-47-3_node_134;
 	length 222.3;
 	configuration line_configuration:1141;
 }
@@ -10242,8 +10242,8 @@ object underground_line:1249 {
 object underground_line:1250 {
 	name R1-12-47-3_ul_9;
 	phases "BN";
-	from node:816;
-	to node:819;
+	from R1-12-47-3_node_133;
+	to R1-12-47-3_node_135;
 	length 576.4;
 	configuration line_configuration:1141;
 }
@@ -10251,8 +10251,8 @@ object underground_line:1250 {
 object underground_line:1289 {
 	name R1-12-47-3_ul_10;
 	phases "AN";
-	from node:890;
-	to node:893;
+	from R1-12-47-3_node_171;
+	to R1-12-47-3_node_173;
 	length 75.4;
 	configuration line_configuration:1127;
 }
@@ -10260,8 +10260,8 @@ object underground_line:1289 {
 object underground_line:1291 {
 	name R1-12-47-3_ul_11;
 	phases "AN";
-	from node:890;
-	to node:897;
+	from R1-12-47-3_node_171;
+	to R1-12-47-3_node_175;
 	length 803.391760225883;
 	configuration line_configuration:1127;
 }
@@ -10269,8 +10269,8 @@ object underground_line:1291 {
 object underground_line:1293 {
 	name R1-12-47-3_ul_12;
 	phases "AN";
-	from node:897;
-	to node:899;
+	from R1-12-47-3_node_175;
+	to R1-12-47-3_node_177;
 	length 861.8;
 	configuration line_configuration:1127;
 }
@@ -10278,8 +10278,8 @@ object underground_line:1293 {
 object underground_line:1295 {
 	name R1-12-47-3_ul_13;
 	phases "AN";
-	from node:897;
-	to node:660;
+	from R1-12-47-3_node_175;
+	to R1-12-47-3_node_32;
 	length 1137.14526017973;
 	configuration line_configuration:1127;
 }
@@ -10287,8 +10287,8 @@ object underground_line:1295 {
 object underground_line:1306 {
 	name R1-12-47-3_ul_14;
 	phases "AN";
-	from node:922;
-	to node:924;
+	from R1-12-47-3_node_189;
+	to R1-12-47-3_node_190;
 	length 160.5;
 	configuration line_configuration:1127;
 }
@@ -10296,8 +10296,8 @@ object underground_line:1306 {
 object underground_line:1310 {
 	name R1-12-47-3_ul_15;
 	phases "AN";
-	from node:929;
-	to node:931;
+	from R1-12-47-3_node_193;
+	to R1-12-47-3_node_194;
 	length 237.2;
 	configuration line_configuration:1127;
 }
@@ -10305,8 +10305,8 @@ object underground_line:1310 {
 object underground_line:1311 {
 	name R1-12-47-3_ul_16;
 	phases "AN";
-	from node:929;
-	to node:932;
+	from R1-12-47-3_node_193;
+	to R1-12-47-3_node_195;
 	length 458.911667182604;
 	configuration line_configuration:1127;
 }
@@ -10314,8 +10314,8 @@ object underground_line:1311 {
 object underground_line:1312 {
 	name R1-12-47-3_ul_17;
 	phases "AN";
-	from node:932;
-	to node:934;
+	from R1-12-47-3_node_195;
+	to R1-12-47-3_node_196;
 	length 344.6;
 	configuration line_configuration:1127;
 }
@@ -10323,8 +10323,8 @@ object underground_line:1312 {
 object underground_line:1313 {
 	name R1-12-47-3_ul_18;
 	phases "AN";
-	from node:932;
-	to node:936;
+	from R1-12-47-3_node_195;
+	to R1-12-47-3_node_197;
 	length 272.3;
 	configuration line_configuration:1127;
 }
@@ -10332,8 +10332,8 @@ object underground_line:1313 {
 object underground_line:1314 {
 	name R1-12-47-3_ul_19;
 	phases "AN";
-	from node:932;
-	to node:937;
+	from R1-12-47-3_node_195;
+	to R1-12-47-3_node_198;
 	length 316.032899744907;
 	configuration line_configuration:1127;
 }
@@ -10341,8 +10341,8 @@ object underground_line:1314 {
 object underground_line:1315 {
 	name R1-12-47-3_ul_20;
 	phases "AN";
-	from node:937;
-	to node:939;
+	from R1-12-47-3_node_198;
+	to R1-12-47-3_node_199;
 	length 263.8;
 	configuration line_configuration:1127;
 }
@@ -10350,8 +10350,8 @@ object underground_line:1315 {
 object underground_line:1316 {
 	name R1-12-47-3_ul_21;
 	phases "AN";
-	from node:937;
-	to node:940;
+	from R1-12-47-3_node_198;
+	to R1-12-47-3_node_200;
 	length 201.7;
 	configuration line_configuration:1127;
 }
@@ -10359,8 +10359,8 @@ object underground_line:1316 {
 object underground_line:1317 {
 	name R1-12-47-3_ul_22;
 	phases "AN";
-	from node:937;
-	to node:943;
+	from R1-12-47-3_node_198;
+	to R1-12-47-3_node_201;
 	length 768.7;
 	configuration line_configuration:1127;
 }
@@ -10368,8 +10368,8 @@ object underground_line:1317 {
 object underground_line:1318 {
 	name R1-12-47-3_ul_23;
 	phases "AN";
-	from node:929;
-	to node:945;
+	from R1-12-47-3_node_193;
+	to R1-12-47-3_node_202;
 	length 1133.5;
 	configuration line_configuration:1127;
 }
@@ -10377,8 +10377,8 @@ object underground_line:1318 {
 object underground_line:1319 {
 	name R1-12-47-3_ul_24;
 	phases "AN";
-	from node:945;
-	to node:947;
+	from R1-12-47-3_node_202;
+	to R1-12-47-3_node_203;
 	length 222.4;
 	configuration line_configuration:1127;
 }
@@ -10386,8 +10386,8 @@ object underground_line:1319 {
 object underground_line:1320 {
 	name R1-12-47-3_ul_25;
 	phases "AN";
-	from node:947;
-	to node:948;
+	from R1-12-47-3_node_203;
+	to R1-12-47-3_node_204;
 	length 620.8;
 	configuration line_configuration:1127;
 }
@@ -10395,8 +10395,8 @@ object underground_line:1320 {
 object underground_line:1321 {
 	name R1-12-47-3_ul_26;
 	phases "AN";
-	from node:947;
-	to node:951;
+	from R1-12-47-3_node_203;
+	to R1-12-47-3_node_205;
 	length 624.1;
 	configuration line_configuration:1127;
 }
@@ -10404,8 +10404,8 @@ object underground_line:1321 {
 object underground_line:1322 {
 	name R1-12-47-3_ul_27;
 	phases "AN";
-	from node:945;
-	to node:952;
+	from R1-12-47-3_node_202;
+	to R1-12-47-3_node_206;
 	length 1893.7;
 	configuration line_configuration:1127;
 }
@@ -10413,8 +10413,8 @@ object underground_line:1322 {
 object underground_line:1328 {
 	name R1-12-47-3_ul_28;
 	phases "CN";
-	from node:958;
-	to node:959;
+	from R1-12-47-3_node_211;
+	to R1-12-47-3_node_212;
 	length 296.8;
 	configuration line_configuration:1143;
 }
@@ -10422,8 +10422,8 @@ object underground_line:1328 {
 object underground_line:1329 {
 	name R1-12-47-3_ul_29;
 	phases "CN";
-	from node:958;
-	to node:960;
+	from R1-12-47-3_node_211;
+	to R1-12-47-3_node_213;
 	length 72.9;
 	configuration line_configuration:1143;
 }
@@ -10431,8 +10431,8 @@ object underground_line:1329 {
 object underground_line:1330 {
 	name R1-12-47-3_ul_30;
 	phases "CN";
-	from node:958;
-	to node:961;
+	from R1-12-47-3_node_211;
+	to R1-12-47-3_node_214;
 	length 693.338552989563;
 	configuration line_configuration:1143;
 }
@@ -10440,8 +10440,8 @@ object underground_line:1330 {
 object underground_line:1331 {
 	name R1-12-47-3_ul_31;
 	phases "CN";
-	from node:961;
-	to node:962;
+	from R1-12-47-3_node_214;
+	to R1-12-47-3_node_215;
 	length 401.3;
 	configuration line_configuration:1143;
 }
@@ -10449,8 +10449,8 @@ object underground_line:1331 {
 object underground_line:1332 {
 	name R1-12-47-3_ul_32;
 	phases "CN";
-	from node:961;
-	to node:963;
+	from R1-12-47-3_node_214;
+	to R1-12-47-3_node_216;
 	length 454.838693419149;
 	configuration line_configuration:1143;
 }
@@ -10458,8 +10458,8 @@ object underground_line:1332 {
 object underground_line:1333 {
 	name R1-12-47-3_ul_33;
 	phases "CN";
-	from node:963;
-	to node:964;
+	from R1-12-47-3_node_216;
+	to R1-12-47-3_node_217;
 	length 201.3;
 	configuration line_configuration:1143;
 }
@@ -10467,8 +10467,8 @@ object underground_line:1333 {
 object underground_line:1334 {
 	name R1-12-47-3_ul_34;
 	phases "CN";
-	from node:963;
-	to node:965;
+	from R1-12-47-3_node_216;
+	to R1-12-47-3_node_218;
 	length 460.4;
 	configuration line_configuration:1143;
 }
@@ -10476,8 +10476,8 @@ object underground_line:1334 {
 object underground_line:1335 {
 	name R1-12-47-3_ul_35;
 	phases "CN";
-	from node:963;
-	to node:966;
+	from R1-12-47-3_node_216;
+	to R1-12-47-3_node_219;
 	length 550.957586351016;
 	configuration line_configuration:1143;
 }
@@ -10485,8 +10485,8 @@ object underground_line:1335 {
 object underground_line:1336 {
 	name R1-12-47-3_ul_36;
 	phases "CN";
-	from node:966;
-	to node:967;
+	from R1-12-47-3_node_219;
+	to R1-12-47-3_node_220;
 	length 102.693568756614;
 	configuration line_configuration:1143;
 }
@@ -10494,8 +10494,8 @@ object underground_line:1336 {
 object underground_line:1337 {
 	name R1-12-47-3_ul_37;
 	phases "CN";
-	from node:966;
-	to node:968;
+	from R1-12-47-3_node_219;
+	to R1-12-47-3_node_221;
 	length 158.642000113433;
 	configuration line_configuration:1143;
 }
@@ -10503,8 +10503,8 @@ object underground_line:1337 {
 object underground_line:1338 {
 	name R1-12-47-3_ul_38;
 	phases "CN";
-	from node:966;
-	to node:969;
+	from R1-12-47-3_node_219;
+	to R1-12-47-3_node_222;
 	length 334.792459658799;
 	configuration line_configuration:1143;
 }
@@ -10512,8 +10512,8 @@ object underground_line:1338 {
 object underground_line:1339 {
 	name R1-12-47-3_ul_39;
 	phases "CN";
-	from node:969;
-	to node:970;
+	from R1-12-47-3_node_222;
+	to R1-12-47-3_node_223;
 	length 88.1814612035562;
 	configuration line_configuration:1143;
 }
@@ -10521,8 +10521,8 @@ object underground_line:1339 {
 object underground_line:1340 {
 	name R1-12-47-3_ul_40;
 	phases "CN";
-	from node:969;
-	to node:971;
+	from R1-12-47-3_node_222;
+	to R1-12-47-3_node_224;
 	length 283.254473220606;
 	configuration line_configuration:1143;
 }
@@ -10530,8 +10530,8 @@ object underground_line:1340 {
 object underground_line:1341 {
 	name R1-12-47-3_ul_41;
 	phases "CN";
-	from node:969;
-	to node:972;
+	from R1-12-47-3_node_222;
+	to R1-12-47-3_node_225;
 	length 228.879547813744;
 	configuration line_configuration:1143;
 }
@@ -10539,8 +10539,8 @@ object underground_line:1341 {
 object underground_line:1351 {
 	name R1-12-47-3_ul_42;
 	phases "CN";
-	from node:982;
-	to node:983;
+	from R1-12-47-3_node_233;
+	to R1-12-47-3_node_234;
 	length 94.5420625965071;
 	configuration line_configuration:1143;
 }
@@ -10548,8 +10548,8 @@ object underground_line:1351 {
 object underground_line:1352 {
 	name R1-12-47-3_ul_43;
 	phases "CN";
-	from node:982;
-	to node:984;
+	from R1-12-47-3_node_233;
+	to R1-12-47-3_node_235;
 	length 526.924130677196;
 	configuration line_configuration:1143;
 }
@@ -10557,8 +10557,8 @@ object underground_line:1352 {
 object underground_line:1353 {
 	name R1-12-47-3_ul_44;
 	phases "CN";
-	from node:984;
-	to node:985;
+	from R1-12-47-3_node_235;
+	to R1-12-47-3_node_236;
 	length 516.343432997841;
 	configuration line_configuration:1143;
 }
@@ -10566,8 +10566,8 @@ object underground_line:1353 {
 object underground_line:1354 {
 	name R1-12-47-3_ul_45;
 	phases "CN";
-	from node:987;
-	to node:986;
+	from R1-12-47-3_node_238;
+	to R1-12-47-3_node_237;
 	length 134.5;
 	configuration line_configuration:1143;
 }
@@ -10575,8 +10575,8 @@ object underground_line:1354 {
 object underground_line:1355 {
 	name R1-12-47-3_ul_46;
 	phases "CN";
-	from node:984;
-	to node:987;
+	from R1-12-47-3_node_235;
+	to R1-12-47-3_node_238;
 	length 669.195252713301;
 	configuration line_configuration:1143;
 }
@@ -10584,8 +10584,8 @@ object underground_line:1355 {
 object underground_line:1356 {
 	name R1-12-47-3_ul_47;
 	phases "CN";
-	from node:987;
-	to node:988;
+	from R1-12-47-3_node_238;
+	to R1-12-47-3_node_239;
 	length 269.959291086571;
 	configuration line_configuration:1143;
 }
@@ -10593,8 +10593,8 @@ object underground_line:1356 {
 object underground_line:1357 {
 	name R1-12-47-3_ul_48;
 	phases "CN";
-	from node:982;
-	to node:989;
+	from R1-12-47-3_node_233;
+	to R1-12-47-3_node_240;
 	length 590.578585233386;
 	configuration line_configuration:1143;
 }
@@ -10602,8 +10602,8 @@ object underground_line:1357 {
 object underground_line:1358 {
 	name R1-12-47-3_ul_49;
 	phases "CN";
-	from node:989;
-	to node:990;
+	from R1-12-47-3_node_240;
+	to R1-12-47-3_node_241;
 	length 221.021181111643;
 	configuration line_configuration:1143;
 }
@@ -10611,8 +10611,8 @@ object underground_line:1358 {
 object underground_line:1359 {
 	name R1-12-47-3_ul_50;
 	phases "CN";
-	from node:989;
-	to node:991;
+	from R1-12-47-3_node_240;
+	to R1-12-47-3_node_242;
 	length 748.60875840803;
 	configuration line_configuration:1143;
 }
@@ -10620,8 +10620,8 @@ object underground_line:1359 {
 object underground_line:1360 {
 	name R1-12-47-3_ul_51;
 	phases "CN";
-	from node:989;
-	to node:614;
+	from R1-12-47-3_node_240;
+	to R1-12-47-3_node_2;
 	length 178.4;
 	configuration line_configuration:1143;
 }
@@ -10629,8 +10629,8 @@ object underground_line:1360 {
 object underground_line:1361 {
 	name R1-12-47-3_ul_52;
 	phases "CN";
-	from node:992;
-	to node:993;
+	from R1-12-47-3_node_243;
+	to R1-12-47-3_node_244;
 	length 365.066789625507;
 	configuration line_configuration:1143;
 }
@@ -10638,8 +10638,8 @@ object underground_line:1361 {
 object underground_line:1362 {
 	name R1-12-47-3_ul_53;
 	phases "CN";
-	from node:992;
-	to node:994;
+	from R1-12-47-3_node_243;
+	to R1-12-47-3_node_245;
 	length 303.794869114097;
 	configuration line_configuration:1143;
 }
@@ -10647,8 +10647,8 @@ object underground_line:1362 {
 object underground_line:1363 {
 	name R1-12-47-3_ul_54;
 	phases "CN";
-	from node:992;
-	to node:995;
+	from R1-12-47-3_node_243;
+	to R1-12-47-3_node_246;
 	length 126.421407721877;
 	configuration line_configuration:1143;
 }
@@ -10656,8 +10656,8 @@ object underground_line:1363 {
 object underground_line:1364 {
 	name R1-12-47-3_ul_55;
 	phases "CN";
-	from node:995;
-	to node:996;
+	from R1-12-47-3_node_246;
+	to R1-12-47-3_node_247;
 	length 278.768093750968;
 	configuration line_configuration:1143;
 }
@@ -10665,8 +10665,8 @@ object underground_line:1364 {
 object underground_line:1365 {
 	name R1-12-47-3_ul_56;
 	phases "CN";
-	from node:995;
-	to node:997;
+	from R1-12-47-3_node_246;
+	to R1-12-47-3_node_248;
 	length 325.784145019866;
 	configuration line_configuration:1143;
 }
@@ -10674,8 +10674,8 @@ object underground_line:1365 {
 object underground_line:1366 {
 	name R1-12-47-3_ul_57;
 	phases "CN";
-	from node:997;
-	to node:998;
+	from R1-12-47-3_node_248;
+	to R1-12-47-3_node_249;
 	length 1041.69928649175;
 	configuration line_configuration:1143;
 }
@@ -10683,8 +10683,8 @@ object underground_line:1366 {
 object underground_line:1367 {
 	name R1-12-47-3_ul_58;
 	phases "CN";
-	from node:997;
-	to node:999;
+	from R1-12-47-3_node_248;
+	to R1-12-47-3_node_250;
 	length 72.2254146820262;
 	configuration line_configuration:1143;
 }
@@ -10692,8 +10692,8 @@ object underground_line:1367 {
 object underground_line:1372 {
 	name R1-12-47-3_ul_59;
 	phases "CN";
-	from node:1004;
-	to node:1005;
+	from R1-12-47-3_node_254;
+	to R1-12-47-3_node_255;
 	length 67.9622866006774;
 	configuration line_configuration:1143;
 }
@@ -10701,8 +10701,8 @@ object underground_line:1372 {
 object underground_line:1373 {
 	name R1-12-47-3_ul_60;
 	phases "CN";
-	from node:1004;
-	to node:1006;
+	from R1-12-47-3_node_254;
+	to R1-12-47-3_node_256;
 	length 125.158781281964;
 	configuration line_configuration:1143;
 }
@@ -10710,8 +10710,8 @@ object underground_line:1373 {
 object underground_line:1374 {
 	name R1-12-47-3_ul_61;
 	phases "CN";
-	from node:1004;
-	to node:1007;
+	from R1-12-47-3_node_254;
+	to R1-12-47-3_node_257;
 	length 307.866468921776;
 	configuration line_configuration:1143;
 }
@@ -10719,8 +10719,8 @@ object underground_line:1374 {
 object underground_line:1380 {
 	name R1-12-47-3_ul_62;
 	phases "BN";
-	from node:1017;
-	to node:1015;
+	from R1-12-47-3_node_264;
+	to R1-12-47-3_node_262;
 	length 227.544356355242;
 	configuration line_configuration:1141;
 }
@@ -10728,8 +10728,8 @@ object underground_line:1380 {
 object underground_line:1386 {
 	name R1-12-47-3_ul_63;
 	phases "BN";
-	from node:1019;
-	to node:1022;
+	from R1-12-47-3_node_266;
+	to R1-12-47-3_node_268;
 	length 126.6692274444;
 	configuration line_configuration:1141;
 }
@@ -10737,8 +10737,8 @@ object underground_line:1386 {
 object underground_line:1387 {
 	name R1-12-47-3_ul_64;
 	phases "BN";
-	from node:1020;
-	to node:1024;
+	from R1-12-47-3_node_267;
+	to R1-12-47-3_node_269;
 	length 356.111162321912;
 	configuration line_configuration:1141;
 }
@@ -10746,8 +10746,8 @@ object underground_line:1387 {
 object underground_line:1389 {
 	name R1-12-47-3_ul_65;
 	phases "BN";
-	from node:1026;
-	to node:1028;
+	from R1-12-47-3_node_270;
+	to R1-12-47-3_node_271;
 	length 473.778013829924;
 	configuration line_configuration:1141;
 }
@@ -10755,8 +10755,8 @@ object underground_line:1389 {
 object underground_line:1390 {
 	name R1-12-47-3_ul_66;
 	phases "BN";
-	from node:1026;
-	to node:1030;
+	from R1-12-47-3_node_270;
+	to R1-12-47-3_node_272;
 	length 555.790359561567;
 	configuration line_configuration:1141;
 }
@@ -10764,8 +10764,8 @@ object underground_line:1390 {
 object underground_line:1391 {
 	name R1-12-47-3_ul_67;
 	phases "BN";
-	from node:1030;
-	to node:1031;
+	from R1-12-47-3_node_272;
+	to R1-12-47-3_node_273;
 	length 189.402623811605;
 	configuration line_configuration:1141;
 }
@@ -10773,8 +10773,8 @@ object underground_line:1391 {
 object underground_line:1405 {
 	name R1-12-47-3_ul_68;
 	phases "CN";
-	from node:1047;
-	to node:1048;
+	from R1-12-47-3_node_286;
+	to R1-12-47-3_node_287;
 	length 425.202913303169;
 	configuration line_configuration:1143;
 }
@@ -10782,8 +10782,8 @@ object underground_line:1405 {
 object underground_line:1406 {
 	name R1-12-47-3_ul_69;
 	phases "CN";
-	from node:1047;
-	to node:1049;
+	from R1-12-47-3_node_286;
+	to R1-12-47-3_node_288;
 	length 582.899261884662;
 	configuration line_configuration:1143;
 }
@@ -10791,8 +10791,8 @@ object underground_line:1406 {
 object underground_line:1407 {
 	name R1-12-47-3_ul_70;
 	phases "CN";
-	from node:1049;
-	to node:1050;
+	from R1-12-47-3_node_288;
+	to R1-12-47-3_node_289;
 	length 171.86283047824;
 	configuration line_configuration:1143;
 }
@@ -10800,8 +10800,8 @@ object underground_line:1407 {
 object underground_line:1408 {
 	name R1-12-47-3_ul_71;
 	phases "CN";
-	from node:1049;
-	to node:1051;
+	from R1-12-47-3_node_288;
+	to R1-12-47-3_node_290;
 	length 769.24425220222;
 	configuration line_configuration:1143;
 }
@@ -10809,8 +10809,8 @@ object underground_line:1408 {
 object underground_line:1409 {
 	name R1-12-47-3_ul_72;
 	phases "CN";
-	from node:1051;
-	to node:1052;
+	from R1-12-47-3_node_290;
+	to R1-12-47-3_node_291;
 	length 428.183776588052;
 	configuration line_configuration:1143;
 }
@@ -10818,8 +10818,8 @@ object underground_line:1409 {
 object underground_line:1410 {
 	name R1-12-47-3_ul_73;
 	phases "CN";
-	from node:1051;
-	to node:1053;
+	from R1-12-47-3_node_290;
+	to R1-12-47-3_node_292;
 	length 372.600031572305;
 	configuration line_configuration:1143;
 }
@@ -10827,8 +10827,8 @@ object underground_line:1410 {
 object underground_line:1417 {
 	name R1-12-47-3_ul_74;
 	phases "BN";
-	from node:1059;
-	to node:1061;
+	from R1-12-47-3_node_298;
+	to R1-12-47-3_node_299;
 	length 425.08657905069;
 	configuration line_configuration:1141;
 }
@@ -10836,8 +10836,8 @@ object underground_line:1417 {
 object underground_line:1418 {
 	name R1-12-47-3_ul_75;
 	phases "BN";
-	from node:1059;
-	to node:1063;
+	from R1-12-47-3_node_298;
+	to R1-12-47-3_node_300;
 	length 618.415719243369;
 	configuration line_configuration:1141;
 }
@@ -10845,8 +10845,8 @@ object underground_line:1418 {
 object underground_line:1422 {
 	name R1-12-47-3_ul_76;
 	phases "BN";
-	from node:1068;
-	to node:1070;
+	from R1-12-47-3_node_303;
+	to R1-12-47-3_node_304;
 	length 701.874640626803;
 	configuration line_configuration:1141;
 }
@@ -10854,8 +10854,8 @@ object underground_line:1422 {
 object underground_line:1423 {
 	name R1-12-47-3_ul_77;
 	phases "BN";
-	from node:1068;
-	to node:1072;
+	from R1-12-47-3_node_303;
+	to R1-12-47-3_node_305;
 	length 936.435046204324;
 	configuration line_configuration:1141;
 }
@@ -10863,8 +10863,8 @@ object underground_line:1423 {
 object underground_line:1430 {
 	name R1-12-47-3_ul_78;
 	phases "BCN";
-	from node:1074;
-	to node:1079;
+	from R1-12-47-3_node_307;
+	to R1-12-47-3_node_312;
 	length 4976.8009422874;
 	configuration line_configuration:1156;
 }
@@ -10872,8 +10872,8 @@ object underground_line:1430 {
 object underground_line:1431 {
 	name R1-12-47-3_ul_79;
 	phases "CN";
-	from node:1079;
-	to node:1080;
+	from R1-12-47-3_node_312;
+	to R1-12-47-3_node_313;
 	length 1742.93666110251;
 	configuration line_configuration:1143;
 }
@@ -10881,8 +10881,8 @@ object underground_line:1431 {
 object underground_line:1432 {
 	name R1-12-47-3_ul_80;
 	phases "BN";
-	from node:1079;
-	to node:1081;
+	from R1-12-47-3_node_312;
+	to R1-12-47-3_node_314;
 	length 7612.9;
 	configuration line_configuration:1141;
 }
@@ -10890,8 +10890,8 @@ object underground_line:1432 {
 object underground_line:1438 {
 	name R1-12-47-3_ul_81;
 	phases "BN";
-	from node:1089;
-	to node:1091;
+	from R1-12-47-3_node_319;
+	to R1-12-47-3_node_320;
 	length 111.400622291625;
 	configuration line_configuration:1141;
 }
@@ -10899,8 +10899,8 @@ object underground_line:1438 {
 object underground_line:1439 {
 	name R1-12-47-3_ul_82;
 	phases "BN";
-	from node:1089;
-	to node:1092;
+	from R1-12-47-3_node_319;
+	to R1-12-47-3_node_321;
 	length 437.419968511743;
 	configuration line_configuration:1141;
 }
@@ -10908,8 +10908,8 @@ object underground_line:1439 {
 object underground_line:1440 {
 	name R1-12-47-3_ul_83;
 	phases "BN";
-	from node:1092;
-	to node:1093;
+	from R1-12-47-3_node_321;
+	to R1-12-47-3_node_322;
 	length 416.676235642531;
 	configuration line_configuration:1141;
 }
@@ -10917,8 +10917,8 @@ object underground_line:1440 {
 object underground_line:1441 {
 	name R1-12-47-3_ul_84;
 	phases "BN";
-	from node:1092;
-	to node:1095;
+	from R1-12-47-3_node_321;
+	to R1-12-47-3_node_323;
 	length 571.301581013198;
 	configuration line_configuration:1141;
 }
@@ -10926,8 +10926,8 @@ object underground_line:1441 {
 object underground_line:1442 {
 	name R1-12-47-3_ul_85;
 	phases "BN";
-	from node:1092;
-	to node:1096;
+	from R1-12-47-3_node_321;
+	to R1-12-47-3_node_324;
 	length 566.604951318786;
 	configuration line_configuration:1141;
 }
@@ -10935,8 +10935,8 @@ object underground_line:1442 {
 object underground_line:1443 {
 	name R1-12-47-3_ul_86;
 	phases "BN";
-	from node:1096;
-	to node:1097;
+	from R1-12-47-3_node_324;
+	to R1-12-47-3_node_325;
 	length 329.119018360722;
 	configuration line_configuration:1141;
 }
@@ -10944,8 +10944,8 @@ object underground_line:1443 {
 object underground_line:1444 {
 	name R1-12-47-3_ul_87;
 	phases "BN";
-	from node:1096;
-	to node:1099;
+	from R1-12-47-3_node_324;
+	to R1-12-47-3_node_326;
 	length 580.102382136055;
 	configuration line_configuration:1141;
 }
@@ -10953,8 +10953,8 @@ object underground_line:1444 {
 object underground_line:1445 {
 	name R1-12-47-3_ul_88;
 	phases "BN";
-	from node:1099;
-	to node:1100;
+	from R1-12-47-3_node_326;
+	to R1-12-47-3_node_327;
 	length 129.611403047235;
 	configuration line_configuration:1141;
 }
@@ -10962,8 +10962,8 @@ object underground_line:1445 {
 object underground_line:1446 {
 	name R1-12-47-3_ul_89;
 	phases "BN";
-	from node:1099;
-	to node:1102;
+	from R1-12-47-3_node_326;
+	to R1-12-47-3_node_328;
 	length 338.577255573443;
 	configuration line_configuration:1141;
 }
@@ -10971,8 +10971,8 @@ object underground_line:1446 {
 object underground_line:1447 {
 	name R1-12-47-3_ul_90;
 	phases "BN";
-	from node:1100;
-	to node:1103;
+	from R1-12-47-3_node_327;
+	to R1-12-47-3_node_329;
 	length 221.130315053183;
 	configuration line_configuration:1141;
 }
@@ -10980,8 +10980,8 @@ object underground_line:1447 {
 object underground_line:1448 {
 	name R1-12-47-3_ul_91;
 	phases "BN";
-	from node:1100;
-	to node:1105;
+	from R1-12-47-3_node_327;
+	to R1-12-47-3_node_330;
 	length 661.023328456643;
 	configuration line_configuration:1141;
 }
@@ -10989,8 +10989,8 @@ object underground_line:1448 {
 object underground_line:1449 {
 	name R1-12-47-3_ul_92;
 	phases "BN";
-	from node:1099;
-	to node:1108;
+	from R1-12-47-3_node_326;
+	to R1-12-47-3_node_331;
 	length 364.845708210988;
 	configuration line_configuration:1141;
 }
@@ -10998,8 +10998,8 @@ object underground_line:1449 {
 object underground_line:1450 {
 	name R1-12-47-3_ul_93;
 	phases "BN";
-	from node:1108;
-	to node:1109;
+	from R1-12-47-3_node_331;
+	to R1-12-47-3_node_332;
 	length 463.545547305641;
 	configuration line_configuration:1141;
 }
@@ -11007,8 +11007,8 @@ object underground_line:1450 {
 object underground_line:1451 {
 	name R1-12-47-3_ul_94;
 	phases "BN";
-	from node:1108;
-	to node:1112;
+	from R1-12-47-3_node_331;
+	to R1-12-47-3_node_333;
 	length 1572.44994211962;
 	configuration line_configuration:1141;
 }
@@ -11016,8 +11016,8 @@ object underground_line:1451 {
 object underground_line:1453 {
 	name R1-12-47-3_ul_95;
 	phases "BN";
-	from node:1114;
-	to node:1116;
+	from R1-12-47-3_node_334;
+	to R1-12-47-3_node_335;
 	length 3048.48453886887;
 	configuration line_configuration:1141;
 }
@@ -11025,8 +11025,8 @@ object underground_line:1453 {
 object underground_line:1454 {
 	name R1-12-47-3_ul_96;
 	phases "BN";
-	from node:771;
-	to node:615;
+	from R1-12-47-3_node_105;
+	to R1-12-47-3_node_3;
 	length 20.2;
 	configuration line_configuration:1141;
 }
@@ -11034,8 +11034,8 @@ object underground_line:1454 {
 object underground_line:1455 {
 	name R1-12-47-3_ul_97;
 	phases "BN";
-	from node:649;
-	to node:775;
+	from R1-12-47-3_node_24;
+	to R1-12-47-3_node_108;
 	length 755.207623997184;
 	configuration line_configuration:1141;
 }
@@ -11043,8 +11043,8 @@ object underground_line:1455 {
 object underground_line:1456 {
 	name R1-12-47-3_ul_98;
 	phases "BN";
-	from node:775;
-	to node:651;
+	from R1-12-47-3_node_108;
+	to R1-12-47-3_node_25;
 	length 311.3;
 	configuration line_configuration:1141;
 }
@@ -11052,8 +11052,8 @@ object underground_line:1456 {
 object underground_line:1457 {
 	name R1-12-47-3_ul_99;
 	phases "BN";
-	from node:826;
-	to node:652;
+	from R1-12-47-3_node_138;
+	to R1-12-47-3_node_26;
 	length 707.230694153698;
 	configuration line_configuration:1141;
 }
@@ -11061,8 +11061,8 @@ object underground_line:1457 {
 object underground_line:1458 {
 	name R1-12-47-3_ul_100;
 	phases "BN";
-	from node:652;
-	to node:627;
+	from R1-12-47-3_node_26;
+	to R1-12-47-3_node_10;
 	length 956.961935663612;
 	configuration line_configuration:1141;
 }
@@ -11070,8 +11070,8 @@ object underground_line:1458 {
 object underground_line:1459 {
 	name R1-12-47-3_ul_101;
 	phases "BN";
-	from node:627;
-	to node:656;
+	from R1-12-47-3_node_10;
+	to R1-12-47-3_node_29;
 	length 243.620694482875;
 	configuration line_configuration:1141;
 }
@@ -11079,8 +11079,8 @@ object underground_line:1459 {
 object underground_line:1460 {
 	name R1-12-47-3_ul_102;
 	phases "AN";
-	from node:660;
-	to node:903;
+	from R1-12-47-3_node_32;
+	to R1-12-47-3_node_179;
 	length 625.180894610872;
 	configuration line_configuration:1127;
 }
@@ -11088,8 +11088,8 @@ object underground_line:1460 {
 object underground_line:1461 {
 	name R1-12-47-3_ul_103;
 	phases "AN";
-	from node:903;
-	to node:676;
+	from R1-12-47-3_node_179;
+	to R1-12-47-3_node_39;
 	length 71.3;
 	configuration line_configuration:1127;
 }
@@ -11097,8 +11097,8 @@ object underground_line:1461 {
 object underground_line:1462 {
 	name R1-12-47-3_ul_104;
 	phases "AN";
-	from node:903;
-	to node:666;
+	from R1-12-47-3_node_179;
+	to R1-12-47-3_node_35;
 	length 82.0;
 	configuration line_configuration:1127;
 }
@@ -11106,8 +11106,8 @@ object underground_line:1462 {
 object underground_line:1463 {
 	name R1-12-47-3_ul_105;
 	phases "AN";
-	from node:660;
-	to node:619;
+	from R1-12-47-3_node_32;
+	to R1-12-47-3_node_5;
 	length 80.5;
 	configuration line_configuration:1127;
 }
@@ -11115,8 +11115,8 @@ object underground_line:1463 {
 object underground_line:1464 {
 	name R1-12-47-3_ul_106;
 	phases "AN";
-	from node:660;
-	to node:638;
+	from R1-12-47-3_node_32;
+	to R1-12-47-3_node_17;
 	length 241.0;
 	configuration line_configuration:1127;
 }
@@ -11124,8 +11124,8 @@ object underground_line:1464 {
 object underground_line:1466 {
 	name R1-12-47-3_ul_107;
 	phases "AN";
-	from node:633;
-	to node:927;
+	from R1-12-47-3_node_15;
+	to R1-12-47-3_node_192;
 	length 468.7;
 	configuration line_configuration:1127;
 }
@@ -11133,8 +11133,8 @@ object underground_line:1466 {
 object underground_line:1467 {
 	name R1-12-47-3_ul_108;
 	phases "AN";
-	from node:633;
-	to node:668;
+	from R1-12-47-3_node_15;
+	to R1-12-47-3_node_36;
 	length 747.1;
 	configuration line_configuration:1127;
 }
@@ -11142,8 +11142,8 @@ object underground_line:1467 {
 object underground_line:1468 {
 	name R1-12-47-3_ul_109;
 	phases "BN";
-	from node:648;
-	to node:1068;
+	from R1-12-47-3_node_23;
+	to R1-12-47-3_node_303;
 	length 284.6;
 	configuration line_configuration:1141;
 }
@@ -11151,8 +11151,8 @@ object underground_line:1468 {
 object underground_line:1469 {
 	name R1-12-47-3_ul_110;
 	phases "BN";
-	from node:648;
-	to node:672;
+	from R1-12-47-3_node_23;
+	to R1-12-47-3_node_38;
 	length 356.8;
 	configuration line_configuration:1141;
 }
@@ -11160,8 +11160,8 @@ object underground_line:1469 {
 object underground_line:1470 {
 	name R1-12-47-3_ul_111;
 	phases "BN";
-	from node:656;
-	to node:621;
+	from R1-12-47-3_node_29;
+	to R1-12-47-3_node_6;
 	length 399.4;
 	configuration line_configuration:1141;
 }
@@ -11169,8 +11169,8 @@ object underground_line:1470 {
 object underground_line:1475 {
 	name R1-12-47-3_ul_112;
 	phases "AN";
-	from node:863;
-	to node:641;
+	from R1-12-47-3_node_158;
+	to R1-12-47-3_node_20;
 	length 203.3;
 	configuration line_configuration:1127;
 }
@@ -11178,8 +11178,8 @@ object underground_line:1475 {
 object underground_line:1477 {
 	name R1-12-47-3_ul_113;
 	phases "BN";
-	from node:630;
-	to node:631;
+	from R1-12-47-3_node_12;
+	to R1-12-47-3_node_13;
 	length 381.8;
 	configuration line_configuration:1148;
 }
@@ -11187,8 +11187,8 @@ object underground_line:1477 {
 object underground_line:1480 {
 	name R1-12-47-3_ul_114;
 	phases "AN";
-	from node:633;
-	to node:655;
+	from R1-12-47-3_node_15;
+	to R1-12-47-3_node_28;
 	length 174.9;
 	configuration line_configuration:1127;
 }
@@ -11196,8 +11196,8 @@ object underground_line:1480 {
 object underground_line:1482 {
 	name R1-12-47-3_ul_115;
 	phases "CN";
-	from node:983;
-	to node:678;
+	from R1-12-47-3_node_234;
+	to R1-12-47-3_node_41;
 	length 226.8;
 	configuration line_configuration:1143;
 }
@@ -11205,8 +11205,8 @@ object underground_line:1482 {
 object underground_line:1484 {
 	name R1-12-47-3_ul_116;
 	phases "ABCN";
-	from node:682;
-	to node:657;
+	from R1-12-47-3_node_44;
+	to R1-12-47-3_node_30;
 	length 5.49148303467872;
 	configuration line_configuration:1119;
 }
@@ -11214,8 +11214,8 @@ object underground_line:1484 {
 object underground_line:1486 {
 	name R1-12-47-3_ul_117;
 	phases "CN";
-	from node:614;
-	to node:992;
+	from R1-12-47-3_node_2;
+	to R1-12-47-3_node_243;
 	length 698.608273720894;
 	configuration line_configuration:1143;
 }
