@@ -14,6 +14,8 @@
 
 #include "capacitor.h"
 
+complex junkvar;
+
 //////////////////////////////////////////////////////////////////////////
 // capacitor CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -117,6 +119,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 {
 	switch (control) {
 		case MANUAL:  // manual
+			//May not really be anything to do in here - all handled in common set below.
 			/// @todo implement capacity manual control closed (ticket #189)
 			break;
 		case VAR:  // VAr
@@ -127,24 +130,25 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 			if ((pt_phase & PHASE_N) == (PHASE_N))// Line to Neutral connections
 			{
 				complex test = voltage[0].Mag();
+				junkvar = test;
 				if ((pt_phase & (PHASE_A | PHASE_N)) == (PHASE_A | PHASE_N))
-					if (voltage_set_low <= voltage[0].Mag())
+					if (voltage_set_low >= voltage[0].Mag())
 						switchA_state=CLOSED;
-					else if (voltage_set_high >= voltage[0].Mag())
+					else if (voltage_set_high <= voltage[0].Mag())
 						switchA_state=OPEN;
 					else;
 					
 				if ((pt_phase & (PHASE_B | PHASE_N)) == (PHASE_B | PHASE_N))
-					if (voltage_set_low <= voltage[1].Mag())
+					if (voltage_set_low >= voltage[1].Mag())
 						switchB_state=CLOSED;
-					else if (voltage_set_high >= voltage[1].Mag())
+					else if (voltage_set_high <= voltage[1].Mag())
 						switchB_state=OPEN;
 					else;
 
 				if ((pt_phase & (PHASE_C | PHASE_N)) == (PHASE_C | PHASE_N))
-					if (voltage_set_low <= voltage[2].Mag())
+					if (voltage_set_low >= voltage[2].Mag())
 						switchC_state=CLOSED;
-					else if (voltage_set_high >= voltage[2].Mag())
+					else if (voltage_set_high <= voltage[2].Mag())
 						switchC_state=OPEN;
 					else;
 			}
