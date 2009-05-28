@@ -222,7 +222,7 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		return TS_NEVER;
 	}
 
-	if(my->last.ts < 1)
+	if(my->last.ts < 1 && my->interval != -1)
 		my->last.ts = t0;
 
 	/* connect to property */
@@ -275,19 +275,19 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		return TS_NEVER;
 	}
 
-	if(my->last.ts < 1)
+	if(my->last.ts < 1 && my->interval != -1)
 		my->last.ts = t0;
 
 	/* write tape */
 	if (my->status==TS_OPEN)
 	{	
-		strncpy(my->last.value,buffer,sizeof(my->last.value));
 		if (my->interval==0 /* sample on every pass */
 			|| ((my->interval==-1) && my->last.ts!=t0 && strcmp(buffer,my->last.value)!=0) /* sample only when value changes */
 			)
 //			|| (my->interval>0 && my->last.ts+my->interval<=t0)) /* sample regularly */
 
 		{
+			strncpy(my->last.value,buffer,sizeof(my->last.value));
 			my->last.ts = t0;
 			//my->last.ts = obj->parent;
 //			strncpy(my->last.value,buffer,sizeof(my->last.value));
