@@ -1230,7 +1230,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 #endif
 	if (solver_method==SM_NR)
 	{
-		throw "Newton-Raphson solution method is not yet supported";
+		//Nothing here yet, will eventually be current calculations
 	}
 	else if (solver_method==SM_FBS)
 	{

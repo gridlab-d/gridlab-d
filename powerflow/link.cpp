@@ -153,7 +153,7 @@ int link::init(OBJECT *parent)
 
 	powerflow_object::init(parent);
 
-	set phase_f_test, phase_t_test;
+	set phase_f_test, phase_t_test, phases_test;
 	node *fNode = OBJECTDATA(from,node);
 	node *tNode = OBJECTDATA(to,node);
 
@@ -279,16 +279,17 @@ int link::init(OBJECT *parent)
 	}
 
 	//Simple Phase checks
-	phase_f_test = (fNode->phases & phases);
-	phase_t_test = (tNode->phases & phases);
-
+	phases_test = (phases & (~(PHASE_N | PHASE_D)));	//N and D phases are stripped off for now.  Redundant to D-Gwye tests.
+	phase_f_test = (fNode->phases & phases_test);		//Will need to be handled differently if in the future explicit N/G phases are introduced.
+	phase_t_test = (tNode->phases & phases_test);	
+																		
 	if ((SpecialLnk==DELTAGWYE) | (SpecialLnk==SPLITPHASE))	//Delta-Gwye and Split-phase transformers will cause problems, handle special
 	{
 		if (SpecialLnk==SPLITPHASE)
 		{
 			phase_f_test &= ~(PHASE_S);	//Pull off the single phase portion of from node
 
-			if ((phase_f_test != (phases & ~(PHASE_S))) || (phase_t_test != phases))	//Phase mismatch on the line
+			if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test))	//Phase mismatch on the line
 				GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
 				/*  TROUBLESHOOT
 				A line has been configured to carry a certain set of phases.  Either the input node or output
@@ -308,9 +309,22 @@ int link::init(OBJECT *parent)
 	}
 	else												//Everything else
 	{
-		if ((phase_f_test != phases) || (phase_t_test != phases))	//Phase mismatch on the line
+		if ((phase_f_test != phases_test) || (phase_t_test != phases_test))	//Phase mismatch on the line
 			GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
 			//Defined above
+
+		if (solver_method==SM_FBS)	//Further test to see if to has more phases than from (it shouldn't)
+		{
+			phase_f_test = (fNode->phases & (PHASE_A | PHASE_B | PHASE_C));
+			phase_t_test = (tNode->phases & (PHASE_A | PHASE_B | PHASE_C));
+			if (phase_t_test > phase_f_test)
+				GL_THROW("line:%d has more phases on the output than the input",obj->id);
+			/* TROUBLESHOOT
+			A line has more phases on the output than on the input.  Under the Forward-Back sweep algorithm,
+			the system should be strictly radial.  This scenario implies either a meshed system or unconnected
+			phases between the from and to nodes.  Please adjust the phases appropriately.
+			*/
+		}
 	}
 	
 	if (nominal_voltage==0)
