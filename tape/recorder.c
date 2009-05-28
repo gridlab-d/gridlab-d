@@ -151,15 +151,14 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 		/* must occur w/ *cpart=0 before gl_get_property in order to properly reformat the property name string */
 		cpart = strchr(item, '.');
 		if(cpart != NULL){
-//			strtok(item, ".");
-			*cpart = 0;
-			++cpart;
-			if(strcmp("imag", cpart) == 0){
+			if(strcmp("imag", cpart+1) == 0){
 				cid = (int)((int64)&(oblig.i) - (int64)&oblig);
-			} else if(strcmp("real", cpart) == 0){
+				*cpart = 0;
+			} else if(strcmp("real", cpart+1) == 0){
 				cid = (int)((int64)&(oblig.r) - (int64)&oblig);
+				*cpart = 0;
 			} else {
-				gl_error("recorder:%d: invalid complex part for \'%s.%s\'", pstr, cpart);
+				;
 			}
 		}
 
