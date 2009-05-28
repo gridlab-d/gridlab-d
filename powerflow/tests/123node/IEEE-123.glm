@@ -2757,7 +2757,7 @@ object switch:450451 {
 }
 
 object switch:5494 {
-     phases "ABCN";
+     phases "AN";
      name 54-94;
      from node:54;
      to load:94;
