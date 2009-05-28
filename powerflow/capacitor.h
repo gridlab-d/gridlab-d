@@ -25,6 +25,8 @@ public:
 	CAPSWITCH switchA_state;	// capacitor A switch open or close
 	CAPSWITCH switchB_state;	// capacitor B switch open or close
 	CAPSWITCH switchC_state;	// capacitor C switch open or close
+	OBJECT *RemoteNode;			// Remote node for sensing values used for control schemes
+	double time_delay;           // control time delay
 
 protected:
 	complex q_node[3];          // 3x1 matrix, Q of node
@@ -36,8 +38,8 @@ protected:
 	double volt_close;          // volt close limit
 	double volt_open;           // volt open limit
 	int32 pt_ratio;             // control PT ratio
-	int32 time_delay;           // control time delay
-	double time_to_change;      // time for state to change
+	int64 time_to_change;       // time until state change
+	int64 last_time;			// last time capacitor was checked
 
 public:
 	int create(void);
@@ -49,6 +51,9 @@ public:
 
 private:
 	complex cap_value[3];		// Capacitor values translated to impedance
+	CAPSWITCH switchA_state_Next;	// capacitor A switch open or close
+	CAPSWITCH switchB_state_Next;	// capacitor B switch open or close
+	CAPSWITCH switchC_state_Next;	// capacitor C switch open or close
 
 public:
 	static CLASS *pclass;

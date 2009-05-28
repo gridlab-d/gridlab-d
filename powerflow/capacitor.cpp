@@ -14,8 +14,6 @@
 
 #include "capacitor.h"
 
-complex junkvar;
-
 //////////////////////////////////////////////////////////////////////////
 // capacitor CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -71,6 +69,8 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			PT_double, "capacitor_A[VAr]", PADDR(capacitor_A),
 			PT_double, "capacitor_B[VAr]", PADDR(capacitor_B),
 			PT_double, "capacitor_C[VAr]", PADDR(capacitor_C),
+			PT_double, "time_delay[s]", PADDR(time_delay),
+			PT_object,"Remote_Node",PADDR(RemoteNode),
 			PT_enumeration, "control_level", PADDR(control_level),
 				PT_KEYWORD, "BANK", BANK,
 				PT_KEYWORD, "INDIVIDUAL", INDIVIDUAL, 
@@ -96,8 +96,9 @@ int capacitor::create()
 	volt_close = 0.0;
 	volt_open = 0.0;
 	pt_ratio = 60;
-	time_delay = 0;
-	time_to_change = 0.0;
+	time_delay = 0.0;
+	time_to_change = 0;
+	last_time = 0;
 
 	//throw "capacitor implementation is not complete"; - removed while debugging
 	return result;
@@ -117,66 +118,129 @@ int capacitor::init(OBJECT *parent)
 
 TIMESTAMP capacitor::sync(TIMESTAMP t0)
 {
-	switch (control) {
-		case MANUAL:  // manual
-			//May not really be anything to do in here - all handled in common set below.
-			/// @todo implement capacity manual control closed (ticket #189)
-			break;
-		case VAR:  // VAr
-			/// @todo implement capacity var control closed (ticket #190)
-			break;
-		case VOLT:
-			{// V
-			if ((pt_phase & PHASE_N) == (PHASE_N))// Line to Neutral connections
-			{
-				complex test = voltage[0].Mag();
-				junkvar = test;
-				if ((pt_phase & (PHASE_A | PHASE_N)) == (PHASE_A | PHASE_N))
-					if (voltage_set_low >= voltage[0].Mag())
-						switchA_state=CLOSED;
-					else if (voltage_set_high <= voltage[0].Mag())
-						switchA_state=OPEN;
-					else;
-					
-				if ((pt_phase & (PHASE_B | PHASE_N)) == (PHASE_B | PHASE_N))
-					if (voltage_set_low >= voltage[1].Mag())
-						switchB_state=CLOSED;
-					else if (voltage_set_high <= voltage[1].Mag())
-						switchB_state=OPEN;
-					else;
+	complex VoltVals[3];
+	node *RNode = OBJECTDATA(RemoteNode,node);
+	TIMESTAMP result;
 
-				if ((pt_phase & (PHASE_C | PHASE_N)) == (PHASE_C | PHASE_N))
-					if (voltage_set_low >= voltage[2].Mag())
-						switchC_state=CLOSED;
-					else if (voltage_set_high <= voltage[2].Mag())
-						switchC_state=OPEN;
-					else;
-			}
-			else // Line to Line connections
-			{
-				if ((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B))
-                   voltaged[0];
-				if ((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C))
-                   voltaged[1];
-				if ((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A))
-			    voltaged[2];
-			}
-			/// @todo implement capacity volt control closed (ticket #191)
-			break;
-			}
-		case VARVOLT:  // VAr, V
-			/// @todo implement capacity varvolt control closed (ticket #192)
-			break;
-		default:
-			break;
+	//Update time tracker
+	time_to_change -= (t0 - last_time);
+
+	if (last_time!=t0)	//If we've transitioned, update the transition value
+	{
+		last_time = t0;
 	}
 
-	if (control_level == BANK)
+	if (time_to_change<=0)	//Only let us iterate if our time has changed
 	{
-		if ((switchA_state | switchB_state | switchC_state) == CLOSED)
-			switchA_state = switchB_state = switchC_state = CLOSED;	//Bank control, close them all
+		//Perform the previous settings first
+		if ((pt_phase & (PHASE_A)) == PHASE_A)
+			switchA_state=switchA_state_Next;
+			
+		if ((pt_phase & (PHASE_B)) == PHASE_B)
+			switchB_state=switchB_state_Next;
+
+		if ((pt_phase & (PHASE_C)) == PHASE_C)
+			switchC_state=switchC_state_Next;
+
+		//Update controls
+		if ((pt_phase & PHASE_N) == (PHASE_N))	//See if we are interested in L-N or L-L voltages
+		{
+			if (RNode == NULL)	//L-N voltages
+			{
+				VoltVals[0] = voltage[0];
+				VoltVals[1] = voltage[1];
+				VoltVals[2] = voltage[2];
+			}
+			else
+			{
+				VoltVals[0] = RNode->voltage[0];
+				VoltVals[1] = RNode->voltage[1];
+				VoltVals[2] = RNode->voltage[2];
+			}
+		}
+		else				//L-L voltages
+		{
+			if (RNode == NULL)
+			{
+				VoltVals[0] = voltaged[0];
+				VoltVals[1] = voltaged[1];
+				VoltVals[2] = voltaged[2];
+			}
+			else
+			{
+				VoltVals[0] = RNode->voltaged[0];
+				VoltVals[1] = RNode->voltaged[1];
+				VoltVals[2] = RNode->voltaged[2];
+			}
+		}
+
+		switch (control) {
+			case MANUAL:  // manual
+				//May not really be anything to do in here - all handled in common set below.
+				/// @todo implement capacity manual control closed (ticket #189)
+				break;
+			case VAR:  // VAr
+				/// @todo implement capacity var control closed (ticket #190)
+				break;
+			case VOLT:
+				{// V
+				if ((pt_phase & PHASE_N) == (PHASE_N))// Line to Neutral connections
+				{
+					if ((pt_phase & (PHASE_A | PHASE_N)) == (PHASE_A | PHASE_N))
+						if (voltage_set_low >= VoltVals[0].Mag())
+							switchA_state_Next=CLOSED;
+						else if (voltage_set_high <= VoltVals[0].Mag())
+							switchA_state_Next=OPEN;
+						else;
+						
+					if ((pt_phase & (PHASE_B | PHASE_N)) == (PHASE_B | PHASE_N))
+						if (voltage_set_low >= VoltVals[1].Mag())
+							switchB_state_Next=CLOSED;
+						else if (voltage_set_high <= VoltVals[1].Mag())
+							switchB_state_Next=OPEN;
+						else;
+
+					if ((pt_phase & (PHASE_C | PHASE_N)) == (PHASE_C | PHASE_N))
+						if (voltage_set_low >= VoltVals[2].Mag())
+							switchC_state_Next=CLOSED;
+						else if (voltage_set_high <= VoltVals[2].Mag())
+							switchC_state_Next=OPEN;
+						else;
+				}
+				else // Line to Line connections
+				{
+					if ((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B))
+					   voltaged[0];
+					if ((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C))
+					   voltaged[1];
+					if ((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A))
+					voltaged[2];
+				}
+				/// @todo implement capacity volt control closed (ticket #191)
+				break;
+				}
+			case VARVOLT:  // VAr, V
+				/// @todo implement capacity varvolt control closed (ticket #192)
+				break;
+			default:
+				break;
+		}
+
+		if (control_level == BANK)
+		{
+			if ((switchA_state_Next | switchB_state_Next | switchC_state_Next) == CLOSED)
+				switchA_state_Next = switchB_state_Next = switchC_state_Next = CLOSED;	//Bank control, close them all
+			else
+				switchA_state_Next = switchB_state_Next = switchC_state_Next = OPEN;	//Bank control, open them all (this should never be an issue)
+		}
+
+
+		//See what our new delay needs to be
+		if ((switchA_state != switchA_state_Next) | (switchB_state != switchB_state_Next) | (switchC_state != switchC_state_Next))	//Not same
+			time_to_change=(int64)time_delay;
 		else
-			switchA_state = switchB_state = switchC_state = OPEN;	//Bank control, open them all (this should never be an issue)
+			time_to_change=-1;	//Flag value to pass normal result, not a modified version
+
 	}
 
 	if ((pt_phase & (PHASE_A)) == PHASE_A)
@@ -189,7 +253,12 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 		shunt[2] = switchC_state==CLOSED ? cap_value[2] : complex(0.0);
 
 
-return node::sync(t0);
+	result = node::sync(t0);
+
+	if ((time_to_change!=-1) && ((result - t0) > time_to_change))
+		result = t0 + time_to_change;
+
+	return result;
 }
 
 int capacitor::isa(char *classname)
