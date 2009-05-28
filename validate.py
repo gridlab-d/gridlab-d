@@ -60,12 +60,15 @@ def run_tests(argv):
 	for path, file in autotestfiles:
 		err = False
 		slice = file[:-4]
+		currpath = os.getcwd()
 		xpath = os.path.join(path,slice) # path/slice
 		xfile = os.path.join(xpath,file) # path/slice/file.glm
 		if not os.path.exists(xpath):
 			os.mkdir(xpath)
 		shutil.copy2(os.path.join(path,file), xfile) # path/file to path/slice/file
 		
+		os.chdir(xpath)
+		print("cwd: "+xpath)
 		# build conf files
 		# moo?
 		
@@ -73,6 +76,7 @@ def run_tests(argv):
 		#run file with:
 		outfile = open(os.path.join(xpath,"outfile.txt"), "w")
 		errfile = open(os.path.join(xpath,"errfile.txt"), "w")
+		print("NOTICE:  Running \'"+xfile+"\'")
 		rv = subprocess.call(["gridlabd",xfile],stdout=outfile,stderr=errfile)
 		outfile.close()
 		errfile.close()
@@ -103,8 +107,11 @@ def run_tests(argv):
 		if err:
 			# zip target directory
 			errlist.append((path,file))
+			
+		os.chdir(currpath)
+		print("cwd: "+currpath)
 		# end autotestfiles loop
-	
+		
 	#return success/failure
 	print("Validation detected "+str(errct)+" models with errors.")
 	return errct
