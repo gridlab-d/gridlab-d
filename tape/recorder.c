@@ -292,6 +292,8 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			//my->last.ts = obj->parent;
 //			strncpy(my->last.value,buffer,sizeof(my->last.value));
 			recorder_write(obj);
+		} else if (my->interval > 0){
+			strncpy(my->last.value,buffer,sizeof(my->last.value));
 		}
 	}
 
