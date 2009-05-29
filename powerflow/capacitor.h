@@ -51,9 +51,12 @@ public:
 
 private:
 	complex cap_value[3];		// Capacitor values translated to impedance
-	CAPSWITCH switchA_state_Next;	// capacitor A switch open or close
-	CAPSWITCH switchB_state_Next;	// capacitor B switch open or close
-	CAPSWITCH switchC_state_Next;	// capacitor C switch open or close
+	CAPSWITCH switchA_state_Next;	// capacitor A switch open or close at next transition
+	CAPSWITCH switchB_state_Next;	// capacitor B switch open or close at next transition
+	CAPSWITCH switchC_state_Next;	// capacitor C switch open or close at next transition
+	CAPSWITCH switchA_state_Prev;	// capacitor A switch open or close at previous transition (used for manual control)
+	CAPSWITCH switchB_state_Prev;	// capacitor B switch open or close at previous transition (used for manual control)
+	CAPSWITCH switchC_state_Prev;	// capacitor C switch open or close at previous transition (used for manual control)
 
 public:
 	static CLASS *pclass;

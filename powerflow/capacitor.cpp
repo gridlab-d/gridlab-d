@@ -70,7 +70,7 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			PT_double, "capacitor_B[VAr]", PADDR(capacitor_B),
 			PT_double, "capacitor_C[VAr]", PADDR(capacitor_C),
 			PT_double, "time_delay[s]", PADDR(time_delay),
-			PT_object,"Remote_Node",PADDR(RemoteNode),
+			PT_object,"Sense_Node",PADDR(RemoteNode),
 			PT_enumeration, "control_level", PADDR(control_level),
 				PT_KEYWORD, "BANK", BANK,
 				PT_KEYWORD, "INDIVIDUAL", INDIVIDUAL, 
@@ -86,6 +86,12 @@ int capacitor::create()
 	switchA_state = OPEN;
 	switchB_state = OPEN;
 	switchC_state = OPEN;
+	switchA_state_Next = OPEN;
+	switchB_state_Next = OPEN;
+	switchC_state_Next = OPEN;
+	switchA_state_Prev = OPEN;
+	switchB_state_Prev = OPEN;
+	switchC_state_Prev = OPEN;
 	control = MANUAL;
 	control_level = INDIVIDUAL;
 	pt_phase = PHASE_A;
@@ -100,13 +106,21 @@ int capacitor::create()
 	time_to_change = 0;
 	last_time = 0;
 
-	//throw "capacitor implementation is not complete"; - removed while debugging
 	return result;
 }
 
 int capacitor::init(OBJECT *parent)
 {
 	int result = node::init();
+
+	OBJECT *obj = OBJECTHDR(this);
+
+	if ((capacitor_A == 0.0) && (capacitor_A == 0.0) && (capacitor_A == 0.0))
+		GL_THROW("Capacitor:%d does not have any capacitance values defined!",obj->id);
+		/*  TROUBLESHOOT
+		The capacitor does not have any actual capacitance values defined.  This results in the capacitor doing
+		nothing at all and results in no change to the system.  Specify a value with capacitor_A, capacitor_B, or capacitor_C.
+		*/
 
 	//Calculate capacitor values as admittance
 	cap_value[0] = complex(0,capacitor_A/(nominal_voltage * nominal_voltage));
@@ -128,6 +142,30 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 	if (last_time!=t0)	//If we've transitioned, update the transition value
 	{
 		last_time = t0;
+	}
+
+	if (control==MANUAL)	//Manual requires slightly different scheme
+	{
+		if (switchA_state != switchA_state_Prev)
+		{
+			switchA_state_Next = switchA_state;
+			switchA_state = switchA_state_Prev;
+			time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
+		}
+
+		if (switchB_state != switchB_state_Prev)
+		{
+			switchB_state_Next = switchB_state;
+			switchB_state = switchB_state_Prev;
+			time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
+		}
+
+		if (switchC_state != switchC_state_Prev)
+		{
+			switchC_state_Next = switchC_state;
+			switchC_state = switchC_state_Prev;
+			time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
+		}
 	}
 
 	if (time_to_change<=0)	//Only let us iterate if our time has changed
@@ -172,12 +210,19 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 				VoltVals[1] = RNode->voltaged[1];
 				VoltVals[2] = RNode->voltaged[2];
 			}
+
+			//In this convention, the lack of an N means delta connected.  Make sure our phases reflect this or the node load calculations will be off
+			if ((phases & PHASE_D) != PHASE_D)	//Make sure we have a delta flag
+				phases |= PHASE_D;
 		}
 
 		switch (control) {
 			case MANUAL:  // manual
-				//May not really be anything to do in here - all handled in common set below.
-				/// @todo implement capacity manual control closed (ticket #189)
+				{
+					switchA_state_Prev = switchA_state_Next;	//Prepare working variables for the transition that happened
+					switchB_state_Prev = switchB_state_Next;
+					switchC_state_Prev = switchC_state_Next;
+				}
 				break;
 			case VAR:  // VAr
 				/// @todo implement capacity var control closed (ticket #190)
@@ -210,13 +255,26 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 				else // Line to Line connections
 				{
 					if ((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B))
-					   voltaged[0];
+						if (voltage_set_low >= VoltVals[0].Mag())	//VoltVals handled above to use L-L voltages instead
+							switchA_state_Next=CLOSED;				//switchA assigned to AB connection (delta-connection in loads)
+						else if (voltage_set_high <= VoltVals[0].Mag())
+							switchA_state_Next=OPEN;
+						else;
+
 					if ((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C))
-					   voltaged[1];
+						if (voltage_set_low >= VoltVals[1].Mag())	//VoltVals handled above to use L-L voltages instead
+							switchB_state_Next=CLOSED;				//switchB assigned to BC connection (delta-connection in loads)
+						else if (voltage_set_high <= VoltVals[1].Mag())
+							switchB_state_Next=OPEN;
+						else;
+
 					if ((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A))
-					voltaged[2];
+						if (voltage_set_low >= VoltVals[2].Mag())	//VoltVals handled above to use L-L voltages instead
+							switchC_state_Next=CLOSED;				//switchC assigned to CA connection (delta-connection in loads)
+						else if (voltage_set_high <= VoltVals[2].Mag())
+							switchC_state_Next=OPEN;
+						else;
 				}
-				/// @todo implement capacity volt control closed (ticket #191)
 				break;
 				}
 			case VARVOLT:  // VAr, V
@@ -255,7 +313,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 
 	result = node::sync(t0);
 
-	if ((time_to_change!=-1) && ((result - t0) > time_to_change))
+	if (time_to_change>0)
 		result = t0 + time_to_change;
 
 	return result;
