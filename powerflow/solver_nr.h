@@ -15,6 +15,8 @@ typedef struct  {
 	complex *I[3];	///< constant current
 	double PL[3]; ///< real power component of total bus load
 	double QL[3]; ///< reactive power component of total bus load
+	double PG[3];///< real power generation at generator bus
+	double QG[3];///< reactive power generation at generator bus
 	double kv_base; ///< kV basis
 	double mva_base; /// MVA basis
 } BUSDATA;
