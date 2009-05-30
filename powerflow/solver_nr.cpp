@@ -7,6 +7,9 @@
 /* access to module global variables */
 #include "powerflow.h"
 
+double *deltaI_NR;
+complex *Icalc;
+
 /** Newton-Raphson solver
 	Solves a power flow problem using the Newton-Raphson method
 	
@@ -157,9 +160,62 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 				tempP += *bus[indexer].V[jindex]*(~(*bus[indexer].V[jindex]*(*bus[indexer].Y[jindex])));	//Constant impedance portion
 
 				bus[indexer].PL[jindex] = tempP.Re();	//Real power portion
-				bus[indexer].QL[jindex] = tempP.Im();	//Reactive power portion
+				bus[indexer].QL[jindex] = tempP.Im();	//Reactive power portion  
+			
+
+
 			}
 	}
+
+// Calculate the mismatch of three phase current injection at each bus (deltaI), 
+//and store the deltaI in terms of real and reactive value in array deltaI_NR    
+	if (deltaI_NR==NULL)
+	{
+		deltaI_NR = new double[2*bus_count];   // left_hand side of equation (11)
+	}
+
+	if (Icalc==NULL)
+	{
+		Icalc = new complex[bus_count];  // Calculated current injections at each bus is stored in Icalc for each iteration 
+	}
+
+	complex tempDI; //tempDI store the temporary value of deltaI at each bus  
+	complex tempIcalc; // tempIcalc store the temporary calculated value of current injection at bus k equation(1)  
+	double tempPbus; //tempPbus store the temporary value of active power at each bus
+	double tempQbus; //tempQbus store the temporary value of reactive power at each bus
+	int tempbus, tempPhase; 
+	for (indexer=0; indexer<bus_count; indexer++)
+	{
+		tempIcalc = NULL;
+		tempbus=indexer;	
+		for (jindex=0; jindex<3; jindex++)
+			{
+					tempPbus = - bus[indexer].PL[jindex];	// @@@ PG and QG is assumed to be zero here @@@
+					tempQbus = - bus[indexer].QL[jindex];	
+					tempPhase = jindex;
+
+					for (indexer=0; indexer<branch_count; indexer++)
+					{
+							if (branch[indexer].from == tempbus) 
+								for (jindex=0; jindex<3; jindex++)
+						             {
+								     tempIcalc += (*branch[indexer].Y[tempPhase][jindex]) * (*bus[branch[indexer].to].V[jindex]);
+								     }
+							else if  (branch[indexer].to == tempbus)
+                                for (jindex=0; jindex<3; jindex++)
+						            {
+								     tempIcalc += (*branch[indexer].Y[tempPhase][jindex]) * (*bus[branch[indexer].from].V[jindex]);
+								     }
+							else {}
+					}				
+					Icalc[tempbus] = tempIcalc; // calculated current injection  				
+					tempDI =  (~complex(tempPbus, tempQbus))/(~(*bus[indexer].V[jindex])) - tempIcalc;
+                   	deltaI_NR[tempbus*3 + tempPhase] = tempDI.Re(); // Real part of deltaI, left hand side of equation (11)
+                    deltaI_NR[tempbus*3-3 + tempPhase] = tempDI.Im(); // Imaginary part of deltaI, left hand side of equation (11)
+
+			}
+	}
+
 
 ////////////////////
 
