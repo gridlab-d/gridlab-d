@@ -28,6 +28,12 @@ typedef struct {
 	double v_ratio;   ///< voltage ratio (v_from/v_to)
 } BRANCHDATA;
 
+typedef struct {
+	int row_ind;  ///< row location of the element in 6n*6n Y matrix in NR solver
+	int	col_ind;  ///< collumn location of the element in 6n*6n Y matrix in NR solver
+    double Y_value; ///< value of the element in 6n*6n Y matrix in NR solver
+} Y_NR;
+
 int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch);
 
 #endif
