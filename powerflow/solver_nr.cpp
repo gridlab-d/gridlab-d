@@ -147,9 +147,21 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 	fclose(FP);
 #endif
 
+// Build the Y_NR matrix, the off-diagonal elements are identical to the corresponding elements of bus admittance matrix.
+// The off-diagonal elements of Y_NR marix are not updated at each iteration.
+
+Y_NR *off_diag = new Y_NR[6*branch_count];  // store the loaction and value of off-diagonal elements of Y into array off_diag 
+int indexer,jindex;
+for (indexer=0; indexer<branch_count; indexer++)
+	{
+		for (jindex=0; jindex<3; jindex++)
+		{ }
+}
+
+
 
 //System load at each bus is represented by second order polynomial equations
-	int indexer,jindex;
+	
 	complex tempP; //tempP storea the temporary value of Power load at each bus  
 	for (indexer=0; indexer<bus_count; indexer++)
 		{
@@ -171,7 +183,7 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 //and store the deltaI in terms of real and reactive value in array deltaI_NR    
 	if (deltaI_NR==NULL)
 	{
-		deltaI_NR = new double[2*bus_count];   // left_hand side of equation (11)
+		deltaI_NR = new double[6*bus_count];   // left_hand side of equation (11)
 	}
 
 	if (Icalc==NULL)
@@ -210,14 +222,14 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 					}				
 					Icalc[tempbus] = tempIcalc; // calculated current injection  				
 					tempDI =  (~complex(tempPbus, tempQbus))/(~(*bus[indexer].V[jindex])) - tempIcalc;
-                   	deltaI_NR[tempbus*3 + tempPhase] = tempDI.Re(); // Real part of deltaI, left hand side of equation (11)
-                    deltaI_NR[tempbus*3-3 + tempPhase] = tempDI.Im(); // Imaginary part of deltaI, left hand side of equation (11)
+                   	deltaI_NR[tempbus*3+3 + tempPhase] = tempDI.Re(); // Real part of deltaI, left hand side of equation (11)
+                    deltaI_NR[tempbus*3 + tempPhase] = tempDI.Im(); // Imaginary part of deltaI, left hand side of equation (11)
 
 			}
 	}
 
 
-////////////////////
+
 
 	/// @todo implement NR method
 	GL_THROW("Newton-Raphson solution method is not yet supported");
