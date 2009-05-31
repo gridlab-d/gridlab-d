@@ -71,7 +71,7 @@ BEGIN {
 
 
 END {
-        print "This troubleshooting guide lists all the errors and warning messages from GridLAB-D.  Simply search for your message and following the recommendations given."
+        print "This troubleshooting guide lists all the errors and warning messages from GridLAB-D.  Simply search for your message and follow the recommendations given."
 	print "<CITE>Last updated " strftime() "</CITE>."
         for (group in output) {
                 print "<H1>" group "</H1>\n<DL>" output[group] "</DL>";
