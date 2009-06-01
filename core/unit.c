@@ -98,7 +98,7 @@ static double s = 1.233270e4;		/**< 1990$/kgAu */
 static int precision = 10;			/**, 10 digits max precision */
 static UNIT *unit_list = NULL;
 static char filepath[1024] = "unitfile.txt";
-static int linenum=0;
+static int linenum = 0;
 
 typedef struct s_unitscalar UNITSCALAR;
 struct s_unitscalar {
@@ -107,16 +107,18 @@ struct s_unitscalar {
 	int scalar;
 	UNITSCALAR *next;
 };
-UNITSCALAR *scalar_list=NULL;
+UNITSCALAR *scalar_list = NULL;
 
-UNIT *unit_find_raw(char *unit)
-{
+/* unit_find_raw is both used to detect the presence and absence of units in the list.
+	not finding a given unit is normal behavior, and this function should run silently.
+*/
+UNIT *unit_find_raw(char *unit){
 	UNIT *p;
 	/* scan list for existing entry */
-	for (p=unit_list; p!=NULL; p=p->next)
-	{
-		if (strcmp(p->name,unit)==0)
+	for (p = unit_list; p != NULL; p = p->next){
+		if (strcmp(p->name,unit) == 0){
 			return p;
+		}
 	}
 	return NULL;
 }
@@ -130,35 +132,47 @@ UNIT *unit_find_underived(char *unit)
 
 	/* scan list for existing entry */
 	p = unit_find_raw(unit);
-	if (p!=NULL) return p;
+	if(p != NULL){
+		/* success, quick out */
+		return p;
+	}
 
 	/* check to see if scalar is being used */
-	for (s=scalar_list; s!=NULL; s=s->next)
-	{
-		if (strncmp(unit,s->name,s->len)==0)
-		{
+	for(s = scalar_list; s != NULL; s = s->next){
+		if(strncmp(unit, s->name, s->len) == 0){
 			break;
 		}
 	}
-	if (s==NULL) /* no scalar found */
+	if(s == NULL){ /* normal behavior */
 		return NULL;
+	}
 
 	/* scan for base unit */
 	p = unit_find_raw(unit+s->len);
-	if (p==NULL)
+	if(p == NULL){
+		output_error("compound unit \'%s\' could not be correctly identified", unit);
+		/*	TROUBLESHOOTING
+			The given unit had a recognized scalar prefix, but the underlying base unit was not identified.   This
+			will cascade a null pointer to the calling method.
+		*/
 		return NULL;
+	}
 
 	/* add as new derived unit */
-	return unit_primary(unit,p->c,p->e,p->h,p->k,p->m,p->s,p->a*pow(10,s->scalar),p->b,p->prec);
+	return unit_primary(unit, p->c, p->e, p->h, p->k, p->m, p->s, p->a * pow(10, s->scalar), p->b, p->prec);
 }
 
 /* define a unit scalar */
 int unit_scalar(char *name,int scalar)
 {
-	UNITSCALAR *ptr = (UNITSCALAR*)malloc(sizeof(UNITSCALAR));
-	if (ptr==NULL)
+	UNITSCALAR *ptr = (UNITSCALAR *)malloc(sizeof(UNITSCALAR));
+	if (ptr == NULL){
 		throw_exception("%s(%d): scalar definitinon of '%s' failed: %s", filepath, linenum, name, strerror(errno));
-	strncpy(ptr->name,name,sizeof(ptr->name));
+		/*	TROUBLESHOOT
+			This is actually triggered by a malloc failure, and the rest of the system is likely unstable.
+		*/
+	}
+	strncpy(ptr->name, name, sizeof(ptr->name));
 	ptr->scalar = scalar;
 	ptr->len = (unsigned char)strlen(ptr->name);
 	ptr->next = scalar_list;
@@ -171,47 +185,70 @@ int unit_scalar(char *name,int scalar)
 int unit_constant(char name, double value)
 {
 	char buffer[2] = {name,'\0'};
-	if (unit_find_underived(buffer)!=NULL)
+	if(unit_find_underived(buffer) != NULL){
 		throw_exception("%s(%d): constant definition of '%s' failed; unit already defined", filepath, linenum, buffer);
+		/*	TROUBLESHOOT
+			The value of the specified scalar name has already been used as a unit and cannot be used as a constant.  Please remove or comment
+			out the offending line from the unit file.
+		*/
+	}
 	switch (name) {
-	case 'c':
-		c=value;
-		break;
-	case 'e':
-		e=value;
-		break;
-	case 'h':
-		h=value;
-		break;
-	case 'k':
-		k=value;
-		break;
-	case 'm':
-		m=value;
-		break;
-	case 's':
-		s=value;
-		break;
-	default:
-		throw_exception("%s(%d): constant '%c' is not valid", filepath,linenum,name);
-		return 0;
+		case 'c':
+			c=value;
+			break;
+		case 'e':
+			e=value;
+			break;
+		case 'h':
+			h=value;
+			break;
+		case 'k':
+			k=value;
+			break;
+		case 'm':
+			m=value;
+			break;
+		case 's':
+			s=value;
+			break;
+		default:
+			throw_exception("%s(%d): constant '%c' is not valid", filepath,linenum,name);
+			/*	TROUBLESHOOT
+				The specified constant name does not conform to the internally recognized constants.
+			*/
+			return 0;
 	}
 	return 1;
 }
 
 /* define a primary unit */
-UNIT *unit_primary(char *name,double c,double e,double h,double k,double m,double s,double a,double b,int prec)
-{
+UNIT *unit_primary(char *name, double c, double e, double h, double k, double m, double s, double a, double b, int prec){
 	UNIT *p = unit_find_raw(name);
-	if (p!=NULL && (c!=p->c || e!=p->e || h!=p->h || k!=p->k || m!=p->m || s!=p->s || a!=p->a || b!=p->b || prec!=p->prec))
+#if 0
+	){
+		throw_exception("raw unit \'%s\' was not found", name);
+		/*	TROUBLESHOOT
+			The requested unit was not found by the unit subsystem.  There is a good chance that this function will
+			end up triggering a null pointer exception if not properly handled.
+		*/
+	}
+	if
+#endif
+	if(p != NULL && (c != p->c || e != p->e || h != p->h || k != p->k || m != p->m || s != p->s || a != p->a || b != p->b || prec != p->prec)){
 		throw_exception("%s(%d): primary definition of '%s' failed; unit already defined with a different parameter set", filepath, linenum, name);
-	p = (UNIT*)malloc(sizeof(UNIT));
-	if (p==NULL)
+		/*	TROUBLESHOOT
+			Since the specified unit was defined, the values of the universal constants OR the global precision have
+			changed.  No units should be created until after all of the constants have been specified, nor should those
+			constants be modified between unit definitions.
+		*/
+	}
+	p = (UNIT *)malloc(sizeof(UNIT));
+	if(p == NULL)
 	{
 		throw_exception("%s(%d): memory allocation failed",filepath,linenum);
 		return 0;
 	}
-	strncpy(p->name,name,sizeof(p->name)-1);
+	strncpy(p->name, name, sizeof(p->name) - 1);
 	p->c = c;
 	p->e = e;
 	p->h = h;
@@ -233,78 +270,86 @@ int unit_precision(char *term)
 	char mant[256];
 
 	/* get mantissa */
-	if ((p=strchr(term,'e'))!=NULL || (p=strchr(term,'E'))!=NULL) {
+	if ((p=strchr(term,'e')) != NULL || (p=strchr(term,'E')) != NULL) {
 
 		/* has exponent */
 		strncpy(mant, term, p-term);
-	}
-	else {
+	} else {
 		strcpy(mant, term);
 	}
 
-	return (int)(strlen(mant) - (strchr(mant,'.')!=NULL ? 1 : 0));
+	return (int)(strlen(mant) - (strchr(mant,'.') != NULL ? 1 : 0));
 }
 
 /* define a derived unit */
 int unit_derived(char *name,char *derivation)
 {
-	double c=0,e=0,h=0,k=0,m=0,s=0,a=0,b=0;
-	int prec=0;
-	double scalar=1.0;
+	double c = 0, e = 0, h = 0, k = 0, m = 0, s = 0, a = 0, b = 0;
+	int prec = 0;
+	double scalar = 1.0;
 	char lastOp = '\0', nextOp = '\0';
 	UNIT *lastUnit = NULL;
-	char *p=derivation;
-	if (unit_find_raw(name)!=NULL)
+	char *p = derivation;
+	
+	if (unit_find_raw(name) != NULL){
 		throw_exception("%s(%d): derived definition of '%s' failed; unit already defined", filepath, linenum, name);
-
+		/*	TROUBLESHOOT
+			The specified derived unit has already been defined within the unit file.  Please review the unit definition file and remove the offending line.
+		*/
+	}
+	
 	/* extract scalar */
-	if (sscanf(p,"%lf",&scalar)==1)
-	{
+	if (sscanf(p, "%lf", &scalar) == 1){
 		/* advance pointer */
-		if ((p=strchr(p,' '))!=NULL) 
+		if ((p = strchr(p,' ')) != NULL){
 			p++;
-
+		}
 		/* reset pointer */
-		else
-			p=derivation;
+		else {
+			p = derivation;
+		}
 	}
 
 	/* scan for terms */
-	while (*p!='\0')
+	while (*p != '\0')
 	{
 		char term[32];
 		UNIT *pUnit;
 
 		/* extract operation */
-		if (sscanf(p,"%[^-*/^+]",term)!=1)
+		if (sscanf(p,"%[^-*/^+]",term)!=1){
 			throw_exception("%s(%d): unable to read unit '%s'", filepath,linenum,p);
+			/*	TROUBLESHOOT
+				The unit definition contains a character that prevents it from being parsed.  No unit definitions should contain
+				the characters ^, -, *, /, or +.
+			*/
+		}
 
 		/* non-exponential ops */
-		if (nextOp!='^')
-		{
+		if (nextOp != '^'){
 			/* find unit */
 			pUnit = unit_find_underived(term);
 
-			if (pUnit==NULL)
-			{
+			if (pUnit == NULL){
 				double val;
-				if (sscanf(term,"%lf",&val)==1)
-				{
+				if (sscanf(term,"%lf",&val) == 1){
 					static UNIT local;
-					if (nextOp=='+' || nextOp=='-') /* bias operation */
-					{
-						UNIT bias = {"",0,0,0,0,0,0,0,val,unit_precision(term)};
+					if (nextOp =='+' || nextOp == '-'){ /* bias operation */
+						UNIT bias = {"", 0, 0, 0, 0, 0, 0, 0, val, unit_precision(term)};
 						local = bias;
-					}
-					else /* scale operation */
-					{
-						UNIT offset = {"",0,0,0,0,0,0,val,0,unit_precision(term)};
+					} else { /* scale operation */
+						UNIT offset = {"", 0, 0, 0, 0, 0, 0, val, 0, unit_precision(term)};
 						local = offset;
 					}
 					pUnit = &local;
+				} else {
+					throw_exception("%s(%d): unable to find or derive unit '%s'", filepath, linenum, p);
+					/*	TROUBLESHOOT
+						The specified term was neither found nor derived, and likely does not exist in the unit subsystem at
+						the point the exception is raised.  Review the unit file and either move the offending unit down the
+						file, or verify that the base unit exists.
+					*/
 				}
-				else
-					throw_exception("%s(%d): unable to find or derive unit '%s'", filepath,linenum,p);
 			}
 		}
 
@@ -312,95 +357,101 @@ int unit_derived(char *name,char *derivation)
 		p += strlen(term);
 
 		/* add this term to result */
-		switch (nextOp) {
-		case '\0':
-			/* first term */
-			if (a==0)
-			{
-				c = pUnit->c;
-				e = pUnit->e;
-				h = pUnit->h;
-				k = pUnit->k;
-				m = pUnit->m;
-				s = pUnit->s;
-				a = pUnit->a * scalar;
-				b = pUnit->b;
-				prec = pUnit->prec;
-				nextOp = '*'; /* in case ^ follows first term */
-			} /* else last term */
-			break;
-		case '*':
-			c += pUnit->c;
-			e += pUnit->e;
-			h += pUnit->h;
-			k += pUnit->k;
-			m += pUnit->m;
-			s += pUnit->s;
-			a *= pUnit->a;
-			prec = min(prec,pUnit->prec);
-			break;
-		case '/':
-			c -= pUnit->c;
-			e -= pUnit->e;
-			h -= pUnit->h;
-			k -= pUnit->k;
-			m -= pUnit->m;
-			s -= pUnit->s;
-			a /= pUnit->a;
-			prec = min(prec,pUnit->prec);
-			break;
-		case '+':
-			b += pUnit->b;
-			break;
-		case '-':
-			b -= pUnit->b;
-			break;
-		case '^':
-			if (lastUnit!=NULL)
-			{
-				int repeat = 0;
-				if (sscanf(term,"%d",&repeat)!=1 || repeat<2)
-					throw_exception("%s(%d): syntax error at '%s'", filepath,linenum,term);
-				repeat--;
-				switch(lastOp) {
-				case '*':
-					c += lastUnit->c*repeat;
-					e += lastUnit->e*repeat;
-					h += lastUnit->h*repeat;
-					k += lastUnit->k*repeat;
-					m += lastUnit->m*repeat;
-					s += lastUnit->s*repeat;
-					a *= pow(lastUnit->a,repeat);
-					prec = min(prec,lastUnit->prec);
-					break;
-				case '/':
-					c -= lastUnit->c*repeat;
-					e -= lastUnit->e*repeat;
-					h -= lastUnit->h*repeat;
-					k -= lastUnit->k*repeat;
-					m -= lastUnit->m*repeat;
-					s -= lastUnit->s*repeat;
-					a /= pow(lastUnit->a,repeat);
-					prec = min(prec,lastUnit->prec);
-					break;
-				default:
-					throw_exception("%s(%d): ^ not allowed after '%c' at '%s'", filepath,linenum,lastOp,term);
-					return 0;
-				}
-			}
-			break;
-		default:
-			throw_exception("%s(%d): '%c' is not recognized at '%s'", filepath,linenum,lastOp,term);
-			return 0;
-			break;
+		switch(nextOp){
+			case '\0':
+				/* first term */
+				if (a == 0)
+				{
+					c = pUnit->c;
+					e = pUnit->e;
+					h = pUnit->h;
+					k = pUnit->k;
+					m = pUnit->m;
+					s = pUnit->s;
+					a = pUnit->a * scalar;
+					b = pUnit->b;
+					prec = pUnit->prec;
+					nextOp = '*'; /* in case ^ follows first term */
+				} /* else last term */
+				break;
+			case '*':
+				c += pUnit->c;
+				e += pUnit->e;
+				h += pUnit->h;
+				k += pUnit->k;
+				m += pUnit->m;
+				s += pUnit->s;
+				a *= pUnit->a;
+				prec = min(prec,pUnit->prec);
+				break;
+			case '/':
+				c -= pUnit->c;
+				e -= pUnit->e;
+				h -= pUnit->h;
+				k -= pUnit->k;
+				m -= pUnit->m;
+				s -= pUnit->s;
+				a /= pUnit->a;
+				prec = min(prec, pUnit->prec);
+				break;
+			case '+':
+				b += pUnit->b;
+				break;
+			case '-':
+				b -= pUnit->b;
+				break;
+			case '^':
+				if (lastUnit!=NULL){
+					int repeat = 0;
+					if (sscanf(term, "%d", &repeat) != 1 || repeat < 2){
+						throw_exception("%s(%d): syntax error at '%s', exponent must be greater than 1", filepath,linenum,term);
+						/*	TROUBLESHOOT
+							The unit was defined akin to "m^2", but the exponent was an integer value less than 1,
+							which is nonsensical for a physical simulation
+						*/
+					}
+					repeat--;
+					switch(lastOp) {
+						case '*':
+							c += lastUnit->c * repeat;
+							e += lastUnit->e * repeat;
+							h += lastUnit->h * repeat;
+							k += lastUnit->k * repeat;
+							m += lastUnit->m * repeat;
+							s += lastUnit->s * repeat;
+							a *= pow(lastUnit->a, repeat);
+							prec = min(prec, lastUnit->prec);
+							break;
+						case '/':
+							c -= lastUnit->c * repeat;
+							e -= lastUnit->e * repeat;
+							h -= lastUnit->h * repeat;
+							k -= lastUnit->k * repeat;
+							m -= lastUnit->m * repeat;
+							s -= lastUnit->s * repeat;
+							a /= pow(lastUnit->a, repeat);
+							prec = min(prec, lastUnit->prec);
+							break;
+						default:
+							throw_exception("%s(%d): ^ not allowed after '%c' at '%s'", filepath, linenum, lastOp, term);
+							return 0;
+					}
+				} // endif (lastUnit != NULL)
+				break;
+			default:
+				throw_exception("%s(%d): '%c' is not recognized at '%s'", filepath,linenum,lastOp,term);
+				return 0;
+				break;
+			// endswitch nextOp
 		}
 		lastOp = nextOp;
-		if ((nextOp=*p)!='\0')
+		if((nextOp = *p) != '\0'){
 			p++;
+		}
 		lastUnit = pUnit;
 	}
 
-	return unit_primary(name,c,e,h,k,m,s,a,b,prec)!=NULL;
+	return (unit_primary(name, c, e, h, k, m, s, a, b, prec) != NULL);
 }
 
 /** Initialize the unit manager 
@@ -421,27 +472,30 @@ void unit_init(void)
 		fp = fopen(tpath, "r");
 
 	/* locate unit file on GLPATH if not found locally */
-	if (fp==NULL && glpath!=NULL)
-	{
+	if (fp == NULL && glpath != NULL){
 		char envbuf[1024];
 		char *dir;
-		strcpy(envbuf,glpath);
-		dir = strtok(envbuf,";");
-		while (dir!=NULL)
-		{
-			strcpy(filepath,dir);
-			strcat(filepath,"/unitfile.txt");
-			fp = fopen(filepath,"r");
-			if (fp!=NULL)
+		strcpy(envbuf, glpath);
+		dir = strtok(envbuf, ";");
+		while(dir != NULL){
+			strcpy(filepath, dir);
+			strcat(filepath, "/unitfile.txt");
+			fp = fopen(filepath, "r");
+			if (fp != NULL){
 				break;
-			dir = strtok(NULL,";");
+			}
+			dir = strtok(NULL, ";");
 		}
 	}
 
 	/* unit file not found */
-	if (fp==NULL)
+	if (fp == NULL)
 	{
-		output_error("%s: %s (GLPATH=%s)", filepath, strerror(errno),glpath);
+		output_error("%s: %s (GLPATH=%s)", filepath, strerror(errno), glpath);
+		/*	TROUBLESHOOT
+			The unit subsystem was not able to locate the unit file in the working directoy or in the directories
+			specified in GLPATH.
+		*/
 		return;
 	}
 
@@ -449,44 +503,49 @@ void unit_init(void)
 	while (!feof(fp) && !ferror(fp))
 	{
 		char buffer[1024], *p;
-		if (fgets(buffer,sizeof(buffer),fp)==NULL)
+		if (fgets(buffer, sizeof(buffer), fp) == NULL){
 			break;
+		}
 		linenum++;
 
 		/* wipe comments */
 		p = strchr(buffer,';');
-		if (p!=NULL)
+		if (p != NULL){
 			*p = '\0';
+		}
 
 		/* remove trailing whitespace */
-		p = buffer+strlen(buffer)-1;
-		while (iswspace(*p) && p>buffer)
-			*p--='\0';
+		p = buffer + strlen(buffer) - 1;
+		while (iswspace(*p) && p>buffer){
+			*p-- = '\0';
+		}
 
 		/* ignore blank lines or lines starting with white space*/
-		if (buffer[0]=='\0' || iswspace(buffer[0]))
+		if (buffer[0] == '\0' || iswspace(buffer[0])){
 			continue;
-
+		}
+		
 		/* constant definition */
-		if (buffer[0]=='#') {
-			double value=0.0;
+		if (buffer[0] == '#') {
+			double value = 0.0;
 			char name;
-			if (sscanf(buffer+1,"%c=%lf",&name,&value)!=2) 
-				output_error("%s(%d): constant definition '%s' is not valid", filepath,linenum,buffer);
-			else
-				unit_constant(name,value);
+			if (sscanf(buffer + 1,"%c=%lf", &name, &value) != 2){
+				output_error("%s(%d): constant definition '%s' is not valid", filepath, linenum, buffer);
+			} else {
+				unit_constant(name, value);
+			}
 			continue;
 		}
 
 		/* scalar definition */
-		if (buffer[0]=='*')
-		{
+		if (buffer[0] == '*'){
 			char name[8];
 			int scalar;
-			if (sscanf(buffer+1,"%7[^=]=%d", name, &scalar)==2)
-				unit_scalar(name,scalar);
-			else
-				output_error("%s(%d): scalar '%s' is not valid", filepath,linenum,buffer);
+			if (sscanf(buffer+1, "%7[^=]=%d", name, &scalar) == 2){
+				unit_scalar(name, scalar);
+			} else {
+				output_error("%s(%d): scalar '%s' is not valid", filepath, linenum, buffer);
+			}
 			continue;
 		}
 
@@ -495,9 +554,8 @@ void unit_init(void)
 			char name[256];
 			double c, e, h, k, m, s, a, b;
 			int prec;
-			if (sscanf(buffer,"%[^=]=%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%d",name,&c,&e,&h,&k,&m,&s,&a,&b,&prec)==10) 
-			{
-				unit_primary(name,c,e,h,k,m,s,a,b,prec);
+			if (sscanf(buffer, "%[^=]=%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%d",name, &c, &e, &h, &k, &m, &s, &a, &b, &prec) == 10){
+				unit_primary(name, c, e, h, k, m, s, a, b, prec);
 				continue;
 			}
 		}
@@ -506,22 +564,28 @@ void unit_init(void)
 		{
 			char name[256];
 			char derivation[256];
-			if (sscanf(buffer,"%[^=]=%[-+/*^0-9. %A-Za-z]",name,derivation)==2) 
-			{
-				unit_derived(name,derivation);
+			if (sscanf(buffer, "%[^=]=%[-+/*^0-9. %A-Za-z]", name, derivation) == 2){
+				unit_derived(name, derivation);
 				continue;
 			}
 		}
 
 		/* not recognized */
-		throw_exception("%s(%d): unit '%s' is not recognized", filepath,linenum,buffer);
+		throw_exception("%s(%d): unit '%s' is not recognized", filepath, linenum, buffer);
+		/*	TROUBLESHOOT
+			The specified unit was not recognized as a constant, a primary unit, or a derived unit.
+		*/
 	}
 
 	/* check status */
-	if (ferror(fp))
+	if (ferror(fp)){
 		throw_exception("unitfile: %s", strerror(errno));
-	else
+		/*	TROUBLESHOOT
+			An error occured while reading the unit file.
+		*/
+	} else {
 		output_verbose("%s loaded ok", filepath);
+	}
 
 	/* done */
 	fclose(fp);
@@ -530,12 +594,24 @@ void unit_init(void)
 /** Convert a value from one unit to another
 	@return 1 if successful, 0 if failed
  **/
-int unit_convert(char *from, char *to, double *pValue)
-{
+int unit_convert(char *from, char *to, double *pValue){
 	UNIT *pFrom = unit_find(from);
 	UNIT *pTo = unit_find(to);
-	if (pFrom!=NULL && pTo!=NULL)
-		return unit_convert_ex(pFrom,pTo,pValue);
+	if (pFrom != NULL){
+		if(pTo != NULL){
+			return unit_convert_ex(pFrom, pTo, pValue);
+		} else {
+			output_error("could not find \'to\' unit %s for unit_convert", to);
+			/*	TROUBLESHOOT
+				The specified unit name was not found by the unit system.  Verify that it is a valid unit name.
+			*/
+		}
+	} else {
+		output_error("could not find \'from\' unit %s for unit_convert", from);
+		/*	TROUBLESHOOT
+			The specified unit name was not found by the unit system.  Verify that it is a valid unit name.
+		*/
+	}
 	return 0;
 }
 
@@ -544,13 +620,23 @@ int unit_convert(char *from, char *to, double *pValue)
  **/
 int unit_convert_ex(UNIT *pFrom, UNIT *pTo, double *pValue)
 {
-	if (pTo->c==pFrom->c && pTo->e==pFrom->e && pTo->h==pFrom->h && pTo->k==pFrom->k && pTo->m==pFrom->m && pTo->s==pFrom->s)
-	{
-		*pValue = (*pValue-pFrom->b)*pFrom->a/pTo->a + pTo->b;
-		return 1;
-	}
-	else
+	if(pFrom == NULL || pTo == NULL || pValue == NULL){
+		output_error("could not run unit_convert_ex due to null arguement");
+		/*	TROUBLESHOOT
+			An error occured earlier in processing that caused a null pointer to be used as an arguement.  Review
+			other error messages for details, but either a property was not found, or a unit definition was not
+			found.
+		*/
 		return 0;
+	}
+	if (pTo->c == pFrom->c && pTo->e == pFrom->e && pTo->h == pFrom->h && pTo->k == pFrom->k && pTo->m == pFrom->m && pTo->s == pFrom->s)
+	{
+		*pValue = (*pValue - pFrom->b) * (pFrom->a / pTo->a) + pTo->b;
+		return 1;
+	} else {
+		output_error("could not convert units from %s to %s, mismatched constant values", pFrom->name, pTo->name);
+		return 0;
+	}
 }
 
 /** Convert a complex value from one unit to another
@@ -558,14 +644,24 @@ int unit_convert_ex(UNIT *pFrom, UNIT *pTo, double *pValue)
  **/
 int unit_convert_complex(UNIT *pFrom, UNIT *pTo, complex *pValue)
 {
-	if (pTo->c==pFrom->c && pTo->e==pFrom->e && pTo->h==pFrom->h && pTo->k==pFrom->k && pTo->m==pFrom->m && pTo->s==pFrom->s)
-	{
-		pValue->r = (pValue->r-pFrom->b)*pFrom->a/pTo->a + pTo->b;
-		pValue->i = (pValue->i-pFrom->b)*pFrom->a/pTo->a + pTo->b;
-		return 1;
-	}
-	else
+	if(pFrom == NULL || pTo == NULL || pValue == NULL){
+		output_error("could not run unit_convert_complex due to null arguement");
+		/*	TROUBLESHOOT
+			An error occured earlier in processing that caused a null pointer to be used as an arguement.  Review
+			other error messages for details, but either a property was not found, or a unit definition was not
+			found.
+		*/
 		return 0;
+	}
+	
+	if (pTo->c == pFrom->c && pTo->e == pFrom->e && pTo->h == pFrom->h && pTo->k == pFrom->k && pTo->m == pFrom->m && pTo->s == pFrom->s){
+		pValue->r = (pValue->r - pFrom->b) * (pFrom->a / pTo->a) + pTo->b;
+		pValue->i = (pValue->i - pFrom->b) * (pFrom->a / pTo->a) + pTo->b;
+		return 1;
+	} else {
+		output_error("could not convert units from %s to %s, mismatched constant values", pFrom->name, pTo->name);
+		return 0;
+	}
 }
 
 /** Find a unit
@@ -586,14 +682,17 @@ UNIT *unit_find(char *unit) /**< the name of the unit */
 
 	/* scan list for existing entry */
 	p = unit_find_raw(unit);
-	if (p!=NULL)
+	if (p != NULL){
 		return p;
-
+	}
+	
 	/* derive entry if possible */
-	if (unit_derived(unit,unit))
+	if (unit_derived(unit,unit)){
 		return unit_list;
-	else
+	} else {
+		output_error("could not find unit \'%s\'", unit);
 		return NULL;
+	}
 }
 
 /** Test the unit manager
@@ -681,50 +780,37 @@ int unit_test(void)
 		{1, "Ohm",		1,"V/A"},
 		{1, "H",		1,"Ohm*s"},
 	};
-	int n, failed=0, succeeded=0;
+	int n, failed = 0, succeeded = 0;
 	output_verbose("performing units tests");
 	output_test("BEGIN: units tests");
-	for (n=0; n<sizeof(test)/sizeof(test[0]); n++)
-	{
+	for (n = 0; n < sizeof(test)/sizeof(test[0]); n++){
 		double v = test[n].from.value;
-		if (test[n].precision==0)
+		if (test[n].precision == 0)
 			test[n].precision = 1e-4;
 
 		/* forward test */
-		if (!unit_convert(test[n].from.unit,test[n].to.unit,&v))
-		{
+		if (!unit_convert(test[n].from.unit, test[n].to.unit, &v)) {
 			output_test("FAILED: conversion from %s to %s not possible", test[n].from.unit,test[n].to.unit);
 			failed++;
-		}
-		else if (fabs(v-test[n].to.value)>test[n].precision)
-		{
+		} else if (fabs(v-test[n].to.value) > test[n].precision) {
 			output_test("FAILED: incorrect unit conversion %g %s -> %g %s (got %g %s instead)", 
 				test[n].from.value,test[n].from.unit,
 				test[n].to.value,test[n].to.unit,
-				v,test[n].to.unit);
+				v, test[n].to.unit);
 			failed++;
-		}
-
-		/* reverse test */
-		else if (!unit_convert(test[n].to.unit,test[n].from.unit,&v))
-		{
-			output_test("FAILED: conversion from %s to %s not possible", test[n].to.unit,test[n].from.unit);
+		} else if (!unit_convert(test[n].to.unit,test[n].from.unit, &v)) { 	/* reverse test */
+			output_test("FAILED: conversion from %s to %s not possible", test[n].to.unit, test[n].from.unit);
 			failed++;
-		}
-		else if (fabs(v-test[n].from.value)>test[n].precision)
-		{
+		} else if (fabs(v - test[n].from.value) > test[n].precision) {
 			output_test("FAILED: incorrect unit conversion %g %s -> %g %s (got %g %s instead)", 
 				test[n].to.value,test[n].to.unit,
 				test[n].from.value,test[n].from.unit,
-				v,test[n].from.unit);
+				v, test[n].from.unit);
 			failed++;
-		}
-
-		else
-		{
+		} else {
 			output_test("SUCCESS: %g %s = %g %s", 				
-					test[n].from.value,test[n].from.unit,
-					test[n].to.value,test[n].to.unit);
+					test[n].from.value, test[n].from.unit,
+					test[n].to.value, test[n].to.unit);
 			succeeded++;
 		}
 	}
