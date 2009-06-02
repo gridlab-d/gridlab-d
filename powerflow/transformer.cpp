@@ -75,7 +75,7 @@ int transformer::init(OBJECT *parent)
 	double V_base,za_basehi,za_baselo,V_basehi;
 	double sa_base;
 	double nt, nt_a, nt_b, nt_c, inv_nt_a, inv_nt_b, inv_nt_c;
-	complex zt, zt_a, zt_b, zt_c, z0,z1,z2;
+	complex zt, zt_a, zt_b, zt_c, z0, z1, z2, zc;
 
 	transformer_configuration *config = OBJECTDATA(configuration,
 	                                   transformer_configuration);
@@ -368,15 +368,18 @@ int transformer::init(OBJECT *parent)
 					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
 					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
 					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					zc = complex(100000 * config->impedance.Re(),80000 * config->impedance.Im()) * complex(za_basehi,0);
 					zt_b = complex(0,0);
 					zt_c = complex(0,0);
-					a_mat[0][0] = a_mat[1][0] = nt;
+					
+					a_mat[0][0] = a_mat[1][0] = (z0 / zc + complex(1,0))*nt;
+					
+					c_mat[0][0] = complex(1,0)*nt / zc;
 				
-					d_mat[0][0] = complex(1,0)/nt;
+					d_mat[0][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
 					d_mat[0][1] = complex(-1,0)/nt;
 
-					A_mat[0][0] = complex(1,0)/nt;
-					A_mat[1][0] = complex(1,0)/nt;
+					A_mat[0][0] = A_mat[1][0] =  (zc / (zc + z0) ) * complex(1,0)/nt;
 				}
 
 				else if (has_phase(PHASE_B)) // wye-B
@@ -396,16 +399,18 @@ int transformer::init(OBJECT *parent)
 					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
 					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
 					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					zc = complex(100000 * config->impedance.Re(),80000 * config->impedance.Im()) * complex(za_basehi,0);
 					zt_b = complex(0,0);
 					zt_c = complex(0,0);
-					a_mat[0][1] = a_mat[1][1] = nt;
+					
+					a_mat[0][1] = a_mat[1][1] = (z0 / zc + complex(1,0))*nt;
 				
-					d_mat[1][0] = complex(1,0)/nt;
+					c_mat[1][0] = complex(1,0)*nt / zc;
+
+					d_mat[1][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
 					d_mat[1][1] = complex(-1,0)/nt;
 
-					A_mat[0][1] = complex(1,0)/nt;
-					A_mat[1][1] = complex(1,0)/nt;
-				
+					A_mat[0][1] = A_mat[1][1] = (zc / (zc + z0) ) * complex(1,0)/nt;			
 				}
 				else if (has_phase(PHASE_C)) // wye-C
 				{
@@ -424,31 +429,34 @@ int transformer::init(OBJECT *parent)
 					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
 					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
 					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					zc = complex(100000 * config->impedance.Re(),80000 * config->impedance.Im()) * complex(za_basehi,0);
 					zt_b = complex(0,0);
 					zt_c = complex(0,0);
-					a_mat[0][2] = a_mat[1][2] = nt;
+					
+					a_mat[0][2] = a_mat[1][2] = (z0 / zc + complex(1,0))*nt;
 				
-					d_mat[2][0] = complex(1,0)/nt;
+					c_mat[2][0] = complex(1,0)*nt / zc;
+
+					d_mat[2][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
 					d_mat[2][1] = complex(-1,0)/nt;
 
-					A_mat[0][2] = complex(1,0)/nt;
-					A_mat[1][2] = complex(1,0)/nt;
+					A_mat[0][2] = A_mat[1][2] = (zc / (zc + z0) ) * complex(1,0)/nt; 
 				}
 
-				b_mat[0][0] = (z1*nt)+(z0/nt);
+				b_mat[0][0] = (z0 / zc + complex(1,0))*(z1*nt) + z0/nt;
 				b_mat[0][1] = complex(-1,0) * (z0/nt);
 				b_mat[0][2] = complex(0,0);
 				b_mat[1][0] = (z0/nt);
-				b_mat[1][1] = complex(-1,0) * ((z2*nt) + z0/nt);
+				b_mat[1][1] = -(z0 / zc + complex(1,0))*(z2*nt) - z0/nt;
 				b_mat[1][2] = complex(0,0);
 				b_mat[2][0] = complex(0,0);
 				b_mat[2][1] = complex(0,0);
 				b_mat[2][2] = complex(0,0);
 
-				B_mat[0][0] = (z1) + (z0/(nt*nt));
-				B_mat[0][1] = complex(-1,0) * (z0/(nt*nt));
-				B_mat[1][0] = (z0/(nt*nt));
-				B_mat[1][1] = complex(-1,0) * ((z2) + (z0/(nt*nt)));
+				B_mat[0][0] = (z1) + (z0*zc/((zc + z0)*nt*nt));
+				B_mat[0][1] = -(z0*zc/((zc + z0)*nt*nt));
+				B_mat[1][0] = (z0*zc/((zc + z0)*nt*nt));
+				B_mat[1][1] = complex(-1,0) * ((z2) + (z0*zc/((zc + z0)*nt*nt)));
 			}
 			else if (solver_method==SM_GS)	// This doesn't work yet
 			{
