@@ -8,6 +8,8 @@
 #include "powerflow.h"
 
 double *deltaI_NR;
+Bus_admit *BA_diag;
+Y_NR *Y_off_diag;
 complex *Icalc;
 
 /** Newton-Raphson solver
@@ -147,24 +149,61 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 	fclose(FP);
 #endif
 
+int indexer, jindexer;
+char jindex, kindex;
 // Build the Y_NR matrix, the off-diagonal elements are identical to the corresponding elements of bus admittance matrix.
 // The off-diagonal elements of Y_NR marix are not updated at each iteration.
-
-Y_NR *off_diag = new Y_NR[6*branch_count];  // store the loaction and value of off-diagonal elements of Y into array off_diag 
-int indexer,jindex;
-for (indexer=0; indexer<branch_count; indexer++)
+    if (BA_diag == NULL)
 	{
+		BA_diag = new Bus_admit[bus_count];   //BA_diag store the location and value of diagonal elements of Bus Admittance matrix
+	}
+
+	
+for (indexer=0; indexer<bus_count; indexer++) // Construct the diagonal elements of Bus admittance matrix.
+	{
+		complex tempY[3][3] = {0};
+		for (jindexer=0; jindexer<branch_count;jindexer++)
+		{ 
+			if ( branch[jindexer].from = indexer)
+			{ 
+				for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						tempY[jindex][kindex] += *branch[jindexer].Y[jindex][kindex];
+					}
+				}
+			}
+			else if ( branch[jindexer].to = indexer)
+			{ 
+				for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						tempY[jindex][kindex] += *branch[jindexer].Y[jindex][kindex];
+					}
+				}
+			}
+			else {}
+		}
+        BA_diag[indexer].col_ind = BA_diag[indexer].row_ind = indexer; // BA_diag store the row and column information of n elements, n = bus_count
 		for (jindex=0; jindex<3; jindex++)
-		{ }
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						*BA_diag[indexer].Y[jindex][kindex] = tempY[jindex][kindex];// BA_diag store the 3*3 complex admittance value of n elements, n = bus_count
+					}
+				}
+	
 }
 
 
 
 //System load at each bus is represented by second order polynomial equations
-	
-	complex tempP; //tempP storea the temporary value of Power load at each bus  
+	complex tempP;
 	for (indexer=0; indexer<bus_count; indexer++)
 		{
+			tempP = complex(); //tempP storea the temporary value of Power load at each bus  
 			for (jindex=0; jindex<3; jindex++)
 			{
 				tempP = *bus[indexer].S[jindex];									//Constant power portion
@@ -235,4 +274,3 @@ for (indexer=0; indexer<branch_count; indexer++)
 	GL_THROW("Newton-Raphson solution method is not yet supported");
 	return 0;
 }
-
