@@ -34,6 +34,13 @@ typedef struct {
     double Y_value; ///< value of the element in 6n*6n Y matrix in NR solver
 } Y_NR;
 
+typedef struct {
+	int row_ind;  ///< row location of the element in n*n bus admittance matrix in NR solver
+	int	col_ind;  ///< collumn location of the element in n*n bus admittance matrix in NR solver
+    complex *Y[3][3]; ///< 3*3 complex value of the element in bus admittance matrix in NR solver
+} Bus_admit;
+
+
 int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch);
 
 #endif
