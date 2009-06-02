@@ -6,6 +6,9 @@ import smtplib
 import time
 import subprocess
 
+
+os.putenv("PATH","%PATH%;..\\..\\..\\VS2005\\Win32\\Release")
+
 ##
 #	run_tests is the main function for the autotest validation script.
 #	@param	argv	The command line arguements.
