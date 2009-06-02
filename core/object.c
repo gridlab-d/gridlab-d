@@ -808,19 +808,18 @@ int object_get_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value, int si
 
 /** Get a reference to another object 
  **/
-OBJECT *object_get_reference(OBJECT *obj, char *name)
-{
+OBJECT *object_get_reference(OBJECT *obj, char *name){
 	PROPERTY *prop = class_find_property(obj->oclass,name);
-	if (prop==NULL || prop->access==PA_PRIVATE || prop->ptype!=PT_object)
+	if (prop == NULL || prop->access == PA_PRIVATE || prop->ptype != PT_object)
 	{
 		if(prop == NULL){
 			;
 		}
 		errno = EINVAL;
 		return NULL;
-	} 
-	else 
-		return *(OBJECT**)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
+	} else {
+		return *(OBJECT**)((char*)obj + sizeof(OBJECT) + (int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
+	}
 }
 
 /** Get the first object in the model
@@ -834,9 +833,12 @@ OBJECT *object_get_first()
 /** Get the next object in the model
 	@return a pointer to the OBJECT after \p obj
  **/
-OBJECT *object_get_next(OBJECT *obj) /**< the object from which to start */
-{
-	return obj!=NULL ? obj->next : NULL;
+OBJECT *object_get_next(OBJECT *obj){ /**< the object from which to start */
+	if(obj != NULL){
+		return obj->next;
+	} else {
+		return NULL;
+	}
 }
 
 
@@ -850,6 +852,11 @@ static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 	OBJECTRANK parent_rank = -1;
 	if (rank >= object_get_count()){
 		output_error("%s: set_rank wigging out, rank > object count", object_name(first));
+		/*	TROUBLESHOOT
+			As a sanity check, the rank of an object should not exceed the number of objects in the model.  If the model
+			is deliberately playing with the ranks, please either reduce the manual rank adjustment, or add a number of
+			"harmless" objects to inflate the number of objects in the model.
+		 */
 		return -1;
 	}
 	if (obj==first)
@@ -1025,24 +1032,24 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 
 	@return 1 on success; 0 on failure
  **/
-int object_init(OBJECT *obj) /**< the object to initialize */
-{
-	if (obj->oclass->init!=NULL)
-		return (int)(*(obj->oclass->init))(obj,obj->parent);
+int object_init(OBJECT *obj){ /**< the object to initialize */
+	if (obj->oclass->init != NULL){
+		return (int)(*(obj->oclass->init))(obj, obj->parent);
+	}
 	return 1;
 }
 
 /** Tests the type of an object
  **/
 int object_isa(OBJECT *obj, /**< the object to test */
-			   char *type) /**< the type of test */
-{
-	if (strcmp(obj->oclass->name,type)==0)
+			   char *type){ /**< the type of test */
+	if(strcmp(obj->oclass->name,type) == 0){
 		return 1;
-	else if (obj->oclass->isa)
-		return (int)obj->oclass->isa(obj,type);
-	else
+	} else if (obj->oclass->isa){
+		return (int)obj->oclass->isa(obj, type);
+	} else {
 		return 0;
+	}
 }
 
 /** Dump an object to a buffer
@@ -1050,54 +1057,62 @@ int object_isa(OBJECT *obj, /**< the object to test */
  **/
 int object_dump(char *outbuffer, /**< the destination buffer */
 				int size, /**< the size of the buffer */
-				OBJECT *obj) /**< the object to dump */
-{
+				OBJECT *obj){ /**< the object to dump */
 	char buffer[65536];
 	char tmp[256];
 	int count = 0;
-	PROPERTY *prop;
+	PROPERTY *prop = NULL;
 	static int safesize;
-	CLASS *pclass;
-	if (size>sizeof(buffer))
+	CLASS *pclass = NULL;
+	if (size>sizeof(buffer)){
 		size = sizeof(buffer);
+	}
 	safesize = size;
 
-	count += sprintf(buffer+count,"object %s:%d {\n", obj->oclass->name, obj->id);
+	count += sprintf(buffer + count, "object %s:%d {\n", obj->oclass->name, obj->id);
 
 	/* dump internal properties */
-	if (obj->parent!=NULL)
-		count += sprintf(buffer+count,"\tparent = %s:%d (%s)\n", obj->parent->oclass->name, obj->parent->id, obj->parent->name!=NULL?obj->parent->name:"");
-	else
-		count += sprintf(buffer+count,"\troot object\n");
-	if (obj->name!=NULL)
-		count += sprintf(buffer+count,"\tname %s\n",obj->name);
-	count += sprintf(buffer+count,"\trank = %d;\n", obj->rank);
-	count += sprintf(buffer+count,"\tclock = %s (%" FMT_INT64 "d);\n", convert_from_timestamp(obj->clock,tmp,sizeof(tmp))>0?tmp:"(invalid)",obj->clock);
-	if (!isnan(obj->latitude)) count += sprintf(buffer+count,"\tlatitude = %s;\n",convert_from_latitude(obj->latitude,tmp,sizeof(tmp))?tmp:"(invalid)");
-	if (!isnan(obj->longitude)) count += sprintf(buffer+count,"\tlongitude = %s;\n",convert_from_longitude(obj->longitude,tmp,sizeof(tmp))?tmp:"(invalid)");
-	count += sprintf(buffer+count,"\tflags = %s;\n", convert_from_set(tmp,sizeof(tmp),&(obj->flags),object_flag_property())?tmp:"(invalid)");
+	if(obj->parent != NULL){
+		count += sprintf(buffer + count, "\tparent = %s:%d (%s)\n", obj->parent->oclass->name, obj->parent->id, obj->parent->name != NULL ? obj->parent->name : "");
+	} else {
+		count += sprintf(buffer + count, "\troot object\n");
+	}
+	if (obj->name != NULL){
+		count += sprintf(buffer + count, "\tname %s\n", obj->name);
+	}
+
+	count += sprintf(buffer + count, "\trank = %d;\n", obj->rank);
+	count += sprintf(buffer + count, "\tclock = %s (%" FMT_INT64 "d);\n", convert_from_timestamp(obj->clock, tmp, sizeof(tmp)) > 0 ? tmp : "(invalid)", obj->clock);
+
+	if(!isnan(obj->latitude)){
+		count += sprintf(buffer + count, "\tlatitude = %s;\n", convert_from_latitude(obj->latitude, tmp, sizeof(tmp)) ? tmp : "(invalid)");
+	}
+	if(!isnan(obj->longitude)){
+		count += sprintf(buffer + count, "\tlongitude = %s;\n", convert_from_longitude(obj->longitude, tmp, sizeof(tmp)) ? tmp : "(invalid)");
+	}
+	count += sprintf(buffer + count, "\tflags = %s;\n", convert_from_set(tmp, sizeof(tmp), &(obj->flags), object_flag_property()) ? tmp : "(invalid)");
 
 	/* dump properties */
-	for (prop=obj->oclass->pmap;prop!=NULL && prop->otype==obj->oclass->type;prop=prop->next)
-	{
-		char *value = object_property_to_string(obj,prop->name);
-		if (value!=NULL)
-			count += sprintf(buffer+count,"\t%s %s = %s;\n",prop->ptype==PT_delegated?prop->delegation->type:class_get_property_typename(prop->ptype),prop->name,value);
-		if (count>safesize)
-			throw_exception("object_dump(char *buffer=%x, int size=%d, OBJECT *obj=%s:%d) buffer overrun", outbuffer,size,obj->oclass->name,obj->id);
+	for(prop = obj->oclass->pmap; prop != NULL && prop->otype == obj->oclass->type; prop = prop->next){
+		char *value = object_property_to_string(obj, prop->name);
+		if(value != NULL){
+			count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type : class_get_property_typename(prop->ptype), prop->name, value);
+			if(count > safesize){
+				throw_exception("object_dump(char *buffer=%x, int size=%d, OBJECT *obj=%s:%d) buffer overrun", outbuffer, size, obj->oclass->name, obj->id);
+			}
+		}
 	}
 
 	/* dump inherited properties */
 	pclass = obj->oclass;
-	while ((pclass = pclass->parent)!=NULL)
-	{
-		for (prop=pclass->pmap;prop!=NULL && prop->otype==pclass->type;prop=prop->next)
-		{
-			char *value = object_property_to_string(obj,prop->name);
-			if (value!=NULL){
-				count += sprintf(buffer+count,"\t%s %s = %s;\n",prop->ptype==PT_delegated?prop->delegation->type:class_get_property_typename(prop->ptype),prop->name,value);
-			if (count>safesize)
-				throw_exception("object_dump(char *buffer=%x, int size=%d, OBJECT *obj=%s:%d) buffer overrun", outbuffer,size,obj->oclass->name,obj->id);
+	while((pclass = pclass->parent) != NULL){
+		for(prop = pclass->pmap; prop != NULL && prop->otype == pclass->type; prop = prop->next){
+			char *value = object_property_to_string(obj, prop->name);
+			if(value != NULL){
+				count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type : class_get_property_typename(prop->ptype), prop->name, value);
+				if(count > safesize){
+					throw_exception("object_dump(char *buffer=%x, int size=%d, OBJECT *obj=%s:%d) buffer overrun", outbuffer, size, obj->oclass->name, obj->id);
+				}
 			}
 		}
 	}
@@ -1118,38 +1133,44 @@ int object_dump(char *outbuffer, /**< the destination buffer */
  **/
 int object_saveall(FILE *fp) /**< the stream to write to */
 {
-	unsigned count=0;
+	unsigned count = 0;
 	char buffer[1024];
-	count += fprintf(fp,"\n########################################################\n");
-	count += fprintf(fp,"# objects\n");
-	{	OBJECT *obj;
-		for (obj=first_object; obj!=NULL; obj=obj->next)
-		{
-			PROPERTY *prop;
-			char32 oname="(unidentified)";
-			count += fprintf(fp,"object %s:%d {\n", obj->oclass->name, obj->id);
+
+	count += fprintf(fp, "\n########################################################\n");
+	count += fprintf(fp, "# objects\n");
+	{
+		OBJECT *obj;
+		for (obj = first_object; obj != NULL; obj = obj->next){
+			PROPERTY *prop = NULL;
+			char32 oname = "(unidentified)";
+			count += fprintf(fp, "object %s:%d {\n", obj->oclass->name, obj->id);
 
 			/* dump internal properties */
-			if (obj->parent!=NULL)
-			{
-				convert_from_object(oname,sizeof(oname),&obj->parent,NULL);
-				count += fprintf(fp,"\tparent %s;\n", oname);
-			}
-			else
+			if(obj->parent != NULL){
+				convert_from_object(oname, sizeof(oname), &obj->parent, NULL);
+				count += fprintf(fp, "\tparent %s;\n", oname);
+			} else {
 				count += fprintf(fp,"\troot;\n");
-			count += fprintf(fp,"\trank %d;\n", obj->rank);
-			if (obj->name!=NULL)
-				count += fprintf(fp,"\tname %s;\n", obj->name);
-			count += fprintf(fp,"\tclock %s;\n", convert_from_timestamp(obj->clock,buffer,sizeof(buffer))>0?buffer:"(invalid)");
-			if (!isnan(obj->latitude)) count += fprintf(fp,"\tlatitude %s;\n",convert_from_latitude(obj->latitude,buffer,sizeof(buffer))?buffer:"(invalid)");
-			if (!isnan(obj->longitude)) count += fprintf(fp,"\tlongitude %s;\n",convert_from_longitude(obj->longitude,buffer,sizeof(buffer))?buffer:"(invalid)");
-			count += fprintf(fp,"\tflags %s;\n", convert_from_set(buffer,sizeof(buffer),&(obj->flags),object_flag_property())?buffer:"(invalid)");
+			}
+			count += fprintf(fp, "\trank %d;\n", obj->rank);
+			if (obj->name != NULL){
+				count += fprintf(fp, "\tname %s;\n", obj->name);
+			}
+			count += fprintf(fp,"\tclock %s;\n", convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) > 0 ? buffer : "(invalid)");
+			if(!isnan(obj->latitude)){
+				count += fprintf(fp, "\tlatitude %s;\n", convert_from_latitude(obj->latitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+			}
+			if(!isnan(obj->longitude)){
+				count += fprintf(fp, "\tlongitude %s;\n", convert_from_longitude(obj->longitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+			}
+			count += fprintf(fp, "\tflags %s;\n", convert_from_set(buffer, sizeof(buffer), &(obj->flags), object_flag_property()) ? buffer : "(invalid)");
+
 			/* dump properties */
-			for (prop=obj->oclass->pmap;prop!=NULL && prop->otype==obj->oclass->type;prop=prop->next)
-			{
-				char *value = object_property_to_string(obj,prop->name);
-				if (value!=NULL)
-					count += fprintf(fp,"\t%s %s;\n",prop->name,value);
+			for(prop = obj->oclass->pmap; prop != NULL && prop->otype == obj->oclass->type; prop = prop->next){
+				char *value = object_property_to_string(obj, prop->name);
+				if(value != NULL){
+					count += fprintf(fp, "\t%s %s;\n", prop->name, value);
+				}
 			}
 			count += fprintf(fp,"}\n");
 		}
@@ -1160,188 +1181,197 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 /** Save all the objects in the model to the stream \p fp in the \p .XML format
 	@return the number of bytes written, 0 on error, with errno set.
  **/
-int object_saveall_xml(FILE *fp) /**< the stream to write to */
-{
+int object_saveall_xml(FILE *fp){ /**< the stream to write to */
 	unsigned count = 0;
 	char buffer[1024];
 	PROPERTY *prop = NULL;
-	OBJECT *obj;
-	CLASS *oclass=NULL;
+	OBJECT *obj = NULL;
+	CLASS *oclass = NULL;
 
 	for(obj = first_object; obj != NULL; obj = obj->next){
-
 		char32 oname = "(unidentified)";
 		convert_from_object(oname, sizeof(oname), &obj, NULL); /* what if we already have a name? -mh */
-		if ((oclass == NULL) || (obj->oclass->type != oclass->type))
+		if ((oclass == NULL) || (obj->oclass->type != oclass->type)){
 			oclass = obj->oclass;
-		count += fprintf(fp,"\t\t<object type=\"%s\" id=\"%i\" name=\"%s\">\n", obj->oclass->name, obj->id, oname);
+		}
+		count += fprintf(fp, "\t\t<object type=\"%s\" id=\"%i\" name=\"%s\">\n", obj->oclass->name, obj->id, oname);
 
 		/* dump internal properties */
-		if (obj->parent!=NULL)
-		{
-			convert_from_object(oname,sizeof(oname),&obj->parent,NULL);
+		if(obj->parent != NULL){
+			convert_from_object(oname, sizeof(oname), &obj->parent, NULL);
 			count += fprintf(fp,"\t\t\t<parent>\n"); 
 			count += fprintf(fp, "\t\t\t\t%s\n", oname);
 			count += fprintf(fp,"\t\t\t</parent>\n");
-		}
-		else
+		} else {
 			count += fprintf(fp,"\t\t\t<parent>root</parent>\n");
-			count += fprintf(fp,"\t\t\t<rank>%d</rank>\n", obj->rank);
-			count += fprintf(fp,"\t\t\t<clock>\n", obj->clock);
-			count += fprintf(fp,"\t\t\t\t <timestamp>%s</timestamp>\n", convert_from_timestamp(obj->clock,buffer,sizeof(buffer))>0?buffer:"(invalid)");
-			count += fprintf(fp,"\t\t\t</clock>\n");
-			/* why do latitude/longitude have 2 values?  I currently only store as float in the schema... */
-		if (!isnan(obj->latitude)) 
-			count += fprintf(fp,"\t\t\t<latitude>%lf %s</latitude>\n",obj->latitude,convert_from_latitude(obj->latitude,buffer,sizeof(buffer))?buffer:"(invalid)");
-		if (!isnan(obj->longitude)) 
-			count += fprintf(fp,"\t\t\t<longitude>%lf %s</longitude>\n",obj->longitude,convert_from_longitude(obj->longitude,buffer,sizeof(buffer))?buffer:"(invalid)");
+		}
+		count += fprintf(fp,"\t\t\t<rank>%d</rank>\n", obj->rank);
+		count += fprintf(fp,"\t\t\t<clock>\n", obj->clock);
+		count += fprintf(fp,"\t\t\t\t <timestamp>%s</timestamp>\n", convert_from_timestamp(obj->clock,buffer, sizeof(buffer)) > 0 ? buffer : "(invalid)");
+		count += fprintf(fp,"\t\t\t</clock>\n");
+		/* why do latitude/longitude have 2 values?  I currently only store as float in the schema... */
+		if (!isnan(obj->latitude)){
+			count += fprintf(fp, "\t\t\t<latitude>%lf %s</latitude>\n", obj->latitude, convert_from_latitude(obj->latitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+		}
+		if (!isnan(obj->longitude)){
+			count += fprintf(fp, "\t\t\t<longitude>%lf %s</longitude>\n", obj->longitude, convert_from_longitude(obj->longitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+		}
 
 		/* dump inherited properties */
-		if (oclass->parent!=NULL)
-		{
-			for (prop=oclass->parent->pmap;prop!=NULL && prop->otype==oclass->parent->type;prop=prop->next)
-			{
-				char *value = object_property_to_string(obj,prop->name);
-				if (value!=NULL){
+		if(oclass->parent != NULL){
+			for (prop = oclass->parent->pmap; prop != NULL && prop->otype == oclass->parent->type; prop = prop->next){
+				char *value = object_property_to_string(obj, prop->name);
+				if(value != NULL){
 					count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", prop->name, value, prop->name);
 				}
 			}
 		}
 
 		/* dump properties */
-		for (prop=oclass->pmap;prop!=NULL && prop->otype==oclass->type;prop=prop->next)
-		{
-			char *value = object_property_to_string(obj,prop->name);
-			if (value!=NULL){
+		for(prop = oclass->pmap; prop != NULL && prop->otype == oclass->type; prop = prop->next){
+			char *value = object_property_to_string(obj, prop->name);
+			if(value!=NULL){
 				count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", prop->name, value, prop->name);
 			}
 		}
-		count += fprintf(fp,"\t\t</object>\n");
+		count += fprintf(fp, "\t\t</object>\n");
 	}
 
-	count += fprintf(fp,"\t</objects>\n");
+	count += fprintf(fp, "\t</objects>\n");
 	return count;	
 }
 
 int object_saveall_xml_old(FILE *fp);
 
-int object_saveall_xml_old(FILE *fp) /**< the stream to write to */
-{
-	unsigned count=0;
+int object_saveall_xml_old(FILE *fp){ /**< the stream to write to */
+	unsigned count = 0;
 	char buffer[1024];
+
 	count += fprintf(fp,"\t<objects>\n");
-	{	OBJECT *obj;
-		CLASS *oclass=NULL;
-		for (obj=first_object; obj!=NULL; obj=obj->next)
-		{
-			PROPERTY *prop;
-			char32 oname="(unidentified)";
-			convert_from_object(oname,sizeof(oname),&obj,NULL);
-			if (oclass==NULL || obj->oclass->type!=oclass->type)
+	{
+		OBJECT *obj;
+		CLASS *oclass = NULL;
+
+		for (obj = first_object; obj != NULL; obj = obj->next){
+			PROPERTY *prop = NULL;
+			char32 oname = "(unidentified)";
+
+			convert_from_object(oname, sizeof(oname), &obj, NULL);
+			
+			if (oclass == NULL || obj->oclass->type != oclass->type){
 				oclass = obj->oclass;
-			count += fprintf(fp,"\t\t<object>\n");
-			count += fprintf(fp,"\t\t\t<name>%s</name> \n", oname);
-			count += fprintf(fp,"\t\t\t<class>%s</class> \n", obj->oclass->name);
+			}
+			count += fprintf(fp, "\t\t<object>\n");
+			count += fprintf(fp, "\t\t\t<name>%s</name> \n", oname);
+			count += fprintf(fp, "\t\t\t<class>%s</class> \n", obj->oclass->name);
 			count += fprintf(fp, "\t\t\t<id>%d</id>\n", obj->id);
 
 			/* dump internal properties */
-			if (obj->parent!=NULL)
-			{
-				convert_from_object(oname,sizeof(oname),&obj->parent,NULL);
-				count += fprintf(fp,"\t\t\t<parent>\n"); 
-				count += fprintf(fp,"\t\t\t\t<name>%s</name>\n", oname);
-				count += fprintf(fp,"\t\t\t\t<class>%s</class>\n", obj->parent->oclass->name);
-				count += fprintf(fp,"\t\t\t\t<id>%d</id>\n", obj->parent->id);
-				count += fprintf(fp,"\t\t\t</parent>\n");
-			}
-			else
+			if(obj->parent != NULL){
+				convert_from_object(oname, sizeof(oname), &obj->parent, NULL);
+				count += fprintf(fp, "\t\t\t<parent>\n"); 
+				count += fprintf(fp, "\t\t\t\t<name>%s</name>\n", oname);
+				count += fprintf(fp, "\t\t\t\t<class>%s</class>\n", obj->parent->oclass->name);
+				count += fprintf(fp, "\t\t\t\t<id>%d</id>\n", obj->parent->id);
+				count += fprintf(fp, "\t\t\t</parent>\n");
+			} else {
 				count += fprintf(fp,"\t\t\t<parent>root</parent>\n");
-				count += fprintf(fp,"\t\t\t<rank>%d</rank>\n", obj->rank);
-				count += fprintf(fp,"\t\t\t<clock>\n", obj->clock);
-				count += fprintf(fp,"\t\t\t\t <timestamp>%s</timestamp>\n", convert_from_timestamp(obj->clock,buffer,sizeof(buffer))>0?buffer:"(invalid)");
-				count += fprintf(fp,"\t\t\t</clock>\n");
+			}
+			count += fprintf(fp, "\t\t\t<rank>%d</rank>\n", obj->rank);
+			count += fprintf(fp, "\t\t\t<clock>\n", obj->clock);
+			count += fprintf(fp, "\t\t\t\t <timestamp>%s</timestamp>\n", (convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) > 0) ? buffer : "(invalid)");
+			count += fprintf(fp, "\t\t\t</clock>\n");
 				/* why do latitude/longitude have 2 values?  I currently only store as float in the schema... */
-			if (!isnan(obj->latitude)) 
-				count += fprintf(fp,"\t\t\t<latitude>%lf %s</latitude>\n",obj->latitude,convert_from_latitude(obj->latitude,buffer,sizeof(buffer))?buffer:"(invalid)");
-			if (!isnan(obj->longitude)) 
-				count += fprintf(fp,"\t\t\t<longitude>%lf %s</longitude>\n",obj->longitude,convert_from_longitude(obj->longitude,buffer,sizeof(buffer))?buffer:"(invalid)");
+			if (!isnan(obj->latitude)){
+				count += fprintf(fp, "\t\t\t<latitude>%lf %s</latitude>\n" ,obj->latitude, convert_from_latitude(obj->latitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+			}
+			if (!isnan(obj->longitude)) {
+				count += fprintf(fp, "\t\t\t<longitude>%lf %s</longitude>\n", obj->longitude, convert_from_longitude(obj->longitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+			}
 
 			/* dump properties */
-			count += fprintf(fp,"\t\t\t<properties>\n");
-			for (prop=oclass->pmap;prop!=NULL && prop->otype==oclass->type;prop=prop->next)
-			{
-				char *value = object_property_to_string(obj,prop->name);
-				if (value!=NULL)
-					count += fprintf(fp,"\t\t\t\t<property>\n");
-				count += fprintf(fp,"\t\t\t\t\t<type>%s</type> \n", prop->name);
-					count += fprintf(fp,"\t\t\t\t\t<value>%s</value> \n", value);
-					count += fprintf(fp,"\t\t\t\t</property>\n");
+			count += fprintf(fp, "\t\t\t<properties>\n");
+			for (prop = oclass->pmap; prop != NULL && prop->otype == oclass->type; prop = prop->next){
+				char *value = object_property_to_string(obj, prop->name);
+
+				if(value != NULL){
+					count += fprintf(fp, "\t\t\t\t<property>\n");
+					count += fprintf(fp, "\t\t\t\t\t<type>%s</type> \n", prop->name);
+					count += fprintf(fp, "\t\t\t\t\t<value>%s</value> \n", value);
+					count += fprintf(fp, "\t\t\t\t</property>\n");
+				}
 			}
-			count += fprintf(fp,"\t\t\t</properties>\n");
-			count += fprintf(fp,"\t\t</object>\n");
+			count += fprintf(fp, "\t\t\t</properties>\n");
+			count += fprintf(fp, "\t\t</object>\n");
 		}
 	}
 	count += fprintf(fp,"\t</objects>\n");
 	return count;	
 }
 
-int convert_from_latitude(double v,void *buffer,int bufsize)
-{
+int convert_from_latitude(double v, void *buffer, int bufsize){
+	double d = floor(fabs(v));
+	double r = fabs(v) - d;
+	double m = floor(r * 60.0);
+	double s = (r - (double)m / 60.0) * 3600.0;
+	char ns = (v < 0) ? 'S' : 'N';
+
+	if(isnan(v)){
+		return 0;
+	}
+	
+	return sprintf(buffer, "%.0f%c%.0f'%.2f\"", d, ns, m, s);
+}
+
+int convert_from_longitude(double v, void *buffer, int bufsize){
 	double d = floor(fabs(v));
 	double r = fabs(v)-d;
 	double m = floor(r*60);
 	double s = (r - (double)m/60.0)*3600;
-	char ns = v<0 ? 'S':'N';
-	if(isnan(v)) return 0;
-	return sprintf(buffer,"%.0f%c%.0f'%.2f\"",d,ns,m,s);
+	char ns = (v < 0) ? 'W' : 'E';
+
+	if(isnan(v)){
+		return 0;
+	}
+
+	return sprintf(buffer, "%.0f%c%.0f'%.2f\"", d, ns, m, s);
 }
 
-int convert_from_longitude(double v,void *buffer,int bufsize)
-{
-	double d = floor(fabs(v));
-	double r = fabs(v)-d;
-	double m = floor(r*60);
-	double s = (r - (double)m/60.0)*3600;
-	char ns = v<0 ? 'W':'E';
-	if(isnan(v)) return 0;
-	return sprintf(buffer,"%.0f%c%.0f'%.2f\"",d,ns,m,s);
-}
-
-double convert_to_latitude(char *buffer)
-{
-	int32 d, m=0;
-	double s=0;
+double convert_to_latitude(char *buffer){
+	int32 d, m = 0;
+	double s = 0;
 	char ns;
-	if (sscanf(buffer,"%d%c%d'%lf\"",&d,&ns,&m,&s)>1)
-	{	
-		double v = (double)d+(double)m/60+s/3600;
-		if (v>=0 || v<=90)
-		{
-			if (ns=='S')
+	
+	if (sscanf(buffer, "%d%c%d'%lf\"", &d, &ns, &m, &s) > 1){	
+		double v = (double)d + (double)m / 60.0 + s / 3600.0;
+		if (v >= 0.0 || v <= 90.0){
+			if (ns == 'S'){
 				return -v;
-			else if (ns=='N')
+			} else if(ns == 'N'){
 				return v;
+			}
 		}
 	}
+
 	return QNAN;
 }
 
-double convert_to_longitude(char *buffer)
-{
-	int32 d, m=0;
-	double s=0;
+double convert_to_longitude(char *buffer){
+	int32 d, m = 0;
+	double s = 0;
 	char ns;
-	if (sscanf(buffer,"%d%c%d'%lf\"",&d,&ns,&m,&s)>1)
-	{	
-		double v = (double)d+(double)m/60+s/3600;
-		if (v>=0 || v<=90)
-		{
-			if (ns=='W')
+
+	if (sscanf(buffer, "%d%c%d'%lf\"", &d, &ns, &m, &s) > 1){	
+		double v = (double)d + (double)m / 60.0 + s / 3600.0;
+		if(v >= 0.0 || v <= 90.0){
+			if (ns == 'W'){
 				return -v;
-			else if (ns=='E')
+			} else if(ns=='E'){
 				return v;
+			}
 		}
 	}
+
 	return QNAN;
 }
 
@@ -1361,12 +1391,17 @@ static OBJECTTREE *top=NULL;
 void debug_traverse_tree(OBJECTTREE *tree){
 	if(tree == NULL){
 		tree = top;
-		if(top == NULL)
+		if(top == NULL){
 			return;
+		}
 	}
-	if(tree->before != NULL) debug_traverse_tree(tree->before);
+	if(tree->before != NULL){
+		debug_traverse_tree(tree->before);
+	}
 	output_test("%s", tree->name);
-	if(tree->after != NULL) debug_traverse_tree(tree->after);
+	if(tree->after != NULL){
+		debug_traverse_tree(tree->after);
+	}
 }
 
 /* returns the height of the tree */
@@ -1420,27 +1455,26 @@ int object_tree_rebalance(OBJECTTREE *tree) /* AVL logic */
 /*	Add an item to the tree
 	returns the "correct" root node for the subtree that an object was added to.
  */
-static int addto_tree(OBJECTTREE **tree, OBJECTTREE *item)
-{
+static int addto_tree(OBJECTTREE **tree, OBJECTTREE *item){
 	int rel = strcmp((*tree)->name, item->name);
 	int right = 0, left = 0, ir = 0, il = 0, rv = 0;
-	if (rel>0)
-	{
+
+	if (rel > 0){
 		(*tree)->balance--;
-		if ((*tree)->before==NULL)
-		{
+		if ((*tree)->before == NULL){
 			(*tree)->before = item;
 			return 1;
-		}
-		else {
-			rv = addto_tree(&((*tree)->before),item);
-			if(global_no_balance) return rv + 1;
+		} else {
+			rv = addto_tree(&((*tree)->before), item);
+			if(global_no_balance){
+				return rv + 1;
+			}
 			if((*tree)->balance > 1){
 				if((*tree)->after->balance < 0){ /* inner left is heavy */
 					rotate_tree_right(&((*tree)->after));
 				}
 				rotate_tree_left(tree);
-			} else if((*tree)->balance < -1){
+			} else if((*tree)->balance < -1) {
 				if((*tree)->before->balance > 0){ /* inner right is heavy */
 					rotate_tree_left(&((*tree)->before));
 				}
@@ -1448,18 +1482,16 @@ static int addto_tree(OBJECTTREE **tree, OBJECTTREE *item)
 			}
 			return tree_get_height(*tree); /* verify after rotations */
 		}
-	}
-	else if (rel<0)
-	{
+	} else if (rel<0) {
 		(*tree)->balance++;
-		if ((*tree)->after==NULL)
-		{
+		if ((*tree)->after == NULL) {
 			(*tree)->after = item;
 			return 1;
-		}
-		else {
+		} else {
 			rv = addto_tree(&((*tree)->after),item);
-			if(global_no_balance) return rv + 1;
+			if(global_no_balance){
+				return rv + 1;
+			}
 			if((*tree)->balance > 1){
 				if((*tree)->after->balance < 0){ /* inner left is heavy */
 					rotate_tree_right(&((*tree)->after));
@@ -1473,69 +1505,72 @@ static int addto_tree(OBJECTTREE **tree, OBJECTTREE *item)
 			}
 			return tree_get_height(*tree); /* verify after rotations */
 		}
-	}
-	else
+	} else {
 		return (*tree)->obj==item->obj;
+	}
 	return 0;
 }
 
 /*	Add an object to the object tree.  Throws exceptions on memory errors.
 	Returns a pointer to the object tree item if successful, NULL on failure (usually because name already used)
  */
-static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name)
-{
+static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
 	OBJECTTREE *item = (OBJECTTREE*)malloc(sizeof(OBJECTTREE));
-	if (item==NULL) 
+
+	if (item == NULL) {
 		throw_exception("object_tree_add(obj='%s:%d', name='%s'): memory allocation failed (%s)",
 			obj->oclass->name, obj->id, name, strerror(errno));
+	}
+	
 	item->obj = obj;
 	item->balance = 0;
-	strncpy(item->name,name,sizeof(item->name));
-	item->before=item->after=NULL;
-	if (top==NULL)
-	{
+	strncpy(item->name, name, sizeof(item->name));
+	item->before = item->after = NULL;
+
+	if (top == NULL){
 		top = item;
 		return top;
-	}
-	else{
-		return addto_tree(&top,item) ? item : NULL;
+	} else {
+		if(addto_tree(&top, item) != NULL){
+			return item;
+		} else {
+			return NULL;
+		}
 	}
 }
 
 /*	Finds a name in the tree
  */
-static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name)
-{
+static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name){
 	static OBJECTTREE **temptree = NULL;
-	if (tree==NULL)
+
+	if(tree == NULL){
 		return NULL;
-	else 
-	{
-		int rel = strcmp(tree->name,name);
-		if (rel>0)
-		{
+	} else {
+		int rel = strcmp(tree->name, name);
+		if(rel > 0){
 			if(tree->before != NULL){
-				if(strcmp(tree->before->name, name) == 0)
+				if(strcmp(tree->before->name, name) == 0){
 					return &(tree->before);
-				else
+				} else {
 					return findin_tree(tree->before, name);
+				}
 			} else {
 				return NULL;
 			}
-		}
-		else if (rel<0)
-		{
+		} else if(rel<0) {
 			if(tree->after != NULL){
-				if(strcmp(tree->after->name, name) == 0)
+				if(strcmp(tree->after->name, name) == 0){
 					return &(tree->after);
-				else
+				} else {
 					return findin_tree(tree->after, name);
+				}
 			} else {
 				return NULL;
 			}
-		}
-		else
+		} else {
 			return (temptree = &tree);
+		}
 	}
 }
 
@@ -1546,7 +1581,8 @@ void object_tree_delete(OBJECT *obj, OBJECTNAME name)
 {
 	OBJECTTREE **item = findin_tree(top,name);
 	OBJECTTREE *temp = NULL, **dtemp = NULL;
-	if (item!=NULL && strcmp((*item)->name,name)!=0){
+
+	if (item != NULL && strcmp((*item)->name, name)!=0){
 		if((*item)->after == NULL && (*item)->before == NULL){ /* no children -- nuke */
 			free(*item);
 			*item = NULL;
@@ -1586,39 +1622,56 @@ void object_tree_delete(OBJECT *obj, OBJECTNAME name)
 /** Find an object from a name.  This only works for named objects.  See object_set_name().
 	@return a pointer to the OBJECT structure
  **/
-OBJECT *object_find_name(OBJECTNAME name)
-{
-	OBJECTTREE **item = findin_tree(top,name);
-	return item!=NULL && *item!=NULL ? (*item)->obj : NULL;
+OBJECT *object_find_name(OBJECTNAME name){
+	OBJECTTREE **item = NULL;
+
+	item = findin_tree(top, name);
+	
+	if(item != NULL && *item != NULL){
+		return (*item)->obj;
+	} else {
+		/* normal operation, remain silent */
+		return NULL;
+	}
 }
 
 /** Sets the name of an object.  This is useful if the internal name cannot be relied upon, 
 	as when multiple modules are being used.
 	Throws an exception when a memory error occurs or when the name is already taken by another object.
  **/
-OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name)
-{
+OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name){
 	OBJECTTREE *item = NULL;
-	if (obj->name!=NULL)
+
+	if (obj->name != NULL){
 		object_tree_delete(obj,name);
-	if (name!=NULL)
-	{
+	}
+	
+	if(name != NULL){
 		if(object_find_name(name) != NULL){
 			output_error("An object named \"%s\" already exists!", name);
+			/*	TROUBLESHOOT
+				GridLab-D prohibits two objects from using the same name, to prevent
+				ambiguous object look-ups.
+			*/
 			return NULL;
 		}
 		item = object_tree_add(obj,name);
-		if (item!=NULL)
+		if (item != NULL){
 			obj->name = item->name;
+		}
 	}
-	return item?item->name:NULL;
+	
+	if(item != NULL){
+		return item->name;
+	} else {
+		return NULL;
+	}
 }
 
 /** Convenience method use by the testing framework.  
 	This should only be exposed there.
  **/
-void remove_objects()
-{ 
+void remove_objects(){ 
 	OBJECT* obj1;
 
 	obj1 = first_object;
