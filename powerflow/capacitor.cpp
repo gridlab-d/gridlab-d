@@ -70,7 +70,8 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			PT_double, "capacitor_B[VAr]", PADDR(capacitor_B),
 			PT_double, "capacitor_C[VAr]", PADDR(capacitor_C),
 			PT_double, "time_delay[s]", PADDR(time_delay),
-			PT_object,"Sense_Node",PADDR(RemoteNode),
+			PT_double, "dwell_time[s]", PADDR(dwell_time),
+			PT_object,"sense_node",PADDR(RemoteNode),
 			PT_enumeration, "control_level", PADDR(control_level),
 				PT_KEYWORD, "BANK", BANK,
 				PT_KEYWORD, "INDIVIDUAL", INDIVIDUAL, 
@@ -92,6 +93,9 @@ int capacitor::create()
 	switchA_state_Prev = OPEN;
 	switchB_state_Prev = OPEN;
 	switchC_state_Prev = OPEN;
+	switchA_state_Req_Next = OPEN;
+	switchB_state_Req_Next = OPEN;
+	switchC_state_Req_Next = OPEN;
 	control = MANUAL;
 	control_level = INDIVIDUAL;
 	pt_phase = PHASE_A;
@@ -103,7 +107,9 @@ int capacitor::create()
 	volt_open = 0.0;
 	pt_ratio = 60;
 	time_delay = 0.0;
+	dwell_time = 0.0;
 	time_to_change = 0;
+	dwell_time_left = 0;
 	last_time = 0;
 
 	return result;
@@ -116,13 +122,13 @@ int capacitor::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 
 	if ((capacitor_A == 0.0) && (capacitor_A == 0.0) && (capacitor_A == 0.0))
-		GL_THROW("Capacitor:%d does not have any capacitance values defined!",obj->id);
+		gl_error("Capacitor:%d does not have any capacitance values defined!",obj->id);
 		/*  TROUBLESHOOT
 		The capacitor does not have any actual capacitance values defined.  This results in the capacitor doing
 		nothing at all and results in no change to the system.  Specify a value with capacitor_A, capacitor_B, or capacitor_C.
 		*/
 
-	//Calculate capacitor values as admittance
+	//Calculate capacitor values as admittance - handling of Delta - Wye conversion will be handled later (if needed)
 	cap_value[0] = complex(0,capacitor_A/(nominal_voltage * nominal_voltage));
 	cap_value[1] = complex(0,capacitor_B/(nominal_voltage * nominal_voltage));
 	cap_value[2] = complex(0,capacitor_C/(nominal_voltage * nominal_voltage));
@@ -133,11 +139,14 @@ int capacitor::init(OBJECT *parent)
 TIMESTAMP capacitor::sync(TIMESTAMP t0)
 {
 	complex VoltVals[3];
+	complex temp_shunt[3];
 	node *RNode = OBJECTDATA(RemoteNode,node);
+	bool Phase_Mismatch = false;
 	TIMESTAMP result;
 
-	//Update time tracker
+	//Update time trackers
 	time_to_change -= (t0 - last_time);
+	dwell_time_left -= (t0 - last_time);
 
 	if (last_time!=t0)	//If we've transitioned, update the transition value
 	{
@@ -210,10 +219,6 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 				VoltVals[1] = RNode->voltaged[1];
 				VoltVals[2] = RNode->voltaged[2];
 			}
-
-			//In this convention, the lack of an N means delta connected.  Make sure our phases reflect this or the node load calculations will be off
-			if ((phases & PHASE_D) != PHASE_D)	//Make sure we have a delta flag
-				phases |= PHASE_D;
 		}
 
 		switch (control) {
@@ -233,46 +238,47 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 				{
 					if ((pt_phase & (PHASE_A | PHASE_N)) == (PHASE_A | PHASE_N))
 						if (voltage_set_low >= VoltVals[0].Mag())
-							switchA_state_Next=CLOSED;
+							switchA_state_Req_Next=CLOSED;
 						else if (voltage_set_high <= VoltVals[0].Mag())
-							switchA_state_Next=OPEN;
+							switchA_state_Req_Next=OPEN;
 						else;
 						
 					if ((pt_phase & (PHASE_B | PHASE_N)) == (PHASE_B | PHASE_N))
 						if (voltage_set_low >= VoltVals[1].Mag())
-							switchB_state_Next=CLOSED;
+							switchB_state_Req_Next=CLOSED;
 						else if (voltage_set_high <= VoltVals[1].Mag())
-							switchB_state_Next=OPEN;
+							switchB_state_Req_Next=OPEN;
 						else;
 
 					if ((pt_phase & (PHASE_C | PHASE_N)) == (PHASE_C | PHASE_N))
 						if (voltage_set_low >= VoltVals[2].Mag())
-							switchC_state_Next=CLOSED;
+							switchC_state_Req_Next=CLOSED;
 						else if (voltage_set_high <= VoltVals[2].Mag())
-							switchC_state_Next=OPEN;
+							switchC_state_Req_Next=OPEN;
 						else;
 				}
 				else // Line to Line connections
 				{
+					complex test = VoltVals[0].Mag();
 					if ((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B))
 						if (voltage_set_low >= VoltVals[0].Mag())	//VoltVals handled above to use L-L voltages instead
-							switchA_state_Next=CLOSED;				//switchA assigned to AB connection (delta-connection in loads)
+							switchA_state_Req_Next=CLOSED;				//switchA assigned to AB connection (delta-connection in loads)
 						else if (voltage_set_high <= VoltVals[0].Mag())
-							switchA_state_Next=OPEN;
+							switchA_state_Req_Next=OPEN;
 						else;
 
 					if ((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C))
 						if (voltage_set_low >= VoltVals[1].Mag())	//VoltVals handled above to use L-L voltages instead
-							switchB_state_Next=CLOSED;				//switchB assigned to BC connection (delta-connection in loads)
+							switchB_state_Req_Next=CLOSED;				//switchB assigned to BC connection (delta-connection in loads)
 						else if (voltage_set_high <= VoltVals[1].Mag())
-							switchB_state_Next=OPEN;
+							switchB_state_Req_Next=OPEN;
 						else;
 
 					if ((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A))
 						if (voltage_set_low >= VoltVals[2].Mag())	//VoltVals handled above to use L-L voltages instead
-							switchC_state_Next=CLOSED;				//switchC assigned to CA connection (delta-connection in loads)
+							switchC_state_Req_Next=CLOSED;				//switchC assigned to CA connection (delta-connection in loads)
 						else if (voltage_set_high <= VoltVals[2].Mag())
-							switchC_state_Next=OPEN;
+							switchC_state_Req_Next=OPEN;
 						else;
 				}
 				break;
@@ -282,6 +288,22 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 				break;
 			default:
 				break;
+		}
+
+		//Checking of dwell times to see if we can transition the next state or not
+		if (((switchA_state_Prev != switchA_state_Req_Next) || (switchB_state_Prev != switchB_state_Req_Next) || (switchC_state_Prev != switchC_state_Req_Next)) && (control != MANUAL))
+		{
+			dwell_time_left = (int64)dwell_time;			//Reset counter
+			switchA_state_Prev = switchA_state_Req_Next;	//Reset trackers
+			switchB_state_Prev = switchB_state_Req_Next;
+			switchC_state_Prev = switchC_state_Req_Next;
+		}
+
+		if ((dwell_time_left <= 0) && (control!=MANUAL))	//Time criteria met, but not manual (this doesn't exist in MANUAL configuration)
+		{
+			switchA_state_Next = switchA_state_Req_Next;	//Transition things, this should reset the time_to_change timer as well
+			switchB_state_Next = switchB_state_Req_Next;
+			switchC_state_Next = switchC_state_Req_Next;
 		}
 
 		if (control_level == BANK)
@@ -301,19 +323,75 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 
 	}
 
-	if ((pt_phase & (PHASE_A)) == PHASE_A)
-		shunt[0] = switchA_state==CLOSED ? cap_value[0] : complex(0.0);
-		
-	if ((pt_phase & (PHASE_B)) == PHASE_B)
-		shunt[1] = switchB_state==CLOSED ? cap_value[1] : complex(0.0);
+	//Put in appropriate values.  If we are a mismatch, convert things appropriately first
+	//Check based on connection input (so could check Wye values and then switch in a delta connected CAP
+	if ((((phases_connected & PHASE_N) == PHASE_N) && ((phases & PHASE_D) != PHASE_D)) || ((phases_connected & PHASE_N) != PHASE_N) && ((phases & PHASE_D) == PHASE_D))	//Correct connection
+	{
+		temp_shunt[0] = cap_value[0];
+		temp_shunt[1] = cap_value[1];
+		temp_shunt[2] = cap_value[2];
+	}
+	else if (((phases_connected & PHASE_N) == PHASE_N) && ((phases & PHASE_D) == PHASE_D))	//Delta connected node, but Wye connected Cap
+	{
+		GL_THROW("Capacitor:%d is Wye-connected on a Delta-connected node.  This is not supported at this time.",OBJECTHDR(this)->id);
+		/*  TROUBLESHOOT
+		Wye-connected capacitors on a delta-connected node are not supported at this time.  They may be added in a future release when
+		the functionality is needed.
+		*/
+	}
+	else if (((phases_connected & PHASE_N) != PHASE_N) && ((phases & PHASE_D) != PHASE_D))	//Wye connected node, but Delta connected Cap
+	{
+		complex cap_temp[3];
 
-	if ((pt_phase & (PHASE_C)) == PHASE_C)
-		shunt[2] = switchC_state==CLOSED ? cap_value[2] : complex(0.0);
+		cap_temp[0] = cap_temp[1] = cap_temp[2] = 0.0;
 
+		//Update values of capacitors that are closed
+		if (((phases_connected & PHASE_A) == PHASE_A) && (switchA_state==CLOSED))
+			cap_temp[0] = cap_value[0];
 
+		if (((phases_connected & PHASE_B) == PHASE_B) && (switchB_state==CLOSED))
+			cap_temp[1] = cap_value[1];
+
+		if (((phases_connected & PHASE_C) == PHASE_C) && (switchC_state==CLOSED))
+			cap_temp[2] = cap_value[2];
+
+		//Convert to Wye equivalent
+		temp_shunt[0] = (voltaged[0]*cap_temp[0] - voltaged[2]*cap_temp[2]) / voltage[0];
+		temp_shunt[1] = (voltaged[1]*cap_temp[1] - voltaged[0]*cap_temp[0]) / voltage[1];
+		temp_shunt[2] = (voltaged[2]*cap_temp[2] - voltaged[1]*cap_temp[1]) / voltage[2];
+
+		Phase_Mismatch = true;	//Flag us as an exception.  Otherwise values are wrong.
+	}
+	else	//No case should exist here, so if it does, scream about it.
+		GL_THROW("Unable to determine connection for capacitor:%d",OBJECTHDR(this)->id);
+		/*  TROUBLESHOOT
+		The capacitor object encountered a connection it was unable to decipher.  Please submit this as
+		a bug report with your code.
+		*/
+
+	if (Phase_Mismatch==true)	//On/offs are handled above, all must be turned on for here! (Delta-Wye/Wye-Delta type conversions)
+	{
+		shunt[0] = temp_shunt[0];
+		shunt[1] = temp_shunt[1];
+		shunt[2] = temp_shunt[2];
+	}
+	else	//Matched connection cases, implement "normally"
+	{
+		//Perform actual switching operation
+		if ((phases_connected & (PHASE_A)) == PHASE_A)
+			shunt[0] = switchA_state==CLOSED ? temp_shunt[0] : complex(0.0);
+			
+		if ((phases_connected & (PHASE_B)) == PHASE_B)
+			shunt[1] = switchB_state==CLOSED ? temp_shunt[1] : complex(0.0);
+
+		if ((phases_connected & (PHASE_C)) == PHASE_C)
+			shunt[2] = switchC_state==CLOSED ? temp_shunt[2] : complex(0.0);
+	}
+
+	//Perform our inherited class sync
 	result = node::sync(t0);
 
-	if (time_to_change>0)
+	if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
 		result = t0 + time_to_change;
 
 	return result;

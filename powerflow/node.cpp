@@ -606,8 +606,8 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		{
 			node *pNode = OBJECTDATA(obj->parent,node);
 
-			//Check to make sure phases are correct
-			if ((pNode->phases & phases) == phases)
+			//Check to make sure phases are correct - ignore Deltas and neutrals (load changes take care of those)
+			if (((pNode->phases & phases) & (!(PHASE_D | PHASE_N))) == (phases & (!(PHASE_D | PHASE_N))))
 			{
 				// add the injections on this node to the parent
 				LOCKED(obj->parent, pNode->current_inj[0] += current_inj[0]);
@@ -1028,6 +1028,21 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			LOCKED(obj, voltage[0] = pNode->voltage[0]);
 			LOCKED(obj, voltage[1] = pNode->voltage[1]);
 			LOCKED(obj, voltage[2] = pNode->voltage[2]);
+
+			//Re-update our Delta or single-phase equivalents since we now have a new voltage
+			//Update appropriate "other" voltages
+			if (phases&PHASE_S) 
+			{	// split-tap voltage diffs are different
+				LOCKED(obj, voltage12 = voltage1 + voltage2);
+				LOCKED(obj, voltage1N = voltage1 - voltageN);
+				LOCKED(obj, voltage2N = voltage2 - voltageN);
+			}
+			else
+			{	// compute 3phase voltage differences
+				LOCKED(obj, voltageAB = voltageA - voltageB);
+				LOCKED(obj, voltageBC = voltageB - voltageC);
+				LOCKED(obj, voltageCA = voltageC - voltageA);
+			}
 		}
 	}
 	else if (solver_method==SM_GS)//GS items - solver and misc. related

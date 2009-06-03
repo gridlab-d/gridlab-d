@@ -26,7 +26,8 @@ public:
 	CAPSWITCH switchB_state;	// capacitor B switch open or close
 	CAPSWITCH switchC_state;	// capacitor C switch open or close
 	OBJECT *RemoteNode;			// Remote node for sensing values used for control schemes
-	double time_delay;           // control time delay
+	double time_delay;          // control time delay
+	double dwell_time;			// Time for system to remain constant before a state change will be passed
 
 protected:
 	complex q_node[3];          // 3x1 matrix, Q of node
@@ -39,6 +40,7 @@ protected:
 	double volt_open;           // volt open limit
 	int32 pt_ratio;             // control PT ratio
 	int64 time_to_change;       // time until state change
+	int64 dwell_time_left;		// time until dwell interval is met
 	int64 last_time;			// last time capacitor was checked
 
 public:
@@ -50,10 +52,13 @@ public:
 	int isa(char *classname);
 
 private:
-	complex cap_value[3];		// Capacitor values translated to impedance
+	complex cap_value[3];		// Capacitor values translated to admittance
 	CAPSWITCH switchA_state_Next;	// capacitor A switch open or close at next transition
 	CAPSWITCH switchB_state_Next;	// capacitor B switch open or close at next transition
 	CAPSWITCH switchC_state_Next;	// capacitor C switch open or close at next transition
+	CAPSWITCH switchA_state_Req_Next;	// capacitor A switch open or close requested (dwell checking)
+	CAPSWITCH switchB_state_Req_Next;	// capacitor A switch open or close requested (dwell checking)
+	CAPSWITCH switchC_state_Req_Next;	// capacitor A switch open or close requested (dwell checking)
 	CAPSWITCH switchA_state_Prev;	// capacitor A switch open or close at previous transition (used for manual control)
 	CAPSWITCH switchB_state_Prev;	// capacitor B switch open or close at previous transition (used for manual control)
 	CAPSWITCH switchC_state_Prev;	// capacitor C switch open or close at previous transition (used for manual control)
