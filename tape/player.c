@@ -115,6 +115,7 @@ static TIMESTAMP player_read(OBJECT *obj)
 	char unit[2];
 	TIMESTAMP t1;
 	char *result=NULL;
+	char32 value;
 Retry:
 	result = my->ops->read(my, buffer, sizeof(buffer));
 
@@ -158,7 +159,7 @@ Retry:
 				my->next.ts = t1;
 		}
 	}
-	else if (sscanf(result,"%d-%d-%d %d:%d:%d,%31[^\n]",&Y,&m,&d,&H,&M,&S,my->next.value)==7)
+	else if (sscanf(result,"%d-%d-%d %d:%d:%d,%31[^\n]",&Y,&m,&d,&H,&M,&S,value)==7)
 	{
 		//struct tm dt = {S,M,H,d,m-1,Y-1900,0,0,0};
 		DATETIME dt;
@@ -170,8 +171,10 @@ Retry:
 		dt.second = S;
 		dt.tz[0] = 0;
 		t1 = (TIMESTAMP)gl_mktime(&dt);
-		if (t1!=TS_INVALID && my->loop==my->loopnum)
+		if (t1!=TS_INVALID && my->loop==my->loopnum){
 			my->next.ts = t1;
+			strcpy(my->next.value, value);
+		}
 	}
 Done:
 	return my->next.ts;
