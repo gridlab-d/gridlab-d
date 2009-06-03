@@ -85,14 +85,44 @@ STATUS load_module_list(FILE *fd,int* test_mod_num)
 
 typedef struct s_pntree{
 	char *name;
+	CLASS *oclass;
 	struct s_pntree *left, *right;
 } pntree;
 
-void print_class_d(CLASS *oclass, int tabdepth){
-	PROPERTY *prop;
-	FUNCTION *func;
-	char tabs[33];
+void modhelp_alpha(pntree **ctree, CLASS *oclass){
+	int cmpval = 0;
+	pntree *targ = *ctree;
+	
+	cmpval = strcmp(oclass->name, targ->name);
+	
+	if(cmpval == 0){
+		; /* exception? */
+	} if(cmpval < 0){ /*  class < root ~ go left */
+		if(targ->left == NULL){
+			targ->left = (pntree *)malloc(sizeof(pntree));
+			memset(targ->left, 0, sizeof(pntree));
+			targ->left->name = oclass->name;
+			targ->left->name = oclass->name;
+			targ->left->oclass = oclass;
+			targ->left->left = targ->left->right = 0;
+		} else { /* non-null, follow upwards */
+			modhelp_alpha(&targ->left, oclass);
+		}
+	} else {
+		if(targ->right == NULL){
+			targ->right = (pntree *)malloc(sizeof(pntree));
+			memset(targ->right, 0, sizeof(pntree));
+			targ->right->name = oclass->name;
+			targ->right->name = oclass->name;
+			targ->right->oclass = oclass;
+			targ->right->right = targ->right->left = 0;
+		} else {
+			modhelp_alpha(&targ->right, oclass);
+		}
+	}
+}
 
+void set_tabs(char *tabs, int tabdepth){
 	if(tabdepth > 32){
 		throw_exception("print_class_d: tabdepth > 32, which is mightily deep!");
 	} else {
@@ -101,6 +131,14 @@ void print_class_d(CLASS *oclass, int tabdepth){
 		for(i = 0; i < tabdepth; ++i)
 			tabs[i] = '\t';
 	}
+}
+
+void print_class_d(CLASS *oclass, int tabdepth){
+	PROPERTY *prop;
+	FUNCTION *func;
+	char tabs[33];
+
+	set_tabs(tabs, tabdepth);
 
 	printf("%sclass %s {\n", tabs, oclass->name,oclass->type);
 	if (oclass->parent){
@@ -128,11 +166,25 @@ void print_class_d(CLASS *oclass, int tabdepth){
 			printf("\n");
 		}
 	}
-	printf("%s}\n", tabs);
+	printf("%s}\n\n", tabs);
 }
 
 void print_class(CLASS *oclass){
 	print_class_d(oclass, 0);
+}
+
+void print_modhelp_tree(pntree *ctree){
+	if(ctree->left != NULL){
+		print_modhelp_tree(ctree->left);
+		free(ctree->left);
+		ctree->left = 0;
+	}
+	print_class(ctree->oclass);
+	if(ctree->right != NULL){
+		print_modhelp_tree(ctree->right);
+		free(ctree->right);
+		ctree->right = 0;
+	}
 }
 
 /** Load and process the command-line arguments
@@ -300,11 +352,27 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				else
 				{
 					CLASS	*oclass;
+					pntree	*ctree;
 					/* lexographically sort all elements from class_get_first_class & oclass->next */
-					for (oclass=class_get_first_class(); oclass!=NULL; oclass=oclass->next)
-					{
-						print_class(oclass);
+
+					oclass=class_get_first_class();
+					ctree = (pntree *)malloc(sizeof(pntree));
+					
+					if(ctree == NULL){
+						throw_exception("--modhelp: malloc failure");
 					}
+					
+					ctree->name = oclass->name;
+					ctree->oclass = oclass;
+					ctree->left = ctree->right = 0;
+					
+					for(; oclass != NULL; oclass = oclass->next){
+						modhelp_alpha(&ctree, oclass);
+						//print_class(oclass);
+					}
+
+					/* flatten tree */
+					print_modhelp_tree(ctree);
 				}
 			}
 		}
