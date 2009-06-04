@@ -1133,7 +1133,7 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 #endif
 
 		/* compute va flows */
-		if (PHASE_S && SpecialLnk!=SPLITPHASE) {
+		if (has_phase(PHASE_S) && SpecialLnk!=SPLITPHASE) {
 			power_in = (f->voltage[0]*~current_in[0] - f->voltage[1]*~current_in[1] + f->voltage[2]*~current_in[2]).Mag();
 			power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
 		}
