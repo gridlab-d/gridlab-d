@@ -18,6 +18,8 @@ public:
 	set phases_connected;		// phases capacitors connected to
 	double voltage_set_high;    // high voltage set point for voltage control (turn off)
 	double voltage_set_low;     // low voltage set point for voltage control (turn on)
+	double VAr_set_high;		// high VAR set point for VAR control (turn off)
+	double VAr_set_low;			// low VAR set point for VAR control (turn on)
 	double capacitor_A;			// Capacitance value for phase A or phase AB
 	double capacitor_B;			// Capacitance value for phase B or phase BC
 	double capacitor_C;			// Capacitance value for phase C or phase CA
@@ -30,21 +32,14 @@ public:
 	double dwell_time;			// Time for system to remain constant before a state change will be passed
 
 protected:
-	complex q_node[3];          // 3x1 matrix, Q of node
-	complex b_node[3];          // 3x1 matrix, B of node
-	complex q_cap[3];           // 3x1 matrix, Q of cap
 	CAPCONTROL control;			// control operation strategy; 0 - manual, 1 - VAr, 2- voltage, 3 - VAr primary,voltage backup.
-	double var_close;           // VAr close limit
-	double var_open;            // VAr open limit
-	double volt_close;          // volt close limit
-	double volt_open;           // volt open limit
-	int32 pt_ratio;             // control PT ratio
 	int64 time_to_change;       // time until state change
 	int64 dwell_time_left;		// time until dwell interval is met
 	int64 last_time;			// last time capacitor was checked
 
 public:
 	int create(void);
+	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP sync(TIMESTAMP t0);
 	capacitor(MODULE *mod);
 	inline capacitor(CLASS *cl=oclass):node(cl){};
@@ -62,6 +57,7 @@ private:
 	CAPSWITCH switchA_state_Prev;	// capacitor A switch open or close at previous transition (used for manual control)
 	CAPSWITCH switchB_state_Prev;	// capacitor B switch open or close at previous transition (used for manual control)
 	CAPSWITCH switchC_state_Prev;	// capacitor C switch open or close at previous transition (used for manual control)
+	double VArVals[3];				// VAr values recorded (due to nature of how it's recorded, it has to be in here)
 
 public:
 	static CLASS *pclass;

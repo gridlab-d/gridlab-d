@@ -66,6 +66,8 @@ capacitor::capacitor(MODULE *mod):node(mod)
 				PT_KEYWORD, "VARVOLT", VARVOLT,
 			PT_double, "voltage_set_high[V]", PADDR(voltage_set_high), 
 			PT_double, "voltage_set_low[V]", PADDR(voltage_set_low),
+			PT_double, "VAr_set_high[VAr]", PADDR(VAr_set_high),
+			PT_double, "VAr_set_low[VAr]", PADDR(VAr_set_low),
 			PT_double, "capacitor_A[VAr]", PADDR(capacitor_A),
 			PT_double, "capacitor_B[VAr]", PADDR(capacitor_B),
 			PT_double, "capacitor_C[VAr]", PADDR(capacitor_C),
@@ -101,11 +103,8 @@ int capacitor::create()
 	pt_phase = PHASE_A;
 	voltage_set_high = 0.0;
 	voltage_set_low = 0.0;
-	var_close = 0.0;
-	var_open = 0.0;
-	volt_close = 0.0;
-	volt_open = 0.0;
-	pt_ratio = 60;
+	VAr_set_high = 0.0;
+	VAr_set_low = 0.0;
 	time_delay = 0.0;
 	dwell_time = 0.0;
 	time_to_change = 0;
@@ -133,7 +132,34 @@ int capacitor::init(OBJECT *parent)
 	cap_value[1] = complex(0,capacitor_B/(nominal_voltage * nominal_voltage));
 	cap_value[2] = complex(0,capacitor_C/(nominal_voltage * nominal_voltage));
 
+	if (control==VAR)
+		gl_warning("VAR control is implemented as a \"Best Guess\" implementation.  Use at your own risk.");
+
 	return result;
+}
+
+TIMESTAMP capacitor::presync(TIMESTAMP t0)
+{
+	node *RNode = OBJECTDATA(RemoteNode,node);
+
+	if (control==VAR)	//Grab the power values before they are zeroed out (mainly by FBS)
+	{
+		//Only grabbing L-N power.  No effective way to take L-N back to L-L power (no reference)
+		if (RNode == NULL)	//L-N power
+		{
+			VArVals[0] = (voltage[0]*current_inj[0]).Im();
+			VArVals[1] = (voltage[1]*current_inj[1]).Im();
+			VArVals[2] = (voltage[2]*current_inj[2]).Im();
+		}
+		else
+		{
+			VArVals[0] = (RNode->voltage[0]*RNode->current_inj[0]).Im();
+			VArVals[1] = (RNode->voltage[1]*RNode->current_inj[1]).Im();
+			VArVals[2] = (RNode->voltage[2]*RNode->current_inj[2]).Im();
+		}
+	}
+
+	return node::presync(t0);
 }
 
 TIMESTAMP capacitor::sync(TIMESTAMP t0)
@@ -180,46 +206,51 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 	if (time_to_change<=0)	//Only let us iterate if our time has changed
 	{
 		//Perform the previous settings first
-		if ((pt_phase & (PHASE_A)) == PHASE_A)
+		if ((phases_connected & (PHASE_A)) == PHASE_A)
 			switchA_state=switchA_state_Next;
 			
-		if ((pt_phase & (PHASE_B)) == PHASE_B)
+		if ((phases_connected & (PHASE_B)) == PHASE_B)
 			switchB_state=switchB_state_Next;
 
-		if ((pt_phase & (PHASE_C)) == PHASE_C)
+		if ((phases_connected & (PHASE_C)) == PHASE_C)
 			switchC_state=switchC_state_Next;
 
 		//Update controls
-		if ((pt_phase & PHASE_N) == (PHASE_N))	//See if we are interested in L-N or L-L voltages
+		if (control==VOLT)
 		{
-			if (RNode == NULL)	//L-N voltages
+			if ((pt_phase & PHASE_D) != (PHASE_D))	//See if we are interested in L-N or L-L voltages
 			{
-				VoltVals[0] = voltage[0];
-				VoltVals[1] = voltage[1];
-				VoltVals[2] = voltage[2];
+				if (RNode == NULL)	//L-N voltages
+				{
+					VoltVals[0] = voltage[0];
+					VoltVals[1] = voltage[1];
+					VoltVals[2] = voltage[2];
+				}
+				else
+				{
+					VoltVals[0] = RNode->voltage[0];
+					VoltVals[1] = RNode->voltage[1];
+					VoltVals[2] = RNode->voltage[2];
+				}
 			}
-			else
+			else				//L-L voltages
 			{
-				VoltVals[0] = RNode->voltage[0];
-				VoltVals[1] = RNode->voltage[1];
-				VoltVals[2] = RNode->voltage[2];
+				if (RNode == NULL)
+				{
+					VoltVals[0] = voltaged[0];
+					VoltVals[1] = voltaged[1];
+					VoltVals[2] = voltaged[2];
+				}
+				else
+				{
+					VoltVals[0] = RNode->voltaged[0];
+					VoltVals[1] = RNode->voltaged[1];
+					VoltVals[2] = RNode->voltaged[2];
+				}
 			}
 		}
-		else				//L-L voltages
-		{
-			if (RNode == NULL)
-			{
-				VoltVals[0] = voltaged[0];
-				VoltVals[1] = voltaged[1];
-				VoltVals[2] = voltaged[2];
-			}
-			else
-			{
-				VoltVals[0] = RNode->voltaged[0];
-				VoltVals[1] = RNode->voltaged[1];
-				VoltVals[2] = RNode->voltaged[2];
-			}
-		}
+		else;	//MANUAL and VAR-VOLT (which do not need values or do nothing right now)
+				//VAR handled in presynch
 
 		switch (control) {
 			case MANUAL:  // manual
@@ -230,59 +261,130 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 				}
 				break;
 			case VAR:  // VAr
-				/// @todo implement capacity var control closed (ticket #190)
+				{
+					//Power values only calculated as L-N (L-L not possible), but logic left for both L-N and L-L until we determine the true scheme
+					if ((pt_phase & PHASE_D) != (PHASE_D))// Line to Neutral connections
+					{
+						if ((pt_phase & PHASE_A) == PHASE_A)
+						{
+							if (VAr_set_low >= VArVals[0])
+								switchA_state_Req_Next=CLOSED;
+							else if (VAr_set_high <= VArVals[0])
+								switchA_state_Req_Next=OPEN;
+							else;
+						}
+							
+						if ((pt_phase & PHASE_B) == PHASE_B)
+						{
+							if (VAr_set_low >= VArVals[1])
+								switchB_state_Req_Next=CLOSED;
+							else if (VAr_set_high <= VArVals[1])
+								switchB_state_Req_Next=OPEN;
+							else;
+						}
+
+						if ((pt_phase & PHASE_C) == PHASE_C)
+						{
+							if (VAr_set_low >= VArVals[2])
+								switchC_state_Req_Next=CLOSED;
+							else if (VAr_set_high <= VArVals[2])
+								switchC_state_Req_Next=OPEN;
+							else;
+						}
+					}
+					else // Line to Line connections
+					{
+						if ((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B))
+						{
+							if (VAr_set_low >= VArVals[0])	//VArVals handled above to use L-L power instead
+								switchA_state_Req_Next=CLOSED;				//switchA assigned to AB connection (delta-connection in loads)
+							else if (VAr_set_high <= VArVals[0])
+								switchA_state_Req_Next=OPEN;
+							else;
+						}
+
+						if ((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C))
+						{
+							if (VAr_set_low >= VArVals[1])	//VArVals handled above to use L-L power instead
+								switchB_state_Req_Next=CLOSED;				//switchB assigned to BC connection (delta-connection in loads)
+							else if (VAr_set_high <= VArVals[1])
+								switchB_state_Req_Next=OPEN;
+							else;
+						}
+
+						if ((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A))
+						{
+							if (VAr_set_low >= VArVals[2])	//VArVals handled above to use L-L power instead
+								switchC_state_Req_Next=CLOSED;				//switchC assigned to CA connection (delta-connection in loads)
+							else if (VAr_set_high <= VArVals[2])
+								switchC_state_Req_Next=OPEN;
+							else;
+						}
+					}
+				}
 				break;
 			case VOLT:
 				{// V
-				if ((pt_phase & PHASE_N) == (PHASE_N))// Line to Neutral connections
-				{
-					if ((pt_phase & (PHASE_A | PHASE_N)) == (PHASE_A | PHASE_N))
-						if (voltage_set_low >= VoltVals[0].Mag())
-							switchA_state_Req_Next=CLOSED;
-						else if (voltage_set_high <= VoltVals[0].Mag())
-							switchA_state_Req_Next=OPEN;
-						else;
-						
-					if ((pt_phase & (PHASE_B | PHASE_N)) == (PHASE_B | PHASE_N))
-						if (voltage_set_low >= VoltVals[1].Mag())
-							switchB_state_Req_Next=CLOSED;
-						else if (voltage_set_high <= VoltVals[1].Mag())
-							switchB_state_Req_Next=OPEN;
-						else;
+					if ((pt_phase & PHASE_D) != (PHASE_D))// Line to Neutral connections
+					{
+						if ((pt_phase & PHASE_A) == PHASE_A)
+						{
+							if (voltage_set_low >= VoltVals[0].Mag())
+								switchA_state_Req_Next=CLOSED;
+							else if (voltage_set_high <= VoltVals[0].Mag())
+								switchA_state_Req_Next=OPEN;
+							else;
+						}
+							
+						if ((pt_phase & PHASE_B) == PHASE_B)
+						{
+							if (voltage_set_low >= VoltVals[1].Mag())
+								switchB_state_Req_Next=CLOSED;
+							else if (voltage_set_high <= VoltVals[1].Mag())
+								switchB_state_Req_Next=OPEN;
+							else;
+						}
 
-					if ((pt_phase & (PHASE_C | PHASE_N)) == (PHASE_C | PHASE_N))
-						if (voltage_set_low >= VoltVals[2].Mag())
-							switchC_state_Req_Next=CLOSED;
-						else if (voltage_set_high <= VoltVals[2].Mag())
-							switchC_state_Req_Next=OPEN;
-						else;
-				}
-				else // Line to Line connections
-				{
-					complex test = VoltVals[0].Mag();
-					if ((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B))
-						if (voltage_set_low >= VoltVals[0].Mag())	//VoltVals handled above to use L-L voltages instead
-							switchA_state_Req_Next=CLOSED;				//switchA assigned to AB connection (delta-connection in loads)
-						else if (voltage_set_high <= VoltVals[0].Mag())
-							switchA_state_Req_Next=OPEN;
-						else;
+						if ((pt_phase & PHASE_C) == PHASE_C)
+						{
+							if (voltage_set_low >= VoltVals[2].Mag())
+								switchC_state_Req_Next=CLOSED;
+							else if (voltage_set_high <= VoltVals[2].Mag())
+								switchC_state_Req_Next=OPEN;
+							else;
+						}
+					}
+					else // Line to Line connections
+					{
+						if ((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B))
+						{
+							if (voltage_set_low >= VoltVals[0].Mag())	//VoltVals handled above to use L-L voltages instead
+								switchA_state_Req_Next=CLOSED;				//switchA assigned to AB connection (delta-connection in loads)
+							else if (voltage_set_high <= VoltVals[0].Mag())
+								switchA_state_Req_Next=OPEN;
+							else;
+						}
 
-					if ((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C))
-						if (voltage_set_low >= VoltVals[1].Mag())	//VoltVals handled above to use L-L voltages instead
-							switchB_state_Req_Next=CLOSED;				//switchB assigned to BC connection (delta-connection in loads)
-						else if (voltage_set_high <= VoltVals[1].Mag())
-							switchB_state_Req_Next=OPEN;
-						else;
+						if ((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C))
+						{
+							if (voltage_set_low >= VoltVals[1].Mag())	//VoltVals handled above to use L-L voltages instead
+								switchB_state_Req_Next=CLOSED;				//switchB assigned to BC connection (delta-connection in loads)
+							else if (voltage_set_high <= VoltVals[1].Mag())
+								switchB_state_Req_Next=OPEN;
+							else;
+						}
 
-					if ((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A))
-						if (voltage_set_low >= VoltVals[2].Mag())	//VoltVals handled above to use L-L voltages instead
-							switchC_state_Req_Next=CLOSED;				//switchC assigned to CA connection (delta-connection in loads)
-						else if (voltage_set_high <= VoltVals[2].Mag())
-							switchC_state_Req_Next=OPEN;
-						else;
+						if ((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A))
+						{
+							if (voltage_set_low >= VoltVals[2].Mag())	//VoltVals handled above to use L-L voltages instead
+								switchC_state_Req_Next=CLOSED;				//switchC assigned to CA connection (delta-connection in loads)
+							else if (voltage_set_high <= VoltVals[2].Mag())
+								switchC_state_Req_Next=OPEN;
+							else;
+						}
+					}
 				}
 				break;
-				}
 			case VARVOLT:  // VAr, V
 				/// @todo implement capacity varvolt control closed (ticket #192)
 				break;
@@ -306,12 +408,42 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 			switchC_state_Next = switchC_state_Req_Next;
 		}
 
-		if (control_level == BANK)
+		if (control_level == BANK)	//Check the "sense" phases.  If any are closed, close all of them
 		{
-			if ((switchA_state_Next | switchB_state_Next | switchC_state_Next) == CLOSED)
-				switchA_state_Next = switchB_state_Next = switchC_state_Next = CLOSED;	//Bank control, close them all
-			else
-				switchA_state_Next = switchB_state_Next = switchC_state_Next = OPEN;	//Bank control, open them all (this should never be an issue)
+			bool bank_A, bank_B, bank_C;
+
+			if ((pt_phase & PHASE_D) != (PHASE_D))// Line to Neutral connections
+			{
+					bank_A = (((pt_phase & PHASE_A) == PHASE_A) && (switchA_state_Next == CLOSED));
+					bank_B = (((pt_phase & PHASE_B) == PHASE_B) && (switchB_state_Next == CLOSED));
+					bank_C = (((pt_phase & PHASE_C) == PHASE_C) && (switchC_state_Next == CLOSED));
+			}
+			else							//Line-Line connections
+			{
+					bank_A = (((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B)) && (switchA_state_Next == CLOSED));
+					bank_B = (((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C)) && (switchB_state_Next == CLOSED));
+					bank_C = (((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A)) && (switchC_state_Next == CLOSED));
+			}
+
+			if (control==MANUAL)
+			{
+				if ((bank_A | bank_B | bank_C) == true)
+					switchA_state_Next = switchB_state_Next = switchC_state_Next = CLOSED;	//Bank control, close them all
+				else
+					switchA_state_Next = switchB_state_Next = switchC_state_Next = OPEN;	//Bank control, open them all (this should never be an issue)
+
+				switchA_state_Prev = switchB_state_Prev = switchC_state_Prev = switchA_state_Next; //Slight override, otherwise it oscillates
+			}
+			else	//Other
+			{
+				if ((bank_A | bank_B | bank_C) == true)
+					switchA_state_Next = switchB_state_Next = switchC_state_Next = CLOSED;	//Bank control, close them all
+				else
+					switchA_state_Next = switchB_state_Next = switchC_state_Next = OPEN;	//Bank control, open them all (this should never be an issue)
+
+				switchA_state_Req_Next = switchB_state_Req_Next = switchC_state_Req_Next = switchA_state_Next; //Slight override, otherwise it oscillates
+				switchA_state_Prev = switchB_state_Prev = switchC_state_Prev = switchA_state_Next;
+			}
 		}
 
 
@@ -325,13 +457,13 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 
 	//Put in appropriate values.  If we are a mismatch, convert things appropriately first
 	//Check based on connection input (so could check Wye values and then switch in a delta connected CAP
-	if ((((phases_connected & PHASE_N) == PHASE_N) && ((phases & PHASE_D) != PHASE_D)) || ((phases_connected & PHASE_N) != PHASE_N) && ((phases & PHASE_D) == PHASE_D))	//Correct connection
+	if ((((phases_connected & PHASE_D) != PHASE_D) && ((phases & PHASE_D) != PHASE_D)) || ((phases_connected & PHASE_D) == PHASE_D) && ((phases & PHASE_D) == PHASE_D))	//Correct connection
 	{
 		temp_shunt[0] = cap_value[0];
 		temp_shunt[1] = cap_value[1];
 		temp_shunt[2] = cap_value[2];
 	}
-	else if (((phases_connected & PHASE_N) == PHASE_N) && ((phases & PHASE_D) == PHASE_D))	//Delta connected node, but Wye connected Cap
+	else if (((phases_connected & PHASE_D) != PHASE_D) && ((phases & PHASE_D) == PHASE_D))	//Delta connected node, but Wye connected Cap
 	{
 		GL_THROW("Capacitor:%d is Wye-connected on a Delta-connected node.  This is not supported at this time.",OBJECTHDR(this)->id);
 		/*  TROUBLESHOOT
@@ -339,7 +471,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 		the functionality is needed.
 		*/
 	}
-	else if (((phases_connected & PHASE_N) != PHASE_N) && ((phases & PHASE_D) != PHASE_D))	//Wye connected node, but Delta connected Cap
+	else if (((phases_connected & PHASE_D) == PHASE_D) && ((phases & PHASE_D) != PHASE_D))	//Wye connected node, but Delta connected Cap
 	{
 		complex cap_temp[3];
 
@@ -391,8 +523,11 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 	//Perform our inherited class sync
 	result = node::sync(t0);
 
-	if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
+	if (dwell_time_left>0)		//Dwelling in progress, flag us to iterate when it should be done
+		result = t0 + dwell_time_left;	//If nothing changes in the system, it will reiterate at the dwell time.  Otherwise, it will come in earlier
+	else if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
 		result = t0 + time_to_change;
+	else;
 
 	return result;
 }
