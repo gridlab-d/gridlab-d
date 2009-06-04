@@ -147,15 +147,15 @@ TIMESTAMP capacitor::presync(TIMESTAMP t0)
 		//Only grabbing L-N power.  No effective way to take L-N back to L-L power (no reference)
 		if (RNode == NULL)	//L-N power
 		{
-			VArVals[0] = (voltage[0]*current_inj[0]).Im();
-			VArVals[1] = (voltage[1]*current_inj[1]).Im();
-			VArVals[2] = (voltage[2]*current_inj[2]).Im();
+			VArVals[0] = (voltage[0]*~current_inj[0]).Im();
+			VArVals[1] = (voltage[1]*~current_inj[1]).Im();
+			VArVals[2] = (voltage[2]*~current_inj[2]).Im();
 		}
 		else
 		{
-			VArVals[0] = (RNode->voltage[0]*RNode->current_inj[0]).Im();
-			VArVals[1] = (RNode->voltage[1]*RNode->current_inj[1]).Im();
-			VArVals[2] = (RNode->voltage[2]*RNode->current_inj[2]).Im();
+			VArVals[0] = (RNode->voltage[0]*~RNode->current_inj[0]).Im();
+			VArVals[1] = (RNode->voltage[1]*~RNode->current_inj[1]).Im();
+			VArVals[2] = (RNode->voltage[2]*~RNode->current_inj[2]).Im();
 		}
 	}
 
