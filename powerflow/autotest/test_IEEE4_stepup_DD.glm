@@ -114,7 +114,7 @@ object overhead_line:34 {
 }
 
 object load:4 {
-	phases "D";
+	phases "ABCD";
 	voltage_A +14376.022+0.000j;
 	voltage_B -7188.011-12450.000j;
 	voltage_C -7188.011+12450.000j;
