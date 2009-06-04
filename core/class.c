@@ -130,6 +130,18 @@ PROPERTY *class_get_next_property(PROPERTY *prop)
 		return NULL;
 }
 
+PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop){
+	if(oclass->type == prop->otype){
+		return prop;
+	} else {
+		if(oclass->parent != NULL){
+			return class_prop_in_class(oclass->parent, prop);
+		} else {
+			return NULL;
+		}
+	}
+}
+
 /** Get the size of a single instance of a property
 	@return the size in bytes of the a property
  **/

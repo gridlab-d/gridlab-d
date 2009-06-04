@@ -206,6 +206,7 @@ extern "C" {
 
 PROPERTY *class_get_first_property(CLASS *oclass);
 PROPERTY *class_get_next_property(PROPERTY *prop);
+PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop);
 PROPERTY *class_find_property(CLASS *oclass, PROPERTYNAME name);
 void class_add_property(CLASS *oclass, PROPERTY *prop);
 PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE ptype, char *unit);

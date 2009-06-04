@@ -174,7 +174,7 @@ static CALLBACKS callbacks = {
 	{find_file},
 	{object_get_complex, object_get_int16, object_get_int32, object_get_int64, object_get_double, object_get_string, object_get_object},
 	{object_get_complex_by_name, object_get_int16_by_name, object_get_int32_by_name, object_get_int64_by_name,
-		object_get_double_by_name, object_get_string_by_name},
+		object_get_double_by_name, object_get_string_by_name, object_get_object_by_name},
 	{class_string_to_property, class_property_to_string,},
 	module_find,
 	object_find_name,

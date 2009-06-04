@@ -177,6 +177,7 @@ typedef struct s_callbacks {
 		int64 *(*int64_var)(OBJECT *obj, char *name);
 		double *(*double_var)(OBJECT *obj, char *name);
 		char *(*string_var)(OBJECT *obj, char *name);
+		OBJECT *(*object_var)(OBJECT *obj, char *name);
 	} objvarname;
 	struct {
 		int (*string_to_property)(PROPERTY *prop, void *addr, char *value);
@@ -201,6 +202,7 @@ int object_set_dependent(OBJECT *obj, OBJECT *dependent);
 int object_set_parent(OBJECT *obj, OBJECT *parent);
 void *object_get_addr(OBJECT *obj, char *name);
 PROPERTY *object_get_property(OBJECT *obj, PROPERTYNAME name);
+PROPERTY *object_prop_in_class(OBJECT *obj, PROPERTY *prop);
 int object_set_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value);
 int object_set_value_by_addr(OBJECT *obj, void *addr, char *value, PROPERTY *prop);
 int object_set_double_by_name(OBJECT *obj, PROPERTYNAME name, double value);
@@ -217,6 +219,7 @@ int object_get_oflags(KEYWORD **extflags);
 TIMESTAMP object_sync(OBJECT *obj, TIMESTAMP to,PASSCONFIG pass);
 PROPERTY *object_get_property(OBJECT *obj, PROPERTYNAME name);
 OBJECT *object_get_object(OBJECT *obj, PROPERTY *prop);
+OBJECT *object_get_object_by_name(OBJECT *obj, char *name);
 int16 *object_get_int16(OBJECT *obj, PROPERTY *prop);
 int16 *object_get_int16_by_name(OBJECT *obj, char *name);
 int32 *object_get_int32(OBJECT *obj, PROPERTY *prop);
