@@ -36,7 +36,8 @@ public:
 	
 	double band_center;   // band center setting of regulator control
 	double band_width;    // band width setting of regulator control
-	double time_delay;    // time delay setting of regulator control
+	double dwell_time;    // time delay setting of regulator control
+	double time_delay; // mechanical time delay between tap changes 
 	int16 raise_taps;     // number of regulator raise taps
 	int16 lower_taps;     // number of regulator lower taps
 	double CT_ratio;       // primary rating of current transformer (x:5)

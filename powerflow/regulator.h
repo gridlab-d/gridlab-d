@@ -8,6 +8,10 @@
 #include "link.h"
 #include "regulator_configuration.h"
 
+#define tap_A tap[0]
+#define tap_B tap[1]
+#define tap_C tap[2]
+
 class regulator : public link
 {
 public:
@@ -22,6 +26,14 @@ public:
 	complex W_mat[3][3];
 	complex curr[3];
 
+protected:
+	int64 mech_t_next[3];	//next time step after tap change
+	int64 dwell_t_next[3];	//wait to advance only after sensing over/under voltage for a certain dwell_time
+	int64 next_time;		//final return for next time step
+	int16 mech_flag[3];		//indicates whether a state change is okay due to mechanical tap changes
+	int16 dwell_flag[3];	//indicates whether a state change is okay due to dwell time limitations
+	int16 first_run_flag[3];//keeps the system from blowing up on bad initial tap position guess
+
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
@@ -32,7 +44,7 @@ public:
 	inline regulator(CLASS *cl=oclass):link(cl){};
 	int create(void);
 	int init(OBJECT *parent);
-	//TIMESTAMP presync(TIMESTAMP t0);
+	TIMESTAMP presync(TIMESTAMP t0);
 	//TIMESTAMP sync(TIMESTAMP t0);
 	//TIMESTAMP postsync(TIMESTAMP t0);
 	int isa(char *classname);

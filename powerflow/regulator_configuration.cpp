@@ -45,7 +45,8 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 				PT_KEYWORD, "CLOSED_DELTA", CLOSED_DELTA,
 			PT_double, "band_center[V]",PADDR(band_center),
 			PT_double, "band_width[V]",PADDR(band_width),	
-			PT_double, "time_delay[s]",PADDR(time_delay),	
+			PT_double, "time_delay[s]",PADDR(time_delay),
+			PT_double, "dwell_time[s]",PADDR(dwell_time),
 			PT_int16, "raise_taps",PADDR(raise_taps),
 			PT_int16, "lower_taps",PADDR(lower_taps),
 			PT_double, "current_transducer_ratio[pu]",PADDR(CT_ratio),	
@@ -94,6 +95,7 @@ int regulator_configuration::create(void)
 	band_center = 0.0;
 	band_width = 0.0;
 	time_delay = 0.0;
+	dwell_time = 0.0;
 	raise_taps = 0;
 	lower_taps = 0;
 	CT_ratio = 0;
@@ -103,7 +105,7 @@ int regulator_configuration::create(void)
 	CT_phase = PHASE_ABC;
 	PT_phase = PHASE_ABC;
 	Control = MANUAL;
-	Type = A;
+	Type = B;
 	regulation = 0.0;
 	tap_pos[0] = tap_pos[1] = tap_pos[2] = 0;
 	return result;
