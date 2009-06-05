@@ -111,6 +111,8 @@ int capacitor::create()
 	dwell_time_left = 0;
 	last_time = 0;
 
+	NotFirstIteration=false;
+
 	return result;
 }
 
@@ -203,7 +205,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 		}
 	}
 
-	if (time_to_change<=0)	//Only let us iterate if our time has changed
+	if ((time_to_change<=0) && NotFirstIteration)	//Only let us iterate if our time has changed
 	{
 		//Perform the previous settings first
 		if ((phases_connected & (PHASE_A)) == PHASE_A)
@@ -528,6 +530,8 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 	else if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
 		result = t0 + time_to_change;
 	else;
+
+	NotFirstIteration=true;	//Set so we know we can start automating (powerflow takes about 1 iteration to get even ball-park values)
 
 	return result;
 }

@@ -58,6 +58,7 @@ private:
 	CAPSWITCH switchB_state_Prev;	// capacitor B switch open or close at previous transition (used for manual control)
 	CAPSWITCH switchC_state_Prev;	// capacitor C switch open or close at previous transition (used for manual control)
 	double VArVals[3];				// VAr values recorded (due to nature of how it's recorded, it has to be in here)
+	bool NotFirstIteration;			// Checks to see if this is the first iteration of the system.
 
 public:
 	static CLASS *pclass;
