@@ -59,6 +59,7 @@ def run_tests(argv):
 	#build test dirs
 	#for file in autotestfiles:
 	errlist=[]
+	cleanlist=[]
 	errct = 0
 	for path, file in autotestfiles:
 		err = False
@@ -68,10 +69,12 @@ def run_tests(argv):
 		xfile = os.path.join(xpath,file) # path/slice/file.glm
 		if not os.path.exists(xpath):
 			os.mkdir(xpath)
+			if os.path.exists(os.path.join(xpath,"gridlabd.xml")):
+				os.remove(os.path.join(xpath,"gridlabd.xml"))
 		shutil.copy2(os.path.join(path,file), xfile) # path/file to path/slice/file
 		
 		os.chdir(xpath)
-		print("cwd: "+xpath)
+		#print("cwd: "+xpath)
 		# build conf files
 		# moo?
 		
@@ -79,16 +82,21 @@ def run_tests(argv):
 		#run file with:
 		outfile = open(os.path.join(xpath,"outfile.txt"), "w")
 		errfile = open(os.path.join(xpath,"errfile.txt"), "w")
-		print("NOTICE:  Running \'"+xfile+"\'")
+		#print("NOTICE:  Running \'"+xfile+"\'")
 		rv = subprocess.call(["gridlabd",xfile],stdout=outfile,stderr=errfile)
 		outfile.close()
 		errfile.close()
+		
+		if os.path.exists(os.path.join(xpath,"gridlabd.xml")):
+			if rv == 0: # didn't succeed if gridlabd.xml exists
+				rv = 1
 		
 		# handle results
 		if "err_" in file:
 			if rv == 0:
 				if "opt_" in file:
 					print("WARNING: Optional file "+file+" converged when it shouldn't've!")
+					cleanlist.append((path, file))
 					err = False
 				else:
 					print("ERROR: "+file+" converged when it shouldn't've!")
@@ -96,10 +104,12 @@ def run_tests(argv):
 					err = True
 			else:
 				print("SUCCESS: File "+file+" failed to converge, as planned.")
+				cleanlist.append((path, file))
 		else:
 			if rv != 0:
 				if "opt_" in file:
 					print("WARNING: Optional file "+file+" failed to converge!")
+					cleanlist.append((path, file))
 					err = False
 				else:
 					errct += 1
@@ -107,16 +117,27 @@ def run_tests(argv):
 					err = True
 			else:
 				print("SUCCESS: File "+file+" converged successfully.")
+				cleanlist.append((path, file))
 		if err:
 			# zip target directory
 			errlist.append((path,file))
 			
 		os.chdir(currpath)
-		print("cwd: "+currpath)
+		#print("cwd: "+currpath)
 		# end autotestfiles loop
-		
+
+	#cleanup as appropriate
+	#for cleanfile, cleanpath in cleanlist:
+	#	for path, dirs, file in os.walk(cleanpath):
+	#		print("foo")
+	#end
+	#print("bar")
+	
 	#return success/failure
 	print("Validation detected "+str(errct)+" models with errors.")
+	for errpath, errfile in errlist:
+		print(" * "+os.path.join(errpath, errfile))
+	
 	return errct
 #end run_tests()
 
