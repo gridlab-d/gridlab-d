@@ -4,7 +4,6 @@
 #set profiler=1
 #set pauseatexit=1
 #set iteration_limit=100000;
-//#include "C:\Documents and Settings\d3x289\Desktop\GridLAB-D\trunk\core\rt\msvc_debugger.glm"
 
 clock {
 	timestamp '2000-01-01 0:00:00';
@@ -294,9 +293,9 @@ object node:633 {
 object node:630 {
      name 630;
      phases "ABCN";
-     voltage_A 2401.7771 + 0j;//2551.888 + 0j;
-     voltage_B -1200.8886-2080.000j;//-1260.93298 - 2183.99998j;
-     voltage_C -1200.8886+2080.000j;//-1283.38950 + 2222.89582j;
+     voltage_A 2401.7771+0j;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
 }
  
@@ -344,7 +343,7 @@ object node:684 {
 object load:634 {
      name 634;
      phases "ABCN";
-     voltage_A 480.000 + 0j;
+     voltage_A 480.000+0j;
      voltage_B -240.000-415.6922j;
      voltage_C -240.000+415.6922j;
      constant_power_A 160000+110000j;
@@ -438,13 +437,13 @@ object load:611 {
 object load:6711 {
      name 6711;
      parent 671;
-     phases "ABCN";
+     phases "ABC";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_power_A 5666.6667 + 3333.3333j;
-     constant_power_B 22000 + 12666.6667j;
-     constant_power_C 39000 + 22666.6667j;
+     constant_power_A 5666.6667+3333.3333j;
+     constant_power_B 22000+12666.6667j;
+     constant_power_C 39000+22666.6667j;
      nominal_voltage 2401.7771;
 }
 
@@ -454,9 +453,9 @@ object load:6321 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_power_A 11333.333 + 6666.6667j;
-     constant_power_B 44000 + 25333.3333j;
-     constant_power_C 78000 + 45333.3333j;
+     constant_power_A 11333.333+6666.6667j;
+     constant_power_B 44000+25333.3333j;
+     constant_power_C 78000+45333.3333j;
      nominal_voltage 2401.7771;
 }
  
@@ -494,7 +493,7 @@ object transformer:633634 {
 // Regulator
 object regulator_configuration:6506321 {
 	connect_type 1;
-	band_center 120.000;
+	band_center 122.000;
 	band_width 2.0;
 	time_delay 30.0;
 	raise_taps 16;
