@@ -71,6 +71,7 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			PT_double, "capacitor_A[VAr]", PADDR(capacitor_A),
 			PT_double, "capacitor_B[VAr]", PADDR(capacitor_B),
 			PT_double, "capacitor_C[VAr]", PADDR(capacitor_C),
+			PT_double, "cap_nominal_voltage[V]", PADDR(cap_nominal_voltage),
 			PT_double, "time_delay[s]", PADDR(time_delay),
 			PT_double, "dwell_time[s]", PADDR(dwell_time),
 			PT_object,"sense_node",PADDR(RemoteNode),
@@ -110,6 +111,7 @@ int capacitor::create()
 	time_to_change = 0;
 	dwell_time_left = 0;
 	last_time = 0;
+	cap_nominal_voltage = 0.0;
 
 	NotFirstIteration=false;
 
@@ -129,10 +131,23 @@ int capacitor::init(OBJECT *parent)
 		nothing at all and results in no change to the system.  Specify a value with capacitor_A, capacitor_B, or capacitor_C.
 		*/
 
+	//Define the capacitor nominal voltage if unspecified
+	if (cap_nominal_voltage==0.0)
+	{
+		cap_nominal_voltage=nominal_voltage;
+	}
+
+	if ((cap_nominal_voltage==0.0) && (nominal_voltage==0.0))	//Check both just in csae, but if cap_nominal is 0 at this point, both probably are
+		GL_THROW("Capcitor:%d does not have a node nominal or capacitor nominal voltage specified.",obj->id);
+		/*  TROUBLESHOOT
+		The capacitor needs the cap_nominal_voltage or nominal_voltage property set to calculate the resultant
+		capacitance value from the power rating.  Please specify one or both of these values.
+		*/
+
 	//Calculate capacitor values as admittance - handling of Delta - Wye conversion will be handled later (if needed)
-	cap_value[0] = complex(0,capacitor_A/(nominal_voltage * nominal_voltage));
-	cap_value[1] = complex(0,capacitor_B/(nominal_voltage * nominal_voltage));
-	cap_value[2] = complex(0,capacitor_C/(nominal_voltage * nominal_voltage));
+	cap_value[0] = complex(0,capacitor_A/(cap_nominal_voltage * cap_nominal_voltage));
+	cap_value[1] = complex(0,capacitor_B/(cap_nominal_voltage * cap_nominal_voltage));
+	cap_value[2] = complex(0,capacitor_C/(cap_nominal_voltage * cap_nominal_voltage));
 
 	if (control==VAR)
 		gl_warning("VAR control is implemented as a \"Best Guess\" implementation.  Use at your own risk.");

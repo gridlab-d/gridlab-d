@@ -36,6 +36,7 @@ protected:
 	int64 time_to_change;       // time until state change
 	int64 dwell_time_left;		// time until dwell interval is met
 	int64 last_time;			// last time capacitor was checked
+	double cap_nominal_voltage;	// Nominal voltage for the capacitor. Used for calculation of capacitance value.
 
 public:
 	int create(void);
