@@ -99,12 +99,13 @@ office::office(MODULE *module)
 	{
 		oclass = gl_register_class(module,"office",sizeof(office),passconfig); 
 		if (gl_publish_variable(oclass,
-			PT_double, "occupancy", PADDR(zone.current.occupancy),
+			PT_double, "floor_area[sf]", PADDR(zone.design.floor_area),
+			
 			PT_double, "floor_height[ft]", PADDR(zone.design.floor_height),
 			PT_double, "exterior_ua[Btu/degF/h]", PADDR(zone.design.exterior_ua),
 			PT_double, "interior_ua[Btu/degF/h]", PADDR(zone.design.interior_ua),
 			PT_double, "interior_mass[Btu/degF]", PADDR(zone.design.interior_mass),
-			PT_double, "floor_area[sf]", PADDR(zone.design.floor_area),
+			
 			PT_double, "glazing[sf]", PADDR(zone.design.window_area[0]), PT_SIZE, sizeof(zone.design.window_area)/sizeof(zone.design.window_area[0]),
 			PT_double, "glazing.north[sf]", PADDR(zone.design.window_area[CP_N]),
 			PT_double, "glazing.northeast[sf]", PADDR(zone.design.window_area[CP_NE]),
@@ -117,19 +118,21 @@ office::office(MODULE *module)
 			PT_double, "glazing.horizontal[sf]", PADDR(zone.design.window_area[CP_H]),
 			PT_double, "glazing.coefficient[pu]", PADDR(zone.design.glazing_coeff),
 
+			PT_double, "occupancy", PADDR(zone.current.occupancy),
 			PT_double, "occupants", PADDR(zone.design.occupants),
 			PT_char256, "schedule", PADDR(zone.design.schedule),
 
 			PT_double, "air_temperature[degF]", PADDR(zone.current.air_temperature),
 			PT_double, "mass_temperature[degF]", PADDR(zone.current.mass_temperature),
 			PT_double, "temperature_change[degF/h]", PADDR(zone.current.temperature_change),
+
 			PT_double, "Qh[Btu/h]", PADDR(Qh),
 			PT_double, "Qs[Btu/h]", PADDR(Qs),
 			PT_double, "Qi[Btu/h]", PADDR(Qi),
 			PT_double, "Qz[Btu/h]", PADDR(Qz),
 
 			/* HVAC loads */
-			PT_enumeration, "hvac.mode", PADDR(zone.hvac.mode),
+			PT_enumeration, "hc_mode", PADDR(zone.hvac.mode),
 				PT_KEYWORD, "HEAT", HC_HEAT,
 				PT_KEYWORD, "AUX", HC_AUX,
 				PT_KEYWORD, "COOL", HC_COOL,
@@ -142,6 +145,7 @@ office::office(MODULE *module)
 			PT_double, "hvac.cooling.design_temperature[degF]", PADDR(zone.hvac.cooling.design_temperature),
 			PT_double, "hvac.cooling.efficiency[pu]",PADDR(zone.hvac.cooling.efficiency),
 			PT_double, "hvac.cooling.cop[pu]", PADDR(zone.hvac.cooling.cop),
+
 			PT_double, "hvac.heating.balance_temperature[degF]",PADDR(zone.hvac.heating.balance_temperature),
 			PT_double, "hvac.heating.capacity[Btu/h]",PADDR(zone.hvac.heating.capacity),
 			PT_double, "hvac.heating.capacity_perF[Btu/degF/h]", PADDR(zone.hvac.heating.capacity_perF),
@@ -159,28 +163,28 @@ office::office(MODULE *module)
 
 			/* End-use data */
 			PT_complex, "demand[kW]", PADDR(zone.total.demand),
-			PT_complex, "power[kW]", PADDR(zone.total.power),
+			PT_complex, "total_load[kW]", PADDR(zone.total.power),
 			PT_complex, "energy", PADDR(zone.total.energy),
 			PT_double, "power_factor", PADDR(zone.total.power_factor),
 
 			PT_complex, "hvac.demand[kW]", PADDR(zone.hvac.enduse.demand),
-			PT_complex, "hvac.power[kW]", PADDR(zone.hvac.enduse.power),
+			PT_complex, "hvac.load[kW]", PADDR(zone.hvac.enduse.power),
 			PT_complex, "hvac.energy", PADDR(zone.hvac.enduse.energy),
 			PT_double, "hvac.power_factor", PADDR(zone.hvac.enduse.power_factor),
 
 			PT_complex, "lights.demand[kW]", PADDR(zone.lights.enduse.demand),
-			PT_complex, "lights.power[kW]", PADDR(zone.lights.enduse.power),
+			PT_complex, "lights.load[kW]", PADDR(zone.lights.enduse.power),
 			PT_complex, "lights.energy", PADDR(zone.lights.enduse.energy),
 			PT_double, "lights.power_factor", PADDR(zone.lights.enduse.power_factor),
 
 			PT_complex, "plugs.demand[kW]", PADDR(zone.plugs.enduse.demand),
-			PT_complex, "plugs.power[kW]", PADDR(zone.plugs.enduse.power),
+			PT_complex, "plugs.load[kW]", PADDR(zone.plugs.enduse.power),
 			PT_complex, "plugs.energy", PADDR(zone.plugs.enduse.energy),
 			PT_double, "plugs.power_factor", PADDR(zone.plugs.enduse.power_factor),
 
-			PT_double, "control.cooling_setpoint", PADDR(zone.control.cooling_setpoint),
-			PT_double, "control.heating_setpoint", PADDR(zone.control.heating_setpoint),
-			PT_double, "control.setpoint_deadband", PADDR(zone.control.setpoint_deadband),
+			PT_double, "cooling_setpoint", PADDR(zone.control.cooling_setpoint),
+			PT_double, "heating_setpoint", PADDR(zone.control.heating_setpoint),
+			PT_double, "thermostat_deadband", PADDR(zone.control.setpoint_deadband),
 			PT_double, "control.ventilation_fraction", PADDR(zone.control.ventilation_fraction),
 			PT_double, "control.lighting_fraction", PADDR(zone.control.lighting_fraction),
 			
@@ -390,14 +394,24 @@ int office::init(OBJECT *parent)
 /* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP office::presync(TIMESTAMP t0, TIMESTAMP t1) 
 {
+	DATETIME dt;
+
 	/* reset the multizone heat transfer */
 	Qz = 0;
 	
+
+
 	/* get the occupancy mode from the schedule, if any */
 	if (t0>0)
 	{
-		int day = gl_getweekday(t0);
-		int hour = gl_gethour(t0);
+		int day;// = gl_getweekday(t0);
+		int hour;// = gl_gethour(t0);
+		
+		gl_localtime(t0, &dt);
+		
+		day = dt.weekday;
+		hour = dt.hour;
+
 		if (zone.design.schedule[0]!='\0' )
 			zone.current.occupancy = IS_OCCUPIED(day,hour);
 	}

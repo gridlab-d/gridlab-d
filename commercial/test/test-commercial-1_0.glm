@@ -3,8 +3,9 @@
 // commercial single-zone office test
 //
 
-#define NOFFICES=10
+#define NOFFICES=1
 #define GET_WEATHER
+#define BUILDING
 #set threadcount=1
 #set profiler=1
 
@@ -13,7 +14,7 @@ clock {
 	starttime '2001-01-01 00:00:00 PST';
 }
 
-#set stoptime=2002-01-01 00:00:00
+#set stoptime=2001-04-01 00:00:00
 
 module climate;
 object climate {
@@ -58,7 +59,7 @@ object recorder {
 #ifdef BUILDING
 object recorder {
 	parent office_1;
-	property air_temperature,hvac.mode,mass_temperature,Qh,Qs,Qi,Qz,occupancy,control.ventilation_fraction,control.cooling_setpoint,control.heating_setpoint,power;
+	property air_temperature,hc_mode,mass_temperature,Qh,Qs,Qi,Qz,occupancy,control.ventilation_fraction,cooling_setpoint,heating_setpoint,total_load;
 	file office_1.csv;
 	interval 0;
 }
@@ -66,7 +67,7 @@ object recorder {
 
 object collector {
 	group class=office;
-	property sum(energy.mag),sum(power.mag),max(air_temperature,min(air_temperature),avg(air_temperature),max(mass_temperature),min(mass_temperature),avg(mass_temperature);
+	property sum(occupancy),sum(energy.mag),sum(total_load.mag),max(air_temperature,min(air_temperature),avg(air_temperature),max(mass_temperature),min(mass_temperature),avg(mass_temperature);
 	interval 3600; // hourly
 	limit 8760;
 	file total.csv;

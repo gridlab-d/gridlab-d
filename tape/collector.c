@@ -111,8 +111,12 @@ static TIMESTAMP collector_write(OBJECT *obj)
 	char ts[64];
 	if (my->format==0)
 	{
-		time_t t = (time_t)(my->last.ts*TS_SECOND);
-		strftime(ts,sizeof(ts),timestamp_format, gmtime(&t));
+		//time_t t = (time_t)(my->last.ts*TS_SECOND);
+		//strftime(ts,sizeof(ts),timestamp_format, gmtime(&t));
+
+		DATETIME dt;
+		gl_localtime(my->last.ts, &dt);
+		gl_strtime(&dt, ts, sizeof(ts));
 	}
 	else
 		sprintf(ts,"%" FMT_INT64 "d", my->last.ts);
