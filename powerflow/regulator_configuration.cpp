@@ -68,7 +68,9 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 			PT_double, "regulation",PADDR(regulation),	// what unit?
 			PT_enumeration, "Control",PADDR(Control),
 				PT_KEYWORD, "MANUAL", MANUAL,
-				PT_KEYWORD, "AUTO", AUTO,
+				PT_KEYWORD, "OUTPUT_VOLTAGE", OUTPUT_VOLTAGE,
+				PT_KEYWORD, "LINE_DROP_COMP", LINE_DROP_COMP,
+				PT_KEYWORD, "REMOTE_NODE", REMOTE_NODE,
 			PT_enumeration, "Type",PADDR(Type),
 				PT_KEYWORD, "A", A,
 				PT_KEYWORD, "B", B,

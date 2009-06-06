@@ -40,6 +40,7 @@ regulator::regulator(MODULE *mod) : link(mod)
 			PT_int16, "tap_A",PADDR(tap_A),
 			PT_int16, "tap_B",PADDR(tap_B),
 			PT_int16, "tap_C",PADDR(tap_C),
+			PT_object,"sense_node",PADDR(RemoteNode),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -68,23 +69,16 @@ int regulator::init(OBJECT *parent)
 
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
 
-	// D_mat - 3x3 matrix, 'D' matrix
+	// D_mat & W_mat - 3x3 matrix
 	D_mat[0][0] = D_mat[1][1] = D_mat[2][2] = complex(1,0);
 	D_mat[0][1] = D_mat[2][0] = D_mat[1][2] = complex(-1,0);
 	D_mat[0][2] = D_mat[2][1] = D_mat[1][0] = complex(0,0);
-
-	//D_mat[3][3] = {{complex(1,0),complex(-1,0),complex(0,0)},
-	//               {complex(0,0), complex(1,0),complex(-1,0)},
-	//			   {complex(-1,0), complex(0,0), complex(1,0)}};   
 	
 	W_mat[0][0] = W_mat[1][1] = W_mat[2][2] = complex(2,0);
 	W_mat[0][1] = W_mat[2][0] = W_mat[1][2] = complex(1,0);
 	W_mat[0][2] = W_mat[2][1] = W_mat[1][0] = complex(0,0);
 	
 	multiply(1.0/3.0,W_mat,W_mat);
-	//W_mat[3][3] = {{complex(2,0),complex(1,0),complex(0,0)},
-	//               {complex(0,0),complex(2,0),complex(1,0)},
-	//               {complex(1,0),complex(0,0),complex(2,0)}};
 	
 	tapChangePer = pConfig->regulation / (double) pConfig->raise_taps;
 	Vlow = pConfig->band_center - pConfig->band_width / 2.0;
@@ -154,6 +148,7 @@ int regulator::init(OBJECT *parent)
 	mech_t_next[0] = mech_t_next[1] = mech_t_next[2] = 0;
 	dwell_t_next[0] = dwell_t_next[1] = dwell_t_next[2] = TS_NEVER;
 	first_run_flag[0] = first_run_flag[1] = first_run_flag[2] = -1;
+	state_flag[0] = state_flag[1] = state_flag[2] = 0;
 
 	return result;
 }
@@ -161,7 +156,7 @@ int regulator::init(OBJECT *parent)
 
 TIMESTAMP regulator::presync(TIMESTAMP t0) 
 {
-	//Set flags correctly for each pass, 1 indicates okay to change, 0 indicates no go
+	//Set flags correctly for each pass, 1 indicates okay to change taps, 0 indicates no go
 	for (int i = 0; i < 3; i++) {
 		if (mech_t_next[i] <= t0) {
 			mech_flag[i] = 1;
@@ -174,7 +169,6 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		}
 	}
 
-	
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
 	node *pTo = OBJECTDATA(to, node);
 
@@ -186,99 +180,157 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 	curr[1] = tmp_mat2[1][0]*current_in[0]+tmp_mat2[1][1]*current_in[1]+tmp_mat2[1][2]*current_in[2];
 	curr[2] = tmp_mat2[2][0]*current_in[0]+tmp_mat2[2][1]*current_in[1]+tmp_mat2[2][2]*current_in[2];
 
+
+	if (pConfig->Control == pConfig->LINE_DROP_COMP) {
+		if (pTo) 
+		{
+			volt[0] = pTo->voltageA;
+			volt[1] = pTo->voltageB;
+			volt[2] = pTo->voltageC;
+		}
+		else
+		{	
+			volt[0] = volt[1] = volt[2] = 0.0;
+		}
+		for (int i = 0; i < 3; i++) 
+		{
+			V2[i] = volt[i] / ((double) pConfig->PT_ratio);
+			check_voltage[i] = V2[i] - (curr[i] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[i], pConfig->ldc_X_V[i]);
+		}
+	}
+ 	else if (pConfig->Control == pConfig->OUTPUT_VOLTAGE) {
+		if (pTo) 
+		{
+			check_voltage[0] = pTo->voltageA;
+			check_voltage[1] = pTo->voltageB;
+			check_voltage[2] = pTo->voltageC;
+		}
+		else
+		{	
+			check_voltage[0] = check_voltage[1] = check_voltage[2] = 0.0;
+		}
+	}
+	else if (pConfig->Control == pConfig->REMOTE_NODE) {
+		node *RNode = OBJECTDATA(RemoteNode,node);
+		for (int i = 0; i < 3; i++)
+		{
+			check_voltage[i] = RNode->voltage[i];
+		}
+	}
+	else if (pConfig->Control == pConfig->MANUAL) {
+		for (int i = 0; i < 3; i++) {
+			if (curr[i] != 0) {
+				if (pConfig->Type == pConfig->A)
+				{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
+				else if (pConfig->Type == pConfig->B)
+				{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
+				else
+				{	throw "invalid regulator type";}
+			}
+		}
+		next_time = TS_NEVER;
+	}
+	else
+		throw "Invalid control type";
+
+	//Update first run flag - special solver during first time solved.
 	for (int i = 0; i < 3; i++) {
 		if (first_run_flag[i] < 1) {
-			if (curr[i] != 0) {
-				first_run_flag[i] += 1;
-			}
+			first_run_flag[i] += 1;
 		}
 	}
 
-	if (pTo) 
-	{
-		volt[0] = pTo->voltageA;
-		volt[1] = pTo->voltageB;
-		volt[2] = pTo->voltageC;
-	}
-	else
-	{	volt[0] = volt[1] = volt[2] = 0.0;
-	}
-
-	if (pConfig->Control == pConfig->AUTO) {
- 		for (int i = 0; i < 3; i++) 
-		{	
-			if (pConfig->connect_type == pConfig->WYE_WYE) 
-			{
-				if (curr[i] != 0)
+	if (pConfig->connect_type == pConfig->WYE_WYE && pConfig->Control != pConfig->MANUAL)
+	{	
+		for (int i = 0; i < 3; i++) 
+		{
+			
+				if (check_voltage[i].Mag() < Vlow)		//raise voltage
 				{	
-					V2[i] = volt[i] / ((double) pConfig->PT_ratio);
-					Vcomp[i] = V2[i] - (curr[i] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[i], pConfig->ldc_X_V[i]);
-	
-					if (Vcomp[i].Mag() < Vlow)		//raise voltage
+					//hit the band center for convergence on first run, otherwise bad initial guess on tap settings 
+					//can fail on the first timestep
+					if (first_run_flag[i] == 0) 
 					{	
-						//hit the band center for convergence on first run, otherwise bad initial guess on tap settings 
-						//can fail on the first timestep
-						if (first_run_flag[i] == 0) {	
-							tap[i] = tap[i] + (int16)ceil((pConfig->band_center - Vcomp[i].Mag())/VtapChange);
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-							mech_flag[i] = 0;
+						tap[i] = tap[i] + (int16)ceil((pConfig->band_center - check_voltage[i].Mag())/VtapChange);
+						if (tap[i] > pConfig->raise_taps) 
+						{
+							tap[i] = pConfig->raise_taps;
 						}
-						//if both flags say it's okay to change the tap, then change the tap and turn on a 
-						//mechanical tap changing delay before the next change
-						else if (mech_flag[i] == 1 && dwell_flag[i] == 1) {		 
-							tap[i] = tap[i] + (int16) 1;						
+						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+						mech_flag[i] = 0;
+					}
+					//if both flags say it's okay to change the tap, then change the tap and turn on a 
+					//mechanical tap changing delay before the next change
+					else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
+					{		 
+						tap[i] = tap[i] + (int16) 1;						
+
+						if (tap[i] > pConfig->raise_taps) 
+						{
+							tap[i] = pConfig->raise_taps;
+							mech_t_next[i] = dwell_t_next[i] = TS_NEVER;
+						}
+						else 
+						{
 							mech_t_next[i] = t0 + (int64)pConfig->time_delay;	
 							mech_flag[i] = 0;
 						}
-						//only set the dwell time if we've reached the end of the previous dwell (in case other 
-						//objects update during that time)
-						else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) {
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;	
-						}														
 					}
-					else if (Vcomp[i].Mag() > Vhigh)  //lower voltage
+					//only set the dwell time if we've reached the end of the previous dwell (in case other 
+					//objects update during that time)
+					else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
 					{
-						if (first_run_flag[i] == 0) {
-							tap[i] = tap[i] - (int16)ceil((Vcomp[i].Mag() - pConfig->band_center)/VtapChange);
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-							mech_flag[i] = 0;
-						}
-						else if (mech_flag[i] == 1 && dwell_flag[i] == 1) {
-							tap[i] = tap[i] - (int16) 1;							
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-							mech_flag[i] = 0;
-						}
-						else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) {
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-						}
-					}
-					//If no tap changes were needed, then this resets dwell_flag to 0 and indicates regulator has no
-					//more changes unless system changes
-					else 
-					{	
-						dwell_t_next[i] = TS_NEVER;
-					}
-
-					//Keeps it within limits of the number of taps
-					if (tap[i] < -pConfig->lower_taps)
-					{	tap[i] = -pConfig->lower_taps;}
-					if (tap[i] > pConfig->raise_taps)
-					{	tap[i] = pConfig->raise_taps;}
-			
-					//Use tap positions to solve for 'a' matrix
-					if (pConfig->Type == pConfig->A)
-					{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
-					else if (pConfig->Type == pConfig->B)
-					{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
-					else
-					{	throw "invalid regulator type";}
+						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;	
+					}														
 				}
-			}
+				else if (check_voltage[i].Mag() > Vhigh)  //lower voltage
+				{
+					if (first_run_flag[i] == 0) 
+					{
+						tap[i] = tap[i] - (int16)ceil((check_voltage[i].Mag() - pConfig->band_center)/VtapChange);
+						if (tap[i] < -pConfig->lower_taps) 
+						{
+							tap[i] = -pConfig->lower_taps;
+						}
+						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+						mech_flag[i] = 0;
+					}
+					else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
+					{
+						tap[i] = tap[i] - (int16) 1;							
+						
+						if (tap[i] < -pConfig->lower_taps) 
+						{
+							tap[i] = -pConfig->lower_taps;
+							mech_t_next[i] = dwell_t_next[i] = TS_NEVER;
+						}
+						else 
+						{
+							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+							mech_flag[i] = 0;
+						}
+					}
+					else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
+					{
+						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+					}
+				}
+				//If no tap changes were needed, then this resets dwell_flag to 0 and indicates regulator has no
+				//more changes unless system changes
+				else 
+				{	
+					dwell_t_next[i] = TS_NEVER;
+					dwell_flag[i] = 0;
+				}
 
-			else 
-			{
-				throw "Regulator connect type not supported in automatic mode yet";
-			}
+				//Use tap positions to solve for 'a' matrix
+				if (pConfig->Type == pConfig->A)
+				{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
+				else if (pConfig->Type == pConfig->B)
+				{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
+				else
+				{	throw "invalid regulator type";}
+			
 		}
 		//Determine how far to advance the clock
 		int64 nt[3];
@@ -299,20 +351,12 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		if (next_time <= t0)
 			next_time = TS_NEVER;
 	}
-
-	else if (pConfig->Control == pConfig->MANUAL) {
-		for (int i = 0; i < 3; i++) {
-			if (curr[i] != 0) {
-				if (pConfig->Type == pConfig->A)
-				{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
-				else if (pConfig->Type == pConfig->B)
-				{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
-				else
-				{	throw "invalid regulator type";}
-			}
-		}
-		next_time = TS_NEVER;
+	else if (pConfig->Control != pConfig->MANUAL)
+	{
+		throw "Regulator connect type not supported in an automatic mode yet.";
 	}
+		
+	
 
 	//Use 'a' matrix to solve appropriate 'A' & 'd' matrices
 	complex tmp_mat[3][3] = {{complex(1,0)/a_mat[0][0],complex(0,0),complex(0,0)},
@@ -351,8 +395,9 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		}
 	
 
-
-	return next_time;
+	TIMESTAMP t1 = link::presync(t0);
+	if (t1 <= next_time) return t1;
+	else return next_time;
 }
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: regulator

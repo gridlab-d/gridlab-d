@@ -21,7 +21,9 @@ public:
 				
 	enum Contro1 {
 		MANUAL=1,
-		AUTO
+		OUTPUT_VOLTAGE,
+		REMOTE_NODE,
+		LINE_DROP_COMP
 	} Control;
 
 	enum Type {
@@ -34,19 +36,19 @@ public:
 	/* get_id acquires the object's id */
 	inline unsigned int get_id(void) const {return OBJECTHDR(this)->id;};
 	
-	double band_center;   // band center setting of regulator control
-	double band_width;    // band width setting of regulator control
-	double dwell_time;    // time delay setting of regulator control
-	double time_delay; // mechanical time delay between tap changes 
-	int16 raise_taps;     // number of regulator raise taps
-	int16 lower_taps;     // number of regulator lower taps
-	double CT_ratio;       // primary rating of current transformer (x:5)
-	double PT_ratio;       // potential transformer rating (x:1)
-	double ldc_R_V[3];       // Line Drop Compensation R setting of regulator control (in volts)
-	double ldc_X_V[3];       // Line Drop Compensation X setting of regulator control (in volts)
-	set CT_phase;		  // phase(s) monitored by CT
-	set PT_phase;		  // phase(s) monitored by PT
-	double regulation;    // regulation of voltage regulator in %
+	double band_center;		// band center setting of regulator control
+	double band_width;		// band width setting of regulator control
+	double dwell_time;		// time delay setting of regulator control
+	double time_delay;		// mechanical time delay between tap changes 
+	int16 raise_taps;		// number of regulator raise taps
+	int16 lower_taps;		// number of regulator lower taps
+	double CT_ratio;		// primary rating of current transformer (x:5)
+	double PT_ratio;		// potential transformer rating (x:1)
+	double ldc_R_V[3];		// Line Drop Compensation R setting of regulator control (in volts)
+	double ldc_X_V[3];		// Line Drop Compensation X setting of regulator control (in volts)
+	set CT_phase;			// phase(s) monitored by CT
+	set PT_phase;			// phase(s) monitored by PT
+	double regulation;		// regulation of voltage regulator in %
 	int16 tap_pos[3];
 
 	#define ldc_R_V_A ldc_R_V[0]	// R for each phase
@@ -55,9 +57,9 @@ public:
 	#define ldc_X_V_A ldc_X_V[0]	// X for each phase
 	#define ldc_X_V_B ldc_X_V[1]
 	#define ldc_X_V_C ldc_X_V[2]
-	#define tap_posA tap_pos[0]		/// tap_pos of phase A
-	#define tap_posB tap_pos[1]		/// tap_pos of phase B
-	#define tap_posC tap_pos[2]		/// tap_pos of phase C
+	#define tap_posA tap_pos[0]		// tap_pos of phase A
+	#define tap_posB tap_pos[1]		// tap_pos of phase B
+	#define tap_posC tap_pos[2]		// tap_pos of phase C
 
 public:
 	static CLASS *oclass;

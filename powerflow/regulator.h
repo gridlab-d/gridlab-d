@@ -25,6 +25,7 @@ public:
 	complex D_mat[3][3];
 	complex W_mat[3][3];
 	complex curr[3];
+	OBJECT *RemoteNode;		// Remote node for sensing values used for control schemes
 
 protected:
 	int64 mech_t_next[3];	//next time step after tap change
@@ -33,6 +34,8 @@ protected:
 	int16 mech_flag[3];		//indicates whether a state change is okay due to mechanical tap changes
 	int16 dwell_flag[3];	//indicates whether a state change is okay due to dwell time limitations
 	int16 first_run_flag[3];//keeps the system from blowing up on bad initial tap position guess
+	int16 state_flag[3];	//tracks state changes: -1 indicates the voltage was low, 0 good, 1 high
+	complex check_voltage[3];//Voltage that is being checked against
 
 public:
 	static CLASS *oclass;
