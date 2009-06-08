@@ -234,9 +234,11 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		throw "Invalid control type";
 
 	//Update first run flag - special solver during first time solved.
-	for (int i = 0; i < 3; i++) {
-		if (first_run_flag[i] < 1) {
-			first_run_flag[i] += 1;
+	if ((first_run_flag[0] + first_run_flag[1] + first_run_flag[2]) < 3 ) {
+		for (int i = 0; i < 3; i++) {
+			if (first_run_flag[i] < 1) {
+				first_run_flag[i] += 1;
+			}
 		}
 	}
 
@@ -257,7 +259,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 							tap[i] = pConfig->raise_taps;
 						}
 						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-						mech_flag[i] = 0;
+						mech_t_next[i] = t0 + (int64)pConfig->time_delay;
 					}
 					//if both flags say it's okay to change the tap, then change the tap and turn on a 
 					//mechanical tap changing delay before the next change
@@ -272,7 +274,8 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 						}
 						else 
 						{
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;	
+							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
 							mech_flag[i] = 0;
 						}
 					}
@@ -293,7 +296,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 							tap[i] = -pConfig->lower_taps;
 						}
 						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-						mech_flag[i] = 0;
+						mech_t_next[i] = t0 + (int64)pConfig->time_delay;
 					}
 					else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
 					{
@@ -307,6 +310,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 						else 
 						{
 							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
 							mech_flag[i] = 0;
 						}
 					}
