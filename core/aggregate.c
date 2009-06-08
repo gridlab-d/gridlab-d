@@ -303,10 +303,11 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 	double scale = (aggr->punit ? aggr->scale : 1.0);
 
 	/* non-constant groups need search program rerun */
-	if ((aggr->group->constflags&CF_CONSTANT)!=CF_CONSTANT)
-		aggr->last = find_runpgm(NULL,aggr->group); /** @todo use constant part instead of NULL (ticket #14) */
-	for (obj=find_first(aggr->last); obj!=NULL; obj=find_next(aggr->last,obj))
-	{
+	if ((aggr->group->constflags & CF_CONSTANT) != CF_CONSTANT){
+		aggr->last = find_runpgm(NULL,aggr->group); /** @todo use constant part instead of NULL (ticket #3) */
+	}
+
+	for(obj = find_first(aggr->last); obj != NULL; obj = find_next(aggr->last, obj)){
 		double value=0;
 		double *pdouble = NULL;
 		complex *pcomplex = NULL;
