@@ -60,9 +60,12 @@ public:
 	// The primary values we compute in our simultation...
 	double h;						///< boundary between hot and cold water layers [ft from top of tank]
 	double Tlower;					///< temperature in lower zone of tank (for 2-zone model) [F]
+	double Tlower_old;
 	double Tupper;					///< temperature in upper zone of tank (for 2-zone model) [F]
+	double Tupper_old;
 	double Twater;					///< temperature of whole tank (for 1-node model) [F]
 	double Tw;						///< water temperature [F]
+	double Tw_old;					///< previous water temperature, for internal_gains
 
 	double last_water_demand;
 	double cur_water_demand;
@@ -80,6 +83,7 @@ public:
 	complex power_kw;					///< total power demand [kW]
 	double power_factor;
 	complex kwh_meter;					///< energy used since start of simulation [kWh] 
+	double faux_gain;
 
 public:
 	static CLASS *oclass;
