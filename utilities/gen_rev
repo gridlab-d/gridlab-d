@@ -1,0 +1,1 @@
+#!/bin/bash# obtain rev number to releaseBUILD=`echo $(svn -R info "$SRC" | grep Revision | cut -f2 -d: | sort -ur | head -n 1)`echo "BUILD=$BUILD" > "REV"
