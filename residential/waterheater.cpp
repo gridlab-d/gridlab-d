@@ -67,8 +67,14 @@ waterheater::waterheater(MODULE *module)
 			PT_complex,"power[kW]",PADDR(power_kw),
 			PT_double,"meter[kWh]",PADDR(kwh_meter),
 			PT_double,"temperature[degF]",PADDR(Tw),
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
 			PT_double,"height[ft]",PADDR(h),
+			PT_double,"faux_gain",PADDR(faux_gain),
+			PT_complex,"enduse_load[kW]",PADDR(load.total),
+			PT_complex,"constant_power[kW]",PADDR(load.power),
+			PT_complex,"constant_current[A]",PADDR(load.current),
+			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
+			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
+
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -276,10 +282,17 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 	cur_water_demand = water_demand;
 	water_demand = last_water_demand;
 
+	// capture old temperature
+	if(t0 < t1){ // not an iteration
+		Tw_old = Tw;
+		Tupper_old = Tupper;
+		Tlower_old = Tlower;
+	}
+
 	// update temperature and height
 	update_T_and_or_h(nHours);
 
-	if(this->Tw > 212.0){
+	if(Tw > 212.0){
 		GL_THROW("the waterheater is boiling!");
 		/*	TROUBLESHOOT
 			The temperature model for the waterheater has broken, or the environment around the
@@ -317,16 +330,30 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	double internal_gain = 0.0;
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
+	double Tamb = get_Tambient(location);
+	double Td, Texp;
 
 	// determine internal gains
-	if (location == INSIDE){
-		internal_gain = actual_kW() * nHours; // DPC: this is wrong!!!  Where's the UA?
-	} else {
-		internal_gain = 0;
+	if(nHours > 0){
+		if (location == INSIDE){
+			//internal_gain = actual_kW() * nHours; // DPC: this is wrong!!!  Where's the UA?
+			if(this->current_model == ONENODE){
+				Texp = exp((this->tank_UA / this->Cw) * nHours);
+				Td = ((Tamb + Tw_old) * Texp) - Tamb;
+				internal_gain = Tw_old - (((Tamb + Tw_old) * exp((this->tank_UA / this->Cw) * nHours)) - Tamb);
+				internal_gain *= Cw;	/* convert from T0 - T0_jacket degF to BTUs */
+			} else if(this->current_model == TWONODE){
+//				internal_gain = -((Tamb - Tupper_old) * exp((tank_UA / Cw) * nHours) - Tamb) * (h - height) / height;
+//				internal_gain += -((Tamb - Tlower_old) * exp((tank_UA / Cw) * nHours) - Tamb) * (1 - (h - height) / height);
+				internal_gain = actual_kW() * nHours; /* cop-out */
+			}
+		} else {
+			internal_gain = 0;
+		}
+		faux_gain = actual_kW() * nHours;
+		// post internal gains
+		load.heatgain = -internal_gain * KWPBTUPH;
 	}
-	// post internal gains
-	load.heatgain = internal_gain;
-
 
 	return TS_NEVER;
 }
