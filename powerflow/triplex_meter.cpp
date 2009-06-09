@@ -117,9 +117,10 @@ TIMESTAMP triplex_meter::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	measured_voltage[0] = voltageA;
-	measured_voltage[1] = voltageB;
-	measured_voltage[2] = voltageC;
+	//measured_voltage[0] = voltageA;
+	measured_voltage[0].SetPolar(voltageA.Mag(),voltageA.Arg());
+	measured_voltage[1].SetPolar(voltageB.Mag(),voltageB.Arg());
+	measured_voltage[2].SetPolar(voltageC.Mag(),voltageC.Arg());
 	measured_current[0] = current_inj[0];
 	measured_current[1] = current_inj[1];
 	measured_current[2] = current_inj[2];

@@ -62,6 +62,7 @@ private:
 	{ return c->status==BRK_CLOSED ? *(c->pV) : complex(0,0);};
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
+	complex *pLine12; ///< pointer to the load across lines 1 & 2
 
 public:  //definitions
 	typedef enum {	HEAT, ///< heating mode

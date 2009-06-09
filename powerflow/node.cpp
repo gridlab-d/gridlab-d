@@ -510,7 +510,6 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	{
 	case SM_FBS:
 		{
-		// add power and shunt to current injection
 		if (phases&PHASE_S)
 		{	// Split phase
 			complex temp_inj[2];
@@ -525,7 +524,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			
 			if (obj->parent!=NULL && gl_object_isa(obj->parent,"triplex_line","powerflow")) {
 				link *plink = OBJECTDATA(obj->parent,link);
-				current_inj[2] = plink->tn[0]*current_inj[0] + plink->tn[1]*current_inj[1];
+				current_inj[2] += plink->tn[0]*current_inj[0] + plink->tn[1]*current_inj[1];
 			}
 			else {
 				current_inj[2] += ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||

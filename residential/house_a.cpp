@@ -287,6 +287,7 @@ int house::init(OBJECT *parent)
 		// local object name,	meter object name
 		{&pCircuit_V,			"voltage_12"}, // assumes 1N and 2N follow immediately in memory
 		{&pLine_I,				"current_1"}, // assumes 2 and 3(N) follow immediately in memory
+		{&pLine12,				"current_12"},
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	};
 
@@ -606,8 +607,9 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 		LOCK_OBJECT(obj->parent);
 
 	pLine_I[0] = I[X13];
-	pLine_I[1] = -I[X23];
-	pLine_I[2] = I[X12];
+	pLine_I[1] = I[X23];
+	pLine_I[2] = 0;
+	*pLine12 = I[X12];
 
 	if (obj->parent != NULL)
 		UNLOCK_OBJECT(obj->parent);
