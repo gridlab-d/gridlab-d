@@ -372,7 +372,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 	}
 
 	write_default_plot_commands_rec(my, extension);
-	if (my->columns){
+	if (my->columns[0]){
 		sscanf(my->columns,"%s %s", columnlist);
 		fprintf(my->fp, "plot \'-\' using %s with lines;\n", columnlist);
 	}
@@ -403,11 +403,12 @@ EXPORT void write_default_plot_commands_rec(struct recorder *my, char32 extensio
 {
 	char32   fname;
 	char32   type;
+	char32   ext;
 	char1024 buf;
 	char1024 plotcommands;
 	int i, j;	
 	i = j = 0;
-	sscanf(my->file,"%32[^:]:%32[^:]",type,fname);
+	sscanf(my->file,"%32[^:]:%32[^.].[^\n;:]",type,fname,ext);
 
 	/////////////////////////////////////////////////////////////////////////////
 	// Default behavior for directive plotcommands
@@ -415,7 +416,9 @@ EXPORT void write_default_plot_commands_rec(struct recorder *my, char32 extensio
 	if (my->plotcommands[0]=='\0' || strcmp(my->plotcommands,"")==0) {
 		j= strlen(my->columns)>0 ? 0: fprintf(my->fp, "set xdata time;\n");
 		fprintf(my->fp, "set datafile separator \",\";\n");
-		fprintf(my->fp, "set output \"%s.%s\"; \n", fname,extension);
+		if(my->output != SCREEN){
+			fprintf(my->fp, "set output \"%s.%s\"; \n", fname,extension);
+		}
 		fprintf(my->fp, "show output; \n");
 		fprintf(my->fp, "set timefmt \"%%Y-%%m-%%d %%H:%%M:%%S\";\n");
 		j = strlen(my->columns)>0  ? 0: fprintf(my->fp, "plot \'-\' using 1:2 with lines;\n");
