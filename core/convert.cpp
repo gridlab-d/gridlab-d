@@ -137,7 +137,7 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 		count = sprintf(temp,global_complex_format,m,a,R);
 	} 
 	else {
-		count = sprintf(temp,global_complex_format,v->Re()*scale,v->Im()*scale,v->Notation());
+		count = sprintf(temp,global_complex_format,v->Re()*scale,v->Im()*scale,v->Notation()?v->Notation():'i');
 	}
 	if(count < size - 1){
 		memcpy(buffer, temp, count);
