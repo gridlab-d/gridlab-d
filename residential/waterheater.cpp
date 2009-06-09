@@ -351,6 +351,7 @@ TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			internal_gain = 0;
 		}
 		faux_gain = actual_kW() * nHours;
+		load.total = load.power = power_kw;
 		// post internal gains
 		load.heatgain = -internal_gain * KWPBTUPH;
 	}
