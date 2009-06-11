@@ -408,11 +408,11 @@ int node::init(OBJECT *parent)
 		}
 		if (voltage[1] == 0)
 		{
-			voltage[1].SetPolar(nominal_voltage,-120.0);
+			voltage[1].SetPolar(nominal_voltage,-2*PI/3);
 		}
 		if (voltage[2] == 0)
 		{
-			voltage[2].SetPolar(nominal_voltage,120.0);
+			voltage[2].SetPolar(nominal_voltage,2*PI/3);
 		}
 	}
 	else	//Not three phase - check for individual phases and zero them if they aren't already
