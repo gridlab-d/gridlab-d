@@ -292,6 +292,7 @@ int house::init(OBJECT *parent)
 	};
 
 	extern complex default_line_voltage[3], default_line_current[3];
+	static complex default_line_current_12;
 	int i;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
@@ -324,6 +325,7 @@ int house::init(OBJECT *parent)
 		// attach meter variables to each circuit in the default_meter
 		*(map[0].var) = &default_line_voltage[0];
 		*(map[1].var) = &default_line_current[0];
+		*(map[2].var) = &default_line_current_12;
 	}
 		// Set defaults for published variables nor provided by model definition
 	while (floor_area <= 500)
