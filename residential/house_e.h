@@ -60,6 +60,7 @@ private:
 	{ return c->status==BRK_CLOSED ? *(c->pV) : complex(0,0);};
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
+	complex *pLine12;
 
 public:  //definitions
 	typedef enum {	

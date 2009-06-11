@@ -339,10 +339,12 @@ int house_e::init(OBJECT *parent)
 		// local object name,	meter object name
 		{&pCircuit_V,			"voltage_12"}, // assumes 1N and 2N follow immediately in memory
 		{&pLine_I,				"current_1"}, // assumes 2 and 3(N) follow immediately in memory
+		{&pLine12,				"current_12"}, // maps current load 1-2 onto triplex load
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	};
 
 	extern complex default_line_voltage[3], default_line_current[3];
+	static complex default_line_current_12;
 	int i;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
@@ -364,6 +366,7 @@ int house_e::init(OBJECT *parent)
 		// attach meter variables to each circuit in the default_meter
 		*(map[0].var) = &default_line_voltage[0];
 		*(map[1].var) = &default_line_current[0];
+		*(map[2].var) = &default_line_current_12;
 	}
 
 	// set defaults for panel/meter variables
@@ -744,8 +747,9 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 		LOCK_OBJECT(obj->parent);
 
 	pLine_I[0] = I[X13];
-	pLine_I[1] = -I[X23];
-	pLine_I[2] = I[X12];
+	pLine_I[1] = I[X23];
+	pLine_I[2] = 0;
+	*pLine12 = I[X12];
 
 	if (obj->parent != NULL)
 		UNLOCK_OBJECT(obj->parent);

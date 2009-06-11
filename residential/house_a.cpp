@@ -287,7 +287,7 @@ int house::init(OBJECT *parent)
 		// local object name,	meter object name
 		{&pCircuit_V,			"voltage_12"}, // assumes 1N and 2N follow immediately in memory
 		{&pLine_I,				"current_1"}, // assumes 2 and 3(N) follow immediately in memory
-		{&pLine12,				"current_12"},
+		{&pLine12,				"current_12"}, // maps current load 1-2 onto triplex load
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	};
 
