@@ -62,10 +62,10 @@
 
 	@par Outage support
 
-	When SUPPORT_OUTAGES is defined, the \p postsync pass will examine whether 
+	When <code>SUPPORT_OUTAGES</code> is defined, the \p postsync pass will examine whether 
 	\p condition and \p solution are matched.  If there is an inconsistency
-	(i.e., \p condition != OC_NORMAL && \p solution == PS_NORMAL or
-	\p condition == OC_NORMAL && \p solution != PS_NORMAL), then
+	(i.e., \p <code>condition != OC_NORMAL &&</code> \p <code>solution == PS_NORMAL</code> or
+	\p <code>condition == OC_NORMAL &&</code> \p <code>solution != PS_NORMAL</code>), then
 	they will be reconciled and the solver will iterate again. 
 	Object derived from powerflow_object can inspect the value of \p condition
 	to determine whether they can use the normal powerflow solution method, or

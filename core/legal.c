@@ -27,7 +27,7 @@
 	software permission to use the licensor's name anyway.  But it makes the legal
 	types happy.  That's a good thing.
 
-	See \ref license "The GridLAB License" for details.
+	See \ref License "The GridLAB License" for details.
 
  @{
  **/

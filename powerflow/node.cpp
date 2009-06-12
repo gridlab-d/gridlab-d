@@ -1636,7 +1636,6 @@ LINKCONNECTED *node::attachlink(OBJECT *obj) ///< object to attach
 * "initialized".  This function "initializes" the node into the Newton-Raphson data
 * structure NR_busdata
 *
-* @param obj the link that has an attachment to this node
 */
 int *node::NR_populate(void)
 {

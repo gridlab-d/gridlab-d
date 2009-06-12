@@ -1436,7 +1436,7 @@ EXPORT int isa_link(OBJECT *obj, char *classname)
 * for future nodes.
 *
 * @param snode is the object to update
-* @param snodesite is the type the calling node is (1=from, 2=to)
+* @param snodeside is the type the calling node is (1=from, 2=to)
 * @param deltaV the voltage update to apply to YVs terms
 */
 void *link::UpdateYVs(OBJECT *snode, char snodeside, complex *deltaV)
