@@ -15,6 +15,6 @@ cd src/xercesc
 make
 cd ../..
 sudo cp -r include/xercesc /usr/include
-sudo cp -lf cp -l lib/* /usr/lib
+sudo cp -f lib/* /usr/lib
 sudo /sbin/ldconfig
 
