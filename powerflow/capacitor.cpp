@@ -313,27 +313,27 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 						if ((pt_phase & PHASE_A) == PHASE_A)
 						{
 							if (VAr_set_low >= VArVals[0])
-								switchA_state_Req_Next=CLOSED;
-							else if (VAr_set_high <= VArVals[0])
 								switchA_state_Req_Next=OPEN;
+							else if (VAr_set_high <= VArVals[0])
+								switchA_state_Req_Next=CLOSED;
 							else;
 						}
 							
 						if ((pt_phase & PHASE_B) == PHASE_B)
 						{
 							if (VAr_set_low >= VArVals[1])
-								switchB_state_Req_Next=CLOSED;
-							else if (VAr_set_high <= VArVals[1])
 								switchB_state_Req_Next=OPEN;
+							else if (VAr_set_high <= VArVals[1])
+								switchB_state_Req_Next=CLOSED;
 							else;
 						}
 
 						if ((pt_phase & PHASE_C) == PHASE_C)
 						{
 							if (VAr_set_low >= VArVals[2])
-								switchC_state_Req_Next=CLOSED;
-							else if (VAr_set_high <= VArVals[2])
 								switchC_state_Req_Next=OPEN;
+							else if (VAr_set_high <= VArVals[2])
+								switchC_state_Req_Next=CLOSED;
 							else;
 						}
 					}
@@ -342,27 +342,27 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 						if ((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B))
 						{
 							if (VAr_set_low >= VArVals[0])	//VArVals handled above to use L-L power instead
-								switchA_state_Req_Next=CLOSED;				//switchA assigned to AB connection (delta-connection in loads)
+								switchA_state_Req_Next=OPEN;				//switchA assigned to AB connection (delta-connection in loads)
 							else if (VAr_set_high <= VArVals[0])
-								switchA_state_Req_Next=OPEN;
+								switchA_state_Req_Next=CLOSED;
 							else;
 						}
 
 						if ((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C))
 						{
 							if (VAr_set_low >= VArVals[1])	//VArVals handled above to use L-L power instead
-								switchB_state_Req_Next=CLOSED;				//switchB assigned to BC connection (delta-connection in loads)
+								switchB_state_Req_Next=OPEN;				//switchB assigned to BC connection (delta-connection in loads)
 							else if (VAr_set_high <= VArVals[1])
-								switchB_state_Req_Next=OPEN;
+								switchB_state_Req_Next=CLOSED;
 							else;
 						}
 
 						if ((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A))
 						{
 							if (VAr_set_low >= VArVals[2])	//VArVals handled above to use L-L power instead
-								switchC_state_Req_Next=CLOSED;				//switchC assigned to CA connection (delta-connection in loads)
+								switchC_state_Req_Next=OPEN;				//switchC assigned to CA connection (delta-connection in loads)
 							else if (VAr_set_high <= VArVals[2])
-								switchC_state_Req_Next=OPEN;
+								switchC_state_Req_Next=CLOSED;
 							else;
 						}
 					}
@@ -487,7 +487,6 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 					switchA_state_Next = switchB_state_Next = switchC_state_Next = OPEN;	//Bank control, open them all (this should never be an issue)
 
 				switchA_state_Req_Next = switchB_state_Req_Next = switchC_state_Req_Next = switchA_state_Next; //Slight override, otherwise it oscillates
-				//switchA_state_Prev = switchB_state_Prev = switchC_state_Prev = switchA_state_Next;
 			}
 		}
 
