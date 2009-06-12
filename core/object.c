@@ -813,6 +813,70 @@ int object_set_value_by_name(OBJECT *obj, /**< the object to change */
 	return object_set_value_by_addr(obj,addr,value,prop);
 }
 
+
+/* Set a property value by reference to its name
+ */
+int object_set_int16_by_name(OBJECT *obj, PROPERTYNAME name, int16 value)
+{
+	PROPERTY *prop = class_find_property(obj->oclass,name);
+	if(prop==NULL)
+	{
+		errno = ENOENT;
+		return 0;
+	}
+	if(prop->access != PA_PUBLIC){
+		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
+		/*	TROUBLESHOOT
+			The specified property was published by its object as private.  It may not be modified by other modules.
+		*/
+		return 0;
+	}
+	*(int16 *)((char *)(obj+1)+(int64)(prop->addr)) = value; /* warning: cast from pointer to integer of different size */
+	return 1;
+}
+
+/* Set a property value by reference to its name
+ */
+int object_set_int32_by_name(OBJECT *obj, PROPERTYNAME name, int32 value)
+{
+	PROPERTY *prop = class_find_property(obj->oclass,name);
+	if(prop==NULL)
+	{
+		errno = ENOENT;
+		return 0;
+	}
+	if(prop->access != PA_PUBLIC){
+		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
+		/*	TROUBLESHOOT
+			The specified property was published by its object as private.  It may not be modified by other modules.
+		*/
+		return 0;
+	}
+	*(int32 *)((char *)(obj+1)+(int64)(prop->addr)) = value; /* warning: cast from pointer to integer of different size */
+	return 1;
+}
+
+/* Set a property value by reference to its name
+ */
+int object_set_int64_by_name(OBJECT *obj, PROPERTYNAME name, int64 value)
+{
+	PROPERTY *prop = class_find_property(obj->oclass,name);
+	if(prop==NULL)
+	{
+		errno = ENOENT;
+		return 0;
+	}
+	if(prop->access != PA_PUBLIC){
+		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
+		/*	TROUBLESHOOT
+			The specified property was published by its object as private.  It may not be modified by other modules.
+		*/
+		return 0;
+	}
+	*(int64 *)((char *)(obj+1)+(int64)(prop->addr)) = value; /* warning: cast from pointer to integer of different size */
+	return 1;
+}
+
 /* Set a property value by reference to its name
  */
 int object_set_double_by_name(OBJECT *obj, PROPERTYNAME name, double value)

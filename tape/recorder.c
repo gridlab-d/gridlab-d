@@ -182,7 +182,7 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 		}
 		else
 		{
-			gl_error("recorder:%d: property '%s' not found", obj->id,item);
+			gl_error("recorder: property '%s' not found", item);
 			return NULL;
 		}
 		if(cid >= 0){ /* doing the complex part thing */
@@ -215,6 +215,14 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	COMPAREOP comparison;
 	char1024 buffer = "";
 	
+	if(obj->parent == NULL){
+		char tb[32];
+		sprintf(buffer, "'%s' lacks a parent object", obj->name ? obj->name : tb, sprintf(tb, "recorder:%i", obj->id));
+		close_recorder(my);
+		my->status = TS_ERROR;
+		goto Error;
+	}
+
 	if (my->status==TS_DONE)
 	{
 		close_recorder(my); /* note: potentially called every sync pass for multiple timesteps, catch fp==NULL in tape ops */
@@ -233,6 +241,7 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		sprintf(buffer,"'%s' contains a property of %s %d that is not found", my->property, obj->parent->oclass->name, obj->parent->id);
 		close_recorder(my);
 		my->status = TS_ERROR;
+		goto Error;
 	}
 
 	// update clock
@@ -295,7 +304,7 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			strncpy(my->last.value,buffer,sizeof(my->last.value));
 		}
 	}
-
+Error:
 	if (my->status==TS_ERROR)
 	{
 		gl_error("recorder %d %s\n",obj->id, buffer);

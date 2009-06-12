@@ -85,12 +85,10 @@ static struct s_varmap {
 STATUS global_init(void)
 {
 	unsigned int i;
-	for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
-	{
+	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++){
 		struct s_varmap *p = &(map[i]);
-		GLOBALVAR *var = global_create(p->name,p->type,p->addr,PT_ACCESS,p->access,NULL);
-		if (var==NULL)
-		{
+		GLOBALVAR *var = global_create(p->name, p->type, p->addr, PT_ACCESS, p->access, NULL);
+		if(var == NULL){
 			output_error("global_init(): global variable '%s' registration failed", p->name);
 			/* TROUBLESHOOT
 				The global variable initialization process was unable to register
@@ -98,9 +96,9 @@ STATUS global_init(void)
 				detailed explanation of the error.  Follow the troubleshooting for
 				that message and try again.
 			*/
-		}
-		else
+		} else {
 			var->prop->keywords = p->keys;
+		}
 	}
 	return SUCCESS;
 }
@@ -110,11 +108,11 @@ STATUS global_init(void)
  **/
 GLOBALVAR *global_find(char *name) /**< name of global variable to find */
 {
-	GLOBALVAR *var;
-	for (var=global_getnext(NULL); var!=NULL; var=global_getnext(var))
-	{
-		if (strcmp(var->name,name)==0)
+	GLOBALVAR *var = NULL;
+	for(var = global_getnext(NULL); var != NULL; var = global_getnext(var)){
+		if(strcmp(var->name, name) == 0){
 			return var;
+		}
 	}
 	return NULL;
 }
@@ -127,9 +125,12 @@ GLOBALVAR *global_find(char *name) /**< name of global variable to find */
 
 	@return a pointer to the first character in the next variable name, or NULL of none found.
  **/
-GLOBALVAR *global_getnext(GLOBALVAR *previous) /**< a pointer to the previous variable name (NULL for first) */
-{
-	return previous==NULL ? global_varlist : previous->next;
+GLOBALVAR *global_getnext(GLOBALVAR *previous){ /**< a pointer to the previous variable name (NULL for first) */
+	if(previous == NULL){
+		return global_varlist;
+	} else {
+		return previous->next;
+	}
 }
 
 /** Creates a user-defined global variable
@@ -144,12 +145,11 @@ GLOBALVAR *global_getnext(GLOBALVAR *previous) /**< a pointer to the previous va
 	@todo this does not support module globals but needs to (no ticket)
 
  **/
-GLOBALVAR *global_create(char *name, ...)
-{
+GLOBALVAR *global_create(char *name, ...){
 	va_list arg;
 	PROPERTY *property = NULL, *lastprop = NULL;
 	PROPERTYTYPE proptype;
-	GLOBALVAR *var;
+	GLOBALVAR *var = NULL;
 
 	/* don't create duplicate entries */
 	if(global_find(name) != NULL){
@@ -164,93 +164,87 @@ GLOBALVAR *global_create(char *name, ...)
 	}
 
 	/* allocate the global var definition */
-	var = (GLOBALVAR*)malloc(sizeof(GLOBALVAR));
-	if (var==NULL)
-	{
+	var = (GLOBALVAR *)malloc(sizeof(GLOBALVAR));
+	
+	if(var == NULL){
 		errno = ENOMEM;
 		throw_exception("global_create(char *name='%s',...): unable to allocate memory for global variable", name);
 		return NULL;
 	}
-	strncpy(var->name,name,sizeof(var->name));
+
+	strncpy(var->name, name, sizeof(var->name));
 	var->prop = NULL;
 	var->next = NULL;
 
 	/* read the property args */
-	va_start(arg,name);
-	while ((proptype=va_arg(arg,PROPERTYTYPE))!=0)
-	{
-		if (proptype>_PT_LAST)
-		{
-			if (property==NULL)
+	va_start(arg, name);
+
+	while ((proptype = va_arg(arg,PROPERTYTYPE)) != 0){
+		if(proptype > _PT_LAST){
+			if(property == NULL){
 				throw_exception("global_create(char *name='%s',...): property keyword not specified after an enumeration property definition", name);
-			else if (proptype==PT_KEYWORD && property->ptype==PT_enumeration)
-			{
-				char *keyword = va_arg(arg,char*);
-				long keyvalue = va_arg(arg,long);
-				KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
-				if (key==NULL)
+			} else if(proptype == PT_KEYWORD && property->ptype == PT_enumeration) {
+				char *keyword = va_arg(arg, char *);
+				long keyvalue = va_arg(arg, long);
+				KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
+				if(key == NULL){
 					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
+				}
 				key->next = property->keywords;
-				strncpy(key->name,keyword,sizeof(key->name));
+				strncpy(key->name, keyword, sizeof(key->name));
 				key->value = keyvalue;
 				property->keywords = key;
-			}
-			else if (proptype==PT_KEYWORD && property->ptype==PT_set)
-			{
-				char *keyword = va_arg(arg,char*);
+			} else if(proptype == PT_KEYWORD && property->ptype == PT_set){
+				char *keyword = va_arg(arg, char *);
 				unsigned char keyvalue = va_arg(arg, int); /* uchars are promoted to int by GCC */
-				KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
-				if (keyvalue>63)
-					throw_exception("global_create(char *name='%s',...): set '%s' keyword value '%d' may not exceed 64",name,keyword,keyvalue);
-				if (key==NULL)
+				KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
+				if(keyvalue > 63){
+					throw_exception("global_create(char *name='%s',...): set '%s' keyword value '%d' may not exceed 64", name, keyword, keyvalue);
+				}
+				if(key == NULL){
 					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
+				}
 				key->next = property->keywords;
-				strncpy(key->name,keyword,sizeof(key->name));
+				strncpy(key->name, keyword, sizeof(key->name));
 				key->value = keyvalue;
 				property->keywords = key;
-			}
-			else if (proptype==PT_ACCESS)
-			{
-				PROPERTYACCESS pa = va_arg(arg,PROPERTYACCESS);
-				switch (pa) {
-				case PA_PUBLIC:
-				case PA_REFERENCE:
-				case PA_PROTECTED:
-				case PA_PRIVATE:
-					property->access = pa;
-					break;
-				default:
-					errno = EINVAL;
-					throw_exception("global_create(char *name='%s',...): unrecognized property access code (PROPERTYACCESS=%d)", name, pa);
-					break;
+			} else if(proptype == PT_ACCESS){
+				PROPERTYACCESS pa = va_arg(arg, PROPERTYACCESS);
+				switch (pa){
+					case PA_PUBLIC:
+					case PA_REFERENCE:
+					case PA_PROTECTED:
+					case PA_PRIVATE:
+						property->access = pa;
+						break;
+					default:
+						errno = EINVAL;
+						throw_exception("global_create(char *name='%s',...): unrecognized property access code (PROPERTYACCESS=%d)", name, pa);
+						break;
 				}
-			}
-			else if (proptype==PT_SIZE)
-			{
-				property->size = va_arg(arg,unsigned long);
-				if (property->addr==0)
-				{
-					if (property->size>0)
+			} else if(proptype == PT_SIZE){
+				property->size = va_arg(arg, unsigned long);
+				if(property->addr == 0){
+					if (property->size > 0){
 						property->addr = (PROPERTYADDR)malloc(property->size * property_size(property));
-					else
+					} else {
 						throw_exception("global_create(char *name='%s',...): property size must be greater than 0 to allocate memory", name);
+					}
 				}
-			}
-			else if (proptype==PT_UNITS)
-			{
-				char *unitspec = va_arg(arg,char*);
-				if ((property->unit = unit_find(unitspec))==NULL)
+			} else if(proptype == PT_UNITS){
+				char *unitspec = va_arg(arg, char *);
+				if((property->unit = unit_find(unitspec)) == NULL){
 					output_warning("global_create(char *name='%s',...): property %s unit '%s' is not recognized",name, property->name,unitspec);
-			}
-			else
+				}
+			} else {
 				throw_exception("global_create(char *name='%s',...): property extension code not recognized (PROPERTYTYPE=%d)", name, proptype);
-		}
-		else
-		{
-			DELEGATEDTYPE *delegation=(proptype==PT_delegated?va_arg(arg,DELEGATEDTYPE*):NULL);
+			}
+		} else {
+			DELEGATEDTYPE *delegation = (proptype == PT_delegated ? va_arg(arg, DELEGATEDTYPE *) : NULL);
 			char unitspec[1024];
-			if (strlen(name)>=sizeof(property->name))
+			if(strlen(name) >= sizeof(property->name)){
 				throw_exception("global_create(char *name='%s',...): property name '%s' is too big to store", name, name);
+			}
 			property = (PROPERTY*)malloc(sizeof(PROPERTY));
 			if (property==NULL)
 				throw_exception("global_create(char *name='%s',...): property '%s' could not be stored", name, name);

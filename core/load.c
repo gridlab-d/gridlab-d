@@ -1490,6 +1490,7 @@ static int expression(PARSER, double *pValue, UNIT **unit, OBJECT *obj){
 			ACCEPT;
 			if WHITE ACCEPT;
 			rpn_stk[rpn_i].op = 0;
+
 			rpn_stk[rpn_i].val = tVal;
 			++rpn_i;
 			++rpn_sz;
@@ -3094,6 +3095,14 @@ int set_flags(OBJECT *obj, char1024 propval)
 	return 1;
 }
 
+int is_int(PROPERTYTYPE pt){
+	if(pt == PT_int16 || pt == PT_int32 || pt == PT_int64){
+		return (int)pt;
+	} else {
+		return 0;
+	}
+}
+
 static int object_block(PARSER, OBJECT *parent, OBJECT **obj);
 static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 {
@@ -3180,6 +3189,51 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			}
 			else
 				ACCEPT;
+		}
+		else if(prop != NULL && is_int(prop->ptype) && TERM(functional_unit(HERE, &dval, &unit))){
+			int64 ival = 0;
+			int16 ival16 = 0;
+			int32 ival32 = 0;
+			int64 ival64 = 0;
+			int rv = 0;
+
+			if(unit != NULL && prop->unit != NULL && strcmp((char *)(unit), "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0){
+				output_message("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
+				REJECT;
+			} else {
+				switch(prop->ptype){
+					case PT_int16:
+						ival16 = (int16)dval;
+						ival = rv = object_set_int16_by_name(obj, propname, ival16);
+						break;
+					case PT_int32:
+						ival = ival32 = (int32)dval;
+						rv = object_set_int32_by_name(obj, propname, ival32);
+						break;
+					case PT_int64:
+						ival = ival64 = (int64)dval;
+						rv = object_set_int64_by_name(obj, propname, ival64);
+						break;
+					default:
+						output_error("function_int operating on a non-integer (we shouldn't be here)");
+						REJECT;
+				} /* end switch */
+				if(rv == 0){
+					output_message("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), ival);
+					REJECT;
+				} else {
+					ACCEPT;
+				}
+#if 0
+			if (object_set_double_by_name(obj,propname,dval)==0)
+			{
+				output_message("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
+				REJECT;
+			} else {
+				ACCEPT;
+			}
+#endif
+			} /* end unit_convert_ex else */
 		}
 		else if TERM(alternate_value(HERE,propval,sizeof(propval)))
 		{
@@ -3671,7 +3725,7 @@ Unterminated:
 	}
 	else
 	{
-		output_message("%s(%d): unsufficient buffer space to continue", filename, linenum);
+		output_message("%s(%d): insufficient buffer space to continue", filename, linenum);
 		return -1;
 	}
 }
@@ -3811,6 +3865,7 @@ static int include_file(char *incname, char *buffer, int size)
 	return count;
 }
 
+/** @return TRUE/SUCCESS for a successful macro read, FALSE/FAILED on parse error (which halts the loader) */
 static int process_macro(char *line, int size, char *filename, int linenum)
 {
 	if (strncmp(line,MACRO "endif",6)==0)
@@ -3956,8 +4011,11 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 				line+=len; size-=len;
 				return size>0;
 			}
-		}
-		else
+		} else if(sscanf(term, "<%[^>]>", value) == 1){
+			/* C include file */
+			output_verbose("added C include for \"%s\", value");
+			append_code(value);
+		} else
 		{
 			output_message("%s(%d): #include failed",filename,linenum);
 				strcpy(line,"\n");
@@ -4205,6 +4263,9 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		strcpy(line,"\n");
 		return FALSE;
 	}
+
+	output_message("%s(%d): macro fell out of logic tree", filename, linenum);
+	return FALSE;
 }
 
 STATUS loadall_glm(char *file) /**< a pointer to the first character in the file name string */
