@@ -201,6 +201,16 @@ int code_used = 0;
 #define FN_PLC		0x0080
 #define FN_ISA		0x0100
 
+/* used for tracking #include directives in files */
+#define BUFFERSIZE (65536*1000)
+typedef struct s_include_list {
+	char *file;
+	struct s_include_list *next;
+} INCLUDELIST;
+
+INCLUDELIST *include_list = NULL;
+INCLUDELIST *header_list = NULL;
+
 static char *forward_slashes(char *a)
 {
 	static char buffer[1024];
@@ -3803,58 +3813,80 @@ static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 	return n;
 }
 
-#define BUFFERSIZE (65536*1000)
-typedef struct s_include_list {
-	char *file;
-	struct s_include_list *next;
-} INCLUDELIST;
-INCLUDELIST *include_list = NULL;
+
 static int include_file(char *incname, char *buffer, int size)
 {
-	int move=0;
+	int move = 0;
 	char *p = buffer;
-	int count =0 ;
+	int count = 0;
+	char *ext = 0;
 	STAT stat;
 	char *ff = find_file(incname,NULL,R_OK);
-	FILE *fp;
+	FILE *fp = 0;
 	
 	/* check include list */
 	INCLUDELIST *list;
-	INCLUDELIST this={incname,include_list};
-	output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'", incname, buffer, size,getenv("GLPATH")?getenv("GLPATH"):"NULL",ff?ff:"NULL");
-	for (list = include_list; list!=NULL; list=list->next)
+	INCLUDELIST this={incname,include_list}; /* REALLY BAD IDEA ~~ this is a reserved C++ keyword */
+	output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'", 
+		incname, buffer, size, getenv("GLPATH") ? getenv("GLPATH") : "NULL", ff ? ff : "NULL");
+	for (list = include_list; list != NULL; list = list->next)
 	{
-		if (strcmp(incname,list->file)==0)
+		if (strcmp(incname, list->file) == 0)
 		{
 			output_message("%s(%d): include file has already been included", incname, linenum);
 			return 0;
 		}
 	}
 
+	/* if source file, add to header list and keep moving */
+	ext = strchr(incname, '.');
+	if(ext != 0){
+		if(strcmp(ext, ".hpp") == 0 || strcmp(ext, ".h")==0 || strcmp(ext, ".c") == 0 || strcmp(ext, ".cpp") == 0){
+			// append to list
+			for (list = header_list; list != NULL; list = list->next){
+				if(strcmp(incname, list->file) == 0){
+					// normal behavior
+					return 0;
+				}
+			}
+			this.next = header_list;
+			header_list = &this;
+		}
+	} else { /* no extension */
+		for (list = header_list; list != NULL; list = list->next){
+			if(strcmp(incname, list->file) == 0){
+				// normal behavior
+				return 0;
+			}
+		}
+		this.next = header_list;
+		header_list = &this;
+	}
+
 	/* open file */
-	fp = ff?fopen(ff,"r"):NULL;
-	if (fp==NULL)
-	{
+	fp = ff ? fopen(ff, "r") : NULL;
+	
+	if(fp == NULL){
 		output_message("%s(%d): include file open failed: %s", incname, linenum, strerror(errno));
 		return 0;
 	}
-	if (FSTAT(fileno(fp),&stat)==0)
-	{
-		if (stat.st_mtime > modtime)
+
+	if(FSTAT(fileno(fp), &stat) == 0){
+		if(stat.st_mtime > modtime){
 			modtime = stat.st_mtime;
-		if (size<stat.st_size)
-		{
+		}
+
+		if(size < stat.st_size){
 			/** @todo buffer must grow (ticket #31) */
 			/* buffer = realloc(buffer,size+stat.st_size); */
 			output_message("%s(%d): unable to grow size of read buffer to include file", incname, linenum);
 			return 0;
 		}
-	}
-	else
-	{
+	} else {
 		output_message("%s(%d): unable to get size of included file", incname, linenum);
 		return 0;
 	}
+
 	output_verbose("%s(%d): included file is %d bytes long", incname, linenum, stat.st_size);
 
 	/* reset line counter for parser */
