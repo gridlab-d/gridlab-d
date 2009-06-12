@@ -226,8 +226,7 @@
 #include "kill.h"
 
 #ifndef _MAX_PATH
-#include <linux/limits.h>
-#define _MAX_PATH PATH_MAX
+#define _MAX_PATH 1024
 #endif
 
 /* these are defined in exec.c */

@@ -41,9 +41,11 @@ typedef double real;
 #endif
 
 #ifndef __cplusplus
+#ifndef true
 typedef unsigned char bool;
 #define true (1)
 #define false (0)
+#endif
 #endif
 
 

@@ -98,8 +98,7 @@ int exec_init()
 }
 
 #ifndef _MAX_PATH
-#include <linux/limits.h>
-#define _MAX_PATH PATH_MAX
+#define _MAX_PATH 1024
 #endif
 
 #define PASSINIT(p) (p % 2 ? ranks[p]->first_used : ranks[p]->last_used)
