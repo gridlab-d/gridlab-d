@@ -17,6 +17,8 @@ public:
 	inline overhead_line(CLASS *cl=oclass):line(cl){};
 	int isa(char *classname);
 	int create(void);
+private:
+	void test_phases(line_configuration *config, const char ph);
 };
 
 #endif // _OVERHEADLINE_H

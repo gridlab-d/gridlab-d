@@ -60,27 +60,14 @@ int overhead_line::init(OBJECT *parent)
 		configuration object.  Please ensure you have a line_configuration object selected.
 		*/
 
+	//Test the phases
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 
-	#define TEST_CONFIG(ph)                                                       \
-		if (config->phase##ph##_conductor &&                                       \
-				!gl_object_isa(config->phase##ph##_conductor, "overhead_line_conductor")) \
-			throw "invalid conductor for phase " #ph " of overhead line";           \
-			/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an overhead line conductor, it may be an underground or triplex-line only conductor */	\
-		else if ((!config->phase##ph##_conductor) && has_phase(PHASE_##ph))                 \
-			throw "missing conductor for phase " #ph " of overhead line";
-			/*  TROUBLESHOOT
-			The conductor specified for the indicated phase for the overhead line is missing
-			or invalid.
-			*/
-
-	TEST_CONFIG(A)
-	TEST_CONFIG(B)
-	TEST_CONFIG(C)
-	TEST_CONFIG(N)
+	test_phases(config,'A');
+	test_phases(config,'B');
+	test_phases(config,'C');
+	test_phases(config,'N');
 	
-	#undef TEST_CONFIG
-
 	if (!config->line_spacing || !gl_object_isa(config->line_spacing, "line_spacing"))
 		throw "invalid or missing line spacing on overhead line";
 		/*  TROUBLESHOOT
@@ -239,6 +226,51 @@ void overhead_line::recalc(void)
 int overhead_line::isa(char *classname)
 {
 	return strcmp(classname,"overhead_line")==0 || line::isa(classname);
+}
+
+/**
+* test_phases is called to ensure all necessary conductors are included in the
+* configuration object and are of the proper type.
+*
+* @param config the line configuration object
+* @param ph the phase to check
+*/
+void overhead_line::test_phases(line_configuration *config, const char ph)
+{
+	bool condCheck, condNotPres;
+
+	if (ph=='A')
+	{
+		condCheck = (config->phaseA_conductor && !gl_object_isa(config->phaseA_conductor, "overhead_line_conductor"));
+		condNotPres = ((!config->phaseA_conductor) && has_phase(PHASE_A));
+	}
+	else if (ph=='B')
+	{
+		condCheck = (config->phaseB_conductor && !gl_object_isa(config->phaseB_conductor, "overhead_line_conductor"));
+		condNotPres = ((!config->phaseB_conductor) && has_phase(PHASE_B));
+	}
+	else if (ph=='C')
+	{
+		condCheck = (config->phaseC_conductor && !gl_object_isa(config->phaseC_conductor, "overhead_line_conductor"));
+		condNotPres = ((!config->phaseC_conductor) && has_phase(PHASE_C));
+	}
+	else if (ph=='N')
+		{
+		condCheck = (config->phaseN_conductor && !gl_object_isa(config->phaseN_conductor, "overhead_line_conductor"));
+		condNotPres = ((!config->phaseN_conductor) && has_phase(PHASE_N));
+	}
+	//Nothing else down here.  Should never get anything besides ABCN to check
+
+	if (condCheck==true)
+		GL_THROW("invalid conductor for phase %c of overhead line",ph);
+		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an overhead line conductor, it may be an underground or triplex-line only conductor */
+
+	if (condNotPres==true)
+		GL_THROW("missing conductor for phase %c of overhead line",ph);
+		/*  TROUBLESHOOT
+		The conductor specified for the indicated phase for the overhead line is missing
+		or invalid.
+		*/
 }
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: overhead_line

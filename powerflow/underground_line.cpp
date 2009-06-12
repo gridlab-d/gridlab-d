@@ -60,27 +60,32 @@ int underground_line::init(OBJECT *parent)
 		configuration object.  Please ensure you have a line_configuration object selected.
 		*/
 
-
+	//Test the phases
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 
-	#define TEST_CONFIG(ph)                                                       \
-		if (config->phase##ph##_conductor &&                                       \
-				!gl_object_isa(config->phase##ph##_conductor, "underground_line_conductor")) \
-			throw "invalid conductor for phase " #ph " of underground line";           \
-			/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an underground line conductor, it may be an overhead or triplex-line only conductor. */ \
-		else if ((!config->phase##ph##_conductor) && (has_phase(PHASE_##ph)))         \
-			throw "missing conductor for phase " #ph " of underground line";
-			/*  TROUBLESHOOT
-			The conductor specified for the indicated phase for the underground line is missing
-			or invalid.
-			*/
+	test_phases(config,'A');
+	test_phases(config,'B');
+	test_phases(config,'C');
+	test_phases(config,'N');
 
-	TEST_CONFIG(A)
-	TEST_CONFIG(B)
-	TEST_CONFIG(C)
-	TEST_CONFIG(N)
+	//#define TEST_CONFIG(ph)                                                       \
+	//	if (config->phase##ph##_conductor &&                                       \
+	//			!gl_object_isa(config->phase##ph##_conductor, "underground_line_conductor")) \
+	//		throw "invalid conductor for phase " #ph " of underground line";           \
+	//		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an underground line conductor, it may be an overhead or triplex-line only conductor. */ \
+	//	else if ((!config->phase##ph##_conductor) && (has_phase(PHASE_##ph)))         \
+	//		throw "missing conductor for phase " #ph " of underground line";
+	//		/*  TROUBLESHOOT
+	//		The conductor specified for the indicated phase for the underground line is missing
+	//		or invalid.
+	//		*/
 
-	#undef TEST_CONFIG
+	//TEST_CONFIG(A)
+	//TEST_CONFIG(B)
+	//TEST_CONFIG(C)
+	//TEST_CONFIG(N)
+
+	//#undef TEST_CONFIG
 
 	if (!config->line_spacing || !gl_object_isa(config->line_spacing, "line_spacing"))
 		throw "invalid or missing line spacing on underground line";
@@ -296,7 +301,50 @@ int underground_line::isa(char *classname)
 	return strcmp(classname,"underground_line")==0 || line::isa(classname);
 }
 
+/**
+* test_phases is called to ensure all necessary conductors are included in the
+* configuration object and are of the proper type.
+*
+* @param config the line configuration object
+* @param ph the phase to check
+*/
+void underground_line::test_phases(line_configuration *config, const char ph)
+{
+	bool condCheck, condNotPres;
 
+	if (ph=='A')
+	{
+		condCheck = (config->phaseA_conductor && !gl_object_isa(config->phaseA_conductor, "underground_line_conductor"));
+		condNotPres = ((!config->phaseA_conductor) && has_phase(PHASE_A));
+	}
+	else if (ph=='B')
+	{
+		condCheck = (config->phaseB_conductor && !gl_object_isa(config->phaseB_conductor, "underground_line_conductor"));
+		condNotPres = ((!config->phaseB_conductor) && has_phase(PHASE_B));
+	}
+	else if (ph=='C')
+	{
+		condCheck = (config->phaseC_conductor && !gl_object_isa(config->phaseC_conductor, "underground_line_conductor"));
+		condNotPres = ((!config->phaseC_conductor) && has_phase(PHASE_C));
+	}
+	else if (ph=='N')
+		{
+		condCheck = (config->phaseN_conductor && !gl_object_isa(config->phaseN_conductor, "underground_line_conductor"));
+		condNotPres = ((!config->phaseN_conductor) && has_phase(PHASE_N));
+	}
+	//Nothing else down here.  Should never get anything besides ABCN to check
+
+	if (condCheck==true)
+		GL_THROW("invalid conductor for phase %c of underground line",ph);
+		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an underground line conductor, it may be an overhead or triplex-line only conductor. */
+
+	if (condNotPres==true)
+		GL_THROW("missing conductor for phase %c of underground line",ph);
+		/*  TROUBLESHOOT
+		The object specified as the configuration for the underground line is not a valid
+		configuration object.  Please ensure you have a line_configuration object selected.
+		*/
+}
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: underground_line
 //////////////////////////////////////////////////////////////////////////

@@ -87,11 +87,6 @@ int line::init(OBJECT *parent)
 	node *pFrom = OBJECTDATA(from,node);
 	node *pTo = OBJECTDATA(to,node);
 
-	/* check for phase mismatch */
-	//if (!pTo->has_phase(PHASE_S))
-	//	if ((pFrom->phases&pTo->phases) != pTo->phases)
-	//		throw "to phases is not a subset of from phases";	
-
 	/* check for node nominal voltage mismatch */
 	if (pFrom->nominal_voltage != pTo->nominal_voltage)
 		throw "from and to node nominal voltage mismatch";
