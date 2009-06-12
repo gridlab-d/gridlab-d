@@ -116,6 +116,7 @@ static TIMESTAMP player_read(OBJECT *obj)
 	TIMESTAMP t1;
 	char *result=NULL;
 	char32 value;
+	int voff=0;
 Retry:
 	result = my->ops->read(my, buffer, sizeof(buffer));
 
@@ -136,12 +137,17 @@ Retry:
 	}
 	if (result[0]=='#' || result[0]=='\n') /* ignore comments and blank lines */
 		goto Retry;
-	if (sscanf(result,"%" FMT_INT64 "d,%31[^\n]", &t1,my->next.value)==2)
+	if (sscanf(result,"%" FMT_INT64 "d,%31[^\n]", &t1,value)==2)
 	{
-		if (my->loop==my->loopnum) 
+		if (my->loop==my->loopnum) {
 			my->next.ts = t1;
+			while(value[voff] == ' '){
+				++voff;
+			}
+			strcpy(my->next.value, value+voff);
+		}
 	}
-	else if (sscanf(result,"%" FMT_INT64 "d%1[^,],%31[^\n]", &t1, unit, my->next.value)==3)
+	else if (sscanf(result,"%" FMT_INT64 "d%1[^,],%31[^\n]", &t1, unit, value)==3)
 	{
 		{
 			int64 scale=1;
@@ -153,10 +159,19 @@ Retry:
 			default: break;
 			}
 			t1 *= scale; 
-			if (result[0]=='+') /* timeshifts have leading + */
+			if (result[0]=='+'){ /* timeshifts have leading + */
 				my->next.ts += t1;
-			else if (my->loop==my->loopnum) /* absolute times are ignored on all but first loops */
+				while(value[voff] == ' '){
+					++voff;
+				}
+				strcpy(my->next.value, value+voff);
+			} else if (my->loop==my->loopnum){ /* absolute times are ignored on all but first loops */
 				my->next.ts = t1;
+				while(value[voff] == ' '){
+					++voff;
+				}
+				strcpy(my->next.value, value+voff);
+			}
 		}
 	}
 	else if (sscanf(result,"%d-%d-%d %d:%d:%d,%31[^\n]",&Y,&m,&d,&H,&M,&S,value)==7)
@@ -173,7 +188,10 @@ Retry:
 		t1 = (TIMESTAMP)gl_mktime(&dt);
 		if (t1!=TS_INVALID && my->loop==my->loopnum){
 			my->next.ts = t1;
-			strcpy(my->next.value, value);
+			while(value[voff] == ' '){
+				++voff;
+			}
+			strcpy(my->next.value, value+voff);
 		}
 	}
 Done:
