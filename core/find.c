@@ -171,6 +171,12 @@ static int compare_property_alt(OBJECT *obj, char *propname, FINDOP op, void *va
 	int32 *int32_target = NULL;
 	int64 *int64_target = NULL;
 	PROPERTY *prop = object_get_property(obj, propname);
+
+	if(prop == NULL){
+		/* property not found in object ~ normal operation */
+		return 0;
+	}
+
 	switch(prop->ptype){
 		case PT_void:
 			return 0;	/* no comparsion to be made */
@@ -243,7 +249,8 @@ static int compare(OBJECT *obj, FINDTYPE ftype, FINDOP op, void *value, char *pr
 	case FT_MODULE: return compare_string((char*)obj->oclass->module->name,op,(char*)value);
 	case FT_RANK: return compare_int((int64)obj->rank,op,(int64)*(int*)value);
 	case FT_CLOCK: return compare_int((int64)obj->clock,op,(int64)*(TIMESTAMP*)value);
-	case FT_PROPERTY: return compare_property_alt(obj,propname,op,value);
+	//case FT_PROPERTY: return compare_property_alt(obj,propname,op,value);
+	case FT_PROPERTY: return compare_property(obj,propname,op,value);
 	default:
 		output_error("findtype %s not supported", ftype);
 		/* TROUBLESHOOT
