@@ -152,6 +152,13 @@ int capacitor::init(OBJECT *parent)
 	if (control==VAR)
 		gl_warning("VAR control is implemented as a \"Best Guess\" implementation.  Use at your own risk.");
 
+	if ((control != MANUAL) && (time_delay == 0) && (dwell_time==0))
+		gl_warning("Automatic controls can oscillate to the iteration limit with no time delays.  To prevent this, ensure your switching limits are reasonable.");
+		/*  TROUBLESHOOT
+		With no time delays set (time_delay or dwell_time), the capacitor performs everything instantaneously.  If the set points are too close together,
+		the capacitor may oscillate until the convergence limit is reached.  Avoid this for proper answers.
+		*/
+
 	return result;
 }
 
@@ -200,22 +207,43 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 	{
 		if (switchA_state != switchA_state_Prev)
 		{
-			switchA_state_Next = switchA_state;
-			switchA_state = switchA_state_Prev;
+			if ((control_level == BANK) && ((pt_phase & PHASE_A) != PHASE_A) && (time_delay==0))	//Special handling of no time delay
+			{
+				switchA_state = switchA_state_Next;
+			}
+			else
+			{
+				switchA_state_Next = switchA_state;
+				switchA_state = switchA_state_Prev;
+			}
 			time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
 		}
 
 		if (switchB_state != switchB_state_Prev)
 		{
-			switchB_state_Next = switchB_state;
-			switchB_state = switchB_state_Prev;
+			if ((control_level == BANK) && ((pt_phase & PHASE_B) != PHASE_B) && (time_delay==0))
+			{
+				switchB_state = switchB_state_Next;
+			}
+			else
+			{
+				switchB_state_Next = switchB_state;
+				switchB_state = switchB_state_Prev;
+			}
 			time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
 		}
 
 		if (switchC_state != switchC_state_Prev)
 		{
-			switchC_state_Next = switchC_state;
-			switchC_state = switchC_state_Prev;
+			if ((control_level == BANK) && ((pt_phase & PHASE_C) != PHASE_C) && (time_delay==0))	//Special handling of no time delay
+			{
+				switchC_state = switchC_state_Next;
+			}
+			else
+			{
+				switchC_state_Next = switchC_state;
+				switchC_state = switchC_state_Prev;
+			}
 			time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
 		}
 	}
@@ -459,7 +487,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 					switchA_state_Next = switchB_state_Next = switchC_state_Next = OPEN;	//Bank control, open them all (this should never be an issue)
 
 				switchA_state_Req_Next = switchB_state_Req_Next = switchC_state_Req_Next = switchA_state_Next; //Slight override, otherwise it oscillates
-				switchA_state_Prev = switchB_state_Prev = switchC_state_Prev = switchA_state_Next;
+				//switchA_state_Prev = switchB_state_Prev = switchC_state_Prev = switchA_state_Next;
 			}
 		}
 
