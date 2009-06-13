@@ -3820,6 +3820,7 @@ static int include_file(char *incname, char *buffer, int size)
 	char *p = buffer;
 	int count = 0;
 	char *ext = 0;
+	char *name = 0;
 	STAT stat;
 	char *ff = find_file(incname,NULL,R_OK);
 	FILE *fp = 0;
@@ -3839,8 +3840,9 @@ static int include_file(char *incname, char *buffer, int size)
 	}
 
 	/* if source file, add to header list and keep moving */
-	ext = strchr(incname, '.');
-	if(ext != 0){
+	ext = strrchr(incname, '.');
+	name = strrchr(incname, '/');
+	if (ext>name) {
 		if(strcmp(ext, ".hpp") == 0 || strcmp(ext, ".h")==0 || strcmp(ext, ".c") == 0 || strcmp(ext, ".cpp") == 0){
 			// append to list
 			for (list = header_list; list != NULL; list = list->next){
