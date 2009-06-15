@@ -68,25 +68,6 @@ int underground_line::init(OBJECT *parent)
 	test_phases(config,'C');
 	test_phases(config,'N');
 
-	//#define TEST_CONFIG(ph)                                                       \
-	//	if (config->phase##ph##_conductor &&                                       \
-	//			!gl_object_isa(config->phase##ph##_conductor, "underground_line_conductor")) \
-	//		throw "invalid conductor for phase " #ph " of underground line";           \
-	//		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an underground line conductor, it may be an overhead or triplex-line only conductor. */ \
-	//	else if ((!config->phase##ph##_conductor) && (has_phase(PHASE_##ph)))         \
-	//		throw "missing conductor for phase " #ph " of underground line";
-	//		/*  TROUBLESHOOT
-	//		The conductor specified for the indicated phase for the underground line is missing
-	//		or invalid.
-	//		*/
-
-	//TEST_CONFIG(A)
-	//TEST_CONFIG(B)
-	//TEST_CONFIG(C)
-	//TEST_CONFIG(N)
-
-	//#undef TEST_CONFIG
-
 	if (!config->line_spacing || !gl_object_isa(config->line_spacing, "line_spacing"))
 		throw "invalid or missing line spacing on underground line";
 		/*  TROUBLESHOOT
