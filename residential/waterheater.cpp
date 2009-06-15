@@ -278,10 +278,6 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 	/* time has passed ~ calculate internal gains, height change, temperature change */
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 
-	// calculate water demand
-	cur_water_demand = water_demand;
-	water_demand = last_water_demand;
-
 	// capture old temperature
 	if(t0 < t1){ // not an iteration
 		Tw_old = Tw;
@@ -316,7 +312,10 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// Now find our current temperatures and boundary height...
 	// And compute the time to the next transition...
-	water_demand = cur_water_demand;
+	//Adjusted because shapers go on sync, not presync
+	cur_water_demand = water_demand;
+	water_demand = last_water_demand;
+
 	set_time_to_transition();
 	last_water_demand = cur_water_demand;
 
