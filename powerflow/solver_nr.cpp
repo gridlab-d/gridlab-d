@@ -151,20 +151,29 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 
 int indexer, jindexer;
 char jindex, kindex;
-// Build the Y_NR matrix, the off-diagonal elements are identical to the corresponding elements of bus admittance matrix.
-// The off-diagonal elements of Y_NR marix are not updated at each iteration.
+ //*Build the Y_NR matrix, the off-diagonal elements are identical to the corresponding elements of bus admittance matrix.
+ //The off-diagonal elements of Y_NR marix are not updated at each iteration.*/
     if (BA_diag == NULL)
 	{
 		BA_diag = new Bus_admit[bus_count];   //BA_diag store the location and value of diagonal elements of Bus Admittance matrix
 	}
 
-	
+complex tempY[3][3];	
 for (indexer=0; indexer<bus_count; indexer++) // Construct the diagonal elements of Bus admittance matrix.
 	{
-		complex tempY[3][3] = {0};
+		for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+					BA_diag[indexer].Y[jindex][kindex] = 0;
+					tempY[jindex][kindex] = 0;
+					}
+				}
+ 
+
 		for (jindexer=0; jindexer<branch_count;jindexer++)
 		{ 
-			if ( branch[jindexer].from = indexer)
+			if ( branch[jindexer].from == indexer)
 			{ 
 				for (jindex=0; jindex<3; jindex++)
 				{
@@ -174,7 +183,7 @@ for (indexer=0; indexer<bus_count; indexer++) // Construct the diagonal elements
 					}
 				}
 			}
-			else if ( branch[jindexer].to = indexer)
+			else if ( branch[jindexer].to == indexer)
 			{ 
 				for (jindex=0; jindex<3; jindex++)
 				{
@@ -191,10 +200,10 @@ for (indexer=0; indexer<bus_count; indexer++) // Construct the diagonal elements
 				{
 					for (kindex=0; kindex<3; kindex++)
 					{
-						*BA_diag[indexer].Y[jindex][kindex] = tempY[jindex][kindex];// BA_diag store the 3*3 complex admittance value of n elements, n = bus_count
+						BA_diag[indexer].Y[jindex][kindex] = tempY[jindex][kindex];// BA_diag store the 3*3 complex admittance value of n elements, n = bus_count
 					}
-				}
-	
+			
+		}
 }
 
 
