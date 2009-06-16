@@ -105,6 +105,12 @@ static int write_collector(struct collector *my, char *ts, char *value)
 	return my->ops->write(my, ts, value);
 }
 
+static void close_collector(struct collector *my){
+	if(my->ops){
+		my->ops->close(my);
+	}
+}
+
 static TIMESTAMP collector_write(OBJECT *obj)
 {
 	struct collector *my = OBJECTDATA(obj,struct collector);
@@ -124,7 +130,7 @@ static TIMESTAMP collector_write(OBJECT *obj)
 		|| write_collector(my,ts,my->last.value)==0) /* write failed */
 	{
 		if (my->ops){
-			my->ops->close(my);
+			close_collector(my);
 		} else {
 			gl_error("collector_write: no TAPEOP structure when closing the tape");
 		}
@@ -179,8 +185,9 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	COMPAREOP comparison;
 	char1024 buffer = "";
 	
-	if (my->status==TS_DONE)
+	if(my->status == TS_DONE){
 		return TS_NEVER;
+	}
 
 	/* connect to property */
 	if (my->aggr==NULL)
@@ -191,10 +198,21 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	{
 		sprintf(buffer,"'%s' contains an aggregate that is not found in the group '%s'", my->property, my->group);
 		my->status = TS_ERROR;
+		goto Error;
 	}
-	else if (read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
+	
+	if((my->status == TS_OPEN) && (t0 > obj->clock)){
+		obj->clock = t0;
+		if((my->interval > 0) && (my->last.ts + my->interval <= t0) && (my->last.value[0] != 0)){
+			my->last.ts = t0;
+			collector_write(obj);
+		}
+	}
+
+	if(my->aggr != NULL && read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
 	{
 		sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property, my->group);
+		close_collector(my);
 		my->status = TS_ERROR;
 	}
 
@@ -206,27 +224,34 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 		/* if not trigger or can't get access */
 		int actual = strcmp(buffer,my->trigger+1);
-		if (actual!=desired || (my->status==TS_INIT && !collector_open(obj)))
-
+		if (actual!=desired || (my->status==TS_INIT && !collector_open(obj))){
 			/* better luck next time */
-			return TS_NEVER;
-	}
-	else if (my->status==TS_INIT && !collector_open(obj))
-		return TS_NEVER;
-
-	/* write tape */
-	if (my->status==TS_OPEN)
-	{	
-		if (my->interval==0 /* sample on every pass */
-			|| ((my->interval==-1) && my->last.ts!=t0 && strcmp(buffer,my->last.value)!=0) /* sample only when value changes */
-			|| (my->interval>0 && my->last.ts+my->interval<=t0)) /* sample regularly */
-		{
-			my->last.ts = t0;
-			strncpy(my->last.value,buffer,sizeof(my->last.value));
-			collector_write(obj);
+			return (my->interval==0 || my->interval==-1) ? TS_NEVER : t0+my->interval;
 		}
 	}
-	else if (my->status==TS_ERROR)
+	else if (my->status==TS_INIT && !collector_open(obj)){
+		close_collector(my);
+		return TS_NEVER;
+	}
+
+	if(my->last.ts < 1 && my->interval != -1){
+		my->last.ts = t0;
+	}
+
+	/* write tape */
+	if(my->status == TS_OPEN){	
+		if(my->interval == 0 /* sample on every pass */
+			|| ((my->interval == -1) && my->last.ts != t0 && strcmp(buffer, my->last.value) != 0) /* sample only when value changes */
+			){
+			strncpy(my->last.value, buffer, sizeof(my->last.value));
+			my->last.ts = t0;
+			collector_write(obj);
+		} else if(my->interval > 0){
+			strncpy(my->last.value, buffer, sizeof(my->last.value));
+		}
+	}
+Error:
+	if (my->status==TS_ERROR)
 	{
 		gl_error("collector %d %s\n",obj->id, buffer);
 		my->status=TS_DONE;

@@ -215,18 +215,18 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	COMPAREOP comparison;
 	char1024 buffer = "";
 	
+	if (my->status==TS_DONE)
+	{
+		close_recorder(my); /* note: potentially called every sync pass for multiple timesteps, catch fp==NULL in tape ops */
+		return TS_NEVER;
+	}
+
 	if(obj->parent == NULL){
 		char tb[32];
 		sprintf(buffer, "'%s' lacks a parent object", obj->name ? obj->name : tb, sprintf(tb, "recorder:%i", obj->id));
 		close_recorder(my);
 		my->status = TS_ERROR;
 		goto Error;
-	}
-
-	if (my->status==TS_DONE)
-	{
-		close_recorder(my); /* note: potentially called every sync pass for multiple timesteps, catch fp==NULL in tape ops */
-		return TS_NEVER;
 	}
 
 	if(my->last.ts < 1 && my->interval != -1)
@@ -310,6 +310,7 @@ Error:
 		gl_error("recorder %d %s\n",obj->id, buffer);
 		close_recorder(my);
 		my->status=TS_DONE;
+		return TS_NEVER;
 	}
 
 	if (my->interval==0 || my->interval==-1) 
