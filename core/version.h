@@ -2,5 +2,5 @@
 #define REV_MAJOR 2
 #define REV_MINOR 0
 #define COPYRIGHT "Copyright (C) 2004-2009\nBattelle Memorial Institute\nAll Rights Reserved"
-#define BUILD "$Revision: 654 $"
+#define BUILD "$Revision: 300 $"
 #define BRANCH "Diablo" 
