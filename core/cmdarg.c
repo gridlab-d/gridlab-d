@@ -327,7 +327,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 					mod = module_load(strtok(argv[0],":"),0,NULL);
 					oclass = class_get_class_from_classname(cname);
 					if(oclass == NULL){
-						output_fatal("Unable to find class \'%s\' in module \'%s\'", cname, argv[0]);
+						output_fatal("Unable to find class '%s' in module '%s'", cname, argv[0]);
 						/*	TROUBLESHOOT
 							The <b>--modhelp</b> parameter was found on the command line, but
 							if was followed by a class specification that isn't valid.

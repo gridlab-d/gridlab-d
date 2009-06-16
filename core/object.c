@@ -770,7 +770,7 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 		return SUCCESS;
 	}
 	else {
-		output_error("object %s:%d called set_header_value() for invalid field \'%s\'", name);
+		output_error("object %s:%d called set_header_value() for invalid field '%s'", name);
 		/*	TROUBLESHOOT
 			The valid header fields are "name", "parent", "rank", "clock", "valid_to", "latitude",
 			"longitude", "in_svc", "out_svc", and "flags".
@@ -1793,7 +1793,7 @@ OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name){
 	
 	if(name != NULL){
 		if(object_find_name(name) != NULL){
-			output_error("An object named \"%s\" already exists!", name);
+			output_error("An object named '%s' already exists!", name);
 			/*	TROUBLESHOOT
 				GridLab-D prohibits two objects from using the same name, to prevent
 				ambiguous object look-ups.

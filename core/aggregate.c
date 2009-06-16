@@ -68,7 +68,7 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 	if(sscanf(aggrval, "%32[A-Za-z0-9_][%[A-Za-z0-9_]]", aggrprop, aggrunit) == 2){
 		to_unit = unit_find(aggrunit);
 		if(to_unit == NULL){
-			output_error("aggregate group '%s' has invalid units (%s)\n", aggrval, aggrunit);
+			output_error("aggregate group '%s' has invalid units (%s)", aggrval, aggrunit);
 			/* TROUBLESHOOT
 				An aggregation expression include a unit specification in the value expression, but the unit is not found.
 				Check your aggregations and make sure all the units are defined.

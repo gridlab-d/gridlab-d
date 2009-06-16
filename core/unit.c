@@ -150,7 +150,7 @@ UNIT *unit_find_underived(char *unit)
 	/* scan for base unit */
 	p = unit_find_raw(unit+s->len);
 	if(p == NULL){
-		output_error("compound unit \'%s\' could not be correctly identified", unit);
+		output_error("compound unit '%s' could not be correctly identified", unit);
 		/*	TROUBLESHOOTING
 			The given unit had a recognized scalar prefix, but the underlying base unit was not identified.   This
 			will cascade a null pointer to the calling method.
@@ -226,7 +226,7 @@ UNIT *unit_primary(char *name, double c, double e, double h, double k, double m,
 	UNIT *p = unit_find_raw(name);
 #if 0
 	){
-		throw_exception("raw unit \'%s\' was not found", name);
+		throw_exception("raw unit '%s' was not found", name);
 		/*	TROUBLESHOOT
 			The requested unit was not found by the unit subsystem.  There is a good chance that this function will
 			end up triggering a null pointer exception if not properly handled.
@@ -601,13 +601,13 @@ int unit_convert(char *from, char *to, double *pValue){
 		if(pTo != NULL){
 			return unit_convert_ex(pFrom, pTo, pValue);
 		} else {
-			output_error("could not find \'to\' unit %s for unit_convert", to);
+			output_error("could not find 'to' unit %s for unit_convert", to);
 			/*	TROUBLESHOOT
 				The specified unit name was not found by the unit system.  Verify that it is a valid unit name.
 			*/
 		}
 	} else {
-		output_error("could not find \'from\' unit %s for unit_convert", from);
+		output_error("could not find 'from' unit %s for unit_convert", from);
 		/*	TROUBLESHOOT
 			The specified unit name was not found by the unit system.  Verify that it is a valid unit name.
 		*/
