@@ -123,6 +123,7 @@ int capacitor::init(OBJECT *parent)
 	int result = node::init();
 
 	OBJECT *obj = OBJECTHDR(this);
+	node *RNode = OBJECTDATA(RemoteNode,node);
 
 	if ((capacitor_A == 0.0) && (capacitor_A == 0.0) && (capacitor_A == 0.0))
 		gl_error("Capacitor:%d does not have any capacitance values defined!",obj->id);
@@ -149,8 +150,12 @@ int capacitor::init(OBJECT *parent)
 	cap_value[1] = complex(0,capacitor_B/(cap_nominal_voltage * cap_nominal_voltage));
 	cap_value[2] = complex(0,capacitor_C/(cap_nominal_voltage * cap_nominal_voltage));
 
-	if (control==VAR)
-		gl_warning("VAR control is implemented as a \"Best Guess\" implementation.  Use at your own risk.");
+	if ((control == VAR) && (RNode == NULL))
+		gl_warning("If this is a child-attached capacitor, point sense_node to its parent for proper VAR control.");
+		/*  TROUBLESHOOT
+		VAR control calculates reactive power directly.  If the capacitor is connected as a child node, it will typically not see a current injection and will have
+		a reactive power of zero.  This will result in no switching operations.  If in a child connection, specify sense_node as the parent as well.
+		*/
 
 	if ((control != MANUAL) && (time_delay == 0) && (dwell_time==0))
 		gl_warning("Automatic controls can oscillate to the iteration limit with no time delays.  To prevent this, ensure your switching limits are reasonable.");
@@ -160,30 +165,6 @@ int capacitor::init(OBJECT *parent)
 		*/
 
 	return result;
-}
-
-TIMESTAMP capacitor::presync(TIMESTAMP t0)
-{
-	node *RNode = OBJECTDATA(RemoteNode,node);
-
-	if (control==VAR)	//Grab the power values before they are zeroed out (mainly by FBS)
-	{
-		//Only grabbing L-N power.  No effective way to take L-N back to L-L power (no reference)
-		if (RNode == NULL)	//L-N power
-		{
-			VArVals[0] = (voltage[0]*~current_inj[0]).Im();
-			VArVals[1] = (voltage[1]*~current_inj[1]).Im();
-			VArVals[2] = (voltage[2]*~current_inj[2]).Im();
-		}
-		else
-		{
-			VArVals[0] = (RNode->voltage[0]*~RNode->current_inj[0]).Im();
-			VArVals[1] = (RNode->voltage[1]*~RNode->current_inj[1]).Im();
-			VArVals[2] = (RNode->voltage[2]*~RNode->current_inj[2]).Im();
-		}
-	}
-
-	return node::presync(t0);
 }
 
 TIMESTAMP capacitor::sync(TIMESTAMP t0)
@@ -576,6 +557,30 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 	NotFirstIteration=true;	//Set so we know we can start automating (powerflow takes about 1 iteration to get even ball-park values)
 
 	return result;
+}
+
+TIMESTAMP capacitor::postsync(TIMESTAMP t0)
+{
+	node *RNode = OBJECTDATA(RemoteNode,node);
+
+	if (control==VAR)	//Grab the power values before they are zeroed out (mainly by FBS)
+	{
+		//Only grabbing L-N power.  No effective way to take L-N back to L-L power (no reference)
+		if (RNode == NULL)	//L-N power
+		{
+			VArVals[0] = (voltage[0]*~current_inj[0]).Im();
+			VArVals[1] = (voltage[1]*~current_inj[1]).Im();
+			VArVals[2] = (voltage[2]*~current_inj[2]).Im();
+		}
+		else
+		{
+			VArVals[0] = (RNode->voltage[0]*~RNode->current_inj[0]).Im();
+			VArVals[1] = (RNode->voltage[1]*~RNode->current_inj[1]).Im();
+			VArVals[2] = (RNode->voltage[2]*~RNode->current_inj[2]).Im();
+		}
+	}
+
+	return node::postsync(t0);
 }
 
 int capacitor::isa(char *classname)

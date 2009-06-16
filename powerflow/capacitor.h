@@ -40,8 +40,8 @@ protected:
 
 public:
 	int create(void);
-	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP sync(TIMESTAMP t0);
+	TIMESTAMP postsync(TIMESTAMP t0);
 	capacitor(MODULE *mod);
 	inline capacitor(CLASS *cl=oclass):node(cl){};
 	int init(OBJECT *parent);
