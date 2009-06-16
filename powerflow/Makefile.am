@@ -60,6 +60,7 @@ libpowerflow_la_SOURCES = \
 	undergroundline_test.h \
 	powerflow_library.cpp powerflow_library.h	\
 	triplex_meter.cpp triplex_meter.h 	\
-	switch_object.cpp switch_object.h
+	switch_object.cpp switch_object.h	\
+	substation.cpp substation.h
 libpowerflow_la_LDFLAGS = -version-info 0:0:0
 

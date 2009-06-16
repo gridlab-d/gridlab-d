@@ -302,7 +302,11 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		output_verbose("%s(%d): module '%s' memory allocated", __FILE__, __LINE__, file);
 
 	/* locate the module */
+#ifdef DLEXT
+	snprintf(pathname, 1024, LIBPREFIX "%s" DLEXT, file);
+#else
 	snprintf(pathname, 1024, LIBPREFIX "%s" STR(LIBEXT), file);
+#endif
 	tpath = find_file(pathname, NULL, X_OK|R_OK);
 	if(tpath == NULL)
 	{

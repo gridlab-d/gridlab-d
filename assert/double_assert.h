@@ -7,6 +7,10 @@
 #include <stdarg.h>
 #include "gridlabd.h"
 
+#ifndef _isnan
+#define _isnan isnan
+#endif
+
 class double_assert {
 
 private:
