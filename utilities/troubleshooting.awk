@@ -64,7 +64,6 @@ BEGIN {
                         while (index($0,"*/")==0)
 						item = "<DD>" explanation "<cite>See <a href=\"http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/" module "/" filename "?view=markup#" tag "\">" id "</a></cite></DD>"
                         #output[group] = output[group] "<DT>" message "</DT>" item;
-						message = tolower(message);
 						if (group=="Fatal errors")
 							fatal_errors[message] = fatal_errors[message] "" item;
 						else if (group=="Errors")
@@ -90,32 +89,52 @@ END {
         #}
 		print "<H1>Warnings</H1>"
 		i=1
-		for (msg in warnings) ndx[i++] = msg;
+		for (msg in warnings) {
+			m = tolower(msg);
+			ndx[i++] = m;
+			hdg[m] = msg;
+		}
 		n = asort(ndx);
-		for (i=1; i<=n; i++) print "\n<DT>" ndx[i] "</DT>" warnings[ndx[i]];
+		for (i=1; i<=n; i++) print "\n<DT>" hdg[ndx[i]] "</DT>" warnings[ndx[i]];
 
 		print "<H1>Errors</H1>"
 		i=1
-		for (msg in errors) ndx[i++] = msg;
+		for (msg in errors) {
+			m = tolower(msg);
+			ndx[i++] = m;
+			hdg[m] = msg;
+		}
 		n = asort(ndx);
-		for (i=1; i<=n; i++) print "\n<DT>" ndx[i] "</DT>" errors[ndx[i]];
+		for (i=1; i<=n; i++) print "\n<DT>" hdg[ndx[i]] "</DT>" errors[ndx[i]];
 
 		print "<H1>Fatal errors</H1>"
 		i=1
-		for (msg in fatal_errors) ndx[i++] = msg;
+		for (msg in fatal_errors) {
+			m = tolower(msg);
+			ndx[i++] = m;
+			hdg[m] = msg;
+		}
 		n = asort(ndx);
-		for (i=1; i<=n; i++) print "\n<DT>" ndx[i] "</DT>" fatal_errors[ndx[i]];
+		for (i=1; i<=n; i++) print "\n<DT>" hdg[ndx[i]] "</DT>" fatal_errors[ndx[i]];
 
 		print "<H1>Exceptions</H1>"
 		i=1
-		for (msg in exceptions) ndx[i++] = msg;
+		for (msg in exceptions) {
+			m = tolower(msg);
+			ndx[i++] = m;
+			hdg[m] = msg;
+		}
 		n = asort(ndx);
-		for (i=1; i<=n; i++) print "\n<DT>" ndx[i] "</DT>" exceptions[ndx[i]];
+		for (i=1; i<=n; i++) print "\n<DT>" hdg[ndx[i]] "</DT>" exceptions[ndx[i]];
 
 		print "<H1>Other messages</H1>"
 		i=1
-		for (msg in other) ndx[i++] = msg;
+		for (msg in other) {
+			m = tolower(msg);
+			ndx[i++] = m;
+			hdg[m] = msg;
+		}
 		n = asort(ndx);
-		for (i=1; i<=n; i++) print "\n<DT>" ndx[i] "</DT>" other[ndx[i]];
+		for (i=1; i<=n; i++) print "\n<DT>" hdg[ndx[i]] "</DT>" other[ndx[i]];
 }
 
