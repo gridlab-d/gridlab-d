@@ -85,15 +85,12 @@ BEGIN {
 
 END {
 	alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	tabs = "<HR/><A HREF=\"#Warnings\">Warnings</A> | <A HREF=\"#Errors\">Errors</A> | <A HREF=\"#Fatal\">Fatal errors</A> | <A HREF=\"#Exceptions\">Exceptions</A> | <A HREF=\"#Other\">Other messages</A><HR/>";
+	tabs = "<HR/><B><A HREF=\"#Warnings\">Warnings</A> | <A HREF=\"#Errors\">Errors</A> | <A HREF=\"#Fatal\">Fatal errors</A> | <A HREF=\"#Exceptions\">Exceptions</A> | <A HREF=\"#Other\">Other messages</A></B><HR/>";
 	links = "";
 	for (i=1; i<=26; i++) links = links "<A HREF=\"#Warnings_" substr(alphabet,i,1) "\">" substr(alphabet,i,1)  "</A> | ";
         print "This troubleshooting guide lists all the errors and warning messages from GridLAB-D.  Simply search for your message and follow the recommendations given."
-		print "<CITE>Last updated " strftime() "</CITE>."
-        #for (group in output) {
-        #        print "<H1>" group "</H1>\n<DL>" output[group] "</DL>";
-        #}
-	print "<A ID=\"Warnings\"></A>" tabs;
+	print "<CITE>Last updated " strftime() "</CITE>."
+	print "<BR><A ID=\"Warnings\"></A>" tabs;
 	print "<H1>Warnings</H1>" links;
 	print "<BR/>"
 	i=1
