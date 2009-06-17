@@ -125,6 +125,10 @@ void modhelp_alpha(pntree **ctree, CLASS *oclass){
 void set_tabs(char *tabs, int tabdepth){
 	if(tabdepth > 32){
 		throw_exception("print_class_d: tabdepth > 32, which is mightily deep!");
+		/* TROUBLESHOOT
+			This means that there is very deep nesting and this is unexpected.  
+			This suggests a problem with the internal model and should be reported.
+		 */
 	} else {
 		int i = 0;
 		memset(tabs, 0, 33);
@@ -360,6 +364,9 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 					
 					if(ctree == NULL){
 						throw_exception("--modhelp: malloc failure");
+						/* TROUBLESHOOT
+							The memory allocation needed for module help to function has failed.  Try freeing up system memory and try again.
+						 */
 					}
 					
 					ctree->name = oclass->name;

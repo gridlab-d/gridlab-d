@@ -155,6 +155,10 @@ int kml_dump(char *filename)
 	fp = fopen(fname,"w");
 	if (fp==NULL)
 		throw_exception("kml_dump(char *filename='%s'): %s", filename, strerror(errno));
+		/* TROUBLESHOOT
+			The system was unable to output the KML data to the specified file.  
+			Follow the recommended solution based on the error message provided and try again.
+		 */
 
 	/* output data */
 	kml_output(fp);

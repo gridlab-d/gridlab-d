@@ -169,6 +169,9 @@ GLOBALVAR *global_create(char *name, ...){
 	if(var == NULL){
 		errno = ENOMEM;
 		throw_exception("global_create(char *name='%s',...): unable to allocate memory for global variable", name);
+		/* TROUBLESHOOT
+			There is insufficient memory to allocate for the global variable.  Try freeing up memory and try again.
+		 */
 		return NULL;
 	}
 
@@ -189,6 +192,9 @@ GLOBALVAR *global_create(char *name, ...){
 				KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
 				if(key == NULL){
 					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
+					/* TROUBLESHOOT
+						The memory needed to store the property's keyword is not available.  Try freeing up memory and try again.
+					 */
 				}
 				key->next = property->keywords;
 				strncpy(key->name, keyword, sizeof(key->name));
@@ -200,9 +206,15 @@ GLOBALVAR *global_create(char *name, ...){
 				KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
 				if(keyvalue > 63){
 					throw_exception("global_create(char *name='%s',...): set '%s' keyword value '%d' may not exceed 64", name, keyword, keyvalue);
+					/* TROUBLESHOOT
+						The value of the keyword may not exceed 63 characters.  Try using a shorter keyword.
+					 */
 				}
 				if(key == NULL){
 					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
+					/* TROUBLESHOOT
+						The memory needed to store the property's keyword is not available.  Try freeing up memory and try again.
+					 */
 				}
 				key->next = property->keywords;
 				strncpy(key->name, keyword, sizeof(key->name));
@@ -220,6 +232,9 @@ GLOBALVAR *global_create(char *name, ...){
 					default:
 						errno = EINVAL;
 						throw_exception("global_create(char *name='%s',...): unrecognized property access code (PROPERTYACCESS=%d)", name, pa);
+						/* TROUBLESHOOT
+							The specific property access code is not recognized.  Correct the access code and try again.
+						 */
 						break;
 				}
 			} else if(proptype == PT_SIZE){
@@ -229,6 +244,9 @@ GLOBALVAR *global_create(char *name, ...){
 						property->addr = (PROPERTYADDR)malloc(property->size * property_size(property));
 					} else {
 						throw_exception("global_create(char *name='%s',...): property size must be greater than 0 to allocate memory", name);
+						/* TROUBLESHOOT
+							The size of the property must be positive.
+						 */
 					}
 				}
 			} else if(proptype == PT_UNITS){
@@ -242,16 +260,26 @@ GLOBALVAR *global_create(char *name, ...){
 				}
 			} else {
 				throw_exception("global_create(char *name='%s',...): property extension code not recognized (PROPERTYTYPE=%d)", name, proptype);
+				/* TROUBLESHOOT
+					The property extension code used is not valid.  This is probably a bug and should be reported.
+				 */
 			}
 		} else {
 			DELEGATEDTYPE *delegation = (proptype == PT_delegated ? va_arg(arg, DELEGATEDTYPE *) : NULL);
 			char unitspec[1024];
 			if(strlen(name) >= sizeof(property->name)){
 				throw_exception("global_create(char *name='%s',...): property name '%s' is too big to store", name, name);
+				/* TROUBLESHOOT
+					The property name cannot be longer than the size of the internal buffer used to store it (currently this is 63 characters).
+					Use a shorter name and try again.
+				 */
 			}
 			property = (PROPERTY*)malloc(sizeof(PROPERTY));
 			if (property==NULL)
 				throw_exception("global_create(char *name='%s',...): property '%s' could not be stored", name, name);
+			/* TROUBLESHOOT
+				The memory required to store the property is not available.  Try freeing up system memory and try again.
+			 */
 			property->otype = 0;
 			property->ptype = proptype;
 			property->addr = va_arg(arg,PROPERTYADDR);
@@ -262,6 +290,10 @@ GLOBALVAR *global_create(char *name, ...){
 				property->unit = unit_find(unitspec);
 				if (property->unit==NULL)
 					throw_exception("global_create(char *name='%s',...): property %s unit '%s' is not recognized",name, property->name,unitspec);
+				/* TROUBLESHOOT
+					The unit specified for the property is not defined in the units file <code>.../etc/unitfile.txt</code>.  Try using a valid unit
+					or add the desired unit to the units file and try again.
+				 */
 			}
 			else
 				property->unit = NULL;

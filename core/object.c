@@ -216,6 +216,11 @@ char *object_get_unit(OBJECT *obj, char *name){
 	
 	if(prop == NULL){
 		throw_exception("property '%s' not found in object '%s'", name, object_name(obj));
+		/* TROUBLESHOOT
+			The property for which the unit was requested does not exist.  
+			Depending on where this occurs it's either a bug or an error in the model.
+			Try fixing your model and try again.  If the problem persists, report it.
+		 */
 	}
 	
 	if(dimless == NULL){
@@ -246,12 +251,19 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 
 	if(oclass == NULL){
 		throw_exception("object_create_single(CLASS *oclass=NULL): class is NULL");
+		/* TROUBLESHOOT
+			An attempt to create an object was given a NULL pointer for the class.  
+			This is most likely a bug and should be reported.
+		 */
 	}
 
 	obj = (OBJECT*)malloc(sizeof(OBJECT) + oclass->size);
 	
 	if(obj == NULL){
 		throw_exception("object_create_single(CLASS *oclass='%s'): memory allocation failed", oclass->name);
+		/* TROUBLESHOOT
+			The system has run out of memory and is unable to create the object requested.  Try freeing up system memory and try again.
+		 */
 	}
 
 	memset(obj, 0, sizeof(OBJECT) + oclass->size);
@@ -305,14 +317,25 @@ OBJECT *object_create_foreign(OBJECT *obj){ /**< a pointer to the OBJECT data st
 
 	if(obj == NULL){
 		throw_exception("object_create_foreign(OBJECT *obj=NULL): object is NULL");
+		/* TROUBLESHOOT
+			An attempt to create an object was given a NULL pointer for the class.  
+			This is most likely a bug and should be reported.
+		 */
 	}
 	
 	if(obj->oclass == NULL){
 		throw_exception("object_create_foreign(OBJECT *obj=<new>): object->oclass is NULL");
+		/* TROUBLESHOOT
+			The system has run out of memory and is unable to create the object requested.  Try freeing up system memory and try again.
+		 */
 	}
 	
 	if(obj->oclass->magic!=CLASSVALID)
 		throw_exception("object_create_foreign(OBJECT *obj=<new>): obj->oclass is not really a class");
+		/* TROUBLESHOOT
+			An attempt to create an object was given a class that most likely is not a class.  
+			This is most likely a bug and should be reported.
+		 */
 
 	obj->tp_affinity = 0; /* tp_next++; // @todo use tp_next once threadpool is supported during object creation */
 	tp_next %= tp_count;
@@ -1244,6 +1267,10 @@ int object_dump(char *outbuffer, /**< the destination buffer */
 			count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type : class_get_property_typename(prop->ptype), prop->name, value);
 			if(count > safesize){
 				throw_exception("object_dump(char *buffer=%x, int size=%d, OBJECT *obj=%s:%d) buffer overrun", outbuffer, size, obj->oclass->name, obj->id);
+				/* TROUBLESHOOT
+					The buffer used to dump objects has overflowed.  This can only be fixed by increasing the size of the buffer and recompiling.
+					If you do not have access to source code, please report this problem so that it can be corrected in the next build.
+				 */
 			}
 		}
 	}
@@ -1257,6 +1284,10 @@ int object_dump(char *outbuffer, /**< the destination buffer */
 				count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type : class_get_property_typename(prop->ptype), prop->name, value);
 				if(count > safesize){
 					throw_exception("object_dump(char *buffer=%x, int size=%d, OBJECT *obj=%s:%d) buffer overrun", outbuffer, size, obj->oclass->name, obj->id);
+					/* TROUBLESHOOT
+						The buffer used to dump objects has overflowed.  This can only be fixed by increasing the size of the buffer and recompiling.
+						If you do not have access to source code, please report this problem so that it can be corrected in the next build.
+					 */
 				}
 			}
 		}
@@ -1663,8 +1694,10 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
 	OBJECTTREE *item = (OBJECTTREE*)malloc(sizeof(OBJECTTREE));
 
 	if(item == NULL) {
-		throw_exception("object_tree_add(obj='%s:%d', name='%s'): memory allocation failed (%s)",
-			obj->oclass->name, obj->id, name, strerror(errno));
+		throw_exception("object_tree_add(obj='%s:%d', name='%s'): memory allocation failed (%s)", obj->oclass->name, obj->id, name, strerror(errno));
+		/* TROUBLESHOOT
+			The memory required to add this object to the object index is not available.  Try freeing up system memory and try again.
+		 */
 	}
 	
 	item->obj = obj;
@@ -1885,6 +1918,9 @@ int object_open_namespace(char *space)
 	if(ns==NULL)
 	{
 		throw_exception("object_open_namespace(char *space='%s'): memory allocation failure", space);
+		/* TROUBLESHOOT
+			The memory required to create the indicated namespace is not available.  Try freeing up system memory and try again.
+		 */
 		return 0;
 	}
 	strncpy(ns->name,space,sizeof(ns->name));
@@ -1901,6 +1937,10 @@ int object_close_namespace()
 	if(current_namespace==NULL)
 	{
 		throw_exception("object_close_namespace(): no current namespace to close");
+		/* TROUBLESHOOT
+			An attempt to close a namespace was made while there was no open namespace.
+			This is an internal error and should be reported.
+		 */
 		return 0;
 	}
 	current_namespace = current_namespace->next;

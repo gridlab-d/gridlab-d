@@ -408,9 +408,17 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 	case AGGR_SKEW:
 		/** @todo implement skewness aggregate (no ticket) */
 		throw_exception("skewness aggregation is not implemented");
+		/* TROUBLESHOOT
+			An attempt to use the skew aggregator failed because it is not implemented yet.
+			Remove or replace the reference to the skew aggregate and try again.
+		 */
 	case AGGR_KUR:
 		/** @todo implement kurtosis aggregate (no ticket) */
 		throw_exception("kurtosis aggregation is not implemented");
+		/* TROUBLESHOOT
+			An attempt to use the kurtosis aggregator failed because it is not implemented yet.
+			Remove or replace the reference to the
+		 */
 	default:
 		return numerator/denominator * scale;
 	}

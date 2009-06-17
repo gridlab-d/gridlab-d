@@ -235,6 +235,10 @@ static STATUS init_all(void)
 		{
 			if (object_init(obj)==FAILED){
 				throw_exception("init_all(): object %s initialization failed", object_name(obj));
+				/* TROUBLESHOOT
+					The initialization of the named object has failed.  Make sure that the object's
+					requirements for initialization are satisfied and try again.
+				 */
 			}
 			if((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME){
 				if(0 == strcmp(obj->name, "")){

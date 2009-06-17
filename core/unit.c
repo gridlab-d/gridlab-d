@@ -246,6 +246,10 @@ UNIT *unit_primary(char *name, double c, double e, double h, double k, double m,
 	if(p == NULL)
 	{
 		throw_exception("%s(%d): memory allocation failed",filepath,linenum);
+		/* TROUBLESHOOT
+			The unit conversion system was unable to allocate memory needed to define the unit located at the specified file at the given line.
+			Try freeing up system memory and try again.
+		 */
 		return 0;
 	}
 	strncpy(p->name, name, sizeof(p->name) - 1);
@@ -434,12 +438,18 @@ int unit_derived(char *name,char *derivation)
 							break;
 						default:
 							throw_exception("%s(%d): ^ not allowed after '%c' at '%s'", filepath, linenum, lastOp, term);
+							/* TROUBLESHOOT
+								The unit file used an invalid syntax to define a unit.  Correct the syntax and try again.
+							 */
 							return 0;
 					}
 				} // endif (lastUnit != NULL)
 				break;
 			default:
 				throw_exception("%s(%d): '%c' is not recognized at '%s'", filepath,linenum,lastOp,term);
+				/* TROUBLESHOOT
+					The unit file used an invalid syntax to define a unit.  Correct the syntax and try again.
+				 */
 				return 0;
 				break;
 			// endswitch nextOp

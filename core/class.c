@@ -116,6 +116,10 @@ PROPERTY *class_get_first_property(CLASS *oclass) /**< the object class */
 {
 	if (oclass==NULL)
 		throw_exception("class_get_first_property(CLASS *oclass=NULL): oclass is NULL");
+		/* TROUBLESHOOT
+			A call to <code>class_get_first_property()</code> was made with a NULL pointer.
+			This is a bug and should be reported.
+		 */
 	return oclass->pmap;
 }
 
@@ -230,10 +234,20 @@ PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE pt
 
 	if (prop==NULL)
 		throw_exception("class_add_extended_property(oclass='%s', name='%s', ...): memory allocation failed", oclass->name, name);
+		/* TROUBLESHOOT
+			The system has run out of memory.  Try making the model smaller and trying again.
+		 */
 	if (ptype<=_PT_FIRST || ptype>=_PT_LAST)
 		throw_exception("class_add_extended_property(oclass='%s', name='%s', ...): property type is invalid", oclass->name, name);
+		/* TROUBLESHOOT
+			The function was called with a property type that is not recognized.  This is a bug that should be reported.
+		 */
 	if (unit!=NULL && pUnit==NULL)
 		throw_exception("class_add_extended_property(oclass='%s', name='%s', ...): unit '%s' is not found", oclass->name, name, unit);
+		/* TROUBLESHOOT
+			The function was called with unit that is defined in units file <code>.../etc/unitfile.txt</code>.  Try using a defined unit or adding
+			the desired unit to the units file and try again.
+		 */
 	prop->access = PA_PUBLIC;
 	prop->addr = (void*)(int64)oclass->size;
 	prop->size = property_type[ptype].size;

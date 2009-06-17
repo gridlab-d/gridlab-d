@@ -265,6 +265,10 @@ double random_sampled(unsigned n, /**< the number of samples in the list */
 	else
 	{
 		throw_exception("random_sampled(n=%d,...): n must be a positive number", n);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 		return QNAN; /* never gets here */
 	}
 }
@@ -364,6 +368,10 @@ double random_weibull(double lambda, /**< scale parameter */
 	double r = randunit();
 	if (k<=0)
 		throw_exception("random_weibull(l=%g, k=%g): k must be greater than 0", lambda, k);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	return lambda * pow(-log(1-randunit()),1/k);	
 }
 
@@ -534,6 +542,10 @@ static double _random_value(RANDOMTYPE type, va_list ptr)
 		}
 	default:
 		throw_exception("_random_value(type=%d,...); type is not valid",type);
+		/* TROUBLESHOOT
+			An attempt to generate a random number specific a distribution type that isn't recognized.
+			Check that the distribution is valid and try again.
+		 */
 	}
 	return QNAN; /* never gets here */
 }

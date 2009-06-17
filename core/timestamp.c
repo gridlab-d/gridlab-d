@@ -490,7 +490,11 @@ void load_tzspecs(char *tz){
 	pTzname = tz_name(tz);
 
 	if(pTzname == 0){
-		throw_exception("timezone \'%s\' was not understood by tz_name.", tz);
+		throw_exception("timezone '%s' was not understood by tz_name.", tz);
+		/* TROUBLESHOOT
+			The specific timezone is not valid.  
+			Try using a valid timezone or add the desired timezone to the timezone file <code>.../etc/tzinfo.txt</code> and try again.
+		 */
 	}
 
 	strncpy(current_tzname, pTzname, sizeof(current_tzname));
@@ -500,12 +504,19 @@ void load_tzspecs(char *tz){
 
 	if(filepath == NULL){
 		throw_exception("timezone specification file %s not found in GLPATH=%s: %s", TZFILE, getenv("GLPATH"), strerror(errno));
+		/* TROUBLESHOOT
+			The system could not locate the timezone file <code>tzinfo.txt</code>.
+			Check that the <code>etc</code> folder is included in the '''GLPATH''' environment variable and try again.
+		 */
 	}
 
 	fp = fopen(filepath,"r");
 	
 	if(fp == NULL){
 		throw_exception("%s: access denied: %s", filepath, strerror(errno));
+		/* TROUBLESHOOT
+			The system was unable to read the timezone file.  Check that the file has the correct permissions and try again.
+		 */
 	}
 
 	while(fgets(buffer,sizeof(buffer),fp)){
@@ -558,6 +569,10 @@ void load_tzspecs(char *tz){
 			set_tzspec(year, current_tzname, &start, &end);
 		} else {
 			throw_exception("%s(%d): %s is not a valid timezone spec", filepath, linenum, buffer);
+			/* TROUBLESHOOT
+				The timezone specification is not valid.  Verify the syntax of the timezone spec and that it is defined in the timezone file 
+				<code>.../etc/tzinfo.txt</code> or add it, and try again.
+			 */
 		}
 	}
 
@@ -584,6 +599,12 @@ char *timestamp_set_tz(char *tz_name){
 	if(tz_name == NULL){
 		if (strcmp(_tzname[0], "") == 0){
 			throw_exception("timezone not identified");
+			/* TROUBLESHOOT
+				An attempt to use timezones was made before the timezome has been specified.  Try adding or moving the
+				timezone spec to the top of the <code>clock</code> directive and try again.  Alternatively, you can set the '''TZ''' environment
+				variable.
+
+			 */
 		}
 		
 		if (_timezone % 60 == 0){
@@ -615,6 +636,10 @@ int convert_from_timestamp(TIMESTAMP ts, char *buffer, int size)
 					len = strdatetime(&t,temp,sizeof(temp));
 				else
 					throw_exception("%"FMT_INT64"d is an invalid timestamp", ts);
+					/* TROUBLESHOOT
+						An attempt to convert a timestamp to a date/time string has failed because the timezone isn't valid.
+						This is most likely an internal error and should be reported.
+					 */
 			}
 			else
 				len=sprintf(temp,"%s","NEVER");
