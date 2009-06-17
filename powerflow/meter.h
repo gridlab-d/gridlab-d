@@ -16,7 +16,7 @@ public:
 	complex measured_voltage[3];	///< measured voltage
 	complex measured_current[3];	///< measured current
 	double measured_energy;			///< metered energy
-	double measured_power;			///< metered power
+	complex measured_power;			///< metered power
 	double measured_demand;			///< metered demand (peak of power)
 	double measured_real_power;		///< metered real power
 	double measured_reactive_power; ///< metered reactive power

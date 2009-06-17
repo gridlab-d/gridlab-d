@@ -60,7 +60,7 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_INHERIT, "node",
 			/// @todo three-phase meter should meter Q also (required complex)
 			PT_double, "measured_energy[Wh]", PADDR(measured_energy),
-			PT_double, "measured_power[W]", PADDR(measured_power),
+			PT_complex, "measured_power[VA]", PADDR(measured_power),
 			PT_double, "measured_demand[W]", PADDR(measured_demand),
 			PT_double, "measured_real_power[W]", PADDR(measured_real_power),
 			PT_double, "measured_reactive_power[VAr]", PADDR(measured_reactive_power),
@@ -96,7 +96,7 @@ int meter::create()
 	measured_voltage[0] = measured_voltage[1] = measured_voltage[2] = complex(0,0,A);
 	measured_current[0] = measured_current[1] = measured_current[2] = complex(0,0,J);
 	measured_energy = 0.0;
-	measured_power = 0.0;
+	measured_power = complex(0,0,J);
 	measured_demand = 0.0;
 	measured_real_power = 0.0;
 	measured_reactive_power = 0.0;
@@ -114,12 +114,12 @@ int meter::init(OBJECT *parent)
 TIMESTAMP meter::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	// compute demand power
-	if (measured_power>measured_demand) 
-		measured_demand=measured_power;
+	if (measured_power.Mag()>measured_demand) 
+		measured_demand=measured_power.Mag();
 
 	// compute energy use
 	if (t0>0)
-		measured_energy += measured_power * TO_HOURS(t1 - t0);
+		measured_energy += measured_power.Mag() * TO_HOURS(t1 - t0);
 
 	return node::presync(t1);
 }
@@ -132,9 +132,9 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	measured_current[0] = current_inj[0];
 	measured_current[1] = current_inj[1];
 	measured_current[2] = current_inj[2];
-	measured_power = (measured_voltage[0]*(~measured_current[0])).Mag() 
-				   + (measured_voltage[1]*(~measured_current[1])).Mag()
-				   + (measured_voltage[2]*(~measured_current[2])).Mag();
+	measured_power = measured_voltage[0]*(~measured_current[0]) 
+				   +  measured_voltage[1]*(~measured_current[1])
+				   +  measured_voltage[2]*(~measured_current[2]);
 	measured_real_power = (measured_voltage[0]*(~measured_current[0])).Re()
 						+ (measured_voltage[1]*(~measured_current[1])).Re()
 						+ (measured_voltage[2]*(~measured_current[2])).Re();

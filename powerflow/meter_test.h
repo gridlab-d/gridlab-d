@@ -171,7 +171,7 @@ public:
 
 //		local_callbacks->sync_all(PC_PRETOPDOWN);
 
-		double mP_3 = OBJECTDATA(node3,meter)->measured_power*1000;
+		double mP_3 = OBJECTDATA(node3,meter)->measured_power.Mag()*1000;
 		validate_re = 1 - (mP_3 <= meter_power_test ? mP_3 / meter_power_test : meter_power_test /mP_3);
 				
 		CPPUNIT_ASSERT(validate_re < VALIDATE_THRESHOLD);
@@ -358,7 +358,7 @@ public:
 		CPPUNIT_ASSERT(validate_im < VALIDATE_THRESHOLD);
 
 //		local_callbacks->sync_all(PC_PRETOPDOWN);
-		double mP_1=OBJECTDATA(node2,meter)->measured_power*1000;
+		double mP_1=OBJECTDATA(node2,meter)->measured_power.Mag()*1000;
 		validate_re = 1 - (mP_1 <= meter_power_test1 ? mP_1 / meter_power_test1 : meter_power_test1 /mP_1);
 //		CPPUNIT_ASSERT(validate_re < VALIDATE_THRESHOLD);
 
@@ -399,7 +399,7 @@ public:
 
 //		local_callbacks->sync_all(PC_PRETOPDOWN);
 
-		mP_1=OBJECTDATA(node2,meter)->measured_power*1000;
+		mP_1=OBJECTDATA(node2,meter)->measured_power.Mag()*1000;
 		validate_re = 1 - (mP_1 <= meter_power_test2 ? mP_1 / meter_power_test2 : meter_power_test2 /mP_1);
 		CPPUNIT_ASSERT(validate_re < VALIDATE_THRESHOLD);
 
