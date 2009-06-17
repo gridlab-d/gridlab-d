@@ -235,6 +235,10 @@ GLOBALVAR *global_create(char *name, ...){
 				char *unitspec = va_arg(arg, char *);
 				if((property->unit = unit_find(unitspec)) == NULL){
 					output_warning("global_create(char *name='%s',...): property %s unit '%s' is not recognized",name, property->name,unitspec);
+					/* TROUBLESHOOT
+						The property definition uses a unit that is not found.  Check the unit and try again.  
+						If you wish to define a new unit, try adding it to <code>.../etc/unitfile.txt</code>.
+					 */
 				}
 			} else {
 				throw_exception("global_create(char *name='%s',...): property extension code not recognized (PROPERTYTYPE=%d)", name, proptype);

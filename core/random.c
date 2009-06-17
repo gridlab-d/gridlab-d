@@ -130,6 +130,10 @@ double random_degenerate(double a)
 	double aa = fabs(a);
 	if (a!=0 && (aa<1e-30 || aa>1e30))
 		output_warning("random_degenerate(a=%g): a is outside normal bounds of +/-1e(+/-30)", a);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	return a;
 }
 
@@ -153,10 +157,22 @@ double random_uniform(double a, /**< the minimum number */
 	double aa=fabs(a), ab=fabs(b);
 	if (a!=0 && (aa<1e-30 || aa>1e30))
 		output_warning("random_uniform(a=%g, b=%g): a is outside normal bounds of +/-1e(+/-30)", a, b);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	if (b!=0 && (ab<1e-30 || ab>1e30))
 		output_warning("random_uniform(a=%g, b=%g): b is outside normal bounds of +/-1e(+/-30)", a, b);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	if (b<a)
 		output_warning("random_uniform(a=%g, b=%g): b is less than a", a, b);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	return randunit()*(b-a)+a;
 }
 
@@ -188,6 +204,10 @@ double random_normal(double m, /**< the mean of the distribution */
 	double r=randunit();
 	if (s<0)
 		output_warning("random_normal(m=%g, s=%g): s is negative", m, s);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	while (r<=0 || r>1)
 		r=randunit();
 	return sqrt(-2*log(r)) * sin(2*PI*randunit())*s+m;
@@ -205,8 +225,16 @@ double random_bernoulli(double p) /**< the probability of generating a 1 */
 	double ap = fabs(p);
 	if (ap!=0 && (ap<1e-30 || ap>1e30))
 		output_warning("random_bernoulli(p=%g): p is not within the normal bounds of +/-1e(+/-30)", p);
-	if (p<0 || p>1)
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
+if (p<0 || p>1)
 		output_warning("random_bernoulli(p=%g): p is not between 0 and 1", p);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	/* 1 if rand<=p, 0 if rand>p */
 	return (p>=randunit()) ? 1 : 0;
 }
@@ -228,6 +256,10 @@ double random_sampled(unsigned n, /**< the number of samples in the list */
 		double av = fabs(v);
 		if (v!=0 && (v<1e-30 || v>1e30))
 			output_warning("random_sampled(n=%d,...): sampled value is not within normal bounds of +/-1e(+/-30)",n);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 		return v;
 	}
 	else
@@ -254,10 +286,22 @@ double random_pareto(double m, /**< the minimum value */
 	double r = randunit();
 	if (am!=0 && (am<1e-03 || am>1e30))
 		output_warning("random_pareto(m=%g, k=%g): m is not within the normal bounds of +/-1e(+/-30)", m, k);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	if (ak>1e30)
 		output_warning("random_pareto(m=%g, k=%g): k is not within the normal bounds of +/-1e(+/-30)", m, k);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	if (k<=0)
 		throw_exception("random_pareto(m=%g, k=%g): k must be greater than 1", m, k);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	while (r<=0 || r>=1)
 		r = randunit();
 	return m*pow(r,-1/k);
@@ -290,8 +334,16 @@ double random_exponential(double lambda) /**< the rate parameter lambda */
 	double r=randunit();
 	if (lambda<=0)
 		throw_exception("random_exponential(l=%g): l must be greater than 0", lambda);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	if (lambda<1e-30 || lambda>1e30)
 		output_warning("random_exponential(l=%g): l is not within the normal bounds of 1e(+/-30)", lambda);
+		/* TROUBLESHOOT
+			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
+			Correct the functional definition of the random number and try again.
+		 */
 	while (r<=0 || r>=1)
 		r=randunit();
 	return -log(r)/lambda;

@@ -690,6 +690,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 		{
 			if (global_test_mode)
 				output_warning("file '%s' ignored in test mode", *argv);
+				/* TROUBLESHOOT
+				   This warning is caused by an attempt to read an input file in self-test mode.  
+				   The use of self-test model precludes reading model files.  Try running the system
+				   in normal more or leaving off the model file name.
+				 */
 			else {
 				if (!loadall(*argv))
 					return FAILED;

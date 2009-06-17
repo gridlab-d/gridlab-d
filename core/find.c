@@ -135,6 +135,11 @@ static int compare_string(char *a, FINDOP op, char *b)
 	case NE:
 		if (!(isdigit(a[0])||a[0]=='+'||a[0]=='-')&&!(isdigit(b[0])||b[0]=='+'||b[0]=='-'))
 			output_warning("compare of strings using numeric op usually does not work");
+			/* TROUBLESHOOT
+				An attempt to compare two numbers using a string comparison operation is not generally going to work as expected.
+				Check that this is truly the desired comparison and correct it if not.  If so and the warning error is not desired
+				you may suppress warnings using <code>#set warning=0</code> in the model file.
+			 */
 		return compare_double(atof(a),op,atof(b));
 	default:
 		output_error("compare op %d not supported on strings", op);

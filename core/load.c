@@ -1919,6 +1919,10 @@ static int clock_properties(PARSER)
 		{
 			if (timestamp_set_tz(timezone)==NULL)
 				output_warning("%s(%d): timezone %s is not defined",filename,linenum,timezone);
+				/* TROUBLESHOOT
+					The specified timezone is not defined in the timezone file <code>.../etc/tzinfo.txt</code>.  
+					Try using an known timezone, or add the desired timezone to the timezome file and try again.
+				 */
 			ACCEPT;
 			goto Next;
 		}
@@ -3324,6 +3328,10 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				else if (strcmp(propname,"library")==0)
 				{
 					output_warning("%s(%d): libraries not yet supported", filename, linenum);
+					/* TROUBLESHOOT
+						An attempt to use the <b>library</b> GLM directive was made.  Library directives
+						are not supported yet.
+					 */
 					ACCEPT;
 					DONE;
 				}
@@ -3635,6 +3643,10 @@ static int library(PARSER)
 		if ( TERM(dotted_name(HERE,libname,sizeof(libname))) && (WHITE,LITERAL(";")))
 		{
 			output_warning("%s(%d): libraries not yet supported", filename, linenum);
+			/* TROUBLESHOOT
+				An attempt to parse a <b>library</b> GLM directive was made.  Library directives
+				are not supported yet.
+			 */
 			ACCEPT;
 			DONE;
 		}
@@ -3714,6 +3726,10 @@ int replace_variables(char *to,char *from,int len)
 			{
 				/* this must be benign because otherwise macros that are inactive fail when they shouldn't */
 				output_warning("%s(%d): variable '%s' not found", filename, linenum, varname);
+				/* TROUBLESHOOT
+					A macro refers to a variable that is not defined.  Correct the variable reference, or
+					define the variable before using it and try again.
+				 */
 			}
 			e = strchr(p,'}');
 			if (e==NULL)
@@ -4410,6 +4426,11 @@ STATUS loadall(char *file){
 		/* load the gridlabd.conf file */
 		if (conf==NULL)
 			output_warning("gridlabd.conf was not found");
+			/* TROUBLESHOOT
+				The <code>gridlabd.conf</code> was not found in the <b>GLPATH</b> environment path.
+				This file is always loaded before a GLM file is loaded.
+				Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
+			 */
 		else if(loadall_glm(conf)==FAILED)
 			return FAILED;
 
@@ -4419,6 +4440,11 @@ STATUS loadall(char *file){
 			char *dbg = find_file("debugger.conf",NULL,R_OK);
 			if (dbg==NULL)
 				output_warning("debugger.conf was not found");
+				/* TROUBLESHOOT
+					The <code>debugger.conf</code> was not found in the <b>GLPATH</b> environment path.
+					This file is loaded when the debugger is enabled.
+					Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
+				 */
 			else if (loadall_glm(dbg)==FAILED)
 				return FAILED;
 		}

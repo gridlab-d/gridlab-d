@@ -55,6 +55,9 @@ void locale_pop(void)
 		sprintf(tz,"TZ=%s",next->tz);
 		if (putenv(tz)!=0)
 			output_warning("locale pop failed");
+			/* TROUBLESHOOT
+				This is an internal error causes by a corrupt locale stack.  
+			 */
 		else
 			tzset();
 		free(next);
