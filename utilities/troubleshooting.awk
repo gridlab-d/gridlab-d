@@ -84,76 +84,75 @@ BEGIN {
 
 
 END {
-		alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	tabs = "<HR/><A HREF=\"#Warnings\">Warnings</A> | <A HREF=\"#Errors\">Errors</A> | <A HREF=\"#Fatal\">Fatal errors</A> | <A HREF=\"#Exceptions\">Exceptions</A> | <A HREF=\"#Other\">Other messages</A><HR/>";
+	links = "";
+	for (i=1; i<=26; i++) links = links "<A HREF=\"#Warnings_" substr(alphabet,i,1) "\">" substr(alphabet,i,1)  "</A> | ";
         print "This troubleshooting guide lists all the errors and warning messages from GridLAB-D.  Simply search for your message and follow the recommendations given."
 		print "<CITE>Last updated " strftime() "</CITE>."
         #for (group in output) {
         #        print "<H1>" group "</H1>\n<DL>" output[group] "</DL>";
         #}
-		print "<A ID=\"Warnings\"></A><HR/><A HREF=\"#Warnings\">Warnings</A> <A HREF=\"#Errors\">Errors</A> <A HREF=\"#Fatal\">Fatal errors</A> <A HREF=\"#Exceptions\">Exceptions</A> <A HREF=\"#Other\">Other messages</A><HR/>";
-		print "<H1>Warnings</H1>"
-		for (i=1; i<=26; i++) print "<A HREF=\"#Warnings_" substr(alphabet,i,1) "\">" substr(alphabet,i,1)  "</A> "
-		print "<BR/>"
-		i=1
-		for (msg in warnings) {
-			m = tolower(msg);
-			txt[m] = warnings[msg];
-			ndx[i++] = m;
-			hdg[m] = msg;
-		}
-		n = asort(ndx);
-		for (i=1; i<=n; i++) print "\n<A ID=\"Warnings_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+	print "<A ID=\"Warnings\"></A>" tabs;
+	print "<H1>Warnings</H1>" links;
+	print "<BR/>"
+	i=1
+	for (msg in warnings) {
+		m = tolower(msg);
+		txt[m] = warnings[msg];
+		ndx[i++] = m;
+		hdg[m] = msg;
+	}
+	n = asort(ndx);
+	for (i=1; i<=n; i++) print "\n<A ID=\"Warnings_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
 
-		print "<A ID=\"Errors\"><HR/><A HREF=\"#Warnings\">Warnings</A> <A HREF=\"#Errors\">Errors</A> <A HREF=\"#Fatal\">Fatal errors</A> <A HREF=\"#Exceptions\">Exceptions</A> <A HREF=\"#Other\">Other messages</A><HR/>";
-		print "</A><H1>Errors</H1>"
-		for (i=1; i<=26; i++) print "<A HREF=\"#Errors_" substr(alphabet,i,1) "\">" substr(alphabet,i,1)  "</A> "
-		i=1
-		for (msg in errors) {
-			m = tolower(msg);
-			txt[m] = errors[msg];
-			ndx[i++] = m;
-			hdg[m] = msg;
-		}
-		n = asort(ndx);
-		for (i=1; i<=n; i++) print "\n<A ID=\"Errors_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+	print "<A ID=\"Errors\"></A>" tabs;
+	print "<H1>Errors</H1>" links;
+	i=1
+	for (msg in errors) {
+		m = tolower(msg);
+		txt[m] = errors[msg];
+		ndx[i++] = m;
+		hdg[m] = msg;
+	}
+	n = asort(ndx);
+	for (i=1; i<=n; i++) print "\n<A ID=\"Errors_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
 
-		print "<A ID=\"Fatal\"></A><HR/><A HREF=\"#Warnings\">Warnings</A> <A HREF=\"#Errors\">Errors</A> <A HREF=\"#Fatal\">Fatal errors</A> <A HREF=\"#Exceptions\">Exceptions</A> <A HREF=\"#Other\">Other messages</A><HR/>";
-		print "<H1>Fatal errors</H1>"
-		for (i=1; i<=26; i++) print "<A HREF=\"#Fatal_" substr(alphabet,i,1) "\">" substr(alphabet,i,1)  "</A> "
-		i=1
-		for (msg in fatal_errors) {
-			m = tolower(msg);
-			txt[m] = fatal_errors[msg];
-			ndx[i++] = m;
-			hdg[m] = msg;
-		}
-		n = asort(ndx);
-		for (i=1; i<=n; i++) print "\n<A ID=\"Fatal_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+	print "<A ID=\"Fatal\"></A>" tabs;
+	print "<H1>Fatal errors</H1>" links;
+	i=1
+	for (msg in fatal_errors) {
+		m = tolower(msg);
+		txt[m] = fatal_errors[msg];
+		ndx[i++] = m;
+		hdg[m] = msg;
+	}
+	n = asort(ndx);
+	for (i=1; i<=n; i++) print "\n<A ID=\"Fatal_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
 
-		print "<A ID=\"Exceptions\"></A><HR/><A HREF=\"#Warnings\">Warnings</A> <A HREF=\"#Errors\">Errors</A> <A HREF=\"#Fatal\">Fatal errors</A> <A HREF=\"#Exceptions\">Exceptions</A> <A HREF=\"#Other\">Other messages</A><HR/>";
-		print "<H1>Exceptions</H1>"
-		for (i=1; i<=26; i++) print "<A HREF=\"#Exceptions_" substr(alphabet,i,1) "\">" substr(alphabet,i,1)  "</A> "
-		i=1
-		for (msg in exceptions) {
-			m = tolower(msg);
-			txt[m] = exceptions[msg];
-			ndx[i++] = m;
-			hdg[m] = msg;
-		}
-		n = asort(ndx);
-		for (i=1; i<=n; i++) print "\n<A ID=\"Exceptions_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+	print "<A ID=\"Exceptions\"></A>" tabs;
+	print "<H1>Exceptions</H1>" links;
+	i=1
+	for (msg in exceptions) {
+		m = tolower(msg);
+		txt[m] = exceptions[msg];
+		ndx[i++] = m;
+		hdg[m] = msg;
+	}
+	n = asort(ndx);
+	for (i=1; i<=n; i++) print "\n<A ID=\"Exceptions_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
 
-		print "<A ID=\"Other\"></A><HR/><A HREF=\"#Warnings\">Warnings</A> <A HREF=\"#Errors\">Errors</A> <A HREF=\"#Fatal\">Fatal errors</A> <A HREF=\"#Exceptions\">Exceptions</A> <A HREF=\"#Other\">Other messages</A><HR/>";
-		print "<H1>Other messages</H1>"
-		for (i=1; i<=26; i++) print "<A HREF=\"#Other_" substr(alphabet,i,1) "\">" substr(alphabet,i,1)  "</A> "
-		i=1
-		for (msg in other) {
-			m = tolower(msg);
-			txt[m] = others[msg];
-			ndx[i++] = m;
-			hdg[m] = msg;
-		}
-		n = asort(ndx);
-		for (i=1; i<=n; i++) print "\n<A ID=\"Other_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+	print "<A ID=\"Other\"></A>" tabs;
+	print "<H1>Other messages</H1>" links;
+	i=1
+	for (msg in other) {
+		m = tolower(msg);
+		txt[m] = others[msg];
+		ndx[i++] = m;
+		hdg[m] = msg;
+	}
+	n = asort(ndx);
+	for (i=1; i<=n; i++) print "\n<A ID=\"Other_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+	print "<HR/>";
 }
 
