@@ -180,8 +180,21 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 	curr[1] = tmp_mat2[1][0]*current_in[0]+tmp_mat2[1][1]*current_in[1]+tmp_mat2[1][2]*current_in[2];
 	curr[2] = tmp_mat2[2][0]*current_in[0]+tmp_mat2[2][1]*current_in[1]+tmp_mat2[2][2]*current_in[2];
 
+	if (pConfig->Control == pConfig->MANUAL) {
+		for (int i = 0; i < 3; i++) {
+			if (curr[i] != 0) {
+				if (pConfig->Type == pConfig->A)
+				{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
+				else if (pConfig->Type == pConfig->B)
+				{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
+				else
+				{	throw "invalid regulator type";}
+			}
+		}
+		next_time = TS_NEVER;
+	}
 
-	if (pConfig->Control == pConfig->LINE_DROP_COMP) {
+	else if (pConfig->Control == pConfig->LINE_DROP_COMP) {
 		if (pTo) 
 		{
 			volt[0] = pTo->voltageA;
@@ -217,33 +230,20 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 			check_voltage[i] = RNode->voltage[i];
 		}
 	}
-	else if (pConfig->Control == pConfig->MANUAL) {
-		for (int i = 0; i < 3; i++) {
-			if (curr[i] != 0) {
-				if (pConfig->Type == pConfig->A)
-				{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
-				else if (pConfig->Type == pConfig->B)
-				{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
-				else
-				{	throw "invalid regulator type";}
-			}
-		}
-		next_time = TS_NEVER;
-	}
 	else
 		throw "Invalid control type";
 
-	//Update first run flag - special solver during first time solved.
-	if ((first_run_flag[0] + first_run_flag[1] + first_run_flag[2]) < 3 ) {
-		for (int i = 0; i < 3; i++) {
-			if (first_run_flag[i] < 1) {
-				first_run_flag[i] += 1;
-			}
-		}
-	}
-
 	if (pConfig->connect_type == pConfig->WYE_WYE && pConfig->Control != pConfig->MANUAL)
 	{	
+		//Update first run flag - special solver during first time solved.
+		if ((first_run_flag[0] + first_run_flag[1] + first_run_flag[2]) < 3 ) {
+			for (int i = 0; i < 3; i++) {
+				if (first_run_flag[i] < 1) {
+					first_run_flag[i] += 1;
+				}
+			}
+		}
+
 		for (int i = 0; i < 3; i++) 
 		{
 			

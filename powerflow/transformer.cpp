@@ -368,7 +368,7 @@ int transformer::init(OBJECT *parent)
 					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
 					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
 					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					zc =  complex(za_basehi,0) * complex(1000000 * config->impedance.Re(),0) * complex(0,1000000 * config->impedance.Im()) / complex(1000000 * config->impedance.Re(),1000000 * config->impedance.Im());
+					zc =  complex(za_basehi,0) * complex(1000000 * config->impedance.Re(),0) * complex(0,1000 * config->impedance.Im()) / complex(1000000 * config->impedance.Re(),1000 * config->impedance.Im());
 					zt_b = complex(0,0);
 					zt_c = complex(0,0);
 					
@@ -399,7 +399,7 @@ int transformer::init(OBJECT *parent)
 					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
 					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
 					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					zc =  complex(za_basehi,0) * complex(1000000 * config->impedance.Re(),0) * complex(0,1000000 * config->impedance.Im()) / complex(1000000 * config->impedance.Re(),1000000 * config->impedance.Im());
+					zc =  complex(za_basehi,0) * complex(1000000 * config->impedance.Re(),0) * complex(0,1000 * config->impedance.Im()) / complex(1000000 * config->impedance.Re(),1000 * config->impedance.Im());
 					zt_b = complex(0,0);
 					zt_c = complex(0,0);
 					
@@ -429,7 +429,7 @@ int transformer::init(OBJECT *parent)
 					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
 					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
 					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					zc =  complex(za_basehi,0) * complex(1000000 * config->impedance.Re(),0) * complex(0,1000000 * config->impedance.Im()) / complex(1000000 * config->impedance.Re(),1000000 * config->impedance.Im());
+					zc =  complex(za_basehi,0) * complex(1000000 * config->impedance.Re(),0) * complex(0,1000 * config->impedance.Im()) / complex(1000000 * config->impedance.Re(),1000 * config->impedance.Im());
 					zt_b = complex(0,0);
 					zt_c = complex(0,0);
 					
@@ -457,6 +457,10 @@ int transformer::init(OBJECT *parent)
 				B_mat[0][1] = -(z0*zc/((zc + z0)*nt*nt));
 				B_mat[1][0] = (z0*zc/((zc + z0)*nt*nt));
 				B_mat[1][1] = complex(-1,0) * ((z2) + (z0*zc/((zc + z0)*nt*nt)));
+				B_mat[1][2] = complex(0,0);
+				B_mat[2][0] = complex(0,0);
+				B_mat[2][1] = complex(0,0);
+				B_mat[2][2] = complex(0,0);
 			}
 			else if (solver_method==SM_GS)	// This doesn't work yet
 			{
