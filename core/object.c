@@ -1123,17 +1123,8 @@ char *object_property_to_string(OBJECT *obj, char *name)
 		return "";
 }
 
-/** Synchronize an object.  The timestamp given is the desired increment.
 
-	If an object is called on multiple passes (see PASSCONFIG) it is 
-	customary to update the clock only after the last pass is completed.
-
-	For the sake of speed this function assumes that the sync function 
-	is properly defined in the object class structure.
-
-	@return  the time of the next event for this object.
- */
-TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
+TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 					  TIMESTAMP ts, /**< the desire clock to sync to */
 					  PASSCONFIG pass) /**< the pass configuration */
 {
@@ -1193,6 +1184,27 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 		obj->oclass->profiler.clocks += clock()-t;
 	}
 	return obj->valid_to;
+}
+/** Synchronize an object.  The timestamp given is the desired increment.
+
+	If an object is called on multiple passes (see PASSCONFIG) it is 
+	customary to update the clock only after the last pass is completed.
+
+	For the sake of speed this function assumes that the sync function 
+	is properly defined in the object class structure.
+
+	@return  the time of the next event for this object.
+ */
+TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
+					  TIMESTAMP ts, /**< the desire clock to sync to */
+					  PASSCONFIG pass) /**< the pass configuration */
+{
+	TIMESTAMP t2=TS_NEVER;
+	do {
+		/* don't call sync beyond valid horizon */
+		t2 = _object_sync(obj,(ts<(obj->valid_to>0?obj->valid_to:TS_NEVER)?ts:obj->valid_to),pass);
+	} while (t2>0 && ts>(t2<0?-t2:t2) && t2<TS_NEVER);
+	return t2;
 }
 
 /** Initialize an object.  This should not be called until

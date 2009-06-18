@@ -10,14 +10,16 @@
 // should run.
 //
 
+#set minimum_timestep=60
+
 clock {
 	timezone PST+8PDT;
-	timestamp '2000-01-01 0:00:00';
+	starttime '2000-01-01 00:00:00 PST';
 }
 
 module climate;
 object climate {
-	tmyfile USA-CA-LosAngeles.tmy2;
+	tmyfile LosAngeles.tmy2;
 }
 
 module commercial;
@@ -45,7 +47,7 @@ object office:..1000 {
 module tape;
 object collector {
 	group class=office;
-	property sum(power.mag);
+	property sum(total_load.mag);
 	interval 3600;
 	file office_power.csv;
 	limit 8760;
