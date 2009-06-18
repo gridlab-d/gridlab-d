@@ -254,6 +254,7 @@ PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE pt
 	prop->delegation = NULL;
 	prop->flags = 0;
 	prop->keywords = NULL;
+	prop->description = NULL;
 	prop->unit = pUnit;
 	strncpy(prop->name,name,sizeof(prop->name));
 	prop->next = NULL;
@@ -774,6 +775,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 						 */
 				} ENDCATCH;
 			}
+			else if (proptype==PT_DESCRIPTION)
+			{
+				prop->description = va_arg(arg,char*);
+			}
 			else
 			{
 				char tcode[32];
@@ -870,6 +875,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			prop->otype = oclass->type;
 			prop->flags = 0;
 			prop->keywords = NULL;
+			prop->description = NULL;
 			prop->unit = NULL;
 			if (sscanf(name,"%[^[][%[A-Za-z0-9*/^]]",prop->name,unitspec)==2)
 			{

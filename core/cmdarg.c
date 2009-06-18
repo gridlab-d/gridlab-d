@@ -155,18 +155,24 @@ void print_class_d(CLASS *oclass, int tabdepth){
 	{
 		char *propname = class_get_property_typename(prop->ptype);
 		if (propname!=NULL){
-			if(prop->unit != NULL){
-				printf("%s\t%s %s [%s];", tabs, propname, prop->name, prop->unit->name);
-			} else {
-				printf("%s\t%s %s;", tabs, propname, prop->name);
+			if(prop->unit != NULL)
+			{
+				printf("%s\t%s %s[%s];", tabs, propname, prop->name, prop->unit->name);
 			}
-			if (prop->ptype==PT_set || prop->ptype==PT_enumeration)
+			else if (prop->ptype==PT_set || prop->ptype==PT_enumeration)
 			{
 				KEYWORD *key;
-				printf (" // {");
+				printf("%s\t%s {", tabs, propname);
 				for (key=prop->keywords; key!=NULL; key=key->next)
-					printf("%s%s", key->name, key->next==NULL?"}":", ");
+					printf("%s=%d%s", key->name, key->value, key->next==NULL?"":", ");
+				printf("} %s;", prop->name);
+			} 
+			else 
+			{
+				printf("%s\t%s %s;", tabs, propname, prop->name);
 			}
+			if (prop->description!=NULL)
+				printf(" // %s",prop->description);
 			printf("\n");
 		}
 	}

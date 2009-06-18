@@ -50,8 +50,8 @@ waterheater::waterheater(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_double,"tank_volume[gal]",PADDR(tank_volume),
-			PT_double,"tank_UA[Btu/h]",PADDR(tank_UA),
+			PT_double,"tank_volume[gal]",PADDR(tank_volume), PT_DESCRIPTION, "the volume of water in the tank when it is full",
+			PT_double,"tank_UA[Btu/h]",PADDR(tank_UA), PT_DESCRIPTION, "the UA of the tank (surface area divided by R-value)",
 			PT_double,"tank_diameter[ft]",PADDR(tank_diameter),
 			PT_double,"water_demand[gpm]",PADDR(water_demand),
 			PT_double,"heating_element_capacity[W]",PADDR(heating_element_capacity),
