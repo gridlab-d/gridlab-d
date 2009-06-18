@@ -6,6 +6,7 @@
 
 #include "powerflow.h"
 #include "node.h"
+#include "link.h"
 
 class capacitor : public node
 {
@@ -27,26 +28,31 @@ public:
 	CAPSWITCH switchA_state;	// capacitor A switch open or close
 	CAPSWITCH switchB_state;	// capacitor B switch open or close
 	CAPSWITCH switchC_state;	// capacitor C switch open or close
-	OBJECT *RemoteNode;			// Remote node for sensing values used for control schemes
+	OBJECT *RemoteSensor;		// Remote object for sensing values used for control schemes
+	OBJECT *SecondaryRemote;	// Secondary Remote object for sensing values used for control schemes (VARVOLT uses two)
 	double time_delay;          // control time delay
 	double dwell_time;			// Time for system to remain constant before a state change will be passed
+	double lockout_time;		// Time for capacitor to remain locked out from further switching operations (VARVOLT control)
 
 protected:
 	CAPCONTROL control;			// control operation strategy; 0 - manual, 1 - VAr, 2- voltage, 3 - VAr primary,voltage backup.
 	int64 time_to_change;       // time until state change
 	int64 dwell_time_left;		// time until dwell interval is met
+	int64 lockout_time_left_A;	// time until lockout interval is met for phase A
+	int64 lockout_time_left_B;	// time until lockout interval is met for phase B
+	int64 lockout_time_left_C;	// time until lockout interval is met for phase C
 	int64 last_time;			// last time capacitor was checked
 	double cap_nominal_voltage;	// Nominal voltage for the capacitor. Used for calculation of capacitance value.
 
 public:
 	int create(void);
+	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP sync(TIMESTAMP t0);
-	TIMESTAMP postsync(TIMESTAMP t0);
 	capacitor(MODULE *mod);
 	inline capacitor(CLASS *cl=oclass):node(cl){};
 	int init(OBJECT *parent);
 	int isa(char *classname);
-
+	
 private:
 	complex cap_value[3];		// Capacitor values translated to admittance
 	CAPSWITCH switchA_state_Next;	// capacitor A switch open or close at next transition
@@ -60,6 +66,8 @@ private:
 	CAPSWITCH switchC_state_Prev;	// capacitor C switch open or close at previous transition (used for manual control)
 	double VArVals[3];				// VAr values recorded (due to nature of how it's recorded, it has to be in here)
 	bool NotFirstIteration;			// Checks to see if this is the first iteration of the system.
+	node *RNode;					// Remote node to sense voltage measurements (if desired) for VOLT controls
+	link *RLink;					// Remote link to sense power measurements for VAR controls
 
 public:
 	static CLASS *pclass;

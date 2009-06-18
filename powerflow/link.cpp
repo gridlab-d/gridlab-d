@@ -119,6 +119,12 @@ link::link(MODULE *mod) : powerflow_object(mod)
 			PT_object, "to", PADDR(to),
 			PT_double, "power_in[VA]", PADDR(power_in),
 			PT_double, "power_out[VA]", PADDR(power_out),
+			PT_complex, "power_in_A[VA]", PADDR(indiv_power_in[0]),
+			PT_complex, "power_in_B[VA]", PADDR(indiv_power_in[1]),
+			PT_complex, "power_in_C[VA]", PADDR(indiv_power_in[2]),
+			PT_complex, "power_out_A[VA]", PADDR(indiv_power_out[0]),
+			PT_complex, "power_out_B[VA]", PADDR(indiv_power_out[1]),
+			PT_complex, "power_out_C[VA]", PADDR(indiv_power_out[2]),
 			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 	}
 }
@@ -1142,8 +1148,152 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 			power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
 		}
 		else {
-			power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
-			power_out = (t->voltage[0]*~t->current_inj[0]).Mag() + (t->voltage[1]*~t->current_inj[1]).Mag() + (t->voltage[2]*~t->current_inj[2]).Mag();
+			//GS-esque (but fixed) method of power calculations
+			//complex current_temp[3];
+			//complex Binv[3][3];
+			//complex binv[3][3];
+			//node *fnode = OBJECTDATA(from,node);
+			//node *tnode = OBJECTDATA(to,node);
+			//char jindex, kindex;
+
+			//for (jindex=0; jindex<3; jindex++)
+			//{
+			//	for (kindex=0; kindex<3; kindex++)
+			//	{
+			//		Binv[jindex][kindex] = 0.0;
+			//		binv[jindex][kindex] = 0.0;
+			//	}
+			//}
+
+			//// invert B matrix - special circumstances given different methods
+			//if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+			//{
+			//	Binv[0][0] = complex(1.0) / B_mat[0][0];
+			//	binv[0][0] = complex(1.0) / b_mat[0][0];
+			//}
+			//else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+			//{
+			//	Binv[1][1] = complex(1.0) / B_mat[1][1];
+			//	binv[1][1] = complex(1.0) / b_mat[1][1];
+			//}
+			//else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+			//{
+			//	Binv[2][2] = complex(1.0) / B_mat[2][2];
+			//	binv[2][2] = complex(1.0) / b_mat[2][2];
+			//}
+			//else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+			//{
+			//	complex detvalue = B_mat[0][0]*B_mat[2][2] - B_mat[0][2]*B_mat[2][0];
+
+			//	Binv[0][0] = B_mat[2][2] / detvalue;
+			//	Binv[0][2] = B_mat[0][2] * -1.0 / detvalue;
+			//	Binv[2][0] = B_mat[2][0] * -1.0 / detvalue;
+			//	Binv[2][2] = B_mat[0][0] / detvalue;
+
+			//	//Forward direction calculation
+			//	detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
+
+			//	binv[0][0] = b_mat[2][2] / detvalue;
+			//	binv[0][2] = b_mat[0][2] * -1.0 / detvalue;
+			//	binv[2][0] = b_mat[2][0] * -1.0 / detvalue;
+			//	binv[2][2] = b_mat[0][0] / detvalue;
+			//}
+			//else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+			//{
+			//	complex detvalue = B_mat[0][0]*B_mat[1][1] - B_mat[0][1]*B_mat[1][0];
+
+			//	Binv[0][0] = B_mat[1][1] / detvalue;
+			//	Binv[0][1] = B_mat[0][1] * -1.0 / detvalue;
+			//	Binv[1][0] = B_mat[1][0] * -1.0 / detvalue;
+			//	Binv[1][1] = B_mat[0][0] / detvalue;
+
+			//	//Forward direction calculation
+			//	detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+
+			//	binv[0][0] = b_mat[1][1] / detvalue;
+			//	binv[0][1] = b_mat[0][1] * -1.0 / detvalue;
+			//	binv[1][0] = b_mat[1][0] * -1.0 / detvalue;
+			//	binv[1][1] = b_mat[0][0] / detvalue;
+			//}
+			//else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+			//{
+			//	inverse(B_mat,Binv);
+			//	inverse(b_mat,binv);
+			//}
+			//// defaulted else - No phases (e.g., the line does not exist) - just = 0
+
+			////Calculate output currents
+			//current_temp[0] = A_mat[0][0]*fnode->voltage[0]+
+			//				  A_mat[0][1]*fnode->voltage[1]+
+			//				  A_mat[0][2]*fnode->voltage[2]-
+			//				  tnode->voltage[0];
+			//current_temp[1] = A_mat[1][0]*fnode->voltage[0]+
+			//				  A_mat[1][1]*fnode->voltage[1]+
+			//				  A_mat[1][2]*fnode->voltage[2]-
+			//				  tnode->voltage[1];
+			//current_temp[2] = A_mat[2][0]*fnode->voltage[0]+
+			//				  A_mat[2][1]*fnode->voltage[1]+
+			//				  A_mat[2][2]*fnode->voltage[2]-
+			//				  tnode->voltage[2];
+
+			//current_out[0] = Binv[0][0]*current_temp[0]+
+			//				 Binv[0][1]*current_temp[1]+
+			//				 Binv[0][2]*current_temp[2];
+			//current_out[1] = Binv[1][0]*current_temp[0]+
+			//				 Binv[1][1]*current_temp[1]+
+			//				 Binv[1][2]*current_temp[2];
+			//current_out[2] = Binv[2][0]*current_temp[0]+
+			//				 Binv[2][1]*current_temp[1]+
+			//				 Binv[2][2]*current_temp[2];
+
+			////Calculate input currents
+			//current_temp[0] = a_mat[0][0]*fnode->voltage[0]+
+			//				  a_mat[0][1]*fnode->voltage[1]+
+			//				  a_mat[0][2]*fnode->voltage[2]-
+			//				  tnode->voltage[0];
+			//current_temp[1] = a_mat[1][0]*fnode->voltage[0]+
+			//				  a_mat[1][1]*fnode->voltage[1]+
+			//				  a_mat[1][2]*fnode->voltage[2]-
+			//				  tnode->voltage[1];
+			//current_temp[2] = a_mat[2][0]*fnode->voltage[0]+
+			//				  a_mat[2][1]*fnode->voltage[1]+
+			//				  a_mat[2][2]*fnode->voltage[2]-
+			//				  tnode->voltage[2];
+			//
+			//current_in[0] = binv[0][0]*current_temp[0]+
+			//				binv[0][1]*current_temp[1]+
+			//				binv[0][2]*current_temp[2];
+			//current_in[1] = binv[1][0]*current_temp[0]+
+			//				binv[1][1]*current_temp[1]+
+			//				binv[1][2]*current_temp[2];
+			//current_in[2] = binv[2][0]*current_temp[0]+
+			//				binv[2][1]*current_temp[1]+
+			//				binv[2][2]*current_temp[2];
+
+			////Only three-phase portion of individual powers calculated right now
+			//indiv_power_in[0] = fnode->voltage[0]*~current_in[0];
+			//indiv_power_in[1] = fnode->voltage[1]*~current_in[1];
+			//indiv_power_in[2] = fnode->voltage[2]*~current_in[2];
+
+			//indiv_power_out[0] = tnode->voltage[0]*~current_out[0];
+			//indiv_power_out[1] = tnode->voltage[1]*~current_out[1];
+			//indiv_power_out[2] = tnode->voltage[2]*~current_out[2];
+
+			//Only three-phase portion of individual powers calculated right now
+			indiv_power_in[0] = f->voltage[0]*~current_in[0];
+			indiv_power_in[1] = f->voltage[1]*~current_in[1];
+			indiv_power_in[2] = f->voltage[2]*~current_in[2];
+
+			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
+			indiv_power_out[1] = t->voltage[1]*~t->current_inj[1];
+			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
+
+			power_in = indiv_power_in[0].Mag() + indiv_power_in[1].Mag() + indiv_power_in[2].Mag();
+			power_out = indiv_power_out[0].Mag() + indiv_power_out[1].Mag() + indiv_power_out[2].Mag();
+
+			//Old calculation method
+			//power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
+			//power_out = (t->voltage[0]*~t->current_inj[0]).Mag() + (t->voltage[1]*~t->current_inj[1]).Mag() + (t->voltage[2]*~t->current_inj[2]).Mag();
 		}
 	}
 	else if ((!is_open()) && (solver_method==SM_GS) && GS_all_converged)

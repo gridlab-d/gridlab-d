@@ -74,7 +74,9 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			PT_double, "cap_nominal_voltage[V]", PADDR(cap_nominal_voltage),
 			PT_double, "time_delay[s]", PADDR(time_delay),
 			PT_double, "dwell_time[s]", PADDR(dwell_time),
-			PT_object,"sense_node",PADDR(RemoteNode),
+			PT_double, "lockout_time[s]", PADDR(lockout_time),
+			PT_object, "remote_sense",PADDR(RemoteSensor),
+			PT_object, "remote_sense_B", PADDR(SecondaryRemote),
 			PT_enumeration, "control_level", PADDR(control_level),
 				PT_KEYWORD, "BANK", BANK,
 				PT_KEYWORD, "INDIVIDUAL", INDIVIDUAL, 
@@ -108,10 +110,18 @@ int capacitor::create()
 	VAr_set_low = 0.0;
 	time_delay = 0.0;
 	dwell_time = 0.0;
+	lockout_time = 0.0;
 	time_to_change = 0;
 	dwell_time_left = 0;
+	lockout_time_left_A = 0;
+	lockout_time_left_B = 0;
+	lockout_time_left_C = 0;
 	last_time = 0;
 	cap_nominal_voltage = 0.0;
+	RemoteSensor = NULL;
+	SecondaryRemote=NULL;
+	RNode = NULL;
+	RLink = NULL;
 
 	NotFirstIteration=false;
 
@@ -123,9 +133,65 @@ int capacitor::init(OBJECT *parent)
 	int result = node::init();
 
 	OBJECT *obj = OBJECTHDR(this);
-	node *RNode = OBJECTDATA(RemoteNode,node);
 
-	if ((capacitor_A == 0.0) && (capacitor_A == 0.0) && (capacitor_A == 0.0))
+	if ((control == VARVOLT) && (SecondaryRemote!=NULL))	//Something set in the secondary sensor location & VARVOLT scheme
+	{
+		if (RemoteSensor==NULL)	//But nothing in the first
+		{
+			GL_THROW("Please set the remote sensing location on capacitor:%d under \"remote_sense\"",obj->id);
+			/*  TROUBLESHOOT
+			Capacitor objects have two "remote sensor" fields that can be set.  The secondary sensor is only used in VAR-VOLT schemes
+			and requires that the primary sensor is used first.
+			*/
+		}
+		else	//It has something too - let's make sure they are right
+		{
+			if ((gl_object_isa(RemoteSensor,"node","powerflow")) && (gl_object_isa(SecondaryRemote,"link","powerflow")))	//Node in 1, link in 2
+			{
+				RNode = OBJECTDATA(RemoteSensor,node);
+				RLink = OBJECTDATA(SecondaryRemote,link);
+			}
+			else if ((gl_object_isa(RemoteSensor,"link","powerflow")) && (gl_object_isa(SecondaryRemote,"node","powerflow")))	//link in 1, node in 2
+			{
+				RNode = OBJECTDATA(SecondaryRemote,node);
+				RLink = OBJECTDATA(RemoteSensor,link);
+			}
+			else
+			{
+				GL_THROW("For two remote sensors, Capacitor:%d requires one link and one node object specified.",obj->id);
+				/*  TROUBLESHOOT
+				To use both remote sensor fields, the capacitor must in VAR-VOLT control mode.  Furthermore, these two sensors are used
+				to determine voltage and power measurements elsewhere on the system, so a remote node and a remote link must be specified.
+				*/
+			}
+		}
+	}
+	else if ((control==VARVOLT) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && gl_object_isa(RemoteSensor,"link","powerflow"))	//VAR-VOLT scheme, one sensor defined
+	{
+		RLink = OBJECTDATA(RemoteSensor,link);
+	}
+	else if (SecondaryRemote != NULL)	//Should only be populated for VARVOLT scheme,
+	{
+		gl_warning("Capacitor:%d has a secondary sensor specified, but is not in VARVOLT control.  This will be ignored.",obj->id);
+		/*  TROUBLESHOOT
+		The secondary remote sensor field is only used in the VAR-VOLT control scheme.  When not under this control scheme, any inputs
+		to this field are ignored.
+		*/
+	}
+
+	if ((RemoteSensor != NULL) && (control != VARVOLT))	//Something is specified
+	{
+		if (gl_object_isa(RemoteSensor,"node","powerflow"))
+		{
+			RNode = OBJECTDATA(RemoteSensor,node);	//Get remote node information
+		}
+		else if (gl_object_isa(RemoteSensor,"link","powerflow"))
+		{
+			RLink = OBJECTDATA(RemoteSensor,link);	//Get remote link information
+		}
+	}
+
+	if ((capacitor_A == 0.0) && (capacitor_B == 0.0) && (capacitor_C == 0.0))
 		gl_error("Capacitor:%d does not have any capacitance values defined!",obj->id);
 		/*  TROUBLESHOOT
 		The capacitor does not have any actual capacitance values defined.  This results in the capacitor doing
@@ -150,11 +216,44 @@ int capacitor::init(OBJECT *parent)
 	cap_value[1] = complex(0,capacitor_B/(cap_nominal_voltage * cap_nominal_voltage));
 	cap_value[2] = complex(0,capacitor_C/(cap_nominal_voltage * cap_nominal_voltage));
 
-	if ((control == VAR) && (RNode == NULL))
-		gl_warning("If this is a child-attached capacitor, point sense_node to its parent for proper VAR control.");
+	if ((control == VOLT) && ((voltage_set_high == 0) || (voltage_set_low == 0)))
+		gl_warning("Capacitor:%d does not have one or both of its voltage set points set.",obj->id);
 		/*  TROUBLESHOOT
-		VAR control calculates reactive power directly.  If the capacitor is connected as a child node, it will typically not see a current injection and will have
-		a reactive power of zero.  This will result in no switching operations.  If in a child connection, specify sense_node as the parent as well.
+		If the VOLT control schemes is active, you must specify the voltage set points for the band of operation.  Without these,
+		the capacitor will not function and will effectively perform no action.
+		*/
+
+	if ((control == VARVOLT) && (voltage_set_high == 0))
+		gl_warning("Capacitor:%d does not have its upper voltage limit set.",obj->id);
+		/*  TROUBLESHOOT
+		When under the VAR-VOLT control scheme, the voltage_set_high set point should be set to the upper voltage
+		limit the capacitor will remain switched on for.
+		*/
+
+	if (((control == VAR) || (control == VARVOLT) ) && ((VAr_set_high == 0) || (VAr_set_low == 0)))
+		gl_warning("Capacitor:%d does not have one or both of its VAr set points set.",obj->id);
+		/*  TROUBLESHOOT
+		If VAR or VARVOLT control schemes are active, you must specify the reactive power set points for the band of operation.  Without these,
+		the capacitor will not function and will effectively perform no action.
+		*/
+
+	if (((control == VAR) || (control == VARVOLT)) && (RLink == NULL))
+		GL_THROW("VAR control on capacitor:%d requires a remote link to monitor.",obj->id);
+		/*  TROUBLESHOOT
+		For VAR or VARVOLT control to work on the capacitor, a remote line must be specified to monitor reactive power flow.  Without this, no operations will
+		occur within the capacitor.
+		*/
+
+	if (((control==VAR) || (control==VARVOLT)) && (VAr_set_low > VAr_set_high))	//Check limits
+		GL_THROW("The lower VAr limit of capacitor:%d is larger than the high limit setpoint!",obj->id);
+		/*  TROUBLESHOOT
+		Under VAr controls, the lower VAr set point must be less than the upper VAr set point.  Please set these accordingly.
+		*/
+
+	if (((control==VOLT) || (control==VARVOLT)) && (voltage_set_low > voltage_set_high))	//Check limits
+		GL_THROW("The lower voltage limit of capacitor:%d is larger than the high limit setpoint!",obj->id);
+		/*  TROUBLESHOOT
+		Under voltage controls, the lower voltage set point must be less than the upper voltage set point.  Please set these accordingly.
 		*/
 
 	if ((control != MANUAL) && (time_delay == 0) && (dwell_time==0))
@@ -164,20 +263,45 @@ int capacitor::init(OBJECT *parent)
 		the capacitor may oscillate until the convergence limit is reached.  Avoid this for proper answers.
 		*/
 
+	if ((control == VARVOLT) && (lockout_time==0))
+		gl_warning("No lockout time specified for capacitor:%d's VAR-VOLT control scheme.  May switch excessively.",obj->id);
+		/*  TROUBLESHOOT
+		Without a lockout_time set, the capacitor will only turn off for the delays instituted in time_delay.
+		*/
+
 	return result;
+}
+
+TIMESTAMP capacitor::presync(TIMESTAMP t0)
+{
+
+	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
+	{
+		LOCK_OBJECT(OBJECTHDR(RLink));
+		//Takes all measurements from output side of link
+		VArVals[0] = RLink->indiv_power_out[0].Im();
+		VArVals[1] = RLink->indiv_power_out[1].Im();
+		VArVals[2] = RLink->indiv_power_out[2].Im();
+		UNLOCK_OBJECT(OBJECTHDR(RLink));
+	}
+
+	return node::presync(t0);
 }
 
 TIMESTAMP capacitor::sync(TIMESTAMP t0)
 {
 	complex VoltVals[3];
 	complex temp_shunt[3];
-	node *RNode = OBJECTDATA(RemoteNode,node);
+	//node *RNode = OBJECTDATA(RemoteSensor,node);
 	bool Phase_Mismatch = false;
 	TIMESTAMP result;
 
 	//Update time trackers
 	time_to_change -= (t0 - last_time);
 	dwell_time_left -= (t0 - last_time);
+	lockout_time_left_A -= (t0 - last_time);
+	lockout_time_left_B -= (t0 - last_time);
+	lockout_time_left_C -= (t0 - last_time);
 
 	if (last_time!=t0)	//If we've transitioned, update the transition value
 	{
@@ -242,7 +366,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 			switchC_state=switchC_state_Next;
 
 		//Update controls
-		if (control==VOLT)
+		if ((control==VOLT) || (control==VARVOLT))
 		{
 			if ((pt_phase & PHASE_D) != (PHASE_D))	//See if we are interested in L-N or L-L voltages
 			{
@@ -254,9 +378,12 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 				}
 				else
 				{
+					LOCK_OBJECT(OBJECTHDR(RNode));
 					VoltVals[0] = RNode->voltage[0];
 					VoltVals[1] = RNode->voltage[1];
 					VoltVals[2] = RNode->voltage[2];
+					UNLOCK_OBJECT(OBJECTHDR(RNode));
+
 				}
 			}
 			else				//L-L voltages
@@ -269,9 +396,11 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 				}
 				else
 				{
+					LOCK_OBJECT(OBJECTHDR(RNode));
 					VoltVals[0] = RNode->voltaged[0];
 					VoltVals[1] = RNode->voltaged[1];
 					VoltVals[2] = RNode->voltaged[2];
+					UNLOCK_OBJECT(OBJECTHDR(RNode));
 				}
 			}
 		}
@@ -286,66 +415,142 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 					switchC_state_Prev = switchC_state_Next;
 				}
 				break;
+			case VARVOLT:  // VAr-Volt - same as VAR, but switching operations contingent (and interrupted) by voltage limit
 			case VAR:  // VAr
 				{
-					//Power values only calculated as L-N (L-L not possible), but logic left for both L-N and L-L until we determine the true scheme
-					if ((pt_phase & PHASE_D) != (PHASE_D))// Line to Neutral connections
+					//Power values only calculated as L-N (L-L not possible or really feasible)
+					if ((pt_phase & PHASE_A) == PHASE_A)
 					{
-						if ((pt_phase & PHASE_A) == PHASE_A)
-						{
-							if (VAr_set_low >= VArVals[0])
-								switchA_state_Req_Next=OPEN;
-							else if (VAr_set_high <= VArVals[0])
-								switchA_state_Req_Next=CLOSED;
-							else;
-						}
-							
-						if ((pt_phase & PHASE_B) == PHASE_B)
-						{
-							if (VAr_set_low >= VArVals[1])
-								switchB_state_Req_Next=OPEN;
-							else if (VAr_set_high <= VArVals[1])
-								switchB_state_Req_Next=CLOSED;
-							else;
-						}
-
-						if ((pt_phase & PHASE_C) == PHASE_C)
-						{
-							if (VAr_set_low >= VArVals[2])
-								switchC_state_Req_Next=OPEN;
-							else if (VAr_set_high <= VArVals[2])
-								switchC_state_Req_Next=CLOSED;
-							else;
-						}
+						if (VAr_set_low >= VArVals[0])
+							switchA_state_Req_Next=OPEN;
+						else if (VAr_set_high <= VArVals[0])
+							switchA_state_Req_Next=CLOSED;
+						else;
 					}
-					else // Line to Line connections
+						
+					if ((pt_phase & PHASE_B) == PHASE_B)
 					{
-						if ((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B))
-						{
-							if (VAr_set_low >= VArVals[0])	//VArVals handled above to use L-L power instead
-								switchA_state_Req_Next=OPEN;				//switchA assigned to AB connection (delta-connection in loads)
-							else if (VAr_set_high <= VArVals[0])
-								switchA_state_Req_Next=CLOSED;
-							else;
-						}
+						if (VAr_set_low >= VArVals[1])
+							switchB_state_Req_Next=OPEN;
+						else if (VAr_set_high <= VArVals[1])
+							switchB_state_Req_Next=CLOSED;
+						else;
+					}
 
-						if ((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C))
-						{
-							if (VAr_set_low >= VArVals[1])	//VArVals handled above to use L-L power instead
-								switchB_state_Req_Next=OPEN;				//switchB assigned to BC connection (delta-connection in loads)
-							else if (VAr_set_high <= VArVals[1])
-								switchB_state_Req_Next=CLOSED;
-							else;
-						}
+					if ((pt_phase & PHASE_C) == PHASE_C)
+					{
+						if (VAr_set_low >= VArVals[2])
+							switchC_state_Req_Next=OPEN;
+						else if (VAr_set_high <= VArVals[2])
+							switchC_state_Req_Next=CLOSED;
+						else;
+					}
 
-						if ((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A))
+					//VAR-VOLT portion of control scheme
+					if (control == VARVOLT)	//Check all voltages.  If exceed limit, force capacitor open instead of closed (regardless of how it was)
+					{
+						bool lockout_state_change[3];
+						lockout_state_change[0] = lockout_state_change[1] = lockout_state_change[2] = false;
+
+						if ((pt_phase & PHASE_D) != (PHASE_D))// Line to Neutral connections
 						{
-							if (VAr_set_low >= VArVals[2])	//VArVals handled above to use L-L power instead
-								switchC_state_Req_Next=OPEN;				//switchC assigned to CA connection (delta-connection in loads)
-							else if (VAr_set_high <= VArVals[2])
-								switchC_state_Req_Next=CLOSED;
-							else;
+							if (lockout_time_left_A <= 0)	//Not in lockout period
+							{
+								if (((pt_phase & PHASE_A) == PHASE_A) && (VoltVals[0].Mag() >= voltage_set_high))
+								{
+									switchA_state_Req_Next=OPEN;
+									lockout_state_change[0] = true;
+								}
+							}
+							else	//In lockout period
+							{
+								switchA_state_Req_Next=OPEN;
+							}
+
+							if (lockout_time_left_B <= 0)	//Not in lockout period
+							{
+								if (((pt_phase & PHASE_B) == PHASE_B) && (VoltVals[1].Mag() >= voltage_set_high))
+								{
+									switchB_state_Req_Next=OPEN;
+									lockout_state_change[1] = true;
+								}
+							}
+							else	//In lockout period
+							{
+								switchB_state_Req_Next=OPEN;
+							}
+
+							if (lockout_time_left_C <= 0)	//Not in lockout period
+							{
+								if (((pt_phase & PHASE_C) == PHASE_C) && (VoltVals[2].Mag() >= voltage_set_high))
+								{
+									switchC_state_Req_Next=OPEN;
+									lockout_state_change[2] = true;
+								}
+							}
+							else	//In lockout period
+							{
+								switchC_state_Req_Next=OPEN;
+							}
 						}
+						else // Line to Line connections
+						{
+							if (lockout_time_left_A <= 0)	//Not in lockout period
+							{
+								if (((pt_phase & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B)) && (VoltVals[0].Mag() >= voltage_set_high))
+								{
+									switchA_state_Req_Next=OPEN;
+									lockout_state_change[0] = true;
+								}
+							}
+							else	//In lockout period
+							{
+								switchA_state_Req_Next=OPEN;
+							}
+
+							if (lockout_time_left_B <= 0)	//Not in lockout period
+							{
+								if (((pt_phase & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C)) && (VoltVals[1].Mag() >= voltage_set_high))
+								{
+									switchB_state_Req_Next=OPEN;
+									lockout_state_change[1] = true;
+								}
+							}
+							else	//In lockout period
+							{
+								switchB_state_Req_Next=OPEN;
+							}
+
+							if (lockout_time_left_C <= 0)	//Not in lockout period
+							{
+								if (((pt_phase & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A)) && (VoltVals[2].Mag() >= voltage_set_high))
+								{
+									switchC_state_Req_Next=OPEN;
+									lockout_state_change[2] = true;
+								}
+							}
+							else	//In lockout period
+							{
+								switchC_state_Req_Next=OPEN;
+							}
+						}
+						
+						if ((control_level == BANK) && (lockout_state_change[0] | lockout_state_change[1] | lockout_state_change[2]))	//Bank control
+						{
+							lockout_time_left_A = lockout_time_left_B = lockout_time_left_C = (int64)lockout_time;	//Bank control, so lock 'em all
+						}
+						else if ((control_level == INDIVIDUAL) && (lockout_state_change[0] | lockout_state_change[1] | lockout_state_change[2]))	//Individual control
+						{
+							if (lockout_state_change[0]==true)
+								lockout_time_left_A = (int64)lockout_time;
+
+							if (lockout_state_change[1]==true)
+								lockout_time_left_B = (int64)lockout_time;
+
+							if (lockout_state_change[2]==true)
+								lockout_time_left_C = (int64)lockout_time;
+						}
+						else;
 					}
 				}
 				break;
@@ -410,9 +615,6 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 						}
 					}
 				}
-				break;
-			case VARVOLT:  // VAr, V
-				/// @todo implement capacity varvolt control closed (ticket #192)
 				break;
 			default:
 				break;
@@ -557,30 +759,6 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 	NotFirstIteration=true;	//Set so we know we can start automating (powerflow takes about 1 iteration to get even ball-park values)
 
 	return result;
-}
-
-TIMESTAMP capacitor::postsync(TIMESTAMP t0)
-{
-	node *RNode = OBJECTDATA(RemoteNode,node);
-
-	if (control==VAR)	//Grab the power values before they are zeroed out (mainly by FBS)
-	{
-		//Only grabbing L-N power.  No effective way to take L-N back to L-L power (no reference)
-		if (RNode == NULL)	//L-N power
-		{
-			VArVals[0] = (voltage[0]*~current_inj[0]).Im();
-			VArVals[1] = (voltage[1]*~current_inj[1]).Im();
-			VArVals[2] = (voltage[2]*~current_inj[2]).Im();
-		}
-		else
-		{
-			VArVals[0] = (RNode->voltage[0]*~RNode->current_inj[0]).Im();
-			VArVals[1] = (RNode->voltage[1]*~RNode->current_inj[1]).Im();
-			VArVals[2] = (RNode->voltage[2]*~RNode->current_inj[2]).Im();
-		}
-	}
-
-	return node::postsync(t0);
 }
 
 int capacitor::isa(char *classname)
