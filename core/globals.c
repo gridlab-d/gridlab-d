@@ -76,6 +76,7 @@ static struct s_varmap {
 	{"nolocks", PT_int32, &global_nolocks, PA_REFERENCE},
 	{"skipsafe", PT_int32, &global_skipsafe, PA_REFERENCE},
 	{"dateformat", PT_enumeration, &global_dateformat, PA_REFERENCE, df_keys},
+	{"minimum_timestep", PT_int32, &global_minimum_timestep, PA_REFERENCE},
 	/* add new global variables here */
 };
 

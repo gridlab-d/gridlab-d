@@ -220,6 +220,10 @@ static void do_object_sync(int thread, void *item)
 			 */
 		}
 
+		/* manage minimum timestep */
+		if (global_minimum_timestep>1 && this_t>global_clock && this_t<TS_NEVER)
+			this_t = ((this_t/global_minimum_timestep)+1)*global_minimum_timestep;
+
 		/* if this event precedes next step, next step is now this event */
 		if (data->step_to > this_t)
 			data->step_to = this_t;
@@ -608,6 +612,10 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 				is caused by a bug in the module that implements that object's class.
 			 */
 		}
+
+		/* manage minimum timestep */
+		if (global_minimum_timestep>1 && this_t>global_clock && this_t<TS_NEVER)
+			this_t = ((this_t/global_minimum_timestep)+1)*global_minimum_timestep;
 
 		/* if this event precedes next step, next step is now this event */
 		if (data->step_to > this_t)

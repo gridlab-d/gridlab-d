@@ -1462,6 +1462,10 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 			 */
 		}
 
+		/* manage minimum timestep */
+		if (global_minimum_timestep>1 && this_t>global_clock && this_t<TS_NEVER)
+			this_t = ((this_t/global_minimum_timestep)+1)*global_minimum_timestep;
+
 		/* if this event precedes next step, next step is now this event */
 		if (data->step_to > this_t)
 			data->step_to = this_t;

@@ -114,6 +114,8 @@ GLOBAL char global_complex_format[256] INIT("%+lg%+lg%c"); /**< the format to us
 GLOBAL char global_object_format[32] INIT("%s:%d"); 
 GLOBAL char global_object_scan[32] INIT("%[^:]:%d"); /**< the format to use when scanning for object ids */
 
+GLOBAL int global_minimum_timestep INIT(1); /**< the minimum timestep allowed */
+
 #ifdef __cplusplus
 }
 #endif
