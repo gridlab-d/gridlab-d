@@ -22,11 +22,11 @@ typedef enum {	X12=0,	///< circuit from line 1 to line 2    (240V)
 } CIRCUITTYPE; ///< circuit type
 
 typedef struct s_load {
-	/* NOTE: total must be first and must be published as "enduse_load[kW]" */
-	complex total;		///< total load at voltage given (kW)
-	complex power;		///< constant power load (kW)
-	complex current;	///< constant current load (A)
-	complex admittance;	///< constant admittance load (1/Ohm)
+	/* NOTE: total must be first and must be published as "enduse_load[kVA]" */
+	complex total;		///< total load at voltage given (kVA)
+	complex power;		///< constant power load (kVA)
+	complex current;	///< constant current load (kVA)
+	complex admittance;	///< constant admittance load (kVA)
 	double energy;		///< energy usage (accumulated kWh)
 	double heatgain;	///< internal heat gain rate (kW)
 } ENDUSELOAD;	///< End-use load struct that must be included in end-use for circuits to read load
@@ -42,6 +42,7 @@ typedef struct s_circuit {
 	unsigned short tripsleft; ///< the number of trips left before breaker faults
 	OBJECT *enduse; ///< the enduse that is using this circuit (must use ENDUSELOAD struct)
 	struct s_circuit *next; ///< next circuit in list
+	LOADSHAPE *implicit_end_use;///pointer to the implicit end use, if the object is an implicit end use
 } CIRCUIT; ///< circuit definition
 typedef struct s_panel {
 	double max_amps; ///< maximum panel amps
