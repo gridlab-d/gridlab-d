@@ -1,3 +1,6 @@
+# $Id: validate.py 1 2009-06-19 16:09:36Z mhauer $
+# Copyright (C) 2009 Battelle Memorial Institute
+
 import sys
 import email
 import os
@@ -6,13 +9,34 @@ import smtplib
 import time
 import subprocess
 
-
 os.putenv("PATH","%PATH%;..\\..\\..\\VS2005\\Win32\\Release")
+
+def do_help():
+	print("validate.py - GridLAB-D autotest/validation script")
+	print("     validate.py [dir=.] ~ runs the autotest script with \'dir\' used as")
+	print("                           the root directory to walk through")
+	print("")
+	print("  The validate script will search through all directories underneath the")
+	print("   target directory and locate all files that start with \"test_\" inside")
+	print("   directories named \"autotest\".  After locating as many files as possible,")
+	print("   it will run each file in GridLAB-D and count the number of model files")
+	print("   that fail to converge, then return that number.")
+	return 0
 
 ##
 #	run_tests is the main function for the autotest validation script.
 #	@param	argv	The command line arguements.
 def run_tests(argv):
+	cleanval = 0
+	#scan for --help and --clean
+	if len(argv) > 1:
+		for arg in argv:
+			if arg is "--help":
+				do_help();
+				exit(0)
+			if arg is "--clean":
+				clean = 1
+
 	print("Starting autotest script")
 	
 	there_dir = os.getcwd()
@@ -138,6 +162,7 @@ def run_tests(argv):
 	for errpath, errfile in errlist:
 		print(" * "+os.path.join(errpath, errfile))
 	
+	#exit(errct)
 	return errct
 #end run_tests()
 
