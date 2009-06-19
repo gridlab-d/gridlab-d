@@ -25,6 +25,7 @@
 #include "transformer.h"
 #include "switch_object.h"
 #include "substation.h"
+#include "pqload.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -82,6 +83,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new triplex_line_conductor(module);
 	new switch_object(module);
 	new substation(module);
+	new pqload(module);
 
 	/* always return the first class registered */
 	return node::oclass;

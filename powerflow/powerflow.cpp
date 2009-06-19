@@ -5,21 +5,20 @@
 	@ingroup modules
 
 	This module contains a model simulating a powerflow distribution network 
-	using Kersting's method outlined in his book: <I>Distribution System Modeling 
-	and Analysis.</I> In this method, the network is looked at as a system of
-	nodes and links.  Voltage and current are passed along the network in a 
-	series of sweeps.  During the sweeps, and small system of equations are
-	solved at each link using linear methods.  The sweeps are repeated for each 
-	timestep until the system reaches equilibrium, at which point the time in
-	the network can advance to the next available timestamp.  During a sweep,
-	3 passes are made across the network; pre-topdown, bottom up, and 
-	post-topdown.  During the pre-topdown pass, the meter object resets
-	agregator variables, and calculates maximum powe and energy consumption.
-	During the bottom up pass, currents are agregated, starting at the meter,
-	and working its way up the network to the generation node.  In the 
-	post-topdown pass, voltages for each node are calculated starting at the
-	generation node and working down towards the meter object (and from there
-	into the end use models).
+	using Kersting's method outlined in his book: <I>Distribution System Modeling and Analysis.</I>
+	In this method, the network is looked at as a system of	nodes and links.
+	Voltage and current are passed along the network in a series of sweeps.
+	During the sweeps, and small system of equations are solved at each link 
+	using linear methods.  The sweeps are repeated for each timestep until the
+	system reaches equilibrium, at which point the time in the network can 
+	advance to the next available timestamp.  During a sweep, 3 passes are
+	made across the network; pre-topdown, bottom up, and post-topdown.  During
+	the pre-topdown pass, the meter object resets agregator variables, and
+	calculates maximum powe and energy consumption.  During the bottom up pass,
+	currents are agregated, starting at the meter, and working its way up the
+	network to the generation node.  In the post-topdown pass, voltages for
+	each node are calculated starting at the generation node and working down
+	towards the meter object (and from there into the end use models).
 	
  @{
  **/
