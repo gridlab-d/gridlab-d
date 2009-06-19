@@ -42,7 +42,8 @@ typedef struct s_circuit {
 	unsigned short tripsleft; ///< the number of trips left before breaker faults
 	OBJECT *enduse; ///< the enduse that is using this circuit (must use ENDUSELOAD struct)
 	struct s_circuit *next; ///< next circuit in list
-	LOADSHAPE *implicit_end_use;///pointer to the implicit end use, if the object is an implicit end use
+	// DPC: commented this out until the rest of house_e is updated
+	// LOADSHAPE *implicit_end_use;///pointer to the implicit end use, if the object is an implicit end use
 } CIRCUIT; ///< circuit definition
 typedef struct s_panel {
 	double max_amps; ///< maximum panel amps
