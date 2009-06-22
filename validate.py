@@ -31,10 +31,10 @@ def run_tests(argv):
 	#scan for --help and --clean
 	if len(argv) > 1:
 		for arg in argv:
-			if arg is "--help":
+			if "--help" in arg:
 				do_help();
 				exit(0)
-			if arg is "--clean":
+			if "--clean" in arg:
 				clean = 1
 
 	print("Starting autotest script")
