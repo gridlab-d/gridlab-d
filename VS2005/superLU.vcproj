@@ -39,7 +39,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="D:\projects\gridlab_sourceforge\trunk\third_party\SuperLU_3.1\SRC"
+				AdditionalIncludeDirectories="..\third_party\SuperLU_3.1\SRC"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -100,7 +100,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="D:\projects\gridlab_sourceforge\trunk\third_party\SuperLU_3.1\SRC"
+				AdditionalIncludeDirectories="..\third_party\SuperLU_3.1\SRC"
 				RuntimeLibrary="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
