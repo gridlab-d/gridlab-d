@@ -58,6 +58,7 @@ TIMESTAMP double_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			Check to make sure the target you are specifying is a published variable.  
 			Refer to the documentation of the command flag --modhelp
 			*/
+			return TS_NEVER;
 		}
 		else {
 			double m = abs(*x-value);
