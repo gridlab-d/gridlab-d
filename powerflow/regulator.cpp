@@ -80,6 +80,18 @@ int regulator::init(OBJECT *parent)
 
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
 
+	if (pConfig->Control == pConfig->REMOTE_NODE) 
+	{
+		node *RNode = OBJECTDATA(RemoteNode,node);
+		if (RNode == NULL)
+		{
+			throw "Remote sensing node not found";
+			/* TROUBLESHOOT
+			If you are trying to use REMOTE_NODE, then please specify a sense_node within the regulator
+			object.  Otherwise, change your Control method.
+			*/
+		}
+	}
 	// D_mat & W_mat - 3x3 matrix
 	D_mat[0][0] = D_mat[1][1] = D_mat[2][2] = complex(1,0);
 	D_mat[0][1] = D_mat[2][0] = D_mat[1][2] = complex(-1,0);
@@ -174,10 +186,9 @@ int regulator::init(OBJECT *parent)
 			break;
 	}
 
-	mech_t_next[0] = mech_t_next[1] = mech_t_next[2] = 0;
+	mech_t_next[0] = mech_t_next[1] = mech_t_next[2] = TS_NEVER;
 	dwell_t_next[0] = dwell_t_next[1] = dwell_t_next[2] = TS_NEVER;
 	first_run_flag[0] = first_run_flag[1] = first_run_flag[2] = -1;
-	state_flag[0] = state_flag[1] = state_flag[2] = 0;
 
 	return result;
 }
@@ -282,97 +293,107 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		for (int i = 0; i < 3; i++) 
 		{
 			
-				if (check_voltage[i].Mag() < Vlow)		//raise voltage
+			if (check_voltage[i].Mag() < Vlow)		//raise voltage
+			{	
+				//hit the band center for convergence on first run, otherwise bad initial guess on tap settings 
+				//can fail on the first timestep
+				if (first_run_flag[i] == 0) 
 				{	
-					//hit the band center for convergence on first run, otherwise bad initial guess on tap settings 
-					//can fail on the first timestep
-					if (first_run_flag[i] == 0) 
-					{	
-						tap[i] = tap[i] + (int16)ceil((pConfig->band_center - check_voltage[i].Mag())/VtapChange);
-						if (tap[i] > pConfig->raise_taps) 
-						{
-							tap[i] = pConfig->raise_taps;
-						}
-						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-						mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-					}
-					//if both flags say it's okay to change the tap, then change the tap and turn on a 
-					//mechanical tap changing delay before the actual change
-					else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
-					{		 
-						tap[i] = tap[i] + (int16) 1;						
-
-						if (tap[i] > pConfig->raise_taps) 
-						{
-							tap[i] = pConfig->raise_taps;
-							mech_t_next[i] = dwell_t_next[i] = TS_NEVER;
-						}
-						else 
-						{
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-							mech_flag[i] = 0;
-						}
-					}
-					//only set the dwell time if we've reached the end of the previous dwell (in case other 
-					//objects update during that time)
-					else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
+					tap[i] = tap[i] + (int16)ceil((pConfig->band_center - check_voltage[i].Mag())/VtapChange);
+					if (tap[i] > pConfig->raise_taps) 
 					{
-						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;	
-					}														
+						tap[i] = pConfig->raise_taps;
+					}
+					dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+					mech_t_next[i] = t0 + (int64)pConfig->time_delay;
 				}
-				else if (check_voltage[i].Mag() > Vhigh)  //lower voltage
+				//dwelling has happened, and now waiting for actual physical change time
+				else if (mech_flag[i] == 0 && dwell_flag[i] == 1 && (mech_t_next[i] - t0) >= pConfig->time_delay)
 				{
-					if (first_run_flag[i] == 0) 
-					{
-						tap[i] = tap[i] - (int16)ceil((check_voltage[i].Mag() - pConfig->band_center)/VtapChange);
-						if (tap[i] < -pConfig->lower_taps) 
-						{
-							tap[i] = -pConfig->lower_taps;
-						}
-						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-						mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-					}
-					else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
-					{
-						tap[i] = tap[i] - (int16) 1;							
-						
-						if (tap[i] < -pConfig->lower_taps) 
-						{
-							tap[i] = -pConfig->lower_taps;
-							mech_t_next[i] = dwell_t_next[i] = TS_NEVER;
-						}
-						else 
-						{
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-							mech_flag[i] = 0;
-						}
-					}
-					else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
-					{
-						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-					}
+					mech_t_next[i] = t0 + (int64)pConfig->time_delay;
 				}
-				//If no tap changes were needed, then this resets dwell_flag to 0 and indicates regulator has no
-				//more changes unless system changes
-				else 
-				{	
-					dwell_t_next[i] = TS_NEVER;
-					dwell_flag[i] = 0;
-				}
+				//if both flags say it's okay to change the tap, then change the tap
+				else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
+				{		 
+					tap[i] = tap[i] + (int16) 1;						
 
-				//Use tap positions to solve for 'a' matrix
-				if (pConfig->Type == pConfig->A)
-				{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
-				else if (pConfig->Type == pConfig->B)
-				{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
-				else
-				{	throw "invalid regulator type";}
-				/*  TROUBLESHOOT
-				Check the Type of regulator specified.  Type can only be A or B at this time.
-				*/
-			
+					if (tap[i] > pConfig->raise_taps) 
+					{
+						tap[i] = pConfig->raise_taps;
+						mech_t_next[i] = dwell_t_next[i] = TS_NEVER;
+					}
+					else 
+					{
+						mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+						mech_flag[i] = 0;
+					}
+				}
+				//only set the dwell time if we've reached the end of the previous dwell (in case other 
+				//objects update during that time)
+				else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
+				{
+					dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+					mech_t_next[i] = dwell_t_next[i] + (int64)pConfig->time_delay;
+				}														
+			}
+			else if (check_voltage[i].Mag() > Vhigh)  //lower voltage
+			{
+				if (first_run_flag[i] == 0) 
+				{
+					tap[i] = tap[i] - (int16)ceil((check_voltage[i].Mag() - pConfig->band_center)/VtapChange);
+					if (tap[i] < -pConfig->lower_taps) 
+					{
+						tap[i] = -pConfig->lower_taps;
+					}
+					dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+					mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+				}
+				else if (mech_flag[i] == 0 && dwell_flag[i] == 1 && (mech_t_next[i] - t0) >= pConfig->time_delay)
+				{
+					mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+				}
+				else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
+				{
+					tap[i] = tap[i] - (int16) 1;							
+					
+					if (tap[i] < -pConfig->lower_taps) 
+					{
+						tap[i] = -pConfig->lower_taps;
+						mech_t_next[i] = dwell_t_next[i] = TS_NEVER;
+					}
+					else 
+					{
+						mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+						mech_flag[i] = 0;
+					}
+				}
+				else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
+				{
+					dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+					mech_t_next[i] = dwell_t_next[i] + (int64)pConfig->time_delay;
+				}
+			}
+			//If no tap changes were needed, then this resets dwell_flag to 0 and indicates regulator has no
+			//more changes unless system changes
+			else 
+			{	
+				dwell_t_next[i] = mech_t_next[i] = TS_NEVER;
+				dwell_flag[i] = 0;
+				mech_flag[i] = 0;
+			}
+
+			//Use tap positions to solve for 'a' matrix
+			if (pConfig->Type == pConfig->A)
+			{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
+			else if (pConfig->Type == pConfig->B)
+			{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
+			else
+			{	throw "invalid regulator type";}
+			/*  TROUBLESHOOT
+			Check the Type of regulator specified.  Type can only be A or B at this time.
+			*/
 		}
 		//Determine how far to advance the clock
 		int64 nt[3];
