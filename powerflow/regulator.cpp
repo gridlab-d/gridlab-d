@@ -239,16 +239,17 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		{	
 			volt[0] = volt[1] = volt[2] = 0.0;
 		}
+		
+		//Calculate outgoing currents
+		complex tmp_mat2[3][3];
+		inverse(d_mat,tmp_mat2);
+
+		curr[0] = tmp_mat2[0][0]*current_in[0]+tmp_mat2[0][1]*current_in[1]+tmp_mat2[0][2]*current_in[2];
+		curr[1] = tmp_mat2[1][0]*current_in[0]+tmp_mat2[1][1]*current_in[1]+tmp_mat2[1][2]*current_in[2];
+		curr[2] = tmp_mat2[2][0]*current_in[0]+tmp_mat2[2][1]*current_in[1]+tmp_mat2[2][2]*current_in[2];
+		
 		for (int i = 0; i < 3; i++) 
 		{
-			//Calculate outgoing currents
-			complex tmp_mat2[3][3];
-			inverse(d_mat,tmp_mat2);
-
-			curr[0] = tmp_mat2[0][0]*current_in[0]+tmp_mat2[0][1]*current_in[1]+tmp_mat2[0][2]*current_in[2];
-			curr[1] = tmp_mat2[1][0]*current_in[0]+tmp_mat2[1][1]*current_in[1]+tmp_mat2[1][2]*current_in[2];
-			curr[2] = tmp_mat2[2][0]*current_in[0]+tmp_mat2[2][1]*current_in[1]+tmp_mat2[2][2]*current_in[2];
-
 			V2[i] = volt[i] / ((double) pConfig->PT_ratio);
 			check_voltage[i] = V2[i] - (curr[i] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[i], pConfig->ldc_X_V[i]);
 		}
