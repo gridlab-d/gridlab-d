@@ -1,20 +1,20 @@
-########################################################
-# BEGIN
-########################################################
-# filename... example.glm
-# workdir.... \GridlabD\source\test\input
-# command.... --warn --verbose --test
-# created.... June 2007
-# classes.... 4
-# objects.... 5
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// filename... example.glm
+// workdir.... \GridlabD\source\test\input
+// command.... --warn --verbose --test
+// created.... June 2007 (updated 6/23/09)
+// classes.... 4
+// objects.... 5
 
 clock {
 	timestamp '2000-01-01 0:00:00';
 	timezone EST+5EDT;
 }
 
-########################################################
-# modules
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// modules
 module network {
 	acceleration_factor 1.1;
 	convergence_limit 0.001;
@@ -24,14 +24,16 @@ module climate;
 module commercial;
 module residential;
 
-########################################################
-# Wheatstone bridge
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#include "CA-Los_angeles.glm"
+
+// Wheatstone bridge
 object node:0 {
 	latitude 49N12'34";
 	longitude 121W15'48.3";
-	type 3; # swing bus
+	type SWING;
 	name "Feeder";
-	V random.uniform(0.5,1.5);
+	V 0.5+1.5j;
 }
 object node:1 {
 	parent node:0;
@@ -81,7 +83,7 @@ object player:9 {
 }
 
 object recorder {
-	parent node.name:Feeder;
+	parent Feeder;
 	property S;
 	file feeder.txt;
 	interval -1;
@@ -95,56 +97,68 @@ object recorder {
 	limit 1000;
 }
 
-# an island for testing purposes
-#object node:12 {
-#}
-#object node:13 {
-#}
-#object link:14 {
-#	from node:12;
-#	to node:13;
-#}
+// an island for testing purposes
+//object node:12 {
+//}
+//object node:13 {
+//}
+//object link:14 {
+//	from node:12;
+//	to node:13;
+//}
 
-#object collector:14 {
-#	property avg|V.ang|,min(V.mag);
-#	file aggr.txt;
-#	interval -1;
-#	limit 1000;
-#	group class=node;
-#}
-
-object climate {
-}
+//object collector:14 {
+//	property avg|V.ang|,min(V.mag);
+//	file aggr.txt;
+//	interval -1;
+//	limit 1000;
+//	group class=node;
+//}
 
 object office:20..30 {
-	parent node.name:Load;
-	floorarea_sf random.normal(10000,1000);
+	parent Load;
+	floor_area random.normal(100000,10000) sf;
+	floor_height 10 ft;
+	interior_mass random.normal(500000,50000) Btu/degF;
+	interior_ua random.normal(75000,7500) Btu/degF/h;
+	exterior_ua random.normal(15000,1500) Btu/degF/h;
+	hvac.heating.balance_temperature random.normal(60,2) degF;
+	hvac.heating.design_temperature random.normal(25,2) degF;
+	hvac.cooling.balance_temperature random.normal(70,2) degF;
+	hvac.cooling.design_temperature random.normal(100,2) degF;
+	air_temperature random.normal(75,1) degF;
+	mass_temperature random.normal(75,1) degF;
+	glazing.south 5000 sf;
+	glazing.east 5000 sf;
+	glazing.west 5000 sf;
+	glazing.north 5000 sf;
+	glazing.coefficient 0.5;
 }
 
 object recorder:..10 {
 	parent office:*;
-	property floorarea_sf;
+	property floor_area;
 	file office_area.txt;
 	interval -1;
 	limit 10;
 }
 
-#object shaper {
-#	file dryer.txt;
-#	group class=office;
-#	property occupancy;
-#	magnitude 5;
-#	#events 0;
-#}
+//object shaper {
+//	file dryer.txt;
+//	group class=office;
+//	property occupancy;
+//	magnitude 5;
+//	//events 0;
+//}
 
-#object collector {
-#	group class=office;
-#	property sum(occupancy),count(occupancy);
-#	file loadshape.txt;
-#	interval 0;
-#	limit 1000;
-#}
+//object collector {
+//	group class=office;
+//	property sum(occupancy),count(occupancy);
+//	file loadshape.txt;
+//	interval 0;
+//	limit 1000;
+//}
 
-########################################################
-# END
-########################################################
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// END
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////

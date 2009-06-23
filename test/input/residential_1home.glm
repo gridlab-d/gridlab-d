@@ -10,9 +10,8 @@ module tape;
 module climate;
 module residential;
 
-object climate {
-	tmyfile ca.los_angeles.23174;
-}
+#include "CA-Los_angeles.glm"
+
 
 object house:1 {
 	floor_area random.normal(1500,300) sf;
@@ -39,6 +38,18 @@ object waterheater:5 {
 	tank_setpoint 135.0 degF;
 }
 
+object microwave:6 {
+	parent house:1;
+}
+
+object plugload:7 {
+	parent house:1;
+}
+
+object dishwasher:8 {
+	parent house:1;
+}
+
 object player{
 	parent lights:2;
 	property demand;
@@ -55,46 +66,33 @@ object player{
 
 object player{
 	parent clotheswasher:4;
-	property demand;
+	property enduse_queue;
 	file clotheswasherDemand.glt;
 	loop 100;
 }
 
 object player{
 	parent waterheater:5;
-	property demand;
+	property water_demand;
 	file hotwaterDemand.glt;
 	loop 100;
 }
 
-object microwave:6 {
-	parent house:1;
-}
-
-object plugload:7 {
-	parent house:1;
-}
-
-object dishwasher:8 {
-	parent house:1;
-}
-
-object player{
+object player:20 {
 	parent microwave:6;
 	property demand;
 	file microwaveDemand.glt;
 	loop 100;
 }
 
-object player{
+object player:21 {
 	parent plugload:7;
 	property demand;
 	file plugloadDemand.glt;
 	loop 100;
 }
 
-
-object player{
+object player:22 {
 	parent dishwasher:8;
 	property demand;
 	file dishwasherDemand.glt;
@@ -106,7 +104,7 @@ object occupantload:9{
 	number_of_occupants 4;
 }
 
-object player{
+object player:23 {
 	parent occupantload:9;
 	property occupancy_fraction;
 	file occupancyFraction.glt;
@@ -115,7 +113,7 @@ object player{
 
 object recorder{
 	parent house:*;
-	property total_internal_gain;
+	property enduse_load;
 	file kgrecorder.txt;
 	interval 0;
 	limit 1000;

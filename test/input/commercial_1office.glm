@@ -1,7 +1,7 @@
-# $Id: commercial_1office.glm 683 2008-06-18 20:16:29Z d3g637 $
-#
-# commercial single-zone office test
-#
+// $Id: commercial_1office.glm 683 2008-06-18 20:16:29Z d3g637 $
+//
+// commercial single-zone office test
+//
 
 clock {
 	timestamp '2000-01-01 0:00:00';
@@ -9,11 +9,11 @@ clock {
 }
 
 module climate;
-object climate {
-	tmyfile LosAngeles.tmy2;
-}
-
 module commercial;
+module tape;
+
+#include "CA-Los_angeles.glm"
+
 object office:1 {
 	floor_area random.normal(100000,10000) sf;
 	floor_height 10 ft;
@@ -33,18 +33,17 @@ object office:1 {
 	glazing.coefficient 0.5;
 }
 
-module tape;
 object collector {
 	group class=office;
-	property sum(power.real),max(air_temperature,min(air_temperature),avg(air_temperature),max(mass_temperature),min(mass_temperature),avg(mass_temperature);
-	interval 3600; # 1 hour
-	limit 8760; # ~1 month
+	property sum(total_load.real),max(air_temperature,min(air_temperature),avg(air_temperature),max(mass_temperature),min(mass_temperature),avg(mass_temperature);
+	interval 3600; // 1 hour
+	limit 8760; // ~1 month
 	file total_power.csv;
 }
 
 object recorder {
 	parent office:1;
-	property hvac.mode,air_temperature,mass_temperature,temperature_change,Qh,Qs,Qi,power;
+	property hc_mode,air_temperature,mass_temperature,temperature_change,Qh,Qs,Qi,total_load;
 	interval 0;
 	file office_1.csv;
 }
