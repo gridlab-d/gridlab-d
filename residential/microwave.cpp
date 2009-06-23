@@ -119,7 +119,13 @@ double microwave::update_state(double dt)
 		// new OFF state or demand changed
 		if (state_time==0 || prev_demand!=demand) 
 		{
-			runtime = avgrt/demand;
+			if(demand != 0.0){
+				runtime = avgrt/demand;
+			} 
+			else {
+				runtime = 0.0;
+				return 0; /* don't run the microwave */
+			}
 			prev_demand = demand;
 			state_time = 0; // important that state time be reset to prevent increase in demand from causing immediate state change
 		}
