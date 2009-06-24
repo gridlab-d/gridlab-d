@@ -3,6 +3,7 @@
  */
 
 #include "solver_nr.h"
+#include <slu_ddefs.h>
 
 /* access to module global variables */
 #include "powerflow.h"
@@ -11,6 +12,10 @@ double *deltaI_NR;
 Bus_admit *BA_diag;
 Y_NR *Y_off_diag;
 complex *Icalc;
+
+SuperMatrix Test_Matrix;		//Simple initialization just to make sure SuperLU is linking - can be deleted
+superlu_options_t test_options; //Simple initialization just to make sure SuperLU is linking - can be deleted
+
 
 /** Newton-Raphson solver
 	Solves a power flow problem using the Newton-Raphson method
@@ -21,6 +26,7 @@ complex *Icalc;
  **/
 int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 {
+    set_default_options(&test_options); //Simple test to make sure library linking is working - can be deleted
 #ifdef DEBUG
 	//Debugger output for NR solver - dumps into MATPOWER friendly format
 	FILE *FP = fopen("caseMATPOWEROutput.m","w");
