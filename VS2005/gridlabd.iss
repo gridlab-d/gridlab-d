@@ -113,6 +113,7 @@ Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Compon
 Source: ..\..\..\models\residential_loads.glm; DestDir: {app}\samples
 Source: ..\..\..\models\powerflow_IEEE_37node.glm; DestDir: {app}\samples
 Source: ..\..\..\models\lighting.player; DestDir: {app}\samples
+Source: ..\..\..\core\rt\gridlabd.syn; Check: GetTextPadLocation; DestDir: {code:TextPadDestination}\System; Flags: ignoreversion
 
 ;; debug files
 ; ++DEBUG++
@@ -130,7 +131,6 @@ Source: ..\..\..\models\lighting.player; DestDir: {app}\samples
 Source: ..\..\..\models\dryer.shape; DestDir: {app}\samples
 Source: ..\..\..\README-WINDOWS.txt; DestDir: {app}
 Source: ..\..\..\core\rt\mingw.conf; DestDir: {app}\rt
-Source: ..\..\..\core\rt\gridlabd.syn; DestDir: {app}\rt
 Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\gnuplot.conf; DestDir: {app}\rt; Flags: ignoreversion
@@ -232,4 +232,35 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if (CurUninstallStep = usPostUninstall) then
     UnInstallEnvironment();
+end;
+
+// Grabbed and modified from stackoverflow
+// http://stackoverflow.com/questions/121812/how-do-i-use-inno-setup-to-optionally-install-a-plugin-file-in-a-folder-based-on
+var sTextPadDest : String;
+
+//
+// Search for the path where TextPad was installed.  Return true if path found.
+// Set variable to plugin folder
+//
+
+function GetTextPadLocation(): Boolean;
+var
+  i:      Integer;
+  len:    Integer;
+
+begin
+  sTextPadDest := '';
+
+  RegQueryStringValue( HKLM, 'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\TextPad.exe', 'Path', sTextPadDest );
+  len := Length(sTextPadDest);
+
+  Result := len > 0;
+end;
+
+//
+//  Use this function to return path to install plugin
+//
+function TextPadDestination(Param: String) : String;
+begin
+   Result := sTextPadDest;
 end;
