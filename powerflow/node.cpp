@@ -1168,7 +1168,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 				//Update branch currents - explicitly check to and from in case this is a parent structure
 				if (((currlink->from)->id) == (OBJECTHDR(this)->id))	//see if we are the from end
 				{
-					if  ((currlink->power_in) > (currlink->power_out))	//Make sure current flowing right direction
+					if  ((currlink->power_in.Mag()) > (currlink->power_out.Mag()))	//Make sure current flowing right direction
 					{
 						current_inj[0] += currlink->current_in[0];
 						current_inj[1] += currlink->current_in[1];
@@ -1177,7 +1177,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 				}
 				else if (((currlink->to)->id) == (OBJECTHDR(this)->id))	//see if we are the to end
 				{
-					if ((currlink->power_in) < (currlink->power_out))	//Current is reversed, so this is a from to
+					if ((currlink->power_in.Mag()) < (currlink->power_out.Mag()))	//Current is reversed, so this is a from to
 					{
 						current_inj[0] -= currlink->current_out[0];
 						current_inj[1] -= currlink->current_out[1];

@@ -42,8 +42,8 @@ public:
 	OBJECT *to;				///< to_node - load node
 	complex current_in[3];		///< current flow to link (w.r.t from node)
 	complex current_out[3];	///< current flow out of link (w.r.t. to node)
-	double power_in;		///< power flow in (w.r.t from node)
-	double power_out;		///< power flow out (w.r.t to node)
+	complex power_in;		///< power flow in (w.r.t from node)
+	complex power_out;		///< power flow out (w.r.t to node)
 	complex indiv_power_in[3];	///< power flow in (w.r.t. from node) - individual quantities
 	complex indiv_power_out[3];	///< power flow out (w.r.t. to node) - individual quantities
 

@@ -117,8 +117,8 @@ link::link(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "OPEN", LS_OPEN,
 			PT_object, "from",PADDR(from),
 			PT_object, "to", PADDR(to),
-			PT_double, "power_in[VA]", PADDR(power_in),
-			PT_double, "power_out[VA]", PADDR(power_out),
+			PT_complex, "power_in[VA]", PADDR(power_in),
+			PT_complex, "power_out[VA]", PADDR(power_out),
 			PT_complex, "power_in_A[VA]", PADDR(indiv_power_in[0]),
 			PT_complex, "power_in_B[VA]", PADDR(indiv_power_in[1]),
 			PT_complex, "power_in_C[VA]", PADDR(indiv_power_in[2]),
@@ -1288,8 +1288,8 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 			indiv_power_out[1] = t->voltage[1]*~t->current_inj[1];
 			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
 
-			power_in = indiv_power_in[0].Mag() + indiv_power_in[1].Mag() + indiv_power_in[2].Mag();
-			power_out = indiv_power_out[0].Mag() + indiv_power_out[1].Mag() + indiv_power_out[2].Mag();
+			power_in = indiv_power_in[0] + indiv_power_in[1] + indiv_power_in[2];
+			power_out = indiv_power_out[0] + indiv_power_out[1] + indiv_power_out[2];
 
 			//Old calculation method
 			//power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
