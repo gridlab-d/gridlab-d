@@ -9,13 +9,29 @@
 #include "powerflow.h"
 
 double *deltaI_NR;
-Bus_admit *BA_diag;
-Y_NR *Y_off_diag;
+Bus_admit *BA_diag; /// BA_diag store the diagonal elements of the bus admittance matrix, the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+Y_NR *Y_offdiag_PQ; //Y_offdiag_PQ store the row,column and value of off_diagonal elements of 6n*6n Y_NR matrix. No PV bus is included.
+Y_NR *Y_diag_fixed; //Y_diag_fixed store the row,column and value of fixed diagonal elements of 6n*6n Y_NR matrix. No PV bus is included
 complex *Icalc;
+//FILE * pFile; ////temporary output file, to be delete
 
 SuperMatrix Test_Matrix;		//Simple initialization just to make sure SuperLU is linking - can be deleted
 superlu_options_t test_options; //Simple initialization just to make sure SuperLU is linking - can be deleted
 
+//struct Sample
+//{
+//int x;
+//int y;
+//int z;
+//}s[4];
+
+//int cmp( const void *a , const void *b )
+//{
+//struct Sample *c = (Sample *)a;
+//struct Sample *d = (Sample *)b;
+//if(c->x != d->x) return c->x - d->x;
+//else return c->y - d->y;
+//}
 
 /** Newton-Raphson solver
 	Solves a power flow problem using the Newton-Raphson method
@@ -155,7 +171,8 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 	fclose(FP);
 #endif
 
-int indexer, jindexer;
+//pFile = fopen ("myfile.txt","w"); ////////////////////////to be delete
+int indexer, jindexer, tempa, tempb;
 char jindex, kindex;
  //*Build the Y_NR matrix, the off-diagonal elements are identical to the corresponding elements of bus admittance matrix.
  //The off-diagonal elements of Y_NR marix are not updated at each iteration.*/
@@ -163,6 +180,7 @@ char jindex, kindex;
 	{
 		BA_diag = new Bus_admit[bus_count];   //BA_diag store the location and value of diagonal elements of Bus Admittance matrix
 	}
+
 
 complex tempY[3][3];	
 for (indexer=0; indexer<bus_count; indexer++) // Construct the diagonal elements of Bus admittance matrix.
@@ -186,6 +204,7 @@ for (indexer=0; indexer<bus_count; indexer++) // Construct the diagonal elements
 					for (kindex=0; kindex<3; kindex++)
 					{
 						tempY[jindex][kindex] += *branch[jindexer].Y[jindex][kindex];
+						//fprintf(pFile,"Admittance of branch %d , %d %d : %4.3f + %4.3f i \n",jindexer,jindex,kindex,(*branch[jindexer].Y[jindex][kindex]).Re(), (*branch[jindexer].Y[jindex][kindex]).Im()); /////////////////////printf to be delete
 					}
 				}
 			}
@@ -207,11 +226,159 @@ for (indexer=0; indexer<bus_count; indexer++) // Construct the diagonal elements
 					for (kindex=0; kindex<3; kindex++)
 					{
 						BA_diag[indexer].Y[jindex][kindex] = tempY[jindex][kindex];// BA_diag store the 3*3 complex admittance value of n elements, n = bus_count
+					//fprintf(pFile,"BA_diag %d , %d %d : %4.3f + %4.3f i \n",indexer,jindex,kindex,(BA_diag[indexer].Y[jindex][kindex]).Re(), (BA_diag[indexer].Y[jindex][kindex]).Im()); /////////////////////printf to be delete
 					}
 			
-		}
-}
+				}
+	}
 
+//// Build the off_diagonal_PQ bus elements of 6n*6n Y_NR matrix.Equation (12). All the value in this part will not be updated at each iteration.
+int size_offdiag_PQ = 0;
+for (jindexer=0; jindexer<branch_count;jindexer++) 
+	{
+		for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+					  tempa  = branch[jindexer].from;
+					  tempb  = branch[jindexer].to;
+					  if ((*branch[jindexer].Y[jindex][kindex]).Re() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)  
+					  size_offdiag_PQ += 1; 
+					  if ((*branch[jindexer].Y[jindex][kindex]).Im() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1) 
+					  size_offdiag_PQ += 1; 
+					  else {}
+					 }
+				}
+	}
+
+if (Y_offdiag_PQ == NULL)
+	{
+		Y_offdiag_PQ = new Y_NR[size_offdiag_PQ*4];   //Y_offdiag_PQ store the row,column and value of off_diagonal elements of Bus Admittance matrix in which all the buses are not PV buses. 
+	}
+
+
+indexer = 0;
+for (jindexer=0; jindexer<branch_count;jindexer++)
+	{ 
+		for (jindex=0; jindex<3; jindex++)
+			{
+				for (kindex=0; kindex<3; kindex++)
+					{					
+						tempa  = branch[jindexer].from;
+					    tempb  = branch[jindexer].to;
+						if ((*branch[jindexer].Y[jindex][kindex]).Im() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)
+						{
+								Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex;
+						        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex;
+								Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Y[jindex][kindex]).Im()); // Note that off diagonal elements of bus admittance matrix is equal to the negative value of corresponding branch admittance.
+								indexer += 1;
+								Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex +3;
+						        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex +3;
+								Y_offdiag_PQ[indexer].Y_value = (*branch[jindexer].Y[jindex][kindex]).Im();
+								indexer += 1;
+								Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex;
+						        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex;
+								Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Y[jindex][kindex]).Im());
+								indexer += 1;
+								Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex +3;
+						        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex +3;
+								Y_offdiag_PQ[indexer].Y_value = (*branch[jindexer].Y[jindex][kindex]).Im();
+								indexer += 1;
+						}
+						if ((*branch[jindexer].Y[jindex][kindex]).Re() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)
+						{
+								Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex + 3;
+						        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex;
+								Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Y[jindex][kindex]).Re());
+								indexer += 1;
+								Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex;
+						        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex +3;
+								Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Y[jindex][kindex]).Re());
+								indexer += 1;	
+								Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex + 3;
+						        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex;
+								Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Y[jindex][kindex]).Re());
+								indexer += 1;
+								Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex;
+						        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex +3;
+								Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Y[jindex][kindex]).Re());
+								indexer += 1;
+						}
+				}
+			}
+	}
+
+//Build the fixed part of the diagonal PQ bus elements of 6n*6n Y_NR matrix. This part will not be updated at each iteration. 
+int size_diag_fixed = 0;
+for (jindexer=0; jindexer<bus_count;jindexer++) 
+	{
+		for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{		 
+					  if ((BA_diag[jindexer].Y[jindex][kindex]).Re() != 0 && bus[jindexer].type != 1 && jindex!=kindex)  
+					  size_diag_fixed += 1; 
+					  if ((BA_diag[jindexer].Y[jindex][kindex]).Im() != 0 && bus[jindexer].type != 1 && jindex!=kindex) 
+					  size_diag_fixed += 1; 
+					  else {}
+					 }
+				}
+	}
+if (Y_diag_fixed == NULL)
+	{
+		Y_diag_fixed = new Y_NR[size_diag_fixed*2];   //Y_diag_fixed store the row,column and value of the fixed part of the diagonal PQ bus elements of 6n*6n Y_NR matrix.
+	}
+indexer = 0;
+for (jindexer=0; jindexer<bus_count;jindexer++)
+	{ 
+		for (jindex=0; jindex<3; jindex++)
+			{
+				for (kindex=0; kindex<3; kindex++)
+					{					
+							if ((BA_diag[jindexer].Y[jindex][kindex]).Im() != 0 && bus[jindexer].type != 1 && jindex!=kindex)
+								{
+									Y_diag_fixed[indexer].row_ind = 6*jindexer + jindex;
+									Y_diag_fixed[indexer].col_ind = 6*jindexer + kindex;
+									Y_diag_fixed[indexer].Y_value = (BA_diag[jindexer].Y[jindex][kindex]).Im();
+									indexer += 1;
+									Y_diag_fixed[indexer].row_ind = 6*jindexer + jindex +3;
+									Y_diag_fixed[indexer].col_ind = 6*jindexer + kindex +3;
+									Y_diag_fixed[indexer].Y_value = (BA_diag[jindexer].Y[jindex][kindex]).Im();
+									indexer += 1;
+								}
+							if ((BA_diag[jindexer].Y[jindex][kindex]).Re() != 0 && bus[jindexer].type != 1 && jindex!=kindex)
+								{
+									Y_diag_fixed[indexer].row_ind = 6*jindexer + jindex;
+									Y_diag_fixed[indexer].col_ind = 6*jindexer + kindex +3;
+									Y_diag_fixed[indexer].Y_value = (BA_diag[jindexer].Y[jindex][kindex]).Re();
+									indexer += 1;
+									Y_diag_fixed[indexer].row_ind = 6*jindexer + jindex +3;
+									Y_diag_fixed[indexer].col_ind = 6*jindexer + kindex;
+									Y_diag_fixed[indexer].Y_value = (BA_diag[jindexer].Y[jindex][kindex]).Re();
+									indexer += 1;
+								}
+					}
+			}
+	}
+
+
+//Build the dynamic diagnal elements of 6n*6n Y matrix. All the elements in this part will be updated at each iteration.
+
+
+
+
+
+//////////////////////////////////////test printing
+//fprintf(pFile,"off diagnal elementes of 6n*6n Y matrix \n");
+//for (indexer=0; indexer<size_offdiag_PQ*4;indexer++)
+//	{
+//		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_offdiag_PQ[indexer].row_ind ,Y_offdiag_PQ[indexer].col_ind,Y_offdiag_PQ[indexer].Y_value); /////////////////////printf to be delete
+//	}
+//fprintf(pFile,"fixed diagnal elementes of 6n*6n Y matrix \n");
+//for (indexer=0; indexer<size_diag_fixed*2;indexer++)
+//	{
+//		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_diag_fixed[indexer].row_ind ,Y_diag_fixed[indexer].col_ind,Y_diag_fixed[indexer].Y_value); /////////////////////printf to be delete
+//	}
 
 
 //System load at each bus is represented by second order polynomial equations
@@ -260,17 +427,17 @@ for (indexer=0; indexer<bus_count; indexer++) // Construct the diagonal elements
 					tempQbus = - bus[indexer].QL[jindex];	
 					tempPhase = jindex;
 
-					for (indexer=0; indexer<branch_count; indexer++)
+					for (jindexer=0; jindexer<branch_count; jindexer++)
 					{
-							if (branch[indexer].from == tempbus) 
-								for (jindex=0; jindex<3; jindex++)
+							if (branch[jindexer].from == tempbus) 
+								for (kindex=0; kindex<3; kindex++)
 						             {
-								     tempIcalc += (*branch[indexer].Y[tempPhase][jindex]) * (*bus[branch[indexer].to].V[jindex]);
+								     tempIcalc += (*branch[jindexer].Y[tempPhase][kindex]) * (*bus[branch[jindexer].to].V[kindex]);
 								     }
 							else if  (branch[indexer].to == tempbus)
-                                for (jindex=0; jindex<3; jindex++)
+                                for (kindex=0; kindex<3; kindex++)
 						            {
-								     tempIcalc += (*branch[indexer].Y[tempPhase][jindex]) * (*bus[branch[indexer].from].V[jindex]);
+								     tempIcalc += (*branch[jindexer].Y[tempPhase][kindex]) * (*bus[branch[jindexer].from].V[kindex]);
 								     }
 							else {}
 					}				
@@ -282,8 +449,12 @@ for (indexer=0; indexer<bus_count; indexer++) // Construct the diagonal elements
 			}
 	}
 
+/* sorting integers using qsort() example */
+
+//qsort(s,4,sizeof(s[0]),cmp);
 
 
+//fclose (pFile); //////////////////////////////////////// to be delete
 
 	/// @todo implement NR method
 	GL_THROW("Newton-Raphson solution method is not yet supported");
