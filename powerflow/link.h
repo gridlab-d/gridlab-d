@@ -44,8 +44,10 @@ public:
 	complex current_out[3];	///< current flow out of link (w.r.t. to node)
 	complex power_in;		///< power flow in (w.r.t from node)
 	complex power_out;		///< power flow out (w.r.t to node)
+	complex power_loss;		///< power loss in transformer
 	complex indiv_power_in[3];	///< power flow in (w.r.t. from node) - individual quantities
 	complex indiv_power_out[3];	///< power flow out (w.r.t. to node) - individual quantities
+	complex indiv_power_loss[3];///< power losses in the transformer - individual quantities
 
 	int create(void);
 	int init(OBJECT *parent);

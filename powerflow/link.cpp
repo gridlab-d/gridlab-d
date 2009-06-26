@@ -119,12 +119,16 @@ link::link(MODULE *mod) : powerflow_object(mod)
 			PT_object, "to", PADDR(to),
 			PT_complex, "power_in[VA]", PADDR(power_in),
 			PT_complex, "power_out[VA]", PADDR(power_out),
+			PT_complex, "power_losses[VA]", PADDR(power_loss),
 			PT_complex, "power_in_A[VA]", PADDR(indiv_power_in[0]),
 			PT_complex, "power_in_B[VA]", PADDR(indiv_power_in[1]),
 			PT_complex, "power_in_C[VA]", PADDR(indiv_power_in[2]),
 			PT_complex, "power_out_A[VA]", PADDR(indiv_power_out[0]),
 			PT_complex, "power_out_B[VA]", PADDR(indiv_power_out[1]),
 			PT_complex, "power_out_C[VA]", PADDR(indiv_power_out[2]),
+			PT_complex, "power_losses_A[VA]", PADDR(indiv_power_loss[0]),
+			PT_complex, "power_losses_B[VA]", PADDR(indiv_power_loss[1]),
+			PT_complex, "power_losses_C[VA]", PADDR(indiv_power_loss[2]),
 			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 	}
 }
@@ -143,6 +147,10 @@ int link::create(void)
 	status = LS_CLOSED;
 	power_in = 0;
 	power_out = 0;
+	power_loss = 0;
+	indiv_power_in[0] = indiv_power_in[1] = indiv_power_in[2] = 0.0;
+	indiv_power_out[0] = indiv_power_out[1] = indiv_power_out[2] = 0.0;
+	indiv_power_loss[0] = indiv_power_loss[1] = indiv_power_loss[2] = 0.0;
 	voltage_ratio = 1.0;
 	SpecialLnk = NORMAL;
 	prev_LTime=0;
@@ -1140,12 +1148,32 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 
 		/* compute va flows */
 		if (has_phase(PHASE_S) && SpecialLnk!=SPLITPHASE) {
-			power_in = (f->voltage[0]*~current_in[0] - f->voltage[1]*~current_in[1] + f->voltage[2]*~current_in[2]).Mag();
-			power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
+			//Original code - attempted to split so single phase matches three phase in terms of output capabilities
+			//power_in = (f->voltage[0]*~current_in[0] - f->voltage[1]*~current_in[1] + f->voltage[2]*~current_in[2]).Mag();
+			//power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
+			
+			//Follows convention of three phase calculations below
+			indiv_power_in[0] = f->voltage[0]*~current_in[0];
+			indiv_power_in[1] = complex(-1.0) * f->voltage[1]*~current_in[1];
+			indiv_power_in[2] = f->voltage[2]*~current_in[2];
+
+			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
+			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~t->current_inj[1];
+			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
 		}
 		else if (SpecialLnk==SPLITPHASE) {
-			power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
-			power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
+			//Original code - attempted to split so matches three phase below
+			//power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
+			//power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
+
+			//Follows convention of three phase calculations below
+			indiv_power_in[0] = f->voltage[0]*~current_in[0];
+			indiv_power_in[1] = f->voltage[1]*~current_in[1];
+			indiv_power_in[2] = f->voltage[2]*~current_in[2];
+
+			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
+			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~t->current_inj[1];
+			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
 		}
 		else {
 			//GS-esque (but fixed) method of power calculations
@@ -1288,13 +1316,32 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 			indiv_power_out[1] = t->voltage[1]*~t->current_inj[1];
 			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
 
-			power_in = indiv_power_in[0] + indiv_power_in[1] + indiv_power_in[2];
-			power_out = indiv_power_out[0] + indiv_power_out[1] + indiv_power_out[2];
-
 			//Old calculation method
 			//power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
 			//power_out = (t->voltage[0]*~t->current_inj[0]).Mag() + (t->voltage[1]*~t->current_inj[1]).Mag() + (t->voltage[2]*~t->current_inj[2]).Mag();
 		}
+
+		//Combine all of the quantities now
+		power_in = indiv_power_in[0] + indiv_power_in[1] + indiv_power_in[2];
+		power_out = indiv_power_out[0] + indiv_power_out[1] + indiv_power_out[2];
+
+		//Figure out losses - fix for reverse flow capabilities
+		if (power_in.Mag() > power_out.Mag())	//"Normal" flow direction
+		{
+			indiv_power_loss[0] = indiv_power_in[0] - indiv_power_out[0];
+			indiv_power_loss[1] = indiv_power_in[1] - indiv_power_out[1];
+			indiv_power_loss[2] = indiv_power_in[2] - indiv_power_out[2];
+		}
+		else									//Reversed flow direction
+		{
+			indiv_power_loss[0] = indiv_power_out[0] - indiv_power_in[0];
+			indiv_power_loss[1] = indiv_power_out[1] - indiv_power_in[1];
+			indiv_power_loss[2] = indiv_power_out[2] - indiv_power_in[2];
+		}
+
+		//Calculate overall losses
+		power_loss = indiv_power_loss[0] + indiv_power_loss[1] + indiv_power_loss[2];
+
 	}
 	else if ((!is_open()) && (solver_method==SM_GS) && GS_all_converged)
 	{
