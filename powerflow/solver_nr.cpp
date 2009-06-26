@@ -9,6 +9,7 @@
 #include "powerflow.h"
 
 double *deltaI_NR;
+double *deltaV_NR;
 Bus_admit *BA_diag; /// BA_diag store the diagonal elements of the bus admittance matrix, the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 Y_NR *Y_offdiag_PQ; //Y_offdiag_PQ store the row,column and value of off_diagonal elements of 6n*6n Y_NR matrix. No PV bus is included.
 Y_NR *Y_diag_fixed; //Y_diag_fixed store the row,column and value of fixed diagonal elements of 6n*6n Y_NR matrix. No PV bus is included
@@ -412,14 +413,14 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 		Icalc = new complex[bus_count];  // Calculated current injections at each bus is stored in Icalc for each iteration 
 	}
 
-	complex tempDI; //tempDI store the temporary value of deltaI at each bus  
-	complex tempIcalc; // tempIcalc store the temporary calculated value of current injection at bus k equation(1)  
+	complex tempPb; //tempPb store the temporary value of deltaI at each bus  
+	complex tempPc; // tempPc store the temporary calculated value of current injection at bus k equation(1)  
 	double tempPbus; //tempPbus store the temporary value of active power at each bus
 	double tempQbus; //tempQbus store the temporary value of reactive power at each bus
 	int tempbus, tempPhase; 
 	for (indexer=0; indexer<bus_count; indexer++)
 	{
-		tempIcalc = NULL;
+		tempPc = NULL;
 		tempbus=indexer;	
 		for (jindex=0; jindex<3; jindex++)
 			{
@@ -432,22 +433,49 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 							if (branch[jindexer].from == tempbus) 
 								for (kindex=0; kindex<3; kindex++)
 						             {
-								     tempIcalc += (*branch[jindexer].Y[tempPhase][kindex]) * (*bus[branch[jindexer].to].V[kindex]);
+								     tempPc += (*branch[jindexer].Y[tempPhase][kindex]) * (*bus[branch[jindexer].to].V[kindex]);
 								     }
 							else if  (branch[indexer].to == tempbus)
                                 for (kindex=0; kindex<3; kindex++)
 						            {
-								     tempIcalc += (*branch[jindexer].Y[tempPhase][kindex]) * (*bus[branch[jindexer].from].V[kindex]);
+								     tempPc += (*branch[jindexer].Y[tempPhase][kindex]) * (*bus[branch[jindexer].from].V[kindex]);
 								     }
 							else {}
 					}				
-					Icalc[tempbus] = tempIcalc; // calculated current injection  				
-					tempDI =  (~complex(tempPbus, tempQbus))/(~(*bus[indexer].V[jindex])) - tempIcalc;
-                   	deltaI_NR[tempbus*3+3 + tempPhase] = tempDI.Re(); // Real part of deltaI, left hand side of equation (11)
-                    deltaI_NR[tempbus*3 + tempPhase] = tempDI.Im(); // Imaginary part of deltaI, left hand side of equation (11)
+					Icalc[tempbus] = tempPc; // calculated current injection  				
+					tempPb =  (~complex(tempPbus, tempQbus))/(~(*bus[indexer].V[jindex])) - tempPc;
+                   	deltaI_NR[tempbus*3+3 + tempPhase] = tempPb.Re(); // Real part of deltaI, left hand side of equation (11)
+                    deltaI_NR[tempbus*3 + tempPhase] = tempPb.Im(); // Imaginary part of deltaI, left hand side of equation (11)
 
 			}
 	}
+
+// Define deltaV_NR, which is the solution of equation (11)
+	if (deltaV_NR==NULL)
+	{
+		deltaV_NR = new double[6*bus_count];   // right_hand side of equation (11)
+	}
+
+// Calculate the elements of a,b,c,d in equations(14),(15),(16),(17). These elements are used to update the Jacobian matrix.	
+	for (indexer=0; indexer<bus_count; indexer++)
+		{
+			for (jindex=0; jindex<3; jindex++)
+			{
+				tempP = *bus[indexer].S[jindex];	//Constant power portion
+				tempPb = *bus[indexer].V[jindex]*(~(*bus[indexer].I[jindex]));	//Constant current portion
+				tempPc = *bus[indexer].V[jindex]*(~(*bus[indexer].V[jindex]*(*bus[indexer].Y[jindex])));	//Constant impedance portion
+                bus[indexer].Jacob_A[jindex] = (tempP.Im()*(pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*tempP.Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
+				bus[indexer].Jacob_A[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*tempPb.Re() + tempPb.Im()*pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) + tempPc.Im();// second part of equation(37)
+                bus[indexer].Jacob_B[jindex] = (tempP.Re()*(pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) + 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*tempP.Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
+				bus[indexer].Jacob_B[jindex] += -((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*tempPb.Im() + tempPb.Re()*pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - tempPc.Re();// second part of equation(38)
+                bus[indexer].Jacob_C[jindex] = (tempP.Re()*(pow((*bus[indexer].V[jindex]).Im(),2) - pow((*bus[indexer].V[jindex]).Re(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*tempP.Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
+				bus[indexer].Jacob_C[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*tempPb.Im() - tempPb.Re()*pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - tempPc.Re();// second part of equation(39)
+				bus[indexer].Jacob_D[jindex] = (tempP.Im()*(pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*tempP.Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
+				bus[indexer].Jacob_D[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*tempPb.Re() - tempPb.Im()*pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - tempPc.Im();// second part of equation(40)
+			}
+	}
+
+    
 
 /* sorting integers using qsort() example */
 
