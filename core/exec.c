@@ -266,6 +266,31 @@ static STATUS init_all(void)
 	return SUCCESS;
 }
 
+static STATUS commit_all(void){
+	OBJECT *obj;
+	TRY {
+		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
+		{
+			if (object_commit(obj)==FAILED){
+				throw_exception("commit_all(): object %s commit failed", object_name(obj));
+				/* TROUBLESHOOT
+					The commit function of the named object has failed.  Make sure that the object's
+					requirements for commit'ing are satisfied and try again.  (likely internal state aberations)
+				 */
+			}
+		}
+	} CATCH(char *msg){
+		output_error("commit() failure: %s", msg);
+		/* TROUBLESHOOT
+			The commit'ing procedure failed.  This is usually preceded 
+			by a more detailed message that explains why it failed.  Follow
+			the guidance for that message and try again.
+		 */
+		return FAILED;
+	} ENDCATCH;
+	return SUCCESS;
+}
+
 STATUS exec_test(struct sync_data *data, int pass, OBJECT *obj);
  
 STATUS t_setup_ranks(void){
@@ -472,6 +497,17 @@ STATUS exec_start(void)
 			/* check for clock advance */
 			if (sync.step_to != global_clock)
 			{
+				if (commit_all() == FAILED)
+				{
+					output_error("model commit failed");
+					/* TROUBLESHOOT
+						The commit procedure failed.  This is usually preceded 
+						by a more detailed message that explains why it failed.  Follow
+						the guidance for that message and try again.
+					 */
+					return FAILED;
+				}
+
 				/* reset iteration count */
 				iteration_counter = global_iteration_limit;
 

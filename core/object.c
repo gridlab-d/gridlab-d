@@ -1219,6 +1219,13 @@ int object_init(OBJECT *obj){ /**< the object to initialize */
 	return 1;
 }
 
+int object_commit(OBJECT *obj){
+	if(obj->oclass->commit != NULL){
+		return (int)(*(obj->oclass->commit))(obj);
+	}
+	return 1;
+}
+
 /** Tests the type of an object
  **/
 int object_isa(OBJECT *obj, /**< the object to test */
