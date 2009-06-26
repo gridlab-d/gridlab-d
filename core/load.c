@@ -1650,31 +1650,46 @@ static int complex_value(PARSER, complex *pValue)
 		pValue->i = i;
 		pValue->f = I;
 		ACCEPT;
+		DONE;
 	}
-	else if ((WHITE,TERM(real_value(HERE,&r))) && (WHITE,TERM(real_value(HERE,&i))) && LITERAL("j"))
+	OR
+	if ((WHITE,TERM(real_value(HERE,&r))) && (WHITE,TERM(real_value(HERE,&i))) && LITERAL("j"))
 	{
 		pValue->r = r;
 		pValue->i = i;
 		pValue->f = J;
 		ACCEPT;
+		DONE;
 	}
-	else if ((WHITE,TERM(real_value(HERE,&m))) && (WHITE,TERM(real_value(HERE,&a))) && LITERAL("d"))
+	OR
+	if ((WHITE,TERM(real_value(HERE,&m))) && (WHITE,TERM(real_value(HERE,&a))) && LITERAL("d"))
 	{
 		pValue->r = m*cos(a*PI/180);
 		pValue->i = m*sin(a*PI/180);
 		pValue->f = A;
 		ACCEPT;
+		DONE;
 	}
-	else if ((WHITE,TERM(real_value(HERE,&m))) && (WHITE,TERM(real_value(HERE,&a))) && LITERAL("r"))
+	OR
+	if ((WHITE,TERM(real_value(HERE,&m))) && (WHITE,TERM(real_value(HERE,&a))) && LITERAL("r"))
 	{
 		pValue->r = m*cos(a);
 		pValue->i = m*sin(a);
 		pValue->f = R;
 		ACCEPT;
+		DONE;
+	} 
+	OR
+	if ((WHITE,TERM(real_value(HERE,&m))))
+	{
+		pValue->r = m;
+		pValue->i = 0.0;
+		pValue->f = I;
+		ACCEPT;
+		DONE;
 	}
-	else 
-		REJECT;
-	DONE;
+
+	REJECT;
 }
 
 static int complex_unit(PARSER,complex *pValue,UNIT **unit)
@@ -3828,7 +3843,6 @@ static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 	}
 	return n;
 }
-
 
 static int include_file(char *incname, char *buffer, int size)
 {
