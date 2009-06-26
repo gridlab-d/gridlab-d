@@ -12,8 +12,10 @@ double *deltaI_NR;
 double *deltaV_NR;
 Bus_admit *BA_diag; /// BA_diag store the diagonal elements of the bus admittance matrix, the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 Y_NR *Y_offdiag_PQ; //Y_offdiag_PQ store the row,column and value of off_diagonal elements of 6n*6n Y_NR matrix. No PV bus is included.
-Y_NR *Y_diag_fixed; //Y_diag_fixed store the row,column and value of fixed diagonal elements of 6n*6n Y_NR matrix. No PV bus is included
+Y_NR *Y_diag_fixed; //Y_diag_fixed store the row,column and value of fixed diagonal elements of 6n*6n Y_NR matrix. No PV bus is included.
+Y_NR *Y_diag_update;//Y_diag_update store the row,column and value of updated diagonal elements of 6n*6n Y_NR matrix at each iteration. No PV bus is included
 complex *Icalc;
+
 //FILE * pFile; ////temporary output file, to be delete
 
 SuperMatrix Test_Matrix;		//Simple initialization just to make sure SuperLU is linking - can be deleted
@@ -363,12 +365,6 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 	}
 
 
-//Build the dynamic diagnal elements of 6n*6n Y matrix. All the elements in this part will be updated at each iteration.
-
-
-
-
-
 //////////////////////////////////////test printing
 //fprintf(pFile,"off diagnal elementes of 6n*6n Y matrix \n");
 //for (indexer=0; indexer<size_offdiag_PQ*4;indexer++)
@@ -474,8 +470,46 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 				bus[indexer].Jacob_D[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*tempPb.Re() - tempPb.Im()*pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - tempPc.Im();// second part of equation(40)
 			}
 	}
+//Build the dynamic diagnal elements of 6n*6n Y matrix. All the elements in this part will be updated at each iteration.
+int size_diag_update = 0;
+for (jindexer=0; jindexer<bus_count;jindexer++) 
+	{
+	 if  (bus[jindexer].type != 1)  
+	size_diag_update += 1; 
+	else {}
+	}
+if (Y_diag_fixed == NULL)
+	{
+		Y_diag_update = new Y_NR[size_diag_update*12];   //Y_diag_update store the row,column and value of the dynamic part of the diagonal PQ bus elements of 6n*6n Y_NR matrix.
+	}
+indexer = 0;
+for (jindexer=0; jindexer<bus_count; jindexer++)
+	{
+		for (jindex=0; jindex<3; jindex++)
+			{
+				if (bus[jindexer].type != 1)
+					{
+						Y_diag_update[indexer].row_ind = 6*jindexer + jindex;
+						Y_diag_update[indexer].col_ind = Y_diag_update[jindexer].row_ind;
+						Y_diag_update[indexer].Y_value = (BA_diag[jindexer].Y[jindex][jindex]).Im() - bus[jindexer].Jacob_A[jindex]; // Equation(14)
+						indexer += 1;
+						Y_diag_update[indexer].row_ind = 6*jindexer + jindex;
+						Y_diag_update[indexer].col_ind = Y_diag_update[jindexer].row_ind + 3;
+						Y_diag_update[indexer].Y_value = (BA_diag[jindexer].Y[jindex][jindex]).Re() - bus[jindexer].Jacob_B[jindex]; // Equation(15)
+						indexer += 1;
+						Y_diag_update[indexer].row_ind = 6*jindexer + jindex + 3;
+						Y_diag_update[indexer].col_ind = Y_diag_update[jindexer].row_ind - 3;
+						Y_diag_update[indexer].Y_value = (BA_diag[jindexer].Y[jindex][jindex]).Re() - bus[jindexer].Jacob_C[jindex]; // Equation(16)
+						indexer += 1;
+						Y_diag_update[indexer].row_ind = 6*jindexer + jindex + 3;
+						Y_diag_update[indexer].col_ind = Y_diag_update[jindexer].row_ind;
+						Y_diag_update[indexer].Y_value = -(BA_diag[jindexer].Y[jindex][jindex]).Im() - bus[jindexer].Jacob_D[jindex]; // Equation(17)
+						indexer += 1;
+				    }
+			}
+	}
 
-    
+
 
 /* sorting integers using qsort() example */
 
