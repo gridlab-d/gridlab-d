@@ -668,9 +668,9 @@ static unsigned int object_index_size = 65536;
 	{
 		int new_size = (id/object_index_size+1)*object_index_size;
 		object_index = realloc(object_index,sizeof(OBJECT*)*new_size);
-		memset(object_index+object_index_size,0,sizeof(OBJECT*)*object_index_size);
+		memset(object_index+object_index_size*sizeof(OBJECT *),0,sizeof(OBJECT*)*object_index_size);
 		object_linked = realloc(object_linked,sizeof(unsigned char)*new_size);
-		memset(object_linked+object_index_size,0,sizeof(unsigned char)*object_index_size);
+		memset(object_linked+object_index_size*sizeof(unsigned char),0,sizeof(unsigned char)*object_index_size);
 		object_index_size = new_size;
 	}
 	if (object_index==NULL) { errno = ENOMEM; return FAILED;}
