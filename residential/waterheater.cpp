@@ -64,7 +64,7 @@ waterheater::waterheater(MODULE *module)
 				PT_KEYWORD,"GARAGE",GARAGE,
 			PT_double,"tank_setpoint[degF]",PADDR(tank_setpoint),
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),
-			PT_complex,"power[kW]",PADDR(power_kw),
+			//PT_complex,"power[kW]",PADDR(power_kw),
 			PT_double,"meter[kWh]",PADDR(kwh_meter),
 			PT_double,"temperature[degF]",PADDR(Tw),
 			PT_double,"height[ft]",PADDR(h),
@@ -304,6 +304,11 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
  **/
 TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
+	double internal_gain = 0.0;
+	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
+	double Tamb = get_Tambient(location);
+	double Td, Texp;
+
 	// determine the power used
 	if (heat_needed == TRUE){
 		power_kw = actual_kW() * (heat_mode == GASHEAT ? 0.01 : 1.0);
@@ -318,19 +323,6 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	set_time_to_transition();
 	last_water_demand = cur_water_demand;
-
-	if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
-		return -(TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND); // negative means soft transition
-	// less than one second means never
-	else
-		return TS_NEVER; 
-}
-
-TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
-	double internal_gain = 0.0;
-	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
-	double Tamb = get_Tambient(location);
-	double Td, Texp;
 
 	// determine internal gains
 	if(nHours > 0){
@@ -354,6 +346,21 @@ TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		// post internal gains
 		load.heatgain = -internal_gain * KWPBTUPH;
 	}
+
+	if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
+		return -(TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND); // negative means soft transition
+	// less than one second means never
+	else
+		return TS_NEVER; 
+}
+
+TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	double internal_gain = 0.0;
+	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
+	double Tamb = get_Tambient(location);
+	double Td, Texp;
+
+
 
 	return TS_NEVER;
 }
