@@ -103,11 +103,13 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// compute the total load and heat gain
 	if (t0>0 && t1>t0)
 		load.energy += load.total.Mag() * gl_tohours(t1-t0);
-	load.total = load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000;
+	load.total = (load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000) ;
+	load.total *= demand;
 	load.heatgain = load.total.Mag() * heat_fraction;
 
 
 	return TS_NEVER; 
+
 }
 
 //////////////////////////////////////////////////////////////////////////
