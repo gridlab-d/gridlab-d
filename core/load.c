@@ -855,12 +855,16 @@ static void syntax_error(char *p)
 
 static int white(PARSER)
 {
-	if (*_p=='\0' || !isspace((unsigned char)(*_p)))
-		return 0;
-	if (*_p=='\n') linenum++;
-	/* tail recursion to keep consuming whitespace until none left*/
-	return white(_p+1)+1;
+	int len = 0;
+	for(len = 0; *_p != '\0' && isspace((unsigned char)(*_p)); ++_p){
+		if(*_p == '\n'){
+			++linenum;
+		}
+		++len;
+	}
+	return len;
 }
+
 
 static int comment(PARSER)
 {
