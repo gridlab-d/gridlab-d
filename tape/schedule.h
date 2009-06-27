@@ -87,11 +87,12 @@ private:
 	schedule_list *sched_list;
 public:
 	double currval;
+	double default_value;
 	TIMESTAMP next_ts;
+	TAPESTATUS state;
+	char256 errmsg;
 	char256 filename;	// one or the other
 	char1024 sched;
-	double default_value;
-
 public:
 	static CLASS *oclass;
 	static schedule *defaults;

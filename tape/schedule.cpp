@@ -268,10 +268,15 @@ schedule::schedule(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			//PT_double,"motor_power[W]",PADDR(motor_power),
-			PT_double, "value", PADDR(currval),
+			PT_double, "value", PADDR(currval), PT_ACCESS, PA_REFERENCE,
 			PT_double, "default_value", PADDR(default_value),
-			PT_timestamp, "next_ts", PADDR(next_ts),
+			PT_timestamp, "next_ts", PADDR(next_ts), PT_ACCESS, PA_REFERENCE,
+			PT_enumeration, "state", PADDR(state), PT_ACCESS, PA_REFERENCE,
+				PT_KEYWORD, "INIT", TS_INIT,
+				PT_KEYWORD, "OPEN", TS_OPEN,
+				PT_KEYWORD, "DONE", TS_DONE,
+				PT_KEYWORD, "ERROR", TS_ERROR,
+			PT_char256, "error_msg", PADDR(errmsg), PT_ACCESS, PA_REFERENCE,
 			PT_char256, "filename", PADDR(filename),
 			PT_char1024, "schedule", PADDR(sched),
 			NULL)<1) 
@@ -304,9 +309,20 @@ int schedule::init(OBJECT *parent)
 		rv = open_sched_file();
 	}
 	
+	if(rv == 0){
+		state = TS_ERROR;
+		strcpy(errmsg, "Error reading & parsing schedule input source");
+	}
 	/* group rules together here */
 
 	/* ...or not (yet). */
+
+	if(state == TS_INIT){
+		state = TS_OPEN;
+	} else if(state == TS_ERROR){
+		gl_error("unable to open schedule");
+		state = TS_DONE;
+	}
 
 	return 1;
 }
@@ -433,7 +449,7 @@ int schedule::parse_schedule(){
 	@return 1 for success, 0 for failure
  */
 int schedule::open_sched_file(){
-	gl_error("schedule file input not yet supported")
+	gl_error("schedule file input not yet supported");
 	return 0;
 }
 
@@ -462,6 +478,11 @@ EXPORT int init_schedule(OBJECT *obj)
 {
 	schedule *my = OBJECTDATA(obj,schedule);
 	return my->init(obj->parent);
+}
+
+EXPORT int commit_schedule(OBJECT *obj){
+	//gl_error("We're in the commit function, yay!");
+	return 1;
 }
 
 EXPORT TIMESTAMP sync_schedule(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
