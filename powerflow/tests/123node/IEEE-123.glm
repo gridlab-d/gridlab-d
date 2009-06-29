@@ -1806,7 +1806,7 @@ object node:451 {
 object node:610 {
      phases "ABCN";
      name 610;
-     voltage_A 480.000 + 0j;
+     voltage_A 480.000+0j;
      voltage_B -240.000-415.6922j;
      voltage_C -240.000+415.6922j;
      nominal_voltage 480.000;
@@ -1901,7 +1901,7 @@ object load:10 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_A 8.3272+-4.1636j;
+     constant_current_A 8.3272-4.1636j;
      nominal_voltage 2401.7771;
 }
  
@@ -1961,7 +1961,7 @@ object load:20 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_A 16.6543+-8.3272j;
+     constant_current_A 16.6543-8.3272j;
      nominal_voltage 2401.7771;
 }
  
@@ -1991,7 +1991,7 @@ object load:28 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_A 16.6543+-8.3272j;
+     constant_current_A 16.6543-8.3272j;
      nominal_voltage 2401.7771;
 }
  
@@ -2041,7 +2041,7 @@ object load:33 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_A 16.6543+-8.3272j;
+     constant_current_A 16.6543-8.3272j;
      nominal_voltage 2401.7771;
 }
  
@@ -2081,7 +2081,7 @@ object load:38 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_B -7.7694+-5.1297j;
+     constant_current_B -7.7694-5.1297j;
      nominal_voltage 2401.7771;
 }
  
@@ -2131,7 +2131,7 @@ object load:45 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_A 8.3272+-4.1636j;
+     constant_current_A 8.3272-4.1636j;
      nominal_voltage 2401.7771;
 }
  
@@ -2151,8 +2151,8 @@ object load:47 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_A 14.5725+-10.409j;
-     constant_current_B -16.3007+-7.4157j;
+     constant_current_A 14.5725-10.409j;
+     constant_current_B -16.3007-7.4157j;
      constant_current_C 1.7282+17.8247j;
      nominal_voltage 2401.7771;
 }
@@ -2247,7 +2247,7 @@ object load:58 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_B -7.7694+-5.1297j;
+     constant_current_B -7.7694-5.1297j;
      nominal_voltage 2401.7771;
 }
  
@@ -2297,7 +2297,7 @@ object load:64 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_B -28.2336+-19.757j;
+     constant_current_B -28.2336-19.757j;
      nominal_voltage 2401.7771;
 }
  
@@ -2399,8 +2399,8 @@ object load:76 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_A 31.4742+-4.0341j;
-     constant_current_B -12.0192+-16.8269j;
+     constant_current_A 31.4742-4.0341j;
+     constant_current_B -12.0192-16.8269j;
      constant_current_C -8.5629+18.8224j;
      nominal_voltage 2401.7771;
 }
@@ -2515,7 +2515,7 @@ object load:90 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_B -15.5387+-10.2595j;
+     constant_current_B -15.5387-10.2595j;
      constant_impedance_B 0.00-115.7067j;         //Shunt Capacitor
      nominal_voltage 2401.7771;
 }
@@ -2667,7 +2667,7 @@ object load:112 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_A 8.3272+-4.1636j;
+     constant_current_A 8.3272-4.1636j;
      nominal_voltage 2401.7771;
 }
  

@@ -443,8 +443,8 @@ object node:799 {
 	phases "ABC";
 	name 799;
 	bustype SWING;
-	voltage_A 2400.000000 -1385.640646j;
-	voltage_B -2400.000000 -1385.640646j;
+	voltage_A 2400.000000-1385.640646j;
+	voltage_B -2400.000000-1385.640646j;
 	voltage_C 0.000000+2771.281292j;
 	nominal_voltage 4800;
 }
@@ -454,9 +454,9 @@ object node:781 {
 	 phases "ABC";
 	 name 781;
 	 //bustype SWING;
-	 voltage_A 2400.0000 - 1385.640646j;//2504.88-1446.19314229j;
-	 voltage_B -2400.0000 - 1385.640646j;//-2504.88-1446.19314229j;
-	 voltage_C 0.0000 + 2771.281292j;//-44.88+2814.65184433j;
+	 voltage_A 2400.0000-1385.640646j;
+	 voltage_B -2400.0000-1385.640646j;
+	 voltage_C 0.0000+2771.281292j;
 	 nominal_voltage 4800;
 }
 
