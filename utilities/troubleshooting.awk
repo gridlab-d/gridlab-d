@@ -92,7 +92,7 @@ END {
     print "This troubleshooting guide lists all the errors and warning messages from GridLAB-D.  Simply search for your message and follow the recommendations given."
 	print "<CITE>Last updated " strftime() "</CITE>."
 
-	i=1; links="";
+	i=1; links="<TABLE BGCOLOR=lightyellow BORDER=1 CELLPADDING=5 CELLSPACING=0><TR>";
 	for (msg in warnings) {
 		m = tolower(msg);
 		warnings_ndx[toupper(substr(m,1,1))] = toupper(substr(m,1,1));
@@ -101,12 +101,20 @@ END {
 		hdg[m] = msg;
 	}
     n = asort(warnings_ndx);
-	for (i=1; i<=n; i++) links = links "<A HREF=\"#Warnings_" warnings_ndx[i] "\">" warnings_ndx[i]  "</A> | ";
-	print "<BR><A ID=\"Warnings\"></A>" tabs "<H1>Warnings</H1>" links "<BR/>"
+	for (i=1; i<=n; i++) {
+		links = links "<TD><A HREF=\"#Warnings_" warnings_ndx[i] "\">" warnings_ndx[i]  "</A></TD>";
+		warnings_ndx[i] = 0;
+	}
+	links = links "</TR></TABLE>";
+	print "<BR><A ID=\"Warnings\"></A>" tabs NL "<H1>Warnings</H1>" links "<BR/>" NL;
 	n = asort(ndx);
-	for (i=1; i<=n; i++) print "\n<A ID=\"Warnings_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+	for (i=1; i<=n; i++) {
+		tag = toupper(substr(hdg[ndx[i]],1,1));
+		if (warnings_ndx[tag]==0) print "\n<A ID=\"Warnings_" tag "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+		warnings_ndx[tag] = warnings_ndx[tag] + 1;
+	}
 
-	i=1; links="";
+	i=1; links="<TABLE BGCOLOR=lightyellow BORDER=1 CELLPADDING=5 CELLSPACING=0><TR>";
 	for (msg in errors) {
 		m = tolower(msg);
 		errors_ndx[toupper(substr(m,1,1))] = toupper(substr(m,1,1));
@@ -115,12 +123,20 @@ END {
 		hdg[m] = msg;
 	}
     n = asort(errors_ndx);
-	for (i=1; i<=n; i++) links = links "<A HREF=\"#Errors_" errors_ndx[i] "\">" errors_ndx[i]  "</A> | ";
-	print "<A ID=\"Errors\"></A>" tabs "<H1>Errors</H1>" links "<BR/>";
+	for (i=1; i<=n; i++) {
+		links = links "<TD><A HREF=\"#Errors_" errors_ndx[i] "\">" errors_ndx[i]  "</A></TD>";
+		errors_ndx[i] = 0;
+	}
+	links = links "</TR></TABLE>";
+	print "<A ID=\"Errors\"></A>" tabs NL "<H1>Errors</H1>" links "<BR/>" NL;
 	n = asort(ndx);
-	for (i=1; i<=n; i++) print "\n<A ID=\"Errors_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+	for (i=1; i<=n; i++) {
+		tag = toupper(substr(hdg[ndx[i]],1,1));
+		if (errors_ndx[tag]==0) print "\n<A ID=\"Errors_" toupper(substr(hdg[ndx[i]],1,1)) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+		errors_ndx[tag] = errors_ndx[tag] + 1;
+	}
 
-	i=1; links="";
+	i=1; links="<TABLE BGCOLOR=lightyellow BORDER=1 CELLPADDING=5 CELLSPACING=0><TR>";
 	for (msg in fatal_errors) {
 		m = tolower(msg);
 		fatal_ndx[toupper(substr(m,1,1))] = toupper(substr(m,1,1));
@@ -129,12 +145,20 @@ END {
 		hdg[m] = msg;
 	}
     n = asort(fatal_ndx);
-	for (i=1; i<=n; i++) links = links "<A HREF=\"#Fatal_" fatal_ndx[i] "\">" fatal_ndx[i]  "</A> | ";
-	print "<A ID=\"Fatal\"></A>" tabs "<H1>Fatal errors</H1>" links "<BR/>";
+	for (i=1; i<=n; i++) {
+		links = links "<TD><A HREF=\"#Fatal_" fatal_ndx[i] "\">" fatal_ndx[i]  "</A></TD>";
+		fatal_ndx[i] = 0;
+	}
+	links = links "</TR></TABLE>";
+	print "<A ID=\"Fatal\"></A>" tabs NL "<H1>Fatal errors</H1>" links "<BR/>" NL;
 	n = asort(ndx);
-	for (i=1; i<=n; i++) print "\n<A ID=\"Fatal_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+	for (i=1; i<=n; i++) {
+		tag = toupper(substr(hdg[ndx[i]],1,1));
+		if (fatal_ndx[tag]==0) print "\n<A ID=\"Fatal_" toupper(substr(hdg[ndx[i]],1,1)) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+		fatal_ndx[tag] = fatal_ndx[tag] + 1;
+	}
 
-	i=1; links="";
+	i=1; links="<TABLE BGCOLOR=lightyellow BORDER=1 CELLPADDING=5 CELLSPACING=0><TR>";
 	for (msg in exceptions) {
 		m = tolower(msg);
 		exception_ndx[toupper(substr(m,1,1))] = toupper(substr(m,1,1));
@@ -143,12 +167,20 @@ END {
 		hdg[m] = msg;
 	}
     n = asort(exception_ndx);
-	for (i=1; i<=n; i++) links = links "<A HREF=\"#Exceptions_" exception_ndx[i] "\">" exception_ndx[i]  "</A> | ";
-	print "<A ID=\"Exceptions\"></A>" tabs "<H1>Exceptions</H1>" links "<BR/>";
+	for (i=1; i<=n; i++) {
+		links = links "<TD><A HREF=\"#Exceptions_" exception_ndx[i] "\">" exception_ndx[i]  "</A></TD>";
+		exception_ndx[i] = 0;
+	}
+	links = links "</TR></TABLE>";
+	print "<A ID=\"Exceptions\"></A>" tabs NL "<H1>Exceptions</H1>" links "<BR/>" NL;
 	n = asort(ndx);
-	for (i=1; i<=n; i++) print "\n<A ID=\"Exceptions_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+	for (i=1; i<=n; i++) {
+		tag = toupper(substr(hdg[ndx[i]],1,1));
+		if (exception_ndx[tag]==0) print "\n<A ID=\"Exceptions_" toupper(substr(hdg[ndx[i]],1,1)) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+		exception_ndx[tag] = exception_ndx[tag] + 1;
+	}
 
-	i=1; links="";
+	i=1; links="<TABLE BGCOLOR=lightyellow BORDER=1 CELLPADDING=5 CELLSPACING=0><TR>";
 	for (msg in other) {
 		m = tolower(msg);
 		other_ndx[toupper(substr(m,1,1))] = toupper(substr(m,1,1));
@@ -157,10 +189,18 @@ END {
 		hdg[m] = msg;
 	}
     n = asort(other_ndx);
-	for (i=1; i<=n; i++) links = links "<A HREF=\"#Other_" other_ndx[i] "\">" other_ndx[i]  "</A> | ";
-	print "<A ID=\"Other\"></A>" tabs "<H1>Other messages</H1>" links "<BR/";
+	for (i=1; i<=n; i++) {
+		links = links "<TD><A HREF=\"#Other_" other_ndx[i] "\">" other_ndx[i]  "</A></TD>";
+		other_ndx[i] = 0;
+	}
+	links = links "</TR></TABLE>";
+	print "<A ID=\"Other\"></A>" tabs NL "<H1>Other messages</H1>" links "<BR/>" NL;
 	n = asort(ndx);
-	for (i=1; i<=n; i++) print "\n<A ID=\"Other_" substr(hdg[ndx[i]],1,1) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+	for (i=1; i<=n; i++) {
+		tag = toupper(substr(hdg[ndx[i]],1,1));
+		if (other_ndx[tag]==0) print "\n<A ID=\"Other_" toupper(substr(hdg[ndx[i]],1,1)) "\"></A><H2>" hdg[ndx[i]] "</H2><UL>" txt[ndx[i]] "</UL>";
+		other_ndx[tag] = other_ndx[tag] + 1;
+	}
 
 	print "<HR/>";
 }
