@@ -246,7 +246,7 @@ static STATUS init_all(void)
 			}
 			if((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME){
 				if(0 == strcmp(obj->name, "")){
-					output_warning("init: object %s:%i should have a name, but doesn't", obj->oclass->name, obj->id);
+					output_warning("init: object %s:%d should have a name, but doesn't", obj->oclass->name, obj->id);
 					/* TROUBLESHOOT
 					   The object indicated has been flagged by the module which implements its class as one which must be named
 					   to work properly.  Please provide the object with a name and try again.
