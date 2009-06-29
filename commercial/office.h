@@ -19,6 +19,9 @@ typedef struct s_enduse {
 	complex energy;				/**< ENDUSE cumulative energy (Wh) */
 	complex power;				/**< ENDUSE power (W) */
 	complex demand;				/**< ENDUSE peak power demand (W) */
+	complex constant_power;		/**< ENDUSE constant power part*/
+	complex constant_current;	/**< ENDUSE constant current part*/
+	complex constant_admittance;	/**< ENDUSE addmittance part*/
 } ENDUSE;
 
 /*****************************************************

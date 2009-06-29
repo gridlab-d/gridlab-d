@@ -166,7 +166,9 @@ office::office(MODULE *module)
 			PT_complex, "total_load[kW]", PADDR(zone.total.power),
 			PT_complex, "energy", PADDR(zone.total.energy),
 			PT_double, "power_factor", PADDR(zone.total.power_factor),
-
+			PT_complex, "power[kW]", PADDR(zone.total.constant_power),
+			PT_complex, "current[A]", PADDR(zone.total.constant_current),
+			PT_complex, "admittance[1/Ohm]", PADDR(zone.total.constant_admittance),
 			PT_complex, "hvac.demand[kW]", PADDR(zone.hvac.enduse.demand),
 			PT_complex, "hvac.load[kW]", PADDR(zone.hvac.enduse.power),
 			PT_complex, "hvac.energy", PADDR(zone.hvac.enduse.energy),
