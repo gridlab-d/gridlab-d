@@ -67,8 +67,6 @@ public:
 	double Tw;						///< water temperature [F]
 	double Tw_old;					///< previous water temperature, for internal_gains
 
-	double last_water_demand;
-	double cur_water_demand;
 	// Convenience values (some pre-computed here and there for efficiency)...
 	bool heat_needed;				///< need to maintain this bit of state because of Tstat deadband...
 
@@ -77,6 +75,7 @@ public:
 	double tank_UA;						///< tank UA [BTU/hr-F]
 	double tank_diameter;				///< tank diameter [ft]
 	double water_demand;				///< water draw rate [gpm]
+	double water_demand_old;			///< previous water demand, needed for temperature change (reflects heat loss from hot water draw)
 	double heating_element_capacity;	///< rated Q of (each) heating element, input in W, converted to[Btu/hr]
 	double tank_setpoint;				///< setpoint T of heating element [F]
 	double thermostat_deadband;			///< deadband around Tset (half above, half below) [F]
@@ -97,6 +96,7 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
+	int commit();
 
 
 public:

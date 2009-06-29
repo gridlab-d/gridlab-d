@@ -220,9 +220,6 @@ int waterheater::init(OBJECT *parent)
 	height 		= tank_volume/GALPCF / area;
 	Cw 			= tank_volume/GALPCF * RHOWATER * Cp;  // [Btu/F]
 
-	// initial demand
-	cur_water_demand = last_water_demand = water_demand;
-
 	// @todo initial tank charge should be based on demand, which is time dependent and must wait until sync from t0=0
 	//if (gl_random_uniform(0,1) < 0.8)
 		h = height;
@@ -278,13 +275,6 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 	/* time has passed ~ calculate internal gains, height change, temperature change */
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 
-	// capture old temperature
-	if(t0 < t1){ // not an iteration
-		Tw_old = Tw;
-		Tupper_old = Tupper;
-		Tlower_old = Tlower;
-	}
-
 	// update temperature and height
 	update_T_and_or_h(nHours);
 
@@ -318,11 +308,8 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// Now find our current temperatures and boundary height...
 	// And compute the time to the next transition...
 	//Adjusted because shapers go on sync, not presync
-	cur_water_demand = water_demand;
-	water_demand = last_water_demand;
 
 	set_time_to_transition();
-	last_water_demand = cur_water_demand;
 
 	// determine internal gains
 	if(nHours > 0){
@@ -355,14 +342,15 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
-	double internal_gain = 0.0;
-	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
-	double Tamb = get_Tambient(location);
-	double Td, Texp;
-
-
-
 	return TS_NEVER;
+}
+
+int waterheater::commit(){
+	Tw_old = Tw;
+	Tupper_old = Tupper;
+	Tlower_old = Tlower;
+	water_demand_old = water_demand;
+return 1;
 }
 
 /** Tank state determined based on the height of the hot water column
@@ -662,7 +650,8 @@ inline double waterheater::new_time_1node(double T0, double T1)
 
 inline double waterheater::new_temp_1node(double T0, double delta_t)
 {
-	const double mdot_Cp = Cp * water_demand * 60 * RHOWATER / GALPCF;
+	// old because this happens in presync and needs previously used demand
+	const double mdot_Cp = Cp * water_demand_old * 60 * RHOWATER / GALPCF;
 
     if (Cw <= ROUNDOFF || (tank_UA+mdot_Cp) <= ROUNDOFF)
         return T0;
@@ -697,7 +686,8 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 	if (delta_t <= ROUNDOFF)
 		return h0;
 
-	const double mdot = water_demand * 60 * RHOWATER / GALPCF;		// lbm/hr...
+	// old because this happens in presync and needs previously used demand
+	const double mdot = water_demand_old * 60 * RHOWATER / GALPCF;		// lbm/hr...
 	const double c1 = RHOWATER * Cp * area * (Tupper - Tlower);
 
 	// check c1 before division
@@ -794,6 +784,12 @@ EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		gl_error("%s (waterheater:%d) %s", obj->name?obj->name:"(anonymous waterheater)", obj->id, msg);
 	}
 	return TS_INVALID;
+}
+
+EXPORT int commit_waterheater(OBJECT *obj)
+{
+	waterheater *my = OBJECTDATA(obj,waterheater);
+	return my->commit();
 }
 
 EXPORT TIMESTAMP plc_waterheater(OBJECT *obj, TIMESTAMP t0)
