@@ -132,7 +132,7 @@ office::office(MODULE *module)
 			PT_double, "Qz[Btu/h]", PADDR(Qz),
 
 			/* HVAC loads */
-			PT_enumeration, "hc_mode", PADDR(zone.hvac.mode),
+			PT_enumeration, "hvac_mode", PADDR(zone.hvac.mode),
 				PT_KEYWORD, "HEAT", HC_HEAT,
 				PT_KEYWORD, "AUX", HC_AUX,
 				PT_KEYWORD, "COOL", HC_COOL,
