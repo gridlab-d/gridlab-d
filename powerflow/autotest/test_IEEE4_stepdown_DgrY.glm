@@ -87,16 +87,6 @@ object transformer:23 {
 	from node:2;
 	to node:3;
 	configuration transformer_configuration:400;
-	object double_assert {
-		target "power_in";
-		value 7386327.83;
-		within 0.1;
-	};
-	object double_assert {
-		target "power_out";
-		value 6921759.35;
-		within 0.1;
-	};
 }
 
 object node:3 {
