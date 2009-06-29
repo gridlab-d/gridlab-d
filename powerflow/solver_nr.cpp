@@ -391,9 +391,6 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 
 				bus[indexer].PL[jindex] = tempP.Re();	//Real power portion
 				bus[indexer].QL[jindex] = tempP.Im();	//Reactive power portion  
-			
-
-
 			}
 	}
 
