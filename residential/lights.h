@@ -19,7 +19,7 @@ private:
 
 public:
 	enum { // make certain this matchers the power_factor table
-		INCANDESCENT,	///< incandescent lights
+		INCANDESCENT=0,	///< incandescent lights
 		FLUORESCENT,	///< fluorescent lights
 		CFL,			///< compact fluorescent lights
 		SSL,			///< solid state lights

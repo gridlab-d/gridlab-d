@@ -427,6 +427,10 @@ CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
 	CIRCUIT *c = new CIRCUIT;
 	if (c==NULL)
 	{
+		GL_THROW("memory allocation failure");
+
+
+
 		gl_error("memory allocation failure");
 		return 0;
 		/* Note ~ this returns a null pointer, but iff the malloc fails.  If
