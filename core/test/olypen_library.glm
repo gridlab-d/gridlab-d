@@ -49,14 +49,31 @@ object transformer_configuration {
 }
 
 object transformer_configuration {
-	name Poletop_40kVA;
+	name Poletop_40kVA_A;
 	impedance 0.005+0.05j;
 	powerA_rating 40 kVA;
-	powerB_rating 40 kVA;
-	powerC_rating 40 kVA;
 	primary_voltage 7200;
 	secondary_voltage 120;
 	connect_type SINGLE_PHASE_CENTER_TAPPED; // may be DELTA_DELTA, DELTA_WYE, etc.
 	install_type POLETOP;
 }
 
+object transformer_configuration {
+	name Poletop_40kVA_B;
+	impedance 0.005+0.05j;
+	powerB_rating 40 kVA;
+	primary_voltage 7200;
+	secondary_voltage 120;
+	connect_type SINGLE_PHASE_CENTER_TAPPED; // may be DELTA_DELTA, DELTA_WYE, etc.
+	install_type POLETOP;
+}
+
+object transformer_configuration {
+	name Poletop_40kVA_C;
+	impedance 0.005+0.05j;
+	powerC_rating 40 kVA;
+	primary_voltage 7200;
+	secondary_voltage 120;
+	connect_type SINGLE_PHASE_CENTER_TAPPED; // may be DELTA_DELTA, DELTA_WYE, etc.
+	install_type POLETOP;
+}
