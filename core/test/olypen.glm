@@ -19,7 +19,7 @@
 //#define ALLOW_RTP
 //#define USE_SHAPES
 //#define USE_COLLECTORS
-#define MAXDATA=10000
+#define MAXDATA=1000
 #define INTERVAL=3600
 
 #set debugger=0		// 1 to enable model debugger
@@ -181,7 +181,7 @@ object transformer:..${NHOUSES} {
 	configuration Poletop_40kVA_C;
 	phases CS;
 	to object triplex_meter {
-		phases CS:
+		phases CS;
 		object house {
 			contract RTP;
 			price 50.0 $/MWh;
@@ -225,13 +225,13 @@ object shaper {
 object shaper {
 	file "olypen_washing.shape";
 	group "class=clotheswasher";
-	property "demand";
+	property "enduse_demand";
 };
 
 object shaper {
 	file "olypen_occupancy.shape";
 	group "class=occupantload";
-	property "demand";
+	property "occupancy_fraction";
 };
 
 object shaper {
@@ -243,7 +243,7 @@ object shaper {
 object shaper {
 	file "olypen_hotwater.shape";
 	group "class=waterheater";
-	property "demand";
+	property "water_demand";
 };
 #endif
 
@@ -269,7 +269,7 @@ object collector {
 object collector {
 	file "olypen_lights.csv";
 	group "class=lights";
-	property "sum(power.mag)";
+	property "sum(enduse_load.mag)";
 	interval ${INTERVAL};
 	limit ${MAXDATA};
 }
@@ -277,7 +277,7 @@ object collector {
 object collector {
 	file "olypen_clotheswasher.csv";
 	group "class=clotheswasher";
-	property "sum(power.mag)";
+	property "sum(enduse_load.mag)";
 	interval ${INTERVAL};
 	limit ${MAXDATA};
 }
@@ -285,7 +285,7 @@ object collector {
 object collector {
 	file "olypen_microwave.csv";
 	group "class=microwave";
-	property "sum(power.mag)";
+	property "sum(enduse_load.mag)";
 	interval ${INTERVAL};
 	limit ${MAXDATA};
 }
@@ -293,7 +293,7 @@ object collector {
 object collector {
 	file "olypen_plugload.csv";
 	group "class=plugload";
-	property "sum(power.mag)";
+	property "sum(enduse_load.mag)";
 	interval ${INTERVAL};
 	limit ${MAXDATA};
 }
@@ -301,7 +301,7 @@ object collector {
 object collector {
 	file "olypen_range.csv";
 	group "class=range";
-	property "sum(power.mag)";
+	property "sum(enduse_load.mag)";
 	interval ${INTERVAL};
 	limit ${MAXDATA};
 }
@@ -309,7 +309,7 @@ object collector {
 object collector {
 	file "olypen_waterheater.csv";
 	group "class=waterheater";
-	property "sum(power.mag)";
+	property "sum(enduse_load.mag)";
 	interval ${INTERVAL};
 	limit ${MAXDATA};
 }
