@@ -554,7 +554,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			//Grab the linked list from the from object
 			LINKCONNECTED *parlink = &fnode->nodelinks;
 
-			LINKCONNECTED *prevlink = new LINKCONNECTED;
+			LINKCONNECTED *prevlink = (LINKCONNECTED *)gl_malloc(sizeof(LINKCONNECTED));
 			if (prevlink==NULL)
 			{
 				gl_error("GS: memory allocation failure zero length");
@@ -596,7 +596,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				parlink->next=NULL;
 
 			prevlink=NULL;
-			delete prevlink;
+			gl_free(prevlink);
 
 			OBJECT *obj = OBJECTHDR(this);
 

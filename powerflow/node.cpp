@@ -446,7 +446,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	{
 		if (NR_busdata==NULL || NR_branchdata==NULL)	//First time any NR in
 		{
-			NR_busdata = (BUSDATA *)malloc(NR_bus_count * sizeof(BUSDATA));
+			NR_busdata = (BUSDATA *)gl_malloc(NR_bus_count * sizeof(BUSDATA));
 			if (NR_busdata==NULL)
 			{
 				gl_error("NR: memory allocation failure for bus table");
@@ -458,7 +458,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			}
 			NR_curr_bus = 0;	//Pull pointer off flag so other objects know it's built
 
-			NR_branchdata = (BRANCHDATA *)malloc(NR_branch_count * sizeof(BRANCHDATA));
+			NR_branchdata = (BRANCHDATA *)gl_malloc(NR_branch_count * sizeof(BRANCHDATA));
 			if (NR_branchdata==NULL)
 			{
 				gl_error("NR: memory allocation failure for branch table");
@@ -1453,7 +1453,7 @@ void *node::GS_P_C_NodeChecks(TIMESTAMP t0, TIMESTAMP t1, OBJECT *obj, LINKCONNE
 			{
 				linktable = linktable->next;
 
-				LINKCONNECTED *lnewconnected = new LINKCONNECTED;
+				LINKCONNECTED *lnewconnected = (LINKCONNECTED *)gl_malloc(sizeof(LINKCONNECTED));
 				if (lnewconnected==NULL)
 				{
 					gl_error("GS: memory allocation failure");
@@ -1608,7 +1608,7 @@ LINKCONNECTED *node::attachlink(OBJECT *obj) ///< object to attach
 	link *templink = OBJECTDATA(obj,link);
 
 	// construct and id the new circuit
-	LINKCONNECTED *lconnected = new LINKCONNECTED;
+	LINKCONNECTED *lconnected = (LINKCONNECTED *)gl_malloc(sizeof(LINKCONNECTED));
 	if (lconnected==NULL)
 	{
 		gl_error("GS: memory allocation failure for link table");
