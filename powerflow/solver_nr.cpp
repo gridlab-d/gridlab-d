@@ -478,7 +478,7 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 	size_diag_update += 1; 
 	else {}
 	}
-if (Y_diag_fixed == NULL)
+if (Y_diag_update == NULL)
 	{
 		Y_diag_update = new Y_NR[size_diag_update*12];   //Y_diag_update store the row,column and value of the dynamic part of the diagonal PQ bus elements of 6n*6n Y_NR matrix.
 	}
@@ -509,7 +509,110 @@ for (jindexer=0; jindexer<bus_count; jindexer++)
 			}
 	}
 
+//The example of using SuperLU to solve AX=B, A is an 5*5 matrix.
+SuperMatrix A,B,L,U;
+double *a,*rhs;
+int *perm_c, *perm_r, *cols, *rows;
+int nnz, info;
+superlu_options_t options;
+SuperLUStat_t stat;
+NCformat *Astore;
+DNformat *Bstore;
 
+int m,n;
+double *sol;
+
+
+/* Initialize parameters. */
+m = 5; n = 5; nnz = 12;
+
+/* Set aside space for the arrays. */
+a = doubleMalloc ( nnz );
+rows = intMalloc ( nnz );
+cols = intMalloc ( n+1 );
+
+/* Create the right-hand side matrix B. */
+rhs = doubleMalloc( m);
+
+/* Set up the arrays for the permutations. */
+perm_r = intMalloc ( m );
+perm_c = intMalloc ( n );
+
+/* Set the default input options, and then adjust some of them. */
+set_default_options ( &options );
+
+
+rows[0]=0; // row pointers of non zero values
+rows[1]=1;
+rows[2]=4;
+rows[3]=1;
+rows[4]=2;
+rows[5]=4;
+rows[6]=0;
+rows[7]=2; 
+rows[8]=0;
+rows[9]=3;
+rows[10]=3;
+rows[11]=4;
+cols[0]=0;
+cols[1]=3; // column pointers
+cols[2]=6;
+cols[3]=8;
+cols[4]=10; 
+cols[5]=12; // number of non-zeros
+
+a[0]= 19.00;
+a[1]= 0.63;
+a[2]= 0.63;
+a[3]= 21.00;
+a[4]= 0.57;
+a[5]= 0.57;
+a[6]= 21.00;
+a[7]= 23.58;
+a[8]= 21.00;
+a[9]= 5.00;
+a[10]= 21.00;
+a[11]=	34.00;
+for (jindex=0;jindex<m;jindex++)
+{ rhs[jindex] = 5.0;}
+
+
+/* Create Matrix A in the format expected by Super LU.*/
+dCreate_CompCol_Matrix ( &A, m, n, nnz, a, rows, cols, SLU_NC,SLU_D,SLU_GE );
+Astore =(NCformat*)A.Store;
+printf("Dimension %dx%d; # nonzeros %d\n", A.nrow, A.ncol, Astore->nnz);
+
+/* Create right-hand side matrix B in the format expected by Super LU.*/
+dCreate_Dense_Matrix(&B, m, 1, rhs, m, SLU_DN, SLU_D, SLU_GE);
+
+//Astore=(NCformat*)A.Store;
+Bstore=(DNformat*)B.Store;
+StatInit ( &stat );
+
+Astore->nzval=a;
+Bstore->nzval=rhs;
+
+
+// solve the system
+dgssv(&options, &A, perm_c, perm_r, &L, &U, &B, &stat, &info);
+sol = (double*) ((DNformat*) B.Store)->nzval;
+for (jindex=0; jindex<5; jindex++)
+{ 
+	printf(" x %d  = %f ",jindex, sol[jindex]);
+}
+
+/* De-allocate storage. */
+Destroy_CompCol_Matrix( &A );
+Destroy_Dense_Matrix(&B);
+Destroy_SuperNode_Matrix( &L );
+Destroy_CompCol_Matrix( &U );
+superlu_free(rhs);              // The Gridlab-d failed to execute free(rhs)!!!!!  
+superlu_free(a);
+superlu_free(cols);
+superlu_free(rows);
+superlu_free(perm_r);
+superlu_free(perm_c);
+StatFree ( &stat );
 
 /* sorting integers using qsort() example */
 
@@ -522,3 +625,7 @@ for (jindexer=0; jindexer<bus_count; jindexer++)
 	GL_THROW("Newton-Raphson solution method is not yet supported");
 	return 0;
 }
+
+
+
+
