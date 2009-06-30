@@ -109,7 +109,10 @@ int regulator_configuration::create(void)
 	Control = MANUAL;
 	Type = B;
 	regulation = 0.0;
-	tap_pos[0] = tap_pos[1] = tap_pos[2] = 0;
+
+	//Set initial taps to some obscene value so we know if they've been initialized or not
+	tap_pos[0] = tap_pos[1] = tap_pos[2] = 999;
+	
 	return result;
 }
 

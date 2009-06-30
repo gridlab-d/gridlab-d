@@ -59,6 +59,8 @@ int regulator::create()
 
 int regulator::init(OBJECT *parent)
 {
+	bool TapInitialValue[3];
+	char jindex;
 	int result = link::init(parent);
 
 	if (!configuration)
@@ -79,6 +81,20 @@ int regulator::init(OBJECT *parent)
 		*/
 
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+
+	//See if any initial tap settings have been specified
+	for (jindex=0;jindex<3;jindex++)
+	{
+		if (pConfig->tap_pos[jindex] != 999)
+		{
+			TapInitialValue[jindex] = true;	//Flag as an initial value
+		}
+		else
+		{
+			TapInitialValue[jindex] = false;	//Ensure is not flagged
+			pConfig->tap_pos[jindex] = 0;		//Set back to default
+		}
+	}
 
 	if (pConfig->Control == pConfig->REMOTE_NODE) 
 	{
@@ -188,7 +204,19 @@ int regulator::init(OBJECT *parent)
 
 	mech_t_next[0] = mech_t_next[1] = mech_t_next[2] = TS_NEVER;
 	dwell_t_next[0] = dwell_t_next[1] = dwell_t_next[2] = TS_NEVER;
-	first_run_flag[0] = first_run_flag[1] = first_run_flag[2] = -1;
+
+	//Now set first_run_flag appropriately
+	for (jindex=0;jindex<3;jindex++)
+	{
+		if (TapInitialValue[jindex] == false)
+		{
+			first_run_flag[jindex] = -1;	//Let the code find a value
+		}
+		else
+		{
+			first_run_flag[jindex] = 0;		//Set so the regulator will operate normally here
+		}
+	}
 
 	return result;
 }
