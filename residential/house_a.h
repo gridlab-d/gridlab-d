@@ -96,6 +96,7 @@ public:
 	double heating_COP;				///< space heating COP
 	double cooling_COP;				///< space cooling COP
 	double over_sizing_factor;		///< Future: equipment over sizing factor
+	double outside_temp;
 
 	double volume;					///< house air volume
 	double air_mass;				///< mass of air (lbs)

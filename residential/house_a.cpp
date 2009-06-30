@@ -161,6 +161,7 @@ house::house(MODULE *mod)
 			PT_double,"air_temperature[degF]",PADDR(Tair),
 			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),
 			PT_double,"mass_heat_coeff",PADDR(house_content_heat_transfer_coeff),
+			PT_double,"outside_temp",PADDR(outside_temp),
 			PT_enumeration,"heat_mode",PADDR(heat_mode),
 				PT_KEYWORD,"ELECTRIC",ELECTRIC,
 				PT_KEYWORD,"GASHEAT",GASHEAT,
@@ -678,6 +679,7 @@ This synchronization function updates the HVAC equipment load and power draw.
 TIMESTAMP house::sync_hvac_load(TIMESTAMP t1, double nHours)
 {
 	// compute hvac performance
+	outside_temp = *pTout;
 	const double heating_cop_adj = (-0.0063*(*pTout)+1.5984);
 	const double cooling_cop_adj = -(-0.0108*(*pTout)+2.0389);
 	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
