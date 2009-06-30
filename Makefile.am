@@ -3,7 +3,7 @@
 # This file is distributed under the same terms as GridLAB-D.
 
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = core assert climate commercial network powerflow residential tape generators plc tape_file tape_plot market reliability 
+SUBDIRS =  core assert climate commercial network powerflow residential tape generators plc tape_file tape_plot market reliability 
 
 include aminclude.am
 
@@ -26,6 +26,9 @@ repo-clean:
 	find . -maxdepth 1 -type l -execdir rm -rf \{\} \+
 
 #BEGIN run
+
+validate: 
+	python validate.py
 
 run-clean:
 	-rm -rf run
