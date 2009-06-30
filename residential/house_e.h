@@ -12,6 +12,7 @@
 
 #include "house_a.h"
 #include "residential.h"
+#include "complex.h"
 
 #define LST_DIRECT		0x00 ///< shape is absolute direct shape - scalar is multiplier
 #define LST_NORMAL		0x01 ///< shape is given in normalized values (pu) - scalar is kW
@@ -29,28 +30,6 @@
 #define LS_SUMMERWEEKDAY 2	///< summer weekday shape
 #define LS_SUMMERWEEKEND 3	///< summer weekend shape
 
-typedef struct s_loadshape {
-	char *name; ///< end-use name
-	int32 type; ///< load shape type (see LST_*)
-	double scalar; ///< scaling parameter (action differs based on type)
-	double event; ///< queue event size (nonzero induces queueing behavior)
-	double magnitude; ///< magnitude of load (nonzero induces pulsed behavior)
-	double duration; ///< typical pulse duration (nonzero induces event frequency modulation)
-	double shape[4][24]; ///< end-use shape (unit depends on loadshape type) [season][daytype][hour]
-	double power_factor; ///< power factor
-	double current_fraction, impedance_fraction; ///< fraction of power that is actually constant current or constant impedance
-	double heat_fraction; ///< fraction of energy that ends as internal gain
-	double breaker_amps; ///< breaker amps
-	bool is220;	///< 220V load
-	/* this value is setup during init */
-	struct s_loadshape *next; ///< next end-use shape in list
-	/* these values are only used duration simulation */
-	double queue; ///< the current state of the queue
-	double value; ///< the current load value
-	TIMESTAMP stopat; ///< the time at which the current event stops (only used when magnitude is non-zero and an event is active)
-	ENDUSELOAD load;
-} LOADSHAPE; ///< End-use load shape used to generate implicity end-use loads
-
 class house_e {
 private:
 	PANEL panel; ///< main house_e panel
@@ -60,7 +39,7 @@ private:
 	{ return c->status==BRK_CLOSED ? *(c->pV) : complex(0,0);};
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
-	complex *pLine12;
+	complex *pLine12; ///< pointer to the load across lines 1 & 2
 
 public:  //definitions
 	typedef enum {	
@@ -75,6 +54,7 @@ public:  //definitions
 		HT_ELECTRIC=1,	///< tank heats with an electric resistance element
 		HT_GASHEAT=2,	///< tank heats with natural gas
 	} HEATTYPE;		///<
+	 
 
 public:
 	// published variables
@@ -128,7 +108,7 @@ public:
 	double rated_cooling_capacity;
 
 	double hvac_kWh_use;
-	ENDUSELOAD load;  /* hvac load */
+	ENDUSELOAD HVAC_load;  /* hvac load */
 	ENDUSELOAD tload; /* total load */
 
 	/* implicit end-uses */
@@ -140,6 +120,7 @@ private:
 	double c1,c2,c3,c4,c5,c6,c7,r1,r2,k1,k2,Teq, Tevent;
 	static bool warn_control;
 	static double warn_low_temp, warn_high_temp;
+	bool check_start;
 
 public:
 	static CLASS *oclass;
@@ -161,7 +142,7 @@ public:
 	int init(OBJECT *parent);
 	int init_climate(void);
 
-	CIRCUIT *attach(OBJECT *obj, double limit, int is220=false, ENDUSELOAD *pLoad=NULL);
+	CIRCUIT *attach(OBJECT *obj, double limit, int is220=false, ENDUSELOAD *pLoad=NULL, LOADSHAPE *implicit_end_use=NULL);
 	void attach_implicit_enduses(char *enduses=NULL);
 
 // access methods
