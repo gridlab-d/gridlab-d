@@ -181,7 +181,7 @@ char jindex, kindex;
  //The off-diagonal elements of Y_NR marix are not updated at each iteration.*/
     if (BA_diag == NULL)
 	{
-		BA_diag = new Bus_admit[bus_count];   //BA_diag store the location and value of diagonal elements of Bus Admittance matrix
+		BA_diag = (Bus_admit *)gl_malloc(bus_count *sizeof(Bus_admit));   //BA_diag store the location and value of diagonal elements of Bus Admittance matrix
 	}
 
 
@@ -256,7 +256,7 @@ for (jindexer=0; jindexer<branch_count;jindexer++)
 
 if (Y_offdiag_PQ == NULL)
 	{
-		Y_offdiag_PQ = new Y_NR[size_offdiag_PQ*4];   //Y_offdiag_PQ store the row,column and value of off_diagonal elements of Bus Admittance matrix in which all the buses are not PV buses. 
+		Y_offdiag_PQ = (Y_NR *)gl_malloc((size_offdiag_PQ*4) *sizeof(Y_NR));   //Y_offdiag_PQ store the row,column and value of off_diagonal elements of Bus Admittance matrix in which all the buses are not PV buses. 
 	}
 
 
@@ -329,7 +329,7 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 	}
 if (Y_diag_fixed == NULL)
 	{
-		Y_diag_fixed = new Y_NR[size_diag_fixed*2];   //Y_diag_fixed store the row,column and value of the fixed part of the diagonal PQ bus elements of 6n*6n Y_NR matrix.
+		Y_diag_fixed = (Y_NR *)gl_malloc((size_diag_fixed*2) *sizeof(Y_NR));   //Y_diag_fixed store the row,column and value of the fixed part of the diagonal PQ bus elements of 6n*6n Y_NR matrix.
 	}
 indexer = 0;
 for (jindexer=0; jindexer<bus_count;jindexer++)
@@ -398,12 +398,12 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 //and store the deltaI in terms of real and reactive value in array deltaI_NR    
 	if (deltaI_NR==NULL)
 	{
-		deltaI_NR = new double[6*bus_count];   // left_hand side of equation (11)
+		deltaI_NR = (double *)gl_malloc((6*bus_count) *sizeof(double));   // left_hand side of equation (11)
 	}
 
 	if (Icalc==NULL)
 	{
-		Icalc = new complex[bus_count];  // Calculated current injections at each bus is stored in Icalc for each iteration 
+		Icalc = (complex *)gl_malloc((bus_count) *sizeof(complex));  // Calculated current injections at each bus is stored in Icalc for each iteration 
 	}
 
 	complex tempPb; //tempPb store the temporary value of deltaI at each bus  
@@ -446,7 +446,7 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 // Define deltaV_NR, which is the solution of equation (11)
 	if (deltaV_NR==NULL)
 	{
-		deltaV_NR = new double[6*bus_count];   // right_hand side of equation (11)
+		deltaV_NR = (double *)gl_malloc((6*bus_count) *sizeof(double));   // right_hand side of equation (11)
 	}
 
 // Calculate the elements of a,b,c,d in equations(14),(15),(16),(17). These elements are used to update the Jacobian matrix.	
@@ -477,7 +477,7 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 	}
 if (Y_diag_update == NULL)
 	{
-		Y_diag_update = new Y_NR[size_diag_update*12];   //Y_diag_update store the row,column and value of the dynamic part of the diagonal PQ bus elements of 6n*6n Y_NR matrix.
+		Y_diag_update = (Y_NR *)gl_malloc((size_diag_update*12) *sizeof(Y_NR));   //Y_diag_update store the row,column and value of the dynamic part of the diagonal PQ bus elements of 6n*6n Y_NR matrix.
 	}
 indexer = 0;
 for (jindexer=0; jindexer<bus_count; jindexer++)
@@ -524,16 +524,16 @@ double *sol;
 m = 5; n = 5; nnz = 12;
 
 /* Set aside space for the arrays. */
-a = doubleMalloc ( nnz );
-rows = intMalloc ( nnz );
-cols = intMalloc ( n+1 );
+a = (double *) gl_malloc(nnz *sizeof(double));
+rows = (int *) gl_malloc(nnz *sizeof(int));
+cols = (int *) gl_malloc((n+1) *sizeof(int));
 
 /* Create the right-hand side matrix B. */
-rhs = doubleMalloc( m);
+rhs = (double *) gl_malloc(m *sizeof(double));
 
 /* Set up the arrays for the permutations. */
-perm_r = intMalloc ( m );
-perm_c = intMalloc ( n );
+perm_r = (int *) gl_malloc(m *sizeof(int));
+perm_c = (int *) gl_malloc(n *sizeof(int));
 
 /* Set the default input options, and then adjust some of them. */
 set_default_options ( &options );
@@ -599,16 +599,16 @@ for (jindex=0; jindex<5; jindex++)
 }
 
 /* De-allocate storage. */
-Destroy_CompCol_Matrix( &A );
-Destroy_Dense_Matrix(&B);
+gl_free(rhs);              // The Gridlab-d failed to execute free(rhs)!!!!!  
+gl_free(a);
+gl_free(cols);
+gl_free(rows);
+gl_free(perm_r);
+gl_free(perm_c);
 Destroy_SuperNode_Matrix( &L );
 Destroy_CompCol_Matrix( &U );
-superlu_free(rhs);              // The Gridlab-d failed to execute free(rhs)!!!!!  
-superlu_free(a);
-superlu_free(cols);
-superlu_free(rows);
-superlu_free(perm_r);
-superlu_free(perm_c);
+Destroy_SuperMatrix_Store( &A );
+Destroy_SuperMatrix_Store(&B);
 StatFree ( &stat );
 
 /* sorting integers using qsort() example */
