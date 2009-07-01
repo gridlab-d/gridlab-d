@@ -1,14 +1,14 @@
-# office.txt
-# depends: test.tmy
-#
-# This benchmark test create 1000 commercial buildings
-# with no objects inside them.  It plays a simple 6 hr
-# weather tape that is not connected.  The result
-# should be a test of the system ability to exploit
-# the implicit parallelism of the model.  The more
-# processors are used, the faster the simulation 
-# should run.
-#
+// office.txt
+// depends: test.tmy
+//
+// This benchmark test create 1000 commercial buildings
+// with no objects inside them.  It plays a simple 6 hr
+// weather tape that is not connected.  The result
+// should be a test of the system ability to exploit
+// the implicit parallelism of the model.  The more
+// processors are used, the faster the simulation 
+// should run.
+//
 
 clock {
 	timestamp '2000-01-01 0:00:00';

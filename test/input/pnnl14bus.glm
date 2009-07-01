@@ -18,9 +18,3 @@ object generator {
 	Qmax_MVAR 100;
 	Qmin_MVAR -100;
 }
-
-module tape;
-object player {
-	file "speed.tape";
-	loop 50000;
-}

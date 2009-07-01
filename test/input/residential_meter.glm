@@ -15,15 +15,13 @@ module climate;
 module residential;
 module tape;
 
-object meter:0 {
+object triplex_meter:0 {
 	name "Meter 1";
-	line1_voltage 120 V;
-	line2_voltage 0 V;
-	line3_voltage 120 V;
-	line12_voltage 120 V;
-	line23_voltage 120 V;
-	line31_voltage 240 V;
-	
+	voltage_1 120 V;
+	voltage_N 0 V;
+	voltage_2 120 V;
+	nominal_voltage 120.0;
+	phases AS;
 }
 
 object house:1 {

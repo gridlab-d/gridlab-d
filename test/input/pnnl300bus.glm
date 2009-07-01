@@ -1,6 +1,10 @@
 // $Id: pnnl300bus.glm 1182 2008-12-22 22:08:36Z dchassin $
 // Copyright (C) 2008 Battelle Memorial Institute
 
+// NOTE:
+// This file will not work at this time, as the pnnl 300 bus
+// system is not in common data format.
+
 clock {
 	timestamp '2000-01-01 0:00:00';
 }
@@ -11,9 +15,4 @@ module network {
 	convergence_limit 0.5;
 }
 
-import network ieee300bus.cdf;
-
-object player {
-	file "speed.tape";
-	loop 2000;
-}
+import network pnnl300bus.cdf;

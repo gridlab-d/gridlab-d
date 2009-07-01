@@ -11,21 +11,33 @@ clock {
 module powerflow;
 module tape;
 
-object meter:0 {
+object triplex_meter:0 {
+	parent triplex_node:1;
 	name "Meter 1";
-	type SINGLEPHASE;
-	line1_voltage 120 V;
-	line2_voltage 0 V;
-	line3_voltage 120 V;
-	line12_voltage 120 V;
-	line23_voltage 120 V;
-	line31_voltage 240 V;
-	
+	phases "AS";
+	nominal_voltage 120.0 V;
+	voltage_1 120 V;
+	voltage_N 0 V;
+	voltage_2 120 V;
+}
+
+object triplex_node:1 {
+	name triplex_node:1;
+	phases "AS";
+	nominal_voltage 120.0 V;
 }
 
 object player:2 {
-	parent meter:0;
-	property line1_voltage;
-	file memory:player_1;
+	parent triplex_node:1;
+	property voltage_1;
+	file player_1.csv;
 	loop 10;
+}
+
+object recorder:3 {
+	parent triplex_meter:0;
+	property measured_voltage_1;
+	file recorder_1.csv;
+	limit 40;
+	interval 3600 s;
 }

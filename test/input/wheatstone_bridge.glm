@@ -21,13 +21,13 @@ object node:1 {
 }
 object node:2 {
 	parent node:0;
-	Vobs 0.9387-0.00002j;
+	V 0.9387-0.00002j;
 }
 object node:3 {
 	parent node:0;
 	name "Load";
 	S -1.0-0.1j;
-	Vobs 0.8762-0.00001j;
+	V 0.8762-0.00001j;
 }
 
 object link:4 {

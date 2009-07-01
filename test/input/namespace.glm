@@ -6,10 +6,15 @@ clock {
 module powerflow;
 module network;
 
-object powerflow.meter:0{
+object powerflow.node {
+	phases "ABCN";
+	nominal_voltage 2400.00;
 	name Bob;
 }
 
-object network.meter:1{
-	name Sam;
+
+object network.node {
+	name SwingBus;
+	type SWING;
 }
+	

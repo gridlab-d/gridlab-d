@@ -1,0 +1,14 @@
+// $Id$
+// automatically generated Thu May  7 09:19:14 PDT 2009 from 23174.tm2
+module climate;
+class climate {
+	double elevation[m];
+	double tzoffset[h];
+}
+object climate {
+	name "Los_angeles CA";
+	tmyfile "CA-Los_angeles.tmy2";
+	tzoffset -8;
+	elevation 32;
+}
+

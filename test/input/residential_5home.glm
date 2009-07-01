@@ -11,11 +11,13 @@ module climate;
 module residential;
 module powerflow;
 
+#set iteration_limit=10
+
 object climate {
 }
 
 object house:1..5 {
-	parent meter:*
+	parent triplex_meter:*;
 	floor_area random.normal(1500,300);
 }
 
@@ -23,42 +25,42 @@ object lights:6..10 {
 	parent house:id-5;
 }
 
-object range:11..15 {
-	parent house:id-10;
-}
-
-object clotheswasher:16..20 {
-	parent house:id-15;
-}
-
-object waterheater:21..25 {
-	parent house:id-20;
-}
-
-object player:26..30{
-	parent lights:id-20;
+object player:11..15 {
+	parent lights:id-5;
 	property demand;
 	file lightingDemand.glt;
 	loop 100;
 }
 
-object player:31..35{
-	parent range:id-20;
+object range:16..20 {
+	parent house:id-15;
+}
+
+object player:21..25{
+	parent range:id-5;
 	property demand;
 	file rangeDemand.glt;
 	loop 100;
 }
 
-object player:36..40{
-	parent clotheswasher:id-20;
-	property demand;
+object clotheswasher:26..30 {
+	parent house:id-25;
+}
+
+object player:31..35{
+	parent clotheswasher:id-5;
+	property enduse_queue;
 	file clotheswasherDemand.glt;
 	loop 100;
 }
 
+object waterheater:36..40 {
+	parent house:id-35;
+}
+
 object player:41..45{
-	parent waterheater:id-20;
-	property demand;
+	parent waterheater:id-5;
+	property water_demand;
 	file hotwaterDemand.glt;
 	loop 100;
 }
@@ -109,20 +111,18 @@ object player:81..85{
 	loop 100;
 }
 
-object recorder:..5{
-	parent house:*;
-	property total_internal_gain;
+object triplex_meter:86..90 {
+	phases AS;
+	nominal_voltage 120;
+	voltage_1 120 V;
+	voltage_N 0 V;
+	voltage_2 120 V;
+}
+
+object recorder:91..95 {
+	parent house:id-90;
+	property internal_gain;
 	file kgrecorder.txt;
 	interval 0;
 	limit 1000;
-	}
-
-object meter
-{
-	line1_voltage 120 V;
-	line2_voltage 0 V;
-	line3_voltage 120 V;
-	line12_voltage 120 V;
-	line23_voltage 120 V;
-	line31_voltage 240 V;
 }
