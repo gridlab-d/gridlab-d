@@ -12,6 +12,9 @@
 
 #include "residential.h"
 
+typedef enum {duration=0,energy=1} TYPEOFEVENT;
+typedef enum {analog=0, PWM=1, queued=2} TYPEOFPULSE;
+
 typedef enum {	BRK_OPEN=0,		///< breaker open
 				BRK_CLOSED=1,	///< breaker closed
 				BRK_FAULT=-1,	///< breaker faulted
@@ -31,6 +34,35 @@ typedef struct s_load {
 	double heatgain;	///< internal heat gain rate (kW)
 } ENDUSELOAD;	///< End-use load struct that must be included in end-use for circuits to read load
 
+typedef struct s_loadshape{
+	char *name; ///< end-use name
+	int32 type; ///< load shape type (see LST_*)
+	double scalar; ///< scaling parameter (action differs based on type)
+	double event_power_nominal; ///< the power value of the event
+	double event_duration_nominal; ///< the duration of the event	
+	TYPEOFEVENT event_type; ///whether a duration event or an energy event
+	TYPEOFPULSE event_queue;
+	double shape[4][24]; ///< end-use shape (unit depends on loadshape type) [season][daytype][hour]
+	double power_factor; ///< power factor
+	double current_fraction, impedance_fraction; ///< fraction of power that is actually constant current or constant impedance
+	double heat_fraction; ///< fraction of energy that ends as internal gain
+	double breaker_amps; ///< breaker amps
+	bool is220;	///< 220V load
+	/* this value is setup during init */
+	struct s_loadshape *next; ///< next end-use shape in list
+	/* these values are only used duration simulation */
+	double queue; ///< the current state of the queue
+	double reqd_queue;//stores integer parts of queue
+	double value; ///< the current load value
+	TIMESTAMP stopat; ///< the time at which the current event stops (only used when magnitude is non-zero and an event is active --- may not be true N Kumar)
+	TIMESTAMP start_at; ///< the time at which the current event starts
+	complex appliance_nominal_current;
+	complex appliance_nominal_voltage;
+	complex appliance_nominal_admittance;
+	complex appliance_constant_power;
+	ENDUSELOAD load;
+} LOADSHAPE; ///< End-use load shape used to generate implicity end-use loads
+
 typedef struct s_circuit {
 	CIRCUITTYPE type;	///< circuit type
 	ENDUSELOAD *pLoad;	///< pointer to the load struct
@@ -45,6 +77,7 @@ typedef struct s_circuit {
 	// DPC: commented this out until the rest of house_e is updated
 	// LOADSHAPE *implicit_end_use;///pointer to the implicit end use, if the object is an implicit end use
 } CIRCUIT; ///< circuit definition
+
 typedef struct s_panel {
 	double max_amps; ///< maximum panel amps
 	BREAKERSTATUS status; ///< panel breaker status
