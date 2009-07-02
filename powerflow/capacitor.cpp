@@ -103,7 +103,6 @@ int capacitor::create()
 	switchC_state_Req_Next = OPEN;
 	control = MANUAL;
 	control_level = INDIVIDUAL;
-	pt_phase = PHASE_A;
 	voltage_set_high = 0.0;
 	voltage_set_low = 0.0;
 	VAr_set_high = 0.0;
@@ -268,6 +267,32 @@ int capacitor::init(OBJECT *parent)
 		/*  TROUBLESHOOT
 		Without a lockout_time set, the capacitor will only turn off for the delays instituted in time_delay.
 		*/
+
+	if ((control != MANUAL) && ((pt_phase & (PHASE_A | PHASE_B | PHASE_C)) == 0))	//Nothing specified in pt_phases
+		GL_THROW("Capacitor:%d is set to an automatic scheme, but is not monitoring any phases.",obj->id);
+		/*  TROUBLESHOOT
+		A capacitor is setup to use one of the automatic control schemes (VAR, VOLT, VARVOLT), but does not have a phase
+		specified in pt_phase to monitor.  As such, the capacitor will not do anything.  Please specify phase(s) to monitor
+		in pt_phase.
+		*/
+
+	if ((control == MANUAL) && (control_level == BANK) && ((pt_phase & (PHASE_A | PHASE_B | PHASE_C)) == 0))	//Manual bank control with no phases monitored
+		gl_warning("Capacitor:%d is set to manual bank mode, but does not know which phase to monitor.",obj->id);
+		/*  TROUBLESHOOT
+		A capacitor is set to manual bank mode.  However, pt_phase is empty and the capacitor does not know which phase
+		to monitor to switch all conencted phases.  Specify at least one phase in pt_phase to enable the bank control
+		*/
+
+	if ((phases_connected & (PHASE_A | PHASE_B | PHASE_C)) == 0)
+	{
+		gl_warning("No capacitor phase connection information is available for capacitor:%d.  Defaulting to the phases property.",obj->id);
+		/*  TROUBLESHOOT
+		The capacitor does not have any information specified about how the capacitors are actually connected.  The phases property of the
+		capacitor will be utilized instead.  If this is incorrect, explicitly specify the phases in phases_connected.
+		*/
+
+		phases_connected = phases;	//Just use what the node has set
+	}
 
 	return result;
 }
