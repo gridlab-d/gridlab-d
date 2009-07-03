@@ -762,6 +762,7 @@ inline char* gl_name(OBJECT *my) ///< pointer to the object
 }
 
 /// Throw an exception using printf-style arguments
+/// @return Does not return
 inline void gl_throw(char *msg, ...) ///< printf-style argument list
 {
 	va_list ptr;
@@ -772,17 +773,51 @@ inline void gl_throw(char *msg, ...) ///< printf-style argument list
 	va_end(ptr);
 }
 
-inline char *gl_global_getvar(char *name) {return callback->global.getvar(name,NULL,0);};
+/// Get the string value of global variable
+/// @return A pointer to a static buffer containing the value
+inline char *gl_global_getvar(char *name) ///< pointer to string containing the name of the global variable
+{
+	return callback->global.getvar(name,NULL,0);
+}
 
-inline OBJECT *gl_create_object(CLASS *oclass) {return (*callback->create.single)(oclass);};
+/// Create an object in the core
+/// @return A pointer to the object
+inline OBJECT *gl_create_object(CLASS *oclass) ///< a pointer to the class of the object to be created
+{
+	return (*callback->create.single)(oclass);
+}
+
 inline OBJECT *gl_create_foreign(OBJECT *obj) {return (*callback->create.foreign)(obj);};
-inline int gl_set_parent(OBJECT *obj, OBJECT *parent) { return (*callback->set_parent)(obj,parent);};
-inline int gl_set_rank(OBJECT* obj,unsigned int rank) { return (*callback->set_rank)(obj,rank);}; 
-inline void *gl_get_addr(OBJECT *obj, char *name)
+
+/// Set the parent of an object
+/// @return the rank of the object after parent is set
+inline int gl_set_parent(OBJECT *obj, ///< the object whose parent is being set
+						 OBJECT *parent) ///< the parent that is being set
+{ 
+	return (*callback->set_parent)(obj,parent);
+}
+
+/// Promote an object to a higher rank
+/// @return the old rank of the object
+inline int gl_set_rank(OBJECT* obj, ///< the object whose rank is being set
+					   unsigned int rank) ///< the new rank of the object
+{ 
+	return (*callback->set_rank)(obj,rank);
+} 
+
+/// Get a pointer to the data of an object property (by name)
+/// @return a pointer to the data
+inline void *gl_get_addr(OBJECT *obj, ///< the object whose property is sought
+						 char *name) ///< the name of the property being sought
 {
 	return callback->properties.get_addr(obj,name);
 }
-template <class T> inline void gl_get_value(OBJECT *obj, char *propname, T &value)
+
+/// Get the typed value of a property
+/// @return nothing
+template <class T> inline void gl_get_value(OBJECT *obj, ///< the object whose property value is being obtained
+											char *propname, ///< the name of the property being obtained
+											T &value) ///< a reference to the local value where the property's value is being copied
 {
 	T *ptr = (T*)gl_get_addr(obj,propname);
 	// @todo it would be a good idea to check the property type here
