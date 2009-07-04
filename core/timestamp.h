@@ -40,6 +40,7 @@ typedef int64 TIMESTAMP;
 #define TS_NEVER ((int64)(((unsigned int64)-1)>>1))
 #define MINYEAR 1970
 #define MAXYEAR 2969
+#define ISLEAPYEAR(Y) ((Y)%4==0 && ((Y)%100!=0 || (Y)%400==0))
 
 typedef struct s_datetime {
 	unsigned short year; /**< year (1970 to 2970 is allowed) */

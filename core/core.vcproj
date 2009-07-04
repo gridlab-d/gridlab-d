@@ -655,6 +655,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\schedule.c"
+				>
+			</File>
+			<File
+				RelativePath=".\statemachine.c"
+				>
+			</File>
+			<File
 				RelativePath="..\core\test.c"
 				>
 			</File>
@@ -805,6 +813,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\schedule.h"
+				>
+			</File>
+			<File
+				RelativePath=".\statemachine.h"
+				>
+			</File>
+			<File
 				RelativePath="..\core\test.h"
 				>
 			</File>
@@ -845,15 +861,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\x86\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File

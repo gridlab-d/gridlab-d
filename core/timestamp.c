@@ -55,7 +55,6 @@ typedef struct{
 static daysinmonth[] = {31,28,31,30,31,30,31,31,30,31,30,31};
 static char *dow[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 
-#define ISLEAPYEAR(Y) ((Y)%4==0 && ((Y)%100!=0 || (Y)%400==0))
 #define YEAR0 (1970) /* basis year is 1970 */
 #define YEAR0_ISLY (0) /* set to 1 if YEAR0 is a leap year, 1970 is not */
 #define DOW0 (4) /* 1/1/1970 is a Thursday (day 4) */
