@@ -2,6 +2,24 @@
  	Copyright (C) 2008 Battelle Memorial Institute
 	@file schedule.h
 	@addtogroup schedule Schedules
+
+	Schedules are defined as a multiline string
+	
+	@par Schedule syntax
+	<code>
+	# comments are ignored until and end-of-line
+	block1-name { # each block must have a unique name
+		minutes hours days months weekdays value # uses the crontab format
+		minutes hours days months weekdays value # multiple entries separate by newlines or semicolons
+	}
+	block2-name { # normalization is done over each block
+	}
+	block3-name { # block are combined
+	}
+	</code>
+
+	Optionally, a simple schedule can be provided
+
 **/
 
 #ifndef _SCHEDULE_H

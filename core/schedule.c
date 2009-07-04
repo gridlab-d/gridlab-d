@@ -2,6 +2,7 @@
  	Copyright (C) 2008 Battelle Memorial Institute
 	@file schedule.c
 	@addtogroup schedule
+
 **/
 
 #include <stdlib.h>
@@ -197,7 +198,18 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 								continue;
 							do {
 								if (minute_match[minute])
-									sch->index[calendar][minute] = sch->block*MAXBLOCKS + index;
+								{
+									if (sch->index[calendar][minute]>0)
+									{
+										output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) %s has a conflict at %d %d %d %d %d", sch->name, token, minute, hour, day, month, weekday);
+										/* TROUBLESHOOT
+										   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
+										 */
+										return 0;
+									}
+									else
+										sch->index[calendar][minute] = sch->block*MAXBLOCKS + index;
+								}
 								minute++;
 							} while (minute%60>0);
 						}
@@ -218,6 +230,7 @@ int schedule_compile(SCHEDULE *sch)
 	char blockdef[1024];
 	char blockname[64];
 	enum {INIT, NAME, OPEN, BLOCK, CLOSE} state = INIT;
+	int comment=0;
 	
 	/* check to see no blocks are defined */
 	if (strchr(p,'{')==NULL && strchr(p,'}')==NULL)
@@ -228,6 +241,21 @@ int schedule_compile(SCHEDULE *sch)
 	/* isolate each block */
 	while (*p!='\0')
 	{
+		/* handle comments */
+		if (*p=='#') 
+		{
+			comment=1;
+			p++;
+			continue;
+		}
+		else if (comment)
+		{
+			if (*p=='\n')
+				comment=0;
+			p++;
+			continue;
+		}
+
 		switch (state) {
 		case INIT:
 		case CLOSE:

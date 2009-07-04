@@ -54,9 +54,9 @@ struct s_schedule_fsm {
 
 	/* internal machine parameters */
 	double r[2];		/**< the state rates */
-	double re[2];		/**< the state rate stdevs */ 
+	double re[2];		/**< the state rate stdevs (not used yet) */ 
 	double d[2];		/**< the state transition thresholds */
-	double de[2];		/**< the state transition threshold stdevs */
+	double de[2];		/**< the state transition threshold stdevs (not used yet) */
 	complex *v;			/**< reference voltage (if any) */
 
 	/* state variables */

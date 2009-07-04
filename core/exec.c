@@ -60,6 +60,7 @@
 #include "exception.h"
 #include "random.h"	
 #include "local.h"
+#include "schedule.h"
 
 /** The main system initialization sequence
 	@return 1 on success, 0 on failure
@@ -434,7 +435,9 @@ STATUS exec_start(void)
 
 			sync.hard_event = 0;
 			global_clock = sync.step_to;
-			sync.step_to = TS_NEVER;
+
+			/* synchronize all internal schedules */
+			sync.step_to = schedule_syncall(sync.step_to);
 
 			if (!global_debug_mode)
 			{
