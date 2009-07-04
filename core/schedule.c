@@ -42,19 +42,19 @@ SCHEDULE *schedule_find_byname(char *name)
 	 ...,...
 	 
  */
-int schedule_matcher(char *pattern, unsigned char *table)
+int schedule_matcher(char *pattern, unsigned char *table, int max)
 {
 	int go=0;
 	int start=0;
 	int stop=0;
 	int range=0;
-	char *p = pattern;
-	while (*p!='\0')
+	char *p;
+	for (p=pattern; *p!='\0'; p++)
 	{
 		switch (*p) {
 		case '*':
 			/* full range and go fill */
-			start=0; stop=60; go=1;
+			start=0; stop=max; go=1;
 			break;
 		case ',':
 			/* go fill */
@@ -84,8 +84,16 @@ int schedule_matcher(char *pattern, unsigned char *table)
 			break;
 		}
 		if (go)
-		{	/* go fill */
-			int i;
+		{	int i;
+
+			/* check over limit */
+			if (stop>max)
+			{
+				output_warning("schedule_matcher(char *pattern='%s',...) end exceed max of %d", pattern,max);
+				stop = max;
+			}
+
+			/* go fill */
 			for (i=start; i<stop; i++)
 				table[i] = 1;
 			/* reset */
@@ -114,7 +122,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 		double value=1.0; /* default value is 1.0 */
 		if (sscanf(token,"%s %s %s %s %s %f",moh,hod,dom,moy,dow,&value)<5) /* value can be missing -> defaults to 1.0 */
 		{
-			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", token);
+			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
 			/* TROUBLESHOOT
 			   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 			 */
@@ -129,7 +137,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 		}
 
 		/* get match tables */
-		if (!schedule_matcher(moh,minute_match))
+		if (!schedule_matcher(moh,minute_match,60))
 		{
 			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) minute syntax error in item '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -137,7 +145,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 			 */
 			return 0;
 		}
-		if (!schedule_matcher(hod,hour_match))
+		if (!schedule_matcher(hod,hour_match,60))
 		{
 			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) hour syntax error in item '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -145,7 +153,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 			 */
 			return 0;
 		}
-		if (!schedule_matcher(dom,day_match))
+		if (!schedule_matcher(dom,day_match,31))
 		{
 			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) day syntax error in item '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -153,7 +161,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 			 */
 			return 0;
 		}
-		if (!schedule_matcher(moy,month_match))
+		if (!schedule_matcher(moy,month_match,12))
 		{
 			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) month syntax error in item '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -161,7 +169,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 			 */
 			return 0;
 		}
-		if (!schedule_matcher(dow,weekday_match))
+		if (!schedule_matcher(dow,weekday_match,8))
 		{
 			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) weekday syntax error in item '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -197,7 +205,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 							if (!hour_match[hour])
 								continue;
 							do {
-								if (minute_match[minute])
+								if (minute_match[minute%60])
 								{
 									if (sch->index[calendar][minute]>0)
 									{
@@ -227,7 +235,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 int schedule_compile(SCHEDULE *sch)
 {
 	char *p = sch->definition, *q = NULL;
-	char blockdef[1024];
+	char blockdef[65536];
 	char blockname[64];
 	enum {INIT, NAME, OPEN, BLOCK, CLOSE} state = INIT;
 	int comment=0;
@@ -319,6 +327,19 @@ int schedule_compile(SCHEDULE *sch)
 			break;
 		case BLOCK:
 			if (*p=='}')
+			{	/* end block */
+				state = CLOSE;
+				q = NULL;
+				p++;
+				if (schedule_compile_block(sch,blockdef))
+				{
+					strcpy(sch->blockname[sch->block],blockname);
+					sch->block++;
+				}
+				else
+					return 0;
+			}
+			else 
 			{
 				if (q<blockdef+sizeof(blockdef)-1)
 				{
@@ -333,19 +354,6 @@ int schedule_compile(SCHEDULE *sch)
 					 */
 					return 0;
 				}
-			}
-			else /* end block */
-			{
-				state = CLOSE;
-				q = NULL;
-				p++;
-				if (schedule_compile_block(sch,blockdef))
-				{
-					strcpy(sch->blockname[sch->block],blockname);
-					sch->block++;
-				}
-				else
-					return 0;
 			}
 			break;
 		default:
@@ -432,7 +440,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		for (block=0; block<sch->block; block++)
 		{
 			/* number of minutes that are indexed */
-			unsigned int t = sizeof(sch->dtnext[block])/sizeof(sch->dtnext[block][0])-1;
+			int t = sizeof(sch->dtnext[block])/sizeof(sch->dtnext[block][0])-1;
 
 			/* assume that loopback results in a value change in 1 minute */
 			sch->dtnext[block][t] = 1; 

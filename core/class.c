@@ -50,6 +50,7 @@
 #include "module.h"
 #include "exception.h"
 #include "timestamp.h"
+#include "loadshape.h"
 
 int convert_from_real(char *a, int b, void *c, PROPERTY *d){return 0;}
 int convert_to_real(char *a, void *b, PROPERTY *c){return 0;}
@@ -85,7 +86,8 @@ static struct s_property_specs { /**<	the property type conversion specification
 	{"double_array", sizeof(double), convert_from_double_array, convert_to_double_array},
 	{"complex_array", sizeof(complex), convert_from_complex_array, convert_to_complex_array},
 	{"real", sizeof(real), convert_from_real, convert_to_real},
-	{"float", sizeof(float), convert_from_float, convert_to_float}
+	{"float", sizeof(float), convert_from_float, convert_to_float},
+	{"loadshape", sizeof(loadshape), convert_from_loadshape, convert_to_loadshape},
 };
 
 /* object class list */

@@ -168,6 +168,7 @@ typedef struct stat STAT;
 #include "output.h"
 #include "random.h"
 #include "convert.h"
+#include "schedule.h"
 
 static unsigned int linenum=0;
 static char filename[1024];
@@ -3702,6 +3703,42 @@ static int comment_block(PARSER)
 	return 0;
 }
 
+static int schedule(PARSER)
+{
+	int startline = linenum;
+	char schedname[64];
+	START;
+	if WHITE ACCEPT;
+	if (LITERAL("schedule") && WHITE && TERM(name(HERE,schedname,sizeof(schedname))) && WHITE,LITERAL("{"))
+	{
+		char buffer[65536], *p=buffer;
+		int nest=0;
+		for (nest=0; nest>=0; _m++)
+		{
+			char c = *HERE;
+			if (c=='\0') break;
+			switch (c) {
+			case '{': nest++; *p++ = c; break;
+			case '}': if (nest-->0) *p++ = c; break; 
+			default: *p++ = c; break;
+			}
+			*p = '\0';
+		}
+		if (schedule_create(schedname, buffer))
+		{
+			ACCEPT;
+		}
+		else
+		{
+			output_message("%s(%d): schedule '%s' is not valid", filename, startline, schedname);
+			REJECT;
+		}
+	}
+	else
+		REJECT;
+	DONE;
+}
+
 static int gridlabd_file(PARSER)
 {
 	START;
@@ -3714,6 +3751,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(clock_block(HERE)) {ACCEPT; DONE;}
 	OR if TERM(import(HERE)) {ACCEPT; DONE; }
 	OR if TERM(library(HERE)) {ACCEPT; DONE; }
+	OR if TERM(schedule(HERE)) {ACCEPT; DONE; }
 	OR if (*(HERE)=='\0') {ACCEPT; DONE;}
 	else REJECT;
 	DONE;

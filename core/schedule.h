@@ -34,7 +34,7 @@
 typedef struct s_schedule SCHEDULE;
 struct s_schedule {
 	char name[64];						/**< the name of the schedule */
-	char definition[1024];				/**< the definition string of the schedule */
+	char definition[65536];				/**< the definition string of the schedule */
 	char blockname[MAXBLOCKS][64];		/**< the name of each block */
 	unsigned char block;				/**< the last block used (4 max) */
 	unsigned char index[14][8784*60];	/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */

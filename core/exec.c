@@ -61,6 +61,7 @@
 #include "random.h"	
 #include "local.h"
 #include "schedule.h"
+#include "loadshape.h"
 
 /** The main system initialization sequence
 	@return 1 on success, 0 on failure
@@ -328,6 +329,15 @@ STATUS t_sync_all(PASSCONFIG pass)
 	return SUCCESS;
 }
 
+/* this function synchronizes all internal behaviors */
+TIMESTAMP syncall_internals(TIMESTAMP t1)
+{
+	TIMESTAMP t2 = schedule_syncall(t1);
+	TIMESTAMP t3 = loadshape_syncall(t1); if (t3<t2) t2=t3;
+	/* add other internal syncs here */
+	return t2;
+}
+
 /** This is the main simulation loop
 	@return STATUS is SUCCESS if the simulation reached equilibrium, 
 	and FAILED if a problem was encountered.
@@ -437,7 +447,7 @@ STATUS exec_start(void)
 			global_clock = sync.step_to;
 
 			/* synchronize all internal schedules */
-			sync.step_to = schedule_syncall(sync.step_to);
+			sync.step_to = syncall_internals(sync.step_to);
 
 			if (!global_debug_mode)
 			{

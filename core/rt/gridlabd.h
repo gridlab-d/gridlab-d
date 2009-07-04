@@ -374,6 +374,7 @@ typedef enum {_PT_FIRST=-1,
 /*	PT_object_array, */ /**< the data is a fixed length array of object pointers*/
 	PT_float,	/**< Single-precision float	*/
 	PT_real,	/**< Single or double precision float ~ allows double values to be overriden */
+	PT_loadshape,	/**< Loadshapes are state machines driven by schedules */
 #ifdef USE_TRIPLETS
 	PT_triple, /**< triplet of doubles (not supported) */
 	PT_triplex, /**< triplet of complexes (not supported) */
