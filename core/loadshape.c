@@ -390,7 +390,11 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				else
 				{
 					ls->params.pulsed.pulsetype = MPT_TIME;
-					ls->params.pulsed.pulsevalue = atof(value);
+					if (!convert_unit_double(value,"s",&ls->params.pulsed.pulsevalue))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert duration to seconds",string);
+						return 0;
+					}
 				}
 			}
 			else if (ls->type==MT_MODULATED)
@@ -402,7 +406,11 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				else
 				{
 					ls->params.queued.pulsetype = MPT_TIME;
-					ls->params.queued.pulsevalue = atof(value);
+					if (!convert_unit_double(value,"s",&ls->params.queued.pulsevalue))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert duration to seconds",string);
+						return 0;
+					}
 				}
 			}
 			else
@@ -424,7 +432,11 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				else
 				{
 					ls->params.modulated.pulsetype = MPT_TIME;
-					ls->params.modulated.pulsevalue = atof(value);
+					if (!convert_unit_double(value,"s",&ls->params.modulated.pulsevalue))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert period to seconds",string);
+						return 0;
+					}
 				}
 			}
 			else if (ls->type==MT_QUEUED)
@@ -440,12 +452,16 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 			if (ls->type==MT_ANALOG)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) power is not used by analog loadshapes",string);
 			else if (ls->type==MT_PULSED)
-				if (ls->params.modulated.pulsetype==MPT_TIME)
+				if (ls->params.pulsed.pulsetype==MPT_TIME)
 					output_warning("convert_to_loadshape(string='%-.64s...', ...) power ignored because duration has already been specified and is mutually exclusive",string);
 				else
 				{
-					ls->params.modulated.pulsetype = MPT_POWER;
-					ls->params.modulated.pulsevalue = atof(value);
+					ls->params.pulsed.pulsetype = MPT_POWER;
+					if (!convert_unit_double(value,"kW",&ls->params.pulsed.pulsevalue))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power to unit kW",string);
+						return 0;
+					}
 				}
 			else if (ls->type==MT_MODULATED)
 				if (ls->params.modulated.pulsetype==MPT_TIME)
@@ -453,20 +469,23 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				else
 				{
 					ls->params.modulated.pulsetype = MPT_POWER;
-					ls->params.modulated.pulsevalue = atof(value);
-					if (ls->params.modulated.pulsevalue<=0)
+					if (!convert_unit_double(value,"kW",&ls->params.modulated.pulsevalue))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) power must be a positive number",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power to unit kW",string);
 						return 0;
 					}
 				}
 			else if (ls->type==MT_QUEUED)
-				if (ls->params.modulated.pulsetype==MPT_TIME)
+				if (ls->params.queued.pulsetype==MPT_TIME)
 					output_warning("convert_to_loadshape(string='%-.64s...', ...) power ignored because duration has already been specified and is mutually exclusive",string);
 				else
 				{
-					ls->params.modulated.pulsetype = MPT_POWER;
-					ls->params.modulated.pulsevalue = atof(value);
+					ls->params.queued.pulsetype = MPT_POWER;
+					if (!convert_unit_double(value,"kW",&ls->params.queued.pulsevalue))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power to unit kW",string);
+						return 0;
+					}
 				}
 			else
 			{

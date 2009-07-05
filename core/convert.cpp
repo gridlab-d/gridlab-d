@@ -848,11 +848,14 @@ int convert_to_complex_array(char *buffer, void *data, PROPERTY *prop){
 extern "C" int convert_unit_double(char *buffer,char *unit, double *data)
 {
 	char *from = strchr(buffer,' ');
+	*data = atof(buffer);
+
+	if (from==NULL)
+		return 1; /* no conversion needed */
 	
 	/* skip white space in from of unit */
 	while (isspace(*from)) from++;
 
-	*data = atof(buffer);
 	return unit_convert(from,unit,data);
 }
 
