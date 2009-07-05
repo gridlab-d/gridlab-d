@@ -13,6 +13,7 @@
 #include "loadshape.h"
 #include "exception.h"
 #include "convert.h"
+#include "globals.h"
 
 static loadshape *loadshape_list = NULL;
 /** Create a loadshape
@@ -129,19 +130,124 @@ Error:
 	return NULL;
 }
 
-int loadshape_init(loadshape *m, /**< machine */
-				   complex *v, /**< reference voltage to use for power calcs */
-				   complex *zip0, /**< analog: peak end-use ZIP fractions; others: ZIP values when machine is off */
-				   complex *zip1) /**< ZIP values when machine is on, NULL for analog machines */
+int loadshape_initall(void)
 {
-	m->zip[0][0] = &zip0[0];
-	m->zip[0][1] = &zip0[1];
-	m->zip[0][2] = &zip0[2];
-	if (m->type!=MT_ANALOG)
+	loadshape *ls;
+	for (ls=loadshape_list; ls!=NULL; ls=ls->next)
 	{
-		m->zip[1][0] = &zip1[0];
-		m->zip[1][1] = &zip1[1];
-		m->zip[1][2] = &zip1[2];
+		if (loadshape_init(ls)==1)
+			return FAILED;
+	}
+	return SUCCESS;
+}
+
+int loadshape_init(loadshape *ls) /**< load shape */
+{
+	if (ls->schedule==NULL)
+	{
+			output_error("loadshape_init(...) schedule is not specified");
+			return 1;
+	}
+
+	/* some sanity checks */
+	switch (ls->type) {
+	case MT_ANALOG:
+		if (ls->params.analog.energy<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) analog energy must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		break;
+	case MT_PULSED:
+		if (ls->params.pulsed.energy<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) pulsed energy must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.pulsed.pulsetype==MPT_UNKNOWN)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) pulse type could not be inferred because either duration or power is missing",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.pulsed.pulsetype==MPT_TIME && ls->params.pulsed.pulsevalue<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) pulse duration must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.pulsed.pulsetype==MPT_POWER && ls->params.pulsed.pulsevalue<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) pulse power must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.pulsed.scalar<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) pulse count must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		break;
+	case MT_MODULATED:
+		if (ls->params.modulated.energy<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated energy must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.modulated.pulsetype==MT_UNKNOWN)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated pulse type could not be inferred because either duration or power is missing",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.modulated.pulsetype==MPT_TIME && ls->params.modulated.pulsevalue<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated pulse period must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.modulated.pulsetype==MPT_POWER && ls->params.modulated.pulsevalue<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated pulse power must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.modulated.scalar<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated pulse count must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		break;
+	case MT_QUEUED:
+		if (ls->params.queued.energy<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) queue energy must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.queued.pulsetype==MT_UNKNOWN)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) queue pulse type could not be inferred because either duration or power is missing",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.queued.pulsetype==MPT_TIME && ls->params.queued.pulsevalue<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) queue pulse duration must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.queued.pulsetype==MPT_POWER && ls->params.queued.pulsevalue<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) queue pulse power must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.queued.scalar<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) queue pulse count must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.queued.q_on<=ls->params.queued.q_off)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) queue q_on threshold must be greater than q_off threshold (q_off=%f, q_on=%f)",ls->schedule->name,ls->params.queued.q_off,ls->params.queued.q_on);
+			return 1;
+		}
+		break;
+	default:
+		output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) load shape type is invalid",ls->schedule->name);
+		return 1;
+		break;
 	}
 	return 0;
 }
@@ -174,24 +280,7 @@ TIMESTAMP loadshape_sync(loadshape *m, TIMESTAMP t1)
 			m->q += m->r[m->s]*dt;
 		}
 
-		/* if reference voltage is given */
-		if (m->v!=NULL)
-		{
-			/* power is sensitive to voltage */
-			complex v = *(m->v);
-
-			/* power = energy/interval x value x ZIPfractions */
-			// TODO: can't do this easily until complex is supported in C
-			//m->power = energy/interval * value * ((v/(m->zip[m->s][0]) + m->zip[m->s][1])/(~v) + m->zip[m->s][2]);
-			throw_exception("complex ops not supported in C yet");
-		}
-		else
-		{
-			/* power = energy/interval x value x nominal_power (ignores constant impedance and current portions)*/
-			// TODO: can't do this easily until complex is supported in C
-			//m->power = energy/interval * value * ((v/(m->zip[m->s][0]) + m->zip[m->s][1])/(~v) + m->zip[m->s][2]);
-			//m->power = energy/interval * value * m->zip[m->s][2];
-		}
+		// TODO calculate the load
 	}
 	return TS_NEVER;
 }
@@ -522,108 +611,30 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 		}
 	}
 
-	/* some sanity checks */
-	switch (ls->type) {
-	case MT_ANALOG:
-		if (ls->params.analog.energy<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) analog energy must be a positive number",string);
-			return 0;
-		}
-		break;
-	case MT_PULSED:
-		if (ls->params.pulsed.energy<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) pulsed energy must be a positive number",string);
-			return 0;
-		}
-		if (ls->params.pulsed.pulsetype==MPT_UNKNOWN)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) pulse type could not be inferred because either duration or power is missing",string);
-			return 0;
-		}
-		if (ls->params.pulsed.pulsetype==MPT_TIME && ls->params.pulsed.pulsevalue<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) pulse duration must be a positive number",string);
-			return 0;
-		}
-		if (ls->params.pulsed.pulsetype==MPT_POWER && ls->params.pulsed.pulsevalue<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) pulse power must be a positive number",string);
-			return 0;
-		}
-		if (ls->params.pulsed.scalar<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) pulse count must be a positive number",string);
-			return 0;
-		}
-		break;
-	case MT_MODULATED:
-		if (ls->params.modulated.energy<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) modulated energy must be a positive number",string);
-			return 0;
-		}
-		if (ls->params.modulated.pulsetype==MT_UNKNOWN)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) modulated pulse type could not be inferred because either duration or power is missing",string);
-			return 0;
-		}
-		if (ls->params.modulated.pulsetype==MPT_TIME && ls->params.modulated.pulsevalue<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) modulated pulse period must be a positive number",string);
-			return 0;
-		}
-		if (ls->params.modulated.pulsetype==MPT_POWER && ls->params.modulated.pulsevalue<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) modulated pulse power must be a positive number",string);
-			return 0;
-		}
-		if (ls->params.modulated.scalar<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) modulated pulse count must be a positive number",string);
-			return 0;
-		}
-		break;
-	case MT_QUEUED:
-		if (ls->params.queued.energy<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) queue energy must be a positive number",string);
-			return 0;
-		}
-		if (ls->params.queued.pulsetype==MT_UNKNOWN)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) queue pulse type could not be inferred because either duration or power is missing",string);
-			return 0;
-		}
-		if (ls->params.queued.pulsetype==MPT_TIME && ls->params.queued.pulsevalue<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) queue pulse duration must be a positive number",string);
-			return 0;
-		}
-		if (ls->params.queued.pulsetype==MPT_POWER && ls->params.queued.pulsevalue<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) queue pulse power must be a positive number",string);
-			return 0;
-		}
-		if (ls->params.queued.scalar<=0)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) queue pulse count must be a positive number",string);
-			return 0;
-		}
-		if (ls->params.queued.q_on<=ls->params.queued.q_off)
-		{
-			output_error("convert_to_loadshape(string='%-.64s...', ...) queue q_on threshold must be greater than q_off threshold (q_off=%f, q_on=%f)",string,ls->params.queued.q_off,ls->params.queued.q_on);
-			return 0;
-		}
-		break;
-	default:
-		output_error("convert_to_loadshape(string='%-.64s...', ...) load shape type is invalid",string);
-		return 0;
-		break;
+	/* Add to list of active loadshapes only if not already in list 
+	   Note: this is the most efficient way to do it, but it avoids having
+	   to implement support for creators for all core properties
+	 */
+	/* search loadshape list for this load shape */
+	for (ls=loadshape_list; ls!=NULL; ls=ls->next)
+	{
+		if (ls==(loadshape*)data)
+			break;
 	}
 
-	/* everything looks ok */
+	/* if not found in list */
+	if (ls==NULL)
+	{
+		ls = (loadshape*)data;
+		ls->next = loadshape_list;
+		loadshape_list = ls;
+	}
+	
+	/* reinitialize the loadshape */
+	else if (loadshape_init((loadshape*)data)==FAILED)
+		return 0;
+
+	/* everything converted ok */
 	return 1;
 } 
 

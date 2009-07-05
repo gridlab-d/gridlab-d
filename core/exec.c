@@ -236,6 +236,11 @@ static STATUS init_all(void)
 {
 	OBJECT *obj;
 	output_verbose("initializing objects...");
+
+	/* initialize loadshapes */
+	if (loadshape_initall()==FAILED)
+		return FAILED;
+
 	TRY {
 		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
 		{
