@@ -463,9 +463,6 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 			}
 		}
 
-		/* normalize the schedule */
-		schedule_normalize(sch,0);
-
 		/* attach to schedule list */
 		sch->next = schedule_list;
 		schedule_list = sch;
@@ -481,13 +478,19 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 
 /** normalizes a schedule, if possible
 	@note the sum of the values is equal to 1.0, not the sum of the absolute values
-	@return number of block that could be normalized
+	@return number of block that could be normalized, 0 if none, -1 if already normalized
  **/
 int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
 					   int use_abs)		/**< true if normalization should use absolute values */
 {
 	unsigned int b,i;
 	int count=0;
+
+	/* check if already normalized */
+	if (sch->flags&SF_NORMALIZED)
+		return -1;
+
+	/* normalized */
 	for (b=0; b<MAXBLOCKS; b++)
 	{
 		double scale = (use_abs?sch->abs[b]:sch->sum[b]);
@@ -498,6 +501,10 @@ int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
 				sch->data[b*MAXBLOCKS+i]/=scale;
 		}
 	}
+
+	/* mark as normalized */
+	sch->flags |= SF_NORMALIZED;
+
 	return count;
 }
 

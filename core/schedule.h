@@ -30,6 +30,8 @@
 #define MAXBLOCKS 4
 #define MAXVALUES 64
 
+#define SF_NORMALIZED 0x0001 /**< the schedule is normalized */
+
 /** The SCHEDULE structure defines POSIX style schedules */
 typedef struct s_schedule SCHEDULE;
 struct s_schedule {
@@ -46,6 +48,7 @@ struct s_schedule {
 	TIMESTAMP next_t;					/**< the time of the next schedule event */
 	double value;						/**< the current scheduled value */
 	double duration;					/**< the duration of the current scheduled value */
+	int flags;							/**< the schedule flags (see SF_*) */
 	SCHEDULE *next;	/* next schedule in list */
 };
 

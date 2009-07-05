@@ -143,11 +143,15 @@ int loadshape_initall(void)
 
 int loadshape_init(loadshape *ls) /**< load shape */
 {
+	/* check the schedule */
 	if (ls->schedule==NULL)
 	{
 			output_error("loadshape_init(...) schedule is not specified");
 			return 1;
 	}
+
+	/* normalize the schedule */
+	schedule_normalize(ls->schedule,FALSE);
 
 	/* some sanity checks */
 	switch (ls->type) {
