@@ -49,6 +49,7 @@ struct s_schedule {
 	SCHEDULE *next;	/* next schedule in list */
 };
 
+SCHEDULE *schedule_find_byname(char *name);
 SCHEDULE *schedule_create(char *name, char *definition);
 int schedule_normalize(SCHEDULE *sch, int use_abs);
 int schedule_index(SCHEDULE *sch, TIMESTAMP ts);

@@ -52,6 +52,9 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop);
 int convert_from_complex_array(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_complex_array(char *buffer, void *data, PROPERTY *prop);
 
+int convert_unit_double(char *buffer,char *unit, double *data);
+int convert_unit_complex(char *buffer,char *unit, complex *data);
+
 #ifdef __cplusplus
 }
 #endif
