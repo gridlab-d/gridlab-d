@@ -525,6 +525,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\load_shape.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\loadshape.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\tape\main.cpp"
 				>
 			</File>
@@ -542,6 +550,10 @@
 			</File>
 			<File
 				RelativePath="..\tape\recorder.c"
+				>
+			</File>
+			<File
+				RelativePath=".\schedule.cpp"
 				>
 			</File>
 			<File
@@ -567,11 +579,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\load_shape.h"
+				>
+			</File>
+			<File
+				RelativePath=".\loadshape.h"
+				>
+			</File>
+			<File
 				RelativePath="..\tape\memory.h"
 				>
 			</File>
 			<File
 				RelativePath="..\tape\odbc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\schedule.h"
 				>
 			</File>
 			<File
