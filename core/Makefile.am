@@ -47,10 +47,15 @@ gridlabd_SOURCES = main.c \
 	threadpool.c threadpool.h \
 	timestamp.c timestamp.h \
 	unit.c unit.h \
-	version.h \
+	version.h build.h \
 	asm/cmpxchg.h asm/x86/cmpxchg.h asm/x86_64/cmpxchg.h \
 	schedule.c schedule.h \
 	loadshape.c loadshape.h
 EXTRA_gridlabd_SOURCES = \
 	cmex.c cmex.h
+
+legal.c: build.h
+
+build.h:
+	( echo "#define BUILD \"\$Revision: $(. ../utilities/build_number ..)\" >build.h
 

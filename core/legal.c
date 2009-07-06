@@ -33,11 +33,15 @@
  **/
 #include "version.h"
 
-
 #include "globals.h"
 #include "legal.h"
 #include "output.h"
 #include "find.h"
+
+#ifndef WIN32
+#undef BUILD
+#include "build.h"
+#endif
 
 /* branch names and histories (named after WECC 500kV busses)
 	Allston			Version 1.0 originated at PNNL March 2007, released February 2008

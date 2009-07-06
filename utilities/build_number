@@ -4,15 +4,24 @@
 # Release script for Linux source
 #
 
+# don't use #define BUILD form by default
+BUILD=0 
+
 # command line args
 while [ $# -gt 0 ]; do
 	case $1 in
-	-h) echo "Syntax: $(basename $0) [DIR]"
+	-h) 	echo "Syntax: $(basename $0) [DIR]"
 		exit 0
 		;;
-	*)	echo $(svn -R info "$1" | grep Revision | cut -f2 -d: | sort -ur | head -n 1)
-		shift
+	-b)	BUILD=1 # use #define BUILD form
+		;;
+	*)	if [ $BUILD -eq 1 ]; then
+			echo "#define BUILD \"\$Revision: $(svn -R info "$1" | grep Revision | cut -f2 -d: | sort -ur | head -n 1)\""
+		else
+			echo $(svn -R info "$1" | grep Revision | cut -f2 -d: | sort -ur | head -n 1)
+		fi
 		;;
 	esac
+	shift
 done
 
