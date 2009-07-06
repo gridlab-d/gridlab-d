@@ -17,18 +17,13 @@
 #include "config.h"
 #endif
 
-/* The following hack is required to stringize LIBEXT as passed in from
- * Makefile and used by snprintf below to construct the library name. */
-#define _STR(x) #x
-#define STR(x) _STR(x)
-
 #if defined WIN32 && ! defined MINGW
 	#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 	#define _WIN32_WINNT 0x0400
 	#include <windows.h>
 	#define LIBPREFIX
-	#ifndef LIBEXT
-		#define LIBEXT .dll
+	#ifndef DLEXT
+		#define DLEXT ".dll"
 	#endif
 	#define DLLOAD(P) LoadLibrary(P)
 	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
@@ -38,9 +33,8 @@
 	#include "dlfcn.h"
 #endif
 	#define LIBPREFIX "lib"
-	#ifndef LIBEXT
-		#define LIBEXT .so
-	#else
+	#ifndef DLEXT
+		#define DLEXT ".so"
 	#endif
 #ifndef MINGW
 	#define DLLOAD(P) dlopen(P,RTLD_LAZY)
@@ -302,11 +296,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		output_verbose("%s(%d): module '%s' memory allocated", __FILE__, __LINE__, file);
 
 	/* locate the module */
-#ifdef DLEXT
 	snprintf(pathname, 1024, LIBPREFIX "%s" DLEXT, file);
-#else
-	snprintf(pathname, 1024, LIBPREFIX "%s" STR(LIBEXT), file);
-#endif
 	tpath = find_file(pathname, NULL, X_OK|R_OK);
 	if(tpath == NULL)
 	{

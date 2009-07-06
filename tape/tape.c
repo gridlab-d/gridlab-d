@@ -46,19 +46,13 @@ extern CLASS *recorder_class;
 extern CLASS *collector_class;
 
 
-/* The following hack is required to stringize LIBEXT as passed in from
- * Makefile and used by snprintf below to construct the library name. */
-#define _STR(x) #x
-#define STR(x) _STR(x)
-
-
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
 #define LIBPREFIX
-#ifndef LIBEXT
-#define LIBEXT .dll
+#ifndef DLEXT
+#define DLEXT ".dll"
 #endif
 #define DLLOAD(P) LoadLibrary(P)
 #define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
@@ -66,8 +60,8 @@ extern CLASS *collector_class;
 #else /* ANSI */
 #include "dlfcn.h"
 #define LIBPREFIX "lib"
-#ifndef LIBEXT
-#define LIBEXT .so
+#ifndef DLEXT
+#define DLEXT ".so"
 #else
 #endif
 #define DLLOAD(P) dlopen(P,RTLD_LAZY)
@@ -103,7 +97,7 @@ TAPEFUNCS *get_ftable(char *mode){
 		GL_THROW("get_ftable(char *mode='%s'): out of memory", mode);
 		return NULL; /* out of memory */
 	}
-	snprintf(modname, 1024, LIBPREFIX "tape_%s" STR(LIBEXT), mode);
+	snprintf(modname, 1024, LIBPREFIX "tape_%s" DLEXT, mode);
 	tpath = gl_findfile(modname, NULL, 0|4);
 	if(tpath == NULL){
 		GL_THROW("unable to locate %s", modname);
