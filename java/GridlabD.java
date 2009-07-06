@@ -66,136 +66,136 @@ public class GridlabD {
 	/**
 	 * The inner Property class is used to cache published properties from classes in Java modules.
 	 */
-	public static class Property{
-		private String name; /** property name */
-		private String type; /** property type - must be equal to "int16", "int32", "int64", "double", "char8", "char32", "char256", "char1024", "complex", or "object". */
-		private long size; /** in bytes, needed for correctly allocating objects in the core */
-		private long offset; /** in bytes, needed for correctly locating within core memory */
-		private long addr; /** address pointer to a PROPERTY * where the core allocated this property */
-		public String GetName(){return name;}
-		public String GetType(){return type;}
-		public long GetSize(){return size;}
-		public long GetOffset(){return offset;}
-		public long GetAddr(){return addr;}
-		private Property(String n, String t, long s, long o){
-			name = new String(n);
-			type = new String(t);
-			size = s;
-			offset = o;
-		}
-		/** Builds a Property object and registers it with the core.
-		  * @param n Property name
-		  * @param t Property type
-		  * @param o Address of the object registering this property in the core
-		  * @return A new Property object.   Null return on failure.
-		  */
-		public static Property Build(String n, String t, long o){
-			Long size = proptype.get(t);
-			Property p = null;
-			if(size == null){
-				GridlabD.error("Unable to create property \""+n+"\" of type \""+t+"\"");
-				return null;
-			}
-			p = new GridlabD.Property(n, t, size.longValue(), o);
-			return p;
-		}
-		/** Builds a Property object within the Java core.  Not recommended since it does not work with the core.  Internal use only.  */
-		public static Property Build(String n, String t, long o, long s){
-			return new GridlabD.Property(n, t, s, o);
-		}
-	}
+	// public static class Property{
+		// private String name; /** property name */
+		// private String type; /** property type - must be equal to "int16", "int32", "int64", "double", "char8", "char32", "char256", "char1024", "complex", or "object". */
+		// private long size; /** in bytes, needed for correctly allocating objects in the core */
+		// private long offset; /** in bytes, needed for correctly locating within core memory */
+		// private long addr; /** address pointer to a PROPERTY * where the core allocated this property */
+		// public String GetName(){return name;}
+		// public String GetType(){return type;}
+		// public long GetSize(){return size;}
+		// public long GetOffset(){return offset;}
+		// public long GetAddr(){return addr;}
+		// private Property(String n, String t, long s, long o){
+			// name = new String(n);
+			// type = new String(t);
+			// size = s;
+			// offset = o;
+		// }
+		// /** Builds a Property object and registers it with the core.
+		  // * @param n Property name
+		  // * @param t Property type
+		  // * @param o Address of the object registering this property in the core
+		  // * @return A new Property object.   Null return on failure.
+		  // */
+		// public static Property Build(String n, String t, long o){
+			// Long size = proptype.get(t);
+			// Property p = null;
+			// if(size == null){
+				// GridlabD.error("Unable to create property \""+n+"\" of type \""+t+"\"");
+				// return null;
+			// }
+			// p = new GridlabD.Property(n, t, size.longValue(), o);
+			// return p;
+		// }
+		// /** Builds a Property object within the Java core.  Not recommended since it does not work with the core.  Internal use only.  */
+		// public static Property Build(String n, String t, long o, long s){
+			// return new GridlabD.Property(n, t, s, o);
+		// }
+	// }
 	/**
 	 * Contains the properties of GridLAB-D classes registered by Java modules and keys them in a HashTable by name.
 	 * @deprecated Use GClass instead of GridlabD.Class
 	 */
-	public static class Class{
-		private String classname; /** The published name of this class */
-		private long addr; /** The address of the CLASS in the core. */
-		private long modaddr; /** The address of the MODULE in the core that this class belongs to */
-		private int synctype; /** Bitfield for what sync passes this class operates during */
-		private boolean inUse; /** True once an object of this class is created during load time. */
-		private long size; /** Size of this class when instatiated, in bytes.  */
-		private Hashtable<String, Property> ptable; /***/
-		public long GetSize(){inUse = true; return size;} /* once we say how big we are, keep that value valid. */
-		public long GetAddr(){return addr;}
-		public String GetName(){return classname;}
-		public void SetUsed(){inUse = true;}
-		private Class(String n, long ca, long ma, int s){
-			classname = new String(n);
-			ptable = new Hashtable<String, Property>();
-			addr = ca;
-			modaddr = ma;
-			synctype = s;
-			inUse = false;
-			size = 0;
-		}
-		/**
-		 * Registers a new class with the GridLAB-D core.
-		 * @param n Name of the new class
-		 * @param a Address of the module this class is registering with.
-		 * @param sync Bitfield of the sync phases for this class.
-		 * @return Null on error, Class object on success.
-		 */
-		public static Class Build(String n, long a, int sync){
-			long addr = GridlabD.register_class(a, n, sync); /**/
-			if(addr != 0){
-				return new Class(n, addr, a, sync);
-			}
-			return null;
-		}
-		/**
-		 * Publishes a property in the GridLAB-D core for this class.
-		 * @param pname Name of the property to publish
-		 * @param ptype Name of the property type to publish
-		 * @return New Property on success, null pointer on error.
-		 */
-		public Property AddProperty(String pname, String ptype){
-			if(inUse){
-				GridlabD.error("Class "+classname+" is in use, ignoring AddProperty attempt");
-				return null;
-			}
-			GridlabD.verbose("Class.AddProperty("+pname+", "+ptype+")");
-			long offset = 0;
-			for(Enumeration<Property> e = ptable.elements(); e.hasMoreElements();){
-				Long ov = e.nextElement().GetSize();
-				offset += ov.longValue();
-			}
-			GridlabD.verbose("\toffset = "+offset);
-			if(ptable.containsKey(pname)){
-				GridlabD.error("Property \""+pname+"\" already exists");
-				return null;
-			} else {
-				GridlabD.verbose("Property "+pname+" is unique");
-			}
-			long psize = GridlabD.publish_variable(modaddr, addr, pname, ptype, offset);
-			if(0 == psize){
-				GridlabD.error("Unable to GridlabD.publish_variable("+modaddr+", "+addr+", "+pname+", "+ptype+", "+offset+")");
-			} else {
-				GridlabD.verbose("Published "+pname);
-			}
-			Property p = GridlabD.Property.Build(pname, ptype, offset, psize);
-			if(p == null){
-				GridlabD.error("Unable to GridlabD.Property.Build("+pname+", "+ptype+", "+offset+", "+psize+")");
-				return null;
-			}
-			ptable.put(pname, p);
-			size = offset + psize; /* update class size */
-			return p;
-		}
-		public boolean hasProperty(String pname){
-			if(ptable.containsKey(pname))
-				return true;
-			return false;
-		}
-		/**
-		 * Fetches a Property object by name from the Class's property table.
-		 * @param pname Name of the property to be found.
-		 * @return A Property with the same property name, else null.
-		 */
-		public GridlabD.Property findProperty(String pname){
-			return ptable.get(pname);
-		}
-	}
+	// public static class Class{
+		// private String classname; /** The published name of this class */
+		// private long addr; /** The address of the CLASS in the core. */
+		// private long modaddr; /** The address of the MODULE in the core that this class belongs to */
+		// private int synctype; /** Bitfield for what sync passes this class operates during */
+		// private boolean inUse; /** True once an object of this class is created during load time. */
+		// private long size; /** Size of this class when instatiated, in bytes.  */
+		// private Hashtable<String, Property> ptable; /***/
+		// public long GetSize(){inUse = true; return size;} /* once we say how big we are, keep that value valid. */
+		// public long GetAddr(){return addr;}
+		// public String GetName(){return classname;}
+		// public void SetUsed(){inUse = true;}
+		// private Class(String n, long ca, long ma, int s){
+			// classname = new String(n);
+			// ptable = new Hashtable<String, Property>();
+			// addr = ca;
+			// modaddr = ma;
+			// synctype = s;
+			// inUse = false;
+			// size = 0;
+		// }
+		// /**
+		 // * Registers a new class with the GridLAB-D core.
+		 // * @param n Name of the new class
+		 // * @param a Address of the module this class is registering with.
+		 // * @param sync Bitfield of the sync phases for this class.
+		 // * @return Null on error, Class object on success.
+		 // */
+		// public static Class Build(String n, long a, int sync){
+			// long addr = GridlabD.register_class(a, n, sync); /**/
+			// if(addr != 0){
+				// return new Class(n, addr, a, sync);
+			// }
+			// return null;
+		// }
+		// /**
+		 // * Publishes a property in the GridLAB-D core for this class.
+		 // * @param pname Name of the property to publish
+		 // * @param ptype Name of the property type to publish
+		 // * @return New Property on success, null pointer on error.
+		 // */
+		// public Property AddProperty(String pname, String ptype){
+			// if(inUse){
+				// GridlabD.error("Class "+classname+" is in use, ignoring AddProperty attempt");
+				// return null;
+			// }
+			// GridlabD.verbose("Class.AddProperty("+pname+", "+ptype+")");
+			// long offset = 0;
+			// for(Enumeration<Property> e = ptable.elements(); e.hasMoreElements();){
+				// Long ov = e.nextElement().GetSize();
+				// offset += ov.longValue();
+			// }
+			// GridlabD.verbose("\toffset = "+offset);
+			// if(ptable.containsKey(pname)){
+				// GridlabD.error("Property \""+pname+"\" already exists");
+				// return null;
+			// } else {
+				// GridlabD.verbose("Property "+pname+" is unique");
+			// }
+			// long psize = GridlabD.publish_variable(modaddr, addr, pname, ptype, offset);
+			// if(0 == psize){
+				// GridlabD.error("Unable to GridlabD.publish_variable("+modaddr+", "+addr+", "+pname+", "+ptype+", "+offset+")");
+			// } else {
+				// GridlabD.verbose("Published "+pname);
+			// }
+			// Property p = GridlabD.Property.Build(pname, ptype, offset, psize);
+			// if(p == null){
+				// GridlabD.error("Unable to GridlabD.Property.Build("+pname+", "+ptype+", "+offset+", "+psize+")");
+				// return null;
+			// }
+			// ptable.put(pname, p);
+			// size = offset + psize; /* update class size */
+			// return p;
+		// }
+		// public boolean hasProperty(String pname){
+			// if(ptable.containsKey(pname))
+				// return true;
+			// return false;
+		// }
+		// /**
+		 // * Fetches a Property object by name from the Class's property table.
+		 // * @param pname Name of the property to be found.
+		 // * @return A Property with the same property name, else null.
+		 // */
+		// public GridlabD.Property findProperty(String pname){
+			// return ptable.get(pname);
+		// }
+	// }
 	/* static methods of Property */
 
 	/* Module inner class */
@@ -207,44 +207,44 @@ public class GridlabD {
 	 * code is executed, the module has already been instantiated in the core, but will not have any classes or states registered.
 	 * @deprecated Use GModule instead of GridlabD.Module
 	 */
-	public static class Module{
-		private String modulename; /** Name of this module, as we will look for it in the core. */
-		private long addr; /** Address of the MODULE allocated in the core. */
-		private Hashtable<String, Class> ctable; /** Dictionary of the classes registered by this module. */
-		/**
-		 * Returns the core memory address of the first class that we registered.
-		 * @return A pointer to the first CLASS registered for this module in the core.
-		 */
-		public long GetFirstClassAddr(){
-			//Enumeration<Class> ec = ctable;
-			if(ctable.isEmpty())
-				return 0;
-			return ctable.elements().nextElement().GetAddr();
-		}
-		public Module(String name, long a){
-			modulename = new String(name);
-			ctable = new Hashtable<String, Class>();
-			addr = a;
-		}
-		/**
-		 * Tells the module to publish a class in the core.
-		 * @param cname The name of the class to be published.
-		 * @param sync The pass flags for the new class
-		 * @return The new GridlabD.Class object on success, null on failure.
-		 */
-		public GridlabD.Class AddClass(String cname, int sync){
-			if(!ctable.containsKey(cname)){
-				GridlabD.Class c = GridlabD.Class.Build(cname, addr, sync);
-				ctable.put(new String(cname), c);
-				GridlabD.verbose("Module "+modulename+" registered "+c.GetName()+" and got a pointer to 0x"+Long.toHexString(c.GetAddr()));
-				return c;
-			}
-			GridlabD.error("We were unable to register class \""+cname+"\"");
-			return null;
-		}
-	}
-	/* complex GridlabD statics ~ singleton behavior */
-	private static Hashtable<String, GridlabD.Module> moduletable;
+	// public static class Module{
+		// private String modulename; /** Name of this module, as we will look for it in the core. */
+		// private long addr; /** Address of the MODULE allocated in the core. */
+		// private Hashtable<String, Class> ctable; /** Dictionary of the classes registered by this module. */
+		// /**
+		 // * Returns the core memory address of the first class that we registered.
+		 // * @return A pointer to the first CLASS registered for this module in the core.
+		 // */
+		// public long GetFirstClassAddr(){
+			Enumeration<Class> ec = ctable;
+			// if(ctable.isEmpty())
+				// return 0;
+			// return ctable.elements().nextElement().GetAddr();
+		// }
+		// public Module(String name, long a){
+			// modulename = new String(name);
+			// ctable = new Hashtable<String, Class>();
+			// addr = a;
+		// }
+		// /**
+		 // * Tells the module to publish a class in the core.
+		 // * @param cname The name of the class to be published.
+		 // * @param sync The pass flags for the new class
+		 // * @return The new GridlabD.Class object on success, null on failure.
+		 // */
+		// public GridlabD.Class AddClass(String cname, int sync){
+			// if(!ctable.containsKey(cname)){
+				// GridlabD.Class c = GridlabD.Class.Build(cname, addr, sync);
+				// ctable.put(new String(cname), c);
+				// GridlabD.verbose("Module "+modulename+" registered "+c.GetName()+" and got a pointer to 0x"+Long.toHexString(c.GetAddr()));
+				// return c;
+			// }
+			// GridlabD.error("We were unable to register class \""+cname+"\"");
+			// return null;
+		// }
+	// }
+	// /* complex GridlabD statics ~ singleton behavior */
+	// private static Hashtable<String, GridlabD.Module> moduletable;
 	private static Hashtable<String, GModule> gmoduletable;
 	/* Initialization block */
 	static
