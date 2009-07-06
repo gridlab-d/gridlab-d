@@ -142,11 +142,11 @@ public:
 	double house_content_thermal_mass; ///< house thermal mass (BTU/F)
 
 	double *pTout;
-	double vTout;
 	double *pRhout;
 	double *pSolar;
 
 	double Tair;
+	double Tout;
 	double Tsolar;
 	double Tmaterials;
 

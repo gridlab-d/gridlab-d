@@ -197,6 +197,7 @@ house_e::house_e(MODULE *mod)
 			PT_double,"cooling_COP",PADDR(cooling_COP),
 			PT_double,"COP_coeff",PADDR(COP_coeff),
 			PT_double,"air_temperature[degF]",PADDR(Tair),
+			PT_double,"outside_temp[degF]",PADDR(outside_temp),
 			PT_double,"mass_heat_capacity[Btu/F]",PADDR(house_content_thermal_mass),
 			PT_double,"mass_heat_coeff[Btu/F.h]",PADDR(house_content_heat_transfer_coeff),
 			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),
@@ -516,6 +517,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if (t0==0 || t1>t0)
 	{
+		outside_temp = *pTout;
 		te = sync_enduses(t0,t1);
 		update_hvac(dt1);
 		update_model(dt1);

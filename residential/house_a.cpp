@@ -159,9 +159,10 @@ house::house(MODULE *mod)
 			PT_double,"cooling_COP",PADDR(cooling_COP),
 			PT_double,"COP_coeff",PADDR(COP_coeff),
 			PT_double,"air_temperature[degF]",PADDR(Tair),
+			PT_double,"outside_temp[degF]",PADDR(Tout),
 			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),
 			PT_double,"mass_heat_coeff",PADDR(house_content_heat_transfer_coeff),
-			PT_double,"outside_temp",PADDR(outside_temp),
+			PT_double,"outside_temp_b",PADDR(outside_temp),
 			PT_enumeration,"heat_mode",PADDR(heat_mode),
 				PT_KEYWORD,"ELECTRIC",ELECTRIC,
 				PT_KEYWORD,"GASHEAT",GASHEAT,
@@ -711,6 +712,8 @@ TIMESTAMP house::sync_hvac_load(TIMESTAMP t1, double nHours)
 
 	DATETIME tv;
 	gl_localtime(t1, &tv);
+	
+	Tout = *pTout;
 
 	Tsolar = get_Tsolar(tv.hour, tv.month, Tair, *pTout);
 	solar_load = 0.0;

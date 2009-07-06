@@ -99,7 +99,8 @@ public:
 	double Tair;
 	double Tsolar;
 	double Tmaterials;
-		
+	double outside_temp;
+
 	HCMODE heat_cool_mode;			///< heating cooling mode at t1
 	HEATTYPE heat_type;				///< method of heating the water (gas or electric) [enum]
 	double hvac_rated_power;

@@ -140,7 +140,7 @@ int waterheater::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || !gl_object_isa(parent,"house"))
+	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{
 		gl_error("waterheater must have a parent house");
 		/*	TROUBLESHOOT
@@ -708,6 +708,9 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 double waterheater::get_Tambient(WHLOCATION loc)
 {
 	double ratio;
+	OBJECT *parent = OBJECTHDR(this)->parent;
+	double *pTair = gl_get_double_by_name(parent, "air_temperature");
+	double *pTout = gl_get_double_by_name(parent, "outside_temp");
 
 	switch (loc) {
 	case GARAGE: // temperature is about 1/2 way between indoor and outdoor
@@ -720,8 +723,16 @@ double waterheater::get_Tambient(WHLOCATION loc)
 	}
 
 	// return temperature of location
-	house *pHouse = OBJECTDATA(OBJECTHDR(this)->parent,house);
-	return pHouse->get_Tair()*ratio + pHouse->get_Tout()*(1-ratio);
+	//house *pHouse = OBJECTDATA(OBJECTHDR(this)->parent,house);
+	//return pHouse->get_Tair()*ratio + pHouse->get_Tout()*(1-ratio);
+	
+	if(pTair == 0){
+		GL_THROW("Unable to find \'air_temperature\' in waterheater parent %s", parent->oclass->name);
+	}
+	if(pTout == 0){
+		GL_THROW("Unable to find \'outside_temp\' in waterheater parent %s", parent->oclass->name);
+	}
+	return *pTair * ratio + *pTout *(1-ratio);
 }
 
 void waterheater::wrong_model(WRONGMODEL msg)
