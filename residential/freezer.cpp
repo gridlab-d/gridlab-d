@@ -132,7 +132,7 @@ int freezer::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || !gl_object_isa(parent,"house"))
+	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{
 		gl_error("freezer must have a parent house");
 		/*	TROUBLESHOOT
@@ -148,11 +148,12 @@ int freezer::init(OBJECT *parent)
 	pVoltage = (pHouse->attach(OBJECTHDR(this),20,false))->pV;
 
 	/* derived values */
-	Tair = pHouse->Tair;
+	Tair = gl_random_uniform(10.0, Tset);
 
 	// size is used to couple Cw and Qrated
-	Cf = 8.43 * size/10; // BTU equivalent gallons of water for only 10% of the size of the refigerator
-	rated_capacity = BTUPHPW * size*10; // BTU/h
+	//Cf = 8.43 * size/10; // BTU equivalent gallons of water for only 10% of the size of the refigerator
+	Cf = size/10.0 * RHOWATER * CWATER;  // cf * lb/cf * BTU/lb/degF = BTU / degF
+	rated_capacity = BTUPHPW * size*10; // BTU/h ... 10W per cf?  'Typical consumption' is about 450-600W for a 15-20 cf freezer, so COP 3 power W / 1 cooling W ...
 
 	// duty cycle estimate
 	if (gl_random_uniform(0,1)<0.04)
