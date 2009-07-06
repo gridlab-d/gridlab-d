@@ -57,5 +57,5 @@ EXTRA_gridlabd_SOURCES = \
 legal.c: build.h
 
 build.h:
-	( echo "#define BUILD \"\$Revision: $(. ../utilities/build_number ..)\" >build.h
+	. ../utilities/build_number -b .. >build.h
 
