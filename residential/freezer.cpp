@@ -153,7 +153,8 @@ int freezer::init(OBJECT *parent)
 	// size is used to couple Cw and Qrated
 	//Cf = 8.43 * size/10; // BTU equivalent gallons of water for only 10% of the size of the refigerator
 	Cf = size/10.0 * RHOWATER * CWATER;  // cf * lb/cf * BTU/lb/degF = BTU / degF
-	rated_capacity = BTUPHPW * size*10; // BTU/h ... 10W per cf?  'Typical consumption' is about 450-600W for a 15-20 cf freezer, so COP 3 power W / 1 cooling W ...
+
+	rated_capacity = BTUPHPW * size*10; // BTU/h ... 10 BTU.h / cf (34W/cf, so ~700 for a full-sized freezer)
 
 	// duty cycle estimate
 	if (gl_random_uniform(0,1)<0.04)
