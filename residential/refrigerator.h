@@ -23,11 +23,13 @@ public:
 private:
 	complex *pVoltage;		// reference to the assigned panel circuit voltage
 	house *pHouse;			// reference to the parent house
+	PROPERTY *pTempProp;
 
 public:
 	double size;  ///< refrigerator volume (cf) 
 	double rated_capacity;  ///< rated capacity (Btu/h)
 	double thermostat_deadband;  ///< refrigerator thermostat hysterisys (degF)
+	double UA;
 	double UAr;		///< UA of Refrigerator compartment
 	double UAf;		///< UA of the food-air
 	double Tair;	///< Refirgerator air temperature (degF)
@@ -43,7 +45,7 @@ public:
 
 	MOTORSTATE motor_state;
 	ENDUSELOAD load;
-	TIMESTAMP last_time;
+	TIMESTAMP last_time, next_time;
 
 public:
 
