@@ -11,7 +11,7 @@
 #define _LOADSHAPE_H
 
 #include "tape.h"
-#include "schedule.h" /* needed for parse_cron() */
+#include "../tape/schedule.h" /* needed for parse_cron() */
 
 EXPORT void new_loadshape(MODULE *mod);
 
