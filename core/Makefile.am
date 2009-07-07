@@ -10,7 +10,7 @@ AM_CFLAGS = $(PTHREAD_CFLAGS)
 # Debug symbols must also be included with -g if not done elsewhere.
 AM_CXXFLAGS = $(PTHREAD_CFLAGS)
 AM_LDFLAGS = $(EXTRA_gridlabd_LDFLAGS) -ldl -lxerces-c $(PTHREAD_LIBS) $(PTHREAD_CFLAGS)
-gridlabd_SOURCES = main.c \
+gridlabd_SOURCES = build.h main.c \
 	aggregate.c aggregate.h \
 	class.c  class.h \
 	cmdarg.c cmdarg.h \
@@ -47,15 +47,17 @@ gridlabd_SOURCES = main.c \
 	threadpool.c threadpool.h \
 	timestamp.c timestamp.h \
 	unit.c unit.h \
-	version.h build.h \
+	version.h \
 	asm/cmpxchg.h asm/x86/cmpxchg.h asm/x86_64/cmpxchg.h \
 	schedule.c schedule.h \
 	loadshape.c loadshape.h
 EXTRA_gridlabd_SOURCES = \
 	cmex.c cmex.h
 
-legal.c: build.h
+legal.c: buildnum build.h
 
-build.h:
+build.h: buildnum
+
+buildnum:
 	. ../utilities/build_number -b .. >build.h
 
