@@ -279,7 +279,10 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		for (int i = 0; i < 3; i++) 
 		{
 			V2[i] = volt[i] / ((double) pConfig->PT_ratio);
-			check_voltage[i] = V2[i] - (curr[i] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[i], pConfig->ldc_X_V[i]);
+			if ((double) pConfig->CT_ratio != 0.0)
+				check_voltage[i] = V2[i] - (curr[i] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[i], pConfig->ldc_X_V[i]);
+			else 
+				check_voltage[i] = V2[i];
 		}
 	}
  	else if (pConfig->Control == pConfig->OUTPUT_VOLTAGE) {
