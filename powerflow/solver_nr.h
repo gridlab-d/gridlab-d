@@ -32,7 +32,7 @@ typedef struct {
 	double v_ratio;   ///< voltage ratio (v_from/v_to)
 } BRANCHDATA;
 
-typedef struct {
+typedef struct Y_NR{
 	int row_ind;  ///< row location of the element in 6n*6n Y matrix in NR solver
 	int	col_ind;  ///< collumn location of the element in 6n*6n Y matrix in NR solver
     double Y_value; ///< value of the element in 6n*6n Y matrix in NR solver
