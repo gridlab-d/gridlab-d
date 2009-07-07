@@ -681,7 +681,7 @@ for (indexer=0; indexer<size_Amatrix;indexer++)
 	}
 for (indexer=0; indexer<bus_count*6;indexer++)
 	{
-		fprintf(pFile,"DeltaI_NR %d = %4.5f \n",deltaI_NR[indexer]); /////////////////////printf to be delete
+		fprintf(pFile,"DeltaI_NR %d = %4.5f \n",indexer, deltaI_NR[indexer]); /////////////////////printf to be delete
 	}
 
 //////////////////////////////////////
