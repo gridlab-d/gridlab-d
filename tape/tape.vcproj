@@ -575,10 +575,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\load_shape.h"
-				>
-			</File>
-			<File
 				RelativePath=".\loadshape.h"
 				>
 			</File>
