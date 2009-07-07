@@ -525,10 +525,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\load_shape.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\loadshape.cpp"
 				>
 			</File>
