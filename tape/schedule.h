@@ -7,8 +7,8 @@
  @{
  **/
 
-#ifndef _SCHEDULE_H
-#define _SCHEDULE_H
+#ifndef _TAPE_SCHEDULE_H
+#define _TAPE_SCHEDULE_H
 
 //#include "residential.h"
 

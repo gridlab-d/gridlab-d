@@ -14,7 +14,7 @@
 #include <math.h>
 #include <cctype>
 
-#include "schedule.h"
+#include "../tape/schedule.h"
 
 
 /*	cron_part takes the individual schedule pattern and returns a
@@ -344,6 +344,10 @@ int test_sched_dt(int lo, int hi, int dt){
 	}
 	return 0;
 }
+double get_sched_list_value(schedule_list *sched_list, TIMESTAMP t1){
+	double res = 0.0;
+	return res;
+}
 
 TIMESTAMP schedule::presync(TIMESTAMP t0, TIMESTAMP t1){
 	/* get localtime & run rules */
@@ -356,7 +360,7 @@ TIMESTAMP schedule::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 	//	skip if t0 < next_ts ... we should know when this needs to change
 
-	gl_localtime(t0 > 0 ? t0 : t1, &dt);
+	gl_localtime(t1, &dt);
 
 	currval = default_value;
 
