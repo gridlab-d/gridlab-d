@@ -892,4 +892,25 @@ inline void gl_find_add(struct s_findlist *list, OBJECT *obj) { callback->find.a
 inline void gl_find_del(struct s_findlist *list, OBJECT *obj) { callback->find.del(list,obj);};
 inline void gl_find_clear(struct s_findlist *list) { callback->find.clear(list);};
 
+inline SCHEDULE *gl_schedule_create(char *name, char *definition)
+{
+	return callback->schedule.create(name,definition);
+}
+
+inline int gl_schedule_index(SCHEDULE *sch, TIMESTAMP ts)
+{
+	return callback->schedule.index(sch,ts);
+}
+
+inline double gl_schedule_value(SCHEDULE *sch, int index)
+{
+	return callback->schedule.value(sch,index);
+}
+
+inline long gl_schedule_dtnext(SCHEDULE *sch, int index)
+{
+	return callback->schedule.dtnext(sch,index);
+}
+
+
 /**@}**/

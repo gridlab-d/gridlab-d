@@ -15,6 +15,7 @@
 #include "globals.h"
 #include "random.h"
 #include "threadpool.h"
+#include "schedule.h"
 
 /* this must match property_type list in object.c */
 typedef unsigned int OBJECTRANK; /**< Object rank number */
@@ -187,6 +188,12 @@ typedef struct s_callbacks {
 	OBJECT *(*get_object)(char *name);
 	int (*get_oflags)(KEYWORD **extflags);
 	unsigned int (*object_count)(void);
+	struct {
+		SCHEDULE *(*create)(char *name, char *definition);
+		int (*index)(SCHEDULE *sch, TIMESTAMP ts);
+		double (*value)(SCHEDULE *sch, int index);
+		long (*dtnext)(SCHEDULE *sch, int index);
+	} schedule;
 } CALLBACKS; /**< core callback function table */
 
 #ifdef __cplusplus

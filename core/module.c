@@ -60,6 +60,7 @@
 #ifndef MINGW
 #include "lock.h"
 #endif
+#include "schedule.h"
 
 #include "matlab.h"
 
@@ -174,6 +175,7 @@ static CALLBACKS callbacks = {
 	object_find_name,
 	object_get_oflags,
 	object_get_count,
+	{schedule_create, schedule_index, schedule_value, schedule_dtnext},
 };
 
 MODULE *first_module = NULL;

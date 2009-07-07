@@ -88,14 +88,24 @@ STATUS legal_notice(void)
 	}
 	if (find_file(copyright,NULL,FF_EXIST)==NULL)
 	{
-		if (buildinfo)
+		int build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
+		if (build>0)
 		{
-			int build = atoi(strstr(BUILD,":")+1);
 			output_message("GridLAB-D Version %d.%02d.%03d (" BRANCH ")\n" COPYRIGHT
 				"", global_version_major, global_version_minor,build);
 		}
 		else
-			output_message("GridLAB-D Version %d.%02d.??? (" BRANCH ")\n" COPYRIGHT
+			output_message("GridLAB-D Version %d.%02d." 
+#ifdef WIN32
+#ifdef _DEBUG
+			"WIN32-DEBUG" 
+#else
+			"WIN32-RELEASE"
+#endif
+#else
+			"DEV"
+#endif
+			" (" BRANCH ")\n" COPYRIGHT
 				"", global_version_major, global_version_minor);
 	}
 	return SUCCESS; /* conditions of use have been met */
