@@ -389,16 +389,43 @@ int node::init(OBJECT *parent)
 	//Pre-zero non existant phases
 	if (has_phase(PHASE_S))	//Single phase
 	{
-		if (voltage[0] == 0)
+		if (has_phase(PHASE_A))
 		{
-			voltage[0].SetPolar(nominal_voltage,0.0);
+			if (voltage[0] == 0)
+			{
+				voltage[0].SetPolar(nominal_voltage,0.0);
+			}
+			if (voltage[1] == 0)
+			{
+				voltage[1].SetPolar(nominal_voltage,0.0);
+			}
 		}
-		if (voltage[1] == 0)
+		else if (has_phase(PHASE_B))
 		{
-			voltage[1].SetPolar(nominal_voltage,0.0);
+			if (voltage[0] == 0)
+			{
+				voltage[0].SetPolar(nominal_voltage,-PI*2/3);
+			}
+			if (voltage[1] == 0)
+			{
+				voltage[1].SetPolar(nominal_voltage,-PI*2/3);
+			}
 		}
-		voltage[2] = 0.0;	//Ground always assumed it seems
+		else if (has_phase(PHASE_C))
+		{
+			if (voltage[0] == 0)
+			{
+				voltage[0].SetPolar(nominal_voltage,PI*2/3);
+			}
+			if (voltage[1] == 0)
+			{
+				voltage[1].SetPolar(nominal_voltage,PI*2/3);
+			}
+		}
+		else
+			throw("Please specify which phase (A,B,or C) the triplex node is attached to.");
 
+		voltage[2] = 0.0;	//Ground always assumed it seems
 	}
 	else if ((has_phase(PHASE_A|PHASE_B|PHASE_C)) || (has_phase(PHASE_D)))	//three phase or delta
 	{
