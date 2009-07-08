@@ -791,8 +791,7 @@ int unit_test(void)
 		{1, "H",		1,"Ohm*s"},
 	};
 	int n, failed = 0, succeeded = 0;
-	output_verbose("performing units tests");
-	output_test("BEGIN: units tests");
+	output_test("\nBEGIN: units tests");
 	for (n = 0; n < sizeof(test)/sizeof(test[0]); n++){
 		double v = test[n].from.value;
 		if (test[n].precision == 0)
@@ -825,7 +824,7 @@ int unit_test(void)
 		}
 	}
 	output_test("END: %d units tested", n);
-	output_debug("units tested: %d ok, %d failed (see '%s' for details).", succeeded, failed, global_testoutputfile);
+	output_verbose("units tested: %d ok, %d failed (see '%s' for details).", succeeded, failed, global_testoutputfile);
 	return failed;
 }
 

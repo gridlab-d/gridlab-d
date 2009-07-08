@@ -783,7 +783,6 @@ int timestamp_test(void)
 	TIMESTAMP *event[]={dststart,dstend};
 	int failed=0, succeeded=0;
 
-	output_verbose("performing daylight saving time tests");
 	output_test("BEGIN: daylight saving time event test for TZ=%s...", current_tzname);
 	convert_from_timestamp(step,steptxt,sizeof(steptxt));
 	for (year=0; year<NYEARS; year++)
@@ -849,7 +848,7 @@ int timestamp_test(void)
 	}
 	output_test("END: round robin test",steptxt);
 	output_test("END: daylight saving time tests for %d to %d", YEAR0, YEAR0+NYEARS);
-	output_debug("daylight saving time tests: %d succeeded, %d failed (see '%s' for details)", succeeded, failed, global_testoutputfile);
+	output_verbose("daylight saving time tests: %d succeeded, %d failed (see '%s' for details)", succeeded, failed, global_testoutputfile);
 	return failed;
 }
 

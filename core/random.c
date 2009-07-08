@@ -659,19 +659,22 @@ static double stdev(double sample[], unsigned int count)
 static void sort(double sample[], unsigned int count)
 {
 }
-static void report(char *parameter, double actual, double expected)
+static int report(char *parameter, double actual, double expected, double error)
 {
 	if (parameter==NULL)
 	{
 		output_test("   Parameter       Actual    Expected    Error");
 		output_test("---------------- ---------- ---------- ----------");
+		return 0;
 	}
 	else
 	{
+		int iserror = fabs(actual-expected)>error ? 1 : 0;
 		if (expected==0)
-			output_test("%-16.16s %10.4f %10.4f %9.6f ", parameter,actual,expected,actual-expected);
+			output_test("%-16.16s %10.4f %10.4f %9.6f  %s", parameter,actual,expected,actual-expected, iserror?"ERROR":"");
 		else
-			output_test("%-16.16s %10.4f %10.4f %9.6f%%", parameter,actual,expected,(actual-expected)/expected*100);
+			output_test("%-16.16s %10.4f %10.4f %9.6f%% %s", parameter,actual,expected,(actual-expected)/expected*100, iserror?"ERROR":"");
+		return iserror;
 	}
 }
 
@@ -683,11 +686,14 @@ static void report(char *parameter, double actual, double expected)
  **/
 int random_test(void)
 {
+	int failed = 0, ok=0, errorcount=0, preverrors=0;
 	static double sample[1000000];
 	double a, b;
 	unsigned int count = sizeof(sample)/sizeof(sample[0]);
 	unsigned int i;
 	unsigned int initstate, state;
+
+	output_test("\nBEGIN: random random distributions tests");
 
 	/* Dirac distribution test */
 	a = 10*randunit()/2-5;
@@ -696,13 +702,15 @@ int random_test(void)
 	{
 		sample[i] = random_degenerate(a);
 		if (!finite(sample[i]))
-			output_test("Sample %d is not a finite number!",i--);
+			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),a);
-	report("Stdev",stdev(sample,count),0);
-	report("Min",min(sample,count),a);
-	report("Max",max(sample,count),a);
+	errorcount+=report(NULL,0,0,0);
+	errorcount+=report("Mean",mean(sample,count),a,0.001);
+	errorcount+=report("Stdev",stdev(sample,count),0,0.001);
+	errorcount+=report("Min",min(sample,count),a,0.001);
+	errorcount+=report("Max",max(sample,count),a,0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
 	/* uniform distribution test */
 	a = 10*randunit()/2;
@@ -712,13 +720,15 @@ int random_test(void)
 	{
 		sample[i] = random_uniform(a,b);
 		if (!finite(sample[i]))
-			output_test("Sample %d is not a finite number!",i--);
+			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),(a+b)/2);
-	report("Stdev",stdev(sample,count),sqrt((b-a)*(b-a)/12));
-	report("Min",min(sample,count),a);
-	report("Max",max(sample,count),b);
+	errorcount+=report(NULL,0,0,0);
+	errorcount+=report("Mean",mean(sample,count),(a+b)/2,0.001);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt((b-a)*(b-a)/12),0.001);
+	errorcount+=report("Min",min(sample,count),a,0.001);
+	errorcount+=report("Max",max(sample,count),b,0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
 	/* Bernoulli distribution test */
 	a = randunit();
@@ -727,13 +737,15 @@ int random_test(void)
 	{
 		sample[i] = random_bernoulli(a);
 		if (!finite(sample[i]))
-			output_test("Sample %d is not a finite number!",i--);
+			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),a);
-	report("Stdev",stdev(sample,count),sqrt(a*(1-a)));
-	report("Min",min(sample,count),0);
-	report("Max",max(sample,count),1);
+	errorcount+=report(NULL,0,0,0.001);
+	errorcount+=report("Mean",mean(sample,count),a,0.001);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*(1-a)),0.001);
+	errorcount+=report("Min",min(sample,count),0,0.001);
+	errorcount+=report("Max",max(sample,count),1,0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
 	/* normal distribution test */
 	a = 20*randunit()-5;
@@ -743,12 +755,14 @@ int random_test(void)
 	{
 		sample[i] = random_normal(a,b);
 		if (!finite(sample[i]))
-			output_test("Sample %d is not a finite number!",i--);
+			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),a);
-	report("Stdev",stdev(sample,count),b);
-	
+	errorcount+=report(NULL,0,0,0.001);
+	errorcount+=report("Mean",mean(sample,count),a,0.001);
+	errorcount+=report("Stdev",stdev(sample,count),b,0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
+
 	/* exponential distribution test */
 	a = 1/randunit()-1;
 	output_test("\nexponential(lambda=%g)",a);
@@ -756,12 +770,14 @@ int random_test(void)
 	{
 		sample[i] = random_exponential(a);
 		if (!finite(sample[i]))
-			output_test("Sample %d is not a finite number!",i--);
+			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),1/a);
-	report("Stdev",stdev(sample,count),1/a);
-	report("Min",min(sample,count),0);
+	errorcount+=report(NULL,0,0,0.001);
+	errorcount+=report("Mean",mean(sample,count),1/a,0.001);
+	errorcount+=report("Stdev",stdev(sample,count),1/a,0.001);
+	errorcount+=report("Min",min(sample,count),0,0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 	
 	/* lognormal distribution test */
 	a = 2*randunit()-1;
@@ -771,12 +787,14 @@ int random_test(void)
 	{
 		sample[i] = random_lognormal(a,b);
 		if (!finite(sample[i]))
-			output_test("Sample %d is not a finite number!",i--);
+			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),exp(a+b*b/2));
-	report("Stdev",stdev(sample,count),sqrt((exp(b*b)-1)*exp(2*a+b*b)));
-	report("Min",min(sample,count),0);
+	errorcount+=report(NULL,0,0,0.001);
+	errorcount+=report("Mean",mean(sample,count),exp(a+b*b/2),0.001);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt((exp(b*b)-1)*exp(2*a+b*b)),0.001);
+	errorcount+=report("Min",min(sample,count),0,0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
 	/* Pareto distribution test */
 	a = 10*randunit();
@@ -786,12 +804,14 @@ int random_test(void)
 	{
 		sample[i] = random_pareto(a,b);
 		if (!finite(sample[i]))
-			output_test("Sample %d is not a finite number!",i--);
+			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),b*a/(b-1));
-	report("Stdev",stdev(sample,count),sqrt(a*a*b/((b-1)*(b-1)*(b-2))));
-	report("Min",min(sample,count),a);
+	errorcount+=report(NULL,0,0,0.001);
+	errorcount+=report("Mean",mean(sample,count),b*a/(b-1),0.001);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*a*b/((b-1)*(b-1)*(b-2))),0.001);
+	errorcount+=report("Min",min(sample,count),a,0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
 	/* rayleigh distribution test */
 	a = 10*randunit();
@@ -801,11 +821,13 @@ int random_test(void)
 	{
 		sample[i] = random_rayleigh(a);
 		if (!finite(sample[i]))
-			output_test("Sample %d is not a finite number!",i--);
+			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),a*sqrt(3.1415926/2));
-	report("Stdev",stdev(sample,count),sqrt((4-3.1415926)/2*a*a));
+	errorcount+=report(NULL,0,0,0.001);
+	errorcount+=report("Mean",mean(sample,count),a*sqrt(3.1415926/2),0.001);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt((4-3.1415926)/2*a*a),0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
 	/* beta distribution test */
 	a = 15*randunit();
@@ -815,11 +837,13 @@ int random_test(void)
 	{
 		sample[i] = random_beta(a,b);
 		if (!finite(sample[i]))
-			output_test("Sample %d is not a finite number!",i--);
+			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),a/(a+b));
-	report("Stdev",stdev(sample,count),sqrt(a*b/((a+b)*(a+b)*(a+b+1))));
+	errorcount+=report(NULL,0,0,0.001);
+	errorcount+=report("Mean",mean(sample,count),a/(a+b),0.001);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*b/((a+b)*(a+b)*(a+b+1))),0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
 	/* gamma distribution test */
 	a = 15*randunit();
@@ -829,11 +853,13 @@ int random_test(void)
 	{
 		sample[i] = random_gamma(a,b);
 		if (!finite(sample[i]))
-			output_test("Sample %d is not a finite number!",i--);
+			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),a*b);
-	report("Stdev",stdev(sample,count),sqrt(a*b*b));
+	errorcount+=report(NULL,0,0,0.001);
+	errorcount+=report("Mean",mean(sample,count),a*b,0.001);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*b*b),0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
 	/* triangle distribution test */
 	a = -randunit()*10;
@@ -845,9 +871,11 @@ int random_test(void)
 		if (!finite(sample[i]))
 			output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),(a+b)/2);
-	report("Stdev",stdev(sample,count),sqrt((a-b)*(a-b)/24));
+	errorcount+=report(NULL,0,0,0.001);
+	errorcount+=report("Mean",mean(sample,count),(a+b)/2,0.001);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt((a-b)*(a-b)/24),0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
 	/* sampled distribution test */
 	output_test("\nSampled(count=10, sample=[0..9])");
@@ -856,14 +884,16 @@ int random_test(void)
 		double set[10]={0,1,2,3,4,5,6,7,8,9};
 		sample[i] = random_sampled(10,set);
 		if (!finite(sample[i]))
-			output_test("Sample %d is not a finite number!",i--);
+			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	report(NULL,0,0);
-	report("Mean",mean(sample,count),4.5);
-	//report("Stdev",stdev(sample,count),sqrt(9*9/12));
-	report("Stdev",stdev(sample,count),sqrt(99/12)); /* sqrt((b-a+1)^2-1 / 12)*/ /* 2.87 is more accurate and was Mathematica's answer */
-	report("Min",min(sample,count),0);
-	report("Max",max(sample,count),9);
+	errorcount+=report(NULL,0,0,0.001);
+	errorcount+=report("Mean",mean(sample,count),4.5,0.001);
+	//report("Stdev",stdev(sample,count),sqrt(9*9/12),0.001);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt(99/12),0.001); /* sqrt((b-a+1)^2-1 / 12)*/ /* 2.87 is more accurate and was Mathematica's answer */
+	errorcount+=report("Min",min(sample,count),0,0.001);
+	errorcount+=report("Max",max(sample,count),9,0.001);
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
 	/* test non-deterministic sequences */
 	output_test("\nNon-deterministic test (N=%d)",count);
@@ -873,8 +903,10 @@ int random_test(void)
 	{
 		double v = random_value(RT_NORMAL,0,1);
 		if (sample[i] == v)
-			output_test("Sample %d matched (%f==%f)", sample[i],v);
+			failed++,output_test("Sample %d matched (%f==%f)", sample[i],v);
 	}	
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
 	/* test deterministic sequences */
 	initstate = state = rand();
@@ -886,10 +918,24 @@ int random_test(void)
 	{
 		double v = pseudorandom_value(RT_NORMAL,&state,0,1);
 		if (sample[i] != v)
-			output_test("Sample %d did not match (%f!=%f)", sample[i],v);
+			failed++,output_test("Sample %d did not match (%f!=%f)", sample[i],v);
 	}	
+	if (preverrors==errorcount)	ok++; else failed++;
+	preverrors=errorcount;
 
-	return 0;
+	/* report results */
+	if (failed)
+	{
+		output_error("randtest: %d random distributions tests failed--see test.txt for more information",failed);
+		output_test("!!! %d random distributions tests failed, %d errors found",failed,errorcount);
+	}
+	else
+	{
+		output_verbose("%d random distributions tests completed with no errors--see test.txt for details",ok);
+		output_test("randtest: %d random distributions tests completed, %d errors found",ok,errorcount);
+	}
+	output_test("END: random distributions tests");
+	return failed;
 }
 
 /** @} **/

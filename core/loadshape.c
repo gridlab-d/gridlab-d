@@ -766,6 +766,7 @@ int loadshape_test(void)
 		{"quarterday-normal", NULL,										"2011/12/23 18:00:00",	"2011/12/24 00:00:00",	SN_WEIGHTED, 0.0},
 	};
 
+	output_test("\nBEGIN: loadshape tests");
 	for (p=test;p<test+sizeof(test)/sizeof(test[0]);p++)
 	{
 		TIMESTAMP t1 = convert_to_timestamp(p->t1);
@@ -814,9 +815,10 @@ int loadshape_test(void)
 	}
 	else
 	{
-		output_message("%d schedule tests completed with no errors--see test.txt for details",ok);
+		output_verbose("%d schedule tests completed with no errors--see test.txt for details",ok);
 		output_test("loadshapetest: %d schedule tests completed, %d errors found",ok,errorcount);
 	}
+	output_test("END: loadshape tests");
 	return failed;
 }
 
