@@ -30,7 +30,7 @@ typedef struct s_load {
 	complex power;		///< constant power load (kVA)
 	complex current;	///< constant current load (kVA)
 	complex admittance;	///< constant admittance load (kVA)
-	double energy;		///< energy usage (accumulated kWh)
+	complex energy;		///< energy usage (accumulated kWh)
 	double heatgain;	///< internal heat gain rate (kW)
 } ENDUSELOAD;	///< End-use load struct that must be included in end-use for circuits to read load
 

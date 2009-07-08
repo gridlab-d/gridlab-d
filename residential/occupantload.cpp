@@ -71,7 +71,7 @@ int occupantload::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || !gl_object_isa(parent,"house"))
+	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{
 		gl_error("occupantload must have a parent house");
 		/*	TROUBLESHOOT

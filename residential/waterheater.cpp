@@ -73,6 +73,7 @@ waterheater::waterheater(MODULE *module)
 			PT_complex,"constant_power[kW]",PADDR(load.power),
 			PT_complex,"constant_current[A]",PADDR(load.current),
 			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
 
 			NULL)<1) 
@@ -287,6 +288,8 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 		 */
 	}
 	return TS_NEVER;
+	if(nHours > 0.0 && t0 > 0)
+		load.energy += load.total * nHours;
 }
 
 /** Water heater synchronization determines the time to next

@@ -45,7 +45,7 @@ microwave::microwave(MODULE *module)
 			PT_complex,"constant_current[A]",PADDR(load.current),
 			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
 			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_double,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			PT_double,"heat_fraction",PADDR(heat_fraction),
 			PT_enumeration,"state",PADDR(state),
 				PT_KEYWORD,"OFF",OFF,
@@ -86,7 +86,7 @@ int microwave::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || !gl_object_isa(parent,"house"))
+	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{
 		gl_error("microwave must have a parent house");
 		/*	TROUBLESHOOT
@@ -158,10 +158,12 @@ double microwave::update_state(double dt)
 			to either "ON" or "OFF".
 		*/
 	}
-
+	/* before we update our power for the next state */
+	if (dt>0) load.energy += load.total * dt/3600.0; /* dt in seconds */
+	
 	load.power.SetPowerFactor( (state==ON?installed_power:standby_power)/1000,power_factor);
 	load.total = load.power;
-	if (dt>0) load.energy += load.total.Mag() * dt;
+	
 	load.heatgain = load.total.Mag()*(state==ON?heat_fraction:1.0);
 
 	return runtime;

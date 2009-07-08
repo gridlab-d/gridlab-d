@@ -83,7 +83,7 @@ lights::lights(MODULE *mod)
 			PT_complex,"constant_current[A]",PADDR(load.current),
 			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
 			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_double,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// default global values
@@ -128,7 +128,7 @@ int lights::init(OBJECT *parent)
 	hdr->flags |= OF_SKIPSAFE;
 
 	// lights must have a parent house
-	if (parent==NULL || !gl_object_isa(parent,"house"))
+	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{
 		gl_error("lights must have a parent house");
 		/*	TROUBLESHOOT
@@ -209,7 +209,7 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// update energy if clock is running
 	if (t0>0 && t1>t0)
-		load.energy = load.total.Mag()*gl_tohours(t1-t0);
+		load.energy = load.total*gl_tohours(t1-t0);
 
 	// update heatgain
 	load.total = load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000;

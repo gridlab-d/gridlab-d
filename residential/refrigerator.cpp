@@ -96,7 +96,7 @@ refrigerator::refrigerator(MODULE *module)
 			PT_complex,"constant_current[A]",PADDR(load.current),
 			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
 			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_double,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 
 			NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
@@ -235,7 +235,7 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// calculate power & accumulate energy
 	load.total = Qr * KWPBTUPH * COP;
-	load.energy += load.total.Re() * nHours;
+	load.energy += load.total * nHours;
 
 	// change control mode if appropriate
 	if(motor_state == S_ON){

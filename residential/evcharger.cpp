@@ -304,7 +304,7 @@ evcharger::evcharger(MODULE *module)
 			PT_complex,"constant_current[A]",PADDR(load.current),
 			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
 			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_double,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),
 
 			NULL)<1) 
@@ -351,7 +351,7 @@ int evcharger::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || !gl_object_isa(parent,"house"))
+	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 		throw "evcharger must have a parent house";
 		/*	TROUBLESHOOT
 			The evcharger object, being an enduse for the house model, must have a parent house
@@ -387,6 +387,7 @@ double evcharger::update_state(double dt /* seconds */)
 
 		int hour = now.hour;
 		int daytype = pDemand->n_daytypes>0 ? (now.weekday>0&&now.weekday<6) : 0;
+
 		demand.home = pDemand->home[daytype][DEPART][hour];
 		demand.work = pDemand->home[daytype][ARRIVE][hour];
 
@@ -539,6 +540,7 @@ double evcharger::update_state(double dt /* seconds */)
 	*/
 	load.total = load.power;
 	load.heatgain = load.total.Mag() * heat_fraction;
+	
 
 	return dt<3600&&dt>=0?dt:3600;
 }
@@ -548,7 +550,7 @@ TIMESTAMP evcharger::sync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 	// compute the total load and heat gain
 	if (t0>TS_ZERO && t1>t0)
-			load.energy += (load.total * gl_tohours(t1-t0)).Mag();
+			load.energy += (load.total * gl_tohours(t1-t0));
 	double dt = update_state(gl_toseconds(t1-t0));
 	if (dt==0)
 		gl_warning("%s (%s:%d) didn't advance the clock",obj->name?obj->name:"anonymous",obj->oclass->name,obj->id);

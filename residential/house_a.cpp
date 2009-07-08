@@ -175,6 +175,7 @@ house::house(MODULE *mod)
 			PT_complex,"power[kW]",PADDR(load.power),
 			PT_complex,"current[A]",PADDR(load.current),
 			PT_complex,"admittance[1/Ohm]",PADDR(load.admittance),
+			PT_complex,"energy[kWh]",PADDR(load.energy),
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -600,6 +601,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				tload.admittance += c->pLoad->admittance; // should this be additive? I don't buy t.a = c->pL->a ... -MH
 				tload.total += c->pLoad->total;
 				tload.heatgain += c->pLoad->heatgain;
+				tload.energy += c->pLoad->power * gl_tohours(t1-t0);
 				I[n] += current;
 				c->reclose = TS_NEVER;
 			}
@@ -657,8 +659,9 @@ Also synchronizes the voltages and current in the panel with the meter.
 TIMESTAMP house::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
-
-	TIMESTAMP sync_time = sync_hvac_load(t1, (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND);
+	double nHours = (gl_tohours(t1)- gl_tohours(t0));
+	load.energy += load.total * nHours;
+	TIMESTAMP sync_time = sync_hvac_load(t1, nHours);
 
 	// sync circuit panel
 	TIMESTAMP panel_time = sync_panel(t0,t1);

@@ -242,7 +242,7 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// calculate power & accumulate energy
 	load.total = Qr * KWPBTUPH * COP;
-	load.energy += load.total.Re() * nHours;
+	load.energy += load.total * nHours;
 
 	// change control mode if appropriate
 	if(motor_state == S_ON){

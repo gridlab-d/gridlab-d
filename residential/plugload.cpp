@@ -43,7 +43,7 @@ plugload::plugload(MODULE *module)
 			PT_complex,"constant_current[A]",PADDR(load.current),
 			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
 			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_double,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
@@ -76,7 +76,7 @@ int plugload::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || !gl_object_isa(parent,"house"))
+	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{
 		gl_error("plugload must have a parent house");
 		/*	TROUBLESHOOT
@@ -102,7 +102,7 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	// compute the total load and heat gain
 	if (t0>0 && t1>t0)
-		load.energy += load.total.Mag() * gl_tohours(t1-t0);
+		load.energy += load.total * gl_tohours(t1-t0);
 	load.total = (load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000) ;
 	load.total *= demand;
 	load.heatgain = load.total.Mag() * heat_fraction;

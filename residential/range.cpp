@@ -44,7 +44,7 @@ range::range(MODULE *module)
 			PT_complex,"constant_current[A]",PADDR(load.current),
 			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
 			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_double,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
@@ -77,7 +77,7 @@ int range::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL)
+	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{
 		gl_error("range must have a parent house");
 		/*	TROUBLESHOOT
@@ -102,7 +102,7 @@ int range::init(OBJECT *parent)
 TIMESTAMP range::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	if (t0>0 && t1>t0)
-		load.energy += load.total.Mag() * gl_tohours(t1-t0);
+		load.energy += load.total * gl_tohours(t1-t0);
 
 	load.total = complex(installed_power*demand,0,J);
 	load.admittance = load.total*(1.0/240/240);

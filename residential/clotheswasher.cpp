@@ -55,7 +55,7 @@ clotheswasher::clotheswasher(MODULE *module)
 			PT_complex,"constant_current[A]",PADDR(load.current),
 			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
 			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_double,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			PT_double,"stall_voltage[V]", PADDR(stall_voltage),
 			PT_double,"start_voltage[V]", PADDR(start_voltage),
 			PT_complex,"stall_impedance[Ohm]", PADDR(stall_impedance),
@@ -101,7 +101,7 @@ int clotheswasher::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || !gl_object_isa(parent,"house"))
+	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{
 		gl_error("clotheswasher must have a parent house");
 		/*	TROUBLESHOOT
@@ -131,7 +131,7 @@ TIMESTAMP clotheswasher::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (t0>TS_ZERO && t1>t0)
 	{
 		// compute the total energy usage in this interval
-		load.energy += load.total.Mag() * dt*3600;
+		load.energy += load.total * dt/3600.0;
 	}
 
 	// determine the delta time until the next state change

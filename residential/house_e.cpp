@@ -210,6 +210,7 @@ house_e::house_e(MODULE *mod)
 			PT_complex,"power[kVA]",PADDR(HVAC_load.power),
 			PT_complex,"current[kVA]",PADDR(HVAC_load.current),
 			PT_complex,"admittance[kVA]",PADDR(HVAC_load.admittance),
+			PT_complex,"energy[kWh]",PADDR(HVAC_load.energy),
 			PT_enumeration,"hc_mode",PADDR(heat_cool_mode),
 				PT_KEYWORD,"UNKNOWN",HC_UNKNOWN,
 				PT_KEYWORD,"HEAT",HC_HEAT,
@@ -514,6 +515,9 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	TIMESTAMP te = TS_NEVER;
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
+
+	double nHours = gl_tohours(dt1);
+	HVAC_load.energy += HVAC_load.total * nHours;
 
 	if (t0==0 || t1>t0)
 	{

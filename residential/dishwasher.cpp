@@ -44,7 +44,7 @@ dishwasher::dishwasher(MODULE *module)
 			PT_complex,"constant_current[A]",PADDR(load.current),
 			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
 			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_double,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			PT_double,"heat_fraction",PADDR(heat_fraction),
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
@@ -78,7 +78,7 @@ int dishwasher::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || !gl_object_isa(parent,"house"))
+	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{
 		gl_error("dishwasher must have a parent house");
 		/*	TROUBLESHOOT
@@ -102,7 +102,7 @@ int dishwasher::init(OBJECT *parent)
 TIMESTAMP dishwasher::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	if (t0>0 && t1>t0)
-		load.energy += load.total.Mag() * gl_tohours(t1-t0);
+		load.energy += load.total * gl_tohours(t1-t0);
 
 	load.power.SetPowerFactor(installed_power*demand/1000.0, power_factor, J);
 
