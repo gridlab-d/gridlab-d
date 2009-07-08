@@ -49,12 +49,16 @@ int schedule_matcher(char *pattern, unsigned char *table, int max)
 	int stop=0;
 	int range=0;
 	char *p;
-	for (p=pattern; *p!='\0'; p++)
+	memset(table,0,max);
+	for (p=pattern; ; p++)
 	{
 		switch (*p) {
+		case '\0':
+			go = 1;
+			break;
 		case '*':
 			/* full range and go fill */
-			start=0; stop=max; go=1;
+			start=0; stop=max-1; go=1;
 			break;
 		case ',':
 			/* go fill */
@@ -62,7 +66,8 @@ int schedule_matcher(char *pattern, unsigned char *table, int max)
 			break;
 		case '-':
 			/* partial range */
-			range = 1;
+			range = 1; 
+			stop = 0;
 			break;
 		case '0':
 		case '1':
@@ -75,7 +80,7 @@ int schedule_matcher(char *pattern, unsigned char *table, int max)
 		case '8':
 		case '9':
 			if (range)
-				stop = start*10 + (*p-'0');
+				stop = stop*10 + (*p-'0');
 			else
 				stop = start = start*10 + (*p-'0');
 			break;
@@ -87,18 +92,30 @@ int schedule_matcher(char *pattern, unsigned char *table, int max)
 		{	int i;
 
 			/* check over limit */
-			if (stop>max)
+			if (stop>=max)
 			{
 				output_warning("schedule_matcher(char *pattern='%s',...) end exceed max of %d", pattern,max);
-				stop = max;
+				stop = max-1;
 			}
 
 			/* go fill */
-			for (i=start; i<stop; i++)
-				table[i] = 1;
+			if (start>stop) /* wraparound */
+			{
+				for (i=stop; i<max; i++)
+					table[i] = 1;
+				for (i=0; i<=start; i++)
+					table[i] = 1;
+			}
+			else
+			{
+				for (i=start; i<=stop; i++)
+					table[i] = 1;
+			}
 			/* reset */
 			start = stop = range = go = 0;
 		}
+		if (*p=='\0')
+			break;
 	}
 
 	return 1;
@@ -113,14 +130,24 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 	unsigned char index=0;
 	unsigned int minute=0;
 
+	/* check block count */
+	if (sch->block>=MAXBLOCKS)
+	{
+		output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of blocks reached", sch->name);
+		/* TROUBLESHOOT
+		   The schedule definition has too many blocks to compile.  Consolidate your schedule and try again.
+		 */
+		return 0;
+	}
+
 	/* first index is always value 0 */
 	for (index=1; (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL; index++)
 	{
 		char moh[256], hod[256], dom[256], moy[256], dow[256];
-		unsigned char minute_match[60], hour_match[60], day_match[31], month_match[12], weekday_match[8];
+		unsigned char minute_match[60], hour_match[24], day_match[31], month_match[12], weekday_match[8];
 		unsigned int weekday;
 		double value=1.0; /* default value is 1.0 */
-		if (sscanf(token,"%s %s %s %s %s %f",moh,hod,dom,moy,dow,&value)<5) /* value can be missing -> defaults to 1.0 */
+		if (sscanf(token,"%s %s %s %s %s %lf",moh,hod,dom,moy,dow,&value)<5) /* value can be missing -> defaults to 1.0 */
 		{
 			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -145,7 +172,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 			 */
 			return 0;
 		}
-		if (!schedule_matcher(hod,hour_match,60))
+		if (!schedule_matcher(hod,hour_match,24))
 		{
 			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) hour syntax error in item '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -194,22 +221,34 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 				{
 					unsigned int day;
 					if (!month_match[month])
+					{
+						minute+=60*24*days[month];
 						continue;
+					}
 					for (day=0; day<days[month]; day++)
 					{
 						unsigned int hour;
 						if (!day_match[day])
+						{
+							minute+=60*24;
 							continue;
+						}
 						for (hour=0; hour<24; hour++)
 						{
+							unsigned int stop = minute+60;
 							if (!hour_match[hour])
+							{
+								minute = stop;
 								continue;
-							do {
+							}
+							while (minute<stop)
+							{
 								if (minute_match[minute%60])
 								{
 									if (sch->index[calendar][minute]>0)
 									{
-										output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) %s has a conflict at %d %d %d %d %d", sch->name, token, minute, hour, day, month, weekday);
+										char *dayofweek[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol"};
+										output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) %s has a conflict with value %g on %s %d/%d %02d:%02d", sch->name, token, sch->data[sch->index[calendar][minute]], dayofweek[weekday], month+1, day+1, hour, minute%60);
 										/* TROUBLESHOOT
 										   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 										 */
@@ -219,13 +258,14 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 										sch->index[calendar][minute] = sch->block*MAXBLOCKS + index;
 								}
 								minute++;
-							} while (minute%60>0);
+							}
 						}
 					}
 				}
 			}
 		}
 	}
+	sch->block++;
 	return 1;
 }
 
@@ -242,9 +282,11 @@ int schedule_compile(SCHEDULE *sch)
 	
 	/* check to see no blocks are defined */
 	if (strchr(p,'{')==NULL && strchr(p,'}')==NULL)
-
+	{
 		/* this is single block unnamed schedule */
-		return schedule_compile_block(sch,p);
+		strcpy(blockdef,p);
+		return schedule_compile_block(sch,blockdef);
+	}
 
 	/* isolate each block */
 	while (*p!='\0')
@@ -437,6 +479,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	{
 		/* construct the dtnext array */
 		unsigned char block;
+		int invariant = 1;
 		for (block=0; block<sch->block; block++)
 		{
 			/* number of minutes that are indexed */
@@ -458,10 +501,17 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 					/* add 1 minute to next values time */
 					sch->dtnext[block][t] = sch->dtnext[block][t+1] + 1;
 				else
+				{
 					/* start the time over at 1 minute (to next value) */
 					sch->dtnext[block][t] = 1;
+					invariant = 0;
+				}
 			}
 		}
+
+		/* special case for invariant schedule */
+		if (invariant)
+			memset(sch->dtnext,0,sizeof(sch->dtnext)); /* zero means never */
 
 		/* attach to schedule list */
 		sch->next = schedule_list;
@@ -577,11 +627,11 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 	{
 		/* record the next value and its duration */
 		sch->value = value;
-		sch->duration = dtnext;
+		sch->duration = (dtnext==0 ? (double)TS_NEVER : dtnext);
 	}
 
 	/* compute the time of the next schedule change */
-	sch->next_t = t + dtnext;
+	sch->next_t = (dtnext==0 ? TS_NEVER : t + dtnext);
 	return sch->next_t;
 }
 

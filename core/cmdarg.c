@@ -53,6 +53,7 @@
 #include "legal.h"
 #include "timestamp.h"
 #include "random.h"
+#include "loadshape.h"
 
 STATUS load_module_list(FILE *fd,int* test_mod_num)
 {
@@ -265,6 +266,8 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			random_test();
 		else if (strcmp(*argv,"--unitstest")==0)
 			unit_test();
+		else if (strcmp(*argv,"--loadshapetest")==0)
+			loadshape_test();
 		else if (strcmp(*argv,"--xmlstrict")==0)
 			global_xmlstrict = !global_xmlstrict;
 		else if (strcmp(*argv,"--globaldump")==0)

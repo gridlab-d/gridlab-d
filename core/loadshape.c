@@ -14,6 +14,8 @@
 #include "exception.h"
 #include "convert.h"
 #include "globals.h"
+#include "random.h"
+#include "schedule.h"
 
 static loadshape *loadshape_list = NULL;
 /** Create a loadshape
@@ -141,6 +143,29 @@ int loadshape_initall(void)
 	return SUCCESS;
 }
 
+void loadshape_recalc(loadshape *ls)
+{
+	switch (ls->type) {
+	case MT_ANALOG:
+		break;
+	case MT_PULSED:
+		ls->d[0] = 1/ls->params.pulsed.scalar; /* scalar determine how many pulses per period are emitted */
+		ls->d[1] = 0;
+		if (ls->s == 0) /* load is off */
+			/* recalculate time to next on */
+			ls->r = 1/random_exponential(ls->schedule->value * ls->params.pulsed.scalar);
+		break;
+	case MT_MODULATED:
+		ls->d[0] = 1/ls->params.modulated.scalar; /* scalar determine how many pulses per period are emitted */
+		ls->d[1] = 0;
+		break;
+	case MT_QUEUED:
+		break;
+	default:
+		break;
+	}
+}
+
 int loadshape_init(loadshape *ls) /**< load shape */
 {
 	/* check the schedule */
@@ -253,40 +278,110 @@ int loadshape_init(loadshape *ls) /**< load shape */
 		return 1;
 		break;
 	}
+	
+	/* randomize the initial state */
+	if (ls->q==0) ls->q = random_uniform(ls->d[0], ls->d[1]); 
+
+	/* initial power per-unit factor */
+	if (ls->dPdV==0) ls->dPdV = 1.0;
+
+	/* establish the initial parameters */
+	loadshape_recalc(ls);
+
 	return 0;
 }
 
-TIMESTAMP loadshape_sync(loadshape *m, TIMESTAMP t1)
+TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 {
-	if (t1>m->t0)
+	/* if the clock is running */
+	if (t1 > ls->t0)
 	{
-		double dt = (double)(t1-m->t0);
-		double energy, value, interval;
-		if (m->type == MT_ANALOG)
-		{
-			energy = m->params.analog.energy;
-			value = m->schedule->value;
-			interval = m->schedule->duration;
-			m->s = 0; /* always in state 0 */
-		}
-		else
-		{
-			switch (m->s) {
-			case 0:
-				// TODO
-				break;
-			case 1:
-				// TODO
-				break;
-			default:
-				break;
-			}
-			m->q += m->r[m->s]*dt;
-		}
+		double dt = (double)(t1 - ls->t0);
+		switch (ls->type) {
+		case MT_ANALOG:
+			/* update load */
+			ls->load = ls->schedule->value * ls->params.analog.energy / ls->schedule->duration * ls->dPdV;
+			break;
+		case MT_PULSED:
+			/* update s and r */
+			if (ls->q < ls->d[0])
+			{
+				/* turn load on - rate is based on duration/power given */
+				ls->s = 1;
+				if (ls->params.pulsed.pulsetype==MPT_POWER)
 
-		// TODO calculate the load
+					/* fixed power */
+					ls->load = ls->params.pulsed.pulsevalue * ls->dPdV;
+				else
+
+					/* fixed duration */
+					ls->load = ls->params.pulsed.energy / ls->params.pulsed.pulsevalue * ls->dPdV;
+
+				/* read is based on load */
+				ls->r = -1/ls->load;
+
+			}
+			else if (ls->q > ls->d[1])
+			{
+				/* turn load off - rate is based of exponential distribution based on schedule value */
+				ls->s = 0;
+				ls->r = 1/random_exponential(ls->schedule->value * ls->params.pulsed.scalar);
+			}
+			/* else state remains unchanged */
+
+			/* udpate q */ 
+			ls->q += ls->r * dt;
+
+			/* update load */
+			break;
+		case MT_MODULATED:
+			/* update s and r */
+			if (ls->q < ls->d[0])
+			{
+				ls->s = 1;
+				ls->r = 1/(double)(ls->schedule->next_t-t1)/60;
+			}
+			else if (ls->q > ls->d[1])
+			{
+				ls->s = 0;
+				ls->r = -1/(double)(ls->schedule->next_t-t1)/60;
+			}
+			/* else state remains unchanged */
+
+			/* udpate q */ 
+			ls->q += ls->r * dt;
+
+			/* update load */
+			#define duration (ls->params.modulated.energy / ls->params.modulated.pulsevalue / ls->schedule->value)
+			if (ls->params.modulated.pulsetype==MPT_POWER)
+				ls->load = ls->s * ls->params.modulated.energy / ls->params.modulated.pulsevalue / duration * ls->dPdV; 
+			else /* MPT_TIME */
+				ls->load = ls->s * ls->params.modulated.energy / duration / ls->params.modulated.scalar * ls->dPdV;
+			break;
+		case MT_QUEUED:
+			/* update s and r */
+			if (ls->q < ls->d[0])
+			{
+				ls->s = 1;
+				ls->r = 1/(double)(ls->schedule->next_t-t1)/60;
+			}
+			else if (ls->q > ls->d[1])
+			{
+				ls->s = 0;
+				ls->r = -1/(double)(ls->schedule->next_t-t1)/60;
+			}
+			/* else state remains unchanged */
+
+			/* udpate q */ 
+			ls->q += ls->r * dt;
+
+			/* update load */
+			break;
+		default:
+			break;
+		}
 	}
-	return TS_NEVER;
+	return ls->t2;
 }
 
 TIMESTAMP loadshape_syncall(TIMESTAMP t1)
@@ -641,4 +736,62 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 	/* everything converted ok */
 	return 1;
 } 
+
+int loadshape_test(void)
+{
+	int failed = 0;
+	int errorcount = 0;
+	char ts[64];
+	struct s_test {
+		char *name, *def;
+		char *t1, *t2;
+		double value;
+	} *p, test[] = {
+		{"empty",			"", 										"2000/01/01 00:00:00", "NEVER",					0},
+		{"halfday-binary",	"* 12-23 * * *",							"2000/01/01 01:00:00", "2000/01/01 12:00:00",	0},
+		{"halfday-binary",	"* 12-23 * * *",							"2000/01/01 13:00:00", "2000/01/02 00:00:00",	1},
+		{"halfday-modal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2000/01/01 01:00:00", "2000/01/01 12:00:00",	0.25},
+		{"halfday-modal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2000/01/01 13:00:00", "2000/01/02 00:00:00",	0.75},
+	};
+
+	for (p=test;p<test+sizeof(test)/sizeof(test[0]);p++)
+	{
+		int errors=0;
+		SCHEDULE *s = schedule_create(p->name, p->def);
+		TIMESTAMP t1 = convert_to_timestamp(p->t1);
+		TIMESTAMP t2 = s?schedule_sync(s,t1):TS_NEVER;
+		output_test("Schedule %s { %s } sync to %s...", p->name, p->def, convert_from_timestamp(t1,ts,sizeof(ts))?ts:"???");
+		if (s==NULL)
+		{
+			output_test(" ! schedule %s { %s } create failed", p->name, p->def);
+			errors++;
+		}
+		else
+		{
+			if (s->value!=p->value)
+			{
+				output_test(" ! expected value %g but found %g", s->name, 0, s->value);
+				errors++;
+			}
+			if (t2!=convert_to_timestamp(p->t2))
+			{
+				output_test(" ! expected next time %s but found %s", p->t2, convert_from_timestamp(t2,ts,sizeof(ts))?ts:"???");
+				errors++;
+			}
+		}
+		if (errors==0)
+			output_test("   test passed");
+		else
+			failed++;
+		errorcount+=errors;
+	}
+
+	if (failed)
+	{
+		output_error("%d schedule tests failed--see test.txt for more information",failed);
+		output_test("!!! %d schedule tests failed, %d errors found",failed,errorcount);
+	}
+
+	return failed;
+}
 

@@ -57,15 +57,17 @@ struct s_loadshape {
 	} params;	/**< the machine parameters (depends on #type) */
 
 	/* internal machine parameters */
-	double r[2];		/**< the state rates */
+	double r;			/**< the state rate */
 	double re[2];		/**< the state rate stdevs (not used yet) */ 
 	double d[2];		/**< the state transition thresholds */
 	double de[2];		/**< the state transition threshold stdevs (not used yet) */
+	double dPdV;		/**< the voltage sensitivity of the load */
 
 	/* state variables */
 	double q;			/**< the internal state of the machine */
 	unsigned int s;		/**< the current state of the machine (0 or 1) */
-	TIMESTAMP t0;		/**< time of last update (in seconds since epoch) */
+	TIMESTAMP t0;	/**< time of last update (in seconds since epoch) */
+	TIMESTAMP t2;	/**< time of next update (in seconds since epoch) */
 
 	loadshape *next;	/* next loadshape in list */
 };
@@ -75,6 +77,8 @@ int loadshape_init(loadshape *m);
 int loadshape_initall(void);
 TIMESTAMP loadshape_sync(loadshape *m, TIMESTAMP t1);
 TIMESTAMP loadshape_syncall(TIMESTAMP t1);
+
+int loadshape_test(void);
 
 int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop); /**< convert from a loadshape to a string */
 int convert_to_loadshape(char *string, void *data, PROPERTY *prop); /**< convert from a string to a loadshape */
