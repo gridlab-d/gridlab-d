@@ -141,14 +141,24 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 		return 0;
 	}
 
-	/* first index is always value 0 */
+	/* first index is always default value 0 */
 	for (index=1; (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL; index++)
 	{
-		char moh[256], hod[256], dom[256], moy[256], dow[256];
-		unsigned char minute_match[60], hour_match[24], day_match[31], month_match[12], weekday_match[8];
+		struct {
+			char *name;
+			int max;
+			char pattern[256];
+			char table[60];
+		} matcher[] = {
+			{"minute",60},
+			{"hour",24},
+			{"day",31},
+			{"month",12},
+			{"weekday",8},
+		}, *match;
 		unsigned int weekday;
 		double value=1.0; /* default value is 1.0 */
-		if (sscanf(token,"%s %s %s %s %s %lf",moh,hod,dom,moy,dow,&value)<5) /* value can be missing -> defaults to 1.0 */
+		if (sscanf(token,"%s %s %s %s %s %lf",matcher[0].pattern,matcher[1].pattern,matcher[2].pattern,matcher[3].pattern,matcher[4].pattern,&value)<5) /* value can be missing -> defaults to 1.0 */
 		{
 			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -164,53 +174,25 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 			sch->count[sch->block]++;
 		}
 
-		/* get match tables */
-		if (!schedule_matcher(moh,minute_match,60))
+		/* compile matching tables */
+		for (match=matcher; match<matcher+sizeof(matcher)/sizeof(matcher[0]); match++)
 		{
-			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) minute syntax error in item '%s'", sch->name, token);
-			/* TROUBLESHOOT
-			   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
-			 */
-			return 0;
-		}
-		if (!schedule_matcher(hod,hour_match,24))
-		{
-			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) hour syntax error in item '%s'", sch->name, token);
-			/* TROUBLESHOOT
-			   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
-			 */
-			return 0;
-		}
-		if (!schedule_matcher(dom,day_match,31))
-		{
-			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) day syntax error in item '%s'", sch->name, token);
-			/* TROUBLESHOOT
-			   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
-			 */
-			return 0;
-		}
-		if (!schedule_matcher(moy,month_match,12))
-		{
-			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) month syntax error in item '%s'", sch->name, token);
-			/* TROUBLESHOOT
-			   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
-			 */
-			return 0;
-		}
-		if (!schedule_matcher(dow,weekday_match,8))
-		{
-			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) weekday syntax error in item '%s'", sch->name, token);
-			/* TROUBLESHOOT
-			   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
-			 */
-			return 0;
+			/* get match tables */
+			if (!schedule_matcher(match->pattern,match->table,match->max))
+			{
+				output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) %s pattern syntax error in item '%s'", sch->name, match->name, token);
+				/* TROUBLESHOOT
+					The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
+				*/
+				return 0;
+			}
 		}
 
 		/* load schedule */
 		for (weekday=0; weekday<7; weekday++)
 		{
 			unsigned int is_leapyear;
-			if (!weekday_match[weekday])
+			if (!matcher[4].table[weekday])
 				continue;
 			for (is_leapyear=0; is_leapyear<2; is_leapyear++)
 			{
@@ -221,7 +203,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 				for (month=0; month<12; month++)
 				{
 					unsigned int day;
-					if (!month_match[month])
+					if (!matcher[3].table[month])
 					{
 						minute+=60*24*days[month];
 						continue;
@@ -229,7 +211,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 					for (day=0; day<days[month]; day++)
 					{
 						unsigned int hour;
-						if (!day_match[day])
+						if (!matcher[2].table[day])
 						{
 							minute+=60*24;
 							continue;
@@ -237,14 +219,14 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 						for (hour=0; hour<24; hour++)
 						{
 							unsigned int stop = minute+60;
-							if (!hour_match[hour])
+							if (!matcher[1].table[hour])
 							{
 								minute = stop;
 								continue;
 							}
 							while (minute<stop)
 							{
-								if (minute_match[minute%60])
+								if (matcher[0].table[minute%60])
 								{
 									if (sch->index[calendar][minute]>0)
 									{
@@ -256,7 +238,14 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 										return 0;
 									}
 									else
-										sch->index[calendar][minute] = sch->block*MAXBLOCKS + index;
+									{
+										/* associate this time with the current value */
+										unsigned int ndx = sch->block*MAXBLOCKS + index;
+										sch->index[calendar][minute] = ndx;
+										sch->weight[ndx]++;
+										sch->minutes[sch->block]++;
+
+									}
 								}
 								minute++;
 							}
@@ -479,6 +468,8 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	memset(sch->sum,0,sizeof(sch->sum));
 	memset(sch->abs,0,sizeof(sch->abs));
 	memset(sch->count,0,sizeof(sch->count));
+	memset(sch->weight,0,sizeof(sch->weight));
+	memset(sch->minutes,0,sizeof(sch->minutes));
 	sch->next_t = TS_NEVER;
 	sch->value = 0.0;
 	sch->flags = 0;
@@ -542,29 +533,62 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	@return number of block that could be normalized, 0 if none, -1 if already normalized
  **/
 int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
-					   int use_abs)		/**< true if normalization should use absolute values */
+					   int flags)		/**< schedule normalization flag (see #SN_WEIGHTED and #SN_ABSOLUTE) */
 {
 	unsigned int b,i;
 	int count=0;
 
 	/* check if already normalized */
-	if (sch->flags&SF_NORMALIZED)
+	if (sch->flags&flags)
 		return -1;
 
 	/* normalized */
 	for (b=0; b<MAXBLOCKS; b++)
 	{
-		double scale = (use_abs?sch->abs[b]:sch->sum[b]);
-		if (scale!=0)
+		/* ignore empty blocks */
+		if (sch->count[b]==0)
+			continue;
+
+		/* weighted normalization */
+		if (flags&SN_WEIGHTED)
+		{	
+			double scale[MAXVALUES];
+			unsigned int i;
+			int nonzero = 0;
+			memset(scale,0,sizeof(scale));
+			for (i=1; i<=sch->count[b]; i++)
+			{
+				if (sch->weight[i]!=0)
+				{
+					nonzero = 1;
+					scale[i] += sch->data[b*MAXBLOCKS+i] * sch->weight[i] / sch->minutes[b];
+				}
+			}
+			if (nonzero)
+			{
+				for (i=1; i<=sch->count[b]; i++)
+					sch->data[b*MAXBLOCKS+i]*=scale[i];
+			}
+		}
+
+		/* unweighted normalization */
+		else
 		{
-			count++;
-			for (i=0; i<MAXVALUES; i++)
-				sch->data[b*MAXBLOCKS+i]/=scale;
+			double scale = (flags&SN_ABSOLUTE?sch->abs[b]:sch->sum[b]);
+
+			/* if the coefficient is non-zero */
+			if (scale!=0)
+			{
+				/* normalize the values */
+				count++;
+				for (i=1; i<=sch->count[b]; i++)
+					sch->data[b*MAXBLOCKS+i]/=scale;
+			}
 		}
 	}
 
 	/* mark as normalized */
-	sch->flags |= SF_NORMALIZED;
+	sch->flags |= flags;
 
 	return count;
 }

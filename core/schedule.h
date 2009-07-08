@@ -30,8 +30,6 @@
 #define MAXBLOCKS 4
 #define MAXVALUES 64
 
-#define SF_NORMALIZED 0x0001 /**< the schedule is normalized */
-
 typedef union {
 	struct {
 		unsigned int calendar:4;
@@ -50,9 +48,11 @@ struct s_schedule {
 	unsigned char index[14][8784*60];	/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */
 	unsigned long dtnext[14][8784*60];	/**< the time until the next schedule change (in minutes) */
 	double data[MAXBLOCKS*MAXVALUES];	/**< the list of values used in each block */
+	unsigned int weight[MAXBLOCKS*MAXVALUES];	/**< the weight (in minutes) associate with each value */
 	double sum[MAXBLOCKS];				/**< the sum of values for each block -- used to normalize */
 	double abs[MAXBLOCKS];				/**< the sum of the absolute values for each block -- used to normalize */
 	unsigned int count[MAXBLOCKS];		/**< the number of values given in each block */
+	unsigned int minutes[MAXBLOCKS];	/**< the total number of minutes associate with each block */
 	TIMESTAMP next_t;					/**< the time of the next schedule event */
 	double value;						/**< the current scheduled value */
 	double duration;					/**< the duration of the current scheduled value */
@@ -60,9 +60,12 @@ struct s_schedule {
 	SCHEDULE *next;	/* next schedule in list */
 };
 
+#define SN_ABSOLUTE 0x0001	/**< schedule normalization flag - use absolute values */
+#define SN_WEIGHTED 0x0002	/**< schedule normalization flag - use weighted values */
+
 SCHEDULE *schedule_find_byname(char *name);
 SCHEDULE *schedule_create(char *name, char *definition);
-int schedule_normalize(SCHEDULE *sch, int use_abs);
+int schedule_normalize(SCHEDULE *sch, int flags);
 SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts);
 double schedule_value(SCHEDULE *sch, SCHEDULEINDEX index);
 long schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
