@@ -12,8 +12,14 @@ double *deltaI_NR;
 double *deltaV_NR;
 double *deltaP;
 double *deltaQ;
+double *totalPload; 
+double *totalQload;
 double zero = 0;
-int Iteration = 0;
+double Maxmismatch;
+int Iteration ;
+int MaxIteration = 100;
+int size_offdiag_PQ;
+int size_diag_fixed;
 double eps = 1.0e-4;
 bool newiter;
 Bus_admit *BA_diag; /// BA_diag store the diagonal elements of the bus admittance matrix, the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
@@ -175,8 +181,9 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 #endif
 pFile = fopen ("myfile.txt","w"); ////////////////////////to be delete
 
-
-int indexer,jindex, kindex, jindexer, tempa, tempb;
+for (Iteration=1; Iteration < MaxIteration; Iteration++)
+{
+	int indexer,jindex, kindex, jindexer, tempa, tempb;
 //System load at each bus is represented by second order polynomial equations
 double tempPbus; //tempPbus store the temporary value of active power load at each bus
 double tempQbus; //tempQbus store the temporary value of reactive power load at each bus
@@ -188,14 +195,36 @@ double tempQbus; //tempQbus store the temporary value of reactive power load at 
 				tempPbus += (*bus[indexer].I[jindex]).Re() * (*bus[indexer].V[jindex]).Mag();	// Real power portion of Constant current component multiply the magnitude of bus voltage
 				tempPbus += (*bus[indexer].Y[jindex]).Re() * (*bus[indexer].V[jindex]).Mag() * (*bus[indexer].V[jindex]).Mag();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
 				bus[indexer].PL[jindex] = tempPbus;	//Real power portion
-				fprintf(pFile,"load: bus %d , phase %d , Value: %4.5f \n",indexer ,jindex ,bus[indexer].PL[jindex]); /////////////////////printf to be delete
+				//fprintf(pFile,"load: bus %d , phase %d , Value: %4.5f \n",indexer ,jindex ,bus[indexer].PL[jindex]); /////////////////////printf to be delete
 				tempQbus = (*bus[indexer].S[jindex]).Im();									// Reactive power portion of constant power portion
 				tempQbus += (*bus[indexer].I[jindex]).Im() * (*bus[indexer].V[jindex]).Mag();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
 				tempQbus += (*bus[indexer].Y[jindex]).Im() * (*bus[indexer].V[jindex]).Mag() * (*bus[indexer].V[jindex]).Mag();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage				
 				bus[indexer].QL[jindex] = tempQbus;	//Reactive power portion  
-				fprintf(pFile,"load: bus %d , phase %d , Value: %4.5f \n",indexer ,jindex ,bus[indexer].QL[jindex]); /////////////////////printf to be delete
+				//fprintf(pFile,"load: bus %d , phase %d , Value: %4.5f \n",indexer ,jindex ,bus[indexer].QL[jindex]); /////////////////////printf to be delete
 			}
 	}
+//Calculate the total load in the system
+if (totalPload==NULL)
+	{
+		totalPload = (double *)gl_malloc((3) *sizeof(double));   // three phase loadP Value
+	}
+if (totalQload==NULL)
+	{
+		totalQload = (double *)gl_malloc((3) *sizeof(double));   // three phase loadP Value
+	}
+
+for (jindex=0; jindex<3; jindex++)
+	{	
+		tempPbus = 0;
+		tempQbus = 0;
+		for (indexer=0; indexer<bus_count; indexer++)
+			{
+				tempPbus += (bus[indexer].PL[jindex]); // The amount of Pload is accumulated for phase(jindex)
+				tempQbus += (bus[indexer].QL[jindex]); // The amount of Qload is accumulated for phase(jindex)
+		}
+	totalPload[jindex] = tempPbus;
+	totalQload[jindex] = tempQbus;
+}
 
 // Calculate the mismatch of three phase current injection at each bus (deltaI), 
 //and store the deltaI in terms of real and reactive value in array deltaI_NR    
@@ -211,13 +240,23 @@ double tempQbus; //tempQbus store the temporary value of reactive power load at 
 
 	complex tempPb;
 	complex tempPc;
-	for (indexer=0; indexer<bus_count; indexer++)
+	complex tempGswing;
+	for (indexer=0; indexer<bus_count; indexer++) //for specific bus k
 	{
-		for (jindex=0; jindex<3; jindex++)
+			for (jindex=0; jindex<3; jindex++) // for specific phase s
 			{
-					tempPc = complex(zero,zero); // tempPc store the temporary calculated value of current injection at bus k equation(1)  
-					tempPbus = - bus[indexer].PL[jindex];	// @@@ PG and QG is assumed to be zero here @@@
-					tempQbus = - bus[indexer].QL[jindex];	
+				tempPc = complex(zero,zero);  // tempPc store the temporary calculated value of current injection at bus k equation(1) 
+					if (indexer == 0)
+					{ 
+						tempGswing.Re() = totalPload[jindex] ; // specify the PG for the swing bus0
+						tempGswing.Im() = totalQload[jindex] ; // specify the QG for the swing bus0
+					}
+					else
+					{
+						tempGswing.Re() = tempGswing.Im() = 0;
+					}
+					tempPbus = tempGswing.Re() - bus[indexer].PL[jindex];	// @@@ PG and QG is assumed to be zero here @@@
+					tempQbus = tempGswing.Im() - bus[indexer].QL[jindex];	
 					for (jindexer=0; jindexer<branch_count; jindexer++)
 					{
 							if (branch[jindexer].from == indexer) 
@@ -228,12 +267,12 @@ double tempQbus; //tempQbus store the temporary value of reactive power load at 
 							if  (branch[jindexer].to == indexer)
                                 for (kindex=0; kindex<3; kindex++)
 						            {
-										tempPc += (-(*branch[jindexer].Y[jindex][kindex])) * (*bus[branch[jindexer].from].V[kindex]);// the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+										tempPc += (-(*branch[jindexer].Y[jindex][kindex])) * (*bus[branch[jindexer].from].V[kindex]);// the off_diag elements of bus admittance matrix are equal to negative value of branch admittance.
 								     }
 							else {}
 					}				
 					Icalc[indexer *3 + jindex] = tempPc; // calculated current injection  				
-					fprintf(pFile,"Icalc: %4.5f + %4.5f i \n", tempPc.Re(), tempPc.Im()); // to be deleted;
+					//fprintf(pFile,"Icalc: %4.5f + %4.5f i \n", tempPc.Re(), tempPc.Im()); // to be deleted;
 					tempPb =  (~complex(tempPbus, tempQbus))/(~(*bus[indexer].V[jindex])) - tempPc; //tempPb store the temporary value of deltaI at each bus
                    	deltaI_NR[indexer*6+3 + jindex] = tempPb.Re(); // Real part of deltaI, left hand side of equation (11)
 					deltaI_NR[indexer*6 + jindex] = tempPb.Im(); // Imaginary part of deltaI, left hand side of equation (11)
@@ -264,16 +303,30 @@ double tempQbus; //tempQbus store the temporary value of reactive power load at 
 	}
 // Convergence test. Check the active and reactive power mismatche deltaP and deltaQ, to see if they are in the tolerance.
 newiter = false;
-for (indexer=0; indexer<bus_count*3; indexer++)
+Maxmismatch = 0;
+for (indexer=3; indexer<bus_count*3-1; indexer++) // do not check the swing bus
 	{
-	if ( deltaP[indexer] > eps || deltaQ[indexer] > eps)
-		newiter = true;
-		Iteration = Iteration +1;
-	break;
+		if ( Maxmismatch < deltaP[indexer])
+		{	
+			Maxmismatch = deltaP[indexer];	
+		}	
+		else if (Maxmismatch < deltaQ[indexer])
+		{
+			Maxmismatch = deltaP[indexer];	
+		}
+		else {}
 	}
-
-
-
+if ( Maxmismatch <= eps)
+		{
+			printf("Power flow calculation converges at Iteration %d",Iteration);
+		}
+else if ( Maxmismatch > eps)
+newiter = true;
+if ( newiter == false )
+break;
+  
+if (Iteration == 1)
+{
  //*Build the Y_NR matrix, the off-diagonal elements are identical to the corresponding elements of bus admittance matrix.
  //The off-diagonal elements of Y_NR marix are not updated at each iteration.*/
     if (BA_diag == NULL)
@@ -460,13 +513,7 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 					}
 			}
 	}
-
-
-// Define deltaV_NR, which is the solution of equation (11)
-	if (deltaV_NR==NULL)
-	{
-		deltaV_NR = (double *)gl_malloc((6*bus_count) *sizeof(double));   // right_hand side of equation (11)
-	}
+}
 
 // Calculate the elements of a,b,c,d in equations(14),(15),(16),(17). These elements are used to update the Jacobian matrix.	
 	for (indexer=0; indexer<bus_count; indexer++)
@@ -586,7 +633,7 @@ for (indexer=0; indexer<size_Amatrix; indexer++)
 {
 	rows[indexer] = Y_Amatrix[indexer].row_ind ; // row pointers of non zero values
     a[indexer] = Y_Amatrix[indexer].Y_value;
-	fprintf(pFile,"row: %d , a: %4.5f \n", rows[indexer], a[indexer]); // to be deleted;
+	//fprintf(pFile,"row: %d , a: %4.5f \n", rows[indexer], a[indexer]); // to be deleted;
 }
 cols[0] = 0;
 indexer = 0;
@@ -600,17 +647,17 @@ for ( jindex = 0; jindex< (size_Amatrix-1); jindex++)
 	{
 		kindex += 1;
 		cols[kindex] = indexer;
-		fprintf(pFile,"col: %d \n", cols[kindex]); // to be deleted;
+		//fprintf(pFile,"col: %d \n", cols[kindex]); // to be deleted;
 
 	}
 }
 cols[n] = nnz ;// number of non-zeros;
-fprintf(pFile,"col: %d \n", cols[n]); // to be deleted;
+//fprintf(pFile,"col: %d \n", cols[n]); // to be deleted;
 
 for (int jindex=0;jindex<m;jindex++)
 { 
 	rhs[jindex] = deltaI_NR[jindex];
-	fprintf(pFile,"rhs: %4.5f \n", rhs[jindex]); // to be deleted;
+	//fprintf(pFile,"rhs: %4.5f \n", rhs[jindex]); // to be deleted;
 }
 
 
@@ -637,6 +684,21 @@ for (jindex=0; jindex<6*bus_count; jindex++)
 { 
 	fprintf(pFile," deltaV_NR %d  = %4.5f \n",jindex, sol[jindex]);
 }
+//////Update the bus voltage with the AX=B solution.
+kindex = 0;
+for (indexer=0; indexer<bus_count; indexer++)
+		{
+			for (jindex=0; jindex<3; jindex++)
+				{
+					((*bus[indexer].V[jindex]).Re()) = ((*bus[indexer].V[jindex]).Re()) + sol [kindex];
+					kindex +=1;
+				}
+			for (jindex=0; jindex<3; jindex++)
+				{
+					((*bus[indexer].V[jindex]).Im()) = ((*bus[indexer].V[jindex]).Im()) +sol [kindex];
+					kindex +=1;
+				}
+		}	
 
 /* De-allocate storage. */
 gl_free(rhs);              // The Gridlab-d failed to execute free(rhs)!!!!!  
@@ -651,39 +713,56 @@ Destroy_SuperMatrix_Store( &A );
 Destroy_SuperMatrix_Store(&B);
 StatFree ( &stat );
 
-fprintf(pFile," All the elementes of 6n*6n Y matrix \n");
-for (indexer=0; indexer<size_Amatrix;indexer++)
-	{
-		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_Amatrix[indexer].row_ind ,Y_Amatrix[indexer].col_ind,Y_Amatrix[indexer].Y_value); /////////////////////printf to be delete
-	}
-fprintf(pFile," All the elementes of 6n*6n Y matrix \n");
-
-//////////////////////////////////////test printing
-fprintf(pFile,"off diagnal elementes of 6n*6n Y matrix \n");
-for (indexer=0; indexer<size_offdiag_PQ*4;indexer++)
-	{
-		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_offdiag_PQ[indexer].row_ind ,Y_offdiag_PQ[indexer].col_ind,Y_offdiag_PQ[indexer].Y_value); /////////////////////printf to be delete
-	}
-fprintf(pFile,"fixed diagnal elementes of 6n*6n Y matrix \n");
-for (indexer=0; indexer<size_diag_fixed*2;indexer++)
-	{
-		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_diag_fixed[indexer].row_ind ,Y_diag_fixed[indexer].col_ind,Y_diag_fixed[indexer].Y_value); /////////////////////printf to be delete
-	}
-fprintf(pFile,"updated diagnal elementes of 6n*6n Y matrix \n");
-for (indexer=0; indexer<size_diag_update*12;indexer++)
-	{
-		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_diag_update[indexer].row_ind ,Y_diag_update[indexer].col_ind,Y_diag_update[indexer].Y_value); /////////////////////printf to be delete
-	}
-fprintf(pFile,"sorted all the elementes of 6n*6n Y matrix \n");
-for (indexer=0; indexer<size_Amatrix;indexer++)
-	{
-		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_Amatrix[indexer].row_ind ,Y_Amatrix[indexer].col_ind,Y_Amatrix[indexer].Y_value); /////////////////////printf to be delete
-	}
+//fprintf(pFile," All the elementes of 6n*6n Y matrix \n");
+//for (indexer=0; indexer<size_Amatrix;indexer++)
+//	{
+//		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_Amatrix[indexer].row_ind ,Y_Amatrix[indexer].col_ind,Y_Amatrix[indexer].Y_value); /////////////////////printf to be delete
+//	}
+//fprintf(pFile," All the elementes of 6n*6n Y matrix \n");
+//
+////////////////////////////////////////test printing
+//fprintf(pFile,"off diagnal elementes of 6n*6n Y matrix \n");
+//for (indexer=0; indexer<size_offdiag_PQ*4;indexer++)
+//	{
+//		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_offdiag_PQ[indexer].row_ind ,Y_offdiag_PQ[indexer].col_ind,Y_offdiag_PQ[indexer].Y_value); /////////////////////printf to be delete
+//	}
+//fprintf(pFile,"fixed diagnal elementes of 6n*6n Y matrix \n");
+//for (indexer=0; indexer<size_diag_fixed*2;indexer++)
+//	{
+//		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_diag_fixed[indexer].row_ind ,Y_diag_fixed[indexer].col_ind,Y_diag_fixed[indexer].Y_value); /////////////////////printf to be delete
+//	}
+//fprintf(pFile,"updated diagnal elementes of 6n*6n Y matrix \n");
+//for (indexer=0; indexer<size_diag_update*12;indexer++)
+//	{
+//		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_diag_update[indexer].row_ind ,Y_diag_update[indexer].col_ind,Y_diag_update[indexer].Y_value); /////////////////////printf to be delete
+//	}
+//fprintf(pFile,"sorted all the elementes of 6n*6n Y matrix \n");
+//for (indexer=0; indexer<size_Amatrix;indexer++)
+//	{
+//		fprintf(pFile,"row %d , column %d , Value: %4.5f \n",Y_Amatrix[indexer].row_ind ,Y_Amatrix[indexer].col_ind,Y_Amatrix[indexer].Y_value); /////////////////////printf to be delete
+//	}
 for (indexer=0; indexer<bus_count*6;indexer++)
 	{
 		fprintf(pFile,"DeltaI_NR %d = %4.5f \n",indexer, deltaI_NR[indexer]); /////////////////////printf to be delete
 	}
-
+//for (jindexer=0; jindexer<branch_count; jindexer++)
+//	{  
+//		for (jindex=0; jindex<3; jindex++)
+//		{
+//			for (kindex=0; kindex<3; kindex++)
+//			{
+//				fprintf(pFile,"Branch admittance phase %d%d = %4.5f + %4.5f i \n",jindex,kindex,-(*branch[jindexer].Y[jindex][kindex]).Re(),-(*branch[jindexer].Y[jindex][kindex]).Im());
+//			}
+//		}
+//	}
+//for (jindexer=0; jindexer<bus_count; jindexer++)
+//	{
+//		for (jindex=0; jindex<3; jindex++)
+//		{
+//			fprintf(pFile,"bus %d voltage phase %d = %4.5f + %4.5f i \n",jindexer,jindex,(*bus[jindexer].V[jindex]).Re(),(*bus[jindexer].V[jindex]).Im());
+//		}
+//	}
+}
 //////////////////////////////////////
 fclose (pFile); //////////////////////////////////////// to be delete
 
