@@ -32,6 +32,14 @@
 
 #define SF_NORMALIZED 0x0001 /**< the schedule is normalized */
 
+typedef union {
+	struct {
+		unsigned int calendar:4;
+		unsigned int minute:20;
+	};
+	unsigned int index;
+} SCHEDULEINDEX;
+
 /** The SCHEDULE structure defines POSIX style schedules */
 typedef struct s_schedule SCHEDULE;
 struct s_schedule {
@@ -55,9 +63,9 @@ struct s_schedule {
 SCHEDULE *schedule_find_byname(char *name);
 SCHEDULE *schedule_create(char *name, char *definition);
 int schedule_normalize(SCHEDULE *sch, int use_abs);
-int schedule_index(SCHEDULE *sch, TIMESTAMP ts);
-double schedule_value(SCHEDULE *sch, int index);
-long schedule_dtnext(SCHEDULE *sch, int index);
+SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts);
+double schedule_value(SCHEDULE *sch, SCHEDULEINDEX index);
+long schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
 TIMESTAMP schedule_sync(SCHEDULE *sch, TIMESTAMP t);
 TIMESTAMP schedule_syncall(TIMESTAMP t);
 

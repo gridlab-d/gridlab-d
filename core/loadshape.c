@@ -740,18 +740,25 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 int loadshape_test(void)
 {
 	int failed = 0;
+	int ok = 0;
 	int errorcount = 0;
 	char ts[64];
+
+	/* first do schedule tests */
 	struct s_test {
 		char *name, *def;
 		char *t1, *t2;
 		double value;
 	} *p, test[] = {
-		{"empty",			"", 										"2000/01/01 00:00:00", "NEVER",					0},
-		{"halfday-binary",	"* 12-23 * * *",							"2000/01/01 01:00:00", "2000/01/01 12:00:00",	0},
-		{"halfday-binary",	"* 12-23 * * *",							"2000/01/01 13:00:00", "2000/01/02 00:00:00",	1},
-		{"halfday-modal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2000/01/01 01:00:00", "2000/01/01 12:00:00",	0.25},
-		{"halfday-modal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2000/01/01 13:00:00", "2000/01/02 00:00:00",	0.75},
+		/* schedule name	schedule definition							sync time				next time expected		value expected */
+		{"empty",			"", 										"2000/01/01 00:00:00",	"NEVER",				0},
+		{"halfday-binary",	"* 12-23 * * *",							"2000/01/01 01:30:00",	"2000/01/01 12:00:00",	0},
+		{"halfday-binary",	"* 12-23 * * *",							"2000/01/01 13:45:00",	"2000/01/02 00:00:00",	1},
+		{"halfday-bimodal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2000/01/01 01:15:00",	"2000/01/01 12:00:00",	0.25},
+		{"halfday-bimodal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2000/01/01 00:00:00",	"2000/01/01 12:00:00",	0.25},
+		{"halfday-bimodal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2000/01/01 13:20:00",	"2000/01/02 00:00:00",	0.75},
+		{"halfday-bimodal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2000/01/01 12:00:00",	"2000/01/02 00:00:00",	0.75},
+		{"halfday-bimodal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2000/01/02 00:00:00",	"2000/01/02 12:00:00",	0.25},
 	};
 
 	for (p=test;p<test+sizeof(test)/sizeof(test[0]);p++)
@@ -780,7 +787,10 @@ int loadshape_test(void)
 			}
 		}
 		if (errors==0)
+		{
 			output_test("   test passed");
+			ok++;
+		}
 		else
 			failed++;
 		errorcount+=errors;
@@ -788,10 +798,14 @@ int loadshape_test(void)
 
 	if (failed)
 	{
-		output_error("%d schedule tests failed--see test.txt for more information",failed);
+		output_error("loadshapetest: %d schedule tests failed--see test.txt for more information",failed);
 		output_test("!!! %d schedule tests failed, %d errors found",failed,errorcount);
 	}
-
+	else
+	{
+		output_message("%d schedule tests completed with 0 errors--see test.txt for more information",ok);
+		output_test("loadshapetest: %d schedule tests completed, %d errors found",ok,errorcount);
+	}
 	return failed;
 }
 

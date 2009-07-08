@@ -865,17 +865,17 @@ inline SCHEDULE *gl_schedule_create(char *name, char *definition)
 	return callback->schedule.create(name,definition);
 }
 
-inline int gl_schedule_index(SCHEDULE *sch, TIMESTAMP ts)
+inline SCHEDULEINDEX gl_schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 {
 	return callback->schedule.index(sch,ts);
 }
 
-inline double gl_schedule_value(SCHEDULE *sch, int index)
+inline double gl_schedule_value(SCHEDULE *sch, SCHEDULEINDEX index)
 {
 	return callback->schedule.value(sch,index);
 }
 
-inline long gl_schedule_dtnext(SCHEDULE *sch, int index)
+inline long gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
 {
 	return callback->schedule.dtnext(sch,index);
 }

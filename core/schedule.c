@@ -15,6 +15,7 @@
 #include "platform.h"
 #include "output.h"
 #include "schedule.h"
+#include "exception.h"
 
 #ifndef QNAN
 #define QNAN sqrt(-1)
@@ -478,32 +479,32 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	if (schedule_compile(sch))
 	{
 		/* construct the dtnext array */
-		unsigned char block;
+		unsigned char calendar;
 		int invariant = 1;
-		for (block=0; block<sch->block; block++)
+		for (calendar=0; calendar<14; calendar++)
 		{
 			/* number of minutes that are indexed */
-			int t = sizeof(sch->dtnext[block])/sizeof(sch->dtnext[block][0])-1;
+			int t = sizeof(sch->dtnext[calendar])/sizeof(sch->dtnext[calendar][0])-1;
 
 			/* assume that loopback results in a value change in 1 minute */
-			sch->dtnext[block][t] = 1; 
+			sch->dtnext[calendar][t] = 1; 
 
 			/* scan backwards through time */
 			for (t--; t>=0; t--)
 			{
 				/* get this and the next index to values */
-				int index0 = sch->index[block][t];
-				int index1 = sch->index[block][t+1];
+				int index0 = sch->index[calendar][t];
+				int index1 = sch->index[calendar][t+1];
 
 				/* if the values are the same */
 				if (sch->data[index0]==sch->data[index1])
 
 					/* add 1 minute to next values time */
-					sch->dtnext[block][t] = sch->dtnext[block][t+1] + 1;
+					sch->dtnext[calendar][t] = sch->dtnext[calendar][t+1] + 1;
 				else
 				{
 					/* start the time over at 1 minute (to next value) */
-					sch->dtnext[block][t] = 1;
+					sch->dtnext[calendar][t] = 1;
 					invariant = 0;
 				}
 			}
@@ -561,49 +562,47 @@ int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
 /** get the index value for the given timestamp 
     @return negative on error, 0 or positive on success
  **/
-int schedule_index(SCHEDULE *sch, TIMESTAMP ts)
+SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 {
-	int calendar = 0;
-	int minute = 0;
+	SCHEDULEINDEX ref = {0};
 	DATETIME dt;
 	
 	/* determine the local time */
 	if (!local_datetime(ts,&dt))
 	{
-		output_error("schedule_read(SCHEDULE *schedule={name='%s',...}, TIMESTAMP ts=%"FMT_INT64"d) unable to determine local time", sch->name, ts);
+		throw_exception("schedule_read(SCHEDULE *schedule={name='%s',...}, TIMESTAMP ts=%"FMT_INT64"d) unable to determine local time", sch->name, ts);
 		/* TROUBLESHOOT
 			The schedule could not be read because the local time could not be determined.  
 			Fix the problem causing the local time system failure and try again.
 		 */
-		return -1;
 	}
 
 	/* determine which calendar is used based on the weekday of Jan 1 and LY status */
-	calendar = dt.weekday + ISLEAPYEAR(dt.year);
+	ref.calendar = dt.weekday + ISLEAPYEAR(dt.year);
 
 	/* compute the minute of year */
-	minute = (dt.yearday*24 + dt.hour)*60 + dt.minute;
+	ref.minute = (dt.yearday*24 + dt.hour)*60 + dt.minute;
 
 	/* got it */
-	return sch->index[calendar][minute];
+	return ref;
 }
 
 /** reads the value on the schedule
     @return current value on schedule
  **/
 double schedule_value(SCHEDULE *sch, /**< the schedule to read */
-					  int index)	/**< the index of the value to read (see schedule_index) */
+					  SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
-	return index<0||index>255?QNAN:sch->data[index];
+	return sch->data[sch->index[index.calendar][index.minute]];
 }
 
 /** reads the time until the next change in the schedule 
 	@return time until next value change (in minutes)
  **/
 long schedule_dtnext(SCHEDULE *sch, /**< the schedule to read */
-					  int index)	/**< the index of the value to read (see schedule_index) */
+					  SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
-	return index<0||index>255?-1:sch->dtnext[index/MAXBLOCKS][index%MAXBLOCKS];
+	return sch->dtnext[index.calendar][index.minute];
 }
 
 /** synchronize the schedule to the time given
@@ -613,7 +612,7 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 						TIMESTAMP t)	/**< the time to which the schedule is to be synchronized */
 {
 	static TIMESTAMP last_t = 0;
-	static int index = 0;
+	static SCHEDULEINDEX index = {0};
 	double value;
 	long dtnext;
 	

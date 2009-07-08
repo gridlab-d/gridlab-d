@@ -190,9 +190,9 @@ typedef struct s_callbacks {
 	unsigned int (*object_count)(void);
 	struct {
 		SCHEDULE *(*create)(char *name, char *definition);
-		int (*index)(SCHEDULE *sch, TIMESTAMP ts);
-		double (*value)(SCHEDULE *sch, int index);
-		long (*dtnext)(SCHEDULE *sch, int index);
+		SCHEDULEINDEX (*index)(SCHEDULE *sch, TIMESTAMP ts);
+		double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
+		long (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
 	} schedule;
 } CALLBACKS; /**< core callback function table */
 

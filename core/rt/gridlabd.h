@@ -337,6 +337,14 @@ inline double gl_hours(TIMESTAMP t) { return (double)t/(double)(TS_TPS*60*60);}
 inline double gl_days(TIMESTAMP t) { return (double)t/(double)(TS_TPS*60*60*24);}
 inline double gl_weeks(TIMESTAMP t) { return (double)t/(double)(TS_TPS*60*60*24*7);}
 
+typedef union {
+	struct {
+		unsigned int calendar:4;
+		unsigned int minute:20;
+	};
+	unsigned int index;
+} SCHEDULEINDEX;
+
 typedef char char1024[1025]; /**< strings up to 1024 characters */
 typedef char char256[257]; /**< strings up to 256 characters */
 typedef char char32[33]; /**< strings up to 32 characters */
@@ -735,6 +743,12 @@ typedef struct s_callbacks {
 	OBJECT *(*get_object)(char *name);
 	int (*get_oflags)(KEYWORD **extflags);
 	unsigned int (*object_count)(void);
+	struct {
+		SCHEDULE *(*create)(char *name, char *definition);
+		SCHEDULEINDEX (*index)(SCHEDULE *sch, TIMESTAMP ts);
+		double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
+		long (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
+	} schedule;
 } CALLBACKS; /**< core callback function table */
 
 extern CALLBACKS *callback; 
@@ -897,17 +911,17 @@ inline SCHEDULE *gl_schedule_create(char *name, char *definition)
 	return callback->schedule.create(name,definition);
 }
 
-inline int gl_schedule_index(SCHEDULE *sch, TIMESTAMP ts)
+inline SCHEDULEINDEX gl_schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 {
 	return callback->schedule.index(sch,ts);
 }
 
-inline double gl_schedule_value(SCHEDULE *sch, int index)
+inline double gl_schedule_value(SCHEDULE *sch, SCHEDULEINDEX index)
 {
 	return callback->schedule.value(sch,index);
 }
 
-inline long gl_schedule_dtnext(SCHEDULE *sch, int index)
+inline long gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
 {
 	return callback->schedule.dtnext(sch,index);
 }
