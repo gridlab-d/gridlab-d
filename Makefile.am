@@ -88,7 +88,10 @@ run-all: all ./run run/gridlabd$(EXEEXT) run/libclimate$(LIBEXT) \
 run-support: run-all run/dryer.txt run/test1.txt \
 	run/ieee14bus.cdf run/ieee300bus.cdf run/pnnl2bus.cdf
 
-test: run-all
+test: 
+	gridlabd --dsttest --randtest --unitstest --loadshapetest
+
+test-internal: run-all
 	(cd run && GLPATH=../core LD_LIBRARY_PATH=$(PWD)/run \
 		./gridlabd --test $(test))
 
