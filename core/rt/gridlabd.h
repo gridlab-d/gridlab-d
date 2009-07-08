@@ -425,6 +425,10 @@ typedef struct s_module_list MODULE;
 typedef struct s_class_list CLASS;
 typedef struct s_property_map PROPERTY;
 typedef struct s_function_map FUNCTION;
+typedef struct s_schedule SCHEDULE;
+
+#define MAXBLOCKS 4
+#define MAXVALUES 64
 
 /* pass configuration */
 typedef unsigned char PASSCONFIG; /**< the pass configuration */
