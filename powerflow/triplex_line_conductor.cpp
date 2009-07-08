@@ -28,7 +28,7 @@ triplex_line_conductor::triplex_line_conductor(MODULE *mod) : powerflow_library(
             GL_THROW("unable to register triplex_line_conductor class implemented by %s",__FILE__);
         
         if(gl_publish_variable(oclass,
-			PT_double, "resistance[Ohm]",PADDR(resistance),
+			PT_double, "resistance[Ohm/mile]",PADDR(resistance),
 			PT_double, "geometric_mean_radius[in]", PADDR(geometric_mean_radius),
 			NULL) < 1) GL_THROW("unable to publish triplex_line_conductor properties in %s",__FILE__);
 	}   
