@@ -33,8 +33,8 @@ triplex_line_configuration::triplex_line_configuration(MODULE *mod) : line_confi
 			PT_object, "conductor_1",PADDR(phaseA_conductor),
 			PT_object, "conductor_2",PADDR(phaseB_conductor),
 			PT_object, "conductor_N",PADDR(phaseC_conductor),
-			PT_double, "insulation_thickness[ft]", PADDR(ins_thickness),
-			PT_double, "diameter[ft]",PADDR(diameter),
+			PT_double, "insulation_thickness[in]", PADDR(ins_thickness),
+			PT_double, "diameter[in]",PADDR(diameter),
 			PT_object, "spacing",PADDR(line_spacing),
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
