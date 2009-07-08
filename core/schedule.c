@@ -407,7 +407,8 @@ int schedule_compile(SCHEDULE *sch)
 }
 
 /** Create a schedule. 
-	If the schedule has already been define, the existing structure is returned, otherwise a new one is created. 
+	If the schedule has already been defined, the existing structure is returned, otherwise a new one is created. 
+	If the definition is not provided, then the named schedule is searched and NULL is returned if it is not found.
 	
 	Example:
 	<code>schedule_create("weekdays 8am-5pm 100%, weekends 9-noon 50%","* 8-17 * * 1-5; * 9-12 * * 0,6 0.5");</code>
@@ -415,13 +416,13 @@ int schedule_compile(SCHEDULE *sch)
 	@return a pointer to the new schedule, NULL if failed
  **/
 SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
-						  char *definition)	/**< the definition of the schedule (using crontab format with semicolon delimiters) */
+						  char *definition)	/**< the definition of the schedule (using crontab format with semicolon delimiters), NULL is only a search */
 {
 	/* find the schedule is already defined (by name) */
 	SCHEDULE *sch = schedule_find_byname(name);
 	if (sch!=NULL) 
 	{
-		if (strcmp(sch->definition,definition)!=0)
+		if (definition!=NULL && strcmp(sch->definition,definition)!=0)
 		{
 			output_error("schedule_create(char *name='%s', char *definition='%s') definition does not match previous definition of schedule '%s')", name, definition, name);
 			/* TROUBLESHOOT
@@ -430,6 +431,12 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 			 */
 		}
 		return sch;
+	}
+
+	/* create without a definition is simply a search */
+	else if (definition==NULL)
+	{
+		return NULL;
 	}
 
 	/* create the schedule */
@@ -474,6 +481,9 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	memset(sch->count,0,sizeof(sch->count));
 	sch->next_t = TS_NEVER;
 	sch->value = 0.0;
+	sch->flags = 0;
+	sch->duration = 0.0;
+	sch->next = NULL;
 
 	/* compile the schedule */
 	if (schedule_compile(sch))
