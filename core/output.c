@@ -259,7 +259,10 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 	static char lastfmt[1024] = "";
 	static int count=0;
 	if (strcmp(lastfmt,format)==0)
+	{
 		count++;
+		return 0;
+	}
 	else
 	{
 		va_list ptr;
@@ -293,7 +296,10 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 	static char lastfmt[1024] = "";
 	static int count=0;
 	if (strcmp(lastfmt,format)==0)
+	{
 		count++;
+		return 0;
+	}
 	else
 	{
 		va_list ptr;
@@ -368,7 +374,10 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 		static char lastfmt[1024] = "";
 		static int count=0;
 		if (strcmp(lastfmt,format)==0)
+		{
 			count++;
+			return 0;
+		}
 		else
 		{
 			va_list ptr;
@@ -406,7 +415,10 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 		static char lastfmt[1024] = "";
 		static int count=0;
 		if (strcmp(lastfmt,format)==0)
+		{
 			count++;
+			return 0;
+		}
 		else
 		{
 			va_list ptr;
@@ -445,7 +457,10 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 		static char lastfmt[1024] = "";
 		static int count=0;
 		if (strcmp(lastfmt,format)==0)
+		{
 			count++;
+			return 0;
+		}
 		else
 		{
 			va_list ptr;
@@ -453,7 +468,7 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 			strcpy(lastfmt,format);
 			if (count>0)
 			{
-				len = sprintf(buffer,"   ... last message was repeated %d times\n",count);
+				len = sprintf(buffer,"last message was repeated %d times\n",count);
 				count = 0;
 			}
 			va_start(ptr,format);
@@ -481,7 +496,10 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 		static char lastfmt[1024] = "";
 		static int count=0;
 		if (strcmp(lastfmt,format)==0)
+		{
 			count++;
+			return 0;
+		}
 		else
 		{
 			va_list ptr;
