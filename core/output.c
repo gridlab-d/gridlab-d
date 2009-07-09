@@ -35,7 +35,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <process.h>
 #include "output.h"
 #include "globals.h"
 #include "exception.h"
