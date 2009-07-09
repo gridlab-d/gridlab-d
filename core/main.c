@@ -63,7 +63,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	atexit(pause_at_exit);
 #endif
 	/* main initialization */
-	if (!exec_init())
+	if (!output_init(argc,argv) || !exec_init())
 		exit(6);
 
 	/* process command line arguments */

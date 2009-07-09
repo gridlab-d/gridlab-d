@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <process.h>
 #include "output.h"
 #include "globals.h"
 #include "exception.h"
@@ -165,6 +166,23 @@ static void prep_stream(){
 	return;
 }
 
+int output_init(int argc,char *argv[])
+{
+	atexit(output_cleanup);
+	return 1;
+}
+
+void output_cleanup(void)
+{
+	/* NULL purges buffers */
+	output_verbose(NULL);
+	output_warning(NULL);
+	output_error(NULL);
+	output_fatal(NULL);
+	output_message(NULL);
+	output_debug(NULL);
+}
+
 static int default_printstd(char *format,...)
 {
 	int count;
@@ -258,7 +276,7 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 	/* check for repeated message */
 	static char lastfmt[1024] = "";
 	static int count=0;
-	if (strcmp(lastfmt,format)==0)
+	if (format!=NULL && strcmp(lastfmt,format)==0)
 	{
 		count++;
 		return 0;
@@ -267,12 +285,14 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 	{
 		va_list ptr;
 		int len=0;
-		strcpy(lastfmt,format);
+		strcpy(lastfmt,format?format:"");
 		if (count>0)
 		{
 			len = sprintf(buffer,"FATAL [%s] : last message was repeated %d times\n",time_context, count);
 			count = 0;
 		}
+		else if (format==NULL)
+			return 0;
 		va_start(ptr,format);
 		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 		va_end(ptr);
@@ -295,7 +315,7 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 	/* check for repeated message */
 	static char lastfmt[1024] = "";
 	static int count=0;
-	if (strcmp(lastfmt,format)==0)
+	if (format!=NULL && strcmp(lastfmt,format)==0)
 	{
 		count++;
 		return 0;
@@ -304,12 +324,14 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 	{
 		va_list ptr;
 		int len=0;
-		strcpy(lastfmt,format);
+		strcpy(lastfmt,format?format:"");
 		if (count>0)
 		{
 			len = sprintf(buffer,"ERROR [%s] : last message was repeated %d times\n",time_context, count);
 			count = 0;
 		}
+		else if (format==NULL)
+			return 0;
 		va_start(ptr,format);
 		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 		va_end(ptr);
@@ -373,7 +395,7 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 		/* check for repeated message */
 		static char lastfmt[1024] = "";
 		static int count=0;
-		if (strcmp(lastfmt,format)==0)
+		if (format!=NULL && strcmp(lastfmt,format)==0)
 		{
 			count++;
 			return 0;
@@ -382,12 +404,14 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 		{
 			va_list ptr;
 			int len=0;
-			strcpy(lastfmt,format);
+			strcpy(lastfmt,format?format:"");
 			if (count>0)
 			{
 				len = sprintf(buffer,"WARNING [%s] : last message was repeated %d times\n",time_context, count);
 				count = 0;
 			}
+			else if (format==NULL)
+				return 0;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 			va_end(ptr);
@@ -414,7 +438,7 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 		/* check for repeated message */
 		static char lastfmt[1024] = "";
 		static int count=0;
-		if (strcmp(lastfmt,format)==0)
+		if (format!=NULL && strcmp(lastfmt,format)==0)
 		{
 			count++;
 			return 0;
@@ -423,12 +447,14 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 		{
 			va_list ptr;
 			int len=0;
-			strcpy(lastfmt,format);
+			strcpy(lastfmt,format?format:"");
 			if (count>0)
 			{
 				len = sprintf(buffer,"DEBUG [%s] : last message was repeated %d times\n",time_context, count);
 				count = 0;
 			}
+			else if (format==NULL)
+				return 0;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 			va_end(ptr);
@@ -456,7 +482,7 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 		/* check for repeated message */
 		static char lastfmt[1024] = "";
 		static int count=0;
-		if (strcmp(lastfmt,format)==0)
+		if (format!=NULL && strcmp(lastfmt,format)==0)
 		{
 			count++;
 			return 0;
@@ -465,12 +491,14 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 		{
 			va_list ptr;
 			int len=0;
-			strcpy(lastfmt,format);
+			strcpy(lastfmt,format?format:"");
 			if (count>0)
 			{
 				len = sprintf(buffer,"last message was repeated %d times\n",count);
 				count = 0;
 			}
+			else if (format==NULL)
+				return 0;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 			va_end(ptr);
@@ -495,7 +523,7 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 		/* check for repeated message */
 		static char lastfmt[1024] = "";
 		static int count=0;
-		if (strcmp(lastfmt,format)==0)
+		if (format!=NULL && strcmp(lastfmt,format)==0)
 		{
 			count++;
 			return 0;
@@ -504,12 +532,14 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 		{
 			va_list ptr;
 			int len=0;
-			strcpy(lastfmt,format);
+			strcpy(lastfmt,format?format:"");
 			if (count>0)
 			{
 				len = sprintf(buffer,"last message was repeated %d times\n",count);
 				count = 0;
 			}
+			else if (format==NULL)
+				return 0;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 			va_end(ptr);
