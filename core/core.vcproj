@@ -563,6 +563,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\enduse.c"
+				>
+			</File>
+			<File
 				RelativePath="..\core\environment.c"
 				>
 			</File>
@@ -710,6 +714,10 @@
 			</File>
 			<File
 				RelativePath="..\core\debug.h"
+				>
+			</File>
+			<File
+				RelativePath=".\enduse.h"
 				>
 			</File>
 			<File
@@ -861,15 +869,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1273,11 +1281,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\makefile.win"
+				RelativePath="..\makefile.win"
 				>
 			</File>
 			<File
-				RelativePath="..\makefile.win"
+				RelativePath=".\makefile.win"
 				>
 			</File>
 		</Filter>

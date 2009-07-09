@@ -54,6 +54,7 @@
 #include "timestamp.h"
 #include "random.h"
 #include "loadshape.h"
+#include "enduse.h"
 
 STATUS load_module_list(FILE *fd,int* test_mod_num)
 {

@@ -17,6 +17,7 @@ gridlabd_SOURCES = build.h main.c \
 	complex.h \
 	convert.cpp convert.h \
 	debug.c  debug.h \
+	enduse.c enduse.h \
 	environment.c environment.h \
 	exception.c exception.h \
 	exec.c exec.h \

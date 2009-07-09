@@ -62,6 +62,7 @@
 #include "local.h"
 #include "schedule.h"
 #include "loadshape.h"
+#include "enduse.h"
 
 /** The main system initialization sequence
 	@return 1 on success, 0 on failure
@@ -339,6 +340,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
 	TIMESTAMP t2 = schedule_syncall(t1);
 	TIMESTAMP t3 = loadshape_syncall(t1); if (t3<t2) t2=t3;
+	t3 = enduse_syncall(t1); if (t3<t2) t2=t3;
 	/* add other internal syncs here */
 	return t2;
 }

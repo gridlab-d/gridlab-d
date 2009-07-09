@@ -51,6 +51,7 @@
 #include "exception.h"
 #include "timestamp.h"
 #include "loadshape.h"
+#include "enduse.h"
 
 int convert_from_real(char *a, int b, void *c, PROPERTY *d){return 0;}
 int convert_to_real(char *a, void *b, PROPERTY *c){return 0;}
@@ -88,6 +89,7 @@ static struct s_property_specs { /**<	the property type conversion specification
 	{"real", sizeof(real), convert_from_real, convert_to_real},
 	{"float", sizeof(float), convert_from_float, convert_to_float},
 	{"loadshape", sizeof(loadshape), convert_from_loadshape, convert_to_loadshape},
+	{"enduse",sizeof(enduse), convert_from_enduse, convert_to_enduse},
 };
 
 /* object class list */
