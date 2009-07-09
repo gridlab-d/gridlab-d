@@ -705,10 +705,10 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0);
-	errorcount+=report("Mean",mean(sample,count),a,0.001);
-	errorcount+=report("Stdev",stdev(sample,count),0,0.001);
-	errorcount+=report("Min",min(sample,count),a,0.001);
-	errorcount+=report("Max",max(sample,count),a,0.001);
+	errorcount+=report("Mean",mean(sample,count),a,0.01);
+	errorcount+=report("Stdev",stdev(sample,count),0,0.01);
+	errorcount+=report("Min",min(sample,count),a,0.01);
+	errorcount+=report("Max",max(sample,count),a,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -723,10 +723,10 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0);
-	errorcount+=report("Mean",mean(sample,count),(a+b)/2,0.001);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt((b-a)*(b-a)/12),0.001);
-	errorcount+=report("Min",min(sample,count),a,0.001);
-	errorcount+=report("Max",max(sample,count),b,0.001);
+	errorcount+=report("Mean",mean(sample,count),(a+b)/2,0.01);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt((b-a)*(b-a)/12),0.01);
+	errorcount+=report("Min",min(sample,count),a,0.01);
+	errorcount+=report("Max",max(sample,count),b,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -739,11 +739,11 @@ int random_test(void)
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.001);
-	errorcount+=report("Mean",mean(sample,count),a,0.001);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*(1-a)),0.001);
-	errorcount+=report("Min",min(sample,count),0,0.001);
-	errorcount+=report("Max",max(sample,count),1,0.001);
+	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report("Mean",mean(sample,count),a,0.01);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*(1-a)),0.01);
+	errorcount+=report("Min",min(sample,count),0,0.01);
+	errorcount+=report("Max",max(sample,count),1,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -757,9 +757,9 @@ int random_test(void)
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.001);
-	errorcount+=report("Mean",mean(sample,count),a,0.001);
-	errorcount+=report("Stdev",stdev(sample,count),b,0.001);
+	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report("Mean",mean(sample,count),a,0.01);
+	errorcount+=report("Stdev",stdev(sample,count),b,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -772,10 +772,10 @@ int random_test(void)
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.001);
-	errorcount+=report("Mean",mean(sample,count),1/a,0.001);
-	errorcount+=report("Stdev",stdev(sample,count),1/a,0.001);
-	errorcount+=report("Min",min(sample,count),0,0.001);
+	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report("Mean",mean(sample,count),1/a,0.01);
+	errorcount+=report("Stdev",stdev(sample,count),1/a,0.01);
+	errorcount+=report("Min",min(sample,count),0,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 	
@@ -789,10 +789,10 @@ int random_test(void)
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.001);
-	errorcount+=report("Mean",mean(sample,count),exp(a+b*b/2),0.001);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt((exp(b*b)-1)*exp(2*a+b*b)),0.001);
-	errorcount+=report("Min",min(sample,count),0,0.001);
+	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report("Mean",mean(sample,count),exp(a+b*b/2),0.01);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt((exp(b*b)-1)*exp(2*a+b*b)),0.1);
+	errorcount+=report("Min",min(sample,count),0,0.1);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -806,10 +806,10 @@ int random_test(void)
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.001);
-	errorcount+=report("Mean",mean(sample,count),b*a/(b-1),0.001);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*a*b/((b-1)*(b-1)*(b-2))),0.001);
-	errorcount+=report("Min",min(sample,count),a,0.001);
+	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report("Mean",mean(sample,count),b*a/(b-1),0.01);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*a*b/((b-1)*(b-1)*(b-2))),0.25);
+	errorcount+=report("Min",min(sample,count),a,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -823,9 +823,9 @@ int random_test(void)
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.001);
-	errorcount+=report("Mean",mean(sample,count),a*sqrt(3.1415926/2),0.001);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt((4-3.1415926)/2*a*a),0.001);
+	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report("Mean",mean(sample,count),a*sqrt(3.1415926/2),0.01);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt((4-3.1415926)/2*a*a),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -839,9 +839,9 @@ int random_test(void)
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.001);
-	errorcount+=report("Mean",mean(sample,count),a/(a+b),0.001);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*b/((a+b)*(a+b)*(a+b+1))),0.001);
+	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report("Mean",mean(sample,count),a/(a+b),0.01);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*b/((a+b)*(a+b)*(a+b+1))),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -855,9 +855,9 @@ int random_test(void)
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.001);
-	errorcount+=report("Mean",mean(sample,count),a*b,0.001);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*b*b),0.001);
+	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report("Mean",mean(sample,count),a*b,0.25);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*b*b),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -871,9 +871,9 @@ int random_test(void)
 		if (!finite(sample[i]))
 			output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.001);
-	errorcount+=report("Mean",mean(sample,count),(a+b)/2,0.001);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt((a-b)*(a-b)/24),0.001);
+	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report("Mean",mean(sample,count),(a+b)/2,0.01);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt((a-b)*(a-b)/24),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -886,12 +886,12 @@ int random_test(void)
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.001);
-	errorcount+=report("Mean",mean(sample,count),4.5,0.001);
-	//report("Stdev",stdev(sample,count),sqrt(9*9/12),0.001);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt(99/12),0.001); /* sqrt((b-a+1)^2-1 / 12)*/ /* 2.87 is more accurate and was Mathematica's answer */
-	errorcount+=report("Min",min(sample,count),0,0.001);
-	errorcount+=report("Max",max(sample,count),9,0.001);
+	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report("Mean",mean(sample,count),4.5,0.01);
+	//report("Stdev",stdev(sample,count),sqrt(9*9/12),0.01);
+	errorcount+=report("Stdev",stdev(sample,count),sqrt(99/12),0.1); /* sqrt((b-a+1)^2-1 / 12)*/ /* 2.87 is more accurate and was Mathematica's answer */
+	errorcount+=report("Min",min(sample,count),0,0.01);
+	errorcount+=report("Max",max(sample,count),9,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
