@@ -861,15 +861,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\core\asm\cmpxchg.h"
+				>
+			</File>
+			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
-				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1259,6 +1259,26 @@
 						Outputs="$(OutDir)\$(InputFileName)"
 					/>
 				</FileConfiguration>
+			</File>
+		</Filter>
+		<Filter
+			Name="Automake"
+			>
+			<File
+				RelativePath="..\automake.bat"
+				>
+			</File>
+			<File
+				RelativePath="..\configure.bat"
+				>
+			</File>
+			<File
+				RelativePath=".\makefile.win"
+				>
+			</File>
+			<File
+				RelativePath="..\makefile.win"
+				>
 			</File>
 		</Filter>
 	</Files>
