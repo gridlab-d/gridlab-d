@@ -289,6 +289,12 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 		{
 			len = sprintf(buffer,"FATAL [%s] : last message was repeated %d times\n",time_context, count);
 			count = 0;
+			if(format == NULL){
+				if (redirect.error)
+					return fprintf(redirect.error,"FATAL [%s] : %s\n", time_context, buffer);
+				else
+					return (*printerr)("FATAL [%s] : %s\n", time_context, buffer);
+			}
 		}
 		else if (format==NULL)
 			return 0;
@@ -328,6 +334,12 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 		{
 			len = sprintf(buffer,"ERROR [%s] : last message was repeated %d times\n",time_context, count);
 			count = 0;
+			if(format == NULL){
+				if (redirect.error)
+					return fprintf(redirect.error,"ERROR [%s] : %s\n",time_context, buffer);
+				else
+					return (*printerr)("ERROR [%s] : %s\n", time_context, buffer);
+			}
 		}
 		else if (format==NULL)
 			return 0;
@@ -357,6 +369,10 @@ int output_test(char *format,...) /**< \bprintf style argument list */
 	static FILE *fp = NULL;
 	char minor_b[32], major_b[32];
 	va_list ptr;
+
+	if(format == NULL){
+		return 0;
+	}
 
 	va_start(ptr,format);
 	vsprintf(buffer,format,ptr); /* note the lack of check on buffer overrun */
@@ -408,6 +424,12 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 			{
 				len = sprintf(buffer,"WARNING [%s] : last message was repeated %d times\n",time_context, count);
 				count = 0;
+				if(format == NULL){
+					if (redirect.warning)
+						return fprintf(redirect.warning,"WARNING [%s] : %s\n",time_context, buffer);
+					else
+						return (*printerr)("WARNING [%s] : %s\n", time_context, buffer);
+				}
 			}
 			else if (format==NULL)
 				return 0;
@@ -451,6 +473,12 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 			{
 				len = sprintf(buffer,"DEBUG [%s] : last message was repeated %d times\n",time_context, count);
 				count = 0;
+				if(format == 0){
+					if (redirect.debug)
+						return fprintf(redirect.debug,"DEBUG [%s] : %s\n",time_context, buffer);
+					else
+						return (*printerr)("DEBUG [%s] : %s\n", time_context, buffer);
+				}
 			}
 			else if (format==NULL)
 				return 0;
@@ -495,6 +523,12 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 			{
 				len = sprintf(buffer,"last message was repeated %d times\n",count);
 				count = 0;
+				if(format == 0){
+					if (redirect.verbose)
+						return fprintf(redirect.verbose,"   ... %s\n",buffer);
+					else
+						return (*printerr)("   ... %s\n",buffer);
+				}
 			}
 			else if (format==NULL)
 				return 0;
@@ -536,8 +570,14 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 			{
 				len = sprintf(buffer,"last message was repeated %d times\n",count);
 				count = 0;
+				if(format == NULL){
+					if (redirect.output)
+						return fprintf(redirect.output,"%s\n",buffer);
+					else
+						return (*printstd)("%s\n",buffer);
+				}
 			}
-			else if (format==NULL)
+			if (format==NULL)
 				return 0;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
