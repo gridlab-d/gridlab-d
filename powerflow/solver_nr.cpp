@@ -262,12 +262,12 @@ for (jindex=0; jindex<3; jindex++)
 							if (branch[jindexer].from == indexer) 
 								for (kindex=0; kindex<3; kindex++)
 						             {
-										tempPc += (-(*branch[jindexer].Y[jindex][kindex])) * (*bus[branch[jindexer].to].V[kindex]);// the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+										tempPc += (-(*branch[jindexer].Y[jindex][kindex])) * ((*bus[indexer].V[kindex])-(*bus[branch[jindexer].to].V[kindex]));// the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 									 }	
 							if  (branch[jindexer].to == indexer)
                                 for (kindex=0; kindex<3; kindex++)
 						            {
-										tempPc += (-(*branch[jindexer].Y[jindex][kindex])) * (*bus[branch[jindexer].from].V[kindex]);// the off_diag elements of bus admittance matrix are equal to negative value of branch admittance.
+										tempPc += (-(*branch[jindexer].Y[jindex][kindex])) * ((*bus[indexer].V[kindex])-(*bus[branch[jindexer].from].V[kindex]));// the off_diag elements of bus admittance matrix are equal to negative value of branch admittance.
 								     }
 							else {}
 					}				
@@ -306,13 +306,13 @@ newiter = false;
 Maxmismatch = 0;
 for (indexer=3; indexer<bus_count*3-1; indexer++) // do not check the swing bus
 	{
-		if ( Maxmismatch < deltaP[indexer])
+		if ( Maxmismatch < abs(deltaP[indexer]))
 		{	
-			Maxmismatch = deltaP[indexer];	
+			Maxmismatch = abs(deltaP[indexer]);	
 		}	
-		else if (Maxmismatch < deltaQ[indexer])
+		else if (Maxmismatch < abs(deltaQ[indexer]))
 		{
-			Maxmismatch = deltaP[indexer];	
+			Maxmismatch = abs(deltaQ[indexer]);	
 		}
 		else {}
 	}
