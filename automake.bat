@@ -42,7 +42,7 @@ goto :EOF
 :link
 set file=%*%
 echo %file%: %OFILES% 
-echo+	%gcc% %OFILES% -o %file% 
+echo+	%gcc% %LFLAGS% %OFILES% -o %file% 
 echo+ 
 
 goto :EOF

@@ -1,7 +1,8 @@
 OUTDIR=win32
+MODULES=
 TARGETS=gridlab.exe
 CFLAGS=-DMINGW -I..\third_party\xerces-c-src_2_8_0\src -I..\third_party\cppunit-1.12.0\include
-LFLAGS=
+LFLAGS=-Wl,-lxerces-c_2D
 CPPFLAGS=-DMINGW -I..\third_party\xerces-c-src_2_8_0\src  -I..\third_party\cppunit-1.12.0\include
 CFILES=aggregate.c class.c cmdarg.c debug.c environment.c exception.c exec.c find.c globals.c index.c kill.c kml.c legal.c list.c load.c loadshape.c local.c main.c match.c matlab.c module.c object.c output.c random.c realtime.c save.c schedule.c test.c threadpool.c timestamp.c unit.c 
 CPPFILES=convert.cpp load_xml.cpp load_xml_handle.cpp
