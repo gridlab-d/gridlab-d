@@ -244,6 +244,7 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	OBJECT *obj = 0;
 	static int tp_next = 0;
 	static int tp_count = 0;
+	PROPERTY *prop;
 	
 	if(tp_count == 0){
 		tp_count = processor_count();
@@ -284,6 +285,9 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	obj->out_svc = TS_NEVER;
 	obj->space = object_current_namespace();
 	obj->flags = OF_NONE;
+
+	for (prop=obj->oclass->pmap; prop!=NULL; prop=prop->next)
+		property_create(prop,(char*)obj+(int)(prop->addr));
 	
 	if(first_object == NULL){
 		first_object = obj;

@@ -67,6 +67,7 @@ static struct s_property_specs { /**<	the property type conversion specification
 	unsigned int size; /**< the size of 1 instance */
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
 	int (*string_to_data)(char *,void*,PROPERTY*); /**< the function to convert from a string to data */
+	int (*create)(void*); /**< the function used to create the property, if any */
 } property_type[] = {
 	{"void", 0, convert_from_void,convert_to_void},
 	{"double", sizeof(double), convert_from_double,convert_to_double},
@@ -88,8 +89,8 @@ static struct s_property_specs { /**<	the property type conversion specification
 	{"complex_array", sizeof(complex), convert_from_complex_array, convert_to_complex_array},
 	{"real", sizeof(real), convert_from_real, convert_to_real},
 	{"float", sizeof(float), convert_from_float, convert_to_float},
-	{"loadshape", sizeof(loadshape), convert_from_loadshape, convert_to_loadshape},
-	{"enduse",sizeof(enduse), convert_from_enduse, convert_to_enduse},
+	{"loadshape", sizeof(loadshape), convert_from_loadshape, convert_to_loadshape, loadshape_create},
+	{"enduse",sizeof(enduse), convert_from_enduse, convert_to_enduse, enduse_create},
 };
 
 /* object class list */
@@ -157,6 +158,14 @@ unsigned long property_size(PROPERTY *prop)
 {
 	if (prop && prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
 		return property_type[prop->ptype].size;
+	else
+		return 0;
+}
+
+int property_create(PROPERTY *prop, void *addr)
+{
+	if (prop && prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
+		return property_type[prop->ptype].create ? property_type[prop->ptype].create(addr) : 1;
 	else
 		return 0;
 }

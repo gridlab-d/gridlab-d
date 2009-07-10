@@ -2,25 +2,7 @@
  	Copyright (C) 2008 Battelle Memorial Institute
 	@file loadshape.c
 	@addtogroup loadshape
-**/
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <ctype.h>
-
-#include "platform.h"
-#include "output.h"
-#include "loadshape.h"
-#include "exception.h"
-#include "convert.h"
-#include "globals.h"
-#include "random.h"
-#include "schedule.h"
-
-static loadshape *loadshape_list = NULL;
-/** Create a loadshape
-    The arguments depend on the loadshape machine type:
-	
 	@par MT_ANALOG 
 	<code>loadshape_create(s,MT_ANALOG,double energy)</code>
 	where #energy is the total energy used over the schedule definition
@@ -43,93 +25,34 @@ static loadshape *loadshape_list = NULL;
 	definition, #pulsetype is the type of pulse generated (fixed duration or fixed power), #pulsevalue is the value of the fixed part
 	of the pulse, #q_on is the pulse queue value at which the pulses are started, and #q_off is the pulse queue value at which the pulses are stopped.
 
+**/
+
+#include <stdlib.h>
+#include <stdarg.h>
+#include <ctype.h>
+
+#include "platform.h"
+#include "output.h"
+#include "loadshape.h"
+#include "exception.h"
+#include "convert.h"
+#include "globals.h"
+#include "random.h"
+#include "schedule.h"
+
+static loadshape *loadshape_list = NULL;
+/** Create a loadshape
+    The arguments depend on the loadshape machine type:
+	
 	@return a pointer to the new state machine on success, or NULL on failure
  **/
-loadshape *loadshape_create(SCHEDULE *s,	/**< the schedule that govern this machine */
-						MACHINETYPE t,	/**< the type of machine (see #MACHINETYPE) */
-						...)			/**< the machine specification (depends on #MACHINETYPE) */
+int loadshape_create(void *data)
 {
-	va_list arg;
-	loadshape *machine = malloc(sizeof(loadshape));
-	if (machine==NULL)
-	{
-		output_error("loadshape_create(SCHEDULE *s={name: %s; ...}, ...): memory allocation error", s->name);
-		/* TROUBLESHOOT
-			An attempt to create a schedule state machine failed because of insufficient system resources.  Free some system memory and try again.
-		 */
-		return NULL;
-	}	
-	va_start(arg,t);
-	switch (t) {
-	case MT_ANALOG:
-		machine->params.analog.energy = va_arg(arg,double);
-		if (machine->params.analog.energy<0)
-		{
-			output_error("loadshape_create(SCHEDULE *s={name: %s; ...}, MACHINETYPE t=MT_ANALOG, double energy=%g): scheduled energy is negative", s->name, machine->params.analog.energy);
-			/* TROUBLESHOOT
-				The machine uses a schedule that has a negative energy.  Specify a zero or position scheduled energy and try again.
-			 */
-			goto Error;
-		}
-		break;
-	case MT_PULSED:
-		machine->params.pulsed.energy = va_arg(arg,double);
-		if (machine->params.analog.energy<0)
-		{
-			output_error("loadshape_create(SCHEDULE *s={name: %s; ...}, MACHINETYPE t=MT_PULSED, double energy=%g): scheduled energy is negative", s->name, machine->params.analog.energy);
-			/* TROUBLESHOOT
-				The machine uses a schedule that has a negative energy.  Specify a zero or position scheduled energy and try again.
-			 */
-			goto Error;
-		}
-		machine->params.pulsed.scalar = va_arg(arg,double);
-		machine->params.pulsed.pulsetype = va_arg(arg,MACHINEPULSETYPE);
-		machine->params.pulsed.pulsevalue = va_arg(arg,double);
-		break;
-	case MT_MODULATED:
-		machine->params.modulated.energy = va_arg(arg,double);
-		if (machine->params.analog.energy<0)
-		{
-			output_error("loadshape_create(SCHEDULE *s={name: %s; ...}, MACHINETYPE t=MT_MODULATED, double energy=%g): scheduled energy is negative", s->name, machine->params.analog.energy);
-			/* TROUBLESHOOT
-				The machine uses a schedule that has a negative energy.  Specify a zero or position scheduled energy and try again.
-			 */
-			goto Error;
-		}
-		machine->params.modulated.scalar = va_arg(arg,double);
-		machine->params.modulated.pulsetype = va_arg(arg,MACHINEPULSETYPE);
-		machine->params.modulated.pulsevalue = va_arg(arg,double);
-		break;
-	case MT_QUEUED:
-		machine->params.queued.energy = va_arg(arg,double);
-		if (machine->params.analog.energy<0)
-		{
-			output_error("loadshape_create(SCHEDULE *s={name: %s; ...}, MACHINETYPE t=MT_QUEUED, double energy=%g): scheduled energy is negative", s->name, machine->params.analog.energy);
-			/* TROUBLESHOOT
-				The machine uses a schedule that has a negative energy.  Specify a zero or position scheduled energy and try again.
-			 */
-			goto Error;
-		}
-		machine->params.queued.scalar = va_arg(arg,double);
-		machine->params.queued.pulsetype = va_arg(arg,MACHINEPULSETYPE);
-		machine->params.queued.pulsevalue = va_arg(arg,double);
-		machine->params.queued.q_on = va_arg(arg,double);
-		machine->params.queued.q_off = va_arg(arg,double);
-		break;
-	default:
-		output_error("loadshape_create(SCHEDULE *s={name: %s; ...}, MACHINETYPE t=%d, ...): memory allocation error", s->name);
-		/* TROUBLESHOOT
-			The machine type is not defined.  Specify a defined machine type (see MACHINETYPE) and try again.
-		 */
-		goto Error;
-	}
-	va_end(arg);
-	machine->next = loadshape_list;
-	loadshape_list = machine;
-	return machine;
-Error:
-	free(machine);
-	return NULL;
+	loadshape *s = (loadshape*)data;
+	s->schedule = NULL;
+	s->next = loadshape_list;
+	loadshape_list = s;
+	return 1;
 }
 
 int loadshape_initall(void)

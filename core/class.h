@@ -241,6 +241,7 @@ DELEGATEDTYPE *class_register_type(CLASS *oclass, char *type,int (*from_string)(
 int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...);
 
 unsigned long property_size(PROPERTY *prop);
+int property_create(PROPERTY *prop, void *addr);
 
 #ifdef __cplusplus
 }

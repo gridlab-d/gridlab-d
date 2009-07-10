@@ -239,7 +239,7 @@ static STATUS init_all(void)
 	output_verbose("initializing objects...");
 
 	/* initialize loadshapes */
-	if (loadshape_initall()==FAILED)
+	if (loadshape_initall()==FAILED || enduse_initall()==FAILED)
 		return FAILED;
 
 	TRY {
