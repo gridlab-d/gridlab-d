@@ -31,7 +31,7 @@
 #define LS_SUMMERWEEKEND 3	///< summer weekend shape
 
 class house_e {
-private:
+public:
 	PANEL panel; ///< main house_e panel
 	/// Get voltage on a circuit
 	/// @return voltage (or 0 if breaker is open)

@@ -147,6 +147,57 @@ static LOADSHAPE default_loadshapes[] = {
 	},*/
 };
 
+
+EXPORT CIRCUIT *attach_enduse_house_e(OBJECT *obj, ENDUSELOAD *attachee, double breaker_amps, int is220){
+	house_e *pHouse = 0;
+	CIRCUIT *c = 0;
+
+	if(obj == NULL){
+		GL_THROW("attach_house_a: null *obj");
+	}
+	if(attachee == NULL){
+		GL_THROW("attach_house_a: null *attachee");
+	}
+	if(breaker_amps < 0 || breaker_amps > 1000){ /* at 3kA, we're looking into substation power levels, not enduses */
+		GL_THROW("attach_house_a: breaker amps of %i unrealistic");
+	}
+
+	pHouse = OBJECTDATA(obj,house_e);
+	c = new CIRCUIT;
+
+	if(c == NULL){
+		GL_THROW("attach_enduse_house_a: memory allocation failure");
+	}
+
+	c->next = pHouse->panel.circuits;
+	c->id = pHouse->panel.circuits ? pHouse->panel.circuits->id+1 : 1;
+	c->max_amps = breaker_amps;
+	c->pLoad = attachee;
+
+	// choose circuit
+	if (is220 == 1) // 220V circuit is on x12
+	{
+		c->type = X12;
+		c->id++; // use two circuits
+	}
+	else if (c->id&0x01) // odd circuit is on x13
+		c->type = X13;
+	else // even circuit is on x23
+		c->type = X23;
+
+	// attach to circuit list
+	pHouse->panel.circuits = c;
+
+	c->pV = &(pHouse->pCircuit_V[(int)c->type]);
+	c->status = BRK_CLOSED;
+	c->tripsleft = 100;
+
+	// attach the enduse for future reference
+	//c->enduse = obj;
+
+	return c;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // house_e CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -224,7 +275,7 @@ house_e::house_e(MODULE *mod)
 			PT_char256, "implicit_enduses", PADDR(implicit_enduses),
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
-
+		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse_house_e);
 		// deafults set during class creation
 		defaults = this;
 		memset(this,0,sizeof(house_e));

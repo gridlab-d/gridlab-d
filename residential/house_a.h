@@ -89,8 +89,7 @@ typedef struct s_panel {
 typedef enum {HORIZONTAL, NORTH, NORTH_EAST, EAST, SOUTH_EAST, SOUTH, SOUTH_WEST, WEST, NORTH_WEST} ORIENTATION;
 
 class house {
-private:
-	PANEL panel; ///< main house panel
+public:
 	/// Get voltage on a circuit
 	/// @return voltage (or 0 if breaker is open)
 	inline complex V(CIRCUIT *c) ///< pointer to circuit 
@@ -156,6 +155,8 @@ public:
 	double hvac_rated_capacity;
 	double rated_heating_capacity;
 	double rated_cooling_capacity;
+
+	PANEL panel; ///< main house panel
 
 	double internal_gain;
 	double hvac_kWh_use;
