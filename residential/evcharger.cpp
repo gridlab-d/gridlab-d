@@ -366,7 +366,7 @@ int evcharger::init(OBJECT *parent)
 	// load demand profile
 	if (strcmp(demand_profile,"")!=0)
 		pDemand = get_demand_profile(demand_profile);
-
+	
 	update_state();
 
 	return 1;
@@ -386,10 +386,13 @@ double evcharger::update_state(double dt /* seconds */)
 		*/
 
 		int hour = now.hour;
-		int daytype = pDemand->n_daytypes>0 ? (now.weekday>0&&now.weekday<6) : 0;
+		int daytype = 0;
+		if(pDemand != NULL){
+			pDemand->n_daytypes>0 ? (now.weekday>0&&now.weekday<6) : 0;
 
-		demand.home = pDemand->home[daytype][DEPART][hour];
-		demand.work = pDemand->home[daytype][ARRIVE][hour];
+			demand.home = pDemand->home[daytype][DEPART][hour];
+			demand.work = pDemand->home[daytype][ARRIVE][hour];
+		}
 
 		// implement any state change (arrival/departure)
 		switch (vehicle_state) {
