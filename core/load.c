@@ -453,7 +453,11 @@ static void reset_line(FILE *fp, char *file)
 
 static STATUS compile_code(CLASS *oclass, int64 functions)
 {
+	char include_file_str[1024];
 	bool use_msvc = (global_getvar("use_msvc",NULL,0)!=NULL);
+
+	include_file_str[0] = '\0';
+
 	if (code_used>0)
 	{
 		MODULE *mod;
@@ -466,6 +470,8 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		char afile[1024];
 		char file[1024];
 		char tmp[1024];
+		size_t ifs_off = 0;
+		INCLUDELIST *lptr = 0;
 
 		/* build class implementation files */
 		global_getvar("tmp",tmp,sizeof(tmp));
@@ -520,13 +526,20 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				return FAILED;
 			}
 			outfilename = cfile;
+			ifs_off = 0;
+			for(lptr = header_list; lptr != 0; lptr = lptr->next){
+				sprintf(include_file_str+ifs_off, "#include \"%s\"\n;", lptr->file);
+				ifs_off+=strlen(lptr->file)+13;
+			}
 			if (write_file(fp,"/* automatically generated from GridLAB-D */\n\n"
 					"int major=0, minor=0;\n\n"
+					"%s\n\n"
 					"#include \"rt/gridlabd.h\"\n\n"
 					"%s"
 					"CALLBACKS *callback = NULL;\n"
 					"static CLASS *myclass = NULL;\n"
 					"static void setup_class(CLASS *);\n\n",
+					include_file_str,
 					global_getvar("use_msvc",NULL,0)!=NULL
 					?
 						"int __declspec(dllexport) dllinit() { return 0;};\n"
@@ -2542,7 +2555,7 @@ static int source_code(PARSER, char *code, int size)
 			linenum++;
 		if (size==0)
 		{
-			output_message("%s(%d): unsufficient buffer space to load code", filename,linenum);
+			output_message("%s(%d): insufficient buffer space to load code", filename,linenum);
 			return 0;
 		}
 		switch(state) {
@@ -2811,7 +2824,7 @@ static int class_external_function(PARSER, CLASS *oclass, CLASS **eclass,char *f
 
 static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initcode, int initsize)
 {
-	char code[4096];
+	char code[40960];
 	char arglist[1024];
 	char fname[64];
 	CLASS *eclass;
@@ -3819,7 +3832,7 @@ static int macro_line[64];
 static int process_macro(char *line, int size, char *filename, int linenum);
 static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 {
-	char line[65536*3];
+	char line[65536];
 	int n=0;
 	int linenum=0;
 	int startnest = nesting;
@@ -3886,6 +3899,103 @@ static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 	return n;
 }
 
+static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
+{
+	char line[10240];
+	char *buf = buffer;
+	int n = 0, i = 0;
+	int linenum=0;
+	int startnest = nesting;
+	int bnest = 0, quote = 0;
+	while (fgets(line,sizeof(line),fp)!=NULL)
+	{
+		int len;
+		char subst[65536];
+
+		/* comments must have preceding whitespace in macros */
+		char *c = line[0]!='#'?strstr(line,COMMENT):strstr(line, " " COMMENT);
+		linenum++;
+		if (c!=NULL) /* truncate at comment */
+			strcpy(c,"\n");
+		len = (int)strlen(line);
+		if (len>=size-1)
+			return 0;
+	
+#ifndef OLDSTYLE
+		/* check for oldstyle file under newstyle parse */
+		if (linenum==1 && strncmp(line,"# ",2)==0)
+		{
+			output_error("%s looks like a version 1.x GLM files, please convert this file to new style before loading", filename);
+			return 0;
+		}
+#endif
+		/* expand variables */
+		if ((len=replace_variables(subst,line,sizeof(subst)))>=0)
+			strcpy(line,subst);
+		else
+		{
+			output_message("%s(%d): unable to continue", filename,linenum);
+			return -1;
+		}
+
+		/* expand macros */
+		if (strncmp(line,MACRO,strlen(MACRO))==0)
+		{
+			/* macro disables reading */
+			if (process_macro(line,sizeof(line),filename,linenum)==FALSE)
+				return 0;
+			len = (int)strlen(line);
+			strcat(buffer,line);
+			buffer += len;
+			size -= len;
+			n += len;
+		}
+
+		/* if reading is enabled */
+		else if (suppress==0)
+		{
+			strcpy(buffer,subst);
+			buffer+=len;
+			size -= len;
+			n+=len;
+			for(i = 0; i < len; ++i){
+				if(quote == 0){
+					if(subst[i] == '\"'){
+						quote = 1;
+					} else if(subst[i] == '{'){
+						++bnest;
+					} else if(subst[i] == '}'){
+						--bnest;
+					}
+				} else {
+					if(subst[i] == '\"'){
+						quote = 0;
+					}
+				}
+			}
+		}
+		if(bnest == 0){
+			/* end of block */
+			return n;
+		}
+
+	}
+	if(quote != 0){
+		output_warning("unterminated doublequote string");
+	}
+	if(bnest != 0){
+		output_warning("incomplete loader block");
+	}
+	if (nesting != startnest)
+	{
+		//output_message("%s(%d): missing %sendif for #if at %s(%d)", filename,linenum,MACRO,filename,macro_line[nesting-1]);
+		output_message("%s(%d): Unbalanced %sif/%sendif at %s(%d) ~ started with nestlevel %i, ending %i", filename,linenum,MACRO,MACRO,filename,macro_line[nesting-1], startnest, nesting);
+		return -1;
+	}
+	return n;
+}
+
+
 static int include_file(char *incname, char *buffer, int size)
 {
 	int move = 0;
@@ -3896,10 +4006,11 @@ static int include_file(char *incname, char *buffer, int size)
 	STAT stat;
 	char *ff = find_file(incname,NULL,R_OK);
 	FILE *fp = 0;
-	
+	char buffer2[20480];
+
 	/* check include list */
 	INCLUDELIST *list;
-	INCLUDELIST this={incname,include_list}; /* REALLY BAD IDEA ~~ this is a reserved C++ keyword */
+	INCLUDELIST this={incname,include_list}; /* REALLY BAD IDEA ~~ "this" is a reserved C++ keyword */
 	output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'", 
 		incname, buffer, size, getenv("GLPATH") ? getenv("GLPATH") : "NULL", ff ? ff : "NULL");
 	for (list = include_list; list != NULL; list = list->next)
@@ -3965,7 +4076,27 @@ static int include_file(char *incname, char *buffer, int size)
 
 	/* reset line counter for parser */
 	include_list = &this;
-	count = buffer_read(fp,buffer,incname,size); // fread(buffer,1,stat.st_size,fp);
+	//count = buffer_read(fp,buffer,incname,size); // fread(buffer,1,stat.st_size,fp);
+
+	move = buffer_read_alt(fp, buffer2, incname, 20479);
+	while(move > 0){
+		count += move;
+		p = buffer; // grab a block
+		while(*p != 0){
+			// and process it
+			move = gridlabd_file(p);
+			if(move == 0)
+				break;
+			p += move;
+		}
+		if(*p != 0){
+			// failed if we didn't parse the whole thing
+			count = 0;
+			break;
+		}
+		move = buffer_read_alt(fp, buffer, incname, 20479);
+	}
+
 	include_list = this.next;
 
 	return count;
@@ -4456,6 +4587,84 @@ Done:
 	return status;
 }
 
+/**/
+STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the file name string */
+{
+	OBJECT *obj, *first = object_get_first();
+	//char *buffer = NULL, *p = NULL;
+	char *p = NULL;
+	char buffer[20480];
+	int fsize = 0;
+	STATUS status=FAILED;
+	STAT stat;
+	char *ext = strrchr(file,'.');
+	FILE *fp;
+	int move = 0;
+	errno = 0;
+
+	fp = fopen(file,"r");
+	if (fp==NULL)
+		goto Failed;
+	if (FSTAT(fileno(fp),&stat)==0)
+	{
+		modtime = stat.st_mtime;
+		fsize = stat.st_size;
+	}
+	output_verbose("file '%s' is %d bytes long", file,fsize);
+	/* removed malloc check since it doesn't malloc any more */
+	buffer[0] = '\0';
+
+	move = buffer_read_alt(fp, buffer, file, 20479);
+	while(move > 0){
+		p = buffer; // grab a block
+		while(*p != 0){
+			// and process it
+			move = gridlabd_file(p);
+			if(move == 0)
+				break;
+			p += move;
+		}
+		if(*p != 0){
+			// failed if we didn't parse the whole thing
+			status = FAILED;
+			break;
+		}
+		move = buffer_read_alt(fp, buffer, file, 20479);
+	}
+
+	status = (*p=='\0') ? SUCCESS : FAILED;
+	if (status==FAILED)
+	{
+		char *eol = strchr(p,'\n');
+		if (eol!=NULL)
+			*eol='\0';
+		output_message("%s(%d): load failed at or near '%.12s...'", file, linenum,*p=='\0'?"end of line":p);
+		if (p==0)
+			output_error("%s doesn't appear to be a GLM file", file);
+		goto Failed;
+	}
+	else if ((status=load_resolve_all())==FAILED)
+		goto Failed;
+
+	/* establish ranks */
+	for (obj=first?first:object_get_first(); obj!=NULL; obj=obj->next)
+		object_set_parent(obj,obj->parent);
+	output_verbose("%d object%s loaded", object_get_count(), object_get_count()>1?"s":"");
+	goto Done;
+Failed:
+	if (errno!=0){
+		output_error("unable to load '%s': %s", file, strerror(errno));
+		/*	TROUBLESHOOT
+			In most cases, strerror(errno) will claim "No such file or directory".  This claim should be ignored in
+			favor of prior error messages.
+		*/
+	}
+Done:
+	//free(buffer);
+	free_index();
+	linenum=0;
+	return status;
+}
 /** Load a file
 	@return STATUS is SUCCESS if the load was ok, FAILED if there was a problem
 	@todo Rollback the model data if the load failed (ticket #32)
@@ -4487,7 +4696,7 @@ STATUS loadall(char *file){
 				This file is always loaded before a GLM file is loaded.
 				Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
 			 */
-		else if(loadall_glm(conf)==FAILED)
+		else if(loadall_glm_roll(conf)==FAILED)
 			return FAILED;
 
 		/* load the debugger.conf file */
@@ -4501,7 +4710,7 @@ STATUS loadall(char *file){
 					This file is loaded when the debugger is enabled.
 					Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
 				 */
-			else if (loadall_glm(dbg)==FAILED)
+			else if (loadall_glm_roll(dbg)==FAILED)
 				return FAILED;
 		}
 	}
@@ -4516,7 +4725,7 @@ STATUS loadall(char *file){
 
 	/* load the appropriate type of file */
 	if(ext==NULL || strcmp(ext, ".glm")==0)
-		load_status = loadall_glm(filename);
+		load_status = loadall_glm_roll(filename);
 	else if(strcmp(ext, ".xml")==0)
 		load_status = loadall_xml(filename);
 	else
