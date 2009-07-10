@@ -139,7 +139,6 @@ static CALLBACKS callbacks = {
 	{object_create_single,object_create_array,object_create_foreign},
 	class_define_map,
 	class_get_class_from_classname,
-	class_get_class_from_objecttype,
 	{class_define_function,class_get_function},
 	class_define_enumeration_member,
 	class_define_set_member,
@@ -549,7 +548,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 		} else {
 			sprintf(oname, "%s:%i", obj->oclass->name, obj->id);
 		}
-		if ((oclass == NULL) || (obj->oclass->type != oclass->type))
+		if ((oclass == NULL) || (obj->oclass != oclass))
 			oclass = obj->oclass;
 		count += fprintf(fp,"\t\t<object type=\"%s\" id=\"%i\" name=\"%s\">\n", obj->oclass->name, obj->id, oname);
 
@@ -579,7 +578,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 			count += fprintf(fp,"\t\t\t<longitude>NONE</longitude>\n");
 
 		/* dump properties */
-		for (prop=oclass->pmap;prop!=NULL && prop->otype==oclass->type;prop=prop->next)
+		for (prop=oclass->pmap;prop!=NULL && prop->oclass==oclass;prop=prop->next)
 		{
 			char *value = NULL;
 			if((prop->access != PA_PUBLIC) && (prop->access != PA_REFERENCE))
@@ -591,7 +590,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 		}
 		pclass = oclass->parent;
 		while(pclass != NULL){ /* inherited properties */
-			for (prop=pclass->pmap;prop!=NULL && prop->otype==pclass->type;prop=prop->next){
+			for (prop=pclass->pmap;prop!=NULL && prop->oclass==pclass;prop=prop->next){
 				char *value = object_property_to_string(obj,prop->name);
 				if (value!=NULL){
 					count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", prop->name, value, prop->name);

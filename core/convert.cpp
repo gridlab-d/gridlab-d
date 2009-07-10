@@ -59,7 +59,7 @@ int convert_from_double(char *buffer, /**< pointer to the string buffer */
 
 	double scale = 1.0;
 	if(prop->unit != NULL){
-		CLASS *ctmp = class_get_class_from_objecttype(prop->otype);
+		CLASS *ctmp = prop->oclass;
 		PROPERTY *ptmp = class_find_property(ctmp, prop->name);
 		if(prop->unit != ptmp->unit){
 			if(0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)){
@@ -107,7 +107,7 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 
 	double scale = 1.0;
 	if(prop->unit != NULL){
-		CLASS *ctmp = class_get_class_from_objecttype(prop->otype);
+		CLASS *ctmp = prop->oclass;
 		PROPERTY *ptmp = class_find_property(ctmp, prop->name);
 		if(prop->unit != ptmp->unit){
 			if(0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)){

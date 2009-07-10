@@ -281,7 +281,7 @@ GLOBALVAR *global_create(char *name, ...){
 			/* TROUBLESHOOT
 				The memory required to store the property is not available.  Try freeing up system memory and try again.
 			 */
-			property->otype = 0;
+			property->oclass = NULL;
 			property->ptype = proptype;
 			property->addr = va_arg(arg,PROPERTYADDR);
 			property->size = 1;

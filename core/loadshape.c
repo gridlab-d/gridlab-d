@@ -315,7 +315,6 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 		if (t3<t2) t2 = t3;
 	}
 	return t2;
-
 }
 
 int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)

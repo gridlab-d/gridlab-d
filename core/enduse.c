@@ -57,18 +57,47 @@ int enduse_initall(void)
 
 TIMESTAMP enduse_sync(enduse *e, TIMESTAMP t1)
 {
+	TIMESTAMP t2 = TS_NEVER;
+
 	/* TODO update power, energy, demand, etc. from shape->load */
-	return TS_NEVER;
+	return t2;
 }
 
 TIMESTAMP enduse_syncall(TIMESTAMP t1)
 {
-	return TS_NEVER;
+	enduse *e;
+	TIMESTAMP t2 = TS_NEVER;
+	for (e=enduse_list; e!=NULL; e=e->next)
+	{
+		TIMESTAMP t3 = enduse_sync(e,t1);
+		if (t3<t2) t2 = t3;
+	}
+	return t2;
 }
 
 int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 {
-	return 0;
+/*
+	loadshape *shape;
+	complex power;
+	complex energy;
+	complex demand;
+	double impedance_fraction;
+	double current_fraction;
+	double power_fraction;
+	double power_factor;
+	struct s_enduse *next;
+*/
+	enduse *e = (enduse*)data;
+	int len = 0;
+#define OUTPUT_NZ(X) if (e->X!=0) len+=sprintf(string+len,"%s" #X ": %g", len>0?"; ":"", e->X)
+#define OUTPUT(X) len+=sprintf(string+len,"%s"#X": %g", len>0?"; ":"", e->X);
+	OUTPUT_NZ(impedance_fraction);
+	OUTPUT_NZ(current_fraction);
+	OUTPUT_NZ(power_fraction);
+	OUTPUT(power_factor);
+	OUTPUT(shape);
+	return len;
 }
 
 int convert_to_enduse(char *string, void *data, PROPERTY *prop)
@@ -111,8 +140,13 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 			e->power_factor = atof(value);
 		else if (strcmp(param,"loadshape")==0)
 		{
-			/* TODO resolve loadshape */
-			output_warning("convert_to_enduse(string='%-.64s...', ...) unable to link loadshape '%s' (not implemented)",string,value);
+			PROPERTY *pref = class_find_property(prop->oclass,value);
+			if (pref==NULL)
+			{
+				output_warning("convert_to_enduse(string='%-.64s...', ...) loadshape '%s' not found in class '%s'",string,value,prop->oclass->name);
+				return 0;
+			}
+			e->shape = (loadshape*)((char*)e - (int64)(prop->addr) + (int64)(pref->addr));
 		}
 		else
 		{

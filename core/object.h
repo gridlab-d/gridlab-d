@@ -75,7 +75,6 @@ typedef struct s_callbacks {
 	} create;
 	int (*define_map)(CLASS*,...);
 	CLASS *(*class_getname)(char*);
-	CLASS *(*class_getobjnum)(OBJECTTYPE);
 	struct {
 		FUNCTION *(*define)(CLASS*,FUNCTIONNAME,FUNCTIONADDR);
 		FUNCTIONADDR (*get)(char*,char*);

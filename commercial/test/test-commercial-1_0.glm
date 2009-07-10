@@ -39,7 +39,7 @@ schedule officehours {
 
 object office:..${NOFFICES} {
 	plugs_shape "type: analog; schedule: officehours; energy: 25 Btu";
-	plugs_enduse "current_fraction: 0.5; impedance_fraction: 0.5; power_factor: 0.97; loadshape: plugs";
+	plugs_enduse "current_fraction: 0.5; impedance_fraction: 0.5; power_factor: 0.97; loadshape: plugs_shape";
 	name `office_{id}`;
 	floor_area random.triangle(10000,100000) sf;
 	floor_height random.triangle(10,15) ft;

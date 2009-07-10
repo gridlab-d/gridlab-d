@@ -602,7 +602,7 @@ static PROPERTY *get_property_at_addr(OBJECT *obj, void *addr)
 		return prop;
 
 	/* scan through properties of this class and stop when no more properties or class changes */
-	for (prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next->otype==prop->otype?prop->next:NULL))
+	for (prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next->oclass==prop->oclass?prop->next:NULL))
 	{
 		if((int64)(prop->addr)==offset) /* warning: cast from pointer to integer of different size */
 			if(prop->access != PA_PRIVATE)
@@ -1284,7 +1284,7 @@ int object_dump(char *outbuffer, /**< the destination buffer */
 	count += sprintf(buffer + count, "\tflags = %s;\n", convert_from_set(tmp, sizeof(tmp), &(obj->flags), object_flag_property()) ? tmp : "(invalid)");
 
 	/* dump properties */
-	for(prop = obj->oclass->pmap; prop != NULL && prop->otype == obj->oclass->type; prop = prop->next){
+	for(prop = obj->oclass->pmap; prop != NULL && prop->oclass == obj->oclass; prop = prop->next){
 		char *value = object_property_to_string(obj, prop->name);
 		if(value != NULL){
 			count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type : class_get_property_typename(prop->ptype), prop->name, value);
@@ -1301,7 +1301,7 @@ int object_dump(char *outbuffer, /**< the destination buffer */
 	/* dump inherited properties */
 	pclass = obj->oclass;
 	while((pclass = pclass->parent) != NULL){
-		for(prop = pclass->pmap; prop != NULL && prop->otype == pclass->type; prop = prop->next){
+		for(prop = pclass->pmap; prop != NULL && prop->oclass == pclass; prop = prop->next){
 			char *value = object_property_to_string(obj, prop->name);
 			if(value != NULL){
 				count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type : class_get_property_typename(prop->ptype), prop->name, value);
@@ -1365,7 +1365,7 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			count += fprintf(fp, "\tflags %s;\n", convert_from_set(buffer, sizeof(buffer), &(obj->flags), object_flag_property()) ? buffer : "(invalid)");
 
 			/* dump properties */
-			for(prop = obj->oclass->pmap; prop != NULL && prop->otype == obj->oclass->type; prop = prop->next){
+			for(prop = obj->oclass->pmap; prop != NULL && prop->oclass == obj->oclass; prop = prop->next){
 				char *value = object_property_to_string(obj, prop->name);
 				if(value != NULL){
 					count += fprintf(fp, "\t%s %s;\n", prop->name, value);
@@ -1390,7 +1390,7 @@ int object_saveall_xml(FILE *fp){ /**< the stream to write to */
 	for(obj = first_object; obj != NULL; obj = obj->next){
 		char32 oname = "(unidentified)";
 		convert_from_object(oname, sizeof(oname), &obj, NULL); /* what if we already have a name? -mh */
-		if((oclass == NULL) || (obj->oclass->type != oclass->type)){
+		if((oclass == NULL) || (obj->oclass != oclass)){
 			oclass = obj->oclass;
 		}
 		count += fprintf(fp, "\t\t<object type=\"%s\" id=\"%i\" name=\"%s\">\n", obj->oclass->name, obj->id, oname);
@@ -1418,7 +1418,7 @@ int object_saveall_xml(FILE *fp){ /**< the stream to write to */
 
 		/* dump inherited properties */
 		if(oclass->parent != NULL){
-			for (prop = oclass->parent->pmap; prop != NULL && prop->otype == oclass->parent->type; prop = prop->next){
+			for (prop = oclass->parent->pmap; prop != NULL && prop->oclass == oclass->parent; prop = prop->next){
 				char *value = object_property_to_string(obj, prop->name);
 				if(value != NULL){
 					count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", prop->name, value, prop->name);
@@ -1427,7 +1427,7 @@ int object_saveall_xml(FILE *fp){ /**< the stream to write to */
 		}
 
 		/* dump properties */
-		for(prop = oclass->pmap; prop != NULL && prop->otype == oclass->type; prop = prop->next){
+		for(prop = oclass->pmap; prop != NULL && prop->oclass == oclass; prop = prop->next){
 			char *value = object_property_to_string(obj, prop->name);
 			if(value!=NULL){
 				count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", prop->name, value, prop->name);
@@ -1457,7 +1457,7 @@ int object_saveall_xml_old(FILE *fp){ /**< the stream to write to */
 
 			convert_from_object(oname, sizeof(oname), &obj, NULL);
 			
-			if(oclass == NULL || obj->oclass->type != oclass->type){
+			if(oclass == NULL || obj->oclass != oclass){
 				oclass = obj->oclass;
 			}
 			count += fprintf(fp, "\t\t<object>\n");
@@ -1490,7 +1490,7 @@ int object_saveall_xml_old(FILE *fp){ /**< the stream to write to */
 
 			/* dump properties */
 			count += fprintf(fp, "\t\t\t<properties>\n");
-			for (prop = oclass->pmap; prop != NULL && prop->otype == oclass->type; prop = prop->next){
+			for (prop = oclass->pmap; prop != NULL && prop->oclass == oclass; prop = prop->next){
 				char *value = object_property_to_string(obj, prop->name);
 
 				if(value != NULL){

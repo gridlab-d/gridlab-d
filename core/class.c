@@ -53,6 +53,8 @@
 #include "loadshape.h"
 #include "enduse.h"
 
+static unsigned int class_count = 0;
+
 int convert_from_real(char *a, int b, void *c, PROPERTY *d){return 0;}
 int convert_to_real(char *a, void *b, PROPERTY *c){return 0;}
 int convert_from_float(char *a, int b, void *c, PROPERTY *d){return 0;}
@@ -94,7 +96,6 @@ static struct s_property_specs { /**<	the property type conversion specification
 };
 
 /* object class list */
-OBJECTTYPE last_object_type = 0; /**< last object type assigned */
 static CLASS *first_class = NULL; /**< first class in class list */
 static CLASS *last_class = NULL; /**< last class in class list */
 
@@ -133,19 +134,29 @@ PROPERTY *class_get_first_property(CLASS *oclass) /**< the object class */
  **/
 PROPERTY *class_get_next_property(PROPERTY *prop)
 {
-	if (prop->next!=NULL && prop->otype==prop->next->otype)
+	if (prop->next && prop->oclass==prop->next->oclass)
 		return prop->next;
 	else
 		return NULL;
 }
 
-PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop){
-	if(oclass->type == prop->otype){
+/** Search class hierarchy for a property 
+	@return property pointer if found, NULL if not in class hierarchy
+ **/
+PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop)
+{
+	if(oclass == prop->oclass)
+	{
 		return prop;
-	} else {
-		if(oclass->parent != NULL){
+	} 
+	else 
+	{
+		if(oclass->parent != NULL)
+		{
 			return class_prop_in_class(oclass->parent, prop);
-		} else {
+		} 
+		else 
+		{
 			return NULL;
 		}
 	}
@@ -173,13 +184,16 @@ int property_create(PROPERTY *prop, void *addr)
 /* though improbable, this is to prevent more complicated, specifically crafted
 	inheritence loops.  these should be impossible if a class_register call is
 	immediately followed by a class_define_map call. -d3p988 */
-PROPERTY *class_find_property_rec(CLASS *oclass, PROPERTYNAME name, CLASS *pclass){
+PROPERTY *class_find_property_rec(CLASS *oclass, PROPERTYNAME name, CLASS *pclass)
+{
 	PROPERTY *prop;
-	for (prop=oclass->pmap; prop!=NULL && prop->otype==oclass->type; prop=prop->next){
+	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
+	{
 		if (strcmp(name,prop->name)==0)
 			return prop;
 	}
-	if (oclass->parent==pclass){
+	if (oclass->parent==pclass)
+	{
 		output_error("class_find_property_rec(CLASS *oclass='%s', PROPERTYNAME name='%s', CLASS *pclass='%s') causes an infinite class inheritance loop", oclass->name, name, pclass->name);
 		/*	TROUBLESHOOT
 			A class has somehow specified itself as a parent class, either directly or indirectly.
@@ -202,7 +216,7 @@ PROPERTY *class_find_property(CLASS *oclass,		/**< the object class */
 							  PROPERTYNAME name)	/**< the property name */
 {
 	PROPERTY *prop;
-	for (prop=oclass->pmap; prop!=NULL && prop->otype==oclass->type; prop=prop->next)
+	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 	{
 		if (strcmp(name,prop->name)==0)
 			return prop;
@@ -271,7 +285,7 @@ PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE pt
 	prop->unit = pUnit;
 	strncpy(prop->name,name,sizeof(prop->name));
 	prop->next = NULL;
-	prop->otype = oclass->type;
+	prop->oclass = oclass;
 	prop->ptype = ptype;
 	
 	oclass->size += prop->size;
@@ -293,7 +307,7 @@ CLASS *class_get_last_class(void)
  **/
 unsigned int class_get_count(void)
 {
-	return last_object_type;
+	return class_count;
 }
 
 /** Get the name of a property from its type
@@ -425,7 +439,6 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 	memset(oclass,0,sizeof(CLASS));
 	oclass->magic = CLASSVALID;
 	oclass->module = module;
-	oclass->type = ++last_object_type;
 	strncpy(oclass->name,name,sizeof(oclass->name));
 	oclass->size = size;
 	oclass->passconfig = passconfig;
@@ -438,6 +451,7 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 		last_class->next = oclass;
 	last_class = oclass;
 	output_verbose("class %s registered ok", name);
+	class_count++;
 	return oclass;
 }
 
@@ -448,35 +462,6 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 CLASS *class_get_first_class(void)
 {
 	return first_class;
-}
-
-/** Get the class from the object type.
-	@return a pointer the class that implemented the \p type,
-	or \p NULL is no match found
- **/
-CLASS *class_get_class_from_objecttype(OBJECTTYPE type) /**< the object type */
-{
-	CLASS *oclass;
-	for (oclass=first_class; oclass!=NULL; oclass=oclass->next)
-	{
-		if (oclass->type==type)
-			return oclass;
-	}
-	return NULL;
-}
-
-/** Get the class name from the object type.
-	@return a pointer to the string containing the class name
- **/
-char *class_get_classname_from_objecttype(OBJECTTYPE type) /**< the object type */
-{
-	CLASS *oclass;
-	for (oclass=first_class; oclass!=NULL; oclass=oclass->next)
-	{
-		if (oclass->type==type)
-			return oclass->name;
-	}
-	return NULL;
 }
 
 /** Get the class from the class name and a module pointer.
@@ -530,20 +515,6 @@ CLASS *class_get_class_from_classname(char *name) /**< a pointer to a \p NULL -t
 			return oclass;
 	}
 	return NULL;
-}
-
-/** Get the object type from the class name.
-	@return an OBJECTTYPE
- **/
-OBJECTTYPE class_get_classtype_from_classname(char *name) /**< a pointer to a \p NULL -terminated string containing then name of the class */
-{
-	CLASS *oclass;
-	for (oclass=first_class; oclass!=NULL; oclass=oclass->next)
-	{
-		if (strcmp(oclass->name,name)==0)
-			return oclass->type;
-	}
-	return 0;
 }
 
 /** Define one or more class properties.
@@ -885,7 +856,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			prop->ptype = proptype;
 			prop->size = 0;
 			prop->access = PA_PUBLIC;
-			prop->otype = oclass->type;
+			prop->oclass = oclass;
 			prop->flags = 0;
 			prop->keywords = NULL;
 			prop->description = NULL;
@@ -1004,7 +975,7 @@ FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTI
 	func->addr = call;
 	strcpy(func->name,functionname);
 	func->next = NULL;
-	func->otype = oclass->type;
+	func->oclass = oclass;
 	if (oclass->fmap==NULL)
 		oclass->fmap = func;
 	else
@@ -1018,7 +989,7 @@ FUNCTIONADDR class_get_function(char *classname, char *functionname)
 {
 	CLASS *oclass = class_get_class_from_classname(classname);
 	FUNCTION *func;
-	for (func=oclass->fmap; func!=NULL && func->otype==oclass->type; func=func->next)
+	for (func=oclass->fmap; func!=NULL && func->oclass==oclass; func=func->next)
 	{
 		if (strcmp(functionname,func->name)==0)
 			return func->addr;
@@ -1040,12 +1011,12 @@ int class_saveall(FILE *fp) /**< a pointer to the stream FILE structure */
 		{
 			PROPERTY *prop;
 			FUNCTION *func;
-			count += fprintf(fp,"class %s {\n",oclass->name,oclass->type);
+			count += fprintf(fp,"class %s {\n",oclass->name);
 			if (oclass->parent)
 				count += fprintf(fp,"\tparent %s;\n", oclass->parent->name);
-			for (func=oclass->fmap; func!=NULL && func->otype==oclass->type; func=func->next)
+			for (func=oclass->fmap; func!=NULL && func->oclass==oclass; func=func->next)
 				count += fprintf(fp, "\tfunction %s();\n", func->name);
-			for (prop=oclass->pmap; prop!=NULL && prop->otype==oclass->type; prop=prop->next)
+			for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 			{
 				char *propname = class_get_property_typename(prop->ptype);
 				if (propname!=NULL)
@@ -1069,12 +1040,12 @@ int class_saveall_xml(FILE *fp) /**< a pointer to the stream FILE structure */
 		{
 			PROPERTY *prop;
 			FUNCTION *func;
-			count += fprintf(fp,"\t\t<class name=\"%s\">\n",oclass->name,oclass->type);
+			count += fprintf(fp,"\t\t<class name=\"%s\">\n",oclass->name);
 			if (oclass->parent)
 				count += fprintf(fp,"\t\t<parent>%s</parent>\n", oclass->parent->name);
-			for (func=oclass->fmap; func!=NULL && func->otype==oclass->type; func=func->next)
+			for (func=oclass->fmap; func!=NULL && func->oclass==oclass; func=func->next)
 				count += fprintf(fp, "\t\t<function>%s</function>\n", func->name);
-			for (prop=oclass->pmap; prop!=NULL && prop->otype==oclass->type; prop=prop->next)
+			for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 			{
 				char *propname = class_get_property_typename(prop->ptype);
 				if (propname!=NULL)
@@ -1264,7 +1235,7 @@ int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD *
 		n += buffer_write(buffer+n, len-n, "\t\t\t\t</xs:simpleType>\n");
 		n += buffer_write(buffer+n, len-n, "\t\t\t</xs:element>\n");
 	}
-	for (prop=oclass->pmap; prop!=NULL && prop->otype==oclass->type; prop=prop->next)
+	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 	{
 		char *proptype=class_get_property_typename(prop->ptype);
 		if (prop->unit!=NULL){

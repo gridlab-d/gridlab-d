@@ -84,7 +84,7 @@ int kml_document(FILE *fp)
 				fprintf(fp,"      <description>\n");
 				fprintf(fp,"        <![CDATA[\n");
 				fprintf(fp,"          <TABLE><TR>\n");
-				for (prop=oclass->pmap;prop!=NULL && prop->otype==oclass->type;prop=prop->next)
+				for (prop=oclass->pmap;prop!=NULL && prop->oclass==oclass; prop=prop->next)
 				{
 					char *value = object_property_to_string(obj,prop->name);
 					if (value!=NULL)

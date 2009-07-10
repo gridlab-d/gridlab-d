@@ -245,7 +245,7 @@ int savexml_strict(char *filename,FILE *fp)
 							count += fprintf(fp,"\t\t\t\t<name>(%s:%d)</name>\n",obj->oclass->name,obj->id);
 						for (pclass=oclass; pclass!=NULL; pclass=pclass->parent)
 						{
-							for (prop=pclass->pmap; prop!=NULL && prop->otype==pclass->pmap->otype; prop=prop->next)
+							for (prop=pclass->pmap; prop!=NULL && prop->oclass==pclass->pmap->oclass; prop=prop->next)
 							{
 								if (prop->unit!=NULL && strcmp(prop->unit->name,"V")==0 && prop->ptype==PT_complex)
 								{

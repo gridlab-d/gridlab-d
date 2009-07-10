@@ -329,14 +329,6 @@ inline int gl_module_depends(char *name, /**< module name */
 #endif
 
 
-#ifdef __cplusplus
-inline CLASS *gl_find_classnum(OBJECTTYPE num){
-	return (*callback->class_getobjnum)(num);
-}
-#else
-#define gl_find_classnum (*class_getobjnum)
-#endif
-
 /** @} **/
 
 /******************************************************************************

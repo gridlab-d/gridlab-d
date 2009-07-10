@@ -109,7 +109,6 @@ typedef enum {_PT_FIRST=-1,
 	PT_EXTENDBY, /* used to enlarge class size by the size provided in the next argument */
 } PROPERTYTYPE; /**< property types */
 typedef char CLASSNAME[64]; /**< the name a GridLAB class */
-typedef unsigned short OBJECTTYPE; /**< the type ID on an object */
 typedef void* PROPERTYADDR; /**< the offset of a property from the end of the OBJECT header */
 typedef char PROPERTYNAME[64]; /**< the name of a property */
 typedef char FUNCTIONNAME[64]; /**< the name of a function (not used) */
@@ -148,7 +147,7 @@ typedef unsigned long PROPERTYFLAGS;
 #define PF_CHARSET	0x0002 /**< set supports single character keywords (avoids use of |) */
 
 typedef struct s_property_map {
-	OBJECTTYPE otype; /**< object type id implementing the property */
+	CLASS *oclass; /**< class implementing the property */
 	PROPERTYNAME name; /**< property name */
 	PROPERTYTYPE ptype; /**< property type */
 	unsigned long size; /**< property array size */
@@ -163,7 +162,7 @@ typedef struct s_property_map {
 } PROPERTY; /**< property definition item */
 
 typedef struct s_function_map {
-	OBJECTTYPE otype;
+	CLASS *oclass;
 	FUNCTIONNAME name;
 	FUNCTIONADDR addr;
 	struct s_function_map *next;
@@ -182,7 +181,6 @@ typedef enum {CLASSVALID=0xc44d822e} CLASSMAGIC; /* this is used to uniquely ide
 typedef struct s_module_list MODULE;
 struct s_class_list {
 	CLASSMAGIC magic;
-	OBJECTTYPE type;
 	CLASSNAME name;
 	unsigned int size;
 	MODULE *module; 
@@ -223,7 +221,6 @@ CLASS *class_get_first_class(void);
 CLASS *class_get_last_class(void);
 CLASS *class_get_class_from_classname(char *name);
 CLASS *class_get_class_from_classname_in_module(char *name, MODULE *mod);
-CLASS *class_get_class_from_objecttype(OBJECTTYPE type);
 char *class_get_property_typename(PROPERTYTYPE type);
 int class_saveall(FILE *fp);
 int class_saveall_xml(FILE *fp);

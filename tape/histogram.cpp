@@ -217,7 +217,7 @@ int histogram::init(OBJECT *parent)
 	if(parent == NULL) /* better have a group... */
 	{
 		OBJECT *group_obj = NULL;
-		int cid = -1;
+		CLASS *oclass = NULL;
 		gl_error("group");
 		if(group[0] == 0){
 			throw("Histogram has no parent and no group");
@@ -244,11 +244,11 @@ int histogram::init(OBJECT *parent)
 				return 0;
 			}
 			/* check to see if all the group objects are in the same class, allowing us to cache the target property */
-			if (cid == -1){
-				cid = group_obj->oclass->type;
+			if (oclass == NULL){
+				oclass = group_obj->oclass;
 				prop_ptr = prop;
 			}
-			if(cid != group_obj->oclass->type){
+			if(oclass != group_obj->oclass){
 				prop_ptr = NULL;
 			} 
 			

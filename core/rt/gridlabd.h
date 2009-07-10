@@ -406,7 +406,6 @@ typedef unsigned int OBJECTRANK; /**< Object rank number */
 typedef unsigned short OBJECTSIZE; /** Object data size */
 typedef unsigned int OBJECTNUM; /** Object id number */
 typedef char * OBJECTNAME; /** Object name */
-typedef unsigned short OBJECTTYPE; /**< the type ID on an object */
 typedef char FUNCTIONNAME[64]; /**< the name of a function (not used) */
 typedef void* PROPERTYADDR; /**< the offset of a property from the end of the OBJECT header */
 typedef char PROPERTYNAME[64]; /**< the name of a property */
@@ -476,7 +475,7 @@ typedef unsigned long PROPERTYFLAGS;
 #define PF_CHARSET	0x0002 /**< set supports single character keywords (avoids use of |) */
 
 struct s_property_map {
-	OBJECTTYPE otype; /**< object type id implementing the property */
+	CLASS *oclass; /**< class implementing the property */
 	PROPERTYNAME name; /**< property name */
 	PROPERTYTYPE ptype; /**< property type */
 	unsigned long size; /**< property array size */
@@ -586,7 +585,7 @@ struct s_object_list {
 }; /**< Object header structure */
 
 struct s_function_map {
-	OBJECTTYPE otype; ///< the object type to which this function applies
+	CLASS *oclass; ///< class to which this function applies
 	FUNCTIONNAME name; ///< the name of the function
 	FUNCTIONADDR addr; ///< the call address of the function
 	FUNCTION *next; ///< the next function in the function map
@@ -637,7 +636,6 @@ typedef struct s_callbacks {
 	} create;
 	int (*define_map)(CLASS*,...);
 	CLASS *(*class_getname)(char*);
-	CLASS *(*class_getobjnum)(OBJECTTYPE);
 	struct {
 		FUNCTION *(*define)(CLASS*,FUNCTIONNAME,FUNCTIONADDR);
 		FUNCTIONADDR (*get)(char*,char*);

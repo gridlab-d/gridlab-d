@@ -146,14 +146,14 @@ void print_class_d(CLASS *oclass, int tabdepth){
 
 	set_tabs(tabs, tabdepth);
 
-	printf("%sclass %s {\n", tabs, oclass->name,oclass->type);
+	printf("%sclass %s {\n", tabs, oclass->name);
 	if (oclass->parent){
 		printf("%s\tparent %s;\n", tabs, oclass->parent->name);
 		print_class_d(oclass->parent, tabdepth+1);
 	}
-	for (func=oclass->fmap; func!=NULL && func->otype==oclass->type; func=func->next)
+	for (func=oclass->fmap; func!=NULL && func->oclass==oclass; func=func->next)
 		printf( "%s\tfunction %s();\n", tabs, func->name);
-	for (prop=oclass->pmap; prop!=NULL && prop->otype==oclass->type; prop=prop->next)
+	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 	{
 		char *propname = class_get_property_typename(prop->ptype);
 		if (propname!=NULL){
