@@ -71,5 +71,6 @@ double schedule_value(SCHEDULE *sch, SCHEDULEINDEX index);
 long schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
 TIMESTAMP schedule_sync(SCHEDULE *sch, TIMESTAMP t);
 TIMESTAMP schedule_syncall(TIMESTAMP t);
+int schedule_test(void);
 
 #endif

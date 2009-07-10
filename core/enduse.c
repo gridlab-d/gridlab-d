@@ -162,3 +162,38 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 	/* everything converted ok */
 	return 1;
 }
+
+int enduse_test(void)
+{
+	int failed = 0;
+	int ok = 0;
+	int errorcount = 0;
+	char ts[64];
+
+	/* tests */
+	struct s_test {
+		char *name;
+	} *p, test[] = {
+		"TODO",
+	};
+
+	output_test("\nBEGIN: enduse tests");
+	for (p=test;p<test+sizeof(test)/sizeof(test[0]);p++)
+	{
+	}
+
+	/* report results */
+	if (failed)
+	{
+		output_error("endusetest: %d enduse tests failed--see test.txt for more information",failed);
+		output_test("!!! %d enduse tests failed, %d errors found",failed,errorcount);
+	}
+	else
+	{
+		output_verbose("%d enduse tests completed with no errors--see test.txt for details",ok);
+		output_test("endusetest: %d schedule tests completed, %d errors found",ok,errorcount);
+	}
+	output_test("END: enduse tests");
+	return failed;
+}
+

@@ -645,65 +645,16 @@ int loadshape_test(void)
 	int errorcount = 0;
 	char ts[64];
 
-	/* first do schedule tests */
+	/* tests */
 	struct s_test {
-		char *name, *def;
-		char *t1, *t2;
-		int normalize;
-		double value;
+		char *name;
 	} *p, test[] = {
-		/* schedule name	schedule definition							sync time				next time expected		normalize	value expected */
-		{"empty",			"", 										"2000/01/01 00:00:00",	"NEVER",				0,			 0.0},
-		{"halfday-binary",	"* 12-23 * * *",							"2001/02/03 01:30:00",	"2001/02/03 12:00:00",	0,			 0.0},
-		{"halfday-binary",	NULL,										"2002/03/05 13:45:00",	"2002/03/06 00:00:00",	0,			 1.0},
-		{"halfday-bimodal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2003/04/07 01:15:00",	"2003/04/07 12:00:00",	0,			 0.25},
-		{"halfday-bimodal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2004/05/09 00:00:00",	"2004/05/09 12:00:00",	0,			 0.25},
-		{"halfday-bimodal",	NULL,										"2005/06/11 13:20:00",	"2005/06/12 00:00:00",	0,			 0.75},
-		{"halfday-bimodal",	NULL,										"2006/07/13 12:00:00",	"2006/07/14 00:00:00",	0,			 0.75},
-		{"halfday-bimodal",	NULL,										"2007/08/15 00:00:00",	"2007/08/15 12:00:00",	0,			 0.25},
-		{"quarterday-normal", "* 0-5 * * *; * 12-17 * * *;",			"2008/09/17 00:00:00",	"2008/09/17 06:00:00",	SN_WEIGHTED, 0.5},
-		{"quarterday-normal", NULL,										"2009/10/19 06:00:00",	"2009/10/19 12:00:00",	SN_WEIGHTED, 0.0},
-		{"quarterday-normal", NULL,										"2010/11/21 12:00:00",	"2010/11/21 18:00:00",	SN_WEIGHTED, 0.5},
-		{"quarterday-normal", NULL,										"2011/12/23 18:00:00",	"2011/12/24 00:00:00",	SN_WEIGHTED, 0.0},
+		"TODO",
 	};
 
 	output_test("\nBEGIN: loadshape tests");
 	for (p=test;p<test+sizeof(test)/sizeof(test[0]);p++)
 	{
-		TIMESTAMP t1 = convert_to_timestamp(p->t1);
-		int errors=0;
-		SCHEDULE *s = schedule_create(p->name, p->def);
-		output_test("Schedule %s { %s } sync to %s...", p->name, p->def?p->def:(s?s->definition:"???"), convert_from_timestamp(t1,ts,sizeof(ts))?ts:"???");
-		if (s==NULL)
-		{
-			output_test(" ! schedule %s { %s } create failed", p->name, p->def);
-			errors++;
-		}
-		else
-		{
-			TIMESTAMP t2;
-			if (p->normalize) 
-				schedule_normalize(s,p->normalize);
-			t2 = s?schedule_sync(s,t1):TS_NEVER;
-			if (s->value!=p->value)
-			{
-				output_test(" ! expected value %lg but found %lg",  p->value, s->value);
-				errors++;
-			}
-			if (t2!=convert_to_timestamp(p->t2))
-			{
-				output_test(" ! expected next time %s but found %s", p->t2, convert_from_timestamp(t2,ts,sizeof(ts))?ts:"???");
-				errors++;
-			}
-		}
-		if (errors==0)
-		{
-			output_test("   test passed");
-			ok++;
-		}
-		else
-			failed++;
-		errorcount+=errors;
 	}
 
 	/* TODO now ok to do loadshape tests */
@@ -711,13 +662,13 @@ int loadshape_test(void)
 	/* report results */
 	if (failed)
 	{
-		output_error("loadshapetest: %d schedule tests failed--see test.txt for more information",failed);
-		output_test("!!! %d schedule tests failed, %d errors found",failed,errorcount);
+		output_error("loadshapetest: %d loadshape tests failed--see test.txt for more information",failed);
+		output_test("!!! %d loadshape tests failed, %d errors found",failed,errorcount);
 	}
 	else
 	{
-		output_verbose("%d schedule tests completed with no errors--see test.txt for details",ok);
-		output_test("loadshapetest: %d schedule tests completed, %d errors found",ok,errorcount);
+		output_verbose("%d loadshape tests completed with no errors--see test.txt for details",ok);
+		output_test("loadshapetest: %d loadshape tests completed, %d errors found",ok,errorcount);
 	}
 	output_test("END: loadshape tests");
 	return failed;

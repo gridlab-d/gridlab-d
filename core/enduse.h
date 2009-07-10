@@ -24,5 +24,6 @@ TIMESTAMP enduse_sync(enduse *e, TIMESTAMP t1);
 TIMESTAMP enduse_syncall(TIMESTAMP t1);
 int convert_to_enduse(char *string, void *data, PROPERTY *prop);
 int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop);
+int enduse_test(void);
 
 #endif

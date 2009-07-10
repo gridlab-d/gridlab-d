@@ -20,6 +20,9 @@
 	- \p --dsttest	performs a daylight saving time definitions in \b tzinfo.txt
 	- \p --unitstest	performs a test of the units in \b unitfile.txt
 	- \p --randtest	performs a test of the random number generators
+	- \p --scheduletest	performs a test of the built-in schedules
+	- \p --loadshapetest	performs a test of the built-in loadshapes 
+	- \p --endusetest	performs a test of the built-in enduses
 	- \p --testall \e file	performs module selftests of modules those listed in \e file
 	- \p --test	run the internal core self-test routines
 	- \p --define	define a global variable
@@ -267,8 +270,12 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			random_test();
 		else if (strcmp(*argv,"--unitstest")==0)
 			unit_test();
+		else if (strcmp(*argv,"--scheduletest")==0)
+			schedule_test();
 		else if (strcmp(*argv,"--loadshapetest")==0)
 			loadshape_test();
+		else if (strcmp(*argv,"--endusetest")==0)
+			enduse_test();
 		else if (strcmp(*argv,"--xmlstrict")==0)
 			global_xmlstrict = !global_xmlstrict;
 		else if (strcmp(*argv,"--globaldump")==0)
