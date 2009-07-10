@@ -606,7 +606,7 @@ int output_profile(char *format, ...) /**< /bprintf style argument list */
 	if (redirect.profile!=NULL)
 		return fprintf(redirect.profile,"%s\n",tmp);
 	else
-		return output_message("%s",tmp);
+		return (*printstd)("%s\n",tmp);
 }
 
 /** Output a progress report

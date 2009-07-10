@@ -27,7 +27,8 @@ module commercial {
 }
 
 class office {
-	loadshape plugs;
+	loadshape plugs_shape;
+	enduse plugs_enduse;
 }
 
 schedule officehours {
@@ -37,7 +38,8 @@ schedule officehours {
 }
 
 object office:..${NOFFICES} {
-	plugs "type: analog; schedule: officehours; energy: 25 Btu";
+	plugs_shape "type: analog; schedule: officehours; energy: 25 Btu";
+	plugs_enduse "current_fraction: 0.5; impedance_fraction: 0.5; power_factor: 0.97; loadshape: plugs";
 	name `office_{id}`;
 	floor_area random.triangle(10000,100000) sf;
 	floor_height random.triangle(10,15) ft;
@@ -70,7 +72,7 @@ object recorder {
 #ifdef BUILDING
 object recorder {
 	parent office_1;
-	property air_temperature,hc_mode,mass_temperature,Qh,Qs,Qi,Qz,occupancy,control.ventilation_fraction,cooling_setpoint,heating_setpoint,total_load;
+	property air_temperature,hvac_mode,mass_temperature,Qh,Qs,Qi,Qz,occupancy,control.ventilation_fraction,cooling_setpoint,heating_setpoint,total_load;
 	file office_1.csv;
 	interval 0;
 }

@@ -10,7 +10,9 @@ typedef struct s_enduse {
 	complex power;
 	complex energy;
 	complex demand;
-	double impedance_zip, current_zip, power_zip;
+	double impedance_fraction;
+	double current_fraction;
+	double power_fraction;
 	double power_factor;
 	struct s_enduse *next;
 } enduse;

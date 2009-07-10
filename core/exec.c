@@ -586,7 +586,7 @@ STATUS exec_start(void)
 	/* report performance */
 	if (global_profiler && sync.status==SUCCESS)
 	{
-		double elapsed_sim = (timestamp_to_hours(global_clock)-timestamp_to_hours(start_time));
+		double elapsed_sim = (timestamp_to_hours(global_clock<start_time?start_time:global_clock)-timestamp_to_hours(start_time));
 		double elapsed_wall = (double)(realtime_now()-started_at+1);
 		double sync_time = 0;
 		double sim_speed = object_get_count()/1000.0*elapsed_sim/elapsed_wall;
@@ -616,8 +616,8 @@ STATUS exec_start(void)
 #ifndef NOLOCKS
 		output_profile("Memory lock contention  %7.01lf%%", (lock_spin>0 ? (1-(double)lock_count/(double)lock_spin)*100 : 0));
 #endif
-		output_profile("Average timestep        %7.0lf seconds/timestep", (double)(global_clock-start_time)/tsteps);
-		output_profile("Simulation rate         %7.0lf x realtime", (double)(global_clock-start_time)/elapsed_wall);
+		output_profile("Average timestep        %7.0lf seconds/timestep", (double)(global_clock<start_time?0:global_clock-start_time)/tsteps);
+		output_profile("Simulation rate         %7.0lf x realtime", (double)(global_clock<start_time?0:global_clock-start_time)/elapsed_wall);
 		output_profile("\n");
 	}
 

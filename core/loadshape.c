@@ -42,9 +42,7 @@
 
 static loadshape *loadshape_list = NULL;
 /** Create a loadshape
-    The arguments depend on the loadshape machine type:
-	
-	@return a pointer to the new state machine on success, or NULL on failure
+	@return 1 on success, 0 on failure
  **/
 int loadshape_create(void *data)
 {
@@ -633,27 +631,8 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 		}
 	}
 
-	/* Add to list of active loadshapes only if not already in list 
-	   Note: this is the most efficient way to do it, but it avoids having
-	   to implement support for creators for all core properties
-	 */
-	/* search loadshape list for this load shape */
-	for (ls=loadshape_list; ls!=NULL; ls=ls->next)
-	{
-		if (ls==(loadshape*)data)
-			break;
-	}
-
-	/* if not found in list */
-	if (ls==NULL)
-	{
-		ls = (loadshape*)data;
-		ls->next = loadshape_list;
-		loadshape_list = ls;
-	}
-	
 	/* reinitialize the loadshape */
-	else if (loadshape_init((loadshape*)data)==FAILED)
+	if (loadshape_init((loadshape*)data))
 		return 0;
 
 	/* everything converted ok */
@@ -728,7 +707,7 @@ int loadshape_test(void)
 		errorcount+=errors;
 	}
 
-	/* TODO loadshape tests */
+	/* TODO now ok to do loadshape tests */
 
 	/* report results */
 	if (failed)

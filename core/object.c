@@ -287,7 +287,7 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	obj->flags = OF_NONE;
 
 	for (prop=obj->oclass->pmap; prop!=NULL; prop=prop->next)
-		property_create(prop,(char*)obj+(int)(prop->addr));
+		property_create(prop,(void*)((char *)(obj+1)+(int64)(prop->addr)));
 	
 	if(first_object == NULL){
 		first_object = obj;
