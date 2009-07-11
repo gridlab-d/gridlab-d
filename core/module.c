@@ -175,6 +175,7 @@ static CALLBACKS callbacks = {
 	object_get_oflags,
 	object_get_count,
 	{schedule_create, schedule_index, schedule_value, schedule_dtnext},
+	{enduse_sync},
 };
 
 MODULE *first_module = NULL;

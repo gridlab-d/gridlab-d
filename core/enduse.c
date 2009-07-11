@@ -55,12 +55,22 @@ int enduse_initall(void)
 	return SUCCESS;
 }
 
-TIMESTAMP enduse_sync(enduse *e, TIMESTAMP t1)
+TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1)
 {
-	TIMESTAMP t2 = TS_NEVER;
-
-	/* TODO update power, energy, demand, etc. from shape->load */
-	return t2;
+	if (pass==PC_PRETOPDOWN && t1>t0)
+	{
+		double dt = (double)(t1-t0)/(double)3600;
+		e->energy.r += e->power.i * dt;
+		e->energy.i += e->power.i * dt;
+	}
+	else if(pass==PC_BOTTOMUP)
+	{
+		e->power.r = e->shape->load * (e->power_fraction + (e->current_fraction + e->impedance_fraction/e->voltage_factor )/e->voltage_factor) ;
+		e->power.i = e->shape->load * e->power_factor;
+		if (e->power.r > e->demand.r) e->demand = e->power;
+		e->heatgain = e->power.r * e->heatgain_fraction;
+	}
+	return TS_NEVER;
 }
 
 TIMESTAMP enduse_syncall(TIMESTAMP t1)
@@ -69,7 +79,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	for (e=enduse_list; e!=NULL; e=e->next)
 	{
-		TIMESTAMP t3 = enduse_sync(e,t1);
+		TIMESTAMP t3 = enduse_sync(e,PC_PRETOPDOWN,global_clock,t1);
 		if (t3<t2) t2 = t3;
 	}
 	return t2;

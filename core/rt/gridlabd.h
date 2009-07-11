@@ -752,6 +752,9 @@ typedef struct s_callbacks {
 		double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
 		long (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
 	} schedule;
+	struct {
+		TIMESTAMP (*sync)(enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1);
+	} enduse;
 } CALLBACKS; /**< core callback function table */
 
 extern CALLBACKS *callback; 
@@ -927,6 +930,11 @@ inline double gl_schedule_value(SCHEDULE *sch, SCHEDULEINDEX index)
 inline long gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
 {
 	return callback->schedule.dtnext(sch,index);
+}
+
+inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1)
+{
+	return callback->enduse.sync(e,PC_BOTTOMUP,*(callback->global_clock),t1);
 }
 
 

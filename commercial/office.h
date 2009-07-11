@@ -14,7 +14,7 @@
 class multizone;
 
 /* each electric load must have an enduse member */
-typedef struct s_enduse {
+typedef struct s_endusex {
 	double power_factor;		/**< ENDUSE power factor */
 	complex energy;				/**< ENDUSE cumulative energy (Wh) */
 	complex power;				/**< ENDUSE power (W) */

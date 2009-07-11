@@ -16,6 +16,7 @@
 #include "random.h"
 #include "threadpool.h"
 #include "schedule.h"
+#include "enduse.h"
 
 /* this must match property_type list in object.c */
 typedef unsigned int OBJECTRANK; /**< Object rank number */
@@ -193,6 +194,9 @@ typedef struct s_callbacks {
 		double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
 		long (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
 	} schedule;
+	struct {
+		TIMESTAMP (*sync)(enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1);
+	} enduse;
 } CALLBACKS; /**< core callback function table */
 
 #ifdef __cplusplus

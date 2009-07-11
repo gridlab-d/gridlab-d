@@ -34,7 +34,7 @@ typedef struct s_load {
 	double heatgain;	///< internal heat gain rate (kW)
 } ENDUSELOAD;	///< End-use load struct that must be included in end-use for circuits to read load
 
-typedef struct s_loadshape{
+typedef struct s_loadshapex {
 	char *name; ///< end-use name
 	int32 type; ///< load shape type (see LST_*)
 	double scalar; ///< scaling parameter (action differs based on type)
@@ -49,7 +49,7 @@ typedef struct s_loadshape{
 	double breaker_amps; ///< breaker amps
 	bool is220;	///< 220V load
 	/* this value is setup during init */
-	struct s_loadshape *next; ///< next end-use shape in list
+	struct s_loadshapex *next; ///< next end-use shape in list
 	/* these values are only used duration simulation */
 	double queue; ///< the current state of the queue
 	double reqd_queue;//stores integer parts of queue
