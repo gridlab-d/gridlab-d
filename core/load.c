@@ -4610,6 +4610,10 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 		modtime = stat.st_mtime;
 		fsize = stat.st_size;
 	}
+	if(fsize <= 1){
+		// empty file short circuit
+		return SUCCESS;
+	}
 	output_verbose("file '%s' is %d bytes long", file,fsize);
 	/* removed malloc check since it doesn't malloc any more */
 	buffer[0] = '\0';
@@ -4632,7 +4636,11 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 		move = buffer_read_alt(fp, buffer, file, 20479);
 	}
 
-	status = (*p=='\0') ? SUCCESS : FAILED;
+	if(p != 0){ /* did the file contain anything? */
+		status = (*p=='\0') ? SUCCESS : FAILED;
+	} else {
+		status = FAILED;
+	}
 	if (status==FAILED)
 	{
 		char *eol = strchr(p,'\n');
