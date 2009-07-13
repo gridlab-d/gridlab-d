@@ -2,682 +2,685 @@
 // own discretion -- may not agree with some published
 // values.
 
+// Note:  This file will not do anything on its own.
+//        Use it only as a reference or an "include" file.
+
 module powerflow;
 
 object overhead_line_conductor {
-        name 1/0_ACSR;
+        name "1/0_ACSR";
         geometric_mean_radius 0.135890cm;
         resistance 0.646847Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1000_CU;
+        name "1000_CU";
         geometric_mean_radius 1.121921cm;
         resistance 0.042875Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_AAAC;
+        name "1/0_AAAC";
         geometric_mean_radius 0.347980cm;
         resistance 0.592167Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2_WPCU;
+        name "2_WPCU";
         geometric_mean_radius 0.254762cm;
         resistance 0.587196Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 250_CU;
+        name "250_CU";
         geometric_mean_radius 0.551688cm;
         resistance 0.159692Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 600_CU;
+        name "600_CU";
         geometric_mean_radius 0.838200cm;
         resistance 0.062323Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2/0_WPCU;
+        name "2/0_WPCU";
         geometric_mean_radius 0.381254cm;
         resistance 0.298879Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 350_CU;
+        name "350_CU";
         geometric_mean_radius 0.652780cm;
         resistance 0.114643Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_QPX;
+        name "4/0_QPX";
         geometric_mean_radius 0.480568cm;
         resistance 0.301837Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_3WCS;
+        name "1/0_3WCS";
         geometric_mean_radius 0.347980cm;
         resistance 0.603674Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 14_CU;
+        name "14_CU";
         geometric_mean_radius 0.129885cm;
         resistance 8.463073Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_4WCS;
+        name "1/0_4WCS";
         geometric_mean_radius 0.347980cm;
         resistance 0.603674Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 6_AM;
+        name "6_AM";
         geometric_mean_radius 0.120142cm;
         resistance 2.460629Ohm/km;
 }
 
 object overhead_line_conductor {
-        name #2_ACSR_6/1;
+        name "#2_ACSR_6/1";
         geometric_mean_radius 0.127000cm;
         resistance 1.010411Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 400_CU;
+        name "400_CU";
         geometric_mean_radius 0.697738cm;
         resistance 0.100662Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_ACSR;
+        name "4/0_ACSR";
         geometric_mean_radius 0.248158cm;
         resistance 0.349832Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_AAAC;
+        name "4/0_AAAC";
         geometric_mean_radius 0.480568cm;
         resistance 0.295773Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1_WPCU;
+        name "1_WPCU";
         geometric_mean_radius 0.309626cm;
         resistance 0.470378Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 500_CU;
+        name "500_CU";
         geometric_mean_radius 0.792734cm;
         resistance 0.080778Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_WPCU;
+        name "1/0_WPCU";
         geometric_mean_radius 0.339598cm;
         resistance 0.381335Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 6_WPCU;
+        name "6_WPCU";
         geometric_mean_radius 0.160274cm;
         resistance 1.485077Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4_DPX;
+        name "4_DPX";
         geometric_mean_radius 0.213360cm;
         resistance 1.522297Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2_ACSR;
+        name "2_ACSR";
         geometric_mean_radius 0.127508cm;
         resistance 1.010163Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 500_WPAL;
+        name "500_WPAL";
         geometric_mean_radius 0.989330cm;
         resistance 0.146954Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_ALQPX;
+        name "1/0_ALQPX";
         geometric_mean_radius 0.347980cm;
         resistance 0.592167Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 101_ACSR_12/7;
+        name "101_ACSR_12/7";
         geometric_mean_radius 0.016256cm;
         resistance 0.679780Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_ALQPX;
+        name "4/0_ALQPX";
         geometric_mean_radius 0.480568cm;
         resistance 0.301837Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 750_CU;
+        name "750_CU";
         geometric_mean_radius 0.971804cm;
         resistance 0.055302Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4_WPCU;
+        name "4_WPCU";
         geometric_mean_radius 0.202184cm;
         resistance 0.932057Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_AAC;
+        name "1/0_AAC";
         geometric_mean_radius 0.366596cm;
         resistance 0.592167Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 500_CU_19STR;
+        name "500_CU_19STR";
         geometric_mean_radius 0.779780cm;
         resistance 0.081027Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_ACSR_AZUSA;
+        name "1/0_ACSR_AZUSA";
         geometric_mean_radius 0.135890cm;
         resistance 0.658790Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_WPCU;
+        name "4/0_WPCU";
         geometric_mean_radius 0.480060cm;
         resistance 0.188275Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2_TPX;
+        name "2_TPX";
         geometric_mean_radius 0.213360cm;
         resistance 0.583989Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 777_CU;
+        name "777_CU";
         geometric_mean_radius 0.987552cm;
         resistance 0.062992Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2_ACSR_TW;
+        name "2_ACSR_TW";
         geometric_mean_radius 0.153545cm;
         resistance 1.010163Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 6_ACSR;
+        name "6_ACSR";
         geometric_mean_radius 0.120142cm;
         resistance 2.460262Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_AAC;
+        name "4/0_AAC";
         geometric_mean_radius 0.314757cm;
         resistance 0.295773Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 500_KCM_WPAL;
+        name "500_KCM_WPAL";
         geometric_mean_radius 0.989330cm;
         resistance 0.146954Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_AAC_TW;
+        name "4/0_AAC_TW";
         geometric_mean_radius 0.314757cm;
         resistance 0.295773Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4_ACSR;
+        name "4_ACSR";
         geometric_mean_radius 0.133096cm;
         resistance 1.572497Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 477_ACSR_26/7;
+        name "477_ACSR_26/7";
         geometric_mean_radius 0.883920cm;
         resistance 0.131731Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 397_ACSR_18/1;
+        name "397_ACSR_18/1";
         geometric_mean_radius 0.731520cm;
         resistance 0.159692Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 6_WPCU_SEC;
+        name "6_WPCU_SEC";
         geometric_mean_radius 0.160274cm;
         resistance 1.485077Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2/0_WPAL;
+        name "2/0_WPAL";
         geometric_mean_radius 0.155448cm;
         resistance 0.530030Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_TPX;
+        name "1/0_TPX";
         geometric_mean_radius 0.347980cm;
         resistance 0.114332Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4_TPX;
+        name "4_TPX";
         geometric_mean_radius 0.213360cm;
         resistance 1.522297Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_ARV_7STR;
+        name "4/0_ARV_7STR";
         geometric_mean_radius 0.513080cm;
         resistance 0.294592Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2/0_ARV_7STR;
+        name "2/0_ARV_7STR";
         geometric_mean_radius 0.406400cm;
         resistance 0.469197Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_ARV_7STR;
+        name "1/0_ARV_7STR";
         geometric_mean_radius 0.361696cm;
         resistance 0.590800Ohm/km;
 }
 
 object overhead_line_conductor {
-        name #4_CU_1STR;
+        name "#4_CU_1STR";
         geometric_mean_radius 0.202184cm;
         resistance 0.933983Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1000_KCM_WPAL;
+        name "1000_KCM_WPAL";
         geometric_mean_radius 1.314961cm;
         resistance 0.074813Ohm/km;
 }
 
 object overhead_line_conductor {
-        name UNK_UNK;
+        name "UNK_UNK";
         geometric_mean_radius 0.133096cm;
         resistance 1.572497Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_3W_CS;
+        name "1/0_3W_CS";
         geometric_mean_radius 0.347980cm;
         resistance 0.603674Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_WPAL;
+        name "1/0_WPAL";
         geometric_mean_radius 0.135890cm;
         resistance 0.695867Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2_WPAL;
+        name "2_WPAL";
         geometric_mean_radius 0.127508cm;
         resistance 1.050198Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_TPX;
+        name "4/0_TPX";
         geometric_mean_radius 0.480568cm;
         resistance 0.301837Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2/0_ACSR_TW;
+        name "2/0_ACSR_TW";
         geometric_mean_radius 0.155448cm;
         resistance 0.530030Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_ACSR_TW;
+        name "1/0_ACSR_TW";
         geometric_mean_radius 0.204544cm;
         resistance 0.646847Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_CU_7STR;
+        name "4/0_CU_7STR";
         geometric_mean_radius 0.480060cm;
         resistance 0.188275Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2/0_CU_7STR;
+        name "2/0_CU_7STR";
         geometric_mean_radius 0.381000cm;
         resistance 0.298880Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 266_ACSR_26/7;
+        name "266_ACSR_26/7";
         geometric_mean_radius 0.661416cm;
         resistance 0.234319Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_CU_7STR;
+        name "1/0_CU_7STR";
         geometric_mean_radius 0.340360cm;
         resistance 0.377172Ohm/km;
 }
 
 object overhead_line_conductor {
-        name DEFAULT;
+        name "DEFAULT";
         geometric_mean_radius 0.883920cm;
         resistance 0.121789Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 3#1_CU;
+        name "3#1_CU";
         geometric_mean_radius 0.309626cm;
         resistance 0.470378Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_4W_CS;
+        name "1/0_4W_CS";
         geometric_mean_radius 0.347980cm;
         resistance 0.603674Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 397_ACSR;
+        name "397_ACSR";
         geometric_mean_radius 0.731520cm;
         resistance 0.159692Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1_CU;
+        name "1_CU";
         geometric_mean_radius 0.309626cm;
         resistance 0.470378Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2_CU;
+        name "2_CU";
         geometric_mean_radius 0.254762cm;
         resistance 0.587196Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 3_CU;
+        name "3_CU";
         geometric_mean_radius 0.227076cm;
         resistance 0.748877Ohm/km;
 }
 
 object overhead_line_conductor {
-        name #4_ACSR_6/1;
+        name "#4_ACSR_6/1";
         geometric_mean_radius 0.133096cm;
         resistance 1.572690Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4_CU;
+        name "4_CU";
         geometric_mean_radius 0.202184cm;
         resistance 0.932057Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 5_CU;
+        name "5_CU";
         geometric_mean_radius 0.179832cm;
         resistance 1.190490Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 6_CU;
+        name "6_CU";
         geometric_mean_radius 0.160274cm;
         resistance 1.485077Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 8_CU;
+        name "8_CU";
         geometric_mean_radius 0.127000cm;
         resistance 2.386250Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_WPAL;
+        name "4/0_WPAL";
         geometric_mean_radius 0.480568cm;
         resistance 0.302821Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 397_ACSR_26/7;
+        name "397_ACSR_26/7";
         geometric_mean_radius 0.807720cm;
         resistance 0.157828Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 6_WPAL;
+        name "6_WPAL";
         geometric_mean_radius 0.120142cm;
         resistance 2.430120Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2_AAAC;
+        name "2_AAAC";
         geometric_mean_radius 0.269240cm;
         resistance 0.944298Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 556_ACSR_26/7;
+        name "556_ACSR_26/7";
         geometric_mean_radius 0.954024cm;
         resistance 0.113090Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 336_AAC;
+        name "336_AAC";
         geometric_mean_radius 0.671264cm;
         resistance 0.188275Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4_WPAL;
+        name "4_WPAL";
         geometric_mean_radius 0.213360cm;
         resistance 1.528212Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 795_AAC;
+        name "795_AAC";
         geometric_mean_radius 0.999744cm;
         resistance 0.081400Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 336_ACSR;
+        name "336_ACSR";
         geometric_mean_radius 0.701040cm;
         resistance 0.188275Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1000_WPAL;
+        name "1000_WPAL";
         geometric_mean_radius 1.314961cm;
         resistance 0.065289Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 477_AAAC;
+        name "477_AAAC";
         geometric_mean_radius 0.762000cm;
         resistance 0.134216Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 397_ACSR_TW;
+        name "397_ACSR_TW";
         geometric_mean_radius 0.731520cm;
         resistance 0.159692Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 266_ACSR;
+        name "266_ACSR";
         geometric_mean_radius 0.661416cm;
         resistance 0.234257Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2/0_CU;
+        name "2/0_CU";
         geometric_mean_radius 0.381254cm;
         resistance 0.298879Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 266_ARV_19STR;
+        name "266_ARV_19STR";
         geometric_mean_radius 0.607314cm;
         resistance 0.236121Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_ACSR_6/1;
+        name "4/0_ACSR_6/1";
         geometric_mean_radius 0.248920cm;
         resistance 0.349770Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 101_ACSR;
+        name "101_ACSR";
         geometric_mean_radius 0.016256cm;
         resistance 0.679780Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4_AAAC;
+        name "4_AAAC";
         geometric_mean_radius 0.213360cm;
         resistance 1.497318Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2/0_ACSR_6/1;
+        name "2/0_ACSR_6/1";
         geometric_mean_radius 0.154940cm;
         resistance 0.530030Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_ACSR_6/1;
+        name "1/0_ACSR_6/1";
         geometric_mean_radius 0.137160cm;
         resistance 0.646910Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 3/0_CU;
+        name "3/0_CU";
         geometric_mean_radius 0.427990cm;
         resistance 0.240036Ohm/km;
 }
 
 object overhead_line_conductor {
-        name #2_CU_7STR;
+        name "#2_CU_7STR";
         geometric_mean_radius 0.269240cm;
         resistance 0.599002Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 397_AAC_TREEWIRE;
+        name "397_AAC_TREEWIRE";
         geometric_mean_radius 0.731520cm;
         resistance 0.175853Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_CU_TWISTED;
+        name "1/0_CU_TWISTED";
         geometric_mean_radius 0.474980cm;
         resistance 0.206726Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 750_AAC;
+        name "750_AAC";
         geometric_mean_radius 0.972640cm;
         resistance 0.086371Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_CU;
+        name "1/0_CU";
         geometric_mean_radius 0.339598cm;
         resistance 0.381335Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 2/0_ACSR;
+        name "2/0_ACSR";
         geometric_mean_radius 0.155448cm;
         resistance 0.530030Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 477_AAC;
+        name "477_AAC";
         geometric_mean_radius 0.519069cm;
         resistance 0.134216Ohm/km;
 }
 
 object overhead_line_conductor {
-        name BUSS_2000_AMP;
+        name "BUSS_2000_AMP";
         geometric_mean_radius 0.127000cm;
         resistance 0.128002Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 300_CU;
+        name "300_CU";
         geometric_mean_radius 0.614172cm;
         resistance 0.133595Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 3/0_ACSR;
+        name "3/0_ACSR";
         geometric_mean_radius 0.182880cm;
         resistance 0.396435Ohm/km;
 }
 
 object overhead_line_conductor {
-        name #6_CU_1STR;
+        name "#6_CU_1STR";
         geometric_mean_radius 0.160274cm;
         resistance 1.485083Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 336_ACSR_26/7;
+        name "336_ACSR_26/7";
         geometric_mean_radius 0.743712cm;
         resistance 0.186411Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 477_ACSR;
+        name "477_ACSR";
         geometric_mean_radius 0.762000cm;
         resistance 0.134216Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 1/0_QPX;
+        name "1/0_QPX";
         geometric_mean_radius 0.347980cm;
         resistance 0.114332Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 250_CU_12STR;
+        name "250_CU_12STR";
         geometric_mean_radius 0.579120cm;
         resistance 0.159692Ohm/km;
 }
 
 object overhead_line_conductor {
-        name #2_ARV_7STR;
+        name "#2_ARV_7STR";
         geometric_mean_radius 0.287020cm;
         resistance 0.939016Ohm/km;
 }
 
 object overhead_line_conductor {
-        name 4/0_CU;
+        name "4/0_CU";
         geometric_mean_radius 0.507238cm;
         resistance 0.190575Ohm/km;
 }
