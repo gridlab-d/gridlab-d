@@ -211,6 +211,12 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	/* new histogram() */
 	new_histogram(module);
 
+#if 0
+	new_loadshape(module);
+#endif // zero
+
+//	new_schedule(module);
+
 	/* always return the first class registered */
 	return player_class;
 }

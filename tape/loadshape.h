@@ -6,6 +6,7 @@
 
  @{
  **/
+#if 0
 
 #ifndef _LOADSHAPE_H
 #define _LOADSHAPE_H
@@ -86,3 +87,5 @@ public:
 #endif // _LOADSHAPE_H
 
 /**@}**/
+
+#endif // zero

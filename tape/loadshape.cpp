@@ -8,6 +8,8 @@
  @{
  **/
 
+#if 0
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -266,3 +268,5 @@ EXPORT int commit_loadshape(OBJECT *obj){
 }
 
 /**@}**/
+
+#endif // zero
