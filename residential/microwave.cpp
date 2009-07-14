@@ -97,12 +97,22 @@ int microwave::init(OBJECT *parent)
 		return 0;
 	}
 
-	// attach object to house panel
-	house *pHouse = OBJECTDATA(parent,house);
-	pVoltage = (pHouse->attach(OBJECTHDR(this),20,false))->pV;
+	//	pull parent attach_enduse and attach the enduseload
+	FUNCTIONADDR attach = 0;
+	load.end_obj = hdr;
+	attach = (gl_get_function(parent, "attach_enduse"));
+	if(attach == NULL){
+		gl_error("freezer parent must publish attach_enduse()");
+		/*	TROUBLESHOOT
+			The Microwave object attempt to attach itself to its parent, which
+			must implement the attach_enduse function.
+		*/
+		return 0;
+	}
+	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
 
 	// initial demand
-	update_state();
+	update_state(0.0);
 
 	return 1;
 }
@@ -114,6 +124,14 @@ double microwave::update_state(double dt)
 	static double sumrt = 2520; // sum(pdf) -- you do the math
 	static double avgrt = sumrt/sizeof(rt);
 
+	if(demand < 0.0){
+		gl_error("microwave demand less than 0, reseting to zero");
+		demand = 0.0;
+	}
+	if(demand > 1.0){
+		gl_error("microwave demand greater than 1, reseting to one");
+		demand = 1.0;
+	}
 	switch (state) {
 	case OFF:
 		// new OFF state or demand changed
@@ -158,13 +176,6 @@ double microwave::update_state(double dt)
 			to either "ON" or "OFF".
 		*/
 	}
-	/* before we update our power for the next state */
-	if (dt>0) load.energy += load.total * dt/3600.0; /* dt in seconds */
-	
-	load.power.SetPowerFactor( (state==ON?installed_power:standby_power)/1000,power_factor);
-	load.total = load.power;
-	
-	load.heatgain = load.total.Mag()*(state==ON?heat_fraction:1.0);
 
 	return runtime;
 }
@@ -175,6 +186,14 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 		return TS_NEVER;
 
 	double dt = update_state(gl_toseconds(t1-t0));
+
+	/* before we update our power for the next state */
+	if (dt>0) load.energy += load.total * dt/3600.0; /* dt in seconds */
+	
+	load.power.SetPowerFactor( (state==ON?installed_power:standby_power)/1000,power_factor);
+	load.total = load.power;
+	
+	load.heatgain = load.total.Mag()*(state==ON?heat_fraction:1.0);
 
 	return dt>0?-(TIMESTAMP)(t1 + dt*TS_SECOND):TS_NEVER; // negative time means soft transition
 }
