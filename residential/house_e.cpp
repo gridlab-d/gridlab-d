@@ -193,7 +193,7 @@ EXPORT CIRCUIT *attach_enduse_house_e(OBJECT *obj, ENDUSELOAD *attachee, double 
 	c->tripsleft = 100;
 
 	// attach the enduse for future reference
-	//c->enduse = obj;
+	c->enduse = attachee->end_obj;
 
 	return c;
 }
@@ -567,7 +567,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP te = TS_NEVER;
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
 
-	double nHours = gl_tohours(dt1);
+	double nHours = (double)gl_tohours(dt1);
 	HVAC_load.energy += HVAC_load.total * nHours;
 
 	if (t0==0 || t1>t0)
@@ -1217,7 +1217,7 @@ void house_e::update_model(double dt)
 
 	/* compute next initial condition */
 	dTi = c2*Tm + c1*Ti - (c1+c2)*Tout + c7;
-	k1 = (r2*Ti - r2*Teq - dTi)/(r2-r1);
+	k1 = (r1*Ti - r2*Teq - dTi)/(r2-r1);
 	k2 = (dTi - r1*k1)/r2;
 }
 
