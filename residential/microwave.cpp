@@ -138,7 +138,7 @@ double microwave::update_state(double dt)
 		if (state_time==0 || prev_demand!=demand) 
 		{
 			if(demand != 0.0){
-				runtime = avgrt/demand;
+				runtime = avgrt * (1-demand)/demand;
 			} 
 			else {
 				runtime = 0.0;
