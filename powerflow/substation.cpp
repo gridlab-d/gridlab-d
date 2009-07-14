@@ -65,9 +65,9 @@ substation::substation(MODULE *mod) : node(mod)
 			PT_complex, "distribution_voltage_A[V]", PADDR(distribution_voltage[0]),
 			PT_complex, "distribution_voltage_B[V]", PADDR(distribution_voltage[1]),
 			PT_complex, "distribution_voltage_C[V]", PADDR(distribution_voltage[2]),
-			PT_complex, "distribution_current_A[V]", PADDR(distribution_current[0]),
-			PT_complex, "distribution_current_B[V]", PADDR(distribution_current[1]),
-			PT_complex, "distribution_current_C[V]", PADDR(distribution_current[2]),
+			PT_complex, "distribution_current_A[A]", PADDR(distribution_current[0]),
+			PT_complex, "distribution_current_B[A]", PADDR(distribution_current[1]),
+			PT_complex, "distribution_current_C[A]", PADDR(distribution_current[2]),
 
 			// Information on Network solver connection
 			PT_double, "Network_Node_Base_Power[MVA]", PADDR(Network_Node_Base_Power),
