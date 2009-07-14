@@ -26,6 +26,7 @@ typedef enum {	X12=0,	///< circuit from line 1 to line 2    (240V)
 
 typedef struct s_load {
 	/* NOTE: total must be first and must be published as "enduse_load[kVA]" */
+	OBJECT *end_obj;
 	complex total;		///< total load at voltage given (kVA)
 	complex power;		///< constant power load (kVA)
 	complex current;	///< constant current load (kVA)
