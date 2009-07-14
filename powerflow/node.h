@@ -138,6 +138,7 @@ public:
 	friend class meter;	// needs access to current_inj
 	friend class substation; //needs access to current_inj
 	friend class triplex_meter; // needs access to current_inj
+	friend class fuse;			// needs access to current_inj
 
 	int kmldump(FILE *fp);
 };

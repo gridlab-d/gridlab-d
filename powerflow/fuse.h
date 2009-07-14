@@ -7,24 +7,37 @@
 #include "powerflow.h"
 #include "relay.h"
 
+#define Open_Z 1000000;	//Open impedance - 100 MOhm
+
 class fuse : public link
 {
-protected:
-	TIMESTAMP blow_time;
 public:
     static CLASS *oclass;
     static CLASS *pclass;
 
 public:
-	int time_curve;   // equation, current vs time curve
-	double current_limit;	/// maximum current
+	typedef enum {GOOD=0, BLOWN=1} FUSESTATE;
 
 	int create(void);
 	int init(OBJECT *parent);
-	TIMESTAMP sync(TIMESTAMP t0);
+	int fuse_state(OBJECT *parent);
+	TIMESTAMP postsync(TIMESTAMP t0);
 	fuse(MODULE *mod);
 	inline fuse(CLASS *cl=oclass):link(cl){};
 	int isa(char *classname);
+
+	double current_limit;
+	double mean_replacement_time;
+	TIMESTAMP fix_time_A;
+	TIMESTAMP fix_time_B;
+	TIMESTAMP fix_time_C;
+	FUSESTATE phase_A_status;
+	FUSESTATE phase_B_status;
+	FUSESTATE phase_C_status;
+
+private:
+	TIMESTAMP Prev_Time;
+	void fuse_check(set phase_to_check, complex *fcurr, complex *curr);
 };
 
 #endif // _FUSE_H

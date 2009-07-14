@@ -39,8 +39,16 @@ fuse::fuse(MODULE *mod) : link(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "link",
 			PT_double, "current_limit[A]",PADDR(current_limit),
-			PT_enumeration, "time_curve", PADDR(time_curve),
-				PT_KEYWORD, "UNKNOWN", UNKNOWN,
+			PT_double, "mean_replacement_time[H]",PADDR(mean_replacement_time),
+			PT_enumeration, "phase_A_status", PADDR(phase_A_status),
+				PT_KEYWORD, "GOOD", GOOD,
+				PT_KEYWORD, "BLOWN", BLOWN,
+			PT_enumeration, "phase_B_status", PADDR(phase_B_status),
+				PT_KEYWORD, "GOOD", GOOD,
+				PT_KEYWORD, "BLOWN", BLOWN,
+			PT_enumeration, "phase_C_status", PADDR(phase_C_status),
+				PT_KEYWORD, "GOOD", GOOD,
+				PT_KEYWORD, "BLOWN", BLOWN,
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -56,10 +64,15 @@ int fuse::create()
         
     // Set up defaults
 	to = from = NULL;
-	blow_time = TS_NEVER;
-	time_curve = UNKNOWN;
-	current_limit = 1.0;
-	phases = PHASE_ABCN;
+	fix_time_A = TS_NEVER;
+	fix_time_B = TS_NEVER;
+	fix_time_C = TS_NEVER;
+	Prev_Time = 0;
+	current_limit = 0.0;
+	mean_replacement_time = 0.0;
+	phase_A_status = GOOD;
+	phase_B_status = GOOD;
+	phase_C_status = GOOD;
 
 	return result;
 }
@@ -72,59 +85,276 @@ int fuse::create()
 */
 int fuse::init(OBJECT *parent)
 {
-	if (phases&PHASE_S)
-		throw "fuses cannot be placed on triplex circuits";
+	int jindex, kindex;
+
+	if ((phases & PHASE_S) == PHASE_S)
+		GL_THROW("fuses cannot be placed on triplex circuits");
+		/*  TROUBLESHOOT
+		Fuses do not currently support triplex circuits.  Please place the fuse higher upstream in the three-phase power
+		area or utilize another object (such as a circuit breaker in a house model) to limit the current flow.
+		*/
 
 	int result = link::init(parent);
 
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
-			a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
-			c_mat[i][j] = 0.0;
-			B_mat[i][j] = b_mat[i][j] = 0.0;
-		}
+	if (current_limit<=0.0)
+		GL_THROW("Fuse:%d has no or a negative current limit set.",OBJECTHDR(this)->id);
+		/*  TROUBLESHOOT
+		The fuse does not have a proper current limit set.  The value is in current magnitude, so specify a number
+		above zero.
+		*/
 
+	if (mean_replacement_time<=0.0)
+		GL_THROW("Fuse:%d does not have a mean replacement time interval, or has a negative value set.",OBJECTHDR(this)->id);
+		/*  TROUBLESHOOT
+		The fuse does not have a proper mean replacement time specified.  Without this, it will not function properly
+		if blown.  Please specify a replacement time greater than 0.
+		*/
+
+	if (solver_method==SM_FBS)
+		gl_warning("Fuses only work for the attached node in the FBS solver, not any deeper.");
+		/*  TROUBLESHOOT
+		Under the Forward-Back sweep method, fuses can only affect their directly attached downstream node.
+		Due to the nature of the FBS algorithm, nodes further downstream (especially constant current loads)
+		will cause an oscillatory nature in the voltage and current injections, so they will no longer be accurate.
+		Either ignore these values or figure out a way to work around this limitation (player objects).
+		*/
+
+	//Initialize matrices
+	for (jindex=0;jindex<3;jindex++)
+	{
+		for (kindex=0;kindex<3;kindex++)
+		{
+			a_mat[jindex][kindex] = d_mat[jindex][kindex] = A_mat[jindex][kindex] = 0.0;
+			c_mat[jindex][kindex] = 0.0;
+			B_mat[jindex][kindex] = b_mat[jindex][kindex] = 0.0;
+		}
 	}
+
+	//Check to see which phases we have
+	//Phase A
+	if ((phases & PHASE_A) == PHASE_A)
+	{
+		a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 1.0;
+	}
+
+	//Phase B
+	if ((phases & PHASE_B) == PHASE_B)
+	{
+		a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 1.0;
+	}
+
+	//Phase C
+	if ((phases & PHASE_C) == PHASE_C)
+	{
+		a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = 1.0;
+	}
+
 	return result;
 }
 
-TIMESTAMP fuse::sync(TIMESTAMP t0)
+
+TIMESTAMP fuse::postsync(TIMESTAMP t0)
 {
-	int i = phase_index();
 	OBJECT *hdr = OBJECTHDR(this);
-	node *f;
-	node *t;
-	set reverse = get_flow(&f,&t);
-	
-	//complex fI[3] = {f->voltage[0]/impedance(0), f->voltage[1]/impedance(1), f->voltage[2]/impedance(2)};
-	complex fI[3] = { f->current[0], f->current[1], f->current[2]};
-	if (t0 == blow_time)
+	char jindex;
+	TIMESTAMP Ret_Val[3];
+
+	//Update time variable
+	if (Prev_Time != t0)	//New timestep
+		Prev_Time = t0;
+
+	//All actual checks and updates are handled in the COMMIT time-step in the fuse_check function below.
+	//See which phases we need to check
+	if ((phases & PHASE_A) == PHASE_A)	//Check A
 	{
-		open();
-		gl_verbose("Fuse \"%s\" popped open!", hdr->name ? hdr->name : "(anon)");
-	} 
-	if (fI[0].Mag()<current_limit 
-		&& fI[1].Mag()<current_limit 
-		&& fI[2].Mag()<current_limit) 
-	{		
-		close();
-		blow_time = TS_NEVER;
-	} else {
-		open();
+		if (phase_A_status == GOOD)	//Only bother if we are in service
+		{
+			Ret_Val[0] = TS_NEVER;		//We're still good, so we don't care when we come back
+		}
+		else						//We're blown
+		{
+			if (t0 == fix_time_A)
+				Ret_Val[0] = t0 + 1;		//Jump us up 1 second so COMMIT can happen
+			else
+				Ret_Val[0] = fix_time_A;		//Time until we should be fixed
+		}
 	}
-	//else if (blow_time == TS_NEVER) {	
-	//	open();
-	//	switch (time_curve) {
-	//		case UNKNOWN:
-	//		default:
-	//			blow_time = t0 + 1; // one timestep default
-	//			break;
-	//	}
-	//}
+	else
+		Ret_Val[0] = TS_NEVER;		//No phase A, make us really big
 
-	TIMESTAMP t1 = link::sync(t0);
+	//See which phases we need to check
+	if ((phases & PHASE_B) == PHASE_B)	//Check B
+	{
+		if (phase_B_status == GOOD)	//Only bother if we are in service
+		{
+			Ret_Val[1] = TS_NEVER;		//We're still good, so we don't care when we come back
+		}
+		else						//We're blown
+		{
+			if (t0 == fix_time_B)
+				Ret_Val[1] = t0 + 1;		//Jump us up 1 second so COMMIT can happen
+			else
+				Ret_Val[1] = fix_time_B;		//Time until we should be fixed
+		}
+	}
+	else
+		Ret_Val[1] = TS_NEVER;		//No phase A, make us really big
 
-	return (blow_time<t1) ? blow_time : t1;
+
+	//See which phases we need to check
+	if ((phases & PHASE_C) == PHASE_C)	//Check C
+	{
+		if (phase_C_status == GOOD)	//Only bother if we are in service
+		{
+			Ret_Val[2] = TS_NEVER;		//We're still good, so we don't care when we come back
+		}
+		else						//We're blown
+		{
+			if (t0 == fix_time_C)
+				Ret_Val[2] = t0 + 1;		//Jump us up 1 second so COMMIT can happen
+			else
+				Ret_Val[2] = fix_time_C;		//Time until we should be fixed
+		}
+	}
+	else
+		Ret_Val[2] = TS_NEVER;		//No phase A, make us really big
+
+	//Normal link update
+	TIMESTAMP t1 = link::postsync(t0);
+	
+	//Find the minimum timestep and return it
+	for (jindex=0;jindex<3;jindex++)
+	{
+		if (Ret_Val[jindex] < t1)
+			t1 = Ret_Val[jindex];
+	}
+
+	return t1;	//Return that minimum
+}
+
+/**
+* Routine to see if a fuse has been blown
+*
+* @param parent a pointer to this object's parent
+* @return 1 on success, 0 on error
+*/
+int fuse::fuse_state(OBJECT *parent)
+{
+	OBJECT *hdr = OBJECTHDR(this);
+	node *fnode;
+	node *tnode;
+	complex fcurr[3], tcurr[3];
+
+	fnode = OBJECTDATA(from,node);
+	tnode = OBJECTDATA(to,node);
+
+	//Do a proper lock/unlock - just in case
+	LOCK_OBJECT(from);
+	fcurr[0] = fnode->current_inj[0];
+	fcurr[1] = fnode->current_inj[1];
+	fcurr[2] = fnode->current_inj[2];
+	UNLOCK_OBJECT(from);
+
+	LOCK_OBJECT(to);
+	tcurr[0] = tnode->current_inj[0];
+	tcurr[1] = tnode->current_inj[1];
+	tcurr[2] = tnode->current_inj[2];
+	UNLOCK_OBJECT(to);
+
+
+	this->fuse_check(PHASE_A,fcurr,tcurr);
+	this->fuse_check(PHASE_B,fcurr,tcurr);
+	this->fuse_check(PHASE_C,fcurr,tcurr);
+
+	return 1;	//Not sure how we'd ever fail.  If I come up with a reason, we'll check
+}
+/**
+* Fuse checking function
+*
+* functionalized so don't have to change 4 entries in 3 different sets every time
+*
+* @param phase_to_check - the current phase to check fusing action for
+* @param fcurr - array of from (line input) currents
+* @param tcurr - array of to (line output) currents
+*/
+
+void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
+{
+	char indexval;
+	char phase_verbose;
+	FUSESTATE *valstate;
+	TIMESTAMP *fixtime;
+	OBJECT *hdr = OBJECTHDR(this);
+
+	if (phase_to_check == PHASE_A)
+	{
+		indexval = 0;
+		valstate = &phase_A_status;
+		phase_verbose='A';
+		fixtime = &fix_time_A;
+	}
+	else if (phase_to_check == PHASE_B)
+	{
+		indexval = 1;
+		valstate = &phase_B_status;
+		phase_verbose='B';
+		fixtime = &fix_time_B;
+	}
+	else if (phase_to_check == PHASE_C)
+	{
+		indexval = 2;
+		valstate = &phase_C_status;
+		phase_verbose='C';
+		fixtime = &fix_time_C;
+	}
+	else
+	{
+		GL_THROW("Unknown phase to check in fuse:%d",OBJECTHDR(this)->id);
+	}
+
+	//See which phases we need to check
+	if ((phases & phase_to_check) == phase_to_check)	//Check phase
+	{
+		if (*valstate == GOOD)	//Only bother if we are in service
+		{
+			//Check both directions, that way if we are reverse flowed it doesn't matter
+			if ((fcurr[indexval].Mag() > current_limit) || (tcurr[indexval].Mag() > current_limit))	//We've exceeded the limit
+			{
+				*valstate = BLOWN;	//Trip us
+				A_mat[indexval][indexval] = d_mat[indexval][indexval] = 0.0;
+
+				//Get an update time
+				*fixtime = Prev_Time + (int64)(3600*gl_random_exponential(1.0/mean_replacement_time));
+
+				//Announce it for giggles
+				gl_verbose("Phase %c of fuse:%d just blew",phase_verbose,hdr->id);
+			}
+			else	//Still good
+			{
+				//Ensure matrices are up to date in case someone manually set things
+				A_mat[indexval][indexval] = d_mat[indexval][indexval] = 1.0;
+			}
+		}
+		else						//We're blown
+		{
+			if (*fixtime <= Prev_Time)	//Technician has arrived and replaced us!!
+			{
+				//Fix us
+				A_mat[indexval][indexval] = d_mat[indexval][indexval] = 1.0;
+
+				*valstate = GOOD;
+				*fixtime = TS_NEVER;	//Update the time check just in case
+
+				//Send an announcement for giggles
+				gl_verbose("Phase %c of fuse:%d just returned to service",phase_verbose,hdr->id);
+			}
+			else //Still driving there or on break, no fixed yet
+			{
+				//Ensure matrices are up to date in case someone manually blew us (or a third, off state is implemented)
+				A_mat[indexval][indexval] = d_mat[indexval][indexval] = 0.0;
+			}
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -166,6 +396,20 @@ EXPORT int init_fuse(OBJECT *obj)
 	catch (char *msg)
 	{
 		GL_THROW("%s (fuse:%d): %s", my->get_name(), my->get_id(), msg);
+		return 0; 
+	}
+}
+
+//Commit timestep - after all iterations are done
+EXPORT int commit_fuse(OBJECT *obj)
+{
+	fuse *fsr = OBJECTDATA(obj,fuse);
+	try {
+		return fsr->fuse_state(obj->parent);
+	}
+	catch (char *msg)
+	{
+		GL_THROW("%s (fuse:%d): %s", fsr->get_name(), fsr->get_id(), msg);
 		return 0; 
 	}
 }
