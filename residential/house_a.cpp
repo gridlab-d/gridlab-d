@@ -163,7 +163,7 @@ EXPORT CIRCUIT *attach_enduse_house_a(OBJECT *obj, ENDUSELOAD *attachee, double 
 	c->tripsleft = 100;
 
 	// attach the enduse for future reference
-	//c->enduse = obj;
+	c->enduse = attachee->end_obj;
 
 	return c;
 }

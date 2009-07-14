@@ -351,17 +351,31 @@ int evcharger::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
-		throw "evcharger must have a parent house";
+	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e"))){
+		GL_THROW("evcharger must have a parent house");
 		/*	TROUBLESHOOT
 			The evcharger object, being an enduse for the house model, must have a parent house
 			that it is connected to.  Create a house object and set it as the parent of the
 			offending evcharger object.
 		*/
-	house *pHouse = OBJECTDATA(parent,house);
+	}
+
+	//	pull parent attach_enduse and attach the enduseload
+	FUNCTIONADDR attach = 0;
+	load.end_obj = hdr;
+	attach = (gl_get_function(parent, "attach_enduse"));
+	if(attach == NULL){
+		gl_error("freezer parent must publish attach_enduse()");
+		/*	TROUBLESHOOT
+			The Freezer object attempt to attach itself to its parent, which
+			must implement the attach_enduse function.
+		*/
+		return 0;
+	}
+	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), fuse[charger_type], hiV[charger_type])->pV;
 
 	// attach object to house panel
-	pVoltage = (pHouse->attach(OBJECTHDR(this),fuse[charger_type],hiV[charger_type]))->pV;
+	//pVoltage = (pHouse->attach(OBJECTHDR(this),fuse[charger_type],hiV[charger_type]))->pV;
 
 	// load demand profile
 	if (strcmp(demand_profile,"")!=0)

@@ -139,13 +139,30 @@ int lights::init(OBJECT *parent)
 		return 0;
 	}
 
-	// attach object to house panel
-	house *pHouse = OBJECTDATA(parent,house);
-	pVoltage = (pHouse->attach(OBJECTHDR(this),20,false))->pV;
+	//	pull parent attach_enduse and attach the enduseload
+	FUNCTIONADDR attach = 0;
+	load.end_obj = hdr;
+	attach = (gl_get_function(parent, "attach_enduse"));
+	if(attach == NULL){
+		gl_error("freezer parent must publish attach_enduse()");
+		/*	TROUBLESHOOT
+			The Freezer object attempt to attach itself to its parent, which
+			must implement the attach_enduse function.
+		*/
+		return 0;
+	}
+	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
 
 	// installed power intially overrides use of power density
-	if (installed_power==0) 
-		installed_power = power_density * pHouse->floor_area;
+	if (installed_power==0) {
+		double *floor_area = gl_get_double_by_name(parent, "floor_area");
+		if(floor_area == NULL){
+			gl_error("lights parent must publish \'floor_area\' to work properly if no installed_power is given ~ default 2500 sf");
+			installed_power = power_density * 2500;
+		} else {
+			installed_power = power_density * *floor_area;
+		}
+	}
 
 	if(demand > 1.0){
 		gl_warning("lights demand reset from %f to 1.0", demand);

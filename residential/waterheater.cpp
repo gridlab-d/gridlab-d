@@ -156,6 +156,20 @@ int waterheater::init(OBJECT *parent)
 	house *pHouse = OBJECTDATA(parent,house);
 	pVoltage = (pHouse->attach(OBJECTHDR(this),30,TRUE))->pV; // 220V 30amp breaker
 
+	//	pull parent attach_enduse and attach the enduseload
+	FUNCTIONADDR attach = 0;
+	load.end_obj = hdr;
+	attach = (gl_get_function(parent, "attach_enduse"));
+	if(attach == NULL){
+		gl_error("freezer parent must publish attach_enduse()");
+		/*	TROUBLESHOOT
+			The Freezer object attempt to attach itself to its parent, which
+			must implement the attach_enduse function.
+		*/
+		return 0;
+	}
+	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 30, true)->pV;
+
 	/* sanity checks */
 	/* initialize water tank volume */
 	if(tank_volume <= 0.0){
