@@ -53,57 +53,57 @@ pqload::pqload(MODULE *mod) : load(mod)
 		if(gl_publish_variable(oclass,
 			PT_INHERIT, "load",
 			PT_object, "weather", PADDR(weather),
-			PT_double, "T_nominal", PADDR(temp_nom),
+			PT_double, "T_nominal[degF]", PADDR(temp_nom),
 			PT_double, "Zp_T[ohm/degF]", PADDR(imped_p[0]),
-			PT_double, "Zp_H[ohm]", PADDR(imped_p[1]),
+			PT_double, "Zp_H[ohm/%]", PADDR(imped_p[1]),
 			PT_double, "Zp_S[ohm.h/Btu]", PADDR(imped_p[2]),
 			PT_double, "Zp_W[ohm/mph]", PADDR(imped_p[3]),
 			PT_double, "Zp_R[ohm.h/in]", PADDR(imped_p[4]),
 			PT_double, "Zp[ohm]", PADDR(imped_p[5]),
 			PT_double, "Zq_T[F/degF]", PADDR(imped_q[0]),
-			PT_double, "Zq_H[F]", PADDR(imped_q[1]),
+			PT_double, "Zq_H[F/%]", PADDR(imped_q[1]),
 			PT_double, "Zq_S[F.h/Btu]", PADDR(imped_q[2]),
 			PT_double, "Zq_W[F/mph]", PADDR(imped_q[3]),
 			PT_double, "Zq_R[F.h/in]", PADDR(imped_q[4]),
 			PT_double, "Zq[F]", PADDR(imped_q[5]),
 			PT_double, "Im_T[A/degF]", PADDR(current_m[0]),
-			PT_double, "Im_H[A]", PADDR(current_m[1]),
+			PT_double, "Im_H[A/%]", PADDR(current_m[1]),
 			PT_double, "Im_S[A.h/Btu]", PADDR(current_m[2]),
 			PT_double, "Im_W[A/mph]", PADDR(current_m[3]),
 			PT_double, "Im_R[A.h/in]", PADDR(current_m[4]),
 			PT_double, "Im[A]", PADDR(current_m[5]),
 			PT_double, "Ia_T[deg/degF]", PADDR(current_a[0]),
-			PT_double, "Ia_H[deg]", PADDR(current_a[1]),
+			PT_double, "Ia_H[deg/%]", PADDR(current_a[1]),
 			PT_double, "Ia_S[deg.h/Btu]", PADDR(current_a[2]),
 			PT_double, "Ia_W[deg/mph]", PADDR(current_a[3]),
 			PT_double, "Ia_R[deg.h/in]", PADDR(current_a[4]),
 			PT_double, "Ia[deg]", PADDR(current_a[5]),
 			PT_double, "Pp_T[W/degF]", PADDR(power_p[0]),
-			PT_double, "Pp_H[W]", PADDR(power_p[1]),
+			PT_double, "Pp_H[W/%]", PADDR(power_p[1]),
 			PT_double, "Pp_S[W.h/Btu]", PADDR(power_p[2]),
 			PT_double, "Pp_W[W/mph]", PADDR(power_p[3]),
 			PT_double, "Pp_R[W.h/in]", PADDR(power_p[4]),
 			PT_double, "Pp[W]", PADDR(power_p[5]),
 			PT_double, "Pq_T[VAr/degF]", PADDR(power_q[0]),
-			PT_double, "Pq_H[VAr]", PADDR(power_q[1]),
+			PT_double, "Pq_H[VAr/%]", PADDR(power_q[1]),
 			PT_double, "Pq_S[VAr.h/Btu]", PADDR(power_q[2]),
 			PT_double, "Pq_W[VAr/mph]", PADDR(power_q[3]),
 			PT_double, "Pq_R[VAr.h/in]", PADDR(power_q[4]),
 			PT_double, "Pq[VAr]", PADDR(power_q[5]),
 			PT_double, "input_temp[degF]", PADDR(input[0]), PT_ACCESS, PA_REFERENCE,
-			PT_double, "input_humid", PADDR(input[1]), PT_ACCESS, PA_REFERENCE,
+			PT_double, "input_humid[%]", PADDR(input[1]), PT_ACCESS, PA_REFERENCE,
 			PT_double, "input_solar[Btu/h]", PADDR(input[2]), PT_ACCESS, PA_REFERENCE,
 			PT_double, "input_wind[mph]", PADDR(input[3]), PT_ACCESS, PA_REFERENCE,
 			PT_double, "input_rain[in/h]", PADDR(input[4]), PT_ACCESS, PA_REFERENCE,
-			PT_double, "output_admit_p", PADDR(output[0]), PT_ACCESS, PA_REFERENCE,
-			PT_double, "output_admit_q", PADDR(output[1]), PT_ACCESS, PA_REFERENCE,
-			PT_double, "output_current_m", PADDR(output[2]), PT_ACCESS, PA_REFERENCE,
-			PT_double, "output_current_a", PADDR(output[3]), PT_ACCESS, PA_REFERENCE,
-			PT_double, "output_power_p", PADDR(output[4]), PT_ACCESS, PA_REFERENCE,
-			PT_double, "output_power_q", PADDR(output[5]), PT_ACCESS, PA_REFERENCE,
-			PT_complex, "output_admittence[ohm]", PADDR(kZ), PT_ACCESS, PA_REFERENCE,
+			PT_double, "output_imped_p[Ohm]", PADDR(output[0]), PT_ACCESS, PA_REFERENCE,
+			PT_double, "output_imped_q[Ohm]", PADDR(output[1]), PT_ACCESS, PA_REFERENCE,
+			PT_double, "output_current_m[A]", PADDR(output[2]), PT_ACCESS, PA_REFERENCE,
+			PT_double, "output_current_a[deg]", PADDR(output[3]), PT_ACCESS, PA_REFERENCE,
+			PT_double, "output_power_p[W]", PADDR(output[4]), PT_ACCESS, PA_REFERENCE,
+			PT_double, "output_power_q[VAr]", PADDR(output[5]), PT_ACCESS, PA_REFERENCE,
+			PT_complex, "output_impedance[ohm]", PADDR(kZ), PT_ACCESS, PA_REFERENCE,
 			PT_complex, "output_current[A]", PADDR(kI), PT_ACCESS, PA_REFERENCE,
-			PT_complex, "output_power[W]", PADDR(kP), PT_ACCESS, PA_REFERENCE,
+			PT_complex, "output_power[VA]", PADDR(kP), PT_ACCESS, PA_REFERENCE,
 			NULL) < 1){
 				GL_THROW("unable to publish properties in %s",__FILE__);
 		}
@@ -224,6 +224,7 @@ TIMESTAMP pqload::presync(TIMESTAMP t0)
 TIMESTAMP pqload::sync(TIMESTAMP t0)
 {
 	TIMESTAMP result = TS_NEVER;
+	double SysFreq = 376.991118431;		//System frequency in radians/sec, nominalized 60 Hz for now.
 
 	int i = 0;
 
@@ -262,7 +263,7 @@ TIMESTAMP pqload::sync(TIMESTAMP t0)
 	output[0] = output[1] = output[2] = output[3] = output[4] = output[5] = 0.0;
 	for(i = 0; i < 6; ++i){
 		output[0] += imped_p[i] * input[i];
-		output[1] += imped_q[i] * input[i];
+		output[1] -= (imped_q[i]!=0.0) ? input[i] / (SysFreq*imped_q[i]) : 0;	//XC = 1/(jwc)
 		output[2] += current_m[i] * input[i];
 		output[3] += current_a[i] * input[i];
 		output[4] += power_p[i] * input[i];
