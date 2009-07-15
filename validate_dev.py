@@ -8,15 +8,40 @@ import subprocess
 
 
 os.putenv("PATH","%PATH%;..\\..\\..\\VS2005\\Win32\\Debug")
+def do_help():
+	print("validate.py - GridLAB-D autotest/validation script")
+	print("     validate.py [dir=.] ~ runs the autotest script with \'dir\' used as")
+	print("                           the root directory to walk through")
+	print("")
+	print("  The validate script will search through all directories underneath the")
+	print("   target directory and locate all files that start with \"test_\" inside")
+	print("   directories named \"autotest\".  After locating as many files as possible,")
+	print("   it will run each file in GridLAB-D and count the number of model files")
+	print("   that fail to converge, then return that number.")
+	return 0
 
 ##
 #	run_tests is the main function for the autotest validation script.
 #	@param	argv	The command line arguements.
 def run_tests(argv):
+	clean = 0
+	#scan for --help and --clean
+	if len(argv) > 1:
+		for arg in argv:
+			if "--help" in arg:
+				do_help();
+				exit(0)
+			if "--clean" in arg:
+				clean = 1
+
 	print("Starting autotest script")
 	
 	there_dir = os.getcwd()
 	err_ct = 0
+	start_time = time.time()
+	
+	if clean == 1:
+		print("Go clean?")
 	
 	# determine where the script starts
 	here_dir = os.getcwd()
@@ -88,13 +113,15 @@ def run_tests(argv):
 		errfile.close()
 		
 		if os.path.exists(os.path.join(xpath,"gridlabd.xml")):
-			if rv == 0: # didn't succeed if gridlabd.xml exists
-				rv = 1
+			statinfo = os.stat(os.path.join(xpath, "gridlabd.xml"))
+			if(statinfo.st_mtime > start_time):
+				if rv == 0: # didn't succeed if gridlabd.xml exists & updated since runtime
+					rv = 1
 		
 		# handle results
-		if "err_" in file:
+		if "err_" in file or "_err" in file:
 			if rv == 0:
-				if "opt_" in file:
+				if "opt_" in file or "_opt" in file:
 					print("WARNING: Optional file "+file+" converged when it shouldn't've!")
 					cleanlist.append((path, file))
 					err = False
@@ -107,7 +134,7 @@ def run_tests(argv):
 				cleanlist.append((path, file))
 		else:
 			if rv != 0:
-				if "opt_" in file:
+				if "opt_" in file or "_opt" in file:
 					print("WARNING: Optional file "+file+" failed to converge!")
 					cleanlist.append((path, file))
 					err = False
@@ -138,7 +165,8 @@ def run_tests(argv):
 	for errpath, errfile in errlist:
 		print(" * "+os.path.join(errpath, errfile))
 	
-	return errct
+	exit(errct)
+	#return errct
 #end run_tests()
 
 if __name__ == '__main__':
