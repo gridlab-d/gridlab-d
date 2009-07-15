@@ -27,11 +27,13 @@ public:
 	enum {	OFF=0,					///< microwave is off
 			ON=1,					///< microwave is on
 	} state;					///< microwave state
+	double cycle_time;
 private:
 	double runtime;				///< current runtime (expected time in ON state)
+	double last_runtime;
 	double state_time;			///< time in current state
 	double prev_demand;			///< previous demand
-
+	TIMESTAMP cycle_start, cycle_on, cycle_off;
 public:
 	static CLASS *oclass;
 	static microwave *defaults;
@@ -42,6 +44,7 @@ public:
 	int init(OBJECT *parent);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	double update_state(double dt=0.0);
+	TIMESTAMP update_state_cycle(TIMESTAMP t0, TIMESTAMP t1);
 };
 
 #endif // _MICROWAVE_H
