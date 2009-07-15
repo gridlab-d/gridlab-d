@@ -47,6 +47,7 @@ microwave::microwave(MODULE *module)
 			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
 			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			PT_double,"heat_fraction",PADDR(heat_fraction),
+			PT_double,"cycle_length",PADDR(cycle_time),
 			PT_enumeration,"state",PADDR(state),
 				PT_KEYWORD,"OFF",OFF,
 				PT_KEYWORD,"ON",ON,
@@ -117,6 +118,53 @@ int microwave::init(OBJECT *parent)
 	return 1;
 }
 
+// periodically activates for the tail demand % of a cycle_time period.  Has a random offset to prevent
+//	lock-step behavior across uniform devices
+// start ....... on .. off
+TIMESTAMP microwave::update_state_cycle(TIMESTAMP t0, TIMESTAMP t1){
+	double ti0 = (double)t0, ti1 = (double)t1;
+
+	if(demand == 0){
+		state = OFF;
+		cycle_start = 0;
+		return TS_NEVER;
+	}
+
+	if(demand == 1){
+		state = ON;
+		cycle_start = 0;
+		return TS_NEVER;
+	}
+
+	if(cycle_start == 0){
+		double off = gl_random_uniform(0, this->cycle_time);
+		cycle_start = ti1 + off;
+		cycle_on = (1 - demand) * cycle_time + cycle_start;
+		cycle_off = cycle_time + cycle_start;
+		state = OFF;
+		return (TIMESTAMP)cycle_on;
+	}
+	
+	if(t0 == cycle_on){
+		state = ON;
+	}
+	if(t0 == cycle_off){
+		state = OFF;
+		cycle_start = cycle_off;
+	}
+	if(t0 == cycle_start){
+		cycle_on = (1 - demand) * cycle_time + cycle_start;
+		state = OFF;
+		cycle_off = cycle_time + cycle_start;
+	}
+
+	if(state == ON)
+		return (TIMESTAMP)cycle_off;
+	if(state == OFF)
+		return (TIMESTAMP)cycle_on;
+	return TS_NEVER; // from ambiguous state
+}
+
 double microwave::update_state(double dt)
 {
 	// run times (used for gl_random_sample()) - DPC: this is an educated guess, the true PDF needs to be researched
@@ -185,17 +233,27 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (t0 <= 0)
 		return TS_NEVER;
 
-	double dt = update_state(gl_toseconds(t1-t0));
+	TIMESTAMP ct = 0;
+	double dt = 0;
+	
+	if(cycle_time > 0){
+		ct = update_state_cycle(t0, t1);
+	} else {
+		dt = update_state(gl_toseconds(t1-t0));
+	}
 
 	/* before we update our power for the next state */
-	if (dt>0) load.energy += load.total * dt/3600.0; /* dt in seconds */
+	if (t1 > t0) load.energy += load.total * ((double)(t1 - t0))/3600.0; /* dt in seconds */
 	
 	load.power.SetPowerFactor( (state==ON?installed_power:standby_power)/1000,power_factor);
 	load.total = load.power;
 	
 	load.heatgain = load.total.Mag()*(state==ON?heat_fraction:1.0);
 
-	return dt>0?-(TIMESTAMP)(t1 + dt*TS_SECOND):TS_NEVER; // negative time means soft transition
+	if(cycle_time == 0)
+		return dt>0?-(TIMESTAMP)(t1 + dt*TS_SECOND) : TS_NEVER; // negative time means soft transition
+	else
+		return ct == TS_NEVER ? TS_NEVER : -ct;
 }
 
 //////////////////////////////////////////////////////////////////////////
