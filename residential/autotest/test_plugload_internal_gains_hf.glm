@@ -1,12 +1,12 @@
 //
 // Test purpose: validating internal_gains calculation over time; verifies
-// that the code uses the following equation correctly:
-
+// that the code uses the following equation correctly; 
 //	internal_gains = power*heat_fraction
 //
-// demand varies over time
+//heat_fraction varies over time, this might be overtesting it
 
 // Payroll: d3y332
+
 
 clock {
 	timestamp '2000-01-01 0:00:00';
@@ -25,17 +25,19 @@ object house {
 	heating_setpoint 1;
 	object plugload {
 		constant_power .1;
+		demand 1;
+		heat_fraction .5;
 		object player {
-			file ../generic_demand.glt;
+			file ../generic_demand.glt; //used as heat fraction in this case
 			loop 24;
-			property demand;
+			property heat_fraction;
 		};
 		object double_assert {
 			target "internal_gains";
 			within 0.000001;
 			object player {
 				property value;
-				file ../plugload_internal_gains.player;
+				file ../plugload_internal_gains_hf.player;
 			};
 		};
 		object recorder {
