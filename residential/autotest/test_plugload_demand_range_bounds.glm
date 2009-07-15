@@ -24,7 +24,7 @@ object house {
 	object plugload {
 		constant_power .1;
 		object player {
-			file ..\generic_fail_demand(range0-1).glt;
+			file ../generic_fail_demand(range0-1).glt;
 			loop 2;
 			property demand;
 		};
@@ -35,7 +35,7 @@ object house {
 			object player {
 				property value;
 				loop 1;
-				file ..\plugload_demand_range_bounds.player;
+				file ../plugload_demand_range_bounds.player;
 			};
 		};
 		object recorder {
