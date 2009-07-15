@@ -1,0 +1,48 @@
+//Demand Boundary Test
+
+//This program is to test and see if module auto corrects for input error in demand.
+//demand is can range from 0 - 1 and if a negative number or a number is larger than 1 
+//then the module should automatically corret those boundary errors setting  the demand to 0 for negative values
+//or setting the demand to 1 for values larger than 1.
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+module tape;
+module residential;
+module assert;
+
+object house:1 {
+}
+
+object microwave:2 {
+	parent house:1;
+}
+
+object player:3 {
+	parent microwave:2;
+	property demand;
+	file "../test_generic_limit_demand(range0-1).glt";
+}
+
+
+
+object recorder:4 {
+	parent microwave:2;
+	property demand;
+	file "test_generic_limit_demand.csv";
+	interval 3600;
+	limit 24;
+}
+
+object double_assert:5 {
+	parent microwave:2;
+	target "demand";
+	within 0;
+	object player {
+		property value;
+		file "../test_generic_limit_demand.player";
+	};
+}
