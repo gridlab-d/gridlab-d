@@ -118,10 +118,10 @@ def run_tests(argv):
 		
 		if os.path.exists(os.path.join(xpath,"gridlabd.xml")):
 			statinfo = os.stat(os.path.join(xpath, "gridlabd.xml"))
-			if(statinfo.mt_ctime > start_time):
+			if(statinfo.st_mtime > start_time):
 				if rv == 0: # didn't succeed if gridlabd.xml exists & updated since runtime
 					rv = 1
-		
+
 		# handle results
 		if "err_" in file or "_err" in file:
 			if rv == 0:
