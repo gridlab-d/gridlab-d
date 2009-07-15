@@ -88,8 +88,20 @@ int plugload::init(OBJECT *parent)
 	}
 	house *pHouse = OBJECTDATA(parent,house);
 
-	// attach object to house panel
-	pVoltage = (pHouse->attach(OBJECTHDR(this),20,false))->pV;
+	//	pull parent attach_enduse and attach the enduseload
+	FUNCTIONADDR attach = 0;
+	load.end_obj = hdr;
+	attach = (gl_get_function(parent, "attach_enduse"));
+	if(attach == NULL){
+		gl_error("plugload parent must publish attach_enduse()");
+		/*	TROUBLESHOOT
+			The Plugload object attempt to attach itself to its parent, which
+			must implement the attach_enduse function.
+		*/
+		return 0;
+	}
+	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
+
 
 	// compute the total load and heat gain
 	load.total = load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000;
@@ -103,6 +115,14 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// compute the total load and heat gain
 	if (t0>0 && t1>t0)
 		load.energy += load.total * gl_tohours(t1-t0);
+	if(demand > 1.0){
+		gl_error("plugload demand cannot be greater than 1.0, capping");
+		demand = 1.0;
+	}
+	if(demand < 0.0){
+		gl_error("plugload demand cannot be negative, capping");
+		demand = 0.0;
+	}
 	load.total = (load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000) ;
 	load.total *= demand;
 	load.heatgain = load.total.Mag() * heat_fraction;

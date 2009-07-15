@@ -125,7 +125,7 @@ int dryer::init(OBJECT *parent)
 	if(attach == NULL){
 		gl_error("dryer parent must publish attach_enduse()");
 		/*	TROUBLESHOOT
-			The Freezer object attempt to attach itself to its parent, which
+			The dryer object attempt to attach itself to its parent, which
 			must implement the attach_enduse function.
 		*/
 		return 0;

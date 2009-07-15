@@ -117,9 +117,9 @@ int clotheswasher::init(OBJECT *parent)
 	load.end_obj = hdr;
 	attach = (gl_get_function(parent, "attach_enduse"));
 	if(attach == NULL){
-		gl_error("freezer parent must publish attach_enduse()");
+		gl_error("clotheswasher parent must publish attach_enduse()");
 		/*	TROUBLESHOOT
-			The Freezer object attempt to attach itself to its parent, which
+			The clotheswasher object attempt to attach itself to its parent, which
 			must implement the attach_enduse function.
 		*/
 		return 0;
