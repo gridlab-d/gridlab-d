@@ -369,24 +369,77 @@ for (jindexer=0; jindexer<bus_count;jindexer++)
 			}
 	}
 
+complex undeltacurr[3], undeltaimped[3], undeltapower[3];
+complex delta_current[3], voltageDel[3];
 
 for (Iteration=1; Iteration < MaxIteration; Iteration++)
 {
 //System load at each bus is represented by second order polynomial equations
 	for (indexer=0; indexer<bus_count; indexer++)
 		{
-			for (jindex=0; jindex<3; jindex++)
+			if (bus[indexer].delta == true)	//Delta connected node
 			{
-				tempPbus = (*bus[indexer].S[jindex]).Re();									// Real power portion of constant power portion
-				tempPbus += (*bus[indexer].I[jindex]).Re() * (*bus[indexer].V[jindex]).Re() + (*bus[indexer].I[jindex]).Im() * (*bus[indexer].V[jindex]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
-				tempPbus += (*bus[indexer].Y[jindex]).Re() * (*bus[indexer].V[jindex]).Re() * (*bus[indexer].V[jindex]).Re() + (*bus[indexer].Y[jindex]).Re() * (*bus[indexer].V[jindex]).Im() * (*bus[indexer].V[jindex]).Im();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
-				bus[indexer].PL[jindex] = tempPbus;	//Real power portion
-				tempQbus = (*bus[indexer].S[jindex]).Im();									// Reactive power portion of constant power portion
-				tempQbus += (*bus[indexer].I[jindex]).Re() * (*bus[indexer].V[jindex]).Im() - (*bus[indexer].I[jindex]).Im() * (*bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
-				tempQbus += -(*bus[indexer].Y[jindex]).Im() * (*bus[indexer].V[jindex]).Im() * (*bus[indexer].V[jindex]).Im() - (*bus[indexer].Y[jindex]).Im() * (*bus[indexer].V[jindex]).Re() * (*bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage				
-				bus[indexer].QL[jindex] = tempQbus;	//Reactive power portion  
+				//Delta voltages
+				voltageDel[0] = *bus[indexer].V[0] - *bus[indexer].V[1];
+				voltageDel[1] = *bus[indexer].V[1] - *bus[indexer].V[2];
+				voltageDel[2] = *bus[indexer].V[2] - *bus[indexer].V[0];
+
+				//Power
+				delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(*bus[indexer].S[0]/voltageDel[0]);
+				delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(*bus[indexer].S[1]/voltageDel[1]);
+				delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(*bus[indexer].S[2]/voltageDel[2]);
+
+				//Use delta current variable at first
+				undeltacurr[0] =delta_current[0]-delta_current[2];
+				undeltacurr[1] =delta_current[1]-delta_current[0];
+				undeltacurr[2] =delta_current[2]-delta_current[1];
+
+				//Now convert back to power
+				undeltapower[0] = *bus[indexer].V[0] * (~undeltacurr[0]);
+				undeltapower[1] = *bus[indexer].V[1] * (~undeltacurr[1]);
+				undeltapower[2] = *bus[indexer].V[2] * (~undeltacurr[2]);
+
+				//Convert delta connected load to appropriate Wye - reuse temp variable
+				undeltacurr[0] = voltageDel[0] * (*bus[indexer].Y[0]);
+				undeltacurr[1] = voltageDel[1] * (*bus[indexer].Y[1]);
+				undeltacurr[2] = voltageDel[2] * (*bus[indexer].Y[2]);
+
+				undeltaimped[0] = (*bus[indexer].V[0] == 0) ? 0 : (undeltacurr[0] - undeltacurr[2]) / (*bus[indexer].V[0]);
+				undeltaimped[1] = (*bus[indexer].V[1] == 0) ? 0 : (undeltacurr[1] - undeltacurr[0]) / (*bus[indexer].V[1]);
+				undeltaimped[2] = (*bus[indexer].V[2] == 0) ? 0 : (undeltacurr[2] - undeltacurr[1]) / (*bus[indexer].V[2]);
+
+				//Convert delta-current into a phase current - reuse temp variable
+				undeltacurr[0]=*bus[indexer].I[0]-*bus[indexer].I[2];
+				undeltacurr[1]=*bus[indexer].I[1]-*bus[indexer].I[0];
+				undeltacurr[2]=*bus[indexer].I[2]-*bus[indexer].I[1];
+
+				for (jindex=0; jindex<3; jindex++)
+				{
+					tempPbus = (undeltapower[jindex]).Re();									// Real power portion of constant power portion
+					tempPbus += (undeltacurr[jindex]).Re() * (*bus[indexer].V[jindex]).Re() + (undeltacurr[jindex]).Im() * (*bus[indexer].V[jindex]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
+					tempPbus += (undeltaimped[jindex]).Re() * (*bus[indexer].V[jindex]).Re() * (*bus[indexer].V[jindex]).Re() + (undeltaimped[jindex]).Re() * (*bus[indexer].V[jindex]).Im() * (*bus[indexer].V[jindex]).Im();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
+					bus[indexer].PL[jindex] = tempPbus;	//Real power portion
+					tempQbus = (undeltapower[jindex]).Im();									// Reactive power portion of constant power portion
+					tempQbus += (undeltacurr[jindex]).Re() * (*bus[indexer].V[jindex]).Im() - (undeltacurr[jindex]).Im() * (*bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
+					tempQbus += -(undeltaimped[jindex]).Im() * (*bus[indexer].V[jindex]).Im() * (*bus[indexer].V[jindex]).Im() - (undeltaimped[jindex]).Im() * (*bus[indexer].V[jindex]).Re() * (*bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage				
+					bus[indexer].QL[jindex] = tempQbus;	//Reactive power portion  
+				}
 			}
-	}
+			else	//Wye-connected node
+			{
+				for (jindex=0; jindex<3; jindex++)
+				{
+					tempPbus = (*bus[indexer].S[jindex]).Re();									// Real power portion of constant power portion
+					tempPbus += (*bus[indexer].I[jindex]).Re() * (*bus[indexer].V[jindex]).Re() + (*bus[indexer].I[jindex]).Im() * (*bus[indexer].V[jindex]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
+					tempPbus += (*bus[indexer].Y[jindex]).Re() * (*bus[indexer].V[jindex]).Re() * (*bus[indexer].V[jindex]).Re() + (*bus[indexer].Y[jindex]).Re() * (*bus[indexer].V[jindex]).Im() * (*bus[indexer].V[jindex]).Im();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
+					bus[indexer].PL[jindex] = tempPbus;	//Real power portion
+					tempQbus = (*bus[indexer].S[jindex]).Im();									// Reactive power portion of constant power portion
+					tempQbus += (*bus[indexer].I[jindex]).Re() * (*bus[indexer].V[jindex]).Im() - (*bus[indexer].I[jindex]).Im() * (*bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
+					tempQbus += -(*bus[indexer].Y[jindex]).Im() * (*bus[indexer].V[jindex]).Im() * (*bus[indexer].V[jindex]).Im() - (*bus[indexer].Y[jindex]).Im() * (*bus[indexer].V[jindex]).Re() * (*bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage				
+					bus[indexer].QL[jindex] = tempQbus;	//Reactive power portion  
+				}
+			}
+		}
 // Calculate the mismatch of three phase current injection at each bus (deltaI), 
 //and store the deltaI in terms of real and reactive value in array deltaI_NR    
 	if (deltaI_NR==NULL)
@@ -482,16 +535,67 @@ break;
 // Calculate the elements of a,b,c,d in equations(14),(15),(16),(17). These elements are used to update the Jacobian matrix.	
 	for (indexer=0; indexer<bus_count; indexer++)
 		{
-			for (jindex=0; jindex<3; jindex++)
+			if (bus[indexer].delta == true)	//Delta connected node
 			{
-   				bus[indexer].Jacob_A[jindex] = ((*bus[indexer].S[jindex]).Im() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
-				bus[indexer].Jacob_A[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Re() + (*bus[indexer].I[jindex]).Im() *pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) + (*bus[indexer].Y[jindex]).Im();// second part of equation(37)
-                bus[indexer].Jacob_B[jindex] = ((*bus[indexer].S[jindex]).Re() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) + 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
-				bus[indexer].Jacob_B[jindex] += -((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Im() + (*bus[indexer].I[jindex]).Re() *pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (*bus[indexer].Y[jindex]).Re();// second part of equation(38)
-                bus[indexer].Jacob_C[jindex] = ((*bus[indexer].S[jindex]).Re() * (pow((*bus[indexer].V[jindex]).Im(),2) - pow((*bus[indexer].V[jindex]).Re(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
-				bus[indexer].Jacob_C[jindex] +=((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Im() - (*bus[indexer].I[jindex]).Re() *pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (*bus[indexer].Y[jindex]).Re();// second part of equation(39)
-				bus[indexer].Jacob_D[jindex] = ((*bus[indexer].S[jindex]).Im() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
-				bus[indexer].Jacob_D[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Re() - (*bus[indexer].I[jindex]).Im() *pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (*bus[indexer].Y[jindex]).Im();// second part of equation(40)
+				//Delta voltages
+				voltageDel[0] = *bus[indexer].V[0] - *bus[indexer].V[1];
+				voltageDel[1] = *bus[indexer].V[1] - *bus[indexer].V[2];
+				voltageDel[2] = *bus[indexer].V[2] - *bus[indexer].V[0];
+
+				//Power
+				delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(*bus[indexer].S[0]/voltageDel[0]);
+				delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(*bus[indexer].S[1]/voltageDel[1]);
+				delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(*bus[indexer].S[2]/voltageDel[2]);
+
+				//Use delta current variable at first
+				undeltacurr[0] =delta_current[0]-delta_current[2];
+				undeltacurr[1] =delta_current[1]-delta_current[0];
+				undeltacurr[2] =delta_current[2]-delta_current[1];
+
+				//Now convert back to power
+				undeltapower[0] = *bus[indexer].V[0] * (~undeltacurr[0]);
+				undeltapower[1] = *bus[indexer].V[1] * (~undeltacurr[1]);
+				undeltapower[2] = *bus[indexer].V[2] * (~undeltacurr[2]);
+
+				//Convert delta connected load to appropriate Wye - reuse temp variable
+				undeltacurr[0] = voltageDel[0] * (*bus[indexer].Y[0]);
+				undeltacurr[1] = voltageDel[1] * (*bus[indexer].Y[1]);
+				undeltacurr[2] = voltageDel[2] * (*bus[indexer].Y[2]);
+
+				undeltaimped[0] = (*bus[indexer].V[0] == 0) ? 0 : (undeltacurr[0] - undeltacurr[2]) / (*bus[indexer].V[0]);
+				undeltaimped[1] = (*bus[indexer].V[1] == 0) ? 0 : (undeltacurr[1] - undeltacurr[0]) / (*bus[indexer].V[1]);
+				undeltaimped[2] = (*bus[indexer].V[2] == 0) ? 0 : (undeltacurr[2] - undeltacurr[1]) / (*bus[indexer].V[2]);
+
+				//Convert delta-current into a phase current - reuse temp variable
+				undeltacurr[0]=*bus[indexer].I[0]-*bus[indexer].I[2];
+				undeltacurr[1]=*bus[indexer].I[1]-*bus[indexer].I[0];
+				undeltacurr[2]=*bus[indexer].I[2]-*bus[indexer].I[1];
+
+				for (jindex=0; jindex<3; jindex++)
+				{
+   					bus[indexer].Jacob_A[jindex] = ((undeltapower[jindex]).Im() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
+					bus[indexer].Jacob_A[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() + (undeltacurr[jindex]).Im() *pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) + (undeltaimped[jindex]).Im();// second part of equation(37)
+					bus[indexer].Jacob_B[jindex] = ((undeltapower[jindex]).Re() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) + 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
+					bus[indexer].Jacob_B[jindex] += -((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() + (undeltacurr[jindex]).Re() *pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(38)
+					bus[indexer].Jacob_C[jindex] = ((undeltapower[jindex]).Re() * (pow((*bus[indexer].V[jindex]).Im(),2) - pow((*bus[indexer].V[jindex]).Re(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
+					bus[indexer].Jacob_C[jindex] +=((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() - (undeltacurr[jindex]).Re() *pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(39)
+					bus[indexer].Jacob_D[jindex] = ((undeltapower[jindex]).Im() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
+					bus[indexer].Jacob_D[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() - (undeltacurr[jindex]).Im() *pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Im();// second part of equation(40)
+				}
+			}
+			else
+			{
+				for (jindex=0; jindex<3; jindex++)
+				{
+   					bus[indexer].Jacob_A[jindex] = ((*bus[indexer].S[jindex]).Im() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
+					bus[indexer].Jacob_A[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Re() + (*bus[indexer].I[jindex]).Im() *pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) + (*bus[indexer].Y[jindex]).Im();// second part of equation(37)
+					bus[indexer].Jacob_B[jindex] = ((*bus[indexer].S[jindex]).Re() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) + 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
+					bus[indexer].Jacob_B[jindex] += -((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Im() + (*bus[indexer].I[jindex]).Re() *pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (*bus[indexer].Y[jindex]).Re();// second part of equation(38)
+					bus[indexer].Jacob_C[jindex] = ((*bus[indexer].S[jindex]).Re() * (pow((*bus[indexer].V[jindex]).Im(),2) - pow((*bus[indexer].V[jindex]).Re(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
+					bus[indexer].Jacob_C[jindex] +=((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Im() - (*bus[indexer].I[jindex]).Re() *pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (*bus[indexer].Y[jindex]).Re();// second part of equation(39)
+					bus[indexer].Jacob_D[jindex] = ((*bus[indexer].S[jindex]).Im() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
+					bus[indexer].Jacob_D[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Re() - (*bus[indexer].I[jindex]).Im() *pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (*bus[indexer].Y[jindex]).Im();// second part of equation(40)
+				}
 			}
 	}
 //Build the dynamic diagnal elements of 6n*6n Y matrix. All the elements in this part will be updated at each iteration.
