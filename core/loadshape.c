@@ -66,6 +66,12 @@ int loadshape_initall(void)
 
 void loadshape_recalc(loadshape *ls)
 {
+	if (ls->schedule->duration==0)
+	{
+		ls->load = 0;
+		ls->t2=TS_NEVER;
+		return;
+	}
 	switch (ls->type) {
 	case MT_ANALOG:
 		break;

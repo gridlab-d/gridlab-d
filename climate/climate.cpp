@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "climate.h"
+#include "timestamp.h"
 
 #define RAD(x) (x*PI)/180
                          //ET,CT,MT ,PT ,AT, HT
@@ -287,7 +288,7 @@ int climate::init(OBJECT *parent)
 
 TIMESTAMP climate::sync(TIMESTAMP t0) 
 {
-	if (tmy!=NULL)
+	if (t0>TS_ZERO && tmy!=NULL)
 	{
 		DATETIME ts;
 		int localres = gl_localtime(t0,&ts);

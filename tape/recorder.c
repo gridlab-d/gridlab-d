@@ -99,12 +99,16 @@ static void close_recorder(struct recorder *my)
 static TIMESTAMP recorder_write(OBJECT *obj)
 {
 	struct recorder *my = OBJECTDATA(obj,struct recorder);
-	char ts[64];
+	char ts[64]="0"; /* 0 = INIT */
 	if (my->format==0)
 	{
-		DATETIME dt;
-		gl_localtime(my->last.ts,&dt);
-		gl_strtime(&dt,ts,sizeof(ts));
+		if (my->last.ts>TS_ZERO)
+		{
+			DATETIME dt;
+			gl_localtime(my->last.ts,&dt);
+			gl_strtime(&dt,ts,sizeof(ts));
+		}
+		/* else leave INIT in the buffer */
 	}
 	else
 		sprintf(ts,"%" FMT_INT64 "d", my->last.ts);

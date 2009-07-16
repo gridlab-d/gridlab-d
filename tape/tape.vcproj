@@ -525,10 +525,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\loadshape.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\tape\main.cpp"
 				>
 			</File>
@@ -572,10 +568,6 @@
 			</File>
 			<File
 				RelativePath=".\histogram.h"
-				>
-			</File>
-			<File
-				RelativePath=".\loadshape.h"
 				>
 			</File>
 			<File
