@@ -1,0 +1,105 @@
+<project name="GLDebug" default="dist" basedir=".">
+    <description>
+        Ant Build file for the GLDebug program jar file.
+        Just run ant.exe in this directory and ant will take care of the rest.
+
+        This build file will build and compile all of the java files.  Output class files
+        are placed in the build folder.  Jar files required to run the application,
+        including the GLDebug program jar are placed in the dist folder.
+
+        Run "ant clean" to clean the build and dist folders.
+        Run "ant" to build the default, no debug, distribution
+        Run "ant -Ddebug=on" to build a version with debug information
+
+        Copyright: Copyright (C) 2008
+        Company: Battelle Memorial Institute
+    </description>
+
+  <!-- set global properties for this build -->
+  <property name="src" location="src"/>
+  <property name="build" location="build.ant"/>
+  <property name="dist"  location="dist"/>
+  <property name="debug" value="off"/>
+
+  <property name="GLDebugClasspath" location=".;lib\jdom.jar"/>
+
+	<!--Patternset to exclude files from the output directory:-->
+	<patternset id="dest.exclude">
+		<exclude name="Temporary_Files/"/>
+		<exclude name="Generated Source/"/>
+	</patternset>
+	
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+  </target>
+
+  <!-- Compile the java code from ${src} into ${build} -->
+  <target name="compile" depends="init"
+        description="compile the source " >
+    <javac classpath="${GLDebugClasspath}"
+    	   srcdir="${src}"
+    	   destdir="${build}"
+    	   deprecation="true"
+    	   nowarn="false" 
+    	   source="1.5" 
+    	   target="1.5"
+           debug="${debug}" />
+
+  </target>
+	
+	<!-- copy all of the resource/images out with the compiled classes -->
+	<target name="resource">
+		<copy todir="${build}">
+		<fileset dir="${src}">
+			<include name="**/*.jpe"/>
+			<include name="**/*.jpeg"/>
+			<include name="**/*.rmf"/>
+			<include name="**/*.wav"/>
+			<include name="**/*.mid"/>
+			<include name="**/*.midi"/>
+			<include name="**/*.au"/>
+			<include name="**/*.gif"/>
+			<include name="**/*.png"/>
+			<include name="**/*.jpg"/>
+			<include name="**/*.aiff"/>
+			<include name="**/*.properties"/>
+		</fileset>
+		</copy>
+	</target>
+	
+  <target name="dist" depends="dobuild" description="generate the distribution" >
+  </target>
+
+	
+	<target name="archive" depends="compile,resource" >
+		<jar compress="true" destfile="GLDebug.jar">
+			<fileset dir="${build}">
+				<patternset refid="dest.exclude"/>
+				<include name="**/*.*"/>
+			</fileset>
+			<manifest>
+				<attribute name="Main-Class" value="gov.pnnl.gridlab.gldebug.GLDebug"/>
+			</manifest>
+		</jar>
+	</target>
+	
+
+  <target name="dobuild" depends="archive" >
+
+    <!-- Create the distribution directory and move files there -->
+    <mkdir dir="${dist}"/>
+    <copy file="GLDebug.jar" tofile="${dist}/GLDebug.jar"/>
+    <copy file="lib/jdom.jar" tofile="${dist}/jdom.jar"/>
+  	
+  </target>
+
+  <target name="clean"
+        description="clean up" >
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+</project>
