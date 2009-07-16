@@ -327,18 +327,9 @@ int link::init(OBJECT *parent)
 			GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
 			//Defined above
 
-		if (solver_method==SM_FBS)	//Further test to see if to has more phases than from (it shouldn't)
-		{
-			phase_f_test = (fNode->phases & (PHASE_A | PHASE_B | PHASE_C));
-			phase_t_test = (tNode->phases & (PHASE_A | PHASE_B | PHASE_C));
-			if (phase_t_test > phase_f_test)
-				GL_THROW("line:%d has more phases on the output than the input",obj->id);
-			/* TROUBLESHOOT
-			A line has more phases on the output than on the input.  Under the Forward-Back sweep algorithm,
-			the system should be strictly radial.  This scenario implies either a meshed system or unconnected
-			phases between the from and to nodes.  Please adjust the phases appropriately.
-			*/
-		}
+		//Set up the phase test on the to node to make sure all are hit (only do to node)
+		tNode->busphasesIn |= phases_test;
+		fNode->busphasesOut |= phases_test;
 	}
 	
 	if (nominal_voltage==0)

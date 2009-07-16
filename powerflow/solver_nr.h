@@ -9,6 +9,7 @@
 
 typedef struct  {
 	int type;		///< bus type (0=PQ, 1=PV, 2=SWING)
+	bool delta;		///< Flag for delta connected load
 	complex *V[3];	///< bus voltage
 	complex *S[3];	///< constant power
 	complex *Y[3];	///< constant admittance (impedance loads)

@@ -117,6 +117,8 @@ int node::create(void)
 
 	bustype = PQ;
 	busflags = NF_HASSOURCE;
+	busphasesIn = 0;
+	busphasesOut = 0;
 	reference_bus = NULL;
 	nominal_voltage = 0.0;
 	maximum_voltage_error = 0.0;
@@ -500,6 +502,24 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	}
 	else if (solver_method==SM_FBS)
 	{
+		//Initial phase check
+		if (prev_NTime==0)	//Should only be the very first run
+		{
+			set phase_to_check;
+			phase_to_check = (phases & (~(PHASE_D | PHASE_N)));
+			
+			//See if everything has a source
+			if (((phase_to_check & busphasesIn) != phase_to_check) && (busphasesIn != 0))	//Phase mismatch (and not top level node)
+			{
+				GL_THROW("node:%d has more phases leaving than entering",obj->id);
+				/* TROUBLESHOOT
+				A node has more phases present than it has sources coming in.  Under the Forward-Back sweep algorithm,
+				the system should be strictly radial.  This scenario implies either a meshed system or unconnected
+				phases between the from and to nodes of a connected line.  Please adjust the phases appropriately.
+				*/
+			}
+		}
+
 		/* reset the current accumulator */
 		current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
 
@@ -533,6 +553,13 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	TIMESTAMP t1 = powerflow_object::sync(t0);
 	OBJECT *obj = OBJECTHDR(this);
 	
+	//Generic time keeping variable - used for phase checks (GS does this explicitly below)
+	if ((t0!=prev_NTime) && (solver_method !=SM_GS))
+	{
+			//Update time tracking variable
+			prev_NTime=t0;
+	}
+
 	switch (solver_method)
 	{
 	case SM_FBS:
@@ -1667,6 +1694,16 @@ LINKCONNECTED *node::attachlink(OBJECT *obj) ///< object to attach
 int *node::NR_populate(void)
 {
 		NR_busdata[NR_curr_bus].type = (int)bustype;
+
+		//Are we delta (split/single phase may end up in here eventually as well)
+		if ((phases & PHASE_D) == PHASE_D)
+		{
+			NR_busdata[NR_curr_bus].delta = true;
+		}
+		else
+		{
+			NR_busdata[NR_curr_bus].delta = false;
+		}
 		
 		//Populate voltage
 		NR_busdata[NR_curr_bus].V[0] = &voltage[0];

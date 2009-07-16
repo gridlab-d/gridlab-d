@@ -102,6 +102,8 @@ public:
 	} status;
 	SUBNODETYPE SubNode;
 	set busflags;			///< node flags (see NF_*)
+	set busphasesIn;		///< phase check flags for "reconvergent" lines (input)
+	set busphasesOut;		///< phase check flags for output
 	double maximum_voltage_error;  // convergence voltage limit
 
 	// properties
