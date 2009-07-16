@@ -34,7 +34,7 @@ object lights:2 {
 		within .01;
 		object player {
 			property value;
-			file "test_lights_incandescent_power.player";
+			file "..\test_lights_incandescent_power.player";
 		};
 	};
 	object recorder{

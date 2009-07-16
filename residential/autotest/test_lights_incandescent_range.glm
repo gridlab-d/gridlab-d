@@ -1,9 +1,7 @@
-// $Id: test_lights_incandescent_power.glm 2009-07-13 22:08:36Z Ben Nguyen $
-// Copyright (C) 2009 Battelle Memorial Institute
-//
-//Purpose: This test is primarily to check if the power factor calculations of fluorescent bulbs is correct. It uses the
-//generic_demand.glt file. As of 07/14/2009, this test is optional because it is known that the power calculations for
-//fluorescent bulbs do not work. The values from the player were hand calculated and tested in the lights_power.m file.
+
+//Purpose: Incandescent bulbs have a 1.00 power factor. This means the load should basically be the demand * the total installed
+//power. The demand goes from 0 to .1, .25, .5, 1, and back to 0. These are in 4 hour increments. These were both hand calculated
+//and tested using the lights_power.m file.
 //
 //Note: Last hand check passed 07/14/2009
 //Payroll: D3P706
@@ -29,19 +27,19 @@ object house:1 {
 
 object lights:2 {
 	parent house:1;
-	type FLUORESCENT;
+	type INCANDESCENT;
 	installed_power 1000 W;
 	object complex_assert {
 		target "enduse_load";
 		within .01;
 		object player {
 			property value;
-			file "..\test_lights_fluorescent_power.player";
+			file "..\test_lights_incandescent_range.player";
 		};
 	};
 	object recorder{
 		property enduse_load,internal_gains;
-		file "test_lights_fluorescent_power.csv";
+		file "test_lights_incandescent_range.csv";
 		interval 3600;
 		limit 100;
 	};	
@@ -50,6 +48,6 @@ object lights:2 {
 object player{
 	parent lights:2;
 	property demand;
-	file generic_demand.glt;
+	file generic_fail_demand(range0-1).glt;
 	loop 1;
 }
