@@ -1,0 +1,73 @@
+//Microwave Energy Simulation
+
+//this program tests to see whether the energy is calculated correctly for a given installed power, standby power, and demand
+//there are 3 variables used in the microwave module to calculate energy use:
+//installed_power - the real power draw when the microwave is on
+//standby_power - the real power draw when the microwave is off
+//demand - the fraction of the time interval specified that microwave is on
+//the module has a default power factor of 0.95
+
+//so the energy is calulated by using the equation below
+
+// E = [(Poff)*(1-D)+(Pon)*(D)]*(dt)
+//     ----------------------------- @ inverse cos(.95)
+//	            pf
+// where:
+//E (kWh)   = the energy consumed by the microwave
+//Poff (kW) = the standby power of the microwave
+//D (unit)  = fraction of the  time interval specified ranging from (0-1)
+//Pon (kW)  = installed power of the microwave
+//dt (hrs)  = the time interval specified for the demand
+//pf (unit) = the power factor of the microwave
+
+
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+module tape;
+module residential;
+module assert;
+
+object house:1 {
+}
+
+object microwave:2 {
+	parent house:1;
+	installed_power 1000 W;
+	standby_power 10 W;
+	cycle_length 600;
+}
+
+object player:3 {
+	parent microwave:2;
+	property demand;
+	file "../test_microwave_energy.glt";//the file gives a specific demand for each hour over a 24 hour period
+}
+
+object recorder:4 {
+	parent microwave:2;
+	property constant_power,energy_meter;
+	file "test_microwave_energy.csv";
+	interval 1;//I want to record the power energy and demand for every second within 1 day
+	limit 86400;
+}
+
+object complex_assert:5 {
+	parent microwave:2;
+	target "energy_meter";
+	within .001;
+	object player {
+		property value;
+		file "../test_microwave_energy.player";
+	};
+}
+
+//Please note that the accuracy of this model is only valid for a constant power draw from the microwave.
+//If the demand is greater than zero or less than 1 then the accuracy will go condiderably.
+//This is because the module doesn't start the cycling process for a number of time steps.
+//This test is only to verify that the microwave module is caclulating the correct amount of energy thereby
+//confirming the correct power usage.
+//created by d3y334.
