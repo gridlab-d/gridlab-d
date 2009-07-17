@@ -100,7 +100,23 @@ void CLeftView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 				}
 			}
 		}
+	}
 
+	HTREEITEM schedules = tree.InsertItem("Schedules");
+	SCHEDULE *sch = NULL;
+	while ((sch=schedule_getnext(sch))!=NULL)
+	{
+		HTREEITEM hItem1 = tree.InsertItem(sch->name,schedules);
+		pRef = new CTreeRef("schedule",(DWORD_PTR)sch);
+		tree.SetItemData(hItem1,(DWORD_PTR)pRef);
+		tree.SetItemState(schedules,TVIS_BOLD,TVIS_BOLD);
+		int block;
+		for (block=0; block<sch->block; block++)
+		{
+			HTREEITEM hItem2 = tree.InsertItem(sch->blockname[block],hItem1);
+			tree.SetItemData(hItem2,(DWORD_PTR)pRef);
+			tree.SetItemState(hItem1,TVIS_BOLD,TVIS_BOLD);
+		}
 	}
 
 	HTREEITEM files = tree.InsertItem("Files");
@@ -182,7 +198,9 @@ void CLeftView::OnTvnSelchanged(NMHDR *pNMHDR, LRESULT *pResult)
 			pEditor->LoadSolver();
 		else if (type=="file")
 			pEditor->LoadFile((char*)(pRef->GetData()));
-		else
+		else if (type=="schedule")
+			pEditor->LoadSchedule((SCHEDULE*)(pRef->GetData()));
+		else /* add other types here */
 		{
 		}
 	}

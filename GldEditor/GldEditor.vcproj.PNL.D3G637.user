@@ -10,7 +10,7 @@
 			>
 			<DebugSettings
 				Command="$(TargetPath)"
-				WorkingDirectory=""
+				WorkingDirectory="$(SolutionDir)..\test"
 				CommandArguments=""
 				Attach="false"
 				DebuggerType="3"
@@ -20,9 +20,9 @@
 				HttpUrl=""
 				PDBPath=""
 				SQLDebugging=""
-				Environment=""
+				Environment="PATH=c:\mingw\bin;$(SolutionDir)..\vs2005\win32\debug&#x0A;GLPATH=$(SolutionDir)..\core\rt;$(SolutionDir)..\vs2005\win32\debug"
 				EnvironmentMerge="true"
-				DebuggerFlavor=""
+				DebuggerFlavor="0"
 				MPIRunCommand=""
 				MPIRunArguments=""
 				MPIRunWorkingDirectory=""

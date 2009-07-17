@@ -496,5 +496,52 @@ void CGldEditorView::LoadFile(char *filename)
 		int nItem = list.InsertItem(list.GetItemCount(),"ERROR");
 		list.SetItemText(nItem,Text,strerror(errno));
 	}
+}
+
+void CGldEditorView::LoadSchedule(SCHEDULE *sch)
+{
+	CListCtrl &list = GetListCtrl();
 	
+	int nColumns = list.GetHeaderCtrl()?list.GetHeaderCtrl()->GetItemCount():0;
+	for (int i=0; i<nColumns; i++)
+		list.DeleteColumn(0);
+
+	CRect wr;
+	list.GetClientRect(&wr);
+	int nCol=0;
+	int nWid=0;
+	#define W(X) (nWid+=X,X)
+	int Cal = list.InsertColumn(nCol++,"Month",LVCFMT_LEFT,W(150),nCol);
+	int dowCol[8];
+	dowCol[0] = list.InsertColumn(nCol++,"Sun",LVCFMT_LEFT,W(50),nCol);
+	dowCol[1] = list.InsertColumn(nCol++,"Mon",LVCFMT_LEFT,W(50),nCol);
+	dowCol[2] = list.InsertColumn(nCol++,"Tue",LVCFMT_LEFT,W(50),nCol);
+	dowCol[3] = list.InsertColumn(nCol++,"Wed",LVCFMT_LEFT,W(50),nCol);
+	dowCol[4] = list.InsertColumn(nCol++,"Thu",LVCFMT_LEFT,W(50),nCol);
+	dowCol[5] = list.InsertColumn(nCol++,"Fri",LVCFMT_LEFT,W(50),nCol);
+	dowCol[6] = list.InsertColumn(nCol++,"Sat",LVCFMT_LEFT,W(50),nCol);
+	dowCol[7] = list.InsertColumn(nCol++,"Hol",LVCFMT_LEFT,W(50),nCol);
+	#undef W
+
+	char *months[] = {"January","February","March","April","May","June","July","August","September","October","November","December"};
+	int days[] = {31,28,31,30,31,30,31,31,30,31,30,31}; 
+	int offset=0;
+	for (int month=0; month<12; month++)
+	{
+		char buffer[64];
+		sprintf(buffer,"%s",months[month]);
+		int nItem = list.InsertItem(list.GetItemCount(),buffer);
+		int minute=offset*60*24;
+		while (minute<(offset+7)*60*24)
+		{
+			int day = (minute/(60*24))%7;
+			SCHEDULEINDEX index;
+			index.calendar = 0;
+			index.minute = minute;
+			double value = schedule_value(sch,index);
+			minute += schedule_dtnext(sch,index);
+			list.SetItemText(nItem,dowCol[day],"TODO");
+		}
+		offset += days[month];
+	}
 }

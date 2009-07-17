@@ -63,6 +63,10 @@ struct s_schedule {
 #define SN_ABSOLUTE 0x0001	/**< schedule normalization flag - use absolute values */
 #define SN_WEIGHTED 0x0002	/**< schedule normalization flag - use weighted values */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+SCHEDULE *schedule_getnext(SCHEDULE *sch);
 SCHEDULE *schedule_find_byname(char *name);
 SCHEDULE *schedule_create(char *name, char *definition);
 int schedule_normalize(SCHEDULE *sch, int flags);
@@ -72,5 +76,8 @@ long schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
 TIMESTAMP schedule_sync(SCHEDULE *sch, TIMESTAMP t);
 TIMESTAMP schedule_syncall(TIMESTAMP t);
 int schedule_test(void);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

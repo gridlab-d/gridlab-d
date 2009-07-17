@@ -23,6 +23,7 @@ public:
 	void LoadGlobals(void);
 	void LoadSolver(void);
 	void LoadFile(char *);
+	void LoadSchedule(SCHEDULE *);
 
 // Overrides
 public:

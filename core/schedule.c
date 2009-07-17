@@ -23,8 +23,18 @@
 
 static SCHEDULE *schedule_list = NULL;
 
-/* finds a schedule by its name */
-SCHEDULE *schedule_find_byname(char *name)
+/** Iterate through the schedule list
+	@return the next schedule pointer (or first schedule)
+ **/
+SCHEDULE *schedule_getnext(SCHEDULE *sch) /**< the schedule (or NULL to get first) */
+{
+	return sch==NULL ? schedule_list : sch->next;
+}
+
+/** Find a schedule by its name 
+	@return the schedule pointer
+ **/
+SCHEDULE *schedule_find_byname(char *name) /**< the name of the schedule */
 {
 	SCHEDULE *sch;
 	for (sch=schedule_list; sch!=NULL; sch=sch->next)
@@ -255,7 +265,6 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 			}
 		}
 	}
-	sch->block++;
 	return 1;
 }
 
@@ -275,7 +284,14 @@ int schedule_compile(SCHEDULE *sch)
 	{
 		/* this is single block unnamed schedule */
 		strcpy(blockdef,p);
-		return schedule_compile_block(sch,blockdef);
+		if (schedule_compile_block(sch,blockdef))
+		{
+			strcpy(sch->blockname[sch->block],"");
+			sch->block++;
+			return 1;
+		}
+		else
+			return 0;
 	}
 
 	/* isolate each block */
