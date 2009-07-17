@@ -1,0 +1,34 @@
+//Power limits Test
+
+//This is a test to see if an error or auto-correction will occur when a negative number is put in for the two power variables 
+//and the cylce variable within the microwave module
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+module tape;
+module residential;
+
+
+object house:1 {
+}
+
+object microwave:2 {
+	parent house:1;
+	installed_power -1000 W;
+	standby_power -10 W;
+	cycle_length -600;
+	demand 1;
+}
+
+object recorder:3 {
+	parent microwave:2;
+	property standby_power,installed_power,cycle_length;
+	file "test_microwave_power_limits_err.csv";
+	interval 0;
+	limit 10;
+}
+
+//created by d3y334
