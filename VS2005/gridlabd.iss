@@ -57,7 +57,10 @@ Name: samples; Description: Sample Models; Types: typical custom
 [Tasks]
 Name: environment; Description: Add GridLAB-D to &PATH environment variable; GroupDescription: Environment
 Name: overwriteglpath; Description: Create GLPATH, overwrite if exists (recommended); GroupDescription: Environment; Components: 
-Name: Download_TMY_Files; Description: Download climate data files; Components: modules\climate
+Name: Install_Support_Files; Description: Download and install support files; GroupDescription: Download and install support files; Components: 
+Name: Install_Support_Files\Download_TMY_Files; Description: Download climate data files; Components: modules\climate
+Name: Install_Support_Files\Install_MinGW; Description: Download and install MinGW
+Name: Install_Support_Files\Install_gnuplot; Description: Download and install GnuPlot
 Name: desktopicon; Description: Create a &desktop icon; GroupDescription: Additional icons:
 Name: desktopicon\common; Description: For all users; GroupDescription: Additional icons:; Flags: exclusive
 Name: desktopicon\user; Description: For the current user only; GroupDescription: Additional icons:; Flags: exclusive unchecked
@@ -141,6 +144,7 @@ Source: ..\..\..\core\rt\gridlabd.h; DestDir: {app}\rt; Flags: ignoreversion
 ;Source: ..\..\..\climate\tmy\build_pkgs; DestDir: {app}\tmy
 Source: ..\..\..\plc\rt\include\plc.h; DestDir: {app}\rt
 Source: ..\..\..\utilities\wget.exe; DestDir: {app}; Flags: deleteafterinstall
+Source: ..\..\..\utilities\7za.exe; DestDir: {app}; Flags: deleteafterinstall
 
 
 [Registry]
@@ -267,6 +271,10 @@ begin
    Result := sTextPadDest;
 end;
 [Run]
-Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/climate-US-2_0.zip?use_mirror=superb-east; WorkingDir: {app}\tmy
+Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/climate-US-2_0.zip?use_mirror=superb-east; WorkingDir: {app}\tmy; Tasks: " Install_Support_Files\Download_TMY_Files"
+Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/MinGW-5.1.4.exe?use_mirror=superb-west; WorkingDir: {app}; Tasks: Install_Support_Files\Install_MinGW
+Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/gnuplot-win32-4_2_3.zip?use_mirror=superb-west; WorkingDir: {app}; Tasks: " Install_Support_Files\Install_gnuplot"
+Filename: {app}\MinGW-5.1.4.exe; WorkingDir: {app}
+Filename: {app}\7za.exe; Parameters: x gnuplot-win32-4_2_3.zip; WorkingDir: c:\
 [UninstallDelete]
 Name: {app}\tmy\climate-US-2_0.zip; Type: files
