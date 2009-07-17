@@ -112,6 +112,18 @@ int microwave::init(OBJECT *parent)
 	}
 	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
 
+	if(installed_power < 0){
+		GL_THROW("microwave power must be positive (read as %f)", installed_power);
+	} else if (installed_power > 4000){
+		GL_THROW("microwave power can not exceed 4 kW (and most don't exceed 2 kW)");
+	}
+	if(installed_power < 700){
+		gl_error("microwave installed power is smaller than traditional microwave ovens");
+	} else if(installed_power > 1800){
+		gl_error("microwave installed power is greater than traditional microwave ovens");
+	}
+
+	load.total = load.power = standby_power;
 	// initial demand
 	update_state(0.0);
 
@@ -243,7 +255,7 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	/* before we update our power for the next state */
-	if (t1 > t0) load.energy += load.total * ((double)(t1 - t0))/3600.0; /* dt in seconds */
+	if (t1 > t0 && t0 > 0) load.energy += load.total * ((double)(t1 - t0))/3600.0; /* dt in seconds */
 	
 	load.power.SetPowerFactor( (state==ON?installed_power:standby_power)/1000,power_factor);
 	load.total = load.power;
