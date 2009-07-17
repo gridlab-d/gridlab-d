@@ -124,10 +124,10 @@ int microwave::init(OBJECT *parent)
 	}
 
 	if(standby_power < 0){
-		gl_error("negative standby power, reseting to 1% of installed power");
+		gl_error("negative standby power, reseting to 1%% of installed power");
 		standby_power = installed_power * 0.01;
 	} else if(standby_power > installed_power){
-		gl_error("standby power exceeds installed power, reseting to 1% of installed power");
+		gl_error("standby power exceeds installed power, reseting to 1%% of installed power");
 		standby_power = installed_power * 0.01;
 	}
 
