@@ -61,6 +61,7 @@ if [ -f VERSION ]; then
 			echo "/* automatically created by $0 */" >.tmp.$$
 			echo "#define REV_MAJOR $MAJOR" >>.tmp.$$
 			echo "#define REV_MINOR $MINOR" >>.tmp.$$
+			echo "#define REV_PATCH $PATCH" >>.tmp.$$
 			echo "#define COPYRIGHT \"Copyright (C) 2004-$(date +'%Y')\\nBattelle Memorial Institute\\nAll Rights Reserved\"" >>.tmp.$$
 			echo "#define BUILD \"\$Revision: $BUILD \$\"" >>.tmp.$$
 			grep BRANCH core/version.h >>.tmp.$$

@@ -91,8 +91,8 @@ STATUS legal_notice(void)
 		int build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
 		if (build>0)
 		{
-			output_message("GridLAB-D Version %d.%02d.%03d (" BRANCH ")\n" COPYRIGHT
-				"", global_version_major, global_version_minor,build);
+			output_message("GridLAB-D Version %d.%02d.%03d (build %d of " BRANCH ")\n" COPYRIGHT
+				"", global_version_major, global_version_minor,REV_PATCH,build);
 		}
 		else
 			output_message("GridLAB-D Version %d.%02d." 
