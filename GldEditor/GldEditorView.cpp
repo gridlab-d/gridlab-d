@@ -531,16 +531,27 @@ void CGldEditorView::LoadSchedule(SCHEDULE *sch)
 		char buffer[64];
 		sprintf(buffer,"%s",months[month]);
 		int nItem = list.InsertItem(list.GetItemCount(),buffer);
-		int minute=offset*60*24;
-		while (minute<(offset+7)*60*24)
+		int hItem[24];
+		for (int hour=0; hour<24; hour++)
 		{
-			int day = (minute/(60*24))%7;
-			SCHEDULEINDEX index;
-			index.calendar = 0;
-			index.minute = minute;
-			double value = schedule_value(sch,index);
-			minute += schedule_dtnext(sch,index);
-			list.SetItemText(nItem,dowCol[day],"TODO");
+			char buffer[64];
+			sprintf(buffer,"    %d:00",hour);
+			hItem[hour] = list.InsertItem(list.GetItemCount(),buffer);
+		}
+		for (int day=0; day<7; day++)
+		{
+			for (int hour=0; hour<23; hour++)
+			{
+				int minute = (offset*24 + hour)*60;
+				SCHEDULEINDEX index;
+				index.calendar = 0;
+				index.minute = minute;
+				double value = schedule_value(sch,index);
+				minute += schedule_dtnext(sch,index);
+				char buffer[64];
+				sprintf(buffer,"%g",value);
+				list.SetItemText(hItem[hour],dowCol[day],buffer);
+			}
 		}
 		offset += days[month];
 	}
