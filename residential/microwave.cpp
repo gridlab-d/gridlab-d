@@ -123,6 +123,21 @@ int microwave::init(OBJECT *parent)
 		gl_error("microwave installed power is greater than traditional microwave ovens");
 	}
 
+	if(standby_power < 0){
+		gl_error("negative standby power, reseting to 1% of installed power");
+		standby_power = installed_power * 0.01;
+	} else if(standby_power > installed_power){
+		gl_error("standby power exceeds installed power, reseting to 1% of installed power");
+		standby_power = installed_power * 0.01;
+	}
+
+	if(cycle_time < 0){
+		GL_THROW("negative cycle_length is an invalid value");
+	}
+	if(cycle_time > 14400){
+		gl_warning("cycle_length is abnormally long and may give unusual results");
+	}
+
 	load.total = load.power = standby_power;
 	// initial demand
 	update_state(0.0);
