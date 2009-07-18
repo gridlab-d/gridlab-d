@@ -54,6 +54,7 @@ int regulator::create()
 {
 	int result = link::create();
 	configuration = NULL;
+	tap_A = tap_B = tap_C = -999;
 	return result;
 }
 
@@ -135,7 +136,8 @@ int regulator::init(OBJECT *parent)
 
 	for (int i = 0; i < 3; i++) 
 	{	
-		tap[i] = pConfig->tap_pos[i];
+		if (tap[i] == -999)
+			tap[i] = pConfig->tap_pos[i];
 
 		if (pConfig->Type == pConfig->A)
 			a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);

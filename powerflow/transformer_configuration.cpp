@@ -67,6 +67,9 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 			PT_double, "resistance[pu.Ohm]",PADDR(impedance.Re()),	// was R_pu
 			PT_double, "reactance[pu.Ohm]",PADDR(impedance.Im()),	// was X_pu
 			PT_complex, "impedance[pu.Ohm]",PADDR(impedance),
+			PT_double, "shunt_resistance[pu.Ohm]",PADDR(shunt_impedance.Re()),
+			PT_double, "shunt_reactance[pu.Ohm]",PADDR(shunt_impedance.Im()),
+			PT_complex, "shunt_impedance[pu.Ohm]",PADDR(shunt_impedance),
 
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -88,7 +91,8 @@ int transformer_configuration::create(void)
 	phaseB_kVA_rating = 0.0;
 	phaseC_kVA_rating = 0.0;
 	kVA_rating = 0;
-	impedance = complex(0,0);
+	impedance = complex(0,0);						//Lossless transformer by default
+	shunt_impedance = complex(999999999,999999999);	//Very large number for infinity to approximate lossless
 	return result;
 }
 
@@ -126,10 +130,14 @@ int transformer_configuration::init(OBJECT *parent)
 		throw "kVA rating mismatch across phases exceeds 1%";
 
 	// check impedance
-	if (impedance.Re()<=0)
-		throw "resistance must be positive";
-	if (impedance.Im()<=0)
-		throw "reactance must be positive";
+	if (impedance.Re()<0)
+		throw "resistance must be non-negative";
+	if (impedance.Im()<0)
+		throw "reactance must be non-negative";
+	if (shunt_impedance.Re()<0)
+		throw "shunt_resistance must be non-negative";
+	if (shunt_impedance.Im()<0)
+		throw "shunt_reactance must be non-negative";
 	return 1;
 }
 
