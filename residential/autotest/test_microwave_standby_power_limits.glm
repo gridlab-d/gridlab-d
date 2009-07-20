@@ -24,7 +24,7 @@ object microwave:2 {
 object recorder:3 {
 	parent microwave:2;
 	property standby_power,installed_power,cycle_length,constant_power,constant_current;
-	file "test_microwave_power_limits_err.csv";
+	file "test_microwave_standby_power_limits.csv";
 	interval 1;
 	limit 10;
 }
