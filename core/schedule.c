@@ -614,8 +614,9 @@ int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
  **/
 SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 {
-	SCHEDULEINDEX ref = {0};
+	SCHEDULEINDEX ref;
 	DATETIME dt;
+	ref.index = 0;
 	
 	/* determine the local time */
 	if (!local_datetime(ts,&dt))

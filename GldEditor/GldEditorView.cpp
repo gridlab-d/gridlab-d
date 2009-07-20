@@ -543,11 +543,12 @@ void CGldEditorView::LoadSchedule(SCHEDULE *sch)
 			for (int hour=0; hour<23; hour++)
 			{
 				int minute = (offset*24 + hour)*60;
-				SCHEDULEINDEX index;
-				index.calendar = 0;
-				index.minute = minute;
-				double value = schedule_value(sch,index);
-				minute += schedule_dtnext(sch,index);
+				SCHEDULEINDEX ref;
+				ref.index = 0;
+				ref.calendar = 0;
+				ref.minute = minute;
+				double value = schedule_value(sch,ref);
+				minute += schedule_dtnext(sch,ref);
 				char buffer[64];
 				sprintf(buffer,"%g",value);
 				list.SetItemText(hItem[hour],dowCol[day],buffer);
