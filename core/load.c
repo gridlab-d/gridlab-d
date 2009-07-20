@@ -4013,6 +4013,9 @@ static int include_file(char *incname, char *buffer, int size)
 	INCLUDELIST this={incname,include_list}; /* REALLY BAD IDEA ~~ "this" is a reserved C++ keyword */
 	output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'", 
 		incname, buffer, size, getenv("GLPATH") ? getenv("GLPATH") : "NULL", ff ? ff : "NULL");
+
+	buffer2[0]=0;
+	
 	for (list = include_list; list != NULL; list = list->next)
 	{
 		if (strcmp(incname, list->file) == 0)
@@ -4081,7 +4084,7 @@ static int include_file(char *incname, char *buffer, int size)
 	move = buffer_read_alt(fp, buffer2, incname, 20479);
 	while(move > 0){
 		count += move;
-		p = buffer; // grab a block
+		p = buffer2; // grab a block
 		while(*p != 0){
 			// and process it
 			move = gridlabd_file(p);
@@ -4094,7 +4097,7 @@ static int include_file(char *incname, char *buffer, int size)
 			count = 0;
 			break;
 		}
-		move = buffer_read_alt(fp, buffer, incname, 20479);
+		move = buffer_read_alt(fp, buffer2, incname, 20479);
 	}
 
 	include_list = this.next;
