@@ -49,7 +49,7 @@ histogram::histogram(MODULE *mod)
 			PT_int32, "samplerate", PADDR(sampling_interval),
 			PT_int32, "countrate", PADDR(counting_interval),
 			PT_int32, "bin_count", PADDR(bin_count),
-			PT_int32, "count", PADDR(limit),
+			PT_int32, "limit", PADDR(limit),
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(filename, 0, 1025);
@@ -72,7 +72,6 @@ histogram::histogram(MODULE *mod)
 
 int histogram::create()
 {
-	gl_error("create");
 	memcpy(this, defaults, sizeof(histogram));
 	return 1;
 }
@@ -95,7 +94,6 @@ int parse_bin_val(char *tok, BIN *bin){
 	eat_white(&pos);
 
 	/* check for bracket or parenthesis */
-	printf("first: %c (%i)\n", pos[0], pos[0]);
 	if(pos[0] == '['){
 		++pos;
 		bin->low_inc = 1;
@@ -213,12 +211,10 @@ int histogram::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 	char tprop[64], tpart[8];
 
-	gl_error("init");
 	if(parent == NULL) /* better have a group... */
 	{
 		OBJECT *group_obj = NULL;
 		CLASS *oclass = NULL;
-		gl_error("group");
 		if(group[0] == 0){
 			throw("Histogram has no parent and no group");
 			return 0;
@@ -253,7 +249,6 @@ int histogram::init(OBJECT *parent)
 			} 
 			
 		}
-		gl_error("end group");
 	} else { /* if we have a parent, we only focus on that one object */
 		test_for_complex(tprop, tpart);
 		
@@ -355,7 +350,6 @@ int histogram::init(OBJECT *parent)
 
 	/* if type is file or file is stdin */
 	ops = get_ftable(ftype)->histogram; /* same mentality as a recorder, 'cept for the header properties */
-	gl_error("end init");
 	if(ops == NULL)
 		return 0;
 	return ops->open(this, fname, flags);
@@ -447,7 +441,6 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double value = 0.0;
 	OBJECT *obj = OBJECTHDR(this);
 
-	gl_error("sync");
 	if((sampling_interval == 0 && t_count > t1) ||
 		sampling_interval == -1 ||
 		(sampling_interval > 0 && t1 >= next_sample))
@@ -461,7 +454,11 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 		}
 		t_sample = t1;
-		next_sample = t1 + sampling_interval;
+		if(sampling_interval > 0){
+			next_sample = t1 + sampling_interval;
+		} else {
+			next_sample = TS_NEVER;
+		}
 	}
 
 	if((counting_interval == 0 && t_count > t1) ||
@@ -493,7 +490,12 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 			binctr[i] = 0;
 		}
 		t_count = t1;
-		next_count = t_count + counting_interval;
+		if(counting_interval > 0){
+			next_count = t_count + counting_interval;
+		} else {
+			next_count = TS_NEVER;
+		}
+
 
 		if(--limit < 1){
 			ops->close(this);
