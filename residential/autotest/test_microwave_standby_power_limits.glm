@@ -1,0 +1,42 @@
+//Power limits Test
+//test_microwave_standby_power_limits.glm
+
+//This is a test to see that the auto-correction will occur when a negative number is put in for the standby_power
+
+clock {
+	timestamp '2000-01-01 00:00:00';
+	timezone PST+8PDT;
+}
+
+module tape;
+module residential;
+module assert;
+
+object house:1 {
+}
+
+object microwave:2 {
+	parent house:1;
+	installed_power 1000 W;
+	standby_power -10 W;//the model auto-corrects a negative standby_power to .01*installed_power
+}
+
+object recorder:3 {
+	parent microwave:2;
+	property standby_power,installed_power,cycle_length,constant_power,constant_current;
+	file "test_microwave_power_limits_err.csv";
+	interval 1;
+	limit 10;
+}
+
+object double_assert:4 {
+	parent microwave:2;
+	target "standby_power";
+	within 0;
+	object player {
+		property value;
+		file "../test_microwave_standby_power_limits.player";//standby_power should = 10 W
+	};
+}
+
+//created by d3y334
