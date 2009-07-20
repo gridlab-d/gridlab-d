@@ -1,0 +1,48 @@
+//
+// test to ensure that enduse_load variable of occupantload always stays 0
+// standard house with HVAC turned off and a single occupant; occupancy_fraction
+// varies in 24hr cycles for 300 hours
+//
+// Payroll: d3y332
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone PST+8PDT;
+	
+}
+
+module tape;
+module residential;
+module assert;
+
+
+object house {
+	floor_area 1500 sf;
+	cooling_setpoint 80;
+	air_temperature 74;
+	heating_setpoint 60;
+	thermostat_deadband 2;
+	object occupantload {
+		number_of_occupants 1;
+		object player {
+			property occupancy_fraction;
+			file "generic_demand.glt";
+			loop 100;
+		};
+		object recorder {
+			file "occupantload3600.csv";
+			interval 3600;
+			limit 300;
+			property enduse_load,internal_gains,occupancy_fraction,heatgain_per_person;
+		};
+		object complex_assert {
+			target enduse_load;
+			value 0; // occupantloads should not consume power
+			within 0;
+		};
+	};
+}
+
+
+
+
