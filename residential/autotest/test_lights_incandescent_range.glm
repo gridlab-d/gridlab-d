@@ -34,7 +34,7 @@ object lights:2 {
 		within .01;
 		object player {
 			property value;
-			file "..\test_lights_incandescent_range.player";
+			file "../test_lights_incandescent_range.player";
 		};
 	};
 	object recorder{
@@ -48,6 +48,6 @@ object lights:2 {
 object player{
 	parent lights:2;
 	property demand;
-	file generic_fail_demand(range0-1).glt;
+	file "../generic_fail_demand(range0-1).glt";
 	loop 1;
 }
