@@ -138,7 +138,7 @@ int microwave::init(OBJECT *parent)
 		gl_warning("cycle_length is abnormally long and may give unusual results");
 	}
 
-	load.total = load.power = standby_power;
+	load.total = load.power = standby_power/1000;
 	// initial demand
 	update_state(0.0);
 
