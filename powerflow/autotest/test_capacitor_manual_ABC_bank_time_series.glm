@@ -113,24 +113,24 @@ object load:4 {
 	object player {
 		parent load:4;
 		property constant_power_A;
-		file ..\loader_fastA.player;
+		file ../loader_fastA.player;
 	};
 	object player {
 		parent load:4;
 		property constant_power_B;
-		file ..\loader_fastB.player;
+		file ../loader_fastB.player;
 	};
 	object player {
 		parent load:4;
 		property constant_power_C;
-		file ..\loader_fastC.player;
+		file ../loader_fastC.player;
 	};
 	object complex_assert {
 		target "voltage_A";
 		within 0.1;
 		object player {
 			property value;
-			file ..\cap_volt_A_manual_ts.player;
+			file ../cap_volt_A_manual_ts.player;
 			};
 	};
 	object complex_assert {
@@ -138,7 +138,7 @@ object load:4 {
 		within 0.1;
 		object player {
 			property value;
-			file ..\cap_volt_B_manual_ts.player;
+			file ../cap_volt_B_manual_ts.player;
 			};
 	};
 	object complex_assert {
@@ -146,7 +146,7 @@ object load:4 {
 		within 0.1;
 		object player {
 			property value;
-			file ..\cap_volt_C_manual_ts.player;
+			file ../cap_volt_C_manual_ts.player;
 			};
 	};
 }
@@ -173,6 +173,6 @@ object capacitor {
 	nominal_voltage 14377;
 	object player {
 		property switchB;
-		file ..\cap_manual_switch.player;
+		file ../cap_manual_switch.player;
 		};
 }
