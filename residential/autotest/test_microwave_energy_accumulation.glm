@@ -1,0 +1,42 @@
+//Microwave Energy Accumulation
+//test_microwave_energy_accumulation.glm
+//The purpose of this simulation is to make sure the energy is accumulating when the demand it set to zero
+
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+module tape;
+module residential;
+module assert;
+
+object house:1 {
+}
+
+object microwave:2 {
+	parent house:1;
+	installed_power 1000;
+	standby_power 200;
+	cycle_length 600;
+	demand 0;
+}
+
+object recorder:3 {
+	parent microwave:2;
+	property constant_power,energy_meter;
+	file "test_microwave_energy_accumulation.csv";
+	interval 1;
+	limit 10;
+}
+
+object complex_assert:4 {
+	parent microwave:2;
+	target energy_meter;
+	within 0.02;
+	object player {
+		property value;
+		file "../test_microwave_energy_accumulation.player";
+	};
+}
