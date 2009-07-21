@@ -1,0 +1,51 @@
+
+//Purpose: Incandescent bulbs have a 1.00 power factor. This means the load should basically be the demand * the total installed
+//power. The demand goes from 0 to .1, .25, .5, 1, and back to 0. These are in 4 hour increments.
+//
+//Note: Last hand check passed 07/14/2009
+//
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-01 24:00:00';
+	timezone PST+8PDT;
+}
+
+module tape;
+module residential;
+module assert;
+
+object house:1 {
+	floor_area random.normal(1500,300) sf;
+	heating_setpoint 10;
+	cooling_setpoint 150;
+	air_temperature 74;
+	mass_temperature 74;
+	thermostat_deadband 2;
+}
+
+object range:2 {
+	parent house:1;
+	installed_power 2000;
+	object complex_assert {
+		target "enduse_load";
+		within .1;
+		object player {
+			property value;
+			file "..\test_range_power.player";
+		};
+	};
+	object recorder{
+		property enduse_load,internal_gains,energy_meter,constant_current;
+		file "test_range_power.csv";
+		interval -1;
+		limit 100;
+	};	
+}
+
+object player{
+	parent range:2;
+	property demand;
+	file "..\generic_demand.glt";
+	loop 1;
+}
