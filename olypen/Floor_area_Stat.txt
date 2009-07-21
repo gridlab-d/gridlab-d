@@ -1,0 +1,8 @@
+Category	Frequency
+2,000 – 2,499 sq. ft.	26.0
+1,500 – 1,999 sq. ft.	37.0
+2,500 – 2,999 sq. ft.	16.0
+1,000 – 1,499 sq. ft.	20.0
+More than 3,500 sq. ft.	3.0
+3,000 – 3,499 sq. ft.	4.0
+Less than 1000 sq. ft.	3.0

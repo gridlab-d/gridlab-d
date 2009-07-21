@@ -1,0 +1,3442 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xml-stylesheet href="http://www.gridlabd.org/gridlabd-2_0.xsl" type="text/xsl"?>
+<gridlabd>
+	<version.major>2</version.major>
+	<version.minor>0</version.minor>
+	<command_line>"gridlabd control-new.glm"</command_line>
+	<environment>batch</environment>
+	<quiet>0</quiet>
+	<warn>1</warn>
+	<debugger>0</debugger>
+	<gdb>0</gdb>
+	<debug>0</debug>
+	<test>0</test>
+	<verbose>0</verbose>
+	<iteration_limit>100</iteration_limit>
+	<workdir>"C:\Program Files\GridLAB-D\bin"</workdir>
+	<dumpfile>gridlabd.xml</dumpfile>
+	<savefile>""</savefile>
+	<dumpall>0</dumpall>
+	<runchecks>0</runchecks>
+	<threadcount>1</threadcount>
+	<profiler>0</profiler>
+	<pauseatexit>0</pauseatexit>
+	<testoutputfile>test.txt</testoutputfile>
+	<xml_encoding>8</xml_encoding>
+	<clock>2006-04-03 01:00:00 PDT</clock>
+	<starttime>2009-06-09 20:29:54 PDT</starttime>
+	<stoptime>2007-04-02 01:00:00 PDT</stoptime>
+	<double_format>%+lg</double_format>
+	<complex_format>%+lg%+lg%c</complex_format>
+	<object_format>%s:%d</object_format>
+	<object_scan>%[^:]:%d</object_scan>
+	<object_tree_balance>FALSE</object_tree_balance>
+	<kmlfile>""</kmlfile>
+	<modelname>control-new.glm</modelname>
+	<execdir>gridlabd</execdir>
+	<strictnames>TRUE</strictnames>
+	<website>http://www.gridlabd.org/</website>
+	<urlbase>http://www.gridlabd.org/</urlbase>
+	<randomseed>0</randomseed>
+	<include>""</include>
+	<trace>""</trace>
+	<gdb_window>0</gdb_window>
+	<tmp>c:/temp</tmp>
+	<force_compile>0</force_compile>
+	<nolocks>0</nolocks>
+	<skipsafe>0</skipsafe>
+	<timezone>PST8PDT</timezone>
+	<sync-order>
+		<pass>
+			<name>pretopdown</name>
+			<rank>
+				<ordinal>2</ordinal>
+				<object>
+					<name>(triplex_meter:1)</name>
+					<id>1</id>
+				</object>
+				<object>
+					<name>(triplex_meter:5)</name>
+					<id>5</id>
+				</object>
+				<object>
+					<name>(triplex_meter:9)</name>
+					<id>9</id>
+				</object>
+				<object>
+					<name>(triplex_meter:13)</name>
+					<id>13</id>
+				</object>
+				<object>
+					<name>(triplex_meter:17)</name>
+					<id>17</id>
+				</object>
+				<object>
+					<name>(triplex_meter:21)</name>
+					<id>21</id>
+				</object>
+				<object>
+					<name>(triplex_meter:25)</name>
+					<id>25</id>
+				</object>
+				<object>
+					<name>(triplex_meter:29)</name>
+					<id>29</id>
+				</object>
+				<object>
+					<name>(triplex_meter:33)</name>
+					<id>33</id>
+				</object>
+				<object>
+					<name>(triplex_meter:37)</name>
+					<id>37</id>
+				</object>
+				<object>
+					<name>(triplex_meter:41)</name>
+					<id>41</id>
+				</object>
+				<object>
+					<name>(triplex_meter:45)</name>
+					<id>45</id>
+				</object>
+				<object>
+					<name>(triplex_meter:49)</name>
+					<id>49</id>
+				</object>
+				<object>
+					<name>(triplex_meter:53)</name>
+					<id>53</id>
+				</object>
+				<object>
+					<name>(triplex_meter:57)</name>
+					<id>57</id>
+				</object>
+				<object>
+					<name>(triplex_meter:61)</name>
+					<id>61</id>
+				</object>
+				<object>
+					<name>(triplex_meter:65)</name>
+					<id>65</id>
+				</object>
+				<object>
+					<name>(triplex_meter:69)</name>
+					<id>69</id>
+				</object>
+				<object>
+					<name>(triplex_meter:73)</name>
+					<id>73</id>
+				</object>
+				<object>
+					<name>(triplex_meter:77)</name>
+					<id>77</id>
+				</object>
+				<object>
+					<name>(triplex_meter:81)</name>
+					<id>81</id>
+				</object>
+				<object>
+					<name>(triplex_meter:85)</name>
+					<id>85</id>
+				</object>
+				<object>
+					<name>(triplex_meter:89)</name>
+					<id>89</id>
+				</object>
+				<object>
+					<name>(triplex_meter:93)</name>
+					<id>93</id>
+				</object>
+				<object>
+					<name>(triplex_meter:97)</name>
+					<id>97</id>
+				</object>
+			</rank>
+			<rank>
+				<ordinal>1</ordinal>
+				<object>
+					<name>(house:2)</name>
+					<id>2</id>
+				</object>
+				<object>
+					<name>(house:6)</name>
+					<id>6</id>
+				</object>
+				<object>
+					<name>(house:10)</name>
+					<id>10</id>
+				</object>
+				<object>
+					<name>(house:14)</name>
+					<id>14</id>
+				</object>
+				<object>
+					<name>(house:18)</name>
+					<id>18</id>
+				</object>
+				<object>
+					<name>(house:22)</name>
+					<id>22</id>
+				</object>
+				<object>
+					<name>(house:26)</name>
+					<id>26</id>
+				</object>
+				<object>
+					<name>(house:30)</name>
+					<id>30</id>
+				</object>
+				<object>
+					<name>(house:34)</name>
+					<id>34</id>
+				</object>
+				<object>
+					<name>(house:38)</name>
+					<id>38</id>
+				</object>
+				<object>
+					<name>(house:42)</name>
+					<id>42</id>
+				</object>
+				<object>
+					<name>(house:46)</name>
+					<id>46</id>
+				</object>
+				<object>
+					<name>(house:50)</name>
+					<id>50</id>
+				</object>
+				<object>
+					<name>(house:54)</name>
+					<id>54</id>
+				</object>
+				<object>
+					<name>(house:58)</name>
+					<id>58</id>
+				</object>
+				<object>
+					<name>(house:62)</name>
+					<id>62</id>
+				</object>
+				<object>
+					<name>(house:66)</name>
+					<id>66</id>
+				</object>
+				<object>
+					<name>(house:70)</name>
+					<id>70</id>
+				</object>
+				<object>
+					<name>(house:74)</name>
+					<id>74</id>
+				</object>
+				<object>
+					<name>(house:78)</name>
+					<id>78</id>
+				</object>
+				<object>
+					<name>(house:82)</name>
+					<id>82</id>
+				</object>
+				<object>
+					<name>(house:86)</name>
+					<id>86</id>
+				</object>
+				<object>
+					<name>(house:90)</name>
+					<id>90</id>
+				</object>
+				<object>
+					<name>(house:94)</name>
+					<id>94</id>
+				</object>
+				<object>
+					<name>(house:98)</name>
+					<id>98</id>
+				</object>
+			</rank>
+		</pass>
+		<pass>
+			<name>bottomup</name>
+			<rank>
+				<ordinal>0</ordinal>
+				<object>
+					<name>(player:35)</name>
+					<id>35</id>
+				</object>
+				<object>
+					<name>(player:87)</name>
+					<id>87</id>
+				</object>
+				<object>
+					<name>(player:8)</name>
+					<id>8</id>
+				</object>
+				<object>
+					<name>(player:11)</name>
+					<id>11</id>
+				</object>
+				<object>
+					<name>(player:52)</name>
+					<id>52</id>
+				</object>
+				<object>
+					<name>(player:79)</name>
+					<id>79</id>
+				</object>
+				<object>
+					<name>(player:44)</name>
+					<id>44</id>
+				</object>
+				<object>
+					<name>(player:39)</name>
+					<id>39</id>
+				</object>
+				<object>
+					<name>(player:12)</name>
+					<id>12</id>
+				</object>
+				<object>
+					<name>(player:15)</name>
+					<id>15</id>
+				</object>
+				<object>
+					<name>(player:91)</name>
+					<id>91</id>
+				</object>
+				<object>
+					<name>(player:20)</name>
+					<id>20</id>
+				</object>
+				<object>
+					<name>(player:7)</name>
+					<id>7</id>
+				</object>
+				<object>
+					<name>(player:63)</name>
+					<id>63</id>
+				</object>
+				<object>
+					<name>(player:96)</name>
+					<id>96</id>
+				</object>
+				<object>
+					<name>(player:84)</name>
+					<id>84</id>
+				</object>
+				<object>
+					<name>(player:99)</name>
+					<id>99</id>
+				</object>
+				<object>
+					<name>(player:36)</name>
+					<id>36</id>
+				</object>
+				<object>
+					<name>(player:80)</name>
+					<id>80</id>
+				</object>
+				<object>
+					<name>(player:68)</name>
+					<id>68</id>
+				</object>
+				<object>
+					<name>(player:3)</name>
+					<id>3</id>
+				</object>
+				<object>
+					<name>(player:4)</name>
+					<id>4</id>
+				</object>
+				<object>
+					<name>(player:64)</name>
+					<id>64</id>
+				</object>
+				<object>
+					<name>(player:48)</name>
+					<id>48</id>
+				</object>
+				<object>
+					<name>(player:92)</name>
+					<id>92</id>
+				</object>
+				<object>
+					<name>(player:19)</name>
+					<id>19</id>
+				</object>
+				<object>
+					<name>(player:32)</name>
+					<id>32</id>
+				</object>
+				<object>
+					<name>(climate:0)</name>
+					<id>0</id>
+				</object>
+				<object>
+					<name>(player:55)</name>
+					<id>55</id>
+				</object>
+				<object>
+					<name>(player:59)</name>
+					<id>59</id>
+				</object>
+				<object>
+					<name>(player:60)</name>
+					<id>60</id>
+				</object>
+				<object>
+					<name>(player:56)</name>
+					<id>56</id>
+				</object>
+				<object>
+					<name>(player:28)</name>
+					<id>28</id>
+				</object>
+				<object>
+					<name>(player:76)</name>
+					<id>76</id>
+				</object>
+				<object>
+					<name>(player:72)</name>
+					<id>72</id>
+				</object>
+				<object>
+					<name>(player:31)</name>
+					<id>31</id>
+				</object>
+				<object>
+					<name>(player:40)</name>
+					<id>40</id>
+				</object>
+				<object>
+					<name>(player:23)</name>
+					<id>23</id>
+				</object>
+				<object>
+					<name>(player:27)</name>
+					<id>27</id>
+				</object>
+				<object>
+					<name>(player:100)</name>
+					<id>100</id>
+				</object>
+				<object>
+					<name>(player:83)</name>
+					<id>83</id>
+				</object>
+				<object>
+					<name>(player:16)</name>
+					<id>16</id>
+				</object>
+				<object>
+					<name>(player:88)</name>
+					<id>88</id>
+				</object>
+				<object>
+					<name>(player:75)</name>
+					<id>75</id>
+				</object>
+				<object>
+					<name>(player:47)</name>
+					<id>47</id>
+				</object>
+				<object>
+					<name>(player:24)</name>
+					<id>24</id>
+				</object>
+				<object>
+					<name>(player:51)</name>
+					<id>51</id>
+				</object>
+				<object>
+					<name>(player:67)</name>
+					<id>67</id>
+				</object>
+				<object>
+					<name>(player:95)</name>
+					<id>95</id>
+				</object>
+				<object>
+					<name>(player:71)</name>
+					<id>71</id>
+				</object>
+				<object>
+					<name>(player:43)</name>
+					<id>43</id>
+				</object>
+			</rank>
+			<rank>
+				<ordinal>1</ordinal>
+				<object>
+					<name>(house:46)</name>
+					<id>46</id>
+				</object>
+				<object>
+					<name>(house:10)</name>
+					<id>10</id>
+				</object>
+				<object>
+					<name>(house:98)</name>
+					<id>98</id>
+				</object>
+				<object>
+					<name>(house:30)</name>
+					<id>30</id>
+				</object>
+				<object>
+					<name>(house:18)</name>
+					<id>18</id>
+				</object>
+				<object>
+					<name>(house:90)</name>
+					<id>90</id>
+				</object>
+				<object>
+					<name>(house:54)</name>
+					<id>54</id>
+				</object>
+				<object>
+					<name>(house:42)</name>
+					<id>42</id>
+				</object>
+				<object>
+					<name>(house:70)</name>
+					<id>70</id>
+				</object>
+				<object>
+					<name>(house:78)</name>
+					<id>78</id>
+				</object>
+				<object>
+					<name>(house:50)</name>
+					<id>50</id>
+				</object>
+				<object>
+					<name>(house:94)</name>
+					<id>94</id>
+				</object>
+				<object>
+					<name>(house:6)</name>
+					<id>6</id>
+				</object>
+				<object>
+					<name>(house:34)</name>
+					<id>34</id>
+				</object>
+				<object>
+					<name>(house:26)</name>
+					<id>26</id>
+				</object>
+				<object>
+					<name>(house:82)</name>
+					<id>82</id>
+				</object>
+				<object>
+					<name>(house:74)</name>
+					<id>74</id>
+				</object>
+				<object>
+					<name>(house:62)</name>
+					<id>62</id>
+				</object>
+				<object>
+					<name>(house:58)</name>
+					<id>58</id>
+				</object>
+				<object>
+					<name>(house:22)</name>
+					<id>22</id>
+				</object>
+				<object>
+					<name>(house:14)</name>
+					<id>14</id>
+				</object>
+				<object>
+					<name>(house:66)</name>
+					<id>66</id>
+				</object>
+				<object>
+					<name>(house:86)</name>
+					<id>86</id>
+				</object>
+				<object>
+					<name>(house:2)</name>
+					<id>2</id>
+				</object>
+				<object>
+					<name>(house:38)</name>
+					<id>38</id>
+				</object>
+			</rank>
+			<rank>
+				<ordinal>2</ordinal>
+				<object>
+					<name>(triplex_meter:1)</name>
+					<id>1</id>
+				</object>
+				<object>
+					<name>(triplex_meter:5)</name>
+					<id>5</id>
+				</object>
+				<object>
+					<name>(triplex_meter:9)</name>
+					<id>9</id>
+				</object>
+				<object>
+					<name>(triplex_meter:13)</name>
+					<id>13</id>
+				</object>
+				<object>
+					<name>(triplex_meter:17)</name>
+					<id>17</id>
+				</object>
+				<object>
+					<name>(triplex_meter:21)</name>
+					<id>21</id>
+				</object>
+				<object>
+					<name>(triplex_meter:25)</name>
+					<id>25</id>
+				</object>
+				<object>
+					<name>(triplex_meter:29)</name>
+					<id>29</id>
+				</object>
+				<object>
+					<name>(triplex_meter:33)</name>
+					<id>33</id>
+				</object>
+				<object>
+					<name>(triplex_meter:37)</name>
+					<id>37</id>
+				</object>
+				<object>
+					<name>(triplex_meter:41)</name>
+					<id>41</id>
+				</object>
+				<object>
+					<name>(triplex_meter:45)</name>
+					<id>45</id>
+				</object>
+				<object>
+					<name>(triplex_meter:49)</name>
+					<id>49</id>
+				</object>
+				<object>
+					<name>(triplex_meter:53)</name>
+					<id>53</id>
+				</object>
+				<object>
+					<name>(triplex_meter:57)</name>
+					<id>57</id>
+				</object>
+				<object>
+					<name>(triplex_meter:61)</name>
+					<id>61</id>
+				</object>
+				<object>
+					<name>(triplex_meter:65)</name>
+					<id>65</id>
+				</object>
+				<object>
+					<name>(triplex_meter:69)</name>
+					<id>69</id>
+				</object>
+				<object>
+					<name>(triplex_meter:73)</name>
+					<id>73</id>
+				</object>
+				<object>
+					<name>(triplex_meter:77)</name>
+					<id>77</id>
+				</object>
+				<object>
+					<name>(triplex_meter:81)</name>
+					<id>81</id>
+				</object>
+				<object>
+					<name>(triplex_meter:85)</name>
+					<id>85</id>
+				</object>
+				<object>
+					<name>(triplex_meter:89)</name>
+					<id>89</id>
+				</object>
+				<object>
+					<name>(triplex_meter:93)</name>
+					<id>93</id>
+				</object>
+				<object>
+					<name>(triplex_meter:97)</name>
+					<id>97</id>
+				</object>
+			</rank>
+		</pass>
+		<pass>
+			<name>posttopdown</name>
+			<rank>
+				<ordinal>2</ordinal>
+				<object>
+					<name>(triplex_meter:1)</name>
+					<id>1</id>
+				</object>
+				<object>
+					<name>(triplex_meter:5)</name>
+					<id>5</id>
+				</object>
+				<object>
+					<name>(triplex_meter:9)</name>
+					<id>9</id>
+				</object>
+				<object>
+					<name>(triplex_meter:13)</name>
+					<id>13</id>
+				</object>
+				<object>
+					<name>(triplex_meter:17)</name>
+					<id>17</id>
+				</object>
+				<object>
+					<name>(triplex_meter:21)</name>
+					<id>21</id>
+				</object>
+				<object>
+					<name>(triplex_meter:25)</name>
+					<id>25</id>
+				</object>
+				<object>
+					<name>(triplex_meter:29)</name>
+					<id>29</id>
+				</object>
+				<object>
+					<name>(triplex_meter:33)</name>
+					<id>33</id>
+				</object>
+				<object>
+					<name>(triplex_meter:37)</name>
+					<id>37</id>
+				</object>
+				<object>
+					<name>(triplex_meter:41)</name>
+					<id>41</id>
+				</object>
+				<object>
+					<name>(triplex_meter:45)</name>
+					<id>45</id>
+				</object>
+				<object>
+					<name>(triplex_meter:49)</name>
+					<id>49</id>
+				</object>
+				<object>
+					<name>(triplex_meter:53)</name>
+					<id>53</id>
+				</object>
+				<object>
+					<name>(triplex_meter:57)</name>
+					<id>57</id>
+				</object>
+				<object>
+					<name>(triplex_meter:61)</name>
+					<id>61</id>
+				</object>
+				<object>
+					<name>(triplex_meter:65)</name>
+					<id>65</id>
+				</object>
+				<object>
+					<name>(triplex_meter:69)</name>
+					<id>69</id>
+				</object>
+				<object>
+					<name>(triplex_meter:73)</name>
+					<id>73</id>
+				</object>
+				<object>
+					<name>(triplex_meter:77)</name>
+					<id>77</id>
+				</object>
+				<object>
+					<name>(triplex_meter:81)</name>
+					<id>81</id>
+				</object>
+				<object>
+					<name>(triplex_meter:85)</name>
+					<id>85</id>
+				</object>
+				<object>
+					<name>(triplex_meter:89)</name>
+					<id>89</id>
+				</object>
+				<object>
+					<name>(triplex_meter:93)</name>
+					<id>93</id>
+				</object>
+				<object>
+					<name>(triplex_meter:97)</name>
+					<id>97</id>
+				</object>
+			</rank>
+			<rank>
+				<ordinal>0</ordinal>
+				<object>
+					<name>(collector:101)</name>
+					<id>101</id>
+				</object>
+			</rank>
+		</pass>
+	</sync-order>
+	<powerflow>
+		<version.major>2</version.major>
+		<version.minor>0</version.minor>
+		<node_list>
+			<inherits_from>powerflow_object</inherits_from>
+		</node_list>
+		<link_list>
+			<inherits_from>powerflow_object</inherits_from>
+		</link_list>
+		<capacitor_list>
+			<inherits_from>node</inherits_from>
+		</capacitor_list>
+		<fuse_list>
+			<inherits_from>link</inherits_from>
+		</fuse_list>
+		<meter_list>
+			<inherits_from>node</inherits_from>
+		</meter_list>
+		<line_list>
+			<inherits_from>link</inherits_from>
+		</line_list>
+		<line_spacing_list>
+		</line_spacing_list>
+		<overhead_line_list>
+			<inherits_from>line</inherits_from>
+		</overhead_line_list>
+		<underground_line_list>
+			<inherits_from>line</inherits_from>
+		</underground_line_list>
+		<overhead_line_conductor_list>
+		</overhead_line_conductor_list>
+		<underground_line_conductor_list>
+		</underground_line_conductor_list>
+		<line_configuration_list>
+		</line_configuration_list>
+		<relay_list>
+			<inherits_from>link</inherits_from>
+		</relay_list>
+		<transformer_configuration_list>
+		</transformer_configuration_list>
+		<transformer_list>
+			<inherits_from>link</inherits_from>
+		</transformer_list>
+		<load_list>
+			<inherits_from>node</inherits_from>
+		</load_list>
+		<regulator_configuration_list>
+		</regulator_configuration_list>
+		<regulator_list>
+			<inherits_from>link</inherits_from>
+		</regulator_list>
+		<triplex_node_list>
+			<inherits_from>powerflow_object</inherits_from>
+		</triplex_node_list>
+		<triplex_meter_list>
+			<inherits_from>triplex_node</inherits_from>
+			<triplex_meter>
+				<id>1</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:1)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>5</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:5)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>9</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:9)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>13</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:13)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>17</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:17)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>21</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:21)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>25</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:25)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>29</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:29)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>33</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:33)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>37</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:37)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>41</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:41)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>45</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:45)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>49</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:49)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>53</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:53)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>57</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:57)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>61</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:61)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>65</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:65)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>69</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:69)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>73</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:73)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>77</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:77)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>81</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:81)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>85</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:85)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>89</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:89)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>93</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:93)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+			<triplex_meter>
+				<id>97</id>
+				<rank>2</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(triplex_meter:97)</name>
+				<measured_energy>+0 Wh</measured_energy>
+				<measured_power>+0 W</measured_power>
+				<measured_demand>+0 W</measured_demand>
+				<measured_real_power>+0 W</measured_real_power>
+				<measured_voltage_1>+0+0d V</measured_voltage_1>
+				<measured_voltage_2>+0+0d V</measured_voltage_2>
+				<measured_voltage_N>+0+0d V</measured_voltage_N>
+				<measured_current_1>+0+0i A</measured_current_1>
+				<measured_current_2>+0+0i A</measured_current_2>
+				<measured_current_N>+0+0i A</measured_current_N>
+				<bustype>PQ</bustype>
+				<busflags>HASSOURCE</busflags>
+				<maximum_voltage_error>+1.2e-006 V</maximum_voltage_error>
+				<voltage_1>+120+0j V</voltage_1>
+				<voltage_2>+120+0j V</voltage_2>
+				<voltage_N>+0+0j V</voltage_N>
+				<voltage_12>+0+0i V</voltage_12>
+				<voltage_1N>+0+0i V</voltage_1N>
+				<voltage_2N>+0+0i V</voltage_2N>
+				<current_1>+0+0j A</current_1>
+				<current_2>+0+0j A</current_2>
+				<current_N>-0-0j A</current_N>
+				<power_1>+0+0i W</power_1>
+				<power_2>+0+0i W</power_2>
+				<power_N>+0+0i W</power_N>
+				<shunt_1>+0+0j S</shunt_1>
+				<shunt_2>+0+0j S</shunt_2>
+				<shunt_N>+0+0j S</shunt_N>
+				<impedance_1>+0+0i Ohm</impedance_1>
+				<impedance_2>+0+0i Ohm</impedance_2>
+				<impedance_N>+0+0i Ohm</impedance_N>
+				<phases>AS</phases>
+				<nominal_voltage>+120 V</nominal_voltage>
+			</triplex_meter>
+		</triplex_meter_list>
+		<triplex_line_list>
+			<inherits_from>line</inherits_from>
+		</triplex_line_list>
+		<triplex_line_configuration_list>
+		</triplex_line_configuration_list>
+		<triplex_line_conductor_list>
+		</triplex_line_conductor_list>
+		<switch_list>
+			<inherits_from>link</inherits_from>
+		</switch_list>
+		<substation_list>
+			<inherits_from>node</inherits_from>
+		</substation_list>
+	</powerflow>
+	<climate>
+		<version.major>1</version.major>
+		<version.minor>0</version.minor>
+		<climate_list>
+			<climate>
+				<id>0</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(climate:0)</name>
+				<city>""</city>
+				<tmyfile>Olympia.tmy2</tmyfile>
+				<temperature>+35.962 degF</temperature>
+				<humidity>+0.96</humidity>
+				<solar_flux>+0 W/sf</solar_flux>
+				<wind_speed>+0 mph</wind_speed>
+				<wind_dir>+0 deg</wind_dir>
+				<wind_gust>+0 mph</wind_gust>
+				<record.low>-7.8 degF</record.low>
+				<record.high>+35.6 degF</record.high>
+				<record.solar>+22.1466 W/sf</record.solar>
+			</climate>
+		</climate_list>
+	</climate>
+	<residential>
+		<version.major>1</version.major>
+		<version.minor>0</version.minor>
+		<house_list>
+			<house>
+				<id>2</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:1</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:2)</name>
+				<floor_area>+2750 sf</floor_area>
+				<gross_wall_area>+6712.38 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+449.552 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.80566</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+71.0013 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+23.1292 Btu</design_heating_capacity>
+				<design_cooling_capacity>+18.694 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.06769</COP_coeff>
+				<air_temperature>+75.5145 degF</air_temperature>
+				<mass_temperature>+75.5145 degF</mass_temperature>
+				<mass_heat_coeff>+2202.86</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>6</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:5</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:6)</name>
+				<floor_area>+1750 sf</floor_area>
+				<gross_wall_area>+5354.62 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+338.171 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.1485</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+68.0996 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+23.632 Btu</design_heating_capacity>
+				<design_cooling_capacity>+21.8232 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+0.938672</COP_coeff>
+				<air_temperature>+70.1488 degF</air_temperature>
+				<mass_temperature>+70.1488 degF</mass_temperature>
+				<mass_heat_coeff>+1331.43</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>10</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:9</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:10)</name>
+				<floor_area>+1750 sf</floor_area>
+				<gross_wall_area>+5354.62 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+349.057 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.94952</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+70.9343 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+18.5385 Btu</design_heating_capacity>
+				<design_cooling_capacity>+21.8796 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.08984</COP_coeff>
+				<air_temperature>+74.4592 degF</air_temperature>
+				<mass_temperature>+74.4592 degF</mass_temperature>
+				<mass_heat_coeff>+1002.53</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>14</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:13</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:14)</name>
+				<floor_area>+1750 sf</floor_area>
+				<gross_wall_area>+5354.62 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+272.097 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.19366</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+70.1244 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+22.688 Btu</design_heating_capacity>
+				<design_cooling_capacity>+20.1431 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+0.931934</COP_coeff>
+				<air_temperature>+72.5712 degF</air_temperature>
+				<mass_temperature>+72.5712 degF</mass_temperature>
+				<mass_heat_coeff>+938.74</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>18</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:17</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:18)</name>
+				<floor_area>+1750 sf</floor_area>
+				<gross_wall_area>+5354.62 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+263.429 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.82172</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+71.3932 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+21.3907 Btu</design_heating_capacity>
+				<design_cooling_capacity>+19.4244 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.022</COP_coeff>
+				<air_temperature>+73.6391 degF</air_temperature>
+				<mass_temperature>+73.6391 degF</mass_temperature>
+				<mass_heat_coeff>+1569.84</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>22</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:21</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:22)</name>
+				<floor_area>+2250 sf</floor_area>
+				<gross_wall_area>+6071.57 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+354.182 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.64227</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+71.8601 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+23.1008 Btu</design_heating_capacity>
+				<design_cooling_capacity>+21.6733 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.04699</COP_coeff>
+				<air_temperature>+74.2442 degF</air_temperature>
+				<mass_temperature>+74.2442 degF</mass_temperature>
+				<mass_heat_coeff>+1519.13</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>26</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:25</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:26)</name>
+				<floor_area>+2250 sf</floor_area>
+				<gross_wall_area>+6071.57 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+365.22 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.36072</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+70.2572 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+18.1511 Btu</design_heating_capacity>
+				<design_cooling_capacity>+20.4578 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+0.932178</COP_coeff>
+				<air_temperature>+72.5386 degF</air_temperature>
+				<mass_temperature>+72.5386 degF</mass_temperature>
+				<mass_heat_coeff>+2216.53</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>30</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:29</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:30)</name>
+				<floor_area>+1750 sf</floor_area>
+				<gross_wall_area>+5354.62 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+271.627 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.39331</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+68.0625 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+23.9894 Btu</design_heating_capacity>
+				<design_cooling_capacity>+22.6771 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.08099</COP_coeff>
+				<air_temperature>+70.6967 degF</air_temperature>
+				<mass_temperature>+70.6967 degF</mass_temperature>
+				<mass_heat_coeff>+1367.48</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>34</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:33</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:34)</name>
+				<floor_area>+1750 sf</floor_area>
+				<gross_wall_area>+5354.62 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+284.255 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.18494</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+70.2321 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+19.6844 Btu</design_heating_capacity>
+				<design_cooling_capacity>+21.7421 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+0.91875</COP_coeff>
+				<air_temperature>+72.3779 degF</air_temperature>
+				<mass_temperature>+72.3779 degF</mass_temperature>
+				<mass_heat_coeff>+1334.74</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>38</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:37</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:38)</name>
+				<floor_area>+2250 sf</floor_area>
+				<gross_wall_area>+6071.57 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+370.562 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.3327</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+70.7238 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+19.9166 Btu</design_heating_capacity>
+				<design_cooling_capacity>+19.3275 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+0.96955</COP_coeff>
+				<air_temperature>+74.0114 degF</air_temperature>
+				<mass_temperature>+74.0114 degF</mass_temperature>
+				<mass_heat_coeff>+1892.4</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>42</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:41</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:42)</name>
+				<floor_area>+1750 sf</floor_area>
+				<gross_wall_area>+5354.62 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+334.173 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.17969</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+69.8276 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+20.9348 Btu</design_heating_capacity>
+				<design_cooling_capacity>+19.3619 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.06747</COP_coeff>
+				<air_temperature>+73.859 degF</air_temperature>
+				<mass_temperature>+73.859 degF</mass_temperature>
+				<mass_heat_coeff>+1672.4</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>46</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:45</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:46)</name>
+				<floor_area>+2250 sf</floor_area>
+				<gross_wall_area>+6071.57 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+374.953 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.93744</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+69.944 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+21.839 Btu</design_heating_capacity>
+				<design_cooling_capacity>+20.9733 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.01673</COP_coeff>
+				<air_temperature>+73.9702 degF</air_temperature>
+				<mass_temperature>+73.9702 degF</mass_temperature>
+				<mass_heat_coeff>+2003.32</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>50</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:49</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:50)</name>
+				<floor_area>+1250 sf</floor_area>
+				<gross_wall_area>+4525.48 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+226.366 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.07288</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+70.4053 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+23.7578 Btu</design_heating_capacity>
+				<design_cooling_capacity>+21.364 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.09332</COP_coeff>
+				<air_temperature>+73.5367 degF</air_temperature>
+				<mass_temperature>+73.5367 degF</mass_temperature>
+				<mass_heat_coeff>+1193.39</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>54</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:53</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:54)</name>
+				<floor_area>+1250 sf</floor_area>
+				<gross_wall_area>+4525.48 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+223.431 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.90045</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+70.6855 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+22.8041 Btu</design_heating_capacity>
+				<design_cooling_capacity>+19.8234 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.05028</COP_coeff>
+				<air_temperature>+75.2717 degF</air_temperature>
+				<mass_temperature>+75.2717 degF</mass_temperature>
+				<mass_heat_coeff>+900.898</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>58</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:57</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:58)</name>
+				<floor_area>+1250 sf</floor_area>
+				<gross_wall_area>+4525.48 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+223.671 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.3111</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+71.4202 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+21.8408 Btu</design_heating_capacity>
+				<design_cooling_capacity>+21.033 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+0.973291</COP_coeff>
+				<air_temperature>+73.6776 degF</air_temperature>
+				<mass_temperature>+73.6776 degF</mass_temperature>
+				<mass_heat_coeff>+983.009</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>62</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:61</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:62)</name>
+				<floor_area>+2750 sf</floor_area>
+				<gross_wall_area>+6712.38 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+537.579 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.58636</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+70.5353 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+18.8317 Btu</design_heating_capacity>
+				<design_cooling_capacity>+22.2371 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.0586</COP_coeff>
+				<air_temperature>+73.9258 degF</air_temperature>
+				<mass_temperature>+73.9258 degF</mass_temperature>
+				<mass_heat_coeff>+1575.58</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>66</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:65</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:66)</name>
+				<floor_area>+2250 sf</floor_area>
+				<gross_wall_area>+6071.57 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+374.558 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.54913</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+71.9846 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+23.6534 Btu</design_heating_capacity>
+				<design_cooling_capacity>+19.4919 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+0.976575</COP_coeff>
+				<air_temperature>+75.469 degF</air_temperature>
+				<mass_temperature>+75.469 degF</mass_temperature>
+				<mass_heat_coeff>+1729.73</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>70</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:69</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:70)</name>
+				<floor_area>+2250 sf</floor_area>
+				<gross_wall_area>+6071.57 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+388.7 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.13275</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+69.5997 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+18.414 Btu</design_heating_capacity>
+				<design_cooling_capacity>+21.806 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+0.965564</COP_coeff>
+				<air_temperature>+73.3493 degF</air_temperature>
+				<mass_temperature>+73.3493 degF</mass_temperature>
+				<mass_heat_coeff>+1178.28</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>74</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:73</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:74)</name>
+				<floor_area>+2250 sf</floor_area>
+				<gross_wall_area>+6071.57 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+397.949 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.06525</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+70.8763 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+18.3607 Btu</design_heating_capacity>
+				<design_cooling_capacity>+21.3146 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+0.998108</COP_coeff>
+				<air_temperature>+73.873 degF</air_temperature>
+				<mass_temperature>+73.873 degF</mass_temperature>
+				<mass_heat_coeff>+1528.88</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>78</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:77</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:78)</name>
+				<floor_area>+1750 sf</floor_area>
+				<gross_wall_area>+5354.62 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+277.59 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.00781</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+69.6577 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+19.0776 Btu</design_heating_capacity>
+				<design_cooling_capacity>+19.4185 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.09949</COP_coeff>
+				<air_temperature>+72.1571 degF</air_temperature>
+				<mass_temperature>+72.1571 degF</mass_temperature>
+				<mass_heat_coeff>+905.815</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>82</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:81</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:82)</name>
+				<floor_area>+1750 sf</floor_area>
+				<gross_wall_area>+5354.62 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+290.704 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.41479</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+71.1166 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+20.6387 Btu</design_heating_capacity>
+				<design_cooling_capacity>+19.8364 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.00198</COP_coeff>
+				<air_temperature>+74.7306 degF</air_temperature>
+				<mass_temperature>+74.7306 degF</mass_temperature>
+				<mass_heat_coeff>+901.463</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>86</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:85</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:86)</name>
+				<floor_area>+2250 sf</floor_area>
+				<gross_wall_area>+6071.57 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+442.873 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.83771</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+69.6963 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+22.4388 Btu</design_heating_capacity>
+				<design_cooling_capacity>+18.4898 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.0125</COP_coeff>
+				<air_temperature>+71.9176 degF</air_temperature>
+				<mass_temperature>+71.9176 degF</mass_temperature>
+				<mass_heat_coeff>+1682.83</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>90</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:89</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:90)</name>
+				<floor_area>+2250 sf</floor_area>
+				<gross_wall_area>+6071.57 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+405.183 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.63452</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+69.245 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+21.3316 Btu</design_heating_capacity>
+				<design_cooling_capacity>+21.8524 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.08086</COP_coeff>
+				<air_temperature>+75.8295 degF</air_temperature>
+				<mass_temperature>+75.8295 degF</mass_temperature>
+				<mass_heat_coeff>+1505.13</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>94</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:93</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:94)</name>
+				<floor_area>+2750 sf</floor_area>
+				<gross_wall_area>+6712.38 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+425.307 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+4.3161</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+70.9539 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+18.1945 Btu</design_heating_capacity>
+				<design_cooling_capacity>+22.5489 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+1.00654</COP_coeff>
+				<air_temperature>+73.6783 degF</air_temperature>
+				<mass_temperature>+73.6783 degF</mass_temperature>
+				<mass_heat_coeff>+2307.14</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+			<house>
+				<id>98</id>
+				<rank>1</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>triplex_meter:97</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(house:98)</name>
+				<floor_area>+2750 sf</floor_area>
+				<gross_wall_area>+6712.38 sf</gross_wall_area>
+				<ceiling_height>+8 ft</ceiling_height>
+				<aspect_ratio>+1</aspect_ratio>
+				<envelope_UA>+497.783 Btu/degF</envelope_UA>
+				<window_wall_ratio>+0.15</window_wall_ratio>
+				<glazing_shgc>+0.65</glazing_shgc>
+				<airchange_per_hour>+5.31018</airchange_per_hour>
+				<internal_gain>+0 Btu/h</internal_gain>
+				<solar_gain>+0 Btu/h</solar_gain>
+				<heat_cool_gain>+0 Btu/h</heat_cool_gain>
+				<thermostat_deadband>+2 degF</thermostat_deadband>
+				<heating_setpoint>+71.4128 degF</heating_setpoint>
+				<cooling_setpoint>+75 degF</cooling_setpoint>
+				<design_heating_capacity>+21.8844 Btu</design_heating_capacity>
+				<design_cooling_capacity>+20.3897 Btu</design_cooling_capacity>
+				<heating_COP>+3</heating_COP>
+				<cooling_COP>+3</cooling_COP>
+				<COP_coeff>+0.937598</COP_coeff>
+				<air_temperature>+73.9108 degF</air_temperature>
+				<mass_temperature>+73.9108 degF</mass_temperature>
+				<mass_heat_coeff>+1667.3</mass_heat_coeff>
+				<heat_mode>ELECTRIC</heat_mode>
+				<hc_mode>OFF</hc_mode>
+				<total_load>+0+0j kW</total_load>
+				<enduse_load>+0+0j kW</enduse_load>
+				<power>+0+0j kW</power>
+				<current>+0+0j A</current>
+				<admittance>+0+0j 1/Ohm</admittance>
+			</house>
+		</house_list>
+		<house_e_list>
+		</house_e_list>
+		<waterheater_list>
+		</waterheater_list>
+		<lights_list>
+		</lights_list>
+		<refrigerator_list>
+		</refrigerator_list>
+		<clotheswasher_list>
+		</clotheswasher_list>
+		<dishwasher_list>
+		</dishwasher_list>
+		<occupantload_list>
+		</occupantload_list>
+		<plugload_list>
+		</plugload_list>
+		<microwave_list>
+		</microwave_list>
+		<range_list>
+		</range_list>
+		<freezer_list>
+		</freezer_list>
+		<dryer_list>
+		</dryer_list>
+		<evcharger_list>
+		</evcharger_list>
+	</residential>
+	<tape>
+		<version.major>1</version.major>
+		<version.minor>0</version.minor>
+		<player_list>
+			<player>
+				<id>3</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:2</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:3)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>4</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:2</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:4)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>7</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:6</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:7)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>8</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:6</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:8)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>11</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:10</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:11)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>12</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:10</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:12)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>15</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:14</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:15)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>16</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:14</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:16)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>19</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:18</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:19)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>20</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:18</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:20)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>23</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:22</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:23)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>24</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:22</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:24)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>27</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:26</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:27)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>28</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:26</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:28)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>31</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:30</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:31)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>32</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:30</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:32)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>35</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:34</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:35)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>36</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:34</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:36)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>39</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:38</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:39)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>40</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:38</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:40)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>43</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:42</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:43)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>44</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:42</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:44)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>47</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:46</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:47)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>48</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:46</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:48)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>51</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:50</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:51)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>52</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:50</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:52)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>55</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:54</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:55)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>56</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:54</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:56)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>59</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:58</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:59)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>60</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:58</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:60)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>63</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:62</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:63)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>64</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:62</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:64)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>67</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:66</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:67)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>68</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:66</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:68)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>71</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:70</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:71)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>72</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:70</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:72)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>75</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:74</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:75)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>76</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:74</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:76)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>79</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:78</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:79)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>80</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:78</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:80)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>83</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:82</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:83)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>84</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:82</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:84)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>87</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:86</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:87)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>88</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:86</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:88)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>91</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:90</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:91)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>92</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:90</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:92)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>95</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:94</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:95)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>96</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:94</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:96)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>99</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:98</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:99)</name>
+				<property>cooling_setpoint</property>
+				<file>controlcooling.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+			<player>
+				<id>100</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<parent>house:98</parent>
+				<clock>2006-04-03 01:00:00 PDT</clock>
+				<name>(player:100)</name>
+				<property>heating_setpoint</property>
+				<file>controlheating_new.csv</file>
+				<filetype>txt</filetype>
+				<loop>52</loop>
+			</player>
+		</player_list>
+		<shaper_list>
+		</shaper_list>
+		<recorder_list>
+		</recorder_list>
+		<collector_list>
+			<collector>
+				<id>101</id>
+				<rank>0</rank>
+				<out_svc>NEVER</out_svc>
+				<name>(collector:101)</name>
+				<property>sum(measured_energy)</property>
+				<trigger>""</trigger>
+				<file>control.csv</file>
+				<interval>86400</interval>
+				<limit>365</limit>
+				<group>class=triplex_meter</group>
+			</collector>
+		</collector_list>
+		<histogram_list>
+		</histogram_list>
+	</tape>
+</gridlabd>

@@ -1,0 +1,250 @@
+// $Id: res_integrated_test.glm,v 1.7 2008/02/13 00:03:55 d3j168 Exp $
+//
+// This model is a fully functional integrated load and powerflow model.
+
+module powerflow;
+module climate;
+module residential;
+module tape;
+
+clock {
+	timestamp '2006-03-30 0:00:00 PST';
+	timezone PST-8PDT;
+}
+
+#set stoptime="2007-04-02 0:00:00 PST";
+
+// The tmy2 file is from rredc.nrel.gov/solar/old_data/nsrdb/tmy2/State.html#W
+object climate {
+	tmyfile Olympia.tmy2;
+};
+
+// residential model
+
+object triplex_meter:..111 {
+	voltage_1 120<0;
+	voltage_2 120<180;
+	phases ANS;
+	nominal_voltage 120;
+
+	object house {
+		
+		//The latitude and longitude of Olympic Peninsula
+		//latitude "48N";
+		//longitude "122W";
+		
+		//The distribution of floor_area is 
+		//	[1000	0.028
+		//	1250	0.183
+		//	1750	0.339
+		//	2250	0.239
+		//	2750	0.146
+		//	3250	0.037
+		//	3500	0.028]		
+		//	It is simulated by using a symmetric triangle distribution, 
+		//	though an asymmetric triangle distribution might be more appropriate.
+	
+		floor_area random.triangle(1000.0, 3500.0) sf;
+		
+		// For space-heating
+		// The distribution of heating_setpoint
+		//	[50	0.01
+		//	57	0.01
+		//	60	0.01
+		//	60.5	0.01
+		//	61	0.019
+		//	61.5	0.019
+		//	62	0.049
+		//	62.5	0.029
+		//	63	0.078
+		//	63.5	0.029
+		//	64	0.049
+		//	64.5	0.057
+		//	65	0.117
+		//	65.5	0.039
+		//	66	0.029
+		//	66.5	0.087
+		//	67	0.039
+		//	67.5	0.058
+		//	68	0.029
+		//	68.5	0.068
+		//	69	0.077
+		//	69.5	0.019
+		//	70	0.029
+		//	71	0.01
+		//	71.5	0.01
+		//	72	0.01
+		//	72.5	0.01]
+		//  There are only two households setting their heating-setpoint below 60.
+		//  We assume those two households are outliers.
+		
+		heating_setpoint random.triangle(60,72.5);
+		
+		
+		// For space-cooling
+		// From surveyed data, we got the following:
+		//	Air-conditioners	Households
+		//	Heat pump	64
+		//	None	41
+		//	Central forced air	4
+		//	wall or window unit(s)	1
+		// For those who have air-conditioners (heat pump, central forced air, or wall or window unit(s)),
+		// the usage behavior of the households are as follows:
+		//	Occasionally	56
+		//	Never	11
+		//	Routinely	2
+		// So, in general, we assume that the space-cooling energy consumption is negligible. 
+		// In the input file, we then set cooling_setpoint as a very large number e.g., 199.
+		
+		cooling_setpoint 199.0;
+
+
+		// Water heater
+		
+		// The distribution of water heaters in the households
+		// Number of water heaters	Frequency	Percentage x 100%
+		//	1	100	0.93
+		//	2	7	0.07
+		// Thus in simulating water heaters, we assume that each household has one water heater.
+		
+		object waterheater {
+			//name Waterheater;
+			tank_volume 60;
+			tank_UA 2.0;
+			water_demand 0.25 gpm;
+			heating_element_capacity 4500 W;
+			
+			// The location of water heater could be ‘INSIDE’ OR in 'GARAGE'. 
+			// In the survey, the distribution of the location of water heaters is as follows:
+			//	Garage	Inside
+			//	21	90
+			//	19%	81%
+
+			location (random.bernoulli(0.8)) ? INSIDE : GARAGE ;
+			
+			// From the survey, there are four categories of temperatures. The summary is as folows:
+			// Category	Number of households	Percentage
+			// about_140F	40	39%
+			// about_120 F	54	53%
+			// 160F_or_more	3	3%
+			// less_than_120F	5	5%
+			
+			// We then assume that the 60% of the households setting the tank_setpoint at 120F
+			// and 40% of the households setting the tank_setpoint at 140F
+
+			tank_setpoint random.sampled(120, 120, 120, 140, 140) degF;
+		};
+
+		object lights {
+			//name Lights;
+			type INCANDESCENT;
+			placement INDOOR;
+			demand 0.50;
+			installed_power 1.5 kW;
+			// this tape is set to loop 100 times to cycle through the synchronization
+			object player {
+				//name Player;
+				//parent Lights;
+				property demand;
+				//file lighting.player;
+				file ../samples/lighting.player;
+				loop 100;
+			};
+		};
+
+
+		// The distribution of the appliances in the households are as follows:
+		
+		// Clothewasher
+		
+		// Number_of_clothewashers_in_a_household	Number_of_households	Percentage
+		// 0	0	0
+		// 1	109	100%
+		
+		// Thus we assume in each household, there is one clothewasher
+		
+		object clotheswasher {
+	
+		};
+
+		// Dryer
+		// The same as that for clothewasher
+		
+		object dryer {
+	
+		};
+
+		
+		// Dishwasher
+		// Number_of_dishwasher_in_a_household	Number_of_households	Percentage
+		// 0	3	3%
+		// 1	102	96%
+		// 2	1	1%
+		// We assume that each household has one dishwasher
+
+		object dishwasher {
+		};
+		
+		// Stove/range
+		// Number_of_range_in_a_household	Number_of_households	Percentage
+		// 0	0	0%
+		// 1	104	96%
+		// 2	3	3%
+		// 3	1	1%
+		
+		// Again, we assume that each household has one range/stove
+		object range {
+		};
+		
+		// Microwave
+		// Number_of_microwave_in_a_household	Number_of_househods	Percentage
+		// 0	0	0%
+		// 1	104	96%
+		// 2	3	3%
+		// 3	1	1%
+		// 4	0	0%
+		// 5	0	0%
+		// Then we assume that each household has one microwave 
+		
+		object microwave {
+		}:
+		
+		// Refrigerator
+		// Number_of_refrigerators_in_a_household	Number_of_households	Percentage
+		// 0	0	0%
+		// 1	84	77%
+		// 2	25	23%
+
+		// ?????? HOW TO SIMULATE THIS? WILL DISCUSS WITH DAVE LATER
+		
+		object refrigerator{
+		}:
+		
+		// Freezers
+		// Number_of_freezers_in_a_household	Number_of_households	Percentage
+		// 0	13	15.294%
+		// 1	70	82.353%
+		// 2	2	2.353%
+
+		// ?????? HOW TO SIMULATE THIS? WILL DISCUSS WITH DAVE LATER
+		
+		object freezer {
+		}:
+		
+		
+		// Occupants in a household
+		object occupantload{
+		number_of_occupants random.sampled (2,2,2,2,4);		
+		};
+	};
+}
+
+object collector {
+	group class=triplex_meter;
+	property sum(measured_energy);
+	file total.csv;
+	interval 86400;
+	limit 8760;
+}
+
+// END

@@ -1,0 +1,112 @@
+ID #	AC System	Summer AC Use	Summer Tstat Setting - Daytime	Summer Tstat Setting - Nighttime
+233	Heat pump	Occasionally	76	65
+235	Heat pump	Never	78	75
+239	Heat pump	Occasionally	78	78
+251	Heat pump	Occasionally	68	65
+270	Heat pump	Occasionally	78	80
+278	None	Don't have one	off	off
+282	None	Don't have one	66	60
+292	Heat pump	Occasionally	85	70
+293	Heat pump	Never	60	60
+294	Heat pump	Occasionally	71	66
+316	Heat pump	Occasionally	68	68
+325	None	Never	off	off
+343	Heat pump	Occasionally	not sure	not sure
+347	None	Don't have one	off	off
+352	Heat pump	Occasionally	78	70
+358	None	Don't have one	off	off
+360	None	Don't have one	off	off
+361	Heat pump	Occasionally	70	70
+362	Heat pump	Never	68	62
+366	Heat pump	Occasionally	72	72
+368	None	Don't have one	88	88
+401	Heat pump	Occasionally	blank	blank
+419	None	Don't have one	off	off
+429	Heat pump	Occasionally	70	64
+434	Central forced air	Occasionally	72	off
+440	Heat pump	Never	74	74
+442	None	Don't have one	55	55
+443	wall or window unit(s)	Occasionally	off	off
+449	Blank	Occasionally	off	off
+452	Central forced air	Occasionally	80	74
+455	Heat pump	Occasionally	76	76
+460	Heat pump	Occasionally	72	74
+462	Heat pump	Occasionally	75	75
+469	None	Don't have one	0	0
+471	Heat pump	Occasionally	63	63
+526	Heat pump	Never	63	63
+531	Heat pump	Occasionally	75	70
+532	None	Never	off	off
+546	Heat pump	Occasionally	75	60
+547	Heat pump	Occasionally	60	60
+551	Heat pump	Occasionally	78	80
+554	Heat pump	Occasionally	78	76
+556	Heat pump	Occasionally	73	62
+559	None	Never	off	off
+562	None	Don't have one	60	60
+566	None	Never	off	off
+575	None	Don't have one	blank	blank
+576	Heat pump	Occasionally	65	65
+577	None	Don't have one	off	off
+578	Heat pump	Never	85	85
+580	None	Don't have one	off	off
+584	Heat pump	Occasionally	62	62
+587	Heat pump	Occasionally	68	68
+588	None	Don't have one	off	off
+592	None	Don't have one	off	off
+594	None	Don't have one	50	50
+596	Heat pump	Occasionally	68	65
+599	Heat pump	Occasionally	78	78
+600	None	Don't have one	60	60
+602	None	Don't have one	64	64
+610	Heat pump	Never	off	off
+611	None	Don't have one	off	off
+613	Central forced air	Never	0	0
+617	None	Don't have one	70	70
+622	None	Don't have one	60	60
+629	None	Never	64	60
+632	Heat pump	Occasionally	78	72
+635	Heat pump	Occasionally	-	-
+636	Heat pump	Occasionally	65	60
+638	Heat pump	Routinely	70	70
+642	None	Don't have one	70	70
+643	None	Don't have one	65	69
+644	None	Never	70	60
+652	None	Don't have one	58	58
+653	None	Don't have one	55	55
+661	Heat pump	Occasionally	68	60
+666	Heat pump	Occasionally	78	65
+669	None	Never	?	?
+671	Heat pump	Occasionally	65	-
+685	Heat pump	Occasionally	75	75
+687	Heat pump	Occasionally	69	64
+688	Heat pump	Never	68	61
+690	Central forced air	Occasionally	78	78
+697	None	Don't have one	off	off
+699	Heat pump	Occasionally	70	65
+705	None	Never	40	40
+713	None	Don't have one	50	50
+715	Heat pump	Occasionally	78	78
+727	Heat pump	Occasionally	68	68
+730	None	Don't have one	Blank	blank
+731	Heat pump	Occasionally	80	80
+734	Heat pump	Occasionally	72	Off
+735	None	Don't have one	50	Blank
+737	Heat pump	Never	62-65	62-65
+739	Heat pump	Occasionally	80	80
+742	None	Don't have one	72	68
+744	Heat pump	Occasionally	70	65
+746	Heat pump	Occasionally	60	60
+747	Heat pump	Occasionally	72	73
+752	Heat pump	Occasionally	50	50
+753	Heat pump	Occasionally	80	n/a
+754	Heat pump	Occasionally	76	80
+755	Heat pump	Occasionally	blank	blank
+756	Heat pump	Occasionally	74	74
+760	None	Don't have one	off	off
+761	Heat pump	Occasionally	71	55
+763	Heat pump	Never	0	0
+764	None	Don't have one	off	off
+766	Heat pump	Occasionally	75	75
+767	Heat pump	Routinely	65	70
+776	None	Don't have one	60	55

@@ -1,0 +1,61 @@
+module powerflow;
+module climate;
+module residential;
+module tape;
+
+clock {
+	timezone PST+8PDT;
+	timestamp '2006-04-01 0:00:00 PST';
+	
+}
+
+#set stoptime="2007-04-01 0:00:00 PST";
+
+
+object climate {
+	tmyfile Olympia.tmy2;
+};
+
+
+object triplex_meter:..20{
+	voltage_1 120<0;
+	voltage_2 120<180;
+	phases ANS;
+	nominal_voltage 120;
+
+//CONTROL
+
+
+	object house {
+		floor_area random.sampled(1250,1750,1750,1750,2250,2250,1750,1750,2250,1000,2750,2250,1750,1750,1250,2250,1750,1750,1750,1250,2250,1750,2250,2750,1250,1250,2750) sf;
+		//heatsetpoint
+		//coolsetpoint
+
+		object player{
+
+			property cooling_setpoint;
+			file "toucooling.csv";
+		};
+
+		object player{
+
+			property heating_setpoint;		
+			file "balance.csv";			
+
+		};
+
+
+
+
+	};
+
+
+};
+
+object collector {
+	group class=triplex_meter;
+	property sum(measured_energy);
+	file rtp_balance_new.csv;
+	interval 86400;
+	limit 365;
+};

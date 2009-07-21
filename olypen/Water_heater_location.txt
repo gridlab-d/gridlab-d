@@ -1,0 +1,112 @@
+ID #	Location of water heater
+233	Garage
+235	Utility room
+239	Pantry
+251	Master bedroon closet
+270	Laundry room
+278	Office Closet
+282	Mud room
+292	Garage
+293	Utility room
+294	Garage
+316	Linen Closet
+325	Laundry Room
+343	Garage
+347	laundry room
+352	Garage
+358	Laundry Room
+360	Laundry room
+361	Bedroom Closet
+362	Kitchen
+366	Garage
+368	Garage
+401	Basement
+419	Basement
+429	Laundry Room
+434	Under House
+440	Laundry/Utility Room
+442	Storage Room
+443	Bedroom Closet
+449	Garage
+452	Downstairs
+455	Garage
+460	Garage
+462	Main floor hall
+469	Garage
+471	Garage
+526	Hall closet
+531	Basement
+532	Laundry Room
+546	Laundry Room
+547	Home
+551	Basement
+554	1st Floor Closet
+556	Lower Floor
+559	Basement
+562	Basement
+566	Bedroom Closet
+575	Blank
+576	Basement
+577	basement
+578	Basement
+580	Utility room
+584	Garage
+587	House and Garage
+588	Bedroom and 3 Closet
+592	Basement
+594	Basement
+596	Basement
+599	Basement
+600	Laundry Room
+602	Main floor
+610	Basement
+611	Basement
+613	Laundry Room
+617	Basement
+622	Basement
+629	Basement
+632	Closet of Bedroom
+635	Basement
+636	Basement
+638	Basement
+642	Basement
+643	Basement
+644	Basement
+652	Hallway Closet
+653	Master bath
+661	Bottom floor
+666	lower level
+669	wall between br & bth
+671	Utility room
+685	Garage; Closet
+687	Garage
+688	2nd floor Utility Room
+690	Garage
+697	Basement
+699	House; Main floor
+705	Kitchen
+713	Basement
+715	Basement
+727	Garage
+730	Family Room
+731	Closet in Hallway
+734	Laundry Room
+735	Second floor Closet
+737	Garage
+739	Utility room
+742	Laundry Room Closet
+744	Front Hall Closet
+746	Pantry/Bedroom Closet
+747	Garage
+752	Bottom floor
+753	Laundry Room
+754	Garage
+755	Laundry Room
+756	Closet
+760	Basement
+761	Garage; Crawl Space
+763	House
+764	Back Porch
+766	Garage
+767	Laundry Room
+776	Access Door
