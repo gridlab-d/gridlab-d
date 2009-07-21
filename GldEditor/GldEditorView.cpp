@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include <time.h>
 #include "GldEditor.h"
 
 #include "GldEditorDoc.h"
@@ -498,7 +499,7 @@ void CGldEditorView::LoadFile(char *filename)
 	}
 }
 
-void CGldEditorView::LoadSchedule(SCHEDULE *sch)
+void CGldEditorView::LoadScheduleBlock(SCHEDULE *sch, unsigned int block)
 {
 	CListCtrl &list = GetListCtrl();
 	
@@ -543,10 +544,9 @@ void CGldEditorView::LoadSchedule(SCHEDULE *sch)
 			for (int hour=0; hour<23; hour++)
 			{
 				int minute = (offset*24 + hour)*60;
-				SCHEDULEINDEX ref;
-				ref.index = 0;
-				ref.calendar = 0;
-				ref.minute = minute;
+				SCHEDULEINDEX ref = 0;
+				SET_CALENDAR(ref,0);
+				SET_MINUTE(ref,minute);
 				double value = schedule_value(sch,ref);
 				minute += schedule_dtnext(sch,ref);
 				char buffer[64];
@@ -555,5 +555,93 @@ void CGldEditorView::LoadSchedule(SCHEDULE *sch)
 			}
 		}
 		offset += days[month];
+	}
+}
+
+void CGldEditorView::LoadSchedule(SCHEDULE *sch)
+{
+	CListCtrl &list = GetListCtrl();
+	
+	int nColumns = list.GetHeaderCtrl()?list.GetHeaderCtrl()->GetItemCount():0;
+	for (int i=0; i<nColumns; i++)
+		list.DeleteColumn(0);
+
+	CRect wr;
+	list.GetClientRect(&wr);
+	int nCol=0;
+	int nWid=0;
+	#define W(X) (nWid+=X,X)
+	int year = list.InsertColumn(nCol++,"Year",LVCFMT_LEFT,W(45),nCol);
+	int month = list.InsertColumn(nCol++,"Month",LVCFMT_LEFT,W(50),nCol);
+	int weekday = list.InsertColumn(nCol++,"Weekday",LVCFMT_LEFT,W(60),nCol);
+	int day = list.InsertColumn(nCol++,"Day",LVCFMT_RIGHT,W(35),nCol);
+	int hour = list.InsertColumn(nCol++,"Time",LVCFMT_RIGHT,W(50),nCol);
+	int value = list.InsertColumn(nCol++,"Value",LVCFMT_RIGHT,W(50),nCol);
+	#undef W
+
+	TIMESTAMP tstart = global_clock; // TODO: this should be global_starttime but it's already been set to wall clock by this time
+	TIMESTAMP tstop = global_stoptime;
+	if (tstart==0)
+	{
+		time_t now = time(NULL);
+		struct tm* ts = localtime(&now);
+		DATETIME dt = {ts->tm_year,1,1,0,0,0,0,0};
+		tstart = mkdatetime(&dt);
+	}
+	if (tstop==TS_NEVER || tstop<tstart)
+	{
+		DATETIME dt;
+		local_datetime(tstart,&dt);
+		dt.year++;
+		tstop = mkdatetime(&dt);
+	}
+
+	TIMESTAMP t = tstart;
+	DATETIME last = {0,0,0,0,-1,0}; // -1 forces first time to be displayed even when it's midnight
+	int max = 100;
+	while (t<tstop )// && max-->0)
+	{
+		SCHEDULEINDEX ndx = schedule_index(sch,t);
+	
+		DATETIME next;
+		local_datetime(t,&next);
+		int hItem = list.InsertItem(list.GetItemCount(),"");
+		CString buf;
+
+		if (last.year!=next.year)
+		{
+			buf.Format("%d",next.year);
+			list.SetItemText(hItem,year,buf);
+			last.year = next.year;
+		}
+
+		if (last.month!=next.month)
+		{
+			char *mon[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+			list.SetItemText(hItem,month,mon[next.month-1]);
+			last.month = next.month;
+		}
+
+		if (last.day!=next.day)
+		{
+			buf.Format("%d",next.day);
+			list.SetItemText(hItem,day,buf);
+			last.day = next.day;
+			char *wd[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+			list.SetItemText(hItem,weekday,wd[next.weekday]);
+		}
+
+		if (last.hour!=next.hour || last.minute!=next.minute)
+		{
+			buf.Format("%d:%02d",next.hour,next.minute);
+			list.SetItemText(hItem,hour,buf);
+			last.hour = next.hour;
+			last.minute = next.minute;
+		}
+
+		buf.Format("%g", schedule_value(sch,ndx));
+		list.SetItemText(hItem,value,buf);
+
+		t+=schedule_dtnext(sch,ndx)*60; // TODO increment by dtnext
 	}
 }

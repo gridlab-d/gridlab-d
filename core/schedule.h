@@ -30,13 +30,11 @@
 #define MAXBLOCKS 4
 #define MAXVALUES 64
 
-typedef union {
-	struct {
-		unsigned int calendar:4;
-		unsigned int minute:20;
-	};
-	unsigned int index;
-} SCHEDULEINDEX;
+typedef unsigned long SCHEDULEINDEX;
+#define GET_CALENDAR(N) (((N)>>20)&0x0f)
+#define GET_MINUTE(N) ((N)&0x0fffff)
+#define SET_CALENDAR(N,X) (N)|=(((X)&0x0f)<<20)
+#define SET_MINUTE(N,X) (N)|=((X)&0x0fffff)
 
 /** The SCHEDULE structure defines POSIX style schedules */
 typedef struct s_schedule SCHEDULE;

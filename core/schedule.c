@@ -614,9 +614,8 @@ int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
  **/
 SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 {
-	SCHEDULEINDEX ref;
+	SCHEDULEINDEX ref = 0;
 	DATETIME dt;
-	ref.index = 0;
 	
 	/* determine the local time */
 	if (!local_datetime(ts,&dt))
@@ -629,10 +628,10 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 	}
 
 	/* determine which calendar is used based on the weekday of Jan 1 and LY status */
-	ref.calendar = dt.weekday + ISLEAPYEAR(dt.year);
+	SET_CALENDAR(ref, ((dt.weekday+dt.yearday+6)%7)*2 + ISLEAPYEAR(dt.year));
 
 	/* compute the minute of year */
-	ref.minute = (dt.yearday*24 + dt.hour)*60 + dt.minute;
+	SET_MINUTE(ref, (dt.yearday*24 + dt.hour)*60 + dt.minute);
 
 	/* got it */
 	return ref;
@@ -644,7 +643,7 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 double schedule_value(SCHEDULE *sch, /**< the schedule to read */
 					  SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
-	return sch->data[sch->index[index.calendar][index.minute]];
+	return sch->data[sch->index[GET_CALENDAR(index)][GET_MINUTE(index)]];
 }
 
 /** reads the time until the next change in the schedule 
@@ -653,7 +652,7 @@ double schedule_value(SCHEDULE *sch, /**< the schedule to read */
 long schedule_dtnext(SCHEDULE *sch, /**< the schedule to read */
 					  SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
-	return sch->dtnext[index.calendar][index.minute];
+	return sch->dtnext[GET_CALENDAR(index)][GET_MINUTE(index)];
 }
 
 /** synchronize the schedule to the time given

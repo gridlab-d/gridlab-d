@@ -24,6 +24,7 @@ public:
 	void LoadSolver(void);
 	void LoadFile(char *);
 	void LoadSchedule(SCHEDULE *);
+	void CGldEditorView::LoadScheduleBlock(SCHEDULE *sch, unsigned int block);
 
 // Overrides
 public:

@@ -387,8 +387,8 @@
 <xsl:for-each select="tape/collector_list/collector"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="property"/></TD><TD><xsl:value-of select="trigger"/></TD><TD><xsl:value-of select="file"/></TD><TD><xsl:value-of select="interval"/></TD><TD><xsl:value-of select="limit"/></TD><TD><xsl:value-of select="group"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>histogram objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>filename</TH><TH>group</TH><TH>bins</TH><TH>property</TH><TH>min</TH><TH>max</TH><TH>samplerate</TH><TH>countrate</TH><TH>bin_count</TH><TH>count</TH></TR>
-<xsl:for-each select="tape/histogram_list/histogram"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="filename"/></TD><TD><xsl:value-of select="group"/></TD><TD><xsl:value-of select="bins"/></TD><TD><xsl:value-of select="property"/></TD><TD><xsl:value-of select="min"/></TD><TD><xsl:value-of select="max"/></TD><TD><xsl:value-of select="samplerate"/></TD><TD><xsl:value-of select="countrate"/></TD><TD><xsl:value-of select="bin_count"/></TD><TD><xsl:value-of select="count"/></TD></TR>
+<TR><TH>Name</TH><TH>filename</TH><TH>group</TH><TH>bins</TH><TH>property</TH><TH>min</TH><TH>max</TH><TH>samplerate</TH><TH>countrate</TH><TH>bin_count</TH><TH>limit</TH></TR>
+<xsl:for-each select="tape/histogram_list/histogram"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="filename"/></TD><TD><xsl:value-of select="group"/></TD><TD><xsl:value-of select="bins"/></TD><TD><xsl:value-of select="property"/></TD><TD><xsl:value-of select="min"/></TD><TD><xsl:value-of select="max"/></TD><TD><xsl:value-of select="samplerate"/></TD><TD><xsl:value-of select="countrate"/></TD><TD><xsl:value-of select="bin_count"/></TD><TD><xsl:value-of select="limit"/></TD></TR>
 </xsl:for-each></TABLE>
 <H2><A NAME="output">GLM Output</A></H2>
 <table border="1" width="100%"><tr><td><pre>
@@ -2260,7 +2260,7 @@ module tape {
 </xsl:if><xsl:if test="samplerate">	samplerate <xsl:value-of select="samplerate"/>;
 </xsl:if><xsl:if test="countrate">	countrate <xsl:value-of select="countrate"/>;
 </xsl:if><xsl:if test="bin_count">	bin_count <xsl:value-of select="bin_count"/>;
-</xsl:if><xsl:if test="count">	count <xsl:value-of select="count"/>;
+</xsl:if><xsl:if test="limit">	limit <xsl:value-of select="limit"/>;
 </xsl:if>}
 </xsl:for-each></xsl:for-each></pre></td></tr></table>
 </body>
