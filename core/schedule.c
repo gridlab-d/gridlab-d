@@ -112,9 +112,9 @@ int schedule_matcher(char *pattern, unsigned char *table, int max)
 			/* go fill */
 			if (start>stop) /* wraparound */
 			{
-				for (i=stop; i<max; i++)
+				for (i=start; i<max; i++)
 					table[i] = 1;
-				for (i=0; i<=start; i++)
+				for (i=0; i<=stop; i++)
 					table[i] = 1;
 			}
 			else
