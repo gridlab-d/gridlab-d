@@ -1,0 +1,70 @@
+//Microwave internal gain test
+//test_microwave_internal_gains.glm
+//The program checks to see that the correct internal gain is displayed when the microwave is on
+//and when the microwave is on standby.
+//if the microwave is off then the internal gain = magnitude of standby power.
+//if the microwave is on then the internal gain = magnitude of installed power * heat fraction 
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+module residential;
+module tape;
+module assert;
+
+object house:1 {
+}
+
+object microwave:2 {
+	parent house:1;
+	installed_power 1000 W;
+	standby_power 20 W;
+	heat_fraction .5;
+	demand 1;
+	object recorder {
+		property internal_gains,constant_power;
+		file "test_microwave_internal_gains_1.csv";
+		interval 1;
+		limit 10;
+	};	
+}
+
+object microwave:3 {
+	parent house:1;
+	installed_power 1000 W;
+	standby_power 20 W;
+	heat_fraction .5;
+	demand 0;
+	object recorder {
+		property internal_gains,constant_power;
+		file "test_microwave_internal_gains_0.csv";
+		interval 1;
+		limit 10;
+	};
+}
+
+object complex_assert:4 {
+	parent microwave:2;
+	target "internal_gains";
+	within .6;//I have checked the .csv files and internal_gains is actually within .0001 of the actual gain. 
+	//The variance of .6 is to compensate for when the microwave is off for the first second.
+	object player {
+		property value;
+		file "../test_microwave_internal_gains_1.player";
+	};
+}
+
+object complex_assert:5 {
+	parent microwave:3;
+	target "internal_gains";
+	within .03;//I have checked the .csv files and internal_gains is actually within .0001 of the actual gain. 
+	//The variance of .03 is to compensate for the anomolous power value on the first second.
+	object player {
+		property value;
+		file "../test_microwave_internal_gains_0.player";
+	};
+}
+
+//created by d3y334
