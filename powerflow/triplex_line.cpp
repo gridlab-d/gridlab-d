@@ -104,8 +104,8 @@ void triplex_line::recalc(void)
 	{
 		zs[0][0] = zp11-((zp13*zp13)/zp33);
 		zs[0][1] = zp12-((zp13*zp23)/zp33);
-		zs[1][0] = zp12-((zp13*zp23)/zp33);
-		zs[1][1] = zp22-((zp23*zp23)/zp33);
+		zs[1][0] = -(zp12-((zp13*zp23)/zp33));
+		zs[1][1] = -(zp22-((zp23*zp23)/zp33));
 		zs[0][2] = complex(0,0);
 		zs[1][2] = complex(0,0);
 		zs[2][2] = complex(0,0);
