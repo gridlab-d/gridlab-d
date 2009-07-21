@@ -1,8 +1,7 @@
 //Power limits Test
 //test_microwave_standby_power_limits.glm
-
-//This is a test to see that the auto-correction will occur when a negative number is put in for the standby_power
-
+//This is a test to see that the auto-correction works correctly for standby_power.
+//The default value for standby_power is 1% of installed_power
 clock {
 	timestamp '2000-01-01 00:00:00';
 	timezone PST+8PDT;
@@ -18,7 +17,7 @@ object house:1 {
 object microwave:2 {
 	parent house:1;
 	installed_power 1000 W;
-	standby_power -10 W;//the model auto-corrects a negative standby_power to .01*installed_power
+	standby_power -100 W;
 }
 
 object recorder:3 {
