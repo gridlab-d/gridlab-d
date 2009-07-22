@@ -135,7 +135,7 @@ int schedule_matcher(char *pattern, unsigned char *table, int max)
 /* compiles a single schedule block and report errors
    returns 1 on success, 0 on failure 
  */
-int schedule_compile_block(SCHEDULE *sch, char *blockdef)
+int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 {
 	char *token = NULL;
 	unsigned char index=0;
@@ -166,7 +166,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 			{"month",12},
 			{"weekday",8},
 		}, *match;
-		unsigned int weekday;
+		unsigned int calendar;
 		double value=1.0; /* default value is 1.0 */
 		if (sscanf(token,"%s %s %s %s %s %lf",matcher[0].pattern,matcher[1].pattern,matcher[2].pattern,matcher[3].pattern,matcher[4].pattern,&value)<5) /* value can be missing -> defaults to 1.0 */
 		{
@@ -198,73 +198,71 @@ int schedule_compile_block(SCHEDULE *sch, char *blockdef)
 			}
 		}
 
-		/* load schedule */
-		for (weekday=0; weekday<7; weekday++)
+		/* load schedule based on weekday of Jan 1 */
+		for (calendar=0; calendar<14; calendar++) // don't do holidays (requires a special case that's not supported yet)
 		{
-			unsigned int is_leapyear;
-			if (!matcher[4].table[weekday])
-				continue;
-			for (is_leapyear=0; is_leapyear<2; is_leapyear++)
+			unsigned int weekday = calendar%7;
+			unsigned int is_leapyear = (calendar>=7?1:0);
+			unsigned int calendar = weekday*2+is_leapyear;
+			unsigned int month;
+			unsigned int days[] = {31,(is_leapyear?29:28),31,30,31,30,31,31,30,31,30,31};
+			minute = 0;
+			for (month=0; month<12; month++)
 			{
-				unsigned int calendar = weekday*2+is_leapyear;
-				unsigned int month;
-				unsigned int days[] = {31,(is_leapyear?29:28),31,30,31,30,31,31,30,31,30,31};
-				minute = 0;
-				for (month=0; month<12; month++)
+				unsigned int day;
+				if (!matcher[3].table[month])
 				{
-					unsigned int day;
-					if (!matcher[3].table[month])
+					minute+=60*24*days[month];
+					continue;
+				}
+				for (day=0; day<days[month]; weekday++,day++)
+				{
+					unsigned int hour;
+					weekday%=7; /* wrap day of week */
+					if (!matcher[4].table[weekday] || !matcher[2].table[day])
 					{
-						minute+=60*24*days[month];
+						minute+=60*24;
 						continue;
 					}
-					for (day=0; day<days[month]; day++)
+					for (hour=0; hour<24; hour++)
 					{
-						unsigned int hour;
-						if (!matcher[2].table[day])
+						unsigned int stop = minute+60;
+						if (!matcher[1].table[hour])
 						{
-							minute+=60*24;
+							minute = stop;
 							continue;
 						}
-						for (hour=0; hour<24; hour++)
+						while (minute<stop)
 						{
-							unsigned int stop = minute+60;
-							if (!matcher[1].table[hour])
+							if (matcher[0].table[minute%60])
 							{
-								minute = stop;
-								continue;
-							}
-							while (minute<stop)
-							{
-								if (matcher[0].table[minute%60])
+								if (sch->index[calendar][minute]>0)
 								{
-									if (sch->index[calendar][minute]>0)
-									{
-										char *dayofweek[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol"};
-										output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) %s has a conflict with value %g on %s %d/%d %02d:%02d", sch->name, token, sch->data[sch->index[calendar][minute]], dayofweek[weekday], month+1, day+1, hour, minute%60);
-										/* TROUBLESHOOT
-										   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
-										 */
-										return 0;
-									}
-									else
-									{
-										/* associate this time with the current value */
-										unsigned int ndx = sch->block*MAXBLOCKS + index;
-										sch->index[calendar][minute] = ndx;
-										sch->weight[ndx]++;
-										sch->minutes[sch->block]++;
-
-									}
+									char *dayofweek[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol"};
+									output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) '%s' in block '%s' has a conflict with value %g on %s %d/%d %02d:%02d", sch->name, token, blockname, sch->data[sch->index[calendar][minute]], dayofweek[weekday], month+1, day+1, hour, minute%60);
+									/* TROUBLESHOOT
+									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
+									 */
+									return 0;
 								}
-								minute++;
+								else
+								{
+									/* associate this time with the current value */
+									unsigned int ndx = sch->block*MAXBLOCKS + index;
+									sch->index[calendar][minute] = ndx;
+									sch->weight[ndx]++;
+									sch->minutes[sch->block]++;
+
+								}
 							}
+							minute++;
 						}
 					}
 				}
 			}
 		}
 	}
+	strcpy(sch->blockname[sch->block],blockname);
 	return 1;
 }
 
@@ -284,9 +282,8 @@ int schedule_compile(SCHEDULE *sch)
 	{
 		/* this is single block unnamed schedule */
 		strcpy(blockdef,p);
-		if (schedule_compile_block(sch,blockdef))
+		if (schedule_compile_block(sch,"*",blockdef))
 		{
-			strcpy(sch->blockname[sch->block],"");
 			sch->block++;
 			return 1;
 		}
@@ -321,7 +318,7 @@ int schedule_compile(SCHEDULE *sch)
 				{
 					output_error("maximum number of allowed schedule blocks exceeded");
 					/* TROUBLESHOOT
-						
+						Up to 4 schedule blocks are allowed.  Define your schedule so it only uses four blocks and try again.
 					 */
 					return 0;
 				}
@@ -338,6 +335,10 @@ int schedule_compile(SCHEDULE *sch)
 				state = OPEN;
 				p++;
 			}
+			else if (*p=='{' || *p==';')
+			{
+				state = OPEN;
+			}
 			else /* valid text */
 			{
 				if (q<blockname+sizeof(blockname)-1)
@@ -349,14 +350,35 @@ int schedule_compile(SCHEDULE *sch)
 				{
 					output_error("schedule name is too long");
 					/* TROUBLESHOOT
-						
+						The name given the schedule is too long to be used.  Use a name that is less than 64 characters and try again.
 					 */
 					return 0;
 				}
 			}
 			break;
 		case OPEN:
-			if (*p=='{') /* open block */
+			if (*p==';') /* option */
+			{
+				if (strcmp(blockname,"weighted")==0)
+				{
+					state = CLOSE;
+					sch->flags |= SN_WEIGHTED;
+					p++;
+				}
+				else if (strcmp(blockname,"absolute")==0)
+				{
+					state = CLOSE;
+					sch->flags |= SN_ABSOLUTE;
+					p++;
+				}
+				else if (strcmp(blockname,"normal")==0)
+				{
+					state = CLOSE;
+					sch->flags |= SN_NORMAL;
+					p++;
+				}
+			}
+			else if (*p=='{') /* open block */
 			{
 				state = BLOCK;
 				q = blockdef;
@@ -366,7 +388,7 @@ int schedule_compile(SCHEDULE *sch)
 			{
 				output_error("unexpected text before block start");
 				/* TROUBLESHOOT
-					
+					The schedule syntax is not valid.  Remove the unexpected or invalid text before the block and try again.
 				 */
 				return 0;
 			}
@@ -379,11 +401,8 @@ int schedule_compile(SCHEDULE *sch)
 				state = CLOSE;
 				q = NULL;
 				p++;
-				if (schedule_compile_block(sch,blockdef))
-				{
-					strcpy(sch->blockname[sch->block],blockname);
+				if (schedule_compile_block(sch,blockname,blockdef))
 					sch->block++;
-				}
 				else
 					return 0;
 			}
@@ -398,7 +417,7 @@ int schedule_compile(SCHEDULE *sch)
 				{
 					output_error("schedule name is too long");
 					/* TROUBLESHOOT
-						
+						The definition given the schedule is too long to be used.  Use a definition that is less than 1024 characters and try again.
 					 */
 					return 0;
 				}
@@ -456,7 +475,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	}
 	if (strlen(name)>=sizeof(sch->name))
 	{
-		output_error("schedule_create(char *name='%s', char *definition='%s') memory allocation failed)", name, definition);
+		output_error("schedule_create(char *name='%s', char *definition='%s') name too long)", name, definition);
 		/* TROUBLESHOOT
 			The name given the schedule is too long to be used.  Use a name that is less than 64 characters and try again.
 		 */
@@ -466,7 +485,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	strcpy(sch->name,name);
 	if (strlen(definition)>=sizeof(sch->definition))
 	{
-		output_error("schedule_create(char *name='%s', char *definition='%s') memory allocation failed)", name, definition);
+		output_error("schedule_create(char *name='%s', char *definition='%s') definition too long)", name, definition);
 		/* TROUBLESHOOT
 			The definition given the schedule is too long to be used.  Use a definition that is less than 1024 characters and try again.
 		 */
@@ -530,6 +549,14 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		/* special case for invariant schedule */
 		if (invariant)
 			memset(sch->dtnext,0,sizeof(sch->dtnext)); /* zero means never */
+
+		/* normalize */
+		if (sch->flags!=0)
+		{
+			int flags = sch->flags;
+			sch->flags=0;
+			schedule_normalize(sch,flags);
+		}
 
 		/* attach to schedule list */
 		sch->next = schedule_list;
@@ -628,7 +655,7 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 	}
 
 	/* determine which calendar is used based on the weekday of Jan 1 and LY status */
-	SET_CALENDAR(ref, ((dt.weekday+dt.yearday+6)%7)*2 + ISLEAPYEAR(dt.year));
+	SET_CALENDAR(ref, ((dt.weekday-dt.yearday+53*7)%7)*2 + ISLEAPYEAR(dt.year));
 
 	/* compute the minute of year */
 	SET_MINUTE(ref, (dt.yearday*24 + dt.hour)*60 + dt.minute);
@@ -782,3 +809,62 @@ int schedule_test(void)
 	return failed;
 }
 
+void schedule_dump(SCHEDULE *sch, char *file)
+{
+	FILE *fp = fopen(file,"w");
+	int calendar;
+
+
+	fprintf(fp,"schedule %s { %s }\n", sch->name, sch->definition);
+	fprintf(fp,"sizeof(SCHEDULE) = %.3f MB\n", (double)sizeof(SCHEDULE)/1024/1024);
+	for (calendar=0; calendar<14; calendar++)
+	{
+		int year=0, month, y;
+		int daysinmonth[] = {31,((calendar&1)?29:28),31,30,31,30,31,31,30,31,30,31};
+		char *monthname[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+		fprintf(fp,"\nYears:");
+		for (y=1970; y<2039; y++)
+		{
+			DATETIME dt = {y,0,1,0,0,0};
+			TIMESTAMP ts = mkdatetime(&dt);
+			SCHEDULEINDEX ndx = schedule_index(sch,ts);
+			if (GET_CALENDAR(ndx)==calendar)
+			{
+				fprintf(fp," %d",y);
+				if (year==0) year=y;
+			}
+		}
+		fprintf(fp," (calendar %d)\n",calendar);
+
+		for (month=1; month<=12; month++)
+		{
+			int day, hour;
+			fprintf(fp,"     %s  ", monthname[month-1]);
+			for (hour=0; hour<24; hour++)
+			{
+				fprintf(fp," %2d:00", hour);
+			}
+			fprintf(fp,"\n");
+			for (day=1; day<=daysinmonth[month-1]; day++)
+			{
+				int hour;
+				char wd[] = "SMTWTFSH";
+				DATETIME dt = {year,month,day,0,0,0,0,0,""};
+				TIMESTAMP ts = mkdatetime(&dt);
+				local_datetime(ts,&dt);
+				fprintf(fp,"      %c %2d",wd[dt.weekday],day);
+				for (hour=0; hour<24; hour++)
+				{
+					int minute=0;
+					DATETIME dt = {year,month,day,hour,0,0};
+					TIMESTAMP ts = mkdatetime(&dt);
+					SCHEDULEINDEX ndx = schedule_index(sch,ts);
+					fprintf(fp,"%5g%c",schedule_value(sch,ndx),schedule_dtnext(sch,ndx)<60?'*':' ');
+				}
+				fprintf(fp,"\n");
+			}
+		}
+	}
+
+	fclose(fp);
+}

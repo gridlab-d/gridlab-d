@@ -137,7 +137,7 @@ BOOL CGldEditorDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		_getcwd(global_workdir,1024);
 		t_setup_ranks();
 	}
-	return result==SUCCESS;
+	return 1;
 }
 
 void CGldEditorDoc::OutputStdout(LPCTSTR format, ...)

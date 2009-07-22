@@ -10,11 +10,11 @@
 #set profiler=1
 
 clock {
-	timezone PST+8PDT;
-	starttime '2001-01-01 00:00:00 PST';
+	timezone EST+8EDT;
+	starttime '2000-01-01 00:00:00 EST';
 }
 
-#set stoptime=2001-04-01 00:00:00
+#set stoptime=2001-12-31 23:59:59 EST
 
 module climate;
 object climate {
@@ -32,12 +32,8 @@ class office {
 }
 
 schedule officehours {
-	weekday {
-		* 8-17 * * 1-5 # M-F 8a-5p
-	}
-	weekend {
-		* 9-11,13-15 * * 6-0 # M-F 8a-5p
-	}
+	* 8-17 * * 1-5 # Mon-Fri 8a-5p
+	* 13-17 * * 6-0 # Sat,Sun,Hol 1p-5p
 }
 
 object office:..${NOFFICES} {

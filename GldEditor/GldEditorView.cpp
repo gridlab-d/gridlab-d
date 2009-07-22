@@ -526,11 +526,11 @@ void CGldEditorView::LoadScheduleBlock(SCHEDULE *sch, unsigned int block)
 
 	char *months[] = {"January","February","March","April","May","June","July","August","September","October","November","December"};
 	int days[] = {31,28,31,30,31,30,31,31,30,31,30,31}; 
-	int offset=0;
-	for (int month=0; month<12; month++)
+	int year=2000;
+	for (int month=1; month<=12; month++)
 	{
 		char buffer[64];
-		sprintf(buffer,"%s",months[month]);
+		sprintf(buffer,"%s",months[month-1]);
 		int nItem = list.InsertItem(list.GetItemCount(),buffer);
 		int hItem[24];
 		for (int hour=0; hour<24; hour++)
@@ -541,20 +541,18 @@ void CGldEditorView::LoadScheduleBlock(SCHEDULE *sch, unsigned int block)
 		}
 		for (int day=0; day<7; day++)
 		{
-			for (int hour=0; hour<23; hour++)
+			for (int hour=0; hour<24; hour++)
 			{
-				int minute = (offset*24 + hour)*60;
-				SCHEDULEINDEX ref = 0;
-				SET_CALENDAR(ref,0);
-				SET_MINUTE(ref,minute);
+				DATETIME dt = {year,month,day+1,hour,0,0};
+				TIMESTAMP ts = mkdatetime(&dt);
+				local_datetime(ts,&dt);
+				SCHEDULEINDEX ref = schedule_index(sch,ts);
 				double value = schedule_value(sch,ref);
-				minute += schedule_dtnext(sch,ref);
 				char buffer[64];
-				sprintf(buffer,"%g",value);
-				list.SetItemText(hItem[hour],dowCol[day],buffer);
+				sprintf(buffer,"%g%c",value,schedule_dtnext(sch,ref)<60?'*':' ');
+				list.SetItemText(hItem[hour],dowCol[dt.weekday],buffer);
 			}
 		}
-		offset += days[month];
 	}
 }
 
@@ -597,51 +595,56 @@ void CGldEditorView::LoadSchedule(SCHEDULE *sch)
 	}
 
 	TIMESTAMP t = tstart;
-	DATETIME last = {0,0,0,0,-1,0}; // -1 forces first time to be displayed even when it's midnight
+	DATETIME last = {0,0,0,-1,0,0}; // -1 forces first time to be displayed even when it's midnight
 	int max = 100;
+	double lastvalue=-1; // -1 forces first time to be displayed even when it's zero value
 	while (t<tstop )// && max-->0)
 	{
 		SCHEDULEINDEX ndx = schedule_index(sch,t);
 	
 		DATETIME next;
 		local_datetime(t,&next);
-		int hItem = list.InsertItem(list.GetItemCount(),"");
-		CString buf;
-
-		if (last.year!=next.year)
+		double nextvalue = schedule_value(sch,ndx);
+		if (nextvalue!=lastvalue)
 		{
-			buf.Format("%d",next.year);
-			list.SetItemText(hItem,year,buf);
-			last.year = next.year;
+			int hItem = list.InsertItem(list.GetItemCount(),"");
+			CString buf;
+
+			if (last.year!=next.year)
+			{
+				buf.Format("%d",next.year);
+				list.SetItemText(hItem,year,buf);
+				last.year = next.year;
+			}
+
+			if (last.month!=next.month)
+			{
+				char *mon[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+				list.SetItemText(hItem,month,mon[next.month-1]);
+				last.month = next.month;
+			}
+
+			if (last.day!=next.day)
+			{
+				buf.Format("%d",next.day);
+				list.SetItemText(hItem,day,buf);
+				last.day = next.day;
+				char *wd[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+				list.SetItemText(hItem,weekday,wd[next.weekday]);
+			}
+
+			if (last.hour!=next.hour || last.minute!=next.minute)
+			{
+				buf.Format("%d:%02d",next.hour,next.minute);
+				list.SetItemText(hItem,hour,buf);
+				last.hour = next.hour;
+				last.minute = next.minute;
+			}
+
+			buf.Format("%g", nextvalue);
+			list.SetItemText(hItem,value,buf);
+			lastvalue = nextvalue;
 		}
-
-		if (last.month!=next.month)
-		{
-			char *mon[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-			list.SetItemText(hItem,month,mon[next.month-1]);
-			last.month = next.month;
-		}
-
-		if (last.day!=next.day)
-		{
-			buf.Format("%d",next.day);
-			list.SetItemText(hItem,day,buf);
-			last.day = next.day;
-			char *wd[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
-			list.SetItemText(hItem,weekday,wd[next.weekday]);
-		}
-
-		if (last.hour!=next.hour || last.minute!=next.minute)
-		{
-			buf.Format("%d:%02d",next.hour,next.minute);
-			list.SetItemText(hItem,hour,buf);
-			last.hour = next.hour;
-			last.minute = next.minute;
-		}
-
-		buf.Format("%g", schedule_value(sch,ndx));
-		list.SetItemText(hItem,value,buf);
-
 		t+=schedule_dtnext(sch,ndx)*60; // TODO increment by dtnext
 	}
 }

@@ -43,8 +43,8 @@ struct s_schedule {
 	char definition[65536];				/**< the definition string of the schedule */
 	char blockname[MAXBLOCKS][64];		/**< the name of each block */
 	unsigned char block;				/**< the last block used (4 max) */
-	unsigned char index[14][8784*60];	/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */
-	unsigned long dtnext[14][8784*60];	/**< the time until the next schedule change (in minutes) */
+	unsigned char index[14][366*24*60];	/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */
+	unsigned long dtnext[14][366*24*60];/**< the time until the next schedule change (in minutes) */
 	double data[MAXBLOCKS*MAXVALUES];	/**< the list of values used in each block */
 	unsigned int weight[MAXBLOCKS*MAXVALUES];	/**< the weight (in minutes) associate with each value */
 	double sum[MAXBLOCKS];				/**< the sum of values for each block -- used to normalize */
@@ -58,8 +58,9 @@ struct s_schedule {
 	SCHEDULE *next;	/* next schedule in list */
 };
 
-#define SN_ABSOLUTE 0x0001	/**< schedule normalization flag - use absolute values */
-#define SN_WEIGHTED 0x0002	/**< schedule normalization flag - use weighted values */
+#define SN_NORMAL   0x0001	/**< schedule normalization flag - normalize enabled */
+#define SN_ABSOLUTE 0x0002	/**< schedule normalization flag - use absolute values */
+#define SN_WEIGHTED 0x0004	/**< schedule normalization flag - use weighted values */
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,6 +75,8 @@ long schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
 TIMESTAMP schedule_sync(SCHEDULE *sch, TIMESTAMP t);
 TIMESTAMP schedule_syncall(TIMESTAMP t);
 int schedule_test(void);
+void schedule_dump(SCHEDULE *sch, char *file);
+
 #ifdef __cplusplus
 }
 #endif

@@ -102,9 +102,6 @@ int loadshape_init(loadshape *ls) /**< load shape */
 			return 1;
 	}
 
-	/* normalize the schedule */
-	schedule_normalize(ls->schedule,FALSE);
-
 	/* some sanity checks */
 	switch (ls->type) {
 	case MT_ANALOG:
