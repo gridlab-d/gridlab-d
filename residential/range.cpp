@@ -118,7 +118,7 @@ TIMESTAMP range::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (t0>0 && t1>t0)
 		load.energy += load.total * gl_tohours(t1-t0);
 
-	load.total = complex(installed_power*demand,0,J);
+	load.total = complex(installed_power*demand/1000,0,J);
 	load.admittance = load.total*(1.0/240/240);
 	load.heatgain = load.total.Mag()*heat_fraction;
 
