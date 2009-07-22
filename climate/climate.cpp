@@ -15,7 +15,7 @@
 #define RAD(x) (x*PI)/180
                          //ET,CT,MT ,PT ,AT, HT
 double std_meridians[] = {75,90,105,120,135,150};
-double surface_angles[8] = {0,45,-45,90,-90,135,-135,180};
+double surface_angles[8] = {180,135,90,45,0,-45,-90,-135}; // Old surface_angles = {0,45,-45,90,-90,135,-135,180};
 
 /**
 	@addtogroup tmy TMY2 data
@@ -258,7 +258,7 @@ int climate::init(OBJECT *parent)
 			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(long_degrees));
 			double sol_rad = 0.0; 
 			
-			for(COMPASS_PTS c_point = CP_S; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
+			for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				if(c_point == CP_H)
 					sol_rad = file.calc_solar(CP_E,doy,RAD(degrees),sol_time,dnr,dhr,0.0);//(double)dnr * cos_incident + dhr;
 				else

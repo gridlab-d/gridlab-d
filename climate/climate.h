@@ -14,15 +14,15 @@
 #include "solar_angles.h"
 
 typedef enum{
-	CP_S  = 0,
-    CP_SE = 1,
-	CP_SW = 2,
-	CP_E  = 3,
-	CP_W  = 4,
-	CP_NE = 5,
-	CP_NW = 6,
-	CP_N  = 7,
-	CP_H  = 8,
+	CP_H    = 0,
+    CP_N    = 1,
+	CP_NE   = 2,
+	CP_E    = 3,
+	CP_SE   = 4,
+	CP_S    = 5,
+	CP_SW   = 6,
+	CP_W    = 7,
+	CP_NW   = 8,
 	CP_LAST = 9
 } COMPASS_PTS;
 
