@@ -81,6 +81,16 @@ void triplex_line::recalc(void)
 	triplex_line_conductor *l2 = OBJECTDATA(line_config->phaseB_conductor,triplex_line_conductor);
 	triplex_line_conductor *lN = OBJECTDATA(line_config->phaseC_conductor,triplex_line_conductor);
 
+	if (l1 == NULL || l2 == NULL || lN == NULL)
+	{
+		GL_THROW("triplex_line_configuration:%d (%s) is missing a conductor specification.",line_config->get_id(),line_config->get_name());
+		/* TROUBLESHOOT
+		At this point, triplex lines are assumed to have three conductor values: conductor_1, conductor_2,
+		and conductor_N.  If any of these are missing, the triplex line cannot be specified.  Please
+		verify that your triplex_line_configuration object contains all of the neccessary conductor values.
+		*/
+	}
+
 	r1 = l1->resistance;
 	r2 = l2->resistance;
 	rn = lN->resistance;
