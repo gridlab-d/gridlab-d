@@ -93,16 +93,18 @@ int diesel_dg::init(OBJECT *parent)
 	double ZB, SB, EB;
 	complex tst;
 	int i;
-		if (Gen_mode==UNKNOWN)
+	OBJECT *obj = OBJECTHDR(this);
+
+	if (Gen_mode==UNKNOWN)
 	{
-		OBJECT *obj = OBJECTHDR(this);
 		throw("Generator control mode is not specified");
 	}
-		if (Gen_status==0)
+	if (Gen_status==0)
 	{
 		//OBJECT *obj = OBJECTHDR(this);
 		throw("Generator is out of service!");
-	}else
+	}
+	else
 		{
 //			if (Rated_kW!=0.0)  SB = Rated_kW/sqrt(1-Rated_pf*Rated_pf);
 			if (Rated_kVA!=0.0)  SB = Rated_kVA*1000.0/3;
@@ -127,7 +129,7 @@ int diesel_dg::init(OBJECT *parent)
 	} map[] = {
 		// local object name,	meter object name
 		{&pCircuit_V,			"voltage_A"}, // assumes 23 and 31 follow immediately in memory
-		{&pLine_I,				"line1_current"}, // assumes 2 and 3(N) follow immediately in memory
+		{&pLine_I,				"current_A"}, // assumes 2 and 3(N) follow immediately in memory
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	};
 
@@ -136,6 +138,10 @@ int diesel_dg::init(OBJECT *parent)
 		// attach meter variables to each circuit
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 			*(map[i].var) = get_complex(parent,map[i].varname);
+	}
+	else
+	{
+		GL_THROW("Meter object was not found, please specify a meter parent for diesel_dg:%d.",obj->id);
 	}
 
 	return 1; /* return 1 on success, 0 on failure */
