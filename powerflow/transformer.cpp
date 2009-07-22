@@ -106,6 +106,7 @@ int transformer::init(OBJECT *parent)
 				nt_a = nt;
 				zt_a = zt * nt_a;
 				inv_nt_a = 1 / nt_a;
+				c_mat[0][0] = complex(1,0) / (complex(nt_a * nt_a,0) * config->shunt_impedance);
 			} 
 			else 
 			{
@@ -118,6 +119,7 @@ int transformer::init(OBJECT *parent)
 				nt_b = nt;
 				zt_b = zt * nt_b;
 				inv_nt_b = 1 / nt_b;
+				c_mat[1][1] = complex(1,0) / (complex(nt_b * nt_b,0) * config->shunt_impedance);
 			} 
 			else 
 			{
@@ -130,6 +132,7 @@ int transformer::init(OBJECT *parent)
 				nt_c = nt;
 				zt_c = zt * nt_c;
 				inv_nt_c = 1 / nt_c;
+				c_mat[2][2] = complex(1,0) / (complex(nt_c * nt_c,0) * config->shunt_impedance);
 			} 
 			else 
 			{
