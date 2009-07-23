@@ -7,16 +7,6 @@
 #set include="../../core"
 #setenv GLPATH=../../core;../../core/etc
 
-#ifdef USERNAME
-#ifndef USER
-#setenv USER=${USERNAME}
-#endif
-#endif
-
-#include "rt/gridlabd.conf"
-
-#include "../../core/rt/msvc_debugger.glm"
-
 module market;
 module tape;
 
