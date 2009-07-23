@@ -30,8 +30,9 @@ object recorder:3 {
 
 object double_assert:4 {
 	parent microwave:2;
+	status ASSERT_TRUE;
 	target "standby_power";
-	within 0;
+	within 0.001;
 	object player {
 		property value;
 		file "../test_microwave_standby_power_limits.player";//standby_power should = 10 W

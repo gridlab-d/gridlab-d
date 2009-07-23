@@ -39,8 +39,9 @@ object recorder:4 {
 
 object double_assert:5 {
 	parent microwave:2;
+	status ASSERT_TRUE;
 	target "demand";
-	within 0;
+	within 0.001;
 	object player {
 		property value;
 		file "../test_generic_limit_demand.player";
