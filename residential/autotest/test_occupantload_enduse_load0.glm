@@ -38,7 +38,7 @@ object house {
 		object complex_assert {
 			target enduse_load;
 			value 0; // occupantloads should not consume power
-			within 0;
+			within 0.000001;
 		};
 	};
 }
