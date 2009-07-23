@@ -178,32 +178,22 @@ module tape;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-object triplex_meter: {
+object triplex_meter {
 	name Meter;
-// 	type SINGLEPHASE;
-//	parent Link45;
-//	line1_voltage +120+0.000j;
-//	line2_voltage +120.0+0.0j;
-//	line3_voltage +0.0+00.000j;
-//	line12_voltage 240 V;
-//	line23_voltage -120 V;
-//	line31_voltage -120 V;
-
+	nominal_voltage 120;
+	phases AS;
 }
 
 //object node {
 //	name Meter;
-//	phases A|B|C;
-//	voltage_A 120+0j;
-//	voltage_B 120+0j;
-//	voltage_C 120+0j;
+//	phases AS;
+//	nominal_voltage 120;
 //}
 
 //object recorder{
 //	name MeterCorder;
 //	parent Meter;
-//	property energy,power,demand,line1_voltage,line2_voltage,line3_voltage,line1_current,line2_current,line3_current;
-//	property voltage_A,voltage_B,voltage_C,phaseA_I_in,phaseB_I_in,phaseC_I_in;
+//	property voltage_1,voltage_2,voltage_N;
 //	file meter.csv;
 //	interval 3600;
 //	limit 370;
