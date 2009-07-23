@@ -205,7 +205,7 @@ int code_used = 0;
 /* used for tracking #include directives in files */
 #define BUFFERSIZE (65536*1000)
 typedef struct s_include_list {
-	char *file;
+	char file[256];
 	struct s_include_list *next;
 } INCLUDELIST;
 
@@ -3973,6 +3973,11 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 					}
 				}
 			}
+		} else {
+			strcpy(buffer,"\n");
+			buffer+=strlen("\n");
+			size -= 1;
+			n += 1;
 		}
 		if(bnest == 0){
 			/* end of block */
@@ -4010,7 +4015,9 @@ static int include_file(char *incname, char *buffer, int size)
 
 	/* check include list */
 	INCLUDELIST *list;
-	INCLUDELIST this={incname,include_list}; /* REALLY BAD IDEA ~~ "this" is a reserved C++ keyword */
+	INCLUDELIST *this = (INCLUDELIST *)malloc(sizeof(INCLUDELIST));//={incname,include_list}; /* REALLY BAD IDEA ~~ "this" is a reserved C++ keyword */
+	strcpy(this->file, incname);
+	this->next = include_list;
 	output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'", 
 		incname, buffer, size, getenv("GLPATH") ? getenv("GLPATH") : "NULL", ff ? ff : "NULL");
 
@@ -4037,8 +4044,8 @@ static int include_file(char *incname, char *buffer, int size)
 					return 0;
 				}
 			}
-			this.next = header_list;
-			header_list = &this;
+			this->next = header_list;
+			header_list = this;
 		}
 	} else { /* no extension */
 		for (list = header_list; list != NULL; list = list->next){
@@ -4047,8 +4054,8 @@ static int include_file(char *incname, char *buffer, int size)
 				return 0;
 			}
 		}
-		this.next = header_list;
-		header_list = &this;
+		this->next = header_list;
+		header_list = this;
 	}
 
 	/* open file */
@@ -4078,7 +4085,7 @@ static int include_file(char *incname, char *buffer, int size)
 	output_verbose("%s(%d): included file is %d bytes long", incname, linenum, stat.st_size);
 
 	/* reset line counter for parser */
-	include_list = &this;
+	include_list = this;
 	//count = buffer_read(fp,buffer,incname,size); // fread(buffer,1,stat.st_size,fp);
 
 	move = buffer_read_alt(fp, buffer2, incname, 20479);
@@ -4100,7 +4107,7 @@ static int include_file(char *incname, char *buffer, int size)
 		move = buffer_read_alt(fp, buffer2, incname, 20479);
 	}
 
-	include_list = this.next;
+	//include_list = this.next;
 
 	return count;
 }
