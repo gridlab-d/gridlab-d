@@ -21,12 +21,19 @@ double_assert::double_assert(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			// TO DO:  publish your variables here
+			PT_enumeration,"status",PADDR(status),
+				PT_KEYWORD,"ASSERT_TRUE",ASSERT_TRUE,
+				PT_KEYWORD,"ASSERT_FALSE",ASSERT_FALSE,
+				PT_KEYWORD,"ASSERT_NONE",ASSERT_NONE,
 			PT_double, "value", PADDR(value),
 			PT_double, "within", PADDR(within),
 			PT_char32, "target", PADDR(target),			
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		defaults = this;		
+		defaults = this;
+		status = ASSERT_TRUE;
+		within = 0.0;
+		value = 0.0;
 	}
 }
 
@@ -40,7 +47,12 @@ int double_assert::create(void)
 
 int double_assert::init(OBJECT *parent)
 {
-
+	if (within <= 0.0)
+		GL_THROW ("A non-positive value has been specified for within.");
+		/*  TROUBLESHOOT
+		Within is the range in which the check is being performed.  Please check to see that you have
+		specified a value for "within" and it is positive.
+		*/
 	return 1;
 }
 TIMESTAMP double_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
@@ -52,17 +64,22 @@ TIMESTAMP double_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	if (t0>0)
 	{	
 		double *x = (double*)gl_get_double_by_name(obj->parent,target);
-		if (x==NULL) {
+		if (x==NULL) 
+		{
 			GL_THROW("Specified target %s for %s is not valid.",target,gl_name(obj->parent,buff,64));
 			/*  TROUBLESHOOT
-			Check to make sure the target you are specifying is a published variable.  
-			Refer to the documentation of the command flag --modhelp
+			Check to make sure the target you are specifying is a published variable for the object
+			that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
+			check the wiki page to determine which variables can be published within the object you
+			are pointing to with the assert function.
 			*/
 			return TS_NEVER;
 		}
-		else {
+		else if (status == ASSERT_TRUE)
+		{
 			double m = abs(*x-value);
-			if (_isnan(m) || m>within){				
+			if (_isnan(m) || m>within)
+			{				
 				gl_verbose("Assert failed on %s: %s %g not within %f of %g", 
 					gl_name(obj->parent, buff, 64), target, *x, within, value);
 				return t1;
@@ -70,8 +87,26 @@ TIMESTAMP double_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
 			return TS_NEVER;
 		}
+		else if (status == ASSERT_FALSE)
+		{
+			double m = abs(*x-value);
+			if (_isnan(m) || m<within)
+			{				
+				gl_verbose("Assert failed on %s: %s %g is within %f of %g", 
+					gl_name(obj->parent, buff, 64), target, *x, within, value);
+				return t1;
+			}
+			gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+			return TS_NEVER;
+		}
+		else
+		{
+			gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
+			return TS_NEVER;
+		}
 	} 
-	else {
+	else 
+	{
 		return t1+1;
 	}
 }

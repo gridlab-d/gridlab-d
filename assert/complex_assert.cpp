@@ -20,12 +20,19 @@ complex_assert::complex_assert(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			// TO DO:  publish your variables here
+			PT_enumeration,"status",PADDR(status),
+				PT_KEYWORD,"ASSERT_TRUE",ASSERT_TRUE,
+				PT_KEYWORD,"ASSERT_FALSE",ASSERT_FALSE,
+				PT_KEYWORD,"ASSERT_NONE",ASSERT_NONE,
 			PT_complex, "value", PADDR(value),
 			PT_double, "within", PADDR(within),
 			PT_char32, "target", PADDR(target),	
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		defaults = this;		
+		defaults = this;
+		status = ASSERT_TRUE;
+		within = 0.0;
+		value = 0.0;
 	}
 }
 
@@ -39,6 +46,13 @@ int complex_assert::create(void)
 
 int complex_assert::init(OBJECT *parent)
 {
+	if (within <= 0.0)
+		GL_THROW ("A non-positive value has been specified for within.");
+		/*  TROUBLESHOOT
+		Within is the range in which the check is being performed.  Please check to see that you have
+		specified a value for "within" and it is positive.
+		*/
+
 	return 1;
 }
 TIMESTAMP complex_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
@@ -53,11 +67,14 @@ TIMESTAMP complex_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		if (x==NULL) {
 			GL_THROW("Specified target %s for %s is not valid.",target,gl_name(obj->parent,buff,64));
 			/*  TROUBLESHOOT
-			Check to make sure the target you are specifying is a published variable.  
-			Refer to the documentation of the command flag --modhelp
+			Check to make sure the target you are specifying is a published variable for the object
+			that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
+			check the wiki page to determine which variables can be published within the object you
+			are pointing to with the assert function.
 			*/
 		}
-		else {
+		else if (status == ASSERT_TRUE)
+		{
 			complex error = *x - value;
 			double real_error = error.Re();
 			double imag_error = error.Im();
@@ -72,6 +89,28 @@ TIMESTAMP complex_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				return t1;
 			}
+		}
+		else if (status == ASSERT_FALSE)
+		{
+			complex error = *x - value;
+			double real_error = error.Re();
+			double imag_error = error.Im();
+			if ((_isnan(real_error) || abs(real_error)<within)||(_isnan(imag_error) || abs(imag_error)<within)){
+				if (_isnan(real_error) || abs(real_error)<within) {
+					gl_verbose("Assert failed on %s: real part of %s %g not within %f of %g", 
+					gl_name(obj->parent,buff,64), target, x->Re(), within, value.Re());
+				}
+				if (_isnan(imag_error) || abs(imag_error)<within) {
+					gl_verbose("Assert failed on %s: imaginary part of %s %+gi not within %f of %+gi", 
+					gl_name(obj->parent,buff,64), target, x->Im(), within, value.Im());
+				}
+				return t1;
+			}
+		}
+		else
+		{
+			gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
+			return TS_NEVER;
 		}
 		gl_verbose("Assert passed on %s",gl_name(obj->parent,buff,64));
 		return TS_NEVER;

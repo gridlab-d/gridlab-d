@@ -16,8 +16,9 @@ class double_assert {
 private:
 protected:
 public:
-	char32 target;
-	double value;
+	enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} status; //Assert whether the target value should be
+	char32 target;											//within the range (True), outside of a 
+	double value;											//range (False) or shouldn't be checked (None).
 	double within;
 
 public:
