@@ -138,15 +138,17 @@ int enduse_publish(CLASS *oclass, int struct_address, char *prefix)
 
 	for (p=prop_list;p<prop_list+sizeof(prop_list)/sizeof(prop_list[0]);p++)
 	{
-		char *prop_name;
+		char prop_name[256];
 				
 		if(prefix == NULL)
 		{
-			prop_name = p->prop_name;
+			strcpy(prop_name,p->prop_name);
 		}
 		else
 		{
-			prop_name = strcat(prefix, ".", p->prop_name);
+			strcpy(prop_name,prefix);
+			strcat(prop_name, ".");
+			strcat(prop_name, p->prop_name);
 		}
 				
 		result = class_define_map(oclass,  p->prop_type, prop_name, p->publish_addr, NULL);
