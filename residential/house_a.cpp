@@ -212,7 +212,7 @@ house::house(MODULE *mod)
 			PT_double,"outside_temp[degF]",PADDR(Tout),
 			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),
 			PT_double,"mass_heat_coeff",PADDR(house_content_heat_transfer_coeff),
-			PT_double,"outside_temp_b",PADDR(outside_temp),
+			PT_double,"outdoor_temperature[degF]",PADDR(outside_temp),
 			PT_enumeration,"heat_mode",PADDR(heat_mode),
 				PT_KEYWORD,"ELECTRIC",ELECTRIC,
 				PT_KEYWORD,"GASHEAT",GASHEAT,
