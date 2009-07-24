@@ -4091,12 +4091,12 @@ static int include_file(char *incname, char *buffer, int size)
 			modtime = stat.st_mtime;
 		}
 
-		if(size < stat.st_size){
+		//if(size < stat.st_size){
 			/** @todo buffer must grow (ticket #31) */
 			/* buffer = realloc(buffer,size+stat.st_size); */
-			output_message("%s(%d): unable to grow size of read buffer to include file", incname, linenum);
-			return 0;
-		}
+		//	output_message("%s(%d): unable to grow size of read buffer to include file", incname, linenum);
+		//	return 0;
+		//}
 	} else {
 		output_message("%s(%d): unable to get size of included file", incname, linenum);
 		return 0;
@@ -4273,7 +4273,7 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 			}
 			else
 			{
-				line+=len; size-=len;
+//				line+=len; size-=len; // not relevant to the block loader, was already consumed
 				len = sprintf(line,"@%s;%d\n",filename,linenum);
 				line+=len; size-=len;
 				return size>0;
