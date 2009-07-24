@@ -218,6 +218,7 @@ house_e::house_e(MODULE *mod)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"house_e",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP);
+
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
@@ -272,14 +273,137 @@ house_e::house_e(MODULE *mod)
 			PT_double, "Rwall[degF.h/Btu]", PADDR(Rwall),
 			PT_double, "Rfloor[degF.h/Btu]", PADDR(Rfloor),
 			PT_double, "Rwindows[degF.h/Btu]", PADDR(Rwindows),
-			PT_char256, "implicit_enduses", PADDR(implicit_enduses),
+			
+			PT_complex, "clotheswasher.current_fraction", PADDR(clotheswasher.current_fraction),
+			PT_complex, "clotheswasher.demand", PADDR(clotheswasher.demand),
+			PT_complex, "clotheswasher.energy", PADDR(clotheswasher.energy),
+			PT_double, "clotheswasher.heatgain", PADDR(clotheswasher.heatgain),
+			PT_double, "clotheswasher.heatgain_fraction", PADDR(clotheswasher.heatgain_fraction),
+			PT_double, "clotheswasher.impedance_fraction", PADDR(clotheswasher.impedance_fraction),
+			PT_double, "clotheswasher.power", PADDR(clotheswasher.power),
+			PT_double, "clotheswasher.power_factor", PADDR(clotheswasher.power_factor),
+			PT_double, "clotheswasher.power_fraction", PADDR(clotheswasher.power_fraction),
+			PT_loadshape, "clotheswasher.shape", PADDR(clotheswasher_shape),
+			PT_double, "clotheswasher.load", PADDR(clotheswasher_shape.load),
+			PT_double, "clotheswasher.voltage_factor", PADDR(clotheswasher.voltage_factor),
+
+			PT_complex, "dishwasher.current_fraction", PADDR(dishwasher.current_fraction),
+			PT_complex, "dishwasher.demand", PADDR(dishwasher.demand),
+			PT_complex, "dishwasher.energy", PADDR(dishwasher.energy),
+			PT_double, "dishwasher.heatgain", PADDR(dishwasher.heatgain),
+			PT_double, "dishwasher.heatgain_fraction", PADDR(dishwasher.heatgain_fraction),
+			PT_double, "dishwasher.impedance_fraction", PADDR(dishwasher.impedance_fraction),
+			PT_double, "dishwasher.power", PADDR(dishwasher.power),
+			PT_double, "dishwasher.power_factor", PADDR(dishwasher.power_factor),
+			PT_double, "dishwasher.power_fraction", PADDR(dishwasher.power_fraction),
+			PT_loadshape, "dishwasher.shape", PADDR(dishwasher_shape),
+			PT_double, "dishwasher.load", PADDR(dishwasher_shape.load),
+			PT_double, "dishwasher.voltage_factor", PADDR(dishwasher.voltage_factor),
+			
+			PT_complex, "dryer.current_fraction", PADDR(dryer.current_fraction),
+			PT_complex, "dryer.demand", PADDR(dryer.demand),
+			PT_complex, "dryer.energy", PADDR(dryer.energy),
+			PT_double, "dryer.heatgain", PADDR(dryer.heatgain),
+			PT_double, "dryer.heatgain_fraction", PADDR(dryer.heatgain_fraction),
+			PT_double, "dryer.impedance_fraction", PADDR(dryer.impedance_fraction),
+			PT_double, "dryer.power", PADDR(dryer.power),
+			PT_double, "dryer.power_factor", PADDR(dryer.power_factor),
+			PT_double, "dryer.power_fraction", PADDR(dryer.power_fraction),
+			PT_loadshape, "dryer.shape", PADDR(dryer_shape),
+			PT_double, "dryer.load", PADDR(dryer_shape.load),
+			PT_double, "dryer.voltage_factor", PADDR(dryer.voltage_factor),
+
+			PT_complex, "freezer.current_fraction", PADDR(freezer.current_fraction),
+			PT_complex, "freezer.demand", PADDR(freezer.demand),
+			PT_complex, "freezer.energy", PADDR(freezer.energy),
+			PT_double, "freezer.heatgain", PADDR(freezer.heatgain),
+			PT_double, "freezer.heatgain_fraction", PADDR(freezer.heatgain_fraction),
+			PT_double, "freezer.impedance_fraction", PADDR(freezer.impedance_fraction),
+			PT_double, "freezer.power", PADDR(freezer.power),
+			PT_double, "freezer.power_factor", PADDR(freezer.power_factor),
+			PT_double, "freezer.power_fraction", PADDR(freezer.power_fraction),
+			PT_loadshape, "freezer.shape", PADDR(freezer_shape),
+			PT_double, "freezer.load", PADDR(freezer_shape.load),
+			PT_double, "freezer.voltage_factor", PADDR(freezer.voltage_factor),
+
+			PT_complex, "light.current_fraction", PADDR(light.current_fraction),
+			PT_complex, "light.demand", PADDR(light.demand),
+			PT_complex, "light.energy", PADDR(light.energy),
+			PT_double, "light.heatgain", PADDR(light.heatgain),
+			PT_double, "light.heatgain_fraction", PADDR(light.heatgain_fraction),
+			PT_double, "light.impedance_fraction", PADDR(light.impedance_fraction),
+			PT_double, "light.power", PADDR(light.power),
+			PT_double, "light.power_factor", PADDR(light.power_factor),
+			PT_double, "light.power_fraction", PADDR(light.power_fraction),
+			PT_loadshape, "light.shape", PADDR(light_shape),
+			PT_double, "light.load", PADDR(light_shape.load),
+			PT_double, "light.voltage_factor", PADDR(light.voltage_factor),
+
+			PT_complex, "microwave.current_fraction", PADDR(microwave.current_fraction),
+			PT_complex, "microwave.demand", PADDR(microwave.demand),
+			PT_complex, "microwave.energy", PADDR(microwave.energy),
+			PT_double, "microwave.heatgain", PADDR(microwave.heatgain),
+			PT_double, "microwave.heatgain_fraction", PADDR(microwave.heatgain_fraction),
+			PT_double, "microwave.impedance_fraction", PADDR(microwave.impedance_fraction),
+			PT_double, "microwave.power", PADDR(microwave.power),
+			PT_double, "microwave.power_factor", PADDR(microwave.power_factor),
+			PT_double, "microwave.power_fraction", PADDR(microwave.power_fraction),
+			PT_loadshape, "microwave.shape", PADDR(microwave_shape),
+			PT_double, "microwave.load", PADDR(microwave_shape.load),
+			PT_double, "microwave.voltage_factor", PADDR(microwave.voltage_factor),
+
+			PT_complex, "occupants.current_fraction", PADDR(occupants.current_fraction),
+			PT_complex, "occupants.demand", PADDR(occupants.demand),
+			PT_complex, "occupants.energy", PADDR(occupants.energy),
+			PT_double, "occupants.heatgain", PADDR(occupants.heatgain),
+			PT_double, "occupants.heatgain_fraction", PADDR(occupants.heatgain_fraction),
+			PT_double, "occupants.impedance_fraction", PADDR(occupants.impedance_fraction),
+			PT_double, "occupants.power", PADDR(occupants.power),
+			PT_double, "occupants.power_factor", PADDR(occupants.power_factor),
+			PT_double, "occupants.power_fraction", PADDR(occupants.power_fraction),
+			PT_loadshape, "occupants.shape", PADDR(occupants_shape),
+			PT_double, "occupants.load", PADDR(occupants_shape.load),
+			PT_double, "occupants.voltage_factor", PADDR(occupants.voltage_factor),
+
+			PT_complex, "plugs.current_fraction", PADDR(plugs.current_fraction),
+			PT_complex, "plugs.demand", PADDR(plugs.demand),
+			PT_complex, "plugs.energy", PADDR(plugs.energy),
+			PT_double, "plugs.heatgain", PADDR(plugs.heatgain),
+			PT_double, "plugs.heatgain_fraction", PADDR(plugs.heatgain_fraction),
+			PT_double, "plugs.impedance_fraction", PADDR(plugs.impedance_fraction),
+			PT_double, "plugs.power", PADDR(plugs.power),
+			PT_double, "plugs.power_factor", PADDR(plugs.power_factor),
+			PT_double, "plugs.power_fraction", PADDR(plugs.power_fraction),
+			PT_loadshape, "plugs.shape", PADDR(plugs_shape),
+			PT_double, "plugs.load", PADDR(plugs_shape.load),
+			PT_double, "plugs.voltage_factor", PADDR(plugs.voltage_factor),
+
+			PT_complex, "refrigerator.current_fraction", PADDR(refrigerator.current_fraction),
+			PT_complex, "refrigerator.demand", PADDR(refrigerator.demand),
+			PT_complex, "refrigerator.energy", PADDR(refrigerator.energy),
+			PT_double, "refrigerator.heatgain", PADDR(refrigerator.heatgain),
+			PT_double, "refrigerator.heatgain_fraction", PADDR(refrigerator.heatgain_fraction),
+			PT_double, "refrigerator.impedance_fraction", PADDR(refrigerator.impedance_fraction),
+			PT_double, "refrigerator.power", PADDR(refrigerator.power),
+			PT_double, "refrigerator.power_factor", PADDR(refrigerator.power_factor),
+			PT_double, "refrigerator.power_fraction", PADDR(refrigerator.power_fraction),
+			PT_loadshape, "refrigerator.shape", PADDR(refrigerator_shape),
+			PT_double, "refrigerator.load", PADDR(refrigerator_shape.load),
+			PT_double, "refrigerator.voltage_factor", PADDR(refrigerator.voltage_factor),			
+			
 			NULL)<1) 
-			GL_THROW("unable to publish properties in %s",__FILE__);
+			GL_THROW("unable to publish properties in %s",__FILE__);			
+
 		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse_house_e);
+
+		//int x = PADDR(waterheater) - 0;
+		//int result = enduse_publish(oclass, x, "waterheater");
+
 		// deafults set during class creation
 		defaults = this;
 		memset(this,0,sizeof(house_e));
-		strcpy(implicit_enduses,"clotheswasher,dishwasher,dryer,freezer,light,microwave,occupants,plugs,refrigerator,waterheater,heating/cooling");
+
+
 	}	
 }
 
@@ -463,8 +587,26 @@ int house_e::init(OBJECT *parent)
 	volume = ceiling_height*floor_area;									// volume of air [cf]
 	air_mass = air_density*volume;							// mass of air [lb]
 	air_thermal_mass = air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]
-	Tmaterials = Tair;										// material temperture [F]
+	Tmaterials = Tair;	
+	
+	if(clotheswasher.current_fraction==0.0) clotheswasher.current_fraction = 1.0;
+	if(clotheswasher.heatgain_fraction==0.0) clotheswasher.heatgain_fraction = 1.0;
+	if(clotheswasher.power_factor==0.0) clotheswasher.power_factor = 0.9;
+	if(clotheswasher.power_factor==0.0) clotheswasher.heatgain_fraction = 0.9;
+	if(clotheswasher.power_factor==0.0) clotheswasher.heatgain_fraction = 0.9;
+	// material temperture [F]
 
+	clotheswasher.shape = &clotheswasher_shape;
+	dishwasher.shape = &dishwasher_shape;
+	dryer.shape = &dryer_shape;
+	freezer.shape = &freezer_shape;
+	light.shape = &light_shape;
+	microwave.shape = &microwave_shape;
+	occupants.shape = &occupants_shape;
+	plugs.shape = &plugs_shape;
+	refrigerator.shape = &refrigerator_shape;
+	waterheater.shape = &waterheater_shape;
+	
 	// connect any implicit loads
 	attach_implicit_enduses();
 	update_hvac();
