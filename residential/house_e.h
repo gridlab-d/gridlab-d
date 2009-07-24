@@ -13,6 +13,8 @@
 #include "house_a.h"
 #include "residential.h"
 #include "complex.h"
+#include "enduse.h"
+#include "loadshape.h"
 
 #define LST_DIRECT		0x00 ///< shape is absolute direct shape - scalar is multiplier
 #define LST_NORMAL		0x01 ///< shape is given in normalized values (pu) - scalar is kW
@@ -95,6 +97,27 @@ public:
 	double vTout;
 	double *pRhout;
 	double *pSolar;
+
+	enduse clotheswasher;
+	loadshape clotheswasher_shape;
+	enduse dishwasher;
+	loadshape dishwasher_shape;
+	enduse dryer;
+	loadshape dryer_shape;
+	enduse freezer;
+	loadshape freezer_shape;
+	enduse light;
+	loadshape light_shape;
+	enduse microwave;
+	loadshape microwave_shape;
+	enduse occupants;
+	loadshape occupants_shape;
+	enduse plugs;
+	loadshape plugs_shape;
+	enduse refrigerator;
+	loadshape refrigerator_shape;
+	enduse waterheater;
+	loadshape waterheater_shape;
 
 	double Tair;
 	double Tsolar;
