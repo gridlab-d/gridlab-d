@@ -259,8 +259,8 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 	OBJECT *parent = (OBJECTHDR(this))->parent;
 	house *pHouse = OBJECTDATA(parent, house);
 
-	double Ton  = tank_setpoint - thermostat_deadband/2;
-	double Toff = tank_setpoint + thermostat_deadband/2;
+	Ton  = tank_setpoint - thermostat_deadband/2;
+	Toff = tank_setpoint + thermostat_deadband/2;
 
 	switch(tank_state()){
 		case FULL:
@@ -301,9 +301,8 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 			attached to the bug report.
 		 */
 	}
+	
 	return TS_NEVER;
-	if(nHours > 0.0 && t0 > 0)
-		load.energy += load.total * nHours;
 }
 
 /** Water heater synchronization determines the time to next
@@ -328,6 +327,9 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	set_time_to_transition();
 
+	if(nHours > 0.0 && t0 > 0)
+		load.energy += load.total * nHours;
+
 	// determine internal gains
 	if(nHours > 0){
 		if (location == INSIDE){
@@ -348,7 +350,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		faux_gain = actual_kW() * nHours;
 		load.total = load.power = power_kw;
 		// post internal gains
-		load.heatgain = -internal_gain * KWPBTUPH;
+		load.heatgain = (this->location == INSIDE) ? (-internal_gain * KWPBTUPH) : 0;
 	}
 
 	if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
