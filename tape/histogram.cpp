@@ -67,6 +67,7 @@ histogram::histogram(MODULE *mod)
 		binctr = NULL;
 		prop_ptr = NULL;
 		next_count = t_count = next_sample = t_sample = TS_ZERO;
+		flags[0]='w';
     }
 }
 
@@ -210,6 +211,8 @@ int histogram::init(OBJECT *parent)
 	PROPERTY *prop = NULL;
 	OBJECT *obj = OBJECTHDR(this);
 	char tprop[64], tpart[8];
+	tprop[0]=0;
+	tpart[0] = 0;
 
 	if(parent == NULL) /* better have a group... */
 	{
@@ -269,6 +272,7 @@ int histogram::init(OBJECT *parent)
 		int i=0;
 		double range = max - min;
 		double step = range/bin_count;
+		throw("Histogram bin_count is temporarily disabled.");
 		bin_list = (BIN *)malloc(sizeof(BIN) * bin_count);
 		if(bin_list == NULL){
 			throw("Histogram malloc error: unable to alloc %i * %i bytes for %s", bin_count, sizeof(BIN), obj->name ? obj->name : "(anon. histogram)");
@@ -282,6 +286,7 @@ int histogram::init(OBJECT *parent)
 			bin_list[i].high_inc = 0;
 		}
 		bin_list[i].high_inc = 1;	/* tail value capture */
+		// freeze starts here
 		binctr = (int *)malloc(sizeof(int) * bin_count);
 		memset(binctr, 0, sizeof(int) * bin_count);
 	}
@@ -332,7 +337,11 @@ int histogram::init(OBJECT *parent)
 		}
 		binctr = (int *)malloc(sizeof(int) * bin_count);
 		memset(binctr, 0, sizeof(int) * bin_count);
+	} else {
+		gl_error("Histogram has neither bins or a bin range to work with");
+		return 0;
 	}
+
 	/* open file ~ copied from recorder.c */
 		/* if prefix is omitted (no colons found) */
 	if (sscanf(filename,"%32[^:]:%1024[^:]:%[^:]",ftype,fname,flags)==1)
