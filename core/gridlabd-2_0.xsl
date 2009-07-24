@@ -73,6 +73,7 @@
 <TR><TH>skipsafe</TH><TD><xsl:value-of select="skipsafe"/></TD></TR>
 <TR><TH>dateformat</TH><TD><xsl:value-of select="dateformat"/></TD></TR>
 <TR><TH>minimum_timestep</TH><TD><xsl:value-of select="minimum_timestep"/></TD></TR>
+<TR><TH>platform</TH><TD><xsl:value-of select="platform"/></TD></TR>
 </TABLE>
 <H2><A NAME="solver_ranks">Solver ranks</A></H2>
 <TABLE BORDER="1">

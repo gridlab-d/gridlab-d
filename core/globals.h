@@ -116,6 +116,13 @@ GLOBAL char global_object_scan[32] INIT("%[^:]:%d"); /**< the format to use when
 
 GLOBAL int global_minimum_timestep INIT(1); /**< the minimum timestep allowed */
 
+GLOBAL char global_platform[8] /**< the host operating platform */
+#ifdef WIN32
+	INIT("WINDOWS");
+#else
+	INIT("LINUX");
+#endif
+
 #ifdef __cplusplus
 }
 #endif

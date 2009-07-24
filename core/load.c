@@ -458,6 +458,26 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 	include_file_str[0] = '\0';
 
+	/* check global_include */
+	if (strlen(global_include)==0)
+	{
+		if (getenv("GRIDLABD"))
+		{
+			strncpy(global_include,getenv("GRIDLABD"),sizeof(global_include));
+			output_verbose("global_include is not set, assuming value of GRIDLABD variable '%s'", global_include);
+		}
+		else
+		{
+			output_error("'include' variable is not set and neither is GRIDLABD environment, compiler cannot proceed without a way to find rt/gridlabd.h");
+			/* TROUBLESHOOT
+				The runtime class compiler needs to find the file rt/gridlabd.h and uses either the <i>include<i> global variable or the <b>gridlabd</b> 
+				environment variable to find it.  Check the definition of the <b>gridlabd</b> environment variable or use the 
+				<code>#define include=<i>path</i></code> to specify the path to the <code>rt/gridlabd.h<code>.
+			 */
+			return FAILED;
+		}
+	}
+
 	if (code_used>0)
 	{
 		MODULE *mod;
@@ -615,7 +635,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				// /Fd"Win32\Debug\powerflow\vc80.pdb" /W3 /nologo /c /Wp64 /ZI /TP /wd4996 /errorReport:prompt
 				if (exec("cl /Od /DWIN32 /D_DEBUG /D_WINDOWS /D_USRDLL /D_CRT_SECURE_NO_DEPRECATE /D_WINDLL /D_MBCS /Gm /EHsc /RTC1 "
 					"/MDd /nologo /W3 /Zi /TP /wd4996 /errorReport:prompt %s%s%s /c /Fo%s %s"
-					"",	strlen(global_include)>'\0'?"/I \"":"", global_include, strlen(global_include)>'\0'?"\"":"", file, cfile)==FAILED)
+					"",	strlen(global_include)>0?"/I \"":"", global_include, strlen(global_include)>0?"\"":"", file, cfile)==FAILED)
 					return FAILED;
 
 				// /OUT:"Win32\Debug\powerflow.dll" /INCREMENTAL /NOLOGO /LIBPATH:"Win32\Debug" /DLL /MANIFEST 
