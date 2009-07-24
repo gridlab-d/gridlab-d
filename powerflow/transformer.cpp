@@ -528,7 +528,7 @@ EXPORT int commit_transformer(OBJECT *obj)
 {	
 	if (solver_method==SM_FBS)
 	{	
-		link *plink = OBJECTDATA(obj,link);
+		transformer *plink = OBJECTDATA(obj,transformer);
 		if (plink->has_phase(PHASE_S))
 			plink->calculate_power_splitphase();
 		else

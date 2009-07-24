@@ -287,7 +287,7 @@ EXPORT int commit_overhead_line(OBJECT *obj)
 {
 	if (solver_method==SM_FBS)
 	{
-		link *plink = OBJECTDATA(obj,link);
+		overhead_line *plink = OBJECTDATA(obj,overhead_line);
 		plink->calculate_power();
 	}
 	return 1;

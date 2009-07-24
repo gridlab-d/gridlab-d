@@ -229,7 +229,7 @@ EXPORT int commit_triplex_line(OBJECT *obj)
 {
 	if (solver_method==SM_FBS)
 	{
-		link *plink = OBJECTDATA(obj,link);
+		triplex_line *plink = OBJECTDATA(obj,triplex_line);
 		plink->calculate_power_splitphase();
 	}
 	return 1;

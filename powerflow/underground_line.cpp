@@ -341,7 +341,7 @@ EXPORT int commit_underground_line(OBJECT *obj)
 {
 	if (solver_method==SM_FBS)
 	{
-		link *plink = OBJECTDATA(obj,link);
+		underground_line *plink = OBJECTDATA(obj,underground_line);
 		plink->calculate_power();
 	}
 	return 1;

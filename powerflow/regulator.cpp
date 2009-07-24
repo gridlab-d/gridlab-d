@@ -519,7 +519,7 @@ EXPORT int commit_regulator(OBJECT *obj)
 {
 	if (solver_method==SM_FBS)
 	{
-		link *plink = OBJECTDATA(obj,link);
+		regulator *plink = OBJECTDATA(obj,regulator);
 		plink->calculate_power();
 	}
 	return 1;

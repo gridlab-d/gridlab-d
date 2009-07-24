@@ -155,6 +155,16 @@ EXPORT int create_relay(OBJECT **obj, OBJECT *parent)
 	return 0;
 }
 
+EXPORT int commit_relay(OBJECT *obj)
+{
+	if (solver_method==SM_FBS)
+	{
+		relay *plink = OBJECTDATA(obj,relay);
+		plink->calculate_power();
+	}
+	return 1;
+}
+
 /**
 * Object initialization is called once after all object have been created
 *

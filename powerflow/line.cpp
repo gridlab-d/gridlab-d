@@ -115,7 +115,7 @@ EXPORT int commit_line(OBJECT *obj)
 {
 	if (solver_method==SM_FBS)
 	{
-		link *plink = OBJECTDATA(obj,link);
+		line *plink = OBJECTDATA(obj,line);
 		plink->calculate_power();
 	}
 	return 1;
