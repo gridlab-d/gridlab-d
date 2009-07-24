@@ -76,17 +76,26 @@ void loadshape_recalc(loadshape *ls)
 	case MT_ANALOG:
 		break;
 	case MT_PULSED:
-		ls->d[0] = 1/ls->params.pulsed.scalar; /* scalar determine how many pulses per period are emitted */
+		ls->d[0] = 1; /* scalar determine how many pulses per period are emitted */
 		ls->d[1] = 0;
 		if (ls->s == 0) /* load is off */
+		{
 			/* recalculate time to next on */
 			ls->r = 1/random_exponential(ls->schedule->value * ls->params.pulsed.scalar);
+		}
 		break;
 	case MT_MODULATED:
-		ls->d[0] = 1/ls->params.modulated.scalar; /* scalar determine how many pulses per period are emitted */
+		ls->d[0] = 1; /* scalar determine how many pulses per period are emitted */
 		ls->d[1] = 0;
 		break;
 	case MT_QUEUED:
+		ls->d[0] = ls->params.queued.q_off;
+		ls->d[1] = ls->params.queued.q_on;
+		if (ls->s == 0) /* load is off */
+		{
+			/* recalculate time to next on */
+			ls->r = 1/random_exponential(ls->schedule->value * ls->params.pulsed.scalar * (ls->params.queued.q_on - ls->params.queued.q_off));
+		}
 		break;
 	default:
 		break;
@@ -203,14 +212,14 @@ int loadshape_init(loadshape *ls) /**< load shape */
 		break;
 	}
 	
+	/* establish the initial parameters */
+	loadshape_recalc(ls);
+
 	/* randomize the initial state */
 	if (ls->q==0) ls->q = random_uniform(ls->d[0], ls->d[1]); 
 
 	/* initial power per-unit factor */
 	if (ls->dPdV==0) ls->dPdV = 1.0;
-
-	/* establish the initial parameters */
-	loadshape_recalc(ls);
 
 	return 0;
 }
@@ -221,6 +230,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 	if (t1 > ls->t0)
 	{
 		double dt = (double)(t1 - ls->t0);
+		double queue_value;
 		switch (ls->type) {
 		case MT_ANALOG:
 			/* update load */
@@ -228,28 +238,30 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 			break;
 		case MT_PULSED:
 			/* update s and r */
-			if (ls->q < ls->d[0])
+			if (ls->q > ls->d[0])
 			{
 				/* turn load on - rate is based on duration/power given */
 				ls->s = 1;
 				if (ls->params.pulsed.pulsetype==MPT_POWER)
-
+				{
 					/* fixed power */
 					ls->load = ls->params.pulsed.pulsevalue * ls->dPdV;
+					/* rate is based on load */
+					ls->r = -1/(ls->params.pulsed.energy/ls->load);
+				}
 				else
-
+				{
 					/* fixed duration */
 					ls->load = ls->params.pulsed.energy / ls->params.pulsed.pulsevalue * ls->dPdV;
-
-				/* read is based on load */
-				ls->r = -1/ls->load;
-
+					/* rate is based on load */
+					ls->r = -1/(ls->params.pulsed.pulsevalue);
+				}
 			}
-			else if (ls->q > ls->d[1])
+			else if (ls->q < ls->d[1])
 			{
 				/* turn load off - rate is based of exponential distribution based on schedule value */
 				ls->s = 0;
-				ls->r = 1/random_exponential(ls->schedule->value * ls->params.pulsed.scalar);
+				ls->r = 1/random_exponential(ls->schedule->value*ls->params.pulsed.scalar);
 			}
 			/* else state remains unchanged */
 
@@ -259,48 +271,65 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 			/* update load */
 			break;
 		case MT_MODULATED:
-			/* update s and r */
-			if (ls->q < ls->d[0])
-			{
-				ls->s = 1;
-				ls->r = 1/(double)(ls->schedule->next_t-t1)/60;
-			}
-			else if (ls->q > ls->d[1])
-			{
-				ls->s = 0;
-				ls->r = -1/(double)(ls->schedule->next_t-t1)/60;
-			}
-			/* else state remains unchanged */
 
-			/* udpate q */ 
-			ls->q += ls->r * dt;
-
-			/* update load */
-			#define duration (ls->params.modulated.energy / ls->params.modulated.pulsevalue / ls->schedule->value)
 			if (ls->params.modulated.pulsetype==MPT_POWER)
-				ls->load = ls->s * ls->params.modulated.energy / ls->params.modulated.pulsevalue / duration * ls->dPdV; 
+				ls->load = ls->s * ls->params.modulated.pulsevalue * ls->dPdV; 
 			else /* MPT_TIME */
-				ls->load = ls->s * ls->params.modulated.energy / duration / ls->params.modulated.scalar * ls->dPdV;
-			break;
-		case MT_QUEUED:
+				ls->load = ls->s * ls->params.modulated.energy / ls->params.modulated.pulsevalue / ls->params.modulated.scalar * ls->dPdV;		
+
+			#define duration (ls->params.modulated.energy / ls->load / ls->params.modulated.scalar)
+
 			/* update s and r */
-			if (ls->q < ls->d[0])
+			if (ls->q > ls->d[0])
 			{
 				ls->s = 1;
-				ls->r = 1/(double)(ls->schedule->next_t-t1)/60;
+				ls->r = -1/(duration);
 			}
-			else if (ls->q > ls->d[1])
+			else if (ls->q < ls->d[1])
 			{
 				ls->s = 0;
-				ls->r = -1/(double)(ls->schedule->next_t-t1)/60;
+				ls->r = 1/(duration);
 			}
 			/* else state remains unchanged */
 
 			/* udpate q */ 
 			ls->q += ls->r * dt;
 
-			/* update load */
 			break;
+
+		case MT_QUEUED:
+
+			queue_value = (ls->d[1] - ls->d[0]);
+
+			if (ls->params.modulated.pulsetype==MPT_POWER)
+				ls->load = ls->s * ls->params.modulated.pulsevalue * ls->dPdV; 
+			else /* MPT_TIME */
+				ls->load = ls->s * ls->params.modulated.energy / ls->params.modulated.pulsevalue / ls->params.modulated.scalar * ls->dPdV;		
+
+			#define duration ((ls->params.modulated.energy*queue_value)/ ls->load)
+
+			/* update s and r */
+			if (ls->q > ls->d[0])
+			{
+				ls->s = 1;
+
+				ls->r = -1/duration;
+				
+			}
+			else if (ls->q < ls->d[1])
+			{
+				ls->s = 0;
+				ls->r = 1/random_exponential(ls->schedule->value*ls->params.pulsed.scalar*queue_value);
+			}
+			/* else state remains unchanged */
+
+			/* udpate q */ 
+			ls->q += ls->r * dt;
+
+			
+			break;
+			
+
 		default:
 			break;
 		}
