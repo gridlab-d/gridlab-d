@@ -18,6 +18,7 @@
 #include "random.h"
 #include "schedule.h"
 #include "enduse.h"
+#include "gridlabd.h"
 
 static enduse *enduse_list = NULL;
 
@@ -108,6 +109,52 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 	OUTPUT(power_factor);
 	OUTPUT(shape);
 	return len;
+}
+
+int enduse_publish(CLASS *oclass, int struct_address, char *prefix)
+{
+	enduse e;
+
+	struct s_map_enduse{
+		char *prop_name;
+		int publish_addr;
+		PROPERTYTYPE prop_type;
+	}*p, prop_list[]={
+		{"current_fraction", ((&e.current_fraction - &e) + struct_address), PT_double},
+		{"demand[kVA]", ((&e.demand - &e) + struct_address), PT_complex},
+		{"energy[kVA]", ((&e.energy - &e) + struct_address), PT_complex},
+		{"heatgain",  ((&e.heatgain - &e) + struct_address), PT_double},
+		{"heatgain_fraction", ((&e.heatgain_fraction - &e) + struct_address), PT_double},
+		{"impedance_fraction", ((&e.impedance_fraction - &e) + struct_address), PT_double},
+		{"power[kVA]", ((&e.power - &e) + struct_address), PT_complex},
+		{"power_factor", ((&e.power_factor - &e) + struct_address), PT_double},
+		{"power_fraction", ((&e.power_fraction - &e) + struct_address), PT_double},		
+		{"voltage_factor", ((&e.voltage_factor - &e) + struct_address), PT_double},
+		{"flags", ((&e.flags - &e) + struct_address), PT_set},
+		{"is220", EUF_IS220, PT_KEYWORD},
+	};
+	
+	int result = 0;	
+
+	for (p=prop_list;p<prop_list+sizeof(prop_list)/sizeof(prop_list[0]);p++)
+	{
+		char *prop_name;
+				
+		if(prefix == NULL)
+		{
+			prop_name = p->prop_name;
+		}
+		else
+		{
+			prop_name = strcat(prefix, ".", p->prop_name);
+		}
+				
+		result = class_define_map(oclass,  p->prop_type, prop_name, p->publish_addr, NULL);
+		if(result<1)
+			output_error("unable to publish properties in %s",__FILE__);
+	}
+
+	return result;
 }
 
 int convert_to_enduse(char *string, void *data, PROPERTY *prop)
