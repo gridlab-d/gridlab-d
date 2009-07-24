@@ -211,6 +211,7 @@ int histogram::init(OBJECT *parent)
 	PROPERTY *prop = NULL;
 	OBJECT *obj = OBJECTHDR(this);
 	char tprop[64], tpart[8];
+	int e = 0;
 	tprop[0]=0;
 	tpart[0] = 0;
 
@@ -272,8 +273,8 @@ int histogram::init(OBJECT *parent)
 		int i=0;
 		double range = max - min;
 		double step = range/bin_count;
-		throw("Histogram bin_count is temporarily disabled.");
-		bin_list = (BIN *)malloc(sizeof(BIN) * bin_count);
+		//throw("Histogram bin_count is temporarily disabled.");
+		bin_list = (BIN *)gl_malloc(sizeof(BIN) * bin_count);
 		if(bin_list == NULL){
 			throw("Histogram malloc error: unable to alloc %i * %i bytes for %s", bin_count, sizeof(BIN), obj->name ? obj->name : "(anon. histogram)");
 			return 0;
@@ -285,9 +286,8 @@ int histogram::init(OBJECT *parent)
 			bin_list[i].low_inc = 1;
 			bin_list[i].high_inc = 0;
 		}
-		bin_list[i].high_inc = 1;	/* tail value capture */
-		// freeze starts here
-		binctr = (int *)malloc(sizeof(int) * bin_count);
+		bin_list[i-1].high_inc = 1;	/* tail value capture */
+		binctr = (int *)gl_malloc(sizeof(int) * bin_count);
 		memset(binctr, 0, sizeof(int) * bin_count);
 	}
 	else if (bins[0] != 0)
@@ -308,7 +308,7 @@ int histogram::init(OBJECT *parent)
 			}
 		//	++cptr;
 		}
-		bin_list = (BIN *)malloc(sizeof(BIN) * bin_count);
+		bin_list = (BIN *)gl_malloc(sizeof(BIN) * bin_count);
 		if(bin_list == NULL){
 			throw("Histogram malloc error: unable to alloc %i * %i bytes for %s", bin_count, sizeof(BIN), obj->name ? obj->name : "(anon. histogram)");
 			return 0;
