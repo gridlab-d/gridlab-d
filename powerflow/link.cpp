@@ -129,6 +129,9 @@ link::link(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "power_losses_A[VA]", PADDR(indiv_power_loss[0]),
 			PT_complex, "power_losses_B[VA]", PADDR(indiv_power_loss[1]),
 			PT_complex, "power_losses_C[VA]", PADDR(indiv_power_loss[2]),
+			PT_int16, "direction_A", PADDR(direction_flag[0]),
+			PT_int16, "direction_B", PADDR(direction_flag[1]),
+			PT_int16, "direction_C", PADDR(direction_flag[2]),
 			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 	}
 }
@@ -1466,6 +1469,19 @@ void link::calculate_power_splitphase()
 		indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~t->current_inj[1];
 		indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
 	}
+	
+	//Set direction flag.  Can be a little odd in split phase, since circulating currents.
+	int16 i;
+	for (i=0; i<3; i++)
+	{	
+		if (indiv_power_in[i].Mag() > indiv_power_out[i].Mag())
+			direction_flag[i] = 1;  //"Normal" flow direction
+		else if (indiv_power_in[i].Mag() < indiv_power_out[i].Mag())
+			direction_flag[i] = -1; //"Reverse" flow direction
+		else
+			direction_flag[i] = 0;  //No flow
+	}
+
 
 	power_in = indiv_power_in[0] + indiv_power_in[1] + indiv_power_in[2];
 	power_out = indiv_power_out[0] + indiv_power_out[1] + indiv_power_out[2];
@@ -1486,6 +1502,8 @@ void link::calculate_power_splitphase()
 
 	//Calculate overall losses
 	power_loss = indiv_power_loss[0] + indiv_power_loss[1] + indiv_power_loss[2];
+
+
 }
 void link::calculate_power()
 {
@@ -1516,6 +1534,17 @@ void link::calculate_power()
 			indiv_power_loss[0] = indiv_power_out[0] - indiv_power_in[0];
 			indiv_power_loss[1] = indiv_power_out[1] - indiv_power_in[1];
 			indiv_power_loss[2] = indiv_power_out[2] - indiv_power_in[2];
+		}
+	
+		int16 i;
+		for (i=0; i<3; i++)
+		{	
+			if (indiv_power_in[i].Mag() > indiv_power_out[i].Mag())
+				direction_flag[i] = 1;  //"Normal" flow direction
+			else if (indiv_power_in[i].Mag() < indiv_power_out[i].Mag())
+				direction_flag[i] = -1; //"Reverse" flow direction
+			else
+				direction_flag[i] = 0;  //No flow
 		}
 
 		//Calculate overall losses

@@ -34,6 +34,7 @@ public: /// @todo make this private and create interfaces to control values
 	double voltage_ratio;	// voltage ratio (normally 1.0)
 	int NR_branch_reference;	//Index of NR_branchdata this link is contained in
 	SPECIAL_LINK SpecialLnk;	//Flag for exceptions to the normal handling
+	int16 direction_flag[3];	//Flag direction of powerflow: 1 is normal, -1 is reverse flow, 0 is no flow
 	void calculate_power();
 	void calculate_power_splitphase();
 
