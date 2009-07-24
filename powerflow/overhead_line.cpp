@@ -283,6 +283,15 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 * @param parent a pointer to the parent of this object
 * @return 1 for a successfully created object, 0 for error
 */
+EXPORT int commit_overhead_line(OBJECT *obj)
+{
+	if (solver_method==SM_FBS)
+	{
+		link *plink = OBJECTDATA(obj,link);
+		plink->calculate_power();
+	}
+	return 1;
+}
 EXPORT int create_overhead_line(OBJECT **obj, OBJECT *parent)
 {
 	try

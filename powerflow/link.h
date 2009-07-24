@@ -34,6 +34,9 @@ public: /// @todo make this private and create interfaces to control values
 	double voltage_ratio;	// voltage ratio (normally 1.0)
 	int NR_branch_reference;	//Index of NR_branchdata this link is contained in
 	SPECIAL_LINK SpecialLnk;	//Flag for exceptions to the normal handling
+	void calculate_power();
+	void calculate_power_splitphase();
+
 
 public:
 	typedef enum {LS_CLOSED=0, LS_OPEN=1} LINKSTATUS;

@@ -160,6 +160,15 @@ TIMESTAMP switch_object::postsync(TIMESTAMP t0)
 * @param parent a pointer to the parent of this object
 * @return 1 for a successfully created object, 0 for error
 */
+EXPORT int commit_switch(OBJECT *obj)
+{
+	if (solver_method==SM_FBS)
+	{
+		link *plink = OBJECTDATA(obj,link);
+		plink->calculate_power();
+	}
+	return 1;
+}
 EXPORT int create_switch(OBJECT **obj, OBJECT *parent)
 {
 	try

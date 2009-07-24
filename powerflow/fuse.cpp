@@ -405,6 +405,11 @@ EXPORT int commit_fuse(OBJECT *obj)
 {
 	fuse *fsr = OBJECTDATA(obj,fuse);
 	try {
+		if (solver_method==SM_FBS)
+		{
+			link *plink = OBJECTDATA(obj,link);
+			plink->calculate_power();
+		}
 		return fsr->fuse_state(obj->parent);
 	}
 	catch (char *msg)
@@ -412,6 +417,7 @@ EXPORT int commit_fuse(OBJECT *obj)
 		GL_THROW("%s (fuse:%d): %s", fsr->get_name(), fsr->get_id(), msg);
 		return 0; 
 	}
+
 }
 
 EXPORT TIMESTAMP sync_fuse(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
