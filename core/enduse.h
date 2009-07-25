@@ -2,8 +2,6 @@
 #ifndef _ENDUSE_H
 #define _ENDUSE_H
 
-#define NULL    0
-
 #include "class.h"
 #include "timestamp.h"
 #include "loadshape.h"

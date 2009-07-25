@@ -263,7 +263,28 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 		else if (strcmp(*argv,"--license")==0)
 			legal_license();
 		else if (strcmp(*argv, "-V")==0 ||strcmp(*argv, "--version")==0)
-			legal_notice();
+		{
+			char *buildinfo = strstr(BUILD,":");
+			int build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
+			output_message("Revision major: %d", REV_MAJOR);
+			output_message("Revision minor: %d", REV_MINOR);
+			output_message("Patch number  : %d", REV_PATCH);
+			output_message("Branch name   : %s", BRANCH);
+			if (build>0)
+				output_message("Build number  : %d", build);
+			else
+				output_message("Build number  : %s",
+#ifdef WIN32
+#ifdef _DEBUG
+			"WIN32-DEBUG" 
+#else
+			"WIN32-RELEASE"
+#endif
+#else
+			"DEV"
+#endif		
+			);
+		}
 		else if (strcmp(*argv,"--dsttest")==0)
 			timestamp_test();
 		else if (strcmp(*argv,"--randtest")==0)

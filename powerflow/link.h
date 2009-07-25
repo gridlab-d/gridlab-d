@@ -16,8 +16,22 @@ typedef enum {
 		REGULATOR=1,		///< defines the link is a regulator
 		DELTAGWYE=2,		///< defines the link is actually a Delta-Gwye transformer
 		SPLITPHASE=3		///< defines the link is a split-phase transformer
-		} SPECIAL_LINK;
+} SPECIAL_LINK;
 
+// flow directions (see link::flow_direction)
+#define FD_UNKNOWN		0x000	///< Flow is undetermined
+#define FD_A_MASK		0x00f	///< mask to isolate phase A flow information
+#define FD_A_NORMAL		0x001	///< Flow over phase A is normal
+#define FD_A_REVERSE	0x002	///< Flow over phase A is reversed
+#define FD_A_NONE		0x003	///< No flow over of phase A 
+#define FD_B_MASK		0x0f0	///< mask to isolate phase B flow information
+#define FD_B_NORMAL		0x010	///< Flow over phase B is normal
+#define FD_B_REVERSE	0x020	///< Flow over phase B is reversed
+#define FD_B_NONE		0x030	///< No flow over of phase B 
+#define FD_C_MASK		0xf00	///< mask to isolate phase C flow information
+#define FD_C_NORMAL		0x100	///< Flow over phase C is normal
+#define FD_C_REVERSE	0x200	///< Flow over phase C is reversed
+#define FD_C_NONE		0x300	///< No flow over of phase C 
 
 class link : public powerflow_object
 {
@@ -34,10 +48,10 @@ public: /// @todo make this private and create interfaces to control values
 	double voltage_ratio;	// voltage ratio (normally 1.0)
 	int NR_branch_reference;	//Index of NR_branchdata this link is contained in
 	SPECIAL_LINK SpecialLnk;	//Flag for exceptions to the normal handling
-	int16 direction_flag[3];	//Flag direction of powerflow: 1 is normal, -1 is reverse flow, 0 is no flow
+	set flow_direction;		// Flag direction of powerflow: 1 is normal, -1 is reverse flow, 0 is no flow
 	void calculate_power();
 	void calculate_power_splitphase();
-
+	void set_flow_directions();
 
 public:
 	typedef enum {LS_CLOSED=0, LS_OPEN=1} LINKSTATUS;
