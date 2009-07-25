@@ -123,6 +123,8 @@ GLOBAL char global_platform[8] /**< the host operating platform */
 	INIT("LINUX");
 #endif
 
+GLOBAL int global_suppress_repeat_messages INIT(1); /**< flag that allows repeated messages to be suppressed */
+
 #ifdef __cplusplus
 }
 #endif

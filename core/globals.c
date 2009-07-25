@@ -78,6 +78,7 @@ static struct s_varmap {
 	{"dateformat", PT_enumeration, &global_dateformat, PA_REFERENCE, df_keys},
 	{"minimum_timestep", PT_int32, &global_minimum_timestep, PA_REFERENCE},
 	{"platform",PT_char8, global_platform, PA_REFERENCE},
+	{"suppress_repeat_messages",PT_int32, &global_suppress_repeat_messages, PA_REFERENCE},
 	/* add new global variables here */
 };
 
