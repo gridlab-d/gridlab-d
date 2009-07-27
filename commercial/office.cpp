@@ -125,6 +125,7 @@ office::office(MODULE *module)
 			PT_double, "air_temperature[degF]", PADDR(zone.current.air_temperature),
 			PT_double, "mass_temperature[degF]", PADDR(zone.current.mass_temperature),
 			PT_double, "temperature_change[degF/h]", PADDR(zone.current.temperature_change),
+			PT_double, "outdoor_temperature[degF]", PADDR(zone.current.out_temp),
 
 			PT_double, "Qh[Btu/h]", PADDR(Qh),
 			PT_double, "Qs[Btu/h]", PADDR(Qs),
@@ -401,7 +402,8 @@ TIMESTAMP office::presync(TIMESTAMP t0, TIMESTAMP t1)
 	/* reset the multizone heat transfer */
 	Qz = 0;
 	
-
+	/* update out_temp */ 
+	zone.current.out_temp = *(zone.current.pTemperature);
 
 	/* get the occupancy mode from the schedule, if any */
 	if (t0>0)
@@ -434,6 +436,7 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 	HCMODE &mode = (zone.hvac.mode);
 
 	/* advance the thermal state of the building */
+
 	const double dt1 = t0>0 ? (double)(t1-t0)*TS_SECOND : 0;
 	if (dt1>0)
 	{

@@ -81,6 +81,7 @@ typedef struct s_conditions {
 	double *pTemperature;		/**< output temperature (F) */
 	double *pHumidity;			/**< relative humidity */
 	double *pSolar;				/**< solar radiation (BTU/h) */
+	double out_temp;			/**< outside air temperature (F) */
 	double air_temperature;		/**< indoor air temperature (F) */
 	double mass_temperature;	/**< indoor mass temperature (F) */
 	double occupancy;			/**< number of people */
