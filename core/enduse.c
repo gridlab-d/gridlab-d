@@ -120,17 +120,17 @@ int enduse_publish(CLASS *oclass, int struct_address, char *prefix)
 		int publish_addr;
 		PROPERTYTYPE prop_type;
 	}*p, prop_list[]={
-		{"current_fraction", ((&e.current_fraction - &e) + struct_address), PT_double},
-		{"demand[kVA]", ((&e.demand - &e) + struct_address), PT_complex},
-		{"energy[kVA]", ((&e.energy - &e) + struct_address), PT_complex},
-		{"heatgain",  ((&e.heatgain - &e) + struct_address), PT_double},
-		{"heatgain_fraction", ((&e.heatgain_fraction - &e) + struct_address), PT_double},
-		{"impedance_fraction", ((&e.impedance_fraction - &e) + struct_address), PT_double},
-		{"power[kVA]", ((&e.power - &e) + struct_address), PT_complex},
-		{"power_factor", ((&e.power_factor - &e) + struct_address), PT_double},
-		{"power_fraction", ((&e.power_fraction - &e) + struct_address), PT_double},		
-		{"voltage_factor", ((&e.voltage_factor - &e) + struct_address), PT_double},
-		{"flags", ((&e.flags - &e) + struct_address), PT_set},
+		{"current_fraction", (((char*)&e.current_fraction - (char*)&e) + struct_address), PT_double},
+		{"demand[kVA]", (((char*)&e.demand - (char*)&e) + struct_address), PT_complex},
+		{"energy[kVA]", (((char*)&e.energy - (char*)&e) + struct_address), PT_complex},
+		{"heatgain",  (((char*)&e.heatgain - (char*)&e) + struct_address), PT_double},
+		{"heatgain_fraction", (((char*)&e.heatgain_fraction - (char*)&e) + struct_address), PT_double},
+		{"impedance_fraction", (((char*)&e.impedance_fraction - (char*)&e) + struct_address), PT_double},
+		{"power[kVA]", (((char*)&e.power - (char*)&e) + struct_address), PT_complex},
+		{"power_factor", (((char*)&e.power_factor - (char*)&e) + struct_address), PT_double},
+		{"power_fraction", (((char*)&e.power_fraction - (char*)&e) + struct_address), PT_double},		
+		{"voltage_factor", (((char*)&e.voltage_factor - (char*)&e) + struct_address), PT_double},
+		{"flags", (((char*)&e.flags - (char*)&e) + struct_address), PT_set},
 		{"is220", EUF_IS220, PT_KEYWORD},
 	};
 	
