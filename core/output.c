@@ -275,7 +275,7 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 	/* check for repeated message */
 	static char lastfmt[1024] = "";
 	static int count=0;
-	if (format!=NULL && strcmp(lastfmt,format)==0)
+	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages)
 	{
 		count++;
 		return 0;
@@ -315,7 +315,7 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 	/* check for repeated message */
 	static char lastfmt[1024] = "";
 	static int count=0;
-	if (format!=NULL && strcmp(lastfmt,format)==0)
+	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages)
 	{
 		count++;
 		return 0;
@@ -400,7 +400,7 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 		/* check for repeated message */
 		static char lastfmt[1024] = "";
 		static int count=0;
-		if (format!=NULL && strcmp(lastfmt,format)==0)
+		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages)
 		{
 			count++;
 			return 0;
@@ -444,7 +444,7 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 		/* check for repeated message */
 		static char lastfmt[1024] = "";
 		static int count=0;
-		if (format!=NULL && strcmp(lastfmt,format)==0)
+		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages)
 		{
 			count++;
 			return 0;
@@ -489,7 +489,7 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 		/* check for repeated message */
 		static char lastfmt[1024] = "";
 		static int count=0;
-		if (format!=NULL && strcmp(lastfmt,format)==0)
+		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages)
 		{
 			count++;
 			return 0;
@@ -531,7 +531,7 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 		/* check for repeated message */
 		static char lastfmt[1024] = "";
 		static int count=0;
-		if (format!=NULL && strcmp(lastfmt,format)==0)
+		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages)
 		{
 			count++;
 			return 0;

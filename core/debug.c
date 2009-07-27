@@ -1283,6 +1283,9 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 		kill_starthandler();
 		atexit(kill_stophandler);
 		firstcall=0;
+
+		/* disable repeated message trap */
+		global_suppress_repeat_messages = 0;
 	}
 #endif
 
