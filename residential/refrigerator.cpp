@@ -70,7 +70,7 @@ refrigerator::refrigerator(MODULE *module)
 	// first time init
 	if (oclass == NULL)
 	{
-		oclass = gl_register_class(module,"refrigerator",sizeof(refrigerator),PC_BOTTOMUP);
+		oclass = gl_register_class(module,"refrigerator",sizeof(refrigerator),PC_PRETOPDOWN | PC_BOTTOMUP);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
@@ -85,7 +85,7 @@ refrigerator::refrigerator(MODULE *module)
 			PT_timestamp,"next_time",PADDR(last_time),
 			PT_double,"output",PADDR(Qr),
 			PT_double,"event_temp",PADDR(Tevent),
-			PT_double,"UA",PADDR(UA),
+			PT_double,"UA[Btu.h/degF]",PADDR(UA),
 
 			PT_enumeration,"state",PADDR(motor_state),
 				PT_KEYWORD,"OFF",S_OFF,
@@ -124,7 +124,7 @@ int refrigerator::init(OBJECT *parent)
 	if (size==0)				size = gl_random_uniform(20,40); // cf
 	if (thermostat_deadband==0) thermostat_deadband = gl_random_uniform(2,3);
 	if (Tset==0)				Tset = gl_random_uniform(35,39);
-	if (UA == 0)				UA = 6.5;
+	if (UA == 0)				UA = 0.6;
 	if (UAr==0)					UAr = UA+size/40*gl_random_uniform(0.9,1.1);
 	if (UAf==0)					UAf = gl_random_uniform(0.9,1.1);
 	if (COPcoef==0)				COPcoef = gl_random_uniform(0.9,1.1);
@@ -147,9 +147,13 @@ int refrigerator::init(OBJECT *parent)
 
 	// attach object to house panel
 	house *pHouse = OBJECTDATA(parent,house);
-	pVoltage = (pHouse->attach(OBJECTHDR(this),20,false))->pV;
+	//pVoltage = (pHouse->attach(OBJECTHDR(this),20,false))->pV;
+	pTempProp = gl_get_property(parent, "air_temperature");
+	if(pTempProp == NULL){
+		GL_THROW("Parent house of refrigerator lacks property \'air_temperature\'");
+	}
 
-		//	pull parent attach_enduse and attach the enduseload
+	//	pull parent attach_enduse and attach the enduseload
 	FUNCTIONADDR attach = 0;
 	load.end_obj = hdr;
 	attach = (gl_get_function(parent, "attach_enduse"));
@@ -169,7 +173,7 @@ int refrigerator::init(OBJECT *parent)
 	// size is used to couple Cw and Qrated
 	Cf = size/10.0 * RHOWATER * CWATER;  // cf * lb/cf * BTU/lb/degF = BTU / degF
 
-	rated_capacity = BTUPHPW * size*10; // BTU/h ... 10 BTU.h / cf (34W/cf, so ~700 for a full-sized freezer)
+	rated_capacity = BTUPHPW * size*10; // BTU/h ... 10 BTU.h / cf (34W/cf, so ~700 for a full-sized refrigerator)
 
 	// duty cycle estimate
 	if (gl_random_bernoulli(0.04)){
@@ -196,13 +200,17 @@ TIMESTAMP refrigerator::presync(TIMESTAMP t0, TIMESTAMP t1){
 	Tout = *pTout;
 
 	if(nHours > 0 && t0 > 0){ /* skip this on TS_INIT */
+		const double COP = COPcoef*((-3.5/45)*(Tout-70)+4.5); /* come from ??? */
+
 		if(t1 == next_time){
 			/* lazy skip-ahead */
+			load.heatgain = -((Tair - Tout) * exp(-(UAr+UAf)/Cf) + Tout - Tair) * Cf * nHours + Qr * nHours * COP;
 			Tair = Tevent;
 		} else {
 			/* run calculations */
 			const double C1 = Cf/(UAr+UAf);
 			const double C2 = Tout - Qr/UAr;
+			load.heatgain = -((Tair - Tout) * exp(-(UAr+UAf)/Cf) + Tout - Tair) * Cf * nHours + Qr * nHours * COP;
 			Tair = (Tair-C2)*exp(-nHours/C1)+C2;
 		}
 		if (Tair < 32 || Tair > 55)

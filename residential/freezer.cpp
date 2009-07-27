@@ -85,7 +85,7 @@ freezer::freezer(MODULE *module)
 			PT_timestamp,"next_time",PADDR(last_time),
 			PT_double,"output",PADDR(Qr),
 			PT_double,"event_temp",PADDR(Tevent),
-			PT_double,"UA",PADDR(UA),
+			PT_double,"UA[Btu.h/degF]",PADDR(UA),
 
 			PT_enumeration,"state",PADDR(motor_state),
 				PT_KEYWORD,"OFF",S_OFF,
@@ -96,7 +96,7 @@ freezer::freezer(MODULE *module)
 			PT_complex,"constant_current[A]",PADDR(load.current),
 			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
 			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_double,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 
 			NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
@@ -124,7 +124,7 @@ int freezer::init(OBJECT *parent)
 	if (size==0)				size = gl_random_uniform(20,40); // cf
 	if (thermostat_deadband==0) thermostat_deadband = gl_random_uniform(2,3);
 	if (Tset==0)				Tset = gl_random_uniform(10,20);
-	if (UA == 0)				UA = 6.5;
+	if (UA == 0)				UA = 0.3;
 	if (UAr==0)					UAr = UA+size/40*gl_random_uniform(0.9,1.1);
 	if (UAf==0)					UAf = gl_random_uniform(0.9,1.1);
 	if (COPcoef==0)				COPcoef = gl_random_uniform(0.9,1.1);
@@ -201,13 +201,17 @@ TIMESTAMP freezer::presync(TIMESTAMP t0, TIMESTAMP t1){
 	Tout = *pTout;
 
 	if(nHours > 0 && t0 > 0){ /* skip this on TS_INIT */
+		const double COP = COPcoef*((-3.5/45)*(Tout-70)+4.5); /* come from ??? */
+
 		if(t1 == next_time){
 			/* lazy skip-ahead */
+			load.heatgain = -((Tair - Tout) * exp(-(UAr+UAf)/Cf) + Tout - Tair) * Cf * nHours + Qr * nHours * COP;
 			Tair = Tevent;
 		} else {
 			/* run calculations */
 			const double C1 = Cf/(UAr+UAf);
 			const double C2 = Tout - Qr/UAr;
+			load.heatgain = -((Tair - Tout) * exp(-(UAr+UAf)/Cf) + Tout - Tair) * Cf * nHours + Qr * nHours * COP;
 			Tair = (Tair-C2)*exp(-nHours/C1)+C2;
 		}
 		if (Tair < 0 || Tair > 32)
