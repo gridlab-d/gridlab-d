@@ -417,7 +417,7 @@ int house_e::create()
 
 /** Checks for climate object and maps the climate variables to the house_e object variables.  
 Currently Tout, RHout and solar flux data from TMY files are used.  If no climate object is linked,
-then Tout will be set to 59 degF, RHout is set to 75% and solar flux will be set to zero for all orientations.
+then Tout will be set to 74 degF, RHout is set to 75% and solar flux will be set to zero for all orientations.
 **/
 int house_e::init_climate()
 {
