@@ -201,7 +201,7 @@ office::office(MODULE *module)
 		zone.hvac.enduse.power_factor = 1.0;
 
 		/* set default climate to static values */
-		static double Tout = 59, RHout=0.75, Solar[9]={1, 0.9,0.9, 0.5,0.5, 0,0, 0,1};
+		static double Tout = 59, RHout=0.75, Solar[9]={0,0,0,0,0,0,0,0,0};
 		zone.current.pTemperature = &Tout;
 		zone.current.pHumidity = &RHout;
 		zone.current.pSolar = Solar;
@@ -316,6 +316,19 @@ int office::init(OBJECT *parent)
 {
 	double oversize = 1.2; /* oversizing factor */
 	update_control_setpoints();
+	/* sets up default office parameters if none were passed:  floor height = 9ft; interior mass = 2000 Btu/degF;
+	interior/exterior ua = 2 Btu/degF/h; floor area = 4000 sf*/
+
+	if (zone.design.floor_height == 0)
+		zone.design.floor_height = 9;
+	if (zone.design.interior_mass == 0)
+		zone.design.interior_mass = 2000;
+	if (zone.design.interior_ua == 0)
+		zone.design.interior_ua = 2;
+	if (zone.design.exterior_ua == 0)
+		zone.design.exterior_ua = 2;
+	if (zone.design.floor_area == 0)
+		zone.design.floor_area = 4000;
 
 	/** @todo set the dynamic initial value of properties (no ticket) */
 	if (zone.hvac.minimum_ach==0)
@@ -335,11 +348,11 @@ int office::init(OBJECT *parent)
 		zone.hvac.heating.capacity = oversize*(zone.design.exterior_ua*(zone.control.heating_setpoint-zone.hvac.heating.design_temperature) /* envelope */
 			- (zone.hvac.heating.design_temperature - zone.control.heating_setpoint) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.hvac.minimum_ach); /* vent */
 	if (zone.hvac.cooling.capacity==0)
-		zone.hvac.cooling.capacity = oversize*(-zone.design.exterior_ua*(zone.hvac.cooling.design_temperature-zone.control.cooling_setpoint) /* envelope */
+		zone.hvac.cooling.capacity = -(oversize*(-zone.design.exterior_ua*(zone.hvac.cooling.design_temperature-zone.control.cooling_setpoint) /* envelope */
 			- (zone.design.window_area[0]+zone.design.window_area[1]+zone.design.window_area[2]+zone.design.window_area[3]+zone.design.window_area[4]
 				+zone.design.window_area[5]+zone.design.window_area[6]+zone.design.window_area[7]+zone.design.window_area[8])*100*3.412*zone.design.glazing_coeff /* solar */
 			- (zone.hvac.cooling.design_temperature - zone.control.cooling_setpoint) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.hvac.minimum_ach /* vent */
-			- (zone.lights.capacity + zone.plugs.capacity)*3.412); /* lights and plugs */
+			- (zone.lights.capacity + zone.plugs.capacity)*3.412)); /* lights and plugs */
 	if (zone.hvac.cooling.cop==0)
 		zone.hvac.cooling.cop=-gl_random_triangle(2,4);
 	if (zone.hvac.heating.cop==0)
