@@ -105,6 +105,35 @@ int occupantload::init(OBJECT *parent)
 
 TIMESTAMP occupantload::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
+	if(number_of_occupants < 0){
+		gl_error("negative number of occupants, reseting to zero");
+		number_of_occupants = 0;
+	}
+	if(occupancy_fraction < 0.0){
+		gl_error("negative occupancy_fraction, reseting to zero");
+		occupancy_fraction = 0.0;
+	}
+	if(occupancy_fraction > 1.0){
+		; /* party at Bob's house! */
+	}
+	if(occupancy_fraction * number_of_occupants > 300.0){
+		gl_error("attempting to fit 300 warm bodies into a house, reseting to zero");
+		// let's assume that the police cleared the party
+		// or the fire department said 'this is a bad sign, people!'
+		// how about that the house just plain collapsed?
+		occupancy_fraction = 0;
+	}
+	if(heatgain_per_person < 0){
+		gl_error("negative heatgain per person, reseting to 400 BTU/hr");
+		heatgain_per_person = 400.0;
+	}
+	if(heatgain_per_person > 1600){
+		//	Bob's party is on fire.  Literally.
+		gl_error("heatgain per person above 1600 Btu/hr (470W), reseting to 400 Btu/hr");
+		heatgain_per_person = 400.0;
+	}
+
+
 	load.heatgain = number_of_occupants * occupancy_fraction * heatgain_per_person * KWPBTUPH;
 
 	return TS_NEVER; 

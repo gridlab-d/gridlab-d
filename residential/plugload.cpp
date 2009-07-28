@@ -113,11 +113,12 @@ int plugload::init(OBJECT *parent)
 TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	// compute the total load and heat gain
-	if (t0>0 && t1>t0)
+	if (t0>0 && t1>t0){
 		load.energy += load.total * gl_tohours(t1-t0);
+		load.heatgain += load.total.Mag() * heat_fraction * gl_tohours(t1-t0);
+	}
 	if(demand > 1.0){
-		gl_error("plugload demand cannot be greater than 1.0, capping");
-		demand = 1.0;
+		gl_warning("plugload demand cannot be greater than 1.0, capping");
 	}
 	if(demand < 0.0){
 		gl_error("plugload demand cannot be negative, capping");
@@ -125,7 +126,9 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	load.total = (load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000) ;
 	load.total *= demand;
-	load.heatgain = load.total.Mag() * heat_fraction;
+	if(pVoltage->Mag() < 72.0){
+		load.total = 0.0; /* assuming too low to power the devices */
+	}
 
 
 	return TS_NEVER; 

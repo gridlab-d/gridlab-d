@@ -214,8 +214,10 @@ TIMESTAMP freezer::presync(TIMESTAMP t0, TIMESTAMP t1){
 			load.heatgain = -((Tair - Tout) * exp(-(UAr+UAf)/Cf) + Tout - Tair) * Cf * nHours + Qr * nHours * COP;
 			Tair = (Tair-C2)*exp(-nHours/C1)+C2;
 		}
-		if (Tair < 0 || Tair > 32)
-			throw "freezer air temperature out of control";
+		if (Tair < 0 || Tair > 32){
+			gl_warning("freezer air temperature out of control");
+			// was exception, now semi-valid with power outages
+		}
 		last_time = t1;
 	}
 
@@ -267,6 +269,13 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 		Qr = 0;
 	} else{
 		throw "freezer motor state is ambiguous";
+	}
+
+	if(pVoltage->Mag() < (120.0 * 0.6) ){ /* stall voltage */
+		gl_verbose("freezer motor has stalled");
+		motor_state = S_OFF;
+		Qr = 0;
+		return TS_NEVER;
 	}
 
 	// compute constants
