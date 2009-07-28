@@ -929,6 +929,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\test\gnuplot.conf"
+				>
+			</File>
+			<File
 				RelativePath="..\core\test\gridlabd.conf"
 				>
 			</File>
@@ -946,6 +950,10 @@
 			</File>
 			<File
 				RelativePath="..\core\test\metronome.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\mingw.conf"
 				>
 			</File>
 			<File
