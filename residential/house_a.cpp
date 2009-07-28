@@ -163,7 +163,7 @@ EXPORT CIRCUIT *attach_enduse_house_a(OBJECT *obj, ENDUSELOAD *attachee, double 
 	c->tripsleft = 100;
 
 	// attach the enduse for future reference
-	c->enduse = attachee->end_obj;
+	c->pObj = attachee->end_obj;
 
 	return c;
 }
@@ -497,7 +497,7 @@ CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
 	// get address of load values (if any)
 	c->pLoad = (ENDUSELOAD*)gl_get_addr(obj,"enduse_load");
 	if (c->pLoad==NULL){
-		GL_THROW("end-use load %s couldn't be connected because it does not publish ENDUSELOAD structure", c->enduse->name);
+		GL_THROW("end-use load %s couldn't be connected because it does not publish ENDUSELOAD structure", c->pObj->name);
 		/*	TROUBLESHOOT
 			The house model expects all enduse load models to publish an 'enduse_load' property that points to the top
 			of the load aggregator for the appliance.  Please verify that the specified load class publishes an
@@ -530,7 +530,7 @@ CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
 	c->tripsleft = 100;
 
 	// attach the enduse for future reference
-	c->enduse = obj;
+	c->pObj = obj;
 
 	return c;
 }
@@ -609,7 +609,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// compute circuit current
 			if ((c->pV)->Mag() == 0)
 			{
-				gl_debug("house:%d circuit %d (%s:%d) voltage is zero", obj->id, c->id, c->enduse->oclass->name, c->enduse->id);
+				gl_debug("house:%d circuit %d (%s:%d) voltage is zero", obj->id, c->id, c->pObj->oclass->name, c->pObj->id);
 				break;
 			}
 			
@@ -627,7 +627,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 					// average five minutes before reclosing, exponentially distributed
 					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(1/300.0)*TS_SECOND); 
 					gl_debug("house:%d circuit breaker %d tripped - %s (%s:%d) overload at %.0f A", obj->id, c->id,
-						c->enduse->name?c->enduse->name:"unnamed object", c->enduse->oclass->name, c->enduse->id, current.Mag());
+						c->pObj->name?c->pObj->name:"unnamed object", c->pObj->oclass->name, c->pObj->id, current.Mag());
 				}
 
 				// breaker fails from too frequent operation

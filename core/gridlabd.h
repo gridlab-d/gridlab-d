@@ -78,6 +78,7 @@
 #define EXPORT CDECL
 #endif
 
+#include "schedule.h"
 #include "object.h"
 #include "find.h"
 #include "random.h"
@@ -254,10 +255,14 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 **/
 #define gl_error (*callback->output_error)
 
+#ifdef _DEBUG
 /** Produces a debug message on stderr, but only when \b --debug is provided on the command line.
  	@see output_debug(char *format, ...)
  **/
 #define gl_debug (*callback->output_debug)
+#else
+#define gl_debug
+#endif
 
 /** Produces a test message in the test record file, but only when \b --testfile is provided on the command line.
 	@see output_testmsg(char *format, ...)
@@ -404,7 +409,7 @@ inline FUNCTION *gl_publish_function(CLASS *oclass, /**< class to which function
 									 FUNCTIONADDR call) /**< address of function entry */
 { return (*callback->function.define)(oclass, functionname, call);}
 inline FUNCTIONADDR gl_get_function(OBJECT *obj, char *name)
-{ return (*callback->function.get)(obj->oclass->name,name);}
+{ return obj?(*callback->function.get)(obj->oclass->name,name):NULL;}
 #else
 #define gl_publish_function (*callback->function.define)
 #define gl_get_function (*callback->function.get)
@@ -877,8 +882,23 @@ inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1)
 	return callback->enduse.sync(e,PC_BOTTOMUP,*(callback->global_clock),t1);
 }
 
-#endif
+inline loadshape *gl_create_loadshape(SCHEDULE *s)
+{
+	loadshape *ls = (loadshape*)malloc(sizeof(loadshape));
+	callback->loadshape.create(ls);
+	ls->schedule = s;
+	return ls;
+}
 
+inline double gl_get_loadshape_value(loadshape *shape)
+{
+	if (shape)
+		return shape->load;
+	else
+		return 0;
+}
+
+#endif //__cplusplus
 
 /** @} **/
 #endif

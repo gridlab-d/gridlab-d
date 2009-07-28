@@ -850,6 +850,10 @@ typedef struct s_callbacks {
 		long (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
 	} schedule;
 	struct {
+		loadshape *(*create)(loadshape *s);
+		int (*init)(loadshape *s);
+	} loadshape;
+	struct {
 		TIMESTAMP (*sync)(enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1);
 	} enduse;
 } CALLBACKS; /**< core callback function table */
@@ -862,7 +866,11 @@ typedef FUNCTIONADDR function;
 #define gl_output (*callback->output_message) ///< Send a printf-style message to the output stream
 #define gl_warning (*callback->output_warning) ///< Send a printf-style message to the warning stream
 #define gl_error (*callback->output_error) ///< Send a printf-style message to the error stream
+#ifdef _DEBUG
 #define gl_debug (*callback->output_debug) ///< Send a printf-style message to the debug stream
+#else
+#define gl_debug 
+#endif
 #define gl_testmsg (*callback->output_test) ///< Send a printf-style message to the testmsg stream
 
 #define gl_globalclock (*(callback->global_clock)) ///< Get the current value of the global clock

@@ -84,6 +84,7 @@
 //////////////////////////////////////////////////////////////////////////
 // implicit loadshapes
 //////////////////////////////////////////////////////////////////////////
+#ifdef NEVER
 static LOADSHAPE default_loadshapes[] = {
 
 		{"clotheswasher",
@@ -146,56 +147,25 @@ static LOADSHAPE default_loadshapes[] = {
 		NULL // no linkage for defaults
 	},*/
 };
+#endif
 
-
-EXPORT CIRCUIT *attach_enduse_house_e(OBJECT *obj, ENDUSELOAD *attachee, double breaker_amps, int is220){
+EXPORT CIRCUIT *attach_enduse(OBJECT *obj, void *target, double breaker_amps, int is220)
+{
 	house_e *pHouse = 0;
 	CIRCUIT *c = 0;
 
 	if(obj == NULL){
-		GL_THROW("attach_house_a: null *obj");
+		GL_THROW("attach_house_a: null object reference");
 	}
-	if(attachee == NULL){
-		GL_THROW("attach_house_a: null *attachee");
+	if(target == NULL){
+		GL_THROW("attach_house_a: null enduse target data");
 	}
 	if(breaker_amps < 0 || breaker_amps > 1000){ /* at 3kA, we're looking into substation power levels, not enduses */
-		GL_THROW("attach_house_a: breaker amps of %i unrealistic");
+		GL_THROW("attach_house_a: breaker amps of %i unrealistic", breaker_amps);
 	}
 
 	pHouse = OBJECTDATA(obj,house_e);
-	c = new CIRCUIT;
-
-	if(c == NULL){
-		GL_THROW("attach_enduse_house_a: memory allocation failure");
-	}
-
-	c->next = pHouse->panel.circuits;
-	c->id = pHouse->panel.circuits ? pHouse->panel.circuits->id+1 : 1;
-	c->max_amps = breaker_amps;
-	c->pLoad = attachee;
-
-	// choose circuit
-	if (is220 == 1) // 220V circuit is on x12
-	{
-		c->type = X12;
-		c->id++; // use two circuits
-	}
-	else if (c->id&0x01) // odd circuit is on x13
-		c->type = X13;
-	else // even circuit is on x23
-		c->type = X23;
-
-	// attach to circuit list
-	pHouse->panel.circuits = c;
-
-	c->pV = &(pHouse->pCircuit_V[(int)c->type]);
-	c->status = BRK_CLOSED;
-	c->tripsleft = 100;
-
-	// attach the enduse for future reference
-	c->enduse = attachee->end_obj;
-
-	return c;
+	return pHouse->attach(obj,breaker_amps,is220,(enduse*)target);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -232,9 +202,9 @@ house_e::house_e(MODULE *mod)
 			PT_double,"window_wall_ratio",PADDR(window_wall_ratio),
 			PT_double,"glazing_shgc",PADDR(glazing_shgc),
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),
-			PT_double,"internal_gain[Btu/h]",PADDR(tload.heatgain),
+			PT_double,"internal_gain[Btu/h]",PADDR(total.heatgain),
 			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),
-			PT_double,"heat_cool_gain[Btu/h]",PADDR(HVAC_load.heatgain),
+			PT_double,"heat_cool_gain[Btu/h]",PADDR(system.heatgain),
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),
 			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),
 			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),
@@ -249,152 +219,30 @@ house_e::house_e(MODULE *mod)
 			PT_double,"cooling_COP",PADDR(cooling_COP),
 			PT_double,"COP_coeff",PADDR(COP_coeff),
 			PT_double,"air_temperature[degF]",PADDR(Tair),
-			PT_double,"outdoor_temperature[degF]",PADDR(outside_temp),
+			PT_double,"outdoor_temperature[degF]",PADDR(outside_temperature),
 			PT_double,"mass_heat_capacity[Btu/F]",PADDR(house_content_thermal_mass),
 			PT_double,"mass_heat_coeff[Btu/F.h]",PADDR(house_content_heat_transfer_coeff),
 			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),
-			PT_enumeration,"heat_mode",PADDR(heat_type),
-				PT_KEYWORD,"UNKNOWN",HT_UNKNOWN,
-				PT_KEYWORD,"ELECTRIC",HT_ELECTRIC,
-				PT_KEYWORD,"GASHEAT",HT_GASHEAT,
-			PT_complex,"total_load[kVA]",PADDR(tload.total),
-			PT_complex,"enduse_load[kVA]",PADDR(HVAC_load.total),
-			PT_complex,"power[kVA]",PADDR(HVAC_load.power),
-			PT_complex,"current[kVA]",PADDR(HVAC_load.current),
-			PT_complex,"admittance[kVA]",PADDR(HVAC_load.admittance),
-			PT_complex,"energy[kWh]",PADDR(HVAC_load.energy),
-			PT_enumeration,"hc_mode",PADDR(heat_cool_mode),
-				PT_KEYWORD,"UNKNOWN",HC_UNKNOWN,
-				PT_KEYWORD,"HEAT",HC_HEAT,
-				PT_KEYWORD,"OFF",HC_OFF,
-				PT_KEYWORD,"COOL",HC_COOL,
-				PT_KEYWORD,"OFF",HC_OFF,
+			PT_set,"system_type",PADDR(system_type),
+				PT_KEYWORD, "GAS",	ST_GAS,
+				PT_KEYWORD, "AIRCONDITIONING", ST_AC,
+				PT_KEYWORD, "FORCEDAIR", ST_AIR,
+				PT_KEYWORD, "TWOSTAGE", ST_VAR,
+			PT_enumeration,"system_mode",PADDR(system_mode),
+				PT_KEYWORD,"UNKNOWN",SM_UNKNOWN,
+				PT_KEYWORD,"HEAT",SM_HEAT,
+				PT_KEYWORD,"OFF",system_mode,
+				PT_KEYWORD,"COOL",SM_COOL,
+				PT_KEYWORD,"OFF",system_mode,
 			PT_double, "Rroof[degF.h/Btu]", PADDR(Rroof),
 			PT_double, "Rwall[degF.h/Btu]", PADDR(Rwall),
 			PT_double, "Rfloor[degF.h/Btu]", PADDR(Rfloor),
 			PT_double, "Rwindows[degF.h/Btu]", PADDR(Rwindows),
 			
-			PT_complex, "clotheswasher.current_fraction", PADDR(clotheswasher.current_fraction),
-			PT_complex, "clotheswasher.demand", PADDR(clotheswasher.demand),
-			PT_complex, "clotheswasher.energy", PADDR(clotheswasher.energy),
-			PT_double, "clotheswasher.heatgain", PADDR(clotheswasher.heatgain),
-			PT_double, "clotheswasher.heatgain_fraction", PADDR(clotheswasher.heatgain_fraction),
-			PT_double, "clotheswasher.impedance_fraction", PADDR(clotheswasher.impedance_fraction),
-			PT_double, "clotheswasher.power", PADDR(clotheswasher.power),
-			PT_double, "clotheswasher.power_factor", PADDR(clotheswasher.power_factor),
-			PT_double, "clotheswasher.power_fraction", PADDR(clotheswasher.power_fraction),
-			PT_loadshape, "clotheswasher.shape", PADDR(clotheswasher_shape),
-			PT_double, "clotheswasher.load", PADDR(clotheswasher_shape.load),
-			PT_double, "clotheswasher.voltage_factor", PADDR(clotheswasher.voltage_factor),
-
-			PT_complex, "dishwasher.current_fraction", PADDR(dishwasher.current_fraction),
-			PT_complex, "dishwasher.demand", PADDR(dishwasher.demand),
-			PT_complex, "dishwasher.energy", PADDR(dishwasher.energy),
-			PT_double, "dishwasher.heatgain", PADDR(dishwasher.heatgain),
-			PT_double, "dishwasher.heatgain_fraction", PADDR(dishwasher.heatgain_fraction),
-			PT_double, "dishwasher.impedance_fraction", PADDR(dishwasher.impedance_fraction),
-			PT_double, "dishwasher.power", PADDR(dishwasher.power),
-			PT_double, "dishwasher.power_factor", PADDR(dishwasher.power_factor),
-			PT_double, "dishwasher.power_fraction", PADDR(dishwasher.power_fraction),
-			PT_loadshape, "dishwasher.shape", PADDR(dishwasher_shape),
-			PT_double, "dishwasher.load", PADDR(dishwasher_shape.load),
-			PT_double, "dishwasher.voltage_factor", PADDR(dishwasher.voltage_factor),
-			
-			PT_complex, "dryer.current_fraction", PADDR(dryer.current_fraction),
-			PT_complex, "dryer.demand", PADDR(dryer.demand),
-			PT_complex, "dryer.energy", PADDR(dryer.energy),
-			PT_double, "dryer.heatgain", PADDR(dryer.heatgain),
-			PT_double, "dryer.heatgain_fraction", PADDR(dryer.heatgain_fraction),
-			PT_double, "dryer.impedance_fraction", PADDR(dryer.impedance_fraction),
-			PT_double, "dryer.power", PADDR(dryer.power),
-			PT_double, "dryer.power_factor", PADDR(dryer.power_factor),
-			PT_double, "dryer.power_fraction", PADDR(dryer.power_fraction),
-			PT_loadshape, "dryer.shape", PADDR(dryer_shape),
-			PT_double, "dryer.load", PADDR(dryer_shape.load),
-			PT_double, "dryer.voltage_factor", PADDR(dryer.voltage_factor),
-
-			PT_complex, "freezer.current_fraction", PADDR(freezer.current_fraction),
-			PT_complex, "freezer.demand", PADDR(freezer.demand),
-			PT_complex, "freezer.energy", PADDR(freezer.energy),
-			PT_double, "freezer.heatgain", PADDR(freezer.heatgain),
-			PT_double, "freezer.heatgain_fraction", PADDR(freezer.heatgain_fraction),
-			PT_double, "freezer.impedance_fraction", PADDR(freezer.impedance_fraction),
-			PT_double, "freezer.power", PADDR(freezer.power),
-			PT_double, "freezer.power_factor", PADDR(freezer.power_factor),
-			PT_double, "freezer.power_fraction", PADDR(freezer.power_fraction),
-			PT_loadshape, "freezer.shape", PADDR(freezer_shape),
-			PT_double, "freezer.load", PADDR(freezer_shape.load),
-			PT_double, "freezer.voltage_factor", PADDR(freezer.voltage_factor),
-
-			PT_complex, "light.current_fraction", PADDR(light.current_fraction),
-			PT_complex, "light.demand", PADDR(light.demand),
-			PT_complex, "light.energy", PADDR(light.energy),
-			PT_double, "light.heatgain", PADDR(light.heatgain),
-			PT_double, "light.heatgain_fraction", PADDR(light.heatgain_fraction),
-			PT_double, "light.impedance_fraction", PADDR(light.impedance_fraction),
-			PT_double, "light.power", PADDR(light.power),
-			PT_double, "light.power_factor", PADDR(light.power_factor),
-			PT_double, "light.power_fraction", PADDR(light.power_fraction),
-			PT_loadshape, "light.shape", PADDR(light_shape),
-			PT_double, "light.load", PADDR(light_shape.load),
-			PT_double, "light.voltage_factor", PADDR(light.voltage_factor),
-
-			PT_complex, "microwave.current_fraction", PADDR(microwave.current_fraction),
-			PT_complex, "microwave.demand", PADDR(microwave.demand),
-			PT_complex, "microwave.energy", PADDR(microwave.energy),
-			PT_double, "microwave.heatgain", PADDR(microwave.heatgain),
-			PT_double, "microwave.heatgain_fraction", PADDR(microwave.heatgain_fraction),
-			PT_double, "microwave.impedance_fraction", PADDR(microwave.impedance_fraction),
-			PT_double, "microwave.power", PADDR(microwave.power),
-			PT_double, "microwave.power_factor", PADDR(microwave.power_factor),
-			PT_double, "microwave.power_fraction", PADDR(microwave.power_fraction),
-			PT_loadshape, "microwave.shape", PADDR(microwave_shape),
-			PT_double, "microwave.load", PADDR(microwave_shape.load),
-			PT_double, "microwave.voltage_factor", PADDR(microwave.voltage_factor),
-
-			PT_complex, "occupants.current_fraction", PADDR(occupants.current_fraction),
-			PT_complex, "occupants.demand", PADDR(occupants.demand),
-			PT_complex, "occupants.energy", PADDR(occupants.energy),
-			PT_double, "occupants.heatgain", PADDR(occupants.heatgain),
-			PT_double, "occupants.heatgain_fraction", PADDR(occupants.heatgain_fraction),
-			PT_double, "occupants.impedance_fraction", PADDR(occupants.impedance_fraction),
-			PT_double, "occupants.power", PADDR(occupants.power),
-			PT_double, "occupants.power_factor", PADDR(occupants.power_factor),
-			PT_double, "occupants.power_fraction", PADDR(occupants.power_fraction),
-			PT_loadshape, "occupants.shape", PADDR(occupants_shape),
-			PT_double, "occupants.load", PADDR(occupants_shape.load),
-			PT_double, "occupants.voltage_factor", PADDR(occupants.voltage_factor),
-
-			PT_complex, "plugs.current_fraction", PADDR(plugs.current_fraction),
-			PT_complex, "plugs.demand", PADDR(plugs.demand),
-			PT_complex, "plugs.energy", PADDR(plugs.energy),
-			PT_double, "plugs.heatgain", PADDR(plugs.heatgain),
-			PT_double, "plugs.heatgain_fraction", PADDR(plugs.heatgain_fraction),
-			PT_double, "plugs.impedance_fraction", PADDR(plugs.impedance_fraction),
-			PT_double, "plugs.power", PADDR(plugs.power),
-			PT_double, "plugs.power_factor", PADDR(plugs.power_factor),
-			PT_double, "plugs.power_fraction", PADDR(plugs.power_fraction),
-			PT_loadshape, "plugs.shape", PADDR(plugs_shape),
-			PT_double, "plugs.load", PADDR(plugs_shape.load),
-			PT_double, "plugs.voltage_factor", PADDR(plugs.voltage_factor),
-
-			PT_complex, "refrigerator.current_fraction", PADDR(refrigerator.current_fraction),
-			PT_complex, "refrigerator.demand", PADDR(refrigerator.demand),
-			PT_complex, "refrigerator.energy", PADDR(refrigerator.energy),
-			PT_double, "refrigerator.heatgain", PADDR(refrigerator.heatgain),
-			PT_double, "refrigerator.heatgain_fraction", PADDR(refrigerator.heatgain_fraction),
-			PT_double, "refrigerator.impedance_fraction", PADDR(refrigerator.impedance_fraction),
-			PT_double, "refrigerator.power", PADDR(refrigerator.power),
-			PT_double, "refrigerator.power_factor", PADDR(refrigerator.power_factor),
-			PT_double, "refrigerator.power_fraction", PADDR(refrigerator.power_fraction),
-			PT_loadshape, "refrigerator.shape", PADDR(refrigerator_shape),
-			PT_double, "refrigerator.load", PADDR(refrigerator_shape.load),
-			PT_double, "refrigerator.voltage_factor", PADDR(refrigerator.voltage_factor),			
-			
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
-		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse_house_e);
+		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse);
 
 		//int x = PADDR(waterheater) - 0;
 		//int result = enduse_publish(oclass, x, "waterheater");
@@ -533,12 +381,9 @@ int house_e::init(OBJECT *parent)
 
 	// set defaults for panel/meter variables
 	if (panel.max_amps==0) panel.max_amps = 200; 
-	HVAC_load.power = complex(0,0,J);
-	HVAC_load.admittance = complex(0,0,J);
-	HVAC_load.current = complex(0,0,J);
+	system.power = complex(0,0,J);
 
 	// Set defaults for published variables nor provided by model definition
-	if (heat_type==HT_UNKNOWN)	heat_type = HT_ELECTRIC;
 	if (heating_COP==0.0)		heating_COP = gl_random_triangle(1,2);
 	if (cooling_COP==0.0)		cooling_COP = gl_random_triangle(2,4);
 
@@ -558,7 +403,7 @@ int house_e::init(OBJECT *parent)
 
 	if (airchange_per_hour==0)	airchange_per_hour = gl_random_triangle(4,6);
 
-	// initalize/set hvac model parameters
+	// initalize/set system model parameters
     if (COP_coeff==0)			COP_coeff = gl_random_uniform(0.9,1.1);	// coefficient of cops [scalar]
     if (Tair==0)				Tair = gl_random_uniform(heating_setpoint, cooling_setpoint);	// air temperature [F]
 	if (over_sizing_factor==0)  over_sizing_factor = gl_random_uniform(0.98,1.3);
@@ -568,7 +413,7 @@ int house_e::init(OBJECT *parent)
 	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * gl_random_triangle(4,6); // ~5 W/sf estimated
 	if (design_cooling_capacity==0)	design_cooling_capacity = envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (1 - glazing_shgc)) + design_internal_gains;
 	if (design_heating_capacity==0)	design_heating_capacity = envelope_UA * (heating_setpoint - heating_design_temperature);
-    if (heat_cool_mode==HC_UNKNOWN) heat_cool_mode = HC_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
+    //if (system_mode==HC_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
 
     air_density = 0.0735;			// density of air [lb/cf]
 	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
@@ -576,11 +421,11 @@ int house_e::init(OBJECT *parent)
 	if (house_content_thermal_mass==0) house_content_thermal_mass = gl_random_triangle(4,6)*floor_area;		// thermal mass of house_e [BTU/F]
     if (house_content_heat_transfer_coeff==0) house_content_heat_transfer_coeff = gl_random_uniform(0.5,1.0)*floor_area;	// heat transfer coefficient of house_e contents [BTU/hr.F]
 
-	if (heat_cool_mode==HC_OFF)
+	if (system_mode==SM_OFF)
 		Tair = gl_random_uniform(heating_setpoint,cooling_setpoint);
-	else if (heat_cool_mode==HC_HEAT || heat_cool_mode==HC_AUX)
+	else if (system_mode==SM_HEAT || system_mode==SM_AUX)
 		Tair = gl_random_uniform(heating_setpoint-thermostat_deadband/2,heating_setpoint+thermostat_deadband/2);
-	else if (heat_cool_mode==HC_COOL)
+	else if (system_mode==SM_COOL)
 		Tair = gl_random_uniform(cooling_setpoint-thermostat_deadband/2,cooling_setpoint+thermostat_deadband/2);
 
 	//house_e properties for HVAC
@@ -596,20 +441,9 @@ int house_e::init(OBJECT *parent)
 	if(clotheswasher.power_factor==0.0) clotheswasher.heatgain_fraction = 0.9;
 	// material temperture [F]
 
-	clotheswasher.shape = &clotheswasher_shape;
-	dishwasher.shape = &dishwasher_shape;
-	dryer.shape = &dryer_shape;
-	freezer.shape = &freezer_shape;
-	light.shape = &light_shape;
-	microwave.shape = &microwave_shape;
-	occupants.shape = &occupants_shape;
-	plugs.shape = &plugs_shape;
-	refrigerator.shape = &refrigerator_shape;
-	waterheater.shape = &waterheater_shape;
-	
 	// connect any implicit loads
 	attach_implicit_enduses();
-	update_hvac();
+	update_system();
 	update_model();
 
 	// attach the house_e HVAC to the panel
@@ -638,20 +472,20 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	// change control mode if appropriate
-	if (Tair<TheatOn-terr/2 && heat_cool_mode!=HC_HEAT) 
+	if (Tair<TheatOn-terr/2 && system_mode!=SM_HEAT) 
 	{	// heating on
 		// TODO: check for AUX
-		heat_cool_mode = HC_HEAT;
+		system_mode = SM_HEAT;
 		Tevent = TheatOff;
 	}
-	else if (Tair>TcoolOn-terr/2 && heat_cool_mode!=HC_COOL)
+	else if (Tair>TcoolOn-terr/2 && system_mode!=SM_COOL)
 	{	// cooling on
-		heat_cool_mode = HC_COOL;
+		system_mode = SM_COOL;
 		Tevent = TcoolOff;
 	}
 	else 
 	{	// floating
-		heat_cool_mode = HC_OFF;
+		system_mode = SM_OFF;
 		Tevent = ( dTair<0 ? TheatOn : TcoolOn );
 	}
 
@@ -668,9 +502,8 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 	if (t0>0 && dt1>0)
 	{
 		const double dt = dt1/3600; /* model operates in units of hours */
-		HVAC_load.energy += HVAC_load.total.Mag()*dt;
-		tload.energy += tload.total.Mag()*dt;
-		tload.heatgain = tload.heatgain;
+		system.energy += system.power * dt;
+		total.energy += total.power * dt;
 
 		/* calculate model update, if possible */
 		if (c2!=0)
@@ -685,21 +518,17 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// reset the not required accumulators for the next sync
 	/* HVAC accumulators */
-	HVAC_load.heatgain = 0;
-	HVAC_load.total = complex(0,0,J);
-	HVAC_load.admittance = complex(0,0,J);
-	HVAC_load.current = complex(0,0,J);
+	system.heatgain = 0;
+	system.power = complex(0,0,J);
 
 	/* main panel accumulators */
-	tload.heatgain = 0;
-	tload.total = complex(0,0,J);
-	tload.admittance = complex(0,0,J);
-	tload.current = complex(0,0,J);
+	total.heatgain = 0;
+	total.power = complex(0,0,J);
 
 	return TS_NEVER;
 }
 
-/** Updates the total internal gain and synchronizes with the hvac equipment load.  
+/** Updates the total internal gain and synchronizes with the system equipment load.  
 Also synchronizes the voltages and current in the panel with the meter.
 **/
 TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
@@ -709,14 +538,14 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP te = TS_NEVER;
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
 
-	double nHours = (double)gl_tohours(dt1);
-	HVAC_load.energy += HVAC_load.total * nHours;
+	double nHours = dt1 * 3600;
+	system.energy += system.power * nHours;
 
 	if (t0==0 || t1>t0)
 	{
-		outside_temp = *pTout;
+		outside_temperature = *pTout;
 		te = sync_enduses(t0,t1);
-		update_hvac(dt1);
+		update_system(dt1);
 		update_model(dt1);
 		check_controls();
 	}
@@ -743,39 +572,29 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	
 }
 
-void house_e::attach_implicit_enduses(char *enduses)
+void house_e::attach_implicit_enduses()
 {
-	char list[256], *next=NULL;
-	strcpy(list,enduses?enduses:implicit_enduses);
-	if (strcmp(list,"none")==0)
-		return;
-	while ((next=strtok(next?NULL:list,",; \t\n"))!=NULL)
+	struct {
+		int64 flag;
+		enduse *data;
+		double breaker_amps;
+	} map[] = {
+		{IEU_CLOTHESWASHER, &clotheswasher, 15},
+		{IEU_DISHWASHER, &dishwasher, 15},
+		{IEU_DRYER, &dryer, dryer.config&EUC_IS220 ? 30 : 15},
+		{IEU_EVCHARGER, &evcharger, evcharger.config&EUC_IS220 ? 60 : 20},
+		{IEU_FREEZER, &freezer, 15},
+		{IEU_LIGHTS, &lights, 15}, 
+		{IEU_MICROWAVE, &microwave, 15},
+		{IEU_PLUGS, &plugs, 15},
+		{IEU_RANGE, &range, 30},
+		{IEU_REFRIGERATOR, &refrigerator, 15},
+		{IEU_WATERHEATER, &waterheater, 30},
+		// TODO add other enduses
+	}, *p;
+	for (p=map; p<map+sizeof(map)/sizeof(map[0]); p++)
 	{
-		LOADSHAPE *shape = NULL;
-		int i;
-		for (i=0; i<sizeof(default_loadshapes)/sizeof(default_loadshapes[0]); i++)
-		{
-			if (strcmp(default_loadshapes[i].name,next)==0)
-			{
-				shape = default_loadshapes+i;
-				break;
-			}
-		}
-		if (shape==NULL)
-			gl_warning("implicit enduse '%s' is not defined in the default loadshapes", next);
-		else
-		{
-			LOADSHAPE *ls = new LOADSHAPE;
-			
-			if (ls==NULL)
-				throw "house_e::attach_implicity_enduses(char *enduses): memory allocation failure";
-			memcpy(ls,shape,sizeof(LOADSHAPE));
-			memset(&(ls->load),0,sizeof(ENDUSELOAD));
-			//ls = &default_loadshapes[1];
-			ls->next = implicit_loads;
-			implicit_loads = ls;
-			attach(NULL,ls->breaker_amps,ls->is220,&(ls->load), ls);
-		}
+		attach(NULL,p->breaker_amps,p->data->config&EUC_IS220?1:0,p->data);
 	}
 	return;
 }
@@ -787,7 +606,7 @@ void house_e::attach_implicit_enduses(char *enduses)
 CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 					   double breaker_amps, ///< breaker capacity (in Amps)
 					   int is220, ///< 0 for 120V, 1 for 240V load
-					   ENDUSELOAD *pLoad, LOADSHAPE *implicit_end_use) ///< reference to load structure
+					   enduse *pLoad) ///< reference to load structure
 {
 	// construct and id the new circuit
 	CIRCUIT *c = new CIRCUIT;
@@ -808,9 +627,17 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	if (pLoad)
 		c->pLoad = pLoad;
 	else 
-		c->pLoad = (ENDUSELOAD*)gl_get_addr(obj,"enduse_load");
-	if (c->pLoad==NULL){
-		GL_THROW("end-use load %s couldn't be connected because it does not publish ENDUSELOAD structure", c->enduse->name);
+		c->pLoad = (enduse*)gl_get_addr(obj,"enduse_load");
+	if (c->pLoad==NULL)
+	{
+		GL_THROW("end-use load %s couldn't be connected because it does not publish 'enduse_load' property", c->pObj->name);
+	}
+	else {
+		PROPERTY *prop = gl_get_property(obj,"enduse_load");
+		if (prop==NULL || prop->ptype!=PT_enduse)
+		{
+			GL_THROW("end-use load %s couldn't be connected because 'enduse_load' property is not of type 'enduse'", c->pObj->name);
+		}
 	}
 	
 	// choose circuit
@@ -837,15 +664,8 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	// @todo get data on residential breaker lifetimes (residential, low priority)
 	c->tripsleft = 100;
 
-	if(obj == NULL)
-	{
-		c->implicit_end_use = implicit_end_use;
-	}
-	else
-	{
-		// attach the enduse for future reference
-		c->enduse = obj;
-	}
+	// attach the enduse for future reference
+	c->pObj = obj;
 	return c;
 }
 
@@ -884,11 +704,11 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// compute circuit current
 			if ((c->pV)->Mag() == 0)
 			{
-				gl_debug("house_e:%d circuit %d (%s:%d) voltage is zero", obj->id, c->id, c->enduse->oclass->name, c->enduse->id);
+				gl_debug("house_e:%d circuit %d (%s:%d) voltage is zero", obj->id, c->id, c->pObj->oclass->name, c->pObj->id);
 				break;
 			}
 			
-			complex current = ~(c->pLoad->total*1000 / *(c->pV)); 
+			complex current = ~(c->pLoad->power*1000 / *(c->pV)); 
 
 			// check breaker
 			if (current.Mag()>c->max_amps)
@@ -902,7 +722,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 					// average five minutes before reclosing, exponentially distributed
 					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(1/300.0)*TS_SECOND); 
 					gl_debug("house_e:%d circuit breaker %d tripped - %s (%s:%d) overload at %.0f A", obj->id, c->id,
-						c->enduse->name?c->enduse->name:"unnamed object", c->enduse->oclass->name, c->enduse->id, current.Mag());
+						c->pObj->name?c->pObj->name:"unnamed object", c->pObj->oclass->name, c->pObj->id, current.Mag());
 				}
 
 				// breaker fails from too frequent operation
@@ -920,11 +740,8 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// add to panel current
 			else
 			{
-				tload.power += c->pLoad->power;	// reminder: |a| + |b| != |a+b|
-				tload.current += c->pLoad->current;
-				tload.admittance += c->pLoad->admittance; // should this be additive? I don't buy t.a = c->pL->a ... -MH
-				tload.total += c->pLoad->total;
-				tload.heatgain += c->pLoad->heatgain;
+				system.power += c->pLoad->power;	// reminder: |a| + |b| != |a+b|
+				system.heatgain += c->pLoad->heatgain;
 				I[n] += current;
 				c->reclose = TS_NEVER;
 			}
@@ -952,336 +769,8 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
 {
-	//double duration = (double)(3600-t1%3600)/3600.0;
-	double dt = (double)(t1-t0)/3600;
-	double duration_time = 3600;
-	double time_ratio = 1;
-	TIMESTAMP t2 = t1 + 3600 - t1%3600;
-	TIMESTAMP change_hour_flag = t1%3600;
-	TIMESTAMP t3 = t2;
-	OBJECT *obj = OBJECTHDR(this);
-	DATETIME t;
-	gl_localtime(obj->clock,&t);
-	int season = (t.month<5 || t.month>10) ? LS_WINTER : LS_SUMMER;
-	int daytype = (t.weekday<1 || t.weekday>5) ? LS_WEEKEND : LS_WEEKDAY;
-	int quad = season*2 + daytype;
-	int hour = t.hour;
-	LOADSHAPE *ls;
-	complex sys_nom_voltage_220, sys_nom_voltage_120;	
-	complex power_current_fraction;
-	complex power_impedance_fraction;
-	double power_fraction;
-	
-	for (ls=implicit_loads; ls!=NULL; ls=ls->next)//start of implicit end use loop
-	{		
-		CIRCUIT *c;
-		for (c=panel.circuits; c!=NULL; c=c->next)
-		{
-			if(c->implicit_end_use == ls)
-			{
-				ls->appliance_nominal_voltage = (pCircuit_V[(int)c->type]);
-			}
-		}		
-	
-		if(check_start==true)
-		{
-			
-			double power_fraction = (1 - ls->current_fraction - ls->impedance_fraction);
-			double appliance_power = ls->event_power_nominal/ls->power_factor;
-
-			//assuming all inductive loads
-			ls->load.total.SetPowerFactor(appliance_power, ls->power_factor);
-
-			ls->load.power = appliance_power*power_fraction;
-			ls->load.current = appliance_power*ls->current_fraction;						
-			ls->load.admittance = appliance_power*ls->impedance_fraction;
-						
-			ls->appliance_nominal_current = ~(power_current_fraction/ls->appliance_nominal_voltage);	
-			ls->appliance_nominal_admittance = ~(power_impedance_fraction/(ls->appliance_nominal_voltage*ls->appliance_nominal_voltage));
-
-		}
-		else
-		{
-			ls->load.current = ls->appliance_nominal_voltage*~(ls->appliance_nominal_current);
-			ls->load.admittance = ls->appliance_nominal_voltage*~(ls->appliance_nominal_voltage*ls->appliance_nominal_admittance);
-			ls->load.total = ls->load.power + ls->load.current + ls->load.admittance;
-		}
-	
-		/* This is the begining of the hour so we have possible new load at this hour*/
-		if(change_hour_flag == 0 || check_start==true)
-		{
-			//a. When the current time is equal to the time of the next schedule increment 
-			//	(e.g., at the beginning of the hour), or for the very first time step of a simultation, 
-			//	the probability of one or more events is assessed and the start times of any events are scheduled:
-			
-			if(check_start==true)
-			{
-				time_ratio = (double)(t2-t1) / 3600.0;				
-			}			
-			
-			double value=0;				
-
-			register int type = ls->type;
-			if (type&(LST_SEASONAL|LST_WEEKDAY))
-				value = ls->shape[quad][hour];
-			else if (type&LST_SEASONAL)
-				value = ls->shape[season][hour];
-			else if (type&LST_WEEKDAY)
-				value = ls->shape[daytype][hour];
-			else
-				value = ls->shape[0][hour];
-
-			//Added to always multiply the value by a scalar
-			value *= ls->scalar*time_ratio;
-
-			// pulse width modulated load
-			if (ls->event_queue==PWM)
-			{
-				//	i) Determine the start probability of the load during the next schedule interval as:
-				//			the scheduled load (kW) multiplied by the remaining fraction of the schedule interval 
-				//			(e.g., remainder of the hour), divided by the nominal event energy (the product of the 
-				//			nominal event power and the nominal event duration).
-				//
-				//			An event occurs within the next schedule interval (e.g., hour) if its start probability is greater 
-				//			than a random number between zero and one.
-				if (gl_random_bernoulli((value*(duration_time/3600))/(ls->event_power_nominal*ls->event_duration_nominal)))
-				{
-					//If an event occurs, the start time of the event is posted as the current time plus a fraction of the 
-					//remainder of the schedule interval (hour) equal to a random number between zero and one.
-					ls->start_at = t1 + (TIMESTAMP) gl_random_uniform(0, duration_time);
-					ls->value = value;
-				}
-				/*else
-				{
-					ls->start_at = ls->start_at + duration_time;							
-				}*/
-			}
-			else if (ls->event_queue==queued) //Queue
-			{
-				int mul_factor;
-				double reqd_queue;
-				
-				//Determine the start probability of the load during the 
-				//next schedule interval as:
-				
-				if (ls->event_type==duration)	
-				{
-					//the scheduled load (kW) multiplied by the remaining fraction of the 
-					//schedule interval (e.g., remainder of the hour), divided by the nominal 
-					//event energy (the product of the nominal event power and the nominal event duration).
-					ls->queue = ls->queue + (value*(duration_time/3600));						
-					reqd_queue = (ls->queue - fmod(ls->queue, ls->event_duration_nominal));	
-					mul_factor = reqd_queue/ls->event_duration_nominal;
-				}
-				else
-				{
-					//the scheduled load (kW) multiplied by the remaining fraction of the 
-					//schedule interval (e.g., remainder of the hour), divided by the nominal 
-					//event energy (the product of the nominal event power and the nominal event duration).
-					ls->queue += (value*(duration_time/3600)/ls->event_power_nominal);//3, a, iv(1)
-					reqd_queue = (ls->queue - fmod(ls->queue, ls->event_duration_nominal*ls->event_power_nominal));	
-					mul_factor = reqd_queue/(ls->event_power_nominal*ls->event_duration_nominal);
-				}
-				
-				double random_factor = ((value*(duration_time/3600))/(ls->event_power_nominal*ls->event_duration_nominal))*mul_factor;
-
-				//If the start probability is greater than one, then more than one event is scheduled; 
-				//the algorithm here does not yet handle this, and a fatal error results.
-				if(random_factor > 1.0) 
-				{
-					//If an event occurs, the start time of the event is posted as the current time plus a 
-					//fraction of the remainder of the schedule interval (hour) equal to a random number between zero and one.
-					ls->start_at = t1 + (TIMESTAMP) gl_random_uniform(0, duration_time);
-					ls->value = value;
-				}
-				else if(gl_random_bernoulli(random_factor) && (mul_factor>0))
-				{
-					//An event occurs within the next schedule interval (e.g., hour) if its start probability 
-					//is greater than a random number between zero and one.
-					
-					//If an event occurs, the start time of the event is posted as the current time plus a 
-					//fraction of the remainder of the schedule interval (hour) equal to a random number between zero and one.
-					ls->start_at = t1 + (TIMESTAMP) gl_random_uniform(0, duration_time);
-					ls->value = value;
-				}
-				/*else
-				{
-					ls->start_at = ls->start_at + duration_time;					
-				}*/
-			}
-			else if (ls->event_queue==analog)//amplitude modulated
-			{	
-				//The load is always "on" and the nominal power is equal to the scheduled load.
-				//The (next) start time is equal to the current time plus the remainder of the schedule interval.
-				ls->value = value;
-				ls->start_at = t1;
-				ls->stopat = t1 + (TIMESTAMP)(duration_time);		
-
-			}			
-
-		}//end of change of the hour check
-		
-		// Start the load
-		if(ls->start_at==t1)
-		{
-			double trun;
-		
-			//PWM
-			if (ls->event_queue==PWM)
-			{										
-				//When the current time is equal to or greater 
-				//than the posted start time for an event, start the event:
-				if (ls->event_type==energy)
-				{
-					//The event queue is incremented (if the queue is non-zero, 
-					//the new event posting adds to the existing value): 
-					//		for fixed energy events:  the nominal event energy 
-					//		(the product of the nominal event power (kW) times the 
-					//		nominal event duration (hr))
-					ls->queue += ls->event_power_nominal*(ls->event_duration_nominal);	
-					//The load is started (turned "on")
-					trun = ls->queue/(ls->load.total.Re() );					
-				}
-				else
-				{
-					//for fixed duration events: the nominal event duration
-					ls->queue += ls->event_duration_nominal; //2,c,iii
-					trun = ls->event_duration_nominal;					
-				}
-					
-				ls->stopat = t1 + (TIMESTAMP)(trun*3600);		
-					
-			}	
-			else if (ls->event_queue==queued)//queued event
-			{
-				double reqd_queue;
-
-				//When the current time is equal to or greater than the posted start time for an event, 
-				//start the event:					
-				if (ls->event_type==energy)
-				{												
-					//The load is started (turned "on")
-					//The event queue is incremented (if the queue is non-zero, 
-					//the new event posting adds to the existing value): 
-					reqd_queue = (ls->queue - fmod(ls->queue, ls->event_power_nominal*ls->event_duration_nominal));	
-					ls->reqd_queue += reqd_queue;
-					trun = ls->reqd_queue/ls->load.total.Re();				
-				}
-				else
-				{
-					//The load is started (turned "on")
-					reqd_queue = (ls->queue - fmod(ls->queue, ls->event_duration_nominal));	
-					ls->reqd_queue += reqd_queue;
-					trun = ls->reqd_queue;
-				}		
-
-				ls->stopat = t1 + (TIMESTAMP)(trun*3600);
-
-			}//end of queued event	
-
-		}//end of starting the load
-		else if (ls->stopat>t1 && ls->stopat<TS_NEVER)//running the load
-		{
-			double trun;
-			
-			if (dt>0 && ls->start_at<t1)
-			{		
-				//PWM
-				if (ls->event_queue==PWM)
-				{
-					double delta_energy = ls->load.total.Re()*dt;
-
-					if (ls->event_type==energy)						
-					{	
-						ls->queue -= delta_energy;	
-						trun = ls->queue/(ls->load.total.Re());
-						ls->stopat = t1 + (TIMESTAMP)(trun*3600);	
-					}
-					else
-					{
-						ls->queue -= dt;
-					}
-
-				}		
-				else if (ls->event_queue==queued)//queue
-				{
-					double delta_energy = ls->load.total.Re()*dt;
-					
-					if (ls->event_type==energy)						
-					{
-						ls->queue -= delta_energy;	
-						ls->reqd_queue -= delta_energy;	//This is just for storing the integer part of the queue
-						trun = ls->reqd_queue/(ls->load.total.Re());
-						ls->stopat = t1 + (TIMESTAMP)(trun*3600);	
-					}						
-					else
-					{
-						ls->queue -= dt;
-						ls->reqd_queue -= dt;
-					}
-				}
-			
-			}				
-		}
-		else if (ls->stopat>0 && ls->stopat<=t1)/* shut off load */
-		{
-			//PWM
-			if (ls->event_queue==PWM)
-			{
-				//When the current time is greater than or equal to the stop at 
-				//time for the load:
-				//		The load is turned "off", i.e. its actual power is set to zero.
-				ls->start_at = 0;
-				ls->stopat = 0;
-				ls->value = 0; 
-				ls->queue = 0;				
-				ls->load.total = 0;
-
-			}
-			else if (ls->event_queue==queued)//queued event
-			{
-				ls->start_at = 0;
-				ls->stopat = 0;
-				ls->value = 0; 
-				ls->queue = 0;				
-				ls->load.total = 0;
-
-				
-			}
-			else if(ls->event_queue==analog)
-			{
-				ls->start_at = 0;
-				ls->stopat = 0;
-				ls->value = 0; 
-				ls->queue = 0;				
-				ls->load.total = 0;
-			}
-		}
-		
-		ls->load.heatgain = ls->load.total.Re()*BTUPHPKW*ls->heat_fraction;
-	
-
-	}//end of implicit end use loop
-
-	//Check which of the t3 is the smallest value to send
-	for (ls=implicit_loads; ls!=NULL; ls=ls->next)
-	{
-		if(ls->stopat < t3 && ls->stopat>0 && ls->stopat>t1)
-		{
-			t3 = ls->stopat;						
-		}
-		if(ls->start_at < t3 && ls->start_at>0 && ls->start_at>t1)
-		{
-			t3 = ls->start_at;						
-		}
-	}	
-
-	if(check_start==true)
-	{
-		check_start=false;
-	}
-	
-	return t3;
+	// TODO
+	return TS_NEVER;
 }
 
 void house_e::update_model(double dt)
@@ -1291,13 +780,13 @@ void house_e::update_model(double dt)
 	const double &Ua = (envelope_UA);
 	const double &Cm = (house_content_thermal_mass);
 	const double &Um = (house_content_heat_transfer_coeff);
-	const double &Qi = (tload.heatgain);
+	const double &Qi = (system.heatgain);
 	double &Qs = (solar_load);
-	double &Qh = (HVAC_load.heatgain);
+	double &Qh = (system.heatgain);
 	double &Ti = (Tair);
 	double &dTi = (dTair);
 	double &Tm = (Tmaterials);
-	HCMODE &mode = (heat_cool_mode);
+	SYSTEMMODE &mode = (system_mode);
 	const double tdead = thermostat_deadband/2;
 	const double TheatOff = heating_setpoint + tdead;
 	const double TheatOn = heating_setpoint - tdead;
@@ -1370,35 +859,32 @@ a dual decay solver to obtain the time for next state change based on the thermo
 This synchronization function updates the HVAC equipment load and power draw.
 **/
 
-void house_e::update_hvac(double dt)
+void house_e::update_system(double dt)
 {
-	// compute hvac performance
+	// compute system performance
 	const double heating_cop_adj = (-0.0063*(*pTout)+1.5984);
 	const double cooling_cop_adj = -(-0.0108*(*pTout)+2.0389);
 	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
 	const double cooling_capacity_adj = -(-0.0063*(*pTout)+1.5984);
 
-	switch (heat_cool_mode) {
-	case HC_HEAT:
-	case HC_AUX:
-		hvac_rated_capacity = design_heating_capacity*heating_capacity_adj;
-		hvac_rated_power = hvac_rated_capacity/(heating_COP * heating_cop_adj);
+	switch (system_mode) {
+	case SM_HEAT:
+	case SM_AUX:
+		system_rated_capacity = design_heating_capacity*heating_capacity_adj;
+		system_rated_power = system_rated_capacity/(heating_COP * heating_cop_adj);
 		break;
-	case HC_COOL:
-		hvac_rated_capacity = design_cooling_capacity*cooling_capacity_adj;
-		hvac_rated_power = hvac_rated_capacity/(cooling_COP * cooling_cop_adj);
+	case SM_COOL:
+		system_rated_capacity = design_cooling_capacity*cooling_capacity_adj;
+		system_rated_power = system_rated_capacity/(cooling_COP * cooling_cop_adj);
 		break;
 	default:
-		hvac_rated_capacity = 0.0;
-		hvac_rated_power = 0.0;
+		system_rated_capacity = 0.0;
+		system_rated_power = 0.0;
 	}
 
 	/* calculate the power consumption */
-	HVAC_load.power = hvac_rated_power*KWPBTUPH * ((heat_cool_mode == HC_HEAT) && (heat_type == HT_GASHEAT) ? 0.01 : 1.0);
-	HVAC_load.admittance = 0;
-	HVAC_load.current = 0;
-	HVAC_load.total = HVAC_load.power;
-	HVAC_load.heatgain = hvac_rated_capacity;
+	system.power = system_rated_power*KWPBTUPH * ((system_mode == SM_HEAT) && (system_type&ST_GAS) ? 0.01 : 1.0);
+	system.heatgain = system_rated_capacity;
 }
 
 void house_e::check_controls(void)
@@ -1428,7 +914,7 @@ void house_e::check_controls(void)
 		}
 
 		/* check for heating equipment sizing problem */
-		if ((heat_cool_mode==HC_HEAT || heat_cool_mode==HC_AUX) && Teq<heating_setpoint)
+		if ((system_mode==SM_HEAT || system_mode==SM_AUX) && Teq<heating_setpoint)
 		{
 			OBJECT *obj = OBJECTHDR(this);
 			DATETIME dt0;
@@ -1439,7 +925,7 @@ void house_e::check_controls(void)
 		}
 
 		/* check for cooling equipment sizing problem */
-		else if (heat_cool_mode==HC_COOL && Teq>cooling_setpoint)
+		else if (system_mode==SM_COOL && Teq>cooling_setpoint)
 		{
 			OBJECT *obj = OBJECTHDR(this);
 			DATETIME dt0;

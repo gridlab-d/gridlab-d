@@ -102,7 +102,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Updating XSL file"
+				Description="Updating XSL file in $(SolutionDir) for $(TargetPath)"
 				CommandLine="set GLPATH=win32\debug;core\rt;core&#x0D;&#x0A;set TZ=PST+8PDT&#x0D;&#x0A;&quot;$(TargetPath)&quot; --xsl climate,commercial,generators,market,network,plc,powerflow,residential,tape&#x0D;&#x0A;"
 			/>
 		</Configuration>
@@ -869,15 +869,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\core\asm\x86_64\cmpxchg.h"
+				>
+			</File>
+			<File
 				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
-				>
-			</File>
-			<File
-				RelativePath="..\core\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -892,6 +892,26 @@
 				RelativePath="..\Makefile.am"
 				>
 			</File>
+			<Filter
+				Name="Automake"
+				>
+				<File
+					RelativePath="..\automake.bat"
+					>
+				</File>
+				<File
+					RelativePath="..\configure.bat"
+					>
+				</File>
+				<File
+					RelativePath="..\makefile.win"
+					>
+				</File>
+				<File
+					RelativePath=".\makefile.win"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Test Files"
@@ -1042,74 +1062,6 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="Status"
-			>
-			<File
-				RelativePath="..\COPYRIGHT"
-				>
-			</File>
-			<File
-				RelativePath="..\LICENSE"
-				>
-			</File>
-			<File
-				RelativePath="..\README-LINUX"
-				>
-			</File>
-			<File
-				RelativePath="..\RELEASE"
-				>
-			</File>
-			<File
-				RelativePath="..\STATUS"
-				>
-			</File>
-			<File
-				RelativePath="..\VERSION"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Models"
-			>
-			<File
-				RelativePath="..\models\COPYRIGHT"
-				>
-			</File>
-			<File
-				RelativePath="..\models\dryer.shape"
-				>
-			</File>
-			<File
-				RelativePath="..\models\LICENSE"
-				>
-			</File>
-			<File
-				RelativePath="..\models\lighting.player"
-				>
-			</File>
-			<File
-				RelativePath="..\models\powerflow_IEEE_37node.glm"
-				>
-			</File>
-			<File
-				RelativePath="..\models\powerflow_IEEE_4node.glm"
-				>
-			</File>
-			<File
-				RelativePath="..\models\README"
-				>
-			</File>
-			<File
-				RelativePath="..\models\residential_loads.glm"
-				>
-			</File>
-			<File
-				RelativePath="..\models\STATUS"
-				>
-			</File>
-		</Filter>
-		<Filter
 			Name="Runtime Files"
 			>
 			<File
@@ -1132,162 +1084,210 @@
 				RelativePath=".\rt\mingw.conf"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="Support Files"
-			>
-			<File
-				RelativePath=".\rt\gridlabd.syn"
+			<Filter
+				Name="Support Files"
 				>
-			</File>
-			<File
-				RelativePath="..\core\tzinfo.txt"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
+				<File
+					RelativePath=".\rt\gridlabd.syn"
 					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying $(InputPath)"
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
+				</File>
+				<File
+					RelativePath="..\core\tzinfo.txt"
 					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying runtime file."
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying $(InputPath)"
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|x64"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying runtime file."
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying runtime file."
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying runtime file."
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="QuickDebug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying runtime file."
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="QuickDebug|x64"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying runtime file."
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\core\unitfile.txt"
 					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying runtime file."
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying $(InputPath)"
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|x64"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying runtime file"
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying runtime file"
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying runtime file"
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="QuickDebug|Win32"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying runtime file"
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="QuickDebug|x64"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+							Description="Copying runtime file"
+							CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+							Outputs="$(OutDir)\$(InputFileName)"
+						/>
+					</FileConfiguration>
+				</File>
+				<Filter
+					Name="Models"
 					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying runtime file."
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="QuickDebug|Win32"
+					<File
+						RelativePath="..\models\COPYRIGHT"
+						>
+					</File>
+					<File
+						RelativePath="..\models\dryer.shape"
+						>
+					</File>
+					<File
+						RelativePath="..\models\LICENSE"
+						>
+					</File>
+					<File
+						RelativePath="..\models\lighting.player"
+						>
+					</File>
+					<File
+						RelativePath="..\models\powerflow_IEEE_37node.glm"
+						>
+					</File>
+					<File
+						RelativePath="..\models\powerflow_IEEE_4node.glm"
+						>
+					</File>
+					<File
+						RelativePath="..\models\README"
+						>
+					</File>
+					<File
+						RelativePath="..\models\residential_loads.glm"
+						>
+					</File>
+					<File
+						RelativePath="..\models\STATUS"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Status"
 					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying runtime file."
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="QuickDebug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying runtime file."
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\core\unitfile.txt"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying $(InputPath)"
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying runtime file"
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying runtime file"
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying runtime file"
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="QuickDebug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying runtime file"
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="QuickDebug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Copying runtime file"
-						CommandLine="copy /y &quot;$(InputPath)&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
-						Outputs="$(OutDir)\$(InputFileName)"
-					/>
-				</FileConfiguration>
-			</File>
-		</Filter>
-		<Filter
-			Name="Automake"
-			>
-			<File
-				RelativePath="..\automake.bat"
-				>
-			</File>
-			<File
-				RelativePath="..\configure.bat"
-				>
-			</File>
-			<File
-				RelativePath="..\makefile.win"
-				>
-			</File>
-			<File
-				RelativePath=".\makefile.win"
-				>
-			</File>
+					<File
+						RelativePath="..\COPYRIGHT"
+						>
+					</File>
+					<File
+						RelativePath="..\LICENSE"
+						>
+					</File>
+					<File
+						RelativePath="..\README-LINUX"
+						>
+					</File>
+					<File
+						RelativePath="..\RELEASE"
+						>
+					</File>
+					<File
+						RelativePath="..\STATUS"
+						>
+					</File>
+					<File
+						RelativePath="..\VERSION"
+						>
+					</File>
+				</Filter>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

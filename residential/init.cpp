@@ -25,6 +25,8 @@
 #include "freezer.h"
 #include "dryer.h"
 #include "evcharger.h"
+
+#include "residential_enduse.h"
 #include "house_e.h"
 
 complex default_line_voltage[3] = {complex(240,0,A),complex(120,180,A),complex(120,180,A)};
@@ -43,6 +45,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 
 	house *house_class = new house(module);
 	new house_e(module);
+	new residential_enduse(module);
 	new waterheater(module);
 	new lights(module);
 	new refrigerator(module);

@@ -123,6 +123,9 @@ int savexml_strict(char *filename,FILE *fp)
 	MODULE *module;
 	GLOBALVAR *stylesheet = global_find("stylesheet");
 
+	int old_suppress_deprecated = global_suppress_deprecated_messages;
+	global_suppress_deprecated_messages = 1;
+
 	count += fprintf(fp,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
 	if (stylesheet==NULL || stylesheet->prop->ptype!=PT_char1024) /* only char1024 is allowed */
 		count += fprintf(fp,"<?xml-stylesheet href=\"%sgridlabd-%d_%d.xsl\" type=\"text/xsl\"?>\n",global_urlbase,global_version_major,global_version_minor);
@@ -270,6 +273,9 @@ int savexml_strict(char *filename,FILE *fp)
 
 	if (fp!=stdout)
 		fclose(fp);
+
+	global_suppress_deprecated_messages = old_suppress_deprecated;
+
 	return count;
 }
 

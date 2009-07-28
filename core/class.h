@@ -107,6 +107,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_DESCRIPTION, /* used to provide helpful description of property */
 	PT_EXTEND, /* used to enlarge class size by the size of the current property being mapped */
 	PT_EXTENDBY, /* used to enlarge class size by the size provided in the next argument */
+	PT_DEPRECATED, /* used to flag a property that is deprecated */
 } PROPERTYTYPE; /**< property types */
 typedef char CLASSNAME[64]; /**< the name a GridLAB class */
 typedef void* PROPERTYADDR; /**< the offset of a property from the end of the OBJECT header */
@@ -145,6 +146,7 @@ typedef struct s_keyword {
 typedef unsigned long PROPERTYFLAGS;
 #define PF_RECALC	0x0001 /**< property has a recalc trigger (only works if recalc_<class> is exported) */
 #define PF_CHARSET	0x0002 /**< set supports single character keywords (avoids use of |) */
+#define PF_DEPRECATED 0x8000 /**< set this flag to indicate that the property is deprecated (warning will be displayed anytime it is used */
 
 typedef struct s_property_map {
 	CLASS *oclass; /**< class implementing the property */
@@ -239,6 +241,7 @@ int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...);
 
 unsigned long property_size(PROPERTY *prop);
 int property_create(PROPERTY *prop, void *addr);
+PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation);
 
 #ifdef __cplusplus
 }

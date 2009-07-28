@@ -15,25 +15,7 @@
 typedef enum {duration=0,energy=1} TYPEOFEVENT;
 typedef enum {analog=0, PWM=1, queued=2} TYPEOFPULSE;
 
-typedef enum {	BRK_OPEN=0,		///< breaker open
-				BRK_CLOSED=1,	///< breaker closed
-				BRK_FAULT=-1,	///< breaker faulted
-} BREAKERSTATUS; ///< breaker state
-typedef enum {	X12=0,	///< circuit from line 1 to line 2    (240V)
-				X23=1,	///< circuit from line 2 to line 3(N) (120V)
-				X13=2,	///< circuit from line 1 to line 3(N) (120V)
-} CIRCUITTYPE; ///< circuit type
-
-typedef struct s_load {
-	/* NOTE: total must be first and must be published as "enduse_load[kVA]" */
-	OBJECT *end_obj;
-	complex total;		///< total load at voltage given (kVA)
-	complex power;		///< constant power load (kVA)
-	complex current;	///< constant current load (kVA)
-	complex admittance;	///< constant admittance load (kVA)
-	complex energy;		///< energy usage (accumulated kWh)
-	double heatgain;	///< internal heat gain rate (kW)
-} ENDUSELOAD;	///< End-use load struct that must be included in end-use for circuits to read load
+#define ENDUSELOAD enduse
 
 typedef struct s_loadshapex {
 	char *name; ///< end-use name
@@ -64,30 +46,6 @@ typedef struct s_loadshapex {
 	ENDUSELOAD load;
 } LOADSHAPE; ///< End-use load shape used to generate implicity end-use loads
 
-typedef struct s_circuit {
-	CIRCUITTYPE type;	///< circuit type
-	ENDUSELOAD *pLoad;	///< pointer to the load struct
-	complex *pV; ///< pointer to circuit voltage
-	double max_amps; ///< maximum breaker amps
-	int id; ///< circuit id
-	BREAKERSTATUS status; ///< breaker status
-	TIMESTAMP reclose; ///< time at which breaker is reclosed
-	unsigned short tripsleft; ///< the number of trips left before breaker faults
-	OBJECT *enduse; ///< the enduse that is using this circuit (must use ENDUSELOAD struct)
-	struct s_circuit *next; ///< next circuit in list
-	// DPC: commented this out until the rest of house_e is updated
-	LOADSHAPE *implicit_end_use;///pointer to the implicit end use, if the object is an implicit end use
-} CIRCUIT; ///< circuit definition
-
-typedef struct s_panel {
-	double max_amps; ///< maximum panel amps
-	BREAKERSTATUS status; ///< panel breaker status
-	TIMESTAMP reclose; ///< time at which breaker is reclosed
-	CIRCUIT *circuits; ///< pointer to first circuit in circuit list
-} PANEL; ///< panel definition
-
-#define N_SOLAR_SURFACES 9
-typedef enum {HORIZONTAL, NORTH, NORTH_EAST, EAST, SOUTH_EAST, SOUTH, SOUTH_WEST, WEST, NORTH_WEST} ORIENTATION;
 
 class house {
 public:

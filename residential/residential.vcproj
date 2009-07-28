@@ -567,6 +567,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\residential_enduse.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\residential\solvers.cpp"
 				>
 			</File>
@@ -637,6 +641,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\residential_enduse.h"
+				>
+			</File>
+			<File
 				RelativePath="..\residential\solvers.h"
 				>
 			</File>
@@ -667,6 +675,10 @@
 			</File>
 			<File
 				RelativePath="..\test\input\residential_meter.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_lights_standalone.glm"
 				>
 			</File>
 		</Filter>

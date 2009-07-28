@@ -111,49 +111,117 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 	return len;
 }
 
-int enduse_publish(CLASS *oclass, int struct_address, char *prefix)
+int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 {
-	enduse e;
+	enduse *this=NULL; // temporary enduse structure used for mapping variables
 
 	struct s_map_enduse{
-		char *prop_name;
-		int publish_addr;
-		PROPERTYTYPE prop_type;
+		PROPERTYTYPE type;
+		char *name;
+		char *addr;
+		char *description;
+		int flags;
 	}*p, prop_list[]={
-		{"current_fraction", (((char*)&e.current_fraction - (char*)&e) + struct_address), PT_double},
-		{"demand[kVA]", (((char*)&e.demand - (char*)&e) + struct_address), PT_complex},
-		{"energy[kVA]", (((char*)&e.energy - (char*)&e) + struct_address), PT_complex},
-		{"heatgain",  (((char*)&e.heatgain - (char*)&e) + struct_address), PT_double},
-		{"heatgain_fraction", (((char*)&e.heatgain_fraction - (char*)&e) + struct_address), PT_double},
-		{"impedance_fraction", (((char*)&e.impedance_fraction - (char*)&e) + struct_address), PT_double},
-		{"power[kVA]", (((char*)&e.power - (char*)&e) + struct_address), PT_complex},
-		{"power_factor", (((char*)&e.power_factor - (char*)&e) + struct_address), PT_double},
-		{"power_fraction", (((char*)&e.power_fraction - (char*)&e) + struct_address), PT_double},		
-		{"voltage_factor", (((char*)&e.voltage_factor - (char*)&e) + struct_address), PT_double},
-		{"flags", (((char*)&e.flags - (char*)&e) + struct_address), PT_set},
-		{"is220", EUF_IS220, PT_KEYWORD},
-	};
+		{PT_complex, "demand[kVA]",  PADDR(demand), "the peak power consumption since the last meter reading"},
+		{PT_complex, "energy[kVAh]",  PADDR(energy), "the total energy consumed since the last meter reading"},
+		{PT_complex, "total_power[kVA]",  PADDR(total), "the total power consumption of the load"},
+		{PT_double, "heatgain[Btu/h]",   PADDR(heatgain), "the heat transferred from the enduse to the parent"},
+		{PT_double, "heatgain_fraction[%]",  PADDR(heatgain_fraction), "the fraction of the heat that goes to the parent"},
+		{PT_double, "current_fraction[%]", PADDR(current_fraction),"the fraction of total power that is constant current"}, 
+		{PT_double, "impedance_fraction[%]",  PADDR(impedance_fraction), "the fraction of total power that is constant impedance"},
+		{PT_double, "power_fraction[%]",  PADDR(power_fraction), "the fraction of the total power that is constant power"},		
+		{PT_double, "power_factor",  PADDR(power_factor), "the power factor of the load"},
+		{PT_complex, "constant_power[kVA]",  PADDR(power), "the constant power portion of the total load"},
+		{PT_complex, "constant_current[kVA]", PADDR(current), "the constant current portion of the total load"},
+		{PT_complex, "constant_admittance[kVA]", PADDR(current), "the constant admittance portion of the total load"},
+		{PT_double, "voltage_factor[pu]",  PADDR(voltage_factor), "the voltage change factor"},
+		{PT_set, "configuration",  PADDR(config), "the load configuration options"},
+			{PT_KEYWORD, "IS220", EUC_IS220},
+
+		// @todo retire these values asap
+		{PT_complex, "total[kVA]",  PADDR(power), "the constant power portion of the total load",PF_DEPRECATED},
+		{PT_complex, "power[kVA]",  PADDR(power), "the constant power portion of the total load",PF_DEPRECATED},
+		{PT_complex, "current[kVA]", PADDR(current), "the constant current portion of the total load",PF_DEPRECATED},
+		{PT_complex, "admittance[kVA]", PADDR(current), "the constant admittance portion of the total load",PF_DEPRECATED},
+	}, *last=NULL;
 	
 	int result = 0;	
-
 	for (p=prop_list;p<prop_list+sizeof(prop_list)/sizeof(prop_list[0]);p++)
 	{
-		char prop_name[256];
+		char name[256];
 				
-		if(prefix == NULL)
+		if(prefix == NULL || strcmp(prefix,"")==0)
 		{
-			strcpy(prop_name,p->prop_name);
+			strcpy(name,p->name);
 		}
 		else
 		{
-			strcpy(prop_name,prefix);
-			strcat(prop_name, ".");
-			strcat(prop_name, p->prop_name);
+			strcpy(name,prefix);
+			strcat(name, ".");
+			strcat(name, p->name);
 		}
-				
-		result = class_define_map(oclass,  p->prop_type, prop_name, p->publish_addr, NULL);
-		if(result<1)
-			output_error("unable to publish properties in %s",__FILE__);
+		
+		if (p->type<_PT_LAST)
+		{
+			PROPERTY *prop = property_malloc(p->type,oclass,name,p->addr+(int64)struct_address,NULL);
+			prop->description = p->description;
+			prop->flags = p->flags;
+			class_add_property(oclass,prop);
+			result++;
+		}
+		else if (last==NULL)
+		{
+			output_error("PT_KEYWORD not allowed unless it follows another property specification");
+			/* TROUBLESHOOT
+				The enduse_publish structure is not defined correctly.  This is an internal error and cannot be corrected by
+				users.  Contact technical support and report this problem.
+			 */
+			return -result;
+		}
+		else if (p->type==PT_KEYWORD) {
+			switch (last->type) {
+			case PT_enumeration:
+				if (!class_define_enumeration_member(oclass,last->name,p->name,p->type))
+				{
+					output_error("unable to publish enumeration member %s of enduse %s", p->name,last->name);
+					/* TROUBLESHOOT
+					The enduse_publish structure is not defined correctly.  This is an internal error and cannot be corrected by
+					users.  Contact technical support and report this problem.
+					 */
+					return -result;
+				}
+				break;
+			case PT_set:
+				if (!class_define_set_member(oclass,last->name,p->name,(int64)p->addr))
+				{
+					output_error("unable to publish set member %s of enduse %s", p->name,last->name);
+					/* TROUBLESHOOT
+					The enduse_publish structure is not defined correctly.  This is an internal error and cannot be corrected by
+					users.  Contact technical support and report this problem.
+					 */
+					return -result;
+				}
+				break;
+			default:
+				output_error("PT_KEYWORD not supported after property type %s in enduse_publish", class_get_property_typename(last->type));
+				/* TROUBLESHOOT
+				The enduse_publish structure is not defined correctly.  This is an internal error and cannot be corrected by
+				users.  Contact technical support and report this problem.
+				 */
+				return -result;
+			}
+		}
+		else
+		{
+			output_error("property type %s not recognized in enduse_publish", class_get_property_typename(last->type));
+			/* TROUBLESHOOT
+				The enduse_publish structure is not defined correctly.  This is an internal error and cannot be corrected by
+				users.  Contact technical support and report this problem.
+			*/
+			return -result;
+		}
+
+		last = p;
 	}
 
 	return result;

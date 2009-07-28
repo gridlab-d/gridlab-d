@@ -195,7 +195,11 @@ typedef struct s_callbacks {
 		long (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
 	} schedule;
 	struct {
-		TIMESTAMP (*sync)(enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1);
+		loadshape *(*create)(struct s_loadshape *s);
+		int (*init)(struct s_loadshape *s);
+	} loadshape;
+	struct {
+		TIMESTAMP (*sync)(struct s_enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1);
 	} enduse;
 } CALLBACKS; /**< core callback function table */
 

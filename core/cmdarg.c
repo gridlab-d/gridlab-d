@@ -177,7 +177,7 @@ void print_class_d(CLASS *oclass, int tabdepth){
 				printf("%s\t%s %s;", tabs, propname, prop->name);
 			}
 			if (prop->description!=NULL)
-				printf(" // %s",prop->description);
+				printf(" // %s%s",prop->flags&PF_DEPRECATED?"(DEPRECATED) ":"",prop->description);
 			printf("\n");
 		}
 	}

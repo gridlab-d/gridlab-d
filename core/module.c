@@ -175,6 +175,7 @@ static CALLBACKS callbacks = {
 	object_get_oflags,
 	object_get_count,
 	{schedule_create, schedule_index, schedule_value, schedule_dtnext},
+	{loadshape_create,loadshape_init},
 	{enduse_sync},
 };
 

@@ -78,7 +78,7 @@ GLOBAL bool global_strictnames INIT(true); /**< Enforce strict global naming (pr
 GLOBAL bool global_xmlstrict INIT(false); /**< Causes XML I/O to use strict XML data structures */
 GLOBAL char global_urlbase[1024] /**< default urlbase used for online resources */
 #ifdef _DEBUG
-	INIT("http://gridlabd.pnl.gov/source/VS2005/");
+	INIT("./");
 #else
 	INIT("http://www.gridlabd.org/"); 
 #endif
@@ -124,6 +124,7 @@ GLOBAL char global_platform[8] /**< the host operating platform */
 #endif
 
 GLOBAL int global_suppress_repeat_messages INIT(1); /**< flag that allows repeated messages to be suppressed */
+GLOBAL int global_suppress_deprecated_messages INIT(0); /**< flag to suppress output notice of deprecated properties usage */
 
 #ifdef __cplusplus
 }

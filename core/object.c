@@ -434,7 +434,8 @@ void *object_get_addr(OBJECT *obj, /**< object to look in */
 	}
 }
 
-OBJECT *object_get_object(OBJECT *obj, PROPERTY *prop){
+OBJECT *object_get_object(OBJECT *obj, PROPERTY *prop)
+{
 	int64 o = (int64)obj;
 	int64 s = (int64)sizeof(OBJECT);
 	int64 a = (int64)(prop->addr);
@@ -448,7 +449,8 @@ OBJECT *object_get_object(OBJECT *obj, PROPERTY *prop){
 	}
 }
 
-OBJECT *object_get_object_by_name(OBJECT *obj, char *name){
+OBJECT *object_get_object_by_name(OBJECT *obj, char *name)
+{
 	PROPERTY *prop = class_find_property(obj->oclass, name);
 	
 	if(prop != NULL && prop->access != PA_PRIVATE && prop->ptype == PT_object){
@@ -462,7 +464,8 @@ OBJECT *object_get_object_by_name(OBJECT *obj, char *name){
 /* Get the pointer to the value of a 16-bit integer property. 
  * Returns NULL if the property is not found or if the value the right type.
  */
-int16 *object_get_int16(OBJECT *obj, PROPERTY *prop){
+int16 *object_get_int16(OBJECT *obj, PROPERTY *prop)
+{
 	if(object_prop_in_class(obj, prop) && prop->ptype == PT_int16 && prop->access != PA_PRIVATE){
 		return (int16 *)((char *)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
 	} else {
@@ -471,7 +474,8 @@ int16 *object_get_int16(OBJECT *obj, PROPERTY *prop){
 	}
 }
 
-int16 *object_get_int16_by_name(OBJECT *obj, char *name){
+int16 *object_get_int16_by_name(OBJECT *obj, char *name)
+{
 	PROPERTY *prop = class_find_property(obj->oclass, name);
 	
 	if(prop != NULL && prop->access != PA_PRIVATE){
@@ -495,7 +499,8 @@ int32 *object_get_int32(OBJECT *obj, PROPERTY *prop)
 	}
 }
 
-int32 *object_get_int32_by_name(OBJECT *obj, char *name){
+int32 *object_get_int32_by_name(OBJECT *obj, char *name)
+{
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop!=NULL && prop->access != PA_PRIVATE)
 		return (int32 *)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
@@ -506,7 +511,8 @@ int32 *object_get_int32_by_name(OBJECT *obj, char *name){
 /* Get the pointer to the value of a 64-bit integer property. 
  * Returns NULL if the property is not found or if the value the right type.
  */
-int64 *object_get_int64(OBJECT *obj, PROPERTY *prop){
+int64 *object_get_int64(OBJECT *obj, PROPERTY *prop)
+{
 	if(object_prop_in_class(obj, prop) && prop->ptype == PT_int64 && prop->access != PA_PRIVATE){
 		return (int64 *)((char *)obj + sizeof(OBJECT) + (int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
 	} else {
@@ -515,7 +521,8 @@ int64 *object_get_int64(OBJECT *obj, PROPERTY *prop){
 	}
 }
 
-int64 *object_get_int64_by_name(OBJECT *obj, char *name){
+int64 *object_get_int64_by_name(OBJECT *obj, char *name)
+{
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop!=NULL && prop->access != PA_PRIVATE)
 		return (int64 *)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
@@ -539,7 +546,8 @@ double *object_get_double(OBJECT *obj, PROPERTY *prop)
 	return NULL;
 }
 
-double *object_get_double_by_name(OBJECT *obj, char *name){
+double *object_get_double_by_name(OBJECT *obj, char *name)
+{
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop!=NULL && prop->access != PA_PRIVATE)
 		return (double *)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */

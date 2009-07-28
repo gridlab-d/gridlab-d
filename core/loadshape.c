@@ -66,6 +66,10 @@ int loadshape_initall(void)
 
 void loadshape_recalc(loadshape *ls)
 {
+	/* no schedule -> don't touch the loadshape */
+	if (ls->schedule==NULL)
+		return;
+
 	if (ls->schedule->duration==0)
 	{
 		ls->load = 0;
@@ -104,12 +108,9 @@ void loadshape_recalc(loadshape *ls)
 
 int loadshape_init(loadshape *ls) /**< load shape */
 {
-	/* check the schedule */
+	/* no schedule -> nothing to initialized */
 	if (ls->schedule==NULL)
-	{
-			output_error("loadshape_init(...) schedule is not specified");
-			return 1;
-	}
+		return 0;
 
 	/* some sanity checks */
 	switch (ls->type) {
@@ -229,12 +230,13 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 	/* if the clock is running */
 	if (t1 > ls->t0)
 	{
-		double dt = (double)(t1 - ls->t0);
+		double dt = ls->t0>0 ? (double)(t1 - ls->t0) : 0.0;
 		double queue_value;
 		switch (ls->type) {
 		case MT_ANALOG:
 			/* update load */
-			ls->load = ls->schedule->value * ls->params.analog.energy / ls->schedule->duration * ls->dPdV;
+			ls->load = ls->schedule->value * ls->params.analog.energy / ls->schedule->duration * 3600 * ls->dPdV;
+			ls->t2 = ls->schedule->duration>0 ? t1+ls->schedule->duration : TS_NEVER;
 			break;
 		case MT_PULSED:
 			/* update s and r */
@@ -277,7 +279,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 			else /* MPT_TIME */
 				ls->load = ls->s * ls->params.modulated.energy / ls->params.modulated.pulsevalue / ls->params.modulated.scalar * ls->dPdV;		
 
-			#define duration (ls->params.modulated.energy / ls->load / ls->params.modulated.scalar)
+#define duration (ls->params.modulated.energy / ls->load / ls->params.modulated.scalar)
 
 			/* update s and r */
 			if (ls->q > ls->d[0])
@@ -294,7 +296,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 
 			/* udpate q */ 
 			ls->q += ls->r * dt;
-
+#undef duration
 			break;
 
 		case MT_QUEUED:
@@ -306,7 +308,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 			else /* MPT_TIME */
 				ls->load = ls->s * ls->params.modulated.energy / ls->params.modulated.pulsevalue / ls->params.modulated.scalar * ls->dPdV;		
 
-			#define duration ((ls->params.modulated.energy*queue_value)/ ls->load)
+#define duration ((ls->params.modulated.energy*queue_value)/ ls->load)
 
 			/* update s and r */
 			if (ls->q > ls->d[0])
@@ -325,7 +327,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 
 			/* udpate q */ 
 			ls->q += ls->r * dt;
-
+#undef duration
 			
 			break;
 			

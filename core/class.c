@@ -219,7 +219,15 @@ PROPERTY *class_find_property(CLASS *oclass,		/**< the object class */
 	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 	{
 		if (strcmp(name,prop->name)==0)
+		{
+			if (prop->flags&PF_DEPRECATED && !global_suppress_deprecated_messages)
+				output_warning("class_find_property(CLASS *oclass='%s', PROPERTYNAME name='%s': property is deprecated", oclass->name, name);
+				/* TROUBLESHOOT
+					You have done a search on a property that has been flagged as deprecated and will most likely not be supported soon.
+					Correct the usage of this property to get rid of this message.
+				 */
 			return prop;
+		}
 	}
 	if (oclass->parent==oclass)
 	{
@@ -481,6 +489,76 @@ CLASS *class_get_class_from_classname_in_module(char *name, MODULE *mod){
 	return NULL;
 }
 
+PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation)
+{
+	char unitspec[1024];
+	PROPERTY *prop = (PROPERTY*)malloc(sizeof(PROPERTY));
+	
+	if (prop==NULL)
+	{
+		output_error("class_define_map(oclass='%s',...): memory allocation failed", oclass->name, name);
+		/*	TROUBLESHOOT
+			This means that the system has run out of memory while trying to define a class.  Trying freeing
+			up some memory by unloading applications or configuring your system so it has more memory.
+		 */
+		errno = ENOMEM;
+		goto Error;
+	}
+	prop->ptype = proptype;
+	prop->size = 0;
+	prop->access = PA_PUBLIC;
+	prop->oclass = oclass;
+	prop->flags = 0;
+	prop->keywords = NULL;
+	prop->description = NULL;
+	prop->unit = NULL;
+	if (sscanf(name,"%[^[][%[A-Za-z0-9*/^]]",prop->name,unitspec)==2)
+	{
+		/* detect when a unit is associated with non-double/complex property */
+		if (prop->ptype!=PT_double && prop->ptype!=PT_complex)
+			output_error("class_define_map(oclass='%s',...): property %s cannot have unit '%s' because it is not a double or complex value",oclass->name, prop->name,unitspec);
+			/*	TROUBLESHOOT
+				Only <b>double</b> and <b>complex</b> properties can have units.  
+				Either change the type of the property or remove the unit specification from the property's declaration.
+			 */
+
+		/* verify that the requested unit exists or can be derived */
+		else 
+		{
+			TRY {
+				if ((prop->unit = unit_find(unitspec))==NULL)
+					output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
+					/*	TROUBLESHOOT
+						A class is attempting to publish a variable using a unit that is not defined.  
+						This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
+						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+					 */
+			} CATCH (char *msg) {
+					output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
+					/*	TROUBLESHOOT
+						A class is attempting to publish a variable using a unit that is not defined.  
+						This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
+						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+					 */
+			} ENDCATCH;
+		}
+	}
+	prop->addr = addr;
+	prop->delegation = delegation;
+	prop->next = NULL;
+
+	/* check for already existing property by same name */
+	if (class_find_property(oclass,prop->name))
+		output_warning("class_define_map(oclass='%s',...): property name '%s' is defined more than once", oclass->name, prop->name);
+		/*	TROUBLESHOOT
+			A class is attempting to publish a variable more than once.  
+			This is caused by an repeated specification for a variable publication (in C++) or declaration (in GLM).
+		 */
+	return prop;
+Error:
+	free(prop);
+	return NULL;
+}
 /** Get the class from the class name.
 	@return a pointer to the class having that \p name,
 	or \p NULL if no match found.
@@ -736,7 +814,11 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			}
 			else if (proptype==PT_FLAGS)
 			{
-				prop->flags = va_arg(arg,unsigned int);
+				prop->flags |= va_arg(arg,unsigned int);
+			}
+			else if (proptype==PT_DEPRECATED)
+			{
+				prop->flags |= PF_DEPRECATED;
 			}
 			else if (proptype==PT_UNITS)
 			{
@@ -779,15 +861,29 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				goto Error;
 			}
 		}
+		else if (proptype==PT_enduse) // TODO this has to be done explicitly until structures are supported
+		{
+			char *name = va_arg(arg,char*);
+			PROPERTYADDR addr = va_arg(arg,PROPERTYADDR);
+			if (enduse_publish(oclass,addr,name)<=0)
+			{
+				output_error("class_define_map(oclass='%s',...): substructure of property '%s' substructure could not be published", oclass->name, prop->name);
+				/*	TROUBLESHOOT
+					A class is publishing a property that has a substructure, which couldn't be published.  
+					This must be corrected in the code the declares the property or publishes the class.
+				 */
+				errno = E2BIG;
+				goto Error;
+			}
+		}
 		else
 		{
 			DELEGATEDTYPE *delegation=(proptype==PT_delegated?va_arg(arg,DELEGATEDTYPE*):NULL);
 			char *name = va_arg(arg,char*);
 			PROPERTYADDR addr = va_arg(arg,PROPERTYADDR);
-			char unitspec[1024];
 			if (prop!=NULL && strlen(name)>=sizeof(prop->name))
 			{
-				output_error("class_define_map(oclass='%s',...): property name '%s' is too big", oclass->name, prop->name);
+				output_error("class_define_map(oclass='%s',...): property name '%s' is too big", oclass->name, name);
 				/*	TROUBLESHOOT
 					A class is publishing a property using a name that is too big for the system.  
 					Property names are limited in length.  
@@ -797,7 +893,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				goto Error;
 			}
 			if (strcmp(name,"parent")==0){
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/*	TROUBLESHOOT
 					A class is attempting to publish a variable with a name normally reserved for object headers.  
 					This is not allowed.  If the class is implemented in a module, this is problem with the module.
@@ -806,109 +902,51 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				 */
 				goto Error;
 			} else if (strcmp(name,"rank")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/* no need to repeat troubleshoot message */
 				goto Error;
 			} else if (strcmp(name,"clock")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/* no need to repeat troubleshoot message */
 				goto Error;
 			} else if (strcmp(name,"valid_to")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/* no need to repeat troubleshoot message */
 				goto Error;
 			} else if (strcmp(name,"latitude")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/* no need to repeat troubleshoot message */
 				goto Error;
 			} else if (strcmp(name,"longitude")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/* no need to repeat troubleshoot message */
 				goto Error;
 			} else if (strcmp(name,"in_svc")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/* no need to repeat troubleshoot message */
 				goto Error;
 			} else if (strcmp(name,"out_svc")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/* no need to repeat troubleshoot message */
 				goto Error;
 			} else if (strcmp(name,"name")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/* no need to repeat troubleshoot message */
 				goto Error;
 			} else if (strcmp(name,"flags")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, prop->name);
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/* no need to repeat troubleshoot message */
 				goto Error;
 			}
-			prop = (PROPERTY*)malloc(sizeof(PROPERTY));
+			prop = property_malloc(proptype,oclass,name,addr,delegation);
 			if (prop==NULL)
-			{
-				output_error("class_define_map(oclass='%s',...): memory allocation failed", oclass->name, prop->name);
-				/*	TROUBLESHOOT
-					This means that the system has run out of memory while trying to define a class.  Trying freeing
-					up some memory by unloading applications or configuring your system so it has more memory.
-				 */
-				errno = ENOMEM;
 				goto Error;
-			}
-			prop->ptype = proptype;
-			prop->size = 0;
-			prop->access = PA_PUBLIC;
-			prop->oclass = oclass;
-			prop->flags = 0;
-			prop->keywords = NULL;
-			prop->description = NULL;
-			prop->unit = NULL;
-			if (sscanf(name,"%[^[][%[A-Za-z0-9*/^]]",prop->name,unitspec)==2)
-			{
-				/* detect when a unit is associated with non-double/complex property */
-				if (prop->ptype!=PT_double && prop->ptype!=PT_complex)
-					output_error("class_define_map(oclass='%s',...): property %s cannot have unit '%s' because it is not a double or complex value",oclass->name, prop->name,unitspec);
-					/*	TROUBLESHOOT
-						Only <b>double</b> and <b>complex</b> properties can have units.  
-						Either change the type of the property or remove the unit specification from the property's declaration.
-					 */
-
-				/* verify that the requested unit exists or can be derived */
-				else 
-				{
-					TRY {
-						if ((prop->unit = unit_find(unitspec))==NULL)
-							output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
-							/*	TROUBLESHOOT
-								A class is attempting to publish a variable using a unit that is not defined.  
-								This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-								Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
-							 */
-					} CATCH (char *msg) {
-							output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
-							/*	TROUBLESHOOT
-								A class is attempting to publish a variable using a unit that is not defined.  
-								This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-								Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
-							 */
-					} ENDCATCH;
-				}
-			}
-			prop->addr = addr;
-			prop->delegation = delegation;
-			prop->next = NULL;
-
-			/* check for already existing property by same name */
-			if (class_find_property(oclass,prop->name))
-				output_warning("class_define_map(oclass='%s',...): property name '%s' is defined more than once", oclass->name, prop->name);
-				/*	TROUBLESHOOT
-					A class is attempting to publish a variable more than once.  
-					This is caused by an repeated specification for a variable publication (in C++) or declaration (in GLM).
-				 */
 
 			/* attach to property list */
 			class_add_property(oclass,prop);
 			count++;
 
-			/* save enum property in case extended property come up */
+			/* save property types in case extended property comes up */
 			if (prop->ptype>_PT_LAST)
 				prop = NULL;
 		}
