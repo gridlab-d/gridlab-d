@@ -1,4 +1,3 @@
-//
 // Test purpose: validate demand resetting function to make sure it resets demand to the appropriate 
 // values when input demand is outside the range of 0<=demand<=1; demand should be reset to 1 for values
 // greater than 1 and 0 for values less than 0; tape runs for 24 hours; assert compares enduse-load 
@@ -19,14 +18,13 @@ module assert;
 
 object house {
 	floor_area 1500 sf;
-	cooling_setpoint 100; // turns of HVAC
+	cooling_setpoint 100; // turns off HVAC
 	heating_setpoint 1;
 	object plugload {
 		constant_power .1;
 		object player {
-			file ../generic_fail_demand(range0-1).glt;
-			loop 2;
 			property demand;
+			file "../test_generic_limit_demand(range0-1).glt";
 		};
 		
 		object complex_assert {
@@ -34,10 +32,10 @@ object house {
 			within 0.000001;
 			object player {
 				property value;
-				loop 1;
-				file ../plugload_demand_range_bounds.player;
+				file "../plugload_demand_range_bounds.player";
 			};
 		};
+		
 		object recorder {
 			file "plugload_load_usage3600.csv";
 			interval 3600;
