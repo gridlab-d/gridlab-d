@@ -53,14 +53,14 @@ Name: modules\powerflow; Description: Power Flow Module; Types: typical custom
 Name: modules\residential; Description: Residential Module; Types: typical custom
 Name: modules\tape; Description: Tape Module; Types: typical custom
 Name: samples; Description: Sample Models; Types: typical custom
+Name: Compilers; Description: Download and install MinGW
+Name: Plotting_Tools; Description: Download and install GNUPlot
+Name: Climate_Data; Description: Download climate data files
+Name: Climate_Data\US; Description: US data in TMY2 format
 
 [Tasks]
 Name: environment; Description: Add GridLAB-D to &PATH environment variable; GroupDescription: Environment
 Name: overwriteglpath; Description: Create GLPATH, overwrite if exists (recommended); GroupDescription: Environment; Components: 
-Name: Install_Support_Files; Description: Download and install support files; GroupDescription: Download and install support files; Components: 
-Name: Install_Support_Files\Download_TMY_Files; Description: Download climate data files; Components: modules\climate
-Name: Install_Support_Files\Install_MinGW; Description: Download and install MinGW
-Name: Install_Support_Files\Install_gnuplot; Description: Download and install GnuPlot
 Name: desktopicon; Description: Create a &desktop icon; GroupDescription: Additional icons:
 Name: desktopicon\common; Description: For all users; GroupDescription: Additional icons:; Flags: exclusive
 Name: desktopicon\user; Description: For the current user only; GroupDescription: Additional icons:; Flags: exclusive unchecked
@@ -271,10 +271,10 @@ begin
    Result := sTextPadDest;
 end;
 [Run]
-Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/climate-US-2_0.zip?use_mirror=superb-east; WorkingDir: {app}\tmy; Tasks: " Install_Support_Files\Download_TMY_Files"
-Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/MinGW-5.1.4.exe?use_mirror=superb-west; WorkingDir: {app}; Tasks: Install_Support_Files\Install_MinGW
-Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/gnuplot-win32-4_2_3.zip?use_mirror=superb-west; WorkingDir: {app}; Tasks: " Install_Support_Files\Install_gnuplot"
-Filename: {app}\MinGW-5.1.4.exe; WorkingDir: {app}
-Filename: {app}\7za.exe; Parameters: x gnuplot-win32-4_2_3.zip; WorkingDir: c:\
+Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/climate-US-2_0.zip?use_mirror=superb-east; WorkingDir: {app}\tmy; Components: Climate_Data\US
+Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/MinGW-5.1.4.exe?use_mirror=superb-west; WorkingDir: {app}; Components: Compilers
+Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/gnuplot-win32-4_2_3.zip?use_mirror=superb-west; WorkingDir: {app}; Components: Plotting_Tools
+Filename: {app}\MinGW-5.1.4.exe; WorkingDir: {app}; Components: Compilers
+Filename: {app}\7za.exe; Parameters: x gnuplot-win32-4_2_3.zip; WorkingDir: c:\; Components: Climate_Data\US; Tasks: 
 [UninstallDelete]
 Name: {app}\tmy\climate-US-2_0.zip; Type: files

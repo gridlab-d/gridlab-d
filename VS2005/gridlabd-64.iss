@@ -4,9 +4,9 @@ OutputDir=.
 
 ; ++RELEASE++
 SourceDir=.\x64\Release
-OutputBaseFilename=gridlabd-1.1-64
+OutputBaseFilename=gridlabd-2.0
 AppName=GridLAB-D
-AppVerName=GridLAB-D 1.1
+AppVerName=GridLAB-D 2.0
 ; --RELEASE--
 
 ; ++DEBUG++
@@ -18,7 +18,7 @@ AppVerName=GridLAB-D 1.1
 
 AppVersion=0.1
 AppPublisher=Pacific Northwest National Laboratory, operated by Battelle
-AppCopyright=Copyright (C) 2004-2007 Battelle Memorial Institute
+AppCopyright=Copyright © 2004-2008 Battelle Memorial Institute
 AppPublisherURL=http://www.pnl.gov
 ;AppReadmeFile={app}\README.TXT
 ;AppSupportURL=http://gridlab.pnl.gov/support
@@ -26,7 +26,7 @@ AppPublisherURL=http://www.pnl.gov
 ;AppComments=<Include application comments here>
 ;AppContact=GridLAB-D Development Team <gridlabd@pnl.gov>
 VersionInfoDescription=Gridlab-D - Grid Simulator
-VersionInfoVersion=1.1.0.0
+VersionInfoVersion=2.0.0.0
 
 ;AppMutex=<Mutex string to prevent installation while application is running>
 DefaultDirName={pf}\GridLAB-D
@@ -54,6 +54,10 @@ Name: modules\powerflow; Description: Power Flow Module; Types: typical custom
 Name: modules\residential; Description: Residential Module; Types: typical custom
 Name: modules\tape; Description: Tape Module; Types: typical custom
 Name: samples; Description: Sample Models; Types: typical custom
+Name: Compilers; Description: Download and install MinGW
+Name: Plotting_Tools; Description: Download and install GNUPlot
+Name: Climate_Data; Description: Download climate data files
+Name: Climate_Data\US; Description: US data in TMY2 format
 
 [Tasks]
 Name: environment; Description: Add GridLAB-D to &PATH environment variable; GroupDescription: Environment
@@ -66,7 +70,7 @@ Name: quicklaunchicon; Description: Create a &Quick Launch icon; GroupDescriptio
 [Dirs]
 Name: {app}\bin
 Name: {app}\etc
-Name: {app}\etc\tmy
+Name: {app}\tmy
 Name: {app}\lib
 Name: {userdocs}\GridLAB-D
 Name: {app}\rt
@@ -103,6 +107,10 @@ Source: tape_file.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: tape_memory.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
 ;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
+Source: reliability.dll; DestDir: {app}\lib; Flags: ignoreversion
+Source: ..\..\..\market\Win32\Release\market.dll; DestDir: {app}\lib; Flags: ignoreversion
+Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
+Source: tape_plot.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
 Source: ..\..\..\models\residential_loads.glm; DestDir: {app}\samples
 Source: ..\..\..\models\powerflow_IEEE_37node.glm; DestDir: {app}\samples
@@ -129,7 +137,12 @@ Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\gnuplot.conf; DestDir: {app}\rt; Flags: ignoreversion
 Source: ..\..\..\core\rt\gridlabd.h; DestDir: {app}\rt; Flags: ignoreversion
+;Source: ..\..\..\climate\tmy\*.zip; DestDir: {app}\tmy
+;Source: ..\..\..\climate\tmy\extract_tmy; DestDir: {app}\tmy
+;Source: ..\..\..\climate\tmy\build_pkgs; DestDir: {app}\tmy
 Source: ..\..\..\plc\rt\include\plc.h; DestDir: {app}\rt
+Source: ..\..\..\utilities\wget.exe; DestDir: {app}; Flags: deleteafterinstall
+Source: ..\..\..\utilities\7za.exe; DestDir: {app}; Flags: deleteafterinstall
 
 [Registry]
 Root: HKCU; SubKey: Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples"; Flags: uninsdeletevalue deletevalue; Check: not (IsAdminLoggedOn() or IsPowerUserLoggedOn()); AfterInstall: InstallEnvironment(); Tasks: overwriteglpath
@@ -254,3 +267,11 @@ function TextPadDestination(Param: String) : String;
 begin
    Result := sTextPadDest;
 end;
+[Run]
+Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/climate-US-2_0.zip?use_mirror=superb-east; WorkingDir: {app}\tmy; Components: Climate_Data\US
+Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/MinGW-5.1.4.exe?use_mirror=superb-west; WorkingDir: {app}; Components: Compilers
+Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/gnuplot-win32-4_2_3.zip?use_mirror=superb-west; WorkingDir: {app}; Components: Plotting_Tools
+Filename: {app}\MinGW-5.1.4.exe; WorkingDir: {app}; Components: Compilers
+Filename: {app}\7za.exe; Parameters: x gnuplot-win32-4_2_3.zip; WorkingDir: c:\; Components: Climate_Data\US; Tasks: 
+[UninstallDelete]
+Name: {app}\tmy\climate-US-2_0.zip; Type: files
