@@ -1,0 +1,19 @@
+// $Id$
+// Copyright (C) 2008 Battelle Memorial Institute
+//
+// Test the use of alternate property value syntax (A) ? (B) : (C);
+//
+
+class test {
+	enumeration {NO=0, YES=1} value;
+        intrinsic create(object parent)
+	{
+		return 0;
+	};
+}
+
+object test:..100 {
+	value (random.bernoulli(0.8)) ? YES : NO;
+	};
+}
+

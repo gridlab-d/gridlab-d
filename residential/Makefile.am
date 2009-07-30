@@ -3,6 +3,7 @@ libresidential_la_SOURCES = \
 	house_a.cpp house_a.h \
 	house_e.cpp house_e.h \
 	solvers.cpp solvers.h \
+	residential_enduse.cpp residential_enduse.h \
 	clotheswasher.cpp clotheswasher.h \
 	dishwasher.cpp dishwasher.h \
 	lights.cpp lights.h \
