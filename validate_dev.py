@@ -75,7 +75,7 @@ def run_tests(argv):
 	autotestfiles = []
 	for path in autotestdirs:
 		for file in os.listdir(path):
-			if "test_" in file and ".glm" in file:
+			if "test_" in file and ".glm" in file and file[0] != '.':
 				autotestfiles.append((path, file))
 	
 	for path, file in autotestfiles:
