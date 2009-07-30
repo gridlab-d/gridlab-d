@@ -558,7 +558,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 					"%s"
 					"CALLBACKS *callback = NULL;\n"
 					"static CLASS *myclass = NULL;\n"
-					"static void setup_class(CLASS *);\n\n",
+					"static int setup_class(CLASS *);\n\n",
 					include_file_str,
 					global_getvar("use_msvc",NULL,0)!=NULL
 					?
@@ -574,13 +574,13 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 					"{\n"
 					"\tcallback=fntable;\n"
 					"\tmyclass=(CLASS*)((*(callback->class_getname))(\"%s\"));\n"
-					"\tsetup_class(myclass);\n"
+					"\tif (!setup_class(myclass)) return NULL;\n"
 					"\treturn myclass;"
 					"}\n",oclass->name)<0
 				|| write_file(fp,"%s",code_block)<0 
 				|| write_file(fp,"%s",global_block)<0
-				|| write_file(fp,"static void setup_class(CLASS *oclass)\n"
-					"{\t\n%s}\n",setup_class(oclass))<0 
+				|| write_file(fp,"static int setup_class(CLASS *oclass)\n"
+					"{\t\n%s\treturn 1;\n}\n",setup_class(oclass))<0 
 				)
 			{
 				output_fatal("unable to write to '%s'", cfile);
@@ -2711,7 +2711,7 @@ static int class_export_function(PARSER, CLASS *oclass, char *fname, int fsize, 
 
 			if (global_getvar("noglmrefs",NULL,0)==NULL)
 				append_init("#line %d \"%s\"\n"
-					"\t(*(callback->function.define))(oclass,\"%s\",(FUNCTIONADDR)&%s::%s);\n"
+					"\tif ((*(callback->function.define))(oclass,\"%s\",(FUNCTIONADDR)&%s::%s)==NULL) return 0;\n"
 					"/*RESETLINE*/\n", startline, forward_slashes(filename),
 					fname,oclass->name,fname);
 

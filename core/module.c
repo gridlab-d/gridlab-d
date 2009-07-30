@@ -367,6 +367,8 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 
 	/* call the initialization function */
 	mod->oclass = (*init)(&callbacks,(void*)mod,argc,argv);
+	if (mod->oclass==NULL)
+		return NULL;
 
 	/* connect intrinsic functions */
 	for (c=mod->oclass; c!=NULL; c=c->next) {

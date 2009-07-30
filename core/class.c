@@ -1004,7 +1004,20 @@ int class_define_set_member(CLASS *oclass, /**< pointer to the class which imple
  */
 FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTIONADDR call)
 {
-	FUNCTION *func = (FUNCTION*)malloc(sizeof(FUNCTION));
+	FUNCTION *func;
+	if (class_get_function(oclass->name,functionname)!=NULL)
+	{
+		output_error("class_define_function(CLASS *class={name='%s',...}, FUNCTIONNAME functionname='%s', ...) the function name has already been defined", oclass->name, functionname);
+		/* TROUBLESHOOT
+			The function in question has already been defined for the class.  
+			Only one function of any given name is permitted in each class.
+			Remove or correct the duplicate function declaration and try again.
+		 */
+		errno = 0;
+		return NULL;
+	}
+
+	func = (FUNCTION*)malloc(sizeof(FUNCTION));
 	if (func==NULL)
 	{
 		errno = ENOMEM;
