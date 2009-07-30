@@ -58,6 +58,7 @@ void delete_pidfile(void)
 int main(int argc, /**< the number entries on command-line argument list \p argv */
 		 char *argv[]) /**< a list of pointers to the command-line arguments */
 {
+	int rv = 0;
 	global_process_id = getpid();
 #if defined WIN32 && _DEBUG 
 	atexit(pause_at_exit);
@@ -141,7 +142,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 			follows a more specific message regarding the startup problem.
 			Follow the recommendation for the indicated problem.
 		 */
-		exit(2);
+		rv = 2;
 	}
 
 	/* post process the test */
@@ -188,7 +189,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	/* compute elapsed runtime */
 	output_verbose("elapsed runtime %d seconds", realtime_runtime());
 
-	exit(0);
+	exit(rv);
 }
 
 /** @} **/
