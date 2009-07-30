@@ -115,7 +115,6 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// compute the total load and heat gain
 	if (t0>0 && t1>t0){
 		load.energy += load.total * gl_tohours(t1-t0);
-		load.heatgain += load.total.Mag() * heat_fraction * gl_tohours(t1-t0);
 	}
 	if(demand > 1.0){
 		gl_warning("plugload demand cannot be greater than 1.0, capping");
@@ -129,7 +128,7 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if(pVoltage->Mag() < 72.0){
 		load.total = 0.0; /* assuming too low to power the devices */
 	}
-
+	load.heatgain = load.total.Mag() * heat_fraction;
 
 	return TS_NEVER; 
 
