@@ -68,7 +68,6 @@ waterheater::waterheater(MODULE *module)
 			PT_double,"meter[kWh]",PADDR(kwh_meter),
 			PT_double,"temperature[degF]",PADDR(Tw),
 			PT_double,"height[ft]",PADDR(h),
-			PT_double,"faux_gain",PADDR(faux_gain),
 			PT_complex,"enduse_load[kW]",PADDR(load.total),
 			PT_complex,"constant_power[kW]",PADDR(load.power),
 			PT_complex,"constant_current[A]",PADDR(load.current),
@@ -245,10 +244,10 @@ int waterheater::init(OBJECT *parent)
 	if (h == 0)
 
 		// discharged
-		Tw = Tupper = Tlower = Tinlet;  // Note that Tw gets reset, too...
+		Tw = /*Tupper*/ Tw = Tlower = Tinlet;  // Note that Tw gets reset, too...
 	else 
 	{
-		Tupper = Tw;
+		/*Tupper*/ Tw = Tw;
 		Tlower = Tinlet;
 	}
 
@@ -313,7 +312,6 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double internal_gain = 0.0;
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 	double Tamb = get_Tambient(location);
-	double Td, Texp;
 
 	// determine the power used
 	if (heat_needed == TRUE){
@@ -333,24 +331,18 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// determine internal gains
 	if(nHours > 0){
 		if (location == INSIDE){
-			//internal_gain = actual_kW() * nHours; // DPC: this is wrong!!!  Where's the UA?
 			if(this->current_model == ONENODE){
-				Texp = exp((this->tank_UA / this->Cw) * nHours);
-				Td = ((Tamb + Tw_old) * Texp) - Tamb;
-				internal_gain = Tw_old - (((Tamb + Tw_old) * exp((this->tank_UA / this->Cw) * nHours)) - Tamb);
-				internal_gain *= Cw;	/* convert from T0 - T0_jacket degF to BTUs */
+				internal_gain = tank_UA * (Tw - get_Tambient(location));
 			} else if(this->current_model == TWONODE){
-//				internal_gain = -((Tamb - Tupper_old) * exp((tank_UA / Cw) * nHours) - Tamb) * (h - height) / height;
-//				internal_gain += -((Tamb - Tlower_old) * exp((tank_UA / Cw) * nHours) - Tamb) * (1 - (h - height) / height);
-				internal_gain = actual_kW() * nHours; /* cop-out */
+				internal_gain = tank_UA * (/*Tupper*/ Tw - Tamb) * h / height;
+				internal_gain += tank_UA * (Tlower - Tamb) * (1 - h / height);
 			}
 		} else {
 			internal_gain = 0;
 		}
-		faux_gain = actual_kW() * nHours;
 		load.total = load.power = power_kw;
 		// post internal gains
-		load.heatgain = (this->location == INSIDE) ? (-internal_gain * KWPBTUPH) : 0;
+		load.heatgain = (internal_gain * KWPBTUPH);
 	}
 
 	if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
@@ -366,10 +358,10 @@ TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
 
 int waterheater::commit(){
 	Tw_old = Tw;
-	Tupper_old = Tupper;
+	Tupper_old = /*Tupper*/ Tw;
 	Tlower_old = Tlower;
 	water_demand_old = water_demand;
-return 1;
+	return 1;
 }
 
 /** Tank state determined based on the height of the hot water column
@@ -440,8 +432,15 @@ waterheater::WHQFLOW waterheater::set_current_model_and_load_state(void)
 			{
 				// If the tank is empty, a negative dh/dt means we're still
 				// drawing water, so we'll be switching to the 1-zone model...
-				current_model = NONE;
+				
+				//current_model = NONE;
+				//load_state = DEPLETING;
+				
+				current_model = ONENODE;
 				load_state = DEPLETING;
+				Tw = Tupper = Tlower = Tinlet;
+				h = height;
+				/* empty of hot water? full of cold water! */
 			}
 			else if (dhdt_full > 0)
 			{
@@ -533,7 +532,7 @@ void waterheater::update_T_and_or_h(double nHours)
 			// things are moving (RECOVERING vs DEPLETING)...
 SingleZone:
 			Tw = new_temp_1node(Tw, nHours);
-			Tupper = Tw;
+			/*Tupper*/ Tw = Tw;
 			Tlower = Tinlet;
 			break;
 
@@ -571,7 +570,7 @@ SingleZone:
 				// adjustment to Tlower/Tw to account for it...
 
 				double vol_over = tank_volume/GALPCF * h/height;  // Negative...
-				double energy_over = vol_over * RHOWATER * Cp * (Tupper - Tlower);
+				double energy_over = vol_over * RHOWATER * Cp * (/*Tupper*/ Tw - Tlower);
 				double Tnew = Tlower + energy_over/Cw;
 				Tw = Tlower = Tnew;
 				h = 0;
@@ -580,9 +579,9 @@ SingleZone:
 			{
 				// Ditto for over-recovery...
 				double vol_over = tank_volume/GALPCF * (h-height)/height;
-				double energy_over = vol_over * RHOWATER * Cp * (Tupper - Tlower);
-				double Tnew = Tupper + energy_over/Cw;
-				Tw = Tupper = Tnew;
+				double energy_over = vol_over * RHOWATER * Cp * (/*Tupper*/ Tw - Tlower);
+				double Tnew = /*Tupper*/ Tw + energy_over/Cw;
+				Tw = /*Tupper*/ Tw = Tnew;
 				Tlower = Tinlet;
 				h = height;
 			} 
@@ -592,7 +591,7 @@ SingleZone:
 				// adjust Tlower, even if the Tinlet has changed.  This avoids
 				// the headache of adjusting h and is of minimal consequence because
 				// Tinlet changes so slowly...
-				Tupper = Tw;
+				/*Tupper*/ Tw = Tw;
 			}
 			break;
 
@@ -605,19 +604,19 @@ SingleZone:
 
 double waterheater::dhdt(double h)
 {
-	if (Tupper - Tlower < ROUNDOFF)
-		return 0.0; // if Tupper and Tlower are same then dh/dt = 0.0;
+	if (/*Tupper*/ Tw - Tlower < ROUNDOFF)
+		return 0.0; // if /*Tupper*/ Tw and Tlower are same then dh/dt = 0.0;
 
 	// Pre-set some algebra just for efficiency...
 	const double mdot = water_demand * 60 * RHOWATER / GALPCF;		// lbm/hr...
-    const double c1 = RHOWATER * Cp * area * (Tupper - Tlower);
+    const double c1 = RHOWATER * Cp * area * (/*Tupper*/ Tw - Tlower);
 	
     // check c1 before dividing by it
     if (c1 <= ROUNDOFF)
-        return 0.0; //Possible only when Tupper and Tlower are very close, and the difference is negligible
+        return 0.0; //Possible only when /*Tupper*/ Tw and Tlower are very close, and the difference is negligible
 
 	const double cA = -mdot / (RHOWATER * area) + (actual_kW() * BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
-	const double cb = (tank_UA / height) * (Tupper - Tlower) / c1;
+	const double cb = (tank_UA / height) * (/*Tupper*/ Tw - Tlower) / c1;
 
 	// Returns the rate of change of 'h'
 	return cA + cb*h;
@@ -684,13 +683,13 @@ inline double waterheater::new_temp_1node(double T0, double delta_t)
 
 inline double waterheater::new_time_2zone(double h0, double h1)
 {
-	const double c0 = RHOWATER * Cp * area * (Tupper - Tlower);
+	const double c0 = RHOWATER * Cp * area * (/*Tupper*/ Tw - Tlower);
 	double dhdt0, dhdt1;
 
     if (fabs(c0) <= ROUNDOFF || height <= ROUNDOFF)
         return -1.0;    // c0 or height should never be zero.  if one of these is zero, there is no definite time to transition
 
-	const double cb = (tank_UA / height) * (Tupper - Tlower) / c0;
+	const double cb = (tank_UA / height) * (/*Tupper*/ Tw - Tlower) / c0;
 
     if (fabs(cb) <= ROUNDOFF)
         return -1.0;
@@ -707,16 +706,16 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 
 	// old because this happens in presync and needs previously used demand
 	const double mdot = water_demand_old * 60 * RHOWATER / GALPCF;		// lbm/hr...
-	const double c1 = RHOWATER * Cp * area * (Tupper - Tlower);
+	const double c1 = RHOWATER * Cp * area * (/*Tupper*/ Tw - Tlower);
 
 	// check c1 before division
 	if (fabs(c1) <= ROUNDOFF)
-        return height;      // if Tupper and Tlower are real close, then the new height is the same as tank height
+        return height;      // if /*Tupper*/ Tw and Tlower are real close, then the new height is the same as tank height
 //		throw MODEL_NOT_2ZONE;
 		
 
 	const double cA = -mdot / (RHOWATER * area) + (actual_kW()*BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
-	const double cb = (tank_UA / height) * (Tupper - Tlower) / c1;
+	const double cb = (tank_UA / height) * (/*Tupper*/ Tw - Tlower) / c1;
 
     if (fabs(cb) <= ROUNDOFF)
         return height;
