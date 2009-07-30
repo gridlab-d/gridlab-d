@@ -51,7 +51,7 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 				else
 					output_message("dump to '%s' complete", global_dumpfile);
 			}
-			// exit(5);
+			return FAILED;
 		}
 		return SUCCESS;
 	}

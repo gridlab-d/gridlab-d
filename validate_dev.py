@@ -38,6 +38,7 @@ def run_tests(argv):
 	
 	there_dir = os.getcwd()
 	err_ct = 0
+	ex_ct = 0
 	start_time = time.time()
 	
 	if clean == 1:
@@ -129,11 +130,19 @@ def run_tests(argv):
 					print("ERROR: "+file+" converged when it shouldn't've!")
 					errct += 1
 					err = True
-			else:
+			elif rv == 2:
 				print("SUCCESS: File "+file+" failed to converge, as planned.")
 				cleanlist.append((path, file))
+			elif rv == 1:
+				print("ERROR:  "+file+" failed to load!")
+				errct += 1
+				err = True
+			else:
+				print("ERROR:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
+				errct += 1
+				err = True
 		else:
-			if rv != 0:
+			if rv == 2:
 				if "opt_" in file or "_opt" in file:
 					print("WARNING: Optional file "+file+" failed to converge!")
 					cleanlist.append((path, file))
@@ -142,9 +151,17 @@ def run_tests(argv):
 					errct += 1
 					print("ERROR: "+file+" failed to converge!")
 					err = True
-			else:
+			elif rv == 1:
+				print("ERROR:  "+file+" failed to load!")
+				errct += 1
+				err = True
+			elif rv == 0:
 				print("SUCCESS: File "+file+" converged successfully.")
 				cleanlist.append((path, file))
+			else:
+				print("ERROR:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
+				errct += 1
+				err = True
 		if err:
 			# zip target directory
 			errlist.append((path,file))
