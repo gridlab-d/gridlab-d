@@ -230,7 +230,7 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// update heatgain
 	load.total = load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000;
-	load.heatgain = (placement==INDOOR ? (load.total.Mag() * BTUPHPKW) : 0);
+	load.heatgain = (placement==INDOOR ? (load.total.Mag()) : 0);
 
 	return TS_NEVER; 
 }
