@@ -106,7 +106,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	for (e=enduse_list; e!=NULL; e=e->next)
 	{
-		TIMESTAMP t3 = enduse_sync(e,PC_PRETOPDOWN,global_clock,t1);
+		TIMESTAMP t3 = enduse_sync(e,PC_PRETOPDOWN,t1);
 		if (t3<t2) t2 = t3;
 	}
 	return t2;
