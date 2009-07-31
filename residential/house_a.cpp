@@ -709,7 +709,7 @@ TIMESTAMP house::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	double nHours = (gl_tohours(t1)- gl_tohours(t0));
-	//load.energy += load.total * nHours;
+	load.energy += load.total * nHours;
 	TIMESTAMP sync_time = sync_hvac_load(t1, nHours);
 
 	// sync circuit panel
