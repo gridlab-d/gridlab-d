@@ -459,8 +459,11 @@ EXPORT void close_recorder(struct recorder *my)
 {
 #ifdef WIN32
 	char32 gnuplot;
-	strcpy(gnuplot,"wgnuplot ");
-	_putenv("PATH=%PATH%;C:\\wgnuplot\\bin");
+	if(my->output == SCREEN)
+		strcpy(gnuplot,"wgnuplot -persist");
+	else
+		strcpy(gnuplot,"wgnuplot");
+	_putenv("PATH=%PATH%;C:\\wgnuplot");
 #else
 	char *gnuplot = "gnuplot ";
 #endif
@@ -474,7 +477,7 @@ EXPORT void close_recorder(struct recorder *my)
 		return;
 	else {
 		fprintf(my->fp,"e\n");
-		//fprintf(my->fp,"pause -1 \"PRESS RETURN TO CONTINUE\" \n" );
+		//fprintf(my->fp,"pause -1");// \"PRESS RETURN TO CONTINUE\" \n" );
 		fprintf(my->fp,"# end of tape\n");
 		fclose(my->fp);
 		sscanf(my->file,"%32[^:]:%32[^:]",type,fname);
@@ -596,7 +599,7 @@ EXPORT void close_collector(struct collector *my)
 #ifdef WIN32
 	char32 gnuplot;
 	strcpy(gnuplot,"wgnuplot ");
-	_putenv("PATH=%PATH%;C:\\wgnuplot\\bin");
+	_putenv("PATH=%PATH%;C:\\wgnuplot");
 #else
 	char *gnuplot = "gnuplot ";
 #endif
@@ -610,7 +613,7 @@ EXPORT void close_collector(struct collector *my)
 		return;
 	else {
 		fprintf(my->fp,"e\n");
-		fprintf(my->fp,"pause -1 \"PRESS RETURN TO CONTINUE\" \n" );
+		fprintf(my->fp,"pause -1");// \"PRESS RETURN TO CONTINUE\" \n" );
 		fprintf(my->fp,"# end of tape\n");
 		fclose(my->fp);
 		sscanf(my->file,"%32[^:]:%32[^:]",type,fname);
