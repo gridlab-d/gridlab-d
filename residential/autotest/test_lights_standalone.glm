@@ -1,0 +1,70 @@
+// $Id$
+// Test standalone lighting objects
+//
+
+#set verbose=1
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2002-01-01 00:00:00 PST';
+}
+
+schedule lighting {
+	* 17-22 * 12-2 * 0.75 // winter
+	* 18-22 * 3-5,9-11 * 0.5 // spring/fall
+	* 19-22 * 6-8 * 0.25 // summer
+}
+
+module residential;
+module assert;
+module tape;
+
+// Test 1
+// Verify that the values given in the schedule are directly copied
+// to the enduse and that they accrue properly to the metered energy
+object lights {
+	name "direct-power";
+	power_fraction 1.0;
+	type CFL; // -> PF = -0.92
+	shape "type: analog; schedule: lighting";
+	object complex_assert {
+		in '2001-12-31 23:59:59 PST';
+		target energy;
+		within 1;
+		value +954-406i;
+	};
+}
+
+// Test 2
+// Verify that the values given in the schedule are scaled from installed_power
+// to the enduse and that they accrue properly to the metered energy
+object lights {
+	name "installed-power";
+	installed_power 500 W; 
+	power_fraction 1.0;
+	type CFL; // -> PF = -0.92
+	shape "type: analog; schedule: lighting";
+	object complex_assert {
+		in '2001-12-31 23:59:59 PST';
+		target energy;
+		within 1;
+		value +477-203i;
+	};
+}
+
+// Test 3
+// Verify that the values given in the schedule are scaled from the loadshape
+// to the enduse and that they accrue properly to the metered energy
+object lights {
+	name "scaled-power";
+	type CFL; // -> PF = -0.92
+	power_fraction 1.0;
+	shape "type: analog; schedule: lighting; power: 500 W";
+	object complex_assert {
+		in '2001-12-31 23:59:59 PST';
+		target energy;
+		within 1;
+		value +477-203i;
+	};
+}

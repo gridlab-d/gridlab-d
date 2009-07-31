@@ -1,0 +1,42 @@
+// $Id$
+// Test standalone lighting objects
+//
+
+#set suppress_repeat_messages=0
+#set verbose=1
+#set debug=1
+#set savefile="test_residentialenduse_standalone.xml"
+
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 0:00:00 PST';
+	stoptime '2001-01-01 0:00:00 PST';
+}
+
+module residential;
+
+schedule weekly {
+	* * * * 1-5 5 // 5/7 of energy on weekdays
+	* * * * 6-0 2 // 2/7 of energy on weekends
+}
+
+// this object should generate a continuous load of about 416.67W
+object residential_enduse {
+	name res-enduse-basic;
+	shape "type:analog; schedule: weekly; energy: 10 kWh";
+}
+
+// this object should generate a warning message about a missing schedule
+#print Object 'res-enduse-none' should generate a warning about missing schedule
+object residential_enduse {
+	name res-enduse-none;
+}
+
+// this object should generate a warning message about a bad parent
+#print Object 'res-enduse-badparent' should generate a warning about its parent
+object residential_enduse {
+	name res-enduse-badparent;
+	parent res-enduse-none;
+	shape "type:analog; schedule: weekly; energy: 10 kWh";
+}
+
