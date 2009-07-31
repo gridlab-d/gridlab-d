@@ -455,6 +455,13 @@ STATUS exec_start(void)
 
 			/* synchronize all internal schedules */
 			sync.step_to = syncall_internals(sync.step_to);
+			if (sync.step_to<=global_clock)
+				THROW("internal property sync failure");
+				/* TROUBLESHOOT
+					An internal property such as schedule, enduse or loadshape has failed to synchronize and the simulation aborted.
+					This message should be preceded by a more informative message that explains which element failed and why.
+					Follow the troubleshooting recommendations for that message and try again.
+				 */
 
 			if (!global_debug_mode)
 			{

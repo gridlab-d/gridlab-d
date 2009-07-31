@@ -677,10 +677,18 @@
 				RelativePath="..\test\input\residential_meter.glm"
 				>
 			</File>
-			<File
-				RelativePath=".\autotest\test_lights_standalone.glm"
+			<Filter
+				Name="Autotest"
 				>
-			</File>
+				<File
+					RelativePath=".\autotest\test_lights_standalone.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_residentialenduse_standalone.glm"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

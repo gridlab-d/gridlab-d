@@ -3,9 +3,6 @@
 //
 
 #set suppress_repeat_messages=0
-#set verbose=1
-#set debug=1
-#set savefile="test_residentialenduse_standalone.xml"
 
 clock {
 	timezone PST+8PDT;

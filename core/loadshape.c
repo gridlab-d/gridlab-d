@@ -351,7 +351,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 			break;
 		}
 	}
-	return ls->t2;
+	return ls->t2>0?ls->t2:TS_NEVER;
 }
 
 TIMESTAMP loadshape_syncall(TIMESTAMP t1)
