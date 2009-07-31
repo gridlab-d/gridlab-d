@@ -22,6 +22,8 @@ typedef struct s_endusex {
 	complex constant_power;		/**< ENDUSE constant power part*/
 	complex constant_current;	/**< ENDUSE constant current part*/
 	complex constant_admittance;	/**< ENDUSE addmittance part*/
+	double heatgain;
+	double heatgain_fraction;
 } ENDUSE;
 
 /*****************************************************
@@ -147,8 +149,8 @@ private:
 	double r1, r2, k1, k2;
 	double c1, c2, c3, c4, c5, c6, c7, dTi;
 	void update_control_setpoints();
-	double update_lighting();
-	double update_plugs();
+	TIMESTAMP update_lighting(TIMESTAMP t0,TIMESTAMP t1);
+	TIMESTAMP update_plugs(TIMESTAMP t0,TIMESTAMP t1);
 	double update_hvac();
 public:
 	static CLASS *oclass;

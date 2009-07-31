@@ -437,7 +437,11 @@ TIMESTAMP office::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 /* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1) 
-{
+{	
+	/* load calculations */
+	update_lighting(t0,t1);
+	update_plugs(t0,t1);
+	
 	/* local aliases */
 	const double &Tout = (*(zone.current.pTemperature));
 	const double &Ua = (zone.design.exterior_ua);
@@ -500,7 +504,7 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 		const double Ca = 0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area;
 
 		/* update enduses and get internal heat gains */
-		Qi = update_lighting() + update_plugs();
+		Qi = zone.lights.enduse.power.Mag() + zone.plugs.enduse.power.Mag();
 
 		/* compute solar gains */
 		Qs = 0; 
@@ -640,16 +644,32 @@ void office::update_control_setpoints()
 	zone.control.ventilation_fraction = zone.current.occupancy>0 ? zone.hvac.minimum_ach : 0;
 }
 
-double office::update_lighting()
+TIMESTAMP office::update_lighting(TIMESTAMP t0, TIMESTAMP t1)
 {
-	/** @todo compute lighting enduse (no ticket) */
-	return zone.lights.enduse.power.Mag();
+	// power calculation
+	zone.lights.enduse.power.SetPowerFactor(zone.lights.capacity *
+		zone.lights.fraction, zone.lights.enduse.power_factor, J);
+	// energy calculation
+	if (t0>0 && t1>t0)
+		zone.lights.enduse.energy += zone.lights.enduse.power * gl_tohours(t1-t0);
+	// heatgain calculation
+	zone.lights.enduse.heatgain = zone.lights.enduse.power.Mag() *
+		zone.lights.enduse.heatgain_fraction;
+	return TS_NEVER;
 }
 
-double office::update_plugs()
+TIMESTAMP office::update_plugs(TIMESTAMP t0, TIMESTAMP t1)
 {
-	/** @todo compute plugs enduse (no ticket) */
-	return zone.plugs.enduse.power.Mag();
+	//power calculation
+	zone.plugs.enduse.power.SetPowerFactor(zone.plugs.capacity * 
+		zone.plugs.fraction, zone.plugs.enduse.power_factor, J);
+	// energy calculation
+	if (t0>0 && t1>t0)
+		zone.plugs.enduse.energy += zone.plugs.enduse.power * gl_tohours(t1-t0);
+	// heatgain calculation 
+	zone.plugs.enduse.heatgain = zone.plugs.enduse.power.Mag() *
+		zone.plugs.enduse.heatgain_fraction;
+	return TS_NEVER;
 }
 
 double office::update_hvac()
