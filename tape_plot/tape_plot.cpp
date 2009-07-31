@@ -474,7 +474,7 @@ EXPORT void close_recorder(struct recorder *my)
 		return;
 	else {
 		fprintf(my->fp,"e\n");
-		fprintf(my->fp,"pause -1 \"PRESS RETURN TO CONTINUE\" \n" );
+		//fprintf(my->fp,"pause -1 \"PRESS RETURN TO CONTINUE\" \n" );
 		fprintf(my->fp,"# end of tape\n");
 		fclose(my->fp);
 		sscanf(my->file,"%32[^:]:%32[^:]",type,fname);
