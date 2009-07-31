@@ -33,7 +33,8 @@ struct s_loadshape {
 	MACHINETYPE type;	/**< the type of this machine */
 	union {
 		struct {
-			double energy;		/**< the total energy used over the shape */
+			double energy;		/**< the total energy used over the shape (0 if scalar is used) */
+			double power;		/**< the power scaling factor of the shape (0 if energy is used) */
 		} analog;
 		struct {
 			double energy;		/**< the total energy used over the shape */

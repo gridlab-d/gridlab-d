@@ -20,7 +20,6 @@ public:
 
 public:
 	static CLASS *oclass;
-	static residential_enduse *defaults;
 	residential_enduse(MODULE *mod);
 	int create(void);
 	int init(OBJECT *parent);

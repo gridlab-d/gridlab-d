@@ -667,7 +667,7 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 /** reads the value on the schedule
     @return current value on schedule
  **/
-double schedule_value(SCHEDULE *sch, /**< the schedule to read */
+double schedule_value(SCHEDULE *sch,		/**< the schedule to read */
 					  SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
 	return sch->data[sch->index[GET_CALENDAR(index)][GET_MINUTE(index)]];
@@ -676,10 +676,23 @@ double schedule_value(SCHEDULE *sch, /**< the schedule to read */
 /** reads the time until the next change in the schedule 
 	@return time until next value change (in minutes)
  **/
-long schedule_dtnext(SCHEDULE *sch, /**< the schedule to read */
-					  SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
+long schedule_dtnext(SCHEDULE *sch,			/**< the schedule to read */
+					 SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
 	return sch->dtnext[GET_CALENDAR(index)][GET_MINUTE(index)];
+}
+
+long schedule_duration(SCHEDULE *sch,			/**< the schedule to read */
+					   SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
+{
+	int block = (sch->index[GET_CALENDAR(index)][GET_MINUTE(index)]>>6)&MAXBLOCKS; // these change if MAXVALUES or MAXBLOCKS changes
+	return sch->minutes[block];
+}
+
+double schedule_weight(SCHEDULE *sch,			/**< the schedule to read */
+					   SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
+{
+	return sch->weight[sch->index[GET_CALENDAR(index)][GET_MINUTE(index)]];
 }
 
 /** synchronize the schedule to the time given
@@ -692,18 +705,21 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 	static SCHEDULEINDEX index = {0};
 	double value;
 	long dtnext;
+	double duration;
 	
 	/* get the current schedule status */
 	if (t!=last_t) index = schedule_index(sch,t);
 	value = schedule_value(sch,index);
 	dtnext = schedule_dtnext(sch,index)*60;
+	duration = (double)schedule_duration(sch,index);
 
 	/* if the schedule is changing value */
-	if (value!=sch->value)
+	if (value!=sch->value || sch->duration!=duration)
 	{
 		/* record the next value and its duration */
 		sch->value = value;
-		sch->duration = (dtnext==0 ? (double)TS_NEVER : dtnext);
+		sch->duration = duration / 60;
+		sch->fraction = schedule_weight(sch,index) / duration;
 	}
 
 	/* compute the time of the next schedule change */

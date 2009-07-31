@@ -879,7 +879,7 @@ inline long gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
 
 inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1)
 {
-	return callback->enduse.sync(e,PC_BOTTOMUP,*(callback->global_clock),t1);
+	return callback->enduse.sync(e,PC_BOTTOMUP,t1);
 }
 
 inline loadshape *gl_create_loadshape(SCHEDULE *s)

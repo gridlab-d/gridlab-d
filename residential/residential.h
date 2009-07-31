@@ -7,6 +7,8 @@
 #define _RESIDENTIAL_H
 
 #include "gridlabd.h"
+#include "lock.h"
+#include "module.h"
 
 /* useful constants */
 #define RHOWATER	(62.4)			// lb/cf

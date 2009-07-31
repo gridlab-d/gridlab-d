@@ -10,12 +10,11 @@
 #define _LIGHTS_H
 
 #include "residential.h"
+#include "residential_enduse.h"
 
-class lights  
-{
+class lights : public residential_enduse {
 private:
-	complex *pVoltage;
-	ENDUSELOAD load;
+	CIRCUIT *pCircuit;
 
 public:
 	enum { // make certain this matchers the power_factor table
@@ -31,14 +30,12 @@ public:
 		INDOOR=0,		///< indoor lighting (100% indoor heat gain)
 		OUTDOOR=1,		///< outdoor lighting (0% indoor heat gain)
 	} placement;		///< lighting location 
-	double circuit_split;			///< -1=100% negative, 0=balanced, +1=100% positive
+	double circuit_split;			///< -1=100% negative, 0=balanced, +1=100% positive (DEPRECATED)
 	double power_density;			///< Installed lighting power density [W/sf]
-	double installed_power;			///< installed wattage [W]
-	double demand;					///< fraction of light that is on [pu]
+	double curtailment;				///< fractional curtailment of lighting [pu]
 
 public:
-	static CLASS *oclass;
-	static lights *defaults;
+	static CLASS *oclass, *pclass;
 	lights(MODULE *mod);
 	int create(void);
 	int init(OBJECT *parent);

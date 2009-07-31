@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include "lock.h"
 #include "residential.h"
 #include "residential_enduse.h"
 
@@ -19,7 +18,6 @@
 // CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* residential_enduse::oclass = NULL;
-residential_enduse *residential_enduse::defaults = NULL;
 
 // the constructor registers the class and properties and sets the defaults
 residential_enduse::residential_enduse(MODULE *mod) 
@@ -47,19 +45,12 @@ residential_enduse::residential_enduse(MODULE *mod)
 				by a coding error in the core implementation of classes or the module implementation.
 				Please report this error to the developers.
 			 */
-
-		// setup the default values
-		defaults = this;
-		memset(this,0,sizeof(residential_enduse));
 	}
 }
 
 // create is called every time a new object is loaded
 int residential_enduse::create(void) 
 {
-	// copy the defaults
-	memcpy(this,defaults,sizeof(residential_enduse));
-
 	// attach loadshape 
 	load.shape = &shape;
 	return 1;
@@ -121,7 +112,14 @@ EXPORT int create_residential_enduse(OBJECT **obj, OBJECT *parent)
 	{
 		residential_enduse *my = OBJECTDATA(*obj,residential_enduse);
 		gl_set_parent(*obj,parent);
-		my->create();
+		try {
+			my->create();
+		}
+		catch (char *msg)
+		{
+			gl_error("%s::%s.create(OBJECT **obj={name='%s', id=%d},...): %s", (*obj)->oclass->module->name, (*obj)->oclass->name, (*obj)->name, (*obj)->id, msg);
+			return 0;
+		}
 		return 1;
 	}
 	return 0;
@@ -130,15 +128,33 @@ EXPORT int create_residential_enduse(OBJECT **obj, OBJECT *parent)
 EXPORT int init_residential_enduse(OBJECT *obj)
 {
 	residential_enduse *my = OBJECTDATA(obj,residential_enduse);
-	return my->init(obj->parent);
+	try {
+		return my->init(obj->parent);
+	}
+	catch (char *msg)
+	{
+		gl_error("%s::%s.init(OBJECT *obj={name='%s', id=%d}): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, msg);
+		return 0;
+	}
 }
 
-EXPORT TIMESTAMP sync_residential_enduse(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP sync_residential_enduse(OBJECT *obj, TIMESTAMP t1)
 {
 	residential_enduse *my = OBJECTDATA(obj,residential_enduse);
-	TIMESTAMP t1 = my->sync(obj->clock, t0);
-	obj->clock = t0;
-	return t1;
+	try {
+		TIMESTAMP t2 = my->sync(obj->clock, t1);
+		obj->clock = t1;
+		return t2;
+	}
+	catch (char *msg)
+	{
+		DATETIME dt;
+		char ts[64];
+		gl_localtime(t1,&dt);
+		gl_strtime(&dt,ts,sizeof(ts));
+		gl_error("%s::%s.init(OBJECT **obj={name='%s', id=%d},TIMESTAMP t1='%s'): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, ts, msg);
+		return 0;
+	}
 }
 
 /**@}**/

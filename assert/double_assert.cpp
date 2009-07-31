@@ -107,7 +107,7 @@ TIMESTAMP double_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	} 
 	else 
 	{
-		return t1+1;
+		return TS_NEVER;
 	}
 }
 complex *double_assert::get_complex(OBJECT *obj, char *name)

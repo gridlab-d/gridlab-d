@@ -33,14 +33,26 @@ int enduse_create(void *data)
 
 int enduse_init(enduse *e)
 {
+	// check the zip fractions
 	double sum = fabs(e->current_fraction) + fabs(e->impedance_fraction) + fabs(e->power_fraction);
-
-	/* TODO initialize enduse data */
 	if (sum==0)
 	{
-		output_error("enduse_init(...) sum of zip fractions is zero");
-		return 1;
+		output_warning("enduse_init(char *name='%s',...) sum of zip fractions is zero, making load constant power", e->name);
+		e->power_fraction = 1.0;
 	}
+	else if (sum!=1.0)
+	{
+		output_warning("enduse_init(char *name='%s',...) sum of zip fractions is not 1.0, normalizing fractions", e->name);
+		e->power_fraction /= sum;
+		e->current_fraction /= sum;
+		e->impedance_fraction /= sum;
+	}
+
+	// check the power factor
+	if (e->power_factor==0) e->power_factor = 1.0;
+	if (e->heatgain_fraction==0) e->heatgain_fraction = 1.0;
+
+	e->t_last = TS_ZERO;
 
 	return 0;
 }
@@ -56,20 +68,34 @@ int enduse_initall(void)
 	return SUCCESS;
 }
 
-TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1)
+TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 {
-	if (pass==PC_PRETOPDOWN && t1>t0)
+	if (pass==PC_PRETOPDOWN && t1>e->t_last)
 	{
-		double dt = (double)(t1-t0)/(double)3600;
-		e->energy.r += e->power.i * dt;
-		e->energy.i += e->power.i * dt;
+		if (e->t_last>TS_ZERO)
+		{
+			double dt = (double)(t1-e->t_last)/(double)3600;
+			e->energy.r += e->total.r * dt;
+			e->energy.i += e->total.i * dt;
+		}
 	}
 	else if(pass==PC_BOTTOMUP)
 	{
-		e->power.r = e->shape->load * (e->power_fraction + (e->current_fraction + e->impedance_fraction/e->voltage_factor )/e->voltage_factor) ;
-		e->power.i = e->shape->load * e->power_factor;
+		double P = e->shape->load * (e->power_fraction + (e->current_fraction + e->impedance_fraction*e->voltage_factor )*e->voltage_factor);
+		e->total.r = P;
+		if (fabs(e->power_factor)<1)
+			e->total.i = (e->power_factor<0?-1:1)*P*sqrt(1/(e->power_factor*e->power_factor)-1);
+		else
+			e->total.i = 0;
+
+		// beware: these are misnomers (they are e->constant_power, e->constant_current, ...)
+		e->power.r = e->total.r * e->power_fraction; e->power.i = e->total.i * e->power_fraction;
+		e->current.r = e->total.r * e->current_fraction; e->current.i = e->total.i * e->current_fraction;
+		e->admittance.r = e->total.r * e->impedance_fraction; e->admittance.i = e->total.i * e->impedance_fraction;
+
 		if (e->power.r > e->demand.r) e->demand = e->power;
 		e->heatgain = e->power.r * e->heatgain_fraction;
+		e->t_last = t1;
 	}
 	return TS_NEVER;
 }
@@ -114,7 +140,7 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 {
 	enduse *this=NULL; // temporary enduse structure used for mapping variables
-
+	int result = 0;	
 	struct s_map_enduse{
 		PROPERTYTYPE type;
 		char *name;
@@ -122,14 +148,14 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		char *description;
 		int flags;
 	}*p, prop_list[]={
-		{PT_complex, "demand[kVA]",  PADDR(demand), "the peak power consumption since the last meter reading"},
 		{PT_complex, "energy[kVAh]",  PADDR(energy), "the total energy consumed since the last meter reading"},
-		{PT_complex, "total_power[kVA]",  PADDR(total), "the total power consumption of the load"},
+		{PT_complex, "power[kVA]",  PADDR(total), "the total power consumption of the load"},
+		{PT_complex, "demand[kVA]",  PADDR(demand), "the peak power consumption since the last meter reading"},
 		{PT_double, "heatgain[Btu/h]",   PADDR(heatgain), "the heat transferred from the enduse to the parent"},
-		{PT_double, "heatgain_fraction[%]",  PADDR(heatgain_fraction), "the fraction of the heat that goes to the parent"},
-		{PT_double, "current_fraction[%]", PADDR(current_fraction),"the fraction of total power that is constant current"}, 
-		{PT_double, "impedance_fraction[%]",  PADDR(impedance_fraction), "the fraction of total power that is constant impedance"},
-		{PT_double, "power_fraction[%]",  PADDR(power_fraction), "the fraction of the total power that is constant power"},		
+		{PT_double, "heatgain_fraction[pu]",  PADDR(heatgain_fraction), "the fraction of the heat that goes to the parent"},
+		{PT_double, "current_fraction[pu]", PADDR(current_fraction),"the fraction of total power that is constant current"}, 
+		{PT_double, "impedance_fraction[pu]",  PADDR(impedance_fraction), "the fraction of total power that is constant impedance"},
+		{PT_double, "power_fraction[pu]",  PADDR(power_fraction), "the fraction of the total power that is constant power"},		
 		{PT_double, "power_factor",  PADDR(power_factor), "the power factor of the load"},
 		{PT_complex, "constant_power[kVA]",  PADDR(power), "the constant power portion of the total load"},
 		{PT_complex, "constant_current[kVA]", PADDR(current), "the constant current portion of the total load"},
@@ -138,14 +164,19 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		{PT_set, "configuration",  PADDR(config), "the load configuration options"},
 			{PT_KEYWORD, "IS220", EUC_IS220},
 
-		// @todo retire these values asap
+		// @todo retire these values before the next major release because they are legacy values from residential ENDUSELOAD structure
 		{PT_complex, "total[kVA]",  PADDR(power), "the constant power portion of the total load",PF_DEPRECATED},
-		{PT_complex, "power[kVA]",  PADDR(power), "the constant power portion of the total load",PF_DEPRECATED},
+		{PT_complex, "total_power[kVA]",  PADDR(power), "the constant power portion of the total load",PF_DEPRECATED},
 		{PT_complex, "current[kVA]", PADDR(current), "the constant current portion of the total load",PF_DEPRECATED},
 		{PT_complex, "admittance[kVA]", PADDR(current), "the constant admittance portion of the total load",PF_DEPRECATED},
 	}, *last=NULL;
 	
-	int result = 0;	
+	// publish the enduse load itself
+	PROPERTY *prop = property_malloc(PT_enduse,oclass,strcmp(prefix,"")==0?prefix:"load",struct_address,NULL);
+	prop->description = "the enduse load description";
+	prop->flags = 0;
+	class_add_property(oclass,prop);
+
 	for (p=prop_list;p<prop_list+sizeof(prop_list)/sizeof(prop_list[0]);p++)
 	{
 		char name[256];
@@ -163,7 +194,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		
 		if (p->type<_PT_LAST)
 		{
-			PROPERTY *prop = property_malloc(p->type,oclass,name,p->addr+(int64)struct_address,NULL);
+			prop = property_malloc(p->type,oclass,name,p->addr+(int64)struct_address,NULL);
 			prop->description = p->description;
 			prop->flags = p->flags;
 			class_add_property(oclass,prop);

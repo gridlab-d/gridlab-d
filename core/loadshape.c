@@ -115,9 +115,14 @@ int loadshape_init(loadshape *ls) /**< load shape */
 	/* some sanity checks */
 	switch (ls->type) {
 	case MT_ANALOG:
-		if (ls->params.analog.energy<=0)
+		if (ls->params.analog.energy<0)
 		{
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) analog energy must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		else if (ls->params.analog.power<0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) analog power must be a positive number",ls->schedule->name);
 			return 1;
 		}
 		break;
@@ -235,8 +240,18 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 		switch (ls->type) {
 		case MT_ANALOG:
 			/* update load */
-			ls->load = ls->schedule->value * ls->params.analog.energy / ls->schedule->duration * 3600 * ls->dPdV;
-			ls->t2 = ls->schedule->duration>0 ? t1+ls->schedule->duration : TS_NEVER;
+			if (ls->schedule->duration>0)
+			{
+				if (ls->params.analog.energy>0)
+					ls->load = ls->schedule->value * ls->params.analog.energy * ls->schedule->fraction * ls->dPdV;
+				else if (ls->params.analog.power>0)
+					ls->load = ls->schedule->value * ls->params.analog.power * ls->dPdV;
+				else
+					ls->load = ls->schedule->value * ls->dPdV;
+				ls->t2 = ls->schedule->next_t;
+			}
+			else
+				return TS_NEVER;
 			break;
 		case MT_PULSED:
 			/* update s and r */
@@ -356,8 +371,12 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 	loadshape *ls = (loadshape*)data;
 	switch (ls->type) {
 	case MT_ANALOG:
-		return sprintf(string,"type: analog; schedule: %s; energy: %g kWh",
-			ls->schedule->name, ls->params.analog.energy);
+		if (ls->params.analog.energy>0)
+			return sprintf(string,"type: analog; schedule: %s; energy: %g kWh",	ls->schedule->name, ls->params.analog.energy);
+		else if (ls->params.analog.power>0)
+			return sprintf(string,"type: analog; schedule: %s; power: %g kWh",	ls->schedule->name, ls->params.analog.power);
+		else
+			return sprintf(string,"type: analog; schedule: %s", ls->schedule->name);
 		break;
 	case MT_PULSED:
 		if (ls->params.pulsed.pulsetype==MPT_TIME)
@@ -592,7 +611,13 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 		else if (strcmp(param,"power")==0)
 		{
 			if (ls->type==MT_ANALOG)
-				output_warning("convert_to_loadshape(string='%-.64s...', ...) power is not used by analog loadshapes",string);
+			{
+				if (!convert_unit_double(value,"kW",&ls->params.analog.power))
+				{
+					output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power to unit kW",string);
+					return 0;
+				}
+			}
 			else if (ls->type==MT_PULSED)
 				if (ls->params.pulsed.pulsetype==MPT_TIME)
 					output_warning("convert_to_loadshape(string='%-.64s...', ...) power ignored because duration has already been specified and is mutually exclusive",string);
@@ -677,7 +702,6 @@ int loadshape_test(void)
 	int failed = 0;
 	int ok = 0;
 	int errorcount = 0;
-	char ts[64];
 
 	/* tests */
 	struct s_test {

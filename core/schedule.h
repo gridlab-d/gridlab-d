@@ -7,18 +7,25 @@
 	
 	@par Schedule syntax
 	<code>
-	# comments are ignored until and end-of-line
-	block1-name { # each block must have a unique name
-		minutes hours days months weekdays value # uses the crontab format
-		minutes hours days months weekdays value # multiple entries separate by newlines or semicolons
+	// comments are ignored until and end-of-line
+	block1-name { // each block must have a unique name
+		minutes hours days months weekdays value // uses the crontab format
+		minutes hours days months weekdays value // multiple entries separate by newlines or semicolons
 	}
-	block2-name { # normalization is done over each block
-	}
-	block3-name { # block are combined
+	block2-name { // normalization is done over each block
+		minutes hours days months weekdays // omitted values a taken to be 1.0
+		}
+	block3-name { // block are combined
+		// omitted entries are taken to be 0.0
 	}
 	</code>
 
 	Optionally, a simple schedule can be provided
+
+	<code>
+	minutes hours days months weekdays value // uses the crontab format
+	minutes hours days months weekdays value // multiple entries separate by newlines or semicolons
+	</code>
 
 **/
 
@@ -29,6 +36,8 @@
 
 #define MAXBLOCKS 4
 #define MAXVALUES 64
+#define GET_BLOCK(I) ((I)>>6)&0x02)
+#define GET_VALUE(I) ((I)&0x3f)
 
 typedef unsigned long SCHEDULEINDEX;
 #define GET_CALENDAR(N) (((N)>>20)&0x0f)
@@ -53,7 +62,8 @@ struct s_schedule {
 	unsigned int minutes[MAXBLOCKS];	/**< the total number of minutes associate with each block */
 	TIMESTAMP next_t;					/**< the time of the next schedule event */
 	double value;						/**< the current scheduled value */
-	double duration;					/**< the duration of the current scheduled value */
+	double duration;					/**< the duration of the current scheduled value (in hours) */
+	double fraction;					/**< the fractional weight of the block of the current value (pu time) */
 	int flags;							/**< the schedule flags (see SF_*) */
 	SCHEDULE *next;	/* next schedule in list */
 };

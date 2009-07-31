@@ -6,34 +6,11 @@
 
 	The residential lighting object supports the major types of residential
 	lights (see lights::type).  The lighting type effects the power factor
-	used (see lights::power_factor).
+	used (see lights::load.power_factor).
 
-		\f$ S = Polar\left(S_{rated}*demand,cos^{-1}PF_{type}\right) \f$
+	The lighting enduse is driven by an analog loadshape which is driven by
+	a general purpose schedule.
 
-	For incandescent lights, the power drops proportionally with voltage:
-
-		\f$ S = S_{rated}\frac{\left|V\right|}{120} \f$
-
-	and cuts out below 30 V.
-
-	For electronic ballast lights, the power drops as voltage drops 
-
-		\f$ \Re\left(S\right) = S_{rated} \frac{\left|V\right|}{120} \f$ 
-
-	but reactive power is to the square root of voltage
-
-		\f$ \Im\left(S\right) = \frac{S_{rated}}{PF_{type}} \sqrt{\frac{\left|V\right|}{120}} \f$ 
-
-	and cuts out below 0.1 puV.  The lighs cut back in between 0.2 and 0.4 puV. 
-	[Ref: Steve Yang's test results for WECC LMTF done at BPA in 2007]
-
-	For high-intensity discharge lights the power increases to the square of the voltage drop
-
-		\f$ S = S_{rated}\left(\frac{120}{\left|V\right|}\right)^2 \f$
-
-	and cuts out below 90 V.
-
-	@todo Research the voltage response for HID lights; these are just educated guesses. (residential, medium priority) (ticket #141)
  @{
  **/
 
@@ -41,198 +18,163 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include "lock.h"
-#include "house_a.h"
+#include "residential.h"
 #include "lights.h"
 
 //////////////////////////////////////////////////////////////////////////
 // lights CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* lights::oclass = NULL;
-lights *lights::defaults = NULL;
+CLASS* lights::pclass = NULL;
 
-double lights::power_factor[_MAXTYPES];
+double lights::power_factor[_MAXTYPES] = {
+	1.00, // INCANDESCENT
+	-0.95, // FLUORESCENT
+	-0.92, // CFL
+	-0.90, // SSL
+	-0.97, // HID
+};
 
 // the constructor registers the class and properties and sets the defaults
 lights::lights(MODULE *mod) 
+: residential_enduse(mod)
 {
 	// first time init
 	if (oclass==NULL)
 	{
+		pclass = residential_enduse::oclass;
+
 		// register the class definition
 		oclass = gl_register_class(mod,"lights",sizeof(lights),PC_BOTTOMUP);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			/* TROUBLESHOOT
+				The file that implements the lights in the residential module cannot register the class.
+				This is an internal error.  Contact support for assistance.
+			 */
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_enumeration,"type",PADDR(type),
+			PT_INHERIT, "residential_enduse",
+			PT_enumeration,"type",PADDR(type), PT_DESCRIPTION, "lighting type (affects power_factor)",
 				PT_KEYWORD,"INCANDESCENT",INCANDESCENT,
 				PT_KEYWORD,"FLUORESCENT",FLUORESCENT,
 				PT_KEYWORD,"CFL",CFL,
 				PT_KEYWORD,"SSL",SSL,
 				PT_KEYWORD,"HID",HID,
-			PT_enumeration,"placement",PADDR(placement),
+			PT_enumeration,"placement",PADDR(placement), PT_DESCRIPTION, "lighting location (affects where heatgains go)",
 				PT_KEYWORD,"INDOOR",INDOOR,
 				PT_KEYWORD,"OUTDOOR",OUTDOOR,
-			PT_double,"installed_power[W]",PADDR(installed_power),
-			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"demand[unit]",PADDR(demand),
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"constant_power[kW]",PADDR(load.power),
-			PT_complex,"constant_current[A]",PADDR(load.current),
-			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
+			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power), PT_DESCRIPTION, "installed lighting capacity",
+			PT_double,"power_density[W/sf]",PADDR(power_density), PT_DESCRIPTION, "installed power density",
+			PT_double,"curtailment[pu]", PADDR(curtailment), PT_DESCRIPTION, "lighting curtailment factor",
+
+			// @todo retire these values before the next major release
+			PT_double,"circuit_split",PADDR(circuit_split), PT_DEPRECATED, PT_DESCRIPTION, "the split of the lighting load across the 120V circuits",
+			PT_double,"demand_factor[unit]",PADDR(shape.load), PT_DEPRECATED, PT_DESCRIPTION, "the fraction of the installed lighting capacity that is active",
+			PT_complex,"enduse_load[kVA]",PADDR(load.total), PT_DEPRECATED, PT_DESCRIPTION, "the total lighting load",
+			PT_double,"internal_gains[Btu/h]",PADDR(load.heatgain), PT_DEPRECATED, PT_DESCRIPTION, "the internal gains from the lighting", 
+			PT_complex,"energy_meter[kVAh]",PADDR(load.energy), PT_DEPRECATED,PT_DESCRIPTION, "the total energy energy consumed since the last meter reading",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
-
-		// default global values
-		power_factor[INCANDESCENT]	= 1.00;
-		power_factor[FLUORESCENT]	= 0.93;
-		power_factor[CFL]			= 0.86;
-		power_factor[SSL]			= 0.75;
-		power_factor[HID]			= 0.97;
-
-		// setup the default values
-		defaults = this;
-		memset(this,0,sizeof(lights));
-		type = INCANDESCENT;
-		placement = INDOOR;
-		circuit_split = 0;
-		power_density = 0;
-		installed_power = 0;
-		load.power = load.admittance = load.current = load.total = complex(0,0,J);
-		load.energy = load.heatgain = 0.0;
-		pVoltage = NULL;
+			/* TROUBLESHOOT
+				The file that implements the specified class cannot publisht the variables in the class.
+				This is an internal error.  Contact support for assistance.
+			 */
 	}
 }
 
 // create is called every time a new object is loaded
 int lights::create(void) 
 {
-	// copy the defaults
-	memcpy(this,defaults,sizeof(lights));
+	int res = residential_enduse::create();
 
-	// set basic properties
-	circuit_split = gl_random_uniform(-1,1); // @todo circuit_split is ignored and should be delete; the split is done automatically by panel.attach()
-	power_density = gl_random_normal(1.0, 0.075);  // W/sf
-	
+	// name of enduse
+	load.name = "lights";
+
 	// other initial conditions
-	demand = 0.2;
-	return 1;
+	return res;
 }
 
 int lights::init(OBJECT *parent)
 {
+	int res = residential_enduse::init(parent);
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	// lights must have a parent house
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
-	{
-		gl_error("lights must have a parent house");
-		/*	TROUBLESHOOT
-			The lights object, being an enduse for the house model, must have a parent house
-			that it is connected to.  Create a house object and set it as the parent of the
-			offending lights object.
-		*/
-		return 0;
-	}
+	if(shape.load > 1.0)
+		gl_warning("lighting load %f exceeds installed capacity", shape.load);
+		/* TROUBLESHOOT
+			The lighting load cannot exceed the installed capacity.  
+			Use a lighting load that is less than or equal to 1.0 and try again.
+		 */
+	else if (shape.load < 0.0)
+		gl_warning("lights load %f is negative", shape.load);
+		/* TROUBLESHOOT
+			The lighting load cannot be negative.
+			Use a positive lighting lighting and try again.
+		 */
+	
 
-	//	pull parent attach_enduse and attach the enduseload
-	FUNCTIONADDR attach = 0;
-	load.end_obj = hdr;
-	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
-		gl_error("lights parent must publish attach_enduse()");
-		/*	TROUBLESHOOT
-			The lights object attempt to attach itself to its parent, which
-			must implement the attach_enduse function.
-		*/
-		return 0;
-	}
-	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
+	if (load.power_factor==0) load.power_factor = power_factor[type];
+	if (load.voltage_factor==0) load.voltage_factor = 1.0;
+
+	// check for the right kind of loadshape schedule 
+	if (shape.type!=MT_ANALOG)
+		throw("residential lighting only supports analog loadshapes");
+		/* TROUBLESHOOT
+			Lighting load use analog loadshapes.
+			Change the load shape type to analogy and try again.
+		 */
+	if (shape.params.analog.energy>0)
+		throw("residential lighting does not support fixed energy");
+		/* TROUBLESHOOT
+			It is not possible to define the total energy consumed by a lighting load in relation to a schedule.
+			Use either scaled power or installed power to define the lighting load and try again.
+		 */
 
 	// installed power intially overrides use of power density
-	if (installed_power==0) {
-		double *floor_area = gl_get_double_by_name(parent, "floor_area");
-		if(floor_area == NULL){
+	double *floor_area = parent?gl_get_double_by_name(parent, "floor_area"):NULL;
+	if (shape.params.analog.power==0 && shape.schedule==NULL) 
+	{		
+		// set basic properties
+		if (power_density==0) power_density = gl_random_triangle(0.75, 1.25);  // W/sf
+
+		if(floor_area == NULL)
+		{
 			gl_error("lights parent must publish \'floor_area\' to work properly if no installed_power is given ~ default 2500 sf");
-			installed_power = power_density * 2500;
+			/* TROUBLESHOOT
+				The lights did not reference a parent object that publishes a floor are, so 2500 sf was assumed.
+				Change the parent reference and try again.
+			 */
+			shape.params.analog.power = power_density * 2500 * 1000;
 		} else {
-			installed_power = power_density * *floor_area;
+			shape.params.analog.power = power_density * *floor_area * 1000;
 		}
 	}
-
-	if(demand > 1.0){
-		gl_warning("lights demand reset from %f to 1.0", demand);
-		demand = 1.0;
-	} else if (demand < 0.0){
-		gl_warning("lights demand reset from %f to 0.0", demand);
-		demand = 0.0;
+	else if (power_density==0 && shape.params.analog.power>0)
+	{
+		if (floor_area!=NULL)
+			power_density = shape.params.analog.power / *floor_area * 1000;
+		else
+			power_density = shape.params.analog.power / 2500 * 1000;
 	}
 
-	// initial demand (assume power factor is 1.0)
-	load.power = installed_power * demand / 1000;
+	// curtailment factor
+	if (curtailment==0) curtailment = 1.0;
 
-	return 1;
+	// power factor
+	load.power_factor = power_factor[type];
+
+	return res;
 }
 
 TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	// reset load
-	load.admittance = load.current = load.power = complex(0,0,J);
-
-	// sanity check demand
-	if(demand > 1.0){
-		gl_warning("lights demand reset from %f to 1.0", demand);
-		demand = 1.0;
-	} else if (demand < 0.0){
-		gl_warning("lights demand reset from %f to 0.0", demand);
-		demand = 0.0;
-	}
-
-	// compute nominal power consumption (adjust with power factor)
-	load.power.SetPowerFactor(installed_power/power_factor[type] * demand / 1000.0, power_factor[type],J);
-	double VM2 = ((*pVoltage) * ~(*pVoltage)).Re();
-
-	// adjust power based on lamp type's response to voltage
-	double puV = pVoltage->Mag()/120.0;
-	switch (type) {
-	case INCANDESCENT:
-		if (puV>0.25 && puV<1.5) // lights can burn out--normally this should take a while to fix, but let's not worry about this now
-			load.admittance = installed_power/VM2;
-		break;
-	case FLUORESCENT:
-	case CFL:
-	case SSL:
-		if (puV<0.1)
-			load.power = complex(0,0,J);
-		else
-		{	
-			load.power.Re() *= puV; 
-			load.power.Im() *= sqrt(puV);
-		}
-		break;
-	case HID:
-		if (puV<0.75)
-			load.power = complex(0,0,J);
-		else
-			load.admittance = installed_power/VM2;
-		break;
-	default:
-		break;
-	}
-
-	// update energy if clock is running
-	if (t0>0 && t1>t0)
-		load.energy = load.total*gl_tohours(t1-t0);
-
-	// update heatgain
-	load.total = load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000;
-	load.heatgain = (placement==INDOOR ? (load.total.Mag()) : 0);
-
-	return TS_NEVER; 
+	if (pCircuit!=NULL) load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor
+	TIMESTAMP t2 = residential_enduse::sync(t0,t1);
+	shape.load *= curtailment;
+	gl_enduse_sync(&(residential_enduse::load),t1);
+	return t2;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -246,7 +188,18 @@ EXPORT int create_lights(OBJECT **obj, OBJECT *parent)
 	{
 		lights *my = OBJECTDATA(*obj,lights);
 		gl_set_parent(*obj,parent);
-		my->create();
+		try {
+			my->create();
+		}
+		catch (char *msg)
+		{
+			gl_error("%s::%s.create(OBJECT **obj={name='%s', id=%d},...): %s", (*obj)->oclass->module->name, (*obj)->oclass->name, (*obj)->name, (*obj)->id, msg);
+			/* TROUBLESHOOT
+				The create operation of the specified object failed.  
+				The message given provide additional details and can be looked up under the Exceptions section.
+			 */
+			return 0;
+		}
 		return 1;
 	}
 	return 0;
@@ -255,15 +208,41 @@ EXPORT int create_lights(OBJECT **obj, OBJECT *parent)
 EXPORT int init_lights(OBJECT *obj)
 {
 	lights *my = OBJECTDATA(obj,lights);
-	return my->init(obj->parent);
+	try {
+		return my->init(obj->parent);
+	}
+	catch (char *msg)
+	{
+		gl_error("%s::%s.init(OBJECT *obj={name='%s', id=%d}): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, msg);
+		/* TROUBLESHOOT
+			The initialization operation of the specified object failed.  
+			The message given provide additional details and can be looked up under the Exceptions section.
+		 */
+		return 0;
+	}
 }
 
-EXPORT TIMESTAMP sync_lights(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP sync_lights(OBJECT *obj, TIMESTAMP t1)
 {
 	lights *my = OBJECTDATA(obj,lights);
-	TIMESTAMP t1 = my->sync(obj->clock, t0);
-	obj->clock = t0;
-	return t1;
+	try {
+		TIMESTAMP t2 = my->sync(obj->clock, t1);
+		obj->clock = t1;
+		return t2;
+	}
+	catch (char *msg)
+	{
+		DATETIME dt;
+		char ts[64];
+		gl_localtime(t1,&dt);
+		gl_strtime(&dt,ts,sizeof(ts));
+		gl_error("%s::%s.init(OBJECT **obj={name='%s', id=%d},TIMESTAMP t1='%s'): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, ts, msg);
+		/* TROUBLESHOOT
+			The synchronization operation of the specified object failed.  
+			The message given provide additional details and can be looked up under the Exceptions section.
+		 */
+		return 0;
+	}
 }
 
 /**@}**/

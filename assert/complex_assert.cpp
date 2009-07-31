@@ -116,7 +116,7 @@ TIMESTAMP complex_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		return TS_NEVER;
 	} 
 	else {
-		return t1+1;
+		return TS_NEVER;
 	}
 }
 complex *complex_assert::get_complex(OBJECT *obj, char *name)

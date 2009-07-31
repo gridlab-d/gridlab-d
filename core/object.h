@@ -199,7 +199,7 @@ typedef struct s_callbacks {
 		int (*init)(struct s_loadshape *s);
 	} loadshape;
 	struct {
-		TIMESTAMP (*sync)(struct s_enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1);
+		TIMESTAMP (*sync)(struct s_enduse *e, PASSCONFIG pass, TIMESTAMP t1);
 	} enduse;
 } CALLBACKS; /**< core callback function table */
 

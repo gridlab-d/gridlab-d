@@ -23,6 +23,7 @@ typedef struct s_enduse {
 	double voltage_factor;		/* voltage factor (pu nominal) */
 	double heatgain;			/* internal heat from load (Btu/h) */
 	double heatgain_fraction;	/* fraction of power that goes to internal heat (pu Btu/h) */
+	TIMESTAMP t_last;			/* last time of update */
 
 	// added for backward compatibility with res ENDUSELOAD
 	// @todo these are obsolete and must be retrofitted with the above values
@@ -36,7 +37,7 @@ typedef struct s_enduse {
 int enduse_create(void *addr);
 int enduse_init(enduse *e);
 int enduse_initall(void);
-TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1);
+TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1);
 TIMESTAMP enduse_syncall(TIMESTAMP t1);
 int convert_to_enduse(char *string, void *data, PROPERTY *prop);
 int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop);
