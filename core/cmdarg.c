@@ -169,7 +169,7 @@ void print_class_d(CLASS *oclass, int tabdepth){
 				KEYWORD *key;
 				printf("%s\t%s {", tabs, propname);
 				for (key=prop->keywords; key!=NULL; key=key->next)
-					printf("%s=%d%s", key->name, key->value, key->next==NULL?"":", ");
+					printf("%s=%"FMT_INT64"u%s", key->name, (int64)key->value, key->next==NULL?"":", ");
 				printf("} %s;", prop->name);
 			} 
 			else 
