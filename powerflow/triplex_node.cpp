@@ -35,7 +35,7 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 				PT_KEYWORD, "PV", PV,
 				PT_KEYWORD, "SWING", SWING,
 			PT_set, "busflags", PADDR(busflags),
-				PT_KEYWORD, "HASSOURCE", NF_HASSOURCE,
+				PT_KEYWORD, "HASSOURCE", (set)NF_HASSOURCE,
 			PT_object, "reference_bus", PADDR(reference_bus),
 			PT_double,"maximum_voltage_error[V]",PADDR(maximum_voltage_error),
 

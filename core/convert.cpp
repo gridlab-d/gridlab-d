@@ -261,23 +261,23 @@ int convert_from_set(char *buffer, /**< pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	KEYWORD *keys=prop->keywords;
+	KEYWORD *keys;
 
 	/* get the actual value */
-	unsigned long value = *(unsigned long*)data;
+	unsigned int64 value = *(unsigned int64*)data;
 
 	/* keep track of how characters written */
 	int count=0;
 
-	int NONZERO = (value > 0);
+	int ISZERO = (value == 0);
 	/* clear the buffer */
 	buffer[0] = '\0';
 
 	/* process each keyword */
-	for ( ; keys!=NULL ; keys=keys->next)
+	for ( keys=prop->keywords ; keys!=NULL ; keys=keys->next)
 	{
 		/* if the keyword matches */
-		if ((keys->value&value)==keys->value || (keys->value==0 && value==0 && !NONZERO))
+		if ((!ISZERO && keys->value!=0 && (keys->value&value)==keys->value) || (keys->value==0 && ISZERO))
 		{
 			/* get the length of the keyword */
 			int len = (int)strlen(keys->name);

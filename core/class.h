@@ -139,7 +139,7 @@ typedef enum {
 
 typedef struct s_keyword {
 	char name[32];
-	unsigned long value;
+	unsigned int64 value;
 	struct s_keyword *next;
 } KEYWORD;
 

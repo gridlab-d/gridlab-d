@@ -79,11 +79,11 @@ energy_storage::energy_storage(MODULE *module)
 
 			PT_set, "phases", PADDR(phases),
 
-			PT_KEYWORD, "A",PHASE_A,
-				PT_KEYWORD, "B",PHASE_B,
-				PT_KEYWORD, "C",PHASE_C,
-				PT_KEYWORD, "N",PHASE_N,
-				PT_KEYWORD, "S",PHASE_S,
+				PT_KEYWORD, "A",(set)PHASE_A,
+				PT_KEYWORD, "B",(set)PHASE_B,
+				PT_KEYWORD, "C",(set)PHASE_C,
+				PT_KEYWORD, "N",(set)PHASE_N,
+				PT_KEYWORD, "S",(set)PHASE_S,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 

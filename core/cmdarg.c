@@ -366,6 +366,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				if(strchr(argv[0], ':') == 0){ // no class
 					mod = module_load(argv[0],0,NULL);
 				} else {
+					GLOBALVAR *var=NULL;
 					char *cname;
 					cname = strchr(argv[0], ':')+1;
 					mod = module_load(strtok(argv[0],":"),0,NULL);
@@ -379,6 +380,38 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 						*/
 						return FAILED;
 					}
+
+					/* dump module globals */
+					printf("module %s {\n", mod->name);
+					while ((var=global_getnext(var))!=NULL)
+					{
+						PROPERTY *prop = var->prop;
+						char *proptype = class_get_property_typename(prop->ptype);
+						if (strncmp(var->name,mod->name,strlen(mod->name))!=0)
+							continue;
+						if (proptype!=NULL){
+							if(prop->unit != NULL)
+							{
+								printf("\t%s %s[%s];", proptype, strrchr(prop->name,':')+1, prop->unit->name);
+							}
+							else if (prop->ptype==PT_set || prop->ptype==PT_enumeration)
+							{
+								KEYWORD *key;
+								printf("\t%s {", proptype);
+								for (key=prop->keywords; key!=NULL; key=key->next)
+									printf("%s=%d%s", key->name, key->value, key->next==NULL?"":", ");
+								printf("} %s;", strrchr(prop->name,':')+1);
+							} 
+							else 
+							{
+								printf("\t%s %s;", proptype, strrchr(prop->name,':')+1);
+							}
+							if (prop->description!=NULL)
+								printf(" // %s%s",prop->flags&PF_DEPRECATED?"(DEPRECATED) ":"",prop->description);
+							printf("\n");
+						}
+					}
+					printf("}\n");
 				}
 				if(mod == NULL){
 					output_fatal("module %s is not found",*argv);

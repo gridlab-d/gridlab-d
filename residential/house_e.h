@@ -16,11 +16,35 @@
 #include "loadshape.h"
 
 typedef struct s_implicit_enduse {
-	enduse enduse;
+	enduse load;
 	double amps;
 	int is220;
 	struct s_implicit_enduse *next;
 } IMPLICITENDUSE;
+
+typedef enum {
+	// analog loads (continuous load) - bits 0-15
+	IEU_LIGHTS			= 0x00000001, ///< implicit lights load
+	IEU_PLUGS			= 0x00000002, ///< implicit plugs load
+	IEU_OCCUPANCY		= 0x00000004, ///< implicit occupancy load
+	
+	// pulsed loads (unqueued aperiodic loads) - bits 16-31
+	IEU_DISHWASHER		= 0x00000100, ///< implicit dishwasher load
+	IEU_MICROWAVE		= 0x00000200, ///< implicit microwave load
+
+	// modulated loads (periodic loads) - bits 32-47
+	IEU_FREEZER			= 0x00010000, ///< implicit freezer load
+	IEU_REFRIGERATOR	= 0x00020000, ///< implicit refrigerator load
+	IEU_RANGE			= 0x00040000, ///< implicit cooking load
+	IEU_EVCHARGE		= 0x00080000, ///< implicit evcharger load
+	IEU_WATERHEATER		= 0x00100000, ///< implicit waterheater load
+
+	// queued loads (queued aperiodic loads) - bits 48-63
+	IEU_CLOTHESWASHER	= 0x01000000, ///< implicit clotheswasher load
+	IEU_DRYER			= 0x02000000, ///< implicit dryer load
+
+	/// @todo add other implicit enduse flags as they are defined
+} IMPLICITENDUSEFLAGS;
 
 class house_e {
 public:
@@ -32,7 +56,8 @@ public:
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
 	complex *pLine12; ///< pointer to the load across lines 1 & 2
-	IMPLICITENDUSE *implicit_enduses; ///< implicit enduses
+	IMPLICITENDUSE *implicit_enduse_list; ///< implicit enduses
+	static set implicit_enduses_active; ///< implicit enduses that are to be activated
 public:
 	// building design variables
 	double floor_area;				///< house_e floor area (ft^2)
@@ -63,10 +88,10 @@ public:
 	double rated_cooling_capacity;	///< rated cooling capacity of the system (BTUh/sf; varies w.r.t Tout)
 
 	typedef enum {
-		ST_GAS	= 0x01,	///< flag to indicate gas heating is used
-		ST_AC	= 0x02,	///< flag to indicate the air-conditioning is used
-		ST_AIR	= 0x04,	///< flag to indicate central air is used
-		ST_VAR	= 0x08,	///< flag to indicate the variable speed system is used
+		ST_GAS	= 0x00000001,	///< flag to indicate gas heating is used
+		ST_AC	= 0x00000002,	///< flag to indicate the air-conditioning is used
+		ST_AIR	= 0x00000004,	///< flag to indicate central air is used
+		ST_VAR	= 0x00000008,	///< flag to indicate the variable speed system is used
 	} SYSTEMTYPE; ///< flags for system type options
 	set system_type;				///< system type
 

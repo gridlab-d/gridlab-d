@@ -205,14 +205,8 @@ GLOBALVAR *global_create(char *name, ...){
 				prop->keywords = key;
 			} else if(proptype == PT_KEYWORD && prop->ptype == PT_set){
 				char *keyword = va_arg(arg, char *);
-				unsigned char keyvalue = va_arg(arg, int); /* uchars are promoted to int by GCC */
+				unsigned int64 keyvalue = va_arg(arg, int64); /* uchars are promoted to int by GCC */
 				KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
-				if(keyvalue > 63){
-					throw_exception("global_create(char *name='%s',...): set '%s' keyword value '%d' may not exceed 64", name, keyword, keyvalue);
-					/* TROUBLESHOOT
-						The value of the keyword may not exceed 63 characters.  Try using a shorter keyword.
-					 */
-				}
 				if(key == NULL){
 					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
 					/* TROUBLESHOOT
@@ -261,6 +255,10 @@ GLOBALVAR *global_create(char *name, ...){
 						If you wish to define a new unit, try adding it to <code>.../etc/unitfile.txt</code>.
 					 */
 				}
+			} else if (proptype == PT_DESCRIPTION) {
+				prop->description = va_arg(arg,char*);
+			} else if (proptype == PT_DEPRECATED) {
+				prop->flags |= PF_DEPRECATED;
 			} else {
 				throw_exception("global_create(char *name='%s',...): property extension code not recognized (PROPERTYTYPE=%d)", name, proptype);
 				/* TROUBLESHOOT

@@ -97,7 +97,7 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 		e->heatgain = e->power.r * e->heatgain_fraction;
 		e->t_last = t1;
 	}
-	return TS_NEVER;
+	return e->shape->schedule?e->shape->schedule->next_t:TS_NEVER;
 }
 
 TIMESTAMP enduse_syncall(TIMESTAMP t1)
@@ -162,7 +162,8 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		{PT_complex, "constant_admittance[kVA]", PADDR(current), "the constant admittance portion of the total load"},
 		{PT_double, "voltage_factor[pu]",  PADDR(voltage_factor), "the voltage change factor"},
 		{PT_set, "configuration",  PADDR(config), "the load configuration options"},
-			{PT_KEYWORD, "IS220", EUC_IS220},
+			{PT_KEYWORD, "IS220", (set)EUC_IS220},
+			//{PT_KEYWORD, "NONE",(set)0},
 
 		// @todo retire these values before the next major release because they are legacy values from residential ENDUSELOAD structure
 		{PT_complex, "total[kVA]",  PADDR(power), "the constant power portion of the total load",PF_DEPRECATED},

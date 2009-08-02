@@ -36,6 +36,12 @@
 	In the current implementation, the HVAC equipment is defined as part of the house_e and
 	attached to the electrical panel with a 50 amp/220-240V circuit.
 
+	@par Implicit enduses
+
+	The use of implicit enduses is controlled globally by the #implicit_enduse global variable.
+	All houses in the system will employ the same set of global enduses, meaning that the
+	loadshape is controlled by the default schedule.
+
 	@par Credits
 
 	The original concept for ETP was developed by Rob Pratt and Todd Taylor around 1990.  
@@ -82,127 +88,66 @@
 #include "complex.h"
 
 // list of enduses that are implicitly active
-char1024 implicit_enduses = "lights";
+set house_e::implicit_enduses_active = 0xffffffff;
 
 //////////////////////////////////////////////////////////////////////////
 // implicit loadshapes - these are enabled by using implicit_enduses global
 //////////////////////////////////////////////////////////////////////////
 struct s_implicit_enduse_list {
-	char *name;
-	double amps; 
-	int is220;
+	char *implicit_name;
+	struct {
+		double breaker_amps; 
+		int circuit_is220;
+		struct {
+			double z, i, p;
+		} fractions;
+		double power_factor;
+		double heat_fraction;
+	} load;
 	char *shape;
-	char *schedule;
-} implicit_enduse_list[] =
+	char *schedule_name;
+	char *schedule_definition;
+} implicit_enduse_data[] =
 {
 	// lighting (source: ELCAP lit-sp.dat)
-	{	"residential-lights-implicit", 30, false,
-		"type:analog; schedule: residential-lights-implicit; power: 1.0 kW",
+	{	"LIGHTS", 
+		{30, false, {0,0,1}, 0.97, 0.9},
+		"type:analog; schedule: residential-lights-default; power: 1.0 kW",
+		"residential-lights-default", 
 		"weekday-summer {"
-		"	* 0 * 4-9 1-5 0.380"
-		"	* 1 * 4-9 1-5 0.340"
-		"	* 2 * 4-9 1-5 0.320"
-		"	* 3 * 4-9 1-5 0.320"
-		"	* 4 * 4-9 1-5 0.320"
-		"	* 5 * 4-9 1-5 0.350"
-		"	* 6 * 4-9 1-5 0.410"
-		"	* 7 * 4-9 1-5 0.450"
-		"	* 8 * 4-9 1-5 0.450"
-		"	* 9 * 4-9 1-5 0.450"
-		"	* 10 * 4-9 1-5 0.450"
-		"	* 11 * 4-9 1-5 0.450"
-		"	* 12 * 4-9 1-5 0.450"
-		"	* 13 * 4-9 1-5 0.440"
-		"	* 14 * 4-9 1-5 0.440"
-		"	* 15 * 4-9 1-5 0.450"
-		"	* 16 * 4-9 1-5 0.470"
-		"	* 17 * 4-9 1-5 0.510"
-		"	* 18 * 4-9 1-5 0.540"
-		"	* 19 * 4-9 1-5 0.560"
-		"	* 20 * 4-9 1-5 0.630"
-		"	* 21 * 4-9 1-5 0.710"
-		"	* 22 * 4-9 1-5 0.650"
-		"	* 23 * 4-9 1-5 0.490"
+		"	*  0 * 4-9 1-5 0.380; *  1 * 4-9 1-5 0.340; *  2 * 4-9 1-5 0.320; *  3 * 4-9 1-5 0.320"
+		"	*  4 * 4-9 1-5 0.320; *  5 * 4-9 1-5 0.350; *  6 * 4-9 1-5 0.410; *  7 * 4-9 1-5 0.450"
+		"	*  8 * 4-9 1-5 0.450; *  9 * 4-9 1-5 0.450; * 10 * 4-9 1-5 0.450; * 11 * 4-9 1-5 0.450"
+		"	* 12 * 4-9 1-5 0.450; * 13 * 4-9 1-5 0.440; * 14 * 4-9 1-5 0.440; * 15 * 4-9 1-5 0.450"
+		"	* 16 * 4-9 1-5 0.470; * 17 * 4-9 1-5 0.510; * 18 * 4-9 1-5 0.540; * 19 * 4-9 1-5 0.560"
+		"	* 20 * 4-9 1-5 0.630; * 21 * 4-9 1-5 0.710; * 22 * 4-9 1-5 0.650; * 23 * 4-9 1-5 0.490"
 		"}"
 		"weekend-summer {"
-		"	* 0 * 4-9 6-0 0.410"
-		"	* 1 * 4-9 6-0 0.360"
-		"	* 2 * 4-9 6-0 0.330"
-		"	* 3 * 4-9 6-0 0.320"
-		"	* 4 * 4-9 6-0 0.320"
-		"	* 5 * 4-9 6-0 0.320"
-		"	* 6 * 4-9 6-0 0.340"
-		"	* 7 * 4-9 6-0 0.390"
-		"	* 8 * 4-9 6-0 0.440"
-		"	* 9 * 4-9 6-0 0.470"
-		"	* 10 * 4-9 6-0 0.470"
-		"	* 11 * 4-9 6-0 0.470"
-		"	* 12 * 4-9 6-0 0.470"
-		"	* 13 * 4-9 6-0 0.460"
-		"	* 14 * 4-9 6-0 0.460"
-		"	* 15 * 4-9 6-0 0.460"
-		"	* 16 * 4-9 6-0 0.470"
-		"	* 17 * 4-9 6-0 0.490"
-		"	* 18 * 4-9 6-0 0.520"
-		"	* 19 * 4-9 6-0 0.540"
-		"	* 20 * 4-9 6-0 0.610"
-		"	* 21 * 4-9 6-0 0.680"
-		"	* 22 * 4-9 6-0 0.630"
-		"	* 23 * 4-9 6-0 0.500"
+		"	*  0 * 4-9 6-0 0.410; *  1 * 4-9 6-0 0.360; *  2 * 4-9 6-0 0.330; *  3 * 4-9 6-0 0.320"
+		"	*  4 * 4-9 6-0 0.320; *  5 * 4-9 6-0 0.320; *  6 * 4-9 6-0 0.340; *  7 * 4-9 6-0 0.390"
+		"	*  8 * 4-9 6-0 0.440; *  9 * 4-9 6-0 0.470; * 10 * 4-9 6-0 0.470; * 11 * 4-9 6-0 0.470"
+		"	* 12 * 4-9 6-0 0.470; * 13 * 4-9 6-0 0.460; * 14 * 4-9 6-0 0.460; * 15 * 4-9 6-0 0.460"
+		"	* 16 * 4-9 6-0 0.470; * 17 * 4-9 6-0 0.490; * 18 * 4-9 6-0 0.520; * 19 * 4-9 6-0 0.540"
+		"	* 20 * 4-9 6-0 0.610; * 21 * 4-9 6-0 0.680; * 22 * 4-9 6-0 0.630; * 23 * 4-9 6-0 0.500"
 		"}"
 		"weekday-winter {"
-		"	* 0 * 10-3 1-5 0.4200"
-		"	* 1 * 10-3 1-5 0.3800"
-		"	* 2 * 10-3 1-5 0.3700"
-		"	* 3 * 10-3 1-5 0.3600"
-		"	* 4 * 10-3 1-5 0.3700"
-		"	* 5 * 10-3 1-5 0.4200"
-		"	* 6 * 10-3 1-5 0.5800"
-		"	* 7 * 10-3 1-5 0.6900"
-		"	* 8 * 10-3 1-5 0.6100"
-		"	* 9 * 10-3 1-5 0.5600"
-		"	* 10 * 10-3 1-5 0.5300"
-		"	* 11 * 10-3 1-5 0.5100"
-		"	* 12 * 10-3 1-5 0.4900"
-		"	* 13 * 10-3 1-5 0.4700"
-		"	* 14 * 10-3 1-5 0.4700"
-		"	* 15 * 10-3 1-5 0.5100"
-		"	* 16 * 10-3 1-5 0.6300"
-		"	* 17 * 10-3 1-5 0.8400"
-		"	* 18 * 10-3 1-5 0.9700"
-		"	* 19 * 10-3 1-5 0.9800"
-		"	* 20 * 10-3 1-5 0.9600"
-		"	* 21 * 10-3 1-5 0.8900"
-		"	* 22 * 10-3 1-5 0.7400"
-		"	* 23 * 10-3 1-5 0.5500"
+		"	*  0 * 10-3 1-5 0.4200; *  1 * 10-3 1-5 0.3800; *  2 * 10-3 1-5 0.3700; *  3 * 10-3 1-5 0.3600"
+		"	*  4 * 10-3 1-5 0.3700; *  5 * 10-3 1-5 0.4200; *  6 * 10-3 1-5 0.5800; *  7 * 10-3 1-5 0.6900"
+		"	*  8 * 10-3 1-5 0.6100; *  9 * 10-3 1-5 0.5600; * 10 * 10-3 1-5 0.5300; * 11 * 10-3 1-5 0.5100"
+		"	* 12 * 10-3 1-5 0.4900; * 13 * 10-3 1-5 0.4700; * 14 * 10-3 1-5 0.4700; * 15 * 10-3 1-5 0.5100"
+		"	* 16 * 10-3 1-5 0.6300; * 17 * 10-3 1-5 0.8400; * 18 * 10-3 1-5 0.9700; * 19 * 10-3 1-5 0.9800"
+		"	* 20 * 10-3 1-5 0.9600; * 21 * 10-3 1-5 0.8900; * 22 * 10-3 1-5 0.7400; * 23 * 10-3 1-5 0.5500"
 		"}"
 		"weekend-winter {"
-		"	* 0 * 10-3 6-0 0.4900"
-		"	* 1 * 10-3 6-0 0.4200"
-		"	* 2 * 10-3 6-0 0.3800"
-		"	* 3 * 10-3 6-0 0.3800"
-		"	* 4 * 10-3 6-0 0.3700"
-		"	* 5 * 10-3 6-0 0.3800"
-		"	* 6 * 10-3 6-0 0.4300"
-		"	* 7 * 10-3 6-0 0.5100"
-		"	* 8 * 10-3 6-0 0.6000"
-		"	* 9 * 10-3 6-0 0.6300"
-		"	* 10 * 10-3 6-0 0.6300"
-		"	* 11 * 10-3 6-0 0.6100"
-		"	* 12 * 10-3 6-0 0.6000"
-		"	* 13 * 10-3 6-0 0.5900"
-		"	* 14 * 10-3 6-0 0.5900"
-		"	* 15 * 10-3 6-0 0.6100"
-		"	* 16 * 10-3 6-0 0.7100"
-		"	* 17 * 10-3 6-0 0.8800"
-		"	* 18 * 10-3 6-0 0.9600"
-		"	* 19 * 10-3 6-0 0.9700"
-		"	* 20 * 10-3 6-0 0.9400"
-		"	* 21 * 10-3 6-0 0.8800"
-		"	* 22 * 10-3 6-0 0.7600"
-		"	* 23 * 10-3 6-0 0.5800"
+		"	*  0 * 10-3 6-0 0.4900; *  1 * 10-3 6-0 0.4200; *  2 * 10-3 6-0 0.3800; *  3 * 10-3 6-0 0.3800"
+		"	*  4 * 10-3 6-0 0.3700; *  5 * 10-3 6-0 0.3800; *  6 * 10-3 6-0 0.4300; *  7 * 10-3 6-0 0.5100"
+		"	*  8 * 10-3 6-0 0.6000; *  9 * 10-3 6-0 0.6300; * 10 * 10-3 6-0 0.6300; * 11 * 10-3 6-0 0.6100"
+		"	* 12 * 10-3 6-0 0.6000; * 13 * 10-3 6-0 0.5900; * 14 * 10-3 6-0 0.5900; * 15 * 10-3 6-0 0.6100"
+		"	* 16 * 10-3 6-0 0.7100; * 17 * 10-3 6-0 0.8800; * 18 * 10-3 6-0 0.9600; * 19 * 10-3 6-0 0.9700"
+		"	* 20 * 10-3 6-0 0.9400; * 21 * 10-3 6-0 0.8800; * 22 * 10-3 6-0 0.7600; * 23 * 10-3 6-0 0.5800"
 		"}"
 		}
+	/// @todo add other implicit enduse schedules and shapes as they are defined
 };
 
 EXPORT CIRCUIT *attach_enduse(OBJECT *obj, enduse *target, double breaker_amps, int is220)
@@ -279,10 +224,10 @@ house_e::house_e(MODULE *mod)
 			PT_double,"mass_heat_coeff[Btu/F.h]",PADDR(house_content_heat_transfer_coeff),
 			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),
 			PT_set,"system_type",PADDR(system_type),
-				PT_KEYWORD, "GAS",	ST_GAS,
-				PT_KEYWORD, "AIRCONDITIONING", ST_AC,
-				PT_KEYWORD, "FORCEDAIR", ST_AIR,
-				PT_KEYWORD, "TWOSTAGE", ST_VAR,
+				PT_KEYWORD, "GAS",	(set)ST_GAS,
+				PT_KEYWORD, "AIRCONDITIONING", (set)ST_AC,
+				PT_KEYWORD, "FORCEDAIR", (set)ST_AIR,
+				PT_KEYWORD, "TWOSTAGE", (set)ST_VAR,
 			PT_enumeration,"system_mode",PADDR(system_mode),
 				PT_KEYWORD,"UNKNOWN",SM_UNKNOWN,
 				PT_KEYWORD,"HEAT",SM_HEAT,
@@ -298,46 +243,89 @@ house_e::house_e(MODULE *mod)
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
 		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse);
-		gl_global_create("residential::implicit_enduses",PT_char1024,&implicit_enduses,NULL,NULL);
+		gl_global_create("residential::implicit_enduses",PT_set,&implicit_enduses_active,
+			PT_KEYWORD, "LIGHTS", (set)IEU_LIGHTS,
+			PT_KEYWORD, "PLUGS", (set)IEU_PLUGS,
+			PT_KEYWORD, "OCCUPANCY", (set)IEU_OCCUPANCY,
+			PT_KEYWORD, "DISHWASHER", (set)IEU_DISHWASHER,
+			PT_KEYWORD, "MICROWAVE", (set)IEU_MICROWAVE,
+			PT_KEYWORD, "FRWEZER", (set)IEU_FREEZER,
+			PT_KEYWORD, "REFRIGERATOR", (set)IEU_REFRIGERATOR,
+			PT_KEYWORD, "RANGE", (set)IEU_RANGE,
+			PT_KEYWORD, "EVCHARGER", (set)IEU_EVCHARGE,
+			PT_KEYWORD, "WATERHEATER", (set)IEU_WATERHEATER,
+			PT_KEYWORD, "CLOTHESWASHER", (set)IEU_CLOTHESWASHER,
+			PT_KEYWORD, "DRYER", (set)IEU_DRYER,
+			PT_KEYWORD, "NONE", (set)0,
+			PT_DESCRIPTION, "list of implicit enduses that are active in houses",
+			NULL);
+		gl_global_create("residential::house_low_temperature_warning[F]",PT_double,&warn_low_temp,
+			PT_DESCRIPTION, "the low house indoor temperature at which a warning will be generated",
+			NULL);
+		gl_global_create("residential::house_high_temperature_warning[F]",PT_double,&warn_high_temp,
+			PT_DESCRIPTION, "the high house indoor temperature at which a warning will be generated",
+			NULL);
+		gl_global_create("residential::thermostat_control_warning",PT_double,&warn_control,
+			PT_DESCRIPTION, "boolean to indicate whether a warning is generated when indoor temperature is out of control limits",
+			NULL);
+
+		// set up implicit enduse list
+		implicit_enduse_list = NULL;
 	}	
 }
 
 int house_e::create() 
 {
-	char1024 enduse_list;
-	gl_global_getvar("residential::implicit_enduses",enduse_list,sizeof(enduse_list));
+	char1024 active_enduses;
+	gl_global_getvar("residential::implicit_enduses",active_enduses,sizeof(active_enduses));
 	char *token = NULL;
-	implicit_enduses = NULL;
 
-	// scan the implicit_enduse list
-	while ((token=strtok(token?NULL:enduse_list,",; "))!=NULL)
+	if (strcmp(active_enduses,"NONE")!=0)
 	{
-		// find the implicity enduse description
-		struct s_implicit_enduse_list *eu = NULL;
-		for (eu=implicit_enduse_list; eu<implicit_enduse_list+sizeof(implicit_enduse_list)/sizeof(implicit_enduse_list[0]); eu++)
+		// scan the implicit_enduse list
+		while ((token=strtok(token?NULL:active_enduses,"|"))!=NULL)
 		{
-			char name[64];
-			sprintf(name,"residential-%s-implicit",token);
-			// matched enduse
-			if (strcmp(eu->name,name)==0)
+			strlwr(token);
+			
+			// find the implicit enduse description
+			struct s_implicit_enduse_list *eu = NULL;
+			int found=0;
+			for (eu=implicit_enduse_data; eu<implicit_enduse_data+sizeof(implicit_enduse_data)/sizeof(implicit_enduse_data[0]); eu++)
 			{
-				SCHEDULE *sched = gl_schedule_create(eu->name,eu->schedule);
-				IMPLICITENDUSE *item = (IMPLICITENDUSE*)gl_malloc(sizeof(IMPLICITENDUSE));
-				memset(item,0,sizeof(IMPLICITENDUSE));
-				gl_enduse_create(&(item->enduse));
-				item->enduse.shape = gl_loadshape_create(sched);
-				if (gl_set_value_by_type(PT_loadshape,item->enduse.shape,eu->shape)==0)
+				char name[64];
+				sprintf(name,"residential-%s-default",token);
+				// matched enduse
+				if (strcmp(eu->schedule_name,name)==0)
 				{
-					gl_error("loadshape '%s' could not be created", name);
-					return 0;
+					SCHEDULE *sched = gl_schedule_create(eu->schedule_name,eu->schedule_definition);
+					IMPLICITENDUSE *item = (IMPLICITENDUSE*)gl_malloc(sizeof(IMPLICITENDUSE));
+					memset(item,0,sizeof(IMPLICITENDUSE));
+					gl_enduse_create(&(item->load));
+					item->load.shape = gl_loadshape_create(sched);
+					if (gl_set_value_by_type(PT_loadshape,item->load.shape,eu->shape)==0)
+					{
+						gl_error("loadshape '%s' could not be created", name);
+						return 0;
+					}
+					item->load.name = eu->implicit_name;
+					item->next = implicit_enduse_list;
+					item->amps = eu->load.breaker_amps;
+					item->is220 = eu->load.circuit_is220;
+					item->load.impedance_fraction = eu->load.fractions.z;
+					item->load.current_fraction = eu->load.fractions.i;
+					item->load.power_fraction = eu->load.fractions.p;
+					item->load.power_factor = eu->load.power_factor;
+					item->load.heatgain_fraction = eu->load.heat_fraction;
+					implicit_enduse_list = item;
+					found=1;
+					break;
 				}
-				item->next = implicit_enduses;
-				item->amps = eu->amps;
-				item->is220 = eu->is220;
-				implicit_enduses = item;
 			}
+			if (found==0)
+				gl_warning("house_e data for '%s' implicit enduse not found", token);
 		}
 	}
+
 	return 1;
 }
 
@@ -347,6 +335,7 @@ then Tout will be set to 74 degF, RHout is set to 75% and solar flux will be set
 **/
 int house_e::init_climate()
 {
+	static double tout=74.0, rhout=0.75, solar[8] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 	OBJECT *hdr = OBJECTHDR(this);
 
 	// link to climate data
@@ -361,7 +350,6 @@ int house_e::init_climate()
 			gl_warning("house_e: no climate data found, using static data");
 
 			//default to mock data
-			static double tout=74.0, rhout=0.75, solar[8] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 			pTout = &tout;
 			pRhout = &rhout;
 			pSolar = &solar[0];
@@ -376,7 +364,6 @@ int house_e::init_climate()
 		if (climates->hit_count==0)
 		{
 			//default to mock data
-			static double tout=74.0, rhout=0.75, solar[8] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 			pTout = &tout;
 			pRhout = &rhout;
 			pSolar = &solar[0];
@@ -404,7 +391,6 @@ int house_e::init_climate()
 				double *src = (double*)GETADDR(obj,gl_get_property(obj,map[i].name));
 				if (src) *map[i].dst = *src;
 			}
-
 		}
 	}
 	return 1;
@@ -523,6 +509,71 @@ int house_e::init(OBJECT *parent)
 	return 1;
 }
 
+/**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time
+**/
+TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1) 
+{
+	const double dt = ((double)(t1-t0)*TS_SECOND)/3600;
+
+	/* advance the thermal state of the building */
+	if (t0>0 && dt>0)
+	{
+		/* calculate model update, if possible */
+		if (c2!=0)
+		{
+			/* update temperatures */
+			const double e1 = k1*exp(r1*dt);
+			const double e2 = k2*exp(r2*dt);
+			Tair = e1 + e2 + Teq;
+			Tmaterials = ((r1-c1)*e1 + (r2-c1)*e2 + c6)/c2 + Teq;
+		}
+	}
+	return TS_NEVER;
+}
+
+/** Updates the total internal gain and synchronizes with the system equipment load.  
+Also synchronizes the voltages and current in the panel with the meter.
+**/
+TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	TIMESTAMP t2 = TS_NEVER;
+	TIMESTAMP te = TS_NEVER;
+	const double dt1 = (double)(t1-t0)*TS_SECOND;
+
+	double nHours = dt1 / 3600;
+
+	if (t0==0 || t1>t0)
+	{
+		outside_temperature = *pTout;
+		te = sync_enduses(t0,t1);
+		update_system(dt1);
+		update_model(dt1);
+		check_controls();
+	}
+
+	/* solve for the time to the next event */
+	double dt2=(double)TS_NEVER;
+	dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+	if (isnan(dt2) || !isfinite(dt2) || dt2<0)
+	{
+		if (sgn(dTair)==sgn(Tair-Tevent)) // imminent control event
+			t2 = t1+1;
+	}
+	else if (dt2<TS_SECOND)
+		t2 = t1+1; /* need to do a second pass to get next state */
+	else
+		t2 = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+
+	// sync circuit panel
+	TIMESTAMP panel_time = sync_panel(t0,t1);
+	if (panel_time < t2)
+		t2 = panel_time;
+
+	return (te!=TS_NEVER&&te<t2)?(t2<TS_NEVER?te:-te):t2;
+	
+}
+
 /** The PLC control code for house_e thermostat.  The heat or cool mode is based
 	on the house_e air temperature, thermostat setpoints and deadband.
 **/
@@ -563,91 +614,11 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	return TS_NEVER;
 }
 
-/**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time
-**/
-TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1) 
-{
-	const double dt1 = (double)(t1-t0)*TS_SECOND;
-
-	/* advance the thermal state of the building */
-	if (t0>0 && dt1>0)
-	{
-		const double dt = dt1/3600; /* model operates in units of hours */
-		system.energy += system.power * dt;
-		total.energy += total.power * dt;
-
-		/* calculate model update, if possible */
-		if (c2!=0)
-		{
-			/* update temperatures */
-			const double e1 = k1*exp(r1*dt);
-			const double e2 = k2*exp(r2*dt);
-			Tair = e1 + e2 + Teq;
-			Tmaterials = ((r1-c1)*e1 + (r2-c1)*e2 + c6)/c2 + Teq;
-		}
-	}
-
-	// reset the not required accumulators for the next sync
-	/* HVAC accumulators */
-	system.heatgain = 0;
-	system.power = complex(0,0,J);
-
-	/* main panel accumulators */
-	total.heatgain = 0;
-	total.power = complex(0,0,J);
-
-	return TS_NEVER;
-}
-
-/** Updates the total internal gain and synchronizes with the system equipment load.  
-Also synchronizes the voltages and current in the panel with the meter.
-**/
-TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
-{
-	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP t2 = TS_NEVER;
-	TIMESTAMP te = TS_NEVER;
-	const double dt1 = (double)(t1-t0)*TS_SECOND;
-
-	double nHours = dt1 * 3600;
-	system.energy += system.power * nHours;
-
-	if (t0==0 || t1>t0)
-	{
-		outside_temperature = *pTout;
-		te = sync_enduses(t0,t1);
-		update_system(dt1);
-		update_model(dt1);
-		check_controls();
-	}
-
-	/* solve for the time to the next event */
-	double dt2=(double)TS_NEVER;
-	dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
-	if (isnan(dt2) || !isfinite(dt2) || dt2<0)
-	{
-		if (sgn(dTair)==sgn(Tair-Tevent)) // imminent control event
-			t2 = t1+1;
-	}
-	else if (dt2<TS_SECOND)
-		t2 = t1+1; /* need to do a second pass to get next state */
-	else
-		t2 = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
-
-	// sync circuit panel
-	TIMESTAMP panel_time = sync_panel(t0,t1);
-	if (panel_time < t2)
-		t2 = panel_time;
-
-	return (te!=TS_NEVER&&te<t2)?(t2<TS_NEVER?te:-te):t2;
-	
-}
-
 void house_e::attach_implicit_enduses()
 {
 	IMPLICITENDUSE *item;
-	for (item=implicit_enduses; item!=NULL; item=item->next)
-		attach(NULL,item->amps,item->is220,&(item->enduse));
+	for (item=implicit_enduse_list; item!=NULL; item=item->next)
+		attach(NULL,item->amps,item->is220,&(item->load));
 
 	return;
 }
@@ -813,8 +784,14 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
 {
-	// TODO
-	return TS_NEVER;
+	TIMESTAMP t2 = TS_NEVER;
+	IMPLICITENDUSE *eu;
+	for (eu=implicit_enduse_list; eu!=NULL; eu=eu->next)
+	{
+		TIMESTAMP t = gl_enduse_sync(&(eu->load),t1);
+		if (t<t2) t2 = t;
+	}
+	return t2;
 }
 
 void house_e::update_model(double dt)

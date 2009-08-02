@@ -754,7 +754,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			else if (proptype==PT_KEYWORD && prop->ptype==PT_set)
 			{
 				char *keyword = va_arg(arg,char*);
-				unsigned long keyvalue = va_arg(arg, int); 
+				unsigned long keyvalue = va_arg(arg, int64); 
 				if (!class_define_set_member(oclass,prop->name,keyword,keyvalue))
 				{
 					errno = EINVAL;
