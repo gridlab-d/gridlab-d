@@ -15,6 +15,13 @@
 #include "enduse.h"
 #include "loadshape.h"
 
+typedef struct s_implicit_enduse {
+	enduse enduse;
+	double amps;
+	int is220;
+	struct s_implicit_enduse *next;
+} IMPLICITENDUSE;
+
 class house_e {
 public:
 	PANEL panel; ///< main house_e panel
@@ -25,7 +32,7 @@ public:
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
 	complex *pLine12; ///< pointer to the load across lines 1 & 2
-
+	IMPLICITENDUSE *implicit_enduses; ///< implicit enduses
 public:
 	// building design variables
 	double floor_area;				///< house_e floor area (ft^2)
@@ -70,42 +77,11 @@ public:
 	double solar_load;				///< solar load (BTU/h)
 	double cooling_design_temperature, heating_design_temperature, design_peak_solar, design_internal_gains;
 
-	/* enduse loads */
-#define IEU_CLOTHESWASHER	0x0001	///< flag to indicate clotheswasher enduse is implicitly defined
-#define IEU_DISHWASHER		0x0002	///< flag to indicate dishwasher enduse is implicitly defined
-#define IEU_DRYER			0x0004	///< flag to indicate dryer enduse is implicitly defined
-#define IEU_EVCHARGER		0x0008	///< flag to indicate eletric vehicle charger enduse is implicitly defined
-#define IEU_FREEZER			0x0010	///< flag to indicate freezer enduse is implicitly defined
-#define IEU_LIGHTS			0x0020	///< flag to indicate lights enduse is implicitly defined
-#define IEU_MICROWAVE		0x0040	///< flag to indicate microwave enduse is implicitly defined
-#define IEU_PLUGS			0x0080	///< flag to indicate plugs enduse is implicitly defined
-#define IEU_RANGE			0x0100	///< flag to indicate range enduse is implicitly defined
-#define IEU_REFRIGERATOR	0x0200	///< flag to indicate refrigerator enduse is implicitly defined
-#define IEU_WATERHEATER		0x0400	///< flag to indicate waterheater enduse is implicitly defined
-	/* TODO add more enduses here */
-	set implicit_enduses;	///< flags to indicate which enduses are implicitly defined
-
 	double Rroof, Rwall, Rfloor, Rwindows;
 
 	double *pTout;	// pointer to outdoor temperature (see climate)
 	double *pRhout;	// pointer to outdoor humidity (see climate)
 	double *pSolar;	// pointer to solar radiation array (see climate)
-
-	// electric enduse loads
-	enduse clotheswasher;
-	enduse dishwasher;
-	enduse dryer;
-	enduse evcharger;
-	enduse freezer;
-	enduse lights;
-	enduse microwave;
-	enduse plugs;
-	enduse range;
-	enduse refrigerator;
-	enduse waterheater;
-
-	// no electric load enduse gains
-	enduse occupants;
 
 	double Tair;
 	double Tmaterials;
@@ -136,7 +112,6 @@ private:
 
 public:
 	static CLASS *oclass;
-	static house_e *defaults;
 	house_e( MODULE *module);
 	~house_e();
 

@@ -94,6 +94,7 @@ typedef struct s_callbacks {
 		OBJECT *(*get_reference)(OBJECT *, char*);
 		char *(*get_unit)(OBJECT *, char *);
 		void *(*get_addr)(OBJECT *, char *);
+		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
 	} properties;
 	struct {
 		struct s_findlist *(*objects)(struct s_findlist *,...);
@@ -195,10 +196,11 @@ typedef struct s_callbacks {
 		long (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
 	} schedule;
 	struct {
-		loadshape *(*create)(struct s_loadshape *s);
+		struct s_loadshape *(*create)(struct s_loadshape *s);
 		int (*init)(struct s_loadshape *s);
 	} loadshape;
 	struct {
+		struct s_enduse *(*create)(struct s_enduse *e);
 		TIMESTAMP (*sync)(struct s_enduse *e, PASSCONFIG pass, TIMESTAMP t1);
 	} enduse;
 } CALLBACKS; /**< core callback function table */
@@ -227,6 +229,7 @@ int object_set_double_by_name(OBJECT *obj, PROPERTYNAME name, double value);
 int object_set_complex_by_name(OBJECT *obj, PROPERTYNAME name, complex value);
 int object_get_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value, int size);
 int object_get_value_by_addr(OBJECT *obj, void *addr, char *value, int size, PROPERTY *prop);
+int object_set_value_by_type(PROPERTYTYPE,void *addr, char *value);
 OBJECT *object_get_reference(OBJECT *obj, char *name);
 int object_isa(OBJECT *obj, char *type);
 OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name);

@@ -238,7 +238,9 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 
 	while (argv++,--argc>0)
 	{
-		if (strcmp(*argv,"-w")==0 || strcmp(*argv,"--warn")==0)
+		if (strcmp(*argv,"--copyright")==0)
+			legal_notice();
+		else if (strcmp(*argv,"-w")==0 || strcmp(*argv,"--warn")==0)
 			global_warn_mode=!global_warn_mode;
 		else if (strcmp(*argv,"--bothstdout")==0)
 			output_both_stdout();

@@ -508,6 +508,7 @@ inline int gl_get_value(OBJECT *obj, /**< the object from which to get the data 
 #else
 #define gl_get_value (*callback->properties.get_value_by_addr)
 #endif
+#define gl_set_value_by_type (*callback->properties.set_value_by_type)
 
 /** Set the value of a property in an object
 	@see object_set_value_by_addr()
@@ -877,14 +878,20 @@ inline long gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
 	return callback->schedule.dtnext(sch,index);
 }
 
+inline enduse *gl_enduse_create(enduse *e)
+{
+	return callback->enduse.create(e);
+}
+
 inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1)
 {
 	return callback->enduse.sync(e,PC_BOTTOMUP,t1);
 }
 
-inline loadshape *gl_create_loadshape(SCHEDULE *s)
+inline loadshape *gl_loadshape_create(SCHEDULE *s)
 {
 	loadshape *ls = (loadshape*)malloc(sizeof(loadshape));
+	memset(ls,0,sizeof(loadshape));
 	callback->loadshape.create(ls);
 	ls->schedule = s;
 	return ls;

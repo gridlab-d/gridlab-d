@@ -81,75 +81,131 @@
 #include "lock.h"
 #include "complex.h"
 
+// list of enduses that are implicitly active
+char1024 implicit_enduses = "lights";
+
 //////////////////////////////////////////////////////////////////////////
-// implicit loadshapes
+// implicit loadshapes - these are enabled by using implicit_enduses global
 //////////////////////////////////////////////////////////////////////////
-#ifdef NEVER
-static LOADSHAPE default_loadshapes[] = {
-
-		{"clotheswasher",
-		LST_SEASONAL|LST_WEEKDAY, // pulsed with different seasonal/weekday components
-		1.0, // scalar(pu or kW) 
-		0.54, 0.5, // event power nominal(kW) and event duration nominal(hr)
-		duration, queued,  //event type(kW or hr), flag for event queue or PWM or analog
-		{	// winter weekday
-			0.0036,0.0024,0.0020,0.0019,0.0026,0.0040,0.0062,0.0118,0.0177,0.0211,0.0215,0.0203,0.0176,0.0155,0.0133,0.0130,0.0145,0.0159,0.0166,0.0164,0.0154,0.0149,0.0110,0.0065,
-			// winter weekend
-			0.0044,0.0030,0.0022,0.0020,0.0021,0.0021,0.0030,0.0067,0.0145,0.0244,0.0310,0.0323,0.0308,0.0285,0.0251,0.0224,0.0215,0.0203,0.0194,0.0188,0.0180,0.0151,0.0122,0.0073,
-			// summer weekday
-			0.0029,0.0019,0.0014,0.0013,0.0018,0.0026,0.0055,0.0126,0.0181,0.0208,0.0229,0.0216,0.0193,0.0170,0.0145,0.0135,0.0135,0.0142,0.0145,0.0148,0.0146,0.0141,0.0110,0.0062,
-			// summer weekend
-			0.0031,0.0019,0.0013,0.0012,0.0012,0.0016,0.0027,0.0066,0.0157,0.0220,0.0258,0.0251,0.0231,0.0217,0.0186,0.0157,0.0156,0.0151,0.0147,0.0150,0.0156,0.0148,0.0106,0.0065,
-		},
-		0.90, // power factor
-		1.0, 0.0, 1.0, // current and impedance and heat fractions
-		20, false, // 20 amps, 110V
-		NULL // no linkage for defaults
-	},
-
-		/*{"freezer",
-		LST_SEASONAL,
-		0.69, // scalar(pu or kW) 
-		0, 0, // event power nominal(kW) and event duration nominal(hr)
-		energy, analog,  //event type(kW or hr), flag for event queue or PWM or analog
-		{	
-			//average winter day
-			0.1507,0.1486,0.1444,0.1431,0.1424,0.1397,0.1380,0.1383,0.1406,0.1413,0.1429,0.1487,0.1553,0.1563,0.1543,0.1539,0.1621,0.1749,0.1769,0.1763,0.1739,0.1687,0.1600,0.1524,
-			//average summer day
-			0.2080,0.2099,0.2063,0.1994,0.2016,0.1917,0.1903,0.1851,0.1876,0.1934,0.1984,0.2020,0.2101,0.2154,0.2190,0.2229,0.2286,0.2271,0.2273,0.2219,0.2231,0.2221,0.2171,0.2126
-
-		},
-		0.90,// power factor
-		0.90, 0.10, 1.00, // current and impedance and heat fractions
-		20, false, // 20 amps, 110V
-		NULL // no linkage for defaults
-	},*/
-
-	/*{"heating/cooling",
-		LST_SEASONAL|LST_WEEKDAY,
-		1,// scalar(pu or kW) 
-		4, 0.75, // event power nominal(kW) and event duration nominal(hr)
-		energy, PWM,  //event type(kW or hr), flag for event queue or PWM or analog
-		{	
-			//winter weekday
-			1.49,1.57,1.68,1.78,1.94,2.4,2.91,2.9,2.61,2.3,2.03,1.84,1.71,1.64,1.6,1.7,1.93,2.05,2.00,1.93,1.89,1.83,1.64,1.5,
-			//winter weekend
-			1.53,1.59,1.69,1.8,1.93,2.25,2.6,2.9,2.95,2.67,2.3,2.01,1.84,1.72,1.67,1.69,1.78,1.84,1.8,1.79,1.81,1.77,1.65,1.49,
-			//summer weekday
-			0.12,0.1,0.09,0.08,0.08,0.09,0.13,0.16,0.17,0.19,0.21,0.22,0.25,0.29,0.33,0.38,0.43,0.46,0.47,0.43,0.36,0.29,0.23,0.16,
-			//summer weekend
-			0.12,0.1,0.09,0.08,0.08,0.09,0.12,0.16,0.19,0.2,0.22,0.24,0.27,0.3,0.34,0.38,0.42,0.45,0.46,0.42,0.35,0.28,0.22,0.16
-
-		},
-		1.00,// power factor
-		0.00, 0.00, 1.00, // current and impedance and heat fractions
-		20, false, // 20 amps, 110V
-		NULL // no linkage for defaults
-	},*/
+struct s_implicit_enduse_list {
+	char *name;
+	double amps; 
+	int is220;
+	char *shape;
+	char *schedule;
+} implicit_enduse_list[] =
+{
+	// lighting (source: ELCAP lit-sp.dat)
+	{	"residential-lights-implicit", 30, false,
+		"type:analog; schedule: residential-lights-implicit; power: 1.0 kW",
+		"weekday-summer {"
+		"	* 0 * 4-9 1-5 0.380"
+		"	* 1 * 4-9 1-5 0.340"
+		"	* 2 * 4-9 1-5 0.320"
+		"	* 3 * 4-9 1-5 0.320"
+		"	* 4 * 4-9 1-5 0.320"
+		"	* 5 * 4-9 1-5 0.350"
+		"	* 6 * 4-9 1-5 0.410"
+		"	* 7 * 4-9 1-5 0.450"
+		"	* 8 * 4-9 1-5 0.450"
+		"	* 9 * 4-9 1-5 0.450"
+		"	* 10 * 4-9 1-5 0.450"
+		"	* 11 * 4-9 1-5 0.450"
+		"	* 12 * 4-9 1-5 0.450"
+		"	* 13 * 4-9 1-5 0.440"
+		"	* 14 * 4-9 1-5 0.440"
+		"	* 15 * 4-9 1-5 0.450"
+		"	* 16 * 4-9 1-5 0.470"
+		"	* 17 * 4-9 1-5 0.510"
+		"	* 18 * 4-9 1-5 0.540"
+		"	* 19 * 4-9 1-5 0.560"
+		"	* 20 * 4-9 1-5 0.630"
+		"	* 21 * 4-9 1-5 0.710"
+		"	* 22 * 4-9 1-5 0.650"
+		"	* 23 * 4-9 1-5 0.490"
+		"}"
+		"weekend-summer {"
+		"	* 0 * 4-9 6-0 0.410"
+		"	* 1 * 4-9 6-0 0.360"
+		"	* 2 * 4-9 6-0 0.330"
+		"	* 3 * 4-9 6-0 0.320"
+		"	* 4 * 4-9 6-0 0.320"
+		"	* 5 * 4-9 6-0 0.320"
+		"	* 6 * 4-9 6-0 0.340"
+		"	* 7 * 4-9 6-0 0.390"
+		"	* 8 * 4-9 6-0 0.440"
+		"	* 9 * 4-9 6-0 0.470"
+		"	* 10 * 4-9 6-0 0.470"
+		"	* 11 * 4-9 6-0 0.470"
+		"	* 12 * 4-9 6-0 0.470"
+		"	* 13 * 4-9 6-0 0.460"
+		"	* 14 * 4-9 6-0 0.460"
+		"	* 15 * 4-9 6-0 0.460"
+		"	* 16 * 4-9 6-0 0.470"
+		"	* 17 * 4-9 6-0 0.490"
+		"	* 18 * 4-9 6-0 0.520"
+		"	* 19 * 4-9 6-0 0.540"
+		"	* 20 * 4-9 6-0 0.610"
+		"	* 21 * 4-9 6-0 0.680"
+		"	* 22 * 4-9 6-0 0.630"
+		"	* 23 * 4-9 6-0 0.500"
+		"}"
+		"weekday-winter {"
+		"	* 0 * 10-3 1-5 0.4200"
+		"	* 1 * 10-3 1-5 0.3800"
+		"	* 2 * 10-3 1-5 0.3700"
+		"	* 3 * 10-3 1-5 0.3600"
+		"	* 4 * 10-3 1-5 0.3700"
+		"	* 5 * 10-3 1-5 0.4200"
+		"	* 6 * 10-3 1-5 0.5800"
+		"	* 7 * 10-3 1-5 0.6900"
+		"	* 8 * 10-3 1-5 0.6100"
+		"	* 9 * 10-3 1-5 0.5600"
+		"	* 10 * 10-3 1-5 0.5300"
+		"	* 11 * 10-3 1-5 0.5100"
+		"	* 12 * 10-3 1-5 0.4900"
+		"	* 13 * 10-3 1-5 0.4700"
+		"	* 14 * 10-3 1-5 0.4700"
+		"	* 15 * 10-3 1-5 0.5100"
+		"	* 16 * 10-3 1-5 0.6300"
+		"	* 17 * 10-3 1-5 0.8400"
+		"	* 18 * 10-3 1-5 0.9700"
+		"	* 19 * 10-3 1-5 0.9800"
+		"	* 20 * 10-3 1-5 0.9600"
+		"	* 21 * 10-3 1-5 0.8900"
+		"	* 22 * 10-3 1-5 0.7400"
+		"	* 23 * 10-3 1-5 0.5500"
+		"}"
+		"weekend-winter {"
+		"	* 0 * 10-3 6-0 0.4900"
+		"	* 1 * 10-3 6-0 0.4200"
+		"	* 2 * 10-3 6-0 0.3800"
+		"	* 3 * 10-3 6-0 0.3800"
+		"	* 4 * 10-3 6-0 0.3700"
+		"	* 5 * 10-3 6-0 0.3800"
+		"	* 6 * 10-3 6-0 0.4300"
+		"	* 7 * 10-3 6-0 0.5100"
+		"	* 8 * 10-3 6-0 0.6000"
+		"	* 9 * 10-3 6-0 0.6300"
+		"	* 10 * 10-3 6-0 0.6300"
+		"	* 11 * 10-3 6-0 0.6100"
+		"	* 12 * 10-3 6-0 0.6000"
+		"	* 13 * 10-3 6-0 0.5900"
+		"	* 14 * 10-3 6-0 0.5900"
+		"	* 15 * 10-3 6-0 0.6100"
+		"	* 16 * 10-3 6-0 0.7100"
+		"	* 17 * 10-3 6-0 0.8800"
+		"	* 18 * 10-3 6-0 0.9600"
+		"	* 19 * 10-3 6-0 0.9700"
+		"	* 20 * 10-3 6-0 0.9400"
+		"	* 21 * 10-3 6-0 0.8800"
+		"	* 22 * 10-3 6-0 0.7600"
+		"	* 23 * 10-3 6-0 0.5800"
+		"}"
+		}
 };
-#endif
 
-EXPORT CIRCUIT *attach_enduse(OBJECT *obj, void *target, double breaker_amps, int is220)
+EXPORT CIRCUIT *attach_enduse(OBJECT *obj, enduse *target, double breaker_amps, int is220)
 {
 	house_e *pHouse = 0;
 	CIRCUIT *c = 0;
@@ -165,14 +221,13 @@ EXPORT CIRCUIT *attach_enduse(OBJECT *obj, void *target, double breaker_amps, in
 	}
 
 	pHouse = OBJECTDATA(obj,house_e);
-	return pHouse->attach(obj,breaker_amps,is220,(enduse*)target);
+	return pHouse->attach(obj,breaker_amps,is220,target);
 }
 
 //////////////////////////////////////////////////////////////////////////
 // house_e CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* house_e::oclass = NULL;
-house_e *house_e::defaults = NULL;
 
 double house_e::warn_low_temp = 55;
 double house_e::warn_high_temp = 95;
@@ -243,23 +298,46 @@ house_e::house_e(MODULE *mod)
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
 		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse);
-
-		//int x = PADDR(waterheater) - 0;
-		//int result = enduse_publish(oclass, x, "waterheater");
-
-		// deafults set during class creation
-		defaults = this;
-		memset(this,0,sizeof(house_e));
-
-
+		gl_global_create("residential::implicit_enduses",PT_char1024,&implicit_enduses,NULL,NULL);
 	}	
 }
 
 int house_e::create() 
 {
-	// copy the defaults
-	memcpy(this,defaults,sizeof(house_e));
-	check_start = true;
+	char1024 enduse_list;
+	gl_global_getvar("residential::implicit_enduses",enduse_list,sizeof(enduse_list));
+	char *token = NULL;
+	implicit_enduses = NULL;
+
+	// scan the implicit_enduse list
+	while ((token=strtok(token?NULL:enduse_list,",; "))!=NULL)
+	{
+		// find the implicity enduse description
+		struct s_implicit_enduse_list *eu = NULL;
+		for (eu=implicit_enduse_list; eu<implicit_enduse_list+sizeof(implicit_enduse_list)/sizeof(implicit_enduse_list[0]); eu++)
+		{
+			char name[64];
+			sprintf(name,"residential-%s-implicit",token);
+			// matched enduse
+			if (strcmp(eu->name,name)==0)
+			{
+				SCHEDULE *sched = gl_schedule_create(eu->name,eu->schedule);
+				IMPLICITENDUSE *item = (IMPLICITENDUSE*)gl_malloc(sizeof(IMPLICITENDUSE));
+				memset(item,0,sizeof(IMPLICITENDUSE));
+				gl_enduse_create(&(item->enduse));
+				item->enduse.shape = gl_loadshape_create(sched);
+				if (gl_set_value_by_type(PT_loadshape,item->enduse.shape,eu->shape)==0)
+				{
+					gl_error("loadshape '%s' could not be created", name);
+					return 0;
+				}
+				item->next = implicit_enduses;
+				item->amps = eu->amps;
+				item->is220 = eu->is220;
+				implicit_enduses = item;
+			}
+		}
+	}
 	return 1;
 }
 
@@ -434,20 +512,13 @@ int house_e::init(OBJECT *parent)
 	air_thermal_mass = air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]
 	Tmaterials = Tair;	
 	
-	if(clotheswasher.current_fraction==0.0) clotheswasher.current_fraction = 1.0;
-	if(clotheswasher.heatgain_fraction==0.0) clotheswasher.heatgain_fraction = 1.0;
-	if(clotheswasher.power_factor==0.0) clotheswasher.power_factor = 0.9;
-	if(clotheswasher.power_factor==0.0) clotheswasher.heatgain_fraction = 0.9;
-	if(clotheswasher.power_factor==0.0) clotheswasher.heatgain_fraction = 0.9;
-	// material temperture [F]
-
 	// connect any implicit loads
 	attach_implicit_enduses();
 	update_system();
 	update_model();
 
 	// attach the house_e HVAC to the panel
-	attach(OBJECTHDR(this),50, true);
+	attach(OBJECTHDR(this),50, true, &system);
 
 	return 1;
 }
@@ -574,28 +645,10 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 void house_e::attach_implicit_enduses()
 {
-	struct {
-		int64 flag;
-		enduse *data;
-		double breaker_amps;
-	} map[] = {
-		{IEU_CLOTHESWASHER, &clotheswasher, 15},
-		{IEU_DISHWASHER, &dishwasher, 15},
-		{IEU_DRYER, &dryer, dryer.config&EUC_IS220 ? 30 : 15},
-		{IEU_EVCHARGER, &evcharger, evcharger.config&EUC_IS220 ? 60 : 20},
-		{IEU_FREEZER, &freezer, 15},
-		{IEU_LIGHTS, &lights, 15}, 
-		{IEU_MICROWAVE, &microwave, 15},
-		{IEU_PLUGS, &plugs, 15},
-		{IEU_RANGE, &range, 30},
-		{IEU_REFRIGERATOR, &refrigerator, 15},
-		{IEU_WATERHEATER, &waterheater, 30},
-		// TODO add other enduses
-	}, *p;
-	for (p=map; p<map+sizeof(map)/sizeof(map[0]); p++)
-	{
-		attach(NULL,p->breaker_amps,p->data->config&EUC_IS220?1:0,p->data);
-	}
+	IMPLICITENDUSE *item;
+	for (item=implicit_enduses; item!=NULL; item=item->next)
+		attach(NULL,item->amps,item->is220,&(item->enduse));
+
 	return;
 }
 
@@ -626,19 +679,10 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	// get address of load values (if any)
 	if (pLoad)
 		c->pLoad = pLoad;
-	else 
+	else if (obj)
 		c->pLoad = (enduse*)gl_get_addr(obj,"enduse_load");
-	if (c->pLoad==NULL)
-	{
+	else
 		GL_THROW("end-use load %s couldn't be connected because it does not publish 'enduse_load' property", c->pObj->name);
-	}
-	else {
-		PROPERTY *prop = gl_get_property(obj,"enduse_load");
-		if (prop==NULL || prop->ptype!=PT_enduse)
-		{
-			GL_THROW("end-use load %s couldn't be connected because 'enduse_load' property is not of type 'enduse'", c->pObj->name);
-		}
-	}
 	
 	// choose circuit
 	if (is220 == 1) // 220V circuit is on x12

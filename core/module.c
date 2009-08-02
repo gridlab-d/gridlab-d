@@ -145,7 +145,7 @@ static CALLBACKS callbacks = {
 	object_set_dependent,
 	object_set_parent,
 	object_set_rank,
-	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr},
+	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr,class_string_to_propertytype},
 	{find_objects,find_next,findlist_copy,findlist_add,findlist_del,findlist_clear},
 	class_find_property,
 	malloc,
@@ -176,7 +176,7 @@ static CALLBACKS callbacks = {
 	object_get_count,
 	{schedule_create, schedule_index, schedule_value, schedule_dtnext},
 	{loadshape_create,loadshape_init},
-	{enduse_sync},
+	{enduse_create,enduse_sync},
 };
 
 MODULE *first_module = NULL;

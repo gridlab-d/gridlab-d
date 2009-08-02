@@ -343,6 +343,13 @@ PROPERTYTYPE class_get_propertytype_from_typename(char *name) /**< a string cont
 	return PT_void;
 }
 
+int class_string_to_propertytype(PROPERTYTYPE type, void *addr, char *value)
+{
+	if (type > _PT_FIRST && type < _PT_LAST)
+		return (*property_type[type].string_to_data)(value,addr,NULL);
+	else
+		return 0;
+}
 /** Convert a string value to property data.
 	The \p addr must be the physical address in memory.
 	@return the number of value read from the \p value string; 0 on failure 
@@ -351,16 +358,7 @@ int class_string_to_property(PROPERTY *prop, /**< the type of the property at th
 							 void *addr,		/**< the address of the property's data */
 							 char *value)		/**< the string from which the data is read */
 {
-	if (prop->ptype==PT_delegated)
-	{
-		output_error("unable to convert to delegated property value");
-		/*	TROUBLESHOOT
-			Property delegation is not yet fully implemented, so you should never get this error.
-			If you do, there is a problem with the system that is causing it to become unstable.
-		 */
-		return 0;
-	}
-	else if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
+	if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
 		return (*property_type[prop->ptype].string_to_data)(value,addr,prop);
 	else
 		return 0;
@@ -548,7 +546,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	prop->next = NULL;
 
 	/* check for already existing property by same name */
-	if (class_find_property(oclass,prop->name))
+	if (oclass!=NULL && class_find_property(oclass,prop->name))
 		output_warning("class_define_map(oclass='%s',...): property name '%s' is defined more than once", oclass->name, prop->name);
 		/*	TROUBLESHOOT
 			A class is attempting to publish a variable more than once.  
