@@ -48,6 +48,7 @@ typedef enum {
 
 class house_e {
 public:
+	object weather; ///< reference to the climate
 	PANEL panel; ///< main house_e panel
 	/// Get voltage on a circuit
 	/// @return voltage (or 0 if breaker is open)
@@ -64,6 +65,7 @@ public:
 	double envelope_UA;				///< envelope UA (BTU.sq.ft/hr.ft2)
 	double glazing_shgc;			///< glazing SHGC
 	double window_wall_ratio;		///< window-wall ratio
+	double door_wall_ratio;			///< door-wall ratio
 	double gross_wall_area;			///< gross wall area (sq.ft)
 	double ceiling_height;			///< ceiling height
 	double aspect_ratio;			///< building footprint aspect ratio
@@ -102,7 +104,7 @@ public:
 	double solar_load;				///< solar load (BTU/h)
 	double cooling_design_temperature, heating_design_temperature, design_peak_solar, design_internal_gains;
 
-	double Rroof, Rwall, Rfloor, Rwindows;
+	double Rroof, Rwall, Rfloor, Rwindows, Rdoors;
 
 	double *pTout;	// pointer to outdoor temperature (see climate)
 	double *pRhout;	// pointer to outdoor humidity (see climate)

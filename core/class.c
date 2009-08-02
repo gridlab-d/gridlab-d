@@ -494,7 +494,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	
 	if (prop==NULL)
 	{
-		output_error("class_define_map(oclass='%s',...): memory allocation failed", oclass->name, name);
+		output_error("property_malloc(oclass='%s',...): memory allocation failed", oclass->name, name);
 		/*	TROUBLESHOOT
 			This means that the system has run out of memory while trying to define a class.  Trying freeing
 			up some memory by unloading applications or configuring your system so it has more memory.
@@ -514,7 +514,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	{
 		/* detect when a unit is associated with non-double/complex property */
 		if (prop->ptype!=PT_double && prop->ptype!=PT_complex)
-			output_error("class_define_map(oclass='%s',...): property %s cannot have unit '%s' because it is not a double or complex value",oclass->name, prop->name,unitspec);
+			output_error("property_malloc(oclass='%s',...): property %s cannot have unit '%s' because it is not a double or complex value",oclass->name, prop->name,unitspec);
 			/*	TROUBLESHOOT
 				Only <b>double</b> and <b>complex</b> properties can have units.  
 				Either change the type of the property or remove the unit specification from the property's declaration.
@@ -525,14 +525,14 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 		{
 			TRY {
 				if ((prop->unit = unit_find(unitspec))==NULL)
-					output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
+					output_error("property_malloc(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
 					/*	TROUBLESHOOT
 						A class is attempting to publish a variable using a unit that is not defined.  
 						This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
 						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
 					 */
 			} CATCH (char *msg) {
-					output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
+					output_error("property_malloc(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
 					/*	TROUBLESHOOT
 						A class is attempting to publish a variable using a unit that is not defined.  
 						This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
@@ -547,7 +547,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 
 	/* check for already existing property by same name */
 	if (oclass!=NULL && class_find_property(oclass,prop->name))
-		output_warning("class_define_map(oclass='%s',...): property name '%s' is defined more than once", oclass->name, prop->name);
+		output_warning("property_malloc(oclass='%s',...): property name '%s' is defined more than once", oclass->name, prop->name);
 		/*	TROUBLESHOOT
 			A class is attempting to publish a variable more than once.  
 			This is caused by an repeated specification for a variable publication (in C++) or declaration (in GLM).
@@ -859,7 +859,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				goto Error;
 			}
 		}
-		else if (proptype==PT_enduse) // TODO this has to be done explicitly until structures are supported
+		else if (proptype==PT_enduse) /// @todo class_define_map support for enduse has to be done explicitly until structures are supported
 		{
 			char *name = va_arg(arg,char*);
 			PROPERTYADDR addr = va_arg(arg,PROPERTYADDR);
@@ -953,7 +953,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 	return count;
 Error:
 	if (prop!=NULL)
-		output_verbose("class_define_map(oclass='%s',...): processed up to property %s before error", oclass->name, prop->name);
+		output_error("class_define_map(oclass='%s',...): processed up to '%s' before encountering error", oclass->name, prop->name);
 	return -count;
 }
 

@@ -194,51 +194,58 @@ house_e::house_e(MODULE *mod)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_double,"floor_area[sf]",PADDR(floor_area),
-			PT_double,"gross_wall_area[sf]",PADDR(gross_wall_area),
-			PT_double,"ceiling_height[ft]",PADDR(ceiling_height),
-			PT_double,"aspect_ratio",PADDR(aspect_ratio),
-			PT_double,"envelope_UA[Btu/degF.h]",PADDR(envelope_UA),
-			PT_double,"window_wall_ratio",PADDR(window_wall_ratio),
-			PT_double,"glazing_shgc",PADDR(glazing_shgc),
-			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),
-			PT_double,"internal_gain[Btu/h]",PADDR(total.heatgain),
-			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),
-			PT_double,"heat_cool_gain[Btu/h]",PADDR(system.heatgain),
-			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),
-			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),
-			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),
-			PT_double, "design_heating_capacity[Btu.h/sf]",PADDR(design_heating_capacity),
-			PT_double,"design_cooling_capacity[Btu.h/sf]",PADDR(design_cooling_capacity),
-			PT_double, "cooling_design_temperature[degF]", PADDR(cooling_design_temperature),
-			PT_double, "heating_design_temperature[degF]", PADDR(heating_design_temperature),
-			PT_double, "design_peak_solar[W/sf]", PADDR(design_peak_solar),
-			PT_double, "design_internal_gains[W/sf]", PADDR(design_peak_solar),
+			PT_object,"weather",PADDR(weather),PT_DESCRIPTION,"reference to the climate object",
+			PT_double,"floor_area[sf]",PADDR(floor_area),PT_DESCRIPTION,"home conditioned floor area",
+			PT_double,"gross_wall_area[sf]",PADDR(gross_wall_area),PT_DESCRIPTION,"gross outdoor wall area",
+			PT_double,"ceiling_height[ft]",PADDR(ceiling_height),PT_DESCRIPTION,"average ceiling height",
+			PT_double,"aspect_ratio",PADDR(aspect_ratio), PT_DESCRIPTION,"aspect ratio of the home's footprint",
+			PT_double,"envelope_UA[Btu/degF.h]",PADDR(envelope_UA),PT_DESCRIPTION,"overall UA of the home's envelope",
+			PT_double,"window_wall_ratio",PADDR(window_wall_ratio),PT_DESCRIPTION,"ratio of window area to wall area",
+			PT_double,"door_wall_ratio",PADDR(door_wall_ratio),PT_DESCRIPTION,"ratio of door area to wall area",
+			PT_double,"glazing_shgc",PADDR(glazing_shgc),PT_DESCRIPTION,"shading coefficient of glazing",PT_DEPRECATED,
+			PT_double,"window_shading",PADDR(glazing_shgc),PT_DESCRIPTION,"shading coefficient of windows",
+			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),PT_DESCRIPTION,"number of air-changes per hour",
+			PT_double,"internal_gain[Btu/h]",PADDR(total.heatgain),PT_DESCRIPTION,"internal heat gains",
+			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),PT_DESCRIPTION,"solar heat gains",
+			PT_double,"heat_cool_gain[Btu/h]",PADDR(system.heatgain),PT_DESCRIPTION,"system heat gains(losses)",
 
-			PT_double,"heating_COP",PADDR(heating_COP),
-			PT_double,"cooling_COP",PADDR(cooling_COP),
-			PT_double,"COP_coeff",PADDR(COP_coeff),
-			PT_double,"air_temperature[degF]",PADDR(Tair),
-			PT_double,"outdoor_temperature[degF]",PADDR(outside_temperature),
-			PT_double,"mass_heat_capacity[Btu/F]",PADDR(house_content_thermal_mass),
-			PT_double,"mass_heat_coeff[Btu/F.h]",PADDR(house_content_heat_transfer_coeff),
-			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),
-			PT_set,"system_type",PADDR(system_type),
+			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),PT_DESCRIPTION,"deadband of thermostat control",
+			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),PT_DESCRIPTION,"thermostat heating setpoint",
+			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),PT_DESCRIPTION,"thermostat cooling setpoint",
+			PT_double, "design_heating_capacity[Btu.h/sf]",PADDR(design_heating_capacity),PT_DESCRIPTION,"system heating capacity",
+			PT_double,"design_cooling_capacity[Btu.h/sf]",PADDR(design_cooling_capacity),PT_DESCRIPTION,"system cooling capacity",
+			PT_double, "cooling_design_temperature[degF]", PADDR(cooling_design_temperature),PT_DESCRIPTION,"system cooling design temperature",
+			PT_double, "heating_design_temperature[degF]", PADDR(heating_design_temperature),PT_DESCRIPTION,"system heating design temperature",
+			PT_double, "design_peak_solar[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design solar load",
+			PT_double, "design_internal_gains[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design internal gains",
+
+			PT_double,"heating_COP[pu]",PADDR(heating_COP),PT_DESCRIPTION,"system heating performance coefficient",
+			PT_double,"cooling_COP[Btu/kWh]",PADDR(cooling_COP),PT_DESCRIPTION,"system cooling performance coefficient",
+			PT_double,"COP_coeff",PADDR(COP_coeff),PT_DESCRIPTION,"effective system performance coefficient",
+			PT_double,"air_temperature[degF]",PADDR(Tair),PT_DESCRIPTION,"indoor air temperature",
+			PT_double,"outdoor_temperature[degF]",PADDR(outside_temperature),PT_DESCRIPTION,"outdoor air temperature",
+			PT_double,"mass_heat_capacity[Btu/F]",PADDR(house_content_thermal_mass),PT_DESCRIPTION,"interior mass heat capacity",
+			PT_double,"mass_heat_coeff[Btu/F.h]",PADDR(house_content_heat_transfer_coeff),PT_DESCRIPTION,"interior mass heat exchange coefficient",
+			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),PT_DESCRIPTION,"interior mass temperature",
+			PT_set,"system_type",PADDR(system_type),PT_DESCRIPTION,"heating/cooling system type/options",
 				PT_KEYWORD, "GAS",	(set)ST_GAS,
 				PT_KEYWORD, "AIRCONDITIONING", (set)ST_AC,
 				PT_KEYWORD, "FORCEDAIR", (set)ST_AIR,
 				PT_KEYWORD, "TWOSTAGE", (set)ST_VAR,
-			PT_enumeration,"system_mode",PADDR(system_mode),
+			PT_enumeration,"system_mode",PADDR(system_mode),PT_DESCRIPTION,"heating/cooling system operation state",
 				PT_KEYWORD,"UNKNOWN",SM_UNKNOWN,
 				PT_KEYWORD,"HEAT",SM_HEAT,
 				PT_KEYWORD,"OFF",system_mode,
 				PT_KEYWORD,"COOL",SM_COOL,
 				PT_KEYWORD,"OFF",system_mode,
-			PT_double, "Rroof[degF.h/Btu]", PADDR(Rroof),
-			PT_double, "Rwall[degF.h/Btu]", PADDR(Rwall),
-			PT_double, "Rfloor[degF.h/Btu]", PADDR(Rfloor),
-			PT_double, "Rwindows[degF.h/Btu]", PADDR(Rwindows),
+			PT_double, "Rroof[degF.h/Btu]", PADDR(Rroof),PT_DESCRIPTION,"roof R-value",
+			PT_double, "Rwall[degF.h/Btu]", PADDR(Rwall),PT_DESCRIPTION,"wall R-value",
+			PT_double, "Rfloor[degF.h/Btu]", PADDR(Rfloor),PT_DESCRIPTION,"floor R-value",
+			PT_double, "Rwindows[degF.h/Btu]", PADDR(Rwindows),PT_DESCRIPTION,"window R-value",
+			PT_double, "Rdoors[degF.h/Btu]", PADDR(Rdoors),PT_DESCRIPTION,"door R-value",
 			
+			PT_enduse,"system",PADDR(system),PT_DESCRIPTION,"heating/cooling system enduse load",
+			PT_enduse,"total",PADDR(total),PT_DESCRIPTION,"total enduse load",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
@@ -249,7 +256,7 @@ house_e::house_e(MODULE *mod)
 			PT_KEYWORD, "OCCUPANCY", (set)IEU_OCCUPANCY,
 			PT_KEYWORD, "DISHWASHER", (set)IEU_DISHWASHER,
 			PT_KEYWORD, "MICROWAVE", (set)IEU_MICROWAVE,
-			PT_KEYWORD, "FRWEZER", (set)IEU_FREEZER,
+			PT_KEYWORD, "FREEZER", (set)IEU_FREEZER,
 			PT_KEYWORD, "REFRIGERATOR", (set)IEU_REFRIGERATOR,
 			PT_KEYWORD, "RANGE", (set)IEU_RANGE,
 			PT_KEYWORD, "EVCHARGER", (set)IEU_EVCHARGE,
@@ -325,6 +332,8 @@ int house_e::create()
 				gl_warning("house_e data for '%s' implicit enduse not found", token);
 		}
 	}
+	total.name = "total";
+	system.name = "system";
 
 	return 1;
 }
@@ -456,14 +465,16 @@ int house_e::init(OBJECT *parent)
 	if (ceiling_height==0)		ceiling_height = gl_random_triangle(7,9);
 	if (gross_wall_area==0)		gross_wall_area = 4.0 * 2.0 * (aspect_ratio + 1.0) * ceiling_height * sqrt(floor_area/aspect_ratio);
 	if (window_wall_ratio==0)	window_wall_ratio = 0.15;
+	if (door_wall_ratio==0)		door_wall_ratio = 0.05;
 	if (glazing_shgc==0)		glazing_shgc = 0.65; // assuming generic double glazing
 
 	if (Rroof==0)				Rroof = gl_random_triangle(50,70);
 	if (Rwall==0)				Rwall = gl_random_triangle(15,25);
 	if (Rfloor==0)				Rfloor = gl_random_triangle(100,150);
 	if (Rwindows==0)			Rwindows = gl_random_triangle(2,4);
+	if (Rdoors==0)				Rdoors = gl_random_triangle(1,3);
 
-	if (envelope_UA==0)			envelope_UA = floor_area*(1/Rroof+1/Rfloor) + gross_wall_area*((1-window_wall_ratio)/Rwall + window_wall_ratio/Rwindows);
+	if (envelope_UA==0)			envelope_UA = floor_area*(1/Rroof+1/Rfloor) + gross_wall_area*((1-window_wall_ratio-door_wall_ratio)/Rwall + window_wall_ratio/Rwindows + door_wall_ratio/Rdoors);
 
 	if (airchange_per_hour==0)	airchange_per_hour = gl_random_triangle(4,6);
 
@@ -537,8 +548,7 @@ Also synchronizes the voltages and current in the panel with the meter.
 TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP t2 = TS_NEVER;
-	TIMESTAMP te = TS_NEVER;
+	TIMESTAMP t2 = TS_NEVER, t;
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
 
 	double nHours = dt1 / 3600;
@@ -546,31 +556,45 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (t0==0 || t1>t0)
 	{
 		outside_temperature = *pTout;
-		te = sync_enduses(t0,t1);
+		t = sync_enduses(t0,t1);
+		if (t<t2) t2 = t;
 		update_system(dt1);
+		t = gl_enduse_sync(&system,t1);
+		if (t<t2) t2 = t;
 		update_model(dt1);
 		check_controls();
 	}
 
 	/* solve for the time to the next event */
-	double dt2=(double)TS_NEVER;
+	double dt2;
 	dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
 	if (isnan(dt2) || !isfinite(dt2) || dt2<0)
 	{
 		if (sgn(dTair)==sgn(Tair-Tevent)) // imminent control event
-			t2 = t1+1;
+		{
+			t = t1+1;
+			if (t<t2) t2 = t;
+		}
 	}
 	else if (dt2<TS_SECOND)
-		t2 = t1+1; /* need to do a second pass to get next state */
+	{	
+		t = t1+1; /* need to do a second pass to get next state */
+		if (t<t2) t2 = t;
+	}	
 	else
-		t2 = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+	{
+		t = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+		if (t<t2) t2 = t;
+	}
 
 	// sync circuit panel
-	TIMESTAMP panel_time = sync_panel(t0,t1);
-	if (panel_time < t2)
-		t2 = panel_time;
+	t = sync_panel(t0,t1);
+	if (t < t2)	t2 = t;
 
-	return (te!=TS_NEVER&&te<t2)?(t2<TS_NEVER?te:-te):t2;
+	t = gl_enduse_sync(&total,t1);
+	if (t < t2) t2 = t;
+
+	return t2;
 	
 }
 
@@ -651,9 +675,13 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	if (pLoad)
 		c->pLoad = pLoad;
 	else if (obj)
+	{
 		c->pLoad = (enduse*)gl_get_addr(obj,"enduse_load");
+		if (c->pLoad==NULL)
+			GL_THROW("end-use load %s couldn't be connected because it does not publish 'enduse_load' property", c->pObj->name);
+	}
 	else
-		GL_THROW("end-use load %s couldn't be connected because it does not publish 'enduse_load' property", c->pObj->name);
+			GL_THROW("end-use load couldn't be connected neither an object nor a enduse property was given");
 	
 	// choose circuit
 	if (is220 == 1) // 220V circuit is on x12
@@ -692,8 +720,9 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	// clear accumulators for panel currents
 	complex I[3]; I[X12] = I[X23] = I[X13] = complex(0,0);
 
-	// clear heatgain accumulator
-	double heatgain = 0;
+	// clear accumulator
+	total.heatgain = 0;
+	total.total = total.power = total.current = total.admittance = complex(0,0);
 
 	// gather load power and compute current for each circuit
 	CIRCUIT *c;
@@ -723,7 +752,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				break;
 			}
 			
-			complex current = ~(c->pLoad->power*1000 / *(c->pV)); 
+			complex current = ~(c->pLoad->total*1000 / *(c->pV)); 
 
 			// check breaker
 			if (current.Mag()>c->max_amps)
@@ -755,8 +784,11 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// add to panel current
 			else
 			{
-				system.power += c->pLoad->power;	// reminder: |a| + |b| != |a+b|
-				system.heatgain += c->pLoad->heatgain;
+				total.total += c->pLoad->total;
+				total.power += c->pLoad->power;
+				total.current += c->pLoad->current;
+				total.admittance += c->pLoad->admittance;
+				total.heatgain += c->pLoad->heatgain;
 				I[n] += current;
 				c->reclose = TS_NEVER;
 			}

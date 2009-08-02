@@ -81,23 +81,31 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 	}
 	else if(pass==PC_BOTTOMUP)
 	{
-		double P = e->shape->load * (e->power_fraction + (e->current_fraction + e->impedance_fraction*e->voltage_factor )*e->voltage_factor);
-		e->total.r = P;
-		if (fabs(e->power_factor)<1)
-			e->total.i = (e->power_factor<0?-1:1)*P*sqrt(1/(e->power_factor*e->power_factor)-1);
-		else
-			e->total.i = 0;
+		if (e->shape) // shape driven -> use fractions
+		{
+			double P = e->shape->load * (e->power_fraction + (e->current_fraction + e->impedance_fraction*e->voltage_factor )*e->voltage_factor);
+			e->total.r = P;
+			if (fabs(e->power_factor)<1)
+				e->total.i = (e->power_factor<0?-1:1)*P*sqrt(1/(e->power_factor*e->power_factor)-1);
+			else
+				e->total.i = 0;
 
-		// beware: these are misnomers (they are e->constant_power, e->constant_current, ...)
-		e->power.r = e->total.r * e->power_fraction; e->power.i = e->total.i * e->power_fraction;
-		e->current.r = e->total.r * e->current_fraction; e->current.i = e->total.i * e->current_fraction;
-		e->admittance.r = e->total.r * e->impedance_fraction; e->admittance.i = e->total.i * e->impedance_fraction;
+			// beware: these are misnomers (they are e->constant_power, e->constant_current, ...)
+			e->power.r = e->total.r * e->power_fraction; e->power.i = e->total.i * e->power_fraction;
+			e->current.r = e->total.r * e->current_fraction; e->current.i = e->total.i * e->current_fraction;
+			e->admittance.r = e->total.r * e->impedance_fraction; e->admittance.i = e->total.i * e->impedance_fraction;
+		}
+		else // no shape - use ZIP component directly
+		{
+			e->total.r = e->power.r + (e->current.r + e->admittance.r*e->voltage_factor)*e->voltage_factor;
+			e->total.i = e->power.i + (e->current.i + e->admittance.i*e->voltage_factor)*e->voltage_factor;
+		}
 
 		if (e->power.r > e->demand.r) e->demand = e->power;
 		e->heatgain = e->power.r * e->heatgain_fraction;
 		e->t_last = t1;
 	}
-	return e->shape->schedule?e->shape->schedule->next_t:TS_NEVER;
+	return e->shape ? e->shape->t2 : TS_NEVER;
 }
 
 TIMESTAMP enduse_syncall(TIMESTAMP t1)
@@ -180,7 +188,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 
 	for (p=prop_list;p<prop_list+sizeof(prop_list)/sizeof(prop_list[0]);p++)
 	{
-		char name[256];
+		char name[256], lastname[256];
 				
 		if(prefix == NULL || strcmp(prefix,"")==0)
 		{
@@ -213,9 +221,9 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		else if (p->type==PT_KEYWORD) {
 			switch (last->type) {
 			case PT_enumeration:
-				if (!class_define_enumeration_member(oclass,last->name,p->name,p->type))
+				if (!class_define_enumeration_member(oclass,lastname,p->name,p->type))
 				{
-					output_error("unable to publish enumeration member %s of enduse %s", p->name,last->name);
+					output_error("unable to publish enumeration member '%s' of enduse '%s'", p->name,last->name);
 					/* TROUBLESHOOT
 					The enduse_publish structure is not defined correctly.  This is an internal error and cannot be corrected by
 					users.  Contact technical support and report this problem.
@@ -224,9 +232,9 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 				}
 				break;
 			case PT_set:
-				if (!class_define_set_member(oclass,last->name,p->name,(int64)p->addr))
+				if (!class_define_set_member(oclass,lastname,p->name,(int64)p->addr))
 				{
-					output_error("unable to publish set member %s of enduse %s", p->name,last->name);
+					output_error("unable to publish set member '%s' of enduse '%s'", p->name,last->name);
 					/* TROUBLESHOOT
 					The enduse_publish structure is not defined correctly.  This is an internal error and cannot be corrected by
 					users.  Contact technical support and report this problem.
@@ -235,7 +243,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 				}
 				break;
 			default:
-				output_error("PT_KEYWORD not supported after property type %s in enduse_publish", class_get_property_typename(last->type));
+				output_error("PT_KEYWORD not supported after property '%s %s' in enduse_publish", class_get_property_typename(last->type), last->name);
 				/* TROUBLESHOOT
 				The enduse_publish structure is not defined correctly.  This is an internal error and cannot be corrected by
 				users.  Contact technical support and report this problem.
@@ -245,7 +253,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		}
 		else
 		{
-			output_error("property type %s not recognized in enduse_publish", class_get_property_typename(last->type));
+			output_error("property type '%s' not recognized in enduse_publish", class_get_property_typename(last->type));
 			/* TROUBLESHOOT
 				The enduse_publish structure is not defined correctly.  This is an internal error and cannot be corrected by
 				users.  Contact technical support and report this problem.
@@ -254,6 +262,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		}
 
 		last = p;
+		strcpy(lastname,name);
 	}
 
 	return result;
