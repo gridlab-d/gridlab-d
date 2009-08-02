@@ -54,6 +54,8 @@ GLOBAL double default_maximum_voltage_error INIT(1e-8);	/**< default sync voltag
 
 /* used by many powerflow enums */
 #define UNKNOWN 0
+#define ROUNDOFF 1e-6			// numerical accuracy for zero in float comparisons
+
 
 #include "powerflow_object.h"
 

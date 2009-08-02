@@ -1512,9 +1512,9 @@ void link::set_flow_directions(void)
 		static int shift[] = {0,4,8};
 		double power_in = indiv_power_in[i].Mag();
 		double power_out = indiv_power_out[i].Mag();
-		if (power_in > power_out)
+		if (power_in - power_out > ROUNDOFF)
 			flow_direction |= ((int64)FD_A_NORMAL<<shift[i]);  // "Normal" flow direction
-		else if (power_in < power_out)
+		else if (power_in - power_out < -ROUNDOFF)
 			flow_direction |= ((int64)FD_A_REVERSE<<shift[i]);  // "Reverse" flow direction
 		else
 			flow_direction |= ((int64)FD_A_NONE<<shift[i]);  // "No" flow direction
