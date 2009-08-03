@@ -739,6 +739,15 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				return FAILED;
 			}
 		}
+		else if (strcmp(*argv,"--server")==0)
+		{
+#ifdef WIN32
+			output_fatal("server mode not supported on this platform");
+			return FAILED;
+#else
+			strcpy(global_environment,"server");
+#endif
+		}
 		else if (strcmp(*argv,"-h")==0 || strcmp(*argv,"--help")==0)
 		{
 			printf("Syntax: gridlabd [OPTIONS ...] <file> ... \nOptions:\n"

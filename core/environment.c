@@ -19,6 +19,7 @@
 #include "exec.h"
 #include "save.h"
 #include "matlab.h"
+#include "server.h"
 
 /** Starts the environment selected by the global_environment variable
  **/
@@ -59,6 +60,11 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	{
 		output_verbose("starting Matlab");
 		return matlab_startup(argc,argv);
+	}
+	else if (strcmp(global_environment,"server")==0)
+	{
+		output_verbose("starting server");
+		return server_startup(argc,argv);
 	}
 	else
 	{
