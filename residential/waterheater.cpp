@@ -31,7 +31,7 @@
 #define HEIGHT_PRECISION 0.01
 
 //////////////////////////////////////////////////////////////////////////
-// underground_line_conductor CLASS FUNCTIONS
+// waterheater CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* waterheater::oclass = NULL;
 waterheater *waterheater::defaults = NULL;
@@ -433,14 +433,20 @@ waterheater::WHQFLOW waterheater::set_current_model_and_load_state(void)
 				// If the tank is empty, a negative dh/dt means we're still
 				// drawing water, so we'll be switching to the 1-zone model...
 				
+				/* original plan */
 				//current_model = NONE;
 				//load_state = DEPLETING;
 				
 				current_model = ONENODE;
 				load_state = DEPLETING;
-				Tw = Tupper = Tlower = Tinlet;
+				Tw = Tupper = Tinlet + HEIGHT_PRECISION;
+				Tlower = Tinlet;
 				h = height;
 				/* empty of hot water? full of cold water! */
+				/* it is reconized that this causes a discontinuous jump in the water temperature.
+				 * despite that, energy is mostly conserved, since Q => dh until h = 0 (thus no heat in the water).
+				 * the +0.01 degF fudge factor for the dhdt() T_diff=0 catch adds about 0.05% of a tank of heat,
+				 * less than expected errors from other sources. */
 			}
 			else if (dhdt_full > 0)
 			{
