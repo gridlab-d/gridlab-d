@@ -117,55 +117,24 @@
 #include "solvers.h"
 #include "house_a.h"
 #include "lock.h"
-
-EXPORT CIRCUIT *attach_enduse_house_a(OBJECT *obj, ENDUSELOAD *attachee, double breaker_amps, int is220){
+	
+EXPORT CIRCUIT *attach_enduse_house_a(OBJECT *obj, enduse *target, double breaker_amps, int is220)
+{
 	house *pHouse = 0;
 	CIRCUIT *c = 0;
 
 	if(obj == NULL){
-		GL_THROW("attach_house_a: null *obj");
+		GL_THROW("attach_house_a: null object reference");
 	}
-	if(attachee == NULL){
-		GL_THROW("attach_house_a: null *attachee");
+	if(target == NULL){
+		GL_THROW("attach_house_a: null enduse target data");
 	}
 	if(breaker_amps < 0 || breaker_amps > 1000){ /* at 3kA, we're looking into substation power levels, not enduses */
-		GL_THROW("attach_house_a: breaker amps of %i unrealistic");
+		GL_THROW("attach_house_a: breaker amps of %i unrealistic", breaker_amps);
 	}
 
 	pHouse = OBJECTDATA(obj,house);
-	c = new CIRCUIT;
-
-	if(c == NULL){
-		GL_THROW("attach_enduse_house_a: memory allocation failure");
-	}
-
-	c->next = pHouse->panel.circuits;
-	c->id = pHouse->panel.circuits ? pHouse->panel.circuits->id+1 : 1;
-	c->max_amps = breaker_amps;
-	c->pLoad = attachee;
-
-	// choose circuit
-	if (is220 == 1) // 220V circuit is on x12
-	{
-		c->type = X12;
-		c->id++; // use two circuits
-	}
-	else if (c->id&0x01) // odd circuit is on x13
-		c->type = X13;
-	else // even circuit is on x23
-		c->type = X23;
-
-	// attach to circuit list
-	pHouse->panel.circuits = c;
-
-	c->pV = &(pHouse->pCircuit_V[(int)c->type]);
-	c->status = BRK_CLOSED;
-	c->tripsleft = 100;
-
-	// attach the enduse for future reference
-	c->pObj = attachee->end_obj;
-
-	return c;
+	return pHouse->attach(target,breaker_amps,is220);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -464,7 +433,9 @@ int house::init(OBJECT *parent)
 	}
 
 	// attach the house HVAC to the panel
-	attach(OBJECTHDR(this),50, TRUE);
+	load.name = "hvac";
+	tload.name = "house";
+	attach(&load, 50, TRUE);
 	
 	return 1;
 }
@@ -473,10 +444,20 @@ int house::init(OBJECT *parent)
 /// The attach() method automatically assigns an end-use load
 /// to the first appropriate available circuit.
 /// @return pointer to the voltage on the assigned circuit
-CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
+CIRCUIT *house::attach(enduse *pLoad, ///< enduse structure
 					   double breaker_amps, ///< breaker capacity (in Amps)
-					   int is220) ///< 0 for 120V, 1 for 240V load
+					   int is220///< 0 for 120V, 1 for 240V load
+					   ) 
 {
+	if (pLoad==NULL){
+		GL_THROW("end-use load couldn't be connected because it was not provided");
+		/*	TROUBLESHOOT
+			The house model expects all enduse load models to publish an 'enduse_load' property that points to the top
+			of the load aggregator for the appliance.  Please verify that the specified load class publishes an
+			'enduse_load' property.
+		*/
+	}
+	
 	// construct and id the new circuit
 	CIRCUIT *c = new CIRCUIT;
 	if (c==NULL)
@@ -495,16 +476,7 @@ CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
 	c->max_amps = breaker_amps;
 
 	// get address of load values (if any)
-	c->pLoad = (ENDUSELOAD*)gl_get_addr(obj,"enduse_load");
-	if (c->pLoad==NULL){
-		GL_THROW("end-use load %s couldn't be connected because it does not publish ENDUSELOAD structure", c->pObj->name);
-		/*	TROUBLESHOOT
-			The house model expects all enduse load models to publish an 'enduse_load' property that points to the top
-			of the load aggregator for the appliance.  Please verify that the specified load class publishes an
-			'enduse_load' property.
-		*/
-	}
-	
+	c->pLoad = pLoad;
 	// choose circuit
 	if (is220 == 1) // 220V circuit is on x12
 	{
@@ -528,9 +500,6 @@ CIRCUIT *house::attach(OBJECT *obj, ///< object to attach
 	// set breaker lifetime (at average of 3.5 ops/year, 100 seems reasonable)
 	// @todo get data on residential breaker lifetimes (residential, low priority)
 	c->tripsleft = 100;
-
-	// attach the enduse for future reference
-	c->pObj = obj;
 
 	return c;
 }

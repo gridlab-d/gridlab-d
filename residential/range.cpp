@@ -90,7 +90,6 @@ int range::init(OBJECT *parent)
 
 	// attach object to house panel
 	house *pHouse = OBJECTDATA(parent,house);
-	pVoltage = (pHouse->attach(OBJECTHDR(this),30,true))->pV;
 
 		//	pull parent attach_enduse and attach the enduseload
 	FUNCTIONADDR attach = 0;

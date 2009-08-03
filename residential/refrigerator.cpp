@@ -61,24 +61,30 @@
 // underground_line_conductor CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* refrigerator::oclass = NULL;
-refrigerator *refrigerator::defaults = NULL;
-
-
+CLASS *refrigerator::pclass = NULL;
 
 refrigerator::refrigerator(MODULE *module) 
+: residential_enduse(module)
 {
 	// first time init
 	if (oclass == NULL)
 	{
+		pclass = residential_enduse::oclass;
+
+		// register the class definition
 		oclass = gl_register_class(module,"refrigerator",sizeof(refrigerator),PC_PRETOPDOWN | PC_BOTTOMUP);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			/* TROUBLESHOOT
+				The file that implements the lights in the residential module cannot register the class.
+				This is an internal error.  Contact support for assistance.
+			 */
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_double, "size[cf]", PADDR(size),
+			PT_INHERIT, "residential_enduse",
+			PT_double, "size[cf]", PADDR(size),PT_DESCRIPTION,"volume of the refrigerator",
 			PT_double, "rated_capacity[Btu/h]", PADDR(rated_capacity),
-			PT_double,"power_factor[pu]",PADDR(power_factor),
 			PT_double,"temperature[degF]",PADDR(Tair),
 			PT_double,"setpoint[degF]",PADDR(Tset),
 			PT_double,"deadband[degF]",PADDR(thermostat_deadband),
@@ -91,35 +97,31 @@ refrigerator::refrigerator(MODULE *module)
 				PT_KEYWORD,"OFF",S_OFF,
 				PT_KEYWORD,"ON",S_ON,
 
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"constant_power[kW]",PADDR(load.power),
-			PT_complex,"constant_current[A]",PADDR(load.current),
-			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"enduse_load[kW]",PADDR(load.total),PT_DEPRECATED,
 
 			NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
-
-		//setup default values
-		defaults = this;
-		memset(this,0,sizeof(refrigerator));
 	}
-}
-
-refrigerator::~refrigerator()
-{
 }
 
 int refrigerator::create() 
 {
-	memcpy(this, defaults, sizeof(*this));
+	int res = residential_enduse::create();
 
-	return 1;
+	// name of enduse
+	load.name = oclass->name;
+
+	// @todo other initial conditions
+
+	return res;
 }
 
 int refrigerator::init(OBJECT *parent)
 {
+	int res = residential_enduse::init(parent);
+	OBJECT *hdr = OBJECTHDR(this);
+	hdr->flags |= OF_SKIPSAFE;
+
 	// defaults for unset values */
 	if (size==0)				size = gl_random_uniform(20,40); // cf
 	if (thermostat_deadband==0) thermostat_deadband = gl_random_uniform(2,3);
@@ -129,10 +131,7 @@ int refrigerator::init(OBJECT *parent)
 	if (UAf==0)					UAf = gl_random_uniform(0.9,1.1);
 	if (COPcoef==0)				COPcoef = gl_random_uniform(0.9,1.1);
 	if (Tout==0)				Tout = 59.0;
-	if (power_factor==0)		power_factor = 0.95;
-
-	OBJECT *hdr = OBJECTHDR(this);
-	hdr->flags |= OF_SKIPSAFE;
+	if (load.power_factor==0)		load.power_factor = 0.95;
 
 	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{
@@ -145,27 +144,14 @@ int refrigerator::init(OBJECT *parent)
 		return 0;
 	}
 
-	// attach object to house panel
-	house *pHouse = OBJECTDATA(parent,house);
 	//pVoltage = (pHouse->attach(OBJECTHDR(this),20,false))->pV;
-	pTempProp = gl_get_property(parent, "air_temperature");
-	if(pTempProp == NULL){
-		GL_THROW("Parent house of refrigerator lacks property \'air_temperature\'");
+	pTout = (double*)gl_get_addr(parent, "air_temperature");
+	if (pTout==NULL)
+	{
+		static double default_air_temperature = 72;
+		gl_warning("%s (%s:%d) parent object lacks air temperature, using %0f degF instead", hdr->name, hdr->oclass->name, hdr->id, default_air_temperature);
+		pTout = &default_air_temperature;
 	}
-
-	//	pull parent attach_enduse and attach the enduseload
-	FUNCTIONADDR attach = 0;
-	load.end_obj = hdr;
-	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
-		gl_error("refrigerator parent must publish attach_enduse()");
-		/*	TROUBLESHOOT
-			The refrigerator object attempt to attach itself to its parent, which
-			must implement the attach_enduse function.
-		*/
-		return 0;
-	}
-	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
 
 	/* derived values */
 	Tair = gl_random_uniform(Tset-thermostat_deadband/2, Tset+thermostat_deadband/2);
@@ -175,8 +161,8 @@ int refrigerator::init(OBJECT *parent)
 
 	rated_capacity = BTUPHPW * size*10; // BTU/h ... 10 BTU.h / cf (34W/cf, so ~700 for a full-sized refrigerator)
 
-	// duty cycle estimate
-	if (gl_random_bernoulli(0.04)){
+	// duty cycle estimate for initial condition
+	if (gl_random_bernoulli(0.1)){
 		Qr = rated_capacity;
 	} else {
 		Qr = 0;
@@ -193,10 +179,6 @@ TIMESTAMP refrigerator::presync(TIMESTAMP t0, TIMESTAMP t1){
 	double *pTout = 0, t = 0.0, dt = 0.0;
 	double nHours = (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND;
 
-	pTout = gl_get_double(hdr->parent, pTempProp);
-	if(pTout == NULL){
-		GL_THROW("Parent house of refrigerator lacks property \'air_temperature\' at sync time?");
-	}
 	Tout = *pTout;
 
 	if(nHours > 0 && t0 > 0){ /* skip this on TS_INIT */

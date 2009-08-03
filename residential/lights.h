@@ -13,9 +13,6 @@
 #include "residential_enduse.h"
 
 class lights : public residential_enduse {
-private:
-	CIRCUIT *pCircuit;
-
 public:
 	enum { // make certain this matchers the power_factor table
 		INCANDESCENT=0,	///< incandescent lights

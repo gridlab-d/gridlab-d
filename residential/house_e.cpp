@@ -163,7 +163,7 @@ struct s_implicit_enduse_list {
 	/// @todo add other implicit enduse schedules and shapes as they are defined
 };
 
-EXPORT CIRCUIT *attach_enduse(OBJECT *obj, enduse *target, double breaker_amps, int is220)
+EXPORT CIRCUIT *attach_enduse_house_e(OBJECT *obj, enduse *target, double breaker_amps, int is220)
 {
 	house_e *pHouse = 0;
 	CIRCUIT *c = 0;
@@ -262,7 +262,7 @@ house_e::house_e(MODULE *mod)
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
-		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse);
+		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse_house_e);
 		gl_global_create("residential::implicit_enduses",PT_set,&implicit_enduses_active,
 			PT_KEYWORD, "LIGHTS", (set)IEU_LIGHTS,
 			PT_KEYWORD, "PLUGS", (set)IEU_PLUGS,

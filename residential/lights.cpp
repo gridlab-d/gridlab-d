@@ -89,9 +89,10 @@ int lights::create(void)
 	int res = residential_enduse::create();
 
 	// name of enduse
-	load.name = "lights";
+	load.name = oclass->name;
 
-	// other initial conditions
+	// @todo other initial conditions
+
 	return res;
 }
 
@@ -113,7 +114,6 @@ int lights::init(OBJECT *parent)
 			The lighting load cannot be negative.
 			Use a positive lighting lighting and try again.
 		 */
-	
 
 	if (load.power_factor==0) load.power_factor = power_factor[type];
 	if (load.voltage_factor==0) load.voltage_factor = 1.0;

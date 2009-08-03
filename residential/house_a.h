@@ -163,7 +163,7 @@ public:
 	int init(OBJECT *parent);
 	int init_climate(void);
 
-	CIRCUIT *attach(OBJECT *obj, double limit, int is220=false);
+	CIRCUIT *attach(ENDUSELOAD *target, double limit, int is220=false);
 
 // access methods
 public:

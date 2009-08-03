@@ -153,7 +153,6 @@ int waterheater::init(OBJECT *parent)
 
 	// attach object to house panel
 	house *pHouse = OBJECTDATA(parent,house);
-	pVoltage = (pHouse->attach(OBJECTHDR(this),30,TRUE))->pV; // 220V 30amp breaker
 
 	//	pull parent attach_enduse and attach the enduseload
 	FUNCTIONADDR attach = 0;

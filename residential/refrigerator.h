@@ -11,20 +11,16 @@
 #define _REFRIGERATOR_H
 
 #include "residential.h"
+#include "residential_enduse.h"
 
-class refrigerator  
-{
+class refrigerator : public residential_enduse {
+private:
+	double *pTout;
 public:
 	typedef enum {
 		S_OFF=0,
 		S_ON=1
 	} MOTORSTATE;
-
-private:
-	complex *pVoltage;		// reference to the assigned panel circuit voltage
-	house *pHouse;			// reference to the parent house
-	PROPERTY *pTempProp;
-
 public:
 	double size;  ///< refrigerator volume (cf) 
 	double rated_capacity;  ///< rated capacity (Btu/h)
@@ -41,16 +37,13 @@ public:
 	
 	double Tevent;	///< Temperature we will switch the motor on or off.  Available for SmartGrid PLC code to nudge.
 
-	double power_factor;
-
 	MOTORSTATE motor_state;
-	ENDUSELOAD load;
+	enduse load;
 	TIMESTAMP last_time, next_time;
 
 public:
 
-	static CLASS *oclass;
-	static refrigerator *defaults;
+	static CLASS *oclass, *pclass;
 	refrigerator(MODULE *module);
 	~refrigerator();
 	
