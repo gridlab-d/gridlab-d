@@ -12,10 +12,13 @@
 typedef struct s_enduse {
 	char *name;
 	loadshape *shape;
-	long config;				/* end-use configuration */
-	complex power;				/* power in kW */
+	set config;					/* end-use configuration */
+	complex total;				/* total power in kW */
 	complex energy;				/* total energy in kWh */
 	complex demand;				/* maximum power in kW (can be reset) */
+	complex admittance;			/* constant impedance oprtion of load in kW */
+	complex current;			/* constant current portion of load in kW */
+	complex power;				/* constant power portion of load in kW */
 	double impedance_fraction;	/* constant impedance fraction (pu load) */
 	double current_fraction;	/* constant current fraction (pu load) */
 	double power_fraction;		/* constant power fraction (pu load)*/
@@ -28,9 +31,7 @@ typedef struct s_enduse {
 	// added for backward compatibility with res ENDUSELOAD
 	// @todo these are obsolete and must be retrofitted with the above values
 	struct s_object_list *end_obj;
-	complex total;
-	complex current;
-	complex admittance;
+
 	struct s_enduse *next;
 } enduse;
 
