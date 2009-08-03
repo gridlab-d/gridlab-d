@@ -170,6 +170,7 @@ office::office(MODULE *module)
 			PT_complex, "power[kW]", PADDR(zone.total.constant_power),
 			PT_complex, "current[A]", PADDR(zone.total.constant_current),
 			PT_complex, "admittance[1/Ohm]", PADDR(zone.total.constant_admittance),
+		
 			PT_complex, "hvac.demand[kW]", PADDR(zone.hvac.enduse.demand),
 			PT_complex, "hvac.load[kW]", PADDR(zone.hvac.enduse.power),
 			PT_complex, "hvac.energy", PADDR(zone.hvac.enduse.energy),
@@ -179,11 +180,15 @@ office::office(MODULE *module)
 			PT_complex, "lights.load[kW]", PADDR(zone.lights.enduse.power),
 			PT_complex, "lights.energy", PADDR(zone.lights.enduse.energy),
 			PT_double, "lights.power_factor", PADDR(zone.lights.enduse.power_factor),
-
+			PT_double, "lights.heatgain_fraction", PADDR(zone.lights.enduse.heatgain_fraction),
+			PT_double, "lights.heatgain", PADDR(zone.lights.enduse.heatgain),
+			
 			PT_complex, "plugs.demand[kW]", PADDR(zone.plugs.enduse.demand),
 			PT_complex, "plugs.load[kW]", PADDR(zone.plugs.enduse.power),
 			PT_complex, "plugs.energy", PADDR(zone.plugs.enduse.energy),
 			PT_double, "plugs.power_factor", PADDR(zone.plugs.enduse.power_factor),
+			PT_double, "plugs.heatgain_fraction", PADDR(zone.plugs.enduse.heatgain_fraction),
+			PT_double, "plugs.heatgain", PADDR(zone.plugs.enduse.heatgain),
 
 			PT_double, "cooling_setpoint", PADDR(zone.control.cooling_setpoint),
 			PT_double, "heating_setpoint", PADDR(zone.control.heating_setpoint),
