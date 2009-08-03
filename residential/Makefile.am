@@ -16,6 +16,6 @@ libresidential_la_SOURCES = \
 	dryer.cpp dryer.h \
 	freezer.cpp freezer.h \
 	evcharger.cpp evcharger.h \
-	init.cpp main.cpp residential.h	
+	init.cpp main.cpp residential.h
 libresidential_la_LDFLAGS = -version-info 0:0:0
 

@@ -37,6 +37,7 @@
 #ifndef isfinite
 #define isfinite _finite
 #endif
+#define strlwr _strlwr
 #else /* !WIN32 */
 #define int64 long long /**< standard version of 64-bit integers */
 #define FMT_INT64 "ll" /**< standard version of 64-bit integer printf format string */

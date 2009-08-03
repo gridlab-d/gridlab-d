@@ -87,6 +87,19 @@
 #include "lock.h"
 #include "complex.h"
 
+#ifndef WIN32
+char *strlwr(char *s)
+{
+	char *r=s;
+	while (*s!='\0') 
+	{
+		*s = (*s>='A'&&*s<='Z') ? (*s-'A'+'a') : *s;
+		s++;
+	}
+	return r;
+}
+#endif
+
 // list of enduses that are implicitly active
 set house_e::implicit_enduses_active = 0xffffffff;
 
