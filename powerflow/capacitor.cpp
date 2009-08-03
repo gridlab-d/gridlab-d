@@ -297,27 +297,10 @@ int capacitor::init(OBJECT *parent)
 	return result;
 }
 
-TIMESTAMP capacitor::presync(TIMESTAMP t0)
-{
-
-	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
-	{
-		LOCK_OBJECT(OBJECTHDR(RLink));
-		//Takes all measurements from output side of link
-		VArVals[0] = RLink->indiv_power_out[0].Im();
-		VArVals[1] = RLink->indiv_power_out[1].Im();
-		VArVals[2] = RLink->indiv_power_out[2].Im();
-		UNLOCK_OBJECT(OBJECTHDR(RLink));
-	}
-
-	return node::presync(t0);
-}
-
 TIMESTAMP capacitor::sync(TIMESTAMP t0)
 {
 	complex VoltVals[3];
 	complex temp_shunt[3];
-	//node *RNode = OBJECTDATA(RemoteSensor,node);
 	bool Phase_Mismatch = false;
 	TIMESTAMP result;
 
@@ -430,7 +413,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 			}
 		}
 		else;	//MANUAL and VAR-VOLT (which do not need values or do nothing right now)
-				//VAR handled in presynch
+				//VAR handled in postsynch
 
 		switch (control) {
 			case MANUAL:  // manual
@@ -784,6 +767,26 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 	NotFirstIteration=true;	//Set so we know we can start automating (powerflow takes about 1 iteration to get even ball-park values)
 
 	return result;
+}
+
+TIMESTAMP capacitor::postsync(TIMESTAMP t0)
+{
+
+	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
+	{
+		LOCK_OBJECT(OBJECTHDR(RLink));
+
+		//Force the link to do an update (will be ignored first run anyways (zero))
+		RLink->calculate_power();
+
+		//Takes all measurements from output side of link
+		VArVals[0] = RLink->indiv_power_out[0].Im();
+		VArVals[1] = RLink->indiv_power_out[1].Im();
+		VArVals[2] = RLink->indiv_power_out[2].Im();
+		UNLOCK_OBJECT(OBJECTHDR(RLink));
+	}
+
+	return node::postsync(t0);
 }
 
 int capacitor::isa(char *classname)
