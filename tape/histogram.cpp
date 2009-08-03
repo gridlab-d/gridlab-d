@@ -450,8 +450,8 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double value = 0.0;
 	OBJECT *obj = OBJECTHDR(this);
 
-	if((sampling_interval == 0 && t_count > t1) ||
-		sampling_interval == -1 ||
+	if((sampling_interval == -1 && t_count > t1) ||
+		sampling_interval == 0 ||
 		(sampling_interval > 0 && t1 >= next_sample))
 	{
 		if(group_list == NULL){
@@ -470,8 +470,8 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
-	if((counting_interval == 0 && t_count > t1) ||
-		counting_interval == -1 ||
+	if((counting_interval == -1 && t_count > t1) ||
+		counting_interval == 0 ||
 		(counting_interval > 0 && t1 >= next_count))
 	{
 		char1024 line;
