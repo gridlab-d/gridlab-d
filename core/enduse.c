@@ -181,7 +181,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 	}, *last=NULL;
 	
 	// publish the enduse load itself
-	PROPERTY *prop = property_malloc(PT_enduse,oclass,strcmp(prefix,"")==0?prefix:"load",struct_address,NULL);
+	PROPERTY *prop = property_malloc(PT_enduse,oclass,strcmp(prefix,"")==0?"load":prefix,struct_address,NULL);
 	prop->description = "the enduse load description";
 	prop->flags = 0;
 	class_add_property(oclass,prop);
