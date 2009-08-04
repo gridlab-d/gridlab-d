@@ -147,6 +147,7 @@ typedef unsigned long PROPERTYFLAGS;
 #define PF_RECALC	0x0001 /**< property has a recalc trigger (only works if recalc_<class> is exported) */
 #define PF_CHARSET	0x0002 /**< set supports single character keywords (avoids use of |) */
 #define PF_DEPRECATED 0x8000 /**< set this flag to indicate that the property is deprecated (warning will be displayed anytime it is used */
+#define PF_DEPRECATED_NONOTICE 0x04000 /**< set this flag to indicate that the property is deprecated but no reference warning is desired */
 
 typedef struct s_property_map {
 	CLASS *oclass; /**< class implementing the property */

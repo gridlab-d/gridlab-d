@@ -8,6 +8,10 @@
 //Note: Last hand check passed 07/14/2009
 //Payroll: D3P706
 
+#setenv GLPATH=../../core;../../core/etc
+#setenv GRIDLABD=../../core
+#include "rt/debugger.conf"
+
 clock {
 	timestamp '2000-01-01 0:00:00';
 	stoptime '2000-01-01 24:00:00';
@@ -27,6 +31,25 @@ object house:1 {
 	thermostat_deadband 2;
 }
 
+class test {
+	function house::attach_enduse;
+	enduse load;
+	intrinsic create(object parent)
+	{
+		return 1;
+	};
+	intrinsic init(object parent)
+	{
+		attach_enduse(parent,NULL,15,false);
+		return 1;
+	};
+}
+
+object test {
+	parent house:1;
+}
+
+#ifdef NEVER
 object lights:2 {
 	parent house:1;
 	type CFL;
@@ -53,3 +76,4 @@ object player{
 	file "..\generic_demand.glt";
 	loop 1;
 }
+#endif

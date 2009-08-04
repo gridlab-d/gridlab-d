@@ -571,7 +571,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// compute circuit current
 			if ((c->pV)->Mag() == 0)
 			{
-				gl_debug("house:%d circuit %d (%s:%d) voltage is zero", obj->id, c->id, c->pObj->oclass->name, c->pObj->id);
+				gl_debug("house:%d circuit %d (enduse %s) voltage is zero", obj->id, c->id, c->pLoad->name);
 				break;
 			}
 			
@@ -588,8 +588,8 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 					// average five minutes before reclosing, exponentially distributed
 					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(1/300.0)*TS_SECOND); 
-					gl_debug("house:%d circuit breaker %d tripped - %s (%s:%d) overload at %.0f A", obj->id, c->id,
-						c->pObj->name?c->pObj->name:"unnamed object", c->pObj->oclass->name, c->pObj->id, current.Mag());
+					gl_debug("house:%d circuit breaker %d tripped - enduse %s overload at %.0f A", obj->id, c->id,
+						c->pLoad->name, current.Mag());
 				}
 
 				// breaker fails from too frequent operation

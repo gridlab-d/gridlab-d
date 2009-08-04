@@ -691,7 +691,7 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	{
 		c->pLoad = (enduse*)gl_get_addr(obj,"enduse_load");
 		if (c->pLoad==NULL)
-			GL_THROW("end-use load %s couldn't be connected because it does not publish 'enduse_load' property", c->pObj->name);
+			GL_THROW("end-use load %s couldn't be connected because it does not publish 'enduse_load' property", c->pLoad->name);
 	}
 	else
 			GL_THROW("end-use load couldn't be connected neither an object nor a enduse property was given");
@@ -720,8 +720,6 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	// @todo get data on residential breaker lifetimes (residential, low priority)
 	c->tripsleft = 100;
 
-	// attach the enduse for future reference
-	c->pObj = obj;
 	return c;
 }
 
@@ -761,7 +759,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// compute circuit current
 			if ((c->pV)->Mag() == 0)
 			{
-				gl_debug("house_e:%d circuit %d (%s:%d) voltage is zero", obj->id, c->id, c->pObj->oclass->name, c->pObj->id);
+				gl_debug("house_e:%d circuit %d (enduse %s) voltage is zero", obj->id, c->id, c->pLoad->name);
 				break;
 			}
 			
@@ -778,8 +776,8 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 					// average five minutes before reclosing, exponentially distributed
 					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(1/300.0)*TS_SECOND); 
-					gl_debug("house_e:%d circuit breaker %d tripped - %s (%s:%d) overload at %.0f A", obj->id, c->id,
-						c->pObj->name?c->pObj->name:"unnamed object", c->pObj->oclass->name, c->pObj->id, current.Mag());
+					gl_debug("house_e:%d circuit breaker %d tripped - enduse %s overload at %.0f A", obj->id, c->id,
+						c->pLoad->name, current.Mag());
 				}
 
 				// breaker fails from too frequent operation

@@ -51,7 +51,6 @@ typedef struct s_circuit {
 	BREAKERSTATUS status; ///< breaker status
 	TIMESTAMP reclose; ///< time at which breaker is reclosed
 	unsigned short tripsleft; ///< the number of trips left before breaker faults
-	OBJECT *pObj; ///< the object that is using this circuit (NULL if implicit; must publish enduse_load property of type enduse)
 	struct s_circuit *next; ///< next circuit in list
 	// DPC: commented this out until the rest of house_e is updated
 } CIRCUIT; ///< circuit definition

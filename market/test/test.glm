@@ -5,7 +5,7 @@
 // generates 10000 bids, one each 5 minutes and clear a market once per hour
 
 #setenv GLPATH=../../core;../../core/etc
-
+#setenv GRIDLABD=../../core
 #include "rt/debugger.conf"
 
 module market;

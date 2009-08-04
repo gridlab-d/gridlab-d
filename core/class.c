@@ -225,12 +225,16 @@ PROPERTY *class_find_property(CLASS *oclass,		/**< the object class */
 	{
 		if (strcmp(name,prop->name)==0)
 		{
-			if (prop->flags&PF_DEPRECATED && !global_suppress_deprecated_messages)
+			if (prop->flags&PF_DEPRECATED && !(prop->flags&PF_DEPRECATED_NONOTICE) && !global_suppress_deprecated_messages)
+			{
 				output_warning("class_find_property(CLASS *oclass='%s', PROPERTYNAME name='%s': property is deprecated", oclass->name, name);
 				/* TROUBLESHOOT
 					You have done a search on a property that has been flagged as deprecated and will most likely not be supported soon.
 					Correct the usage of this property to get rid of this message.
 				 */
+				if (global_suppress_repeat_messages)
+					prop->flags |= ~PF_DEPRECATED_NONOTICE;
+			}
 			return prop;
 		}
 	}
