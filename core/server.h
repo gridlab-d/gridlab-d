@@ -5,7 +5,7 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
-#include "globals.h"svn up
+#include "globals.h"
 
 STATUS server_start(int argc, char *argv[]);
 
