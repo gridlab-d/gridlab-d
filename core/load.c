@@ -891,7 +891,7 @@ static int white(PARSER)
 {
 	int len = 0;
 	for(len = 0; *_p != '\0' && isspace((unsigned char)(*_p)); ++_p){
-		if(*_p == '\n'){
+		if(*_p == '\n' || *_p == '\r'){
 			++linenum;
 		}
 		++len;
@@ -3926,6 +3926,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 	int linenum=0;
 	int startnest = nesting;
 	int bnest = 0, quote = 0;
+	int hassc = 0; // has semicolon
 	while (fgets(line,sizeof(line),fp)!=NULL)
 	{
 		int len;
@@ -3983,8 +3984,11 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 						quote = 1;
 					} else if(subst[i] == '{'){
 						++bnest;
+						++hassc;
 					} else if(subst[i] == '}'){
 						--bnest;
+					} else if(subst[i] == ';'){
+						++hassc;
 					}
 				} else {
 					if(subst[i] == '\"'){
@@ -3998,7 +4002,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 			size -= 1;
 			n += 1;
 		}
-		if(bnest == 0){
+		if(bnest == 0 && hassc > 0){
 			/* end of block */
 			return n;
 		}
