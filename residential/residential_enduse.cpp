@@ -62,7 +62,7 @@ int residential_enduse::init(OBJECT *parent)
 	hdr->flags |= OF_SKIPSAFE;
 
 	//	pull parent attach_enduse and attach the enduseload
-	ATTACHFUNCTION *attach = (ATTACHFUNCTION*)(gl_get_function(parent, "attach_enduse"));
+	ATTACHFUNCTION attach = (ATTACHFUNCTION)(gl_get_function(parent, "attach_enduse"));
 	if(attach)
 		pCircuit = (*attach)(parent, hdr, 15, false, &load);
 	else if (parent)
