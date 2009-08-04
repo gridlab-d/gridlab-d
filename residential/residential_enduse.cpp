@@ -64,7 +64,7 @@ int residential_enduse::init(OBJECT *parent)
 	//	pull parent attach_enduse and attach the enduseload
 	ATTACHFUNCTION attach = (ATTACHFUNCTION)(gl_get_function(parent, "attach_enduse"));
 	if(attach)
-		pCircuit = (*attach)(parent, hdr, 15, false, &load);
+		pCircuit = (*attach)(parent, hdr, load.breaker_amps, (load.config&EUC_IS220)!=0, &load);
 	else if (parent)
 		gl_warning("%s (%s:%d) parent %s (%s:%d) does not export attach_enduse function so voltage response cannot be modeled", hdr->name?hdr->name:"(unnamed)", hdr->oclass->name, hdr->id, parent->name?parent->name:"(unnamed)", parent->oclass->name, parent->id);
 		/* TROUBLESHOOT
@@ -98,6 +98,13 @@ TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	gl_debug("%s shape load = %8g", obj->name, gl_get_loadshape_value(&shape));
+	if (load.voltage_factor>1.2 || load.voltage_factor<0.8)
+		gl_warning("%s voltage is out of normal +/- 20%% range of nominal (vf=%.2f)", obj->name, load.voltage_factor);
+		/* TROUBLESHOOTING
+		   The voltage on the enduse circuit is outside the expected range for that enduse.
+		   This is usually caused by an impropely configure circuit (e.g., 110V on 220V or vice versa).
+		   Fix the circuit configuration for that enduse and try again.
+		 */
 	return shape.t2>t1 ? shape.t2 : TS_NEVER; 
 }
 

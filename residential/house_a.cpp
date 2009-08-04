@@ -585,7 +585,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			complex current = ~(c->pLoad->total*1000 / *(c->pV)); 
 
 			// check breaker
-			if (current.Mag()>c->max_amps)
+			if (c->max_amps>0 && current.Mag()>c->max_amps)
 			{
 				// probability of breaker failure increases over time
 				if (c->tripsleft>0 && gl_random_bernoulli(1/(c->tripsleft--))==0)

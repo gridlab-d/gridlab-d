@@ -98,10 +98,10 @@ int lights::create(void)
 
 int lights::init(OBJECT *parent)
 {
-	int res = residential_enduse::init(parent);
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
+	// check the load configuration before initializing the parent class
 	if(shape.load > 1.0)
 		gl_warning("lighting load %f exceeds installed capacity", shape.load);
 		/* TROUBLESHOOT
@@ -165,7 +165,10 @@ int lights::init(OBJECT *parent)
 	// power factor
 	load.power_factor = power_factor[type];
 
-	return res;
+	// circuit config and breaker amps
+
+	// waiting this long to initialize the parent class is normal
+	return residential_enduse::init(parent);
 }
 
 TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1) 

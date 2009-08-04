@@ -12,20 +12,31 @@
 typedef struct s_enduse {
 	char *name;
 	loadshape *shape;
-	set config;					/* end-use configuration */
-	complex total;				/* total power in kW */
-	complex energy;				/* total energy in kWh */
-	complex demand;				/* maximum power in kW (can be reset) */
-	complex admittance;			/* constant impedance oprtion of load in kW */
-	complex current;			/* constant current portion of load in kW */
-	complex power;				/* constant power portion of load in kW */
-	double impedance_fraction;	/* constant impedance fraction (pu load) */
-	double current_fraction;	/* constant current fraction (pu load) */
-	double power_fraction;		/* constant power fraction (pu load)*/
-	double power_factor;		/* power factor */
-	double voltage_factor;		/* voltage factor (pu nominal) */
-	double heatgain;			/* internal heat from load (Btu/h) */
-	double heatgain_fraction;	/* fraction of power that goes to internal heat (pu Btu/h) */
+	struct {
+		set config;					/* end-use configuration */
+		double breaker_amps;		/* breaker limit (if any) */
+	}; /* circuit configuration */
+	struct {
+		complex total;				/* total power in kW */
+		complex energy;				/* total energy in kWh */
+		complex demand;				/* maximum power in kW (can be reset) */
+	}; /* meter values */
+	struct {
+		complex admittance;			/* constant impedance oprtion of load in kW */
+		complex current;			/* constant current portion of load in kW */
+		complex power;				/* constant power portion of load in kW */
+	}; /* zip values */
+	struct {
+		double impedance_fraction;	/* constant impedance fraction (pu load) */
+		double current_fraction;	/* constant current fraction (pu load) */
+		double power_fraction;		/* constant power fraction (pu load)*/
+		double power_factor;		/* power factor */
+		double voltage_factor;		/* voltage factor (pu nominal) */
+	}; /* loading */
+	struct {
+		double heatgain;			/* internal heat from load (Btu/h) */
+		double heatgain_fraction;	/* fraction of power that goes to internal heat (pu Btu/h) */
+	}; /* heat */
 	TIMESTAMP t_last;			/* last time of update */
 
 	// added for backward compatibility with res ENDUSELOAD
