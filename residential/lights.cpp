@@ -119,7 +119,7 @@ int lights::init(OBJECT *parent)
 	if (load.voltage_factor==0) load.voltage_factor = 1.0;
 
 	// check for the right kind of loadshape schedule 
-	if (shape.type!=MT_ANALOG)
+	if (shape.type!=MT_ANALOG && shape.type != MT_UNKNOWN)
 		throw("residential lighting only supports analog loadshapes");
 		/* TROUBLESHOOT
 			Lighting load use analog loadshapes.

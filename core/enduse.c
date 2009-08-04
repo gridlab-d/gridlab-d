@@ -105,7 +105,7 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 		e->heatgain = e->power.r * e->heatgain_fraction;
 		e->t_last = t1;
 	}
-	return e->shape ? e->shape->t2 : TS_NEVER;
+	return (e->shape && e->shape->type != MT_UNKNOWN) ? e->shape->t2 : TS_NEVER;
 }
 
 TIMESTAMP enduse_syncall(TIMESTAMP t1)
@@ -277,7 +277,7 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 	/* check string length before copying to buffer */
 	if (strlen(string)>sizeof(buffer)-1)
 	{
-		output_error("convert_to_loadshape(string='%-.64s...', ...) input string is too long (max is 1023)",string);
+		output_error("convert_to_enduse(string='%-.64s...', ...) input string is too long (max is 1023)",string);
 		return 0;
 	}
 	strcpy(buffer,string);
