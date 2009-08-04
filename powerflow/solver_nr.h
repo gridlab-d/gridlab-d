@@ -27,10 +27,11 @@ typedef struct  {
 } BUSDATA;
 
 typedef struct {
-	complex *Y[3][3]; ///< branch admittance
-	int from;         ///< index into bus data
-	int to;	          ///< index into bus data
-	double v_ratio;   ///< voltage ratio (v_from/v_to)
+	complex *Yfrom[3][3];	///< branch admittance of from side of link
+	complex *Yto[3][3];		///< branch admittance of to side of link
+	int from;				///< index into bus data
+	int to;					///< index into bus data
+	double v_ratio;			///< voltage ratio (v_from/v_to)
 } BRANCHDATA;
 
 typedef struct Y_NR{

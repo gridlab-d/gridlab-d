@@ -146,16 +146,16 @@ int transformer::init(OBJECT *parent)
 				b_mat[1][1] = zt_b;
 				b_mat[2][2] = zt_c;
 			}
-			else if (solver_method==SM_GS)
+			else if ((solver_method==SM_GS) || (solver_method==SM_NR))
 			{
 				complex Izt = complex(1,0) / zt;
 
 				b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
 			}
-			else if (solver_method==SM_NR)
-			{
-				throw "Newton-Raphson solution method is not yet supported";
-			}
+			//else if (solver_method==SM_NR)
+			//{
+			//	throw "Newton-Raphson solution method is not yet supported";
+			//}
 			else 
 			{
 				GL_THROW("Unsupported solver method");
@@ -196,7 +196,7 @@ int transformer::init(OBJECT *parent)
 				B_mat[0][0] = B_mat[1][1] = zt;
 				B_mat[2][0] = B_mat[2][1] = -zt;
 			}
-			else if (solver_method==SM_GS)
+			else if ((solver_method==SM_GS) || (solver_method==SM_NR))
 			{
 				//Calculate admittance matrix
 				complex Izt = complex(1,0) / zt;
@@ -214,10 +214,10 @@ int transformer::init(OBJECT *parent)
 				B_mat[0][0] = B_mat[1][1] = zt;
 				B_mat[2][0] = B_mat[2][1] = -zt;
 			}
-			else if (solver_method==SM_NR)
-			{
-				throw "Newton-Raphson solution method is not yet supported";
-			}
+			//else if (solver_method==SM_NR)
+			//{
+			//	throw "Newton-Raphson solution method is not yet supported";
+			//}
 			else 
 			{
 				GL_THROW("Unsupported solver method");
@@ -263,7 +263,7 @@ int transformer::init(OBJECT *parent)
 					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = zt;
 				}
 			}
-			else if (solver_method==SM_GS)
+			else if ((solver_method==SM_GS) || (solver_method==SM_NR))
 			{
 				SpecialLnk = DELTAGWYE;
 
@@ -328,10 +328,10 @@ int transformer::init(OBJECT *parent)
 					A_mat[0][1] = A_mat[1][2] = A_mat[2][0] = complex(-1.0) / nt;
 				}
 			}
-			else if (solver_method==SM_NR)
-			{
-				throw "Newton-Raphson solution method is not yet supported";
-			}
+			//else if (solver_method==SM_NR)
+			//{
+			//	throw "Newton-Raphson solution method is not yet supported";
+			//}
 			else 
 			{
 				GL_THROW("Unsupported solver method");

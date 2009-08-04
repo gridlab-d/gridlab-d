@@ -991,6 +991,8 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			else
 				return t1;
 		}
+		else if (NR_curr_bus==NR_bus_count)	//Population complete, we're not swing, let us go (or we never go on)
+			return t1;
 		else	//Population of data busses is not complete.  Flag us for a go-around, they should be ready next time
 			return t0;
 		break;

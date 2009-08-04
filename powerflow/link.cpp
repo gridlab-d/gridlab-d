@@ -417,8 +417,13 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				
 				//Start with admittance matrix
 				for (jval=0; jval<3; jval++)
+				{
 					for (kval=0; kval<3; kval++)
-						NR_branchdata[NR_curr_branch].Y[jval][kval] = &From_Y[jval][kval];
+					{
+						NR_branchdata[NR_curr_branch].Yfrom[jval][kval] = &From_Y[jval][kval];
+						NR_branchdata[NR_curr_branch].Yto[jval][kval] = &To_Y[jval][kval];
+					}
+				}
 
 				//Populate to/from indices
 				NR_branchdata[NR_curr_branch].from = fnode->NR_node_reference;
@@ -448,6 +453,9 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			complex Y[3][3];
 			complex Yc[3][3];
 			complex Ylefttemp[3][3];
+			complex Yto[3][3];
+			complex Yfrom[3][3];
+			double invratio;
 			char jindex, kindex;
 
 			//Create initial admittance matrix - use code from GS below - store in From_Y (for now)
@@ -488,15 +496,74 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				inverse(b_mat,Y);
 			// defaulted else - No phases (e.g., the line does not exist) - just = 0
 
-			//Compute total self admittance - include line charging capacitance
-			equalm(a_mat,Ylinecharge);
-			Ylinecharge[0][0]-=1;
-			Ylinecharge[1][1]-=1;
-			Ylinecharge[2][2]-=1;
-			multiply(2,Ylinecharge,Ylefttemp);
-			multiply(Y,Ylefttemp,Ylinecharge);
+			if ((voltage_ratio!=1) | (SpecialLnk!=NORMAL))	//Handle transformers slightly different
+			{
+				invratio=1.0/voltage_ratio;
 
-			addition(Ylinecharge,Y,From_Y);
+				if (SpecialLnk==DELTAGWYE)	//Delta-Gwye implementation
+				{
+					complex tempImped;
+
+					//Pre-admittancized matrix
+					equalm(b_mat,Yto);
+
+					//Adjust for To_Y
+					multiply(Yto,c_mat,To_Y);
+
+					//Scale to other size
+					multiply(invratio,Yto,Ylefttemp);
+					multiply(invratio,Ylefttemp,Yfrom);
+
+					//Adjust for From_Y
+					multiply(B_mat,Yto,From_Y);
+
+					//Fix what I broke
+					for(jindex=0;jindex<3;jindex++)
+					{
+						for(kindex=0;kindex<3;kindex++)
+						{
+							c_mat[jindex][kindex]=0.0;
+							B_mat[jindex][kindex]=0.0;
+						}
+					}
+
+					tempImped = complex(1.0) / b_mat[0][0];
+					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = tempImped;
+
+				}
+				else if (SpecialLnk==REGULATOR)	//Regulator
+				{
+					GL_THROW("Not done yet");
+				}
+				else if (SpecialLnk==SPLITPHASE)	//Split phase - non working
+				{
+					GL_THROW("Not done yet");
+				}
+				else	//Other xformers
+				{
+					//Pre-admittancized matrix
+					equalm(b_mat,Yto);
+
+					multiply(invratio,Yto,Ylefttemp);		//Scale from admittance by turns ratio
+					multiply(invratio,Ylefttemp,Yfrom);
+
+					multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
+					multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
+				}
+			}
+			else					//Simple lines
+			{
+				//Compute total self admittance - include line charging capacitance
+				equalm(a_mat,Ylinecharge);
+				Ylinecharge[0][0]-=1;
+				Ylinecharge[1][1]-=1;
+				Ylinecharge[2][2]-=1;
+				multiply(2,Ylinecharge,Ylefttemp);
+				multiply(Y,Ylefttemp,Ylinecharge);
+
+				addition(Ylinecharge,Y,From_Y);
+				equalm(From_Y,To_Y);
+			}
 
 			//Update time variable
 			prev_LTime=t0;
