@@ -47,7 +47,7 @@ static loadshape *loadshape_list = NULL;
 int loadshape_create(void *data)
 {
 	loadshape *s = (loadshape*)data;
-	s->schedule = NULL;
+	memset(data,0,sizeof(loadshape));
 	s->next = loadshape_list;
 	loadshape_list = s;
 	return 1;

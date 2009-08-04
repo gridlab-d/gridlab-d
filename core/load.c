@@ -3049,7 +3049,6 @@ static int class_block(PARSER)
 				append_code("extern \"C\" int64 create_%s(OBJECT **obj, OBJECT *parent)\n{\n",oclass->name);
 				append_code(
 						"\tif ((*obj=gl_create_object(myclass))==NULL)\n\t\treturn 0;\n"
-						"\tmemset((*obj)+1,0,sizeof(%s));\n"
 						"\tgl_set_parent(*obj,parent);\n", oclass->name,oclass->name);
 					if (functions&FN_CREATE) 
 					{

@@ -25,7 +25,7 @@ static enduse *enduse_list = NULL;
 int enduse_create(void *data)
 {
 	enduse *e = (enduse*)data;
-	e->shape = NULL;
+	memset(data,0,sizeof(enduse));
 	e->next = enduse_list;
 	enduse_list = e;
 	return 1;

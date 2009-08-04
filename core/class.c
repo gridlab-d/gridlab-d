@@ -176,7 +176,12 @@ unsigned long property_size(PROPERTY *prop)
 int property_create(PROPERTY *prop, void *addr)
 {
 	if (prop && prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
-		return property_type[prop->ptype].create ? property_type[prop->ptype].create(addr) : 1;
+	{
+		if (property_type[prop->ptype].create)
+			return property_type[prop->ptype].create(addr);
+		memset(addr,0,(prop->size==0?1:prop->size)*property_type[prop->ptype].size);
+		return 1;
+	}
 	else
 		return 0;
 }
@@ -754,7 +759,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			else if (proptype==PT_KEYWORD && prop->ptype==PT_set)
 			{
 				char *keyword = va_arg(arg,char*);
-				unsigned long keyvalue = va_arg(arg, int64); 
+				unsigned int64 keyvalue = va_arg(arg, int64); 
 				if (!class_define_set_member(oclass,prop->name,keyword,keyvalue))
 				{
 					errno = EINVAL;
@@ -980,7 +985,7 @@ int class_define_enumeration_member(CLASS *oclass, /**< pointer to the class whi
 int class_define_set_member(CLASS *oclass, /**< pointer to the class which implements the set */
 							char *property_name, /**< property name of the set */
 							char *member, /**< member name to define */
-							unsigned long value) /**< set value to associate with the name */
+							unsigned int64 value) /**< set value to associate with the name */
 {
 	PROPERTY *prop = class_find_property(oclass,property_name);
 	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));

@@ -234,7 +234,7 @@ int class_get_xsd(CLASS *oclass, char *buffer, size_t len);
 CLASS *class_register(MODULE *module,CLASSNAME classname,unsigned int datasize,PASSCONFIG passconfig);
 int class_define_map(CLASS *oclass, ...);
 int class_define_enumeration_member(CLASS *oclass,char *property_name,char *member,enumeration value);
-int class_define_set_member(CLASS *oclass,char *property_name,char *member,unsigned long value);
+int class_define_set_member(CLASS *oclass,char *property_name,char *member,unsigned int64 value);
 FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTIONADDR call);
 FUNCTIONADDR class_get_function(char *classname, char *functionname);
 DELEGATEDTYPE *class_register_type(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));
