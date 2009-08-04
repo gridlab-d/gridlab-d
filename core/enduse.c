@@ -83,7 +83,7 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 	{
 		if (e->shape) // shape driven -> use fractions
 		{
-			double P = e->shape->load * (e->power_fraction + (e->current_fraction + e->impedance_fraction*e->voltage_factor )*e->voltage_factor);
+			double P = e->voltage_factor>0 ? e->shape->load * (e->power_fraction + (e->current_fraction + e->impedance_fraction/e->voltage_factor )/e->voltage_factor) : 0.0;
 			e->total.r = P;
 			if (fabs(e->power_factor)<1)
 				e->total.i = (e->power_factor<0?-1:1)*P*sqrt(1/(e->power_factor*e->power_factor)-1);
@@ -95,14 +95,18 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 			e->current.r = e->total.r * e->current_fraction; e->current.i = e->total.i * e->current_fraction;
 			e->admittance.r = e->total.r * e->impedance_fraction; e->admittance.i = e->total.i * e->impedance_fraction;
 		}
-		else // no shape - use ZIP component directly
+		else if (e->voltage_factor > 0) // no shape - use ZIP component directly
 		{
-			e->total.r = e->power.r + (e->current.r + e->admittance.r*e->voltage_factor)*e->voltage_factor;
-			e->total.i = e->power.i + (e->current.i + e->admittance.i*e->voltage_factor)*e->voltage_factor;
+			e->total.r = e->power.r + (e->current.r + e->admittance.r/e->voltage_factor)/e->voltage_factor;
+			e->total.i = e->power.i + (e->current.i + e->admittance.i/e->voltage_factor)/e->voltage_factor;
+		}
+		else 
+		{
+			/* don't touch anything */
 		}
 
 		if (e->power.r > e->demand.r) e->demand = e->power;
-		e->heatgain = e->power.r * e->heatgain_fraction;
+		e->heatgain = e->power.r * e->heatgain_fraction * 3412.1416 /* Btu/h/kW */;
 		e->t_last = t1;
 	}
 	return (e->shape && e->shape->type != MT_UNKNOWN) ? e->shape->t2 : TS_NEVER;

@@ -681,11 +681,23 @@
 				Name="Autotest"
 				>
 				<File
+					RelativePath=".\autotest\test_lights_implicit.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_lights_standalone.glm"
 					>
 				</File>
 				<File
 					RelativePath=".\autotest\test_residentialenduse_standalone.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_waterheater_implicit.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_waterheater_standalone.glm"
 					>
 				</File>
 			</Filter>

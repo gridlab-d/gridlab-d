@@ -296,6 +296,7 @@ house_e::house_e(MODULE *mod)
 
 int house_e::create() 
 {
+	int result=SUCCESS;
 	char1024 active_enduses;
 	gl_global_getvar("residential::implicit_enduses",active_enduses,sizeof(active_enduses));
 	char *token = NULL;
@@ -325,7 +326,7 @@ int house_e::create()
 					if (gl_set_value_by_type(PT_loadshape,item->load.shape,eu->shape)==0)
 					{
 						gl_error("loadshape '%s' could not be created", name);
-						return 0;
+						result = FAILED;
 					}
 					item->load.name = eu->implicit_name;
 					item->next = implicit_enduse_list;
@@ -342,13 +343,16 @@ int house_e::create()
 				}
 			}
 			if (found==0)
-				gl_warning("house_e data for '%s' implicit enduse not found", token);
+			{
+				gl_error("house_e data for '%s' implicit enduse not found", token);
+				result = FAILED;
+			}
 		}
 	}
 	total.name = "total";
 	system.name = "system";
 
-	return 1;
+	return result;
 }
 
 /** Checks for climate object and maps the climate variables to the house_e object variables.  
@@ -533,124 +537,6 @@ int house_e::init(OBJECT *parent)
 	return 1;
 }
 
-/**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time
-**/
-TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1) 
-{
-	const double dt = ((double)(t1-t0)*TS_SECOND)/3600;
-
-	/* advance the thermal state of the building */
-	if (t0>0 && dt>0)
-	{
-		/* calculate model update, if possible */
-		if (c2!=0)
-		{
-			/* update temperatures */
-			const double e1 = k1*exp(r1*dt);
-			const double e2 = k2*exp(r2*dt);
-			Tair = e1 + e2 + Teq;
-			Tmaterials = ((r1-c1)*e1 + (r2-c1)*e2 + c6)/c2 + Teq;
-		}
-	}
-	return TS_NEVER;
-}
-
-/** Updates the total internal gain and synchronizes with the system equipment load.  
-Also synchronizes the voltages and current in the panel with the meter.
-**/
-TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
-{
-	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP t2 = TS_NEVER, t;
-	const double dt1 = (double)(t1-t0)*TS_SECOND;
-
-	double nHours = dt1 / 3600;
-
-	if (t0==0 || t1>t0)
-	{
-		outside_temperature = *pTout;
-		t = sync_enduses(t0,t1);
-		if (t<t2) t2 = t;
-		update_system(dt1);
-		t = gl_enduse_sync(&system,t1);
-		if (t<t2) t2 = t;
-		update_model(dt1);
-		check_controls();
-	}
-
-	/* solve for the time to the next event */
-	double dt2;
-	dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
-	if (isnan(dt2) || !isfinite(dt2) || dt2<0)
-	{
-		if (sgn(dTair)==sgn(Tair-Tevent)) // imminent control event
-		{
-			t = t1+1;
-			if (t<t2) t2 = t;
-		}
-	}
-	else if (dt2<TS_SECOND)
-	{	
-		t = t1+1; /* need to do a second pass to get next state */
-		if (t<t2) t2 = t;
-	}	
-	else
-	{
-		t = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
-		if (t<t2) t2 = t;
-	}
-
-	// sync circuit panel
-	t = sync_panel(t0,t1);
-	if (t < t2)	t2 = t;
-
-	t = gl_enduse_sync(&total,t1);
-	if (t < t2) t2 = t;
-
-	return t2;
-	
-}
-
-/** The PLC control code for house_e thermostat.  The heat or cool mode is based
-	on the house_e air temperature, thermostat setpoints and deadband.
-**/
-TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
-{
-	double tdead = thermostat_deadband/2;
-	double terr = dTair/3600; // this is the time-error of 1 second uncertainty
-	const double TcoolOn = cooling_setpoint+tdead;
-	const double TcoolOff = cooling_setpoint-tdead;
-	const double TheatOn = heating_setpoint-tdead;
-	const double TheatOff = heating_setpoint+tdead;
-
-	// check for deadband overlap
-	if (TcoolOff<TheatOff)
-	{
-		gl_error("house_e: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", TcoolOff,TheatOff);
-		return TS_INVALID;
-	}
-
-	// change control mode if appropriate
-	if (Tair<TheatOn-terr/2 && system_mode!=SM_HEAT) 
-	{	// heating on
-		// TODO: check for AUX
-		system_mode = SM_HEAT;
-		Tevent = TheatOff;
-	}
-	else if (Tair>TcoolOn-terr/2 && system_mode!=SM_COOL)
-	{	// cooling on
-		system_mode = SM_COOL;
-		Tevent = TcoolOff;
-	}
-	else 
-	{	// floating
-		system_mode = SM_OFF;
-		Tevent = ( dTair<0 ? TheatOn : TcoolOn );
-	}
-
-	return TS_NEVER;
-}
-
 void house_e::attach_implicit_enduses()
 {
 	IMPLICITENDUSE *item;
@@ -723,120 +609,6 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	return c;
 }
 
-TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
-{
-	TIMESTAMP sync_time = TS_NEVER;
-	OBJECT *obj = OBJECTHDR(this);
-
-	// clear accumulators for panel currents
-	complex I[3]; I[X12] = I[X23] = I[X13] = complex(0,0);
-
-	// clear accumulator
-	total.heatgain = 0;
-	total.total = total.power = total.current = total.admittance = complex(0,0);
-
-	// gather load power and compute current for each circuit
-	CIRCUIT *c;
-	for (c=panel.circuits; c!=NULL; c=c->next)
-	{
-		// get circuit type
-		int n = (int)c->type;
-		if (n<0 || n>2)
-			GL_THROW("%s:%d circuit %d has an invalid circuit type (%d)", obj->oclass->name, obj->id, c->id, (int)c->type);
-
-		// if breaker is open and reclose time has arrived
-		if (c->status==BRK_OPEN && t1>=c->reclose)
-		{
-			c->status = BRK_CLOSED;
-			c->reclose = TS_NEVER;
-			sync_time = t1; // must immediately reevaluate devices affected
-			gl_debug("house_e:%d panel breaker %d closed", obj->id, c->id);
-		}
-
-		// if breaker is closed
-		if (c->status==BRK_CLOSED)
-		{
-			// compute circuit current
-			if ((c->pV)->Mag() == 0)
-			{
-				gl_debug("house_e:%d circuit %d (enduse %s) voltage is zero", obj->id, c->id, c->pLoad->name);
-				break;
-			}
-			
-			complex current = ~(c->pLoad->total*1000 / *(c->pV)); 
-
-			// check breaker
-			if (current.Mag()>c->max_amps)
-			{
-				// probability of breaker failure increases over time
-				if (c->tripsleft>0 && gl_random_bernoulli(1/(c->tripsleft--))==0)
-				{
-					// breaker opens
-					c->status = BRK_OPEN;
-
-					// average five minutes before reclosing, exponentially distributed
-					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(1/300.0)*TS_SECOND); 
-					gl_debug("house_e:%d circuit breaker %d tripped - enduse %s overload at %.0f A", obj->id, c->id,
-						c->pLoad->name, current.Mag());
-				}
-
-				// breaker fails from too frequent operation
-				else
-				{
-					c->status = BRK_FAULT;
-					c->reclose = TS_NEVER;
-					gl_debug("house_e:%d circuit breaker %d failed", obj->id, c->id);
-				}
-
-				// must immediately reevaluate everything
-				sync_time = t1; 
-			}
-
-			// add to panel current
-			else
-			{
-				total.total += c->pLoad->total;
-				total.power += c->pLoad->power;
-				total.current += c->pLoad->current;
-				total.admittance += c->pLoad->admittance;
-				total.heatgain += c->pLoad->heatgain;
-				I[n] += current;
-				c->reclose = TS_NEVER;
-			}
-		}
-
-		// sync time
-		if (sync_time > c->reclose)
-			sync_time = c->reclose;
-	}
-
-	// compute line currents and post to meter
-	if (obj->parent != NULL)
-		LOCK_OBJECT(obj->parent);
-
-	pLine_I[0] = I[X13];
-	pLine_I[1] = I[X23];
-	pLine_I[2] = 0;
-	*pLine12 = I[X12];
-
-	if (obj->parent != NULL)
-		UNLOCK_OBJECT(obj->parent);
-
-	return sync_time;
-}
-
-TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
-{
-	TIMESTAMP t2 = TS_NEVER;
-	IMPLICITENDUSE *eu;
-	for (eu=implicit_enduse_list; eu!=NULL; eu=eu->next)
-	{
-		TIMESTAMP t = gl_enduse_sync(&(eu->load),t1);
-		if (t<t2) t2 = t;
-	}
-	return t2;
-}
-
 void house_e::update_model(double dt)
 {
 		/* local aliases */
@@ -844,7 +616,7 @@ void house_e::update_model(double dt)
 	const double &Ua = (envelope_UA);
 	const double &Cm = (house_content_thermal_mass);
 	const double &Um = (house_content_heat_transfer_coeff);
-	const double &Qi = (system.heatgain);
+	const double &Qi = (total.heatgain - system.heatgain);
 	double &Qs = (solar_load);
 	double &Qh = (system.heatgain);
 	double &Ti = (Tair);
@@ -949,6 +721,243 @@ void house_e::update_system(double dt)
 	/* calculate the power consumption */
 	system.power = system_rated_power*KWPBTUPH * ((system_mode == SM_HEAT) && (system_type&ST_GAS) ? 0.01 : 1.0);
 	system.heatgain = system_rated_capacity;
+}
+
+/**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time
+**/
+TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1) 
+{
+	const double dt = ((double)(t1-t0)*TS_SECOND)/3600;
+
+	/* advance the thermal state of the building */
+	if (t0>0 && dt>0)
+	{
+		/* calculate model update, if possible */
+		if (c2!=0)
+		{
+			/* update temperatures */
+			const double e1 = k1*exp(r1*dt);
+			const double e2 = k2*exp(r2*dt);
+			Tair = e1 + e2 + Teq;
+			Tmaterials = ((r1-c1)*e1 + (r2-c1)*e2 + c6)/c2 + Teq;
+		}
+	}
+	return TS_NEVER;
+}
+
+/** Updates the total internal gain and synchronizes with the system equipment load.  
+Also synchronizes the voltages and current in the panel with the meter.
+**/
+TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	TIMESTAMP t2 = TS_NEVER, t;
+	const double dt1 = (double)(t1-t0)*TS_SECOND;
+
+	double nHours = dt1 / 3600;
+
+	if (t0==0 || t1>t0)
+	{
+		outside_temperature = *pTout;
+
+		// update the state of the system
+		update_system(dt1);
+
+		// update the model of house
+		update_model(dt1);
+
+		// provide warning of control problems
+		check_controls();
+	}
+
+	/* solve for the time to the next event */
+	double dt2;
+	dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+
+	// if no solution is found or it has already occurred
+	if (isnan(dt2) || !isfinite(dt2) || dt2<0)
+	{
+		// try again in 1 second if there is a solution in the future
+		if (sgn(dTair)==sgn(Tair-Tevent)) 
+		{
+			t = t1+1; if (t<t2) t2 = t;
+		}
+	}
+
+	// if the solution is less than time resolution
+	else if (dt2<TS_SECOND)
+	{	
+		// need to do a second pass to get next state
+		t = t1+1; if (t<t2) t2 = t;
+	}	
+	else
+	{
+		// next event is found
+		t = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); if (t<t2) t2 = t;
+	}
+
+	// sync circuit panel
+	t = sync_panel(t0,t1); if (t < t2)	t2 = t;
+
+	return t2;
+	
+}
+
+/** The PLC control code for house_e thermostat.  The heat or cool mode is based
+	on the house_e air temperature, thermostat setpoints and deadband.
+**/
+TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
+{
+	double tdead = thermostat_deadband/2;
+	double terr = dTair/3600; // this is the time-error of 1 second uncertainty
+	const double TcoolOn = cooling_setpoint+tdead;
+	const double TcoolOff = cooling_setpoint-tdead;
+	const double TheatOn = heating_setpoint-tdead;
+	const double TheatOff = heating_setpoint+tdead;
+
+	// check for deadband overlap
+	if (TcoolOff<TheatOff)
+	{
+		gl_error("house_e: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", TcoolOff,TheatOff);
+		return TS_INVALID;
+	}
+
+	// change control mode if appropriate
+	if (Tair<TheatOn-terr/2 && system_mode!=SM_HEAT) 
+	{	// heating on
+		// TODO: check for AUX
+		system_mode = SM_HEAT;
+		Tevent = TheatOff;
+	}
+	else if (Tair>TcoolOn-terr/2 && system_mode!=SM_COOL)
+	{	// cooling on
+		system_mode = SM_COOL;
+		Tevent = TcoolOff;
+	}
+	else 
+	{	// floating
+		system_mode = SM_OFF;
+		Tevent = ( dTair<0 ? TheatOn : TcoolOn );
+	}
+
+	return TS_NEVER;
+}
+
+TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
+{
+	TIMESTAMP sync_time = TS_NEVER;
+	OBJECT *obj = OBJECTHDR(this);
+
+	// clear accumulators for panel currents
+	complex I[3]; I[X12] = I[X23] = I[X13] = complex(0,0);
+
+	// clear accumulator
+	total.heatgain = 0;
+	total.total = total.power = total.current = total.admittance = complex(0,0);
+
+	// gather load power and compute current for each circuit
+	CIRCUIT *c;
+	for (c=panel.circuits; c!=NULL; c=c->next)
+	{
+		// get circuit type
+		int n = (int)c->type;
+		if (n<0 || n>2)
+			GL_THROW("%s:%d circuit %d has an invalid circuit type (%d)", obj->oclass->name, obj->id, c->id, (int)c->type);
+
+		// if breaker is open and reclose time has arrived
+		if (c->status==BRK_OPEN && t1>=c->reclose)
+		{
+			c->status = BRK_CLOSED;
+			c->reclose = TS_NEVER;
+			sync_time = t1; // must immediately reevaluate devices affected
+			gl_debug("house_e:%d panel breaker %d closed", obj->id, c->id);
+		}
+
+		// if breaker is closed
+		if (c->status==BRK_CLOSED)
+		{
+			// compute circuit current
+			if ((c->pV)->Mag() == 0)
+			{
+				gl_debug("house_e:%d circuit %d (enduse %s) voltage is zero", obj->id, c->id, c->pLoad->name);
+				break;
+			}
+			
+			complex current = ~(c->pLoad->total*1000 / *(c->pV)); 
+
+			// check breaker
+			if (current.Mag()>c->max_amps)
+			{
+				// probability of breaker failure increases over time
+				if (c->tripsleft>0 && gl_random_bernoulli(1/(c->tripsleft--))==0)
+				{
+					// breaker opens
+					c->status = BRK_OPEN;
+
+					// average five minutes before reclosing, exponentially distributed
+					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(1/300.0)*TS_SECOND); 
+					gl_debug("house_e:%d circuit breaker %d tripped - enduse %s overload at %.0f A", obj->id, c->id,
+						c->pLoad->name, current.Mag());
+				}
+
+				// breaker fails from too frequent operation
+				else
+				{
+					c->status = BRK_FAULT;
+					c->reclose = TS_NEVER;
+					gl_debug("house_e:%d circuit breaker %d failed", obj->id, c->id);
+				}
+
+				// must immediately reevaluate everything
+				sync_time = t1; 
+			}
+
+			// add to panel current
+			else
+			{
+				c->pLoad->voltage_factor = c->pV->Mag() / ((c->pLoad->config&EUC_IS220) ? 240 : 120);
+				TIMESTAMP t = gl_enduse_sync(c->pLoad,t1); if (t<sync_time) sync_time = t;
+				total.total += c->pLoad->total;
+				total.power += c->pLoad->power;
+				total.current += c->pLoad->current;
+				total.admittance += c->pLoad->admittance;
+				total.heatgain += c->pLoad->heatgain;
+				I[n] += current;
+				c->reclose = TS_NEVER;
+			}
+		}
+
+		// sync time
+		if (sync_time > c->reclose)
+			sync_time = c->reclose;
+	}
+	TIMESTAMP t = gl_enduse_sync(&total,t1); if (t<sync_time) sync_time = t;
+
+	// compute line currents and post to meter
+	if (obj->parent != NULL)
+		LOCK_OBJECT(obj->parent);
+
+	pLine_I[0] = I[X13];
+	pLine_I[1] = I[X23];
+	pLine_I[2] = 0;
+	*pLine12 = I[X12];
+
+	if (obj->parent != NULL)
+		UNLOCK_OBJECT(obj->parent);
+
+	return sync_time;
+}
+
+TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
+{
+	TIMESTAMP t2 = TS_NEVER;
+	IMPLICITENDUSE *eu;
+	for (eu=implicit_enduse_list; eu!=NULL; eu=eu->next)
+	{
+		TIMESTAMP t = gl_enduse_sync(&(eu->load),t1);
+		if (t<t2) t2 = t;
+	}
+	return t2;
 }
 
 void house_e::check_controls(void)
