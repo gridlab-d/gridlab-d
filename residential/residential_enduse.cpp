@@ -64,7 +64,7 @@ int residential_enduse::init(OBJECT *parent)
 	//	pull parent attach_enduse and attach the enduseload
 	ATTACHFUNCTION attach = (ATTACHFUNCTION)(gl_get_function(parent, "attach_enduse"));
 	if(attach)
-		pCircuit = (*attach)(parent, hdr, load.breaker_amps, (load.config&EUC_IS220)!=0, &load);
+		pCircuit = (*attach)(parent, &load, load.breaker_amps, (load.config&EUC_IS220)!=0);
 	else if (parent)
 		gl_warning("%s (%s:%d) parent %s (%s:%d) does not export attach_enduse function so voltage response cannot be modeled", hdr->name?hdr->name:"(unnamed)", hdr->oclass->name, hdr->id, parent->name?parent->name:"(unnamed)", parent->oclass->name, parent->id);
 		/* TROUBLESHOOT

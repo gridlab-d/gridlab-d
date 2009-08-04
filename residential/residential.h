@@ -63,7 +63,7 @@ typedef struct s_panel {
 	CIRCUIT *circuits; ///< pointer to first circuit in circuit list
 } PANEL; ///< panel definition
 
-typedef	CIRCUIT *(*ATTACHFUNCTION)(OBJECT *, OBJECT *, double , int is220, enduse *); ///< type definition for attach function
+typedef	CIRCUIT *(*ATTACHFUNCTION)(OBJECT *, enduse *, double , int is220); ///< type definition for attach function
 
 typedef enum {HORIZONTAL, NORTH, NORTH_EAST, EAST, SOUTH_EAST, SOUTH, SOUTH_WEST, WEST, NORTH_WEST,N_SOLAR_SURFACES} ORIENTATION;
 

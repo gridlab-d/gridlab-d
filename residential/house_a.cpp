@@ -199,10 +199,6 @@ house::house(MODULE *mod)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse_house_a);
 
-		// deafults set during class creation
-		defaults = this;
-		memset(this,0,sizeof(house));
-
 		// initalize published variables.  The model definition can set any of this.
 		heat_mode = ELECTRIC;
 		floor_area = 0.0;
@@ -233,9 +229,6 @@ house::house(MODULE *mod)
 
 int house::create() 
 {
-	// copy the defaults
-	memcpy(this,defaults,sizeof(house));
-
 	return 1;
 }
 
