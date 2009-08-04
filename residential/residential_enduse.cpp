@@ -49,10 +49,10 @@ residential_enduse::residential_enduse(MODULE *mod)
 }
 
 // create is called every time a new object is loaded
-int residential_enduse::create(void) 
+int residential_enduse::create(bool connect_shape) 
 {
 	// attach loadshape 
-	load.shape = &shape;
+	if (connect_shape) load.shape = &shape;
 	return 1;
 }
 
@@ -73,15 +73,7 @@ int residential_enduse::init(OBJECT *parent)
 			Fix the parent reference and try again.
 		 */
 
-
-	// setup the default residential_enduse if needed
-	if (load.shape==NULL)
-		throw "load.shape is not attached to loadshape";
-		/* TROUBLESHOOT
-			This is an internal error.  Please report this problem.
-		 */
-
-	if (load.shape->schedule==NULL)
+	if (load.shape!=NULL && load.shape->schedule==NULL)
 	{
 		gl_warning("%s (%s:%d) schedule is not specified so the load is inactive", hdr->name?hdr->name:"(unnamed)", hdr->oclass->name, hdr->id);
 		/* TROUBLESHOOT

@@ -21,7 +21,7 @@ public:
 public:
 	static CLASS *oclass;
 	residential_enduse(MODULE *mod);
-	int create(void);
+	int create(bool connect_shape=true);
 	int init(OBJECT *parent);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 
