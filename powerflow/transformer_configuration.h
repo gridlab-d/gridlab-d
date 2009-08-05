@@ -23,7 +23,9 @@ public:
 	double phaseB_kVA_rating;     // kVA rating of transformer
 	double phaseC_kVA_rating;     // kVA rating of transformer
 	complex impedance;				// Series impedance
-	complex shunt_impedance;		// Shunt impedance
+	complex impedance1;				// Series impedance (only used when you want to define each individual 
+	complex impedance2;				//    winding seperately
+	complex shunt_impedance;		// Shunt impedance - all values are summed and reflected back to the primary
 	
 	transformer_configuration(MODULE *mod);
 	inline transformer_configuration(CLASS *cl=oclass):powerflow_library(cl){};

@@ -67,6 +67,12 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 			PT_double, "resistance[pu.Ohm]",PADDR(impedance.Re()),	// was R_pu
 			PT_double, "reactance[pu.Ohm]",PADDR(impedance.Im()),	// was X_pu
 			PT_complex, "impedance[pu.Ohm]",PADDR(impedance),
+			PT_double, "resistance1[pu.Ohm]",PADDR(impedance1.Re()),	
+			PT_double, "reactance1[pu.Ohm]",PADDR(impedance1.Im()),	
+			PT_complex, "impedance1[pu.Ohm]",PADDR(impedance1),
+			PT_double, "resistance2[pu.Ohm]",PADDR(impedance2.Re()),	
+			PT_double, "reactance2[pu.Ohm]",PADDR(impedance2.Im()),	
+			PT_complex, "impedance2[pu.Ohm]",PADDR(impedance2),
 			PT_double, "shunt_resistance[pu.Ohm]",PADDR(shunt_impedance.Re()),
 			PT_double, "shunt_reactance[pu.Ohm]",PADDR(shunt_impedance.Im()),
 			PT_complex, "shunt_impedance[pu.Ohm]",PADDR(shunt_impedance),
@@ -91,8 +97,8 @@ int transformer_configuration::create(void)
 	phaseB_kVA_rating = 0.0;
 	phaseC_kVA_rating = 0.0;
 	kVA_rating = 0;
-	impedance = complex(0,0);						//Lossless transformer by default
-	shunt_impedance = complex(999999999,999999999);	//Very large number for infinity to approximate lossless
+	impedance = impedance1 = impedance2 = complex(0.0,0.0);	//Lossless transformer by default
+	shunt_impedance = complex(999999999,999999999);			//Very large number for infinity to approximate lossless
 	return result;
 }
 
@@ -111,11 +117,42 @@ int transformer_configuration::init(OBJECT *parent)
 	// check connection type
 	if (connect_type==UNKNOWN)
 		throw "connection type not specified";
+	
+	// check connection type and see if it support shunt or additional series impedance values
+	if (connect_type!=SINGLE_PHASE_CENTER_TAPPED)
+	{
+		if ((impedance1.Re() != 0.0 && impedance1.Im() != 0.0) || (impedance2.Re() != 0.0 && impedance2.Im() != 0.0))
+			gl_warning("This connection type does not support impedance (impedance1 or impedance2) of secondaries at this time.");
+			/*  TROUBLESHOOT
+			At this time impedance1 and impedance2 are only defined and used for center-tap transformers to be
+			explicitly defined.  These values will be ignored for now.
+			*/
+		if (shunt_impedance.Re() != 999999999 || shunt_impedance.Im() != 999999999)
+			gl_warning("This connection type does not support shunt_impedance at this time.");
+			/* TROUBLESHOOT
+			At this time shunt_impedance is only defined and supported in center-tap transformers.  Theses values
+			will be ignored for now.
+			*/
+	}
+	else
+	{
+		if ((impedance1.Re() == 0.0 && impedance1.Im() == 0.0) && (impedance2.Re() != 0.0 && impedance2.Im() != 0.0))
+		{
+			impedance1 = impedance2;
+			gl_warning("impedance2 was defined, but impedance1 was not -- assuming they are equal");
+		}
+		else if ((impedance1.Re() != 0.0 && impedance1.Im() != 0.0) && (impedance2.Re() == 0.0 && impedance2.Im() == 0.0))
+		{
+			impedance2 = impedance1;
+			gl_warning("impedance1 was defined, but impedance2 was not -- assuming they are equal");
+		}
+	}
+
 
 	// check installation type
 	if (install_type==UNKNOWN)
 		gl_warning("installation type not specified");
-
+	
 	// check primary and second voltages
 	if (V_secondary==0)
 		throw "V_secondary must be positive";

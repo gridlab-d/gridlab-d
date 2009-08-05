@@ -358,7 +358,7 @@ int transformer::init(OBJECT *parent)
 				{
 					V_basehi = config->V_primary;
 					sa_base = config->phaseA_kVA_rating;
-					if (sa_base==0)	//Error
+					if (sa_base==0)	
 						GL_THROW("Split-phase tranformer:%d trying to attach to phase A not defined in the configuration",obj->id);
 						/*  TROUBLESHOOT
 						A single-phase, center-tapped transformer is attempting to attach to a system with phase A, while
@@ -368,9 +368,20 @@ int transformer::init(OBJECT *parent)
 
 					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
 					za_baselo = (V_base * V_base)/(sa_base*1000);
-					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+
+					if (config->impedance1.Re() == 0.0 && config->impedance1.Im() == 0.0)
+					{
+						z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
+						z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+						z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					}
+					else
+					{
+						z0 = complex(config->impedance.Re(),config->impedance.Im()) * complex(za_basehi,0);
+						z1 = complex(config->impedance1.Re(),config->impedance1.Im()) * complex(za_baselo,0);
+						z2 = complex(config->impedance2.Re(),config->impedance2.Im()) * complex(za_baselo,0);
+					}
+
 					zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 					zt_b = complex(0,0);
 					zt_c = complex(0,0);
@@ -389,7 +400,7 @@ int transformer::init(OBJECT *parent)
 				{
 					V_basehi = config->V_primary;
 					sa_base = config->phaseB_kVA_rating;
-					if (sa_base==0)	//Error
+					if (sa_base==0)	
 						GL_THROW("Split-phase tranformer:%d trying to attach to phase B not defined in the configuration",obj->id);
 						/*  TROUBLESHOOT
 						A single-phase, center-tapped transformer is attempting to attach to a system with phase B, while
@@ -399,9 +410,20 @@ int transformer::init(OBJECT *parent)
 
 					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
 					za_baselo = (V_base * V_base)/(sa_base*1000);
-					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					
+					if (config->impedance1.Re() == 0.0 && config->impedance.Im() == 0.0)
+					{
+						z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
+						z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+						z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					}
+					else
+					{
+						z0 = complex(config->impedance.Re(),config->impedance.Im()) * complex(za_basehi,0);
+						z1 = complex(config->impedance1.Re(),config->impedance1.Im()) * complex(za_baselo,0);
+						z2 = complex(config->impedance2.Re(),config->impedance2.Im()) * complex(za_baselo,0);
+					}
+
 					zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 					zt_b = complex(0,0);
 					zt_c = complex(0,0);
@@ -419,7 +441,7 @@ int transformer::init(OBJECT *parent)
 				{
 					V_basehi = config->V_primary;
 					sa_base = config->phaseC_kVA_rating;
-					if (sa_base==0)	//Error
+					if (sa_base==0)	
 						GL_THROW("Split-phase tranformer:%d trying to attach to phase C not defined in the configuration",obj->id);
 						/*  TROUBLESHOOT
 						A single-phase, center-tapped transformer is attempting to attach to a system with phase C, while
@@ -429,9 +451,20 @@ int transformer::init(OBJECT *parent)
 
 					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
 					za_baselo = (V_base * V_base)/(sa_base*1000);
-					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+
+					if (config->impedance1.Re() == 0.0 && config->impedance.Im() == 0.0)
+					{
+						z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
+						z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+						z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					}
+					else
+					{
+						z0 = complex(config->impedance.Re(),config->impedance.Im()) * complex(za_basehi,0);
+						z1 = complex(config->impedance1.Re(),config->impedance1.Im()) * complex(za_baselo,0);
+						z2 = complex(config->impedance2.Re(),config->impedance2.Im()) * complex(za_baselo,0);
+					}
+
 					zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 					zt_b = complex(0,0);
 					zt_c = complex(0,0);
