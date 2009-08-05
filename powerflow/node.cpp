@@ -113,6 +113,10 @@ int node::create(void)
 {
 	int result = powerflow_object::create();
 
+#ifdef SUPPORT_OUTAGES
+	condition=OC_NORMAL;
+#endif
+
 	n++;
 
 	bustype = PQ;
@@ -502,6 +506,13 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	}
 	else if (solver_method==SM_FBS)
 	{
+#ifdef SUPPORT_OUTAGES
+		if (condition!=OC_NORMAL)	//We're in an abnormal state
+		{
+			voltage[0] = voltage[1] = voltage[2] = 0.0;	//Zero the voltages
+			condition = OC_NORMAL;	//Clear the flag in case we're a switch
+		}
+#endif
 		//Initial phase check
 		if (prev_NTime==0)	//Should only be the very first run
 		{
@@ -568,14 +579,39 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		{	// Split phase
 			complex temp_inj[2];
 
+#ifdef SUPPORT_OUTAGES
+			if (voltage[0]!=0.0)
+			{
+#endif
 			current_inj[0] += (voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ? current1 : current1 + ~(power1/voltage1) + voltage1*shunt1;
 			temp_inj[0] = current_inj[0];
 			current_inj[0] += ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? current12 : current12 + ~(power12/(voltage1+voltage2)) + (voltage1+voltage2)*shunt12;
-			
+
+#ifdef SUPPORT_OUTAGES
+			}
+			else
+			{
+				temp_inj[0] = 0.0;
+				current_inj[0]=0.0;
+			}
+
+			if (voltage[1]!=0)
+			{
+#endif
+
 			current_inj[1] += (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero())) ? -current2 : -current2 - ~(power2/voltage2) - voltage2*shunt2;
 			temp_inj[1] = current_inj[1];
 			current_inj[1] += ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? -current12 : -current12 - ~(power12/(voltage1+voltage2)) - (voltage1+voltage2)*shunt12;
 			
+#ifdef SUPPORT_OUTAGES
+			}
+			else
+			{
+				temp_inj[0] = 0.0;
+				current_inj[1] = 0.0;
+			}
+#endif
+
 			if (obj->parent!=NULL && gl_object_isa(obj->parent,"triplex_line","powerflow")) {
 				link *plink = OBJECTDATA(obj->parent,link);
 				current_inj[2] += plink->tn[0]*current_inj[0] + plink->tn[1]*current_inj[1];
@@ -616,16 +652,45 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			delta_current[0]=current[0]-current[2];
 			delta_current[1]=current[1]-current[0];
 			delta_current[2]=current[2]-current[1];
-			
+
+#ifdef SUPPORT_OUTAGES
+			for (char kphase=0;kphase<3;kphase++)
+			{
+				if (voltaged[kphase]==0.0)
+				{
+					current_inj[kphase] = 0.0;
+				}
+				else
+				{
+					current_inj[kphase] += delta_current[kphase] + power_current[kphase] + delta_shunt_curr[kphase];
+				}
+			}
+#else
 			current_inj[0] += delta_current[0] + power_current[0] + delta_shunt_curr[0];
 			current_inj[1] += delta_current[1] + power_current[1] + delta_shunt_curr[1];
 			current_inj[2] += delta_current[2] + power_current[2] + delta_shunt_curr[2];
+#endif
 		}
 		else 
 		{	// 'WYE' connected load
+
+#ifdef SUPPORT_OUTAGES
+			for (char kphase=0;kphase<3;kphase++)
+			{
+				if (voltage[kphase]==0.0)
+				{
+					current_inj[kphase] = 0.0;
+				}
+				else
+				{
+					current_inj[kphase] += ((voltage[kphase]==0.0) || ((power[kphase] == 0) && shunt[kphase].IsZero())) ? current[kphase] : current[kphase] + ~(power[kphase]/voltage[kphase]) + voltage[kphase]*shunt[kphase];
+				}
+			}
+#else
 			current_inj[0] += (voltageA.IsZero() || (powerA.IsZero() && shuntA.IsZero())) ? currentA : currentA + ~(powerA/voltageA) + voltageA*shuntA;
 			current_inj[1] += (voltageB.IsZero() || (powerB.IsZero() && shuntB.IsZero())) ? currentB : currentB + ~(powerB/voltageB) + voltageB*shuntB;
 			current_inj[2] += (voltageC.IsZero() || (powerC.IsZero() && shuntC.IsZero())) ? currentC : currentC + ~(powerC/voltageC) + voltageC*shuntC;
+#endif
 		}
 
 #ifdef SUPPORT_OUTAGES
@@ -1015,6 +1080,11 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	OBJECT *obj = OBJECTHDR(this);
 
 #ifdef SUPPORT_OUTAGES
+	if (condition!=OC_NORMAL)	//Zero all the voltages, just in case
+	{
+		voltage[0] = voltage[1] = voltage[2] = 0.0;
+	}
+
 	if (is_contact_any())
 	{
 		complex dVAB = voltageA - voltageB;

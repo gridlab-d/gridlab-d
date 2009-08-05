@@ -152,6 +152,10 @@ int link::isa(char *classname)
 int link::create(void)
 {
 	int result = powerflow_object::create();
+
+#ifdef SUPPORT_OUTAGES
+	condition=OC_NORMAL;
+#endif
 	
 	from = NULL;
 	to = NULL;
@@ -1124,18 +1128,22 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 #ifdef SUPPORT_OUTAGES
 	else if (is_open_any())
 	{
-		if (solver_method==SM_FBS)
-		{
-			/* compute for consequences of open link conditions -- Only supports 3-phase fault at the moment */
-			if (has_phase(PHASE_A))	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = is_open() ? 0.0 : 1.0;
-			if (has_phase(PHASE_B))	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = is_open() ? 0.0 : 1.0;
-			if (has_phase(PHASE_C))	a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = is_open() ? 0.0 : 1.0;
-			tNode->condition=!OC_NORMAL;
-		}
-
+		;//Nothing special in here yet
 	}
 	else if (is_contact_any())
 		throw "unable to handle link contact condition";
+
+	if (solver_method==SM_FBS)
+	{
+		/* compute for consequences of open link conditions -- Only supports 3-phase fault at the moment */
+		if (has_phase(PHASE_A))	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = is_open() ? 0.0 : 1.0;
+		if (has_phase(PHASE_B))	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = is_open() ? 0.0 : 1.0;
+		if (has_phase(PHASE_C))	a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = is_open() ? 0.0 : 1.0;
+		if (tNode->condition!=OC_NORMAL)
+			tNode->condition=OC_NORMAL;		//Clear the flags just in case
+	}
+
+
 #endif
 
 	return TS_NEVER;

@@ -263,7 +263,17 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 		gl_verbose("old values = '%s'",old_values);
 
 		FINDLIST *candidates = gl_findlist_copy(customers);
-		FINDLIST *unserved = gl_find_objects(candidates,FT_PROPERTY,"condition",NOT,SAME,"NORMAL",NULL);
+		//FINDLIST *unserved = gl_find_objects(candidates,FT_PROPERTY,"condition",NOT,SAME,"NORMAL",NULL);
+		FINDLIST *unserved = gl_find_objects(candidates,FT_PROPERTY,"voltage_A",EQ,"0.0",AND,FT_PROPERTY,"voltage_B",EQ,"0.0",AND,FT_PROPERTY,"voltage_C",EQ,"0.0",NULL);
+		
+		FINDLIST *candidatessecond = gl_findlist_copy(customers);
+
+		FINDLIST *unservedtrip = gl_find_objects(candidatessecond,FT_PROPERTY,"voltage_1",EQ,"0.0",AND,FT_PROPERTY,"voltage_2",EQ,"0.0",NULL);
+
+		OBJECT *tripcust_mad=NULL;
+		while ((tripcust_mad=gl_find_next(unservedtrip,tripcust_mad))!=NULL)
+			gl_findlist_add(unserved,tripcust_mad);
+
 		if (report_event_log)
 			fprintf(fp,"%8d\n", unserved->hit_count);
 
@@ -278,6 +288,7 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 
 		/* done */
 		gl_free(candidates);
+		gl_free(candidatessecond);
 		fflush(fp);
 		
 		/* restore previous values */
