@@ -75,6 +75,7 @@
 <TR><TH>minimum_timestep</TH><TD><xsl:value-of select="minimum_timestep"/></TD></TR>
 <TR><TH>platform</TH><TD><xsl:value-of select="platform"/></TD></TR>
 <TR><TH>suppress_repeat_messages</TH><TD><xsl:value-of select="suppress_repeat_messages"/></TD></TR>
+<TR><TH>maximum_synctime</TH><TD><xsl:value-of select="maximum_synctime"/></TD></TR>
 </TABLE>
 <H2><A NAME="solver_ranks">Solver ranks</A></H2>
 <TABLE BORDER="1">
@@ -261,8 +262,8 @@
 <xsl:for-each select="powerflow/relay_list/relay"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="time_to_change"/></TD><TD><xsl:value-of select="recloser_delay"/></TD><TD><xsl:value-of select="recloser_tries"/></TD><TD><xsl:value-of select="status"/></TD><TD><a href="#{from}"><xsl:value-of select="from"/></a></TD><TD><a href="#{to}"><xsl:value-of select="to"/></a></TD><TD><xsl:value-of select="power_in"/></TD><TD><xsl:value-of select="power_out"/></TD><TD><xsl:value-of select="power_losses"/></TD><TD><xsl:value-of select="power_in_A"/></TD><TD><xsl:value-of select="power_in_B"/></TD><TD><xsl:value-of select="power_in_C"/></TD><TD><xsl:value-of select="power_out_A"/></TD><TD><xsl:value-of select="power_out_B"/></TD><TD><xsl:value-of select="power_out_C"/></TD><TD><xsl:value-of select="power_losses_A"/></TD><TD><xsl:value-of select="power_losses_B"/></TD><TD><xsl:value-of select="power_losses_C"/></TD><TD><xsl:value-of select="flow_direction"/></TD><TD><xsl:value-of select="phases"/></TD><TD><xsl:value-of select="nominal_voltage"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>transformer_configuration objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>connect_type</TH><TH>install_type</TH><TH>primary_voltage</TH><TH>secondary_voltage</TH><TH>power_rating</TH><TH>powerA_rating</TH><TH>powerB_rating</TH><TH>powerC_rating</TH><TH>resistance</TH><TH>reactance</TH><TH>impedance</TH><TH>shunt_resistance</TH><TH>shunt_reactance</TH><TH>shunt_impedance</TH></TR>
-<xsl:for-each select="powerflow/transformer_configuration_list/transformer_configuration"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="connect_type"/></TD><TD><xsl:value-of select="install_type"/></TD><TD><xsl:value-of select="primary_voltage"/></TD><TD><xsl:value-of select="secondary_voltage"/></TD><TD><xsl:value-of select="power_rating"/></TD><TD><xsl:value-of select="powerA_rating"/></TD><TD><xsl:value-of select="powerB_rating"/></TD><TD><xsl:value-of select="powerC_rating"/></TD><TD><xsl:value-of select="resistance"/></TD><TD><xsl:value-of select="reactance"/></TD><TD><xsl:value-of select="impedance"/></TD><TD><xsl:value-of select="shunt_resistance"/></TD><TD><xsl:value-of select="shunt_reactance"/></TD><TD><xsl:value-of select="shunt_impedance"/></TD></TR>
+<TR><TH>Name</TH><TH>connect_type</TH><TH>install_type</TH><TH>primary_voltage</TH><TH>secondary_voltage</TH><TH>power_rating</TH><TH>powerA_rating</TH><TH>powerB_rating</TH><TH>powerC_rating</TH><TH>resistance</TH><TH>reactance</TH><TH>impedance</TH><TH>resistance1</TH><TH>reactance1</TH><TH>impedance1</TH><TH>resistance2</TH><TH>reactance2</TH><TH>impedance2</TH><TH>shunt_resistance</TH><TH>shunt_reactance</TH><TH>shunt_impedance</TH></TR>
+<xsl:for-each select="powerflow/transformer_configuration_list/transformer_configuration"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="connect_type"/></TD><TD><xsl:value-of select="install_type"/></TD><TD><xsl:value-of select="primary_voltage"/></TD><TD><xsl:value-of select="secondary_voltage"/></TD><TD><xsl:value-of select="power_rating"/></TD><TD><xsl:value-of select="powerA_rating"/></TD><TD><xsl:value-of select="powerB_rating"/></TD><TD><xsl:value-of select="powerC_rating"/></TD><TD><xsl:value-of select="resistance"/></TD><TD><xsl:value-of select="reactance"/></TD><TD><xsl:value-of select="impedance"/></TD><TD><xsl:value-of select="resistance1"/></TD><TD><xsl:value-of select="reactance1"/></TD><TD><xsl:value-of select="impedance1"/></TD><TD><xsl:value-of select="resistance2"/></TD><TD><xsl:value-of select="reactance2"/></TD><TD><xsl:value-of select="impedance2"/></TD><TD><xsl:value-of select="shunt_resistance"/></TD><TD><xsl:value-of select="shunt_reactance"/></TD><TD><xsl:value-of select="shunt_impedance"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>transformer objects</H4><TABLE BORDER="1">
 <TR><TH>Name</TH><TH>configuration</TH><TH>status</TH><TH>from</TH><TH>to</TH><TH>power_in</TH><TH>power_out</TH><TH>power_losses</TH><TH>power_in_A</TH><TH>power_in_B</TH><TH>power_in_C</TH><TH>power_out_A</TH><TH>power_out_B</TH><TH>power_out_C</TH><TH>power_losses_A</TH><TH>power_losses_B</TH><TH>power_losses_C</TH><TH>flow_direction</TH><TH>phases</TH><TH>nominal_voltage</TH></TR>
@@ -1458,6 +1459,12 @@ module powerflow {
 </xsl:if><xsl:if test="resistance">	resistance <xsl:value-of select="resistance"/>;
 </xsl:if><xsl:if test="reactance">	reactance <xsl:value-of select="reactance"/>;
 </xsl:if><xsl:if test="impedance">	impedance <xsl:value-of select="impedance"/>;
+</xsl:if><xsl:if test="resistance1">	resistance1 <xsl:value-of select="resistance1"/>;
+</xsl:if><xsl:if test="reactance1">	reactance1 <xsl:value-of select="reactance1"/>;
+</xsl:if><xsl:if test="impedance1">	impedance1 <xsl:value-of select="impedance1"/>;
+</xsl:if><xsl:if test="resistance2">	resistance2 <xsl:value-of select="resistance2"/>;
+</xsl:if><xsl:if test="reactance2">	reactance2 <xsl:value-of select="reactance2"/>;
+</xsl:if><xsl:if test="impedance2">	impedance2 <xsl:value-of select="impedance2"/>;
 </xsl:if><xsl:if test="shunt_resistance">	shunt_resistance <xsl:value-of select="shunt_resistance"/>;
 </xsl:if><xsl:if test="shunt_reactance">	shunt_reactance <xsl:value-of select="shunt_reactance"/>;
 </xsl:if><xsl:if test="shunt_impedance">	shunt_impedance <xsl:value-of select="shunt_impedance"/>;

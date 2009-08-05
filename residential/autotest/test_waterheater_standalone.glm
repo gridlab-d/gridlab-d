@@ -1,0 +1,79 @@
+// $Id$
+// Test standalone waterheater objects
+//
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2002-01-01 00:00:00 PST';
+}
+
+schedule waterheater {
+	hotwater-weekday {
+		* 0 * * 1-5 0.22
+		* 1 * * 1-5 0.17
+		* 2 * * 1-5 0.14
+		* 3 * * 1-5 0.14
+		* 4 * * 1-5 0.16
+		* 5 * * 1-5 0.32
+		* 6 * * 1-5 0.70
+		* 7 * * 1-5 1.10
+		* 8 * * 1-5 0.98
+		* 9 * * 1-5 0.83
+		* 10 * * 1-5 0.72
+		* 11 * * 1-5 0.62
+		* 12 * * 1-5 0.54
+		* 13 * * 1-5 0.49
+		* 14 * * 1-5 0.43
+		* 15 * * 1-5 0.42
+		* 16 * * 1-5 0.47
+		* 17 * * 1-5 0.59
+		* 18 * * 1-5 0.72
+		* 19 * * 1-5 0.73
+		* 20 * * 1-5 0.69
+		* 21 * * 1-5 0.66
+		* 22 * * 1-5 0.55
+		* 23 * * 1-5 0.37
+	}
+	hotwater-weekend {
+		* 0 * * 6-0 0.25
+		* 1 * * 6-0 0.19
+		* 2 * * 6-0 0.15
+		* 3 * * 6-0 0.14
+		* 4 * * 6-0 0.15
+		* 5 * * 6-0 0.18
+		* 6 * * 6-0 0.28
+		* 7 * * 6-0 0.49
+		* 8 * * 6-0 0.80
+		* 9 * * 6-0 1.00
+		* 10 * * 6-0 1.01
+		* 11 * * 6-0 0.91
+		* 12 * * 6-0 0.81
+		* 13 * * 6-0 0.72
+		* 14 * * 6-0 0.62
+		* 15 * * 6-0 0.58
+		* 16 * * 6-0 0.60
+		* 17 * * 6-0 0.66
+		* 18 * * 6-0 0.71
+		* 19 * * 6-0 0.71
+		* 20 * * 6-0 0.67
+		* 21 * * 6-0 0.62
+		* 22 * * 6-0 0.52
+		* 23 * * 6-0 0.39
+	}
+}
+
+module residential;
+module assert;
+module tape;
+
+// Test 1
+// Verify that the values given in the schedule are directly copied
+// to the enduse and that they accrue properly to the metered energy
+object waterheater {
+	name "direct-gpm";
+	power_fraction 1.0;
+	shape "type: queued; schedule: waterheater";
+	// @todo assert energy use here
+}
+

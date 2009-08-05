@@ -339,9 +339,9 @@ STATUS t_sync_all(PASSCONFIG pass)
 TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
 	TIMESTAMP t2 = schedule_syncall(t1);
-	TIMESTAMP t3 = loadshape_syncall(t1); if (t3<t2) t2=t3;
-	t3 = enduse_syncall(t1); if (t3<t2) t2=t3;
-	/* add other internal syncs here */
+	TIMESTAMP t = loadshape_syncall(t1); if (t<t2) t2=t;
+	t = enduse_syncall(t1); if (t<t2) t2=t;
+	/* @todo add other internal syncs here */
 	return t2;
 }
 

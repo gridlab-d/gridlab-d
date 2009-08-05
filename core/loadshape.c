@@ -70,19 +70,13 @@ void loadshape_recalc(loadshape *ls)
 	if (ls->schedule==NULL)
 		return;
 
-	if (ls->schedule->duration==0)
-	{
-		ls->load = 0;
-		ls->t2=TS_NEVER;
-		return;
-	}
 	switch (ls->type) {
 	case MT_ANALOG:
 		break;
 	case MT_PULSED:
 		ls->d[0] = 1; /* scalar determine how many pulses per period are emitted */
 		ls->d[1] = 0;
-		if (ls->s == 0) /* load is off */
+		if (ls->s == 0 && ls->schedule->value != 0) /* load is off but schedule is non-zero*/
 		{
 			/* recalculate time to next on */
 			ls->r = 1/random_exponential(ls->schedule->value * ls->params.pulsed.scalar);
@@ -103,6 +97,13 @@ void loadshape_recalc(loadshape *ls)
 		break;
 	default:
 		break;
+	}
+
+	if (ls->schedule->duration==0)
+	{
+		ls->load = 0;
+		ls->t2=TS_NEVER;
+		return;
 	}
 }
 
@@ -222,7 +223,7 @@ int loadshape_init(loadshape *ls) /**< load shape */
 	loadshape_recalc(ls);
 
 	/* randomize the initial state */
-	if (ls->q==0) ls->q = random_uniform(ls->d[0], ls->d[1]); 
+	if (ls->q==0) ls->q = ls->d[0]<ls->d[1] ? random_uniform(ls->d[0], ls->d[1]) : random_uniform(ls->d[1], ls->d[0]); ; 
 
 	/* initial power per-unit factor */
 	if (ls->dPdV==0) ls->dPdV = 1.0;
@@ -235,10 +236,12 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 	/* if the clock is running */
 	if (t1 > ls->t0)
 	{
-		double dt = ls->t0>0 ? (double)(t1 - ls->t0) : 0.0;
+		double dt = ls->t0>0 ? (double)(t1 - ls->t0)/3600 : 0.0;
 		double queue_value;
 		switch (ls->type) {
+
 		case MT_ANALOG:
+
 			/* update load */
 			if (ls->schedule->duration>0)
 			{
@@ -253,9 +256,23 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 			else
 				return TS_NEVER;
 			break;
+
 		case MT_PULSED:
+
+			/* udpate q */ 
+			ls->q += ls->r * dt;
+
+			/* initial s and r */
+			if (ls->r == 0)
+			{
+				/* @todo initial state should be on/off in proportion to apparent duty-cycle */
+				ls->s = 0;
+				ls->load = 0;
+				if (ls->schedule->value>0) ls->r = 1 / random_exponential(ls->schedule->value*ls->params.pulsed.scalar);
+			}
+
 			/* update s and r */
-			if (ls->q > ls->d[0])
+			if (ls->r > 0 && ls->q >= ls->d[0] - 2/ls->r/3600)
 			{
 				/* turn load on - rate is based on duration/power given */
 				ls->s = 1;
@@ -266,27 +283,37 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 					/* rate is based on load */
 					ls->r = -1/(ls->params.pulsed.energy/ls->load);
 				}
-				else
+				else if (ls->params.pulsed.pulsevalue!=0)
 				{
 					/* fixed duration */
 					ls->load = ls->params.pulsed.energy / ls->params.pulsed.pulsevalue * ls->dPdV;
 					/* rate is based on load */
-					ls->r = -1/(ls->params.pulsed.pulsevalue);
+					ls->r = -1/ls->params.pulsed.pulsevalue;
+				}
+				else
+				{
+					/* can't have load now */
+					output_warning("%s: pulsed load value is zero in 'on' state, turning loadshape off", ls->schedule->name);
+					ls->s = 0;
+					ls->load = 0;
+					ls->r = 0;
 				}
 			}
-			else if (ls->q < ls->d[1])
+			else if (ls->r < 0 && ls->q <= ls->d[1] - 2/ls->r/3600)
 			{
 				/* turn load off - rate is based of exponential distribution based on schedule value */
 				ls->s = 0;
-				ls->r = 1/random_exponential(ls->schedule->value*ls->params.pulsed.scalar);
+				ls->load = 0;
+				ls->r = ls->schedule->value>0 ? 1/random_exponential(ls->schedule->value*ls->params.pulsed.scalar) : 0.0;
 			}
-			/* else state remains unchanged */
 
-			/* udpate q */ 
-			ls->q += ls->r * dt;
+			/* time to next event */
+			ls->t2 = ls->r!=0 ? t1 + (TIMESTAMP)(( ls->d[ls->s] - ls->q) / ls->r * 3600) + 1 : TS_NEVER;
 
-			/* update load */
+			/* choose sooner of schedule change or state change */
+			if (ls->schedule->next_t < ls->t2) ls->t2 = ls->schedule->next_t;
 			break;
+
 		case MT_MODULATED:
 
 			if (ls->params.modulated.pulsetype==MPT_POWER)
@@ -351,6 +378,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 			break;
 		}
 	}
+	ls->t0 = t1;
 	return ls->t2>0?ls->t2:TS_NEVER;
 }
 

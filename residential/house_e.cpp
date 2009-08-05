@@ -198,8 +198,8 @@ struct s_implicit_enduse_list {
 		"}"		
 	},
 	{   "WATERHEATER", 
-		{30, false, {1,0,0}, 1.0, 0.15},
-		"type:analog; schedule: residential-waterheater-default; power: 1.0 kW",
+		{30, true, {0,0,1}, 1.0, 0.5},
+		"type:pulsed; schedule: residential-waterheater-default; energy: 1 kWh; count: 4; power: 5 kW",
 		"residential-waterheater-default", 
 		"weekday-summer {"
 		"	*  0 * 4-9 1-5 0.21; *  1 * 4-9 1-5 0.16; *  2 * 4-9 1-5 0.13; *  3 * 4-9 1-5 0.12"
@@ -382,7 +382,6 @@ struct s_implicit_enduse_list {
 		"	* 20 * * 6-0 0.0267; * 21 * * 6-0 0.0221; * 22 * * 6-0 0.0174; * 23 * * 6-0 0.0145"
 		"}"		
 	},
-	
 	/// @todo add other implicit enduse schedules and shapes as they are defined
 };
 
@@ -1069,7 +1068,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 {
-	TIMESTAMP sync_time = TS_NEVER;
+	TIMESTAMP t2 = TS_NEVER;
 	OBJECT *obj = OBJECTHDR(this);
 
 	// clear accumulators for panel currents
@@ -1093,7 +1092,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			c->status = BRK_CLOSED;
 			c->reclose = TS_NEVER;
-			sync_time = t1; // must immediately reevaluate devices affected
+			t2 = t1; // must immediately reevaluate devices affected
 			gl_debug("house_e:%d panel breaker %d closed", obj->id, c->id);
 		}
 
@@ -1133,14 +1132,14 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				}
 
 				// must immediately reevaluate everything
-				sync_time = t1; 
+				t2 = t1; 
 			}
 
 			// add to panel current
 			else
 			{
 				c->pLoad->voltage_factor = c->pV->Mag() / ((c->pLoad->config&EUC_IS220) ? 240 : 120);
-				TIMESTAMP t = gl_enduse_sync(c->pLoad,t1); if (t<sync_time) sync_time = t;
+				TIMESTAMP t = gl_enduse_sync(c->pLoad,t1); if (t<t2) t2 = t;
 				total.total += c->pLoad->total;
 				total.power += c->pLoad->power;
 				total.current += c->pLoad->current;
@@ -1152,10 +1151,10 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		// sync time
-		if (sync_time > c->reclose)
-			sync_time = c->reclose;
+		if (t2 > c->reclose)
+			t2 = c->reclose;
 	}
-	TIMESTAMP t = gl_enduse_sync(&total,t1); if (t<sync_time) sync_time = t;
+	TIMESTAMP t = gl_enduse_sync(&total,t1); if (t<t2) t2 = t;
 
 	// compute line currents and post to meter
 	if (obj->parent != NULL)
@@ -1169,7 +1168,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	if (obj->parent != NULL)
 		UNLOCK_OBJECT(obj->parent);
 
-	return sync_time;
+	return t2;
 }
 
 TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)

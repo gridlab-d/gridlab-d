@@ -1,0 +1,21 @@
+// $Id$
+// Test standalone lighting objects
+//
+
+#set suppress_repeat_messages=0
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2002-01-01 00:00:00 PST';
+}
+
+module residential {
+	implicit_enduses WATERHEATER;
+}
+module assert;
+module tape;
+
+object house_e {
+}
+
