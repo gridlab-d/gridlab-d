@@ -1167,6 +1167,11 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 		return TS_INVALID;
 	}
 
+#ifndef WIN32
+	/* setup lockup alarm */
+	alarm(global_maximum_synctime);
+#endif
+
 	/* call recalc if recalc bit is set */
 	if( (obj->flags&OF_RECALC) && obj->oclass->recalc!=NULL)
 	{
@@ -1195,6 +1200,12 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 		obj->oclass->profiler.count++;
 		obj->oclass->profiler.clocks += clock()-t;
 	}
+
+#ifndef WIN32
+	/* clear lockup alarm */
+	alarm(0);
+#endif
+
 	return obj->valid_to;
 }
 /** Synchronize an object.  The timestamp given is the desired increment.

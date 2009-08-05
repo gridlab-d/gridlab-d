@@ -545,6 +545,18 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				return FAILED;
 			}
 		}
+		else if (strcmp(*argv,"--globals")==0)
+		{
+			GLOBALVAR *var = NULL;
+			while ((var=global_getnext(var))!=NULL)
+			{
+				char buffer[1024];
+				printf("%s=%s;",var->name,global_getvar(var->name,buffer,sizeof(buffer))?buffer:"(error)");
+				if (var->prop->description || var->prop->flags&PF_DEPRECATED)
+					printf(" // %s%s", (var->prop->flags&PF_DEPRECATED)?"DEPRECATED ":"", var->prop->description?var->prop->description:"");
+				printf("\n");
+			}
+		}
 		else if (strcmp(*argv,"--redirect")==0)
 		{
 			if (argc-1>0)

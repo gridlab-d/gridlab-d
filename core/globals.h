@@ -115,6 +115,7 @@ GLOBAL char global_object_format[32] INIT("%s:%d");
 GLOBAL char global_object_scan[32] INIT("%[^:]:%d"); /**< the format to use when scanning for object ids */
 
 GLOBAL int global_minimum_timestep INIT(1); /**< the minimum timestep allowed */
+GLOBAL int global_maximum_synctime INIT(60); /**< the maximum time allotted to any single sync call */
 
 GLOBAL char global_platform[8] /**< the host operating platform */
 #ifdef WIN32
