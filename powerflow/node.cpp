@@ -147,14 +147,14 @@ int node::create(void)
 
 int node::init(OBJECT *parent)
 {
-#ifdef SUPPORT_OUTAGES
-	if (solver_method!=SM_FBS)
-		GL_THROW("Only the Forward-Back Sweep algorithm supports the reliability module at this time.");
-		/*  TROUBLESHOOT
-		The Forward-Back Swep algorithm is the only solver method that current supports the interactions
-		necessary to use the reliability module.  Switch to that solver method to continue.
-		*/
-#endif
+//#ifdef SUPPORT_OUTAGES
+	//if (solver_method!=SM_FBS)
+	//	gl_warning("Only the Forward-Back Sweep algorithm supports the reliability module at this time.");
+	//	/*  TROUBLESHOOT
+	//	The Forward-Back Swep algorithm is the only solver method that current supports the interactions
+	//	necessary to use the reliability module.  Switch to that solver method to continue.
+	//	*/
+//#endif
 	if (solver_method==SM_NR)
 	{
 		NR_bus_count++;		//Update global bus count for NR solver
