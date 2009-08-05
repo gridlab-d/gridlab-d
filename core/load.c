@@ -3964,8 +3964,9 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 			/* macro disables reading */
 			if (process_macro(line,sizeof(line),filename,linenum)==FALSE)
 				return 0;
-			len = (int)strlen(line);
 			strcat(buffer,line);
+			//strcpy(buffer,line);
+			len = (int)strlen(buffer); // include anything else in the buffer, then advance
 			buffer += len;
 			size -= len;
 			n += len;
