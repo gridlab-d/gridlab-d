@@ -73,6 +73,9 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_complex, "measured_voltage_A[V]", PADDR(measured_voltage[0]),
 			PT_complex, "measured_voltage_B[V]", PADDR(measured_voltage[1]),
 			PT_complex, "measured_voltage_C[V]", PADDR(measured_voltage[2]),
+			PT_complex, "measured_voltage_AB[V]", PADDR(measured_voltageD[0]),
+			PT_complex, "measured_voltage_BC[V]", PADDR(measured_voltageD[1]),
+			PT_complex, "measured_voltage_CA[V]", PADDR(measured_voltageD[2]),
 			PT_complex, "measured_current_A[A]", PADDR(measured_current[0]),
 			PT_complex, "measured_current_B[A]", PADDR(measured_current[1]),
 			PT_complex, "measured_current_C[A]", PADDR(measured_current[2]),
@@ -98,6 +101,7 @@ int meter::create()
 	int result = node::create();
 	
 	measured_voltage[0] = measured_voltage[1] = measured_voltage[2] = complex(0,0,A);
+	measured_voltageD[0] = measured_voltageD[1] = measured_voltageD[2] = complex(0,0,A);
 	measured_current[0] = measured_current[1] = measured_current[2] = complex(0,0,J);
 	measured_real_energy = measured_reactive_energy = 0.0;
 	measured_power = complex(0,0,J);
@@ -128,6 +132,10 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	measured_voltage[0] = voltageA;
 	measured_voltage[1] = voltageB;
 	measured_voltage[2] = voltageC;
+
+	measured_voltageD[0] = voltageA - voltageB;
+	measured_voltageD[1] = voltageB - voltageC;
+	measured_voltageD[2] = voltageC - voltageA;
 	
 	measured_current[0] = current_inj[0];
 	measured_current[1] = current_inj[1];

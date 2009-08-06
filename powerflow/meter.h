@@ -11,6 +11,7 @@ class meter : public node
 {
 public:
 	complex measured_voltage[3];	///< measured voltage
+	complex measured_voltageD[3];	///< measured voltage - Line-to-Line
 	complex measured_current[3];	///< measured current
 	double measured_real_energy;	///< metered real energy consumption
 	double measured_reactive_energy;///< metered reactive energy consumption
