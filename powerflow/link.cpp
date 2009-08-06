@@ -1135,10 +1135,13 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 
 	if (solver_method==SM_FBS)
 	{
-		/* compute for consequences of open link conditions -- Only supports 3-phase fault at the moment */
-		if (has_phase(PHASE_A))	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = is_open() ? 0.0 : 1.0;
-		if (has_phase(PHASE_B))	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = is_open() ? 0.0 : 1.0;
-		if (has_phase(PHASE_C))	a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = is_open() ? 0.0 : 1.0;
+		if (voltage_ratio==1.0)	//Only do this for lines
+		{
+			/* compute for consequences of open link conditions -- Only supports 3-phase fault at the moment */
+			if (has_phase(PHASE_A))	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = is_open() ? 0.0 : 1.0;
+			if (has_phase(PHASE_B))	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = is_open() ? 0.0 : 1.0;
+			if (has_phase(PHASE_C))	a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = is_open() ? 0.0 : 1.0;
+		}
 		if (tNode->condition!=OC_NORMAL)
 			tNode->condition=OC_NORMAL;		//Clear the flags just in case
 	}
