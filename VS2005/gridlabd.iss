@@ -113,6 +113,7 @@ Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: tape_plot.dll; DestDir: {app}\lib; Flags: ignoreversion
 
 ;; sample files
+Source: assert.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
 Source: ..\..\..\models\residential_loads.glm; DestDir: {app}\samples
 Source: ..\..\..\models\powerflow_IEEE_37node.glm; DestDir: {app}\samples
