@@ -487,7 +487,7 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 		if (ls->params.analog.energy>0)
 			return sprintf(string,"type: analog; schedule: %s; energy: %g kWh",	ls->schedule->name, ls->params.analog.energy);
 		else if (ls->params.analog.power>0)
-			return sprintf(string,"type: analog; schedule: %s; power: %g kWh",	ls->schedule->name, ls->params.analog.power);
+			return sprintf(string,"type: analog; schedule: %s; power: %g kW",	ls->schedule->name, ls->params.analog.power);
 		else
 			return sprintf(string,"type: analog; schedule: %s", ls->schedule->name);
 		break;
@@ -771,6 +771,95 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 			{
 				output_error("convert_to_loadshape(string='%-.64s...', ...) unable to parse count before type is specified",string);
 				return 0;
+			}
+		}
+		else if (strcmp(param,"stdev")==0)
+		{
+			double dev = atof(value);
+			double err = random_triangle(-3,3);
+			if (ls->type==MT_ANALOG)
+			{
+				if (ls->params.analog.energy!=0) 
+				{
+					if (!convert_unit_double(value,"kWh",&dev))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit kWh",string);
+						return 0;
+					}
+					ls->params.analog.energy += dev*err;
+				}
+				else
+				{
+					if (!convert_unit_double(value,"kW",&dev))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit kW",string);
+						return 0;
+					}
+					ls->params.analog.power += dev*err;
+				}
+			}
+			else if (ls->type==MT_PULSED)
+			{
+				if (ls->params.pulsed.pulsetype == MPT_TIME)
+				{
+					if (!convert_unit_double(value,"s",&dev))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit s",string);
+						return 0;
+					}
+					ls->params.pulsed.pulsevalue += dev*err;
+					}
+				else if (ls->params.pulsed.pulsetype == MPT_POWER)
+				{
+					if (!convert_unit_double(value,"kW",&dev))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit kW",string);
+						return 0;
+					}
+					ls->params.pulsed.pulsevalue += dev*err;
+				}
+			}
+			else if (ls->type==MT_MODULATED)
+			{
+				if (ls->params.modulated.pulsetype == MPT_TIME)
+				{
+					if (!convert_unit_double(value,"s",&dev))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit s",string);
+						return 0;
+					}
+					ls->params.modulated.pulsevalue += dev*err;
+				}
+				else if (ls->params.modulated.pulsetype == MPT_POWER)
+				{
+					if (!convert_unit_double(value,"kW",&dev))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit kW",string);
+						return 0;
+					}
+					ls->params.modulated.pulsevalue += dev*err;
+				}
+			}
+			else if (ls->type==MT_QUEUED)
+			{
+				if (ls->params.queued.pulsetype == MPT_TIME)
+				{
+					if (!convert_unit_double(value,"s",&dev))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit s",string);
+						return 0;
+					}
+					ls->params.queued.pulsevalue += dev*err;
+				}
+				else if (ls->params.queued.pulsetype == MPT_POWER)
+				{
+					if (!convert_unit_double(value,"kW",&dev))
+					{
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit kW",string);
+						return 0;
+					}
+					ls->params.queued.pulsevalue += dev*err;
+				}
 			}
 		}
 		else if (strcmp(param,"q_on")==0)
