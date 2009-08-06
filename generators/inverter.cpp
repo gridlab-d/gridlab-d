@@ -430,7 +430,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			GL_THROW("Constant PQ mode not supported at this time");
 			/* TROUBLESHOOT
-			This will be worked on at a later date as it applies to certain elements
+			This will be worked on at a later date and is not yet correctly implemented.
 			*/
 			gl_verbose("inverter sync: constant pq");
 			//TODO
@@ -546,7 +546,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			GL_THROW("Constant V mode not supported at this time");
 			/* TROUBLESHOOT
-			This will be worked on at a later date as it applies to certain elements
+			This will be worked on at a later date and is not yet correctly implemented.
 			*/
 			gl_verbose("inverter sync: constant v");
 			bool changed = false;
