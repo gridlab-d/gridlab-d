@@ -21,7 +21,6 @@ class inverter: public power_electronics
 {
 private:
 	/* TODO: put private variables here */
-	//complex AMx[3][3];//generator impedance matrix
 
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -42,6 +41,7 @@ public:
 	complex I_step_max;
 	double internal_losses;
 	double C_Storage_In;
+	double power_factor;
 
 	complex V_In_Set_A;
 	complex V_In_Set_B;
@@ -49,6 +49,7 @@ public:
 
 	complex *pCircuit_V;		//< pointer to the three voltages on three lines
 	complex *pLine_I;			//< pointer to the three current on three lines
+	complex *pLine12;			//< used in triplex metering
 
 	double output_frequency;
 	double frequency_losses;

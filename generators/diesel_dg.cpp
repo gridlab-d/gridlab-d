@@ -142,6 +142,10 @@ int diesel_dg::init(OBJECT *parent)
 	else
 	{
 		GL_THROW("Meter object was not found, please specify a meter parent for diesel_dg:%d.",obj->id);
+		/* TROUBLESHOOT
+		A meter object is the only way that a generator object can attach to powerflow or other solver
+		systems.  Please create a parent meter object for the generator to attach to the system.
+		*/
 	}
 
 	return 1; /* return 1 on success, 0 on failure */

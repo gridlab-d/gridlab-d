@@ -300,7 +300,7 @@ complex power_electronics::filter_voltage_impact_source(complex desired_I_out, c
 		return complex(0,0);
 	}else{
 	complex Is = filter_current_impact_source(desired_I_out, desired_V_out);
-	complex Vs = desired_V_out + (Is * (Rsfilter_total + Xsfilter_total));
+	complex Vs = desired_V_out + (Is * complex(Rsfilter_total,Xsfilter_total));
 	return Vs;
 	}
 }
@@ -311,7 +311,7 @@ complex power_electronics::filter_current_impact_source(complex desired_I_out, c
 	if(desired_I_out == 0){
 		return complex(0,0);
 	}else{
-	complex Ig = desired_V_out / (Rgfilter_total + Xgfilter_total);
+	complex Ig = desired_V_out / complex(Rgfilter_total,Xgfilter_total);
 	complex Is = desired_I_out + Ig;
 	return Is;
 	}
@@ -323,7 +323,7 @@ complex power_electronics::filter_voltage_impact_out(complex source_I_in, comple
 	if(source_V_in == 0){
 		return complex(0,0);
 	}else{
-	complex Vo = source_V_in - (source_I_in * (Rsfilter_total + Xsfilter_total));
+	complex Vo = source_V_in - (source_I_in * complex(Rsfilter_total,Xsfilter_total));
 	return Vo;
 	}
 }
@@ -334,7 +334,7 @@ complex power_electronics::filter_current_impact_out(complex source_I_in, comple
 		return complex(0,0);
 	}else{
 	complex Vo = filter_voltage_impact_out(source_I_in, source_V_in);
-	complex Ig = Vo / (Rgfilter_total + Xgfilter_total);
+	complex Ig = Vo / complex(Rgfilter_total,Xgfilter_total);
 	complex Io = source_I_in - Ig;
 	return Io;
 	}

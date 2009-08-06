@@ -54,7 +54,6 @@ solar::solar(MODULE *module)
 				PT_KEYWORD,"AC",AC,
 				PT_KEYWORD,"DC",DC,
 
-
 			PT_double, "noct", PADDR(NOCT),
 			PT_double, "Tcell", PADDR(Tcell),
 			PT_double, "Tambient", PADDR(Tambient),
@@ -62,10 +61,10 @@ solar::solar(MODULE *module)
 			PT_double, "Rinternal", PADDR(Rinternal),
 			PT_double, "Rated_Insolation", PADDR(Rated_Insolation),
 			PT_double, "V_Max[V]", PADDR(V_Max), 
-			PT_complex, "Voc_Max", PADDR(Voc_Max),
-			PT_complex, "Voc", PADDR(Voc),
-			PT_double, "efficiency", PADDR(efficiency),
-			PT_double, "area", PADDR(area),
+			PT_complex, "Voc_Max[V]", PADDR(Voc_Max),
+			PT_complex, "Voc[V]", PADDR(Voc),
+			PT_double, "efficiency[unit]", PADDR(efficiency),
+			PT_double, "area[m^2]", PADDR(area),
 			//PT_int64, "generator_mode_choice", PADDR(generator_mode_choice),
 
 			PT_double, "Rated_kVA[kVA]", PADDR(Rated_kVA),
@@ -73,7 +72,6 @@ solar::solar(MODULE *module)
 			PT_complex, "V_Out[V]", PADDR(V_Out),
 			PT_complex, "I_Out[A]", PADDR(I_Out),
 			PT_complex, "VA_Out[VA]", PADDR(VA_Out),
-
 
 			//resistasnces and max P, Q
 
@@ -84,14 +82,22 @@ solar::solar(MODULE *module)
 				PT_KEYWORD, "N",(set)PHASE_N,
 				PT_KEYWORD, "S",(set)PHASE_S,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+
 		defaults = this;
-
-
-		
-
-
 		memset(this,0,sizeof(solar));
-		/* TODO: set the default values of all properties here */
+
+		NOCT = 45;//celsius
+		Tcell = 21; //celsius
+		Tambient = 25; //celsius
+		Insolation = 0;
+		Rinternal = 0.05;
+		Rated_Insolation = 1200;
+		V_Max = 40;
+		Voc = complex(40,0);
+		Voc_Max = complex(40,0);
+		area = 10;
+		
+		efficiency = 0;
 	}
 }
 
@@ -156,7 +162,8 @@ int solar::init_climate()
 				gl_set_dependent(obj,hdr);
 			pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
 			pRhout = (double*)GETADDR(obj,gl_get_property(obj,"humidity"));
-			pSolar = (double*)GETADDR(obj,gl_get_property(obj,"solar_flux"));
+			pSolar = (double*)&(((double*)(GETADDR(obj,gl_get_property(obj,"solar_flux"))))[8]);
+			//pSolar = (double*)GETADDR(obj,gl_get_property(obj,"global_solar"));
 			//pSolar = (double*)malloc(50 * sizeof(double));
 
 			//the climate object's solar data doesn't seem to work... so.... use a mock version?
@@ -203,120 +210,72 @@ int solar::init_climate()
 	return 1;
 }
 
-
-
-
-
-
 /* Object initialization is called once after all object have been created */
 int solar::init(OBJECT *parent)
 {
-	/* TODO: set the context-dependent initial value of properties */
-	//double ZB, SB, EB;
-	//complex tst;
+	OBJECT *obj = OBJECTHDR(this);
 
-	gl_verbose("solar init: started");
-
+	if (gen_mode_v == UNKNOWN)
+	{
+		gl_warning("Generator control mode is not specified! Using default: SUPPLY_DRIVEN");
 		gen_mode_v = SUPPLY_DRIVEN;
-	
+	}
+	if (gen_status_v == UNKNOWN)
+	{
+		gl_warning("Solar panel status is unknown! Using default: ONLINE");
 		gen_status_v = ONLINE;
+	}
+	if (panel_type_v == UNKNOWN)
+	{
+		gl_warning("Solar panel type is unknown! Using default: SINGLE_CRYSTAL_SILICON");
 		panel_type_v = SINGLE_CRYSTAL_SILICON;
-
-		NOCT = 45;//celsius
-		Tcell = 21; //celsius
-		Tambient = 25; //celsius
-		Insolation = 0;
-		Rinternal = 0.05;
-		Rated_Insolation = 1200;
-		V_Max = complex(40);
-		Voc = complex(40);
-		Voc_Max = complex(40);
-		area = 1000;
-		
-		efficiency = 0;
-		
-		gl_verbose("solar init: finished initializing variables");
+	}
 
 	struct {
 		complex **var;
 		char *varname;
-	} map[] = {
-		// local object name,	meter object name
+	} 
+	
+	map[] = {
+		// map the V & I from the inverter
 		{&pCircuit_V,			"V_In"}, // assumes 2 and 3 follow immediately in memory
 		{&pLine_I,				"I_In"}, // assumes 2 and 3(N) follow immediately in memory
-		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	};
-	 
-
-	
 
 	static complex default_line_voltage[1], default_line_current[1];
 	int i;
 
-	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
-	if (parent!=NULL && strcmp(parent->oclass->name,"meter")==0)
+	// find parent inverter, if not defined, use a default voltage
+	if (parent != NULL && strcmp(parent->oclass->name,"inverter") == 0)
 	{
-
+		// construct circuit variable map to meter
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
+		{
 			*(map[i].var) = get_complex(parent,map[i].varname);
-
-	 gl_verbose("solar init: mapped METER objects to internal variables");
-	}
-
-	else if (parent!=NULL && strcmp(parent->oclass->name,"inverter")==0){
-		gl_verbose("solar init: parent WAS found, is an inverter!");
-			// construct circuit variable map to meter
-			/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
-			
-		for (i=0; i<sizeof(map)/sizeof(map[0]); i++){
-						*(map[i].var) = get_complex(parent,map[i].varname);
 		}
-		gl_verbose("solar init: mapped INVERTER objects to internal variables");
-		
 	}
-	else{
-		
-			// construct circuit variable map to meter
+	else if	(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0)
+	{
+		throw("Solar panel must have an inverter as it's parent");
+	}
+	else
+	{	// default values of voltage
+		// construct circuit variable map to meter
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
-		gl_verbose("solar init: mapped meter objects to internal variables");
-	
-
-		
-		OBJECT *obj = OBJECTHDR(this);
-		gl_verbose("solar init: no parent meter defined, parent is not a meter");
-		gl_warning("solar:%d %s", obj->id, parent==NULL?"has no parent meter defined":"parent is not a meter");
+		gl_warning("solar panel:%d has no parent defined. Using static voltages.", obj->id);
 
 		// attach meter variables to each circuit in the default_meter
-			*(map[0].var) = &default_line_voltage[0];
-			*(map[1].var) = &default_line_current[0];
+		*(map[0].var) = &default_line_voltage[0];
+		*(map[1].var) = &default_line_current[0];
 
 		// provide initial values for voltages
-			default_line_voltage[0] = complex(V_Max.Re()/sqrt(3.0),0);
-			//default_line123_voltage[1] = complex(V_Max/sqrt(3.0)*cos(2*PI/3),V_Max/sqrt(3.0)*sin(2*PI/3));
-			//default_line123_voltage[2] = complex(V_Max/sqrt(3.0)*cos(-2*PI/3),V_Max/sqrt(3.0)*sin(-2*PI/3));
-
+		default_line_voltage[0] = complex(V_Max.Re()/sqrt(3.0),0);
 	}
-
-	gl_verbose("solar init: finished connecting with meter");
-
-
-
-	if (gen_mode_v==UNKNOWN)
-		{
-			OBJECT *obj = OBJECTHDR(this);
-			throw("Generator control mode is not specified");
-		}
-	if (gen_status_v==0)
-		{
-			//OBJECT *obj = OBJECTHDR(this);
-			throw("Generator is out of service!");
-		}
-	
 		
-	switch(panel_type_v){
+	switch(panel_type_v)
+	{
 		case SINGLE_CRYSTAL_SILICON:
 			efficiency = 0.2;
-			gl_verbose("got here!");
 			break;
 		case MULTI_CRYSTAL_SILICON:
 			efficiency = 0.15;
@@ -334,109 +293,50 @@ int solar::init(OBJECT *parent)
 			efficiency = 0.10;
 			break;
 	}
-		//efficiency dictates how much of the rate insolation the panel can capture and
-		//turn into electricity
-		Max_P = Rated_Insolation * efficiency * area;
-		gl_verbose("Max_P is : %f", Max_P);
 		
+	//efficiency dictates how much of the rate insolation the panel can capture and
+	//turn into electricity
+	Max_P = Rated_Insolation * efficiency * area;
+	gl_verbose("Max_P is : %f", Max_P);
 
-	gl_verbose("solar init: about to init climate");
 	solar::init_climate();
 
-
-	gl_verbose("solar init: about to exit");
-
-
-
 	return 1; /* return 1 on success, 0 on failure */
-	
-
-}
-	void solar::derate_panel(double Tamb, double Insol){
-		Tcell = Tamb + ((NOCT - 20)/0.8) * Insol/1000;
-		Rinternal=.0001*Tcell*Tcell;
-		gl_verbose("solar sync: panel temperature is : %f", Tcell);
-		Voc = Voc_Max * (1 - (0.0037 * (Tcell - 25)));
-
-		if(100.00 > Insol){
-			VA_Out = 0;
-		}else{
-			VA_Out = complex(Max_P * (1 - (0.005 * (Tcell - 25))), 0);
-		}
-		gl_verbose("solar sync: VA_Out real component is: (%f , %f)", VA_Out.Re()), VA_Out.Im();
-		VA_Out = complex(VA_Out.Re() * 0.97, VA_Out.Im()* 0.97); // mismatch derating
-		VA_Out = complex(VA_Out.Re() * 0.96, VA_Out.Im()* 0.96);
-
-		
-	}
-	
-	
-	
-	void solar::calculate_IV(double Tamb, double Insol){
-		derate_panel(Tamb, Insol);
-		V_Out = V_Max * (Voc / Voc_Max);
-		I_Out = (VA_Out / V_Out) * (Insol / Rated_Insolation); 
-		gl_verbose("solar sync: VA_Out after set real component is: %f, %f", VA_Out.Re(), VA_Out.Im());
-		gl_verbose("solar sync: I_Out real component is : (%f , %f)", I_Out.Re(), I_Out.Im());
-	}
-
-
-
-complex *solar::get_complex(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
-	return (complex*)GETADDR(obj,p);
 }
 
-
-
-/* Presync is called when the clock needs to advance on the first top-down pass */
 TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	I_Out = 0.0;
-	gl_verbose("solar presync: about to exit presync");
+	I_Out = complex(0,0);
+
 	TIMESTAMP t2 = TS_NEVER;
-	/* TODO: implement pre-topdown behavior */
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
-/* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	gl_verbose("solar sync: started");
-	//gather insolation (tape)
-	//gather ambient temperature (tape)
 
 	//V_Out = pCircuit_V[0];	//Syncs the meter parent to the generator.
 	
-	//gl_verbose("solar sync: set V from meter");
-	//need pSolar for this time step
-	//FOR NOW
+	Insolation = *pSolar;	
 
-		if(0 == gl_convert("W/sf","W/m^2", (pSolar))){
-					gl_error("climate::init unable to gl_convert() 'W/sf' to 'W/m^2'!");
-					return 0;
-				}
-
-	Insolation = *pSolar;
-	//Insolation = 1000.00;
+	if(0 == gl_convert("W/sf","W/m^2", &Insolation))
+	{
+		gl_error("climate::init unable to gl_convert() 'W/sf' to 'W/m^2'!");
+		return 0;
+	}
 	
-	gl_verbose("solar sync: set insolation as: %f ", Insolation);
 	Tambient = *pTout;
-	gl_verbose("solar sync: set temperature as %f", Tambient);
 	calculate_IV(Tambient, Insolation);
-	gl_verbose("solar sync: calculated IV");
 	pLine_I[0] = I_Out;
 	pCircuit_V[0] = V_Out;
 	gl_verbose("solar sync: sent I to the meter: (%f , %f)", I_Out.Re(), I_Out.Im());
 	gl_verbose("solar sync: sent V to the meter: (%f , %f)", V_Out.Re(), V_Out.Im());
 	gl_verbose("solar sync: sent the current to meter");
-	//TIMESTAMP t2 = t1 + 10 * 60 * TS_SECOND;
+
 	TIMESTAMP t2 = TS_NEVER;
-	/* TODO: implement bottom-up behavior */
-	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+
+	return t2; 
 }
 
 /* Postsync is called when the clock needs to advance on the second top-down pass */
@@ -445,6 +345,51 @@ TIMESTAMP solar::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	/* TODO: implement post-topdown behavior */
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+}
+
+void solar::derate_panel(double Tamb, double Insol)
+{
+	Tcell = Tamb + ((NOCT - 20)/0.8) * Insol/1000;
+	Rinternal=.0001*Tcell*Tcell;
+	gl_verbose("solar sync: panel temperature is : %f", Tcell);
+	Voc = Voc_Max * (1 - (0.0037 * (Tcell - 25)));
+
+	if(100.00 > Insol)
+	{
+		VA_Out = 0;
+	}
+	else
+	{
+		VA_Out = complex(Max_P * (1 - (0.005 * (Tcell - 25))), 0);
+	}
+
+	gl_verbose("solar sync: VA_Out real component is: (%f , %f)", VA_Out.Re()), VA_Out.Im();
+	VA_Out = complex(VA_Out.Re() * 0.97, VA_Out.Im()* 0.97); // mismatch derating
+	VA_Out = complex(VA_Out.Re() * 0.96, VA_Out.Im()* 0.96);
+}
+	
+void solar::calculate_IV(double Tamb, double Insol){
+
+	derate_panel(Tamb, Insol);
+	V_Out = V_Max * (Voc / Voc_Max);
+	if (V_Out.Mag() == 0.0)
+	{
+		I_Out = complex(0.0,0.0);
+	}
+	else
+	{
+		I_Out = (VA_Out / V_Out) * (Insol / Rated_Insolation); 
+	}
+	gl_verbose("solar sync: VA_Out after set is: %f, %fj", VA_Out.Re(), VA_Out.Im());
+	gl_verbose("solar sync: I_Out is : (%f , %fj)", I_Out.Re(), I_Out.Im());
+}
+
+complex *solar::get_complex(OBJECT *obj, char *name)
+{
+	PROPERTY *p = gl_get_property(obj,name);
+	if (p==NULL || p->ptype!=PT_complex)
+		return NULL;
+	return (complex*)GETADDR(obj,p);
 }
 
 //////////////////////////////////////////////////////////////////////////
