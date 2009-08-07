@@ -95,7 +95,7 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 				{
 					for (kindex=0; kindex<3; kindex++)
 					{
-						tempY[jindex][kindex] += *branch[jindexer].Yfrom[jindex][kindex] / branch[jindexer].v_ratio;
+						tempY[jindex][kindex] += branch[jindexer].YSfrom[jindex*3+kindex];
 					}
 				}
 			}
@@ -105,7 +105,7 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 				{
 					for (kindex=0; kindex<3; kindex++)
 					{
-						tempY[jindex][kindex] += *branch[jindexer].Yto[jindex][kindex] * branch[jindexer].v_ratio;
+						tempY[jindex][kindex] += branch[jindexer].YSto[jindex*3+kindex];
 					}
 				}
 			}
@@ -132,16 +132,16 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 			{
 				tempa  = branch[jindexer].from;
 				tempb  = branch[jindexer].to;
-				if ((*branch[jindexer].Yfrom[jindex][kindex]).Re() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)  
+				if ((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)  
 					size_offdiag_PQ += 1; 
 
-				if ((*branch[jindexer].Yto[jindex][kindex]).Re() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)  
+				if ((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)  
 					size_offdiag_PQ += 1; 
 
-				if ((*branch[jindexer].Yfrom[jindex][kindex]).Im() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1) 
+				if ((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1) 
 					size_offdiag_PQ += 1; 
 
-				if ((*branch[jindexer].Yto[jindex][kindex]).Im() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1) 
+				if ((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1) 
 					size_offdiag_PQ += 1; 
 			}
 		}
@@ -162,83 +162,83 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 			{					
 				tempa  = branch[jindexer].from;
 			    tempb  = branch[jindexer].to;
-				if ((*branch[jindexer].Yfrom[jindex][kindex]).Im() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)	//From imags
+				if ((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)	//From imags
 				{
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yfrom[jindex][kindex]).Im()); // Note that off diagonal elements of bus admittance matrix is equal to the negative value of corresponding branch admittance.
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Im()); // Note that off diagonal elements of bus admittance matrix is equal to the negative value of corresponding branch admittance.
 					indexer += 1;
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex +3;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex +3;
-					Y_offdiag_PQ[indexer].Y_value = (*branch[jindexer].Yfrom[jindex][kindex]).Im();
+					Y_offdiag_PQ[indexer].Y_value = (branch[jindexer].Yfrom[jindex*3+kindex]).Im();
 					indexer += 1;
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yto[jindex][kindex]).Im());
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Im());
 					indexer += 1;
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex +3;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex +3;
-					Y_offdiag_PQ[indexer].Y_value = (*branch[jindexer].Yto[jindex][kindex]).Im();
+					Y_offdiag_PQ[indexer].Y_value = (branch[jindexer].Yto[jindex*3+kindex]).Im();
 					indexer += 1;
 				}
 
-				if ((*branch[jindexer].Yto[jindex][kindex]).Im() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)	//To imags
+				if ((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)	//To imags
 				{
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yto[jindex][kindex]).Im()); // Note that off diagonal elements of bus admittance matrix is equal to the negative value of corresponding branch admittance.
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Im()); // Note that off diagonal elements of bus admittance matrix is equal to the negative value of corresponding branch admittance.
 					indexer += 1;
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex +3;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex +3;
-					Y_offdiag_PQ[indexer].Y_value = (*branch[jindexer].Yto[jindex][kindex]).Im();
+					Y_offdiag_PQ[indexer].Y_value = (branch[jindexer].Yto[jindex*3+kindex]).Im();
 					indexer += 1;
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yfrom[jindex][kindex]).Im());
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Im());
 					indexer += 1;
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex +3;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex +3;
-					Y_offdiag_PQ[indexer].Y_value = (*branch[jindexer].Yfrom[jindex][kindex]).Im();
+					Y_offdiag_PQ[indexer].Y_value = (branch[jindexer].Yfrom[jindex*3+kindex]).Im();
 					indexer += 1;
 				}
 
-				if ((*branch[jindexer].Yfrom[jindex][kindex]).Re() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)	//From reals
+				if ((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)	//From reals
 				{
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex + 3;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yfrom[jindex][kindex]).Re());
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
 					indexer += 1;
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex +3;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yfrom[jindex][kindex]).Re());
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
 					indexer += 1;	
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex + 3;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yto[jindex][kindex]).Re());
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
 					indexer += 1;
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex +3;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yto[jindex][kindex]).Re());
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
 					indexer += 1;
 				}
 
-				if ((*branch[jindexer].Yto[jindex][kindex]).Re() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)	//To reals
+				if ((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0 && bus[tempa].type != 1 && bus[tempb].type != 1)	//To reals
 				{
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex + 3;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yto[jindex][kindex]).Re());
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
 					indexer += 1;
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].to) + jindex;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].from) + kindex +3;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yto[jindex][kindex]).Re());
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
 					indexer += 1;	
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex + 3;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yfrom[jindex][kindex]).Re());
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
 					indexer += 1;
 					Y_offdiag_PQ[indexer].row_ind = 6*(branch[jindexer].from) + jindex;
 			        Y_offdiag_PQ[indexer].col_ind = 6*(branch[jindexer].to) + kindex +3;
-					Y_offdiag_PQ[indexer].Y_value = -((*branch[jindexer].Yfrom[jindex][kindex]).Re());
+					Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
 					indexer += 1;
 				}
 			}
@@ -310,48 +310,57 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 			if (bus[indexer].delta == true)	//Delta connected node
 			{
 				//Delta voltages
-				voltageDel[0] = *bus[indexer].V[0] - *bus[indexer].V[1];
-				voltageDel[1] = *bus[indexer].V[1] - *bus[indexer].V[2];
-				voltageDel[2] = *bus[indexer].V[2] - *bus[indexer].V[0];
+				voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
+				voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
+				voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
 
 				//Power
-				delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(*bus[indexer].S[0]/voltageDel[0]);
-				delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(*bus[indexer].S[1]/voltageDel[1]);
-				delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(*bus[indexer].S[2]/voltageDel[2]);
+				delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(bus[indexer].S[0]/voltageDel[0]);
+				delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(bus[indexer].S[1]/voltageDel[1]);
+				delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(bus[indexer].S[2]/voltageDel[2]);
 
-				//Use delta current variable at first
-				undeltacurr[0] =delta_current[0]-delta_current[2];
-				undeltacurr[1] =delta_current[1]-delta_current[0];
-				undeltacurr[2] =delta_current[2]-delta_current[1];
+				////Use delta current variable at first
+				//undeltacurr[0] =delta_current[0]-delta_current[2];
+				//undeltacurr[1] =delta_current[1]-delta_current[0];
+				//undeltacurr[2] =delta_current[2]-delta_current[1];
+
+				////Now convert back to power
+				//undeltapower[0] = *bus[indexer].V[0] * (~undeltacurr[0]);
+				//undeltapower[1] = *bus[indexer].V[1] * (~undeltacurr[1]);
+				//undeltapower[2] = *bus[indexer].V[2] * (~undeltacurr[2]);
 
 				//Now convert back to power
-				undeltapower[0] = *bus[indexer].V[0] * (~undeltacurr[0]);
-				undeltapower[1] = *bus[indexer].V[1] * (~undeltacurr[1]);
-				undeltapower[2] = *bus[indexer].V[2] * (~undeltacurr[2]);
+				undeltapower[0] = 0.0;
+				undeltapower[1] = 0.0;
+				undeltapower[2] = 0.0;
+
 
 				//Convert delta connected load to appropriate Wye - reuse temp variable
-				undeltacurr[0] = voltageDel[0] * (*bus[indexer].Y[0]);
-				undeltacurr[1] = voltageDel[1] * (*bus[indexer].Y[1]);
-				undeltacurr[2] = voltageDel[2] * (*bus[indexer].Y[2]);
+				undeltacurr[0] = voltageDel[0] * (bus[indexer].Y[0]);
+				undeltacurr[1] = voltageDel[1] * (bus[indexer].Y[1]);
+				undeltacurr[2] = voltageDel[2] * (bus[indexer].Y[2]);
 
-				undeltaimped[0] = (*bus[indexer].V[0] == 0) ? 0 : (undeltacurr[0] - undeltacurr[2]) / (*bus[indexer].V[0]);
-				undeltaimped[1] = (*bus[indexer].V[1] == 0) ? 0 : (undeltacurr[1] - undeltacurr[0]) / (*bus[indexer].V[1]);
-				undeltaimped[2] = (*bus[indexer].V[2] == 0) ? 0 : (undeltacurr[2] - undeltacurr[1]) / (*bus[indexer].V[2]);
+				undeltaimped[0] = (bus[indexer].V[0] == 0) ? 0 : (undeltacurr[0] - undeltacurr[2]) / (bus[indexer].V[0]);
+				undeltaimped[1] = (bus[indexer].V[1] == 0) ? 0 : (undeltacurr[1] - undeltacurr[0]) / (bus[indexer].V[1]);
+				undeltaimped[2] = (bus[indexer].V[2] == 0) ? 0 : (undeltacurr[2] - undeltacurr[1]) / (bus[indexer].V[2]);
 
 				//Convert delta-current into a phase current - reuse temp variable
-				undeltacurr[0]=*bus[indexer].I[0]-*bus[indexer].I[2];
-				undeltacurr[1]=*bus[indexer].I[1]-*bus[indexer].I[0];
-				undeltacurr[2]=*bus[indexer].I[2]-*bus[indexer].I[1];
+				//undeltacurr[0]=*bus[indexer].I[0]-*bus[indexer].I[2];
+				//undeltacurr[1]=*bus[indexer].I[1]-*bus[indexer].I[0];
+				//undeltacurr[2]=*bus[indexer].I[2]-*bus[indexer].I[1];
+				undeltacurr[0]=(bus[indexer].I[0]+delta_current[0])-(bus[indexer].I[2]+delta_current[2]);
+				undeltacurr[1]=(bus[indexer].I[1]+delta_current[1])-(bus[indexer].I[0]+delta_current[0]);
+				undeltacurr[2]=(bus[indexer].I[2]+delta_current[2])-(bus[indexer].I[1]+delta_current[1]);
 
 				for (jindex=0; jindex<3; jindex++)
 				{
 					tempPbus = (undeltapower[jindex]).Re();									// Real power portion of constant power portion
-					tempPbus += (undeltacurr[jindex]).Re() * (*bus[indexer].V[jindex]).Re() + (undeltacurr[jindex]).Im() * (*bus[indexer].V[jindex]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
-					tempPbus += (undeltaimped[jindex]).Re() * (*bus[indexer].V[jindex]).Re() * (*bus[indexer].V[jindex]).Re() + (undeltaimped[jindex]).Re() * (*bus[indexer].V[jindex]).Im() * (*bus[indexer].V[jindex]).Im();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
+					tempPbus += (undeltacurr[jindex]).Re() * (bus[indexer].V[jindex]).Re() + (undeltacurr[jindex]).Im() * (bus[indexer].V[jindex]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
+					tempPbus += (undeltaimped[jindex]).Re() * (bus[indexer].V[jindex]).Re() * (bus[indexer].V[jindex]).Re() + (undeltaimped[jindex]).Re() * (bus[indexer].V[jindex]).Im() * (bus[indexer].V[jindex]).Im();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
 					bus[indexer].PL[jindex] = tempPbus;	//Real power portion
 					tempQbus = (undeltapower[jindex]).Im();									// Reactive power portion of constant power portion
-					tempQbus += (undeltacurr[jindex]).Re() * (*bus[indexer].V[jindex]).Im() - (undeltacurr[jindex]).Im() * (*bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
-					tempQbus += -(undeltaimped[jindex]).Im() * (*bus[indexer].V[jindex]).Im() * (*bus[indexer].V[jindex]).Im() - (undeltaimped[jindex]).Im() * (*bus[indexer].V[jindex]).Re() * (*bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage				
+					tempQbus += (undeltacurr[jindex]).Re() * (bus[indexer].V[jindex]).Im() - (undeltacurr[jindex]).Im() * (bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
+					tempQbus += -(undeltaimped[jindex]).Im() * (bus[indexer].V[jindex]).Im() * (bus[indexer].V[jindex]).Im() - (undeltaimped[jindex]).Im() * (bus[indexer].V[jindex]).Re() * (bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage				
 					bus[indexer].QL[jindex] = tempQbus;	//Reactive power portion  
 				}
 			}
@@ -359,13 +368,13 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 			{
 				for (jindex=0; jindex<3; jindex++)
 				{
-					tempPbus = (*bus[indexer].S[jindex]).Re();									// Real power portion of constant power portion
-					tempPbus += (*bus[indexer].I[jindex]).Re() * (*bus[indexer].V[jindex]).Re() + (*bus[indexer].I[jindex]).Im() * (*bus[indexer].V[jindex]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
-					tempPbus += (*bus[indexer].Y[jindex]).Re() * (*bus[indexer].V[jindex]).Re() * (*bus[indexer].V[jindex]).Re() + (*bus[indexer].Y[jindex]).Re() * (*bus[indexer].V[jindex]).Im() * (*bus[indexer].V[jindex]).Im();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
+					tempPbus = (bus[indexer].S[jindex]).Re();									// Real power portion of constant power portion
+					tempPbus += (bus[indexer].I[jindex]).Re() * (bus[indexer].V[jindex]).Re() + (bus[indexer].I[jindex]).Im() * (bus[indexer].V[jindex]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
+					tempPbus += (bus[indexer].Y[jindex]).Re() * (bus[indexer].V[jindex]).Re() * (bus[indexer].V[jindex]).Re() + (bus[indexer].Y[jindex]).Re() * (bus[indexer].V[jindex]).Im() * (bus[indexer].V[jindex]).Im();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
 					bus[indexer].PL[jindex] = tempPbus;	//Real power portion
-					tempQbus = (*bus[indexer].S[jindex]).Im();									// Reactive power portion of constant power portion
-					tempQbus += (*bus[indexer].I[jindex]).Re() * (*bus[indexer].V[jindex]).Im() - (*bus[indexer].I[jindex]).Im() * (*bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
-					tempQbus += -(*bus[indexer].Y[jindex]).Im() * (*bus[indexer].V[jindex]).Im() * (*bus[indexer].V[jindex]).Im() - (*bus[indexer].Y[jindex]).Im() * (*bus[indexer].V[jindex]).Re() * (*bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage				
+					tempQbus = (bus[indexer].S[jindex]).Im();									// Reactive power portion of constant power portion
+					tempQbus += (bus[indexer].I[jindex]).Re() * (bus[indexer].V[jindex]).Im() - (bus[indexer].I[jindex]).Im() * (bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
+					tempQbus += -(bus[indexer].Y[jindex]).Im() * (bus[indexer].V[jindex]).Im() * (bus[indexer].V[jindex]).Im() - (bus[indexer].Y[jindex]).Im() * (bus[indexer].V[jindex]).Re() * (bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage				
 					bus[indexer].QL[jindex] = tempQbus;	//Reactive power portion  
 				}
 			}
@@ -415,27 +424,27 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 				
 				for (kindex=0; kindex<3; kindex++)
 				{
-					tempIcalcReal += (BA_diag[indexer].Y[jindex][kindex]).Re() * (*bus[indexer].V[kindex]).Re() - (BA_diag[indexer].Y[jindex][kindex]).Im() * (*bus[indexer].V[kindex]).Im();// equation (7), the diag elements of bus admittance matrix 
-					tempIcalcImag += (BA_diag[indexer].Y[jindex][kindex]).Re() * (*bus[indexer].V[kindex]).Im() + (BA_diag[indexer].Y[jindex][kindex]).Im() * (*bus[indexer].V[kindex]).Re();// equation (8), the diag elements of bus admittance matrix 
+					tempIcalcReal += (BA_diag[indexer].Y[jindex][kindex]).Re() * (bus[indexer].V[kindex]).Re() - (BA_diag[indexer].Y[jindex][kindex]).Im() * (bus[indexer].V[kindex]).Im();// equation (7), the diag elements of bus admittance matrix 
+					tempIcalcImag += (BA_diag[indexer].Y[jindex][kindex]).Re() * (bus[indexer].V[kindex]).Im() + (BA_diag[indexer].Y[jindex][kindex]).Im() * (bus[indexer].V[kindex]).Re();// equation (8), the diag elements of bus admittance matrix 
 					for (jindexer=0; jindexer<branch_count; jindexer++)
 					{
 						if (branch[jindexer].from == indexer) 
 						{
-							tempIcalcReal += (-(*branch[jindexer].Yfrom[jindex][kindex])).Re() * (*bus[branch[jindexer].to].V[kindex]).Re() - (-(*branch[jindexer].Yfrom[jindex][kindex])).Im() * (*bus[branch[jindexer].to].V[kindex]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-							tempIcalcImag += (-(*branch[jindexer].Yfrom[jindex][kindex])).Re() * (*bus[branch[jindexer].to].V[kindex]).Im() + (-(*branch[jindexer].Yfrom[jindex][kindex])).Im() * (*bus[branch[jindexer].to].V[kindex]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+							tempIcalcReal += (-(branch[jindexer].Yfrom[jindex*3+kindex])).Re() * (bus[branch[jindexer].to].V[kindex]).Re() - (-(branch[jindexer].Yfrom[jindex*3+kindex])).Im() * (bus[branch[jindexer].to].V[kindex]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+							tempIcalcImag += (-(branch[jindexer].Yfrom[jindex*3+kindex])).Re() * (bus[branch[jindexer].to].V[kindex]).Im() + (-(branch[jindexer].Yfrom[jindex*3+kindex])).Im() * (bus[branch[jindexer].to].V[kindex]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 						}	
 						if  (branch[jindexer].to == indexer)
 						{
-							tempIcalcReal += (-(*branch[jindexer].Yto[jindex][kindex])).Re() * (*bus[branch[jindexer].from].V[kindex]).Re() - (-(*branch[jindexer].Yto[jindex][kindex])).Im() * (*bus[branch[jindexer].from].V[kindex]).Im() ;//equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance.
-							tempIcalcImag += (-(*branch[jindexer].Yto[jindex][kindex])).Re() * (*bus[branch[jindexer].from].V[kindex]).Im() + (-(*branch[jindexer].Yto[jindex][kindex])).Im() * (*bus[branch[jindexer].from].V[kindex]).Re() ;//equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance.
+							tempIcalcReal += (-(branch[jindexer].Yto[jindex*3+kindex])).Re() * (bus[branch[jindexer].from].V[kindex]).Re() - (-(branch[jindexer].Yto[jindex*3+kindex])).Im() * (bus[branch[jindexer].from].V[kindex]).Im() ;//equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance.
+							tempIcalcImag += (-(branch[jindexer].Yto[jindex*3+kindex])).Re() * (bus[branch[jindexer].from].V[kindex]).Im() + (-(branch[jindexer].Yto[jindex*3+kindex])).Im() * (bus[branch[jindexer].from].V[kindex]).Re() ;//equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance.
 						}
 						else;
 					}
 				}
 
 				Icalc[indexer *3 + jindex] = complex(tempIcalcReal,tempIcalcImag);// calculated current injection  				
-           		deltaI_NR[indexer*6+3 + jindex] = (tempPbus * (*bus[indexer].V[jindex]).Re() + tempQbus * (*bus[indexer].V[jindex]).Im())/ ((*bus[indexer].V[jindex]).Mag()*(*bus[indexer].V[jindex]).Mag()) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
-				deltaI_NR[indexer*6 + jindex] = (tempPbus * (*bus[indexer].V[jindex]).Im() - tempQbus * (*bus[indexer].V[jindex]).Re())/ ((*bus[indexer].V[jindex]).Mag()*(*bus[indexer].V[jindex]).Mag()) - tempIcalcImag ; // Imaginary part of deltaI, left hand side of equation (11)
+           		deltaI_NR[indexer*6+3 + jindex] = (tempPbus * (bus[indexer].V[jindex]).Re() + tempQbus * (bus[indexer].V[jindex]).Im())/ ((bus[indexer].V[jindex]).Mag()*(bus[indexer].V[jindex]).Mag()) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
+				deltaI_NR[indexer*6 + jindex] = (tempPbus * (bus[indexer].V[jindex]).Im() - tempQbus * (bus[indexer].V[jindex]).Re())/ ((bus[indexer].V[jindex]).Mag()*(bus[indexer].V[jindex]).Mag()) - tempIcalcImag ; // Imaginary part of deltaI, left hand side of equation (11)
 			}
 		}
 
@@ -454,10 +463,10 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 		{
 			for (jindex=0; jindex<3; jindex++)
 			{
-				tempPbus = ((*bus[indexer].V[jindex]) * (~Icalc[indexer * 3 + jindex])).Re(); //corresponding to equation (22)
+				tempPbus = ((bus[indexer].V[jindex]) * (~Icalc[indexer * 3 + jindex])).Re(); //corresponding to equation (22)
 				tempQbus = -(bus[indexer].PL[jindex]);
 				deltaP[indexer*3 + jindex] =  tempQbus - tempPbus;// corresponding to equation (20) PG is assumed to be zero here
-				tempPbus = ((*bus[indexer].V[jindex]) * (~Icalc[indexer * 3 + jindex])).Im(); //corresponding to equation (21)
+				tempPbus = ((bus[indexer].V[jindex]) * (~Icalc[indexer * 3 + jindex])).Im(); //corresponding to equation (21)
 				tempQbus = -(bus[indexer].QL[jindex]);
 				deltaQ[indexer*3 + jindex] = tempQbus - tempPbus;// corresponding to equation (23),QG is assumed to be zero here		
 			}
@@ -495,63 +504,69 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 			if (bus[indexer].delta == true)	//Delta connected node
 			{
 				//Delta voltages
-				voltageDel[0] = *bus[indexer].V[0] - *bus[indexer].V[1];
-				voltageDel[1] = *bus[indexer].V[1] - *bus[indexer].V[2];
-				voltageDel[2] = *bus[indexer].V[2] - *bus[indexer].V[0];
+				voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
+				voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
+				voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
 
 				//Power
-				delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(*bus[indexer].S[0]/voltageDel[0]);
-				delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(*bus[indexer].S[1]/voltageDel[1]);
-				delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(*bus[indexer].S[2]/voltageDel[2]);
+				delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(bus[indexer].S[0]/voltageDel[0]);
+				delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(bus[indexer].S[1]/voltageDel[1]);
+				delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(bus[indexer].S[2]/voltageDel[2]);
 
-				//Use delta current variable at first
-				undeltacurr[0] =delta_current[0]-delta_current[2];
-				undeltacurr[1] =delta_current[1]-delta_current[0];
-				undeltacurr[2] =delta_current[2]-delta_current[1];
+				////Use delta current variable at first
+				//undeltacurr[0] =delta_current[0]-delta_current[2];
+				//undeltacurr[1] =delta_current[1]-delta_current[0];
+				//undeltacurr[2] =delta_current[2]-delta_current[1];
 
-				//Now convert back to power
-				undeltapower[0] = *bus[indexer].V[0] * (~undeltacurr[0]);
-				undeltapower[1] = *bus[indexer].V[1] * (~undeltacurr[1]);
-				undeltapower[2] = *bus[indexer].V[2] * (~undeltacurr[2]);
+				////Now convert back to power
+				//undeltapower[0] = *bus[indexer].V[0] * (~undeltacurr[0]);
+				//undeltapower[1] = *bus[indexer].V[1] * (~undeltacurr[1]);
+				//undeltapower[2] = *bus[indexer].V[2] * (~undeltacurr[2]);
+
+				undeltapower[0] = undeltapower[1] = undeltapower[2] = 0.0;
+				
 
 				//Convert delta connected load to appropriate Wye - reuse temp variable
-				undeltacurr[0] = voltageDel[0] * (*bus[indexer].Y[0]);
-				undeltacurr[1] = voltageDel[1] * (*bus[indexer].Y[1]);
-				undeltacurr[2] = voltageDel[2] * (*bus[indexer].Y[2]);
+				undeltacurr[0] = voltageDel[0] * (bus[indexer].Y[0]);
+				undeltacurr[1] = voltageDel[1] * (bus[indexer].Y[1]);
+				undeltacurr[2] = voltageDel[2] * (bus[indexer].Y[2]);
 
-				undeltaimped[0] = (*bus[indexer].V[0] == 0) ? 0 : (undeltacurr[0] - undeltacurr[2]) / (*bus[indexer].V[0]);
-				undeltaimped[1] = (*bus[indexer].V[1] == 0) ? 0 : (undeltacurr[1] - undeltacurr[0]) / (*bus[indexer].V[1]);
-				undeltaimped[2] = (*bus[indexer].V[2] == 0) ? 0 : (undeltacurr[2] - undeltacurr[1]) / (*bus[indexer].V[2]);
+				undeltaimped[0] = (bus[indexer].V[0] == 0) ? 0 : (undeltacurr[0] - undeltacurr[2]) / (bus[indexer].V[0]);
+				undeltaimped[1] = (bus[indexer].V[1] == 0) ? 0 : (undeltacurr[1] - undeltacurr[0]) / (bus[indexer].V[1]);
+				undeltaimped[2] = (bus[indexer].V[2] == 0) ? 0 : (undeltacurr[2] - undeltacurr[1]) / (bus[indexer].V[2]);
 
 				//Convert delta-current into a phase current - reuse temp variable
-				undeltacurr[0]=*bus[indexer].I[0]-*bus[indexer].I[2];
-				undeltacurr[1]=*bus[indexer].I[1]-*bus[indexer].I[0];
-				undeltacurr[2]=*bus[indexer].I[2]-*bus[indexer].I[1];
+				//undeltacurr[0]=*bus[indexer].I[0]-*bus[indexer].I[2];
+				//undeltacurr[1]=*bus[indexer].I[1]-*bus[indexer].I[0];
+				//undeltacurr[2]=*bus[indexer].I[2]-*bus[indexer].I[1];
+				undeltacurr[0]=(bus[indexer].I[0]+delta_current[0])-(bus[indexer].I[2]+delta_current[2]);
+				undeltacurr[1]=(bus[indexer].I[1]+delta_current[1])-(bus[indexer].I[0]+delta_current[0]);
+				undeltacurr[2]=(bus[indexer].I[2]+delta_current[2])-(bus[indexer].I[1]+delta_current[1]);
 
 				for (jindex=0; jindex<3; jindex++)
 				{
-					bus[indexer].Jacob_A[jindex] = ((undeltapower[jindex]).Im() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
-					bus[indexer].Jacob_A[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() + (undeltacurr[jindex]).Im() *pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) + (undeltaimped[jindex]).Im();// second part of equation(37)
-					bus[indexer].Jacob_B[jindex] = ((undeltapower[jindex]).Re() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) + 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
-					bus[indexer].Jacob_B[jindex] += -((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() + (undeltacurr[jindex]).Re() *pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(38)
-					bus[indexer].Jacob_C[jindex] = ((undeltapower[jindex]).Re() * (pow((*bus[indexer].V[jindex]).Im(),2) - pow((*bus[indexer].V[jindex]).Re(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
-					bus[indexer].Jacob_C[jindex] +=((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() - (undeltacurr[jindex]).Re() *pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(39)
-					bus[indexer].Jacob_D[jindex] = ((undeltapower[jindex]).Im() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
-					bus[indexer].Jacob_D[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() - (undeltacurr[jindex]).Im() *pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Im();// second part of equation(40)
+					bus[indexer].Jacob_A[jindex] = ((undeltapower[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
+					bus[indexer].Jacob_A[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() + (undeltacurr[jindex]).Im() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) + (undeltaimped[jindex]).Im();// second part of equation(37)
+					bus[indexer].Jacob_B[jindex] = ((undeltapower[jindex]).Re() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) + 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
+					bus[indexer].Jacob_B[jindex] += -((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() + (undeltacurr[jindex]).Re() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(38)
+					bus[indexer].Jacob_C[jindex] = ((undeltapower[jindex]).Re() * (pow((bus[indexer].V[jindex]).Im(),2) - pow((bus[indexer].V[jindex]).Re(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
+					bus[indexer].Jacob_C[jindex] +=((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() - (undeltacurr[jindex]).Re() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(39)
+					bus[indexer].Jacob_D[jindex] = ((undeltapower[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
+					bus[indexer].Jacob_D[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() - (undeltacurr[jindex]).Im() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Im();// second part of equation(40)
 				}
 			}
 			else
 			{
 				for (jindex=0; jindex<3; jindex++)
 				{
-					bus[indexer].Jacob_A[jindex] = ((*bus[indexer].S[jindex]).Im() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
-					bus[indexer].Jacob_A[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Re() + (*bus[indexer].I[jindex]).Im() *pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) + (*bus[indexer].Y[jindex]).Im();// second part of equation(37)
-					bus[indexer].Jacob_B[jindex] = ((*bus[indexer].S[jindex]).Re() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) + 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
-					bus[indexer].Jacob_B[jindex] += -((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Im() + (*bus[indexer].I[jindex]).Re() *pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (*bus[indexer].Y[jindex]).Re();// second part of equation(38)
-					bus[indexer].Jacob_C[jindex] = ((*bus[indexer].S[jindex]).Re() * (pow((*bus[indexer].V[jindex]).Im(),2) - pow((*bus[indexer].V[jindex]).Re(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Im())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
-					bus[indexer].Jacob_C[jindex] +=((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Im() - (*bus[indexer].I[jindex]).Re() *pow((*bus[indexer].V[jindex]).Im(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (*bus[indexer].Y[jindex]).Re();// second part of equation(39)
-					bus[indexer].Jacob_D[jindex] = ((*bus[indexer].S[jindex]).Im() * (pow((*bus[indexer].V[jindex]).Re(),2) - pow((*bus[indexer].V[jindex]).Im(),2)) - 2*(*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].S[jindex]).Re())/pow((*bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
-					bus[indexer].Jacob_D[jindex] += ((*bus[indexer].V[jindex]).Re()*(*bus[indexer].V[jindex]).Im()*(*bus[indexer].I[jindex]).Re() - (*bus[indexer].I[jindex]).Im() *pow((*bus[indexer].V[jindex]).Re(),2))/pow((*bus[indexer].V[jindex]).Mag(),3) - (*bus[indexer].Y[jindex]).Im();// second part of equation(40)
+					bus[indexer].Jacob_A[jindex] = ((bus[indexer].S[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
+					bus[indexer].Jacob_A[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Re() + (bus[indexer].I[jindex]).Im() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) + (bus[indexer].Y[jindex]).Im();// second part of equation(37)
+					bus[indexer].Jacob_B[jindex] = ((bus[indexer].S[jindex]).Re() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) + 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
+					bus[indexer].Jacob_B[jindex] += -((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Im() + (bus[indexer].I[jindex]).Re() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (bus[indexer].Y[jindex]).Re();// second part of equation(38)
+					bus[indexer].Jacob_C[jindex] = ((bus[indexer].S[jindex]).Re() * (pow((bus[indexer].V[jindex]).Im(),2) - pow((bus[indexer].V[jindex]).Re(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
+					bus[indexer].Jacob_C[jindex] +=((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Im() - (bus[indexer].I[jindex]).Re() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (bus[indexer].Y[jindex]).Re();// second part of equation(39)
+					bus[indexer].Jacob_D[jindex] = ((bus[indexer].S[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
+					bus[indexer].Jacob_D[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Re() - (bus[indexer].I[jindex]).Im() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (bus[indexer].Y[jindex]).Im();// second part of equation(40)
 				}
 			}
 		}
@@ -772,13 +787,13 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 			{
 				for (jindex=0; jindex<3; jindex++)
 				{
-					((*bus[indexer].V[jindex]).Re()) = ((*bus[indexer].V[jindex]).Re()) + sol [kindex];
+					((bus[indexer].V[jindex]).Re()) = ((bus[indexer].V[jindex]).Re()) + sol [kindex];
 					kindex +=1;
 				}
 
 				for (jindex=0; jindex<3; jindex++)
 				{
-					((*bus[indexer].V[jindex]).Im()) = ((*bus[indexer].V[jindex]).Im()) +sol [kindex];
+					((bus[indexer].V[jindex]).Im()) = ((bus[indexer].V[jindex]).Im()) +sol [kindex];
 					kindex +=1;
 				}
 			}

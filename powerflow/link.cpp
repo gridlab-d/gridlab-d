@@ -400,7 +400,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 		{
 			node *fnode = OBJECTDATA(from,node);
 			node *tnode = OBJECTDATA(to,node);
-			char jval, kval;
+
 			if (fnode==NULL || tnode==NULL)
 				return TS_NEVER;
 
@@ -418,15 +418,35 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				}
 
 				//Now populate the link's information
-				
 				//Start with admittance matrix
-				for (jval=0; jval<3; jval++)
+				if ((voltage_ratio != 1.0) || (SpecialLnk!=NORMAL))	//Transformer, send more - may not need all 4, but put them there anyways
 				{
-					for (kval=0; kval<3; kval++)
-					{
-						NR_branchdata[NR_curr_branch].Yfrom[jval][kval] = &From_Y[jval][kval];
-						NR_branchdata[NR_curr_branch].Yto[jval][kval] = &To_Y[jval][kval];
-					}
+					//Create them
+					YSfrom = (complex *)gl_malloc(9*sizeof(complex));
+					if (YSfrom == NULL)
+						GL_THROW("NR: Memory allocation failure for transformer matrices.");
+						/*  TROUBLESHOOT
+						This is a bug.  Newton-Raphson tries to allocate memory for two other
+						needed matrices when dealing with transformers.  This failed.  Please submit
+						your code and a bug report on the Trac site.
+						*/
+
+					YSto = (complex *)gl_malloc(9*sizeof(complex));
+					if (YSto == NULL)
+						GL_THROW("NR: Memory allocation failure for transformer matrices.");
+						//defined above
+
+					NR_branchdata[NR_curr_branch].Yfrom = &From_Y[0][0];
+					NR_branchdata[NR_curr_branch].Yto = &To_Y[0][0];
+					NR_branchdata[NR_curr_branch].YSfrom = YSfrom;
+					NR_branchdata[NR_curr_branch].YSto = YSto;
+				}
+				else						//Simple line, they are all the same anyways
+				{
+					NR_branchdata[NR_curr_branch].Yfrom = &From_Y[0][0];
+					NR_branchdata[NR_curr_branch].Yto = &From_Y[0][0];
+					NR_branchdata[NR_curr_branch].YSfrom = &From_Y[0][0];
+					NR_branchdata[NR_curr_branch].YSto = &From_Y[0][0];
 				}
 
 				//Populate to/from indices
@@ -511,12 +531,30 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 					//Pre-admittancized matrix
 					equalm(b_mat,Yto);
 
+					//Store value into YSto
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							YSto[jindex*3+kindex]=Yto[jindex][kindex];
+						}
+					}
+
 					//Adjust for To_Y
 					multiply(Yto,c_mat,To_Y);
 
 					//Scale to other size
 					multiply(invratio,Yto,Ylefttemp);
 					multiply(invratio,Ylefttemp,Yfrom);
+
+					//Store value into YSfrom
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+						}
+					}
 
 					//Adjust for From_Y
 					multiply(B_mat,Yto,From_Y);
@@ -548,8 +586,26 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 					//Pre-admittancized matrix
 					equalm(b_mat,Yto);
 
+					//Store value into YSto
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							YSto[jindex*3+kindex]=Yto[jindex][kindex];
+						}
+					}
+
 					multiply(invratio,Yto,Ylefttemp);		//Scale from admittance by turns ratio
 					multiply(invratio,Ylefttemp,Yfrom);
+
+					//Store value into YSfrom
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+						}
+					}
 
 					multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
 					multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
@@ -566,7 +622,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				multiply(Y,Ylefttemp,Ylinecharge);
 
 				addition(Ylinecharge,Y,From_Y);
-				equalm(From_Y,To_Y);
+				//equalm(From_Y,To_Y);
 			}
 
 			//Update time variable

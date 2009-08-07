@@ -10,10 +10,10 @@
 typedef struct  {
 	int type;		///< bus type (0=PQ, 1=PV, 2=SWING)
 	bool delta;		///< Flag for delta connected load
-	complex *V[3];	///< bus voltage
-	complex *S[3];	///< constant power
-	complex *Y[3];	///< constant admittance (impedance loads)
-	complex *I[3];	///< constant current
+	complex *V;	///< bus voltage
+	complex *S;	///< constant power
+	complex *Y;	///< constant admittance (impedance loads)
+	complex *I;	///< constant current
 	double PL[3]; ///< real power component of total bus load
 	double QL[3]; ///< reactive power component of total bus load
 	double PG[3];///< real power generation at generator bus
@@ -27,8 +27,10 @@ typedef struct  {
 } BUSDATA;
 
 typedef struct {
-	complex *Yfrom[3][3];	///< branch admittance of from side of link
-	complex *Yto[3][3];		///< branch admittance of to side of link
+	complex *Yfrom;			///< branch admittance of from side of link
+	complex *Yto;			///< branch admittance of to side of link
+	complex *YSfrom;		///< self admittance seen on from side
+	complex *YSto;			///< self admittance seen on to side
 	int from;				///< index into bus data
 	int to;					///< index into bus data
 	double v_ratio;			///< voltage ratio (v_from/v_to)

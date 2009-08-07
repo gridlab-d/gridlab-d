@@ -36,15 +36,17 @@ typedef enum {
 class link : public powerflow_object
 {
 public: /// @todo make this private and create interfaces to control values
-	complex a_mat[3][3];   // a_mat - 3x3 matrix, 'a' matrix
-	complex b_mat[3][3];   // b_mat - 3x3 matrix, 'b' matrix
-	complex c_mat[3][3];   // c_mat - 3x3 matrix, 'c' matrix
-	complex d_mat[3][3];   // d_mat - 3x3 matrix, 'd' matrix
-	complex A_mat[3][3];   // A_mat - 3x3 matrix, 'A' matrix
-	complex B_mat[3][3];   // B_mat - 3x3 matrix, 'B' matrix
-	complex tn[3];		   // Used to calculate return current
-	complex To_Y[3][3];	   // To_Y  - 3x3 matrix, object to admittance
-	complex From_Y[3][3];  // From_Y - 3x3 matrix, object from admittance
+	complex a_mat[3][3];	// a_mat - 3x3 matrix, 'a' matrix
+	complex b_mat[3][3];	// b_mat - 3x3 matrix, 'b' matrix
+	complex c_mat[3][3];	// c_mat - 3x3 matrix, 'c' matrix
+	complex d_mat[3][3];	// d_mat - 3x3 matrix, 'd' matrix
+	complex A_mat[3][3];	// A_mat - 3x3 matrix, 'A' matrix
+	complex B_mat[3][3];	// B_mat - 3x3 matrix, 'B' matrix
+	complex tn[3];			// Used to calculate return current
+	complex To_Y[3][3];		// To_Y  - 3x3 matrix, object transition to admittance
+	complex From_Y[3][3];	// From_Y - 3x3 matrix, object transition from admittance
+	complex *YSfrom;		// YSfrom - Pointer to 3x3 matrix representing admittance seen from "from" side (transformers)
+	complex *YSto;			// YSto - Pointer to 3x3 matrix representing admittance seen from "to" side (transformers)
 	double voltage_ratio;	// voltage ratio (normally 1.0)
 	int NR_branch_reference;	//Index of NR_branchdata this link is contained in
 	SPECIAL_LINK SpecialLnk;	//Flag for exceptions to the normal handling

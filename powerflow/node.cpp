@@ -1786,24 +1786,16 @@ int *node::NR_populate(void)
 		}
 		
 		//Populate voltage
-		NR_busdata[NR_curr_bus].V[0] = &voltage[0];
-		NR_busdata[NR_curr_bus].V[1] = &voltage[1];
-		NR_busdata[NR_curr_bus].V[2] = &voltage[2];
+		NR_busdata[NR_curr_bus].V = &voltage[0];
 		
 		//Populate power
-		NR_busdata[NR_curr_bus].S[0] = &power[0];
-		NR_busdata[NR_curr_bus].S[1] = &power[1];
-		NR_busdata[NR_curr_bus].S[2] = &power[2];
+		NR_busdata[NR_curr_bus].S = &power[0];
 
 		//Populate admittance
-		NR_busdata[NR_curr_bus].Y[0] = &shunt[0];
-		NR_busdata[NR_curr_bus].Y[1] = &shunt[1];
-		NR_busdata[NR_curr_bus].Y[2] = &shunt[2];
+		NR_busdata[NR_curr_bus].Y = &shunt[0];
 
 		//Populate current
-		NR_busdata[NR_curr_bus].I[0] = &current[0];
-		NR_busdata[NR_curr_bus].I[1] = &current[1];
-		NR_busdata[NR_curr_bus].I[2] = &current[2];
+		NR_busdata[NR_curr_bus].I = &current[0];
 
 		//Per unit values
 		NR_busdata[NR_curr_bus].kv_base = -1.0;
