@@ -125,7 +125,7 @@ struct s_implicit_enduse_list {
 	// lighting (source: ELCAP lit-sp.dat)
 	{	"LIGHTS", 
 		{30, false, {0,0,1}, 0.97, 0.9},
-		"type:analog; schedule: residential-lights-default; power: 1.0 kW",
+		"type:analog; schedule: residential-lights-default; power: 0.75 kW",
 		"residential-lights-default", 
 		"weekday-summer {"
 		"*  0 * 4-9 1-5 0.380; *  1 * 4-9 1-5 0.340; *  2 * 4-9 1-5 0.320; *  3 * 4-9 1-5 0.320;"
@@ -162,7 +162,7 @@ struct s_implicit_enduse_list {
 		},
 	{   "CLOTHESWASHER", 
 		{20, false, {0,1,0}, 0.9, 1.0},
-		"type:analog; schedule: residential-clotheswasher-default; power: 1.0 kW",
+		"type: pulsed; schedule: residential-clotheswasher-default; energy: 0.75 kWh; count: 0.25; power: 1 kW; stdev: 0.15 kW",
 		"residential-clotheswasher-default", 
 		"weekday-summer {"
 		"*  0 * 4-9 1-5 0.0029; *  1 * 4-9 1-5 0.0019; *  2 * 4-9 1-5 0.0014; *  3 * 4-9 1-5 0.0013;"
@@ -199,7 +199,7 @@ struct s_implicit_enduse_list {
 	},
 	{   "WATERHEATER", 
 		{30, true, {0,0,1}, 1.0, 0.5},
-		"type:modulated; schedule: residential-waterheater-default; energy: 1 kWh; count: 1; power: 5 kW; modulation: frequency",
+		"type:modulated; schedule: residential-waterheater-default; energy: 1 kWh; count: 1; power: 5 kW; modulation: frequency; stdev: 500 W",
 		"residential-waterheater-default", 
 		"weekday-summer {"
 		"*  0 * 4-9 1-5 0.21; *  1 * 4-9 1-5 0.16; *  2 * 4-9 1-5 0.13; *  3 * 4-9 1-5 0.12;"
@@ -236,7 +236,7 @@ struct s_implicit_enduse_list {
 	},
 	{   "REFRIGERATOR", 
 		{20, false, {0.1,0.9,0}, 0.9, 1.0},
-		"type:analog; schedule: residential-refrigerator-default; power: 1.0 kW",
+		"type:modulated; schedule: residential-refrigerator-default; energy: 1 kWh; count: 25; power: 750 W; stdev: 100 W; modulation: frequency",
 		"residential-refrigerator-default", 
 		"weekday-summer {"
 		"*  0 * 4-9 1-5 0.187; *  1 * 4-9 1-5 0.182; *  2 * 4-9 1-5 0.176; *  3 * 4-9 1-5 0.170;"
@@ -310,7 +310,7 @@ struct s_implicit_enduse_list {
 	},
 	{   "FREEZER", 
 		{20, false, {0.1,0.9,0}, 0.9, 1.0},
-		"type:analog; schedule: residential-freezer-default; power: 1.0 kW",
+		"type:modulated; schedule: residential-freezer-default; energy: 750 Wh; count: 25; power: 500 W; stdev: 50 W; modulation: frequency",
 		"residential-freezer-default", 
 		"weekday-summer {"
 		"*  0 * 4-9 1-5 0.210; *  1 * 4-9 1-5 0.213; *  2 * 4-9 1-5 0.208; *  3 * 4-9 1-5 0.202;"
@@ -347,7 +347,7 @@ struct s_implicit_enduse_list {
 	},
 	{   "DISHWASHER", 
 		{20, false, {0.8,0.2,0}, 0.98, 1.0},
-		"type:analog; schedule: residential-dishwasher-default; power: 1.0 kW",
+		"type:pulsed; schedule: residential-dishwasher-default; energy: 1.0 kWh; power: 1.0 kW; count: 1; stdev: 150 W",
 		"residential-dishwasher-default", 
 		"weekday-summer {"
 		"*  0 * * 1-5 0.0068; *  1 * * 1-5 0.0029; *  2 * * 1-5 0.0016; *  3 * * 1-5 0.0013;"
@@ -494,7 +494,7 @@ house_e::house_e(MODULE *mod)
 			PT_KEYWORD, "FREEZER", (set)IEU_FREEZER,
 			PT_KEYWORD, "REFRIGERATOR", (set)IEU_REFRIGERATOR,
 			PT_KEYWORD, "RANGE", (set)IEU_RANGE,
-			PT_KEYWORD, "EVCHARGER", (set)IEU_EVCHARGE,
+			PT_KEYWORD, "EVCHARGER", (set)IEU_EVCHARGER,
 			PT_KEYWORD, "WATERHEATER", (set)IEU_WATERHEATER,
 			PT_KEYWORD, "CLOTHESWASHER", (set)IEU_CLOTHESWASHER,
 			PT_KEYWORD, "DRYER", (set)IEU_DRYER,

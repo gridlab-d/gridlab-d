@@ -715,6 +715,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 			}
 			else if (strcmp(value,"queued")==0)
 			{
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) queued loadshapes are fully supported",string);
 				ls->type = MT_QUEUED;
 				ls->params.queued.energy = 0.0;
 				ls->params.queued.pulsetype = MPT_UNKNOWN;
@@ -995,11 +996,19 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 			else if (ls->type==MT_MODULATED)
 			{
 				if (strcmp(value,"amplitude")==0)
+				{
+					output_warning("convert_to_loadshape(string='%-.64s...', ...) amplitude modulation is not fully supported",string);
 					ls->params.modulated.modulation = MMT_AMPLITUDE;
+				}
 				else if (strcmp(value,"pulsewidth")==0)
+				{
 					ls->params.modulated.modulation = MMT_PULSEWIDTH;
+				}
 				else if (strcmp(value,"frequency")==0)
+				{
+					output_warning("convert_to_loadshape(string='%-.64s...', ...) frequency modulation is not fully supported",string);
 					ls->params.modulated.modulation = MMT_FREQUENCY;
+				}
 				else
 				{
 					output_error("convert_to_loadshape(string='%-.64s...', ...) '%s' is not a recognized modulation",string,value);

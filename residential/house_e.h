@@ -36,7 +36,7 @@ typedef enum {
 	IEU_FREEZER			= 0x00010000, ///< implicit freezer load
 	IEU_REFRIGERATOR	= 0x00020000, ///< implicit refrigerator load
 	IEU_RANGE			= 0x00040000, ///< implicit cooking load
-	IEU_EVCHARGE		= 0x00080000, ///< implicit evcharger load
+	IEU_EVCHARGER		= 0x00080000, ///< implicit evcharger load
 	IEU_WATERHEATER		= 0x00100000, ///< implicit waterheater load
 
 	// queued loads (queued aperiodic loads) - bits 48-63
