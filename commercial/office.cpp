@@ -117,7 +117,8 @@ office::office(MODULE *module)
 			PT_double, "glazing.northwest[sf]", PADDR(zone.design.window_area[CP_NW]),
 			PT_double, "glazing.horizontal[sf]", PADDR(zone.design.window_area[CP_H]),
 			PT_double, "glazing.coefficient[pu]", PADDR(zone.design.glazing_coeff),
-
+			
+			// to be ripped out/updated with new schedule system
 			PT_double, "occupancy", PADDR(zone.current.occupancy),
 			PT_double, "occupants", PADDR(zone.design.occupants),
 			PT_char256, "schedule", PADDR(zone.design.schedule),
@@ -754,6 +755,7 @@ double office::update_hvac()
 	if (Qvent!=0)
 		zone.hvac.enduse.power += complex(1,-0.1)*0.1/1000 * zone.design.floor_area; /* ~ 1 W/sf */
 
+	zone.hvac.enduse.energy += zone.hvac.enduse.power; 
 	if (zone.hvac.enduse.power.Re()<0)
 		throw "hvac unit is generating electricity";
 	else if (!isfinite(zone.hvac.enduse.power.Re()) || !isfinite(zone.hvac.enduse.power.Im()))
