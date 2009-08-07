@@ -43,7 +43,7 @@ struct s_loadshape {
 	MACHINETYPE type;	/**< the type of this machine */
 	union {
 		struct {
-			double energy;		/**< the total energy used over the shape (0 if scalar is used) */
+			double energy;		/**< the total energy used over the shape (0 if power is used) */
 			double power;		/**< the power scaling factor of the shape (0 if energy is used) */
 		} analog;
 		struct {
@@ -57,6 +57,7 @@ struct s_loadshape {
 			double scalar;		/**< the number of pulses over the shape */
 			MACHINEPULSETYPE pulsetype;	/**< the fixed part of the pulse (time or power) */
 			double pulsevalue;	/**< the value of the fixed part of the pulse */
+			double pulseenergy;	/**< the pulse energy */
 			MACHINEMODULATIONTYPE modulation; /**< the type of modulation used */
 		} modulated;
 		struct {

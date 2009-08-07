@@ -199,7 +199,7 @@ struct s_implicit_enduse_list {
 	},
 	{   "WATERHEATER", 
 		{30, true, {0,0,1}, 1.0, 0.5},
-		"type:modulated; schedule: residential-waterheater-default; energy: 1 kWh; count: 1; power: 5 kW; modulation: frequency; stdev: 500 W",
+		"type:modulated; schedule: residential-waterheater-default; energy: 1 kWh; count: 1; power: 5 kW; pulse: 750 Wh; modulation: frequency; stdev: 500 W",
 		"residential-waterheater-default", 
 		"weekday-summer {"
 		"*  0 * 4-9 1-5 0.21; *  1 * 4-9 1-5 0.16; *  2 * 4-9 1-5 0.13; *  3 * 4-9 1-5 0.12;"

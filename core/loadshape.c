@@ -169,7 +169,7 @@ TurnOff:
 				double duty_cycle = (ls->params.modulated.pulsetype==MPT_TIME) 
 					? ls->params.modulated.pulsevalue / period 
 					: ls->params.modulated.energy * 3600 / ls->params.modulated.pulsevalue / period;
-				ls->r = 1 / (period - duty_cycle * period);
+				ls->r = 3600 / (period - duty_cycle * period);
 			}
 
 			// pulse-width modulation
@@ -181,7 +181,7 @@ TurnOff:
 					: ls->params.modulated.pulsevalue;
 				double period = ls->schedule->duration / ls->params.modulated.scalar;
 				double ton = ls->schedule->value * ls->params.modulated.scalar / ls->params.modulated.energy / ls->params.modulated.scalar;
-				ls->r = 1 / (period - ton);
+				ls->r = 3600 / (period - ton);
 			}
 
 			// frequency modulation
@@ -189,14 +189,20 @@ TurnOff:
 			{
 				double ton = ls->params.modulated.pulsevalue;
 				double power = ls->params.modulated.pulsevalue;
-				double period, toff;
+				double dutycycle, period, toff;
 				if (ls->params.modulated.pulsetype==MPT_TIME)
-					power = ls->params.modulated.energy * ls->params.modulated.scalar / ton * 3600;
+					power = ls->params.modulated.pulseenergy * ls->params.modulated.scalar / ton * 3600;
 				else
-					ton = ls->params.modulated.energy * ls->params.modulated.scalar / power * 3600;
-				period = ls->schedule->duration /  ls->params.modulated.scalar;
-				toff = period /  ls->params.modulated.scalar - ton;
-				ls->r = 1/toff;
+					ton = ls->params.modulated.pulseenergy * ls->params.modulated.scalar / power * 3600;
+				dutycycle = ls->schedule->value / ls->params.modulated.energy /  ls->params.modulated.scalar;
+				if (dutycycle<1) // saturation of control
+				{
+					period = ton / dutycycle;
+					toff = period - ton;
+					ls->r = 3600/toff;
+				}
+				else
+					ls->r = 0;
 			}
 			else
 				output_warning("loadshape %s: modulation type is not determined!", ls->schedule->name);
@@ -231,7 +237,7 @@ TurnOn:
 			double duty_cycle = (ls->params.modulated.pulsetype==MPT_TIME) 
 					? ls->params.modulated.pulsevalue / period 
 					: ls->params.modulated.energy * 3600 / ls->params.modulated.pulsevalue / period;
-			ls->r  = 1 / (duty_cycle * period);
+			ls->r  = -3600 / (duty_cycle * period);
 			ls->load = ls->schedule->value * ls->params.modulated.scalar;
 		}
 
@@ -245,7 +251,7 @@ TurnOn:
 			double pulsecount = ls->params.modulated.energy / power * ls->schedule->duration / 3600;
 			double period = ls->schedule->duration / pulsecount;
 			double ton = ls->schedule->value * ls->params.modulated.scalar / ls->params.modulated.energy / pulsecount;
-			ls->r = 1 / ton;
+			ls->r = -3600 / ton;
 			ls->load = power;
 		}
 
@@ -255,10 +261,14 @@ TurnOn:
 			double ton = ls->params.modulated.pulsevalue;
 			double power = ls->params.modulated.pulsevalue;
 			if (ls->params.modulated.pulsetype==MPT_TIME)
-				power = ls->params.modulated.energy * ls->params.modulated.scalar / ton * 3600;
+				power = ls->params.modulated.pulseenergy * ls->params.modulated.scalar / ton * 3600;
 			else
-				ton = ls->params.modulated.energy * ls->params.modulated.scalar / power * 3600;
-			ls->r = 1/ton;
+				ton = ls->params.modulated.pulseenergy * ls->params.modulated.scalar / power * 3600;
+			if (ton>0)
+				ls->r = -3600/ton;
+			else
+				ls->r = 0;
+			ls->load = power;
 		}
 		else
 			output_warning("loadshape %s: modulation type is not determined!", ls->schedule->name);
@@ -430,6 +440,11 @@ int loadshape_init(loadshape *ls) /**< load shape */
 		if (ls->params.modulated.scalar<=0)
 		{
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated pulse count must be a positive number",ls->schedule->name);
+			return 1;
+		}
+		if (ls->params.modulated.pulseenergy<=0)
+		{
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated pulse energy must be a positive number",ls->schedule->name);
 			return 1;
 		}
 		if (ls->params.modulated.modulation<=MMT_UNKNOWN || ls->params.modulated.modulation>MMT_FREQUENCY)
@@ -630,11 +645,11 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 		break;
 	case MT_MODULATED:
 		if (ls->params.pulsed.pulsetype==MPT_TIME)
-			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %d; duration: %g s; modulation: %s",
-			ls->schedule->name, ls->params.modulated.energy, ls->params.modulated.scalar, ls->params.modulated.pulsevalue,modulation[ls->params.modulated.modulation]);
+			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %d; duration: %g s; pulse: %g kWh; modulation: %s",
+			ls->schedule->name, ls->params.modulated.energy, ls->params.modulated.scalar, ls->params.modulated.pulsevalue, ls->params.modulated.pulseenergy, modulation[ls->params.modulated.modulation]);
 		else if (ls->params.pulsed.pulsetype==MPT_POWER)
-			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %d; power: %g kW; modulation: %s",
-			ls->schedule->name, ls->params.modulated.energy, ls->params.modulated.scalar, ls->params.modulated.pulsevalue,modulation[ls->params.modulated.modulation]);
+			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %d; power: %g kW; pulse: %g kWh; modulation: %s",
+			ls->schedule->name, ls->params.modulated.energy, ls->params.modulated.scalar, ls->params.modulated.pulsevalue, ls->params.modulated.pulseenergy, modulation[ls->params.modulated.modulation]);
 		else
 		{
 			output_error("convert_from_loadshape(...,data={schedule->name='%s',...},prop={name='%s',...}) has an invalid pulsetype", ls->schedule->name, prop->name);
@@ -791,7 +806,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 					ls->params.pulsed.pulsetype = MPT_TIME;
 					if (!convert_unit_double(value,"s",&ls->params.pulsed.pulsevalue))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert duration to seconds",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert duration '%s' to seconds",string, value);
 						return 0;
 					}
 				}
@@ -807,7 +822,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 					ls->params.queued.pulsetype = MPT_TIME;
 					if (!convert_unit_double(value,"s",&ls->params.queued.pulsevalue))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert duration to seconds",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert duration '%s' to seconds",string,value);
 						return 0;
 					}
 				}
@@ -833,7 +848,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 					ls->params.modulated.pulsetype = MPT_TIME;
 					if (!convert_unit_double(value,"s",&ls->params.modulated.pulsevalue))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert period to seconds",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert period '%s' to seconds",string, value);
 						return 0;
 					}
 				}
@@ -852,7 +867,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 			{
 				if (!convert_unit_double(value,"kW",&ls->params.analog.power))
 				{
-					output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power to unit kW",string);
+					output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power '%s' to unit kW",string, value);
 					return 0;
 				}
 			}
@@ -864,7 +879,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 					ls->params.pulsed.pulsetype = MPT_POWER;
 					if (!convert_unit_double(value,"kW",&ls->params.pulsed.pulsevalue))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power to unit kW",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power '%s' to unit kW",string, value);
 						return 0;
 					}
 				}
@@ -876,7 +891,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 					ls->params.modulated.pulsetype = MPT_POWER;
 					if (!convert_unit_double(value,"kW",&ls->params.modulated.pulsevalue))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power to unit kW",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power '%s' to unit kW",string, value);
 						return 0;
 					}
 				}
@@ -888,7 +903,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 					ls->params.queued.pulsetype = MPT_POWER;
 					if (!convert_unit_double(value,"kW",&ls->params.queued.pulsevalue))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power to unit kW",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert power '%s' to unit kW",string, value);
 						return 0;
 					}
 				}
@@ -908,7 +923,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				{
 					if (!convert_unit_double(value,"kWh",&dev))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit kWh",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev '%s' to unit kWh",string, value);
 						return 0;
 					}
 					ls->params.analog.energy += dev*err;
@@ -917,7 +932,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				{
 					if (!convert_unit_double(value,"kW",&dev))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit kW",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev '%s' to unit kW",string, value);
 						return 0;
 					}
 					ls->params.analog.power += dev*err;
@@ -929,7 +944,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				{
 					if (!convert_unit_double(value,"s",&dev))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit s",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev '%s' to unit s",string, value);
 						return 0;
 					}
 					ls->params.pulsed.pulsevalue += dev*err;
@@ -938,7 +953,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				{
 					if (!convert_unit_double(value,"kW",&dev))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit kW",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev '%s' to unit kW",string, value);
 						return 0;
 					}
 					ls->params.pulsed.pulsevalue += dev*err;
@@ -950,7 +965,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				{
 					if (!convert_unit_double(value,"s",&dev))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit s",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev '%s' to unit s",string, value);
 						return 0;
 					}
 					ls->params.modulated.pulsevalue += dev*err;
@@ -959,7 +974,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				{
 					if (!convert_unit_double(value,"kW",&dev))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit kW",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev '%s' to unit kW",string, value);
 						return 0;
 					}
 					ls->params.modulated.pulsevalue += dev*err;
@@ -971,7 +986,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				{
 					if (!convert_unit_double(value,"s",&dev))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit s",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev '%s' to unit s",string, value);
 						return 0;
 					}
 					ls->params.queued.pulsevalue += dev*err;
@@ -980,7 +995,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				{
 					if (!convert_unit_double(value,"kW",&dev))
 					{
-						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev to unit kW",string);
+						output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert stdev '%s' to unit kW",string, value);
 						return 0;
 					}
 					ls->params.queued.pulsevalue += dev*err;
@@ -1006,7 +1021,6 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				}
 				else if (strcmp(value,"frequency")==0)
 				{
-					output_warning("convert_to_loadshape(string='%-.64s...', ...) frequency modulation is not fully supported",string);
 					ls->params.modulated.modulation = MMT_FREQUENCY;
 				}
 				else
@@ -1017,6 +1031,23 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 			}
 			else if (ls->type==MT_QUEUED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) modulation is not used by queued loadshapes",string);
+		}
+		else if (strcmp(param,"pulse")==0)
+		{
+			if (ls->type==MT_ANALOG)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) pulse energy is not used by analog loadshapes",string);
+			else if (ls->type==MT_PULSED)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) pulse energy is not used by pulsed loadshapes",string);
+			else if (ls->type==MT_MODULATED)
+			{
+				if (!convert_unit_double(value,"kWh",&ls->params.modulated.pulseenergy))
+				{
+					output_error("convert_to_loadshape(string='%-.64s...', ...) unable to convert pulse energy '%s' to unit kWh",string, value);
+					return 0;
+				}
+			}
+			else if (ls->type==MT_QUEUED)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) pulse energy is not used by queued loadshapes",string);
 		}
 		else if (strcmp(param,"q_on")==0)
 		{
