@@ -1,0 +1,42 @@
+// validates constant air temperature with hvac turned off; initial temp set to 59 degF
+
+// payroll: d3y332
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+module commercial;
+module tape;
+module assert;
+
+
+object office {
+	floor_area 4000 sf;
+	floor_height 9 ft;
+	exterior_ua 2.0;
+	interior_ua 2.0;
+	interior_mass 2000;
+	heating_setpoint 58;
+	cooling_setpoint 76;
+	thermostat_deadband .25;
+	air_temperature 59;
+	object double_assert {
+		target "air_temperature";
+		within .001; 	
+		value 59;
+	};
+	object recorder {
+		file "commercial_hvac_usage.csv";
+		interval 3600;
+		limit 360;
+		property air_temperature,mass_temperature,hvac_mode;
+	};
+	object recorder {
+		file "commercial_hvac_usage2.csv";
+		interval -1;
+		limit 36000;
+		property air_temperature,mass_temperature,hvac_mode;
+	};
+}
