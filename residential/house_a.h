@@ -148,7 +148,6 @@ private:
 
 public:
 	static CLASS *oclass;
-	static house *defaults;
 	house( MODULE *module);
 	~house();
 

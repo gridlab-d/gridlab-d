@@ -141,7 +141,6 @@ EXPORT CIRCUIT *attach_enduse_house_a(OBJECT *obj, enduse *target, double breake
 // house CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* house::oclass = NULL;
-house *house::defaults = NULL;
 
 /** House object constructor:  Registers the class and publishes the variables that can be set by the user. 
 Sets default randomized values for published variables.
@@ -189,46 +188,50 @@ house::house(MODULE *mod)
 				PT_KEYWORD,"OFF",OFF,
 				PT_KEYWORD,"HEAT",HEAT,
 				PT_KEYWORD,"COOL",COOL,
-			PT_complex,"total_load[kW]",PADDR(tload.total),
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"power[kW]",PADDR(load.power),
-			PT_complex,"current[A]",PADDR(load.current),
-			PT_complex,"admittance[1/Ohm]",PADDR(load.admittance),
-			PT_complex,"energy[kWh]",PADDR(load.energy),
+			
+				PT_complex,"total_load[kW]",PADDR(tload.total),PT_DEPRECATED,
+			PT_complex,"enduse_load[kW]",PADDR(load.total),PT_DEPRECATED,
+			PT_complex,"power[kW]",PADDR(load.power),PT_DEPRECATED,
+			PT_complex,"current[A]",PADDR(load.current),PT_DEPRECATED,
+			PT_complex,"admittance[1/Ohm]",PADDR(load.admittance),PT_DEPRECATED,
+			PT_complex,"energy[kWh]",PADDR(load.energy),PT_DEPRECATED,
+
+			PT_enduse,"total",PADDR(tload),PT_DESCRIPTION,"total house enduse loads",
+			PT_enduse,"system",PADDR(load),PT_DESCRIPTION,"heating/cooling enduse load",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse_house_a);
-
-		// initalize published variables.  The model definition can set any of this.
-		heat_mode = ELECTRIC;
-		floor_area = 0.0;
-		ceiling_height = 0.0;
-		envelope_UA = 0.0;
-		airchange_per_hour = 0.0;
-		thermostat_deadband = 0.0;
-		heating_setpoint = 0.0;
-		cooling_setpoint = 0.0;
-		window_wall_ratio = 0.0;
-		gross_wall_area = 0.0;
-		glazing_shgc = 0.0;
-		design_heating_capacity = 0.0;
-		design_cooling_capacity = 0.0;
-		heating_COP = 3.0;
-		cooling_COP = 3.0;
-		aspect_ratio = 1.0;
-
-		// set defaults for panel/meter variables
-		panel.circuits=NULL;
-		panel.max_amps=200;
-
-		load.power = complex(0,0,J);
-		load.admittance = complex(0,0,J);
-		load.current = complex(0,0,J);
 	}	
 }
 
 int house::create() 
 {
+	// initalize published variables.  The model definition can set any of this.
+	heat_mode = ELECTRIC;
+	floor_area = 0.0;
+	ceiling_height = 0.0;
+	envelope_UA = 0.0;
+	airchange_per_hour = 0.0;
+	thermostat_deadband = 0.0;
+	heating_setpoint = 0.0;
+	cooling_setpoint = 0.0;
+	window_wall_ratio = 0.0;
+	gross_wall_area = 0.0;
+	glazing_shgc = 0.0;
+	design_heating_capacity = 0.0;
+	design_cooling_capacity = 0.0;
+	heating_COP = 3.0;
+	cooling_COP = 3.0;
+	aspect_ratio = 1.0;
+
+	// set defaults for panel/meter variables
+	panel.circuits=NULL;
+	panel.max_amps=200;
+
+	load.power = complex(0,0,J);
+	load.admittance = complex(0,0,J);
+	load.current = complex(0,0,J);
+
 	return 1;
 }
 
@@ -331,7 +334,7 @@ int house::init(OBJECT *parent)
 	}
 	else
 	{
-		gl_error("house:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
+		gl_warning("house:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
 		/*	TROUBLESHOOT
 			The House model relies on a triplex_meter as a parent to calculate voltages based on
 			events within the powerflow module.  Create a triplex_meter object and set it as
@@ -426,8 +429,8 @@ int house::init(OBJECT *parent)
 	}
 
 	// attach the house HVAC to the panel
-	load.name = "hvac";
-	tload.name = "house";
+	load.name = "system";
+	tload.name = "total";
 	attach(&load, 50, TRUE);
 	
 	return 1;
