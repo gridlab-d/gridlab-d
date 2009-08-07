@@ -57,58 +57,7 @@ int double_assert::init(OBJECT *parent)
 }
 TIMESTAMP double_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj;
-	char buff[64];
-
-	obj = OBJECTHDR(this);
-	if (t0>0)
-	{	
-		double *x = (double*)gl_get_double_by_name(obj->parent,target);
-		if (x==NULL) 
-		{
-			GL_THROW("Specified target %s for %s is not valid.",target,gl_name(obj->parent,buff,64));
-			/*  TROUBLESHOOT
-			Check to make sure the target you are specifying is a published variable for the object
-			that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
-			check the wiki page to determine which variables can be published within the object you
-			are pointing to with the assert function.
-			*/
-			return TS_NEVER;
-		}
-		else if (status == ASSERT_TRUE)
-		{
-			double m = abs(*x-value);
-			if (_isnan(m) || m>within)
-			{				
-				gl_verbose("Assert failed on %s: %s %g not within %f of %g", 
-					gl_name(obj->parent, buff, 64), target, *x, within, value);
-				return t1;
-			}
-			gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
-			return TS_NEVER;
-		}
-		else if (status == ASSERT_FALSE)
-		{
-			double m = abs(*x-value);
-			if (_isnan(m) || m<within)
-			{				
-				gl_verbose("Assert failed on %s: %s %g is within %f of %g", 
-					gl_name(obj->parent, buff, 64), target, *x, within, value);
-				return t1;
-			}
-			gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
-			return TS_NEVER;
-		}
-		else
-		{
-			gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
-			return TS_NEVER;
-		}
-	} 
-	else 
-	{
-		return TS_NEVER;
-	}
+	return TS_NEVER;
 }
 complex *double_assert::get_complex(OBJECT *obj, char *name)
 {
@@ -159,4 +108,56 @@ EXPORT TIMESTAMP sync_double_assert(OBJECT *obj, TIMESTAMP t0)
 	TIMESTAMP t1 = my->postsync(obj->clock, t0);
 	obj->clock = t0;
 	return t1;
+}
+EXPORT int commit_double_assert(OBJECT *obj)
+{
+	//OBJECT *obj;
+	char buff[64];
+	double_assert *da = OBJECTDATA(obj,double_assert);
+
+	//bj = OBJECTHDR(this);
+	
+		
+		double *x = (double*)gl_get_double_by_name(obj->parent,da->target);
+		if (x==NULL) 
+		{
+			GL_THROW("Specified target %s for %s is not valid.",da->target,gl_name(obj->parent,buff,64));
+			/*  TROUBLESHOOT
+			Check to make sure the target you are specifying is a published variable for the object
+			that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
+			check the wiki page to determine which variables can be published within the object you
+			are pointing to with the assert function.
+			*/
+			return 0;
+		}
+		else if (da->status == da->ASSERT_TRUE)
+		{
+			double m = abs(*x-da->value);
+			if (_isnan(m) || m>da->within)
+			{				
+				gl_verbose("Assert failed on %s: %s %g not within %f of %g", 
+					gl_name(obj->parent, buff, 64), da->target, *x, da->within, da->value);
+				return 0;
+			}
+			gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+			return 1;
+		}
+		else if (da->status == da->ASSERT_FALSE)
+		{
+			double m = abs(*x-da->value);
+			if (_isnan(m) || m<da->within)
+			{				
+				gl_verbose("Assert failed on %s: %s %g is within %f of %g", 
+					gl_name(obj->parent, buff, 64), da->target, *x, da->within, da->value);
+				return 0;
+			}
+			gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+			return 1;
+		}
+		else
+		{
+			gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
+			return 1;
+		}
+
 }
