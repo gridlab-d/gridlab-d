@@ -502,7 +502,8 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 
 	TIMESTAMP t1 = link::presync(t0);
 	if (t1 <= next_time) return t1;
-	else return next_time;
+	else if (next_time != TS_NEVER) return -next_time;
+	else return TS_NEVER;
 }
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: regulator

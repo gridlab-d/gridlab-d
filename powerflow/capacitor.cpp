@@ -766,7 +766,10 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 
 	NotFirstIteration=true;	//Set so we know we can start automating (powerflow takes about 1 iteration to get even ball-park values)
 
-	return result;
+	if (result != TS_NEVER)
+		return -result;
+	else
+		return TS_NEVER;
 }
 
 TIMESTAMP capacitor::postsync(TIMESTAMP t0)

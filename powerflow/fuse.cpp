@@ -228,8 +228,10 @@ TIMESTAMP fuse::postsync(TIMESTAMP t0)
 		if (Ret_Val[jindex] < t1)
 			t1 = Ret_Val[jindex];
 	}
-
-	return t1;	//Return that minimum
+	if (t1 != TS_NEVER)
+		return -t1;  //Return that minimum, but don't push simulation forward.
+	else
+		return TS_NEVER;
 }
 
 /**
