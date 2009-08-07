@@ -33,7 +33,7 @@ private:
 public:
 	curve(void);
 	~curve(void);
-	inline unsigned int getcount() const { return n_bids;};
+	inline unsigned int getcount() { return n_bids;};
 	void clear(void);
 	KEY submit(BID *bid);
 	KEY resubmit(BID *bid, KEY key);

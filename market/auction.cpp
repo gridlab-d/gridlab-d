@@ -151,7 +151,7 @@ void auction::clear_market(void)
 	/* sort the bids */
 	offers.sort(false);
 	asks.sort(true);
-
+	
 	if (asks.getcount()>0 && offers.getcount()>0)
 	{
 		/* clear market */
@@ -169,10 +169,12 @@ void auction::clear_market(void)
 			char name[64];
 			gl_verbose("  supply curve");
 			for (i=0; i<offers.getcount(); i++)
-				gl_verbose("  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
-			gl_verbose("  demand curve");
+				//gl_verbose("  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
+			printf("  %4d: %s offers %.3f %s at %.2f $/%s\n",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
+				gl_verbose("  demand curve");
 			for (i=0; i<asks.getcount(); i++)
-				gl_verbose("  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+				//gl_verbose("  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+			printf("  %4d: %s asks %.3f %s at %.2f $/%s\n",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
 		}
 
 		i=j=0;
@@ -196,9 +198,11 @@ void auction::clear_market(void)
 			}
 			else /* buy quantity equal sell quantity but price split */
 			{
-				clear.quantity = demand_quantity = supply_quantity = buy->quantity;
+				clear.quantity = demand_quantity = supply_quantity = buy_quantity;
 				a = buy->price;
 				b = sell->price;
+				buy = asks.getbid(++i);
+				sell = offers.getbid(++j);
 				check = true;
 			}
 		}
@@ -206,12 +210,12 @@ void auction::clear_market(void)
 		/* check for split price at single quantity */
 		while (check)
 		{
-			if (i>0 && i<asks.getcount() && (a+b)/2 <= buy->price)
+			if (i>0 && i<asks.getcount() && (a<b ? a : b) <= buy->price)
 			{
 				b = buy->price;
 				buy = asks.getbid(++i);
 			}
-			else if (j>0 && j<offers.getcount() && (a+b)/2 <= sell->price)
+			else if (j>0 && j<offers.getcount() && (a<b ? a : b) <= sell->price)
 			{
 				a = sell->price;
 				sell = offers.getbid(++j);
@@ -219,7 +223,7 @@ void auction::clear_market(void)
 			else
 				check = false;
 		}
-		clear.price = (a+b)/2;
+		clear.price = a<b ? a : b;
 	
 		/* check for zero demand but non-zero first unit sell price */
 		if (clear.quantity==0 && offers.getcount()>0)
@@ -252,14 +256,17 @@ KEY auction::submit(OBJECT *from, double quantity, double price, KEY key)
 	{
 		char myname[64];
 		char biddername[64];
-		gl_verbose("  %s resubmits %s from object %s for %.2f %s at $%.2f/%s", 
+		//gl_warning("  %s resubmits %s from object %s for %.2f %s at $%.2f/%s", 
+			//gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
+			//fabs(quantity), unit, price, unit);
+		printf("  %s resubmits %s from object %s for %.2f %s at $%.2f/%s\n", 
 			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
 			fabs(quantity), unit, price, unit);
 		BID bid = {from,fabs(quantity),price};
 		if (quantity<0)
-			return asks.resubmit(&bid,key)>=0;
+			return asks.resubmit(&bid,key);
 		else if (quantity>0)
-			return offers.resubmit(&bid,key)>=0;
+			return offers.resubmit(&bid,key);
 		char name[64];
 		gl_warning("zero quantity bid from %s is ignored", gl_name(from,name,sizeof(name)));
 		return 0;
@@ -267,14 +274,17 @@ KEY auction::submit(OBJECT *from, double quantity, double price, KEY key)
 	else {
 		char myname[64];
 		char biddername[64];
-		gl_verbose("  %s receives %s from object %s for %.2f %s at $%.2f/%s", 
+		//gl_warning("  %s receives %s from object %s for %.2f %s at $%.2f/%s", 
+		//	gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
+		//	fabs(quantity), unit, price, unit);
+		printf("  %s receives %s from object %s for %.2f %s at $%.2f/%s\n", 
 			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
 			fabs(quantity), unit, price, unit);
 		BID bid = {from,fabs(quantity),price};
 		if (quantity<0)
-			return asks.submit(&bid)>=0;
+			return asks.submit(&bid);
 		else if (quantity>0)
-			return offers.submit(&bid)>=0;
+			return offers.submit(&bid);
 		char name[64];
 		gl_warning("zero quantity bid from %s is ignored", gl_name(from,name,sizeof(name)));
 		return -1;
@@ -424,6 +434,7 @@ void curve::sort(bool reverse)
 
 void curve::sort(BID *list, KEY *key, const int len, const bool reverse)
 {
+	//merge sort
 	if (len>0)
 	{
 #define BUFSIZE 1024
