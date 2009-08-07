@@ -45,14 +45,104 @@ static loadshape *loadshape_list = NULL;
 static void sync_analog(loadshape *ls, double dt)
 {
 	if (ls->params.analog.energy>0)
+
+		/* load is based on fixed energy scale */
 		ls->load = ls->schedule->value * ls->params.analog.energy * ls->schedule->fraction * ls->dPdV;
 	else if (ls->params.analog.power>0)
+
+		/* load is based on fixed power scale */
 		ls->load = ls->schedule->value * ls->params.analog.power * ls->dPdV;
 	else
+
+		/* load is based on direct value (no scale) */
 		ls->load = ls->schedule->value * ls->dPdV;
 }
 
 static void sync_pulsed(loadshape *ls, double dt)
+{
+	/* load is off or waiting to choose a state */
+	if (ls->r >= 0)
+	{
+		/* if load should turn on within the next second */
+		if (ls->r!=0 && ls->q >= ls->d[0] - ls->r/3600)
+		{
+			/* turn load on */
+			ls->q = 1;
+#ifdef _DEBUG
+			output_debug("loadshape %s: turns on", ls->schedule->name);
+#endif
+			goto TurnOn;
+		}
+TurnOff:
+		/* load is off */
+		ls->s = 0;
+
+		/* no load when off */
+		ls->load = 0;
+
+		/* if a value is given in the schedule */
+		if (ls->schedule->value>0) 
+		{
+			/* calculate the decay rate of the queue */
+			ls->r = ls->schedule->value*ls->params.pulsed.scalar/ls->params.pulsed.energy;
+			if (ls->r<=0)
+				output_warning("loadshape %s: r not positive while load is off!", ls->schedule->name);
+		}
+		else
+		{
+			/* the queue doesn't change (no decay) */
+			ls->r = 0;
+			output_warning("loadshape %s: state machine suspended because schedule has zero value", ls->schedule->name);
+		}
+	}
+
+	/* load is on */
+	else
+	{
+		/* the load will turn off within the next second */
+		if (ls->r!=0 && ls->q <= ls->d[1] - ls->r/3600)
+		{
+			/* turn the load off */
+			ls->q = 0;
+#ifdef _DEBUG
+			output_debug("loadshape %s: turns off", ls->schedule->name);
+#endif
+			goto TurnOff;
+		}
+TurnOn:	
+		/* the load is on */
+		ls->s = 1;
+
+		/* fixed power pulse */
+		if (ls->params.pulsed.pulsetype==MPT_POWER)
+		{
+			/* load has fixed power */
+			ls->load = ls->params.pulsed.pulsevalue * ls->dPdV;
+			
+			/* rate is based on energy and load */
+			ls->r = -1/(ls->params.pulsed.energy/ls->load);
+			if (ls->r>=0)
+				output_warning("loadshape %s: r not negative while load is on!", ls->schedule->name);
+		}
+		else if (ls->params.pulsed.pulsevalue!=0)
+		{
+			/* load has fixed duration so power is energy/duration */
+			ls->load = ls->params.pulsed.energy / ls->params.pulsed.pulsevalue *3600 * ls->dPdV;
+			
+			/* rate is based on time */
+			ls->r = -3600/ls->params.pulsed.pulsevalue;
+			if (ls->r>=0)
+				output_warning("loadshape %s: r not negative while load is on!", ls->schedule->name);
+		}
+		else
+		{
+			/* can't have load now */
+			output_warning("loadshape %s: load value is zero in 'on' state", ls->schedule->name);
+		}
+	}
+}
+
+static void sync_modulated(loadshape *ls, double dt)
 {
 	/* load is off or waiting to choose a state */
 	if (ls->r >= 0)
@@ -68,11 +158,48 @@ static void sync_pulsed(loadshape *ls, double dt)
 TurnOff:
 		ls->s = 0;
 		ls->load = 0;
+
+		// amplitude modulation
 		if (ls->schedule->value>0) 
 		{
-			ls->r = ls->schedule->value*ls->params.pulsed.scalar/ls->params.pulsed.energy;
-			if (ls->r<=0)
-				output_warning("loadshape %s: r not positive while load is off!", ls->schedule->name);
+			if (ls->params.modulated.modulation==MMT_AMPLITUDE) 
+			{
+				// AM off time
+				double period = ls->schedule->duration / ls->params.modulated.scalar;
+				double duty_cycle = (ls->params.modulated.pulsetype==MPT_TIME) 
+					? ls->params.modulated.pulsevalue / period 
+					: ls->params.modulated.energy * 3600 / ls->params.modulated.pulsevalue / period;
+				ls->r = 1 / (period - duty_cycle * period);
+			}
+
+			// pulse-width modulation
+			else if (ls->params.modulated.modulation==MMT_PULSEWIDTH) 
+			{
+				// PWM off time
+				double power = (ls->params.modulated.pulsetype==MPT_TIME)
+					? ls->params.modulated.energy * 3600 / ls->params.modulated.pulsevalue
+					: ls->params.modulated.pulsevalue;
+				double period = ls->schedule->duration / ls->params.modulated.scalar;
+				double ton = ls->schedule->value * ls->params.modulated.scalar / ls->params.modulated.energy / ls->params.modulated.scalar;
+				ls->r = 1 / (period - ton);
+			}
+
+			// frequency modulation
+			else if (ls->params.modulated.modulation==MMT_FREQUENCY) 
+			{
+				double ton = ls->params.modulated.pulsevalue;
+				double power = ls->params.modulated.pulsevalue;
+				double period, toff;
+				if (ls->params.modulated.pulsetype==MPT_TIME)
+					power = ls->params.modulated.energy * ls->params.modulated.scalar / ton * 3600;
+				else
+					ton = ls->params.modulated.energy * ls->params.modulated.scalar / power * 3600;
+				period = ls->schedule->duration /  ls->params.modulated.scalar;
+				toff = period /  ls->params.modulated.scalar - ton;
+				ls->r = 1/toff;
+			}
+			else
+				output_warning("loadshape %s: modulation type is not determined!", ls->schedule->name);
 		}
 		else
 		{
@@ -95,57 +222,47 @@ TurnOff:
 		}
 TurnOn:	
 		ls->s = 1;
-		if (ls->params.pulsed.pulsetype==MPT_POWER)
+
+		// amplitude modulation
+		if (ls->params.modulated.modulation==MMT_AMPLITUDE) 
 		{
-			/* fixed power */
-			ls->load = ls->params.pulsed.pulsevalue * ls->dPdV;
-			/* rate is based on load */
-			ls->r = -1/(ls->params.pulsed.energy/ls->load);
-			if (ls->r>=0)
-				output_warning("loadshape %s: r not negative while load is on!", ls->schedule->name);
+			// AM on time
+			double period = ls->schedule->duration / ls->params.modulated.scalar;
+			double duty_cycle = (ls->params.modulated.pulsetype==MPT_TIME) 
+					? ls->params.modulated.pulsevalue / period 
+					: ls->params.modulated.energy * 3600 / ls->params.modulated.pulsevalue / period;
+			ls->r  = 1 / (duty_cycle * period);
+			ls->load = ls->schedule->value * ls->params.modulated.scalar;
 		}
-		else if (ls->params.pulsed.pulsevalue!=0)
+
+		// pulse-width modulation
+		else if (ls->params.modulated.modulation==MMT_PULSEWIDTH) 
 		{
-			/* fixed duration */
-			ls->load = ls->params.pulsed.energy / ls->params.pulsed.pulsevalue *3600 * ls->dPdV;
-			/* rate is based on time */
-			ls->r = -3600/ls->params.pulsed.pulsevalue;
-			if (ls->r>=0)
-				output_warning("loadshape %s: r not negative while load is on!", ls->schedule->name);
+			// PWM on time
+			double power = (ls->params.modulated.pulsetype==MPT_TIME)
+				? ls->params.modulated.energy * 3600 / ls->params.modulated.pulsevalue
+				: ls->params.modulated.pulsevalue;
+			double pulsecount = ls->params.modulated.energy / power * ls->schedule->duration / 3600;
+			double period = ls->schedule->duration / pulsecount;
+			double ton = ls->schedule->value * ls->params.modulated.scalar / ls->params.modulated.energy / pulsecount;
+			ls->r = 1 / ton;
+			ls->load = power;
+		}
+
+		// frequency modulation
+		else if (ls->params.modulated.modulation==MMT_FREQUENCY) // frequency modulation
+		{
+			double ton = ls->params.modulated.pulsevalue;
+			double power = ls->params.modulated.pulsevalue;
+			if (ls->params.modulated.pulsetype==MPT_TIME)
+				power = ls->params.modulated.energy * ls->params.modulated.scalar / ton * 3600;
+			else
+				ton = ls->params.modulated.energy * ls->params.modulated.scalar / power * 3600;
+			ls->r = 1/ton;
 		}
 		else
-		{
-			/* can't have load now */
-			output_warning("loadshape %s: load value is zero in 'on' state", ls->schedule->name);
-		}
+			output_warning("loadshape %s: modulation type is not determined!", ls->schedule->name);
 	}
-}
-
-static void sync_modulated(loadshape *ls, double dt)
-{
-	if (ls->params.modulated.pulsetype==MPT_POWER)
-		ls->load = ls->s * ls->params.modulated.pulsevalue * ls->dPdV; 
-	else /* MPT_TIME */
-		ls->load = ls->s * ls->params.modulated.energy / ls->params.modulated.pulsevalue / ls->params.modulated.scalar * ls->dPdV;		
-
-#define duration (ls->params.modulated.energy / ls->load / ls->params.modulated.scalar)
-
-	/* update s and r */
-	if (ls->q > ls->d[0])
-	{
-		ls->s = 1;
-		ls->r = -1/(duration);
-	}
-	else if (ls->q < ls->d[1])
-	{
-		ls->s = 0;
-		ls->r = 1/(duration);
-	}
-	/* else state remains unchanged */
-
-	/* udpate q */ 
-	ls->q += ls->r * dt;
-#undef duration
 }
 
 static void sync_queued(loadshape *ls, double dt)
@@ -315,6 +432,12 @@ int loadshape_init(loadshape *ls) /**< load shape */
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated pulse count must be a positive number",ls->schedule->name);
 			return 1;
 		}
+		if (ls->params.modulated.modulation<=MMT_UNKNOWN || ls->params.modulated.modulation>MMT_FREQUENCY)
+		{
+			char *modulation[] = {"unknown","amplitude","pulsewidth","frequency"};
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulation type %s is invalid",ls->schedule->name,modulation[ls->params.modulated.modulation]);
+			return 1;
+		}
 		break;
 	case MT_QUEUED:
 		if (ls->params.queued.energy<=0)
@@ -430,7 +553,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 			/* udpate q */ 
 			ls->q += ls->r * dt;
 
-			sync_pulsed(ls, dt);
+			sync_modulated(ls, dt);
 
 			/* time to next event */
 			ls->t2 = ls->r!=0 ? t1 + (TIMESTAMP)(( ls->d[ls->s] - ls->q) / ls->r * 3600) + 1 : TS_NEVER;
@@ -481,6 +604,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 
 int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 {
+	char *modulation[] = {"unknown","amplitude","pulsewidth","frequency"};
 	loadshape *ls = (loadshape*)data;
 	switch (ls->type) {
 	case MT_ANALOG:
@@ -506,11 +630,11 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 		break;
 	case MT_MODULATED:
 		if (ls->params.pulsed.pulsetype==MPT_TIME)
-			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %d; duration: %g s",
-			ls->schedule->name, ls->params.modulated.energy, ls->params.modulated.scalar, ls->params.modulated.pulsevalue);
+			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %d; duration: %g s; modulation: %s",
+			ls->schedule->name, ls->params.modulated.energy, ls->params.modulated.scalar, ls->params.modulated.pulsevalue,modulation[ls->params.modulated.modulation]);
 		else if (ls->params.pulsed.pulsetype==MPT_POWER)
-			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %d; power: %g kW",
-			ls->schedule->name, ls->params.modulated.energy, ls->params.modulated.scalar, ls->params.modulated.pulsevalue);
+			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %d; power: %g kW; modulation: %s",
+			ls->schedule->name, ls->params.modulated.energy, ls->params.modulated.scalar, ls->params.modulated.pulsevalue,modulation[ls->params.modulated.modulation]);
 		else
 		{
 			output_error("convert_from_loadshape(...,data={schedule->name='%s',...},prop={name='%s',...}) has an invalid pulsetype", ls->schedule->name, prop->name);
@@ -861,6 +985,29 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 					ls->params.queued.pulsevalue += dev*err;
 				}
 			}
+		}
+		else if (strcmp(param,"modulation")==0)
+		{
+			if (ls->type==MT_ANALOG)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) modulation is not used by analog loadshapes",string);
+			else if (ls->type==MT_PULSED)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) modulation is not used by pulsed loadshapes",string);
+			else if (ls->type==MT_MODULATED)
+			{
+				if (strcmp(value,"amplitude")==0)
+					ls->params.modulated.modulation = MMT_AMPLITUDE;
+				else if (strcmp(value,"pulsewidth")==0)
+					ls->params.modulated.modulation = MMT_PULSEWIDTH;
+				else if (strcmp(value,"frequency")==0)
+					ls->params.modulated.modulation = MMT_FREQUENCY;
+				else
+				{
+					output_error("convert_to_loadshape(string='%-.64s...', ...) '%s' is not a recognized modulation",string,value);
+					return 0;
+				}
+			}
+			else if (ls->type==MT_QUEUED)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) modulation is not used by queued loadshapes",string);
 		}
 		else if (strcmp(param,"q_on")==0)
 		{

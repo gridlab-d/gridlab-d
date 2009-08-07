@@ -160,7 +160,7 @@
 <xsl:for-each select="market/auction_list/auction"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="type"/></TD><TD><xsl:value-of select="unit"/></TD><TD><xsl:value-of select="period"/></TD><TD><xsl:value-of select="latency"/></TD><TD><xsl:value-of select="market_id"/></TD><TD><xsl:value-of select="last.Q"/></TD><TD><xsl:value-of select="last.P"/></TD><TD><xsl:value-of select="next.Q"/></TD><TD><xsl:value-of select="next.P"/></TD><TD><a href="#{network}"><xsl:value-of select="network"/></a></TD></TR>
 </xsl:for-each></TABLE>
 <H3><A NAME="modules_network">network</A></H3><TABLE BORDER="1">
-<TR><TH>version.major</TH><TD><xsl:value-of select="network/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="network/version.minor"/></TD></TR></TABLE>
+<TR><TH>version.major</TH><TD><xsl:value-of select="network/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="network/version.minor"/></TD></TR><TR><TH>acceleration_factor</TH><TD><xsl:value-of select="network/acceleration_factor"/></TD></TR><TR><TH>convergence_limit</TH><TD><xsl:value-of select="network/convergence_limit"/></TD></TR><TR><TH>mvabase</TH><TD><xsl:value-of select="network/mvabase"/></TD></TR><TR><TH>kvbase</TH><TD><xsl:value-of select="network/kvbase"/></TD></TR><TR><TH>model_year</TH><TD><xsl:value-of select="network/model_year"/></TD></TR><TR><TH>model_case</TH><TD><xsl:value-of select="network/model_case"/></TD></TR><TR><TH>model_name</TH><TD><xsl:value-of select="network/model_name"/></TD></TR></TABLE>
 <H4>node objects</H4><TABLE BORDER="1">
 <TR><TH>Name</TH><TH>V</TH><TH>S</TH><TH>G</TH><TH>B</TH><TH>Qmax_MVAR</TH><TH>Qmin_MVAR</TH><TH>type</TH><TH>flow_area_num</TH><TH>base_kV</TH></TR>
 <xsl:for-each select="network/node_list/node"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="V"/></TD><TD><xsl:value-of select="S"/></TD><TD><xsl:value-of select="G"/></TD><TD><xsl:value-of select="B"/></TD><TD><xsl:value-of select="Qmax_MVAR"/></TD><TD><xsl:value-of select="Qmin_MVAR"/></TD><TD><xsl:value-of select="type"/></TD><TD><xsl:value-of select="flow_area_num"/></TD><TD><xsl:value-of select="base_kV"/></TD></TR>
@@ -923,6 +923,13 @@ module market {
 module network {
 	version.major <xsl:value-of select="version.major"/>;
 	version.minor <xsl:value-of select="version.minor"/>;
+	acceleration_factor <xsl:value-of select="acceleration_factor"/>;
+	convergence_limit <xsl:value-of select="convergence_limit"/>;
+	mvabase <xsl:value-of select="mvabase"/>;
+	kvbase <xsl:value-of select="kvbase"/>;
+	model_year <xsl:value-of select="model_year"/>;
+	model_case <xsl:value-of select="model_case"/>;
+	model_name <xsl:value-of select="model_name"/>;
 }
 
 # network::node objects
