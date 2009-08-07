@@ -276,7 +276,7 @@ static void filename_parts(char *fullname, char *path, char *name, char *ext)
 
 static int append_init(char* format,...)
 {
-	char code[1024];
+	static char code[1024];
 	va_list ptr;
 	va_start(ptr,format);
 	vsprintf(code,format,ptr);
@@ -299,7 +299,7 @@ static int append_init(char* format,...)
 }
 static int append_code(char* format,...)
 {
-	char code[65536];
+	static char code[65536];
 	va_list ptr;
 	va_start(ptr,format);
 	vsprintf(code,format,ptr);
@@ -322,7 +322,7 @@ static int append_code(char* format,...)
 }
 static int append_global(char* format,...)
 {
-	char code[1024];
+	static char code[1024];
 	va_list ptr;
 	va_start(ptr,format);
 	vsprintf(code,format,ptr);
