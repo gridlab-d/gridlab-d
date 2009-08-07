@@ -366,10 +366,15 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//losses = VA_Out * Rtotal / (Rtotal + Rload);
 			//VA_Out = VA_Out * Rload / (Rtotal + Rload);
 
-			if (number_of_phases_out == 4)  //Triplex-line -> Assume it's only across the 240 V.
+			if (number_of_phases_out == 4)  //Triplex-line -> Assume it's only across the 240 V for now.
 			{
-				power_A = complex(VA_Out.Mag()*power_factor,VA_Out.Mag()*sin(acos(power_factor)));
-				phaseA_I_Out = ~(power_A / phaseA_V_Out);
+				power_A = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+				if (phaseA_V_Out.Mag() != 0.0)
+					phaseA_I_Out = ~(power_A / phaseA_V_Out);
+				else
+					phaseA_I_Out = complex(0.0,0.0);
+
+				*pLine12 = -phaseA_I_Out;
 				
 				//Get rid of these for now
 				//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
@@ -377,10 +382,23 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			else if (number_of_phases_out == 3)
 			{
-				power_A = power_B = power_C = complex(VA_Out.Mag()*power_factor,VA_Out.Mag()*sin(acos(power_factor)))/3;
-				phaseA_I_Out = ~(power_A / phaseA_V_Out); // /sqrt(2.0);
-				phaseB_I_Out = ~(power_B / phaseB_V_Out); // /sqrt(2.0);
-				phaseC_I_Out = ~(power_C / phaseC_V_Out); // /sqrt(2.0);
+				power_A = power_B = power_C = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/3;
+				if (phaseA_V_Out.Mag() != 0.0)
+					phaseA_I_Out = ~(power_A / phaseA_V_Out); // /sqrt(2.0);
+				else
+					phaseA_I_Out = complex(0.0,0.0);
+				if (phaseB_V_Out.Mag() != 0.0)
+					phaseB_I_Out = ~(power_B / phaseB_V_Out); // /sqrt(2.0);
+				else
+					phaseB_I_Out = complex(0.0,0.0);
+				if (phaseC_V_Out.Mag() != 0.0)
+					phaseC_I_Out = ~(power_C / phaseC_V_Out); // /sqrt(2.0);
+				else
+					phaseC_I_Out = complex(0.0,0.0);
+
+				pLine_I[0] = -phaseA_I_Out;
+				pLine_I[1] = -phaseB_I_Out;
+				pLine_I[2] = -phaseC_I_Out;
 
 				//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
 				//complex phaseB_V_Internal = filter_voltage_impact_source(phaseB_I_Out, phaseB_V_Out);
@@ -390,34 +408,70 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//phaseB_I_Out = filter_current_impact_out(phaseB_I_Out, phaseB_V_Internal);
 				//phaseC_I_Out = filter_current_impact_out(phaseC_I_Out, phaseC_V_Internal);
 			}
+			else if(number_of_phases_out == 2)
+			{
+				OBJECT *obj = OBJECTHDR(this);
+				node *par = OBJECTDATA(obj->parent, node);
+
+				if (par->has_phase(PHASE_A) && phaseA_V_Out.Mag() != 0)
+				{
+					power_A = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+					phaseA_I_Out = ~(power_A / phaseA_V_Out);
+				}
+				else 
+					phaseA_I_Out = complex(0,0);
+
+				if (par->has_phase(PHASE_B) && phaseB_V_Out.Mag() != 0)
+				{
+					power_B = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+					phaseB_I_Out = ~(power_B / phaseB_V_Out);
+				}
+				else 
+					phaseB_I_Out = complex(0,0);
+
+				if (par->has_phase(PHASE_C) && phaseC_V_Out.Mag() != 0)
+				{
+					power_C = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+					phaseC_I_Out = ~(power_C / phaseC_V_Out);
+				}
+				else 
+					phaseC_I_Out = complex(0,0);
+
+				pLine_I[0] = -phaseA_I_Out;
+				pLine_I[1] = -phaseB_I_Out;
+				pLine_I[2] = -phaseC_I_Out;
+			}
 			else if(number_of_phases_out == 1)
 			{
-				if(phaseA_V_Out != 0)
+				if(phaseA_V_Out.Mag() != 0)
 				{
-					power_A = complex(VA_Out.Mag()*power_factor,VA_Out.Mag()*sin(acos(power_factor)));
+					power_A = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 					phaseA_I_Out = ~(power_A / phaseA_V_Out); 
-					complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
-					phaseA_I_Out = filter_current_impact_out(phaseA_I_Out, phaseA_V_Internal);
+					//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
+					//phaseA_I_Out = filter_current_impact_out(phaseA_I_Out, phaseA_V_Internal);
 				}
-				else if(phaseB_V_Out != 0)
+				else if(phaseB_V_Out.Mag() != 0)
 				{
-					power_B = complex(VA_Out.Mag()*power_factor,VA_Out.Mag()*sin(acos(power_factor)));
+					power_B = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 					phaseB_I_Out = ~(power_B / phaseB_V_Out); 
-					complex phaseB_V_Internal = filter_voltage_impact_source(phaseB_I_Out, phaseB_V_Out);
-					phaseB_I_Out = filter_current_impact_out(phaseB_I_Out, phaseB_V_Internal);
+					//complex phaseB_V_Internal = filter_voltage_impact_source(phaseB_I_Out, phaseB_V_Out);
+					//phaseB_I_Out = filter_current_impact_out(phaseB_I_Out, phaseB_V_Internal);
 				}
-				else if(phaseC_V_Out != 0)
+				else if(phaseC_V_Out.Mag() != 0)
 				{
-					power_C = complex(VA_Out.Mag()*power_factor,VA_Out.Mag()*sin(acos(power_factor)));
+					power_C = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 					phaseC_I_Out = ~(power_C / phaseC_V_Out); 
-					complex phaseC_V_Internal = filter_voltage_impact_source(phaseC_I_Out, phaseC_V_Out);
-					phaseC_I_Out = filter_current_impact_out(phaseC_I_Out, phaseC_V_Internal);
+					//complex phaseC_V_Internal = filter_voltage_impact_source(phaseC_I_Out, phaseC_V_Out);
+					//phaseC_I_Out = filter_current_impact_out(phaseC_I_Out, phaseC_V_Internal);
 				}
 				else
 				{
 					gl_warning("None of the phases specified have voltages!");
 					phaseA_I_Out = phaseB_I_Out = phaseC_I_Out = complex(0.0,0.0);
 				}
+				pLine_I[0] = -phaseA_I_Out;
+				pLine_I[1] = -phaseB_I_Out;
+				pLine_I[2] = -phaseC_I_Out;
 			}
 			else
 			{

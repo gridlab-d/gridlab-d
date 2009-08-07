@@ -151,11 +151,11 @@ int solar::init_climate()
 			pTout = &tout;
 			pRhout = &rhout;
 			pSolar = &solar;
-			gl_verbose("solar init: solar data is %f", *pSolar);
+			//gl_verbose("solar init: solar data is %f", *pSolar);
 		}
 		else //climate data was found
 		{
-			gl_verbose("solar init: climate data was found!");
+			//gl_verbose("solar init: climate data was found!");
 			// force rank of object w.r.t climate
 			OBJECT *obj = gl_find_next(climates,NULL);
 			if (obj->rank<=hdr->rank)
@@ -297,7 +297,7 @@ int solar::init(OBJECT *parent)
 	//efficiency dictates how much of the rate insolation the panel can capture and
 	//turn into electricity
 	Max_P = Rated_Insolation * efficiency * area;
-	gl_verbose("Max_P is : %f", Max_P);
+	//gl_verbose("Max_P is : %f", Max_P);
 
 	solar::init_climate();
 
@@ -314,7 +314,7 @@ TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	gl_verbose("solar sync: started");
+	//gl_verbose("solar sync: started");
 
 	//V_Out = pCircuit_V[0];	//Syncs the meter parent to the generator.
 	
@@ -330,9 +330,9 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	calculate_IV(Tambient, Insolation);
 	pLine_I[0] = I_Out;
 	pCircuit_V[0] = V_Out;
-	gl_verbose("solar sync: sent I to the meter: (%f , %f)", I_Out.Re(), I_Out.Im());
-	gl_verbose("solar sync: sent V to the meter: (%f , %f)", V_Out.Re(), V_Out.Im());
-	gl_verbose("solar sync: sent the current to meter");
+	//gl_verbose("solar sync: sent I to the meter: (%f , %f)", I_Out.Re(), I_Out.Im());
+	//gl_verbose("solar sync: sent V to the meter: (%f , %f)", V_Out.Re(), V_Out.Im());
+	//gl_verbose("solar sync: sent the current to meter");
 
 	TIMESTAMP t2 = TS_NEVER;
 
@@ -351,7 +351,7 @@ void solar::derate_panel(double Tamb, double Insol)
 {
 	Tcell = Tamb + ((NOCT - 20)/0.8) * Insol/1000;
 	Rinternal=.0001*Tcell*Tcell;
-	gl_verbose("solar sync: panel temperature is : %f", Tcell);
+	//gl_verbose("solar sync: panel temperature is : %f", Tcell);
 	Voc = Voc_Max * (1 - (0.0037 * (Tcell - 25)));
 
 	if(100.00 > Insol)
@@ -363,7 +363,7 @@ void solar::derate_panel(double Tamb, double Insol)
 		VA_Out = complex(Max_P * (1 - (0.005 * (Tcell - 25))), 0);
 	}
 
-	gl_verbose("solar sync: VA_Out real component is: (%f , %f)", VA_Out.Re()), VA_Out.Im();
+	//gl_verbose("solar sync: VA_Out real component is: (%f , %f)", VA_Out.Re()), VA_Out.Im();
 	VA_Out = complex(VA_Out.Re() * 0.97, VA_Out.Im()* 0.97); // mismatch derating
 	VA_Out = complex(VA_Out.Re() * 0.96, VA_Out.Im()* 0.96);
 }
@@ -380,8 +380,8 @@ void solar::calculate_IV(double Tamb, double Insol){
 	{
 		I_Out = (VA_Out / V_Out) * (Insol / Rated_Insolation); 
 	}
-	gl_verbose("solar sync: VA_Out after set is: %f, %fj", VA_Out.Re(), VA_Out.Im());
-	gl_verbose("solar sync: I_Out is : (%f , %fj)", I_Out.Re(), I_Out.Im());
+	//gl_verbose("solar sync: VA_Out after set is: %f, %fj", VA_Out.Re(), VA_Out.Im());
+	//gl_verbose("solar sync: I_Out is : (%f , %fj)", I_Out.Re(), I_Out.Im());
 }
 
 complex *solar::get_complex(OBJECT *obj, char *name)
