@@ -2844,7 +2844,7 @@ static int class_external_function(PARSER, CLASS *oclass, CLASS **eclass,char *f
 
 static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initcode, int initsize)
 {
-	char code[40960];
+	static char code[65536];
 	char arglist[1024];
 	char fname[64];
 	CLASS *eclass;
