@@ -8,72 +8,36 @@
 //Note: Last hand check passed 07/14/2009
 //Payroll: D3P706
 
-#setenv GLPATH=../../core;../../core/etc
-#setenv GRIDLABD=../../core
-#include "rt/debugger.conf"
-
 clock {
-	timestamp '2000-01-01 0:00:00';
-	stoptime '2000-01-01 24:00:00';
 	timezone PST+8PDT;
+	starttime '2000-01-01 0:00:00 PST';
+	stoptime '2000-01-01 24:00:00 PST';
 }
 
-module tape;
 module residential;
 module assert;
 
-object house:1 {
-	floor_area random.normal(1500,300) sf;
+schedule lighting {
+	* * * * * 1.0
+}
+
+object house {
+	floor_area 1000 sf;
 	heating_setpoint 10;
 	cooling_setpoint 150;
 	air_temperature 74;
 	mass_temperature 74;
 	thermostat_deadband 2;
-}
 
-class test {
-	function house::attach_enduse;
-	enduse load;
-	intrinsic create(object parent)
-	{
-		return 1;
-	};
-	intrinsic init(object parent)
-	{
-		attach_enduse(parent,NULL,15,false);
-		return 1;
-	};
-}
-
-object test {
-	parent house:1;
-}
-
-#ifdef NEVER
-object lights:2 {
-	parent house:1;
-	type CFL;
-	installed_power 1000 W;
-	object complex_assert {
-		target "enduse_load";
-		within .01;
-		object player {
-			property value;
-			file "..\test_lights_cfl_power.player";
+	object lights {
+		type CFL;
+		installed_power 1000 W;
+		shape "type: analog; schedule: lighting; power: 1 kW";
+		object complex_assert {
+			target "enduse_load";
+			within .01;
+			value 1.0-0.43i;
 		};
 	};
-	object recorder{
-		property enduse_load,internal_gains;
-		file "test_lights_cfl_power.csv";
-		interval 3600;
-		limit 100;
-	};	
 }
 
-object player{
-	parent lights:2;
-	property demand;
-	file "..\generic_demand.glt";
-	loop 1;
-}
-#endif
