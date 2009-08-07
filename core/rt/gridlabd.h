@@ -952,6 +952,19 @@ template <class T> inline void gl_get_value(OBJECT *obj, ///< the object whose p
 	value = *ptr;
 }
 
+/// Set the typed value of a property
+/// @return nothing
+template <class T> inline void gl_set_value(OBJECT *obj, ///< the object whose property value is being obtained
+											char *propname, ///< the name of the property being obtained
+											T &value) ///< a reference to the local value where the property's value is being copied
+{
+	T *ptr = (T*)gl_get_addr(obj,propname);
+	// @todo it would be a good idea to check the property type here
+	if (ptr==NULL)
+		gl_throw("property %s not found in object %s", propname, gl_name(obj));
+	*ptr = value;
+}
+
 inline FUNCTIONADDR gl_get_function(OBJECT *obj, char *fname) { return callback->function.get(obj->oclass->name,fname);};
 inline FUNCTIONADDR gl_get_function(CLASS *oclass, char *fname) { return callback->function.get(oclass->name,fname);};
 inline FUNCTIONADDR gl_get_function(char *classname, char *fname) { return callback->function.get(classname,fname);};
