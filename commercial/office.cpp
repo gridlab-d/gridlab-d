@@ -166,7 +166,7 @@ office::office(MODULE *module)
 			/* End-use data */
 			PT_complex, "demand[kW]", PADDR(zone.total.demand),
 			PT_complex, "total_load[kW]", PADDR(zone.total.power),
-			PT_complex, "energy", PADDR(zone.total.energy),
+			PT_complex, "energy[kWh]", PADDR(zone.total.energy),
 			PT_double, "power_factor", PADDR(zone.total.power_factor),
 			PT_complex, "power[kW]", PADDR(zone.total.constant_power),
 			PT_complex, "current[A]", PADDR(zone.total.constant_current),
@@ -174,26 +174,26 @@ office::office(MODULE *module)
 		
 			PT_complex, "hvac.demand[kW]", PADDR(zone.hvac.enduse.demand),
 			PT_complex, "hvac.load[kW]", PADDR(zone.hvac.enduse.power),
-			PT_complex, "hvac.energy", PADDR(zone.hvac.enduse.energy),
+			PT_complex, "hvac.energy[kWh]", PADDR(zone.hvac.enduse.energy),
 			PT_double, "hvac.power_factor", PADDR(zone.hvac.enduse.power_factor),
 
 			PT_complex, "lights.demand[kW]", PADDR(zone.lights.enduse.demand),
 			PT_complex, "lights.load[kW]", PADDR(zone.lights.enduse.power),
-			PT_complex, "lights.energy", PADDR(zone.lights.enduse.energy),
+			PT_complex, "lights.energy[kWh]", PADDR(zone.lights.enduse.energy),
 			PT_double, "lights.power_factor", PADDR(zone.lights.enduse.power_factor),
 			PT_double, "lights.heatgain_fraction", PADDR(zone.lights.enduse.heatgain_fraction),
-			PT_double, "lights.heatgain", PADDR(zone.lights.enduse.heatgain),
+			PT_double, "lights.heatgain[kW]", PADDR(zone.lights.enduse.heatgain),
 			
 			PT_complex, "plugs.demand[kW]", PADDR(zone.plugs.enduse.demand),
 			PT_complex, "plugs.load[kW]", PADDR(zone.plugs.enduse.power),
-			PT_complex, "plugs.energy", PADDR(zone.plugs.enduse.energy),
+			PT_complex, "plugs.energy[kWh]", PADDR(zone.plugs.enduse.energy),
 			PT_double, "plugs.power_factor", PADDR(zone.plugs.enduse.power_factor),
 			PT_double, "plugs.heatgain_fraction", PADDR(zone.plugs.enduse.heatgain_fraction),
-			PT_double, "plugs.heatgain", PADDR(zone.plugs.enduse.heatgain),
+			PT_double, "plugs.heatgain[kW]", PADDR(zone.plugs.enduse.heatgain),
 
-			PT_double, "cooling_setpoint", PADDR(zone.control.cooling_setpoint),
-			PT_double, "heating_setpoint", PADDR(zone.control.heating_setpoint),
-			PT_double, "thermostat_deadband", PADDR(zone.control.setpoint_deadband),
+			PT_double, "cooling_setpoint[degF]", PADDR(zone.control.cooling_setpoint),
+			PT_double, "heating_setpoint[degF]", PADDR(zone.control.heating_setpoint),
+			PT_double, "thermostat_deadband[degF]", PADDR(zone.control.setpoint_deadband),
 			PT_double, "control.ventilation_fraction", PADDR(zone.control.ventilation_fraction),
 			PT_double, "control.lighting_fraction", PADDR(zone.control.lighting_fraction),
 			
