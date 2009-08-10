@@ -134,12 +134,29 @@ def run_tests(argv):
 				print("SUCCESS: File "+file+" failed to converge, as planned.")
 				cleanlist.append((path, file))
 			elif rv == 1:
-				print("ERROR:  "+file+" failed to load!")
-				errct += 1
+				print("EXCEPTION:  "+file+" failed to load!")
+				ex_ct += 1
 				err = True
 			else:
-				print("ERROR:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
-				errct += 1
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
+				ex_ct += 1
+				err = True
+		elif "exc_" in file or "_exc" in file:
+			if rv == 0:
+				if "opt_" in file or "_opt" in file:
+					print("WARNING: Optional file "+file+" loaded when it shouldn't've!")
+					cleanlist.append((path, file))
+					err = False
+				else:
+					print("ERROR: "+file+" loaded when it shouldn't've!")
+					errct += 1
+					err = True
+			elif rv == 1:
+				print("SUCCESS:  "+file+" failed to load, as planned")
+				cleanlist.append((path, file))
+			else:
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
+				ex_ct += 1
 				err = True
 		else:
 			if rv == 2:
@@ -152,15 +169,15 @@ def run_tests(argv):
 					print("ERROR: "+file+" failed to converge!")
 					err = True
 			elif rv == 1:
-				print("ERROR:  "+file+" failed to load!")
-				errct += 1
+				print("EXCEPTION:  "+file+" failed to load!")
+				ex_ct += 1
 				err = True
 			elif rv == 0:
 				print("SUCCESS: File "+file+" converged successfully.")
 				cleanlist.append((path, file))
 			else:
-				print("ERROR:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
-				errct += 1
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
+				ex_ct += 1
 				err = True
 		if err:
 			# zip target directory
@@ -178,11 +195,11 @@ def run_tests(argv):
 	#print("bar")
 	
 	#return success/failure
-	print("Validation detected "+str(errct)+" models with errors.")
+	print("Validation detected "+str(errct)+" models with errors and "+str(ex_ct)+" models with exceptions.")
 	for errpath, errfile in errlist:
 		print(" * "+os.path.join(errpath, errfile))
 	
-	exit(errct)
+	exit(errct+ex_ct)
 	#return errct
 #end run_tests()
 
