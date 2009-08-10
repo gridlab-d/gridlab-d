@@ -8,12 +8,11 @@ class test {
 	enumeration {NO=0, YES=1} value;
         intrinsic create(object parent)
 	{
-		return 0;
+		return 1;
 	};
 }
 
 object test:..100 {
 	value (random.bernoulli(0.8)) ? YES : NO;
-	};
 }
 
