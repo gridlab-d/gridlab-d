@@ -432,6 +432,15 @@ STATUS exec_start(void)
 		output_message("GridLAB-D entering debug mode");
 	}
 
+	/* realtime startup */
+	if (global_run_realtime)
+	{
+		time(&global_clock);
+		output_verbose("realtime mode requires using now (%d) as starttime", global_clock);
+		if (global_stoptime<global_clock)
+			global_stoptime=TS_NEVER;
+	}
+
 	iteration_counter = global_iteration_limit;
 	sync.step_to = global_clock;
 	sync.hard_event = 1;
@@ -451,7 +460,19 @@ STATUS exec_start(void)
 			output_set_time_context(sync.step_to);
 
 			sync.hard_event = 0;
-			global_clock = sync.step_to;
+
+			/* realtime support */
+			if (global_run_realtime)
+			{
+				struct timeval tv;
+				gettimeofday(&tv);
+				output_verbose("waiting %d usec", 1000000-tv.tv_usec);
+				usleep(1000000-tv.tv_usec);
+				global_clock = tv.tv_sec+1;
+				output_verbose("realtime clock advancing to %d", (int)global_clock);
+			}
+			else
+				global_clock = sync.step_to;
 
 			/* synchronize all internal schedules */
 			sync.step_to = syncall_internals(sync.step_to);

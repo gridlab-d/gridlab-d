@@ -399,7 +399,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 								KEYWORD *key;
 								printf("\t%s {", proptype);
 								for (key=prop->keywords; key!=NULL; key=key->next)
-									printf("%s=%d%s", key->name, key->value, key->next==NULL?"":", ");
+									printf("%s=%"FMT_INT64"d%s", key->name, key->value, key->next==NULL?"":", ");
 								printf("} %s;", strrchr(prop->name,':')+1);
 							} 
 							else 

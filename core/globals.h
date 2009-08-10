@@ -127,6 +127,8 @@ GLOBAL char global_platform[8] /**< the host operating platform */
 GLOBAL int global_suppress_repeat_messages INIT(1); /**< flag that allows repeated messages to be suppressed */
 GLOBAL int global_suppress_deprecated_messages INIT(0); /**< flag to suppress output notice of deprecated properties usage */
 
+GLOBAL int global_run_realtime INIT(0); /**< flag to force simulator into realtime mode */
+
 #ifdef __cplusplus
 }
 #endif

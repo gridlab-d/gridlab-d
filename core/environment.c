@@ -65,7 +65,10 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	{
 #ifndef WIN32
 		output_verbose("starting server");
-		return server_startup(argc,argv);
+		if (server_startup(argc,argv))
+			return exec_start();
+		else
+			return FAILED;
 #else
 		output_fatal("server environment not supported on this platform");
 		return FAILED;

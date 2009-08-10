@@ -80,6 +80,7 @@ static struct s_varmap {
 	{"platform",PT_char8, global_platform, PA_REFERENCE},
 	{"suppress_repeat_messages",PT_int32, &global_suppress_repeat_messages, PA_REFERENCE},
 	{"maximum_synctime",PT_int32, &global_maximum_synctime, PA_REFERENCE},
+	{"run_realtime",PT_int32, &global_run_realtime, PA_REFERENCE},
 	/* add new global variables here */
 };
 
