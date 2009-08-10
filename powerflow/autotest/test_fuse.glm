@@ -1,0 +1,150 @@
+// Fuse test
+
+// Simple test to verify that the fuses blow when current exceeds amp rating, and that only
+// the phase that blows actually creates an open in the circuit.
+
+clock {
+	timestamp '2000-01-01 12:00:00';
+	timezone PST+8EDT;
+}
+
+module powerflow;
+module assert;
+module tape;
+//#define stylesheet="C:\Documents and Settings\d3x289\Desktop\GLD_6_4\trunk\VS2005\gridlabd-2_0";
+//#set iteration_limit=100;
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;	
+}
+
+object line_configuration:300 {
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
+}
+
+object transformer_configuration:400 {
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+	install_type PADMOUNT;
+}
+
+object node {
+	nominal_voltage 7199.778;
+	phases ABCN;
+	name node1;
+}
+
+object node {
+	nominal_voltage 7199.778;
+	phases ABCN;
+	name node2;
+}
+
+object node {
+	nominal_voltage 2401.777;
+	phases ABCN;
+	name node3;
+}
+
+object load {
+	nominal_voltage 2401.777;
+	phases ABCN;
+	name load4;
+	constant_power_A 10;
+	object player {
+		property constant_power_B;
+		file ../fuse_load_B.player;
+	};
+	constant_power_C 100000+100000j;
+}
+
+object overhead_line {
+	from node1;
+	to node2;
+	configuration line_configuration:300;
+	phases ABCN;
+}
+
+object transformer {
+	from node2;
+	to node3;
+	configuration transformer_configuration:400;
+	phases ABCN;
+}
+
+object fuse {
+	from node3;
+	to load4;
+	mean_replacement_time 1000;
+	current_limit 1;
+	phases ABCN;
+	name fuse_test;
+	object enum_assert {
+		target phase_A_status;
+		object player {
+			property value;
+			file ../fuse_ph_A_status.player;
+		};
+	};
+	object enum_assert {
+		target phase_B_status;
+		object player {
+			property value;
+			file ../fuse_ph_B_status.player;
+		};
+	};
+	object enum_assert {
+		target phase_C_status;
+		object player {
+			property value;
+			file ../fuse_ph_C_status.player;
+		};
+	};
+	
+	object complex_assert {
+		target power_out_A;
+		value 10+0j;
+		within 0.1;
+	};
+	object complex_assert {
+		target power_out_B;
+		object player {
+			property status;
+			file ../fuse_assert_status_B.player;
+		};
+		value 1000+1000j;
+		within 1;
+	};	
+	object complex_assert {
+		target power_out_C;
+		object player {
+			property status;
+			file ../fuse_assert_status_C.player;
+		};
+		value 100000+100000j;
+		within 1;
+	};
+}
