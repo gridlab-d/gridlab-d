@@ -11,11 +11,12 @@
 #define _WATERHEATER_H
 
 #include "residential.h"
+#include "residential_enduse.h"
 
-class waterheater {
+class waterheater : public residential_enduse {
 private:
 	complex *pVoltage;		///< reference to the assigned panel circuit voltage
-	ENDUSELOAD load;		///< end-use load structure (required by parent house)
+	double standby_load;	///< typical power loss through thermal jacket losses (UA 2, 60 to 140 degF, 160 BTU/hr, 47W, 411kWh/year, ~10% energy star guesstimate)
 public:
 	typedef enum {
 		ONENODE,	///< tank model uses a single zone
@@ -81,11 +82,13 @@ public:
 	double thermostat_deadband;			///< deadband around Tset (half above, half below) [F]
 	complex power_kw;					///< total power demand [kW]
 	double power_factor;
-	complex kwh_meter;					///< energy used since start of simulation [kWh] 
 	double faux_gain;
+	double *pTair;
+	double *pTout;
+	
 
 public:
-	static CLASS *oclass;
+	static CLASS *oclass, *pclass;
 	static waterheater *defaults;
 	
 	waterheater(MODULE *mod);

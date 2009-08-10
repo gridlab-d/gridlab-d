@@ -34,15 +34,15 @@
 // waterheater CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* waterheater::oclass = NULL;
-waterheater *waterheater::defaults = NULL;
+CLASS* waterheater::pclass = NULL;
 
 /**  Register the class and publish water heater object properties
  **/
-waterheater::waterheater(MODULE *module) 
-{
+waterheater::waterheater(MODULE *module) : residential_enduse(module){
 	// first time init
 	if (oclass==NULL)
 	{
+		pclass = residential_enduse::oclass;
 		// register the class definition
 		oclass = gl_register_class(module,"waterheater",sizeof(waterheater),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
@@ -50,53 +50,25 @@ waterheater::waterheater(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
+			PT_INHERIT, "residential_enduse",
 			PT_double,"tank_volume[gal]",PADDR(tank_volume), PT_DESCRIPTION, "the volume of water in the tank when it is full",
-			PT_double,"tank_UA[Btu/h]",PADDR(tank_UA), PT_DESCRIPTION, "the UA of the tank (surface area divided by R-value)",
-			PT_double,"tank_diameter[ft]",PADDR(tank_diameter),
-			PT_double,"water_demand[gpm]",PADDR(water_demand),
-			PT_double,"heating_element_capacity[W]",PADDR(heating_element_capacity),
-			PT_double,"inlet_water_temperature[degF]",PADDR(Tinlet),
-			PT_enumeration,"heat_mode",PADDR(heat_mode),
+			PT_double,"tank_UA[Btu.h/degF]",PADDR(tank_UA), PT_DESCRIPTION, "the UA of the tank (surface area divided by R-value)",
+			PT_double,"tank_diameter[ft]",PADDR(tank_diameter), PT_DESCRIPTION, "the diameter of the water heater tank",
+			PT_double,"water_demand[gpm]",PADDR(water_demand), PT_DESCRIPTION, "the hot water draw from the water heater",
+			PT_double,"heating_element_capacity[W]",PADDR(heating_element_capacity), PT_DESCRIPTION,  "the power of the heating element",
+			PT_double,"inlet_water_temperature[degF]",PADDR(Tinlet), PT_DESCRIPTION,  "the inlet temperature of the water tank",
+			PT_enumeration,"heat_mode",PADDR(heat_mode), PT_DESCRIPTION, "the energy source for heating the water heater",
 				PT_KEYWORD,"ELECTRIC",ELECTRIC,
 				PT_KEYWORD,"GASHEAT",GASHEAT,
-			PT_enumeration,"location",PADDR(location),
+			PT_enumeration,"location",PADDR(location), PT_DESCRIPTION, "whether the water heater is inside or outside",
 				PT_KEYWORD,"INSIDE",INSIDE,
 				PT_KEYWORD,"GARAGE",GARAGE,
-			PT_double,"tank_setpoint[degF]",PADDR(tank_setpoint),
-			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),
-			//PT_complex,"power[kW]",PADDR(power_kw),
-			PT_double,"meter[kWh]",PADDR(kwh_meter),
-			PT_double,"temperature[degF]",PADDR(Tw),
-			PT_double,"height[ft]",PADDR(h),
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"constant_power[kW]",PADDR(load.power),
-			PT_complex,"constant_current[A]",PADDR(load.current),
-			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-
+			PT_double,"tank_setpoint[degF]",PADDR(tank_setpoint), PT_DESCRIPTION, "the temperature around which the water heater will heat its contents",
+			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband), PT_DESCRIPTION, "the degree to heat the water tank, when needed",
+			PT_double,"temperature[degF]",PADDR(Tw), PT_DESCRIPTION, "the outlet temperature of the water tank",
+			PT_double,"height[ft]",PADDR(h), PT_DESCRIPTION, "the height of the hot water column within the water tank",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
-
-		// setup the default values
-		defaults = this;
-		memset(this,0,sizeof(waterheater));
-
-		// initialize public values
-		tank_volume = 50.0;
-		tank_UA = 0.0;
-		tank_diameter	= 1.5;  // All heaters are 1.5-ft wide for now...
-		Tinlet = 60.0;		// default set here, but published by the model for users to set this value
-		water_demand = 0.0;	// in gpm
-		heating_element_capacity = 0.0;
-		heat_needed = FALSE;
-		location = GARAGE;
-		heat_mode = ELECTRIC;
-		tank_setpoint = 0.0;
-		thermostat_deadband = 0.0;
-		power_kw = complex(0,0);
-		kwh_meter = 0.0;
-		Tw = 0.0;
 	}
 }
 
@@ -106,8 +78,22 @@ waterheater::~waterheater()
 
 int waterheater::create() 
 {
-	// copy the defaults
-	memcpy(this,defaults,sizeof(waterheater));
+	int res = residential_enduse::create();
+
+	// initialize public values
+	tank_volume = 50.0;
+	tank_UA = 0.0;
+	tank_diameter	= 1.5;  // All heaters are 1.5-ft wide for now...
+	Tinlet = 60.0;		// default set here, but published by the model for users to set this value
+	water_demand = 0.0;	// in gpm
+	heating_element_capacity = 0.0;
+	heat_needed = FALSE;
+	location = GARAGE;
+	heat_mode = ELECTRIC;
+	tank_setpoint = 0.0;
+	thermostat_deadband = 0.0;
+	power_kw = complex(0,0);
+	Tw = 0.0;
 
 	// location...mostly in garage, a few inside...
 	location = gl_random_bernoulli(0.80) ? GARAGE : INSIDE;
@@ -130,7 +116,14 @@ int waterheater::create()
 	if(tank_UA <= 1.0)
 		tank_UA = 2.0;	// "R-13"
 
-	return 1;
+	// name of enduse
+	load.name = oclass->name;
+
+	load.breaker_amps = 30;
+	load.config = EUC_IS220;
+	load.heatgain_fraction = 0.0; /* power has no effect on heat loss */
+	return res;
+
 }
 
 /** Initialize water heater model properties - randomized defaults for all published variables
@@ -140,38 +133,27 @@ int waterheater::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
-	{
-		gl_error("waterheater must have a parent house");
-		/*	TROUBLESHOOT
-			The waterheater object, being an enduse for the house model, must have a parent
-			house that it is connected to.  Create a house object and set it as the parent
-			of the offending waterheater object.
-		*/
-		return 0;
+	static double sTair = 74;
+	static double sTout = 68;
+
+	if(parent){
+		pTair = gl_get_double_by_name(parent, "air_temperature");
+		pTout = gl_get_double_by_name(parent, "outside_temp");
 	}
 
-	// attach object to house panel
-	house *pHouse = OBJECTDATA(parent,house);
-
-	//	pull parent attach_enduse and attach the enduseload
-	FUNCTIONADDR attach = 0;
-	load.end_obj = hdr;
-	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
-		gl_error("waterheater parent must publish attach_enduse()");
-		/*	TROUBLESHOOT
-			The waterheater object attempt to attach itself to its parent, which
-			must implement the attach_enduse function.
-		*/
-		return 0;
+	if(pTair == 0){
+		pTair = &sTair;
+		gl_warning("waterheater parent lacks \'air_temperature\' property, using default");
 	}
-	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 30, true)->pV;
+	if(pTout == 0){
+		pTout = &sTout;
+		gl_warning("waterheater parent lacks \'outside_temperature\' property, using default");
+	}
 
 	/* sanity checks */
 	/* initialize water tank volume */
 	if(tank_volume <= 0.0){
-		tank_volume = 5*floor((1.0/5.0)*gl_random_uniform(0.90, 1.10) * 50.0 * (pHouse->get_floor_area() /2000.0));  // [gal]
+//		tank_volume = 5*floor((1.0/5.0)*gl_random_uniform(0.90, 1.10) * 50.0 * (pHouse->get_floor_area() /2000.0));  // [gal]
 		if (tank_volume > 100.0)
 			tank_volume = 100.0;		
 		else if (tank_volume < 20.0) 
@@ -233,30 +215,74 @@ int waterheater::init(OBJECT *parent)
 	height 		= tank_volume/GALPCF / area;
 	Cw 			= tank_volume/GALPCF * RHOWATER * Cp;  // [Btu/F]
 
-	// @todo initial tank charge should be based on demand, which is time dependent and must wait until sync from t0=0
-	//if (gl_random_uniform(0,1) < 0.8)
-		h = height;
-	//else
-	//	h = 10 * floor(0.1 * gl_random_uniform(0,height));
+	h = height;
 
 	// initial water temperature
-	if (h == 0)
-
+	if(h == 0){
 		// discharged
-		Tw = /*Tupper*/ Tw = Tlower = Tinlet;  // Note that Tw gets reset, too...
-	else 
-	{
-		/*Tupper*/ Tw = Tw;
+		Tlower = Tinlet;
+		Tupper = Tinlet + TSTAT_PRECISION;
+	} else {
 		Tlower = Tinlet;
 	}
 
-	return 1;
+	/* schedule checks */
+	switch(shape.type){
+		case MT_UNKNOWN:
+			/* normal, undriven behavior. */
+			break;
+		case MT_ANALOG:
+			if(shape.params.analog.energy == 0.0){
+				GL_THROW("waterheater does not support fixed energy shaping");
+				/*	TROUBLESHOOT
+					Though it is possible to drive the water demand of a water heater,
+					it is not possible to shape its power or energy draw.  Its heater
+					is either on or off, not in between.
+					Change the load shape to not specify the power or energy and try
+					again.
+				*/
+			} else if (shape.params.analog.power == 0){
+				; /* power-driven ~ cheat with W/degF*gpm */
+			} else {
+				water_demand = gl_get_loadshape_value(&shape); /* unitless ~ drive gpm */
+			}
+			break;
+		case MT_PULSED:
+			/* pulsed loadshapes "emit one or more pulses at random times s. t. the total energy is accumulated over the period of the loadshape".
+			 * pulsed loadshapes can either user time or kW values per pulse. */
+			if(shape.params.pulsed.pulsetype == MPT_TIME){
+				; /* constant time pulse ~ consumes X gallons to drive heater for Y hours ~ but what's Vdot, what's t? */
+			} else if(shape.params.pulsed.pulsetype == MPT_POWER){
+				; /* constant power pulse ~ draws water to consume X kW, limited by C + Q * h ~ Vdot proportional to power/time */
+			}
+		case MT_MODULATED:
+			if(shape.params.modulated.pulsetype == MPT_TIME){
+				GL_THROW("Amplitude modulated water usage is nonsensical for residential water heaters");
+				/*	TROUBLESHOOT
+					Though it is possible to put a constant, low-level water draw on a water heater, it is thoroughly
+					counterintuitive to the normal usage of the waterheater.
+				 */
+			} else if(shape.params.modulated.pulsetype == MPT_POWER){
+				/* frequency modulated */
+				/* fixed-amplitude, varying length pulses at regular intervals. */
+				;
+			}
+			break;
+		case MT_QUEUED:
+			if(shape.params.queued.pulsetype == MPT_TIME){
+				; /* constant time pulse ~ consumes X gallons/minute to consume Y thermal energy */
+			} else if(shape.params.queued.pulsetype == MPT_POWER){
+				; /* constant power pulse ~ draws water to consume X kW, limited by C + Q * h */
+			}
+			break;
+		default:
+			GL_THROW("waterheater load shape has an unknown state!");
+			break;
+	}
+	return residential_enduse::init(parent);
 }
 
 void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
-	OBJECT *parent = (OBJECTHDR(this))->parent;
-	house *pHouse = OBJECTDATA(parent, house);
-
 	Ton  = tank_setpoint - thermostat_deadband/2;
 	Toff = tank_setpoint + thermostat_deadband/2;
 
@@ -300,7 +326,65 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 		 */
 	}
 	
-	return TS_NEVER;
+	/* determine loadshape effects */
+	switch(shape.type){
+		case MT_UNKNOWN:
+			/* normal, undriven behavior. */
+			break;
+		case MT_ANALOG:
+			if(shape.params.analog.energy == 0.0){
+				/* this should've been caught in init() */
+				GL_THROW("waterheater does not support fixed energy shaping");
+				/*	TROUBLESHOOT
+					Though it is possible to drive the water demand of a water heater,
+					it is not possible to shape its power or energy draw.  Its heater
+					is either on or off, not in between.
+					Change the load shape to not specify the power or energy and try
+					again.
+				*/
+			} else if (shape.params.analog.power == 0){
+				/* power-driven ~ cheat with W/degF*gpm */
+				this->water_demand = load.shape->load / 2.4449;
+			} else {
+				/* unitless ~ drive gpm */
+				this->water_demand = load.shape->load;
+			}
+			break;
+		case MT_PULSED:
+			/* pulsed loadshapes "emit one or more pulses at random times s. t. the total energy is accumulated over the period of the loadshape".
+			 * pulsed loadshapes can either user time or kW values per pulse. */
+			if(shape.params.pulsed.pulsetype == MPT_TIME){
+				; /* constant time pulse ~ consumes X gallons to drive heater for Y hours ~ but what's Vdot, what's t? */
+			} else if(shape.params.pulsed.pulsetype == MPT_POWER){
+				; /* constant power pulse ~ draws water to consume X kW, limited by C + Q * h ~ Vdot proportional to power/time */
+			}
+		case MT_MODULATED:
+			if(shape.params.modulated.pulsetype == MPT_TIME){
+				GL_THROW("Amplitude modulated water usage is nonsensical for residential water heaters");
+				/*	TROUBLESHOOT
+					Though it is possible to put a constant, low-level water draw on a water heater, it is thoroughly
+					counterintuitive to the normal usage of the waterheater.
+				 */
+			} else if(shape.params.modulated.pulsetype == MPT_POWER){
+				/* frequency modulated */
+				/* fixed-amplitude, varying length pulses at regular intervals. */
+				;
+			}
+			break;
+		case MT_QUEUED:
+			if(shape.params.queued.pulsetype == MPT_TIME){
+				; /* constant time pulse ~ consumes X gallons/minute to consume Y thermal energy */
+			} else if(shape.params.queued.pulsetype == MPT_POWER){
+				; /* constant power pulse ~ draws water to consume X kW, limited by C + Q * h */
+			}
+			break;
+		default:
+			GL_THROW("waterheater load shape has an unknown state!");
+			break;
+	}
+
+	//return TS_NEVER;
+	return residential_enduse::sync(t0,t1);
 }
 
 /** Water heater synchronization determines the time to next
@@ -318,31 +402,30 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	} else
 		power_kw = 0.0;
 
+	TIMESTAMP t2 = residential_enduse::sync(t0,t1);
+	
 	// Now find our current temperatures and boundary height...
 	// And compute the time to the next transition...
 	//Adjusted because shapers go on sync, not presync
 
 	set_time_to_transition();
 
-	if(nHours > 0.0 && t0 > 0)
-		load.energy += load.total * nHours;
-
 	// determine internal gains
-	if(nHours > 0){
-		if (location == INSIDE){
-			if(this->current_model == ONENODE){
-				internal_gain = tank_UA * (Tw - get_Tambient(location));
-			} else if(this->current_model == TWONODE){
-				internal_gain = tank_UA * (/*Tupper*/ Tw - Tamb) * h / height;
-				internal_gain += tank_UA * (Tlower - Tamb) * (1 - h / height);
-			}
-		} else {
-			internal_gain = 0;
+	if (location == INSIDE){
+		if(this->current_model == ONENODE){
+			internal_gain = tank_UA * (Tw - get_Tambient(location));
+		} else if(this->current_model == TWONODE){
+			internal_gain = tank_UA * (Tw - Tamb) * h / height;
+			internal_gain += tank_UA * (Tlower - Tamb) * (1 - h / height);
 		}
-		load.total = load.power = power_kw;
-		// post internal gains
-		load.heatgain = (internal_gain * KWPBTUPH);
+	} else {
+		internal_gain = 0;
 	}
+
+	load.total = load.power = power_kw;
+	load.heatgain = (internal_gain * KWPBTUPH);
+
+	gl_enduse_sync(&(residential_enduse::load),t1);
 
 	if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
 		return -(TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND); // negative means soft transition
@@ -635,7 +718,10 @@ double waterheater::actual_kW(void)
 	// calculate rated heat capacity adjusted for the current line voltage
 	if (heat_needed)
     {
-		const double actual_voltage = pVoltage->Mag();
+		if(heat_mode == GASHEAT){
+			return heating_element_capacity / 1000; /* gas heating is voltage independent.  convert W->kW. */
+		}
+		const double actual_voltage = pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
         if (actual_voltage > 2.0*nominal_voltage)
         {
             if (trip_counter++ > 10)
@@ -675,6 +761,7 @@ inline double waterheater::new_temp_1node(double T0, double delta_t)
 {
 	// old because this happens in presync and needs previously used demand
 	const double mdot_Cp = Cp * water_demand_old * 60 * RHOWATER / GALPCF;
+	// Btu / degF.lb * gal/hr * lb/cf * cf/gal = Btu / degF.hr
 
     if (Cw <= ROUNDOFF || (tank_UA+mdot_Cp) <= ROUNDOFF)
         return T0;
@@ -682,6 +769,7 @@ inline double waterheater::new_temp_1node(double T0, double delta_t)
 	const double c1 = (tank_UA + mdot_Cp) / Cw;
 	const double c2 = (actual_kW()*BTUPHPKW + mdot_Cp*Tinlet + tank_UA*get_Tambient(location)) / (tank_UA + mdot_Cp);
 
+//	return  c2 - (c2 + T0) * exp(c1 * delta_t);	// [F]
 	return  c2 - (c2 - T0) * exp(-c1 * delta_t);	// [F]
 }
 
@@ -711,15 +799,16 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 
 	// old because this happens in presync and needs previously used demand
 	const double mdot = water_demand_old * 60 * RHOWATER / GALPCF;		// lbm/hr...
-	const double c1 = RHOWATER * Cp * area * (/*Tupper*/ Tw - Tlower);
+	const double c1 = RHOWATER * Cp * area * (/*Tupper*/ Tw - Tlower); // lb/ft^3 * ft^2 * degF * Btu/lb.degF = lb/lb * ft^2/ft^3 * degF/degF * Btu = Btu/ft
 
 	// check c1 before division
 	if (fabs(c1) <= ROUNDOFF)
         return height;      // if /*Tupper*/ Tw and Tlower are real close, then the new height is the same as tank height
 //		throw MODEL_NOT_2ZONE;
 		
-
+//	#define CWATER		(0.9994)		// BTU/lb/F
 	const double cA = -mdot / (RHOWATER * area) + (actual_kW()*BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
+	// lbm/hr / lb/ft + kW * Btu.h/kW + 
 	const double cb = (tank_UA / height) * (/*Tupper*/ Tw - Tlower) / c1;
 
     if (fabs(cb) <= ROUNDOFF)
@@ -732,8 +821,6 @@ double waterheater::get_Tambient(WHLOCATION loc)
 {
 	double ratio;
 	OBJECT *parent = OBJECTHDR(this)->parent;
-	double *pTair = gl_get_double_by_name(parent, "air_temperature");
-	double *pTout = gl_get_double_by_name(parent, "outside_temp");
 
 	switch (loc) {
 	case GARAGE: // temperature is about 1/2 way between indoor and outdoor
@@ -748,13 +835,6 @@ double waterheater::get_Tambient(WHLOCATION loc)
 	// return temperature of location
 	//house *pHouse = OBJECTDATA(OBJECTHDR(this)->parent,house);
 	//return pHouse->get_Tair()*ratio + pHouse->get_Tout()*(1-ratio);
-	
-	if(pTair == 0){
-		GL_THROW("Unable to find \'air_temperature\' in waterheater parent %s", parent->oclass->name);
-	}
-	if(pTout == 0){
-		GL_THROW("Unable to find \'outside_temp\' in waterheater parent %s", parent->oclass->name);
-	}
 	return *pTair * ratio + *pTout *(1-ratio);
 }
 

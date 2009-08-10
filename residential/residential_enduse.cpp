@@ -52,6 +52,7 @@ residential_enduse::residential_enduse(MODULE *mod)
 int residential_enduse::create(bool connect_shape) 
 {
 	// attach loadshape 
+	load.end_obj = OBJECTHDR(this);
 	if (connect_shape) load.shape = &shape;
 	return 1;
 }
@@ -91,7 +92,7 @@ TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 	gl_debug("%s shape load = %8g", obj->name, gl_get_loadshape_value(&shape));
 	if (load.voltage_factor>1.2 || load.voltage_factor<0.8)
-		gl_warning("%s voltage is out of normal +/- 20%% range of nominal (vf=%.2f)", obj->name, load.voltage_factor);
+		gl_verbose("%s voltage is out of normal +/- 20%% range of nominal (vf=%.2f)", obj->name, load.voltage_factor);
 		/* TROUBLESHOOTING
 		   The voltage on the enduse circuit is outside the expected range for that enduse.
 		   This is usually caused by an impropely configure circuit (e.g., 110V on 220V or vice versa).
