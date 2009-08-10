@@ -647,7 +647,7 @@ void office::update_control_setpoints()
 	TcoolOff = zone.control.cooling_setpoint - zone.control.setpoint_deadband;
 	TheatOn = zone.control.heating_setpoint - zone.control.setpoint_deadband;
 	TheatOff = zone.control.heating_setpoint + zone.control.setpoint_deadband;
-	zone.control.ventilation_fraction = zone.current.occupancy>0 ? zone.hvac.minimum_ach : 0;
+	zone.control.ventilation_fraction = 0;
 }
 
 TIMESTAMP office::update_lighting(TIMESTAMP t0, TIMESTAMP t1)
@@ -753,7 +753,7 @@ double office::update_hvac()
 
 	/* add fan power */
 	if (Qvent!=0)
-		zone.hvac.enduse.power += complex(1,-0.1)*0.1/1000 * zone.design.floor_area; /* ~ 1 W/sf */
+		zone.hvac.enduse.power += complex(.1,-0.01)/1000 * zone.design.floor_area; /* ~ 1 W/sf */
 
 	zone.hvac.enduse.energy += zone.hvac.enduse.power; 
 	if (zone.hvac.enduse.power.Re()<0)
