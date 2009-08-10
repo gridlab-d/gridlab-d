@@ -8,6 +8,7 @@
 #include "loadshape.h"
 
 #define EUC_IS220 0x0001 ///< enduse flag to indicate that the voltage is line-to-line, not line-to-neutral
+#define EUC_HEATLOAD 0x0002 ///< enduse flag to indicate that the load drives the heatgain instead of the total power
 
 typedef struct s_enduse {
 	char *name;
