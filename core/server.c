@@ -98,15 +98,16 @@ void handleRequest(int newsockfd)
 	char method[64];
 	char name[1024];
 	char property[1024];
-	char xml[] = "Content-Type: text/xml\n\n<xml>%s</xml>\n";
+	char value[1024];
 
 	/* read socket */
 	read(newsockfd,(void *)input,MAXSTR);
 
 	/* @todo process input and write to output */
 	output_verbose("received incoming request [%s]", input);
-	switch (sscanf(input,"%63s /%1023[^/]/%1023s",method,name,property)) {
+	switch (sscanf(input,"%63s /%1023[^/]/%1023[^= ]=%1023s",method,name,property,value)) {
 	case 2:
+		output_verbose("2 terms received");
 		if (strcmp(method,"GET")==0)
 		{
 			char buf[1024];
@@ -115,17 +116,18 @@ void handleRequest(int newsockfd)
 				output_verbose("variable '%s' not found", name);
 			else
 				output_verbose("got %s=[%s]", name,buf);
-			sprintf(output,xml,buf);
+			sprintf(output,"%s\n",buf);
 		}
 		else if (strcmp(method,"POST")==0)
 		{
 			output_error("POST not supported yet");
-			sprintf(output,xml,"POST not supported yet");			
+			sprintf(output,"%s\n","POST not supported yet");			
 		}
 		else	
-			sprintf(output,xml,"method not supported");
+			sprintf(output,"%s\n","method not supported");
 		break;
 	case 3:
+		output_verbose("3 terms received");
 		if (strcmp(method,"GET")==0)
 		{
 			char buf[1024]="property not found";
@@ -135,23 +137,55 @@ void handleRequest(int newsockfd)
 			if (obj==NULL)
 			{
 				output_verbose("object '%s' not found", name);
-				sprintf(output,xml,"object not found");
+				sprintf(output,"%s\n","object not found");
 				break;
 			}
 			if (object_get_value_by_name(obj,property,buf,sizeof(buf)))
 				output_verbose("got %s.%s=[%s]", name,property,buf);
-			sprintf(output,xml,buf);
+			sprintf(output,"%s\n",buf);
 		}
 		else if (strcmp(method,"POST")==0)
 		{
 			output_error("POST not supported yet");
-			sprintf(output,xml,"POST not supported yet");			
+			sprintf(output,"%s\n","POST not supported yet");			
 		}
 		else	
-			sprintf(output,xml,"method not supported");		
+			sprintf(output,"%s\n","method not supported");		
+		break;
+	case 4:
+		output_verbose("4 terms received (method='%s', name='%s', property='%s', value='%s'", method, name, property, value);
+		if (strcmp(method,"GET")==0)
+		{
+			char buf[1024]="property not found";
+			OBJECT *obj;
+			output_verbose("getting object '%s'", name);
+			obj = object_find_name(name);
+			if (obj==NULL)
+			{
+				output_verbose("object '%s' not found", name);
+				sprintf(output,"%s\n","object not found");
+				break;
+			}
+			if (strcmp(value,"")!=0)
+			{
+				output_verbose("set %s.%s=[%s]", name, property, value);
+				if (!object_set_value_by_name(obj,property,value))
+					output_verbose("set failed!");
+			}
+			if (object_get_value_by_name(obj,property,buf,sizeof(buf)))
+				output_verbose("got %s.%s=[%s]", name,property,buf);
+			sprintf(output,"%s\n",buf);
+		}
+		else if (strcmp(method,"POST")==0)
+		{
+			output_error("POST not supported yet");
+			sprintf(output,"%s\n","POST not supported yet");			
+		}
+		else	
+			sprintf(output,"%s\n","method not supported");		
 		break;
 	default:
-		sprintf(output,xml,"invalid query");
+		sprintf(output,"%s\n","invalid query");
 		break;
 	}
 
