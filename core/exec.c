@@ -432,6 +432,7 @@ STATUS exec_start(void)
 		output_message("GridLAB-D entering debug mode");
 	}
 
+#ifndef WIN32
 	/* realtime startup */
 	if (global_run_realtime)
 	{
@@ -440,7 +441,7 @@ STATUS exec_start(void)
 		if (global_stoptime<global_clock)
 			global_stoptime=TS_NEVER;
 	}
-
+#endif
 	iteration_counter = global_iteration_limit;
 	sync.step_to = global_clock;
 	sync.hard_event = 1;
@@ -461,6 +462,7 @@ STATUS exec_start(void)
 
 			sync.hard_event = 0;
 
+#ifndef WIN32
 			/* realtime support */
 			if (global_run_realtime)
 			{
@@ -472,6 +474,7 @@ STATUS exec_start(void)
 				output_verbose("realtime clock advancing to %d", (int)global_clock);
 			}
 			else
+#endif
 				global_clock = sync.step_to;
 
 			/* synchronize all internal schedules */
