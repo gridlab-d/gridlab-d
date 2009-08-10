@@ -1,4 +1,10 @@
+/* complex_assert
 
+   Very simple test that compares complex values to any corresponding complex value.  It breaks the
+   tests down into a test for the real value and a test for the imagniary portion.  If either test 
+   fails at any time, it throws a 'zero' to the commit function and breaks the simulator out with 
+   a failure code.
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -141,11 +147,11 @@ EXPORT int commit_complex_assert(OBJECT *obj)
 			double imag_error = error.Im();
 			if ((_isnan(real_error) || abs(real_error)<ca->within)||(_isnan(imag_error) || abs(imag_error)<ca->within)){
 				if (_isnan(real_error) || abs(real_error)<ca->within) {
-					gl_verbose("Assert failed on %s: real part of %s %g not within %f of %g", 
+					gl_verbose("Assert failed on %s: real part of %s %g is within %f of %g", 
 					gl_name(obj->parent,buff,64), ca->target, x->Re(), ca->within, ca->value.Re());
 				}
 				if (_isnan(imag_error) || abs(imag_error)<ca->within) {
-					gl_verbose("Assert failed on %s: imaginary part of %s %+gi not within %f of %+gi", 
+					gl_verbose("Assert failed on %s: imaginary part of %s %+gi is within %f of %gi", 
 					gl_name(obj->parent,buff,64), ca->target, x->Im(), ca->within, ca->value.Im());
 				}
 				return 0;

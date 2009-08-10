@@ -1,5 +1,9 @@
-/** Double Assert Function
-**/
+/* double_assert
+
+   Very simple test that compares double values to any corresponding double value.  If the test 
+   fails at any time, it throws a 'zero' to the commit function and breaks the simulator out with 
+   a failure code.
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
