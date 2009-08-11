@@ -95,7 +95,7 @@ int substation::create()
 	distribution_voltage[0] = distribution_voltage[1] = distribution_voltage[2] = complex(0,0,A);
 	distribution_current[0] = distribution_current[1] = distribution_current[2] = complex(0,0,J);
 	distribution_energy = 0.0;
-	distribution_power = 0.0;
+	distribution_power = complex(0,0,J);
 	distribution_demand = 0.0;
 
 	return result;
@@ -157,7 +157,7 @@ TIMESTAMP substation::presync(TIMESTAMP t0, TIMESTAMP t1)
 		NonPU_Voltage = *NetNodeVoltage*Network_Node_Base_Voltage;
 
 		//Put our power on the network node (one phases worth)
-		*NetNodePower = PU_Power / 3.0;
+		*NetNodePower = complex(PU_Power.Re() / 3.0, PU_Power.Im() / 3.0, J);
 		UNLOCK_OBJECT(nethdr);
 
 		//Put network node's voltage as our own (balanced offsets)
