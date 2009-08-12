@@ -196,7 +196,8 @@ office::office(MODULE *module)
 			PT_double, "thermostat_deadband[degF]", PADDR(zone.control.setpoint_deadband),
 			PT_double, "control.ventilation_fraction", PADDR(zone.control.ventilation_fraction),
 			PT_double, "control.lighting_fraction", PADDR(zone.control.lighting_fraction),
-			
+			PT_double, "ACH", PADDR(zone.hvac.minimum_ach),
+
 			NULL)<1) throw("unable to publish properties in "__FILE__);
 		defaults = this;
 		memset(defaults,0,sizeof(office));
@@ -647,7 +648,7 @@ void office::update_control_setpoints()
 	TcoolOff = zone.control.cooling_setpoint - zone.control.setpoint_deadband;
 	TheatOn = zone.control.heating_setpoint - zone.control.setpoint_deadband;
 	TheatOff = zone.control.heating_setpoint + zone.control.setpoint_deadband;
-	zone.control.ventilation_fraction = 0;
+	zone.control.ventilation_fraction = zone.current.occupancy>0 ? zone.hvac.minimum_ach : 0;
 }
 
 TIMESTAMP office::update_lighting(TIMESTAMP t0, TIMESTAMP t1)
@@ -777,25 +778,24 @@ TIMESTAMP office::plc(TIMESTAMP t0, TIMESTAMP t1)
 	/* compute the new control temperature */
 	update_control_setpoints();
 
-	vent = MinAch;
-	if (Tair<TheatOn) 
+//	vent = MinAch; <- // useless and harmful; code in update_control_setpoints already updates it
+	if (Tair<=TheatOn)  // enter HEAT/AUX mode
 	{
 		if (Tair<=Taux)
 			mode = HC_AUX;
 		else
 			mode = HC_HEAT;
 	}
-	else if (Tair>TheatOff && Tair<TcoolOff) 
+	else if (Tair>TheatOff && Tair<TcoolOff)  // enter VENT/OFF mode
 	{
 		if (vent>0)
 			mode = HC_VENT;
 		else
 		{
 			mode = HC_OFF;
-			vent = 0.0;
 		}
 	}
-	else if (Tair>TcoolOn) 
+	else if (Tair>=TcoolOn) // enter ECON/COOL mode
 	{
 		if (Tout<Tecon)
 		{
