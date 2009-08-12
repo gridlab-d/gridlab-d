@@ -92,7 +92,7 @@ int waterheater::create()
 	heat_mode = ELECTRIC;
 	tank_setpoint = 0.0;
 	thermostat_deadband = 0.0;
-	power_kw = complex(0,0);
+//	power_kw = complex(0,0);
 	Tw = 0.0;
 
 	// location...mostly in garage, a few inside...
@@ -383,8 +383,8 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 			break;
 	}
 
-	//return TS_NEVER;
-	return residential_enduse::sync(t0,t1);
+	return TS_NEVER;
+	//return residential_enduse::sync(t0,t1);
 }
 
 /** Water heater synchronization determines the time to next
@@ -398,9 +398,9 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// determine the power used
 	if (heat_needed == TRUE){
-		power_kw = actual_kW() * (heat_mode == GASHEAT ? 0.01 : 1.0);
+		/* power_kw */ load.power = actual_kW() * (heat_mode == GASHEAT ? 0.01 : 1.0);
 	} else
-		power_kw = 0.0;
+		/* power_kw */ load.power = 0.0;
 
 	TIMESTAMP t2 = residential_enduse::sync(t0,t1);
 	
@@ -422,7 +422,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		internal_gain = 0;
 	}
 
-	load.total = load.power = power_kw;
+	load.total = load.power = /* power_kw */ load.power;
 	load.heatgain = (internal_gain * KWPBTUPH);
 
 	gl_enduse_sync(&(residential_enduse::load),t1);
@@ -690,6 +690,11 @@ SingleZone:
 	return;
 }
 
+/* the key to picking the equations apart is that the goal is to calculate the temperature differences relative to the
+ *	temperature of the lower node (or inlet temp, if 1node).
+ * cA is the volume change from water draw, heating element, and thermal jacket given a uniformly cold tank
+ * cB is the volume change from the extra energy within the hot water node
+ */
 double waterheater::dhdt(double h)
 {
 	if (/*Tupper*/ Tw - Tlower < ROUNDOFF)
@@ -697,7 +702,7 @@ double waterheater::dhdt(double h)
 
 	// Pre-set some algebra just for efficiency...
 	const double mdot = water_demand * 60 * RHOWATER / GALPCF;		// lbm/hr...
-    const double c1 = RHOWATER * Cp * area * (/*Tupper*/ Tw - Tlower);
+    const double c1 = RHOWATER * Cp * area * (/*Tupper*/ Tw - Tlower);	// Btu/ft...
 	
     // check c1 before dividing by it
     if (c1 <= ROUNDOFF)
@@ -707,7 +712,7 @@ double waterheater::dhdt(double h)
 	const double cb = (tank_UA / height) * (/*Tupper*/ Tw - Tlower) / c1;
 
 	// Returns the rate of change of 'h'
-	return cA + cb*h;
+	return cA - cb*h;
 }
 
 double waterheater::actual_kW(void)
