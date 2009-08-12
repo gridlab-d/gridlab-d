@@ -9,16 +9,18 @@
 
 class triplex_meter : public triplex_node
 {
-protected:
-	TIMESTAMP last_t;
-
 public:
 	complex measured_voltage[3];	///< measured voltage
 	complex measured_current[3];	///< measured current
-	double measured_energy; //< metered energy
-	double measured_power; //< metered power
+	double measured_real_energy;	///< metered real energy consumption
+	double measured_reactive_energy;///< metered reactive energy consumption
+	complex measured_power; //< metered power
+	complex indiv_measured_power[3]; //individual phase power
 	double measured_demand; //< metered demand (peak of power)
 	double measured_real_power; //< metered real power
+	double measured_reactive_power; //< metered reactive power
+	TIMESTAMP dt;
+	TIMESTAMP last_t;
 
 public:
 	static CLASS *oclass;
@@ -28,7 +30,6 @@ public:
 	inline triplex_meter(CLASS *cl=oclass):triplex_node(cl){};
 	int create(void);
 	int init(OBJECT *parent);
-	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	int isa(char *classname);
 };
