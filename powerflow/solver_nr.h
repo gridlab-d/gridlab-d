@@ -49,6 +49,6 @@ typedef struct {
 } Bus_admit;
 
 
-int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch);
+int64 solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch);
 
 #endif

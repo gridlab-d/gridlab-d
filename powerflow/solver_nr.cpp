@@ -17,7 +17,7 @@ complex tempPb;
 double Maxmismatch;
 int size_offdiag_PQ;
 int size_diag_fixed;
-double eps = 0.01; //1.0e-4;
+//double eps = 0.01; //1.0e-4;
 bool newiter;
 Bus_admit *BA_diag; /// BA_diag store the diagonal elements of the bus admittance matrix, the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 Y_NR *Y_offdiag_PQ; //Y_offdiag_PQ store the row,column and value of off_diagonal elements of 6n*6n Y_NR matrix. No PV bus is included.
@@ -30,8 +30,6 @@ double tempIcalcReal, tempIcalcImag;
 double tempPbus; //tempPbus store the temporary value of active power load at each bus
 double tempQbus; //tempQbus store the temporary value of reactive power load at each bus
 int indexer,jindex, kindex, jindexer, tempa, tempb;
-extern unsigned global_iteration_limit;
-
 
 SuperMatrix Test_Matrix;		//Simple initialization just to make sure SuperLU is linking - can be deleted
 superlu_options_t test_options; //Simple initialization just to make sure SuperLU is linking - can be deleted
@@ -52,23 +50,22 @@ else return c->row_ind - d->row_ind;
 	n>0 to indicate success after n interations, or 
 	n<0 to indicate failure after n iterations
  **/
-int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
+int64 solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 {
 	//FILE *pFile = fopen("myfile.txt","w"); ////////////////////////to be delete
 
-	//Pull off the iteration count (it's backwards and incorporates iteration_limit
-	int64 Iteration = 0;
-	//This may change
-	char buffer[64];
-	gl_global_getvar("iteration_limit",buffer,sizeof(buffer));
+	//Internal iteration counter - just NR limits
+	int64 Iteration;
 
-	indexer=0;
-	while (buffer[indexer] != NULL)
-	{
-		Iteration *= 10;
-		Iteration += (int)buffer[indexer]-48;
-		indexer++;
-	}
+	//convergence limit
+	double eps;
+
+	//DV checking array
+	complex DVConvCheck[3];
+	double CurrConvVal;
+
+	//Calculate the convergence limit - base it off of the swing bus
+	eps = default_maximum_voltage_error * bus[indexer].V[0].Mag();
 
 	//Build the diagnoal elements of the bus admittance matrix	
 	if (BA_diag == NULL)
@@ -302,7 +299,7 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 	complex undeltacurr[3], undeltaimped[3], undeltapower[3];
 	complex delta_current[3], voltageDel[3];
 
-	for (; Iteration > 0; Iteration--)
+	for (Iteration=0; Iteration<NR_iteration_limit; Iteration++)
 	{
 		//System load at each bus is represented by second order polynomial equations
 		for (indexer=0; indexer<bus_count; indexer++)
@@ -472,31 +469,32 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 			}
 		}
 
-		// Convergence test. Check the active and reactive power mismatche deltaP and deltaQ, to see if they are in the tolerance.
-		newiter = false;
-		Maxmismatch = 0;
-		for (indexer=3; indexer<(bus_count*3); indexer++) // do not check the swing bus
-		{
-			if ( Maxmismatch < abs(deltaP[indexer]))
-			{	
-				Maxmismatch = abs(deltaP[indexer]);	
-			}	
-			else if (Maxmismatch < abs(deltaQ[indexer]))
-			{
-				Maxmismatch = abs(deltaQ[indexer]);	
-			}
-			else
-				;
-		}
+		////Old convergence test - power check (method in the paper)
+		//// Convergence test. Check the active and reactive power mismatche deltaP and deltaQ, to see if they are in the tolerance.
+		//newiter = false;
+		//Maxmismatch = 0;
+		//for (indexer=3; indexer<(bus_count*3); indexer++) // do not check the swing bus
+		//{
+		//	if ( Maxmismatch < abs(deltaP[indexer]))
+		//	{	
+		//		Maxmismatch = abs(deltaP[indexer]);	
+		//	}	
+		//	else if (Maxmismatch < abs(deltaQ[indexer]))
+		//	{
+		//		Maxmismatch = abs(deltaQ[indexer]);	
+		//	}
+		//	else
+		//		;
+		//}
 
-		if ( Maxmismatch <= eps)
-		{
-			printf("Power flow calculation converges at Iteration %d \n",Iteration-1);
-		}
-		else if ( Maxmismatch > eps)
-			newiter = true;
-		if ( newiter == false )
-			break;
+		//if ( Maxmismatch <= eps)
+		//{
+		//	gl_verbose("Power flow calculation converges at Iteration %d \n",Iteration-1);
+		//}
+		//else if ( Maxmismatch > eps)
+		//	newiter = true;
+		//if ( newiter == false )
+		//	break;
 
 		// Calculate the elements of a,b,c,d in equations(14),(15),(16),(17). These elements are used to update the Jacobian matrix.	
 		for (indexer=0; indexer<bus_count; indexer++)
@@ -779,7 +777,10 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 		//	}
 		//}
 
+		//Update bus voltages - check convergence while we're here
 		kindex = 0;
+		Maxmismatch = 0;
+
 		for (indexer=0; indexer<bus_count; indexer++)
 		{
 			//Avoid swing bus updates
@@ -788,12 +789,20 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 				for (jindex=0; jindex<3; jindex++)
 				{
 					((bus[indexer].V[jindex]).Re()) = ((bus[indexer].V[jindex]).Re()) + sol [kindex];
+					DVConvCheck[jindex]=sol[kindex];
 					kindex +=1;
 				}
 
 				for (jindex=0; jindex<3; jindex++)
 				{
 					((bus[indexer].V[jindex]).Im()) = ((bus[indexer].V[jindex]).Im()) +sol [kindex];
+					DVConvCheck[jindex]+=complex(0,sol[kindex]);
+
+					//Pull off the magnitude (no sense calculating it twice)
+					CurrConvVal=DVConvCheck[jindex].Mag();
+					if (CurrConvVal > Maxmismatch)	//Update our convergence check if it is bigger
+						Maxmismatch=CurrConvVal;
+
 					kindex +=1;
 				}
 			}
@@ -802,6 +811,18 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 				kindex +=6;	//Increment us for what this bus would have been had it not been a swing
 			}
 		}	
+
+		//New convergence test - voltage check
+		newiter=false;
+		if ( Maxmismatch <= eps)
+		{
+			printf("Power flow calculation converges at Iteration %d \n",Iteration-1);
+		}
+		else if ( Maxmismatch > eps)
+			newiter = true;
+		
+		if ( newiter == false )
+			break;
 
 		//if (Iteration==500)
 		//{
@@ -826,43 +847,7 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 		Destroy_SuperMatrix_Store( &A );
 		Destroy_SuperMatrix_Store(&B);
 		StatFree ( &stat );
-	}
-
-	////Update the iteration count back to GridLAB-D
-	//char outbuffer[64];
-
-	//if (Iteration == 0)	//Make sure we didn't fail out for no more iterations
-	//{
-	//	outbuffer[0] = 48;	//0
-	//	indexer = 1;		//Update flag so we can make sure to null stuff out
-	//}
-	//else	//Normal run, parse out what we are
-	//{
-	//	indexer=0;
-	//	int TenBase = (int)log10(double(Iteration));
-	//	int64 TempNum = 0;
-	//	int64 IterUpdate = Iteration;
-	//	int64 CurrBase;
-	//	while (TenBase >= 0)
-	//	{
-	//		CurrBase = 10^TenBase;					//Current 10-base
-	//		TempNum = (int)(IterUpdate/CurrBase);	//Amount of this multiplier we are
-	//		
-	//		IterUpdate -= TempNum * CurrBase;		//Pull this off for the next run
-	//		
-	//		buffer[indexer] = (char)(TempNum + 48);	//Store it
-
-	//		TenBase--;	//Update multiplier
-	//		indexer++;	//Update index
-	//	}
-	//}
-	//for (;indexer<64;indexer++)
-	//{
-	//	outbuffer[indexer] = NULL;
-	//}
-
-	//gl_global_setvar("passes",buffer);
-
+	}	//End iteration loop
 
 //for (jindexer=0; jindexer<bus_count; jindexer++)
 //	{
@@ -876,7 +861,12 @@ int solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branch)
 //fclose(pFile); //////////////////////////////////////// to be delete
 
 	gl_warning("Newton-Raphson solution method is not yet supported");
-	return Iteration;
+
+	//Check to see how we are ending
+	if ((Iteration==NR_iteration_limit) && (newiter==true)) //Reached the limit
+		return -Iteration;
+	else	//Must have converged (failure to solve not handled yet)
+		return Iteration;
 }
 
 

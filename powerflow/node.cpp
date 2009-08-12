@@ -1064,9 +1064,25 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		{
 		if ((NR_curr_bus==NR_bus_count) && (bustype==SWING))	//Only run the solver once everything has populated
 		{
-			int result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata);
-			if (result<=0)
-				return TS_INVALID;
+			int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata);
+			if (result==0)
+			{
+				GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
+				/*  TROUBLESHOOT
+				Newton-Raphson has failed to complete even a single iteration on the powerflow.  This is an indication
+				that the method will not solve the system and may have a singularity or other ill-favored condition in the
+				system matrices.
+				*/
+			}
+			else if (result<0)	//Failure to converge, but we just let it stay where we are for now
+			{
+				gl_verbose("Newton-Raphson failed to converge, sticking at same iteration.");
+				/*  TROUBLESHOOT
+				Newton-Raphson failed to converge in the number of iterations specified in NR_iteration_limit.
+				It will try again (if the global iteration limit has not been reached).
+				*/
+				return t0;
+			}
 			else
 				return t1;
 		}
