@@ -294,6 +294,13 @@ int capacitor::init(OBJECT *parent)
 		phases_connected = phases;	//Just use what the node has set
 	}
 
+	if (control==MANUAL)	//Set transition variables to beginning value initially
+	{
+		switchA_state_Prev = switchA_state_Next = switchA_state;
+		switchB_state_Prev = switchB_state_Next = switchB_state;
+		switchC_state_Prev = switchC_state_Next = switchC_state;
+	}
+
 	return result;
 }
 
