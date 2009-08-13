@@ -543,28 +543,48 @@ int64 solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branc
 
 				for (jindex=0; jindex<3; jindex++)
 				{
-					bus[indexer].Jacob_A[jindex] = ((undeltapower[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
-					bus[indexer].Jacob_A[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() + (undeltacurr[jindex]).Im() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) + (undeltaimped[jindex]).Im();// second part of equation(37)
-					bus[indexer].Jacob_B[jindex] = ((undeltapower[jindex]).Re() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) + 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
-					bus[indexer].Jacob_B[jindex] += -((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() + (undeltacurr[jindex]).Re() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(38)
-					bus[indexer].Jacob_C[jindex] = ((undeltapower[jindex]).Re() * (pow((bus[indexer].V[jindex]).Im(),2) - pow((bus[indexer].V[jindex]).Re(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
-					bus[indexer].Jacob_C[jindex] +=((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() - (undeltacurr[jindex]).Re() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(39)
-					bus[indexer].Jacob_D[jindex] = ((undeltapower[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
-					bus[indexer].Jacob_D[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() - (undeltacurr[jindex]).Im() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Im();// second part of equation(40)
+					if ((bus[indexer].V[jindex]).Mag()!=0)
+					{
+						bus[indexer].Jacob_A[jindex] = ((undeltapower[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
+						bus[indexer].Jacob_A[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() + (undeltacurr[jindex]).Im() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) + (undeltaimped[jindex]).Im();// second part of equation(37)
+						bus[indexer].Jacob_B[jindex] = ((undeltapower[jindex]).Re() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) + 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
+						bus[indexer].Jacob_B[jindex] += -((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() + (undeltacurr[jindex]).Re() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(38)
+						bus[indexer].Jacob_C[jindex] = ((undeltapower[jindex]).Re() * (pow((bus[indexer].V[jindex]).Im(),2) - pow((bus[indexer].V[jindex]).Re(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
+						bus[indexer].Jacob_C[jindex] +=((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() - (undeltacurr[jindex]).Re() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(39)
+						bus[indexer].Jacob_D[jindex] = ((undeltapower[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
+						bus[indexer].Jacob_D[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() - (undeltacurr[jindex]).Im() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Im();// second part of equation(40)
+					}
+					else
+					{
+						bus[indexer].Jacob_A[jindex] = (undeltaimped[jindex]).Im();
+						bus[indexer].Jacob_B[jindex] = -(undeltaimped[jindex]).Re();
+						bus[indexer].Jacob_C[jindex] = -(undeltaimped[jindex]).Re();
+						bus[indexer].Jacob_D[jindex] = -(undeltaimped[jindex]).Im();
+					}
 				}
 			}
 			else
 			{
 				for (jindex=0; jindex<3; jindex++)
 				{
-					bus[indexer].Jacob_A[jindex] = ((bus[indexer].S[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
-					bus[indexer].Jacob_A[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Re() + (bus[indexer].I[jindex]).Im() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) + (bus[indexer].Y[jindex]).Im();// second part of equation(37)
-					bus[indexer].Jacob_B[jindex] = ((bus[indexer].S[jindex]).Re() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) + 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
-					bus[indexer].Jacob_B[jindex] += -((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Im() + (bus[indexer].I[jindex]).Re() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (bus[indexer].Y[jindex]).Re();// second part of equation(38)
-					bus[indexer].Jacob_C[jindex] = ((bus[indexer].S[jindex]).Re() * (pow((bus[indexer].V[jindex]).Im(),2) - pow((bus[indexer].V[jindex]).Re(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
-					bus[indexer].Jacob_C[jindex] +=((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Im() - (bus[indexer].I[jindex]).Re() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (bus[indexer].Y[jindex]).Re();// second part of equation(39)
-					bus[indexer].Jacob_D[jindex] = ((bus[indexer].S[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
-					bus[indexer].Jacob_D[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Re() - (bus[indexer].I[jindex]).Im() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (bus[indexer].Y[jindex]).Im();// second part of equation(40)
+					if ((bus[indexer].V[jindex]).Mag()!=0)
+					{
+						bus[indexer].Jacob_A[jindex] = ((bus[indexer].S[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
+						bus[indexer].Jacob_A[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Re() + (bus[indexer].I[jindex]).Im() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) + (bus[indexer].Y[jindex]).Im();// second part of equation(37)
+						bus[indexer].Jacob_B[jindex] = ((bus[indexer].S[jindex]).Re() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) + 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
+						bus[indexer].Jacob_B[jindex] += -((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Im() + (bus[indexer].I[jindex]).Re() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (bus[indexer].Y[jindex]).Re();// second part of equation(38)
+						bus[indexer].Jacob_C[jindex] = ((bus[indexer].S[jindex]).Re() * (pow((bus[indexer].V[jindex]).Im(),2) - pow((bus[indexer].V[jindex]).Re(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
+						bus[indexer].Jacob_C[jindex] +=((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Im() - (bus[indexer].I[jindex]).Re() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (bus[indexer].Y[jindex]).Re();// second part of equation(39)
+						bus[indexer].Jacob_D[jindex] = ((bus[indexer].S[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].S[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
+						bus[indexer].Jacob_D[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(bus[indexer].I[jindex]).Re() - (bus[indexer].I[jindex]).Im() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (bus[indexer].Y[jindex]).Im();// second part of equation(40)
+					}
+					else
+					{
+						bus[indexer].Jacob_A[jindex]= (bus[indexer].Y[jindex]).Im();
+						bus[indexer].Jacob_B[jindex]= -(bus[indexer].Y[jindex]).Re();
+						bus[indexer].Jacob_C[jindex]= -(bus[indexer].Y[jindex]).Re();
+						bus[indexer].Jacob_D[jindex]= -(bus[indexer].Y[jindex]).Im();
+					}
 				}
 			}
 		}
