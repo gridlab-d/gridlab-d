@@ -31,12 +31,6 @@ int saveall(char *filename)
 	};
 	int i;
 
-	/* setup output stream */
-	if (filename[0]=='-')
-		fp = stdout;
-	else if ((fp=fopen(filename,"w"))==NULL)
-			return 0;
-
 	/* identify output format */
 	if (ext==NULL)
 	{	/* no extension given */
@@ -51,6 +45,13 @@ int saveall(char *filename)
 	for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 	{
 		if (strcmp(ext,map[i].format)==0)
+				/* setup output stream */
+			if (filename[0]=='-')
+				fp = stdout;
+			else if ((fp=fopen(filename,"w"))==NULL){
+				output_error("saveall: unable to open stream \'%s\' for writing", filename);
+				return 0;
+			}
 			return (*(map[i].save))(filename,fp);
 	}
 
