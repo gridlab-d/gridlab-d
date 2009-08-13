@@ -23,6 +23,12 @@ public:
 	TIMESTAMP dt;
 	TIMESTAMP last_t;
 
+#ifdef SUPPORT_OUTAGES
+	int16 sustained_count;	//reliability sustained event counter
+	int16 momentary_count;	//reliability momentary event counter
+	int16 total_count;		//reliability total event counter
+#endif
+
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;

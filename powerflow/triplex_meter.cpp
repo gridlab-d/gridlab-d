@@ -77,6 +77,11 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_complex, "measured_current_1[A]", PADDR(measured_current[0]),
 			PT_complex, "measured_current_2[A]", PADDR(measured_current[1]),
 			PT_complex, "measured_current_N[A]", PADDR(measured_current[2]),
+#ifdef SUPPORT_OUTAGES
+			PT_int16, "sustained_count", PADDR(sustained_count),	//reliability sustained event counter
+			PT_int16, "momentary_count", PADDR(momentary_count),	//reliability momentary event counter
+			PT_int16, "total_count", PADDR(total_count),		//reliability total event counter
+#endif
 
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		}
@@ -101,6 +106,11 @@ int triplex_meter::create()
 // Initialize a distribution triplex_meter, return 1 on success
 int triplex_meter::init(OBJECT *parent)
 {
+#ifdef SUPPORT_OUTAGES
+	sustained_count=0;	//reliability sustained event counter
+	momentary_count=0;	//reliability momentary event counter
+	total_count=0;		//reliability total event counter
+#endif
 	return triplex_node::init(parent);
 }
 

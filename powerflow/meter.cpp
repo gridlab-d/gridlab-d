@@ -79,6 +79,11 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_complex, "measured_current_A[A]", PADDR(measured_current[0]),
 			PT_complex, "measured_current_B[A]", PADDR(measured_current[1]),
 			PT_complex, "measured_current_C[A]", PADDR(measured_current[2]),
+#ifdef SUPPORT_OUTAGES
+			PT_int16, "sustained_count", PADDR(sustained_count),	//reliability sustained event counter
+			PT_int16, "momentary_count", PADDR(momentary_count),	//reliability momentary event counter
+			PT_int16, "total_count", PADDR(total_count),		//reliability total event counter
+#endif
 
 
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
@@ -100,6 +105,12 @@ int meter::create()
 {
 	int result = node::create();
 	
+#ifdef SUPPORT_OUTAGES
+	sustained_count=0;	//reliability sustained event counter
+	momentary_count=0;	//reliability momentary event counter
+	total_count=0;		//reliability total event counter
+#endif
+
 	measured_voltage[0] = measured_voltage[1] = measured_voltage[2] = complex(0,0,A);
 	measured_voltageD[0] = measured_voltageD[1] = measured_voltageD[2] = complex(0,0,A);
 	measured_current[0] = measured_current[1] = measured_current[2] = complex(0,0,J);
