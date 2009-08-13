@@ -439,7 +439,7 @@ int node::init(OBJECT *parent)
 		else
 			throw("Please specify which phase (A,B,or C) the triplex node is attached to.");
 
-		voltage[2] = 0.0;	//Ground always assumed it seems
+		voltage[2] = complex(1e-8,0);	//Ground always assumed it seems
 	}
 	else if ((has_phase(PHASE_A|PHASE_B|PHASE_C)) || (has_phase(PHASE_D)))	//three phase or delta
 	{

@@ -490,7 +490,8 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			// compute admittance - invert b matrix - special circumstances given different methods
 			if (has_phase(PHASE_S)) //Triplexy
 			{
-				inverse(b_mat,Y);
+				GL_THROW("I broke here - NR not working yet.");
+				equalm(b_mat,Y);
 			}
 			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
 				Y[0][0] = complex(1.0) / b_mat[0][0];
@@ -579,7 +580,29 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				}
 				else if (SpecialLnk==SPLITPHASE)	//Split phase - non working
 				{
-					GL_THROW("Not done yet");
+					equalm(b_mat,Yto);
+
+					//Store value into YSto
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							YSto[jindex*3+kindex]=Yto[jindex][kindex];
+						}
+					}
+
+					equalm(B_mat,Yfrom);
+
+					//Store value into YSfrom
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+						}
+					}
+					
+					//GL_THROW("Not done yet");
 				}
 				else	//Other xformers
 				{
@@ -611,7 +634,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 					multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
 				}
 			}
-			else					//Simple lines
+			else 				//Simple lines
 			{
 				//Compute total self admittance - include line charging capacitance
 				equalm(a_mat,Ylinecharge);
@@ -624,6 +647,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				addition(Ylinecharge,Y,From_Y);
 				//equalm(From_Y,To_Y);
 			}
+			
 
 			//Update time variable
 			prev_LTime=t0;

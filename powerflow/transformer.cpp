@@ -508,8 +508,137 @@ int transformer::init(OBJECT *parent)
 			}
 			else if (solver_method==SM_NR)
 			{
-				throw "Newton-Raphson solution method is not yet supported";
-			}
+				V_basehi = config->V_primary;
+
+				if (has_phase(PHASE_A))
+				{
+					sa_base = config->phaseA_kVA_rating;
+					if (sa_base==0)	
+						GL_THROW("Split-phase tranformer:%d trying to attach to phase A not defined in the configuration",obj->id);
+						/*  TROUBLESHOOT
+						A single-phase, center-tapped transformer is attempting to attach to a system with phase A, while
+						its phase A is undefined.  Fix the appropriate link or define a new transformer configuration with
+						powerA_rating property properly defined.
+						*/
+				}
+				else if (has_phase(PHASE_B))
+				{
+					sa_base = config->phaseB_kVA_rating;
+					if (sa_base==0)	
+						GL_THROW("Split-phase tranformer:%d trying to attach to phase B not defined in the configuration",obj->id);
+						/*  TROUBLESHOOT
+						A single-phase, center-tapped transformer is attempting to attach to a system with phase B, while
+						its phase B is undefined.  Fix the appropriate link or define a new transformer configuration with
+						powerB_rating property properly defined.
+						*/
+				}
+				else if (has_phase(PHASE_C))
+				{
+					sa_base = config->phaseC_kVA_rating;
+					if (sa_base==0)	
+						GL_THROW("Split-phase tranformer:%d trying to attach to phase C not defined in the configuration",obj->id);
+						/*  TROUBLESHOOT
+						A single-phase, center-tapped transformer is attempting to attach to a system with phase C, while
+						its phase C is undefined.  Fix the appropriate link or define a new transformer configuration with
+						powerC_rating property properly defined.
+						*/
+				}
+
+				za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
+				za_baselo = (V_base * V_base)/(sa_base*1000);
+
+				if (config->impedance1.Re() == 0.0 && config->impedance.Im() == 0.0)
+				{
+					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
+					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+				}
+				else
+				{
+					z0 = complex(config->impedance.Re(),config->impedance.Im()) * complex(za_basehi,0);
+					z1 = complex(config->impedance1.Re(),config->impedance1.Im()) * complex(za_baselo,0);
+					z2 = complex(config->impedance2.Re(),config->impedance2.Im()) * complex(za_baselo,0);
+				}
+
+				zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
+				
+				if (has_phase(PHASE_A))
+				{
+					a_mat[0][0] = a_mat[1][0] = (z0 / zc + complex(1,0))*nt;
+					
+					c_mat[0][0] = complex(1,0)*nt / zc;
+				
+					d_mat[0][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
+					d_mat[0][1] = complex(-1,0)/nt;
+
+					A_mat[0][0] = A_mat[1][0] =  (zc / (zc + z0) ) * complex(1,0)/nt;
+
+					gl_warning("Newton-Raphson solution method is not yet supported");
+				}
+				else if (has_phase(PHASE_B))
+				{
+					a_mat[0][1] = a_mat[1][1] = (z0 / zc + complex(1,0))*nt;
+				
+					c_mat[1][0] = complex(1,0)*nt / zc;
+
+					d_mat[1][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
+					d_mat[1][1] = complex(-1,0)/nt;
+
+					A_mat[0][1] = A_mat[1][1] = (zc / (zc + z0) ) * complex(1,0)/nt;
+
+					gl_warning("Newton-Raphson solution method is not yet supported");
+				}
+				else if (has_phase(PHASE_C))
+				{
+					a_mat[0][2] = a_mat[1][2] = (z0 / zc + complex(1,0))*nt;
+				
+					c_mat[2][0] = complex(1,0)*nt / zc;
+
+					d_mat[2][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
+					d_mat[2][1] = complex(-1,0)/nt;
+
+					A_mat[0][2] = A_mat[1][2] = (zc / (zc + z0) ) * complex(1,0)/nt;
+
+					gl_warning("Newton-Raphson solution method is not yet supported");
+				}
+				else
+					GL_THROW("Unsupported number of phases specified for center-tap transformer:%d",obj->id);
+					/* TROUBLESHOOT
+					Center-tap/split-tap transformers only support a single phase from the standard three
+					phase configurations.  Please specify phases A, B, or C and phase S to indicate which
+					phase the transformer is attached.  Your transformer configuration will also need to match.
+					*/
+				
+				// b_mat is now the forward admittance matrix -- inverse of 2x2 FBS b_mat
+				// B_mat is now the backward admittance matrix -- inverse of 2x2 FBS B_mat
+				complex tempdet;
+
+				tempdet = ((complex(nt*nt*nt,0) * z1 + complex(nt,0) * z0) * z2 + complex(nt,0) * z0 * z1) * zc * zc
+					    + ((complex(2*nt*nt*nt,0) * z0 * z1 + complex(nt,0) * z0 * z0) * z2 + complex(nt,0) * z0 * z0 * z1) * zc
+						+ complex(nt*nt*nt,0) * z0 * z0 * z1 * z2;
+
+				b_mat[0][0] = ((complex(nt*nt,0) * z2 + z0) * zc * zc + complex(nt*nt) * z0 * z2 * zc) / tempdet;
+				b_mat[0][1] = (z0 * zc * zc) / tempdet;
+				b_mat[0][2] = complex(0,0);
+				b_mat[1][0] = (z0 * zc * zc) / tempdet;
+				b_mat[1][1] = ((complex(nt*nt,0) * z1 + z0) * zc * zc + complex(nt*nt) * z0 * z1 * zc) / tempdet;
+				b_mat[1][2] = complex(0,0);
+				b_mat[2][0] = complex(0,0);
+				b_mat[2][1] = complex(0,0);
+				b_mat[2][2] = complex(0,0);
+				
+				tempdet = ((complex(nt*nt,0) * z1 + z0) * z2 + z0 * z1) * zc + complex(nt*nt,0) * z0 * z1 * z2;
+
+				B_mat[0][0] = ((complex(nt*nt,0) * z2 + z0) * zc + complex(nt*nt,0) * z0 * z2) / tempdet;
+				B_mat[0][1] = -(z0 * zc) / tempdet;
+				B_mat[1][0] = (z0 * zc) / tempdet;
+				B_mat[1][1] = -((complex(nt*nt,0) * z1 + z0) * zc + complex(nt*nt,0) * z0 * z1) / tempdet;
+				B_mat[1][2] = complex(0,0);
+				B_mat[2][0] = complex(0,0);
+				B_mat[2][1] = complex(0,0);
+				B_mat[2][2] = complex(0,0);
+
+			}	
 			else 
 			{
 				throw "Unsupported solver method";

@@ -135,6 +135,21 @@ void triplex_line::recalc(void)
 		zs[2][2] = zp33;
 
 	}
+	else if (solver_method==SM_NR)
+	{
+		complex tempdet = (zp11 * zp22 - zp12 * zp12) * zp33 - zp11 * zp23 * zp23 
+						+ complex(2,0) * zp12 * zp13 * zp23 - zp13 * zp13 * zp22;
+
+		zs[0][0] = (zp22 * zp33 - zp23 * zp23)/tempdet;
+		zs[0][1] = (zp12 * zp33 - zp13 * zp23)/tempdet;
+		zs[1][0] = (zp12 * zp33 - zp13 * zp23)/tempdet;
+		zs[1][1] = (zp11 * zp33 - zp13 * zp13)/tempdet;
+		zs[0][2] = complex(1e-8,1e-8);
+		zs[1][2] = complex(1e-8,1e-8);
+		zs[2][2] = complex(1e-8,1e-8);
+		zs[2][1] = complex(1e-8,1e-8);
+		zs[2][0] = complex(1e-8,1e-8);
+	}
 	else
 	{
 		throw "unsupported solver method";
@@ -180,13 +195,23 @@ void triplex_line::recalc(void)
 	A_mat[2][1] = complex(0,0);
 	A_mat[2][2] = complex(1,0);
 	
-	multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
-	multiply(length/5280.0,zs,B_mat);
-	
 	if (solver_method==SM_FBS) {
 		tn[0] = -zp13/zp33;
 		tn[1] = -zp23/zp33;
 		tn[2] = 0;
+
+		multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
+		multiply(length/5280.0,zs,B_mat);
+	}
+	else if (solver_method == SM_GS)
+	{
+		multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
+		multiply(length/5280.0,zs,B_mat);
+	}
+	else if (solver_method == SM_NR)
+	{
+		multiply(1/(length/5280.0),zs,b_mat); // Length comes in ft, convert to miles.
+		multiply(1/(length/5280.0),zs,B_mat); // We're in admittance form now, so multiply by 1/L.
 	}
 	
 	// print out matrices when testing.
