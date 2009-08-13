@@ -256,8 +256,9 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			global_dumpall=!global_dumpall;
 		else if (strcmp(*argv,"-q")==0 || strcmp(*argv,"--quiet")==0)
 			global_quiet_mode=!global_quiet_mode;
-		else if (strcmp(*argv,"-v")==0 || strcmp(*argv,"--verbose")==0)
+		else if (strcmp(*argv,"-v")==0 || strcmp(*argv,"--verbose")==0){
 			global_verbose_mode=!global_verbose_mode;
+		}
 		else if (strcmp(*argv,"--profile")==0)
 			global_profiler=!global_profiler;
 		else if (strcmp(*argv,"--pause")==0)

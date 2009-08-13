@@ -22,16 +22,16 @@
 
 static enduse *enduse_list = NULL;
 
-int enduse_create(void *data)
+int enduse_create(enduse *data)
 {
-	enduse *e = (enduse*)data;
+	//enduse *e = (enduse*)data;
 	memset(data,0,sizeof(enduse));
-	e->next = enduse_list;
-	enduse_list = e;
+	data->next = enduse_list;
+	enduse_list = data;
 
 	// check the power factor
-	e->power_factor = 1.0;
-	e->heatgain_fraction = 1.0;
+	data->power_factor = 1.0;
+	data->heatgain_fraction = 1.0;
 
 	return 1;
 }
@@ -71,7 +71,7 @@ int enduse_initall(void)
 
 TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 {
-	if (pass==PC_PRETOPDOWN && t1>e->t_last)
+	if (pass==PC_PRETOPDOWN)// && t1>e->t_last)
 	{
 		if (e->t_last>TS_ZERO)
 		{
@@ -80,6 +80,7 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 			e->energy.i += e->total.i * dt;
 		}
 		e->heatgain = 0;
+		e->t_last = t1;
 	}
 	else if(pass==PC_BOTTOMUP)
 	{
@@ -185,7 +186,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 	}*p, prop_list[]={
 		{PT_complex, "energy[kVAh]", (char *)PADDR(energy), "the total energy consumed since the last meter reading"},
 		{PT_complex, "power[kVA]", (char *)PADDR(total), "the total power consumption of the load"},
-		{PT_complex, "demand[kVA]", (char *)PADDR(demand), "the peak power consumption since the last meter reading"},
+		{PT_complex, "peak_demand[kVA]", (char *)PADDR(demand), "the peak power consumption since the last meter reading"},
 		{PT_double, "heatgain[Btu/h]", (char *)PADDR(heatgain), "the heat transferred from the enduse to the parent"},
 		{PT_double, "heatgain_fraction[pu]", (char *)PADDR(heatgain_fraction), "the fraction of the heat that goes to the parent"},
 		{PT_double, "current_fraction[pu]", (char *)PADDR(current_fraction),"the fraction of total power that is constant current"},
@@ -205,6 +206,8 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		{PT_complex, "total_power[kVA]", (char *)PADDR(power), "the constant power portion of the total load",PF_DEPRECATED},
 		{PT_complex, "current[kVA]", (char *)PADDR(current), "the constant current portion of the total load",PF_DEPRECATED},
 		{PT_complex, "admittance[kVA]", (char *)PADDR(current), "the constant admittance portion of the total load",PF_DEPRECATED},
+		{PT_double, "internal_gains", (char *)PADDR(heatgain), "the heat transferred from the enduse to the parent",PF_DEPRECATED},
+		{PT_complex, "enduse_load", (char *)PADDR(total), "the total power consumption of the load",PF_DEPRECATED},
 	}, *last=NULL;
 
 	// publish the enduse load itself

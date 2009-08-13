@@ -245,7 +245,8 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	static int tp_next = 0;
 	static int tp_count = 0;
 	PROPERTY *prop;
-	
+	int sz = sizeof(OBJECT);
+
 	if(tp_count == 0){
 		tp_count = processor_count();
 	}
@@ -258,8 +259,8 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 		 */
 	}
 
-	obj = (OBJECT*)malloc(sizeof(OBJECT) + oclass->size);
-	
+	obj = (OBJECT*)malloc(sz + oclass->size);
+
 	if(obj == NULL){
 		throw_exception("object_create_single(CLASS *oclass='%s'): memory allocation failed", oclass->name);
 		/* TROUBLESHOOT
@@ -267,7 +268,7 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 		 */
 	}
 
-	memset(obj, 0, sizeof(OBJECT) + oclass->size);
+	memset(obj, 0, sz + oclass->size);
 
 	obj->tp_affinity = 0; /* tp_next++; // @todo use tp_next once threadpool is supported during object creation */
 	tp_next %= tp_count;
@@ -1751,7 +1752,7 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
 		top = item;
 		return top;
 	} else {
-		if(addto_tree(&top, item) != NULL){
+		if(addto_tree(&top, item) != 0){
 			return item;
 		} else {
 			return NULL;

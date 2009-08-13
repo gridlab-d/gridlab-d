@@ -309,12 +309,12 @@ static void sync_queued(loadshape *ls, double dt)
 /** Create a loadshape
 	@return 1 on success, 0 on failure
  **/
-int loadshape_create(void *data)
+int loadshape_create(loadshape *data)
 {
-	loadshape *s = (loadshape*)data;
+	//loadshape *s = (loadshape*)data;
 	memset(data,0,sizeof(loadshape));
-	s->next = loadshape_list;
-	loadshape_list = s;
+	data->next = loadshape_list;
+	loadshape_list = data;
 	return 1;
 }
 
