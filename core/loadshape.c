@@ -314,6 +314,7 @@ int loadshape_create(loadshape *data)
 	//loadshape *s = (loadshape*)data;
 	memset(data,0,sizeof(loadshape));
 	data->next = loadshape_list;
+	data->t2 = TS_NEVER;
 	loadshape_list = data;
 	return 1;
 }
@@ -372,8 +373,10 @@ void loadshape_recalc(loadshape *ls)
 int loadshape_init(loadshape *ls) /**< load shape */
 {
 	/* no schedule -> nothing to initialized */
-	if (ls->schedule==NULL)
+	if (ls->schedule==NULL){
+		output_error("loadshape_init(): a loadshape without a schedule is meaningless");
 		return 0;
+	}
 
 	/* some sanity checks */
 	switch (ls->type) {
