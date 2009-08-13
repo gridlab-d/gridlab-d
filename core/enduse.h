@@ -59,7 +59,7 @@ typedef struct s_enduse {
 	struct s_enduse *next;
 } enduse;
 
-int enduse_create(void *addr);
+int enduse_create(enduse *addr);
 int enduse_init(enduse *e);
 int enduse_initall(void);
 TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1);

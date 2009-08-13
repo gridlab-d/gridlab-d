@@ -85,7 +85,7 @@ struct s_loadshape {
 	struct s_loadshape *next;	/* next loadshape in list */
 };
 
-int loadshape_create(void *shape);
+int loadshape_create(loadshape *shape);
 int loadshape_init(loadshape *shape);
 int loadshape_initall(void);
 TIMESTAMP loadshape_sync(loadshape *m, TIMESTAMP t1);
