@@ -29,7 +29,7 @@
 #include "residential_enduse.h"
 #include "house_e.h"
 
-complex default_line_voltage[3] = {complex(240,0,A),complex(120,180,A),complex(120,180,A)};
+complex default_line_voltage[3] = {complex(240,0,A),complex(120,0,A),complex(120,0,A)};
 complex default_line_current[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
@@ -43,9 +43,9 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("residential::default_line_voltage",PT_complex,&default_line_voltage,PT_SIZE,3,PT_UNITS,"V",PT_DESCRIPTION,"line voltage to use when no circuit is attached",NULL);
 	gl_global_create("residential::default_line_current",PT_complex,&default_line_current,PT_SIZE,3,PT_UNITS,"A",PT_DESCRIPTION,"line current calculated when no circuit is attached",NULL);
 
-	house *house_class = new house(module);
-	new house_e(module);
 	new residential_enduse(module);
+	new house(module);
+	new house_e(module);
 	new waterheater(module);
 	new lights(module);
 	new refrigerator(module);
@@ -60,7 +60,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new evcharger(module);
 
 	/* always return the first class registered */
-	return house_class->oclass;
+	return residential_enduse::oclass;
 }
 
 CDECL int do_kill()
