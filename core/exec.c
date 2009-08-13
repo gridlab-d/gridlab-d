@@ -274,17 +274,19 @@ static STATUS init_all(void)
 	return SUCCESS;
 }
 
-static STATUS commit_all(void){
+static STATUS commit_all(TIMESTAMP t0){
 	OBJECT *obj;
 	TRY {
 		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
 		{
-			if (object_commit(obj)==FAILED){
-				throw_exception("commit_all(): object %s commit failed", object_name(obj));
-				/* TROUBLESHOOT
-					The commit function of the named object has failed.  Make sure that the object's
-					requirements for commit'ing are satisfied and try again.  (likely internal state aberations)
-				 */
+			if(obj->in_svc <= t0 && obj->out_svc >= t0){
+				if(object_commit(obj) == FAILED){
+					throw_exception("commit_all(): object %s commit failed", object_name(obj));
+					/* TROUBLESHOOT
+						The commit function of the named object has failed.  Make sure that the object's
+						requirements for commit'ing are satisfied and try again.  (likely internal state aberations)
+					 */
+				}
 			}
 		}
 	} CATCH(char *msg){
@@ -548,7 +550,7 @@ STATUS exec_start(void)
 			/* check for clock advance */
 			if (sync.step_to != global_clock)
 			{
-				if (commit_all() == FAILED)
+				if (commit_all(global_clock) == FAILED)
 				{
 					output_error("model commit failed");
 					/* TROUBLESHOOT
