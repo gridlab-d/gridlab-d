@@ -71,7 +71,7 @@ lights::lights(MODULE *mod)
 
 			// @todo retire these values before the next major release
 			PT_double,"circuit_split",PADDR(circuit_split), PT_DEPRECATED, PT_DESCRIPTION, "the split of the lighting load across the 120V circuits",
-			PT_double,"demand_factor[unit]",PADDR(shape.load), PT_DEPRECATED, PT_DESCRIPTION, "the fraction of the installed lighting capacity that is active",
+			PT_double,"demand[unit]",PADDR(shape.load), PT_DEPRECATED, PT_DESCRIPTION, "the fraction of the installed lighting capacity that is active",
 			PT_complex,"enduse_load[kVA]",PADDR(load.total), PT_DEPRECATED, PT_DESCRIPTION, "the total lighting load",
 			PT_double,"internal_gains[Btu/h]",PADDR(load.heatgain), PT_DEPRECATED, PT_DESCRIPTION, "the internal gains from the lighting", 
 			PT_complex,"energy_meter[kVAh]",PADDR(load.energy), PT_DEPRECATED,PT_DESCRIPTION, "the total energy energy consumed since the last meter reading",
@@ -165,6 +165,12 @@ int lights::init(OBJECT *parent)
 	// power factor
 	load.power_factor = power_factor[type];
 
+	if(placement == INDOOR){
+		load.heatgain_fraction = 1.0;
+	} else if (placement == OUTDOOR){
+		load.heatgain_fraction = 0.0;
+	}
+
 	// circuit config and breaker amps
 
 	// waiting this long to initialize the parent class is normal
@@ -173,9 +179,34 @@ int lights::init(OBJECT *parent)
 
 TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	if (pCircuit!=NULL) load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor
-	TIMESTAMP t2 = residential_enduse::sync(t0,t1);
+	double val = 0.0;
+	TIMESTAMP t2 = TS_NEVER;
+
+	if (pCircuit!=NULL)
+		load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor
+
+	t2 = residential_enduse::sync(t0,t1);
+
 	shape.load *= curtailment;
+
+	if(shape.type == MT_UNKNOWN){ /* manual power calculation*/
+		double frac = shape.load;
+		if(shape.load < 0){
+			gl_warning("lights shape demand is negative, capping to 0");
+			shape.load = 0.0;
+		} else if (shape.load > 1.0){
+			gl_warning("lights shape demand exceeds installed lighting power, capping to 100%%");
+			shape.load = 1.0;
+		}
+		load.power = shape.params.analog.power * shape.load * load.voltage_factor;
+		if(fabs(load.power_factor) < 1){
+			val = (load.power_factor<0?-1.0:1.0) * load.power.Re() * sqrt(1/(load.power_factor * load.power_factor) - 1);
+		} else {
+			val = 0;
+		}
+		load.total.SetRect(load.power.Re(), val);
+	}
+
 	gl_enduse_sync(&(residential_enduse::load),t1);
 	return t2;
 }

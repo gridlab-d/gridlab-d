@@ -425,7 +425,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	load.total = load.power = /* power_kw */ load.power;
 	load.heatgain = (internal_gain * KWPBTUPH);
 
-	gl_enduse_sync(&(residential_enduse::load),t1);
+//	gl_enduse_sync(&(residential_enduse::load),t1);
 
 	if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
 		return -(TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND); // negative means soft transition

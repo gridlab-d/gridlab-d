@@ -111,8 +111,6 @@ int refrigerator::create()
 	// name of enduse
 	load.name = oclass->name;
 
-	// @todo other initial conditions
-
 	return res;
 }
 
@@ -186,13 +184,13 @@ TIMESTAMP refrigerator::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 		if(t1 == next_time){
 			/* lazy skip-ahead */
-			load.heatgain = -((Tair - Tout) * exp(-(UAr+UAf)/Cf) + Tout - Tair) * Cf * nHours + Qr * nHours * COP;
+			load.heatgain = (-((Tair - Tout) * exp(-(UAr+UAf)/Cf) + Tout - Tair) * Cf + Qr * COP) * KWPBTUPH;
 			Tair = Tevent;
 		} else {
 			/* run calculations */
 			const double C1 = Cf/(UAr+UAf);
 			const double C2 = Tout - Qr/UAr;
-			load.heatgain = -((Tair - Tout) * exp(-(UAr+UAf)/Cf) + Tout - Tair) * Cf * nHours + Qr * nHours * COP;
+			load.heatgain = (-((Tair - Tout) * exp(-(UAr+UAf)/Cf) + Tout - Tair) * Cf  + Qr * COP) * KWPBTUPH;;
 			Tair = (Tair-C2)*exp(-nHours/C1)+C2;
 		}
 		if (Tair < 32 || Tair > 55)

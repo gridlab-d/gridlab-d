@@ -80,9 +80,6 @@ public:
 	double heating_element_capacity;	///< rated Q of (each) heating element, input in W, converted to[Btu/hr]
 	double tank_setpoint;				///< setpoint T of heating element [F]
 	double thermostat_deadband;			///< deadband around Tset (half above, half below) [F]
-	complex power_kw;					///< total power demand [kW]
-	double power_factor;
-	double faux_gain;
 	double *pTair;
 	double *pTout;
 	
