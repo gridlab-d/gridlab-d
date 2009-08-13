@@ -139,7 +139,7 @@ EXPORT int commit_double_assert(OBJECT *obj)
 			double m = abs(*x-da->value);
 			if (_isnan(m) || m>da->within)
 			{				
-				gl_verbose("Assert failed on %s: %s %g not within %f of %g", 
+				gl_verbose("Assert failed on %s: %s %g not within %f of given value %g", 
 					gl_name(obj->parent, buff, 64), da->target, *x, da->within, da->value);
 				return 0;
 			}
@@ -151,7 +151,7 @@ EXPORT int commit_double_assert(OBJECT *obj)
 			double m = abs(*x-da->value);
 			if (_isnan(m) || m<da->within)
 			{				
-				gl_verbose("Assert failed on %s: %s %g is within %f of %g", 
+				gl_verbose("Assert failed on %s: %s %g is within %f of given value %g", 
 					gl_name(obj->parent, buff, 64), da->target, *x, da->within, da->value);
 				return 0;
 			}
