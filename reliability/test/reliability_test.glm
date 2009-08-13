@@ -5,7 +5,10 @@
 // One house with each enduse represented for verifying power aggregation
 // at the feeder/meter 
 // 
+#set randomseed=1;
 
+module assert;
+module tape;
 module powerflow;
 module climate;
 module residential;
@@ -17,20 +20,8 @@ module reliability {
 
 clock {
 	timestamp '2000-01-01 0:00:00';
-	timezone EST+5EDT;
-}
-
-object load {
-	name Load;
-	parent Node4;
-	phases A|B|C|D;
-	voltage_A +2401.777+0.000j;
-	voltage_B -1200.889-2080.000j;
-	voltage_C -1200.889+2080.000j;
-	constant_power_A +1800000.000+871779.789j;
-	constant_power_B +1800000.000+871779.789j;
-	constant_power_C +1800000.000+871779.789j;
-	nominal_voltage 2400;
+	stoptime '2001-01-01 1:00:00';
+	timezone PST+8PDT;
 }
 
 object metrics {
@@ -41,14 +32,16 @@ object eventgen {
 	name OpenLine;
 	parent Metrics;
 	frequency 25;
-	duration 4;
+	duration 300;
 	group "class=overhead_line";
-	targets "condition";
-	values "OPEN|A|B|C";
+	targets "status";
+	values "OPEN";
 }		
 
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 4 Node Feeder: Balanced step-down delta-delta
+// 4 Node Feeder: Balanced step-down wye-wye
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 object overhead_line_conductor {
@@ -84,7 +77,7 @@ object line_configuration {
 
 object transformer_configuration {
 	name XFC400;
-	connect_type 2;
+	connect_type 1;
 	power_rating 6000;
 	primary_voltage 12470;
 	secondary_voltage 4160;
@@ -97,24 +90,24 @@ object transformer_configuration {
 	connect_type 5;
 	power_rating 400;
 	powerA_rating 400;
-	primary_voltage 2402;
-	secondary_voltage 120;
+	primary_voltage 4160;
+	secondary_voltage 207.846;
 	resistance 0.01;
 	reactance 0.06;
 }
 
 object node {
 	name Node1;
-	phases A|B|C;
-	voltage_A +7199.558+0.000j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
+	phases "ABCN";
+	voltage_A +7199.558+0.000d;
+	voltage_B +7199.558-120.0d;
+	voltage_C +7199.558+120.0d;
 	nominal_voltage 7200;
 }
 
 object overhead_line {
 	name Link12;
-	phases A|B|C;
+	phases "ABCN";
 	from Node1;
 	to Node2;
 	length 2000;
@@ -123,16 +116,16 @@ object overhead_line {
 
 object node {
 	name Node2;
-	phases A|B|C;
-	voltage_A +7199.558+0.000j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
+	phases "ABCN";
+	voltage_A +7199.558+0.000d;
+	voltage_B +7199.558-120.0d;
+	voltage_C +7199.558+120.0d;
 	nominal_voltage 7200;
 }
 
 object transformer {
 	name Link23;
-	phases A|B|C;
+	phases "ABCN";
 	from Node2;
 	to Node3;
 	configuration XFC400;
@@ -140,16 +133,16 @@ object transformer {
 
 object node {
 	name Node3;
-	phases A|B|C;
-	voltage_A +2401.777+0.000j;
-	voltage_B -1200.889-2080.000j;
-	voltage_C -1200.889+2080.000j;
+	phases "ABCN";
+	voltage_A +2401.777+0.000d;
+	voltage_B +2401.777-120.0d;
+	voltage_C +2401.777+120.0d;
 	nominal_voltage 2400;
 }
 
 object overhead_line {
 	name Link34;
-	phases A|B|C;
+	phases "ABCN";
 	from Node3;
 	to Node4;
 	length 2500;
@@ -158,16 +151,16 @@ object overhead_line {
 
 object node {
 	name Node4;
-	phases A|B|C|D;
-	voltage_A +2401.777+0.000j;
-	voltage_B -1200.889-2080.000j;
-	voltage_C -1200.889+2080.000j;
+	phases "ABCN";
+	voltage_A +2401.777+0.000d;
+	voltage_B +2401.777-120.0d;
+	voltage_C +2401.777+120.0d;
 	nominal_voltage 2400;
 }
 
 object transformer {
 	name Link45;
-	phases AS;
+	phases "AS";
 	from Node4;
 	to Meter;
 	configuration PoleTop;
@@ -184,65 +177,60 @@ object triplex_meter {
 	phases AS;
 }
 
-//object node {
-//	name Meter;
-//	phases AS;
-//	nominal_voltage 120;
-//}
-
-//object recorder{
-//	name MeterCorder;
-//	parent Meter;
-//	property voltage_1,voltage_2,voltage_N;
-//	file meter.csv;
-//	interval 3600;
-//	limit 370;
-//}
-
-object house {
-	name House;
+object triplex_node {
+	name Triplex_node;
 	parent Meter;
-	latitude "48N";
-	longitude "125W";
-	floor_area 1500.0 sf;
-//	floor_area random.normal(1500, 300);
-	envelope_UA 450.0;
-	window_wall_ratio 0.25;
-	glazing_shgc 0.40;
-	heating_setpoint 72.0;
-	cooling_setpoint 76.0;
+	phases "AS";
+	nominal_voltage 120;
+	power_1 130000.000+12000j;
 }
 
-object waterheater {
-	name Waterheater;
-	parent House;
-	tank_volume 60;
-	tank_UA 2.0;
-//	water_demand random.uniform(0, 5);  
-	water_demand 0.25 gpm;
-	heating_element_capacity 4500 W;
-	location INSIDE;
-	tank_setpoint 120 degF;
+object load {
+	name Load;
+	parent load_meter;
+	phases "ABCN";
+	voltage_A +7199.558+0.000d;
+	voltage_B +7199.558-120.0d;
+	voltage_C +7199.558+120.0d;
+	constant_power_A +1800000.000+668131.724j;
+	constant_power_B +1800000.000+668131.724j;
+	constant_power_C +1800000.000+668131.724j;
+	nominal_voltage 2400;
 }
 
-object lights {
-	name Lights;
-	type INCANDESCENT;
-	parent House;
-	placement INDOOR;
-	demand 0.50;
-	installed_power 1.5 kW;
+object meter {
+	name load_meter;
+	parent Node4;
+	nominal_voltage 2400;
+	phases "ABCN";
 }
 
-//this tape is set to loop several times to cycle through the synchronization
-object player {
-	name Player;
-	parent Lights;
-	property demand;
-	file lighting.player;
-	loop 2000;
+object recorder {
+	name recorder;
+	parent load_meter;
+	property measured_power,sustained_count,momentary_count,total_count;
+	file "meter_load.csv";
+	interval -1;
+	limit 1000;
 }
 
+object recorder {
+	name MeterCorder;
+	parent Meter;
+	property measured_power,sustained_count,momentary_count,total_count;
+	file "meter.csv";
+	interval -1;
+	limit 1000;
+}
+
+object recorder {
+	name node_recorder;
+	parent Node2;
+	property voltage_A;
+	file "node.csv";
+	interval 3600;
+	limit 8784;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // END

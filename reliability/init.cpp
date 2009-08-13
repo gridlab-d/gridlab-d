@@ -26,6 +26,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	/*** DO NOT EDIT NEXT LINE ***/
 	//NEWCLASS()
 
+
 	/* always return the first class registered */
 	return metrics::oclass;
 }

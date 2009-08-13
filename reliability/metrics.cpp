@@ -62,11 +62,25 @@ metrics::metrics(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			PT_char1024, "report_file", PADDR(report_file),
+			PT_double, "SAIFI", PADDR(SAIFI),
+			PT_double, "SAIDI", PADDR(SAIDI),
+			PT_double, "CAIDI", PADDR(CAIDI),
+			PT_double, "CAIFI", PADDR(CAIFI),
+			PT_double, "CTAIDI", PADDR(CTAIDI),
+			PT_double, "ASAI", PADDR(ASAI),
+			PT_double, "ASIFI", PADDR(ASIFI),
+			PT_double, "ASIDI", PADDR(ASIDI),
+			PT_double, "CEMI", PADDR(CEMI),
+			PT_double, "MAIFI", PADDR(MAIFI),
+			PT_double, "MAIFIE", PADDR(MAIFIE),
+			PT_double, "CEMSMI", PADDR(CEMSMI),
+			PT_int16, "n", PADDR(n),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(metrics));
 		customers = interrupted = NULL;
-		strcpy(report_file,"reliability.csv");
+		SAIFI = SAIDI = CAIDI = CAIFI = CTAIDI = ASAI = ASIFI = ASIDI = CEMI = MAIFI = MAIFIE = CEMSMI = n =0.0;
+		strcpy(report_file,"reliability.txt");
 	}
 }
 
@@ -131,7 +145,7 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			// write reliability report
 			if (!report_event_log)
 				fprintf(fp,"%4d\t", dt.year-1);
-			fprintf(fp, "%.0f\t%.2f\t%.0f\t%.2f\t%.2f\t(na)\t%.6f\n", saidi(), saifi(), caidi(), caifi(), ctaidi(), asai()*100);
+			fprintf(fp, "%.1f\t%.2f\t%.1f\t%.2f\t%.2f\t(na)\t%.6f\n", saidi(), saifi(), caidi(), caifi(), ctaidi(), asai()*100);
 		}
 		
 		// reset totals for new year
@@ -214,7 +228,7 @@ OBJECT *metrics::start_event(EVENT *pEvent,			/**< a pointer to the EVENT struct
 			{
 				fprintf(fp, "\nEVENT LOG FOR YEAR %d\n", dt.year);
 				fprintf(fp, "=======================\n");
-				fprintf(fp,"Event\tDateTime\t\tAffects\tProperties\tValues\tT_interrupted\tL_interrupted\tN_interrupted\n");
+				fprintf(fp,"Event\tDateTime\t\tAffects\tProperties\tValues\t\tT_interrupted\tL_interrupted\tN_interrupted\n");
 			}
 			fprintf(fp,"%d\t", totals.Nevents);
 			gl_strtime(&dt,buffer,sizeof(buffer));
@@ -225,10 +239,10 @@ OBJECT *metrics::start_event(EVENT *pEvent,			/**< a pointer to the EVENT struct
 			else
 				fprintf(fp,"%s:%d\t", obj->oclass->name, obj->id);
 			fprintf(fp,"%s\t\t", targets);
-			fprintf(fp,"%s\t", event_values);
-			fprintf(fp,"%7.2f\t", t);
-
-			complex *kva_in = gl_get_complex_by_name(obj,"power_in");
+			fprintf(fp,"%s\t\t", event_values);
+			fprintf(fp,"%7.2f\t\t", t);
+			//find the interrupted load
+			complex *kva_in = gl_get_complex_by_name(obj,"power_in");//These two lines are incorrect. It should look at the loading at each meter to determine interrupted load.
 			complex *kva_out = gl_get_complex_by_name(obj,"power_out");
 			if (kva_in!=NULL)
 			{
@@ -256,6 +270,8 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 						const char *targets,	/**< the properties to be restored */
 						char *old_values)		/**< the old values to be restored */
 {
+
+
 	/* check whether an event is already started (old_value is populated) */
 	if (strcmp(old_values,"")!=0)
 	{
@@ -263,12 +279,18 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 		gl_verbose("old values = '%s'",old_values);
 
 		FINDLIST *candidates = gl_findlist_copy(customers);
-		//FINDLIST *unserved = gl_find_objects(candidates,FT_PROPERTY,"condition",NOT,SAME,"NORMAL",NULL);
+
 		FINDLIST *unserved = gl_find_objects(candidates,FT_PROPERTY,"voltage_A",EQ,"0.0",AND,FT_PROPERTY,"voltage_B",EQ,"0.0",AND,FT_PROPERTY,"voltage_C",EQ,"0.0",NULL);
 		
 		FINDLIST *candidatessecond = gl_findlist_copy(customers);
 
 		FINDLIST *unservedtrip = gl_find_objects(candidatessecond,FT_PROPERTY,"voltage_1",EQ,"0.0",AND,FT_PROPERTY,"voltage_2",EQ,"0.0",NULL);
+		
+		FINDLIST *pmetercounter = gl_findlist_copy(unserved);
+
+		FINDLIST *tmetercounter = gl_findlist_copy(unservedtrip);
+
+
 
 		OBJECT *tripcust_mad=NULL;
 		while ((tripcust_mad=gl_find_next(unservedtrip,tripcust_mad))!=NULL)
@@ -276,40 +298,106 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 
 		if (report_event_log)
 			fprintf(fp,"%8d\n", unserved->hit_count);
+		//declaring pointers to meter and triplex_meter
 
-		totals.CI += unserved->hit_count;
-		if (eventlist!=NULL)
-			totals.CMI += unserved->hit_count * eventlist->ri;
 
-		OBJECT *cust=NULL;
-		while ((cust=gl_find_next(unserved,cust))!=NULL)
-			gl_findlist_add(interrupted,cust);
-		totals.CN = interrupted->hit_count;
+		
+		
+
+
+
+		//sustained interruption variable calculations
+		if (eventlist->ri > 300) { 
+			//count the number of meters interrupted by the event
+			totals.CI += unserved->hit_count;
+			//calculate the customer minutes interrupted
+			if (eventlist!=NULL) {
+				totals.CMI += unserved->hit_count * eventlist->ri/60;
+			}
+		
+			//increment sustained event counter for each power meter
+			OBJECT *sust_pmeter=NULL;
+			int16 *sust_pcount;
+			while ((sust_pmeter=gl_find_next(pmetercounter,sust_pmeter))!=NULL){
+				sust_pcount = gl_get_int16_by_name(sust_pmeter,"sustained_count");
+				(*sust_pcount)++;
+			}
+			
+			//increment sustained event counter for each triplex meter
+			OBJECT *sust_tmeter=NULL;
+			int16 *sust_tcount;
+			while ((sust_tmeter=gl_find_next(tmetercounter,sust_tmeter))!=NULL){
+				sust_tcount = gl_get_int16_by_name(sust_tmeter,"sustained_count");
+				(*sust_tcount)++;
+			}
+
+		//momentary interruption variable calculations
+		} else {
+			//increment momentary event counter for each power meter
+			OBJECT *momt_pmeter=NULL;
+			int16 *momt_pcount;
+			while ((momt_pmeter=gl_find_next(pmetercounter,momt_pmeter))!=NULL){
+				momt_pcount = gl_get_int16_by_name(momt_pmeter,"momentary_count");
+				(*momt_pcount)++;
+			}
+			
+			//increment momentary event counter for each triplex meter
+			OBJECT *momt_tmeter=NULL;
+			int16 *momt_tcount;
+			while ((momt_tmeter=gl_find_next(tmetercounter,momt_tmeter))!=NULL){
+				momt_tcount = gl_get_int16_by_name(momt_tmeter,"momentary_count");
+				(*momt_tcount)++;
+			}
+			
+		}
+		
+		//determine the total amount of events experienced by each triplex meter
+		OBJECT *totl_tmeter=NULL;
+		int16 *totl_tcount;
+		while ((totl_tmeter=gl_find_next(tmetercounter,totl_tmeter))!=NULL){
+			totl_tcount = gl_get_int16_by_name(totl_tmeter,"total_count");
+			(*totl_tcount)++;
+		}
+		
+		//determine the total amount of events experienced by each power meter
+		OBJECT *totl_pmeter=NULL;
+		int16 *totl_pcount;
+		while ((totl_pmeter=gl_find_next(pmetercounter,totl_pmeter))!=NULL){
+			totl_pcount = gl_get_int16_by_name(totl_pmeter,"total_count");
+			(*totl_pcount)++;
+		}
+		//determine the number of individual meters that experienced at least 1 sustained interruption
+		FINDLIST *sust_intr_cust = gl_find_objects(customers,FT_PROPERTY,"sustained_count",GT,"0.0",NULL);
+		//calculate the total number of customers that were interrupted by 
+		totals.CN = sust_intr_cust->hit_count;
+
+		SAIFI = saifi();
+		SAIDI = saidi();
+		CAIFI = caifi();
+		CAIDI = caidi();
+		CTAIDI = ctaidi();
+		ASAI = asai();
 
 		/* done */
 		gl_free(candidates);
 		gl_free(candidatessecond);
 		fflush(fp);
-		
+
 		/* restore previous values */
 		set_values(obj,targets,old_values);
 		strcpy(old_values,"");
 	}
 }
 
+//calculate the reliability indices
 double metrics::asai(void)
 {
-	return customers->hit_count>0 ? (customers->hit_count*8760 - totals.CMI/60)/(customers->hit_count*8760) : 1.0;
+	return customers->hit_count>0 ? (customers->hit_count*8760 - (totals.CMI/60))/(customers->hit_count*8760) : 1.0;
 }
 
 double metrics::ctaidi(void)
 {
 	return totals.CN>0 ? totals.CMI/totals.CN : 0;
-}
-
-double metrics::caidi(void)
-{
-	return totals.CI>0 ? totals.CMI/totals.CI : 0;
 }
 
 double metrics::saidi(void)
@@ -318,13 +406,18 @@ double metrics::saidi(void)
 }
 
 double metrics::caifi(void)
-{	/* Sum(Ni)/CN */
+{	
 	return totals.CN>0 ? totals.CI/totals.CN : 0;
 }
 
 double metrics::saifi(void)
-{	/* Sum(CI)/NT */
+{	
 	return customers->hit_count>0 ? totals.CI/customers->hit_count:0;
+}
+
+double metrics::caidi(void)
+{
+	return totals.CI>0 ? saidi()/saifi() : 0;
 }
 
 //////////////////////////////////////////////////////////////////////////
