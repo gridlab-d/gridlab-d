@@ -44,7 +44,7 @@ int saveall(char *filename)
 
 	for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 	{
-		if (strcmp(ext,map[i].format)==0)
+		if (strcmp(ext,map[i].format)==0){
 				/* setup output stream */
 			if (filename[0]=='-')
 				fp = stdout;
@@ -53,6 +53,7 @@ int saveall(char *filename)
 				return 0;
 			}
 			return (*(map[i].save))(filename,fp);
+		}
 	}
 
 	output_error("saveall: extension '.%s' not a known format", ext);
