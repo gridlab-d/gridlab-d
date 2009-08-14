@@ -11,15 +11,15 @@
 #define _DISHWASHER_H
 
 #include "residential.h"
+#include "residential_enduse.h"
 
-class dishwasher  
+class dishwasher : public residential_enduse
 {
 
 private:
 	complex *pVoltage;
 
 public:
-	ENDUSELOAD load;			///< enduse load structure
 	double circuit_split;		///< -1=100% negative, 0=balanced, +1=100% positive
 	double installed_power;		///< installed washer power [W] (default = random uniform between 1000 - 3000 W)
 	double demand	;			///< fraction of dishwasher load
@@ -27,8 +27,8 @@ public:
 	double power_factor;		///< power factor (default = 0.95)
 
 public:
-	static CLASS *oclass;
-	static dishwasher *defaults;
+static CLASS *oclass, *pclass;
+static dishwasher *defaults;
 
 	dishwasher(MODULE *module);
 	~dishwasher();

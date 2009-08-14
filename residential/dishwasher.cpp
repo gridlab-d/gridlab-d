@@ -22,9 +22,10 @@
 // dishwasher CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* dishwasher::oclass = NULL;
+CLASS* dishwasher::pclass = NULL;
 dishwasher *dishwasher::defaults = NULL;
 
-dishwasher::dishwasher(MODULE *module) 
+dishwasher::dishwasher(MODULE *module) : residential_enduse(module)
 {
 	// first time init
 	if (oclass==NULL)
@@ -36,23 +37,14 @@ dishwasher::dishwasher(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_double,"installed_power[W]",PADDR(installed_power),
-			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"demand[unit]",PADDR(demand),
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"constant_power[kW]",PADDR(load.power),
-			PT_complex,"constant_current[A]",PADDR(load.current),
-			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
-			PT_double,"heat_fraction",PADDR(heat_fraction),
+			PT_INHERIT, "residential_enduse",
+			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power), PT_DESCRIPTION, "installed power draw",
+			PT_double,"circuit_split",PADDR(circuit_split), PT_DEPRECATED, PT_DESCRIPTION, "the split of the lighting load across the 120V circuits",
+			PT_double,"demand[unit]",PADDR(shape.load),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),PT_DEPRECATED,PT_DESCRIPTION, "the total energy energy consumed since the last meter reading",
+			PT_double,"heat_fraction",PADDR(load.heatgain_fraction),PT_DEPRECATED,
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
-
-		// setup the default values
-		defaults = this;
-		memset(this,0,sizeof(dishwasher));
-		load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	}
 }
 
@@ -62,65 +54,78 @@ dishwasher::~dishwasher()
 
 int dishwasher::create() 
 {
-	// copy the defaults
-	memcpy(this,defaults,sizeof(dishwasher));
+	int res = residential_enduse::create();
 
-	return 1;
+	// name of enduse
+	load.name = oclass->name;
+	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.power_factor = 0.95;
+
+	return res;
 }
 
 int dishwasher::init(OBJECT *parent)
 {
 	// default properties
-	if (installed_power==0) installed_power = gl_random_uniform(1000,3000);		// dishwasher size [W]
-	if (heat_fraction==0) heat_fraction = 0.50;  //Assuming 50% of the power is transformed to internal heat
-	if (power_factor==0) power_factor = 0.95;
+	if(shape.params.analog.power == 0){
+		shape.params.analog.power = gl_random_uniform(1000, 3000);		// dishwasher size [W]
+	}
+	if(load.heatgain_fraction == 0){
+		load.heatgain_fraction = 0.50;  //Assuming 50% of the power is transformed to internal heat
+	}
+	if(load.power_factor == 0){
+		load.power_factor = 0.95;
+	}
 
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
-	{
-		gl_error("dishwasher must have a parent house");
-		/*	TROUBLESHOOT
-			The dishwasher object, being an enduse for the house model, must have a parent house
-			that it is connected to.  Create a house object and set it as the parent of the
-			offending dishwasher object.
-		*/
-		return 0;
+	/* handle schedules */
+	switch(shape.type){
+		case MT_UNKNOWN:
+			break;
+		case MT_ANALOG:
+			break;
+		case MT_PULSED:
+			break;
+		case MT_MODULATED:
+			break;
+		case MT_QUEUED:
+			break;
+		default:
+			char name[64];
+			if(hdr->name == 0){
+				sprintf(name, "%s:%s", hdr->oclass->name, hdr->id);
+			}
+			gl_error("dishwasher %s schedule of an unrecognized type", hdr->name ? hdr->name : name);
 	}
 
-	//	pull parent attach_enduse and attach the enduseload
-	FUNCTIONADDR attach = 0;
-	load.end_obj = hdr;
-	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
-		gl_error("dishwasher parent must publish attach_enduse()");
-		/*	TROUBLESHOOT
-			The dishwasher object attempt to attach itself to its parent, which
-			must implement the attach_enduse function.
-		*/
-		return 0;
-	}
-	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
-
-	// compute initial power draw
-	load.power.SetPowerFactor(installed_power*demand/1000.0, power_factor, J);
-
-	return 1;
+	return residential_enduse::init(parent);
 }
 
 TIMESTAMP dishwasher::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	if (t0>0 && t1>t0)
-		load.energy += load.total * gl_tohours(t1-t0);
+	TIMESTAMP t2 = residential_enduse::sync(t0, t1);
 
-	load.power.SetPowerFactor(installed_power*demand/1000.0, power_factor, J);
+	if (pCircuit!=NULL)
+		load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor
 
-	// update heatgain
-	load.total = load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000;
-	load.heatgain = load.total.Mag()*heat_fraction;
+	if(shape.type == MT_UNKNOWN){ /* requires manual enduse control */
+		double real = 0.0, imag = 0.0;
+		real = shape.params.analog.power * shape.load * load.voltage_factor;
 
-	return TS_NEVER; 
+		if(fabs(load.power_factor) < 1){
+			imag = (load.power_factor<0?-1.0:1.0) * real * sqrt(1/(load.power_factor * load.power_factor) - 1);
+		} else {
+			imag = 0;
+		}
+
+		load.power.SetRect(real, imag); // convert from W to kW
+	}
+	
+	gl_enduse_sync(&(residential_enduse::load), t1);
+
+	return t2; 
 }
 
 
