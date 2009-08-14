@@ -81,6 +81,9 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_int16, "sustained_count", PADDR(sustained_count),	//reliability sustained event counter
 			PT_int16, "momentary_count", PADDR(momentary_count),	//reliability momentary event counter
 			PT_int16, "total_count", PADDR(total_count),		//reliability total event counter
+			PT_int16, "s_flag", PADDR(s_flag),
+			PT_int16, "t_flag", PADDR(t_flag),
+			PT_complex, "pre_load", PADDR(pre_load),
 #endif
 
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -110,6 +113,9 @@ int triplex_meter::init(OBJECT *parent)
 	sustained_count=0;	//reliability sustained event counter
 	momentary_count=0;	//reliability momentary event counter
 	total_count=0;		//reliability total event counter
+	s_flag=0;
+	t_flag=0;
+	pre_load=0;
 #endif
 	return triplex_node::init(parent);
 }

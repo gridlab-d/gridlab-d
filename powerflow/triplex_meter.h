@@ -26,6 +26,9 @@ public:
 	int16 sustained_count;	//reliability sustained event counter
 	int16 momentary_count;	//reliability momentary event counter
 	int16 total_count;		//reliability total event counter
+	int16 s_flag;			//reliability flag that gets set if the meter experienced more than n sustained interruptions
+	int16 t_flag;			//reliability flage that gets set if the meter experienced more than n events total
+	complex pre_load;		//the load prior to being interrupted
 #endif
 
 public:
