@@ -72,8 +72,6 @@ lights::lights(MODULE *mod)
 			// @todo retire these values before the next major release
 			PT_double,"circuit_split",PADDR(circuit_split), PT_DEPRECATED, PT_DESCRIPTION, "the split of the lighting load across the 120V circuits",
 			PT_double,"demand[unit]",PADDR(shape.load), PT_DEPRECATED, PT_DESCRIPTION, "the fraction of the installed lighting capacity that is active",
-			PT_complex,"enduse_load[kVA]",PADDR(load.total), PT_DEPRECATED, PT_DESCRIPTION, "the total lighting load",
-			PT_double,"internal_gains[Btu/h]",PADDR(load.heatgain), PT_DEPRECATED, PT_DESCRIPTION, "the internal gains from the lighting", 
 			PT_complex,"energy_meter[kVAh]",PADDR(load.energy), PT_DEPRECATED,PT_DESCRIPTION, "the total energy energy consumed since the last meter reading",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
@@ -164,6 +162,7 @@ int lights::init(OBJECT *parent)
 
 	// power factor
 	load.power_factor = power_factor[type];
+	load.breaker_amps = 20;
 
 	if(placement == INDOOR){
 		load.heatgain_fraction = 1.0;
@@ -204,7 +203,7 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 		} else {
 			val = 0;
 		}
-		load.total.SetRect(load.power.Re(), val);
+		load.power.SetRect(load.power.Re(), val);
 	}
 
 	gl_enduse_sync(&(residential_enduse::load),t1);

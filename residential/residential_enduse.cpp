@@ -54,6 +54,10 @@ int residential_enduse::create(bool connect_shape)
 	// attach loadshape 
 	load.end_obj = OBJECTHDR(this);
 	if (connect_shape) load.shape = &shape;
+	load.breaker_amps = 20;
+	load.config = 0;
+	load.heatgain_fraction = 1.0; /* power has no effect on heat loss */
+
 	return 1;
 }
 
