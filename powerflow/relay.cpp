@@ -38,6 +38,7 @@ relay::relay(MODULE *mod) : link(mod)
 			PT_double, "time_to_change[s]", PADDR(time_to_change),
 			PT_double, "recloser_delay[s]", PADDR(recloser_delay),
 			PT_int16, "recloser_tries", PADDR(recloser_tries),
+			PT_int16, "recloser_limit", PADDR(recloser_limit),
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -50,14 +51,34 @@ int relay::isa(char *classname)
 int relay::create()
 {
 	int result = link::create();
-	recloser_delay = 5;
-	recloser_tries = 3;
+	recloser_delay = 0;
+	recloser_tries = 0;
+	recloser_limit = 0;
 	return result;
 }
 
 int relay::init(OBJECT *parent)
 {
 	int result = link::init(parent);
+
+	if (recloser_limit == 0)
+	{
+		recloser_limit = 5;
+		gl_warning("Recloser:%d tries limit was not specified, defaulted to 5 tries",OBJECTHDR(this)->id);
+		/*  TROUBLESHOOT
+		The recloser did not have a specified value for the maximum number of recloser tries.  5 was selected as a default value. 
+		*/
+	}
+
+	if (recloser_delay == 0)
+	{
+		recloser_delay = 3;
+		gl_warning("Recloser:%d reclose delay was not specified, defaulted to 3 seconds",OBJECTHDR(this)->id);
+		/*  TROUBLESHOOT
+		The recloser did not have a specified value for the recloser try delay.  3 was selected as a default value. 
+		*/
+	}
+
 
 	if (recloser_delay<=1.0)
 		throw "recloser delay must be at least 1 second";
@@ -98,9 +119,9 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 		if (trip)
 		{
 			/* reschedule automatic recloser if retries permits */ 
-			if (recloser_tries>0)
+			if (recloser_limit>recloser_tries)
 			{
-				recloser_tries--;
+				recloser_tries++;
 				t1 = t0+(TIMESTAMP)(recloser_delay*TS_SECOND);
 			}
 
