@@ -133,19 +133,19 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			if (report_event_log)
 			{
 				fprintf(fp, "\nAnnual reliability metrics report for %d", dt.year-1);
-				fprintf(fp, "\n==========================================\n");
-				fprintf(fp, "SAIDI\tSAIFI\tCAIDI\tCAIFI\tCTAIDI\tMAIFI\tASAI\n");
+				fprintf(fp, "\n===================================================================================\n");
+				fprintf(fp, "SAIDI\tSAIFI\tCAIDI\tCAIFI\tCTAIDI\tCEMI\tCEMSMI\tASIFI\tASIDI\tMAIFIE\tASAI\n");
 			}
 			else if (first_year)
 			{	
-				fprintf(fp, "\nYear\tSAIDI\tSAIFI\tCAIDI\tCAIFI\tCTAIDI\tMAIFI\tASAI\n");
+				fprintf(fp, "\nYear\tSAIDI\tSAIFI\tCAIDI\tCAIFI\tCTAIDI\tCEMI\tCEMSMI\tASIFI\tASIDI\tMAIFIE\tASAI\n");
 				first_year=false;
 			}
 
 			// write reliability report
 			if (!report_event_log)
 				fprintf(fp,"%4d\t", dt.year-1);
-			fprintf(fp, "%.1f\t%.2f\t%.1f\t%.2f\t%.2f\t(na)\t%.6f\n", saidi(), saifi(), caidi(), caifi(), ctaidi(), asai()*100);
+			fprintf(fp, "%.1f\t%.2f\t%.1f\t%.2f\t%.1f\t%.2f\t%.2f\t%.2f\t%.1f\t%.2f\t%.6f\n", saidi(), saifi(), caidi(), caifi(), ctaidi(), cemi(), cemsmi(),asifi(), asidi(), maifie(),asai()*100);
 		}
 		
 		// reset totals for new year
@@ -242,21 +242,18 @@ OBJECT *metrics::start_event(EVENT *pEvent,			/**< a pointer to the EVENT struct
 			fprintf(fp,"%s\t\t", event_values);
 			fprintf(fp,"%7.2f\t\t", t);
 			//find the interrupted load
-			complex *kva_in = gl_get_complex_by_name(obj,"power_in");//These two lines are incorrect. It should look at the loading at each meter to determine interrupted load.
-			complex *kva_out = gl_get_complex_by_name(obj,"power_out");
-			if (kva_in!=NULL)
+			FINDLIST *load_meters = gl_findlist_copy(customers);
+			OBJECT *interrupted_meters=NULL;
+			complex *kva_in;
+			complex *pload;
+			totals.LT=0;//reset the total load value
+			while ((interrupted_meters = gl_find_next(load_meters,interrupted_meters))!=NULL)
 			{
-				double Sin = kva_in->Mag();
-				if (kva_out!=NULL)
-				{
-					double Sout = kva_out->Mag();
-					fprintf(fp,"%9.3f\t", Sin>Sout?Sin:Sout);
-				}
-				else
-					fprintf(fp,"%9.3f\t", Sin);
+				kva_in = gl_get_complex_by_name(interrupted_meters,"measured_power");
+				totals.LT += (*kva_in).Mag();
+				pload = gl_get_complex_by_name(interrupted_meters,"pre_load");
+				(*pload) = (*kva_in);
 			}
-			else
-				fprintf(fp,"(na)\t");
 		}
 
 		/* rest will be written when event ends */
@@ -290,22 +287,30 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 
 		FINDLIST *tmetercounter = gl_findlist_copy(unservedtrip);
 
-
-
+		double S_lost=0;
+		
 		OBJECT *tripcust_mad=NULL;
 		while ((tripcust_mad=gl_find_next(unservedtrip,tripcust_mad))!=NULL)
 			gl_findlist_add(unserved,tripcust_mad);
 
-		if (report_event_log)
+		OBJECT *int_load=NULL;
+		complex *pload;
+		while ((int_load = gl_find_next(unserved,int_load))!=NULL)
+			{
+				pload = gl_get_complex_by_name(int_load,"pre_load");
+				S_lost += (*pload).Mag();
+			}
+		if (eventlist->ri>300){
+			//calculate the total interrupted load over the entire year
+			totals.Li +=S_lost;
+			//calculate the total load interrupted minutes
+			totals.LDI += S_lost * eventlist->ri/60;
+		}
+		
+		if (report_event_log){
+			fprintf(fp,"%9.3f\t", S_lost);
 			fprintf(fp,"%8d\n", unserved->hit_count);
-		//declaring pointers to meter and triplex_meter
-
-
-		
-		
-
-
-
+		}
 		//sustained interruption variable calculations
 		if (eventlist->ri > 300) { 
 			//count the number of meters interrupted by the event
@@ -333,6 +338,8 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 
 		//momentary interruption variable calculations
 		} else {
+			//determine the number of momentary events
+			totals.CMIE += unserved->hit_count;
 			//increment momentary event counter for each power meter
 			OBJECT *momt_pmeter=NULL;
 			int16 *momt_pcount;
@@ -367,9 +374,43 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 			(*totl_pcount)++;
 		}
 		//determine the number of individual meters that experienced at least 1 sustained interruption
-		FINDLIST *sust_intr_cust = gl_find_objects(customers,FT_PROPERTY,"sustained_count",GT,"0.0",NULL);
+		candidates = gl_findlist_copy(customers);
+		FINDLIST *sust_intr_cust = gl_find_objects(candidates,FT_PROPERTY,"sustained_count",GT,"0.0",NULL);
 		//calculate the total number of customers that were interrupted by 
 		totals.CN = sust_intr_cust->hit_count;
+
+		//set the CEMI and CEMSMI flags for each type of meter
+		candidates = gl_findlist_copy(customers);
+		OBJECT *k_sust_cust=NULL;
+		int16 *s_count;
+		int16 *sust_flag;
+		while ((k_sust_cust=gl_find_next(candidates,k_sust_cust))!=NULL){
+			s_count = gl_get_int16_by_name(k_sust_cust,"sustained_count");
+			if ((*s_count)>n){
+				sust_flag = gl_get_int16_by_name(k_sust_cust,"s_flag");
+				(*sust_flag)=1;
+			}
+		}
+
+		candidates = gl_findlist_copy(customers);
+		OBJECT *k_totl_cust=NULL;
+		int16 *t_count;
+		int16 *totl_flag;
+		while ((k_totl_cust=gl_find_next(candidates,k_totl_cust))!=NULL){
+			t_count = gl_get_int16_by_name(k_totl_cust,"total_count");
+			if ((*t_count)>n){
+				totl_flag = gl_get_int16_by_name(k_totl_cust,"t_flag");
+				(*totl_flag)=1;
+			}
+		}
+
+		//find the number of meter who experienced more than n sustained and total events
+		candidates = gl_findlist_copy(customers);
+		FINDLIST *cemi_cust = gl_find_objects(candidates,FT_PROPERTY,"s_flag",EQ,"1",NULL);
+		candidates = gl_findlist_copy(customers);
+		FINDLIST *cemsmi_cust = gl_find_objects(candidates,FT_PROPERTY,"t_flag",EQ,"1",NULL);
+		totals.CNK=cemi_cust->hit_count;
+		totals.CNT=cemsmi_cust->hit_count;
 
 		SAIFI = saifi();
 		SAIDI = saidi();
@@ -377,7 +418,10 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 		CAIDI = caidi();
 		CTAIDI = ctaidi();
 		ASAI = asai();
-
+		MAIFIE = maifie();
+		CEMI = cemi();
+		ASIDI = asidi();
+		ASIFI = asifi();
 		/* done */
 		gl_free(candidates);
 		gl_free(candidatessecond);
@@ -394,32 +438,46 @@ double metrics::asai(void)
 {
 	return customers->hit_count>0 ? (customers->hit_count*8760 - (totals.CMI/60))/(customers->hit_count*8760) : 1.0;
 }
-
 double metrics::ctaidi(void)
 {
 	return totals.CN>0 ? totals.CMI/totals.CN : 0;
 }
-
 double metrics::saidi(void)
 {
 	return customers->hit_count>0 ? totals.CMI / customers->hit_count : 0;
 }
-
 double metrics::caifi(void)
 {	
 	return totals.CN>0 ? totals.CI/totals.CN : 0;
 }
-
 double metrics::saifi(void)
 {	
 	return customers->hit_count>0 ? totals.CI/customers->hit_count:0;
 }
-
 double metrics::caidi(void)
 {
 	return totals.CI>0 ? saidi()/saifi() : 0;
 }
-
+double metrics::maifie(void)
+{
+	return totals.CMIE>0 ? totals.CMIE/customers->hit_count : 0;
+}
+double metrics::cemi(void)
+{
+	return totals.CNK>0 ? (double)totals.CNK/customers->hit_count : 0;
+}
+double metrics::cemsmi(void)
+{
+	return totals.CNT>0 ? (double)totals.CNT/customers->hit_count : 0;
+}
+double metrics::asifi(void)
+{
+	return totals.Li>0 ? totals.Li/totals.LT : 0;
+}
+double metrics::asidi(void)
+{
+	return totals.LDI>0 ? totals.LDI/totals.LT : 0;
+}
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////

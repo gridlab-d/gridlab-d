@@ -25,8 +25,6 @@ typedef struct s_event {
 	int32 Ni;	// number of interrupted customers for each sustaind interruption
 	int32 Nmi;	// number of interrupted customers for each momentary interruption
 	double ri;	// restoration time for each interruption event
-	double Li;	// connection kVA load interrupted for each interruption event
-	double LT;	// total connected kVA load served
 	struct s_event *next;
 } EVENT;
 
@@ -38,6 +36,11 @@ typedef struct s_totals {
 	double CMI;		// customer minutes interrupted = Sum[ri*Ni]
 	int32 CN;		// customers who experienced at least one sustained interruption
 	int32 CNT;		// total number of customers who have experienced more than n sustained and momentary interruptions
+	int32 CNK;		// total number of customers who have experienced more than n sustained interruptions
+	double CMIE;	// total number of customer momentary interruption events = Sum[IMe*Nmi]
+	double LT;		// total connected kVA load served
+	double Li;		// connection kVA load interrupted for each interruption event
+	double LDI;		// load minutes interrupted
 } TOTALS;
 
 class metrics {

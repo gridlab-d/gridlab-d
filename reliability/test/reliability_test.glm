@@ -26,6 +26,7 @@ clock {
 
 object metrics {
 	name Metrics;
+	n 20;
 }
 
 object eventgen {
@@ -189,9 +190,9 @@ object load {
 	name Load;
 	parent load_meter;
 	phases "ABCN";
-	voltage_A +7199.558+0.000d;
-	voltage_B +7199.558-120.0d;
-	voltage_C +7199.558+120.0d;
+	voltage_A +2401.777+0.000d;
+	voltage_B +2401.777-120.0d;
+	voltage_C +2401.777+120.0d;
 	constant_power_A +1800000.000+668131.724j;
 	constant_power_B +1800000.000+668131.724j;
 	constant_power_C +1800000.000+668131.724j;
