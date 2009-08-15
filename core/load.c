@@ -158,6 +158,7 @@ typedef struct _stat STAT;
 #include <unistd.h>
 typedef struct stat STAT;
 #define FSTAT fstat
+#define LIBPREFIX "lib"
 #endif
 
 #define QNAN (sqrt(-1)) /* used to force a quiet NAN return value for bad results */
@@ -500,7 +501,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		sprintf(cfile,"%s%s.cpp", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(ofile,"%s%s.o", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(file,"%s%s", (use_msvc||global_gdb||global_gdb_window)?"":tmp, oclass->name);
-		sprintf(afile,"%s."
+		sprintf(afile, LIBPREFIX "%s."
 #ifdef WIN32
 			"dll"
 #else
@@ -602,8 +603,14 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			output_debug("LIB=%s", getenv("LIB"));
 			if (!use_msvc)
 			{
+#ifdef WIN32
+#define EXTRA_CXXFLAGS ""
+#else
+#define EXTRA_CXXFLAGS "-fPIC"
+#endif
+
 				char execstr[1024];
-				sprintf(execstr, "g++ %s -I\"%s\" -c \"%s\" -o \"%s\"", global_debug_output?"-g -O0":"", global_include, cfile, ofile);
+				sprintf(execstr, "%s %s %s -I\"%s\" -c \"%s\" -o \"%s\"", getenv("CXX")?getenv("CXX"):"g++", getenv("CXXFLAGS")?getenv("CXXFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", global_include, cfile, ofile);
 				output_verbose("compile string: \"%s\"", execstr);
 				//if (exec("g++ %s -I\"%s\" -c \"%s\" -o \"%s\"", global_debug_output?"-g -O0":"", global_include, cfile, ofile)==FAILED)
 				if(exec(execstr)==FAILED)
@@ -614,7 +621,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 				/* link new runtime module */
 				output_verbose("linking inline code from '%s'", ofile);
-				if (exec("g++ %s -export-all-symbols -shared -Wl,%s -o %s -lstdc++", global_debug_output?"-g -O0":"", ofile,afile)==FAILED)
+				if (exec("%s %s %s -export-all-symbols -shared -Wl,%s -o %s -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", ofile,afile)==FAILED)
 					return FAILED;
 				unlink(ofile);
 			}
