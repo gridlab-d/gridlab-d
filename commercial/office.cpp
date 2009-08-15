@@ -339,7 +339,7 @@ int office::init(OBJECT *parent)
 
 	/** @todo set the dynamic initial value of properties (no ticket) */
 	if (zone.hvac.minimum_ach==0)
-		zone.hvac.minimum_ach = gl_random_triangle(1.0,2.0);
+		zone.hvac.minimum_ach = 1.5;
 	if (zone.control.economizer_cutin==0)
 		zone.control.economizer_cutin=60;
 	if (zone.control.auxiliary_cutin==0)
@@ -361,9 +361,9 @@ int office::init(OBJECT *parent)
 			- (zone.hvac.cooling.design_temperature - zone.control.cooling_setpoint) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.hvac.minimum_ach /* vent */
 			- (zone.lights.capacity + zone.plugs.capacity)*3.412)); /* lights and plugs */
 	if (zone.hvac.cooling.cop==0)
-		zone.hvac.cooling.cop=-gl_random_triangle(2,4);
+		zone.hvac.cooling.cop=-3;
 	if (zone.hvac.heating.cop==0)
-		zone.hvac.heating.cop=gl_random_triangle(1,1.5);
+		zone.hvac.heating.cop= 1.25;
 
 	/** @todo link climate data (no ticket) */
 	OBJECT *hdr = OBJECTHDR(this);
@@ -778,7 +778,7 @@ TIMESTAMP office::plc(TIMESTAMP t0, TIMESTAMP t1)
 	/* compute the new control temperature */
 	update_control_setpoints();
 
-//	vent = MinAch; <- // useless and harmful; code in update_control_setpoints already updates it
+//	vent = MinAch;  //<- useless and harmful; code in update_control_setpoints already updates it
 	if (Tair<=TheatOn)  // enter HEAT/AUX mode
 	{
 		if (Tair<=Taux)

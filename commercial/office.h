@@ -141,10 +141,10 @@ public:
 	complex *pCurrent;
 	ZONEDATA zone;
 private:
-	double TcoolOn, TcoolOff;
-	double TheatOn, TheatOff;
+	double TcoolOn, TcoolOff; // hvac cooling on, off temperature [degF]
+	double TheatOn, TheatOff; // hvac heating on, off temperature [degF]
 	double cop;
-	double Qi, Qh, Qs, Qz;
+	double Qi, Qh, Qs, Qz; // heating gains: plugs/lights, hvac, solar, multi-zone
 	double Teq, Tevent;
 	double r1, r2, k1, k2;
 	double c1, c2, c3, c4, c5, c6, c7, dTi;
