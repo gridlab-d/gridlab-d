@@ -2,7 +2,8 @@
 // with heating/cooling deadbands set around the (unchanging) interior and exterior temperature
 // occupancy set to 1 for all seven days of the week; OCCUPANCY IS BASED ON OLD SCHEDULING SYSTEM
 // (which doesn't take in the correct input); MAY NEED TO BE UPDATED ONCE THE SWITCH TO 
-// THE NEW SCHEDULING SYSTEM IS MADE; BASED ON OUTSIDE OFFICE TEMP OF 59degF
+// THE NEW SCHEDULING SYSTEM IS MADE; BASED ON OUTSIDE OFFICE TEMP OF 59degF;
+// CURRENTLY FAILS BECAUSE OCCUPANCY CAN'T BE SET TO 1 FOR ALL TIMES
 
 // payroll: d3y332
 

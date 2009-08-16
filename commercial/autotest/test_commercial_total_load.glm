@@ -1,4 +1,5 @@
-// validates commercial HVAC ECON load usage and hvac ECON mode turn-on;
+// validates commercial office total_load calculation; 25kW, 50kW of lights and an HVAC
+// system in a constant AUX state are all run for 58s
 // initial air temperature set to 90degF,with heating/cooling setpoints set to 70/73 
 // with a .1degF deadband lights added to supply internal heating gains occupancy set 
 // to 1 for all hours of all seven days of the week OCCUPANCY IS BASED ON OLD SCHEDULING 
@@ -12,6 +13,7 @@ clock {
 	timezone PST+8PDT;
 }
 
+#set stoptime=2000-01-01 0:00:60 PST
 
 module commercial;
 module tape;
@@ -27,24 +29,20 @@ object office {
 	heating_setpoint 70;
 	cooling_setpoint 73;
 	thermostat_deadband .1;
-	air_temperature 90;
+	air_temperature 60;
 	control.ventilation_fraction 0;
 	lights.capacity 50;
 	lights.fraction 1;
-	lights.power_factor 1;
+	lights.power_factor .785398;
+	plugs.capacity 25;
+	plugs.fraction 1;
+	plugs.power_factor .758398;
+	hvac.power_factor .758398;	
 	schedule "0-6 0-23";
 	object complex_assert {
-		target "hvac.load";
+		target "total_load";
 		within .001;
-		value 0.4-0.04j;
-		object player {
-			file ../office_hvac_ECON_assert.player;
-			property status;
-		};
-	};
-	object enum_assert {
-		target "hvac_mode";
-		value 4; // HC_ECON
+		value 155.25+129.861j;
 		object player {
 			file ../office_hvac_ECON_assert.player;
 			property status;
@@ -54,6 +52,6 @@ object office {
 		file "commercial_hvac_usage2.csv";
 		interval 1;
 		limit 58;
-		property lights.load,outdoor_temperature,occupancy,control.ventilation_fraction,air_temperature,mass_temperature,hvac_mode,hvac.load;
+		property lights.load,hvac.load,plugs.load,total_load,air_temperature,mass_temperature,hvac_mode,hvac.load;
 	};
 }
