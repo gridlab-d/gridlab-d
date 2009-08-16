@@ -152,7 +152,7 @@ office::office(MODULE *module)
 			PT_double, "hvac.heating.capacity[Btu/h]",PADDR(zone.hvac.heating.capacity),
 			PT_double, "hvac.heating.capacity_perF[Btu/degF/h]", PADDR(zone.hvac.heating.capacity_perF),
 			PT_double, "hvac.heating.design_temperature[degF]", PADDR(zone.hvac.heating.design_temperature),
-			PT_double, "hvac.heating.efficiency[pu]", PADDR(zone.hvac.heating.design_temperature),
+			PT_double, "hvac.heating.efficiency[pu]", PADDR(zone.hvac.heating.efficiency ),
 			PT_double, "hvac.heating.cop[pu]", PADDR(zone.hvac.heating.cop),
 
 			/* Lighting loads */
@@ -511,7 +511,7 @@ TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1)
 		const double Ca = 0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area;
 
 		/* update enduses and get internal heat gains */
-		Qi = zone.lights.enduse.power.Mag() + zone.plugs.enduse.power.Mag();
+		Qi = zone.lights.enduse.heatgain + zone.plugs.enduse.heatgain;
 
 		/* compute solar gains */
 		Qs = 0; 
