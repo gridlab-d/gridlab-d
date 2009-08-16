@@ -154,6 +154,7 @@ typedef struct _stat STAT;
 #define FSTAT _fstat
 #define tzset _tzset
 #define snprintf _snprintf
+#define LIBPREFIX ""
 #else
 #include <unistd.h>
 typedef struct stat STAT;
