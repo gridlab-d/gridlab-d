@@ -123,7 +123,7 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 			recloser_delay_time = 0;
 			recloser_tries = 0;
 			status = LS_CLOSED;
-			t1 = 0;	//Just flag us as something small to continue
+			t1 = TS_NEVER;	//Just flag us as something small to continue
 			gl_verbose("Recloser:%d just unlocked and rejoined service",OBJECTHDR(this)->id);
 		}
 		else if ((recloser_reset_time != 0 ) && (recloser_reset_time<t0))	//Not done being locked out
@@ -181,7 +181,7 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 			recloser_delay_time = 0;
 			recloser_tries = 0;
 			status = LS_CLOSED;
-			t1 = 0;	//Just flag us as something small to continue
+			t1 = TS_NEVER;	//Just flag us as something small to continue
 			gl_verbose("Recloser:%d just unlocked and rejoined service",OBJECTHDR(this)->id);
 		}
 		else if ((recloser_reset_time != 0 ) && (recloser_reset_time<t0))	//Not done being locked out
