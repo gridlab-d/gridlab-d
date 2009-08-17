@@ -1279,7 +1279,7 @@ char *find_file(char *name, /**< the name of the file to find */
 			return tempfp;
 	}
 #else
-	sprintf(tempfp, "/usr/lib/gridlabd/%s", name);
+	sprintf(tempfp, "/scratch/download/gridlabd/lib/gridlabd/%s", name);
 	if(access(tempfp, mode) == 0){
 		return tempfp;
 	}
