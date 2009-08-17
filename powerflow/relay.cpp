@@ -85,9 +85,14 @@ int relay::init(OBJECT *parent)
 		*/
 	}
 
-
-	if (recloser_delay<=1.0)
-		throw "recloser delay must be at least 1 second";
+	if (recloser_delay<1.0)
+	{
+		GL_THROW("recloser delay must be at least 1 second");
+		/*  TROUBLESHOOT
+		The recloser delay must be at least one second long.  Please set the value of
+		recloser_delay to something greater than or equal to 1.0.
+		*/
+	}
 	
 	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = (link::is_closed() && has_phase(PHASE_A) ? 1.0 : 0.0);
 	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = (link::is_closed() && has_phase(PHASE_B) ? 1.0 : 0.0);
