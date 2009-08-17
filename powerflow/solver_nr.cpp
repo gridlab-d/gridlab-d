@@ -65,7 +65,7 @@ int64 solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branc
 	double CurrConvVal;
 
 	//Calculate the convergence limit - base it off of the swing bus
-	eps = default_maximum_voltage_error * bus[indexer].V[0].Mag();
+	eps = default_maximum_voltage_error * bus[0].V[0].Mag();
 
 	//Build the diagnoal elements of the bus admittance matrix	
 	if (BA_diag == NULL)
@@ -439,9 +439,18 @@ int64 solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branc
 					}
 				}
 
-				Icalc[indexer *3 + jindex] = complex(tempIcalcReal,tempIcalcImag);// calculated current injection  				
-           		deltaI_NR[indexer*6+3 + jindex] = (tempPbus * (bus[indexer].V[jindex]).Re() + tempQbus * (bus[indexer].V[jindex]).Im())/ ((bus[indexer].V[jindex]).Mag()*(bus[indexer].V[jindex]).Mag()) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
-				deltaI_NR[indexer*6 + jindex] = (tempPbus * (bus[indexer].V[jindex]).Im() - tempQbus * (bus[indexer].V[jindex]).Re())/ ((bus[indexer].V[jindex]).Mag()*(bus[indexer].V[jindex]).Mag()) - tempIcalcImag ; // Imaginary part of deltaI, left hand side of equation (11)
+				Icalc[indexer *3 + jindex] = complex(tempIcalcReal,tempIcalcImag);// calculated current injection
+
+				if ((bus[indexer].V[jindex]).Mag()!=0)
+				{
+           			deltaI_NR[indexer*6+3 + jindex] = (tempPbus * (bus[indexer].V[jindex]).Re() + tempQbus * (bus[indexer].V[jindex]).Im())/ ((bus[indexer].V[jindex]).Mag()*(bus[indexer].V[jindex]).Mag()) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
+					deltaI_NR[indexer*6 + jindex] = (tempPbus * (bus[indexer].V[jindex]).Im() - tempQbus * (bus[indexer].V[jindex]).Re())/ ((bus[indexer].V[jindex]).Mag()*(bus[indexer].V[jindex]).Mag()) - tempIcalcImag ; // Imaginary part of deltaI, left hand side of equation (11)
+				}
+				else
+				{
+           			deltaI_NR[indexer*6+3 + jindex] = 0.0;
+					deltaI_NR[indexer*6 + jindex] = 0.0;
+				}
 			}
 		}
 
@@ -808,14 +817,14 @@ int64 solver_nr(int bus_count, BUSDATA *bus, int branch_count, BRANCHDATA *branc
 			{
 				for (jindex=0; jindex<3; jindex++)
 				{
-					((bus[indexer].V[jindex]).Re()) = ((bus[indexer].V[jindex]).Re()) + sol [kindex];
+					((bus[indexer].V[jindex]).Re()) = ((bus[indexer].V[jindex]).Re()) + sol[kindex];
 					DVConvCheck[jindex]=sol[kindex];
 					kindex +=1;
 				}
 
 				for (jindex=0; jindex<3; jindex++)
 				{
-					((bus[indexer].V[jindex]).Im()) = ((bus[indexer].V[jindex]).Im()) +sol [kindex];
+					((bus[indexer].V[jindex]).Im()) = ((bus[indexer].V[jindex]).Im()) +sol[kindex];
 					DVConvCheck[jindex]+=complex(0,sol[kindex]);
 
 					//Pull off the magnitude (no sense calculating it twice)
