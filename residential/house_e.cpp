@@ -1026,7 +1026,7 @@ void house_e::update_model(double dt)
 
 	/* compute next initial condition */
 	dTi = c2*Tm + c1*Ti - (c1+c2)*Tout + c7;
-	k1 = (r1*Ti - r2*Teq - dTi)/(r2-r1);
+	k1 = (r2*Ti - r2*Teq - dTi)/(r2-r1);
 	k2 = (dTi - r1*k1)/r2;
 }
 
