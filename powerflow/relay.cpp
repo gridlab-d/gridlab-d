@@ -39,6 +39,7 @@ relay::relay(MODULE *mod) : link(mod)
 			PT_double, "recloser_delay[s]", PADDR(recloser_delay),
 			PT_int16, "recloser_tries", PADDR(recloser_tries),
 			PT_int16, "recloser_limit", PADDR(recloser_limit),
+			PT_bool, "recloser_event", PADDR(recloser_event),
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -54,6 +55,11 @@ int relay::create()
 	recloser_delay = 0;
 	recloser_tries = 0;
 	recloser_limit = 0;
+
+	recloser_event=false;
+	recloser_delay_time=0;
+	recloser_reset_time=0;
+
 	return result;
 }
 
@@ -101,38 +107,134 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 	node *t;
 	set reverse = get_flow(&f,&t);
 #ifdef SUPPORT_OUTAGES
-	set trip = (f->is_contact_any() || t->is_contact_any());
-
-	/* perform relay operation if any line contact has occurred */
-	if (status==LS_CLOSED && trip)
+	//Handle explicit trips differently
+	if (recloser_event)
 	{
-		status = LS_OPEN;
-
-		/* schedule recloser operation */
-		t1 = t0+(TIMESTAMP)(recloser_delay*TS_SECOND);
-	}
-
-	/* recloser time has arrived */
-	else if (status==LS_OPEN && t0>=reclose_time)
-	{
-		/* still have contact */
-		if (trip)
+		//Make sure we aren't locked out
+		if ((recloser_reset_time != 0) && (recloser_reset_time>=t0))	//We're done
 		{
-			/* reschedule automatic recloser if retries permits */ 
-			if (recloser_limit>recloser_tries)
+			//Reset all of the variables
+			recloser_reset_time = 0;
+			recloser_delay_time = 0;
+			recloser_tries = 0;
+			status = LS_CLOSED;
+			t1 = 0;	//Just flag us as something small to continue
+			gl_verbose("Recloser:%d just unlocked and rejoined service",OBJECTHDR(this)->id);
+		}
+		else if ((recloser_reset_time != 0 ) && (recloser_reset_time<t0))	//Not done being locked out
+		{
+			status=LS_OPEN;	//Make sure we are still open
+			t1 = recloser_reset_time;
+		}
+		else //Should be normal area
+		{
+			if (status==LS_OPEN)	//Open operations - only if a reliability event is occurring
 			{
-				recloser_tries++;
-				t1 = t0+(TIMESTAMP)(recloser_delay*TS_SECOND);
+				if (recloser_delay_time>=t0)	//Time delay has passed - but we are obviously still "in fault"
+				{
+					recloser_tries++;		//Increment the tries counter
+					if (recloser_tries>recloser_limit)	//Now we need to lock out
+					{
+						recloser_delay_time = 0;
+						recloser_reset_time = t0+(TIMESTAMP)(gl_random_exponential(3600)*TS_SECOND);	//Figure out how long to lock out
+						gl_verbose("Recloser:%d just reached its limit and locked out for a while",OBJECTHDR(this)->id);
+						t1 = recloser_reset_time;
+					}
+					else		//We're still OK to flicker
+					{
+						recloser_delay_time = t0+(TIMESTAMP)(recloser_delay*TS_SECOND);	//Get a new time
+						gl_verbose("Recloser:%d just tried to reclose and failed",OBJECTHDR(this)->id);
+						t1 = recloser_delay_time;
+					}
+				}
+				else	//still in delay
+				{
+					t1 = recloser_delay_time;
+				}
 			}
-
-			/* automatic retries exhausted, manual takes an average of an hour */
-			else
+			else					//Closed operations - only if a reliability event is occurring
 			{
-				t1 = t0+(TIMESTAMP)(gl_random_exponential(3600)*TS_SECOND);
+				status=LS_OPEN;				//Open us up, we are in an event
+				recloser_tries = 0;			//Reset out count, just in case
+				recloser_reset_time = 0;	//Reset the lockout timer, just in case
+
+				recloser_delay_time = t0+(TIMESTAMP)(recloser_delay*TS_SECOND);	//Get a new time
+				gl_verbose("Recloser:%d detected a fault and opened",OBJECTHDR(this)->id);
+				t1 = recloser_delay_time;
 			}
 		}
-		else
+	}
+	else	//Older method (and catch if reliabilty ends while in lockout)
+	{
+		set trip = (f->is_contact_any() || t->is_contact_any());
+
+		//Make sure aren't in overall lockout
+		if ((recloser_reset_time != 0 ) && (recloser_reset_time>=t0))	//We're done being locked out
+		{
+			//Reset all of the variables
+			recloser_reset_time = 0;
+			recloser_delay_time = 0;
+			recloser_tries = 0;
 			status = LS_CLOSED;
+			t1 = 0;	//Just flag us as something small to continue
+			gl_verbose("Recloser:%d just unlocked and rejoined service",OBJECTHDR(this)->id);
+		}
+		else if ((recloser_reset_time != 0 ) && (recloser_reset_time<t0))	//Not done being locked out
+		{
+			t1 = recloser_reset_time;
+		}
+		else //Should be normal area
+		{
+			/* perform relay operation if any line contact has occurred */
+			if (status==LS_CLOSED && trip)
+			{
+				status = LS_OPEN;
+
+				/* schedule recloser operation */
+				recloser_delay_time=t0+(TIMESTAMP)(recloser_delay*TS_SECOND);
+				gl_verbose("Recloser:%d detected a fault and opened",OBJECTHDR(this)->id);
+				t1 = recloser_delay_time;
+			}
+			/* recloser time has arrived */
+			else if (status==LS_OPEN && t0>=recloser_delay_time)
+			{
+				/* still have contact */
+				if (trip)
+				{
+					/* reschedule automatic recloser if retries permits */ 
+					if (recloser_limit>recloser_tries)
+					{
+						recloser_tries++;
+						gl_verbose("Recloser:%d just tried to reclose and failed",OBJECTHDR(this)->id);
+						recloser_delay_time = t0+(TIMESTAMP)(recloser_delay*TS_SECOND);
+
+						t1 = recloser_delay_time;
+					}
+
+					/* automatic retries exhausted, manual takes an average of an hour */
+					else
+					{
+						gl_verbose("Recloser:%d just reached its limit and locked out for a while",OBJECTHDR(this)->id);
+						recloser_reset_time = t0+(TIMESTAMP)(gl_random_exponential(3600)*TS_SECOND);
+						t1 = recloser_reset_time;
+					}
+				}
+				else
+					status = LS_CLOSED;
+			}
+			else if (recloser_delay_time<t0)	//Still in delay
+			{
+				t1 = recloser_delay_time;
+			}
+			else	//Recover
+			{
+				if (status==LS_OPEN)
+				{
+					gl_verbose("Recloser:%d recovered from a fault",OBJECTHDR(this)->id);
+				}
+				status=LS_CLOSED;
+			}
+		}
 	}
 #endif
 

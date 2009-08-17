@@ -20,10 +20,15 @@ public:
 	double recloser_delay;	///< time delay before reclose (s)
 	int16 recloser_tries;	///< number of times recloser has tried
 	int16 recloser_limit;	///< maximum number of recloser tries
+	bool recloser_event;		///< Flag for if we are in a reliabilty relay event or not
 	
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
+
+private:
+	TIMESTAMP recloser_delay_time;
+	TIMESTAMP recloser_reset_time;
 
 public:
 	int create(void);
