@@ -19,9 +19,7 @@
 module assert;
 module tape;
 module powerflow;
-module reliability {
-	report_event_log TRUE;
-}
+module reliability;
 
 
 

@@ -46,7 +46,7 @@ CLASS *metrics::oclass = NULL;
 metrics *metrics::defaults = NULL;
 
 double metrics::major_event_threshold = 0.01; /* minutes */
-bool metrics::report_event_log = false; /* dumps detailed event log */
+bool metrics::report_event_log = true; /* dumps detailed event log */
 
 static PASSCONFIG passconfig = PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_POSTTOPDOWN;
@@ -241,20 +241,21 @@ OBJECT *metrics::start_event(EVENT *pEvent,			/**< a pointer to the EVENT struct
 			fprintf(fp,"%s\t\t", targets);
 			fprintf(fp,"%s\t", event_values);
 			fprintf(fp,"%7.2f\t\t", t);
-			//find the interrupted load
-			FINDLIST *load_meters = gl_findlist_copy(customers);
-			OBJECT *interrupted_meters=NULL;
-			complex *kva_in;
-			complex *pload;
-			totals.LT=0;//reset the total load value
-			while ((interrupted_meters = gl_find_next(load_meters,interrupted_meters))!=NULL)
-			{
-				kva_in = gl_get_complex_by_name(interrupted_meters,"measured_power");
-				totals.LT += (*kva_in).Mag();
-				pload = gl_get_complex_by_name(interrupted_meters,"pre_load");
-				(*pload) = (*kva_in);
-			}
 		}
+		//find the interrupted load
+		FINDLIST *load_meters = gl_findlist_copy(customers);
+		OBJECT *interrupted_meters=NULL;
+		complex *kva_in;
+		complex *pload;
+		totals.LT=0;//reset the total load value
+		while ((interrupted_meters = gl_find_next(load_meters,interrupted_meters))!=NULL)
+		{
+			kva_in = gl_get_complex_by_name(interrupted_meters,"measured_power");
+			totals.LT += (*kva_in).Mag();
+			pload = gl_get_complex_by_name(interrupted_meters,"pre_load");
+			(*pload) = (*kva_in);
+		}
+		
 
 		/* rest will be written when event ends */
 		return obj;
