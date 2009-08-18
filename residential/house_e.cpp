@@ -649,7 +649,7 @@ int house_e::create()
 		// scan the implicit_enduse list
 		while ((token=strtok(token?NULL:active_enduses,"|"))!=NULL)
 		{
-			_strlwr(token);
+			strlwr(token);
 			
 			// find the implicit enduse description
 			struct s_implicit_enduse_list *eu = NULL;
