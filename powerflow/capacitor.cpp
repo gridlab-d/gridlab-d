@@ -64,10 +64,13 @@ capacitor::capacitor(MODULE *mod):node(mod)
 				PT_KEYWORD, "VAR", VAR,
 				PT_KEYWORD, "VOLT", VOLT,
 				PT_KEYWORD, "VARVOLT", VARVOLT,
+				PT_KEYWORD, "CURRENT", CURRENT,
 			PT_double, "voltage_set_high[V]", PADDR(voltage_set_high), 
 			PT_double, "voltage_set_low[V]", PADDR(voltage_set_low),
 			PT_double, "VAr_set_high[VAr]", PADDR(VAr_set_high),
 			PT_double, "VAr_set_low[VAr]", PADDR(VAr_set_low),
+			PT_double, "current_set_low[A]", PADDR(current_set_low),
+			PT_double, "current_set_high[A]", PADDR(current_set_high),
 			PT_double, "capacitor_A[VAr]", PADDR(capacitor_A),
 			PT_double, "capacitor_B[VAr]", PADDR(capacitor_B),
 			PT_double, "capacitor_C[VAr]", PADDR(capacitor_C),
@@ -107,6 +110,8 @@ int capacitor::create()
 	voltage_set_low = 0.0;
 	VAr_set_high = 0.0;
 	VAr_set_low = 0.0;
+	current_set_low = 0.0;
+	current_set_high = 0.0;
 	time_delay = 0.0;
 	dwell_time = 0.0;
 	lockout_time = 0.0;
@@ -121,6 +126,8 @@ int capacitor::create()
 	SecondaryRemote=NULL;
 	RNode = NULL;
 	RLink = NULL;
+	VArVals[0] = VArVals[1] = VArVals[2] = 0.0;
+	CurrentVals[0] = CurrentVals[1] = CurrentVals[2] = 0.0;
 
 	NotFirstIteration=false;
 
@@ -165,7 +172,7 @@ int capacitor::init(OBJECT *parent)
 			}
 		}
 	}
-	else if ((control==VARVOLT) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && gl_object_isa(RemoteSensor,"link","powerflow"))	//VAR-VOLT scheme, one sensor defined
+	else if (((control==VARVOLT) || (control==CURRENT)) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && gl_object_isa(RemoteSensor,"link","powerflow"))	//VAR-VOLT scheme, one sensor defined
 	{
 		RLink = OBJECTDATA(RemoteSensor,link);
 	}
@@ -236,10 +243,17 @@ int capacitor::init(OBJECT *parent)
 		the capacitor will not function and will effectively perform no action.
 		*/
 
-	if (((control == VAR) || (control == VARVOLT)) && (RLink == NULL))
-		GL_THROW("VAR control on capacitor:%d requires a remote link to monitor.",obj->id);
+	if ((control==CURRENT) && ((current_set_high == 0) || (current_set_low == 0)))
+		gl_warning("Capacitor:%d does not have one or both of its current set points set.",obj->id);
 		/*  TROUBLESHOOT
-		For VAR or VARVOLT control to work on the capacitor, a remote line must be specified to monitor reactive power flow.  Without this, no operations will
+		If the CURRENT control scheme is active, you must specify the current set points for the band of operation.  Without these,
+		the capacitor will not function and will effectively perform no action.
+		*/
+
+	if (((control == VAR) || (control == VARVOLT) || (control==CURRENT)) && (RLink == NULL))
+		GL_THROW("VAR, VARVOLT, or CURRENT control on capacitor:%d requires a remote link to monitor.",obj->id);
+		/*  TROUBLESHOOT
+		For VAR, VARVOLT, or CURRENT control to work on the capacitor, a remote line must be specified to monitor reactive power flow.  Without this, no operations will
 		occur within the capacitor.
 		*/
 
@@ -253,6 +267,12 @@ int capacitor::init(OBJECT *parent)
 		GL_THROW("The lower voltage limit of capacitor:%d is larger than the high limit setpoint!",obj->id);
 		/*  TROUBLESHOOT
 		Under voltage controls, the lower voltage set point must be less than the upper voltage set point.  Please set these accordingly.
+		*/
+
+	if ((control==CURRENT) && (current_set_low > current_set_high))	//Check limits
+		GL_THROW("The lower current limit of capacitor:%d is larger than the high limit setpoint!",obj->id);
+		/*  TROUBLESHOOT
+		Under CURRENT controls, the lower current set point must be less than the upper current set point.  Please set these accordingly.
 		*/
 
 	if ((control != MANUAL) && (time_delay == 0) && (dwell_time==0))
@@ -299,6 +319,35 @@ int capacitor::init(OBJECT *parent)
 		switchA_state_Prev = switchA_state_Next = switchA_state;
 		switchB_state_Prev = switchB_state_Next = switchB_state;
 		switchC_state_Prev = switchC_state_Next = switchC_state;
+	}
+
+	//Perform phase checks - make sure what we want to look at actually exists
+	if (((control!=MANUAL) && (control!=VOLT)) && ((RLink->phases & pt_phase) != pt_phase))	//VAR, VOLTVAR, CURRENT
+	{
+		GL_THROW("One of the monitored remote link phases for capacitor:%d does not exist",obj->id);
+		/*  TROUBLESHOOT
+		One of the phases specified in pt_phase does not exist on the link being monitored by the capacitor.
+		This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
+		remote link are compatible.
+		*/
+	}
+	else if (((control==VOLT) || (control==VARVOLT)) && (RNode != NULL) && ((RNode->phases & pt_phase) != pt_phase))	//RNode check
+	{
+		GL_THROW("One of the monitored remote node phases for capacitor:%d does not exist",obj->id);
+		/*  TROUBLESHOOT
+		One of the phases specified in pt_phase does not exist on the node being monitored by the capacitor.
+		This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
+		remote node are compatible.
+		*/
+	}
+	else if (((control==VOLT) || (control==VARVOLT)) && (RNode == NULL) && ((phases & pt_phase) != pt_phase))	//Self node check
+	{
+		GL_THROW("One of the monitored node phases for capacitor:%d does not exist",obj->id);
+		/*  TROUBLESHOOT
+		One of the phases specified in pt_phase does not exist on the capacitor node.
+		This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
+		capacitor are compatible.
+		*/
 	}
 
 	return result;
@@ -631,6 +680,36 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 					}
 				}
 				break;
+			case CURRENT:
+				{// I - only line currents (just consider the phase as it was, no conversions)
+					if ((pt_phase & PHASE_A) == PHASE_A)
+					{
+						if (current_set_low >= CurrentVals[0])
+							switchA_state_Req_Next=OPEN;
+						else if (current_set_high <= CurrentVals[0])
+							switchA_state_Req_Next=CLOSED;
+						else;
+					}
+						
+					if ((pt_phase & PHASE_B) == PHASE_B)
+					{
+						if (current_set_low >= CurrentVals[1])
+							switchB_state_Req_Next=OPEN;
+						else if (current_set_high <= CurrentVals[1])
+							switchB_state_Req_Next=CLOSED;
+						else;
+					}
+
+					if ((pt_phase & PHASE_C) == PHASE_C)
+					{
+						if (current_set_low >= CurrentVals[2])
+							switchC_state_Req_Next=OPEN;
+						else if (current_set_high <= CurrentVals[2])
+							switchC_state_Req_Next=CLOSED;
+						else;
+					}
+				}
+				break;
 			default:
 				break;
 		}
@@ -781,7 +860,6 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 
 TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 {
-
 	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
 	{
 		LOCK_OBJECT(OBJECTHDR(RLink));
@@ -793,6 +871,18 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 		VArVals[0] = RLink->indiv_power_out[0].Im();
 		VArVals[1] = RLink->indiv_power_out[1].Im();
 		VArVals[2] = RLink->indiv_power_out[2].Im();
+		
+		UNLOCK_OBJECT(OBJECTHDR(RLink));
+	}
+	else if (control==CURRENT)	//Grab the current injection values
+	{
+		LOCK_OBJECT(OBJECTHDR(RLink));
+
+		//Pull off the output currents
+		CurrentVals[0]=RLink->current_in[0].Mag();
+		CurrentVals[1]=RLink->current_in[1].Mag();
+		CurrentVals[2]=RLink->current_in[2].Mag();
+		
 		UNLOCK_OBJECT(OBJECTHDR(RLink));
 	}
 

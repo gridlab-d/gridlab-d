@@ -11,7 +11,7 @@
 class capacitor : public node
 {
 public:
-	typedef enum {MANUAL=0, VAR=1, VOLT=2, VARVOLT=3} CAPCONTROL;
+	typedef enum {MANUAL=0, VAR=1, VOLT=2, VARVOLT=3, CURRENT=4} CAPCONTROL;
 	typedef enum {OPEN=0, CLOSED=1} CAPSWITCH;
 	typedef enum {BANK=0, INDIVIDUAL=1} CAPCONTROL2;
 
@@ -21,6 +21,8 @@ public:
 	double voltage_set_low;     // low voltage set point for voltage control (turn on)
 	double VAr_set_high;		// high VAR set point for VAR control (turn off)
 	double VAr_set_low;			// low VAR set point for VAR control (turn on)
+	double current_set_high;	// high current set point for current control mode (turn on)
+	double current_set_low;		// low current set point for current control mode (turn off)
 	double capacitor_A;			// Capacitance value for phase A or phase AB
 	double capacitor_B;			// Capacitance value for phase B or phase BC
 	double capacitor_C;			// Capacitance value for phase C or phase CA
@@ -65,6 +67,7 @@ private:
 	CAPSWITCH switchB_state_Prev;	// capacitor B switch open or close at previous transition (used for manual control)
 	CAPSWITCH switchC_state_Prev;	// capacitor C switch open or close at previous transition (used for manual control)
 	double VArVals[3];				// VAr values recorded (due to nature of how it's recorded, it has to be in here)
+	double CurrentVals[3];			// Current magnitude values recorded (due to nature of how it's recorded, it has to be in here)
 	bool NotFirstIteration;			// Checks to see if this is the first iteration of the system.
 	node *RNode;					// Remote node to sense voltage measurements (if desired) for VOLT controls
 	link *RLink;					// Remote link to sense power measurements for VAR controls
