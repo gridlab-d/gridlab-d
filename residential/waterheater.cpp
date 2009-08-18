@@ -423,7 +423,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	load.total = load.power = /* power_kw */ load.power;
-	load.heatgain = (internal_gain * KWPBTUPH);
+	load.heatgain = internal_gain;
 
 //	gl_enduse_sync(&(residential_enduse::load),t1);
 

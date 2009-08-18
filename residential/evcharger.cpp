@@ -254,9 +254,10 @@ EVDEMAND *get_demand_profile(char *name)
 // evcharger CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* evcharger::oclass = NULL;
+CLASS* evcharger::pclass = NULL;
 evcharger *evcharger::defaults = NULL;
 
-evcharger::evcharger(MODULE *module) 
+evcharger::evcharger(MODULE *module) : residential_enduse(module)
 {
 	// first time init
 	if (oclass==NULL)
@@ -268,6 +269,7 @@ evcharger::evcharger(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
+			PT_INHERIT, "residential_enduse",
 			PT_enumeration,"charger_type",PADDR(charger_type),
 				PT_KEYWORD,"LOW",CT_LOW,
 				PT_KEYWORD,"MEDIUM",CT_MEDIUM,
@@ -294,27 +296,15 @@ evcharger::evcharger(MODULE *module)
 			PT_double,"capacity[kWh]",PADDR(capacity),
 			PT_double,"charge[unit]",PADDR(charge),
 			PT_bool,"charge_at_work",PADDR(charge_at_work),
-			PT_double,"power_factor[unit]",PADDR(power_factor),
 			PT_double,"charge_throttle[unit]", PADDR(charge_throttle),
 			PT_char1024,"demand_profile", PADDR(demand_profile),
 
 			// enduse load
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"constant_power[kW]",PADDR(load.power),
-			PT_complex,"constant_current[A]",PADDR(load.current),
-			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
-			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),PT_DEPRECATED,
+			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),PT_DEPRECATED,
 
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
-
-		// setup the default values
-		defaults = this;
-		memset(this,0,sizeof(evcharger));
-		load.power = load.admittance = load.current = load.total = complex(0,0,J);
-		vehicle_type = VT_HYBRID;
 	}
 }
 
@@ -324,10 +314,14 @@ evcharger::~evcharger()
 
 int evcharger::create() 
 {
-	memcpy(this,defaults,sizeof(evcharger));
+	int res = residential_enduse::create();
 
-	return 1;
-	
+	// name of enduse
+	load.name = oclass->name;
+	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	vehicle_type = VT_HYBRID;
+
+	return res;
 }
 
 // LOW, MEDIUM, HIGH settings

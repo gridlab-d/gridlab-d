@@ -23,9 +23,9 @@
 // occupantload CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* occupantload::oclass = NULL;
-occupantload *occupantload::defaults = NULL;
+CLASS* occupantload::pclass = NULL;
 
-occupantload::occupantload(MODULE *module) 
+occupantload::occupantload(MODULE *module) : residential_enduse(module)
 {
 	// first time init
 	if (oclass==NULL)
@@ -37,18 +37,12 @@ occupantload::occupantload(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
+			PT_INHERIT, "residential_enduse",
 			PT_int32,"number_of_occupants",PADDR(number_of_occupants),
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
 			PT_double,"occupancy_fraction[unit]",PADDR(occupancy_fraction),
 			PT_double,"heatgain_per_person[Btu/h]",PADDR(heatgain_per_person),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
-
-		// setup the default values
-		defaults = this;
-		memset(this,0,sizeof(occupantload));
-		load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	}
 }
 
@@ -58,9 +52,13 @@ occupantload::~occupantload()
 
 int occupantload::create() 
 {
-	// copy the defaults
-	memcpy(this,defaults,sizeof(occupantload));
-	return 1;
+	int res = residential_enduse::create();
+
+	// name of enduse
+	load.name = oclass->name;
+	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.config = EUC_HEATLOAD;
+	return res;
 }
 
 int occupantload::init(OBJECT *parent)
@@ -100,29 +98,21 @@ int occupantload::init(OBJECT *parent)
 
 	load.heatgain = number_of_occupants * occupancy_fraction * heatgain_per_person * KWPBTUPH;
 
+	if(shape.type != MT_UNKNOWN && shape.type != MT_ANALOG){
+		char outname[64];
+		if(hdr->name){
+			//sprintf(outname, "%s", hdr->name);
+		} else {
+			sprintf(outname, "occupancy_load:%i", hdr->id);
+		}
+		gl_warning("occupancy_load \'%s\' may not work properly with a non-analog load shape.", hdr->name ? hdr->name : outname);
+	}
 	return 1;
 }
 
 TIMESTAMP occupantload::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	if(number_of_occupants < 0){
-		gl_error("negative number of occupants, reseting to zero");
-		number_of_occupants = 0;
-	}
-	if(occupancy_fraction < 0.0){
-		gl_error("negative occupancy_fraction, reseting to zero");
-		occupancy_fraction = 0.0;
-	}
-	if(occupancy_fraction > 1.0){
-		; /* party at Bob's house! */
-	}
-	if(occupancy_fraction * number_of_occupants > 300.0){
-		gl_error("attempting to fit 300 warm bodies into a house, reseting to zero");
-		// let's assume that the police cleared the party
-		// or the fire department said 'this is a bad sign, people!'
-		// how about that the house just plain collapsed?
-		occupancy_fraction = 0;
-	}
+	/* sanity checks */
 	if(heatgain_per_person < 0){
 		gl_error("negative heatgain per person, reseting to 400 BTU/hr");
 		heatgain_per_person = 400.0;
@@ -134,7 +124,28 @@ TIMESTAMP occupantload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 
-	load.heatgain = number_of_occupants * occupancy_fraction * heatgain_per_person * KWPBTUPH;
+	if(shape.type == MT_UNKNOWN){
+		if(number_of_occupants < 0){
+			gl_error("negative number of occupants, reseting to zero");
+			number_of_occupants = 0;
+		}
+		if(occupancy_fraction < 0.0){
+			gl_error("negative occupancy_fraction, reseting to zero");
+			occupancy_fraction = 0.0;
+		}
+		if(occupancy_fraction > 1.0){
+			; /* party at Bob's house! */
+		}
+		if(occupancy_fraction * number_of_occupants > 300.0){
+			gl_error("attempting to fit 300 warm bodies into a house, reseting to zero");
+			// let's assume that the police cleared the party
+			// or the fire department said 'this is a bad sign, people!'
+			// how about that the house just plain collapsed?
+			occupancy_fraction = 0;
+		}
+
+		load.heatgain = number_of_occupants * occupancy_fraction * heatgain_per_person * KWPBTUPH;
+	}
 
 	return TS_NEVER; 
 }

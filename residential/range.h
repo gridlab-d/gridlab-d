@@ -10,8 +10,9 @@
 #ifndef _RANGE_H
 #define _RANGE_H
 #include "residential.h"
+#include "residential_enduse.h"
 
-class range  
+class range : public residential_enduse
 {
 private:
 	complex *pVoltage;
@@ -22,11 +23,10 @@ public:
 	double demand;				///< fraction of installed power currently used
 	double power_factor;		///< power factor (default = 1.0)
 	double heat_fraction;		///< fraction of the plugload that is transferred as heat (default = 0.90)
-	ENDUSELOAD load;			///< enduse load structure
 
 
 public:
-	static CLASS *oclass;
+	static CLASS *oclass, *pclass;
 	static range *defaults;
 
 	range(MODULE *module);

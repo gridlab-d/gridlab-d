@@ -30,9 +30,10 @@
 // dryer CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* dryer::oclass = NULL;
+CLASS* dryer::pclass = NULL;
 dryer *dryer::defaults = NULL;
 
-dryer::dryer(MODULE *module) 
+dryer::dryer(MODULE *module) : residential_enduse(module)
 {
 	// first time init
 	if (oclass==NULL)
@@ -44,19 +45,14 @@ dryer::dryer(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
+			PT_INHERIT, "residential_enduse",
 			PT_double,"motor_power[W]",PADDR(motor_power),
-			PT_double,"power_factor[unit]",PADDR(power_factor),
 			PT_double,"coil_power[W]",PADDR(coil_power),
 			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),
+			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),PT_DEPRECATED,
 			PT_double,"enduse_demand[unit]",PADDR(enduse_demand),
 			PT_double,"enduse_queue[unit]",PADDR(enduse_queue),
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"constant_power[kW]",PADDR(load.power),
-			PT_complex,"constant_current[A]",PADDR(load.current),
-			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),PT_DEPRECATED,
 			PT_double,"stall_voltage[V]", PADDR(stall_voltage),
 			PT_double,"start_voltage[V]", PADDR(start_voltage),
 			PT_complex,"stall_impedance[Ohm]", PADDR(stall_impedance),
@@ -69,12 +65,6 @@ dryer::dryer(MODULE *module)
 				PT_KEYWORD,"TRIPPED",TRIPPED,
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
-
-		// setup the default values
-		defaults = this;
-		memset(this,0,sizeof(dryer));
-		load.power = load.admittance = load.current = load.total = complex(0,0,J);
-		coil_power = -1; // signal that is hasn't been set by the user
 	}
 }
 
@@ -84,10 +74,14 @@ dryer::~dryer()
 
 int dryer::create() 
 {
-	// copy the defaults
-	memcpy(this,defaults,sizeof(dryer));
+	int res = residential_enduse::create();
 
-	return 1;
+	// name of enduse
+	load.name = oclass->name;
+	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	coil_power = -1; // signal that is hasn't been set by the user
+
+	return res;
 }
 
 int dryer::init(OBJECT *parent)

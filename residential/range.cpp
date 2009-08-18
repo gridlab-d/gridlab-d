@@ -22,9 +22,9 @@
 // range CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* range::oclass = NULL;
-range *range::defaults = NULL;
+CLASS* range::pclass = NULL;
 
-range::range(MODULE *module) 
+range::range(MODULE *module) : residential_enduse(module)
 {
 	// first time init
 	if (oclass==NULL)
@@ -36,23 +36,16 @@ range::range(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
+			PT_INHERIT, "residential_enduse",
 			PT_double,"installed_power[W]",PADDR(installed_power),
 			PT_double,"circuit_split",PADDR(circuit_split),
 			PT_double,"demand[unit]",PADDR(demand),
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"constant_power[kW]",PADDR(load.power),
-			PT_complex,"constant_current[A]",PADDR(load.current),
-			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
 			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
-			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),
+			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),PT_DEPRECATED,
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
-		// setup the default values
-		defaults = this;
-		memset(this,0,sizeof(range));
-		load.power = load.admittance = load.current = load.total = complex(0,0,J);
+
 	}
 }
 
@@ -62,14 +55,26 @@ range::~range()
 
 int range::create() 
 {
-	// copy the defaults
-	memcpy(this,defaults,sizeof(range));
+	int res = residential_enduse::create();
 
-	return 1;
+	// name of enduse
+	load.name = oclass->name;
+	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+
+	return res;
 }
 
 int range::init(OBJECT *parent)
 {
+	if(installed_power < 0){
+		gl_warning("range installed power is negative, using random default");
+		installed_power = 0;
+	}
+	if(heat_fraction < 0.0 || heat_fraction > 1.0){
+		gl_warning("range heat_fraction out of bounds, restoring default");
+		heat_fraction = 0;
+	}
+	
 	if (installed_power==0) installed_power = gl_random_uniform(8000,15000);	// range size [W]; based on a GE drop-in range 11600kW;
 	if (power_factor==0) power_factor = 1.0;
 	if (heat_fraction==0) heat_fraction = 0.9;
@@ -105,6 +110,7 @@ int range::init(OBJECT *parent)
 	}
 	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 30, true)->pV;
 
+	
 	load.total = complex(installed_power*demand/1000,0,J);
 	load.admittance = load.total*(1000/240/240);
 	load.heatgain = load.total.Mag()*heat_fraction;
@@ -116,6 +122,13 @@ TIMESTAMP range::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	if (t0>0 && t1>t0)
 		load.energy += load.total * gl_tohours(t1-t0);
+
+	if(demand < 0.0){
+		GL_THROW("range demand is negative");
+	}
+	if(demand > 1.0){
+		GL_THROW("range demand is greater than 1.0 and out of bounds");
+	}
 
 	load.total = complex(installed_power*demand/1000,0,J);
 	load.admittance = load.total*(1.0/240/240);

@@ -527,6 +527,7 @@ EXPORT CIRCUIT *attach_enduse_house_e(OBJECT *obj, enduse *target, double breake
 // house_e CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* house_e::oclass = NULL;
+CLASS* house_e::pclass = NULL;
 
 double house_e::warn_low_temp = 55;
 double house_e::warn_high_temp = 95;
@@ -535,21 +536,21 @@ bool house_e::warn_control = true;
 /** House object constructor:  Registers the class and publishes the variables that can be set by the user. 
 Sets default randomized values for published variables.
 **/
-house_e::house_e(MODULE *mod) 
+house_e::house_e(MODULE *mod) : residential_enduse(mod)
 {
 	// first time init
 	if (oclass==NULL)  
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"house_e",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP);
+		oclass = gl_register_class(mod,"house",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP);
 
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
+			PT_INHERIT, "residential_enduse",
 			PT_object,"weather",PADDR(weather),PT_DESCRIPTION,"reference to the climate object",
-			
 			PT_double,"floor_area[sf]",PADDR(floor_area),PT_DESCRIPTION,"home conditioned floor area",
 			PT_double,"gross_wall_area[sf]",PADDR(gross_wall_area),PT_DESCRIPTION,"gross outdoor wall area",
 			PT_double,"ceiling_height[ft]",PADDR(ceiling_height),PT_DESCRIPTION,"average ceiling height",
@@ -557,13 +558,12 @@ house_e::house_e(MODULE *mod)
 			PT_double,"envelope_UA[Btu/degF.h]",PADDR(envelope_UA),PT_DESCRIPTION,"overall UA of the home's envelope",
 			PT_double,"window_wall_ratio",PADDR(window_wall_ratio),PT_DESCRIPTION,"ratio of window area to wall area",
 			PT_double,"door_wall_ratio",PADDR(door_wall_ratio),PT_DESCRIPTION,"ratio of door area to wall area",
-			
 			PT_double,"glazing_shgc",PADDR(glazing_shgc),PT_DESCRIPTION,"shading coefficient of glazing",PT_DEPRECATED,
 			PT_double,"window_shading",PADDR(glazing_shgc),PT_DESCRIPTION,"shading coefficient of windows",
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),PT_DESCRIPTION,"number of air-changes per hour",
 			PT_double,"internal_gain[Btu/h]",PADDR(total.heatgain),PT_DESCRIPTION,"internal heat gains",
 			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),PT_DESCRIPTION,"solar heat gains",
-			PT_double,"heat_cool_gain[Btu/h]",PADDR(system.heatgain),PT_DESCRIPTION,"system heat gains(losses)",
+			PT_double,"heat_cool_gain[Btu/h]",PADDR(load.heatgain),PT_DESCRIPTION,"system heat gains(losses)",
 
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),PT_DESCRIPTION,"deadband of thermostat control",
 			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),PT_DESCRIPTION,"thermostat heating setpoint",
@@ -600,7 +600,7 @@ house_e::house_e(MODULE *mod)
 			PT_double, "Rwindows[degF.h/Btu]", PADDR(Rwindows),PT_DESCRIPTION,"window R-value",
 			PT_double, "Rdoors[degF.h/Btu]", PADDR(Rdoors),PT_DESCRIPTION,"door R-value",
 			
-			PT_enduse,"system",PADDR(system),PT_DESCRIPTION,"heating/cooling system enduse load",
+			//PT_enduse,"system",PADDR(system),PT_DESCRIPTION,"heating/cooling system enduse load",
 			PT_enduse,"total",PADDR(total),PT_DESCRIPTION,"total enduse load",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
@@ -631,9 +631,6 @@ house_e::house_e(MODULE *mod)
 		gl_global_create("residential::thermostat_control_warning",PT_double,&warn_control,
 			PT_DESCRIPTION, "boolean to indicate whether a warning is generated when indoor temperature is out of control limits",
 			NULL);
-
-		// set up implicit enduse list
-		implicit_enduse_list = NULL;
 	}	
 }
 
@@ -644,12 +641,15 @@ int house_e::create()
 	gl_global_getvar("residential::implicit_enduses",active_enduses,sizeof(active_enduses));
 	char *token = NULL;
 
+	// set up implicit enduse list
+	implicit_enduse_list = NULL;
+
 	if (strcmp(active_enduses,"NONE")!=0)
 	{
 		// scan the implicit_enduse list
 		while ((token=strtok(token?NULL:active_enduses,"|"))!=NULL)
 		{
-			strlwr(token);
+			_strlwr(token);
 			
 			// find the implicit enduse description
 			struct s_implicit_enduse_list *eu = NULL;
@@ -693,7 +693,7 @@ int house_e::create()
 		}
 	}
 	total.name = "total";
-	system.name = "system";
+	load.name = "system";
 
 	return result;
 }
@@ -814,7 +814,7 @@ int house_e::init(OBJECT *parent)
 
 	// set defaults for panel/meter variables
 	if (panel.max_amps==0) panel.max_amps = 200; 
-	system.power = complex(0,0,J);
+	load.power = complex(0,0,J);
 
 	// Set defaults for published variables nor provided by model definition
 	if (heating_COP==0.0)		heating_COP = gl_random_triangle(1,2);
@@ -840,11 +840,12 @@ int house_e::init(OBJECT *parent)
 
 	// initalize/set system model parameters
     if (COP_coeff==0)			COP_coeff = gl_random_uniform(0.9,1.1);	// coefficient of cops [scalar]
+	if (heating_setpoint==0)	heating_setpoint = gl_random_triangle(68,72);
+	if (cooling_setpoint==0)	cooling_setpoint = gl_random_triangle(75,79);
     if (Tair==0)				Tair = gl_random_uniform(heating_setpoint, cooling_setpoint);	// air temperature [F]
 	if (over_sizing_factor==0)  over_sizing_factor = gl_random_uniform(0.98,1.3);
 	if (thermostat_deadband==0)	thermostat_deadband = gl_random_triangle(2,3);
-	if (heating_setpoint==0)	heating_setpoint = gl_random_triangle(68,72);
-	if (cooling_setpoint==0)	cooling_setpoint = gl_random_triangle(75,79);
+	if(cooling_design_temperature == 0)	cooling_design_temperature = 95.0;
 	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * gl_random_triangle(4,6); // ~5 W/sf estimated
 	if (design_cooling_capacity==0)	design_cooling_capacity = envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (1 - glazing_shgc)) + design_internal_gains;
 	if (design_heating_capacity==0)	design_heating_capacity = envelope_UA * (heating_setpoint - heating_design_temperature);
@@ -876,7 +877,9 @@ int house_e::init(OBJECT *parent)
 	update_model();
 
 	// attach the house_e HVAC to the panel
-	attach(OBJECTHDR(this),60, true, &system);
+	load.breaker_amps = 200;
+	load.config = EUC_IS220;
+	attach(OBJECTHDR(this),200, true, &load);
 
 	return 1;
 }
@@ -960,9 +963,9 @@ void house_e::update_model(double dt)
 	const double &Ua = (envelope_UA);
 	const double &Cm = (house_content_thermal_mass);
 	const double &Um = (house_content_heat_transfer_coeff);
-	const double &Qi = (total.heatgain - system.heatgain);
+	const double &Qi = (total.heatgain - load.heatgain);
 	double &Qs = (solar_load);
-	double &Qh = (system.heatgain);
+	double &Qh = (load.heatgain);
 	double &Ti = (Tair);
 	double &dTi = (dTair);
 	double &Tm = (Tmaterials);
@@ -1021,13 +1024,14 @@ void house_e::update_model(double dt)
 	if (rr<0)
 		throw "thermal solution does not exist";
 	const double rc = sqrt(rr)/ra;
-	r1 = rb+rc;
-	r2 = rb-rc;
+	r1 = rb+rc; // okay
+	r2 = rb-rc; // okay
 	if (r1>0 || r2>0)
 		throw "thermal solution has runaway condition";
 
 	/* compute next initial condition */
 	dTi = c2*Tm + c1*Ti - (c1+c2)*Tout + c7;
+	//k1 = (r1*Ti - r2*Teq - dTi)/(r2-r1);
 	k1 = (r2*Ti - r2*Teq - dTi)/(r2-r1);
 	k2 = (dTi - r1*k1)/r2;
 }
@@ -1063,8 +1067,9 @@ void house_e::update_system(double dt)
 	}
 
 	/* calculate the power consumption */
-	system.power = system_rated_power*KWPBTUPH * ((system_mode == SM_HEAT) && (system_type&ST_GAS) ? 0.01 : 1.0);
-	system.heatgain = system_rated_capacity;
+	// manually add 'total', we should be unshaped
+	load.total = load.power = system_rated_power*KWPBTUPH * ((system_mode == SM_HEAT) && (system_type&ST_GAS) ? 0.01 : 1.0);
+	load.heatgain = system_rated_capacity;
 }
 
 /**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time
@@ -1072,6 +1077,9 @@ void house_e::update_system(double dt)
 TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	const double dt = ((double)(t1-t0)*TS_SECOND)/3600;
+	OBJECT *obj = OBJECTHDR(this);
+	const double dt1 = (double)(t1-t0)*TS_SECOND;
+	double nHours = dt1 / 3600;
 
 	/* advance the thermal state of the building */
 	if (t0>0 && dt>0)
@@ -1086,6 +1094,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 			Tmaterials = ((r1-c1)*e1 + (r2-c1)*e2 + c6)/c2 + Teq;
 		}
 	}
+
 	return TS_NEVER;
 }
 
@@ -1100,18 +1109,27 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	double nHours = dt1 / 3600;
 
-	if (t0==0 || t1>t0)
-	{
+	/* update HVAC power before panel sync */
+	if (t0==0 || t1>t0){
 		outside_temperature = *pTout;
 
 		// update the state of the system
 		update_system(dt1);
+	}
 
+	// sync circuit panel
+	t = sync_panel(t0,t1); if (t < t2)	t2 = t;
+
+	t2 = sync_enduses(t0, t1);
+
+	if (t0==0 || t1>t0)
+	{
 		// update the model of house
 		update_model(dt1);
 
 		// provide warning of control problems
 		check_controls();
+
 	}
 
 	/* solve for the time to the next event */
@@ -1140,10 +1158,8 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		t = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); if (t<t2) t2 = t;
 	}
 
-	// sync circuit panel
-	t = sync_panel(t0,t1); if (t < t2)	t2 = t;
-
-	return t2;
+	//return TS_NEVER; // matt's-pissed override
+	return -t2;
 	
 }
 
@@ -1166,22 +1182,37 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		return TS_INVALID;
 	}
 
-	// change control mode if appropriate
-	if (Tair<TheatOn-terr/2) 
-	{	// heating on
-		// TODO: check for AUX
-		system_mode = SM_HEAT;
-		Tevent = TheatOff;
-	}
-	else if (Tair>TcoolOn-terr/2)
-	{	// cooling on
-		system_mode = SM_COOL;
-		Tevent = TcoolOff;
-	}
-	else 
-	{	// floating
+	if(system_mode == SM_UNKNOWN || system_mode == SM_AUX)
 		system_mode = SM_OFF;
-		Tevent = ( dTair<0 ? TheatOn : TcoolOn );
+	
+	// change control mode if appropriate
+	switch(system_mode){
+		case SM_HEAT:
+			if(Tair < TcoolOff-terr/2){
+				system_mode = SM_OFF;
+				Tevent = ( dTair<0 ? TheatOn : TcoolOn );
+			}
+			break;
+		case SM_COOL:
+			if(Tair < TcoolOff-terr/2){
+				system_mode = SM_OFF;
+				Tevent = ( dTair<0 ? TheatOn : TcoolOn );
+			}
+			break;
+		case SM_AUX:
+			system_mode = SM_OFF;
+			break;
+		case SM_OFF:
+			if(Tair > TcoolOn + terr/2){
+				system_mode = SM_COOL;
+				Tevent = TcoolOff;
+			} else if(Tair < TheatOn - terr/2){
+				system_mode = SM_HEAT;
+				Tevent = TheatOff;
+			} else {
+				Tevent = ( dTair<0 ? TheatOn : TcoolOn );;
+			}
+			break;
 	}
 
 	return TS_NEVER;
@@ -1196,7 +1227,9 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	complex I[3]; I[X12] = I[X23] = I[X13] = complex(0,0);
 
 	// clear accumulator
-	total.heatgain = 0;
+	if(t0 != 0 && t1 > t0){
+		total.heatgain = 0;
+	}
 	total.total = total.power = total.current = total.admittance = complex(0,0);
 
 	// gather load power and compute current for each circuit
@@ -1224,7 +1257,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			if ((c->pV)->Mag() == 0)
 			{
 				gl_debug("house_e:%d circuit %d (enduse %s) voltage is zero", obj->id, c->id, c->pLoad->name);
-				break;
+				continue;
 			}
 			
 			complex current = ~(c->pLoad->total*1000 / *(c->pV)); 
@@ -1249,7 +1282,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					c->status = BRK_FAULT;
 					c->reclose = TS_NEVER;
-					gl_debug("house_e:%d circuit breaker %d failed", obj->id, c->id);
+					gl_warning("house_e:%d circuit breaker %d failed", obj->id, c->id);
 				}
 
 				// must immediately reevaluate everything
@@ -1260,12 +1293,14 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			else
 			{
 				c->pLoad->voltage_factor = c->pV->Mag() / ((c->pLoad->config&EUC_IS220) ? 240 : 120);
-				TIMESTAMP t = gl_enduse_sync(c->pLoad,t1); if (t<t2) t2 = t;
+				//TIMESTAMP t = gl_enduse_sync(c->pLoad,t1); if (t<t2) t2 = t;
 				total.total += c->pLoad->total;
 				total.power += c->pLoad->power;
 				total.current += c->pLoad->current;
 				total.admittance += c->pLoad->admittance;
-				total.heatgain += c->pLoad->heatgain;
+				if(t0 != 0 && t1 > t0){
+					total.heatgain += c->pLoad->heatgain;
+				}
 				I[n] += current;
 				c->reclose = TS_NEVER;
 			}
@@ -1275,7 +1310,9 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 		if (t2 > c->reclose)
 			t2 = c->reclose;
 	}
-	TIMESTAMP t = gl_enduse_sync(&total,t1); if (t<t2) t2 = t;
+	/* using an enduse structure for the total is more a matter of having all the values add up for the house,
+	 * and it should not sync the struct! ~MH */
+	//TIMESTAMP t = gl_enduse_sync(&total,t1); if (t<t2) t2 = t;
 
 	// compute line currents and post to meter
 	if (obj->parent != NULL)
@@ -1314,7 +1351,7 @@ void house_e::check_controls(void)
 			OBJECT *obj = OBJECTHDR(this);
 			DATETIME dt0;
 			gl_localtime(obj->clock,&dt0);
-			char ts0[64];
+//			char ts0[64];
 			/*gl_warning("house_e:%d (%s) air temperature excursion (%.1f degF) at %s", 
 				obj->id, obj->name?obj->name:"anonymous", Tair, gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");*/
 		}
@@ -1325,7 +1362,7 @@ void house_e::check_controls(void)
 			OBJECT *obj = OBJECTHDR(this);
 			DATETIME dt0;
 			gl_localtime(obj->clock,&dt0);
-			char ts0[64];
+//			char ts0[64];
 			/*gl_warning("house_e:%d (%s) mass temperature excursion (%.1f degF) at %s", 
 				obj->id, obj->name?obj->name:"anonymous", Tmaterials, gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");*/
 		}
@@ -1366,7 +1403,7 @@ complex *house_e::get_complex(OBJECT *obj, char *name)
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int create_house_e(OBJECT **obj, OBJECT *parent)
+EXPORT int create_house(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(house_e::oclass);
 	if (*obj!=NULL)
@@ -1379,7 +1416,7 @@ EXPORT int create_house_e(OBJECT **obj, OBJECT *parent)
 	return 0;
 }
 
-EXPORT int init_house_e(OBJECT *obj)
+EXPORT int init_house(OBJECT *obj)
 {
 	try {
 		house_e *my = OBJECTDATA(obj,house_e);
@@ -1393,7 +1430,7 @@ EXPORT int init_house_e(OBJECT *obj)
 	}
 }
 
-EXPORT TIMESTAMP sync_house_e(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	house_e *my = OBJECTDATA(obj,house_e);
 	TIMESTAMP t1 = TS_NEVER;
@@ -1430,7 +1467,7 @@ EXPORT TIMESTAMP sync_house_e(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return t1;
 }
 
-EXPORT TIMESTAMP plc_house_e(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0)
 {
 	// this will be disabled if a PLC object is attached to the waterheater
 	if (obj->clock <= ROUNDOFF)

@@ -11,43 +11,14 @@
 #define _HOUSE_H
 
 #include "residential.h"
+#include "residential_enduse.h"
 
 typedef enum {duration=0,energy=1} TYPEOFEVENT;
 typedef enum {analog=0, PWM=1, queued=2} TYPEOFPULSE;
 
 #define ENDUSELOAD enduse
 
-typedef struct s_loadshapex {
-	char *name; ///< end-use name
-	int32 type; ///< load shape type (see LST_*)
-	double scalar; ///< scaling parameter (action differs based on type)
-	double event_power_nominal; ///< the power value of the event
-	double event_duration_nominal; ///< the duration of the event	
-	TYPEOFEVENT event_type; ///whether a duration event or an energy event
-	TYPEOFPULSE event_queue;
-	double shape[4][24]; ///< end-use shape (unit depends on loadshape type) [season][daytype][hour]
-	double power_factor; ///< power factor
-	double current_fraction, impedance_fraction; ///< fraction of power that is actually constant current or constant impedance
-	double heat_fraction; ///< fraction of energy that ends as internal gain
-	double breaker_amps; ///< breaker amps
-	bool is220;	///< 220V load
-	/* this value is setup during init */
-	struct s_loadshapex *next; ///< next end-use shape in list
-	/* these values are only used duration simulation */
-	double queue; ///< the current state of the queue
-	double reqd_queue;//stores integer parts of queue
-	double value; ///< the current load value
-	TIMESTAMP stopat; ///< the time at which the current event stops (only used when magnitude is non-zero and an event is active --- may not be true N Kumar)
-	TIMESTAMP start_at; ///< the time at which the current event starts
-	complex appliance_nominal_current;
-	complex appliance_nominal_voltage;
-	complex appliance_nominal_admittance;
-	complex appliance_constant_power;
-	ENDUSELOAD load;
-} LOADSHAPE; ///< End-use load shape used to generate implicity end-use loads
-
-
-class house {
+class house : public residential_enduse { /* inherits due to HVAC being an enduse */
 public:
 	/// Get voltage on a circuit
 	/// @return voltage (or 0 if breaker is open)
@@ -117,11 +88,11 @@ public:
 
 	PANEL panel; ///< main house panel
 
-	double internal_gain;
-	double hvac_kWh_use;
-	ENDUSELOAD load;  /* hvac load */
-	ENDUSELOAD tload; /* total load */
-
+//	double internal_gain;
+//	double hvac_kWh_use;
+	enduse tload; /* total load */
+	//enduse load;	// inherited from res_enduse
+	CIRCUIT *hvac_circuit;
 private:
 	double A11;
 	double A12;
@@ -147,14 +118,15 @@ private:
 	double BB22;
 
 public:
-	static CLASS *oclass;
+	static CLASS *oclass, *pclass;
 	house( MODULE *module);
 	~house();
 
 	int create();
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync_hvac_load(TIMESTAMP t0, double nHours);
+	TIMESTAMP sync_hvac_load(TIMESTAMP t1, double nHours);
+	TIMESTAMP sync_thermal(TIMESTAMP t1, double nHours);
 	TIMESTAMP sync_billing(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_thermostat(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_panel(TIMESTAMP t0, TIMESTAMP t1);

@@ -10,20 +10,20 @@
 #ifndef _PLUGLOAD_H
 #define _PLUGLOAD_H
 #include "residential.h"
+#include "residential_enduse.h"
 
-class plugload  
+class plugload : public residential_enduse
 {
 private:
 	complex *pVoltage;
 
 public:
-	ENDUSELOAD load;			///< enduse load structure
 	double circuit_split;		///< -1=100% negative, 0=balanced, +1=100% positive
 	double demand;				///< fraction of time plugloads are ON (schedule driven)
 	double heat_fraction;		///< fraction of the plugload that is transferred as heat (default = 0.90)
 
 public:
-	static CLASS *oclass;
+	static CLASS *oclass, *pclass;
 	static plugload *defaults;
 
 	plugload(MODULE *module);

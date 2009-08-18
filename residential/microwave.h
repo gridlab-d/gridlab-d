@@ -10,8 +10,9 @@
 #ifndef _MICROWAVE_H
 #define _MICROWAVE_H
 #include "residential.h"
+#include "residential_enduse.h"
 
-class microwave  
+class microwave : public residential_enduse
 {
 private:
 	complex *pVoltage;
@@ -23,7 +24,6 @@ public:
 	double demand;				///< fraction of time microwave oven is ON (schedule driven)
 	double power_factor;		///< power factor (default = 0.95)
 	double heat_fraction;		///< fraction of heat that is internal gain
-	ENDUSELOAD load;			///< enduse load structure
 	enum {	OFF=0,					///< microwave is off
 			ON=1,					///< microwave is on
 	} state;					///< microwave state
@@ -35,12 +35,13 @@ private:
 	double prev_demand;			///< previous demand
 	TIMESTAMP cycle_start, cycle_on, cycle_off;
 public:
-	static CLASS *oclass;
+	static CLASS *oclass, *pclass;
 	static microwave *defaults;
 
 	microwave(MODULE *module);
 	~microwave();
 	int create();
+	void init_noshape();
 	int init(OBJECT *parent);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	double update_state(double dt=0.0);

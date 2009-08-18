@@ -30,31 +30,28 @@
 // clotheswasher CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* clotheswasher::oclass = NULL;
+CLASS* clotheswasher::pclass = NULL;
 clotheswasher *clotheswasher::defaults = NULL;
 
-clotheswasher::clotheswasher(MODULE *module) 
+clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 {
 	// first time init
 	if (oclass==NULL)
 	{
 		// register the class definition
 		oclass = gl_register_class(module,"clotheswasher",sizeof(clotheswasher),PC_BOTTOMUP);
+		pclass = residential_enduse::oclass;
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
+			PT_INHERIT, "residential_enduse",
 			PT_double,"motor_power[W]",PADDR(motor_power),
-			PT_double,"power_factor[unit]",PADDR(power_factor),
 			PT_double,"circuit_split",PADDR(circuit_split),
 			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),
 			PT_double,"enduse_demand[unit]",PADDR(enduse_demand),
 			PT_double,"enduse_queue[unit]",PADDR(enduse_queue),
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"constant_power[kW]",PADDR(load.power),
-			PT_complex,"constant_current[A]",PADDR(load.current),
-			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
 			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			PT_double,"stall_voltage[V]", PADDR(stall_voltage),
 			PT_double,"start_voltage[V]", PADDR(start_voltage),
@@ -68,11 +65,6 @@ clotheswasher::clotheswasher(MODULE *module)
 				PT_KEYWORD,"TRIPPED",TRIPPED,
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
-
-		// setup the default values
-		defaults = this;
-		memset(this,0,sizeof(clotheswasher));
-		load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	}
 }
 
@@ -82,10 +74,14 @@ clotheswasher::~clotheswasher()
 
 int clotheswasher::create() 
 {
-	// copy the defaults
-	memcpy(this,defaults,sizeof(clotheswasher));
+	int res = residential_enduse::create();
 
-	return 1;
+	// name of enduse
+	load.name = oclass->name;
+
+	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+
+	return res;
 }
 
 int clotheswasher::init(OBJECT *parent)
@@ -100,6 +96,11 @@ int clotheswasher::init(OBJECT *parent)
 
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
+
+	if(motor_power < 100){
+		gl_error("clotheswasher motor is undersized, using 500W motor");
+		motor_power = 500;
+	}
 
 	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{

@@ -11,6 +11,7 @@
 #define _EVCHARGER_H
 
 #include "residential.h"
+#include "residential_enduse.h"
 
 #define MAXDAYTYPES 2
 #define WEEKDAY 0
@@ -29,7 +30,7 @@ typedef struct s_evdemand {
 	double longtrip[MAXDAYTYPES][MAXEVENTS][24];
 } EVDEMAND;
 
-class evcharger  
+class evcharger : public residential_enduse
 {
 	typedef enum {
 		VS_UNKNOWN=-1,				///< vehicle state is unknown
@@ -53,7 +54,6 @@ private:
 	EVDEMAND *pDemand;				///< ref demand profile for this vehicle
 
 public:
-	ENDUSELOAD load;				///< enduse load structure
 	double heat_fraction;			///< fraction of the evcharger that is transferred as heat (default = 0.90)
 	CHARGERTYPE charger_type;		///< EV charger power
 	VEHICLETYPE vehicle_type;		///< vehicle type
@@ -80,7 +80,7 @@ public:
 	char1024 demand_profile;	///< filename of demand profile
 
 public:
-	static CLASS *oclass;
+	static CLASS *oclass, *pclass;
 	static evcharger *defaults;
 
 	evcharger(MODULE *module);

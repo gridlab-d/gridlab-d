@@ -97,8 +97,6 @@ refrigerator::refrigerator(MODULE *module)
 				PT_KEYWORD,"OFF",S_OFF,
 				PT_KEYWORD,"ON",S_ON,
 
-			PT_complex,"enduse_load[kW]",PADDR(load.total),PT_DEPRECATED,
-
 			NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 	}

@@ -11,8 +11,9 @@
 #define _DRYER_H
 
 #include "residential.h"
+#include "residential_enduse.h"
 
-class dryer  
+class dryer : public residential_enduse
 {
 private:
 	complex *pVoltage;
@@ -33,7 +34,6 @@ public:
 	double trip_delay;					///< stalled time before thermal trip
 	double reset_delay;					///< trip time before thermal reset and restart
 	double heat_fraction;				///< internal gain fraction of installed power
-	ENDUSELOAD load;					///< total, power, current, impedance, energy, and heatgain
 	TIMESTAMP time_state;				///< time in current state
 	enum {	STOPPED=0,						///< motor is stopped
 			RUNNING=1,						///< motor is running
@@ -42,7 +42,7 @@ public:
 	} state;							///< control state
 
 public:
-	static CLASS *oclass;
+	static CLASS *oclass, *pclass;
 	static dryer *defaults;
 
 	dryer(MODULE *module);

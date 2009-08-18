@@ -78,8 +78,9 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 			double dt = (double)(t1-e->t_last)/(double)3600;
 			e->energy.r += e->total.r * dt;
 			e->energy.i += e->total.i * dt;
+			if(dt > 0.0)
+				e->heatgain = 0; /* heat is a dt thing, so dt=0 -> Q*dt = 0 */
 		}
-		e->heatgain = 0;
 		e->t_last = t1;
 	}
 	else if(pass==PC_BOTTOMUP)
@@ -128,7 +129,8 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 		else
 		{
 			if (e->power.r > e->demand.r) e->demand = e->power;
-			e->heatgain += e->power.r * e->heatgain_fraction * 3412.1416 /* Btu/h/kW */;
+			if(e->heatgain_fraction > 0.0)
+				e->heatgain = e->power.r * e->heatgain_fraction * 3412.1416 /* Btu/h/kW */;
 		}
 
 		e->t_last = t1;

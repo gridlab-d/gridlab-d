@@ -22,9 +22,9 @@
 // plugload CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* plugload::oclass = NULL;
-plugload *plugload::defaults = NULL;
+CLASS* plugload::pclass = NULL;
 
-plugload::plugload(MODULE *module) 
+plugload::plugload(MODULE *module) : residential_enduse(module)
 {
 	// first time init
 	if (oclass==NULL)
@@ -36,22 +36,14 @@ plugload::plugload(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
+			PT_INHERIT, "residential_enduse",
 			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"demand[unit]",PADDR(demand),
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"constant_power[kW]",PADDR(load.power),
-			PT_complex,"constant_current[A]",PADDR(load.current),
-			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
-			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),
+			PT_double,"demand[unit]",PADDR(shape.load),
+			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power), PT_DESCRIPTION, "installed plugs capacity",
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),PT_DEPRECATED,
+			PT_double,"heat_fraction[unit]",PADDR(load.heatgain_fraction),PT_DEPRECATED,
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
-
-		// setup the default values
-		defaults = this;
-		memset(this,0,sizeof(plugload));
-		load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	}
 }
 
@@ -61,74 +53,53 @@ plugload::~plugload()
 
 int plugload::create() 
 {
-	memcpy(this,defaults,sizeof(plugload));
+	int res = residential_enduse::create();
 
-	return 1;
-	
+	// name of enduse
+	load.name = oclass->name;
+	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.heatgain_fraction = 0.90;
+	shape.load = gl_random_uniform(0, 0.1);
+	return res;
 }
 
 int plugload::init(OBJECT *parent)
 {
 	// other derived properties
-	if (demand==0) demand = gl_random_uniform(0, 0.1);  // assuming a default maximum 10% of the sync time 
-	if (heat_fraction==0) heat_fraction = 0.90;  // assuming default 90% of power is transferred as heat
 
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
-	{
-		gl_error("plugload must have a parent house");
-		/*	TROUBLESHOOT
-			The plugload object, being an enduse for the house model, must have a parent house
-			that it is connected to.  Create a house object and set it as the parent of the
-			offending plugload object.
-		*/
-		return 0;
-	}
-	house *pHouse = OBJECTDATA(parent,house);
-
-	//	pull parent attach_enduse and attach the enduseload
-	FUNCTIONADDR attach = 0;
-	load.end_obj = hdr;
-	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
-		gl_error("plugload parent must publish attach_enduse()");
-		/*	TROUBLESHOOT
-			The Plugload object attempt to attach itself to its parent, which
-			must implement the attach_enduse function.
-		*/
-		return 0;
-	}
-	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
-
-
-	// compute the total load and heat gain
-	load.total = load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000;
-	load.heatgain = load.total.Mag() * heat_fraction;
 
 	return 1;
 }
 
 TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	// compute the total load and heat gain
-	if (t0>0 && t1>t0){
-		load.energy += load.total * gl_tohours(t1-t0);
+	TIMESTAMP t2 = TS_NEVER;
+	double val = 0.0;
+
+	if (pCircuit!=NULL)
+		load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor
+
+	t2 = residential_enduse::sync(t0,t1);
+
+	if(shape.type == MT_UNKNOWN){
+		if(shape.load < 0.0){
+			gl_error("plugload demand cannot be negative, capping");
+			demand = 0.0;
+		}
+		load.power = shape.params.analog.power * shape.load * load.voltage_factor;
+		if(fabs(load.power_factor) < 1){
+			val = (load.power_factor < 0 ? -1.0 : 1.0) * load.power.Re() * sqrt(1/(load.power_factor * load.power_factor) - 1);
+		} else {
+			val = 0;
+		}
+		load.power.SetRect(load.power.Re(), val);
 	}
 
-	if(demand < 0.0){
-		gl_error("plugload demand cannot be negative, capping");
-		demand = 0.0;
-	}
-	load.total = (load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000) * demand;
-	load.heatgain = load.total.Mag() * heat_fraction;
-
-
-
-
-	return TS_NEVER; 
-
+	gl_enduse_sync(&(residential_enduse::load),t1);
+	return t2;
 }
 
 //////////////////////////////////////////////////////////////////////////

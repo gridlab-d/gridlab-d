@@ -11,8 +11,9 @@
 #define _FREEZER_H
 
 #include "residential.h"
+#include "residential_enduse.h"
 
-class freezer  
+class freezer : public residential_enduse
 {
 public:
 	typedef enum {
@@ -44,12 +45,11 @@ public:
 	double power_factor;
 
 	MOTORSTATE motor_state;
-	ENDUSELOAD load;
 	TIMESTAMP last_time, next_time;
 
 public:
 
-	static CLASS *oclass;
+	static CLASS *oclass, *pclass;
 	static freezer *defaults;
 	freezer(MODULE *module);
 	~freezer();

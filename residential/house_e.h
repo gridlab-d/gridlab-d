@@ -14,6 +14,7 @@
 #include "complex.h"
 #include "enduse.h"
 #include "loadshape.h"
+#include "residential_enduse.h"
 
 typedef struct s_implicit_enduse {
 	enduse load;
@@ -46,7 +47,7 @@ typedef enum {
 	/// @todo add other implicit enduse flags as they are defined
 } IMPLICITENDUSEFLAGS;
 
-class house_e {
+class house_e : public residential_enduse { /*inherits due to HVAC being a load */
 public:
 	object weather; ///< reference to the climate
 	PANEL panel; ///< main house_e panel
@@ -125,7 +126,7 @@ public:
 	double system_rated_power;		///< rated power of the system
 	double system_rated_capacity;	///< rated capacity of the system
 
-	enduse system;  /* hvac system load */
+	/* inherited res_enduse::load is hvac system load */
 	enduse total; /* total load */
 
 private:
@@ -138,7 +139,7 @@ private:
 	bool check_start;
 
 public:
-	static CLASS *oclass;
+	static CLASS *oclass, *pclass;
 	house_e( MODULE *module);
 	~house_e();
 

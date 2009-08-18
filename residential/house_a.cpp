@@ -141,72 +141,81 @@ EXPORT CIRCUIT *attach_enduse_house_a(OBJECT *obj, enduse *target, double breake
 // house CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* house::oclass = NULL;
+CLASS* house::pclass = NULL;
 
 /** House object constructor:  Registers the class and publishes the variables that can be set by the user. 
 Sets default randomized values for published variables.
 **/
-house::house(MODULE *mod) 
+house::house(MODULE *mod) : residential_enduse(mod)
 {
 	// first time init
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"house",sizeof(house),PC_PRETOPDOWN|PC_BOTTOMUP);
+		oclass = gl_register_class(mod,"house_a",sizeof(house),PC_PRETOPDOWN|PC_BOTTOMUP);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_double,"floor_area[sf]",PADDR(floor_area),
-			PT_double,"gross_wall_area[sf]",PADDR(gross_wall_area),
-			PT_double,"ceiling_height[ft]",PADDR(ceiling_height),
-			PT_double,"aspect_ratio",PADDR(aspect_ratio),
-			PT_double,"envelope_UA[Btu/degF]",PADDR(envelope_UA),
-			PT_double,"window_wall_ratio",PADDR(window_wall_ratio),
-			PT_double,"glazing_shgc",PADDR(glazing_shgc),
-			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),
-			PT_double,"internal_gain[Btu/h]",PADDR(internal_gain),
-			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),
-			PT_double,"heat_cool_gain[Btu/h]",PADDR(hvac_rated_capacity),
-			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),
-			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),
-			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),
-			PT_double, "design_heating_capacity[Btu.h/sf]",PADDR(design_heating_capacity),
-			PT_double,"design_cooling_capacity[Btu.h/sf]",PADDR(design_cooling_capacity),
-			PT_double,"heating_COP",PADDR(heating_COP),
-			PT_double,"cooling_COP",PADDR(cooling_COP),
-			PT_double,"COP_coeff",PADDR(COP_coeff),
-			PT_double,"air_temperature[degF]",PADDR(Tair),
-			PT_double,"outside_temp[degF]",PADDR(Tout),
-			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),
-			PT_double,"mass_heat_coeff",PADDR(house_content_heat_transfer_coeff),
-			PT_double,"outdoor_temperature[degF]",PADDR(outside_temp),
-			PT_enumeration,"heat_mode",PADDR(heat_mode),
+			PT_INHERIT, "residential_enduse",
+			PT_double,"floor_area[sf]",PADDR(floor_area), PT_DESCRIPTION, "area of the house's ground floor",
+			PT_double,"gross_wall_area[sf]",PADDR(gross_wall_area), PT_DESCRIPTION, "total exterior wall area",
+			PT_double,"ceiling_height[ft]",PADDR(ceiling_height), PT_DESCRIPTION, "height of the house's ceiling, across all floors",
+			PT_double,"aspect_ratio",PADDR(aspect_ratio), PT_DESCRIPTION, "ratio of the length to the width of the house's ground footprint",
+			PT_double,"envelope_UA[Btu/degF]",PADDR(envelope_UA), PT_DESCRIPTION, "insulative UA value of the house, based on insulation thickness and surface area",
+			PT_double,"window_wall_ratio",PADDR(window_wall_ratio), PT_DESCRIPTION, "ratio of exterior window area to exterior wall area",
+			PT_double,"glazing_shgc",PADDR(glazing_shgc), PT_DESCRIPTION, "siding glazing solar heat gain coeffient",
+			PT_double,"airchange_per_hour",PADDR(airchange_per_hour), PT_DESCRIPTION, "volume of air exchanged between the house and exterior per hour",
+			PT_double,"solar_gain[Btu/h]",PADDR(solar_load), PT_DESCRIPTION, "thermal solar input",
+			PT_double,"heat_cool_gain[Btu/h]",PADDR(hvac_rated_capacity), PT_DESCRIPTION, "thermal gain rate of the installed HVAC",
+			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband), PT_DESCRIPTION, "",
+			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint), PT_DESCRIPTION, "",
+			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint), PT_DESCRIPTION, "",
+			PT_double, "design_heating_capacity[Btu.h/sf]",PADDR(design_heating_capacity), PT_DESCRIPTION, "",
+			PT_double,"design_cooling_capacity[Btu.h/sf]",PADDR(design_cooling_capacity), PT_DESCRIPTION, "",
+			PT_double,"heating_COP",PADDR(heating_COP), PT_DESCRIPTION, "",
+			PT_double,"cooling_COP",PADDR(cooling_COP), PT_DESCRIPTION, "",
+			PT_double,"COP_coeff",PADDR(COP_coeff), PT_DESCRIPTION, "",
+			PT_double,"air_temperature[degF]",PADDR(Tair), PT_DESCRIPTION, "",
+			PT_double,"outside_temp[degF]",PADDR(Tout), PT_DESCRIPTION, "",
+			PT_double,"mass_temperature[degF]",PADDR(Tmaterials), PT_DESCRIPTION, "",
+			PT_double,"mass_heat_coeff",PADDR(house_content_heat_transfer_coeff), PT_DESCRIPTION, "",
+			PT_double,"outdoor_temperature[degF]",PADDR(outside_temp), PT_DESCRIPTION, "",
+			PT_double,"house_thermal_mass[Btu/degF]",PADDR(house_content_thermal_mass), PT_DESCRIPTION, "thermal mass of the house's contained mass",
+			PT_enumeration,"heat_mode",PADDR(heat_mode), PT_DESCRIPTION, "",
 				PT_KEYWORD,"ELECTRIC",ELECTRIC,
 				PT_KEYWORD,"GASHEAT",GASHEAT,
-			PT_enumeration,"hc_mode",PADDR(heat_cool_mode),
+			PT_enumeration,"hc_mode",PADDR(heat_cool_mode), PT_DESCRIPTION, "",
 				PT_KEYWORD,"OFF",OFF,
 				PT_KEYWORD,"HEAT",HEAT,
 				PT_KEYWORD,"COOL",COOL,
-			
-				PT_complex,"total_load[kW]",PADDR(tload.total),PT_DEPRECATED,
-			PT_complex,"enduse_load[kW]",PADDR(load.total),PT_DEPRECATED,
-			PT_complex,"power[kW]",PADDR(load.power),PT_DEPRECATED,
-			PT_complex,"current[A]",PADDR(load.current),PT_DEPRECATED,
-			PT_complex,"admittance[1/Ohm]",PADDR(load.admittance),PT_DEPRECATED,
-			PT_complex,"energy[kWh]",PADDR(load.energy),PT_DEPRECATED,
-
-			PT_enduse,"total",PADDR(tload),PT_DESCRIPTION,"total house enduse loads",
-			PT_enduse,"system",PADDR(load),PT_DESCRIPTION,"heating/cooling enduse load",
+			PT_enduse,"houseload",PADDR(tload), PT_DESCRIPTION, "",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
-		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse_house_a);
+		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)&attach_enduse_house_a);		
 	}	
 }
 
 int house::create() 
 {
-	// initalize published variables.  The model definition can set any of this.
+	int res = residential_enduse::create();
+
+	static char tload_name[32] = "house_total";
+	static char load_name[32] = "house_hvac";
+
+	tload.name = tload_name;
+	tload.power = complex(0,0,J);
+	tload.admittance = complex(0,0,J);
+	tload.current = complex(0,0,J);
+	load.name = load_name;
+	load.power = complex(0,0,J);
+	load.admittance = complex(0,0,J);
+	load.current = complex(0,0,J);
+
+	tload.end_obj = OBJECTHDR(this);
+
+// initalize published variables.  The model definition can set any of this.
 	heat_mode = ELECTRIC;
 	floor_area = 0.0;
 	ceiling_height = 0.0;
@@ -223,16 +232,16 @@ int house::create()
 	heating_COP = 3.0;
 	cooling_COP = 3.0;
 	aspect_ratio = 1.0;
+    air_density = 0.0735;			// density of air [lb/cf]
+	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
+	house_content_thermal_mass = 10000.0;		// thermal mass of house [BTU/F]
 
 	// set defaults for panel/meter variables
 	panel.circuits=NULL;
 	panel.max_amps=200;
 
-	load.power = complex(0,0,J);
-	load.admittance = complex(0,0,J);
-	load.current = complex(0,0,J);
+	return res;
 
-	return 1;
 }
 
 /** Checks for climate object and maps the climate variables to the house object variables.  
@@ -334,7 +343,7 @@ int house::init(OBJECT *parent)
 	}
 	else
 	{
-		gl_warning("house:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
+		gl_error("house:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
 		/*	TROUBLESHOOT
 			The House model relies on a triplex_meter as a parent to calculate voltages based on
 			events within the powerflow module.  Create a triplex_meter object and set it as
@@ -399,11 +408,6 @@ int house::init(OBJECT *parent)
 
     heat_cool_mode = house::OFF;							// heating/cooling mode {HEAT, COOL, OFF}
 
-    air_density = 0.0735;			// density of air [lb/cf]
-	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
-
-	house_content_thermal_mass = 10000.0;		// thermal mass of house [BTU/F]
-    
     if (house_content_heat_transfer_coeff <= ROUNDOFF)
 	    house_content_heat_transfer_coeff = gl_random_uniform(0.5,1.0)*floor_area;	// heat transfer coefficient of house contents [BTU/hr.F]
 
@@ -429,10 +433,9 @@ int house::init(OBJECT *parent)
 	}
 
 	// attach the house HVAC to the panel
-	load.name = "system";
-	tload.name = "total";
-	attach(&load, 50, TRUE);
-	
+	//attach(&load, 50, TRUE);
+	hvac_circuit = attach_enduse_house_a(hdr, &load, 50, TRUE);
+
 	return 1;
 }
 
@@ -666,68 +669,10 @@ TIMESTAMP house::presync(TIMESTAMP t0, TIMESTAMP t1)
 	return TS_NEVER;
 }
 
-/** Updates the total internal gain and synchronizes with the hvac equipment load.  
-Also synchronizes the voltages and current in the panel with the meter.
-**/
 
-TIMESTAMP house::sync(TIMESTAMP t0, TIMESTAMP t1)
-{
-	OBJECT *obj = OBJECTHDR(this);
-	double nHours = (gl_tohours(t1)- gl_tohours(t0));
-	load.energy += load.total * nHours;
-	TIMESTAMP sync_time = sync_hvac_load(t1, nHours);
-
-	// sync circuit panel
-	TIMESTAMP panel_time = sync_panel(t0,t1);
-	if (panel_time < sync_time)
-		sync_time = panel_time;
-
-	/// @todo check panel main breaker (residential, medium priority) (ticket #140)
-	return sync_time;
-	
-}
-
-/** HVAC load synchronizaion is based on the equipment capacity, COP, solar loads and total internal gain
-from end uses.  The modeling approach is based on the Equivalent Thermal Parameter (ETP)
-method of calculating the air and mass temperature in the conditioned space.  These are solved using
-a dual decay solver to obtain the time for next state change based on the thermostat set points.
-This synchronization function updates the HVAC equipment load and power draw.
-**/
-
-TIMESTAMP house::sync_hvac_load(TIMESTAMP t1, double nHours)
-{
-	// compute hvac performance
-	outside_temp = *pTout;
-	const double heating_cop_adj = (-0.0063*(*pTout)+1.5984);
-	const double cooling_cop_adj = -(-0.0108*(*pTout)+2.0389);
-	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
-	const double cooling_capacity_adj = -(-0.0063*(*pTout)+1.5984);
-
-	double t = 0.0;
-
-	if (heat_cool_mode == HEAT)
-	{
-		hvac_rated_capacity = design_heating_capacity*floor_area*heating_capacity_adj;
-		hvac_rated_power = hvac_rated_capacity/(heating_COP * heating_cop_adj);
-	}
-	else if (heat_cool_mode == COOL)
-	{
-		hvac_rated_capacity = design_cooling_capacity*floor_area*cooling_capacity_adj;
-		hvac_rated_power = hvac_rated_capacity/(cooling_COP * cooling_cop_adj);
-	}
-	else
-	{
-		hvac_rated_capacity = 0.0;
-		hvac_rated_power = 0.0;
-	}
-
-	load.power = hvac_rated_power*KWPBTUPH * ((heat_cool_mode == HEAT) && (heat_mode == GASHEAT) ? 0.01 : 1.0);
-	load.total = load.power;
-	load.heatgain = 0.0;
-	//load.heatgain = hvac_rater_power;		/* factored in at netHeatrate */
-	hvac_kWh_use = load.power.Mag()*nHours;  // this updates the energy usage of the elapsed time since last synch
-
+TIMESTAMP house::sync_thermal(TIMESTAMP t1, double nHours){
 	DATETIME tv;
+	double t = 0.0;
 	gl_localtime(t1, &tv);
 	
 	Tout = *pTout;
@@ -739,7 +684,7 @@ TIMESTAMP house::sync_hvac_load(TIMESTAMP t1, double nHours)
 	{
 		solar_load += (gross_wall_area*window_wall_ratio/8.0) * glazing_shgc * pSolar[i];
 	}
-	double netHeatrate = hvac_rated_capacity + tload.heatgain*BTUPHPW + solar_load;
+	double netHeatrate = /*hvac_rated_capacity +*/ tload.heatgain*BTUPHPW + solar_load;
 	double Q1 = M_inv11*Tair + M_inv12*Tmaterials;
 	double Q2 = M_inv21*Tair + M_inv22*Tmaterials;
 
@@ -809,8 +754,73 @@ TIMESTAMP house::sync_hvac_load(TIMESTAMP t1, double nHours)
 	else
 		return TS_NEVER;
 #endif
-	    
+}
 
+/** Updates the total internal gain and synchronizes with the hvac equipment load.  
+Also synchronizes the voltages and current in the panel with the meter.
+**/
+
+TIMESTAMP house::sync(TIMESTAMP t0, TIMESTAMP t1)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	double nHours = (gl_tohours(t1)- gl_tohours(t0));
+	//load.energy += load.total * nHours;
+	/* TIMESTAMP sync_time = */ sync_hvac_load(t1, nHours);
+
+	// sync circuit panel
+	TIMESTAMP panel_time = sync_panel(t0,t1);
+	TIMESTAMP sync_time = sync_thermal(t1, nHours);
+
+	if (panel_time < sync_time)
+		sync_time = panel_time;
+
+	/// @todo check panel main breaker (residential, medium priority) (ticket #140)
+	return sync_time;
+	
+}
+
+/** HVAC load synchronizaion is based on the equipment capacity, COP, solar loads and total internal gain
+from end uses.  The modeling approach is based on the Equivalent Thermal Parameter (ETP)
+method of calculating the air and mass temperature in the conditioned space.  These are solved using
+a dual decay solver to obtain the time for next state change based on the thermostat set points.
+This synchronization function updates the HVAC equipment load and power draw.
+**/
+
+TIMESTAMP house::sync_hvac_load(TIMESTAMP t1, double nHours)
+{
+	// compute hvac performance
+	outside_temp = *pTout;
+	const double heating_cop_adj = (-0.0063*(*pTout)+1.5984);
+	const double cooling_cop_adj = -(-0.0108*(*pTout)+2.0389);
+	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
+	const double cooling_capacity_adj = -(-0.0063*(*pTout)+1.5984);
+
+	double t = 0.0;
+
+	if (heat_cool_mode == HEAT)
+	{
+		hvac_rated_capacity = design_heating_capacity*floor_area*heating_capacity_adj;
+		hvac_rated_power = hvac_rated_capacity/(heating_COP * heating_cop_adj);
+	}
+	else if (heat_cool_mode == COOL)
+	{
+		hvac_rated_capacity = design_cooling_capacity*floor_area*cooling_capacity_adj;
+		hvac_rated_power = hvac_rated_capacity/(cooling_COP * cooling_cop_adj);
+	}
+	else
+	{
+		hvac_rated_capacity = 0.0;
+		hvac_rated_power = 0.0;
+	}
+
+	gl_enduse_sync(&(residential_enduse::load),t1);
+	load.power = hvac_rated_power*KWPBTUPH * ((heat_cool_mode == HEAT) && (heat_mode == GASHEAT) ? 0.01 : 1.0);
+	//load.total = load.power;	// calculated by sync_enduse()
+	load.heatgain = hvac_rated_capacity;
+
+	//load.heatgain = hvac_rater_power;		/* factored in at netHeatrate */
+	//hvac_kWh_use = load.power.Mag()*nHours;  // this updates the energy usage of the elapsed time since last synch
+	return TS_NEVER; /* we'll figure that out later */
 }
 
 int house::set_Eigen_values()
@@ -920,7 +930,7 @@ complex *house::get_complex(OBJECT *obj, char *name)
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int create_house(OBJECT **obj, OBJECT *parent)
+EXPORT int create_house_a(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(house::oclass);
 	if (*obj!=NULL)
@@ -933,14 +943,14 @@ EXPORT int create_house(OBJECT **obj, OBJECT *parent)
 	return 0;
 }
 
-EXPORT int init_house(OBJECT *obj)
+EXPORT int init_house_a(OBJECT *obj)
 {
 	house *my = OBJECTDATA(obj,house);
 	my->init_climate();
 	return my->init(obj->parent);
 }
 
-EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+EXPORT TIMESTAMP sync_house_a(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	house *my = OBJECTDATA(obj,house);
 	TIMESTAMP t1 = TS_NEVER;
@@ -977,7 +987,7 @@ EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return t1;
 }
 
-EXPORT TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP plc_house_a(OBJECT *obj, TIMESTAMP t0)
 {
 	// this will be disabled if a PLC object is attached to the waterheater
 	if (obj->clock <= ROUNDOFF)

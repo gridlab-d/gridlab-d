@@ -61,11 +61,11 @@
 // underground_line_conductor CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* freezer::oclass = NULL;
-freezer *freezer::defaults = NULL;
+CLASS* freezer::pclass = NULL;
 
 
 
-freezer::freezer(MODULE *module) 
+freezer::freezer(MODULE *module) : residential_enduse(module)
 {
 	// first time init
 	if (oclass == NULL)
@@ -76,9 +76,9 @@ freezer::freezer(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
+			PT_INHERIT, "residential_enduse",
 			PT_double, "size[cf]", PADDR(size),
 			PT_double, "rated_capacity[Btu/h]", PADDR(rated_capacity),
-			PT_double,"power_factor[pu]",PADDR(power_factor),
 			PT_double,"temperature[degF]",PADDR(Tair),
 			PT_double,"setpoint[degF]",PADDR(Tset),
 			PT_double,"deadband[degF]",PADDR(thermostat_deadband),
@@ -91,19 +91,10 @@ freezer::freezer(MODULE *module)
 				PT_KEYWORD,"OFF",S_OFF,
 				PT_KEYWORD,"ON",S_ON,
 
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"constant_power[kW]",PADDR(load.power),
-			PT_complex,"constant_current[A]",PADDR(load.current),
-			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
+			PT_complex,"energy_meter[kWh]",PADDR(load.energy),PT_DEPRECATED,
 
 			NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
-
-		//setup default values
-		defaults = this;
-		memset(this,0,sizeof(freezer));
 	}
 }
 
@@ -113,9 +104,14 @@ freezer::~freezer()
 
 int freezer::create() 
 {
-	memcpy(this, defaults, sizeof(*this));
+	int res = residential_enduse::create();
 
-	return 1;
+	// name of enduse
+	load.name = oclass->name;
+
+	// @todo other initial conditions
+
+	return res;
 }
 
 int freezer::init(OBJECT *parent)
@@ -259,8 +255,7 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 	const double COP = COPcoef*((-3.5/45)*(Tout-70)+4.5);
 
 	// calculate power & accumulate energy
-	load.total = Qr * KWPBTUPH * COP;
-	load.energy += load.total * nHours;
+	load.energy += load.total * nHours; // moot if no dt
 
 	// change control mode if appropriate
 	if(motor_state == S_ON){
@@ -270,6 +265,8 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 	} else{
 		throw "freezer motor state is ambiguous";
 	}
+
+	load.total = Qr * KWPBTUPH * COP;
 
 	if(pVoltage->Mag() < (120.0 * 0.6) ){ /* stall voltage */
 		gl_verbose("freezer motor has stalled");

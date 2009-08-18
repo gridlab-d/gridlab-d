@@ -22,9 +22,9 @@
 // microwave CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* microwave::oclass = NULL;
-microwave *microwave::defaults = NULL;
+CLASS* microwave::pclass = NULL;
 
-microwave::microwave(MODULE *module) 
+microwave::microwave(MODULE *module) : residential_enduse(module)
 {
 	// first time init
 	if (oclass==NULL)
@@ -36,30 +36,22 @@ microwave::microwave(MODULE *module)
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_double,"installed_power[W]",PADDR(installed_power),
-			PT_double,"standby_power[W]",PADDR(standby_power),
+			PT_INHERIT, "residential_enduse",
+			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power),PT_DESCRIPTION,"rated microwave power level",
+			PT_double,"standby_power[kW]",PADDR(standby_power),PT_DESCRIPTION,"standby microwave power draw (unshaped only)",
 			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"demand[unit]",PADDR(demand),
-			PT_complex,"enduse_load[kW]",PADDR(load.total),
-			PT_complex,"constant_power[kW]",PADDR(load.power),
-			PT_complex,"constant_current[A]",PADDR(load.current),
-			PT_complex,"constant_admittance[1/Ohm]",PADDR(load.admittance),
-			PT_double,"internal_gains[kW]",PADDR(load.heatgain),
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
-			PT_double,"heat_fraction",PADDR(heat_fraction),
-			PT_double,"cycle_length",PADDR(cycle_time),
-			PT_enumeration,"state",PADDR(state),
+			PT_double,"demand[unit]",PADDR(shape.load),PT_DEPRECATED,PT_DESCRIPTION,"fraction of time microwave is running",
+			PT_complex,"energy_meter[kVAh]",PADDR(load.energy),PT_DEPRECATED,
+			PT_double,"heat_fraction",PADDR(load.heatgain_fraction),PT_DEPRECATED,
+			PT_enumeration,"state",PADDR(state),PT_DESCRIPTION,"on/off state of the microwave",
 				PT_KEYWORD,"OFF",OFF,
 				PT_KEYWORD,"ON",ON,
-			PT_double,"runtime[s]",PADDR(runtime),
-			PT_double,"state_time[s]",PADDR(state_time),
+			
+			PT_double,"cycle_length[s]",PADDR(cycle_time),PT_DESCRIPTION,"length of the combined on/off cycle between uses",
+			PT_double,"runtime[s]",PADDR(runtime),PT_DESCRIPTION,"",
+			PT_double,"state_time[s]",PADDR(state_time),PT_DESCRIPTION,"",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
-
-		// setup the default values
-		defaults = this;
-		memset(this,0,sizeof(microwave));
-		load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	}
 }
 
@@ -69,49 +61,23 @@ microwave::~microwave()
 
 int microwave::create() 
 {
-	// copy the defaults
-	memcpy(this,defaults,sizeof(microwave));
+	int res = residential_enduse::create();
 
-	// default properties
-	return 1;
+	// name of enduse
+	load.name = oclass->name;
+	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+
+	load.heatgain_fraction = 0.25;
+	load.power_factor = 0.95;
+
+	standby_power = 0.01;
+	shape.load = gl_random_uniform(0, 0.1);  // assuming a default maximum 10% of the sync time 
+
+	return res;
 }
 
-int microwave::init(OBJECT *parent)
-{
-	if (heat_fraction==0) heat_fraction = 0.25;
-	if (power_factor==0) power_factor = 0.95;
-	if (installed_power==0) installed_power = gl_random_uniform(700,1500);
-	if (standby_power==0) standby_power = installed_power/100*gl_random_uniform(0.99,1.01);
-	if (demand==0) demand = gl_random_uniform(0, 0.1);  // assuming a default maximum 10% of the sync time 
-
-	OBJECT *hdr = OBJECTHDR(this);
-	hdr->flags |= OF_SKIPSAFE;
-
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
-	{
-		gl_error("microwave must have a parent house");
-		/*	TROUBLESHOOT
-			The microwave object, being an enduse for the house model, must have a parent house
-			that it is connected to.  Create a house object and set it as the parent of the
-			offending microwave object.
-		*/
-		return 0;
-	}
-
-	//	pull parent attach_enduse and attach the enduseload
-	FUNCTIONADDR attach = 0;
-	load.end_obj = hdr;
-	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
-		gl_error("microwave parent must publish attach_enduse()");
-		/*	TROUBLESHOOT
-			The Microwave object attempt to attach itself to its parent, which
-			must implement the attach_enduse function.
-		*/
-		return 0;
-	}
-	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
-
+/* basic checks on unshaped microwaves.  on failure, don't play games, just throw exceptions. */
+void microwave::init_noshape(){
 	if(installed_power < 0){
 		GL_THROW("microwave power must be positive (read as %f)", installed_power);
 	} else if (installed_power > 4000){
@@ -122,7 +88,6 @@ int microwave::init(OBJECT *parent)
 	} else if(installed_power > 1800){
 		gl_error("microwave installed power is greater than traditional microwave ovens");
 	}
-
 	if(standby_power < 0){
 		gl_error("negative standby power, reseting to 1%% of installed power");
 		standby_power = installed_power * 0.01;
@@ -130,19 +95,51 @@ int microwave::init(OBJECT *parent)
 		gl_error("standby power exceeds installed power, reseting to 1%% of installed power");
 		standby_power = installed_power * 0.01;
 	}
-
 	if(cycle_time < 0){
 		GL_THROW("negative cycle_length is an invalid value");
 	}
 	if(cycle_time > 14400){
 		gl_warning("cycle_length is abnormally long and may give unusual results");
 	}
+}
 
-	load.total = load.power = standby_power/1000;
-	// initial demand
-	update_state(0.0);
+int microwave::init(OBJECT *parent)
+{
+	OBJECT *hdr = OBJECTHDR(this);
+	hdr->flags |= OF_SKIPSAFE;
 
-	return 1;
+	if (load.voltage_factor==0) load.voltage_factor = 1.0;
+
+	if(shape.type == MT_UNKNOWN){
+		init_noshape();
+		// initial demand
+		update_state(0.0);
+	} else if(shape.type == MT_ANALOG){
+		if(1){
+			;
+		}
+	} else if(shape.type == MT_PULSED){
+		if(1){
+			;
+		}
+	} else if(shape.type == MT_MODULATED){
+		if(1){
+			;
+		}
+	} else if(shape.type == MT_QUEUED){
+		gl_error("queued loadshapes not supported ~ will attempt to run as an unshaped load");
+		shape.type = MT_UNKNOWN;
+		init_noshape();
+		// initial demand
+		update_state(0.0);
+	} else {
+		gl_error("unrecognized loadshape");
+		return 0;
+	}
+	load.total = load.power = standby_power;
+	
+	// waiting this long to initialize the parent class is normal
+	return residential_enduse::init(parent);
 }
 
 // periodically activates for the tail demand % of a cycle_time period.  Has a random offset to prevent
@@ -151,13 +148,13 @@ int microwave::init(OBJECT *parent)
 TIMESTAMP microwave::update_state_cycle(TIMESTAMP t0, TIMESTAMP t1){
 	double ti0 = (double)t0, ti1 = (double)t1;
 
-	if(demand == 0){
+	if(shape.load == 0){
 		state = OFF;
 		cycle_start = 0;
 		return TS_NEVER;
 	}
 
-	if(demand == 1){
+	if(shape.load == 1){
 		state = ON;
 		cycle_start = 0;
 		return TS_NEVER;
@@ -166,7 +163,7 @@ TIMESTAMP microwave::update_state_cycle(TIMESTAMP t0, TIMESTAMP t1){
 	if(cycle_start == 0){
 		double off = gl_random_uniform(0, this->cycle_time);
 		cycle_start = ti1 + off;
-		cycle_on = (1 - demand) * cycle_time + cycle_start;
+		cycle_on = (1 - shape.load) * cycle_time + cycle_start;
 		cycle_off = cycle_time + cycle_start;
 		state = OFF;
 		return (TIMESTAMP)cycle_on;
@@ -180,7 +177,7 @@ TIMESTAMP microwave::update_state_cycle(TIMESTAMP t0, TIMESTAMP t1){
 		cycle_start = cycle_off;
 	}
 	if(t0 == cycle_start){
-		cycle_on = (1 - demand) * cycle_time + cycle_start;
+		cycle_on = (1 - shape.load) * cycle_time + cycle_start;
 		state = OFF;
 		cycle_off = cycle_time + cycle_start;
 	}
@@ -199,27 +196,27 @@ double microwave::update_state(double dt)
 	static double sumrt = 2520; // sum(pdf) -- you do the math
 	static double avgrt = sumrt/sizeof(rt);
 
-	if(demand < 0.0){
+	if(shape.load < 0.0){
 		gl_error("microwave demand less than 0, reseting to zero");
-		demand = 0.0;
+		shape.load = 0.0;
 	}
-	if(demand > 1.0){
+	if(shape.load > 1.0){
 		gl_error("microwave demand greater than 1, reseting to one");
-		demand = 1.0;
+		shape.load = 1.0;
 	}
 	switch (state) {
 	case OFF:
 		// new OFF state or demand changed
-		if (state_time==0 || prev_demand!=demand) 
+		if (state_time == 0 || prev_demand != shape.load) 
 		{
-			if(demand != 0.0){
-				runtime = avgrt * (1-demand)/demand;
+			if(shape.load != 0.0){
+				runtime = avgrt * (1 - shape.load) / shape.load;
 			} 
 			else {
 				runtime = 0.0;
 				return 0; /* don't run the microwave */
 			}
-			prev_demand = demand;
+			prev_demand = shape.load;
 			state_time = 0; // important that state time be reset to prevent increase in demand from causing immediate state change
 		}
 
@@ -257,30 +254,38 @@ double microwave::update_state(double dt)
 
 TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	if (t0 <= 0)
-		return TS_NEVER;
-
 	TIMESTAMP ct = 0;
 	double dt = 0;
+	double val = 0.0;
+	TIMESTAMP t2 = TS_NEVER;
+
+	if (t0 <= 0)
+		return TS_NEVER;
 	
-	if(cycle_time > 0){
-		ct = update_state_cycle(t0, t1);
-	} else {
-		dt = update_state(gl_toseconds(t1-t0));
+	if (pCircuit!=NULL)
+		load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor
+
+	t2 = residential_enduse::sync(t0,t1);
+
+	if(shape.type == MT_UNKNOWN){
+		if(cycle_time > 0){
+			ct = update_state_cycle(t0, t1);
+		} else {
+			dt = update_state(gl_toseconds(t1-t0));
+		}
+		load.power.SetPowerFactor( (state==ON ? installed_power : standby_power), power_factor);
 	}
 
-	/* before we update our power for the next state */
-	if (t1 > t0 && t0 > 0) load.energy += load.total * ((double)(t1 - t0))/3600.0; /* dt in seconds */
-	
-	load.power.SetPowerFactor( (state==ON?installed_power:standby_power)/1000,power_factor);
-	load.total = load.power;
-	
-	load.heatgain = load.total.Mag()*(state==ON?heat_fraction:1.0);
+	gl_enduse_sync(&(residential_enduse::load),t1);
 
-	if(cycle_time == 0)
-		return dt>0?-(TIMESTAMP)(t1 + dt*TS_SECOND) : TS_NEVER; // negative time means soft transition
-	else
-		return ct == TS_NEVER ? TS_NEVER : -ct;
+	if(shape.type == MT_UNKNOWN){
+		if(cycle_time == 0)
+			return dt>0?-(TIMESTAMP)(t1 + dt*TS_SECOND) : TS_NEVER; // negative time means soft transition
+		else
+			return ct == TS_NEVER ? TS_NEVER : -ct;
+	} else {
+		return t2;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
