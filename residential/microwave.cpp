@@ -233,7 +233,7 @@ double microwave::update_state(double dt)
 	case ON:
 		// power outage or runtime expired
 		runtime = floor(runtime);
-		if (*pVoltage < 0.25 || state_time>runtime)
+		if (pCircuit->pV->Mag() < 0.25 || state_time>runtime)
 		{
 			state = OFF;
 			state_time = 0;
