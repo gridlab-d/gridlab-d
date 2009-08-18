@@ -126,6 +126,10 @@ MakeAnother:
 			delete pEvent;
 		}			
 	}
+	else
+	{
+		t2 = pEvent->event_time;
+	}
 	return -t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 

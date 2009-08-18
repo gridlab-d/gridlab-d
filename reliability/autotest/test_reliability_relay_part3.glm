@@ -1,11 +1,20 @@
-// $Id: reliability_test.glm 1182 2008-12-22 22:08:36Z dchassin $
-//	Copyright (C) 2008 Battelle Memorial Institute
-//
-// Model file for integrated testing
-// One house with each enduse represented for verifying power aggregation
-// at the feeder/meter 
-// 
-#set randomseed=1;
+//test_reliability_relay_part3.glm
+
+//This glm contains a 4 node test feeder with a wye-wye step down transformer with loads shown below and a relay object
+//placed in between node 1 and the line 1-2.
+
+// 1			   2			   3			   4			
+// |_______________________|__________} {__________|_______________________|________} {____________			
+// |  			   |	      } {          |			   |_       } {            |     			
+//									     |	      		   |			
+//								          (meter)	     (triplex meter)			
+//								             |			   |			
+//								           (load) 	     (triplex node) 			 
+
+//This reliability test only affects the relays in the system.
+//This glm will check ASIDI, MAIFI, MAFIFIE, and ASAI.
+
+#set randomseed=1;//fixing the seed insures that the same event times are displayed every time the glm is run
 
 module assert;
 module tape;
@@ -25,6 +34,42 @@ clock {
 object metrics {
 	name Metrics;
 	n 7;
+	object double_assert {
+		target "ASIDI";
+		object player {
+			property status;
+			file "../test_reliability_relay.player";
+		};
+		value 372.89;
+		within 0.01;
+	};
+	object double_assert {
+		target "MAIFI";
+		object player {
+			property status;
+			file "../test_reliability_relay.player";
+		};
+		value 4278;
+		within 0.01;
+	};
+	object double_assert {
+		target "MAIFIE";
+		object player {
+			property status;
+			file "../test_reliability_relay.player";
+		};
+		value 58.00;
+		within 0.01;
+	};
+	object double_assert {
+		target "ASAI";
+		object player {
+			property status;
+			file "../test_reliability_relay.player";
+		};
+		value 0.9992906;
+		within 0.0000001;
+	};
 }
 
 object eventgen {
@@ -191,7 +236,7 @@ module tape;
 object triplex_meter {
 	name Meter;
 	nominal_voltage 120;
-	phases AS;
+	phases "AS";
 }
 
 object triplex_node {
@@ -223,26 +268,8 @@ object meter {
 }
 
 object recorder {
-	name recorder;
-	parent load_meter;
-	property measured_power,sustained_count,momentary_count,total_count;
-	file "meter_load.csv";
-	interval -1;
-	limit 1000;
-}
-
-object recorder {
-	name MeterCorder;
-	parent Meter;
-	property measured_power,sustained_count,momentary_count,total_count;
-	file "meter.csv";
-	interval -1;
-	limit 1000;
-}
-
-object recorder {
 	name node_recorder;
-	parent Node2;
+	parent Node4;
 	property voltage_A;
 	file "node.csv";
 	interval 3600;

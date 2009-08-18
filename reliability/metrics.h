@@ -38,6 +38,7 @@ typedef struct s_totals {
 	int32 CNT;		// total number of customers who have experienced more than n sustained and momentary interruptions
 	int32 CNK;		// total number of customers who have experienced more than n sustained interruptions
 	double CMIE;	// total number of customer momentary interruption events = Sum[IMe*Nmi]
+	double IMi;		// total number of customer momentary interruptions
 	double LT;		// total connected kVA load served
 	double Li;		// connection kVA load interrupted for each interruption event
 	double LDI;		// load minutes interrupted

@@ -133,19 +133,19 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			if (report_event_log)
 			{
 				fprintf(fp, "\nAnnual reliability metrics report for %d", dt.year-1);
-				fprintf(fp, "\n===================================================================================\n");
-				fprintf(fp, "SAIDI\tSAIFI\tCAIDI\tCAIFI\tCTAIDI\tCEMI\tCEMSMI\tASIFI\tASIDI\tMAIFIE\tASAI\n");
+				fprintf(fp, "\n=================================================================================================================\n");
+				fprintf(fp, "SAIDI\tSAIFI\tCAIDI\tCAIFI\tCTAIDI\tCEMI\tCEMSMI\tASIFI\tASIDI\tMAIFI\tMAIFIE\tASAI\n");
 			}
 			else if (first_year)
 			{	
-				fprintf(fp, "\nYear\tSAIDI\tSAIFI\tCAIDI\tCAIFI\tCTAIDI\tCEMI\tCEMSMI\tASIFI\tASIDI\tMAIFIE\tASAI\n");
+				fprintf(fp, "\nYear\tSAIDI\tSAIFI\tCAIDI\tCAIFI\tCTAIDI\tCEMI\tCEMSMI\tASIFI\tASIDI\tMAIFI\tMAIFIE\tASAI\n");
 				first_year=false;
 			}
 
 			// write reliability report
 			if (!report_event_log)
 				fprintf(fp,"%4d\t", dt.year-1);
-			fprintf(fp, "%.1f\t%.2f\t%.1f\t%.2f\t%.1f\t%.2f\t%.2f\t%.2f\t%.1f\t%.2f\t%.6f\n", saidi(), saifi(), caidi(), caifi(), ctaidi(), cemi(), cemsmi(),asifi(), asidi(), maifie(),asai()*100);
+			fprintf(fp, "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\n", saidi(), saifi(), caidi(), caifi(), ctaidi(), cemi(), cemsmi(),asifi(), asidi(), maifi(), maifie(),asai()*100);
 		}
 		
 		// reset totals for new year
@@ -228,7 +228,7 @@ OBJECT *metrics::start_event(EVENT *pEvent,			/**< a pointer to the EVENT struct
 			{
 				fprintf(fp, "\nEVENT LOG FOR YEAR %d\n", dt.year);
 				fprintf(fp, "=======================\n");
-				fprintf(fp,"Event\tDateTime\t\tAffects\tProperties\tValues\t\tT_interrupted\tL_interrupted\tN_interrupted\n");
+				fprintf(fp,"Event\tDateTime\t\tAffects\tProperties\t\tValues\tT_interrupted\tL_interrupted\tN_interrupted\n");
 			}
 			fprintf(fp,"%d\t", totals.Nevents);
 			gl_strtime(&dt,buffer,sizeof(buffer));
@@ -239,7 +239,7 @@ OBJECT *metrics::start_event(EVENT *pEvent,			/**< a pointer to the EVENT struct
 			else
 				fprintf(fp,"%s:%d\t", obj->oclass->name, obj->id);
 			fprintf(fp,"%s\t\t", targets);
-			fprintf(fp,"%s\t\t", event_values);
+			fprintf(fp,"%s\t", event_values);
 			fprintf(fp,"%7.2f\t\t", t);
 			//find the interrupted load
 			FINDLIST *load_meters = gl_findlist_copy(customers);
@@ -398,7 +398,8 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 		int16 *totl_flag;
 		while ((k_totl_cust=gl_find_next(candidates,k_totl_cust))!=NULL){
 			t_count = gl_get_int16_by_name(k_totl_cust,"total_count");
-			if ((*t_count)>n){
+			if ((*t_count)>n)
+			{
 				totl_flag = gl_get_int16_by_name(k_totl_cust,"t_flag");
 				(*totl_flag)=1;
 			}
@@ -412,16 +413,37 @@ void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored *
 		totals.CNK=cemi_cust->hit_count;
 		totals.CNT=cemsmi_cust->hit_count;
 
+		//find how many times the recloser tried to close durring the event
+		double relay_ops = 0;
+		if ((gl_object_isa(obj,"relay","powerflow")))
+		{
+			if (eventlist->ri<=300)
+			{
+				int16 *r_operations;
+				r_operations = gl_get_int16_by_name(obj,"recloser_tries");
+				relay_ops = (*r_operations);
+				totals.IMi += relay_ops * unserved->hit_count;
+			}
+		}
+		if (!(gl_object_isa(obj,"relay","powerflow")))
+		{
+			relay_ops = 0;
+			totals.IMi += relay_ops * unserved->hit_count;
+		}
+
 		SAIFI = saifi();
 		SAIDI = saidi();
 		CAIFI = caifi();
 		CAIDI = caidi();
 		CTAIDI = ctaidi();
 		ASAI = asai();
+		MAIFI = maifi();
 		MAIFIE = maifie();
 		CEMI = cemi();
+		CEMSMI = cemsmi();
 		ASIDI = asidi();
 		ASIFI = asifi();
+
 		/* done */
 		gl_free(candidates);
 		gl_free(candidatessecond);
@@ -477,6 +499,10 @@ double metrics::asifi(void)
 double metrics::asidi(void)
 {
 	return totals.LDI>0 ? totals.LDI/totals.LT : 0;
+}
+double metrics::maifi(void)
+{
+	return totals.IMi>0 ? totals.IMi/customers->hit_count : 0;
 }
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
