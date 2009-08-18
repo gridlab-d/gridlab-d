@@ -549,6 +549,7 @@ house_e::house_e(MODULE *mod)
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_object,"weather",PADDR(weather),PT_DESCRIPTION,"reference to the climate object",
+			
 			PT_double,"floor_area[sf]",PADDR(floor_area),PT_DESCRIPTION,"home conditioned floor area",
 			PT_double,"gross_wall_area[sf]",PADDR(gross_wall_area),PT_DESCRIPTION,"gross outdoor wall area",
 			PT_double,"ceiling_height[ft]",PADDR(ceiling_height),PT_DESCRIPTION,"average ceiling height",
@@ -556,6 +557,7 @@ house_e::house_e(MODULE *mod)
 			PT_double,"envelope_UA[Btu/degF.h]",PADDR(envelope_UA),PT_DESCRIPTION,"overall UA of the home's envelope",
 			PT_double,"window_wall_ratio",PADDR(window_wall_ratio),PT_DESCRIPTION,"ratio of window area to wall area",
 			PT_double,"door_wall_ratio",PADDR(door_wall_ratio),PT_DESCRIPTION,"ratio of door area to wall area",
+			
 			PT_double,"glazing_shgc",PADDR(glazing_shgc),PT_DESCRIPTION,"shading coefficient of glazing",PT_DEPRECATED,
 			PT_double,"window_shading",PADDR(glazing_shgc),PT_DESCRIPTION,"shading coefficient of windows",
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),PT_DESCRIPTION,"number of air-changes per hour",
@@ -1165,13 +1167,13 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	// change control mode if appropriate
-	if (Tair<TheatOn-terr/2 && system_mode!=SM_HEAT) 
+	if (Tair<TheatOn-terr/2) 
 	{	// heating on
 		// TODO: check for AUX
 		system_mode = SM_HEAT;
 		Tevent = TheatOff;
 	}
-	else if (Tair>TcoolOn-terr/2 && system_mode!=SM_COOL)
+	else if (Tair>TcoolOn-terr/2)
 	{	// cooling on
 		system_mode = SM_COOL;
 		Tevent = TcoolOff;
