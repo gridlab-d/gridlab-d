@@ -29,6 +29,7 @@ public:
 private:
 	TIMESTAMP recloser_delay_time;
 	TIMESTAMP recloser_reset_time;
+	int16 current_recloser_tries;
 
 public:
 	int create(void);

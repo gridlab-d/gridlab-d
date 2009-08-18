@@ -55,6 +55,7 @@ int relay::create()
 	recloser_delay = 0;
 	recloser_tries = 0;
 	recloser_limit = 0;
+	current_recloser_tries=0;
 
 	recloser_event=false;
 	recloser_delay_time=0;
@@ -111,22 +112,23 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 	node *f;
 	node *t;
 	set reverse = get_flow(&f,&t);
+
 #ifdef SUPPORT_OUTAGES
 	//Handle explicit trips differently
 	if (recloser_event)
 	{
 		//Make sure we aren't locked out
-		if ((recloser_reset_time != 0) && (recloser_reset_time>=t0))	//We're done
+		if ((recloser_reset_time != 0) && (recloser_reset_time<=t0))	//We're done
 		{
 			//Reset all of the variables
 			recloser_reset_time = 0;
 			recloser_delay_time = 0;
-			recloser_tries = 0;
+			current_recloser_tries = 0;
 			status = LS_CLOSED;
 			t1 = TS_NEVER;	//Just flag us as something small to continue
 			gl_verbose("Recloser:%d just unlocked and rejoined service",OBJECTHDR(this)->id);
 		}
-		else if ((recloser_reset_time != 0 ) && (recloser_reset_time<t0))	//Not done being locked out
+		else if ((recloser_reset_time != 0 ) && (recloser_reset_time>t0))	//Not done being locked out
 		{
 			status=LS_OPEN;	//Make sure we are still open
 			t1 = recloser_reset_time;
@@ -135,10 +137,11 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 		{
 			if (status==LS_OPEN)	//Open operations - only if a reliability event is occurring
 			{
-				if (recloser_delay_time>=t0)	//Time delay has passed - but we are obviously still "in fault"
+				if (recloser_delay_time<=t0)	//Time delay has passed - but we are obviously still "in fault"
 				{
-					recloser_tries++;		//Increment the tries counter
-					if (recloser_tries>recloser_limit)	//Now we need to lock out
+					recloser_tries++;			//Increment the tries counter
+					current_recloser_tries++;	//Increment the current tries
+					if (current_recloser_tries>recloser_limit)	//Now we need to lock out
 					{
 						recloser_delay_time = 0;
 						recloser_reset_time = t0+(TIMESTAMP)(gl_random_exponential(3600)*TS_SECOND);	//Figure out how long to lock out
@@ -160,7 +163,7 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 			else					//Closed operations - only if a reliability event is occurring
 			{
 				status=LS_OPEN;				//Open us up, we are in an event
-				recloser_tries = 0;			//Reset out count, just in case
+				current_recloser_tries = 0;	//Reset out count, just in case
 				recloser_reset_time = 0;	//Reset the lockout timer, just in case
 
 				recloser_delay_time = t0+(TIMESTAMP)(recloser_delay*TS_SECOND);	//Get a new time
@@ -184,7 +187,7 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 			t1 = TS_NEVER;	//Just flag us as something small to continue
 			gl_verbose("Recloser:%d just unlocked and rejoined service",OBJECTHDR(this)->id);
 		}
-		else if ((recloser_reset_time != 0 ) && (recloser_reset_time<t0))	//Not done being locked out
+		else if ((recloser_reset_time != 0 ) && (recloser_reset_time>t0))	//Not done being locked out
 		{
 			t1 = recloser_reset_time;
 		}
@@ -227,7 +230,7 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 				else
 					status = LS_CLOSED;
 			}
-			else if (recloser_delay_time<t0)	//Still in delay
+			else if ((recloser_delay_time != 0) && (recloser_delay_time>t0))	//Still in delay
 			{
 				t1 = recloser_delay_time;
 			}
@@ -237,6 +240,9 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 				{
 					gl_verbose("Recloser:%d recovered from a fault",OBJECTHDR(this)->id);
 				}
+
+				current_recloser_tries = 0;	//Reset count variables
+				recloser_tries = 0;
 				status=LS_CLOSED;
 			}
 		}
