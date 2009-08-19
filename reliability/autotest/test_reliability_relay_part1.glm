@@ -19,8 +19,7 @@
 module assert;
 module tape;
 module powerflow;
-module reliability; 
-
+module reliability;
 
 
 clock {
@@ -31,6 +30,7 @@ clock {
 
 object metrics {
 	name Metrics;
+	report_file "rely1.txt";
 	n 7;
 	object double_assert {
 		target "SAIFI";

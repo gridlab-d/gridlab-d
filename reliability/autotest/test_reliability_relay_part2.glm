@@ -31,6 +31,7 @@ clock {
 
 object metrics {
 	name Metrics;
+	report_file "rely2.txt";
 	n 7;
 	object double_assert {
 		target "CTAIDI";
