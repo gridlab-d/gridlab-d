@@ -30,7 +30,8 @@ object house {
 		};
 		object complex_assert {
 			target "energy_meter";
-			within 0.000001;
+			once ONCE_TRUE;
+			within 0.0001;
 			object player {
 				property value;
 				file ../plugload_energy_meter.player;
