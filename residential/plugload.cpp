@@ -73,7 +73,7 @@ int plugload::init(OBJECT *parent)
 	hdr->flags |= OF_SKIPSAFE;
 
 
-	return 1;
+	return residential_enduse::init(parent);
 }
 
 TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1) 
