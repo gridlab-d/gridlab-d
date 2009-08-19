@@ -24,15 +24,16 @@ object house {
 	cooling_setpoint 100; // turns of HVAC
 	heating_setpoint 1;
 	object plugload {
-		constant_power .1;
+		installed_power .1;
 		object player {
 			file ../generic_demand.glt;
 			loop 24;
 			property demand;
 		};
 		object double_assert {
-			target "internal_gains";
-			within 0.000001;
+			target "heatgain";
+			once ONCE_TRUE;
+			within 0.001;
 			object player {
 				property value;
 				file ../plugload_internal_gains.player;
@@ -42,7 +43,7 @@ object house {
 			file "plugload_load_usage3600.csv";
 			interval 3600;
 			limit 28;
-			property demand,enduse_load,heat_fraction,internal_gains;
+			property demand,power,total,heatgain_fraction,heatgain;
 		};
 	};
 }
