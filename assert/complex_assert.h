@@ -16,6 +16,8 @@ class complex_assert {
 private:
 protected:
 public:
+	enum {ONCE_FALSE=0, ONCE_TRUE=1, ONCE_DONE=2} once;
+	complex once_value;
 	enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} status; //Assert whether the target value should be
 	char32 target;											//within the range (True), outside of a 
 	complex value;											//range (False) or shouldn't be checked (None).

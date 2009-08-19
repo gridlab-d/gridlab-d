@@ -27,6 +27,7 @@ object residential_enduse {
 #print Object 'res-enduse-none' should generate a warning about missing schedule
 object residential_enduse {
 	name res-enduse-none;
+	shape "type:analog; energy: 10kWh";
 }
 
 // this object should generate a warning message about a bad parent

@@ -3,10 +3,11 @@
 
 clock {
 	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-02 0:00:00';
 	timezone PST+8PDT;
 }
 
-#set profiler=1
+//#set profiler=1
 
 //#define stylesheet=C:/Dell/gridlabd-mine2
 //#include "WA-Yakima.glm"
@@ -120,7 +121,7 @@ object meter {
 		file "feeder_power.csv";
 		interval 60;
 		limit 1440;
-		property measured_real_power,measured_reactive_power;
+		property measured_real_power,measured_reactive_power,measured_real_energy,measured_reactive_energy,measured_current_A,measured_voltage_A;
 	};
 }
 
@@ -195,51 +196,54 @@ object triplex_node {
 
 object house {
 	parent triplex_meter1;
-	floor_area 1500 sf;
+	floor_area 2000 sf;
 	heating_setpoint 68.0 degF;
-	cooling_setpoint 75.0 degF;
-	thermostat_deadband 1.0 degF;
-	heat_mode GASHEAT;
+	cooling_setpoint 76.0 degF;
+	air_temperature 74 degF;
+	mass_temperature 74 degF;
+	thermostat_deadband 2.0 degF;
+	system_type FORCEDAIR;
 	object lights {
 		type INCANDESCENT;
-		installed_power 1000;
-//		object player {
-//			file "lights.player";
-//			loop 1;			
-//			property demand;
-//		};
+		installed_power 1600 W;
+		object player {
+			file "../generic_demand.glt";
+			loop 1;			
+			property demand;
+		};
 		object recorder {
 			file "lights_power.csv";
 			interval 60;
 			limit 1440;
-			property enduse_load.real,enduse_load.imag,;
+			property power,total,energy,heatgain;
 		};
 	};
 	object waterheater {
 		tank_volume 50;
 		location INSIDE;
 		tank_setpoint 135;
-		thermostat_deadband 5;
+		temperature 140;
+		thermostat_deadband 8;
 		tank_UA 2.0;
 		heating_element_capacity 4500;
 		object player {
-			file "waterheater_demand_waveform_sine.player";
+			file "../waterheater_demand_waveform_sine.player";
 			loop 1;
 			property water_demand;
 		};
 		object recorder {
 			file "waterheater_power_odd.csv";
-			interval 1;
+			interval 60;
 			//limit 14400;
-			limit 31900;
-			property enduse_load.real,enduse_load.imag,heating_element_capacity,constant_power[kW],constant_current[A],constant_admittance[1/Ohm],internal_gains[kW],height[ft],temperature[degF],water_demand[gpm];
+			limit 1440;
+			property power,energy,total,energy,heatgain,temperature,height;
 		};
 	};
 	
 //	object plugload {
 //		constant_power 500;
 //		object player {
-//			file "plugload.player";
+//			file "../plugload.player";
 //			loop 1;
 //			property demand;
 //		};
@@ -251,10 +255,16 @@ object house {
 //		};
 //	};
 	object recorder {
-		property total_load.real,total_load.imag;
+		property system_mode,power,energy,heatgain,total.total,total.energy,air_temperature,mass_temperature,total.heatgain;
 		file "house_power.csv";
 		interval 60;
 		limit 1440;
+	};
+	object recorder {
+		property system_mode,power,energy,heatgain;
+		file "hvac_power.csv";
+		interval 60;
+		limit 300000;
 	};
 }
 

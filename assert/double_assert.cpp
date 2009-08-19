@@ -38,6 +38,8 @@ double_assert::double_assert(MODULE *module)
 		status = ASSERT_TRUE;
 		within = 0.0;
 		value = 0.0;
+		once = ONCE_FALSE;
+		once_value = 0;
 	}
 }
 
@@ -120,48 +122,66 @@ EXPORT int commit_double_assert(OBJECT *obj)
 	double_assert *da = OBJECTDATA(obj,double_assert);
 
 	//bj = OBJECTHDR(this);
-	
+	if(da->once == da->ONCE_TRUE){
+		da->once_value = da->value;
+		da->once = da->ONCE_DONE;
+	} else if (da->once == da->ONCE_DONE){
+		if(da->once_value == da->value){
+			gl_verbose("Assert skipped with ONCE logic");
+			return 1;
+		} else {
+			da->once_value = da->value;
+		}
+	}
 		
-		double *x = (double*)gl_get_double_by_name(obj->parent,da->target);
-		if (x==NULL) 
-		{
-			GL_THROW("Specified target %s for %s is not valid.",da->target,gl_name(obj->parent,buff,64));
-			/*  TROUBLESHOOT
-			Check to make sure the target you are specifying is a published variable for the object
-			that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
-			check the wiki page to determine which variables can be published within the object you
-			are pointing to with the assert function.
-			*/
+	double *x = (double*)gl_get_double_by_name(obj->parent,da->target);
+	if (x==NULL) 
+	{
+		GL_THROW("Specified target %s for %s is not valid.",da->target,gl_name(obj->parent,buff,64));
+		/*  TROUBLESHOOT
+		Check to make sure the target you are specifying is a published variable for the object
+		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
+		check the wiki page to determine which variables can be published within the object you
+		are pointing to with the assert function.
+		*/
+		return 0;
+	}
+	else if (da->status == da->ASSERT_TRUE)
+	{
+		double m = abs(*x-da->value);
+		if (_isnan(m) || m>da->within)
+		{				
+			gl_verbose("Assert failed on %s: %s %g not within %f of given value %g", 
+				gl_name(obj->parent, buff, 64), da->target, *x, da->within, da->value);
 			return 0;
 		}
-		else if (da->status == da->ASSERT_TRUE)
-		{
-			double m = abs(*x-da->value);
-			if (_isnan(m) || m>da->within)
-			{				
-				gl_verbose("Assert failed on %s: %s %g not within %f of given value %g", 
-					gl_name(obj->parent, buff, 64), da->target, *x, da->within, da->value);
-				return 0;
-			}
-			gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
-			return 1;
+		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+		return 1;
+	}
+	else if (da->status == da->ASSERT_FALSE)
+	{
+		double m = abs(*x-da->value);
+		if (_isnan(m) || m<da->within)
+		{				
+			gl_verbose("Assert failed on %s: %s %g is within %f of given value %g", 
+				gl_name(obj->parent, buff, 64), da->target, *x, da->within, da->value);
+			return 0;
 		}
-		else if (da->status == da->ASSERT_FALSE)
-		{
-			double m = abs(*x-da->value);
-			if (_isnan(m) || m<da->within)
-			{				
-				gl_verbose("Assert failed on %s: %s %g is within %f of given value %g", 
-					gl_name(obj->parent, buff, 64), da->target, *x, da->within, da->value);
-				return 0;
-			}
-			gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
-			return 1;
-		}
-		else
-		{
-			gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
-			return 1;
-		}
+		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+		return 1;
+	}
+	else
+	{
+		gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
+		return 1;
+	}
 
+}
+
+EXPORT int notify_double_assert(OBJECT *obj, int update_mode, PROPERTY *prop){
+	double_assert *da = OBJECTDATA(obj,double_assert);
+	if(update_mode == NM_POSTUPDATE && (da->once == da->ONCE_DONE) && (strcmp(prop->name, "value") == 0)){
+		da->once = da->ONCE_TRUE;
+	}
+	return 1;
 }
