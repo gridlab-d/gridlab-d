@@ -89,7 +89,7 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if(shape.type == MT_UNKNOWN){
 		if(shape.load < 0.0){
 			gl_error("plugload demand cannot be negative, capping");
-			demand = 0.0;
+			shape.load = 0.0;
 		}
 		load.power = shape.params.analog.power * shape.load * load.voltage_factor;
 		if(fabs(load.power_factor) < 1 && load.power_factor != 0.0){

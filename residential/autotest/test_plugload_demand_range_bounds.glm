@@ -21,7 +21,7 @@ object house {
 	cooling_setpoint 100; // turns off HVAC
 	heating_setpoint 1;
 	object plugload {
-		constant_power .1;
+		installed_power .1;
 		object player {
 			property demand;
 			file "../test_generic_limit_demand(range0-1).glt";
@@ -29,7 +29,8 @@ object house {
 		
 		object complex_assert {
 			target "enduse_load";
-			within 0.000001;
+			within 0.0001;
+			once ONCE_TRUE;
 			object player {
 				property value;
 				file "../plugload_demand_range_bounds.player";
@@ -40,7 +41,7 @@ object house {
 			file "plugload_load_usage3600.csv";
 			interval 3600;
 			limit 24;
-			property demand,enduse_load;
+			property power;
 		};
 	};
 }
