@@ -308,12 +308,12 @@ public:
 	inline bool operator >= (double m)	{ return Mag()>=m; };
 
 	/* angle comparisons */
-	inline complex operator == (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)==0.0;};
-	inline complex operator != (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)!=0.0;};
-	inline complex operator < (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<PI;};
-	inline complex operator <= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<=PI;};
-	inline complex operator > (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>PI;};
-	inline complex operator >= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>=PI;};
+	inline bool operator == (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)==0.0;};
+	inline bool operator != (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)!=0.0;};
+	inline bool operator < (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<PI;};
+	inline bool operator <= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<=PI;};
+	inline bool operator > (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>PI;};
+	inline bool operator >= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>=PI;};
 	inline bool IsFinite(void) { return isfinite(r) && isfinite(i); };
 };
 #else
