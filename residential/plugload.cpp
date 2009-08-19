@@ -59,6 +59,8 @@ int plugload::create()
 	load.name = oclass->name;
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	load.heatgain_fraction = 0.90;
+	load.power_factor = 0.90;
+	load.voltage_factor = 1.0; // assume 'even' voltage, initially
 	shape.load = gl_random_uniform(0, 0.1);
 	return res;
 }
@@ -90,7 +92,7 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 			demand = 0.0;
 		}
 		load.power = shape.params.analog.power * shape.load * load.voltage_factor;
-		if(fabs(load.power_factor) < 1){
+		if(fabs(load.power_factor) < 1 && load.power_factor != 0.0){
 			val = (load.power_factor < 0 ? -1.0 : 1.0) * load.power.Re() * sqrt(1/(load.power_factor * load.power_factor) - 1);
 		} else {
 			val = 0;
