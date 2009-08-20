@@ -1,0 +1,70 @@
+// $Id$
+// Test standalone dishwashing objects
+//
+
+#set suppress_repeat_messages=0
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-07-01 00:00:00 PDT';
+	stoptime '2001-07-02 00:00:00 PDT';
+}
+
+schedule dishwashing {
+
+	//Weekday
+	*  0 * * 1-5 0.0068; *  1 * * 1-5 0.0029; *  2 * * 1-5 0.0016; *  3 * * 1-5 0.0013;
+	*  4 * * 1-5 0.0012; *  5 * * 1-5 0.0037; *  6 * * 1-5 0.0075; *  7 * * 1-5 0.0129;
+	*  8 * * 1-5 0.0180; *  9 * * 1-5 0.0177; * 10 * * 1-5 0.0144; * 11 * * 1-5 0.0113;
+	* 12 * * 1-5 0.0116; * 13 * * 1-5 0.0128; * 14 * * 1-5 0.0109; * 15 * * 1-5 0.0105;
+	* 16 * * 1-5 0.0124; * 17 * * 1-5 0.0156; * 18 * * 1-5 0.0278; * 19 * * 1-5 0.0343;
+	* 20 * * 1-5 0.0279; * 21 * * 1-5 0.0234; * 22 * * 1-5 0.0194; * 23 * * 1-5 0.0131;
+	
+	//Weekend
+	*  0 * * 6-0 0.0093; *  1 * * 6-0 0.0045; *  2 * * 6-0 0.0021; *  3 * * 6-0 0.0015;
+	*  4 * * 6-0 0.0013; *  5 * * 6-0 0.0015; *  6 * * 6-0 0.0026; *  7 * * 6-0 0.0067;
+	*  8 * * 6-0 0.0142; *  9 * * 6-0 0.0221; * 10 * * 6-0 0.0259; * 11 * * 6-0 0.0238;
+	* 12 * * 6-0 0.0214; * 13 * * 6-0 0.0214; * 14 * * 6-0 0.0188; * 15 * * 6-0 0.0169;
+	* 16 * * 6-0 0.0156; * 17 * * 6-0 0.0166; * 18 * * 6-0 0.0249; * 19 * * 6-0 0.0298;
+	* 20 * * 6-0 0.0267; * 21 * * 6-0 0.0221; * 22 * * 6-0 0.0174; * 23 * * 6-0 0.0145;
+}
+
+module residential;
+module assert;
+module tape;
+
+object house {
+	heating_setpoint 5;
+	cooling_setpoint 300;
+	air_temperature 70;
+	outdoor_temperature 73;
+	object dishwasher {
+		installed_power 1000 W;
+		shape "type: analog; schedule: dishwashing; power: .76 kW";
+		
+		//Weekend test
+		//WARNING: This test may be off by 1 hour. Please adjust accordingly.
+		object complex_assert {
+			target "enduse_load";
+			within .01;
+			object player {
+				property value;
+				file "../test_dishwasher_external_power2.player";
+				loop 1;
+			};
+		};
+		
+	};
+	object recorder{
+		property total;
+		file "test_dishwasher_external_power2.csv";
+		interval 3600;
+		limit 24;
+	};
+	
+	
+	
+}
+
+
+
