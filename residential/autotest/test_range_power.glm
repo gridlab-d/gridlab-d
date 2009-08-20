@@ -26,7 +26,7 @@ object house:1 {
 
 object range:2 {
 	parent house:1;
-	installed_power 2000;
+	installed_power 2000W;
 	object complex_assert {
 		target "enduse_load";
 		within .1;

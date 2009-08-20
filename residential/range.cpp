@@ -37,11 +37,11 @@ range::range(MODULE *module) : residential_enduse(module)
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "residential_enduse",
-			PT_double,"installed_power[W]",PADDR(installed_power),
+			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power),
 			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"demand[unit]",PADDR(demand),
+			PT_double,"demand[unit]",PADDR(shape.load),
 			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
-			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),PT_DEPRECATED,
+			PT_double,"heat_fraction[unit]",PADDR(load.heatgain_fraction),PT_DEPRECATED,
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -66,75 +66,68 @@ int range::create()
 
 int range::init(OBJECT *parent)
 {
-	if(installed_power < 0){
+	if(shape.params.analog.power < 0){
 		gl_warning("range installed power is negative, using random default");
 		installed_power = 0;
 	}
-	if(heat_fraction < 0.0 || heat_fraction > 1.0){
+	if(load.heatgain_fraction < 0.0 || load.heatgain_fraction > 1.0){
 		gl_warning("range heat_fraction out of bounds, restoring default");
 		heat_fraction = 0;
 	}
 	
-	if (installed_power==0) installed_power = gl_random_uniform(8000,15000);	// range size [W]; based on a GE drop-in range 11600kW;
-	if (power_factor==0) power_factor = 1.0;
-	if (heat_fraction==0) heat_fraction = 0.9;
+	if (shape.params.analog.power==0) shape.params.analog.power = gl_random_uniform(8,15);	// range size [W]; based on a GE drop-in range 11600kW;
+	if (load.power_factor==0) load.power_factor = 1.0;
+	if (load.heatgain_fraction==0) load.heatgain_fraction = 0.9;
+	if (load.voltage_factor==0) load.voltage_factor = 1.0;
 	
-	OBJECT *hdr = OBJECTHDR(this);
-	hdr->flags |= OF_SKIPSAFE;
+	load.config = EUC_IS220;
+	load.breaker_amps = 30;
 
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
-	{
-		gl_error("range must have a parent house");
-		/*	TROUBLESHOOT
-			The range object, being an enduse for the house model, must have a parent house
-			that it is connected to.  Create a house object and set it as the parent of the
-			offending range object.
-		*/
-		return 0;
-	}
+	load.total = complex(shape.params.analog.power*shape.load,0,J);
+	load.admittance = load.total*(240/240);
+	load.heatgain = load.total.Mag()*load.heatgain_fraction;
 
-	// attach object to house panel
-	house *pHouse = OBJECTDATA(parent,house);
-
-		//	pull parent attach_enduse and attach the enduseload
-	FUNCTIONADDR attach = 0;
-	load.end_obj = hdr;
-	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
-		gl_error("range parent must publish attach_enduse()");
-		/*	TROUBLESHOOT
-			The range object attempt to attach itself to its parent, which
-			must implement the attach_enduse function.
-		*/
-		return 0;
-	}
-	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 30, true)->pV;
-
-	
-	load.total = complex(installed_power*demand/1000,0,J);
-	load.admittance = load.total*(1000/240/240);
-	load.heatgain = load.total.Mag()*heat_fraction;
-
-	return 1;
+	return residential_enduse::init(parent);
 }
 
 TIMESTAMP range::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	if (t0>0 && t1>t0)
-		load.energy += load.total * gl_tohours(t1-t0);
+	double val = 0.0;
+	TIMESTAMP t2 = TS_NEVER;
 
-	if(demand < 0.0){
+	if (pCircuit!=NULL)
+		load.voltage_factor = pCircuit->pV->Mag() / 240; // update voltage factor
+
+	if(shape.load < 0.0){
 		GL_THROW("range demand is negative");
 	}
-	if(demand > 1.0){
+	if(shape.load > 1.0){
 		GL_THROW("range demand is greater than 1.0 and out of bounds");
 	}
 
-	load.total = complex(installed_power*demand/1000,0,J);
-	load.admittance = load.total*(1.0/240/240);
-	load.heatgain = load.total.Mag()*heat_fraction;
+	t2 = residential_enduse::sync(t0,t1);
 
-	return TS_NEVER; 
+	if(shape.type == MT_UNKNOWN){ /* manual power calculation*/
+		double frac = shape.load;
+		if(shape.load < 0){
+			gl_warning("range shape demand is negative, capping to 0");
+			shape.load = 0.0;
+		} else if (shape.load > 1.0){
+			gl_warning("range shape demand exceeds installed lighting power, capping to 100%%");
+			shape.load = 1.0;
+		}
+		load.power = shape.params.analog.power * shape.load * load.voltage_factor;
+		if(fabs(load.power_factor) < 1){
+			val = (load.power_factor<0?-1.0:1.0) * load.power.Re() * sqrt(1/(load.power_factor * load.power_factor) - 1);
+		} else {
+			val = 0;
+		}
+		load.power.SetRect(load.power.Re(), val);
+	}
+
+	gl_enduse_sync(&(residential_enduse::load),t1);
+
+	return t2;
 }
 
 //////////////////////////////////////////////////////////////////////////

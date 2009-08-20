@@ -6,7 +6,7 @@
 
 clock {
 	timestamp '2000-01-01 0:00:00';
-	stoptime '2000-01-01 24:00:00';
+	stoptime '2000-01-01 23:59:00';
 	timezone PST+8PDT;
 }
 
@@ -25,13 +25,15 @@ object house:1 {
 
 object range:2 {
 	parent house:1;
-	installed_power 2000;
+	installed_power 2000W;
 	object complex_assert {
 		target "energy_meter";
 		within .1;
+		once ONCE_TRUE;
 		object player {
 			property value;
 			file "..\test_range_energy.player";
+			loop 1;
 		};
 	};
 	object recorder{
