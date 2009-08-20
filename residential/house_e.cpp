@@ -842,7 +842,7 @@ int house_e::init(OBJECT *parent)
     if (COP_coeff==0)			COP_coeff = gl_random_uniform(0.9,1.1);	// coefficient of cops [scalar]
 	if (heating_setpoint==0)	heating_setpoint = gl_random_triangle(68,72);
 	if (cooling_setpoint==0)	cooling_setpoint = gl_random_triangle(75,79);
-    if (Tair==0)				Tair = gl_random_uniform(heating_setpoint, cooling_setpoint);	// air temperature [F]
+    //if (Tair==0)				Tair = gl_random_uniform(heating_setpoint, cooling_setpoint);	// air temperature [F]
 	if (over_sizing_factor==0)  over_sizing_factor = gl_random_uniform(0.98,1.3);
 	if (thermostat_deadband==0)	thermostat_deadband = gl_random_triangle(2,3);
 	if(cooling_design_temperature == 0)	cooling_design_temperature = 95.0;
@@ -858,12 +858,14 @@ int house_e::init(OBJECT *parent)
 	if (house_content_thermal_mass==0) house_content_thermal_mass = gl_random_triangle(4,6)*floor_area;		// thermal mass of house_e [BTU/F]
     if (house_content_heat_transfer_coeff==0) house_content_heat_transfer_coeff = gl_random_uniform(0.5,1.0)*floor_area;	// heat transfer coefficient of house_e contents [BTU/hr.F]
 
-	if (system_mode==SM_OFF)
-		Tair = gl_random_uniform(heating_setpoint,cooling_setpoint);
-	else if (system_mode==SM_HEAT || system_mode==SM_AUX)
-		Tair = gl_random_uniform(heating_setpoint-thermostat_deadband/2,heating_setpoint+thermostat_deadband/2);
-	else if (system_mode==SM_COOL)
-		Tair = gl_random_uniform(cooling_setpoint-thermostat_deadband/2,cooling_setpoint+thermostat_deadband/2);
+	if(Tair == 0){
+		if (system_mode==SM_OFF)
+			Tair = gl_random_uniform(heating_setpoint,cooling_setpoint);
+		else if (system_mode==SM_HEAT || system_mode==SM_AUX)
+			Tair = gl_random_uniform(heating_setpoint-thermostat_deadband/2,heating_setpoint+thermostat_deadband/2);
+		else if (system_mode==SM_COOL)
+			Tair = gl_random_uniform(cooling_setpoint-thermostat_deadband/2,cooling_setpoint+thermostat_deadband/2);
+	}
 
 	//house_e properties for HVAC
 	volume = ceiling_height*floor_area;									// volume of air [cf]
@@ -1117,10 +1119,11 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		update_system(dt1);
 	}
 
+	t2 = sync_enduses(t0, t1);
+
 	// sync circuit panel
 	t = sync_panel(t0,t1); if (t < t2)	t2 = t;
 
-	t2 = sync_enduses(t0, t1);
 
 	if (t0==0 || t1>t0)
 	{
