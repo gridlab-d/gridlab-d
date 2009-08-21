@@ -12,6 +12,7 @@ clock {
 	timezone PST+8PDT;
 }
 
+#set stoptime=2000-01-01 0:00:56
 module commercial;
 module tape;
 module assert;
@@ -35,7 +36,7 @@ object office {
 	object complex_assert {
 		target "hvac.load";
 		within .001;
-		value 80.2497+0j;
+		value 87.1283+0j;
 		object player {
 			file ../office_hvac_ECON_assert.player;
 			property status;

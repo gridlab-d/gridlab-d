@@ -1,5 +1,6 @@
 // validates proper functioning of hvac by making sure inside air_temperature stays
-// within the thermostat setpoints; setpoints are 67/72 with 5 degF deadband
+// within the thermostat setpoints; setpoints are 70/73 with 1 degF deadband; initial temperature
+// is 70 degF
 
 // payroll: d3y332
 
@@ -19,25 +20,21 @@ object office {
 	exterior_ua 2.0;
 	interior_ua 2.0;
 	interior_mass 2000;
-	heating_setpoint 67;
-	cooling_setpoint 72;
-	thermostat_deadband 5;
+	hvac.cooling.cop -3;
+	hvac.heating.cop 1.25;
+	heating_setpoint 70;
+	cooling_setpoint 73;
+	thermostat_deadband 1;
 	air_temperature 70;
 	object double_assert {
 		target "air_temperature";
-		within 9.5; 	
-		value 69.5;
+		within 4; 	
+		value 71.5;
 	};
 	object recorder {
 		file "commercial_hvac_usage.csv";
 		interval 3600;
 		limit 360;
-		property air_temperature,mass_temperature,hvac_mode;
-	};
-	object recorder {
-		file "commercial_hvac_usage2.csv";
-		interval 0;
-		limit 36000;
 		property air_temperature,mass_temperature,hvac_mode;
 	};
 }

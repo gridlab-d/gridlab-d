@@ -12,7 +12,7 @@ clock {
 	timezone PST+8PDT;
 }
 
-#set stoptime=2000-01-01 0:00:17 PST
+#set stoptime=2000-01-01 0:00:16 PST
 
 module commercial;
 module tape;
@@ -25,10 +25,12 @@ object office {
 	exterior_ua 2.0;
 	interior_ua 45;
 	interior_mass 200;
+	hvac.cooling.cop -3;
+	hvac.heating.cop 1.25;
 	heating_setpoint 70;
 	cooling_setpoint 73;
 	thermostat_deadband .1;
-	air_temperature 80;
+	air_temperature 71.5;
 	lights.capacity 50;
 	lights.fraction 1;
 	lights.heatgain_fraction 1;

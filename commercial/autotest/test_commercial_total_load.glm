@@ -26,6 +26,8 @@ object office {
 	exterior_ua 2.0;
 	interior_ua 2.0;
 	interior_mass 2000;
+	hvac.cooling.cop -3;
+	hvac.heating.cop 1.25;
 	heating_setpoint 70;
 	cooling_setpoint 73;
 	thermostat_deadband .1;
@@ -42,7 +44,7 @@ object office {
 	object complex_assert {
 		target "total_load";
 		within .001;
-		value 155.25+129.861j;
+		value 162.128+135.773j;
 		object player {
 			file ../office_hvac_ECON_assert.player;
 			property status;

@@ -25,10 +25,10 @@ module assert;
 module climate;
 
 object climate {
-	tmyfile generic.tmy2;
+	tmyfile ../generic.tmy2;
 	object recorder {
 		property temperature,solar_flux;
-		file ../temp.csv;
+		file "temp.csv";
 		interval 1;
 		limit 58;
 	};
@@ -40,6 +40,8 @@ object office {
 	exterior_ua 2.0;
 	interior_ua 2.0;
 	interior_mass 2000;
+	hvac.cooling.cop -3;
+	hvac.heating.cop 1.25;
 	heating_setpoint 70;
 	cooling_setpoint 73;
 	thermostat_deadband .1;
@@ -52,7 +54,7 @@ object office {
 	object complex_assert {
 		target "hvac.load";
 		within .001;
-		value 1+1j; // (dummy value); expected value unknown until HVAC COOL mode Qactive calculation is fixed
+		value 20.1072+j; // (dummy value); expected value unknown until HVAC COOL mode Qactive calculation is fixed
 		object player {
 			file ../office_hvac_ECON_assert.player;
 			property status;
