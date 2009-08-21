@@ -194,6 +194,10 @@ Retry:
 			strcpy(my->next.value, value+voff);
 		}
 	}
+	else
+	{
+		gl_warning("player was unable to parse timestamp \'%s\'", result);
+	}
 Done:
 	return my->next.ts;
 }
