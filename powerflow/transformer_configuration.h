@@ -26,6 +26,8 @@ public:
 	complex impedance1;				// Series impedance (only used when you want to define each individual 
 	complex impedance2;				//    winding seperately
 	complex shunt_impedance;		// Shunt impedance - all values are summed and reflected back to the primary
+	double no_load_loss;			// Another method of specifying transformer impedances
+	double full_load_loss;			//  -- both are defined as unit values
 	
 	transformer_configuration(MODULE *mod);
 	inline transformer_configuration(CLASS *cl=oclass):powerflow_library(cl){};

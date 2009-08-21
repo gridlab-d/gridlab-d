@@ -76,6 +76,8 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 			PT_double, "shunt_resistance[pu.Ohm]",PADDR(shunt_impedance.Re()),
 			PT_double, "shunt_reactance[pu.Ohm]",PADDR(shunt_impedance.Im()),
 			PT_complex, "shunt_impedance[pu.Ohm]",PADDR(shunt_impedance),
+			PT_double, "percent_no_load_loss[unit]",PADDR(no_load_loss),
+			PT_double, "percent_full_load_loss[unit]",PADDR(full_load_loss),
 
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -99,6 +101,7 @@ int transformer_configuration::create(void)
 	kVA_rating = 0;
 	impedance = impedance1 = impedance2 = complex(0.0,0.0);	//Lossless transformer by default
 	shunt_impedance = complex(999999999,999999999);			//Very large number for infinity to approximate lossless
+	no_load_loss = full_load_loss = 0.0;
 	return result;
 }
 
@@ -118,37 +121,6 @@ int transformer_configuration::init(OBJECT *parent)
 	if (connect_type==UNKNOWN)
 		throw "connection type not specified";
 	
-	// check connection type and see if it support shunt or additional series impedance values
-	if (connect_type!=SINGLE_PHASE_CENTER_TAPPED)
-	{
-		if ((impedance1.Re() != 0.0 && impedance1.Im() != 0.0) || (impedance2.Re() != 0.0 && impedance2.Im() != 0.0))
-			gl_warning("This connection type does not support impedance (impedance1 or impedance2) of secondaries at this time.");
-			/*  TROUBLESHOOT
-			At this time impedance1 and impedance2 are only defined and used for center-tap transformers to be
-			explicitly defined.  These values will be ignored for now.
-			*/
-		if (shunt_impedance.Re() != 999999999 || shunt_impedance.Im() != 999999999)
-			gl_warning("This connection type does not support shunt_impedance at this time.");
-			/* TROUBLESHOOT
-			At this time shunt_impedance is only defined and supported in center-tap transformers.  Theses values
-			will be ignored for now.
-			*/
-	}
-	else
-	{
-		if ((impedance1.Re() == 0.0 && impedance1.Im() == 0.0) && (impedance2.Re() != 0.0 && impedance2.Im() != 0.0))
-		{
-			impedance1 = impedance2;
-			gl_warning("impedance2 was defined, but impedance1 was not -- assuming they are equal");
-		}
-		else if ((impedance1.Re() != 0.0 && impedance1.Im() != 0.0) && (impedance2.Re() == 0.0 && impedance2.Im() == 0.0))
-		{
-			impedance2 = impedance1;
-			gl_warning("impedance1 was defined, but impedance2 was not -- assuming they are equal");
-		}
-	}
-
-
 	// check installation type
 	if (install_type==UNKNOWN)
 		gl_warning("installation type not specified");
@@ -166,10 +138,70 @@ int transformer_configuration::init(OBJECT *parent)
 	if (fabs((kVA_rating-phaseA_kVA_rating-phaseB_kVA_rating-phaseC_kVA_rating)/kVA_rating)>0.01)
 		throw "kVA rating mismatch across phases exceeds 1%";
 
+	// check connection type and see if it support shunt or additional series impedance values
+	if (connect_type!=SINGLE_PHASE_CENTER_TAPPED)
+	{
+		if ((impedance1.Re() != 0.0 && impedance1.Im() != 0.0) || (impedance2.Re() != 0.0 && impedance2.Im() != 0.0))
+			gl_warning("This connection type does not support impedance (impedance1 or impedance2) of secondaries at this time.");
+			/*  TROUBLESHOOT
+			At this time impedance1 and impedance2 are only defined and used for center-tap transformers to be
+			explicitly defined.  These values will be ignored for now.
+			*/
+		if (shunt_impedance.Re() != 999999999 || shunt_impedance.Im() != 999999999)
+			gl_warning("This connection type does not support shunt_impedance at this time.");
+			/* TROUBLESHOOT
+			At this time shunt_impedance is only defined and supported in center-tap transformers.  Theses values
+			will be ignored for now.
+			*/
+		if (no_load_loss != 0.0 || full_load_loss != 0.0)
+			gl_warning("This connection type does not support shunt_impedance at this time.");
+			/* TROUBLESHOOT
+			At this time no_load_loss and full_load_loss are only defined and supported in 
+			center-tap transformers.  Theses values	will be ignored for now.
+			*/
+	}
+	else
+	{
+		if ((impedance1.Re() == 0.0 && impedance1.Im() == 0.0) && (impedance2.Re() != 0.0 && impedance2.Im() != 0.0))
+		{
+			impedance1 = impedance2;
+			gl_warning("impedance2 was defined, but impedance1 was not -- assuming they are equal");
+		}
+		else if ((impedance1.Re() != 0.0 && impedance1.Im() != 0.0) && (impedance2.Re() == 0.0 && impedance2.Im() == 0.0))
+		{
+			impedance2 = impedance1;
+			gl_warning("impedance1 was defined, but impedance2 was not -- assuming they are equal");
+		}
+		
+		if (no_load_loss != 0.0) //convert load losses to impedance values
+		{
+			if (no_load_loss < 0.0 || full_load_loss < 0.0)
+			{
+				GL_THROW("Loss percentages (no_load) must be positive values.");
+			}
+			else
+			{
+				shunt_impedance = complex(1/no_load_loss,99999999999); //What should X value be here?
+			}
+		}
+		
+		if (full_load_loss != 0.0)
+		{
+			if (full_load_loss < 0.0)
+			{
+				GL_THROW("Loss percentages (full_load) must be positive values.");
+			}
+			else
+			{
+				impedance = complex(full_load_loss,0); //What should the X value be here?
+			}
+		}
+
+	}
 	// check impedance
-	if (impedance.Re()<0)
+	if (impedance.Re()<0 || impedance1.Re()<0 || impedance2.Re()<0)
 		throw "resistance must be non-negative";
-	if (impedance.Im()<0)
+	if (impedance.Im()<0 || impedance1.Im()<0 || impedance2.Im()<0)
 		throw "reactance must be non-negative";
 	if (shunt_impedance.Re()<0)
 		throw "shunt_resistance must be non-negative";
