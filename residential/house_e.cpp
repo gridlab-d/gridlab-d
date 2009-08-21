@@ -889,8 +889,9 @@ int house_e::init(OBJECT *parent)
 void house_e::attach_implicit_enduses()
 {
 	IMPLICITENDUSE *item;
-	for (item=implicit_enduse_list; item!=NULL; item=item->next)
+	for (item=implicit_enduse_list; item!=NULL; item=item->next){
 		attach(NULL,item->amps,item->is220,&(item->load));
+	}
 
 	return;
 }
@@ -1082,6 +1083,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
 	double nHours = dt1 / 3600;
+	CIRCUIT *c;
 
 	/* advance the thermal state of the building */
 	if (t0>0 && dt>0)
@@ -1097,6 +1099,15 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
+	/* update all voltage factors */
+	for (c=panel.circuits; c!=NULL; c=c->next)
+	{
+		// get circuit type
+		int n = (int)c->type;
+		if (n<0 || n>2)
+			GL_THROW("%s:%d circuit %d has an invalid circuit type (%d)", obj->oclass->name, obj->id, c->id, (int)c->type);
+		c->pLoad->voltage_factor = c->pV->Mag() / ((c->pLoad->config&EUC_IS220) ? 240 : 120);
+	}
 	return TS_NEVER;
 }
 
@@ -1338,7 +1349,8 @@ TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
 	IMPLICITENDUSE *eu;
 	for (eu=implicit_enduse_list; eu!=NULL; eu=eu->next)
 	{
-		TIMESTAMP t = gl_enduse_sync(&(eu->load),t1);
+		TIMESTAMP t = 0;
+		t = gl_enduse_sync(&(eu->load),t1);
 		if (t<t2) t2 = t;
 	}
 	return t2;
