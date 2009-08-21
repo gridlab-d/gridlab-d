@@ -4147,6 +4147,8 @@ static int include_file(char *incname, char *buffer, int size)
 /** @return TRUE/SUCCESS for a successful macro read, FALSE/FAILED on parse error (which halts the loader) */
 static int process_macro(char *line, int size, char *filename, int linenum)
 {
+        char *var, *val, *save;
+        int i, count;
 	if (strncmp(line,MACRO "endif",6)==0)
 	{
 		if (nesting>0)
@@ -4313,7 +4315,13 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		}
 		if (sscanf(term+1,"%[^\n]",value)==1)
 		{
+#ifdef WIN32
 			putenv(value);
+#else
+			var = strtok_r(value, "=", &save);
+                        val = strtok_r(NULL, "=", &save);
+                        setenv(var, val, 1);
+#endif
 			strcpy(line,"\n");
 			return SUCCESS;
 		}
@@ -4375,7 +4383,12 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		{
 			char path[1024];
 			sprintf(path,"PATH=%s",value);
-			putenv(path);
+#ifdef WIN32
+                        putenv(path);
+#else
+                        setenv("PATH", value, 1);
+#endif
+
 			strcpy(line,"\n");
 			return SUCCESS;
 		}
@@ -4400,7 +4413,11 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		{
 			char path[1024];
 			sprintf(path,"GLPATH=%s",value);
-			putenv(path);
+#ifdef WIN32
+                        putenv(path);
+#else
+                        setenv("GLPATH", value, 1);
+#endif
 			strcpy(line,"\n");
 			return SUCCESS;
 		}
@@ -4425,7 +4442,12 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		{
 			char path[1024];
 			sprintf(path,"INCLUDE=%s",value);
-			putenv(path);
+#ifdef WIN32
+                        putenv(path);
+#else
+                        setenv("INCLUDE", value, 1);
+#endif
+
 			strcpy(line,"\n");
 			return SUCCESS;
 		}
