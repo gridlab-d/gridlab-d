@@ -4,8 +4,8 @@
 //This test validates power, energy, and heat gain.
 
 clock {
-	timestamp '2000-05-06 0:00:00';
-	stoptime '2000-05-07 1:00:00';
+	timestamp '2001-05-06 0:00:00';
+	stoptime '2001-05-07 1:00:00';
 	timezone PST+8PDT;
 }
 
