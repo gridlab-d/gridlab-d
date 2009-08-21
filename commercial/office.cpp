@@ -152,7 +152,7 @@ office::office(MODULE *module)
 			PT_double, "hvac.heating.capacity[Btu/h]",PADDR(zone.hvac.heating.capacity),
 			PT_double, "hvac.heating.capacity_perF[Btu/degF/h]", PADDR(zone.hvac.heating.capacity_perF),
 			PT_double, "hvac.heating.design_temperature[degF]", PADDR(zone.hvac.heating.design_temperature),
-			PT_double, "hvac.heating.efficiency[pu]", PADDR(zone.hvac.heating.efficiency ),
+			PT_double, "hvac.heating.efficiency[pu]", PADDR(zone.hvac.heating.efficiency),
 			PT_double, "hvac.heating.cop[pu]", PADDR(zone.hvac.heating.cop),
 
 			/* Lighting loads */
@@ -326,16 +326,22 @@ int office::init(OBJECT *parent)
 	/* sets up default office parameters if none were passed:  floor height = 9ft; interior mass = 2000 Btu/degF;
 	interior/exterior ua = 2 Btu/degF/h; floor area = 4000 sf*/
 
+	if (zone.design.floor_area == 0)
+		zone.design.floor_area = 10000;
 	if (zone.design.floor_height == 0)
 		zone.design.floor_height = 9;
 	if (zone.design.interior_mass == 0)
-		zone.design.interior_mass = 2000;
+		zone.design.interior_mass = 40000;
 	if (zone.design.interior_ua == 0)
-		zone.design.interior_ua = 2;
+		zone.design.interior_ua = 1;
 	if (zone.design.exterior_ua == 0)
-		zone.design.exterior_ua = 2;
-	if (zone.design.floor_area == 0)
-		zone.design.floor_area = 4000;
+		zone.design.exterior_ua = .375;
+
+	if (zone.hvac.cooling.design_temperature == 0)
+		zone.hvac.cooling.design_temperature = 93; // Pittsburgh, PA
+	if (zone.hvac.heating.design_temperature == 0)  
+		zone.hvac.heating.design_temperature = -6;  // Pittsburgh, PA
+	
 
 	/** @todo set the dynamic initial value of properties (no ticket) */
 	if (zone.hvac.minimum_ach==0)
@@ -355,11 +361,11 @@ int office::init(OBJECT *parent)
 		zone.hvac.heating.capacity = oversize*(zone.design.exterior_ua*(zone.control.heating_setpoint-zone.hvac.heating.design_temperature) /* envelope */
 			- (zone.hvac.heating.design_temperature - zone.control.heating_setpoint) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.hvac.minimum_ach); /* vent */
 	if (zone.hvac.cooling.capacity==0)
-		zone.hvac.cooling.capacity = -(oversize*(-zone.design.exterior_ua*(zone.hvac.cooling.design_temperature-zone.control.cooling_setpoint) /* envelope */
+		zone.hvac.cooling.capacity = oversize*(-zone.design.exterior_ua*(zone.hvac.cooling.design_temperature-zone.control.cooling_setpoint) /* envelope */
 			- (zone.design.window_area[0]+zone.design.window_area[1]+zone.design.window_area[2]+zone.design.window_area[3]+zone.design.window_area[4]
 				+zone.design.window_area[5]+zone.design.window_area[6]+zone.design.window_area[7]+zone.design.window_area[8])*100*3.412*zone.design.glazing_coeff /* solar */
 			- (zone.hvac.cooling.design_temperature - zone.control.cooling_setpoint) * (0.2402 * 0.0735 * zone.design.floor_height * zone.design.floor_area) * zone.hvac.minimum_ach /* vent */
-			- (zone.lights.capacity + zone.plugs.capacity)*3.412)); /* lights and plugs */
+			- (zone.lights.capacity + zone.plugs.capacity)*3.412); /* lights and plugs */
 	if (zone.hvac.cooling.cop==0)
 		zone.hvac.cooling.cop=-3;
 	if (zone.hvac.heating.cop==0)
@@ -648,6 +654,8 @@ void office::update_control_setpoints()
 	TcoolOff = zone.control.cooling_setpoint - zone.control.setpoint_deadband;
 	TheatOn = zone.control.heating_setpoint - zone.control.setpoint_deadband;
 	TheatOff = zone.control.heating_setpoint + zone.control.setpoint_deadband;
+	if (TcoolOff - TheatOff <= 0) // deadband needs to be smaller/ setpoints need to be farther apart
+		throw "thermostat deadband causes heating/cooling turn-off points to overlap";
 	zone.control.ventilation_fraction = zone.current.occupancy>0 ? zone.hvac.minimum_ach : 0;
 }
 
@@ -778,24 +786,24 @@ TIMESTAMP office::plc(TIMESTAMP t0, TIMESTAMP t1)
 	/* compute the new control temperature */
 	update_control_setpoints();
 
-//	vent = MinAch;  //<- useless and harmful; code in update_control_setpoints already updates it
-	if (Tair<=TheatOn)  // enter HEAT/AUX mode
+	if (Tair>TheatOff && Tair<TcoolOff )  // enter VENT/OFF mode
+		{
+		if (vent>0)
+			mode = HC_VENT;
+		else
+
+		{
+			mode = HC_OFF;
+		}
+	}	
+	else if (Tair<=TheatOn || (mode == HC_AUX || mode == HC_HEAT))  // enter HEAT/AUX mode
 	{
 		if (Tair<=Taux)
 			mode = HC_AUX;
 		else
 			mode = HC_HEAT;
 	}
-	else if (Tair>TheatOff && Tair<TcoolOff)  // enter VENT/OFF mode
-	{
-		if (vent>0)
-			mode = HC_VENT;
-		else
-		{
-			mode = HC_OFF;
-		}
-	}
-	else if (Tair>=TcoolOn) // enter ECON/COOL mode
+	else if (Tair>=TcoolOn || (mode == HC_ECON || mode == HC_COOL)) // enter ECON/COOL mode
 	{
 		if (Tout<Tecon)
 		{
