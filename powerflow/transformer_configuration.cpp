@@ -181,7 +181,7 @@ int transformer_configuration::init(OBJECT *parent)
 			}
 			else
 			{
-				shunt_impedance = complex(1/no_load_loss,99999999999); //What should X value be here?
+				shunt_impedance = complex(1/no_load_loss,10000000.0); //	10 million should be sufficient.
 			}
 		}
 		
