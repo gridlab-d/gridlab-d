@@ -29,10 +29,10 @@ CLASS* lights::pclass = NULL;
 
 double lights::power_factor[_MAXTYPES] = {
 	1.00, // INCANDESCENT
-	-0.95, // FLUORESCENT
-	-0.92, // CFL
-	-0.90, // SSL
-	-0.97, // HID
+	0.95, // FLUORESCENT
+	0.92, // CFL
+	0.90, // SSL
+	0.97, // HID
 };
 
 // the constructor registers the class and properties and sets the defaults
