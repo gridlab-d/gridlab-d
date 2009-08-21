@@ -1,0 +1,96 @@
+//test_plugload_explicit_swd.glm
+
+//This test file test the explicit use of plugloads within house_e.
+//This test validates power, energy, and heat gain.
+
+clock {
+	timestamp '2000-05-06 0:00:00';
+	stoptime '2000-05-07 1:00:00';
+	timezone PST+8PDT;
+}
+
+module assert;
+module tape;
+module residential;
+
+schedule plugs {
+
+	//weekday-summer 
+	*  0 * 4-9 1-5 0.380; *  1 * 4-9 1-5 0.340; *  2 * 4-9 1-5 0.320; *  3 * 4-9 1-5 0.320;
+	*  4 * 4-9 1-5 0.320; *  5 * 4-9 1-5 0.350; *  6 * 4-9 1-5 0.410; *  7 * 4-9 1-5 0.450;
+	*  8 * 4-9 1-5 0.450; *  9 * 4-9 1-5 0.450; * 10 * 4-9 1-5 0.450; * 11 * 4-9 1-5 0.450;
+	* 12 * 4-9 1-5 0.450; * 13 * 4-9 1-5 0.440; * 14 * 4-9 1-5 0.440; * 15 * 4-9 1-5 0.450;
+	* 16 * 4-9 1-5 0.470; * 17 * 4-9 1-5 0.510; * 18 * 4-9 1-5 0.540; * 19 * 4-9 1-5 0.560;
+	* 20 * 4-9 1-5 0.630; * 21 * 4-9 1-5 0.710; * 22 * 4-9 1-5 0.650; * 23 * 4-9 1-5 0.490
+
+	//weekend-summer 
+	*  0 * 4-9 6-0 0.410; *  1 * 4-9 6-0 0.360; *  2 * 4-9 6-0 0.330; *  3 * 4-9 6-0 0.320;
+	*  4 * 4-9 6-0 0.320; *  5 * 4-9 6-0 0.320; *  6 * 4-9 6-0 0.340; *  7 * 4-9 6-0 0.390;
+	*  8 * 4-9 6-0 0.440; *  9 * 4-9 6-0 0.470; * 10 * 4-9 6-0 0.470; * 11 * 4-9 6-0 0.470;
+	* 12 * 4-9 6-0 0.470; * 13 * 4-9 6-0 0.460; * 14 * 4-9 6-0 0.460; * 15 * 4-9 6-0 0.460;
+	* 16 * 4-9 6-0 0.470; * 17 * 4-9 6-0 0.490; * 18 * 4-9 6-0 0.520; * 19 * 4-9 6-0 0.540;
+	* 20 * 4-9 6-0 0.610; * 21 * 4-9 6-0 0.680; * 22 * 4-9 6-0 0.630; * 23 * 4-9 6-0 0.500
+
+	//weekday-winter 
+	*  0 * 10-3 1-5 0.4200; *  1 * 10-3 1-5 0.3800; *  2 * 10-3 1-5 0.3700; *  3 * 10-3 1-5 0.3600;
+	*  4 * 10-3 1-5 0.3700; *  5 * 10-3 1-5 0.4200; *  6 * 10-3 1-5 0.5800; *  7 * 10-3 1-5 0.6900;
+	*  8 * 10-3 1-5 0.6100; *  9 * 10-3 1-5 0.5600; * 10 * 10-3 1-5 0.5300; * 11 * 10-3 1-5 0.5100;
+	* 12 * 10-3 1-5 0.4900; * 13 * 10-3 1-5 0.4700; * 14 * 10-3 1-5 0.4700; * 15 * 10-3 1-5 0.5100;
+	* 16 * 10-3 1-5 0.6300; * 17 * 10-3 1-5 0.8400; * 18 * 10-3 1-5 0.9700; * 19 * 10-3 1-5 0.9800;
+	* 20 * 10-3 1-5 0.9600; * 21 * 10-3 1-5 0.8900; * 22 * 10-3 1-5 0.7400; * 23 * 10-3 1-5 0.5500
+
+	//weekend-winter 
+	*  0 * 10-3 6-0 0.4900; *  1 * 10-3 6-0 0.4200; *  2 * 10-3 6-0 0.3800; *  3 * 10-3 6-0 0.3800;
+	*  4 * 10-3 6-0 0.3700; *  5 * 10-3 6-0 0.3800; *  6 * 10-3 6-0 0.4300; *  7 * 10-3 6-0 0.5100;
+	*  8 * 10-3 6-0 0.6000; *  9 * 10-3 6-0 0.6300; * 10 * 10-3 6-0 0.6300; * 11 * 10-3 6-0 0.6100;
+	* 12 * 10-3 6-0 0.6000; * 13 * 10-3 6-0 0.5900; * 14 * 10-3 6-0 0.5900; * 15 * 10-3 6-0 0.6100;
+	* 16 * 10-3 6-0 0.7100; * 17 * 10-3 6-0 0.8800; * 18 * 10-3 6-0 0.9600; * 19 * 10-3 6-0 0.9700;
+	* 20 * 10-3 6-0 0.9400; * 21 * 10-3 6-0 0.8800; * 22 * 10-3 6-0 0.7600; * 23 * 10-3 6-0 0.5800
+
+}
+
+object house {
+	name House;
+	heating_setpoint 5;
+	cooling_setpoint 300;
+	air_temperature 70;
+	outdoor_temperature 73;
+	object plugload {
+		installed_power .36;
+		heatgain_fraction .9;
+		shape "type: analog; schedule: plugs; power: .36 kW";
+		object complex_assert {
+			once ONCE_TRUE;
+			target "enduse_load";
+			object player {
+				property value;
+				file "../test_plugload_enduse_load_swd.player";
+			};
+			within 1e-6;
+		};
+		object complex_assert {
+			once ONCE_TRUE;
+			target "energy";
+			object player {
+				property value;
+				file "../test_plugload_energy_swd.player";
+			};
+			within 1e-6;
+		};
+		object double_assert {
+			once ONCE_TRUE;
+			target "heatgain";
+			object player {
+				property value;
+				file "../test_plugload_heatgain_swd.player";
+			};
+			within 1e-3;
+		};
+		object recorder {
+			property enduse_load,energy,heatgain;
+			file "test_plugload_explicit_swd.csv";
+			interval 3600;
+			limit 30;
+		};
+	};
+}

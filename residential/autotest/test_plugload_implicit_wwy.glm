@@ -1,0 +1,57 @@
+//test_plugload_implicit_wwy.glm
+
+//This test file test the implicit use of plugloads within house_e.
+//This test validates power, energy, and heat gain.
+
+clock {
+	timestamp '2000-01-04 0:00:00';
+	stoptime '2000-01-05 1:00:00';
+	timezone PST+8PDT;
+}
+
+module assert;
+module tape;
+module residential {
+	implicit_enduses PLUGS;
+}
+
+object house {
+	name House;
+	heating_setpoint 5;
+	cooling_setpoint 300;
+	air_temperature 70;
+	outdoor_temperature 73;
+	object complex_assert {
+		once ONCE_TRUE;
+		target "total.enduse_load";
+		object player {
+			property value;
+			file "test_plugload_enduse_load_wwy.player";
+		};
+		within 1e-6;
+	};
+	object complex_assert {
+		once ONCE_TRUE;
+		target "total.energy";
+		object player {
+			property value;
+			file "test_plugload_energy_wwy.player";
+		};
+		within 1e-6;
+	};
+	object double_assert {
+		once ONCE_TRUE;
+		target "total.heatgain";
+		object player {
+			property value;
+			file "test_plugload_heatgain_wwy.player";
+		};
+		within 1e-6;
+	};
+	object recorder {
+		property total.power,total.energy,total.heatgain;
+		file "test_plugload_implicit_wwy.csv";
+		interval 3600;
+		limit 30;
+	};
+}
