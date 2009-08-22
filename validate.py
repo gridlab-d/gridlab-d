@@ -42,6 +42,7 @@ def run_tests(argv):
 	
 	there_dir = os.getcwd()
 	err_ct = 0
+	errct = 0
 	ex_ct = 0
 	start_time = time.time()
 	
