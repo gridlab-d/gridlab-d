@@ -128,9 +128,9 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 		// electric load
 		else
 		{
-			if (e->power.r > e->demand.r) e->demand = e->power;
+			if (e->total.r > e->demand.r) e->demand = e->total;
 			if(e->heatgain_fraction > 0.0)
-				e->heatgain = e->power.r * e->heatgain_fraction * 3412.1416 /* Btu/h/kW */;
+				e->heatgain = e->total.r * e->heatgain_fraction * 3412.1416 /* Btu/h/kW */;
 		}
 
 		e->t_last = t1;
@@ -165,13 +165,14 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 */
 	enduse *e = (enduse*)data;
 	int len = 0;
-#define OUTPUT_NZ(X) if (e->X!=0) len+=sprintf(string+len,"%s" #X ": %g", len>0?"; ":"", e->X)
-#define OUTPUT(X) len+=sprintf(string+len,"%s"#X": %g", len>0?"; ":"", e->X);
+#define OUTPUT_NZ(X) if (e->X!=0) len+=sprintf(string+len,"%s" #X ": %f", len>0?"; ":"", e->X)
+#define OUTPUT(X) len+=sprintf(string+len,"%s"#X": %f", len>0?"; ":"", e->X);
 	OUTPUT_NZ(impedance_fraction);
 	OUTPUT_NZ(current_fraction);
 	OUTPUT_NZ(power_fraction);
 	OUTPUT(power_factor);
-	OUTPUT(shape);
+	OUTPUT(power.r);
+	OUTPUT_NZ(power.i);
 	OUTPUT(power.r);
 	OUTPUT_NZ(power.i);
 	return len;
