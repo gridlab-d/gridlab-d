@@ -1,6 +1,6 @@
 // $Id$
-// Test standalone dishwashing objects
-//
+// Test: Weekday test for explicit dishwasher energy.
+// Author: D3P706
 
 #set suppress_repeat_messages=0
 
@@ -40,27 +40,27 @@ object house {
 	outdoor_temperature 73;
 	object dishwasher {
 		installed_power 1000 W;
-		shape "type: analog; schedule: dishwashing; power: .76 kW";
+		shape "type:pulsed; schedule: dishwashing; energy: 1.0 kWh; power: 1.0 kW; count: 1; stdev: 150 W";
 		
 		//Weekday test
-		//WARNING: This test may be off by 1 hour. Please adjust accordingly.
+		//WARNING: From what I understand, this schedule should return an energy of "energy" multiplied by "count" above.
+		//Therefore, it should be a total of 1kWh of energy by the end of the day. This is not true, so someone should
+		//try checking the "pulsed" code.
 		object complex_assert {
 			target "enduse_load";
 			within .01;
-			object player {
-				property value;
-				file "../test_dishwasher_external_power1.player";
-				loop 1;
-			};
+			in '2001-07-03 23:59:59 PDT';
+			value 1;
 		};
 		
+		object recorder{
+			property total;
+			file "test_dishwasher_explicit_power1.csv";
+			interval 3600;
+			limit 25;
+		};
 	};
-	object recorder{
-		property total;
-		file "test_dishwasher_external_power1.csv";
-		interval 3600;
-		limit 24;
-	};
+	
 	
 	
 	
