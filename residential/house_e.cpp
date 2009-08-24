@@ -601,7 +601,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "Rdoors[degF.h/Btu]", PADDR(Rdoors),PT_DESCRIPTION,"door R-value",
 			
 			//PT_enduse,"system",PADDR(system),PT_DESCRIPTION,"heating/cooling system enduse load",
-			PT_enduse,"total",PADDR(total),PT_DESCRIPTION,"total enduse load",
+			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
@@ -692,7 +692,7 @@ int house_e::create()
 			}
 		}
 	}
-	total.name = "total";
+	total.name = "panel";
 	load.name = "system";
 
 	return result;
@@ -1306,7 +1306,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// add to panel current
 			else
 			{
-				c->pLoad->voltage_factor = c->pV->Mag() / ((c->pLoad->config&EUC_IS220) ? 240 : 120);
+				//c->pLoad->voltage_factor = c->pV->Mag() / ((c->pLoad->config&EUC_IS220) ? 240 : 120);
 				//TIMESTAMP t = gl_enduse_sync(c->pLoad,t1); if (t<t2) t2 = t;
 				total.total += c->pLoad->total;
 				total.power += c->pLoad->power;

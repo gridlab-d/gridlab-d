@@ -55,7 +55,7 @@ object house {
 		
 	};
 	object recorder{
-		property total;
+		property panel;
 		file "test_dishwasher_external_power2.csv";
 		interval 3600;
 		limit 25;

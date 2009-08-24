@@ -23,13 +23,13 @@ object house {
 	air_temperature 70;
 	outdoor_temperature 73;
 	object recorder{
-			property total;
-			file "test_lights_implicit_power.csv";
-			interval 3600;
-			limit 10000;
+		property panel;
+		file "test_lights_implicit_power.csv";
+		interval 3600;
+		limit 10000;
 	};
 	object complex_assert {
-		target "total";
+		target "panel.total";
 		within .01;
 		object player {
 			property value;

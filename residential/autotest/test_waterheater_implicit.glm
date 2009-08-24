@@ -16,6 +16,12 @@ module residential {
 module assert;
 module tape;
 
-object house_e {
+object house {
+	object recorder{
+		property panel.power,panel.energy;
+		interval 1800;
+		limit 400;
+		file house.csv;
+	};
 }
 

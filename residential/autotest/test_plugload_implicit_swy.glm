@@ -23,7 +23,7 @@ object house {
 	outdoor_temperature 73;
 	object complex_assert {
 		once ONCE_TRUE;
-		target "total.enduse_load";
+		target "panel.enduse_load";
 		object player {
 			property value;
 			file "../test_plugload_enduse_load_swy.player";
@@ -32,7 +32,7 @@ object house {
 	};
 	object complex_assert {
 		once ONCE_TRUE;
-		target "total.energy";
+		target "panel.energy";
 		object player {
 			property value;
 			file "../test_plugload_energy_swy.player";
@@ -41,7 +41,7 @@ object house {
 	};
 	object double_assert {
 		once ONCE_TRUE;
-		target "total.heatgain";
+		target "panel.heatgain";
 		object player {
 			property value;
 			file "../test_plugload_heatgain_swy.player";
@@ -49,7 +49,7 @@ object house {
 		within 1e-6;
 	};
 	object recorder {
-		property total.power,total.energy,total.heatgain;
+		property panel.power,panel.energy,panel.heatgain;
 		file "test_plugload_implicit_swy.csv";
 		interval 3600;
 		limit 30;

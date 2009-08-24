@@ -16,6 +16,6 @@ module residential {
 module assert;
 module tape;
 
-object house_e {
+object house {
 }
 

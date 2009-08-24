@@ -255,7 +255,7 @@ object house {
 //		};
 //	};
 	object recorder {
-		property system_mode,power,energy,heatgain,total.total,total.energy,air_temperature,mass_temperature,total.heatgain;
+		property system_mode,power,energy,heatgain,panel.total,panel.energy,air_temperature,mass_temperature,panel.heatgain;
 		file "house_power.csv";
 		interval 60;
 		limit 1440;

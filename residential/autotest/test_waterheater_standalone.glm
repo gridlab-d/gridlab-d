@@ -73,7 +73,7 @@ module tape;
 object waterheater {
 	name "direct-gpm";
 	power_fraction 1.0;
-	shape "type: queued; schedule: waterheater";
+	shape "type: queued; schedule: waterheater; duration: 600; count: 5; q_on: 0.6; q_off: 0.1";
 	// @todo assert energy use here
 }
 
