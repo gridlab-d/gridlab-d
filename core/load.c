@@ -4147,8 +4147,8 @@ static int include_file(char *incname, char *buffer, int size)
 /** @return TRUE/SUCCESS for a successful macro read, FALSE/FAILED on parse error (which halts the loader) */
 static int process_macro(char *line, int size, char *filename, int linenum)
 {
-//	char *var, *val, *save;
-//	int i, count;
+	char *var, *val, *save;	// used by *nix
+	int i, count;			// used by *nix
 	if (strncmp(line,MACRO "endif",6)==0)
 	{
 		if (nesting>0)
