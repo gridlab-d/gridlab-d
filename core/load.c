@@ -4147,8 +4147,8 @@ static int include_file(char *incname, char *buffer, int size)
 /** @return TRUE/SUCCESS for a successful macro read, FALSE/FAILED on parse error (which halts the loader) */
 static int process_macro(char *line, int size, char *filename, int linenum)
 {
-        char *var, *val, *save;
-        int i, count;
+//	char *var, *val, *save;
+//	int i, count;
 	if (strncmp(line,MACRO "endif",6)==0)
 	{
 		if (nesting>0)
@@ -4315,6 +4315,16 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 		}
 		if (sscanf(term+1,"%[^\n]",value)==1)
 		{
+/*			if(0 == putenv(value)){;
+				strcpy(line,"\n");
+				return SUCCESS;
+			}
+			else
+			{
+				output_fatal("unable to putenv(%s)", value);
+				return FAILED;
+			}
+ */
 #ifdef WIN32
 			putenv(value);
 #else
@@ -4707,9 +4717,15 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 	}
 	if (status==FAILED)
 	{
-		char *eol = strchr(p,'\n');
-		if (eol!=NULL)
+		char *eol = NULL;
+		if(p){
+			eol = strchr(p,'\n');
+		} else {
+			p = "";
+		}
+		if (eol!=NULL){
 			*eol='\0';
+		}
 		output_message("%s(%d): load failed at or near '%.12s...'", file, linenum,*p=='\0'?"end of line":p);
 		if (p==0)
 			output_error("%s doesn't appear to be a GLM file", file);
