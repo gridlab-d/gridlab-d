@@ -31,11 +31,11 @@ void print_matrix(complex mat[3][3]);
 typedef enum {SM_FBS=0, SM_GS=1, SM_NR=2} SOLVERMETHOD;		/**< powerflow solver methodology */
 GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodology */
 GLOBAL bool GS_all_converged INIT(false);			/**< Gauss-Seidel convergence indicator (for post-convergence calculations */
-GLOBAL int NR_bus_count INIT(0);					/**< Newton-Raphson bus count - used for determining size of bus vector */
-GLOBAL int NR_branch_count INIT(0);					/**< Newton-Raphson branch count - used for determining size of branch vector */
+GLOBAL unsigned int NR_bus_count INIT(0);			/**< Newton-Raphson bus count - used for determining size of bus vector */
+GLOBAL unsigned int NR_branch_count INIT(0);		/**< Newton-Raphson branch count - used for determining size of branch vector */
 GLOBAL BUSDATA *NR_busdata INIT(NULL);				/**< Newton-Raphson bus data pointer array */
 GLOBAL BRANCHDATA *NR_branchdata INIT(NULL);		/**< Newton-Raphson branch data pointer array */
-GLOBAL int NR_curr_bus INIT(-1);						/**< Newton-Raphson current bus indicator - used to populate NR_busdata */
+GLOBAL int NR_curr_bus INIT(-1);					/**< Newton-Raphson current bus indicator - used to populate NR_busdata */
 GLOBAL int NR_curr_branch INIT(-1);					/**< Newton-Raphson current branch indicator - used to populate NR_branchdata */
 GLOBAL unsigned int NR_iteration_limit INIT(500);	/**< Newton-Raphson iteration limit (per GridLAB-D iteration) */
 GLOBAL double acceleration_factor INIT(1.4);		/**< Acceleration factor for Gauss-Seidel to increase convergence speed */

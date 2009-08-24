@@ -449,6 +449,9 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 					NR_branchdata[NR_curr_branch].YSto = &From_Y[0][0];
 				}
 
+				//Populate phases property
+				NR_branchdata[NR_curr_branch].phases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
+
 				//Populate to/from indices
 				NR_branchdata[NR_curr_branch].from = fnode->NR_node_reference;
 				NR_branchdata[NR_curr_branch].to = tnode->NR_node_reference;
@@ -490,7 +493,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			// compute admittance - invert b matrix - special circumstances given different methods
 			if (has_phase(PHASE_S)) //Triplexy
 			{
-				GL_THROW("I broke here - NR not working yet.");
+				//GL_THROW("I broke here - NR not working yet.");
 				equalm(b_mat,Y);
 			}
 			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
@@ -516,6 +519,15 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
 				Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
 				Y[1][1] = b_mat[0][0] / detvalue;
+			}
+			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
+			{
+				complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
+
+				Y[1][1] = b_mat[2][2] / detvalue;
+				Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
+				Y[2][1] = b_mat[2][1] * -1.0 / detvalue;
+				Y[2][2] = b_mat[1][1] / detvalue;
 			}
 			else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
 				inverse(b_mat,Y);
@@ -580,27 +592,96 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				}
 				else if (SpecialLnk==SPLITPHASE)	//Split phase - non working
 				{
-					equalm(b_mat,Yto);
+					//Yto - same for all
+					Yto[0][0] = b_mat[0][0];
+					Yto[0][1] = b_mat[0][1];
+					Yto[1][0] = b_mat[1][0];
+					Yto[1][1] = b_mat[1][1];
+					Yto[0][2] = Yto[1][2] = Yto[2][0] = Yto[2][1] = Yto[2][2] = 0.0;
 
-					//Store value into YSto
-					for (jindex=0; jindex<3; jindex++)
+					if (has_phase(PHASE_A))		//A connected
 					{
-						for (kindex=0; kindex<3; kindex++)
-						{
-							YSto[jindex*3+kindex]=Yto[jindex][kindex];
-						}
+						//To_Y
+						To_Y[0][0] = b_mat[0][2];
+						To_Y[1][0] = b_mat[1][2];
+						To_Y[0][1] = To_Y[0][2] = To_Y[1][1] = 0.0;
+						To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
+
+						//Yfrom
+						Yfrom[0][0] = b_mat[2][2];
+						Yfrom[0][1] = Yfrom[0][2] = Yfrom[1][0] = Yfrom[1][1] = 0.0;
+						Yfrom[1][2] = Yfrom[2][0] = Yfrom[2][1] = Yfrom[2][2] = 0.0;
+
+						//From_Y
+						From_Y[0][0] = b_mat[2][0];
+						From_Y[0][1] = b_mat[2][1];
+						From_Y[0][2] = From_Y[1][0] = From_Y[1][1] = 0.0;
+						From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
 					}
-
-					equalm(B_mat,Yfrom);
-
-					//Store value into YSfrom
-					for (jindex=0; jindex<3; jindex++)
+					else if (has_phase(PHASE_B))	//B connected
 					{
-						for (kindex=0; kindex<3; kindex++)
-						{
-							YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
-						}
+						//To_Y
+						To_Y[0][1] = b_mat[0][2];
+						To_Y[1][1] = b_mat[1][2];
+						To_Y[0][0] = To_Y[0][2] = To_Y[1][0] = 0.0;
+						To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
+
+						//Yfrom
+						Yfrom[1][1] = b_mat[2][2];
+						Yfrom[0][0] = Yfrom[0][1] = Yfrom[0][2] = Yfrom[1][0] = 0.0;
+						Yfrom[1][2] = Yfrom[2][0] = Yfrom[2][1] = Yfrom[2][2] = 0.0;
+
+						//From_Y
+						From_Y[1][0] = b_mat[2][0];
+						From_Y[1][1] = b_mat[2][1];
+						From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
+						From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
 					}
+					else if (has_phase(PHASE_C))	//C connected
+					{
+						//To_Y
+						To_Y[0][2] = b_mat[0][2];
+						To_Y[1][2] = b_mat[1][2];
+						To_Y[0][0] = To_Y[0][1] = To_Y[1][0] = 0.0;
+						To_Y[1][1] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
+
+						//Yfrom
+						Yfrom[2][2] = b_mat[2][2];
+						Yfrom[0][0] = Yfrom[0][1] = Yfrom[0][2] = Yfrom[1][0] = 0.0;
+						Yfrom[1][1] = Yfrom[1][2] = Yfrom[2][0] = Yfrom[2][1] = 0.0;
+
+						//From_Y
+						From_Y[2][0] = b_mat[2][0];
+						From_Y[2][1] = b_mat[2][1];
+						From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
+						From_Y[1][0] = From_Y[1][1] = From_Y[1][2] = From_Y[2][2] = 0.0;
+					}
+					else
+						GL_THROW("NR: Unknown phsae configuration on split-phase transformer");
+
+										
+					//Jason's stuff - commented for testing
+					//equalm(b_mat,Yto);
+
+					////Store value into YSto
+					//for (jindex=0; jindex<3; jindex++)
+					//{
+					//	for (kindex=0; kindex<3; kindex++)
+					//	{
+					//		YSto[jindex*3+kindex]=Yto[jindex][kindex];
+					//	}
+					//}
+
+					//equalm(B_mat,Yfrom);
+
+					////Store value into YSfrom
+					//for (jindex=0; jindex<3; jindex++)
+					//{
+					//	for (kindex=0; kindex<3; kindex++)
+					//	{
+					//		YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+					//	}
+					//}
 					
 					//GL_THROW("Not done yet");
 				}
@@ -873,6 +954,15 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
 				Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
 				Y[1][1] = b_mat[0][0] / detvalue;
+			}
+			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
+			{
+				complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
+
+				Y[1][1] = b_mat[2][2] / detvalue;
+				Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
+				Y[2][1] = b_mat[2][1] * -1.0 / detvalue;
+				Y[2][2] = b_mat[1][1] / detvalue;
 			}
 			else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
 				inverse(b_mat,Y);

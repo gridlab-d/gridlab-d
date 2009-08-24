@@ -489,6 +489,24 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t1 = powerflow_object::presync(t0); 
 
+	//Initial phase check - moved so all methods check now
+	if (prev_NTime==0)	//Should only be the very first run
+	{
+		set phase_to_check;
+		phase_to_check = (phases & (~(PHASE_D | PHASE_N)));
+		
+		//See if everything has a source
+		if (((phase_to_check & busphasesIn) != phase_to_check) && (busphasesIn != 0))	//Phase mismatch (and not top level node)
+		{
+			GL_THROW("node:%d has more phases leaving than entering",obj->id);
+			/* TROUBLESHOOT
+			A node has more phases present than it has sources coming in.  Under the Forward-Back sweep algorithm,
+			the system should be strictly radial.  This scenario implies either a meshed system or unconnected
+			phases between the from and to nodes of a connected line.  Please adjust the phases appropriately.
+			*/
+		}
+	}
+
 	if (solver_method==SM_NR)
 	{
 		if (NR_busdata==NULL || NR_branchdata==NULL)	//First time any NR in
@@ -527,24 +545,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			condition = OC_NORMAL;	//Clear the flag in case we're a switch
 		}
 #endif
-		//Initial phase check
-		if (prev_NTime==0)	//Should only be the very first run
-		{
-			set phase_to_check;
-			phase_to_check = (phases & (~(PHASE_D | PHASE_N)));
-			
-			//See if everything has a source
-			if (((phase_to_check & busphasesIn) != phase_to_check) && (busphasesIn != 0))	//Phase mismatch (and not top level node)
-			{
-				GL_THROW("node:%d has more phases leaving than entering",obj->id);
-				/* TROUBLESHOOT
-				A node has more phases present than it has sources coming in.  Under the Forward-Back sweep algorithm,
-				the system should be strictly radial.  This scenario implies either a meshed system or unconnected
-				phases between the from and to nodes of a connected line.  Please adjust the phases appropriately.
-				*/
-			}
-		}
-
 		/* reset the current accumulator */
 		current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
 
@@ -1797,16 +1797,16 @@ int *node::NR_populate(void)
 {
 		NR_busdata[NR_curr_bus].type = (int)bustype;
 
-		//Are we delta (split/single phase may end up in here eventually as well)
-		if ((phases & PHASE_D) == PHASE_D)
+		//Populate phases - see if it is Delta or not
+		if (has_phase(PHASE_D))	//Check because Delta is forced to be ABCD (even if it wasn't) due to how matrices are handled
 		{
-			NR_busdata[NR_curr_bus].delta = true;
+			NR_busdata[NR_curr_bus].phases = 0xF;	//ABCD, if an S ever exists here, I don't want to know about it
 		}
 		else
 		{
-			NR_busdata[NR_curr_bus].delta = false;
+			NR_busdata[NR_curr_bus].phases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 		}
-		
+
 		//Populate voltage
 		NR_busdata[NR_curr_bus].V = &voltage[0];
 		
@@ -1822,6 +1822,9 @@ int *node::NR_populate(void)
 		//Per unit values
 		NR_busdata[NR_curr_bus].kv_base = -1.0;
 		NR_busdata[NR_curr_bus].mva_base = -1.0;
+
+		//Set the matrix value to -1 to know it hasn't been set (probably not necessary)
+		NR_busdata[NR_curr_bus].Matrix_Loc = -1;
 
 		//Store our reference value
 		NR_node_reference = NR_curr_bus;
