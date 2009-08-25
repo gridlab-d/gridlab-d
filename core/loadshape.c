@@ -371,6 +371,12 @@ void loadshape_recalc(loadshape *ls)
 
 int loadshape_init(loadshape *ls) /**< load shape */
 {
+	/* unknown shape -> placeholder loadshape, needs no actions at all */
+	if(ls->type == MT_UNKNOWN){
+		ls->t2 = TS_NEVER;
+		return 0;
+	}
+
 	/* no schedule -> nothing to initialized */
 	if (ls->schedule==NULL){
 		output_error("loadshape_init(): a loadshape without a schedule is meaningless");
