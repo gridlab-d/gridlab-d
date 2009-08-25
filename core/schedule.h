@@ -68,6 +68,15 @@ struct s_schedule {
 	SCHEDULE *next;	/* next schedule in list */
 };
 
+typedef struct s_schedulexform SCHEDULEXFORM;
+struct s_schedulexform {
+	SCHEDULE *schedule;
+	double *target;
+	double scale;
+	double bias;
+	SCHEDULEXFORM *next;
+};
+
 #define SN_NORMAL   0x0001	/**< schedule normalization flag - normalize enabled */
 #define SN_ABSOLUTE 0x0002	/**< schedule normalization flag - use absolute values */
 #define SN_WEIGHTED 0x0004	/**< schedule normalization flag - use weighted values */
@@ -75,6 +84,7 @@ struct s_schedule {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 SCHEDULE *schedule_getnext(SCHEDULE *sch);
 SCHEDULE *schedule_find_byname(char *name);
 SCHEDULE *schedule_create(char *name, char *definition);
@@ -86,6 +96,8 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, TIMESTAMP t);
 TIMESTAMP schedule_syncall(TIMESTAMP t);
 int schedule_test(void);
 void schedule_dump(SCHEDULE *sch, char *file);
+
+int schedule_add_xform(SCHEDULE *schedule, double *target, double scale, double bias);
 
 #ifdef __cplusplus
 }

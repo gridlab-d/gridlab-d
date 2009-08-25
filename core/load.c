@@ -3177,6 +3177,16 @@ int is_int(PROPERTYTYPE pt){
 	}
 }
 
+static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
+{
+	START;
+	/* TODO schedule_name * scale +/- bias  */
+	/* TODO scale * schedule_name +/- bias  */
+	/* TODO schedule_name * scale  */
+	/* TODO scale * schedule_name  */
+	REJECT;
+}
+
 static int object_block(PARSER, OBJECT *parent, OBJECT **obj);
 static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 {
@@ -3184,6 +3194,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	char1024 propval;
 	double dval;
 	complex cval;
+	SCHEDULEXFORM xform;
 	UNIT *unit=NULL;
 	OBJECT *subobj=NULL;
 	START;
@@ -3259,6 +3270,16 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			else if (object_set_double_by_name(obj,propname,dval)==0)
 			{
 				output_message("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
+				REJECT;
+			}
+			else
+				ACCEPT;
+		}
+		else if (prop!=NULL && prop->ptype==PT_double && TERM(schedule_xform(HERE,&xform)))
+		{
+			if (!schedule_add_xform(xform.schedule,xform.target,xform.scale,xform.bias))
+			{
+				output_message("%s(%d): schedule transform could not be read", filename, linenum);
 				REJECT;
 			}
 			else
