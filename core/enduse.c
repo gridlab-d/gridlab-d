@@ -135,7 +135,7 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 
 		e->t_last = t1;
 	}
-	return (e->shape && e->shape->type != MT_UNKNOWN) ? e->shape->t2 : TS_NEVER;
+	return (e->shape && e->shape->type != MT_UNKNOWN) ? -e->shape->t2 : TS_NEVER;
 }
 
 TIMESTAMP enduse_syncall(TIMESTAMP t1)
