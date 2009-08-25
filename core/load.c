@@ -945,6 +945,14 @@ static int literal(PARSER, char *text)
 	return 0;
 }
 
+static int dashed_name(PARSER, char *result, int size)
+{	/* basic name */
+	START;
+	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='_' || *_p=='-') COPY(result);
+	result[_n]='\0';
+	DONE;
+}
+
 static int name(PARSER, char *result, int size)
 {	/* basic name */
 	START;
@@ -3177,14 +3185,91 @@ int is_int(PROPERTYTYPE pt){
 	}
 }
 
+static int schedule_name(PARSER, SCHEDULE *sch)
+{
+	char name[64];
+	START;
+	if WHITE ACCEPT;
+	if (dashed_name(HERE,name,sizeof(name)) && (sch=schedule_find_byname(name)))
+	{
+		ACCEPT;
+		DONE;
+	}
+	REJECT;
+	DONE;
+}
+
 static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 {
 	START;
-	/* TODO schedule_name * scale +/- bias  */
-	/* TODO scale * schedule_name +/- bias  */
-	/* TODO schedule_name * scale  */
-	/* TODO scale * schedule_name  */
+	if WHITE ACCEPT;
+	/* TODO scale * schedule_name [+ bias]  */
+	if (TERM(real_value(HERE,&xform->scale)) && WHITE,LITERAL("*") && WHITE,TERM(schedule_name(HERE,xform->schedule)))
+	{	
+		if (WHITE,LITERAL("+") && WHITE,TERM(real_value(HERE,&xform->bias))) { ACCEPT; }
+		else xform->bias = 0;
+		ACCEPT;
+		DONE;
+	}
+	OR
+	/* TODO scale * schedule_name [- bias]  */
+	if (TERM(real_value(HERE,&xform->scale)) && WHITE,LITERAL("*") && WHITE,TERM(schedule_name(HERE,xform->schedule)))
+	{
+		if (WHITE,LITERAL("-") && WHITE,TERM(real_value(HERE,&xform->bias))) { xform->bias *= -1; ACCEPT; }
+		else xform->bias = 0;
+		ACCEPT;
+		DONE;
+	}
+	OR
+	/* TODO schedule_name * scale [+ bias]  */
+	if (TERM(schedule_name(HERE,xform->schedule)) && WHITE,LITERAL("*") && WHITE,TERM(real_value(HERE,&xform->scale)))
+	{
+		if (WHITE,LITERAL("+") && WHITE,TERM(real_value(HERE,&xform->bias))) { ACCEPT; }
+		else xform->bias = 0;
+		ACCEPT;
+		DONE;
+	}
+	OR
+	/* TODO schedule_name * scale [- bias]  */
+	if (TERM(schedule_name(HERE,xform->schedule)) && WHITE,LITERAL("*") && WHITE,TERM(real_value(HERE,&xform->scale)))
+	{
+	 	if (WHITE,LITERAL("-") && WHITE,TERM(real_value(HERE,&xform->bias))) { xform->bias *= -1; ACCEPT;}
+		else xform->bias = 0;
+		ACCEPT;
+		DONE;
+	}
+	OR
+	/* TODO bias + scale * schedule_name  */
+	if (TERM(real_value(HERE,&xform->bias)) && WHITE,LITERAL("+") && WHITE,TERM(real_value(HERE,&xform->scale)) && WHITE,LITERAL("*") && WHITE,TERM(schedule_name(HERE,xform->schedule)))
+	{
+		ACCEPT;
+		DONE;
+	}
+	OR
+	/* TODO bias - scale * schedule_name  */
+	if (TERM(real_value(HERE,&xform->bias)) && WHITE,LITERAL("-") && WHITE,TERM(real_value(HERE,&xform->scale)) && WHITE,LITERAL("*") && WHITE,TERM(schedule_name(HERE,xform->schedule)))
+	{
+		xform->scale *= -1;
+		ACCEPT;
+		DONE;
+	}
+	OR
+	/* TODO bias + schedule_name * scale */
+	if (TERM(real_value(HERE,&xform->bias)) && WHITE,LITERAL("+") && WHITE,TERM(schedule_name(HERE,xform->schedule)) && WHITE,LITERAL("*") && WHITE,TERM(real_value(HERE,&xform->scale)))
+	{
+		ACCEPT;
+		DONE;
+	}
+	OR
+	/* TODO bias - schedule_name * scale */
+	if (TERM(real_value(HERE,&xform->bias)) && WHITE,LITERAL("-") && WHITE,TERM(schedule_name(HERE,xform->schedule)) && WHITE,LITERAL("*") && WHITE,TERM(real_value(HERE,&xform->scale)))
+	{
+		xform->scale *= -1;
+		ACCEPT;
+		DONE;
+	}
 	REJECT;
+	DONE;
 }
 
 static int object_block(PARSER, OBJECT *parent, OBJECT **obj);

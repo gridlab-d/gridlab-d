@@ -1,0 +1,26 @@
+// test schedule transforms
+
+#define include=$HOME/gridlabd/trunk/core
+
+schedule test_schedule {
+	* 0-11 * * *
+}
+
+class test_class {
+	double scale1bias0;
+	double scale1bias1;
+	double scale2bias0;
+	double scale2bias1;
+	intrinsic create(object parent) {
+		return 1;
+	};
+}
+
+object test_class {
+	scale1bias0 test_schedule;
+	scale1bias1 test_schedule + 1;
+	scale2bias0 2 * test_schedule;
+	scale2bias1 2 * test_schedule + 1;
+	bias0scale2 test_schedule * 2;
+	bias1scale2 1 + test_schedule * 2;
+}
