@@ -56,7 +56,7 @@ object house {
 	air_temperature 70;
 	outdoor_temperature 73;
 	object clotheswasher {
-		motor_power 1000;
+		motor_power 1000W;
 		shape "type: pulsed; schedule: washing; energy: 1 kWh; count: 4; power: 1 kW; stdev: 0.15 kW";
 		
 		//Weekend summer test
