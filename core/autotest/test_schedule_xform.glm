@@ -1,29 +1,25 @@
 // test schedule transforms
 
-#define include=..
-#include "../rt/debugger.conf"
+clock {
+	timezone PST+8PDT;
+	starttime '2009-01-01 0:00:00 PST';
+	stoptime '2009-02-01 0:00:00 PST';
+}
 
 schedule test_schedule {
-	* 0-11 * * *
+	* 9-17 * * 1-5
 }
 
-class test_class {
-	double scale1bias0;
-	double scale1bias1;
-	double scale2bias0;
-	double scale2bias1;
-	double bias0scale2;
-	double bias1scale2;
-	intrinsic create(object parent) {
-		return 1;
+module residential;
+module tape;
+
+object house {
+	name test_house;
+	cooling_setpoint 3*test_schedule + 75;
+	heating_setpoint -3*test_schedule + 70;
+	object recorder {
+		property heating_setpoint,air_temperature,cooling_setpoint;
+		interval 3600;
+		file air_temperature.csv;
 	};
-}
-
-object test_class {
-	scale1bias0 test_schedule;
-	scale1bias1 test_schedule + 1;
-	scale2bias0 2 * test_schedule;
-	scale2bias1 2 * test_schedule + 1;
-	bias0scale2 test_schedule * 2;
-	bias1scale2 1 + test_schedule * 2;
 }

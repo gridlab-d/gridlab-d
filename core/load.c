@@ -3185,17 +3185,22 @@ int is_int(PROPERTYTYPE pt){
 	}
 }
 
-static int schedule_name(PARSER, SCHEDULE *sch)
+static int schedule_name(PARSER, SCHEDULE **sch)
 {
 	char name[64];
 	START;
 	if WHITE ACCEPT;
-	if (TERM(dashed_name(HERE,name,sizeof(name)) && (sch=schedule_find_byname(name))))
+	if (TERM(dashed_name(HERE,name,sizeof(name))))
 	{
 		ACCEPT;
-		DONE;
+		if (((*sch)=schedule_find_byname(name))==NULL)
+		{
+			output_message("%s(%d) schedule '%s' not found", filename, linenum,name);
+			REJECT;
+		}
 	}
-	REJECT;
+	else
+		REJECT;
 	DONE;
 }
 
@@ -3204,15 +3209,15 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	START;
 	if WHITE ACCEPT;
 	/* TODO scale * schedule_name [+ bias]  */
-	if (TERM(real_value(HERE,&xform->scale)) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,xform->schedule))))
+	if (TERM(real_value(HERE,&xform->scale)) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
 	{	
-		if (WHITE,LITERAL("+") && WHITE,TERM(real_value(HERE,&xform->bias))) { ACCEPT; }
+		if ((WHITE,LITERAL("+")) && (WHITE,TERM(real_value(HERE,&xform->bias)))) { ACCEPT; }
 		else { xform->bias = 0;	ACCEPT;}
 		DONE;
 	}
 	OR
 	/* TODO scale * schedule_name [- bias]  */
-	if (TERM(real_value(HERE,&xform->scale)) &&( WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,xform->schedule))))
+	if (TERM(real_value(HERE,&xform->scale)) &&( WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
 	{
 		if ((WHITE,LITERAL("-")) && (WHITE,TERM(real_value(HERE,&xform->bias)))) { xform->bias *= -1; ACCEPT; }
 		else { xform->bias = 0;	ACCEPT;}
@@ -3220,7 +3225,7 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	}
 	OR
 	/* TODO schedule_name [* scale] [+ bias]  */
-	if (TERM(schedule_name(HERE,xform->schedule)))
+	if (TERM(schedule_name(HERE,&xform->schedule)))
 	{
 		if ((WHITE,LITERAL("*")) && (WHITE,TERM(real_value(HERE,&xform->scale)))) { ACCEPT; }
 		else { ACCEPT; xform->scale = 1;}
@@ -3231,14 +3236,14 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	}
 	OR
 	/* TODO bias + scale * schedule_name  */
-	if (TERM(real_value(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(real_value(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,xform->schedule))))
+	if (TERM(real_value(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(real_value(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
 	{
 		ACCEPT;
 		DONE;
 	}
 	OR
 	/* TODO bias - scale * schedule_name  */
-	if (TERM(real_value(HERE,&xform->bias)) && (WHITE,LITERAL("-")) && (WHITE,TERM(real_value(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,xform->schedule))))
+	if (TERM(real_value(HERE,&xform->bias)) && (WHITE,LITERAL("-")) && (WHITE,TERM(real_value(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
 	{
 		xform->scale *= -1;
 		ACCEPT;
@@ -3246,7 +3251,7 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	}
 	OR
 	/* TODO bias + schedule_name [* scale] */
-	if (TERM(real_value(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(schedule_name(HERE,xform->schedule))))
+	if (TERM(real_value(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
 	{
 		if (WHITE,LITERAL("*") && WHITE,TERM(real_value(HERE,&xform->scale))) { ACCEPT; }
 		else { ACCEPT; xform->scale = 1;}
@@ -3254,7 +3259,7 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	}
 	OR
 	/* TODO bias - schedule_name [* scale] */
-	if (TERM(real_value(HERE,&xform->bias)) && WHITE,LITERAL("-") && WHITE,TERM(schedule_name(HERE,xform->schedule)))
+	if (TERM(real_value(HERE,&xform->bias)) && WHITE,LITERAL("-") && WHITE,TERM(schedule_name(HERE,&xform->schedule)))
 	{
 		if ((WHITE,LITERAL("*")) && (WHITE,TERM(real_value(HERE,&xform->scale)))) { ACCEPT; xform->scale *= -1; }
 		else { ACCEPT; xform->scale = 1;}
@@ -3337,6 +3342,17 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			else
 				ACCEPT;
 		} 
+		else if (prop!=NULL && prop->ptype==PT_double && TERM(schedule_xform(HERE,&xform)))
+		{
+			xform.target = (double*)((char*)(obj+1) + (int64)prop->addr);
+			if (!schedule_add_xform(xform.schedule,xform.target,xform.scale,xform.bias))
+			{
+				output_message("%s(%d): schedule transform could not be created - %s", filename, linenum, strerror(errno));
+				REJECT;
+			}
+			else
+				ACCEPT;
+		}
 		else if (prop!=NULL && prop->ptype==PT_double && TERM(functional_unit(HERE,&dval,&unit)))
 		{
 			if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
@@ -3347,16 +3363,6 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			else if (object_set_double_by_name(obj,propname,dval)==0)
 			{
 				output_message("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
-				REJECT;
-			}
-			else
-				ACCEPT;
-		}
-		else if (prop!=NULL && prop->ptype==PT_double && TERM(schedule_xform(HERE,&xform)))
-		{
-			if (!schedule_add_xform(xform.schedule,xform.target,xform.scale,xform.bias))
-			{
-				output_message("%s(%d): schedule transform could not be created - %s", filename, linenum, strerror(errno));
 				REJECT;
 			}
 			else

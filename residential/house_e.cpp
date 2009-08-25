@@ -842,14 +842,14 @@ int house_e::init(OBJECT *parent)
     if (COP_coeff==0)			COP_coeff = gl_random_uniform(0.9,1.1);	// coefficient of cops [scalar]
 	if (heating_setpoint==0)	heating_setpoint = gl_random_triangle(68,72);
 	if (cooling_setpoint==0)	cooling_setpoint = gl_random_triangle(75,79);
-    //if (Tair==0)				Tair = gl_random_uniform(heating_setpoint, cooling_setpoint);	// air temperature [F]
+    if (Tair==0)				Tair = gl_random_uniform(heating_setpoint, cooling_setpoint);	// air temperature [F]
 	if (over_sizing_factor==0)  over_sizing_factor = gl_random_uniform(0.98,1.3);
 	if (thermostat_deadband==0)	thermostat_deadband = gl_random_triangle(2,3);
 	if(cooling_design_temperature == 0)	cooling_design_temperature = 95.0;
 	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * gl_random_triangle(4,6); // ~5 W/sf estimated
 	if (design_cooling_capacity==0)	design_cooling_capacity = envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (1 - glazing_shgc)) + design_internal_gains;
 	if (design_heating_capacity==0)	design_heating_capacity = envelope_UA * (heating_setpoint - heating_design_temperature);
-    //if (system_mode==HC_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
+    if (system_mode==SM_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
 
 
     air_density = 0.0735;			// density of air [lb/cf]
