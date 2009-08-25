@@ -39,7 +39,7 @@ clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(module,"clotheswasher",sizeof(clotheswasher),PC_BOTTOMUP);
+		oclass = gl_register_class(module,"clotheswasher",sizeof(clotheswasher),PC_PRETOPDOWN|PC_BOTTOMUP);
 		pclass = residential_enduse::oclass;
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
@@ -47,9 +47,8 @@ clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "residential_enduse",
-			PT_double,"motor_power[W]",PADDR(motor_power),
+			PT_double,"motor_power[kW]",PADDR(shape.params.analog.power),
 			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),
 			PT_double,"enduse_demand[unit]",PADDR(enduse_demand),
 			PT_double,"enduse_queue[unit]",PADDR(enduse_queue),
 			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
@@ -81,15 +80,17 @@ int clotheswasher::create()
 
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
 
+	load.voltage_factor = 1.0;
+
 	return res;
 }
 
 int clotheswasher::init(OBJECT *parent)
 {
 	// default properties
-	if (motor_power==0) motor_power = gl_random_uniform(100,750);		// clotheswasher size [W]
-	if (heat_fraction==0) heat_fraction = 0.5; 
-	if (power_factor==0) power_factor = 0.95;
+	if (shape.params.analog.power==0) shape.params.analog.power = gl_random_uniform(0.100,0.750);		// clotheswasher size [W]
+	if (load.heatgain_fraction==0) load.heatgain_fraction = 0.5; 
+	if (load.power_factor==0) load.power_factor = 0.95;
 	if (stall_voltage==0) stall_voltage  = 0.7*120;
 	if (trip_delay==0) trip_delay = 10;
 	if (reset_delay==0) reset_delay = 60;
@@ -97,58 +98,68 @@ int clotheswasher::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if(motor_power < 100){
+	if(shape.params.analog.power < 0.1){
 		gl_error("clotheswasher motor is undersized, using 500W motor");
-		motor_power = 500;
+		shape.params.analog.power = 0.5;
 	}
 
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
-	{
-		gl_error("clotheswasher must have a parent house");
-		/*	TROUBLESHOOT
-			The clotheswasher object, being an enduse for the house model, must have a parent house
-			that it is connected to.  Create a house object and set it as the parent of the
-			offending clotheswasher object.
-		*/
-		return 0;
+	switch(shape.type){
+		case MT_UNKNOWN:
+			// initial load
+			update_state(0);
+			break;
+		case MT_ANALOG:
+			break;
+		case MT_PULSED:
+			break;
+		case MT_MODULATED:
+			break;
+		default:
+			GL_THROW("clotheswasher load shape has an unknown state!");
+			break;
 	}
 
-	//	pull parent attach_enduse and attach the enduseload
-	FUNCTIONADDR attach = 0;
-	load.end_obj = hdr;
-	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
-		gl_error("clotheswasher parent must publish attach_enduse()");
-		/*	TROUBLESHOOT
-			The clotheswasher object attempt to attach itself to its parent, which
-			must implement the attach_enduse function.
-		*/
-		return 0;
-	}
-	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
+	return residential_enduse::init(parent);
+}
 
-	// initial load
-	update_state(0);
-
-	return 1;
+TIMESTAMP clotheswasher::presync(TIMESTAMP t0, TIMESTAMP t1){
+	return TS_NEVER;
 }
 
 TIMESTAMP clotheswasher::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	// compute the seconds in this time step
-	double dt = gl_toseconds(t0>0?t1-t0:0);
+	double dt = 0.0;
+	TIMESTAMP t2 = residential_enduse::sync(t0, t1);
 
-	// if advancing from a non-init condition
-	if (t0>TS_ZERO && t1>t0)
-	{
-		// compute the total energy usage in this interval
-		load.energy += load.total * dt/3600.0;
+	if (pCircuit!=NULL)
+		load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor
+
+	switch(shape.type){
+		case MT_UNKNOWN:
+			dt = gl_toseconds(t0>0?t1-t0:0);
+			// determine the delta time until the next state change
+			dt = update_state(dt);
+			break;
+		case MT_ANALOG:
+			break;
+		case MT_PULSED:
+			break;
+		case MT_MODULATED:
+			break;
+		default:
+			GL_THROW("clotheswasher load shape has an unknown state!");
+			break;
 	}
 
-	// determine the delta time until the next state change
-	dt = update_state(dt);
+	gl_enduse_sync(&(residential_enduse::load),t1);
 
-	return dt>0?(TIMESTAMP)(dt*TS_SECOND):TS_NEVER; 
+	if(dt>0){
+		if(t2 > (TIMESTAMP)(dt*TS_SECOND + t0)){
+			t2 = (TIMESTAMP)(dt*TS_SECOND + t0);
+		}
+	}
+	return -t2;
 }
 
 double clotheswasher::update_state(double dt)
@@ -224,7 +235,7 @@ double clotheswasher::update_state(double dt)
 		cycle_time -= dt;
 
 		// running in constant power mode
-		load.power.SetPowerFactor(motor_power/1000, power_factor);
+		load.power.SetPowerFactor(shape.params.analog.power, power_factor);
 		load.current = load.admittance = complex(0,0,J);
 
 		// remaining time
@@ -263,7 +274,7 @@ double clotheswasher::update_state(double dt)
 	load.total = load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000;
 
 	// compute the total heat gain
-	load.heatgain = load.total.Mag() * heat_fraction;
+	load.heatgain = load.total.Mag() * load.heatgain_fraction * BTUPHPKW;
 
 	return dt;
 }
@@ -291,12 +302,32 @@ EXPORT int init_clotheswasher(OBJECT *obj)
 	return my->init(obj->parent);
 }
 
-EXPORT TIMESTAMP sync_clotheswasher(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP sync_clotheswasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	clotheswasher *my = OBJECTDATA(obj, clotheswasher);
-	TIMESTAMP t1 = my->sync(obj->clock, t0);
-	obj->clock = t0;
-	return t1;
-}
+	if (obj->clock <= ROUNDOFF)
+		obj->clock = t0;  //set the object clock if it has not been set yet
+	try {
+		TIMESTAMP t1 = TS_NEVER;
+		switch (pass) {
+		case PC_PRETOPDOWN:
+			return my->presync(obj->clock, t0);
+		case PC_BOTTOMUP:
+			t1 = my->sync(obj->clock, t0);
+			obj->clock = t0;
+			return t1;
+		default:
+			throw "invalid pass request";
+		}
+	}
+	catch (int m)
+	{
+		gl_error("%s (clotheswasher:%d) model zone exception (code %d) not caught", obj->name?obj->name:"(anonymous waterheater)", obj->id, m);
+	}
+	catch (char *msg)
+	{
+		gl_error("%s (clotheswasher:%d) %s", obj->name?obj->name:"(anonymous clotheswasher)", obj->id, msg);
+	}
+	return TS_INVALID;}
 
 /**@}**/
