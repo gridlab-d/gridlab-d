@@ -869,15 +869,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -904,11 +904,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>
@@ -1072,7 +1072,19 @@
 				Name="Autotest"
 				>
 				<File
+					RelativePath=".\autotest\test_alternate_syntax.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_err_duplicate_function.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_exc_duplicate_function.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_schedule_xform.glm"
 					>
 				</File>
 			</Filter>

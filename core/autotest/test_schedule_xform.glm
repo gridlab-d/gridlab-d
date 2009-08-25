@@ -1,6 +1,7 @@
 // test schedule transforms
 
-#define include=$HOME/gridlabd/trunk/core
+#define include=..
+#include "../rt/debugger.conf"
 
 schedule test_schedule {
 	* 0-11 * * *
@@ -11,6 +12,8 @@ class test_class {
 	double scale1bias1;
 	double scale2bias0;
 	double scale2bias1;
+	double bias0scale2;
+	double bias1scale2;
 	intrinsic create(object parent) {
 		return 1;
 	};
