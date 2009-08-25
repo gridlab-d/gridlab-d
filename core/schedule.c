@@ -183,6 +183,10 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}, *match;
 		unsigned int calendar;
 		double value=1.0; /* default value is 1.0 */
+		/* remove leading whitespace */
+		while (isspace(*token)) token++;
+		if (strcmp(token,"")==0)
+			continue;
 		if (sscanf(token,"%s %s %s %s %s %lf",matcher[0].pattern,matcher[1].pattern,matcher[2].pattern,matcher[3].pattern,matcher[4].pattern,&value)<5) /* value can be missing -> defaults to 1.0 */
 		{
 			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
@@ -296,6 +300,8 @@ int schedule_compile(SCHEDULE *sch)
 	if (strchr(p,'{')==NULL && strchr(p,'}')==NULL)
 	{
 		/* this is single block unnamed schedule */
+		/* remove leading whitespace */
+		while (isspace(*p)) p++;
 		strcpy(blockdef,p);
 		if (schedule_compile_block(sch,"*",blockdef))
 		{
