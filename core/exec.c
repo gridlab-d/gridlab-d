@@ -341,8 +341,8 @@ STATUS t_sync_all(PASSCONFIG pass)
 TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
 	TIMESTAMP t2 = schedule_syncall(t1);
-	TIMESTAMP t = loadshape_syncall(t1); if (t<t2) t2=t;
-	t = enduse_syncall(t1); if (t<t2) t2=t;
+	TIMESTAMP t = loadshape_syncall(t1); if (abs(t)<t2) t2=t;
+	t = enduse_syncall(t1); if (abs(t)<t2) t2=t;
 	/* @todo add other internal syncs here */
 	return t2;
 }
@@ -481,7 +481,7 @@ STATUS exec_start(void)
 
 			/* synchronize all internal schedules */
 			sync.step_to = syncall_internals(sync.step_to);
-			if (sync.step_to<=global_clock)
+			if (abs(sync.step_to)<=global_clock)
 				THROW("internal property sync failure");
 				/* TROUBLESHOOT
 					An internal property such as schedule, enduse or loadshape has failed to synchronize and the simulation aborted.

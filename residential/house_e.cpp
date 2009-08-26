@@ -704,7 +704,6 @@ then Tout will be set to 74 degF, RHout is set to 75% and solar flux will be set
 **/
 int house_e::init_climate()
 {
-	static double tout=74.0, rhout=0.75, solar[8] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 	OBJECT *hdr = OBJECTHDR(this);
 
 	// link to climate data
@@ -719,9 +718,10 @@ int house_e::init_climate()
 			gl_warning("house_e: no climate data found, using static data");
 
 			//default to mock data
-			pTout = &tout;
-			pRhout = &rhout;
-			pSolar = &solar[0];
+			extern double default_outdoor_temperature, default_humidity, default_solar[9];
+			pTout = &default_outdoor_temperature;
+			pRhout = &default_humidity;
+			pSolar = &default_solar[0];
 		}
 		else if (climates->hit_count>1)
 		{
@@ -733,9 +733,10 @@ int house_e::init_climate()
 		if (climates->hit_count==0)
 		{
 			//default to mock data
-			pTout = &tout;
-			pRhout = &rhout;
-			pSolar = &solar[0];
+			extern double default_outdoor_temperature, default_humidity, default_solar[9];
+			pTout = &default_outdoor_temperature;
+			pRhout = &default_humidity;
+			pSolar = &default_solar[0];
 		}
 		else //climate data was found
 		{
