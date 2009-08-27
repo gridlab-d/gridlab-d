@@ -1064,15 +1064,25 @@ void house_e::update_system(double dt)
 		system_rated_power = system_rated_capacity/(cooling_COP * cooling_cop_adj);
 		break;
 	default:
+		// two-speed systems use a little power at when off (vent mode)
 		system_rated_capacity = 0.0;
 		system_rated_power = 0.0;
 	}
 
 	/* calculate the power consumption */
 	// manually add 'total', we should be unshaped
-	// fan consumes only ~5% of total energy when using GAS
-	load.total = load.power = system_rated_power*KWPBTUPH * ((system_mode == SM_HEAT) && (system_type&ST_GAS) ? 0.05 : 1.0);
-	load.heatgain = system_rated_capacity;
+	// central-air fan consumes only ~5% of total energy when using GAS, 2% when ventilating at low power
+	load.current = load.admittance = complex(0,0);
+	if ((system_type&ST_VAR) && (system_mode==SM_OFF))
+	{
+		load.total = load.power = design_heating_capacity*KWPBTUPH*0.02;
+		load.heatgain = design_heating_capacity*0.02;
+	}
+	else
+	{
+		load.total = load.power = system_rated_power*KWPBTUPH * ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? ((system_type&ST_AIR)?0.05:0.00) : 1.0);
+		load.heatgain = system_rated_capacity;
+	}
 }
 
 /**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time
@@ -1214,7 +1224,7 @@ void house_e::update_Tevent()
 		if (dTair<0) // falling
 			Tevent = TheatOn;
 		else if (dTair>0) // rising 
-			Tevent = TcoolOn;
+			Tevent = ( (system_type&ST_AC) ? TcoolOn : 100) ;
 		else
 			Tevent = Tair;
 		break;
@@ -1255,10 +1265,15 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				system_mode = SM_OFF;
 			break;
 		case SM_OFF:
-			if(Tair > TcoolOn - terr/2)
+			if(Tair > TcoolOn - terr/2 && (system_type&ST_AC))
 				system_mode = SM_COOL;
 			else if(Tair < TheatOn - terr/2)
-				system_mode = SM_HEAT;
+			{
+				if (Tair < 20)
+					system_mode = SM_AUX;
+				else
+					system_mode = SM_HEAT;
+			}
 			break;
 	}
 
@@ -1416,7 +1431,7 @@ void house_e::check_controls(void)
 		}
 
 		/* check for cooling equipment sizing problem */
-		else if (system_mode==SM_COOL && Teq>cooling_setpoint)
+		else if (system_mode==SM_COOL && (system_type&ST_AC) && Teq>cooling_setpoint)
 		{
 			gl_warning("house_e:%d (%s) cooling equipement undersized at %s", 
 				obj->id, obj->name?obj->name:"anonymous", gl_strftime(obj->clock));
