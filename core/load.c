@@ -3195,7 +3195,8 @@ static int schedule_name(PARSER, SCHEDULE **sch)
 		ACCEPT;
 		if (((*sch)=schedule_find_byname(name))==NULL)
 		{
-			output_message("%s(%d) schedule '%s' not found", filename, linenum,name);
+			/* this ends up getting called a LOT... */
+			//output_message("%s(%d) schedule '%s' not found", filename, linenum,name);
 			REJECT;
 		}
 	}
