@@ -141,7 +141,7 @@ void handleRequest(int newsockfd)
 				break;
 			}
 			if (object_get_value_by_name(obj,property,buf,sizeof(buf)))
-				output_verbose("got %s.%s=[%s]", name,property,buf);
+          output_debug("set %s.%s=%s", name,property,value);
 			sprintf(output,"%s\n",buf);
 		}
 		else if (strcmp(method,"POST")==0)
@@ -171,6 +171,8 @@ void handleRequest(int newsockfd)
 				output_verbose("set %s.%s=[%s]", name, property, value);
 				if (!object_set_value_by_name(obj,property,value))
 					output_verbose("set failed!");
+          else
+			      output_debug("set %s.%s=%s", name,property,value);
 			}
 			if (object_get_value_by_name(obj,property,buf,sizeof(buf)))
 				output_verbose("got %s.%s=[%s]", name,property,buf);
@@ -190,6 +192,18 @@ void handleRequest(int newsockfd)
 	}
 
 	/* write response */
-	write(newsockfd,output,strlen(output));
+	{	char xml[1024];
+		int i=0;
+		/*********************
+		while(i<1024){
+			if (xml[i]=='\n'){
+				xml[i++]='\0';
+				break;
+			}
+		}
+		*********************/
+		sprintf(xml,"HTTP/1.1 200 OK\nServer: gridlabd\nConnection: close\nContent-type: text/xml\n\n<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<resultset>\n\t<answer>%s\t</answer>\n</resultset>\n", output);
+		write(newsockfd,xml,strlen(xml));
+	}
 	output_verbose("response [%s] sent", output);
 }
