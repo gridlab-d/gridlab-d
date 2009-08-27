@@ -357,7 +357,6 @@ STATUS exec_start(void)
 	threadpool_t threadpool = INVALID_THREADPOOL;
 	struct sync_data sync = {TS_NEVER,0,SUCCESS};
 	TIMESTAMP start_time = global_clock;
-	long abs_step_to;
 	int64 passes = 0, tsteps = 0;
 	time_t started_at = realtime_now();
 	int j;
@@ -483,9 +482,7 @@ STATUS exec_start(void)
 
 			/* synchronize all internal schedules */
 			sync.step_to = syncall_internals(sync.step_to);
-			abs_step_to = abs(sync.step_to);
-			//if (abs(sync.step_to)<=global_clock)
-			if(sync.step_to < TS_MAX && abs(sync.step_to) <= global_clock)
+			if(sync.step_to <= global_clock)
 				THROW("internal property sync failure");
 				/* TROUBLESHOOT
 					An internal property such as schedule, enduse or loadshape has failed to synchronize and the simulation aborted.
