@@ -21,7 +21,7 @@
 #include "module.h"
 #include "timestamp.h"
 
-static FINDTYPE invar_types[] = {FT_ID, FT_SIZE, FT_CLASS, FT_PARENT, FT_RANK, FT_NAME, FT_LAT, FT_LONG, FT_INSVC, FT_OUTSVC, FT_MODULE, FT_GROUPID, 0};
+static FINDTYPE invar_types[] = {FT_ID, FT_SIZE, FT_CLASS, FT_PARENT, FT_RANK, FT_NAME, FT_LAT, FT_LONG, FT_INSVC, FT_OUTSVC, FT_MODULE,  0};
 
 static int compare_int(int64 a, FINDOP op, int64 b)
 {
@@ -252,7 +252,7 @@ static int compare(OBJECT *obj, FINDTYPE ftype, FINDOP op, void *value, char *pr
 	case FT_SIZE: return compare_int((int64)obj->oclass->size,op,(int64)*(int*)value);
 	case FT_CLASS: return compare_string((char*)obj->oclass->name,op,(char*)value);
 	case FT_MODULE: return compare_string((char*)obj->oclass->module->name,op,(char*)value);
-	case FT_GROUPID: return compare_string((char*)obj->groupid,op,(char*)value);
+//	case FT_GROUPID: return compare_string((char*)obj->groupid,op,(char*)value);
 	case FT_RANK: return compare_int((int64)obj->rank,op,(int64)*(int*)value);
 	case FT_CLOCK: return compare_int((int64)obj->clock,op,(int64)*(TIMESTAMP*)value);
 	//case FT_PROPERTY: return compare_property_alt(obj,propname,op,value);

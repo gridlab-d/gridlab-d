@@ -3491,14 +3491,14 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 						ACCEPT;
 					}
 				}
-				else if(strcmp(propname,"groupid")==0)
-				{
-					if(convert_to_char32(propval, obj->groupid, NULL) == 0){
-						REJECT;
-					} else {
-						ACCEPT;
-					}
-				}
+//				else if(strcmp(propname,"groupid")==0)
+//				{
+//					if(convert_to_char32(propval, obj->groupid, NULL) == 0){
+//						REJECT;
+//					} else {
+//						ACCEPT;
+//					}
+//				}
 
 				else if (strcmp(propname,"library")==0)
 				{
