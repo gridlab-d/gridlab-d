@@ -100,7 +100,7 @@ char *strlwr(char *s)
 }
 #endif
 
-// list of enduses that are implicitly active
+// list of enduses that are implicitly active (-1 is all)
 set house_e::implicit_enduses_active = 0xffffffff;
 
 //////////////////////////////////////////////////////////////////////////
@@ -574,6 +574,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "heating_design_temperature[degF]", PADDR(heating_design_temperature),PT_DESCRIPTION,"system heating design temperature",
 			PT_double, "design_peak_solar[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design solar load",
 			PT_double, "design_internal_gains[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design internal gains",
+			PT_double, "air_heat_fraction[%]", PADDR(air_heat_fraction), PT_DESCRIPTION, "fraction of heat gain that goes to air (as opposed to mass)",
 
 			PT_double,"heating_COP[pu]",PADDR(heating_COP),PT_DESCRIPTION,"system heating performance coefficient",
 			PT_double,"cooling_COP[Btu/kWh]",PADDR(cooling_COP),PT_DESCRIPTION,"system cooling performance coefficient",
@@ -962,43 +963,37 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 
 void house_e::update_model(double dt)
 {
-		/* local aliases */
-	const double &Tout = (*(pTout));
-	const double &Ua = (envelope_UA);
-	const double &Cm = (house_content_thermal_mass);
-	const double &Um = (house_content_heat_transfer_coeff);
-	const double &Qi = (total.heatgain - load.heatgain);
-	double &Qs = (solar_load);
-	double &Qh = (load.heatgain);
-	double &Ti = (Tair);
-	double &dTi = (dTair);
-	double &Tm = (Tmaterials);
-	SYSTEMMODE &mode = (system_mode);
-	const double tdead = thermostat_deadband/2;
-	const double TheatOff = heating_setpoint + tdead;
-	const double TheatOn = heating_setpoint - tdead;
-	const double TcoolOff = cooling_setpoint - tdead;
-	const double TcoolOn = cooling_setpoint + tdead;
-	const double Ca = air_heat_capacity * air_density * ceiling_height * floor_area;
+	/* local aliases */
+	#define Tout (*(pTout))
+	#define Ua (envelope_UA)
+	#define Cm (house_content_thermal_mass)
+	#define Um (house_content_heat_transfer_coeff)
+	#define Qs (solar_load)
+	#define Qh (load.heatgain)
+	#define Ti (Tair)
+	#define dTi (dTair)
+	#define Tm (Tmaterials)
 
 	/* compute solar gains */
 	Qs = 0; 
 	int i;
 	for (i=0; i<9; i++)
-		Qs += (gross_wall_area*window_wall_ratio/8.0) * glazing_shgc * pSolar[i];
-	Qs *= 3.412;
+		Qs += pSolar[i];
+	Qs *= 3.412 * (gross_wall_area*window_wall_ratio) / 8.0 * glazing_shgc;
 	if (Qs<0)
-		throw "solar gain is negative?!?";
+		throw "solar gain is negative";
 
+	/* compute thermal capacity of indoor air */
+	const double Ca = (air_heat_capacity * air_density * ceiling_height * floor_area);
 	if (Ca<=0)
 		throw "Ca must be positive";
 	if (Cm<=0)
 		throw "Cm must be positive";
 
 	// split gains to air and mass
-	double f_air = 1.0; /* adjust the fraction of gains that goes to air vs mass */
-	double Qa = Qh + f_air*(Qi + Qs);
-	double Qm = (1-f_air)*(Qi + Qs);
+	const double Qi = total.heatgain - load.heatgain;
+	const double Qa = Qh + air_heat_fraction*(Qi + Qs);
+	const double Qm = (1-air_heat_fraction)*(Qi + Qs);
 
 	c1 = -(Ua + Um)/Ca;
 	c2 = Um/Ca;
@@ -1012,9 +1007,9 @@ void house_e::update_model(double dt)
 	c5 = -c4;
 	if (c2<=0)
 		throw "Um must be positive";
-	double p2 = -(c5+c1)/c2;
-	double p3 = c1*c5/c2 - c4;
-	double p4 = -c3*c5/c2 + c6;
+	const double p2 = -(c5+c1)/c2;
+	const double p3 = c1*c5/c2 - c4;
+	const double p4 = -c3*c5/c2 + c6;
 	if (p3==0)
 		throw "Teq is not finite";
 	Teq = p4/p3;
@@ -1035,7 +1030,6 @@ void house_e::update_model(double dt)
 
 	/* compute next initial condition */
 	dTi = c2*Tm + c1*Ti - (c1+c2)*Tout + c7;
-	//k1 = (r1*Ti - r2*Teq - dTi)/(r2-r1);
 	k1 = (r2*Ti - r2*Teq - dTi)/(r2-r1);
 	k2 = (dTi - r1*k1)/r2;
 }
@@ -1049,7 +1043,8 @@ This synchronization function updates the HVAC equipment load and power draw.
 
 void house_e::update_system(double dt)
 {
-	// compute system performance
+	// compute system performance 
+	/// @todo document COP calculation constants
 	const double heating_cop_adj = (-0.0063*(*pTout)+1.5984);
 	const double cooling_cop_adj = -(-0.0108*(*pTout)+2.0389);
 	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
@@ -1057,9 +1052,12 @@ void house_e::update_system(double dt)
 
 	switch (system_mode) {
 	case SM_HEAT:
-	case SM_AUX:
 		system_rated_capacity = design_heating_capacity*heating_capacity_adj;
 		system_rated_power = system_rated_capacity/(heating_COP * heating_cop_adj);
+		break;
+	case SM_AUX:
+		system_rated_capacity = design_heating_capacity;
+		system_rated_power = system_rated_capacity;
 		break;
 	case SM_COOL:
 		system_rated_capacity = design_cooling_capacity*cooling_capacity_adj;
@@ -1072,7 +1070,8 @@ void house_e::update_system(double dt)
 
 	/* calculate the power consumption */
 	// manually add 'total', we should be unshaped
-	load.total = load.power = system_rated_power*KWPBTUPH * ((system_mode == SM_HEAT) && (system_type&ST_GAS) ? 0.01 : 1.0);
+	// fan consumes only ~5% of total energy when using GAS
+	load.total = load.power = system_rated_power*KWPBTUPH * ((system_mode == SM_HEAT) && (system_type&ST_GAS) ? 0.05 : 1.0);
 	load.heatgain = system_rated_capacity;
 }
 
@@ -1080,10 +1079,8 @@ void house_e::update_system(double dt)
 **/
 TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	const double dt = ((double)(t1-t0)*TS_SECOND)/3600;
 	OBJECT *obj = OBJECTHDR(this);
-	const double dt1 = (double)(t1-t0)*TS_SECOND;
-	double nHours = dt1 / 3600;
+	const double dt = (double)((t1-t0)*TS_SECOND)/3600;
 	CIRCUIT *c;
 
 	/* advance the thermal state of the building */
@@ -1121,8 +1118,6 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER, t;
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
 
-	double nHours = dt1 / 3600;
-
 	/* update HVAC power before panel sync */
 	if (t0==0 || t1>t0){
 		outside_temperature = *pTout;
@@ -1132,28 +1127,36 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	t2 = sync_enduses(t0, t1);
+#ifdef _DEBUG
+	gl_debug("house %s (%d) sync_enduses event at '%s'", obj->name, obj->id, gl_strftime(t2));
+#endif
 
 	// sync circuit panel
-	t = sync_panel(t0,t1); if (t < t2)	t2 = t;
-
+	t = sync_panel(t0,t1); 
+	if (t < t2) {
+		t2 = t;
+#ifdef _DEBUG
+		gl_debug("house %s (%d) sync_panel event '%s'", obj->name, obj->id, gl_strftime(t2));
+#endif
+	}
 
 	if (t0==0 || t1>t0)
-	{
+
 		// update the model of house
 		update_model(dt1);
 
-		// provide warning of control problems
-		check_controls();
-
-	}
+	// determine temperature of next event
+	update_Tevent();
 
 	/* solve for the time to the next event */
-	double dt2;
-	dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+	double dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
 
 	// if no solution is found or it has already occurred
 	if (isnan(dt2) || !isfinite(dt2) || dt2<0)
 	{
+#ifdef _DEBUG
+	gl_debug("house %s (%d) time to next event is indeterminate", obj->name, obj->id);
+#endif
 		// try again in 1 second if there is a solution in the future
 		if (sgn(dTair)==sgn(Tair-Tevent)) 
 		{
@@ -1166,16 +1169,56 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{	
 		// need to do a second pass to get next state
 		t = t1+1; if (t<t2) t2 = t;
+#ifdef _DEBUG
+	gl_debug("house %s (%d) time to next event is less than time resolution", obj->name, obj->id);
+#endif
 	}	
 	else
 	{
 		// next event is found
 		t = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); if (t<t2) t2 = t;
+#ifdef _DEBUG
+	gl_debug("house %s (%d) time to next event is %.2f hrs", obj->name, obj->id, dt2/3600);
+#endif
 	}
 
-	//return TS_NEVER; // matt's-pissed override
-	return -t2;
+#ifdef _DEBUG
+	gl_debug("house %s (%d) next event at '%s'", obj->name, obj->id, gl_strftime(t2));
+#endif
+	return t2;
 	
+}
+
+void house_e::update_Tevent()
+{
+	OBJECT *obj = OBJECTHDR(this);
+	double tdead = thermostat_deadband/2;
+	double terr = dTair/3600; // this is the time-error of 1 second uncertainty
+	const double TcoolOn = cooling_setpoint+tdead;
+	const double TcoolOff = cooling_setpoint-tdead;
+	const double TheatOn = heating_setpoint-tdead;
+	const double TheatOff = heating_setpoint+tdead;
+
+	// Tevent is based on temperature bracket and assumes state is correct
+	switch(system_mode) {
+
+	case SM_HEAT: case SM_AUX: // temperature rising actively
+		Tevent = TheatOff;
+		break;
+
+	case SM_COOL: // temperature falling actively
+		Tevent = TcoolOff;
+		break;
+
+	default: // temperature floating passively
+		if (dTair<0) // falling
+			Tevent = TheatOn;
+		else if (dTair>0) // rising 
+			Tevent = TcoolOn;
+		else
+			Tevent = Tair;
+		break;
+	}
 }
 
 /** The PLC control code for house_e thermostat.  The heat or cool mode is based
@@ -1191,42 +1234,31 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	const double TheatOff = heating_setpoint+tdead;
 
 	// check for deadband overlap
-	if (TcoolOff<TheatOff)
+	if (cooling_setpoint-tdead<heating_setpoint+tdead)
 	{
-		gl_error("house_e: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", TcoolOff,TheatOff);
+		gl_error("house_e: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", cooling_setpoint-tdead, heating_setpoint+tdead);
 		return TS_INVALID;
 	}
 
-	if(system_mode == SM_UNKNOWN || system_mode == SM_AUX)
+	if(system_mode == SM_UNKNOWN)
 		system_mode = SM_OFF;
 	
-	// change control mode if appropriate
+	// change control mode if necessary
 	switch(system_mode){
 		case SM_HEAT:
-			if(Tair < TcoolOff-terr/2){
+		case SM_AUX:
+			if(Tair > TheatOff - terr/2)
 				system_mode = SM_OFF;
-				Tevent = ( dTair<0 ? TheatOn : TcoolOn );
-			}
 			break;
 		case SM_COOL:
-			if(Tair < TcoolOff-terr/2){
+			if(Tair < TcoolOff - terr/2)
 				system_mode = SM_OFF;
-				Tevent = ( dTair<0 ? TheatOn : TcoolOn );
-			}
-			break;
-		case SM_AUX:
-			system_mode = SM_OFF;
 			break;
 		case SM_OFF:
-			if(Tair > TcoolOn + terr/2){
+			if(Tair > TcoolOn - terr/2)
 				system_mode = SM_COOL;
-				Tevent = TcoolOff;
-			} else if(Tair < TheatOn - terr/2){
+			else if(Tair < TheatOn - terr/2)
 				system_mode = SM_HEAT;
-				Tevent = TheatOff;
-			} else {
-				Tevent = ( dTair<0 ? TheatOn : TcoolOn );;
-			}
 			break;
 	}
 
@@ -1361,48 +1393,40 @@ void house_e::check_controls(void)
 {
 	if (warn_control)
 	{
+		OBJECT *obj = OBJECTHDR(this);
 		/* check for air temperature excursion */
 		if (Tair<warn_low_temp || Tair>warn_high_temp)
 		{
-			OBJECT *obj = OBJECTHDR(this);
-			DATETIME dt0;
-			gl_localtime(obj->clock,&dt0);
-//			char ts0[64];
-			/*gl_warning("house_e:%d (%s) air temperature excursion (%.1f degF) at %s", 
-				obj->id, obj->name?obj->name:"anonymous", Tair, gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");*/
+			gl_warning("house_e:%d (%s) air temperature excursion (%.1f degF) at %s", 
+				obj->id, obj->name?obj->name:"anonymous", Tair, gl_strftime(obj->clock));
 		}
 
 		/* check for mass temperature excursion */
 		if (Tmaterials<warn_low_temp || Tmaterials>warn_high_temp)
 		{
-			OBJECT *obj = OBJECTHDR(this);
-			DATETIME dt0;
-			gl_localtime(obj->clock,&dt0);
-//			char ts0[64];
-			/*gl_warning("house_e:%d (%s) mass temperature excursion (%.1f degF) at %s", 
-				obj->id, obj->name?obj->name:"anonymous", Tmaterials, gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");*/
+			gl_warning("house_e:%d (%s) mass temperature excursion (%.1f degF) at %s", 
+				obj->id, obj->name?obj->name:"anonymous", Tmaterials, gl_strftime(obj->clock));
 		}
 
 		/* check for heating equipment sizing problem */
 		if ((system_mode==SM_HEAT || system_mode==SM_AUX) && Teq<heating_setpoint)
 		{
-			OBJECT *obj = OBJECTHDR(this);
-			DATETIME dt0;
-			gl_localtime(obj->clock,&dt0);
-			char ts0[64];
 			gl_warning("house_e:%d (%s) heating equipement undersized at %s", 
-				obj->id, obj->name?obj->name:"anonymous", gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");
+				obj->id, obj->name?obj->name:"anonymous", gl_strftime(obj->clock));
 		}
 
 		/* check for cooling equipment sizing problem */
 		else if (system_mode==SM_COOL && Teq>cooling_setpoint)
 		{
-			OBJECT *obj = OBJECTHDR(this);
-			DATETIME dt0;
-			gl_localtime(obj->clock,&dt0);
-			char ts0[64];
 			gl_warning("house_e:%d (%s) cooling equipement undersized at %s", 
-				obj->id, obj->name?obj->name:"anonymous", gl_strtime(&dt0,ts0,sizeof(ts0))?ts0:"UNKNOWN");
+				obj->id, obj->name?obj->name:"anonymous", gl_strftime(obj->clock));
+		}
+
+		/* check for invalid event temperature */
+		if ((dTair>0 && Tevent<Tair) || (dTair<0 && Tevent>Tair))
+		{
+			gl_warning("house_e:%d (%s) possible control problem (system_mode %s) -- Tevent-Tair mismatch with dTair (Tevent=%.1f, Tair=%.1f, dTair=%.1f) at %s", 
+				obj->id, obj->name?obj->name:"anonymous", gl_getvalue(obj,"system_mode"), Tevent, Tair, dTair, gl_strftime(obj->clock));
 		}
 	}
 }

@@ -18,7 +18,7 @@ object house {
 	heating_setpoint -3*test_schedule + 70;
 	object recorder {
 		property heating_setpoint,air_temperature,system_mode,cooling_setpoint;
-		interval 60;
+		interval 0;
 		file air_temperature.csv;
 	};
 }

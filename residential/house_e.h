@@ -76,6 +76,7 @@ public:
 	double air_density;				///< air density
 	double air_heat_capacity;		///< heat capacity of air
 	double house_content_thermal_mass; ///< house thermal mass (BTU/F)
+	double air_heat_fraction;		///< fraction of gains that go to air
 
 	// system design variables
 	double thermostat_deadband;		///< thermostat deadband (degF)
@@ -153,6 +154,7 @@ public:
 	void update_system(double dt=0);
 	void update_model(double dt=0);
 	void check_controls(void);
+	void update_Tevent(void);
 
 	int init(OBJECT *parent);
 	int init_climate(void);
