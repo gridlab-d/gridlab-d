@@ -565,7 +565,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 #ifdef _DEBUG
 			{
 				char buf[64];
-				output_debug("value = %5.3f, q = %5.3f, r = %+5.3f, %s", ls->schedule->value, ls->q, ls->r, convert_from_timestamp(ls->t2,buf,sizeof(buf))?buf:"(error)");
+				output_debug("schedule %s: value = %5.3f, q = %5.3f, r = %+5.3f, t2 = '%s'", ls->schedule->name, ls->schedule->value, ls->q, ls->r, convert_from_timestamp(ls->t2,buf,sizeof(buf))?buf:"(error)");
 			}
 #endif
 			/* choose sooner of schedule change or state change */
