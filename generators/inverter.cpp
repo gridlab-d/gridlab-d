@@ -43,6 +43,10 @@ inverter::inverter(MODULE *module)
 				PT_KEYWORD,"TWELVE_PULSE",TWELVE_PULSE,
 				PT_KEYWORD,"PWM",PWM,
 
+			PT_enumeration,"generator_status",PADDR(gen_status_v),
+				PT_KEYWORD,"OFFLINE",OFFLINE,
+				PT_KEYWORD,"ONLINE",ONLINE,	
+
 			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
 				PT_KEYWORD,"UNKNOWN",UNKNOWN,
 				PT_KEYWORD,"CONSTANT_V",CONSTANT_V,

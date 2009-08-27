@@ -26,6 +26,7 @@ protected:
 	/* TODO: put unpublished but inherited variables */
 public:
 	enum INVERTER_TYPE {TWO_PULSE=0, SIX_PULSE=1, TWELVE_PULSE=2, PWM=3}inverter_type_v;
+	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2} gen_status_v;
 	//INVERTER_TYPE inverter_type_choice;
 	complex V_In; // V_in (DC)
 	complex I_In; // I_in (DC)
