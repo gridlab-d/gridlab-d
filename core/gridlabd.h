@@ -541,6 +541,16 @@ inline int gl_get_value_by_name(OBJECT *obj,
 #define gl_get_value_by_name (*callback->properties.get_value_by_name)
 #endif
 
+#ifdef __cplusplus
+inline char *gl_getvalue(OBJECT *obj,
+						 PROPERTYNAME name)
+{
+	static char buffer[1024];
+	memset(buffer,0,sizeof(buffer));
+	return gl_get_value_by_name(obj,name,buffer,sizeof(buffer))>=0 ? buffer : NULL;
+}
+#endif
+
 /** Set the value of a property in an object
 	@see object_set_value_by_name()
  **/
@@ -905,6 +915,16 @@ inline double gl_get_loadshape_value(loadshape *shape)
 		return 0;
 }
 
+inline char *gl_strftime(DATETIME *dt, char *buffer, int size) { return callback->time.strdatetime(dt,buffer,size)?buffer:NULL;};
+inline char *gl_strftime(TIMESTAMP ts)
+{
+	static char buffer[64];
+	strcpy(buffer,"(invalid time)");
+	DATETIME dt;
+	gl_localtime(ts,&dt);
+	gl_strftime(&dt,buffer,sizeof(buffer));
+	return buffer;
+}
 #endif //__cplusplus
 
 /** @} **/
