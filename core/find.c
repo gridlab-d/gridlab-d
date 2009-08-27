@@ -21,7 +21,7 @@
 #include "module.h"
 #include "timestamp.h"
 
-static FINDTYPE invar_types[] = {FT_ID, FT_SIZE, FT_CLASS, FT_PARENT, FT_RANK, FT_NAME, FT_LAT, FT_LONG, FT_INSVC, FT_OUTSVC, FT_MODULE, 0};
+static FINDTYPE invar_types[] = {FT_ID, FT_SIZE, FT_CLASS, FT_PARENT, FT_RANK, FT_NAME, FT_LAT, FT_LONG, FT_INSVC, FT_OUTSVC, FT_MODULE, FT_GROUPID, 0};
 
 static int compare_int(int64 a, FINDOP op, int64 b)
 {
@@ -252,6 +252,7 @@ static int compare(OBJECT *obj, FINDTYPE ftype, FINDOP op, void *value, char *pr
 	case FT_SIZE: return compare_int((int64)obj->oclass->size,op,(int64)*(int*)value);
 	case FT_CLASS: return compare_string((char*)obj->oclass->name,op,(char*)value);
 	case FT_MODULE: return compare_string((char*)obj->oclass->module->name,op,(char*)value);
+	case FT_GROUPID: return compare_string((char*)obj->groupid,op,(char*)value);
 	case FT_RANK: return compare_int((int64)obj->rank,op,(int64)*(int*)value);
 	case FT_CLOCK: return compare_int((int64)obj->clock,op,(int64)*(TIMESTAMP*)value);
 	//case FT_PROPERTY: return compare_property_alt(obj,propname,op,value);
@@ -449,6 +450,7 @@ FINDLIST *find_objects(FINDLIST *start, ...)
 			case FT_NAME:
 			case FT_PROPERTY:
 			case FT_MODULE:
+			case FT_GROUPID:
 				sval = va_arg(ptr,char*);
 				value = sval;
 				break;
@@ -1029,6 +1031,16 @@ static int expression(PARSER, FINDPGM **pgm)
 				ACCEPT;	DONE;
 			}
 		}
+		if (strcmp(pname,"groupid")==0)
+		{
+			FINDVALUE v;
+			strcpy(v.string, pvalue);
+			//printf("find(): v.string=\"%s\", pvalue=\"%s\"\n", v.string, pvalue);
+			add_pgm(pgm, comparemap[op].string, OFFSET(name), v, NULL, findlist_del);
+			(*pgm)->constflags |= CF_NAME;
+			ACCEPT;
+			DONE;
+		}
 		if (strcmp(pname,"module")==0)
 		{
 			FINDVALUE v;
@@ -1070,7 +1082,6 @@ static int expression(PARSER, FINDPGM **pgm)
 			/* Accept implicitly.  If it's bad, it's bad. -MH */
 			FINDVALUE v;
 			strcpy(v.string, pvalue);
-			printf("find(): v.string=\"%s\", pvalue=\"%s\"\n", v.string, pvalue);
 			add_pgm(pgm, comparemap[op].string, OFFSET(name), v, NULL, findlist_del);
 			(*pgm)->constflags |= CF_NAME;
 			ACCEPT;

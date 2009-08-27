@@ -18,7 +18,7 @@ struct s_object_list;
 /* the values are important because they're used to index lookups in find.c */
 typedef enum {EQ=0,LT=1,GT=2,NE=3,LE=4,GE=5,NOT=6,BETWEEN=7,BEFORE=8,AFTER=9,SAME=10,DIFF=11,MATCH=12,LIKE=13,UNLIKE=14,FINDOP_END} FINDOP;
 typedef enum {OR=-2,AND=-1,FT_END=0, FT_ID=1, FT_SIZE=2, FT_CLASS=3, FT_PARENT=4, FT_RANK=5, FT_CLOCK=6, FT_PROPERTY=7, FT_NAME=8,
-	FT_LAT=9, FT_LONG=10, FT_INSVC=11, FT_OUTSVC=12, FT_FLAGS=13, FT_MODULE=14} FINDTYPE;
+	FT_LAT=9, FT_LONG=10, FT_INSVC=11, FT_OUTSVC=12, FT_FLAGS=13, FT_MODULE=14, FT_GROUPID=15} FINDTYPE;
 
 typedef struct s_findlist {
 	unsigned int result_size;
@@ -51,7 +51,7 @@ typedef unsigned int PGMCONSTFLAGS; /**< find program constant criteria flags */
 #define CF_OUTSVC	0x0800 /**< out-service criteria is invariant */
 #define CF_FLAGS	0x1000 /**< flags criteria is variant */
 #define CF_MODULE	0x2000 /**< module criteria is invariant */
-// 0x4000
+#define CF_GROUPID	0x4000 /**< groupid criteria is invariant */
 #define CF_CONSTANT 0x8000 /**< entire criteria is invariant */
 
 typedef struct s_findpgm {
