@@ -34,6 +34,8 @@ typedef struct s_tmy {
 	double dhr;
 	double solar[CP_LAST]; // W/sf
 	double windspeed;
+	double rainfall; // in/h
+	double snowdepth; // in
 } TMYDATA;
 
 /**
@@ -106,7 +108,7 @@ public:
 	 * @param hour - hour of the observation
 	 * @param wind Wind speed (optional)
 	 */
-	int read_data(double *dnr, double *dhr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind=0);
+	int read_data(double *dnr, double *dhr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind=0,double *precip=0, double *snowDepth=0);
 
 	/** obtain records **/
 
@@ -129,6 +131,8 @@ public:
 	double wind_speed; ///< wind speed (m/s)
 	double wind_dir; ///< wind direction (0-360)
 	double wind_gust; ///< wind gusts (m/s)
+	double rainfall; // in/h
+	double snowdepth; // in
 	struct {
 		double low;
 		double high;

@@ -98,14 +98,14 @@ int tmy2_reader::header_info(char* city, char* state, int* degrees, int* minutes
 	@param hour hour of day
 */
 
-int tmy2_reader::read_data(double *dnr, double *dhr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind){
-	int tmp_dnr, tmp_dhr, tmp_tdb, tmp_rh, tmp_ws;
+int tmy2_reader::read_data(double *dnr, double *dhr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind, double *precip, double *snowDepth){
+	int tmp_dnr, tmp_dhr, tmp_tdb, tmp_rh, tmp_ws, tmp_precip, tmp_sf;
 	//sscanf(buf, "%*2s%2d%2d%2d%*14s%4d%*2s%4d%*40s%4d%8*s%3d%*s",month,day,hour,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh);
 	int tmh, tday, thr;
 	if(month == NULL) month = &tmh;
 	if(day == NULL) day = &tday;
 	if(hour == NULL) hour = &thr;
-	sscanf(buf, "%*2s%2d%2d%2d%*14s%4d%*2s%4d%*34s%4d%8*s%3d%*13s%3d",month,day,hour,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh, &tmp_ws);
+	sscanf(buf, "%*2s%2d%2d%2d%*14s%4d%*2s%4d%*34s%4d%8*s%3d%*13s%3d%*25s%3d%*7s%3d",month,day,hour,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh, &tmp_ws,&tmp_precip,&tmp_sf);
 				/* 3__5__7__9___23_27__29_33___67_71_79__82___95_98_ */
 	if(dnr) *dnr = tmp_dnr;
 	if(dhr) *dhr = tmp_dhr;
@@ -118,6 +118,13 @@ int tmy2_reader::read_data(double *dnr, double *dhr, double *tdb, double *rh, in
 	/* *tdb = ((double)tmp_tdb)/10.0 * 9.0 / 5.0 + 32.0; */
 	if(rh) *rh = ((double)tmp_rh)/100.0;
 	if(wind) *wind = tmp_ws/10.0;
+	
+	// COnvert precip in mm to in/h
+	if(precip) *precip = ((double)tmp_precip) * 0.03937;
+	
+	//convert snowfall in cm to in
+	if(snowDepth) *snowDepth =  ((double)tmp_sf) * 0.3937;
+	
 	return 1;
 }
 
@@ -178,6 +185,8 @@ climate::climate(MODULE *module)
 			PT_double,"record.low[degF]", PADDR(record.low),
 			PT_double,"record.high[degF]", PADDR(record.high),
 			PT_double,"record.solar[W/sf]", PADDR(record.solar),
+			PT_double,"rainfall[in/h]",PADDR(rainfall),
+			PT_double,"snowdepth[in]",PADDR(snowdepth),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(climate));
 		strcpy(city,"");
@@ -185,6 +194,8 @@ climate::climate(MODULE *module)
 		temperature = 59.0;
 		temperature_raw = 15.0;
 		humidity = 0.75;
+		rainfall = 0.0;
+		snowdepth = 0.0;
 		//solar_flux = malloc(8 * sizeof(double));
 		solar_flux[0] = solar_flux[1] = solar_flux[2] = solar_flux[3] = solar_flux[4] = solar_flux[5] = solar_flux[6] = solar_flux[7] = solar_flux[8] = 0.0; // W/sf normal
 		//solar_flux_S = solar_flux_SE = solar_flux_SW = solar_flux_E = solar_flux_W = solar_flux_NE = solar_flux_NW = solar_flux_N = 0.0; // W/sf normal
@@ -227,7 +238,7 @@ int climate::init(OBJECT *parent)
 	}
 
 	int month,day, hour;
-	double dnr,dhr, wspeed;
+	double dnr,dhr, wspeed,precip,snowdepth;
 	//char cty[50];
 	//char st[3];
 	int lat_deg,lat_min,long_deg,long_min;
@@ -240,7 +251,7 @@ int climate::init(OBJECT *parent)
 	while (line<8760 && file.next())
 	{
 		
-		file.read_data(&dnr,&dhr,&temperature,&humidity,&month,&day,&hour,&wspeed);
+		file.read_data(&dnr,&dhr,&temperature,&humidity,&month,&day,&hour,&wspeed,&precip,&snowdepth);
 		int doy = sa->day_of_yr(month,day);
 		int hoy = (doy - 1) * 24 + (hour-1); 
 		if (hoy>=0 && hoy<8760){
@@ -254,6 +265,8 @@ int climate::init(OBJECT *parent)
 			tmy[hoy].rh = humidity;
 			tmy[hoy].dnr = dnr;
 			tmy[hoy].dhr = dhr;
+			tmy[hoy].rainfall = precip;
+			tmy[hoy].snowdepth = snowdepth;
 			// calculate the solar radiation
 			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(long_degrees));
 			double sol_rad = 0.0; 
@@ -304,6 +317,8 @@ TIMESTAMP climate::sync(TIMESTAMP t0)
 		solar_direct = tmy[hoy].dnr;
 		solar_diffuse = tmy[hoy].dnr;
 		this->wind_speed = tmy[hoy].windspeed;
+		this->rainfall = tmy[hoy].rainfall;
+		this->snowdepth = tmy[hoy].snowdepth;
 		
 		if(memcmp(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double)))
 			memcpy(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double));
