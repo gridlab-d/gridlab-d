@@ -137,18 +137,19 @@ void triplex_line::recalc(void)
 	}
 	else if (solver_method==SM_NR)
 	{
-		complex tempdet = (zp11 * zp22 - zp12 * zp12) * zp33 - zp11 * zp23 * zp23 
-						+ complex(2,0) * zp12 * zp13 * zp23 - zp13 * zp13 * zp22;
+		//Inverted
+		complex tempval = (-zp11*zp33*zp22+zp11*zp23*zp23+zp13*zp13*zp22+zp12*zp12*zp33-complex(2.0,0)*zp12*zp13*zp23);
 
-		zs[0][0] = (zp22 * zp33 - zp23 * zp23)/tempdet;
-		zs[0][1] = (zp12 * zp33 - zp13 * zp23)/tempdet;
-		zs[1][0] = (zp12 * zp33 - zp13 * zp23)/tempdet;
-		zs[1][1] = (zp11 * zp33 - zp13 * zp13)/tempdet;
-		zs[0][2] = complex(1e-8,1e-8);
-		zs[1][2] = complex(1e-8,1e-8);
-		zs[2][2] = complex(1e-8,1e-8);
-		zs[2][1] = complex(1e-8,1e-8);
-		zs[2][0] = complex(1e-8,1e-8);
+		zs[0][0] = -(zp22*zp33-zp23*zp23)/tempval;
+		zs[0][1] = (-zp12*zp33+zp13*zp23)/tempval;
+		zs[1][0] = -(-zp12*zp33+zp13*zp23)/tempval;
+		zs[1][1] = -(-zp11*zp33+zp13*zp13)/tempval;
+
+		zs[0][2] = 0.0;
+		zs[1][2] = 0.0;
+		zs[2][2] = 0.0;
+		zs[2][1] = 0.0;
+		zs[2][0] = 0.0;
 	}
 	else
 	{

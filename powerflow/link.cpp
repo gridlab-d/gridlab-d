@@ -446,6 +446,16 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				//Populate phases property
 				NR_branchdata[NR_curr_branch].phases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 
+				//If we're a SPCT transformer, add in the "special" phase flag for our to node
+				if (SpecialLnk==SPLITPHASE)
+				{
+					//Set the branch phases
+					NR_branchdata[NR_curr_branch].phases |= 0x20;
+
+					//Set the To node phases
+					NR_busdata[tnode->NR_node_reference].phases |= 0x20;
+				}
+
 				//Populate to/from indices
 				NR_branchdata[NR_curr_branch].from = fnode->NR_node_reference;
 				NR_branchdata[NR_curr_branch].to = tnode->NR_node_reference;
@@ -584,7 +594,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				{
 					GL_THROW("Not done yet");
 				}
-				else if (SpecialLnk==SPLITPHASE)	//Split phase - non working
+				else if (SpecialLnk==SPLITPHASE)	//Split phase
 				{
 					//Yto - same for all
 					YSto[0] = b_mat[0][0];

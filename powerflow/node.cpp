@@ -439,7 +439,7 @@ int node::init(OBJECT *parent)
 		else
 			throw("Please specify which phase (A,B,or C) the triplex node is attached to.");
 
-		voltage[2] = complex(1e-8,0);	//Ground always assumed it seems
+		voltage[2] = complex(0,0);	//Ground always assumed it seems
 	}
 	else if ((has_phase(PHASE_A|PHASE_B|PHASE_C)) || (has_phase(PHASE_D)))	//three phase or delta
 	{
@@ -1818,6 +1818,10 @@ int *node::NR_populate(void)
 
 		//Populate current
 		NR_busdata[NR_curr_bus].I = &current[0];
+
+		//See if we're a triplex
+		if (has_phase(PHASE_S))
+			NR_busdata[NR_curr_bus].extra_var = current12;	//Stored in a separate variable and this is the easiest way for me to get it
 
 		//Per unit values
 		NR_busdata[NR_curr_bus].kv_base = -1.0;

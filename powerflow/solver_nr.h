@@ -14,6 +14,7 @@ typedef struct  {
 	complex *S;				///< constant power
 	complex *Y;				///< constant admittance (impedance loads)
 	complex *I;				///< constant current
+	complex extra_var;		///< Extra variable - used mainly for current12 in triplex
 	double PL[3];			///< real power component of total bus load
 	double QL[3];			///< reactive power component of total bus load
 	double PG[3];			///< real power generation at generator bus

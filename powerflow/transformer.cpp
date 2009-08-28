@@ -411,7 +411,7 @@ int transformer::init(OBJECT *parent)
 					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
 					za_baselo = (V_base * V_base)/(sa_base*1000);
 					
-					if (config->impedance1.Re() == 0.0 && config->impedance.Im() == 0.0)
+					if (config->impedance1.Re() == 0.0 && config->impedance1.Im() == 0.0)
 					{
 						z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
 						z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
@@ -452,7 +452,7 @@ int transformer::init(OBJECT *parent)
 					za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
 					za_baselo = (V_base * V_base)/(sa_base*1000);
 
-					if (config->impedance1.Re() == 0.0 && config->impedance.Im() == 0.0)
+					if (config->impedance1.Re() == 0.0 && config->impedance1.Im() == 0.0)
 					{
 						z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
 						z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
@@ -508,6 +508,8 @@ int transformer::init(OBJECT *parent)
 			}
 			else if (solver_method==SM_NR)
 			{
+				SpecialLnk = SPLITPHASE;
+
 				V_basehi = config->V_primary;
 
 				if (has_phase(PHASE_A))
@@ -547,7 +549,7 @@ int transformer::init(OBJECT *parent)
 				za_basehi = (V_basehi*V_basehi)/(sa_base*1000);
 				za_baselo = (V_base * V_base)/(sa_base*1000);
 
-				if (config->impedance1.Re() == 0.0 && config->impedance.Im() == 0.0)
+				if (config->impedance1.Re() == 0.0 && config->impedance1.Im() == 0.0)
 				{
 					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
 					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
@@ -560,83 +562,122 @@ int transformer::init(OBJECT *parent)
 					z2 = complex(config->impedance2.Re(),config->impedance2.Im()) * complex(za_baselo,0);
 				}
 
-				zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
+				//Make intermediate variable for the nasty denominators
+				complex indet;
+
+				indet=complex(1.0,0)/(z1*z2*nt*nt + z1*z0 + z2*z0);
 				
-				if (has_phase(PHASE_A))
+				//Store all information into b_mat (pull it out later) - phases handled in link
+				// Yto_00	Yto_01   To_Y00
+				// Yto_10	Yto_11	 To_Y10
+				// From_Y00	From_Y01 YFrom_00
+
+				//Put in a_mat first, it gets scaled
+				//Yto
+				a_mat[0][0] = -z2*nt*nt-z0;
+				a_mat[0][1] = z0;
+				a_mat[1][0] = -z0;
+				a_mat[1][1] = z1*nt*nt+z0;
+				
+				//To_Y
+				a_mat[0][2] = z2*nt;
+				a_mat[1][2] = -z1*nt;
+
+				//From_Y
+				a_mat[2][0] = -z2*nt;
+				a_mat[2][1] = -z1*nt;
+
+				//Yfrom
+				a_mat[2][2] = z1+z2;
+
+				//Form it into b_mat
+				for (char xindex=0; xindex<3; xindex++)
 				{
-					a_mat[0][0] = a_mat[1][0] = (z0 / zc + complex(1,0))*nt;
-					
-					c_mat[0][0] = complex(1,0)*nt / zc;
-				
-					d_mat[0][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
-					d_mat[0][1] = complex(-1,0)/nt;
-
-					A_mat[0][0] = A_mat[1][0] =  (zc / (zc + z0) ) * complex(1,0)/nt;
-
-					gl_warning("Newton-Raphson solution method is not yet supported");
+					for (char yindex=0; yindex<3; yindex++)
+					{
+						b_mat[xindex][yindex]=a_mat[xindex][yindex]*indet;
+						a_mat[xindex][yindex]=0.0;
+					}
 				}
-				else if (has_phase(PHASE_B))
-				{
-					a_mat[0][1] = a_mat[1][1] = (z0 / zc + complex(1,0))*nt;
-				
-					c_mat[1][0] = complex(1,0)*nt / zc;
 
-					d_mat[1][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
-					d_mat[1][1] = complex(-1,0)/nt;
+				////Jason's stuff - commented for now
+				//zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
+				//
+				//if (has_phase(PHASE_A))
+				//{
+				//	a_mat[0][0] = a_mat[1][0] = (z0 / zc + complex(1,0))*nt;
+				//	
+				//	c_mat[0][0] = complex(1,0)*nt / zc;
+				//
+				//	d_mat[0][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
+				//	d_mat[0][1] = complex(-1,0)/nt;
 
-					A_mat[0][1] = A_mat[1][1] = (zc / (zc + z0) ) * complex(1,0)/nt;
+				//	A_mat[0][0] = A_mat[1][0] =  (zc / (zc + z0) ) * complex(1,0)/nt;
 
-					gl_warning("Newton-Raphson solution method is not yet supported");
-				}
-				else if (has_phase(PHASE_C))
-				{
-					a_mat[0][2] = a_mat[1][2] = (z0 / zc + complex(1,0))*nt;
-				
-					c_mat[2][0] = complex(1,0)*nt / zc;
+				//	gl_warning("Newton-Raphson solution method is not yet supported");
+				//}
+				//else if (has_phase(PHASE_B))
+				//{
+				//	a_mat[0][1] = a_mat[1][1] = (z0 / zc + complex(1,0))*nt;
+				//
+				//	c_mat[1][0] = complex(1,0)*nt / zc;
 
-					d_mat[2][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
-					d_mat[2][1] = complex(-1,0)/nt;
+				//	d_mat[1][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
+				//	d_mat[1][1] = complex(-1,0)/nt;
 
-					A_mat[0][2] = A_mat[1][2] = (zc / (zc + z0) ) * complex(1,0)/nt;
+				//	A_mat[0][1] = A_mat[1][1] = (zc / (zc + z0) ) * complex(1,0)/nt;
 
-					gl_warning("Newton-Raphson solution method is not yet supported");
-				}
-				else
-					GL_THROW("Unsupported number of phases specified for center-tap transformer:%d",obj->id);
-					/* TROUBLESHOOT
-					Center-tap/split-tap transformers only support a single phase from the standard three
-					phase configurations.  Please specify phases A, B, or C and phase S to indicate which
-					phase the transformer is attached.  Your transformer configuration will also need to match.
-					*/
-				
-				// b_mat is now the forward admittance matrix -- inverse of 2x2 FBS b_mat
-				// B_mat is now the backward admittance matrix -- inverse of 2x2 FBS B_mat
-				complex tempdet;
+				//	gl_warning("Newton-Raphson solution method is not yet supported");
+				//}
+				//else if (has_phase(PHASE_C))
+				//{
+				//	a_mat[0][2] = a_mat[1][2] = (z0 / zc + complex(1,0))*nt;
+				//
+				//	c_mat[2][0] = complex(1,0)*nt / zc;
 
-				tempdet = ((complex(nt*nt*nt,0) * z1 + complex(nt,0) * z0) * z2 + complex(nt,0) * z0 * z1) * zc * zc
-					    + ((complex(2*nt*nt*nt,0) * z0 * z1 + complex(nt,0) * z0 * z0) * z2 + complex(nt,0) * z0 * z0 * z1) * zc
-						+ complex(nt*nt*nt,0) * z0 * z0 * z1 * z2;
+				//	d_mat[2][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
+				//	d_mat[2][1] = complex(-1,0)/nt;
 
-				b_mat[0][0] = ((complex(nt*nt,0) * z2 + z0) * zc * zc + complex(nt*nt) * z0 * z2 * zc) / tempdet;
-				b_mat[0][1] = (z0 * zc * zc) / tempdet;
-				b_mat[0][2] = complex(0,0);
-				b_mat[1][0] = (z0 * zc * zc) / tempdet;
-				b_mat[1][1] = ((complex(nt*nt,0) * z1 + z0) * zc * zc + complex(nt*nt) * z0 * z1 * zc) / tempdet;
-				b_mat[1][2] = complex(0,0);
-				b_mat[2][0] = complex(0,0);
-				b_mat[2][1] = complex(0,0);
-				b_mat[2][2] = complex(0,0);
-				
-				tempdet = ((complex(nt*nt,0) * z1 + z0) * z2 + z0 * z1) * zc + complex(nt*nt,0) * z0 * z1 * z2;
+				//	A_mat[0][2] = A_mat[1][2] = (zc / (zc + z0) ) * complex(1,0)/nt;
 
-				B_mat[0][0] = ((complex(nt*nt,0) * z2 + z0) * zc + complex(nt*nt,0) * z0 * z2) / tempdet;
-				B_mat[0][1] = -(z0 * zc) / tempdet;
-				B_mat[1][0] = (z0 * zc) / tempdet;
-				B_mat[1][1] = -((complex(nt*nt,0) * z1 + z0) * zc + complex(nt*nt,0) * z0 * z1) / tempdet;
-				B_mat[1][2] = complex(0,0);
-				B_mat[2][0] = complex(0,0);
-				B_mat[2][1] = complex(0,0);
-				B_mat[2][2] = complex(0,0);
+				//	gl_warning("Newton-Raphson solution method is not yet supported");
+				//}
+				//else
+				//	GL_THROW("Unsupported number of phases specified for center-tap transformer:%d",obj->id);
+				//	/* TROUBLESHOOT
+				//	Center-tap/split-tap transformers only support a single phase from the standard three
+				//	phase configurations.  Please specify phases A, B, or C and phase S to indicate which
+				//	phase the transformer is attached.  Your transformer configuration will also need to match.
+				//	*/
+				//
+				//// b_mat is now the forward admittance matrix -- inverse of 2x2 FBS b_mat
+				//// B_mat is now the backward admittance matrix -- inverse of 2x2 FBS B_mat
+				//complex tempdet;
+
+				//tempdet = ((complex(nt*nt*nt,0) * z1 + complex(nt,0) * z0) * z2 + complex(nt,0) * z0 * z1) * zc * zc
+				//	    + ((complex(2*nt*nt*nt,0) * z0 * z1 + complex(nt,0) * z0 * z0) * z2 + complex(nt,0) * z0 * z0 * z1) * zc
+				//		+ complex(nt*nt*nt,0) * z0 * z0 * z1 * z2;
+
+				//b_mat[0][0] = ((complex(nt*nt,0) * z2 + z0) * zc * zc + complex(nt*nt) * z0 * z2 * zc) / tempdet;
+				//b_mat[0][1] = (z0 * zc * zc) / tempdet;
+				//b_mat[0][2] = complex(0,0);
+				//b_mat[1][0] = (z0 * zc * zc) / tempdet;
+				//b_mat[1][1] = ((complex(nt*nt,0) * z1 + z0) * zc * zc + complex(nt*nt) * z0 * z1 * zc) / tempdet;
+				//b_mat[1][2] = complex(0,0);
+				//b_mat[2][0] = complex(0,0);
+				//b_mat[2][1] = complex(0,0);
+				//b_mat[2][2] = complex(0,0);
+				//
+				//tempdet = ((complex(nt*nt,0) * z1 + z0) * z2 + z0 * z1) * zc + complex(nt*nt,0) * z0 * z1 * z2;
+
+				//B_mat[0][0] = ((complex(nt*nt,0) * z2 + z0) * zc + complex(nt*nt,0) * z0 * z2) / tempdet;
+				//B_mat[0][1] = -(z0 * zc) / tempdet;
+				//B_mat[1][0] = (z0 * zc) / tempdet;
+				//B_mat[1][1] = -((complex(nt*nt,0) * z1 + z0) * zc + complex(nt*nt,0) * z0 * z1) / tempdet;
+				//B_mat[1][2] = complex(0,0);
+				//B_mat[2][0] = complex(0,0);
+				//B_mat[2][1] = complex(0,0);
+				//B_mat[2][2] = complex(0,0);
 
 			}	
 			else 
