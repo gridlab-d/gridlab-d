@@ -3194,11 +3194,10 @@ static int schedule_name(PARSER, SCHEDULE **sch)
 	{
 		ACCEPT;
 		if (((*sch)=schedule_find_byname(name))==NULL)
-		{
-			/* this ends up getting called a LOT... */
-			//output_message("%s(%d) schedule '%s' not found", filename, linenum,name);
+
+
+
 			REJECT;
-		}
 	}
 	else
 		REJECT;
@@ -3488,19 +3487,8 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 						REJECT;
 					}
 					else
-					{
 						ACCEPT;
-					}
 				}
-//				else if(strcmp(propname,"groupid")==0)
-//				{
-//					if(convert_to_char32(propval, obj->groupid, NULL) == 0){
-//						REJECT;
-//					} else {
-//						ACCEPT;
-//					}
-//				}
-
 				else if (strcmp(propname,"library")==0)
 				{
 					output_warning("%s(%d): libraries not yet supported", filename, linenum);
