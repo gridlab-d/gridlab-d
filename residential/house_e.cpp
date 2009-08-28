@@ -581,9 +581,13 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"COP_coeff",PADDR(COP_coeff),PT_DESCRIPTION,"effective system performance coefficient",
 			PT_double,"air_temperature[degF]",PADDR(Tair),PT_DESCRIPTION,"indoor air temperature",
 			PT_double,"outdoor_temperature[degF]",PADDR(outside_temperature),PT_DESCRIPTION,"outdoor air temperature",
-			PT_double,"mass_heat_capacity[Btu/F]",PADDR(house_content_thermal_mass),PT_DESCRIPTION,"interior mass heat capacity",
-			PT_double,"mass_heat_coeff[Btu/F.h]",PADDR(house_content_heat_transfer_coeff),PT_DESCRIPTION,"interior mass heat exchange coefficient",
+			PT_double,"mass_heat_capacity[Btu/degF]",PADDR(house_content_thermal_mass),PT_DESCRIPTION,"interior mass heat capacity",
+			PT_double,"mass_heat_coeff[Btu/degF.h]",PADDR(house_content_heat_transfer_coeff),PT_DESCRIPTION,"interior mass heat exchange coefficient",
 			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),PT_DESCRIPTION,"interior mass temperature",
+			PT_double,"air_volume[cf]", PADDR(volume), PT_DESCRIPTION,"air volume",
+			PT_double,"air_mass[lb]",PADDR(air_mass), PT_DESCRIPTION,"air mass",
+			PT_double,"air_heat_capacity[Btu/degF]", PADDR(air_thermal_mass), PT_DESCRIPTION,"air thermal mass",
+			PT_double,"latent_load_fraction[pu]", PADDR(latent_load_fraction), PT_DESCRIPTION,"fractional increase in cooling load due to latent heat",
 			PT_set,"system_type",PADDR(system_type),PT_DESCRIPTION,"heating/cooling system type/options",
 				PT_KEYWORD, "GAS",	(set)ST_GAS,
 				PT_KEYWORD, "AIRCONDITIONING", (set)ST_AC,
@@ -849,7 +853,8 @@ int house_e::init(OBJECT *parent)
 	if (thermostat_deadband==0)	thermostat_deadband = gl_random_triangle(2,3);
 	if(cooling_design_temperature == 0)	cooling_design_temperature = 95.0;
 	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * gl_random_triangle(4,6); // ~5 W/sf estimated
-	if (design_cooling_capacity==0)	design_cooling_capacity = envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (1 - glazing_shgc)) + design_internal_gains;
+	if (latent_load_fraction==0) latent_load_fraction = 0.2;
+	if (design_cooling_capacity==0)	design_cooling_capacity = (1+latent_load_fraction) * envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (1 - glazing_shgc)) + design_internal_gains;
 	if (design_heating_capacity==0)	design_heating_capacity = envelope_UA * (heating_setpoint - heating_design_temperature);
     if (system_mode==SM_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
 
@@ -870,9 +875,9 @@ int house_e::init(OBJECT *parent)
 	}
 
 	//house_e properties for HVAC
-	volume = ceiling_height*floor_area;									// volume of air [cf]
-	air_mass = air_density*volume;							// mass of air [lb]
-	air_thermal_mass = air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]
+	if (volume==0) volume = ceiling_height*floor_area;									// volume of air [cf]
+	if (air_mass==0) air_mass = air_density*volume;							// mass of air [lb]
+	if (air_thermal_mass==0) air_thermal_mass = air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]
 	Tmaterials = Tair;	
 	
 	// connect any implicit loads
@@ -984,7 +989,7 @@ void house_e::update_model(double dt)
 		throw "solar gain is negative";
 
 	/* compute thermal capacity of indoor air */
-	const double Ca = (air_heat_capacity * air_density * ceiling_height * floor_area);
+	#define Ca (air_thermal_mass)
 	if (Ca<=0)
 		throw "Ca must be positive";
 	if (Cm<=0)
@@ -1060,8 +1065,8 @@ void house_e::update_system(double dt)
 		system_rated_power = system_rated_capacity;
 		break;
 	case SM_COOL:
-		system_rated_capacity = design_cooling_capacity*cooling_capacity_adj;
-		system_rated_power = system_rated_capacity/(cooling_COP * cooling_cop_adj);
+		system_rated_capacity = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction);
+		system_rated_power = system_rated_capacity/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction);
 		break;
 	default:
 		// two-speed systems use a little power at when off (vent mode)
