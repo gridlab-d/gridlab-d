@@ -70,27 +70,27 @@ class gld_loadHndl : public DefaultHandler, public XMLFormatTarget {
 public:
 	gld_loadHndl();
     gld_loadHndl(const char* const, const XMLFormatter::UnRepFlags, const bool);
-    ~gld_loadHndl();
+    virtual ~gld_loadHndl();
 
 	bool did_load(){return load_state;}
 
 	void writeChars(const XMLByte* const toWrite);
-	void writeChars(const XMLByte* const toWrite, const unsigned int count, XMLFormatter* const formatter);
+	virtual void writeChars(const XMLByte* const toWrite, const unsigned int count, XMLFormatter* const formatter);
 
-	void setDocumentLocator(const Locator *const locator);
-	void endDocument();
-    void endElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname);
-    void characters(const XMLCh* const chars, const unsigned int length);
-    void ignorableWhitespace(const XMLCh* const chars, const unsigned int length);
-    void processingInstruction(const XMLCh* const target, const XMLCh* const data);
-    void startDocument();
-    void startElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname, const Attributes& attributes);
+	virtual void setDocumentLocator(const Locator *const locator);
+	virtual void endDocument();
+    virtual void endElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname);
+    virtual void characters(const XMLCh* const chars, const unsigned int length);
+    virtual void ignorableWhitespace(const XMLCh* const chars, const unsigned int length);
+    virtual void processingInstruction(const XMLCh* const target, const XMLCh* const data);
+    virtual void startDocument();
+    virtual void startElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname, const Attributes& attributes);
 
-    void warning(const SAXParseException& exc);
-    void error(const SAXParseException& exc);
-    void fatalError(const SAXParseException& exc);
+    virtual void warning(const SAXParseException& exc);
+    virtual void error(const SAXParseException& exc);
+    virtual void fatalError(const SAXParseException& exc);
 
-    void notationDecl(const XMLCh* const name, const XMLCh* const publicId, const XMLCh* const systemId);
+    virtual void notationDecl(const XMLCh* const name, const XMLCh* const publicId, const XMLCh* const systemId);
     /* void unparsedEntityDecl(const XMLCh* const name, const XMLCh* const publicId, const XMLCh* const systemId, const XMLCh* const notationName); */
 
 	char *build_object_vect(int start, int end);
