@@ -1737,7 +1737,8 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
 	OBJECTTREE *item = (OBJECTTREE*)malloc(sizeof(OBJECTTREE));
 
 	if(item == NULL) {
-		throw_exception("object_tree_add(obj='%s:%d', name='%s'): memory allocation failed (%s)", obj->oclass->name, obj->id, name, strerror(errno));
+		output_fatal("object_tree_add(obj='%s:%d', name='%s'): memory allocation failed (%s)", obj->oclass->name, obj->id, name, strerror(errno));
+		return NULL;
 		/* TROUBLESHOOT
 			The memory required to add this object to the object index is not available.  Try freeing up system memory and try again.
 		 */

@@ -751,6 +751,7 @@ typedef struct s_callbacks {
 		OBJECT *(*get_reference)(OBJECT *, char*);
 		char *(*get_unit)(OBJECT *, char *);
 		void *(*get_addr)(OBJECT *, char *);
+		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
 	} properties;
 	struct {
 		struct s_findlist *(*objects)(struct s_findlist *,...);

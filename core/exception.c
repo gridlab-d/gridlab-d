@@ -64,6 +64,10 @@ EXCEPTIONHANDLER *handlers = NULL;
 EXCEPTIONHANDLER *create_exception_handler(void)
 {
 	EXCEPTIONHANDLER *ptr = malloc(sizeof(EXCEPTIONHANDLER));
+	if(ptr == NULL){
+		output_fatal("create_exception_handler(): malloc failure");
+		return NULL;
+	}
 	ptr->next = handlers;
 	ptr->id = (handlers==NULL?0:handlers->id)+1;
 	memset(ptr->msg,0,sizeof(ptr->msg));
@@ -75,7 +79,12 @@ EXCEPTIONHANDLER *create_exception_handler(void)
  **/
 void delete_exception_handler(EXCEPTIONHANDLER *ptr) /**< a pointer to the exception handler */
 {
-	EXCEPTIONHANDLER *target = ptr->next;
+	EXCEPTIONHANDLER *target;
+	if(ptr == NULL){
+		output_fatal("delete_exception_handler(): ending an exception handler block where no exception handler was present");
+		return;
+	}
+	target = ptr->next;
 	while (handlers!=target)
 	{
 		ptr = handlers;

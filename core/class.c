@@ -179,7 +179,8 @@ int property_create(PROPERTY *prop, void *addr)
 	{
 		if (property_type[prop->ptype].create)
 			return property_type[prop->ptype].create(addr);
-		memset(addr,0,(prop->size==0?1:prop->size)*property_type[prop->ptype].size);
+		//memset(addr,0,(prop->size==0?1:prop->size)*property_type[prop->ptype].size);
+		memset(addr,0,property_type[prop->ptype].size);
 		return 1;
 	}
 	else
