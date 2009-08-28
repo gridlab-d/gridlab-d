@@ -58,6 +58,14 @@ public:
 	BID next;			/**< next clearing result */
 	TIMESTAMP clearat;	/**< next clearing time */
 	object network;		/**< comm network to use */
+
+	double avg24;		/**< daily average of price */
+	double std24;		/**< daily stdev of price */
+	double avg168;		/**< weekly average of price */
+	double std168;		/**< weekly stdev of price */
+	double prices[168]; /**< price history */
+	unsigned char count;/**< number of prices in history */
+	
 public:
 	KEY submit(OBJECT *from, double quantity, double price, KEY key=-1);
 	TIMESTAMP nextclear() const;

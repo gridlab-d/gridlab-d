@@ -46,18 +46,22 @@ auction::auction(MODULE *module)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
-			PT_enumeration, "type", PADDR(type),
+			PT_enumeration, "type", PADDR(type), PT_DESCRIPTION, "type of market",
 				PT_KEYWORD, "NONE", AT_NONE,
 				PT_KEYWORD, "DOUBLE", AT_DOUBLE,
-			PT_char32, "unit", PADDR(unit),
-			PT_double, "period[s]", PADDR(period),
-			PT_double, "latency[s]", PADDR(latency),
-			PT_int64, "market_id", PADDR(market_id),
-			PT_double, "last.Q", PADDR(last.quantity), PT_ACCESS, PA_REFERENCE,
-			PT_double, "last.P", PADDR(last.price), PT_ACCESS, PA_REFERENCE,
-			PT_double, "next.Q", PADDR(next.quantity), PT_ACCESS, PA_REFERENCE,
-			PT_double, "next.P", PADDR(next.price),  PT_ACCESS, PA_REFERENCE,
-			PT_object, "network", PADDR(network),
+			PT_char32, "unit", PADDR(unit), PT_DESCRIPTION, "unit of quantity",
+			PT_double, "period[s]", PADDR(period), PT_DESCRIPTION, "interval of time between market clearings",
+			PT_double, "latency[s]", PADDR(latency), PT_DESCRIPTION, "latency between market clearing and delivery", 
+			PT_int64, "market_id", PADDR(market_id), PT_DESCRIPTION, "unique identifier of market clearing",
+			PT_double, "last.Q", PADDR(last.quantity), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "last cleared quantity", 
+			PT_double, "last.P", PADDR(last.price), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "last cleared price", 
+			PT_double, "next.Q", PADDR(next.quantity), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "next cleared quantity", 
+			PT_double, "next.P", PADDR(next.price),  PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "next cleared price",
+			PT_double, "avg24", PADDR(avg24), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "daily average of price",
+			PT_double, "std24", PADDR(std24), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "daily stdev of price",
+			PT_double, "avg168", PADDR(avg168), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "weekly average of price",
+			PT_double, "std168", PADDR(std168), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "weekly stdev of price",
+			PT_object, "network", PADDR(network), PT_DESCRIPTION, "the comm network used by object to talk to the market (if any)",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		gl_publish_function(oclass,	"submit_bid", (FUNCTIONADDR)submit_bid);
 		defaults = this;
@@ -236,6 +240,10 @@ void auction::clear_market(void)
 		gl_verbose("  %s clears %.2f %s at $%.2f/%s\n", gl_name(OBJECTHDR(this),name,sizeof(name)), clear.quantity, unit, clear.price, unit);
 		next.price = clear.price;
 		next.quantity = clear.quantity;
+
+		/** @todo add price/quantity to the history */
+
+		/** @todo update the daily and weekly averages */
 
 		/* clear the bid lists */
 		asks.clear();
