@@ -295,7 +295,7 @@ PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE pt
 		 */
 	prop->access = PA_PUBLIC;
 	prop->addr = (void*)(int64)oclass->size;
-	prop->size = property_type[ptype].size;
+	prop->size = 0;
 	prop->delegation = NULL;
 	prop->flags = 0;
 	prop->keywords = NULL;
@@ -306,7 +306,7 @@ PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE pt
 	prop->oclass = oclass;
 	prop->ptype = ptype;
 	
-	oclass->size += prop->size;
+	oclass->size += property_type[ptype].size;
 	
 	class_add_property(oclass,prop);
 	return prop;
