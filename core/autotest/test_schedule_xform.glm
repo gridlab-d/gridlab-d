@@ -1,24 +1,32 @@
 // test schedule transforms
 
+#set verbose=1
+module assert;
+
 clock {
 	timezone PST+8PDT;
 	starttime '2009-01-01 0:00:00 PST';
 	stoptime '2009-01-02 0:00:00 PST';
 }
 schedule test_schedule {
-	* 9-17 * * 1-5
+	* * * * * // value of 1 all the time
 }
-module residential {
-	default_outdoor_temperature 50;
+class mytest {
+	double myvalue;
+	intrinsic create(object parent)	{ 
+		myvalue=0; // start with 0
+		return 1; 
+	};
 }
-module tape;
-object house {
-	name test_house;
-	cooling_setpoint 3*test_schedule + 75;
-	heating_setpoint -3*test_schedule + 70;
-	object recorder {
-		property heating_setpoint,air_temperature,system_mode,cooling_setpoint;
-		interval 0;
-		file air_temperature.csv;
+
+object mytest {
+	name MyTest;
+	myvalue test_schedule;
+	object double_assert {
+		status ASSERT_TRUE;
+		once ONCE_DONE;
+		within 1e-8;
+		value 1;
+		target myvalue;
 	};
 }
