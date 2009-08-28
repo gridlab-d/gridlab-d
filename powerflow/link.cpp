@@ -265,7 +265,7 @@ int link::init(OBJECT *parent)
 	{
 		NR_branch_count++;		//Update global value of link count
 
-		//Use FBS code to rank objects - do this so swing ends up on one end for consistency
+		//Use partial FBS code to rank objects - do this so swing ends up on one end for consistency
 			if (obj->parent==NULL)
 			{
 				/* make 'from' object parent of this object */
@@ -279,9 +279,6 @@ int link::init(OBJECT *parent)
 					throw "link from reference not a node";
 					//Defined above
 			}
-			else
-				/* promote 'from' object if necessary */
-				gl_set_rank(from,obj->rank+1);
 			
 			if (to->parent==NULL)
 			{
@@ -296,9 +293,6 @@ int link::init(OBJECT *parent)
 					throw "link to reference not a node";
 					//Defined above
 			}
-			else
-				/* promote this object if necessary */
-				gl_set_rank(obj,to->rank+1);
 
 		break;
 	}
@@ -593,97 +587,77 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				else if (SpecialLnk==SPLITPHASE)	//Split phase - non working
 				{
 					//Yto - same for all
-					Yto[0][0] = b_mat[0][0];
-					Yto[0][1] = b_mat[0][1];
-					Yto[1][0] = b_mat[1][0];
-					Yto[1][1] = b_mat[1][1];
-					Yto[0][2] = Yto[1][2] = Yto[2][0] = Yto[2][1] = Yto[2][2] = 0.0;
+					YSto[0] = b_mat[0][0];
+					YSto[1] = b_mat[0][1];
+					YSto[3] = b_mat[1][0];
+					YSto[4] = b_mat[1][1];
+					YSto[2] = YSto[5] = YSto[6] = YSto[7] = YSto[8] = 0.0;
 
 					if (has_phase(PHASE_A))		//A connected
 					{
 						//To_Y
-						To_Y[0][0] = b_mat[0][2];
-						To_Y[1][0] = b_mat[1][2];
+						To_Y[0][0] = -b_mat[0][2];
+						To_Y[1][0] = -b_mat[1][2];
 						To_Y[0][1] = To_Y[0][2] = To_Y[1][1] = 0.0;
 						To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 						//Yfrom
-						Yfrom[0][0] = b_mat[2][2];
-						Yfrom[0][1] = Yfrom[0][2] = Yfrom[1][0] = Yfrom[1][1] = 0.0;
-						Yfrom[1][2] = Yfrom[2][0] = Yfrom[2][1] = Yfrom[2][2] = 0.0;
+						YSfrom[0] = b_mat[2][2];
+						YSfrom[1] = YSfrom[2] = YSfrom[3] = YSfrom[4] = 0.0;
+						YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
 
 						//From_Y
-						From_Y[0][0] = b_mat[2][0];
-						From_Y[0][1] = b_mat[2][1];
+						From_Y[0][0] = -b_mat[2][0];
+						From_Y[0][1] = -b_mat[2][1];
 						From_Y[0][2] = From_Y[1][0] = From_Y[1][1] = 0.0;
 						From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
 					}
 					else if (has_phase(PHASE_B))	//B connected
 					{
 						//To_Y
-						To_Y[0][1] = b_mat[0][2];
-						To_Y[1][1] = b_mat[1][2];
+						To_Y[0][1] = -b_mat[0][2];
+						To_Y[1][1] = -b_mat[1][2];
 						To_Y[0][0] = To_Y[0][2] = To_Y[1][0] = 0.0;
 						To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 						//Yfrom
-						Yfrom[1][1] = b_mat[2][2];
-						Yfrom[0][0] = Yfrom[0][1] = Yfrom[0][2] = Yfrom[1][0] = 0.0;
-						Yfrom[1][2] = Yfrom[2][0] = Yfrom[2][1] = Yfrom[2][2] = 0.0;
+						YSfrom[4] = b_mat[2][2];
+						YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
+						YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
 
 						//From_Y
-						From_Y[1][0] = b_mat[2][0];
-						From_Y[1][1] = b_mat[2][1];
+						From_Y[1][0] = -b_mat[2][0];
+						From_Y[1][1] = -b_mat[2][1];
 						From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
 						From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
 					}
 					else if (has_phase(PHASE_C))	//C connected
 					{
 						//To_Y
-						To_Y[0][2] = b_mat[0][2];
-						To_Y[1][2] = b_mat[1][2];
+						To_Y[0][2] = -b_mat[0][2];
+						To_Y[1][2] = -b_mat[1][2];
 						To_Y[0][0] = To_Y[0][1] = To_Y[1][0] = 0.0;
 						To_Y[1][1] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 						//Yfrom
-						Yfrom[2][2] = b_mat[2][2];
-						Yfrom[0][0] = Yfrom[0][1] = Yfrom[0][2] = Yfrom[1][0] = 0.0;
-						Yfrom[1][1] = Yfrom[1][2] = Yfrom[2][0] = Yfrom[2][1] = 0.0;
+						YSfrom[8] = b_mat[2][2];
+						YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
+						YSfrom[4] = YSfrom[5] = YSfrom[6] = YSfrom[7] = 0.0;
 
 						//From_Y
-						From_Y[2][0] = b_mat[2][0];
-						From_Y[2][1] = b_mat[2][1];
+						From_Y[2][0] = -b_mat[2][0];
+						From_Y[2][1] = -b_mat[2][1];
 						From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
 						From_Y[1][0] = From_Y[1][1] = From_Y[1][2] = From_Y[2][2] = 0.0;
 					}
 					else
 						GL_THROW("NR: Unknown phsae configuration on split-phase transformer");
-
-										
-					//Jason's stuff - commented for testing
-					//equalm(b_mat,Yto);
-
-					////Store value into YSto
-					//for (jindex=0; jindex<3; jindex++)
-					//{
-					//	for (kindex=0; kindex<3; kindex++)
-					//	{
-					//		YSto[jindex*3+kindex]=Yto[jindex][kindex];
-					//	}
-					//}
-
-					//equalm(B_mat,Yfrom);
-
-					////Store value into YSfrom
-					//for (jindex=0; jindex<3; jindex++)
-					//{
-					//	for (kindex=0; kindex<3; kindex++)
-					//	{
-					//		YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
-					//	}
-					//}
-					
-					//GL_THROW("Not done yet");
+						/*  TROUBLESHOOT
+						An unknown phase configuration has been entered for a split-phase,
+						center-tapped transformer.  The Newton-Raphson solver does not know how to
+						handle it.  Fix the phase and try again.
+						*/
+									
 				}
 				else	//Other xformers
 				{
