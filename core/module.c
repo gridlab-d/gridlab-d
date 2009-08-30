@@ -726,6 +726,7 @@ void module_libinfo(char *module_name)
 	{
 		CLASS *c;
 		PROPERTY *p;
+		GLOBALVAR *v=NULL;
 		output_raw("Module name....... %s\n", mod->name);
 		output_raw("Major version..... %d\n", mod->major);
 		output_raw("Minor version..... %d\n", mod->minor);
@@ -747,6 +748,15 @@ void module_libinfo(char *module_name)
 		output_raw("\nGlobals........... ");
 		for (p=mod->globals; p!=NULL; p=p->next)
 			output_raw("%s ", p->name);
+		while ((v=global_getnext(v))!=NULL)
+		{
+			if (strncmp(v->name,module_name,strlen(module_name))==0)
+			{
+				char *vn = strstr(v->name,"::");
+				if (vn!=NULL)
+					output_raw("%s ", vn+2);
+			}
+		}
 		output_raw("\n");
 	}
 	else
