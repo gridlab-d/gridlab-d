@@ -415,25 +415,36 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				//Start with admittance matrix
 				if ((voltage_ratio != 1.0) || (SpecialLnk!=NORMAL))	//Transformer, send more - may not need all 4, but put them there anyways
 				{
-					//Create them
-					YSfrom = (complex *)gl_malloc(9*sizeof(complex));
-					if (YSfrom == NULL)
-						GL_THROW("NR: Memory allocation failure for transformer matrices.");
-						/*  TROUBLESHOOT
-						This is a bug.  Newton-Raphson tries to allocate memory for two other
-						needed matrices when dealing with transformers.  This failed.  Please submit
-						your code and a bug report on the Trac site.
-						*/
+					//See if we're a switch (if so, we don't need all the hoopla)
+					if (SpecialLnk==SWITCH)	//Almost like normal lines
+					{
+						NR_branchdata[NR_curr_branch].Yfrom = &From_Y[0][0];
+						NR_branchdata[NR_curr_branch].Yto = &From_Y[0][0];
+						NR_branchdata[NR_curr_branch].YSfrom = &From_Y[0][0];
+						NR_branchdata[NR_curr_branch].YSto = &From_Y[0][0];
+					}
+					else
+					{
+						//Create them
+						YSfrom = (complex *)gl_malloc(9*sizeof(complex));
+						if (YSfrom == NULL)
+							GL_THROW("NR: Memory allocation failure for transformer matrices.");
+							/*  TROUBLESHOOT
+							This is a bug.  Newton-Raphson tries to allocate memory for two other
+							needed matrices when dealing with transformers.  This failed.  Please submit
+							your code and a bug report on the Trac site.
+							*/
 
-					YSto = (complex *)gl_malloc(9*sizeof(complex));
-					if (YSto == NULL)
-						GL_THROW("NR: Memory allocation failure for transformer matrices.");
-						//defined above
+						YSto = (complex *)gl_malloc(9*sizeof(complex));
+						if (YSto == NULL)
+							GL_THROW("NR: Memory allocation failure for transformer matrices.");
+							//defined above
 
-					NR_branchdata[NR_curr_branch].Yfrom = &From_Y[0][0];
-					NR_branchdata[NR_curr_branch].Yto = &To_Y[0][0];
-					NR_branchdata[NR_curr_branch].YSfrom = YSfrom;
-					NR_branchdata[NR_curr_branch].YSto = YSto;
+						NR_branchdata[NR_curr_branch].Yfrom = &From_Y[0][0];
+						NR_branchdata[NR_curr_branch].Yto = &To_Y[0][0];
+						NR_branchdata[NR_curr_branch].YSfrom = YSfrom;
+						NR_branchdata[NR_curr_branch].YSto = YSto;
+					}
 				}
 				else						//Simple line, they are all the same anyways
 				{
@@ -494,8 +505,13 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				for (kindex=0; kindex<3; kindex++)
 					Y[jindex][kindex] = 0.0;
 			
+
 			// compute admittance - invert b matrix - special circumstances given different methods
-			if (has_phase(PHASE_S)) //Triplexy
+			if (SpecialLnk==SWITCH)
+			{
+				;	//Just skip over all of this nonsense
+			}
+			else if (has_phase(PHASE_S)) //Triplexy
 			{
 				//GL_THROW("I broke here - NR not working yet.");
 				equalm(b_mat,Y);
@@ -668,6 +684,10 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 						handle it.  Fix the phase and try again.
 						*/
 									
+				}
+				else if (SpecialLnk==SWITCH)
+				{
+					;	//More nothingness (all handled inside switch itself)
 				}
 				else	//Other xformers
 				{

@@ -1535,6 +1535,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				undeltacurr[1] = voltageDel[1] * (bus[indexer].Y[1]);
 				undeltacurr[2] = voltageDel[2] * (bus[indexer].Y[2]);
 
+				/******************** TODO:  Why isn't this just left as current?!?!?!? *****************************/
 				undeltaimped[0] = (bus[indexer].V[0] == 0) ? 0 : (undeltacurr[0] - undeltacurr[2]) / (bus[indexer].V[0]);
 				undeltaimped[1] = (bus[indexer].V[1] == 0) ? 0 : (undeltacurr[1] - undeltacurr[0]) / (bus[indexer].V[1]);
 				undeltaimped[2] = (bus[indexer].V[2] == 0) ? 0 : (undeltacurr[2] - undeltacurr[1]) / (bus[indexer].V[2]);
@@ -2028,7 +2029,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						}
 					}//end intermediate current for each phase column
 
-					if ((bus[indexer].V[temp_index]).Mag()!=0)
+					if ((bus[indexer].V[temp_index_b]).Mag()!=0)
 					{
 						deltaI_NR[2*bus[indexer].Matrix_Loc+ BA_diag[indexer].size + jindex] = (tempPbus * (bus[indexer].V[temp_index_b]).Re() + tempQbus * (bus[indexer].V[temp_index_b]).Im())/ ((bus[indexer].V[temp_index_b]).Mag()*(bus[indexer].V[temp_index_b]).Mag()) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
 						deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempPbus * (bus[indexer].V[temp_index_b]).Im() - tempQbus * (bus[indexer].V[temp_index_b]).Re())/ ((bus[indexer].V[temp_index_b]).Mag()*(bus[indexer].V[temp_index_b]).Mag()) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
@@ -2065,6 +2066,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				undeltacurr[1] = voltageDel[1] * (bus[indexer].Y[1]);
 				undeltacurr[2] = voltageDel[2] * (bus[indexer].Y[2]);
 
+				/*********************** TODO: Again, why this not left as current!?!?!? ***********************************/
 				undeltaimped[0] = (bus[indexer].V[0] == 0) ? 0 : (undeltacurr[0] - undeltacurr[2]) / (bus[indexer].V[0]);
 				undeltaimped[1] = (bus[indexer].V[1] == 0) ? 0 : (undeltacurr[1] - undeltacurr[0]) / (bus[indexer].V[1]);
 				undeltaimped[2] = (bus[indexer].V[2] == 0) ? 0 : (undeltacurr[2] - undeltacurr[1]) / (bus[indexer].V[2]);
@@ -2089,10 +2091,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}
 					else	//Zero voltage = only impedance is valid (others get divided by VMag, so are IND)
 					{
-						bus[indexer].Jacob_A[jindex] = (undeltaimped[jindex]).Im();
-						bus[indexer].Jacob_B[jindex] = -(undeltaimped[jindex]).Re();
-						bus[indexer].Jacob_C[jindex] = -(undeltaimped[jindex]).Re();
-						bus[indexer].Jacob_D[jindex] = -(undeltaimped[jindex]).Im();
+						bus[indexer].Jacob_A[jindex] = (undeltaimped[jindex]).Im() - 1e-4;	//Small offset to avoid singularities (if impedance is zero too)
+						bus[indexer].Jacob_B[jindex] = -(undeltaimped[jindex]).Re() - 1e-4;
+						bus[indexer].Jacob_C[jindex] = -(undeltaimped[jindex]).Re() - 1e-4;
+						bus[indexer].Jacob_D[jindex] = -(undeltaimped[jindex]).Im() - 1e-4;
 					}
 				}//End delta-three phase traverse
 			}//end delta-connected load
@@ -2132,10 +2134,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}
 					else
 					{
-						bus[indexer].Jacob_A[jindex]= 0.0;
-						bus[indexer].Jacob_B[jindex]= 0.0;
-						bus[indexer].Jacob_C[jindex]= 0.0;
-						bus[indexer].Jacob_D[jindex]= 0.0;
+						bus[indexer].Jacob_A[jindex]=  -1e-4;	//Put very small to avoid singularity issues
+						bus[indexer].Jacob_B[jindex]=  -1e-4;
+						bus[indexer].Jacob_C[jindex]=  -1e-4;
+						bus[indexer].Jacob_D[jindex]=  -1e-4;
 					}
 				}
 
@@ -2221,7 +2223,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						*/
 					}
 
-					if ((bus[indexer].V[jindex]).Mag()!=0)
+					if ((bus[indexer].V[temp_index_b]).Mag()!=0)
 					{
 						bus[indexer].Jacob_A[temp_index] = ((bus[indexer].S[temp_index_b]).Im() * (pow((bus[indexer].V[temp_index_b]).Re(),2) - pow((bus[indexer].V[temp_index_b]).Im(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Re())/pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(37)
 						bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].I[temp_index_b]).Re() + (bus[indexer].I[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) + (bus[indexer].Y[temp_index_b]).Im();// second part of equation(37)
@@ -2234,10 +2236,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}
 					else
 					{
-						bus[indexer].Jacob_A[temp_index]= (bus[indexer].Y[temp_index_b]).Im();
-						bus[indexer].Jacob_B[temp_index]= -(bus[indexer].Y[temp_index_b]).Re();
-						bus[indexer].Jacob_C[temp_index]= -(bus[indexer].Y[temp_index_b]).Re();
-						bus[indexer].Jacob_D[temp_index]= -(bus[indexer].Y[temp_index_b]).Im();
+						bus[indexer].Jacob_A[temp_index]= (bus[indexer].Y[temp_index_b]).Im() - 1e-4;	//Small offset to avoid singularity issues
+						bus[indexer].Jacob_B[temp_index]= -(bus[indexer].Y[temp_index_b]).Re() - 1e-4;
+						bus[indexer].Jacob_C[temp_index]= -(bus[indexer].Y[temp_index_b]).Re() - 1e-4;
+						bus[indexer].Jacob_D[temp_index]= -(bus[indexer].Y[temp_index_b]).Im() - 1e-4;
 					}
 				}//End phase traversion - Wye
 			}//End wye-connected load

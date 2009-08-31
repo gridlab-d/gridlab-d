@@ -87,6 +87,7 @@ int switch_object::isa(char *classname)
 int switch_object::create()
 {
 	int result = link::create();
+	prev_SW_time = 0;
 	return result;
 }
 
@@ -98,9 +99,33 @@ int switch_object::init(OBJECT *parent)
 	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = (is_closed() && has_phase(PHASE_B) ? 1.0 : 0.0);
 	a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = (is_closed() && has_phase(PHASE_C) ? 1.0 : 0.0);
 
-	b_mat[0][0] = c_mat[0][0] = B_mat[0][0] = 0.0;
-	b_mat[1][1] = c_mat[1][1] = B_mat[1][1] = 0.0;
-	b_mat[2][2] = c_mat[2][2] = B_mat[2][2] = 0.0;
+	if (solver_method==SM_FBS)
+	{
+		b_mat[0][0] = c_mat[0][0] = B_mat[0][0] = 0.0;
+		b_mat[1][1] = c_mat[1][1] = B_mat[1][1] = 0.0;
+		b_mat[2][2] = c_mat[2][2] = B_mat[2][2] = 0.0;
+	}
+	else
+	{
+		//Flag it as special (we'll forgo inversion processes on this)
+		SpecialLnk = SWITCH;
+		c_mat[0][0] = c_mat[0][1] = c_mat[0][2] = 0.0;
+		c_mat[1][0] = c_mat[1][1] = c_mat[1][2] = 0.0;
+		c_mat[2][0] = c_mat[2][1] = c_mat[2][2] = 0.0;
+
+		if (status==LS_OPEN)
+		{
+			From_Y[0][0] = complex(0.0,0.0);
+			From_Y[1][1] = complex(0.0,0.0);
+			From_Y[2][2] = complex(0.0,0.0);
+		}
+		else
+		{
+			From_Y[0][0] = complex(1e4,1e4);
+			From_Y[1][1] = complex(1e4,1e4);
+			From_Y[2][2] = complex(1e4,1e4);
+		}
+	}
 
 	return result;
 }
@@ -108,9 +133,44 @@ int switch_object::init(OBJECT *parent)
 TIMESTAMP switch_object::sync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = TS_NEVER;
+	node *tnode = OBJECTDATA(to,node);
 	node *f;
 	node *t;
 	set reverse = get_flow(&f,&t);
+
+	if (solver_method==SM_NR)	//Newton-Raphson checks
+	{
+		if (status==LS_OPEN)
+		{
+			if (prev_SW_time!=t0)			//If new timestep, zero end voltage again (it will get resolved if it shouldn't be)
+			{
+				tnode->voltage[0] = 0.0;
+				tnode->voltage[1] = 0.0;
+				tnode->voltage[2] = 0.0;
+			}
+
+			if (has_phase(PHASE_A))
+				From_Y[0][0] = complex(0.0,0.0);
+
+			if (has_phase(PHASE_B))
+				From_Y[1][1] = complex(0.0,0.0);
+
+			if (has_phase(PHASE_C))
+				From_Y[2][2] = complex(0.0,0.0);
+		}//end open
+		else					//Must be closed then
+		{
+			if (has_phase(PHASE_A))
+				From_Y[0][0] = complex(1e4,1e4);
+
+			if (has_phase(PHASE_B))
+				From_Y[1][1] = complex(1e4,1e4);
+
+			if (has_phase(PHASE_C))
+				From_Y[2][2] = complex(1e4,1e4);
+
+		}//end closed
+	}//end SM_NR
 #ifdef SUPPORT_OUTAGES
 	set trip = (f->is_contact_any() || t->is_contact_any());
 
@@ -132,6 +192,9 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 		//	status = RS_CLOSED;
 	}
 #endif
+
+	if (prev_SW_time!=t0)	//Update tracking variable
+		prev_SW_time=t0;
 
 	TIMESTAMP t2=link::sync(t0);
 
