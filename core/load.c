@@ -128,7 +128,18 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 
  **/
 
+#ifndef DLEXT
+#ifdef MACOSX
 #include "config.h"
+#else
+#ifdef LINUX
+#include "config.h"
+#else
+#define DLEXT ".dll"
+#endif // LINUX
+#endif // MACOSX
+#endif // LIBPREFIX
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -3099,7 +3110,7 @@ static int class_block(PARSER)
 						append_code("\t\tt2=((%s*)(obj+1))->presync(obj->clock,t1);\n",oclass->name);
 						EXITING(obj,presync);
 						if ((functions&(FN_SYNC|FN_POSTSYNC))==0)
-							append_code("\t\tobj->clock = t2;\n");
+							append_code("\t\tobj->clock = t1;\n");
 						append_code("\t\tbreak;\n");
 					}
 					if (functions&FN_SYNC)
@@ -3109,7 +3120,7 @@ static int class_block(PARSER)
 						append_code("\t\tt2=((%s*)(obj+1))->sync(obj->clock,t1);\n",oclass->name);
 						EXITING(obj,sync);
 						if ((functions&FN_POSTSYNC)==0)
-							append_code("\t\tobj->clock = t2;\n");
+							append_code("\t\tobj->clock = t1;\n");
 						append_code("\t\tbreak;\n");
 					}
 					if (functions&FN_POSTSYNC)
@@ -3118,7 +3129,7 @@ static int class_block(PARSER)
 						ENTERING(obj,postsync);
 						append_code("\t\tt2=((%s*)(obj+1))->postsync(obj->clock,t1);\n",oclass->name);
 						EXITING(obj,postsync);
-						append_code("\t\tobj->clock = t2;\n");
+						append_code("\t\tobj->clock = t1;\n");
 						append_code("\t\tbreak;\n");
 					}
 					append_code("\tdefault:\n\t\tbreak;\n\t}\n\treturn t2;\n}\n");
@@ -4874,7 +4885,7 @@ STATUS loadall(char *file){
 	char *ext = strrchr(file,'.');
 	unsigned int old_obj_count = object_get_count();
 	unsigned int new_obj_count = 0;
-	unsigned int i;
+//	unsigned int i;
 	char *conf = find_file("gridlabd.conf",NULL,R_OK);
 	static int loaded_files = 0;
 	STATUS load_status = FAILED;
@@ -4931,12 +4942,12 @@ STATUS loadall(char *file){
 		output_error("%s: unable to load unknown file type", filename, ext);
 
 	/* handle new objects */
-	new_obj_count = object_get_count();
-	if((load_status == FAILED) && (old_obj_count < new_obj_count)){
-		for(i = old_obj_count+1; i <= new_obj_count; ++i){
-			object_remove_by_id(i);
-		}
-	}
+//	new_obj_count = object_get_count();
+//	if((load_status == FAILED) && (old_obj_count < new_obj_count)){
+//		for(i = old_obj_count+1; i <= new_obj_count; ++i){
+//			object_remove_by_id(i);
+//		}
+//	}
 
 	loaded_files++;
 	return load_status;
