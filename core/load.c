@@ -128,6 +128,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 
  **/
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -502,11 +503,11 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		sprintf(cfile,"%s%s.cpp", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(ofile,"%s%s.o", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(file,"%s%s", (use_msvc||global_gdb||global_gdb_window)?"":tmp, oclass->name);
-		sprintf(afile, LIBPREFIX "%s."
+		sprintf(afile, LIBPREFIX "%s"
 #ifdef WIN32
-			"dll"
+			".dll"
 #else
-			"so"
+			DLEXT
 #endif
 			, oclass->name);
 
@@ -611,6 +612,10 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 #endif
 
 				char execstr[1024];
+				char exportsyms[64]="-export-all-symbols";
+				if (strcmp(DLEXT,".dylib")==0)
+					strcpy(exportsyms,"-dynamiclib");
+				
 				sprintf(execstr, "%s %s %s -I\"%s\" -c \"%s\" -o \"%s\"", getenv("CXX")?getenv("CXX"):"g++", getenv("CXXFLAGS")?getenv("CXXFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", global_include, cfile, ofile);
 				output_verbose("compile string: \"%s\"", execstr);
 				//if (exec("g++ %s -I\"%s\" -c \"%s\" -o \"%s\"", global_debug_output?"-g -O0":"", global_include, cfile, ofile)==FAILED)
@@ -622,7 +627,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 				/* link new runtime module */
 				output_verbose("linking inline code from '%s'", ofile);
-				if (exec("%s %s %s -export-all-symbols -shared -Wl,%s -o %s -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", ofile,afile)==FAILED)
+				if (exec("%s %s %s %s -shared -Wl,%s -o %s -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile)==FAILED)
 					return FAILED;
 				unlink(ofile);
 			}
