@@ -128,17 +128,11 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 
  **/
 
-#ifndef DLEXT
-#ifdef MACOSX
+#ifdef HAVE_CONFIG_H
 #include "config.h"
-#else
-#ifdef LINUX
-#include "config.h"
-#else
+#else // not a build using automake
 #define DLEXT ".dll"
-#endif // LINUX
-#endif // MACOSX
-#endif // LIBPREFIX
+#endif // HAVE_CONFIG_H
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -514,13 +508,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		sprintf(cfile,"%s%s.cpp", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(ofile,"%s%s.o", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(file,"%s%s", (use_msvc||global_gdb||global_gdb_window)?"":tmp, oclass->name);
-		sprintf(afile, LIBPREFIX "%s"
-#ifdef WIN32
-			".dll"
-#else
-			DLEXT
-#endif
-			, oclass->name);
+		sprintf(afile, LIBPREFIX "%s" DLEXT , oclass->name);
 
 		/* peek at library file */
 		fp = fopen(afile,"r");
@@ -624,6 +612,8 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 				char execstr[1024];
 				char exportsyms[64]="-export-all-symbols";
+
+				/* Mac OS X uses different exportsyms command */
 				if (strcmp(DLEXT,".dylib")==0)
 					strcpy(exportsyms,"-dynamiclib");
 				
