@@ -1,3 +1,6 @@
+# $Id: validate.py 1 2009-06-19 16:09:36Z mhauer $
+# Copyright (C) 2009 Battelle Memorial Institute
+
 import sys
 import email
 import os
@@ -8,6 +11,7 @@ import subprocess
 
 
 os.putenv("PATH","%PATH%;..\\..\\..\\VS2005\\Win32\\Debug")
+
 def do_help():
 	print("validate.py - GridLAB-D autotest/validation script")
 	print("     validate.py [dir=.] ~ runs the autotest script with \'dir\' used as")
@@ -127,60 +131,60 @@ def run_tests(argv):
 		if "err_" in file or "_err" in file:
 			if rv == 0:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional file "+file+" converged when it shouldn't've!"+" ("+str(dt)+"s)")
+					print("WARNING: Optional file "+file+" converged when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
-					print("ERROR: "+file+" converged when it shouldn't've!"+" ("+str(dt)+"s)")
+					print("ERROR: "+file+" converged when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
 					errct += 1
 					err = True
 			elif rv == 2:
-				print("SUCCESS: File "+file+" failed to converge, as planned."+" ("+str(dt)+"s)")
+				print("SUCCESS: File "+file+" failed to converge, as planned."+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			elif rv == 1:
 				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(dt)+"s)")
 				ex_ct += 1
 				err = True
 			else:
-				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(dt)+"s)")
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 		elif "exc_" in file or "_exc" in file:
 			if rv == 0:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional file "+file+" loaded when it shouldn't've!"+" ("+str(dt)+"s)")
+					print("WARNING: Optional file "+file+" loaded when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
-					print("ERROR: "+file+" loaded when it shouldn't've!"+" ("+str(dt)+"s)")
+					print("ERROR: "+file+" loaded when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
 					errct += 1
 					err = True
 			elif rv == 1:
-				print("SUCCESS:  "+file+" failed to load, as planned"+" ("+str(dt)+"s)")
+				print("SUCCESS:  "+file+" failed to load, as planned"+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			else:
-				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(dt)+"s)")
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 		else:
 			if rv == 2:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional file "+file+" failed to converge!"+" ("+str(dt)+"s)")
+					print("WARNING: Optional file "+file+" failed to converge!"+" ("+str(round(dt,2))+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
 					errct += 1
-					print("ERROR: "+file+" failed to converge!"+" ("+str(dt)+"s)")
+					print("ERROR: "+file+" failed to converge!"+" ("+str(round(dt,2))+"s)")
 					err = True
 			elif rv == 1:
-				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(dt)+"s)")
+				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 			elif rv == 0:
-				print("SUCCESS: File "+file+" converged successfully."+" ("+str(dt)+"s)")
+				print("SUCCESS: File "+file+" converged successfully."+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			else:
-				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(dt)+"s)")
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 		if err:
@@ -201,7 +205,7 @@ def run_tests(argv):
 	last_time = time.time()
 	dt = last_time - first_time
 	#return success/failure
-	print("Validation detected "+str(errct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(dt)+" seconds.")
+	print("Validation detected "+str(errct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(float(dt,2))+" seconds.")
 	for errpath, errfile in errlist:
 		print(" * "+os.path.join(errpath, errfile))
 	
