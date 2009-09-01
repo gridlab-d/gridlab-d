@@ -42,9 +42,9 @@ def run_tests(argv):
 	
 	there_dir = os.getcwd()
 	err_ct = 0
-	errct = 0
 	ex_ct = 0
-	start_time = time.time()
+	first_time = time.time()
+	end_time = 0
 	
 	if clean == 1:
 		print("Go clean?")
@@ -114,7 +114,10 @@ def run_tests(argv):
 		outfile = open(os.path.join(xpath,"outfile.txt"), "w")
 		errfile = open(os.path.join(xpath,"errfile.txt"), "w")
 		#print("NOTICE:  Running \'"+xfile+"\'")
+		start_time = time.time();
 		rv = subprocess.call(["gridlabd",xfile],stdout=outfile,stderr=errfile)
+		end_time = time.time();
+		dt = end_time - start_time
 		outfile.close()
 		errfile.close()
 		
@@ -124,65 +127,65 @@ def run_tests(argv):
 				if rv == 0: # didn't succeed if gridlabd.xml exists & updated since runtime
 					rv = 1
 		
-				# handle results
-				if "err_" in file or "_err" in file:
-					if rv == 0:
-						if "opt_" in file or "_opt" in file:
-							print("WARNING: Optional file "+file+" converged when it shouldn't've!")
-							cleanlist.append((path, file))
-							err = False
-						else:
-							print("ERROR: "+file+" converged when it shouldn't've!")
-							errct += 1
-							err = True
-					elif rv == 2:
-						print("SUCCESS: File "+file+" failed to converge, as planned.")
-						cleanlist.append((path, file))
-					elif rv == 1:
-						print("EXCEPTION:  "+file+" failed to load!")
-						ex_ct += 1
-						err = True
-					else:
-						print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
-						ex_ct += 1
-						err = True
-				elif "exc_" in file or "_exc" in file:
-					if rv == 0:
-						if "opt_" in file or "_opt" in file:
-							print("WARNING: Optional file "+file+" loaded when it shouldn't've!")
-							cleanlist.append((path, file))
-							err = False
-						else:
-							print("ERROR: "+file+" loaded when it shouldn't've!")
-							errct += 1
-							err = True
-					elif rv == 1:
-						print("SUCCESS:  "+file+" failed to load, as planned")
-						cleanlist.append((path, file))
-					else:
-						print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
-						ex_ct += 1
-						err = True
+		# handle results
+		if "err_" in file or "_err" in file:
+			if rv == 0:
+				if "opt_" in file or "_opt" in file:
+					print("WARNING: Optional file "+file+" converged when it shouldn't've!"+" ("+str(dt)+"s)")
+					cleanlist.append((path, file))
+					err = False
 				else:
-					if rv == 2:
-						if "opt_" in file or "_opt" in file:
-							print("WARNING: Optional file "+file+" failed to converge!")
-							cleanlist.append((path, file))
-							err = False
-						else:
-							errct += 1
-							print("ERROR: "+file+" failed to converge!")
-							err = True
-					elif rv == 1:
-						print("EXCEPTION:  "+file+" failed to load!")
-						ex_ct += 1
-						err = True
-					elif rv == 0:
-						print("SUCCESS: File "+file+" converged successfully.")
-						cleanlist.append((path, file))
-					else:
-						print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
-						ex_ct += 1
+					print("ERROR: "+file+" converged when it shouldn't've!"+" ("+str(dt)+"s)")
+					errct += 1
+					err = True
+			elif rv == 2:
+				print("SUCCESS: File "+file+" failed to converge, as planned."+" ("+str(dt)+"s)")
+				cleanlist.append((path, file))
+			elif rv == 1:
+				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(dt)+"s)")
+				ex_ct += 1
+				err = True
+			else:
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(dt)+"s)")
+				ex_ct += 1
+				err = True
+		elif "exc_" in file or "_exc" in file:
+			if rv == 0:
+				if "opt_" in file or "_opt" in file:
+					print("WARNING: Optional file "+file+" loaded when it shouldn't've!"+" ("+str(dt)+"s)")
+					cleanlist.append((path, file))
+					err = False
+				else:
+					print("ERROR: "+file+" loaded when it shouldn't've!"+" ("+str(dt)+"s)")
+					errct += 1
+					err = True
+			elif rv == 1:
+				print("SUCCESS:  "+file+" failed to load, as planned"+" ("+str(dt)+"s)")
+				cleanlist.append((path, file))
+			else:
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(dt)+"s)")
+				ex_ct += 1
+				err = True
+		else:
+			if rv == 2:
+				if "opt_" in file or "_opt" in file:
+					print("WARNING: Optional file "+file+" failed to converge!"+" ("+str(dt)+"s)")
+					cleanlist.append((path, file))
+					err = False
+				else:
+					errct += 1
+					print("ERROR: "+file+" failed to converge!"+" ("+str(dt)+"s)")
+					err = True
+			elif rv == 1:
+				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(dt)+"s)")
+				ex_ct += 1
+				err = True
+			elif rv == 0:
+				print("SUCCESS: File "+file+" converged successfully."+" ("+str(dt)+"s)")
+				cleanlist.append((path, file))
+			else:
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(dt)+"s)")
+				ex_ct += 1
 				err = True
 		if err:
 			# zip target directory
@@ -191,7 +194,7 @@ def run_tests(argv):
 		os.chdir(currpath)
 		#print("cwd: "+currpath)
 		# end autotestfiles loop
-		
+
 	#cleanup as appropriate
 	#for cleanfile, cleanpath in cleanlist:
 	#	for path, dirs, file in os.walk(cleanpath):
@@ -199,11 +202,13 @@ def run_tests(argv):
 	#end
 	#print("bar")
 	
+	last_time = time.time()
+	dt = last_time - first_time
 	#return success/failure
-	print("Validation detected "+str(errct)+" models with errors and "+str(ex_ct)+" models with exceptions.")
+	print("Validation detected "+str(errct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(dt)+" seconds.")
 	for errpath, errfile in errlist:
 		print(" * "+os.path.join(errpath, errfile))
-		
+	
 	exit(errct+ex_ct)
 	#return errct
 #end run_tests()

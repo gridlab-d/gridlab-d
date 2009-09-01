@@ -39,7 +39,8 @@ def run_tests(argv):
 	there_dir = os.getcwd()
 	err_ct = 0
 	ex_ct = 0
-	start_time = time.time()
+	first_time = time.time()
+	end_time = 0
 	
 	if clean == 1:
 		print("Go clean?")
@@ -109,7 +110,10 @@ def run_tests(argv):
 		outfile = open(os.path.join(xpath,"outfile.txt"), "w")
 		errfile = open(os.path.join(xpath,"errfile.txt"), "w")
 		#print("NOTICE:  Running \'"+xfile+"\'")
+		start_time = time.time();
 		rv = subprocess.call(["gridlabd",xfile],stdout=outfile,stderr=errfile)
+		end_time = time.time();
+		dt = end_time - start_time
 		outfile.close()
 		errfile.close()
 		
@@ -123,60 +127,60 @@ def run_tests(argv):
 		if "err_" in file or "_err" in file:
 			if rv == 0:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional file "+file+" converged when it shouldn't've!")
+					print("WARNING: Optional file "+file+" converged when it shouldn't've!"+" ("+str(dt)+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
-					print("ERROR: "+file+" converged when it shouldn't've!")
+					print("ERROR: "+file+" converged when it shouldn't've!"+" ("+str(dt)+"s)")
 					errct += 1
 					err = True
 			elif rv == 2:
-				print("SUCCESS: File "+file+" failed to converge, as planned.")
+				print("SUCCESS: File "+file+" failed to converge, as planned."+" ("+str(dt)+"s)")
 				cleanlist.append((path, file))
 			elif rv == 1:
-				print("EXCEPTION:  "+file+" failed to load!")
+				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(dt)+"s)")
 				ex_ct += 1
 				err = True
 			else:
-				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(dt)+"s)")
 				ex_ct += 1
 				err = True
 		elif "exc_" in file or "_exc" in file:
 			if rv == 0:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional file "+file+" loaded when it shouldn't've!")
+					print("WARNING: Optional file "+file+" loaded when it shouldn't've!"+" ("+str(dt)+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
-					print("ERROR: "+file+" loaded when it shouldn't've!")
+					print("ERROR: "+file+" loaded when it shouldn't've!"+" ("+str(dt)+"s)")
 					errct += 1
 					err = True
 			elif rv == 1:
-				print("SUCCESS:  "+file+" failed to load, as planned")
+				print("SUCCESS:  "+file+" failed to load, as planned"+" ("+str(dt)+"s)")
 				cleanlist.append((path, file))
 			else:
-				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(dt)+"s)")
 				ex_ct += 1
 				err = True
 		else:
 			if rv == 2:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional file "+file+" failed to converge!")
+					print("WARNING: Optional file "+file+" failed to converge!"+" ("+str(dt)+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
 					errct += 1
-					print("ERROR: "+file+" failed to converge!")
+					print("ERROR: "+file+" failed to converge!"+" ("+str(dt)+"s)")
 					err = True
 			elif rv == 1:
-				print("EXCEPTION:  "+file+" failed to load!")
+				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(dt)+"s)")
 				ex_ct += 1
 				err = True
 			elif rv == 0:
-				print("SUCCESS: File "+file+" converged successfully.")
+				print("SUCCESS: File "+file+" converged successfully."+" ("+str(dt)+"s)")
 				cleanlist.append((path, file))
 			else:
-				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")")
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(dt)+"s)")
 				ex_ct += 1
 				err = True
 		if err:
@@ -194,8 +198,10 @@ def run_tests(argv):
 	#end
 	#print("bar")
 	
+	last_time = time.time()
+	dt = last_time - first_time
 	#return success/failure
-	print("Validation detected "+str(errct)+" models with errors and "+str(ex_ct)+" models with exceptions.")
+	print("Validation detected "+str(errct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(dt)+" seconds.")
 	for errpath, errfile in errlist:
 		print(" * "+os.path.join(errpath, errfile))
 	
