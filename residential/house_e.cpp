@@ -1198,7 +1198,9 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 #ifdef _DEBUG
-	gl_debug("house %s (%d) next event at '%s'", obj->name, obj->id, gl_strftime(t2));
+	char tbuf[64];
+	gl_printtime(t2, tbuf, 64);
+	gl_debug("house %s (%d) next event at '%s'", obj->name, obj->id, tbuf);
 #endif
 	return t2;
 	

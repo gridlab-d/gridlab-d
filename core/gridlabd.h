@@ -733,6 +733,8 @@ inline char *gl_getvalue(OBJECT *obj,
  **/
 #define gl_parsetime (*callback->time.convert_to_timestamp)
 
+#define gl_printtime (*callback->time.convert_from_timestamp)
+
 /** Convert a timestamp to a date/time structure
 	@see mkdatetime()
  **/
@@ -921,8 +923,9 @@ inline char *gl_strftime(TIMESTAMP ts)
 	static char buffer[64];
 	strcpy(buffer,"(invalid time)");
 	DATETIME dt;
-	gl_localtime(ts,&dt);
-	gl_strftime(&dt,buffer,sizeof(buffer));
+	if(gl_localtime(ts,&dt)){
+		gl_strftime(&dt,buffer,sizeof(buffer));
+	}
 	return buffer;
 }
 #endif //__cplusplus

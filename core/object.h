@@ -142,6 +142,7 @@ typedef struct s_callbacks {
 		double (*timestamp_to_seconds)(TIMESTAMP t);
 		int (*local_datetime)(TIMESTAMP ts, DATETIME *dt);
 		TIMESTAMP (*convert_to_timestamp)(char *value);
+		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
 	} time;
 	int (*unit_convert)(char *from, char *to, double *value);
 	int (*unit_convert_ex)(UNIT *pFrom, UNIT *pTo, double *pValue);

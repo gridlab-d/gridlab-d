@@ -797,6 +797,7 @@ typedef struct s_callbacks {
 		double (*timestamp_to_seconds)(TIMESTAMP t);
 		int (*local_datetime)(TIMESTAMP ts, DATETIME *dt);
 		TIMESTAMP (*convert_to_timestamp)(char *value);
+		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
 	} time;
 	int (*unit_convert)(char *from, char *to, double *value);
 	int (*unit_convert_ex)(UNIT *pFrom, UNIT *pTo, double *pValue);
@@ -1004,6 +1005,8 @@ inline int gl_unit_convert(char *from, char *to, double &value) { return callbac
 inline int gl_unit_convert(UNIT *from, UNIT *to, double &value) { return callback->unit_convert_ex(from, to, &value);};
 inline UNIT *gl_unit_find(char *name) { return callback->unit_find(name);};
 inline char *gl_find_file(char *name, char *path, int mode) { return callback->file.find_file(name,path,mode); };
+
+inline gl_printtime (*callback->time.convert_from_timestamp)
 
 inline char *gl_strftime(DATETIME *dt, char *buffer, int size) { return callback->time.strdatetime(dt,buffer,size)?buffer:NULL;};
 inline char *gl_strftime(TIMESTAMP ts)

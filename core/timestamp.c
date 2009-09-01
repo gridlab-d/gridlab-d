@@ -155,6 +155,9 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	if(ts < TS_ZERO && ts > TS_MAX) /* timestamp out of range */
 		return 0;
 	
+	if(ts == TS_NEVER)
+		return 0;
+
 	/* ts is valid */
 	dt->timestamp = ts;
 
