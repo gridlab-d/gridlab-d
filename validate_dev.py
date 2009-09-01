@@ -205,7 +205,7 @@ def run_tests(argv):
 	last_time = time.time()
 	dt = last_time - first_time
 	#return success/failure
-	print("Validation detected "+str(errct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(float(dt,2))+" seconds.")
+	print("Validation detected "+str(errct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(round(dt,2))+" seconds.")
 	for errpath, errfile in errlist:
 		print(" * "+os.path.join(errpath, errfile))
 	
