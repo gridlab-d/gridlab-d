@@ -26,6 +26,7 @@
 #include "switch_object.h"
 #include "substation.h"
 #include "pqload.h"
+#include "voltdump.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -85,6 +86,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new switch_object(module);
 	new substation(module);
 	new pqload(module);
+	new voltdump(module);
 
 	/* always return the first class registered */
 	return node::oclass;

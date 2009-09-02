@@ -646,6 +646,10 @@
 				RelativePath="..\powerflow\underground_line_conductor.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\voltdump.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -806,6 +810,10 @@
 			</File>
 			<File
 				RelativePath="..\powerflow\undergroundline_test.h"
+				>
+			</File>
+			<File
+				RelativePath=".\voltdump.h"
 				>
 			</File>
 		</Filter>

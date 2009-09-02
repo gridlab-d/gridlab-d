@@ -62,6 +62,7 @@ libpowerflow_la_SOURCES = \
 	triplex_meter.cpp triplex_meter.h 	\
 	switch_object.cpp switch_object.h	\
 	substation.cpp substation.h \
-	pqload.cpp pqload.h
+	pqload.cpp pqload.h \
+	voltdump.cpp voltdump.h
 libpowerflow_la_LDFLAGS = -version-info 0:0:0
 
