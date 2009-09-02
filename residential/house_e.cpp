@@ -848,9 +848,16 @@ int house_e::init(OBJECT *parent)
     if (COP_coeff==0)			COP_coeff = gl_random_uniform(0.9,1.1);	// coefficient of cops [scalar]
 	if (heating_setpoint==0)	heating_setpoint = gl_random_triangle(68,72);
 	if (cooling_setpoint==0)	cooling_setpoint = gl_random_triangle(75,79);
-    if (Tair==0)				Tair = gl_random_uniform(heating_setpoint, cooling_setpoint);	// air temperature [F]
-	if (over_sizing_factor==0)  over_sizing_factor = gl_random_uniform(0.98,1.3);
 	if (thermostat_deadband==0)	thermostat_deadband = gl_random_triangle(2,3);
+	if (Tair==0){
+		/* bind limits between 60 and 140 degF */
+		double Thigh = cooling_setpoint+thermostat_deadband/2;
+		double Tlow  = heating_setpoint-thermostat_deadband/2;
+		Thigh = clip(Thigh, 60, 140);
+		Tlow = clip(Tlow, 60, 140);
+		Tair = gl_random_uniform(Tlow, Thigh);	// air temperature [F]
+	}
+	if (over_sizing_factor==0)  over_sizing_factor = gl_random_uniform(0.98,1.3);
 	if(cooling_design_temperature == 0)	cooling_design_temperature = 95.0;
 	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * gl_random_triangle(4,6); // ~5 W/sf estimated
 	if (latent_load_fraction==0) latent_load_fraction = 0.2;
