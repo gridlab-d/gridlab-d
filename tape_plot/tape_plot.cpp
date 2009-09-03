@@ -460,7 +460,7 @@ EXPORT void close_recorder(struct recorder *my)
 #ifdef WIN32
 	char32 gnuplot;
 	if(my->output == SCREEN)
-		strcpy(gnuplot,"wgnuplot -persist");
+		strcpy(gnuplot,"start wgnuplot -persist");
 	else
 		strcpy(gnuplot,"wgnuplot");
 #else
