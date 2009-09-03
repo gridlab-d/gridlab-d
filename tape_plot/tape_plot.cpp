@@ -463,7 +463,6 @@ EXPORT void close_recorder(struct recorder *my)
 		strcpy(gnuplot,"wgnuplot -persist");
 	else
 		strcpy(gnuplot,"wgnuplot");
-	_putenv("PATH=%PATH%;C:\\wgnuplot");
 #else
 	char *gnuplot = "gnuplot ";
 #endif
