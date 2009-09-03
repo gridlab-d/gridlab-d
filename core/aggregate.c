@@ -43,18 +43,16 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 {
 	AGGREGATOR op = AGGR_NOP;
 	AGGREGATION *result=NULL;
-	char aggrop[9], aggrval[33], aggrpart[9]="";
+	char aggrop[9], aggrval[257], *aggrpart;
 	char aggrprop[33], aggrunit[9];
 	unsigned char flags=0x00;
 	UNIT *from_unit = NULL, *to_unit = NULL;
 	double scale = 1.0;
 
-	if (sscanf(aggregator,"%8[A-Za-z0-9_](%32[][A-Za-z0-9_].%8[A-Za-z0-9_])",aggrop,aggrval,aggrpart)!=3 &&
-		sscanf(aggregator,"%8[A-Za-z0-9_](%32[][A-Za-z0-9_])",aggrop,aggrval)!=2 &&
+	if (sscanf(aggregator,"%8[A-Za-z0-9_](%256[][A-Za-z0-9_.])",aggrop,aggrval)!=2 &&
 		(flags|=AF_ABS,
-		sscanf(aggregator,"%8[A-Za-z0-9_]|%32[][A-Za-z0-9_].%8[A-Za-z0-9_]|",aggrop,aggrval,aggrpart)!=3) &&
-		sscanf(aggregator,"%8[A-Za-z0-9_]|%32[][A-Za-z0-9_]|",aggrop,aggrval)!=2 
-		)
+		sscanf(aggregator,"%8[A-Za-z0-9_]|%256[][A-Za-z0-9_.]",aggrop,aggrval)!=2 
+		))
 	{
 		output_error("aggregate group '%s' is not valid", aggregator);
 		/* TROUBLESHOOT
@@ -64,6 +62,13 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 		errno = EINVAL;
 		return NULL;
 	}
+
+	aggrpart = strrchr(aggrval,'.');
+	/* if an aggregate part is found */
+	if (aggrpart!=NULL)
+		*aggrpart++ = '\0';	// split the value and the part
+	else
+		aggrpart=""; // no part given
 
 	if(sscanf(aggrval, "%32[A-Za-z0-9_][%[A-Za-z0-9_]]", aggrprop, aggrunit) == 2){
 		to_unit = unit_find(aggrunit);
