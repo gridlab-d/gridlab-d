@@ -608,7 +608,44 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				}
 				else if (SpecialLnk==REGULATOR)	//Regulator
 				{
-					GL_THROW("Not done yet");
+					//Pre-admittancized matrix
+					equalm(b_mat,Yto);
+
+					//Store value into YSto
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							YSto[jindex*3+kindex]=Yto[jindex][kindex];
+						}
+					}
+					
+					for (jindex=0; jindex<3; jindex++)
+					{
+						Ylefttemp[jindex][jindex] = Yto[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
+						Yfrom[jindex][jindex]=Ylefttemp[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
+					}
+
+
+					//multiply(invratio,Yto,Ylefttemp);		//Scale from admittance by turns ratio
+					//multiply(invratio,Ylefttemp,Yfrom);
+
+					//Store value into YSfrom
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+						}
+					}
+
+					for (jindex=0; jindex<3; jindex++)
+					{
+						To_Y[jindex][jindex] = Yto[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
+						From_Y[jindex][jindex]=Yfrom[jindex][jindex] * a_mat[jindex][jindex];
+					}
+					//multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
+					//multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
 				}
 				else if (SpecialLnk==SPLITPHASE)	//Split phase
 				{

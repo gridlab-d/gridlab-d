@@ -134,6 +134,13 @@ int regulator::init(OBJECT *parent)
 		}
 	}
 
+	if (solver_method == SM_NR)
+	{
+		SpecialLnk = REGULATOR;
+		//complex Izt = complex(1,0) / zt;
+		b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = 1e4;
+	}
+
 	for (int i = 0; i < 3; i++) 
 	{	
 		if (tap[i] == -999)
