@@ -104,6 +104,17 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	if (BA_diag == NULL)
 	{
 		BA_diag = (Bus_admit *)gl_malloc(bus_count *sizeof(Bus_admit));   //BA_diag store the location and value of diagonal elements of Bus Admittance matrix
+
+		//Make sure it worked
+		if (BA_diag == NULL)
+		{
+			GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+			/*  TROUBLESHOOT
+			During the allocation stage of the NR algorithm, one of the matrices failed to be allocated.
+			Please try again and if this bug persists, submit your code and a bug report using the trac
+			website.
+			*/
+		}
 	}
 	
 	for (indexer=0; indexer<bus_count; indexer++) // Construct the diagonal elements of Bus admittance matrix.
@@ -381,6 +392,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	if (Y_offdiag_PQ == NULL)
 	{
 		Y_offdiag_PQ = (Y_NR *)gl_malloc((size_offdiag_PQ*2) *sizeof(Y_NR));   //Y_offdiag_PQ store the row,column and value of off_diagonal elements of Bus Admittance matrix in which all the buses are not PV buses. 
+
+		//Make sure it worked
+		if (Y_offdiag_PQ == NULL)
+			GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
 	}
 
 	indexer = 0;
@@ -1487,6 +1502,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	if (Y_diag_fixed == NULL)
 	{
 		Y_diag_fixed = (Y_NR *)gl_malloc((size_diag_fixed*2) *sizeof(Y_NR));   //Y_diag_fixed store the row,column and value of the fixed part of the diagonal PQ bus elements of 6n*6n Y_NR matrix.
+
+		//Make sure it worked
+		if (Y_diag_fixed == NULL)
+			GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
 	}
 	indexer = 0;
 	for (jindexer=0; jindexer<bus_count;jindexer++)	//Parse through bus list
@@ -1697,6 +1716,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		if (deltaI_NR==NULL)
 		{
 			deltaI_NR = (double *)gl_malloc((2*total_variables) *sizeof(double));   // left_hand side of equation (11)
+
+			//Make sure it worked
+			if (deltaI_NR == NULL)
+				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
 		}
 
 		//Compute the calculated loads (not specified) at each bus
@@ -2269,6 +2292,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		if (Y_diag_update == NULL)
 		{
 			Y_diag_update = (Y_NR *)gl_malloc((4*size_diag_update) *sizeof(Y_NR));   //Y_diag_update store the row,column and value of the dynamic part of the diagonal PQ bus elements of 6n*6n Y_NR matrix.
+
+			//Make sure it worked
+			if (Y_diag_update == NULL)
+				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
 		}
 		
 		indexer = 0;	//Rest positional counter
@@ -2334,6 +2361,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		if (Y_Amatrix == NULL)
 		{
 			Y_Amatrix = (Y_NR *)gl_malloc((size_Amatrix) *sizeof(Y_NR));   // Amatrix includes all the elements of Y_offdiag_PQ, Y_diag_fixed and Y_diag_update.
+
+			//Make sure it worked
+			if (Y_Amatrix == NULL)
+				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
 		}
 
 		//integrate off diagonal components
