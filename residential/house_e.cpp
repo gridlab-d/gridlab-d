@@ -574,7 +574,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "heating_design_temperature[degF]", PADDR(heating_design_temperature),PT_DESCRIPTION,"system heating design temperature",
 			PT_double, "design_peak_solar[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design solar load",
 			PT_double, "design_internal_gains[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design internal gains",
-			PT_double, "air_heat_fraction[%]", PADDR(air_heat_fraction), PT_DESCRIPTION, "fraction of heat gain that goes to air (as opposed to mass)",
+			PT_double, "air_heat_fraction[pu]", PADDR(air_heat_fraction), PT_DESCRIPTION, "fraction of heat gain/loss that goes to air (as opposed to mass)",
 
 			PT_double,"heating_COP[pu]",PADDR(heating_COP),PT_DESCRIPTION,"system heating performance coefficient",
 			PT_double,"cooling_COP[Btu/kWh]",PADDR(cooling_COP),PT_DESCRIPTION,"system cooling performance coefficient",
@@ -885,6 +885,7 @@ int house_e::init(OBJECT *parent)
 	if (volume==0) volume = ceiling_height*floor_area;									// volume of air [cf]
 	if (air_mass==0) air_mass = air_density*volume;							// mass of air [lb]
 	if (air_thermal_mass==0) air_thermal_mass = air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]
+	if (air_heat_fraction<0.0 || air_heat_fraction>1.0) throw "air heat fraction is not between 0 and 1";
 	Tmaterials = Tair;	
 	
 	// connect any implicit loads

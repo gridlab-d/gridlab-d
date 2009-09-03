@@ -972,11 +972,13 @@ static int unitspec(PARSER, UNIT **unit)
 	char result[1024];
 	int size=sizeof(result);
 	START;
-	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='$' || *_p=='*' || *_p=='/' || *_p=='^') COPY(result);
+	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='$' || *_p=='%' || *_p=='*' || *_p=='/' || *_p=='^') COPY(result);
 	result[_n]='\0';
 	TRY {
 		if ((*unit=unit_find(result))==NULL)
-			REJECT;
+			REJECT
+		else
+			return (int)strlen(result);
 	}
 	CATCH (char *msg) {
 		REJECT;
