@@ -85,6 +85,18 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Miscellaneous counter tracker
 	unsigned int index_count = 0;
 
+	//SuperLU variables
+	SuperMatrix A_LU,B_LU,L_LU,U_LU;
+	double *a_LU,*rhs_LU;
+	int *perm_c, *perm_r, *cols_LU, *rows_LU;
+	int nnz, info;
+	superlu_options_t options;
+	SuperLUStat_t stat;
+	NCformat *Astore_LU;
+	DNformat *Bstore_LU;
+	unsigned int m,n;
+	double *sol_LU;
+
 	//Calculate the convergence limit - base it off of the swing bus
 	eps = default_maximum_voltage_error * bus[0].V[0].Mag();
 
@@ -2351,42 +2363,53 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		/* sorting integers using qsort() example */
 		qsort(Y_Amatrix,size_Amatrix,sizeof(*Y_Amatrix),cmp);
 
-		//Call SuperLU to solve the equation of AX=b;
-		SuperMatrix A,B,L,U;
-		double *a,*rhs;
-		int *perm_c, *perm_r, *cols, *rows;
-		int nnz, info;
-		superlu_options_t options;
-		SuperLUStat_t stat;
-		NCformat *Astore;
-		DNformat *Bstore;
-		unsigned int m,n;
-		double *sol;
-
 		///* Initialize parameters. */
 		m = 2*total_variables; n = 2*total_variables; nnz = size_Amatrix;
 
 		/* Set aside space for the arrays. */
-		a = (double *) gl_malloc(nnz *sizeof(double));
-		rows = (int *) gl_malloc(nnz *sizeof(int));
-		cols = (int *) gl_malloc((n+1) *sizeof(int));
+		a_LU = (double *) gl_malloc(nnz *sizeof(double));
+		if (a_LU==NULL)
+		{
+			GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+			/*  TROUBLESHOOT
+			While attempting to allocate the memory for one of the SuperLU working matrices,
+			an error was encountered and it was not allocated.  Please try again.  If it fails
+			again, please submit your code and a bug report using the trac website.
+			*/
+		}
+		
+		rows_LU = (int *) gl_malloc(nnz *sizeof(int));
+		if (rows_LU == NULL)
+			GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+
+		cols_LU = (int *) gl_malloc((n+1) *sizeof(int));
+		if (cols_LU == NULL)
+			GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
 		/* Create the right-hand side matrix B. */
-		rhs = (double *) gl_malloc(m *sizeof(double));
+		rhs_LU = (double *) gl_malloc(m *sizeof(double));
+		if (rhs_LU == NULL)
+			GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
 		///* Set up the arrays for the permutations. */
 		perm_r = (int *) gl_malloc(m *sizeof(int));
+		if (perm_r == NULL)
+			GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+
 		perm_c = (int *) gl_malloc(n *sizeof(int));
+		if (perm_c == NULL)
+			GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+
 		//
 		///* Set the default input options, and then adjust some of them. */
 		set_default_options ( &options );
 
 		for (indexer=0; indexer<size_Amatrix; indexer++)
 		{
-			rows[indexer] = Y_Amatrix[indexer].row_ind ; // row pointers of non zero values
-			a[indexer] = Y_Amatrix[indexer].Y_value;
+			rows_LU[indexer] = Y_Amatrix[indexer].row_ind ; // row pointers of non zero values
+			a_LU[indexer] = Y_Amatrix[indexer].Y_value;
 		}
-		cols[0] = 0;
+		cols_LU[0] = 0;
 		indexer = 0;
 		temp_index = 0;
 		for ( jindexer = 0; jindexer< (size_Amatrix-1); jindexer++)
@@ -2397,33 +2420,32 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			if (tempb > tempa)
 			{
 				temp_index += 1;
-				cols[temp_index] = indexer;
+				cols_LU[temp_index] = indexer;
 			}
 		}
-		cols[n] = nnz ;// number of non-zeros;
+		cols_LU[n] = nnz ;// number of non-zeros;
 
 		for (temp_index=0;temp_index<m;temp_index++)
 		{ 
-			rhs[temp_index] = deltaI_NR[temp_index];
+			rhs_LU[temp_index] = deltaI_NR[temp_index];
 		}
 
 		//* Create Matrix A in the format expected by Super LU.*/
-		dCreate_CompCol_Matrix ( &A, m, n, nnz, a, rows, cols, SLU_NC,SLU_D,SLU_GE );
-		Astore =(NCformat*)A.Store;
+		dCreate_CompCol_Matrix ( &A_LU, m, n, nnz, a_LU, rows_LU, cols_LU, SLU_NC,SLU_D,SLU_GE );
+		Astore_LU =(NCformat*)A_LU.Store;
 
 		//* Create right-hand side matrix B in the format expected by Super LU.*/
-		dCreate_Dense_Matrix(&B, m, 1, rhs, m, SLU_DN, SLU_D, SLU_GE);
+		dCreate_Dense_Matrix(&B_LU, m, 1, rhs_LU, m, SLU_DN, SLU_D, SLU_GE);
 
-		//Astore=(NCformat*)A.Store;
-		Bstore=(DNformat*)B.Store;
+		Bstore_LU=(DNformat*)B_LU.Store;
 		StatInit ( &stat );
 
-		Astore->nzval=a;
-		Bstore->nzval=rhs;
+		Astore_LU->nzval=a_LU;
+		Bstore_LU->nzval=rhs_LU;
 
 		// solve the system
-		dgssv(&options, &A, perm_c, perm_r, &L, &U, &B, &stat, &info);
-		sol = (double*) ((DNformat*) B.Store)->nzval;
+		dgssv(&options, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &stat, &info);
+		sol_LU = (double*) ((DNformat*) B_LU.Store)->nzval;
 
 		//Update bus voltages - check convergence while we're here
 		Maxmismatch = 0;
@@ -2440,8 +2462,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				if ((bus[indexer].phases & 0x80) == 0x80)	//Split phase
 				{
 					//Pull the two updates (assume split-phase is always 2)
-					DVConvCheck[0]=complex(sol[2*bus[indexer].Matrix_Loc],sol[(2*bus[indexer].Matrix_Loc+2)]);
-					DVConvCheck[1]=complex(sol[(2*bus[indexer].Matrix_Loc+1)],sol[(2*bus[indexer].Matrix_Loc+3)]);
+					DVConvCheck[0]=complex(sol_LU[2*bus[indexer].Matrix_Loc],sol_LU[(2*bus[indexer].Matrix_Loc+2)]);
+					DVConvCheck[1]=complex(sol_LU[(2*bus[indexer].Matrix_Loc+1)],sol_LU[(2*bus[indexer].Matrix_Loc+3)]);
 					bus[indexer].V[0] += DVConvCheck[0];
 					bus[indexer].V[1] += DVConvCheck[1];	//Negative due to convention
 					
@@ -2526,7 +2548,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							*/
 						}
 
-						DVConvCheck[jindex]=complex(sol[(2*bus[indexer].Matrix_Loc+temp_index)],sol[(2*bus[indexer].Matrix_Loc+BA_diag[indexer].size+temp_index)]);
+						DVConvCheck[jindex]=complex(sol_LU[(2*bus[indexer].Matrix_Loc+temp_index)],sol_LU[(2*bus[indexer].Matrix_Loc+BA_diag[indexer].size+temp_index)]);
 						bus[indexer].V[temp_index_b] += DVConvCheck[jindex];
 						
 						//Pull off the magnitude (no sense calculating it twice)
@@ -2547,27 +2569,27 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		newiter=false;
 		if ( Maxmismatch <= eps)
 		{
-			printf("Power flow calculation converges at Iteration %d \n",Iteration-1);
+			gl_verbose("Power flow calculation converges at Iteration %d \n",Iteration-1);
 		}
 		else if ( Maxmismatch > eps)
 			newiter = true;
-		
+
+		/* De-allocate storage. */
+		gl_free(rhs_LU);
+		gl_free(a_LU);
+		gl_free(cols_LU);
+		gl_free(rows_LU);
+		gl_free(perm_r);
+		gl_free(perm_c);
+		Destroy_SuperNode_Matrix( &L_LU );
+		Destroy_CompCol_Matrix( &U_LU );
+		Destroy_SuperMatrix_Store( &A_LU );
+		Destroy_SuperMatrix_Store(&B_LU);
+		StatFree ( &stat );
+
 		//Break us out if we are done		
 		if ( newiter == false )
 			break;
-
-		/* De-allocate storage. */
-		gl_free(rhs);
-		gl_free(a);
-		gl_free(cols);
-		gl_free(rows);
-		gl_free(perm_r);
-		gl_free(perm_c);
-		Destroy_SuperNode_Matrix( &L );
-		Destroy_CompCol_Matrix( &U );
-		Destroy_SuperMatrix_Store( &A );
-		Destroy_SuperMatrix_Store(&B);
-		StatFree ( &stat );
 	}	//End iteration loop
 
 	gl_warning("Newton-Raphson solution method is not yet supported");
