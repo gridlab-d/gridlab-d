@@ -762,6 +762,9 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 		}
 			break;
+		case SUPPLY_DRIVEN: {
+			GL_THROW("SUPPLY_DRIVEN mode for inverters not supported at this time");
+		}
 		default:
 		{
 			pLine_I[0] = phaseA_I_Out;

@@ -162,7 +162,7 @@ int solar::init_climate()
 				gl_set_dependent(obj,hdr);
 			pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
 			pRhout = (double*)GETADDR(obj,gl_get_property(obj,"humidity"));
-			pSolar = (double*)&(((double*)(GETADDR(obj,gl_get_property(obj,"solar_flux"))))[8]);
+			pSolar = (double*)GETADDR(obj,gl_get_property(obj,"solar_flux"));
 			//pSolar = (double*)GETADDR(obj,gl_get_property(obj,"global_solar"));
 			//pSolar = (double*)malloc(50 * sizeof(double));
 
@@ -318,7 +318,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	//V_Out = pCircuit_V[0];	//Syncs the meter parent to the generator.
 	
-	Insolation = *pSolar;	
+	Insolation = pSolar[0];	
 
 	if(0 == gl_convert("W/sf","W/m^2", &Insolation))
 	{
@@ -360,7 +360,7 @@ void solar::derate_panel(double Tamb, double Insol)
 	}
 	else
 	{
-		VA_Out = complex(Max_P * (1 - (0.005 * (Tcell - 25))), 0);
+		VA_Out = complex(Max_P * (1 - (0.001 * (Tcell - 25))), 0);
 	}
 
 	//gl_verbose("solar sync: VA_Out real component is: (%f , %f)", VA_Out.Re()), VA_Out.Im();
@@ -378,7 +378,8 @@ void solar::calculate_IV(double Tamb, double Insol){
 	}
 	else
 	{
-		I_Out = (VA_Out / V_Out) * (Insol / Rated_Insolation); 
+		VA_Out = VA_Out * Insol/Rated_Insolation;
+		I_Out = (VA_Out / V_Out); 
 	}
 	//gl_verbose("solar sync: VA_Out after set is: %f, %fj", VA_Out.Re(), VA_Out.Im());
 	//gl_verbose("solar sync: I_Out is : (%f , %fj)", I_Out.Re(), I_Out.Im());
