@@ -141,6 +141,7 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 		double scale = 1.0;
 
 		// everything that looks like a property name, then read units up to ]
+		while (isspace(*item)) item++;
 		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n,\0]", pstr, ustr)){
 			unit = gl_find_unit(ustr);
 			if(unit == NULL){
