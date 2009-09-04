@@ -1294,7 +1294,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				system_mode = SM_COOL;
 			else if(Tair < TheatOn - terr/2)
 			{
-				if (Tair < 20)
+				if (outside_temperature < 20)
 					system_mode = SM_AUX;
 				else
 					system_mode = SM_HEAT;
