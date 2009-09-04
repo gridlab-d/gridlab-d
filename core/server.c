@@ -101,6 +101,11 @@ void handleRequest(int newsockfd)
 	char name[1024];
 	char property[1024];
 	char value[1024];
+#define HTTP_OK 200
+#define HTTP_BADREQUEST 400
+#define HTTP_FORBIDDEN 403
+#define HTTP_NOTFOUND 404
+	int code=HTTP_OK;
 
 	/* read socket */
 	read(newsockfd,(void *)input,MAXSTR);
@@ -115,7 +120,10 @@ void handleRequest(int newsockfd)
 			char buf[1024];
 			output_verbose("getting global '%s'", name);
 			if (global_getvar(name,buf,sizeof(buf))==NULL)
+			{
 				output_verbose("variable '%s' not found", name);
+				code=HTTP_NOTFOUND;
+			}
 			else
 				output_verbose("got %s=[%s]", name,buf);
 			sprintf(output,"%s\n",buf);
@@ -123,10 +131,14 @@ void handleRequest(int newsockfd)
 		else if (strcmp(method,"POST")==0)
 		{
 			output_error("POST not supported yet");
+			code=HTTP_BADREQUEST;
 			sprintf(output,"%s\n","POST not supported yet");			
 		}
-		else	
+		else
+		{
+			code = HTTP_BADREQUEST;
 			sprintf(output,"%s\n","method not supported");
+		}
 		break;
 	case 3:
 		output_verbose("3 terms received");
@@ -139,6 +151,7 @@ void handleRequest(int newsockfd)
 			if (obj==NULL)
 			{
 				output_verbose("object '%s' not found", name);
+				code = HTTP_NOTFOUND;
 				sprintf(output,"%s\n","object not found");
 				break;
 			}
@@ -149,10 +162,14 @@ void handleRequest(int newsockfd)
 		else if (strcmp(method,"POST")==0)
 		{
 			output_error("POST not supported yet");
+			code = HTTP_BADREQUEST;
 			sprintf(output,"%s\n","POST not supported yet");			
 		}
 		else	
-			sprintf(output,"%s\n","method not supported");		
+		{
+			code = HTTP_BADREQUEST;
+			sprintf(output,"%s\n","method not supported");	
+			}
 		break;
 	case 4:
 		output_verbose("4 terms received (method='%s', name='%s', property='%s', value='%s'", method, name, property, value);
@@ -166,14 +183,18 @@ void handleRequest(int newsockfd)
 			{
 				output_verbose("object '%s' not found", name);
 				sprintf(output,"%s\n","object not found");
+				code = HTTP_NOTFOUND;
 				break;
 			}
 			if (strcmp(value,"")!=0)
 			{
 				output_verbose("set %s.%s=[%s]", name, property, value);
 				if (!object_set_value_by_name(obj,property,value))
+				{
+					code = HTTP_FORBIDDEN;
 					output_verbose("set failed!");
-          else
+				}
+			else
 			      output_debug("set %s.%s=%s", name,property,value);
 			}
 			if (object_get_value_by_name(obj,property,buf,sizeof(buf)))
@@ -182,13 +203,18 @@ void handleRequest(int newsockfd)
 		}
 		else if (strcmp(method,"POST")==0)
 		{
+			code = HTTP_BADREQUEST;
 			output_error("POST not supported yet");
 			sprintf(output,"%s\n","POST not supported yet");			
 		}
-		else	
-			sprintf(output,"%s\n","method not supported");		
+		else
+		{
+			code = HTTP_BADREQUEST;
+			sprintf(output,"%s\n","method not supported");
+		}
 		break;
 	default:
+		code = HTTP_BADREQUEST;
 		sprintf(output,"%s\n","invalid query");
 		break;
 	}
@@ -204,7 +230,19 @@ void handleRequest(int newsockfd)
 			}
 		}
 		*********************/
-		sprintf(xml,"HTTP/1.1 200 OK\nServer: gridlabd %.%.% (%s) \nConnection: close\nContent-type: text/xml\n\n<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<resultset>\n\t<answer>%s\t</answer>\n</resultset>\n", REV_MAJOR, REV_MINOR, REV_PATCH, BRANCH, output);
+		sprintf(xml,"HTTP/1.1 %d OK\n"
+			"Server: gridlabd %.%.% (%s) \n"
+			"Connection: close"
+			"\nContent-type: text/xml\n\n"
+			"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+			"<resultset>\n"
+			"\t<object>%s</object>\n"
+			"\t<property>%s</property>\n"
+			"\t<answer>%s</answer>\n"
+			"</resultset>\n", 
+			code, 
+			REV_MAJOR, REV_MINOR, REV_PATCH, BRANCH, 
+			name,property,output);
 		write(newsockfd,xml,strlen(xml));
 	}
 	output_verbose("response [%s] sent", output);
