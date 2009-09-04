@@ -607,6 +607,27 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			
 			//PT_enduse,"system",PADDR(system),PT_DESCRIPTION,"heating/cooling system enduse load",
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
+#ifdef _DEBUG
+			// these are added in the debugging version so we can spy on ETP
+			PT_double,"a",PADDR(a),
+			PT_double,"b",PADDR(b),
+			PT_double,"c",PADDR(c),
+			PT_double,"d",PADDR(d),
+			PT_double,"c1",PADDR(c1),
+			PT_double,"c2",PADDR(c2),
+			PT_double,"A3",PADDR(A3),
+			PT_double,"A4",PADDR(A4),
+			PT_double,"k1",PADDR(k1),
+			PT_double,"k2",PADDR(k2),
+			PT_double,"r1",PADDR(r1),
+			PT_double,"r2",PADDR(r2),
+			PT_double,"Teq",PADDR(Teq),
+			PT_double,"Tevent",PADDR(Tevent),
+			PT_double,"Qi",PADDR(Qi),
+			PT_double,"Qa",PADDR(Qa),
+			PT_double,"Qm",PADDR(Qm),
+			PT_double,"Qh",PADDR(load.heatgain),
+#endif
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
@@ -888,6 +909,35 @@ int house_e::init(OBJECT *parent)
 	if (air_heat_fraction<0.0 || air_heat_fraction>1.0) throw "air heat fraction is not between 0 and 1";
 	Tmaterials = Tair;	
 	
+	// calculate thermal constants
+#define Ca (air_thermal_mass)
+#define Tout (*(pTout))
+#define Ua (envelope_UA)
+#define Cm (house_content_thermal_mass)
+#define Hm (house_content_heat_transfer_coeff)
+#define Qs (solar_load)
+#define Qh (load.heatgain)
+#define Ta (Tair)
+#define dTa (dTair)
+#define Tm (Tmaterials)
+
+	if (Ca<=0)
+		throw "Ca must be positive";
+	if (Cm<=0)
+		throw "Cm must be positive";
+
+	a = Cm*Ca/Hm;
+	b = Cm*(Ua+Hm)/Hm+Ca;
+	c = Ua;
+	c1 = -(Ua + Hm)/Ca;
+	c2 = Hm/Ca;
+	double rr = sqrt(b*b-4*a*c)/(2*a);
+	double r = -b/(2*a);
+	r1 = r+rr;
+	r2 = r-rr;
+	A3 = Ca/Hm * r1 + (Ua+Hm)/Hm;
+	A4 = Ca/Hm * r2 + (Ua+Hm)/Hm;
+
 	// connect any implicit loads
 	attach_implicit_enduses();
 	update_system();
@@ -976,16 +1026,9 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 
 void house_e::update_model(double dt)
 {
-	/* local aliases */
-	#define Tout (*(pTout))
-	#define Ua (envelope_UA)
-	#define Cm (house_content_thermal_mass)
-	#define Um (house_content_heat_transfer_coeff)
-	#define Qs (solar_load)
-	#define Qh (load.heatgain)
-	#define Ti (Tair)
-	#define dTi (dTair)
-	#define Tm (Tmaterials)
+#ifndef _DEBUG
+	double d;
+#endif
 
 	/* compute solar gains */
 	Qs = 0; 
@@ -996,55 +1039,18 @@ void house_e::update_model(double dt)
 	if (Qs<0)
 		throw "solar gain is negative";
 
-	/* compute thermal capacity of indoor air */
-	#define Ca (air_thermal_mass)
-	if (Ca<=0)
-		throw "Ca must be positive";
-	if (Cm<=0)
-		throw "Cm must be positive";
-
 	// split gains to air and mass
-	const double Qi = total.heatgain - load.heatgain;
-	const double Qa = Qh + air_heat_fraction*(Qi + Qs);
-	const double Qm = (1-air_heat_fraction)*(Qi + Qs);
+	Qi = total.heatgain - load.heatgain;
+	Qa = Qh + air_heat_fraction*(Qi + Qs);
+	Qm = (1-air_heat_fraction)*(Qi + Qs);
 
-	c1 = -(Ua + Um)/Ca;
-	c2 = Um/Ca;
-	c3 = (Qa + Tout*Ua)/Ca;
-	c6 = Qm/Cm;
-	c7 = Qa/Ca;
-	double p1 = 1/c2;
-	if (Cm<=0)
-		throw "Cm must be positive";
-	c4 = Um/Cm;
-	c5 = -c4;
-	if (c2<=0)
-		throw "Um must be positive";
-	const double p2 = -(c5+c1)/c2;
-	const double p3 = c1*c5/c2 - c4;
-	const double p4 = -c3*c5/c2 + c6;
-	if (p3==0)
-		throw "Teq is not finite";
-	Teq = p4/p3;
-
-	/* compute solution roots */
-	if (p1==0)
-		throw "internal error (p1==0 -> Ca==0 which should have caught)";
-	const double ra = 2*p1;
-	const double rb = -p2/ra;
-	const double rr = p2*p2-4*p1*p3;
-	if (rr<0)
-		throw "thermal solution does not exist";
-	const double rc = sqrt(rr)/ra;
-	r1 = rb+rc; // okay
-	r2 = rb-rc; // okay
-	if (r1>0 || r2>0)
-		throw "thermal solution has runaway condition";
+	 d = Qa + Qm + Ua*Tout;
+	Teq = d/c;
 
 	/* compute next initial condition */
-	dTi = c2*Tm + c1*Ti - (c1+c2)*Tout + c7;
-	k1 = (r2*Ti - r2*Teq - dTi)/(r2-r1);
-	k2 = (dTi - r1*k1)/r2;
+	dTa = c2*Tm + c1*Ta - (c1+c2)*Tout + Qa/Ca;
+	k1 = (r2*Tair - r2*Teq - dTa)/(r2-r1);
+	k2 = Tair - Teq - k1;
 }
 
 /** HVAC load synchronizaion is based on the equipment capacity, COP, solar loads and total internal gain
@@ -1116,7 +1122,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 			const double e1 = k1*exp(r1*dt);
 			const double e2 = k2*exp(r2*dt);
 			Tair = e1 + e2 + Teq;
-			Tmaterials = ((r1-c1)*e1 + (r2-c1)*e2 + c6)/c2 + Teq;
+			Tmaterials = A3*e1 + A3*e2 + Qm/Hm + (Qm+Qa)/Ua + Tout;
 		}
 	}
 
@@ -1181,10 +1187,8 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	gl_debug("house %s (%d) time to next event is indeterminate", obj->name, obj->id);
 #endif
 		// try again in 1 second if there is a solution in the future
-		if (sgn(dTair)==sgn(Tair-Tevent)) 
-		{
-			t = t1+1; if (t<t2) t2 = t;
-		}
+		if (sgn(dTair)==sgn(Tevent-Tair)) 
+			if (t2>t1) t2 = t1+1;
 	}
 
 	// if the solution is less than time resolution
@@ -1239,7 +1243,7 @@ void house_e::update_Tevent()
 		if (dTair<0) // falling
 			Tevent = TheatOn;
 		else if (dTair>0) // rising 
-			Tevent = ( (system_type&ST_AC) ? TcoolOn : 100) ;
+			Tevent = ( (system_type&ST_AC) ? TcoolOn : warn_high_temp) ;
 		else
 			Tevent = Tair;
 		break;

@@ -135,7 +135,10 @@ private:
 
 	// internal variables used to track state of house */
 	double dTair;
-	double c1,c2,c3,c4,c5,c6,c7,r1,r2,k1,k2,Teq, Tevent;
+	double a,b,c,c1,c2,A3,A4,k1,k2,r1,r2,Teq,Tevent,Qi,Qa,Qm;
+#ifdef _DEBUG
+	double d;
+#endif
 	static bool warn_control;
 	static double warn_low_temp, warn_high_temp;
 	bool check_start;
