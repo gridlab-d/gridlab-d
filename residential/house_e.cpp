@@ -627,6 +627,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"Qa",PADDR(Qa),
 			PT_double,"Qm",PADDR(Qm),
 			PT_double,"Qh",PADDR(load.heatgain),
+			PT_double,"dTair",PADDR(dTair),
 #endif
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
@@ -906,6 +907,7 @@ int house_e::init(OBJECT *parent)
 	if (volume==0) volume = ceiling_height*floor_area;									// volume of air [cf]
 	if (air_mass==0) air_mass = air_density*volume;							// mass of air [lb]
 	if (air_thermal_mass==0) air_thermal_mass = air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]
+	if (air_heat_fraction==0) air_heat_fraction=0.5;
 	if (air_heat_fraction<0.0 || air_heat_fraction>1.0) throw "air heat fraction is not between 0 and 1";
 	Tmaterials = Tair;	
 	
@@ -1122,7 +1124,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 			const double e1 = k1*exp(r1*dt);
 			const double e2 = k2*exp(r2*dt);
 			Tair = e1 + e2 + Teq;
-			Tmaterials = A3*e1 + A3*e2 + Qm/Hm + (Qm+Qa)/Ua + Tout;
+			Tmaterials = A3*e1 + A4*e2 + Qm/Hm + (Qm+Qa)/Ua + Tout;
 		}
 	}
 
