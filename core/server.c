@@ -25,6 +25,8 @@ void server_request(int);	// Function to handle clients' request(s)
 #include "globals.h"
 #include "object.h"
 
+#include "legal.h"
+
 void *server_routine(int sockfd)
 {
 	struct sockaddr_in cli_addr;
@@ -202,7 +204,7 @@ void handleRequest(int newsockfd)
 			}
 		}
 		*********************/
-		sprintf(xml,"HTTP/1.1 200 OK\nServer: gridlabd\nConnection: close\nContent-type: text/xml\n\n<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<resultset>\n\t<answer>%s\t</answer>\n</resultset>\n", output);
+		sprintf(xml,"HTTP/1.1 200 OK\nServer: gridlabd %.%.% (%s) \nConnection: close\nContent-type: text/xml\n\n<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<resultset>\n\t<answer>%s\t</answer>\n</resultset>\n", REV_MAJOR, REV_MINOR, REV_PATCH, BRANCH, output);
 		write(newsockfd,xml,strlen(xml));
 	}
 	output_verbose("response [%s] sent", output);
