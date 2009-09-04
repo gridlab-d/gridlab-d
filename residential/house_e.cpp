@@ -913,7 +913,7 @@ int house_e::init(OBJECT *parent)
 	
 	// calculate thermal constants
 #define Ca (air_thermal_mass)
-#define Tout (*(pTout))
+#define Tout (outside_temperature)
 #define Ua (envelope_UA)
 #define Cm (house_content_thermal_mass)
 #define Hm (house_content_heat_transfer_coeff)
@@ -939,6 +939,10 @@ int house_e::init(OBJECT *parent)
 	r2 = r-rr;
 	A3 = Ca/Hm * r1 + (Ua+Hm)/Hm;
 	A4 = Ca/Hm * r2 + (Ua+Hm)/Hm;
+
+	// outside temperature init
+	extern double default_outdoor_temperature;
+	outside_temperature = default_outdoor_temperature;
 
 	// connect any implicit loads
 	attach_implicit_enduses();
@@ -1189,8 +1193,8 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	gl_debug("house %s (%d) time to next event is indeterminate", obj->name, obj->id);
 #endif
 		// try again in 1 second if there is a solution in the future
-		if (sgn(dTair)==sgn(Tevent-Tair)) 
-			if (t2>t1) t2 = t1+1;
+		//if (sgn(dTair)==sgn(Tevent-Tair) && Tevent) 
+		//	if (t2>t1) t2 = t1+1;
 	}
 
 	// if the solution is less than time resolution
