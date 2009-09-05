@@ -617,7 +617,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				if (strcmp(DLEXT,".dylib")==0)
 					strcpy(exportsyms,"-dynamiclib");
 				
-				sprintf(execstr, "%s %s %s -I\"%s\" -c \"%s\" -o \"%s\"", getenv("CXX")?getenv("CXX"):"g++", getenv("CXXFLAGS")?getenv("CXXFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", global_include, cfile, ofile);
+				sprintf(execstr, "%s %s %s -I \"%s\" -c \"%s\" -o \"%s\"", getenv("CXX")?getenv("CXX"):"g++", getenv("CXXFLAGS")?getenv("CXXFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", global_include, cfile, ofile);
 				output_verbose("compile string: \"%s\"", execstr);
 				//if (exec("g++ %s -I\"%s\" -c \"%s\" -o \"%s\"", global_debug_output?"-g -O0":"", global_include, cfile, ofile)==FAILED)
 				if(exec(execstr)==FAILED)

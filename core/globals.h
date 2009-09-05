@@ -83,7 +83,12 @@ GLOBAL char global_urlbase[1024] /**< default urlbase used for online resources 
 	INIT("http://www.gridlabd.org/"); 
 #endif
 GLOBAL unsigned int global_randomseed INIT(0); /**< random number seed (default 0 means true randomization, non-zero means deterministic random state) */
-GLOBAL char global_include[1024] INIT(""); /**< include path for models and code headers */
+GLOBAL char global_include[1024] 
+#ifdef WIN32
+	INIT(""); 
+#else
+	INIT("/usr/etc/gridlabd");
+#endif /**< include path for models and code headers */
 GLOBAL int global_gdb INIT(0); /**< select gdb debugger */
 GLOBAL char global_trace[1024] INIT(""); /**< comma separate list of runtime calls that will be traced */
 GLOBAL int global_gdb_window INIT(0); /**< start gdb in a separate window */

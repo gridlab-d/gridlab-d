@@ -1006,7 +1006,7 @@ inline int gl_unit_convert(UNIT *from, UNIT *to, double &value) { return callbac
 inline UNIT *gl_unit_find(char *name) { return callback->unit_find(name);};
 inline char *gl_find_file(char *name, char *path, int mode) { return callback->file.find_file(name,path,mode); };
 
-inline gl_printtime (*callback->time.convert_from_timestamp)
+#define gl_printtime (*callback->time.convert_from_timestamp)
 
 inline char *gl_strftime(DATETIME *dt, char *buffer, int size) { return callback->time.strdatetime(dt,buffer,size)?buffer:NULL;};
 inline char *gl_strftime(TIMESTAMP ts)
