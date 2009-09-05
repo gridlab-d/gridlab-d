@@ -211,6 +211,11 @@ void triplex_line::recalc(void)
 	}
 	else if (solver_method == SM_NR)
 	{
+		//Copied from SM_FBS - used for extra current flow (not used in any powerflow convergence calculations)
+		tn[0] = -zp13/zp33;
+		tn[1] = -zp23/zp33;
+		tn[2] = 0;
+
 		multiply(1/(length/5280.0),zs,b_mat); // Length comes in ft, convert to miles.
 		multiply(1/(length/5280.0),zs,B_mat); // We're in admittance form now, so multiply by 1/L.
 	}
@@ -253,7 +258,7 @@ void triplex_line::recalc(void)
 */
 EXPORT int commit_triplex_line(OBJECT *obj)
 {
-	if (solver_method==SM_FBS)
+	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{
 		triplex_line *plink = OBJECTDATA(obj,triplex_line);
 		plink->calculate_power_splitphase();

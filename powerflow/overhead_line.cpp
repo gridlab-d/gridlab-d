@@ -285,7 +285,7 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 */
 EXPORT int commit_overhead_line(OBJECT *obj)
 {
-	if (solver_method==SM_FBS)
+	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{
 		overhead_line *plink = OBJECTDATA(obj,overhead_line);
 		plink->calculate_power();

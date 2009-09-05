@@ -131,6 +131,9 @@ int node::create(void)
 	prev_NTime = 0;
 	SubNode = NONE;
 	SubNodeParent = NULL;
+	NR_subnode_reference = NULL;
+
+	YVs[0] = YVs[1] = YVs[2] = 0.0;
 
 	GS_converged=false;
 
@@ -157,8 +160,6 @@ int node::init(OBJECT *parent)
 //#endif
 	if (solver_method==SM_NR)
 	{
-		NR_bus_count++;		//Update global bus count for NR solver
-		
 		OBJECT *obj = OBJECTHDR(this);
 
 		FINDLIST *buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
@@ -170,13 +171,92 @@ int node::init(OBJECT *parent)
 			be designated "bustype SWING".
 			*/
 		if (buslist->hit_count>1)
-			gl_warning("NR: more than one swing bus found, you must specify which is this node's parent");
+			GL_THROW("NR: more than one swing bus found!");
 			/*	TROUBLESHOOT
-			More than one swing bus was found.  Newton-Raphson requires you specify the swing
-			bus this node is connected to via the parent property.
+			More than one swing bus was found.  Newton-Raphson currently only supports one swing bus
+			at this time.  Please split the system into individual files or consider merging the system to
+			only one swing bus.
 			*/
 
+		//Get the swing bus object identifier
 		OBJECT *SwingBusObj = gl_find_next(buslist,NULL);
+
+		//Check for parents to see if they are a parent/childed load
+		if ((obj->parent!=NULL) && (OBJECTDATA(obj->parent,node)->bustype!=SWING))	//Has a parent that isn't a swing bus, let's see if it is a node and link it up 
+		{																			//(this will break anything intentionally done this way - e.g. switch between two nodes)
+			//See if it is a node/load/meter
+			if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow")))
+				GL_THROW("NR: Parent is not a load or node!");
+				/*  TROUBLESHOOT
+				A Newton-Raphson parent-child connection was attempted on a non-node.  The parent object must be a node, load, or meter object in the 
+				powerflow module for this connection to be successful.
+				*/
+
+			node *parNode = OBJECTDATA(obj->parent,node);
+
+			//Make sure our phases align, otherwise become angry (this may be modified in the future)
+			if (parNode->phases!=this->phases)
+				throw("NR: Parent and child node phases do not match!");
+				/*	TROUBLESHOOT
+				The implementation of parent-child connections in Newton-Raphson requires the child
+				object have the same phases as the parent.  Match the phases appropriately.
+				*/
+
+			if ((parNode->SubNode==CHILD) | ((obj->parent->parent!=SwingBusObj) && (obj->parent->parent!=NULL)))	//Our parent is another child
+			{
+				GL_THROW("NR: Grandchildren are not supported at this time!");
+				/*  TROUBLESHOOT
+				Parent-child connections in Newton-Raphson may not go more than one level deep.  Grandchildren
+				(a node parented to a node parented to a node) are unsupported at this time.  Please rearrange your
+				parent-child connections appropriately, figure out a different way of performing the required connection,
+				or, if your system is radial, consider using forward-back sweep.
+				*/
+			}
+			else	//Our parent is unchilded (or has the swing bus as a parent)
+			{
+				//Set appropriate flags (store parent name and flag self & parent)
+				SubNode = CHILD;
+				SubNodeParent = obj->parent;
+				
+				parNode->SubNode = PARENT;
+				parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
+
+				//Update the pointer to our parent's NR pointer (so links can go there appropriately)
+				NR_subnode_reference = &(parNode->NR_node_reference);
+			}
+
+			//Give us no parent now, and let it go to SWING (otherwise generic check fails)
+			obj->parent=NULL;
+
+			//Flag our index as a child as well, as yet another catch
+			NR_node_reference = -99;
+
+			//Adjust our rank appropriately
+			//Ranking - similar to GS
+			gl_set_rank(obj,3);				//Put us below normal nodes (but above links)
+												//This way load postings should propogate during sync (bottom-up)
+
+			//Zero out last child power vector (used for updates)
+			last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = complex(0,0);
+			last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
+			last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
+
+		}
+		else	//Non-childed node gets the count updated
+		{
+			NR_bus_count++;		//Update global bus count for NR solver
+
+			//Update ranking
+			//Ranking - similar to GS
+			if (bustype==SWING)
+			{
+				gl_set_rank(obj,5);
+			}
+			else	
+			{		
+				gl_set_rank(obj,4);
+			}
+		}
 
 		if ((obj->parent==NULL) && (bustype!=SWING)) // need to find a swing bus to be this node's parent
 		{
@@ -509,7 +589,10 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 
 	if (solver_method==SM_NR)
 	{
-		if (NR_busdata==NULL || NR_branchdata==NULL)	//First time any NR in
+		//Zero the accumulators for later (meters and such)
+		current_inj[0] = current_inj[1] = current_inj[2] = 0.0;
+
+		if (NR_busdata==NULL || NR_branchdata==NULL)	//First time any NR in (this should be the swing bus doing this)
 		{
 			NR_busdata = (BUSDATA *)gl_malloc(NR_bus_count * sizeof(BUSDATA));
 			if (NR_busdata==NULL)
@@ -1062,35 +1145,91 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		}
 	case SM_NR:
 		{
-		if ((NR_curr_bus==NR_bus_count) && (bustype==SWING))	//Only run the solver once everything has populated
-		{
-			int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata);
-			if (result==0)
+			if (SubNode==CHILD)
 			{
-				GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
-				/*  TROUBLESHOOT
-				Newton-Raphson has failed to complete even a single iteration on the powerflow.  This is an indication
-				that the method will not solve the system and may have a singularity or other ill-favored condition in the
-				system matrices.
-				*/
+				//Post our loads up to our parent
+				node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+
+				if (gl_object_isa(SubNodeParent,"load","powerflow"))	//Load gets cleared at every presync, so reaggregate :(
+				{
+					//Import power and "load" characteristics
+					ParToLoad->power[0]+=power[0];
+					ParToLoad->power[1]+=power[1];
+					ParToLoad->power[2]+=power[2];
+
+					ParToLoad->shunt[0]+=shunt[0];
+					ParToLoad->shunt[1]+=shunt[1];
+					ParToLoad->shunt[2]+=shunt[2];
+
+					ParToLoad->current[0]+=current[0];
+					ParToLoad->current[1]+=current[1];
+					ParToLoad->current[2]+=current[2];
+				}
+				else if (gl_object_isa(SubNodeParent,"node","powerflow"))	//"parented" node - update values - This has to go to the bottom
+				{												//since load/meter share with node (and load handles power in presync)
+					//Import power and "load" characteristics
+					ParToLoad->power[0]+=power[0]-last_child_power[0][0];
+					ParToLoad->power[1]+=power[1]-last_child_power[0][1];
+					ParToLoad->power[2]+=power[2]-last_child_power[0][2];
+
+					ParToLoad->shunt[0]+=shunt[0]-last_child_power[1][0];
+					ParToLoad->shunt[1]+=shunt[1]-last_child_power[1][1];
+					ParToLoad->shunt[2]+=shunt[2]-last_child_power[1][2];
+
+					ParToLoad->current[0]+=current[0]-last_child_power[2][0];
+					ParToLoad->current[1]+=current[1]-last_child_power[2][1];
+					ParToLoad->current[2]+=current[2]-last_child_power[2][2];
+				}
+				else
+					throw("NR: Object %d is a child of something that it shouldn't be!",obj->id);
+					/*  TROUBLESHOOT
+					A Newton-Raphson object is childed to something it should not be (not a load, node, or meter).
+					This should have been caught earlier and is likely a bug.  Submit your code and a bug report using the trac website.
+					*/
+
+				//Update previous power tracker
+				last_child_power[0][0] = power[0];
+				last_child_power[0][1] = power[1];
+				last_child_power[0][2] = power[2];
+
+				last_child_power[1][0] = shunt[0];
+				last_child_power[1][1] = shunt[1];
+				last_child_power[1][2] = shunt[2];
+
+				last_child_power[2][0] = current[0];
+				last_child_power[2][1] = current[1];
+				last_child_power[2][2] = current[2];
 			}
-			else if (result<0)	//Failure to converge, but we just let it stay where we are for now
+
+			if ((NR_curr_bus==NR_bus_count) && (bustype==SWING))	//Only run the solver once everything has populated
 			{
-				gl_verbose("Newton-Raphson failed to converge, sticking at same iteration.");
-				/*  TROUBLESHOOT
-				Newton-Raphson failed to converge in the number of iterations specified in NR_iteration_limit.
-				It will try again (if the global iteration limit has not been reached).
-				*/
-				return t0;
+				int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata);
+				if (result==0)
+				{
+					GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
+					/*  TROUBLESHOOT
+					Newton-Raphson has failed to complete even a single iteration on the powerflow.  This is an indication
+					that the method will not solve the system and may have a singularity or other ill-favored condition in the
+					system matrices.
+					*/
+				}
+				else if (result<0)	//Failure to converge, but we just let it stay where we are for now
+				{
+					gl_verbose("Newton-Raphson failed to converge, sticking at same iteration.");
+					/*  TROUBLESHOOT
+					Newton-Raphson failed to converge in the number of iterations specified in NR_iteration_limit.
+					It will try again (if the global iteration limit has not been reached).
+					*/
+					return t0;
+				}
+				else
+					return t1;
 			}
-			else
+			else if (NR_curr_bus==NR_bus_count)	//Population complete, we're not swing, let us go (or we never go on)
 				return t1;
-		}
-		else if (NR_curr_bus==NR_bus_count)	//Population complete, we're not swing, let us go (or we never go on)
-			return t1;
-		else	//Population of data busses is not complete.  Flag us for a go-around, they should be ready next time
-			return t0;
-		break;
+			else	//Population of data busses is not complete.  Flag us for a go-around, they should be ready next time
+				return t0;
+			break;
 		}
 	default:
 		throw "unsupported solver method";
@@ -1145,6 +1284,38 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	//kva_in = (voltageA*~current[0] + voltageB*~current[1] + voltageC*~current[2])/1000; /*...or not.  Note sure how this works for a node*/
 
 #endif
+	if ((solver_method == SM_NR) && (SubNode==CHILD))	//Remove child contributions
+	{
+		node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+
+		//Remove power and "load" characteristics
+		ParToLoad->power[0]-=last_child_power[0][0];
+		ParToLoad->power[1]-=last_child_power[0][1];
+		ParToLoad->power[2]-=last_child_power[0][2];
+
+		ParToLoad->shunt[0]-=last_child_power[1][0];
+		ParToLoad->shunt[1]-=last_child_power[1][1];
+		ParToLoad->shunt[2]-=last_child_power[1][2];
+
+		ParToLoad->current[0]-=last_child_power[2][0];
+		ParToLoad->current[1]-=last_child_power[2][1];
+		ParToLoad->current[2]-=last_child_power[2][2];
+
+		//Update previous power tracker - if we haven't really converged, things will mess up without this
+		//Power
+		last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = 0.0;
+
+		//Shunt
+		last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = 0.0;
+
+		//Current
+		last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = 0.0;
+
+		//Steal our paren't voltages as well
+		voltage[0] = ParToLoad->voltage[0];
+		voltage[1] = ParToLoad->voltage[1];
+		voltage[2] = ParToLoad->voltage[2];
+	}
 
 	/* check for voltage control requirement */
 	if (require_voltage_control==TRUE)
@@ -1171,7 +1342,97 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 	if (solver_method==SM_NR)
 	{
-		//Nothing here yet
+		if (has_phase(PHASE_D))	//Delta connection
+		{
+			complex delta_shunt[3];
+			complex delta_current[3];
+
+			//Convert delta connected impedance
+			delta_shunt[0] = voltageAB*shunt[0];
+			delta_shunt[1] = voltageBC*shunt[1];
+			delta_shunt[2] = voltageCA*shunt[2];
+
+			//Convert delta connected power
+			delta_current[0]= (voltaged[0]==0) ? complex(0,0) : ~(power[0]/voltageAB);
+			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power[1]/voltageBC);
+			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power[2]/voltageCA);
+
+			current_inj[0] += delta_shunt[0]-delta_shunt[2];	//calculate "load" current (line current) - PQZ
+			current_inj[1] += delta_shunt[1]-delta_shunt[0];
+			current_inj[2] += delta_shunt[2]-delta_shunt[1];
+
+			current_inj[0] +=delta_current[0]-delta_current[2];	//Calculate "load" current (line current) - PQP
+			current_inj[1] +=delta_current[1]-delta_current[0];
+			current_inj[2] +=delta_current[2]-delta_current[1];
+
+			current_inj[0] +=current[0]-current[2];	//Calculate "load" current (line current) - PQI
+			current_inj[1] +=current[1]-current[0];
+			current_inj[2] +=current[2]-current[1];
+		}
+		else if (has_phase(PHASE_S))	//Split phase node
+		{
+			complex vdel;
+			complex temp_current[3];
+
+			//Find V12 (just in case)
+			vdel=voltage[0] + voltage[1];
+
+			//Find contributions
+			//Start with the currents (just put them in)
+			temp_current[0] = current[0];
+			temp_current[1] = current[1];
+			temp_current[2] = current12; //current12 is not part of the standard current array
+
+			//Now add in power contributions
+			temp_current[0] += voltage[0] == 0.0 ? 0.0 : ~(power[0]/voltage[0]);
+			temp_current[1] += voltage[1] == 0.0 ? 0.0 : ~(power[1]/voltage[1]);
+			temp_current[2] += vdel == 0.0 ? 0.0 : ~(power[2]/vdel);
+
+			//Last, but not least, admittance/impedance contributions
+			temp_current[0] += shunt[0]*voltage[0];
+			temp_current[1] += shunt[1]*voltage[1];
+			temp_current[2] += shunt[2]*vdel;
+
+			//Convert 'em to line currents
+			current_inj[0] += (temp_current[0] + temp_current[2]);
+			current_inj[1] += (-temp_current[1] - temp_current[2]);
+
+			////Get information
+			//if ((Triplex_Data != NULL) && ((Triplex_Data[0] != 0.0) || (Triplex_Data[1] != 0.0)))
+			//{
+			//	current_inj[2] += Triplex_Data[0]*current_inj[0] + Triplex_Data[1]*current_inj[1];
+			//}
+			//else
+			//{
+			//	current_inj[2] += ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
+			//					   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
+			//						? currentN : -((current_inj[0]-temp_current[2])+(current_inj[1]+temp_current[2]));
+			//}
+		}
+		else					//Wye connection
+		{
+			current_inj[0] += (voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0]);			//PQP needs power converted to current
+			current_inj[1] += (voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1]);
+			current_inj[2] += (voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2]);
+
+			current_inj[0] +=voltage[0]*shunt[0];			//PQZ needs load currents calculated as well
+			current_inj[1] +=voltage[1]*shunt[1];
+			current_inj[2] +=voltage[2]*shunt[2];
+
+			current_inj[0] +=current[0];		//Update load current values if PQI
+			current_inj[1] +=current[1];		
+			current_inj[2] +=current[2];
+		}
+
+		//If we are a child, apply our current injection directly up to our parent (links will handle their end separately, so this should only be connected power)
+		if (SubNode==CHILD)
+		{
+			node *ParLoadObj=OBJECTDATA(SubNodeParent,node);
+
+			ParLoadObj->current_inj[0] += current_inj[0];
+			ParLoadObj->current_inj[1] += current_inj[1];
+			ParLoadObj->current_inj[2] += current_inj[2];
+		}
 	}
 	else if (solver_method==SM_FBS)
 	{

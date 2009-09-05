@@ -339,7 +339,7 @@ void underground_line::test_phases(line_configuration *config, const char ph)
 */
 EXPORT int commit_underground_line(OBJECT *obj)
 {
-	if (solver_method==SM_FBS)
+	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{
 		underground_line *plink = OBJECTDATA(obj,underground_line);
 		plink->calculate_power();

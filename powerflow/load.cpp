@@ -108,7 +108,7 @@ TIMESTAMP load::presync(TIMESTAMP t0)
 
 TIMESTAMP load::sync(TIMESTAMP t0)
 {
-	if ((solver_method==SM_GS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented load
+	if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS/NR and parented load
 	{													//associated with change due to player methods
 
 		if (!(constant_impedance[0].IsZero()))
@@ -155,14 +155,22 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = node::sync(t0);
 
+	return result;
+}
+TIMESTAMP load::postsync(TIMESTAMP t0)
+{
+	//Call node postsync first, otherwise the properties below end up 1 time out of sync (for PCed loads anyways)
+	TIMESTAMP t1 = node::postsync(t0);
+
+	//Moved from sync.  Hopefully it doesn't mess anything up, but these properties are 99% stupid and useless anyways, so meh
 	measured_voltage_A.SetPolar(voltageA.Mag(),voltageA.Arg());  //Used for testing and xml output
 	measured_voltage_B.SetPolar(voltageB.Mag(),voltageB.Arg());
 	measured_voltage_C.SetPolar(voltageC.Mag(),voltageC.Arg());
 	measured_voltage_AB = measured_voltage_A-measured_voltage_B;
 	measured_voltage_BC = measured_voltage_B-measured_voltage_C;
 	measured_voltage_CA = measured_voltage_C-measured_voltage_A;
-	
-	return result;
+
+	return t1;
 }
 
 //////////////////////////////////////////////////////////////////////////
