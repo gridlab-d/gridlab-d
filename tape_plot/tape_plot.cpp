@@ -457,15 +457,16 @@ void close_recorder_wrapper(void)
 
 EXPORT void close_recorder(struct recorder *my)
 {
+	char gnuplot[1024];
 #ifdef WIN32
-	char32 gnuplot;
-	if(my->output == SCREEN)
-		strcpy(gnuplot,"start wgnuplot -persist");
-	else
-		strcpy(gnuplot,"wgnuplot");
+	char *plotcmd = "start wgnuplot";
 #else
-	char *gnuplot = "gnuplot ";
+	char *plotcmd = "gnuplot";
 #endif
+	if(my->output == SCREEN)
+		sprintf(gnuplot,"%s -persist", plotcmd);
+	else
+		strcpy(gnuplot,plotcmd);
 	char32   fname;
 	char32   type;
 	char1024 command;
