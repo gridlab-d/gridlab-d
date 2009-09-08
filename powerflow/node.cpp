@@ -1203,8 +1203,10 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 
 			if ((NR_curr_bus==NR_bus_count) && (bustype==SWING))	//Only run the solver once everything has populated
 			{
-				int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata);
-				if (result==0)
+				bool bad_computation=false;
+
+				int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, maximum_voltage_error, &bad_computation);
+				if (bad_computation==true)
 				{
 					GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
 					/*  TROUBLESHOOT

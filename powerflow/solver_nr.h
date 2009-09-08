@@ -53,6 +53,6 @@ typedef struct {
 } Bus_admit;
 
 
-int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch);
+int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, double max_voltage_error, bool *bad_computations);
 
 #endif

@@ -17,7 +17,6 @@ complex tempPb;
 double Maxmismatch;
 int size_offdiag_PQ;
 int size_diag_fixed;
-//double eps = 0.01; //1.0e-4;
 bool newiter;
 Bus_admit *BA_diag; /// BA_diag store the diagonal elements of the bus admittance matrix, the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 Y_NR *Y_offdiag_PQ; //Y_offdiag_PQ store the row,column and value of off_diagonal elements of 6n*6n Y_NR matrix. No PV bus is included.
@@ -46,7 +45,7 @@ else return c->row_ind - d->row_ind;
 	n>0 to indicate success after n interations, or 
 	n<0 to indicate failure after n iterations
  **/
-int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch)
+int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, double max_voltage_error, bool *bad_computations)
 {
 	//Internal iteration counter - just NR limits
 	int64 Iteration;
@@ -75,9 +74,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	complex delta_current[3], voltageDel[3];
 	complex temp_current[3], temp_power[3], temp_store[3];
 
-	//convergence limit
-	double eps;
-
 	//DV checking array
 	complex DVConvCheck[3];
 	double CurrConvVal;
@@ -97,8 +93,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	unsigned int m,n;
 	double *sol_LU;
 
-	//Calculate the convergence limit - base it off of the swing bus
-	eps = default_maximum_voltage_error * bus[0].V[0].Mag();
+	//Ensure bad computations flag is set first
+	*bad_computations = false;
 
 	//Build the diagnoal elements of the bus admittance matrix	
 	if (BA_diag == NULL)
@@ -2598,11 +2594,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		//New convergence test - voltage check
 		newiter=false;
-		if ( Maxmismatch <= eps)
+		if ( Maxmismatch <= max_voltage_error)
 		{
 			gl_verbose("Power flow calculation converges at Iteration %d \n",Iteration-1);
 		}
-		else if ( Maxmismatch > eps)
+		else if ( Maxmismatch > max_voltage_error)
 			newiter = true;
 
 		/* De-allocate storage. */
@@ -2623,12 +2619,16 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			break;
 	}	//End iteration loop
 
-	gl_warning("Newton-Raphson solution method is not yet supported");
-
+	
 	//Check to see how we are ending
 	if ((Iteration==NR_iteration_limit) && (newiter==true)) //Reached the limit
 		return -Iteration;
-	else	//Must have converged (failure to solve not handled yet)
+	else if (info>0)	//failure of computations (singular matrix, etc.)
+	{
+		*bad_computations = true;	//Flag our output as bad
+		return 0;					//Just return some arbitrary value
+	}
+	else	//Must have converged 
 		return Iteration;
 }
 
