@@ -30,15 +30,10 @@ double surface_angles[8] = {180,135,90,45,0,-45,-90,-135}; // Old surface_angles
  @{
  **/
 int tmy2_reader::open(const char *file){
-	char *newname = gl_findfile((char *)file, NULL, 2);
-	if (newname==NULL){
-		gl_error("tmy2_reader::open: gl_findfile(\"%s\") failed.", file);
-		return 0;
-	}
-	fp = fopen(newname, "r");
+	fp = fopen(file, "r");
 
 	if(fp == NULL){
-		gl_error("tmy2_reader::open() -- fopen failed on \"%s\"", newname);
+		gl_error("tmy2_reader::open() -- fopen failed on \"%s\"", file);
 		return 0;
 	}
 	
