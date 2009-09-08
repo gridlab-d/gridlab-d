@@ -18,8 +18,8 @@ module tape;
 
 object house {
 	object recorder{
-		property panel.power,panel.energy;
-		interval 1800;
+		property panel.power,panel.energy,system_mode,air_temperature,outdoor_temperature;
+		interval -1;
 		limit 400;
 		file house.csv;
 	};

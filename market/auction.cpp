@@ -174,11 +174,11 @@ void auction::clear_market(void)
 			gl_verbose("  supply curve");
 			for (i=0; i<offers.getcount(); i++)
 				//gl_verbose("  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
-			printf("  %4d: %s offers %.3f %s at %.2f $/%s\n",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
+			gl_verbose("  %4d: %s offers %.3f %s at %.2f $/%s\n",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
 				gl_verbose("  demand curve");
 			for (i=0; i<asks.getcount(); i++)
 				//gl_verbose("  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
-			printf("  %4d: %s asks %.3f %s at %.2f $/%s\n",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+			gl_verbose("  %4d: %s asks %.3f %s at %.2f $/%s\n",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
 		}
 
 		i=j=0;
@@ -267,7 +267,7 @@ KEY auction::submit(OBJECT *from, double quantity, double price, KEY key)
 		//gl_warning("  %s resubmits %s from object %s for %.2f %s at $%.2f/%s", 
 			//gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
 			//fabs(quantity), unit, price, unit);
-		printf("  %s resubmits %s from object %s for %.2f %s at $%.2f/%s\n", 
+		gl_verbose("  %s resubmits %s from object %s for %.2f %s at $%.2f/%s\n", 
 			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
 			fabs(quantity), unit, price, unit);
 		BID bid = {from,fabs(quantity),price};
@@ -285,7 +285,7 @@ KEY auction::submit(OBJECT *from, double quantity, double price, KEY key)
 		//gl_warning("  %s receives %s from object %s for %.2f %s at $%.2f/%s", 
 		//	gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
 		//	fabs(quantity), unit, price, unit);
-		printf("  %s receives %s from object %s for %.2f %s at $%.2f/%s\n", 
+		gl_verbose("  %s receives %s from object %s for %.2f %s at $%.2f/%s\n", 
 			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
 			fabs(quantity), unit, price, unit);
 		BID bid = {from,fabs(quantity),price};
