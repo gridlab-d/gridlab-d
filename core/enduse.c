@@ -22,9 +22,12 @@
 
 static enduse *enduse_list = NULL;
 
+#ifdef _DEBUG
+static unsigned int enduse_magic = 0x8c3d7762;
+#endif
+
 int enduse_create(enduse *data)
 {
-	//enduse *e = (enduse*)data;
 	memset(data,0,sizeof(enduse));
 	data->next = enduse_list;
 	enduse_list = data;
@@ -33,13 +36,21 @@ int enduse_create(enduse *data)
 	data->power_factor = 1.0;
 	data->heatgain_fraction = 1.0;
 
+#ifdef _DEBUG
+	data->magic = enduse_magic;
+#endif
 	return 1;
 }
 
 int enduse_init(enduse *e)
 {
-	// check the zip fractions
 	double sum = fabs(e->current_fraction) + fabs(e->impedance_fraction) + fabs(e->power_fraction);
+#ifdef _DEBUG
+	if (e->magic!=enduse_magic)
+		throw_exception("enduse '%s' magic number bad", e->name);
+#endif
+
+	// check the zip fractions
 	if (sum==0)
 	{
 		output_warning("enduse_init(char *name='%s',...) sum of zip fractions is zero, making load constant power", e->name);
@@ -71,6 +82,11 @@ int enduse_initall(void)
 
 TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 {
+#ifdef _DEBUG
+	if (e->magic!=enduse_magic)
+		throw_exception("enduse '%s' magic number bad", e->name);
+#endif
+
 	if (pass==PC_PRETOPDOWN)// && t1>e->t_last)
 	{
 		if (e->t_last>TS_ZERO)

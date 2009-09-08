@@ -57,6 +57,9 @@ typedef struct s_enduse {
 	struct s_object_list *end_obj;
 
 	struct s_enduse *next;
+#ifdef _DEBUG
+	unsigned int magic;
+#endif
 } enduse;
 
 int enduse_create(enduse *addr);
