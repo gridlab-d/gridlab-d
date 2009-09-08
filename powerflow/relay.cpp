@@ -289,6 +289,9 @@ EXPORT int create_relay(OBJECT **obj, OBJECT *parent)
 	return 0;
 }
 
+
+
+/* This can be added back in after tape has been moved to commit
 EXPORT int commit_relay(OBJECT *obj)
 {
 	if (solver_method==SM_FBS)
@@ -298,6 +301,7 @@ EXPORT int commit_relay(OBJECT *obj)
 	}
 	return 1;
 }
+*/
 
 /**
 * Object initialization is called once after all object have been created

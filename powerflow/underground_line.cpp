@@ -337,6 +337,9 @@ void underground_line::test_phases(line_configuration *config, const char ph)
 * @param parent a pointer to the parent of this object
 * @return 1 for a successfully created object, 0 for error
 */
+
+
+/* This can be added back in after tape has been moved to commit
 EXPORT int commit_underground_line(OBJECT *obj)
 {
 	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
@@ -345,7 +348,7 @@ EXPORT int commit_underground_line(OBJECT *obj)
 		plink->calculate_power();
 	}
 	return 1;
-}
+}*/
 EXPORT int create_underground_line(OBJECT **obj, OBJECT *parent)
 {
 	try

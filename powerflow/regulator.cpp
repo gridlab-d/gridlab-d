@@ -508,9 +508,67 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 	
 
 	TIMESTAMP t1 = link::presync(t0);
-	if (t1 <= next_time) return t1;
+	
+	if (solver_method == SM_NR)
+	{
+		//Get matrices for NR
+		int jindex,kindex;
+		complex Ylefttemp[3][3];
+		complex Yto[3][3];
+		complex Yfrom[3][3];
+
+		//Pre-admittancized matrix
+		equalm(b_mat,Yto);
+
+		//Store value into YSto
+		for (jindex=0; jindex<3; jindex++)
+		{
+			for (kindex=0; kindex<3; kindex++)
+			{
+				YSto[jindex*3+kindex]=Yto[jindex][kindex];
+			}
+		}
+		
+		for (jindex=0; jindex<3; jindex++)
+		{
+			Ylefttemp[jindex][jindex] = Yto[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
+			Yfrom[jindex][jindex]=Ylefttemp[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
+		}
+
+
+		//multiply(invratio,Yto,Ylefttemp);		//Scale from admittance by turns ratio
+		//multiply(invratio,Ylefttemp,Yfrom);
+
+		//Store value into YSfrom
+		for (jindex=0; jindex<3; jindex++)
+		{
+			for (kindex=0; kindex<3; kindex++)
+			{
+				YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+			}
+		}
+
+		for (jindex=0; jindex<3; jindex++)
+		{
+			To_Y[jindex][jindex] = Yto[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
+			From_Y[jindex][jindex]=Yfrom[jindex][jindex] * a_mat[jindex][jindex];
+		}
+		//multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
+		//multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
+	}
+
+
+
+
+	if (first_run_flag[0] < 1 || first_run_flag[1] < 1 || first_run_flag[2] < 1) return t1;
+	else if (t1 <= next_time) return t1;
 	else if (next_time != TS_NEVER) return -next_time;
 	else return TS_NEVER;
+}
+TIMESTAMP regulator::postsync(TIMESTAMP t0)
+{
+	TIMESTAMP t1 = link::postsync(t0);
+	return TS_NEVER;
 }
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: regulator
@@ -523,6 +581,10 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 * @param parent a pointer to the parent of this object
 * @return 1 for a successfully created object, 0 for error
 */
+
+
+
+/* This can be added back in after tape has been moved to commit
 EXPORT int commit_regulator(OBJECT *obj)
 {
 	if (solver_method==SM_FBS)
@@ -532,6 +594,7 @@ EXPORT int commit_regulator(OBJECT *obj)
 	}
 	return 1;
 }
+*/
 EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
 {
 	try

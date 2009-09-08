@@ -655,6 +655,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				}
 				else if (SpecialLnk==REGULATOR)	//Regulator
 				{
+					/*
 					//Pre-admittancized matrix
 					equalm(b_mat,Yto);
 
@@ -693,6 +694,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 					}
 					//multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
 					//multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
+					*/
 				}
 				else if (SpecialLnk==SPLITPHASE)	//Split phase
 				{
@@ -1793,6 +1795,15 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		//Compute magnitude of power output
 		power_in = ((fnode->voltage[0]*~current_in[0]).Mag() + (fnode->voltage[1]*~current_in[1]).Mag() + (fnode->voltage[2]*~current_in[2]).Mag());
 		power_out = ((tnode->voltage[0]*~current_out[0]).Mag() + (tnode->voltage[1]*~current_out[1]).Mag() + (tnode->voltage[2]*~current_out[2]).Mag());
+	}
+
+	// This portion can be removed once tape/recorders are being updated in commit.
+	if (solver_method == SM_FBS || solver_method == SM_NR)
+	{			
+		if (has_phase(PHASE_S))
+			calculate_power_splitphase();
+		else
+			calculate_power();
 	}
 
 	return TRET;

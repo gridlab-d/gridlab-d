@@ -402,6 +402,9 @@ EXPORT int init_fuse(OBJECT *obj)
 	}
 }
 
+
+
+/* This can be added back in after tape has been moved to commit
 //Commit timestep - after all iterations are done
 EXPORT int commit_fuse(OBJECT *obj)
 {
@@ -421,6 +424,7 @@ EXPORT int commit_fuse(OBJECT *obj)
 	}
 
 }
+*/
 
 EXPORT TIMESTAMP sync_fuse(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {

@@ -727,6 +727,10 @@ int transformer::init(OBJECT *parent)
 * @param parent a pointer to the parent of this object
 * @return 1 for a successfully created object, 0 for error
 */
+
+
+
+/* This can be added back in after tape has been moved to commit
 EXPORT int commit_transformer(OBJECT *obj)
 {	
 	if (solver_method==SM_FBS)
@@ -739,6 +743,7 @@ EXPORT int commit_transformer(OBJECT *obj)
 	}
 	return 1;
 }
+*/
 EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 {
 	try

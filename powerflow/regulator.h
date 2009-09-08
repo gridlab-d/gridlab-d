@@ -47,6 +47,7 @@ public:
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP presync(TIMESTAMP t0);
+	TIMESTAMP postsync(TIMESTAMP t0);
 	int isa(char *classname);
 };
 

@@ -256,6 +256,10 @@ void triplex_line::recalc(void)
 * @param parent a pointer to the parent of this object
 * @return 1 for a successfully created object, 0 for error
 */
+
+
+
+/* This can be added back in after tape has been moved to commit
 EXPORT int commit_triplex_line(OBJECT *obj)
 {
 	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
@@ -265,6 +269,7 @@ EXPORT int commit_triplex_line(OBJECT *obj)
 	}
 	return 1;
 }
+*/
 EXPORT int create_triplex_line(OBJECT **obj, OBJECT *parent)
 {
 	try

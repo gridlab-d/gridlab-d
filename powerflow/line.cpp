@@ -111,6 +111,10 @@ int line::isa(char *classname)
 * @param parent a pointer to the parent of this object
 * @return 1 for a successfully created object, 0 for error
 */
+
+
+
+/* This can be added back in after tape has been moved to commit
 EXPORT int commit_line(OBJECT *obj)
 {
 	if (solver_method==SM_FBS)
@@ -120,6 +124,7 @@ EXPORT int commit_line(OBJECT *obj)
 	}
 	return 1;
 }
+*/
 EXPORT int create_line(OBJECT **obj, OBJECT *parent)
 {
 	try
