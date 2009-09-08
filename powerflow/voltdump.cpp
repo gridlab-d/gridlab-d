@@ -100,7 +100,7 @@ void voltdump::dump(TIMESTAMP t){
 			fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),pnode->voltage[0].Re(),pnode->voltage[0].Im(),pnode->voltage[1].Re(),pnode->voltage[1].Im(),pnode->voltage[2].Re(),pnode->voltage[2].Im());
 		}
 	}
-
+	fclose(outfile);
 }
 
 int voltdump::commit(TIMESTAMP t){
