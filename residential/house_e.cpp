@@ -1041,7 +1041,7 @@ void house_e::update_model(double dt)
 	int i;
 	for (i=0; i<9; i++)
 		Qs += pSolar[i];
-	Qs *= 3.412 * (gross_wall_area*window_wall_ratio) / 8.0 * glazing_shgc;
+	Qs *= 3.412 * (gross_wall_area*window_wall_ratio) / 8.0 * (1 - glazing_shgc);
 	if (Qs<0)
 		throw "solar gain is negative";
 
