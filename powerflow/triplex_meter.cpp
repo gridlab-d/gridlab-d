@@ -152,12 +152,12 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	measured_power = indiv_measured_power[0] + indiv_measured_power[1] + indiv_measured_power[2];
 
 	measured_real_power = (indiv_measured_power[0]).Re()
-						+ (indiv_measured_power[0]).Re()
-						+ (indiv_measured_power[0]).Re();
+						+ (indiv_measured_power[1]).Re()
+						+ (indiv_measured_power[2]).Re();
 
 	measured_reactive_power = (indiv_measured_power[0]).Im()
-							+ (indiv_measured_power[0]).Im()
-							+ (indiv_measured_power[0]).Im();
+							+ (indiv_measured_power[1]).Im()
+							+ (indiv_measured_power[2]).Im();
 
 	if (measured_real_power>measured_demand) 
 		measured_demand=measured_real_power;
