@@ -34,6 +34,12 @@ complex_assert::complex_assert(MODULE *module)
 				PT_KEYWORD,"ONCE_FALSE",ONCE_FALSE,
 				PT_KEYWORD,"ONCE_TRUE",ONCE_TRUE,
 				PT_KEYWORD,"ONCE_DONE",ONCE_DONE,
+			PT_enumeration, "operation", PADDR(operation),
+				PT_KEYWORD,"FULL",FULL,
+				PT_KEYWORD,"REAL",REAL,
+				PT_KEYWORD,"IMAGINARY",IMAGINARY,
+				PT_KEYWORD,"MAGNITUDE",MAGNITUDE,
+				PT_KEYWORD,"ANGLE",ANGLE, // If using, please specify in radians
 			PT_complex, "value", PADDR(value),
 			PT_double, "within", PADDR(within),
 			PT_char32, "target", PADDR(target),	
@@ -45,6 +51,7 @@ complex_assert::complex_assert(MODULE *module)
 		value = 0.0;
 		once = ONCE_FALSE;
 		once_value = 0;
+		operation = FULL;
 	}
 }
 
@@ -142,19 +149,52 @@ EXPORT int commit_complex_assert(OBJECT *obj)
 	}
 	else if (ca->status == ca->ASSERT_TRUE)
 	{
-		complex error = *x - ca->value;
-		double real_error = error.Re();
-		double imag_error = error.Im();
-		if ((_isnan(real_error) || abs(real_error)>ca->within)||(_isnan(imag_error) || abs(imag_error)>ca->within)){
-			if (_isnan(real_error) || abs(real_error)>ca->within) {
+		if (ca->operation == ca->FULL || ca->operation == ca->REAL || ca->operation == ca->IMAGINARY)
+		{	
+			complex error = *x - ca->value;
+			double real_error = error.Re();
+			double imag_error = error.Im();
+	
+			if ((_isnan(real_error) || abs(real_error)>ca->within) && (ca->operation == ca->FULL || ca->operation == ca->REAL))
+			{
 				gl_verbose("Assert failed on %s: real part of %s %g not within %f of given value %g", 
 				gl_name(obj->parent,buff,64), ca->target, x->Re(), ca->within, ca->value.Re());
+
+				return 0;
 			}
-			if (_isnan(imag_error) || abs(imag_error)>ca->within) {
+			if ((_isnan(imag_error) || abs(imag_error)>ca->within) && (ca->operation == ca->FULL || ca->operation == ca->IMAGINARY))
+			{
 				gl_verbose("Assert failed on %s: imaginary part of %s %+gi not within %f of given value %+gi", 
 				gl_name(obj->parent,buff,64), ca->target, x->Im(), ca->within, ca->value.Im());
+
+				return 0;
 			}
-			return 0;
+		}
+		else if (ca->operation == ca->MAGNITUDE)
+		{
+			complex val = *x;
+			double magnitude_error = val.Mag() - ca->value.Mag();
+
+			if ( _isnan(magnitude_error) || abs(magnitude_error) > ca->within )
+			{
+				gl_verbose("Assert failed on %s: Magnitude of %s not within %f of given value %g", 
+				gl_name(obj->parent,buff,64), ca->target, ca->within, ca->value.Mag());
+
+				return 0;
+			}
+		}
+		else if (ca->operation == ca->ANGLE)
+		{
+			complex val = *x;
+			double angle_error = val.Arg() - ca->value.Arg();
+
+			if ( _isnan(angle_error) || abs(angle_error) > ca->within )
+			{
+				gl_verbose("Assert failed on %s: Angle of %s not within %f of given value %g", 
+				gl_name(obj->parent,buff,64), ca->target, ca->within, ca->value.Arg());
+
+				return 0;
+			}
 		}
 	}
 	else if (ca->status == ca->ASSERT_FALSE)
