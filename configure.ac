@@ -140,6 +140,7 @@ GLD_GET_NPROCS
 # DO NOT EDIT THE FOLLOWING LINE
 AC_CONFIG_FILES([./Makefile \
 	core/Makefile \
+	core/rt/Makefile \
 	assert/Makefile \
 	climate/Makefile \
 	commercial/Makefile \

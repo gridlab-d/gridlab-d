@@ -1,3 +1,4 @@
+SUBDIRS=rt
 etcdir=$(prefix)/etc
 pkgetcdir=$(etcdir)/$(PACKAGE)
 tmydir=$(etcdir)/tmy
