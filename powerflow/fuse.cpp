@@ -130,23 +130,58 @@ int fuse::init(OBJECT *parent)
 		}
 	}
 
-	//Check to see which phases we have
-	//Phase A
-	if ((phases & PHASE_A) == PHASE_A)
+	if (solver_method==SM_FBS)
 	{
-		a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 1.0;
-	}
+		//Check to see which phases we have
+		//Phase A
+		if ((phases & PHASE_A) == PHASE_A)
+		{
+			a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 1.0;
+		}
 
-	//Phase B
-	if ((phases & PHASE_B) == PHASE_B)
-	{
-		a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 1.0;
-	}
+		//Phase B
+		if ((phases & PHASE_B) == PHASE_B)
+		{
+			a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 1.0;
+		}
 
-	//Phase C
-	if ((phases & PHASE_C) == PHASE_C)
+		//Phase C
+		if ((phases & PHASE_C) == PHASE_C)
+		{
+			a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = 1.0;
+		}
+	}
+	else if (solver_method==SM_NR)
 	{
-		a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = 1.0;
+		SpecialLnk = SWITCH;	//Flag us as a switch, since we'll work the same way anyways
+
+		//Check to see which phases we have
+		//Phase A
+		if ((phases & PHASE_A) == PHASE_A)
+		{
+			From_Y[0][0] = complex(1e4,1e4);
+		}
+
+		//Phase B
+		if ((phases & PHASE_B) == PHASE_B)
+		{
+			From_Y[1][1] = complex(1e4,1e4);
+		}
+
+		//Phase C
+		if ((phases & PHASE_C) == PHASE_C)
+		{
+			From_Y[2][2] = complex(1e4,1e4);
+		}
+	}
+	else
+	{
+		GL_THROW("Fuses are not supported by this solver method");
+		/*  TROUBLESHOOT
+		Fuses are currently only supported in Forward-Back Sweep and
+		Newton-Raphson Solvers.  Using them in other solvers is
+		untested and may provide erroneous answers (if any at all).
+		*/
 	}
 
 	return result;
@@ -323,7 +358,16 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
 			if ((fcurr[indexval].Mag() > current_limit) || (tcurr[indexval].Mag() > current_limit))	//We've exceeded the limit
 			{
 				*valstate = BLOWN;	//Trip us
-				A_mat[indexval][indexval] = d_mat[indexval][indexval] = 0.0;
+
+				//Set us up appropriately
+				if (solver_method==SM_FBS)
+				{
+					A_mat[indexval][indexval] = d_mat[indexval][indexval] = 0.0;
+				}
+				else if (solver_method==SM_NR)
+				{
+					From_Y[indexval][indexval] = complex(0.0,0.0);
+				}
 
 				//Get an update time
 				*fixtime = Prev_Time + (int64)(3600*gl_random_exponential(1.0/mean_replacement_time));
@@ -334,7 +378,14 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
 			else	//Still good
 			{
 				//Ensure matrices are up to date in case someone manually set things
-				A_mat[indexval][indexval] = d_mat[indexval][indexval] = 1.0;
+				if (solver_method==SM_FBS)
+				{
+					A_mat[indexval][indexval] = d_mat[indexval][indexval] = 1.0;
+				}
+				else if (solver_method==SM_NR)
+				{
+					From_Y[indexval][indexval] = complex(1e4,1e4);
+				}
 			}
 		}
 		else						//We're blown
@@ -342,7 +393,14 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
 			if (*fixtime <= Prev_Time)	//Technician has arrived and replaced us!!
 			{
 				//Fix us
-				A_mat[indexval][indexval] = d_mat[indexval][indexval] = 1.0;
+				if (solver_method==SM_FBS)
+				{
+					A_mat[indexval][indexval] = d_mat[indexval][indexval] = 1.0;
+				}
+				else if (solver_method==SM_NR)
+				{
+					From_Y[indexval][indexval] = complex(1e4,1e4);
+				}
 
 				*valstate = GOOD;
 				*fixtime = TS_NEVER;	//Update the time check just in case
@@ -353,7 +411,14 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
 			else //Still driving there or on break, no fixed yet
 			{
 				//Ensure matrices are up to date in case someone manually blew us (or a third, off state is implemented)
-				A_mat[indexval][indexval] = d_mat[indexval][indexval] = 0.0;
+				if (solver_method==SM_FBS)
+				{
+					A_mat[indexval][indexval] = d_mat[indexval][indexval] = 0.0;
+				}
+				else if (solver_method==SM_NR)
+				{
+					From_Y[indexval][indexval] = complex(0.0,0.0);
+				}
 			}
 		}
 	}
@@ -410,7 +475,7 @@ EXPORT int commit_fuse(OBJECT *obj)
 {
 	fuse *fsr = OBJECTDATA(obj,fuse);
 	try {
-		if (solver_method==SM_FBS)
+		if (solver_method==SM_FBS || solver_method==SM_NR)
 		{
 			link *plink = OBJECTDATA(obj,link);
 			plink->calculate_power();
