@@ -151,6 +151,9 @@ Source: ..\..\..\utilities\7za.exe; DestDir: {app}; Flags: deleteafterinstall
 [Registry]
 Root: HKCU; SubKey: Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples"; Flags: uninsdeletevalue deletevalue; Check: not (IsAdminLoggedOn() or IsPowerUserLoggedOn()); AfterInstall: InstallEnvironment(); Tasks: overwriteglpath
 Root: HKLM; SubKey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\etc;{app}\lib;{app}\tmy"; Flags: uninsdeletevalue deletevalue; Check: IsAdminLoggedOn() or IsPowerUserLoggedOn(); AfterInstall: InstallEnvironment(); Tasks: overwriteglpath
+Root: HKLM; Subkey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: expandsz; ValueName: GRIDLABD; ValueData: {app}; Flags: uninsdeletevalue deletevalue
+Root: HKLM; Subkey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: string; ValueName: PATH; ValueData: "%PATH%;{app}\bin"
+Root: HKLM; Subkey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: string; ValueName: PATH; ValueData: "%PATH%;c:\GnuPlot\bin"
 
 [Icons]
 Name: {group}\GridLAB-D Console; Filename: {cmd}; WorkingDir: {app}; Comment: Launch GridLAB-D Command Prompt
@@ -277,5 +280,6 @@ Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourcefor
 Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/gnuplot-win32-4_2_3.zip?use_mirror=superb-west; WorkingDir: {app}; Components: Plotting_Tools
 Filename: {app}\MinGW-5.1.4.exe; WorkingDir: {app}; Components: Compilers
 Filename: {app}\7za.exe; Parameters: x gnuplot-win32-4_2_3.zip; WorkingDir: c:\; Components: Climate_Data\US; Tasks: 
+Filename: {app}\7za.exe; Parameters: x climate-US-2_0.zip; WorkingDir: {app}\tmy; Components: Climate_Data\US; Tasks: 
 [UninstallDelete]
 Name: {app}\tmy\climate-US-2_0.zip; Type: files
