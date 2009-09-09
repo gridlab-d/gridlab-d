@@ -567,8 +567,84 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 }
 TIMESTAMP regulator::postsync(TIMESTAMP t0)
 {
+	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+	node *pTo = OBJECTDATA(to, node);
+
 	TIMESTAMP t1 = link::postsync(t0);
-	return TS_NEVER;
+	
+	if (solver_method == SM_NR)
+	{
+		
+		if (pConfig->connect_type == pConfig->WYE_WYE && pConfig->Control != pConfig->MANUAL)
+		{
+			if (pConfig->Control == pConfig->LINE_DROP_COMP) 
+			{
+				if (pTo) 
+				{
+					volt[0] = pTo->voltageA;
+					volt[1] = pTo->voltageB;
+					volt[2] = pTo->voltageC;
+				}
+				else
+				{	
+					volt[0] = volt[1] = volt[2] = 0.0;
+				}
+			
+				//Calculate outgoing currents
+				complex tmp_mat2[3][3];
+				inverse(d_mat,tmp_mat2);
+
+				curr[0] = tmp_mat2[0][0]*current_in[0]+tmp_mat2[0][1]*current_in[1]+tmp_mat2[0][2]*current_in[2];
+				curr[1] = tmp_mat2[1][0]*current_in[0]+tmp_mat2[1][1]*current_in[1]+tmp_mat2[1][2]*current_in[2];
+				curr[2] = tmp_mat2[2][0]*current_in[0]+tmp_mat2[2][1]*current_in[1]+tmp_mat2[2][2]*current_in[2];
+				
+				for (int i = 0; i < 3; i++) 
+				{
+					V2[i] = volt[i] / ((double) pConfig->PT_ratio);
+					if ((double) pConfig->CT_ratio != 0.0)
+						check_voltage[i] = V2[i] - (curr[i] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[i], pConfig->ldc_X_V[i]);
+					else 
+						check_voltage[i] = V2[i];
+				}
+			}
+ 			else if (pConfig->Control == pConfig->OUTPUT_VOLTAGE) 
+			{
+				if (pTo) 
+				{
+					check_voltage[0] = pTo->voltageA;
+					check_voltage[1] = pTo->voltageB;
+					check_voltage[2] = pTo->voltageC;
+				}
+				else
+				{	
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = 0.0;
+				}
+			}
+			else if (pConfig->Control == pConfig->REMOTE_NODE) 
+			{
+				node *RNode = OBJECTDATA(RemoteNode,node);
+				for (int i = 0; i < 3; i++)
+				{
+					check_voltage[i] = RNode->voltage[i];
+				}
+			}
+				
+			int i;
+			for (i=0; i<3; i++)
+			{
+				if (first_run_flag[i] < 1)
+					return t0;
+			
+				if (check_voltage[i].Mag() < Vlow)
+					return t0;
+
+				if (check_voltage[i].Mag() > Vhigh)
+					return t0;
+			}
+		}
+	}
+
+	return t1;
 }
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: regulator
