@@ -3,6 +3,7 @@ libmarket_la_SOURCES = \
 	init.cpp \
 	main.cpp \
 	auction.cpp auction.h \
+	controller.cpp controller.h \
 	# DO NOT EDIT THE FOLLOWING LINE \
 	# NEWCLASS \
 	market.h            

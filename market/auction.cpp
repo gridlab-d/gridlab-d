@@ -2,7 +2,7 @@
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file auction.cpp
 	@defgroup auction Template for a new object class
-	@ingroup MODULENAME
+	@ingroup market
 
 	The auction object implements the basic auction. 
 

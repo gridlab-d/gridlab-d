@@ -511,6 +511,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\controller.cpp"
+				>
+			</File>
+			<File
 				RelativePath="init.cpp"
 				>
 			</File>
@@ -526,6 +530,10 @@
 			>
 			<File
 				RelativePath="auction.h"
+				>
+			</File>
+			<File
+				RelativePath=".\controller.h"
 				>
 			</File>
 			<File

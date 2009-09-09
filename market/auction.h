@@ -2,7 +2,7 @@
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file auction.h
 	@addtogroup auction
-	@ingroup MODULENAME
+	@ingroup market
 
  @{
  **/
@@ -57,6 +57,7 @@ public:
 	BID last;			/**< last clearing result */
 	BID next;			/**< next clearing result */
 	TIMESTAMP clearat;	/**< next clearing time */
+	TIMESTAMP checkat;	/**< next price check time */
 	object network;		/**< comm network to use */
 
 	double avg24;		/**< daily average of price */
