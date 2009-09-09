@@ -359,8 +359,16 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 			/** @todo autotype global variables when creating them (ticket #26) */
 			var = global_create(name,PT_char1024,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
 		}
-		if (class_string_to_property(var->prop,(void*)var->prop->addr,value)==0)
-			var->prop->addr = "";
+		if (class_string_to_property(var->prop,(void*)var->prop->addr,value)==0){
+			output_error("global_setvar(): unable to set %s to %s",name,value);
+			/* TROUBLESHOOT
+				The input value was not convertable into the desired type for the input
+				variable.  Check the input range, review the input file, and adjust
+				the input value appropriately.
+			 */
+			return FAILED;
+//			var->prop->addr = "";
+		}
 		return SUCCESS;
 	}
 	else
