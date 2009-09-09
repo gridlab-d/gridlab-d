@@ -54,7 +54,7 @@ int controller::create(){
 int controller::init(OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	char tname[32];
-	const char const *namestr = hdr->name ? hdr->name : tname;
+	char *namestr = hdr->name ? hdr->name : tname;
 	double high, low;
 
 	sprintf(tname, "controller:%i", hdr->id);
