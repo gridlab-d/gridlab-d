@@ -145,7 +145,7 @@ Source: ..\..\..\core\rt\gridlabd.h; DestDir: {app}\rt; Flags: ignoreversion
 ;Source: ..\..\..\climate\tmy\build_pkgs; DestDir: {app}\tmy
 Source: ..\..\..\plc\rt\include\plc.h; DestDir: {app}\rt
 Source: ..\..\..\utilities\wget.exe; DestDir: {app}; Flags: deleteafterinstall
-Source: ..\..\..\utilities\7za.exe; DestDir: {app}; Flags: deleteafterinstall
+Source: ..\..\..\utilities\7za.exe; DestDir: {app}
 
 
 [Registry]
