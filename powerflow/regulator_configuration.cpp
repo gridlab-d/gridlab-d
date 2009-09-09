@@ -81,11 +81,6 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 	}
 }
 
-int regulator_configuration::init(OBJECT *parent)
-{
-	return 1;
-}
-
 int regulator_configuration::isa(char *classname)
 {
 	return strcmp(classname,"regulator_configuration")==0;
@@ -114,6 +109,25 @@ int regulator_configuration::create(void)
 	tap_pos[0] = tap_pos[1] = tap_pos[2] = 999;
 	
 	return result;
+}
+int regulator_configuration::init(OBJECT *parent)
+{
+
+	if (Control == LINE_DROP_COMP) 
+	{
+		if (PT_ratio == 0)
+			GL_THROW("power_transducer_ratio must be set as a non-zero value when operating in LINE_DROP_COMP mode");
+	}
+	if (raise_taps == 0 || lower_taps == 0)
+		GL_THROW("raise and lower taps must be specified to non-zero numbers");
+	if (Control != MANUAL)
+	{
+		if (band_width == 0)
+			gl_warning("band_width is set to zero in automatic control. May cause oscillations.");
+		if (regulation == 0)
+			GL_THROW("regulation must be set to a non-zero number when operating in an automatic controlled mode.");
+	}
+	return 1;
 }
 
 //////////////////////////////////////////////////////////////////////////
