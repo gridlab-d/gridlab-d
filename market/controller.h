@@ -28,20 +28,24 @@ public:
 		TC_DOUBLE = 1
 	} CONTROLTYPE;
 	CONTROLTYPE type;
-	char32 target;
+	char32 target1;
 	char32 target2;
 	char32 monitor;
-	double ramp_low, ramp_high;		// k values
+	double ramp1_low, ramp1_high;		// k values
 	double ramp2_low, ramp2_high;
-	double min1, max1;
+	double range1_low, range1_high;
+	double range2_low, range2_high;
+	double min1, max1;					// for convenience
 	double min2, max2;
 	double base1, base2;
+	double set1, set2;
 	double bid_price, bid_quantity;
+	int16 may_run;
 	int64 market_id;
 	auction *market;
 private:
 	double *pTarget1, *pTarget2;
-	double *pMonitor;
+	const double *pMonitor; // we only read the monitored value
 };
 
 
