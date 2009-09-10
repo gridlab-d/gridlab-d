@@ -237,6 +237,7 @@ int convert_to_enumeration(char *buffer, /**< a pointer to the string buffer */
 					       void *data, /**< a pointer to the data */
 					       PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
+	bool found = false;
 	KEYWORD *keys=prop->keywords;
 
 	/* process the keyword list */
@@ -245,10 +246,18 @@ int convert_to_enumeration(char *buffer, /**< a pointer to the string buffer */
 		if (strcmp(keys->name,buffer)==0)
 		{
 			*(unsigned long*)data=keys->value;
-			return 1;
+			found = true;
+			break;
 		}
 	}
-	return sscanf(buffer,"%d",(unsigned long*)data);
+	if (found)
+		return 1;
+	if (strncmp(buffer,"0x",2)==0)
+		return sscanf(buffer+2,"%x",(unsigned long*)data);
+	if (isdigit(*buffer))
+		return sscanf(buffer,"%d",(unsigned long*)data);
+	output_error("keyword '%s' is not valid for property %s", buffer,prop->name);
+	return 0;
 }
 
 /** Convert from an \e set
