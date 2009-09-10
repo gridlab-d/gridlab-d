@@ -145,17 +145,24 @@ int transformer::init(OBJECT *parent)
 				b_mat[0][0] = zt_a;
 				b_mat[1][1] = zt_b;
 				b_mat[2][2] = zt_c;
+
+				d_mat[0][0] = A_mat[0][0] = inv_nt_a;
+				d_mat[1][1] = A_mat[1][1] = inv_nt_b;
+				d_mat[2][2] = A_mat[2][2] = inv_nt_c;
 			}
 			else if ((solver_method==SM_GS) || (solver_method==SM_NR))
 			{
 				complex Izt = complex(1,0) / zt;
-
+				
+				//Pre-inverted
 				b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
+
+				//Same with me
+				d_mat[0][0] = Izt / nt / nt;
+				d_mat[1][1] = Izt / nt / nt;
+				d_mat[2][2] = Izt / nt / nt;
+
 			}
-			//else if (solver_method==SM_NR)
-			//{
-			//	throw "Newton-Raphson solution method is not yet supported";
-			//}
 			else 
 			{
 				GL_THROW("Unsupported solver method");
@@ -173,10 +180,6 @@ int transformer::init(OBJECT *parent)
 			B_mat[0][0] = zt;
 			B_mat[1][1] = zt;
 			B_mat[2][2] = zt;
-
-			d_mat[0][0] = A_mat[0][0] = inv_nt_a;
-			d_mat[1][1] = A_mat[1][1] = inv_nt_b;
-			d_mat[2][2] = A_mat[2][2] = inv_nt_c;
 
 			break;
 		case transformer_configuration::DELTA_DELTA:
@@ -203,21 +206,19 @@ int transformer::init(OBJECT *parent)
 
 				b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
 
-				a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = nt * 2.0 / 3.0;
-				a_mat[0][1] = a_mat[0][2] = a_mat[1][0] = a_mat[1][2] = a_mat[2][0] = a_mat[2][1] = -nt / 3.0;
+				//used for power loss calculations
+				a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = nt;
 
-				d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
+				//Pre-inverted matrix for power losses
+				d_mat[0][0] = Izt / nt / nt;
+				d_mat[1][1] = Izt / nt / nt;
+				d_mat[2][2] = Izt / nt / nt;
+
+				//Generic other matrices that don't get used for NR
 
 				A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(2.0) / (nt * 3.0);
 				A_mat[0][1] = A_mat[0][2] = A_mat[1][0] = A_mat[1][2] = A_mat[2][0] = A_mat[2][1] = complex(-1.0) / (nt * 3.0);
-
-				B_mat[0][0] = B_mat[1][1] = zt;
-				B_mat[2][0] = B_mat[2][1] = -zt;
 			}
-			//else if (solver_method==SM_NR)
-			//{
-			//	throw "Newton-Raphson solution method is not yet supported";
-			//}
 			else 
 			{
 				GL_THROW("Unsupported solver method");
@@ -291,11 +292,8 @@ int transformer::init(OBJECT *parent)
 					B_mat[0][2] = B_mat[1][0] = B_mat[2][1] = 0.0;
 
 					//Other matrices (stolen from above)
-					a_mat[0][1] = a_mat[1][2] = a_mat[2][0] = -nt * 2.0 / 3.0;
-					a_mat[0][2] = a_mat[1][0] = a_mat[2][1] = -nt / 3.0;
-
-					d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
-					d_mat[0][1] = d_mat[1][2] = d_mat[2][0] = complex(-1.0) / nt;
+					equalm(c_mat,a_mat);
+					equalm(B_mat,d_mat);
 
 					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
 					A_mat[0][2] = A_mat[1][0] = A_mat[2][1] = complex(-1.0) / nt;
@@ -318,20 +316,13 @@ int transformer::init(OBJECT *parent)
 					B_mat[0][1] = B_mat[1][2] = B_mat[2][0] = 0.0;
 
 					//Other matrices (stolen from above)
-					a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = nt * 2.0 / 3.0;
-					a_mat[0][1] = a_mat[1][2] = a_mat[2][0] = nt / 3.0;
-
-					d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
-					d_mat[0][2] = d_mat[1][0] = d_mat[2][1] = complex(-1.0) / nt;
+					equalm(c_mat,a_mat);
+					equalm(B_mat,d_mat);
 
 					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
 					A_mat[0][1] = A_mat[1][2] = A_mat[2][0] = complex(-1.0) / nt;
 				}
 			}
-			//else if (solver_method==SM_NR)
-			//{
-			//	throw "Newton-Raphson solution method is not yet supported";
-			//}
 			else 
 			{
 				GL_THROW("Unsupported solver method");
@@ -599,86 +590,6 @@ int transformer::init(OBJECT *parent)
 						a_mat[xindex][yindex]=0.0;
 					}
 				}
-
-				////Jason's stuff - commented for now
-				//zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-				//
-				//if (has_phase(PHASE_A))
-				//{
-				//	a_mat[0][0] = a_mat[1][0] = (z0 / zc + complex(1,0))*nt;
-				//	
-				//	c_mat[0][0] = complex(1,0)*nt / zc;
-				//
-				//	d_mat[0][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
-				//	d_mat[0][1] = complex(-1,0)/nt;
-
-				//	A_mat[0][0] = A_mat[1][0] =  (zc / (zc + z0) ) * complex(1,0)/nt;
-
-				//	gl_warning("Newton-Raphson solution method is not yet supported");
-				//}
-				//else if (has_phase(PHASE_B))
-				//{
-				//	a_mat[0][1] = a_mat[1][1] = (z0 / zc + complex(1,0))*nt;
-				//
-				//	c_mat[1][0] = complex(1,0)*nt / zc;
-
-				//	d_mat[1][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
-				//	d_mat[1][1] = complex(-1,0)/nt;
-
-				//	A_mat[0][1] = A_mat[1][1] = (zc / (zc + z0) ) * complex(1,0)/nt;
-
-				//	gl_warning("Newton-Raphson solution method is not yet supported");
-				//}
-				//else if (has_phase(PHASE_C))
-				//{
-				//	a_mat[0][2] = a_mat[1][2] = (z0 / zc + complex(1,0))*nt;
-				//
-				//	c_mat[2][0] = complex(1,0)*nt / zc;
-
-				//	d_mat[2][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
-				//	d_mat[2][1] = complex(-1,0)/nt;
-
-				//	A_mat[0][2] = A_mat[1][2] = (zc / (zc + z0) ) * complex(1,0)/nt;
-
-				//	gl_warning("Newton-Raphson solution method is not yet supported");
-				//}
-				//else
-				//	GL_THROW("Unsupported number of phases specified for center-tap transformer:%d",obj->id);
-				//	/* TROUBLESHOOT
-				//	Center-tap/split-tap transformers only support a single phase from the standard three
-				//	phase configurations.  Please specify phases A, B, or C and phase S to indicate which
-				//	phase the transformer is attached.  Your transformer configuration will also need to match.
-				//	*/
-				//
-				//// b_mat is now the forward admittance matrix -- inverse of 2x2 FBS b_mat
-				//// B_mat is now the backward admittance matrix -- inverse of 2x2 FBS B_mat
-				//complex tempdet;
-
-				//tempdet = ((complex(nt*nt*nt,0) * z1 + complex(nt,0) * z0) * z2 + complex(nt,0) * z0 * z1) * zc * zc
-				//	    + ((complex(2*nt*nt*nt,0) * z0 * z1 + complex(nt,0) * z0 * z0) * z2 + complex(nt,0) * z0 * z0 * z1) * zc
-				//		+ complex(nt*nt*nt,0) * z0 * z0 * z1 * z2;
-
-				//b_mat[0][0] = ((complex(nt*nt,0) * z2 + z0) * zc * zc + complex(nt*nt) * z0 * z2 * zc) / tempdet;
-				//b_mat[0][1] = (z0 * zc * zc) / tempdet;
-				//b_mat[0][2] = complex(0,0);
-				//b_mat[1][0] = (z0 * zc * zc) / tempdet;
-				//b_mat[1][1] = ((complex(nt*nt,0) * z1 + z0) * zc * zc + complex(nt*nt) * z0 * z1 * zc) / tempdet;
-				//b_mat[1][2] = complex(0,0);
-				//b_mat[2][0] = complex(0,0);
-				//b_mat[2][1] = complex(0,0);
-				//b_mat[2][2] = complex(0,0);
-				//
-				//tempdet = ((complex(nt*nt,0) * z1 + z0) * z2 + z0 * z1) * zc + complex(nt*nt,0) * z0 * z1 * z2;
-
-				//B_mat[0][0] = ((complex(nt*nt,0) * z2 + z0) * zc + complex(nt*nt,0) * z0 * z2) / tempdet;
-				//B_mat[0][1] = -(z0 * zc) / tempdet;
-				//B_mat[1][0] = (z0 * zc) / tempdet;
-				//B_mat[1][1] = -((complex(nt*nt,0) * z1 + z0) * zc + complex(nt*nt,0) * z0 * z1) / tempdet;
-				//B_mat[1][2] = complex(0,0);
-				//B_mat[2][0] = complex(0,0);
-				//B_mat[2][1] = complex(0,0);
-				//B_mat[2][2] = complex(0,0);
-
 			}	
 			else 
 			{
@@ -733,7 +644,7 @@ int transformer::init(OBJECT *parent)
 /* This can be added back in after tape has been moved to commit
 EXPORT int commit_transformer(OBJECT *obj)
 {	
-	if (solver_method==SM_FBS)
+	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{	
 		transformer *plink = OBJECTDATA(obj,transformer);
 		if (plink->has_phase(PHASE_S))

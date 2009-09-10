@@ -592,6 +592,10 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		//Zero the accumulators for later (meters and such)
 		current_inj[0] = current_inj[1] = current_inj[2] = 0.0;
 
+		//If we're the swing, toggle tracking variable
+		if (bustype==SWING)
+			NR_cycle = !NR_cycle;
+
 		if (NR_busdata==NULL || NR_branchdata==NULL)	//First time any NR in (this should be the swing bus doing this)
 		{
 			NR_busdata = (BUSDATA *)gl_malloc(NR_bus_count * sizeof(BUSDATA));
@@ -1145,7 +1149,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		}
 	case SM_NR:
 		{
-			if (SubNode==CHILD)
+			if ((SubNode==CHILD) && (NR_cycle==false))
 			{
 				//Post our loads up to our parent
 				node *ParToLoad = OBJECTDATA(SubNodeParent,node);
@@ -1201,31 +1205,133 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				last_child_power[2][2] = current[2];
 			}
 
+			if (NR_cycle==true)	//Accumulation cycle, compute our current injections
+			{
+				if (has_phase(PHASE_D))	//Delta connection
+				{
+					complex delta_shunt[3];
+					complex delta_current[3];
+
+					//Convert delta connected impedance
+					delta_shunt[0] = voltageAB*shunt[0];
+					delta_shunt[1] = voltageBC*shunt[1];
+					delta_shunt[2] = voltageCA*shunt[2];
+
+					//Convert delta connected power
+					delta_current[0]= (voltaged[0]==0) ? complex(0,0) : ~(power[0]/voltageAB);
+					delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power[1]/voltageBC);
+					delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power[2]/voltageCA);
+
+					current_inj[0] += delta_shunt[0]-delta_shunt[2];	//calculate "load" current (line current) - PQZ
+					current_inj[1] += delta_shunt[1]-delta_shunt[0];
+					current_inj[2] += delta_shunt[2]-delta_shunt[1];
+
+					current_inj[0] +=delta_current[0]-delta_current[2];	//Calculate "load" current (line current) - PQP
+					current_inj[1] +=delta_current[1]-delta_current[0];
+					current_inj[2] +=delta_current[2]-delta_current[1];
+
+					current_inj[0] +=current[0]-current[2];	//Calculate "load" current (line current) - PQI
+					current_inj[1] +=current[1]-current[0];
+					current_inj[2] +=current[2]-current[1];
+				}
+				else if (has_phase(PHASE_S))	//Split phase node
+				{
+					complex vdel;
+					complex temp_current[3];
+
+					//Find V12 (just in case)
+					vdel=voltage[0] + voltage[1];
+
+					//Find contributions
+					//Start with the currents (just put them in)
+					temp_current[0] = current[0];
+					temp_current[1] = current[1];
+					temp_current[2] = current12; //current12 is not part of the standard current array
+
+					//Now add in power contributions
+					temp_current[0] += voltage[0] == 0.0 ? 0.0 : ~(power[0]/voltage[0]);
+					temp_current[1] += voltage[1] == 0.0 ? 0.0 : ~(power[1]/voltage[1]);
+					temp_current[2] += vdel == 0.0 ? 0.0 : ~(power[2]/vdel);
+
+					//Last, but not least, admittance/impedance contributions
+					temp_current[0] += shunt[0]*voltage[0];
+					temp_current[1] += shunt[1]*voltage[1];
+					temp_current[2] += shunt[2]*vdel;
+
+					//Convert 'em to line currents
+					current_inj[0] += (temp_current[0] + temp_current[2]);
+					current_inj[1] += (-temp_current[1] - temp_current[2]);
+
+					//Get information
+					if ((Triplex_Data != NULL) && ((Triplex_Data[0] != 0.0) || (Triplex_Data[1] != 0.0)))
+					{
+						current_inj[2] += Triplex_Data[0]*current_inj[0] + Triplex_Data[1]*current_inj[1];
+					}
+					else
+					{
+						current_inj[2] += ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
+										   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
+											? currentN : -((current_inj[0]-temp_current[2])+(current_inj[1]+temp_current[2]));
+					}
+				}
+				else					//Wye connection
+				{
+					current_inj[0] += (voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0]);			//PQP needs power converted to current
+					current_inj[1] += (voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1]);
+					current_inj[2] += (voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2]);
+
+					current_inj[0] +=voltage[0]*shunt[0];			//PQZ needs load currents calculated as well
+					current_inj[1] +=voltage[1]*shunt[1];
+					current_inj[2] +=voltage[2]*shunt[2];
+
+					current_inj[0] +=current[0];		//Update load current values if PQI
+					current_inj[1] +=current[1];		
+					current_inj[2] +=current[2];
+				}
+
+				//If we are a child, apply our current injection directly up to our parent (links should have accumulated before us)
+				if (SubNode==CHILD)
+				{
+					node *ParLoadObj=OBJECTDATA(SubNodeParent,node);
+
+					ParLoadObj->current_inj[0] += current_inj[0];
+					ParLoadObj->current_inj[1] += current_inj[1];
+					ParLoadObj->current_inj[2] += current_inj[2];
+				}
+			}
+
 			if ((NR_curr_bus==NR_bus_count) && (bustype==SWING))	//Only run the solver once everything has populated
 			{
-				bool bad_computation=false;
+				if (NR_cycle==false)	//Solving pass
+				{
+					bool bad_computation=false;
 
-				int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, maximum_voltage_error, &bad_computation);
-				if (bad_computation==true)
-				{
-					GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
-					/*  TROUBLESHOOT
-					Newton-Raphson has failed to complete even a single iteration on the powerflow.  This is an indication
-					that the method will not solve the system and may have a singularity or other ill-favored condition in the
-					system matrices.
-					*/
+					int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, maximum_voltage_error, &bad_computation);
+					if (bad_computation==true)
+					{
+						GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
+						/*  TROUBLESHOOT
+						Newton-Raphson has failed to complete even a single iteration on the powerflow.  This is an indication
+						that the method will not solve the system and may have a singularity or other ill-favored condition in the
+						system matrices.
+						*/
+					}
+					else if (result<0)	//Failure to converge, but we just let it stay where we are for now
+					{
+						gl_verbose("Newton-Raphson failed to converge, sticking at same iteration.");
+						/*  TROUBLESHOOT
+						Newton-Raphson failed to converge in the number of iterations specified in NR_iteration_limit.
+						It will try again (if the global iteration limit has not been reached).
+						*/
+						NR_retval=t0;
+					}
+					else
+						NR_retval=t1;
+
+					return t0;		//Stay here whether we like it or not (second pass needs to complete)
 				}
-				else if (result<0)	//Failure to converge, but we just let it stay where we are for now
-				{
-					gl_verbose("Newton-Raphson failed to converge, sticking at same iteration.");
-					/*  TROUBLESHOOT
-					Newton-Raphson failed to converge in the number of iterations specified in NR_iteration_limit.
-					It will try again (if the global iteration limit has not been reached).
-					*/
-					return t0;
-				}
-				else
-					return t1;
+				else	//Accumulating pass, let us go where we wanted
+					return NR_retval;
 			}
 			else if (NR_curr_bus==NR_bus_count)	//Population complete, we're not swing, let us go (or we never go on)
 				return t1;
@@ -1286,7 +1392,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	//kva_in = (voltageA*~current[0] + voltageB*~current[1] + voltageC*~current[2])/1000; /*...or not.  Note sure how this works for a node*/
 
 #endif
-	if ((solver_method == SM_NR) && (SubNode==CHILD))	//Remove child contributions
+	if ((solver_method == SM_NR) && (SubNode==CHILD) && (NR_cycle==false))	//Remove child contributions
 	{
 		node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
@@ -1341,102 +1447,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		LOCKED(obj, voltageCA = voltageC - voltageA);
 	}
 
-
-	if (solver_method==SM_NR)
-	{
-		if (has_phase(PHASE_D))	//Delta connection
-		{
-			complex delta_shunt[3];
-			complex delta_current[3];
-
-			//Convert delta connected impedance
-			delta_shunt[0] = voltageAB*shunt[0];
-			delta_shunt[1] = voltageBC*shunt[1];
-			delta_shunt[2] = voltageCA*shunt[2];
-
-			//Convert delta connected power
-			delta_current[0]= (voltaged[0]==0) ? complex(0,0) : ~(power[0]/voltageAB);
-			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power[1]/voltageBC);
-			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power[2]/voltageCA);
-
-			current_inj[0] += delta_shunt[0]-delta_shunt[2];	//calculate "load" current (line current) - PQZ
-			current_inj[1] += delta_shunt[1]-delta_shunt[0];
-			current_inj[2] += delta_shunt[2]-delta_shunt[1];
-
-			current_inj[0] +=delta_current[0]-delta_current[2];	//Calculate "load" current (line current) - PQP
-			current_inj[1] +=delta_current[1]-delta_current[0];
-			current_inj[2] +=delta_current[2]-delta_current[1];
-
-			current_inj[0] +=current[0]-current[2];	//Calculate "load" current (line current) - PQI
-			current_inj[1] +=current[1]-current[0];
-			current_inj[2] +=current[2]-current[1];
-		}
-		else if (has_phase(PHASE_S))	//Split phase node
-		{
-			complex vdel;
-			complex temp_current[3];
-
-			//Find V12 (just in case)
-			vdel=voltage[0] + voltage[1];
-
-			//Find contributions
-			//Start with the currents (just put them in)
-			temp_current[0] = current[0];
-			temp_current[1] = current[1];
-			temp_current[2] = current12; //current12 is not part of the standard current array
-
-			//Now add in power contributions
-			temp_current[0] += voltage[0] == 0.0 ? 0.0 : ~(power[0]/voltage[0]);
-			temp_current[1] += voltage[1] == 0.0 ? 0.0 : ~(power[1]/voltage[1]);
-			temp_current[2] += vdel == 0.0 ? 0.0 : ~(power[2]/vdel);
-
-			//Last, but not least, admittance/impedance contributions
-			temp_current[0] += shunt[0]*voltage[0];
-			temp_current[1] += shunt[1]*voltage[1];
-			temp_current[2] += shunt[2]*vdel;
-
-			//Convert 'em to line currents
-			current_inj[0] += (temp_current[0] + temp_current[2]);
-			current_inj[1] += (-temp_current[1] - temp_current[2]);
-
-			////Get information
-			//if ((Triplex_Data != NULL) && ((Triplex_Data[0] != 0.0) || (Triplex_Data[1] != 0.0)))
-			//{
-			//	current_inj[2] += Triplex_Data[0]*current_inj[0] + Triplex_Data[1]*current_inj[1];
-			//}
-			//else
-			//{
-			//	current_inj[2] += ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
-			//					   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
-			//						? currentN : -((current_inj[0]-temp_current[2])+(current_inj[1]+temp_current[2]));
-			//}
-		}
-		else					//Wye connection
-		{
-			current_inj[0] += (voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0]);			//PQP needs power converted to current
-			current_inj[1] += (voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1]);
-			current_inj[2] += (voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2]);
-
-			current_inj[0] +=voltage[0]*shunt[0];			//PQZ needs load currents calculated as well
-			current_inj[1] +=voltage[1]*shunt[1];
-			current_inj[2] +=voltage[2]*shunt[2];
-
-			current_inj[0] +=current[0];		//Update load current values if PQI
-			current_inj[1] +=current[1];		
-			current_inj[2] +=current[2];
-		}
-
-		//If we are a child, apply our current injection directly up to our parent (links will handle their end separately, so this should only be connected power)
-		if (SubNode==CHILD)
-		{
-			node *ParLoadObj=OBJECTDATA(SubNodeParent,node);
-
-			ParLoadObj->current_inj[0] += current_inj[0];
-			ParLoadObj->current_inj[1] += current_inj[1];
-			ParLoadObj->current_inj[2] += current_inj[2];
-		}
-	}
-	else if (solver_method==SM_FBS)
+	if (solver_method==SM_FBS)
 	{
 		// if the parent object is a node
 		if (obj->parent!=NULL && (gl_object_isa(obj->parent,"node","powerflow")))
@@ -1661,11 +1672,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			status=NOMINAL;
 	}
 #endif
-	if (solver_method==SM_NR)
-	{
-		//Nothing here yet, will eventually be current calculations
-	}
-	else if (solver_method==SM_FBS)
+	if (solver_method==SM_FBS)
 	{
 		/* compute the sync voltage change */
 		double sync_V = (last_voltage[0]-voltage[0]).Mag() + (last_voltage[1]-voltage[1]).Mag() + (last_voltage[2]-voltage[2]).Mag();

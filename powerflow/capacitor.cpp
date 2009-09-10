@@ -860,28 +860,34 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 {
 	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
 	{
-		LOCK_OBJECT(OBJECTHDR(RLink));
+		if ((solver_method==SM_FBS) || ((solver_method==SM_NR) && (NR_cycle==true)))	//Currents (and therefore power) are only valid on accumulation cycle of NR
+		{
+			LOCK_OBJECT(OBJECTHDR(RLink));
 
-		//Force the link to do an update (will be ignored first run anyways (zero))
-		RLink->calculate_power();
+			//Force the link to do an update (will be ignored first run anyways (zero))
+			RLink->calculate_power();
 
-		//Takes all measurements from output side of link
-		VArVals[0] = RLink->indiv_power_out[0].Im();
-		VArVals[1] = RLink->indiv_power_out[1].Im();
-		VArVals[2] = RLink->indiv_power_out[2].Im();
-		
-		UNLOCK_OBJECT(OBJECTHDR(RLink));
+			//Takes all measurements from output side of link
+			VArVals[0] = RLink->indiv_power_out[0].Im();
+			VArVals[1] = RLink->indiv_power_out[1].Im();
+			VArVals[2] = RLink->indiv_power_out[2].Im();
+			
+			UNLOCK_OBJECT(OBJECTHDR(RLink));
+		}
 	}
 	else if (control==CURRENT)	//Grab the current injection values
 	{
-		LOCK_OBJECT(OBJECTHDR(RLink));
+		if ((solver_method==SM_FBS) || ((solver_method==SM_NR) && (NR_cycle==true)))	//Currents are only valid on accumulation cycle of NR
+		{
+			LOCK_OBJECT(OBJECTHDR(RLink));
 
-		//Pull off the output currents
-		CurrentVals[0]=RLink->current_in[0].Mag();
-		CurrentVals[1]=RLink->current_in[1].Mag();
-		CurrentVals[2]=RLink->current_in[2].Mag();
-		
-		UNLOCK_OBJECT(OBJECTHDR(RLink));
+			//Pull off the output currents
+			CurrentVals[0]=RLink->current_in[0].Mag();
+			CurrentVals[1]=RLink->current_in[1].Mag();
+			CurrentVals[2]=RLink->current_in[2].Mag();
+			
+			UNLOCK_OBJECT(OBJECTHDR(RLink));
+		}
 	}
 
 	return node::postsync(t0);

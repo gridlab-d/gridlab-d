@@ -93,7 +93,7 @@ int load::create(void)
 
 TIMESTAMP load::presync(TIMESTAMP t0)
 {
-	if ((solver_method==SM_GS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented node
+	if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented node
 	{
 		shunt[0] = shunt[1] = shunt[2] = 0.0;
 		power[0] = power[1] = power[2] = 0.0;

@@ -109,9 +109,6 @@ int switch_object::init(OBJECT *parent)
 	{
 		//Flag it as special (we'll forgo inversion processes on this)
 		SpecialLnk = SWITCH;
-		c_mat[0][0] = c_mat[0][1] = c_mat[0][2] = 0.0;
-		c_mat[1][0] = c_mat[1][1] = c_mat[1][2] = 0.0;
-		c_mat[2][0] = c_mat[2][1] = c_mat[2][2] = 0.0;
 
 		if (status==LS_OPEN)
 		{
@@ -150,25 +147,42 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 			}
 
 			if (has_phase(PHASE_A))
-				From_Y[0][0] = complex(0.0,0.0);
+			{
+				From_Y[0][0] = complex(0.0,0.0);	//Update admittance
+				a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+			}
 
 			if (has_phase(PHASE_B))
-				From_Y[1][1] = complex(0.0,0.0);
+			{
+				From_Y[1][1] = complex(0.0,0.0);	//Update admittance
+				a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+			}
 
 			if (has_phase(PHASE_C))
-				From_Y[2][2] = complex(0.0,0.0);
+			{
+				From_Y[2][2] = complex(0.0,0.0);	//Update admittance
+				a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+			}
 		}//end open
 		else					//Must be closed then
 		{
 			if (has_phase(PHASE_A))
-				From_Y[0][0] = complex(1e4,1e4);
+			{
+				From_Y[0][0] = complex(1e4,1e4);	//Update admittance
+				a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+			}
 
 			if (has_phase(PHASE_B))
-				From_Y[1][1] = complex(1e4,1e4);
+			{
+				From_Y[1][1] = complex(1e4,1e4);	//Update admittance
+				a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+			}
 
 			if (has_phase(PHASE_C))
-				From_Y[2][2] = complex(1e4,1e4);
-
+			{
+				From_Y[2][2] = complex(1e4,1e4);	//Update admittance
+				a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+			}
 		}//end closed
 	}//end SM_NR
 #ifdef SUPPORT_OUTAGES

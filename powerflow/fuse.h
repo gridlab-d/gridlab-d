@@ -37,7 +37,7 @@ public:
 
 private:
 	TIMESTAMP Prev_Time;
-	void fuse_check(set phase_to_check, complex *fcurr, complex *curr);
+	void fuse_check(set phase_to_check, complex *fcurr);
 };
 
 #endif // _FUSE_H

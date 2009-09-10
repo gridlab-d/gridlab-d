@@ -159,19 +159,22 @@ int fuse::init(OBJECT *parent)
 		//Phase A
 		if ((phases & PHASE_A) == PHASE_A)
 		{
-			From_Y[0][0] = complex(1e4,1e4);
+			From_Y[0][0] = complex(1e4,1e4);	//Update admittance
+			a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 		}
 
 		//Phase B
 		if ((phases & PHASE_B) == PHASE_B)
 		{
-			From_Y[1][1] = complex(1e4,1e4);
+			From_Y[1][1] = complex(1e4,1e4);	//Update admittance
+			a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 		}
 
 		//Phase C
 		if ((phases & PHASE_C) == PHASE_C)
 		{
-			From_Y[2][2] = complex(1e4,1e4);
+			From_Y[2][2] = complex(1e4,1e4);	//Update admittance
+			a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 		}
 	}
 	else
@@ -277,31 +280,9 @@ TIMESTAMP fuse::postsync(TIMESTAMP t0)
 */
 int fuse::fuse_state(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
-	node *fnode;
-	node *tnode;
-	complex fcurr[3], tcurr[3];
-
-	fnode = OBJECTDATA(from,node);
-	tnode = OBJECTDATA(to,node);
-
-	//Do a proper lock/unlock - just in case
-	LOCK_OBJECT(from);
-	fcurr[0] = fnode->current_inj[0];
-	fcurr[1] = fnode->current_inj[1];
-	fcurr[2] = fnode->current_inj[2];
-	UNLOCK_OBJECT(from);
-
-	LOCK_OBJECT(to);
-	tcurr[0] = tnode->current_inj[0];
-	tcurr[1] = tnode->current_inj[1];
-	tcurr[2] = tnode->current_inj[2];
-	UNLOCK_OBJECT(to);
-
-
-	this->fuse_check(PHASE_A,fcurr,tcurr);
-	this->fuse_check(PHASE_B,fcurr,tcurr);
-	this->fuse_check(PHASE_C,fcurr,tcurr);
+	this->fuse_check(PHASE_A,current_in);
+	this->fuse_check(PHASE_B,current_in);
+	this->fuse_check(PHASE_C,current_in);
 
 	return 1;	//Not sure how we'd ever fail.  If I come up with a reason, we'll check
 }
@@ -312,10 +293,9 @@ int fuse::fuse_state(OBJECT *parent)
 *
 * @param phase_to_check - the current phase to check fusing action for
 * @param fcurr - array of from (line input) currents
-* @param tcurr - array of to (line output) currents
 */
 
-void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
+void fuse::fuse_check(set phase_to_check, complex *fcurr)
 {
 	char indexval;
 	char phase_verbose;
@@ -347,6 +327,11 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
 	else
 	{
 		GL_THROW("Unknown phase to check in fuse:%d",OBJECTHDR(this)->id);
+		/*  TROUBLESHOOT
+		An invalid phase was specified for the phase check in a fuse.  Please
+		check your code and continue.  If it persists, submit your code and a bug
+		using the trac website.
+		*/
 	}
 
 	//See which phases we need to check
@@ -355,7 +340,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
 		if (*valstate == GOOD)	//Only bother if we are in service
 		{
 			//Check both directions, that way if we are reverse flowed it doesn't matter
-			if ((fcurr[indexval].Mag() > current_limit) || (tcurr[indexval].Mag() > current_limit))	//We've exceeded the limit
+			if (fcurr[indexval].Mag() > current_limit)	//We've exceeded the limit
 			{
 				*valstate = BLOWN;	//Trip us
 
@@ -366,7 +351,8 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
 				}
 				else if (solver_method==SM_NR)
 				{
-					From_Y[indexval][indexval] = complex(0.0,0.0);
+					From_Y[indexval][indexval] = complex(0.0,0.0);	//Update admittance
+					a_mat[indexval][indexval] = 0.0;				//Update the voltage ratio matrix as well (for power calcs)
 				}
 
 				//Get an update time
@@ -384,7 +370,8 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
 				}
 				else if (solver_method==SM_NR)
 				{
-					From_Y[indexval][indexval] = complex(1e4,1e4);
+					From_Y[indexval][indexval] = complex(1e4,1e4);	//Update admittance
+					a_mat[indexval][indexval] = 1.0;				//Update the voltage ratio matrix as well (for power calcs)
 				}
 			}
 		}
@@ -399,7 +386,8 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
 				}
 				else if (solver_method==SM_NR)
 				{
-					From_Y[indexval][indexval] = complex(1e4,1e4);
+					From_Y[indexval][indexval] = complex(1e4,1e4);	//Update admittance
+					a_mat[indexval][indexval] = 1.0;				//Update the voltage ratio matrix as well (for power calcs)
 				}
 
 				*valstate = GOOD;
@@ -417,7 +405,8 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr, complex *tcurr)
 				}
 				else if (solver_method==SM_NR)
 				{
-					From_Y[indexval][indexval] = complex(0.0,0.0);
+					From_Y[indexval][indexval] = complex(0.0,0.0);	//Update admittance
+					a_mat[indexval][indexval] = 0.0;				//Update the voltage ratio matrix as well (for power calcs)
 				}
 			}
 		}

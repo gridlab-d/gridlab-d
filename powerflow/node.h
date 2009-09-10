@@ -116,7 +116,6 @@ public:
 	complex YVs[3];			/// "Current" accumulator for GS
 	complex current12;		/// Used for phase 1-2 current injections in triplex
 	complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
-	OBJECT *Triplex_End;	/// Other end of triplex line for extra current calculation information (NR)
 
 	int NR_node_reference;		/// Node's reference in NR_busdata
 	int *NR_subnode_reference;	/// Pointer to parent node's reference in NR_busdata - just in case things get inited out of synch

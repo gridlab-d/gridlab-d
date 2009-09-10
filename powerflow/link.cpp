@@ -265,47 +265,16 @@ int link::init(OBJECT *parent)
 	{
 		NR_branch_count++;		//Update global value of link count
 
-		////Use partial FBS code to rank objects - do this so swing ends up on one end for consistency
-		//	if (obj->parent==NULL)
-		//	{
-		//		/* make 'from' object parent of this object */
-		//		if (gl_object_isa(from,"node")) 
-		//		{
-		//			if(gl_set_parent(obj, from) < 0)
-		//				throw "error when setting parent";
-		//				//Defined above
-		//		} 
-		//		else 
-		//			throw "link from reference not a node";
-		//			//Defined above
-		//	}
-		//	
-		//	if (to->parent==NULL)
-		//	{
-		//		/* make this object parent to 'to' object */
-		//		if (gl_object_isa(to,"node"))
-		//		{
-		//			if(gl_set_parent(to, obj) < 0)
-		//				throw "error when setting parent";
-		//			//Defined above
-		//		} 
-		//		else 
-		//			throw "link to reference not a node";
-		//			//Defined above
-		//	}
-			gl_set_rank(obj,1);	//Links go to rank 1
+		gl_set_rank(obj,1);	//Links go to rank 1
 
-			//Link to the tn constants if we are a triplex (parent/child relationship gets lost)
-			//Also link other end of line to from, so we can steal its currents later
-			if (gl_object_isa(obj,"triplex_line","powerflow"))
-			{
-				node *tnode = OBJECTDATA(to,node);
-				node *fnode = OBJECTDATA(from,node);
+		//Link to the tn constants if we are a triplex (parent/child relationship gets lost)
+		//Also link other end of line to from, so we can steal its currents later
+		if (gl_object_isa(obj,"triplex_line","powerflow"))
+		{
+			node *tnode = OBJECTDATA(to,node);
 
-				tnode->Triplex_Data=&tn[0];
-				fnode->Triplex_End = to;
-			}
-
+			tnode->Triplex_Data=&tn[0];
+		}
 
 		break;
 	}
@@ -448,7 +417,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				if ((voltage_ratio != 1.0) || (SpecialLnk!=NORMAL))	//Transformer, send more - may not need all 4, but put them there anyways
 				{
 					//See if we're a switch (if so, we don't need all the hoopla)
-					if (SpecialLnk==SWITCH)	//Almost like normal lines
+					if (SpecialLnk==SWITCH)	//Just like normal lines
 					{
 						NR_branchdata[NR_curr_branch].Yfrom = &From_Y[0][0];
 						NR_branchdata[NR_curr_branch].Yto = &From_Y[0][0];
@@ -554,7 +523,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			
 
 			// compute admittance - invert b matrix - special circumstances given different methods
-			if (SpecialLnk==SWITCH)
+			if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR))
 			{
 				;	//Just skip over all of this nonsense
 			}
@@ -653,49 +622,6 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = tempImped;
 
 				}
-				else if (SpecialLnk==REGULATOR)	//Regulator
-				{
-					/*
-					//Pre-admittancized matrix
-					equalm(b_mat,Yto);
-
-					//Store value into YSto
-					for (jindex=0; jindex<3; jindex++)
-					{
-						for (kindex=0; kindex<3; kindex++)
-						{
-							YSto[jindex*3+kindex]=Yto[jindex][kindex];
-						}
-					}
-					
-					for (jindex=0; jindex<3; jindex++)
-					{
-						Ylefttemp[jindex][jindex] = Yto[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
-						Yfrom[jindex][jindex]=Ylefttemp[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
-					}
-
-
-					//multiply(invratio,Yto,Ylefttemp);		//Scale from admittance by turns ratio
-					//multiply(invratio,Ylefttemp,Yfrom);
-
-					//Store value into YSfrom
-					for (jindex=0; jindex<3; jindex++)
-					{
-						for (kindex=0; kindex<3; kindex++)
-						{
-							YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
-						}
-					}
-
-					for (jindex=0; jindex<3; jindex++)
-					{
-						To_Y[jindex][jindex] = Yto[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
-						From_Y[jindex][jindex]=Yfrom[jindex][jindex] * a_mat[jindex][jindex];
-					}
-					//multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
-					//multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
-					*/
-				}
 				else if (SpecialLnk==SPLITPHASE)	//Split phase
 				{
 					//Yto - same for all
@@ -771,9 +697,9 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 						*/
 									
 				}
-				else if (SpecialLnk==SWITCH)
+				else if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR))
 				{
-					;	//More nothingness (all handled inside switch itself)
+					;	//More nothingness (all handled inside switch/regulator itself)
 				}
 				else	//Other xformers
 				{
@@ -1344,9 +1270,182 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 
 	if (is_closed())
 	{
-		if (solver_method==SM_NR)
+		if ((solver_method==SM_NR) && (NR_cycle==true))	//Accumulation cycle
 		{
-			//Nothing here yet
+			//Solve current equations to get current injections
+			node *fnode = OBJECTDATA(from,node);
+			node *tnode = OBJECTDATA(to,node);
+			complex vtemp[3];
+			complex itemp[3];
+			complex current_temp[3];
+
+			if ((voltage_ratio!=1.0) && (SpecialLnk != DELTAGWYE) && (SpecialLnk != SPLITPHASE))
+			{
+				//(-a*Vout+Vin)
+				vtemp[0] = fnode->voltage[0]-
+						   a_mat[0][0]*tnode->voltage[0]-
+						   a_mat[0][1]*tnode->voltage[1]-
+						   a_mat[0][2]*tnode->voltage[2];
+
+				vtemp[1] = fnode->voltage[1]-
+						   a_mat[1][0]*tnode->voltage[0]-
+						   a_mat[1][1]*tnode->voltage[1]-
+						   a_mat[1][2]*tnode->voltage[2];
+
+				vtemp[2] = fnode->voltage[2]-
+						   a_mat[2][0]*tnode->voltage[0]-
+						   a_mat[2][1]*tnode->voltage[1]-
+						   a_mat[2][2]*tnode->voltage[2];
+
+				current_in[0] = d_mat[0][0]*vtemp[0]+
+								d_mat[0][1]*vtemp[1]+
+								d_mat[0][2]*vtemp[2];
+
+				current_in[1] = d_mat[1][0]*vtemp[0]+
+								d_mat[1][1]*vtemp[1]+
+								d_mat[1][2]*vtemp[2];
+
+				current_in[2] = d_mat[2][0]*vtemp[0]+
+								d_mat[2][1]*vtemp[1]+
+								d_mat[2][2]*vtemp[2];
+
+				//Current in is just the same
+				fnode->current_inj[0] += current_in[0];
+				fnode->current_inj[1] += current_in[1];
+				fnode->current_inj[2] += current_in[2];
+			}//end normal transformers
+			else if (SpecialLnk == DELTAGWYE)
+			{
+				vtemp[0]=fnode->voltage[0]*a_mat[0][0]+
+						 fnode->voltage[1]*a_mat[0][1]+
+						 fnode->voltage[2]*a_mat[0][2]-
+						 tnode->voltage[0];
+
+				vtemp[1]=fnode->voltage[0]*a_mat[1][0]+
+						 fnode->voltage[1]*a_mat[1][1]+
+						 fnode->voltage[2]*a_mat[1][2]-
+						 tnode->voltage[1];
+
+				vtemp[2]=fnode->voltage[0]*a_mat[2][0]+
+						 fnode->voltage[1]*a_mat[2][1]+
+						 fnode->voltage[2]*a_mat[2][2]-
+						 tnode->voltage[2];
+
+				//Get low side current
+				itemp[0] = vtemp[0] * b_mat[0][0];
+				itemp[1] = vtemp[1] * b_mat[1][1];
+				itemp[2] = vtemp[2] * b_mat[2][2];
+
+				//Translate back to high-side
+				current_in[0] = d_mat[0][0]*itemp[0]+
+								d_mat[0][1]*itemp[1]+
+								d_mat[0][2]*itemp[2];
+
+				current_in[1] = d_mat[1][0]*itemp[0]+
+								d_mat[1][1]*itemp[1]+
+								d_mat[1][2]*itemp[2];
+
+				current_in[2] = d_mat[2][0]*itemp[0]+
+								d_mat[2][1]*itemp[1]+
+								d_mat[2][2]*itemp[2];
+
+				//Current in is just the same
+				fnode->current_inj[0] += current_in[0];
+				fnode->current_inj[1] += current_in[1];
+				fnode->current_inj[2] += current_in[2];
+
+			}//end delta-GWYE
+			else if (SpecialLnk == SPLITPHASE)	//Split phase, center tapped xformer
+			{
+				if (has_phase(PHASE_A))
+				{
+					itemp[0] = fnode->voltage[0]*b_mat[2][2]+
+							   tnode->voltage[0]*b_mat[2][0]+
+							   tnode->voltage[1]*b_mat[2][1];
+
+					current_in[0] = itemp[0];
+					fnode->current_inj[0] += itemp[0];
+				}
+				else if (has_phase(PHASE_B))
+				{
+					itemp[0] = fnode->voltage[1]*b_mat[2][2]+
+							   tnode->voltage[0]*b_mat[2][0]+
+							   tnode->voltage[1]*b_mat[2][1];
+
+					current_in[1] = itemp[0];
+					fnode->current_inj[1] += itemp[0];
+				}
+				else if (has_phase(PHASE_C))
+				{
+					itemp[0] = fnode->voltage[2]*b_mat[2][2]+
+							   tnode->voltage[0]*b_mat[2][0]+
+							   tnode->voltage[1]*b_mat[2][1];
+
+					current_in[2] = itemp[0];
+					fnode->current_inj[2] += itemp[0];
+				}
+
+			}//end split-phase, center tapped xformer
+			else if (has_phase(PHASE_S))	//Split-phase line
+			{
+				//(-a*Vout+Vin)
+				vtemp[0] = fnode->voltage[0]-
+						   a_mat[0][0]*tnode->voltage[0]-
+						   a_mat[0][1]*tnode->voltage[1];
+
+				vtemp[1] = fnode->voltage[1]-
+						   a_mat[1][0]*tnode->voltage[0]-
+						   a_mat[1][1]*tnode->voltage[1];
+
+				current_in[0] = From_Y[0][0]*vtemp[0]+
+								From_Y[0][1]*vtemp[1];
+
+				current_in[1] = From_Y[1][0]*vtemp[0]+
+								From_Y[1][1]*vtemp[1];
+
+				current_in[2] = tnode->current_inj[2];			//I don't think this line ever does anything
+
+				//Current in is just the same
+				fnode->current_inj[0] += current_in[0];
+				fnode->current_inj[1] += current_in[1];
+				fnode->current_inj[2] += tnode->current_inj[2];	//I don't think this line ever does anything
+			}
+			else
+			{
+				//(-a*Vout+Vin)
+				vtemp[0] = fnode->voltage[0]-
+						   a_mat[0][0]*tnode->voltage[0]-
+						   a_mat[0][1]*tnode->voltage[1]-
+						   a_mat[0][2]*tnode->voltage[2];
+
+				vtemp[1] = fnode->voltage[1]-
+						   a_mat[1][0]*tnode->voltage[0]-
+						   a_mat[1][1]*tnode->voltage[1]-
+						   a_mat[1][2]*tnode->voltage[2];
+
+				vtemp[2] = fnode->voltage[2]-
+						   a_mat[2][0]*tnode->voltage[0]-
+						   a_mat[2][1]*tnode->voltage[1]-
+						   a_mat[2][2]*tnode->voltage[2];
+
+				current_in[0] = From_Y[0][0]*vtemp[0]+
+								From_Y[0][1]*vtemp[1]+
+								From_Y[0][2]*vtemp[2];
+
+				current_in[1] = From_Y[1][0]*vtemp[0]+
+								From_Y[1][1]*vtemp[1]+
+								From_Y[1][2]*vtemp[2];
+
+				current_in[2] = From_Y[2][0]*vtemp[0]+
+								From_Y[2][1]*vtemp[1]+
+								From_Y[2][2]*vtemp[2];
+
+				//Current in is just the same
+				fnode->current_inj[0] += current_in[0];
+				fnode->current_inj[1] += current_in[1];
+				fnode->current_inj[2] += current_in[2];
+			}
+
 		}
 		else if (solver_method==SM_FBS)
 		{
@@ -1415,231 +1514,8 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 TIMESTAMP link::postsync(TIMESTAMP t0)
 {
 	TIMESTAMP TRET=TS_NEVER;
-	if (solver_method==SM_NR)
-	{
-		//Solve current equations to get current injections
-		node *fnode = OBJECTDATA(from,node);
-		node *tnode = OBJECTDATA(to,node);
-		complex vtemp[3];
-		complex itemp[3];
-		complex current_temp[3];
 
-		////Calculate output currents
-		//complex i;
-		//current_in[0] = 
-		//i = c_mat[0][0] * tnode->voltage[0] +
-		//	c_mat[0][1] * tnode->voltage[1] +
-		//	c_mat[0][2] * tnode->voltage[2] +
-		//	d_mat[0][0] * tnode->current_inj[0] +
-		//	d_mat[0][1] * tnode->current_inj[1] +
-		//	d_mat[0][2] * tnode->current_inj[2];
-		//LOCKED(from, fnode->current_inj[0] += i);
-		//current_in[1] = 
-		//i = c_mat[1][0] * tnode->voltage[0] +
-		//	c_mat[1][1] * tnode->voltage[1] +
-		//	c_mat[1][2] * tnode->voltage[2] +
-		//	d_mat[1][0] * tnode->current_inj[0] +
-		//	d_mat[1][1] * tnode->current_inj[1] +
-		//	d_mat[1][2] * tnode->current_inj[2];
-		//LOCKED(from, fnode->current_inj[1] += i);
-		//current_in[2] = 
-		//i = c_mat[2][0] * tnode->voltage[0] +
-		//	c_mat[2][1] * tnode->voltage[1] +
-		//	c_mat[2][2] * tnode->voltage[2] +
-		//	d_mat[2][0] * tnode->current_inj[0] +
-		//	d_mat[2][1] * tnode->current_inj[1] +
-		//	d_mat[2][2] * tnode->current_inj[2];
-		//LOCKED(from, fnode->current_inj[2] += i);
-
-
-
-		if ((voltage_ratio!=1.0) && (SpecialLnk != DELTAGWYE) && (SpecialLnk != SPLITPHASE))
-		{
-			//(-a*Vout+Vin)
-			vtemp[0] = fnode->voltage[0]-
-					   a_mat[0][0]*tnode->voltage[0]-
-					   a_mat[0][1]*tnode->voltage[1]-
-					   a_mat[0][2]*tnode->voltage[2];
-
-			vtemp[1] = fnode->voltage[1]-
-					   a_mat[1][0]*tnode->voltage[0]-
-					   a_mat[1][1]*tnode->voltage[1]-
-					   a_mat[1][2]*tnode->voltage[2];
-
-			vtemp[2] = fnode->voltage[2]-
-					   a_mat[2][0]*tnode->voltage[0]-
-					   a_mat[2][1]*tnode->voltage[1]-
-					   a_mat[2][2]*tnode->voltage[2];
-
-			current_in[0] = d_mat[0][0]*vtemp[0]+
-							d_mat[0][1]*vtemp[1]+
-							d_mat[0][2]*vtemp[2];
-
-			current_in[1] = d_mat[1][0]*vtemp[0]+
-							d_mat[1][1]*vtemp[1]+
-							d_mat[1][2]*vtemp[2];
-
-			current_in[2] = d_mat[2][0]*vtemp[0]+
-							d_mat[2][1]*vtemp[1]+
-							d_mat[2][2]*vtemp[2];
-
-			//Current in is just the same
-			fnode->current_inj[0] += current_in[0];
-			fnode->current_inj[1] += current_in[1];
-			fnode->current_inj[2] += current_in[2];
-		}//end normal transformers
-		else if (SpecialLnk == DELTAGWYE)
-		{
-			vtemp[0]=fnode->voltage[0]*a_mat[0][0]+
-					 fnode->voltage[1]*a_mat[0][1]+
-					 fnode->voltage[2]*a_mat[0][2]-
-					 tnode->voltage[0];
-
-			vtemp[1]=fnode->voltage[0]*a_mat[1][0]+
-					 fnode->voltage[1]*a_mat[1][1]+
-					 fnode->voltage[2]*a_mat[1][2]-
-					 tnode->voltage[1];
-
-			vtemp[2]=fnode->voltage[0]*a_mat[2][0]+
-					 fnode->voltage[1]*a_mat[2][1]+
-					 fnode->voltage[2]*a_mat[2][2]-
-					 tnode->voltage[2];
-
-			//Get low side current
-			itemp[0] = vtemp[0] * b_mat[0][0];
-			itemp[1] = vtemp[1] * b_mat[1][1];
-			itemp[2] = vtemp[2] * b_mat[2][2];
-
-			//Translate back to high-side
-			current_in[0] = d_mat[0][0]*itemp[0]+
-							d_mat[0][1]*itemp[1]+
-							d_mat[0][2]*itemp[2];
-
-			current_in[1] = d_mat[1][0]*itemp[0]+
-							d_mat[1][1]*itemp[1]+
-							d_mat[1][2]*itemp[2];
-
-			current_in[2] = d_mat[2][0]*itemp[0]+
-							d_mat[2][1]*itemp[1]+
-							d_mat[2][2]*itemp[2];
-
-			//Current in is just the same
-			fnode->current_inj[0] += current_in[0];
-			fnode->current_inj[1] += current_in[1];
-			fnode->current_inj[2] += current_in[2];
-
-		}//end delta-GWYE
-		else if (SpecialLnk == SPLITPHASE)	//Split phase, center tapped xformer
-		{
-			if (has_phase(PHASE_A))
-			{
-				itemp[0] = fnode->voltage[0]*b_mat[2][2]+
-						   tnode->voltage[0]*b_mat[2][0]+
-						   tnode->voltage[1]*b_mat[2][1];
-
-				current_in[0] = itemp[0];
-				fnode->current_inj[0] += itemp[0];
-			}
-			else if (has_phase(PHASE_B))
-			{
-				itemp[0] = fnode->voltage[1]*b_mat[2][2]+
-						   tnode->voltage[0]*b_mat[2][0]+
-						   tnode->voltage[1]*b_mat[2][1];
-
-				current_in[1] = itemp[0];
-				fnode->current_inj[1] += itemp[0];
-			}
-			else if (has_phase(PHASE_C))
-			{
-				itemp[0] = fnode->voltage[2]*b_mat[2][2]+
-						   tnode->voltage[0]*b_mat[2][0]+
-						   tnode->voltage[1]*b_mat[2][1];
-
-				current_in[2] = itemp[0];
-				fnode->current_inj[2] += itemp[0];
-			}
-
-		}//end split-phase, center tapped xformer
-		else if (has_phase(PHASE_S))	//Split-phase line
-		{
-			//(-a*Vout+Vin)
-			vtemp[0] = fnode->voltage[0]-
-					   a_mat[0][0]*tnode->voltage[0]-
-					   a_mat[0][1]*tnode->voltage[1];
-
-			vtemp[1] = fnode->voltage[1]-
-					   a_mat[1][0]*tnode->voltage[0]-
-					   a_mat[1][1]*tnode->voltage[1];
-
-			current_in[0] = From_Y[0][0]*vtemp[0]+
-							From_Y[0][1]*vtemp[1];
-
-			current_in[1] = From_Y[1][0]*vtemp[0]+
-							From_Y[1][1]*vtemp[1];
-
-			current_in[2] = tnode->current_inj[2];			//I don't think this line ever does anything
-
-			//Current in is just the same
-			fnode->current_inj[0] += current_in[0];
-			fnode->current_inj[1] += current_in[1];
-			fnode->current_inj[2] += tnode->current_inj[2];	//I don't think this line ever does anything
-		}
-		else
-		{
-			//(-a*Vout+Vin)
-			vtemp[0] = fnode->voltage[0]-
-					   a_mat[0][0]*tnode->voltage[0]-
-					   a_mat[0][1]*tnode->voltage[1]-
-					   a_mat[0][2]*tnode->voltage[2];
-
-			vtemp[1] = fnode->voltage[1]-
-					   a_mat[1][0]*tnode->voltage[0]-
-					   a_mat[1][1]*tnode->voltage[1]-
-					   a_mat[1][2]*tnode->voltage[2];
-
-			vtemp[2] = fnode->voltage[2]-
-					   a_mat[2][0]*tnode->voltage[0]-
-					   a_mat[2][1]*tnode->voltage[1]-
-					   a_mat[2][2]*tnode->voltage[2];
-
-			current_in[0] = From_Y[0][0]*vtemp[0]+
-							From_Y[0][1]*vtemp[1]+
-							From_Y[0][2]*vtemp[2];
-
-			current_in[1] = From_Y[1][0]*vtemp[0]+
-							From_Y[1][1]*vtemp[1]+
-							From_Y[1][2]*vtemp[2];
-
-			current_in[2] = From_Y[2][0]*vtemp[0]+
-							From_Y[2][1]*vtemp[1]+
-							From_Y[2][2]*vtemp[2];
-
-			//Current in is just the same
-			fnode->current_inj[0] += current_in[0];
-			fnode->current_inj[1] += current_in[1];
-			fnode->current_inj[2] += current_in[2];
-		}
-
-		//Multiply by From_Y (it is b^-1)
-		//tnode->current_inj[0] += From_Y[0][0]*vtemp[0]+
-		//						 From_Y[0][1]*vtemp[1]+
-		//						 From_Y[0][2]*vtemp[2];
-
-		//tnode->current_inj[1] += From_Y[1][0]*vtemp[0]+
-		//						 From_Y[1][1]*vtemp[1]+
-		//						 From_Y[1][2]*vtemp[2];
-
-		//tnode->current_inj[2] += From_Y[2][0]*vtemp[0]+
-		//						 From_Y[2][1]*vtemp[1]+
-		//						 From_Y[2][2]*vtemp[2];
-
-		//We're a line, so current in is the same (just opposite signed)
-		//fnode->current_inj[0]=-tnode->current_inj[0];
-		//fnode->current_inj[1]=-tnode->current_inj[1];
-		//fnode->current_inj[2]=-tnode->current_inj[2];
-	}
-	//else if ((!is_open()) && (solver_method==SM_FBS))
-	else if ((solver_method==SM_FBS))
+	if ((solver_method==SM_FBS))
 	{
 		node *f;
 		node *t;
