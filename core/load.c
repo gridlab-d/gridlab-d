@@ -3217,17 +3217,17 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	START;
 	if WHITE ACCEPT;
 	/* TODO scale * schedule_name [+ bias]  */
-	if (TERM(real_value(HERE,&xform->scale)) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
+	if (TERM(functional(HERE,&xform->scale)) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
 	{	
-		if ((WHITE,LITERAL("+")) && (WHITE,TERM(real_value(HERE,&xform->bias)))) { ACCEPT; }
+		if ((WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,&xform->bias)))) { ACCEPT; }
 		else { xform->bias = 0;	ACCEPT;}
 		DONE;
 	}
 	OR
 	/* TODO scale * schedule_name [- bias]  */
-	if (TERM(real_value(HERE,&xform->scale)) &&( WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
+	if (TERM(functional(HERE,&xform->scale)) &&( WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
 	{
-		if ((WHITE,LITERAL("-")) && (WHITE,TERM(real_value(HERE,&xform->bias)))) { xform->bias *= -1; ACCEPT; }
+		if ((WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,&xform->bias)))) { xform->bias *= -1; ACCEPT; }
 		else { xform->bias = 0;	ACCEPT;}
 		DONE;
 	}
@@ -3235,23 +3235,23 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	/* TODO schedule_name [* scale] [+ bias]  */
 	if (TERM(schedule_name(HERE,&xform->schedule)))
 	{
-		if ((WHITE,LITERAL("*")) && (WHITE,TERM(real_value(HERE,&xform->scale)))) { ACCEPT; }
+		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,&xform->scale)))) { ACCEPT; }
 		else { ACCEPT; xform->scale = 1;}
-		if ((WHITE,LITERAL("+")) && (WHITE,TERM(real_value(HERE,&xform->bias)))) { ACCEPT; }
-	 	OR if ((WHITE,LITERAL("-")) && (WHITE,TERM(real_value(HERE,&xform->bias)))) { xform->bias *= -1; ACCEPT;}
+		if ((WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,&xform->bias)))) { ACCEPT; }
+	 	OR if ((WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,&xform->bias)))) { xform->bias *= -1; ACCEPT;}
 		else { xform->bias = 0;	ACCEPT;}
 		DONE;
 	}
 	OR
 	/* TODO bias + scale * schedule_name  */
-	if (TERM(real_value(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(real_value(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
+	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
 	{
 		ACCEPT;
 		DONE;
 	}
 	OR
 	/* TODO bias - scale * schedule_name  */
-	if (TERM(real_value(HERE,&xform->bias)) && (WHITE,LITERAL("-")) && (WHITE,TERM(real_value(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
+	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
 	{
 		xform->scale *= -1;
 		ACCEPT;
@@ -3259,17 +3259,17 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	}
 	OR
 	/* TODO bias + schedule_name [* scale] */
-	if (TERM(real_value(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
+	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
 	{
-		if (WHITE,LITERAL("*") && WHITE,TERM(real_value(HERE,&xform->scale))) { ACCEPT; }
+		if (WHITE,LITERAL("*") && WHITE,TERM(functional(HERE,&xform->scale))) { ACCEPT; }
 		else { ACCEPT; xform->scale = 1;}
 		DONE;
 	}
 	OR
 	/* TODO bias - schedule_name [* scale] */
-	if (TERM(real_value(HERE,&xform->bias)) && WHITE,LITERAL("-") && WHITE,TERM(schedule_name(HERE,&xform->schedule)))
+	if (TERM(functional(HERE,&xform->bias)) && WHITE,LITERAL("-") && WHITE,TERM(schedule_name(HERE,&xform->schedule)))
 	{
-		if ((WHITE,LITERAL("*")) && (WHITE,TERM(real_value(HERE,&xform->scale)))) { ACCEPT; xform->scale *= -1; }
+		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,&xform->scale)))) { ACCEPT; xform->scale *= -1; }
 		else { ACCEPT; xform->scale = 1;}
 		DONE;
 	}
