@@ -347,6 +347,7 @@ int convert_to_set(char *buffer, /**< a pointer to the string buffer */
 	{
 		for (ptr=buffer; *ptr!='\0'; ptr++)
 		{
+			bool found = false;
 			KEYWORD *key;
 			for (key=keys; key!=NULL; key=key->next)
 			{
@@ -354,8 +355,14 @@ int convert_to_set(char *buffer, /**< a pointer to the string buffer */
 				{
 					value |= key->value;
 					count ++;
+					found = true;
 					break; /* we found our key */
 				}
+			}
+			if (!found)
+			{
+				output_error("set member '%c' is not a keyword of property %s", *ptr, prop->name);
+				return 0;
 			}
 		}
 	}
@@ -364,6 +371,7 @@ int convert_to_set(char *buffer, /**< a pointer to the string buffer */
 		/* process each keyword in the temporary buffer*/
 		for (ptr=strtok(temp,SETDELIM); ptr!=NULL; ptr=strtok(NULL,SETDELIM))
 		{
+			bool found = false;
 			KEYWORD *key;
 
 			/* scan each of the keywords in the set */
@@ -373,8 +381,14 @@ int convert_to_set(char *buffer, /**< a pointer to the string buffer */
 				{
 					value |= key->value;
 					count ++;
+					found = true;
 					break; /* we found our key */
 				}
+			}
+			if (!found)
+			{
+				output_error("set member '%s' is not a keyword of property %s", ptr, prop->name);
+				return 0;
 			}
 		}
 	}
