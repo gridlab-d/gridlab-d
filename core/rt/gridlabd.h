@@ -858,6 +858,9 @@ typedef struct s_callbacks {
 	struct {
 		TIMESTAMP (*sync)(enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1);
 	} enduse;
+	struct {
+		double (*linear)(double t, double x0, double y0, double x1, double y1);
+	} interpolate;
 } CALLBACKS; /**< core callback function table */
 
 extern CALLBACKS *callback; 

@@ -205,6 +205,9 @@ typedef struct s_callbacks {
 		struct s_enduse *(*create)(struct s_enduse *e);
 		TIMESTAMP (*sync)(struct s_enduse *e, PASSCONFIG pass, TIMESTAMP t1);
 	} enduse;
+	struct {
+		double (*linear)(double t, double x0, double y0, double x1, double y1);
+	} interpolate;
 } CALLBACKS; /**< core callback function table */
 
 #ifdef __cplusplus

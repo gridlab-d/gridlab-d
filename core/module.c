@@ -57,6 +57,7 @@
 #include "test_callbacks.h"
 #include "exception.h"
 #include "unit.h"
+#include "interpolate.h"
 #ifndef MINGW
 #include "lock.h"
 #endif
@@ -177,6 +178,7 @@ static CALLBACKS callbacks = {
 	{schedule_create, schedule_index, schedule_value, schedule_dtnext},
 	{loadshape_create,loadshape_init},
 	{enduse_create,enduse_sync},
+	{interpolate_linear}
 };
 
 MODULE *first_module = NULL;

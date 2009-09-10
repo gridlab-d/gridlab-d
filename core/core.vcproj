@@ -591,6 +591,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\interpolate.c"
+				>
+			</File>
+			<File
 				RelativePath="..\core\kill.c"
 				>
 			</File>
@@ -709,6 +713,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\config.h"
+				>
+			</File>
+			<File
 				RelativePath="..\core\convert.h"
 				>
 			</File>
@@ -746,6 +754,10 @@
 			</File>
 			<File
 				RelativePath="..\core\index.h"
+				>
+			</File>
+			<File
+				RelativePath=".\interpolate.h"
 				>
 			</File>
 			<File
@@ -869,15 +881,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\core\asm\cmpxchg.h"
+				>
+			</File>
+			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
-				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File

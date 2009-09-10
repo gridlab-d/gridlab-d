@@ -26,6 +26,11 @@ typedef enum{
 	CP_LAST = 9
 } COMPASS_PTS;
 
+typedef enum{
+	CI_NONE = 0,
+	CI_LINEAR,
+} CLIMATE_INTERPOLATE;
+
 typedef struct s_tmy {
 	double temp; // F
 	double temp_raw; // C
@@ -138,6 +143,7 @@ public:
 		double high;
 		double solar;
 	} record;
+	CLIMATE_INTERPOLATE interpolate;
 private:
 	SolarAngles *sa;
 	tmy2_reader file;

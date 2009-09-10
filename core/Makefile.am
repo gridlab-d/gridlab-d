@@ -25,6 +25,7 @@ gridlabd_SOURCES = build.h main.c \
 	find.c find.h \
 	globals.c globals.h \
 	index.c index.h \
+	interpolate.c interpolate.h \
 	kill.c kill.h \
 	kml.c kml.h \
 	legal.c legal.h \

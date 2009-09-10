@@ -930,5 +930,20 @@ inline char *gl_strftime(TIMESTAMP ts)
 }
 #endif //__cplusplus
 
+
+/**@}*/
+/******************************************************************************
+ * Interpolation routines
+ */
+/** @defgroup gridlabd_h_interpolation Interpolation routines
+ @{
+ **/
+
+/** Linearly interpolate a value between two points
+	
+ **/
+#define gl_lerp (*callback->interpolate.linear)
+/**@}*/
+
 /** @} **/
 #endif

@@ -167,7 +167,7 @@ climate::climate(MODULE *module)
 	memset(this, 0, sizeof(climate));
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"climate",sizeof(climate),PC_BOTTOMUP); 
+		oclass = gl_register_class(module,"climate",sizeof(climate),PC_PRETOPDOWN); 
 		if (gl_publish_variable(oclass,
 			PT_char32, "city", PADDR(city),
 			PT_char1024,"tmyfile",PADDR(tmyfile),
@@ -182,6 +182,9 @@ climate::climate(MODULE *module)
 			PT_double,"record.solar[W/sf]", PADDR(record.solar),
 			PT_double,"rainfall[in/h]",PADDR(rainfall),
 			PT_double,"snowdepth[in]",PADDR(snowdepth),
+			PT_enumeration,"interpolate",PADDR(interpolate),PT_DESCRIPTION,"the interpolation mode used on the climate data",
+				PT_KEYWORD,"NONE",CI_NONE,
+				PT_KEYWORD,"LINEAR",CI_LINEAR,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(climate));
 		strcpy(city,"");
@@ -294,29 +297,53 @@ int climate::init(OBJECT *parent)
 	return 1;
 }
 
-TIMESTAMP climate::sync(TIMESTAMP t0) 
+TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 {
 	if (t0>TS_ZERO && tmy!=NULL)
 	{
 		DATETIME ts;
 		int localres = gl_localtime(t0,&ts);
 		int hoy;
+		double now, hoy0, hoy1;
 		if(localres == 0){
 			GL_THROW("climate::sync -- unable to resolve localtime!");
 		}
 		int doy = sa->day_of_yr(ts.month,ts.day);
 		hoy = (doy - 1) * 24 + (ts.hour);
-		temperature = tmy[hoy].temp;
-		temperature_raw = tmy[hoy].temp_raw;
-		humidity = tmy[hoy].rh;
-		solar_direct = tmy[hoy].dnr;
-		solar_diffuse = tmy[hoy].dnr;
-		this->wind_speed = tmy[hoy].windspeed;
-		this->rainfall = tmy[hoy].rainfall;
-		this->snowdepth = tmy[hoy].snowdepth;
-		
-		if(memcmp(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double)))
-			memcpy(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double));
+		switch(interpolate){
+			case CI_NONE:
+				temperature = tmy[hoy].temp;
+				temperature_raw = tmy[hoy].temp_raw;
+				humidity = tmy[hoy].rh;
+				solar_direct = tmy[hoy].dnr;
+				solar_diffuse = tmy[hoy].dhr;
+				this->wind_speed = tmy[hoy].windspeed;
+				this->rainfall = tmy[hoy].rainfall;
+				this->snowdepth = tmy[hoy].snowdepth;
+				
+				if(memcmp(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double)))
+					memcpy(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double));
+				break;
+			case CI_LINEAR:
+				now = hoy+ts.minute/60.0;
+				hoy0 = hoy;
+				hoy1 = hoy+1.0;
+				temperature = gl_lerp(now, hoy0, tmy[hoy].temp, hoy1, tmy[hoy+1%8760].temp);
+				temperature_raw = gl_lerp(now, hoy0, tmy[hoy].temp_raw, hoy1, tmy[hoy+1%8760].temp_raw);
+				humidity = gl_lerp(now, hoy0, tmy[hoy].rh, hoy1, tmy[hoy+1%8760].rh);
+				solar_direct = gl_lerp(now, hoy0, tmy[hoy].dnr, hoy1, tmy[hoy+1%8760].dnr);
+				solar_diffuse = gl_lerp(now, hoy0, tmy[hoy].dhr, hoy1, tmy[hoy+1%8760].dhr);
+				wind_speed = gl_lerp(now, hoy0, tmy[hoy].windspeed, hoy1, tmy[hoy+1%8760].windspeed);
+				rainfall = gl_lerp(now, hoy0, tmy[hoy].rainfall, hoy1, tmy[hoy+1%8760].rainfall);
+				snowdepth = gl_lerp(now, hoy0, tmy[hoy].snowdepth, hoy1, tmy[hoy+1%8760].snowdepth);
+				//for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
+				for(int pt = 0; pt < CP_LAST; ++pt){
+					solar_flux[pt] = gl_lerp(now, hoy0, tmy[hoy].solar[pt], hoy1, tmy[hoy+1%8760].solar[pt]);
+				}
+				break;
+			default:
+				GL_THROW("climate::sync -- unrecognize interpolation mode!");
+		}
 		return -(t0+(3600*TS_SECOND-t0%(3600 *TS_SECOND))); /// negative means soft event
 	}
 	return TS_NEVER;
@@ -357,7 +384,7 @@ EXPORT int init_climate(OBJECT *obj, /// a pointer to the OBJECT
 EXPORT TIMESTAMP sync_climate(OBJECT *obj, /// a pointer to the OBJECT
 							  TIMESTAMP t0) /// the time to which the OBJECT's clock should advance
 {
-	TIMESTAMP t1 = OBJECTDATA(obj,climate)->sync(t0);
+	TIMESTAMP t1 = OBJECTDATA(obj,climate)->sync(t0); // presync really
 	obj->clock = t0;
 	return t1;
 }
