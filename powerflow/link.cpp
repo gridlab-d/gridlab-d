@@ -607,20 +607,6 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 
 					//Adjust for From_Y
 					multiply(B_mat,Yto,From_Y);
-
-					//Fix what I broke
-					for(jindex=0;jindex<3;jindex++)
-					{
-						for(kindex=0;kindex<3;kindex++)
-						{
-							c_mat[jindex][kindex]=0.0;
-							B_mat[jindex][kindex]=0.0;
-						}
-					}
-
-					tempImped = complex(1.0) / b_mat[0][0];
-					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = tempImped;
-
 				}
 				else if (SpecialLnk==SPLITPHASE)	//Split phase
 				{
