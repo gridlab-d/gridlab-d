@@ -65,7 +65,8 @@ public:
 	double avg168;		/**< weekly average of price */
 	double std168;		/**< weekly stdev of price */
 	double prices[168]; /**< price history */
-	unsigned char count;/**< number of prices in history */
+	int64 count;		/**< number of prices in history */
+	int16 lasthr, thishr;
 	
 public:
 	KEY submit(OBJECT *from, double quantity, double price, KEY key=-1);

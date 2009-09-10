@@ -52,7 +52,7 @@ auction::auction(MODULE *module)
 			PT_char32, "unit", PADDR(unit), PT_DESCRIPTION, "unit of quantity",
 			PT_double, "period[s]", PADDR(period), PT_DESCRIPTION, "interval of time between market clearings",
 			PT_double, "latency[s]", PADDR(latency), PT_DESCRIPTION, "latency between market clearing and delivery", 
-			PT_int64, "market_id", PADDR(market_id), PT_DESCRIPTION, "unique identifier of market clearing",
+			PT_int64, "market_id", PADDR(market_id), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "unique identifier of market clearing",
 			PT_double, "last.Q", PADDR(last.quantity), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "last cleared quantity", 
 			PT_double, "last.P", PADDR(last.price), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "last cleared price", 
 			PT_double, "next.Q", PADDR(next.quantity), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "next cleared quantity", 
@@ -73,6 +73,7 @@ auction::auction(MODULE *module)
 int auction::create(void)
 {
 	memcpy(this,defaults,sizeof(auction));
+	lasthr = thishr = -1;
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -138,6 +139,7 @@ TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		gl_verbose("%s clearing process started at %s", gl_name(OBJECTHDR(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 
 		/* clear market */
+		thishr = dt.hour;
 		clear_market();
 
 		market_id++;
@@ -241,10 +243,39 @@ void auction::clear_market(void)
 		next.price = clear.price;
 		next.quantity = clear.quantity;
 
-		/** @todo add price/quantity to the history */
+		if(lasthr != thishr){
+			/* add price/quantity to the history */
+			prices[count%168] = next.price;
+			++count;
+			
+			/* update the daily and weekly averages */
+			for(i = 0; i < count && i < 168; ++i){
+				avg168 += prices[i];
+			}
+			avg168 /= (count > 168 ? 168 : count);
+			for(i = count; i > 0 && i + 24 > count; --i){
+				avg24 += prices[(i+168)%168];
+			}
+			avg24 /= (count > 24 ? 24 : count);
 
-		/** @todo update the daily and weekly averages */
+			/* update the daily & weekly standard deviations */
+			for(i = 0; i < count && i < 168; ++i){
+				std168 += prices[i] * prices[i];
+			}
+			std168 /= (count > 168 ? 168 : count);
+			std168 -= avg168*avg168;
+			std168 = sqrt(fabs(std168));
 
+			for(i = count; i > 0 && i + 24 > count; --i){
+				std24 += prices[(i+168)%168] * prices[(i+168)%168];
+			}
+			std24 /= (count > 24 ? 24 : count);
+			std24 -= avg24*avg24;
+			std24 = sqrt(fabs(std24));
+
+			/* update reference hour */
+			lasthr = thishr;
+		}
 		/* clear the bid lists */
 		asks.clear();
 		offers.clear();
