@@ -21,9 +21,12 @@ controller::controller(MODULE *module){
 			PT_enumeration, "type", PADDR(type), PT_DESCRIPTION, "type of transactive controller",
 				PT_KEYWORD, "SINGLE", TC_SINGLE,
 				PT_KEYWORD, "DOUBLE", TC_DOUBLE,
+				PT_KEYWORD, "THREEPART", TC_THREEPART,
 			PT_char32, "target1", PADDR(target1), PT_DESCRIPTION, "target property to control",
 			PT_char32, "target2", PADDR(target2), PT_DESCRIPTION, "second target property to control",
 			PT_char32, "monitor", PADDR(monitor), PT_DESCRIPTION, "property to monitor",
+			PT_char32, "demand1", PADDR(demand1),
+			PT_char32, "demand2", PADDR(demand2),
 			PT_double, "ramp1_low", PADDR(ramp1_low), PT_DESCRIPTION, "price ramp for the low end of the first target property",
 			PT_double, "ramp1_high", PADDR(ramp1_high), PT_DESCRIPTION, "price ramp for the high end of the first target property",
 			PT_double, "ramp2_low", PADDR(ramp2_low), PT_DESCRIPTION, "price ramp for the low end of the second target property",
@@ -65,32 +68,59 @@ int controller::init(OBJECT *parent){
 	}
 	
 	switch(type){
+		case TC_THREEPART:
+			gl_error("%s: three-part control mode is not supported", namestr);
+			return 0;
+			break;
 		case TC_DOUBLE:
 			pTarget2 = gl_get_double_by_name(parent, target2);
 			if(pTarget2 == NULL){
 				gl_error("%s: controller unable to find secondary setpoint", namestr);
 				return 0;
 			}
-			if(min2 * max2 > 0){
-				gl_warning("%s: min2/max2 cannot be on the same side of zero", namestr);
+			pDemand2 = gl_get_double_by_name(parent, demand2);
+			if(pDemand2 == NULL){
+				gl_error("%s: controller unable to find \'%s\' property", namestr, demand2);
 				return 0;
 			}
+			
 			base2 = *pTarget2;
 			min2 = base2 + range2_low;
 			max2 = base2 + range2_high;
+			
+			if(min2 < max2){
+				gl_error("%s: min2 cannot be greater than max2", namestr);
+				return 0;
+			}
+
+			if(ramp2_low * ramp2_high < 0){
+				gl_warning("%s: price ramp for secondary property is concave", namestr);
+			}
 		case TC_SINGLE:
 			pTarget1 = gl_get_double_by_name(parent, target1);
 			if(pTarget1 == NULL){
 				gl_error("%s: controller unable to find primary setpoint", namestr);
 				return 0;
 			}
-			if(min1 * max1 > 0){
-				gl_warning("%s: min1/max1 cannot be on the same side of zero", namestr);
+
+			pDemand1 = gl_get_double_by_name(parent, demand1);
+			if(pDemand1 == NULL){
+				gl_error("%s: controller unable to find \'%s\' property", namestr, demand1);
 				return 0;
 			}
+
 			base1 = *pTarget1;
 			min1 = base1 - range1_low;
 			max1 = base2 + range1_high;
+
+			if(min1 * max1 > 0){
+				gl_error("%s: min1 cannot be greater than max1", namestr);
+				return 0;
+			}
+
+			if(ramp1_low * ramp1_high < 0){
+				gl_warning("%s: price ramp for primary property is concave", namestr);
+			}
 			break;
 		default:
 			gl_error("%s: controller using an unrecognized type", namestr);
@@ -135,7 +165,107 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 	return TS_NEVER;
 }
 
+
+double controller::threepart(){
+	return 0.0;
+}
+
+/**
+	@param	value	the current value of the monitored variable
+	@return			the intended bid price, 0 if not bidding
+ **/
+double controller::transact(const double *pValue, double *target, double base, 
+						  double min, double max, double k_low, double k_high, double setpoint,
+						  double range_low, double range_high){
+	double value = *pValue;
+
+	double on, off;
+	double bid;
+
+	double h = k_high * (max - base);
+	double l = k_low * (base - min);
+	double k = (value > base ? k_high : k_low);
+	double range = (value > base ? range_high : range_low);
+
+	int dir = (h > l ? 1 : -1);
+
+	if(k_high <= 0 && k_low <= 0){
+		// negatively sloping
+		on = min;
+		off = max;
+	} else if (k_high >= 0 && k_low >= 0){
+		// positively sloping
+		on = max;
+		off = min;
+	} else {
+		// concave
+		if(fabs(h) < fabs(l)){
+			// lower magnitude greater ~ {5, 2, 3}
+			on = min;
+			off = max;
+		} else {
+			// upper magnitude greater ~ {3, 2, 5}
+			on = max;
+			off = min;
+		}
+	}
+
+	/* having established direction & bounds, where are we? */
+
+	if((value < off && dir > 0) || (value > off && dir < 0)){
+		// below threshhold, in whichever direction
+		return 0.0;
+	}
+
+	if((value > on && dir > 0) || (value < on && dir < 0)){
+		// above threshold, click this sucker on
+		return 9999.99; /* "really big" */
+	}
+
+	/* variable bid region */
+
+	// dir enforces directionality
+	bid = market->avg24 + (value - base) * (double)dir * k * market->std24 / range;
+	
+	return bid;
+}
+
 TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
+	double bid = 0.0;
+	double demand = 0.0;
+
+	if(t1 < next_run){
+		return TS_NEVER;
+	}
+
+	next_run += (TIMESTAMP)(market->period);
+
+	switch(type){
+		case TC_DOUBLE:
+			bid = transact(pMonitor, pTarget2, base2, min2, max2, ramp2_low, ramp2_high, set2, range2_low, range2_high);
+			if(bid != 0.0){
+				demand = *pDemand2;
+				break;
+			}
+		case TC_SINGLE:
+			bid = transact(pMonitor, pTarget1, base1, min1, max1, ramp1_low, ramp1_high, set1, range1_low, range1_high);
+			if(bid != 0.0){
+				demand = *pDemand1;
+			}
+			break;
+		case TC_THREEPART:
+			bid = threepart();
+			break;
+		default:
+			gl_error("controller::sync(): unrecognized control type");
+	}
+
+	if(bid > 0.0){
+		market->submit(OBJECTHDR(this), demand, bid);
+	}/* else if(bid < 0.0){
+		market->submit(OBJECTHDR(this), -demand, -bid);
+	}*/ // else zero
+
 	return TS_NEVER;
 }
 

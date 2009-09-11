@@ -25,12 +25,15 @@ public:
 public:
 	typedef enum{
 		TC_SINGLE = 0,
-		TC_DOUBLE = 1
+		TC_DOUBLE = 1,
+		TC_THREEPART = 2
 	} CONTROLTYPE;
 	CONTROLTYPE type;
 	char32 target1;
 	char32 target2;
 	char32 monitor;
+	char32 demand1;
+	char32 demand2;
 	double ramp1_low, ramp1_high;		// k values
 	double ramp2_low, ramp2_high;
 	double range1_low, range1_high;
@@ -40,12 +43,19 @@ public:
 	double base1, base2;
 	double set1, set2;
 	double bid_price, bid_quantity;
+	int32 lastbid_id;
+	int64 lastmkt_id;
 	int16 may_run;
 	int64 market_id;
 	auction *market;
 private:
 	double *pTarget1, *pTarget2;
+	const double *pDemand1, *pDemand2; // we only read the demanded power
 	const double *pMonitor; // we only read the monitored value
+	TIMESTAMP next_run;
+
+	double transact(const double *, double *, double, double, double, double, double, double, double, double);
+	double threepart();
 };
 
 
