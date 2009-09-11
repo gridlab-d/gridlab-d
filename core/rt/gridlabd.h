@@ -860,6 +860,7 @@ typedef struct s_callbacks {
 	} enduse;
 	struct {
 		double (*linear)(double t, double x0, double y0, double x1, double y1);
+		double (*quadratic)(double t, double x0, double y0, double x1, double y1, double x2, double y2);
 	} interpolate;
 } CALLBACKS; /**< core callback function table */
 

@@ -29,6 +29,7 @@ typedef enum{
 typedef enum{
 	CI_NONE = 0,
 	CI_LINEAR,
+	CI_QUADRATIC
 } CLIMATE_INTERPOLATE;
 
 typedef struct s_tmy {

@@ -945,5 +945,12 @@ inline char *gl_strftime(TIMESTAMP ts)
 #define gl_lerp (*callback->interpolate.linear)
 /**@}*/
 
+/** Quadratically interpolate a value between two points
+	
+ **/
+#define gl_qerp (*callback->interpolate.quadratic)
+/**@}*/
+
+
 /** @} **/
 #endif

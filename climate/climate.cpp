@@ -185,6 +185,7 @@ climate::climate(MODULE *module)
 			PT_enumeration,"interpolate",PADDR(interpolate),PT_DESCRIPTION,"the interpolation mode used on the climate data",
 				PT_KEYWORD,"NONE",CI_NONE,
 				PT_KEYWORD,"LINEAR",CI_LINEAR,
+				PT_KEYWORD,"QUADRATIC",CI_QUADRATIC,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(climate));
 		strcpy(city,"");
@@ -304,7 +305,7 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 		DATETIME ts;
 		int localres = gl_localtime(t0,&ts);
 		int hoy;
-		double now, hoy0, hoy1;
+		double now, hoy0, hoy1, hoy2;
 		if(localres == 0){
 			GL_THROW("climate::sync -- unable to resolve localtime!");
 		}
@@ -339,6 +340,30 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 				//for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				for(int pt = 0; pt < CP_LAST; ++pt){
 					solar_flux[pt] = gl_lerp(now, hoy0, tmy[hoy].solar[pt], hoy1, tmy[hoy+1%8760].solar[pt]);
+				}
+				break;
+			case CI_QUADRATIC:
+				now = hoy+ts.minute/60.0;
+				hoy0 = hoy;
+				hoy1 = hoy+1.0;
+				hoy2 = hoy+2.0;
+				temperature = gl_qerp(now, hoy0, tmy[hoy].temp, hoy1, tmy[hoy+1%8760].temp, hoy2, tmy[hoy+2%8760].temp);
+				temperature_raw = gl_qerp(now, hoy0, tmy[hoy].temp_raw, hoy1, tmy[hoy+1%8760].temp_raw, hoy2, tmy[hoy+2%8760].temp_raw);
+				humidity = gl_qerp(now, hoy0, tmy[hoy].rh, hoy1, tmy[hoy+1%8760].rh, hoy2, tmy[hoy+2%8760].rh);
+				solar_direct = gl_qerp(now, hoy0, tmy[hoy].dnr, hoy1, tmy[hoy+1%8760].dnr, hoy2, tmy[hoy+2%8760].dnr);
+				solar_diffuse = gl_qerp(now, hoy0, tmy[hoy].dhr, hoy1, tmy[hoy+1%8760].dhr, hoy2, tmy[hoy+2%8760].dhr);
+				wind_speed = gl_qerp(now, hoy0, tmy[hoy].windspeed, hoy1, tmy[hoy+1%8760].windspeed, hoy2, tmy[hoy+2%8760].windspeed);
+				rainfall = gl_qerp(now, hoy0, tmy[hoy].rainfall, hoy1, tmy[hoy+1%8760].rainfall, hoy2, tmy[hoy+2%8760].rainfall);
+				snowdepth = gl_qerp(now, hoy0, tmy[hoy].snowdepth, hoy1, tmy[hoy+1%8760].snowdepth, hoy2, tmy[hoy+2%8760].snowdepth);
+				//for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
+				for(int pt = 0; pt < CP_LAST; ++pt){
+					if(tmy[hoy].solar[pt] == tmy[hoy+1].solar[pt]){
+						solar_flux[pt] = tmy[hoy].solar[pt];
+					} else {
+						solar_flux[pt] = gl_qerp(now, hoy0, tmy[hoy].solar[pt], hoy1, tmy[hoy+1%8760].solar[pt], hoy2, tmy[hoy+2%8760].solar[pt]);
+						if(solar_flux[pt] < 0.0)
+							solar_flux[pt] = 0.0; /* quadratic isn't always cooperative... */
+					}
 				}
 				break;
 			default:
