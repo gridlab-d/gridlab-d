@@ -60,7 +60,7 @@ object regulator_configuration {
 	Type B;
 	Control OUTPUT_VOLTAGE;
 	band_center 7200;
-	band_width 45; // approximately one tap difference
+	band_width 90; // approximately one tap difference
 	
 }
 

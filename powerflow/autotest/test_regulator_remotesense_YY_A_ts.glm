@@ -60,7 +60,7 @@ object regulator_configuration {
 	Type A;
 	Control REMOTE_NODE;
 	band_center 7200;
-	band_width 45; // approximately one tap difference
+	band_width 90; // approximately one tap difference
 	
 }
 

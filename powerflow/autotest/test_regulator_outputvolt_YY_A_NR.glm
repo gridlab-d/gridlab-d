@@ -60,7 +60,7 @@ object regulator_configuration {
 	Type A;
 	Control OUTPUT_VOLTAGE;
 	band_center 7200;
-	band_width 45; // approximately one tap difference
+	band_width 90; // approximately one tap difference
 	
 }
 
@@ -106,6 +106,12 @@ object node {
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
 	nominal_voltage 7200;
+	object recorder {
+		property voltage_A.real,voltage_A.imag;
+		file testme.csv;
+		limit 200;
+		interval 0;
+	};
 	
 	object complex_assert {
 		operation MAGNITUDE;

@@ -68,7 +68,7 @@ object regulator_configuration {
 	compensator_x_setting_C 1.6;
 	power_transducer_ratio 60;
 	band_center 120;
-	band_width 1.0; // approximately one tap difference
+	band_width 1.5; // approximately one tap difference
 	
 }
 
@@ -114,6 +114,24 @@ object node {
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
 	nominal_voltage 7200;
+	object complex_assert {
+		operation MAGNITUDE;
+		value 7200;
+		target voltage_A;
+		within 45;
+	};
+	object complex_assert {
+		operation MAGNITUDE;
+		value 7200;
+		target voltage_B;
+		within 45;
+	};
+	object complex_assert {
+		operation MAGNITUDE;
+		value 7200;
+		target voltage_C;
+		within 45;
+	};
 }
 
 object overhead_line {
@@ -147,39 +165,21 @@ object load {
 	nominal_voltage 7200;
 	
 	object player {
-		file ../regulator_load_phA.player;
+		file regulator_load_phA.player;
 		loop 1;
 		property constant_power_A;
 	};
 	object player {
-		file ../regulator_load_phB.player;
+		file regulator_load_phB.player;
 		loop 1;
 		property constant_power_B;
 	};
 	object player {
-		file ../regulator_load_phC.player;
+		file regulator_load_phC.player;
 		loop 1;
 		property constant_power_C;
 	};
-	
-	object complex_assert {
-		operation MAGNITUDE;
-		value 7200;
-		target voltage_A;
-		within 45;
-	};
-	object complex_assert {
-		operation MAGNITUDE;
-		value 7200;
-		target voltage_B;
-		within 45;
-	};
-	object complex_assert {
-		operation MAGNITUDE;
-		value 7200;
-		target voltage_C;
-		within 45;
-	};
+
 }
 
 object recorder {

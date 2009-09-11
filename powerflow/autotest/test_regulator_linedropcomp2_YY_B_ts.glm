@@ -60,16 +60,17 @@ object regulator_configuration {
 	regulation 0.1;
 	Type B;
 	Control LINE_DROP_COMP;
-	compensator_r_setting_A 0.04; // Should approximately look
-	compensator_r_setting_B 0.04; // at the voltage at the load
-	compensator_r_setting_C 0.04;
-	compensator_x_setting_A 0.1;
-	compensator_x_setting_B 0.1;
-	compensator_x_setting_C 0.1;
+	compensator_r_setting_A 0.1; // Should approximately look
+	compensator_r_setting_B 0.1; // at the voltage at the load
+	compensator_r_setting_C 0.1;
+	compensator_x_setting_A 0.2;
+	compensator_x_setting_B 0.2;
+	compensator_x_setting_C 0.2;
+	
 	power_transducer_ratio 60;
 	current_transducer_ratio 10;
 	band_center 120;
-	band_width 1.0; // approximately one tap difference
+	band_width 1.5; // approximately one tap difference
 	
 }
 
