@@ -68,10 +68,12 @@ typedef struct s_linkconnected {
 } LINKCONNECTED; /// connected link definition
 
 typedef enum {
-		NONE=0,				///< defines not a child node
-		CHILD=1,			///< defines is a child node
+		NONE=0,			///< defines not a child node
+		CHILD=1,		///< defines is a child node
 		CHILD_NOINIT=2,	///< defines is a child node that has not been linked
-		PARENT=3		///< defines is a parent of a child
+		PARENT=3,		///< defines is a parent of a child
+		DIFF_CHILD=4,	///< defines is a child node, but has different phase-connection that our parent
+		DIFF_PARENT=5	///< defines a parent, but has a different phase-connection than our child
 		} SUBNODETYPE;
 
 class node : public powerflow_object
@@ -116,6 +118,7 @@ public:
 	complex YVs[3];			/// "Current" accumulator for GS
 	complex current12;		/// Used for phase 1-2 current injections in triplex
 	complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
+	complex *Extra_Data;	/// Link to extra data information (NR)
 
 	int NR_node_reference;		/// Node's reference in NR_busdata
 	int *NR_subnode_reference;	/// Pointer to parent node's reference in NR_busdata - just in case things get inited out of synch

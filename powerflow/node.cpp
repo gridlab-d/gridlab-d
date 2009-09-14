@@ -132,6 +132,7 @@ int node::create(void)
 	SubNode = NONE;
 	SubNodeParent = NULL;
 	NR_subnode_reference = NULL;
+	Extra_Data=NULL;
 
 	YVs[0] = YVs[1] = YVs[2] = 0.0;
 
@@ -164,12 +165,29 @@ int node::init(OBJECT *parent)
 
 		FINDLIST *buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
 
-		if (buslist==NULL)
-			GL_THROW("NR: no swing bus found");
-			/*	TROUBLESHOOT
-			No swing bus was located in the test system.  Newton-Raphson requires at least one node
-			be designated "bustype SWING".
-			*/
+		if ((buslist==NULL) || (buslist->hit_count==0))
+		{
+			//See if it is a meter
+			gl_free(buslist);
+			buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"meter",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
+
+			if ((buslist==NULL) || (buslist->hit_count==0))	//Not a meter either, see if it is a load
+			{
+				//See if it is a meter
+				gl_free(buslist);
+				buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"load",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
+
+				if ((buslist==NULL) || (buslist->hit_count==0))	//Not a meter either, see if it is a load
+				{
+					GL_THROW("NR: no swing bus found");
+					/*	TROUBLESHOOT
+					No swing bus was located in the test system.  Newton-Raphson requires at least one node
+					be designated "bustype SWING".
+					*/
+				}
+			}
+		}
+
 		if (buslist->hit_count>1)
 			GL_THROW("NR: more than one swing bus found!");
 			/*	TROUBLESHOOT
@@ -186,7 +204,7 @@ int node::init(OBJECT *parent)
 		{																			//(this will break anything intentionally done this way - e.g. switch between two nodes)
 			//See if it is a node/load/meter
 			if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow")))
-				GL_THROW("NR: Parent is not a load or node!");
+				GL_THROW("NR: Parent is not a node, load or meter!");
 				/*  TROUBLESHOOT
 				A Newton-Raphson parent-child connection was attempted on a non-node.  The parent object must be a node, load, or meter object in the 
 				powerflow module for this connection to be successful.
@@ -194,53 +212,125 @@ int node::init(OBJECT *parent)
 
 			node *parNode = OBJECTDATA(obj->parent,node);
 
-			//Make sure our phases align, otherwise become angry (this may be modified in the future)
-			if (parNode->phases!=this->phases)
-				throw("NR: Parent and child node phases do not match!");
-				/*	TROUBLESHOOT
-				The implementation of parent-child connections in Newton-Raphson requires the child
-				object have the same phases as the parent.  Match the phases appropriately.
-				*/
+			//Phase variable
+			set p_phase_to_check, c_phase_to_check;
 
-			if ((parNode->SubNode==CHILD) | ((obj->parent->parent!=SwingBusObj) && (obj->parent->parent!=NULL)))	//Our parent is another child
+			//N-less version
+			p_phase_to_check = (parNode->phases & (~(PHASE_N)));
+			c_phase_to_check = (phases & (~(PHASE_N)));
+
+			//Make sure our phases align, otherwise become angry
+			if ((parNode->phases!=phases) && (p_phase_to_check != c_phase_to_check))
 			{
-				GL_THROW("NR: Grandchildren are not supported at this time!");
-				/*  TROUBLESHOOT
-				Parent-child connections in Newton-Raphson may not go more than one level deep.  Grandchildren
-				(a node parented to a node parented to a node) are unsupported at this time.  Please rearrange your
-				parent-child connections appropriately, figure out a different way of performing the required connection,
-				or, if your system is radial, consider using forward-back sweep.
-				*/
+				//Create D-less and N-less versions of both for later comparisons
+				p_phase_to_check = (parNode->phases & (~(PHASE_D | PHASE_N)));
+				c_phase_to_check = (phases & (~(PHASE_D | PHASE_N)));
+
+				//May not necessarily be a failure, let's investiage
+				if ((phases & PHASE_D) && ((parNode->phases & (PHASE_A|PHASE_B|PHASE_C)) != (PHASE_A|PHASE_B|PHASE_C)))	//We're a delta
+				{
+					GL_THROW("NR: Parent and child node phases do not match!");
+					/*	TROUBLESHOOT
+					The implementation of parent-child connections in Newton-Raphson requires the child
+					object have the same phases as the parent.  Match the phases appropriately.  For a delta-connected
+					child, the parent must be delta connected or contain all three "normal" phases.
+					*/
+				}
+				else if ((p_phase_to_check & c_phase_to_check) != c_phase_to_check)	//Our parent is lacking, fail
+				{
+					GL_THROW("NR: Parent and child node phases do not match!");
+					//Defined above
+				}
+				else					//We should be successful, but let's flag ourselves appropriately
+				{	//Essentially a replication of the no-phase section with more check
+					if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | ((obj->parent->parent!=SwingBusObj) && (obj->parent->parent!=NULL)))	//Our parent is another child
+					{
+						GL_THROW("NR: Grandchildren are not supported at this time!");
+						/*  TROUBLESHOOT
+						Parent-child connections in Newton-Raphson may not go more than one level deep.  Grandchildren
+						(a node parented to a node parented to a node) are unsupported at this time.  Please rearrange your
+						parent-child connections appropriately, figure out a different way of performing the required connection,
+						or, if your system is radial, consider using forward-back sweep.
+						*/
+					}
+					else	//Our parent is unchilded (or has the swing bus as a parent)
+					{
+						//Set appropriate flags (store parent name and flag self & parent)
+						SubNode = DIFF_CHILD;
+						SubNodeParent = obj->parent;
+						
+						parNode->SubNode = DIFF_PARENT;
+						parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
+
+						//Update the pointer to our parent's NR pointer (so links can go there appropriately)
+						NR_subnode_reference = &(parNode->NR_node_reference);
+
+						//Allocate and point our properties up to the parent node
+						parNode->Extra_Data = (complex *)gl_malloc(9*sizeof(complex));
+						if (parNode->Extra_Data == NULL)
+						{
+							GL_THROW("NR: Memory allocation failure for differently connected load.");
+							/*  TROUBLESHOOT
+							This is a bug.  Newton-Raphson tried to allocate memory for other necessary
+							information to handle a parent-child relationship with differently connected loads.
+							Please submit your code and a bug report using the trac website.
+							*/
+						}
+					}
+
+					//Give us no parent now, and let it go to SWING (otherwise generic check fails)
+					obj->parent=NULL;
+
+					//Flag our index as a child as well, as yet another catch
+					NR_node_reference = -99;
+
+					//Adjust our rank appropriately
+					//Ranking - similar to GS
+					gl_set_rank(obj,3);				//Put us below normal nodes (but above links)
+													//This way load postings should propogate during sync (bottom-up)
+
+					////Zero out last child power vector (used for updates) - shouldn't need this for this implementation
+					//last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = complex(0,0);
+					//last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
+					//last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
+				}
 			}
-			else	//Our parent is unchilded (or has the swing bus as a parent)
+			else		//Phase compatible, no issues
 			{
-				//Set appropriate flags (store parent name and flag self & parent)
-				SubNode = CHILD;
-				SubNodeParent = obj->parent;
-				
-				parNode->SubNode = PARENT;
-				parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
+				if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | ((obj->parent->parent!=SwingBusObj) && (obj->parent->parent!=NULL)))	//Our parent is another child
+				{
+					GL_THROW("NR: Grandchildren are not supported at this time!");
+					//Defined above
+				}
+				else	//Our parent is unchilded (or has the swing bus as a parent)
+				{
+					//Set appropriate flags (store parent name and flag self & parent)
+					SubNode = CHILD;
+					SubNodeParent = obj->parent;
+					
+					parNode->SubNode = PARENT;
+					parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
 
-				//Update the pointer to our parent's NR pointer (so links can go there appropriately)
-				NR_subnode_reference = &(parNode->NR_node_reference);
-			}
+					//Update the pointer to our parent's NR pointer (so links can go there appropriately)
+					NR_subnode_reference = &(parNode->NR_node_reference);
+				}
 
-			//Give us no parent now, and let it go to SWING (otherwise generic check fails)
-			obj->parent=NULL;
+				//Give us no parent now, and let it go to SWING (otherwise generic check fails)
+				obj->parent=NULL;
 
-			//Flag our index as a child as well, as yet another catch
-			NR_node_reference = -99;
+				//Flag our index as a child as well, as yet another catch
+				NR_node_reference = -99;
 
-			//Adjust our rank appropriately
-			//Ranking - similar to GS
-			gl_set_rank(obj,3);				//Put us below normal nodes (but above links)
+				//Adjust our rank appropriately
+				//Ranking - similar to GS
+				gl_set_rank(obj,3);				//Put us below normal nodes (but above links)
 												//This way load postings should propogate during sync (bottom-up)
 
-			//Zero out last child power vector (used for updates)
-			last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = complex(0,0);
-			last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
-			last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
-
+				//Zero out last child power vector (used for updates)
+				last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = complex(0,0);
+				last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
+				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
+			}//end no issues phase
 		}
 		else	//Non-childed node gets the count updated
 		{
@@ -316,7 +406,7 @@ int node::init(OBJECT *parent)
 			node *parNode = OBJECTDATA(obj->parent,node);
 
 			//Make sure our phases align, otherwise become angry
-			if (parNode->phases!=this->phases)
+			if (parNode->phases!=phases)
 				throw("GS: Parent and child node phases do not match!");
 				/*	TROUBLESHOOT
 				The implementation of parent-child connections in Gauss-Seidel requires the child
@@ -1185,11 +1275,13 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					ParToLoad->current[2]+=current[2]-last_child_power[2][2];
 				}
 				else
-					throw("NR: Object %d is a child of something that it shouldn't be!",obj->id);
+				{
+					GL_THROW("NR: Object %d is a child of something that it shouldn't be!",obj->id);
 					/*  TROUBLESHOOT
 					A Newton-Raphson object is childed to something it should not be (not a load, node, or meter).
 					This should have been caught earlier and is likely a bug.  Submit your code and a bug report using the trac website.
 					*/
+				}
 
 				//Update previous power tracker
 				last_child_power[0][0] = power[0];
@@ -1203,6 +1295,25 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				last_child_power[2][0] = current[0];
 				last_child_power[2][1] = current[1];
 				last_child_power[2][2] = current[2];
+			}
+
+			if ((SubNode==DIFF_CHILD) && (NR_cycle==false))	//Differently connected nodes
+			{
+				//Post our loads up to our parent - in the appropriate fashion
+				node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+
+				//Update post them.  Row 1 is power, row 2 is admittance, row 3 is current
+				ParToLoad->Extra_Data[0] = power[0];
+				ParToLoad->Extra_Data[1] = power[1];
+				ParToLoad->Extra_Data[2] = power[2];
+
+				ParToLoad->Extra_Data[3] = shunt[0];
+				ParToLoad->Extra_Data[4] = shunt[1];
+				ParToLoad->Extra_Data[5] = shunt[2];
+
+				ParToLoad->Extra_Data[6] = current[0];
+				ParToLoad->Extra_Data[7] = current[1];
+				ParToLoad->Extra_Data[8] = current[2];
 			}
 
 			if (NR_cycle==true)	//Accumulation cycle, compute our current injections
@@ -1271,7 +1382,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					{
 						current_inj[2] += ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
 										   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
-											? currentN : -((current_inj[0]-temp_current[2])+(current_inj[1]+temp_current[2]));
+											? currentN : -((current_inj[0]-temp_current[2])+(current_inj[1]-temp_current[2]));
 					}
 				}
 				else					//Wye connection
@@ -1290,7 +1401,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				}
 
 				//If we are a child, apply our current injection directly up to our parent (links should have accumulated before us)
-				if (SubNode==CHILD)
+				if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))
 				{
 					node *ParLoadObj=OBJECTDATA(SubNodeParent,node);
 
@@ -1418,11 +1529,16 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 		//Current
 		last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = 0.0;
+	}
+
+	if ((solver_method == SM_NR) && ((SubNode==CHILD) || (SubNode==DIFF_CHILD)) && (NR_cycle==false))	//Child Voltage Updates
+	{
+		node *ParStealLoad = OBJECTDATA(SubNodeParent,node);
 
 		//Steal our paren't voltages as well
-		voltage[0] = ParToLoad->voltage[0];
-		voltage[1] = ParToLoad->voltage[1];
-		voltage[2] = ParToLoad->voltage[2];
+		voltage[0] = ParStealLoad->voltage[0];
+		voltage[1] = ParStealLoad->voltage[1];
+		voltage[2] = ParStealLoad->voltage[2];
 	}
 
 	/* check for voltage control requirement */
@@ -2091,7 +2207,14 @@ int *node::NR_populate(void)
 
 		//See if we're a triplex
 		if (has_phase(PHASE_S))
-			NR_busdata[NR_curr_bus].extra_var = current12;	//Stored in a separate variable and this is the easiest way for me to get it
+		{
+			NR_busdata[NR_curr_bus].extra_var = &current12;	//Stored in a separate variable and this is the easiest way for me to get it
+		}
+		else if (SubNode==DIFF_PARENT)	//Differently connected load/node (only can't be S)
+		{
+			NR_busdata[NR_curr_bus].extra_var = Extra_Data;
+			NR_busdata[NR_curr_bus].phases |= 0x10;			//Special flag for a phase mismatch being present
+		}
 
 		//Per unit values
 		NR_busdata[NR_curr_bus].kv_base = -1.0;
