@@ -287,7 +287,7 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 		strcpy(lastfmt,format?format:"");
 		if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
-			len = sprintf(buffer,"FATAL [%s] : last fatal error message was repeated %d times\n",time_context, count);
+			len = sprintf(buffer,"last fatal error message was repeated %d times\nFATAL [%s] : ", count,time_context);
 			count = 0;
 			if(format == NULL) goto Output;
 		}
@@ -327,7 +327,7 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 		strcpy(lastfmt,format?format:"");
 		if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
-			len = sprintf(buffer,"ERROR [%s] : last error message was repeated %d times\n",time_context, count);
+			len = sprintf(buffer,"last error message was repeated %d times\nERROR [%s] : ", count,time_context);
 			count = 0;
 			if(format == NULL) goto Output;
 		}
@@ -412,7 +412,7 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 			strcpy(lastfmt,format?format:"");
 			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
-				len = sprintf(buffer,"WARNING [%s] : last warning message was repeated %d times\n",time_context, count);
+				len = sprintf(buffer,"last warning message was repeated %d times\nWARNING [%s] : ", count, time_context);
 				count = 0;
 				if(format == NULL) goto Output;
 			}
@@ -456,7 +456,7 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 			strcpy(lastfmt,format?format:"");
 			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
-				len = sprintf(buffer,"DEBUG [%s] : last debug message was repeated %d times\n",time_context, count);
+				len = sprintf(buffer,"last debug message was repeated %d times\nDEBUG [%s] : ", count,time_context);
 				count = 0;
 				if(format == 0) goto Output;
 			}
@@ -501,7 +501,7 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 			strcpy(lastfmt,format?format:"");
 			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
-				len = sprintf(buffer,"last verbose message was repeated %d times\n",count);
+				len = sprintf(buffer,"last verbose message was repeated %d times\n   ... ",count);
 				count = 0;
 				if(format == 0) goto Output;
 			}
@@ -513,7 +513,7 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 		}
 Output:
 		if (redirect.verbose)
-			return fprintf(redirect.verbose,"   ... %s\n",buffer);
+			return fprintf(redirect.verbose,"%s\n",buffer);
 		else
 			return (*printerr)("   ... %s\n",buffer);
 	}
