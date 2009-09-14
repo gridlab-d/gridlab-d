@@ -711,6 +711,19 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				return 0;
 			}
 			NR_curr_branch = 0;	//Pull pointer off flag so other objects know it's built
+
+			if (bustype==SWING)
+				NR_populate();		//Force a first population via the swing bus.  Not really necessary, but I'm saying it has to be this way.
+			else
+			{
+				GL_THROW("NR: An order requirement has been violated");
+				/*  TROUBLESHOOT
+				When initializing the solver, the swing bus should be initialized first for
+				Newton-Raphson.  If this does not happen, unexpected results can occur.  Try moving
+				the SWING bus to the top of your file.  If the bug persists, submit your code and
+				a bug report via the trac website.
+				*/
+			}
 		}
 	}
 	else if (solver_method==SM_FBS)

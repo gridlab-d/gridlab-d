@@ -110,6 +110,10 @@ int switch_object::init(OBJECT *parent)
 		//Flag it as special (we'll forgo inversion processes on this)
 		SpecialLnk = SWITCH;
 
+		//Initialize off-diagonals just in case
+		From_Y[0][1] = From_Y[0][2] = From_Y[1][0] = 0.0;
+		From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = 0.0;
+
 		if (status==LS_OPEN)
 		{
 			From_Y[0][0] = complex(0.0,0.0);
@@ -118,9 +122,20 @@ int switch_object::init(OBJECT *parent)
 		}
 		else
 		{
-			From_Y[0][0] = complex(1e4,1e4);
-			From_Y[1][1] = complex(1e4,1e4);
-			From_Y[2][2] = complex(1e4,1e4);
+			if (has_phase(PHASE_A))
+			{
+				From_Y[0][0] = complex(1e4,1e4);
+			}
+
+			if (has_phase(PHASE_B))
+			{
+				From_Y[1][1] = complex(1e4,1e4);
+			}
+
+			if (has_phase(PHASE_C))
+			{
+				From_Y[2][2] = complex(1e4,1e4);
+			}
 		}
 	}
 
