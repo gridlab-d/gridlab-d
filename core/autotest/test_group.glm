@@ -1,0 +1,33 @@
+// $Id$
+// 
+// Test group extension
+
+clock {
+	starttime '2000-01-01 0:00:00 PST';
+}
+
+module residential {
+	implicit_enduses NONE;
+}
+
+class house {
+	char32 group;
+}
+
+object house:..10 {
+	group A;
+}
+
+object house:..10 {
+	group B;
+}
+
+module tape;
+
+object collector {
+	group "group=A";
+	property "count(floor_area)";
+	limit 10;
+	interval 3600;
+	file output.csv;
+}
