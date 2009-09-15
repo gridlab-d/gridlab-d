@@ -686,7 +686,7 @@ void regulator::get_monitored_voltage()
 
 	switch (pConfig->Control)
 	{
-		case pConfig->LINE_DROP_COMP: 
+		case (pConfig->LINE_DROP_COMP): 
 		{
 			if (pTo) 
 			{
@@ -722,7 +722,7 @@ void regulator::get_monitored_voltage()
 			}
 		}
 			break;
-		case pConfig->OUTPUT_VOLTAGE: 
+		case (pConfig->OUTPUT_VOLTAGE): 
 		{
 			if (pTo) 
 			{
@@ -736,7 +736,7 @@ void regulator::get_monitored_voltage()
 			}
 		}
 			break;
-		case pConfig->REMOTE_NODE:
+		case (pConfig->REMOTE_NODE):
 		{
 			node *RNode = OBJECTDATA(RemoteNode,node);
 			for (int i = 0; i < 3; i++)
