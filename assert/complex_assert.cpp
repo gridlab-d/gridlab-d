@@ -177,8 +177,8 @@ EXPORT int commit_complex_assert(OBJECT *obj)
 
 			if ( _isnan(magnitude_error) || abs(magnitude_error) > ca->within )
 			{
-				gl_verbose("Assert failed on %s: Magnitude of %s not within %f of given value %g", 
-				gl_name(obj->parent,buff,64), ca->target, ca->within, ca->value.Mag());
+				gl_verbose("Assert failed on %s: Magnitude of %s (%g) not within %f of given value %g", 
+				gl_name(obj->parent,buff,64), ca->target, val.Mag(), ca->within, ca->value.Mag());
 
 				return 0;
 			}
@@ -190,8 +190,8 @@ EXPORT int commit_complex_assert(OBJECT *obj)
 
 			if ( _isnan(angle_error) || abs(angle_error) > ca->within )
 			{
-				gl_verbose("Assert failed on %s: Angle of %s not within %f of given value %g", 
-				gl_name(obj->parent,buff,64), ca->target, ca->within, ca->value.Arg());
+				gl_verbose("Assert failed on %s: Angle of %s (%g) not within %f of given value %g", 
+				gl_name(obj->parent,buff,64), ca->target, val.Arg(), ca->within, ca->value.Arg());
 
 				return 0;
 			}
