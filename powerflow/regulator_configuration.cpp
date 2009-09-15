@@ -127,6 +127,9 @@ int regulator_configuration::init(OBJECT *parent)
 		if (regulation == 0)
 			GL_THROW("regulation must be set to a non-zero number when operating in an automatic controlled mode.");
 	}
+	if (connect_type != WYE_WYE)
+		gl_warning("Only WYE_WYE regulator connections are fully supported at this time.");
+
 	return 1;
 }
 

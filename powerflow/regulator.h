@@ -27,6 +27,8 @@ public:
 	complex curr[3];
 	OBJECT *RemoteNode;		 //Remote node for sensing voltage values in REMOTE_NODE Control method
 
+	
+
 protected:
 	int64 mech_t_next[3];	 //next time step after tap change
 	int64 dwell_t_next[3];	 //wait to advance only after sensing over/under voltage for a certain dwell_time
@@ -35,7 +37,7 @@ protected:
 	int16 dwell_flag[3];	 //indicates whether a state change is okay due to dwell time limitations
 	int16 first_run_flag[3]; //keeps the system from blowing up on bad initial tap position guess
 	complex check_voltage[3];//Voltage that is being checked against
-
+	void get_monitored_voltage();  //Function to calculate check_voltage depending on mode
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
