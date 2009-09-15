@@ -2,12 +2,9 @@
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 // 4 node system with a balanced load and a regulator
-// being controlled under OUTPUT_VOLTAGE mode, each phase
-// individually controlled.  Check to make sure voltages are being
+// being controlled manually, which each phase handled
+// individually.  Check to make sure voltages are being
 // regulated correctly with both a Type A & B regulator.
-// Somewhat contrived test, as a 200000 ft overhead line is used
-// to artificially lower the voltage at the regulator, but tests
-// the regulator function.
 
 
 clock {
@@ -21,7 +18,6 @@ module powerflow {
 module assert;
 module tape;
 
-//#define savefile="test_reg_FBS.xml";
 //#define stylesheet="C:\Documents and Settings\d3x289\Desktop\GLD_8_7\trunk\VS2005\gridlabd-2_0";
 
 object overhead_line_conductor:100 {
@@ -36,99 +32,89 @@ object overhead_line_conductor:101 {
 
 object line_spacing:200 {
 	distance_AB 2.5;
-	distance_BC 4.5;
-	distance_AC 7.0;
+	distance_BC 0;
+	distance_AC 0;
 	distance_AN 5.656854;
 	distance_BN 4.272002;
-	distance_CN 5.0;
+	distance_CN 0;
 }
 
 object line_configuration:300 {
 	conductor_A overhead_line_conductor:100;
 	conductor_B overhead_line_conductor:100;
-	conductor_C overhead_line_conductor:100;
 	conductor_N overhead_line_conductor:101;
 	spacing line_spacing:200;
 }
 
 object regulator_configuration {
 	connect_type WYE_WYE;
-	name auto_regulator;
+	name manual_regulator;
 	raise_taps 16;
 	lower_taps 16;
 	regulation 0.1;
-	Type B;
-	Control OUTPUT_VOLTAGE;
-	band_center 7200;
-	band_width 90; // approximately one tap difference
-	
+	Type A;
+	Control MANUAL;
 }
 
 object node {
-	phases ABCN;
+	phases ABN;
 	name FeederNode;
 	bustype SWING;
 	voltage_A +7199.558+0.000j;
 	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7200;
-}
-
-object overhead_line {
-	phases "ABCN";
-	from FeederNode;
-	to InterNode;
-	length 200000;
-	configuration line_configuration:300;
-}
-
-object node {
-	phases ABCN;
-	name InterNode;
-	voltage_A +7199.558+0.000j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
 	nominal_voltage 7200;
 }
 	
 object regulator {
 	name Regulator;
-	phases ABCN;
-	from InterNode;
+	phases ABN;
+	from FeederNode;
 	to TopNode;
-	configuration auto_regulator;
+	configuration manual_regulator;
+	tap_A 16;
+	tap_B -16;
+	object player {
+		file ../regulator_manual_YY_tap_A.player;
+		property tap_A;
+	};
+	object player {
+		file ../regulator_manual_YY_tap_B.player;
+		property tap_B;
+	};
+	object recorder {
+		file regulator_manual_output.csv;
+		property tap_A,tap_B,tap_C;
+		interval 3600;
+		limit 33;
+	};
 }
 
 object node {
-	phases "ABCN";
+	phases "ABN";
 	name TopNode;
 	voltage_A +7199.558+0.000j;
 	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
 	nominal_voltage 7200;
-	
 	object complex_assert {
-		operation MAGNITUDE;
-		value 7200;
-		target voltage_A;
-		within 45;
+		target "voltage_A";
+		within 1;
+		object player {
+			file ../regulator_manual_YY_assert_A.player;
+			property value;
+		};
 	};
 	object complex_assert {
-		operation MAGNITUDE;
-		value 7200;
-		target voltage_B;
-		within 45;
-	};
-	object complex_assert {
-		operation MAGNITUDE;
-		value 7200;
-		target voltage_C;
-		within 45;
+		target "voltage_B";
+		within 1;
+		object player {
+			file ../regulator_manual_YY_assert_B.player;
+			property value;
+		};
 	};
 }
 
 object overhead_line {
-	phases "ABCN";
+	phases "ABN";
 	from TopNode;
 	to MiddleNode;
 	length 2000;
@@ -136,16 +122,15 @@ object overhead_line {
 }
 
 object node {
-	phases "ABCN";
+	phases "ABN";
 	nominal_voltage 7200;
 	voltage_A +7199.558+0.000j;
 	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
 	name MiddleNode;
 }
 
 object overhead_line {
-	phases "ABCN";
+	phases "ABN";
 	from MiddleNode;
 	to BottomLoad;
 	length 2500;
@@ -153,31 +138,9 @@ object overhead_line {
 }
 
 object load {
-	phases "ABCN";
+	phases "ABN";
 	name BottomLoad;
+	constant_power_A +5000.000+120.0j;
+	constant_power_B +5000.000+120.0j;
 	nominal_voltage 7200;
-	
-	object player {
-		file regulator_load_phA.player;
-		loop 6;
-		property constant_power_A;
-	};
-	object player {
-		file regulator_load_phB.player;
-		loop 6;
-		property constant_power_B;
-	};
-	object player {
-		file regulator_load_phC.player;
-		loop 6;
-		property constant_power_C;
-	};
-}
-
-object recorder {
-	file test.csv;
-	interval 3600;
-	limit 24;
-	parent Regulator;
-	property tap_A,tap_B,tap_C;
 }

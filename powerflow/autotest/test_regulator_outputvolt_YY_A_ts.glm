@@ -159,17 +159,17 @@ object load {
 	
 	object player {
 		file ../regulator_load_phA.player;
-		loop 1;
+		loop 6;
 		property constant_power_A;
 	};
 	object player {
 		file ../regulator_load_phB.player;
-		loop 1;
+		loop 6;
 		property constant_power_B;
 	};
 	object player {
 		file ../regulator_load_phC.player;
-		loop 1;
+		loop 6;
 		property constant_power_C;
 	};
 }

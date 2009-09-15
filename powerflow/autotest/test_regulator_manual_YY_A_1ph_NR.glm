@@ -1,0 +1,129 @@
+// $id$
+//	Copyright (C) 2008 Battelle Memorial Institute
+
+// 4 node system with a balanced load and a regulator
+// being controlled manually, which each phase handled
+// individually.  Check to make sure voltages are being
+// regulated correctly with both a Type A & B regulator.
+
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow {
+	solver_method NR;
+};
+module assert;
+module tape;
+
+//#define stylesheet="C:\Documents and Settings\d3x289\Desktop\GLD_8_7\trunk\VS2005\gridlabd-2_0";
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AB 0;
+	distance_BC 0;
+	distance_AC 0;
+	distance_AN 5.656854;
+	distance_BN 0;
+	distance_CN 0;
+}
+
+object line_configuration:300 {
+	conductor_A overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
+}
+
+object regulator_configuration {
+	connect_type WYE_WYE;
+	name manual_regulator;
+	raise_taps 16;
+	lower_taps 16;
+	regulation 0.1;
+	Type A;
+	Control MANUAL;
+}
+
+object node {
+	phases AN;
+	name FeederNode;
+	bustype SWING;
+	voltage_A +7199.558+0.000j;
+	nominal_voltage 7200;
+}
+	
+object regulator {
+	name Regulator;
+	phases AN;
+	from FeederNode;
+	to TopNode;
+	configuration manual_regulator;
+	tap_A 16;
+	object player {
+		file ../regulator_manual_YY_tap_A.player;
+		property tap_A;
+	};
+	object recorder {
+		file regulator_manual_output.csv;
+		property tap_A,tap_B,tap_C;
+		interval 3600;
+		limit 33;
+	};
+}
+
+object node {
+	phases "AN";
+	name TopNode;
+	voltage_A +7199.558+0.000j;
+	nominal_voltage 7200;
+	object complex_assert {
+		target "voltage_A";
+		within 1;
+		object player {
+			file ../regulator_manual_YY_assert_A.player;
+			property value;
+		};
+	};
+
+}
+
+object overhead_line {
+	phases "AN";
+	from TopNode;
+	to MiddleNode;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node {
+	phases "AN";
+	nominal_voltage 7200;
+	voltage_A +7199.558+0.000j;
+	name MiddleNode;
+}
+
+object overhead_line {
+	phases "AN";
+	from MiddleNode;
+	to BottomLoad;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object load {
+	phases "AN";
+	name BottomLoad;
+	constant_power_A +5000.000+120.0j;
+	nominal_voltage 7200;
+}
