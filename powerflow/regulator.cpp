@@ -248,235 +248,237 @@ int regulator::init(OBJECT *parent)
 
 TIMESTAMP regulator::presync(TIMESTAMP t0) 
 {
-	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
-	node *pTo = OBJECTDATA(to, node);
-
-	//Set flags correctly for each pass, 1 indicates okay to change taps, 0 indicates no go
-	if (pConfig->Control != pConfig->MANUAL) {
-		for (int i = 0; i < 3; i++) {
-			if (mech_t_next[i] <= t0) {
-				mech_flag[i] = 1;
-			}
-			if (dwell_t_next[i] <= t0) {
-				dwell_flag[i] = 1;
-			}
-			else if (dwell_t_next[i] > t0) {
-				dwell_flag[i] = 0;
-			}
-		}
-	}
-
-	if (pConfig->Control == pConfig->MANUAL) {
-		for (int i = 0; i < 3; i++) {
-			if (pConfig->Type == pConfig->A)
-			{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
-			else if (pConfig->Type == pConfig->B)
-			{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
-			else
-			{	throw "invalid regulator type";}
-				/*  TROUBLESHOOT
-				Check the Type specification in your regulator_configuration object.  It can an only be type A or B.
-				*/
-		}
-		next_time = TS_NEVER;
-	}
-	else
+	if ((solver_method == SM_NR && NR_cycle==true) || solver_method == SM_FBS)
 	{
-		get_monitored_voltage();
+		regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+		node *pTo = OBJECTDATA(to, node);
 
-		if (pConfig->connect_type == pConfig->WYE_WYE)
-		{	
-			//Update first run flag - special solver during first time solved.
-			if ((first_run_flag[0] + first_run_flag[1] + first_run_flag[2]) < 3 ) {
-				for (int i = 0; i < 3; i++) {
-					if (first_run_flag[i] < 1) {
-						first_run_flag[i] += 1;
-					}
+		//Set flags correctly for each pass, 1 indicates okay to change taps, 0 indicates no go
+		if (pConfig->Control != pConfig->MANUAL) {
+			for (int i = 0; i < 3; i++) {
+				if (mech_t_next[i] <= t0) {
+					mech_flag[i] = 1;
+				}
+				if (dwell_t_next[i] <= t0) {
+					dwell_flag[i] = 1;
+				}
+				else if (dwell_t_next[i] > t0) {
+					dwell_flag[i] = 0;
 				}
 			}
+		}
 
-			for (int i = 0; i < 3; i++) 
-			{
-				
-				if (check_voltage[i].Mag() < Vlow)		//raise voltage
-				{	
-					//hit the band center for convergence on first run, otherwise bad initial guess on tap settings 
-					//can fail on the first timestep
-					if (first_run_flag[i] == 0) 
-					{	
-						tap[i] = tap[i] + (int16)ceil((pConfig->band_center - check_voltage[i].Mag())/VtapChange);
-						if (tap[i] > pConfig->raise_taps) 
-						{
-							tap[i] = pConfig->raise_taps;
-						}
-						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-						mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-					}
-					//dwelling has happened, and now waiting for actual physical change time
-					else if (mech_flag[i] == 0 && dwell_flag[i] == 1 && (mech_t_next[i] - t0) >= pConfig->time_delay)
-					{
-						mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-					}
-					//if both flags say it's okay to change the tap, then change the tap
-					else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
-					{		 
-						tap[i] = tap[i] + (int16) 1;						
-
-						if (tap[i] > pConfig->raise_taps) 
-						{
-							tap[i] = pConfig->raise_taps;
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-							dwell_flag[i] = mech_flag[i] = 0;
-						}
-						else 
-						{
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-							mech_flag[i] = 0;
-						}
-					}
-					//only set the dwell time if we've reached the end of the previous dwell (in case other 
-					//objects update during that time)
-					else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
-					{
-						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-						mech_t_next[i] = dwell_t_next[i] + (int64)pConfig->time_delay;
-					}														
-				}
-				else if (check_voltage[i].Mag() > Vhigh)  //lower voltage
-				{
-					if (first_run_flag[i] == 0) 
-					{
-						tap[i] = tap[i] - (int16)ceil((check_voltage[i].Mag() - pConfig->band_center)/VtapChange);
-						if (tap[i] < -pConfig->lower_taps) 
-						{
-							tap[i] = -pConfig->lower_taps;
-						}
-						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-						mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-					}
-					else if (mech_flag[i] == 0 && dwell_flag[i] == 1 && (mech_t_next[i] - t0) >= pConfig->time_delay)
-					{
-						mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-					}
-					else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
-					{
-						tap[i] = tap[i] - (int16) 1;							
-						
-						if (tap[i] < -pConfig->lower_taps) 
-						{
-							tap[i] = -pConfig->lower_taps;
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-							dwell_flag[i] = mech_flag[i] = 0;
-						}
-						else 
-						{
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-							mech_flag[i] = 0;
-						}
-					}
-					else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
-					{
-						dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-						mech_t_next[i] = dwell_t_next[i] + (int64)pConfig->time_delay;
-					}
-				}
-				//If no tap changes were needed, then this resets dwell_flag to 0 and indicates regulator has no
-				//more changes unless system changes
-				else 
-				{	
-					dwell_t_next[i] = mech_t_next[i] = TS_NEVER;
-					//if (pConfig->dwell_time == 0)
-					//	dwell_flag[i] = 1;
-					//else
-						dwell_flag[i] = 0;
-					//if (pConfig->time_delay == 0)
-					//	mech_flag[i] = 1;
-					//else
-						mech_flag[i] = 0;
-				}
-
-				//Use tap positions to solve for 'a' matrix
+		if (pConfig->Control == pConfig->MANUAL) {
+			for (int i = 0; i < 3; i++) {
 				if (pConfig->Type == pConfig->A)
 				{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
 				else if (pConfig->Type == pConfig->B)
 				{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
 				else
 				{	throw "invalid regulator type";}
-				/*  TROUBLESHOOT
-				Check the Type of regulator specified.  Type can only be A or B at this time.
-				*/
+					/*  TROUBLESHOOT
+					Check the Type specification in your regulator_configuration object.  It can an only be type A or B.
+					*/
 			}
-			//Determine how far to advance the clock
-			int64 nt[3];
-			for (int i = 0; i < 3; i++) {
-				if (mech_t_next[i] > t0)
-					nt[i] = mech_t_next[i];
-				if (dwell_t_next[i] > t0)
-					nt[i] = dwell_t_next[i];
-			}
-
-			if (nt[0] > t0)
-				next_time = nt[0];
-			if (nt[1] > t0 && nt[1] < next_time)
-				next_time = nt[1];
-			if (nt[2] > t0 && nt[2] < next_time)
-				next_time = nt[2];
-
-			if (next_time <= t0)
-				next_time = TS_NEVER;
+			next_time = TS_NEVER;
 		}
 		else
-			GL_THROW("Specified connect type is not supported in automatic modes at this time.");
-			/* TROUBLESHOOT
-			At this time only WYE-WYE regulators are supported in automatic control modes. 
-			OPEN_DELTA_ABBC will only work in MANUAL control mode and in FBS at this time.
-			*/
+		{
+			get_monitored_voltage();
+
+			if (pConfig->connect_type == pConfig->WYE_WYE)
+			{	
+				//Update first run flag - special solver during first time solved.
+				if ((first_run_flag[0] + first_run_flag[1] + first_run_flag[2]) < 3 ) {
+					for (int i = 0; i < 3; i++) {
+						if (first_run_flag[i] < 1) {
+							first_run_flag[i] += 1;
+						}
+					}
+				}
+
+				for (int i = 0; i < 3; i++) 
+				{
+					
+					if (check_voltage[i].Mag() < Vlow)		//raise voltage
+					{	
+						//hit the band center for convergence on first run, otherwise bad initial guess on tap settings 
+						//can fail on the first timestep
+						if (first_run_flag[i] == 0) 
+						{	
+							tap[i] = tap[i] + (int16)ceil((pConfig->band_center - check_voltage[i].Mag())/VtapChange);
+							if (tap[i] > pConfig->raise_taps) 
+							{
+								tap[i] = pConfig->raise_taps;
+							}
+							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+						}
+						//dwelling has happened, and now waiting for actual physical change time
+						else if (mech_flag[i] == 0 && dwell_flag[i] == 1 && (mech_t_next[i] - t0) >= pConfig->time_delay)
+						{
+							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+						}
+						//if both flags say it's okay to change the tap, then change the tap
+						else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
+						{		 
+							tap[i] = tap[i] + (int16) 1;						
+
+							if (tap[i] > pConfig->raise_taps) 
+							{
+								tap[i] = pConfig->raise_taps;
+								dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+								mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+								dwell_flag[i] = mech_flag[i] = 0;
+							}
+							else 
+							{
+								mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+								dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+								mech_flag[i] = 0;
+							}
+						}
+						//only set the dwell time if we've reached the end of the previous dwell (in case other 
+						//objects update during that time)
+						else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
+						{
+							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+							mech_t_next[i] = dwell_t_next[i] + (int64)pConfig->time_delay;
+						}														
+					}
+					else if (check_voltage[i].Mag() > Vhigh)  //lower voltage
+					{
+						if (first_run_flag[i] == 0) 
+						{
+							tap[i] = tap[i] - (int16)ceil((check_voltage[i].Mag() - pConfig->band_center)/VtapChange);
+							if (tap[i] < -pConfig->lower_taps) 
+							{
+								tap[i] = -pConfig->lower_taps;
+							}
+							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+						}
+						else if (mech_flag[i] == 0 && dwell_flag[i] == 1 && (mech_t_next[i] - t0) >= pConfig->time_delay)
+						{
+							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+						}
+						else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
+						{
+							tap[i] = tap[i] - (int16) 1;							
+							
+							if (tap[i] < -pConfig->lower_taps) 
+							{
+								tap[i] = -pConfig->lower_taps;
+								dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+								mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+								dwell_flag[i] = mech_flag[i] = 0;
+							}
+							else 
+							{
+								mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+								dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+								mech_flag[i] = 0;
+							}
+						}
+						else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
+						{
+							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+							mech_t_next[i] = dwell_t_next[i] + (int64)pConfig->time_delay;
+						}
+					}
+					//If no tap changes were needed, then this resets dwell_flag to 0 and indicates regulator has no
+					//more changes unless system changes
+					else 
+					{	
+						dwell_t_next[i] = mech_t_next[i] = TS_NEVER;
+						//if (pConfig->dwell_time == 0)
+						//	dwell_flag[i] = 1;
+						//else
+							dwell_flag[i] = 0;
+						//if (pConfig->time_delay == 0)
+						//	mech_flag[i] = 1;
+						//else
+							mech_flag[i] = 0;
+					}
+
+					//Use tap positions to solve for 'a' matrix
+					if (pConfig->Type == pConfig->A)
+					{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
+					else if (pConfig->Type == pConfig->B)
+					{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
+					else
+					{	throw "invalid regulator type";}
+					/*  TROUBLESHOOT
+					Check the Type of regulator specified.  Type can only be A or B at this time.
+					*/
+				}
+				//Determine how far to advance the clock
+				int64 nt[3];
+				for (int i = 0; i < 3; i++) {
+					if (mech_t_next[i] > t0)
+						nt[i] = mech_t_next[i];
+					if (dwell_t_next[i] > t0)
+						nt[i] = dwell_t_next[i];
+				}
+
+				if (nt[0] > t0)
+					next_time = nt[0];
+				if (nt[1] > t0 && nt[1] < next_time)
+					next_time = nt[1];
+				if (nt[2] > t0 && nt[2] < next_time)
+					next_time = nt[2];
+
+				if (next_time <= t0)
+					next_time = TS_NEVER;
+			}
+			else
+				GL_THROW("Specified connect type is not supported in automatic modes at this time.");
+				/* TROUBLESHOOT
+				At this time only WYE-WYE regulators are supported in automatic control modes. 
+				OPEN_DELTA_ABBC will only work in MANUAL control mode and in FBS at this time.
+				*/
+		}
+			
+		//Use 'a' matrix to solve appropriate 'A' & 'd' matrices
+		complex tmp_mat[3][3] = {{complex(1,0)/a_mat[0][0],complex(0,0),complex(0,0)},
+								 {complex(0,0), complex(1,0)/a_mat[1][1],complex(0,0)},
+								 {complex(-1,0)/a_mat[0][0],complex(-1,0)/a_mat[1][1],complex(0,0)}};
+		complex tmp_mat1[3][3];
+
+		switch (pConfig->connect_type) {
+			case regulator_configuration::WYE_WYE:
+				for (int i = 0; i < 3; i++)
+				{	d_mat[i][i] = complex(1.0,0) / a_mat[i][i]; }
+				inverse(a_mat,A_mat);
+				break;
+			case regulator_configuration::OPEN_DELTA_ABBC:
+				d_mat[0][0] = complex(1,0) / a_mat[0][0];
+				d_mat[1][0] = complex(-1,0) / a_mat[0][0];
+				d_mat[1][2] = complex(-1,0) / a_mat[1][1];
+				d_mat[2][2] = complex(1,0) / a_mat[1][1];
+
+				a_mat[2][0] = -a_mat[0][0];
+				a_mat[2][1] = -a_mat[1][1];
+				a_mat[2][2] = 0;
+
+				multiply(W_mat,tmp_mat,tmp_mat1);
+				multiply(tmp_mat1,D_mat,A_mat);
+				break;
+			case regulator_configuration::OPEN_DELTA_BCAC:
+				break;
+			case regulator_configuration::OPEN_DELTA_CABA:
+				break;
+			case regulator_configuration::CLOSED_DELTA:
+				break;
+			default:
+				throw "unknown regulator connect type";
+				/*  TROUBLESHOOT
+				Check the connection type specified.  Only a few are available at this time.  Ones available can be
+				found on the wiki website ( http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Power_Flow_Guide )
+				*/
+				break;
+		}
 	}
-		
-	//Use 'a' matrix to solve appropriate 'A' & 'd' matrices
-	complex tmp_mat[3][3] = {{complex(1,0)/a_mat[0][0],complex(0,0),complex(0,0)},
-			                 {complex(0,0), complex(1,0)/a_mat[1][1],complex(0,0)},
-			                 {complex(-1,0)/a_mat[0][0],complex(-1,0)/a_mat[1][1],complex(0,0)}};
-	complex tmp_mat1[3][3];
-
-	switch (pConfig->connect_type) {
-		case regulator_configuration::WYE_WYE:
-			for (int i = 0; i < 3; i++)
-			{	d_mat[i][i] = complex(1.0,0) / a_mat[i][i]; }
-			inverse(a_mat,A_mat);
-			break;
-		case regulator_configuration::OPEN_DELTA_ABBC:
-			d_mat[0][0] = complex(1,0) / a_mat[0][0];
-			d_mat[1][0] = complex(-1,0) / a_mat[0][0];
-			d_mat[1][2] = complex(-1,0) / a_mat[1][1];
-			d_mat[2][2] = complex(1,0) / a_mat[1][1];
-
-			a_mat[2][0] = -a_mat[0][0];
-			a_mat[2][1] = -a_mat[1][1];
-			a_mat[2][2] = 0;
-
-			multiply(W_mat,tmp_mat,tmp_mat1);
-			multiply(tmp_mat1,D_mat,A_mat);
-			break;
-		case regulator_configuration::OPEN_DELTA_BCAC:
-			break;
-		case regulator_configuration::OPEN_DELTA_CABA:
-			break;
-		case regulator_configuration::CLOSED_DELTA:
-			break;
-		default:
-			throw "unknown regulator connect type";
-			/*  TROUBLESHOOT
-			Check the connection type specified.  Only a few are available at this time.  Ones available can be
-			found on the wiki website ( http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Power_Flow_Guide )
-			*/
-			break;
-	}
-	
 
 	TIMESTAMP t1 = link::presync(t0);
 	
@@ -528,13 +530,11 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		//multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
 	}
 
-
-
-
 	if (first_run_flag[0] < 1 || first_run_flag[1] < 1 || first_run_flag[2] < 1) return t1;
 	else if (t1 <= next_time) return t1;
 	else if (next_time != TS_NEVER) return -next_time; //soft return to next tap change
 	else return TS_NEVER;
+		
 }
 TIMESTAMP regulator::postsync(TIMESTAMP t0)
 {
