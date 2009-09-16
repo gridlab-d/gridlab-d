@@ -325,7 +325,9 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 						if (tap[i] > pConfig->raise_taps) 
 						{
 							tap[i] = pConfig->raise_taps;
-							mech_t_next[i] = dwell_t_next[i] = TS_NEVER;
+							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+							dwell_flag[i] = mech_flag[i] = 0;
 						}
 						else 
 						{
@@ -365,7 +367,9 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 						if (tap[i] < -pConfig->lower_taps) 
 						{
 							tap[i] = -pConfig->lower_taps;
-							mech_t_next[i] = dwell_t_next[i] = TS_NEVER;
+							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+							dwell_flag[i] = mech_flag[i] = 0;
 						}
 						else 
 						{
@@ -564,10 +568,10 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 					return t0;
 				if (dwell_flag[i] == 1 && mech_flag[i] == 1)
 				{			
-					if (check_voltage[i].Mag() < Vlow)
+					if (check_voltage[i].Mag() < Vlow && tap[i] != -pConfig->lower_taps)
 						return t0;
 
-					if (check_voltage[i].Mag() > Vhigh)
+					if (check_voltage[i].Mag() > Vhigh && tap[i] != -pConfig->raise_taps)
 						return t0;
 				}
 			}
@@ -684,9 +688,10 @@ void regulator::get_monitored_voltage()
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
 	node *pTo = OBJECTDATA(to, node);
 
-	switch (pConfig->Control)
+	int testval = (int)(pConfig->Control);
+	switch (testval)
 	{
-		case (pConfig->LINE_DROP_COMP): 
+		case 4: //Line Drop Compensation
 		{
 			if (pTo) 
 			{
@@ -722,7 +727,7 @@ void regulator::get_monitored_voltage()
 			}
 		}
 			break;
-		case (pConfig->OUTPUT_VOLTAGE): 
+		case 2: //Output voltage
 		{
 			if (pTo) 
 			{
@@ -736,7 +741,7 @@ void regulator::get_monitored_voltage()
 			}
 		}
 			break;
-		case (pConfig->REMOTE_NODE):
+		case 3: //Remote Node
 		{
 			node *RNode = OBJECTDATA(RemoteNode,node);
 			for (int i = 0; i < 3; i++)
