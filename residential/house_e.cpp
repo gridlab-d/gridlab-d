@@ -568,14 +568,16 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),PT_DESCRIPTION,"deadband of thermostat control",
 			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),PT_DESCRIPTION,"thermostat heating setpoint",
 			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),PT_DESCRIPTION,"thermostat cooling setpoint",
-			PT_double, "design_heating_capacity[Btu.h/sf]",PADDR(design_heating_capacity),PT_DESCRIPTION,"system heating capacity",
-			PT_double,"design_cooling_capacity[Btu.h/sf]",PADDR(design_cooling_capacity),PT_DESCRIPTION,"system cooling capacity",
+			PT_double, "design_heating_capacity[Btu.h]",PADDR(design_heating_capacity),PT_DESCRIPTION,"system heating capacity",
+			PT_double,"design_cooling_capacity[Btu.h]",PADDR(design_cooling_capacity),PT_DESCRIPTION,"system cooling capacity",
 			PT_double, "cooling_design_temperature[degF]", PADDR(cooling_design_temperature),PT_DESCRIPTION,"system cooling design temperature",
 			PT_double, "heating_design_temperature[degF]", PADDR(heating_design_temperature),PT_DESCRIPTION,"system heating design temperature",
 			PT_double, "design_peak_solar[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design solar load",
 			PT_double, "design_internal_gains[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design internal gains",
 			PT_double, "air_heat_fraction[pu]", PADDR(air_heat_fraction), PT_DESCRIPTION, "fraction of heat gain/loss that goes to air (as opposed to mass)",
 
+			PT_double,"heating_demand",PADDR(heating_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the heating system",
+			PT_double,"cooling_demand",PADDR(cooling_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the cooling system",
 			PT_double,"heating_COP[pu]",PADDR(heating_COP),PT_DESCRIPTION,"system heating performance coefficient",
 			PT_double,"cooling_COP[Btu/kWh]",PADDR(cooling_COP),PT_DESCRIPTION,"system cooling performance coefficient",
 			PT_double,"COP_coeff",PADDR(COP_coeff),PT_DESCRIPTION,"effective system performance coefficient",
@@ -769,6 +771,7 @@ int house_e::init_climate()
 		{
 			// force rank of object w.r.t climate
 			OBJECT *obj = gl_find_next(climates,NULL);
+			weather = obj;
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
 			pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
@@ -883,7 +886,7 @@ int house_e::init(OBJECT *parent)
 	if(cooling_design_temperature == 0)	cooling_design_temperature = 95.0;
 	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * gl_random_triangle(4,6); // ~5 W/sf estimated
 	if (latent_load_fraction==0) latent_load_fraction = 0.2;
-	if (design_cooling_capacity==0)	design_cooling_capacity = (1+latent_load_fraction) * envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (1 - glazing_shgc)) + design_internal_gains;
+	if (design_cooling_capacity==0)	design_cooling_capacity = (1+latent_load_fraction) * envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (glazing_shgc)) + design_internal_gains;
 	if (design_heating_capacity==0)	design_heating_capacity = envelope_UA * (heating_setpoint - heating_design_temperature);
     if (system_mode==SM_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
 
@@ -1035,13 +1038,15 @@ void house_e::update_model(double dt)
 #ifndef _DEBUG
 	double d;
 #endif
+	double *solar_raw = gl_get_double_by_name(weather, "solar_raw");
 
 	/* compute solar gains */
 	Qs = 0; 
 	int i;
 	for (i=0; i<9; i++)
 		Qs += pSolar[i];
-	Qs *= 3.412 * (gross_wall_area*window_wall_ratio) / 8.0 * (1 - glazing_shgc);
+	Qs *= 3.412 * (gross_wall_area*window_wall_ratio) / 8.0 * (glazing_shgc);
+
 	if (Qs<0)
 		throw "solar gain is negative";
 
@@ -1075,18 +1080,22 @@ void house_e::update_system(double dt)
 	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
 	const double cooling_capacity_adj = -(-0.0063*(*pTout)+1.5984);
 
+	heating_demand = system_rated_capacity/(heating_COP * heating_cop_adj)/1000.0;
+	cooling_demand = system_rated_capacity/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction)/1000.0;
+
 	switch (system_mode) {
 	case SM_HEAT:
 		system_rated_capacity = design_heating_capacity*heating_capacity_adj;
-		system_rated_power = system_rated_capacity/(heating_COP * heating_cop_adj);
+		system_rated_power = heating_demand;
 		break;
 	case SM_AUX:
 		system_rated_capacity = design_heating_capacity;
 		system_rated_power = system_rated_capacity;
+		heating_demand = system_rated_power/1000.0;
 		break;
 	case SM_COOL:
 		system_rated_capacity = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction);
-		system_rated_power = system_rated_capacity/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction);
+		system_rated_power = cooling_demand;
 		break;
 	default:
 		// two-speed systems use a little power at when off (vent mode)

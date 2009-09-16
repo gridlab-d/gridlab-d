@@ -131,6 +131,9 @@ public:
 	/* inherited res_enduse::load is hvac system load */
 	enduse total; /* total load */
 
+	double heating_demand;
+	double cooling_demand;
+
 private:
 
 	// internal variables used to track state of house */
