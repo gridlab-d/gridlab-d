@@ -31,6 +31,8 @@
 
 complex default_line_voltage[3] = {complex(240,0,A),complex(120,0,A),complex(120,0,A)};
 complex default_line_current[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
+complex default_line_shunt[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
+complex default_line_power[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
 double default_outdoor_temperature = 74.0;
 double default_humidity = 75.0;
 double default_solar[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};

@@ -114,6 +114,14 @@ TIMESTAMP triplex_node::sync(TIMESTAMP t0)
 	complex I;
 	OBJECT *obj = OBJECTHDR(this);
 
+	//Update shunt value here, otherwise it will only be a static value
+	if ((shunt1.IsZero())&&(impedance[0]!=0))
+		shunt1 = complex(1,0)/impedance[0];
+	if ((shunt2.IsZero())&&(impedance[1]!=0))
+		shunt2 = complex(1,0)/impedance[1];
+	if ((shunt12.IsZero())&&(impedance[2]!=0))
+		shunt12 = complex(1,0)/impedance[2];
+
 	return node::sync(t0);
 }
 

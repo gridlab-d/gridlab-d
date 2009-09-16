@@ -809,25 +809,25 @@ int house_e::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	// construct circuit variable map to meter
+	// local object name,	meter object name
 	struct {
-		complex **var;
-		char *varname;
-	} map[] = {
-		// local object name,	meter object name
-		{&pCircuit_V,			"voltage_12"}, // assumes 1N and 2N follow immediately in memory
-		{&pLine_I,				"current_1"}, // assumes 2 and 3(N) follow immediately in memory
-		{&pLine12,				"current_12"},
-		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
-	};
+			complex **var;
+			char *varname;
+			} map[] = { {&pCircuit_V,			"voltage_12"}, // assumes 1N and 2N follow immediately in memory
+						{&pLine_I,				"current_1"}, // assumes 2 and 3(N) follow immediately in memory
+						{&pLine12,				"current_12"},
+						{&pShunt,				"shunt_1"},		// assumes 2 and 3 (12) follow immediately in memory
+						{&pPower,				"power_1"},		// assumes 2 and 3 (12) follow immediately in memory
+					/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
+					};
 
-	extern complex default_line_voltage[3], default_line_current[3];
+	extern complex default_line_voltage[3], default_line_current[3], default_line_power[3], default_line_shunt[3];
 	static complex default_line_current_12;
 	int i;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	OBJECT *obj = OBJECTHDR(this);
-	if (parent!=NULL && gl_object_isa(parent,"triplex_meter"))
+	if (parent!=NULL && (gl_object_isa(parent,"triplex_meter","powerflow") || gl_object_isa(obj->parent,"triplex_node","powerflow")))
 	{
 		// attach meter variables to each circuit
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
@@ -845,6 +845,8 @@ int house_e::init(OBJECT *parent)
 		*(map[0].var) = &default_line_voltage[0];
 		*(map[1].var) = &default_line_current[0];
 		*(map[2].var) = &default_line_current_12;
+		*(map[3].var) = &default_line_shunt[0];
+		*(map[4].var) = &default_line_power[0];
 	}
 
 	// set defaults for panel/meter variables
@@ -1130,6 +1132,11 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 	const double dt = (double)((t1-t0)*TS_SECOND)/3600;
 	CIRCUIT *c;
 
+	//Zero the accumulator
+	load_values[0][0] = load_values[0][1] = load_values[0][2] = 0.0;
+	load_values[1][0] = load_values[1][1] = load_values[1][2] = 0.0;
+	load_values[2][0] = load_values[2][1] = load_values[2][2] = 0.0;
+
 	/* advance the thermal state of the building */
 	if (t0>0 && dt>0)
 	{
@@ -1322,9 +1329,6 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	OBJECT *obj = OBJECTHDR(this);
 
-	// clear accumulators for panel currents
-	complex I[3]; I[X12] = I[X23] = I[X13] = complex(0,0);
-
 	// clear accumulator
 	if(t0 != 0 && t1 > t0){
 		total.heatgain = 0;
@@ -1393,6 +1397,29 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				//c->pLoad->voltage_factor = c->pV->Mag() / ((c->pLoad->config&EUC_IS220) ? 240 : 120);
 				//TIMESTAMP t = gl_enduse_sync(c->pLoad,t1); if (t<t2) t2 = t;
+
+
+				//Convert values appropriately - assume nominal voltages of 240 and 120 (0 degrees)
+				//All values are given in kW, so convert to normal
+				if (n==0)	//1-2 240 V load
+				{
+					load_values[0][2] += c->pLoad->power * 1000.0;
+					load_values[1][2] += ~(c->pLoad->current * 1000.0 / 240.0);
+					load_values[2][2] += ~(c->pLoad->admittance * 1000.0 / (240.0 * 240.0));
+				}
+				else if (n==1)	//2-N 120 V load
+				{
+					load_values[0][1] += c->pLoad->power * 1000.0;
+					load_values[1][1] += ~(c->pLoad->current * 1000.0 / 120.0);
+					load_values[2][1] += ~(c->pLoad->admittance * 1000.0 / (120.0 * 120.0));
+				}
+				else	//n has to equal 2 here (checked above) - 1-N 120 V load
+				{
+					load_values[0][0] += c->pLoad->power * 1000.0;
+					load_values[1][0] += ~(c->pLoad->current * 1000.0 / 120.0);
+					load_values[2][0] += ~(c->pLoad->admittance * 1000.0 / (120.0 * 120.0));
+				}
+
 				total.total += c->pLoad->total;
 				total.power += c->pLoad->power;
 				total.current += c->pLoad->current;
@@ -1400,7 +1427,6 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				if(t0 != 0 && t1 > t0){
 					total.heatgain += c->pLoad->heatgain;
 				}
-				I[n] += current;
 				c->reclose = TS_NEVER;
 			}
 		}
@@ -1417,10 +1443,22 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	if (obj->parent != NULL)
 		LOCK_OBJECT(obj->parent);
 
-	pLine_I[0] = I[X13];
-	pLine_I[1] = I[X23];
+	//Post accumulations up to parent meter/node
+	//Update power
+	pPower[0] = load_values[0][0];
+	pPower[1] = load_values[0][1];
+	pPower[2] = load_values[0][2];
+	
+	//Current
+	pLine_I[0] = load_values[1][0];
+	pLine_I[1] = load_values[1][1];
 	pLine_I[2] = 0;
-	*pLine12 = I[X12];
+	*pLine12 = load_values[1][2];
+
+	//Admittance
+	pShunt[0] = load_values[2][0];
+	pShunt[1] = load_values[2][1];
+	pShunt[2] = load_values[2][2];
 
 	if (obj->parent != NULL)
 		UNLOCK_OBJECT(obj->parent);

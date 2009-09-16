@@ -58,6 +58,8 @@ public:
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
 	complex *pLine12; ///< pointer to the load across lines 1 & 2
+	complex *pShunt;	///< pointer to shunt value on triplex parent
+	complex *pPower;	///< pointer to power value on triplex parent
 	IMPLICITENDUSE *implicit_enduse_list; ///< implicit enduses
 	static set implicit_enduses_active; ///< implicit enduses that are to be activated
 public:
@@ -145,6 +147,8 @@ private:
 	static bool warn_control;
 	static double warn_low_temp, warn_high_temp;
 	bool check_start;
+
+	complex load_values[3][3];	//Power, Current, and impedance (admittance) load accumulators for NR solving method
 
 public:
 	static CLASS *oclass, *pclass;
