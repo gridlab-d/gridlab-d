@@ -670,6 +670,8 @@ int house_e::create()
 	gl_global_getvar("residential::implicit_enduses",active_enduses,sizeof(active_enduses));
 	char *token = NULL;
 
+	glazing_shgc = 0.65; // assuming generic double glazing
+
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
 
@@ -771,7 +773,9 @@ int house_e::init_climate()
 		{
 			// force rank of object w.r.t climate
 			OBJECT *obj = gl_find_next(climates,NULL);
-			weather = obj;
+			if(weather == NULL){
+				weather = obj;
+			}
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
 			pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
@@ -857,7 +861,7 @@ int house_e::init(OBJECT *parent)
 	if (gross_wall_area==0)		gross_wall_area = 4.0 * 2.0 * (aspect_ratio + 1.0) * ceiling_height * sqrt(floor_area/aspect_ratio);
 	if (window_wall_ratio==0)	window_wall_ratio = 0.15;
 	if (door_wall_ratio==0)		door_wall_ratio = 0.05;
-	if (glazing_shgc==0)		glazing_shgc = 0.65; // assuming generic double glazing
+	
 
 	if (Rroof==0)				Rroof = gl_random_triangle(50,70);
 	if (Rwall==0)				Rwall = gl_random_triangle(15,25);
@@ -1038,7 +1042,6 @@ void house_e::update_model(double dt)
 #ifndef _DEBUG
 	double d;
 #endif
-	double *solar_raw = gl_get_double_by_name(weather, "solar_raw");
 
 	/* compute solar gains */
 	Qs = 0; 
@@ -1080,8 +1083,8 @@ void house_e::update_system(double dt)
 	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
 	const double cooling_capacity_adj = -(-0.0063*(*pTout)+1.5984);
 
-	heating_demand = system_rated_capacity/(heating_COP * heating_cop_adj)/1000.0;
-	cooling_demand = system_rated_capacity/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction)/1000.0;
+	heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)/1000.0;
+	cooling_demand = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction)/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction)/1000.0;
 
 	switch (system_mode) {
 	case SM_HEAT:
@@ -1278,7 +1281,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	const double TheatOff = heating_setpoint+tdead;
 
 	// check for deadband overlap
-	if (cooling_setpoint-tdead<heating_setpoint+tdead)
+	if (cooling_setpoint-tdead<heating_setpoint+tdead && (system_type&ST_AC))
 	{
 		gl_error("house_e: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", cooling_setpoint-tdead, heating_setpoint+tdead);
 		return TS_INVALID;

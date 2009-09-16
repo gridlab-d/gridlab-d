@@ -39,6 +39,7 @@ typedef struct s_tmy {
 	double dnr;
 	double dhr;
 	double solar[CP_LAST]; // W/sf
+	double solar_raw;
 	double windspeed;
 	double rainfall; // in/h
 	double snowdepth; // in
@@ -134,6 +135,7 @@ public:
 	double solar_flux[CP_LAST]; ///< Solar flux array (W/sf) Elements are in order: [S, SE, SW, E, W, NE, NW, N, H]
 	double solar_direct;
 	double solar_diffuse;
+	double solar_raw;
 	double wind_speed; ///< wind speed (m/s)
 	double wind_dir; ///< wind direction (0-360)
 	double wind_gust; ///< wind gusts (m/s)

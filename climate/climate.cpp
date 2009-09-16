@@ -186,6 +186,16 @@ climate::climate(MODULE *module)
 				PT_KEYWORD,"NONE",CI_NONE,
 				PT_KEYWORD,"LINEAR",CI_LINEAR,
 				PT_KEYWORD,"QUADRATIC",CI_QUADRATIC,
+			PT_double,"solar_horiz",PADDR(solar_flux),
+			PT_double,"solar_north",PADDR(solar_flux[1]),
+			PT_double,"solar_northeast",PADDR(solar_flux[2]),
+			PT_double,"solar_east",PADDR(solar_flux[3]),
+			PT_double,"solar_southeast",PADDR(solar_flux[4]),
+			PT_double,"solar_south",PADDR(solar_flux[5]),
+			PT_double,"solar_southwest",PADDR(solar_flux[6]),
+			PT_double,"solar_west",PADDR(solar_flux[7]),
+			PT_double,"solar_northwest",PADDR(solar_flux[8]),
+			PT_double,"solar_raw[W/m^2]",PADDR(solar_raw),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(climate));
 		strcpy(city,"");
@@ -266,6 +276,7 @@ int climate::init(OBJECT *parent)
 			tmy[hoy].dhr = dhr;
 			tmy[hoy].rainfall = precip;
 			tmy[hoy].snowdepth = snowdepth;
+			tmy[hoy].solar_raw = dnr;
 			// calculate the solar radiation
 			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(long_degrees));
 			double sol_rad = 0.0; 
@@ -318,6 +329,7 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 				humidity = tmy[hoy].rh;
 				solar_direct = tmy[hoy].dnr;
 				solar_diffuse = tmy[hoy].dhr;
+				solar_raw = tmy[hoy].solar_raw;
 				this->wind_speed = tmy[hoy].windspeed;
 				this->rainfall = tmy[hoy].rainfall;
 				this->snowdepth = tmy[hoy].snowdepth;
@@ -337,6 +349,7 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 				wind_speed = gl_lerp(now, hoy0, tmy[hoy].windspeed, hoy1, tmy[hoy+1%8760].windspeed);
 				rainfall = gl_lerp(now, hoy0, tmy[hoy].rainfall, hoy1, tmy[hoy+1%8760].rainfall);
 				snowdepth = gl_lerp(now, hoy0, tmy[hoy].snowdepth, hoy1, tmy[hoy+1%8760].snowdepth);
+				solar_raw = gl_lerp(now, hoy0, tmy[hoy].solar_raw, hoy1, tmy[hoy+1%8760].solar_raw);
 				//for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				for(int pt = 0; pt < CP_LAST; ++pt){
 					solar_flux[pt] = gl_lerp(now, hoy0, tmy[hoy].solar[pt], hoy1, tmy[hoy+1%8760].solar[pt]);
@@ -355,6 +368,7 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 				wind_speed = gl_qerp(now, hoy0, tmy[hoy].windspeed, hoy1, tmy[hoy+1%8760].windspeed, hoy2, tmy[hoy+2%8760].windspeed);
 				rainfall = gl_qerp(now, hoy0, tmy[hoy].rainfall, hoy1, tmy[hoy+1%8760].rainfall, hoy2, tmy[hoy+2%8760].rainfall);
 				snowdepth = gl_qerp(now, hoy0, tmy[hoy].snowdepth, hoy1, tmy[hoy+1%8760].snowdepth, hoy2, tmy[hoy+2%8760].snowdepth);
+				solar_raw = gl_qerp(now, hoy0, tmy[hoy].solar_raw, hoy1, tmy[hoy+1%8760].solar_raw, hoy2, tmy[hoy+2%8760].solar_raw);
 				//for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				for(int pt = 0; pt < CP_LAST; ++pt){
 					if(tmy[hoy].solar[pt] == tmy[hoy+1].solar[pt]){
