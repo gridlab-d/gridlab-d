@@ -3,8 +3,7 @@
 
 // 4 Node Feeder: Balanced step-up delta-grY
 // Capacitor attached to end load
-// Bank CAP VAR control - delta on a delta
-// Implements a 3 second "dwell" time
+// Individual CAP current control - Wye on wye
 clock {
 	timestamp '2000-01-01 0:00:00';
 	stoptime '2000-01-01 0:01:00';
@@ -12,7 +11,7 @@ clock {
 }
 
 module powerflow{
-	solver_method FBS;
+	solver_method NR;
 }
 module tape;
 module assert;
@@ -117,66 +116,62 @@ object load:4 {
 	object player {
 		parent load:4;
 		property constant_power_A;
-		file ../loader_fastA.player;
+		file ../loader_fastA_induct.player;
 	};
 	object player {
 		parent load:4;
 		property constant_power_B;
-		file ../loader_fastB.player;
+		file ../loader_fastB_induct.player;
 	};
 	object player {
 		parent load:4;
 		property constant_power_C;
-		file ../loader_fastC.player;
+		file ../loader_fastC_induct.player;
 	};
 	object complex_assert {
 		target "voltage_A";
 		within 0.1;
-		operation MAGNITUDE;
 		object player {
 			property value;
-			file ../cap_volt_A_BANK_VAR_dwell.player;
+			file ../cap_current_A_indiv_volt.player;
 			};
 	};
 	object complex_assert {
-		operation MAGNITUDE;
 		target "voltage_B";
 		within 0.1;
 		object player {
 			property value;
-			file ../cap_volt_B_BANK_VAR_dwell.player;
+			file ../cap_current_B_indiv_volt.player;
 			};
 	};
 	object complex_assert {
-		operation MAGNITUDE;
 		target "voltage_C";
 		within 0.1;
 		object player {
 			property value;
-			file ../cap_volt_C_BANK_VAR_dwell.player;
+			file ../cap_current_C_indiv_volt.player;
 			};
 	};
 }
 
 object capacitor {
-	phases ABCD;				
+	phases ABCN;				
 	name CAP2;
-	pt_phase B;				
+	pt_phase ABC;				
 	parent load:4;
 	remote_sense link34;
-	phases_connected ABCD;		
-	control VAR;
-	VAr_set_high 65000.0;
-	VAr_set_low 50000.0;
+	phases_connected ABC;		
+	control CURRENT;
+	current_set_high 20.0;
+	current_set_low 10.0;
 	capacitor_A 0.5 MVAr;
 	capacitor_B 0.5 MVAr;
 	capacitor_C 0.5 MVAr;
-	control_level BANK;
+	control_level INDIVIDUAL;
 	switchA OPEN;
 	switchB OPEN;
 	switchC OPEN;
 	time_delay 2.0;
-	dwell_time 3.0;
 	cap_nominal_voltage 14000;
 	nominal_voltage 14377;
 }

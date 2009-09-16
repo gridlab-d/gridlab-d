@@ -433,7 +433,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 							/*  TROUBLESHOOT
 							This is a bug.  Newton-Raphson tries to allocate memory for two other
 							needed matrices when dealing with transformers.  This failed.  Please submit
-							your code and a bug report on the Trac site.
+							your code and a bug report on the trac site.
 							*/
 
 						YSto = (complex *)gl_malloc(9*sizeof(complex));

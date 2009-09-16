@@ -725,6 +725,16 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				*/
 			}
 		}
+
+		if ((SubNode==DIFF_PARENT) && (NR_cycle==false))	//Differently connected parent - zero our accumulators
+		{
+			//Zero them.  Row 1 is power, row 2 is admittance, row 3 is current
+			Extra_Data[0] = Extra_Data[1] = Extra_Data[2] = 0.0;
+
+			Extra_Data[3] = Extra_Data[4] = Extra_Data[5] = 0.0;
+
+			Extra_Data[6] = Extra_Data[7] = Extra_Data[8] = 0.0;
+		}
 	}
 	else if (solver_method==SM_FBS)
 	{
@@ -1316,17 +1326,17 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
 				//Update post them.  Row 1 is power, row 2 is admittance, row 3 is current
-				ParToLoad->Extra_Data[0] = power[0];
-				ParToLoad->Extra_Data[1] = power[1];
-				ParToLoad->Extra_Data[2] = power[2];
+				ParToLoad->Extra_Data[0] += power[0];
+				ParToLoad->Extra_Data[1] += power[1];
+				ParToLoad->Extra_Data[2] += power[2];
 
-				ParToLoad->Extra_Data[3] = shunt[0];
-				ParToLoad->Extra_Data[4] = shunt[1];
-				ParToLoad->Extra_Data[5] = shunt[2];
+				ParToLoad->Extra_Data[3] += shunt[0];
+				ParToLoad->Extra_Data[4] += shunt[1];
+				ParToLoad->Extra_Data[5] += shunt[2];
 
-				ParToLoad->Extra_Data[6] = current[0];
-				ParToLoad->Extra_Data[7] = current[1];
-				ParToLoad->Extra_Data[8] = current[2];
+				ParToLoad->Extra_Data[6] += current[0];
+				ParToLoad->Extra_Data[7] += current[1];
+				ParToLoad->Extra_Data[8] += current[2];
 			}
 
 			if (NR_cycle==true)	//Accumulation cycle, compute our current injections

@@ -71,6 +71,8 @@ private:
 	bool NotFirstIteration;			// Checks to see if this is the first iteration of the system.
 	node *RNode;					// Remote node to sense voltage measurements (if desired) for VOLT controls
 	link *RLink;					// Remote link to sense power measurements for VAR controls
+	TIMESTAMP Return_Time;			// Newton-Raphson variable to handle time returns for "off" iterations
+	bool Iteration_Toggle;			// "Off" iteration tracker
 
 public:
 	static CLASS *pclass;

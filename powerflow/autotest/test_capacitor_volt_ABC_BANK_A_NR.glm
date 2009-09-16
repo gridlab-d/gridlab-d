@@ -3,7 +3,7 @@
 
 // 4 Node Feeder: Balanced step-up delta-grY
 // Capacitor attached to end load
-// Bank CAP VAR control - delta on a delta
+// Bank CAP voltage control - delta on a delta
 // Implements a 3 second "dwell" time
 clock {
 	timestamp '2000-01-01 0:00:00';
@@ -12,7 +12,7 @@ clock {
 }
 
 module powerflow{
-	solver_method FBS;
+	solver_method NR;
 }
 module tape;
 module assert;
@@ -95,7 +95,6 @@ object node:3 {
 }
 
 object overhead_line:34 {
-	name link34;
 	phases "ABCN";
 	from node:3;
 	to load:4;
@@ -132,28 +131,25 @@ object load:4 {
 	object complex_assert {
 		target "voltage_A";
 		within 0.1;
-		operation MAGNITUDE;
 		object player {
 			property value;
-			file ../cap_volt_A_BANK_VAR_dwell.player;
+			file ../cap_volt_A_bank_dwell.player;
 			};
 	};
 	object complex_assert {
-		operation MAGNITUDE;
 		target "voltage_B";
 		within 0.1;
 		object player {
 			property value;
-			file ../cap_volt_B_BANK_VAR_dwell.player;
+			file ../cap_volt_B_bank_dwell.player;
 			};
 	};
 	object complex_assert {
-		operation MAGNITUDE;
 		target "voltage_C";
 		within 0.1;
 		object player {
 			property value;
-			file ../cap_volt_C_BANK_VAR_dwell.player;
+			file ../cap_volt_C_bank_dwell.player;
 			};
 	};
 }
@@ -161,13 +157,12 @@ object load:4 {
 object capacitor {
 	phases ABCD;				
 	name CAP2;
-	pt_phase B;				
+	pt_phase A;				
 	parent load:4;
-	remote_sense link34;
 	phases_connected ABCD;		
-	control VAR;
-	VAr_set_high 65000.0;
-	VAr_set_low 50000.0;
+	control VOLT;
+	voltage_set_high 15050.0;
+	voltage_set_low 14500.0;
 	capacitor_A 0.5 MVAr;
 	capacitor_B 0.5 MVAr;
 	capacitor_C 0.5 MVAr;
