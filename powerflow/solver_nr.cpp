@@ -226,14 +226,14 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									tempY[0][0] += branch[jindexer].YSfrom[4];
 									tempY[0][1] += branch[jindexer].YSfrom[5];
 									tempY[1][0] += branch[jindexer].YSfrom[7];
-									tempY[1][0] += branch[jindexer].YSfrom[8];
+									tempY[1][1] += branch[jindexer].YSfrom[8];
 								}
 								else									//To branch
 								{
 									tempY[0][0] += branch[jindexer].YSto[4];
 									tempY[0][1] += branch[jindexer].YSto[5];
 									tempY[1][0] += branch[jindexer].YSto[7];
-									tempY[1][0] += branch[jindexer].YSto[8];
+									tempY[1][1] += branch[jindexer].YSto[8];
 								}
 								break;
 							}
