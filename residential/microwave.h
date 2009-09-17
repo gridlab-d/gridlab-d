@@ -14,9 +14,6 @@
 
 class microwave : public residential_enduse
 {
-private:
-	complex *pVoltage;
-
 public:
 	double circuit_split;		///< -1=100% negative, 0=balanced, +1=100% positive
 	double installed_power;		///< installed wattage [W] (default = random normal between 700W and 1200W)

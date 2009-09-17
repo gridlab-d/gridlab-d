@@ -50,7 +50,6 @@ class evcharger : public residential_enduse
 		VT_HYBRID=1,				///< vehicle is hybrid (long trip possible)
 	} VEHICLETYPE;
 private:
-	complex *pVoltage;				///< ref voltage the charge is getting
 	EVDEMAND *pDemand;				///< ref demand profile for this vehicle
 
 public:

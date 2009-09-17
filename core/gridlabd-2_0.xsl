@@ -100,8 +100,8 @@
 <H3><A NAME="modules_climate">climate</A></H3><TABLE BORDER="1">
 <TR><TH>version.major</TH><TD><xsl:value-of select="climate/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="climate/version.minor"/></TD></TR></TABLE>
 <H4>climate objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>city</TH><TH>tmyfile</TH><TH>temperature</TH><TH>humidity</TH><TH>solar_flux</TH><TH>wind_speed</TH><TH>wind_dir</TH><TH>wind_gust</TH><TH>record.low</TH><TH>record.high</TH><TH>record.solar</TH><TH>rainfall</TH><TH>snowdepth</TH><TH>interpolate</TH></TR>
-<xsl:for-each select="climate/climate_list/climate"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="city"/></TD><TD><xsl:value-of select="tmyfile"/></TD><TD><xsl:value-of select="temperature"/></TD><TD><xsl:value-of select="humidity"/></TD><TD><xsl:value-of select="solar_flux"/></TD><TD><xsl:value-of select="wind_speed"/></TD><TD><xsl:value-of select="wind_dir"/></TD><TD><xsl:value-of select="wind_gust"/></TD><TD><xsl:value-of select="record.low"/></TD><TD><xsl:value-of select="record.high"/></TD><TD><xsl:value-of select="record.solar"/></TD><TD><xsl:value-of select="rainfall"/></TD><TD><xsl:value-of select="snowdepth"/></TD><TD><xsl:value-of select="interpolate"/></TD></TR>
+<TR><TH>Name</TH><TH>city</TH><TH>tmyfile</TH><TH>temperature</TH><TH>humidity</TH><TH>solar_flux</TH><TH>wind_speed</TH><TH>wind_dir</TH><TH>wind_gust</TH><TH>record.low</TH><TH>record.high</TH><TH>record.solar</TH><TH>rainfall</TH><TH>snowdepth</TH><TH>interpolate</TH><TH>solar_horiz</TH><TH>solar_north</TH><TH>solar_northeast</TH><TH>solar_east</TH><TH>solar_southeast</TH><TH>solar_south</TH><TH>solar_southwest</TH><TH>solar_west</TH><TH>solar_northwest</TH><TH>solar_raw</TH></TR>
+<xsl:for-each select="climate/climate_list/climate"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="city"/></TD><TD><xsl:value-of select="tmyfile"/></TD><TD><xsl:value-of select="temperature"/></TD><TD><xsl:value-of select="humidity"/></TD><TD><xsl:value-of select="solar_flux"/></TD><TD><xsl:value-of select="wind_speed"/></TD><TD><xsl:value-of select="wind_dir"/></TD><TD><xsl:value-of select="wind_gust"/></TD><TD><xsl:value-of select="record.low"/></TD><TD><xsl:value-of select="record.high"/></TD><TD><xsl:value-of select="record.solar"/></TD><TD><xsl:value-of select="rainfall"/></TD><TD><xsl:value-of select="snowdepth"/></TD><TD><xsl:value-of select="interpolate"/></TD><TD><xsl:value-of select="solar_horiz"/></TD><TD><xsl:value-of select="solar_north"/></TD><TD><xsl:value-of select="solar_northeast"/></TD><TD><xsl:value-of select="solar_east"/></TD><TD><xsl:value-of select="solar_southeast"/></TD><TD><xsl:value-of select="solar_south"/></TD><TD><xsl:value-of select="solar_southwest"/></TD><TD><xsl:value-of select="solar_west"/></TD><TD><xsl:value-of select="solar_northwest"/></TD><TD><xsl:value-of select="solar_raw"/></TD></TR>
 </xsl:for-each></TABLE>
 <H3><A NAME="modules_commercial">commercial</A></H3><TABLE BORDER="1">
 <TR><TH>version.major</TH><TD><xsl:value-of select="commercial/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="commercial/version.minor"/></TD></TR><TR><TH>warn_control</TH><TD><xsl:value-of select="commercial/warn_control"/></TD></TR><TR><TH>warn_low_temp</TH><TD><xsl:value-of select="commercial/warn_low_temp"/></TD></TR><TR><TH>warn_high_temp</TH><TD><xsl:value-of select="commercial/warn_high_temp"/></TD></TR></TABLE>
@@ -162,8 +162,8 @@
 <xsl:for-each select="market/auction_list/auction"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="type"/></TD><TD><xsl:value-of select="unit"/></TD><TD><xsl:value-of select="period"/></TD><TD><xsl:value-of select="latency"/></TD><TD><xsl:value-of select="market_id"/></TD><TD><xsl:value-of select="last.Q"/></TD><TD><xsl:value-of select="last.P"/></TD><TD><xsl:value-of select="next.Q"/></TD><TD><xsl:value-of select="next.P"/></TD><TD><xsl:value-of select="avg24"/></TD><TD><xsl:value-of select="std24"/></TD><TD><xsl:value-of select="avg168"/></TD><TD><xsl:value-of select="std168"/></TD><TD><a href="#{network}"><xsl:value-of select="network"/></a></TD></TR>
 </xsl:for-each></TABLE>
 <H4>controller objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>type</TH><TH>target1</TH><TH>target2</TH><TH>monitor</TH><TH>demand1</TH><TH>demand2</TH><TH>ramp1_low</TH><TH>ramp1_high</TH><TH>ramp2_low</TH><TH>ramp2_high</TH><TH>min1</TH><TH>max1</TH><TH>min2</TH><TH>max2</TH><TH>base1</TH><TH>base2</TH><TH>set1</TH><TH>set2</TH><TH>bidprice</TH><TH>bidquantity</TH><TH>market_id</TH><TH>market</TH><TH>may_run</TH></TR>
-<xsl:for-each select="market/controller_list/controller"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="type"/></TD><TD><xsl:value-of select="target1"/></TD><TD><xsl:value-of select="target2"/></TD><TD><xsl:value-of select="monitor"/></TD><TD><xsl:value-of select="demand1"/></TD><TD><xsl:value-of select="demand2"/></TD><TD><xsl:value-of select="ramp1_low"/></TD><TD><xsl:value-of select="ramp1_high"/></TD><TD><xsl:value-of select="ramp2_low"/></TD><TD><xsl:value-of select="ramp2_high"/></TD><TD><xsl:value-of select="min1"/></TD><TD><xsl:value-of select="max1"/></TD><TD><xsl:value-of select="min2"/></TD><TD><xsl:value-of select="max2"/></TD><TD><xsl:value-of select="base1"/></TD><TD><xsl:value-of select="base2"/></TD><TD><xsl:value-of select="set1"/></TD><TD><xsl:value-of select="set2"/></TD><TD><xsl:value-of select="bidprice"/></TD><TD><xsl:value-of select="bidquantity"/></TD><TD><xsl:value-of select="market_id"/></TD><TD><a href="#{market}"><xsl:value-of select="market"/></a></TD><TD><xsl:value-of select="may_run"/></TD></TR>
+<TR><TH>Name</TH><TH>simple_mode</TH><TH>ramp_low</TH><TH>ramp_high</TH><TH>Tmin</TH><TH>Tmax</TH><TH>target</TH><TH>setpoint</TH><TH>demand</TH><TH>market</TH><TH>bid_price</TH><TH>bid_quant</TH><TH>set_temp</TH></TR>
+<xsl:for-each select="market/controller_list/controller"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="simple_mode"/></TD><TD><xsl:value-of select="ramp_low"/></TD><TD><xsl:value-of select="ramp_high"/></TD><TD><xsl:value-of select="Tmin"/></TD><TD><xsl:value-of select="Tmax"/></TD><TD><xsl:value-of select="target"/></TD><TD><xsl:value-of select="setpoint"/></TD><TD><xsl:value-of select="demand"/></TD><TD><a href="#{market}"><xsl:value-of select="market"/></a></TD><TD><xsl:value-of select="bid_price"/></TD><TD><xsl:value-of select="bid_quant"/></TD><TD><xsl:value-of select="set_temp"/></TD></TR>
 </xsl:for-each></TABLE>
 <H3><A NAME="modules_network">network</A></H3><TABLE BORDER="1">
 <TR><TH>version.major</TH><TD><xsl:value-of select="network/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="network/version.minor"/></TD></TR></TABLE>
@@ -450,6 +450,16 @@ module climate {
 </xsl:if><xsl:if test="rainfall">	rainfall <xsl:value-of select="rainfall"/>;
 </xsl:if><xsl:if test="snowdepth">	snowdepth <xsl:value-of select="snowdepth"/>;
 </xsl:if><xsl:if test="interpolate">	interpolate <xsl:value-of select="interpolate"/>;
+</xsl:if><xsl:if test="solar_horiz">	solar_horiz <xsl:value-of select="solar_horiz"/>;
+</xsl:if><xsl:if test="solar_north">	solar_north <xsl:value-of select="solar_north"/>;
+</xsl:if><xsl:if test="solar_northeast">	solar_northeast <xsl:value-of select="solar_northeast"/>;
+</xsl:if><xsl:if test="solar_east">	solar_east <xsl:value-of select="solar_east"/>;
+</xsl:if><xsl:if test="solar_southeast">	solar_southeast <xsl:value-of select="solar_southeast"/>;
+</xsl:if><xsl:if test="solar_south">	solar_south <xsl:value-of select="solar_south"/>;
+</xsl:if><xsl:if test="solar_southwest">	solar_southwest <xsl:value-of select="solar_southwest"/>;
+</xsl:if><xsl:if test="solar_west">	solar_west <xsl:value-of select="solar_west"/>;
+</xsl:if><xsl:if test="solar_northwest">	solar_northwest <xsl:value-of select="solar_northwest"/>;
+</xsl:if><xsl:if test="solar_raw">	solar_raw <xsl:value-of select="solar_raw"/>;
 </xsl:if>}
 </xsl:for-each></xsl:for-each><xsl:for-each select="commercial">
 ##############################################
@@ -947,29 +957,18 @@ module market {
 </xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
-</xsl:if><xsl:if test="type">	type <xsl:value-of select="type"/>;
-</xsl:if><xsl:if test="target1">	target1 <xsl:value-of select="target1"/>;
-</xsl:if><xsl:if test="target2">	target2 <xsl:value-of select="target2"/>;
-</xsl:if><xsl:if test="monitor">	monitor <xsl:value-of select="monitor"/>;
-</xsl:if><xsl:if test="demand1">	demand1 <xsl:value-of select="demand1"/>;
-</xsl:if><xsl:if test="demand2">	demand2 <xsl:value-of select="demand2"/>;
-</xsl:if><xsl:if test="ramp1_low">	ramp1_low <xsl:value-of select="ramp1_low"/>;
-</xsl:if><xsl:if test="ramp1_high">	ramp1_high <xsl:value-of select="ramp1_high"/>;
-</xsl:if><xsl:if test="ramp2_low">	ramp2_low <xsl:value-of select="ramp2_low"/>;
-</xsl:if><xsl:if test="ramp2_high">	ramp2_high <xsl:value-of select="ramp2_high"/>;
-</xsl:if><xsl:if test="min1">	min1 <xsl:value-of select="min1"/>;
-</xsl:if><xsl:if test="max1">	max1 <xsl:value-of select="max1"/>;
-</xsl:if><xsl:if test="min2">	min2 <xsl:value-of select="min2"/>;
-</xsl:if><xsl:if test="max2">	max2 <xsl:value-of select="max2"/>;
-</xsl:if><xsl:if test="base1">	base1 <xsl:value-of select="base1"/>;
-</xsl:if><xsl:if test="base2">	base2 <xsl:value-of select="base2"/>;
-</xsl:if><xsl:if test="set1">	set1 <xsl:value-of select="set1"/>;
-</xsl:if><xsl:if test="set2">	set2 <xsl:value-of select="set2"/>;
-</xsl:if><xsl:if test="bidprice">	bidprice <xsl:value-of select="bidprice"/>;
-</xsl:if><xsl:if test="bidquantity">	bidquantity <xsl:value-of select="bidquantity"/>;
-</xsl:if><xsl:if test="market_id">	market_id <xsl:value-of select="market_id"/>;
+</xsl:if><xsl:if test="simple_mode">	simple_mode <xsl:value-of select="simple_mode"/>;
+</xsl:if><xsl:if test="ramp_low">	ramp_low <xsl:value-of select="ramp_low"/>;
+</xsl:if><xsl:if test="ramp_high">	ramp_high <xsl:value-of select="ramp_high"/>;
+</xsl:if><xsl:if test="Tmin">	Tmin <xsl:value-of select="Tmin"/>;
+</xsl:if><xsl:if test="Tmax">	Tmax <xsl:value-of select="Tmax"/>;
+</xsl:if><xsl:if test="target">	target <xsl:value-of select="target"/>;
+</xsl:if><xsl:if test="setpoint">	setpoint <xsl:value-of select="setpoint"/>;
+</xsl:if><xsl:if test="demand">	demand <xsl:value-of select="demand"/>;
 </xsl:if><xsl:if test="market">	market <a href="#GLM.{market}"><xsl:value-of select="market"/></a>;
-</xsl:if><xsl:if test="may_run">	may_run <xsl:value-of select="may_run"/>;
+</xsl:if><xsl:if test="bid_price">	bid_price <xsl:value-of select="bid_price"/>;
+</xsl:if><xsl:if test="bid_quant">	bid_quant <xsl:value-of select="bid_quant"/>;
+</xsl:if><xsl:if test="set_temp">	set_temp <xsl:value-of select="set_temp"/>;
 </xsl:if>}
 </xsl:for-each></xsl:for-each><xsl:for-each select="network">
 ##############################################

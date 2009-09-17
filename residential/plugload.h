@@ -14,9 +14,6 @@
 
 class plugload : public residential_enduse
 {
-private:
-	complex *pVoltage;
-
 public:
 	double circuit_split;		///< -1=100% negative, 0=balanced, +1=100% positive
 	double demand;				///< fraction of time plugloads are ON (schedule driven)

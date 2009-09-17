@@ -22,7 +22,6 @@ public:
 	} MOTORSTATE;
 
 private:
-	complex *pVoltage;		// reference to the assigned panel circuit voltage
 	house *pHouse;			// reference to the parent house
 	PROPERTY *pTempProp;
 

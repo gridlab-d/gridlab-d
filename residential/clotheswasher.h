@@ -15,9 +15,6 @@
 
 class clotheswasher : public residential_enduse
 {
-private:
-	complex *pVoltage;
-
 public:
 	double circuit_split;				///< -1=100% negative, 0=balanced, +1=100% positive
 	double motor_power;					///< installed clotheswasher motor power [W] (default = random uniform between 500 - 750 W)

@@ -16,9 +16,6 @@
 class dishwasher : public residential_enduse
 {
 
-private:
-	complex *pVoltage;
-
 public:
 	double circuit_split;		///< -1=100% negative, 0=balanced, +1=100% positive
 	double installed_power;		///< installed washer power [W] (default = random uniform between 1000 - 3000 W)

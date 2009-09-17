@@ -98,34 +98,6 @@ int dryer::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
-	{
-		gl_error("dryer must have a parent house");
-		/*	TROUBLESHOOT
-			The dryer object, being an enduse for the house model, must have a parent house
-			that it is connected to.  Create a house object and set it as the parent of the
-			offending dryer object.
-		*/
-		return 0;
-	}
-
-	// attach object to house panel
-	house *pHouse = OBJECTDATA(parent,house);
-	//pVoltage = (pHouse->attach(OBJECTHDR(this),20,false))->pV;
-	//	pull parent attach_enduse and attach the enduseload
-	FUNCTIONADDR attach = 0;
-	load.end_obj = hdr;
-	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
-		gl_error("dryer parent must publish attach_enduse()");
-		/*	TROUBLESHOOT
-			The dryer object attempt to attach itself to its parent, which
-			must implement the attach_enduse function.
-		*/
-		return 0;
-	}
-	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
-
 	// initial load
 	update_state();
 
@@ -169,14 +141,14 @@ double dryer::update_state(double dt)
 			state = STOPPED;
 			cycle_time = state_time = 0;
 		}
-		else if (pVoltage->Mag()<stall_voltage)
+		else if (pCircuit->pV->Mag()<stall_voltage)
 		{
 			state = STALLED;
 			state_time = 0;
 		}
 		break;
 	case STALLED:
-		if (pVoltage->Mag()>start_voltage)
+		if (pCircuit->pV->Mag()>start_voltage)
 		{
 			state = RUNNING;
 			state_time = cycle_time;
@@ -190,7 +162,7 @@ double dryer::update_state(double dt)
 	case TRIPPED:
 		if (state_time>reset_delay)
 		{
-			if (pVoltage->Mag()>start_voltage)
+			if (pCircuit->pV->Mag()>start_voltage)
 				state = RUNNING;
 			else
 				state = STALLED;
@@ -260,7 +232,7 @@ double dryer::update_state(double dt)
 	}
 
 	// compute the total electrical load
-	load.total = load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000;
+	load.total = load.power + ~(load.current + load.admittance**pCircuit->pV)**pCircuit->pV/1000;
 
 	// compute the total heat gain
 	load.heatgain = load.total.Mag() * heat_fraction;

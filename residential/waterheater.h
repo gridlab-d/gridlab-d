@@ -15,7 +15,6 @@
 
 class waterheater : public residential_enduse {
 private:
-	complex *pVoltage;		///< reference to the assigned panel circuit voltage
 	double standby_load;	///< typical power loss through thermal jacket losses (UA 2, 60 to 140 degF, 160 BTU/hr, 47W, 411kWh/year, ~10% energy star guesstimate)
 public:
 	typedef enum {

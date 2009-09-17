@@ -128,40 +128,13 @@ int freezer::init(OBJECT *parent)
 	if (power_factor==0)		power_factor = 0.95;
 
 	OBJECT *hdr = OBJECTHDR(this);
-	FUNCTIONADDR attach = 0;
-	load.end_obj = hdr;
-
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
-	{
-		gl_error("freezer must have a parent house");
-		/*	TROUBLESHOOT
-			The freezer object, being an enduse for the house model, must have a parent
-			house that it is connected to.  Create a house object and set it as the parent of
-			the offending freezer object.
-		*/
-		return 0;
-	}
-
-		
+	
 	pTempProp = gl_get_property(parent, "air_temperature");
 	if(pTempProp == NULL){
 		GL_THROW("Parent house of freezer lacks property \'air_temperature\'");
 	}
-
-	//	pull parent attach_enduse and attach the enduseload
-	load.end_obj = hdr;
-	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
-		gl_error("freezer parent must publish attach_enduse()");
-		/*	TROUBLESHOOT
-			The Freezer object attempt to attach itself to its parent, which
-			must implement the attach_enduse function.
-		*/
-		return 0;
-	}
-	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, false)->pV;
 
 	/* derived values */
 	Tair = gl_random_uniform(Tset-thermostat_deadband/2, Tset+thermostat_deadband/2);
@@ -268,7 +241,7 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	load.total = Qr * KWPBTUPH * COP;
 
-	if(pVoltage->Mag() < (120.0 * 0.6) ){ /* stall voltage */
+	if(pCircuit->pV->Mag() < (120.0 * 0.6) ){ /* stall voltage */
 		gl_verbose("freezer motor has stalled");
 		motor_state = S_OFF;
 		Qr = 0;

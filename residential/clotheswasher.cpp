@@ -181,14 +181,14 @@ double clotheswasher::update_state(double dt)
 			state = STOPPED;
 			cycle_time = state_time = 0;
 		}
-		else if (pVoltage->Mag()<stall_voltage)
+		else if (pCircuit->pV->Mag()<stall_voltage)
 		{
 			state = STALLED;
 			state_time = 0;
 		}
 		break;
 	case STALLED:
-		if (pVoltage->Mag()>start_voltage)
+		if (pCircuit->pV->Mag()>start_voltage)
 		{
 			state = RUNNING;
 			state_time = cycle_time;
@@ -202,7 +202,7 @@ double clotheswasher::update_state(double dt)
 	case TRIPPED:
 		if (state_time>reset_delay)
 		{
-			if (pVoltage->Mag()>start_voltage)
+			if (pCircuit->pV->Mag()>start_voltage)
 				state = RUNNING;
 			else
 				state = STALLED;
@@ -271,7 +271,7 @@ double clotheswasher::update_state(double dt)
 	}
 
 	// compute the total electrical load
-	load.total = load.power + ~(load.current + load.admittance**pVoltage)**pVoltage/1000;
+	load.total = load.power + ~(load.current + load.admittance**pCircuit->pV)**pCircuit->pV/1000;
 
 	// compute the total heat gain
 	load.heatgain = load.total.Mag() * load.heatgain_fraction * BTUPHPKW;

@@ -345,32 +345,6 @@ int evcharger::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e"))){
-		GL_THROW("evcharger must have a parent house");
-		/*	TROUBLESHOOT
-			The evcharger object, being an enduse for the house model, must have a parent house
-			that it is connected to.  Create a house object and set it as the parent of the
-			offending evcharger object.
-		*/
-	}
-
-	//	pull parent attach_enduse and attach the enduseload
-	FUNCTIONADDR attach = 0;
-	load.end_obj = hdr;
-	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
-		gl_error("evcharger parent must publish attach_enduse()");
-		/*	TROUBLESHOOT
-			The evcharger object attempt to attach itself to its parent, which
-			must implement the attach_enduse function.
-		*/
-		return 0;
-	}
-	pVoltage = ((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), fuse[charger_type], hiV[charger_type])->pV;
-
-	// attach object to house panel
-	//pVoltage = (pHouse->attach(OBJECTHDR(this),fuse[charger_type],hiV[charger_type]))->pV;
-
 	// load demand profile
 	if (strcmp(demand_profile,"")!=0)
 		pDemand = get_demand_profile(demand_profile);
@@ -459,7 +433,7 @@ double evcharger::update_state(double dt /* seconds */)
 			case CT_LOW:
 			case CT_MEDIUM:
 			case CT_HIGH:
-				charge_kw = amps[(int)charger_type] * pVoltage->Mag() * charge_throttle /1000;
+				charge_kw = amps[(int)charger_type] * pCircuit->pV->Mag() * charge_throttle /1000;
 				break;
 			default:
 				throw "invalid charger_type";
