@@ -287,10 +287,10 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 		strcpy(lastfmt,format?format:"");
 		if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
-			len = sprintf(buffer,"last fatal error message was repeated %d times", count,time_context);
+			len = sprintf(buffer,"last fatal error message was repeated %d times", count);
 			count = 0;
 			if(format == NULL) goto Output;
-			else len += sprintf(buffer+len,"\nFATAL [%s] : ");
+			else len += sprintf(buffer+len,"\nFATAL [%s] : ",time_context);
 		}
 		else if (format==NULL)
 			return 0;
@@ -328,10 +328,10 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 		strcpy(lastfmt,format?format:"");
 		if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
-			len = sprintf(buffer,"last error message was repeated %d times", count,time_context);
+			len = sprintf(buffer,"last error message was repeated %d times", count);
 			count = 0;
 			if(format == NULL) goto Output;
-			else len += sprintf(buffer+len,"\nERROR [%s] : ");
+			else len += sprintf(buffer+len,"\nERROR [%s] : ",time_context);
 		}
 		else if (format==NULL)
 			return 0;
@@ -414,10 +414,10 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 			strcpy(lastfmt,format?format:"");
 			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
-				len = sprintf(buffer,"last warning message was repeated %d times", count, time_context);
+				len = sprintf(buffer,"last warning message was repeated %d times", count);
 				count = 0;
 				if(format == NULL) goto Output;
-				else len += sprintf(buffer+len,"\nWARNING [%s] : ");
+				else len += sprintf(buffer+len,"\nWARNING [%s] : ", time_context);
 			}
 			else if (format==NULL)
 				return 0;
@@ -459,10 +459,10 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 			strcpy(lastfmt,format?format:"");
 			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
-				len = sprintf(buffer,"last debug message was repeated %d times", count,time_context);
+				len = sprintf(buffer,"last debug message was repeated %d times", count);
 				count = 0;
 				if(format == 0) goto Output;
-				else len += sprintf(buffer+len,"\nDEBUG [%s] : ");
+				else len += sprintf(buffer+len,"\nDEBUG [%s] : ",time_context);
 			}
 			else if (format==NULL)
 				return 0;
