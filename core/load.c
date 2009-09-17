@@ -178,7 +178,7 @@ typedef struct stat STAT;
 #include "convert.h"
 #include "schedule.h"
 
-static unsigned int linenum=0;
+static unsigned int linenum=1;
 static char filename[1024];
 static time_t modtime = 0;
 
@@ -3894,7 +3894,7 @@ static int schedule(PARSER)
 static int gridlabd_file(PARSER)
 {
 	START;
-	if WHITE ACCEPT;
+	if WHITE {ACCEPT; DONE;}
 	OR if LITERAL(";") {ACCEPT; DONE;}
 	OR if TERM(line_spec(HERE)) { ACCEPT; DONE; }
 	OR if TERM(object_block(HERE,NULL,NULL)) {ACCEPT; DONE;}
@@ -4771,7 +4771,7 @@ Failed:
 Done:
 	free(buffer);
 	free_index();
-	linenum=0;
+	linenum=1; // parser starts at 1
 	return status;
 }
 
@@ -4864,7 +4864,7 @@ Failed:
 Done:
 	//free(buffer);
 	free_index();
-	linenum=0;
+	linenum=1; // parser starts at one
 	return status;
 }
 /** Load a file
