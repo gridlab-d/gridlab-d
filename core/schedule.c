@@ -398,6 +398,24 @@ int schedule_compile(SCHEDULE *sch)
 					sch->flags |= SN_NORMAL;
 					p++;
 				}
+				else if (strcmp(blockname,"positive")==0)
+				{
+					state = CLOSE;
+					sch->flags |= SN_POSITIVE;
+					p++;
+				}
+				else if (strcmp(blockname,"nonzero")==0)
+				{
+					state = CLOSE;
+					sch->flags |= SN_NONZERO;
+					p++;
+				}
+				else if (strcmp(blockname,"boolean")==0)
+				{
+					state = CLOSE;
+					sch->flags |= SN_BOOLEAN;
+					p++;
+				}
 			}
 			else if (*p=='{') /* open block */
 			{
@@ -573,11 +591,11 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 
 		/* normalize */
 		if (sch->flags!=0)
-		{
-			int flags = sch->flags;
-			sch->flags=0;
-			schedule_normalize(sch,flags);
-		}
+			schedule_normalize(sch,sch->flags);
+
+		/* validate */
+		if ((sch->flags&(SN_POSITIVE|SN_NONZERO|SN_BOOLEAN)) != 0 && ! schedule_validate(sch,sch->flags))
+			return NULL;
 
 		/* attach to schedule list */
 		sch->next = schedule_list;
@@ -590,6 +608,41 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		free(sch);
 		return NULL;
 	}
+}
+
+/** validate a schedule, if desired 
+	See SN_* flags for validation options
+ **/
+int schedule_validate(SCHEDULE *sch, int flags)
+{
+	unsigned int b,i;
+	int failed=0;
+	for (b=0; b<MAXBLOCKS; b++) {
+		for (i=1; i<=sch->count[b]; i++)
+		{
+			double value = sch->data[b*MAXBLOCKS+i];
+			int unit =  (value==1.0);
+			int zero = (value==0.0);
+			int positive = (value>0.0);
+			int negative = (value<0.0);
+			if ((flags&SN_BOOLEAN) && !(unit || zero))
+			{
+				output_error("schedule %s fails 'boolean' validation in block %s at schedule index %d", sch->name, sch->blockname[b], i);
+				failed = 1;
+			}
+			else if ((flags&SN_POSITIVE) && negative)
+			{
+				output_error("schedule %s fails 'positive' validation in block %s at schedule index %d", sch->name, sch->blockname[b], i);
+				failed = 1;
+			}
+			else if ((flags&SN_NONZERO) && zero)
+			{
+				output_error("schedule %s fails 'nonzero' validation in block %s at schedule index %d", sch->name, sch->blockname[b], i);
+				failed = 1;
+			}
+		}
+	}
+	return !failed;
 }
 
 /** normalizes a schedule, if possible

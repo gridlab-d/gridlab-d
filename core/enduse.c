@@ -44,25 +44,10 @@ int enduse_create(enduse *data)
 
 int enduse_init(enduse *e)
 {
-	double sum = fabs(e->current_fraction) + fabs(e->impedance_fraction) + fabs(e->power_fraction);
 #ifdef _DEBUG
 	if (e->magic!=enduse_magic)
 		throw_exception("enduse '%s' magic number bad", e->name);
 #endif
-
-	// check the zip fractions
-	if (sum==0)
-	{
-		output_warning("enduse_init(char *name='%s',...) sum of zip fractions is zero, making load constant power", e->name);
-		e->power_fraction = 1.0;
-	}
-	else if (sum!=1.0)
-	{
-		output_warning("enduse_init(char *name='%s',...) sum of zip fractions is not 1.0, normalizing fractions", e->name);
-		e->power_fraction /= sum;
-		e->current_fraction /= sum;
-		e->impedance_fraction /= sum;
-	}
 
 	e->t_last = TS_ZERO;
 

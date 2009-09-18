@@ -317,7 +317,7 @@ struct s_implicit_enduse_list {
 		{30, false, {0.9,0.1,0}, 0.99, 0.15},
 		"type: pulsed; schedule: residential-dryer-default; energy: 2.5 kWh; count: 0.25; power: 5 kW; stdev: 0.5 kW",
 		"residential-dryer-default", 
-		"weekday-summer {"
+		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.036; *  1 * 4-9 1-5 0.013; *  2 * 4-9 1-5 0.007; *  3 * 4-9 1-5 0.005;"
 		"*  4 * 4-9 1-5 0.005; *  5 * 4-9 1-5 0.017; *  6 * 4-9 1-5 0.048; *  7 * 4-9 1-5 0.085;"
 		"*  8 * 4-9 1-5 0.115; *  9 * 4-9 1-5 0.156; * 10 * 4-9 1-5 0.179; * 11 * 4-9 1-5 0.185;"

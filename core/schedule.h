@@ -64,7 +64,7 @@ struct s_schedule {
 	double value;						/**< the current scheduled value */
 	double duration;					/**< the duration of the current scheduled value (in hours) */
 	double fraction;					/**< the fractional weight of the block of the current value (pu time) */
-	int flags;							/**< the schedule flags (see SF_*) */
+	int flags;							/**< the schedule flags (see SN_*) */
 	SCHEDULE *next;	/* next schedule in list */
 };
 
@@ -80,6 +80,9 @@ struct s_schedulexform {
 #define SN_NORMAL   0x0001	/**< schedule normalization flag - normalize enabled */
 #define SN_ABSOLUTE 0x0002	/**< schedule normalization flag - use absolute values */
 #define SN_WEIGHTED 0x0004	/**< schedule normalization flag - use weighted values */
+#define SN_BOOLEAN 0x8000 /**< schedule is boolean (only one/zero values are expected) */
+#define SN_NONZERO 0x4000 /**< schedule is non-zero (no zero values are expected) */
+#define SN_POSITIVE 0x2000 /**< schedule is positive (no negative values are expected) */
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,6 +91,7 @@ extern "C" {
 SCHEDULE *schedule_getnext(SCHEDULE *sch);
 SCHEDULE *schedule_find_byname(char *name);
 SCHEDULE *schedule_create(char *name, char *definition);
+int schedule_validate(SCHEDULE *sch, int flags);
 int schedule_normalize(SCHEDULE *sch, int flags);
 SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts);
 double schedule_value(SCHEDULE *sch, SCHEDULEINDEX index);

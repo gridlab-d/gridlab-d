@@ -88,11 +88,13 @@ TurnOff:
 			if (ls->r<=0)
 				output_warning("loadshape %s: r not positive while load is off!", ls->schedule->name);
 		}
-		else
+
+		/* clock is running */
+		else if (global_starttime<global_clock)
 		{
 			/* the queue doesn't change (no decay) */
 			ls->r = 0;
-			output_warning("loadshape %s: state machine suspended because schedule has zero value", ls->schedule->name);
+			output_warning("loadshape %s: pulsed shape suspended because schedule has zero value", ls->schedule->name);
 		}
 	}
 
@@ -210,7 +212,7 @@ TurnOff:
 		else
 		{
 			ls->r = 0;
-			output_warning("loadshape %s: state machine suspended because schedule has zero value", ls->schedule->name);
+			output_warning("loadshape %s: modulated shape suspended because schedule has zero value", ls->schedule->name);
 		}
 	}
 
