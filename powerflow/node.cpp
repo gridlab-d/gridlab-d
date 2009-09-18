@@ -668,7 +668,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		//See if everything has a source
 		if (((phase_to_check & busphasesIn) != phase_to_check) && (busphasesIn != 0))	//Phase mismatch (and not top level node)
 		{
-			GL_THROW("node:%d has more phases leaving than entering",obj->id);
+			GL_THROW("node:%d (%s) has more phases leaving than entering",obj->id,obj->name);
 			/* TROUBLESHOOT
 			A node has more phases present than it has sources coming in.  Under the Forward-Back sweep algorithm,
 			the system should be strictly radial.  This scenario implies either a meshed system or unconnected

@@ -155,12 +155,20 @@ int transformer::init(OBJECT *parent)
 				complex Izt = complex(1,0) / zt;
 				
 				//Pre-inverted
-				b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
+				if (has_phase(PHASE_A))
+					b_mat[0][0] = Izt;
+				if (has_phase(PHASE_B))
+					b_mat[1][1] = Izt;
+				if (has_phase(PHASE_C))
+					b_mat[2][2] = Izt;
 
 				//Same with me
-				d_mat[0][0] = Izt / nt / nt;
-				d_mat[1][1] = Izt / nt / nt;
-				d_mat[2][2] = Izt / nt / nt;
+				if (has_phase(PHASE_A))
+					d_mat[0][0] = Izt / nt / nt;
+				if (has_phase(PHASE_B))
+					d_mat[1][1] = Izt / nt / nt;
+				if (has_phase(PHASE_C))
+					d_mat[2][2] = Izt / nt / nt;
 
 			}
 			else 

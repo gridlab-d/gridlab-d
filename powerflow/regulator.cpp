@@ -248,13 +248,29 @@ int regulator::init(OBJECT *parent)
 
 TIMESTAMP regulator::presync(TIMESTAMP t0) 
 {
+	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+	node *pTo = OBJECTDATA(to, node);
+
+	if (pConfig->Control == pConfig->MANUAL) {
+		for (int i = 0; i < 3; i++) {
+			if (pConfig->Type == pConfig->A)
+			{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
+			else if (pConfig->Type == pConfig->B)
+			{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
+			else
+			{	throw "invalid regulator type";}
+				/*  TROUBLESHOOT
+				Check the Type specification in your regulator_configuration object.  It can an only be type A or B.
+				*/
+		}
+		next_time = TS_NEVER;
+	}
+
 	if ((solver_method == SM_NR && NR_cycle==true) || solver_method == SM_FBS)
 	{
-		regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
-		node *pTo = OBJECTDATA(to, node);
-
-		//Set flags correctly for each pass, 1 indicates okay to change taps, 0 indicates no go
-		if (pConfig->Control != pConfig->MANUAL) {
+		if (pConfig->Control != pConfig->MANUAL)
+		{
+			//Set flags correctly for each pass, 1 indicates okay to change taps, 0 indicates no go
 			for (int i = 0; i < 3; i++) {
 				if (mech_t_next[i] <= t0) {
 					mech_flag[i] = 1;
@@ -266,24 +282,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 					dwell_flag[i] = 0;
 				}
 			}
-		}
 
-		if (pConfig->Control == pConfig->MANUAL) {
-			for (int i = 0; i < 3; i++) {
-				if (pConfig->Type == pConfig->A)
-				{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
-				else if (pConfig->Type == pConfig->B)
-				{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
-				else
-				{	throw "invalid regulator type";}
-					/*  TROUBLESHOOT
-					Check the Type specification in your regulator_configuration object.  It can an only be type A or B.
-					*/
-			}
-			next_time = TS_NEVER;
-		}
-		else
-		{
 			get_monitored_voltage();
 
 			if (pConfig->connect_type == pConfig->WYE_WYE)
@@ -438,47 +437,49 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 				OPEN_DELTA_ABBC will only work in MANUAL control mode and in FBS at this time.
 				*/
 		}
-			
-		//Use 'a' matrix to solve appropriate 'A' & 'd' matrices
-		complex tmp_mat[3][3] = {{complex(1,0)/a_mat[0][0],complex(0,0),complex(0,0)},
-								 {complex(0,0), complex(1,0)/a_mat[1][1],complex(0,0)},
-								 {complex(-1,0)/a_mat[0][0],complex(-1,0)/a_mat[1][1],complex(0,0)}};
-		complex tmp_mat1[3][3];
-
-		switch (pConfig->connect_type) {
-			case regulator_configuration::WYE_WYE:
-				for (int i = 0; i < 3; i++)
-				{	d_mat[i][i] = complex(1.0,0) / a_mat[i][i]; }
-				inverse(a_mat,A_mat);
-				break;
-			case regulator_configuration::OPEN_DELTA_ABBC:
-				d_mat[0][0] = complex(1,0) / a_mat[0][0];
-				d_mat[1][0] = complex(-1,0) / a_mat[0][0];
-				d_mat[1][2] = complex(-1,0) / a_mat[1][1];
-				d_mat[2][2] = complex(1,0) / a_mat[1][1];
-
-				a_mat[2][0] = -a_mat[0][0];
-				a_mat[2][1] = -a_mat[1][1];
-				a_mat[2][2] = 0;
-
-				multiply(W_mat,tmp_mat,tmp_mat1);
-				multiply(tmp_mat1,D_mat,A_mat);
-				break;
-			case regulator_configuration::OPEN_DELTA_BCAC:
-				break;
-			case regulator_configuration::OPEN_DELTA_CABA:
-				break;
-			case regulator_configuration::CLOSED_DELTA:
-				break;
-			default:
-				throw "unknown regulator connect type";
-				/*  TROUBLESHOOT
-				Check the connection type specified.  Only a few are available at this time.  Ones available can be
-				found on the wiki website ( http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Power_Flow_Guide )
-				*/
-				break;
-		}
 	}
+			
+	//Use 'a' matrix to solve appropriate 'A' & 'd' matrices
+	complex tmp_mat[3][3] = {{complex(1,0)/a_mat[0][0],complex(0,0),complex(0,0)},
+							 {complex(0,0), complex(1,0)/a_mat[1][1],complex(0,0)},
+							 {complex(-1,0)/a_mat[0][0],complex(-1,0)/a_mat[1][1],complex(0,0)}};
+	complex tmp_mat1[3][3];
+
+	switch (pConfig->connect_type) {
+		case regulator_configuration::WYE_WYE:
+			for (int i = 0; i < 3; i++)
+			{	d_mat[i][i] = complex(1.0,0) / a_mat[i][i]; }
+			inverse(a_mat,A_mat);
+			break;
+		case regulator_configuration::OPEN_DELTA_ABBC:
+			d_mat[0][0] = complex(1,0) / a_mat[0][0];
+			d_mat[1][0] = complex(-1,0) / a_mat[0][0];
+			d_mat[1][2] = complex(-1,0) / a_mat[1][1];
+			d_mat[2][2] = complex(1,0) / a_mat[1][1];
+
+			a_mat[2][0] = -a_mat[0][0];
+			a_mat[2][1] = -a_mat[1][1];
+			a_mat[2][2] = 0;
+
+			multiply(W_mat,tmp_mat,tmp_mat1);
+			multiply(tmp_mat1,D_mat,A_mat);
+			break;
+		case regulator_configuration::OPEN_DELTA_BCAC:
+			break;
+		case regulator_configuration::OPEN_DELTA_CABA:
+			break;
+		case regulator_configuration::CLOSED_DELTA:
+			break;
+		default:
+			throw "unknown regulator connect type";
+			/*  TROUBLESHOOT
+			Check the connection type specified.  Only a few are available at this time.  Ones available can be
+			found on the wiki website ( http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Power_Flow_Guide )
+			*/
+			break;
+	}
+		
+	
 
 	TIMESTAMP t1 = link::presync(t0);
 	
