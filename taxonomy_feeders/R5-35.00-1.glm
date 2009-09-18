@@ -7,11 +7,15 @@ clock{
 }
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-
+#set savefile="testing.xml";
 //*********************************************
 // modules
-module powerflow;
-
+#set profiler=1
+module powerflow{
+	solver_method FBS;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 object fuse:1789 {
 	name R5-35-00-1_fuse_1;
@@ -4004,6 +4008,7 @@ object node:365 {
 object node:1863 {
 	name R5-35-00-1_node_339;
 	phases ABCN;
+	bustype SWING;
 	nominal_voltage 19918.584;
 	voltage_A 19918.584+0.0j;
 	voltage_B -9959.292-17250.000j;
@@ -4086,7 +4091,7 @@ object switch:1825 {
 	phases ABCN;
 	from R5-35-00-1_node_9;
 	to R5-35-00-1_node_10;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1826 {
@@ -4094,7 +4099,7 @@ object switch:1826 {
 	phases ABCN;
 	from R5-35-00-1_node_195;
 	to R5-35-00-1_node_154;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1827 {
@@ -4102,7 +4107,7 @@ object switch:1827 {
 	phases ABCN;
 	from R5-35-00-1_node_243;
 	to R5-35-00-1_node_164;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1828 {
@@ -4110,7 +4115,7 @@ object switch:1828 {
 	phases ABCN;
 	from R5-35-00-1_node_17;
 	to R5-35-00-1_node_193;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1829 {
@@ -4118,7 +4123,7 @@ object switch:1829 {
 	phases ABCN;
 	from R5-35-00-1_node_323;
 	to R5-35-00-1_node_194;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1830 {
@@ -4158,7 +4163,7 @@ object switch:1834 {
 	phases ABCN;
 	from R5-35-00-1_node_211;
 	to R5-35-00-1_node_215;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1835 {
@@ -4182,7 +4187,7 @@ object switch:1837 {
 	phases ABCN;
 	from R5-35-00-1_node_217;
 	to R5-35-00-1_node_224;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1838 {
@@ -4238,7 +4243,7 @@ object switch:1844 {
 	phases ABCN;
 	from R5-35-00-1_node_202;
 	to R5-35-00-1_node_252;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1845 {
