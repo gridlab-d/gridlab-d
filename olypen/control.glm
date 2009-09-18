@@ -1,102 +1,48 @@
+// Olympic Peninsula Control Group
+//
+
+#set dateformat=US
+
 module powerflow;
 module climate;
-module residential;
+module residential {
+//	implicit_enduses LIGHTS|DRYER|PLUGS|OCCUPANCY|DISHWASHER|MICROWAVE|RANGE|CLOTHESWASHER|WATERHEATER|REFRIGERATOR|FREEZER;
+}
 module tape;
 
 clock {
 	timezone PST+8PDT;
-	timestamp '2006-04-03 0:00:00 PST';
-	
+	starttime '2006-04-03 0:00:00 PST';
+	stoptime '2007-04-02 0:00:00 PST';
 }
 
-#set stoptime="2007-04-02 0:00:00 PST";
+#include "WA-Olympia.glm"
 
-
-object climate {
-	tmyfile Olympia.tmy2;
-};
-
-
-object triplex_meter:..25{
-	voltage_1 120<0;
-	voltage_2 120<180;
-	phases ANS;
-	nominal_voltage 120;
-
-//CONTROL
-
-
-	object house {
-		floor_area random.sampled(2750,1750,2250,2250,1750,2750,1750,1250,2250,2250,1750,2250,1250,2250,1750,2250,1750,1250,2250,2250,1750,2250,1750,1750,1750) sf;
-		//heatsetpoint
-		//coolsetpoint
-
-		object player{
-
-			property cooling_setpoint;
-			file "controlcooling.csv";
-			loop 52;
-		};
-
-		object player{
-
-			property heating_setpoint;		
-			file "controlheating.csv";
-			loop 52;			
-
-		};
-
-
-		object waterheater {
-			tank_volume 60;
-			tank_UA 2.0;
-			water_demand 0.25 gpm;
-			heating_element_capacity 4500 W;
-			location (random.bernoulli(0.8)) ? INSIDE : GARAGE ;
-			tank_setpoint random.sampled(120, 120, 120, 140, 140) degF;
-		};
-
-		object lights {
-			//name Lights;
-			type INCANDESCENT;
-			placement INDOOR;
-			demand 0.50;
-			installed_power 1.5 kW;
-			// this tape is set to loop 100 times to cycle through the synchronization
-			object player {
-				//name Player;
-				//parent Lights;
-				property demand;
-				//file lighting.player;
-				file ../samples/lighting.player;
-				loop 100;
-			};
-		};
-
-		object clotheswasher {
-		};
-		object dryer {
-		};
-		object dishwasher {
-		};
-		object range {
-		};
-		object microwave {
-		};
-
-		object occupantload{
-		};
-
-
-	};
-
-
+object house:..25 {
+	floor_area random.sampled(2750,1750,2250,2250,1750,2750,1750,1250,2250,2250,1750,2250,1250,2250,1750,2250,1750,1250,2250,2250,1750,2250,1750,1750,1750) sf;
+	heating_setpoint random.triangle(64,72) degF;
+	cooling_setpoint random.triangle(75,82) degF;
+	mass_heat_capacity ($floor_area/2);
 };
 
 object collector {
-	group class=triplex_meter;
-	property sum(measured_energy);
-	file control.csv;
+	group "class=house";
+	property sum(panel.energy.real);
+	interval 3600;
+	file control_energy_hourly.csv;
+}
+
+object collector {
+	group "class=house";
+	property sum(panel.energy.real);
 	interval 86400;
-	limit 365;
-};
+	file control_energy_daily.csv;
+}
+
+object collector {
+	group "class=house";
+	property sum(panel.energy.real);
+	interval 604800;
+	file control_energy_weekly.csv;
+}
+
