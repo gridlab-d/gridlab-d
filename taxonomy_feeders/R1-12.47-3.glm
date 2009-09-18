@@ -1,16 +1,24 @@
 // $Id: R1-12.47-3.glm 384 2009-06-30 16:44:57 ychen $
 //*********************************************
 
-clock{
-	 timezone EST+5EDT;
-	 timestamp '2000-01-01 0:00:00';
+clock {
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-02 0:00:00';
+	timezone EST+8EDT;
 }
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+//#set savefile="testing_.xml";
 
 //*********************************************
 // modules
-module powerflow;
+#set profiler=1
+module tape;
+module powerflow{
+	solver_method FBS;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 
 object fuse:208 {
@@ -18,7 +26,8 @@ object fuse:208 {
 	phases AN;
 	from R1-12-47-3_node_19;
 	to R1-12-47-3_node_20;
-	current_limit 10;
+	mean_replacement_time 1000;
+	current_limit 10000;
 	status CLOSED;
 }
 
@@ -27,7 +36,8 @@ object fuse:209 {
 	phases BCN;
 	from R1-12-47-3_node_21;
 	to R1-12-47-3_node_23;
-	current_limit 10;
+	mean_replacement_time 1000;
+	current_limit 100000;
 	status CLOSED;
 }
 
@@ -36,7 +46,8 @@ object fuse:210 {
 	phases AN;
 	from R1-12-47-3_node_27;
 	to R1-12-47-3_node_28;
-	current_limit 40;
+	mean_replacement_time 1000;
+	current_limit 400000;
 	status CLOSED;
 }
 
@@ -45,7 +56,8 @@ object fuse:211 {
 	phases AN;
 	from R1-12-47-3_node_32;
 	to R1-12-47-3_node_33;
-	current_limit 10;
+	mean_replacement_time 1000;
+	current_limit 100000;
 	status CLOSED;
 }
 
@@ -54,7 +66,8 @@ object fuse:212 {
 	phases ABCN;
 	from R1-12-47-3_node_32;
 	to R1-12-47-3_node_35;
-	current_limit 80;
+	mean_replacement_time 1000;
+	current_limit 80000;
 	status CLOSED;
 }
 
@@ -63,7 +76,8 @@ object fuse:213 {
 	phases BN;
 	from R1-12-47-3_node_36;
 	to R1-12-47-3_node_37;
-	current_limit 40;
+	mean_replacement_time 1000;
+	current_limit 400000;
 	status CLOSED;
 }
 
@@ -72,7 +86,8 @@ object fuse:214 {
 	phases BN;
 	from R1-12-47-3_node_36;
 	to R1-12-47-3_node_40;
-	current_limit 40;
+	mean_replacement_time 1000;
+	current_limit 400000;
 	status CLOSED;
 }
 
@@ -1097,6 +1112,7 @@ object node:85 {
 }
 
 object node:224 {
+	bustype SWING;
 	name R1-12-47-3_node_53;
 	phases ABCN;
 	nominal_voltage 7199.558;
@@ -1432,14 +1448,15 @@ object regulator_configuration:223 {
 	lower_taps 16;
 	current_transducer_ratio  600;
 	power_transducer_ratio   60;
-	compensator_r_setting_A   6.0;
-	compensator_r_setting_B   6.0;
-	compensator_r_setting_C   6.0;
-	compensator_x_setting_A   12.0;
-	compensator_x_setting_B   12.0;
-	compensator_x_setting_C   12.0;
-	CT_phase ABC;
-	PT_phase ABC;
+	//compensator_r_setting_A   6.0;
+	//compensator_r_setting_B   6.0;
+	//compensator_r_setting_C   6.0;
+	//compensator_x_setting_A   12.0;
+	//compensator_x_setting_B   12.0;
+	//compensator_x_setting_C   12.0;
+	//CT_phase ABC;
+	//PT_phase ABC;
+	Control MANUAL;
 	regulation 0.10;
 	tap_pos_A 0;
 	tap_pos_B 0;
@@ -1460,7 +1477,7 @@ object switch:216 {
 	phases ABCN;
 	from R1-12-47-3_node_9;
 	to R1-12-47-3_node_51;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:217 {
@@ -1468,7 +1485,7 @@ object switch:217 {
 	phases ABCN;
 	from R1-12-47-3_node_15;
 	to R1-12-47-3_node_49;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:218 {
@@ -1484,7 +1501,7 @@ object switch:219 {
 	phases ABCN;
 	from R1-12-47-3_node_34;
 	to R1-12-47-3_node_1;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:220 {
@@ -1492,7 +1509,7 @@ object switch:220 {
 	phases ABCN;
 	from R1-12-47-3_node_34;
 	to R1-12-47-3_node_50;
-	status OPEN;
+	status CLOSED;
 }
 
 
