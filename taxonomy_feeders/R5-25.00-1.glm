@@ -5,9 +5,9 @@ clock{
 	 timezone EST+5EDT;
 	 timestamp '2000-01-01 0:00:00';
 }
-#set savefile="testing.xml";
-#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+#set savefile="testing.xml";
 //*********************************************
 // modules
 #set profiler=1
