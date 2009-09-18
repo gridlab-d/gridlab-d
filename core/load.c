@@ -4043,7 +4043,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 	char line[10240];
 	char *buf = buffer;
 	int n = 0, i = 0;
-	int linenum=0;
+	int _linenum=0;
 	int startnest = nesting;
 	int bnest = 0, quote = 0;
 	int hassc = 0; // has semicolon
@@ -4054,7 +4054,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 
 		/* comments must have preceding whitespace in macros */
 		char *c = line[0]!='#'?strstr(line,COMMENT):strstr(line, " " COMMENT);
-		linenum++;
+		_linenum++;
 		if (c!=NULL) /* truncate at comment */
 			strcpy(c,"\n");
 		len = (int)strlen(line);
@@ -4063,7 +4063,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 	
 #ifndef OLDSTYLE
 		/* check for oldstyle file under newstyle parse */
-		if (linenum==1 && strncmp(line,"# ",2)==0)
+		if (_linenum==1 && strncmp(line,"# ",2)==0)
 		{
 			output_error("%s looks like a version 1.x GLM files, please convert this file to new style before loading", filename);
 			return 0;
@@ -4074,7 +4074,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 			strcpy(line,subst);
 		else
 		{
-			output_message("%s(%d): unable to continue", filename,linenum);
+			output_message("%s(%d): unable to continue", filename,_linenum);
 			return -1;
 		}
 
@@ -4082,7 +4082,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 		if (strncmp(line,MACRO,strlen(MACRO))==0)
 		{
 			/* macro disables reading */
-			if (process_macro(line,sizeof(line),filename,linenum)==FALSE)
+			if (process_macro(line,sizeof(line),filename,linenum + _linenum - 1)==FALSE)
 				return 0;
 			strcat(buffer,line);
 			//strcpy(buffer,line);
@@ -4137,15 +4137,15 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 	}
 	if (nesting != startnest)
 	{
-		//output_message("%s(%d): missing %sendif for #if at %s(%d)", filename,linenum,MACRO,filename,macro_line[nesting-1]);
-		output_message("%s(%d): Unbalanced %sif/%sendif at %s(%d) ~ started with nestlevel %i, ending %i", filename,linenum,MACRO,MACRO,filename,macro_line[nesting-1], startnest, nesting);
+		//output_message("%s(%d): missing %sendif for #if at %s(%d)", filename,_linenum,MACRO,filename,macro_line[nesting-1]);
+		output_message("%s(%d): Unbalanced %sif/%sendif at %s(%d) ~ started with nestlevel %i, ending %i", filename,_linenum,MACRO,MACRO,filename,macro_line[nesting-1], startnest, nesting);
 		return -1;
 	}
 	return n;
 }
 
 
-static int include_file(char *incname, char *buffer, int size)
+static int include_file(char *incname, char *buffer, int size, int _linenum)
 {
 	int move = 0;
 	char *p = buffer;
@@ -4156,10 +4156,13 @@ static int include_file(char *incname, char *buffer, int size)
 	char *ff = find_file(incname,NULL,R_OK);
 	FILE *fp = 0;
 	char buffer2[20480];
-
+	unsigned int old_linenum = _linenum;
 	/* check include list */
 	INCLUDELIST *list;
 	INCLUDELIST *this = (INCLUDELIST *)malloc(sizeof(INCLUDELIST));//={incname,include_list}; /* REALLY BAD IDEA ~~ "this" is a reserved C++ keyword */
+
+	linenum = 1;
+
 	strcpy(this->file, incname);
 	this->next = include_list;
 	output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'", 
@@ -4171,7 +4174,7 @@ static int include_file(char *incname, char *buffer, int size)
 	{
 		if (strcmp(incname, list->file) == 0)
 		{
-			output_message("%s(%d): include file has already been included", incname, linenum);
+			output_message("%s(%d): include file has already been included", incname, _linenum);
 			return 0;
 		}
 	}
@@ -4206,7 +4209,7 @@ static int include_file(char *incname, char *buffer, int size)
 	fp = ff ? fopen(ff, "r") : NULL;
 	
 	if(fp == NULL){
-		output_message("%s(%d): include file open failed: %s", incname, linenum, strerror(errno));
+		output_message("%s(%d): include file open failed: %s", incname, _linenum, strerror(errno));
 		return 0;
 	}
 
@@ -4222,11 +4225,11 @@ static int include_file(char *incname, char *buffer, int size)
 		//	return 0;
 		//}
 	} else {
-		output_message("%s(%d): unable to get size of included file", incname, linenum);
+		output_message("%s(%d): unable to get size of included file", incname, _linenum);
 		return 0;
 	}
 
-	output_verbose("%s(%d): included file is %d bytes long", incname, linenum, stat.st_size);
+	output_verbose("%s(%d): included file is %d bytes long", incname, old_linenum, stat.st_size);
 
 	/* reset line counter for parser */
 	include_list = this;
@@ -4252,6 +4255,8 @@ static int include_file(char *incname, char *buffer, int size)
 	}
 
 	//include_list = this.next;
+
+	//linenum = old_linenum;
 
 	return count;
 }
@@ -4393,7 +4398,7 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 			char *start=line;
 			int len = sprintf(line,"@%s;%d\n",value,0);
 			line+=len; size-=len;
-			if ((len=(int)include_file(value,line,size))<=0)
+			if ((len=(int)include_file(value,line,size,linenum))<=0)
 			{
 				output_message("%s(%d): #include failed",filename,linenum);
 				strcpy(line,"\n");
