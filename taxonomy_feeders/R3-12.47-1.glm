@@ -6,11 +6,14 @@ clock{
 	 timestamp '2000-01-01 0:00:00';
 }
 
-#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-
+//#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+//#set savefile="testNR.xml";
+//#set profiler=1;
 //*********************************************
 // modules
-module powerflow;
+module powerflow {
+	solver_method NR;
+};
 
 
 object capacitor:3651 {
@@ -90,7 +93,7 @@ object fuse:3564 {
 
 object fuse:3565 {
 	name R3-12-47-1_fuse_7;
-	phases ABCN;
+	phases ABN;
 	from R3-12-47-1_node_92;
 	to R3-12-47-1_node_93;
 	current_limit 30;
@@ -126,7 +129,7 @@ object fuse:3568 {
 
 object fuse:3569 {
 	name R3-12-47-1_fuse_11;
-	phases BCN;
+	phases ABCN;
 	from R3-12-47-1_node_122;
 	to R3-12-47-1_node_123;
 	current_limit 100;
@@ -171,7 +174,7 @@ object fuse:3573 {
 
 object fuse:3574 {
 	name R3-12-47-1_fuse_16;
-	phases ACN;
+	phases ABCN;
 	from R3-12-47-1_node_166;
 	to R3-12-47-1_node_167;
 	current_limit 150;
@@ -198,7 +201,7 @@ object fuse:3576 {
 
 object fuse:3577 {
 	name R3-12-47-1_fuse_19;
-	phases ACN;
+	phases ABCN;
 	from R3-12-47-1_node_235;
 	to R3-12-47-1_node_237;
 	current_limit 15;
@@ -234,7 +237,7 @@ object fuse:3580 {
 
 object fuse:3581 {
 	name R3-12-47-1_fuse_23;
-	phases ABN;
+	phases ABCN;
 	from R3-12-47-1_node_265;
 	to R3-12-47-1_node_266;
 	current_limit 50;
@@ -243,7 +246,7 @@ object fuse:3581 {
 
 object fuse:3582 {
 	name R3-12-47-1_fuse_24;
-	phases ABN;
+	phases ACN;
 	from R3-12-47-1_node_281;
 	to R3-12-47-1_node_282;
 	current_limit 10;
@@ -252,7 +255,7 @@ object fuse:3582 {
 
 object fuse:3583 {
 	name R3-12-47-1_fuse_25;
-	phases ABCN;
+	phases BCN;
 	from R3-12-47-1_node_287;
 	to R3-12-47-1_node_288;
 	current_limit 10;
@@ -273,13 +276,13 @@ object fuse:3585 {
 	phases ABCN;
 	from R3-12-47-1_node_303;
 	to R3-12-47-1_node_304;
-	current_limit 150;
+	current_limit 300;
 	status CLOSED;
 }
 
 object fuse:3586 {
 	name R3-12-47-1_fuse_28;
-	phases ABCN;
+	phases ABN;
 	from R3-12-47-1_node_318;
 	to R3-12-47-1_node_319;
 	current_limit 15;
@@ -333,10 +336,10 @@ object fuse:3591 {
 
 object fuse:3592 {
 	name R3-12-47-1_fuse_34;
-	phases ACN;
+	phases ABCN;
 	from R3-12-47-1_node_353;
 	to R3-12-47-1_node_354;
-	current_limit 12;
+	current_limit 300;
 	status CLOSED;
 }
 
@@ -345,13 +348,13 @@ object fuse:3593 {
 	phases ABCN;
 	from R3-12-47-1_node_356;
 	to R3-12-47-1_node_357;
-	current_limit 30;
+	current_limit 300;
 	status CLOSED;
 }
 
 object fuse:3594 {
 	name R3-12-47-1_fuse_36;
-	phases ABN;
+	phases ABCN;
 	from R3-12-47-1_node_362;
 	to R3-12-47-1_node_363;
 	current_limit 30;
@@ -378,7 +381,7 @@ object fuse:3596 {
 
 object fuse:3597 {
 	name R3-12-47-1_fuse_39;
-	phases BCN;
+	phases ABCN;
 	from R3-12-47-1_node_432;
 	to R3-12-47-1_node_433;
 	current_limit 30;
@@ -387,7 +390,7 @@ object fuse:3597 {
 
 object fuse:3598 {
 	name R3-12-47-1_fuse_40;
-	phases ABN;
+	phases ABCN;
 	from R3-12-47-1_node_439;
 	to R3-12-47-1_node_440;
 	current_limit 80;
@@ -405,7 +408,7 @@ object fuse:3599 {
 
 object fuse:3600 {
 	name R3-12-47-1_fuse_42;
-	phases ABN;
+	phases ACN;
 	from R3-12-47-1_node_459;
 	to R3-12-47-1_node_460;
 	current_limit 40;
@@ -423,7 +426,7 @@ object fuse:3601 {
 
 object fuse:3602 {
 	name R3-12-47-1_fuse_44;
-	phases BCN;
+	phases ABCN;
 	from R3-12-47-1_node_499;
 	to R3-12-47-1_node_500;
 	current_limit 150;
@@ -432,7 +435,7 @@ object fuse:3602 {
 
 object fuse:3603 {
 	name R3-12-47-1_fuse_45;
-	phases ABN;
+	phases ABCN;
 	from R3-12-47-1_node_513;
 	to R3-12-47-1_node_514;
 	current_limit 150;
@@ -450,7 +453,7 @@ object fuse:3604 {
 
 object fuse:3605 {
 	name R3-12-47-1_fuse_47;
-	phases ACN;
+	phases ABN;
 	from R3-12-47-1_node_527;
 	to R3-12-47-1_node_528;
 	current_limit 30;
@@ -486,7 +489,7 @@ object fuse:3608 {
 
 object fuse:3609 {
 	name R3-12-47-1_fuse_51;
-	phases ABN;
+	phases ABCN;
 	from R3-12-47-1_node_387;
 	to R3-12-47-1_node_542;
 	current_limit 150;
@@ -522,7 +525,7 @@ object fuse:3612 {
 
 object fuse:3613 {
 	name R3-12-47-1_fuse_55;
-	phases ACN;
+	phases ABCN;
 	from R3-12-47-1_node_580;
 	to R3-12-47-1_node_581;
 	current_limit 150;
@@ -549,7 +552,7 @@ object fuse:3615 {
 
 object fuse:3616 {
 	name R3-12-47-1_fuse_58;
-	phases ACN;
+	phases ABCN;
 	from R3-12-47-1_node_596;
 	to R3-12-47-1_node_597;
 	current_limit 150;
@@ -567,7 +570,7 @@ object fuse:3617 {
 
 object fuse:3618 {
 	name R3-12-47-1_fuse_60;
-	phases ACN;
+	phases ABCN;
 	from R3-12-47-1_node_614;
 	to R3-12-47-1_node_615;
 	current_limit 80;
@@ -3165,7 +3168,7 @@ object node:154 {
 
 object node:155 {
 	name R3-12-47-1_node_92;
-	phases ABCN;
+	phases ABN;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
@@ -3174,7 +3177,7 @@ object node:155 {
 
 object node:156 {
 	name R3-12-47-1_node_93;
-	phases ABCN;
+	phases ABN;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
@@ -4798,7 +4801,7 @@ object node:343 {
 
 object node:344 {
 	name R3-12-47-1_node_281;
-	phases ABCN;
+	phases ACN;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
@@ -4807,7 +4810,7 @@ object node:344 {
 
 object node:345 {
 	name R3-12-47-1_node_282;
-	phases ABCN;
+	phases ACN;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
@@ -4850,7 +4853,7 @@ object node:349 {
 
 object node:350 {
 	name R3-12-47-1_node_287;
-	phases ABCN;
+	phases BCN;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
@@ -4859,7 +4862,7 @@ object node:350 {
 
 object node:351 {
 	name R3-12-47-1_node_288;
-	phases ABCN;
+	phases BCN;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
@@ -5117,7 +5120,7 @@ object node:380 {
 
 object node:381 {
 	name R3-12-47-1_node_318;
-	phases ABCN;
+	phases ABN;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
@@ -5126,7 +5129,7 @@ object node:381 {
 
 object node:382 {
 	name R3-12-47-1_node_319;
-	phases ABCN;
+	phases ABN;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
@@ -6339,7 +6342,7 @@ object node:521 {
 
 object node:522 {
 	name R3-12-47-1_node_459;
-	phases ABCN;
+	phases ACN;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
@@ -6348,7 +6351,7 @@ object node:522 {
 
 object node:523 {
 	name R3-12-47-1_node_460;
-	phases ABCN;
+	phases ACN;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
@@ -6906,7 +6909,7 @@ object node:590 {
 
 object node:591 {
 	name R3-12-47-1_node_528;
-	phases ABCN;
+	phases ABN;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
@@ -7857,6 +7860,7 @@ object node:696 {
 
 object node:3655 {
 	name R3-12-47-1_node_634;
+	bustype SWING;
 	phases ABCN;
 	nominal_voltage 7199.558;
 	voltage_A 7199.558+0.0j;
@@ -10205,7 +10209,7 @@ object switch:3620 {
 	phases ABCN;
 	from R3-12-47-1_node_164;
 	to R3-12-47-1_node_165;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:3621 {
@@ -10253,7 +10257,7 @@ object switch:3626 {
 	phases ABCN;
 	from R3-12-47-1_node_34;
 	to R3-12-47-1_node_1;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:3627 {
@@ -10381,7 +10385,7 @@ object switch:3642 {
 	phases ABCN;
 	from R3-12-47-1_node_381;
 	to R3-12-47-1_node_633;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:3643 {
@@ -10421,7 +10425,7 @@ object switch:3647 {
 	phases ABCN;
 	from R3-12-47-1_node_544;
 	to R3-12-47-1_node_2;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:3648 {
