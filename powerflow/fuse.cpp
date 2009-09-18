@@ -103,13 +103,17 @@ int fuse::init(OBJECT *parent)
 		above zero.
 		*/
 
-	if (mean_replacement_time<=0.0)
-		GL_THROW("Fuse:%d does not have a mean replacement time interval, or has a negative value set.",OBJECTHDR(this)->id);
+	if (mean_replacement_time<0.0)
+		GL_THROW("Fuse:%d (%s) has a mean replacement time interval set as a negative value set.",OBJECTHDR(this)->id,OBJECTHDR(this)->name);
 		/*  TROUBLESHOOT
 		The fuse does not have a proper mean replacement time specified.  Without this, it will not function properly
 		if blown.  Please specify a replacement time greater than 0.
 		*/
-
+	else if (mean_replacement_time==0.0)
+	{
+		gl_warning("Fuse:%d (%s) does not have a mean replacement time interval set, using default.",OBJECTHDR(this)->id,OBJECTHDR(this)->name);
+		mean_replacement_time = 10000;
+	}
 	if (solver_method==SM_FBS)
 		gl_warning("Fuses only work for the attached node in the FBS solver, not any deeper.");
 		/*  TROUBLESHOOT
@@ -359,7 +363,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 				*fixtime = Prev_Time + (int64)(3600*gl_random_exponential(1.0/mean_replacement_time));
 
 				//Announce it for giggles
-				gl_verbose("Phase %c of fuse:%d just blew",phase_verbose,hdr->id);
+				gl_verbose("Phase %c of fuse:%d (%s) just blew",phase_verbose,hdr->id,hdr->name);
 			}
 			else	//Still good
 			{
@@ -394,7 +398,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 				*fixtime = TS_NEVER;	//Update the time check just in case
 
 				//Send an announcement for giggles
-				gl_verbose("Phase %c of fuse:%d just returned to service",phase_verbose,hdr->id);
+				gl_verbose("Phase %c of fuse:%d (%s) just returned to service",phase_verbose,hdr->id,hdr->name);
 			}
 			else //Still driving there or on break, no fixed yet
 			{
