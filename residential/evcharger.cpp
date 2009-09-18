@@ -351,7 +351,7 @@ int evcharger::init(OBJECT *parent)
 	
 	update_state();
 
-	return 1;
+	return residential_enduse::init(parent);
 }
 
 double evcharger::update_state(double dt /* seconds */) 

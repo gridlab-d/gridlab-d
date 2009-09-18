@@ -98,10 +98,13 @@ int dryer::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
+	load.power_factor = 0.95;
+	load.breaker_amps = 30;
+
 	// initial load
 	update_state();
 
-	return 1;
+	return residential_enduse::init(parent);
 }
 
 TIMESTAMP dryer::sync(TIMESTAMP t0, TIMESTAMP t1) 

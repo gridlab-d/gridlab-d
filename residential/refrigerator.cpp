@@ -114,7 +114,6 @@ int refrigerator::create()
 
 int refrigerator::init(OBJECT *parent)
 {
-	int res = residential_enduse::init(parent);
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
@@ -155,7 +154,8 @@ int refrigerator::init(OBJECT *parent)
 	// initial demand
 	load.total = Qr * KWPBTUPH;
 
-	return 1;
+	return residential_enduse::init(parent);
+;
 }
 
 TIMESTAMP refrigerator::presync(TIMESTAMP t0, TIMESTAMP t1){
