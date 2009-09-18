@@ -7,10 +7,15 @@ clock{
 }
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-
+#set savefile="testing.xml";
 //*********************************************
 // modules
-module powerflow;
+#set profiler=1
+module powerflow{
+	solver_method FBS;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 
 object capacitor:2417 {
@@ -107,7 +112,7 @@ object fuse:2281 {
 	from R5-12-47-4_node_288;
 	to R5-12-47-4_node_289;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:2282 {
@@ -206,7 +211,7 @@ object fuse:2292 {
 	from R5-12-47-4_node_326;
 	to R5-12-47-4_node_324;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:2293 {
@@ -242,7 +247,7 @@ object fuse:2296 {
 	from R5-12-47-4_node_137;
 	to R5-12-47-4_node_133;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:2297 {
@@ -305,7 +310,7 @@ object fuse:2303 {
 	from R5-12-47-4_node_132;
 	to R5-12-47-4_node_131;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:2304 {
@@ -350,7 +355,7 @@ object fuse:2308 {
 	from R5-12-47-4_node_99;
 	to R5-12-47-4_node_97;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:2309 {
@@ -404,7 +409,7 @@ object fuse:2314 {
 	from R5-12-47-4_node_53;
 	to R5-12-47-4_node_50;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:2315 {
@@ -413,7 +418,7 @@ object fuse:2315 {
 	from R5-12-47-4_node_53;
 	to R5-12-47-4_node_51;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:2316 {
@@ -431,7 +436,7 @@ object fuse:2317 {
 	from R5-12-47-4_node_19;
 	to R5-12-47-4_node_18;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:2318 {
@@ -566,7 +571,7 @@ object fuse:2332 {
 	from R5-12-47-4_node_562;
 	to R5-12-47-4_node_564;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:2333 {
@@ -764,7 +769,7 @@ object fuse:2354 {
 	from R5-12-47-4_node_121;
 	to R5-12-47-4_node_122;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:2355 {
@@ -773,7 +778,7 @@ object fuse:2355 {
 	from R5-12-47-4_node_121;
 	to R5-12-47-4_node_120;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:2356 {
@@ -7271,6 +7276,7 @@ object node:717 {
 object node:2423 {
 	name R5-12-47-4_node_675;
 	phases ABCN;
+	bustype SWING;
 	nominal_voltage 7199.558;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
@@ -9408,7 +9414,7 @@ object switch:2389 {
 	phases ABCN;
 	from R5-12-47-4_node_288;
 	to R5-12-47-4_node_286;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:2390 {
@@ -9456,7 +9462,7 @@ object switch:2395 {
 	phases ABCN;
 	from R5-12-47-4_node_321;
 	to R5-12-47-4_node_320;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:2396 {
@@ -9496,7 +9502,7 @@ object switch:2400 {
 	phases ABCN;
 	from R5-12-47-4_node_247;
 	to R5-12-47-4_node_246;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:2401 {
