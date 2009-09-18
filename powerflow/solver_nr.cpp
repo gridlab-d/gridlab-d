@@ -31,14 +31,6 @@ double tempQbus; //tempQbus store the temporary value of reactive power load at 
 unsigned int indexer, tempa, tempb, jindexer, kindexer;
 char jindex, kindex;
 
-int cmp( const void *a , const void *b )
-{
-struct Y_NR *c = (Y_NR *)a;
-struct Y_NR *d = (Y_NR *)b;
-if(c->col_ind != d->col_ind) return c->col_ind - d->col_ind;
-else return c->row_ind - d->row_ind;
-}
-
 void merge_sort(Y_NR *Input_Array, unsigned int Alen, Y_NR *Work_Array){	//Merge sorting algorithm - basis stolen from auction.cpp in market module
 	unsigned int split_point;
 	unsigned int right_length;
@@ -88,18 +80,6 @@ void merge_sort(Y_NR *Input_Array, unsigned int Alen, Y_NR *Work_Array){	//Merge
 		memcpy(Input_Array,Work_Array,sizeof(Y_NR)*Alen);	//Copy the result back into the input
 	}	//End length > 0
 }
-
-int64 GetMachineCycleCount(void)
-{      
-   __int64 cycles;
-   _asm rdtsc; // won't work on 486 or below - only pentium or above
-
-   _asm lea ebx,cycles;
-   _asm mov [ebx],eax;
-   _asm mov [ebx+4],edx;
-   return cycles;
-}
-
 
 /** Newton-Raphson solver
 	Solves a power flow problem using the Newton-Raphson method
