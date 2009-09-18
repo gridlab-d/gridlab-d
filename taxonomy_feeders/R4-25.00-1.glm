@@ -7,10 +7,15 @@ clock{
 }
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-
+#set savefile="testing.xml";
 //*********************************************
 // modules
-module powerflow;
+#set profiler=1
+module powerflow{
+	solver_method FBS;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};;
 
 
 object fuse:1178 {
@@ -2100,6 +2105,7 @@ object node:258 {
 object node:1213 {
 	name R4-25-00-1_node_231;
 	phases ABCN;
+	bustype SWING;
 	nominal_voltage 14376.022;
 	voltage_A 14376.022+0.0j;
 	voltage_B -7188.011-12450.000j;
@@ -3758,7 +3764,7 @@ object switch:1206 {
 	phases ABCN;
 	from R4-25-00-1_node_127;
 	to R4-25-00-1_node_74;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1207 {
@@ -3774,7 +3780,7 @@ object switch:1208 {
 	phases ABCN;
 	from R4-25-00-1_node_32;
 	to R4-25-00-1_node_73;
-	status OPEN;
+	status CLOSED;
 }
 
 //Recloser, used as switch for now 
