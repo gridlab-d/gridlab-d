@@ -321,7 +321,7 @@ GLOBALVAR *global_create(char *name, ...){
 STATUS global_setvar(char *def, ...) /**< the definition */
 {
 	char name[66]="", value[1024]="";
-	if (sscanf(def,"%[^=]=%[^\n]",name,value)<2)
+	if (sscanf(def,"%[^=]=%[^\r\n]",name,value)<2)
 	{
 		va_list ptr;
 		char *v;
