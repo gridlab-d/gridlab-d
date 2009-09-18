@@ -3872,6 +3872,8 @@ static int schedule(PARSER)
 			switch (c) {
 			case '{': nest++; *p++ = c; break;
 			case '}': if (nest-->0) *p++ = c; break; 
+			case '\n': *p++ = c; ++linenum; break;
+			case '\r': *p++ = c; ++linenum; break;
 			default: *p++ = c; break;
 			}
 			*p = '\0';
@@ -4047,6 +4049,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 	int startnest = nesting;
 	int bnest = 0, quote = 0;
 	int hassc = 0; // has semicolon
+	int quoteline = 0;
 	while (fgets(line,sizeof(line),fp)!=NULL)
 	{
 		int len;
@@ -4058,8 +4061,13 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 		if (c!=NULL) /* truncate at comment */
 			strcpy(c,"\n");
 		len = (int)strlen(line);
-		if (len>=size-1)
+		if (len>=size-1){
+			output_error("load.c: buffer exhaustion reading %i lines past line %i", _linenum, linenum);
+			if(quote != 0){
+				output_error("look for an unterminated doublequote string on line %i", quoteline);
+			}
 			return 0;
+		}
 	
 #ifndef OLDSTYLE
 		/* check for oldstyle file under newstyle parse */
@@ -4102,6 +4110,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 			for(i = 0; i < len; ++i){
 				if(quote == 0){
 					if(subst[i] == '\"'){
+						quoteline = linenum + _linenum - 1;
 						quote = 1;
 					} else if(subst[i] == '{'){
 						++bnest;
