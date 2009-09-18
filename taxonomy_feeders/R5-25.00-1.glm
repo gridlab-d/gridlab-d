@@ -5,13 +5,17 @@ clock{
 	 timezone EST+5EDT;
 	 timestamp '2000-01-01 0:00:00';
 }
-
+#set savefile="testing.xml";
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 
 //*********************************************
 // modules
-module powerflow;
-
+#set profiler=1
+module powerflow{
+	solver_method NR;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 object capacitor:3915 {
 	name R5-25-00-1_cap_1;
@@ -8717,6 +8721,7 @@ object node:1016 {
 object node:3922 {
 	name R5-25-00-1_node_953;
 	phases ABCN;
+	bustype SWING;
 	nominal_voltage 13221.321;
 	voltage_A 13221.321+0.0j;
 	voltage_B -6610.660-11450.000j;
@@ -13224,7 +13229,7 @@ object switch:3888 {
 	phases ABCN;
 	from R5-25-00-1_node_268;
 	to R5-25-00-1_node_267;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:3889 {
@@ -13296,7 +13301,7 @@ object switch:3897 {
 	phases ABCN;
 	from R5-25-00-1_node_876;
 	to R5-25-00-1_node_877;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:3898 {
@@ -13320,7 +13325,7 @@ object switch:3900 {
 	phases ABCN;
 	from R5-25-00-1_node_144;
 	to R5-25-00-1_node_231;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:3901 {
@@ -13328,7 +13333,7 @@ object switch:3901 {
 	phases ABCN;
 	from R5-25-00-1_node_882;
 	to R5-25-00-1_node_883;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:3902 {
@@ -13352,7 +13357,7 @@ object switch:3904 {
 	phases ABCN;
 	from R5-25-00-1_node_944;
 	to R5-25-00-1_node_943;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:3905 {
@@ -13368,7 +13373,7 @@ object switch:3906 {
 	phases ABCN;
 	from R5-25-00-1_node_892;
 	to R5-25-00-1_node_891;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:3907 {
@@ -13384,7 +13389,7 @@ object switch:3908 {
 	phases ABCN;
 	from R5-25-00-1_node_896;
 	to R5-25-00-1_node_895;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:3909 {
@@ -31328,11 +31333,11 @@ object underground_line:2976 {
 
 object underground_line:2977 {
 	name R5-25-00-1_ul_14;
-	phases BCN;
+	phases ABCN;
 	from R5-25-00-1_node_24;
 	to R5-25-00-1_node_25;
 	length 14.115;
-	configuration line_configuration:38;
+	configuration line_configuration:36;
 }
 
 object underground_line:2978 {
@@ -31400,20 +31405,20 @@ object underground_line:2989 {
 
 object underground_line:2990 {
 	name R5-25-00-1_ul_22;
-	phases BCN;
+	phases ABCN;
 	from R5-25-00-1_node_56;
 	to R5-25-00-1_node_57;
 	length 45.952;
-	configuration line_configuration:38;
+	configuration line_configuration:37;
 }
 
 object underground_line:2991 {
 	name R5-25-00-1_ul_23;
-	phases CN;
+	phases ABCN;
 	from R5-25-00-1_node_622;
 	to R5-25-00-1_node_623;
 	length 14.105;
-	configuration line_configuration:33;
+	configuration line_configuration:36;
 }
 
 object underground_line:2992 {
@@ -31562,11 +31567,11 @@ object underground_line:3008 {
 
 object underground_line:3009 {
 	name R5-25-00-1_ul_40;
-	phases BN;
+	phases ABN;
 	from R5-25-00-1_node_684;
 	to R5-25-00-1_node_685;
 	length 14.147;
-	configuration line_configuration:43;
+	configuration line_configuration:41;
 }
 
 object underground_line:3010 {
@@ -31580,11 +31585,11 @@ object underground_line:3010 {
 
 object underground_line:3011 {
 	name R5-25-00-1_ul_42;
-	phases CN;
+	phases ABCN;
 	from R5-25-00-1_node_693;
 	to R5-25-00-1_node_692;
 	length 14.097;
-	configuration line_configuration:35;
+	configuration line_configuration:36;
 }
 
 object underground_line:3012 {
