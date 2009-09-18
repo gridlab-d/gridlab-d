@@ -7,10 +7,15 @@ clock{
 }
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-
+#set savefile="testing.xml";
 //*********************************************
 // modules
-module powerflow;
+#set profiler=1
+module powerflow{
+	solver_method NR;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 
 object capacitor:1610 {
@@ -24,7 +29,7 @@ object capacitor:1610 {
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -44,7 +49,7 @@ object capacitor:1611 {
 	capacitor_B 0.3 MVAr;
 	capacitor_C 0.3 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -64,7 +69,7 @@ object capacitor:1612 {
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -84,7 +89,7 @@ object capacitor:1613 {
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -2983,6 +2988,7 @@ object node:316 {
 object node:1617 {
 	name R2-12-47-2_node_253;
 	phases ABCN;
+	bustype SWING;
 	nominal_voltage 7199.558;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
@@ -4739,7 +4745,7 @@ object switch:1603 {
 	phases ABCN;
 	from R2-12-47-2_node_40;
 	to R2-12-47-2_node_41;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1604 {
@@ -4763,7 +4769,7 @@ object switch:1606 {
 	phases CN;
 	from R2-12-47-2_node_95;
 	to R2-12-47-2_node_104;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1607 {
@@ -4771,7 +4777,7 @@ object switch:1607 {
 	phases BN;
 	from R2-12-47-2_node_97;
 	to R2-12-47-2_node_106;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1608 {
@@ -4779,7 +4785,7 @@ object switch:1608 {
 	phases ABCN;
 	from R2-12-47-2_node_184;
 	to R2-12-47-2_node_71;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1609 {

@@ -7,10 +7,15 @@ clock{
 }
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-
+#set savefile="testing.xml";
 //*********************************************
 // modules
-module powerflow;
+#set profiler=1
+module powerflow{
+	solver_method FBS;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 
 object fuse:1551 {
@@ -3023,6 +3028,7 @@ object node:325 {
 object node:1597 {
 	name R4-12-47-2_node_273;
 	phases ABCN;
+	bustype SWING;
 	nominal_voltage 7216.878;
 	voltage_A 7216.878+0.0j;
 	voltage_B -3608.439-6250.000j;
@@ -3941,7 +3947,7 @@ object switch:1579 {
 	phases AN;
 	from R4-12-47-2_node_143;
 	to R4-12-47-2_node_61;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1580 {
@@ -3949,7 +3955,7 @@ object switch:1580 {
 	phases ABCN;
 	from R4-12-47-2_node_262;
 	to R4-12-47-2_node_60;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1581 {
@@ -3957,7 +3963,7 @@ object switch:1581 {
 	phases AN;
 	from R4-12-47-2_node_177;
 	to R4-12-47-2_node_54;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1582 {
@@ -3965,7 +3971,7 @@ object switch:1582 {
 	phases ABCN;
 	from R4-12-47-2_node_27;
 	to R4-12-47-2_node_64;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1583 {
@@ -3973,7 +3979,7 @@ object switch:1583 {
 	phases BN;
 	from R4-12-47-2_node_131;
 	to R4-12-47-2_node_265;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1584 {
@@ -3981,7 +3987,7 @@ object switch:1584 {
 	phases BN;
 	from R4-12-47-2_node_150;
 	to R4-12-47-2_node_268;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1585 {
@@ -4005,7 +4011,7 @@ object switch:1587 {
 	phases ABCN;
 	from R4-12-47-2_node_259;
 	to R4-12-47-2_node_68;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1588 {
@@ -4029,7 +4035,7 @@ object switch:1590 {
 	phases AN;
 	from R4-12-47-2_node_204;
 	to R4-12-47-2_node_270;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1591 {
@@ -4037,7 +4043,7 @@ object switch:1591 {
 	phases BN;
 	from R4-12-47-2_node_212;
 	to R4-12-47-2_node_271;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1592 {
@@ -4045,7 +4051,7 @@ object switch:1592 {
 	phases AN;
 	from R4-12-47-2_node_160;
 	to R4-12-47-2_node_272;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1593 {
@@ -4053,7 +4059,7 @@ object switch:1593 {
 	phases BN;
 	from R4-12-47-2_node_187;
 	to R4-12-47-2_node_58;
-	status OPEN;
+	status CLOSED;
 }
 
 

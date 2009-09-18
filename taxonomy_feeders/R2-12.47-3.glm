@@ -7,10 +7,15 @@ clock{
 }
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-
+#set savefile="testing.xml";
 //*********************************************
 // modules
-module powerflow;
+#set profiler=1
+module powerflow{
+	solver_method NR;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 
 object fuse:4105 {
@@ -46,7 +51,7 @@ object fuse:4108 {
 	from R2-12-47-3_node_39;
 	to R2-12-47-3_node_40;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:4109 {
@@ -181,7 +186,7 @@ object fuse:4123 {
 	from R2-12-47-3_node_757;
 	to R2-12-47-3_node_776;
 	current_limit 80;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:4124 {
@@ -2397,7 +2402,8 @@ object node:244 {
 
 object node:245 {
 	name R2-12-47-3_node_179;
-	phases BCN;
+	phases ABCN;
+	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
 	nominal_voltage 7199.558;
@@ -7479,6 +7485,7 @@ object node:897 {
 object node:4242 {
 	name R2-12-47-3_node_832;
 	phases ABCN;
+	bustype SWING;
 	nominal_voltage 7199.558;
 	voltage_A 7199.558+0.0j;
 	voltage_B -3599.779-6235.000j;
@@ -8546,7 +8553,7 @@ object switch:4146 {
 	phases BN;
 	from R2-12-47-3_node_280;
 	to R2-12-47-3_node_767;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4147 {
@@ -8562,7 +8569,7 @@ object switch:4148 {
 	phases CN;
 	from R2-12-47-3_node_338;
 	to R2-12-47-3_node_768;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4149 {
@@ -8570,7 +8577,7 @@ object switch:4149 {
 	phases ABCN;
 	from R2-12-47-3_node_13;
 	to R2-12-47-3_node_494;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4150 {
@@ -8578,7 +8585,7 @@ object switch:4150 {
 	phases BN;
 	from R2-12-47-3_node_581;
 	to R2-12-47-3_node_498;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4151 {
@@ -8602,7 +8609,7 @@ object switch:4153 {
 	phases ABCN;
 	from R2-12-47-3_node_78;
 	to R2-12-47-3_node_85;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4154 {
@@ -8618,7 +8625,7 @@ object switch:4155 {
 	phases AN;
 	from R2-12-47-3_node_31;
 	to R2-12-47-3_node_772;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4156 {
@@ -8634,7 +8641,7 @@ object switch:4157 {
 	phases ABCN;
 	from R2-12-47-3_node_750;
 	to R2-12-47-3_node_775;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4158 {
@@ -8674,7 +8681,7 @@ object switch:4162 {
 	phases BN;
 	from R2-12-47-3_node_179;
 	to R2-12-47-3_node_180;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4163 {
@@ -8682,7 +8689,7 @@ object switch:4163 {
 	phases AN;
 	from R2-12-47-3_node_181;
 	to R2-12-47-3_node_166;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4164 {
@@ -8690,7 +8697,7 @@ object switch:4164 {
 	phases ABCN;
 	from R2-12-47-3_node_27;
 	to R2-12-47-3_node_221;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4165 {
@@ -8714,7 +8721,7 @@ object switch:4167 {
 	phases CN;
 	from R2-12-47-3_node_29;
 	to R2-12-47-3_node_241;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4168 {
@@ -8722,7 +8729,7 @@ object switch:4168 {
 	phases CN;
 	from R2-12-47-3_node_30;
 	to R2-12-47-3_node_29;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4169 {
@@ -8730,7 +8737,7 @@ object switch:4169 {
 	phases CN;
 	from R2-12-47-3_node_256;
 	to R2-12-47-3_node_255;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4170 {
@@ -8786,7 +8793,7 @@ object switch:4176 {
 	phases BN;
 	from R2-12-47-3_node_304;
 	to R2-12-47-3_node_780;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4177 {
@@ -8794,7 +8801,7 @@ object switch:4177 {
 	phases CN;
 	from R2-12-47-3_node_306;
 	to R2-12-47-3_node_307;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4178 {
@@ -8802,7 +8809,7 @@ object switch:4178 {
 	phases CN;
 	from R2-12-47-3_node_308;
 	to R2-12-47-3_node_309;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4179 {
@@ -8810,7 +8817,7 @@ object switch:4179 {
 	phases CN;
 	from R2-12-47-3_node_318;
 	to R2-12-47-3_node_319;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4180 {
@@ -8818,7 +8825,7 @@ object switch:4180 {
 	phases CN;
 	from R2-12-47-3_node_328;
 	to R2-12-47-3_node_329;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4181 {
@@ -8826,7 +8833,7 @@ object switch:4181 {
 	phases CN;
 	from R2-12-47-3_node_306;
 	to R2-12-47-3_node_380;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4182 {
@@ -8834,7 +8841,7 @@ object switch:4182 {
 	phases ABCN;
 	from R2-12-47-3_node_381;
 	to R2-12-47-3_node_382;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4183 {
@@ -8842,7 +8849,7 @@ object switch:4183 {
 	phases BN;
 	from R2-12-47-3_node_389;
 	to R2-12-47-3_node_787;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4184 {
@@ -8850,7 +8857,7 @@ object switch:4184 {
 	phases BN;
 	from R2-12-47-3_node_390;
 	to R2-12-47-3_node_399;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4185 {
@@ -8858,7 +8865,7 @@ object switch:4185 {
 	phases ABCN;
 	from R2-12-47-3_node_414;
 	to R2-12-47-3_node_403;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4186 {
@@ -8866,7 +8873,7 @@ object switch:4186 {
 	phases ABCN;
 	from R2-12-47-3_node_420;
 	to R2-12-47-3_node_414;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4187 {
@@ -8874,7 +8881,7 @@ object switch:4187 {
 	phases BN;
 	from R2-12-47-3_node_531;
 	to R2-12-47-3_node_791;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4188 {
@@ -8882,7 +8889,7 @@ object switch:4188 {
 	phases CN;
 	from R2-12-47-3_node_531;
 	to R2-12-47-3_node_792;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4189 {
@@ -8890,7 +8897,7 @@ object switch:4189 {
 	phases AN;
 	from R2-12-47-3_node_435;
 	to R2-12-47-3_node_436;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4190 {
@@ -8898,7 +8905,7 @@ object switch:4190 {
 	phases BN;
 	from R2-12-47-3_node_435;
 	to R2-12-47-3_node_437;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4191 {
@@ -8906,7 +8913,7 @@ object switch:4191 {
 	phases AN;
 	from R2-12-47-3_node_445;
 	to R2-12-47-3_node_447;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4192 {
@@ -8914,7 +8921,7 @@ object switch:4192 {
 	phases ABCN;
 	from R2-12-47-3_node_451;
 	to R2-12-47-3_node_433;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4193 {
@@ -8922,7 +8929,7 @@ object switch:4193 {
 	phases ABCN;
 	from R2-12-47-3_node_451;
 	to R2-12-47-3_node_453;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4194 {
@@ -8962,7 +8969,7 @@ object switch:4198 {
 	phases BN;
 	from R2-12-47-3_node_514;
 	to R2-12-47-3_node_515;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4199 {
@@ -8986,7 +8993,7 @@ object switch:4201 {
 	phases ABCN;
 	from R2-12-47-3_node_529;
 	to R2-12-47-3_node_800;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4202 {
@@ -8994,7 +9001,7 @@ object switch:4202 {
 	phases AN;
 	from R2-12-47-3_node_543;
 	to R2-12-47-3_node_544;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4203 {
@@ -9002,7 +9009,7 @@ object switch:4203 {
 	phases ABCN;
 	from R2-12-47-3_node_558;
 	to R2-12-47-3_node_803;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4204 {
@@ -9010,7 +9017,7 @@ object switch:4204 {
 	phases BN;
 	from R2-12-47-3_node_571;
 	to R2-12-47-3_node_827;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4205 {
@@ -9018,7 +9025,7 @@ object switch:4205 {
 	phases BN;
 	from R2-12-47-3_node_572;
 	to R2-12-47-3_node_804;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4206 {
@@ -9026,7 +9033,7 @@ object switch:4206 {
 	phases ABCN;
 	from R2-12-47-3_node_566;
 	to R2-12-47-3_node_590;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4207 {
@@ -9034,7 +9041,7 @@ object switch:4207 {
 	phases CN;
 	from R2-12-47-3_node_595;
 	to R2-12-47-3_node_598;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4208 {
@@ -9042,7 +9049,7 @@ object switch:4208 {
 	phases CN;
 	from R2-12-47-3_node_597;
 	to R2-12-47-3_node_828;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4209 {
@@ -9050,7 +9057,7 @@ object switch:4209 {
 	phases AN;
 	from R2-12-47-3_node_602;
 	to R2-12-47-3_node_614;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4210 {
@@ -9058,7 +9065,7 @@ object switch:4210 {
 	phases ABCN;
 	from R2-12-47-3_node_608;
 	to R2-12-47-3_node_829;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4211 {
@@ -9066,7 +9073,7 @@ object switch:4211 {
 	phases AN;
 	from R2-12-47-3_node_612;
 	to R2-12-47-3_node_808;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4212 {
@@ -9074,7 +9081,7 @@ object switch:4212 {
 	phases ABCN;
 	from R2-12-47-3_node_623;
 	to R2-12-47-3_node_604;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4213 {
@@ -9082,7 +9089,7 @@ object switch:4213 {
 	phases BN;
 	from R2-12-47-3_node_625;
 	to R2-12-47-3_node_626;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4214 {
@@ -9122,7 +9129,7 @@ object switch:4218 {
 	phases CN;
 	from R2-12-47-3_node_656;
 	to R2-12-47-3_node_813;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4219 {
@@ -9130,7 +9137,7 @@ object switch:4219 {
 	phases BN;
 	from R2-12-47-3_node_657;
 	to R2-12-47-3_node_669;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4220 {
@@ -9138,7 +9145,7 @@ object switch:4220 {
 	phases ACN;
 	from R2-12-47-3_node_660;
 	to R2-12-47-3_node_673;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4221 {
@@ -9146,7 +9153,7 @@ object switch:4221 {
 	phases BN;
 	from R2-12-47-3_node_666;
 	to R2-12-47-3_node_681;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4222 {
@@ -9154,7 +9161,7 @@ object switch:4222 {
 	phases ABCN;
 	from R2-12-47-3_node_684;
 	to R2-12-47-3_node_682;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4223 {
@@ -9170,7 +9177,7 @@ object switch:4224 {
 	phases ABCN;
 	from R2-12-47-3_node_688;
 	to R2-12-47-3_node_677;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4225 {
@@ -9178,7 +9185,7 @@ object switch:4225 {
 	phases ABCN;
 	from R2-12-47-3_node_689;
 	to R2-12-47-3_node_685;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4226 {
@@ -9186,7 +9193,7 @@ object switch:4226 {
 	phases ABCN;
 	from R2-12-47-3_node_692;
 	to R2-12-47-3_node_674;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4227 {
@@ -9194,7 +9201,7 @@ object switch:4227 {
 	phases AN;
 	from R2-12-47-3_node_670;
 	to R2-12-47-3_node_696;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4228 {
@@ -9202,7 +9209,7 @@ object switch:4228 {
 	phases CN;
 	from R2-12-47-3_node_692;
 	to R2-12-47-3_node_796;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4229 {
@@ -9210,7 +9217,7 @@ object switch:4229 {
 	phases CN;
 	from R2-12-47-3_node_674;
 	to R2-12-47-3_node_797;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4230 {
@@ -9218,7 +9225,7 @@ object switch:4230 {
 	phases CN;
 	from R2-12-47-3_node_705;
 	to R2-12-47-3_node_795;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4231 {
@@ -9226,7 +9233,7 @@ object switch:4231 {
 	phases AN;
 	from R2-12-47-3_node_709;
 	to R2-12-47-3_node_798;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4232 {
@@ -9234,7 +9241,7 @@ object switch:4232 {
 	phases ABCN;
 	from R2-12-47-3_node_650;
 	to R2-12-47-3_node_721;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4233 {
@@ -9242,7 +9249,7 @@ object switch:4233 {
 	phases CN;
 	from R2-12-47-3_node_725;
 	to R2-12-47-3_node_799;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4234 {
@@ -9250,7 +9257,7 @@ object switch:4234 {
 	phases BN;
 	from R2-12-47-3_node_729;
 	to R2-12-47-3_node_821;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4235 {
@@ -9258,7 +9265,7 @@ object switch:4235 {
 	phases ABCN;
 	from R2-12-47-3_node_724;
 	to R2-12-47-3_node_729;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4236 {
@@ -9266,7 +9273,7 @@ object switch:4236 {
 	phases BN;
 	from R2-12-47-3_node_733;
 	to R2-12-47-3_node_732;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4237 {
@@ -9274,7 +9281,7 @@ object switch:4237 {
 	phases AN;
 	from R2-12-47-3_node_662;
 	to R2-12-47-3_node_742;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4238 {
@@ -9282,7 +9289,7 @@ object switch:4238 {
 	phases AN;
 	from R2-12-47-3_node_741;
 	to R2-12-47-3_node_746;
-	status OPEN;
+	status CLOSED;
 }
 
 
@@ -34248,11 +34255,11 @@ object underground_line:3705 {
 
 object underground_line:3706 {
 	name R2-12-47-3_ul_217;
-	phases CN;
+	phases ABCN;
 	from R2-12-47-3_node_157;
 	to R2-12-47-3_node_179;
 	length 242.663;
-	configuration line_configuration:35;
+	configuration line_configuration:30;
 }
 
 object underground_line:3707 {
@@ -35094,11 +35101,11 @@ object underground_line:3818 {
 
 object underground_line:3821 {
 	name R2-12-47-3_ul_311;
-	phases CN;
+	phases ABCN;
 	from R2-12-47-3_node_323;
 	to R2-12-47-3_node_330;
 	length 191.806;
-	configuration line_configuration:33;
+	configuration line_configuration:30;
 }
 
 object underground_line:3822 {

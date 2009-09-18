@@ -7,10 +7,16 @@ clock{
 }
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-
+#set savefile="testing.xml";
 //*********************************************
 // modules
-module powerflow;
+#set profiler=1
+module tape;
+module powerflow{
+	solver_method NR;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 
 object capacitor:4482 {
@@ -24,7 +30,7 @@ object capacitor:4482 {
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -64,7 +70,7 @@ object capacitor:4484 {
 	capacitor_B 0.2 MVAr;
 	capacitor_C 0.2 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -84,7 +90,7 @@ object capacitor:4485 {
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -104,7 +110,7 @@ object capacitor:4486 {
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -124,7 +130,7 @@ object capacitor:4487 {
 	capacitor_B 0.2 MVAr;
 	capacitor_C 0.2 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -144,7 +150,7 @@ object capacitor:4488 {
 	capacitor_B 0.2 MVAr;
 	capacitor_C 0.2 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -164,7 +170,7 @@ object capacitor:4489 {
 	capacitor_B 0.2 MVAr;
 	capacitor_C 0.2 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -378,7 +384,7 @@ object fuse:4350 {
 	from R2-35-00-1_node_65;
 	to R2-35-00-1_node_479;
 	current_limit 8;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:4351 {
@@ -936,7 +942,7 @@ object fuse:4412 {
 	from R2-35-00-1_node_26;
 	to R2-35-00-1_node_513;
 	current_limit 10;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:4413 {
@@ -1179,7 +1185,7 @@ object fuse:4439 {
 	from R2-35-00-1_node_8;
 	to R2-35-00-1_node_512;
 	current_limit 50;
-	status OPEN;
+	status CLOSED;
 }
 
 object fuse:4440 {
@@ -18697,6 +18703,7 @@ object node:1125 {
 object node:4493 {
 	name R2-35-00-1_node_1039;
 	phases ABCN;
+	bustype SWING;
 	nominal_voltage 19918.584;
 	voltage_A 19918.584+0.0j;
 	voltage_B -9959.292-17250.000j;
@@ -24520,11 +24527,11 @@ object overhead_line:4251 {
 
 object overhead_line:4253 {
 	name R2-35-00-1_ol_647;
-	phases BN;
+	phases ABCN;
 	from R2-35-00-1_node_48;
 	to R2-35-00-1_node_943;
 	length 626.123;
-	configuration line_configuration:41;
+	configuration line_configuration:40;
 }
 
 object overhead_line:4254 {
@@ -24968,7 +24975,7 @@ object switch:4445 {
 	phases CN;
 	from R2-35-00-1_node_362;
 	to R2-35-00-1_node_581;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4446 {
@@ -25016,7 +25023,7 @@ object switch:4451 {
 	phases ABCN;
 	from R2-35-00-1_node_584;
 	to R2-35-00-1_node_241;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4452 {
@@ -25040,7 +25047,7 @@ object switch:4454 {
 	phases BN;
 	from R2-35-00-1_node_354;
 	to R2-35-00-1_node_567;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4455 {
@@ -25112,7 +25119,7 @@ object switch:4463 {
 	phases ABCN;
 	from R2-35-00-1_node_322;
 	to R2-35-00-1_node_564;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4464 {
@@ -25144,7 +25151,7 @@ object switch:4467 {
 	phases ABCN;
 	from R2-35-00-1_node_588;
 	to R2-35-00-1_node_140;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:4468 {
@@ -25216,7 +25223,7 @@ object switch:4476 {
 	phases ABCN;
 	from R2-35-00-1_node_9;
 	to R2-35-00-1_node_575;
-	status OPEN;
+	status CLOSED;
 }
 
 //Recloser, used as switch for now 
@@ -38994,11 +39001,11 @@ object underground_line:3977 {
 
 object underground_line:3978 {
 	name R2-35-00-1_ul_76;
-	phases AN;
+	phases ABN;
 	from R2-35-00-1_node_228;
 	to R2-35-00-1_node_370;
 	length 796.317;
-	configuration line_configuration:51;
+	configuration line_configuration:79;
 }
 
 object underground_line:3984 {
