@@ -542,7 +542,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 	if (oclass==NULL)  
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"house",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP);
+		oclass = gl_register_class(mod,"house",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
@@ -1243,6 +1243,39 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	
 }
 
+/** Removes load contributions from parent object **/
+TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
+{
+	OBJECT *obj = OBJECTHDR(this);
+
+	// compute line currents and post to meter
+	if (obj->parent != NULL)
+		LOCK_OBJECT(obj->parent);
+
+	//Post accumulations up to parent meter/node
+	//Update power
+	pPower[0] -= load_values[0][0];
+	pPower[1] -= load_values[0][1];
+	pPower[2] -= load_values[0][2];
+	
+	//Current
+	pLine_I[0] -= load_values[1][0];
+	pLine_I[1] -= load_values[1][1];
+	//pLine_I[2] += 0; - This is inferred by not doing anything
+	*pLine12 -= load_values[1][2];
+
+	//Admittance
+	pShunt[0] -= load_values[2][0];
+	pShunt[1] -= load_values[2][1];
+	pShunt[2] -= load_values[2][2];
+
+	if (obj->parent != NULL)
+		UNLOCK_OBJECT(obj->parent);
+
+	return TS_NEVER;
+}
+
+
 void house_e::update_Tevent()
 {
 	OBJECT *obj = OBJECTHDR(this);
@@ -1445,20 +1478,20 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 	//Post accumulations up to parent meter/node
 	//Update power
-	pPower[0] = load_values[0][0];
-	pPower[1] = load_values[0][1];
-	pPower[2] = load_values[0][2];
+	pPower[0] += load_values[0][0];
+	pPower[1] += load_values[0][1];
+	pPower[2] += load_values[0][2];
 	
 	//Current
-	pLine_I[0] = load_values[1][0];
-	pLine_I[1] = load_values[1][1];
-	pLine_I[2] = 0;
-	*pLine12 = load_values[1][2];
+	pLine_I[0] += load_values[1][0];
+	pLine_I[1] += load_values[1][1];
+	//pLine_I[2] += 0; - This is inferred by not doing anything
+	*pLine12 += load_values[1][2];
 
 	//Admittance
-	pShunt[0] = load_values[2][0];
-	pShunt[1] = load_values[2][1];
-	pShunt[2] = load_values[2][2];
+	pShunt[0] += load_values[2][0];
+	pShunt[1] += load_values[2][1];
+	pShunt[2] += load_values[2][2];
 
 	if (obj->parent != NULL)
 		UNLOCK_OBJECT(obj->parent);
@@ -1578,7 +1611,10 @@ EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				t1 = my->sync(obj->clock, t0);
 				obj->clock = t0;
 				break;
-
+			case PC_POSTTOPDOWN:
+				t1 = my->postsync(obj->clock, t0);
+				obj->clock = t0;
+				break;
 			default:
 				gl_error("house_e::sync- invalid pass configuration");
 				t1 = TS_INVALID; // serious error in exec.c

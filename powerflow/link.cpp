@@ -276,6 +276,29 @@ int link::init(OBJECT *parent)
 			tnode->Triplex_Data=&tn[0];
 		}
 
+		//Increment connected links ends for nodes for creating their "link list"
+		if ((fNode->SubNode == CHILD) || (fNode->SubNode == DIFF_CHILD))
+		{
+			//Parent/child connected node, so increment our parent's counter
+			node *pfNode = OBJECTDATA(fNode->SubNodeParent,node);
+			pfNode->NR_connected_links[0]++;
+		}
+		else
+		{
+			fNode->NR_connected_links[0]++;
+		}
+
+		if ((tNode->SubNode == CHILD) || (tNode->SubNode == DIFF_CHILD))
+		{
+			//Parent/child connected node, so increment our parent's counter
+			node *ptNode = OBJECTDATA(tNode->SubNodeParent,node);
+			ptNode->NR_connected_links[0]++;
+		}
+		else
+		{
+			tNode->NR_connected_links[0]++;
+		}
+
 		break;
 	}
 	default:
@@ -376,6 +399,8 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 		{
 			node *fnode = OBJECTDATA(from,node);
 			node *tnode = OBJECTDATA(to,node);
+			char *LinkTableLoc = NULL;
+			int IndVal = 0;
 			OBJECT *obj = OBJECTHDR(this);
 
 			if (fnode==NULL || tnode==NULL)
@@ -471,20 +496,66 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				//Populate to/from indices
 				if (fnode->NR_node_reference == -99)	//Child node
 				{
-					NR_branchdata[NR_curr_branch].from = *fnode->NR_subnode_reference;
+					NR_branchdata[NR_curr_branch].from = *fnode->NR_subnode_reference;	//Index value
+
+					//Pull out index
+					IndVal = *fnode->NR_subnode_reference;
+
+					//Get the parent information
+					node *parFnode = OBJECTDATA(fnode->SubNodeParent,node);
+					LinkTableLoc = parFnode->NR_connected_links;
 				}
 				else
 				{
-					NR_branchdata[NR_curr_branch].from = fnode->NR_node_reference;
+					NR_branchdata[NR_curr_branch].from = fnode->NR_node_reference;	//From reference
+					IndVal = fnode->NR_node_reference;								//Find the FROM busdata index
+					LinkTableLoc = fnode->NR_connected_links;						//Locate the counter table
+				}
+
+				//If we are OK, populate the list entry
+				if (LinkTableLoc[1] >= LinkTableLoc[0])
+				{
+					GL_THROW("NR: An extra link tried to connected to node:%d",obj->id);
+					/*  TROUBLESHOOT
+					During the initialization state, a link tried to connect to a node
+					that's link list is already full.  This is a bug.  Submit your code and
+					a bug report using the trac website
+					*/
+				}
+				else					//We're OK - populate in our parent's list
+				{
+					NR_busdata[IndVal].Link_Table[LinkTableLoc[1]] = NR_curr_branch;	//Populate that value
+					LinkTableLoc[1]++;													//Increment the pointer
 				}
 
 				if (tnode->NR_node_reference == -99)	//Child node
 				{
 					NR_branchdata[NR_curr_branch].to = *tnode->NR_subnode_reference;
+
+					//Pull out index
+					IndVal = *tnode->NR_subnode_reference;
+
+					//Get the parent information
+					node *parTnode = OBJECTDATA(tnode->SubNodeParent,node);
+					LinkTableLoc = parTnode->NR_connected_links;
 				}
 				else
 				{
-					NR_branchdata[NR_curr_branch].to = tnode->NR_node_reference;
+					NR_branchdata[NR_curr_branch].to = tnode->NR_node_reference;	//To reference
+					IndVal = tnode->NR_node_reference;								//Find the TO busdata index
+					LinkTableLoc = tnode->NR_connected_links;						//Locate the counter table
+				}
+
+				//If we are OK, populate the list entry
+				if (LinkTableLoc[1] >= LinkTableLoc[0])
+				{
+					GL_THROW("NR: An extra link tried to connected to node:%d",obj->id);
+					//Defined above
+				}
+				else					//We're OK - populate in our parent's list
+				{
+					NR_busdata[IndVal].Link_Table[LinkTableLoc[1]] = NR_curr_branch;	//Populate that value
+					LinkTableLoc[1]++;													//Increment the pointer
 				}
 
 				//Populate voltage ratio

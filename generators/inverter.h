@@ -68,6 +68,7 @@ public:
 	complex power_A;//power
 	complex power_B;
 	complex power_C;
+	complex last_current[4];	//Previously applied power output (used to remove from parent so XML files look proper)
 	//complex power_A_sch; // scheduled power
 	//complex power_B_sch;
 	//complex power_C_sch;    

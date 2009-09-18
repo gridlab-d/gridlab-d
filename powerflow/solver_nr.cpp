@@ -23,11 +23,12 @@ Y_NR *Y_offdiag_PQ; //Y_offdiag_PQ store the row,column and value of off_diagona
 Y_NR *Y_diag_fixed; //Y_diag_fixed store the row,column and value of fixed diagonal elements of 6n*6n Y_NR matrix. No PV bus is included.
 Y_NR *Y_diag_update;//Y_diag_update store the row,column and value of updated diagonal elements of 6n*6n Y_NR matrix at each iteration. No PV bus is included.
 Y_NR *Y_Amatrix;//Y_Amatrix store all the elements of Amatrix in equation AX=B;
+Y_NR *Y_Work_Amatrix;
 complex tempY[3][3];
 double tempIcalcReal, tempIcalcImag;
 double tempPbus; //tempPbus store the temporary value of active power load at each bus
 double tempQbus; //tempQbus store the temporary value of reactive power load at each bus
-unsigned int indexer, tempa, tempb, jindexer;
+unsigned int indexer, tempa, tempb, jindexer, kindexer;
 char jindex, kindex;
 
 int cmp( const void *a , const void *b )
@@ -37,6 +38,68 @@ struct Y_NR *d = (Y_NR *)b;
 if(c->col_ind != d->col_ind) return c->col_ind - d->col_ind;
 else return c->row_ind - d->row_ind;
 }
+
+void merge_sort(Y_NR *Input_Array, unsigned int Alen, Y_NR *Work_Array){	//Merge sorting algorithm - basis stolen from auction.cpp in market module
+	unsigned int split_point;
+	unsigned int right_length;
+	Y_NR *leftside, *rightside;
+	Y_NR *Output, *Final_P;
+
+	if (Alen>0)	//Only occurs if over zero
+	{
+		split_point = Alen/2;	//Find the middle point
+		right_length = Alen - split_point;	//Figure out how big the right hand side is
+
+		//Make the appropriate pointers
+		leftside = Input_Array;
+		rightside = Input_Array+split_point;
+
+		//Check to see what condition we are in (keep splitting it)
+		if (split_point>1)
+			merge_sort(leftside,split_point,Work_Array);
+
+		if (right_length>1)
+			merge_sort(rightside,right_length,Work_Array);
+
+		//Final_P = Output;	//Point at the first location
+		Final_P = Work_Array;
+
+		//Merge them now
+		do {
+			if (leftside->col_ind < rightside->col_ind)
+				*Final_P++ = *leftside++;
+			else if (leftside->col_ind == rightside->col_ind)
+			{
+				if (leftside->row_ind < rightside->row_ind)
+					*Final_P++ = *leftside++;
+				else
+					*Final_P++ = *rightside++;
+			}
+			else
+				*Final_P++ = *rightside++;
+		} while ((leftside<(Input_Array+split_point)) && (rightside<(Input_Array+Alen)));	//Sort the list until one of them empties
+
+		while (leftside<(Input_Array+split_point))	//Put any remaining entries into the list
+			*Final_P++ = *leftside++;
+
+		while (rightside<(Input_Array+Alen))		//Put any remaining entries into the list
+			*Final_P++ = *rightside++;
+
+		memcpy(Input_Array,Work_Array,sizeof(Y_NR)*Alen);	//Copy the result back into the input
+	}	//End length > 0
+}
+
+int64 GetMachineCycleCount(void)
+{      
+   __int64 cycles;
+   _asm rdtsc; // won't work on 486 or below - only pentium or above
+
+   _asm lea ebx,cycles;
+   _asm mov [ebx],eax;
+   _asm mov [ebx+4],edx;
+   return cycles;
+}
+
 
 /** Newton-Raphson solver
 	Solves a power flow problem using the Newton-Raphson method
@@ -57,7 +120,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	unsigned char phase_worka, phase_workb, phase_workc;
 
 	//Miscellaneous index variable
-	unsigned int temp_index, temp_index_b;
+	unsigned char temp_index, temp_index_b;
+	unsigned int temp_index_c;
 
 	//Miscellaneous flag variables
 	bool Full_Mat_A, Full_Mat_B, proceed_flag;
@@ -80,6 +144,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 	//Miscellaneous counter tracker
 	unsigned int index_count = 0;
+
+	//Miscellaneous working variable
+	double work_vals_double_0, work_vals_double_1,work_vals_double_2,work_vals_double_3;
+	unsigned int work_vals_uint_0, work_vals_uint_1;
+	char work_vals_char_0, work_vals_char_1;
 
 	//SuperLU variables
 	SuperMatrix A_LU,B_LU,L_LU,U_LU;
@@ -141,8 +210,12 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		}
 
 		//Now go through all of the branches to get the self admittance information (hinges on size)
-		for (jindexer=0; jindexer<branch_count;jindexer++)
+		for (kindexer=0; kindexer<(bus[indexer].Link_Table_Size);kindexer++)
 		{ 
+
+			//Assign jindexer as intermediate variable (easier for me this way)
+			jindexer = bus[indexer].Link_Table[kindexer];
+
 			if ((branch[jindexer].from == indexer) || (branch[jindexer].to == indexer))	//Bus is the from or to side of things
 			{
 				if (BA_diag[indexer].size == 3)		//Full three phase
@@ -1557,15 +1630,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(bus[indexer].S[1]/voltageDel[1]);
 				delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(bus[indexer].S[2]/voltageDel[2]);
 
-				//Convert delta connected load to appropriate Wye - reuse temp variable
-				undeltacurr[0] = voltageDel[0] * (bus[indexer].Y[0]);
-				undeltacurr[1] = voltageDel[1] * (bus[indexer].Y[1]);
-				undeltacurr[2] = voltageDel[2] * (bus[indexer].Y[2]);
-
-				/******************** TODO:  Why isn't this just left as current?!?!?!? *****************************/
-				undeltaimped[0] = (bus[indexer].V[0] == 0) ? 0 : (undeltacurr[0] - undeltacurr[2]) / (bus[indexer].V[0]);
-				undeltaimped[1] = (bus[indexer].V[1] == 0) ? 0 : (undeltacurr[1] - undeltacurr[0]) / (bus[indexer].V[1]);
-				undeltaimped[2] = (bus[indexer].V[2] == 0) ? 0 : (undeltacurr[2] - undeltacurr[1]) / (bus[indexer].V[2]);
+				//Convert delta connected load to appropriate Wye
+				delta_current[0] += voltageDel[0] * (bus[indexer].Y[0]);
+				delta_current[1] += voltageDel[1] * (bus[indexer].Y[1]);
+				delta_current[2] += voltageDel[2] * (bus[indexer].Y[2]);
 
 				//Convert delta-current into a phase current - reuse temp variable
 				undeltacurr[0]=(bus[indexer].I[0]+delta_current[0])-(bus[indexer].I[2]+delta_current[2]);
@@ -1596,13 +1664,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				{
 					//Real power calculations
 					tempPbus = (undeltacurr[jindex]).Re() * (bus[indexer].V[jindex]).Re() + (undeltacurr[jindex]).Im() * (bus[indexer].V[jindex]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
-					tempPbus += (undeltaimped[jindex]).Re() * (bus[indexer].V[jindex]).Re() * (bus[indexer].V[jindex]).Re() + (undeltaimped[jindex]).Re() * (bus[indexer].V[jindex]).Im() * (bus[indexer].V[jindex]).Im();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
-					bus[indexer].PL[jindex] = tempPbus;	//Real power portion
+					bus[indexer].PL[jindex] = tempPbus;	//Real power portion - all is current based
 					
 					//Reactive load calculations
 					tempQbus = (undeltacurr[jindex]).Re() * (bus[indexer].V[jindex]).Im() - (undeltacurr[jindex]).Im() * (bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
-					tempQbus += -(undeltaimped[jindex]).Im() * (bus[indexer].V[jindex]).Im() * (bus[indexer].V[jindex]).Im() - (undeltaimped[jindex]).Im() * (bus[indexer].V[jindex]).Re() * (bus[indexer].V[jindex]).Re();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage				
-					bus[indexer].QL[jindex] = tempQbus;	//Reactive power portion
+					bus[indexer].QL[jindex] = tempQbus;	//Reactive power portion - all is current based
 				}
 			}//end delta connected
 			else if ((bus[indexer].phases & 0x80) == 0x80)	//Split-phase connected node
@@ -1775,7 +1841,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			for (jindex=0; jindex<BA_diag[indexer].size; jindex++) // rows - for specific phase that exists
 			{
 				tempIcalcReal = tempIcalcImag = 0;   
-				
+
 				if ((bus[indexer].phases & 0x80) == 0x80)	//Split phase - triplex bus
 				{
 					//Two states of triplex bus - To node of SPCT transformer needs to be different
@@ -1803,33 +1869,41 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					tempIcalcImag += (BA_diag[indexer].Y[jindex][1]).Re() * (bus[indexer].V[1]).Im() + (BA_diag[indexer].Y[jindex][1]).Im() * (bus[indexer].V[1]).Re();// equation (8), the diag elements of bus admittance matrix 
 
 					//Now off diagonals
-					for (jindexer=0; jindexer<branch_count; jindexer++)
+					for (kindexer=0; kindexer<(bus[indexer].Link_Table_Size); kindexer++)
 					{
+						//Apply proper index to jindexer (easier to implement this way)
+						jindexer=bus[indexer].Link_Table[kindexer];
+
 						if (branch[jindexer].from == indexer)	//We're the from bus
 						{
 							if ((bus[indexer].phases & 0x20) == 0x20)	//SPCT from bus - needs different signage
 							{
+								work_vals_char_0 = jindex*3;
+
 								//This situation can only be a normal line (triplex will never be the from for another type)
 								//Again only, & always 2 columns (just do them explicitly)
 								//Column 1
-								tempIcalcReal += ((branch[jindexer].Yfrom[jindex*3])).Re() * (bus[branch[jindexer].to].V[0]).Re() - ((branch[jindexer].Yfrom[jindex*3])).Im() * (bus[branch[jindexer].to].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-								tempIcalcImag += ((branch[jindexer].Yfrom[jindex*3])).Re() * (bus[branch[jindexer].to].V[0]).Im() + ((branch[jindexer].Yfrom[jindex*3])).Im() * (bus[branch[jindexer].to].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+								tempIcalcReal += ((branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Re() - ((branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+								tempIcalcImag += ((branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Im() + ((branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 
 								//Column2
 								tempIcalcReal += ((branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - ((branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 								tempIcalcImag += ((branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + ((branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+
 							}//End SPCT To bus - from diagonal contributions
 							else		//Normal line connection to normal triplex
 							{
+								work_vals_char_0 = jindex*3;
 								//This situation can only be a normal line (triplex will never be the from for another type)
 								//Again only, & always 2 columns (just do them explicitly)
 								//Column 1
-								tempIcalcReal += (-(branch[jindexer].Yfrom[jindex*3])).Re() * (bus[branch[jindexer].to].V[0]).Re() - (-(branch[jindexer].Yfrom[jindex*3])).Im() * (bus[branch[jindexer].to].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-								tempIcalcImag += (-(branch[jindexer].Yfrom[jindex*3])).Re() * (bus[branch[jindexer].to].V[0]).Im() + (-(branch[jindexer].Yfrom[jindex*3])).Im() * (bus[branch[jindexer].to].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+								tempIcalcReal += (-(branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Re() - (-(branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+								tempIcalcImag += (-(branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Im() + (-(branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 
 								//Column2
 								tempIcalcReal += (-(branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - (-(branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 								tempIcalcImag += (-(branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + (-(branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+
 							}//end normal triplex from
 						}//end from bus
 						else if (branch[jindexer].to == indexer)	//We're the to bus
@@ -1854,45 +1928,50 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									GL_THROW("NR: A split-phase transformer appears to have an invalid phase");
 								}
 
+								work_vals_char_0 = jindex*3+temp_index;
+
 								//Perform the update, it only happens for one column (nature of the transformer)
-								tempIcalcReal += (-(branch[jindexer].Yto[jindex*3+temp_index])).Re() * (bus[branch[jindexer].from].V[temp_index]).Re() - (-(branch[jindexer].Yto[jindex*3+temp_index])).Im() * (bus[branch[jindexer].from].V[temp_index]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-								tempIcalcImag += (-(branch[jindexer].Yto[jindex*3+temp_index])).Re() * (bus[branch[jindexer].from].V[temp_index]).Im() + (-(branch[jindexer].Yto[jindex*3+temp_index])).Im() * (bus[branch[jindexer].from].V[temp_index]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+								tempIcalcReal += (-(branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[temp_index]).Re() - (-(branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[temp_index]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+								tempIcalcImag += (-(branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[temp_index]).Im() + (-(branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[temp_index]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+
 							}//end transformer
 							else									//Must be a normal line then
 							{
 								if ((bus[indexer].phases & 0x20) == 0x20)	//SPCT from bus - needs different signage
 								{
+									work_vals_char_0 = jindex*3;
 									//This case should never really exist, but if someone reverses a secondary or is doing meshed secondaries, it might
 									//Again only, & always 2 columns (just do them explicitly)
 									//Column 1
-									tempIcalcReal += ((branch[jindexer].Yto[jindex*3])).Re() * (bus[branch[jindexer].from].V[0]).Re() - ((branch[jindexer].Yto[jindex*3])).Im() * (bus[branch[jindexer].from].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-									tempIcalcImag += ((branch[jindexer].Yto[jindex*3])).Re() * (bus[branch[jindexer].from].V[0]).Im() + ((branch[jindexer].Yto[jindex*3])).Im() * (bus[branch[jindexer].from].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+									tempIcalcReal += ((branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[0]).Re() - ((branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+									tempIcalcImag += ((branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[0]).Im() + ((branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 
 									//Column2
-									tempIcalcReal += ((branch[jindexer].Yto[jindex*3+1])).Re() * (bus[branch[jindexer].from].V[1]).Re() - ((branch[jindexer].Yto[jindex*3+1])).Im() * (bus[branch[jindexer].from].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-									tempIcalcImag += ((branch[jindexer].Yto[jindex*3+1])).Re() * (bus[branch[jindexer].from].V[1]).Im() + ((branch[jindexer].Yto[jindex*3+1])).Im() * (bus[branch[jindexer].from].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+									tempIcalcReal += ((branch[jindexer].Yto[work_vals_char_0+1])).Re() * (bus[branch[jindexer].from].V[1]).Re() - ((branch[jindexer].Yto[work_vals_char_0+1])).Im() * (bus[branch[jindexer].from].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+									tempIcalcImag += ((branch[jindexer].Yto[work_vals_char_0+1])).Re() * (bus[branch[jindexer].from].V[1]).Im() + ((branch[jindexer].Yto[work_vals_char_0+1])).Im() * (bus[branch[jindexer].from].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 								}//End SPCT To bus - from diagonal contributions
 								else		//Normal line connection to normal triplex
 								{
+									work_vals_char_0 = jindex*3;
 									//Again only, & always 2 columns (just do them explicitly)
 									//Column 1
-									tempIcalcReal += (-(branch[jindexer].Yto[jindex*3])).Re() * (bus[branch[jindexer].from].V[0]).Re() - (-(branch[jindexer].Yto[jindex*3])).Im() * (bus[branch[jindexer].from].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-									tempIcalcImag += (-(branch[jindexer].Yto[jindex*3])).Re() * (bus[branch[jindexer].from].V[0]).Im() + (-(branch[jindexer].Yto[jindex*3])).Im() * (bus[branch[jindexer].from].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+									tempIcalcReal += (-(branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[0]).Re() - (-(branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+									tempIcalcImag += (-(branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[0]).Im() + (-(branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 
 									//Column2
-									tempIcalcReal += (-(branch[jindexer].Yto[jindex*3+1])).Re() * (bus[branch[jindexer].from].V[1]).Re() - (-(branch[jindexer].Yto[jindex*3+1])).Im() * (bus[branch[jindexer].from].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-									tempIcalcImag += (-(branch[jindexer].Yto[jindex*3+1])).Re() * (bus[branch[jindexer].from].V[1]).Im() + (-(branch[jindexer].Yto[jindex*3+1])).Im() * (bus[branch[jindexer].from].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+									tempIcalcReal += (-(branch[jindexer].Yto[work_vals_char_0+1])).Re() * (bus[branch[jindexer].from].V[1]).Re() - (-(branch[jindexer].Yto[work_vals_char_0+1])).Im() * (bus[branch[jindexer].from].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+									tempIcalcImag += (-(branch[jindexer].Yto[work_vals_char_0+1])).Re() * (bus[branch[jindexer].from].V[1]).Im() + (-(branch[jindexer].Yto[work_vals_char_0+1])).Im() * (bus[branch[jindexer].from].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 								}//End normal triplex connection
 							}//end normal line
 						}//end to bus
 						else	//We're nothing
 							;
+
 					}//End branch traversion
 
 					//It's I.  Just a direct conversion (P changed above to I as well)
 					deltaI_NR[2*bus[indexer].Matrix_Loc+ BA_diag[indexer].size + jindex] = tempPbus - tempIcalcReal;
 					deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = tempQbus - tempIcalcImag;
-
 				}//End split-phase present
 				else	//Three phase or some variant thereof
 				{
@@ -1963,6 +2042,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						tempIcalcReal += (BA_diag[indexer].Y[jindex][kindex]).Re() * (bus[indexer].V[temp_index]).Re() - (BA_diag[indexer].Y[jindex][kindex]).Im() * (bus[indexer].V[temp_index]).Im();// equation (7), the diag elements of bus admittance matrix 
 						tempIcalcImag += (BA_diag[indexer].Y[jindex][kindex]).Re() * (bus[indexer].V[temp_index]).Im() + (BA_diag[indexer].Y[jindex][kindex]).Im() * (bus[indexer].V[temp_index]).Re();// equation (8), the diag elements of bus admittance matrix 
 
+
 						//Off diagonal contributions
 						//Need another variable to handle the rows
 						temp_index_b = -1;
@@ -2018,8 +2098,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							GL_THROW("NR: A voltage index failed to be found.");
 						}
 
-						for (jindexer=0; jindexer<branch_count; jindexer++)	//Parse through the branch list
+						for (kindexer=0; kindexer<(bus[indexer].Link_Table_Size); kindexer++)	//Parse through the branch list
 						{
+							//Apply proper index to jindexer (easier to implement this way)
+							jindexer=bus[indexer].Link_Table[kindexer];
+
 							if (branch[jindexer].from == indexer) 
 							{
 								//See if we're a triplex transformer (will only occur on the from side)
@@ -2086,35 +2169,56 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 									if (proceed_flag)
 									{
+										work_vals_char_0 = temp_index_b*3;
 										//Do columns individually
 										//1
-										tempIcalcReal += (-(branch[jindexer].Yfrom[temp_index_b*3])).Re() * (bus[branch[jindexer].to].V[0]).Re() - (-(branch[jindexer].Yfrom[temp_index_b*3])).Im() * (bus[branch[jindexer].to].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-										tempIcalcImag += (-(branch[jindexer].Yfrom[temp_index_b*3])).Re() * (bus[branch[jindexer].to].V[0]).Im() + (-(branch[jindexer].Yfrom[temp_index_b*3])).Im() * (bus[branch[jindexer].to].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+										tempIcalcReal += (-(branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Re() - (-(branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+										tempIcalcImag += (-(branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Im() + (-(branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 
 										//2
-										tempIcalcReal += (-(branch[jindexer].Yfrom[temp_index_b*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - (-(branch[jindexer].Yfrom[temp_index_b*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-										tempIcalcImag += (-(branch[jindexer].Yfrom[temp_index_b*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + (-(branch[jindexer].Yfrom[temp_index_b*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+										tempIcalcReal += (-(branch[jindexer].Yfrom[work_vals_char_0+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - (-(branch[jindexer].Yfrom[work_vals_char_0+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+										tempIcalcImag += (-(branch[jindexer].Yfrom[work_vals_char_0+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + (-(branch[jindexer].Yfrom[work_vals_char_0+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+
 									}
 								}//end SPCT transformer
 								else	///Must be a standard line
 								{
-									tempIcalcReal += (-(branch[jindexer].Yfrom[temp_index_b*3+temp_index])).Re() * (bus[branch[jindexer].to].V[temp_index]).Re() - (-(branch[jindexer].Yfrom[temp_index_b*3+temp_index])).Im() * (bus[branch[jindexer].to].V[temp_index]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-									tempIcalcImag += (-(branch[jindexer].Yfrom[temp_index_b*3+temp_index])).Re() * (bus[branch[jindexer].to].V[temp_index]).Im() + (-(branch[jindexer].Yfrom[temp_index_b*3+temp_index])).Im() * (bus[branch[jindexer].to].V[temp_index]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+									work_vals_char_0 = temp_index_b*3+temp_index;
+									work_vals_double_0 = (-branch[jindexer].Yfrom[work_vals_char_0]).Re();
+									work_vals_double_1 = (-branch[jindexer].Yfrom[work_vals_char_0]).Im();
+									work_vals_double_2 = (bus[branch[jindexer].to].V[temp_index]).Re();
+									work_vals_double_3 = (bus[branch[jindexer].to].V[temp_index]).Im();
+
+									tempIcalcReal += work_vals_double_0 * work_vals_double_2 - work_vals_double_1 * work_vals_double_3;// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+									tempIcalcImag += work_vals_double_0 * work_vals_double_3 + work_vals_double_1 * work_vals_double_2;// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+
 								}//end standard line
+
 							}	
 							if  (branch[jindexer].to == indexer)
 							{
-								tempIcalcReal += (-(branch[jindexer].Yto[temp_index_b*3+temp_index])).Re() * (bus[branch[jindexer].from].V[temp_index]).Re() - (-(branch[jindexer].Yto[temp_index_b*3+temp_index])).Im() * (bus[branch[jindexer].from].V[temp_index]).Im() ;//equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance.
-								tempIcalcImag += (-(branch[jindexer].Yto[temp_index_b*3+temp_index])).Re() * (bus[branch[jindexer].from].V[temp_index]).Im() + (-(branch[jindexer].Yto[temp_index_b*3+temp_index])).Im() * (bus[branch[jindexer].from].V[temp_index]).Re() ;//equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance.
+									work_vals_char_0 = temp_index_b*3+temp_index;
+									work_vals_double_0 = (-branch[jindexer].Yto[work_vals_char_0]).Re();
+									work_vals_double_1 = (-branch[jindexer].Yto[work_vals_char_0]).Im();
+									work_vals_double_2 = (bus[branch[jindexer].from].V[temp_index]).Re();
+									work_vals_double_3 = (bus[branch[jindexer].from].V[temp_index]).Im();
+
+									tempIcalcReal += work_vals_double_0 * work_vals_double_2 - work_vals_double_1 * work_vals_double_3;// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+									tempIcalcImag += work_vals_double_0 * work_vals_double_3 + work_vals_double_1 * work_vals_double_2;// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+
 							}
 							else;
+
 						}
 					}//end intermediate current for each phase column
+					work_vals_double_0 = (bus[indexer].V[temp_index_b]).Mag()*(bus[indexer].V[temp_index_b]).Mag();
 
-					if ((bus[indexer].V[temp_index_b]).Mag()!=0)
+					if (work_vals_double_0!=0)	//Only normal one (not square), but a zero is still a zero even after that
 					{
-						deltaI_NR[2*bus[indexer].Matrix_Loc+ BA_diag[indexer].size + jindex] = (tempPbus * (bus[indexer].V[temp_index_b]).Re() + tempQbus * (bus[indexer].V[temp_index_b]).Im())/ ((bus[indexer].V[temp_index_b]).Mag()*(bus[indexer].V[temp_index_b]).Mag()) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
-						deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempPbus * (bus[indexer].V[temp_index_b]).Im() - tempQbus * (bus[indexer].V[temp_index_b]).Re())/ ((bus[indexer].V[temp_index_b]).Mag()*(bus[indexer].V[temp_index_b]).Mag()) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
+						work_vals_double_1 = (bus[indexer].V[temp_index_b]).Re();
+						work_vals_double_2 = (bus[indexer].V[temp_index_b]).Im();
+						deltaI_NR[2*bus[indexer].Matrix_Loc+ BA_diag[indexer].size + jindex] = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
+						deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
 					}
 					else
 					{
@@ -2143,15 +2247,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//Zero the powers - to be removed later (embedded in below equations)
 				undeltapower[0] = undeltapower[1] = undeltapower[2] = 0.0;
 
-				//Convert delta connected load to appropriate Wye - reuse temp variable
-				undeltacurr[0] = voltageDel[0] * (bus[indexer].Y[0]);
-				undeltacurr[1] = voltageDel[1] * (bus[indexer].Y[1]);
-				undeltacurr[2] = voltageDel[2] * (bus[indexer].Y[2]);
-
-				/*********************** TODO: Again, why this not left as current!?!?!? ***********************************/
-				undeltaimped[0] = (bus[indexer].V[0] == 0) ? 0 : (undeltacurr[0] - undeltacurr[2]) / (bus[indexer].V[0]);
-				undeltaimped[1] = (bus[indexer].V[1] == 0) ? 0 : (undeltacurr[1] - undeltacurr[0]) / (bus[indexer].V[1]);
-				undeltaimped[2] = (bus[indexer].V[2] == 0) ? 0 : (undeltacurr[2] - undeltacurr[1]) / (bus[indexer].V[2]);
+				//Convert delta connected load to appropriate Wye
+				delta_current[0] += voltageDel[0] * (bus[indexer].Y[0]);
+				delta_current[1] += voltageDel[1] * (bus[indexer].Y[1]);
+				delta_current[2] += voltageDel[2] * (bus[indexer].Y[2]);
 
 				//Convert delta-current into a phase current - reuse temp variable
 				undeltacurr[0]=(bus[indexer].I[0]+delta_current[0])-(bus[indexer].I[2]+delta_current[2]);
@@ -2181,14 +2280,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				{
 					if ((bus[indexer].V[jindex]).Mag()!=0)	//Make sure we aren't creating any indeterminants
 					{
-						bus[indexer].Jacob_A[jindex] = ((undeltapower[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(37)
-						bus[indexer].Jacob_A[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() + (undeltacurr[jindex]).Im() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) + (undeltaimped[jindex]).Im();// second part of equation(37)
-						bus[indexer].Jacob_B[jindex] = ((undeltapower[jindex]).Re() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) + 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(38)
-						bus[indexer].Jacob_B[jindex] += -((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() + (undeltacurr[jindex]).Re() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(38)
-						bus[indexer].Jacob_C[jindex] = ((undeltapower[jindex]).Re() * (pow((bus[indexer].V[jindex]).Im(),2) - pow((bus[indexer].V[jindex]).Re(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Im())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(39)
-						bus[indexer].Jacob_C[jindex] +=((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() - (undeltacurr[jindex]).Re() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(39)
-						bus[indexer].Jacob_D[jindex] = ((undeltapower[jindex]).Im() * (pow((bus[indexer].V[jindex]).Re(),2) - pow((bus[indexer].V[jindex]).Im(),2)) - 2*(bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltapower[jindex]).Re())/pow((bus[indexer].V[jindex]).Mag(),4);// first part of equation(40)
-						bus[indexer].Jacob_D[jindex] += ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() - (undeltacurr[jindex]).Im() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Im();// second part of equation(40)
+						bus[indexer].Jacob_A[jindex] = ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() + (undeltacurr[jindex]).Im() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) + (undeltaimped[jindex]).Im();// second part of equation(37) - no power term needed
+						bus[indexer].Jacob_B[jindex] = -((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() + (undeltacurr[jindex]).Re() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(38) - no power term needed
+						bus[indexer].Jacob_C[jindex] =((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Im() - (undeltacurr[jindex]).Re() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Re();// second part of equation(39) - no power term needed
+						bus[indexer].Jacob_D[jindex] = ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(undeltacurr[jindex]).Re() - (undeltacurr[jindex]).Im() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3) - (undeltaimped[jindex]).Im();// second part of equation(40) - no power term needed
 					}
 					else	//Zero voltage = only impedance is valid (others get divided by VMag, so are IND)
 					{
@@ -2494,8 +2589,16 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		}
 
 		/* sorting integers using qsort() example */
-		qsort(Y_Amatrix,size_Amatrix,sizeof(*Y_Amatrix),cmp);
+		//Declare working array
+		if (Y_Work_Amatrix == NULL)
+		{
+			Y_Work_Amatrix = (Y_NR *)gl_malloc(size_Amatrix*sizeof(Y_NR));
+			if (Y_Work_Amatrix==NULL)
+				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+		}
 
+		merge_sort(Y_Amatrix, size_Amatrix, Y_Work_Amatrix);
+		
 		///* Initialize parameters. */
 		m = 2*total_variables; n = 2*total_variables; nnz = size_Amatrix;
 
@@ -2544,7 +2647,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		}
 		cols_LU[0] = 0;
 		indexer = 0;
-		temp_index = 0;
+		temp_index_c = 0;
 		for ( jindexer = 0; jindexer< (size_Amatrix-1); jindexer++)
 		{ 
 			indexer += 1;
@@ -2552,15 +2655,15 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			tempb = Y_Amatrix[jindexer+1].col_ind;
 			if (tempb > tempa)
 			{
-				temp_index += 1;
-				cols_LU[temp_index] = indexer;
+				temp_index_c += 1;
+				cols_LU[temp_index_c] = indexer;
 			}
 		}
 		cols_LU[n] = nnz ;// number of non-zeros;
 
-		for (temp_index=0;temp_index<m;temp_index++)
+		for (temp_index_c=0;temp_index_c<m;temp_index_c++)
 		{ 
-			rhs_LU[temp_index] = deltaI_NR[temp_index];
+			rhs_LU[temp_index_c] = deltaI_NR[temp_index_c];
 		}
 
 		//* Create Matrix A in the format expected by Super LU.*/

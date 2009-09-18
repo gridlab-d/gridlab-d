@@ -131,6 +131,8 @@ inverter::inverter(MODULE *module)
 		phaseBOut = true;
 		phaseCOut = true;
 
+		last_current[0] = last_current[1] = last_current[2] = last_current[3] = 0.0;
+
 		switch_type_choice = IDEAL_SWITCH;
 		filter_type_v = BAND_PASS;
 		filter_imp_v = IDEAL_FILTER;
@@ -378,7 +380,10 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				else
 					phaseA_I_Out = complex(0.0,0.0);
 
-				*pLine12 = -phaseA_I_Out;
+				*pLine12 += -phaseA_I_Out;
+
+				//Update this value for later removal
+				last_current[3] = -phaseA_I_Out;
 				
 				//Get rid of these for now
 				//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
@@ -400,9 +405,14 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				else
 					phaseC_I_Out = complex(0.0,0.0);
 
-				pLine_I[0] = -phaseA_I_Out;
-				pLine_I[1] = -phaseB_I_Out;
-				pLine_I[2] = -phaseC_I_Out;
+				pLine_I[0] += -phaseA_I_Out;
+				pLine_I[1] += -phaseB_I_Out;
+				pLine_I[2] += -phaseC_I_Out;
+
+				//Update this value for later removal
+				last_current[0] = -phaseA_I_Out;
+				last_current[1] = -phaseB_I_Out;
+				last_current[2] = -phaseC_I_Out;
 
 				//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
 				//complex phaseB_V_Internal = filter_voltage_impact_source(phaseB_I_Out, phaseB_V_Out);
@@ -441,9 +451,15 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				else 
 					phaseC_I_Out = complex(0,0);
 
-				pLine_I[0] = -phaseA_I_Out;
-				pLine_I[1] = -phaseB_I_Out;
-				pLine_I[2] = -phaseC_I_Out;
+				pLine_I[0] += -phaseA_I_Out;
+				pLine_I[1] += -phaseB_I_Out;
+				pLine_I[2] += -phaseC_I_Out;
+
+				//Update this value for later removal
+				last_current[0] = -phaseA_I_Out;
+				last_current[1] = -phaseB_I_Out;
+				last_current[2] = -phaseC_I_Out;
+
 			}
 			else if(number_of_phases_out == 1)
 			{
@@ -473,9 +489,15 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					gl_warning("None of the phases specified have voltages!");
 					phaseA_I_Out = phaseB_I_Out = phaseC_I_Out = complex(0.0,0.0);
 				}
-				pLine_I[0] = -phaseA_I_Out;
-				pLine_I[1] = -phaseB_I_Out;
-				pLine_I[2] = -phaseC_I_Out;
+				pLine_I[0] += -phaseA_I_Out;
+				pLine_I[1] += -phaseB_I_Out;
+				pLine_I[2] += -phaseC_I_Out;
+
+				//Update this value for later removal
+				last_current[0] = -phaseA_I_Out;
+				last_current[1] = -phaseB_I_Out;
+				last_current[2] = -phaseC_I_Out;
+
 			}
 			else
 			{
@@ -511,6 +533,9 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				phaseA_I_Out = pLine_I[0];
 				phaseB_I_Out = pLine_I[1];
 				phaseC_I_Out = pLine_I[2];
+
+				//Erm, there's no good way to handle this from a "multiply attached" point of view.
+				//TODO: Think about how to do this if the need arrises
 
 				VA_Out = phaseA_V_Out * (~ phaseA_I_Out) + phaseB_V_Out * (~ phaseB_I_Out) + phaseC_V_Out * (~ phaseC_I_Out);
 			}
@@ -593,9 +618,14 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			gl_verbose("Inverter sync: I_In asked for by inverter is: (%f , %f)", I_In.Re(), I_In.Im());
 
 
-			pLine_I[0] = phaseA_I_Out;
-			pLine_I[1] = phaseB_I_Out;
-			pLine_I[2] = phaseC_I_Out;
+			pLine_I[0] += phaseA_I_Out;
+			pLine_I[1] += phaseB_I_Out;
+			pLine_I[2] += phaseC_I_Out;
+
+			//Update this value for later removal
+			last_current[0] = phaseA_I_Out;
+			last_current[1] = phaseB_I_Out;
+			last_current[2] = phaseC_I_Out;
 
 			return TS_NEVER;
 		}
@@ -746,18 +776,29 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 			if(changed)
 			{
-				pLine_I[0] = phaseA_I_Out;
-				pLine_I[1] = phaseB_I_Out;
-				pLine_I[2] = phaseC_I_Out;
+				pLine_I[0] += phaseA_I_Out;
+				pLine_I[1] += phaseB_I_Out;
+				pLine_I[2] += phaseC_I_Out;
 				
+				//Update this value for later removal
+				last_current[0] = phaseA_I_Out;
+				last_current[1] = phaseB_I_Out;
+				last_current[2] = phaseC_I_Out;
+
 				TIMESTAMP t2 = t1 + 10 * 60 * TS_SECOND;
 				return t2;
 			}
 			else
 			{
-				pLine_I[0] = phaseA_I_Out;
-				pLine_I[1] = phaseB_I_Out;
-				pLine_I[2] = phaseC_I_Out;
+				pLine_I[0] += phaseA_I_Out;
+				pLine_I[1] += phaseB_I_Out;
+				pLine_I[2] += phaseC_I_Out;
+
+				//Update this value for later removal
+				last_current[0] = phaseA_I_Out;
+				last_current[1] = phaseB_I_Out;
+				last_current[2] = phaseC_I_Out;
+
 				return TS_NEVER;
 			}
 		}
@@ -767,20 +808,37 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 		default:
 		{
-			pLine_I[0] = phaseA_I_Out;
-			pLine_I[1] = phaseB_I_Out;
-			pLine_I[2] = phaseC_I_Out;
+			pLine_I[0] += phaseA_I_Out;
+			pLine_I[1] += phaseB_I_Out;
+			pLine_I[2] += phaseC_I_Out;
+
+			//Update this value for later removal
+			last_current[0] = phaseA_I_Out;
+			last_current[1] = phaseB_I_Out;
+			last_current[2] = phaseC_I_Out;
+
 			return TS_NEVER;
 		}
 			break;
 	}
 	if (number_of_phases_out == 4)
-		*pLine12 = phaseA_I_Out;
+	{
+		*pLine12 += phaseA_I_Out;
+
+		//Update this value for later removal
+		last_current[3] = phaseA_I_Out;
+	}
 	else
 	{
-		pLine_I[0] = phaseA_I_Out;
-		pLine_I[1] = phaseB_I_Out;
-		pLine_I[2] = phaseC_I_Out;
+		pLine_I[0] += phaseA_I_Out;
+		pLine_I[1] += phaseB_I_Out;
+		pLine_I[2] += phaseC_I_Out;
+
+		//Update this value for later removal
+		last_current[0] = phaseA_I_Out;
+		last_current[1] = phaseB_I_Out;
+		last_current[2] = phaseC_I_Out;
+
 	}
 
 	return TS_NEVER;
@@ -816,6 +874,15 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2 = TS_NEVER;
+
+	//Remove our parent contributions (so XMLs look proper)
+	pLine_I[0] -= last_current[0];
+	pLine_I[1] -= last_current[1];
+	pLine_I[2] -= last_current[2];
+
+	if (number_of_phases_out == 4)	//Triplex connection
+		*pLine12 -= last_current[3];
+
 	///* TODO: implement post-topdown behavior */
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }

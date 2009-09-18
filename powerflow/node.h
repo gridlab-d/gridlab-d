@@ -84,6 +84,7 @@ private:
 	complex current_inj[3];			///< current injection (total of current+shunt+power)
 	TIMESTAMP prev_NTime;			///< Previous timestep - used for propogating child properties
 	complex last_child_power[3][3];	///< Previous power values - used for child object propogation
+	complex last_child_current12;	///< Previous current value - used for child object propogation (namely triplex)
 	bool GS_converged;				///< Flag for if we are converged
 	void *GS_P_C_NodeChecks(TIMESTAMP t0, TIMESTAMP t1, OBJECT *obj, LINKCONNECTED *linktable);	///< Subfunction for parent child checks in sync.  Used to clean up code
 public:
@@ -119,6 +120,8 @@ public:
 	complex current12;		/// Used for phase 1-2 current injections in triplex
 	complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
 	complex *Extra_Data;	/// Link to extra data information (NR)
+	char NR_connected_links[2];	/// Counter for number of connected links in the system
+	int *NR_link_table;		/// Pointer to link list table
 
 	int NR_node_reference;		/// Node's reference in NR_busdata
 	int *NR_subnode_reference;	/// Pointer to parent node's reference in NR_busdata - just in case things get inited out of synch

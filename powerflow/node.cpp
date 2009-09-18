@@ -133,7 +133,8 @@ int node::create(void)
 	SubNodeParent = NULL;
 	NR_subnode_reference = NULL;
 	Extra_Data=NULL;
-
+	NR_link_table = NULL;
+	NR_connected_links[0] = NR_connected_links[1] = 0;
 	YVs[0] = YVs[1] = YVs[2] = 0.0;
 
 	GS_converged=false;
@@ -330,6 +331,7 @@ int node::init(OBJECT *parent)
 				last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = complex(0,0);
 				last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
 				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
+				last_child_current12 = 0.0;
 			}//end no issues phase
 		}
 		else	//Non-childed node gets the count updated
@@ -439,6 +441,7 @@ int node::init(OBJECT *parent)
 			last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = complex(0,0);
 			last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
 			last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
+			last_child_current12 = 0.0;
 
 		} 
 		
@@ -685,6 +688,15 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		//If we're the swing, toggle tracking variable
 		if (bustype==SWING)
 			NR_cycle = !NR_cycle;
+
+		if (prev_NTime==0)	//First run, if we are a child, make sure no one linked us before we knew that
+		{
+			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links>0))
+			{
+				node *parNode = OBJECTDATA(SubNodeParent,node);
+				parNode->NR_connected_links[0] += NR_connected_links[0];
+			}
+		}
 
 		if (NR_busdata==NULL || NR_branchdata==NULL)	//First time any NR in (this should be the swing bus doing this)
 		{
@@ -1296,6 +1308,11 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					ParToLoad->current[0]+=current[0]-last_child_power[2][0];
 					ParToLoad->current[1]+=current[1]-last_child_power[2][1];
 					ParToLoad->current[2]+=current[2]-last_child_power[2][2];
+
+					if (has_phase(PHASE_S))	//Triplex gets another term as well
+					{
+						ParToLoad->current12 +=current12-last_child_current12;
+					}
 				}
 				else
 				{
@@ -1318,6 +1335,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				last_child_power[2][0] = current[0];
 				last_child_power[2][1] = current[1];
 				last_child_power[2][2] = current[2];
+
+				if (has_phase(PHASE_S))		//Triplex extra current update
+					last_child_current12 = current12;
 			}
 
 			if ((SubNode==DIFF_CHILD) && (NR_cycle==false))	//Differently connected nodes
@@ -1543,6 +1563,9 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		ParToLoad->current[1]-=last_child_power[2][1];
 		ParToLoad->current[2]-=last_child_power[2][2];
 
+		if (has_phase(PHASE_S))	//Triplex slightly different
+			ParToLoad->current12-=last_child_current12;
+
 		//Update previous power tracker - if we haven't really converged, things will mess up without this
 		//Power
 		last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = 0.0;
@@ -1552,6 +1575,10 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 		//Current
 		last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = 0.0;
+
+		//Current 12 if we are triplex
+		if (has_phase(PHASE_S))
+			last_child_current12 = 0.0;
 	}
 
 	if ((solver_method == SM_NR) && ((SubNode==CHILD) || (SubNode==DIFF_CHILD)) && (NR_cycle==false))	//Child Voltage Updates
@@ -2227,6 +2254,22 @@ int *node::NR_populate(void)
 
 		//Populate current
 		NR_busdata[NR_curr_bus].I = &current[0];
+
+		//Allocate our link list
+		NR_busdata[NR_curr_bus].Link_Table = (int *)gl_malloc(NR_connected_links[0]*sizeof(int));
+		
+		if (NR_busdata[NR_curr_bus].Link_Table == NULL)
+		{
+			GL_THROW("NR: Failed to allocate link table for node:%d",OBJECTHDR(this)->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate memory for the linking table for NR, memory failed to be
+			allocated.  Make sure you have enough memory and try again.  If this problem happens a second
+			time, submit your code and a bug report using the trac website.
+			*/
+		}
+
+		//Populate our size
+		NR_busdata[NR_curr_bus].Link_Table_Size = NR_connected_links[0];
 
 		//See if we're a triplex
 		if (has_phase(PHASE_S))
