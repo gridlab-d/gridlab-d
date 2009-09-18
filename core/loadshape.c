@@ -455,8 +455,18 @@ int loadshape_init(loadshape *ls) /**< load shape */
 		}
 		if (ls->params.modulated.pulseenergy<=0)
 		{
-			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated pulse energy must be a positive number",ls->schedule->name);
-			return 1;
+			if (ls->params.modulated.pulseenergy==0 && ls->params.modulated.pulsevalue==0)
+			{
+				output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) either modulated pulse or count must be a positive number",ls->schedule->name);
+				return 1;
+			}
+			else if (ls->params.modulated.pulseenergy<0)
+			{
+				output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated pulse must be a positive number",ls->schedule->name);
+				return 1;
+			}
+			else
+				ls->params.modulated.pulseenergy = ls->params.modulated.energy/ls->params.modulated.pulsevalue;
 		}
 		if (ls->params.modulated.modulation<=MMT_UNKNOWN || ls->params.modulated.modulation>MMT_FREQUENCY)
 		{

@@ -381,41 +381,21 @@ int schedule_compile(SCHEDULE *sch)
 			if (*p==';') /* option */
 			{
 				if (strcmp(blockname,"weighted")==0)
-				{
-					state = CLOSE;
 					sch->flags |= SN_WEIGHTED;
-					p++;
-				}
 				else if (strcmp(blockname,"absolute")==0)
-				{
-					state = CLOSE;
 					sch->flags |= SN_ABSOLUTE;
-					p++;
-				}
 				else if (strcmp(blockname,"normal")==0)
-				{
-					state = CLOSE;
 					sch->flags |= SN_NORMAL;
-					p++;
-				}
 				else if (strcmp(blockname,"positive")==0)
-				{
-					state = CLOSE;
 					sch->flags |= SN_POSITIVE;
-					p++;
-				}
 				else if (strcmp(blockname,"nonzero")==0)
-				{
-					state = CLOSE;
 					sch->flags |= SN_NONZERO;
-					p++;
-				}
 				else if (strcmp(blockname,"boolean")==0)
-				{
-					state = CLOSE;
 					sch->flags |= SN_BOOLEAN;
-					p++;
-				}
+				else
+					output_error("schedule %s: block option '%s' is not recognized", sch->name, blockname);
+				state = CLOSE;
+				p++;
 			}
 			else if (*p=='{') /* open block */
 			{
@@ -425,7 +405,7 @@ int schedule_compile(SCHEDULE *sch)
 			}
 			else if (!isspace(*p) && !iscntrl(*p)) /* non-white/control */
 			{
-				output_error("unexpected text before block start");
+				output_error("schedule %s: unexpected text before block start", sch->name);
 				/* TROUBLESHOOT
 					The schedule syntax is not valid.  Remove the unexpected or invalid text before the block and try again.
 				 */

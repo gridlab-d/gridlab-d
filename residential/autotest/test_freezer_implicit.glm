@@ -4,8 +4,6 @@
 
 #set suppress_repeat_messages=0
 
-#define stylesheet="C:\Project Files\Gridlabd\gridlab-d\trunk\VS2005\gridlabd-2_0.xsl"
-
 clock {
 	timezone PST+8PDT;
 	starttime '2001-01-01 00:00:00 PST';
@@ -19,13 +17,7 @@ module residential {
 module assert;
 module tape;
 
-object house{
-
-	object recorder{
-		property total.power,total.energy;
-		file "test_freezer_implicit.csv";
-		interval 3600;
-		limit 100;
-	};	
+object house {
+	// need assert here
 }
 
