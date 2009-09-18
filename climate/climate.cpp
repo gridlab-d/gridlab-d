@@ -15,7 +15,18 @@
 #define RAD(x) (x*PI)/180
                          //ET,CT,MT ,PT ,AT, HT
 double std_meridians[] = {75,90,105,120,135,150};
-double surface_angles[8] = {180,135,90,45,0,-45,-90,-135}; // Old surface_angles = {0,45,-45,90,-90,135,-135,180};
+
+double surface_angles[] = {
+	360,	// H
+	180,	// N
+	135,	// NE
+	90,		// E
+	45,		// SE
+	0,		// S
+	-45,	// SW
+	-90,	// W
+	-135,	// NW
+}; 
 
 /**
 	@addtogroup tmy TMY2 data
