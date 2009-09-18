@@ -51,8 +51,6 @@ residential_enduse::residential_enduse(MODULE *mod)
 // create is called every time a new object is loaded
 int residential_enduse::create(bool connect_shape) 
 {
-	int res = residential_enduse::create();
-
 	// attach loadshape 
 	load.end_obj = OBJECTHDR(this);
 	if (connect_shape) load.shape = &shape;
@@ -60,7 +58,7 @@ int residential_enduse::create(bool connect_shape)
 	load.config = 0;
 	load.heatgain_fraction = 1.0; /* power has no effect on heat loss */
 
-	return res;
+	return 1;
 }
 
 int residential_enduse::init(OBJECT *parent)
@@ -92,7 +90,7 @@ int residential_enduse::init(OBJECT *parent)
 		 */
 	}
 
-	return residential_enduse::init(parent);
+	return 1;
 }
 
 TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1) 
