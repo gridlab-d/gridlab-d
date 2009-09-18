@@ -89,8 +89,8 @@ TurnOff:
 				output_warning("loadshape %s: r not positive while load is off!", ls->schedule->name);
 		}
 
-		/* clock is running */
-		else if (global_starttime<global_clock)
+		/* zero value scheduled */
+		else if (ls->schedule->duration>0)
 		{
 			/* the queue doesn't change (no decay) */
 			ls->r = 0;

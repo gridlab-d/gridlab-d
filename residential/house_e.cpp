@@ -314,7 +314,7 @@ struct s_implicit_enduse_list {
 		},
 
 	{   "DRYER", 
-		{30, false, {0.9,0.1,0}, 0.99, 0.15},
+		{30, true, {0.9,0.1,0}, 0.99, 0.15},
 		"type: pulsed; schedule: residential-dryer-default; energy: 2.5 kWh; count: 0.25; power: 5 kW; stdev: 0.5 kW",
 		"residential-dryer-default", 
 		"positive; nonzero; weekday-summer {"
@@ -1418,7 +1418,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					c->status = BRK_FAULT;
 					c->reclose = TS_NEVER;
-					gl_warning("house_e:%d circuit breaker %d failed", obj->id, c->id);
+					gl_warning("house_e:%d circuit breaker %d failed - enduse %s is no longer running", obj->id, c->id, c->pLoad->name);
 				}
 
 				// must immediately reevaluate everything
