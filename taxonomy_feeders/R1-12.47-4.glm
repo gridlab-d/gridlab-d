@@ -7,11 +7,16 @@ clock{
 }
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-
+#set savefile="testing.xml";
 //*********************************************
 // modules
-module powerflow;
-
+#set profiler=1
+module tape;
+module powerflow{
+	solver_method FBS;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 object capacitor:874 {
 	name R1-12-47-4_cap_1;
@@ -24,7 +29,7 @@ object capacitor:874 {
 	capacitor_B 0.8 MVAr;
 	capacitor_C -0.9 MVAr;
 	control_level INDIVIDUAL;
-	switchA OPEN;
+	switchA CLOSED;
 	switchB CLOSED;
 	switchC CLOSED;
 	time_delay 2.0;
@@ -3389,6 +3394,7 @@ object node:318 {
 
 object node:878 {
 	name R1-12-47-4_node_305;
+	bustype SWING;
 	phases ABCN;
 	nominal_voltage 6928.203;
 	voltage_A 6928.203+0.0j;
@@ -3436,7 +3442,7 @@ object switch:853 {
 	phases ABCN;
 	from R1-12-47-4_node_4;
 	to R1-12-47-4_node_5;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:854 {
@@ -3444,7 +3450,7 @@ object switch:854 {
 	phases ABCN;
 	from R1-12-47-4_node_10;
 	to R1-12-47-4_node_167;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:855 {
@@ -3460,7 +3466,7 @@ object switch:856 {
 	phases AN;
 	from R1-12-47-4_node_251;
 	to R1-12-47-4_node_13;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:857 {
@@ -3468,7 +3474,7 @@ object switch:857 {
 	phases CN;
 	from R1-12-47-4_node_286;
 	to R1-12-47-4_node_31;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:858 {
@@ -3476,7 +3482,7 @@ object switch:858 {
 	phases ABCN;
 	from R1-12-47-4_node_194;
 	to R1-12-47-4_node_102;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:859 {
@@ -3484,7 +3490,7 @@ object switch:859 {
 	phases ABCN;
 	from R1-12-47-4_node_193;
 	to R1-12-47-4_node_96;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:860 {
@@ -3492,7 +3498,7 @@ object switch:860 {
 	phases ABCN;
 	from R1-12-47-4_node_182;
 	to R1-12-47-4_node_303;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:861 {
@@ -3508,7 +3514,7 @@ object switch:862 {
 	phases ABCN;
 	from R1-12-47-4_node_173;
 	to R1-12-47-4_node_71;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:863 {
@@ -3548,7 +3554,7 @@ object switch:867 {
 	phases ABCN;
 	from R1-12-47-4_node_115;
 	to R1-12-47-4_node_214;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:868 {
@@ -3572,7 +3578,7 @@ object switch:870 {
 	phases ABCN;
 	from R1-12-47-4_node_166;
 	to R1-12-47-4_node_236;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:871 {
