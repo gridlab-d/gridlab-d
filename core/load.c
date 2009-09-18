@@ -905,9 +905,8 @@ static int white(PARSER)
 {
 	int len = 0;
 	for(len = 0; *_p != '\0' && isspace((unsigned char)(*_p)); ++_p){
-		if(*_p == '\n' || *_p == '\r'){
+		if (*_p == '\n')
 			++linenum;
-		}
 		++len;
 	}
 	return len;
@@ -3873,7 +3872,7 @@ static int schedule(PARSER)
 			case '{': nest++; *p++ = c; break;
 			case '}': if (nest-->0) *p++ = c; break; 
 			case '\n': *p++ = c; ++linenum; break;
-			case '\r': *p++ = c; ++linenum; break;
+			//case '\r': *p++ = c; ++linenum; break;
 			default: *p++ = c; break;
 			}
 			*p = '\0';
@@ -4215,7 +4214,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	}
 
 	/* open file */
-	fp = ff ? fopen(ff, "r") : NULL;
+	fp = ff ? fopen(ff, "rt") : NULL;
 	
 	if(fp == NULL){
 		output_message("%s(%d): include file open failed: %s", incname, _linenum, strerror(errno));
@@ -4719,7 +4718,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 	int move=0;
 	errno = 0;
 
-	fp = fopen(file,"r");
+	fp = fopen(file,"rt");
 	if (fp==NULL)
 		goto Failed;
 	if (FSTAT(fileno(fp),&stat)==0)
@@ -4804,7 +4803,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 	int move = 0;
 	errno = 0;
 
-	fp = fopen(file,"r");
+	fp = fopen(file,"rt");
 	if (fp==NULL)
 		goto Failed;
 	if (FSTAT(fileno(fp),&stat)==0)
