@@ -202,6 +202,11 @@ void print_modhelp_tree(pntree *ctree){
 	}
 }
 
+int compare(const void *a, const void *b)
+{
+	return stricmp(*(char**)a,*(char**)b);
+}
+
 /** Load and process the command-line arguments
 	@return a STATUS value
 
@@ -548,10 +553,30 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 		}
 		else if (strcmp(*argv,"--globals")==0)
 		{
+			char *list[65536];
+			int i, n=0;
 			GLOBALVAR *var = NULL;
+
+			/* load the list into the array */
 			while ((var=global_getnext(var))!=NULL)
 			{
+				if (n<sizeof(list)/sizeof(list[0]))
+					list[n++] = var->name;
+				else
+				{
+					output_fatal("--globals has insufficient buffer space to sort globals list");
+					return FAILED;
+				}
+			}
+
+			/* sort the array */
+			qsort(list,n,sizeof(list[0]),compare);
+
+			/* output sorted array */
+			for (i=0; i<n; i++)
+			{
 				char buffer[1024];
+				var = global_find(list[i]);
 				printf("%s=%s;",var->name,global_getvar(var->name,buffer,sizeof(buffer))?buffer:"(error)");
 				if (var->prop->description || var->prop->flags&PF_DEPRECATED)
 					printf(" // %s%s", (var->prop->flags&PF_DEPRECATED)?"DEPRECATED ":"", var->prop->description?var->prop->description:"");
