@@ -179,6 +179,7 @@ typedef struct stat STAT;
 #include "schedule.h"
 
 static unsigned int linenum=1;
+static int include_fail = 0;
 static char filename[1024];
 static time_t modtime = 0;
 
@@ -4409,6 +4410,7 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 			if ((len=(int)include_file(value,line,size,linenum))<=0)
 			{
 				output_message("%s(%d): #include failed",filename,linenum);
+				include_fail = 1;
 				strcpy(line,"\n");
 				return FALSE;
 			}
@@ -4838,7 +4840,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 	}
 
 	if(p != 0){ /* did the file contain anything? */
-		status = (*p=='\0') ? SUCCESS : FAILED;
+		status = (*p=='\0' && !include_fail) ? SUCCESS : FAILED;
 	} else {
 		status = FAILED;
 	}
