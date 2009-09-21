@@ -273,7 +273,7 @@ char *output_get_time_context(void)
 int output_fatal(char *format,...) /**< \bprintf style argument list */
 {
 	/* check for repeated message */
-	static char lastfmt[65536] = "";
+	static char lastfmt[4096] = "";
 	static int count=0;
 	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
@@ -284,7 +284,7 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 	{
 		va_list ptr;
 		int len=0;
-		strcpy(lastfmt,format?format:"");
+		strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
 		if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			len = sprintf(buffer,"last fatal error message was repeated %d times", count);
@@ -314,7 +314,7 @@ Output:
 int output_error(char *format,...) /**< \bprintf style argument list */
 {
 	/* check for repeated message */
-	static char lastfmt[65536] = "";
+	static char lastfmt[4096] = "";
 	static int count=0;
 	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
@@ -325,7 +325,7 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 	{
 		va_list ptr;
 		int len=0;
-		strcpy(lastfmt,format?format:"");
+		strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
 		if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			len = sprintf(buffer,"last error message was repeated %d times", count);
@@ -400,7 +400,7 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 	if (global_warn_mode)
 	{
 		/* check for repeated message */
-		static char lastfmt[65536] = "";
+		static char lastfmt[4096] = "";
 		static int count=0;
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
@@ -411,7 +411,7 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 		{
 			va_list ptr;
 			int len=0;
-			strcpy(lastfmt,format?format:"");
+			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
 			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
 				len = sprintf(buffer,"last warning message was repeated %d times", count);
@@ -445,7 +445,7 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 	if (global_debug_output)
 	{
 		/* check for repeated message */
-		static char lastfmt[65536] = "";
+		static char lastfmt[4096] = "";
 		static int count=0;
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
@@ -456,7 +456,7 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 		{
 			va_list ptr;
 			int len=0;
-			strcpy(lastfmt,format?format:"");
+			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
 			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
 				len = sprintf(buffer,"last debug message was repeated %d times", count);
@@ -491,7 +491,7 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 	if (global_verbose_mode)
 	{
 		/* check for repeated message */
-		static char lastfmt[65536] = "";
+		static char lastfmt[4096] = "";
 		static int count=0;
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
@@ -502,7 +502,7 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 		{
 			va_list ptr;
 			int len=0;
-			strcpy(lastfmt,format?format:"");
+			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
 			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
 				len = sprintf(buffer,"last verbose message was repeated %d times\n   ... ",count);
@@ -533,8 +533,9 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 	if (!global_quiet_mode)
 	{
 		/* check for repeated message */
-		static char lastfmt[65536] = "";
+		static char lastfmt[4096] = "";
 		static int count=0;
+		size_t sz = strlen(format?format:"");
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
@@ -544,7 +545,7 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 		{
 			va_list ptr;
 			int len=0;
-			strcpy(lastfmt,format?format:"");
+			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
 			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
 				len = sprintf(buffer,"last message was repeated %d times\n",count);

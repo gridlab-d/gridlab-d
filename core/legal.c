@@ -83,6 +83,8 @@ STATUS legal_notice(void)
 	/* suppress copyright info if copyright file exists */
 	char copyright[1024] = "GridLAB-D " COPYRIGHT;
 	char *end = strchr(copyright,'\n');
+	int surpress = global_suppress_repeat_messages;
+	global_suppress_repeat_messages = 0;
 	while ((end = strchr(copyright,'\n'))!=NULL) {
 		*end = ' ';
 	}
@@ -108,6 +110,7 @@ STATUS legal_notice(void)
 			" (" BRANCH ")\n" COPYRIGHT
 				"", global_version_major, global_version_minor);
 	}
+	global_suppress_repeat_messages = surpress;
 	return SUCCESS; /* conditions of use have been met */
 }
 
@@ -116,6 +119,8 @@ STATUS legal_notice(void)
  **/
 STATUS legal_license(void)
 {
+	int surpress = global_suppress_repeat_messages;
+	global_suppress_repeat_messages = 0;
 	output_message(
 		COPYRIGHT
 		"\n"
@@ -162,6 +167,7 @@ STATUS legal_license(void)
 		"   infringe privately owned rights.\n"
 		"\n"
 		);
+	global_suppress_repeat_messages = surpress;
 	return SUCCESS;
 }
 
