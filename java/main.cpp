@@ -1,6 +1,6 @@
 // $Id$
 // Copyright (C) 2008 Battelle Memorial Institute
-#define MAJOR 1
+#define MAJOR 2
 #define MINOR 0
 #define DLMAIN
 
