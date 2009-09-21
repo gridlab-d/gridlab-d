@@ -1,12 +1,12 @@
-# $Id: dryer.shape 1182 2008-12-22 22:08:36Z dchassin $
-# Copyright (C) 2008 Battelle Memorial Institute
-# This is the shape file for a typical dryer.
-#
-# Time entries are "minutes hours days months weekdays"
-# Shape magnitude are automatically normalized within each group
-#
+// $Id: dryer.shape 1182 2008-12-22 22:08:36Z dchassin $
+// Copyright (C) 2008 Battelle Memorial Institute
+// This is the shape file for a typical dryer.
+//
+// Time entries are "minutes hours days months weekdays"
+// Shape magnitude are automatically normalized within each group
+//
 
-# Winter Weekday, ELCAP fig 15.5
+// Winter Weekday, ELCAP fig 15.5
 dryer-winter-weekday {
 	* 0 * 10-3 1-5,0.036
 	* 1 * 10-3 1-5,0.016
@@ -34,7 +34,7 @@ dryer-winter-weekday {
 	* 23 * 10-3 1-5,0.082
 }
 
-# Winter Weekend, ELCAP fig 15.5
+// Winter Weekend, ELCAP fig 15.5
 dryer-winter-weekend {
 	* 0 * 10-3 0;6,0.039
 	* 1 * 10-3 0;6,0.019
@@ -62,7 +62,7 @@ dryer-winter-weekend {
 	* 23 * 10-3 0;6,0.093
 }
 
-# Summer Weekday, ELCAP fig 15.4
+// Summer Weekday, ELCAP fig 15.4
 dryer-summer-weekday {
 	* 0 * 4-9 1-5,0.041
 	* 1 * 4-9 1-5,0.017
@@ -90,7 +90,7 @@ dryer-summer-weekday {
 	* 23 * 4-9 1-5,0.081 
 }
 
-# Summer Weekend, ELCAP fig 15.4
+// Summer Weekend, ELCAP fig 15.4
 dryer-summer-weekend {
 	* 0 * 4-9 0;6,0.036
 	* 1 * 4-9 0;6,0.013

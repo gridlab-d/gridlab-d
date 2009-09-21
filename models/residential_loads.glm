@@ -7,7 +7,9 @@
 
 module powerflow;
 module climate;
-module residential;
+module residential {
+	implicit_enduses LIGHTS|PLUGS;
+};
 module tape;
 
 clock {
@@ -61,10 +63,10 @@ object transformer_configuration {
 
 object transformer_configuration {
 	name PoleTop;
-	connect_type 5;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	power_rating 400;
 	powerA_rating 400;
-	primary_voltage 2402;
+	primary_voltage 2400;
 	secondary_voltage 120;
 	resistance 0.01;
 	reactance 0.06;
@@ -173,7 +175,6 @@ object house {
 	floor_area 1500.0 sf;
 	envelope_UA 450.0;
 	window_wall_ratio 0.25;
-	glazing_shgc 0.40;
 	heating_setpoint 72.0;
 	cooling_setpoint 76.0;
 }
@@ -189,26 +190,6 @@ object waterheater {
 	tank_setpoint 120 degF;
 }
 
-object lights {
-	name Lights;
-	type INCANDESCENT;
-	parent House;
-	placement INDOOR;
-	demand 0.50;
-	installed_power 1.5 kW;
-}
-
-/////////////////////////////////////////////////////////////////////////
-// this tape is set to loop 100 times to cycle through the synchronization
-object player {
-	name Player;
-	parent Lights;
-	property demand;
-	file lighting.player;
-	loop 100;
-}
-
-
 /////////////////////////////////////////////////////////////////////////
 // these recorders are set to gather data about the simulation results
 object recorder{
@@ -220,5 +201,13 @@ object recorder{
 	limit 1440;
 }
 
+object recorder{
+	name MeterCorder2;
+	parent Meter;
+	property measured_voltage_1,measured_voltage_2,measured_voltage_N,measured_current_1,measured_current_2,measured_current_N;
+	file output.csv;
+	interval 3600;
+	limit 1440;
+}
 /////////////////////////////////////////////////////////////////////////
 // END

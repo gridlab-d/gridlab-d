@@ -18,12 +18,10 @@ clock {
 	timezone EST+5EDT;
 }
 
-module powerflow;
-//module powerflow{
-//	solver_method GS;
-//	acceleration_factor 1.4;
-//	default_maximum_voltage_error 1e-9;
-//};
+module powerflow {
+	solver_method FBS;
+};
+
 
 // Phase Conductor for 721: 1,000,000 AA,CN
 object underground_line_conductor:7210 { 
@@ -834,7 +832,7 @@ object node:775 {
 }
 
 object regulator_configuration:79978101 {
-	connect_type 2;
+	connect_type OPEN_DELTA_ABBC;
 	band_center 122.000;
 	band_width 2.0;
 	time_delay 30.0;
