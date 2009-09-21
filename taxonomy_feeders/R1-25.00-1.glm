@@ -6,22 +6,28 @@ clock{
 	 timestamp '2000-01-01 0:00:00';
 }
 
-#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 
+//#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+#set savefile="testing.xml";
 //*********************************************
 // modules
-module powerflow;
+#set profiler=1
+module powerflow{
+	solver_method NR;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 
 object capacitor:1165 {
 	name R1-25-00-1_cap_1;
 	phases ABCN;
-	pt_phase A;
+	pt_phase AN;
 	parent R1-25-00-1_node_163;
 	phases_connected ABC;
 	control MANUAL;
 	capacitor_A 0.133 MVAr;
-	capacitor_B 0 MVAr;
+	capacitor_B 0.000 MVAr;
 	capacitor_C 0.134 MVAr;
 	control_level INDIVIDUAL;
 	switchA CLOSED;
@@ -39,7 +45,7 @@ object fuse:1145 {
 	phases AN;
 	from R1-25-00-1_node_148;
 	to R1-25-00-1_node_292;
-	current_limit 10;
+	current_limit 1000;
 	status CLOSED;
 }
 
@@ -48,7 +54,7 @@ object fuse:1146 {
 	phases BN;
 	from R1-25-00-1_node_297;
 	to R1-25-00-1_node_298;
-	current_limit 10;
+	current_limit 1000;
 	status CLOSED;
 }
 
@@ -57,7 +63,7 @@ object fuse:1147 {
 	phases CN;
 	from R1-25-00-1_node_64;
 	to R1-25-00-1_node_65;
-	current_limit 10;
+	current_limit 1000;
 	status CLOSED;
 }
 
@@ -66,7 +72,7 @@ object fuse:1148 {
 	phases AN;
 	from R1-25-00-1_node_145;
 	to R1-25-00-1_node_146;
-	current_limit 50;
+	current_limit 5000;
 	status CLOSED;
 }
 
@@ -75,7 +81,7 @@ object fuse:1149 {
 	phases ABCN;
 	from R1-25-00-1_node_153;
 	to R1-25-00-1_node_155;
-	current_limit 50;
+	current_limit 5000;
 	status CLOSED;
 }
 
@@ -84,7 +90,7 @@ object fuse:1150 {
 	phases ABCN;
 	from R1-25-00-1_node_164;
 	to R1-25-00-1_node_165;
-	current_limit 50;
+	current_limit 5000;
 	status CLOSED;
 }
 
@@ -93,7 +99,7 @@ object fuse:1151 {
 	phases AN;
 	from R1-25-00-1_node_207;
 	to R1-25-00-1_node_208;
-	current_limit 25;
+	current_limit 2500;
 	status CLOSED;
 }
 
@@ -102,7 +108,7 @@ object fuse:1152 {
 	phases ABCN;
 	from R1-25-00-1_node_207;
 	to R1-25-00-1_node_213;
-	current_limit 30;
+	current_limit 3000;
 	status CLOSED;
 }
 
@@ -111,7 +117,7 @@ object fuse:1153 {
 	phases AN;
 	from R1-25-00-1_node_244;
 	to R1-25-00-1_node_250;
-	current_limit 30;
+	current_limit 3000;
 	status CLOSED;
 }
 
@@ -120,7 +126,7 @@ object fuse:1154 {
 	phases AN;
 	from R1-25-00-1_node_259;
 	to R1-25-00-1_node_261;
-	current_limit 20;
+	current_limit 2000;
 	status CLOSED;
 }
 
@@ -129,7 +135,7 @@ object fuse:1155 {
 	phases CN;
 	from R1-25-00-1_node_313;
 	to R1-25-00-1_node_319;
-	current_limit 10;
+	current_limit 1000;
 	status CLOSED;
 }
 
@@ -4558,6 +4564,7 @@ object node:381 {
 object node:1169 {
 	name R1-25-00-1_node_324;
 	phases ABCN;
+	bustype SWING;
 	nominal_voltage 14376.022;
 	voltage_A 14376.022+0.0j;
 	voltage_B -7188.011-12450.000j;
@@ -5371,7 +5378,7 @@ object overhead_line:986 {
 	phases CN;
 	from R1-25-00-1_node_127;
 	to R1-25-00-1_node_128;
-	length 0.000;
+	length 10.000;
 	configuration line_configuration:46;
 }
 
@@ -6186,7 +6193,7 @@ object switch:1157 {
 	phases ABCN;
 	from R1-25-00-1_node_1;
 	to R1-25-00-1_node_323;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1158 {
@@ -6194,7 +6201,7 @@ object switch:1158 {
 	phases ABCN;
 	from R1-25-00-1_node_2;
 	to R1-25-00-1_node_287;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1159 {
