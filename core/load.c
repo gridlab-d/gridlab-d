@@ -687,7 +687,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			output_verbose("attaching debugger to process id %d", getpid());
 			if (debugger(afile)==FAILED)
 			{
-				output_error("debugger load failed: %s", strerror(errno));
+				output_error("debugger load failed: %s", errno?strerror(errno):"(no details)");
 				return FAILED;
 			}
 		}
@@ -2392,7 +2392,7 @@ static int module_block(PARSER)
 		}
 		else
 		{
-			output_message("%s(%d): %s module '%s' load failed, %s", filename, linenum, fmod, mod,strerror(errno));
+			output_message("%s(%d): %s module '%s' load failed, %s", filename, linenum, fmod, mod,errno?strerror(errno):"(no details)");
 			REJECT;
 		}
 	}
@@ -2407,7 +2407,7 @@ static int module_block(PARSER)
 		}
 		else
 		{
-			output_message("%s(%d): module '%s' load failed, %s", filename, linenum, module_name,strerror(errno));
+			output_message("%s(%d): module '%s' load failed, %s", filename, linenum, module_name,errno?strerror(errno):"(no details)");
 			REJECT;
 		}
 	}
@@ -3355,7 +3355,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			xform.target = (double*)((char*)(obj+1) + (int64)prop->addr);
 			if (!schedule_add_xform(xform.schedule,xform.target,xform.scale,xform.bias))
 			{
-				output_message("%s(%d): schedule transform could not be created - %s", filename, linenum, strerror(errno));
+				output_message("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 				REJECT;
 			}
 			else
@@ -3775,7 +3775,7 @@ static int import(PARSER)
 					}
 					else if (result==0)
 					{
-						output_message("%s(%d): module %s load of %s failed; %s", filename, linenum, modname, fname, strerror(errno));
+						output_message("%s(%d): module %s load of %s failed; %s", filename, linenum, modname, fname, errno?strerror(errno):"(no details)");
 						REJECT;
 					}
 					else
@@ -4218,7 +4218,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	fp = ff ? fopen(ff, "rt") : NULL;
 	
 	if(fp == NULL){
-		output_message("%s(%d): include file open failed: %s", incname, _linenum, strerror(errno));
+		output_message("%s(%d): include file open failed: %s", incname, _linenum, errno?strerror(errno):"(no details)");
 		return 0;
 	}
 
@@ -4737,7 +4737,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 	output_verbose("file '%s' is %d bytes long", file,fsize);
 	if (buffer==NULL)
 	{
-		output_error("unable to allocate buffer for file '%s': %s", file, strerror(errno));
+		output_error("unable to allocate buffer for file '%s': %s", file, errno?strerror(errno):"(no details)");
 		errno = ENOMEM;
 		goto Done;
 	}
@@ -4782,7 +4782,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 	goto Done;
 Failed:
 	if (errno!=0){
-		output_error("unable to load '%s': %s", file, strerror(errno));
+		output_error("unable to load '%s': %s", file, errno?strerror(errno):"(no details)");
 		/*	TROUBLESHOOT
 			In most cases, strerror(errno) will claim "No such file or directory".  This claim should be ignored in
 			favor of prior error messages.
@@ -4875,7 +4875,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 	goto Done;
 Failed:
 	if (errno!=0){
-		output_error("unable to load '%s': %s", file, strerror(errno));
+		output_error("unable to load '%s': %s", file, errno?strerror(errno):"(no details)");
 		/*	TROUBLESHOOT
 			In most cases, strerror(errno) will claim "No such file or directory".  This claim should be ignored in
 			favor of prior error messages.
