@@ -22,7 +22,7 @@ MODULE:reliability
 /** @{ */
 
 EXPORT int major=1;
-EXPORT int minor=0;
+EXPORT int minor=3;
 
 /**@}*/
 

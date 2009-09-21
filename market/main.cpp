@@ -15,7 +15,7 @@ MODULE:market
 
 #define DLMAIN
 
-#define MAJOR 0
+#define MAJOR 2
 #define MINOR 0
 
 #include <stdlib.h>

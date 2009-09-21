@@ -3,8 +3,8 @@
 //
 
 #define DLMAIN
-#define MAJOR 0
-#define MINOR 0
+#define MAJOR 1
+#define MINOR 3
 
 #include <stdlib.h>
 #include "gridlabd.h"
