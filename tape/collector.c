@@ -50,6 +50,7 @@ EXPORT int create_collector(OBJECT **obj, OBJECT *parent)
 		strcpy(my->property,"(undefined)");
 		strcpy(my->group,"");
 		my->interval = TS_NEVER; /* transients only */
+		my->dInterval = -1.0;
 		my->last.ts = -1;
 		strcpy(my->last.value,"");
 		my->limit = 0;
@@ -70,6 +71,8 @@ static int collector_open(OBJECT *obj)
 	char32 flags="w";
 	struct collector *my = OBJECTDATA(obj,struct collector);
 	
+	my->interval = (int64)(my->dInterval/TS_SECOND);
+
 	/* if prefix is omitted (no colons found) */
 	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
 	{

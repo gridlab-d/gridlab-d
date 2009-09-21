@@ -150,6 +150,7 @@ TAPEFUNCS *get_ftable(char *mode){
 EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 {
 	struct recorder my;
+	struct collector my2;
 
 	if (set_callback(fntable)==NULL)
 	{
@@ -182,13 +183,15 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(recorder,char1024,property);
 	PUBLISH_STRUCT(recorder,char32,trigger);
 	PUBLISH_STRUCT(recorder,char1024,file);
-	PUBLISH_STRUCT(recorder,int64,interval);
+	//PUBLISH_STRUCT(recorder,int64,interval);
 	PUBLISH_STRUCT(recorder,int32,limit);
 	PUBLISH_STRUCT(recorder,char1024,plotcommands);
 	PUBLISH_STRUCT(recorder,char32,xdata);
 	PUBLISH_STRUCT(recorder,char32,columns);
 	
-	if(gl_publish_variable(recorder_class,PT_enumeration, "output", ((char*)&(my.output) - (char *)&my) ,
+	if(gl_publish_variable(recorder_class,
+		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
+		PT_enumeration, "output", ((char*)&(my.output) - (char *)&my),
 			PT_KEYWORD, "SCREEN", SCREEN,
 			PT_KEYWORD, "EPS",    EPS,
 			PT_KEYWORD, "GIF",    GIF,
@@ -204,9 +207,13 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(collector,char1024,property);
 	PUBLISH_STRUCT(collector,char32,trigger);
 	PUBLISH_STRUCT(collector,char1024,file);
-	PUBLISH_STRUCT(collector,int64,interval);
+	//PUBLISH_STRUCT(collector,int64,interval);
 	PUBLISH_STRUCT(collector,int32,limit);
 	PUBLISH_STRUCT(collector,char256,group);
+	if(gl_publish_variable(collector_class,
+		PT_double, "interval[s]", ((char*)&(my2.dInterval) - (char *)&my2),
+			NULL) < 1)
+		GL_THROW("Could not publish property output for collector");
 
 	/* new histogram() */
 	new_histogram(module);

@@ -46,8 +46,8 @@ histogram::histogram(MODULE *mod)
 			PT_char32, "property", PADDR(property),
 			PT_double, "min", PADDR(min),
 			PT_double, "max", PADDR(max),
-			PT_int32, "samplerate", PADDR(sampling_interval),
-			PT_int32, "countrate", PADDR(counting_interval),
+			PT_double, "samplerate[s]", PADDR(sampling_interval),
+			PT_double, "countrate[s]", PADDR(counting_interval),
 			PT_int32, "bin_count", PADDR(bin_count),
 			PT_int32, "limit", PADDR(limit),
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -59,8 +59,8 @@ histogram::histogram(MODULE *mod)
 		min = 0;
 		max = -1;
 		bin_count = -1;
-		sampling_interval = -1;
-		counting_interval = -1;
+		sampling_interval = -1.0;
+		counting_interval = -1.0;
 		limit = 0;
 		bin_list = NULL;
 		group_list = NULL;
@@ -450,9 +450,9 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double value = 0.0;
 	OBJECT *obj = OBJECTHDR(this);
 
-	if((sampling_interval == -1 && t_count > t1) ||
-		sampling_interval == 0 ||
-		(sampling_interval > 0 && t1 >= next_sample))
+	if((sampling_interval == -1.0 && t_count > t1) ||
+		sampling_interval == 0.0 ||
+		(sampling_interval > 0.0 && t1 >= next_sample))
 	{
 		if(group_list == NULL){
 			feed_bins(obj->parent);
@@ -463,16 +463,16 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 		}
 		t_sample = t1;
-		if(sampling_interval > 0){
-			next_sample = t1 + sampling_interval;
+		if(sampling_interval > 0.0){
+			next_sample = t1 + (int64)(sampling_interval/TS_SECOND);
 		} else {
 			next_sample = TS_NEVER;
 		}
 	}
 
-	if((counting_interval == -1 && t_count > t1) ||
-		counting_interval == 0 ||
-		(counting_interval > 0 && t1 >= next_count))
+	if((counting_interval == -1.0 && t_count > t1) ||
+		counting_interval == 0.0 ||
+		(counting_interval > 0.0 && t1 >= next_count))
 	{
 		char1024 line;
 		char ts[64];
@@ -500,7 +500,7 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 		t_count = t1;
 		if(counting_interval > 0){
-			next_count = t_count + counting_interval;
+			next_count = t_count + (int64)(counting_interval/TS_SECOND);
 		} else {
 			next_count = TS_NEVER;
 		}

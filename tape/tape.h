@@ -121,6 +121,7 @@ struct recorder {
 	char1024 file;
 	char8 filetype;
 	int16 format; /* 0=YYYY-MM-DD HH:MM:SS; 1=timestamp */
+	double dInterval;
 	TIMESTAMP interval;
 	int32 limit;
 	char1024 property;
@@ -156,6 +157,7 @@ struct collector {
 	char1024 file;
 	char8 filetype;
 	int16 format; /* 0=YYYY-MM-DD HH:MM:SS; 1=timestamp */
+	double dInterval;
 	TIMESTAMP interval;
 	int32 limit;
 	char1024 property;

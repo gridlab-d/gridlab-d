@@ -53,8 +53,8 @@ public:
 	int32 bin_count;
 	double min;
 	double max;
-	int32 sampling_interval;	//	add values into bins
-	int32 counting_interval;	//	dump the bins into a row
+	double sampling_interval;	//	add values into bins
+	double counting_interval;	//	dump the bins into a row
 	int32 limit;			//	number of lines to write
 	
 	FILETYPE type;

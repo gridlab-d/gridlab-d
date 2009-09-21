@@ -273,7 +273,6 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	obj->clock = t0;
 	if(t1 == 0){
-		char buf[65];
 		gl_error("shaper:%i will return t1==0 ~ check the shaper's target property, \"%s\"", obj->id, my->property);
 	}
 	return t1!=TS_NEVER?-t1:TS_NEVER; /* negative indicates a "soft" event which is only considered for stepping, not for stopping */
