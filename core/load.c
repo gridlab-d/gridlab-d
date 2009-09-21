@@ -4271,7 +4271,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 }
 
 /** @return TRUE/SUCCESS for a successful macro read, FALSE/FAILED on parse error (which halts the loader) */
-static int process_macro(char *line, int size, char *filename, int linenum)
+static int process_macro(char *line, int size, char *_filename, int linenum)
 {
 #ifndef WIN32
 	char *var, *val, *save;	// used by *nix
@@ -4394,6 +4394,7 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 	{
 		char *term = strchr(line+8,' ');
 		char value[1024];
+		char oldfile[1024];
 		if (term==NULL)
 		{
 			output_message("%s(%d): %sinclude macro missing term",filename,linenum,MACRO);
@@ -4407,7 +4408,11 @@ static int process_macro(char *line, int size, char *filename, int linenum)
 			char *start=line;
 			int len = sprintf(line,"@%s;%d\n",value,0);
 			line+=len; size-=len;
-			if ((len=(int)include_file(value,line,size,linenum))<=0)
+			strcpy(oldfile, filename);	// push old filename
+			strcpy(filename, value);	// use include file name for errors while within context
+			len=(int)include_file(value,line,size,linenum);
+			strcpy(filename, oldfile);	// pop include filename, use calling filename
+			if (len<=0)
 			{
 				output_message("%s(%d): #include failed",filename,linenum);
 				include_fail = 1;
@@ -4913,8 +4918,12 @@ STATUS loadall(char *file){
 				This file is always loaded before a GLM file is loaded.
 				Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
 			 */
-		else if(loadall_glm_roll(conf)==FAILED)
-			return FAILED;
+		else{
+			sprintf(filename, "gridlabd.conf");
+			if(loadall_glm_roll(conf)==FAILED){
+				return FAILED;
+			}
+		}
 
 		/* load the debugger.conf file */
 		if (global_debug_mode)
