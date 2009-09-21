@@ -79,6 +79,9 @@ Name: {app}\rt
 Source: Microsoft.VC80.CRT.manifest; DestDir: {app}\bin; Flags: ignoreversion; Components: core
 Source: msvcp80.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
 Source: msvcr80.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
+Source: msvcr80.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: core
+Source: msvcp80.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: core
+Source: Microsoft.VC80.CRT.manifest; DestDir: {app}\lib; Flags: ignoreversion; Components: core
 
 ;; core files
 Source: gridlabd.exe; DestDir: {app}\bin; Flags: ignoreversion; Components: core
