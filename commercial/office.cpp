@@ -230,7 +230,6 @@ office::office(MODULE *module)
 int office::create(void) 
 {
 	memcpy(this,defaults,sizeof(*this));
-	/** @todo set the static initial value of properties (no ticket) */
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -343,7 +342,6 @@ int office::init(OBJECT *parent)
 		zone.hvac.heating.design_temperature = -6;  // Pittsburgh, PA
 	
 
-	/** @todo set the dynamic initial value of properties (no ticket) */
 	if (zone.hvac.minimum_ach==0)
 		zone.hvac.minimum_ach = 1.5;
 	if (zone.control.economizer_cutin==0)
@@ -371,7 +369,6 @@ int office::init(OBJECT *parent)
 	if (zone.hvac.heating.cop==0)
 		zone.hvac.heating.cop= 1.25;
 
-	/** @todo link climate data (no ticket) */
 	OBJECT *hdr = OBJECTHDR(this);
 
 	// link to climate data
@@ -390,12 +387,12 @@ int office::init(OBJECT *parent)
 		zone.current.pSolar = (double*)GETADDR(obj,gl_get_property(obj,"solar_flux"));
 	}
 
-	/** @todo sanity check the initial values (no ticket) */
+	/* sanity check the initial values (no ticket) */
 	struct {
 		char *desc;
 		bool test;
 	} map[] = {
-		/** @todo list simple tests to be made on data (no ticket) */
+		/* list simple tests to be made on data (no ticket) */
 		{"floor height is not valid", zone.design.floor_height<=0},
 		{"interior mass is not valid", zone.design.interior_mass<=0},
 		{"interior UA is not valid", zone.design.interior_ua<=0},
