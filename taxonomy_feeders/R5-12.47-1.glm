@@ -6,12 +6,17 @@ clock{
 	 timestamp '2000-01-01 0:00:00';
 }
 
-#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-
+//#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+#set savefile="testing.xml";
 //*********************************************
 // modules
 module powerflow;
-
+#set profiler=1
+module powerflow{
+	solver_method FBS;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 object capacitor:1724 {
 	name R5-12-47-1_cap_1;
@@ -3980,6 +3985,7 @@ object node:321 {
 object node:1730 {
 	name R5-12-47-1_node_266;
 	phases ABCN;
+	bustype SWING;
 	nominal_voltage 7967.434;
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
@@ -5782,7 +5788,7 @@ object switch:1713 {
 	phases ABCN;
 	from R5-12-47-1_node_23;
 	to R5-12-47-1_node_22;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1714 {
@@ -5814,7 +5820,7 @@ object switch:1717 {
 	phases ABCN;
 	from R5-12-47-1_node_182;
 	to R5-12-47-1_node_51;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1718 {
@@ -5838,7 +5844,7 @@ object switch:1720 {
 	phases CN;
 	from R5-12-47-1_node_128;
 	to R5-12-47-1_node_118;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1721 {
@@ -5854,7 +5860,7 @@ object switch:1722 {
 	phases ABCN;
 	from R5-12-47-1_node_32;
 	to R5-12-47-1_node_170;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:1723 {
@@ -13787,7 +13793,7 @@ object triplex_node:576 {
 	name R5-12-47-1_tn_207;
 	phases BS;
 	parent R5-12-47-1_tm_22;
-	power_1 248400+140800j;
+	power_1 24840+1400j;
 	voltage_1 -60.000-103.923j;
 	voltage_2 -60.000-103.923j;
 	voltage_N 0;
@@ -14161,7 +14167,7 @@ object triplex_node:610 {
 	name R5-12-47-1_tn_241;
 	phases AS;
 	parent R5-12-47-1_tm_56;
-	power_1 120186+58707j;
+	power_1 12186+5877j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
