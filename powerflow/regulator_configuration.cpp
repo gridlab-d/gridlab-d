@@ -117,18 +117,45 @@ int regulator_configuration::init(OBJECT *parent)
 	{
 		if (PT_ratio == 0)
 			GL_THROW("power_transducer_ratio must be set as a non-zero value when operating in LINE_DROP_COMP mode");
+			/* TROUBLESHOOT
+			PT_ratio must be set as a positive, non-zero value when LINE_DROP_COMP is selected to properly scale the 
+			voltage drop along the line being compensated.
+			*/
 	}
-	if (raise_taps == 0 || lower_taps == 0)
+
+	if (raise_taps <= 0 || lower_taps <= 0)
 		GL_THROW("raise and lower taps must be specified to non-zero numbers");
+		/* TROUBLESHOOT
+		The number of tap positions available in the regulator must be known to determine the limits of the regulator.
+		Typically, these are specified as equal values (amount up is the same as amount down), and a common value is 16.
+		Please specify non-zero, positive tap limits.
+		*/
+
 	if (Control != MANUAL)
 	{
 		if (band_width == 0)
 			gl_warning("band_width is set to zero in automatic control. May cause oscillations.");
 		if (regulation == 0)
 			GL_THROW("regulation must be set to a non-zero number when operating in an automatic controlled mode.");
+			/* TROUBLESHOOT
+			When specifying an automatic regulator control method, a positive, non-zero regulation value must be specified
+			to indicate the value of each tap change.  A typical configuration would include a regulation of 0.1, which
+			leads to a tap change of 0.625% of the band_center voltage. 
+			*/
+		if (connect_type != WYE_WYE)
+			GL_THROW("At this time, only WYE_WYE regulators are supported in automatic control modes.");
+			/* TROUBLESHOOT
+			Unfortunately, at this time, only Wye-Wye connect type transformers are supported in the automatic control
+			mode (LINE_DROP_COMP, OUTPUT_VOLTAGE, or REMOTE_NODE). Future versions should support these objects, but
+			until then, please use MANUAL Control with connect types other than Wye-Wye.
+			*/
 	}
-	if (connect_type != WYE_WYE)
-		gl_warning("Only WYE_WYE regulator connections are fully supported at this time.");
+
+	if (connect_type != WYE_WYE && solver_method != SM_FBS)
+		GL_THROW("Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.");
+
+	if (solver_method == SM_GS)
+		GL_THROW("Regulators are not supported in the Gauss-Seidel solver method.");
 
 	return 1;
 }
