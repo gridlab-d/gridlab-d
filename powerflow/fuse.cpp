@@ -161,21 +161,21 @@ int fuse::init(OBJECT *parent)
 
 		//Check to see which phases we have
 		//Phase A
-		if ((phases & PHASE_A) == PHASE_A)
+		if (((phases & PHASE_A) == PHASE_A) && (phase_A_status == GOOD))
 		{
 			From_Y[0][0] = complex(1e4,1e4);	//Update admittance
 			a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 		}
 
 		//Phase B
-		if ((phases & PHASE_B) == PHASE_B)
+		if (((phases & PHASE_B) == PHASE_B) && (phase_B_status == GOOD))
 		{
 			From_Y[1][1] = complex(1e4,1e4);	//Update admittance
 			a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 		}
 
 		//Phase C
-		if ((phases & PHASE_C) == PHASE_C)
+		if (((phases & PHASE_C) == PHASE_C) && (phase_C_status == GOOD))
 		{
 			From_Y[2][2] = complex(1e4,1e4);	//Update admittance
 			a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)

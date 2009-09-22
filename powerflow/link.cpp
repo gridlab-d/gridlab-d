@@ -2034,10 +2034,19 @@ void link::calculate_power()
 		indiv_power_in[1] = f->voltage[1]*~current_in[1];
 		indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
-		indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
-		indiv_power_out[1] = t->voltage[1]*~t->current_inj[1];
-		indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
-	
+		if ((solver_method == SM_NR) && (SpecialLnk == SWITCH))
+		{
+			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0]*a_mat[0][0];
+			indiv_power_out[1] = t->voltage[1]*~t->current_inj[1]*a_mat[1][1];
+			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2]*a_mat[2][2];
+		}
+		else
+		{
+			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
+			indiv_power_out[1] = t->voltage[1]*~t->current_inj[1];
+			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
+		}
+
 		power_in = indiv_power_in[0] + indiv_power_in[1] + indiv_power_in[2];
 		power_out = indiv_power_out[0] + indiv_power_out[1] + indiv_power_out[2];
 
