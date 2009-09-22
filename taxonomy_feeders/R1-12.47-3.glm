@@ -7,7 +7,7 @@ clock {
 	timezone EST+8EDT;
 }
 
-#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+//#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 //#set savefile="testing.xml";
 
 //*********************************************

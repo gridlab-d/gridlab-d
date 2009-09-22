@@ -6,7 +6,7 @@ clock{
 	 timestamp '2000-01-01 0:00:00';
 }
 
-#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+//#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 //#set savefile="testing.xml";
 //*********************************************
 // modules

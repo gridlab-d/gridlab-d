@@ -8,7 +8,7 @@ clock{
 
 
 //#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-#set savefile="testing.xml";
+//#set savefile="testing.xml";
 //*********************************************
 // modules
 #set profiler=1
