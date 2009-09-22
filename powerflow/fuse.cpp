@@ -357,6 +357,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 				{
 					From_Y[indexval][indexval] = complex(0.0,0.0);	//Update admittance
 					a_mat[indexval][indexval] = 0.0;				//Update the voltage ratio matrix as well (for power calcs)
+					NR_admit_change = true;							//Flag for an admittance update
 				}
 
 				//Get an update time
@@ -392,6 +393,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 				{
 					From_Y[indexval][indexval] = complex(1e4,1e4);	//Update admittance
 					a_mat[indexval][indexval] = 1.0;				//Update the voltage ratio matrix as well (for power calcs)
+					NR_admit_change = true;							//Flag for an admittance update
 				}
 
 				*valstate = GOOD;

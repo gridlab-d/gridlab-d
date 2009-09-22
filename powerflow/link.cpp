@@ -160,6 +160,7 @@ int link::create(void)
 	from = NULL;
 	to = NULL;
 	status = LS_CLOSED;
+	prev_status = LS_OPEN;	//Set different to status so it performs a calculation on the first run
 	power_in = 0;
 	power_out = 0;
 	power_loss = 0;
@@ -576,7 +577,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				*/
 		}
 
-		if (prev_LTime!=t0)	//New timestep, recalc admittance matrix (does this really need to be done every timestep?)
+		if (status != prev_status)	//Something's changed, update us
 		{
 			complex Ylinecharge[3][3];
 			complex Y[3][3];
@@ -802,11 +803,15 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				//equalm(From_Y,To_Y);
 			}
 			
-
-			//Update time variable
-			prev_LTime=t0;
+			//Update status variable
+			prev_status = status;
 		}
 
+		//Update time variable if necessary
+		if (prev_LTime != t0)
+		{
+			prev_LTime=t0;
+		}
 	}
 	else if ((solver_method==SM_GS) & (is_closed()) & (prev_LTime!=t0))	//Initial YVs calculations
 	{

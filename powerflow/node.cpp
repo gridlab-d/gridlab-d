@@ -725,7 +725,10 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			NR_curr_branch = 0;	//Pull pointer off flag so other objects know it's built
 
 			if (bustype==SWING)
+			{
 				NR_populate();		//Force a first population via the swing bus.  Not really necessary, but I'm saying it has to be this way.
+				NR_admit_change = true;	//Ensure the admittance update variable is flagged
+			}
 			else
 			{
 				GL_THROW("NR: An order requirement has been violated");
@@ -1461,6 +1464,10 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					bool bad_computation=false;
 
 					int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, maximum_voltage_error, &bad_computation);
+
+					//De-flag the change
+					NR_admit_change = false;
+
 					if (bad_computation==true)
 					{
 						GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");

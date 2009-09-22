@@ -21,6 +21,7 @@ public:
 	double Vhigh;
 	complex V2[3], Vcomp[3];
 	int16 tap[3];
+	int16 prev_tap[3];
 	complex volt[3];
 	complex D_mat[3][3];
 	complex W_mat[3][3];

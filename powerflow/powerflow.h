@@ -39,6 +39,7 @@ GLOBAL int NR_curr_bus INIT(-1);					/**< Newton-Raphson current bus indicator -
 GLOBAL int NR_curr_branch INIT(-1);					/**< Newton-Raphson current branch indicator - used to populate NR_branchdata */
 GLOBAL unsigned int NR_iteration_limit INIT(500);	/**< Newton-Raphson iteration limit (per GridLAB-D iteration) */
 GLOBAL bool NR_cycle INIT(true);					/**< Newton-Raphson pass indicator - false = solution pass, true = metering/accumulation pass */
+GLOBAL bool NR_admit_change INIT(true);				/**< Newton-Raphson admittance matrix change detector - used to prevent complete recalculation of admittance at every timestep */
 GLOBAL TIMESTAMP NR_retval INIT(TS_NEVER);			/**< Newton-Raphson current return value - if t0 objects know we aren't going anywhere */
 GLOBAL double acceleration_factor INIT(1.4);		/**< Acceleration factor for Gauss-Seidel to increase convergence speed */
 GLOBAL bool show_matrix_values INIT(false);			/**< flag to enable dumping matrix calculations as they occur */

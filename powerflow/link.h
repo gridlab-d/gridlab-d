@@ -59,6 +59,7 @@ public: /// @todo make this private and create interfaces to control values
 public:
 	typedef enum {LS_CLOSED=0, LS_OPEN=1} LINKSTATUS;
 	LINKSTATUS status;	///< link status (open disconnect nodes)
+	LINKSTATUS prev_status;	///< Previous link status (used for recalculation detection)
 	OBJECT *from;			///< from_node - source node
 	OBJECT *to;				///< to_node - load node
 	complex current_in[3];		///< current flow to link (w.r.t from node)

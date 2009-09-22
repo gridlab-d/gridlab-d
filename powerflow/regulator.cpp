@@ -242,6 +242,11 @@ int regulator::init(OBJECT *parent)
 		}
 	}
 
+	//Update previous taps variable for NR
+	prev_tap[0] = tap[0];
+	prev_tap[1] = tap[1];
+	prev_tap[2] = tap[2];
+
 	return result;
 }
 
@@ -479,8 +484,6 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 			break;
 	}
 		
-	
-
 	TIMESTAMP t1 = link::presync(t0);
 	
 	if (solver_method == SM_NR)
@@ -529,6 +532,19 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		}
 		//multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
 		//multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
+
+		//Only perform update if a tap has changed.  Since the link calculations are replicated here and it directly
+		//accesses the NR memory space, this won't cause any issues.
+		if ((prev_tap[0] != tap[0]) || (prev_tap[1] != tap[1]) || (prev_tap[2] != tap[2]))	//Change has occurred
+		{
+			//Flag an update
+			NR_admit_change = true;
+
+			//Update our previous tap positions
+			prev_tap[0] = tap[0];
+			prev_tap[1] = tap[1];
+			prev_tap[2] = tap[2];
+		}
 	}
 
 	if (first_run_flag[0] < 1 || first_run_flag[1] < 1 || first_run_flag[2] < 1) return t1;

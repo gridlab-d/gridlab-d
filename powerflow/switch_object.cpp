@@ -225,6 +225,10 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 	if (prev_SW_time!=t0)	//Update tracking variable
 		prev_SW_time=t0;
 
+	//Check status before running sync (since it will clear it)
+	if (status != prev_status)
+		NR_admit_change = true;	//Flag an admittance change
+
 	TIMESTAMP t2=link::sync(t0);
 
 	return t1<t2?t1:t2;
