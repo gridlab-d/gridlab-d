@@ -15,6 +15,16 @@ You will most likely need to build and install XercesC:
       % cd third_party
       % . install_xercesc
 
+If you are using the powerflow module, you will need to build SuperLU:
+
+      % cd third_party
+      % gunzip SuperLU*.gz
+      % tar xvf SuperLU*.tar
+      % cd SuperLU_3.1
+
+and follow the build instructions in the README file.  Note that you will
+have to set the path to the library in make.inc by hand. 	
+
 You may get an error at the end regarding ldconfig--ignore it.  Then you
 may configure and build
 
