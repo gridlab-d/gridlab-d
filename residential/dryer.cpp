@@ -49,10 +49,8 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 			PT_double,"motor_power[W]",PADDR(motor_power),
 			PT_double,"coil_power[W]",PADDR(coil_power),
 			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),PT_DEPRECATED,
 			PT_double,"enduse_demand[unit]",PADDR(enduse_demand),
 			PT_double,"enduse_queue[unit]",PADDR(enduse_queue),
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),PT_DEPRECATED,
 			PT_double,"stall_voltage[V]", PADDR(stall_voltage),
 			PT_double,"start_voltage[V]", PADDR(start_voltage),
 			PT_complex,"stall_impedance[Ohm]", PADDR(stall_impedance),
@@ -86,6 +84,7 @@ int dryer::create()
 
 int dryer::init(OBJECT *parent)
 {
+	int rv = 0;
 	// default properties
 	if (motor_power==0) motor_power = gl_random_uniform(150,350);
 	if (heat_fraction==0) heat_fraction = 0.2; 
@@ -101,10 +100,13 @@ int dryer::init(OBJECT *parent)
 	load.power_factor = 0.95;
 	load.breaker_amps = 30;
 
+	// must run before update_state() so that pCircuit can be set
+	rv = residential_enduse::init(parent);
+
 	// initial load
 	update_state();
 
-	return residential_enduse::init(parent);
+	return rv;
 }
 
 TIMESTAMP dryer::sync(TIMESTAMP t0, TIMESTAMP t1) 
