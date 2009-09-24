@@ -81,7 +81,7 @@ def run_tests(argv):
 	autotestfiles = []
 	for path in autotestdirs:
 		for file in os.listdir(path):
-			if "test_" in file and file.endswith(".glm") and file[0] != '.':
+			if file.startswith("test_") and file.endswith(".glm") and file[0] != '.':
 				autotestfiles.append((path, file))
 	
 	for path, file in autotestfiles:
@@ -91,7 +91,6 @@ def run_tests(argv):
 	#for file in autotestfiles:
 	errlist=[]
 	cleanlist=[]
-	errct = 0
 	for path, file in autotestfiles:
 		err = False
 		slice = file[:-4]
@@ -136,7 +135,7 @@ def run_tests(argv):
 					err = False
 				else:
 					print("ERROR: "+file+" converged when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
-					errct += 1
+					err_ct += 1
 					err = True
 			elif rv == 2:
 				print("SUCCESS: File "+file+" failed to converge, as planned."+" ("+str(round(dt,2))+"s)")
@@ -157,7 +156,7 @@ def run_tests(argv):
 					err = False
 				else:
 					print("ERROR: "+file+" loaded when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
-					errct += 1
+					err_ct += 1
 					err = True
 			elif rv == 1:
 				print("SUCCESS:  "+file+" failed to load, as planned"+" ("+str(round(dt,2))+"s)")
@@ -173,7 +172,7 @@ def run_tests(argv):
 					cleanlist.append((path, file))
 					err = False
 				else:
-					errct += 1
+					err_ct += 1
 					print("ERROR: "+file+" failed to converge!"+" ("+str(round(dt,2))+"s)")
 					err = True
 			elif rv == 1:
@@ -205,12 +204,11 @@ def run_tests(argv):
 	last_time = time.time()
 	dt = last_time - first_time
 	#return success/failure
-	print("Validation detected "+str(errct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(round(dt,2))+" seconds.")
+	print("Validation detected "+str(err_ct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(round(dt,2))+" seconds.")
 	for errpath, errfile in errlist:
 		print(" * "+os.path.join(errpath, errfile))
 	
-	exit(errct+ex_ct)
-	#return errct
+	exit(err_ct+ex_ct)
 #end run_tests()
 
 if __name__ == '__main__':
