@@ -40,8 +40,6 @@ plugload::plugload(MODULE *module) : residential_enduse(module)
 			PT_double,"circuit_split",PADDR(circuit_split),
 			PT_double,"demand[unit]",PADDR(shape.load),
 			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power), PT_DESCRIPTION, "installed plugs capacity",
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),PT_DEPRECATED,
-			PT_double,"heat_fraction[unit]",PADDR(load.heatgain_fraction),PT_DEPRECATED,
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}

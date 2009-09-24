@@ -558,7 +558,6 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"envelope_UA[Btu/degF.h]",PADDR(envelope_UA),PT_DESCRIPTION,"overall UA of the home's envelope",
 			PT_double,"window_wall_ratio",PADDR(window_wall_ratio),PT_DESCRIPTION,"ratio of window area to wall area",
 			PT_double,"door_wall_ratio",PADDR(door_wall_ratio),PT_DESCRIPTION,"ratio of door area to wall area",
-			PT_double,"glazing_shgc",PADDR(glazing_shgc),PT_DESCRIPTION,"shading coefficient of glazing",PT_DEPRECATED,
 			PT_double,"window_shading",PADDR(glazing_shgc),PT_DESCRIPTION,"shading coefficient of windows",
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),PT_DESCRIPTION,"number of air-changes per hour",
 			PT_double,"internal_gain[Btu/h]",PADDR(total.heatgain),PT_DESCRIPTION,"internal heat gains",

@@ -68,11 +68,6 @@ lights::lights(MODULE *mod)
 			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power), PT_DESCRIPTION, "installed lighting capacity",
 			PT_double,"power_density[W/sf]",PADDR(power_density), PT_DESCRIPTION, "installed power density",
 			PT_double,"curtailment[pu]", PADDR(curtailment), PT_DESCRIPTION, "lighting curtailment factor",
-
-			// @todo retire these values before the next major release
-			PT_double,"circuit_split",PADDR(circuit_split), PT_DEPRECATED, PT_DESCRIPTION, "the split of the lighting load across the 120V circuits",
-			PT_double,"demand[unit]",PADDR(shape.load), PT_DEPRECATED, PT_DESCRIPTION, "the fraction of the installed lighting capacity that is active",
-			PT_complex,"energy_meter[kVAh]",PADDR(load.energy), PT_DEPRECATED,PT_DESCRIPTION, "the total energy energy consumed since the last meter reading",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The file that implements the specified class cannot publisht the variables in the class.

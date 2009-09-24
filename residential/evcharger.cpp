@@ -298,11 +298,6 @@ evcharger::evcharger(MODULE *module) : residential_enduse(module)
 			PT_bool,"charge_at_work",PADDR(charge_at_work),
 			PT_double,"charge_throttle[unit]", PADDR(charge_throttle),
 			PT_char1024,"demand_profile", PADDR(demand_profile),
-
-			// enduse load
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),PT_DEPRECATED,
-			PT_double,"heat_fraction[unit]",PADDR(heat_fraction),PT_DEPRECATED,
-
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}

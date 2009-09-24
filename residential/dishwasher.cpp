@@ -39,10 +39,7 @@ dishwasher::dishwasher(MODULE *module) : residential_enduse(module)
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "residential_enduse",
 			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power), PT_DESCRIPTION, "installed power draw",
-			PT_double,"circuit_split",PADDR(circuit_split), PT_DEPRECATED, PT_DESCRIPTION, "the split of the lighting load across the 120V circuits",
 			PT_double,"demand[unit]",PADDR(shape.load),
-			PT_complex,"energy_meter[kWh]",PADDR(load.energy),PT_DEPRECATED,PT_DESCRIPTION, "the total energy energy consumed since the last meter reading",
-			PT_double,"heat_fraction",PADDR(load.heatgain_fraction),PT_DEPRECATED,
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
