@@ -306,8 +306,8 @@ int climate::init(OBJECT *parent)
 
 				/* track records */
 				if (sol_rad>record.solar || record.solar==0) record.solar = sol_rad;
-				if (temperature>record.high || record.high==0) record.high = temperature;
-				if (temperature<record.low || record.low==0) record.low = temperature;
+				if (tmy[hoy].temp>record.high || record.high==0) record.high = tmy[hoy].temp;
+				if (tmy[hoy].temp<record.low || record.low==0) record.low = tmy[hoy].temp;
 			}
 			
 		}
