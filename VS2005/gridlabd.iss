@@ -211,11 +211,12 @@ Source: ..\..\..\utilities\7za.exe; DestDir: {app}
 
 
 [Registry]
-Root: HKCU; SubKey: Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples"; Flags: uninsdeletevalue deletevalue; Check: not (IsAdminLoggedOn() or IsPowerUserLoggedOn()); AfterInstall: InstallEnvironment(); Tasks: overwriteglpath
-Root: HKLM; SubKey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\etc;{app}\lib;{app}\tmy"; Flags: uninsdeletevalue deletevalue; Check: IsAdminLoggedOn() or IsPowerUserLoggedOn(); AfterInstall: InstallEnvironment(); Tasks: overwriteglpath
+Root: HKCU; SubKey: Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples;{app}\rt;{app}\tmy"; Flags: uninsdeletevalue deletevalue; Check: not (IsAdminLoggedOn() or IsPowerUserLoggedOn()); Tasks: overwriteglpath
+Root: HKLM; SubKey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples;{app}\rt;{app}\tmy"; Flags: uninsdeletevalue deletevalue; Check: IsAdminLoggedOn() or IsPowerUserLoggedOn(); Tasks: overwriteglpath
 Root: HKLM; Subkey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: expandsz; ValueName: GRIDLABD; ValueData: {app}; Flags: uninsdeletevalue deletevalue
-Root: HKLM; Subkey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: string; ValueName: PATH; ValueData: "%PATH%;{app}\bin"
-Root: HKLM; Subkey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: string; ValueName: PATH; ValueData: "%PATH%;c:\GnuPlot\bin"
+;Root: HKLM; Subkey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: expandsz; ValueName: PATH; ValueData: "%PATH%;{app}\bin"
+;Root: HKLM; Subkey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: expandsz; ValueName: PATH; ValueData: "%PATH%;c:\GnuPlot\bin"
+Root: HKLM; SubKey: SYSTEM\CurrentControlSet\Control\Session Manager\Environment; ValueType: string; ValueName: GLENVSET; ValueData: true; Flags: uninsdeletevalue deletevalue; Check: IsAdminLoggedOn() or IsPowerUserLoggedOn(); AfterInstall: InstallEnvironment(); Tasks: environment
 
 [Icons]
 Name: {group}\GridLAB-D Console; Filename: {cmd}; WorkingDir: {app}; Comment: Launch GridLAB-D Command Prompt
@@ -225,6 +226,8 @@ Name: {userdesktop}\GridLAB-D Console; Filename: {cmd}; WorkingDir: {app}; Comme
 Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\GridLAB-D Console; Filename: {cmd}; WorkingDir: {app}; Comment: Launch GridLAB-D Command Prompt; Tasks: quicklaunchicon
 
 [Code]
+
+
 const
   WM_SETTINGCHANGE = $1A;
   SMTO_ABORTIFHUNG = $2;
@@ -248,7 +251,33 @@ begin
     SubKey := 'Environment';
   end;
 
+  Path := ExpandConstant('{app}\lib');
+  if RegQueryStringValue(RootKey, SubKey, 'PATH', Value) then
+  begin
+    if Pos(Uppercase(Path + ';'), Uppercase(Value + ';')) <> 0 then
+      exit;
+    Value := Value + ';' + Path;
+  end
+  else
+    Value := Path;
+  RegWriteStringValue(RootKey, SubKey, 'PATH', Value);
+  SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, SendResult);
+  Log('Added ''' + Path + ''' to PATH environment variable.');
+
   Path := ExpandConstant('{app}\bin');
+  if RegQueryStringValue(RootKey, SubKey, 'PATH', Value) then
+  begin
+    if Pos(Uppercase(Path + ';'), Uppercase(Value + ';')) <> 0 then
+      exit;
+    Value := Value + ';' + Path;
+  end
+  else
+    Value := Path;
+  RegWriteStringValue(RootKey, SubKey, 'PATH', Value);
+  SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, SendResult);
+  Log('Added ''' + Path + ''' to PATH environment variable.');
+
+  Path := 'C:\GnuPlot\bin';
   if RegQueryStringValue(RootKey, SubKey, 'PATH', Value) then
   begin
     if Pos(Uppercase(Path + ';'), Uppercase(Value + ';')) <> 0 then
@@ -281,6 +310,44 @@ begin
   if not RegQueryStringValue(RootKey, SubKey, 'PATH', Value) then
     exit;
   Path := ExpandConstant('{app}\bin');
+  Index := Pos(Uppercase(Path + ';'), Uppercase(Value + ';'));
+  if Index = 0 then
+    exit;
+  Len := Length(Path) + 1;
+  while Index <> 0 do
+  begin
+    Temp := Copy(Value, Index + Len, Length(Value));
+    Value := Copy(Value, 0, Index - 2);
+    if (Value <> '') and (Temp <> '') then
+      Value := Value + ';' + Temp
+    else
+      Value := Value + Temp;
+    Index := Pos(Uppercase(Path + ';'), Uppercase(Value + ';'));
+  end;
+  RegWriteStringValue(RootKey, SubKey, 'PATH', Value);
+  SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, SendResult);
+  Log('Removed ''' + Path + ''' from PATH environment variable.');
+
+  Path := ExpandConstant('{app}\lib');
+  Index := Pos(Uppercase(Path + ';'), Uppercase(Value + ';'));
+  if Index = 0 then
+    exit;
+  Len := Length(Path) + 1;
+  while Index <> 0 do
+  begin
+    Temp := Copy(Value, Index + Len, Length(Value));
+    Value := Copy(Value, 0, Index - 2);
+    if (Value <> '') and (Temp <> '') then
+      Value := Value + ';' + Temp
+    else
+      Value := Value + Temp;
+    Index := Pos(Uppercase(Path + ';'), Uppercase(Value + ';'));
+  end;
+  RegWriteStringValue(RootKey, SubKey, 'PATH', Value);
+  SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, SendResult);
+  Log('Removed ''' + Path + ''' from PATH environment variable.');
+
+  Path := 'C:\GnuPlot\bin';
   Index := Pos(Uppercase(Path + ';'), Uppercase(Value + ';'));
   if Index = 0 then
     exit;
@@ -443,7 +510,6 @@ Filename: {app}\7za.exe; Parameters: e OR.zip; WorkingDir: {app}\tmy; Tasks: ; C
 Filename: {app}\7za.exe; Parameters: e climate-US-2_0.zip WA.zip; WorkingDir: {app}\tmy; Tasks: ; Components: Climate_Data\US\West\WA
 Filename: {app}\7za.exe; Parameters: e WA.zip; WorkingDir: {app}\tmy; Tasks: ; Components: Climate_Data\US\West\WA
 Filename: {app}\7za.exe; Parameters: e climate-US-2_0.zip HI.zip; WorkingDir: {app}\tmy; Tasks: ; Components: Climate_Data\US\Other\HI
+Filename: {app}\7za.exe; Parameters: e HI.zip; WorkingDir: {app}\tmy; Tasks: ; Components: Climate_Data\US\Other\HI
 [UninstallDelete]
 Name: {app}\tmy\climate-US-2_0.zip; Type: files
-[Run]
-Filename: {app}\7za.exe; Parameters: e HI.zip; WorkingDir: {app}\tmy; Tasks: ; Components: Climate_Data\US\Other\HI
