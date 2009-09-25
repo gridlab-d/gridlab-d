@@ -16,9 +16,16 @@
 #include "gridlabd.h"
 #include "energy_storage.h"
 
+
 class battery : public energy_storage
 {
 private:
+	double number_of_phases_out;
+	TIMESTAMP prev_time;
+	int first_time_step;
+	double power_transferred;
+	int prev_state; //1 is charging, 0 is nothing, -1 is discharging
+
 	/* TODO: put private variables here */
 	//complex AMx[3][3];//generator impedance matrix
 
@@ -27,17 +34,20 @@ protected:
 public:
 	/* TODO: put published variables here */
 	set phases;	/**< device phases (see PHASE codes) */
-	enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ, CONSTANT_PF, SUPPLY_DRIVEN} gen_mode_v;  //operating mode of the generator 
+	enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ, CONSTANT_PF, SUPPLY_DRIVEN, POWER_DRIVEN} gen_mode_v;  //operating mode of the generator 
 	//note battery panel will always operate under the SUPPLY_DRIVEN generator mode
 	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2} gen_status_v;
 	enum POWER_TYPE{DC1, AC=2} power_type_v;
 	enum RFB_SIZE{SMALL=1, MED_COMMERCIAL, MED_HIGH_ENERGY, LARGE} rfb_size_v;
-
-
-	//GENERATOR_MODE generator_mode_choice;
-	//GENERATOR_STATUS generator_status;
-	//RFB_SIZE rfb_size_choice;
-
+		
+	complex *pCircuit_V;		//< pointer to the three voltages on three lines
+	complex *pLine_I;			//< pointer to the three current on three lines
+	complex *pLine12;			//< used in triplex metering
+	complex *pPower;
+	double power_set_high;
+	double power_set_low;
+	complex last_current[3];
+	
 	
 	//complex V_Max;
 	//complex I_Max;
@@ -56,7 +66,7 @@ public:
 	//
 	//double efficiency;
 
-	//TIMESTAMP prev_time;
+	
 	//double E_Next;
 	
 	
