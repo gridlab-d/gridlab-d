@@ -276,13 +276,23 @@ int climate::init(OBJECT *parent)
 		int doy = sa->day_of_yr(month,day);
 		int hoy = (doy - 1) * 24 + (hour-1); 
 		if (hoy>=0 && hoy<8760){
+			// pre-conversion of solar data from W/m^2 to W/sf
+			if(0 == gl_convert("W/m^2", "W/sf", &(dnr))){
+				gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
+				return 0;
+			}
+			if(0 == gl_convert("W/m^2", "W/sf", &(dhr))){
+				gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
+				return 0;
+			}
 			tmy[hoy].temp_raw = temperature;
 			tmy[hoy].temp = temperature;
-			tmy[hoy].windspeed=wspeed;
+			// post-conversion of copy of temperature from C to F
 			if(0 == gl_convert("degC", "degF", &(tmy[hoy].temp))){
 				gl_error("climate::init unable to gl_convert() 'degC' to 'degF'!");
 				return 0;
 			}
+			tmy[hoy].windspeed=wspeed;
 			tmy[hoy].rh = humidity;
 			tmy[hoy].dnr = dnr;
 			tmy[hoy].dhr = dhr;
@@ -299,10 +309,6 @@ int climate::init(OBJECT *parent)
 				else
 					sol_rad = file.calc_solar(c_point,doy,RAD(degrees),sol_time,dnr,dhr);//(double)dnr * cos_incident + dhr;
 				/* TMY2 solar radiation data is in Watt-hours per square meter. */
-				if(0 == gl_convert("W/m^2", "W/sf", &(sol_rad))){
-					gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
-					return 0;
-				}
 				tmy[hoy].solar[c_point] = sol_rad;
 
 				/* track records */
