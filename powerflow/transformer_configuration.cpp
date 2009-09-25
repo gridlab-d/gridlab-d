@@ -107,6 +107,9 @@ int transformer_configuration::create(void)
 
 int transformer_configuration::init(OBJECT *parent)
 {
+
+	OBJECT *obj = OBJECTHDR(this);
+
 	// if aggregate rating is not set and 3 phase is specified
 	if (kVA_rating==0)
 
@@ -142,19 +145,19 @@ int transformer_configuration::init(OBJECT *parent)
 	if (connect_type!=SINGLE_PHASE_CENTER_TAPPED)
 	{
 		if ((impedance1.Re() != 0.0 && impedance1.Im() != 0.0) || (impedance2.Re() != 0.0 && impedance2.Im() != 0.0))
-			gl_warning("This connection type does not support impedance (impedance1 or impedance2) of secondaries at this time.");
+			gl_warning("This connection type on transformer:%d (%s) does not support impedance (impedance1 or impedance2) of secondaries at this time.",obj->id,obj->name);
 			/*  TROUBLESHOOT
 			At this time impedance1 and impedance2 are only defined and used for center-tap transformers to be
 			explicitly defined.  These values will be ignored for now.
 			*/
 		if (shunt_impedance.Re() != 999999999 || shunt_impedance.Im() != 999999999)
-			gl_warning("This connection type does not support shunt_impedance at this time.");
+			gl_warning("This connection type on transformer:%d (%s) does not support shunt_impedance at this time.",obj->id,obj->name);
 			/* TROUBLESHOOT
 			At this time shunt_impedance is only defined and supported in center-tap transformers.  Theses values
 			will be ignored for now.
 			*/
 		if (no_load_loss != 0.0 || full_load_loss != 0.0)
-			gl_warning("This connection type does not support shunt_impedance at this time.");
+			gl_warning("This connection type on transformer:%d (%s) does not support shunt_impedance at this time.",obj->id,obj->name);
 			/* TROUBLESHOOT
 			At this time no_load_loss and full_load_loss are only defined and supported in 
 			center-tap transformers.  Theses values	will be ignored for now.

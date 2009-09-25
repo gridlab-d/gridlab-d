@@ -123,46 +123,50 @@ int triplex_meter::init(OBJECT *parent)
 // Synchronize a distribution triplex_meter
 TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	if (t1 > last_t)
-	{
-		dt = t1 - last_t;
-		last_t = t1;
-	}
-	else
-		dt = 0;
-
 	//measured_voltage[0] = voltageA;
 	measured_voltage[0].SetPolar(voltageA.Mag(),voltageA.Arg());
 	measured_voltage[1].SetPolar(voltageB.Mag(),voltageB.Arg());
 	measured_voltage[2].SetPolar(voltageC.Mag(),voltageC.Arg());
-	measured_current[0] = current_inj[0];
-	measured_current[1] = current_inj[1];
-	measured_current[2] = current_inj[2];
 
-	if (dt > 0 && last_t != dt)
-	{	
-		measured_real_energy += measured_real_power * TO_HOURS(dt);
-		measured_reactive_energy += measured_reactive_power * TO_HOURS(dt);
+	if ((solver_method == SM_NR && NR_cycle == true)||solver_method  == SM_FBS)
+	{
+		if (t1 > last_t)
+		{
+			dt = t1 - last_t;
+			last_t = t1;
+		}
+		else
+			dt = 0;
+
+		measured_current[0] = current_inj[0];
+		measured_current[1] = current_inj[1];
+		measured_current[2] = current_inj[2];
+
+		if (dt > 0 && last_t != dt)
+		{	
+			measured_real_energy += measured_real_power * TO_HOURS(dt);
+			measured_reactive_energy += measured_reactive_power * TO_HOURS(dt);
+		}
+
+		indiv_measured_power[0] = measured_voltage[0]*(~measured_current[0]);
+		indiv_measured_power[1] = -measured_voltage[1]*(~measured_current[1]);
+		indiv_measured_power[2] = measured_voltage[2]*(~measured_current[2]);
+
+		measured_power = indiv_measured_power[0] + indiv_measured_power[1] + indiv_measured_power[2];
+
+		measured_real_power = (indiv_measured_power[0]).Re()
+							+ (indiv_measured_power[1]).Re()
+							+ (indiv_measured_power[2]).Re();
+
+		measured_reactive_power = (indiv_measured_power[0]).Im()
+								+ (indiv_measured_power[1]).Im()
+								+ (indiv_measured_power[2]).Im();
+
+		if (measured_real_power>measured_demand) 
+			measured_demand=measured_real_power;
+
+		return triplex_node::postsync(t1);
 	}
-
-	indiv_measured_power[0] = measured_voltage[0]*(~measured_current[0]);
-	indiv_measured_power[1] = -measured_voltage[1]*(~measured_current[1]);
-	indiv_measured_power[2] = measured_voltage[2]*(~measured_current[2]);
-
-	measured_power = indiv_measured_power[0] + indiv_measured_power[1] + indiv_measured_power[2];
-
-	measured_real_power = (indiv_measured_power[0]).Re()
-						+ (indiv_measured_power[1]).Re()
-						+ (indiv_measured_power[2]).Re();
-
-	measured_reactive_power = (indiv_measured_power[0]).Im()
-							+ (indiv_measured_power[1]).Im()
-							+ (indiv_measured_power[2]).Im();
-
-	if (measured_real_power>measured_demand) 
-		measured_demand=measured_real_power;
-
-	return triplex_node::postsync(t1);
 }
 
 //////////////////////////////////////////////////////////////////////////
