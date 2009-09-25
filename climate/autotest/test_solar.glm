@@ -1,4 +1,7 @@
 module assert;
+#ifdef RECORD
+module tape;
+#endif
 
 #include "WA-Yakima.glm"
 
@@ -54,6 +57,13 @@ object solar {
 		value 1455.1;
 		within 0.1;
 	};
+#ifdef RECORD
+	object recorder {
+		property power,energy;
+		file `{filename}_fixed_power_energy.csv`;
+		interval 3600;
+	};
+#endif
 }
 
 object solar {
@@ -68,4 +78,11 @@ object solar {
 		value 99.2;
 		within 0.1;
 	};
+#ifdef RECORD
+	object recorder {
+		property power[W/m^2],energy;
+		file `{filename}_tracking_power_energy.csv`;
+		interval 3600;
+	};
+#endif
 }
