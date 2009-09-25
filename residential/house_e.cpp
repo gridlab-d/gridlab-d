@@ -1084,8 +1084,8 @@ void house_e::update_system(double dt)
 	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
 	const double cooling_capacity_adj = -(-0.0063*(*pTout)+1.5984);
 
-	heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)/1000.0;
-	cooling_demand = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction)/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction)/1000.0;
+	heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)*KWPBTUPH;
+	cooling_demand = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction)/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction)*KWPBTUPH;
 
 	switch (system_mode) {
 	case SM_HEAT:
@@ -1118,7 +1118,7 @@ void house_e::update_system(double dt)
 	}
 	else
 	{
-		load.total = load.power = system_rated_power*KWPBTUPH * ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? ((system_type&ST_AIR)?0.05:0.00) : 1.0);
+		load.total = load.power = system_rated_power * ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? ((system_type&ST_AIR)?0.05:0.00) : 1.0);
 		load.heatgain = system_rated_capacity;
 	}
 }
