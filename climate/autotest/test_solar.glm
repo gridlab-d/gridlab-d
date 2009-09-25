@@ -1,0 +1,71 @@
+module assert;
+
+#include "WA-Yakima.glm"
+
+clock {
+	timezone EST+5EDT;
+	starttime '2009-01-01 0:00:00 EST';
+	stoptime '2010-01-01 0:00:00 EST';
+}
+
+class solar {
+	object weather;
+	double power[kW];
+	double energy[MWh];
+	double efficiency[pu];
+	double area[sf];
+	enumeration {FIXED=0, TRACKING=1} type;
+	enumeration {HORIZONTAL=0, NORTH=1, NORTHEAST=2, EAST=3, SOUTHEAST=4, SOUTH=5, SOUTHWEST=6, WEST=7, NORTHWEST=8} orientation;
+	public double *flux;
+	intrinsic create(object parent) {
+		return SUCCESS;
+	};
+	intrinsic init(object parent) {
+		if (efficiency==0) efficiency = 0.85;
+		else if (efficiency<0) throw "efficiency must be positive";
+		if (area<=0) throw "area must be positive";
+		flux = (double*)gl_get_addr(weather,"solar_flux");
+		if (type==FIXED && flux==NULL) throw "solar flux data not available";
+		return SUCCESS;
+	};
+	intrinsic presync(TIMESTAMP t0, TIMESTAMP t1) {
+		energy += power*(t1-t0)/3600.0/1000;
+		return TS_NEVER;
+	};
+	intrinsic sync(TIMESTAMP t0, TIMESTAMP t1) {
+		double solar=0;
+		if (type==FIXED)
+			solar = flux[orientation];
+		else
+			gl_get_value(weather,"solar_direct",solar);
+		power = solar*area/1000*efficiency;
+		return TS_NEVER;
+	};
+}
+
+object solar {
+	weather "Yakima WA";
+	area 1000;
+	type TRACKING;
+	object double_assert {
+		in '2009-12-31 22:00:00 EST';
+		status ASSERT_TRUE;
+		target energy;
+		value 1455.1;
+		within 0.1;
+	};
+}
+
+object solar {
+	weather "Yakima WA";
+	area 1000;
+	type FIXED;
+	orientation SOUTHWEST;
+	object double_assert {
+		in '2009-12-31 22:00:00 EST';
+		status ASSERT_TRUE;
+		target energy;
+		value 99.2;
+		within 0.1;
+	};
+}
