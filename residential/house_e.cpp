@@ -670,6 +670,9 @@ int house_e::create()
 	char *token = NULL;
 
 	glazing_shgc = 0.65; // assuming generic double glazing
+	load.power_fraction = 0.8;
+	load.impedance_fraction = 0.2;
+	load.current_fraction = 0.0;
 
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
@@ -1110,17 +1113,23 @@ void house_e::update_system(double dt)
 	/* calculate the power consumption */
 	// manually add 'total', we should be unshaped
 	// central-air fan consumes only ~5% of total energy when using GAS, 2% when ventilating at low power
+	double mult1=0.0;
 	load.current = load.admittance = complex(0,0);
 	if ((system_type&ST_VAR) && (system_mode==SM_OFF))
 	{
-		load.total = load.power = design_heating_capacity*KWPBTUPH*0.02;
+		load.total =  design_heating_capacity*KWPBTUPH*0.02;
 		load.heatgain = design_heating_capacity*0.02;
 	}
 	else
 	{
-		load.total = load.power = system_rated_power * ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? ((system_type&ST_AIR)?0.05:0.00) : 1.0);
+		
+		mult1 = ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? ((system_type&ST_AIR)?0.05:0.00) : 1.0);
+		load.total = system_rated_power * mult1;
 		load.heatgain = system_rated_capacity;
 	}
+	load.power = complex(load.power_fraction * load.total.Re(), 0);
+	load.admittance = complex(load.impedance_fraction * load.total.Re(), 0);
+	load.current = complex(load.current_fraction * load.total.Re(), 0);
 }
 
 /**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time

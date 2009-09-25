@@ -121,6 +121,8 @@ int waterheater::create()
 
 	load.breaker_amps = 30;
 	load.config = EUC_IS220;
+	load.power_fraction = 0.0;
+	load.impedance_fraction = 1.0;
 	load.heatgain_fraction = 0.0; /* power has no effect on heat loss */
 	return res;
 
@@ -398,9 +400,9 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// determine the power used
 	if (heat_needed == TRUE){
-		/* power_kw */ load.power = actual_kW() * (heat_mode == GASHEAT ? 0.01 : 1.0);
+		/* power_kw */ load.total = actual_kW() * (heat_mode == GASHEAT ? 0.01 : 1.0);
 	} else
-		/* power_kw */ load.power = 0.0;
+		/* power_kw */ load.total = 0.0;
 
 	TIMESTAMP t2 = residential_enduse::sync(t0,t1);
 	
@@ -422,7 +424,10 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		internal_gain = 0;
 	}
 
-	load.total = load.power = /* power_kw */ load.power;
+	//load.total = load.power = /* power_kw */ load.power;
+	load.power = load.total * load.power_fraction;
+	load.admittance = load.total * load.impedance_fraction;
+	load.current = load.total * load.current_fraction;
 	load.heatgain = internal_gain;
 
 //	gl_enduse_sync(&(residential_enduse::load),t1);
