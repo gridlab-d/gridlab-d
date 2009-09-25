@@ -185,6 +185,7 @@ climate::climate(MODULE *module)
 			PT_double,"temperature[degF]",PADDR(temperature),
 			PT_double,"humidity[%]",PADDR(humidity),
 			PT_double,"solar_flux[W/sf]",PADDR(solar_flux),	PT_SIZE, 9,
+			PT_double,"solar_direct[W/sf]",PADDR(solar_direct),
 			PT_double,"wind_speed[mph]", PADDR(wind_speed),
 			PT_double,"wind_dir[deg]", PADDR(wind_dir),
 			PT_double,"wind_gust[mph]", PADDR(wind_gust),
