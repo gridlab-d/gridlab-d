@@ -13,6 +13,7 @@ public:
 	TIMESTAMP runtime;
 	char32 group;
 	char32 filename;
+	int32 runcount;
 public:
 	static CLASS *oclass;
 public:

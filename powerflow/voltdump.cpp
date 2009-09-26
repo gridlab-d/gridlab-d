@@ -34,6 +34,7 @@ voltdump::voltdump(MODULE *mod)
 			PT_char32,"group",PADDR(group),PT_DESCRIPTION,"the group ID to output data for (all nodes if empty)",
 			PT_timestamp,"runtime",PADDR(runtime),PT_DESCRIPTION,"the time to check voltage data",
 			PT_char32,"filename",PADDR(filename),PT_DESCRIPTION,"the file to dump the voltage data into",
+			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
@@ -44,6 +45,7 @@ int voltdump::create(void)
 {
 	memset(group, 0, sizeof(char32));
 	runtime = TS_NEVER;
+	runcount = 0;
 	return 1;
 }
 
@@ -104,9 +106,10 @@ void voltdump::dump(TIMESTAMP t){
 }
 
 int voltdump::commit(TIMESTAMP t){
-	if(t == runtime || runtime == TS_NEVER){
+	if((t == runtime || runtime == TS_NEVER) && (runcount < 1)){
 		/* dump */
 		dump(t);
+		++runcount;
 	}
 	if(runtime == 0){
 		runtime = t;
