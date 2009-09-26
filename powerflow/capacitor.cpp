@@ -884,7 +884,10 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 
 	if (result != TS_NEVER)
 	{
-		return -result;
+		if (result==t0)
+			return result;
+		else
+			return -result;
 	}
 	else
 		return TS_NEVER;
