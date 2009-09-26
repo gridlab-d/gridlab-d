@@ -3,6 +3,13 @@
 # Makefile
 
 SOURCE=rredc.nrel.gov
+tmyDIR=$(prefix)/etc/tmy
+
+all:
+
+install:
+	mkdir -p $(tmyDIR)
+	for f in $(ls ??.zip); do unzip -qq $f -d $(srcdir); done
 
 tmy: tmy2_pc.zip
 	unzip -qq -u tmy2_pc \*.tm2

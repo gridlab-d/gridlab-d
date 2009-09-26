@@ -1,3 +1,7 @@
+SUBDIRS=tmy
+etcdir=$(prefix)/etc
+tmydir=$(etcdir)/tmy
+tmy_DATA=
 pkglib_LTLIBRARIES = libclimate.la
 libclimate_la_SOURCES = \
 	climate.cpp          \
