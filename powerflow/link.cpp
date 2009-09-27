@@ -1736,7 +1736,7 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 	}
 
 	// This portion can be removed once tape/recorders are being updated in commit.
-	if (solver_method == SM_FBS || solver_method == SM_NR)
+	if (solver_method == SM_FBS || (solver_method == SM_NR && NR_cycle == true))
 	{			
 		if (has_phase(PHASE_S))
 			calculate_power_splitphase();
