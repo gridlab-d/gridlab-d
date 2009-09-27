@@ -165,8 +165,8 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		if (measured_real_power>measured_demand) 
 			measured_demand=measured_real_power;
 
-		return triplex_node::postsync(t1);
 	}
+	return triplex_node::postsync(t1);
 }
 
 //////////////////////////////////////////////////////////////////////////
