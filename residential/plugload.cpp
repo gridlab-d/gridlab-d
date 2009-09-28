@@ -82,21 +82,27 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	t2 = residential_enduse::sync(t0,t1);
 
-	if(shape.type == MT_UNKNOWN){
-		if(shape.load < 0.0){
-			gl_error("plugload demand cannot be negative, capping");
-			shape.load = 0.0;
+	if (pCircuit->status==BRK_CLOSED) 
+	{
+		if (shape.type == MT_UNKNOWN)
+		{
+			if(shape.load < 0.0){
+				gl_error("plugload demand cannot be negative, capping");
+				shape.load = 0.0;
+			}
+			load.power = load.power_fraction * shape.load;
+			load.current = load.current_fraction * shape.load / load.voltage_factor;
+			load.admittance = load.impedance_fraction * shape.load / load.voltage_factor / load.voltage_factor;
+			if(fabs(load.power_factor) < 1 && load.power_factor != 0.0){
+				val = (load.power_factor < 0 ? -1.0 : 1.0) * load.power.Re() * sqrt(1/(load.power_factor * load.power_factor) - 1);
+			} else {
+				val = 0;
+			}
+			load.power.SetRect(load.power.Re(), val);
 		}
-		load.power = load.power_fraction * shape.load;
-		load.current = load.current_fraction * shape.load / load.voltage_factor;
-		load.admittance = load.impedance_fraction * shape.load / load.voltage_factor / load.voltage_factor;
-		if(fabs(load.power_factor) < 1 && load.power_factor != 0.0){
-			val = (load.power_factor < 0 ? -1.0 : 1.0) * load.power.Re() * sqrt(1/(load.power_factor * load.power_factor) - 1);
-		} else {
-			val = 0;
-		}
-		load.power.SetRect(load.power.Re(), val);
 	}
+	else
+		load.power = load.current = load.admittance = complex(0,0,J);
 
 	gl_enduse_sync(&(residential_enduse::load),t1);
 	return t2;

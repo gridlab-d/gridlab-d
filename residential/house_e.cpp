@@ -1436,10 +1436,6 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// add to panel current
 			else
 			{
-				//c->pLoad->voltage_factor = c->pV->Mag() / ((c->pLoad->config&EUC_IS220) ? 240 : 120);
-				//TIMESTAMP t = gl_enduse_sync(c->pLoad,t1); if (t<t2) t2 = t;
-
-
 				//Convert values appropriately - assume nominal voltages of 240 and 120 (0 degrees)
 				//All values are given in kW, so convert to normal
 				if (n==0)	//1-2 240 V load
