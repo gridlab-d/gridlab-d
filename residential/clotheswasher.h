@@ -18,7 +18,6 @@ class clotheswasher : public residential_enduse
 public:
 	double circuit_split;				///< -1=100% negative, 0=balanced, +1=100% positive
 	double motor_power;					///< installed clotheswasher motor power [W] (default = random uniform between 500 - 750 W)
-	double power_factor;				///< power factor (default = 0.95)
 	double enduse_demand;				///< amount of demand added per hour (units/hr)
 	double enduse_queue;				///< accumulated demand (units)
 	double cycle_duration;				///< typical cycle runtime (s)

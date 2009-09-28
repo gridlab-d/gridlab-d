@@ -49,8 +49,8 @@ clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 			PT_INHERIT, "residential_enduse",
 			PT_double,"motor_power[kW]",PADDR(shape.params.analog.power),
 			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"enduse_demand[unit]",PADDR(enduse_demand),
-			PT_double,"enduse_queue[unit]",PADDR(enduse_queue),
+			PT_double,"queue[unit]",PADDR(enduse_queue), PT_DESCRIPTION, "the total laundry accumulated",
+			PT_double,"demand[unit/day]",PADDR(enduse_demand), PT_DESCRIPTION, "the amount of laundry accumulating daily",
 			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			PT_double,"stall_voltage[V]", PADDR(stall_voltage),
 			PT_double,"start_voltage[V]", PADDR(start_voltage),
@@ -79,8 +79,9 @@ int clotheswasher::create()
 	load.name = oclass->name;
 
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
-
 	load.voltage_factor = 1.0;
+	load.power_factor = 0.95;
+	load.power_fraction = 1.0;
 
 	return res;
 }
@@ -103,23 +104,12 @@ int clotheswasher::init(OBJECT *parent)
 		shape.params.analog.power = 0.5;
 	}
 
-	switch(shape.type){
-		case MT_UNKNOWN:
-			// initial load
-			update_state(0);
-			break;
-		case MT_ANALOG:
-			break;
-		case MT_PULSED:
-			break;
-		case MT_MODULATED:
-			break;
-		default:
-			GL_THROW("clotheswasher load shape has an unknown state!");
-			break;
-	}
+	int res = residential_enduse::init(parent);
 
-	return residential_enduse::init(parent);
+	if (res==SUCCESS && shape.type==MT_UNKNOWN)
+		update_state(0);
+
+	return res;
 }
 
 TIMESTAMP clotheswasher::presync(TIMESTAMP t0, TIMESTAMP t1){
@@ -215,7 +205,7 @@ double clotheswasher::update_state(double dt)
 	state_time += dt;
 
 	// accumulating units in the queue no matter what happens
-	enduse_queue += enduse_demand * dt/3600;
+	enduse_queue += enduse_demand * dt/3600/24;
 
 	// now implement current state
 	switch(state) {
@@ -235,7 +225,7 @@ double clotheswasher::update_state(double dt)
 		cycle_time -= dt;
 
 		// running in constant power mode
-		load.power.SetPowerFactor(shape.params.analog.power, power_factor);
+		load.power.SetPowerFactor(shape.params.analog.power, load.power_factor);
 		load.current = load.admittance = complex(0,0,J);
 
 		// remaining time
