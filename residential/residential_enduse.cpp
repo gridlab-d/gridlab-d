@@ -80,14 +80,21 @@ int residential_enduse::init(OBJECT *parent)
 			Fix the parent reference and try again.
 		 */
 
-	if (load.shape!=NULL && load.shape->schedule==NULL)
-	{
-		gl_warning("%s (%s:%d) schedule is not specified so the load is inactive", hdr->name?hdr->name:"(unnamed)", hdr->oclass->name, hdr->id);
-		/* TROUBLESHOOT
-			The residential_enduse object requires a schedule that defines how
-			the load behaves.  Omitting this schedule effectively shuts the enduse
-			load off and this is not typically intended.
-		 */
+	if (load.shape!=NULL) {
+		if (load.shape->schedule==NULL)
+		{
+			gl_warning("%s (%s:%d) schedule is not specified so the load may be inactive", hdr->name?hdr->name:"(unnamed)", hdr->oclass->name, hdr->id);
+			/* TROUBLESHOOT
+				The residential_enduse object requires a schedule that defines how
+				the load behaves.  Omitting this schedule effectively shuts the enduse
+				load off and this is not typically intended.
+			 */
+		}
+		if (load.shape->type==MT_UNKNOWN)
+		{
+			gl_error("%s (%s:%d) loadshape is used, but shape type is not specified", hdr->name?hdr->name:"(unnamed)", hdr->oclass->name, hdr->id);
+			return 0;
+		}
 	}
 
 	return 1;
