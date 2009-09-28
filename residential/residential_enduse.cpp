@@ -90,11 +90,6 @@ int residential_enduse::init(OBJECT *parent)
 				load off and this is not typically intended.
 			 */
 		}
-		if (load.shape->type==MT_UNKNOWN)
-		{
-			gl_error("%s (%s:%d) loadshape is used, but shape type is not specified", hdr->name?hdr->name:"(unnamed)", hdr->oclass->name, hdr->id);
-			return 0;
-		}
 	}
 
 	return 1;

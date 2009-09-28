@@ -61,7 +61,7 @@ int plugload::create()
 	load.power_fraction = 1.0;
 	load.voltage_factor = 1.0; // assume 'even' voltage, initially
 	shape.load = gl_random_uniform(0, 0.1);
-	shape.type = MT_ANALOG;
+	//shape.type = MT_ANALOG;
 	return res;
 }
 
@@ -91,7 +91,9 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 			gl_error("plugload demand cannot be negative, capping");
 			shape.load = 0.0;
 		}
-		load.power = shape.params.analog.power * shape.load * load.voltage_factor;
+		load.power = load.power_fraction * shape.load;
+		load.current = load.current_fraction * shape.load / load.voltage_factor;
+		load.admittance = load.impedance_fraction * shape.load / load.voltage_factor / load.voltage_factor;
 		if(fabs(load.power_factor) < 1 && load.power_factor != 0.0){
 			val = (load.power_factor < 0 ? -1.0 : 1.0) * load.power.Re() * sqrt(1/(load.power_factor * load.power_factor) - 1);
 		} else {
