@@ -320,7 +320,7 @@ int link::init(OBJECT *parent)
 			phase_f_test &= ~(PHASE_S);	//Pull off the single phase portion of from node
 
 			if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test))	//Phase mismatch on the line
-				GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
+				GL_THROW("line:%d - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 				/*  TROUBLESHOOT
 				A line has been configured to carry a certain set of phases.  Either the input node or output
 				node is not providing a source/sink for these different conductors.  The To and From nodes must
@@ -333,14 +333,14 @@ int link::init(OBJECT *parent)
 			phase_f_test &= ~(PHASE_N | PHASE_D);	//Pull off the neutral and Delta phase portion of to node
 
 			if ((phase_f_test != (phases & ~(PHASE_N | PHASE_D))) || (phase_t_test != (phases & ~(PHASE_N | PHASE_D))))	//Phase mismatch on the line
-				GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
+				GL_THROW("line:%d - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 				//Defined above
 		}
 	}
 	else												//Everything else
 	{
 		if ((phase_f_test != phases_test) || (phase_t_test != phases_test))	//Phase mismatch on the line
-			GL_THROW("line:%d has a phase mismatch at one or both ends",obj->id);
+			GL_THROW("line:%d - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 			//Defined above
 
 		//Set up the phase test on the to node to make sure all are hit (only do to node)
@@ -516,7 +516,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				//If we are OK, populate the list entry
 				if (LinkTableLoc[1] >= LinkTableLoc[0])
 				{
-					GL_THROW("NR: An extra link tried to connected to node:%d",obj->id);
+					GL_THROW("NR: An extra link tried to connected to node:%d - %s",fnode->SubNodeParent->id,fnode->SubNodeParent->name);
 					/*  TROUBLESHOOT
 					During the initialization state, a link tried to connect to a node
 					that's link list is already full.  This is a bug.  Submit your code and
@@ -550,7 +550,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				//If we are OK, populate the list entry
 				if (LinkTableLoc[1] >= LinkTableLoc[0])
 				{
-					GL_THROW("NR: An extra link tried to connected to node:%d",obj->id);
+					GL_THROW("NR: An extra link tried to connected to node:%d - %s",tnode->SubNodeParent->id,tnode->SubNodeParent->name);
 					//Defined above
 				}
 				else					//We're OK - populate in our parent's list

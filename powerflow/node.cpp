@@ -230,7 +230,7 @@ int node::init(OBJECT *parent)
 				//May not necessarily be a failure, let's investiage
 				if ((phases & PHASE_D) && ((parNode->phases & (PHASE_A|PHASE_B|PHASE_C)) != (PHASE_A|PHASE_B|PHASE_C)))	//We're a delta
 				{
-					GL_THROW("NR: Parent and child node phases do not match!");
+					GL_THROW("NR: Parent and child node phases for nodes %s and %s do not match!",obj->parent->name,obj->name);
 					/*	TROUBLESHOOT
 					The implementation of parent-child connections in Newton-Raphson requires the child
 					object have the same phases as the parent.  Match the phases appropriately.  For a delta-connected
@@ -239,7 +239,7 @@ int node::init(OBJECT *parent)
 				}
 				else if ((p_phase_to_check & c_phase_to_check) != c_phase_to_check)	//Our parent is lacking, fail
 				{
-					GL_THROW("NR: Parent and child node phases do not match!");
+					GL_THROW("NR: Parent and child node phases for nodes %s and %s do not match!",obj->parent->name,obj->name);
 					//Defined above
 				}
 				else					//We should be successful, but let's flag ourselves appropriately
@@ -290,10 +290,6 @@ int node::init(OBJECT *parent)
 					gl_set_rank(obj,3);				//Put us below normal nodes (but above links)
 													//This way load postings should propogate during sync (bottom-up)
 
-					////Zero out last child power vector (used for updates) - shouldn't need this for this implementation
-					//last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = complex(0,0);
-					//last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
-					//last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
 				}
 			}
 			else		//Phase compatible, no issues
@@ -494,6 +490,39 @@ int node::init(OBJECT *parent)
 		YVs[1] = complex(0,0);
 		YVs[2] = complex(0,0);
 	}
+	else if (solver_method == SM_FBS)	//Forward back sweep
+	{
+		OBJECT *obj = OBJECTHDR(this);
+
+		if (obj->parent != NULL)
+		{
+			if((gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow")))	//Parent is another node
+			{
+				node *parNode = OBJECTDATA(obj->parent,node);
+
+				//Phase variable
+				set p_phase_to_check, c_phase_to_check;
+
+				//Create D-less and N-less versions of both for later comparisons
+				p_phase_to_check = (parNode->phases & (~(PHASE_D | PHASE_N)));
+				c_phase_to_check = (phases & (~(PHASE_D | PHASE_N)));
+
+				//Make sure our phases align, otherwise become angry
+				if ((p_phase_to_check & c_phase_to_check) != c_phase_to_check)	//Our parent is lacking, fail
+				{
+					GL_THROW("Parent and child node phases are incompatible for nodes %s and %s.",obj->parent->name,obj->name);
+					/*  TROUBLESHOOT
+					A child object does not have compatible phases with its parent.  The parent needs to at least have the phases of
+					the child object.  Please check your connections and try again.
+					*/
+				}
+			}//No else here, may be a line due to FBS implementation, so we don't want to fail on that
+		}
+	}
+	else
+		GL_THROW("unsupported solver method");
+		/*Defined below*/
+
 
 	/* initialize the powerflow base object */
 	int result = powerflow_object::init(parent);
@@ -1501,7 +1530,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			break;
 		}
 	default:
-		throw "unsupported solver method";
+		GL_THROW("unsupported solver method");
 		/*	TROUBLESHOOT
 		An invalid powerflow solver was specified.  Currently acceptable values are FBS for forward-back
 		sweep (Kersting's method), GS for Gauss-Seidel, and NR for Newton-Raphson.
