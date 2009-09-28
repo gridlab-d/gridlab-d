@@ -206,14 +206,6 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		{PT_set, "configuration", (char *)PADDR(config), "the load configuration options"},
 			{PT_KEYWORD, "IS220", (set)EUC_IS220},
 			//{PT_KEYWORD, "NONE",(set)0},
-
-		// @todo retire these values before the next major release because they are legacy values from residential ENDUSELOAD structure
-		{PT_complex, "total[kVA]", (char *)PADDR(power), "the constant power portion of the total load",PF_DEPRECATED},
-		{PT_complex, "total_power[kVA]", (char *)PADDR(power), "the constant power portion of the total load",PF_DEPRECATED},
-		{PT_complex, "current[kVA]", (char *)PADDR(current), "the constant current portion of the total load",PF_DEPRECATED},
-		{PT_complex, "admittance[kVA]", (char *)PADDR(current), "the constant admittance portion of the total load",PF_DEPRECATED},
-		{PT_double, "internal_gains", (char *)PADDR(heatgain), "the heat transferred from the enduse to the parent",PF_DEPRECATED},
-		{PT_complex, "enduse_load", (char *)PADDR(total), "the total power consumption of the load",PF_DEPRECATED},
 	}, *last=NULL;
 
 	// publish the enduse load itself
