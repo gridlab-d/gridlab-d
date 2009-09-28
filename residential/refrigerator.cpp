@@ -160,7 +160,7 @@ int refrigerator::init(OBJECT *parent)
 
 TIMESTAMP refrigerator::presync(TIMESTAMP t0, TIMESTAMP t1){
 	OBJECT *hdr = OBJECTHDR(this);
-	double *pTout = 0, t = 0.0, dt = 0.0;
+	double t = 0.0, dt = 0.0;
 	double nHours = (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND;
 
 	Tout = *pTout;
