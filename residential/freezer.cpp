@@ -105,7 +105,7 @@ int freezer::create()
 	// name of enduse
 	load.name = oclass->name;
 
-	// @todo other initial conditions
+	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
 
 	return res;
 }

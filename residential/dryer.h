@@ -18,7 +18,6 @@ class dryer : public residential_enduse
 public:
 	double circuit_split;				///< -1=100% negative, 0=balanced, +1=100% positive
 	double motor_power;					///< installed dryer motor power [W] (default = random uniform between 150-350 W)
-	double power_factor;				///< power factor (default = 0.95)
 	double coil_power;					///< installed heating coil power [W] (default = random uniform between 3500-5000 W, 0 for gas)
 	double enduse_demand;				///< amount of demand added per hour (units/hr)
 	double enduse_queue;				///< accumulated demand (units)

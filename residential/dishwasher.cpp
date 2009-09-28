@@ -57,6 +57,8 @@ int dishwasher::create()
 	load.name = oclass->name;
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	load.power_factor = 0.95;
+	load.power_fraction = 1.0;
+	load.shape->type = MT_PULSED;
 
 	return res;
 }

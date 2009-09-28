@@ -109,6 +109,8 @@ int refrigerator::create()
 	// name of enduse
 	load.name = oclass->name;
 
+	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
+
 	return res;
 }
 

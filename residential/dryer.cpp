@@ -49,8 +49,8 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 			PT_double,"motor_power[W]",PADDR(motor_power),
 			PT_double,"coil_power[W]",PADDR(coil_power),
 			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"enduse_demand[unit]",PADDR(enduse_demand),
-			PT_double,"enduse_queue[unit]",PADDR(enduse_queue),
+			PT_double,"demand[unit/day]",PADDR(enduse_demand), PT_DESCRIPTION, "number of loads accumulating daily",
+			PT_double,"queue[unit]",PADDR(enduse_queue), PT_DESCRIPTION, "number of loads accumulated",
 			PT_double,"stall_voltage[V]", PADDR(stall_voltage),
 			PT_double,"start_voltage[V]", PADDR(start_voltage),
 			PT_complex,"stall_impedance[Ohm]", PADDR(stall_impedance),
@@ -76,8 +76,13 @@ int dryer::create()
 
 	// name of enduse
 	load.name = oclass->name;
+
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
-	coil_power = -1; // signal that is hasn't been set by the user
+	load.voltage_factor = 1.0;
+	load.power_factor = 0.95;
+	load.power_fraction = 1.0;
+
+	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
 
 	return res;
 }
@@ -88,7 +93,6 @@ int dryer::init(OBJECT *parent)
 	// default properties
 	if (motor_power==0) motor_power = gl_random_uniform(150,350);
 	if (heat_fraction==0) heat_fraction = 0.2; 
-	if (power_factor==0) power_factor = 0.95;
 	if (stall_voltage==0) stall_voltage  = 0.6*120;
 	if (trip_delay==0) trip_delay = 10;
 	if (reset_delay==0) reset_delay = 60;
@@ -104,7 +108,7 @@ int dryer::init(OBJECT *parent)
 	rv = residential_enduse::init(parent);
 
 	// initial load
-	update_state();
+	if (rv==SUCCESS) update_state();
 
 	return rv;
 }
@@ -124,7 +128,7 @@ TIMESTAMP dryer::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// determine the delta time until the next state change
 	dt = update_state(dt);
 
-	return dt>0?(TIMESTAMP)(dt*TS_SECOND):TS_NEVER; 
+	return dt>0?-(TIMESTAMP)(dt*TS_SECOND+t1):TS_NEVER; 
 }
 
 double dryer::update_state(double dt)
@@ -180,7 +184,7 @@ double dryer::update_state(double dt)
 	state_time += dt;
 
 	// accumulating units in the queue no matter what happens
-	enduse_queue += enduse_demand * dt/3600;
+	enduse_queue += enduse_demand * dt/3600/24;
 
 	// now implement current state
 	switch(state) {
@@ -200,8 +204,8 @@ double dryer::update_state(double dt)
 		cycle_time -= dt;
 
 		// running in constant power mode with intermittent coil
-		load.power.SetPowerFactor(motor_power/1000, power_factor);
-		load.admittance = complex(1,0) / complex(coil_power * (cycle_time/cycle_duration/2),0); /// @todo make coil load pulsed instead of averaged on ramp
+		load.power.SetPowerFactor(motor_power/1000, load.power_factor);
+		load.admittance = complex(0,0,J); // no separate coil load for now
 		load.current = complex(0,0,J);
 
 		// remaining time

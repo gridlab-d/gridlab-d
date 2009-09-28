@@ -70,6 +70,8 @@ int microwave::create()
 	standby_power = 0.01;
 	shape.load = gl_random_uniform(0, 0.1);  // assuming a default maximum 10% of the sync time 
 
+	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
+
 	return res;
 }
 

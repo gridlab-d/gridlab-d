@@ -83,6 +83,8 @@ int clotheswasher::create()
 	load.power_factor = 0.95;
 	load.power_fraction = 1.0;
 
+	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
+
 	return res;
 }
 
