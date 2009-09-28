@@ -67,6 +67,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband), PT_DESCRIPTION, "the degree to heat the water tank, when needed",
 			PT_double,"temperature[degF]",PADDR(Tw), PT_DESCRIPTION, "the outlet temperature of the water tank",
 			PT_double,"height[ft]",PADDR(h), PT_DESCRIPTION, "the height of the hot water column within the water tank",
+			PT_double,"demand[gpm]",PADDR(water_demand), PT_DESCRIPTION, "the water consumption",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
