@@ -68,6 +68,7 @@ lights::lights(MODULE *mod)
 			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power), PT_DESCRIPTION, "installed lighting capacity",
 			PT_double,"power_density[W/sf]",PADDR(power_density), PT_DESCRIPTION, "installed power density",
 			PT_double,"curtailment[pu]", PADDR(curtailment), PT_DESCRIPTION, "lighting curtailment factor",
+			PT_double,"demand[pu]", PADDR(shape.load), PT_DESCRIPTION, "the current lighting demand",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The file that implements the specified class cannot publisht the variables in the class.
@@ -84,7 +85,11 @@ int lights::create(void)
 	// name of enduse
 	load.name = oclass->name;
 
-	// @todo other initial conditions
+	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.voltage_factor = 1.0;
+	load.power_factor = 0.95;
+	load.power_fraction = 0.5;
+	load.impedance_fraction = 0.5;
 
 	return res;
 }
@@ -139,25 +144,22 @@ int lights::init(OBJECT *parent)
 				The lights did not reference a parent object that publishes a floor are, so 2500 sf was assumed.
 				Change the parent reference and try again.
 			 */
-			shape.params.analog.power = power_density * 2500 * 1000;
+			shape.params.analog.power = power_density * 2500 / 1000;
 		} else {
-			shape.params.analog.power = power_density * *floor_area * 1000;
+			shape.params.analog.power = power_density * *floor_area / 1000;
 		}
 	}
 	else if (power_density==0 && shape.params.analog.power>0)
 	{
 		if (floor_area!=NULL)
-			power_density = shape.params.analog.power / *floor_area * 1000;
+			power_density = shape.params.analog.power / *floor_area ;
 		else
-			power_density = shape.params.analog.power / 2500 * 1000;
+			power_density = shape.params.analog.power / 2500;
 	}
-
-	// curtailment factor
-	if (curtailment==0) curtailment = 1.0;
 
 	// power factor
 	load.power_factor = power_factor[type];
-	load.breaker_amps = 20;
+	load.breaker_amps = 40;
 
 	if(placement == INDOOR){
 		load.heatgain_fraction = 1.0;
@@ -181,10 +183,8 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	t2 = residential_enduse::sync(t0,t1);
 
-	shape.load *= curtailment;
-
 	if(shape.type == MT_UNKNOWN){ /* manual power calculation*/
-		double frac = shape.load;
+		double frac = shape.load * (1-curtailment);
 		if(shape.load < 0){
 			gl_warning("lights shape demand is negative, capping to 0");
 			shape.load = 0.0;
