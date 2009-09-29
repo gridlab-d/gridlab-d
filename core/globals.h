@@ -134,6 +134,10 @@ GLOBAL int global_suppress_deprecated_messages INIT(0); /**< flag to suppress ou
 
 GLOBAL int global_run_realtime INIT(0); /**< flag to force simulator into realtime mode */
 
+#ifdef _DEBUG
+GLOBAL char global_sync_dumpfile[1024] INIT(""); /**< enable sync event dump file */
+#endif
+
 #ifdef __cplusplus
 }
 #endif

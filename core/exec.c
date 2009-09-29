@@ -63,6 +63,7 @@
 #include "schedule.h"
 #include "loadshape.h"
 #include "enduse.h"
+#include "globals.h"
 
 /** The main system initialization sequence
 	@return 1 on success, 0 on failure
@@ -188,7 +189,57 @@ static void do_object_sync(int thread, void *item)
 	if (global_clock<obj->in_svc)
 		this_t = obj->in_svc; /* yet to go in service */
 	else if (global_clock<=obj->out_svc)
+	{
 		this_t = object_sync(obj, global_clock, passtype[pass]);
+#ifdef _DEBUG
+		/* sync dumpfile */
+		if (global_sync_dumpfile[0]!='\0')
+		{
+			static FILE *fp = NULL;
+			if (fp==NULL)
+			{
+				static int tried = 0;
+				if (!tried)
+				{
+					fp = fopen(global_sync_dumpfile,"wt");
+					if (fp==NULL)
+						output_error("sync_dumpfile '%s' is not writeable", global_sync_dumpfile);
+					else
+						fprintf(fp,"timestamp,pass,iteration,thread,object,sync\n");	
+					tried = 1;
+				}
+			}
+			if (fp!=NULL)
+			{
+				static int64 lasttime = 0;
+				static char lastdate[64]="";
+				char syncdate[64]="";
+				static char *passname;
+				static int lastpass = -1;
+				char objname[1024];
+				if (lastpass!=passtype[pass])
+				{
+					lastpass=passtype[pass];
+					switch(lastpass) {
+					case PC_PRETOPDOWN: passname = "PRESYNC"; break;
+					case PC_BOTTOMUP: passname = "SYNC"; break;
+					case PC_POSTTOPDOWN: passname = "POSTSYNC"; break;
+					default: passname = "UNKNOWN"; break;
+					}
+				}
+				if (lasttime!=global_clock)
+				{
+					lasttime = global_clock;
+					convert_from_timestamp(global_clock,lastdate,sizeof(lastdate));
+				}
+				convert_from_timestamp(this_t<0?-this_t:this_t,syncdate,sizeof(syncdate));
+				if (obj->name==NULL) sprintf(objname,"%s:%d", obj->oclass->name, obj->id);
+				else strcpy(objname,obj->name);
+				fprintf(fp,"%s,%s,%d,%d,%s,%s\n",lastdate,passname,global_iteration_limit-iteration_counter,thread,objname,syncdate);
+			}
+		}
+#endif
+	}
 	else 
 		this_t = TS_NEVER; /* already out of service */
 

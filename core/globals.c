@@ -82,6 +82,9 @@ static struct s_varmap {
 	{"maximum_synctime",PT_int32, &global_maximum_synctime, PA_REFERENCE},
 	{"run_realtime",PT_int32, &global_run_realtime, PA_REFERENCE},
 	{"no_deprecate",PT_int16, &global_suppress_deprecated_messages, PA_REFERENCE},
+#ifdef _DEBUG
+	{"sync_dumpfile",PT_char1024, &global_sync_dumpfile, PA_REFERENCE},
+#endif
 	/* add new global variables here */
 };
 

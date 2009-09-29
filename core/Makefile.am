@@ -1,9 +1,7 @@
 SUBDIRS=rt
 etcdir=$(prefix)/etc
 pkgetcdir=$(etcdir)/$(PACKAGE)
-tmydir=$(etcdir)/tmy
 pkgetc_DATA=tzinfo.txt unitfile.txt
-tmy_DATA=
 bin_PROGRAMS = gridlabd
 CC = $(PTHREAD_CC)
 AM_CFLAGS = $(PTHREAD_CFLAGS)
