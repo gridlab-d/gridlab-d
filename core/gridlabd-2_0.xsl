@@ -78,6 +78,7 @@
 <TR><TH>maximum_synctime</TH><TD><xsl:value-of select="maximum_synctime"/></TD></TR>
 <TR><TH>run_realtime</TH><TD><xsl:value-of select="run_realtime"/></TD></TR>
 <TR><TH>no_deprecate</TH><TD><xsl:value-of select="no_deprecate"/></TD></TR>
+<TR><TH>sync_dumpfile</TH><TD><xsl:value-of select="sync_dumpfile"/></TD></TR>
 </TABLE>
 <H2><A NAME="solver_ranks">Solver ranks</A></H2>
 <TABLE BORDER="1">
@@ -324,7 +325,7 @@
 <xsl:for-each select="powerflow/voltdump_list/voltdump"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="group"/></TD><TD><xsl:value-of select="runtime"/></TD><TD><xsl:value-of select="filename"/></TD><TD><xsl:value-of select="runcount"/></TD></TR>
 </xsl:for-each></TABLE>
 <H3><A NAME="modules_residential">residential</A></H3><TABLE BORDER="1">
-<TR><TH>version.major</TH><TD><xsl:value-of select="residential/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="residential/version.minor"/></TD></TR><TR><TH>default_line_voltage</TH><TD><xsl:value-of select="residential/default_line_voltage"/></TD></TR><TR><TH>default_line_current</TH><TD><xsl:value-of select="residential/default_line_current"/></TD></TR><TR><TH>default_outdoor_temperature</TH><TD><xsl:value-of select="residential/default_outdoor_temperature"/></TD></TR><TR><TH>default_humidity</TH><TD><xsl:value-of select="residential/default_humidity"/></TD></TR><TR><TH>default_solar</TH><TD><xsl:value-of select="residential/default_solar"/></TD></TR><TR><TH>implicit_enduses</TH><TD><xsl:value-of select="residential/implicit_enduses"/></TD></TR><TR><TH>house_low_temperature_warning[F]</TH><TD><xsl:value-of select="residential/house_low_temperature_warning[F]"/></TD></TR><TR><TH>house_high_temperature_warning[F]</TH><TD><xsl:value-of select="residential/house_high_temperature_warning[F]"/></TD></TR><TR><TH>thermostat_control_warning</TH><TD><xsl:value-of select="residential/thermostat_control_warning"/></TD></TR></TABLE>
+<TR><TH>version.major</TH><TD><xsl:value-of select="residential/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="residential/version.minor"/></TD></TR><TR><TH>default_line_voltage</TH><TD><xsl:value-of select="residential/default_line_voltage"/></TD></TR><TR><TH>default_line_current</TH><TD><xsl:value-of select="residential/default_line_current"/></TD></TR><TR><TH>default_outdoor_temperature</TH><TD><xsl:value-of select="residential/default_outdoor_temperature"/></TD></TR><TR><TH>default_humidity</TH><TD><xsl:value-of select="residential/default_humidity"/></TD></TR><TR><TH>default_solar</TH><TD><xsl:value-of select="residential/default_solar"/></TD></TR><TR><TH>implicit_enduses</TH><TD><xsl:value-of select="residential/implicit_enduses"/></TD></TR><TR><TH>house_low_temperature_warning[degF]</TH><TD><xsl:value-of select="residential/house_low_temperature_warning[degF]"/></TD></TR><TR><TH>house_high_temperature_warning[degF]</TH><TD><xsl:value-of select="residential/house_high_temperature_warning[degF]"/></TD></TR><TR><TH>thermostat_control_warning</TH><TD><xsl:value-of select="residential/thermostat_control_warning"/></TD></TR><TR><TH>system_dwell_time[s]</TH><TD><xsl:value-of select="residential/system_dwell_time[s]"/></TD></TR></TABLE>
 <H4>residential_enduse objects</H4><TABLE BORDER="1">
 <TR><TH>Name</TH><TH>shape</TH><TH>load</TH><TH>energy</TH><TH>power</TH><TH>peak_demand</TH><TH>heatgain</TH><TH>heatgain_fraction</TH><TH>current_fraction</TH><TH>impedance_fraction</TH><TH>power_fraction</TH><TH>power_factor</TH><TH>constant_power</TH><TH>constant_current</TH><TH>constant_admittance</TH><TH>voltage_factor</TH><TH>configuration</TH></TR>
 <xsl:for-each select="residential/residential_enduse_list/residential_enduse"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="shape"/></TD><TD><xsl:value-of select="load"/></TD><TD><xsl:value-of select="energy"/></TD><TD><xsl:value-of select="power"/></TD><TD><xsl:value-of select="peak_demand"/></TD><TD><xsl:value-of select="heatgain"/></TD><TD><xsl:value-of select="heatgain_fraction"/></TD><TD><xsl:value-of select="current_fraction"/></TD><TD><xsl:value-of select="impedance_fraction"/></TD><TD><xsl:value-of select="power_fraction"/></TD><TD><xsl:value-of select="power_factor"/></TD><TD><xsl:value-of select="constant_power"/></TD><TD><xsl:value-of select="constant_current"/></TD><TD><xsl:value-of select="constant_admittance"/></TD><TD><xsl:value-of select="voltage_factor"/></TD><TD><xsl:value-of select="configuration"/></TD></TR>
@@ -1902,9 +1903,10 @@ module residential {
 	default_humidity <xsl:value-of select="default_humidity"/>;
 	default_solar <xsl:value-of select="default_solar"/>;
 	implicit_enduses <xsl:value-of select="implicit_enduses"/>;
-	house_low_temperature_warning[F] <xsl:value-of select="house_low_temperature_warning[F]"/>;
-	house_high_temperature_warning[F] <xsl:value-of select="house_high_temperature_warning[F]"/>;
+	house_low_temperature_warning[degF] <xsl:value-of select="house_low_temperature_warning[degF]"/>;
+	house_high_temperature_warning[degF] <xsl:value-of select="house_high_temperature_warning[degF]"/>;
 	thermostat_control_warning <xsl:value-of select="thermostat_control_warning"/>;
+	system_dwell_time[s] <xsl:value-of select="system_dwell_time[s]"/>;
 }
 
 # residential::residential_enduse objects
