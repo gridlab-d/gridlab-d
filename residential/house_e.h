@@ -146,6 +146,7 @@ private:
 #endif
 	static bool warn_control;
 	static double warn_low_temp, warn_high_temp;
+	static double system_dwell_time; // time interval at which hvac checks its state (approximates true dwell time)
 	bool check_start;
 
 	complex load_values[3][3];	//Power, Current, and impedance (admittance) load accumulators for NR solving method

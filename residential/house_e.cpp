@@ -529,9 +529,10 @@ EXPORT CIRCUIT *attach_enduse_house_e(OBJECT *obj, enduse *target, double breake
 CLASS* house_e::oclass = NULL;
 CLASS* house_e::pclass = NULL;
 
-double house_e::warn_low_temp = 55;
-double house_e::warn_high_temp = 95;
+double house_e::warn_low_temp = 55; // degF
+double house_e::warn_high_temp = 95; // degF
 bool house_e::warn_control = true;
+double house_e::system_dwell_time = 300; // seconds
 
 /** House object constructor:  Registers the class and publishes the variables that can be set by the user. 
 Sets default randomized values for published variables.
@@ -650,14 +651,17 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_KEYWORD, "NONE", (set)0,
 			PT_DESCRIPTION, "list of implicit enduses that are active in houses",
 			NULL);
-		gl_global_create("residential::house_low_temperature_warning[F]",PT_double,&warn_low_temp,
+		gl_global_create("residential::house_low_temperature_warning[degF]",PT_double,&warn_low_temp,
 			PT_DESCRIPTION, "the low house indoor temperature at which a warning will be generated",
 			NULL);
-		gl_global_create("residential::house_high_temperature_warning[F]",PT_double,&warn_high_temp,
+		gl_global_create("residential::house_high_temperature_warning[degF]",PT_double,&warn_high_temp,
 			PT_DESCRIPTION, "the high house indoor temperature at which a warning will be generated",
 			NULL);
 		gl_global_create("residential::thermostat_control_warning",PT_double,&warn_control,
 			PT_DESCRIPTION, "boolean to indicate whether a warning is generated when indoor temperature is out of control limits",
+			NULL);
+		gl_global_create("residential::system_dwell_time[s]",PT_double,&system_dwell_time,
+			PT_DESCRIPTION, "the heating/cooling system dwell time interval for changing system state",
 			NULL);
 	}	
 }
@@ -1254,6 +1258,13 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	gl_printtime(t2, tbuf, 64);
 	gl_debug("house %s (%d) next event at '%s'", obj->name, obj->id, tbuf);
 #endif
+
+	// enforce dwell time
+	if (t2!=TS_NEVER)
+	{
+		double t = ceil((t2<0 ? -t2 : t2)/system_dwell_time)*system_dwell_time;
+		t2 = (t2<0 ? -t : t);
+	}
 	return t2;
 	
 }
