@@ -2,26 +2,36 @@
 //
 
 #set dateformat=US
+#set randomseed=17
+#set suppress_repeat_messages=0
 
 module powerflow;
 module climate;
-module residential {
-//	implicit_enduses LIGHTS|DRYER|PLUGS|OCCUPANCY|DISHWASHER|MICROWAVE|RANGE|CLOTHESWASHER|WATERHEATER|REFRIGERATOR|FREEZER;
-}
+module residential;
 module tape;
 
 clock {
 	timezone PST+8PDT;
-	starttime '2006-04-03 0:00:00 PST';
-	stoptime '2007-04-02 0:00:00 PST';
+	starttime '2006-04-01 0:00:00 PST';
+	stoptime '2007-04-01 0:00:00 PST';
 }
 
 #include "WA-Olympia.glm"
 
+schedule heating {
+	* 21-5 * * * 70
+	* 6-20 * * * 65
+}
+schedule cooling {
+	* 6-7 * * * 83
+	* 8-15 * * * 78
+	* 16-5 * * * 75
+}
+
 object house:..25 {
 	floor_area random.sampled(2750,1750,2250,2250,1750,2750,1750,1250,2250,2250,1750,2250,1250,2250,1750,2250,1750,1250,2250,2250,1750,2250,1750,1750,1750) sf;
-	heating_setpoint random.triangle(64,72) degF;
-	cooling_setpoint random.triangle(75,82) degF;
+	heating_setpoint heating;
+	cooling_setpoint cooling;
 	mass_heat_capacity ($floor_area/2);
 };
 
