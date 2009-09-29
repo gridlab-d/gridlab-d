@@ -101,7 +101,7 @@ char *strlwr(char *s)
 #endif
 
 // list of enduses that are implicitly active (-1 is all)
-set house_e::implicit_enduses_active = 0xffffffff;
+set house_e::implicit_enduses_active = 0xffffffffffffffff;
 
 //////////////////////////////////////////////////////////////////////////
 // implicit loadshapes - these are enabled by using implicit_enduses global
@@ -394,36 +394,36 @@ struct s_implicit_enduse_list {
 		"type:pulsed; schedule: residential-dishwasher-default; energy: 1.0 kWh; power: 1.0 kW; count: 1; stdev: 150 W",
 		"residential-dishwasher-default", 
 		"positive; nonzero; weekday-summer {"
-		"*  0 * * 1-5 0.0068; *  1 * * 1-5 0.0029; *  2 * * 1-5 0.0016; *  3 * * 1-5 0.0013;"
-		"*  4 * * 1-5 0.0012; *  5 * * 1-5 0.0037; *  6 * * 1-5 0.0075; *  7 * * 1-5 0.0129;"
-		"*  8 * * 1-5 0.0180; *  9 * * 1-5 0.0177; * 10 * * 1-5 0.0144; * 11 * * 1-5 0.0113;"
-		"* 12 * * 1-5 0.0116; * 13 * * 1-5 0.0128; * 14 * * 1-5 0.0109; * 15 * * 1-5 0.0105;"
-		"* 16 * * 1-5 0.0124; * 17 * * 1-5 0.0156; * 18 * * 1-5 0.0278; * 19 * * 1-5 0.0343;"
-		"* 20 * * 1-5 0.0279; * 21 * * 1-5 0.0234; * 22 * * 1-5 0.0194; * 23 * * 1-5 0.0131"
+		"*  0 * 4-9 1-5 0.0068; *  1 * 4-9 1-5 0.0029; *  2 * 4-9 1-5 0.0016; *  3 * 4-9 1-5 0.0013;"
+		"*  4 * 4-9 1-5 0.0012; *  5 * 4-9 1-5 0.0037; *  6 * 4-9 1-5 0.0075; *  7 * 4-9 1-5 0.0129;"
+		"*  8 * 4-9 1-5 0.0180; *  9 * 4-9 1-5 0.0177; * 10 * 4-9 1-5 0.0144; * 11 * 4-9 1-5 0.0113;"
+		"* 12 * 4-9 1-5 0.0116; * 13 * 4-9 1-5 0.0128; * 14 * 4-9 1-5 0.0109; * 15 * 4-9 1-5 0.0105;"
+		"* 16 * 4-9 1-5 0.0124; * 17 * 4-9 1-5 0.0156; * 18 * 4-9 1-5 0.0278; * 19 * 4-9 1-5 0.0343;"
+		"* 20 * 4-9 1-5 0.0279; * 21 * 4-9 1-5 0.0234; * 22 * 4-9 1-5 0.0194; * 23 * 4-9 1-5 0.0131"
 		"}"
 		"weekend-summer {"
-		"*  0 * * 6-0 0.0093; *  1 * * 6-0 0.0045; *  2 * * 6-0 0.0021; *  3 * * 6-0 0.0015;"
-		"*  4 * * 6-0 0.0013; *  5 * * 6-0 0.0015; *  6 * * 6-0 0.0026; *  7 * * 6-0 0.0067;"
-		"*  8 * * 6-0 0.0142; *  9 * * 6-0 0.0221; * 10 * * 6-0 0.0259; * 11 * * 6-0 0.0238;"
-		"* 12 * * 6-0 0.0214; * 13 * * 6-0 0.0214; * 14 * * 6-0 0.0188; * 15 * * 6-0 0.0169;"
-		"* 16 * * 6-0 0.0156; * 17 * * 6-0 0.0166; * 18 * * 6-0 0.0249; * 19 * * 6-0 0.0298;"
-		"* 20 * * 6-0 0.0267; * 21 * * 6-0 0.0221; * 22 * * 6-0 0.0174; * 23 * * 6-0 0.0145"
+		"*  0 * 4-9 6-0 0.0093; *  1 * 4-9 6-0 0.0045; *  2 * 4-9 6-0 0.0021; *  3 * 4-9 6-0 0.0015;"
+		"*  4 * 4-9 6-0 0.0013; *  5 * 4-9 6-0 0.0015; *  6 * 4-9 6-0 0.0026; *  7 * 4-9 6-0 0.0067;"
+		"*  8 * 4-9 6-0 0.0142; *  9 * 4-9 6-0 0.0221; * 10 * 4-9 6-0 0.0259; * 11 * 4-9 6-0 0.0238;"
+		"* 12 * 4-9 6-0 0.0214; * 13 * 4-9 6-0 0.0214; * 14 * 4-9 6-0 0.0188; * 15 * 4-9 6-0 0.0169;"
+		"* 16 * 4-9 6-0 0.0156; * 17 * 4-9 6-0 0.0166; * 18 * 4-9 6-0 0.0249; * 19 * 4-9 6-0 0.0298;"
+		"* 20 * 4-9 6-0 0.0267; * 21 * 4-9 6-0 0.0221; * 22 * 4-9 6-0 0.0174; * 23 * 4-9 6-0 0.0145"
 		"}"
 		"weekday-winter {"
-		"*  0 * * 1-5 0.0068; *  1 * * 1-5 0.0029; *  2 * * 1-5 0.0016; *  3 * * 1-5 0.0013;"
-		"*  4 * * 1-5 0.0012; *  5 * * 1-5 0.0037; *  6 * * 1-5 0.0075; *  7 * * 1-5 0.0129;"
-		"*  8 * * 1-5 0.0180; *  9 * * 1-5 0.0177; * 10 * * 1-5 0.0144; * 11 * * 1-5 0.0113;"
-		"* 12 * * 1-5 0.0116; * 13 * * 1-5 0.0128; * 14 * * 1-5 0.0109; * 15 * * 1-5 0.0105;"
-		"* 16 * * 1-5 0.0124; * 17 * * 1-5 0.0156; * 18 * * 1-5 0.0278; * 19 * * 1-5 0.0343;"
-		"* 20 * * 1-5 0.0279; * 21 * * 1-5 0.0234; * 22 * * 1-5 0.0194; * 23 * * 1-5 0.0131"
+		"*  0 * 10-3 1-5 0.0068; *  1 * 10-3 1-5 0.0029; *  2 * 10-3 1-5 0.0016; *  3 * 10-3 1-5 0.0013;"
+		"*  4 * 10-3 1-5 0.0012; *  5 * 10-3 1-5 0.0037; *  6 * 10-3 1-5 0.0075; *  7 * 10-3 1-5 0.0129;"
+		"*  8 * 10-3 1-5 0.0180; *  9 * 10-3 1-5 0.0177; * 10 * 10-3 1-5 0.0144; * 11 * 10-3 1-5 0.0113;"
+		"* 12 * 10-3 1-5 0.0116; * 13 * 10-3 1-5 0.0128; * 14 * 10-3 1-5 0.0109; * 15 * 10-3 1-5 0.0105;"
+		"* 16 * 10-3 1-5 0.0124; * 17 * 10-3 1-5 0.0156; * 18 * 10-3 1-5 0.0278; * 19 * 10-3 1-5 0.0343;"
+		"* 20 * 10-3 1-5 0.0279; * 21 * 10-3 1-5 0.0234; * 22 * 10-3 1-5 0.0194; * 23 * 10-3 1-5 0.0131"
 		"}"
 		"weekend-winter {"
-		"*  0 * * 6-0 0.0093; *  1 * * 6-0 0.0045; *  2 * * 6-0 0.0021; *  3 * * 6-0 0.0015;"
-		"*  4 * * 6-0 0.0013; *  5 * * 6-0 0.0015; *  6 * * 6-0 0.0026; *  7 * * 6-0 0.0067;"
-		"*  8 * * 6-0 0.0142; *  9 * * 6-0 0.0221; * 10 * * 6-0 0.0259; * 11 * * 6-0 0.0238;"
-		"* 12 * * 6-0 0.0214; * 13 * * 6-0 0.0214; * 14 * * 6-0 0.0188; * 15 * * 6-0 0.0169;"
-		"* 16 * * 6-0 0.0156; * 17 * * 6-0 0.0166; * 18 * * 6-0 0.0249; * 19 * * 6-0 0.0298;"
-		"* 20 * * 6-0 0.0267; * 21 * * 6-0 0.0221; * 22 * * 6-0 0.0174; * 23 * * 6-0 0.0145"
+		"*  0 * 10-3 6-0 0.0093; *  1 * 10-3 6-0 0.0045; *  2 * 10-3 6-0 0.0021; *  3 * 10-3 6-0 0.0015;"
+		"*  4 * 10-3 6-0 0.0013; *  5 * 10-3 6-0 0.0015; *  6 * 10-3 6-0 0.0026; *  7 * 10-3 6-0 0.0067;"
+		"*  8 * 10-3 6-0 0.0142; *  9 * 10-3 6-0 0.0221; * 10 * 10-3 6-0 0.0259; * 11 * 10-3 6-0 0.0238;"
+		"* 12 * 10-3 6-0 0.0214; * 13 * 10-3 6-0 0.0214; * 14 * 10-3 6-0 0.0188; * 15 * 10-3 6-0 0.0169;"
+		"* 16 * 10-3 6-0 0.0156; * 17 * 10-3 6-0 0.0166; * 18 * 10-3 6-0 0.0249; * 19 * 10-3 6-0 0.0298;"
+		"* 20 * 10-3 6-0 0.0267; * 21 * 10-3 6-0 0.0221; * 22 * 10-3 6-0 0.0174; * 23 * 10-3 6-0 0.0145"
 		"}"		
 	},
 	{   "RANGE", 
@@ -679,10 +679,17 @@ int house_e::create()
 
 	if (strcmp(active_enduses,"NONE")!=0)
 	{
-		// scan the implicit_enduse list
+		char *eulist[64];
+		char n_eu=0;
+
+		// extract the implicit_enduse list
 		while ((token=strtok(token?NULL:active_enduses,"|"))!=NULL)
+			eulist[n_eu++] = token;
+
+		while (n_eu-->0)
 		{
-			strlwr(token);
+			char *euname = eulist[n_eu];
+			strlwr(euname);
 			
 			// find the implicit enduse description
 			struct s_implicit_enduse_list *eu = NULL;
@@ -690,7 +697,7 @@ int house_e::create()
 			for (eu=implicit_enduse_data; eu<implicit_enduse_data+sizeof(implicit_enduse_data)/sizeof(implicit_enduse_data[0]); eu++)
 			{
 				char name[64];
-				sprintf(name,"residential-%s-default",token);
+				sprintf(name,"residential-%s-default",euname);
 				// matched enduse
 				if (strcmp(eu->schedule_name,name)==0)
 				{
@@ -894,7 +901,7 @@ int house_e::init(OBJECT *parent)
 	if(cooling_design_temperature == 0)	cooling_design_temperature = 95.0;
 	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * gl_random_triangle(4,6); // ~5 W/sf estimated
 	if (latent_load_fraction==0) latent_load_fraction = 0.2;
-	if (design_cooling_capacity==0)	design_cooling_capacity = (1+latent_load_fraction) * envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (glazing_shgc)) + design_internal_gains;
+	if (design_cooling_capacity==0)	design_cooling_capacity = (1+latent_load_fraction) * envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (1-glazing_shgc)) + design_internal_gains;
 	if (design_heating_capacity==0)	design_heating_capacity = envelope_UA * (heating_setpoint - heating_design_temperature);
     if (system_mode==SM_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
 
@@ -1438,24 +1445,10 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				//Convert values appropriately - assume nominal voltages of 240 and 120 (0 degrees)
 				//All values are given in kW, so convert to normal
-				if (n==0)	//1-2 240 V load
-				{
-					load_values[0][2] += c->pLoad->power * 1000.0;
-					load_values[1][2] += ~(c->pLoad->current * 1000.0 / 240.0);
-					load_values[2][2] += ~(c->pLoad->admittance * 1000.0 / (240.0 * 240.0));
-				}
-				else if (n==1)	//2-N 120 V load
-				{
-					load_values[0][1] += c->pLoad->power * 1000.0;
-					load_values[1][1] += ~(c->pLoad->current * 1000.0 / 120.0);
-					load_values[2][1] += ~(c->pLoad->admittance * 1000.0 / (120.0 * 120.0));
-				}
-				else	//n has to equal 2 here (checked above) - 1-N 120 V load
-				{
-					load_values[0][0] += c->pLoad->power * 1000.0;
-					load_values[1][0] += ~(c->pLoad->current * 1000.0 / 120.0);
-					load_values[2][0] += ~(c->pLoad->admittance * 1000.0 / (120.0 * 120.0));
-				}
+				double V = c->pV->Mag();
+				load_values[0][1] += c->pLoad->power * 1000.0;
+				load_values[1][1] += ~(c->pLoad->current * 1000.0 / V);
+				load_values[2][1] += ~(c->pLoad->admittance * 1000.0 / (V*V));
 
 				total.total += c->pLoad->total;
 				total.power += c->pLoad->power;
