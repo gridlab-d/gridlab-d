@@ -1,4 +1,5 @@
 module assert;
+
 #ifdef RECORD
 module tape;
 #endif

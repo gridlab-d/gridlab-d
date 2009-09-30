@@ -20,12 +20,6 @@ module assert;
 module tape;
 
 object house{
-
-	object recorder{
-		property total.power,total.energy;
-		file "test_refrigerator_implicit.csv";
-		interval 3600;
-		limit 100;
-	};	
+	// assert needed here
 }
 
