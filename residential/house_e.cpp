@@ -690,7 +690,7 @@ int house_e::create()
 		while ((token=strtok(token?NULL:active_enduses,"|"))!=NULL)
 			eulist[n_eu++] = token;
 
-		while (token && n_eu-->0)
+		while (n_eu-->0)
 		{
 			char *euname = eulist[n_eu];
 			strlwr(euname);
@@ -731,7 +731,7 @@ int house_e::create()
 			}
 			if (found==0)
 			{
-				gl_error("house_e data for '%s' implicit enduse not found", token);
+				gl_error("house_e data for '%s' implicit enduse not found", euname);
 				result = FAILED;
 			}
 		}
