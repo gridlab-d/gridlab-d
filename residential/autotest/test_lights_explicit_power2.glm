@@ -46,7 +46,7 @@ schedule lighting {
 	* 20 * 10-3 6-0 0.9400; * 21 * 10-3 6-0 0.8800; * 22 * 10-3 6-0 0.7600; * 23 * 10-3 6-0 0.5800
 }
 
-module residential;
+module residential { implicit_enduses NONE; };
 module assert;
 module tape;
 
@@ -63,11 +63,11 @@ object house {
 		//Weekend Summer test
 		//WARNING: This test may be off by 1 hour. Please adjust accordingly.
 		object complex_assert {
-			target "total";
+			target power;
 			within .01;
 			object player {
 				property value;
-				file "../test_lights_explicit_power2.player";
+				file "test_lights_explicit_power2.player";
 				loop 1;
 			};
 		};

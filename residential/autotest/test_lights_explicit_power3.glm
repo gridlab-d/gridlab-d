@@ -63,11 +63,11 @@ object house {
 		//Weekday Winter test
 		//WARNING: This test may be off by 1 hour. Please adjust accordingly.
 		object complex_assert {
-			target "total";
+			target power;
 			within .01;
 			object player {
 				property value;
-				file "../test_lights_explicit_power3.player";
+				file "test_lights_explicit_power3.player";
 				loop 1;
 			};
 		};
