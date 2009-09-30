@@ -22,26 +22,26 @@ object house {
 	cooling_setpoint 100; // turns of HVAC
 	heating_setpoint 1;
 	object plugload {
-		installed_power .1;
+		//shape "type: analog; schedule: residential-plugs-default; power: 0.1";
 		object player {
-			file ../generic_demand.glt;
+			file generic_demand.glt;
 			loop 100;
 			property demand;
 		};
 		object complex_assert {
-			target "energy_meter";
+			target "energy";
 			once ONCE_TRUE;
 			within 0.0001;
 			object player {
 				property value;
-				file ../plugload_energy_meter.player;
+				file plugload_energy_meter.player;
 			};
 		};
 		object recorder {
 			file "plugload_load_usage3600.csv";
 			interval 3600;
 			limit 24;
-			property demand,enduse_load,energy_meter;
+			property load,power,energy_meter;
 		};
 	};
 }

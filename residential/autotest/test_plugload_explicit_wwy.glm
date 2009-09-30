@@ -61,10 +61,10 @@ object house {
 		shape "type: analog; schedule: plugs; power: .36 kW";
 		object complex_assert {
 			once ONCE_TRUE;
-			target "enduse_load";
+			target "power";
 			object player {
 				property value;
-				file "../test_plugload_enduse_load_wwy.player";
+				file "test_plugload_enduse_load_wwy.player";
 			};
 			within 1e-6;
 		};
@@ -73,7 +73,7 @@ object house {
 			target "energy";
 			object player {
 				property value;
-				file "../test_plugload_energy_wwy.player";
+				file "test_plugload_energy_wwy.player";
 			};
 			within 1e-6;
 		};
@@ -82,12 +82,12 @@ object house {
 			target "heatgain";
 			object player {
 				property value;
-				file "../test_plugload_heatgain_wwy.player";
+				file "test_plugload_heatgain_wwy.player";
 			};
 			within 1e-3;
 		};
 		object recorder {
-			property enduse_load,energy,heatgain;
+			property power,energy,heatgain;
 			file "test_plugload_explicit_wwy.csv";
 			interval 3600;
 			limit 30;
