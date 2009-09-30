@@ -201,7 +201,7 @@ struct s_implicit_enduse_list {
 
 	{   "CLOTHESWASHER", 
 		{20, false, {0.0,0.0,1.0}, 0.9, 1.0},
-		"type: pulsed; schedule: residential-clotheswasher-default; energy: 0.75 kWh; count: 0.25; power: 1 kW; stdev: 0.15 kW",
+		"type:analog; schedule: residential-clotheswasher-default; energy: 0.75 kWh; power: 1 kW; stdev: 0.15 kW",
 		"residential-clotheswasher-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.0029; *  1 * 4-9 1-5 0.0019; *  2 * 4-9 1-5 0.0014; *  3 * 4-9 1-5 0.0013;"
@@ -239,7 +239,7 @@ struct s_implicit_enduse_list {
 
 	{   "WATERHEATER", 
 		{30, true, {0.0,0.0,1.0}, 1.0, 0.5},
-		"type:modulated; schedule: residential-waterheater-default; energy: 1 kWh; count: 1; power: 5 kW; pulse: 750 Wh; modulation: frequency; stdev: 500 W",
+		"type:analog; schedule: residential-waterheater-default; energy: 1 kWh; power: 5 kW; stdev: 500 W",
 		"residential-waterheater-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.21; *  1 * 4-9 1-5 0.16; *  2 * 4-9 1-5 0.13; *  3 * 4-9 1-5 0.12;"
@@ -277,7 +277,7 @@ struct s_implicit_enduse_list {
 
 	{   "REFRIGERATOR", 
 		{20, false, {0.1,0.0,0.9}, 0.9, 1.0},
-		"type:modulated; schedule: residential-refrigerator-default; energy: 1 kWh; count: 25; power: 750 W; stdev: 100 W; modulation: frequency",
+		"type:analog; schedule: residential-refrigerator-default; energy: 1 kWh; power: 750 W; stdev: 100 W;",
 		"residential-refrigerator-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.187; *  1 * 4-9 1-5 0.182; *  2 * 4-9 1-5 0.176; *  3 * 4-9 1-5 0.170;"
@@ -315,7 +315,7 @@ struct s_implicit_enduse_list {
 
 	{   "DRYER", 
 		{30, true, {0.9,0.0,0.1}, 0.99, 0.15},
-		"type: pulsed; schedule: residential-dryer-default; energy: 2.5 kWh; count: 0.25; power: 5 kW; stdev: 0.5 kW",
+		"type:analog; schedule: residential-dryer-default; energy: 2.5 kWh; power: 5 kW; stdev: 0.5 kW",
 		"residential-dryer-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.036; *  1 * 4-9 1-5 0.013; *  2 * 4-9 1-5 0.007; *  3 * 4-9 1-5 0.005;"
@@ -353,7 +353,7 @@ struct s_implicit_enduse_list {
 
 	{   "FREEZER", 
 		{20, false, {0.1,0.0,0.9}, 0.9, 1.0},
-		"type:modulated; schedule: residential-freezer-default; energy: 750 Wh; count: 25; power: 500 W; stdev: 50 W; modulation: frequency",
+		"type:analog; schedule: residential-freezer-default; energy: 750 Wh; power: 500 W; stdev: 50 W;",
 		"residential-freezer-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.210; *  1 * 4-9 1-5 0.213; *  2 * 4-9 1-5 0.208; *  3 * 4-9 1-5 0.202;"
@@ -391,7 +391,7 @@ struct s_implicit_enduse_list {
 
 	{   "DISHWASHER", 
 		{20, false, {0.8,0,0.2}, 0.98, 1.0},
-		"type:pulsed; schedule: residential-dishwasher-default; energy: 1.0 kWh; power: 1.0 kW; count: 1; stdev: 150 W",
+		"type:analog; schedule: residential-dishwasher-default; energy: 1.0 kWh; power: 1.0 kW; stdev: 150 W",
 		"residential-dishwasher-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.0068; *  1 * 4-9 1-5 0.0029; *  2 * 4-9 1-5 0.0016; *  3 * 4-9 1-5 0.0013;"
@@ -428,7 +428,7 @@ struct s_implicit_enduse_list {
 	},
 	{   "RANGE", 
 		{40, true, {1,0,0}, 0.85, 0.8},
-		"type:pulsed; schedule: residential-range-default; energy: 1.0 kWh; power: 0.5 kW; count: 1; stdev: 95 W",
+		"type:analog; schedule: residential-range-default; energy: 1.0 kWh; power: 0.5 kW; stdev: 95 W",
 		"residential-range-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.009; *  1 * 4-9 1-5 0.008; *  2 * 4-9 1-5 0.007; *  3 * 4-9 1-5 0.007"
@@ -465,7 +465,7 @@ struct s_implicit_enduse_list {
 	},
 	{   "MICROWAVE", 
 		{40, false, {0,0,1}, 0.7, 0.8},
-		"type:pulsed; schedule: residential-microwave-default; energy: 1.0 kWh; power: 0.2 kW; count: 1; stdev: 40 W",
+		"type:analog; schedule: residential-microwave-default; energy: 1.0 kWh; power: 0.2 kW; stdev: 40 W",
 		"residential-microwave-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.009; *  1 * 4-9 1-5 0.008; *  2 * 4-9 1-5 0.007; *  3 * 4-9 1-5 0.007"
