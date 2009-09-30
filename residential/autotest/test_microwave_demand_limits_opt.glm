@@ -24,15 +24,15 @@ object microwave:2 {
 
 object player:3 {
 	parent microwave:2;
-	property demand;
-	file "../test_generic_limit_demand(range0-1).glt";
+	property load;
+	file "test_generic_limit_demand(range0-1).glt";
 }
 
 
 
 object recorder:4 {
 	parent microwave:2;
-	property demand;
+	property load;
 	file "test_generic_limit_demand.csv";
 	interval 3600;
 	limit 24;
@@ -41,10 +41,10 @@ object recorder:4 {
 object double_assert:5 {
 	parent microwave:2;
 	status ASSERT_TRUE;
-	target "demand";
+	target "load";
 	within 0.001;
 	object player {
 		property value;
-		file "../test_generic_limit_demand.player";
+		file "test_generic_limit_demand.player";
 	};
 }

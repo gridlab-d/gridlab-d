@@ -36,7 +36,7 @@ object double_assert:4 {
 	within 0.001;
 	object player {
 		property value;
-		file "../test_microwave_standby_power_limits.player";//standby_power should = 10 W
+		file "test_microwave_standby_power_limits.player";//standby_power should = 10 W
 	};
 }
 

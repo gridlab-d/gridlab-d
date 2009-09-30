@@ -47,7 +47,7 @@ object house {
 		//Therefore, it should be a total of 1kWh of energy by the end of the day. This is not true, so someone should
 		//try checking the "pulsed" code.
 		object complex_assert {
-			target "enduse_load";
+			target "power";
 			within .01;
 			in '2001-07-01 23:59:59 PDT';
 			value 1;
@@ -55,7 +55,7 @@ object house {
 		
 	};
 	object recorder{
-		property panel;
+		property power;
 		file "test_dishwasher_external_power2.csv";
 		interval 3600;
 		limit 25;
