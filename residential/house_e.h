@@ -45,7 +45,7 @@ typedef enum {
 	IEU_DRYER			= 0x02000000, ///< implicit dryer load
 
 	/// @todo add other implicit enduse flags as they are defined
-	IEU_ALL				= 0x031f0307, ///< all (needed to filter)
+	IEU_ALL				= 0x03170303, ///< all (needed to filter)
 } IMPLICITENDUSEFLAGS;
 
 class house_e : public residential_enduse { /*inherits due to HVAC being a load */
