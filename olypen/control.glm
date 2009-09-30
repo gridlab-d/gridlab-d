@@ -2,13 +2,13 @@
 //
 
 schedule heating {
-	* 21-5 * * * 70
-	* 6-20 * * * 65
+	* 21-5 * * * 68 // night
+	* 6-20 * * * 72 // day
 }
 schedule cooling {
-	* 6-7 * * * 83
-	* 8-15 * * * 78
-	* 16-5 * * * 75
+	* 6-7 * * * 83 // morning
+	* 8-15 * * * 78 // day
+	* 16-5 * * * 75 // night
 }
 
 #define GROUP=control

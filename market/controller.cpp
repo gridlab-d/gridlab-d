@@ -24,17 +24,18 @@ controller::controller(MODULE *module){
 				PT_KEYWORD, "HOUSE_COOL", SM_HOUSE_COOL,
 				PT_KEYWORD, "HOUSE_PREHEAT", SM_HOUSE_PREHEAT,
 				PT_KEYWORD, "HOUSE_PRECOOL", SM_HOUSE_PRECOOL,
-			PT_double, "ramp_low", PADDR(kT_L), PT_DESCRIPTION, "negative if heating, positive if cooling",
-			PT_double, "ramp_high", PADDR(kT_H),
-			PT_double, "Tmin", PADDR(Tmin),
-			PT_double, "Tmax", PADDR(Tmax),
-			PT_char32, "target", PADDR(target),
-			PT_char32, "setpoint", PADDR(setpoint),
-			PT_char32, "demand", PADDR(demand),
-			PT_object, "market", PADDR(pMarket),
-			PT_double, "bid_price", PADDR(last_p), PT_ACCESS, PA_REFERENCE,
-			PT_double, "bid_quant", PADDR(last_q), PT_ACCESS, PA_REFERENCE,
-			PT_double, "set_temp", PADDR(set_temp), PT_ACCESS, PA_REFERENCE,
+			PT_double, "ramp_low", PADDR(kT_L), PT_DESCRIPTION, "the comfort response below the setpoint",
+			PT_double, "ramp_high", PADDR(kT_H), PT_DESCRIPTION, "the comfort response above the setpoint",
+			PT_double, "Tmin", PADDR(Tmin), PT_DESCRIPTION, "the setpoint limit on the low side",
+			PT_double, "Tmax", PADDR(Tmax), PT_DESCRIPTION, "the setpoint limit on the high side",
+			PT_char32, "target", PADDR(target), PT_DESCRIPTION, "the observed property (e.g., air temperature)",
+			PT_char32, "setpoint", PADDR(setpoint), PT_DESCRIPTION, "the controlled property (e.g., heating setpoint)",
+			PT_char32, "demand", PADDR(demand), PT_DESCRIPTION, "the controlled load",
+			PT_char32, "total", PADDR(total), PT_DESCRIPTION, "the uncontrolled load (if any)",
+			PT_object, "market", PADDR(pMarket), PT_DESCRIPTION, "the market to bid into",
+			PT_double, "bid_price", PADDR(last_p), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid price",
+			PT_double, "bid_quant", PADDR(last_q), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid quantity",
+			PT_double, "set_temp", PADDR(set_temp), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the reset value",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(controller));
 	}
@@ -56,6 +57,7 @@ void controller::cheat(){
 			sprintf(target, "air_temperature");
 			sprintf(setpoint, "heating_setpoint");
 			sprintf(demand, "heating_demand");
+			sprintf(total, "panel.power");
 			kT_L = -2;
 			kT_H = -2;
 			Tmin = -5;
@@ -66,6 +68,7 @@ void controller::cheat(){
 			sprintf(target, "air_temperature");
 			sprintf(setpoint, "cooling_setpoint");
 			sprintf(demand, "cooling_demand");
+			sprintf(total, "panel.power");
 			kT_L = 2;
 			kT_H = 2;
 			Tmin = 0;
@@ -76,6 +79,7 @@ void controller::cheat(){
 			sprintf(target, "air_temperature");
 			sprintf(setpoint, "heating_setpoint");
 			sprintf(demand, "heating_demand");
+			sprintf(total, "panel.power");
 			kT_L = -2;
 			kT_H = -2;
 			Tmin = -5;
@@ -86,6 +90,7 @@ void controller::cheat(){
 			sprintf(target, "air_temperature");
 			sprintf(setpoint, "cooling_setpoint");
 			sprintf(demand, "cooling_demand");
+			sprintf(total, "panel.power");
 			kT_L = 2;
 			kT_H = 2;
 			Tmin = -3;
@@ -138,6 +143,7 @@ int controller::init(OBJECT *parent){
 	fetch(&pMonitor, target, parent);
 	fetch(&pSetpoint, setpoint, parent);
 	fetch(&pDemand, demand, parent);
+	fetch(&pTotal, total, parent);
 
 	if(dir == 0){
 		double high = kT_H * Tmax;
@@ -223,16 +229,20 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	if(bid < 0.0)
 		bid = market->avg24 + (*pMonitor - setpoint0) * (k_T * market->std24) / fabs(T_lim - setpoint0);
 
+	// bid the response part of the load
+	double residual = *pTotal;
+	int bid_id = (lastbid_id == market->market_id ? lastbid_id : -1);
 	if(bid > 0.0 && *pDemand > 0){
 		last_p = bid;
 		last_q = *pDemand;
-		lastbid_id = market->submit(OBJECTHDR(this), last_q, last_p, (lastmkt_id == market->market_id ? lastbid_id : -1));
-		//lastmkt_id = market->market_id; // updated in postsync
-		
+		lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id);
+		residual -= *pDemand;
 	} else {
 		last_p = 0;
 		last_q = 0;
 	}
+	lastbid_id = market->submit(OBJECTHDR(this), -residual, 9999, bid_id);
+
 	char timebuf[128];
 	gl_printtime(t1,timebuf,127);
 	//gl_verbose("controller:%i::sync(): bid $%f for %f kW at %s",hdr->id,last_p,last_q,timebuf);

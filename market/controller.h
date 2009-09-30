@@ -35,6 +35,7 @@ public:
 	char target[33];
 	char setpoint[33];
 	char demand[33];
+	char total[33];
 	OBJECT *pMarket;
 	auction *market;
 	int32 lastbid_id;
@@ -48,6 +49,7 @@ private:
 	double *pMonitor;
 	double *pSetpoint;
 	double *pDemand;
+	double *pTotal;
 	double setpoint0;
 	void cheat();
 	void fetch(double **prop, char *name, OBJECT *parent);

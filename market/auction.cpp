@@ -280,17 +280,18 @@ void auction::clear_market(void)
 			/* update reference hour */
 			lasthr = thishr;
 		}
-		/* clear the bid lists */
-		asks.clear();
-		offers.clear();
 	}
 	else
 	{
 		char name[64];
 		next.price = 0;
 		next.quantity = 0;
-		gl_verbose("  %s fails to clear due to missing %s", gl_name(OBJECTHDR(this),name,sizeof(name)), asks.getcount()==0?(offers.getcount()==0?"buyers and sellers":"buyers"):"sellers");
+		gl_warning("market '%s' fails to clear due to missing %s", gl_name(OBJECTHDR(this),name,sizeof(name)), asks.getcount()==0?(offers.getcount()==0?"buyers and sellers":"buyers"):"sellers");
 	}
+
+	/* clear the bid lists */
+	asks.clear();
+	offers.clear();
 }
 
 KEY auction::submit(OBJECT *from, double quantity, double price, KEY key)
