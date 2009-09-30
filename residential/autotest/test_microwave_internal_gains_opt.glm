@@ -21,10 +21,10 @@ object microwave:2 {
 	parent house:1;
 	installed_power 1000 W;
 	standby_power 20 W;
-	heat_fraction .5;
-	demand 1;
+	heatgain_fraction .5;
+	//demand 1;
 	object recorder {
-		property internal_gains,constant_power;
+		property heatgain,constant_power;
 		file "test_microwave_internal_gains_1.csv";
 		interval 1;
 		limit 10;
@@ -35,10 +35,10 @@ object microwave:3 {
 	parent house:1;
 	installed_power 1000 W;
 	standby_power 20 W;
-	heat_fraction .5;
-	demand 0;
+	heatgain_fraction .5;
+	//demand 0;
 	object recorder {
-		property internal_gains,constant_power;
+		property heatgain,constant_power;
 		file "test_microwave_internal_gains_0.csv";
 		interval 1;
 		limit 10;

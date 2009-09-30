@@ -3,7 +3,8 @@
 //This is a test to see that the auto-correction works correctly for standby_power.
 //The default value for standby_power is 1% of installed_power
 clock {
-	timestamp '2000-01-01 00:00:00';
+	starttime '2000-01-01 00:00:00';
+	stoptime '2001-01-01 00:00:00';
 	timezone PST+8PDT;
 }
 

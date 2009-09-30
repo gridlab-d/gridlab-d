@@ -27,7 +27,7 @@ object house {
 		in '2001-05-02 1:00:00';
 		once ONCE_TRUE;
 		target "panel.energy";
-		value 1.0+1.020204j;
+		value 0.025+0.025j;
 		within 0.01;
 	};
 	object recorder {
