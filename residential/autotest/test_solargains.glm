@@ -18,15 +18,27 @@ module climate;
 
 object house{
 
-	cooling_setpoint 300;
+	cooling_setpoint 100;
+	heating_setpoint 1;
 	
-
 	object recorder{
 		property mass_temperature,air_temperature;
 		file "test_solargains.csv";
 		interval 3600;
 		limit 10000;
 	};	
+
+	object double_assert {
+		target "mass_temperature";
+		value 60;
+		within 40;
+	};
+	
+	object double_assert {
+		target "air_temperature";
+		value 60;
+		within 35;
+	};
 }
 
 object climate{
