@@ -26,7 +26,7 @@ object house {
 	object plugload {
 		installed_power .1;
 		object player {
-			file ../generic_demand.glt;
+			file generic_demand.glt;
 			loop 24;
 			property demand;
 		};
@@ -36,7 +36,7 @@ object house {
 			within 0.001;
 			object player {
 				property value;
-				file ../plugload_internal_gains.player;
+				file plugload_internal_gains.player;
 			};
 		};
 		object recorder {
