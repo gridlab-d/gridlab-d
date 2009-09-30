@@ -46,7 +46,7 @@ schedule lighting {
 	* 20 * 10-3 6-0 0.9400; * 21 * 10-3 6-0 0.8800; * 22 * 10-3 6-0 0.7600; * 23 * 10-3 6-0 0.5800;
 }
 
-module residential { implicit_enduses NONE; }
+module residential;
 module assert;
 module tape;
 

@@ -29,11 +29,11 @@ object house {
 		limit 10000;
 	};
 	object complex_assert {
-		target "panel.total";
-		within .01;
+		target "panel.power";
+		within 1;
 		object player {
 			property value;
-			file "../test_lights_explicit_power4.player";
+			file "test_lights_explicit_power4.player";
 			loop 1;
 		};
 	};
