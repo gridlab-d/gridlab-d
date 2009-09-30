@@ -24,11 +24,25 @@ def do_help():
 	print("   that fail to converge, then return that number.")
 	return 0
 
+def print_error(path, printerr):
+	if(printerr == 1):
+		errfile = open("errfile.txt", "r")
+#		if(errfile == NULL):
+#			print("\tunable to open error file for printing")
+#			return
+		lines = errfile.readlines()
+		print(" ***** ")
+		for line in lines:
+			print (' * ',line[0:-1],)
+		print(" ***** ")
+		errfile.close()
+
 ##
 #	run_tests is the main function for the autotest validation script.
 #	@param	argv	The command line arguements.
 def run_tests(argv):
 	clean = 0
+	printerr = 1
 	#scan for --help and --clean
 	if len(argv) > 1:
 		for arg in argv:
@@ -37,6 +51,11 @@ def run_tests(argv):
 				exit(0)
 			if "--clean" in arg:
 				clean = 1
+			if "--error" in arg:
+				if printerr == 0:
+					printerr = 1
+				if printerr == 1:
+					printerr = 0
 
 	print("Starting autotest script")
 	
@@ -135,6 +154,7 @@ def run_tests(argv):
 					err = False
 				else:
 					print("ERROR: "+file+" converged when it shouldn't've"+" ("+str(round(dt,2))+"s)")
+					print_error(path, printerr)
 					err_ct += 1
 					err = True
 			elif rv == 2:
@@ -142,10 +162,12 @@ def run_tests(argv):
 				cleanlist.append((path, file))
 			elif rv == 1:
 				print("EXCEPTION:  "+file+" failed to load"+" ("+str(dt)+"s)")
+				print_error(path, printerr)
 				ex_ct += 1
 				err = True
 			else:
 				print("EXCEPTION:  "+file+" unrecognized return value ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
+				print_error(path, printerr)
 				ex_ct += 1
 				err = True
 		elif "exc_" in file or "_exc" in file:
@@ -163,6 +185,7 @@ def run_tests(argv):
 				cleanlist.append((path, file))
 			else:
 				print("EXCEPTION:  "+file+" unrecognized return value ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
+				print_error(path, printerr)
 				ex_ct += 1
 				err = True
 		else:
@@ -174,9 +197,11 @@ def run_tests(argv):
 				else:
 					err_ct += 1
 					print("ERROR: "+file+" failed to converge"+" ("+str(round(dt,2))+"s)")
+					print_error(path, printerr)
 					err = True
 			elif rv == 1:
 				print("EXCEPTION:  "+file+" failed to load"+" ("+str(round(dt,2))+"s)")
+				print_error(path, printerr)
 				ex_ct += 1
 				err = True
 			elif rv == 0:
@@ -184,6 +209,7 @@ def run_tests(argv):
 				cleanlist.append((path, file))
 			else:
 				print("EXCEPTION:  "+file+": unrecognized return value ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
+				print_error(path, printerr)
 				ex_ct += 1
 				err = True
 		if err:
