@@ -87,7 +87,7 @@ object house {
 			within 1e-3;
 		};
 		object recorder {
-			property enduse_load,energy,heatgain;
+			property power,energy,heatgain;
 			file "test_plugload_explicit_swd.csv";
 			interval 3600;
 			limit 30;
