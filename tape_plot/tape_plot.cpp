@@ -406,8 +406,11 @@ EXPORT void write_default_plot_commands_rec(struct recorder *my, char32 extensio
 	char32   ext;
 	char1024 buf;
 	char1024 plotcommands;
-	int i, j;	
-	i = j = 0;
+	char *item;
+	char1024 list;
+
+	int i, j, k;	
+	i = j = k = 0;
 	sscanf(my->file,"%32[^:]:%32[^.].[^\n;:]",type,fname,ext);
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -421,7 +424,27 @@ EXPORT void write_default_plot_commands_rec(struct recorder *my, char32 extensio
 		}
 		fprintf(my->fp, "show output; \n");
 		fprintf(my->fp, "set timefmt \"%%Y-%%m-%%d %%H:%%M:%%S\";\n");
-		j = strlen(my->columns)>0  ? 0: fprintf(my->fp, "plot \'-\' using 1:2 with lines;\n");
+		fprintf(my->fp, "set datafile missing 'NaN'\n");
+		//j = strlen(my->columns)>0  ? 0: fprintf(my->fp, "plot \'-\' using 1:2 title '%s' with lines;\n", my->property);
+		if(strlen(my->columns) > 0){
+			j = 0;
+		} else {
+			strcpy(list,my->property); /* avoid destroying orginal list */
+			k = 2;
+			for (item=strtok(list,","); item!=NULL; item=strtok(NULL,",")){
+				if(k == 2){
+					fprintf(my->fp, "plot \'-\' using 1:%i title \'%s\' with lines", k, item);
+					/* only handles one column properly as-is, will be fixed with the tape module update -MH */
+					fprintf(my->fp, "\n");
+					break;
+				}// else {
+				//	fprintf(my->fp, ", \\\n\t\'-\' using 1:%i title \'%s\' with lines", k, item);
+				//}
+				++k;
+			}
+			fprintf(my->fp, "\n");
+		}
+
 		return;
 	}
 	strcpy(plotcommands,  my->plotcommands);
