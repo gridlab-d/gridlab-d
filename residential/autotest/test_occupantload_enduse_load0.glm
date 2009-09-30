@@ -34,10 +34,10 @@ object house {
 			file "occupantload3600.csv";
 			interval 3600;
 			limit 300;
-			property enduse_load,internal_gains,occupancy_fraction,heatgain_per_person;
+			property power,heatgain,occupancy_fraction,heatgain_per_person;
 		};
 		object complex_assert {
-			target enduse_load;
+			target power;
 			value 0; // occupantloads should not consume power
 			within 0.000001;
 		};
