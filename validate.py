@@ -46,8 +46,8 @@ def run_tests(argv):
 	first_time = time.time()
 	end_time = 0
 	
-	if clean == 1:
-		print("Go clean?")
+	#if clean == 1:
+	#	print("Go clean?")
 	
 	# determine where the script starts
 	here_dir = os.getcwd()
@@ -73,8 +73,8 @@ def run_tests(argv):
 		if "autotest" in dirs:
 			autotestdirs.append(os.path.abspath(os.path.join(path,"autotest")))
 	
-	for path in autotestdirs:
-		print("Found dir: \'"+path+"\'")
+	#for path in autotestdirs:
+	#	print("Found dir: \'"+path+"\'")
 	
 	#locate autotest test files
 	#autotestfiles = find_autotest_files(autotestdirs)
@@ -84,8 +84,8 @@ def run_tests(argv):
 			if file.startswith("test_") and file.endswith(".glm") and file[0] != '.':
 				autotestfiles.append((path, file))
 	
-	for path, file in autotestfiles:
-		print("Found file: \'"+file+"\'")
+	#for path, file in autotestfiles:
+	#	print("Found file: \'"+file+"\'")
 	
 	#build test dirs
 	#for file in autotestfiles:
@@ -130,60 +130,60 @@ def run_tests(argv):
 		if "err_" in file or "_err" in file:
 			if rv == 0:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional file "+file+" converged when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
+					print("WARNING: Optional "+file+" converged when it shouldn't've"+" ("+str(round(dt,2))+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
-					print("ERROR: "+file+" converged when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
+					print("ERROR: "+file+" converged when it shouldn't've"+" ("+str(round(dt,2))+"s)")
 					err_ct += 1
 					err = True
 			elif rv == 2:
-				print("SUCCESS: File "+file+" failed to converge, as planned."+" ("+str(round(dt,2))+"s)")
+				print("SUCCESS: "+file+" failed to converge, as planned."+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			elif rv == 1:
-				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(dt)+"s)")
+				print("EXCEPTION:  "+file+" failed to load"+" ("+str(dt)+"s)")
 				ex_ct += 1
 				err = True
 			else:
-				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
+				print("EXCEPTION:  "+file+" unrecognized return value ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 		elif "exc_" in file or "_exc" in file:
 			if rv == 0:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional file "+file+" loaded when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
+					print("WARNING: Optional "+file+" loaded when it shouldn't've"+" ("+str(round(dt,2))+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
-					print("ERROR: "+file+" loaded when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
+					print("ERROR: "+file+" loaded when it shouldn't've"+" ("+str(round(dt,2))+"s)")
 					err_ct += 1
 					err = True
 			elif rv == 1:
 				print("SUCCESS:  "+file+" failed to load, as planned"+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			else:
-				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
+				print("EXCEPTION:  "+file+" unrecognized return value ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 		else:
 			if rv == 2:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional file "+file+" failed to converge!"+" ("+str(round(dt,2))+"s)")
+					print("WARNING: Optional "+file+" failed to converge"+" ("+str(round(dt,2))+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
 					err_ct += 1
-					print("ERROR: "+file+" failed to converge!"+" ("+str(round(dt,2))+"s)")
+					print("ERROR: "+file+" failed to converge"+" ("+str(round(dt,2))+"s)")
 					err = True
 			elif rv == 1:
-				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(round(dt,2))+"s)")
+				print("EXCEPTION:  "+file+" failed to load"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 			elif rv == 0:
-				print("SUCCESS: File "+file+" converged successfully."+" ("+str(round(dt,2))+"s)")
+				print("SUCCESS: "+file+" converged"+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			else:
-				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
+				print("EXCEPTION:  "+file+": unrecognized return value ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 		if err:
