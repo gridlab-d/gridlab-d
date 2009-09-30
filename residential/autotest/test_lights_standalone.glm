@@ -30,7 +30,7 @@ object lights {
 		in '2001-12-31 23:59:59 PST';
 		target energy;
 		within 1;
-		value +954-406i;
+		value +1431+610i;
 	};
 }
 
@@ -47,7 +47,7 @@ object lights {
 		in '2001-12-31 23:59:59 PST';
 		target energy;
 		within 1;
-		value +477-203i;
+		value +715+305i;
 	};
 }
 
@@ -63,6 +63,6 @@ object lights {
 		in '2001-12-31 23:59:59 PST';
 		target energy;
 		within 1;
-		value +477-203i;
+		value +715+305i;
 	};
 }
