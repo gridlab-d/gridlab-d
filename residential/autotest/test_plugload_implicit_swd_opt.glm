@@ -1,11 +1,11 @@
-//test_plugload_implicit_wwd.glm
+//test_plugload_implicit_swd.glm
 
 //This test file test the implicit use of plugloads within house_e.
 //This test validates power, energy, and heat gain.
 
 clock {
-	timestamp '2000-01-01 0:00:00';
-	stoptime '2000-01-02 1:00:00';
+	timestamp '2000-05-06 0:00:00';
+	stoptime '2000-05-07 1:00:00';
 	timezone PST+8PDT;
 }
 
@@ -23,10 +23,10 @@ object house {
 	outdoor_temperature 73;
 	object complex_assert {
 		once ONCE_TRUE;
-		target "panel.enduse_load";
+		target "panel.power";
 		object player {
 			property value;
-			file "../test_plugload_enduse_load_wwd.player";
+			file "test_plugload_enduse_load_swd.player";
 		};
 		within 1e-6;
 	};
@@ -35,7 +35,7 @@ object house {
 		target "panel.energy";
 		object player {
 			property value;
-			file "../test_plugload_energy_wwd.player";
+			file "test_plugload_energy_swd.player";
 		};
 		within 1e-6;
 	};
@@ -44,15 +44,14 @@ object house {
 		target "panel.heatgain";
 		object player {
 			property value;
-			file "../test_plugload_heatgain_wwd.player";
+			file "test_plugload_heatgain_swd.player";
 		};
 		within 1e-6;
 	};
-	
 	object recorder {
 		property panel.power,panel.energy,panel.heatgain;
-		file "test_plugload_implicit_wwd.csv";
-		interval 1800;
-		limit 60;
+		file "test_plugload_implicit_swd.csv";
+		interval 3600;
+		limit 30;
 	};
 }
