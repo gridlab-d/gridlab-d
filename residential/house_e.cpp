@@ -100,8 +100,8 @@ char *strlwr(char *s)
 }
 #endif
 
-// list of enduses that are implicitly active (-1 is all)
-set house_e::implicit_enduses_active = 0xffffffffffffffff;
+// list of enduses that are implicitly active
+set house_e::implicit_enduses_active = IEU_ALL;
 
 //////////////////////////////////////////////////////////////////////////
 // implicit loadshapes - these are enabled by using implicit_enduses global
@@ -690,7 +690,7 @@ int house_e::create()
 		while ((token=strtok(token?NULL:active_enduses,"|"))!=NULL)
 			eulist[n_eu++] = token;
 
-		while (n_eu-->0)
+		while (token && n_eu-->0)
 		{
 			char *euname = eulist[n_eu];
 			strlwr(euname);
