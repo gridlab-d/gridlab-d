@@ -44,13 +44,13 @@ public:
 	double last_q;
 	double set_temp;
 	int may_run;
+	double setpoint0;
 private:
 	TIMESTAMP next_run;
 	double *pMonitor;
 	double *pSetpoint;
 	double *pDemand;
 	double *pTotal;
-	double setpoint0;
 	void cheat();
 	void fetch(double **prop, char *name, OBJECT *parent);
 	int dir;
