@@ -36,6 +36,7 @@ controller::controller(MODULE *module){
 			PT_double, "bid_price", PADDR(last_p), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid price",
 			PT_double, "bid_quant", PADDR(last_q), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid quantity",
 			PT_double, "set_temp", PADDR(set_temp), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the reset value",
+			PT_double, "base_setpoint", PADDR(setpoint0),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(controller));
 	}
