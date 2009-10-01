@@ -159,7 +159,7 @@ def run_tests(argv):
 					err_ct += 1
 					err = True
 			elif rv == 2:
-				print("SUCCESS: "+file+" failed to converge, as planned."+" ("+str(round(dt,2))+"s)")
+#				print("SUCCESS: "+file+" failed to converge, as planned."+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			elif rv == 1:
 				print("EXCEPTION:  "+file+" failed to load"+" ("+str(dt)+"s)")
@@ -182,7 +182,7 @@ def run_tests(argv):
 					err_ct += 1
 					err = True
 			elif rv == 1:
-				print("SUCCESS:  "+file+" failed to load, as planned"+" ("+str(round(dt,2))+"s)")
+#				print("SUCCESS:  "+file+" failed to load, as planned"+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			else:
 				print("EXCEPTION:  "+file+" unrecognized return value ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
@@ -206,7 +206,7 @@ def run_tests(argv):
 				ex_ct += 1
 				err = True
 			elif rv == 0:
-				print("SUCCESS: "+file+" converged"+" ("+str(round(dt,2))+"s)")
+#				print("SUCCESS: "+file+" converged"+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			else:
 				print("EXCEPTION:  "+file+": unrecognized return value ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")

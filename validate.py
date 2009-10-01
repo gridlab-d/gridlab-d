@@ -30,6 +30,7 @@ def do_help():
 #	@param	argv	The command line arguements.
 def run_tests(argv):
 	clean = 0
+	printerr = 1
 	#scan for --help and --clean
 	if len(argv) > 1:
 		for arg in argv:
@@ -38,6 +39,11 @@ def run_tests(argv):
 				exit(0)
 			if "--clean" in arg:
 				clean = 1
+			if "--error" in arg:
+				if printerr == 0:
+					printerr = 1
+				if printerr == 1:
+					printerr = 0
 
 	print("Starting autotest script")
 	
@@ -139,7 +145,7 @@ def run_tests(argv):
 					err_ct += 1
 					err = True
 			elif rv == 2:
-				print("SUCCESS: File "+file+" failed to converge, as planned."+" ("+str(round(dt,2))+"s)")
+#				print("SUCCESS: "+file+" failed to converge, as planned."+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			elif rv == 1:
 				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(dt)+"s)")
@@ -160,7 +166,7 @@ def run_tests(argv):
 					err_ct += 1
 					err = True
 			elif rv == 1:
-				print("SUCCESS:  "+file+" failed to load, as planned"+" ("+str(round(dt,2))+"s)")
+#				print("SUCCESS:  "+file+" failed to load, as planned"+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			else:
 				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
@@ -181,7 +187,7 @@ def run_tests(argv):
 				ex_ct += 1
 				err = True
 			elif rv == 0:
-				print("SUCCESS: File "+file+" converged successfully."+" ("+str(round(dt,2))+"s)")
+#				print("SUCCESS: "+file+" converged"+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			else:
 				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")

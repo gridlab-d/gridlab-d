@@ -794,20 +794,20 @@ static int resolve_list(UNRESOLVED *item)
 			FINDLIST *match;
 			if (value++==NULL)
 			{
-				output_message("%s(%d): %s reference to %s is missing match value", filename, item->line,
+				output_error("%s(%d): %s reference to %s is missing match value", filename, item->line,
 					format_object(item->by), item->id);
 				return FAILED;
 			}
 			match = find_objects(FL_NEW,FT_CLASS,SAME,classname,AND,FT_PROPERTY,propname,SAME,value,FT_END);
 			if (match==NULL || match->hit_count==0)
 			{
-				output_message("%s(%d): %s reference to %s does not match any existing objects", filename, item->line,
+				output_error("%s(%d): %s reference to %s does not match any existing objects", filename, item->line,
 					format_object(item->by), item->id);
 				return FAILED;
 			}
 			else if (match->hit_count>1)
 			{
-				output_message("%s(%d): %s reference to %s matches more than one object", filename, item->line,
+				output_error("%s(%d): %s reference to %s matches more than one object", filename, item->line,
 					format_object(item->by), item->id);
 				return FAILED;
 			}
@@ -819,7 +819,7 @@ static int resolve_list(UNRESOLVED *item)
 			obj = object_find_by_id(item->by->id + (op[0]=='+'?+1:-1)*id);
 			if (obj==NULL)
 			{
-				output_message("%s(%d): unable resolve reference from %s to %s", filename, item->line,
+				output_error("%s(%d): unable resolve reference from %s to %s", filename, item->line,
 					format_object(item->by), item->id);
 				return FAILED;
 			}
@@ -829,13 +829,13 @@ static int resolve_list(UNRESOLVED *item)
 			obj = load_get_index(id);
 			if (obj==NULL)
 			{
-				output_message("%s(%d): unable resolve reference from %s to %s", filename, item->line,
+				output_error("%s(%d): unable resolve reference from %s to %s", filename, item->line,
 					format_object(item->by), item->id);
 				return FAILED;
 			}
 			if ((strcmp(obj->oclass->name,classname)!=0) && (strcmp("id", classname) != 0))
 			{ /* "id:###" is our wildcard.  some converters use it for dangerous simplicity. -mh */
-				output_message("%s(%d): class of reference from %s to %s mismatched", filename, item->line,
+				output_error("%s(%d): class of reference from %s to %s mismatched", filename, item->line,
 					format_object(item->by), item->id);
 				return FAILED;
 			}
@@ -846,7 +846,7 @@ static int resolve_list(UNRESOLVED *item)
 			obj = get_next_unlinked(oclass);
 			if (obj==NULL)
 			{
-				output_message("%s(%d): unable resolve reference from %s to %s", filename, item->line,
+				output_error("%s(%d): unable resolve reference from %s to %s", filename, item->line,
 					format_object(item->by), item->id);
 				return FAILED;
 			}
@@ -857,7 +857,7 @@ static int resolve_list(UNRESOLVED *item)
 		}
 		else
 		{
-			output_message("%s(%d): '%s' not found", filename, item->line, item->id);
+			output_error("%s(%d): '%s' not found", filename, item->line, item->id);
 			return FAILED;
 		}
 		*(item->ref) = obj;
@@ -897,9 +897,9 @@ static void syntax_error(char *p)
 	nl = strchr(context,'\n');
 	if (nl!=NULL) *nl='\0'; else context[15]='\0';
 	if (strlen(context)>0)
-		output_message("%s(%d): syntax error at '%s...'", filename, linenum, context);
+		output_error("%s(%d): syntax error at '%s...'", filename, linenum, context);
 	else
-		output_message("%s(%d): syntax error", filename, linenum);
+		output_error("%s(%d): syntax error", filename, linenum);
 }
 
 static int white(PARSER)
@@ -994,12 +994,12 @@ static int unitsuffix(PARSER, UNIT **unit)
 	{
 		if (!TERM(unitspec(HERE,unit)))
 		{
-			output_message("%s(%d): missing valid unit after [", filename, linenum);
+			output_error("%s(%d): missing valid unit after [", filename, linenum);
 			REJECT;
 		}
 		if (!LITERAL("]"))
 		{
-			output_message("%s(%d): missing ] after unit '%s'", filename, linenum,(*unit)->name);
+			output_error("%s(%d): missing ] after unit '%s'", filename, linenum,(*unit)->name);
 		}
 		ACCEPT;
 		DONE;
@@ -1242,7 +1242,7 @@ static int functional(PARSER, double *pValue)
 		double a;
 		if (rtype==RT_INVALID || nargs==0 || (WHITE,!LITERAL("(")))
 		{
-			output_message("%s(%d): %s is not a valid random distribution", filename,linenum,fname);
+			output_error("%s(%d): %s is not a valid random distribution", filename,linenum,fname);
 			REJECT;
 		}
 		if (nargs==-1)
@@ -1260,7 +1260,7 @@ static int functional(PARSER, double *pValue)
 					else
 					{
 						// variable arg list
-						output_message("%s(%d): expected a %s distribution term after ,", filename,linenum, fname);
+						output_error("%s(%d): expected a %s distribution term after ,", filename,linenum, fname);
 						REJECT;
 					}
 				}
@@ -1271,13 +1271,13 @@ static int functional(PARSER, double *pValue)
 				}
 				else
 				{
-					output_message("%s(%d): missing ) after %s distribution terms", filename,linenum, fname);
+					output_error("%s(%d): missing ) after %s distribution terms", filename,linenum, fname);
 					REJECT;
 				}
 			}
 			else
 			{
-				output_message("%s(%d): expected first term of %s distribution", filename,linenum, fname);
+				output_error("%s(%d): expected first term of %s distribution", filename,linenum, fname);
 				REJECT;
 			}
 		}
@@ -1296,7 +1296,7 @@ static int functional(PARSER, double *pValue)
 					}
 					else
 					{
-						output_message("%s(%d): expected ) after %s distribution term", filename,linenum, fname);
+						output_error("%s(%d): expected ) after %s distribution term", filename,linenum, fname);
 						REJECT;
 					}
 				}
@@ -1309,7 +1309,7 @@ static int functional(PARSER, double *pValue)
 					}
 					else
 					{
-						output_message("%s(%d): missing second %s distribution term and/or )", filename,linenum, fname);
+						output_error("%s(%d): missing second %s distribution term and/or )", filename,linenum, fname);
 						REJECT;
 					}
 				}
@@ -1322,19 +1322,19 @@ static int functional(PARSER, double *pValue)
 					}
 					else
 					{
-						output_message("%s(%d): missing terms and/or ) in %s distribution ", filename,linenum, fname);
+						output_error("%s(%d): missing terms and/or ) in %s distribution ", filename,linenum, fname);
 						REJECT;
 					}
 				}
 				else
 				{
-					output_message("%s(%d): %d terms is not supported", filename,linenum, nargs);
+					output_error("%s(%d): %d terms is not supported", filename,linenum, nargs);
 					REJECT;
 				}
 			}
 			else
 			{
-				output_message("%s(%d): expected first term of %s distribution", filename,linenum, fname);
+				output_error("%s(%d): expected first term of %s distribution", filename,linenum, fname);
 				REJECT;
 			}
 		}
@@ -1908,7 +1908,7 @@ double load_latitude(char *buffer)
 				return v;
 		}
 	}
-	output_message("%s(%d): '%s' is not a valid latitude", filename,linenum,buffer);
+	output_error("%s(%d): '%s' is not a valid latitude", filename,linenum,buffer);
 	return QNAN;
 }
 
@@ -1931,7 +1931,7 @@ double load_longitude(char *buffer)
 				return v;
 		}
 	}
-	output_message("%s(%d): '%s' is not a valid longitude", filename,linenum,buffer);
+	output_error("%s(%d): '%s' is not a valid longitude", filename,linenum,buffer);
 	return QNAN;
 }
 
@@ -1948,13 +1948,13 @@ static int clock_properties(PARSER)
 		{
 			if (realval!=TS_RESOLUTION)
 			{
-				output_message("%s(%d): timestamp resolution %g does not match system resolution %g, this version does not support variable tick", filename, linenum, realval, TS_RESOLUTION);
+				output_error("%s(%d): timestamp resolution %g does not match system resolution %g, this version does not support variable tick", filename, linenum, realval, TS_RESOLUTION);
 				REJECT;
 			}
 			ACCEPT;
 			goto Next;
 		}
-		output_message("%s(%d): expected tick value", filename, linenum);
+		output_error("%s(%d): expected tick value", filename, linenum);
 		REJECT;
 	}
 	OR if (LITERAL("timestamp") && WHITE)
@@ -1965,7 +1965,7 @@ static int clock_properties(PARSER)
 			ACCEPT;
 			goto Next;
 		}
-		output_message("%s(%d): expected time value", filename, linenum);
+		output_error("%s(%d): expected time value", filename, linenum);
 		REJECT;
 	}
 	OR if (LITERAL("starttime") && WHITE)
@@ -1976,7 +1976,7 @@ static int clock_properties(PARSER)
 			ACCEPT;
 			goto Next;
 		}
-		output_message("%s(%d): expected time value", filename, linenum);
+		output_error("%s(%d): expected time value", filename, linenum);
 		REJECT;
 	}
 	OR if (LITERAL("stoptime") && WHITE)
@@ -1987,7 +1987,7 @@ static int clock_properties(PARSER)
 			ACCEPT;
 			goto Next;
 		}
-		output_message("%s(%d): expected time value", filename, linenum);
+		output_error("%s(%d): expected time value", filename, linenum);
 		REJECT;
 	}
 	OR if (LITERAL("timezone") && WHITE)
@@ -2003,7 +2003,7 @@ static int clock_properties(PARSER)
 			ACCEPT;
 			goto Next;
 		}
-		output_message("%s(%d): expected time zone specification", filename, linenum);
+		output_error("%s(%d): expected time zone specification", filename, linenum);
 		REJECT;
 	}
 	OR if (WHITE,LITERAL("}")) {/* don't accept yet */ DONE;}
@@ -2050,7 +2050,7 @@ static int expanded_value(char *text, char *result, int size, char *delims)
 		{
 			if (size==0)
 			{
-				output_message("%s(%d): string expansion buffer overrun", filename, linenum);
+				output_error("%s(%d): string expansion buffer overrun", filename, linenum);
 				return 0;
 			}
 			if (text[n]=='{')
@@ -2062,13 +2062,13 @@ static int expanded_value(char *text, char *result, int size, char *delims)
 
 				if (sscanf(text+n+1,"%255[a-zA-Z0-9_]",varname)==0)
 				{
-					output_message("%s(%d): expanded string variable syntax error", filename, linenum);
+					output_error("%s(%d): expanded string variable syntax error", filename, linenum);
 					return 0;
 				}
 				n+=(int)strlen(varname)+1;
 				if (text[n]!='}')
 				{
-					output_message("%s(%d): expanded string variable missing closing }", filename, linenum);
+					output_error("%s(%d): expanded string variable missing closing }", filename, linenum);
 					return 0;
 				}
 
@@ -2096,14 +2096,14 @@ static int expanded_value(char *text, char *result, int size, char *delims)
 				}
 				else if (!object_get_value_by_name(current_object,varname,value,sizeof(value)))
 				{
-					output_message("%s(%d): variable '%s' not found in this context", filename, linenum, varname);
+					output_error("%s(%d): variable '%s' not found in this context", filename, linenum, varname);
 					return 0;
 				}
 
 				/* accept the value */
 				if ((int)strlen(value)>=size)
 				{
-					output_message("%s(%d): string expansion buffer overrun", filename, linenum);
+					output_error("%s(%d): string expansion buffer overrun", filename, linenum);
 					return 0;
 				}
 				strcat(result,value);
@@ -2120,7 +2120,7 @@ static int expanded_value(char *text, char *result, int size, char *delims)
 			return n+1;
 		else
 		{
-			output_message("%s(%d): missing terminating ;", filename, linenum);
+			output_error("%s(%d): missing terminating ;", filename, linenum);
 			return 0;
 		}
 	}
@@ -2152,7 +2152,7 @@ static int alternate_value(PARSER, char *value, int size)
 			{
 				if ((int)strlen(value1)>size)
 				{
-					output_message("%s(%d): alternate value 1 is too large ;", filename, linenum);
+					output_error("%s(%d): alternate value 1 is too large ;", filename, linenum);
 					REJECT;
 				}
 				else
@@ -2165,7 +2165,7 @@ static int alternate_value(PARSER, char *value, int size)
 			{
 				if ((int)strlen(value2)>size)
 				{
-					output_message("%s(%d): alternate value 2 is too large ;", filename, linenum);
+					output_error("%s(%d): alternate value 2 is too large ;", filename, linenum);
 					REJECT;
 				}
 				else
@@ -2177,7 +2177,7 @@ static int alternate_value(PARSER, char *value, int size)
 		}
 		else
 		{
-			output_message("%s(%d): missing or invalid alternate values;", filename, linenum);
+			output_error("%s(%d): missing or invalid alternate values;", filename, linenum);
 			REJECT;
 		}
 		DONE;
@@ -2209,7 +2209,7 @@ static int line_spec(PARSER)
 		}
 		else
 		{
-			output_message("%s(%d): @ syntax error", filename, linenum);
+			output_error("%s(%d): @ syntax error", filename, linenum);
 			REJECT; DONE;
 		}
 	}
@@ -2227,7 +2227,7 @@ static int clock_block(PARSER)
 	if LITERAL("{") ACCEPT
 	else
 	{
-		output_message("%s(%d): expected clock block opening {",filename,linenum);
+		output_error("%s(%d): expected clock block opening {",filename,linenum);
 		REJECT;
 	}
 	if WHITE ACCEPT;
@@ -2235,7 +2235,7 @@ static int clock_block(PARSER)
 	if WHITE ACCEPT;
 	if LITERAL("}") ACCEPT else
 	{
-		output_message("%s(%d): expected clock block closing }",filename,linenum);
+		output_error("%s(%d): expected clock block closing }",filename,linenum);
 		REJECT;
 	}
 	DONE;
@@ -2258,7 +2258,7 @@ static int module_properties(PARSER, MODULE *mod)
 			{
 				if (val!=mod->major)
 				{
-					output_message("%s(%d): %s has an incompatible module major version", filename,linenum,mod->name);
+					output_error("%s(%d): %s has an incompatible module major version", filename,linenum,mod->name);
 					REJECT;
 				}
 				ACCEPT;
@@ -2266,13 +2266,13 @@ static int module_properties(PARSER, MODULE *mod)
 			}
 			else
 			{
-				output_message("%s(%d): expected ; after %s module major number", filename,linenum, mod->name);
+				output_error("%s(%d): expected ; after %s module major number", filename,linenum, mod->name);
 				REJECT;
 			}
 		}
 		else
 		{
-			output_message("%s(%d): expected %s module major number", filename,linenum, mod->name);
+			output_error("%s(%d): expected %s module major number", filename,linenum, mod->name);
 			REJECT;
 		}
 	}
@@ -2285,7 +2285,7 @@ static int module_properties(PARSER, MODULE *mod)
 			{
 				if (val!=mod->minor)
 				{
-					output_message("%s(%d): %s has an incompatible module minor version", filename,linenum,mod->name);
+					output_error("%s(%d): %s has an incompatible module minor version", filename,linenum,mod->name);
 					REJECT;
 				}
 				ACCEPT;
@@ -2293,13 +2293,13 @@ static int module_properties(PARSER, MODULE *mod)
 			}
 			else
 			{
-				output_message("%s(%d): expected ; after %s module minor number", filename,linenum, mod->name);
+				output_error("%s(%d): expected ; after %s module minor number", filename,linenum, mod->name);
 				REJECT;
 			}
 		}
 		else
 		{
-			output_message("%s(%d): expected %s module minor number", filename,linenum, mod->name);
+			output_error("%s(%d): expected %s module minor number", filename,linenum, mod->name);
 			REJECT;
 		}
 	}
@@ -2313,7 +2313,7 @@ static int module_properties(PARSER, MODULE *mod)
 				CLASS *oclass = class_get_class_from_classname(classname);
 				if (oclass==NULL || oclass->module!=mod)
 				{
-					output_message("%s(%d): module '%s' does not implement class '%s'", filename, linenum, mod->name, classname);
+					output_error("%s(%d): module '%s' does not implement class '%s'", filename, linenum, mod->name, classname);
 					REJECT;
 				}
 				ACCEPT;
@@ -2321,13 +2321,13 @@ static int module_properties(PARSER, MODULE *mod)
 			}
 			else
 			{
-				output_message("%s(%d): expected ; after module %s class %s declaration", filename,linenum, mod->name, classname);
+				output_error("%s(%d): expected ; after module %s class %s declaration", filename,linenum, mod->name, classname);
 				REJECT;
 			}
 		}
 		else
 		{
-			output_message("%s(%d): missing class name in module %s class declaration", filename,linenum, mod->name);
+			output_error("%s(%d): missing class name in module %s class declaration", filename,linenum, mod->name);
 			REJECT;
 		}
 	}
@@ -2347,19 +2347,19 @@ static int module_properties(PARSER, MODULE *mod)
 				}
 				else
 				{
-					output_message("%s(%d): invalid module %s property '%s'", filename, linenum, mod->name, propname);
+					output_error("%s(%d): invalid module %s property '%s'", filename, linenum, mod->name, propname);
 					REJECT;
 				}
 			}
 			else
 			{
-				output_message("%s(%d): expected ; after module %s property specification", filename, linenum, mod->name);
+				output_error("%s(%d): expected ; after module %s property specification", filename, linenum, mod->name);
 				REJECT;
 			}
 		}
 		else
 		{
-			output_message("%s(%d): missing module %s property %s value", filename, linenum, mod->name, propname);
+			output_error("%s(%d): missing module %s property %s value", filename, linenum, mod->name, propname);
 			REJECT;
 		}
 	}
@@ -2392,7 +2392,7 @@ static int module_block(PARSER)
 		}
 		else
 		{
-			output_message("%s(%d): %s module '%s' load failed, %s", filename, linenum, fmod, mod,errno?strerror(errno):"(no details)");
+			output_error("%s(%d): %s module '%s' load failed, %s", filename, linenum, fmod, mod,errno?strerror(errno):"(no details)");
 			REJECT;
 		}
 	}
@@ -2407,7 +2407,7 @@ static int module_block(PARSER)
 		}
 		else
 		{
-			output_message("%s(%d): module '%s' load failed, %s", filename, linenum, module_name,errno?strerror(errno):"(no details)");
+			output_error("%s(%d): module '%s' load failed, %s", filename, linenum, module_name,errno?strerror(errno):"(no details)");
 			REJECT;
 		}
 	}
@@ -2417,7 +2417,7 @@ static int module_block(PARSER)
 	if LITERAL("{") ACCEPT
 	else
 	{
-		output_message("%s(%d): expected module %s block opening {", filename, linenum, module_name);
+		output_error("%s(%d): expected module %s block opening {", filename, linenum, module_name);
 		REJECT;
 	}
 	if TERM(module_properties(HERE,module)) ACCEPT else REJECT;
@@ -2425,7 +2425,7 @@ static int module_block(PARSER)
 	if LITERAL("}") ACCEPT
 	else
 	{
-		output_message("%s(%d): expected module %s block closing }", filename, linenum, module_name);
+		output_error("%s(%d): expected module %s block closing }", filename, linenum, module_name);
 		REJECT;
 	}
 	DONE;
@@ -2464,7 +2464,7 @@ static int property_type(PARSER, PROPERTYTYPE *ptype, KEYWORD **keys)
 		*ptype = class_get_propertytype_from_typename(type);
 		if (*ptype==PT_void)
 		{
-			output_message("%s(%d): class member %s is not recognized", filename, linenum, type);
+			output_error("%s(%d): class member %s is not recognized", filename, linenum, type);
 			REJECT;
 		}
 		if (WHITE,LITERAL("{"))
@@ -2554,7 +2554,7 @@ static int class_intrinsic_function_name(PARSER, CLASS *oclass, int64 *function,
 	}
 	else if TERM(name(HERE,buffer,sizeof(buffer)))
 	{
-		output_message("%s(%d): '%s' is not a recognized intrinsic function", filename,linenum,buffer);
+		output_error("%s(%d): '%s' is not a recognized intrinsic function", filename,linenum,buffer);
 		REJECT;
 	}
 	DONE;
@@ -2577,7 +2577,7 @@ static int argument_list(PARSER, char *args, int size)
 		}
 		else
 		{
-			output_message("%s(%d): unterminated argument list",filename, linenum);
+			output_error("%s(%d): unterminated argument list",filename, linenum);
 			REJECT;
 		}
 	}
@@ -2599,7 +2599,7 @@ static int source_code(PARSER, char *code, int size)
 			linenum++;
 		if (size==0)
 		{
-			output_message("%s(%d): insufficient buffer space to load code", filename,linenum);
+			output_error("%s(%d): insufficient buffer space to load code", filename,linenum);
 			return 0;
 		}
 		switch(state) {
@@ -2623,7 +2623,7 @@ static int source_code(PARSER, char *code, int size)
 				}
 				else
 				{
-					output_message("%s(%d): unmatched }", filename,linenum);
+					output_error("%s(%d): unmatched }", filename,linenum);
 					return 0;
 				}
 			}
@@ -2661,7 +2661,7 @@ static int source_code(PARSER, char *code, int size)
 				state = CODE;
 			else if (c1=='\n')
 			{
-				output_message("%s(%d): unterminated string constant", filename,linenum);
+				output_error("%s(%d): unterminated string constant", filename,linenum);
 				return 0;
 			}
 			COPY(code);
@@ -2671,7 +2671,7 @@ static int source_code(PARSER, char *code, int size)
 				state = CODE;
 			else if (c1=='\n')
 			{
-				output_message("%s(%d): unterminated char constant", filename,linenum);
+				output_error("%s(%d): unterminated char constant", filename,linenum);
 				return 0;
 			}
 			COPY(code);
@@ -2681,7 +2681,7 @@ static int source_code(PARSER, char *code, int size)
 			break;
 		}
 	}
-	output_message("%s(%d): unterminated code block", filename,linenum);
+	output_error("%s(%d): unterminated code block", filename,linenum);
 	return 0;
 }
 
@@ -2709,7 +2709,7 @@ static int class_intrinsic_function(PARSER, CLASS *oclass, int64 *functions, cha
 		}
 		else
 		{
-			output_message("%s(%d): intrinsic functions not permitted in static classes", filename, linenum);
+			output_error("%s(%d): intrinsic functions not permitted in static classes", filename, linenum);
 			REJECT;
 		}
 	}
@@ -2743,7 +2743,7 @@ static int class_export_function(PARSER, CLASS *oclass, char *fname, int fsize, 
 		}
 		else
 		{
-			output_message("%s(%d): export functions not permitted in static classes", filename, linenum);
+			output_error("%s(%d): export functions not permitted in static classes", filename, linenum);
 			REJECT;
 		}
 	}
@@ -2806,19 +2806,19 @@ static int class_explicit_definition(PARSER, CLASS *oclass)
 				}
 				else
 				{
-					output_message("%s(%d): missing ; after code block",filename, linenum);
+					output_error("%s(%d): missing ; after code block",filename, linenum);
 					REJECT;
 				}
 			}
 			else 
 			{
-				output_message("%s(%d): syntax error in code block",filename, linenum);
+				output_error("%s(%d): syntax error in code block",filename, linenum);
 				REJECT;
 			}
 		}
 		else
 		{
-			output_message("%s(%d): explicit definitions not permitted in static classes", filename, linenum);
+			output_error("%s(%d): explicit definitions not permitted in static classes", filename, linenum);
 			REJECT;
 		}
 	}
@@ -2838,7 +2838,7 @@ static int class_external_function(PARSER, CLASS *oclass, CLASS **eclass,char *f
 			CLASS *oclass = class_get_class_from_classname(classname);
 			if (oclass==NULL) 
 			{
-				output_message("%s(%d): class '%s' does not exist", filename, linenum, classname);
+				output_error("%s(%d): class '%s' does not exist", filename, linenum, classname);
 				REJECT;
 			}
 			else
@@ -2850,14 +2850,14 @@ static int class_external_function(PARSER, CLASS *oclass, CLASS **eclass,char *f
 				}
 				else
 				{
-					output_message("%s(%d): class '%s' does not define function '%s'", filename, linenum, classname, fname);
+					output_error("%s(%d): class '%s' does not define function '%s'", filename, linenum, classname, fname);
 					REJECT;
 				}
 			}
 		}
 		else
 		{
-			output_message("%s(%d): external functions not permitted in static classes", filename, linenum);
+			output_error("%s(%d): external functions not permitted in static classes", filename, linenum);
 			REJECT;
 		}
 	}
@@ -2908,7 +2908,7 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 		{
 			if (type==PT_void)
 			{
-				output_message("%s(%d): property type %s is not recognized", filename, linenum, type);
+				output_error("%s(%d): property type %s is not recognized", filename, linenum, type);
 				REJECT;
 			}
 			else
@@ -2919,7 +2919,7 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 						prop = class_add_extended_property(oclass,propname,type,pUnit->name);
 					else
 					{
-						output_message("%s(%d): units not permitted for type %s", filename, linenum, class_get_property_typename(type));
+						output_error("%s(%d): units not permitted for type %s", filename, linenum, class_get_property_typename(type));
 						REJECT;
 					}
 				}
@@ -2932,7 +2932,7 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 					}
 					else
 					{
-						output_message("%s(%d): keys not permitted for type %s", filename, linenum, class_get_property_typename(prop->ptype));
+						output_error("%s(%d): keys not permitted for type %s", filename, linenum, class_get_property_typename(prop->ptype));
 						REJECT;
 					}
 				}
@@ -2954,7 +2954,7 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 		}
 		else if (prop->ptype!=type)
 		{
-			output_message("%s(%d): property %s is defined in class %s as type %s", filename, linenum, propname, oclass->name, class_get_property_typename(prop->ptype));
+			output_error("%s(%d): property %s is defined in class %s as type %s", filename, linenum, propname, oclass->name, class_get_property_typename(prop->ptype));
 			REJECT;
 		}
 		ACCEPT;
@@ -3002,13 +3002,13 @@ static int class_block(PARSER)
 				}
 				else
 				{
-					output_message("%s(%d): missing inheritance qualifier", filename, linenum);
+					output_error("%s(%d): missing inheritance qualifier", filename, linenum);
 					REJECT;
 					DONE;
 				}
 				if (class_get_class_from_classname(parent)==NULL)
 				{
-					output_message("%s(%d): class %s inherits from undefined class %s", filename, linenum, classname, parent);
+					output_error("%s(%d): class %s inherits from undefined class %s", filename, linenum, classname, parent);
 					REJECT;
 					DONE;
 				}
@@ -3049,13 +3049,13 @@ static int class_block(PARSER)
 			}
 			else
 			{
-				output_message("%s(%d): expected class %s block opening {",filename,linenum,classname);
+				output_error("%s(%d): expected class %s block opening {",filename,linenum,classname);
 				REJECT;
 			}
 		}
 		else
 		{
-			output_message("%s(%d): expected class name",filename,linenum);
+			output_error("%s(%d): expected class name",filename,linenum);
 			REJECT;
 		}
 		if (TERM(class_properties(HERE,oclass,&functions,initcode,sizeof(initcode)))) ACCEPT;
@@ -3166,7 +3166,7 @@ static int class_block(PARSER)
 		}
 		else
 		{
-			output_message("%s(%d): expected closing } after class block", filename, linenum);
+			output_error("%s(%d): expected closing } after class block", filename, linenum);
 			REJECT;
 		}
 	}
@@ -3179,7 +3179,7 @@ int set_flags(OBJECT *obj, char1024 propval)
 	extern KEYWORD oflags[];
 	if (convert_to_set(propval,&(obj->flags),object_flag_property())<=0)
 	{
-		output_message("%s(%d): flags of %s:%d %s could not be set to %s", filename, linenum, obj->oclass->name, obj->id, obj->name, propval);
+		output_error("%s(%d): flags of %s:%d %s could not be set to %s", filename, linenum, obj->oclass->name, obj->id, obj->name, propval);
 		return 0;
 	};
 	return 1;
@@ -3297,7 +3297,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 		{	ACCEPT;}
 		else
 		{
-			output_message("%s(%d): missing ; at end of nested object block", filename, linenum,propname);
+			output_error("%s(%d): missing ; at end of nested object block", filename, linenum,propname);
 			REJECT;
 		}
 			
@@ -3316,7 +3316,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				ACCEPT
 			else
 			{
-				output_message("%s(%d): unable to link subobject to property '%s'", filename, linenum,propname);
+				output_error("%s(%d): unable to link subobject to property '%s'", filename, linenum,propname);
 				REJECT;
 			}
 		}
@@ -3324,12 +3324,12 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 		{
 			if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_complex(unit,prop->unit,&cval)==0)
 			{
-				output_message("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
+				output_error("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
 				REJECT;
 			}
 			else if (object_set_complex_by_name(obj,propname,cval)==0)
 			{
-				output_message("%s(%d): property %s of %s %s could not be set to '%g%+gi'", filename, linenum, propname, format_object(obj), cval.r, cval.i);
+				output_error("%s(%d): property %s of %s %s could not be set to '%g%+gi'", filename, linenum, propname, format_object(obj), cval.r, cval.i);
 				REJECT;
 			}
 			else
@@ -3339,12 +3339,12 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 		{
 			if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
 			{
-				output_message("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
+				output_error("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
 				REJECT;
 			}
 			else if (object_set_double_by_name(obj,propname,dval)==0)
 			{
-				output_message("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
+				output_error("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
 				REJECT;
 			}
 			else
@@ -3355,7 +3355,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			xform.target = (double*)((char*)(obj+1) + (int64)prop->addr);
 			if (!schedule_add_xform(xform.schedule,xform.target,xform.scale,xform.bias))
 			{
-				output_message("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
+				output_error("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 				REJECT;
 			}
 			else
@@ -3365,12 +3365,12 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 		{
 			if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
 			{
-				output_message("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
+				output_error("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
 				REJECT;
 			}
 			else if (object_set_double_by_name(obj,propname,dval)==0)
 			{
-				output_message("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
+				output_error("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
 				REJECT;
 			}
 			else
@@ -3384,7 +3384,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			int rv = 0;
 
 			if(unit != NULL && prop->unit != NULL && strcmp((char *)(unit), "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0){
-				output_message("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
+				output_error("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
 				REJECT;
 			} else {
 				switch(prop->ptype){
@@ -3405,7 +3405,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 						REJECT;
 				} /* end switch */
 				if(rv == 0){
-					output_message("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), ival);
+					output_error("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), ival);
 					REJECT;
 				} else {
 					ACCEPT;
@@ -3432,7 +3432,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				{
 					if (add_unresolved(obj,(void*)&obj->parent,oclass,propval,linenum,UR_RANKS)==NULL)
 					{
-						output_message("%s(%d): unable to add unresolved reference to parent %s", filename, linenum, propval);
+						output_error("%s(%d): unable to add unresolved reference to parent %s", filename, linenum, propval);
 						REJECT;
 					}
 					else
@@ -3442,7 +3442,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				{
 					if ((obj->rank = atoi(propval))<0)
 					{
-						output_message("%s(%d): unable to set rank to %s", filename, linenum, propval);
+						output_error("%s(%d): unable to set rank to %s", filename, linenum, propval);
 						REJECT;
 					}
 					else
@@ -3482,7 +3482,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				{
 					if (object_set_name(obj,propval)==NULL)
 					{
-						output_message("%s(%d): property name %s could not be used", filename, linenum, propval);
+						output_error("%s(%d): property name %s could not be used", filename, linenum, propval);
 						REJECT;
 					}
 					else
@@ -3509,7 +3509,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else
 				{
-					output_message("%s(%d): property %s is not defined in class %s", filename, linenum, propname, oclass->name);
+					output_error("%s(%d): property %s is not defined in class %s", filename, linenum, propname, oclass->name);
 					REJECT;
 				}
 			}
@@ -3517,7 +3517,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			{	void *addr = object_get_addr(obj,propname);
 				if (addr==NULL)
 				{
-					output_message("%s(%d): unable to get %s member %s", filename, linenum, format_object(obj), propname);
+					output_error("%s(%d): unable to get %s member %s", filename, linenum, format_object(obj), propname);
 					REJECT;
 				}
 				else
@@ -3528,7 +3528,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			}
 			else if (object_set_value_by_name(obj,propname,propval)==0)
 			{
-				output_message("%s(%d): property %s of %s could not be set to '%s'", filename, linenum, propname, format_object(obj), propval);
+				output_error("%s(%d): property %s of %s could not be set to '%s'", filename, linenum, propname, format_object(obj), propval);
 				REJECT;
 			}
 			else
@@ -3538,7 +3538,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 		if LITERAL(";") {ACCEPT;}
 		else
 		{
-			output_message("%s(%d): expected ';' at end of property specification", filename,linenum);
+			output_error("%s(%d): expected ';' at end of property specification", filename,linenum);
 			REJECT;
 		}
 	}
@@ -3586,7 +3586,7 @@ static int object_name_id_range(PARSER,char *classname, int64 *from, int64 *to)
 	else REJECT;
 	if (TERM(integer(HERE,to))) ACCEPT else
 	{
-		output_message("%s(%d): expected id range end value", filename, linenum);
+		output_error("%s(%d): expected id range end value", filename, linenum);
 		REJECT;
 	}
 	DONE;
@@ -3601,7 +3601,7 @@ static int object_name_id_count(PARSER,char *classname, int64 *count)
 	else REJECT;
 	if (TERM(integer(HERE,count))) ACCEPT else
 	{
-		output_message("%s(%d): expected id count", filename, linenum);
+		output_error("%s(%d): expected id count", filename, linenum);
 		REJECT;
 	}
 	DONE;
@@ -3625,7 +3625,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 	{
 		if (!object_open_namespace(space))
 		{
-			output_message("%s(%d): namespace %s could not be opened", filename, linenum, space);
+			output_error("%s(%d): namespace %s could not be opened", filename, linenum, space);
 			REJECT;
 		}
 
@@ -3638,7 +3638,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 		}
 		else
 		{
-			output_message("%s(%d): namespace %s missing closing }", filename, linenum, space);
+			output_error("%s(%d): namespace %s missing closing }", filename, linenum, space);
 			REJECT;
 		}
 	}
@@ -3651,7 +3651,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 		oclass = class_get_class_from_classname(classname);
 		if (oclass==NULL) 
 		{
-			output_message("%s(%d): class '%s' is not known", filename, linenum, classname);
+			output_error("%s(%d): class '%s' is not known", filename, linenum, classname);
 			REJECT;
 		}
 		id2++;
@@ -3663,7 +3663,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 		oclass = class_get_class_from_classname(classname);
 		if (oclass==NULL) 
 		{
-			output_message("%s(%d): class '%s' is not known", filename, linenum, classname);
+			output_error("%s(%d): class '%s' is not known", filename, linenum, classname);
 			REJECT;
 		}
 		ACCEPT;
@@ -3673,20 +3673,20 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 		oclass = class_get_class_from_classname(classname);
 		if (oclass==NULL)
 		{
-			output_message("%s(%d): class '%s' is not known", filename, linenum, classname);
+			output_error("%s(%d): class '%s' is not known", filename, linenum, classname);
 			REJECT;
 		}
 		ACCEPT;
 	}
 	else
 	{
-		output_message("%s(%d): expected object id or range", filename, linenum);
+		output_error("%s(%d): expected object id or range", filename, linenum);
 		REJECT;
 	}
 	if WHITE ACCEPT;
 	if (LITERAL("{")) ACCEPT else
 	{
-		output_message("%s(%d): expected object block starting {", filename, linenum);
+		output_error("%s(%d): expected object block starting {", filename, linenum);
 		REJECT;
 	}
 
@@ -3704,12 +3704,12 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 #endif
 		if (oclass->create==NULL)
 		{
-			output_message("%s(%d): create not implemented for objects of class %s", filename, linenum, classname);
+			output_error("%s(%d): create not implemented for objects of class %s", filename, linenum, classname);
 			REJECT;
 		}
 		else if ((*oclass->create)(&obj,parent)==0) 
 		{
-			output_message("%s(%d): create failed for object %s:%d", filename, linenum, classname, id);
+			output_error("%s(%d): create failed for object %s:%d", filename, linenum, classname, id);
 			REJECT;
 		}
 		else if (obj==NULL
@@ -3718,12 +3718,12 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 #endif
 			) 
 		{
-			output_message("%s(%d): create failed name object %s:%d", filename, linenum, classname, id);
+			output_error("%s(%d): create failed name object %s:%d", filename, linenum, classname, id);
 			REJECT;
 		}
 		else if (id!=-1 && load_set_index(obj,(OBJECTNUM)id)==FAILED)
 		{
-			output_message("%s(%d): unable to index object id number for %s:%d", filename, linenum, classname, id);
+			output_error("%s(%d): unable to index object id number for %s:%d", filename, linenum, classname, id);
 			REJECT;
 		}
 		else if TERM(object_properties(HERE,oclass,obj))
@@ -3737,7 +3737,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 	if WHITE ACCEPT;
 	if LITERAL("}") ACCEPT else
 	{
-		output_message("%s(%d): expected object block closing }", filename, linenum);
+		output_error("%s(%d): expected object block closing }", filename, linenum);
 		REJECT;
 	}
 	if (subobj) *subobj = obj;
@@ -3764,18 +3764,18 @@ static int import(PARSER)
 					MODULE *module = module_find(modname);
 					if (module==NULL)
 					{
-						output_message("%s(%d): module %s not loaded", filename, linenum, modname);
+						output_error("%s(%d): module %s not loaded", filename, linenum, modname);
 						REJECT;
 					}
 					result = module_import(module,fname);
 					if (result < 0)
 					{
-						output_message("%s(%d): %d errors loading importing %s into %s module", filename, linenum, -result, fname, modname);
+						output_error("%s(%d): %d errors loading importing %s into %s module", filename, linenum, -result, fname, modname);
 						REJECT;
 					}
 					else if (result==0)
 					{
-						output_message("%s(%d): module %s load of %s failed; %s", filename, linenum, modname, fname, errno?strerror(errno):"(no details)");
+						output_error("%s(%d): module %s load of %s failed; %s", filename, linenum, modname, fname, errno?strerror(errno):"(no details)");
 						REJECT;
 					}
 					else
@@ -3786,19 +3786,19 @@ static int import(PARSER)
 				}
 				else
 				{
-					output_message("%s(%d): expected ; after module %s import from %s statement", filename, linenum, modname, fname);
+					output_error("%s(%d): expected ; after module %s import from %s statement", filename, linenum, modname, fname);
 					REJECT;
 				}
 			}
 			else
 			{
-				output_message("%s(%d): expected filename after module %s import statement", filename, linenum, modname);
+				output_error("%s(%d): expected filename after module %s import statement", filename, linenum, modname);
 				REJECT;
 			}
 		}
 		else
 		{
-			output_message("%s(%d): expected module name after import statement", filename, linenum);
+			output_error("%s(%d): expected module name after import statement", filename, linenum);
 			REJECT;
 		}
 	}
@@ -3824,7 +3824,7 @@ static int library(PARSER)
 		}
 		else
 		{
-			output_message("%s(%d): library syntax error", filename, linenum);
+			output_error("%s(%d): library syntax error", filename, linenum);
 			REJECT;
 		}
 	}
@@ -3844,7 +3844,7 @@ static int comment_block(PARSER)
 			_p++; result++;
 			if (_p[0]=='\0')
 			{
-				output_message("%s(%d): unterminated C-style comment", filename, startline);
+				output_error("%s(%d): unterminated C-style comment", filename, startline);
 				return 0;
 			}
 			if (_p[0]=='\n')
@@ -3884,7 +3884,7 @@ static int schedule(PARSER)
 		}
 		else
 		{
-			output_message("%s(%d): schedule '%s' is not valid", filename, startline, schedname);
+			output_error("%s(%d): schedule '%s' is not valid", filename, startline, schedname);
 			REJECT;
 		}
 	}
@@ -3950,7 +3950,7 @@ int replace_variables(char *to,char *from,int len)
 		else
 		{
 Unterminated:
-			output_message("%s(%d): unterminated variable name %.10p...", filename, linenum, p);
+			output_error("%s(%d): unterminated variable name %.10p...", filename, linenum, p);
 			return 1;
 		}
 	}
@@ -3962,7 +3962,7 @@ Unterminated:
 	}
 	else
 	{
-		output_message("%s(%d): insufficient buffer space to continue", filename, linenum);
+		output_error("%s(%d): insufficient buffer space to continue", filename, linenum);
 		return -1;
 	}
 }
@@ -4005,7 +4005,7 @@ static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 			strcpy(line,subst);
 		else
 		{
-			output_message("%s(%d): unable to continue", filename,linenum);
+			output_error("%s(%d): unable to continue", filename,linenum);
 			return -1;
 		}
 
@@ -4034,7 +4034,7 @@ static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 	if (nesting != startnest)
 	{
 		//output_message("%s(%d): missing %sendif for #if at %s(%d)", filename,linenum,MACRO,filename,macro_line[nesting-1]);
-		output_message("%s(%d): Unbalanced %sif/%sendif at %s(%d) ~ started with nestlevel %i, ending %i", filename,linenum,MACRO,MACRO,filename,macro_line[nesting-1], startnest, nesting);
+		output_error("%s(%d): Unbalanced %sif/%sendif at %s(%d) ~ started with nestlevel %i, ending %i", filename,linenum,MACRO,MACRO,filename,macro_line[nesting-1], startnest, nesting);
 		return -1;
 	}
 	return n;
@@ -4082,7 +4082,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 			strcpy(line,subst);
 		else
 		{
-			output_message("%s(%d): unable to continue", filename,_linenum);
+			output_error("%s(%d): unable to continue", filename,_linenum);
 			return -1;
 		}
 
@@ -4147,7 +4147,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 	if (nesting != startnest)
 	{
 		//output_message("%s(%d): missing %sendif for #if at %s(%d)", filename,_linenum,MACRO,filename,macro_line[nesting-1]);
-		output_message("%s(%d): Unbalanced %sif/%sendif at %s(%d) ~ started with nestlevel %i, ending %i", filename,_linenum,MACRO,MACRO,filename,macro_line[nesting-1], startnest, nesting);
+		output_error("%s(%d): Unbalanced %sif/%sendif at %s(%d) ~ started with nestlevel %i, ending %i", filename,_linenum,MACRO,MACRO,filename,macro_line[nesting-1], startnest, nesting);
 		return -1;
 	}
 	return n;
@@ -4183,7 +4183,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	{
 		if (strcmp(incname, list->file) == 0)
 		{
-			output_message("%s(%d): include file has already been included", incname, _linenum);
+			output_error("%s(%d): include file has already been included", incname, _linenum);
 			return 0;
 		}
 	}
@@ -4218,7 +4218,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	fp = ff ? fopen(ff, "rt") : NULL;
 	
 	if(fp == NULL){
-		output_message("%s(%d): include file open failed: %s", incname, _linenum, errno?strerror(errno):"(no details)");
+		output_error("%s(%d): include file open failed: %s", incname, _linenum, errno?strerror(errno):"(no details)");
 		return 0;
 	}
 
@@ -4234,7 +4234,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 		//	return 0;
 		//}
 	} else {
-		output_message("%s(%d): unable to get size of included file", incname, _linenum);
+		output_error("%s(%d): unable to get size of included file", incname, _linenum);
 		return 0;
 	}
 
@@ -4285,7 +4285,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			suppress &= ~(1<<nesting);
 		}
 		else
-			output_message("%s(%d): %sendif is mismatched", filename, linenum,MACRO);
+			output_error("%s(%d): %sendif is mismatched", filename, linenum,MACRO);
 		strcpy(line,"\n");
 		return TRUE;
 	}
@@ -4303,7 +4303,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %sifdef macro missing term",filename,linenum,MACRO);
+			output_error("%s(%d): %sifdef macro missing term",filename,linenum,MACRO);
 			return FALSE;
 		}
 		if (sscanf(term+1,"%[^\n]",value)==1 && global_getvar(value, NULL, 0)==NULL && getenv(value)==NULL)
@@ -4319,7 +4319,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %sifexist macro missing term",filename,linenum,MACRO);
+			output_error("%s(%d): %sifexist macro missing term",filename,linenum,MACRO);
 			return FALSE;
 		}
 		while(isspace((unsigned char)(*term)))
@@ -4337,7 +4337,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %sifndef macro missing term",filename,linenum,MACRO);
+			output_error("%s(%d): %sifndef macro missing term",filename,linenum,MACRO);
 			return FALSE;
 		}
 		if (sscanf(term+1,"%[^\n]",value)==1 && (global_getvar(value, NULL, 0)!=NULL || getenv(value)!=NULL))
@@ -4353,14 +4353,14 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char val[1024];
 		if (sscanf(line+4,"%[a-zA-Z_0-9]%[!<>=]%[^\n]",var,op,val)!=3)
 		{
-			output_message("%s(%d): %sif macro statement syntax error", filename,linenum,MACRO);
+			output_error("%s(%d): %sif macro statement syntax error", filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
 		value = global_getvar(var, NULL, 0);
 		if (value==NULL)
 		{
-			output_message("%s(%d): %s is not defined", filename,linenum,var);
+			output_error("%s(%d): %s is not defined", filename,linenum,var);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4372,7 +4372,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		else if (strcmp(op,"!=")==0) { if (!strcmp(value,val)!=0) suppress|=(1<<nesting); }
 		else
 		{
-			output_message("%s(%d): operator %s is not recognized", filename,linenum,op);
+			output_error("%s(%d): operator %s is not recognized", filename,linenum,op);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4397,7 +4397,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char oldfile[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %sinclude macro missing term",filename,linenum,MACRO);
+			output_error("%s(%d): %sinclude macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4414,7 +4414,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(filename, oldfile);	// pop include filename, use calling filename
 			if (len<=0)
 			{
-				output_message("%s(%d): #include failed",filename,linenum);
+				output_error("%s(%d): #include failed",filename,linenum);
 				include_fail = 1;
 				strcpy(line,"\n");
 				return FALSE;
@@ -4432,7 +4432,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			append_code(value);
 		} else
 		{
-			output_message("%s(%d): #include failed",filename,linenum);
+			output_error("%s(%d): #include failed",filename,linenum);
 				strcpy(line,"\n");
 				return FALSE;
 		}
@@ -4443,7 +4443,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[65536];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %ssetenv macro missing term",filename,linenum,MACRO);
+			output_error("%s(%d): %ssetenv macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4471,7 +4471,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		else
 		{
-			output_message("%s(%d): %ssetenv term missing or invalid",filename,linenum,MACRO);
+			output_error("%s(%d): %ssetenv term missing or invalid",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4482,7 +4482,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %sset macro missing term",filename,linenum,MACRO);
+			output_error("%s(%d): %sset macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4491,7 +4491,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			STATUS result;
 			if (strchr(value,'=')==NULL)
 			{
-				output_message("%s(%d): %sset missing assignment",filename,linenum,MACRO);
+				output_error("%s(%d): %sset missing assignment",filename,linenum,MACRO);
 				return FAILED;
 			}
 			else
@@ -4501,14 +4501,14 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 				result = global_setvar(value);
 				global_strictnames = oldstrict;
 				if (result==FAILED)
-					output_message("%s(%d): %sset term not found",filename,linenum,MACRO);
+					output_error("%s(%d): %sset term not found",filename,linenum,MACRO);
 				strcpy(line,"\n");
 				return result==SUCCESS;
 			}
 		}
 		else
 		{
-			output_message("%s(%d): %sset term missing or invalid",filename,linenum,MACRO);
+			output_error("%s(%d): %sset term missing or invalid",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4519,7 +4519,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %sbinpath macro missing term",filename,linenum,MACRO);
+			output_error("%s(%d): %sbinpath macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4538,7 +4538,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		else
 		{
-			output_message("%s(%d): %sbinpath term missing or invalid",filename,linenum,MACRO);
+			output_error("%s(%d): %sbinpath term missing or invalid",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4549,7 +4549,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %slibpath macro missing term",filename,linenum,MACRO);
+			output_error("%s(%d): %slibpath macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4567,7 +4567,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		else
 		{
-			output_message("%s(%d): %slibpath term missing or invalid",filename,linenum, MACRO);
+			output_error("%s(%d): %slibpath term missing or invalid",filename,linenum, MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4578,7 +4578,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %sincpath macro missing term",filename,linenum,MACRO);
+			output_error("%s(%d): %sincpath macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4597,7 +4597,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		else
 		{
-			output_message("%s(%d): %sincpath term missing or invalid",filename,linenum, MACRO);
+			output_error("%s(%d): %sincpath term missing or invalid",filename,linenum, MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4608,7 +4608,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %sdefine macro missing term",filename,linenum, MACRO);
+			output_error("%s(%d): %sdefine macro missing term",filename,linenum, MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4622,13 +4622,13 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			result = global_setvar(value,"\"\""); // extra "" is used in case value is term is empty string
 			global_strictnames = oldstrict;
 			if (result==FAILED)
-				output_message("%s(%d): %sdefine term not found",filename,linenum,MACRO);
+				output_error("%s(%d): %sdefine term not found",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return result==SUCCESS;
 		}
 		else
 		{
-			output_message("%s(%d): %sdefine missing expression",filename,linenum,MACRO);
+			output_error("%s(%d): %sdefine missing expression",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4639,19 +4639,19 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %sprint missing message text",filename,linenum,MACRO);
+			output_error("%s(%d): %sprint missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
 		if (sscanf(term+1,"%[^\n]",value)==1)
 		{
-			output_message("%s(%d): %s", filename, linenum, value);
+			output_error("%s(%d): %s", filename, linenum, value);
 			strcpy(line,"\n");
 			return TRUE;
 		}
 		else
 		{
-			output_message("%s(%d): %sprint term not found",filename,linenum,MACRO);
+			output_error("%s(%d): %sprint term not found",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4662,7 +4662,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %serror missing expression",filename,linenum,MACRO);
+			output_error("%s(%d): %serror missing expression",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4675,7 +4675,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		else
 		{
-			output_message("%s(%d): %serror missing message text",filename,linenum,MACRO);
+			output_error("%s(%d): %serror missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4686,19 +4686,19 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char value[1024];
 		if (term==NULL)
 		{
-			output_message("%s(%d): %swarning missing message text",filename,linenum,MACRO);
+			output_error("%s(%d): %swarning missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
 		if (sscanf(term+1,"%[^\n]",value)==1)
 		{
-			output_message("%s(%d): WARNING - %s", filename, linenum, value);
+			output_error("%s(%d): WARNING - %s", filename, linenum, value);
 			strcpy(line,"\n");
 			return TRUE;
 		}
 		else
 		{
-			output_message("%s(%d): %swarning missing expression",filename,linenum,MACRO);
+			output_error("%s(%d): %swarning missing expression",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
@@ -4709,7 +4709,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		return FALSE;
 	}
 
-	output_message("%s(%d): macro fell out of logic tree", filename, linenum);
+	output_error("%s(%d): macro fell out of logic tree", filename, linenum);
 	return FALSE;
 }
 
@@ -4767,7 +4767,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 		char *eol = strchr(p,'\n');
 		if (eol!=NULL)
 			*eol='\0';
-		output_message("%s(%d): load failed at or near '%.12s...'", file, linenum,*p=='\0'?"end of line":p);
+		output_error("%s(%d): load failed at or near '%.12s...'", file, linenum,*p=='\0'?"end of line":p);
 		if (p==0)
 			output_error("%s doesn't appear to be a GLM file", file);
 		goto Failed;
@@ -4860,7 +4860,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 		if (eol!=NULL){
 			*eol='\0';
 		}
-		output_message("%s(%d): load failed at or near '%.12s...'", file, linenum,*p=='\0'?"end of line":p);
+		output_error("%s(%d): load failed at or near '%.12s...'", file, linenum,*p=='\0'?"end of line":p);
 		if (p==0)
 			output_error("%s doesn't appear to be a GLM file", file);
 		goto Failed;
