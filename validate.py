@@ -10,7 +10,8 @@ import time
 import subprocess
 import time
 
-os.putenv("PATH","%PATH%;..\\..\\..\\VS2005\\Win32\\Release")
+path = os.getenv("PATH")
+os.putenv("PATH",path+";..\\..\\..\\VS2005\\Win32\\Release")
 
 def do_help():
 	print("validate.py - GridLAB-D autotest/validation script")
