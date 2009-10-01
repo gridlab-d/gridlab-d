@@ -10,8 +10,8 @@ import time
 import subprocess
 import time
 
-path = os.getenv("PATH")
-os.putenv("PATH",path+";..\\..\\..\\VS2005\\Win32\\Release")
+tmppath = os.getenv("PATH")
+os.putenv("PATH",tmppath+";..\\..\\..\\VS2005\\Win32\\Release")
 
 def do_help():
 	print("validate.py - GridLAB-D autotest/validation script")
@@ -25,25 +25,11 @@ def do_help():
 	print("   that fail to converge, then return that number.")
 	return 0
 
-def print_error(path, printerr):
-	if(printerr == 1):
-		errfile = open("errfile.txt", "r")
-#		if(errfile == NULL):
-#			print("\tunable to open error file for printing")
-#			return
-		lines = errfile.readlines()
-		print(" ***** ")
-		for line in lines:
-			print (' * ',line[0:-1],)
-		print(" ***** ")
-		errfile.close()
-
 ##
 #	run_tests is the main function for the autotest validation script.
 #	@param	argv	The command line arguements.
 def run_tests(argv):
 	clean = 0
-	printerr = 1
 	#scan for --help and --clean
 	if len(argv) > 1:
 		for arg in argv:
@@ -52,11 +38,6 @@ def run_tests(argv):
 				exit(0)
 			if "--clean" in arg:
 				clean = 1
-			if "--error" in arg:
-				if printerr == 0:
-					printerr = 1
-				if printerr == 1:
-					printerr = 0
 
 	print("Starting autotest script")
 	
@@ -66,8 +47,8 @@ def run_tests(argv):
 	first_time = time.time()
 	end_time = 0
 	
-	#if clean == 1:
-	#	print("Go clean?")
+	if clean == 1:
+		print("Go clean?")
 	
 	# determine where the script starts
 	here_dir = os.getcwd()
@@ -93,8 +74,8 @@ def run_tests(argv):
 		if "autotest" in dirs:
 			autotestdirs.append(os.path.abspath(os.path.join(path,"autotest")))
 	
-	#for path in autotestdirs:
-	#	print("Found dir: \'"+path+"\'")
+	for path in autotestdirs:
+		print("Found dir: \'"+path+"\'")
 	
 	#locate autotest test files
 	#autotestfiles = find_autotest_files(autotestdirs)
@@ -104,8 +85,8 @@ def run_tests(argv):
 			if file.startswith("test_") and file.endswith(".glm") and file[0] != '.':
 				autotestfiles.append((path, file))
 	
-	#for path, file in autotestfiles:
-	#	print("Found file: \'"+file+"\'")
+	for path, file in autotestfiles:
+		print("Found file: \'"+file+"\'")
 	
 	#build test dirs
 	#for file in autotestfiles:
@@ -150,67 +131,60 @@ def run_tests(argv):
 		if "err_" in file or "_err" in file:
 			if rv == 0:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional "+file+" converged when it shouldn't've"+" ("+str(round(dt,2))+"s)")
+					print("WARNING: Optional file "+file+" converged when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
-					print("ERROR: "+file+" converged when it shouldn't've"+" ("+str(round(dt,2))+"s)")
-					print_error(path, printerr)
+					print("ERROR: "+file+" converged when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
 					err_ct += 1
 					err = True
 			elif rv == 2:
-				print("SUCCESS: "+file+" failed to converge, as planned."+" ("+str(round(dt,2))+"s)")
+				print("SUCCESS: File "+file+" failed to converge, as planned."+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			elif rv == 1:
-				print("EXCEPTION:  "+file+" failed to load"+" ("+str(dt)+"s)")
-				print_error(path, printerr)
+				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(dt)+"s)")
 				ex_ct += 1
 				err = True
 			else:
-				print("EXCEPTION:  "+file+" unrecognized return value ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
-				print_error(path, printerr)
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 		elif "exc_" in file or "_exc" in file:
 			if rv == 0:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional "+file+" loaded when it shouldn't've"+" ("+str(round(dt,2))+"s)")
+					print("WARNING: Optional file "+file+" loaded when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
-					print("ERROR: "+file+" loaded when it shouldn't've"+" ("+str(round(dt,2))+"s)")
+					print("ERROR: "+file+" loaded when it shouldn't've!"+" ("+str(round(dt,2))+"s)")
 					err_ct += 1
 					err = True
 			elif rv == 1:
 				print("SUCCESS:  "+file+" failed to load, as planned"+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			else:
-				print("EXCEPTION:  "+file+" unrecognized return value ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
-				print_error(path, printerr)
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 		else:
 			if rv == 2:
 				if "opt_" in file or "_opt" in file:
-					print("WARNING: Optional "+file+" failed to converge"+" ("+str(round(dt,2))+"s)")
+					print("WARNING: Optional file "+file+" failed to converge!"+" ("+str(round(dt,2))+"s)")
 					cleanlist.append((path, file))
 					err = False
 				else:
 					err_ct += 1
-					print("ERROR: "+file+" failed to converge"+" ("+str(round(dt,2))+"s)")
-					print_error(path, printerr)
+					print("ERROR: "+file+" failed to converge!"+" ("+str(round(dt,2))+"s)")
 					err = True
 			elif rv == 1:
-				print("EXCEPTION:  "+file+" failed to load"+" ("+str(round(dt,2))+"s)")
-				print_error(path, printerr)
+				print("EXCEPTION:  "+file+" failed to load!"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 			elif rv == 0:
-				print("SUCCESS: "+file+" converged"+" ("+str(round(dt,2))+"s)")
+				print("SUCCESS: File "+file+" converged successfully."+" ("+str(round(dt,2))+"s)")
 				cleanlist.append((path, file))
 			else:
-				print("EXCEPTION:  "+file+": unrecognized return value ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
-				print_error(path, printerr)
+				print("EXCEPTION:  "+file+" ended with unrecognized return value! ("+str(rv)+")"+" ("+str(round(dt,2))+"s)")
 				ex_ct += 1
 				err = True
 		if err:
