@@ -30,7 +30,8 @@ controller::controller(MODULE *module){
 			PT_double, "Tmax", PADDR(Tmax), PT_DESCRIPTION, "the setpoint limit on the high side",
 			PT_char32, "target", PADDR(target), PT_DESCRIPTION, "the observed property (e.g., air temperature)",
 			PT_char32, "setpoint", PADDR(setpoint), PT_DESCRIPTION, "the controlled property (e.g., heating setpoint)",
-			PT_char32, "demand", PADDR(demand), PT_DESCRIPTION, "the controlled load",
+			PT_char32, "demand", PADDR(demand), PT_DESCRIPTION, "the controlled load when on",
+			PT_char32, "load", PADDR(load), PT_DESCRIPTION, "the current controlled load",
 			PT_char32, "total", PADDR(total), PT_DESCRIPTION, "the uncontrolled load (if any)",
 			PT_object, "market", PADDR(pMarket), PT_DESCRIPTION, "the market to bid into",
 			PT_double, "bid_price", PADDR(last_p), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid price",
@@ -59,6 +60,7 @@ void controller::cheat(){
 			sprintf(setpoint, "heating_setpoint");
 			sprintf(demand, "heating_demand");
 			sprintf(total, "panel.power");
+			sprintf(load, "hvac_load");
 			kT_L = -2;
 			kT_H = -2;
 			Tmin = -5;
@@ -70,6 +72,7 @@ void controller::cheat(){
 			sprintf(setpoint, "cooling_setpoint");
 			sprintf(demand, "cooling_demand");
 			sprintf(total, "panel.power");
+			sprintf(load, "hvac_load");
 			kT_L = 2;
 			kT_H = 2;
 			Tmin = 0;
@@ -81,6 +84,7 @@ void controller::cheat(){
 			sprintf(setpoint, "heating_setpoint");
 			sprintf(demand, "heating_demand");
 			sprintf(total, "panel.power");
+			sprintf(load, "hvac_load");
 			kT_L = -2;
 			kT_H = -2;
 			Tmin = -5;
@@ -92,6 +96,7 @@ void controller::cheat(){
 			sprintf(setpoint, "cooling_setpoint");
 			sprintf(demand, "cooling_demand");
 			sprintf(total, "panel.power");
+			sprintf(load, "hvac_load");
 			kT_L = 2;
 			kT_H = 2;
 			Tmin = -3;
@@ -145,6 +150,7 @@ int controller::init(OBJECT *parent){
 	fetch(&pSetpoint, setpoint, parent);
 	fetch(&pDemand, demand, parent);
 	fetch(&pTotal, total, parent);
+	fetch(&pLoad, load, parent);
 
 	if(dir == 0){
 		double high = kT_H * Tmax;
@@ -237,12 +243,15 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		last_p = bid;
 		last_q = *pDemand;
 		lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id);
-		residual -= *pDemand;
+		residual -= *pLoad;
 	} else {
 		last_p = 0;
 		last_q = 0;
 	}
-	lastbid_id = market->submit(OBJECTHDR(this), -residual, 9999, bid_id);
+	if (residual>0)
+		lastbid_id = market->submit(OBJECTHDR(this), -residual, 9999, bid_id);
+	else
+		gl_warning("controller:%d: residual unresponsive load is negative! (%.1f kW)", hdr->id, residual);
 
 	char timebuf[128];
 	gl_printtime(t1,timebuf,127);

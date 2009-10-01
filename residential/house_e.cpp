@@ -607,7 +607,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "Rwindows[degF.h/Btu]", PADDR(Rwindows),PT_DESCRIPTION,"window R-value",
 			PT_double, "Rdoors[degF.h/Btu]", PADDR(Rdoors),PT_DESCRIPTION,"door R-value",
 			
-			//PT_enduse,"system",PADDR(system),PT_DESCRIPTION,"heating/cooling system enduse load",
+			PT_double,"hvac_load",PADDR(hvac_load),PT_DESCRIPTION,"heating/cooling system load",
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
 #ifdef _DEBUG
 			// these are added in the debugging version so we can spy on ETP
@@ -1133,7 +1133,6 @@ void house_e::update_system(double dt)
 	}
 	else
 	{
-		
 		mult1 = ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? ((system_type&ST_AIR)?0.05:0.00) : 1.0);
 		load.total = system_rated_power * mult1;
 		load.heatgain = system_rated_capacity;
@@ -1141,6 +1140,7 @@ void house_e::update_system(double dt)
 	load.power = complex(load.power_fraction * load.total.Re(), 0);
 	load.admittance = complex(load.impedance_fraction * load.total.Re(), 0);
 	load.current = complex(load.current_fraction * load.total.Re(), 0);
+	hvac_load = load.total.Re();
 }
 
 /**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time

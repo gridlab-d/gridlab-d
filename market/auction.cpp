@@ -62,6 +62,7 @@ auction::auction(MODULE *module)
 			PT_double, "avg168", PADDR(avg168), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "weekly average of price",
 			PT_double, "std168", PADDR(std168), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "weekly stdev of price",
 			PT_object, "network", PADDR(network), PT_DESCRIPTION, "the comm network used by object to talk to the market (if any)",
+			PT_bool, "verbose", PADDR(verbose), PT_DESCRIPTION, "enable verbose auction operations",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		gl_publish_function(oclass,	"submit_bid", (FUNCTIONADDR)submit_bid);
 		defaults = this;
@@ -74,6 +75,7 @@ int auction::create(void)
 {
 	memcpy(this,defaults,sizeof(auction));
 	lasthr = thishr = -1;
+	verbose = 0;
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -111,7 +113,7 @@ TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 		gl_localtime(clearat,&dt);
 		char buffer[256];
 		char myname[64];
-		//gl_verbose("%s first clearing at %s", gl_name(OBJECTHDR(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		if (verbose) gl_output("   ...%s first clearing at %s", gl_name(OBJECTHDR(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 	}
 	else
 	{
@@ -136,7 +138,7 @@ TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		gl_localtime(clearat,&dt);
 		char buffer[256];
 		char myname[64];
-		//gl_verbose("%s clearing process started at %s", gl_name(OBJECTHDR(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		if (verbose) gl_output("   ...%s clearing process started at %s", gl_name(OBJECTHDR(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 
 		/* clear market */
 		thishr = dt.hour;
@@ -147,7 +149,7 @@ TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		char name[64];
 		clearat = nextclear();
 		gl_localtime(clearat,&dt);
-		//gl_verbose("%s opens for clearing of market_id %d at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), (int32)market_id, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		if (verbose) gl_output("   ...%s opens for clearing of market_id %d at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), (int32)market_id, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 	}
 	return -clearat; /* soft return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
@@ -169,20 +171,17 @@ void auction::clear_market(void)
 		bool check=false;
 
 		// dump curves
-		char *verbose=gl_global_getvar("verbose",NULL,0);
-		if (verbose!=NULL && atoi(verbose)>0)
+		if (verbose)
 		{
 			char name[64];
-			//gl_verbose("  supply curve");
+			gl_output("   ...  supply curve");
 			for (i=0; i<offers.getcount(); i++){
-				//gl_verbose("  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
+				gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
 			}
-			//gl_verbose("  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
-			//	gl_verbose("  demand curve");
+			gl_output("   ...  demand curve");
 			for (i=0; i<asks.getcount(); i++){
-				//gl_verbose("  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+				gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
 			}
-			//gl_verbose("  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
 		}
 
 		i=j=0;
@@ -241,7 +240,7 @@ void auction::clear_market(void)
 	
 		/* post the price */
 		char name[64];
-		//gl_verbose("  %s clears %.2f %s at $%.2f/%s", gl_name(OBJECTHDR(this),name,sizeof(name)), clear.quantity, unit, clear.price, unit);
+		if (verbose) gl_output("   ...  %s clears %.2f %s at $%.2f/%s", gl_name(OBJECTHDR(this),name,sizeof(name)), clear.quantity, unit, clear.price, unit);
 		next.price = clear.price;
 		next.quantity = clear.quantity;
 
@@ -300,12 +299,9 @@ KEY auction::submit(OBJECT *from, double quantity, double price, KEY key)
 	{
 		char myname[64];
 		char biddername[64];
-		//gl_warning("  %s resubmits %s from object %s for %.2f %s at $%.2f/%s", 
-			//gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
-			//fabs(quantity), unit, price, unit);
-		//gl_verbose("  %s resubmits %s from object %s for %.2f %s at $%.2f/%s", 
-			//gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
-			//fabs(quantity), unit, price, unit);
+		if (verbose) gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s", 
+			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
+			fabs(quantity), unit, price, unit);
 		BID bid = {from,fabs(quantity),price};
 		if (quantity<0)
 			return asks.resubmit(&bid,key);
@@ -318,12 +314,9 @@ KEY auction::submit(OBJECT *from, double quantity, double price, KEY key)
 	else {
 		char myname[64];
 		char biddername[64];
-		//gl_warning("  %s receives %s from object %s for %.2f %s at $%.2f/%s", 
-		//	gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
-		//	fabs(quantity), unit, price, unit);
-		//gl_verbose("  %s receives %s from object %s for %.2f %s at $%.2f/%s", 
-			//gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
-			//fabs(quantity), unit, price, unit);
+		if (verbose) gl_output("   ...  %s receives %s from object %s for %.2f %s at $%.2f/%s", 
+			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
+			fabs(quantity), unit, price, unit);
 		BID bid = {from,fabs(quantity),price};
 		if (quantity<0)
 			return asks.submit(&bid);

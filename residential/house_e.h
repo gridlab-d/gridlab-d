@@ -132,6 +132,7 @@ public:
 	double system_rated_capacity;	///< rated capacity of the system
 
 	/* inherited res_enduse::load is hvac system load */
+	double hvac_load;
 	enduse total; /* total load */
 
 	double heating_demand;

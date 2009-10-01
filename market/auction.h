@@ -43,6 +43,7 @@ public:
 
 class auction {
 public:
+	bool verbose;
 	typedef enum {AT_NONE=0, AT_SINGLE=1, AT_DOUBLE=2} AUCTIONTYPE;
 private:
 	curve asks;			/**< demand curve */ 

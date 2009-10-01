@@ -36,6 +36,7 @@ public:
 	char setpoint[33];
 	char demand[33];
 	char total[33];
+	char load[33];
 	OBJECT *pMarket;
 	auction *market;
 	int32 lastbid_id;
@@ -44,13 +45,14 @@ public:
 	double last_q;
 	double set_temp;
 	int may_run;
-	double setpoint0;
 private:
 	TIMESTAMP next_run;
 	double *pMonitor;
 	double *pSetpoint;
 	double *pDemand;
 	double *pTotal;
+	double *pLoad;
+	double setpoint0;
 	void cheat();
 	void fetch(double **prop, char *name, OBJECT *parent);
 	int dir;
