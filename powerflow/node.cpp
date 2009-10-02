@@ -267,15 +267,18 @@ int node::init(OBJECT *parent)
 						NR_subnode_reference = &(parNode->NR_node_reference);
 
 						//Allocate and point our properties up to the parent node
-						parNode->Extra_Data = (complex *)gl_malloc(9*sizeof(complex));
-						if (parNode->Extra_Data == NULL)
+						if (parNode->Extra_Data == NULL)	//Make sure someone else hasn't allocated it for us
 						{
-							GL_THROW("NR: Memory allocation failure for differently connected load.");
-							/*  TROUBLESHOOT
-							This is a bug.  Newton-Raphson tried to allocate memory for other necessary
-							information to handle a parent-child relationship with differently connected loads.
-							Please submit your code and a bug report using the trac website.
-							*/
+							parNode->Extra_Data = (complex *)gl_malloc(9*sizeof(complex));
+							if (parNode->Extra_Data == NULL)
+							{
+								GL_THROW("NR: Memory allocation failure for differently connected load.");
+								/*  TROUBLESHOOT
+								This is a bug.  Newton-Raphson tried to allocate memory for other necessary
+								information to handle a parent-child relationship with differently connected loads.
+								Please submit your code and a bug report using the trac website.
+								*/
+							}
 						}
 					}
 
