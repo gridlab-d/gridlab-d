@@ -17,9 +17,9 @@ object house:1 {
 
 object microwave:2 {
 	parent house:1;
-	installed_power 1000W;
-	standby_power 200W;
-	cycle_length 600s;
+	installed_power 1000 W;
+	standby_power 200 W;
+	cycle_length 600;
 }
 
 object recorder:3 {

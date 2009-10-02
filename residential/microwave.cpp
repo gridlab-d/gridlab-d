@@ -77,22 +77,22 @@ int microwave::create()
 
 /* basic checks on unshaped microwaves.  on failure, don't play games, just throw exceptions. */
 void microwave::init_noshape(){
-	if(installed_power < 0){
-		GL_THROW("microwave power must be positive (read as %f)", installed_power);
-	} else if (installed_power > 4000){
+	if(shape.params.analog.power < 0){
+		GL_THROW("microwave power must be positive (read as %f)", shape.params.analog.power);
+	} else if (shape.params.analog.power > 4.000){
 		GL_THROW("microwave power can not exceed 4 kW (and most don't exceed 2 kW)");
 	}
-	if(installed_power < 700){
+	if(shape.params.analog.power < 0.700){
 		gl_error("microwave installed power is smaller than traditional microwave ovens");
-	} else if(installed_power > 1800){
+	} else if(shape.params.analog.power > 1.800){
 		gl_error("microwave installed power is greater than traditional microwave ovens");
 	}
 	if(standby_power < 0){
 		gl_error("negative standby power, reseting to 1%% of installed power");
-		standby_power = installed_power * 0.01;
-	} else if(standby_power > installed_power){
+		standby_power = shape.params.analog.power * 0.01;
+	} else if(standby_power > shape.params.analog.power){
 		gl_error("standby power exceeds installed power, reseting to 1%% of installed power");
-		standby_power = installed_power * 0.01;
+		standby_power = shape.params.analog.power * 0.01;
 	}
 	if(cycle_time < 0){
 		GL_THROW("negative cycle_length is an invalid value");
@@ -272,7 +272,7 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 		} else {
 			dt = update_state(gl_toseconds(t1-t0));
 		}
-		load.power.SetPowerFactor( (state==ON ? installed_power : standby_power), power_factor);
+		load.power.SetPowerFactor( (state==ON ? shape.params.analog.power : standby_power), power_factor);
 	}
 
 	gl_enduse_sync(&(residential_enduse::load),t1);
