@@ -39,6 +39,9 @@ protected:
 	int16 first_run_flag[3]; //keeps the system from blowing up on bad initial tap position guess
 	complex check_voltage[3];//Voltage that is being checked against
 	void get_monitored_voltage();  //Function to calculate check_voltage depending on mode
+
+private:
+	bool offnominal_time;	//Used to detect off-nominal timesteps and perform an exception for them
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
