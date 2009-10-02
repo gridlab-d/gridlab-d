@@ -1,0 +1,14 @@
+// $Id$
+// automatically generated Thu May  7 09:19:15 PDT 2009 from 24243.tm2
+module climate;
+class climate {
+	double elevation[m];
+	double tzoffset[h];
+}
+object climate {
+	name "Yakima WA";
+	tmyfile "../WA-Yakima.tmy2";
+	tzoffset -8;
+	elevation 325;
+}
+
