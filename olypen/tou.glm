@@ -16,4 +16,6 @@ schedule cooling {
 
 
 #define GROUP=tou
+#define BASE=tou
+
 #include "model.glm"

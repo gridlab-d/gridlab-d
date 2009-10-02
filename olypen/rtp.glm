@@ -1,0 +1,29 @@
+object feeder {
+	market Olypen;
+	quantity ${CAPACITY};
+	object player {
+		file midc.tape;
+		property price;
+	};
+	object recorder {
+		in '2006-04-01 0:00:00 PST';
+		file ${BASE}_midc.csv;
+		property quantity,price;
+		interval 300;
+	};
+}
+
+object recorder {
+	in '2006-04-01 0:00:00 PST';
+	parent Olypen;
+	file ${BASE}_price.csv;
+	property next.Q,next.P,avg24,std24;
+	interval 300;
+}
+
+object collector {
+	group "class=house";
+	file ${BASE}_tstat.csv;
+	property min(heating_setpoint),max(heating_setpoint);
+	interval 300;
+}

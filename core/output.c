@@ -350,6 +350,51 @@ Output:
 		return (*printerr)("ERROR [%s] : %s\n", time_context, buffer);
 }
 
+/** Output an error message to the stdout stream using printf style argument processing
+	
+	output_error() will produce output to the standard output stream.  
+	Error messages are always preceded by the string "ERROR: " 
+	and a newline is always appended to the message.
+ **/
+int output_error_raw(char *format,...) /**< \bprintf style argument list */
+{
+	/* check for repeated message */
+	static char lastfmt[4096] = "";
+	static int count=0;
+	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+	{
+		count++;
+		return 0;
+	}
+	else
+	{
+		va_list ptr;
+		int len=0;
+		strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
+		if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
+		{
+			len = sprintf(buffer,"last error message was repeated %d times", count);
+			count = 0;
+			if(format == NULL) goto Output;
+			else len += sprintf(buffer+len,"\n");
+		}
+		else if (format==NULL)
+			return 0;
+		va_start(ptr,format);
+		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
+		va_end(ptr);
+	}
+Output:
+
+	if (notify_error!=NULL)
+		(*notify_error)();
+
+	if (redirect.error)
+		return fprintf(redirect.error,"%s\n", buffer);
+	else
+		return (*printerr)("%s\n", buffer);
+}
+
 /** Output an test message to the stdout stream using printf style argument processing
 	
 	output_test() will produce output to the test output file defined by the 

@@ -12,4 +12,6 @@ schedule cooling {
 }
 
 #define GROUP=fixed
+#define BASE=fixed
+
 #include "model.glm"

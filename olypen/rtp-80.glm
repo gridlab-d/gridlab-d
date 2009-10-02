@@ -1,0 +1,58 @@
+// Olympic Peninsula Realtime Price Group
+//
+
+schedule heating {
+	* 3-9 * 11-3 * 64 // onpeak winter
+	* 10-2 * 11-3 * 69 // offpeak winter
+	* 6-8,18-20 * 4-10 * 64 // onpeak summer
+	* 9-17,21-5 * 4-10 * 69 // offpeak summer
+}
+schedule cooling {
+	* 6-9 * 11-3 * 85 // onpeak winter
+	* 10-2 * 11-3 * 80 // offpeak winter
+	* 6-8,18-20 * 4-10 * 85 // onpeak summer
+	* 9-17,21-5 * 4-10 * 80 // offpeak summer
+}
+
+module market;
+object auction {
+	name Olypen;
+	type DOUBLE;
+	period 300;
+	latency 0;
+	//verbose TRUE;
+};
+
+class feeder {
+	object market;
+	double quantity;
+	double price;
+	int64 lastbid;
+	int64 nextbid;
+	function auction::submit_bid;
+	public double period;
+	intrinsic init (object parent)
+	{
+		if (market==NULL)
+			throw "market is not defined";
+		gl_get_value(market,"period",period);
+		return SUCCESS;
+	};
+	intrinsic sync (TIMESTAMP t0, TIMESTAMP t1)
+	{
+		if (t1 >= nextbid)
+		{
+			(int32)submit_bid(market,my,quantity,price,-1);
+			lastbid = t1;
+			nextbid = ((TIMESTAMP)((double)t1/300.0)+1)*300;
+		}
+		return nextbid;
+	};
+}
+
+#define GROUP=rtp
+#define CAPACITY=80
+#define BASE=rtp-80
+
+#include "model.glm"
+#include "rtp.glm"

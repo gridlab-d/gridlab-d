@@ -34,6 +34,7 @@ FILE* output_redirect(char *name, char *path);
 FILE* output_redirect_stream(char *name, FILE *fp);
 int output_fatal(char *format,...);
 int output_error(char *format,...);
+int output_error_raw(char *format,...);
 int output_warning(char *format,...);
 int output_debug(char *format,...);
 int output_verbose(char *format,...);

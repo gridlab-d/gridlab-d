@@ -102,6 +102,7 @@ char *strlwr(char *s)
 
 // list of enduses that are implicitly active
 set house_e::implicit_enduses_active = IEU_ALL;
+static double aux_cutin_temperature = 10;
 
 //////////////////////////////////////////////////////////////////////////
 // implicit loadshapes - these are enabled by using implicit_enduses global
@@ -664,6 +665,9 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_DESCRIPTION, "the heating/cooling system dwell time interval for changing system state",
 			NULL);
 	}	
+		gl_global_create("residential::aux_cutin_temperature[degF]",PT_double,&aux_cutin_temperature,
+			PT_DESCRIPTION, "the outdoor air temperature below which AUX heating is used",
+			NULL);
 }
 
 int house_e::create() 
@@ -1098,20 +1102,19 @@ void house_e::update_system(double dt)
 	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
 	const double cooling_capacity_adj = -(-0.0063*(*pTout)+1.5984);
 
-	heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)*KWPBTUPH;
-	cooling_demand = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction)/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction)*KWPBTUPH;
-
 	switch (system_mode) {
 	case SM_HEAT:
+		heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)*KWPBTUPH;
 		system_rated_capacity = design_heating_capacity*heating_capacity_adj;
 		system_rated_power = heating_demand;
 		break;
 	case SM_AUX:
+		heating_demand = design_heating_capacity*KWPBTUPH;
 		system_rated_capacity = design_heating_capacity;
-		system_rated_power = system_rated_capacity*KWPBTUPH;
-		heating_demand = system_rated_power;
+		system_rated_power = heating_demand;
 		break;
 	case SM_COOL:
+		cooling_demand = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction)/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction)*KWPBTUPH;
 		system_rated_capacity = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction);
 		system_rated_power = cooling_demand;
 		break;
@@ -1370,7 +1373,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				system_mode = SM_COOL;
 			else if(Tair < TheatOn - terr/2)
 			{
-				if (outside_temperature < 20)
+				if (outside_temperature < aux_cutin_temperature)
 					system_mode = SM_AUX;
 				else
 					system_mode = SM_HEAT;

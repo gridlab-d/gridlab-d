@@ -1,0 +1,70 @@
+// basic olypen model
+
+#ifndef GROUP
+#error GROUP is not defined
+#endif
+#print Processing ${GROUP} group
+
+#set dateformat=ISO
+#set randomseed=17
+#set suppress_repeat_messages=0
+
+#define NHOMES=25
+
+module powerflow;
+module climate;
+module residential {
+	implicit_enduses LIGHTS|PLUGS|WATERHEATER|DISHWASHER|CLOTHESWASHER|DRYER;
+}
+module tape;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2006-03-01 0:00:00 PST';
+	stoptime '2007-04-01 0:00:00 PST';
+}
+
+#include "WA-Olympia.glm"
+
+object triplex_meter {
+	nominal_voltage 120;
+	phases AS;
+	object triplex_meter:..${NHOMES} {
+		nominal_voltage 120;
+		phases AS;
+		object house {
+			floor_area random.triangle(1250,2500) sf;
+			aspect_ratio random.triangle(1.2,1.7);
+			envelope_UA ($floor_area/random.triangle(2.5,3.5));
+			mass_heat_coeff ($floor_area*random.triangle(0.5,0.75));
+			mass_heat_capacity ($floor_area*random.triangle(3,3.6));
+			air_heat_fraction random.triangle(0.5,0.8);
+			air_mass ($floor_area*random.triangle(1.5,2.5));
+			air_temperature random.triangle(68,72);
+			mass_temperature ($air_temperature);
+#if GROUP!=rtp
+			heating_setpoint heating + random.triangle(0,5);
+#endif
+			cooling_setpoint cooling - random.triangle(0,5);
+			window_shading random.triangle(0.8,0.95);
+#if GROUP==rtp
+			object controller {
+					market Olypen;
+					simple_mode HOUSE_PREHEAT;
+			};
+#endif
+		};
+	};
+	object recorder {
+		in '2006-04-01 0:00:00 PST';
+		file ${BASE}_energy.csv;
+		property measured_real_energy;
+		interval 3600;
+	};
+	object recorder {
+		in '2006-04-01 0:00:00 PST';
+		file ${BASE}_transient.csv;
+		property measured_real_power;
+		interval -1;
+	};
+}
