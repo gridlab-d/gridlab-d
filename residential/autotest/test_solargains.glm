@@ -43,7 +43,7 @@ object house{
 
 object climate{
 
-	tmyfile "Olympia.tmy2";
+	tmyfile "../Olympia.tmy2";
 
 }
 

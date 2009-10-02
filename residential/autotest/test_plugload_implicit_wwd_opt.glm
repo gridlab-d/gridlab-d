@@ -26,7 +26,7 @@ object house {
 		target "panel.power";
 		object player {
 			property value;
-			file "test_plugload_enduse_load_wwd.player";
+			file "../test_plugload_enduse_load_wwd.player";
 		};
 		within 1e-6;
 	};
@@ -35,7 +35,7 @@ object house {
 		target "panel.energy";
 		object player {
 			property value;
-			file "test_plugload_energy_wwd.player";
+			file "../test_plugload_energy_wwd.player";
 		};
 		within 1e-6;
 	};
@@ -44,7 +44,7 @@ object house {
 		target "panel.heatgain";
 		object player {
 			property value;
-			file "test_plugload_heatgain_wwd.player";
+			file "../test_plugload_heatgain_wwd.player";
 		};
 		within 1e-6;
 	};

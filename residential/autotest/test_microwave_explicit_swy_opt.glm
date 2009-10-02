@@ -56,7 +56,7 @@ object house {
 	air_temperature 70;
 	outdoor_temperature 73;
 	object microwave {
-		heat_fraction .8;
+		heatgain_fraction .8;
 		power_factor .7;
 		shape "type:pulsed; schedule: micro; energy: 1.0 kWh; power: 0.2 kW; count: 1; stdev: 40 W";
 		object complex_assert {

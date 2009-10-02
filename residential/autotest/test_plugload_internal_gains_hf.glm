@@ -26,11 +26,11 @@ object house {
 	object plugload {
 		installed_power .1;
 		demand 1;
-		heat_fraction .5;
+		heatgain_fraction .5;
 		object player {
 			file ../generic_demand.glt; //used as heat fraction in this case
 			loop 24;
-			property heat_fraction;
+			property heatgain_fraction;
 		};
 //		object double_assert {
 //			target "internal_gains";
@@ -44,7 +44,7 @@ object house {
 			file "plugload_load_usage3600.csv";
 			interval 3600;
 			limit 28;
-			property demand,enduse_load,heat_fraction,internal_gains;
+			property demand,enduse_load,heatgain_fraction,heatgain;
 		};
 	};
 }
