@@ -4,7 +4,7 @@
 clear all; clc;
 
 %% RTP feeder capacity
-peak=100;
+peak=94;
 
 %% load & process data
 control.energy = csvread('control_energy.csv',9,1);
