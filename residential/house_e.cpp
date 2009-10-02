@@ -1108,8 +1108,8 @@ void house_e::update_system(double dt)
 		break;
 	case SM_AUX:
 		system_rated_capacity = design_heating_capacity;
-		system_rated_power = system_rated_capacity;
-		heating_demand = system_rated_power/1000.0;
+		system_rated_power = system_rated_capacity*KWPBTUPH;
+		heating_demand = system_rated_power;
 		break;
 	case SM_COOL:
 		system_rated_capacity = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction);
@@ -1124,7 +1124,6 @@ void house_e::update_system(double dt)
 	/* calculate the power consumption */
 	// manually add 'total', we should be unshaped
 	// central-air fan consumes only ~5% of total energy when using GAS, 2% when ventilating at low power
-	double mult1=0.0;
 	load.current = load.admittance = complex(0,0);
 	if ((system_type&ST_VAR) && (system_mode==SM_OFF))
 	{
@@ -1133,8 +1132,7 @@ void house_e::update_system(double dt)
 	}
 	else
 	{
-		mult1 = ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? ((system_type&ST_AIR)?0.05:0.00) : 1.0);
-		load.total = system_rated_power * mult1;
+		load.total = system_rated_power * ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? ((system_type&ST_AIR)?0.05:0.00) : 1.0);
 		load.heatgain = system_rated_capacity;
 	}
 	load.power = complex(load.power_fraction * load.total.Re(), 0);
