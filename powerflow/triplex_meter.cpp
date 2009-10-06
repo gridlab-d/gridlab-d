@@ -124,6 +124,8 @@ int triplex_meter::init(OBJECT *parent)
 TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	//measured_voltage[0] = voltageA;
+	//measured_voltage[1] = voltageB;
+	//measured_voltage[2] = voltageC;
 	measured_voltage[0].SetPolar(voltageA.Mag(),voltageA.Arg());
 	measured_voltage[1].SetPolar(voltageB.Mag(),voltageB.Arg());
 	measured_voltage[2].SetPolar(voltageC.Mag(),voltageC.Arg());
@@ -149,7 +151,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		indiv_measured_power[0] = measured_voltage[0]*(~measured_current[0]);
-		indiv_measured_power[1] = -measured_voltage[1]*(~measured_current[1]);
+		indiv_measured_power[1] = complex(-1,0) * measured_voltage[1]*(~measured_current[1]);
 		indiv_measured_power[2] = measured_voltage[2]*(~measured_current[2]);
 
 		measured_power = indiv_measured_power[0] + indiv_measured_power[1] + indiv_measured_power[2];

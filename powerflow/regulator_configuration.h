@@ -26,6 +26,11 @@ public:
 		LINE_DROP_COMP
 	} Control;
 
+	enum control_level {
+		INDIVIDUAL=1,
+		BANK
+	} control_level;
+
 	enum Type {
 		A = 1,
 		B

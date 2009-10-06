@@ -297,9 +297,9 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		next_time = TS_NEVER;
 	}
 
-	if ((solver_method == SM_NR && NR_cycle==true) || solver_method == SM_FBS)
+	else if ((solver_method == SM_NR && NR_cycle==true) || solver_method == SM_FBS)
 	{
-		if (pConfig->Control != pConfig->MANUAL)
+		if (pConfig->control_level == pConfig->INDIVIDUAL)
 		{
 			//Set flags correctly for each pass, 1 indicates okay to change taps, 0 indicates no go
 			for (int i = 0; i < 3; i++) {
@@ -468,6 +468,159 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 				OPEN_DELTA_ABBC will only work in MANUAL control mode and in FBS at this time.
 				*/
 		}
+
+		else if (pConfig->control_level == pConfig->BANK)
+		{
+			//Set flags correctly for each pass, 1 indicates okay to change taps, 0 indicates no go - we'll store all of banked stuff in index=0
+			if (mech_t_next[0] <= t0) {
+				mech_flag[0] = 1;
+			}
+			if (dwell_t_next[0] <= t0) {
+				dwell_flag[0] = 1;
+			}
+			else if (dwell_t_next[0] > t0) {
+				dwell_flag[0] = 0;
+			}
+
+			get_monitored_voltage();
+
+			if (pConfig->connect_type == pConfig->WYE_WYE)
+			{	
+				//Update first run flag - special solver during first time solved.
+				if (first_run_flag[0] < 1 ) 
+						first_run_flag[0] += 1;		
+			
+
+				if (check_voltage[0].Mag() < Vlow)		//raise voltage
+				{	
+					//hit the band center for convergence on first run, otherwise bad initial guess on tap settings 
+					//can fail on the first timestep
+					if (first_run_flag[0] == 0) 
+					{	
+						tap[0] = tap[1] = tap[2] = tap[0] + (int16)ceil((pConfig->band_center - check_voltage[0].Mag())/VtapChange);
+						if (tap[0] > pConfig->raise_taps) 
+						{
+							tap[0] = tap[1] = tap[2] = pConfig->raise_taps;
+						}
+						dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
+						mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+					}
+					//dwelling has happened, and now waiting for actual physical change time
+					else if (mech_flag[0] == 0 && dwell_flag[0] == 1 && (mech_t_next[0] - t0) >= pConfig->time_delay)
+					{
+						mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+					}
+					//if both flags say it's okay to change the tap, then change the tap
+					else if (mech_flag[0] == 1 && dwell_flag[0] == 1) 
+					{		 
+						tap[0] = tap[1] = tap[2] = tap[0] + (int16) 1;						
+
+						if (tap[0] > pConfig->raise_taps) 
+						{
+							tap[0] = tap[1] = tap[2] = pConfig->raise_taps;
+							dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
+							mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+							dwell_flag[0] = mech_flag[0] = 0;
+						}
+						else 
+						{
+							mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+							dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
+							mech_flag[0] = 0;
+						}
+					}
+					//only set the dwell time if we've reached the end of the previous dwell (in case other 
+					//objects update during that time)
+					else if (dwell_flag[0] == 0 && (dwell_t_next[0] - t0) >= pConfig->dwell_time) 
+					{
+						dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
+						mech_t_next[0] = dwell_t_next[0] + (int64)pConfig->time_delay;
+					}														
+				}
+				else if (check_voltage[0].Mag() > Vhigh)  //lower voltage
+				{
+					if (first_run_flag[0] == 0) 
+					{
+						tap[0] = tap[1] = tap[2] = tap[0] - (int16)ceil((check_voltage[0].Mag() - pConfig->band_center)/VtapChange);
+						if (tap[0] < -pConfig->lower_taps) 
+						{
+							tap[0] = tap[1] = tap[2] = -pConfig->lower_taps;
+						}
+						dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
+						mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+					}
+					else if (mech_flag[0] == 0 && dwell_flag[0] == 1 && (mech_t_next[0] - t0) >= pConfig->time_delay)
+					{
+						mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+					}
+					else if (mech_flag[0] == 1 && dwell_flag[0] == 1) 
+					{
+						tap[0] = tap[1] = tap[2] = tap[0] - (int16) 1;							
+						
+						if (tap[0] < -pConfig->lower_taps) 
+						{
+							tap[0] = tap[1] = tap[2] = -pConfig->lower_taps;
+							dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
+							mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+							dwell_flag[0] = mech_flag[0] = 0;
+						}
+						else 
+						{
+							mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+							dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
+							mech_flag[0] = 0;
+						}
+					}
+					else if (dwell_flag[0] == 0 && (dwell_t_next[0] - t0) >= pConfig->dwell_time) 
+					{
+						dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
+						mech_t_next[0] = dwell_t_next[0] + (int64)pConfig->time_delay;
+					}
+				}
+				//If no tap changes were needed, then this resets dwell_flag to 0 and indicates regulator has no
+				//more changes unless system changes
+				else 
+				{	
+					dwell_t_next[0] = mech_t_next[0] = TS_NEVER;
+					dwell_flag[0] = 0;
+					mech_flag[0] = 0;
+				}
+
+				for (int i = 0; i < 3; i++) {
+					//Use tap positions to solve for 'a' matrix
+					if (pConfig->Type == pConfig->A)
+					{	a_mat[i][i] = 1/(1.0 + tap[i] * tapChangePer);}
+					else if (pConfig->Type == pConfig->B)
+					{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
+					else
+					{	throw "invalid regulator type";}
+					/*  TROUBLESHOOT
+					Check the Type of regulator specified.  Type can only be A or B at this time.
+					*/
+				}
+
+				//Determine how far to advance the clock
+				int64 nt[3];
+
+				if (mech_t_next[0] > t0)
+					nt[0] = mech_t_next[0];
+				if (dwell_t_next[0] > t0)
+					nt[0] = dwell_t_next[0];
+
+				if (nt[0] > t0)
+					next_time = nt[0];
+
+				if (next_time <= t0)
+					next_time = TS_NEVER;
+			}
+			else
+				GL_THROW("Specified connect type is not supported in automatic modes at this time.");
+				/* TROUBLESHOOT
+				At this time only WYE-WYE regulators are supported in automatic control modes. 
+				OPEN_DELTA_ABBC will only work in MANUAL control mode and in FBS at this time.
+				*/
+		}
+		
 	}
 			
 	//Use 'a' matrix to solve appropriate 'A' & 'd' matrices
@@ -741,60 +894,138 @@ void regulator::get_monitored_voltage()
 	{
 		case 4: //Line Drop Compensation
 		{
-			if (pTo) 
+			if (pConfig->control_level == pConfig->INDIVIDUAL)
 			{
-				volt[0] = pTo->voltageA;
-				volt[1] = pTo->voltageB;
-				volt[2] = pTo->voltageC;
-			}
-			else
-			{	
-				volt[0] = volt[1] = volt[2] = 0.0;
-			}
+				if (pTo) 
+				{
+					volt[0] = pTo->voltageA;
+					volt[1] = pTo->voltageB;
+					volt[2] = pTo->voltageC;
+				}
+				else
+				{	
+					volt[0] = volt[1] = volt[2] = 0.0;
+				}
 
-			for (int i = 0; i < 3; i++) 
-				V2[i] = volt[i] / ((double) pConfig->PT_ratio);
-
-			if ((double) pConfig->CT_ratio != 0.0)
-			{
-				//Calculate outgoing currents
-				complex tmp_mat2[3][3];
-				inverse(d_mat,tmp_mat2);
-
-				curr[0] = tmp_mat2[0][0]*current_in[0]+tmp_mat2[0][1]*current_in[1]+tmp_mat2[0][2]*current_in[2];
-				curr[1] = tmp_mat2[1][0]*current_in[0]+tmp_mat2[1][1]*current_in[1]+tmp_mat2[1][2]*current_in[2];
-				curr[2] = tmp_mat2[2][0]*current_in[0]+tmp_mat2[2][1]*current_in[1]+tmp_mat2[2][2]*current_in[2];
-			
 				for (int i = 0; i < 3; i++) 
-					check_voltage[i] = V2[i] - (curr[i] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[i], pConfig->ldc_X_V[i]);
+					V2[i] = volt[i] / ((double) pConfig->PT_ratio);
+
+				if ((double) pConfig->CT_ratio != 0.0)
+				{
+					//Calculate outgoing currents
+					complex tmp_mat2[3][3];
+					inverse(d_mat,tmp_mat2);
+
+					curr[0] = tmp_mat2[0][0]*current_in[0]+tmp_mat2[0][1]*current_in[1]+tmp_mat2[0][2]*current_in[2];
+					curr[1] = tmp_mat2[1][0]*current_in[0]+tmp_mat2[1][1]*current_in[1]+tmp_mat2[1][2]*current_in[2];
+					curr[2] = tmp_mat2[2][0]*current_in[0]+tmp_mat2[2][1]*current_in[1]+tmp_mat2[2][2]*current_in[2];
+				
+					for (int i = 0; i < 3; i++) 
+						check_voltage[i] = V2[i] - (curr[i] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[i], pConfig->ldc_X_V[i]);
+				}
+				else 
+				{
+					for (int i = 0; i < 3; i++)
+						check_voltage[i] = V2[i];
+				}
 			}
-			else 
+			else if (pConfig->control_level == pConfig->BANK)
 			{
-				for (int i = 0; i < 3; i++)
-					check_voltage[i] = V2[i];
+				if (pTo) 
+				{
+					if (pConfig->PT_phase == PHASE_A)
+						volt[0] = pTo->voltageA;
+					else if (pConfig->PT_phase == PHASE_B)
+						volt[0] = pTo->voltageB;
+					else if (pConfig->PT_phase == PHASE_C)
+						volt[0] = pTo->voltageC;
+				}
+				else
+				{	
+					volt[0] = volt[1] = volt[2] = 0.0;
+				}
+
+				V2[0] = volt[0] / ((double) pConfig->PT_ratio);
+
+				if ((double) pConfig->CT_ratio != 0.0)
+				{
+					//Calculate outgoing currents
+					complex tmp_mat2[3][3];
+					inverse(d_mat,tmp_mat2);
+
+					curr[0] = tmp_mat2[0][0]*current_in[0]+tmp_mat2[0][1]*current_in[1]+tmp_mat2[0][2]*current_in[2];
+					curr[1] = tmp_mat2[1][0]*current_in[0]+tmp_mat2[1][1]*current_in[1]+tmp_mat2[1][2]*current_in[2];
+					curr[2] = tmp_mat2[2][0]*current_in[0]+tmp_mat2[2][1]*current_in[1]+tmp_mat2[2][2]*current_in[2];
+
+					if (pConfig->CT_phase == PHASE_A)
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = V2[0] - (curr[0] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[0], pConfig->ldc_X_V[0]);
+	
+					else if (pConfig->CT_phase == PHASE_B)
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = V2[0] - (curr[1] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[1], pConfig->ldc_X_V[1]);
+	
+					else if (pConfig->CT_phase == PHASE_C)
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = V2[0] - (curr[2] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[2], pConfig->ldc_X_V[2]);
+	
+				}
+				else 
+				{
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = V2[0];
+				}
 			}
 		}
 			break;
 		case 2: //Output voltage
 		{
-			if (pTo) 
+			if (pConfig->control_level == pConfig->INDIVIDUAL)
 			{
-				check_voltage[0] = pTo->voltageA;
-				check_voltage[1] = pTo->voltageB;
-				check_voltage[2] = pTo->voltageC;
+				if (pTo) 
+				{
+					check_voltage[0] = pTo->voltageA;
+					check_voltage[1] = pTo->voltageB;
+					check_voltage[2] = pTo->voltageC;
+				}
+				else
+				{	
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = 0.0;
+				}
 			}
-			else
-			{	
-				check_voltage[0] = check_voltage[1] = check_voltage[2] = 0.0;
+			else if (pConfig->control_level == pConfig->BANK)
+			{
+				if (pTo) 
+				{
+					if (pConfig->PT_phase == PHASE_A)
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = pTo->voltageA;
+					else if (pConfig->PT_phase == PHASE_B)
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = pTo->voltageB;
+					else if (pConfig->PT_phase == PHASE_C)
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = pTo->voltageC;
+				}
+				else
+				{	
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = 0.0;
+				}
 			}
 		}
 			break;
 		case 3: //Remote Node
 		{
 			node *RNode = OBJECTDATA(RemoteNode,node);
-			for (int i = 0; i < 3; i++)
+			if (pConfig->control_level == pConfig->INDIVIDUAL)
 			{
-				check_voltage[i] = RNode->voltage[i];
+				for (int i = 0; i < 3; i++)
+				{
+					check_voltage[i] = RNode->voltage[i];
+				}
+			}
+			else if (pConfig->control_level == pConfig->BANK)
+			{
+				if (pConfig->PT_phase == PHASE_A)
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode->voltage[0];
+				else if (pConfig->PT_phase == PHASE_B)
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode->voltage[1];
+				else if (pConfig->PT_phase == PHASE_C)
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode->voltage[2];
+
 			}
 		}
 			break;

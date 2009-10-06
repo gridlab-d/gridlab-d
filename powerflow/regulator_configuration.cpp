@@ -65,7 +65,10 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 				PT_KEYWORD, "A",(set)PHASE_A,
 				PT_KEYWORD, "B",(set)PHASE_B,
 				PT_KEYWORD, "C",(set)PHASE_C,
-			PT_double, "regulation",PADDR(regulation),	// what unit?
+			PT_double, "regulation",PADDR(regulation),
+			PT_enumeration, "control_level",PADDR(control_level),
+				PT_KEYWORD, "INDIVIDUAL", INDIVIDUAL,
+				PT_KEYWORD, "BANK", BANK,
 			PT_enumeration, "Control",PADDR(Control),
 				PT_KEYWORD, "MANUAL", MANUAL,
 				PT_KEYWORD, "OUTPUT_VOLTAGE", OUTPUT_VOLTAGE,
@@ -102,6 +105,7 @@ int regulator_configuration::create(void)
 	CT_phase = PHASE_ABC;
 	PT_phase = PHASE_ABC;
 	Control = MANUAL;
+	control_level = INDIVIDUAL;
 	Type = B;
 	regulation = 0.0;
 
