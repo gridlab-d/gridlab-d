@@ -97,7 +97,7 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 			// electric load
 			else
 			{
-				double P = e->voltage_factor>0 ? e->shape->load * (e->power_fraction + (e->current_fraction + e->impedance_fraction/e->voltage_factor )/e->voltage_factor) : 0.0;
+				double P = e->voltage_factor>0 ? e->shape->load * (e->power_fraction + e->current_fraction + e->impedance_fraction) : 0.0;
 				e->total.r = P;
 				if (fabs(e->power_factor)<1)
 					e->total.i = (e->power_factor<0?-1:1)*P*sqrt(1/(e->power_factor*e->power_factor)-1);
@@ -112,8 +112,8 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 		}
 		else if (e->voltage_factor > 0 && !(e->config&EUC_HEATLOAD)) // no shape electric - use ZIP component directly
 		{
-			e->total.r = e->power.r + (e->current.r + e->admittance.r/e->voltage_factor)/e->voltage_factor;
-			e->total.i = e->power.i + (e->current.i + e->admittance.i/e->voltage_factor)/e->voltage_factor;
+			e->total.r = e->power.r + e->current.r + e->admittance.r;
+			e->total.i = e->power.i + e->current.i + e->admittance.i;
 		}
 		else
 		{
