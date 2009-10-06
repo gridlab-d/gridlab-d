@@ -91,8 +91,8 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 				shape.load = 0.0;
 			}
 			load.power = load.power_fraction * shape.load;
-			load.current = load.current_fraction * shape.load / load.voltage_factor;
-			load.admittance = load.impedance_fraction * shape.load / load.voltage_factor / load.voltage_factor;
+			load.current = load.current_fraction * shape.load;
+			load.admittance = load.impedance_fraction * shape.load;
 			if(fabs(load.power_factor) < 1 && load.power_factor != 0.0){
 				val = (load.power_factor < 0 ? -1.0 : 1.0) * load.power.Re() * sqrt(1/(load.power_factor * load.power_factor) - 1);
 			} else {

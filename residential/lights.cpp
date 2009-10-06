@@ -192,7 +192,7 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 			gl_warning("lights shape demand exceeds installed lighting power, capping to 100%%");
 			shape.load = 1.0;
 		}
-		load.power = shape.params.analog.power * shape.load * load.voltage_factor;
+		load.power = shape.params.analog.power * shape.load;
 		if(fabs(load.power_factor) < 1){
 			val = (load.power_factor<0?-1.0:1.0) * load.power.Re() * sqrt(1/(load.power_factor * load.power_factor) - 1);
 		} else {

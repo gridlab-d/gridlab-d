@@ -111,7 +111,7 @@ TIMESTAMP dishwasher::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if(shape.type == MT_UNKNOWN){ /* requires manual enduse control */
 		double real = 0.0, imag = 0.0;
-		real = shape.params.analog.power * shape.load * load.voltage_factor;
+		real = shape.params.analog.power * shape.load;
 
 		if(fabs(load.power_factor) < 1){
 			imag = (load.power_factor<0?-1.0:1.0) * real * sqrt(1/(load.power_factor * load.power_factor) - 1);

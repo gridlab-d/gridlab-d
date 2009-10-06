@@ -681,6 +681,7 @@ int house_e::create()
 	load.power_fraction = 0.8;
 	load.impedance_fraction = 0.2;
 	load.current_fraction = 0.0;
+	load.power_factor = 1.0;
 
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
@@ -1138,9 +1139,21 @@ void house_e::update_system(double dt)
 		load.total = system_rated_power * ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? ((system_type&ST_AIR)?0.05:0.00) : 1.0);
 		load.heatgain = system_rated_capacity;
 	}
-	load.power = complex(load.power_fraction * load.total.Re(), 0);
-	load.admittance = complex(load.impedance_fraction * load.total.Re(), 0);
-	load.current = complex(load.current_fraction * load.total.Re(), 0);
+
+
+
+	if (load.power_factor != 0.0)
+	{
+		load.power = complex(load.power_fraction * load.total.Re() , load.power_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+		load.admittance = complex(load.impedance_fraction * load.total.Re() , load.impedance_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+		load.current = complex(load.current_fraction * load.total.Re(), load.current_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+	}
+	else
+	{
+		load.power = complex(0,0);
+		load.admittance = complex(0,0);
+		load.current = complex(0,0);
+	}
 	hvac_load = load.total.Re();
 }
 
@@ -1457,10 +1470,40 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				//Convert values appropriately - assume nominal voltages of 240 and 120 (0 degrees)
 				//All values are given in kW, so convert to normal
-				double V = c->pV->Mag();
-				load_values[0][1] += c->pLoad->power * 1000.0;
-				load_values[1][1] += ~(c->pLoad->current * 1000.0 / V);
-				load_values[2][1] += ~(c->pLoad->admittance * 1000.0 / (V*V));
+				double aV = c->pV->Arg();
+			
+
+				if (n==0)	//1-2 240 V load
+				{
+					complex V2;
+					V2.SetPolar(240,aV);
+
+					load_values[0][2] += c->pLoad->power * 1000.0;
+					load_values[1][2] += ~(c->pLoad->current * 1000.0 / V2);
+					load_values[2][2] += ~(c->pLoad->admittance * 1000.0 / (240.0 * 240.0));
+				}
+				else if (n==1)	//2-N 120 V load
+				{
+					complex V2;
+					V2.SetPolar(120,aV);
+
+					load_values[0][1] += c->pLoad->power * 1000.0;
+					load_values[1][1] += ~(c->pLoad->current * 1000.0 / V2);
+					load_values[2][1] += ~(c->pLoad->admittance * 1000.0 / (120.0 * 120.0));
+				}
+				else	//n has to equal 2 here (checked above) - 1-N 120 V load
+				{
+					complex V2;
+					V2.SetPolar(120,aV);
+
+					load_values[0][0] += c->pLoad->power * 1000.0;
+					load_values[1][0] += ~(c->pLoad->current * 1000.0 / V2);
+					load_values[2][0] += ~(c->pLoad->admittance * 1000.0 / (120.0 * 120.0));
+				}
+
+				//load_values[0][1] += c->pLoad->power * 1000.0;
+				//load_values[1][1] += ~(c->pLoad->current * 1000.0 / V);
+				//load_values[2][1] += ~(c->pLoad->admittance * 1000.0 / (V*V));
 
 				total.total += c->pLoad->total;
 				total.power += c->pLoad->power;
