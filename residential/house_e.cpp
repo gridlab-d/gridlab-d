@@ -1460,7 +1460,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				double V = c->pV->Mag();
 				load_values[0][1] += c->pLoad->power * 1000.0;
 				load_values[1][1] += ~(c->pLoad->current * 1000.0 / V);
-				load_values[2][1] += ~(c->pLoad->admittance * 1000.0 / (V*V));
+				load_values[2][1] += ~(c->pLoad->(V*V) * 1000.0 /admittance );
 
 				total.total += c->pLoad->total;
 				total.power += c->pLoad->power;
