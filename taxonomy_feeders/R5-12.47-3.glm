@@ -1,4 +1,4 @@
-// $Id: R5-12.47-3.glm 384 2009-06-30 16:45:31 ychen $
+// $Id: R5-12.47-3.glm 384 2009-10-03 16:04:01 ychen $
 //*********************************************
 
 clock{
@@ -6,11 +6,16 @@ clock{
 	 timestamp '2000-01-01 0:00:00';
 }
 
-//#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 
 //*********************************************
 // modules
-module powerflow;
+#set profiler=1
+module powerflow{
+	solver_method FBS;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
 
 
 object capacitor:9650 {
@@ -109,6 +114,7 @@ object fuse:9438 {
 	phases AN;
 	from R5-12-47-3_node_688;
 	to R5-12-47-3_node_11;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -118,6 +124,7 @@ object fuse:9439 {
 	phases CN;
 	from R5-12-47-3_node_528;
 	to R5-12-47-3_node_37;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -127,6 +134,7 @@ object fuse:9440 {
 	phases CN;
 	from R5-12-47-3_node_1178;
 	to R5-12-47-3_node_40;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -136,6 +144,7 @@ object fuse:9441 {
 	phases CN;
 	from R5-12-47-3_node_1160;
 	to R5-12-47-3_node_64;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -145,6 +154,7 @@ object fuse:9442 {
 	phases CN;
 	from R5-12-47-3_node_1209;
 	to R5-12-47-3_node_67;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -154,6 +164,7 @@ object fuse:9443 {
 	phases CN;
 	from R5-12-47-3_node_158;
 	to R5-12-47-3_node_69;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -163,6 +174,7 @@ object fuse:9444 {
 	phases CN;
 	from R5-12-47-3_node_747;
 	to R5-12-47-3_node_80;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -172,6 +184,7 @@ object fuse:9445 {
 	phases BN;
 	from R5-12-47-3_node_208;
 	to R5-12-47-3_node_84;
+	mean_replacement_time 2;
 	current_limit 20;
 	status CLOSED;
 }
@@ -181,6 +194,7 @@ object fuse:9446 {
 	phases AN;
 	from R5-12-47-3_node_667;
 	to R5-12-47-3_node_102;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -190,6 +204,7 @@ object fuse:9447 {
 	phases ABCN;
 	from R5-12-47-3_node_803;
 	to R5-12-47-3_node_103;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -199,6 +214,7 @@ object fuse:9448 {
 	phases AN;
 	from R5-12-47-3_node_922;
 	to R5-12-47-3_node_104;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -208,6 +224,7 @@ object fuse:9449 {
 	phases CN;
 	from R5-12-47-3_node_981;
 	to R5-12-47-3_node_105;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -217,6 +234,7 @@ object fuse:9450 {
 	phases BN;
 	from R5-12-47-3_node_1009;
 	to R5-12-47-3_node_106;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -226,6 +244,7 @@ object fuse:9451 {
 	phases AN;
 	from R5-12-47-3_node_852;
 	to R5-12-47-3_node_107;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -235,6 +254,7 @@ object fuse:9452 {
 	phases CN;
 	from R5-12-47-3_node_939;
 	to R5-12-47-3_node_108;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -244,6 +264,7 @@ object fuse:9453 {
 	phases BN;
 	from R5-12-47-3_node_1081;
 	to R5-12-47-3_node_109;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -253,6 +274,7 @@ object fuse:9454 {
 	phases BN;
 	from R5-12-47-3_node_1105;
 	to R5-12-47-3_node_110;
+	mean_replacement_time 2;
 	current_limit 15;
 	status CLOSED;
 }
@@ -262,6 +284,7 @@ object fuse:9455 {
 	phases CN;
 	from R5-12-47-3_node_1133;
 	to R5-12-47-3_node_111;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -271,6 +294,7 @@ object fuse:9456 {
 	phases CN;
 	from R5-12-47-3_node_1144;
 	to R5-12-47-3_node_112;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -280,6 +304,7 @@ object fuse:9457 {
 	phases BN;
 	from R5-12-47-3_node_1091;
 	to R5-12-47-3_node_113;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -289,6 +314,7 @@ object fuse:9458 {
 	phases BN;
 	from R5-12-47-3_node_1155;
 	to R5-12-47-3_node_114;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -298,6 +324,7 @@ object fuse:9459 {
 	phases AN;
 	from R5-12-47-3_node_1197;
 	to R5-12-47-3_node_116;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -307,6 +334,7 @@ object fuse:9460 {
 	phases AN;
 	from R5-12-47-3_node_1225;
 	to R5-12-47-3_node_117;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -316,6 +344,7 @@ object fuse:9461 {
 	phases AN;
 	from R5-12-47-3_node_1227;
 	to R5-12-47-3_node_118;
+	mean_replacement_time 2;
 	current_limit 20;
 	status CLOSED;
 }
@@ -325,6 +354,7 @@ object fuse:9462 {
 	phases AN;
 	from R5-12-47-3_node_539;
 	to R5-12-47-3_node_119;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -334,6 +364,7 @@ object fuse:9463 {
 	phases CN;
 	from R5-12-47-3_node_1235;
 	to R5-12-47-3_node_120;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -343,6 +374,7 @@ object fuse:9464 {
 	phases CN;
 	from R5-12-47-3_node_1236;
 	to R5-12-47-3_node_121;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -352,6 +384,7 @@ object fuse:9465 {
 	phases BN;
 	from R5-12-47-3_node_1252;
 	to R5-12-47-3_node_122;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -361,6 +394,7 @@ object fuse:9466 {
 	phases BN;
 	from R5-12-47-3_node_1218;
 	to R5-12-47-3_node_123;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -370,6 +404,7 @@ object fuse:9467 {
 	phases CN;
 	from R5-12-47-3_node_1153;
 	to R5-12-47-3_node_134;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -379,6 +414,7 @@ object fuse:9468 {
 	phases CN;
 	from R5-12-47-3_node_141;
 	to R5-12-47-3_node_140;
+	mean_replacement_time 2;
 	current_limit 20;
 	status CLOSED;
 }
@@ -388,6 +424,7 @@ object fuse:9469 {
 	phases BN;
 	from R5-12-47-3_node_144;
 	to R5-12-47-3_node_143;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -397,6 +434,7 @@ object fuse:9470 {
 	phases CN;
 	from R5-12-47-3_node_145;
 	to R5-12-47-3_node_146;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -406,6 +444,7 @@ object fuse:9471 {
 	phases CN;
 	from R5-12-47-3_node_1216;
 	to R5-12-47-3_node_150;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -415,6 +454,7 @@ object fuse:9472 {
 	phases BN;
 	from R5-12-47-3_node_155;
 	to R5-12-47-3_node_156;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -424,6 +464,7 @@ object fuse:9473 {
 	phases AN;
 	from R5-12-47-3_node_159;
 	to R5-12-47-3_node_160;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -433,6 +474,7 @@ object fuse:9474 {
 	phases ABCN;
 	from R5-12-47-3_node_161;
 	to R5-12-47-3_node_162;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -442,6 +484,7 @@ object fuse:9475 {
 	phases BN;
 	from R5-12-47-3_node_165;
 	to R5-12-47-3_node_163;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -451,6 +494,7 @@ object fuse:9476 {
 	phases BN;
 	from R5-12-47-3_node_164;
 	to R5-12-47-3_node_166;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -460,6 +504,7 @@ object fuse:9477 {
 	phases AN;
 	from R5-12-47-3_node_172;
 	to R5-12-47-3_node_173;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -469,6 +514,7 @@ object fuse:9478 {
 	phases AN;
 	from R5-12-47-3_node_927;
 	to R5-12-47-3_node_174;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -478,6 +524,7 @@ object fuse:9479 {
 	phases BN;
 	from R5-12-47-3_node_169;
 	to R5-12-47-3_node_178;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -487,6 +534,7 @@ object fuse:9480 {
 	phases BN;
 	from R5-12-47-3_node_183;
 	to R5-12-47-3_node_181;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -496,6 +544,7 @@ object fuse:9481 {
 	phases BN;
 	from R5-12-47-3_node_1003;
 	to R5-12-47-3_node_187;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -505,6 +554,7 @@ object fuse:9482 {
 	phases BN;
 	from R5-12-47-3_node_187;
 	to R5-12-47-3_node_188;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -514,6 +564,7 @@ object fuse:9483 {
 	phases CN;
 	from R5-12-47-3_node_193;
 	to R5-12-47-3_node_192;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -523,6 +574,7 @@ object fuse:9484 {
 	phases CN;
 	from R5-12-47-3_node_176;
 	to R5-12-47-3_node_193;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -532,6 +584,7 @@ object fuse:9485 {
 	phases BN;
 	from R5-12-47-3_node_199;
 	to R5-12-47-3_node_198;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -541,6 +594,7 @@ object fuse:9486 {
 	phases BN;
 	from R5-12-47-3_node_190;
 	to R5-12-47-3_node_199;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -550,6 +604,7 @@ object fuse:9487 {
 	phases BN;
 	from R5-12-47-3_node_815;
 	to R5-12-47-3_node_201;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -559,6 +614,7 @@ object fuse:9488 {
 	phases BN;
 	from R5-12-47-3_node_202;
 	to R5-12-47-3_node_204;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -568,6 +624,7 @@ object fuse:9489 {
 	phases AN;
 	from R5-12-47-3_node_1113;
 	to R5-12-47-3_node_210;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -577,6 +634,7 @@ object fuse:9490 {
 	phases AN;
 	from R5-12-47-3_node_222;
 	to R5-12-47-3_node_221;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -586,6 +644,7 @@ object fuse:9491 {
 	phases BN;
 	from R5-12-47-3_node_490;
 	to R5-12-47-3_node_229;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -595,6 +654,7 @@ object fuse:9492 {
 	phases BN;
 	from R5-12-47-3_node_506;
 	to R5-12-47-3_node_233;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -604,6 +664,7 @@ object fuse:9493 {
 	phases AN;
 	from R5-12-47-3_node_240;
 	to R5-12-47-3_node_239;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -613,6 +674,7 @@ object fuse:9494 {
 	phases BN;
 	from R5-12-47-3_node_206;
 	to R5-12-47-3_node_243;
+	mean_replacement_time 2;
 	current_limit 20;
 	status CLOSED;
 }
@@ -622,6 +684,7 @@ object fuse:9495 {
 	phases BN;
 	from R5-12-47-3_node_246;
 	to R5-12-47-3_node_244;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -631,6 +694,7 @@ object fuse:9496 {
 	phases CN;
 	from R5-12-47-3_node_871;
 	to R5-12-47-3_node_255;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -640,6 +704,7 @@ object fuse:9497 {
 	phases BN;
 	from R5-12-47-3_node_219;
 	to R5-12-47-3_node_258;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -649,6 +714,7 @@ object fuse:9498 {
 	phases BN;
 	from R5-12-47-3_node_263;
 	to R5-12-47-3_node_273;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -658,6 +724,7 @@ object fuse:9499 {
 	phases BN;
 	from R5-12-47-3_node_271;
 	to R5-12-47-3_node_275;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -667,6 +734,7 @@ object fuse:9500 {
 	phases BN;
 	from R5-12-47-3_node_285;
 	to R5-12-47-3_node_286;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -676,6 +744,7 @@ object fuse:9501 {
 	phases CN;
 	from R5-12-47-3_node_292;
 	to R5-12-47-3_node_293;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -685,6 +754,7 @@ object fuse:9502 {
 	phases BN;
 	from R5-12-47-3_node_296;
 	to R5-12-47-3_node_297;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -694,6 +764,7 @@ object fuse:9503 {
 	phases AN;
 	from R5-12-47-3_node_302;
 	to R5-12-47-3_node_306;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -703,6 +774,7 @@ object fuse:9504 {
 	phases CN;
 	from R5-12-47-3_node_308;
 	to R5-12-47-3_node_309;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -712,6 +784,7 @@ object fuse:9505 {
 	phases CN;
 	from R5-12-47-3_node_315;
 	to R5-12-47-3_node_312;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -721,6 +794,7 @@ object fuse:9506 {
 	phases BN;
 	from R5-12-47-3_node_325;
 	to R5-12-47-3_node_322;
+	mean_replacement_time 2;
 	current_limit 100;
 	status CLOSED;
 }
@@ -730,6 +804,7 @@ object fuse:9507 {
 	phases AN;
 	from R5-12-47-3_node_331;
 	to R5-12-47-3_node_329;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -739,6 +814,7 @@ object fuse:9508 {
 	phases BN;
 	from R5-12-47-3_node_335;
 	to R5-12-47-3_node_332;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -748,6 +824,7 @@ object fuse:9509 {
 	phases AN;
 	from R5-12-47-3_node_340;
 	to R5-12-47-3_node_341;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -757,6 +834,7 @@ object fuse:9510 {
 	phases CN;
 	from R5-12-47-3_node_304;
 	to R5-12-47-3_node_352;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -766,6 +844,7 @@ object fuse:9511 {
 	phases CN;
 	from R5-12-47-3_node_364;
 	to R5-12-47-3_node_365;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -775,6 +854,7 @@ object fuse:9512 {
 	phases BN;
 	from R5-12-47-3_node_370;
 	to R5-12-47-3_node_371;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -784,6 +864,7 @@ object fuse:9513 {
 	phases AN;
 	from R5-12-47-3_node_248;
 	to R5-12-47-3_node_373;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -793,6 +874,7 @@ object fuse:9514 {
 	phases CN;
 	from R5-12-47-3_node_385;
 	to R5-12-47-3_node_388;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -802,6 +884,7 @@ object fuse:9515 {
 	phases AN;
 	from R5-12-47-3_node_406;
 	to R5-12-47-3_node_407;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -811,6 +894,7 @@ object fuse:9516 {
 	phases AN;
 	from R5-12-47-3_node_408;
 	to R5-12-47-3_node_409;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -820,6 +904,7 @@ object fuse:9517 {
 	phases CN;
 	from R5-12-47-3_node_418;
 	to R5-12-47-3_node_419;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -829,6 +914,7 @@ object fuse:9518 {
 	phases CN;
 	from R5-12-47-3_node_439;
 	to R5-12-47-3_node_437;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -838,6 +924,7 @@ object fuse:9519 {
 	phases CN;
 	from R5-12-47-3_node_503;
 	to R5-12-47-3_node_504;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -847,6 +934,7 @@ object fuse:9520 {
 	phases AN;
 	from R5-12-47-3_node_509;
 	to R5-12-47-3_node_510;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -856,6 +944,7 @@ object fuse:9521 {
 	phases CN;
 	from R5-12-47-3_node_508;
 	to R5-12-47-3_node_533;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -865,6 +954,7 @@ object fuse:9522 {
 	phases AN;
 	from R5-12-47-3_node_523;
 	to R5-12-47-3_node_535;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -874,6 +964,7 @@ object fuse:9523 {
 	phases BN;
 	from R5-12-47-3_node_586;
 	to R5-12-47-3_node_540;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -883,6 +974,7 @@ object fuse:9524 {
 	phases AN;
 	from R5-12-47-3_node_545;
 	to R5-12-47-3_node_544;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -892,6 +984,7 @@ object fuse:9525 {
 	phases BN;
 	from R5-12-47-3_node_573;
 	to R5-12-47-3_node_574;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -901,6 +994,7 @@ object fuse:9526 {
 	phases BN;
 	from R5-12-47-3_node_1196;
 	to R5-12-47-3_node_581;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -910,6 +1004,7 @@ object fuse:9527 {
 	phases AN;
 	from R5-12-47-3_node_592;
 	to R5-12-47-3_node_598;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -919,6 +1014,7 @@ object fuse:9528 {
 	phases AN;
 	from R5-12-47-3_node_642;
 	to R5-12-47-3_node_639;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -928,6 +1024,7 @@ object fuse:9529 {
 	phases BN;
 	from R5-12-47-3_node_652;
 	to R5-12-47-3_node_650;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -937,6 +1034,7 @@ object fuse:9530 {
 	phases BN;
 	from R5-12-47-3_node_658;
 	to R5-12-47-3_node_656;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -946,6 +1044,7 @@ object fuse:9531 {
 	phases AN;
 	from R5-12-47-3_node_1065;
 	to R5-12-47-3_node_661;
+	mean_replacement_time 2;
 	current_limit 20;
 	status CLOSED;
 }
@@ -955,6 +1054,7 @@ object fuse:9532 {
 	phases AN;
 	from R5-12-47-3_node_694;
 	to R5-12-47-3_node_667;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -964,6 +1064,7 @@ object fuse:9533 {
 	phases CN;
 	from R5-12-47-3_node_704;
 	to R5-12-47-3_node_705;
+	mean_replacement_time 2;
 	current_limit 20;
 	status CLOSED;
 }
@@ -973,6 +1074,7 @@ object fuse:9534 {
 	phases CN;
 	from R5-12-47-3_node_1101;
 	to R5-12-47-3_node_716;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -982,6 +1084,7 @@ object fuse:9535 {
 	phases CN;
 	from R5-12-47-3_node_723;
 	to R5-12-47-3_node_724;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -991,6 +1094,7 @@ object fuse:9536 {
 	phases BN;
 	from R5-12-47-3_node_740;
 	to R5-12-47-3_node_737;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1000,6 +1104,7 @@ object fuse:9537 {
 	phases AN;
 	from R5-12-47-3_node_746;
 	to R5-12-47-3_node_743;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1009,6 +1114,7 @@ object fuse:9538 {
 	phases AN;
 	from R5-12-47-3_node_750;
 	to R5-12-47-3_node_751;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1018,6 +1124,7 @@ object fuse:9539 {
 	phases CN;
 	from R5-12-47-3_node_767;
 	to R5-12-47-3_node_765;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1027,6 +1134,7 @@ object fuse:9540 {
 	phases AN;
 	from R5-12-47-3_node_777;
 	to R5-12-47-3_node_778;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1036,6 +1144,7 @@ object fuse:9541 {
 	phases CN;
 	from R5-12-47-3_node_784;
 	to R5-12-47-3_node_783;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1045,6 +1154,7 @@ object fuse:9542 {
 	phases CN;
 	from R5-12-47-3_node_786;
 	to R5-12-47-3_node_785;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1054,6 +1164,7 @@ object fuse:9543 {
 	phases AN;
 	from R5-12-47-3_node_788;
 	to R5-12-47-3_node_787;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1063,6 +1174,7 @@ object fuse:9544 {
 	phases CN;
 	from R5-12-47-3_node_250;
 	to R5-12-47-3_node_804;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1072,6 +1184,7 @@ object fuse:9545 {
 	phases CN;
 	from R5-12-47-3_node_807;
 	to R5-12-47-3_node_809;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1081,6 +1194,7 @@ object fuse:9546 {
 	phases CN;
 	from R5-12-47-3_node_776;
 	to R5-12-47-3_node_811;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1090,6 +1204,7 @@ object fuse:9547 {
 	phases CN;
 	from R5-12-47-3_node_912;
 	to R5-12-47-3_node_849;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1099,6 +1214,7 @@ object fuse:9548 {
 	phases AN;
 	from R5-12-47-3_node_856;
 	to R5-12-47-3_node_857;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1108,6 +1224,7 @@ object fuse:9549 {
 	phases AN;
 	from R5-12-47-3_node_843;
 	to R5-12-47-3_node_859;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1117,6 +1234,7 @@ object fuse:9550 {
 	phases CN;
 	from R5-12-47-3_node_865;
 	to R5-12-47-3_node_867;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1126,6 +1244,7 @@ object fuse:9551 {
 	phases BN;
 	from R5-12-47-3_node_903;
 	to R5-12-47-3_node_884;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1135,6 +1254,7 @@ object fuse:9552 {
 	phases BN;
 	from R5-12-47-3_node_888;
 	to R5-12-47-3_node_890;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1144,6 +1264,7 @@ object fuse:9553 {
 	phases AN;
 	from R5-12-47-3_node_916;
 	to R5-12-47-3_node_911;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1153,6 +1274,7 @@ object fuse:9554 {
 	phases AN;
 	from R5-12-47-3_node_920;
 	to R5-12-47-3_node_917;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1162,6 +1284,7 @@ object fuse:9555 {
 	phases CN;
 	from R5-12-47-3_node_924;
 	to R5-12-47-3_node_925;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1171,6 +1294,7 @@ object fuse:9556 {
 	phases CN;
 	from R5-12-47-3_node_937;
 	to R5-12-47-3_node_938;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1180,6 +1304,7 @@ object fuse:9557 {
 	phases AN;
 	from R5-12-47-3_node_941;
 	to R5-12-47-3_node_942;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1189,6 +1314,7 @@ object fuse:9558 {
 	phases AN;
 	from R5-12-47-3_node_952;
 	to R5-12-47-3_node_953;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1198,6 +1324,7 @@ object fuse:9559 {
 	phases BN;
 	from R5-12-47-3_node_1008;
 	to R5-12-47-3_node_957;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1207,6 +1334,7 @@ object fuse:9560 {
 	phases BN;
 	from R5-12-47-3_node_1245;
 	to R5-12-47-3_node_964;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1216,6 +1344,7 @@ object fuse:9561 {
 	phases CN;
 	from R5-12-47-3_node_973;
 	to R5-12-47-3_node_975;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1225,6 +1354,7 @@ object fuse:9562 {
 	phases CN;
 	from R5-12-47-3_node_983;
 	to R5-12-47-3_node_977;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1234,6 +1364,7 @@ object fuse:9563 {
 	phases BN;
 	from R5-12-47-3_node_1005;
 	to R5-12-47-3_node_1006;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1243,6 +1374,7 @@ object fuse:9564 {
 	phases AN;
 	from R5-12-47-3_node_494;
 	to R5-12-47-3_node_1028;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1252,6 +1384,7 @@ object fuse:9565 {
 	phases AN;
 	from R5-12-47-3_node_1029;
 	to R5-12-47-3_node_1030;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1261,6 +1394,7 @@ object fuse:9566 {
 	phases AN;
 	from R5-12-47-3_node_1033;
 	to R5-12-47-3_node_1032;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1270,6 +1404,7 @@ object fuse:9567 {
 	phases AN;
 	from R5-12-47-3_node_1048;
 	to R5-12-47-3_node_1049;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1279,6 +1414,7 @@ object fuse:9568 {
 	phases BN;
 	from R5-12-47-3_node_1052;
 	to R5-12-47-3_node_1053;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1288,6 +1424,7 @@ object fuse:9569 {
 	phases BN;
 	from R5-12-47-3_node_1055;
 	to R5-12-47-3_node_1056;
+	mean_replacement_time 2;
 	current_limit 40;
 	status CLOSED;
 }
@@ -1297,6 +1434,7 @@ object fuse:9570 {
 	phases BN;
 	from R5-12-47-3_node_205;
 	to R5-12-47-3_node_1061;
+	mean_replacement_time 2;
 	current_limit 20;
 	status CLOSED;
 }
@@ -1306,6 +1444,7 @@ object fuse:9571 {
 	phases BN;
 	from R5-12-47-3_node_207;
 	to R5-12-47-3_node_1062;
+	mean_replacement_time 2;
 	current_limit 20;
 	status CLOSED;
 }
@@ -1315,6 +1454,7 @@ object fuse:9572 {
 	phases CN;
 	from R5-12-47-3_node_673;
 	to R5-12-47-3_node_1066;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1324,6 +1464,7 @@ object fuse:9573 {
 	phases BN;
 	from R5-12-47-3_node_551;
 	to R5-12-47-3_node_1072;
+	mean_replacement_time 2;
 	current_limit 20;
 	status CLOSED;
 }
@@ -1333,6 +1474,7 @@ object fuse:9574 {
 	phases CN;
 	from R5-12-47-3_node_972;
 	to R5-12-47-3_node_1119;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1342,6 +1484,7 @@ object fuse:9575 {
 	phases BN;
 	from R5-12-47-3_node_1127;
 	to R5-12-47-3_node_1125;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1351,6 +1494,7 @@ object fuse:9576 {
 	phases CN;
 	from R5-12-47-3_node_1129;
 	to R5-12-47-3_node_1130;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1360,6 +1504,7 @@ object fuse:9577 {
 	phases CN;
 	from R5-12-47-3_node_1165;
 	to R5-12-47-3_node_1166;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1369,6 +1514,7 @@ object fuse:9578 {
 	phases CN;
 	from R5-12-47-3_node_1168;
 	to R5-12-47-3_node_1169;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1378,6 +1524,7 @@ object fuse:9579 {
 	phases BN;
 	from R5-12-47-3_node_1186;
 	to R5-12-47-3_node_1185;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1387,6 +1534,7 @@ object fuse:9580 {
 	phases CN;
 	from R5-12-47-3_node_1189;
 	to R5-12-47-3_node_1190;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1396,6 +1544,7 @@ object fuse:9581 {
 	phases AN;
 	from R5-12-47-3_node_1192;
 	to R5-12-47-3_node_1193;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1405,6 +1554,7 @@ object fuse:9582 {
 	phases AN;
 	from R5-12-47-3_node_945;
 	to R5-12-47-3_node_1194;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1414,6 +1564,7 @@ object fuse:9583 {
 	phases CN;
 	from R5-12-47-3_node_910;
 	to R5-12-47-3_node_1199;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1423,6 +1574,7 @@ object fuse:9584 {
 	phases BCN;
 	from R5-12-47-3_node_891;
 	to R5-12-47-3_node_1203;
+	mean_replacement_time 2;
 	current_limit 25;
 	status CLOSED;
 }
@@ -1432,6 +1584,7 @@ object fuse:9585 {
 	phases BN;
 	from R5-12-47-3_node_1205;
 	to R5-12-47-3_node_1206;
+	mean_replacement_time 2;
 	current_limit 10;
 	status CLOSED;
 }
@@ -1441,6 +1594,7 @@ object fuse:9586 {
 	phases AN;
 	from R5-12-47-3_node_1207;
 	to R5-12-47-3_node_1208;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1450,6 +1604,7 @@ object fuse:9587 {
 	phases AN;
 	from R5-12-47-3_node_918;
 	to R5-12-47-3_node_1212;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1459,6 +1614,7 @@ object fuse:9588 {
 	phases CN;
 	from R5-12-47-3_node_1213;
 	to R5-12-47-3_node_1214;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1468,6 +1624,7 @@ object fuse:9589 {
 	phases BN;
 	from R5-12-47-3_node_1229;
 	to R5-12-47-3_node_1230;
+	mean_replacement_time 2;
 	current_limit 10;
 	status CLOSED;
 }
@@ -1477,6 +1634,7 @@ object fuse:9590 {
 	phases ABCN;
 	from R5-12-47-3_node_1233;
 	to R5-12-47-3_node_1234;
+	mean_replacement_time 2;
 	current_limit 15;
 	status CLOSED;
 }
@@ -1486,6 +1644,7 @@ object fuse:9591 {
 	phases BN;
 	from R5-12-47-3_node_1240;
 	to R5-12-47-3_node_1241;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1495,6 +1654,7 @@ object fuse:9592 {
 	phases CN;
 	from R5-12-47-3_node_1242;
 	to R5-12-47-3_node_1243;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1504,6 +1664,7 @@ object fuse:9593 {
 	phases AN;
 	from R5-12-47-3_node_1249;
 	to R5-12-47-3_node_1250;
+	mean_replacement_time 2;
 	current_limit 25;
 	status CLOSED;
 }
@@ -1513,6 +1674,7 @@ object fuse:9594 {
 	phases BN;
 	from R5-12-47-3_node_268;
 	to R5-12-47-3_node_1257;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1522,6 +1684,7 @@ object fuse:9595 {
 	phases CN;
 	from R5-12-47-3_node_369;
 	to R5-12-47-3_node_1287;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1531,6 +1694,7 @@ object fuse:9596 {
 	phases CN;
 	from R5-12-47-3_node_398;
 	to R5-12-47-3_node_1303;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1540,6 +1704,7 @@ object fuse:9597 {
 	phases BN;
 	from R5-12-47-3_node_440;
 	to R5-12-47-3_node_1305;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1549,6 +1714,7 @@ object fuse:9598 {
 	phases CN;
 	from R5-12-47-3_node_421;
 	to R5-12-47-3_node_1306;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1558,6 +1724,7 @@ object fuse:9599 {
 	phases AN;
 	from R5-12-47-3_node_566;
 	to R5-12-47-3_node_1343;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1567,6 +1734,7 @@ object fuse:9600 {
 	phases BN;
 	from R5-12-47-3_node_170;
 	to R5-12-47-3_node_1346;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1576,6 +1744,7 @@ object fuse:9601 {
 	phases BN;
 	from R5-12-47-3_node_631;
 	to R5-12-47-3_node_1349;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1585,6 +1754,7 @@ object fuse:9602 {
 	phases AN;
 	from R5-12-47-3_node_606;
 	to R5-12-47-3_node_1354;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1594,6 +1764,7 @@ object fuse:9603 {
 	phases AN;
 	from R5-12-47-3_node_603;
 	to R5-12-47-3_node_1362;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1603,6 +1774,7 @@ object fuse:9604 {
 	phases CN;
 	from R5-12-47-3_node_683;
 	to R5-12-47-3_node_1364;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1612,6 +1784,7 @@ object fuse:9605 {
 	phases CN;
 	from R5-12-47-3_node_708;
 	to R5-12-47-3_node_1376;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1621,6 +1794,7 @@ object fuse:9606 {
 	phases BN;
 	from R5-12-47-3_node_736;
 	to R5-12-47-3_node_1394;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1630,6 +1804,7 @@ object fuse:9607 {
 	phases CN;
 	from R5-12-47-3_node_839;
 	to R5-12-47-3_node_1407;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1639,6 +1814,7 @@ object fuse:9608 {
 	phases AN;
 	from R5-12-47-3_node_855;
 	to R5-12-47-3_node_1410;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1648,6 +1824,7 @@ object fuse:9609 {
 	phases CN;
 	from R5-12-47-3_node_869;
 	to R5-12-47-3_node_1415;
+	mean_replacement_time 2;
 	current_limit 20;
 	status CLOSED;
 }
@@ -1657,6 +1834,7 @@ object fuse:9610 {
 	phases CN;
 	from R5-12-47-3_node_935;
 	to R5-12-47-3_node_1425;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1666,6 +1844,7 @@ object fuse:9611 {
 	phases CN;
 	from R5-12-47-3_node_1041;
 	to R5-12-47-3_node_1431;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1675,6 +1854,7 @@ object fuse:9612 {
 	phases AN;
 	from R5-12-47-3_node_346;
 	to R5-12-47-3_node_1433;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -1684,6 +1864,7 @@ object fuse:9613 {
 	phases AN;
 	from R5-12-47-3_node_940;
 	to R5-12-47-3_node_1435;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1693,6 +1874,7 @@ object fuse:9614 {
 	phases BN;
 	from R5-12-47-3_node_962;
 	to R5-12-47-3_node_1440;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1702,6 +1884,7 @@ object fuse:9615 {
 	phases AN;
 	from R5-12-47-3_node_949;
 	to R5-12-47-3_node_1449;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1711,6 +1894,7 @@ object fuse:9616 {
 	phases BN;
 	from R5-12-47-3_node_1000;
 	to R5-12-47-3_node_1458;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1720,6 +1904,7 @@ object fuse:9617 {
 	phases BN;
 	from R5-12-47-3_node_998;
 	to R5-12-47-3_node_1460;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1729,6 +1914,7 @@ object fuse:9618 {
 	phases BN;
 	from R5-12-47-3_node_993;
 	to R5-12-47-3_node_1461;
+	mean_replacement_time 2;
 	current_limit 50;
 	status CLOSED;
 }
@@ -1738,6 +1924,7 @@ object fuse:9619 {
 	phases CN;
 	from R5-12-47-3_node_720;
 	to R5-12-47-3_node_1465;
+	mean_replacement_time 2;
 	current_limit 30;
 	status CLOSED;
 }
@@ -2304,8 +2491,8 @@ object load:1563 {
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
 	constant_power_A 1332+666j;
-	constant_power_B 0+0j;
-	constant_power_C 0+0j;
+	constant_power_B 50+50j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -2401,8 +2588,8 @@ object load:1572 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
-	constant_power_B 0+0j;
+	constant_power_A 50+50j;
+	constant_power_B 50+50j;
 	constant_power_C 34+178j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -2415,9 +2602,9 @@ object load:1573 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 331.2+1904j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -2677,8 +2864,8 @@ object load:1598 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
-	constant_power_B 0+0j;
+	constant_power_A 50+50j;
+	constant_power_B 50+50j;
 	constant_power_C 600+400j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -2711,9 +2898,9 @@ object load:1601 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 300+200j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -2736,8 +2923,8 @@ object load:1603 {
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
 	constant_power_A 26000+13000j;
-	constant_power_B 0+0j;
-	constant_power_C 0+0j;
+	constant_power_B 50+50j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -2749,8 +2936,8 @@ object load:1604 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
-	constant_power_B 0+0j;
+	constant_power_A 50+50j;
+	constant_power_B 50+50j;
 	constant_power_C 666+333j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -2763,8 +2950,8 @@ object load:1605 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
-	constant_power_B 0+0j;
+	constant_power_A 50+50j;
+	constant_power_B 50+50j;
 	constant_power_C 600+348j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -2787,8 +2974,8 @@ object load:1607 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
-	constant_power_B 0+0j;
+	constant_power_A 50+50j;
+	constant_power_B 50+50j;
 	constant_power_C 666+333j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -2821,9 +3008,9 @@ object load:1610 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 3330+1665j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -2836,8 +3023,8 @@ object load:1611 {
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
 	constant_power_A 8200+5100j;
-	constant_power_B 0+0j;
-	constant_power_C 0+0j;
+	constant_power_B 50+50j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -2859,7 +3046,7 @@ object load:1613 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 3500+6600j;
 	constant_power_C 1210+3100j;
 	nominal_voltage 7967.434;
@@ -2913,9 +3100,9 @@ object load:1618 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 1998+999j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -2937,8 +3124,8 @@ object load:1620 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
-	constant_power_B 0+0j;
+	constant_power_A 50+50j;
+	constant_power_B 50+50j;
 	constant_power_C 900+500j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -2951,7 +3138,7 @@ object load:1621 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 256.5+1691j;
 	constant_power_C 380+19j;
 	nominal_voltage 7967.434;
@@ -3019,9 +3206,9 @@ object load:1627 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 10000+5000j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3034,8 +3221,8 @@ object load:1628 {
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
 	constant_power_A 1196+624j;
-	constant_power_B 0+0j;
-	constant_power_C 0+0j;
+	constant_power_B 50+50j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3077,9 +3264,9 @@ object load:1632 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 1998+999j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3140,7 +3327,7 @@ object load:1638 {
 	phases ABN;
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 150+84j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -3192,7 +3379,7 @@ object load:1643 {
 	phases ABN;
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 1332+666j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -3204,7 +3391,7 @@ object load:1644 {
 	phases ABN;
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 666+333j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -3281,9 +3468,9 @@ object load:1651 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 1332+666j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3295,9 +3482,9 @@ object load:1652 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 666+333j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3424,7 +3611,7 @@ object load:1664 {
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
 	constant_power_A 1998+999j;
-	constant_power_B 0+0j;
+	constant_power_B 50+50j;
 	constant_power_C 1998+999j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -3497,9 +3684,9 @@ object load:1671 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 10272+6336j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3511,9 +3698,9 @@ object load:1672 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 5070+3055j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3525,9 +3712,9 @@ object load:1673 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 1998+999j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3539,9 +3726,9 @@ object load:1674 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 129+72j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3553,9 +3740,9 @@ object load:1675 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 838.2+4752j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3649,8 +3836,8 @@ object load:1684 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
-	constant_power_B 0+0j;
+	constant_power_A 50+50j;
+	constant_power_B 50+50j;
 	constant_power_C 1998+999j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -3748,8 +3935,8 @@ object load:1693 {
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
 	constant_power_A 1998+999j;
-	constant_power_B 0+0j;
-	constant_power_C 0+0j;
+	constant_power_B 50+50j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3781,9 +3968,9 @@ object load:1696 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 413.4+2262j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -3805,8 +3992,8 @@ object load:1698 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
-	constant_power_B 0+0j;
+	constant_power_A 50+50j;
+	constant_power_B 50+50j;
 	constant_power_C 1250+7800j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -3819,8 +4006,8 @@ object load:1699 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
-	constant_power_B 0+0j;
+	constant_power_A 50+50j;
+	constant_power_B 50+50j;
 	constant_power_C 1100+700j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -4013,9 +4200,9 @@ object load:1717 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 300+200j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -4127,9 +4314,9 @@ object load:1728 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 900+600j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -4151,8 +4338,8 @@ object load:1730 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
-	constant_power_B 0+0j;
+	constant_power_A 50+50j;
+	constant_power_B 50+50j;
 	constant_power_C 1840+11400j;
 	nominal_voltage 7967.434;
 	load_class C;
@@ -4195,9 +4382,9 @@ object load:1734 {
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
-	constant_power_A 0+0j;
+	constant_power_A 50+50j;
 	constant_power_B 1998+999j;
-	constant_power_C 0+0j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -4234,8 +4421,8 @@ object load:1737 {
 	voltage_B -3983.717-6900.000j;
 	voltage_C -3983.717+6900.000j;
 	constant_power_A 77+395j;
-	constant_power_B 0+0j;
-	constant_power_C 0+0j;
+	constant_power_B 50+50j;
+	constant_power_C 50+50j;
 	nominal_voltage 7967.434;
 	load_class C;
 }
@@ -16448,6 +16635,7 @@ object node:1562 {
 object node:9658 {
 	name R5-12-47-3_node_1469;
 	phases ABCN;
+	bustype SWING;
 	nominal_voltage 7967.434;
 	voltage_A 7967.434+0.0j;
 	voltage_B -3983.717-6900.000j;
@@ -27012,6 +27200,14 @@ object overhead_line:9437 {
 	configuration line_configuration:40;
 }
 
+object overhead_line {
+	name R5-12-47-3_ol_1174;
+	phases ABCN;
+	from R5-12-47-3_node_971;
+	to R5-12-47-3_node_974;
+	length 937.000;
+	configuration line_configuration:39;
+}
 
 object overhead_line_conductor:2 {
 	name 4 CU;
@@ -27102,7 +27298,7 @@ object switch:9620 {
 	phases BN;
 	from R5-12-47-3_node_452;
 	to R5-12-47-3_node_453;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:9621 {
@@ -27150,7 +27346,7 @@ object switch:9626 {
 	phases ABCN;
 	from R5-12-47-3_node_805;
 	to R5-12-47-3_node_806;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:9627 {
@@ -27158,7 +27354,7 @@ object switch:9627 {
 	phases CN;
 	from R5-12-47-3_node_1403;
 	to R5-12-47-3_node_817;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:9628 {
@@ -27174,7 +27370,7 @@ object switch:9629 {
 	phases BN;
 	from R5-12-47-3_node_1154;
 	to R5-12-47-3_node_959;
-	status OPEN;
+	status CLOSED;
 }
 
 //Recloser, used as switch for now 
@@ -38894,10 +39090,10 @@ object transformer_configuration:7953 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 5.0;
+	power_rating 15.0;
 	powerA_rating 5.0;
-	powerB_rating 0.0;
-	powerC_rating 0.0;
+	powerB_rating 5.0;
+	powerC_rating 5.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -38963,9 +39159,9 @@ object transformer_configuration:7959 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 5.0;
-	powerA_rating 0.0;
-	powerB_rating 0.0;
+	power_rating 15.0;
+	powerA_rating 5.0;
+	powerB_rating 5.0;
 	powerC_rating 5.0;
 	resistance 0.01;
 	reactance 0.05;
@@ -38976,10 +39172,10 @@ object transformer_configuration:7960 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 5.0;
-	powerA_rating 0.0;
+	power_rating 15.0;
+	powerA_rating 5.0;
 	powerB_rating 5.0;
-	powerC_rating 0.0;
+	powerC_rating 5.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -39158,9 +39354,9 @@ object transformer_configuration:7976 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 10.0;
-	powerA_rating 0.0;
-	powerB_rating 0.0;
+	power_rating 20.0;
+	powerA_rating 5.0;
+	powerB_rating 5.0;
 	powerC_rating 10.0;
 	resistance 0.01;
 	reactance 0.05;
@@ -39171,10 +39367,10 @@ object transformer_configuration:7977 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 15.0;
-	powerA_rating 0.0;
+	power_rating 25.0;
+	powerA_rating 5.0;
 	powerB_rating 15.0;
-	powerC_rating 0.0;
+	powerC_rating 5.0;
 	resistance 0.00667;
 	reactance 0.03333;
 }
@@ -39184,10 +39380,10 @@ object transformer_configuration:7978 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 75.0;
+	power_rating 85.0;
 	powerA_rating 75.0;
-	powerB_rating 0.0;
-	powerC_rating 0.0;
+	powerB_rating 5.0;
+	powerC_rating 5.0;
 	resistance 0.00133;
 	reactance 0.00667;
 }
@@ -39219,10 +39415,10 @@ object transformer_configuration:7981 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 10.0;
-	powerA_rating 0.0;
+	power_rating 20.0;
+	powerA_rating 5.0;
 	powerB_rating 10.0;
-	powerC_rating 0.0;
+	powerC_rating 5.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -39232,10 +39428,10 @@ object transformer_configuration:7982 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 15.0;
+	power_rating 25.0;
 	powerA_rating 15.0;
-	powerB_rating 0.0;
-	powerC_rating 0.0;
+	powerB_rating 5.0;
+	powerC_rating 5.0;
 	resistance 0.00667;
 	reactance 0.03333;
 }
@@ -39245,8 +39441,8 @@ object transformer_configuration:7983 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 40.0;
-	powerA_rating 0.0;
+	power_rating 45.0;
+	powerA_rating 5.0;
 	powerB_rating 15.0;
 	powerC_rating 25.0;
 	resistance 0.00250;
@@ -39269,9 +39465,9 @@ object transformer_configuration:7985 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 15.0;
-	powerA_rating 0.0;
-	powerB_rating 0.0;
+	power_rating 25.0;
+	powerA_rating 5.0;
+	powerB_rating 5.0;
 	powerC_rating 15.0;
 	resistance 0.00667;
 	reactance 0.03333;
@@ -39282,8 +39478,8 @@ object transformer_configuration:7986 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 15.0;
-	powerA_rating 0.0;
+	power_rating 20.0;
+	powerA_rating 5.0;
 	powerB_rating 10.0;
 	powerC_rating 5.0;
 	resistance 0.00667;
@@ -39306,10 +39502,10 @@ object transformer_configuration:7988 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 25.0;
-	powerA_rating 0.0;
+	power_rating 35.0;
+	powerA_rating 5.0;
 	powerB_rating 25.0;
-	powerC_rating 0.0;
+	powerC_rating 5.0;
 	resistance 0.00400;
 	reactance 0.02000;
 }
@@ -39330,8 +39526,8 @@ object transformer_configuration:7990 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 5.0;
-	powerA_rating 0.0;
+	power_rating 10.0;
+	powerA_rating 5.0;
 	powerB_rating 5.0;
 	resistance 0.01;
 	reactance 0.05;
@@ -39355,9 +39551,9 @@ object transformer_configuration:7992 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 10.0;
+	power_rating 15.0;
 	powerA_rating 5.0;
-	powerB_rating 0.0;
+	powerB_rating 5.0;
 	powerC_rating 5.0;
 	resistance 0.01;
 	reactance 0.05;
@@ -39393,9 +39589,9 @@ object transformer_configuration:7995 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 25.0;
-	powerA_rating 0.0;
-	powerB_rating 0.0;
+	power_rating 35.0;
+	powerA_rating 5.0;
+	powerB_rating 5.0;
 	powerC_rating 25.0;
 	resistance 0.00400;
 	reactance 0.02000;
@@ -39453,9 +39649,9 @@ object transformer_configuration:8000 {
 	install_type POLETOP;
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
-	power_rating 50.0;
-	powerA_rating 0.0;
-	powerB_rating 0.0;
+	power_rating 60.0;
+	powerA_rating 5.0;
+	powerB_rating 5.0;
 	powerC_rating 50.0;
 	resistance 0.00200;
 	reactance 0.01000;
@@ -77927,7 +78123,7 @@ object triplex_node:3499 {
 	name R5-12-47-3_tn_1755;
 	phases BS;
 	parent R5-12-47-3_tm_559;
-	power_1 100+0j;
+	power_1 1050+50j;
 	voltage_1 -60.000-103.923j;
 	voltage_2 -60.000-103.923j;
 	voltage_N 0;
@@ -84450,7 +84646,7 @@ object triplex_node:4092 {
 	name R5-12-47-3_tn_2348;
 	phases BS;
 	parent R5-12-47-3_tm_1152;
-	power_1 5600+0j;
+	power_1 56050+50j;
 	voltage_1 -60.000-103.923j;
 	voltage_2 -60.000-103.923j;
 	voltage_N 0;
@@ -85379,7 +85575,7 @@ object underground_line:8268 {
 	phases BN;
 	from R5-12-47-3_node_93;
 	to R5-12-47-3_node_94;
-	length 0.000;
+	length 4.000;
 	configuration line_configuration:45;
 }
 
@@ -85701,5 +85897,4 @@ object underground_line_conductor:5 {
 	shield_gmr 0.00;
 	shield_resistance 0.00;
 }
-
 
