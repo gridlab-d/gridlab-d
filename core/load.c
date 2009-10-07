@@ -3488,6 +3488,9 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					else
 						ACCEPT;
 				}
+				else if (strcmp(propname,"groupid")==0){
+					strncpy(obj->groupid, propval, sizeof(obj->groupid));
+				}
 				else if (strcmp(propname,"flags")==0)
 				{
 					if(set_flags(obj,propval) == 0)
@@ -4219,7 +4222,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	
 	if(fp == NULL){
 		output_error_raw("%s(%d): include file open failed: %s", incname, _linenum, errno?strerror(errno):"(no details)");
-		return 0;
+		return -1;
 	}
 
 	if(FSTAT(fileno(fp), &stat) == 0){
@@ -4235,7 +4238,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 		//}
 	} else {
 		output_error_raw("%s(%d): unable to get size of included file", incname, _linenum);
-		return 0;
+		return -1;
 	}
 
 	output_verbose("%s(%d): included file is %d bytes long", incname, old_linenum, stat.st_size);
@@ -4257,7 +4260,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 		}
 		if(*p != 0){
 			// failed if we didn't parse the whole thing
-			count = 0;
+			count = -1;
 			break;
 		}
 		move = buffer_read_alt(fp, buffer2, incname, 20479);
@@ -4266,7 +4269,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	//include_list = this.next;
 
 	//linenum = old_linenum;
-	fclose(fp);
+
 	return count;
 }
 
@@ -4412,7 +4415,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(filename, value);	// use include file name for errors while within context
 			len=(int)include_file(value,line,size,linenum);
 			strcpy(filename, oldfile);	// pop include filename, use calling filename
-			if (len<=0)
+			if (len<0)
 			{
 				output_error_raw("%s(%d): #include failed",filename,linenum);
 				include_fail = 1;

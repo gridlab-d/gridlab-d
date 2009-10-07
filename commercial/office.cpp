@@ -247,7 +247,7 @@ static void occupancy_schedule(char *text, char occupied[24])
 	char days[8];
 	memset(days,0,sizeof(days));
 
-	char hours[24];
+	char hours[27];
 	memset(hours,0,sizeof(hours));
 
 	char *p = text;

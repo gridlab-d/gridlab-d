@@ -252,7 +252,7 @@ static int compare(OBJECT *obj, FINDTYPE ftype, FINDOP op, void *value, char *pr
 	case FT_SIZE: return compare_int((int64)obj->oclass->size,op,(int64)*(int*)value);
 	case FT_CLASS: return compare_string((char*)obj->oclass->name,op,(char*)value);
 	case FT_MODULE: return compare_string((char*)obj->oclass->module->name,op,(char*)value);
-//	case FT_GROUPID: return compare_string((char*)obj->groupid,op,(char*)value);
+	case FT_GROUPID: return compare_string((char*)obj->groupid,op,(char*)value);
 	case FT_RANK: return compare_int((int64)obj->rank,op,(int64)*(int*)value);
 	case FT_CLOCK: return compare_int((int64)obj->clock,op,(int64)*(TIMESTAMP*)value);
 	//case FT_PROPERTY: return compare_property_alt(obj,propname,op,value);
@@ -583,7 +583,11 @@ int compare_real_le(void *a, FINDVALUE b) { return *(double*)a<=b.real;}
 int compare_real_ge(void *a, FINDVALUE b) { return *(double*)a>=b.real;}
 
 /* NOTE: this only works with short-circuiting logic! */
-int compare_string_eq(void *a, FINDVALUE b) { return *(char **)a != NULL && strcmp(*(char**)a,b.string)==0;}
+int compare_string_eq(void *a, FINDVALUE b) {
+	int one = (char **)a != NULL;
+	int two = strcmp((char*)a,b.string)==0;
+	return (char *)a != NULL && strcmp((char*)a,b.string)==0;
+}
 int compare_string_ne(void *a, FINDVALUE b) { return *(char **)a != NULL && strcmp(*(char**)a,b.string)!=0;}
 int compare_string_lt(void *a, FINDVALUE b) { return *(char **)a != NULL && strcmp(*(char**)a,b.string)<0;}
 int compare_string_gt(void *a, FINDVALUE b) { return *(char **)a != NULL && strcmp(*(char**)a,b.string)>0;}
@@ -1036,7 +1040,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			FINDVALUE v;
 			strcpy(v.string, pvalue);
 			//printf("find(): v.string=\"%s\", pvalue=\"%s\"\n", v.string, pvalue);
-			add_pgm(pgm, comparemap[op].string, OFFSET(name), v, NULL, findlist_del);
+			add_pgm(pgm, comparemap[op].string, OFFSET(groupid), v, NULL, findlist_del);
 			(*pgm)->constflags |= CF_NAME;
 			ACCEPT;
 			DONE;

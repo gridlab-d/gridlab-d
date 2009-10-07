@@ -51,7 +51,7 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 
 	if (sscanf(aggregator,"%8[A-Za-z0-9_](%256[][A-Za-z0-9_.])",aggrop,aggrval)!=2 &&
 		(flags|=AF_ABS,
-		sscanf(aggregator,"%8[A-Za-z0-9_]|%256[][A-Za-z0-9_.]",aggrop,aggrval)!=2 
+		sscanf(aggregator,"%8[A-Za-z0-9_]|%256[][A-Za-z0-9_.]|",aggrop,aggrval)!=2 
 		))
 	{
 		output_error("aggregate group '%s' is not valid", aggregator);

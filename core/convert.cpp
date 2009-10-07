@@ -623,7 +623,8 @@ int convert_to_char256(char *buffer, /**< a pointer to the string buffer */
 	case '"':
 		return sscanf(buffer+1,"%256[^\"]",data);
 	default:
-		return sscanf(buffer,"%256s",data);
+		//return sscanf(buffer,"%256s",data);
+		return sscanf(buffer,"%256[^\n\r;]",data);
 	}
 }
 
@@ -681,6 +682,7 @@ int convert_from_object(char *buffer, /**< pointer to the string buffer */
 {
 	OBJECT *obj = (data ? *(OBJECT**)data : NULL);
 	char temp[256];
+	memset(temp, 0, 256);
 	if (obj==NULL)
 		return 0;
 

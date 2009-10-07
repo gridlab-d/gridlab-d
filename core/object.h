@@ -41,7 +41,7 @@ typedef struct s_namespace {
 
 typedef struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
-//	char32 groupid;
+	char32 groupid;
 	CLASS *oclass; /**< object class; determine structure of object data */
 	struct s_object_list *next; /**< next object in list */
 	struct s_object_list *parent; /**< object's parent; determines rank */
