@@ -49,15 +49,15 @@ public:
 	inline complex(double re, double im, CNOTATION nf=CNOTATION_DEFAULT) /**< create a complex number with both real and imaginary parts */
 	{
 		f = nf;
-		if (nf==A)
-		{
-			SetPolar(re,im);
-		}
-		else
-		{
+		//if (nf==A)
+		//{
+		//	SetPolar(re,im);
+		//}
+		//else
+		//{
 			r = re;
 			i = im;
-		}
+		//}
 	};
 	
 	/* assignment operations */
