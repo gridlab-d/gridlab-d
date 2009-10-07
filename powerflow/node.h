@@ -118,6 +118,8 @@ public:
 	complex Ys[3][3];		/// Self-admittance for GS
 	complex YVs[3];			/// "Current" accumulator for GS
 	complex current12;		/// Used for phase 1-2 current injections in triplex
+	complex nom_res_curr[3];/// Used for the inclusion of nominal residential currents (for angle adjustments)
+	bool house_present;		/// Indicator flag for a house being attached (NR primarily)
 	complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
 	complex *Extra_Data;	/// Link to extra data information (NR)
 	char NR_connected_links[2];	/// Counter for number of connected links in the system

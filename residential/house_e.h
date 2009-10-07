@@ -58,9 +58,9 @@ public:
 	{ return c->status==BRK_CLOSED ? *(c->pV) : complex(0,0);};
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
-	complex *pLine12; ///< pointer to the load across lines 1 & 2
 	complex *pShunt;	///< pointer to shunt value on triplex parent
 	complex *pPower;	///< pointer to power value on triplex parent
+	bool *pHouseConn;	///< Pointer to house_present variable on triplex parent
 	IMPLICITENDUSE *implicit_enduse_list; ///< implicit enduses
 	static set implicit_enduses_active; ///< implicit enduses that are to be activated
 public:
@@ -184,6 +184,7 @@ public:
 	inline double get_Tair () { return Tair; };
 
 	complex *get_complex(OBJECT *obj, char *name);
+	bool *get_bool(OBJECT *obj, char *name);
 };
 
 inline double sgn(double x) 

@@ -1728,6 +1728,25 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				temp_current[1] += bus[indexer].Y[1]*bus[indexer].V[1];
 				temp_current[2] += bus[indexer].Y[2]*voltageDel[0];
 
+				//See if we are a house-connected node, if so, adjust and add in those values as well
+				if ((bus[indexer].phases & 0x40) == 0x40)
+				{
+					//Update phase adjustments
+					temp_store[0].SetPolar(1.0,bus[indexer].V[0].Arg());	//Pull phase of V1
+					temp_store[1].SetPolar(1.0,bus[indexer].V[1].Arg());	//Pull phase of V2
+					temp_store[2].SetPolar(1.0,voltageDel[0].Arg());		//Pull phase of V12
+
+					//Update these current contributions (use delta current variable, it isn't used in here anyways)
+					delta_current[0] = bus[indexer].house_var[0]/(~temp_store[0]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+					delta_current[1] = bus[indexer].house_var[1]/(~temp_store[1]);
+					delta_current[2] = bus[indexer].house_var[2]/(~temp_store[2]);
+
+					//Now add it into the current contributions
+					temp_current[0] += delta_current[0];
+					temp_current[1] += delta_current[1];
+					temp_current[2] += delta_current[2];
+				}//End house-attached splitphase
+
 				//Convert 'em to line currents
 				temp_store[0] = temp_current[0] + temp_current[2];
 				temp_store[1] = -temp_current[1] - temp_current[2];
@@ -2368,6 +2387,25 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				temp_current[0] += bus[indexer].Y[0]*bus[indexer].V[0];
 				temp_current[1] += bus[indexer].Y[1]*bus[indexer].V[1];
 				temp_current[2] += bus[indexer].Y[2]*voltageDel[0];
+
+				//See if we are a house-connected node, if so, adjust and add in those values as well
+				if ((bus[indexer].phases & 0x40) == 0x40)
+				{
+					//Update phase adjustments
+					temp_store[0].SetPolar(1.0,bus[indexer].V[0].Arg());	//Pull phase of V1
+					temp_store[1].SetPolar(1.0,bus[indexer].V[1].Arg());	//Pull phase of V2
+					temp_store[2].SetPolar(1.0,voltageDel[0].Arg());		//Pull phase of V12
+
+					//Update these current contributions (use delta current variable, it isn't used in here anyways)
+					delta_current[0] = bus[indexer].house_var[0]/(~temp_store[0]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+					delta_current[1] = bus[indexer].house_var[1]/(~temp_store[1]);
+					delta_current[2] = bus[indexer].house_var[2]/(~temp_store[2]);
+
+					//Now add it into the current contributions
+					temp_current[0] += delta_current[0];
+					temp_current[1] += delta_current[1];
+					temp_current[2] += delta_current[2];
+				}//End house-attached splitphase
 
 				//Convert 'em to line currents - they need to be negated (due to the convention from earlier)
 				temp_store[0] = -(temp_current[0] + temp_current[2]);

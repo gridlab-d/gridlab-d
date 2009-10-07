@@ -832,15 +832,13 @@ int house_e::init(OBJECT *parent)
 			complex **var;
 			char *varname;
 			} map[] = { {&pCircuit_V,			"voltage_12"}, // assumes 1N and 2N follow immediately in memory
-						{&pLine_I,				"current_1"}, // assumes 2 and 3(N) follow immediately in memory
-						{&pLine12,				"current_12"},
+						{&pLine_I,				"residential_nominal_current_1"}, // assumes 2 and 3(12) follow immediately in memory - off-nominal angles are handled externally
 						{&pShunt,				"shunt_1"},		// assumes 2 and 3 (12) follow immediately in memory
 						{&pPower,				"power_1"},		// assumes 2 and 3 (12) follow immediately in memory
 					/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 					};
 
 	extern complex default_line_voltage[3], default_line_current[3], default_line_power[3], default_line_shunt[3];
-	static complex default_line_current_12;
 	int i;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
@@ -854,6 +852,12 @@ int house_e::init(OBJECT *parent)
 				GL_THROW("%s (%s:%d) does not implement triplex_meter variable %s for %s (house_e:%d)", 
 					parent->name?parent->name:"unnamed object", parent->oclass->name, parent->id, map[i].varname, obj->name?obj->name:"unnamed", obj->id);
 		}
+
+		//Map to the triplex variable
+		pHouseConn = get_bool(parent,"house_present");
+
+		//Flag that we're attached to a node
+		*pHouseConn = true;
 	}
 	else
 	{
@@ -862,9 +866,8 @@ int house_e::init(OBJECT *parent)
 		// attach meter variables to each circuit in the default_meter
 		*(map[0].var) = &default_line_voltage[0];
 		*(map[1].var) = &default_line_current[0];
-		*(map[2].var) = &default_line_current_12;
-		*(map[3].var) = &default_line_shunt[0];
-		*(map[4].var) = &default_line_power[0];
+		*(map[2].var) = &default_line_shunt[0];
+		*(map[3].var) = &default_line_power[0];
 	}
 
 	// set defaults for panel/meter variables
@@ -1301,8 +1304,8 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	//Current
 	pLine_I[0] -= load_values[1][0];
 	pLine_I[1] -= load_values[1][1];
-	//pLine_I[2] += 0; - This is inferred by not doing anything
-	*pLine12 -= load_values[1][2];
+	pLine_I[2] -= load_values[1][2];
+	//Neutral not handled in here, since it was always zero anyways
 
 	//Admittance
 	pShunt[0] -= load_values[2][0];
@@ -1470,34 +1473,23 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				//Convert values appropriately - assume nominal voltages of 240 and 120 (0 degrees)
 				//All values are given in kW, so convert to normal
-				double aV = c->pV->Arg();
-			
 
 				if (n==0)	//1-2 240 V load
 				{
-					complex V2;
-					V2.SetPolar(240,aV);
-
 					load_values[0][2] += c->pLoad->power * 1000.0;
-					load_values[1][2] += ~(c->pLoad->current * 1000.0 / V2);
+					load_values[1][2] += ~(c->pLoad->current * 1000.0 / 240.0);
 					load_values[2][2] += ~(c->pLoad->admittance * 1000.0 / (240.0 * 240.0));
 				}
 				else if (n==1)	//2-N 120 V load
 				{
-					complex V2;
-					V2.SetPolar(120,aV);
-
 					load_values[0][1] += c->pLoad->power * 1000.0;
-					load_values[1][1] += ~(c->pLoad->current * 1000.0 / V2);
+					load_values[1][1] += ~(c->pLoad->current * 1000.0 / 120.0);
 					load_values[2][1] += ~(c->pLoad->admittance * 1000.0 / (120.0 * 120.0));
 				}
 				else	//n has to equal 2 here (checked above) - 1-N 120 V load
 				{
-					complex V2;
-					V2.SetPolar(120,aV);
-
 					load_values[0][0] += c->pLoad->power * 1000.0;
-					load_values[1][0] += ~(c->pLoad->current * 1000.0 / V2);
+					load_values[1][0] += ~(c->pLoad->current * 1000.0 / 120.0);
 					load_values[2][0] += ~(c->pLoad->admittance * 1000.0 / (120.0 * 120.0));
 				}
 
@@ -1537,8 +1529,8 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	//Current
 	pLine_I[0] += load_values[1][0];
 	pLine_I[1] += load_values[1][1];
-	//pLine_I[2] += 0; - This is inferred by not doing anything
-	*pLine12 += load_values[1][2];
+	pLine_I[2] += load_values[1][2];
+	//Neutral assumed 0, since it was anyways
 
 	//Admittance
 	pShunt[0] += load_values[2][0];
@@ -1614,6 +1606,13 @@ complex *house_e::get_complex(OBJECT *obj, char *name)
 	return (complex*)GETADDR(obj,p);
 }
 
+bool *house_e::get_bool(OBJECT *obj, char *name)
+{
+	PROPERTY *p = gl_get_property(obj,name);
+	if (p==NULL || p->ptype!=PT_bool)
+		return NULL;
+	return (bool*)GETADDR(obj,p);
+}
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////

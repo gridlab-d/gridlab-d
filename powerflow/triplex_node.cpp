@@ -57,6 +57,15 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_complex, "current_12[A]", PADDR(current12),
 			PT_double, "current_12_real[A]", PADDR(current12.Re()),
 			PT_double, "current_12_reac[A]", PADDR(current12.Im()),
+			PT_complex, "residential_nominal_current_1[A]", PADDR(nom_res_curr[0]),
+			PT_complex, "residential_nominal_current_2[A]", PADDR(nom_res_curr[1]),
+			PT_complex, "residential_nominal_current_12[A]", PADDR(nom_res_curr[2]),
+			PT_double, "residential_nominal_current_1_real[A]", PADDR(nom_res_curr[0].Re()),
+			PT_double, "residential_nominal_current_1_imag[A]", PADDR(nom_res_curr[0].Im()),
+			PT_double, "residential_nominal_current_2_real[A]", PADDR(nom_res_curr[1].Re()),
+			PT_double, "residential_nominal_current_2_imag[A]", PADDR(nom_res_curr[1].Im()),
+			PT_double, "residential_nominal_current_12_real[A]", PADDR(nom_res_curr[2].Re()),
+			PT_double, "residential_nominal_current_12_imag[A]", PADDR(nom_res_curr[2].Im()),
 			PT_complex, "power_1[VA]", PADDR(power1),
 			PT_complex, "power_2[VA]", PADDR(power2),
 			PT_complex, "power_12[VA]", PADDR(power12),
@@ -78,6 +87,7 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_double, "impedance_1_reac[Ohm]", PADDR(impedance[0].Im()),
 			PT_double, "impedance_2_reac[Ohm]", PADDR(impedance[1].Im()),
 			PT_double, "impedance_12_reac[Ohm]", PADDR(impedance[2].Im()),
+			PT_bool, "house_present", PADDR(house_present),
 
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -95,7 +105,7 @@ int triplex_node::create(void)
 	shunt1 = complex(0,0);
 	shunt2 = complex(0,0);
 	shunt12 = complex(0,0);
-    return result;
+	return result;
 }
 
 int triplex_node::init(OBJECT *parent)

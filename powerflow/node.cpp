@@ -140,6 +140,8 @@ int node::create(void)
 	GS_converged=false;
 
 	NR_node_reference = -1;	//Newton-Raphson bus index, set to -1 initially
+	house_present = false;	//House attachment flag
+	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;	//Nominal house current variables
 
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
@@ -839,14 +841,33 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		if (phases&PHASE_S)
 		{	// Split phase
 			complex temp_inj[2];
+			complex adjusted_curr[3];
+			complex temp_curr_val[3];
+
+			if (house_present)
+			{
+				//Update phase adjustments
+				adjusted_curr[0].SetPolar(1.0,voltage[0].Arg());	//Pull phase of V1
+				adjusted_curr[1].SetPolar(1.0,voltage[1].Arg());	//Pull phase of V2
+				adjusted_curr[2].SetPolar(1.0,voltaged[0].Arg());	//Pull phase of V12
+
+				//Update these current contributions
+				temp_curr_val[0] = nom_res_curr[0]/(~adjusted_curr[0]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+				temp_curr_val[1] = nom_res_curr[1]/(~adjusted_curr[1]);
+				temp_curr_val[2] = nom_res_curr[2]/(~adjusted_curr[2]);
+			}
+			else
+			{
+				temp_curr_val[0] = temp_curr_val[1] = temp_curr_val[2] = 0.0;	//No house present, just zero em
+			}
 
 #ifdef SUPPORT_OUTAGES
 			if (voltage[0]!=0.0)
 			{
 #endif
-			current_inj[0] += (voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ? current1 : current1 + ~(power1/voltage1) + voltage1*shunt1;
+			current_inj[0] += (voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ? (current1 + temp_curr_val[0]) : (current1 + ~(power1/voltage1) + voltage1*shunt1 + temp_curr_val[0]);
 			temp_inj[0] = current_inj[0];
-			current_inj[0] += ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? current12 : current12 + ~(power12/(voltage1+voltage2)) + (voltage1+voltage2)*shunt12;
+			current_inj[0] += ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? (current12 + temp_curr_val[2]) : (current12 + ~(power12/(voltage1+voltage2)) + (voltage1+voltage2)*shunt12 + temp_curr_val[2]);
 
 #ifdef SUPPORT_OUTAGES
 			}
@@ -860,9 +881,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			{
 #endif
 
-			current_inj[1] += (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero())) ? -current2 : -current2 - ~(power2/voltage2) - voltage2*shunt2;
+			current_inj[1] += (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero())) ? (-current2 - temp_curr_val[1]) : (-current2 - ~(power2/voltage2) - voltage2*shunt2 - temp_curr_val[1]);
 			temp_inj[1] = current_inj[1];
-			current_inj[1] += ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? -current12 : -current12 - ~(power12/(voltage1+voltage2)) - (voltage1+voltage2)*shunt12;
+			current_inj[1] += ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? (-current12 - temp_curr_val[2]) : (-current12 - ~(power12/(voltage1+voltage2)) - (voltage1+voltage2)*shunt12 - temp_curr_val[2]);
 			
 #ifdef SUPPORT_OUTAGES
 			}
@@ -1427,6 +1448,8 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				{
 					complex vdel;
 					complex temp_current[3];
+					complex temp_store[3];
+					complex temp_val[3];
 
 					//Find V12 (just in case)
 					vdel=voltage[0] + voltage[1];
@@ -1441,6 +1464,24 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					temp_current[0] += voltage[0] == 0.0 ? 0.0 : ~(power[0]/voltage[0]);
 					temp_current[1] += voltage[1] == 0.0 ? 0.0 : ~(power[1]/voltage[1]);
 					temp_current[2] += vdel == 0.0 ? 0.0 : ~(power[2]/vdel);
+
+					if (house_present)	//House present
+					{
+						//Update phase adjustments
+						temp_store[0].SetPolar(1.0,voltage[0].Arg());	//Pull phase of V1
+						temp_store[1].SetPolar(1.0,voltage[1].Arg());	//Pull phase of V2
+						temp_store[2].SetPolar(1.0,vdel.Arg());		//Pull phase of V12
+
+						//Update these current contributions
+						temp_val[0] = nom_res_curr[0]/(~temp_store[0]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+						temp_val[1] = nom_res_curr[1]/(~temp_store[1]);
+						temp_val[2] = nom_res_curr[2]/(~temp_store[2]);
+
+						//Now add it into the current contributions
+						temp_current[0] += temp_val[0];
+						temp_current[1] += temp_val[1];
+						temp_current[2] += temp_val[2];
+					}//End house-attached splitphase
 
 					//Last, but not least, admittance/impedance contributions
 					temp_current[0] += shunt[0]*voltage[0];
@@ -2313,6 +2354,12 @@ int *node::NR_populate(void)
 		//See if we're a triplex
 		if (has_phase(PHASE_S))
 		{
+			if (house_present)	//We're a proud parent of a house!
+			{
+				NR_busdata[NR_curr_bus].house_var = &nom_res_curr[0];	//Separate storage area for nominal house currents
+				NR_busdata[NR_curr_bus].phases |= 0x40;					//Flag that we are a house-attached node
+			}
+
 			NR_busdata[NR_curr_bus].extra_var = &current12;	//Stored in a separate variable and this is the easiest way for me to get it
 		}
 		else if (SubNode==DIFF_PARENT)	//Differently connected load/node (only can't be S)
