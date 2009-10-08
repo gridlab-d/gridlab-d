@@ -1,0 +1,154 @@
+// $id$
+//	Copyright (C) 2008 Battelle Memorial Institute
+//  An example case of IEEE 4 node system using balanced step down D-D tranformer.
+//  Using one phase line at the end node,
+//  Using static load at the node 4.
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+#define stylesheet="C:\Documents and Settings\D3Y074\My Documents\GridLab-D\trunk\VS2005\gridlabd-2_0";
+
+module powerflow {
+	solver_method NR;
+};
+module assert;
+
+object overhead_line_conductor:200{
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:201{
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:300{
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;	
+}
+
+object line_spacing:301{
+//	distance_AN 0.0;
+}
+
+object line_configuration:400{
+	conductor_A overhead_line_conductor:200;
+	conductor_B overhead_line_conductor:200;
+	conductor_C overhead_line_conductor:200;
+	conductor_N overhead_line_conductor:201;
+	spacing line_spacing:300;
+}
+
+object line_configuration:401{
+	conductor_A overhead_line_conductor:200;
+	spacing line_spacing:301;
+}
+
+object transformer_configuration:500{
+	connect_type DELTA_DELTA;
+	install_type PADMOUNT;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object node:1{
+	phases "ABCD";
+	bustype SWING;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+	
+}
+
+object overhead_line:12{
+	phases "ABCD";
+	from node:1;
+	to node:2;
+	length 2000;
+	configuration line_configuration:400;
+}
+
+object node:2 {
+	phases "ABCD";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+	object complex_assert {
+			target voltage_AB;
+			within 7;
+			value +12463.1+29.9977d;
+		};
+		object complex_assert {
+			target voltage_BC;
+			within 7;
+			value +12471.2-90.0028d;
+		};
+		object complex_assert {
+			target voltage_CA;
+			within 7;
+			value +12467.1+149.965d;
+		};
+}
+
+object transformer:23 {
+	phases "ABCD";
+	from node:2;
+	to node:3;
+	configuration transformer_configuration:500;
+}
+
+object node:3 {
+	phases "ABCD";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
+	object complex_assert {
+			target voltage_AB;
+			within 7;
+			value +4143.99+29.9162d;
+		};
+		object complex_assert {
+			target voltage_BC;
+			within 7;
+			value +4160.4-90.0028d;
+		};
+		object complex_assert {
+			target voltage_CA;
+			within 7;
+			value +4157.3+149.761d;
+		};
+}
+
+object overhead_line:34 {
+	phases "A";
+	from node:3;
+	to load:4;
+	length 2500;
+	configuration line_configuration:401;
+}
+
+object load:4 {
+	phases "A";
+	voltage_A +2401.777+0.000j;
+	constant_power_A +180000.000+87177.789j;
+	nominal_voltage 2400;
+	object complex_assert {
+			target voltage_A;
+			within 7;
+			value +2349.5-1.4396d ;
+			};
+	}
+
