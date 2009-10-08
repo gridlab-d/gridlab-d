@@ -76,8 +76,6 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 			PT_double, "shunt_resistance[pu.Ohm]",PADDR(shunt_impedance.Re()),
 			PT_double, "shunt_reactance[pu.Ohm]",PADDR(shunt_impedance.Im()),
 			PT_complex, "shunt_impedance[pu.Ohm]",PADDR(shunt_impedance),
-			PT_double, "percent_no_load_loss[unit]",PADDR(no_load_loss),
-			PT_double, "percent_full_load_loss[unit]",PADDR(full_load_loss),
 
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -176,30 +174,6 @@ int transformer_configuration::init(OBJECT *parent)
 			gl_warning("impedance1 was defined, but impedance2 was not -- assuming they are equal");
 		}
 		
-		if (no_load_loss != 0.0) //convert load losses to impedance values
-		{
-			if (no_load_loss < 0.0 || full_load_loss < 0.0)
-			{
-				GL_THROW("Loss percentages (no_load) must be positive values.");
-			}
-			else
-			{
-				shunt_impedance = complex(1/no_load_loss,10000000.0); //	10 million should be sufficient.
-			}
-		}
-		
-		if (full_load_loss != 0.0)
-		{
-			if (full_load_loss < 0.0)
-			{
-				GL_THROW("Loss percentages (full_load) must be positive values.");
-			}
-			else
-			{
-				impedance = complex(full_load_loss,0); //What should the X value be here?
-			}
-		}
-
 	}
 	// check impedance
 	if (impedance.Re()<0 || impedance1.Re()<0 || impedance2.Re()<0)
