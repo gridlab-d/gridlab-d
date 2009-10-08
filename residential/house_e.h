@@ -108,7 +108,7 @@ public:
 	double air_mass;				///< mass of air (lbs)
 	double air_thermal_mass;		///< thermal mass of air (BTU/F)
 	double solar_load;				///< solar load (BTU/h)
-	double cooling_design_temperature, heating_design_temperature, design_peak_solar, design_internal_gains;
+	double cooling_design_temperature, heating_design_temperature, design_peak_solar, design_internal_gains, design_internal_gain_density;
 
 	double Rroof, Rwall, Rfloor, Rwindows, Rdoors;
 

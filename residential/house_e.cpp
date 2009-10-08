@@ -610,6 +610,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			
 			PT_double,"hvac_load",PADDR(hvac_load),PT_DESCRIPTION,"heating/cooling system load",
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
+			PT_double,"design_internal_gain_density[W/sf]",PADDR(design_internal_gain_density),PT_DESCRIPTION,"average density of heat generating devices in the house",
 #ifdef _DEBUG
 			// these are added in the debugging version so we can spy on ETP
 			PT_double,"a",PADDR(a),
@@ -682,6 +683,7 @@ int house_e::create()
 	load.impedance_fraction = 0.2;
 	load.current_fraction = 0.0;
 	load.power_factor = 1.0;
+	design_internal_gain_density = gl_random_triangle(4,6);
 
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
@@ -911,7 +913,7 @@ int house_e::init(OBJECT *parent)
 	}
 	if (over_sizing_factor==0)  over_sizing_factor = gl_random_uniform(0.98,1.3);
 	if(cooling_design_temperature == 0)	cooling_design_temperature = 95.0;
-	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * gl_random_triangle(4,6); // ~5 W/sf estimated
+	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * design_internal_gain_density; // ~5 W/sf estimated
 	if (latent_load_fraction==0) latent_load_fraction = 0.2;
 	if (design_cooling_capacity==0)	design_cooling_capacity = (1+latent_load_fraction) * envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (1-glazing_shgc)) + design_internal_gains;
 	if (design_heating_capacity==0)	design_heating_capacity = envelope_UA * (heating_setpoint - heating_design_temperature);
@@ -1220,6 +1222,9 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 #ifdef _DEBUG
 	gl_debug("house %s (%d) sync_enduses event at '%s'", obj->name, obj->id, gl_strftime(t2));
 #endif
+
+	// get the fractions to properly apply themselves
+//	gl_enduse_sync(&(residential_enduse::load),t1);
 
 	// sync circuit panel
 	t = sync_panel(t0,t1); 
