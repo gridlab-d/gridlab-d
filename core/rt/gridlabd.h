@@ -5,7 +5,7 @@
 
 	The Runtime Class API is a programming library for inline C++ embedded
 	within GLM files.
-	
+
  @{
  **/
 #include <stdlib.h>
@@ -29,7 +29,7 @@ typedef enum {I='i',J='j',A='d'} CNOTATION; /**< complex number notation to use 
 #define E 2.71828182845905
 
 /* only cpp code may actually do complex math */
-class complex { 
+class complex {
 private:
 	double r; /**< the real part */
 	double i; /**< the imaginary part */
@@ -54,19 +54,19 @@ public:
 		i = im;
 		f = nf;
 	};
-	
+
 	/* assignment operations */
 	inline complex &operator = (complex x) /**< complex assignment */
 	{
-		r = x.r; 
-		i = x.i; 
-		f = x.f; 
+		r = x.r;
+		i = x.i;
+		f = x.f;
 		return *this;
 	};
 	inline complex &operator = (double x) /**< double assignment */
 	{
-		r = x; 
-		i = 0; 
+		r = x;
+		i = 0;
 		f = CNOTATION_DEFAULT;
 		return *this;
 	};
@@ -117,7 +117,7 @@ public:
 		return a;
 	};
 	inline complex Log(void) const /**< compute log */
-	{ 
+	{
 		return complex(log(Mag()),Arg(),f);
 	};
 	inline void SetReal(double v) /**< set real part */
@@ -140,7 +140,7 @@ public:
 	};
 	inline void SetPolar(double m, double a, CNOTATION nf=A) /**< set polar values */
 	{
-		r = (m*cos(a)); 
+		r = (m*cos(a));
 		i = (m*sin(a));
 		f = nf;
 	};
@@ -157,72 +157,72 @@ public:
 		return complex(-r,-i,f);
 	};
 	inline complex operator ~ (void) /**< complex conjugate */
-	{ 
+	{
 		return complex(r,-i,f);
 	};
 
 	/* reflexive math operations */
 	inline complex &operator += (double x) /**< add a double to the real part */
 	{
-		r += x; 
+		r += x;
 		return *this;
 	};
 	inline complex &operator -= (double x) /**< subtract a double from the real part */
 	{
-		r -= x; 
+		r -= x;
 		return *this;
 	};
 	inline complex &operator *= (double x) /**< multiply a double to real part */
 	{
-		r *= x; 
-		i *= x; 
+		r *= x;
+		i *= x;
 		return *this;
 	};
 	inline complex &operator /= (double x) /**< divide into the real part */
 	{
-		r /= x; 
+		r /= x;
 		i /= x;
 		return *this;
 	};
 	inline complex &operator ^= (double x) /**< raise to a real power */
-	{ 
-		double lm = log(Mag()), a = Arg(), b = exp(x*lm), c = x*a; 
-		r = (b*cos(c)); 
-		i = (b*sin(c)); 
+	{
+		double lm = log(Mag()), a = Arg(), b = exp(x*lm), c = x*a;
+		r = (b*cos(c));
+		i = (b*sin(c));
 		return *this;
 	};
 	inline complex &operator += (complex x) /**< add a complex number */
 	{
-		r += x.r; 
-		i += x.i; 
+		r += x.r;
+		i += x.i;
 		return *this;
 	};
 	inline complex &operator -= (complex x)  /**< subtract a complex number */
 	{
-		r -= x.r; 
-		i -= x.i; 
+		r -= x.r;
+		i -= x.i;
 		return *this;
 	};
 	inline complex &operator *= (complex x)  /**< multip[le by a complex number */
 	{
-		double pr=r; 
-		r = pr * x.r - i * x.i; 
-		i = pr * x.i + i * x.r; 
+		double pr=r;
+		r = pr * x.r - i * x.i;
+		i = pr * x.i + i * x.r;
 		return *this;
 	};
 	inline complex &operator /= (complex y)  /**< divide by a complex number */
 	{
 		double xr=r;
 		double a = y.r*y.r+y.i*y.i;
-		r = (xr*y.r+i*y.i)/a; 
+		r = (xr*y.r+i*y.i)/a;
 		i = (i*y.r-xr*y.i)/a;
 		return *this;
 	};
 	inline complex &operator ^= (complex x) /**< raise to a complex power */
-	{ 
-		double lm = log(Mag()), a = Arg(), b = exp(x.r*lm-x.i*a), c = x.r*a+x.i*lm; 
-		r = (b*cos(c)); 
-		i = (b*sin(c)); 
+	{
+		double lm = log(Mag()), a = Arg(), b = exp(x.r*lm-x.i*a), c = x.r*a+x.i*lm;
+		r = (b*cos(c));
+		i = (b*sin(c));
 		return *this;
 	};
 
@@ -313,7 +313,7 @@ public:
 };
 
 #ifdef REAL4
-typedef float real; 
+typedef float real;
 #else
 typedef double real;
 #endif
@@ -360,7 +360,7 @@ typedef double triplet[3];
 typedef complex triplex[3];
 
 /* int64 is already defined in platform.h */
-typedef enum {_PT_FIRST=-1, 
+typedef enum {_PT_FIRST=-1,
 	PT_void, /**< the type has no data */
 	PT_double, /**< the data is a double-precision float */
 	PT_complex, /**< the data is a complex value */
@@ -370,7 +370,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_int32, /**< the data is a 32-bit integer */
 	PT_int64, /**< the data is a 64-bit integer */
 	PT_char8, /**< the data is \p NULL -terminated string up to 8 characters in length */
-	PT_char32, /**< the data is \p NULL -terminated string up to 32 characters in length */ 
+	PT_char32, /**< the data is \p NULL -terminated string up to 32 characters in length */
 	PT_char256, /**< the data is \p NULL -terminated string up to 256 characters in length */
 	PT_char1024, /**< the data is \p NULL -terminated string up to 1024 characters in length */
 	PT_object, /**< the data is a pointer to a GridLAB object */
@@ -388,7 +388,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_triple, /**< triplet of doubles (not supported) */
 	PT_triplex, /**< triplet of complexes (not supported) */
 #endif
-	_PT_LAST, 
+	_PT_LAST,
 	/* never put these before _PT_LAST they have special uses */
 	PT_AGGREGATE, /* internal use only */
 	PT_KEYWORD, /* used to add an enum/set keyword definition */
@@ -440,7 +440,7 @@ typedef unsigned char PASSCONFIG; /**< the pass configuration */
 #define PC_POSTTOPDOWN 0x04				/**< used when the class requires synchronization on the second top-down pass */
 #define PC_FORCE_NAME 0x20				/**< used to indicate the this class must define names for all its objects */
 #define PC_PARENT_OVERRIDE_OMIT 0x40	/**< used to ignore parent's use of PC_UNSAFE_OVERRIDE_OMIT */
-#define PC_UNSAFE_OVERRIDE_OMIT 0x80	/**< used to flag that omitting overrides is unsafe */ 
+#define PC_UNSAFE_OVERRIDE_OMIT 0x80	/**< used to flag that omitting overrides is unsafe */
 
 #ifndef FALSE
 #define FALSE (0)
@@ -528,11 +528,11 @@ struct s_module_list {
 #endif
 	int (*cmdargs)(int,char**);
 	int (*kmldump)(FILE*fp,OBJECT*);
-	void (*test)(int argc, char *argv[]);	
+	void (*test)(int argc, char *argv[]);
 	MODULE *(*subload)(char *, MODULE **, CLASS **, int, char **);
 	PROPERTY *globals;
 	MODULE *next;
-}; 
+};
 
 typedef enum {CLASSVALID=0xc44d822e} CLASSMAGIC; ///< this is used to uniquely identify class structure
 
@@ -540,7 +540,7 @@ struct s_class_list {
 	CLASSMAGIC magic;
 	CLASSNAME name;
 	unsigned int size;
-	MODULE *module; 
+	MODULE *module;
 	PROPERTY *pmap;
 	FUNCTION *fmap;
 	FUNCTIONADDR create;
@@ -569,6 +569,7 @@ typedef struct s_namespace {
 
 struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
+	char32 groupid;
 	CLASS *oclass; /**< object class; determine structure of object data */
 	OBJECT *next; /**< next object in list */
 	OBJECT *parent; /**< object's parent; determines rank */
@@ -642,7 +643,7 @@ typedef enum {
 
 struct s_loadshape_core {
 	double load;		/**< the actual load magnitude */
-	
+
 	/* machine specification */
 	SCHEDULE *schedule;	/**< the schedule driving this machine */
 	MACHINETYPE type;	/**< the type of this machine */
@@ -673,7 +674,7 @@ struct s_loadshape_core {
 
 	/* internal machine parameters */
 	double r;			/**< the state rate */
-	double re[2];		/**< the state rate stdevs (not used yet) */ 
+	double re[2];		/**< the state rate stdevs (not used yet) */
 	double d[2];		/**< the state transition thresholds */
 	double de[2];		/**< the state transition threshold stdevs (not used yet) */
 	double dPdV;		/**< the voltage sensitivity of the load */
@@ -864,7 +865,7 @@ typedef struct s_callbacks {
 	} interpolate;
 } CALLBACKS; /**< core callback function table */
 
-extern CALLBACKS *callback; 
+extern CALLBACKS *callback;
 
 typedef FUNCTIONADDR function;
 
@@ -875,7 +876,7 @@ typedef FUNCTIONADDR function;
 #ifdef _DEBUG
 #define gl_debug (*callback->output_debug) ///< Send a printf-style message to the debug stream
 #else
-#define gl_debug 
+#define gl_debug
 #endif
 #define gl_testmsg (*callback->output_test) ///< Send a printf-style message to the testmsg stream
 
@@ -925,7 +926,7 @@ inline OBJECT *gl_create_foreign(OBJECT *obj) {return (*callback->create.foreign
 /// @return the rank of the object after parent is set
 inline int gl_set_parent(OBJECT *obj, ///< the object whose parent is being set
 						 OBJECT *parent) ///< the parent that is being set
-{ 
+{
 	return (*callback->set_parent)(obj,parent);
 }
 
@@ -933,9 +934,9 @@ inline int gl_set_parent(OBJECT *obj, ///< the object whose parent is being set
 /// @return the old rank of the object
 inline int gl_set_rank(OBJECT* obj, ///< the object whose rank is being set
 					   unsigned int rank) ///< the new rank of the object
-{ 
+{
 	return (*callback->set_rank)(obj,rank);
-} 
+}
 
 /// Get a pointer to the data of an object property (by name)
 /// @return a pointer to the data
@@ -991,8 +992,8 @@ inline double gl_random_rayleigh(double a) { return callback->random.rayleigh(a)
 inline bool gl_object_isa(OBJECT *obj, char *type) { return callback->object_isa(obj,type)==1;};
 inline DATETIME *gl_localtime(TIMESTAMP ts,DATETIME *dt) { return callback->time.local_datetime(ts,dt)?dt:NULL;};
 inline TIMESTAMP gl_mkdatetime(DATETIME *dt) { return callback->time.mkdatetime(dt);};
-inline TIMESTAMP gl_mkdatetime(short year, short month, short day, short hour=0, short minute=0, short second=0, char *tz=NULL, short usec=0) 
-{ 
+inline TIMESTAMP gl_mkdatetime(short year, short month, short day, short hour=0, short minute=0, short second=0, char *tz=NULL, short usec=0)
+{
 	DATETIME dt;
 	dt.year = year;
 	dt.month = month;
