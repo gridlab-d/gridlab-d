@@ -1141,7 +1141,7 @@ void house_e::update_system(double dt)
 	}
 	else
 	{
-		load.total = system_rated_power * ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? ((system_type&ST_AIR)?0.05:0.00) : 1.0);
+		load.total = system_rated_power * ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? 0.05 : 1.0);
 		load.heatgain = system_rated_capacity;
 	}
 
