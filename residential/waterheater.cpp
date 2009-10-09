@@ -732,7 +732,7 @@ double waterheater::actual_kW(void)
 		if(heat_mode == GASHEAT){
 			return heating_element_capacity / 1000; /* gas heating is voltage independent.  convert W->kW. */
 		}
-		const double actual_voltage = pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
+		const double actual_voltage = nominal_voltage;//pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
         if (actual_voltage > 2.0*nominal_voltage)
         {
             if (trip_counter++ > 10)
