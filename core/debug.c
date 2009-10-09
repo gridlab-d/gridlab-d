@@ -1289,6 +1289,9 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 	}
 #endif
 
+	global_debug_output = 1; // force it on
+	global_suppress_repeat_messages = 0; // force it off
+
 	if (debug_active==0)
 	{
 		BREAKPOINT *bp;
