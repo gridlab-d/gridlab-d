@@ -6,7 +6,7 @@
 	
 	Aggregation functions support calculations over properties of multiple objects.
 	This is used primarily by the collector object in the tape module to define groups
-	(see the \p group property in the collector object).  The \p group can be defined
+	(see the \p group property in aggregate_mkgroupthe collector object).  The \p group can be defined
 	by specifying a boolean series are relationship of object properties, e.g.,
 	\verbatim class=node and parent=root \endverbatim.
 	
@@ -46,6 +46,14 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 	char aggrop[9], aggrval[257], *aggrpart;
 	char aggrprop[33], aggrunit[9];
 	unsigned char flags=0x00;
+
+	//Change made for collector to handle propeties of objects
+	OBJECT *obj;
+	PROPERTY *pinfo=NULL;
+	FINDPGM *pgm = NULL;
+	FINDLIST *list=NULL;	
+	//Change ends here
+
 	UNIT *from_unit = NULL, *to_unit = NULL;
 	double scale = 1.0;
 
@@ -63,12 +71,26 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 		return NULL;
 	}
 
-	aggrpart = strrchr(aggrval,'.');
-	/* if an aggregate part is found */
-	if (aggrpart!=NULL)
-		*aggrpart++ = '\0';	// split the value and the part
-	else
-		aggrpart=""; // no part given
+	//Change made for collector to handle propeties of objects
+		pgm = find_mkpgm(group_expression);
+		list = find_runpgm(NULL,pgm);
+		obj = find_first(list);
+		
+		pinfo = class_find_property(obj->oclass,aggrval);
+		if (pinfo==NULL)
+		{
+			aggrpart = strrchr(aggrval,'.');
+			/* if an aggregate part is found */
+			if (aggrpart!=NULL)
+				*aggrpart++ = '\0';	// split the value and the part
+			else
+				aggrpart=""; // no part given
+		}
+			else
+		{
+			aggrpart=""; // no part given
+		}
+	//Change ends here
 
 	if(sscanf(aggrval, "%32[A-Za-z0-9_][%[A-Za-z0-9_]]", aggrprop, aggrunit) == 2){
 		to_unit = unit_find(aggrunit);
@@ -108,13 +130,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 		return NULL;
 	}
 	if (op!=AGGR_NOP)
-	{
-		PROPERTY *pinfo=NULL;
-		AGGRPART part=AP_NONE;
-		FINDLIST *list=NULL;
-
-		/* compile and check search program */
-		FINDPGM *pgm = find_mkpgm(group_expression);
+	{		
+		AGGRPART part=AP_NONE;	
+		
 		if (pgm==NULL)
 		{
 			output_error("aggregate group expression '%s' failed", group_expression);
@@ -143,9 +161,7 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 				return NULL;
 			}
 			else
-			{
-				OBJECT *obj;
-				list = find_runpgm(NULL,pgm);
+			{				
 				if (list==NULL)
 				{
 					output_error("aggregate group expression '%s' does not result is a usable object list", group_expression);
@@ -157,7 +173,7 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 					errno=EINVAL;
 					return NULL;
 				}
-				obj = find_first(list);
+				
 				if (obj==NULL)
 				{
 					output_error("aggregate group expression '%s' results is an empty object list", group_expression);
