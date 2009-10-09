@@ -2995,7 +2995,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		StatFree ( &stat );
 
 		//Break us out if we are done or are singular		
-		if (( newiter == false ) || (info>0))
+		if (( newiter == false ) || (info!=0))
 			break;
 
 	}	//End iteration loop
@@ -3004,7 +3004,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Check to see how we are ending
 	if ((Iteration==NR_iteration_limit) && (newiter==true)) //Reached the limit
 		return -Iteration;
-	else if (info>0)	//failure of computations (singular matrix, etc.) - 2 = singular matrix it appears
+	else if (info!=0)	//failure of computations (singular matrix, etc.) - 2 = singular matrix it appears - positive values = process errors (singular, etc), negative values = input argument/syntax error
 	{
 		*bad_computations = true;	//Flag our output as bad
 		return 0;					//Just return some arbitrary value

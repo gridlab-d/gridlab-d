@@ -20,8 +20,11 @@ public:
 	complex impedance[3];
 	int create(void);
 	int init(OBJECT *parent=NULL);
+	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP sync(TIMESTAMP t0);
 	int isa(char *classname);
+
+	bool NR_mode;
 
 	friend class triplex_line;
 };

@@ -687,6 +687,13 @@ int node::init(OBJECT *parent)
 		voltageBC = voltageB - voltageC;
 		voltageCA = voltageC - voltageA;
 	}
+	else if (has_phase(PHASE_S))
+	{
+		//Compute differential voltages (1-2, 1-N, 2-N)
+		voltaged[0] = voltage[0] + voltage[1];
+		voltaged[1] = voltage[0] - voltage[2];
+		voltaged[2] = voltage[1] - voltage[2];
+	}
 
 	return result;
 }

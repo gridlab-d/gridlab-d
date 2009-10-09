@@ -829,6 +829,8 @@ int house_e::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
+	Off_Return = TS_NEVER;
+
 	// local object name,	meter object name
 	struct {
 			complex **var;
@@ -841,6 +843,7 @@ int house_e::init(OBJECT *parent)
 					};
 
 	extern complex default_line_voltage[3], default_line_current[3], default_line_power[3], default_line_shunt[3];
+	extern bool default_NR_mode;
 	int i;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
@@ -858,6 +861,9 @@ int house_e::init(OBJECT *parent)
 		//Map to the triplex variable
 		pHouseConn = get_bool(parent,"house_present");
 
+		//Connect the NR mode indicator
+		NR_mode = get_bool(parent,"NR_mode");
+		
 		//Flag that we're attached to a node
 		*pHouseConn = true;
 	}
@@ -870,6 +876,9 @@ int house_e::init(OBJECT *parent)
 		*(map[1].var) = &default_line_current[0];
 		*(map[2].var) = &default_line_shunt[0];
 		*(map[3].var) = &default_line_power[0];
+
+		//Attach the NR solver method flag to default
+		NR_mode = &default_NR_mode;
 	}
 
 	// set defaults for panel/meter variables
@@ -1170,10 +1179,13 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 	const double dt = (double)((t1-t0)*TS_SECOND)/3600;
 	CIRCUIT *c;
 
-	//Zero the accumulator
-	load_values[0][0] = load_values[0][1] = load_values[0][2] = 0.0;
-	load_values[1][0] = load_values[1][1] = load_values[1][2] = 0.0;
-	load_values[2][0] = load_values[2][1] = load_values[2][2] = 0.0;
+	if (*NR_mode == false)
+	{
+		//Zero the accumulator
+		load_values[0][0] = load_values[0][1] = load_values[0][2] = 0.0;
+		load_values[1][0] = load_values[1][1] = load_values[1][2] = 0.0;
+		load_values[2][0] = load_values[2][1] = load_values[2][2] = 0.0;
+	}
 
 	/* advance the thermal state of the building */
 	if (t0>0 && dt>0)
@@ -1210,85 +1222,118 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER, t;
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
 
-	/* update HVAC power before panel sync */
-	if (t0==0 || t1>t0){
-		outside_temperature = *pTout;
-
-		// update the state of the system
-		update_system(dt1);
-	}
-
-	t2 = sync_enduses(t0, t1);
-#ifdef _DEBUG
-	gl_debug("house %s (%d) sync_enduses event at '%s'", obj->name, obj->id, gl_strftime(t2));
-#endif
-
-	// get the fractions to properly apply themselves
-//	gl_enduse_sync(&(residential_enduse::load),t1);
-
-	// sync circuit panel
-	t = sync_panel(t0,t1); 
-	if (t < t2) {
-		t2 = t;
-#ifdef _DEBUG
-		gl_debug("house %s (%d) sync_panel event '%s'", obj->name, obj->id, gl_strftime(t2));
-#endif
-	}
-
-	if (t0==0 || t1>t0)
-
-		// update the model of house
-		update_model(dt1);
-
-	// determine temperature of next event
-	update_Tevent();
-
-	/* solve for the time to the next event */
-	double dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
-
-	// if no solution is found or it has already occurred
-	if (isnan(dt2) || !isfinite(dt2) || dt2<0)
+	if (*NR_mode == false)
 	{
-#ifdef _DEBUG
-	gl_debug("house %s (%d) time to next event is indeterminate", obj->name, obj->id);
-#endif
-		// try again in 1 second if there is a solution in the future
-		//if (sgn(dTair)==sgn(Tevent-Tair) && Tevent) 
-		//	if (t2>t1) t2 = t1+1;
-	}
+		/* update HVAC power before panel sync */
+		if (t0==0 || t1>t0){
+			outside_temperature = *pTout;
 
-	// if the solution is less than time resolution
-	else if (dt2<TS_SECOND)
-	{	
-		// need to do a second pass to get next state
-		t = t1+1; if (t<t2) t2 = t;
+			// update the state of the system
+			update_system(dt1);
+		}
+
+		t2 = sync_enduses(t0, t1);
 #ifdef _DEBUG
-	gl_debug("house %s (%d) time to next event is less than time resolution", obj->name, obj->id);
+		gl_debug("house %s (%d) sync_enduses event at '%s'", obj->name, obj->id, gl_strftime(t2));
 #endif
-	}	
+
+		// get the fractions to properly apply themselves
+	//	gl_enduse_sync(&(residential_enduse::load),t1);
+
+		// sync circuit panel
+		t = sync_panel(t0,t1); 
+		if (t < t2) {
+			t2 = t;
+#ifdef _DEBUG
+			gl_debug("house %s (%d) sync_panel event '%s'", obj->name, obj->id, gl_strftime(t2));
+#endif
+		}
+
+		if (t0==0 || t1>t0)
+
+			// update the model of house
+			update_model(dt1);
+
+		// determine temperature of next event
+		update_Tevent();
+
+		/* solve for the time to the next event */
+		double dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+
+		// if no solution is found or it has already occurred
+		if (isnan(dt2) || !isfinite(dt2) || dt2<0)
+		{
+#ifdef _DEBUG
+		gl_debug("house %s (%d) time to next event is indeterminate", obj->name, obj->id);
+#endif
+			// try again in 1 second if there is a solution in the future
+			//if (sgn(dTair)==sgn(Tevent-Tair) && Tevent) 
+			//	if (t2>t1) t2 = t1+1;
+		}
+
+		// if the solution is less than time resolution
+		else if (dt2<TS_SECOND)
+		{	
+			// need to do a second pass to get next state
+			t = t1+1; if (t<t2) t2 = t;
+#ifdef _DEBUG
+		gl_debug("house %s (%d) time to next event is less than time resolution", obj->name, obj->id);
+#endif
+		}	
+		else
+		{
+			// next event is found
+			t = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); if (t<t2) t2 = t;
+#ifdef _DEBUG
+		gl_debug("house %s (%d) time to next event is %.2f hrs", obj->name, obj->id, dt2/3600);
+#endif
+		}
+
+#ifdef _DEBUG
+		char tbuf[64];
+		gl_printtime(t2, tbuf, 64);
+		gl_debug("house %s (%d) next event at '%s'", obj->name, obj->id, tbuf);
+#endif
+
+		// enforce dwell time
+		if (t2!=TS_NEVER)
+		{
+			double t = ceil((t2<0 ? -t2 : t2)/system_dwell_time)*system_dwell_time;
+			t2 = (t2<0 ? -t : t);
+		}
+
+		//Update the off-return value
+		Off_Return = t2;
+		return t2;
+	}
 	else
 	{
-		// next event is found
-		t = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); if (t<t2) t2 = t;
-#ifdef _DEBUG
-	gl_debug("house %s (%d) time to next event is %.2f hrs", obj->name, obj->id, dt2/3600);
-#endif
-	}
+		// compute line currents and post to meter
+		if (obj->parent != NULL)
+			LOCK_OBJECT(obj->parent);
 
-#ifdef _DEBUG
-	char tbuf[64];
-	gl_printtime(t2, tbuf, 64);
-	gl_debug("house %s (%d) next event at '%s'", obj->name, obj->id, tbuf);
-#endif
+		//Post accumulations up to parent meter/node
+		//Update power
+		pPower[0] += load_values[0][0];
+		pPower[1] += load_values[0][1];
+		pPower[2] += load_values[0][2];
+		
+		//Current
+		pLine_I[0] += load_values[1][0];
+		pLine_I[1] += load_values[1][1];
+		pLine_I[2] += load_values[1][2];
+		//Neutral assumed 0, since it was anyways
 
-	// enforce dwell time
-	if (t2!=TS_NEVER)
-	{
-		double t = ceil((t2<0 ? -t2 : t2)/system_dwell_time)*system_dwell_time;
-		t2 = (t2<0 ? -t : t);
+		//Admittance
+		pShunt[0] += load_values[2][0];
+		pShunt[1] += load_values[2][1];
+		pShunt[2] += load_values[2][2];
+
+		if (obj->parent != NULL)
+			UNLOCK_OBJECT(obj->parent);
+
+		return Off_Return;
 	}
-	return t2;
-	
 }
 
 /** Removes load contributions from parent object **/

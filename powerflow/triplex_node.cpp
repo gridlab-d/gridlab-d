@@ -88,7 +88,7 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_double, "impedance_2_reac[Ohm]", PADDR(impedance[1].Im()),
 			PT_double, "impedance_12_reac[Ohm]", PADDR(impedance[2].Im()),
 			PT_bool, "house_present", PADDR(house_present),
-
+			PT_bool, "NR_mode", PADDR(NR_mode),
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -117,6 +117,16 @@ int triplex_node::init(OBJECT *parent)
 	if ((shunt12.IsZero())&&(impedance[2]!=0))
 		shunt12 = complex(1,0)/impedance[2];
 	return node::init(parent);
+}
+
+TIMESTAMP triplex_node::presync(TIMESTAMP t0)
+{
+	if (solver_method == SM_NR)
+		NR_mode = NR_cycle;		//COpy NR_cycle into NR_mode for houses
+	else
+		NR_mode = false;		//Just put as false for other methods
+
+	return node::presync(t0);
 }
 
 TIMESTAMP triplex_node::sync(TIMESTAMP t0)
