@@ -148,12 +148,15 @@ int transformer_configuration::init(OBJECT *parent)
 			At this time impedance1 and impedance2 are only defined and used for center-tap transformers to be
 			explicitly defined.  These values will be ignored for now.
 			*/
-		if (shunt_impedance.Re() != 999999999 || shunt_impedance.Im() != 999999999)
-			gl_warning("This connection type on transformer:%d (%s) does not support shunt_impedance at this time.",obj->id,obj->name);
-			/* TROUBLESHOOT
-			At this time shunt_impedance is only defined and supported in center-tap transformers.  Theses values
-			will be ignored for now.
-			*/
+		if (connect_type!=WYE_WYE)
+		{
+			if (shunt_impedance.Re() != 999999999 || shunt_impedance.Im() != 999999999)
+				gl_warning("This connection type on transformer:%d (%s) does not support shunt_impedance at this time.",obj->id,obj->name);
+				/* TROUBLESHOOT
+				At this time shunt_impedance is only defined and supported in center-tap and WYE-WYE transformers.  Theses values
+				will be ignored for now.
+				*/
+		}
 		if (no_load_loss != 0.0 || full_load_loss != 0.0)
 			gl_warning("This connection type on transformer:%d (%s) does not support shunt_impedance at this time.",obj->id,obj->name);
 			/* TROUBLESHOOT
