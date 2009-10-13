@@ -947,7 +947,7 @@ int house_e::init(OBJECT *parent)
 	//house_e properties for HVAC
 	if (volume==0) volume = ceiling_height*floor_area;									// volume of air [cf]
 	if (air_mass==0) air_mass = air_density*volume;							// mass of air [lb]
-	if (air_thermal_mass==0) air_thermal_mass = air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]
+	if (air_thermal_mass==0) air_thermal_mass = 5*air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]  //*5 multiplier is to reflect that the air mass includes surface effects from the mass as well.  
 	if (air_heat_fraction==0) air_heat_fraction=0.5;
 	if (air_heat_fraction<0.0 || air_heat_fraction>1.0) throw "air heat fraction is not between 0 and 1";
 	Tmaterials = Tair;	
