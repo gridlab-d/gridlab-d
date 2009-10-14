@@ -1143,6 +1143,31 @@ void house_e::update_system(double dt)
 	// manually add 'total', we should be unshaped
 	// central-air fan consumes only ~5% of total energy when using GAS, 2% when ventilating at low power
 	load.current = load.admittance = complex(0,0);
+	if(!(system_type&ST_GAS)){
+		complex Drawn_load = 0.0;
+		complex temp_power;
+		complex curr_angle;
+		
+		//Calculate "current" power draw of furnace
+		Drawn_load += (load.total*load.power_fraction);
+		
+		//Current fraction
+		temp_power = ~(load.total*load.current_fraction / 240.0);
+		curr_angle.SetPolar(1.0,pCircuit_V[0].Arg());
+		Drawn_load += pCircuit_V[0] * ~(temp_power/~curr_angle);
+
+		//Impedance fraction
+		if ((load.total.Mag() != 0.0) && (load.impedance_fraction != 0.0))
+		{
+			temp_power = ~((complex(240.0,0) * complex(240.0,0)) / (load.total*load.impedance_fraction));
+			Drawn_load += (pCircuit_V[0] * ~pCircuit_V[0])/(~temp_power);
+		}
+
+		// design_heating_capacity scaled by ZIP(voltage)		
+		system_rated_capacity *= system_rated_power == 0.0 ? 0.0 : Drawn_load.Mag()/system_rated_power;
+	
+	}
+
 	if ((system_type&ST_VAR) && (system_mode==SM_OFF))
 	{
 		load.total =  design_heating_capacity*KWPBTUPH*0.02;
