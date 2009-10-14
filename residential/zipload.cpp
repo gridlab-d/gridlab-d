@@ -17,7 +17,7 @@
 #include <math.h>
 
 #include "house_a.h"
-#include "ZIPload.h"
+#include "zipload.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ZIPload CLASS FUNCTIONS
