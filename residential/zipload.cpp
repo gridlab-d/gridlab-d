@@ -44,7 +44,7 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 			PT_double,"current_pf",PADDR(current_pf), PT_DESCRIPTION, "power factor for constant current portion",
 			PT_double,"impedance_pf",PADDR(impedance_pf), PT_DESCRIPTION, "power factor for constant impedance portion",
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",
-			PT_double,"breaker_val",PADDR(breaker_val), PT_DESCRIPTION, "Amperage of connected breaker",
+			PT_double,"breaker_val[A]",PADDR(breaker_val), PT_DESCRIPTION, "Amperage of connected breaker",
 			NULL)<1) 
 
 			GL_THROW("unable to publish properties in %s",__FILE__);
@@ -97,9 +97,18 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	double real_power = 0.0;
 	double imag_power = 0.0;
+	double angleval;
 
-	if (pCircuit!=NULL)
-		load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor - not really used for anything
+	if (pCircuit!=NULL){
+		if (is_240)
+		{
+			load.voltage_factor = pCircuit->pV->Mag() / 240; // update voltage factor - not really used for anything
+		}
+		else //120
+		{
+			load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor - not really used for anything
+		}
+	}
 
 	t2 = residential_enduse::sync(t0,t1);
 
@@ -146,6 +155,10 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//Compute total power - not sure if needed, but will use below
 		load.total = load.power + load.current + load.admittance;
 
+		//Update power factor, just in case
+		angleval = load.total.Arg();
+		load.power_factor = (angleval < 0) ? -1.0 * cos(angleval) : cos(angleval);
+
 		//Determine the heat contributions - percentage of real power
 		load.heatgain = load.total.Re() * load.heatgain_fraction;
 	}
@@ -156,6 +169,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		load.current = 0.0;
 		load.admittance = 0.0;
 		load.heatgain = 0.0;
+		load.power_factor = 0.0;
 	}
 
 	return t2;

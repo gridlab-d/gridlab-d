@@ -201,7 +201,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		{PT_double, "power_factor", (char *)PADDR(power_factor), "the power factor of the load"},
 		{PT_complex, "constant_power[kVA]", (char *)PADDR(power), "the constant power portion of the total load"},
 		{PT_complex, "constant_current[kVA]", (char *)PADDR(current), "the constant current portion of the total load"},
-		{PT_complex, "constant_admittance[kVA]", (char *)PADDR(current), "the constant admittance portion of the total load"},
+		{PT_complex, "constant_admittance[kVA]", (char *)PADDR(admittance), "the constant admittance portion of the total load"},
 		{PT_double, "voltage_factor[pu]", (char *)PADDR(voltage_factor), "the voltage change factor"},
 		{PT_set, "configuration", (char *)PADDR(config), "the load configuration options"},
 			{PT_KEYWORD, "IS220", (set)EUC_IS220},
