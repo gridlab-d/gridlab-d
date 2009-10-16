@@ -84,6 +84,7 @@ public:
 	// system design variables
 	double thermostat_deadband;		///< thermostat deadband (degF)
 	double airchange_per_hour;		///< house_e air changes per hour (ach)
+	double airchange_UA;			///< additional UA due to air changes per hour
 	double heating_setpoint;		///< heating setpoint (degF)
 	double cooling_setpoint;		///< cooling setpoint (degF)
 	double design_heating_capacity;	///< space heating capacity (BTUh/sf)

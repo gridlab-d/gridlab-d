@@ -562,6 +562,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"door_wall_ratio",PADDR(door_wall_ratio),PT_DESCRIPTION,"ratio of door area to wall area",
 			PT_double,"window_shading",PADDR(glazing_shgc),PT_DESCRIPTION,"shading coefficient of windows",
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),PT_DESCRIPTION,"number of air-changes per hour",
+			PT_double,"airchange_UA[Btu/degF.h]",PADDR(airchange_UA),PT_DESCRIPTION,"additional UA due to air infiltration",
 			PT_double,"internal_gain[Btu/h]",PADDR(total.heatgain),PT_DESCRIPTION,"internal heat gains",
 			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),PT_DESCRIPTION,"solar heat gains",
 			PT_double,"heat_cool_gain[Btu/h]",PADDR(load.heatgain),PT_DESCRIPTION,"system heat gains(losses)",
@@ -905,8 +906,6 @@ int house_e::init(OBJECT *parent)
 
 	if (envelope_UA==0)			envelope_UA = floor_area*(1/Rroof+1/Rfloor) + gross_wall_area*((1-window_wall_ratio-door_wall_ratio)/Rwall + window_wall_ratio/Rwindows + door_wall_ratio/Rdoors);
 
-	if (airchange_per_hour==0)	airchange_per_hour = gl_random_triangle(4,6);
-
 	// initalize/set system model parameters
     if (COP_coeff==0)			COP_coeff = gl_random_uniform(0.9,1.1);	// coefficient of cops [scalar]
 	if (heating_setpoint==0)	heating_setpoint = gl_random_triangle(68,72);
@@ -952,6 +951,9 @@ int house_e::init(OBJECT *parent)
 	if (air_heat_fraction<0.0 || air_heat_fraction>1.0) throw "air heat fraction is not between 0 and 1";
 	Tmaterials = Tair;	
 	
+	if (airchange_per_hour==0)	airchange_per_hour = gl_random_triangle(0.5,1);
+	if (airchange_UA == 0) airchange_UA = airchange_per_hour * volume * air_density * air_heat_capacity;
+
 	// calculate thermal constants
 #define Ca (air_thermal_mass)
 #define Tout (outside_temperature)
@@ -971,7 +973,7 @@ int house_e::init(OBJECT *parent)
 
 	a = Cm*Ca/Hm;
 	b = Cm*(Ua+Hm)/Hm+Ca;
-	c = Ua;
+	c = Ua + airchange_UA;
 	c1 = -(Ua + Hm)/Ca;
 	c2 = Hm/Ca;
 	double rr = sqrt(b*b-4*a*c)/(2*a);
@@ -1092,7 +1094,7 @@ void house_e::update_model(double dt)
 	Qa = Qh + air_heat_fraction*(Qi + Qs);
 	Qm = (1-air_heat_fraction)*(Qi + Qs);
 
-	 d = Qa + Qm + Ua*Tout;
+	 d = Qa + Qm + (Ua+airchange_UA)*Tout;
 	Teq = d/c;
 
 	/* compute next initial condition */
@@ -1222,7 +1224,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 			const double e1 = k1*exp(r1*dt);
 			const double e2 = k2*exp(r2*dt);
 			Tair = e1 + e2 + Teq;
-			Tmaterials = A3*e1 + A4*e2 + Qm/Hm + (Qm+Qa)/Ua + Tout;
+			Tmaterials = A3*e1 + A4*e2 + Qm/Hm + (Qm+Qa)/(Ua+airchange_UA) + Tout;
 		}
 	}
 
