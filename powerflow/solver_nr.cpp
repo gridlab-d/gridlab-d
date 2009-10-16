@@ -106,7 +106,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Miscellaneous index variable
 	unsigned int indexer, tempa, tempb, jindexer, kindexer;
 	char jindex, kindex;
-	unsigned char temp_index, temp_index_b;
+	char temp_index, temp_index_b;
 	unsigned int temp_index_c;
 
 	//Working matrix for admittance collapsing/determinations
