@@ -29,6 +29,7 @@ static struct s_varmap {
 	void *addr;
 	PROPERTYACCESS access;
 	KEYWORD *keys;
+	void (*callback)(char *name);
 } map[] = {
 	/** @todo make this list the authorative list and retire the global_* list (ticket #25) */
 	{"version.major", PT_int32, &global_version_major, PA_REFERENCE},
@@ -67,7 +68,7 @@ static struct s_varmap {
 	{"strictnames", PT_bool, &global_strictnames, PA_REFERENCE},
 	{"website", PT_char1024, &global_urlbase, PA_REFERENCE}, /** @todo deprecate use of 'website' */
 	{"urlbase", PT_char1024, &global_urlbase, PA_REFERENCE},
-	{"randomseed", PT_int32, &global_randomseed, PA_REFERENCE},
+	{"randomseed", PT_int32, &global_randomseed, PA_REFERENCE,NULL,(void(*)(char*))random_init},
 	{"include", PT_char1024, &global_include, PA_REFERENCE},
 	{"trace", PT_char1024, &global_trace, PA_REFERENCE},
 	{"gdb_window", PT_int32, &global_gdb_window, PA_REFERENCE},
@@ -107,6 +108,7 @@ STATUS global_init(void)
 			*/
 		} else {
 			var->prop->keywords = p->keys;
+			var->callback = p->callback;
 		}
 	}
 	return SUCCESS;
@@ -174,6 +176,7 @@ GLOBALVAR *global_create(char *name, ...){
 
 	/* allocate the global var definition */
 	var = (GLOBALVAR *)malloc(sizeof(GLOBALVAR));
+	memset(var,0,sizeof(GLOBALVAR));
 	
 	if(var == NULL){
 		errno = ENOMEM;
@@ -372,6 +375,9 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 			return FAILED;
 //			var->prop->addr = "";
 		}
+		else if (var->callback) 
+			var->callback(var->name);
+
 		return SUCCESS;
 	}
 	else

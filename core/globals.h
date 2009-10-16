@@ -34,6 +34,7 @@ typedef struct s_globalvar {
 	PROPERTY *prop;
 	struct s_globalvar *next;
 	unsigned long flags;
+	void (*callback)(char *); // this function will be called whenever the globalvar is set
 } GLOBALVAR;
 
 STATUS global_init(void);
