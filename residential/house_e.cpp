@@ -560,6 +560,9 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"envelope_UA[Btu/degF.h]",PADDR(envelope_UA),PT_DESCRIPTION,"overall UA of the home's envelope",
 			PT_double,"window_wall_ratio",PADDR(window_wall_ratio),PT_DESCRIPTION,"ratio of window area to wall area",
 			PT_double,"door_wall_ratio",PADDR(door_wall_ratio),PT_DESCRIPTION,"ratio of door area to wall area",
+			PT_double,"exterior_wall_fraction",PADDR(exterior_wall_fraction),PT_DESCRIPTION,"ratio of exterior wall ratio to wall area",
+			PT_double,"interior_exterior_wall_ratio",PADDR(interior_exterior_wall_ratio),PT_DESCRIPTION,"ratio of interior to exterior walls",
+			PT_double,"external_ceiling_fraction",PADDR(external_ceiling_fraction),PT_DESCRIPTION,"ratio of external ceiling sf to floor area",
 			PT_double,"window_shading",PADDR(glazing_shgc),PT_DESCRIPTION,"shading coefficient of windows",
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),PT_DESCRIPTION,"number of air-changes per hour",
 			PT_double,"airchange_UA[Btu/degF.h]",PADDR(airchange_UA),PT_DESCRIPTION,"additional UA due to air infiltration",
@@ -570,13 +573,13 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),PT_DESCRIPTION,"deadband of thermostat control",
 			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),PT_DESCRIPTION,"thermostat heating setpoint",
 			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),PT_DESCRIPTION,"thermostat cooling setpoint",
-			PT_double, "design_heating_capacity[Btu/h]",PADDR(design_heating_capacity),PT_DESCRIPTION,"system heating capacity",
+			PT_double,"design_heating_capacity[Btu/h]",PADDR(design_heating_capacity),PT_DESCRIPTION,"system heating capacity",
 			PT_double,"design_cooling_capacity[Btu/h]",PADDR(design_cooling_capacity),PT_DESCRIPTION,"system cooling capacity",
-			PT_double, "cooling_design_temperature[degF]", PADDR(cooling_design_temperature),PT_DESCRIPTION,"system cooling design temperature",
-			PT_double, "heating_design_temperature[degF]", PADDR(heating_design_temperature),PT_DESCRIPTION,"system heating design temperature",
-			PT_double, "design_peak_solar[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design solar load",
-			PT_double, "design_internal_gains[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design internal gains",
-			PT_double, "air_heat_fraction[pu]", PADDR(air_heat_fraction), PT_DESCRIPTION, "fraction of heat gain/loss that goes to air (as opposed to mass)",
+			PT_double,"cooling_design_temperature[degF]", PADDR(cooling_design_temperature),PT_DESCRIPTION,"system cooling design temperature",
+			PT_double,"heating_design_temperature[degF]", PADDR(heating_design_temperature),PT_DESCRIPTION,"system heating design temperature",
+			PT_double,"design_peak_solar[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design solar load",
+			PT_double,"design_internal_gains[W/sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design internal gains",
+			PT_double,"air_heat_fraction[pu]", PADDR(air_heat_fraction), PT_DESCRIPTION, "fraction of heat gain/loss that goes to air (as opposed to mass)",
 
 			PT_double,"heating_demand",PADDR(heating_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the heating system",
 			PT_double,"cooling_demand",PADDR(cooling_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the cooling system",
@@ -592,6 +595,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"air_mass[lb]",PADDR(air_mass), PT_DESCRIPTION,"air mass",
 			PT_double,"air_heat_capacity[Btu/degF]", PADDR(air_thermal_mass), PT_DESCRIPTION,"air thermal mass",
 			PT_double,"latent_load_fraction[pu]", PADDR(latent_load_fraction), PT_DESCRIPTION,"fractional increase in cooling load due to latent heat",
+			PT_double,"total_thermal_mass_per_floor_area[Btu/degF.sf]",PADDR(total_thermal_mass_per_floor_area),
+			PT_double,"interior_surface_heat_transfer_coeff[Btu/h.degF.sf]",PADDR(interior_surface_heat_transfer_coeff),
 			PT_set,"system_type",PADDR(system_type),PT_DESCRIPTION,"heating/cooling system type/options",
 				PT_KEYWORD, "GAS",	(set)ST_GAS,
 				PT_KEYWORD, "AIRCONDITIONING", (set)ST_AC,
@@ -684,7 +689,7 @@ int house_e::create()
 	load.impedance_fraction = 0.2;
 	load.current_fraction = 0.0;
 	load.power_factor = 1.0;
-	design_internal_gain_density = gl_random_triangle(4,6);
+	design_internal_gain_density = 0.625;//gl_random_triangle(4,6);
 
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
@@ -887,30 +892,48 @@ int house_e::init(OBJECT *parent)
 	load.power = complex(0,0,J);
 
 	// Set defaults for published variables nor provided by model definition
-	if (heating_COP==0.0)		heating_COP = gl_random_triangle(1,2);
-	if (cooling_COP==0.0)		cooling_COP = gl_random_triangle(2,4);
+	if (heating_COP==0.0)		heating_COP = 2;//gl_random_triangle(1,2);
+	if (cooling_COP==0.0)		cooling_COP = 2;//gl_random_triangle(2,4);
 
-	if (aspect_ratio==0.0)		aspect_ratio = gl_random_triangle(1,2);
+	if (aspect_ratio==0.0)		aspect_ratio = 1.5;//gl_random_triangle(1,2);
 	if (floor_area==0)			floor_area = gl_random_triangle(1500,2500);
-	if (ceiling_height==0)		ceiling_height = gl_random_triangle(7,9);
-	if (gross_wall_area==0)		gross_wall_area = 4.0 * 2.0 * (aspect_ratio + 1.0) * ceiling_height * sqrt(floor_area/aspect_ratio);
-	if (window_wall_ratio==0)	window_wall_ratio = 0.15;
+	if (ceiling_height==0)		ceiling_height = 8;//gl_random_triangle(7,9);
+	if (gross_wall_area==0)		gross_wall_area = 2.0 * (aspect_ratio + 1.0) * ceiling_height * sqrt(floor_area/aspect_ratio);
+	if (window_wall_ratio==0)	window_wall_ratio = 0.07;
 	if (door_wall_ratio==0)		door_wall_ratio = 0.05;
+	if (interior_exterior_wall_ratio == 0) interior_exterior_wall_ratio = 1.5; //Based partions for six rooms per floor
+	if (exterior_wall_fraction==0) exterior_wall_fraction = 1;
+	if (external_ceiling_fraction==0) external_ceiling_fraction = 1;
 	
 
-	if (Rroof==0)				Rroof = gl_random_triangle(50,70);
-	if (Rwall==0)				Rwall = gl_random_triangle(15,25);
-	if (Rfloor==0)				Rfloor = gl_random_triangle(100,150);
-	if (Rwindows==0)			Rwindows = gl_random_triangle(2,4);
-	if (Rdoors==0)				Rdoors = gl_random_triangle(1,3);
+	if (Rroof==0)				Rroof = 30;//gl_random_triangle(50,70);
+	if (Rwall==0)				Rwall = 19;//gl_random_triangle(15,25);
+	if (Rfloor==0)				Rfloor = 22;//gl_random_triangle(100,150);
+	if (Rwindows==0)			Rwindows = 2;//gl_random_triangle(2,4);
+	if (Rdoors==0)				Rdoors = 5;//gl_random_triangle(1,3);
+	
+	air_density = 0.0735;			// density of air [lb/cf]
+	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
 
-	if (envelope_UA==0)			envelope_UA = floor_area*(1/Rroof+1/Rfloor) + gross_wall_area*((1-window_wall_ratio-door_wall_ratio)/Rwall + window_wall_ratio/Rwindows + door_wall_ratio/Rdoors);
+	//house_e properties for HVAC
+	if (volume==0) volume = ceiling_height*floor_area;									// volume of air [cf]
+	if (air_mass==0) air_mass = air_density*volume;							// mass of air [lb]
+	if (air_thermal_mass==0) air_thermal_mass = 3*air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]  //*3 multiplier is to reflect that the air mass includes surface effects from the mass as well.  
+	if (air_heat_fraction==0) air_heat_fraction=0.5;
+	if (air_heat_fraction<0.0 || air_heat_fraction>1.0) throw "air heat fraction is not between 0 and 1";
+	if (total_thermal_mass_per_floor_area == 0) total_thermal_mass_per_floor_area = 2;
+	if (interior_surface_heat_transfer_coeff == 0) interior_surface_heat_transfer_coeff = 1;
+
+	if (airchange_per_hour==0)	airchange_per_hour = 0.5;//gl_random_triangle(0.5,1);
+	if (airchange_UA == 0) airchange_UA = airchange_per_hour * volume * air_density * air_heat_capacity;
+
+	if (envelope_UA==0)	envelope_UA = floor_area*(1/Rroof+1/Rfloor) + exterior_wall_fraction*gross_wall_area*((1-window_wall_ratio-door_wall_ratio)/Rwall + window_wall_ratio/Rwindows + door_wall_ratio/Rdoors);
 
 	// initalize/set system model parameters
     if (COP_coeff==0)			COP_coeff = gl_random_uniform(0.9,1.1);	// coefficient of cops [scalar]
-	if (heating_setpoint==0)	heating_setpoint = gl_random_triangle(68,72);
-	if (cooling_setpoint==0)	cooling_setpoint = gl_random_triangle(75,79);
-	if (thermostat_deadband==0)	thermostat_deadband = gl_random_triangle(2,3);
+	if (heating_setpoint==0)	heating_setpoint = 70;//gl_random_triangle(68,72);
+	if (cooling_setpoint==0)	cooling_setpoint = 75;//gl_random_triangle(75,79);
+	if (thermostat_deadband==0)	thermostat_deadband = 2;//gl_random_triangle(2,3);
 	if (Tair==0){
 		/* bind limits between 60 and 140 degF */
 		double Thigh = cooling_setpoint+thermostat_deadband/2;
@@ -922,17 +945,14 @@ int house_e::init(OBJECT *parent)
 	if (over_sizing_factor==0)  over_sizing_factor = gl_random_uniform(0.98,1.3);
 	if(cooling_design_temperature == 0)	cooling_design_temperature = 95.0;
 	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * design_internal_gain_density; // ~5 W/sf estimated
-	if (latent_load_fraction==0) latent_load_fraction = 0.2;
-	if (design_cooling_capacity==0)	design_cooling_capacity = (1+latent_load_fraction) * envelope_UA  * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (1-glazing_shgc)) + design_internal_gains;
-	if (design_heating_capacity==0)	design_heating_capacity = envelope_UA * (heating_setpoint - heating_design_temperature);
+	if (latent_load_fraction==0) latent_load_fraction = 0.0;
+	if (design_cooling_capacity==0)	design_cooling_capacity = (1+latent_load_fraction) * (envelope_UA + airchange_UA) * (cooling_design_temperature - cooling_setpoint) + 3.412*(design_peak_solar * gross_wall_area * window_wall_ratio * (1-glazing_shgc)) + design_internal_gains;
+	if (design_heating_capacity==0)	design_heating_capacity = (envelope_UA + airchange_UA) * (heating_setpoint - heating_design_temperature);
     if (system_mode==SM_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
 
 
-    air_density = 0.0735;			// density of air [lb/cf]
-	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
-
-	if (house_content_thermal_mass==0) house_content_thermal_mass = gl_random_triangle(4,6)*floor_area;		// thermal mass of house_e [BTU/F]
-    if (house_content_heat_transfer_coeff==0) house_content_heat_transfer_coeff = gl_random_uniform(0.5,1.0)*floor_area;	// heat transfer coefficient of house_e contents [BTU/hr.F]
+	if (house_content_thermal_mass==0) house_content_thermal_mass = total_thermal_mass_per_floor_area*floor_area;		// thermal mass of house_e [BTU/F]
+    if (house_content_heat_transfer_coeff==0) house_content_heat_transfer_coeff = interior_surface_heat_transfer_coeff*( gross_wall_area*(1-window_wall_ratio-door_wall_ratio) / exterior_wall_fraction + gross_wall_area*interior_exterior_wall_ratio + floor_area / external_ceiling_fraction);	// heat transfer coefficient of house_e contents [BTU/hr.F]
 
 	if(Tair == 0){
 		if (system_mode==SM_OFF)
@@ -943,16 +963,10 @@ int house_e::init(OBJECT *parent)
 			Tair = gl_random_uniform(cooling_setpoint-thermostat_deadband/2,cooling_setpoint+thermostat_deadband/2);
 	}
 
-	//house_e properties for HVAC
-	if (volume==0) volume = ceiling_height*floor_area;									// volume of air [cf]
-	if (air_mass==0) air_mass = air_density*volume;							// mass of air [lb]
-	if (air_thermal_mass==0) air_thermal_mass = air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]  //*5 multiplier is to reflect that the air mass includes surface effects from the mass as well.  
-	if (air_heat_fraction==0) air_heat_fraction=0.5;
-	if (air_heat_fraction<0.0 || air_heat_fraction>1.0) throw "air heat fraction is not between 0 and 1";
+
 	Tmaterials = Tair;	
 	
-	if (airchange_per_hour==0)	airchange_per_hour = gl_random_triangle(0.5,1);
-	if (airchange_UA == 0) airchange_UA = airchange_per_hour * volume * air_density * air_heat_capacity;
+
 
 	// calculate thermal constants
 #define Ca (air_thermal_mass)
