@@ -1,0 +1,33 @@
+; $Id: tzinfo.txt 683 2008-06-18 20:16:29Z d3g637 $
+; Copyright (C) Battelle Memorial Institute, 2007
+; This file is distributed under the same terms as GridLAB-D
+; 
+; Entries in this file follow the Posix standard for TZ
+; The years specify which TZ rules go into effect that year
+;
+; IMPORTANT NOTE: year sections must be in chronological order
+;
+
+EST5 ; Eastern no DST
+CST6 ; Central no DST
+MST7 ; Mountain no DST
+PST8 ; Pacific no DST
+
+[1970] ; Rules as of 1967
+EST+5EDT,M4.5.0/02:00,M10.5.0/02:00 ; Eastern, DST last Sun/Apr to last Sun/Oct
+CST+6CDT,M4.5.0/02:00,M10.5.0/02:00 ; Central, DST last Sun/Apr to last Sun/Oct
+MST+7MDT,M4.5.0/02:00,M10.5.0/02:00 ; Mountain, DST last Sun/Apr to last Sun/Oct
+PST+8PDT,M4.5.0/02:00,M10.5.0/02:00 ; Pacific, DST last Sun/Apr to last Sun/Oct
+
+[1986] ; Rules as of 1986
+EST+5EDT,M4.1.0/02:00,M10.5.0/02:00 ; Eastern, DST first Sun/Apr to last Sun/Oct
+CST+6CDT,M4.1.0/02:00,M10.5.0/02:00 ; Central, DST first Sun/Apr to last Sun/Oct
+MST+7MDT,M4.1.0/02:00,M10.5.0/02:00 ; Mountain, DST first Sun/Apr to last Sun/Oct
+PST+8PDT,M4.1.0/02:00,M10.5.0/02:00 ; Pacific, DST first Sun/Apr to last Sun/Oct
+
+[2007] ; Rules as of 2007
+EST+5EDT,M3.2.0/02:00,M11.1.0/02:00 ; Eastern, DST second Sun/Mar to first Sun/Nov
+CST+6CDT,M3.2.0/02:00,M11.1.0/02:00 ; Central, DST second Sun/Mar to first Sun/Nov
+MST+7MDT,M3.2.0/02:00,M11.1.0/02:00 ; Mountain, DST second Sun/Mar to first Sun/Nov
+PST+8PDT,M3.2.0/02:00,M11.1.0/02:00 ; Pacific, DST second Sun/Mar to first Sun/Nov
+

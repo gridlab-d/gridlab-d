@@ -1,0 +1,646 @@
+// Support file for the D.O.E. Modern Grid Use Test Cases
+//   As this is a support file, it will not run on its own but will be
+//   "included" into a larger system. This forms the transmission backbone.
+
+object node {
+     name trans_node_1;
+     phases ABCN;
+     bustype SWING;
+     nominal_voltage 138000.00;
+}
+
+object node {
+     name trans_node_2;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object node {
+     name trans_node_3;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object node {
+     name trans_node_4;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object node {
+     name trans_node_5;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object node {
+     name trans_node_6;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line_conductor {
+     name "Earth";
+     resistance 100Ohm/mile;
+     geometric_mean_radius 100ft;
+}
+
+object overhead_line_conductor {
+     name "ACSR_477_MCM_30/7";
+     resistance 0.2100Ohm/mile;
+     geometric_mean_radius 0.8830in;
+     rating.summer.continuous 666.0;
+}
+
+object line_spacing {
+     name spacing_1;
+     distance_AB 20.6667ft;
+     distance_BC 20.6667ft;
+     distance_AC 41.3333ft;
+     distance_AN 75.0000ft;
+     distance_BN 67.0000ft;
+     distance_CN 59.0000ft;
+}
+
+object line_spacing {
+     name spacing_2;
+     distance_AB 20.6667ft;
+     distance_BC 41.3333ft;
+     distance_AC 20.6667ft;
+     distance_AN 67.0000ft;
+     distance_BN 59.0000ft;
+     distance_CN 75.0000ft;
+}
+
+object line_spacing {
+     name spacing_3;
+     distance_AB 41.3333ft;
+     distance_BC 20.6667ft;
+     distance_AC 20.6667ft;
+     distance_AN 59.0000ft;
+     distance_BN 75.0000ft;
+     distance_CN 67.0000ft;
+}
+
+object line_configuration {
+     name line_configuration_1;
+     conductor_A "ACSR_477_MCM_30/7";
+     conductor_B "ACSR_477_MCM_30/7";
+     conductor_C "ACSR_477_MCM_30/7";
+     conductor_N "Earth";
+     spacing spacing_1;
+}
+
+object line_configuration {
+     name line_configuration_2;
+     conductor_A "ACSR_477_MCM_30/7";
+     conductor_B "ACSR_477_MCM_30/7";
+     conductor_C "ACSR_477_MCM_30/7";
+     conductor_N "Earth";
+     spacing spacing_2;
+}
+
+object line_configuration {
+     name line_configuration_3;
+     conductor_A "ACSR_477_MCM_30/7";
+     conductor_B "ACSR_477_MCM_30/7";
+     conductor_C "ACSR_477_MCM_30/7";
+     conductor_N "Earth";
+     spacing spacing_3;
+}
+
+//Intermediate transposed transmission lines between
+//  trans_node_1 and trans_node_2
+
+object overhead_line {
+     name inter_line_trans_node_1_to_trans_node_2_1;
+     phases ABCN;
+     from trans_node_1;
+     to inter_node_trans_node_1_to_trans_node_2_1;
+     length 12445.08ft;
+     configuration line_configuration_1;
+     object recorder {
+          file line_trans_node_1_to_trans_node_2_at_from_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_1_to_trans_node_2_1;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_1_to_trans_node_2_2;
+     phases ABCN;
+     from inter_node_trans_node_1_to_trans_node_2_1;
+     to inter_node_trans_node_1_to_trans_node_2_2;
+     length 12445.08ft;
+     configuration line_configuration_2;
+     object recorder {
+          file line_trans_node_1_to_trans_node_2_at_inter_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_1_to_trans_node_2_2;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_1_to_trans_node_2_3;
+     phases ABCN;
+     from inter_node_trans_node_1_to_trans_node_2_2;
+     to trans_node_2;
+     length 12445.08ft;
+     configuration line_configuration_3;
+     object recorder {
+          file line_trans_node_1_to_trans_node_2_at_to_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+//Intermediate transposed transmission lines between
+//  trans_node_1 and trans_node_6
+
+object overhead_line {
+     name inter_line_trans_node_1_to_trans_node_6_1;
+     phases ABCN;
+     from trans_node_1;
+     to inter_node_trans_node_1_to_trans_node_6_1;
+     length 12445.08ft;
+     configuration line_configuration_1;
+     object recorder {
+          file line_trans_node_1_to_trans_node_6_at_from_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_1_to_trans_node_6_1;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_1_to_trans_node_6_2;
+     phases ABCN;
+     from inter_node_trans_node_1_to_trans_node_6_1;
+     to inter_node_trans_node_1_to_trans_node_6_2;
+     length 12445.08ft;
+     configuration line_configuration_2;
+     object recorder {
+          file line_trans_node_1_to_trans_node_6_at_inter_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_1_to_trans_node_6_2;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_1_to_trans_node_6_3;
+     phases ABCN;
+     from inter_node_trans_node_1_to_trans_node_6_2;
+     to trans_node_6;
+     length 12445.08ft;
+     configuration line_configuration_3;
+     object recorder {
+          file line_trans_node_1_to_trans_node_6_at_to_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+//Intermediate transposed transmission lines between
+//  trans_node_2 and trans_node_3
+
+object overhead_line {
+     name inter_line_trans_node_2_to_trans_node_3_1;
+     phases ABCN;
+     from trans_node_2;
+     to inter_node_trans_node_2_to_trans_node_3_1;
+     length 17600.00ft;
+     configuration line_configuration_1;
+     object recorder {
+          file line_trans_node_2_to_trans_node_3_at_from_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_2_to_trans_node_3_1;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_2_to_trans_node_3_2;
+     phases ABCN;
+     from inter_node_trans_node_2_to_trans_node_3_1;
+     to inter_node_trans_node_2_to_trans_node_3_2;
+     length 17600.00ft;
+     configuration line_configuration_2;
+     object recorder {
+          file line_trans_node_2_to_trans_node_3_at_inter_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_2_to_trans_node_3_2;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_2_to_trans_node_3_3;
+     phases ABCN;
+     from inter_node_trans_node_2_to_trans_node_3_2;
+     to trans_node_3;
+     length 17600.00ft;
+     configuration line_configuration_3;
+     object recorder {
+          file line_trans_node_2_to_trans_node_3_at_to_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+//Intermediate transposed transmission lines between
+//  trans_node_6 and trans_node_5
+
+object overhead_line {
+     name inter_line_trans_node_6_to_trans_node_5_1;
+     phases ABCN;
+     from trans_node_6;
+     to inter_node_trans_node_6_to_trans_node_5_1;
+     length 17600.00ft;
+     configuration line_configuration_1;
+     object recorder {
+          file line_trans_node_6_to_trans_node_5_at_from_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_6_to_trans_node_5_1;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_6_to_trans_node_5_2;
+     phases ABCN;
+     from inter_node_trans_node_6_to_trans_node_5_1;
+     to inter_node_trans_node_6_to_trans_node_5_2;
+     length 17600.00ft;
+     configuration line_configuration_2;
+     object recorder {
+          file line_trans_node_6_to_trans_node_5_at_inter_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_6_to_trans_node_5_2;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_6_to_trans_node_5_3;
+     phases ABCN;
+     from inter_node_trans_node_6_to_trans_node_5_2;
+     to trans_node_5;
+     length 17600.00ft;
+     configuration line_configuration_3;
+     object recorder {
+          file line_trans_node_6_to_trans_node_5_at_to_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+//Intermediate transposed transmission lines between
+//  trans_node_5 and trans_node_4
+
+object overhead_line {
+     name inter_line_trans_node_5_to_trans_node_4_1;
+     phases ABCN;
+     from trans_node_5;
+     to inter_node_trans_node_5_to_trans_node_4_1;
+     length 12445.08ft;
+     configuration line_configuration_1;
+     object recorder {
+          file line_trans_node_5_to_trans_node_4_at_from_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_5_to_trans_node_4_1;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_5_to_trans_node_4_2;
+     phases ABCN;
+     from inter_node_trans_node_5_to_trans_node_4_1;
+     to inter_node_trans_node_5_to_trans_node_4_2;
+     length 12445.08ft;
+     configuration line_configuration_2;
+     object recorder {
+          file line_trans_node_5_to_trans_node_4_at_inter_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_5_to_trans_node_4_2;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_5_to_trans_node_4_3;
+     phases ABCN;
+     from inter_node_trans_node_5_to_trans_node_4_2;
+     to trans_node_4;
+     length 12445.08ft;
+     configuration line_configuration_3;
+     object recorder {
+          file line_trans_node_5_to_trans_node_4_at_to_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+//Intermediate transposed transmission lines between
+//  trans_node_3 and trans_node_4
+
+object overhead_line {
+     name inter_line_trans_node_3_to_trans_node_4_1;
+     phases ABCN;
+     from trans_node_3;
+     to inter_node_trans_node_3_to_trans_node_4_1;
+     length 12445.08ft;
+     configuration line_configuration_1;
+     object recorder {
+          file line_trans_node_3_to_trans_node_4_at_from_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_3_to_trans_node_4_1;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_3_to_trans_node_4_2;
+     phases ABCN;
+     from inter_node_trans_node_3_to_trans_node_4_1;
+     to inter_node_trans_node_3_to_trans_node_4_2;
+     length 12445.08ft;
+     configuration line_configuration_2;
+     object recorder {
+          file line_trans_node_3_to_trans_node_4_at_inter_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_3_to_trans_node_4_2;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_3_to_trans_node_4_3;
+     phases ABCN;
+     from inter_node_trans_node_3_to_trans_node_4_2;
+     to trans_node_4;
+     length 12445.08ft;
+     configuration line_configuration_3;
+     object recorder {
+          file line_trans_node_3_to_trans_node_4_at_to_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+//Intermediate transposed transmission lines between
+//  trans_node_2 and trans_node_5
+
+object overhead_line {
+     name inter_line_trans_node_2_to_trans_node_5_1;
+     phases ABCN;
+     from trans_node_2;
+     to inter_node_trans_node_2_to_trans_node_5_1;
+     length 24890.16ft;
+     configuration line_configuration_1;
+     object recorder {
+          file line_trans_node_2_to_trans_node_5_at_from_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_2_to_trans_node_5_1;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_2_to_trans_node_5_2;
+     phases ABCN;
+     from inter_node_trans_node_2_to_trans_node_5_1;
+     to inter_node_trans_node_2_to_trans_node_5_2;
+     length 24890.16ft;
+     configuration line_configuration_2;
+     object recorder {
+          file line_trans_node_2_to_trans_node_5_at_inter_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object node {
+     name inter_node_trans_node_2_to_trans_node_5_2;
+     phases ABCN;
+     nominal_voltage 138000.00;
+}
+
+object overhead_line {
+     name inter_line_trans_node_2_to_trans_node_5_3;
+     phases ABCN;
+     from inter_node_trans_node_2_to_trans_node_5_2;
+     to trans_node_5;
+     length 24890.16ft;
+     configuration line_configuration_3;
+     object recorder {
+          file line_trans_node_2_to_trans_node_5_at_to_power.csv;
+          limit 2880;
+          interval 60;
+          property power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag;
+     };
+
+}
+
+object transformer_configuration {
+     name substation_transformer;
+     connect_type DELTA_GWYE;
+     install_type PADMOUNT;
+     primary_voltage 138000.00;
+     secondary_voltage 7200;
+     resistance 0.00013;
+     reactance 0.00067;
+     power_rating 10500;
+     powerA_rating 3500;
+     powerB_rating 3500;
+     powerC_rating 3500;
+}
+
+object transformer {
+     name substation_trans_node_2_to_feeder_1;
+     from trans_node_2;
+     to feeder_1_R3-12-47-1_node_634;
+     phases ABCD;
+     configuration substation_transformer;
+}
+
+object transformer {
+     name substation_trans_node_2_to_feeder_2;
+     from trans_node_2;
+     to feeder_2_R3-12-47-1_node_634;
+     phases ABCD;
+     configuration substation_transformer;
+}
+
+object transformer {
+     name substation_trans_node_3_to_feeder_3;
+     from trans_node_3;
+     to feeder_3_R3-12-47-1_node_634;
+     phases ABCD;
+     configuration substation_transformer;
+}
+
+object transformer {
+     name substation_trans_node_3_to_feeder_4;
+     from trans_node_3;
+     to feeder_4_R3-12-47-1_node_634;
+     phases ABCD;
+     configuration substation_transformer;
+}
+
+object transformer {
+     name substation_trans_node_4_to_feeder_5;
+     from trans_node_4;
+     to feeder_5_R3-12-47-1_node_634;
+     phases ABCD;
+     configuration substation_transformer;
+}
+
+object transformer {
+     name substation_trans_node_4_to_feeder_6;
+     from trans_node_4;
+     to feeder_6_R3-12-47-1_node_634;
+     phases ABCD;
+     configuration substation_transformer;
+}
+
+object transformer {
+     name substation_trans_node_5_to_feeder_7;
+     from trans_node_5;
+     to feeder_7_R3-12-47-1_node_634;
+     phases ABCD;
+     configuration substation_transformer;
+}
+
+object transformer {
+     name substation_trans_node_5_to_feeder_8;
+     from trans_node_5;
+     to feeder_8_R3-12-47-1_node_634;
+     phases ABCD;
+     configuration substation_transformer;
+}
+
+object transformer {
+     name substation_trans_node_6_to_feeder_9;
+     from trans_node_6;
+     to feeder_9_R3-12-47-1_node_634;
+     phases ABCD;
+     configuration substation_transformer;
+}
+
+object transformer {
+     name substation_trans_node_6_to_feeder_10;
+     from trans_node_6;
+     to feeder_10_R3-12-47-1_node_634;
+     phases ABCD;
+     configuration substation_transformer;
+}
+
