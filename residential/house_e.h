@@ -54,37 +54,37 @@ public:
 	PANEL panel; ///< main house_e panel
 	/// Get voltage on a circuit
 	/// @return voltage (or 0 if breaker is open)
-	inline complex V(CIRCUIT *c) ///< pointer to circuit 
+	inline complex V(CIRCUIT *c)			///< pointer to circuit 
 	{ return c->status==BRK_CLOSED ? *(c->pV) : complex(0,0);};
-	complex *pCircuit_V; ///< pointer to the three voltages on three lines
-	complex *pLine_I; ///< pointer to the three current on three lines
-	complex *pShunt;	///< pointer to shunt value on triplex parent
-	complex *pPower;	///< pointer to power value on triplex parent
-	bool *pHouseConn;	///< Pointer to house_present variable on triplex parent
-	IMPLICITENDUSE *implicit_enduse_list; ///< implicit enduses
-	static set implicit_enduses_active; ///< implicit enduses that are to be activated
+	complex *pCircuit_V;					///< pointer to the three voltages on three lines
+	complex *pLine_I;						///< pointer to the three current on three lines
+	complex *pShunt;						///< pointer to shunt value on triplex parent
+	complex *pPower;						///< pointer to power value on triplex parent
+	bool *pHouseConn;						///< Pointer to house_present variable on triplex parent
+	IMPLICITENDUSE *implicit_enduse_list;	///< implicit enduses
+	static set implicit_enduses_active;		///< implicit enduses that are to be activated
 public:
 	// building design variables
-	double floor_area;				///< house_e floor area (ft^2)
-	double envelope_UA;				///< envelope UA (BTU.sq.ft/hr.ft2)
-	double glazing_shgc;			///< glazing SHGC
-	double window_wall_ratio;		///< window-wall ratio
-	double door_wall_ratio;			///< door-wall ratio
-	double gross_wall_area;			///< gross wall area (sq.ft)
-	double ceiling_height;			///< ceiling height
-	double interior_exterior_wall_ratio; ///< ratio of internal to external wall area
-	double exterior_wall_fraction;	///< exterior-wall ratio
-	double aspect_ratio;			///< building footprint aspect ratio
-	double solar_aperture[N_SOLAR_SURFACES];		///< Future: Solar aperture(WWR) by orientation
-	double house_content_heat_transfer_coeff; ///< mass UA
-	double COP_coeff;				///< equipment cop coefficient (scalar)
-	double air_density;				///< air density
-	double air_heat_capacity;		///< heat capacity of air
-	double house_content_thermal_mass; ///< house thermal mass (BTU/F)
-	double total_thermal_mass_per_floor_area; ///<Total thermal mass per unit of floor area (Rob's rule of thumb is 2 for wood frame
-	double interior_surface_heat_transfer_coeff; ///< Rob's rule of thumb is 1
-	double external_ceiling_fraction; ///< ratio of external ceiling sf to floor area
-	double air_heat_fraction;		///< fraction of gains that go to air
+	double floor_area;							///< house_e floor area (ft^2)
+	double envelope_UA;							///< envelope UA (BTU.sq.ft/hr.ft2)
+	double glazing_shgc;						///< glazing SHGC
+	double window_wall_ratio;					///< window-wall ratio
+	double door_wall_ratio;						///< door-wall ratio
+	double gross_wall_area;						///< gross wall area (sq.ft)
+	double ceiling_height;						///< ceiling height
+	double interior_exterior_wall_ratio;		///< ratio of internal to external wall area
+	double exterior_wall_fraction;				///< exterior-wall ratio
+	double aspect_ratio;						///< building footprint aspect ratio
+	double solar_aperture[N_SOLAR_SURFACES];	///< Future: Solar aperture(WWR) by orientation
+	double house_content_heat_transfer_coeff;	///< mass UA
+	double COP_coeff;							///< equipment cop coefficient (scalar)
+	double air_density;							///< air density
+	double air_heat_capacity;					///< heat capacity of air
+	double house_content_thermal_mass;			///< house thermal mass (BTU/F)
+	double total_thermal_mass_per_floor_area;	///<Total thermal mass per unit of floor area (Rob's rule of thumb is 2 for wood frame)
+	double interior_surface_heat_transfer_coeff;///< Rob's rule of thumb is 1
+	double external_ceiling_fraction;			///< ratio of external ceiling sf to floor area
+	double air_heat_fraction;					///< fraction of gains that go to air
 
 	// system design variables
 	double thermostat_deadband;		///< thermostat deadband (degF)
@@ -107,7 +107,8 @@ public:
 		ST_AIR	= 0x00000004,	///< flag to indicate central air is used
 		ST_VAR	= 0x00000008,	///< flag to indicate the variable speed system is used
 	} SYSTEMTYPE; ///< flags for system type options
-	set system_type;				///< system type
+	set system_type;///< system type
+		
 
 	// derived/calculated variables
 	double volume;					///< house_e air volume
@@ -126,13 +127,25 @@ public:
 	double Tmaterials;
 	double outside_temperature;
 
+	typedef enum {				///< Thermal integrity level is an "easy" to use
+		TI_VERY_LITTLE  =0,		///< parameter, which gives reasonable defaults
+		TI_LITTLE	    =1,		///< for R-values and air exchange rates to broadly
+		TI_BELOW_NORMAL =2,		///< represent generic types of buildings, ranging
+		TI_NORMAL       =3,		///< from extremely un-insulated to very insulated.
+		TI_ABOVE_NORMAL =4,		///< Advanced user's who wish to specify the characteristics
+		TI_GOOD			=5,		///< of the home should not use this variable.
+		TI_VERY_GOOD	=6,
+		TI_UNKNOWN		=7
+	} THERMAL_INTEGRITY;
+	THERMAL_INTEGRITY thermal_integrity_level;
+
 	typedef enum {	
-		SM_UNKNOWN	=0,			///< unknown mode
-		SM_OFF		=1,			///< off
-		SM_HEAT		=2,			///< heating mode
-		SM_AUX		=3,			///< supplemental heating
-		SM_COOL		=4,			///< cooling mode
-	} SYSTEMMODE;				///< system mode
+		SM_UNKNOWN	=0,				///< unknown mode
+		SM_OFF		=1,				///< off
+		SM_HEAT		=2,				///< heating mode
+		SM_AUX		=3,				///< supplemental heating
+		SM_COOL		=4,				///< cooling mode
+	} SYSTEMMODE;					///< system mode
 	SYSTEMMODE system_mode;			///< system mode at t1
 	double system_rated_power;		///< rated power of the system
 	double system_rated_capacity;	///< rated capacity of the system

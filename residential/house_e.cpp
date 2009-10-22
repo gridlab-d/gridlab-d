@@ -608,6 +608,15 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD,"OFF",SM_OFF,
 				PT_KEYWORD,"COOL",SM_COOL,
 				PT_KEYWORD,"AUX",SM_AUX,
+			PT_enumeration,"thermal_integrity_level",PADDR(thermal_integrity_level),PT_DESCRIPTION,"default envelope UA settings",
+				PT_KEYWORD,"VERY_LITTLE",TI_VERY_LITTLE,
+				PT_KEYWORD,"LITTLE",TI_LITTLE,
+				PT_KEYWORD,"BELOW_NORMAL",TI_BELOW_NORMAL,
+				PT_KEYWORD,"NORMAL",TI_NORMAL,
+				PT_KEYWORD,"ABOVE_NORMAL",TI_ABOVE_NORMAL,
+				PT_KEYWORD,"GOOD",TI_GOOD,
+				PT_KEYWORD,"VERY_GOOD",TI_VERY_GOOD,
+				PT_KEYWORD,"UNKNOWN",TI_UNKNOWN,
 			PT_double, "Rroof[degF.h/Btu]", PADDR(Rroof),PT_DESCRIPTION,"roof R-value",
 			PT_double, "Rwall[degF.h/Btu]", PADDR(Rwall),PT_DESCRIPTION,"wall R-value",
 			PT_double, "Rfloor[degF.h/Btu]", PADDR(Rfloor),PT_DESCRIPTION,"floor R-value",
@@ -690,6 +699,7 @@ int house_e::create()
 	load.current_fraction = 0.0;
 	load.power_factor = 1.0;
 	design_internal_gain_density = 0.625;//gl_random_triangle(4,6);
+	thermal_integrity_level = TI_UNKNOWN;
 
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
@@ -892,6 +902,72 @@ int house_e::init(OBJECT *parent)
 	load.power = complex(0,0,J);
 
 	// Set defaults for published variables nor provided by model definition
+	switch (thermal_integrity_level) {
+		case TI_VERY_LITTLE:
+			Rroof = 11;
+			Rwall = 4;
+			Rfloor = 4;
+			Rdoors = 3;
+			Rwindows = 1/1.27;
+			airchange_per_hour = 1.5;
+			break;
+		case TI_LITTLE:
+			Rroof = 19;
+			Rwall = 11;
+			Rfloor = 4;
+			Rdoors = 3;
+			Rwindows = 1/0.81;
+			airchange_per_hour = 1.5;
+			break;
+		case TI_BELOW_NORMAL:
+			Rroof = 19;
+			Rwall = 11;
+			Rfloor = 11;
+			Rdoors = 3;
+			Rwindows = 1/0.81;
+			airchange_per_hour = 1.0;
+			break;
+		case TI_NORMAL:
+			Rroof = 30;
+			Rwall = 11;
+			Rfloor = 19;
+			Rdoors = 3;
+			Rwindows = 1/0.6;
+			airchange_per_hour = 1.0;
+			break;
+		case TI_ABOVE_NORMAL:
+			Rroof = 30;
+			Rwall = 19;
+			Rfloor = 11;
+			Rdoors = 3;
+			Rwindows = 1/0.6;
+			airchange_per_hour = 1.0;
+			break;
+		case TI_GOOD:
+			Rroof = 30;
+			Rwall = 19;
+			Rfloor = 22;
+			Rdoors = 5;
+			Rwindows = 1/0.47;
+			airchange_per_hour = 0.5;
+			break;
+		case TI_VERY_GOOD:
+			Rroof = 48;
+			Rwall = 22;
+			Rfloor = 30;
+			Rdoors = 11;
+			Rwindows = 1/0.31;
+			airchange_per_hour = 0.5;
+			break;
+		case TI_UNKNOWN:
+			// do nothing - use all of the built-in defaults or user-specified values as thermal integrity wasn't used
+			break;
+		default:
+			// do nothing - use all of the built-in defaults or user-specified values as thermal integrity wasn't used
+			break;
+	}
+
+
 	if (heating_COP==0.0)		heating_COP = 2;//gl_random_triangle(1,2);
 	if (cooling_COP==0.0)		cooling_COP = 2;//gl_random_triangle(2,4);
 
