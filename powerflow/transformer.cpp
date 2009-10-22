@@ -141,19 +141,34 @@ int transformer::init(OBJECT *parent)
 				zt_c = complex(0,0);
 			}
 			
-			A_mat[0][0] = (zc - zt_a) / ( complex(nt_a,0) * (zc + zt_a));
-			A_mat[1][1] = (zc - zt_b) / ( complex(nt_b,0) * (zc + zt_b));
-			A_mat[2][2] = (zc - zt_c) / ( complex(nt_c,0) * (zc + zt_c));
+			if (has_phase(PHASE_A))
+				A_mat[0][0] = (zc - zt_a) / ( complex(nt_a,0) * (zc + zt_a));
+
+			if (has_phase(PHASE_B))
+				A_mat[1][1] = (zc - zt_b) / ( complex(nt_b,0) * (zc + zt_b));
+
+			if (has_phase(PHASE_C))
+				A_mat[2][2] = (zc - zt_c) / ( complex(nt_c,0) * (zc + zt_c));
 
 			if (solver_method==SM_FBS)
 			{
-				b_mat[0][0] = zt_a / A_mat[0][0];
-				b_mat[1][1] = zt_b / A_mat[1][1];
-				b_mat[2][2] = zt_c / A_mat[2][2];
+				if (has_phase(PHASE_A))
+				{
+					b_mat[0][0] = zt_a / A_mat[0][0];
+					d_mat[0][0] = (zt_a + zc) / ( complex(nt_a,0) * zc);
+				}
 
-				d_mat[0][0] = (zt_a + zc) / ( complex(nt_a,0) * zc);
-				d_mat[1][1] = (zt_b + zc) / ( complex(nt_b,0) * zc);
-				d_mat[2][2] = (zt_c + zc) / ( complex(nt_c,0) * zc);
+				if (has_phase(PHASE_B))
+				{
+					b_mat[1][1] = zt_b / A_mat[1][1];
+					d_mat[1][1] = (zt_b + zc) / ( complex(nt_b,0) * zc);
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					b_mat[2][2] = zt_c / A_mat[2][2];
+					d_mat[2][2] = (zt_c + zc) / ( complex(nt_c,0) * zc);
+				}
 			}
 			else if ((solver_method==SM_GS) || (solver_method==SM_NR))
 			{
