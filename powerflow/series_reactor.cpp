@@ -37,15 +37,16 @@ series_reactor::series_reactor(MODULE *mod) : link(mod)
 
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "link",
-			PT_complex, "phase_A_impedance[Ohm]",PADDR(phase_A_impedance),
-			PT_double, "phase_A_resistance[Ohm]",PADDR(phase_A_impedance.Re()),
-			PT_double, "phase_A_reactance[Ohm]",PADDR(phase_A_impedance.Im()),
-			PT_complex, "phase_B_impedance[Ohm]",PADDR(phase_B_impedance),
-			PT_double, "phase_B_resistance[Ohm]",PADDR(phase_B_impedance.Re()),
-			PT_double, "phase_B_reactance[Ohm]",PADDR(phase_B_impedance.Im()),
-			PT_complex, "phase_C_impedance[Ohm]",PADDR(phase_C_impedance),
-			PT_double, "phase_C_resistance[Ohm]",PADDR(phase_C_impedance.Re()),
-			PT_double, "phase_C_reactance[Ohm]",PADDR(phase_C_impedance.Im()),
+			PT_complex, "phase_A_impedance[Ohm]",PADDR(phase_A_impedance),PT_DESCRIPTION,"Series impedance of reactor on phase A",
+			PT_double, "phase_A_resistance[Ohm]",PADDR(phase_A_impedance.Re()),PT_DESCRIPTION,"Resistive portion of phase A's impedance",
+			PT_double, "phase_A_reactance[Ohm]",PADDR(phase_A_impedance.Im()),PT_DESCRIPTION,"Reactive portion of phase A's impedance",
+			PT_complex, "phase_B_impedance[Ohm]",PADDR(phase_B_impedance),PT_DESCRIPTION,"Series impedance of reactor on phase B",
+			PT_double, "phase_B_resistance[Ohm]",PADDR(phase_B_impedance.Re()),PT_DESCRIPTION,"Resistive portion of phase B's impedance",
+			PT_double, "phase_B_reactance[Ohm]",PADDR(phase_B_impedance.Im()),PT_DESCRIPTION,"Reactive portion of phase B's impedance",
+			PT_complex, "phase_C_impedance[Ohm]",PADDR(phase_C_impedance),PT_DESCRIPTION,"Series impedance of reactor on phase C",
+			PT_double, "phase_C_resistance[Ohm]",PADDR(phase_C_impedance.Re()),PT_DESCRIPTION,"Resistive portion of phase C's impedance",
+			PT_double, "phase_C_reactance[Ohm]",PADDR(phase_C_impedance.Im()),PT_DESCRIPTION,"Reactive portion of phase C's impedance",
+			PT_double, "rated_current_limit[A]",PADDR(rated_current_limit),PT_DESCRIPTION,"Rated current limit for the reactor",
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
