@@ -487,9 +487,12 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 			if (pConfig->connect_type == pConfig->WYE_WYE)
 			{	
 				//Update first run flag - special solver during first time solved.
-				if (first_run_flag[0] < 1 ) 
-						first_run_flag[0] += 1;		
-			
+				if (first_run_flag[0] < 1)
+				{
+					first_run_flag[0] += 1;	
+					first_run_flag[1] += 1;
+					first_run_flag[2] += 1;
+				}			
 
 				if (check_voltage[0].Mag() < Vlow)		//raise voltage
 				{	

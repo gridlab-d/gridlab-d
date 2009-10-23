@@ -133,6 +133,19 @@ int regulator_configuration::init(OBJECT *parent)
 			*/
 	}
 
+	if (control_level == BANK)
+	{
+		if (CT_phase == 1 || CT_phase == 2 || CT_phase == 4)
+		{	// It's okay 
+		}
+		else 
+			GL_THROW("There are too many CT_phases specified for a BANK control_level (or it wasn't specified).  Should only be one phase monitored.");
+		if (PT_phase == 1 || PT_phase == 2 || PT_phase == 4)
+		{	// It's okay 
+		}
+		else 
+			GL_THROW("There are too many PT_phases specified for a BANK control_level (or it wasn't specified).  Should only be one phase monitored.");
+	}
 	if (raise_taps <= 0 || lower_taps <= 0)
 		GL_THROW("raise and lower taps must be specified to non-zero numbers");
 		/* TROUBLESHOOT
