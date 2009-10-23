@@ -69,7 +69,7 @@ public:
 	double envelope_UA;							///< envelope UA (BTU.sq.ft/hr.ft2)
 	double glazing_shgc;						///< glazing SHGC
 	double window_wall_ratio;					///< window-wall ratio
-	double door_wall_ratio;						///< door-wall ratio
+	double number_of_doors;						///< door-wall ratio
 	double gross_wall_area;						///< gross wall area (sq.ft)
 	double ceiling_height;						///< ceiling height
 	double interior_exterior_wall_ratio;		///< ratio of internal to external wall area
@@ -77,14 +77,16 @@ public:
 	double aspect_ratio;						///< building footprint aspect ratio
 	double solar_aperture[N_SOLAR_SURFACES];	///< Future: Solar aperture(WWR) by orientation
 	double house_content_heat_transfer_coeff;	///< mass UA
-	double COP_coeff;							///< equipment cop coefficient (scalar)
+	//double COP_coeff;							///< equipment cop coefficient (scalar)
 	double air_density;							///< air density
 	double air_heat_capacity;					///< heat capacity of air
 	double house_content_thermal_mass;			///< house thermal mass (BTU/F)
 	double total_thermal_mass_per_floor_area;	///<Total thermal mass per unit of floor area (Rob's rule of thumb is 2 for wood frame)
 	double interior_surface_heat_transfer_coeff;///< Rob's rule of thumb is 1
-	double external_ceiling_fraction;			///< ratio of external ceiling sf to floor area
+	double exterior_ceiling_fraction;			///< ratio of external ceiling sf to floor area
+	double exterior_floor_fraction;
 	double air_heat_fraction;					///< fraction of gains that go to air
+	double number_of_stories;
 
 	// system design variables
 	double thermostat_deadband;		///< thermostat deadband (degF)
@@ -92,6 +94,8 @@ public:
 	double airchange_UA;			///< additional UA due to air changes per hour
 	double heating_setpoint;		///< heating setpoint (degF)
 	double cooling_setpoint;		///< cooling setpoint (degF)
+	double design_heating_setpoint;	///< design heating setpoint (degF)
+	double design_cooling_setpoint;	///< design cooling setpoint (degF)
 	double design_heating_capacity;	///< space heating capacity (BTUh/sf)
 	double design_cooling_capacity;	///< space cooling capacity (BTUh/sf)
 	double heating_COP;				///< space heating COP
