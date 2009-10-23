@@ -27,6 +27,7 @@
 #include "substation.h"
 #include "pqload.h"
 #include "voltdump.h"
+#include "series_reactor.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -87,6 +88,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new substation(module);
 	new pqload(module);
 	new voltdump(module);
+	new series_reactor(module);
 
 	/* always return the first class registered */
 	return node::oclass;
