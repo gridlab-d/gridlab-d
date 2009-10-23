@@ -1,8 +1,8 @@
 // $Id: IEEE123-Feb27.glm 1182 2009-2-27 d3x289 $
 //	Copyright (C) 2009 Battelle Memorial Institute
 
-#set profiler=1
-#set pauseatexit=1
+//#set profiler=1
+//#set pauseatexit=1
 #set iteration_limit=100000;
 //#include "C:\Documents and Settings\d3x289\Desktop\GridLAB-D\trunk\core\rt\msvc_debugger.glm"
 
