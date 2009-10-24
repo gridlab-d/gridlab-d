@@ -143,7 +143,9 @@ public:
 	double snowdepth; // in
 	struct {
 		double low;
+		double low_day;
 		double high;
+		double high_day;
 		double solar;
 	} record;
 	CLIMATE_INTERPOLATE interpolate;
