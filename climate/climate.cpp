@@ -190,7 +190,9 @@ climate::climate(MODULE *module)
 			PT_double,"wind_dir[deg]", PADDR(wind_dir),
 			PT_double,"wind_gust[mph]", PADDR(wind_gust),
 			PT_double,"record.low[degF]", PADDR(record.low),
+			PT_int32,"record.low_day",PADDR(record.low_day),
 			PT_double,"record.high[degF]", PADDR(record.high),
+			PT_int32,"record.high_day",PADDR(record.high_day),
 			PT_double,"record.solar[W/sf]", PADDR(record.solar),
 			PT_double,"rainfall[in/h]",PADDR(rainfall),
 			PT_double,"snowdepth[in]",PADDR(snowdepth),
@@ -258,7 +260,7 @@ int climate::init(OBJECT *parent)
 		return 0;
 	}
 
-	int month,day, hour;
+	int month, day, hour, year;
 	double dnr,dhr, wspeed,precip,snowdepth;
 	//char cty[50];
 	//char st[3];
@@ -273,6 +275,7 @@ int climate::init(OBJECT *parent)
 	{
 		
 		file.read_data(&dnr,&dhr,&temperature,&humidity,&month,&day,&hour,&wspeed,&precip,&snowdepth);
+	
 		int doy = sa->day_of_yr(month,day);
 		int hoy = (doy - 1) * 24 + (hour-1); 
 		if (hoy>=0 && hoy<8760){
@@ -313,8 +316,16 @@ int climate::init(OBJECT *parent)
 
 				/* track records */
 				if (sol_rad>record.solar || record.solar==0) record.solar = sol_rad;
-				if (tmy[hoy].temp>record.high || record.high==0) record.high = tmy[hoy].temp;
-				if (tmy[hoy].temp<record.low || record.low==0) record.low = tmy[hoy].temp;
+				if (tmy[hoy].temp>record.high || record.high==0)
+				{
+					record.high = tmy[hoy].temp;
+					record.high_day = doy;
+				}			
+				if (tmy[hoy].temp<record.low || record.low==0) 
+				{
+					record.low = tmy[hoy].temp;
+					record.low_day = doy;
+				}
 			}
 			
 		}
@@ -324,6 +335,7 @@ int climate::init(OBJECT *parent)
 		line++;
 	}
 	file.close();
+	
 	return 1;
 }
 
