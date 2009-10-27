@@ -564,7 +564,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"interior_exterior_wall_ratio",PADDR(interior_exterior_wall_ratio),PT_DESCRIPTION,"ratio of interior to exterior walls",
 			PT_double,"exterior_ceiling_fraction",PADDR(exterior_ceiling_fraction),PT_DESCRIPTION,"ratio of external ceiling sf to floor area",
 			PT_double,"exterior_floor_fraction",PADDR(exterior_floor_fraction),PT_DESCRIPTION,"ratio of floor area used in UA calculation",
-			PT_double,"window_shading",PADDR(glazing_shgc),PT_DESCRIPTION,"shading coefficient of windows",
+			PT_double,"window_shading",PADDR(glazing_shgc),PT_DESCRIPTION,"transmission coefficient through window due to glazing",
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),PT_DESCRIPTION,"number of air-changes per hour",
 			PT_double,"airchange_UA[Btu/degF.h]",PADDR(airchange_UA),PT_DESCRIPTION,"additional UA due to air infiltration",
 			PT_double,"internal_gain[Btu/h]",PADDR(total.heatgain),PT_DESCRIPTION,"internal heat gains",
@@ -602,6 +602,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"total_thermal_mass_per_floor_area[Btu/degF.sf]",PADDR(total_thermal_mass_per_floor_area),
 			PT_double,"interior_surface_heat_transfer_coeff[Btu/h.degF.sf]",PADDR(interior_surface_heat_transfer_coeff),
 			PT_double,"number_of_stories",PADDR(number_of_stories),PT_DESCRIPTION,"number of stories within the structure",
+			PT_double,"window_exterior_transmission_coefficient",PADDR(window_exterior_transmission_coefficient),PT_DESCRIPTION,"coefficient for the amount of energy that passes through window",
 
 			PT_set,"system_type",PADDR(system_type),PT_DESCRIPTION,"heating/cooling system type/options",
 				PT_KEYWORD, "GAS",	(set)ST_GAS,
@@ -982,11 +983,12 @@ int house_e::init(OBJECT *parent)
 	if (ceiling_height==0)		ceiling_height = 8;//gl_random_triangle(7,9);
 	if (gross_wall_area==0)		gross_wall_area = 2.0 * number_of_stories * (aspect_ratio + 1.0) * ceiling_height * sqrt(floor_area/aspect_ratio/number_of_stories);
 	if (window_wall_ratio==0)	window_wall_ratio = 0.07;
-	if (number_of_doors==0)		number_of_doors = 2;
+	if (number_of_doors==0)		number_of_doors = 4;
 	if (interior_exterior_wall_ratio == 0) interior_exterior_wall_ratio = 1.5; //Based partions for six rooms per floor
 	if (exterior_wall_fraction==0) exterior_wall_fraction = 1;
 	if (exterior_ceiling_fraction==0) exterior_ceiling_fraction = 1;
 	if (exterior_floor_fraction==0) exterior_floor_fraction = 1;
+	if (window_exterior_transmission_coefficient==0) window_exterior_transmission_coefficient = 0.6; //0.6 represents a window with a screen
 
 	if (Rroof==0)				Rroof = 30;//gl_random_triangle(50,70);
 	if (Rwall==0)				Rwall = 19;//gl_random_triangle(15,25);
@@ -998,9 +1000,9 @@ int house_e::init(OBJECT *parent)
 	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
 
 	//house_e properties for HVAC
-	if (volume==0) volume = ceiling_height*floor_area;									// volume of air [cf]
-	if (air_mass==0) air_mass = air_density*volume;							// mass of air [lb]
-	if (air_thermal_mass==0) air_thermal_mass = 3*air_heat_capacity*air_mass;			// thermal mass of air [BTU/F]  //*3 multiplier is to reflect that the air mass includes surface effects from the mass as well.  
+	if (volume==0) volume = ceiling_height*floor_area;					// volume of air [cf]
+	if (air_mass==0) air_mass = air_density*volume;						// mass of air [lb]
+	if (air_thermal_mass==0) air_thermal_mass = 3*air_heat_capacity*air_mass;	// thermal mass of air [BTU/F]  //*3 multiplier is to reflect that the air mass includes surface effects from the mass as well.  
 	if (air_heat_fraction==0) air_heat_fraction=0.5;
 	if (air_heat_fraction<0.0 || air_heat_fraction>1.0) throw "air heat fraction is not between 0 and 1";
 	if (total_thermal_mass_per_floor_area == 0) total_thermal_mass_per_floor_area = 2;
@@ -1034,14 +1036,24 @@ int house_e::init(OBJECT *parent)
 		Tlow = clip(Tlow, 60, 140);
 		Tair = gl_random_uniform(Tlow, Thigh);	// air temperature [F]
 	}
-	if (over_sizing_factor==0)  over_sizing_factor = 1;
+	if (over_sizing_factor==0)  over_sizing_factor = 0;
 	if (cooling_design_temperature == 0)	cooling_design_temperature = 95.0;
-	if (design_internal_gains==0) design_internal_gains =  3.413 * floor_area * design_internal_gain_density; // ~5 W/sf estimated
+	if (design_internal_gains==0) design_internal_gains =  167.09 * pow(floor_area,0.442); // Numerical estimate of internal gains
 	if (latent_load_fraction==0) latent_load_fraction = 0.3;
-	if (design_cooling_capacity==0)	design_cooling_capacity = over_sizing_factor * (1+latent_load_fraction) * ((envelope_UA + airchange_UA) * (cooling_design_temperature - design_cooling_setpoint) + design_internal_gains + (design_peak_solar * window_area * (1-glazing_shgc)));
-	if (design_heating_capacity==0)	design_heating_capacity = over_sizing_factor * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
-    if (system_mode==SM_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
+	if (design_cooling_capacity==0)	// calculate basic load then round to nearest standard HVAC sizing
+	{	
+		design_cooling_capacity = (1 + over_sizing_factor) * (1+latent_load_fraction) * ((envelope_UA + airchange_UA) * (cooling_design_temperature - design_cooling_setpoint) + design_internal_gains + (design_peak_solar * window_area * glazing_shgc * window_exterior_transmission_coefficient));
+		double round_value = design_cooling_capacity / 12000;
+		design_cooling_capacity = ceil(round_value) * 12000;
+	}
 
+	if (design_heating_capacity==0)	// calculate basic load then round to nearest standard HVAC sizing
+	{
+		design_heating_capacity = (1 + over_sizing_factor) * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
+		double round_value = design_heating_capacity / 10000;
+		design_heating_capacity = ceil(round_value) * 10000;
+	}
+    if (system_mode==SM_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
 
 	if (house_content_thermal_mass==0) house_content_thermal_mass = total_thermal_mass_per_floor_area*floor_area;		// thermal mass of house_e [BTU/F]
     if (house_content_heat_transfer_coeff==0) house_content_heat_transfer_coeff = interior_surface_heat_transfer_coeff*( net_exterior_wall_area / exterior_wall_fraction + gross_wall_area * interior_exterior_wall_ratio + number_of_stories * exterior_ceiling_area / exterior_ceiling_fraction);	// heat transfer coefficient of house_e contents [BTU/hr.F]
@@ -1078,16 +1090,16 @@ int house_e::init(OBJECT *parent)
 		throw "Cm must be positive";
 
 	a = Cm*Ca/Hm;
-	b = Cm*(Ua+Hm)/Hm+Ca;
+	b = Cm*(Ua+airchange_UA+Hm)/Hm+Ca;
 	c = Ua + airchange_UA;
-	c1 = -(Ua + Hm)/Ca;
+	c1 = -(Ua+airchange_UA + Hm)/Ca;
 	c2 = Hm/Ca;
 	double rr = sqrt(b*b-4*a*c)/(2*a);
 	double r = -b/(2*a);
 	r1 = r+rr;
 	r2 = r-rr;
-	A3 = Ca/Hm * r1 + (Ua+Hm)/Hm;
-	A4 = Ca/Hm * r2 + (Ua+Hm)/Hm;
+	A3 = Ca/Hm * r1 + (Ua+airchange_UA+Hm)/Hm;
+	A4 = Ca/Hm * r2 + (Ua+airchange_UA+Hm)/Hm;
 
 	// outside temperature init
 	extern double default_outdoor_temperature;
@@ -1188,9 +1200,11 @@ void house_e::update_model(double dt)
 	/* compute solar gains */
 	Qs = 0; 
 	int i;
-	for (i=0; i<9; i++)
+
+	for (i=1; i<9; i++) //Compass points of pSolar include direct normal and diffuse radiation into one value
 		Qs += pSolar[i];
-	Qs *= 3.412 * (gross_wall_area*window_wall_ratio) / 8.0 * (glazing_shgc);
+
+	Qs *= 3.412 * (gross_wall_area*window_wall_ratio) / 8.0 * (glazing_shgc * window_exterior_transmission_coefficient);
 
 	if (Qs<0)
 		throw "solar gain is negative";
@@ -1200,7 +1214,7 @@ void house_e::update_model(double dt)
 	Qa = Qh + air_heat_fraction*(Qi + Qs);
 	Qm = (1-air_heat_fraction)*(Qi + Qs);
 
-	 d = Qa + Qm + (Ua+airchange_UA)*Tout;
+	d = Qa + Qm + (Ua+airchange_UA)*Tout;
 	Teq = d/c;
 
 	/* compute next initial condition */
@@ -1223,12 +1237,12 @@ void house_e::update_system(double dt)
 	const double heating_cop_adj = (-0.0063*(*pTout)+1.5984);
 	const double cooling_cop_adj = -(-0.0108*(*pTout)+2.0389);
 	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
-	const double cooling_capacity_adj = -(-0.0063*(*pTout)+1.5984);
+	const double cooling_capacity_adj = -(-0.0108*(*pTout)+2.0389);
 
 	switch (system_mode) {
 	case SM_HEAT:
 		heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)*KWPBTUPH;
-		system_rated_capacity = design_heating_capacity*heating_capacity_adj;
+		system_rated_capacity = design_heating_capacity;//*heating_capacity_adj;
 		system_rated_power = heating_demand;
 		break;
 	case SM_AUX:
@@ -1238,7 +1252,7 @@ void house_e::update_system(double dt)
 		break;
 	case SM_COOL:
 		cooling_demand = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction)/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction)*KWPBTUPH;
-		system_rated_capacity = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction);
+		system_rated_capacity = -design_cooling_capacity/(1+latent_load_fraction);//*cooling_capacity_adj
 		system_rated_power = cooling_demand;
 		break;
 	default:
