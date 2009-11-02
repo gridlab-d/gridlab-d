@@ -1268,11 +1268,14 @@ void house_e::update_system(double dt)
 	case SM_HEAT:
 		//heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)*KWPBTUPH;
 		//system_rated_capacity = design_heating_capacity*heating_capacity_adj;
-
-		heating_demand = design_heating_capacity / heating_cop_adj * KWPBTUPH;
-		system_rated_capacity = heating_capacity_adj;
-		system_rated_power = heating_demand;
-		break;
+		if(system_type&ST_RST){
+			;
+		} else {
+			heating_demand = design_heating_capacity / heating_cop_adj * KWPBTUPH;
+			system_rated_capacity = heating_capacity_adj;
+			system_rated_power = heating_demand;
+			break;
+		}
 	case SM_AUX:
 		heating_demand = design_heating_capacity*KWPBTUPH;
 		system_rated_capacity = design_heating_capacity;
@@ -1336,7 +1339,7 @@ void house_e::update_system(double dt)
 
 	if (load.power_factor != 0.0)
 	{
-		if(system_type&ST_RST){
+		if(system_type&ST_RST && (system_mode == SM_HEAT || system_mode == SM_AUX)){
 			load.power = complex(0,0);
 			load.admittance = complex(load.total.Re() , load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) ); /* explicitly all kZ by flag */
 			load.current = complex(0,0);
