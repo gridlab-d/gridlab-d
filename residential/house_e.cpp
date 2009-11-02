@@ -1234,15 +1234,42 @@ void house_e::update_system(double dt)
 {
 	// compute system performance 
 	/// @todo document COP calculation constants
-	const double heating_cop_adj = (-0.0063*(*pTout)+1.5984);
-	const double cooling_cop_adj = -(-0.0108*(*pTout)+2.0389);
-	const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
-	const double cooling_capacity_adj = -(-0.0108*(*pTout)+2.0389);
+	//const double heating_cop_adj = (-0.0063*(*pTout)+1.5984);
+	//const double cooling_cop_adj = -(-0.0108*(*pTout)+2.0389);
+	//const double heating_capacity_adj = (-0.0063*(*pTout)+1.5984);
+	//const double cooling_capacity_adj = -(-0.0108*(*pTout)+2.0389);
+
+	double heating_cop_adj;
+	double cooling_cop_adj;
+	
+	if (*pTout < 40)
+	{
+		heating_cop_adj = heating_COP / (2.03914613 - 0.03906753*(*pTout) + 0.00045617*(*pTout)*(*pTout) - 0.00000203*(*pTout)*(*pTout)*(*pTout));
+		double temp_temperature = 40;
+		cooling_cop_adj = cooling_COP / (-0.01363961 + 0.01066989*temp_temperature);
+	}
+	else if (*pTout > 80)
+	{
+		cooling_cop_adj = cooling_COP / (-0.01363961 + 0.01066989*(*pTout));
+		double temp_temperature = 80;
+		heating_cop_adj = heating_COP / (2.03914613 - 0.03906753*temp_temperature + 0.00045617*temp_temperature*temp_temperature - 0.00000203*temp_temperature*temp_temperature*temp_temperature);
+	}
+	else
+	{
+		cooling_cop_adj = cooling_COP / (-0.01363961 + 0.01066989*(*pTout));
+		heating_cop_adj = heating_COP / (2.03914613 - 0.03906753*(*pTout) + 0.00045617*(*pTout)*(*pTout) - 0.00000203*(*pTout)*(*pTout)*(*pTout));
+	}
+
+	double heating_capacity_adj = design_heating_capacity*(0.34148808 + 0.00894102*(*pTout) + 0.00010787*(*pTout)*(*pTout)); 
+	double cooling_capacity_adj = design_cooling_capacity*(1.48924533 - 0.00514995*(*pTout));
 
 	switch (system_mode) {
 	case SM_HEAT:
-		heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)*KWPBTUPH;
-		system_rated_capacity = design_heating_capacity;//*heating_capacity_adj;
+		//heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)*KWPBTUPH;
+		//system_rated_capacity = design_heating_capacity*heating_capacity_adj;
+
+		heating_demand = design_heating_capacity / heating_cop_adj * KWPBTUPH;
+		system_rated_capacity = heating_capacity_adj;
 		system_rated_power = heating_demand;
 		break;
 	case SM_AUX:
@@ -1251,14 +1278,17 @@ void house_e::update_system(double dt)
 		system_rated_power = heating_demand;
 		break;
 	case SM_COOL:
-		cooling_demand = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction)/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction)*KWPBTUPH;
-		system_rated_capacity = -design_cooling_capacity/(1+latent_load_fraction);//*cooling_capacity_adj
+		//cooling_demand = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction)/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction)*KWPBTUPH;
+		//system_rated_capacity = -design_cooling_capacity/(1+latent_load_fraction)*cooling_capacity_adj;
+
+		cooling_demand = design_cooling_capacity / cooling_cop_adj * KWPBTUPH;
+		system_rated_capacity = -cooling_capacity_adj / (1 + latent_load_fraction);
 		system_rated_power = cooling_demand;
 		break;
 	default:
 		// two-speed systems use a little power at when off (vent mode)
-		system_rated_capacity = 0.0;
-		system_rated_power = 0.0;
+		system_rated_capacity = 0.0;		// total heat gain of system
+		system_rated_power = 0.0;			// total power drawn by system
 	}
 
 	/* calculate the power consumption */
@@ -1573,6 +1603,11 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	// change control mode if necessary
 	switch(system_mode){
 		case SM_HEAT:
+			if (Tair < (heating_setpoint - thermostat_deadband)) // If the air of the house is 2x outside the deadband range, it needs AUX help
+				system_mode = SM_AUX;
+			else if(Tair > TheatOff - terr/2)
+				system_mode = SM_OFF;
+			break;
 		case SM_AUX:
 			if(Tair > TheatOff - terr/2)
 				system_mode = SM_OFF;
@@ -1586,7 +1621,8 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				system_mode = SM_COOL;
 			else if(Tair < TheatOn - terr/2)
 			{
-				if (outside_temperature < aux_cutin_temperature)
+				//if (outside_temperature < aux_cutin_temperature)
+				if (Tair < (heating_setpoint - thermostat_deadband)) // If the air of the house is 2x outside the deadband range, it needs AUX help
 					system_mode = SM_AUX;
 				else
 					system_mode = SM_HEAT;
