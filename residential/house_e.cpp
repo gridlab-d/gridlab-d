@@ -609,6 +609,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD, "AIRCONDITIONING", (set)ST_AC,
 				PT_KEYWORD, "FORCEDAIR", (set)ST_AIR,
 				PT_KEYWORD, "TWOSTAGE", (set)ST_VAR,
+				PT_KEYWORD, "RESISTIVE", (set)ST_RST,
 			PT_enumeration,"system_mode",PADDR(system_mode),PT_DESCRIPTION,"heating/cooling system operation state",
 				PT_KEYWORD,"UNKNOWN",SM_UNKNOWN,
 				PT_KEYWORD,"HEAT",SM_HEAT,
@@ -1335,9 +1336,15 @@ void house_e::update_system(double dt)
 
 	if (load.power_factor != 0.0)
 	{
-		load.power = complex(load.power_fraction * load.total.Re() , load.power_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
-		load.admittance = complex(load.impedance_fraction * load.total.Re() , load.impedance_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
-		load.current = complex(load.current_fraction * load.total.Re(), load.current_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+		if(system_type&ST_RST){
+			load.power = complex(0,0);
+			load.admittance = complex(load.total.Re() , load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) ); /* explicitly all kZ by flag */
+			load.current = complex(0,0);
+		} else {
+			load.power = complex(load.power_fraction * load.total.Re() , load.power_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+			load.admittance = complex(load.impedance_fraction * load.total.Re() , load.impedance_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+			load.current = complex(load.current_fraction * load.total.Re(), load.current_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+		}
 	}
 	else
 	{

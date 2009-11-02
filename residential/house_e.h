@@ -112,6 +112,7 @@ public:
 		ST_AC	= 0x00000002,	///< flag to indicate the air-conditioning is used
 		ST_AIR	= 0x00000004,	///< flag to indicate central air is used
 		ST_VAR	= 0x00000008,	///< flag to indicate the variable speed system is used
+		ST_RST	= 0x00000010,	///< flag to indicate that the heat is purely resistive
 	} SYSTEMTYPE; ///< flags for system type options
 	set system_type;///< system type
 		
