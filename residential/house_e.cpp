@@ -630,6 +630,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "Rfloor[degF.h/Btu]", PADDR(Rfloor),PT_DESCRIPTION,"floor R-value",
 			PT_double, "Rwindows[degF.h/Btu]", PADDR(Rwindows),PT_DESCRIPTION,"window R-value",
 			PT_double, "Rdoors[degF.h/Btu]", PADDR(Rdoors),PT_DESCRIPTION,"door R-value",
+			PT_double, "hvac_breaker_rating[A]", PADDR(hvac_breaker_rating), PT_DESCRIPTION,"determines the amount of current the HVAC circuit breaker can handle",
 			
 			PT_double,"hvac_load",PADDR(hvac_load),PT_DESCRIPTION,"heating/cooling system load",
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
@@ -708,6 +709,7 @@ int house_e::create()
 	load.power_factor = 1.0;
 	design_internal_gain_density = 0.6;//gl_random_triangle(4,6);
 	thermal_integrity_level = TI_UNKNOWN;
+	hvac_breaker_rating = 0;
 
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
@@ -1112,9 +1114,15 @@ int house_e::init(OBJECT *parent)
 	update_model();
 
 	// attach the house_e HVAC to the panel
-	load.breaker_amps = 200;
+	if (hvac_breaker_rating == 0)
+	{
+		load.breaker_amps = 200;
+		hvac_breaker_rating = 200;
+	}
+	else
+		load.breaker_amps = hvac_breaker_rating;
 	load.config = EUC_IS220;
-	attach(OBJECTHDR(this),200, true, &load);
+	attach(OBJECTHDR(this),hvac_breaker_rating, true, &load);
 
 	return 1;
 }
