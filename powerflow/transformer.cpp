@@ -142,13 +142,22 @@ int transformer::init(OBJECT *parent)
 			}
 			
 			if (has_phase(PHASE_A))
+			{
 				A_mat[0][0] = (zc - zt_a) / ( complex(nt_a,0) * (zc + zt_a));
+				a_mat[0][0] = complex(1,0) / A_mat[0][0];
+			}
 
 			if (has_phase(PHASE_B))
+			{
 				A_mat[1][1] = (zc - zt_b) / ( complex(nt_b,0) * (zc + zt_b));
+				a_mat[1][1] = complex(1,0) / A_mat[1][1];
+			}
 
 			if (has_phase(PHASE_C))
+			{
 				A_mat[2][2] = (zc - zt_c) / ( complex(nt_c,0) * (zc + zt_c));
+				a_mat[2][2] = complex(1,0) / A_mat[2][2];
+			}
 
 			if (solver_method==SM_FBS)
 			{
@@ -200,10 +209,6 @@ int transformer::init(OBJECT *parent)
 				one of these methods and consider submitting a bug report for the solver type you tried.
 				*/
 			}
-
-			a_mat[0][0] = complex(1,0) / A_mat[0][0];
-			a_mat[1][1] = complex(1,0) / A_mat[1][1];
-			a_mat[2][2] = complex(1,0) / A_mat[2][2];
 
 			B_mat[0][0] = zt;
 			B_mat[1][1] = zt;
