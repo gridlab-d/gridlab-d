@@ -235,25 +235,37 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 	}
 	ts = tszero[dt->year-YEAR0];
 
-	/* add month */
-	for (n=1; n<dt->month; n++){
-		ts += (daysinmonth[n - 1] + (n == 2 && ISLEAPYEAR(dt->year) ? 1 : 0)) * DAY;
-	}
-	
-	/* add day, hour, minute, second, usecs */
-	ts += (dt->day - 1) * DAY + dt->hour * HOUR + dt->minute * MINUTE + dt->second * SECOND + dt->microsecond * MICROSECOND;
-
-	/* adjust for GMT (or unspecified) */
-	if (strcmp(dt->tz, "GMT") == 0){
+	if(dt->month > 12)
+	{
+		output_fatal("Invalid month provided in datetime");
 		return ts;
-	} else if(strcmp(dt->tz, tzstd) == 0 || (strcmp(dt->tz, "")==0 && ts < dststart[dt->year - YEAR0] || ts >= dstend[dt->year - YEAR0])){
-		/* adjust to standard local time */
-		return ts + tzoffset;
-	} else if(strcmp(dt->tz, tzdst) == 0 || (strcmp(dt->tz, "")==0 && ts >= dststart[dt->year - YEAR0] && ts < dstend[dt->year - YEAR0])){
-		/* adjust to daylight local time */
-		return ts + tzoffset - HOUR;
 	}
+	else if(dt->day > daysinmonth[dt->month-1])
+	{
+		output_fatal("Invalid day provided in datetime");
+		return ts;
+	}
+	else
+	{
+		/* add month */
+		for (n=1; n<dt->month; n++){
+			ts += (daysinmonth[n - 1] + (n == 2 && ISLEAPYEAR(dt->year) ? 1 : 0)) * DAY;
+		}	
 	
+		/* add day, hour, minute, second, usecs */
+		ts += (dt->day - 1) * DAY + dt->hour * HOUR + dt->minute * MINUTE + dt->second * SECOND + dt->microsecond * MICROSECOND;
+
+		/* adjust for GMT (or unspecified) */
+		if (strcmp(dt->tz, "GMT") == 0){
+			return ts;
+		} else if(strcmp(dt->tz, tzstd) == 0 || (strcmp(dt->tz, "")==0 && ts < dststart[dt->year - YEAR0] || ts >= dstend[dt->year - YEAR0])){
+			/* adjust to standard local time */
+			return ts + tzoffset;
+		} else if(strcmp(dt->tz, tzdst) == 0 || (strcmp(dt->tz, "")==0 && ts >= dststart[dt->year - YEAR0] && ts < dstend[dt->year - YEAR0])){
+			/* adjust to daylight local time */
+			return ts + tzoffset - HOUR;
+		}
+	}
 	/* not a valid timezone */
 	return TS_INVALID;
 }
