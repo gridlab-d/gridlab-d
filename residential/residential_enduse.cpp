@@ -83,7 +83,7 @@ int residential_enduse::init(OBJECT *parent)
 	if (load.shape!=NULL) {
 		if (load.shape->schedule==NULL)
 		{
-			gl_warning("%s (%s:%d) schedule is not specified so the load may be inactive", hdr->name?hdr->name:"(unnamed)", hdr->oclass->name, hdr->id);
+			gl_verbose("%s (%s:%d) schedule is not specified so the load may be inactive", hdr->name?hdr->name:"(unnamed)", hdr->oclass->name, hdr->id);
 			/* TROUBLESHOOT
 				The residential_enduse object requires a schedule that defines how
 				the load behaves.  Omitting this schedule effectively shuts the enduse

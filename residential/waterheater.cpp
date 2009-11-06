@@ -141,7 +141,7 @@ int waterheater::init(OBJECT *parent)
 
 	if(parent){
 		pTair = gl_get_double_by_name(parent, "air_temperature");
-		pTout = gl_get_double_by_name(parent, "outside_temp");
+		pTout = gl_get_double_by_name(parent, "outdoor_temperature");
 	}
 
 	if(pTair == 0){

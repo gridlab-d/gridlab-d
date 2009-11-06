@@ -68,7 +68,7 @@ int ZIPload::create()
 	load.power_fraction = 1.0;
 	load.current_fraction = load.impedance_fraction = 0.0;
 	load.config = 0x0;	//110 by default
-	breaker_val = 80.0;	//Obscene value so it never trips
+	breaker_val = 1000.0;	//Obscene value so it never trips
 
 	//Default values of other properties
 	power_pf = current_pf = impedance_pf = 1.0;
