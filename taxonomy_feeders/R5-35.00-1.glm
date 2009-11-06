@@ -4047,8 +4047,8 @@ object overhead_line:1779 {
 object overhead_line_conductor:6 {
 	name 477 AAC;
 	rating.summer.continuous 714.0;
-	geometric_mean_radius 0.0304 ft;
-	resistance 0.216;
+	geometric_mean_radius 0.01703 ft;
+	resistance 0.21600;
 }
 
 

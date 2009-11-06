@@ -10125,50 +10125,50 @@ object overhead_line:3557 {
 object overhead_line_conductor:2 {
 	name 4 CW;
 	rating.summer.continuous 180.0;
-	geometric_mean_radius 0.0034 ft;
-	resistance 0.286;
+	geometric_mean_radius 0.00340 ft;
+	resistance 0.28600;
 }
 
 object overhead_line_conductor:4 {
 	name 4 CU;
 	rating.summer.continuous 149.0;
-	geometric_mean_radius 0.244 ft;
-	resistance 0.306;
+	geometric_mean_radius 0.00663 ft;
+	resistance 1.50000;
 }
 
 object overhead_line_conductor:6 {
 	name 3/0 ACSR;
 	rating.summer.continuous 300.0;
-	geometric_mean_radius 0.502 ft;
-	resistance 0.502;
+	geometric_mean_radius 0.00600 ft;
+	resistance 0.63800;
 }
 
 object overhead_line_conductor:7 {
 	name 336 ACSR;
 	rating.summer.continuous 530.0;
-	geometric_mean_radius 0.721 ft;
-	resistance 0.721;
+	geometric_mean_radius 0.02300 ft;
+	resistance 0.30300;
 }
 
 object overhead_line_conductor:9 {
 	name 1/0 AAC;
 	rating.summer.continuous 230.0;
-	geometric_mean_radius 0.368 ft;
-	resistance 1.94304;
+	geometric_mean_radius 0.01203 ft;
+	resistance 0.95300;
 }
 
 object overhead_line_conductor:10 {
 	name 4/0 ACSR;
 	rating.summer.continuous 334.0;
-	geometric_mean_radius 0.563 ft;
-	resistance 2.9726;
+	geometric_mean_radius 0.00814 ft;
+	resistance 0.56300;
 }
 
 object overhead_line_conductor:15 {
 	name 636 AAC;
 	rating.summer.continuous 858.0;
-	geometric_mean_radius 0.0294 ft;
-	resistance 0.163;
+	geometric_mean_radius 0.02940 ft;
+	resistance 0.16300;
 }
 
 

@@ -4584,85 +4584,85 @@ object overhead_line:1546 {
 object overhead_line_conductor:2 {
 	name 2 ACSR;
 	rating.summer.continuous 180.0;
-	geometric_mean_radius 0.316 ft;
-	resistance 0.316;
+	geometric_mean_radius 0.00418 ft;
+	resistance 1.62570;
 }
 
 object overhead_line_conductor:3 {
 	name 394 AAAC;
 	rating.summer.continuous 533.0;
-	geometric_mean_radius 0.721 ft;
-	resistance 3.8069;
+	geometric_mean_radius 0.02280 ft;
+	resistance 0.25800;
 }
 
 object overhead_line_conductor:4 {
 	name 4 CU;
 	rating.summer.continuous 149.0;
-	geometric_mean_radius 0.244 ft;
-	resistance 0.306;
+	geometric_mean_radius 0.00663 ft;
+	resistance 1.50000;
 }
 
 object overhead_line_conductor:5 {
 	name 2/0 AAC;
 	rating.summer.continuous 270.0;
-	geometric_mean_radius 0.414 ft;
-	resistance 2.18592;
+	geometric_mean_radius 0.01350 ft;
+	resistance 0.13200;
 }
 
 object overhead_line_conductor:6 {
 	name 559.5 AAAC;
 	rating.summer.continuous 663.0;
-	geometric_mean_radius 0.0271 ft;
-	resistance 0.045;
+	geometric_mean_radius 0.02710 ft;
+	resistance 0.03690;
 }
 
 object overhead_line_conductor:8 {
 	name 336 ACSR;
 	rating.summer.continuous 530.0;
-	geometric_mean_radius 0.721 ft;
-	resistance 0.721;
+	geometric_mean_radius 0.02300 ft;
+	resistance 0.30300;
 }
 
 object overhead_line_conductor:10 {
 	name 3/0 ACSR;
 	rating.summer.continuous 300.0;
-	geometric_mean_radius 0.502 ft;
-	resistance 0.502;
+	geometric_mean_radius 0.00600 ft;
+	resistance 0.63800;
 }
 
 object overhead_line_conductor:11 {
 	name 2 AAAC;
 	rating.summer.continuous 197.0;
-	geometric_mean_radius 0.292 ft;
-	resistance 1.54176;
+	geometric_mean_radius 0.00883 ft;
+	resistance 1.51970;
 }
 
 object overhead_line_conductor:12 {
 	name 266.8 AAC;
 	rating.summer.continuous 388.0;
-	geometric_mean_radius 0.244 ft;
-	resistance 0.306;
+	geometric_mean_radius 0.02020 ft;
+	resistance 0.06570;
 }
 
 object overhead_line_conductor:14 {
 	name 123.3 AAAC;
 	rating.summer.continuous 256.0;
-	geometric_mean_radius 0.012 ft;
-	resistance 0.18;
+	geometric_mean_radius 0.01200 ft;
+	resistance 0.16600;
 }
 
 object overhead_line_conductor:15 {
 	name 4/0 AAC;
 	rating.summer.continuous 360.0;
-	geometric_mean_radius 0.522 ft;
-	resistance 2.75616;
+	geometric_mean_radius 0.01033 ft;
+	resistance 0.47600;
 }
 
 object overhead_line_conductor:16 {
 	name 2 CU;
 	rating.summer.continuous 204.0;
-	geometric_mean_radius 0.292 ft;
-	resistance 1.5418;
+	geometric_mean_radius 0.00836 ft;
+	resistance 0.94500;
 }
 
 

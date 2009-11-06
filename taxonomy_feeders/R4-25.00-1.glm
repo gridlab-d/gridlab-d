@@ -3692,36 +3692,36 @@ object overhead_line:1175 {
 object overhead_line_conductor:2 {
 	name 2 CU;
 	rating.summer.continuous 204.0;
-	geometric_mean_radius 0.292 ft;
-	resistance 1.5418;
+	geometric_mean_radius 0.00836 ft;
+	resistance 0.94500;
 }
 
 object overhead_line_conductor:3 {
 	name 336 ACSR;
 	rating.summer.continuous 530.0;
-	geometric_mean_radius 0.721 ft;
-	resistance 0.721;
+	geometric_mean_radius 0.02300 ft;
+	resistance 0.30300;
 }
 
 object overhead_line_conductor:4 {
 	name 4 CU;
 	rating.summer.continuous 149.0;
-	geometric_mean_radius 0.244 ft;
-	resistance 0.306;
+	geometric_mean_radius 0.00663 ft;
+	resistance 1.50000;
 }
 
 object overhead_line_conductor:5 {
 	name 123.3 AAAC;
 	rating.summer.continuous 256.0;
-	geometric_mean_radius 0.012 ft;
-	resistance 0.18;
+	geometric_mean_radius 0.01200 ft;
+	resistance 0.16600;
 }
 
 object overhead_line_conductor:7 {
 	name 3/0 ACSR;
 	rating.summer.continuous 300.0;
-	geometric_mean_radius 0.502 ft;
-	resistance 0.502;
+	geometric_mean_radius 0.00600 ft;
+	resistance 0.63800;
 }
 
 

@@ -5716,36 +5716,36 @@ object overhead_line:1661 {
 object overhead_line_conductor:3 {
 	name 1/0 AAAC;
 	rating.summer.continuous 266.0;
-	geometric_mean_radius 0.368 ft;
-	resistance 1.94304;
+	geometric_mean_radius 0.01142 ft;
+	resistance 0.95300;
 }
 
 object overhead_line_conductor:4 {
 	name 343 ACSR;
 	rating.summer.continuous 531.0;
-	geometric_mean_radius 0.673 ft;
-	resistance 3.55344;
+	geometric_mean_radius 0.02240 ft;
+	resistance 0.30600;
 }
 
 object overhead_line_conductor:5 {
 	name 715 ACSR;
 	rating.summer.continuous 891.0;
-	geometric_mean_radius 0.997 ft;
-	resistance 0.0319;
+	geometric_mean_radius 0.03550 ft;
+	resistance 0.14420;
 }
 
 object overhead_line_conductor:6 {
 	name 4 CU;
 	rating.summer.continuous 149.0;
-	geometric_mean_radius 0.244 ft;
-	resistance 0.306;
+	geometric_mean_radius 0.00663 ft;
+	resistance 1.50000;
 }
 
 object overhead_line_conductor:8 {
 	name 123.3 AAAC;
 	rating.summer.continuous 256.0;
-	geometric_mean_radius 0.012 ft;
-	resistance 0.18;
+	geometric_mean_radius 0.01200 ft;
+	resistance 0.16600;
 }
 
 
