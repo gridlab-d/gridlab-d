@@ -68,14 +68,14 @@ SCHEDULE *schedule_find_byname(char *name) /**< the name of the schedule */
 	 ...,...
 	 
  */
-int schedule_matcher(char *pattern, unsigned char *table, int max)
+int schedule_matcher(char *pattern, unsigned char *table, int max, int base)
 {
 	int go=0;
-	int start=0;
-	int stop=0;
+	int start=base;
+	int stop=base;
 	int range=0;
 	char *p;
-	memset(table,0,max);
+	memset(table,0,max-base+1);
 	for (p=pattern; ; p++)
 	{
 		switch (*p) {
@@ -84,7 +84,7 @@ int schedule_matcher(char *pattern, unsigned char *table, int max)
 			break;
 		case '*':
 			/* full range and go fill */
-			start=0; stop=max-1; go=1;
+			start=base; stop=max; go=1;
 			break;
 		case ',':
 			/* go fill */
@@ -93,7 +93,7 @@ int schedule_matcher(char *pattern, unsigned char *table, int max)
 		case '-':
 			/* partial range */
 			range = 1; 
-			stop = 0;
+			stop = max;
 			break;
 		case '0':
 		case '1':
@@ -117,8 +117,12 @@ int schedule_matcher(char *pattern, unsigned char *table, int max)
 		if (go)
 		{	int i;
 
+			/* base adjustment */
+			start -= base;
+			stop -= base;
+
 			/* check over limit */
-			if (stop>=max)
+			if (stop>max-base)
 			{
 				output_warning("schedule_matcher(char *pattern='%s',...) end exceed max of %d", pattern,max);
 				stop = max-1;
@@ -127,7 +131,7 @@ int schedule_matcher(char *pattern, unsigned char *table, int max)
 			/* go fill */
 			if (start>stop) /* wraparound */
 			{
-				for (i=start; i<max; i++)
+				for (i=start; i<=max-base; i++)
 					table[i] = 1;
 				for (i=0; i<=stop; i++)
 					table[i] = 1;
@@ -137,8 +141,10 @@ int schedule_matcher(char *pattern, unsigned char *table, int max)
 				for (i=start; i<=stop; i++)
 					table[i] = 1;
 			}
+
 			/* reset */
-			start = stop = range = go = 0;
+			start = stop = base;
+			range = go = 0;
 		}
 		if (*p=='\0')
 			break;
@@ -171,15 +177,16 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 	{
 		struct {
 			char *name;
+			int base;
 			int max;
 			char pattern[256];
 			char table[60];
 		} matcher[] = {
-			{"minute",60},
-			{"hour",24},
-			{"day",31},
-			{"month",12},
-			{"weekday",8},
+			{"minute",0,59},
+			{"hour",0,24},
+			{"day",1,31},
+			{"month",1,12},
+			{"weekday",0,8},
 		}, *match;
 		unsigned int calendar;
 		double value=1.0; /* default value is 1.0 */
@@ -207,7 +214,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		for (match=matcher; match<matcher+sizeof(matcher)/sizeof(matcher[0]); match++)
 		{
 			/* get match tables */
-			if (!schedule_matcher(match->pattern,match->table,match->max))
+			if (!schedule_matcher(match->pattern,match->table,match->max,match->base))
 			{
 				output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) %s pattern syntax error in item '%s'", sch->name, match->name, token);
 				/* TROUBLESHOOT
@@ -492,6 +499,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		 */
 		return NULL;
 	}
+	output_debug("schedule '%s' uses %.1f MB of memory", name, sizeof(SCHEDULE)/1000000.0);
 	if (strlen(name)>=sizeof(sch->name))
 	{
 		output_error("schedule_create(char *name='%s', char *definition='%s') name too long)", name, definition);
@@ -911,7 +919,7 @@ void schedule_dump(SCHEDULE *sch, char *file)
 		}
 		fprintf(fp," (calendar %d)\n",calendar);
 
-		for (month=1; month<=12; month++)
+		for (month=0; month<12; month++)
 		{
 			int day, hour;
 			fprintf(fp,"     %s  ", monthname[month-1]);
@@ -920,14 +928,14 @@ void schedule_dump(SCHEDULE *sch, char *file)
 				fprintf(fp," %2d:00", hour);
 			}
 			fprintf(fp,"\n");
-			for (day=1; day<=daysinmonth[month-1]; day++)
+			for (day=0; day<daysinmonth[month]; day++)
 			{
 				int hour;
 				char wd[] = "SMTWTFSH";
 				DATETIME dt = {year,month,day,0,0,0,0,0,""};
 				TIMESTAMP ts = mkdatetime(&dt);
 				local_datetime(ts,&dt);
-				fprintf(fp,"      %c %2d",wd[dt.weekday],day);
+				fprintf(fp,"      %c %2d",wd[dt.weekday],day+1);
 				for (hour=0; hour<24; hour++)
 				{
 					int minute=0;
