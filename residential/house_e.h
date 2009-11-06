@@ -105,6 +105,7 @@ public:
 	double rated_cooling_capacity;	///< rated cooling capacity of the system (BTUh/sf; varies w.r.t Tout)
 	double latent_load_fraction;	///< fractional increase in cooling load due to latent heat
 	double hvac_breaker_rating;		///< HVAC current limit on the breaker
+	double hvac_power_factor;		///< HVAC power factor
 	
 	double window_exterior_transmission_coefficient; ///< fraction of energy that transmits through windows
 

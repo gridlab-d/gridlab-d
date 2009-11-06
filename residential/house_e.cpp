@@ -631,6 +631,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "Rwindows[degF.h/Btu]", PADDR(Rwindows),PT_DESCRIPTION,"window R-value",
 			PT_double, "Rdoors[degF.h/Btu]", PADDR(Rdoors),PT_DESCRIPTION,"door R-value",
 			PT_double, "hvac_breaker_rating[A]", PADDR(hvac_breaker_rating), PT_DESCRIPTION,"determines the amount of current the HVAC circuit breaker can handle",
+			PT_double, "hvac_power_factor[unit]", PADDR(hvac_power_factor), PT_DESCRIPTION,"power factor of hvac",
 			
 			PT_double,"hvac_load",PADDR(hvac_load),PT_DESCRIPTION,"heating/cooling system load",
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
@@ -706,11 +707,10 @@ int house_e::create()
 	load.power_fraction = 0.8;
 	load.impedance_fraction = 0.2;
 	load.current_fraction = 0.0;
-	load.power_factor = 1.0;
 	design_internal_gain_density = 0.6;//gl_random_triangle(4,6);
 	thermal_integrity_level = TI_UNKNOWN;
 	hvac_breaker_rating = 0;
-
+	hvac_power_factor = 0;
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
 
@@ -1070,7 +1070,7 @@ int house_e::init(OBJECT *parent)
 			Tair = gl_random_uniform(cooling_setpoint-thermostat_deadband/2,cooling_setpoint+thermostat_deadband/2);
 	}
 
-
+	
 	Tmaterials = Tair;	
 	
 
@@ -1108,11 +1108,16 @@ int house_e::init(OBJECT *parent)
 	extern double default_outdoor_temperature;
 	outside_temperature = default_outdoor_temperature;
 
+	if (hvac_power_factor == 0)
+		load.power_factor = 0.97;
+	else 
+		load.power_factor = hvac_power_factor;
+
 	// connect any implicit loads
 	attach_implicit_enduses();
 	update_system();
 	update_model();
-
+	
 	// attach the house_e HVAC to the panel
 	if (hvac_breaker_rating == 0)
 	{
