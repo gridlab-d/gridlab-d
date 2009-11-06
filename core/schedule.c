@@ -71,11 +71,11 @@ SCHEDULE *schedule_find_byname(char *name) /**< the name of the schedule */
 int schedule_matcher(char *pattern, unsigned char *table, int max, int base)
 {
 	int go=0;
-	int start=base;
-	int stop=base;
+	int start=0;
+	int stop=-1;
 	int range=0;
 	char *p;
-	memset(table,0,max-base+1);
+	memset(table,0,max);
 	for (p=pattern; ; p++)
 	{
 		switch (*p) {
@@ -93,7 +93,7 @@ int schedule_matcher(char *pattern, unsigned char *table, int max, int base)
 		case '-':
 			/* partial range */
 			range = 1; 
-			stop = max;
+			stop = 0;
 			break;
 		case '0':
 		case '1':
@@ -114,37 +114,40 @@ int schedule_matcher(char *pattern, unsigned char *table, int max, int base)
 			return 0;
 			break;
 		}
-		if (go)
+		if (go && stop>=0)
 		{	int i;
 
-			/* base adjustment */
-			start -= base;
-			stop -= base;
+			/* check under limit */
+			if (start<base)
+			{
+				output_warning("schedule_matcher(char *pattern='%s',...) start before min of %d", pattern,base);
+				start = base;
+			}
 
 			/* check over limit */
-			if (stop>max-base)
+			if (stop>max)
 			{
 				output_warning("schedule_matcher(char *pattern='%s',...) end exceed max of %d", pattern,max);
-				stop = max-1;
+				stop = max;
 			}
 
 			/* go fill */
 			if (start>stop) /* wraparound */
 			{
-				for (i=start; i<=max-base; i++)
-					table[i] = 1;
-				for (i=0; i<=stop; i++)
-					table[i] = 1;
+				for (i=start; i<=max; i++)
+					table[i-base] = 1;
+				for (i=base; i<=stop; i++)
+					table[i-base] = 1;
 			}
 			else
 			{
 				for (i=start; i<=stop; i++)
-					table[i] = 1;
+					table[i-base] = 1;
 			}
 
 			/* reset */
-			start = stop = base;
-			range = go = 0;
+			start = range = go = 0;
+			stop = -1;
 		}
 		if (*p=='\0')
 			break;
@@ -183,7 +186,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 			char table[60];
 		} matcher[] = {
 			{"minute",0,59},
-			{"hour",0,24},
+			{"hour",0,23},
 			{"day",1,31},
 			{"month",1,12},
 			{"weekday",0,8},
@@ -922,7 +925,7 @@ void schedule_dump(SCHEDULE *sch, char *file)
 		for (month=0; month<12; month++)
 		{
 			int day, hour;
-			fprintf(fp,"     %s  ", monthname[month-1]);
+			fprintf(fp,"     %s  ", monthname[month]);
 			for (hour=0; hour<24; hour++)
 			{
 				fprintf(fp," %2d:00", hour);
