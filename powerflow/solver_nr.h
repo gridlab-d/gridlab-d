@@ -29,6 +29,7 @@ typedef struct  {
 	double Jacob_C[3];		// Element c in equation (39), which is used to update the Jacobian matrix at each iteration
 	double Jacob_D[3];		// Element d in equation (40), which is used to update the Jacobian matrix at each iteration
 	unsigned int Matrix_Loc;// Starting index of this object's place in all matrices/equations
+	char *name;				///< original name
 } BUSDATA;
 
 typedef struct {
@@ -39,7 +40,9 @@ typedef struct {
 	unsigned char phases;	///< Phases property - used for construction of matrices
 	int from;				///< index into bus data
 	int to;					///< index into bus data
+	bool *status;			///< status of the object, if it is a switch (restoration module usage)
 	double v_ratio;			///< voltage ratio (v_from/v_to)
+	char *name;				///< original name
 } BRANCHDATA;
 
 typedef struct Y_NR{

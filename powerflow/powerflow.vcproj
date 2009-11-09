@@ -595,6 +595,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\restoration.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\series_reactor.cpp"
 				>
 			</File>
@@ -750,6 +754,10 @@
 			</File>
 			<File
 				RelativePath="..\powerflow\relay_test.h"
+				>
+			</File>
+			<File
+				RelativePath=".\restoration.h"
 				>
 			</File>
 			<File

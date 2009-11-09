@@ -53,6 +53,7 @@
 #include <math.h>
 
 #include "solver_nr.h"
+#include "restoration.h"
 #include "node.h"
 #include "transformer.h"
 
@@ -764,6 +765,13 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				return 0;
 			}
 			NR_curr_branch = 0;	//Pull pointer off flag so other objects know it's built
+
+			//Populate the connectivity matrix if a restoration object is present
+			if (restoration_object != NULL)
+			{
+				restoration *Rest_Module = OBJECTDATA(restoration_object,restoration);
+				Rest_Module->CreateConnectivity();
+			}
 
 			if (bustype==SWING)
 			{
@@ -2318,6 +2326,10 @@ LINKCONNECTED *node::attachlink(OBJECT *obj) ///< object to attach
 */
 int *node::NR_populate(void)
 {
+		//Object header for names
+		OBJECT *me = OBJECTHDR(this);
+
+		//Bus type
 		NR_busdata[NR_curr_bus].type = (int)bustype;
 
 		//Populate phases - see if it is Delta or not
@@ -2329,6 +2341,9 @@ int *node::NR_populate(void)
 		{
 			NR_busdata[NR_curr_bus].phases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 		}
+
+		//Link our name in
+		NR_busdata[NR_curr_bus].name = me->name;
 
 		//Populate voltage
 		NR_busdata[NR_curr_bus].V = &voltage[0];

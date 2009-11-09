@@ -18,7 +18,7 @@
 
 class fuse_tests : public powerflow_test_helper
 {
-	void test_three_phase_ganged_switch(link::LINKSTATUS status, set phases)
+	void test_three_phase_ganged_switch(bool status, set phases)
 	{
 		fuse *test_fuse = create_object<fuse>("fuse");
 		test_fuse->status = status;
@@ -51,7 +51,7 @@ class fuse_tests : public powerflow_test_helper
 	}
 
 	void test_three_phase_ganged_switch_ABC_closed() {
-		test_three_phase_ganged_switch(link::LS_CLOSED, PHASE_ABC);
+		test_three_phase_ganged_switch(LS_CLOSED, PHASE_ABC);
 	}
 
 	//void test_three_phase_ganged_switch_ABC_open() {
@@ -59,7 +59,7 @@ class fuse_tests : public powerflow_test_helper
 	//}
 
 	void test_three_phase_ganged_switch_A_closed() {
-		test_three_phase_ganged_switch(link::LS_CLOSED, PHASE_A);
+		test_three_phase_ganged_switch(LS_CLOSED, PHASE_A);
 	}
 
 	//void test_three_phase_ganged_switch_A_open() {
@@ -67,7 +67,7 @@ class fuse_tests : public powerflow_test_helper
 	//}
 
 	void test_three_phase_ganged_switch_B_closed() {
-		test_three_phase_ganged_switch(link::LS_CLOSED, PHASE_B);
+		test_three_phase_ganged_switch(LS_CLOSED, PHASE_B);
 	}
 
 	//void test_three_phase_ganged_switch_B_open() {
@@ -75,13 +75,13 @@ class fuse_tests : public powerflow_test_helper
 	//}
 
 	void test_three_phase_ganged_switch_C_closed() {
-		test_three_phase_ganged_switch(link::LS_CLOSED, PHASE_C);
+		test_three_phase_ganged_switch(LS_CLOSED, PHASE_C);
 	}
 
 	//void test_three_phase_ganged_switch_C_open() {
 	//	test_three_phase_ganged_switch(link::LS_OPEN, PHASE_C);
 	//}
-      
+
 	/*
 	 * This section creates the suite() method that will be used by the
 	 * CPPUnit testrunner to execute the tests that we have registered.

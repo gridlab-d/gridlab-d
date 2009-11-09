@@ -10,6 +10,8 @@
 EXPORT int isa_link(OBJECT *obj, char *classname);
 
 #define impedance(X) (B_mat[X][X])
+#define LS_CLOSED 0	//Changed from enums so it could be used by restoration
+#define LS_OPEN 1
 
 typedef enum {
 		NORMAL=0,			///< defines just a normal link/transformer
@@ -57,9 +59,9 @@ public: /// @todo make this private and create interfaces to control values
 	void set_flow_directions();
 
 public:
-	typedef enum {LS_CLOSED=0, LS_OPEN=1} LINKSTATUS;
-	LINKSTATUS status;	///< link status (open disconnect nodes)
-	LINKSTATUS prev_status;	///< Previous link status (used for recalculation detection)
+	bool status;	///< link status (open disconnect nodes)
+	bool prev_status;	///< Previous link status (used for recalculation detection)
+
 	OBJECT *from;			///< from_node - source node
 	OBJECT *to;				///< to_node - load node
 	complex current_in[3];		///< current flow to link (w.r.t from node)
@@ -95,11 +97,11 @@ public:
 	class node *get_to(void) const;
 	set get_flow(class node **from, class node **to) const; /* determine flow direction (return phases on which flow is reverse) */
 
-	inline LINKSTATUS open(void) { LINKSTATUS previous=status; status=LS_OPEN; return previous;};
-	inline LINKSTATUS close(void) { LINKSTATUS previous=status; status=LS_CLOSED; return previous;};
+	inline bool open(void) { bool previous=status; status=LS_OPEN; return previous;};
+	inline bool close(void) { bool previous=status; status=LS_CLOSED; return previous;};
 	inline bool is_open(void) const { return status==LS_OPEN;};
 	inline bool is_closed(void) const { return status==LS_CLOSED;};
-	inline LINKSTATUS get_status(void) const {return status;};
+	inline bool get_status(void) const {return status;};
 
 	bool is_frequency_nominal();
 	bool is_voltage_nominal();

@@ -93,6 +93,7 @@
 #include <math.h>
 #include "link.h"
 #include "node.h"
+#include "restoration.h"
 
 CLASS* link::oclass = NULL;
 CLASS* link::pclass = NULL;
@@ -449,6 +450,9 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 						NR_branchdata[NR_curr_branch].Yto = &From_Y[0][0];
 						NR_branchdata[NR_curr_branch].YSfrom = &From_Y[0][0];
 						NR_branchdata[NR_curr_branch].YSto = &From_Y[0][0];
+
+						//Populate the status variable while we are in here
+						NR_branchdata[NR_curr_branch].status = &status;
 					}
 					else
 					{
@@ -480,6 +484,9 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 					NR_branchdata[NR_curr_branch].YSfrom = &From_Y[0][0];
 					NR_branchdata[NR_curr_branch].YSto = &From_Y[0][0];
 				}
+
+				//Link the name
+				NR_branchdata[NR_curr_branch].name = obj->name;
 
 				//Populate phases property
 				NR_branchdata[NR_curr_branch].phases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
@@ -561,6 +568,13 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 
 				//Populate voltage ratio
 				NR_branchdata[NR_curr_branch].v_ratio = voltage_ratio;
+
+				//Populate the connectivity matrix with our to/from/type information if restoration exists
+				if (restoration_object != NULL)
+				{
+					restoration *Rest_Object = OBJECTDATA(restoration_object,restoration);
+					Rest_Object->PopulateConnectivity(NR_branchdata[NR_curr_branch].from,NR_branchdata[NR_curr_branch].to,obj);
+				}
 
 				//Update our storage value
 				NR_branch_reference = NR_curr_branch;
