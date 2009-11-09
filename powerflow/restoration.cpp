@@ -29,6 +29,8 @@ restoration::restoration(MODULE *mod) : powerflow_object(mod)
 		
 		if(gl_publish_variable(oclass,
 			PT_char1024,"configuration_file",PADDR(configuration_file),
+			PT_int32,"reconfig_attempts",PADDR(reconfig_attempts),
+			PT_int32,"reconfig_iteration_limit",PADDR(reconfig_iter_limit),
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -44,6 +46,10 @@ int restoration::create(void)
 	*configuration_file = NULL;
 	prev_time = 0;
 	phases = PHASE_A;	//Arbitrary - set so powerflow_object shuts up (library doesn't grant us access to presynch/postsynch)
+
+	reconfig_attempts = 0;
+	reconfig_iter_limit = 0;
+	attempt_reconfigure=false;
 
 	return result;
 }
@@ -85,6 +91,28 @@ int restoration::init(OBJECT *parent)
 			//close the handle
 			fclose(CONFIGINFO);
 
+			//Check limits - post warnings as necessary
+			if (reconfig_attempts==0)
+			{
+				gl_warning("Infinite reconfigurations set.");
+				/*  TROUBLESHOOT
+				The restoration object can have the number of reconfiguration per timestep set via the
+				reconfig_attempts property.  If not set, or set to 0, the system will perform reconfigurations
+				until the overall powerflow iteration limit is reached (or the system solves and moves to a new
+				timestep).
+				*/
+			}
+
+			if (reconfig_iter_limit==0)
+			{
+				gl_warning("Infinite reconfiguration iterations set.");
+				/*  TROUBLESHOOT
+				The restoration object can have the number of iterations powerflow can perform before trying another
+				reconfiguration set.  This is set via teh reconfig_iteration_limit property.  If not set, or set to 0, the
+				system will perform iterations on this reconfiguration until the overall powerflow iteration limit is reached,
+				or the system solves and moves to a new reconfiguration.
+				*/
+			}
 
 			//Set our rank higher than swing.  We need to go off before the swing bus, just in case we are reconfiguring things
 			gl_set_rank(obj,6);	//6 = swing+1
@@ -115,10 +143,18 @@ TIMESTAMP restoration::presync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t1 = powerflow_object::presync(t0);
+	bool NeedReconfiguration;
 	FILE *CONFIGINFO;
 
-	if ((prev_time!=0) && (NR_cycle==true))	//Solution cycle (1 off, since swing toggles it after we've run)
+	if (prev_time!=t0)	//New timestep - reset tracking variables
 	{
+		reconfig_number = 0;	//Reset number of reconfigurations that have occurred
+		reconfig_iterations=0;	//Reset number of iterations that have occurred on this timestep
+	}
+
+	if ((attempt_reconfigure==true) && (NR_cycle==true))	//Solution cycle (1 off, since swing toggles it after we've run)
+	{
+		reconfig_number++;	//Increment the number of reconfigurations we've tried
 
 		//Testing code - not sure how all of this will be handled
 
@@ -139,11 +175,11 @@ TIMESTAMP restoration::presync(TIMESTAMP t0)
 
 			/* ----------- End file read testing ----------*/
 
+			//Check voltages
+			NeedReconfiguration=VoltageCheck();
+
 
 			/* ---------- Array access testing ------------ */
-
-			//print first voltage for now - this is just an example of obtaining the voltages (for check)
-			printf("Volt Check Pre - %f %f\n",NR_busdata[0].V[0].Re(),NR_busdata[0].V[0].Im());
 
 			//print first connectivity for now - this is just an example of obtaining connectivity (for check)
 			printf("Connect Pre - %d\n",Connectivity_Matrix[0][0]);
@@ -177,6 +213,7 @@ TIMESTAMP restoration::postsync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP tret = powerflow_object::postsync(t0);
+	unsigned char ConvergenceCheck;
 
 	bool reconfig_check = false;	//Temp working variable - will be replaced once logic is in place
 
@@ -184,6 +221,7 @@ TIMESTAMP restoration::postsync(TIMESTAMP t0)
 	{
 		NR_retval = t0;	//Override global return, make sure we stay here once
 		ret_time = t0;	//Set our tracking variable as well
+		attempt_reconfigure=true;	//Set up so it will try to do a reconfiguration
 
 		/* Testing Code - remove when done - example of traversing connectivity matrix */
 			//Print the connectivity matrix for the sake of doing so
@@ -219,26 +257,111 @@ TIMESTAMP restoration::postsync(TIMESTAMP t0)
 		/* End testing code */
 	}
 
-	if ((prev_time!=0) && (NR_cycle==false))	//solution phase - check our results and see if we need to reloop or not
+	if (NR_cycle==false)	//solution cycle
 	{
-		/* ------------ Array access testing ------------- */
-			//Voltages would be checked here, just like presynch.  Replication of presync print for testing
+		reconfig_iterations++;	//Increment the iterations counter
 
-			//print first voltage for now - this is just an example of obtaining the voltages (for check)
-			printf("Volt Check Post - %f %f\n",NR_busdata[0].V[1].Re(),NR_busdata[0].V[1].Im());
-
-		/* ---------- End array access testing ------------ */
-
-		//check to see if we want to perform a reconfiguration, or let us go on our way
-		if (reconfig_check)
+		if (NR_retval != t0)	//Convergence!
 		{
-			ret_time = t0;			//We need to stay here, update as such
-			NR_admit_change = true;	//Flag NR to perform an admittance update on next solver pass (not sure if this is absolutely needed or not yet)
+			ConvergenceCheck = 0x04;
+
+			//Reset the counter - we're either at the limit or below it, so this doesn't matter
+			reconfig_iterations=0;
 		}
 		else
 		{
-			ret_time = tret;	//Let us proceed
+			ConvergenceCheck = 0x00;
 		}
+
+		if ((reconfig_iterations>=reconfig_iter_limit) && (reconfig_iter_limit!=0))	//See if we've met the iteration limit (and it's nonzero)
+		{
+			ConvergenceCheck |= 0x02;
+		}
+
+		if ((reconfig_number>=reconfig_attempts) && (reconfig_attempts!=0))	//See if we've met the reconfiguration limit (and it's nonzero)
+		{
+			ConvergenceCheck |= 0x01;
+		}
+	}
+
+	if ((prev_time!=0) && (NR_cycle==false))	//solution phase - check our results and see if we need to reloop or not
+	{
+		//Sample check for convergence, change as required
+		switch(ConvergenceCheck) {
+			case 0x00:	//Not converged, iteration limit not reached, reconfigure limit not reached
+			case 0x01:	//Not converged, iteration limit not reached, reconfigure limit reached
+				{
+					ret_time = t0;	//Proceed as we were (keep iterating)
+					break;
+				}
+			case 0x02:	//Not converged, iteration limit reached, reconfigure limit not reached
+				{
+					ret_time = t0;				//Keep us here
+					attempt_reconfigure=true;	//Flag for a reconfiguration
+					reconfig_iterations = 0;	//Reset the counter
+					break;
+				}
+			case 0x03:	//Not converged, iteration limit reached, reconfigure limit reached
+				{
+					//We're hosed
+					GL_THROW("Reconfiguration iteration and reconfiguration limits reached.");
+					/*  TROUBLESHOOT
+					The restoration object has reached the maximum number of reconfigurations per
+					timestep.  The system failed to reach a suitable configuration, so the solver
+					has halted.
+					*/
+					break;
+				}
+			case 0x04:	//Converged, iteration limit not reached, reconfigure limit not reached
+				{
+					//Check it
+					reconfig_check = VoltageCheck();
+
+					//check to see if we want to perform a reconfiguration, or let us go on our way
+					if (reconfig_check)
+					{
+						ret_time = t0;			//We need to stay here, update as such
+						NR_admit_change = true;	//Flag NR to perform an admittance update on next solver pass (not sure if this is absolutely needed or not yet)
+						attempt_reconfigure = true;	//Flag to perform a reconfiguration
+						reconfig_iterations = 0;	//Reset the iteration counter
+					}
+					else
+					{
+						ret_time = tret;	//Let us proceed
+					}
+					break;
+				}
+			case 0x05:	//Converged, iteration limit not reached, reconfigure limit reached
+				{
+					ret_time = tret;	//Converged and our last attempt, call it good and proceed
+					break;
+				}
+			case 0x06:	//Converged, iteration limit reached, reconfigure limit not reached
+				{
+					//Check it
+					reconfig_check = VoltageCheck();
+
+					//check to see if we want to perform a reconfiguration, or let us go on our way
+					if (reconfig_check)
+					{
+						ret_time = t0;			//We need to stay here, update as such
+						NR_admit_change = true;	//Flag NR to perform an admittance update on next solver pass (not sure if this is absolutely needed or not yet)
+						attempt_reconfigure = true;	//Flag to perform a reconfiguration
+						reconfig_iterations = 0;	//Reset the iteration counter
+					}
+					else
+					{
+						ret_time = tret;	//Let us proceed
+					}
+
+					break;
+				}
+			case 0x07:	//Converged, iteration limit reached, reconfigure limit reached
+				{
+					ret_time = tret;	//Converged and our last attempt, call it good and proceed
+					break;
+				}
+		}//Switch end
 	}
 		
 	//Update previous timestep info
@@ -309,6 +432,21 @@ void restoration::PopulateConnectivity(int frombus, int tobus, OBJECT *linkingob
 	//Populate the connectivity matrix - both directions
 	Connectivity_Matrix[frombus][tobus] = link_type;
 	Connectivity_Matrix[tobus][frombus] = link_type;
+}
+
+//Function to check voltages and determine if a reconfiguration is necessary
+bool *restoration::VoltageCheck(void)
+{
+	/* ------------ Array access testing ------------- */
+		//Voltages would be checked here, just like presynch.  Replication of presync print for testing
+
+		//print first voltage for now - this is just an example of obtaining the voltages (for check)
+		printf("Volt Check Post - %f %f\n",NR_busdata[0].V[1].Re(),NR_busdata[0].V[1].Im());
+
+	/* ---------- End array access testing ------------ */
+
+	//Set to always return false right now
+	return false;
 }
 
 //////////////////////////////////////////////////////////////////////////

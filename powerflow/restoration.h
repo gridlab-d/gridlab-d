@@ -21,6 +21,12 @@ public:
 	char1024 configuration_file;
 	int **Connectivity_Matrix;
 	
+	int reconfig_attempts;		//Number of reconfigurations/timestep to try before giving up
+	int reconfig_iter_limit;	//Number of iterations to let PF go before flagging this as a bad reconfiguration
+	int reconfig_number;		//Number of reconfigurations that have been attempted at this timestep
+	int reconfig_iterations;	//Number of iterations that have been performed on this reconfiguration
+	bool attempt_reconfigure;	//Flag to indicate a reconfiguration should be tried
+
 	restoration(MODULE *mod);
 	inline restoration(CLASS *cl=oclass):powerflow_object(cl){};
 	int create(void);
@@ -28,6 +34,7 @@ public:
 	int isa(char *classname);
 	void CreateConnectivity(void);
 	void PopulateConnectivity(int frombus, int tobus, OBJECT *linkingobj);
+	bool *VoltageCheck(void);
 
 	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);
