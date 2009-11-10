@@ -5,7 +5,6 @@
 #define _RESTORATION_H
 
 #include "powerflow.h"
-#include "powerflow_library.h"
 
 #define CONN_NONE 0		//No connectivity
 #define CONN_LINE 1		//Normal "line" - OH, UH, Triplex, transformer
