@@ -45,7 +45,7 @@ def run_tests(argv):
 				if printerr == 1:
 					printerr = 0
 
-	print("Starting autotest script")
+#	print("Starting autotest script")
 	
 	there_dir = os.getcwd()
 	err_ct = 0
@@ -53,12 +53,12 @@ def run_tests(argv):
 	first_time = time.time()
 	end_time = 0
 	
-	if clean == 1:
-		print("Go clean?")
+#	if clean == 1:
+#		print("Go clean?")
 	
 	# determine where the script starts
 	here_dir = os.getcwd()
-	print("Starting from \'"+here_dir+"\'")
+#	print("Starting from \'"+here_dir+"\'")
 	
 	#determine where we _want_ the script to start
 	if len(argv) > 1:
@@ -80,8 +80,8 @@ def run_tests(argv):
 		if "autotest" in dirs:
 			autotestdirs.append(os.path.abspath(os.path.join(path,"autotest")))
 	
-	for path in autotestdirs:
-		print("Found dir: \'"+path+"\'")
+#	for path in autotestdirs:
+#		print("Found dir: \'"+path+"\'")
 	
 	#locate autotest test files
 	#autotestfiles = find_autotest_files(autotestdirs)
