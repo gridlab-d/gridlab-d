@@ -47,6 +47,7 @@ public:
 
 	char32 city_name;
 	char32 state_name;
+	char32 timezone;
 	double lat_deg;
 	double lat_min;
 	double long_deg;

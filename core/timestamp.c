@@ -255,6 +255,9 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 		/* add day, hour, minute, second, usecs */
 		ts += (dt->day - 1) * DAY + dt->hour * HOUR + dt->minute * MINUTE + dt->second * SECOND + dt->microsecond * MICROSECOND;
 
+		if(dt->tz[0] == 0){
+			strcpy(dt->tz, (isdst(ts) ? tzdst : tzstd));
+		}
 		/* adjust for GMT (or unspecified) */
 		if (strcmp(dt->tz, "GMT") == 0){
 			return ts;

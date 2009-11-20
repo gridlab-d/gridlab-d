@@ -565,6 +565,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"exterior_ceiling_fraction",PADDR(exterior_ceiling_fraction),PT_DESCRIPTION,"ratio of external ceiling sf to floor area",
 			PT_double,"exterior_floor_fraction",PADDR(exterior_floor_fraction),PT_DESCRIPTION,"ratio of floor area used in UA calculation",
 			PT_double,"window_shading",PADDR(glazing_shgc),PT_DESCRIPTION,"transmission coefficient through window due to glazing",
+			PT_double,"window_exterior_transmission_coefficient",PADDR(window_exterior_transmission_coefficient),PT_DESCRIPTION,"coefficient for the amount of energy that passes through window",
+			PT_double,"solar_heatgain_factor",PADDR(solar_heatgain_factor),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"product of the window area, window transmitivity, and the window exterior transmission coefficient",
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),PT_DESCRIPTION,"number of air-changes per hour",
 			PT_double,"airchange_UA[Btu/degF.h]",PADDR(airchange_UA),PT_DESCRIPTION,"additional UA due to air infiltration",
 			PT_double,"internal_gain[Btu/h]",PADDR(total.heatgain),PT_DESCRIPTION,"internal heat gains",
@@ -572,6 +574,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"heat_cool_gain[Btu/h]",PADDR(load.heatgain),PT_DESCRIPTION,"system heat gains(losses)",
 
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),PT_DESCRIPTION,"deadband of thermostat control",
+			PT_int16,"thermostat_cycle_time",PADDR(thermostat_cycle_time),PT_DESCRIPTION,"minimum time in seconds between thermostat updates",
+			PT_timestamp,"thermostat_last_cycle_time",PADDR(thermostat_last_cycle_time),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"last time the thermostat changed state",
 			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),PT_DESCRIPTION,"thermostat heating setpoint",
 			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),PT_DESCRIPTION,"thermostat cooling setpoint",
 			PT_double,"design_heating_setpoint[degF]",PADDR(design_heating_setpoint),PT_DESCRIPTION,"system design heating setpoint",
@@ -584,6 +588,19 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"design_peak_solar[Btu/h.sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design solar load",
 			PT_double,"design_internal_gains[W/sf]", PADDR(design_internal_gains),PT_DESCRIPTION,"system design internal gains",
 			PT_double,"air_heat_fraction[pu]", PADDR(air_heat_fraction), PT_DESCRIPTION, "fraction of heat gain/loss that goes to air (as opposed to mass)",
+
+			PT_double,"auxillary_heat_capacity[Btu/h]",PADDR(aux_heat_capacity),PT_DESCRIPTION,"installed auxillary heating capacity",
+			PT_double,"aux_heat_deadband[degF]",PADDR(aux_heat_deadband),PT_DESCRIPTION,"temperature offset from standard heat activation to auxillary heat activation",
+			PT_double,"aux_heat_temperature_lockout[s]",PADDR(aux_heat_temp_lockout),PT_DESCRIPTION,"temperature at which auxillary heat will not engage above",
+			PT_double,"aux_heat_time_delay[s]",PADDR(aux_heat_time_delay),PT_DESCRIPTION,"time required for heater to run until auxillary heating engages",
+
+			PT_double,"cooling_supply_air_temp[degF]",PADDR(cooling_supply_air_temp),PT_DESCRIPTION,"temperature of air blown out of the cooling system",
+			PT_double,"heating_supply_air_temp[degF]",PADDR(heating_supply_air_temp),PT_DESCRIPTION,"temperature of air blown out of the heating system",
+			PT_double,"duct_pressure_drop[in]",PADDR(duct_pressure_drop),PT_DESCRIPTION,"end-to-end pressure drop for the ventilation ducts, in inches of water",
+			PT_double,"fan_design_power[W]",PADDR(fan_design_power),PT_DESCRIPTION,"designed maximum power draw of the ventilation fan",
+			PT_double,"fan_low_power_fraction[pu]",PADDR(fan_low_power_fraction),PT_DESCRIPTION,"fraction of ventilation fan power draw during low-power mode (two-speed only)",
+			PT_double,"fan_power[kW]",PADDR(fan_power),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"current ventilation fan power draw",
+			PT_double,"fan_design_airflow[cfm]",PADDR(fan_design_airflow),PT_DESCRIPTION,"designed airflow for the ventilation system",
 
 			PT_double,"heating_demand",PADDR(heating_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the heating system",
 			PT_double,"cooling_demand",PADDR(cooling_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the cooling system",
@@ -602,7 +619,6 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"total_thermal_mass_per_floor_area[Btu/degF.sf]",PADDR(total_thermal_mass_per_floor_area),
 			PT_double,"interior_surface_heat_transfer_coeff[Btu/h.degF.sf]",PADDR(interior_surface_heat_transfer_coeff),
 			PT_double,"number_of_stories",PADDR(number_of_stories),PT_DESCRIPTION,"number of stories within the structure",
-			PT_double,"window_exterior_transmission_coefficient",PADDR(window_exterior_transmission_coefficient),PT_DESCRIPTION,"coefficient for the amount of energy that passes through window",
 
 			PT_set,"system_type",PADDR(system_type),PT_DESCRIPTION,"heating/cooling system type/options",
 				PT_KEYWORD, "GAS",	(set)ST_GAS,
@@ -610,12 +626,29 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD, "FORCEDAIR", (set)ST_AIR,
 				PT_KEYWORD, "TWOSTAGE", (set)ST_VAR,
 				PT_KEYWORD, "RESISTIVE", (set)ST_RST,
+			PT_set,"auxillary_strategy",PADDR(auxillary_strategy),PT_DESCRIPTION,"auxillary heating activation strategies",
+				PT_KEYWORD, "NONE", (set)AX_NONE,
+				PT_KEYWORD, "DEADBAND", (set)AX_DEADBAND,
+				PT_KEYWORD, "TIMER", (set)AX_TIMER,
+				PT_KEYWORD, "LOCKOUT", (set)AX_LOCKOUT,
 			PT_enumeration,"system_mode",PADDR(system_mode),PT_DESCRIPTION,"heating/cooling system operation state",
 				PT_KEYWORD,"UNKNOWN",SM_UNKNOWN,
 				PT_KEYWORD,"HEAT",SM_HEAT,
 				PT_KEYWORD,"OFF",SM_OFF,
 				PT_KEYWORD,"COOL",SM_COOL,
 				PT_KEYWORD,"AUX",SM_AUX,
+			PT_enumeration,"heating_system_type",PADDR(heating_system_type),
+				PT_KEYWORD,"NONE",HT_NONE,
+				PT_KEYWORD,"GAS",HT_GAS,
+				PT_KEYWORD,"HEAT_PUMP",HT_HEAT_PUMP,
+				PT_KEYWORD,"RESISTANCE",HT_RESISTANCE,
+			PT_enumeration,"cooling_system_type",PADDR(cooling_system_type),
+				PT_KEYWORD,"NONE",CT_NONE,
+				PT_KEYWORD,"ELECTRIC",CT_ELECTRIC,
+			PT_enumeration,"fan_type",PADDR(fan_type),
+				PT_KEYWORD,"NONE",FT_NONE,
+				PT_KEYWORD,"ONE_SPEED",FT_ONE_SPEED,
+				PT_KEYWORD,"TWO_SPEED",FT_TWO_SPEED,
 			PT_enumeration,"thermal_integrity_level",PADDR(thermal_integrity_level),PT_DESCRIPTION,"default envelope UA settings",
 				PT_KEYWORD,"VERY_LITTLE",TI_VERY_LITTLE,
 				PT_KEYWORD,"LITTLE",TI_LITTLE,
@@ -625,11 +658,33 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD,"GOOD",TI_GOOD,
 				PT_KEYWORD,"VERY_GOOD",TI_VERY_GOOD,
 				PT_KEYWORD,"UNKNOWN",TI_UNKNOWN,
-			PT_double, "Rroof[degF.h/Btu]", PADDR(Rroof),PT_DESCRIPTION,"roof R-value",
-			PT_double, "Rwall[degF.h/Btu]", PADDR(Rwall),PT_DESCRIPTION,"wall R-value",
-			PT_double, "Rfloor[degF.h/Btu]", PADDR(Rfloor),PT_DESCRIPTION,"floor R-value",
-			PT_double, "Rwindows[degF.h/Btu]", PADDR(Rwindows),PT_DESCRIPTION,"window R-value",
-			PT_double, "Rdoors[degF.h/Btu]", PADDR(Rdoors),PT_DESCRIPTION,"door R-value",
+			PT_enumeration, "glass_type", PADDR(glass_type), PT_DESCRIPTION, "glass used in the windows",
+				PT_KEYWORD,"OTHER",GM_OTHER,
+				PT_KEYWORD,"GLASS",GM_GLASS,
+				PT_KEYWORD,"LOW_E_GLASS",GM_LOW_E_GLASS,
+			PT_enumeration, "window_frame", PADDR(window_frame), PT_DESCRIPTION, "type of window frame",
+				PT_KEYWORD, "NONE", WF_NONE,
+				PT_KEYWORD, "ALUMINUM", WF_ALUMINUM,
+				PT_KEYWORD, "THERMAL_BREAK", WF_THERMAL_BREAK,
+				PT_KEYWORD, "WOOD", WF_WOOD,
+				PT_KEYWORD, "INSULATED", WF_INSULATED,
+			PT_enumeration, "glazing_treatment", PADDR(glazing_treatment), PT_DESCRIPTION, "the treatment to increase the reflectivity of the exterior windows",
+				PT_KEYWORD, "OTHER", GT_OTHER,
+				PT_KEYWORD, "CLEAR", GT_CLEAR,
+				PT_KEYWORD, "ABS", GT_ABS,
+				PT_KEYWORD, "REFL", GT_REFL,
+				PT_KEYWORD, "LOW_S", GT_LOW_S,
+				PT_KEYWORD, "HIGH_S", GT_HIGH_S,
+			PT_enumeration, "glazing_layers", PADDR(glazing_layers), PT_DESCRIPTION, "number of layers of glass in each window",
+				PT_KEYWORD, "ONE", GL_ONE,
+				PT_KEYWORD, "TWO", GL_TWO,
+				PT_KEYWORD, "THREE", GL_THREE,
+				PT_KEYWORD, "OTHER", GL_OTHER,
+			PT_double, "Rroof[degF.sf.h/Btu]", PADDR(Rroof),PT_DESCRIPTION,"roof R-value",
+			PT_double, "Rwall[degF.sf.h/Btu]", PADDR(Rwall),PT_DESCRIPTION,"wall R-value",
+			PT_double, "Rfloor[degF.sf.h/Btu]", PADDR(Rfloor),PT_DESCRIPTION,"floor R-value",
+			PT_double, "Rwindows[degF.sf.h/Btu]", PADDR(Rwindows),PT_DESCRIPTION,"window R-value",
+			PT_double, "Rdoors[degF.sf.h/Btu]", PADDR(Rdoors),PT_DESCRIPTION,"door R-value",
 			PT_double, "hvac_breaker_rating[A]", PADDR(hvac_breaker_rating), PT_DESCRIPTION,"determines the amount of current the HVAC circuit breaker can handle",
 			PT_double, "hvac_power_factor[unit]", PADDR(hvac_power_factor), PT_DESCRIPTION,"power factor of hvac",
 			
@@ -703,7 +758,8 @@ int house_e::create()
 	gl_global_getvar("residential::implicit_enduses",active_enduses,sizeof(active_enduses));
 	char *token = NULL;
 
-	glazing_shgc = 0.65; // assuming generic double glazing
+	//glazing_shgc = 0.65; // assuming generic double glazing
+		// now zero to catch lookup trigger
 	load.power_fraction = 0.8;
 	load.impedance_fraction = 0.2;
 	load.current_fraction = 0.0;
@@ -711,9 +767,17 @@ int house_e::create()
 	thermal_integrity_level = TI_UNKNOWN;
 	hvac_breaker_rating = 0;
 	hvac_power_factor = 0;
+
+	cooling_supply_air_temp = 50.0;
+	heating_supply_air_temp = 150.0;
+
+	glazing_layers = GL_TWO;
+	glass_type = GM_LOW_E_GLASS;
+	glazing_treatment = GT_CLEAR;
+	window_frame = WF_THERMAL_BREAK;
+
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
-
 	if (strcmp(active_enduses,"NONE")!=0)
 	{
 		char *eulist[64];
@@ -845,6 +909,368 @@ int house_e::init_climate()
 	return 1;
 }
 
+void house_e::set_thermal_integrity(){
+	switch (thermal_integrity_level) {
+		case TI_VERY_LITTLE:
+			Rroof = 11;
+			Rwall = 4;
+			Rfloor = 4;
+			Rdoors = 3;
+			Rwindows = 1/1.27;
+			airchange_per_hour = 1.5;
+			break;
+		case TI_LITTLE:
+			Rroof = 19;
+			Rwall = 11;
+			Rfloor = 4;
+			Rdoors = 3;
+			Rwindows = 1/0.81;
+			airchange_per_hour = 1.5;
+			break;
+		case TI_BELOW_NORMAL:
+			Rroof = 19;
+			Rwall = 11;
+			Rfloor = 11;
+			Rdoors = 3;
+			Rwindows = 1/0.81;
+			airchange_per_hour = 1.0;
+			break;
+		case TI_NORMAL:
+			Rroof = 30;
+			Rwall = 11;
+			Rfloor = 19;
+			Rdoors = 3;
+			Rwindows = 1/0.6;
+			airchange_per_hour = 1.0;
+			break;
+		case TI_ABOVE_NORMAL:
+			Rroof = 30;
+			Rwall = 19;
+			Rfloor = 11;
+			Rdoors = 3;
+			Rwindows = 1/0.6;
+			airchange_per_hour = 1.0;
+			break;
+		case TI_GOOD:
+			Rroof = 30;
+			Rwall = 19;
+			Rfloor = 22;
+			Rdoors = 5;
+			Rwindows = 1/0.47;
+			airchange_per_hour = 0.5;
+			break;
+		case TI_VERY_GOOD:
+			Rroof = 48;
+			Rwall = 22;
+			Rfloor = 30;
+			Rdoors = 11;
+			Rwindows = 1/0.31;
+			airchange_per_hour = 0.5;
+			break;
+		case TI_UNKNOWN:
+			// do nothing - use all of the built-in defaults or user-specified values as thermal integrity wasn't used
+			break;
+		default:
+			// do nothing - use all of the built-in defaults or user-specified values as thermal integrity wasn't used
+			break;
+	}
+}
+
+
+void house_e::set_window_shgc(){
+	switch(glazing_layers){
+		case GL_ONE:
+			switch(glazing_treatment){
+				case GT_CLEAR:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.86;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.75;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.64;
+							break;
+					}
+					break;
+				case GT_ABS:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.73;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.64;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.54;
+							break;
+					}
+					break;
+				case GT_REFL:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.31;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.28;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.24;
+							break;
+					}
+					break;
+			}
+			break;
+		case GL_TWO:
+			switch(glazing_treatment){
+				case GT_CLEAR:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.76;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.67;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.57;
+							break;
+					}
+					break;
+				case GT_ABS:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.62;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.55;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.46;
+							break;
+					}
+					break;
+				case GT_REFL:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.29;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.27;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.22;
+							break;
+					}
+					break;
+				case GT_LOW_S:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.41;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.37;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.31;
+							break;
+					}
+					break;
+				case GT_HIGH_S:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.70;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.62;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.52;
+							break;
+					}
+					break;
+			}
+			break;
+		case GL_THREE:
+			switch(glazing_treatment){
+				case GT_CLEAR:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.68;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.60;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.51;
+							break;
+					}
+					break;
+				case GT_ABS:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.34;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.31;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.26;
+							break;
+					}
+					break;
+				case GT_REFL:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.34;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.31;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.26;
+							break;
+					}
+					break;
+				case GT_LOW_S:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.27;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.25;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.21;
+							break;
+					}
+					break;
+				case GT_HIGH_S:
+					switch(window_frame){
+						case WF_NONE:
+							glazing_shgc = 0.62;
+							break;
+						case WF_ALUMINUM:
+						case WF_THERMAL_BREAK:
+							glazing_shgc = 0.55;
+							break;
+						case WF_WOOD:
+						case WF_INSULATED:
+							glazing_shgc = 0.46;
+							break;
+					}
+					break;
+			}
+			break;
+	}
+}
+
+void house_e::set_window_Rvalue(){
+	if(glass_type == GM_LOW_E_GLASS){
+		switch(glazing_layers){
+			case GL_ONE:
+				gl_error("no value for one pane of low-e glass");
+				break;
+			case GL_TWO:
+				switch(window_frame){
+					case WF_NONE:
+						Rwindows = 1.0/0.30;
+					case WF_ALUMINUM:
+						Rwindows = 1.0/0.67;
+					case WF_THERMAL_BREAK:
+						Rwindows = 1.0/0.47;
+					case WF_WOOD:
+						Rwindows = 1.0/0.41;
+					case WF_INSULATED:
+						Rwindows = 1.0/0.33;
+				}
+				break;
+			case GL_THREE:
+				switch(window_frame){
+					case WF_NONE:
+						Rwindows = 1/0.27;
+					case WF_ALUMINUM:
+						Rwindows = 1/0.64;
+					case WF_THERMAL_BREAK:
+						Rwindows = 1/0.43;
+					case WF_WOOD:
+						Rwindows = 1/0.37;
+					case WF_INSULATED:
+						Rwindows = 1/0.31;
+				}
+				break;
+		}
+	} else if(glass_type == GM_GLASS){
+		switch(glazing_layers){
+			case GL_ONE:
+				switch(window_frame){
+					case WF_NONE:
+						Rwindows = 1/1.04;
+					case WF_ALUMINUM:
+						Rwindows = 1/1.27;
+					case WF_THERMAL_BREAK:
+						Rwindows = 1/1.08;
+					case WF_WOOD:
+						Rwindows = 1/0.90;
+					case WF_INSULATED:
+						Rwindows = 1/0.81;
+				}
+				break;
+			case GL_TWO:
+				switch(window_frame){
+					case WF_NONE:
+						Rwindows = 1/0.48;
+					case WF_ALUMINUM:
+						Rwindows = 1/0.81;
+					case WF_THERMAL_BREAK:
+						Rwindows = 1/0.60;
+					case WF_WOOD:
+						Rwindows = 1/0.53;
+					case WF_INSULATED:
+						Rwindows = 1/0.44;
+				}
+				break;
+			case GL_THREE:
+				switch(window_frame){
+					case WF_NONE:
+						Rwindows = 1/0.31;
+					case WF_ALUMINUM:
+						Rwindows = 1/0.67;
+					case WF_THERMAL_BREAK:
+						Rwindows = 1/0.46;
+					case WF_WOOD:
+						Rwindows = 1/0.40;
+					case WF_INSULATED:
+						Rwindows = 1/0.34;
+				}
+				break;
+		}
+	}
+}
 /** Map circuit variables to meter.  Initalize house_e and HVAC model properties,
 and internal gain variables.
 **/
@@ -910,94 +1336,54 @@ int house_e::init(OBJECT *parent)
 	if (panel.max_amps==0) panel.max_amps = 200; 
 	load.power = complex(0,0,J);
 
-	// Set defaults for published variables nor provided by model definition
-	switch (thermal_integrity_level) {
-		case TI_VERY_LITTLE:
-			Rroof = 11;
-			Rwall = 4;
-			Rfloor = 4;
-			Rdoors = 3;
-			Rwindows = 1/1.27;
-			airchange_per_hour = 1.5;
-			break;
-		case TI_LITTLE:
-			Rroof = 19;
-			Rwall = 11;
-			Rfloor = 4;
-			Rdoors = 3;
-			Rwindows = 1/0.81;
-			airchange_per_hour = 1.5;
-			break;
-		case TI_BELOW_NORMAL:
-			Rroof = 19;
-			Rwall = 11;
-			Rfloor = 11;
-			Rdoors = 3;
-			Rwindows = 1/0.81;
-			airchange_per_hour = 1.0;
-			break;
-		case TI_NORMAL:
-			Rroof = 30;
-			Rwall = 11;
-			Rfloor = 19;
-			Rdoors = 3;
-			Rwindows = 1/0.6;
-			airchange_per_hour = 1.0;
-			break;
-		case TI_ABOVE_NORMAL:
-			Rroof = 30;
-			Rwall = 19;
-			Rfloor = 11;
-			Rdoors = 3;
-			Rwindows = 1/0.6;
-			airchange_per_hour = 1.0;
-			break;
-		case TI_GOOD:
-			Rroof = 30;
-			Rwall = 19;
-			Rfloor = 22;
-			Rdoors = 5;
-			Rwindows = 1/0.47;
-			airchange_per_hour = 0.5;
-			break;
-		case TI_VERY_GOOD:
-			Rroof = 48;
-			Rwall = 22;
-			Rfloor = 30;
-			Rdoors = 11;
-			Rwindows = 1/0.31;
-			airchange_per_hour = 0.5;
-			break;
-		case TI_UNKNOWN:
-			// do nothing - use all of the built-in defaults or user-specified values as thermal integrity wasn't used
-			break;
-		default:
-			// do nothing - use all of the built-in defaults or user-specified values as thermal integrity wasn't used
-			break;
+	// old-style HVAC system variable mapping
+	if(system_type & ST_GAS)		heating_system_type = HT_GAS;
+	else if (system_type & ST_RST)	heating_system_type = HT_RESISTANCE;
+	if(system_type & ST_AC)			cooling_system_type = CT_ELECTRIC;
+	if(system_type & ST_AIR)		fan_type = FT_ONE_SPEED;
+	if(system_type & ST_VAR)		fan_type = FT_TWO_SPEED;
+
+	if(system_type == 0){ // not using legacy format
+		if(heating_system_type == HT_NONE)		heating_system_type = HT_HEAT_PUMP;
+		if(cooling_system_type == CT_NONE)		cooling_system_type = CT_ELECTRIC;
+		if(fan_type == FT_NONE)					fan_type = FT_ONE_SPEED;
+		if(auxillary_system_type == AT_NONE)	auxillary_system_type = AT_ELECTRIC;
+		if(auxillary_strategy == AX_NONE)		auxillary_strategy = AX_DEADBAND;
 	}
 
+	// Set defaults for published variables nor provided by model definition
+	set_thermal_integrity();
 
-	if (heating_COP==0.0)		heating_COP = 2;//gl_random_triangle(1,2);
-	if (cooling_COP==0.0)		cooling_COP = 2;//gl_random_triangle(2,4);
-	if (number_of_stories==0)	number_of_stories=1;
+	//	COP only affects heat pumps
+	if (heating_COP<=0.0)		heating_COP = 2.5;
+	if (cooling_COP<=0.0)		cooling_COP = 3.5;
 
-	if (aspect_ratio==0.0)		aspect_ratio = 1.5;//gl_random_triangle(1,2);
-	if (floor_area==0)			floor_area = 2200;
-	if (ceiling_height==0)		ceiling_height = 8;//gl_random_triangle(7,9);
+	if (number_of_stories < 1.0)
+		number_of_stories = 1.0;
+	if (fmod(number_of_stories, 1.0) != 0.0){
+		number_of_stories = floor(number_of_stories);
+
+	}
+	if (aspect_ratio==0.0)		aspect_ratio = 1.5;
+	if (floor_area==0)			floor_area = 2500.0;
+	if (ceiling_height==0)		ceiling_height = 8.0;
 	if (gross_wall_area==0)		gross_wall_area = 2.0 * number_of_stories * (aspect_ratio + 1.0) * ceiling_height * sqrt(floor_area/aspect_ratio/number_of_stories);
 	if (window_wall_ratio==0)	window_wall_ratio = 0.07;
-	if (number_of_doors==0)		number_of_doors = 4;
+	if (window_roof_ratio==0)	window_roof_ratio = 0.0; // explicitly zero'ed
+	if (number_of_doors==0)		number_of_doors = 4.0;
+	else						number_of_doors = floor(number_of_doors); /* integer-based */
 	if (interior_exterior_wall_ratio == 0) interior_exterior_wall_ratio = 1.5; //Based partions for six rooms per floor
-	if (exterior_wall_fraction==0) exterior_wall_fraction = 1;
-	if (exterior_ceiling_fraction==0) exterior_ceiling_fraction = 1;
-	if (exterior_floor_fraction==0) exterior_floor_fraction = 1;
-	if (window_exterior_transmission_coefficient==0) window_exterior_transmission_coefficient = 0.6; //0.6 represents a window with a screen
+	if (exterior_wall_fraction==0) exterior_wall_fraction = 1.0;
+	if (exterior_ceiling_fraction==0) exterior_ceiling_fraction = 1.0;
+	if (exterior_floor_fraction==0) exterior_floor_fraction = 1.0;
+	if (window_exterior_transmission_coefficient<=0) window_exterior_transmission_coefficient = 0.60; //0.6 represents a window with a screen
 
-	if (Rroof==0)				Rroof = 30;//gl_random_triangle(50,70);
-	if (Rwall==0)				Rwall = 19;//gl_random_triangle(15,25);
-	if (Rfloor==0)				Rfloor = 22;//gl_random_triangle(100,150);
-	if (Rwindows==0)			Rwindows = 2.1;//gl_random_triangle(2,4);
-	if (Rdoors==0)				Rdoors = 5;//gl_random_triangle(1,3);
+	if (glazing_shgc <= 0.0)	set_window_shgc();
+	if (Rroof<=0)				Rroof = 30.0;
+	if (Rwall<=0)				Rwall = 19.0;
+	if (Rfloor<=0)				Rfloor = 22.0;
+	if (Rwindows<=0)			set_window_Rvalue();
+	if (Rdoors<=0)				Rdoors = 5.0;
 	
 	air_density = 0.0735;			// density of air [lb/cf]
 	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
@@ -1008,13 +1394,13 @@ int house_e::init(OBJECT *parent)
 	if (air_thermal_mass==0) air_thermal_mass = 3*air_heat_capacity*air_mass;	// thermal mass of air [BTU/F]  //*3 multiplier is to reflect that the air mass includes surface effects from the mass as well.  
 	if (air_heat_fraction==0) air_heat_fraction=0.5;
 	if (air_heat_fraction<0.0 || air_heat_fraction>1.0) throw "air heat fraction is not between 0 and 1";
-	if (total_thermal_mass_per_floor_area == 0) total_thermal_mass_per_floor_area = 2;
-	if (interior_surface_heat_transfer_coeff == 0) interior_surface_heat_transfer_coeff = 1;
+	if (total_thermal_mass_per_floor_area <= 0.0) total_thermal_mass_per_floor_area = 2.0;
+	if (interior_surface_heat_transfer_coeff <= 0.0) interior_surface_heat_transfer_coeff = 1.46;
 
-	if (airchange_per_hour==0)	airchange_per_hour = 0.5;//gl_random_triangle(0.5,1);
-	if (airchange_UA == 0) airchange_UA = airchange_per_hour * volume * air_density * air_heat_capacity;
+	if (airchange_per_hour<=0)	airchange_per_hour = 0.5;//gl_random_triangle(0.5,1);
+	if (airchange_UA <= 0) airchange_UA = airchange_per_hour * volume * air_density * air_heat_capacity;
 
-	double door_area = number_of_doors * 3 * 78 / 12;
+	double door_area = number_of_doors * 3.0 * 78.0 / 12.0; // 3' wide by 78" tall
 	double window_area = gross_wall_area * window_wall_ratio * exterior_wall_fraction;
 	double net_exterior_wall_area = exterior_wall_fraction * (gross_wall_area - window_area - door_area);
 	double exterior_ceiling_area = floor_area * exterior_ceiling_fraction / number_of_stories;
@@ -1022,43 +1408,100 @@ int house_e::init(OBJECT *parent)
 
 	if (envelope_UA==0)	envelope_UA = exterior_ceiling_area/Rroof + exterior_floor_area/Rfloor + net_exterior_wall_area/Rwall + window_area/Rwindows + door_area/Rdoors;
 
-	// initalize/set system model parameters
-    //if (COP_coeff==0)			COP_coeff = gl_random_uniform(0.9,1.1);	// coefficient of cops [scalar]
-	if (heating_setpoint==0)	heating_setpoint = 70;//gl_random_triangle(68,72);
-	if (cooling_setpoint==0)	cooling_setpoint = 75;//gl_random_triangle(75,79);
-	if (design_cooling_setpoint==0) design_cooling_setpoint = 75;
-	if (design_heating_setpoint==0) design_heating_setpoint = 70;
-	if (design_peak_solar==0)	design_peak_solar = 195; //From Rob's defaults
+	solar_heatgain_factor = window_area * glazing_shgc * window_exterior_transmission_coefficient;
 
-	if (thermostat_deadband==0)	thermostat_deadband = 2;//gl_random_triangle(2,3);
-	if (Tair==0){
+	// initalize/set system model parameters
+	if (heating_setpoint==0.0)	heating_setpoint = 70.0;
+	if (cooling_setpoint==0.0)	cooling_setpoint = 75.0;
+	if (design_cooling_setpoint==0.0) design_cooling_setpoint = 75.0;
+	if (design_heating_setpoint==0.0) design_heating_setpoint = 70.0;
+	if (design_peak_solar<=0.0)	design_peak_solar = 195.0; //From Rob's defaults
+
+	if (thermostat_deadband<=0.0)	thermostat_deadband = 2.0;
+	if (thermostat_cycle_time<=0.0) thermostat_cycle_time = 120.0;
+	if (Tair==0.0){
 		/* bind limits between 60 and 140 degF */
-		double Thigh = cooling_setpoint+thermostat_deadband/2;
-		double Tlow  = heating_setpoint-thermostat_deadband/2;
-		Thigh = clip(Thigh, 60, 140);
-		Tlow = clip(Tlow, 60, 140);
+		double Thigh = cooling_setpoint+thermostat_deadband/2.0;
+		double Tlow  = heating_setpoint-thermostat_deadband/2.0;
+		Thigh = clip(Thigh, 60.0, 140.0);
+		Tlow = clip(Tlow, 60.0, 140.0);
 		Tair = gl_random_uniform(Tlow, Thigh);	// air temperature [F]
 	}
-	if (over_sizing_factor==0)  over_sizing_factor = 0;
-	if (cooling_design_temperature == 0)	cooling_design_temperature = 95.0;
-	if (design_internal_gains==0) design_internal_gains =  167.09 * pow(floor_area,0.442); // Numerical estimate of internal gains
-	if (latent_load_fraction==0) latent_load_fraction = 0.3;
-	if (design_cooling_capacity==0)	// calculate basic load then round to nearest standard HVAC sizing
+	if (over_sizing_factor<=0.0)  over_sizing_factor = 0.0;
+	if (cooling_design_temperature == 0.0)	cooling_design_temperature = 95.0;
+	if (design_internal_gains<=0.0) design_internal_gains =  167.09 * pow(floor_area,0.442); // Numerical estimate of internal gains
+	if (latent_load_fraction<=0.0) latent_load_fraction = 0.35;
+
+	double round_value = 0.0;
+	if (design_cooling_capacity<=0.0 && cooling_system_type != CT_NONE)	// calculate basic load then round to nearest standard HVAC sizing
 	{	
-		design_cooling_capacity = (1 + over_sizing_factor) * (1+latent_load_fraction) * ((envelope_UA + airchange_UA) * (cooling_design_temperature - design_cooling_setpoint) + design_internal_gains + (design_peak_solar * window_area * glazing_shgc * window_exterior_transmission_coefficient));
-		double round_value = design_cooling_capacity / 12000;
-		design_cooling_capacity = ceil(round_value) * 12000;
+		round_value = 0.0;
+		design_cooling_capacity = (1.0 + over_sizing_factor) * (1.0 + latent_load_fraction) * ((envelope_UA + airchange_UA) * (cooling_design_temperature - design_cooling_setpoint) + design_internal_gains + (design_peak_solar * window_area * glazing_shgc * window_exterior_transmission_coefficient));
+		round_value = (design_cooling_capacity - 3000.0) / 6000.0;
+		design_cooling_capacity = ceil(round_value) * 6000.0;
 	}
 
-	if (design_heating_capacity==0)	// calculate basic load then round to nearest standard HVAC sizing
+	if(auxillary_strategy != AX_NONE && heating_system_type == HT_NONE)
+	{	/* auxillary heating and no normal heating?  crazy talk! */
+		static int aux_for_rst = 0;
+		if(aux_for_rst == 0){
+			gl_warning("house_e heating strategies with auxillary heat but without normal heating modes are converted"
+							"to resistively heated houses");
+			aux_for_rst = 1;
+		}
+		heating_system_type = HT_RESISTANCE;
+	}
+
+	if (design_heating_capacity<=0 && heating_system_type != HT_NONE)	// calculate basic load then round to nearest standard HVAC sizing
 	{
-		design_heating_capacity = (1 + over_sizing_factor) * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
-		double round_value = design_heating_capacity / 10000;
-		design_heating_capacity = ceil(round_value) * 10000;
+		round_value = 0.0;
+		if(heating_system_type == HT_HEAT_PUMP){
+			design_heating_capacity = design_cooling_capacity; /* primary is to reverse the heat pump */
+		} else {
+			design_heating_capacity = (1.0 + over_sizing_factor) * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
+			round_value = (design_heating_capacity-5000.0) / 10000.0;
+			design_heating_capacity = ceil(round_value) * 10000.0;
+		}
 	}
-    if (system_mode==SM_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
 
-	if (house_content_thermal_mass==0) house_content_thermal_mass = total_thermal_mass_per_floor_area*floor_area;		// thermal mass of house_e [BTU/F]
+    if (system_mode==SM_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
+	
+	if (aux_heat_capacity<=0.0 && auxillary_strategy != AX_NONE)
+	{
+		round_value = 0.0;
+		aux_heat_capacity = (1.0 + over_sizing_factor) * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
+		round_value = (aux_heat_capacity-5000.0) / 10000.0;
+		aux_heat_capacity = ceil(round_value) * 10000.0;
+	}
+
+	if (aux_heat_deadband<=0.0)		aux_heat_deadband = thermostat_deadband;
+	if (aux_heat_temp_lockout<=0.0)	aux_heat_temp_lockout = 120.0; // two minutes
+	if (aux_heat_time_delay<=0.0)	aux_heat_time_delay = 300.0; // five minutes
+
+	if (duct_pressure_drop<=0.0)	duct_pressure_drop = 0.5; // half inch of water pressure
+	if (fan_design_airflow<=0.0){
+		double design_heating_cfm;
+		double design_cooling_cfm;
+		double gtr_cfm;
+	
+		design_heating_cfm = (design_heating_capacity > aux_heat_capacity ? design_heating_capacity : aux_heat_capacity) / (0.018 * (heating_supply_air_temp - design_heating_setpoint)) / 60.0;
+		design_cooling_cfm = design_cooling_capacity / (1.0 + latent_load_fraction) / (0.018 * (design_cooling_setpoint - cooling_supply_air_temp)) / 60.0;
+		gtr_cfm = (design_heating_cfm > design_cooling_cfm ? design_heating_cfm : design_cooling_cfm);
+		fan_design_airflow = gtr_cfm;
+	}
+
+	if (fan_design_power<=0.0){
+		double roundval;
+		//	
+		roundval = floor(0.117 * duct_pressure_drop * fan_design_airflow / 0.42 / 745.7 + 1.0/16.0);
+		fan_design_power = roundval / 8.0 * 745.7 / 0.88; // fan rounds to the nearest 1/8 HP
+	}
+
+	if (fan_low_power_fraction<=0.0 && fan_type == FT_TWO_SPEED)
+									fan_low_power_fraction = 0.5; /* low-power mode for two-speed fans */
+	if (fan_power <= 0.0)			fan_power = 0.0;
+
+	if (house_content_thermal_mass==0) house_content_thermal_mass = total_thermal_mass_per_floor_area*floor_area - 2 * air_heat_capacity*air_mass;		// thermal mass of house_e [BTU/F]
     if (house_content_heat_transfer_coeff==0) house_content_heat_transfer_coeff = interior_surface_heat_transfer_coeff*( net_exterior_wall_area / exterior_wall_fraction + gross_wall_area * interior_exterior_wall_ratio + number_of_stories * exterior_ceiling_area / exterior_ceiling_fraction);	// heat transfer coefficient of house_e contents [BTU/hr.F]
 
 	if(Tair == 0){
@@ -1276,39 +1719,117 @@ void house_e::update_system(double dt)
 
 	double heating_capacity_adj = design_heating_capacity*(0.34148808 + 0.00894102*(*pTout) + 0.00010787*(*pTout)*(*pTout)); 
 	double cooling_capacity_adj = design_cooling_capacity*(1.48924533 - 0.00514995*(*pTout));
-
+	
+#pragma message("house_e: add update_system voltage adjustment for heating")
+	double voltage_adj = 1.0;//((pCircuit_V[0] * pCircuit_V[0]) / (240.0 * 240.0));
+	
 	switch (system_mode) {
 	case SM_HEAT:
+		// turn the fan on
+		if(fan_type != FT_NONE)
+			fan_power = fan_design_power/1000.0; /* convert to kW */
+		else
+			fan_power = 0.0;
+
 		//heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)*KWPBTUPH;
 		//system_rated_capacity = design_heating_capacity*heating_capacity_adj;
-		if(system_type&ST_RST){
-			;
-		} else {
-			heating_demand = design_heating_capacity / heating_cop_adj * KWPBTUPH;
-			system_rated_capacity = heating_capacity_adj;
-			system_rated_power = heating_demand;
-			break;
+		switch(heating_system_type){
+			case HT_NONE: /* shouldn't've gotten here... */
+				heating_demand = 0.0;
+				system_rated_capacity = 0.0;
+				system_rated_power = 0.0;
+				fan_power = 0.0; // turn it back off
+				break;
+			case HT_RESISTANCE:
+				heating_demand = design_heating_capacity*KWPBTUPH*voltage_adj;
+				system_rated_capacity = design_heating_capacity*voltage_adj + fan_power*BTUPHPKW;
+				system_rated_power = heating_demand;
+				break;
+			case HT_HEAT_PUMP:
+				heating_demand = design_heating_capacity / heating_cop_adj * KWPBTUPH;
+				system_rated_capacity = heating_capacity_adj + fan_power*BTUPHPKW;
+				system_rated_power = heating_demand;
+				break;
+			case HT_GAS:
+				heating_demand = 0.0;
+				system_rated_capacity = design_heating_capacity + fan_power*BTUPHPKW;
+				system_rated_power = heating_demand;
+				break;
 		}
+		break;
 	case SM_AUX:
-		heating_demand = design_heating_capacity*KWPBTUPH;
-		system_rated_capacity = design_heating_capacity;
-		system_rated_power = heating_demand;
+		// turn the fan on
+		if(fan_type != FT_NONE)
+			fan_power = fan_design_power/1000.0; /* convert to kW */
+		else
+			fan_power = 0.0;
+
+		switch(auxillary_system_type){
+			case AT_NONE: // really shouldn't've gotten here!
+				heating_demand = 0.0;
+				system_rated_capacity = 0.0;
+				system_rated_power = 0.0;
+				break;
+			case AT_ELECTRIC:
+				heating_demand = aux_heat_capacity*KWPBTUPH*voltage_adj;
+				system_rated_capacity = aux_heat_capacity*voltage_adj;
+				system_rated_power = heating_demand;
+				break;
+		}
 		break;
 	case SM_COOL:
+		// turn the fan on
+		if(fan_type != FT_NONE)
+			fan_power = fan_design_power/1000.0; /* convert to kW */
+		else
+			fan_power = 0.0;
+
 		//cooling_demand = design_cooling_capacity*cooling_capacity_adj/(1+latent_load_fraction)/(cooling_COP * cooling_cop_adj)*(1+latent_load_fraction)*KWPBTUPH;
 		//system_rated_capacity = -design_cooling_capacity/(1+latent_load_fraction)*cooling_capacity_adj;
-
-		cooling_demand = design_cooling_capacity / cooling_cop_adj * KWPBTUPH;
-		system_rated_capacity = -cooling_capacity_adj / (1 + latent_load_fraction);
-		system_rated_power = cooling_demand;
+		switch(cooling_system_type){
+			case CT_NONE: /* shouldn't've gotten here... */
+				cooling_demand = 0.0;
+				system_rated_capacity = 0.0;
+				system_rated_power = 0.0;
+				fan_power = 0.0; // turn it back off
+				break;
+			case CT_ELECTRIC:
+				cooling_demand = design_cooling_capacity / cooling_cop_adj * KWPBTUPH;
+				system_rated_capacity = -cooling_capacity_adj / (1 + latent_load_fraction) + fan_power*BTUPHPKW;
+				system_rated_power = cooling_demand;
+				break;
+		}
 		break;
-	default:
+	default: // SM_OFF or SM_UNKNOWN
 		// two-speed systems use a little power at when off (vent mode)
-		system_rated_capacity = 0.0;		// total heat gain of system
-		system_rated_power = 0.0;			// total power drawn by system
+		if(fan_type == FT_TWO_SPEED){
+			fan_power = fan_design_power * fan_low_power_fraction / 1000.0; /* convert to kW */
+		} else {
+			fan_power = 0.0;
+		}
+		system_rated_capacity =  fan_power*BTUPHPKW;	// total heat gain of system
+		system_rated_power = 0.0;					// total power drawn by system
+		
 	}
 
 	/* calculate the power consumption */
+	load.total = system_rated_power + fan_power;
+	load.heatgain = system_rated_capacity;
+
+	if(	(cooling_system_type == CT_ELECTRIC		&& system_mode == SM_COOL) ||
+		(heating_system_type == HT_HEAT_PUMP	&& system_mode == SM_HEAT)) {
+			load.power.SetRect(load.power_fraction * load.total.Re() , load.power_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+			load.admittance.SetRect(load.impedance_fraction * load.total.Re() , load.impedance_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+			load.current.SetRect(load.current_fraction * load.total.Re(), load.current_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+	} else {
+		//	gas heat & resistive heat -> fan power P and heating power Z
+		//	else just fan & system_rated_power = 0
+			load.power.SetRect(fan_power, 0.0);
+			load.admittance.SetRect(system_rated_power, 0.0);
+			load.current.SetRect(0.0, 0.0);
+	}
+
+	/*
 	// manually add 'total', we should be unshaped
 	// central-air fan consumes only ~5% of total energy when using GAS, 2% when ventilating at low power
 	load.current = load.admittance = complex(0,0);
@@ -1354,7 +1875,7 @@ void house_e::update_system(double dt)
 	{
 		if(system_type&ST_RST && (system_mode == SM_HEAT || system_mode == SM_AUX)){
 			load.power = complex(0,0);
-			load.admittance = complex(load.total.Re() , load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) ); /* explicitly all kZ by flag */
+			load.admittance = complex(load.total.Re() , load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) ); // explicitly all kZ by flag
 			load.current = complex(0,0);
 		} else {
 			load.power = complex(load.power_fraction * load.total.Re() , load.power_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
@@ -1367,7 +1888,7 @@ void house_e::update_system(double dt)
 		load.power = complex(0,0);
 		load.admittance = complex(0,0);
 		load.current = complex(0,0);
-	}
+	}*/
 	hvac_load = load.total.Re();
 }
 
@@ -1458,7 +1979,17 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		update_Tevent();
 
 		/* solve for the time to the next event */
-		double dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+		double dt2;
+		
+		/* dt2 is for the next thermal event ... avoid calculating the next time to a given
+			temperature until the cycle time has elapse.
+		 */
+		// this is always false if thermostat_cycle_time == 0
+		if(t < thermostat_last_cycle_time + thermostat_cycle_time){
+			dt2 = thermostat_last_cycle_time + thermostat_cycle_time;
+		} else {
+			dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+		}
 
 		// if no solution is found or it has already occurred
 		if (isnan(dt2) || !isfinite(dt2) || dt2<0)
@@ -1479,7 +2010,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 #ifdef _DEBUG
 		gl_debug("house %s (%d) time to next event is less than time resolution", obj->name, obj->id);
 #endif
-		}	
+		}
 		else
 		{
 			// next event is found
@@ -1594,7 +2125,8 @@ void house_e::update_Tevent()
 		if (dTair<0) // falling
 			Tevent = TheatOn;
 		else if (dTair>0) // rising 
-			Tevent = ( (system_type&ST_AC) ? TcoolOn : warn_high_temp) ;
+			//Tevent = ( (system_type&ST_AC) ? TcoolOn : warn_high_temp) ;
+			Tevent = ( cooling_system_type != CT_NONE ? TcoolOn : warn_high_temp );
 		else
 			Tevent = Tair;
 		break;
@@ -1612,9 +2144,17 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	const double TcoolOff = cooling_setpoint-tdead;
 	const double TheatOn = heating_setpoint-tdead;
 	const double TheatOff = heating_setpoint+tdead;
+	const double TauxOn = TheatOn-aux_heat_deadband;
+
+	// check for thermostat cycle lockout
+	if(t0 < thermostat_last_cycle_time + thermostat_cycle_time){
+		return TS_NEVER; // next time will be calculated in sync_model
+	}
 
 	// check for deadband overlap
-	if (cooling_setpoint-tdead<heating_setpoint+tdead && (system_type&ST_AC))
+	if ((cooling_setpoint-tdead<heating_setpoint+tdead) &&
+//		(system_type&ST_AC))
+		(cooling_system_type != CT_NONE))
 	{
 		gl_error("house_e: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", cooling_setpoint-tdead, heating_setpoint+tdead);
 		return TS_INVALID;
@@ -1623,32 +2163,60 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	if(system_mode == SM_UNKNOWN)
 		system_mode = SM_OFF;
 	
+	/* rationale behind thermostat_last_cycle_time:
+		at this point, the system's handling PLC code, between presync and sync. t0 is when
+		the temperature was updated from, and t1 is "now".  Any changes for "now" must operate
+		off of t1. -mhauer
+	*/
 	// change control mode if necessary
 	switch(system_mode){
 		case SM_HEAT:
-			if (Tair < (heating_setpoint - thermostat_deadband)) // If the air of the house is 2x outside the deadband range, it needs AUX help
+			/* if (aux deadband OR timer tripped) AND below aux lockout, go auxillary */
+			if (((auxillary_strategy & AX_DEADBAND	 && Tair < TauxOn)
+				 || (auxillary_strategy & AX_TIMER	 && t0 >= thermostat_last_cycle_time + aux_heat_time_delay))
+				 && (auxillary_strategy & AX_LOCKOUT && *pTout <= aux_heat_temp_lockout)
+				){
 				system_mode = SM_AUX;
-			else if(Tair > TheatOff - terr/2)
+				thermostat_last_cycle_time = t1;
+			} else if(Tair > TheatOff - terr/2){
 				system_mode = SM_OFF;
+				thermostat_last_cycle_time = t1;
+			}
 			break;
 		case SM_AUX:
-			if(Tair > TheatOff - terr/2)
+			if(Tair > TheatOff - terr/2){
 				system_mode = SM_OFF;
+				thermostat_last_cycle_time = t1;
+			}
 			break;
 		case SM_COOL:
-			if(Tair < TcoolOff - terr/2)
+			if(Tair < TcoolOff - terr/2){
 				system_mode = SM_OFF;
+				thermostat_last_cycle_time = t1;
+			}
 			break;
 		case SM_OFF:
-			if(Tair > TcoolOn - terr/2 && (system_type&ST_AC))
+			if((Tair > TcoolOn - terr/2) &&
+//				(system_type&ST_AC))
+				(cooling_system_type != CT_NONE ))
+			{
 				system_mode = SM_COOL;
+				thermostat_last_cycle_time = t1;
+			}
 			else if(Tair < TheatOn - terr/2)
 			{
 				//if (outside_temperature < aux_cutin_temperature)
-				if (Tair < (heating_setpoint - thermostat_deadband)) // If the air of the house is 2x outside the deadband range, it needs AUX help
+				if (Tair < (heating_setpoint - TauxOn) && (auxillary_strategy & AX_DEADBAND) && // turn aux on if deadband is set
+					(!(auxillary_strategy & AX_LOCKOUT) || (*pTout <= aux_heat_temp_lockout))) // If the air of the house is 2x outside the deadband range, it needs AUX help
+				{
 					system_mode = SM_AUX;
+					thermostat_last_cycle_time = t1;
+				}
 				else
+				{
 					system_mode = SM_HEAT;
+					thermostat_last_cycle_time = t1;
+				}
 			}
 			break;
 	}
@@ -1839,7 +2407,10 @@ void house_e::check_controls(void)
 		}
 
 		/* check for cooling equipment sizing problem */
-		else if (system_mode==SM_COOL && (system_type&ST_AC) && Teq>cooling_setpoint)
+		else if (system_mode==SM_COOL &&
+//			(system_type&ST_AC) &&
+			(cooling_system_type != CT_NONE) &&
+			Teq>cooling_setpoint)
 		{
 			gl_warning("house_e:%d (%s) cooling equipement undersized at %s", 
 				obj->id, obj->name?obj->name:"anonymous", gl_strftime(obj->clock));
@@ -1951,3 +2522,5 @@ EXPORT TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0)
 }
 
 /**@}**/
+
+ 	  	 

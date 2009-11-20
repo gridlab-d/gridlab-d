@@ -67,33 +67,43 @@ public:
 	// building design variables
 	double floor_area;							///< house_e floor area (ft^2)
 	double envelope_UA;							///< envelope UA (BTU.sq.ft/hr.ft2)
-	double glazing_shgc;						///< glazing SHGC
-	double window_wall_ratio;					///< window-wall ratio
 	double number_of_doors;						///< door-wall ratio
+	double area_per_door;						///< area per exterior door
+	double total_door_area;						///< exterior door area
+	double total_wall_area;						///< exterior opaque wall area
 	double gross_wall_area;						///< gross wall area (sq.ft)
 	double ceiling_height;						///< ceiling height
 	double interior_exterior_wall_ratio;		///< ratio of internal to external wall area
 	double exterior_wall_fraction;				///< exterior-wall ratio
+	double exterior_ceiling_fraction;			///< ratio of external ceiling sf to floor area
+	double exterior_floor_fraction;
 	double aspect_ratio;						///< building footprint aspect ratio
 	double solar_aperture[N_SOLAR_SURFACES];	///< Future: Solar aperture(WWR) by orientation
 	double house_content_heat_transfer_coeff;	///< mass UA
-	//double COP_coeff;							///< equipment cop coefficient (scalar)
 	double air_density;							///< air density
 	double air_heat_capacity;					///< heat capacity of air
 	double house_content_thermal_mass;			///< house thermal mass (BTU/F)
 	double total_thermal_mass_per_floor_area;	///<Total thermal mass per unit of floor area (Rob's rule of thumb is 2 for wood frame)
 	double interior_surface_heat_transfer_coeff;///< Rob's rule of thumb is 1
-	double exterior_ceiling_fraction;			///< ratio of external ceiling sf to floor area
-	double exterior_floor_fraction;
 	double air_heat_fraction;					///< fraction of gains that go to air
 	double number_of_stories;
 
+	// window variables
+	double glazing_shgc;						///< glazing SHGC
+	double window_wall_ratio;					///< window-wall ratio
+	double window_roof_ratio;					///< window-roof ratio (skylights)
+	double total_window_area;
+	double window_exterior_transmission_coefficient; ///< fraction of energy that transmits through windows
+	double solar_heatgain_factor;				///< product of the window solar heatgain coefficient and the exterior transmission coefficient
+
 	// system design variables
+	// thermostat
 	double thermostat_deadband;		///< thermostat deadband (degF)
-	double airchange_per_hour;		///< house_e air changes per hour (ach)
-	double airchange_UA;			///< additional UA due to air changes per hour
+	int16 thermostat_cycle_time;	///< thermostat minimum cycle time (seconds)
+	TIMESTAMP thermostat_last_cycle_time;
 	double heating_setpoint;		///< heating setpoint (degF)
 	double cooling_setpoint;		///< cooling setpoint (degF)
+	// hvac characteristics
 	double design_heating_setpoint;	///< design heating setpoint (degF)
 	double design_cooling_setpoint;	///< design cooling setpoint (degF)
 	double design_heating_capacity;	///< space heating capacity (BTUh/sf)
@@ -101,13 +111,38 @@ public:
 	double heating_COP;				///< space heating COP
 	double cooling_COP;				///< space cooling COP
 	double over_sizing_factor;		///< Future: equipment over sizing factor
-	double rated_heating_capacity;	///< reated heating capacity of the system (BTUh/sf; varies w.r.t Tout),
+	double rated_heating_capacity;	///< rated heating capacity of the system (BTUh/sf; varies w.r.t Tout),
 	double rated_cooling_capacity;	///< rated cooling capacity of the system (BTUh/sf; varies w.r.t Tout)
-	double latent_load_fraction;	///< fractional increase in cooling load due to latent heat
 	double hvac_breaker_rating;		///< HVAC current limit on the breaker
 	double hvac_power_factor;		///< HVAC power factor
+	// auxillary heat characteristics
+	double aux_heat_capacity;		///< auxillary (resistive) heat is COP 1 and has no adjustment
+	double aux_heat_deadband;		///< additional deadband before auxillary heat engages
+	double aux_heat_temp_lockout;	///< outdoor temperature at which the auxillary heat will automatically engage
+	double aux_heat_time_delay;		///< minimum time the heat pump must run until the auxillary heating engages
+	// fan characteristics
+	double fan_design_power;		///< designed maximum power draw of the ventilation fan
+	double fan_low_power_fraction;	///< fraction of ventilation fan power draw during low-power mode (two-speed only)
+	double fan_power;				///< current power being fed to the ventilation fan
+	double fan_design_airflow;		///< designed airflow for the ventilation system (cf/min)
+	double duct_pressure_drop;		///< pressure drop across the ventilation ducting, in inches of water pressure
+	double cooling_supply_air_temp;
+	double heating_supply_air_temp;
+	// building HVAC effects
+	double airchange_per_hour;		///< house_e air changes per hour (ach)
+	double airchange_UA;			///< additional UA due to air changes per hour
+	double latent_load_fraction;	///< fractional increase in cooling load due to latent heat
 	
-	double window_exterior_transmission_coefficient; ///< fraction of energy that transmits through windows
+	// current hvac properties
+	double system_rated_power;		///< rated power of the system
+	double system_rated_capacity;	///< rated capacity of the system
+
+	/* inherited res_enduse::load is hvac system load */
+	double hvac_load;
+	enduse total; /* total load */
+	double heating_demand;
+	double cooling_demand;
+
 
 	typedef enum {
 		ST_GAS	= 0x00000001,	///< flag to indicate gas heating is used
@@ -117,24 +152,76 @@ public:
 		ST_RST	= 0x00000010,	///< flag to indicate that the heat is purely resistive
 	} SYSTEMTYPE; ///< flags for system type options
 	set system_type;///< system type
-		
+	/* obsolete? -MH */
 
-	// derived/calculated variables
-	double volume;					///< house_e air volume
-	double air_mass;				///< mass of air (lbs)
-	double air_thermal_mass;		///< thermal mass of air (BTU/F)
-	double solar_load;				///< solar load (BTU/h)
-	double cooling_design_temperature, heating_design_temperature, design_peak_solar, design_internal_gains, design_internal_gain_density;
+	typedef enum  {
+		AX_NONE = 0x0,
+		AX_DEADBAND = 0x1,
+		AX_TIMER = 0x2,
+		AX_LOCKOUT = 0x4,
+	} AUXSTRATEGY;
+	set auxillary_strategy;
 
-	double Rroof, Rwall, Rfloor, Rwindows, Rdoors;
+	typedef enum{
+		AT_NONE,
+		AT_ELECTRIC,
+	} AUXILLARYSYSTEMTYPE;
+	AUXILLARYSYSTEMTYPE auxillary_system_type;
 
-	double *pTout;	// pointer to outdoor temperature (see climate)
-	double *pRhout;	// pointer to outdoor humidity (see climate)
-	double *pSolar;	// pointer to solar radiation array (see climate)
+	typedef enum{
+		HT_NONE,
+		HT_GAS,
+		HT_HEAT_PUMP,
+		HT_RESISTANCE,
+	} HEATSYSTEMTYPE;
+	HEATSYSTEMTYPE heating_system_type;
 
-	double Tair;
-	double Tmaterials;
-	double outside_temperature;
+	typedef enum {
+		CT_NONE,
+		CT_ELECTRIC,
+	} COOLSYSTEMTYPE;
+	COOLSYSTEMTYPE cooling_system_type;
+
+	typedef enum {
+		FT_NONE,
+		FT_ONE_SPEED,
+		FT_TWO_SPEED,
+	} FANTYPE;
+	FANTYPE fan_type;
+
+	typedef enum {
+		GM_OTHER,
+		GM_GLASS,
+		GM_LOW_E_GLASS,
+	} GLASSTYPE;
+	GLASSTYPE glass_type;
+
+	typedef enum {
+		WF_NONE,
+		WF_ALUMINUM,
+		WF_THERMAL_BREAK,
+		WF_WOOD,
+		WF_INSULATED,
+	} WINDOWFRAME;
+	WINDOWFRAME window_frame;
+
+	typedef enum {
+		GT_OTHER,
+		GT_CLEAR,
+		GT_ABS,
+		GT_REFL,
+		GT_LOW_S,
+		GT_HIGH_S,
+	} GLAZINGTREATMENT;
+	GLAZINGTREATMENT glazing_treatment;
+
+	typedef enum {
+		GL_ONE=1,
+		GL_TWO=2,
+		GL_THREE=3,
+		GL_OTHER,
+	} GLAZINGLAYERS;
+	GLAZINGLAYERS glazing_layers;
 
 	typedef enum {				///< Thermal integrity level is an "easy" to use
 		TI_VERY_LITTLE  =0,		///< parameter, which gives reasonable defaults
@@ -156,18 +243,36 @@ public:
 		SM_COOL		=4,				///< cooling mode
 	} SYSTEMMODE;					///< system mode
 	SYSTEMMODE system_mode;			///< system mode at t1
-	double system_rated_power;		///< rated power of the system
-	double system_rated_capacity;	///< rated capacity of the system
 
-	/* inherited res_enduse::load is hvac system load */
-	double hvac_load;
-	enduse total; /* total load */
+	// derived/calculated variables
+	double volume;					///< house_e air volume
+	double air_mass;				///< mass of air (lbs)
+	double air_thermal_mass;		///< thermal mass of air (BTU/F)
+	double solar_load;				///< solar load (BTU/h)
+	double cooling_design_temperature;
+	double heating_design_temperature;
+	double design_peak_solar;
+	double design_internal_gains;
+	double design_internal_gain_density;
 
-	double heating_demand;
-	double cooling_demand;
+	double Rroof;
+	double Rwall;
+	double Rfloor;
+	double Rwindows;
+	double Rdoors;
+
+	double *pTout;	// pointer to outdoor temperature (see climate)
+	double *pRhout;	// pointer to outdoor humidity (see climate)
+	double *pSolar;	// pointer to solar radiation array (see climate)
+
+	double Tair;
+	double Tmaterials;
+	double outside_temperature;
 
 private:
-
+	void set_thermal_integrity();
+	void set_window_shgc();
+	void set_window_Rvalue();
 	// internal variables used to track state of house */
 	double dTair;
 	double a,b,c,c1,c2,A3,A4,k1,k2,r1,r2,Teq,Tevent,Qi,Qa,Qm;
@@ -175,7 +280,8 @@ private:
 	double d;
 #endif
 	static bool warn_control;
-	static double warn_low_temp, warn_high_temp;
+	static double warn_low_temp;
+	static double warn_high_temp;
 	static double system_dwell_time; // time interval at which hvac checks its state (approximates true dwell time)
 	bool check_start;
 	bool *NR_mode;			//Toggle for NR soling cycle.  If not NR, just goes to false
@@ -227,3 +333,5 @@ inline double sgn(double x)
 #endif
 
 /**@}**/
+
+ 	  	 

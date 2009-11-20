@@ -47,6 +47,7 @@ csv_reader::csv_reader(MODULE *module){
 				PT_KEYWORD,"OPEN",CR_OPEN,
 				PT_KEYWORD,"ERROR",CR_ERROR,
 			PT_char32,"timefmt",PADDR(timefmt),
+			PT_char32,"timezone",PADDR(timezone),
 			PT_char256,"columns",PADDR(columns_str),
 			PT_char256,"filename",PADDR(filename),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -147,8 +148,25 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 	}
 
 	// Windows pointers on my Dell Precision 390 are apparently ulli -MH
-	if(0 == gl_set_value(my, (void *)((unsigned long long int)this + (unsigned long long int)prop->addr), valstr, prop)){
-		gl_error("csv_reader::read_prop ~ unable to set property \'%s\' to \'%s\'", propstr, valstr);
+	/* BAD BAD BAD!  cannot use 'my' with this, it may not have an associate object header!!! */
+//	if(0 == gl_set_value(my, (void *)((unsigned long long int)this + (unsigned long long int)prop->addr), valstr, prop)){
+//		gl_error("csv_reader::read_prop ~ unable to set property \'%s\' to \'%s\'", propstr, valstr);
+//		return 0;
+//	}	
+	void *addr = ((unsigned long long int)this + (unsigned long long int)prop->addr);
+	if(prop->ptype == PT_double){
+		if(1 != sscanf(valstr, "%lg", addr)){
+			gl_error("csv_reader::read_prop ~ unable to set property \'%s\' to \'%s\'", propstr, valstr);
+			return 0;
+		}
+	} else if(prop->ptype == PT_char32){
+		strncpy((char *)addr, valstr, 32);
+	} else {
+		gl_error("csv_reader::read_prop ~ unable to convert property \'%s\' due to type restrictions", propstr);
+		/* TROUBLESHOOTING
+			This is a programming problem.  The property parser within the csv_reader is only able to
+			properly handle char32 and double properties.
+		 */
 		return 0;
 	}
 	return 1;
