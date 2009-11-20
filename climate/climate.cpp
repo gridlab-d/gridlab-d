@@ -26,13 +26,13 @@ double surface_angles[] = {
 	-45,	// SW
 	-90,	// W
 	-135,	// NW
-}; 
+};
 
 /**
 	@addtogroup tmy TMY2 data
 	@ingroup climate
-	
-	Opens a TMY2 file for reading and reads in the header data.  Some of the data 
+
+	Opens a TMY2 file for reading and reads in the header data.  Some of the data
 	in the header is used in solar radiation calculations, so this data needs to
 	be held in memory for future use.  This also sets the file pointer used for
 	later reads.
@@ -47,7 +47,7 @@ int tmy2_reader::open(const char *file){
 		gl_error("tmy2_reader::open() -- fopen failed on \"%s\"", file);
 		return 0;
 	}
-	
+
 	// read in the header (use the c code given in the manual)
 	if(fgets(buf,500,fp)){
 		return sscanf(buf,"%*s %75s %3s %d %*s %d %d %*s %d %d",data_city,data_state,&tz_offset,&lat_degrees,&lat_minutes,&long_degrees,&long_minutes);
@@ -65,7 +65,7 @@ int tmy2_reader::open(const char *file){
 int tmy2_reader::next(){
 	// read the next line into the buffer using fgets.
 	char *val = fgets(buf,500,fp);
-	
+
 	if(val != NULL)
 		return 1;
 	else
@@ -74,7 +74,7 @@ int tmy2_reader::next(){
 
 /**
 	Passes the header data by reference out to the calling function.
-	
+
 	@param city the city the data represents
 	@param state the state the city is located in
 	@param degrees latitude degrees
@@ -115,7 +115,7 @@ int tmy2_reader::read_data(double *dnr, double *dhr, double *tdb, double *rh, in
 				/* 3__5__7__9___23_27__29_33___67_71_79__82___95_98_ */
 	if(dnr) *dnr = tmp_dnr;
 	if(dhr) *dhr = tmp_dhr;
-	if(tdb) 
+	if(tdb)
 	{
 		*tdb = ((double)tmp_tdb)/10.0;
 		if (*tdb<low_temp || low_temp==0) low_temp = *tdb;
@@ -124,13 +124,13 @@ int tmy2_reader::read_data(double *dnr, double *dhr, double *tdb, double *rh, in
 	/* *tdb = ((double)tmp_tdb)/10.0 * 9.0 / 5.0 + 32.0; */
 	if(rh) *rh = ((double)tmp_rh)/100.0;
 	if(wind) *wind = tmp_ws/10.0;
-	
+
 	// COnvert precip in mm to in/h
 	if(precip) *precip = ((double)tmp_precip) * 0.03937;
-	
+
 	//convert snowfall in cm to in
 	if(snowDepth) *snowDepth =  ((double)tmp_sf) * 0.3937;
-	
+
 	return 1;
 }
 
@@ -178,7 +178,7 @@ climate::climate(MODULE *module)
 	memset(this, 0, sizeof(climate));
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"climate",sizeof(climate),PC_PRETOPDOWN); 
+		oclass = gl_register_class(module,"climate",sizeof(climate),PC_PRETOPDOWN);
 		if (gl_publish_variable(oclass,
 			PT_char32, "city", PADDR(city),
 			PT_char1024,"tmyfile",PADDR(tmyfile),
@@ -210,6 +210,7 @@ climate::climate(MODULE *module)
 			PT_double,"solar_west",PADDR(solar_flux[CP_W]),
 			PT_double,"solar_northwest",PADDR(solar_flux[CP_NW]),
 			PT_double,"solar_raw[W/sf]",PADDR(solar_raw),
+			PT_object,"reader",PADDR(reader),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(climate));
 		strcpy(city,"");
@@ -228,7 +229,7 @@ climate::climate(MODULE *module)
 	}
 }
 
-int climate::create(void) 
+int climate::create(void)
 {
 	memcpy(this,defaults,sizeof(climate));
 	return 1;
@@ -236,10 +237,13 @@ int climate::create(void)
 
 int climate::init(OBJECT *parent)
 {
+	char *dot = 0;
+	reader_type = RT_NONE;
+
 	// ignore "" files ~ manual climate control is a feature
 	if (strcmp(tmyfile,"")==0)
 		return 1;
-	
+
 	// open access to the TMY file
 	char *found_file = gl_findfile(tmyfile,NULL,FF_READ);
 	if (found_file==NULL) // TODO: get proper values for solar
@@ -247,10 +251,43 @@ int climate::init(OBJECT *parent)
 		gl_error("weather file '%s' access failed", tmyfile);
 		return 0;
 	}
+
+	
+	dot = strchr(tmyfile, '.');
+	while(strchr(dot+1, '.')){ /* init time, doesn't have to be fast -MH */
+		dot = strchr(dot, '.');
+	}
+	if(strncmp(dot+1, "csv", 3) == 0){
+		reader_type = RT_CSV;
+		// may or may not have an object,
+		// have not called open()
+		if(reader == NULL){
+			int rv = 0;
+			csv_reader *creader = new csv_reader();
+			reader_hndl = creader;
+			rv = creader->open(found_file);
+//			creader->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &wind_speed, &rainfall, &snowdepth);
+			return rv;
+		} else {
+			int rv = 0;
+			csv_reader *my = OBJECTDATA(reader,csv_reader);
+			reader_hndl = my;
+			rv = my->open(my->filename);
+//			my->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &wind_speed, &rainfall, &snowdepth);
+			return rv;
+		}
+	} else if(strncmp(dot+1, "tmy2", 4) == 0){
+		reader_type = RT_TMY2;
+	}  else {
+		gl_warning("climate init unable to recognize tmyfile extension, defaulting to TMY file reader");
+		reader_type = RT_TMY2;
+	}
+
 	if( file.open(found_file) < 3 ){
 		gl_error("climate::init() -- weather file header improperly formed");
 		return 0;
 	}
+	
 	// begin parsing the TMY file
 	int line=0;
 	tmy = (TMYDATA*)malloc(sizeof(TMYDATA)*8760);
@@ -260,7 +297,7 @@ int climate::init(OBJECT *parent)
 		return 0;
 	}
 
-	int month, day, hour, year;
+	int month, day, hour;//, year;
 	double dnr,dhr, wspeed,precip,snowdepth;
 	//char cty[50];
 	//char st[3];
@@ -273,11 +310,11 @@ int climate::init(OBJECT *parent)
 	double tz_meridian =  15 * abs(file.tz_offset);//std_meridians[-file.tz_offset-5];
 	while (line<8760 && file.next())
 	{
-		
+
 		file.read_data(&dnr,&dhr,&temperature,&humidity,&month,&day,&hour,&wspeed,&precip,&snowdepth);
-	
+
 		int doy = sa->day_of_yr(month,day);
-		int hoy = (doy - 1) * 24 + (hour-1); 
+		int hoy = (doy - 1) * 24 + (hour-1);
 		if (hoy>=0 && hoy<8760){
 			// pre-conversion of solar data from W/m^2 to W/sf
 			if(0 == gl_convert("W/m^2", "W/sf", &(dnr))){
@@ -304,8 +341,8 @@ int climate::init(OBJECT *parent)
 			tmy[hoy].solar_raw = dnr;
 			// calculate the solar radiation
 			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(long_degrees));
-			double sol_rad = 0.0; 
-			
+			double sol_rad = 0.0;
+
 			for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				if(c_point == CP_H)
 					sol_rad = file.calc_solar(CP_E,doy,RAD(degrees),sol_time,dnr,dhr,0.0);//(double)dnr * cos_incident + dhr;
@@ -320,27 +357,31 @@ int climate::init(OBJECT *parent)
 				{
 					record.high = tmy[hoy].temp;
 					record.high_day = doy;
-				}			
-				if (tmy[hoy].temp<record.low || record.low==0) 
+				}
+				if (tmy[hoy].temp<record.low || record.low==0)
 				{
 					record.low = tmy[hoy].temp;
 					record.low_day = doy;
 				}
 			}
-			
+
 		}
 		else
 			gl_error("%s(%d): day %d, hour %d is out of allowed range 0-8759 hours", tmyfile,line,day,hour);
-		
+
 		line++;
 	}
 	file.close();
-	
+
 	return 1;
 }
 
 TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 {
+	if(t0 > TS_ZERO && reader_type == RT_CSV){
+		csv_reader *cr = OBJECTDATA(reader,csv_reader);
+		return cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &wind_speed, &rainfall, &snowdepth);
+	}
 	if (t0>TS_ZERO && tmy!=NULL)
 	{
 		DATETIME ts;
@@ -363,7 +404,7 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 				this->wind_speed = tmy[hoy].windspeed;
 				this->rainfall = tmy[hoy].rainfall;
 				this->snowdepth = tmy[hoy].snowdepth;
-				
+
 				if(memcmp(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double)))
 					memcpy(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double));
 				break;
@@ -420,7 +461,7 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 // IMPLEMENTATION OF CORE LINKAGE: climate
 //////////////////////////////////////////////////////////////////////////
 
-/// Create a climate object 
+/// Create a climate object
 EXPORT int create_climate(OBJECT **obj, ///< a pointer to the OBJECT*
 						  OBJECT *parent) ///< a pointer to the parent OBJECT
 {
@@ -457,3 +498,5 @@ EXPORT TIMESTAMP sync_climate(OBJECT *obj, /// a pointer to the OBJECT
 }
 
 /**@}**/
+
+

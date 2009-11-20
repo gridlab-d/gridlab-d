@@ -12,6 +12,8 @@
 #include <stdarg.h>
 #include "gridlabd.h"
 #include "solar_angles.h"
+#include "weather_reader.h"
+#include "csv_reader.h"
 
 typedef enum{
 	CP_H    = 0,
@@ -31,6 +33,8 @@ typedef enum{
 	CI_LINEAR,
 	CI_QUADRATIC
 } CLIMATE_INTERPOLATE;
+
+
 
 typedef struct s_tmy {
 	double temp; // F
@@ -129,6 +133,7 @@ class climate {
 public:
 	char32 city; ///< the city
 	char1024 tmyfile; ///< the TMY file name
+	OBJECT *reader;
 	double temperature; ///< the temperature (degF)
 	double temperature_raw; ///< the temperature (degC)
 	double humidity; ///< the relative humidity (%)
@@ -150,8 +155,14 @@ public:
 	} record;
 	CLIMATE_INTERPOLATE interpolate;
 private:
+	enum READERTYPE {
+		RT_NONE,
+		RT_TMY2,
+		RT_CSV,
+	}  reader_type;
 	SolarAngles *sa;
 	tmy2_reader file;
+	weather_reader *reader_hndl;
 	TMYDATA *tmy;
 public:
 	static CLASS *oclass;

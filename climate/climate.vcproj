@@ -511,6 +511,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\csv_reader.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\climate\init.cpp"
 				>
 			</File>
@@ -526,6 +530,14 @@
 				RelativePath="..\climate\test.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\weather.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\weather_reader.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -537,11 +549,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\csv_reader.h"
+				>
+			</File>
+			<File
 				RelativePath="..\climate\solar_angles.h"
 				>
 			</File>
 			<File
 				RelativePath="..\climate\test.h"
+				>
+			</File>
+			<File
+				RelativePath=".\weather.h"
+				>
+			</File>
+			<File
+				RelativePath=".\weather_reader.h"
 				>
 			</File>
 		</Filter>
