@@ -4173,8 +4173,6 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	INCLUDELIST *list;
 	INCLUDELIST *this = (INCLUDELIST *)malloc(sizeof(INCLUDELIST));//={incname,include_list}; /* REALLY BAD IDEA ~~ "this" is a reserved C++ keyword */
 
-	linenum = 1;
-
 	strcpy(this->file, incname);
 	this->next = include_list;
 	output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'", 
@@ -4225,6 +4223,9 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 		return -1;
 	}
 
+	old_linenum = linenum;
+	linenum = 1;
+
 	if(FSTAT(fileno(fp), &stat) == 0){
 		if(stat.st_mtime > modtime){
 			modtime = stat.st_mtime;
@@ -4268,7 +4269,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 
 	//include_list = this.next;
 
-	//linenum = old_linenum;
+	linenum = old_linenum;
 
 	return count;
 }
