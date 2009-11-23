@@ -292,6 +292,7 @@ int underground_line::isa(char *classname)
 void underground_line::test_phases(line_configuration *config, const char ph)
 {
 	bool condCheck, condNotPres;
+	OBJECT *obj = GETOBJECT(this);
 
 	if (ph=='A')
 	{
@@ -316,11 +317,11 @@ void underground_line::test_phases(line_configuration *config, const char ph)
 	//Nothing else down here.  Should never get anything besides ABCN to check
 
 	if (condCheck==true)
-		GL_THROW("invalid conductor for phase %c of underground line",ph);
+		GL_THROW("invalid conductor for phase %c of underground line",ph,obj->name);
 		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an underground line conductor, it may be an overhead or triplex-line only conductor. */
 
 	if (condNotPres==true)
-		GL_THROW("missing conductor for phase %c of underground line",ph);
+		GL_THROW("missing conductor for phase %c of underground line",ph,obj->name);
 		/*  TROUBLESHOOT
 		The object specified as the configuration for the underground line is not a valid
 		configuration object.  Please ensure you have a line_configuration object selected.

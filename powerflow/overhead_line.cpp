@@ -238,6 +238,7 @@ int overhead_line::isa(char *classname)
 void overhead_line::test_phases(line_configuration *config, const char ph)
 {
 	bool condCheck, condNotPres;
+	OBJECT *obj = GETOBJECT(this);
 
 	if (ph=='A')
 	{
@@ -262,11 +263,11 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 	//Nothing else down here.  Should never get anything besides ABCN to check
 
 	if (condCheck==true)
-		GL_THROW("invalid conductor for phase %c of overhead line",ph);
+		GL_THROW("invalid conductor for phase %c of overhead line %s",ph,obj->name);
 		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an overhead line conductor, it may be an underground or triplex-line only conductor */
 
 	if (condNotPres==true)
-		GL_THROW("missing conductor for phase %c of overhead line",ph);
+		GL_THROW("missing conductor for phase %c of overhead line %s",ph,obj->name);
 		/*  TROUBLESHOOT
 		The conductor specified for the indicated phase for the overhead line is missing
 		or invalid.
