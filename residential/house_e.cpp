@@ -775,6 +775,11 @@ int house_e::create()
 	cooling_supply_air_temp = 50.0;
 	heating_supply_air_temp = 150.0;
 
+	heating_system_type = HT_HEAT_PUMP; // assume heat pump under all circumstances until we are told otherwise
+	cooling_system_type = CT_UNKNOWN;
+	auxillary_system_type = AT_UNKNOWN;
+	fan_type = FT_UNKNOWN;
+
 	glazing_layers = GL_TWO;
 	glass_type = GM_LOW_E_GLASS;
 	glazing_treatment = GT_CLEAR;
@@ -1341,7 +1346,6 @@ int house_e::init(OBJECT *parent)
 	load.power = complex(0,0,J);
 
 	// old-style HVAC system variable mapping
-	heating_system_type = HT_HEAT_PUMP; // assume heat pump under all circumstances until we are told otherwise
 
 	if(system_type & ST_GAS)		heating_system_type = HT_GAS;
 	else if (system_type & ST_RST)	heating_system_type = HT_RESISTANCE;
@@ -1353,12 +1357,23 @@ int house_e::init(OBJECT *parent)
 		fan_type = FT_ONE_SPEED;
 	}
 
+	if(system_type != 0){ // using legacy format
+		if(heating_system_type == HT_UNKNOWN)		heating_system_type = HT_NONE; // should not be possible, but good to put in.
+		if(cooling_system_type == CT_UNKNOWN)		cooling_system_type = CT_NONE;
+		if(fan_type == FT_UNKNOWN)					fan_type = FT_NONE;
+		if(auxillary_system_type == AT_UNKNOWN){
+			auxillary_system_type = AT_NONE;
+			auxillary_strategy = 0;
+		}
+	}
 	if(system_type == 0){ // not using legacy format
-		if(heating_system_type == HT_NONE)		heating_system_type = HT_HEAT_PUMP;
-		if(cooling_system_type == CT_NONE)		cooling_system_type = CT_ELECTRIC;
-		if(fan_type == FT_NONE)					fan_type = FT_ONE_SPEED;
-		if(auxillary_system_type == AT_NONE)	auxillary_system_type = AT_ELECTRIC;
-		if(auxillary_strategy == AX_NONE)		auxillary_strategy = AX_DEADBAND;
+		if(heating_system_type == HT_UNKNOWN)		heating_system_type = HT_HEAT_PUMP;
+		if(cooling_system_type == CT_UNKNOWN)		cooling_system_type = CT_ELECTRIC;
+		if(fan_type == FT_UNKNOWN)					fan_type = FT_ONE_SPEED;
+		if(auxillary_system_type == AT_UNKNOWN){
+			auxillary_system_type = AT_ELECTRIC;
+			auxillary_strategy = AX_DEADBAND;
+		}
 	} else if(!(system_type & ST_GAS) && !(system_type & ST_RST)){
 		// if old style and using a heat pump, assume electric auxillary with deadband
 		auxillary_system_type = AT_ELECTRIC;

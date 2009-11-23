@@ -163,12 +163,14 @@ public:
 	set auxillary_strategy;
 
 	typedef enum{
+		AT_UNKNOWN,
 		AT_NONE,
 		AT_ELECTRIC,
 	} AUXILLARYSYSTEMTYPE;
 	AUXILLARYSYSTEMTYPE auxillary_system_type;
 
 	typedef enum{
+		HT_UNKNOWN,
 		HT_NONE,
 		HT_GAS,
 		HT_HEAT_PUMP,
@@ -177,12 +179,14 @@ public:
 	HEATSYSTEMTYPE heating_system_type;
 
 	typedef enum {
+		CT_UNKNOWN,
 		CT_NONE,
 		CT_ELECTRIC,
 	} COOLSYSTEMTYPE;
 	COOLSYSTEMTYPE cooling_system_type;
 
 	typedef enum {
+		FT_UNKNOWN,
 		FT_NONE,
 		FT_ONE_SPEED,
 		FT_TWO_SPEED,
