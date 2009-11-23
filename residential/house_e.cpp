@@ -645,6 +645,10 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_enumeration,"cooling_system_type",PADDR(cooling_system_type),
 				PT_KEYWORD,"NONE",CT_NONE,
 				PT_KEYWORD,"ELECTRIC",CT_ELECTRIC,
+				PT_KEYWORD,"HEAT_PUMP",CT_ELECTRIC,
+			PT_enumeration,"auxillary_system_type",PADDR(auxillary_system_type),
+				PT_KEYWORD,"NONE",AT_NONE,
+				PT_KEYWORD,"ELECTRIC",AT_ELECTRIC,
 			PT_enumeration,"fan_type",PADDR(fan_type),
 				PT_KEYWORD,"NONE",FT_NONE,
 				PT_KEYWORD,"ONE_SPEED",FT_ONE_SPEED,
@@ -1337,11 +1341,17 @@ int house_e::init(OBJECT *parent)
 	load.power = complex(0,0,J);
 
 	// old-style HVAC system variable mapping
+	heating_system_type = HT_HEAT_PUMP; // assume heat pump under all circumstances until we are told otherwise
+
 	if(system_type & ST_GAS)		heating_system_type = HT_GAS;
 	else if (system_type & ST_RST)	heating_system_type = HT_RESISTANCE;
 	if(system_type & ST_AC)			cooling_system_type = CT_ELECTRIC;
 	if(system_type & ST_AIR)		fan_type = FT_ONE_SPEED;
 	if(system_type & ST_VAR)		fan_type = FT_TWO_SPEED;
+
+	if(heating_system_type == HT_HEAT_PUMP && fan_type == FT_NONE){
+		fan_type = FT_ONE_SPEED;
+	}
 
 	if(system_type == 0){ // not using legacy format
 		if(heating_system_type == HT_NONE)		heating_system_type = HT_HEAT_PUMP;
@@ -1349,6 +1359,10 @@ int house_e::init(OBJECT *parent)
 		if(fan_type == FT_NONE)					fan_type = FT_ONE_SPEED;
 		if(auxillary_system_type == AT_NONE)	auxillary_system_type = AT_ELECTRIC;
 		if(auxillary_strategy == AX_NONE)		auxillary_strategy = AX_DEADBAND;
+	} else if(!(system_type & ST_GAS) && !(system_type & ST_RST)){
+		// if old style and using a heat pump, assume electric auxillary with deadband
+		auxillary_system_type = AT_ELECTRIC;
+		auxillary_strategy = AX_DEADBAND;
 	}
 
 	// Set defaults for published variables nor provided by model definition
@@ -1441,7 +1455,7 @@ int house_e::init(OBJECT *parent)
 		design_cooling_capacity = ceil(round_value) * 6000.0;
 	}
 
-	if(auxillary_strategy != AX_NONE && heating_system_type == HT_NONE)
+	if(auxillary_system_type != AT_NONE && heating_system_type == HT_NONE)
 	{	/* auxillary heating and no normal heating?  crazy talk! */
 		static int aux_for_rst = 0;
 		if(aux_for_rst == 0){
@@ -1466,7 +1480,7 @@ int house_e::init(OBJECT *parent)
 
     if (system_mode==SM_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
 	
-	if (aux_heat_capacity<=0.0 && auxillary_strategy != AX_NONE)
+	if (aux_heat_capacity<=0.0 && auxillary_system_type != AT_NONE)
 	{
 		round_value = 0.0;
 		aux_heat_capacity = (1.0 + over_sizing_factor) * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
@@ -2172,7 +2186,8 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	switch(system_mode){
 		case SM_HEAT:
 			/* if (aux deadband OR timer tripped) AND below aux lockout, go auxillary */
-			if (((auxillary_strategy & AX_DEADBAND	 && Tair < TauxOn)
+			if ( auxillary_system_type != AT_NONE	 &&
+				((auxillary_strategy & AX_DEADBAND	 && Tair < TauxOn)
 				 || (auxillary_strategy & AX_TIMER	 && t0 >= thermostat_last_cycle_time + aux_heat_time_delay))
 				 && (auxillary_strategy & AX_LOCKOUT && *pTout <= aux_heat_temp_lockout)
 				){
@@ -2206,7 +2221,9 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 			else if(Tair < TheatOn - terr/2)
 			{
 				//if (outside_temperature < aux_cutin_temperature)
-				if (Tair < (heating_setpoint - TauxOn) && (auxillary_strategy & AX_DEADBAND) && // turn aux on if deadband is set
+				if (Tair < (heating_setpoint - TauxOn) && 
+					(auxillary_system_type != AT_NONE) && // turn on aux if we have it
+					(auxillary_strategy & AX_DEADBAND) && // turn aux on if deadband is set
 					(!(auxillary_strategy & AX_LOCKOUT) || (*pTout <= aux_heat_temp_lockout))) // If the air of the house is 2x outside the deadband range, it needs AUX help
 				{
 					system_mode = SM_AUX;
