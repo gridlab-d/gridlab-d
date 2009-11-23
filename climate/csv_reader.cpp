@@ -153,7 +153,7 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 //		gl_error("csv_reader::read_prop ~ unable to set property \'%s\' to \'%s\'", propstr, valstr);
 //		return 0;
 //	}	
-	void *addr = ((unsigned long long int)this + (unsigned long long int)prop->addr);
+	void *addr = (void *)((unsigned long long int)this + (unsigned long long int)prop->addr);
 	if(prop->ptype == PT_double){
 		if(1 != sscanf(valstr, "%lg", addr)){
 			gl_error("csv_reader::read_prop ~ unable to set property \'%s\' to \'%s\'", propstr, valstr);
