@@ -115,11 +115,11 @@ public:
 	double rated_cooling_capacity;	///< rated cooling capacity of the system (BTUh/sf; varies w.r.t Tout)
 	double hvac_breaker_rating;		///< HVAC current limit on the breaker
 	double hvac_power_factor;		///< HVAC power factor
-	// auxillary heat characteristics
-	double aux_heat_capacity;		///< auxillary (resistive) heat is COP 1 and has no adjustment
-	double aux_heat_deadband;		///< additional deadband before auxillary heat engages
-	double aux_heat_temp_lockout;	///< outdoor temperature at which the auxillary heat will automatically engage
-	double aux_heat_time_delay;		///< minimum time the heat pump must run until the auxillary heating engages
+	// auxiliary heat characteristics
+	double aux_heat_capacity;		///< auxiliary (resistive) heat is COP 1 and has no adjustment
+	double aux_heat_deadband;		///< additional deadband before auxiliary heat engages
+	double aux_heat_temp_lockout;	///< outdoor temperature at which the auxiliary heat will automatically engage
+	double aux_heat_time_delay;		///< minimum time the heat pump must run until the auxiliary heating engages
 	// fan characteristics
 	double fan_design_power;		///< designed maximum power draw of the ventilation fan
 	double fan_low_power_fraction;	///< fraction of ventilation fan power draw during low-power mode (two-speed only)
@@ -160,14 +160,14 @@ public:
 		AX_TIMER = 0x2,
 		AX_LOCKOUT = 0x4,
 	} AUXSTRATEGY;
-	set auxillary_strategy;
+	set auxiliary_strategy;
 
 	typedef enum{
 		AT_UNKNOWN,
 		AT_NONE,
 		AT_ELECTRIC,
-	} AUXILLARYSYSTEMTYPE;
-	AUXILLARYSYSTEMTYPE auxillary_system_type;
+	} AUXILIARYSYSTEMTYPE;
+	AUXILIARYSYSTEMTYPE auxiliary_system_type;
 
 	typedef enum{
 		HT_UNKNOWN,

@@ -109,7 +109,7 @@ object house{
 	name HouseWithJustGasNew;
 	heating_system_type GAS;
 	cooling_system_type NONE;
-	auxillary_system_type NONE;
+	auxiliary_system_type NONE;
 }
 
 object house {
@@ -121,8 +121,8 @@ object house{
 	name HouseWithBothNew;
 	heating_system_type HEAT_PUMP;
 	cooling_system_type ELECTRIC;
-	auxillary_system_type ELECTRIC;
-	auxillary_strategy DEADBAND;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND;
 }
 
 object house {
@@ -135,8 +135,8 @@ object house{
 	heating_system_type HEAT_PUMP;
 	cooling_system_type ELECTRIC;
 	fan_type TWO_SPEED;
-	auxillary_system_type ELECTRIC;
-	auxillary_strategy DEADBAND;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND;
 }
 
 object house{
@@ -148,7 +148,7 @@ object house{
 	name HouseWithBaseboardNew;
 	heating_system_type RESISTANCE;
 	cooling_system_type NONE;
-	auxillary_system_type NONE;
+	auxiliary_system_type NONE;
 	fan_type NONE;
 }
 
@@ -161,7 +161,7 @@ object house{
 	name HouseWithElecHeatNew;
 	heating_system_type RESISTANCE;
 	cooling_system_type NONE;
-	auxillary_system_type NONE;
+	auxiliary_system_type NONE;
 	fan_type ONE_SPEED;
 }
 
@@ -169,40 +169,40 @@ object house{
 	name HouseWithAuxTimer;
 	heating_system_type HEAT_PUMP;
 	cooling_system_type ELECTRIC;
-	auxillary_system_type ELECTRIC;
-	auxillary_strategy TIMER;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy TIMER;
 }
 
 object house{
 	name HouseWithAuxDeadband;
 	heating_system_type HEAT_PUMP;
 	cooling_system_type ELECTRIC;
-	auxillary_system_type ELECTRIC;
-	auxillary_strategy DEADBAND;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND;
 }
 
 object house{
 	name HouseWithAuxTimerLockout;
 	heating_system_type HEAT_PUMP;
 	cooling_system_type ELECTRIC;
-	auxillary_system_type ELECTRIC;
-	auxillary_strategy TIMER|LOCKOUT;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy TIMER|LOCKOUT;
 }
 
 object house{
 	name HouseWithDeadbandLockout;
 	heating_system_type HEAT_PUMP;
 	cooling_system_type ELECTRIC;
-	auxillary_system_type ELECTRIC;
-	auxillary_strategy DEADBAND|LOCKOUT;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND|LOCKOUT;
 }
 
 object house{
 	name HouseWithTimerDeadbandLockout;
 	heating_system_type HEAT_PUMP;
 	cooling_system_type ELECTRIC;
-	auxillary_system_type ELECTRIC;
-	auxillary_strategy DEADBAND|LOCKOUT|TIMER;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND|LOCKOUT|TIMER;
 }
 
 object house{
