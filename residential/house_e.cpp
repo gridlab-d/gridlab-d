@@ -669,6 +669,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_enumeration, "window_frame", PADDR(window_frame), PT_DESCRIPTION, "type of window frame",
 				PT_KEYWORD, "NONE", WF_NONE,
 				PT_KEYWORD, "ALUMINUM", WF_ALUMINUM,
+				PT_KEYWORD, "ALUMINIUM", WF_ALUMINUM, // non-American spelling
 				PT_KEYWORD, "THERMAL_BREAK", WF_THERMAL_BREAK,
 				PT_KEYWORD, "WOOD", WF_WOOD,
 				PT_KEYWORD, "INSULATED", WF_INSULATED,
@@ -1208,28 +1209,38 @@ void house_e::set_window_Rvalue(){
 				switch(window_frame){
 					case WF_NONE:
 						Rwindows = 1.0/0.30;
+						break;
 					case WF_ALUMINUM:
 						Rwindows = 1.0/0.67;
+						break;
 					case WF_THERMAL_BREAK:
 						Rwindows = 1.0/0.47;
+						break;
 					case WF_WOOD:
 						Rwindows = 1.0/0.41;
+						break;
 					case WF_INSULATED:
 						Rwindows = 1.0/0.33;
+						break;
 				}
 				break;
 			case GL_THREE:
 				switch(window_frame){
 					case WF_NONE:
 						Rwindows = 1/0.27;
+						break;
 					case WF_ALUMINUM:
 						Rwindows = 1/0.64;
+						break;
 					case WF_THERMAL_BREAK:
 						Rwindows = 1/0.43;
+						break;
 					case WF_WOOD:
 						Rwindows = 1/0.37;
+						break;
 					case WF_INSULATED:
 						Rwindows = 1/0.31;
+						break;
 				}
 				break;
 		}
@@ -1239,42 +1250,57 @@ void house_e::set_window_Rvalue(){
 				switch(window_frame){
 					case WF_NONE:
 						Rwindows = 1/1.04;
+						break;
 					case WF_ALUMINUM:
 						Rwindows = 1/1.27;
+						break;
 					case WF_THERMAL_BREAK:
 						Rwindows = 1/1.08;
+						break;
 					case WF_WOOD:
 						Rwindows = 1/0.90;
+						break;
 					case WF_INSULATED:
 						Rwindows = 1/0.81;
+						break;
 				}
 				break;
 			case GL_TWO:
 				switch(window_frame){
 					case WF_NONE:
 						Rwindows = 1/0.48;
+						break;
 					case WF_ALUMINUM:
 						Rwindows = 1/0.81;
+						break;
 					case WF_THERMAL_BREAK:
 						Rwindows = 1/0.60;
+						break;
 					case WF_WOOD:
 						Rwindows = 1/0.53;
+						break;
 					case WF_INSULATED:
 						Rwindows = 1/0.44;
+						break;
 				}
 				break;
 			case GL_THREE:
 				switch(window_frame){
 					case WF_NONE:
 						Rwindows = 1/0.31;
+						break;
 					case WF_ALUMINUM:
 						Rwindows = 1/0.67;
+						break;
 					case WF_THERMAL_BREAK:
 						Rwindows = 1/0.46;
+						break;
 					case WF_WOOD:
 						Rwindows = 1/0.40;
+						break;
 					case WF_INSULATED:
 						Rwindows = 1/0.34;
+						break;
 				}
 				break;
 		}

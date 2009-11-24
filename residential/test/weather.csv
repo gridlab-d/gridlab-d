@@ -1,0 +1,14 @@
+#sample weather CSV file
+$state_name=California
+$city_name=Berkeley
+temperature,humidity
+#month:day:hour:minute:second
+01:01:04,50.0,0.05
+01:01:8,62.0,0.16
+01:01:13,78.0,0.12
+01:01:20,70.0,0.10
+01:02:02,51.2,0.06
+01:03,63.0,0.15
+12:28:11,36.0,0.3
+12:29,34.0,0.3
+12:30,31.0,0.5
