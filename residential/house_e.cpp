@@ -1406,6 +1406,15 @@ int house_e::init(OBJECT *parent)
 		auxiliary_strategy = AX_DEADBAND;
 	}
 
+	if(heating_system_type == HT_HEAT_PUMP) {
+		if(cooling_system_type == CT_NONE) 
+			gl_warning("A HEAT_PUMP heating_system_type with no air conditioning does not make a lot of sense. You may encounter odd behavior with house %s",obj->name);
+		else if(cooling_system_type == CT_UNKNOWN) {
+			gl_warning("A HEAT_PUMP heating_system_type with no air conditioning does not make a lot of sense. Setting cooling_system_type to ELECTRIC.");
+			cooling_system_type = CT_ELECTRIC;
+		}
+	}
+
 	// Set defaults for published variables nor provided by model definition
 	set_thermal_integrity();
 
@@ -1548,7 +1557,7 @@ int house_e::init(OBJECT *parent)
 	if (fan_design_power<=0.0){
 		double roundval;
 		//	
-		roundval = floor(0.117 * duct_pressure_drop * fan_design_airflow / 0.42 / 745.7 + 1.0/16.0);
+		roundval = ceil(0.117 * duct_pressure_drop * fan_design_airflow / 0.42 / 745.7 + 1.0/16.0);
 		fan_design_power = roundval / 8.0 * 745.7 / 0.88; // fan rounds to the nearest 1/8 HP
 	}
 
