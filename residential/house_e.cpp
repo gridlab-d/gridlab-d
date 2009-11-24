@@ -922,60 +922,60 @@ int house_e::init_climate()
 void house_e::set_thermal_integrity(){
 	switch (thermal_integrity_level) {
 		case TI_VERY_LITTLE:
-			Rroof = 11;
-			Rwall = 4;
-			Rfloor = 4;
-			Rdoors = 3;
-			Rwindows = 1/1.27;
-			airchange_per_hour = 1.5;
+			if(Rroof <= 0.0) Rroof = 11;
+			if(Rwall <= 0.0) Rwall = 4;
+			if(Rfloor <= 0.0) Rfloor = 4;
+			if(Rdoors <= 0.0) Rdoors = 3;
+			if(Rwindows <= 0.0) Rwindows = 1/1.27;
+			if(airchange_per_hour <= 0.0) airchange_per_hour = 1.5;
 			break;
 		case TI_LITTLE:
-			Rroof = 19;
-			Rwall = 11;
-			Rfloor = 4;
-			Rdoors = 3;
-			Rwindows = 1/0.81;
-			airchange_per_hour = 1.5;
+			if(Rroof <= 0.0) Rroof = 19;
+			if(Rwall <= 0.0) Rwall = 11;
+			if(Rfloor <= 0.0) Rfloor = 4;
+			if(Rdoors <= 0.0) Rdoors = 3;
+			if(Rwindows <= 0.0) Rwindows = 1/0.81;
+			if(airchange_per_hour <= 0.0) airchange_per_hour = 1.5;
 			break;
 		case TI_BELOW_NORMAL:
-			Rroof = 19;
-			Rwall = 11;
-			Rfloor = 11;
-			Rdoors = 3;
-			Rwindows = 1/0.81;
-			airchange_per_hour = 1.0;
+			if(Rroof <= 0.0) Rroof = 19;
+			if(Rwall <= 0.0) Rwall = 11;
+			if(Rfloor <= 0.0) Rfloor = 11;
+			if(Rdoors <= 0.0) Rdoors = 3;
+			if(Rwindows <= 0.0) Rwindows = 1/0.81;
+			if(airchange_per_hour <= 0.0) airchange_per_hour = 1.0;
 			break;
 		case TI_NORMAL:
-			Rroof = 30;
-			Rwall = 11;
-			Rfloor = 19;
-			Rdoors = 3;
-			Rwindows = 1/0.6;
-			airchange_per_hour = 1.0;
+			if(Rroof <= 0.0) Rroof = 30;
+			if(Rwall <= 0.0) Rwall = 11;
+			if(Rfloor <= 0.0) Rfloor = 19;
+			if(Rdoors <= 0.0) Rdoors = 3;
+			if(Rwindows <= 0.0) Rwindows = 1/0.6;
+			if(airchange_per_hour <= 0.0) airchange_per_hour = 1.0;
 			break;
 		case TI_ABOVE_NORMAL:
-			Rroof = 30;
-			Rwall = 19;
-			Rfloor = 11;
-			Rdoors = 3;
-			Rwindows = 1/0.6;
-			airchange_per_hour = 1.0;
+			if(Rroof <= 0.0) Rroof = 30;
+			if(Rwall <= 0.0) Rwall = 19;
+			if(Rfloor <= 0.0) Rfloor = 11;
+			if(Rdoors <= 0.0) Rdoors = 3;
+			if(Rwindows <= 0.0) Rwindows = 1/0.6;
+			if(airchange_per_hour <= 0.0) airchange_per_hour = 1.0;
 			break;
 		case TI_GOOD:
-			Rroof = 30;
-			Rwall = 19;
-			Rfloor = 22;
-			Rdoors = 5;
-			Rwindows = 1/0.47;
-			airchange_per_hour = 0.5;
+			if(Rroof <= 0.0) Rroof = 30;
+			if(Rwall <= 0.0) Rwall = 19;
+			if(Rfloor <= 0.0) Rfloor = 22;
+			if(Rdoors <= 0.0) Rdoors = 5;
+			if(Rwindows <= 0.0) Rwindows = 1/0.47;
+			if(airchange_per_hour <= 0.0) airchange_per_hour = 0.5;
 			break;
 		case TI_VERY_GOOD:
-			Rroof = 48;
-			Rwall = 22;
-			Rfloor = 30;
-			Rdoors = 11;
-			Rwindows = 1/0.31;
-			airchange_per_hour = 0.5;
+			if(Rroof <= 0.0) Rroof = 48;
+			if(Rwall <= 0.0) Rwall = 22;
+			if(Rfloor <= 0.0) Rfloor = 30;
+			if(Rdoors <= 0.0) Rdoors = 11;
+			if(Rwindows <= 0.0) Rwindows = 1/0.31;
+			if(airchange_per_hour <= 0.0) airchange_per_hour = 0.5;
 			break;
 		case TI_UNKNOWN:
 			// do nothing - use all of the built-in defaults or user-specified values as thermal integrity wasn't used
