@@ -402,7 +402,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// determine the power used
 	if (heat_needed == TRUE){
-		/* power_kw */ load.total = actual_kW() * (heat_mode == GASHEAT ? 0.01 : 1.0);
+		/* power_kw */ load.total = heating_element_capacity/1000 * (heat_mode == GASHEAT ? 0.01 : 1.0);
 	} else
 		/* power_kw */ load.total = 0.0;
 
@@ -733,7 +733,7 @@ double waterheater::actual_kW(void)
 		if(heat_mode == GASHEAT){
 			return heating_element_capacity / 1000; /* gas heating is voltage independent.  convert W->kW. */
 		}
-		const double actual_voltage = nominal_voltage;//pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
+		const double actual_voltage = pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
         if (actual_voltage > 2.0*nominal_voltage)
         {
             if (trip_counter++ > 10)
@@ -746,6 +746,7 @@ double waterheater::actual_kW(void)
             else
                 return 0.0;         // @TODO:  This condition should trip the breaker with a counter
         }
+		double test = heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage) / 1000;
 		return heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage) / 1000; /* convert heater[W] to kW */
     }
 	else
