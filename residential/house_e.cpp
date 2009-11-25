@@ -1785,7 +1785,8 @@ void house_e::update_system(double dt)
 	double cooling_capacity_adj = design_cooling_capacity*(1.48924533 - 0.00514995*(*pTout));
 	
 #pragma message("house_e: add update_system voltage adjustment for heating")
-	double voltage_adj = 1.0;//((pCircuit_V[0] * pCircuit_V[0]) / (240.0 * 240.0));
+	double voltage_adj = (((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0) * load.impedance_fraction + ((pCircuit_V[0]).Mag() / 240.0) * load.current_fraction + load.power_fraction);
+	double voltage_adj_resistive = ((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0);
 	
 	switch (system_mode) {
 	case SM_HEAT:
@@ -1805,13 +1806,13 @@ void house_e::update_system(double dt)
 				fan_power = 0.0; // turn it back off
 				break;
 			case HT_RESISTANCE:
-				heating_demand = design_heating_capacity*KWPBTUPH*voltage_adj;
-				system_rated_capacity = design_heating_capacity*voltage_adj + fan_power*BTUPHPKW;
+				heating_demand = design_heating_capacity*KWPBTUPH;
+				system_rated_capacity = design_heating_capacity*voltage_adj_resistive + fan_power*BTUPHPKW;
 				system_rated_power = heating_demand;
 				break;
 			case HT_HEAT_PUMP:
 				heating_demand = design_heating_capacity / heating_cop_adj * KWPBTUPH;
-				system_rated_capacity = heating_capacity_adj + fan_power*BTUPHPKW;
+				system_rated_capacity = heating_capacity_adj*voltage_adj + fan_power*BTUPHPKW;
 				system_rated_power = heating_demand;
 				break;
 			case HT_GAS:
@@ -1835,8 +1836,8 @@ void house_e::update_system(double dt)
 				system_rated_power = 0.0;
 				break;
 			case AT_ELECTRIC:
-				heating_demand = aux_heat_capacity*KWPBTUPH*voltage_adj;
-				system_rated_capacity = aux_heat_capacity*voltage_adj;
+				heating_demand = aux_heat_capacity*KWPBTUPH;
+				system_rated_capacity = aux_heat_capacity*voltage_adj_resistive;
 				system_rated_power = heating_demand;
 				break;
 		}
