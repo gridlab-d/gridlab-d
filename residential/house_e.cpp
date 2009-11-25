@@ -2239,7 +2239,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 			if ( auxiliary_system_type != AT_NONE	 &&
 				((auxiliary_strategy & AX_DEADBAND	 && Tair < TauxOn)
 				 || (auxiliary_strategy & AX_TIMER	 && t0 >= thermostat_last_cycle_time + aux_heat_time_delay))
-				 && (auxiliary_strategy & AX_LOCKOUT && *pTout <= aux_heat_temp_lockout)
+				 || (auxiliary_strategy & AX_LOCKOUT && *pTout <= aux_heat_temp_lockout)
 				){
 				system_mode = SM_AUX;
 				thermostat_last_cycle_time = t1;
