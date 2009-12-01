@@ -239,6 +239,27 @@ public:
 	} THERMAL_INTEGRITY;
 	THERMAL_INTEGRITY thermal_integrity_level;
 
+	typedef enum {
+		MM_NONE		= 0,		///< Motor model describes the level of detail to be assigned
+		MM_BASIC	= 1,		///< in calculating the efficiency of the hvac motor.  NONE will
+		MM_FULL		= 2			///< indicate that the electrical motor is 100% electrically efficient.
+	} MOTORMODEL;				///< BASIC incorporates shunt losses, while FULL also includes series losses.
+	MOTORMODEL motor_model;
+
+	// Motor variables and enumerations
+	double hvac_motor_efficiency;	///< Actual percent electrical efficiency of hvac motor
+	double hvac_motor_loss_power_factor; ///< Between this and efficiency, derives the real and reactive losses
+	double hvac_motor_real_loss;		 ///< Actual real power loss of motor at rated voltage
+	double hvac_motor_reactive_loss;	 ///< Actual reactive power loss of motor at rated voltage
+	typedef enum {
+		ME_VERY_POOR	= 0,	///< Gives an "easy" to use parameter for specifying the efficiency
+		ME_POOR			= 1,	///< level of the motor when using motor_model BASIC or FULL
+		ME_AVERAGE		= 2,
+		ME_GOOD			= 3,
+		ME_VERY_GOOD	= 4,
+	} MOTOREFFICIENCY;
+	MOTOREFFICIENCY motor_efficiency;
+
 	typedef enum {	
 		SM_UNKNOWN	=0,				///< unknown mode
 		SM_OFF		=1,				///< off

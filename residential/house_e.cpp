@@ -685,6 +685,18 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD, "TWO", GL_TWO,
 				PT_KEYWORD, "THREE", GL_THREE,
 				PT_KEYWORD, "OTHER", GL_OTHER,
+			PT_enumeration, "motor_model", PADDR(motor_model), PT_DESCRIPTION, "indicates the level of detail used in modelling the hvac motor parameters",
+				PT_KEYWORD, "NONE", MM_NONE,
+				PT_KEYWORD, "BASIC", MM_BASIC,
+				PT_KEYWORD, "FULL", MM_FULL,
+			PT_enumeration, "motor_efficiency", PADDR(motor_efficiency), PT_DESCRIPTION, "when using motor model, describes the efficiency of the motor",
+				PT_KEYWORD, "VERY_POOR", ME_VERY_POOR,
+				PT_KEYWORD, "POOR", ME_POOR,
+				PT_KEYWORD, "AVERAGE", ME_AVERAGE,
+				PT_KEYWORD, "GOOD", ME_GOOD,
+				PT_KEYWORD, "VERY_GOOD", ME_VERY_GOOD,
+			PT_double, "hvac_motor_efficiency[unit]", PADDR(hvac_motor_efficiency), PT_DESCRIPTION, "when using motor model, percent efficiency of hvac motor",
+			PT_double, "hvac_motor_loss_power_factor[unit]", PADDR(hvac_motor_loss_power_factor), PT_DESCRIPTION, "when using motor model, power factor of motor losses",
 			PT_double, "Rroof[degF.sf.h/Btu]", PADDR(Rroof),PT_DESCRIPTION,"roof R-value",
 			PT_double, "Rwall[degF.sf.h/Btu]", PADDR(Rwall),PT_DESCRIPTION,"wall R-value",
 			PT_double, "Rfloor[degF.sf.h/Btu]", PADDR(Rfloor),PT_DESCRIPTION,"floor R-value",
@@ -785,6 +797,12 @@ int house_e::create()
 	glass_type = GM_LOW_E_GLASS;
 	glazing_treatment = GT_CLEAR;
 	window_frame = WF_THERMAL_BREAK;
+	motor_model = MM_NONE;
+	motor_efficiency = ME_AVERAGE;
+	hvac_motor_efficiency = 1;
+	hvac_motor_loss_power_factor = 0.125;
+	hvac_motor_real_loss = 0;
+	hvac_motor_reactive_loss = 0;
 
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
@@ -1579,8 +1597,38 @@ int house_e::init(OBJECT *parent)
 
 	
 	Tmaterials = Tair;	
-	
 
+	// Set/calculate HVAC motor parameters
+	if (motor_model != MM_NONE)
+	{
+		if ( hvac_motor_loss_power_factor > 1 || hvac_motor_loss_power_factor < -1 )
+			GL_THROW("hvac_motor_power_factor must have a value between -1 and 1");
+		if ( hvac_motor_efficiency > 1 || hvac_motor_efficiency < 0 )
+			GL_THROW("hvac_motor_efficiency must have a value between 0 and 1");
+		switch(motor_efficiency){
+			case ME_VERY_POOR:
+				hvac_motor_efficiency = 0.8236;
+				break;
+			case ME_POOR:
+				hvac_motor_efficiency = 0.8488;
+				break;
+			case ME_AVERAGE:
+				hvac_motor_efficiency = 0.8740;
+				break;
+			case ME_GOOD:
+				hvac_motor_efficiency = 0.9020;
+				break;
+			case ME_VERY_GOOD:
+				hvac_motor_efficiency = 0.9244;
+				break;
+			default:
+				gl_warning("Unknown motor_efficiency setting.  Setting to AVERAGE.");
+				hvac_motor_efficiency = 0.8740;
+				motor_efficiency = ME_AVERAGE;
+				break;
+		}
+	}
+				
 
 	// calculate thermal constants
 #define Ca (air_thermal_mass)
@@ -1899,6 +1947,27 @@ void house_e::update_system(double dt)
 			load.power.SetRect(load.power_fraction * load.total.Re() , load.power_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
 			load.admittance.SetRect(load.impedance_fraction * load.total.Re() , load.impedance_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
 			load.current.SetRect(load.current_fraction * load.total.Re(), load.current_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+			
+			// Motor losses that are related to the efficiency of the induction motor. These contribute to electric power
+			// consumed, but are not incorporated into the heat flow equations.
+			if (motor_model == MM_BASIC)
+			{
+				if (system_mode == SM_HEAT)
+				{
+					hvac_motor_real_loss = hvac_motor_loss_power_factor*(1 - hvac_motor_efficiency) * sqrt( design_heating_capacity*KWPBTUPH*design_heating_capacity*KWPBTUPH / (load.power_factor*load.power_factor*heating_COP*heating_COP) );
+					hvac_motor_reactive_loss = sqrt( 1 / (hvac_motor_loss_power_factor*hvac_motor_loss_power_factor) - 1) * hvac_motor_real_loss;
+				}					
+				else if (system_mode == SM_COOL)
+				{
+					hvac_motor_real_loss = hvac_motor_loss_power_factor*(1 - hvac_motor_efficiency) * sqrt( design_cooling_capacity*KWPBTUPH*design_cooling_capacity*KWPBTUPH / (load.power_factor*load.power_factor*cooling_COP*cooling_COP) );
+					hvac_motor_reactive_loss = sqrt( 1 / (hvac_motor_loss_power_factor*hvac_motor_loss_power_factor) - 1) * hvac_motor_real_loss;
+				}
+
+				load.admittance += complex(hvac_motor_real_loss,hvac_motor_reactive_loss);
+			}
+			else if (motor_model == MM_FULL)
+				gl_warning("FULL motor model is not yet supported. No losses are assumed.");
+
 	} else {
 		//	gas heat & resistive heat -> fan power P and heating power Z
 		//	else just fan & system_rated_power = 0
