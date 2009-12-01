@@ -253,12 +253,19 @@ int climate::init(OBJECT *parent)
 	}
 
 	
-	dot = strchr(tmyfile, '.');
-	while(strchr(dot+1, '.')){ /* init time, doesn't have to be fast -MH */
-		dot = strchr(dot, '.');
-	}
-	if(strncmp(dot+1, "csv", 3) == 0){
+	//dot = strchr(tmyfile, '.');
+	//while(strchr(dot+1, '.')){ /* init time, doesn't have to be fast -MH */
+	//	dot = strchr(dot, '.');
+	//}
+	if(strstr(tmyfile, ".tmy2") || strstr(tmyfile,".tmy")){
+		reader_type = RT_TMY2;
+	} else if(strstr(tmyfile, ".csv")){
 		reader_type = RT_CSV;
+	} else {
+		gl_warning("climate: unrecognized filetype, assuming TMY2");
+	}
+
+	if(reader_type == RT_CSV){
 		// may or may not have an object,
 		// have not called open()
 		if(reader == NULL){
@@ -276,13 +283,9 @@ int climate::init(OBJECT *parent)
 //			my->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &wind_speed, &rainfall, &snowdepth);
 			return rv;
 		}
-	} else if(strncmp(dot+1, "tmy2", 4) == 0){
-		reader_type = RT_TMY2;
-	}  else {
-		gl_warning("climate init unable to recognize tmyfile extension, defaulting to TMY file reader");
-		reader_type = RT_TMY2;
 	}
 
+	// implicit if(reader_type == RT_TMY2) ~ do the following
 	if( file.open(found_file) < 3 ){
 		gl_error("climate::init() -- weather file header improperly formed");
 		return 0;
