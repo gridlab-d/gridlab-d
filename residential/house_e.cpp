@@ -1484,7 +1484,7 @@ int house_e::init(OBJECT *parent)
 	if (thermostat_deadband<=0.0)	thermostat_deadband = 2.0;
 	if (thermostat_cycle_time<=0.0) thermostat_cycle_time = 120.0;
 	if (Tair==0.0){
-		/* bind limits between 60 and 140 degF */
+		/* bind limits between 60 and 140 degF /
 		double Thigh = cooling_setpoint+thermostat_deadband/2.0;
 		double Tlow  = heating_setpoint-thermostat_deadband/2.0;
 		Thigh = clip(Thigh, 60.0, 140.0);
@@ -1518,7 +1518,7 @@ int house_e::init(OBJECT *parent)
 
 	if (design_heating_capacity<=0 && heating_system_type != HT_NONE)	// calculate basic load then round to nearest standard HVAC sizing
 	{
-		round_value = 0.0;
+		double round_value = 0.0;
 		if(heating_system_type == HT_HEAT_PUMP){
 			design_heating_capacity = design_cooling_capacity; /* primary is to reverse the heat pump */
 		} else {
@@ -1532,7 +1532,7 @@ int house_e::init(OBJECT *parent)
 	
 	if (aux_heat_capacity<=0.0 && auxiliary_system_type != AT_NONE)
 	{
-		round_value = 0.0;
+		double round_value = 0.0;
 		aux_heat_capacity = (1.0 + over_sizing_factor) * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
 		round_value = (aux_heat_capacity-5000.0) / 10000.0;
 		aux_heat_capacity = ceil(round_value) * 10000.0;
@@ -1875,6 +1875,19 @@ void house_e::update_system(double dt)
 		system_rated_capacity =  fan_power*BTUPHPKW;	// total heat gain of system
 		system_rated_power = 0.0;					// total power drawn by system
 		
+	}
+
+	if(this->override == OV_OFF){
+		system_mode = SM_OFF;
+		fan_power = 0;
+		system_rated_capacity = 0.0;
+		system_rated_power = 0.0;
+		cooling_demand = 0.0;
+		heating_demand = 0.0;
+		load.power.SetRect(0.0, 0.0);
+		load.admittance.SetRect(0.0, 0.0);
+		load.current.SetRect(0.0, 0.0);
+		load.total.SetRect(0.0, 0.0);
 	}
 
 	/* calculate the power consumption */

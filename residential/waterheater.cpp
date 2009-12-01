@@ -317,12 +317,14 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 	/* time has passed ~ calculate internal gains, height change, temperature change */
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
+	OBJECT *my = OBJECTHDR(this);
 
 	// update temperature and height
 	update_T_and_or_h(nHours);
 
 	if(Tw > 212.0){
-		GL_THROW("the waterheater is boiling!");
+		//GL_THROW("the waterheater is boiling!");
+		gl_warning("waterheater:%i is boiling", my->id);
 		/*	TROUBLESHOOT
 			The temperature model for the waterheater has broken, or the environment around the
 			waterheater has burst into flames.  Please post this with your model and dump files
@@ -400,6 +402,17 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 	double Tamb = get_Tambient(location);
 
+	// use override to control heat_needed state
+	// runs after thermostat() but before "the usual" calculations
+	if(override == OV_ON){
+		heat_needed = TRUE;
+	} else if(override == OV_OFF){
+		heat_needed = FALSE;
+	}
+
+	if(Tw > 212.0 - thermostat_deadband){ // if it's trying boil, turn it off!
+		heat_needed = FALSE;
+	}
 	// determine the power used
 	if (heat_needed == TRUE){
 		/* power_kw */ load.total = heating_element_capacity/1000 * (heat_mode == GASHEAT ? 0.01 : 1.0);
@@ -434,11 +447,15 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 //	gl_enduse_sync(&(residential_enduse::load),t1);
 
-	if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
-		return -(TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND); // negative means soft transition
-	// less than one second means never
-	else
-		return TS_NEVER; 
+	if(override == OV_NORMAL){
+		if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
+			return -(TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND); // negative means soft transition
+		// less than one second means never
+		else
+			return TS_NEVER; 
+	} else {
+		return TS_NEVER; // keep running until the forced state ends
+	}
 }
 
 TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){

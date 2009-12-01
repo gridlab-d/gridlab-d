@@ -11,12 +11,19 @@
 
 #include "residential.h"
 
+typedef enum {
+	OV_ON = 1,
+	OV_NORMAL = 0,
+	OV_OFF = -1,
+} OVERRIDE;
+
 class residential_enduse  
 {
 public:
 	CIRCUIT *pCircuit;	// pointer to circuit data
 	enduse load;	// load data
 	loadshape shape;
+	OVERRIDE override;
 
 public:
 	static CLASS *oclass;

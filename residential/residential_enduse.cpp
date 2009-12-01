@@ -39,6 +39,10 @@ residential_enduse::residential_enduse(MODULE *mod)
 		if (gl_publish_variable(oclass,
 			PT_loadshape,"shape",PADDR(shape),
 			PT_enduse,"",PADDR(load),
+			PT_enumeration,"override",PADDR(override),
+				PT_KEYWORD,"ON",OV_ON,
+				PT_KEYWORD,"NORMAL",OV_NORMAL,
+				PT_KEYWORD,"OFF",OV_OFF,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the residential_enduse properties failed.   This is usually caused
@@ -57,6 +61,7 @@ int residential_enduse::create(bool connect_shape)
 	load.breaker_amps = 20;
 	load.config = 0;
 	load.heatgain_fraction = 1.0; /* power has no effect on heat loss */
+	override = OV_NORMAL;
 
 	return 1;
 }
