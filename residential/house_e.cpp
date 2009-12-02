@@ -1502,7 +1502,7 @@ int house_e::init(OBJECT *parent)
 	if (thermostat_deadband<=0.0)	thermostat_deadband = 2.0;
 	if (thermostat_cycle_time<=0.0) thermostat_cycle_time = 120.0;
 	if (Tair==0.0){
-		/* bind limits between 60 and 140 degF /
+		/* bind limits between 60 and 140 degF */
 		double Thigh = cooling_setpoint+thermostat_deadband/2.0;
 		double Tlow  = heating_setpoint-thermostat_deadband/2.0;
 		Thigh = clip(Thigh, 60.0, 140.0);
@@ -1528,7 +1528,7 @@ int house_e::init(OBJECT *parent)
 		static int aux_for_rst = 0;
 		if(aux_for_rst == 0){
 			gl_warning("house_e heating strategies with auxiliary heat but without normal heating modes are converted"
-							"to resistively heated houses");
+				"to resistively heated houses, see house %s",obj->name);
 			aux_for_rst = 1;
 		}
 		heating_system_type = HT_RESISTANCE;
