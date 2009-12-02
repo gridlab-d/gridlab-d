@@ -2044,6 +2044,21 @@ void link::calculate_power()
 		node *f = OBJECTDATA(from, node);
 		node *t = OBJECTDATA(to, node);
 
+		if ((SpecialLnk == REGULATOR) && (solver_method == SM_NR))	//Regulators are mostly lost-less right now, so implement similar to FBS
+		{
+			current_in[0] = d_mat[0][0]*t->current_inj[0]+
+							d_mat[0][1]*t->current_inj[1]+
+							d_mat[0][2]*t->current_inj[2];
+
+			current_in[1] = d_mat[1][0]*t->current_inj[0]+
+							d_mat[1][1]*t->current_inj[1]+
+							d_mat[1][2]*t->current_inj[2];
+
+			current_in[2] = d_mat[2][0]*t->current_inj[0]+
+							d_mat[2][1]*t->current_inj[1]+
+							d_mat[2][2]*t->current_inj[2];
+		}
+
 		indiv_power_in[0] = f->voltage[0]*~current_in[0];
 		indiv_power_in[1] = f->voltage[1]*~current_in[1];
 		indiv_power_in[2] = f->voltage[2]*~current_in[2];
