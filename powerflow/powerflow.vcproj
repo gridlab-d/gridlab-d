@@ -519,6 +519,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\frequency_gen.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\powerflow\fuse.cpp"
 				>
 			</File>
@@ -670,6 +674,10 @@
 			</File>
 			<File
 				RelativePath=".\check.h"
+				>
+			</File>
+			<File
+				RelativePath=".\frequency_gen.h"
 				>
 			</File>
 			<File
