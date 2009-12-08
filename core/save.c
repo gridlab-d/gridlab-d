@@ -8,6 +8,7 @@
 #include <string.h>
 #include "platform.h"
 #include "output.h"
+#include "stream.h"
 #include "save.h"
 #include "exec.h"
 
@@ -42,16 +43,28 @@ int saveall(char *filename)
 	else
 		ext++;
 
+	/* setup output stream */
+	if (filename[0]=='-')
+		fp = stdout;
+	else if ((fp=fopen(filename,"w"))==NULL){
+		output_error("saveall: unable to open stream \'%s\' for writing", filename);
+		return 0;
+	}
+
+	/* internal streaming used */
+	if (global_streaming_io_enabled)
+	{
+		int res = stream_out(fp,SF_ALL)>0 ? SUCCESS : FAILED;
+		if (res==FAILED)
+			output_error("stream context is %s",stream_context());
+		return res;
+	}
+
+	/* general purpose format used */
 	for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 	{
-		if (strcmp(ext,map[i].format)==0){
-				/* setup output stream */
-			if (filename[0]=='-')
-				fp = stdout;
-			else if ((fp=fopen(filename,"w"))==NULL){
-				output_error("saveall: unable to open stream \'%s\' for writing", filename);
-				return 0;
-			}
+		if (strcmp(ext,map[i].format)==0)
+		{
 			return (*(map[i].save))(filename,fp);
 		}
 	}

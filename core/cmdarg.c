@@ -777,6 +777,8 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				return FAILED;
 			}
 		}
+		else if (strcmp(*argv,"--stream")==0)
+			global_streaming_io_enabled = !global_streaming_io_enabled;
 		else if (strcmp(*argv,"--server")==0)
 		{
 #ifdef WIN32

@@ -297,7 +297,7 @@ PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE pt
 	prop->addr = (void*)(int64)oclass->size;
 	prop->size = 0;
 	prop->delegation = NULL;
-	prop->flags = 0;
+	prop->flags = PT_EXTENDED;
 	prop->keywords = NULL;
 	prop->description = NULL;
 	prop->unit = pUnit;

@@ -139,6 +139,8 @@ GLOBAL int global_run_realtime INIT(0); /**< flag to force simulator into realti
 GLOBAL char global_sync_dumpfile[1024] INIT(""); /**< enable sync event dump file */
 #endif
 
+GLOBAL int global_streaming_io_enabled INIT(0); /**< flag to enable compact streams instead of XML or GLM */
+
 #ifdef __cplusplus
 }
 #endif

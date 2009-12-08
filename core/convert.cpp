@@ -59,8 +59,10 @@ int convert_from_double(char *buffer, /**< pointer to the string buffer */
 
 	double scale = 1.0;
 	if(prop->unit != NULL){
-		CLASS *ctmp = prop->oclass;
-		PROPERTY *ptmp = class_find_property(ctmp, prop->name);
+
+		/* only do conversion if the target unit differs from the class's unit for that property */
+		PROPERTY *ptmp = (prop->oclass==NULL ? prop : class_find_property(prop->oclass, prop->name));
+
 		if(prop->unit != ptmp->unit){
 			if(0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)){
 				output_error("convert_from_double(): unable to convert unit '%s' to '%s' for property '%s' (tape experiment error)", ptmp->unit->name, prop->unit->name, prop->name);
@@ -107,8 +109,10 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 
 	double scale = 1.0;
 	if(prop->unit != NULL){
-		CLASS *ctmp = prop->oclass;
-		PROPERTY *ptmp = class_find_property(ctmp, prop->name);
+
+		/* only do conversion if the target unit differs from the class's unit for that property */
+		PROPERTY *ptmp = (prop->oclass==NULL ? prop : class_find_property(prop->oclass, prop->name));
+	
 		if(prop->unit != ptmp->unit){
 			if(0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)){
 				output_error("convert_from_complex(): unable to convert unit '%s' to '%s' for property '%s' (tape experiment error)", ptmp->unit->name, prop->unit->name, prop->name);

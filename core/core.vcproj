@@ -671,6 +671,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\stream.c"
+				>
+			</File>
+			<File
+				RelativePath=".\stream.h"
+				>
+			</File>
+			<File
 				RelativePath="..\core\test.c"
 				>
 			</File>
@@ -881,15 +889,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -916,11 +924,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>

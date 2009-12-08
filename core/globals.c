@@ -86,6 +86,7 @@ static struct s_varmap {
 #ifdef _DEBUG
 	{"sync_dumpfile",PT_char1024, &global_sync_dumpfile, PA_REFERENCE},
 #endif
+	{"streaming_io",PT_int32, &global_streaming_io_enabled, PA_REFERENCE},
 	/* add new global variables here */
 };
 

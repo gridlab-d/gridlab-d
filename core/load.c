@@ -4889,7 +4889,7 @@ Done:
 	//free(buffer);
 	free_index();
 	linenum=1; // parser starts at one
-	fclose(fp);
+	if (fp!=NULL) fclose(fp);
 	return status;
 }
 /** Load a file
