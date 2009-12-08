@@ -1,4 +1,5 @@
 install-data-local:
+		if [ ! -d $(prefix)/etc/gridlabd/rt ]; then mkdir -p $(prefix)/etc/gridlabd/rt ; fi
 		$(INSTALL_DATA) $(srcdir)/gridlabd.conf $(prefix)/etc/gridlabd/rt
 		$(INSTALL_DATA) $(srcdir)/debugger.conf $(prefix)/etc/gridlabd/rt
 		$(INSTALL_DATA) $(srcdir)/gnuplot.conf $(prefix)/etc/gridlabd/rt
