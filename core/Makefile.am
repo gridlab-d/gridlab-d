@@ -43,6 +43,7 @@ gridlabd_SOURCES = build.h main.c \
 	realtime.c realtime.h \
 	save.c save.h \
 	server.c server.h \
+	stream.c stream.h \
 	test_callbacks.h \
 	test.c test.h \
 	test_framework.cpp test_framework.h \
