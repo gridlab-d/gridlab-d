@@ -10,8 +10,8 @@
 EXPORT int isa_link(OBJECT *obj, char *classname);
 
 #define impedance(X) (B_mat[X][X])
-#define LS_CLOSED 0	//Changed from enums so it could be used by restoration
-#define LS_OPEN 1
+#define LS_CLOSED 1	//Changed from enums so it could be used by restoration
+#define LS_OPEN 0
 
 typedef enum {
 		NORMAL=0,			///< defines just a normal link/transformer
