@@ -24,12 +24,12 @@
 static SCHEDULE *schedule_list = NULL;
 static SCHEDULEXFORM *schedule_xformlist=NULL;
 
-int schedule_add_xform(SCHEDULE *schedule, double *target, double scale, double bias)
+int schedule_add_xform(double *source, double *target, double scale, double bias)
 {
 	SCHEDULEXFORM *xform = (SCHEDULEXFORM*)malloc(sizeof(SCHEDULEXFORM));
 	if (xform==NULL)
 		return 0;
-	xform->schedule = schedule;
+	xform->source = source;
 	xform->target = target;
 	xform->scale = scale;
 	xform->bias = bias;
@@ -798,7 +798,6 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is synchronized */
 {
 	SCHEDULE *sch;
-	SCHEDULEXFORM *xform;
 	TIMESTAMP t2 = TS_NEVER;
 	for (sch=schedule_list; sch!=NULL; sch=sch->next)
 	{
@@ -806,10 +805,16 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 		if (t3<t2) t2 = t3;
 	}
 
+	return t2;
+}
+
+TIMESTAMP scheduletransform_syncall(TIMESTAMP t1)
+{
+	SCHEDULEXFORM *xform;
 	/* process the schedule transformations */
 	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
-		*(xform->target) = xform->schedule->value * xform->scale + xform->bias;
-	return t2;
+		*(xform->target) = *(xform->source) * xform->scale + xform->bias;
+	return TS_NEVER;
 }
 
 int schedule_test(void)

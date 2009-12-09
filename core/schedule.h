@@ -68,14 +68,13 @@ struct s_schedule {
 	SCHEDULE *next;	/* next schedule in list */
 };
 
-typedef struct s_schedulexform SCHEDULEXFORM;
-struct s_schedulexform {
-	SCHEDULE *schedule;
+typedef struct s_schedulexform {
+	double *source;
 	double *target;
 	double scale;
 	double bias;
-	SCHEDULEXFORM *next;
-};
+	struct s_schedulexform *next;
+} SCHEDULEXFORM;
 
 #define SN_NORMAL   0x0001	/**< schedule normalization flag - normalize enabled */
 #define SN_ABSOLUTE 0x0002	/**< schedule normalization flag - use absolute values */
@@ -98,10 +97,11 @@ double schedule_value(SCHEDULE *sch, SCHEDULEINDEX index);
 long schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
 TIMESTAMP schedule_sync(SCHEDULE *sch, TIMESTAMP t);
 TIMESTAMP schedule_syncall(TIMESTAMP t);
+TIMESTAMP scheduletransform_syncall(TIMESTAMP t);
 int schedule_test(void);
 void schedule_dump(SCHEDULE *sch, char *file);
 
-int schedule_add_xform(SCHEDULE *schedule, double *target, double scale, double bias);
+int schedule_add_xform(double *source, double *target, double scale, double bias);
 
 #ifdef __cplusplus
 }

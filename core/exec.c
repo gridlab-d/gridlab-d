@@ -393,7 +393,8 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
 	TIMESTAMP t2 = schedule_syncall(t1);
 	TIMESTAMP t = loadshape_syncall(t1); if (abs(t)<t2) t2=t;
-	
+	t = scheduletransform_syncall(t1); if (abs(t)<t2) t2=t;
+
 	t = enduse_syncall(t1); if (abs(t)<t2) t2=t;
 	/* @todo add other internal syncs here */
 	return t2;

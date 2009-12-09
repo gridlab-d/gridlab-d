@@ -3202,9 +3202,6 @@ static int schedule_name(PARSER, SCHEDULE **sch)
 	{
 		ACCEPT;
 		if (((*sch)=schedule_find_byname(name))==NULL)
-
-
-
 			REJECT;
 	}
 	else
@@ -3217,7 +3214,7 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	START;
 	if WHITE ACCEPT;
 	/* TODO scale * schedule_name [+ bias]  */
-	if (TERM(functional(HERE,&xform->scale)) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
+	if (TERM(functional(HERE,&xform->scale)) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->source))))
 	{	
 		if ((WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,&xform->bias)))) { ACCEPT; }
 		else { xform->bias = 0;	ACCEPT;}
@@ -3225,7 +3222,7 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	}
 	OR
 	/* TODO scale * schedule_name [- bias]  */
-	if (TERM(functional(HERE,&xform->scale)) &&( WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
+	if (TERM(functional(HERE,&xform->scale)) &&( WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->source))))
 	{
 		if ((WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,&xform->bias)))) { xform->bias *= -1; ACCEPT; }
 		else { xform->bias = 0;	ACCEPT;}
@@ -3233,7 +3230,7 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	}
 	OR
 	/* TODO schedule_name [* scale] [+ bias]  */
-	if (TERM(schedule_name(HERE,&xform->schedule)))
+	if (TERM(schedule_name(HERE,&xform->source)))
 	{
 		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,&xform->scale)))) { ACCEPT; }
 		else { ACCEPT; xform->scale = 1;}
@@ -3244,14 +3241,14 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	}
 	OR
 	/* TODO bias + scale * schedule_name  */
-	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
+	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->source))))
 	{
 		ACCEPT;
 		DONE;
 	}
 	OR
 	/* TODO bias - scale * schedule_name  */
-	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
+	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->source))))
 	{
 		xform->scale *= -1;
 		ACCEPT;
@@ -3259,7 +3256,7 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	}
 	OR
 	/* TODO bias + schedule_name [* scale] */
-	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(schedule_name(HERE,&xform->schedule))))
+	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(schedule_name(HERE,&xform->source))))
 	{
 		if (WHITE,LITERAL("*") && WHITE,TERM(functional(HERE,&xform->scale))) { ACCEPT; }
 		else { ACCEPT; xform->scale = 1;}
@@ -3267,7 +3264,7 @@ static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
 	}
 	OR
 	/* TODO bias - schedule_name [* scale] */
-	if (TERM(functional(HERE,&xform->bias)) && WHITE,LITERAL("-") && WHITE,TERM(schedule_name(HERE,&xform->schedule)))
+	if (TERM(functional(HERE,&xform->bias)) && WHITE,LITERAL("-") && WHITE,TERM(schedule_name(HERE,&xform->source)))
 	{
 		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,&xform->scale)))) { ACCEPT; xform->scale *= -1; }
 		else { ACCEPT; xform->scale = 1;}
@@ -3352,8 +3349,9 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 		} 
 		else if (prop!=NULL && prop->ptype==PT_double && TERM(schedule_xform(HERE,&xform)))
 		{
+			SCHEDULE *sch = (SCHEDULE*)(xform.source);
 			xform.target = (double*)((char*)(obj+1) + (int64)prop->addr);
-			if (!schedule_add_xform(xform.schedule,xform.target,xform.scale,xform.bias))
+			if (!schedule_add_xform(&(sch->value),xform.target,xform.scale,xform.bias))
 			{
 				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 				REJECT;
