@@ -38,6 +38,10 @@ libpowerflow_la_SOURCES = \
 	substation.cpp substation.h \
 	pqload.cpp pqload.h \
 	voltdump.cpp voltdump.h \
-	solver_nr.cpp solver_nr.h
+	solver_nr.cpp solver_nr.h \
+	frequency_gen.cpp frequency_gen.h \
+	restoration.cpp frequency_gen.h \
+	series_reactor.cpp series_reactor.h 
+
 libpowerflow_la_LDFLAGS = -version-info 0:0:0
 
