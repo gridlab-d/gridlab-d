@@ -1,5 +1,11 @@
 // test schedule transforms
 
+#define debug=1
+#define verbose=1
+
+module residential {
+	default_outdoor_temperature 70.5;
+}
 module assert;
 
 clock {
@@ -7,25 +13,24 @@ clock {
 	starttime '2009-01-01 0:00:00 PST';
 	stoptime '2009-01-02 0:00:00 PST';
 }
+
 schedule test_schedule {
-	* * * * * // value of 1 all the time
-}
-class mytest {
-	double myvalue;
-	intrinsic create(object parent)	{ 
-		myvalue=0; // start with 0
-		return 1; 
-	};
+	0-29 * * * * 0
+	30-59 * * * * 1
 }
 
-object mytest {
-	name MyTest;
-	myvalue test_schedule;
+object house {
+	cooling_setpoint House1.cooling_setpoint+1;
+	heating_setpoint this.cooling_setpoint-5;
+	air_temperature test_schedule+70;
 	object double_assert {
 		status ASSERT_TRUE;
 		once ONCE_DONE;
-		within 1e-8;
-		value 1;
-		target myvalue;
+		within 1;
+		value 70;
+		target air_temperature;
 	};
+}
+object house {
+	name House1;
 }

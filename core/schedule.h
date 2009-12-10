@@ -102,6 +102,7 @@ int schedule_test(void);
 void schedule_dump(SCHEDULE *sch, char *file);
 
 int schedule_add_xform(double *source, double *target, double scale, double bias);
+SCHEDULEXFORM *scheduletransform_getnext(SCHEDULEXFORM *xform);
 
 #ifdef __cplusplus
 }

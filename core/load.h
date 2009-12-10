@@ -16,6 +16,7 @@
 
 #define UR_NONE  0x00 /* no flags */
 #define UR_RANKS 0x01 /* reference has ranking impact */
+#define UR_TRANSFORM 0x02 /* reference is via a transform */
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,14 +26,16 @@ STATUS loadall(char *filename);
 }
 #endif
 
-typedef struct s_unresolved_object {
+typedef struct s_unresolved {
 	OBJECT *by;
-	OBJECT **ref;
+	PROPERTYTYPE ptype;
+	void *ref;
 	int flags;
 	CLASS *oclass;
 	char256 id;
+	char *file;
 	unsigned int line;
-	struct s_unresolved_object *next;
+	struct s_unresolved *next;
 } UNRESOLVED;
 
 typedef struct s_unresolved_func {
@@ -51,7 +54,7 @@ double load_longitude(char *buffer);
 int time_value(char *, TIMESTAMP *t);
 int time_value_datetime(char *c, TIMESTAMP *t);
 int set_flags(OBJECT *obj, char1024 propval);
-UNRESOLVED *add_unresolved(OBJECT *by, OBJECT **ref, CLASS *oclass, char *id, unsigned int line, int flags);
+UNRESOLVED *add_unresolved(OBJECT *by, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, unsigned int line, int flags);
 int load_resolve_all();
 
 #endif

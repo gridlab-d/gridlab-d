@@ -759,21 +759,32 @@ static void free_index(void)
 }
 
 static UNRESOLVED *first_unresolved = NULL;
-/*static*/ UNRESOLVED *add_unresolved(OBJECT *by, OBJECT **ref, CLASS *oclass, char *id, unsigned int line, int flags)
+/*static*/ UNRESOLVED *add_unresolved(OBJECT *by, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, unsigned int line, int flags)
 {
 	UNRESOLVED *item = malloc(sizeof(UNRESOLVED));
 	if (item==NULL) { errno = ENOMEM; return NULL; }
 	item->by = by;
+	item->ptype = ptype;
 	item->ref = ref;
 	item->oclass = oclass;
 	strncpy(item->id,id,sizeof(item->id));
+	if (first_unresolved!=NULL && strcmp(first_unresolved->file,file)==0)
+	{
+		item->file = first_unresolved->file; // means keep using the same file
+		first_unresolved->file = NULL;
+	}
+	else
+	{
+		item->file = (char*)malloc(strlen(file)+1);
+		strcpy(item->file,file);
+	}
 	item->line = line;
 	item->next = first_unresolved;
 	item->flags = flags;
 	first_unresolved = item;
 	return item;
 }
-static int resolve_list(UNRESOLVED *item)
+static int resolve_object(UNRESOLVED *item, char *filename)
 {
 	OBJECT *obj;
 	char classname[65];
@@ -781,88 +792,194 @@ static int resolve_list(UNRESOLVED *item)
 	OBJECTNUM id = 0;
 	char op[2];
 	char star;
-	UNRESOLVED *next;
-	while (item!=NULL)
-	{	/** @todo support other kinds of references (ticket #29)*/
-		/* insert raw ID number here. -mh */
 
-		if(0 == strcmp(item->id, "root"))
-			obj = NULL;
-		else if (sscanf(item->id,"%64[^.].%64[^:]:",classname,propname)==2)
+	if(0 == strcmp(item->id, "root"))
+		obj = NULL;
+	else if (sscanf(item->id,"%64[^.].%64[^:]:",classname,propname)==2)
+	{
+		char *value = strchr(item->id,':');
+		FINDLIST *match;
+		if (value++==NULL)
 		{
-			char *value = strchr(item->id,':');
-			FINDLIST *match;
-			if (value++==NULL)
-			{
-				output_error_raw("%s(%d): %s reference to %s is missing match value", filename, item->line,
-					format_object(item->by), item->id);
-				return FAILED;
-			}
-			match = find_objects(FL_NEW,FT_CLASS,SAME,classname,AND,FT_PROPERTY,propname,SAME,value,FT_END);
-			if (match==NULL || match->hit_count==0)
-			{
-				output_error_raw("%s(%d): %s reference to %s does not match any existing objects", filename, item->line,
-					format_object(item->by), item->id);
-				return FAILED;
-			}
-			else if (match->hit_count>1)
-			{
-				output_error_raw("%s(%d): %s reference to %s matches more than one object", filename, item->line,
-					format_object(item->by), item->id);
-				return FAILED;
-			}
-			obj=find_first(match);
-		}
-		else if (sscanf(item->id,"%[^:]:id%[+-]%d",classname,op,&id)==3)
-		{
-			CLASS *oclass = class_get_class_from_classname(classname);
-			obj = object_find_by_id(item->by->id + (op[0]=='+'?+1:-1)*id);
-			if (obj==NULL)
-			{
-				output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
-					format_object(item->by), item->id);
-				return FAILED;
-			}
-		}
-		else if (sscanf(item->id,global_object_scan,classname,&id)==2)
-		{
-			obj = load_get_index(id);
-			if (obj==NULL)
-			{
-				output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
-					format_object(item->by), item->id);
-				return FAILED;
-			}
-			if ((strcmp(obj->oclass->name,classname)!=0) && (strcmp("id", classname) != 0))
-			{ /* "id:###" is our wildcard.  some converters use it for dangerous simplicity. -mh */
-				output_error_raw("%s(%d): class of reference from %s to %s mismatched", filename, item->line,
-					format_object(item->by), item->id);
-				return FAILED;
-			}
-		}
-		else if (sscanf(item->id,"%[^:]:%c",classname,&star)==2 && star=='*')
-		{
-			CLASS *oclass = class_get_class_from_classname(classname);
-			obj = get_next_unlinked(oclass);
-			if (obj==NULL)
-			{
-				output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
-					format_object(item->by), item->id);
-				return FAILED;
-			}
-		}
-		else if ((obj=object_find_name(item->id))!=NULL)
-		{
-			/* found it already*/
-		}
-		else
-		{
-			output_error_raw("%s(%d): '%s' not found", filename, item->line, item->id);
+			output_error_raw("%s(%d): %s reference to %s is missing match value", filename, item->line,
+				format_object(item->by), item->id);
 			return FAILED;
 		}
-		*(item->ref) = obj;
-		if ((item->flags&UR_RANKS)==UR_RANKS)
-			object_set_rank(obj,item->by->rank);
+		match = find_objects(FL_NEW,FT_CLASS,SAME,classname,AND,FT_PROPERTY,propname,SAME,value,FT_END);
+		if (match==NULL || match->hit_count==0)
+		{
+			output_error_raw("%s(%d): %s reference to %s does not match any existing objects", filename, item->line,
+				format_object(item->by), item->id);
+			return FAILED;
+		}
+		else if (match->hit_count>1)
+		{
+			output_error_raw("%s(%d): %s reference to %s matches more than one object", filename, item->line,
+				format_object(item->by), item->id);
+			return FAILED;
+		}
+		obj=find_first(match);
+	}
+	else if (sscanf(item->id,"%[^:]:id%[+-]%d",classname,op,&id)==3)
+	{
+		CLASS *oclass = class_get_class_from_classname(classname);
+		obj = object_find_by_id(item->by->id + (op[0]=='+'?+1:-1)*id);
+		if (obj==NULL)
+		{
+			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
+				format_object(item->by), item->id);
+			return FAILED;
+		}
+	}
+	else if (sscanf(item->id,global_object_scan,classname,&id)==2)
+	{
+		obj = load_get_index(id);
+		if (obj==NULL)
+		{
+			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
+				format_object(item->by), item->id);
+			return FAILED;
+		}
+		if ((strcmp(obj->oclass->name,classname)!=0) && (strcmp("id", classname) != 0))
+		{ /* "id:###" is our wildcard.  some converters use it for dangerous simplicity. -mh */
+			output_error_raw("%s(%d): class of reference from %s to %s mismatched", filename, item->line,
+				format_object(item->by), item->id);
+			return FAILED;
+		}
+	}
+	else if (sscanf(item->id,"%[^:]:%c",classname,&star)==2 && star=='*')
+	{
+		CLASS *oclass = class_get_class_from_classname(classname);
+		obj = get_next_unlinked(oclass);
+		if (obj==NULL)
+		{
+			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
+				format_object(item->by), item->id);
+			return FAILED;
+		}
+	}
+	else if ((obj=object_find_name(item->id))!=NULL)
+	{
+		/* found it already*/
+	}
+	else
+	{
+		output_error_raw("%s(%d): '%s' not found", filename, item->line, item->id);
+		return FAILED;
+	}
+	*(OBJECT**)(item->ref) = obj;
+	if ((item->flags&UR_RANKS)==UR_RANKS)
+		object_set_rank(obj,item->by->rank);
+	return SUCCESS;
+}
+static int resolve_double(UNRESOLVED *item, char *context)
+{
+	FULLNAME oname;
+	PROPERTYNAME pname;
+	char *filename = (item->file ? item->file : context);
+
+	if (sscanf(item->id,"%64[^.].%64s",oname,pname)==2)
+	{
+		OBJECT *obj = NULL;
+		PROPERTY *prop = NULL;
+		double **ref = NULL;
+
+		/* get and check the object */
+		obj = object_find_name(oname);
+		if (obj==NULL)
+		{
+			output_error_raw("%s(%d): object '%s' not found", filename, item->line, oname);
+			return FAILED;
+		}
+
+		/* get and check the property */
+		prop = object_get_property(obj,pname);
+		if (prop==NULL)
+		{
+			output_error_raw("%s(%d): property '%s' not found", filename, item->line, pname);
+			return FAILED;
+		}
+
+		/* get transform reference */
+		if ((item->flags&UR_TRANSFORM)==UR_TRANSFORM)
+		{
+			/* find transform that uses this target */
+			SCHEDULEXFORM *xform = NULL;
+			while ((xform=scheduletransform_getnext(xform))!=NULL)
+			{
+				/* the reference is to the schedule's source */
+				if (xform==item->ref)
+				{
+					ref = &(xform->source);
+					break;
+				}
+			}
+		}
+
+		/* get the direct reference */
+		else
+			ref = (double**)(item->ref);
+		
+		/* extract the reference to the object property */
+		switch (prop->ptype) {
+		case PT_double:
+			*ref = object_get_double(obj,prop);
+			break;
+		case PT_complex:
+			*ref = &(((complex*)object_get_addr(obj,prop->name))->r);
+			break;
+		case PT_loadshape:
+			*ref = &(((loadshape*)object_get_addr(obj,prop->name))->load);
+			break;
+		case PT_enduse:
+			*ref = &(((enduse*)object_get_addr(obj,prop->name))->total.r);
+			break;
+		default:
+			output_error_raw("%s(%d): reference '%s' type is not supported", filename, item->line, item->id);
+			return FAILED;
+		}
+
+		output_debug("reference '%s' resolved ok", item->id);
+
+		return SUCCESS;
+	}
+	return FAILED;
+}
+
+static int resolve_list(UNRESOLVED *item)
+{
+	UNRESOLVED *next;
+	char *filename = NULL;
+	while (item!=NULL)
+	{	
+		// context file name changes
+		if (item->file!=NULL)
+		{
+			// free last context file name
+			if (filename!=NULL)
+				free(filename); // last one - not used again
+
+			// get next context file name
+			filename = item->file;
+		}
+
+		// handle different reference types
+		switch (item->ptype) {
+		case PT_object:
+			if (resolve_object(item, filename)==FAILED)
+				return FAILED;
+			break;
+		case PT_double:
+		case PT_complex:
+		case PT_loadshape:
+		case PT_enduse:
+			if (resolve_double(item, filename)==FAILED)
+				return FAILED;
+			break;
+		default:
+			output_error_raw("%s(%d): unresolved reference to property '%s' uses unsupported type (ptype=%d)", filename, item->line, item->id, item->ptype);
+			break;
+		}
 		next = item->next;
 		free(item);
 		item=next;
@@ -3193,7 +3310,7 @@ int is_int(PROPERTYTYPE pt){
 	}
 }
 
-static int schedule_name(PARSER, SCHEDULE **sch)
+static int schedule_ref(PARSER, SCHEDULE **sch)
 {
 	char name[64];
 	START;
@@ -3208,66 +3325,143 @@ static int schedule_name(PARSER, SCHEDULE **sch)
 		REJECT;
 	DONE;
 }
+static int property_ref(PARSER, void **ref, OBJECT *from)
+{
+	FULLNAME oname;
+	PROPERTYNAME pname;
+	START;
+	if WHITE ACCEPT;
+	if (TERM(name(HERE,oname,sizeof(oname))) && LITERAL(".") && TERM(dotted_name(HERE,pname,sizeof(pname))))
+	{
+		OBJECT *obj = (strcmp(oname,"this")==0 ? from : object_find_name(oname));
 
-static int schedule_xform(PARSER, SCHEDULEXFORM *xform)
+		// object isn't defined yet
+		if (obj==NULL)
+		{
+			// add to unresolved list
+			char id[1024];
+			sprintf(id,"%s.%s",oname,pname);
+			*ref = (void*)add_unresolved(from,PT_double,NULL,from->oclass,id,filename,linenum,UR_TRANSFORM);
+			ACCEPT;
+		}
+		else 
+		{
+			PROPERTY *prop = object_get_property(obj,pname);
+			if (prop==NULL)
+			{
+				output_error_raw("%s(%d): property '%s' of object '%s' not found", filename, linenum, oname,pname);
+				REJECT;
+			}
+			else if (prop->ptype==PT_double)
+			{
+				*ref = (void*)object_get_addr(obj,pname); 
+				ACCEPT;
+			}
+			else if (prop->ptype==PT_complex)
+			{
+				// TODO support R,I parts
+				*ref = (void*)object_get_addr(obj,pname); // get R part only
+				ACCEPT;
+			}
+			else if (prop->ptype==PT_loadshape)
+			{
+				loadshape *ls = (void*)object_get_addr(obj,pname);
+				*ref = &(ls->load);
+				ACCEPT;
+			}
+			else if (prop->ptype==PT_enduse)
+			{
+				enduse *eu = (void*)object_get_addr(obj,pname);
+				*ref = &(eu->total.r);
+			}
+			else
+			{
+				output_error_raw("%s(%d): transform '%s.%s' does not reference a double or a double container like a loadshape", filename, linenum, oname,pname);
+				REJECT;
+			}
+		}
+	}
+	else
+	{	REJECT;	}
+	DONE;
+}
+
+static int transform_source(PARSER, void **source, OBJECT *from)
+{
+	SCHEDULE *sch;
+	START;
+	if WHITE ACCEPT;
+	if (TERM(schedule_ref(HERE,&sch)))
+	{
+		*source = (void*)&(sch->value);
+		ACCEPT;
+	}
+	else if (TERM(property_ref(HERE,source,from)))
+	{	ACCEPT; }
+	else
+	{	REJECT; }
+	DONE;
+}
+
+static int linear_transform(PARSER, void **source, double *scale, double *bias, OBJECT *from)
 {
 	START;
 	if WHITE ACCEPT;
-	/* TODO scale * schedule_name [+ bias]  */
-	if (TERM(functional(HERE,&xform->scale)) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->source))))
+	/* scale * schedule_name [+ bias]  */
+	if (TERM(functional(HERE,scale)) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,source, from))))
 	{	
-		if ((WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,&xform->bias)))) { ACCEPT; }
-		else { xform->bias = 0;	ACCEPT;}
+		if ((WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,bias)))) { ACCEPT; }
+		else { *bias = 0;	ACCEPT;}
 		DONE;
 	}
 	OR
-	/* TODO scale * schedule_name [- bias]  */
-	if (TERM(functional(HERE,&xform->scale)) &&( WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->source))))
+	/* scale * schedule_name [- bias]  */
+	if (TERM(functional(HERE,scale)) &&( WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,source,from))))
 	{
-		if ((WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,&xform->bias)))) { xform->bias *= -1; ACCEPT; }
-		else { xform->bias = 0;	ACCEPT;}
+		if ((WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,bias)))) { *bias *= -1; ACCEPT; }
+		else { *bias = 0;	ACCEPT;}
 		DONE;
 	}
 	OR
-	/* TODO schedule_name [* scale] [+ bias]  */
-	if (TERM(schedule_name(HERE,&xform->source)))
+	/* schedule_name [* scale] [+ bias]  */
+	if (TERM(transform_source(HERE,source,from)))
 	{
-		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,&xform->scale)))) { ACCEPT; }
-		else { ACCEPT; xform->scale = 1;}
-		if ((WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,&xform->bias)))) { ACCEPT; }
-	 	OR if ((WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,&xform->bias)))) { xform->bias *= -1; ACCEPT;}
-		else { xform->bias = 0;	ACCEPT;}
+		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,scale)))) { ACCEPT; }
+		else { ACCEPT; *scale = 1;}
+		if ((WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,bias)))) { ACCEPT; DONE; }
+	 	OR if ((WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,bias)))) { *bias *= -1; ACCEPT; DONE}
+		else { *bias = 0;	ACCEPT;}
 		DONE;
 	}
 	OR
-	/* TODO bias + scale * schedule_name  */
-	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->source))))
+	/* bias + scale * schedule_name  */
+	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,source,from))))
 	{
 		ACCEPT;
 		DONE;
 	}
 	OR
-	/* TODO bias - scale * schedule_name  */
-	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,&xform->scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(schedule_name(HERE,&xform->source))))
+	/* bias - scale * schedule_name  */
+	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,source,from))))
 	{
-		xform->scale *= -1;
+		*scale *= -1;
 		ACCEPT;
 		DONE;
 	}
 	OR
-	/* TODO bias + schedule_name [* scale] */
-	if (TERM(functional(HERE,&xform->bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(schedule_name(HERE,&xform->source))))
+	/* bias + schedule_name [* scale] */
+	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(transform_source(HERE,source,from))))
 	{
-		if (WHITE,LITERAL("*") && WHITE,TERM(functional(HERE,&xform->scale))) { ACCEPT; }
-		else { ACCEPT; xform->scale = 1;}
+		if (WHITE,LITERAL("*") && WHITE,TERM(functional(HERE,scale))) { ACCEPT; }
+		else { ACCEPT; *scale = 1;}
 		DONE;
 	}
 	OR
-	/* TODO bias - schedule_name [* scale] */
-	if (TERM(functional(HERE,&xform->bias)) && WHITE,LITERAL("-") && WHITE,TERM(schedule_name(HERE,&xform->source)))
+	/* bias - schedule_name [* scale] */
+	if (TERM(functional(HERE,bias)) && WHITE,LITERAL("-") && WHITE,TERM(transform_source(HERE,source,from)))
 	{
-		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,&xform->scale)))) { ACCEPT; xform->scale *= -1; }
-		else { ACCEPT; xform->scale = 1;}
+		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,scale)))) { ACCEPT; *scale *= -1; }
+		else { ACCEPT; *scale = 1;}
 		DONE;
 	}
 	REJECT;
@@ -3281,7 +3475,8 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	char1024 propval;
 	double dval;
 	complex cval;
-	SCHEDULEXFORM xform;
+	void *source=NULL;
+	double scale=1,bias=0;
 	UNIT *unit=NULL;
 	OBJECT *subobj=NULL;
 	START;
@@ -3347,17 +3542,26 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			else
 				ACCEPT;
 		} 
-		else if (prop!=NULL && prop->ptype==PT_double && TERM(schedule_xform(HERE,&xform)))
+		else if (prop!=NULL && prop->ptype==PT_double && TERM(linear_transform(HERE,&source,&scale,&bias,obj)))
 		{
-			SCHEDULE *sch = (SCHEDULE*)(xform.source);
-			xform.target = (double*)((char*)(obj+1) + (int64)prop->addr);
-			if (!schedule_add_xform(&(sch->value),xform.target,xform.scale,xform.bias))
+			double *target = (double*)((char*)(obj+1) + (int64)prop->addr);
+
+			/* add the transform list */
+			if (!schedule_add_xform(source,target,scale,bias))
 			{
 				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 				REJECT;
 			}
 			else
+			{
+				/* a transform is unresolved */
+				if (first_unresolved==source)
+
+					/* source was the unresolved entry, now it will be the transform itself */
+					first_unresolved->ref = (void*)scheduletransform_getnext(NULL);
+
 				ACCEPT;
+			}
 		}
 		else if (prop!=NULL && prop->ptype==PT_double && TERM(functional_unit(HERE,&dval,&unit)))
 		{
@@ -3428,7 +3632,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					obj->parent = NULL;
 				else if (strcmp(propname,"parent")==0)
 				{
-					if (add_unresolved(obj,(void*)&obj->parent,oclass,propval,linenum,UR_RANKS)==NULL)
+					if (add_unresolved(obj,PT_object,(void*)&obj->parent,oclass,propval,filename,linenum,UR_RANKS)==NULL)
 					{
 						output_error_raw("%s(%d): unable to add unresolved reference to parent %s", filename, linenum, propval);
 						REJECT;
@@ -3523,7 +3727,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else
 				{
-					add_unresolved(obj,addr,oclass,propval,linenum,UR_NONE);
+					add_unresolved(obj,PT_object,addr,oclass,propval,filename,linenum,UR_NONE);
 					ACCEPT;
 				}
 			}

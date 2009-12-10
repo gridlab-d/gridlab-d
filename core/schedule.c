@@ -24,6 +24,11 @@
 static SCHEDULE *schedule_list = NULL;
 static SCHEDULEXFORM *schedule_xformlist=NULL;
 
+SCHEDULEXFORM *scheduletransform_getnext(SCHEDULEXFORM *xform)
+{
+	return xform?xform->next:schedule_xformlist;
+}
+
 int schedule_add_xform(double *source, double *target, double scale, double bias)
 {
 	SCHEDULEXFORM *xform = (SCHEDULEXFORM*)malloc(sizeof(SCHEDULEXFORM));

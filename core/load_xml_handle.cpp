@@ -182,7 +182,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len){
 			if (strcmp(propname, "root")==0){
 				obj->parent = NULL;
 			} else {
-				add_unresolved(obj,(OBJECT **)&obj->parent,oclass,buffer,42,UR_RANKS); 
+				add_unresolved(obj,PT_object,(void*)&obj->parent,oclass,buffer,"XML",42,UR_RANKS); 
 			}
 		} else if (strcmp(propname, "rank")==0){
 			obj->rank = atoi(buffer);
@@ -263,7 +263,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len){
 			}
 			break;
 		case PT_object:
-			if(add_unresolved(obj,(OBJECT **)addr,oclass,buffer,42,UR_NONE) == NULL){
+			if(add_unresolved(obj,PT_object,(void*)addr,oclass,buffer,"XML",42,UR_NONE) == NULL){
 				sprintf(errmsg, "Failure with add_unresolved() in read_object_prop(%s)", buffer);
 				return errmsg;
 			}
