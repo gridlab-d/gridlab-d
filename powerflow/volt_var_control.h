@@ -14,6 +14,7 @@ class volt_var_control : public node
 {
 public:
 	// All of your user or other module accesible variables go here
+	double qualification_time;
 private:
 	// Any "hidden" variables go here
 

@@ -32,6 +32,7 @@ volt_var_control::volt_var_control(MODULE *mod):node(mod)
 		if(gl_publish_variable(oclass,
 
 			// Enumeration of user variables goes here
+			PT_double, "qualification_time[s]", PADDR(qualification_time),
 
 		NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
