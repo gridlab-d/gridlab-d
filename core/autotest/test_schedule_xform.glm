@@ -20,8 +20,11 @@ schedule test_schedule {
 }
 
 object house {
+	// transform references property in as-yet undefined object
 	cooling_setpoint House1.cooling_setpoint+1;
+	// transform references property in this objecct
 	heating_setpoint this.cooling_setpoint-5;
+	// transform references schedule
 	air_temperature test_schedule+70;
 	object double_assert {
 		status ASSERT_TRUE;
