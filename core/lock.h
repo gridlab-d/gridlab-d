@@ -38,7 +38,8 @@
 	#define cmpxchg(dest, xchg, comp) ((unsigned long) _InterlockedCompareExchange((long *) dest, (long) xchg, (long) comp))
 	#define HAVE_CMPXCHG
 #else
-	#include "asm/cmpxchg.h"
+	#define cmpxchg(dest, xchg, comp) __sync_val_compare_and_swap(dest, comp, xchg)
+	#define HAVE_CMPXCHG
 #endif /* defined(WIN32) */
 
 #ifndef HAVE_CMPXCHG
@@ -50,6 +51,7 @@
 	#define UNLOCK(flags)
 	#define LOCK_OBJECT(obj)
 	#define UNLOCK_OBJECT(obj)
+	#define LOCKED(obj, command)
 #else /* !defined(NOLOCKS) */
 
 static __inline int lock(unsigned long *flags)

@@ -9,6 +9,7 @@ AC_CONFIG_SRCDIR([core/aggregate.c])
 # Older versions of automake may require the that following macro be replaced
 # with AM_CONFIG_HEADER([core/config.h]).
 AC_CONFIG_HEADER([core/config.h])
+AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
 
 AC_PREFIX_DEFAULT([/usr])
@@ -84,6 +85,7 @@ AC_PROG_LN_S
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
+DX_INIT_DOXYGEN(gridlabd, [doxygen/gridlabd.conf])
 DX_HTML_FEATURE (ON)
 DX_CHM_FEATURE (OFF)
 DX_CHI_FEATURE (OFF)
@@ -92,7 +94,6 @@ DX_RTF_FEATURE (OFF)
 DX_XML_FEATURE (OFF)
 DX_PDF_FEATURE (OFF)
 DX_PS_FEATURE (OFF)
-DX_INIT_DOXYGEN(gridlabd, [doxygen/gridlabd.conf])
 
 # Checks for libraries.
 AC_LANG_PUSH([C++])
