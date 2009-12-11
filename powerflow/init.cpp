@@ -30,6 +30,7 @@
 #include "series_reactor.h"
 #include "restoration.h"
 #include "frequency_gen.h"
+#include "volt_var_control.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -93,6 +94,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new series_reactor(module);
 	new restoration(module);
 	new frequency_gen(module);
+	new volt_var_control(module);
 
 	/* always return the first class registered */
 	return node::oclass;
