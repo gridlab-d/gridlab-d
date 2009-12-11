@@ -364,6 +364,7 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 			} else if(shape.params.pulsed.pulsetype == MPT_POWER){
 				; /* constant power pulse ~ draws water to consume X kW, limited by C + Q * h ~ Vdot proportional to power/time */
 			}
+			break;
 		case MT_MODULATED:
 			if(shape.params.modulated.pulsetype == MPT_TIME){
 				GL_THROW("Amplitude modulated water usage is nonsensical for residential water heaters");
