@@ -38,6 +38,7 @@
 	#define cmpxchg(dest, xchg, comp) ((unsigned long) _InterlockedCompareExchange((long *) dest, (long) xchg, (long) comp))
 	#define HAVE_CMPXCHG
 #elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
+	#include <OSAtomic.h>
 	#define cmpxchg(dest, xchg, comp) OSAtomicCompareSwapPtr(comp, xchg, dest)
 	#define HAVE_CMPXCHG
 #else
