@@ -1071,6 +1071,8 @@ static int literal(PARSER, char *text)
 static int dashed_name(PARSER, char *result, int size)
 {	/* basic name */
 	START;
+	/* names cannot start with a digit */
+	if (isdigit(*_p)) return 0;
 	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='_' || *_p=='-') COPY(result);
 	result[_n]='\0';
 	DONE;
@@ -1079,6 +1081,8 @@ static int dashed_name(PARSER, char *result, int size)
 static int name(PARSER, char *result, int size)
 {	/* basic name */
 	START;
+	/* names cannot start with a digit */
+	if (isdigit(*_p)) return 0;
 	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='_') COPY(result);
 	result[_n]='\0';
 	DONE;
