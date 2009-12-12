@@ -659,6 +659,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\volt_var_control.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\voltdump.cpp"
 				>
 			</File>
@@ -834,6 +838,10 @@
 			</File>
 			<File
 				RelativePath="..\powerflow\undergroundline_test.h"
+				>
+			</File>
+			<File
+				RelativePath=".\volt_var_control.h"
 				>
 			</File>
 			<File

@@ -143,8 +143,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	int nnz, info;
 	superlu_options_t options;
 	SuperLUStat_t stat;
-	NCformat *Astore_LU;
-	DNformat *Bstore_LU;
 	unsigned int m,n;
 	double *sol_LU;
 
@@ -2842,16 +2840,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		//* Create Matrix A in the format expected by Super LU.*/
 		dCreate_CompCol_Matrix ( &A_LU, m, n, nnz, a_LU, rows_LU, cols_LU, SLU_NC,SLU_D,SLU_GE );
-		Astore_LU =(NCformat*)A_LU.Store;
 
 		//* Create right-hand side matrix B in the format expected by Super LU.*/
 		dCreate_Dense_Matrix(&B_LU, m, 1, rhs_LU, m, SLU_DN, SLU_D, SLU_GE);
 
-		Bstore_LU=(DNformat*)B_LU.Store;
 		StatInit ( &stat );
-
-		Astore_LU->nzval=a_LU;
-		Bstore_LU->nzval=rhs_LU;
 
 		// solve the system
 		dgssv(&options, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &stat, &info);
