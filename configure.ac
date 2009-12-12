@@ -85,6 +85,11 @@ AC_PROG_LN_S
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
+AX_LIB_XERCES
+test "$HAVE_XERCES" = "yes" || AC_MSG_FAILURE([Xerces library not found])
+AX_LIB_SUPERLU
+test "$HAVE_SUPERLU" = "yes" || AC_MSG_FAILURE([Superlu library not found])
+
 DX_INIT_DOXYGEN(gridlabd, [doxygen/gridlabd.conf])
 DX_HTML_FEATURE (ON)
 DX_CHM_FEATURE (OFF)
@@ -100,8 +105,6 @@ AC_LANG_PUSH([C++])
 AC_CHECK_HEADER([cppunit/config-auto.h], [],
    [CPPFLAGS="$CPPFLAGS -D_NO_CPPUNIT"])
 #   [AC_MSG_FAILURE([Missing cppunit headers.])])
-AC_CHECK_HEADER([xercesc/sax2/Attributes.hpp], [],
-   [AC_MSG_FAILURE([Missing xerces-c headers.])])
 #AC_CHECK_LIB([cppunit], [CppUnit::TestFactoryRegistry::getRegistry])
 LIBS_ORIG=$LIBS
 echo "LIBS: " $LIBS
@@ -114,8 +117,6 @@ AC_LANG_POP([C++])
 #AM_PATH_CPPUNIT(1.12.0)
 #AC_CHECK_LIB([cppunit], [main], [],
 #   [AC_MSG_FAILURE([Missing cppunit shared library.])])
-AC_CHECK_LIB([xerces-c], [main], [],
-   [AC_MSG_FAILURE([Missing xerces-c shared library.])])
 
 # Checks for header files.
 AC_HEADER_STDC

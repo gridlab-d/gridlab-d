@@ -1,5 +1,5 @@
-AM_CXXFLAGS = -I../third_party/SuperLU_3.1/SRC
-libpowerflow_la_LIBADD = ../third_party/SuperLU_3.1/lib/libsuperlu_3.1.a
+AM_CPPFLAGS = $(SUPERLU_CPPFLAGS)
+libpowerflow_la_LIBADD = $(SUPERLU_LIBS)
 pkglib_LTLIBRARIES = libpowerflow.la 
 libpowerflow_la_SOURCES = \
 	init.cpp main.cpp \
@@ -43,5 +43,5 @@ libpowerflow_la_SOURCES = \
 	restoration.cpp frequency_gen.h \
 	series_reactor.cpp series_reactor.h 
 
-libpowerflow_la_LDFLAGS = -version-info 0:0:0
+libpowerflow_la_LDFLAGS = -version-info 0:0:0 $(SUPERLU_LDFLAGS)
 
