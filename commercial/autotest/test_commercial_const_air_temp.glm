@@ -7,7 +7,9 @@ clock {
 	timezone PST+8PDT;
 }
 
-module commercial;
+module commercial{
+	default_outdoor_temperature 59.0 degF;
+}
 module tape;
 module assert;
 
