@@ -11,7 +11,7 @@ import subprocess
 
 
 tmppath = os.getenv("PATH")
-os.putenv("PATH",tmppath+";..\\..\\..\\VS2005\\Win32\\Release")
+os.putenv("PATH",tmppath+";..\\..\\..\\VS2005\\Win32\\Debug")
 
 def do_help():
 	print("validate.py - GridLAB-D autotest/validation script")
@@ -234,6 +234,7 @@ def run_tests(argv):
 	print("Validation detected "+str(err_ct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(round(dt,2))+" seconds.")
 	for errpath, errfile in errlist:
 		print(" * "+os.path.join(errpath, errfile))
+	print("Validation detected "+str(err_ct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(round(dt,2))+" seconds.")
 	
 	exit(err_ct+ex_ct)
 #end run_tests()
