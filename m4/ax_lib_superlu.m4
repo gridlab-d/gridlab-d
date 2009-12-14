@@ -61,7 +61,7 @@ AC_DEFUN([AX_LIB_SUPERLU],
         AC_HELP_STRING([--with-superlu-lib=@<:@ARG@:>@],
             [link options for SuperLU libraries]
         ),
-        [superlu_ldflags="$withval"],
+        [superlu_ldflags="-L$withval"],
         [superlu_ldflags=""]
     )
 
@@ -121,7 +121,7 @@ AC_DEFUN([AX_LIB_SUPERLU],
         LIBS="$superlu_libs $LIBS"
 
         AC_LANG_PUSH([C])
-        AC_CHECK_HEADER([superlu/slu_cdefs.h],
+        AC_CHECK_HEADER([slu_cdefs.h],
             [superlu_header_found="yes"],
             [superlu_header_found="no"])
         AC_CHECK_LIB([superlu], [exit],
