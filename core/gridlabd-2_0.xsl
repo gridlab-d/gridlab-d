@@ -345,6 +345,10 @@
 <TR><TH>Name</TH><TH>Frequency_Mode</TH><TH>Frequency</TH><TH>FreqChange</TH><TH>Deadband</TH><TH>Tolerance</TH><TH>M</TH><TH>D</TH><TH>Rated_power</TH><TH>Gen_power</TH><TH>Load_power</TH><TH>Gov_delay</TH><TH>Ramp_rate</TH><TH>Low_Freq_OI</TH><TH>High_Freq_OI</TH><TH>Num_Resp_Eqs</TH></TR>
 <xsl:for-each select="powerflow/frequency_gen_list/frequency_gen"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="Frequency_Mode"/></TD><TD><xsl:value-of select="Frequency"/></TD><TD><xsl:value-of select="FreqChange"/></TD><TD><xsl:value-of select="Deadband"/></TD><TD><xsl:value-of select="Tolerance"/></TD><TD><xsl:value-of select="M"/></TD><TD><xsl:value-of select="D"/></TD><TD><xsl:value-of select="Rated_power"/></TD><TD><xsl:value-of select="Gen_power"/></TD><TD><xsl:value-of select="Load_power"/></TD><TD><xsl:value-of select="Gov_delay"/></TD><TD><xsl:value-of select="Ramp_rate"/></TD><TD><xsl:value-of select="Low_Freq_OI"/></TD><TD><xsl:value-of select="High_Freq_OI"/></TD><TD><xsl:value-of select="Num_Resp_Eqs"/></TD></TR>
 </xsl:for-each></TABLE>
+<H4>volt_var_control objects</H4><TABLE BORDER="1">
+<TR><TH>Name</TH><TH>qualification_time</TH></TR>
+<xsl:for-each select="powerflow/volt_var_control_list/volt_var_control"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="qualification_time"/></TD></TR>
+</xsl:for-each></TABLE>
 <H3><A NAME="modules_residential">residential</A></H3><TABLE BORDER="1">
 <TR><TH>version.major</TH><TD><xsl:value-of select="residential/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="residential/version.minor"/></TD></TR><TR><TH>default_line_voltage</TH><TD><xsl:value-of select="residential/default_line_voltage"/></TD></TR><TR><TH>default_line_current</TH><TD><xsl:value-of select="residential/default_line_current"/></TD></TR><TR><TH>default_outdoor_temperature</TH><TD><xsl:value-of select="residential/default_outdoor_temperature"/></TD></TR><TR><TH>default_humidity</TH><TD><xsl:value-of select="residential/default_humidity"/></TD></TR><TR><TH>default_solar</TH><TD><xsl:value-of select="residential/default_solar"/></TD></TR><TR><TH>implicit_enduses</TH><TD><xsl:value-of select="residential/implicit_enduses"/></TD></TR><TR><TH>house_low_temperature_warning[degF]</TH><TD><xsl:value-of select="residential/house_low_temperature_warning[degF]"/></TD></TR><TR><TH>house_high_temperature_warning[degF]</TH><TD><xsl:value-of select="residential/house_high_temperature_warning[degF]"/></TD></TR><TR><TH>thermostat_control_warning</TH><TD><xsl:value-of select="residential/thermostat_control_warning"/></TD></TR><TR><TH>system_dwell_time[s]</TH><TD><xsl:value-of select="residential/system_dwell_time[s]"/></TD></TR><TR><TH>aux_cutin_temperature[degF]</TH><TD><xsl:value-of select="residential/aux_cutin_temperature[degF]"/></TD></TR></TABLE>
 <H4>residential_enduse objects</H4><TABLE BORDER="1">
@@ -2047,6 +2051,19 @@ module powerflow {
 </xsl:if><xsl:if test="Low_Freq_OI">	Low_Freq_OI <xsl:value-of select="Low_Freq_OI"/>;
 </xsl:if><xsl:if test="High_Freq_OI">	High_Freq_OI <xsl:value-of select="High_Freq_OI"/>;
 </xsl:if><xsl:if test="Num_Resp_Eqs">	Num_Resp_Eqs <xsl:value-of select="Num_Resp_Eqs"/>;
+</xsl:if>}
+</xsl:for-each>
+# powerflow::volt_var_control objects
+<xsl:for-each select="volt_var_control_list/volt_var_control"><a name="#GLM.{name}"/>object volt_var_control:<xsl:value-of select="id"/> {
+<xsl:if test="name!=''">	name "<xsl:value-of select="name"/>";
+</xsl:if><xsl:if test="parent!=''">	parent "<a href="#GLM.{parent}"><xsl:value-of select="parent"/></a>";
+</xsl:if><xsl:if test="clock!=''">	clock '<xsl:value-of select="clock"/>';
+</xsl:if><xsl:if test="in_svc!=''">	in_svc '<xsl:value-of select="in_svc"/>';
+</xsl:if><xsl:if test="out_svc!=''">	out_svc '<xsl:value-of select="out_svc"/>';
+</xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
+</xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
+</xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
+</xsl:if><xsl:if test="qualification_time">	qualification_time <xsl:value-of select="qualification_time"/>;
 </xsl:if>}
 </xsl:for-each></xsl:for-each><xsl:for-each select="residential">
 ##############################################

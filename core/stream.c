@@ -20,13 +20,13 @@ static unsigned short s;
 static unsigned long l;
 static unsigned int64 q;
 static unsigned int64 n;
-#define PUTD(S,L) n=(L);if(fwrite(&n,2,1,fp)!=1 || fwrite((S),1,L,fp)!=L) return -1; else count+=n+2;
-#define PUTC(C) c=(C);PUTD(&c,1)
-#define PUTS(S) s=(S);PUTD(&s,2)
-#define PUTL(L) l=(L);PUTD(&l,4)
-#define PUTQ(Q) q=(Q);PUTD(&q,8)
-#define PUTX(T,X) if ((n=stream_out_##T(fp,(X)))<0) return -1; else count+=n;
-#define PUTT(B,T) b=SB_##B;t=ST_##T;s=(unsigned short)((b<<8)|t);PUTD(&s,2)
+#define PUTD(S,L) {n=(L);if(fwrite(&n,2,1,fp)!=1 || fwrite((S),1,L,fp)!=L) return -1; else count+=n+2;}
+#define PUTC(C) {c=(C);PUTD(&c,1)}
+#define PUTS(S) {s=(S);PUTD(&s,2)}
+#define PUTL(L) {l=(L);PUTD(&l,4)}
+#define PUTQ(Q) {q=(Q);PUTD(&q,8)}
+#define PUTX(T,X) {if ((n=stream_out_##T(fp,(X)))<0) return -1; else count+=n;}
+#define PUTT(B,T) {b=SB_##B;t=ST_##T;s=(unsigned short)((b<<8)|t);PUTD(&s,2)}
 
 /* stream block tokens */
 enum {
@@ -39,6 +39,8 @@ enum {
 	SB_UNIT,
 	SB_KEYWORD,
 	SB_PROPERTY,
+	SB_SCHEDULE,
+	SB_TRANSFORM,
 
 	SB_END=0xff,
 };
@@ -55,6 +57,8 @@ enum {
 	ST_UNIT,
 	ST_KEYWORD,
 	ST_PROPERTY,
+	ST_SCHEDULE,
+	ST_TRANSFORM,
 
 	/* these do not have corresponding stream block tokens */
 	ST_VERSION,
@@ -74,6 +78,7 @@ enum {
 	ST_SIZE,
 	ST_ACCESS,
 	ST_VALUE,
+	ST_DEFINITION,
 
 	ST_END=0xff,
 };
@@ -320,6 +325,34 @@ int64 stream_out_object(FILE *fp, OBJECT *obj)
 }
 
 /*******************************************************
+ * SCHEDULE
+ */
+int64 stream_out_schedule(FILE *fp, SCHEDULE *sch)
+{
+	int64 count=0;
+
+	PUTT(SCHEDULE,NAME);
+	PUTD(sch->name,strlen(sch->name));
+
+	PUTT(SCHEDULE,DEFINITION);
+	PUTD(sch->definition,strlen(sch->definition));
+
+	return count;
+}
+
+/*******************************************************
+ * SCHEDULE
+ */
+int64 stream_out_transform(FILE *fp, SCHEDULEXFORM *xform)
+{
+	int64 count=0;
+
+	/* TODO output the transform definition */
+
+	return count;
+}
+
+/*******************************************************
  * OUTPUT STREAM
  */
 int64 stream_out(FILE *fp, int flags)
@@ -329,6 +362,8 @@ int64 stream_out(FILE *fp, int flags)
 	GLOBALVAR *gvar=NULL;
 	CLASS *oclass=NULL;
 	OBJECT *obj=NULL;
+	SCHEDULE *sch=NULL;
+	SCHEDULEXFORM *xform=NULL;
 
 	/* stream header */
 	PUTD(STREAM_NAME,strlen(STREAM_NAME));
@@ -356,11 +391,23 @@ int64 stream_out(FILE *fp, int flags)
 		PUTX(class,oclass);
 	PUTT(END,CLASS);
 
+	/* schedules */
+	PUTT(BEGIN,SCHEDULE);
+	while ((sch=schedule_getnext(sch))!=NULL)
+		PUTX(schedule,sch);
+	PUTT(END,SCHEDULE);
+
 	/* objects */
 	PUTT(BEGIN,OBJECT);
 	for (obj=object_get_first(); (flags&SF_OBJECTS) && obj!=NULL; obj=obj->next)
 		PUTX(object,obj);
 	PUTT(END,OBJECT);
+
+	/* schedules */
+	PUTT(BEGIN,TRANSFORM);
+	while ((xform=scheduletransform_getnext(xform))!=NULL)
+		PUTX(transform,xform);
+	PUTT(END,TRANSFORM);
 
 	return count;
 }
