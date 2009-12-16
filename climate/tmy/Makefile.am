@@ -8,7 +8,7 @@ TMY_SITE = rredc.nrel.gov
 
 install-data-hook:
 	mkdir -p $(DESTDIR)$(tmydir)
-	cd $(DESTDIR)$(tmydir) && for f in ??.zip; do unzip -qq $$f; done
+	cd $(DESTDIR)$(tmydir) && for f in ??.zip; do unzip -fqq $$f; done
 
 uninstall-local:
 	-cd $(DESTDIR)$(tmydir) && rm ??-*.glm ??-*.tmy2
@@ -18,7 +18,7 @@ uninstall-hook:
 	-rmdir $(DESTDIR)$(pkgsysconfdir)
 
 tmy: tmy2_pc.zip
-	unzip -qq -u tmy2_pc \*.tm2
+	unzip -fqq -u tmy2_pc \*.tm2
 	. ./extract_tmy *.tm2
 	. ./build_pkgs
 	rm -f *.glm *.tmy2 *.tm2*
