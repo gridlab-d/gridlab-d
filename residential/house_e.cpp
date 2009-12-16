@@ -533,7 +533,7 @@ CLASS* house_e::pclass = NULL;
 double house_e::warn_low_temp = 55; // degF
 double house_e::warn_high_temp = 95; // degF
 bool house_e::warn_control = true;
-double house_e::system_dwell_time = 300; // seconds
+double house_e::system_dwell_time = 1; // seconds
 
 /** House object constructor:  Registers the class and publishes the variables that can be set by the user. 
 Sets default randomized values for published variables.
