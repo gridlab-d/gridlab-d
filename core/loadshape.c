@@ -84,8 +84,8 @@ TurnOff:
 		if (ls->schedule->value>0) 
 		{
 			/* calculate the decay rate of the queue */
-			ls->r = ls->schedule->value*ls->params.pulsed.scalar/ls->params.pulsed.energy;
-			if (ls->r<=0)
+			ls->r = ls->schedule->value * ls->params.pulsed.scalar / (ls->params.pulsed.energy);
+			if (ls->r<0)
 				output_warning("loadshape %s: r not positive while load is off!", ls->schedule->name);
 		}
 
@@ -122,17 +122,17 @@ TurnOn:
 			ls->load = ls->params.pulsed.pulsevalue * ls->dPdV;
 			
 			/* rate is based on energy and load */
-			ls->r = -1/(ls->params.pulsed.energy/ls->load);
+			ls->r = -ls->params.pulsed.scalar * ls->load / (ls->params.pulsed.energy);
 			if (ls->r>=0)
 				output_warning("loadshape %s: r not negative while load is on!", ls->schedule->name);
 		}
 		else if (ls->params.pulsed.pulsevalue!=0)
 		{
 			/* load has fixed duration so power is energy/duration */
-			ls->load = ls->params.pulsed.energy / ls->params.pulsed.pulsevalue *3600 * ls->dPdV;
+			ls->load = ls->params.pulsed.energy / (ls->params.pulsed.pulsevalue/3600 * ls->params.pulsed.scalar) * ls->dPdV;
 			
 			/* rate is based on time */
-			ls->r = -3600/ls->params.pulsed.pulsevalue;
+			ls->r = -3600 /ls->params.pulsed.pulsevalue;
 			if (ls->r>=0)
 				output_warning("loadshape %s: r not negative while load is on!", ls->schedule->name);
 		}
