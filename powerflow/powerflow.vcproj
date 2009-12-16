@@ -519,6 +519,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\fault_check.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\frequency_gen.cpp"
 				>
 			</File>
@@ -678,6 +682,10 @@
 			</File>
 			<File
 				RelativePath=".\check.h"
+				>
+			</File>
+			<File
+				RelativePath=".\fault_check.h"
 				>
 			</File>
 			<File

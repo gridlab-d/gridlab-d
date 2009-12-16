@@ -10,6 +10,7 @@
 using namespace std;
 
 #include "restoration.h"
+#include "fault_check.h"
 #include "solver_nr.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -31,6 +32,7 @@ restoration::restoration(MODULE *mod) : powerflow_object(mod)
 			PT_char1024,"configuration_file",PADDR(configuration_file),
 			PT_int32,"reconfig_attempts",PADDR(reconfig_attempts),
 			PT_int32,"reconfig_iteration_limit",PADDR(reconfig_iter_limit),
+			PT_object,"fault_check_object",PADDR(fault_check_obj),
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -50,6 +52,7 @@ int restoration::create(void)
 	reconfig_attempts = 0;
 	reconfig_iter_limit = 0;
 	attempt_reconfigure=false;
+	fault_check_obj=NULL;
 
 	return result;
 }
@@ -114,6 +117,16 @@ int restoration::init(OBJECT *parent)
 				*/
 			}
 
+			/****************************** Possibly unnecessary code **********************************/
+			if (fault_check_obj==NULL)
+			{
+				GL_THROW("Please specify the fault_check object for the restoration object");
+				/*  TROUBLESHOOT
+				The restoration object utilizes functions in the fault_check object, so a fault_check
+				object must be specified using the fault_check_object property.
+				*/
+			}
+
 			//Set our rank higher than swing.  We need to go off before the swing bus, just in case we are reconfiguring things
 			gl_set_rank(obj,6);	//6 = swing+1
 		}
@@ -144,6 +157,8 @@ TIMESTAMP restoration::presync(TIMESTAMP t0)
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t1 = powerflow_object::presync(t0);
 	bool NeedReconfiguration;
+	unsigned int index;
+	fault_check *flt_chk;
 	FILE *CONFIGINFO;
 
 	if (prev_time!=t0)	//New timestep - reset tracking variables
@@ -177,6 +192,32 @@ TIMESTAMP restoration::presync(TIMESTAMP t0)
 
 			//Check voltages
 			NeedReconfiguration=VoltageCheck();
+
+			/* --------------------------- Redundant example - performs a "support check" and does a reconfiguration if necessary
+			   --------------------------- A "support check" and reconfiguration also occurs in fault_check right before the NR solver
+			   --------------------------- This code is here merely as an example and may be removed
+			*/
+				//See if a voltage reconfiguration has been requested, otherwise check a support reconfiguration
+				if (NeedReconfiguration==false)
+				{
+					flt_chk = OBJECTDATA(fault_check_obj,fault_check);
+
+					flt_chk->support_check(0);	//0 is assumed to be the swing node
+
+					//See if anything is unsupported
+					for (index=0; index<NR_bus_count; index++)
+					{
+						if (flt_chk->Supported_Nodes[index]==0)	//Unsupported
+						{
+							NeedReconfiguration=true;	//Request a reconfiguration
+							
+							break;	//Drop out of the for loop, only need 1 reconfiguration request
+						}
+					}
+				}
+
+			if (NeedReconfiguration)
+				Perform_Reconfiguration();	//Perform a reconfiguration (this does nothing right now)
 
 
 			/* ---------- Array access testing ------------ */
@@ -435,7 +476,7 @@ void restoration::PopulateConnectivity(int frombus, int tobus, OBJECT *linkingob
 }
 
 //Function to check voltages and determine if a reconfiguration is necessary
-bool *restoration::VoltageCheck(void)
+bool restoration::VoltageCheck(void)
 {
 	/* ------------ Array access testing ------------- */
 		//Voltages would be checked here, just like presynch.  Replication of presync print for testing
@@ -447,6 +488,13 @@ bool *restoration::VoltageCheck(void)
 
 	//Set to always return false right now
 	return false;
+}
+
+//Function to perform the reconfiguration - functionalized so fault_check can call it before the NR solver goes off
+void restoration::Perform_Reconfiguration(void)
+{
+	//Reconfiguration would occur here
+	printf("Reconfigured!\n\n");
 }
 
 //////////////////////////////////////////////////////////////////////////

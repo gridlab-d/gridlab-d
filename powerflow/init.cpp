@@ -31,6 +31,7 @@
 #include "restoration.h"
 #include "frequency_gen.h"
 #include "volt_var_control.h"
+#include "fault_check.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -95,6 +96,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new restoration(module);
 	new frequency_gen(module);
 	new volt_var_control(module);
+	new fault_check(module);
 
 	/* always return the first class registered */
 	return node::oclass;

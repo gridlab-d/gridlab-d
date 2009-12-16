@@ -33,7 +33,8 @@ public:
 	int isa(char *classname);
 	void CreateConnectivity(void);
 	void PopulateConnectivity(int frombus, int tobus, OBJECT *linkingobj);
-	bool *VoltageCheck(void);
+	void Perform_Reconfiguration(void);
+	bool VoltageCheck(void);
 
 	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);
@@ -41,6 +42,8 @@ public:
 private:
 	TIMESTAMP prev_time;	//Previous timestamp - mainly for intialization
 	TIMESTAMP ret_time;		//Returning timestamp - for off-cycle consistency
+
+	OBJECT *fault_check_obj;		//Object pointer to fault check object
 };
 
 #endif // _RESTORATION_H
