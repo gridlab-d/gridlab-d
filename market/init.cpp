@@ -10,6 +10,8 @@
 #include "market.h"
 #include "auction.h"
 #include "controller.h"
+#include "stubauction.h"
+
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -21,6 +23,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 
 	new auction(module);
 	new controller(module);
+	new stubauction(module);
+
 	/*** DO NOT EDIT NEXT LINE ***/
 	//NEWCLASS
 

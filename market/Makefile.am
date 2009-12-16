@@ -5,10 +5,10 @@ libmarket_la_SOURCES =              \
 	init.cpp                         \
 	main.cpp                         \
 	market.h                         \
+	stubauction.cpp stubauction.h    \
 	# DO NOT EDIT THE FOLLOWING LINE \
 	# NEWCLASS
 libmarket_la_LDFLAGS = -no-undefined -version-info 0:0:0
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)
-

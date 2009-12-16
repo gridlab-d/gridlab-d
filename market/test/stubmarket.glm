@@ -1,0 +1,23 @@
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2001-05-01 00:00:00 PST';
+}
+
+module market;
+module tape;
+
+object stubauction{
+	name Stub;
+	period 3600;
+	object recorder{
+		property avg24,std24,avg168,std168,next.P;
+		interval 3600;
+		limit 1800;
+	};
+	object player{
+		file "prices.player";
+		loop 150;
+		property next.P;
+	};
+}

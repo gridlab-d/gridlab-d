@@ -515,11 +515,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\controller2.cpp"
+				>
+			</File>
+			<File
 				RelativePath="init.cpp"
 				>
 			</File>
 			<File
 				RelativePath="main.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\stubauction.cpp"
 				>
 			</File>
 		</Filter>
@@ -537,7 +545,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\controller2.h"
+				>
+			</File>
+			<File
 				RelativePath="market.h"
+				>
+			</File>
+			<File
+				RelativePath=".\stubauction.h"
 				>
 			</File>
 		</Filter>
