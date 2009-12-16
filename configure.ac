@@ -87,9 +87,29 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
 AX_LIB_XERCES
-test "$HAVE_XERCES" = "yes" || AC_MSG_FAILURE([Xerces library not found])
+test "$HAVE_XERCES" = "yes" || \
+		AC_MSG_FAILURE([Xerces library not found. If Xerces is not properly \
+installed, you probably need to use one or more of the --with-xerces options. \
+Try `./configure --help[`] for more information.])
 AX_LIB_SUPERLU
-test "$HAVE_SUPERLU" = "yes" || AC_MSG_FAILURE([Superlu library not found])
+if test "$HAVE_SUPERLU" != "yes"; then
+	if test -f third_party/SuperLU_3.1/lib/libsuperlu_3.1.a; then
+		SUPERLU_LIBS=$PWD/third_party/SuperLU_3.1/lib/libsuperlu_3.1.a
+	elif test -f third_party/SuperLU_3.1/lib/libsuperlu.a; then
+		SUPERLU_LIBS=$PWD/third_party/SuperLU_3.1/lib/libsuperlu.a
+	else
+		AC_MSG_FAILURE([SuperLU library not found. If SuperLU is not properly \
+installed, you probably need to use one or more of the --with-superlu options. \
+Try `./configure --help[`] for more information.])
+	fi
+	SUPERLU_CPPFLAGS=-I$PWD/third_party/SuperLU_3.1/SRC
+	SUPERLU_LDFLAGS=""
+	AC_SUBST(SUPERLU_CPPFLAGS)
+	AC_SUBST(SUPERLU_LDFLAGS)
+	AC_SUBST(SUPERLU_LIBS)
+	AC_DEFINE_UNQUOTED(HAVE_SUPERLU)
+	HAVE_SUPERLU=yes
+fi
 
 DX_INIT_DOXYGEN(gridlabd, [doxygen/gridlabd.conf])
 DX_HTML_FEATURE (ON)
