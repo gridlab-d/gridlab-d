@@ -1,30 +1,23 @@
 pkglib_LTLIBRARIES = libnetwork.la
-libnetwork_la_SOURCES = \
-	capbank.cpp          \
-	check.cpp            \
-	export.cpp           \
-	fuse.cpp             \
-	generator.cpp        \
-	globals.c            \
-	import.cpp           \
-	link.cpp             \
-	main.cpp             \
-	meter.cpp            \
-	network.cpp          \
-	node.cpp             \
-	regulator.cpp        \
-	relay.cpp            \
-	transformer.cpp      \
-	varmap.c             \
-	capbank.h            \
-	fuse.h               \
-	generator.h          \
-	link.h               \
-	meter.h              \
-	network.h            \
-	node.h               \
-	regulator.h          \
-	relay.h              \
-	transformer.h
-libnetwork_la_LDFLAGS = -version-info 0:0:0
+libnetwork_la_SOURCES =          \
+	capbank.cpp     capbank.h     \
+	check.cpp                     \
+	export.cpp                    \
+	fuse.cpp        fuse.h        \
+	generator.cpp   generator.h   \
+	globals.c                     \
+	import.cpp                    \
+	link.cpp        link.h        \
+	main.cpp                      \
+	meter.cpp       meter.h       \
+	network.cpp     network.h     \
+	node.cpp        node.h        \
+	regulator.cpp   regulator.h   \
+	relay.cpp       relay.h       \
+	transformer.cpp transformer.h \
+	varmap.c
+libnetwork_la_LDFLAGS = -no-undefined -version-info 0:0:0
+
+uninstall-hook:
+	-rmdir $(DESTDIR)$(pkglibdir)
 

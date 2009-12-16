@@ -1,7 +1,6 @@
-SUBDIRS=rt
-etcdir=$(prefix)/etc
-pkgetcdir=$(etcdir)/$(PACKAGE)
-pkgetc_DATA=tzinfo.txt unitfile.txt
+SUBDIRS = rt
+pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
+dist_pkgsysconf_DATA = tzinfo.txt unitfile.txt
 bin_PROGRAMS = gridlabd
 CC = $(PTHREAD_CC)
 AM_CFLAGS = $(PTHREAD_CFLAGS)
@@ -22,19 +21,21 @@ gridlabd_SOURCES = build.h main.c \
 	exec.c exec.h \
 	find.c find.h \
 	globals.c globals.h \
+	gridlabd.h \
 	index.c index.h \
 	interpolate.c interpolate.h \
 	kill.c kill.h \
 	kml.c kml.h \
 	legal.c legal.h \
 	list.c list.h \
-	load.c  load.h \
+	load.c load.h \
+	loadshape.c loadshape.h \
 	load_xml.cpp load_xml.h \
 	load_xml_handle.cpp load_xml_handle.h \
 	local.c local.h \
 	lock.h \
-	matlab.c matlab.h \
 	match.c match.h \
+	matlab.c matlab.h \
 	module.c module.h \
 	object.c object.h \
 	output.c output.h \
@@ -42,18 +43,16 @@ gridlabd_SOURCES = build.h main.c \
 	random.c random.h \
 	realtime.c realtime.h \
 	save.c save.h \
+	schedule.c schedule.h \
 	server.c server.h \
 	stream.c stream.h \
-	test_callbacks.h \
 	test.c test.h \
+	test_callbacks.h \
 	test_framework.cpp test_framework.h \
 	threadpool.c threadpool.h \
 	timestamp.c timestamp.h \
 	unit.c unit.h \
-	version.h \
-	asm/cmpxchg.h asm/x86/cmpxchg.h asm/x86_64/cmpxchg.h \
-	schedule.c schedule.h \
-	loadshape.c loadshape.h
+	version.h
 EXTRA_gridlabd_SOURCES = \
 	cmex.c cmex.h
 
@@ -62,5 +61,15 @@ legal.c: buildnum build.h
 build.h: buildnum
 
 buildnum:
-	. ../utilities/build_number -b .. >build.h
+	if [ -f ../utilities/build_number ]; then \
+		. ../utilities/build_number -b .. > build.h; \
+	elif [ ! -f build.h ]; then \
+		echo '#define "$$Revision: 0"' > build.h; \
+	fi
+
+uninstall-hook:
+	-rmdir $(DESTDIR)$(pkgsysconfdir)
+
+dist-hook:
+	. ../utilities/build_number -b .. > $(distdir)/build.h
 

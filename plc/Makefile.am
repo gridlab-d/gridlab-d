@@ -1,14 +1,14 @@
 pkglib_LTLIBRARIES = libplc.la
-libplc_la_SOURCES = \
-	plc.cpp          \
-	init.cpp         \
-	comm.cpp	\
-	machine.cpp	\
-	main.cpp         \
-	test.cpp         \
-	plc.h            \
-	comm.h		\
-	machine.h	\
-	plc_test.h
-libplc_la_LDFLAGS = -version-info 0:0:0
+libplc_la_SOURCES =      \
+	comm.cpp	   comm.h    \
+	init.cpp              \
+	machine.cpp	machine.h \
+	main.cpp              \
+	plc.cpp     plc.h     \
+	plc_test.h            \
+	test.cpp
+libplc_la_LDFLAGS = -no-undefined -version-info 0:0:0
+
+uninstall-hook:
+	-rmdir $(DESTDIR)$(pkglibdir)
 

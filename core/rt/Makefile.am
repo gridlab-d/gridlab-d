@@ -1,7 +1,23 @@
+pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
+pkgrtdir = $(pkgsysconfdir)/rt
+dist_pkgrt_DATA = gridlabd.conf debugger.conf gnuplot.conf gridlabd.h
+
 install-data-local:
-		if [ ! -d $(prefix)/etc/gridlabd/rt ]; then mkdir -p $(prefix)/etc/gridlabd/rt ; fi
-		$(INSTALL_DATA) $(srcdir)/gridlabd.conf $(prefix)/etc/gridlabd/rt/gridlabd.conf
-		$(INSTALL_DATA) $(srcdir)/debugger.conf $(prefix)/etc/gridlabd/rt/debugger.conf
-		$(INSTALL_DATA) $(srcdir)/gnuplot.conf $(prefix)/etc/gridlabd/rt/gnuplot.conf
-		$(INSTALL_DATA) $(srcdir)/gridlabd.h $(prefix)/etc/gridlabd/rt/gridlabd.h
-		if [ -d /etc/profile.d ] ; then echo "export GRIDLABD=$(prefix)/etc/gridlabd" >/etc/profile.d/gridlabd.sh; echo "export GLPATH=$(prefix)/etc/gridlabd:$(libdir)/gridlabd:$(prefix)/etc/gridlabd/rt:$(prefix)/etc/gridlabd/tmy" >> /etc/profile.d/gridlabd.sh ; elif [ -f /etc/profile ] ; then echo "export GRIDLABD=$(prefix)/etc/gridlabd" >> /etc/profile ; echo "export GLPATH=$(prefix)/etc/gridlabd:$(libdir)/gridlabd:$(prefix)/etc/gridlabd/rt:$(prefix)/etc/gridlabd/tmy" >> /etc/profile ; fi
+	[ -d "$(DESTDIR)$(pkgrtdir)" ] || $(MKDIR_P) $(DESTDIR)$(pkgrtdir)
+	echo "export GRIDLABD=$(pkgsysconfdir)" > $(DESTDIR)$(pkgrtdir)/gridlabd.sh
+	echo "export GLPATH=$(pkgsysconfdir):$(pkglibdir):$(pkgrtdir):$(pkgsysconfdir)/tmy" >> $(DESTDIR)$(pkgrtdir)/gridlabd.sh
+	if [ -d "$(DESTDIR)$(sysconfdir)/profile.d" ]; then \
+		$(LN_S) $(pkgsysconfdir)/gridlabd.sh $(DESTDIR)$(sysconfdir)/profile.d/gridlabd.sh; \
+	elif [ -f "$(DESTDIR)$(sysconfdir)/profile" ]; then \
+		echo ". $(pkgsysconfdir)/gridlabd.sh" >> $(DESTDIR)$(sysconfdir)/profile; \
+	fi
+
+uninstall-local:
+	-[ ! -f "$(DESTDIR)$(sysconfdir)/profile" ] || $(SED) -i '\,^. $(pkgsysconfdir)/gridlabd\.sh$$,d' $(DESTDIR)$(sysconfdir)/profile
+	-[ ! -d "$(DESTDIR)$(sysconfdir)/profile.d" ] || rm -f $(DESTDIR)$(sysconfdir)/profile.d/gridlabd.sh
+	-rm -f $(DESTDIR)$(pkgrtdir)/gridlabd.sh
+
+uninstall-hook:
+	-rmdir $(DESTDIR)$(pkgrtdir)
+	-rmdir $(DESTDIR)$(pkgsysconfdir)
+

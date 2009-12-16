@@ -1,19 +1,22 @@
 pkglib_LTLIBRARIES = libgenerators.la
-libgenerators_la_SOURCES = \
-	init.cpp \
-	main.cpp \
-	diesel_dg.cpp diesel_dg.h \
-	battery.cpp battery.h \
-	dc_dc_converter.cpp dc_dc_converter.h \
-	energy_storage.cpp energy_storage.h \
-	inverter.cpp inverter.h \
-	microturbine.cpp microturbine.h \
+libgenerators_la_SOURCES =                   \
+	battery.cpp           battery.h           \
+	dc_dc_converter.cpp   dc_dc_converter.h   \
+	diesel_dg.cpp         diesel_dg.h         \
+	energy_storage.cpp    energy_storage.h    \
+	generators.h                              \
+	init.cpp                                  \
+	inverter.cpp          inverter.h          \
+	main.cpp                                  \
+	microturbine.cpp      microturbine.h      \
 	power_electronics.cpp power_electronics.h \
-	rectifier.cpp rectifier.h \
-	solar.cpp solar.h \
-	windturb_dg.cpp windturb_dg.h \
-	# DO NOT EDIT THE FOLLOWING LINE \
-	# NEWCLASS \
-	generators.h            
-libgenerators = -version-info 0:0:0
+	rectifier.cpp         rectifier.h         \
+	solar.cpp solar.h                         \
+	windturb_dg.cpp       windturb_dg.h       \
+	# DO NOT EDIT THE FOLLOWING LINE          \
+	# NEWCLASS
+libgenerators_la_LDFLAGS = -no-undefined -version-info 0:0:0
+
+uninstall-hook:
+	-rmdir $(DESTDIR)$(pkglibdir)
 
