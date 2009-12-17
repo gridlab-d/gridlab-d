@@ -15,17 +15,18 @@ class house {
 }
 
 object house:..10 {
-	group A;
+	groupid A;
 }
 
 object house:..10 {
-	group B;
+	groupid B;
 }
 
 module tape;
 
 object collector {
-	group "group=A";
+	//group "class=house AND group=A";
+	group "groupid=A";
 	property "count(floor_area)";
 	limit 10;
 	interval 3600;
