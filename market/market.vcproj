@@ -515,10 +515,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\controller2.cpp"
-				>
-			</File>
-			<File
 				RelativePath="init.cpp"
 				>
 			</File>
@@ -542,10 +538,6 @@
 			</File>
 			<File
 				RelativePath=".\controller.h"
-				>
-			</File>
-			<File
-				RelativePath=".\controller2.h"
 				>
 			</File>
 			<File
