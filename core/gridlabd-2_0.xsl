@@ -175,6 +175,10 @@
 <TR><TH>Name</TH><TH>simple_mode</TH><TH>ramp_low</TH><TH>ramp_high</TH><TH>Tmin</TH><TH>Tmax</TH><TH>target</TH><TH>setpoint</TH><TH>demand</TH><TH>load</TH><TH>total</TH><TH>market</TH><TH>bid_price</TH><TH>bid_quant</TH><TH>set_temp</TH><TH>base_setpoint</TH></TR>
 <xsl:for-each select="market/controller_list/controller"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="simple_mode"/></TD><TD><xsl:value-of select="ramp_low"/></TD><TD><xsl:value-of select="ramp_high"/></TD><TD><xsl:value-of select="Tmin"/></TD><TD><xsl:value-of select="Tmax"/></TD><TD><xsl:value-of select="target"/></TD><TD><xsl:value-of select="setpoint"/></TD><TD><xsl:value-of select="demand"/></TD><TD><xsl:value-of select="load"/></TD><TD><xsl:value-of select="total"/></TD><TD><a href="#{market}"><xsl:value-of select="market"/></a></TD><TD><xsl:value-of select="bid_price"/></TD><TD><xsl:value-of select="bid_quant"/></TD><TD><xsl:value-of select="set_temp"/></TD><TD><xsl:value-of select="base_setpoint"/></TD></TR>
 </xsl:for-each></TABLE>
+<H4>stubauction objects</H4><TABLE BORDER="1">
+<TR><TH>Name</TH><TH>unit</TH><TH>period</TH><TH>last.P</TH><TH>next.P</TH><TH>avg24</TH><TH>std24</TH><TH>avg168</TH><TH>std168</TH><TH>verbose</TH></TR>
+<xsl:for-each select="market/stubauction_list/stubauction"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="unit"/></TD><TD><xsl:value-of select="period"/></TD><TD><xsl:value-of select="last.P"/></TD><TD><xsl:value-of select="next.P"/></TD><TD><xsl:value-of select="avg24"/></TD><TD><xsl:value-of select="std24"/></TD><TD><xsl:value-of select="avg168"/></TD><TD><xsl:value-of select="std168"/></TD><TD><xsl:value-of select="verbose"/></TD></TR>
+</xsl:for-each></TABLE>
 <H3><A NAME="modules_network">network</A></H3><TABLE BORDER="1">
 <TR><TH>version.major</TH><TD><xsl:value-of select="network/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="network/version.minor"/></TD></TR><TR><TH>acceleration_factor</TH><TD><xsl:value-of select="network/acceleration_factor"/></TD></TR><TR><TH>convergence_limit</TH><TD><xsl:value-of select="network/convergence_limit"/></TD></TR><TR><TH>mvabase</TH><TD><xsl:value-of select="network/mvabase"/></TD></TR><TR><TH>kvbase</TH><TD><xsl:value-of select="network/kvbase"/></TD></TR><TR><TH>model_year</TH><TD><xsl:value-of select="network/model_year"/></TD></TR><TR><TH>model_case</TH><TD><xsl:value-of select="network/model_case"/></TD></TR><TR><TH>model_name</TH><TD><xsl:value-of select="network/model_name"/></TD></TR></TABLE>
 <H4>node objects</H4><TABLE BORDER="1">
@@ -338,8 +342,8 @@
 <xsl:for-each select="powerflow/series_reactor_list/series_reactor"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="phase_A_impedance"/></TD><TD><xsl:value-of select="phase_A_resistance"/></TD><TD><xsl:value-of select="phase_A_reactance"/></TD><TD><xsl:value-of select="phase_B_impedance"/></TD><TD><xsl:value-of select="phase_B_resistance"/></TD><TD><xsl:value-of select="phase_B_reactance"/></TD><TD><xsl:value-of select="phase_C_impedance"/></TD><TD><xsl:value-of select="phase_C_resistance"/></TD><TD><xsl:value-of select="phase_C_reactance"/></TD><TD><xsl:value-of select="rated_current_limit"/></TD><TD><xsl:value-of select="status"/></TD><TD><a href="#{from}"><xsl:value-of select="from"/></a></TD><TD><a href="#{to}"><xsl:value-of select="to"/></a></TD><TD><xsl:value-of select="power_in"/></TD><TD><xsl:value-of select="power_out"/></TD><TD><xsl:value-of select="power_losses"/></TD><TD><xsl:value-of select="power_in_A"/></TD><TD><xsl:value-of select="power_in_B"/></TD><TD><xsl:value-of select="power_in_C"/></TD><TD><xsl:value-of select="power_out_A"/></TD><TD><xsl:value-of select="power_out_B"/></TD><TD><xsl:value-of select="power_out_C"/></TD><TD><xsl:value-of select="power_losses_A"/></TD><TD><xsl:value-of select="power_losses_B"/></TD><TD><xsl:value-of select="power_losses_C"/></TD><TD><xsl:value-of select="flow_direction"/></TD><TD><xsl:value-of select="phases"/></TD><TD><xsl:value-of select="nominal_voltage"/></TD></TR>
 </xsl:for-each></TABLE>
 <H4>restoration objects</H4><TABLE BORDER="1">
-<TR><TH>Name</TH><TH>configuration_file</TH><TH>reconfig_attempts</TH><TH>reconfig_iteration_limit</TH></TR>
-<xsl:for-each select="powerflow/restoration_list/restoration"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="configuration_file"/></TD><TD><xsl:value-of select="reconfig_attempts"/></TD><TD><xsl:value-of select="reconfig_iteration_limit"/></TD></TR>
+<TR><TH>Name</TH><TH>configuration_file</TH><TH>reconfig_attempts</TH><TH>reconfig_iteration_limit</TH><TH>fault_check_object</TH></TR>
+<xsl:for-each select="powerflow/restoration_list/restoration"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="configuration_file"/></TD><TD><xsl:value-of select="reconfig_attempts"/></TD><TD><xsl:value-of select="reconfig_iteration_limit"/></TD><TD><a href="#{fault_check_object}"><xsl:value-of select="fault_check_object"/></a></TD></TR>
 </xsl:for-each></TABLE>
 <H4>frequency_gen objects</H4><TABLE BORDER="1">
 <TR><TH>Name</TH><TH>Frequency_Mode</TH><TH>Frequency</TH><TH>FreqChange</TH><TH>Deadband</TH><TH>Tolerance</TH><TH>M</TH><TH>D</TH><TH>Rated_power</TH><TH>Gen_power</TH><TH>Load_power</TH><TH>Gov_delay</TH><TH>Ramp_rate</TH><TH>Low_Freq_OI</TH><TH>High_Freq_OI</TH><TH>Num_Resp_Eqs</TH></TR>
@@ -348,6 +352,10 @@
 <H4>volt_var_control objects</H4><TABLE BORDER="1">
 <TR><TH>Name</TH><TH>qualification_time</TH></TR>
 <xsl:for-each select="powerflow/volt_var_control_list/volt_var_control"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD><TD><xsl:value-of select="qualification_time"/></TD></TR>
+</xsl:for-each></TABLE>
+<H4>fault_check objects</H4><TABLE BORDER="1">
+<TR><TH>Name</TH></TR>
+<xsl:for-each select="powerflow/fault_check_list/fault_check"><TR><TD><a name="#{name}"/><xsl:value-of select="name"/> (#<xsl:value-of select="id"/>)</TD></TR>
 </xsl:for-each></TABLE>
 <H3><A NAME="modules_residential">residential</A></H3><TABLE BORDER="1">
 <TR><TH>version.major</TH><TD><xsl:value-of select="residential/version.major"/></TD></TR><TR><TH>version.minor</TH><TD><xsl:value-of select="residential/version.minor"/></TD></TR><TR><TH>default_line_voltage</TH><TD><xsl:value-of select="residential/default_line_voltage"/></TD></TR><TR><TH>default_line_current</TH><TD><xsl:value-of select="residential/default_line_current"/></TD></TR><TR><TH>default_outdoor_temperature</TH><TD><xsl:value-of select="residential/default_outdoor_temperature"/></TD></TR><TR><TH>default_humidity</TH><TD><xsl:value-of select="residential/default_humidity"/></TD></TR><TR><TH>default_solar</TH><TD><xsl:value-of select="residential/default_solar"/></TD></TR><TR><TH>implicit_enduses</TH><TD><xsl:value-of select="residential/implicit_enduses"/></TD></TR><TR><TH>house_low_temperature_warning[degF]</TH><TD><xsl:value-of select="residential/house_low_temperature_warning[degF]"/></TD></TR><TR><TH>house_high_temperature_warning[degF]</TH><TD><xsl:value-of select="residential/house_high_temperature_warning[degF]"/></TD></TR><TR><TH>thermostat_control_warning</TH><TD><xsl:value-of select="residential/thermostat_control_warning"/></TD></TR><TR><TH>system_dwell_time[s]</TH><TD><xsl:value-of select="residential/system_dwell_time[s]"/></TD></TR><TR><TH>aux_cutin_temperature[degF]</TH><TD><xsl:value-of select="residential/aux_cutin_temperature[degF]"/></TD></TR></TABLE>
@@ -1060,6 +1068,27 @@ module market {
 </xsl:if><xsl:if test="bid_quant">	bid_quant <xsl:value-of select="bid_quant"/>;
 </xsl:if><xsl:if test="set_temp">	set_temp <xsl:value-of select="set_temp"/>;
 </xsl:if><xsl:if test="base_setpoint">	base_setpoint <xsl:value-of select="base_setpoint"/>;
+</xsl:if>}
+</xsl:for-each>
+# market::stubauction objects
+<xsl:for-each select="stubauction_list/stubauction"><a name="#GLM.{name}"/>object stubauction:<xsl:value-of select="id"/> {
+<xsl:if test="name!=''">	name "<xsl:value-of select="name"/>";
+</xsl:if><xsl:if test="parent!=''">	parent "<a href="#GLM.{parent}"><xsl:value-of select="parent"/></a>";
+</xsl:if><xsl:if test="clock!=''">	clock '<xsl:value-of select="clock"/>';
+</xsl:if><xsl:if test="in_svc!=''">	in_svc '<xsl:value-of select="in_svc"/>';
+</xsl:if><xsl:if test="out_svc!=''">	out_svc '<xsl:value-of select="out_svc"/>';
+</xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
+</xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
+</xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
+</xsl:if><xsl:if test="unit">	unit <xsl:value-of select="unit"/>;
+</xsl:if><xsl:if test="period">	period <xsl:value-of select="period"/>;
+</xsl:if><xsl:if test="last.P">	last.P <xsl:value-of select="last.P"/>;
+</xsl:if><xsl:if test="next.P">	next.P <xsl:value-of select="next.P"/>;
+</xsl:if><xsl:if test="avg24">	avg24 <xsl:value-of select="avg24"/>;
+</xsl:if><xsl:if test="std24">	std24 <xsl:value-of select="std24"/>;
+</xsl:if><xsl:if test="avg168">	avg168 <xsl:value-of select="avg168"/>;
+</xsl:if><xsl:if test="std168">	std168 <xsl:value-of select="std168"/>;
+</xsl:if><xsl:if test="verbose">	verbose <xsl:value-of select="verbose"/>;
 </xsl:if>}
 </xsl:for-each></xsl:for-each><xsl:for-each select="network">
 ##############################################
@@ -2024,6 +2053,7 @@ module powerflow {
 </xsl:if><xsl:if test="configuration_file">	configuration_file <xsl:value-of select="configuration_file"/>;
 </xsl:if><xsl:if test="reconfig_attempts">	reconfig_attempts <xsl:value-of select="reconfig_attempts"/>;
 </xsl:if><xsl:if test="reconfig_iteration_limit">	reconfig_iteration_limit <xsl:value-of select="reconfig_iteration_limit"/>;
+</xsl:if><xsl:if test="fault_check_object">	fault_check_object <a href="#GLM.{fault_check_object}"><xsl:value-of select="fault_check_object"/></a>;
 </xsl:if>}
 </xsl:for-each>
 # powerflow::frequency_gen objects
@@ -2064,6 +2094,18 @@ module powerflow {
 </xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
 </xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
 </xsl:if><xsl:if test="qualification_time">	qualification_time <xsl:value-of select="qualification_time"/>;
+</xsl:if>}
+</xsl:for-each>
+# powerflow::fault_check objects
+<xsl:for-each select="fault_check_list/fault_check"><a name="#GLM.{name}"/>object fault_check:<xsl:value-of select="id"/> {
+<xsl:if test="name!=''">	name "<xsl:value-of select="name"/>";
+</xsl:if><xsl:if test="parent!=''">	parent "<a href="#GLM.{parent}"><xsl:value-of select="parent"/></a>";
+</xsl:if><xsl:if test="clock!=''">	clock '<xsl:value-of select="clock"/>';
+</xsl:if><xsl:if test="in_svc!=''">	in_svc '<xsl:value-of select="in_svc"/>';
+</xsl:if><xsl:if test="out_svc!=''">	out_svc '<xsl:value-of select="out_svc"/>';
+</xsl:if><xsl:if test="latitude!=''">	latitude <xsl:value-of select="latitude"/>;
+</xsl:if><xsl:if test="longitude!=''">	longitude <xsl:value-of select="longitude"/>;
+</xsl:if><xsl:if test="rank!=''">	rank <xsl:value-of select="rank"/>;
 </xsl:if>}
 </xsl:for-each></xsl:for-each><xsl:for-each select="residential">
 ##############################################

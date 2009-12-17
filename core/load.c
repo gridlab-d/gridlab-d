@@ -3546,27 +3546,6 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			else
 				ACCEPT;
 		} 
-		else if (prop!=NULL && prop->ptype==PT_double && TERM(linear_transform(HERE,&source,&scale,&bias,obj)))
-		{
-			double *target = (double*)((char*)(obj+1) + (int64)prop->addr);
-
-			/* add the transform list */
-			if (!schedule_add_xform(source,target,scale,bias))
-			{
-				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
-				REJECT;
-			}
-			else
-			{
-				/* a transform is unresolved */
-				if (first_unresolved==source)
-
-					/* source was the unresolved entry, now it will be the transform itself */
-					first_unresolved->ref = (void*)scheduletransform_getnext(NULL);
-
-				ACCEPT;
-			}
-		}
 		else if (prop!=NULL && prop->ptype==PT_double && TERM(functional_unit(HERE,&dval,&unit)))
 		{
 			if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
@@ -3626,6 +3605,27 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			}
 #endif
 			} /* end unit_convert_ex else */
+		}
+		else if (prop!=NULL && prop->ptype==PT_double && TERM(linear_transform(HERE,&source,&scale,&bias,obj)))
+		{
+			double *target = (double*)((char*)(obj+1) + (int64)prop->addr);
+
+			/* add the transform list */
+			if (!schedule_add_xform(source,target,scale,bias))
+			{
+				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
+				REJECT;
+			}
+			else
+			{
+				/* a transform is unresolved */
+				if (first_unresolved==source)
+
+					/* source was the unresolved entry, now it will be the transform itself */
+					first_unresolved->ref = (void*)scheduletransform_getnext(NULL);
+
+				ACCEPT;
+			}
 		}
 		else if TERM(alternate_value(HERE,propval,sizeof(propval)))
 		{
