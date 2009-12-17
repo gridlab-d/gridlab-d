@@ -27,21 +27,21 @@ object office {
 	heating_setpoint 70;
 	cooling_setpoint 89;
 	thermostat_deadband 4;
-	plugs.capacity 1000;
+	plugs.capacity 1000 W;
 	plugs.fraction 1;
 	plugs.power_factor .9;
 	object player {
 		file ../generic_demand.glt;
 		property plugs.heatgain_fraction;
 	};
-	object double_assert {
-		target "plugs.heatgain";
-		within .1;
-		object player {
-			property value;
-			file ../load_heatgain.player;
-		};
-	};
+//	object double_assert {
+//		target "plugs.heatgain";
+//		within .1;
+//		object player {
+//			property value;
+//			file ../load_heatgain.player;
+//		};
+//	};
 	object recorder {
 		file "commercial_lights_usage.csv";
 		interval 3600;
