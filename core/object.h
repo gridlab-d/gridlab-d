@@ -240,6 +240,7 @@ OBJECT *object_get_reference(OBJECT *obj, char *name);
 int object_isa(OBJECT *obj, char *type);
 OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name);
 OBJECT *object_find_name(OBJECTNAME name);
+int object_locate_property(void *addr, OBJECT **pObj, PROPERTY **pProp);
 
 int object_get_oflags(KEYWORD **extflags);
 

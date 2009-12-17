@@ -883,6 +883,7 @@ static int resolve_double(UNRESOLVED *item, char *context)
 		OBJECT *obj = NULL;
 		PROPERTY *prop = NULL;
 		double **ref = NULL;
+		SCHEDULEXFORM *xform = NULL;
 
 		/* get and check the object */
 		obj = object_find_name(oname);
@@ -904,7 +905,6 @@ static int resolve_double(UNRESOLVED *item, char *context)
 		if ((item->flags&UR_TRANSFORM)==UR_TRANSFORM)
 		{
 			/* find transform that uses this target */
-			SCHEDULEXFORM *xform = NULL;
 			while ((xform=scheduletransform_getnext(xform))!=NULL)
 			{
 				/* the reference is to the schedule's source */
@@ -924,15 +924,19 @@ static int resolve_double(UNRESOLVED *item, char *context)
 		switch (prop->ptype) {
 		case PT_double:
 			*ref = object_get_double(obj,prop);
+			if (xform) xform->source_type = XS_DOUBLE;
 			break;
 		case PT_complex:
 			*ref = &(((complex*)object_get_addr(obj,prop->name))->r);
+			if (xform) xform->source_type = XS_COMPLEX;
 			break;
 		case PT_loadshape:
 			*ref = &(((loadshape*)object_get_addr(obj,prop->name))->load);
+			if (xform) xform->source_type = XS_LOADSHAPE;
 			break;
 		case PT_enduse:
 			*ref = &(((enduse*)object_get_addr(obj,prop->name))->total.r);
+			if (xform) xform->source_type = XS_ENDUSE;
 			break;
 		default:
 			output_error_raw("%s(%d): reference '%s' type is not supported", filename, item->line, item->id);
@@ -3329,7 +3333,7 @@ static int schedule_ref(PARSER, SCHEDULE **sch)
 		REJECT;
 	DONE;
 }
-static int property_ref(PARSER, void **ref, OBJECT *from)
+static int property_ref(PARSER, XFORMSOURCE *xstype, void **ref, OBJECT *from)
 {
 	FULLNAME oname;
 	PROPERTYNAME pname;
@@ -3359,24 +3363,28 @@ static int property_ref(PARSER, void **ref, OBJECT *from)
 			else if (prop->ptype==PT_double)
 			{
 				*ref = (void*)object_get_addr(obj,pname); 
+				*xstype = XS_DOUBLE;
 				ACCEPT;
 			}
 			else if (prop->ptype==PT_complex)
 			{
 				// TODO support R,I parts
 				*ref = (void*)object_get_addr(obj,pname); // get R part only
+				*xstype = XS_COMPLEX;
 				ACCEPT;
 			}
 			else if (prop->ptype==PT_loadshape)
 			{
 				loadshape *ls = (void*)object_get_addr(obj,pname);
 				*ref = &(ls->load);
+				*xstype = XS_LOADSHAPE;
 				ACCEPT;
 			}
 			else if (prop->ptype==PT_enduse)
 			{
 				enduse *eu = (void*)object_get_addr(obj,pname);
 				*ref = &(eu->total.r);
+				*xstype = XS_ENDUSE;
 			}
 			else
 			{
@@ -3390,7 +3398,7 @@ static int property_ref(PARSER, void **ref, OBJECT *from)
 	DONE;
 }
 
-static int transform_source(PARSER, void **source, OBJECT *from)
+static int transform_source(PARSER, XFORMSOURCE *xstype, void **source, OBJECT *from)
 {
 	SCHEDULE *sch;
 	START;
@@ -3398,21 +3406,22 @@ static int transform_source(PARSER, void **source, OBJECT *from)
 	if (TERM(schedule_ref(HERE,&sch)))
 	{
 		*source = (void*)&(sch->value);
+		*xstype = XS_SCHEDULE;
 		ACCEPT;
 	}
-	else if (TERM(property_ref(HERE,source,from)))
+	else if (TERM(property_ref(HERE,xstype,source,from)))
 	{	ACCEPT; }
 	else
 	{	REJECT; }
 	DONE;
 }
 
-static int linear_transform(PARSER, void **source, double *scale, double *bias, OBJECT *from)
+static int linear_transform(PARSER, XFORMSOURCE *xstype, void **source, double *scale, double *bias, OBJECT *from)
 {
 	START;
 	if WHITE ACCEPT;
 	/* scale * schedule_name [+ bias]  */
-	if (TERM(functional(HERE,scale)) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,source, from))))
+	if (TERM(functional(HERE,scale)) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE, xstype, source, from))))
 	{	
 		if ((WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,bias)))) { ACCEPT; }
 		else { *bias = 0;	ACCEPT;}
@@ -3420,7 +3429,7 @@ static int linear_transform(PARSER, void **source, double *scale, double *bias, 
 	}
 	OR
 	/* scale * schedule_name [- bias]  */
-	if (TERM(functional(HERE,scale)) &&( WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,source,from))))
+	if (TERM(functional(HERE,scale)) &&( WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,xstype, source,from))))
 	{
 		if ((WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,bias)))) { *bias *= -1; ACCEPT; }
 		else { *bias = 0;	ACCEPT;}
@@ -3428,7 +3437,7 @@ static int linear_transform(PARSER, void **source, double *scale, double *bias, 
 	}
 	OR
 	/* schedule_name [* scale] [+ bias]  */
-	if (TERM(transform_source(HERE,source,from)))
+	if (TERM(transform_source(HERE,xstype,source,from)))
 	{
 		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,scale)))) { ACCEPT; }
 		else { ACCEPT; *scale = 1;}
@@ -3439,14 +3448,14 @@ static int linear_transform(PARSER, void **source, double *scale, double *bias, 
 	}
 	OR
 	/* bias + scale * schedule_name  */
-	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,source,from))))
+	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,xstype, source,from))))
 	{
 		ACCEPT;
 		DONE;
 	}
 	OR
 	/* bias - scale * schedule_name  */
-	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,source,from))))
+	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,xstype, source,from))))
 	{
 		*scale *= -1;
 		ACCEPT;
@@ -3454,7 +3463,7 @@ static int linear_transform(PARSER, void **source, double *scale, double *bias, 
 	}
 	OR
 	/* bias + schedule_name [* scale] */
-	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(transform_source(HERE,source,from))))
+	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(transform_source(HERE,xstype, source,from))))
 	{
 		if (WHITE,LITERAL("*") && WHITE,TERM(functional(HERE,scale))) { ACCEPT; }
 		else { ACCEPT; *scale = 1;}
@@ -3462,7 +3471,7 @@ static int linear_transform(PARSER, void **source, double *scale, double *bias, 
 	}
 	OR
 	/* bias - schedule_name [* scale] */
-	if (TERM(functional(HERE,bias)) && WHITE,LITERAL("-") && WHITE,TERM(transform_source(HERE,source,from)))
+	if (TERM(functional(HERE,bias)) && WHITE,LITERAL("-") && WHITE,TERM(transform_source(HERE,xstype, source,from)))
 	{
 		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,scale)))) { ACCEPT; *scale *= -1; }
 		else { ACCEPT; *scale = 1;}
@@ -3480,6 +3489,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	double dval;
 	complex cval;
 	void *source=NULL;
+	XFORMSOURCE xstype = XS_UNKNOWN;
 	double scale=1,bias=0;
 	UNIT *unit=NULL;
 	OBJECT *subobj=NULL;
@@ -3606,12 +3616,12 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 #endif
 			} /* end unit_convert_ex else */
 		}
-		else if (prop!=NULL && prop->ptype==PT_double && TERM(linear_transform(HERE,&source,&scale,&bias,obj)))
+		else if (prop!=NULL && prop->ptype==PT_double && TERM(linear_transform(HERE, &xstype, &source,&scale,&bias,obj)))
 		{
 			double *target = (double*)((char*)(obj+1) + (int64)prop->addr);
 
 			/* add the transform list */
-			if (!schedule_add_xform(source,target,scale,bias))
+			if (!schedule_add_xform(xstype,source,target,scale,bias,obj,prop))
 			{
 				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 				REJECT;

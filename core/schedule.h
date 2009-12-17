@@ -48,6 +48,8 @@ typedef unsigned long SCHEDULEINDEX;
 /** The SCHEDULE structure defines POSIX style schedules */
 typedef struct s_schedule SCHEDULE;
 struct s_schedule {
+	/* the output value must be first for transform to stream */
+	double value;						/**< the current scheduled value */
 	char name[64];						/**< the name of the schedule */
 	char definition[65536];				/**< the definition string of the schedule */
 	char blockname[MAXBLOCKS][64];		/**< the name of each block */
@@ -61,16 +63,20 @@ struct s_schedule {
 	unsigned int count[MAXBLOCKS];		/**< the number of values given in each block */
 	unsigned int minutes[MAXBLOCKS];	/**< the total number of minutes associate with each block */
 	TIMESTAMP next_t;					/**< the time of the next schedule event */
-	double value;						/**< the current scheduled value */
 	double duration;					/**< the duration of the current scheduled value (in hours) */
 	double fraction;					/**< the fractional weight of the block of the current value (pu time) */
 	int flags;							/**< the schedule flags (see SN_*) */
 	SCHEDULE *next;	/* next schedule in list */
 };
 
+typedef enum {XS_UNKNOWN=0, XS_DOUBLE, XS_COMPLEX, XS_LOADSHAPE, XS_ENDUSE, XS_SCHEDULE} XFORMSOURCE;
 typedef struct s_schedulexform {
 	double *source;
+	XFORMSOURCE source_type;
+	void *source_addr;
 	double *target;
+	struct s_object_list *target_obj;
+	struct s_property_map *target_prop;
 	double scale;
 	double bias;
 	struct s_schedulexform *next;
@@ -101,7 +107,7 @@ TIMESTAMP scheduletransform_syncall(TIMESTAMP t);
 int schedule_test(void);
 void schedule_dump(SCHEDULE *sch, char *file);
 
-int schedule_add_xform(double *source, double *target, double scale, double bias);
+int schedule_add_xform(XFORMSOURCE stype, double *source, double *target, double scale, double bias, struct s_object_list *obj, struct s_property_map *prop);
 SCHEDULEXFORM *scheduletransform_getnext(SCHEDULEXFORM *xform);
 
 #ifdef __cplusplus

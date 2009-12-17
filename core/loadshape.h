@@ -36,6 +36,7 @@ typedef enum {
 	MS_ON=1,
 } MACHINESTATE;
 struct s_loadshape {
+	/* the output value must be first for transform to stream */
 	double load;		/**< the actual load magnitude */
 	
 	/* machine specification */

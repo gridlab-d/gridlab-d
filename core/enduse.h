@@ -11,45 +11,35 @@
 #define EUC_HEATLOAD 0x0002 ///< enduse flag to indicate that the load drives the heatgain instead of the total power
 
 typedef struct s_enduse {
+	/* the output value must be first for transform to stream */
+	/* meter values */
+	complex total;				/* total power in kW */
+	complex energy;				/* total energy in kWh */
+	complex demand;				/* maximum power in kW (can be reset) */
+
+	/* circuit configuration */	
+	set config;					/* end-use configuration */
+	double breaker_amps;		/* breaker limit (if any) */
+
+	/* zip values */
+	complex admittance;			/* constant impedance oprtion of load in kW */
+	complex current;			/* constant current portion of load in kW */
+	complex power;				/* constant power portion of load in kW */
+
+	/* loading */
+	double impedance_fraction;	/* constant impedance fraction (pu load) */
+	double current_fraction;	/* constant current fraction (pu load) */
+	double power_fraction;		/* constant power fraction (pu load)*/
+	double power_factor;		/* power factor */
+	double voltage_factor;		/* voltage factor (pu nominal) */
+
+	/* heat */
+	double heatgain;			/* internal heat from load (Btu/h) */
+	double heatgain_fraction;	/* fraction of power that goes to internal heat (pu Btu/h) */
+
+	/* misc info */
 	char *name;
 	loadshape *shape;
-#ifndef __cplusplus
-	struct {
-#endif
-		set config;					/* end-use configuration */
-		double breaker_amps;		/* breaker limit (if any) */
-#ifndef __cplusplus
-	}; /* circuit configuration */
-	struct {
-#endif
-		complex total;				/* total power in kW */
-		complex energy;				/* total energy in kWh */
-		complex demand;				/* maximum power in kW (can be reset) */
-#ifndef __cplusplus
-	}; /* meter values */
-	struct {
-#endif
-		complex admittance;			/* constant impedance oprtion of load in kW */
-		complex current;			/* constant current portion of load in kW */
-		complex power;				/* constant power portion of load in kW */
-#ifndef __cplusplus
-	}; /* zip values */
-	struct {
-#endif
-		double impedance_fraction;	/* constant impedance fraction (pu load) */
-		double current_fraction;	/* constant current fraction (pu load) */
-		double power_fraction;		/* constant power fraction (pu load)*/
-		double power_factor;		/* power factor */
-		double voltage_factor;		/* voltage factor (pu nominal) */
-#ifndef __cplusplus
-	}; /* loading */
-	struct {
-#endif
-		double heatgain;			/* internal heat from load (Btu/h) */
-		double heatgain_fraction;	/* fraction of power that goes to internal heat (pu Btu/h) */
-#ifndef __cplusplus
-	}; /* heat */
-#endif
 	TIMESTAMP t_last;			/* last time of update */
 
 	// added for backward compatibility with res ENDUSELOAD

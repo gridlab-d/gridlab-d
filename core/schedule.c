@@ -13,6 +13,7 @@
 #include <ctype.h>
 
 #include "platform.h"
+#include "object.h"
 #include "output.h"
 #include "schedule.h"
 #include "exception.h"
@@ -29,12 +30,22 @@ SCHEDULEXFORM *scheduletransform_getnext(SCHEDULEXFORM *xform)
 	return xform?xform->next:schedule_xformlist;
 }
 
-int schedule_add_xform(double *source, double *target, double scale, double bias)
+int schedule_add_xform(XFORMSOURCE stype,	/* specifies the type of source */
+					   double *source,		/* pointer to the source value */
+					   double *target,		/* pointer to the target value */
+					   double scale,		/* transform scalar */
+					   double bias,			/* transform offset */
+					   OBJECT *obj,			/* object containing target value */
+					   PROPERTY *prop)		/* property associated with target value */
 {
 	SCHEDULEXFORM *xform = (SCHEDULEXFORM*)malloc(sizeof(SCHEDULEXFORM));
 	if (xform==NULL)
 		return 0;
+	xform->source_type = stype;
 	xform->source = source;
+	xform->source_addr = source; /* this assumes the double is the first member of the structure */
+	xform->target_obj = obj;
+	xform->target_prop = prop;
 	xform->target = target;
 	xform->scale = scale;
 	xform->bias = bias;

@@ -6,6 +6,7 @@
 #include "stream.h"
 #include "module.h"
 #include "globals.h"
+#include "schedule.h"
 
 /* stream name - this should never be changed */
 #define STREAM_NAME "GRIDLABD"
@@ -79,6 +80,8 @@ enum {
 	ST_ACCESS,
 	ST_VALUE,
 	ST_DEFINITION,
+	ST_BIAS,
+	ST_SCALE,
 
 	ST_END=0xff,
 };
@@ -331,24 +334,86 @@ int64 stream_out_schedule(FILE *fp, SCHEDULE *sch)
 {
 	int64 count=0;
 
+	PUTT(SCHEDULE,BEGIN);
+
 	PUTT(SCHEDULE,NAME);
 	PUTD(sch->name,strlen(sch->name));
 
 	PUTT(SCHEDULE,DEFINITION);
 	PUTD(sch->definition,strlen(sch->definition));
 
+	PUTT(SCHEDULE,END);
+
 	return count;
 }
 
 /*******************************************************
- * SCHEDULE
+ * TRANSFORM
  */
 int64 stream_out_transform(FILE *fp, SCHEDULEXFORM *xform)
 {
 	int64 count=0;
+	OBJECT *obj = NULL;
+	PROPERTY *prop = NULL;
 
-	/* TODO output the transform definition */
+	PUTT(TRANSFORM,BEGIN);
 
+	PUTT(TRANSFORM,TYPE);
+	PUTL(xform->source_type);
+
+	switch (xform->source_type) {
+	case XS_SCHEDULE:
+		PUTT(TRANSFORM,SCHEDULE);
+		PUTD(((SCHEDULE*)(xform->source_addr))->name,strlen(((SCHEDULE*)(xform->source_addr))->name));
+		break;
+	case XS_DOUBLE:
+	case XS_COMPLEX:
+	case XS_LOADSHAPE:
+	case XS_ENDUSE:
+		if (object_locate_property(xform->source,&obj,&prop))
+		{
+			PUTT(TRANSFORM,OBJECT);
+			if (obj->name)
+			{
+				PUTT(OBJECT,NAME);
+				PUTD(obj->name,strlen(obj->name));
+			}
+			else
+			{
+				PUTT(OBJECT,CLASS);
+				PUTD(obj->oclass->name,strlen(obj->oclass->name));
+
+				PUTT(OBJECT,ID);
+				PUTL(obj->id);
+			}
+
+			PUTT(TRANSFORM,PROPERTY);
+			PUTD(prop->name,strlen(prop->name));
+		}
+		else
+		{
+			output_fatal("transform is unable to source for value at %x", xform->source);
+			return -1;
+		}
+		break;
+	default:
+		output_fatal("transform uses undefined source type (%d)", xform->source_type);
+		return -1;
+	}
+
+	PUTT(TRANSFORM,OBJECT);
+	PUTD(xform->target_obj,strlen(xform->target_obj));
+
+	PUTT(TRANSFORM,PROPERTY);
+	PUTD(xform->target_prop,strlen(xform->target_prop));
+
+	PUTT(TRANSFORM,SCALE);
+	PUTQ(xform->scale);
+
+	PUTT(TRANSFORM,BIAS);
+	PUTQ(xform->bias);
+
+	PUTT(TRANSFORM,END);
 	return count;
 }
 

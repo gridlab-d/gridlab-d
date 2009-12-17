@@ -2000,4 +2000,30 @@ int object_select_namespace(char *space)
 	return 0;
 }
 
+/** Locate the object and property corresponding the address of data
+	@return 1 on success, 0 on failure
+	Sets the pointers to the object and the property that matches
+ **/
+int object_locate_property(void *addr, OBJECT **pObj, PROPERTY **pProp)
+{
+	OBJECT *obj;
+	for (obj=first_object; obj!=NULL; obj=obj->next)
+	{
+		if ((int64)addr>(int64)obj && (int64)addr<(int64)(obj+1)+(int64)obj->oclass->size)
+		{
+			int offset = (int)((int64)addr - (int64)(obj+1));
+			PROPERTY *prop; 
+			for (prop=obj->oclass->pmap; prop!=NULL && prop->oclass==obj->oclass; prop=prop->next)
+			{
+				if ((int64)prop->addr == offset)
+				{
+					*pObj = obj;
+					*pProp = prop;
+					return SUCCESS;
+				}
+			}
+		}
+	}
+	return FAILED;
+}
 /** @} **/
