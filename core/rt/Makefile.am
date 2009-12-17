@@ -4,8 +4,11 @@ dist_pkgrt_DATA = gridlabd.conf debugger.conf gnuplot.conf gridlabd.h
 
 install-data-local:
 	[ -d "$(DESTDIR)$(pkgrtdir)" ] || $(MKDIR_P) $(DESTDIR)$(pkgrtdir)
-	echo "export GRIDLABD=$(pkgsysconfdir)" > $(DESTDIR)$(pkgrtdir)/gridlabd.sh
-	echo "export GLPATH=$(pkgsysconfdir):$(pkglibdir):$(pkgrtdir):$(pkgsysconfdir)/tmy" >> $(DESTDIR)$(pkgrtdir)/gridlabd.sh
+	echo "GLROOT=''" > $(DESTDIR)$(pkgrtdir)/gridlabd.sh
+	echo "#export GLROOT=$(DESTDIR)" >> $(DESTDIR)$(pkgrtdir)/gridlabd.sh
+	echo "#export PATH=\$$PATH:\$$GLROOT$(bindir)" >> $(DESTDIR)$(pkgrtdir)/gridlabd.sh
+	echo "export GRIDLABD=\$$GLROOT$(pkgsysconfdir)" >> $(DESTDIR)$(pkgrtdir)/gridlabd.sh
+	echo "export GLPATH=\$$GLROOT$(pkgsysconfdir):\$$GLROOT$(pkglibdir):\$$GLROOT$(pkgrtdir):\$$GLROOT$(pkgsysconfdir)/tmy" >> $(DESTDIR)$(pkgrtdir)/gridlabd.sh
 	if [ -d "$(DESTDIR)$(sysconfdir)/profile.d" ]; then \
 		$(LN_S) $(pkgsysconfdir)/gridlabd.sh $(DESTDIR)$(sysconfdir)/profile.d/gridlabd.sh; \
 	elif [ -f "$(DESTDIR)$(sysconfdir)/profile" ]; then \
