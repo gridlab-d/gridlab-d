@@ -7,6 +7,8 @@
 #include "powerflow.h"
 #include "triplex_node.h"
 
+#define NRECA_MODS 0
+
 class triplex_meter : public triplex_node
 {
 public:
@@ -29,6 +31,29 @@ public:
 	int16 s_flag;			//reliability flag that gets set if the meter experienced more than n sustained interruptions
 	int16 t_flag;			//reliability flage that gets set if the meter experienced more than n events total
 	complex pre_load;		//the load prior to being interrupted
+#endif
+
+#if NRECA_MODS
+	double hourly_acc;
+	double monthly_bill;
+	double monthly_energy;
+	double last_energy;
+	typedef enum {
+		BM_NONE,
+		BM_UNIFORM,
+		BM_TIERED,
+		BM_HOURLY
+	} BILLMODE;
+	BILLMODE bill_mode;
+	OBJECT *power_market;
+	PROPERTY *price_prop;
+	int32 bill_day;
+	int last_bill_month;
+	double price;
+	double tier_price[3], tier_energy[3];
+
+	double process_bill();
+	int check_prices();
 #endif
 
 public:
