@@ -1338,13 +1338,14 @@ static int integer16(PARSER, int16 *value)
 static int real_value(PARSER, double *value)
 {
 	char result[256];
+	int ndigits=0;
 	int size=sizeof(result);
 	START;
 	if (*_p=='+' || *_p=='-') COPY(result);
 	while (size>1 && isdigit(*_p)) COPY(result);
 	if (*_p=='.') COPY(result);
-	while (size>1 && isdigit(*_p)) COPY(result);
-	if (*_p=='E' || *_p=='e') 
+	while (size>1 && isdigit(*_p)) {COPY(result);ndigits++;}
+	if (ndigits>0 && (*_p=='E' || *_p=='e')) 
 	{
 		COPY(result);
 		if (*_p=='+' || *_p=='-') COPY(result);
