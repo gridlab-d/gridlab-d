@@ -1,4 +1,4 @@
-/** $Id: auction.h 1182 2009-09-09 22:08:36Z mhauer $
+/** $Id: controller.h 1182 2009-09-09 22:08:36Z mhauer $
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file controller.h
 	@addtogroup controller
@@ -31,6 +31,13 @@ public:
 		SM_HOUSE_PRECOOL,
 	} SIMPLE_MODE;
 	SIMPLE_MODE simplemode;
+	
+	typedef enum {
+		BM_OFF,
+		BM_ON,
+	} BIDMODE;
+	BIDMODE bidmode;
+
 	double kT_L, kT_H, Tmin, Tmax;
 	char target[33];
 	char setpoint[33];

@@ -13,7 +13,7 @@ CLASS* controller::oclass = NULL;
 controller::controller(MODULE *module){
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"controller",sizeof(auction),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		oclass = gl_register_class(module,"controller",sizeof(controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
@@ -24,6 +24,9 @@ controller::controller(MODULE *module){
 				PT_KEYWORD, "HOUSE_COOL", SM_HOUSE_COOL,
 				PT_KEYWORD, "HOUSE_PREHEAT", SM_HOUSE_PREHEAT,
 				PT_KEYWORD, "HOUSE_PRECOOL", SM_HOUSE_PRECOOL,
+			PT_enumeration, "bid_mode", PADDR(bidmode),
+				PT_KEYWORD, "ON", BM_ON,
+				PT_KEYWORD, "OFF", BM_OFF,
 			PT_double, "ramp_low", PADDR(kT_L), PT_DESCRIPTION, "the comfort response below the setpoint",
 			PT_double, "ramp_high", PADDR(kT_H), PT_DESCRIPTION, "the comfort response above the setpoint",
 			PT_double, "Tmin", PADDR(Tmin), PT_DESCRIPTION, "the setpoint limit on the low side",
@@ -146,6 +149,21 @@ int controller::init(OBJECT *parent){
 
 	market = OBJECTDATA(pMarket, auction);
 
+	if(target[0] == 0){
+		GL_THROW("target property not specified");
+	}
+	if(setpoint[0] == 0){
+		GL_THROW("setpoint property not specified");;
+	}
+	if(demand[0] == 0){
+		GL_THROW("demand property not specified");
+	}
+	if(total[0] == 0){
+		GL_THROW("total property not specified");
+	}
+	if(load[0] == 0){
+		GL_THROW("load property not specified");
+	}
 	fetch(&pMonitor, target, parent);
 	fetch(&pSetpoint, setpoint, parent);
 	fetch(&pDemand, demand, parent);
@@ -250,7 +268,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	}
 	if (residual>0)
 		lastbid_id = market->submit(OBJECTHDR(this), -residual, 9999, bid_id);
-	else
+	else if(residual < 0)
 		gl_warning("controller:%d: residual unresponsive load is negative! (%.1f kW)", hdr->id, residual);
 
 	char timebuf[128];
