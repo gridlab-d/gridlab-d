@@ -252,7 +252,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 #endif
 	//return triplex_node::postsync(t1);
-	return (hr < t1 ? hr : t1);
+	return (hr < rv ? hr : rv);
 }
 
 #if NRECA_MODS
