@@ -7,8 +7,6 @@
 #include "powerflow.h"
 #include "triplex_node.h"
 
-#define NRECA_MODS 0
-
 class triplex_meter : public triplex_node
 {
 public:
@@ -21,6 +19,7 @@ public:
 	double measured_demand; //< metered demand (peak of power)
 	double measured_real_power; //< metered real power
 	double measured_reactive_power; //< metered reactive power
+	TIMESTAMP next_time;
 	TIMESTAMP dt;
 	TIMESTAMP last_t;
 
@@ -33,11 +32,11 @@ public:
 	complex pre_load;		//the load prior to being interrupted
 #endif
 
-#if NRECA_MODS
 	double hourly_acc;
-	double monthly_bill;
-	double monthly_energy;
-	double last_energy;
+	double previous_monthly_bill;	//Total monthly bill for the previous month
+	double monthly_bill;			//Accumulator for the current month's bill
+	double monthly_energy;			//Accumulator for the current month's energy
+	double last_energy;				//Meter reading at end of previous month
 	typedef enum {
 		BM_NONE,
 		BM_UNIFORM,
@@ -47,14 +46,13 @@ public:
 	BILLMODE bill_mode;
 	OBJECT *power_market;
 	PROPERTY *price_prop;
-	int32 bill_day;
-	int last_bill_month;
-	double price;
-	double tier_price[3], tier_energy[3];
+	int32 bill_day;					//Day bill is to be processed (assumed to occur at midnight of that day)
+	int last_bill_month;			//Keeps track of which month we are looking at
+	double price;					//Standard uniform pricing
+	double tier_price[3], tier_energy[3];  //Allows for additional tiers of pricing over the standard price in TIERED
 
-	double process_bill();
+	double process_bill(TIMESTAMP t1);
 	int check_prices();
-#endif
 
 public:
 	static CLASS *oclass;

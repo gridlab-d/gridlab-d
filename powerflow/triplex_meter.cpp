@@ -85,8 +85,9 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_int16, "t_flag", PADDR(t_flag),
 			PT_complex, "pre_load", PADDR(pre_load),
 #endif
-#if NRECA_MODS
+
 			PT_double, "monthly_bill[$]", PADDR(monthly_bill),
+			PT_double, "previous_monthly_bill[$]", PADDR(previous_monthly_bill),
 			PT_double, "monthly_energy[kWh]", PADDR(monthly_energy),
 			PT_double, "last_energy[kWh]", PADDR(last_energy),
 			PT_enumeration, "bill_mode", PADDR(bill_mode),
@@ -103,7 +104,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_double, "second_tier_energy[kWh]", PADDR(tier_energy[1]),
 			PT_double, "third_tier_price[$/kWh]", PADDR(tier_price[2]),
 			PT_double, "third_tier_energy[kWh]", PADDR(tier_energy[2]),
-#endif
+
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		}
 }
@@ -120,9 +121,9 @@ int triplex_meter::create()
 	measured_real_energy = measured_reactive_energy = 0;
 	measured_power = 0;
 	measured_demand = 0;
-	last_t = dt = 0;
+	last_t = dt = next_time = 0;
 
-#if NRECA_MODS
+
 	hourly_acc = 0.0;
 	monthly_bill = 0.0;
 	monthly_energy = 0.0;
@@ -133,7 +134,9 @@ int triplex_meter::create()
 	bill_day = 15;
 	last_bill_month = -1;
 	price = 0.0;
-#endif
+	tier_price[0] = tier_price[1] = tier_price[2] = 0;
+	tier_energy[0] = tier_energy[1] = tier_energy[2] = 0;
+
 
 	return result;
 }
@@ -149,7 +152,7 @@ int triplex_meter::init(OBJECT *parent)
 	t_flag=0;
 	pre_load=0;
 #endif
-#if NRECA_MODS
+
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, "next.P");
 		if(price_prop == 0){
@@ -157,11 +160,11 @@ int triplex_meter::init(OBJECT *parent)
 		}
 	}
 	check_prices();
-#endif
+
 	return triplex_node::init(parent);
 }
 
-#if NRECA_MODS
+
 int triplex_meter::check_prices(){
 	if(bill_mode == BM_UNIFORM){
 		if(price < 0.0){
@@ -184,13 +187,13 @@ int triplex_meter::check_prices(){
 				GL_THROW("triplex_meter tiers cannot have negative values");
 		}
 	} if(bill_mode == BM_HOURLY){
+		GL_THROW("bill_mode HOURLY has in no way been tested at this point. Please select a different mode at this time.");
 		if(power_market == 0 || price_prop == 0){
 			GL_THROW("triplex_meter cannot use hourly energy prices without a power market that publishes the next price");
 		}
 	}
 	return 0;
 }
-#endif
 
 // Synchronize a distribution triplex_meter
 TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
@@ -242,23 +245,50 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			measured_demand=measured_real_power;
 
 	}
-	rv = triplex_node::postsync(t1);
-#if NRECA_MODS
+	
+	if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
+	{
+		process_bill(t1);
+
+		// Decide when the next billing HAS to be processed (one month later)
+		if (monthly_bill == previous_monthly_bill)
+		{
+			DATETIME t_next;
+			gl_localtime(t1,&t_next);
+			if (t_next.month != 12)
+				t_next.month += 1;
+			else
+			{
+				t_next.month = 1;
+				t_next.year += 1;
+			}
+
+			next_time =	gl_mktime(&t_next);
+		}
+	}
+
 	if(bill_mode == BM_HOURLY && power_market != NULL && price_prop != NULL){
 		double *pprice = (gl_get_double(power_market, price_prop));
 		price = *pprice;
 		double hrs = (double)(t1-t0);
 		hourly_acc += hrs/3600.0 * price;
 	}
-#endif
+
+	rv = triplex_node::postsync(t1);
+
+	if (next_time != 0 && next_time < rv)
+		return -next_time;
+	else
+		return rv;
 	//return triplex_node::postsync(t1);
-	return (hr < rv ? hr : rv);
+	
 }
 
-#if NRECA_MODS
-double triplex_meter::process_bill(){
-	double tally_energy;
-	monthly_energy = measured_real_energy - last_energy;
+double triplex_meter::process_bill(TIMESTAMP t1){
+	DATETIME dtime;
+	gl_localtime(t1,&dtime);
+
+	monthly_energy = measured_real_energy/1000 - last_energy;
 	monthly_bill = 0;
 	switch(bill_mode){
 		case BM_NONE:
@@ -267,36 +297,29 @@ double triplex_meter::process_bill(){
 			monthly_bill = monthly_energy * price;
 			break;
 		case BM_TIERED:
-			if(monthly_energy > tier_energy[0]){
-				monthly_bill += price * tier_energy[0];
-				tally_energy = monthly_energy - tier_energy[0];
-				if(monthly_energy > tier_energy[1]){
-					monthly_bill += price * (tier_energy[1] - tier_energy[0]);
-					tally_energy = monthly_energy - tier_energy[1];
-					if(monthly_energy > tier_energy[2]){
-						// 3rd tier price
-						monthly_bill += tier_price[1] * (tier_energy[2] - tier_energy[1] - tier_energy[0]);
-						tally_energy = monthly_energy - tier_energy[2];
-						monthly_bill += tier_price[2] * tally_energy;
-					} else {
-						// 2nd tier price
-						monthly_bill += tier_price[1] * tally_energy;
-					}
-				} else { // 1st tier price
-					monthly_bill += tier_price[0] * tally_energy;
-				}
-			} else { // 0eth tier
+			if(monthly_energy < tier_energy[0])
 				monthly_bill = price * monthly_energy;
-			}
+			else if(monthly_energy < tier_energy[1])
+				monthly_bill = price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]);
+			else if(monthly_energy < tier_energy[2])
+				monthly_bill = price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]);
+			else
+				monthly_bill = price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]) + tier_price[2]*(monthly_energy - tier_energy[2]);
 			break;
 		case BM_HOURLY:
 			monthly_bill = hourly_acc;
 			break;
 	}
+	
+	if (dtime.day == bill_day && dtime.hour == 0 && dtime.month != last_bill_month)
+	{
+		previous_monthly_bill = monthly_bill;
+		last_energy = measured_real_energy/1000;
+		last_bill_month = dtime.month;
+	}
+	
 	return monthly_bill;
 }
-
-#endif
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
