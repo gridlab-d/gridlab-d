@@ -1995,6 +1995,7 @@ void link::calculate_power_splitphase()
 		indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
 		indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~t->current_inj[1];
 		indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
+
 	}
 	
 	//Set direction flag.  Can be a little odd in split phase, since circulating currents.
@@ -2003,20 +2004,38 @@ void link::calculate_power_splitphase()
 	power_in = indiv_power_in[0] + indiv_power_in[1] + indiv_power_in[2];
 	power_out = indiv_power_out[0] + indiv_power_out[1] + indiv_power_out[2];
 
-	//Figure out losses - fix for reverse flow capabilities
-	if (power_in.Mag() > power_out.Mag())	//"Normal" flow direction
+	if (SpecialLnk!=SPLITPHASE) 
 	{
-		indiv_power_loss[0] = indiv_power_in[0] - indiv_power_out[0];
-		indiv_power_loss[1] = indiv_power_in[1] - indiv_power_out[1];
-		indiv_power_loss[2] = indiv_power_in[2] - indiv_power_out[2];
+		for (int i=0; i<3; i++)
+		{
+			indiv_power_loss[i] = indiv_power_in[i] - indiv_power_out[i];
+			if (indiv_power_loss[i].Re() < 0)
+				indiv_power_loss[i].Re() = -indiv_power_loss[i].Re();
+		}
 	}
-	else									//Reversed flow direction
+	else
 	{
-		indiv_power_loss[0] = indiv_power_out[0] - indiv_power_in[0];
-		indiv_power_loss[1] = indiv_power_out[1] - indiv_power_in[1];
-		indiv_power_loss[2] = indiv_power_out[2] - indiv_power_in[2];
+		// A little different for split-phase transformers since it goes from one phase to three indiv. powers
+		// We'll treat "power losses" in the ABC sense, not phase 123.
+		int j;
+		if (has_phase(PHASE_A))
+			j = 0;
+		else if (has_phase(PHASE_B))
+			j = 1;
+		else if (has_phase(PHASE_C))
+			j = 2;
+		for (int i=0; i<3; i++)
+		{
+			if (i == j)
+			{
+				indiv_power_loss[i] = indiv_power_in[j] - power_out;
+				if (indiv_power_loss[i].Re() < 0)
+					indiv_power_loss[i].Re() = -indiv_power_loss[i].Re();
+			}
+			else
+				indiv_power_loss[i] = complex(0,0);
+		}
 	}
-
 	//Calculate overall losses
 	power_loss = indiv_power_loss[0] + indiv_power_loss[1] + indiv_power_loss[2];
 }
@@ -2080,17 +2099,11 @@ void link::calculate_power()
 		power_out = indiv_power_out[0] + indiv_power_out[1] + indiv_power_out[2];
 
 		//Figure out losses - fix for reverse flow capabilities
-		if (power_in.Mag() > power_out.Mag())	//"Normal" flow direction
+		for (int i=0; i<3; i++)
 		{
-			indiv_power_loss[0] = indiv_power_in[0] - indiv_power_out[0];
-			indiv_power_loss[1] = indiv_power_in[1] - indiv_power_out[1];
-			indiv_power_loss[2] = indiv_power_in[2] - indiv_power_out[2];
-		}
-		else									//Reversed flow direction
-		{
-			indiv_power_loss[0] = indiv_power_out[0] - indiv_power_in[0];
-			indiv_power_loss[1] = indiv_power_out[1] - indiv_power_in[1];
-			indiv_power_loss[2] = indiv_power_out[2] - indiv_power_in[2];
+			indiv_power_loss[i] = indiv_power_in[i] - indiv_power_out[i];
+			if (indiv_power_loss[i].Re() < 0)
+				indiv_power_loss[i].Re() = -indiv_power_loss[i].Re();
 		}
 
 		set_flow_directions();
