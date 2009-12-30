@@ -44,6 +44,10 @@ frequency_gen::frequency_gen(MODULE *mod) : powerflow_object(mod)
 			PT_double,"Ramp_rate[W/s]",PADDR(ramp_rate),PT_DESCRIPTION,"Ramp ideal ramp rate",
 			PT_double,"Low_Freq_OI[Hz]",PADDR(Freq_Low),PT_DESCRIPTION,"Low frequency setpoint for GFA devices",
 			PT_double,"High_Freq_OI[Hz]",PADDR(Freq_High),PT_DESCRIPTION,"High frequency setpoint for GFA devices",
+			PT_double,"avg24[Hz]",PADDR(day_average),PT_DESCRIPTION,"Average of last 24 hourly instantaneous measurements",
+			PT_double,"std24[Hz]",PADDR(day_std),PT_DESCRIPTION,"Standard deviation of last 24 hourly instantaneous measurements",
+			PT_double,"avg168[Hz]",PADDR(week_average),PT_DESCRIPTION,"Average of last 168 hourly instantaneous measurements",
+			PT_double,"std168[Hz]",PADDR(week_std),PT_DESCRIPTION,"Standard deviation of last 168 hourly instantaneous measurements",
 			PT_int32,"Num_Resp_Eqs",PADDR(Num_Resp_Eqs),PT_DESCRIPTION,"Total number of equations the response can contain",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -91,6 +95,13 @@ int frequency_gen::create(void)
 	next_time = 0;
 	curr_dt = 0;
 	iter_passes=0;
+
+	//Initialize statistical stuff
+	for (int index=0; index<168; index++)
+		stored_freq[index] = 0.0;
+
+	curr_store_loc = 0;
+	day_average = day_std = week_average = week_std = 0.0;
 
 	return result;
 }
@@ -167,7 +178,7 @@ int frequency_gen::init(OBJECT *parent)
 		GL_THROW("The load-damping constant for the frequency_gen object must be non-zero!");
 		/*  TROUBLESHOOT
 		The D_Load value must be a non-zero value to get proper operation of the frequency_gen object.
-		If you want a system with no load damping, a new object needst to be created.
+		If you want a system with no load damping, a new object needs to be created.
 		*/
 	}
 
@@ -193,6 +204,8 @@ TIMESTAMP frequency_gen::presync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t1 = powerflow_object::presync(t0);
+	int indexval, indexer;
+	double tempval;
 	bool PerformUpdate;
 
 	if (((solver_method==SM_NR) && (NR_cycle == true)) || (solver_method!=SM_NR))
@@ -204,6 +217,7 @@ TIMESTAMP frequency_gen::presync(TIMESTAMP t0)
 	{
 		prev_time = t0;
 		next_time = TS_NEVER;
+		track_time = t0;	//Store when we started, for tracking "hour" changes
 	}
 
 	if (FreqObjectMode==AUTO)
@@ -221,6 +235,85 @@ TIMESTAMP frequency_gen::presync(TIMESTAMP t0)
 			next_time = pres_updatetime(t0, curr_dt);			//Perform frequency and time updates (initial next time estimate is this)
 
 			CurrGenCondition = NextGenCondition;	//Transition the machine states
+
+			//Statistic tracking/calculation
+			if ((t0 - track_time) > 3600)	//Just see if we've gone over an hour, won't force it there since this is all very hand-wavy anyways
+			{
+				stored_freq[curr_store_loc] = FrequencyValue;	//Store the current frequency value
+
+				//Re-initialize statistic values
+				day_average = day_std = 0.0;
+
+				//Now loop through and calculate mean values
+				for (indexer=0; indexer<24; indexer++)
+				{
+					indexval = curr_store_loc-indexer;
+
+					if (indexval<0)	//Loop roll-over handling
+						indexval+=168;
+
+					day_average += stored_freq[indexval];	//Accumulate
+				}
+
+				//Copy day into week
+				week_average = day_average;
+				
+				//Now proceed with week
+				for (indexer=24; indexer<168; indexer++)
+				{
+					indexval = curr_store_loc - indexer;
+
+					if (indexval<0)	//Loop roll-over handling
+						indexval+=168;
+
+					week_average += stored_freq[indexval];	//Accumulate
+				}
+
+				//Turn them into averages
+				day_average /=24.0;
+				week_average /=168.0;
+
+				//Now calculate standard deviation values
+				for (indexer=0; indexer<24; indexer++)
+				{
+					indexval = curr_store_loc - indexer;
+
+					if (indexval<0)	//Loop roll-over handling
+						indexval+=168;
+
+					tempval = (stored_freq[indexval] - day_average);	//Difference
+					day_std += tempval*tempval;							//Squared
+				}
+
+				//Now do the same for the week
+				for (indexer=0; indexer<24; indexer++)
+				{
+					indexval = curr_store_loc - indexer;
+
+					if (indexval<0)	//Loop roll-over handling
+						indexval+=168;
+
+					tempval = (stored_freq[indexval] - week_average);	//Difference
+					week_std += tempval*tempval;						//Squared
+				}
+
+				//Turn them into variances
+				day_std /= 23.0;	//N-1 for unbiased
+				week_std /= 167.0;
+
+				//Now make standard deviations, as requested
+				day_std = sqrt(day_std);
+				week_std = sqrt(week_std);
+
+				//Update current location pointer
+				curr_store_loc++;
+
+				//Roll-over handling
+				if (curr_store_loc >= 168)
+					curr_store_loc=0;
+
+				track_time += 3600;	//Update the tracking interval to the next time
+			}
 		}
 
 		//Update governor response variable, unless it is active

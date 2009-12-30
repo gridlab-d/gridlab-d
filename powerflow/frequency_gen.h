@@ -54,7 +54,8 @@ public:
 	double calc_tol_perc;
 	FREQMODE FreqObjectMode;
 	int Num_Resp_Eqs;
-	int iter_passes;		//Number of passes that have been made over the object - used to figure out if things need removing or not		
+	int iter_passes;		//Number of passes that have been made over the object - used to figure out if things need removing or not
+	double day_average, day_std, week_average, week_std;	//Variables for 24- and 168-hour statistics (mean and std dev)
 	
 	frequency_gen(MODULE *mod);
 	inline frequency_gen(CLASS *cl=oclass):powerflow_object(cl){};
@@ -65,11 +66,12 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);
 
-	FREQSTATE CurrGenCondition, NextGenCondition;	//Move back down to private when done
-
 private:
-	//FREQSTATE CurrGenCondition, NextGenCondition;
+	FREQSTATE CurrGenCondition, NextGenCondition;	//State machine variables
 	double NominalFreq;
+	double stored_freq[168];	//Storage array for statistic estimations
+	int curr_store_loc;			//Pointer to current storage location
+	TIMESTAMP track_time;		//Time to track when an hour has passed to store "new" value
 	int eight_tau_value;	//8 times the time constant of the system - theoretically used to remove equation contributions
 	int three_tau_value;	//3 times the time constant of the system - used for comparisons
 	TIMESTAMP prev_time;	//Previous timestep a run has been accomplished
