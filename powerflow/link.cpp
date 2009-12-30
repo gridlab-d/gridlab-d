@@ -2325,6 +2325,166 @@ void *link::UpdateYVs(OBJECT *snode, char snodeside, complex *deltaV)
 	return 0;
 }
 
+//Function to calculate current values for use by restoration module
+void link::calc_currents(complex *Current_Vals)
+{
+	node *fnode = OBJECTDATA(from,node);
+	node *tnode = OBJECTDATA(to,node);
+	complex vtemp[3];
+	complex itemp[3];
+	complex current_temp[3];
+
+	//Zero the values, in case we are using the same temp variable every time
+	Current_Vals[0] = Current_Vals[1] = Current_Vals[2] = 0.0;
+
+	//Perform current_in calculation from sync pass above (just no propogation to current_inj)
+	if (status==LS_CLOSED)
+	{
+		if ((voltage_ratio!=1.0) && (SpecialLnk != DELTAGWYE) && (SpecialLnk != SPLITPHASE))
+		{
+			//(-a*Vout+Vin)
+			vtemp[0] = fnode->voltage[0]-
+					   a_mat[0][0]*tnode->voltage[0]-
+					   a_mat[0][1]*tnode->voltage[1]-
+					   a_mat[0][2]*tnode->voltage[2];
+
+			vtemp[1] = fnode->voltage[1]-
+					   a_mat[1][0]*tnode->voltage[0]-
+					   a_mat[1][1]*tnode->voltage[1]-
+					   a_mat[1][2]*tnode->voltage[2];
+
+			vtemp[2] = fnode->voltage[2]-
+					   a_mat[2][0]*tnode->voltage[0]-
+					   a_mat[2][1]*tnode->voltage[1]-
+					   a_mat[2][2]*tnode->voltage[2];
+
+			Current_Vals[0] = d_mat[0][0]*vtemp[0]+
+							  d_mat[0][1]*vtemp[1]+
+							  d_mat[0][2]*vtemp[2];
+
+			Current_Vals[1] = d_mat[1][0]*vtemp[0]+
+							  d_mat[1][1]*vtemp[1]+
+							  d_mat[1][2]*vtemp[2];
+
+			Current_Vals[2] = d_mat[2][0]*vtemp[0]+
+							  d_mat[2][1]*vtemp[1]+
+							  d_mat[2][2]*vtemp[2];
+
+		}//end normal transformers
+		else if (SpecialLnk == DELTAGWYE)
+		{
+			vtemp[0]=fnode->voltage[0]*a_mat[0][0]+
+					 fnode->voltage[1]*a_mat[0][1]+
+					 fnode->voltage[2]*a_mat[0][2]-
+					 tnode->voltage[0];
+
+			vtemp[1]=fnode->voltage[0]*a_mat[1][0]+
+					 fnode->voltage[1]*a_mat[1][1]+
+					 fnode->voltage[2]*a_mat[1][2]-
+					 tnode->voltage[1];
+
+			vtemp[2]=fnode->voltage[0]*a_mat[2][0]+
+					 fnode->voltage[1]*a_mat[2][1]+
+					 fnode->voltage[2]*a_mat[2][2]-
+					 tnode->voltage[2];
+
+			//Get low side current
+			itemp[0] = vtemp[0] * b_mat[0][0];
+			itemp[1] = vtemp[1] * b_mat[1][1];
+			itemp[2] = vtemp[2] * b_mat[2][2];
+
+			//Translate back to high-side
+			Current_Vals[0] = d_mat[0][0]*itemp[0]+
+							  d_mat[0][1]*itemp[1]+
+							  d_mat[0][2]*itemp[2];
+
+			Current_Vals[1] = d_mat[1][0]*itemp[0]+
+							  d_mat[1][1]*itemp[1]+
+							  d_mat[1][2]*itemp[2];
+
+			Current_Vals[2] = d_mat[2][0]*itemp[0]+
+							  d_mat[2][1]*itemp[1]+
+							  d_mat[2][2]*itemp[2];
+
+		}//end delta-GWYE
+		else if (SpecialLnk == SPLITPHASE)	//Split phase, center tapped xformer
+		{
+			if (has_phase(PHASE_A))
+			{
+				itemp[0] = fnode->voltage[0]*b_mat[2][2]+
+						   tnode->voltage[0]*b_mat[2][0]+
+						   tnode->voltage[1]*b_mat[2][1];
+
+				Current_Vals[0] = itemp[0];
+			}
+			else if (has_phase(PHASE_B))
+			{
+				itemp[0] = fnode->voltage[1]*b_mat[2][2]+
+						   tnode->voltage[0]*b_mat[2][0]+
+						   tnode->voltage[1]*b_mat[2][1];
+
+				Current_Vals[1] = itemp[0];
+			}
+			else if (has_phase(PHASE_C))
+			{
+				itemp[0] = fnode->voltage[2]*b_mat[2][2]+
+						   tnode->voltage[0]*b_mat[2][0]+
+						   tnode->voltage[1]*b_mat[2][1];
+
+				Current_Vals[2] = itemp[0];
+			}
+
+		}//end split-phase, center tapped xformer
+		else if (has_phase(PHASE_S))	//Split-phase line
+		{
+			//(-a*Vout+Vin)
+			vtemp[0] = fnode->voltage[0]-
+					   a_mat[0][0]*tnode->voltage[0]-
+					   a_mat[0][1]*tnode->voltage[1];
+
+			vtemp[1] = fnode->voltage[1]-
+					   a_mat[1][0]*tnode->voltage[0]-
+					   a_mat[1][1]*tnode->voltage[1];
+
+			Current_Vals[0] = From_Y[0][0]*vtemp[0]+
+							  From_Y[0][1]*vtemp[1];
+
+			Current_Vals[1] = From_Y[1][0]*vtemp[0]+
+							  From_Y[1][1]*vtemp[1];
+		}
+		else
+		{
+			//(-a*Vout+Vin)
+			vtemp[0] = fnode->voltage[0]-
+					   a_mat[0][0]*tnode->voltage[0]-
+					   a_mat[0][1]*tnode->voltage[1]-
+					   a_mat[0][2]*tnode->voltage[2];
+
+			vtemp[1] = fnode->voltage[1]-
+					   a_mat[1][0]*tnode->voltage[0]-
+					   a_mat[1][1]*tnode->voltage[1]-
+					   a_mat[1][2]*tnode->voltage[2];
+
+			vtemp[2] = fnode->voltage[2]-
+					   a_mat[2][0]*tnode->voltage[0]-
+					   a_mat[2][1]*tnode->voltage[1]-
+					   a_mat[2][2]*tnode->voltage[2];
+
+			Current_Vals[0] = From_Y[0][0]*vtemp[0]+
+							  From_Y[0][1]*vtemp[1]+
+							  From_Y[0][2]*vtemp[2];
+
+			Current_Vals[1] = From_Y[1][0]*vtemp[0]+
+							  From_Y[1][1]*vtemp[1]+
+							  From_Y[1][2]*vtemp[2];
+
+			Current_Vals[2] = From_Y[2][0]*vtemp[0]+
+							  From_Y[2][1]*vtemp[1]+
+							  From_Y[2][2]*vtemp[2];
+		}
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // MATRIX OPS FOR LINKS
 //////////////////////////////////////////////////////////////////////////

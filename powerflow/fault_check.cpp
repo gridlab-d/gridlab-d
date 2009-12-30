@@ -51,7 +51,7 @@ int fault_check::init(OBJECT *parent)
 	if (solver_method == SM_NR)
 	{
 		//Set the rank to be 1 below swing - lets it execute before NR on synch
-		gl_set_rank(obj,4);	//4 = swing-1
+		gl_set_rank(obj,5);	//swing-1
 	}
 	else
 	{
@@ -109,7 +109,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		{
 			if (Supported_Nodes[index]==0)
 			{
-				rest_obj->Perform_Reconfiguration();	//Request a reconfiguration
+				rest_obj->Perform_Reconfiguration(OBJECTHDR(this),t0);	//Request a reconfiguration
 
 				break;	//Get us out of this loop, only need to detect a solitary failure
 			}

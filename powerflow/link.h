@@ -10,8 +10,8 @@
 EXPORT int isa_link(OBJECT *obj, char *classname);
 
 #define impedance(X) (B_mat[X][X])
-#define LS_CLOSED 1	//Changed from enums so it could be used by restoration
-#define LS_OPEN 0
+#define LS_CLOSED true	//Changed from enums so it could be used by restoration
+#define LS_OPEN false
 
 typedef enum {
 		NORMAL=0,			///< defines just a normal link/transformer
@@ -57,6 +57,7 @@ public: /// @todo make this private and create interfaces to control values
 	void calculate_power();
 	void calculate_power_splitphase();
 	void set_flow_directions();
+	void calc_currents(complex *Current_Vals);	//Function to perform "immediate" current calculation - used by restoration object
 
 public:
 	bool status;	///< link status (open disconnect nodes)

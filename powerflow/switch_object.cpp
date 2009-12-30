@@ -244,6 +244,76 @@ TIMESTAMP switch_object::postsync(TIMESTAMP t0)
 	return t2;
 }
 
+//Function to externally set switch status - mainly for "out of step" updates under NR solver
+//where admittance needs to be updated
+void switch_object::set_switch(bool desired_status)
+{
+	status = desired_status;	//Change the status
+	//Check solver method - Only works for NR right now
+	if (solver_method == SM_NR)
+	{
+		if (status != prev_status)	//Something's changed
+		{
+			//Copied from sync
+			if (status==LS_OPEN)
+			{
+				if (has_phase(PHASE_A))
+				{
+					From_Y[0][0] = complex(0.0,0.0);	//Update admittance
+					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					From_Y[1][1] = complex(0.0,0.0);	//Update admittance
+					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					From_Y[2][2] = complex(0.0,0.0);	//Update admittance
+					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+			}//end open
+			else					//Must be closed then
+			{
+				if (has_phase(PHASE_A))
+				{
+					From_Y[0][0] = complex(1e4,1e4);	//Update admittance
+					a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					From_Y[1][1] = complex(1e4,1e4);	//Update admittance
+					a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					From_Y[2][2] = complex(1e4,1e4);	//Update admittance
+					a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+			}//end closed
+
+			//Flag an update
+			NR_admit_change = true;	//Flag an admittance change
+
+			//Update prev_status
+			prev_status = status;
+		}
+		//defaulted else - no change, so nothing needs to be done
+	}
+	else
+	{
+		gl_warning("Switch status updated, but no other changes made.");
+		/*  TROUBLESHOOT
+		When changed under solver methods other than NR, only the switch status
+		is changed.  The solver handles other details in a specific step, so no
+		other changes are performed.
+		*/
+	}
+}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: switch_object

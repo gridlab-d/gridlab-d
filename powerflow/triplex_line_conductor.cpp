@@ -30,6 +30,10 @@ triplex_line_conductor::triplex_line_conductor(MODULE *mod) : powerflow_library(
         if(gl_publish_variable(oclass,
 			PT_double, "resistance[Ohm/mile]",PADDR(resistance),
 			PT_double, "geometric_mean_radius[ft]", PADDR(geometric_mean_radius),
+ 			PT_double, "rating.summer.continuous[A]", PADDR(summer.continuous),
+			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),
+			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),
+			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),
 			NULL) < 1) GL_THROW("unable to publish triplex_line_conductor properties in %s",__FILE__);
 	}   
 }
@@ -39,6 +43,10 @@ int triplex_line_conductor::create(void)
 	int result = powerflow_library::create();
 	resistance = 0.0;
 	geometric_mean_radius = 0.0;
+
+	summer.continuous = winter.continuous = 202;	//1/0 Class A AA wire
+	summer.emergency = winter.emergency = 212.1;	//1.05x continuous
+
 	return result;
 }
 

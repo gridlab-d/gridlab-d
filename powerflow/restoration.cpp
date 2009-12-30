@@ -12,6 +12,9 @@ using namespace std;
 #include "restoration.h"
 #include "fault_check.h"
 #include "solver_nr.h"
+#include "node.h"
+#include "line.h"
+#include "switch_object.h"
 
 //////////////////////////////////////////////////////////////////////////
 // restoration CLASS FUNCTIONS
@@ -19,12 +22,11 @@ using namespace std;
 CLASS* restoration::oclass = NULL;
 CLASS* restoration::pclass = NULL;
 
-restoration::restoration(MODULE *mod) : powerflow_object(mod)
+restoration::restoration(MODULE *mod) : powerflow_library(mod)
 {
 	if(oclass == NULL)
 	{
-		pclass = powerflow_object::oclass;
-		oclass = gl_register_class(mod,"restoration",sizeof(restoration),PC_PRETOPDOWN|PC_POSTTOPDOWN);
+		oclass = gl_register_class(mod,"restoration",sizeof(restoration),0x00);
 		if(oclass == NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		
@@ -32,7 +34,6 @@ restoration::restoration(MODULE *mod) : powerflow_object(mod)
 			PT_char1024,"configuration_file",PADDR(configuration_file),
 			PT_int32,"reconfig_attempts",PADDR(reconfig_attempts),
 			PT_int32,"reconfig_iteration_limit",PADDR(reconfig_iter_limit),
-			PT_object,"fault_check_object",PADDR(fault_check_obj),
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -44,17 +45,13 @@ int restoration::isa(char *classname)
 
 int restoration::create(void)
 {
-	int result = powerflow_object::create();
 	*configuration_file = NULL;
 	prev_time = 0;
-	phases = PHASE_A;	//Arbitrary - set so powerflow_object shuts up (library doesn't grant us access to presynch/postsynch)
 
 	reconfig_attempts = 0;
 	reconfig_iter_limit = 0;
-	attempt_reconfigure=false;
-	fault_check_obj=NULL;
 
-	return result;
+	return 1;
 }
 
 int restoration::init(OBJECT *parent)
@@ -97,12 +94,11 @@ int restoration::init(OBJECT *parent)
 			//Check limits - post warnings as necessary
 			if (reconfig_attempts==0)
 			{
-				gl_warning("Infinite reconfigurations set.");
+				GL_THROW("Infinite reconfigurations set.");
 				/*  TROUBLESHOOT
 				The restoration object can have the number of reconfiguration per timestep set via the
 				reconfig_attempts property.  If not set, or set to 0, the system will perform reconfigurations
-				until the overall powerflow iteration limit is reached (or the system solves and moves to a new
-				timestep).
+				forever and lock up the computer (if an acceptable solution is never met).
 				*/
 			}
 
@@ -116,19 +112,6 @@ int restoration::init(OBJECT *parent)
 				or the system solves and moves to a new reconfiguration.
 				*/
 			}
-
-			/****************************** Possibly unnecessary code **********************************/
-			if (fault_check_obj==NULL)
-			{
-				GL_THROW("Please specify the fault_check object for the restoration object");
-				/*  TROUBLESHOOT
-				The restoration object utilizes functions in the fault_check object, so a fault_check
-				object must be specified using the fault_check_object property.
-				*/
-			}
-
-			//Set our rank higher than swing.  We need to go off before the swing bus, just in case we are reconfiguring things
-			gl_set_rank(obj,6);	//6 = swing+1
 		}
 		else
 		{
@@ -149,266 +132,7 @@ int restoration::init(OBJECT *parent)
 		*/
 	}
 
-	return powerflow_object::init(parent);
-}
-
-TIMESTAMP restoration::presync(TIMESTAMP t0)
-{
-	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP t1 = powerflow_object::presync(t0);
-	bool NeedReconfiguration;
-	unsigned int index;
-	fault_check *flt_chk;
-	FILE *CONFIGINFO;
-
-	if (prev_time!=t0)	//New timestep - reset tracking variables
-	{
-		reconfig_number = 0;	//Reset number of reconfigurations that have occurred
-		reconfig_iterations=0;	//Reset number of iterations that have occurred on this timestep
-	}
-
-	if ((attempt_reconfigure==true) && (NR_cycle==true))	//Solution cycle (1 off, since swing toggles it after we've run)
-	{
-		reconfig_number++;	//Increment the number of reconfigurations we've tried
-
-		//Testing code - not sure how all of this will be handled
-
-			/* --------- File read testing ----------- */
-			char1024 testtext;
-
-			CONFIGINFO = fopen(configuration_file,"r");		//Open the file for reading (not sure how you'll want to actually do this)
-
-			//Just read in one line
-			fscanf(CONFIGINFO,"%s",testtext);
-
-			//close the handle
-			fclose(CONFIGINFO);
-
-			//print the contents, just to see if it worked
-			printf(testtext);
-			printf("\n");
-
-			/* ----------- End file read testing ----------*/
-
-			//Check voltages
-			NeedReconfiguration=VoltageCheck();
-
-			/* --------------------------- Redundant example - performs a "support check" and does a reconfiguration if necessary
-			   --------------------------- A "support check" and reconfiguration also occurs in fault_check right before the NR solver
-			   --------------------------- This code is here merely as an example and may be removed
-			*/
-				//See if a voltage reconfiguration has been requested, otherwise check a support reconfiguration
-				if (NeedReconfiguration==false)
-				{
-					flt_chk = OBJECTDATA(fault_check_obj,fault_check);
-
-					flt_chk->support_check(0);	//0 is assumed to be the swing node
-
-					//See if anything is unsupported
-					for (index=0; index<NR_bus_count; index++)
-					{
-						if (flt_chk->Supported_Nodes[index]==0)	//Unsupported
-						{
-							NeedReconfiguration=true;	//Request a reconfiguration
-							
-							break;	//Drop out of the for loop, only need 1 reconfiguration request
-						}
-					}
-				}
-
-			if (NeedReconfiguration)
-				Perform_Reconfiguration();	//Perform a reconfiguration (this does nothing right now)
-
-
-			/* ---------- Array access testing ------------ */
-
-			//print first connectivity for now - this is just an example of obtaining connectivity (for check)
-			printf("Connect Pre - %d\n",Connectivity_Matrix[0][0]);
-
-			/* ---------- End array access testing ----------*/
-
-		/*  NOTES:
-		NR_busdata is the same pointer array the NR solver uses.  Any changes to NR_busdata are reflected on the actual objects (i.e., don't change anything)
-
-		bus names are available in NR_busdata[busindex].name
-		branch names are available in NR_branchdata[branchindex].name
-
-		Switches are read/controlled via the NR_branchdata[branchindex].status field.
-
-		Connectivity matrix is stored in Connectivity_Matrix.  It is a 2D array of (# nodes) x (# nodes) size.  Connections are based on row/column pairs.
-		e.g., if Connectivity_Matrix[2][4] had a non-zero value, it means the bus in NR_busdata[2] is connected to the bus of NR_busdata[4] via some connection.
-
-		Connectivity_Matrix values:
-		0 - no connection
-		1 - "normal" line (overhead line, underground line, triplex line, transformer)
-		2 - fuse - if you want to handle fuses, additional functionality for testing if they are blown or not is probably necessary
-		3 - switch - open/closed status/control is handled in NR_branchdata[branchindex].status
-
-		--- End Notes ---- */
-	}
-
-	return t1;
-}
-
-TIMESTAMP restoration::postsync(TIMESTAMP t0)
-{
-	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP tret = powerflow_object::postsync(t0);
-	unsigned char ConvergenceCheck;
-
-	bool reconfig_check = false;	//Temp working variable - will be replaced once logic is in place
-
-	if (prev_time==0)	//First run, make sure we come back - otherwise this won't do anything
-	{
-		NR_retval = t0;	//Override global return, make sure we stay here once
-		ret_time = t0;	//Set our tracking variable as well
-		attempt_reconfigure=true;	//Set up so it will try to do a reconfiguration
-
-		/* Testing Code - remove when done - example of traversing connectivity matrix */
-			//Print the connectivity matrix for the sake of doing so
-			FILE *FPCONNECT = fopen("connectout.txt","w");
-
-			int conval;
-			unsigned int indexx, indexy;
-			for (indexx=0; indexx<NR_bus_count; indexx++)
-			{
-				for (indexy=0; indexy<NR_bus_count; indexy++)
-				{
-					conval=Connectivity_Matrix[indexx][indexy];
-
-					if (conval != 0)
-					{
-						fprintf(FPCONNECT,NR_busdata[indexx].name);
-						fprintf(FPCONNECT," - ");
-						fprintf(FPCONNECT,NR_busdata[indexy].name);
-						
-						if (conval == 1)
-							fprintf(FPCONNECT," - Normal\n");
-						else if (conval==2)
-							fprintf(FPCONNECT," - fuse\n");
-						else if (conval==3)
-							fprintf(FPCONNECT," - switch\n");
-						else
-							fprintf(FPCONNECT," - Uh oh\n");
-					}
-				}
-			}
-			fclose(FPCONNECT);
-
-		/* End testing code */
-	}
-
-	if (NR_cycle==false)	//solution cycle
-	{
-		reconfig_iterations++;	//Increment the iterations counter
-
-		if (NR_retval != t0)	//Convergence!
-		{
-			ConvergenceCheck = 0x04;
-
-			//Reset the counter - we're either at the limit or below it, so this doesn't matter
-			reconfig_iterations=0;
-		}
-		else
-		{
-			ConvergenceCheck = 0x00;
-		}
-
-		if ((reconfig_iterations>=reconfig_iter_limit) && (reconfig_iter_limit!=0))	//See if we've met the iteration limit (and it's nonzero)
-		{
-			ConvergenceCheck |= 0x02;
-		}
-
-		if ((reconfig_number>=reconfig_attempts) && (reconfig_attempts!=0))	//See if we've met the reconfiguration limit (and it's nonzero)
-		{
-			ConvergenceCheck |= 0x01;
-		}
-	}
-
-	if ((prev_time!=0) && (NR_cycle==false))	//solution phase - check our results and see if we need to reloop or not
-	{
-		//Sample check for convergence, change as required
-		switch(ConvergenceCheck) {
-			case 0x00:	//Not converged, iteration limit not reached, reconfigure limit not reached
-			case 0x01:	//Not converged, iteration limit not reached, reconfigure limit reached
-				{
-					ret_time = t0;	//Proceed as we were (keep iterating)
-					break;
-				}
-			case 0x02:	//Not converged, iteration limit reached, reconfigure limit not reached
-				{
-					ret_time = t0;				//Keep us here
-					attempt_reconfigure=true;	//Flag for a reconfiguration
-					reconfig_iterations = 0;	//Reset the counter
-					break;
-				}
-			case 0x03:	//Not converged, iteration limit reached, reconfigure limit reached
-				{
-					//We're hosed
-					GL_THROW("Reconfiguration iteration and reconfiguration limits reached.");
-					/*  TROUBLESHOOT
-					The restoration object has reached the maximum number of reconfigurations per
-					timestep.  The system failed to reach a suitable configuration, so the solver
-					has halted.
-					*/
-					break;
-				}
-			case 0x04:	//Converged, iteration limit not reached, reconfigure limit not reached
-				{
-					//Check it
-					reconfig_check = VoltageCheck();
-
-					//check to see if we want to perform a reconfiguration, or let us go on our way
-					if (reconfig_check)
-					{
-						ret_time = t0;			//We need to stay here, update as such
-						NR_admit_change = true;	//Flag NR to perform an admittance update on next solver pass (not sure if this is absolutely needed or not yet)
-						attempt_reconfigure = true;	//Flag to perform a reconfiguration
-						reconfig_iterations = 0;	//Reset the iteration counter
-					}
-					else
-					{
-						ret_time = tret;	//Let us proceed
-					}
-					break;
-				}
-			case 0x05:	//Converged, iteration limit not reached, reconfigure limit reached
-				{
-					ret_time = tret;	//Converged and our last attempt, call it good and proceed
-					break;
-				}
-			case 0x06:	//Converged, iteration limit reached, reconfigure limit not reached
-				{
-					//Check it
-					reconfig_check = VoltageCheck();
-
-					//check to see if we want to perform a reconfiguration, or let us go on our way
-					if (reconfig_check)
-					{
-						ret_time = t0;			//We need to stay here, update as such
-						NR_admit_change = true;	//Flag NR to perform an admittance update on next solver pass (not sure if this is absolutely needed or not yet)
-						attempt_reconfigure = true;	//Flag to perform a reconfiguration
-						reconfig_iterations = 0;	//Reset the iteration counter
-					}
-					else
-					{
-						ret_time = tret;	//Let us proceed
-					}
-
-					break;
-				}
-			case 0x07:	//Converged, iteration limit reached, reconfigure limit reached
-				{
-					ret_time = tret;	//Converged and our last attempt, call it good and proceed
-					break;
-				}
-		}//Switch end
-	}
-		
-	//Update previous timestep info
-	prev_time = t0;
-
-	return ret_time;	//Return where we want to go.  If >t0, NR will force us back anyways
+	return 1;
 }
 
 //Function to create the connectivity matrix (called by swing during NR initializations)
@@ -465,6 +189,10 @@ void restoration::PopulateConnectivity(int frombus, int tobus, OBJECT *linkingob
 	{
 		link_type = CONN_FUSE;
 	}
+	else if (gl_object_isa(linkingobj,"transformer","powerflow") || gl_object_isa(linkingobj,"regulator","powerflow"))	//Regulators and transformers lumped together for now.  Both essentially the same thing
+	{
+		link_type = CONN_XFRM;
+	}
 	else	//Must be a "normal" line then
 	{
 		link_type = CONN_LINE;
@@ -479,22 +207,366 @@ void restoration::PopulateConnectivity(int frombus, int tobus, OBJECT *linkingob
 bool restoration::VoltageCheck(void)
 {
 	/* ------------ Array access testing ------------- */
-		//Voltages would be checked here, just like presynch.  Replication of presync print for testing
+		//Voltages would be checked here
 
 		//print first voltage for now - this is just an example of obtaining the voltages (for check)
 		printf("Volt Check Post - %f %f\n",NR_busdata[0].V[1].Re(),NR_busdata[0].V[1].Im());
 
 	/* ---------- End array access testing ------------ */
 
-	//Set to always return false right now
-	return false;
+	//Set to always return true right now - indicates all voltages passed
+	return true;
 }
 
-//Function to perform the reconfiguration - functionalized so fault_check can call it before the NR solver goes off
-void restoration::Perform_Reconfiguration(void)
+//Function to perform the reconfiguration - functionalized so fault_check can call it before the NR solver goes off (and call the solver within)
+void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 {
-	//Reconfiguration would occur here
-	printf("Reconfigured!\n\n");
+	OBJECT *tempobj;
+	DATETIME CurrTimeVal;
+	switch_object *SwitchDevice;
+	line *LineDevice;
+	line_configuration *LineConfig;
+	triplex_line_configuration *TripLineConfig;
+	node *TempNode;
+	overhead_line_conductor *OHConductor;
+	underground_line_conductor *UGConductor;
+	triplex_line_conductor *TLConductor;
+	double max_volt_error;
+	int64 pf_result;
+	int fidx, tidx, pidx;
+	double cont_rating;
+	bool pf_bad_computations, pf_valid_solution, fc_all_supported, good_solution, rating_exceeded;
+	complex temp_current[3];
+
+	if (t0 != prev_time)	//Perform new timestep updates
+	{
+		reconfig_number = 0;	//Reset number of reconfigurations that have occurred
+		prev_time = t0;			//Update time value
+	}
+
+	//Get the current time into a manageable structure - to be used later
+	 gl_localtime(t0, &CurrTimeVal);
+
+	//Pull out fault check object info
+	fault_check *FaultyObject = OBJECTDATA(faultobj,fault_check);
+
+	//Find the maximum voltage error for the NR solver - use the swing bus (since normal NR solver just does that)
+	tempobj = gl_get_object(NR_busdata[0].name);	//Get object link - 0 should be swing bus
+	TempNode = OBJECTDATA(tempobj,node);			//Get the node link
+
+	max_volt_error = TempNode->nominal_voltage * default_maximum_voltage_error;	//Calculate the maximum voltage error
+
+	//Now we go into two while loops so reconfigurations are attempted until a solution is found (or limits are reached)
+	while (reconfig_number < reconfig_attempts)	//Reconfiguration count loop
+	{
+		//Reset tracking variables
+		good_solution = false;
+		reconfig_iterations=0;	//Reset number of iterations that have occurred on this attempt
+
+		//If we've been called, there is a fault somewhere (fault_check has summoned us)
+		/***********************
+
+		This is where the list of candidate switching operations would be generated/found - likely based off of the Connectivity_Matrix
+
+		***********************/
+
+		/**********************
+		
+		This is where a switch status would be changed based on the reconfiguration.  For the purposes of an example, I will just find all
+		switches in the system and close them
+
+		***********************/
+
+			//EXAMPLE CODE - Find all switches in the system and close them
+			//Very crude, just find every switch (possibly even duplication since they exist twice in connectivity) and close them
+			//May need refinement, but is only here to show a quick example
+			unsigned int indexx, indexy, indexz;
+			int conval;
+			BRANCHDATA temp_branch;
+
+			for (indexx=0; indexx<NR_bus_count; indexx++)
+			{
+				for (indexy=0; indexy<NR_bus_count; indexy++)
+				{
+					conval = Connectivity_Matrix[indexx][indexy];
+
+					//See if it is a switch
+					if (conval==CONN_SWITCH)
+					{
+						//Find the switch based on its ends (search the connecting nodes shorter link list
+						for (indexz=0; indexz<NR_busdata[indexx].Link_Table_Size; indexz++)
+						{
+							temp_branch = NR_branchdata[NR_busdata[indexx].Link_Table[indexz]];	//Get current "link of interest" info
+
+							if (((temp_branch.from==indexx) && (temp_branch.to==indexy)) || ((temp_branch.from==indexy) && (temp_branch.to==indexx)))	//Check both ways so we can fail out in a pickle
+							{
+
+
+								break;	//Found what we want, so no need to continue looping
+							}
+						}
+
+						if (indexz==NR_busdata[indexx].Link_Table_Size)	//Made it all the way to the end :(
+						{
+							GL_THROW("A switch object could not be found in reconfiguration");	//This error indicates Connectivity_Matrix flagged a switch, but the node has no record of it
+							//Troubleshoot to be added if kept in here
+						}
+						else	//Proceed with the closing
+						{
+							//Get the switch's object linking
+							tempobj = gl_get_object(temp_branch.name);
+
+							//Now pull it into switch properties
+							SwitchDevice = OBJECTDATA(tempobj,switch_object);
+
+							//Close it
+							SwitchDevice->set_switch(true);	//True = closed, false = open
+						}
+					}//end it is a switch
+				}//end column traversion
+			}//end row traversion
+
+			/*******************
+			End Simple example
+			*******************/
+
+		//Check to see if everything is supported again - not sure if this will be necessary or not
+		FaultyObject->support_check(0);		//Start a new support check
+
+		//See if anything is unsupported
+		fc_all_supported = true;
+		for (indexx=0; indexx<NR_bus_count; indexx++)
+		{
+			if (FaultyObject->Supported_Nodes[indexx]==0)	//No Support
+			{
+				fc_all_supported = false;	//Flag as a defect
+				gl_verbose("Reconfiguration attempt failed - unsupported nodes were still located");
+				/* TROUBLESHOOT
+				After performing the reconfiguration logic, some nodes are still unsupported.  This is considered a failed
+				reconfiguration, so another will be attempted.
+				*/
+				break;						//Only takes one failure to need to get out of here
+			}
+		}
+
+		//Set the pf solution flag
+		pf_valid_solution = false;
+
+		//Re-solve powerflow at this point - assuming the system appears valid
+		while ((reconfig_iterations < reconfig_iter_limit) && (fc_all_supported==true))	//Only let powerflow iterate so many times
+		{
+			pf_bad_computations = false;	//Reset singularity checker
+
+			//Perform NR solver
+			pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, max_volt_error, &pf_bad_computations);
+
+			//De-flag any admittance changes (so other iterations don't take longer
+			NR_admit_change = false;
+
+			if (pf_bad_computations==true)	//Singular attempt, fail - not sure how it will get here with the fault_check call above, but added for completeness
+			{
+				pf_valid_solution = false;
+
+				gl_verbose("Restoration attempt failed - singular system matrix.");
+				/*  TROUBLESHOOT
+				The restoration object has attempted a reconfiguration that did not restore the system.
+				Another reconfiguration will be attempted.
+				*/
+
+				break;	//Get out of this while, no sense solving a singular matrix more than once
+			}
+			else if (pf_result<0)	//Failure to converge, but just numerical issues, not singular.  Do another pass
+			{
+				pf_valid_solution = false;	//Set it just to be safe
+
+				reconfig_iterations++;	//Increment the powerflow iteration counter
+			}
+			else	//Must be a successful solution then
+			{
+				pf_valid_solution = true;
+
+				break;	//Get out of the while, we've solved successfully
+			}
+		}//end while for pf iterations
+
+		//See if it was a valid solution, if so, check system conditions (voltages/currents)
+		if (pf_valid_solution==true)
+		{
+			//Check voltages - handled in the other function (not sure what we want to do here - presumably make sure it isn't too low or something
+			good_solution = VoltageCheck();
+
+			//Check branch currents, if something is a line (switches, xformers, etc. unhandled at this time)
+			if (good_solution==true)	//Voltage passed, onward
+			{
+				for (indexx=0; indexx<NR_branch_count; indexx++)
+				{
+					//See if it is a line
+					fidx=NR_branchdata[indexx].from;
+					tidx=NR_branchdata[indexx].to;
+
+					if (Connectivity_Matrix[fidx][tidx]==CONN_LINE)
+					{
+						cont_rating = 0.0;		//Reset rating variable to zero initially
+
+						//Grab the object header
+						tempobj = gl_get_object(NR_branchdata[indexx].name);
+
+						//Get its line version
+						LineDevice = OBJECTDATA(tempobj,line);
+
+						//Calculate the current in for the deivce
+						LineDevice->calc_currents(temp_current);
+
+						//Find the conductor limits
+						if (gl_object_isa(tempobj,"triplex_line","powerflow"))	//See if it is triplex, that gets handled slightly different
+						{
+							//Get the line configuration
+							TripLineConfig = OBJECTDATA(LineDevice->configuration,triplex_line_configuration);
+
+							//Grab the conductor (assumes 1 and 2 are the same - neutral is unchecked)
+							TLConductor = OBJECTDATA(TripLineConfig->phaseA_conductor,triplex_line_conductor);
+
+							//Grab the appropriate continuous rating - Summer is assumed to be April - September (6 months each)
+							if ((CurrTimeVal.month >= 4) && (CurrTimeVal.month <=9))	//Summer
+							{
+								cont_rating = TLConductor->summer.continuous;
+							}
+							else	//Winter
+							{
+								cont_rating = TLConductor->winter.continuous;
+							}
+						}//end triplex
+						else //Must be UG or OH
+						{
+							//Get the line configuration
+							LineConfig = OBJECTDATA(LineDevice->configuration,line_configuration);
+
+							//Pick a phase that exists.  Assumes all wires are the same on the line
+							if ((LineDevice->phases & PHASE_A) == PHASE_A)
+							{
+								pidx=0;
+							}
+							else if ((LineDevice->phases & PHASE_B) == PHASE_B)
+							{
+								pidx=1;
+							}
+							else	//Must be C only
+							{
+								pidx=2;
+							}
+
+							//See which type of conductor we need to use
+							if (gl_object_isa(tempobj,"overhead_line","powerflow"))
+							{
+								if (pidx==0)	//A
+								{
+									OHConductor = OBJECTDATA(LineConfig->phaseA_conductor,overhead_line_conductor);
+								}
+								else if (pidx==1)	//B
+								{
+									OHConductor = OBJECTDATA(LineConfig->phaseB_conductor,overhead_line_conductor);
+								}
+								else	//Must be C
+								{
+									OHConductor = OBJECTDATA(LineConfig->phaseC_conductor,overhead_line_conductor);
+								}
+
+								//Grab the appropriate continuous rating - Summer is assumed to be April - September (6 months each)
+								if ((CurrTimeVal.month >= 4) && (CurrTimeVal.month <=9))	//Summer
+								{
+									cont_rating = OHConductor->summer.continuous;
+								}
+								else	//Winter
+								{
+									cont_rating = OHConductor->winter.continuous;
+								}
+							}//end OH
+							else	//Must be UG
+							{
+								if (pidx==0)	//A
+								{
+									UGConductor = OBJECTDATA(LineConfig->phaseA_conductor,underground_line_conductor);
+								}
+								else if (pidx==1)	//B
+								{
+									UGConductor = OBJECTDATA(LineConfig->phaseB_conductor,underground_line_conductor);
+								}
+								else	//Must be C
+								{
+									UGConductor = OBJECTDATA(LineConfig->phaseC_conductor,underground_line_conductor);
+								}
+
+								//Grab the appropriate continuous rating - Summer is assumed to be April - September (6 months each)
+								if ((CurrTimeVal.month >= 4) && (CurrTimeVal.month <=9))	//Summer
+								{
+									cont_rating = UGConductor->summer.continuous;
+								}
+								else	//Winter
+								{
+									cont_rating = UGConductor->winter.continuous;
+								}
+							}//end UG
+						}//end UG/OH line
+
+						//Reset rating variable
+						rating_exceeded = false;
+
+						if (cont_rating != 0.0)	//Zero rating is taken to mean ratings aren't going to be examined
+						{
+							//See if any measurements exceeded the ratings
+							if ((LineDevice->phases & PHASE_S) == PHASE_S)	//Triplex line
+							{
+								rating_exceeded |= (temp_current[0].Mag() > cont_rating);
+								rating_exceeded |= (temp_current[1].Mag() > cont_rating);
+							}
+							else	//Normal lines
+							{
+								if ((LineDevice->phases & PHASE_A) == PHASE_A)
+								{
+									rating_exceeded |= (temp_current[0].Mag() > cont_rating);
+								}
+
+								if ((LineDevice->phases & PHASE_B) == PHASE_B)
+								{
+									rating_exceeded |= (temp_current[1].Mag() > cont_rating);
+								}
+
+								if ((LineDevice->phases & PHASE_C) == PHASE_C)
+								{
+									rating_exceeded |= (temp_current[2].Mag() > cont_rating);
+								}
+							}
+						}//end cont rating not 0.0
+
+						if (rating_exceeded == true)	//Exceeded a limit
+						{
+							good_solution = false;	//Flag as bad solution
+							break;					//Get us out of the branch current checks (only takes 1 bad one)
+						}
+					}//end it is a line
+				}//end branch current checks
+			}//end voltage checks passed
+			//Defaulted else - voltage check didn't pass
+		}//end valid pf solution checks
+
+		//Check to see if we're done, or need to reconfigure again
+		if ((good_solution == true) && (pf_valid_solution == true))
+		{
+			break;	//Get us out
+		}
+
+		reconfig_number++;	//Increment the reconfiguration counter
+	}//end reconfiguration while loop
+
+	if (reconfig_number == reconfig_attempts)
+	{
+		GL_THROW("Feeder reconfiguration failed.");
+		/*  TROUBLESHOOT
+		Attempts at reconfiguring the feeder have failed.  An unsolvable condition was reached
+		or the reconfig_attempts limit was set too low.  Please modify the test system or increase
+		the value of reconfig_attempts.
+		*/
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -525,7 +597,7 @@ EXPORT int create_restoration(OBJECT **obj, OBJECT *parent)
 		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
 		return 0;
 	}
-	return 1;
+	return 0;
 }
 
 EXPORT int init_restoration(OBJECT *obj, OBJECT *parent)
@@ -549,35 +621,10 @@ EXPORT int init_restoration(OBJECT *obj, OBJECT *parent)
 * @param pass the current pass for this sync call
 * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
 */
-EXPORT TIMESTAMP sync_restoration(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+EXPORT TIMESTAMP sync_restoration(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
-	restoration *pObj = OBJECTDATA(obj,restoration);
-	try {
-		TIMESTAMP t1 = TS_NEVER;
-		switch (pass) {
-		case PC_PRETOPDOWN:
-			return pObj->presync(t0);
-		case PC_BOTTOMUP:
-			return pObj->sync(t0);
-		case PC_POSTTOPDOWN:
-			t1 = pObj->postsync(t0);
-			obj->clock = t0;
-			return t1;
-		default:
-			throw "invalid pass request";
-		}
-	}
-	catch (char *msg)
-	{
-		gl_error("restoration %s (%s:%d): %s", obj->name, obj->oclass->name, obj->id, msg);
-	}
-	catch (...)
-	{
-		gl_error("restoration %s (%s:%d): unknown exception", obj->name, obj->oclass->name, obj->id);
-	}
-	return TS_INVALID; /* stop the clock */
+	return TS_NEVER;
 }
-
 EXPORT int isa_restoration(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,restoration)->isa(classname);

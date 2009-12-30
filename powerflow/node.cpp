@@ -344,7 +344,7 @@ int node::init(OBJECT *parent)
 			//Ranking - similar to GS
 			if (bustype==SWING)
 			{
-				gl_set_rank(obj,5);
+				gl_set_rank(obj,6);
 			}
 			else	
 			{		

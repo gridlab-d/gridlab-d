@@ -11,6 +11,7 @@ class triplex_line_conductor : public powerflow_library
 public:
 	double resistance;
 	double geometric_mean_radius;
+	LINERATINGS winter, summer;
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;

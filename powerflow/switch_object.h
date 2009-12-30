@@ -29,6 +29,8 @@ public:
 	inline switch_object(CLASS *cl=oclass):link(cl){};
 	int isa(char *classname);
 
+	void set_switch(bool desired_status);
+
 	TIMESTAMP prev_SW_time;	//Used to track switch opens/closes in NR.  Zeros end voltage on first run for other
 };
 
