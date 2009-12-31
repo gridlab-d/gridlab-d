@@ -71,9 +71,9 @@ void voltdump::dump(TIMESTAMP t){
 
 	if(group[0] == 0){
 		nodes = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",FT_END);
-	}// else {
-	//	nodes = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",AND,FT_GROUPID,SAME,group,FT_END);
-	//}
+	} else {
+		nodes = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",AND,FT_GROUPID,SAME,group,FT_END);
+	}
 
 	if(nodes == NULL){
 		gl_warning("no nodes were found to dump");
@@ -106,13 +106,13 @@ void voltdump::dump(TIMESTAMP t){
 }
 
 int voltdump::commit(TIMESTAMP t){
+	if(runtime == 0){
+		runtime = t;
+	}
 	if((t == runtime || runtime == TS_NEVER) && (runcount < 1)){
 		/* dump */
 		dump(t);
 		++runcount;
-	}
-	if(runtime == 0){
-		runtime = t;
 	}
 	return 1;
 }
