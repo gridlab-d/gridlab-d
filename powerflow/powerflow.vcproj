@@ -563,6 +563,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\motor.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\powerflow\node.cpp"
 				>
 			</File>
@@ -722,6 +726,10 @@
 			</File>
 			<File
 				RelativePath="..\powerflow\meter_test.h"
+				>
+			</File>
+			<File
+				RelativePath=".\motor.h"
 				>
 			</File>
 			<File
