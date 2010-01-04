@@ -78,7 +78,7 @@ int motor::isa(char *classname)
 * @param parent a pointer to the parent of this object
 * @return 1 for a successfully created object, 0 for error
 */
-EXPORT int create_induction_motor(OBJECT **obj, OBJECT *parent)
+EXPORT int create_motor(OBJECT **obj, OBJECT *parent)
 {
 	try
 	{
@@ -105,7 +105,7 @@ EXPORT int create_induction_motor(OBJECT **obj, OBJECT *parent)
 * @param obj a pointer to this object
 * @return 1 on success, 0 on error
 */
-EXPORT int init_induction_motor(OBJECT *obj)
+EXPORT int init_motor(OBJECT *obj)
 {
 	motor *my = OBJECTDATA(obj,motor);
 	try {
@@ -126,7 +126,7 @@ EXPORT int init_induction_motor(OBJECT *obj)
 * @param pass the current pass for this sync call
 * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
 */
-EXPORT TIMESTAMP sync_induction_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	motor *pObj = OBJECTDATA(obj,motor);
 	try {
@@ -160,7 +160,7 @@ EXPORT TIMESTAMP sync_induction_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass
 *
 * @return 0 if obj is a subtype of this class
 */
-EXPORT int isa_induction_motor(OBJECT *obj, char *classname)
+EXPORT int isa_motor(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,motor)->isa(classname);
 }
