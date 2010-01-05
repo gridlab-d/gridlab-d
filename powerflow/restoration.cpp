@@ -206,8 +206,21 @@ void restoration::PopulateConnectivity(int frombus, int tobus, OBJECT *linkingob
 //Function to check voltages and determine if a reconfiguration is necessary
 bool restoration::VoltageCheck(void)
 {
+	OBJECT *TempObj;			//Variables for nominal voltage example.  May be changed/removed
+	node *TempNode;
+	double ex_nom_volts;
 	/* ------------ Array access testing ------------- */
 		//Voltages would be checked here
+
+		//This is an example of pulling the nominal voltage from the first item in NR_busdata (this is the swing bus, but the principle holds)
+			//Get the object information
+			TempObj = gl_get_object(NR_busdata[0].name);
+
+			//Associate this with a node object
+			TempNode = OBJECTDATA(TempObj,node);
+
+			//Extract the nominal voltage value
+			ex_nom_volts = TempNode->nominal_voltage;
 
 		//print first voltage for now - this is just an example of obtaining the voltages (for check)
 		printf("Volt Check Post - %f %f\n",NR_busdata[0].V[1].Re(),NR_busdata[0].V[1].Im());
