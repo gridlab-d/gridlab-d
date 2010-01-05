@@ -14,6 +14,7 @@ libpowerflow_la_SOURCES =                                      \
 	main.cpp                                                    \
 	meter.cpp                      meter.h                      \
 	meter_test.h                                                \
+	motor.cpp                      motor.h                      \
 	node.cpp                       node.h                       \
 	overhead_line_conductor.cpp    overhead_line_conductor.h    \
 	overhead_line.cpp              overhead_line.h              \
