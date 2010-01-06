@@ -58,7 +58,7 @@ int plugload::create()
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	load.heatgain_fraction = 0.90;
 	load.power_factor = 0.90;
-	load.power_fraction = 1.0;
+	//load.power_fraction = 1.0;
 	load.voltage_factor = 1.0; // assume 'even' voltage, initially
 	shape.load = gl_random_uniform(0, 0.1);
 	return res;
@@ -68,6 +68,8 @@ int plugload::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
+
+	load.breaker_amps = 40;
 
 	return residential_enduse::init(parent);
 }

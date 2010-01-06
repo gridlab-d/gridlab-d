@@ -601,6 +601,10 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"fan_low_power_fraction[pu]",PADDR(fan_low_power_fraction),PT_DESCRIPTION,"fraction of ventilation fan power draw during low-power mode (two-speed only)",
 			PT_double,"fan_power[kW]",PADDR(fan_power),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"current ventilation fan power draw",
 			PT_double,"fan_design_airflow[cfm]",PADDR(fan_design_airflow),PT_DESCRIPTION,"designed airflow for the ventilation system",
+			PT_double,"fan_impedance_fraction[pu]",PADDR(fan_impedance_fraction),PT_DESCRIPTION,"Impedance component of fan ZIP load",
+			PT_double,"fan_power_fraction[pu]",PADDR(fan_power_fraction),PT_DESCRIPTION,"Power component of fan ZIP load",
+			PT_double,"fan_current_fraction[pu]",PADDR(fan_current_fraction),PT_DESCRIPTION,"Current component of fan ZIP load",
+			PT_double,"fan_power_factor[pu]",PADDR(fan_power_factor),PT_DESCRIPTION,"Power factor of the fan load",
 
 			PT_double,"heating_demand",PADDR(heating_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the heating system",
 			PT_double,"cooling_demand",PADDR(cooling_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the cooling system",
@@ -792,6 +796,10 @@ int house_e::create()
 	cooling_system_type = CT_UNKNOWN;
 	auxiliary_system_type = AT_UNKNOWN;
 	fan_type = FT_UNKNOWN;
+	fan_power_factor = 0.96;
+	fan_current_fraction = 0.26;
+	fan_impedance_fraction = 0.73;
+	fan_power_fraction = 0.01;
 
 	glazing_layers = GL_TWO;
 	glass_type = GM_LOW_E_GLASS;
@@ -1450,7 +1458,7 @@ int house_e::init(OBJECT *parent)
 	if (floor_area==0)			floor_area = 2500.0;
 	if (ceiling_height==0)		ceiling_height = 8.0;
 	if (gross_wall_area==0)		gross_wall_area = 2.0 * number_of_stories * (aspect_ratio + 1.0) * ceiling_height * sqrt(floor_area/aspect_ratio/number_of_stories);
-	if (window_wall_ratio==0)	window_wall_ratio = 0.07;
+	if (window_wall_ratio==0)	window_wall_ratio = 0.15;
 	if (window_roof_ratio==0)	window_roof_ratio = 0.0; // explicitly zero'ed
 	if (number_of_doors==0)		number_of_doors = 4.0;
 	else						number_of_doors = floor(number_of_doors); /* integer-based */
@@ -1971,9 +1979,9 @@ void house_e::update_system(double dt)
 	} else {
 		//	gas heat & resistive heat -> fan power P and heating power Z
 		//	else just fan & system_rated_power = 0
-			load.power.SetRect(fan_power, 0.0);
-			load.admittance.SetRect(system_rated_power, 0.0);
-			load.current.SetRect(0.0, 0.0);
+			load.power.SetRect(fan_power * fan_power_fraction, fan_power * fan_power_fraction * sqrt( 1 / (fan_power_factor * fan_power_factor) - 1));
+			load.admittance.SetRect(system_rated_power + fan_power * fan_impedance_fraction, fan_power * fan_impedance_fraction * sqrt( 1 / (fan_power_factor * fan_power_factor) - 1));
+			load.current.SetRect(fan_power * fan_current_fraction, fan_power * fan_current_fraction * sqrt( 1 / (fan_power_factor * fan_power_factor) - 1));
 	}
 
 	/*
@@ -2036,7 +2044,7 @@ void house_e::update_system(double dt)
 		load.admittance = complex(0,0);
 		load.current = complex(0,0);
 	}*/
-	hvac_load = load.total.Re();
+	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor * (load.impedance_fraction + load.current_fraction * load.voltage_factor));
 }
 
 /**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time

@@ -125,6 +125,13 @@ public:
 	double fan_low_power_fraction;	///< fraction of ventilation fan power draw during low-power mode (two-speed only)
 	double fan_power;				///< current power being fed to the ventilation fan
 	double fan_design_airflow;		///< designed airflow for the ventilation system (cf/min)
+
+	///These are only used when fan is alone (resistive or gas heating)
+	double fan_impedance_fraction;  ///< ZIP fraction for fan - impedance
+	double fan_current_fraction;    ///< ZIP fraction for fan - current
+	double fan_power_fraction;      ///< ZIP fraction for fan - power
+	double fan_power_factor;		///< power factor of fan
+	///
 	double duct_pressure_drop;		///< pressure drop across the ventilation ducting, in inches of water pressure
 	double cooling_supply_air_temp;
 	double heating_supply_air_temp;

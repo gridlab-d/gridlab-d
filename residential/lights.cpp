@@ -88,8 +88,6 @@ int lights::create(void)
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	load.voltage_factor = 1.0;
 	load.power_factor = 0.95;
-	load.power_fraction = 0.5;
-	load.impedance_fraction = 0.5;
 
 	return res;
 }
@@ -110,7 +108,7 @@ int lights::init(OBJECT *parent)
 		gl_warning("lights load %f is negative", shape.load);
 		/* TROUBLESHOOT
 			The lighting load cannot be negative.
-			Use a positive lighting lighting and try again.
+			Use a positive lighting load and try again.
 		 */
 
 	if (load.power_factor==0) load.power_factor = power_factor[type];
@@ -157,12 +155,11 @@ int lights::init(OBJECT *parent)
 			power_density = shape.params.analog.power / 2500;
 	}
 
-	// power factor
-	load.power_factor = power_factor[type];
+	//load.power_factor = power_factor[type];
 	load.breaker_amps = 40;
 
 	if(placement == INDOOR){
-		load.heatgain_fraction = 1.0;
+		load.heatgain_fraction = 0.90;
 	} else if (placement == OUTDOOR){
 		load.heatgain_fraction = 0.0;
 	}
