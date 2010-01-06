@@ -6,6 +6,7 @@ libmarket_la_SOURCES =              \
 	main.cpp                         \
 	market.h                         \
 	stubauction.cpp stubauction.h    \
+	controller2.cpp controller2.h	 \
 	# DO NOT EDIT THE FOLLOWING LINE \
 	# NEWCLASS
 libmarket_la_LDFLAGS = -no-undefined -version-info 0:0:0

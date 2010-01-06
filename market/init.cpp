@@ -11,7 +11,7 @@
 #include "auction.h"
 #include "controller.h"
 #include "stubauction.h"
-
+#include "controller2.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -24,6 +24,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new auction(module);
 	new controller(module);
 	new stubauction(module);
+	new controller2(module);
 
 	/*** DO NOT EDIT NEXT LINE ***/
 	//NEWCLASS
