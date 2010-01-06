@@ -114,6 +114,7 @@ controller2::controller2(MODULE *mod){
 			// specific outputs
 			PT_double,"prob_off",PADDR(prob_off),
 			PT_int32,"output_state",PADDR(output_state),
+			PT_double,"output_setpoint",PADDR(output_setpoint),
 			// enums
 			PT_enumeration,"control_mode",PADDR(control_mode),PT_DESCRIPTION,"the control mode to use for determining controller action",
 				PT_KEYWORD,"NONE",CM_NONE,
@@ -283,9 +284,11 @@ int controller2::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 	double T_set;
 	double min;
 	double max;
+	double set_change;
 
 	if(!orig_setpoint){
 		first_setpoint = *(double *)output_setpoint_addr;
+		orig_setpoint = 1;
 	}
 
 	// "olypen style" ramp with k_high, k_low, rng_high, rng_low
@@ -293,18 +296,29 @@ int controller2::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 		gl_error("insufficient input for ramp control mode");
 		return -1;
 	}
-	if(ramp_high * ramp_low > 0 || range_high * range_low > 0){ // zero is legit
+	if(ramp_high * ramp_low < 0 || range_high * range_low > 0){ // zero is legit
 		gl_warning("invalid ramp parameters");
 	}
 	
-	min = expectation - range_low;
-	max = expectation + range_high;
+	min = first_setpoint - range_low;
+	max = first_setpoint + range_high;
 
 	T_limit = (observation > expectation ? max : min);
 	T_set = first_setpoint;
 
 	// is legit to set expectation to the mean
-	output_setpoint = first_setpoint + (observation - expectation) * fabs(T_limit - first_setpoint) / (sensitivity * obs_stdev);
+	if(sensitivity == 0.0 || obs_stdev == 0.0){
+		set_change = 0.0;
+	} else {
+		set_change = (observation - expectation) * fabs(T_limit - first_setpoint) / (sensitivity * obs_stdev);
+	}
+	if(set_change > range_high){
+		set_change = range_high;
+	}
+	if(set_change < range_low){
+		set_change = range_low;
+	}
+	output_setpoint = first_setpoint + set_change;
 	output_state = 0;
 	return 0;
 }
