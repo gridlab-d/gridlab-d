@@ -18,12 +18,12 @@ public:
 	controller2(MODULE *);
 	int create();
 	int init(OBJECT *parent);
-	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
+	//TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
+	//TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
+	//TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 public:
 	static CLASS *oclass;
-public:
+/*public:
 	// control mode
 	typedef enum {
 		CM_NONE=0,
@@ -73,7 +73,7 @@ public:
 	int32 cycle_length;					///< operation cycle time delays
 	/* setpoint calculations */
 	/* actuator calculations */
-	double ramp_high, ramp_low;
+/*	double ramp_high, ramp_low;
 	double range_high, range_low;
 	double prob_off;
 private:
@@ -81,7 +81,7 @@ private:
 	int calc_cnd(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_proboff(TIMESTAMP t0, TIMESTAMP t1);
-
+*/
 };
 
 #endif // _controller2_H
