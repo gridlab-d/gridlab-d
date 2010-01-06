@@ -35,6 +35,7 @@ public:
 	double hourly_acc;
 	double previous_monthly_bill;	//Total monthly bill for the previous month
 	double monthly_bill;			//Accumulator for the current month's bill
+	double monthly_fee;				//Once a month flat fee for customer hook-up
 	double monthly_energy;			//Accumulator for the current month's energy
 	double last_energy;				//Meter reading at end of previous month
 	typedef enum {

@@ -88,6 +88,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 
 			PT_double, "monthly_bill[$]", PADDR(monthly_bill),
 			PT_double, "previous_monthly_bill[$]", PADDR(previous_monthly_bill),
+			PT_double, "monthly_fee[$]", PADDR(monthly_fee),
 			PT_double, "monthly_energy[kWh]", PADDR(monthly_energy),
 			PT_double, "last_energy[kWh]", PADDR(last_energy),
 			PT_enumeration, "bill_mode", PADDR(bill_mode),
@@ -255,6 +256,9 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			DATETIME t_next;
 			gl_localtime(t1,&t_next);
+
+			t_next.day = bill_day;
+
 			if (t_next.month != 12)
 				t_next.month += 1;
 			else
@@ -289,25 +293,25 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 	gl_localtime(t1,&dtime);
 
 	monthly_energy = measured_real_energy/1000 - last_energy;
-	monthly_bill = 0;
+	monthly_bill = monthly_fee;
 	switch(bill_mode){
 		case BM_NONE:
 			break;
 		case BM_UNIFORM:
-			monthly_bill = monthly_energy * price;
+			monthly_bill += monthly_energy * price;
 			break;
 		case BM_TIERED:
 			if(monthly_energy < tier_energy[0])
-				monthly_bill = price * monthly_energy;
+				monthly_bill += price * monthly_energy;
 			else if(monthly_energy < tier_energy[1])
-				monthly_bill = price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]);
+				monthly_bill += price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]);
 			else if(monthly_energy < tier_energy[2])
-				monthly_bill = price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]);
+				monthly_bill += price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]);
 			else
-				monthly_bill = price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]) + tier_price[2]*(monthly_energy - tier_energy[2]);
+				monthly_bill += price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]) + tier_price[2]*(monthly_energy - tier_energy[2]);
 			break;
 		case BM_HOURLY:
-			monthly_bill = hourly_acc;
+			monthly_bill += hourly_acc;
 			break;
 	}
 	
