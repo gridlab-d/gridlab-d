@@ -1,35 +1,367 @@
-/** $Id: controller.cpp 1182 2009-09-09 22:08:36Z mhauer $
+/** $Id: controller2.h 1182 2009-09-09 22:08:36Z mhauer $
 	Copyright (C) 2009 Battelle Memorial Institute
-	@file auction.cpp
-	@defgroup controller Transactive controller, OlyPen experiment style
+	@file controller2.cpp
+	@addtogroup controller2
 	@ingroup market
 
  **/
 
 #include "controller2.h"
 
-CLASS* controller2::oclass = NULL;
+CLASS *controller2::oclass = NULL;
 
-controller2::controller2(MODULE *module){
-	if (oclass==NULL)
-	{
-		oclass = gl_register_class(module,"controller2",sizeof(controller2),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
-		if (oclass==NULL)
+// ref: http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=c++&artnum=3659
+/***************************
+*   erf.cpp
+*   author:  Steve Strand
+*   written: 29-Jan-04
+***************************/
+
+#include <math.h>
+
+
+static const double rel_error= 1E-14;        //calculate 12^N^N 14 significant figures
+//you can adjust rel_error to trade off between accuracy and speed
+//but don't ask for > 15 figures (assuming usual 52 bit mantissa in a double)
+
+static double tc_erfc(double x)
+//erfc(x) = 2/sqrt(pi)*integral(exp(-t^2),t,x,inf)
+//        = exp(-x^2)/sqrt(pi) * [1/x+ (1/2)/x+ (2/2)/x+ (3/2)/x+ (4/2)/x+ ...]
+//        = 1-erf(x)
+//expression inside [] is a continued fraction so '+' means add to denominator only
+{
+    static const double one_sqrtpi=  0.564189583547756287;        // 1/sqrt(pi)
+//    if (fabs(x) < 2.2) {
+//        return 1.0 - erf(x);        //use series when fabs(x) < 2.2
+//    }
+    if (x < 0.0) {               //continued fraction only valid for x>0
+        return 2.0 - tc_erfc(-x);
+    }
+    double a=1, b=x;                //last two convergent numerators
+    double c=x, d=x*x+0.5;          //last two convergent denominators
+    double q1, q2= b/d;             //last two convergents (a/c and b/d)
+    double n= 1.0, t;
+    do {
+        t= a*n+b*x;
+        a= b;
+        b= t;
+        t= c*n+d*x;
+        c= d;
+        d= t;
+        n+= 0.5;
+        q1= q2;
+        q2= b/d;
+      } while (fabs(q1-q2)/q2 > rel_error);
+    return one_sqrtpi*exp(-x*x)*q2;
+} 
+
+static double tc_erf(double x)
+//erf(x) = 2/sqrt(pi)*integral(exp(-t^2),t,0,x)
+//       = 2/sqrt(pi)*[x - x^3/3 + x^5/5*2! - x^7/7*3! + ...]
+//       = 1-erfc(x)
+{
+    static const double two_sqrtpi=  1.128379167095512574;        // 2/sqrt(pi)
+    if (fabs(x) > 2.2) {
+        return 1.0 - tc_erfc(x);        //use continued fraction when fabs(x) > 2.2
+    }
+    double sum= x, term= x, xsqr= x*x;
+    int j= 1;
+    do {
+        term*= xsqr/j;
+        sum-= term/(2*j+1);
+        ++j;
+        term*= xsqr/j;
+        sum+= term/(2*j+1);
+        ++j;
+    } while (fabs(term)/sum > rel_error);
+    return two_sqrtpi*sum;
+}
+
+controller2::controller2(MODULE *mod){
+	if(oclass == NULL){
+		oclass = gl_register_class(mod,"controller2",sizeof(controller2),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		if(oclass == NULL){
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
-
-		if (gl_publish_variable(oclass,
-		NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+		}
+		if(gl_publish_variable(oclass,
+			// series inputs
+			PT_int32,"input_state",PADDR(input_state),
+			PT_double,"input_setpoint",PADDR(input_setpoint),
+			PT_bool,"input_chained",PADDR(input_chained),
+			// outputs
+			PT_double,"observation",PADDR(observation),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the observed value",
+			PT_double,"mean_observation",PADDR(obs_mean),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the observed mean value",
+			PT_double,"stdev_observation",PADDR(obs_stdev),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the observed standard deviation value",
+			PT_double,"expectation",PADDR(expectation),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the observed expected value",
+			PT_double,"setpoint",PADDR(output_setpoint),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the target setpoint given the input observations",
+			// inputs
+			PT_double,"sensitivity",PADDR(sensitivity),PT_DESCRIPTION,"the sensitivity of the control actuator to observation deviations",
+			PT_char32,"expectation_prop",PADDR(expectation_propname),PT_DESCRIPTION,"the name of the property to observe for the expected value",
+			PT_object,"expectation_obj",PADDR(expectation_obj),PT_DESCRIPTION,"the object to watch for the expectation property",
+			PT_char32,"setpoint_prop",PADDR(output_setpoint_propname),PT_DESCRIPTION,"the name of the setpoint property in the parent object",
+			PT_char32,"state_prop",PADDR(output_state_propname),PT_DESCRIPTION,"the name of the actuator property in the parent object",
+			PT_object,"observation_obj",PADDR(observable),PT_DESCRIPTION,"the object to observe",
+			PT_char32,"observation_prop",PADDR(observation_propname),PT_DESCRIPTION,"the name of the observation property",
+			PT_char32,"mean_observation_prop",PADDR(observation_mean_propname),PT_DESCRIPTION,"the name of the mean observation property",
+			PT_char32,"stdev_observation_prop",PADDR(observation_stdev_propname),PT_DESCRIPTION,"the name of the standard deviation observation property",
+			PT_int32,"cycle_length",PADDR(cycle_length),PT_DESCRIPTION,"length of time between processing cycles",
+			PT_double,"base_setpoint",PADDR(first_setpoint),PT_DESCRIPTION,"the base setpoint to base control off of",
+			// specific inputs
+			PT_double,"ramp_high",PADDR(ramp_high),
+			PT_double,"ramp_low",PADDR(ramp_low),
+			PT_double,"range_high",PADDR(range_high),
+			PT_double,"range_low",PADDR(range_low),
+			// specific outputs
+			PT_double,"prob_off",PADDR(prob_off),
+			PT_int32,"output_state",PADDR(output_state),
+			// enums
+			PT_enumeration,"control_mode",PADDR(control_mode),PT_DESCRIPTION,"the control mode to use for determining controller action",
+				PT_KEYWORD,"NONE",CM_NONE,
+				PT_KEYWORD,"RAMP",CM_RAMP,
+				PT_KEYWORD,"CND",CM_CND,
+				PT_KEYWORD,"DUTYCYCLE",CM_DUTYCYCLE,
+				PT_KEYWORD,"THIRD",CM_THIRD,
+				PT_KEYWORD,"PROBOFF",CM_PROBOFF,
+			NULL) < 1)
+		{
+				GL_THROW("unable to publish properties in %s",__FILE__);
+		}
 		memset(this,0,sizeof(controller2));
 	}
 }
 
 int controller2::create(){
 	memset(this, 0, sizeof(controller2));
+	sensitivity = 1.0;
 	return 1;
 }
+
 int controller2::init(OBJECT *parent){
+	OBJECT *hdr = OBJECTHDR(this);
+	if(parent == NULL){
+		gl_error("controller2 has no parent and will be operating in 'dummy' mode");
+	} else {
+		if(output_state_propname[0] == 0 && output_setpoint_propname[0] == 0){
+			GL_THROW("controller2 has no output properties");
+		}
+		// expectation_addr
+		if(expectation_obj != 0){
+			expectation_prop = gl_get_property(expectation_obj, expectation_propname);
+			if(expectation_prop == 0){
+				GL_THROW("controller2 cannot find its expectation property");
+			}
+			expectation_addr = (void *)((unsigned int64)expectation_obj + sizeof(OBJECT) + (unsigned int64)expectation_prop->addr);
+		}
+
+		if(observable != 0){
+			// observation_addr
+			observation_prop = gl_get_property(observable, observation_propname);
+			if(observation_prop != 0){
+				observation_addr = (void *)((unsigned int64)observable + sizeof(OBJECT) + (unsigned int64)observation_prop->addr);
+			}
+			// observation_mean_addr
+			observation_mean_prop = gl_get_property(observable, observation_mean_propname);
+			if(observation_mean_prop != 0){
+				observation_mean_addr = (void *)((unsigned int64)observable + sizeof(OBJECT) + (unsigned int64)observation_mean_prop->addr);
+			}
+			// observation_stdev_addr
+			observation_stdev_prop = gl_get_property(observable, observation_stdev_propname);
+			if(observation_stdev_prop != 0){
+				observation_stdev_addr = (void *)((unsigned int64)observable + sizeof(OBJECT) + (unsigned int64)observation_stdev_prop->addr);
+			}
+
+		}
+		// output_state
+		if(output_state_propname[0] != 0){
+			output_state_prop = gl_get_property(parent, output_state_propname);
+			if(output_state_prop == NULL){
+				GL_THROW("controller2 parent \"%s\" does not contain property \"%s\"", 
+					(parent->name ? parent->name : "anon"), output_state_propname);
+			}
+			output_setpoint_addr = (void *)((unsigned int64)parent + sizeof(OBJECT) + (unsigned int64)output_state_prop->addr);
+		}
+		
+		// output_setpoint
+		if(output_setpoint_propname[0] == 0 && output_setpoint_propname[0] == 0){
+			GL_THROW("controller2 has no output properties");
+		}
+		if(output_setpoint_propname[0] != 0){
+			output_setpoint_prop = gl_get_property(parent, output_setpoint_propname);
+			if(output_setpoint_prop == NULL){
+				GL_THROW("controller2 parent \"%s\" does not contain property \"%s\"", 
+					(parent->name ? parent->name : "anon"), output_setpoint_propname);
+			}
+			output_setpoint_addr = (void *)((unsigned int64)parent + sizeof(OBJECT) + (unsigned int64)output_setpoint_prop->addr);
+		}
+
+	}
+
+	if(observable == NULL){
+		GL_THROW("controller2 observable object is undefined, and can not function");
+	}
+	
+	//
+	// make sure that the observable and expectable are ranked above the controller
+	//
+
+	if(first_setpoint != 0.0){
+		orig_setpoint = 1;
+	}
+
 	return 1;
 }
+
+TIMESTAMP controller2::presync(TIMESTAMP t0, TIMESTAMP t1){
+	// get observations
+	if(observation_addr != 0){
+		observation = *(double *)observation_addr;
+	} else {
+		observation = 0;
+	}
+	if(observation_mean_addr != 0){
+		obs_mean = *(double *)observation_mean_addr;
+	} else {
+		obs_mean = 0;
+	}
+	if(observation_stdev_addr != 0){
+		obs_stdev = *(double *)observation_stdev_addr;
+	} else {
+		obs_stdev = 0;
+	}
+
+	// get expectation
+	if(expectation_addr != 0){
+		expectation = *(double *)expectation_addr;
+	} else {
+		expectation = 0;
+	}
+	return TS_NEVER;
+}
+
+TIMESTAMP controller2::sync(TIMESTAMP t0, TIMESTAMP t1){
+	// determine output based on control mode
+	switch(control_mode){
+		case CM_NONE:
+			// no control ~ let it slide
+			break;
+		case CM_RAMP:
+			if(calc_ramp(t0, t1) != 0){
+				GL_THROW("error occured when handling the ramp control mode");
+			}
+			break;
+		case CM_CND:
+			break;
+		case CM_THIRD:
+			break;
+		case CM_PROBOFF:
+			if(calc_proboff(t0, t1) != 0){
+				GL_THROW("error occured when handling the probabilistic cutoff control mode");
+			}
+			break;
+		default:
+			GL_THROW("controller2 has entered an invalid control mode");
+			break;
+	}
+
+	// determine if input is chained first
+	if(output_setpoint_addr != 0){
+		*(double *)output_setpoint_addr = output_setpoint;
+	}
+	if(output_state_addr != 0){
+		*(int *)output_state_addr = output_state;
+	}
+	
+	return TS_NEVER;
+}
+
+TIMESTAMP controller2::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	return TS_NEVER;
+}
+
+int controller2::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
+	double T_limit;
+	double T_set;
+	double min;
+	double max;
+
+	if(!orig_setpoint){
+		first_setpoint = *(double *)output_setpoint_addr;
+	}
+
+	// "olypen style" ramp with k_high, k_low, rng_high, rng_low
+	if(expectation_addr == 0 || observation_addr == 0 || observation_stdev_addr == 0){
+		gl_error("insufficient input for ramp control mode");
+		return -1;
+	}
+	if(ramp_high * ramp_low > 0 || range_high * range_low > 0){ // zero is legit
+		gl_warning("invalid ramp parameters");
+	}
+	
+	min = expectation - range_low;
+	max = expectation + range_high;
+
+	T_limit = (observation > expectation ? max : min);
+	T_set = first_setpoint;
+
+	// is legit to set expectation to the mean
+	output_setpoint = first_setpoint + (observation - expectation) * fabs(T_limit - first_setpoint) / (sensitivity * obs_stdev);
+	output_state = 0;
+	return 0;
+}
+
+int controller2::calc_cnd(TIMESTAMP t0, TIMESTAMP t1){
+	// technically the probabilistic turnoff, but who's counting.
+	return 0;
+}
+
+int controller2::calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1){
+	// not sure.
+	return 0;
+}
+
+
+int controller2::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
+	if(observation_addr == 0 || observation_mean_addr == 0 || observation_stdev_addr == 0){
+		gl_error("insufficient input for probabilistic shutoff control mode");
+		return -1;
+	}
+	double erf_in, erf_out;
+	double cdf_out;
+	double r;
+	// N is the cumulative normal distribution
+	// k_w is a comfort setting
+	// r is compared to a uniformly random number on [0,1.0)
+	// erf_in = (x-mean) / (var^2 * sqrt(2))
+	if(obs_stdev == 0){ // short circuit
+		if(observation > obs_mean){
+			output_state = -1;
+			prob_off = 1.0;
+		} else {
+			output_state = 0;
+			prob_off = 0.0;
+		}
+		return 0;
+	}
+	erf_in = (observation - obs_mean) / (obs_stdev*obs_stdev * sqrt(2.0));
+	erf_out = tc_erf(erf_in);
+	cdf_out = 0.5 * (1 + erf_out);
+	prob_off = sensitivity * (cdf_out-0.5);
+	r = gl_random_uniform(0.0,1.0);
+	if(r < prob_off){
+		output_state = -1; // off?
+	} else {
+		output_state = 0;
+	}
+	if(prob_off < 0 || !isfinite(prob_off)){
+		prob_off = 0.0;
+	}
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF CORE LINKAGE
+//////////////////////////////////////////////////////////////////////////
+
 EXPORT int create_controller2(OBJECT **obj, OBJECT *parent)
 {
 	try
@@ -44,7 +376,7 @@ EXPORT int create_controller2(OBJECT **obj, OBJECT *parent)
 	}
 	catch (char *msg)
 	{
-		gl_error("create_controller: %s", msg);
+		gl_error("create_controller2: %s", msg);
 	}
 	return 1;
 }
@@ -60,7 +392,7 @@ EXPORT int init_controller2(OBJECT *obj, OBJECT *parent)
 	catch (char *msg)
 	{
 		char name[64];
-		gl_error("init_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		gl_error("init_controller2(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
 	}
 	return 1;
 }
@@ -73,13 +405,13 @@ EXPORT TIMESTAMP sync_controller2(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	{
 		switch (pass) {
 		case PC_PRETOPDOWN:
-			t2 = TS_NEVER;
+			t2 = my->presync(obj->clock,t1);
 			break;
 		case PC_BOTTOMUP:
-			t2 = TS_NEVER;
+			t2 = my->sync(obj->clock, t1);
 			break;
 		case PC_POSTTOPDOWN:
-			t2 = TS_NEVER;
+			t2 = my->postsync(obj->clock,t1);
 			obj->clock = t1;
 			break;
 		default:
@@ -90,9 +422,10 @@ EXPORT TIMESTAMP sync_controller2(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	catch (char *msg)
 	{
 		char name[64];
-		gl_error("sync_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		gl_error("sync_controller2(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
 	}
 	return t2;
 }
 
 // EOF
+
