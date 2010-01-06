@@ -76,12 +76,14 @@ public:
 /*	double ramp_high, ramp_low;
 	double range_high, range_low;
 	double prob_off;
+	double first_setpoint;
 private:
 	int calc_ramp(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_cnd(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_proboff(TIMESTAMP t0, TIMESTAMP t1);
 */
+	int orig_setpoint;
 };
 
 #endif // _controller2_H
