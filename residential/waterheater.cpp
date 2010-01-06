@@ -68,6 +68,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"temperature[degF]",PADDR(Tw), PT_DESCRIPTION, "the outlet temperature of the water tank",
 			PT_double,"height[ft]",PADDR(h), PT_DESCRIPTION, "the height of the hot water column within the water tank",
 			PT_double,"demand[gpm]",PADDR(water_demand), PT_DESCRIPTION, "the water consumption",
+			PT_double,"acutal_load[kW]",PADDR(actual_load),PT_DESCRIPTION, "the actual load based on the current voltage across the coils",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -417,8 +418,11 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// determine the power used
 	if (heat_needed == TRUE){
 		/* power_kw */ load.total = heating_element_capacity/1000 * (heat_mode == GASHEAT ? 0.01 : 1.0);
-	} else
+		actual_load = load.total.Re() * load.voltage_factor;
+	} else {
 		/* power_kw */ load.total = 0.0;
+		actual_load = 0.0;
+	}
 
 	TIMESTAMP t2 = residential_enduse::sync(t0,t1);
 	

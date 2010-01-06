@@ -81,6 +81,8 @@ public:
 	double thermostat_deadband;			///< deadband around Tset (half above, half below) [F]
 	double *pTair;
 	double *pTout;
+
+	double actual_load;
 	
 
 public:
