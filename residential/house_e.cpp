@@ -797,9 +797,9 @@ int house_e::create()
 	auxiliary_system_type = AT_UNKNOWN;
 	fan_type = FT_UNKNOWN;
 	fan_power_factor = 0.96;
-	fan_current_fraction = 0.26;
-	fan_impedance_fraction = 0.73;
-	fan_power_fraction = 0.01;
+	fan_current_fraction = 0.7332;
+	fan_impedance_fraction = 0.2534;
+	fan_power_fraction = 0.0135;
 
 	glazing_layers = GL_TWO;
 	glass_type = GM_LOW_E_GLASS;
