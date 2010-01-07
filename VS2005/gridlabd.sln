@@ -94,6 +94,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "superLU", "superLU.vcproj",
 		{8BFAB682-B7FD-4422-AB71-3154DF337AA2} = {8BFAB682-B7FD-4422-AB71-3154DF337AA2}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "superLU_MT", "..\superLU_MT\superLU_MT.vcproj", "{DF17498A-83B3-46CE-95EA-C7515C0310A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -440,6 +442,18 @@ Global
 		{1B9253F8-97BC-415C-982C-2E907CC22906}.Release|Win32.Build.0 = Release|Win32
 		{1B9253F8-97BC-415C-982C-2E907CC22906}.Release|x64.ActiveCfg = Release|x64
 		{1B9253F8-97BC-415C-982C-2E907CC22906}.Release|x64.Build.0 = Release|x64
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.Debug|Win32.Build.0 = Debug|Win32
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.Debug|x64.ActiveCfg = Debug|Win32
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.MatlabDebug|x64.ActiveCfg = Debug|Win32
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.QuickDebug|Win32.ActiveCfg = Debug|Win32
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.QuickDebug|Win32.Build.0 = Debug|Win32
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.QuickDebug|x64.ActiveCfg = Debug|Win32
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.Release|Win32.ActiveCfg = Release|Win32
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.Release|Win32.Build.0 = Release|Win32
+		{DF17498A-83B3-46CE-95EA-C7515C0310A0}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
