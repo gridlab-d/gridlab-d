@@ -27,7 +27,7 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;"
 				Outputs="$(OutDir)\pthreadVC2.dll"
 			/>
 			<Tool
@@ -93,7 +93,7 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;"
 				Outputs="$(OutDir)\pthreadVC2.dll"
 			/>
 			<Tool
