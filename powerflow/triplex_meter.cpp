@@ -88,9 +88,9 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 
 			PT_double, "monthly_bill[$]", PADDR(monthly_bill),
 			PT_double, "previous_monthly_bill[$]", PADDR(previous_monthly_bill),
+			PT_double, "previous_monthly_energy[kWh]", PADDR(previous_monthly_bill),
 			PT_double, "monthly_fee[$]", PADDR(monthly_fee),
 			PT_double, "monthly_energy[kWh]", PADDR(monthly_energy),
-			PT_double, "last_energy[kWh]", PADDR(last_energy),
 			PT_enumeration, "bill_mode", PADDR(bill_mode),
 				PT_KEYWORD,"NONE",BM_NONE,
 				PT_KEYWORD,"UNIFORM",BM_UNIFORM,
@@ -128,7 +128,7 @@ int triplex_meter::create()
 	hourly_acc = 0.0;
 	monthly_bill = 0.0;
 	monthly_energy = 0.0;
-	last_energy = 0.0;
+	previous_monthly_energy = 0.0;
 	bill_mode = BM_NONE;
 	power_market = 0;
 	price_prop = 0;
@@ -188,10 +188,10 @@ int triplex_meter::check_prices(){
 				GL_THROW("triplex_meter tiers cannot have negative values");
 		}
 	} if(bill_mode == BM_HOURLY){
-		GL_THROW("bill_mode HOURLY has in no way been tested at this point. Please select a different mode at this time.");
 		if(power_market == 0 || price_prop == 0){
 			GL_THROW("triplex_meter cannot use hourly energy prices without a power market that publishes the next price");
 		}
+		//price = *gl_get_double(power_market,price_prop);
 	}
 	return 0;
 }
@@ -275,7 +275,9 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		double *pprice = (gl_get_double(power_market, price_prop));
 		price = *pprice;
 		double hrs = (double)(t1-t0);
-		hourly_acc += hrs/3600.0 * price;
+		hourly_acc += hrs/3600.0 * price * measured_real_power;
+
+		process_bill(t1);
 	}
 
 	rv = triplex_node::postsync(t1);
@@ -292,7 +294,7 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 	DATETIME dtime;
 	gl_localtime(t1,&dtime);
 
-	monthly_energy = measured_real_energy/1000 - last_energy;
+	monthly_energy = measured_real_energy/1000 - previous_monthly_energy;
 	monthly_bill = monthly_fee;
 	switch(bill_mode){
 		case BM_NONE:
@@ -318,7 +320,7 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 	if (dtime.day == bill_day && dtime.hour == 0 && dtime.month != last_bill_month)
 	{
 		previous_monthly_bill = monthly_bill;
-		last_energy = measured_real_energy/1000;
+		previous_monthly_energy = measured_real_energy/1000;
 		last_bill_month = dtime.month;
 	}
 	

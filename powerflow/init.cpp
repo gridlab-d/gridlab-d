@@ -33,6 +33,7 @@
 #include "volt_var_control.h"
 #include "fault_check.h"
 #include "motor.h"
+#include "billdump.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -100,6 +101,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new volt_var_control(module);
 	new fault_check(module);
 	new motor(module);
+	new billdump(module);
 
 	/* always return the first class registered */
 	return node::oclass;

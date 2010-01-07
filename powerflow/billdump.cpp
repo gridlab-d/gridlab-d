@@ -95,14 +95,14 @@ void billdump::dump(TIMESTAMP t){
 	gl_printtime(t, timestr, 64);
 	fprintf(outfile,"# %s run at %s on %i triplex meters\n", filename, timestr, nodes->hit_count);
 	//fprintf(outfile,"node_name,voltA_real,voltA_imag,voltB_real,voltB_imag,voltC_real,voltC_imag\n");
-	fprintf(outfile,"meter_name,monthly_bill,monthly_energy\n");
+	fprintf(outfile,"meter_name,previous_monthly_bill,previous_monthly_energy\n");
 	while (obj=gl_find_next(nodes,obj)){
 		if(gl_object_isa(obj, "triplex_meter", "powerflow")){
 			pnode = OBJECTDATA(obj,triplex_meter);
 			if(obj->name == NULL){
 				sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
 			}
-			fprintf(outfile,"%s,%f,%f\n",(obj->name ? obj->name : namestr),pnode->previous_monthly_bill,pnode->last_energy);
+			fprintf(outfile,"%s,%f,%f\n",(obj->name ? obj->name : namestr),pnode->previous_monthly_bill,pnode->previous_monthly_energy);
 		}
 	}
 	fclose(outfile);
