@@ -1583,7 +1583,7 @@ int house_e::init(OBJECT *parent)
 	if (fan_design_power<=0.0){
 		double roundval;
 		//	
-		roundval = ceil(0.117 * duct_pressure_drop * fan_design_airflow / 0.42 / 745.7 + 1.0/16.0);
+		roundval = ceil((0.117 * duct_pressure_drop * fan_design_airflow / 0.42 / 745.7 + 1.0/16.0)*8);
 		fan_design_power = roundval / 8.0 * 745.7 / 0.88; // fan rounds to the nearest 1/8 HP
 	}
 
