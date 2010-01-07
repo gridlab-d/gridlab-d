@@ -3,8 +3,7 @@
  */
 
 #include "solver_nr.h"
-//#include <slu_ddefs.h>
-#include <pdsp_defs.h> //sj
+#include <pdsp_defs.h>
 
 /* access to module global variables */
 #include "powerflow.h"
@@ -28,20 +27,6 @@ Y_NR *Y_Work_Amatrix;
 double *a_LU,*rhs_LU;
 int *perm_c, *perm_r, *cols_LU, *rows_LU;
 SuperMatrix A_LU,B_LU;
-
-int64 start_time;
-int64 end_time;
-
-int64 GetMachineCycleCount(void)
-{      
-   __int64 cycles;
-   _asm rdtsc; // won't work on 486 or below - only pentium or above
-
-   _asm lea ebx,cycles;
-   _asm mov [ebx],eax;
-   _asm mov [ebx+4],edx;
-   return cycles;
-}
 
 void merge_sort(Y_NR *Input_Array, unsigned int Alen, Y_NR *Work_Array){	//Merge sorting algorithm - basis stolen from auction.cpp in market module
 	unsigned int split_point;
@@ -105,8 +90,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Internal iteration counter - just NR limits
 	int64 Iteration;
 
-	start_time = GetMachineCycleCount();
-
 	//A matrix size variable
 	unsigned int size_Amatrix;
 
@@ -164,11 +147,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	unsigned int m,n;
 	double *sol_LU;
 
-	//SuperLU MT additions
-    int      nprocs; /* maximum number of processors to use. */
-    nprocs             = 2;
-   
-	printf("nprocs=%d\n",nprocs);
 	//Ensure bad computations flag is set first
 	*bad_computations = false;
 
@@ -2815,9 +2793,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			B_LU.Mtype = SLU_GE;
 			B_LU.nrow = m;
 			B_LU.ncol = 1;
-
-			L_LU.Store = (void *) SUPERLU_MALLOC( sizeof(NCformat) );
-			//U_LU.Store = (void *) SUPERLU_MALLOC( sizeof(NCPformat) );
 		}
 		else if (NR_realloc_needed)	//Something changed, we'll just destroy everything and start over
 		{
@@ -2915,7 +2890,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		get_perm_c(1, &A_LU, perm_c);
 
 		//Solve the system
-		pdgssv(nprocs, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &info);
+		pdgssv(NR_superLU_procs, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &info);
 		sol_LU = (double*) ((DNformat*) B_LU.Store)->nzval;
 
 		//Update bus voltages - check convergence while we're here
@@ -3048,9 +3023,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		else if ( Maxmismatch > max_voltage_error)
 			newiter = true;
 
-		/////* De-allocate storage - superLU matrix types must be destroyed at every iteration, otherwise they balloon fast (65 MB norma becomes 1.5 GB) */
-		//Destroy_SuperNode_SCP(&L_LU);
-		//Destroy_CompCol_NCP(&U_LU);
+		/* De-allocate storage - superLU matrix types must be destroyed at every iteration, otherwise they balloon fast (65 MB norma becomes 1.5 GB) */
+		Destroy_SuperNode_SCP(&L_LU);
+		Destroy_CompCol_NCP(&U_LU);
 
 		//Break us out if we are done or are singular		
 		if (( newiter == false ) || (info!=0))
@@ -3058,18 +3033,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 	}	//End iteration loop
 
-	///* De-allocate storage - superLU matrix types must be destroyed at every iteration, otherwise they balloon fast (65 MB norma becomes 1.5 GB) */
-	Destroy_SuperNode_SCP(&L_LU);
-	Destroy_CompCol_NCP(&U_LU);
-	
-	end_time = GetMachineCycleCount();
-
-	printf("\n\n%lld\n",(end_time-start_time));
-
 	//Check to see how we are ending
 	if ((Iteration==NR_iteration_limit) && (newiter==true)) //Reached the limit
 	{
-		printf("Max mismatch %f\n",Maxmismatch);
+		gl_verbose("Max solver mismatch of failed solution %f\n",Maxmismatch);
 		return -Iteration;
 	}
 	else if (info!=0)	//failure of computations (singular matrix, etc.) - 2 = singular matrix it appears - positive values = process errors (singular, etc), negative values = input argument/syntax error

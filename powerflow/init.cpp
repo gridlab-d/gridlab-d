@@ -61,6 +61,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		NULL);
 	gl_global_create("powerflow::acceleration_factor",PT_double,&acceleration_factor,NULL);
 	gl_global_create("powerflow::NR_iteration_limit",PT_int32,&NR_iteration_limit,NULL);
+	gl_global_create("powerflow::NR_superLU_procs",PT_int32,&NR_superLU_procs,NULL);
 	gl_global_create("powerflow::default_maximum_voltage_error",PT_double,&default_maximum_voltage_error,NULL);
 
 	// register each object class by creating the default instance
