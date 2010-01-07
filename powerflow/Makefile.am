@@ -1,6 +1,7 @@
 AM_CPPFLAGS = $(SUPERLU_CPPFLAGS)
 pkglib_LTLIBRARIES = libpowerflow.la 
 libpowerflow_la_SOURCES =                                      \
+	billdump.cpp                   billdump.h                   \
 	capacitor.cpp                  capacitor.h                  \
 	fault_check.cpp                fault_check.h                \
 	frequency_gen.cpp              frequency_gen.h              \
