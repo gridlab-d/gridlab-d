@@ -591,7 +591,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 
 			PT_double,"auxiliary_heat_capacity[Btu/h]",PADDR(aux_heat_capacity),PT_DESCRIPTION,"installed auxiliary heating capacity",
 			PT_double,"aux_heat_deadband[degF]",PADDR(aux_heat_deadband),PT_DESCRIPTION,"temperature offset from standard heat activation to auxiliary heat activation",
-			PT_double,"aux_heat_temperature_lockout[s]",PADDR(aux_heat_temp_lockout),PT_DESCRIPTION,"temperature at which auxiliary heat will not engage above",
+			PT_double,"aux_heat_temperature_lockout[degF]",PADDR(aux_heat_temp_lockout),PT_DESCRIPTION,"temperature at which auxiliary heat will not engage above",
 			PT_double,"aux_heat_time_delay[s]",PADDR(aux_heat_time_delay),PT_DESCRIPTION,"time required for heater to run until auxiliary heating engages",
 
 			PT_double,"cooling_supply_air_temp[degF]",PADDR(cooling_supply_air_temp),PT_DESCRIPTION,"temperature of air blown out of the cooling system",
@@ -1565,7 +1565,7 @@ int house_e::init(OBJECT *parent)
 	}
 
 	if (aux_heat_deadband<=0.0)		aux_heat_deadband = thermostat_deadband;
-	if (aux_heat_temp_lockout<=0.0)	aux_heat_temp_lockout = 120.0; // two minutes
+	if (aux_heat_temp_lockout<=0.0)	aux_heat_temp_lockout = 10; // 10 degrees
 	if (aux_heat_time_delay<=0.0)	aux_heat_time_delay = 300.0; // five minutes
 
 	if (duct_pressure_drop<=0.0)	duct_pressure_drop = 0.5; // half inch of water pressure
