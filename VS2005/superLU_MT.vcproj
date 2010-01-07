@@ -27,7 +27,7 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;"
+				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;&#x0D;&#x0A;"
 				Outputs="$(OutDir)\pthreadVC2.dll"
 			/>
 			<Tool
@@ -82,7 +82,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -93,6 +93,8 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;&#x0D;&#x0A;"
+				Outputs="$(OutDir)\pthreadVC2.dll"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -105,7 +107,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
+				AdditionalIncludeDirectories="..\third_party\superLU_MT\Need;..\third_party\superLU_MT\SRC"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_PTHREAD"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
