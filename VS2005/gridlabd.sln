@@ -94,7 +94,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "superLU", "superLU.vcproj",
 		{8BFAB682-B7FD-4422-AB71-3154DF337AA2} = {8BFAB682-B7FD-4422-AB71-3154DF337AA2}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "superLU_MT", "..\superLU_MT\superLU_MT.vcproj", "{DF17498A-83B3-46CE-95EA-C7515C0310A0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "superLU_MT", "superLU_MT.vcproj", "{DF17498A-83B3-46CE-95EA-C7515C0310A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
