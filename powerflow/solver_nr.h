@@ -17,7 +17,7 @@ typedef struct  {
 	complex *extra_var;		///< Extra variable - used mainly for current12 in triplex and "differently-connected" children
 	complex *house_var;		///< Extra variable - used mainly for nominal house current 
 	int *Link_Table;		///< table of links that connect to us (for population purposes)
-	unsigned char Link_Table_Size;	///< Number of entries in the link table (number of links connected to us)
+	unsigned int Link_Table_Size;	///< Number of entries in the link table (number of links connected to us)
 	double PL[3];			///< real power component of total bus load
 	double QL[3];			///< reactive power component of total bus load
 	double PG[3];			///< real power generation at generator bus

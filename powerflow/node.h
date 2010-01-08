@@ -122,7 +122,7 @@ public:
 	bool house_present;		/// Indicator flag for a house being attached (NR primarily)
 	complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
 	complex *Extra_Data;	/// Link to extra data information (NR)
-	char NR_connected_links[2];	/// Counter for number of connected links in the system
+	unsigned int NR_connected_links[2];	/// Counter for number of connected links in the system
 	int *NR_link_table;		/// Pointer to link list table
 
 	int NR_node_reference;		/// Node's reference in NR_busdata

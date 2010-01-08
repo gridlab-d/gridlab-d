@@ -401,7 +401,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 		{
 			node *fnode = OBJECTDATA(from,node);
 			node *tnode = OBJECTDATA(to,node);
-			char *LinkTableLoc = NULL;
+			unsigned int *LinkTableLoc = NULL;
 			int IndVal = 0;
 			OBJECT *obj = OBJECTHDR(this);
 
