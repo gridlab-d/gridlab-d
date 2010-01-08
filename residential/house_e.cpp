@@ -2362,7 +2362,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 			else if(Tair < TheatOn - terr/2)
 			{
 				//if (outside_temperature < aux_cutin_temperature)
-				if (Tair < (heating_setpoint - TauxOn) && 
+				if (Tair < TauxOn && 
 					(auxiliary_system_type != AT_NONE) && // turn on aux if we have it
 					(auxiliary_strategy & AX_DEADBAND) && // turn aux on if deadband is set
 					(!(auxiliary_strategy & AX_LOCKOUT) || (*pTout <= aux_heat_temp_lockout))) // If the air of the house is 2x outside the deadband range, it needs AUX help
