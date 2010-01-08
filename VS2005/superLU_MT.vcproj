@@ -20,15 +20,15 @@
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			CharacterSet="1"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;"
-				Outputs="$(OutDir)\pthreadVC2.dll"
+				CommandLine=""
+				Outputs=""
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -78,6 +78,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copy PThreads DLL"
+				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -85,7 +87,7 @@
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			CharacterSet="1"
+			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -93,7 +95,7 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;"
+				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;&#x0D;&#x0A;"
 				Outputs="$(OutDir)\pthreadVC2.dll"
 			/>
 			<Tool
@@ -141,6 +143,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copy PThreads DLL"
+				CommandLine="copy /y ..\third_party\superLU_MT\Need\pthreadVC2.dll &quot;$(OutDir)&quot;"
 			/>
 		</Configuration>
 	</Configurations>
