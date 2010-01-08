@@ -93,16 +93,20 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		
 		last_price = next_price;
 
-		if(lasthr != thishr){
+//		if(lasthr != thishr){
+		if(t0 != t1 && 0 == t1 % 3600){
 			/* add price/quantity to the history */
 			prices[count%168] = next_price;
 			++count;
 			
 			/* update the daily and weekly averages */
+			avg168 = 0.0;
 			for(i = 0; i < count && i < 168; ++i){
 				avg168 += prices[i];
 			}
 			avg168 /= (count > 168 ? 168 : count);
+
+			avg24 = 0.0;
 			for(i = 1; i <= 24 && i <= count; ++i){
 				int j = (168 - i + count) % 168;
 				avg24 += prices[j];
@@ -140,7 +144,7 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP stubauction::nextclear(void) const
 {
-	return gl_globalclock + (TIMESTAMP)(period - fmod(gl_globalclock+period,period));
+	return gl_globalclock + (TIMESTAMP)(period - fmod(gl_globalclock, period));
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -250,10 +250,13 @@ void auction::clear_market(void)
 			++count;
 			
 			/* update the daily and weekly averages */
+			avg168 = 0.0;
 			for(i = 0; i < count && i < 168; ++i){
 				avg168 += prices[i];
 			}
 			avg168 /= (count > 168 ? 168 : count);
+
+			avg24 = 0.0;
 			for(i = 1; i <= 24 && i <= count; ++i){
 				int j = (168 - i + count) % 168;
 				avg24 += prices[j];
