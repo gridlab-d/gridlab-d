@@ -289,8 +289,7 @@ TIMESTAMP controller2::postsync(TIMESTAMP t0, TIMESTAMP t1){
 int controller2::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 	double T_limit;
 	double T_set;
-	double min;
-	double max;
+	double ramp;
 	double set_change;
 
 	if(!orig_setpoint){
@@ -306,18 +305,20 @@ int controller2::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 	if(ramp_high * ramp_low < 0 || range_high * range_low > 0){ // zero is legit
 		gl_warning("invalid ramp parameters");
 	}
-	
-	min = first_setpoint - range_low;
-	max = first_setpoint + range_high;
 
-	T_limit = (observation > expectation ? max : min);
+	if(ramp_low + ramp_high > 0.0){ // net ramp direction
+		ramp = 1.0;
+	} else {
+		ramp = -1.0;
+	}
+	T_limit = (observation > expectation && ramp > 0.0 ? range_high : range_low);
 	T_set = first_setpoint;
 
 	// is legit to set expectation to the mean
 	if(sensitivity == 0.0 || obs_stdev == 0.0){
 		set_change = 0.0;
 	} else {
-		set_change = (observation - expectation) * fabs(T_limit - first_setpoint) / (sensitivity * obs_stdev);
+		set_change = (observation - expectation) * (T_limit) / (sensitivity * obs_stdev);
 	}
 	if(set_change > range_high){
 		set_change = range_high;
