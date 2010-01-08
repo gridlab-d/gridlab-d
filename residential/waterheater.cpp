@@ -246,7 +246,14 @@ int waterheater::init(OBJECT *parent)
 					again.
 				*/
 			} else if (shape.params.analog.power == 0){
-				; /* power-driven ~ cheat with W/degF*gpm */
+				 /* power-driven ~ cheat with W/degF*gpm */
+//				double heat_per_gallon = RHOWATER * // lb/cf
+//										 CFPGAL *	// lb/gal
+//										 CWATER *	// BTU/degF / gal
+//										 KWBTUPH /	// kW/gal
+//										 1000.0;	// W/gal
+				water_demand = gl_get_loadshape_value(&shape) * // W
+								RHOWATER * CFPGAL * CWATER * KWPBTUPH / 1000.0;
 			} else {
 				water_demand = gl_get_loadshape_value(&shape); /* unitless ~ drive gpm */
 			}
@@ -258,6 +265,8 @@ int waterheater::init(OBJECT *parent)
 				; /* constant time pulse ~ consumes X gallons to drive heater for Y hours ~ but what's Vdot, what's t? */
 			} else if(shape.params.pulsed.pulsetype == MPT_POWER){
 				; /* constant power pulse ~ draws water to consume X kW, limited by C + Q * h ~ Vdot proportional to power/time */
+				water_demand = gl_get_loadshape_value(&shape) *
+								RHOWATER * CFPGAL * CWATER * KWPBTUPH / 1000.0;
 			}
 			break;
 		case MT_MODULATED:
@@ -270,7 +279,8 @@ int waterheater::init(OBJECT *parent)
 			} else if(shape.params.modulated.pulsetype == MPT_POWER){
 				/* frequency modulated */
 				/* fixed-amplitude, varying length pulses at regular intervals. */
-				;
+				water_demand = gl_get_loadshape_value(&shape) *
+								RHOWATER * CFPGAL * CWATER * KWPBTUPH / 1000.0;
 			}
 			break;
 		case MT_QUEUED:
@@ -278,6 +288,8 @@ int waterheater::init(OBJECT *parent)
 				; /* constant time pulse ~ consumes X gallons/minute to consume Y thermal energy */
 			} else if(shape.params.queued.pulsetype == MPT_POWER){
 				; /* constant power pulse ~ draws water to consume X kW, limited by C + Q * h */
+				water_demand = gl_get_loadshape_value(&shape) *
+								RHOWATER * CFPGAL * CWATER * KWPBTUPH / 1000.0;
 			}
 			break;
 		default:
