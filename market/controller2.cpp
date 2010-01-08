@@ -306,11 +306,13 @@ int controller2::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 		gl_warning("invalid ramp parameters");
 	}
 
-	if(ramp_low + ramp_high > 0.0){ // net ramp direction
-		ramp = 1.0;
+	if(observation > expectation){ // net ramp direction
+		ramp = ramp_high;
 	} else {
-		ramp = -1.0;
+		ramp = ramp_low;
 	}
+	
+
 	T_limit = (observation > expectation && ramp > 0.0 ? range_high : range_low);
 	T_set = first_setpoint;
 
@@ -318,7 +320,7 @@ int controller2::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 	if(sensitivity == 0.0 || obs_stdev == 0.0){
 		set_change = 0.0;
 	} else {
-		set_change = (observation - expectation) * (T_limit) / (sensitivity * obs_stdev);
+		set_change = (observation - expectation) * fabs(T_limit) / (ramp / sensitivity * obs_stdev);
 	}
 	if(set_change > range_high){
 		set_change = range_high;
