@@ -114,6 +114,7 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			avg24 /= (count > 24 ? 24 : count);
 
 			/* update the daily & weekly standard deviations */
+			std168 = 0.0;
 			for(i = 0; i < count && i < 168; ++i){
 				std168 += prices[i] * prices[i];
 			}
@@ -121,6 +122,7 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			std168 -= avg168*avg168;
 			std168 = sqrt(fabs(std168));
 
+			std24 = 0.0;
 			for(i = 1; i <= 24 && i <= count; ++i){
 				j = (168 - i + count) % 168;
 				std24 += prices[j] * prices[j];

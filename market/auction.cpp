@@ -264,6 +264,7 @@ void auction::clear_market(void)
 			avg24 /= (count > 24 ? 24 : count);
 
 			/* update the daily & weekly standard deviations */
+			std168 = 0.0;
 			for(i = 0; i < count && i < 168; ++i){
 				std168 += prices[i] * prices[i];
 			}
@@ -271,6 +272,7 @@ void auction::clear_market(void)
 			std168 -= avg168*avg168;
 			std168 = sqrt(fabs(std168));
 
+			std24 = 0.0;
 			for(i = 1; i <= 24 && i <= count; ++i){
 				int j = (168 - i + count) % 168;
 				std24 += prices[j] * prices[j];

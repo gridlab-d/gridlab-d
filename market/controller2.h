@@ -36,6 +36,7 @@ public:
 	CONTROLMODE control_mode;
 	// sensitivity
 	double sensitivity;					///<
+	int64 period;
 	// observation tuple
 	double observation;					///<
 	double obs_mean;					///<
@@ -83,6 +84,7 @@ private:
 	int calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_proboff(TIMESTAMP t0, TIMESTAMP t1);
 	int orig_setpoint;
+	int64 last_cycle;
 };
 
 #endif // _controller2_H

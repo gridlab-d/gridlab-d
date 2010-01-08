@@ -96,6 +96,7 @@ controller2::controller2(MODULE *mod){
 			PT_double,"setpoint",PADDR(output_setpoint),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the target setpoint given the input observations",
 			// inputs
 			PT_double,"sensitivity",PADDR(sensitivity),PT_DESCRIPTION,"the sensitivity of the control actuator to observation deviations",
+			PT_int64,"period",PADDR(period),PT_DESCRIPTION,"the cycle period for the controller logic",
 			PT_char32,"expectation_prop",PADDR(expectation_propname),PT_DESCRIPTION,"the name of the property to observe for the expected value",
 			PT_object,"expectation_obj",PADDR(expectation_obj),PT_DESCRIPTION,"the object to watch for the expectation property",
 			PT_char32,"setpoint_prop",PADDR(output_setpoint_propname),PT_DESCRIPTION,"the name of the setpoint property in the parent object",
@@ -209,6 +210,10 @@ int controller2::init(OBJECT *parent){
 		orig_setpoint = 1;
 	}
 
+	if(period < 0){
+		GL_THROW("control period is negative");
+	}
+
 	return 1;
 }
 
@@ -241,38 +246,40 @@ TIMESTAMP controller2::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 TIMESTAMP controller2::sync(TIMESTAMP t0, TIMESTAMP t1){
 	// determine output based on control mode
-	switch(control_mode){
-		case CM_NONE:
-			// no control ~ let it slide
-			break;
-		case CM_RAMP:
-			if(calc_ramp(t0, t1) != 0){
-				GL_THROW("error occured when handling the ramp control mode");
-			}
-			break;
-		case CM_CND:
-			break;
-		case CM_THIRD:
-			break;
-		case CM_PROBOFF:
-			if(calc_proboff(t0, t1) != 0){
-				GL_THROW("error occured when handling the probabilistic cutoff control mode");
-			}
-			break;
-		default:
-			GL_THROW("controller2 has entered an invalid control mode");
-			break;
-	}
+	if(t1 <= last_cycle + period || period == 0){
+		last_cycle = t1; // advance cycle time
+		switch(control_mode){
+			case CM_NONE:
+				// no control ~ let it slide
+				break;
+			case CM_RAMP:
+				if(calc_ramp(t0, t1) != 0){
+					GL_THROW("error occured when handling the ramp control mode");
+				}
+				break;
+			case CM_CND:
+				break;
+			case CM_THIRD:
+				break;
+			case CM_PROBOFF:
+				if(calc_proboff(t0, t1) != 0){
+					GL_THROW("error occured when handling the probabilistic cutoff control mode");
+				}
+				break;
+			default:
+				GL_THROW("controller2 has entered an invalid control mode");
+				break;
+		}
 
-	// determine if input is chained first
-	if(output_setpoint_addr != 0){
-		*(double *)output_setpoint_addr = output_setpoint;
+		// determine if input is chained first
+		if(output_setpoint_addr != 0){
+			*(double *)output_setpoint_addr = output_setpoint;
+		}
+		if(output_state_addr != 0){
+			*(int *)output_state_addr = output_state;
+		}
 	}
-	if(output_state_addr != 0){
-		*(int *)output_state_addr = output_state;
-	}
-	
-	return TS_NEVER;
+	return (period > 0 ? last_cycle+period : TS_NEVER);
 }
 
 TIMESTAMP controller2::postsync(TIMESTAMP t0, TIMESTAMP t1){
