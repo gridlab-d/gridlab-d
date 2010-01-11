@@ -3,7 +3,11 @@
  */
 
 #include "solver_nr.h"
-#include <pdsp_defs.h>
+#ifdef WIN32
+#include <pdsp_defs.h>	//superLU_MT in WIN32
+#else
+#include <slu_ddefs.h>	//Sequential superLU (other platforms)
+#endif
 
 /* access to module global variables */
 #include "powerflow.h"
@@ -146,6 +150,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	int nnz, info;
 	unsigned int m,n;
 	double *sol_LU;
+	
+#ifndef WIN32
+	superlu_options_t options;	//Additional variables for sequential superLU
+	SuperLUStat_t stat;
+#endif
 
 	//Ensure bad computations flag is set first
 	*bad_computations = false;
@@ -2846,6 +2855,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			B_LU.ncol = 1;
 		}
 
+#ifndef WIN32
+		/* superLU sequential options*/
+		set_default_options ( &options );
+#endif
+		
 		for (indexer=0; indexer<size_Amatrix; indexer++)
 		{
 			rows_LU[indexer] = Y_Amatrix[indexer].row_ind ; // row pointers of non zero values
@@ -2886,11 +2900,23 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		Bstore->lda = m;
 		Bstore->nzval = rhs_LU;
 
+#ifdef WIN32
+		//superLU_MT commands
+
 		//Populate perm_c
 		get_perm_c(1, &A_LU, perm_c);
 
 		//Solve the system
 		pdgssv(NR_superLU_procs, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &info);
+#else
+		//sequential superLU
+
+		StatInit ( &stat );
+
+		// solve the system
+		dgssv(&options, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &stat, &info);
+#endif
+
 		sol_LU = (double*) ((DNformat*) B_LU.Store)->nzval;
 
 		//Update bus voltages - check convergence while we're here
@@ -3024,8 +3050,16 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			newiter = true;
 
 		/* De-allocate storage - superLU matrix types must be destroyed at every iteration, otherwise they balloon fast (65 MB norma becomes 1.5 GB) */
+#ifdef WIN32
+		//superLU_MT commands
 		Destroy_SuperNode_SCP(&L_LU);
 		Destroy_CompCol_NCP(&U_LU);
+#else
+		//sequential superLU commands
+		Destroy_SuperNode_Matrix( &L_LU );
+		Destroy_CompCol_Matrix( &U_LU );
+		StatFree ( &stat );
+#endif
 
 		//Break us out if we are done or are singular		
 		if (( newiter == false ) || (info!=0))
