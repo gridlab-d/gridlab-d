@@ -252,8 +252,7 @@ int waterheater::init(OBJECT *parent)
 //										 CWATER *	// BTU/degF / gal
 //										 KWBTUPH /	// kW/gal
 //										 1000.0;	// W/gal
-				water_demand = gl_get_loadshape_value(&shape) * // W
-								RHOWATER * CFPGAL * CWATER * KWPBTUPH / 1000.0;
+				water_demand = gl_get_loadshape_value(&shape) / 2.4449;
 			} else {
 				water_demand = gl_get_loadshape_value(&shape); /* unitless ~ drive gpm */
 			}
@@ -265,8 +264,7 @@ int waterheater::init(OBJECT *parent)
 				; /* constant time pulse ~ consumes X gallons to drive heater for Y hours ~ but what's Vdot, what's t? */
 			} else if(shape.params.pulsed.pulsetype == MPT_POWER){
 				; /* constant power pulse ~ draws water to consume X kW, limited by C + Q * h ~ Vdot proportional to power/time */
-				water_demand = gl_get_loadshape_value(&shape) *
-								RHOWATER * CFPGAL * CWATER * KWPBTUPH / 1000.0;
+				water_demand = gl_get_loadshape_value(&shape) / 2.4449;
 			}
 			break;
 		case MT_MODULATED:
@@ -279,8 +277,7 @@ int waterheater::init(OBJECT *parent)
 			} else if(shape.params.modulated.pulsetype == MPT_POWER){
 				/* frequency modulated */
 				/* fixed-amplitude, varying length pulses at regular intervals. */
-				water_demand = gl_get_loadshape_value(&shape) *
-								RHOWATER * CFPGAL * CWATER * KWPBTUPH / 1000.0;
+				water_demand = gl_get_loadshape_value(&shape) / 2.4449;
 			}
 			break;
 		case MT_QUEUED:
@@ -288,8 +285,7 @@ int waterheater::init(OBJECT *parent)
 				; /* constant time pulse ~ consumes X gallons/minute to consume Y thermal energy */
 			} else if(shape.params.queued.pulsetype == MPT_POWER){
 				; /* constant power pulse ~ draws water to consume X kW, limited by C + Q * h */
-				water_demand = gl_get_loadshape_value(&shape) *
-								RHOWATER * CFPGAL * CWATER * KWPBTUPH / 1000.0;
+				water_demand = gl_get_loadshape_value(&shape) / 2.4449;
 			}
 			break;
 		default:
@@ -352,7 +348,6 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 			break;
 		case MT_ANALOG:
 			if(shape.params.analog.energy == 0.0){
-				/* this should've been caught in init() */
 				GL_THROW("waterheater does not support fixed energy shaping");
 				/*	TROUBLESHOOT
 					Though it is possible to drive the water demand of a water heater,
@@ -362,11 +357,15 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 					again.
 				*/
 			} else if (shape.params.analog.power == 0){
-				/* power-driven ~ cheat with W/degF*gpm */
-				this->water_demand = load.shape->load / 2.4449;
+				 /* power-driven ~ cheat with W/degF*gpm */
+//				double heat_per_gallon = RHOWATER * // lb/cf
+//										 CFPGAL *	// lb/gal
+//										 CWATER *	// BTU/degF / gal
+//										 KWBTUPH /	// kW/gal
+//										 1000.0;	// W/gal
+				water_demand = gl_get_loadshape_value(&shape) 2.4449;
 			} else {
-				/* unitless ~ drive gpm */
-				this->water_demand = load.shape->load;
+				water_demand = gl_get_loadshape_value(&shape); /* unitless ~ drive gpm */
 			}
 			break;
 		case MT_PULSED:
@@ -376,6 +375,7 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 				; /* constant time pulse ~ consumes X gallons to drive heater for Y hours ~ but what's Vdot, what's t? */
 			} else if(shape.params.pulsed.pulsetype == MPT_POWER){
 				; /* constant power pulse ~ draws water to consume X kW, limited by C + Q * h ~ Vdot proportional to power/time */
+				water_demand = gl_get_loadshape_value(&shape) / 2.4449;
 			}
 			break;
 		case MT_MODULATED:
@@ -388,7 +388,7 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 			} else if(shape.params.modulated.pulsetype == MPT_POWER){
 				/* frequency modulated */
 				/* fixed-amplitude, varying length pulses at regular intervals. */
-				;
+				water_demand = gl_get_loadshape_value(&shape) / 2.4449;
 			}
 			break;
 		case MT_QUEUED:
@@ -396,6 +396,7 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 				; /* constant time pulse ~ consumes X gallons/minute to consume Y thermal energy */
 			} else if(shape.params.queued.pulsetype == MPT_POWER){
 				; /* constant power pulse ~ draws water to consume X kW, limited by C + Q * h */
+				water_demand = gl_get_loadshape_value(&shape) / 2.4449;
 			}
 			break;
 		default:
