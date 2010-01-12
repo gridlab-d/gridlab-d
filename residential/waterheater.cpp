@@ -363,7 +363,7 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 //										 CWATER *	// BTU/degF / gal
 //										 KWBTUPH /	// kW/gal
 //										 1000.0;	// W/gal
-				water_demand = gl_get_loadshape_value(&shape) 2.4449;
+				water_demand = gl_get_loadshape_value(&shape) / 2.4449;
 			} else {
 				water_demand = gl_get_loadshape_value(&shape); /* unitless ~ drive gpm */
 			}
