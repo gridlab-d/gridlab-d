@@ -107,9 +107,12 @@ public:
 	double design_heating_setpoint;	///< design heating setpoint (degF)
 	double design_cooling_setpoint;	///< design cooling setpoint (degF)
 	double design_heating_capacity;	///< space heating capacity (BTUh/sf)
+	double adj_heating_cap;
 	double design_cooling_capacity;	///< space cooling capacity (BTUh/sf)
 	double heating_COP;				///< space heating COP
 	double cooling_COP;				///< space cooling COP
+	double adj_heating_cop;
+	double sol_inc;
 	double over_sizing_factor;		///< Future: equipment over sizing factor
 	double rated_heating_capacity;	///< rated heating capacity of the system (BTUh/sf; varies w.r.t Tout),
 	double rated_cooling_capacity;	///< rated cooling capacity of the system (BTUh/sf; varies w.r.t Tout)
@@ -143,6 +146,7 @@ public:
 	// current hvac properties
 	double system_rated_power;		///< rated power of the system
 	double system_rated_capacity;	///< rated capacity of the system
+	double sys_rated_cap;
 
 	/* inherited res_enduse::load is hvac system load */
 	double hvac_load;

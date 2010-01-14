@@ -583,6 +583,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			
 			PT_double,"design_heating_capacity[Btu/h]",PADDR(design_heating_capacity),PT_DESCRIPTION,"system heating capacity",
 			PT_double,"design_cooling_capacity[Btu/h]",PADDR(design_cooling_capacity),PT_DESCRIPTION,"system cooling capacity",
+			PT_double,"adj_heating_cap[Btu/h]",PADDR(adj_heating_cap),PT_DESCRIPTION,"system heating capacity adjusted for outdoor temperature",
+			PT_double,"sys_rated_cap[Btu/h]",PADDR(sys_rated_cap),PT_DESCRIPTION,"the system's total rated capacity",
 			PT_double,"cooling_design_temperature[degF]", PADDR(cooling_design_temperature),PT_DESCRIPTION,"system cooling design temperature",
 			PT_double,"heating_design_temperature[degF]", PADDR(heating_design_temperature),PT_DESCRIPTION,"system heating design temperature",
 			PT_double,"design_peak_solar[Btu/h.sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design solar load",
@@ -610,6 +612,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"cooling_demand",PADDR(cooling_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the cooling system",
 			PT_double,"heating_COP[pu]",PADDR(heating_COP),PT_DESCRIPTION,"system heating performance coefficient",
 			PT_double,"cooling_COP[Btu/kWh]",PADDR(cooling_COP),PT_DESCRIPTION,"system cooling performance coefficient",
+			PT_double,"adj_heating_cop[pu]",PADDR(adj_heating_cop),PT_DESCRIPTION,"the system heating performace coefficient adjusted for the outside temperature",
 			//PT_double,"COP_coeff",PADDR(COP_coeff),PT_DESCRIPTION,"effective system performance coefficient",
 			PT_double,"air_temperature[degF]",PADDR(Tair),PT_DESCRIPTION,"indoor air temperature",
 			PT_double,"outdoor_temperature[degF]",PADDR(outside_temperature),PT_DESCRIPTION,"outdoor air temperature",
@@ -733,6 +736,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"Qm",PADDR(Qm),
 			PT_double,"Qh",PADDR(load.heatgain),
 			PT_double,"dTair",PADDR(dTair),
+			PT_double,"sol_inc",PADDR(sol_inc),
 #endif
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
@@ -1782,6 +1786,8 @@ void house_e::update_model(double dt)
 		Qs += pSolar[i];
 
 	Qs *= 3.412 * (gross_wall_area*window_wall_ratio) / 8.0 * (glazing_shgc * window_exterior_transmission_coefficient);
+	sol_inc = pSolar[i];
+
 
 	if (Qs<0)
 		throw "solar gain is negative";
@@ -1836,9 +1842,10 @@ void house_e::update_system(double dt)
 		cooling_cop_adj = cooling_COP / (-0.01363961 + 0.01066989*(*pTout));
 		heating_cop_adj = heating_COP / (2.03914613 - 0.03906753*(*pTout) + 0.00045617*(*pTout)*(*pTout) - 0.00000203*(*pTout)*(*pTout)*(*pTout));
 	}
-
+	adj_heating_cop = heating_cop_adj;//variable for debug purposes
 	double heating_capacity_adj = design_heating_capacity*(0.34148808 + 0.00894102*(*pTout) + 0.00010787*(*pTout)*(*pTout)); 
 	double cooling_capacity_adj = design_cooling_capacity*(1.48924533 - 0.00514995*(*pTout));
+	adj_heating_cap = heating_capacity_adj;//variable for debug purposes
 	
 #pragma message("house_e: add update_system voltage adjustment for heating")
 	double voltage_adj = (((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0) * load.impedance_fraction + ((pCircuit_V[0]).Mag() / 240.0) * load.current_fraction + load.power_fraction);
@@ -1860,21 +1867,25 @@ void house_e::update_system(double dt)
 				system_rated_capacity = 0.0;
 				system_rated_power = 0.0;
 				fan_power = 0.0; // turn it back off
+				sys_rated_cap = system_rated_capacity;//debug variable
 				break;
 			case HT_RESISTANCE:
 				heating_demand = design_heating_capacity*KWPBTUPH;
 				system_rated_capacity = design_heating_capacity*voltage_adj_resistive + fan_power*BTUPHPKW;
 				system_rated_power = heating_demand;
+				sys_rated_cap = system_rated_capacity;//debug variable
 				break;
 			case HT_HEAT_PUMP:
 				heating_demand = design_heating_capacity / heating_cop_adj * KWPBTUPH;
 				system_rated_capacity = heating_capacity_adj*voltage_adj + fan_power*BTUPHPKW;
 				system_rated_power = heating_demand;
+				sys_rated_cap = system_rated_capacity;//debug variable
 				break;
 			case HT_GAS:
 				heating_demand = 0.0;
 				system_rated_capacity = design_heating_capacity + fan_power*BTUPHPKW;
 				system_rated_power = heating_demand;
+				sys_rated_cap = system_rated_capacity;//debug variable
 				break;
 		}
 		break;
@@ -1890,11 +1901,13 @@ void house_e::update_system(double dt)
 				heating_demand = 0.0;
 				system_rated_capacity = 0.0;
 				system_rated_power = 0.0;
+				sys_rated_cap = system_rated_capacity;//debug variable
 				break;
 			case AT_ELECTRIC:
 				heating_demand = aux_heat_capacity*KWPBTUPH;
-				system_rated_capacity = aux_heat_capacity*voltage_adj_resistive;
+				system_rated_capacity = aux_heat_capacity*voltage_adj_resistive + fan_power*BTUPHPKW;
 				system_rated_power = heating_demand;
+				sys_rated_cap = system_rated_capacity;//debug variable
 				break;
 		}
 		break;
@@ -1913,11 +1926,13 @@ void house_e::update_system(double dt)
 				system_rated_capacity = 0.0;
 				system_rated_power = 0.0;
 				fan_power = 0.0; // turn it back off
+				sys_rated_cap = system_rated_capacity;//debug variable
 				break;
 			case CT_ELECTRIC:
 				cooling_demand = design_cooling_capacity / cooling_cop_adj * KWPBTUPH;
 				system_rated_capacity = -cooling_capacity_adj / (1 + latent_load_fraction) + fan_power*BTUPHPKW;
 				system_rated_power = cooling_demand;
+				sys_rated_cap = system_rated_capacity;//debug variable
 				break;
 		}
 		break;
