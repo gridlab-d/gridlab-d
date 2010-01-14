@@ -1,3 +1,10 @@
+/** $Id: csv_reader.cpp 1182 2010-01-13 18:56:42Z mhauer $
+	Copyright (C) 2009 Battelle Memorial Institute
+	@file csv_reader.cpp
+	@author Matthew L. Hauer
+
+ **/
+
 #include "csv_reader.h"
 
 CLASS *csv_reader::oclass = 0;
@@ -68,6 +75,10 @@ int csv_reader::open(const char *file){
 
 	if(file == 0){
 		gl_error("csv_reader has no input file name!");
+		/* TROUBLESHOOT
+			No input file was specified for the csv_reader object.  Double-check the
+			input model and re-run GridLAB-D.
+		*/
 		return 0;
 	}
 
@@ -75,6 +86,11 @@ int csv_reader::open(const char *file){
 	infile = fopen(filename, "r");
 	if(infile == 0){
 		gl_error("csv_reader could not open \'%s\' for input!", file);
+		/* TROUBLESHOOT
+			The specified input file could not be opened for reading.  Verify that no
+			other applications are using that file, double-check the input model, and
+			re-run GridLAB-D.
+		*/
 		return 0;
 	}
 
@@ -133,17 +149,30 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 
 	if(split == NULL){
 		gl_error("csv_reader::read_prop ~ missing \'=\' seperator");
+		/* TROUBLESHOOT
+			Property lines must have the property name and property value seperated by an
+			equals sign.  Please correct the CSV file and re-run GridLAB-D.
+		*/
 		return 0;
 	}
 
 	if(2 != sscanf(line, "%[^=]=%[^\n]", propstr, valstr)){
 		gl_error("csv_reader::read_prop ~ error reading property & value");
+		/* TROUBLESHOOT
+			The line was not read properly by the parser.  Property lines must be of the format
+			"prop=val".  Please review the CSV file and re-run GridLAB-D.
+		*/
 		return 0;
 	}
 	
 	prop = gl_find_property(oclass, propstr);
 	if(prop == 0){
 		gl_error("csv_reader::read_prop ~ unrecognized csv_reader property \'%s\'", propstr);
+		/* TROUBLESHOOT
+			The property specified within the CSV file is not published by csv_reader.
+			Please review the list of published variables, correct the CSV file, and
+			re-run GridLAB-D.
+		*/
 		return 0;
 	}
 
@@ -157,6 +186,10 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 	if(prop->ptype == PT_double){
 		if(1 != sscanf(valstr, "%lg", addr)){
 			gl_error("csv_reader::read_prop ~ unable to set property \'%s\' to \'%s\'", propstr, valstr);
+			/* TROUBLESHOOT
+				The double parser was not able to convert the property value into a number.  Please
+				review the input line for non-numeric characters and re-run GridLAB-D.
+			*/
 			return 0;
 		}
 	} else if(prop->ptype == PT_char32){
@@ -165,7 +198,8 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 		gl_error("csv_reader::read_prop ~ unable to convert property \'%s\' due to type restrictions", propstr);
 		/* TROUBLESHOOTING
 			This is a programming problem.  The property parser within the csv_reader is only able to
-			properly handle char32 and double properties.
+			properly handle char32 and double properties.  Please contact matthew.hauer@pnl.gov for
+			technical support.
 		 */
 		return 0;
 	}
@@ -230,6 +264,10 @@ int csv_reader::read_header(char *line){
 		temp->column = gl_find_property(weather::oclass, temp->name);
 		if(temp->column == 0){
 			gl_error("csv_reader::read_header ~ unable to find column property \'%s\''", temp->name);
+			/* TROUBLESHOOT
+				The specified property in the header was not found published by the weather
+				class.  Please check the column header input and re-run GridLAB-D.
+			*/
 			return 0;
 		}
 		columns[i] = temp->column;
@@ -260,11 +298,19 @@ int csv_reader::read_line(char *line){
 	if(timefmt[0] == 0){
 		if(sscanf(token, "%i:%i:%i:%i:%i", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
 			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with default format", token);
+			/* TROUBLESHOOT
+				The input timestamp could not be parsed.  Verify that all time strings are formatted
+				as 'MM:dd:hh:mm:ss', 'MM:dd:hh:mm', 'MM:dd:hh', 'MM:dd', or 'MM'.
+			*/
 			return 0;
 		}
 	} else {
 		if(sscanf(token, timefmt, &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
 			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with format \'%s\'", token, timefmt);
+			/* TROUBLESHOOT
+				The input timestamp could not be parsed using the specified time format.  Please
+				review the specified file's time format and input time strings.
+			*/
 			return 0;
 		}
 	}
@@ -276,6 +322,10 @@ int csv_reader::read_line(char *line){
 			double *dptr = (double *)((unsigned long long int)(columns[col]->addr) + (unsigned long long int)(sample));
 			if(sscanf(token, "%lg", dptr) != 1){
 				gl_error("csv_reader::read_line ~ unable to set value \'%s\' to double property \'%s\'", token, columns[col]->name);
+				/* TROUBLESHOOT
+					The specified property value could not be parsed as a number.  Please check
+					the CSV file for non-numeric characters in the data fields on that line.
+				*/
 				return 0;
 			}
 		}
@@ -394,6 +444,11 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 	// having found the index, update the data
 	if(index == start){
 		GL_THROW("something strange happened with the schedule in csv_reader");
+		/*	TROUBLESHOOT
+			An unidentified error occured while reading data and constructing the weather
+			data schedule.  Please post a ticket detailing this event on the GridLAB-D
+			SourceForge page.
+		*/
 	}
 	
 	return -next_ts;
