@@ -129,7 +129,20 @@ void stream_error(char *format, ...)
 	output_error("- stream(%d:%d) - %s", b,t,buffer);
 	return;
 }
+/** stream_compress
 
+	Format of compressed stream 
+
+	[US/len] [bit15 runlen flag, bit 0-14 data len]
+	
+	Bit 15 clear : raw data follows for len given
+	[UC/data ... ]
+
+	Bit 15 set : compressed data 
+	[SC/delta] differential to apply to each value
+	[SC/value] initial value
+
+ **/
 size_t stream_compress(FILE *fp, char *buf, size_t len)
 {
 	size_t count = 0, original = len;
@@ -138,18 +151,21 @@ size_t stream_compress(FILE *fp, char *buf, size_t len)
 	unsigned short rawlen = 0; // len of raw buffer
 	char *run = p; // start of run buffer
 	unsigned short runlen = 0; // len of run buffer
+	char diff = 0; // current differential run value
 	enum {RAW=0, RUNLEN=1} state = RAW; // state of compression
 	for ( p = buf ; len-->0 ; p++ ) 
 	{
+		int dp = p[1]-p[0];
+
 		if (state == RAW)
 		{
-			if (p[0]==p[1]) // pattern repeats
+			if (dp==diff) // pattern repeats
 				runlen++;
 			else
 				runlen=0;
 
-			// if raw buffer in progress and run is long enough
-			if (runlen==7)
+			// if raw buffer in progress and run is long enough to use
+			if (runlen==8)
 			{
 				// dump raw buffer
 				if (rawlen>runlen)
@@ -166,7 +182,7 @@ size_t stream_compress(FILE *fp, char *buf, size_t len)
 				run = p-runlen;
 			}
 
-			else if (rawlen==65535)	// long raw buffer
+			else if (rawlen==32767)	// long raw buffer
 			{
 				// dump raw buffer
 				if (fwrite(&rawlen,1,sizeof(rawlen),fp)<0) return -1;
@@ -183,15 +199,19 @@ size_t stream_compress(FILE *fp, char *buf, size_t len)
 		}
 		else if (state==RUNLEN)
 		{
-			if (p[0]==p[1]) // run continues
+			if (dp==diff) // run continues
 			{
 				runlen++;
 
 				// if run buffer is too long
-				if (runlen==65535)
+				if (runlen==32767)
 				{
+					// mark run buffer
+					runlen |= 0x8000;
+
 					// dump run buffer
 					if (fwrite(&runlen,1,sizeof(runlen),fp)<0) return -1;
+					if (fwrite(&diff,1,sizeof(diff),fp)<0) return -1;
 					if (fputc(*run,fp)<0) return -1; 
 					count+=3;
 
@@ -203,8 +223,12 @@ size_t stream_compress(FILE *fp, char *buf, size_t len)
 
 			else // run ends
 			{
+				// mark run buffer
+				runlen |= 0x8000;
+
 				// dump run buffer
 				if (fwrite(&runlen,1,sizeof(runlen),fp)<0) return -1;
+				if (fwrite(&diff,1,sizeof(diff),fp)<0) return -1;
 				if (fputc(*run,fp)<0) return -1; 
 				count+=3;
 
@@ -212,11 +236,16 @@ size_t stream_compress(FILE *fp, char *buf, size_t len)
 				state = RAW;
 				raw = p;
 				rawlen = 0;
+
+				// get run candidate
 				runlen = 0;
 			}
 		}
+
+		// get next run candidate
+		diff = dp;
 	}
-	output_debug("stream_compress(): %d kB -> %d kB (%d:1)", original/1000+1, count/1000+1, original/count);
+	output_debug("stream_compress(): %d kB -> %d kB (%.1f%%)", original/1000+1, count/1000+1, (double)count*100/(double)original);
 	return count;
 }
 

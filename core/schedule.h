@@ -55,7 +55,7 @@ struct s_schedule {
 	char blockname[MAXBLOCKS][64];		/**< the name of each block */
 	unsigned char block;				/**< the last block used (4 max) */
 	unsigned char index[14][366*24*60];	/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */
-	unsigned long dtnext[14][366*24*60];/**< the time until the next schedule change (in minutes) */
+	unsigned char dtnext[14][366*24*60];/**< the time until the next schedule change (in minutes) */
 	double data[MAXBLOCKS*MAXVALUES];	/**< the list of values used in each block */
 	unsigned int weight[MAXBLOCKS*MAXVALUES];	/**< the weight (in minutes) associate with each value */
 	double sum[MAXBLOCKS];				/**< the sum of values for each block -- used to normalize */

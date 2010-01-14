@@ -142,6 +142,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
+#include "stream.h"
 
 /* define this to use # for comment and % for macros (the way Version 1.x works) */
 /* #define OLDSTYLE	*/
@@ -5172,7 +5173,16 @@ STATUS loadall(char *file){
 	}
 
 	/* load the appropriate type of file */
-	if(ext==NULL || strcmp(ext, ".glm")==0)
+	if (global_streaming_io_enabled)
+	{
+		FILE *fp = fopen(file,"r");
+		if (fp==NULL || stream_in(fp,SF_ALL)<0)
+		{
+			output_error("%s: unable to read stream", filename);
+			return FAILED;
+		}
+	}
+	else if (ext==NULL || strcmp(ext, ".glm")==0)
 		load_status = loadall_glm_roll(filename);
 	else if(strcmp(ext, ".xml")==0)
 		load_status = loadall_xml(filename);

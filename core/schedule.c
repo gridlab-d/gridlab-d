@@ -582,9 +582,17 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 
 				/* if the values are the same */
 				if (sch->data[index0]==sch->data[index1])
+				{	
+					/* if we haven't reached the maximum delta-t (for unsigned char dtnext) */
+					if (sch->dtnext[calendar][t]<255)
 
-					/* add 1 minute to next values time */
-					sch->dtnext[calendar][t] = sch->dtnext[calendar][t+1] + 1;
+						/* add 1 minute to next values time */
+						sch->dtnext[calendar][t] = sch->dtnext[calendar][t+1] + 1;
+					else
+
+						/* start the time over at 1 minute (to next value) */
+						sch->dtnext[calendar][t] = 1;
+				}
 				else
 				{
 					/* start the time over at 1 minute (to next value) */
