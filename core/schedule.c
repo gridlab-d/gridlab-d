@@ -510,6 +510,8 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 
 	/* create the schedule */
 	sch = (SCHEDULE*)malloc(sizeof(SCHEDULE));
+	memset(sch,0,sizeof(SCHEDULE));
+
 	if (sch==NULL)
 	{
 		output_error("schedule_create(char *name='%s', char *definition='%s') memory allocation failed)", name, definition);

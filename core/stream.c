@@ -14,6 +14,9 @@
 /* stream version - change this when the structure of the stream changes */
 #define STREAM_VERSION 1
 
+/* stream format - binary is normal, undefine BINARY to debug the stream visually */
+#define BINARY
+
 /* output macros */
 static unsigned char b,t;
 static unsigned char c;
@@ -21,6 +24,9 @@ static unsigned short s;
 static unsigned long l;
 static unsigned int64 q;
 static unsigned int64 n;
+
+#ifdef BINARY
+#define COMPRESS(S,L) {if ((n=stream_compress(fp,S,L))<=0) return -1; else count+=n;} 
 #define PUTD(S,L) {n=(L);if(fwrite(&n,2,1,fp)!=1 || fwrite((S),1,L,fp)!=L) return -1; else count+=n+2;}
 #define PUTC(C) {c=(C);PUTD(&c,1)}
 #define PUTS(S) {s=(S);PUTD(&s,2)}
@@ -28,6 +34,26 @@ static unsigned int64 n;
 #define PUTQ(Q) {q=(Q);PUTD(&q,8)}
 #define PUTX(T,X) {if ((n=stream_out_##T(fp,(X)))<0) return -1; else count+=n;}
 #define PUTT(B,T) {b=SB_##B;t=ST_##T;s=(unsigned short)((b<<8)|t);PUTD(&s,2)}
+#else
+static char indent[256]="";
+void indent_more() { if (strlen(indent)<sizeof(indent)/sizeof(indent[0])) strcat(indent," ");}
+void indent_less() { if (indent[0]!='\0') indent[strlen(indent)-1] = '\0';}
+#define PUTD(S,L) {n=(L);if(fprintf(fp,"%sD%d/%s:%s\n",indent,L,#S,S)<=0) return -1; else count+=n+2;}
+#define PUTC(C) {c=(C);if(fprintf(fp,"%sC/%s:%d\n",indent,#C,C)<=0) return -1; else count+=3;}
+#define PUTS(S) {s=(S);if(fprintf(fp,"%sS/%s:%d\n",indent,#S,S)<=0) return -1; else count+=4;}
+#define PUTL(L) {l=(L);if(fprintf(fp,"%sL/%s:%d\n",indent,#L,L)<=0) return -1; else count+=6;}
+#define PUTQ(Q) {q=(Q);if(fprintf(fp,"%sQ/%s:%d\n",indent,#Q,Q)<=0) return -1; else count+=10;}
+#define PUTX(T,X) {if ((n=stream_out_##T(fp,(X)))<0) return -1; else count+=n;}
+#define PUTT(B,T) {if (SB_##B==SB_BEGIN || ST_##T==ST_BEGIN) indent_more(); if(fprintf(fp,"%s[%s %s]\n",indent,#B,#T)<=0) return -1; else count+=2; if (SB_##B==SB_END || ST_##T==ST_END) indent_less();}
+#endif
+
+#define GETD(S,L) {char _buf[4096]; if(fread(&n,2,1,fp)!=1 || n!=(L) || n>sizeof(_buf) || fread(_buf,1,n,fp)!=n) return -1; else count+=n+2;}
+#define GETC(C) {c=(C);GETD(&c,1)}
+#define GETS(S) {s=(S);GETD(&s,2)}
+#define GETL(L) {l=(L);GETD(&l,4)}
+#define GETQ(Q)
+#define GETX(T,X)
+#define GETT(B,T)
 
 /* stream block tokens */
 enum {
@@ -82,6 +108,7 @@ enum {
 	ST_DEFINITION,
 	ST_BIAS,
 	ST_SCALE,
+	ST_DATA,
 
 	ST_END=0xff,
 };
@@ -92,6 +119,106 @@ char *stream_context()
 	sprintf(buffer,"block %d, token %d",b,t);
 	return buffer;
 }
+void stream_error(char *format, ...)
+{
+	char buffer[1024];
+	va_list ptr;
+	va_start(ptr,format);
+	vsprintf(buffer,format,ptr);
+	va_end(ptr);
+	output_error("- stream(%d:%d) - %s", b,t,buffer);
+	return;
+}
+
+size_t stream_compress(FILE *fp, char *buf, size_t len)
+{
+	size_t count = 0, original = len;
+	char *p = buf; // current position in input buffer
+	char *raw = p; // start of raw buffer
+	unsigned short rawlen = 0; // len of raw buffer
+	char *run = p; // start of run buffer
+	unsigned short runlen = 0; // len of run buffer
+	enum {RAW=0, RUNLEN=1} state = RAW; // state of compression
+	for ( p = buf ; len-->0 ; p++ ) 
+	{
+		if (state == RAW)
+		{
+			if (p[0]==p[1]) // pattern repeats
+				runlen++;
+			else
+				runlen=0;
+
+			// if raw buffer in progress and run is long enough
+			if (runlen==7)
+			{
+				// dump raw buffer
+				if (rawlen>runlen)
+				{
+					rawlen -= runlen; // don't include new run data
+					if (fwrite(&rawlen,1,sizeof(rawlen),fp)<0) return -1;
+					if (fwrite(raw,1,rawlen,fp)<0) return -1;
+					count += rawlen+2;
+				}
+
+				// change to run buffer
+				state = RUNLEN;
+				rawlen = 0;
+				run = p-runlen;
+			}
+
+			else if (rawlen==65535)	// long raw buffer
+			{
+				// dump raw buffer
+				if (fwrite(&rawlen,1,sizeof(rawlen),fp)<0) return -1;
+				if (fwrite(raw,1,rawlen,fp)<0) return -1;
+				count += rawlen+2;
+
+				// restart raw buffer
+				rawlen = 0;
+				raw = p;
+			}
+			else
+				rawlen++;
+
+		}
+		else if (state==RUNLEN)
+		{
+			if (p[0]==p[1]) // run continues
+			{
+				runlen++;
+
+				// if run buffer is too long
+				if (runlen==65535)
+				{
+					// dump run buffer
+					if (fwrite(&runlen,1,sizeof(runlen),fp)<0) return -1;
+					if (fputc(*run,fp)<0) return -1; 
+					count+=3;
+
+					// start over with a new run
+					runlen = 0;
+					run = p;
+				}
+			}
+
+			else // run ends
+			{
+				// dump run buffer
+				if (fwrite(&runlen,1,sizeof(runlen),fp)<0) return -1;
+				if (fputc(*run,fp)<0) return -1; 
+				count+=3;
+
+				// change to a raw buffer
+				state = RAW;
+				raw = p;
+				rawlen = 0;
+				runlen = 0;
+			}
+		}
+	}
+	output_debug("stream_compress(): %d kB -> %d kB (%d:1)", original/1000+1, count/1000+1, original/count);
+	return count;
+}
 
 /*******************************************************
  * MODULES 
@@ -100,20 +227,49 @@ int64 stream_out_module(FILE *fp, MODULE *m)
 {
 	int64 count=0;
 
-	/* begin */
 	PUTT(MODULE,BEGIN);
 
-	/* name */
 	PUTT(MODULE,NAME);
 	PUTD(m->name,strlen(m->name));
 
-	/* version */
 	PUTT(MODULE,VERSION);
 	PUTS(m->major);
 	PUTS(m->minor);
 
-	/* end */
 	PUTT(MODULE,END);
+	return count;
+}
+int64 stream_in_module(FILE *fp)
+{
+	int64 count=0;
+	char module_name[1024]; 
+	unsigned short major, minor;
+	MODULE *m;
+
+	GETT(MODULE,BEGIN);
+
+	GETT(MODULE,NAME);
+	GETD(module_name,sizeof(module_name));
+
+	m = module_load(module_name,0,NULL);
+	if (m==NULL)
+	{
+		stream_error("module %s version is not found", module_name);
+		return -1;
+	}
+
+	GETT(MODULE,VERSION);
+	GETS(major);
+	GETS(minor);
+
+	GETT(MODULE,END);
+
+	if (m->major!=major || m->minor!=minor)
+	{
+		stream_error("module %s version %d.%02d specified does not match version %d.%02d found", module_name, major, minor, m->major, m->minor);
+		return -1;
+	}
+
 	return count;
 }
 
@@ -317,8 +473,11 @@ int64 stream_out_object(FILE *fp, OBJECT *obj)
 			char value[4096]="";
 			void *addr = (void*)((char*)(obj+1)+(unsigned int64)p->addr);
 			object_get_value_by_addr(obj,addr,value,sizeof(value),p);
+			
 			PUTT(OBJECT,PROPERTY);
-			PUTQ((unsigned int64)(p->addr));
+			PUTL((unsigned long)(p->addr));
+
+			PUTT(OBJECT,VALUE);
 			PUTD(value,strlen(value));
 		}
 	}
@@ -336,11 +495,16 @@ int64 stream_out_schedule(FILE *fp, SCHEDULE *sch)
 
 	PUTT(SCHEDULE,BEGIN);
 
+#ifdef COMPRESS
+	PUTT(SCHEDULE,DATA);
+	COMPRESS(sch,sizeof(SCHEDULE));
+#else
 	PUTT(SCHEDULE,NAME);
 	PUTD(sch->name,strlen(sch->name));
 
 	PUTT(SCHEDULE,DEFINITION);
 	PUTD(sch->definition,strlen(sch->definition));
+#endif
 
 	PUTT(SCHEDULE,END);
 
@@ -373,39 +537,29 @@ int64 stream_out_transform(FILE *fp, SCHEDULEXFORM *xform)
 		if (object_locate_property(xform->source,&obj,&prop))
 		{
 			PUTT(TRANSFORM,OBJECT);
-			if (obj->name)
-			{
-				PUTT(OBJECT,NAME);
-				PUTD(obj->name,strlen(obj->name));
-			}
-			else
-			{
-				PUTT(OBJECT,CLASS);
-				PUTD(obj->oclass->name,strlen(obj->oclass->name));
 
-				PUTT(OBJECT,ID);
-				PUTL(obj->id);
-			}
+			PUTT(OBJECT,ID);
+			PUTL(obj->id);
 
 			PUTT(TRANSFORM,PROPERTY);
-			PUTD(prop->name,strlen(prop->name));
+			PUTL((unsigned long)(prop->addr));
 		}
 		else
 		{
-			output_fatal("transform is unable to source for value at %x", xform->source);
+			stream_error("transform is unable to source for value at %x", xform->source);
 			return -1;
 		}
 		break;
 	default:
-		output_fatal("transform uses undefined source type (%d)", xform->source_type);
+		stream_error("transform uses undefined source type (%d)", xform->source_type);
 		return -1;
 	}
 
 	PUTT(TRANSFORM,OBJECT);
-	PUTD(xform->target_obj,strlen(xform->target_obj));
+	PUTL(xform->target_obj->id);
 
 	PUTT(TRANSFORM,PROPERTY);
-	PUTD(xform->target_prop,strlen(xform->target_prop));
+	PUTL((unsigned long)(xform->target_prop->addr));
 
 	PUTT(TRANSFORM,SCALE);
 	PUTQ(xform->scale);
@@ -480,6 +634,7 @@ int64 stream_out(FILE *fp, int flags)
 int64 stream_in(FILE *fp, int flags)
 {
 	int64 count = 0;
-	output_fatal("stream_in not implemented");
-	return -1;
+	GETD(STREAM_NAME,strlen(STREAM_NAME));
+
+	return count;
 }
