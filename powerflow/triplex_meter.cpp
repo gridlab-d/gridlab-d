@@ -88,7 +88,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 
 			PT_double, "monthly_bill[$]", PADDR(monthly_bill),
 			PT_double, "previous_monthly_bill[$]", PADDR(previous_monthly_bill),
-			PT_double, "previous_monthly_energy[kWh]", PADDR(previous_monthly_bill),
+			PT_double, "previous_monthly_energy[kWh]", PADDR(previous_monthly_energy),
 			PT_double, "monthly_fee[$]", PADDR(monthly_fee),
 			PT_double, "monthly_energy[kWh]", PADDR(monthly_energy),
 			PT_enumeration, "bill_mode", PADDR(bill_mode),
@@ -123,7 +123,7 @@ int triplex_meter::create()
 	measured_power = 0;
 	measured_demand = 0;
 	last_t = dt = next_time = 0;
-
+	previous_energy_total = 0;
 
 	hourly_acc = 0.0;
 	monthly_bill = 0.0;
@@ -275,9 +275,27 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		double *pprice = (gl_get_double(power_market, price_prop));
 		price = *pprice;
 		double hrs = (double)(t1-t0);
-		hourly_acc += hrs/3600.0 * price * measured_real_power;
+		hourly_acc += hrs/3600.0 * price * measured_real_power/1000;
 
 		process_bill(t1);
+
+		if (monthly_bill == previous_monthly_bill)
+		{
+			DATETIME t_next;
+			gl_localtime(t1,&t_next);
+
+			t_next.day = bill_day;
+
+			if (t_next.month != 12)
+				t_next.month += 1;
+			else
+			{
+				t_next.month = 1;
+				t_next.year += 1;
+			}
+
+			next_time =	gl_mktime(&t_next);
+		}
 	}
 
 	rv = triplex_node::postsync(t1);
@@ -294,7 +312,7 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 	DATETIME dtime;
 	gl_localtime(t1,&dtime);
 
-	monthly_energy = measured_real_energy/1000 - previous_monthly_energy;
+	monthly_energy = measured_real_energy/1000 - previous_energy_total;
 	monthly_bill = monthly_fee;
 	switch(bill_mode){
 		case BM_NONE:
@@ -320,8 +338,10 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 	if (dtime.day == bill_day && dtime.hour == 0 && dtime.month != last_bill_month)
 	{
 		previous_monthly_bill = monthly_bill;
-		previous_monthly_energy = measured_real_energy/1000;
+		previous_monthly_energy = monthly_energy;
+		previous_energy_total = measured_real_energy/1000;
 		last_bill_month = dtime.month;
+		hourly_acc = 0;
 	}
 	
 	return monthly_bill;

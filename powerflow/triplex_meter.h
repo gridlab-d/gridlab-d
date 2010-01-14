@@ -55,6 +55,9 @@ public:
 	double process_bill(TIMESTAMP t1);
 	int check_prices();
 
+private:
+	double previous_energy_total;  // Used to track what the meter reading was the previous month
+
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
