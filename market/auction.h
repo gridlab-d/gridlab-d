@@ -63,6 +63,8 @@ public:
 
 	double avg24;		/**< daily average of price */
 	double std24;		/**< daily stdev of price */
+	double avg72;
+	double std72;
 	double avg168;		/**< weekly average of price */
 	double std168;		/**< weekly stdev of price */
 	double prices[168]; /**< price history */

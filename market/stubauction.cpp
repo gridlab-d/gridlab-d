@@ -37,6 +37,8 @@ stubauction::stubauction(MODULE *module)
 			PT_double, "next.P", PADDR(next_price),  PT_DESCRIPTION, "next cleared price",
 			PT_double, "avg24", PADDR(avg24), PT_DESCRIPTION, "daily average of price",
 			PT_double, "std24", PADDR(std24), PT_DESCRIPTION, "daily stdev of price",
+			PT_double, "avg72", PADDR(avg72), PT_DESCRIPTION, "three day price average",
+			PT_double, "std72", PADDR(std72), PT_DESCRIPTION, "three day price stdev",
 			PT_double, "avg168", PADDR(avg168), PT_DESCRIPTION, "weekly average of price",
 			PT_double, "std168", PADDR(std168), PT_DESCRIPTION, "weekly stdev of price",
 			PT_bool, "verbose", PADDR(verbose), PT_DESCRIPTION, "enable verbose stubauction operations",
@@ -71,8 +73,8 @@ TIMESTAMP stubauction::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	int i = 0;
-	int j = 0;
+	int64 i = 0;
+	int64 j = 0;
 	DATETIME dt;
 	char buffer[256];
 	char myname[64];
@@ -108,10 +110,17 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 			avg24 = 0.0;
 			for(i = 1; i <= 24 && i <= count; ++i){
-				int j = (168 - i + count) % 168;
+				j = (168 - i + count) % 168;
 				avg24 += prices[j];
 			}
 			avg24 /= (count > 24 ? 24 : count);
+
+			avg72 = 0.0;
+			for(i = 1; i <= 72 && i <= count; ++i){
+				j = (168 - i + count) % 168;
+				avg72 += prices[j];
+			}
+			avg72 /= (count > 72 ? 72 : count);
 
 			/* update the daily & weekly standard deviations */
 			std168 = 0.0;
@@ -131,6 +140,15 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			std24 -= avg24*avg24;
 			std24 = sqrt(fabs(std24));
 
+			std72 = 0.0;
+			for(i = 1; i <= 72 && i <= count; ++i){
+				j = (168 - i + count) % 168;
+				std24 += prices[j] * prices[j];
+			}
+			std24 /= (count > 72 ? 72 : count);
+			std72 -= avg72*avg72;
+			std72 = sqrt(fabs(std72));
+
 			/* update reference hour */
 			lasthr = thishr;
 		}
@@ -146,7 +164,7 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP stubauction::nextclear(void) const
 {
-	return gl_globalclock + (TIMESTAMP)(period - fmod(gl_globalclock, period));
+	return gl_globalclock + (TIMESTAMP)(period - fmod((double)gl_globalclock, period));
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -59,6 +59,8 @@ auction::auction(MODULE *module)
 			PT_double, "next.P", PADDR(next.price),  PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "next cleared price",
 			PT_double, "avg24", PADDR(avg24), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "daily average of price",
 			PT_double, "std24", PADDR(std24), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "daily stdev of price",
+			PT_double, "avg72", PADDR(avg72), PT_DESCRIPTION, "three day price average",
+			PT_double, "std72", PADDR(std72), PT_DESCRIPTION, "three day price stdev",
 			PT_double, "avg168", PADDR(avg168), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "weekly average of price",
 			PT_double, "std168", PADDR(std168), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "weekly stdev of price",
 			PT_object, "network", PADDR(network), PT_DESCRIPTION, "the comm network used by object to talk to the market (if any)",
@@ -256,6 +258,13 @@ void auction::clear_market(void)
 			}
 			avg168 /= (count > 168 ? 168 : count);
 
+			avg72 = 0.0;
+			for(i = 1; i <= 72 && i <= count; ++i){
+				int j = (168 - i + count) % 168;
+				avg72 += prices[j];
+			}
+			avg72 /= (count > 72 ? 72 : count);
+
 			avg24 = 0.0;
 			for(i = 1; i <= 24 && i <= count; ++i){
 				int j = (168 - i + count) % 168;
@@ -271,6 +280,15 @@ void auction::clear_market(void)
 			std168 /= (count > 168 ? 168 : count);
 			std168 -= avg168*avg168;
 			std168 = sqrt(fabs(std168));
+
+			std72 = 0.0;
+			for(i = 1; i <= 72 && i <= count; ++i){
+				int j = (168 - i + count) % 168;
+				std24 += prices[j] * prices[j];
+			}
+			std72 /= (count > 72 ? 72 : count);
+			std72 -= avg72*avg72;
+			std72 = sqrt(fabs(std72));
 
 			std24 = 0.0;
 			for(i = 1; i <= 24 && i <= count; ++i){
