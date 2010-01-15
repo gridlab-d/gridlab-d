@@ -68,7 +68,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"temperature[degF]",PADDR(Tw), PT_DESCRIPTION, "the outlet temperature of the water tank",
 			PT_double,"height[ft]",PADDR(h), PT_DESCRIPTION, "the height of the hot water column within the water tank",
 			PT_double,"demand[gpm]",PADDR(water_demand), PT_DESCRIPTION, "the water consumption",
-			PT_double,"acutal_load[kW]",PADDR(actual_load),PT_DESCRIPTION, "the actual load based on the current voltage across the coils",
+			PT_double,"actual_load[kW]",PADDR(actual_load),PT_DESCRIPTION, "the actual load based on the current voltage across the coils",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -759,6 +759,7 @@ double waterheater::dhdt(double h)
 
 double waterheater::actual_kW(void)
 {
+	OBJECT *obj = OBJECTHDR(this);
 	const double nominal_voltage = 240.0; //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
     static int trip_counter = 0;
 
@@ -772,7 +773,7 @@ double waterheater::actual_kW(void)
         if (actual_voltage > 2.0*nominal_voltage)
         {
             if (trip_counter++ > 10)
-                GL_THROW("Water heater line voltage is too high, exceeds twice nominal voltage.");
+				GL_THROW("Water heater line voltage for waterheater:%d is too high, exceeds twice nominal voltage.",obj->id);
 			/*	TROUBLESHOOT
 				The waterheater is receiving twice the nominal voltage consistantly, or about 480V on what
 				should be a 240V circuit.  Please sanity check your powerflow model as it feeds to the
