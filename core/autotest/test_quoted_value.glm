@@ -1,0 +1,9 @@
+// $Id$
+// Test of quoted value parsing
+//
+
+module climate;
+
+object climate {
+	name "valid" "invalid";
+}
