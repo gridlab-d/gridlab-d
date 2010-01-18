@@ -1170,17 +1170,22 @@ static int value(PARSER, char *result, int size)
 	/* everything to a semicolon */
 	char delim=';';
 	char *start=_p;
+	int quote=0;
 	START;
-	if (*_p=='"')
+	while (size>1 && *_p!='\0' && *_p!=delim && *_p!='\n') 
 	{
-		delim='"';
-		*_p++;
-		size--;
+		if (*_p=='"')
+		{
+			*_p++;
+			size--;
+			quote++;
+		}
+		else
+			COPY(result);
 	}
-	while (size>1 && *_p!='\0' && *_p!=delim && *_p!='\n') COPY(result);
 	result[_n]='\0';
-	if (delim!=';')
-		while (*_p!='\0' && *_p!=';' && *_p!='\n') _p++;
+	if (quote&1)
+		output_warning("%s(%d): missing closing double quote", filename, linenum);
 	return (int)(_p - start);
 }
 
@@ -5181,6 +5186,8 @@ STATUS loadall(char *file){
 			output_error("%s: unable to read stream", filename);
 			return FAILED;
 		}
+		else
+			load_status = SUCCESS;
 	}
 	else if (ext==NULL || strcmp(ext, ".glm")==0)
 		load_status = loadall_glm_roll(filename);
