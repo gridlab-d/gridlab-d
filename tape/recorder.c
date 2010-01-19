@@ -257,8 +257,8 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		obj->clock = t0;
 		// if the recorder is clock-based, write the value
 		if((my->interval > 0) && (my->last.ts+my->interval <= t0) && (my->last.value[0] != 0)){
-			my->last.ts = t0;
 			recorder_write(obj);
+			my->last.ts = t0;
 		}
 	}
 

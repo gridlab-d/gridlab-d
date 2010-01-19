@@ -160,8 +160,8 @@ AGGREGATION *link_aggregates(char *aggregate_list, char *group)
 			last=aggr;
 			aggr->next = NULL;
 		}
-		else
-			return NULL;
+		//else
+		//	return NULL; // allowable to have null (zero-length) aggrs
 	}
 	return first;
 }
@@ -171,6 +171,7 @@ int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
 	AGGREGATION *p;
 	int offset=0;
 	int count=0;
+
 	for (p=aggr; p!=NULL && offset<size-33; p=p->next)
 	{
 		if (offset>0) strcpy(buffer+offset++,",");
@@ -207,12 +208,12 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	if((my->status == TS_OPEN) && (t0 > obj->clock)){
 		obj->clock = t0;
 		if((my->interval > 0) && (my->last.ts + my->interval <= t0) && (my->last.value[0] != 0)){
-			my->last.ts = t0;
 			collector_write(obj);
+			my->last.ts = t0;
 		}
 	}
 
-	if(my->aggr != NULL && read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
+	if(my->aggr != NULL && (my->aggr = link_aggregates(my->property,my->group)),read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
 	{
 		sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property, my->group);
 		close_collector(my);
