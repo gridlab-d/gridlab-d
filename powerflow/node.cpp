@@ -737,6 +737,12 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			{
 				node *parNode = OBJECTDATA(SubNodeParent,node);
 				parNode->NR_connected_links[0] += NR_connected_links[0];
+
+				//Check and see if we're a house-triplex.  If so, flag our parent so NR works
+				if (house_present==true)
+				{
+					parNode->house_present=true;
+				}
 			}
 		}
 
@@ -798,6 +804,12 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			Extra_Data[3] = Extra_Data[4] = Extra_Data[5] = 0.0;
 
 			Extra_Data[6] = Extra_Data[7] = Extra_Data[8] = 0.0;
+		}
+
+		//If we're a parent and "have house", zero our accumulator
+		if ((SubNode==PARENT) && (house_present==true))
+		{
+			nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
 		}
 	}
 	else if (solver_method==SM_FBS)
@@ -1383,6 +1395,14 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					if (has_phase(PHASE_S))	//Triplex gets another term as well
 					{
 						ParToLoad->current12 +=current12-last_child_current12;
+					}
+
+					//See if we have a house!
+					if (house_present==true)	//Add our values into our parent's accumulator!
+					{
+						ParToLoad->nom_res_curr[0] += nom_res_curr[0];
+						ParToLoad->nom_res_curr[1] += nom_res_curr[1];
+						ParToLoad->nom_res_curr[2] += nom_res_curr[2];
 					}
 				}
 				else
