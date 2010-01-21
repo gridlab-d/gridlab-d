@@ -837,7 +837,7 @@ inline double waterheater::new_time_2zone(double h0, double h1)
         return -1.0;
 	dhdt1 = fabs(dhdt(h1));
 	dhdt0 = fabs(dhdt(h0));
-	double last_timestep = (log(dhdt1) - log(dhdt0)) / cb;	// [hr]
+	double last_timestep = (log(dhdt1) - log(dhdt0)) / -cb;	// [hr]
 	return last_timestep;
 }
 
