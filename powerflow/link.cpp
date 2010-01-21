@@ -1385,6 +1385,23 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 								d_mat[2][1]*vtemp[1]+
 								d_mat[2][2]*vtemp[2];
 
+				//Calculate output current
+				vtemp[0] = A_mat[0][0]*fnode->voltage[0]+
+						   A_mat[0][1]*fnode->voltage[1]+
+						   A_mat[0][2]*fnode->voltage[2]-
+						   tnode->voltage[0];
+
+				vtemp[1] = A_mat[1][0]*fnode->voltage[0]+
+						   A_mat[1][1]*fnode->voltage[1]+
+						   A_mat[1][2]*fnode->voltage[2]-
+						   tnode->voltage[1];
+
+				vtemp[2] = A_mat[2][0]*fnode->voltage[0]+
+						   A_mat[2][1]*fnode->voltage[1]+
+						   A_mat[2][2]*fnode->voltage[2]-
+						   tnode->voltage[2];
+
+
 				//Current in is just the same
 				fnode->current_inj[0] += current_in[0];
 				fnode->current_inj[1] += current_in[1];
@@ -1481,6 +1498,11 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 
 				current_in[2] = tnode->current_inj[2];			//I don't think this line ever does anything
 
+				//Cuurent out is the same as current in for triplex (simple lines)
+				current_out[0] = current_in[0];
+				current_out[1] = current_in[1];
+				current_out[2] = current_in[2];
+
 				//Current in is just the same
 				fnode->current_inj[0] += current_in[0];
 				fnode->current_inj[1] += current_in[1];
@@ -1515,6 +1537,11 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 				current_in[2] = From_Y[2][0]*vtemp[0]+
 								From_Y[2][1]*vtemp[1]+
 								From_Y[2][2]*vtemp[2];
+
+				//Current out is the same as current in for lines/simple devices
+				current_out[0] = current_in[0];
+				current_out[1] = current_in[1];
+				current_out[2] = current_in[2];
 
 				//Current in is just the same
 				fnode->current_inj[0] += current_in[0];
@@ -2082,11 +2109,20 @@ void link::calculate_power()
 		indiv_power_in[1] = f->voltage[1]*~current_in[1];
 		indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
-		if ((solver_method == SM_NR) && (SpecialLnk == SWITCH))
+		if (solver_method == SM_NR)
 		{
-			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0]*a_mat[0][0];
-			indiv_power_out[1] = t->voltage[1]*~t->current_inj[1]*a_mat[1][1];
-			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2]*a_mat[2][2];
+			if (SpecialLnk == SWITCH)
+			{
+				indiv_power_out[0] = (a_mat[0][0].Re() == 0.0) ? 0.0 : t->voltage[0]*~current_out[0];
+				indiv_power_out[1] = (a_mat[1][1].Re() == 0.0) ? 0.0 : t->voltage[1]*~current_out[1];
+				indiv_power_out[2] = (a_mat[2][2].Re() == 0.0) ? 0.0 : t->voltage[2]*~current_out[2];
+			}
+			else
+			{
+				indiv_power_out[0] = t->voltage[0]*~current_out[0];
+				indiv_power_out[1] = t->voltage[1]*~current_out[1];
+				indiv_power_out[2] = t->voltage[2]*~current_out[2];
+			}
 		}
 		else
 		{
