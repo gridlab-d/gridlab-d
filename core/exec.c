@@ -391,12 +391,18 @@ STATUS t_sync_all(PASSCONFIG pass)
 /* this function synchronizes all internal behaviors */
 TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
-	TIMESTAMP t2 = schedule_syncall(t1);
-	TIMESTAMP t = loadshape_syncall(t1); if (abs(t)<t2) t2=t;
-	t = scheduletransform_syncall(t1); if (abs(t)<t2) t2=t;
+	TIMESTAMP sc, ls, st, eu, t2;
+	sc = schedule_syncall(t1);
+	ls = loadshape_syncall(t1);// if (abs(t)<t2) t2=t;
+	st = scheduletransform_syncall(t1);// if (abs(t)<t2) t2=t;
 
-	t = enduse_syncall(t1); if (abs(t)<t2) t2=t;
+	eu = enduse_syncall(t1);// if (abs(t)<t2) t2=t;
 	/* @todo add other internal syncs here */
+	t2 = TS_NEVER;
+	if(sc < t2) t2 = sc;
+	if(ls < t2) t2 = ls;
+	if(st < t2) t2 = st;
+	if(eu < t2) t2 = eu;
 	return t2;
 }
 
@@ -515,7 +521,7 @@ STATUS exec_start(void)
 			/* set time context */
 			output_set_time_context(sync.step_to);
 
-			sync.hard_event = 0;
+			sync.hard_event = (global_stoptime == TS_NEVER ? 0 : 1);
 
 #ifndef WIN32
 			/* realtime support */

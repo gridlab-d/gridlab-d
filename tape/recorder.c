@@ -256,18 +256,31 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	{	
 		obj->clock = t0;
 		// if the recorder is clock-based, write the value
-		if((my->interval > 0) && (my->last.ts+my->interval <= t0) && (my->last.value[0] != 0)){
+		if((my->interval > 0) && (my->last.ts < t0) && (my->last.value[0] != 0)){
 			recorder_write(obj);
-			my->last.ts = t0;
+			my->last.value[0] = 0; // once it's been finalized, dump it
 		}
 	}
 
 	/* update property value */
-	if ((my->target != NULL) && (read_properties(obj->parent,my->target,buffer,sizeof(buffer))==0))
-	{
-		sprintf(buffer,"unable to read property '%s' of %s %d", my->property, obj->parent->oclass->name, obj->parent->id);
-		close_recorder(my);
-		my->status = TS_ERROR;
+	if ((my->target != NULL) && (my->interval == 0 || my->interval == -1)){	
+		if(read_properties(obj->parent,my->target,buffer,sizeof(buffer))==0)
+		{
+			sprintf(buffer,"unable to read property '%s' of %s %d", my->property, obj->parent->oclass->name, obj->parent->id);
+			close_recorder(my);
+			my->status = TS_ERROR;
+		}
+	}
+	if ((my->target != NULL) && (my->interval > 0)){
+		if((t0 >=my->last.ts + my->interval) || (t0 == my->last.ts)){
+			if(read_properties(obj->parent,my->target,buffer,sizeof(buffer))==0)
+			{
+				sprintf(buffer,"unable to read property '%s' of %s %d", my->property, obj->parent->oclass->name, obj->parent->id);
+				close_recorder(my);
+				my->status = TS_ERROR;
+			}
+			my->last.ts = t0;
+		}
 	}
 
 	/* check trigger, if any */
@@ -299,15 +312,12 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		if (my->interval==0 /* sample on every pass */
 			|| ((my->interval==-1) && my->last.ts!=t0 && strcmp(buffer,my->last.value)!=0) /* sample only when value changes */
 			)
-//			|| (my->interval>0 && my->last.ts+my->interval<=t0)) /* sample regularly */
 
 		{
 			strncpy(my->last.value,buffer,sizeof(my->last.value));
 			my->last.ts = t0;
-			//my->last.ts = obj->parent;
-//			strncpy(my->last.value,buffer,sizeof(my->last.value));
 			recorder_write(obj);
-		} else if (my->interval > 0){
+		} else if (my->interval > 0 && my->last.ts == t0){
 			strncpy(my->last.value,buffer,sizeof(my->last.value));
 		}
 	}
@@ -322,7 +332,6 @@ Error:
 
 	if (my->interval==0 || my->interval==-1) 
 	{
-		//close_recorder(my);
 		return TS_NEVER;
 	}
 	else
