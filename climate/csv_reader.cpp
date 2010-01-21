@@ -296,7 +296,7 @@ int csv_reader::read_line(char *line){
 
 	token = strtok(buffer, ",\n\r");
 	if(timefmt[0] == 0){
-		if(sscanf(token, "%i:%i:%i:%i:%i", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
+		if(sscanf(token, "%d:%d:%d:%d:%d", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
 			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with default format", token);
 			/* TROUBLESHOOT
 				The input timestamp could not be parsed.  Verify that all time strings are formatted
@@ -362,7 +362,8 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			guess_dt.hour = samples[sample_ct-i-1]->hour;
 			guess_dt.minute = samples[sample_ct-i-1]->minute;
 			guess_dt.second = samples[sample_ct-i-1]->second;
-			guess_dt.tz[0] = 0;
+			strcpy(guess_dt.tz, now.tz);
+//			strcpy(guess_dt.tz, "GMT");
 			guess_ts = (TIMESTAMP)gl_mktime(&guess_dt);
 
 			if(guess_ts < t0){
@@ -395,9 +396,10 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 		then.hour = samples[(index+1)%sample_ct]->hour;
 		then.minute = samples[(index+1)%sample_ct]->minute;
 		then.second = samples[(index+1)%sample_ct]->second;
-		then.tz[0] = 0;
+		strcpy(then.tz, now.tz);
 
 		next_ts = (TIMESTAMP)gl_mktime(&then);
+		//next_ts = (TIMESTAMP)gl_mktime(&then);
 
 		return -next_ts;
 	}
@@ -427,7 +429,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 		then.hour = samples[(index+1)%sample_ct]->hour;
 		then.minute = samples[(index+1)%sample_ct]->minute;
 		then.second = samples[(index+1)%sample_ct]->second;
-		then.tz[0] = 0;
+		strcpy(then.tz, now.tz);
 
 		// next_ts is the time the current sample is overwritten by another sample.
 		next_ts = (TIMESTAMP)gl_mktime(&then);
