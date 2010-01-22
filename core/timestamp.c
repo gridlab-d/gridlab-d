@@ -235,12 +235,12 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 	}
 	ts = tszero[dt->year-YEAR0];
 
-	if(dt->month > 12)
+	if(dt->month > 12 || dt->month < 1)
 	{
 		output_fatal("Invalid month provided in datetime");
 		return ts;
 	}
-	else if(dt->day > daysinmonth[dt->month-1])
+	else if(dt->day > daysinmonth[dt->month-1] || dt->day < 1)
 	{
 		output_fatal("Invalid day provided in datetime");
 		return ts;
@@ -252,6 +252,10 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 			ts += (daysinmonth[n - 1] + (n == 2 && ISLEAPYEAR(dt->year) ? 1 : 0)) * DAY;
 		}	
 	
+		if(dt->hour < 0 || dt->hour > 23 || dt->minute < 0 || dt->minute > 60 || dt->second < 0 || dt->second > 62){
+			output_fatal("Invalid time of day provided in datetime");
+			return ts;
+		}
 		/* add day, hour, minute, second, usecs */
 		ts += (dt->day - 1) * DAY + dt->hour * HOUR + dt->minute * MINUTE + dt->second * SECOND + dt->microsecond * MICROSECOND;
 
