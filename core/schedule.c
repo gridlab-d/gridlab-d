@@ -192,7 +192,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 	}
 
 	/* first index is always default value 0 */
-	for (index=1; (token=strtok(token==NULL?blockdef:NULL,";\r\n\t"))!=NULL; index++)
+	for (index=1; (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL; index++)
 	{
 		struct {
 			char *name;
@@ -213,7 +213,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		while (isspace(*token)) token++;
 		if (strcmp(token,"")==0)
 			continue;
-		if (sscanf(token,"%s %s %s %s %s %lf",matcher[0].pattern,matcher[1].pattern,matcher[2].pattern,matcher[3].pattern,matcher[4].pattern,&value)<5) /* value can be missing -> defaults to 1.0 */
+		if (sscanf(token,"%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%lf",matcher[0].pattern,matcher[1].pattern,matcher[2].pattern,matcher[3].pattern,matcher[4].pattern,&value)<5) /* value can be missing -> defaults to 1.0 */
 		{
 			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
 			/* TROUBLESHOOT
