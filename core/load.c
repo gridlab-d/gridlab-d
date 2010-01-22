@@ -1172,13 +1172,13 @@ static int value(PARSER, char *result, int size)
 	char *start=_p;
 	int quote=0;
 	START;
-	while (size>1 && *_p!='\0' && *_p!=delim && *_p!='\n') 
+	while (size>1 && *_p!='\0' && !(*_p==delim && quote == 0) && *_p!='\n') 
 	{
 		if (*_p=='"')
 		{
 			*_p++;
 			size--;
-			quote++;
+			quote = (1+quote) % 2;
 		}
 		else
 			COPY(result);

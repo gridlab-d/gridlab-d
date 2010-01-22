@@ -814,7 +814,7 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 	}
 
 	/* compute the time of the next schedule change */
-	sch->next_t = (dtnext==0 ? TS_NEVER : t + dtnext);
+	sch->next_t = (dtnext==0 ? TS_NEVER : t + dtnext -  t % 60);
 	return sch->next_t;
 }
 
