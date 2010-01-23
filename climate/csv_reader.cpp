@@ -98,10 +98,14 @@ int csv_reader::open(const char *file){
 		if(0 == read_header(columns_str)){
 			gl_error("csv_reader::open ~ column header read failure from explicit headers");
 			return 0;
+		} else {
+			has_cols = 1;
 		}
 	}
 	while(fgets(line, 1024, infile) > 0){
 		++linenum;
+		// consume leading whitespace?
+		// comments following valid lines?
 		if(line[0] == '#'){	// comment
 			continue;
 		}
@@ -156,7 +160,7 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 		return 0;
 	}
 
-	if(2 != sscanf(line, "%[^=]=%[^\n]", propstr, valstr)){
+	if(2 != sscanf(line, "%[^=]=%[^\n#]", propstr, valstr)){
 		gl_error("csv_reader::read_prop ~ error reading property & value");
 		/* TROUBLESHOOT
 			The line was not read properly by the parser.  Property lines must be of the format
@@ -226,15 +230,16 @@ int csv_reader::read_header(char *line){
 
 	// split column header list
 	while(index < 1024 && 0 == done){
-		while(buffer[index] != 0 && buffer[index] != ',' && buffer[index] != '\n' && buffer[index] != '\r'){
+		while(buffer[index] != 0 && buffer[index] != ',' && buffer[index] != '\n' && buffer[index] != '\r' && buffer[index] != '#'){
 			++index;
 		}
 		if(buffer[index] == ','){
 			buffer[index] = 0;
 			++index;
 		}
-		if(buffer[index] == '\n' || buffer[index] == '\r')
+		if(buffer[index] == '\n' || buffer[index] == '\r' || buffer[index] == '#'){
 			buffer[index] = 0;
+		}
 
 		temp = (struct cmnlist *)malloc(sizeof(struct cmnlist));
 		temp->name = buffer+start_idx;
