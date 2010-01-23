@@ -141,40 +141,29 @@ int transformer::init(OBJECT *parent)
 				zt_c = complex(0,0);
 			}
 			
-			if (has_phase(PHASE_A))
-			{
-				A_mat[0][0] = (zc - zt_a) / ( complex(nt_a,0) * (zc + zt_a));
-				a_mat[0][0] = complex(1,0) / A_mat[0][0];
-			}
-
-			if (has_phase(PHASE_B))
-			{
-				A_mat[1][1] = (zc - zt_b) / ( complex(nt_b,0) * (zc + zt_b));
-				a_mat[1][1] = complex(1,0) / A_mat[1][1];
-			}
-
-			if (has_phase(PHASE_C))
-			{
-				A_mat[2][2] = (zc - zt_c) / ( complex(nt_c,0) * (zc + zt_c));
-				a_mat[2][2] = complex(1,0) / A_mat[2][2];
-			}
-
 			if (solver_method==SM_FBS)
 			{
 				if (has_phase(PHASE_A))
 				{
+					A_mat[0][0] = (zc - zt_a) / ( complex(nt_a,0) * (zc + zt_a));
+					a_mat[0][0] = complex(1,0) / A_mat[0][0];
 					b_mat[0][0] = zt_a / A_mat[0][0];
 					d_mat[0][0] = (zt_a + zc) / ( complex(nt_a,0) * zc);
+
 				}
 
 				if (has_phase(PHASE_B))
 				{
+					A_mat[1][1] = (zc - zt_b) / ( complex(nt_b,0) * (zc + zt_b));
+					a_mat[1][1] = complex(1,0) / A_mat[1][1];
 					b_mat[1][1] = zt_b / A_mat[1][1];
 					d_mat[1][1] = (zt_b + zc) / ( complex(nt_b,0) * zc);
 				}
 
 				if (has_phase(PHASE_C))
 				{
+					A_mat[2][2] = (zc - zt_c) / ( complex(nt_c,0) * (zc + zt_c));
+					a_mat[2][2] = complex(1,0) / A_mat[2][2];
 					b_mat[2][2] = zt_c / A_mat[2][2];
 					d_mat[2][2] = (zt_c + zc) / ( complex(nt_c,0) * zc);
 				}
@@ -191,13 +180,27 @@ int transformer::init(OBJECT *parent)
 				if (has_phase(PHASE_C))
 					b_mat[2][2] = (zc - zt) / ((zc + zt) * zt);
 
-				//Same with me
+				//Other matrices
+				A_mat[0][1] = A_mat[0][2] = A_mat[1][0] = A_mat[1][2] = A_mat[2][0] = A_mat[2][1] = 0.0;
 				if (has_phase(PHASE_A))
+				{
+					a_mat[0][0] = ( complex(nt_a,0) * (zc + zt_a)) / (zc - zt_a);
 					d_mat[0][0] = Izt / nt / nt;
+					A_mat[0][0] = nt_a;
+				}
 				if (has_phase(PHASE_B))
+				{
+					a_mat[1][1] = ( complex(nt_b,0) * (zc + zt_b)) / (zc - zt_b);
 					d_mat[1][1] = Izt / nt / nt;
+					A_mat[1][1] = nt_b;
+				}
 				if (has_phase(PHASE_C))
+				{
+					a_mat[2][2] = ( complex(nt_c,0) * (zc + zt_c)) / (zc - zt_c);
 					d_mat[2][2] = Izt / nt / nt;
+					A_mat[2][2] = nt_c;
+				}
+
 
 			}
 			else 
@@ -247,10 +250,9 @@ int transformer::init(OBJECT *parent)
 				d_mat[1][1] = Izt / nt / nt;
 				d_mat[2][2] = Izt / nt / nt;
 
-				//Generic other matrices that don't get used for NR
+				//Current conversion matrix
+				A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = nt;
 
-				A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(2.0) / (nt * 3.0);
-				A_mat[0][1] = A_mat[0][2] = A_mat[1][0] = A_mat[1][2] = A_mat[2][0] = A_mat[2][1] = complex(-1.0) / (nt * 3.0);
 			}
 			else 
 			{
@@ -305,7 +307,7 @@ int transformer::init(OBJECT *parent)
 
 				complex alphaval = voltage_ratio * sqrt(3.0);
 
-				nt *=sqrt(3.0);	//Adjustment for other matrices
+				nt *= sqrt(3.0);	//Adjustment for other matrices
 
 				if (voltage_ratio>1.0) //Step down
 				{

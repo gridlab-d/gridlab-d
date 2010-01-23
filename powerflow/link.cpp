@@ -761,7 +761,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 						From_Y[1][0] = From_Y[1][1] = From_Y[1][2] = From_Y[2][2] = 0.0;
 					}
 					else
-						GL_THROW("NR: Unknown phsae configuration on split-phase transformer");
+						GL_THROW("NR: Unknown phase configuration on split-phase transformer");
 						/*  TROUBLESHOOT
 						An unknown phase configuration has been entered for a split-phase,
 						center-tapped transformer.  The Newton-Raphson solver does not know how to
@@ -1355,7 +1355,7 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 			complex itemp[3];
 			complex current_temp[3];
 
-			if ((voltage_ratio!=1.0) && (SpecialLnk != DELTAGWYE) && (SpecialLnk != SPLITPHASE))
+			if ((voltage_ratio!=1.0) && (SpecialLnk != DELTAGWYE) && (SpecialLnk != SPLITPHASE) && (SpecialLnk != REGULATOR))
 			{
 				//(-a*Vout+Vin)
 				vtemp[0] = fnode->voltage[0]-
@@ -1385,28 +1385,72 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 								d_mat[2][1]*vtemp[1]+
 								d_mat[2][2]*vtemp[2];
 
-				//Calculate output current
-				vtemp[0] = A_mat[0][0]*fnode->voltage[0]+
-						   A_mat[0][1]*fnode->voltage[1]+
-						   A_mat[0][2]*fnode->voltage[2]-
-						   tnode->voltage[0];
+				//Calculate current out
+				current_out[0] = A_mat[0][0]*current_in[0]+
+								 A_mat[0][1]*current_in[1]+
+								 A_mat[0][2]*current_in[2];
 
-				vtemp[1] = A_mat[1][0]*fnode->voltage[0]+
-						   A_mat[1][1]*fnode->voltage[1]+
-						   A_mat[1][2]*fnode->voltage[2]-
-						   tnode->voltage[1];
+				current_out[1] = A_mat[1][0]*current_in[0]+
+								 A_mat[1][1]*current_in[1]+
+								 A_mat[1][2]*current_in[2];
 
-				vtemp[2] = A_mat[2][0]*fnode->voltage[0]+
-						   A_mat[2][1]*fnode->voltage[1]+
-						   A_mat[2][2]*fnode->voltage[2]-
-						   tnode->voltage[2];
-
+				current_out[2] = A_mat[2][0]*current_in[0]+
+								 A_mat[2][1]*current_in[1]+
+								 A_mat[2][2]*current_in[2];
 
 				//Current in is just the same
 				fnode->current_inj[0] += current_in[0];
 				fnode->current_inj[1] += current_in[1];
 				fnode->current_inj[2] += current_in[2];
 			}//end normal transformers
+			else if (SpecialLnk == REGULATOR)
+			{
+				//(-a*Vout+Vin)
+				vtemp[0] = fnode->voltage[0]-
+						   a_mat[0][0]*tnode->voltage[0]-
+						   a_mat[0][1]*tnode->voltage[1]-
+						   a_mat[0][2]*tnode->voltage[2];
+
+				vtemp[1] = fnode->voltage[1]-
+						   a_mat[1][0]*tnode->voltage[0]-
+						   a_mat[1][1]*tnode->voltage[1]-
+						   a_mat[1][2]*tnode->voltage[2];
+
+				vtemp[2] = fnode->voltage[2]-
+						   a_mat[2][0]*tnode->voltage[0]-
+						   a_mat[2][1]*tnode->voltage[1]-
+						   a_mat[2][2]*tnode->voltage[2];
+
+				current_out[0] = From_Y[0][0]*vtemp[0]+
+								 From_Y[0][1]*vtemp[1]+
+								 From_Y[0][2]*vtemp[2];
+
+				current_out[1] = From_Y[1][0]*vtemp[0]+
+								 From_Y[1][1]*vtemp[1]+
+								 From_Y[1][2]*vtemp[2];
+
+				current_out[2] = From_Y[2][0]*vtemp[0]+
+								From_Y[2][1]*vtemp[1]+
+								From_Y[2][2]*vtemp[2];
+
+				//Calculate current_in based on current_out (backwards, isn't it?)
+				current_in[0] = d_mat[0][0]*current_out[0]+
+								d_mat[0][1]*current_out[1]+
+								d_mat[0][2]*current_out[2];
+
+				current_in[1] = d_mat[1][0]*current_out[0]+
+								d_mat[1][1]*current_out[1]+
+								d_mat[1][2]*current_out[2];
+
+				current_in[2] = d_mat[2][0]*current_out[0]+
+								d_mat[2][1]*current_out[1]+
+								d_mat[2][2]*current_out[2];
+
+				//Current in is just the same
+				fnode->current_inj[0] += current_in[0];
+				fnode->current_inj[1] += current_in[1];
+				fnode->current_inj[2] += current_in[2];
+			}
 			else if (SpecialLnk == DELTAGWYE)
 			{
 				vtemp[0]=fnode->voltage[0]*a_mat[0][0]+
@@ -1424,23 +1468,23 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 						 fnode->voltage[2]*a_mat[2][2]-
 						 tnode->voltage[2];
 
-				//Get low side current
-				itemp[0] = vtemp[0] * b_mat[0][0];
-				itemp[1] = vtemp[1] * b_mat[1][1];
-				itemp[2] = vtemp[2] * b_mat[2][2];
+				//Get low side current (current out)
+				current_out[0] = vtemp[0] * b_mat[0][0];
+				current_out[1] = vtemp[1] * b_mat[1][1];
+				current_out[2] = vtemp[2] * b_mat[2][2];
 
 				//Translate back to high-side
-				current_in[0] = d_mat[0][0]*itemp[0]+
-								d_mat[0][1]*itemp[1]+
-								d_mat[0][2]*itemp[2];
+				current_in[0] = d_mat[0][0]*current_out[0]+
+								d_mat[0][1]*current_out[1]+
+								d_mat[0][2]*current_out[2];
 
-				current_in[1] = d_mat[1][0]*itemp[0]+
-								d_mat[1][1]*itemp[1]+
-								d_mat[1][2]*itemp[2];
+				current_in[1] = d_mat[1][0]*current_out[0]+
+								d_mat[1][1]*current_out[1]+
+								d_mat[1][2]*current_out[2];
 
-				current_in[2] = d_mat[2][0]*itemp[0]+
-								d_mat[2][1]*itemp[1]+
-								d_mat[2][2]*itemp[2];
+				current_in[2] = d_mat[2][0]*current_out[0]+
+								d_mat[2][1]*current_out[1]+
+								d_mat[2][2]*current_out[2];
 
 				//Current in is just the same
 				fnode->current_inj[0] += current_in[0];
@@ -1458,6 +1502,15 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 
 					current_in[0] = itemp[0];
 					fnode->current_inj[0] += itemp[0];
+
+					//calculate current out
+					current_out[0] = fnode->voltage[0]*b_mat[0][2]+
+									 tnode->voltage[0]*b_mat[0][0]+
+									 tnode->voltage[1]*b_mat[0][1];
+
+					current_out[1] = fnode->voltage[0]*b_mat[1][2]+
+									 tnode->voltage[0]*b_mat[1][0]+
+									 tnode->voltage[1]*b_mat[1][1];
 				}
 				else if (has_phase(PHASE_B))
 				{
@@ -1467,6 +1520,16 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 
 					current_in[1] = itemp[0];
 					fnode->current_inj[1] += itemp[0];
+
+					//calculate current out
+					current_out[0] = fnode->voltage[1]*b_mat[0][2]+
+									 tnode->voltage[0]*b_mat[0][0]+
+									 tnode->voltage[1]*b_mat[0][1];
+
+					current_out[1] = fnode->voltage[1]*b_mat[1][2]+
+									 tnode->voltage[0]*b_mat[1][0]+
+									 tnode->voltage[1]*b_mat[1][1];
+
 				}
 				else if (has_phase(PHASE_C))
 				{
@@ -1476,6 +1539,15 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 
 					current_in[2] = itemp[0];
 					fnode->current_inj[2] += itemp[0];
+
+					//calculate current out
+					current_out[0] = fnode->voltage[2]*b_mat[0][2]+
+									 tnode->voltage[0]*b_mat[0][0]+
+									 tnode->voltage[1]*b_mat[0][1];
+
+					current_out[1] = fnode->voltage[2]*b_mat[1][2]+
+									 tnode->voltage[0]*b_mat[1][0]+
+									 tnode->voltage[1]*b_mat[1][1];
 				}
 
 			}//end split-phase, center tapped xformer
@@ -1994,37 +2066,71 @@ void link::calculate_power_splitphase()
 	node *f = OBJECTDATA(from, node);
 	node *t = OBJECTDATA(to, node);
 
-	if (SpecialLnk!=SPLITPHASE) 
+	if (solver_method == SM_NR)
 	{
-		//Original code - attempted to split so single phase matches three phase in terms of output capabilities
-		//power_in = (f->voltage[0]*~current_in[0] - f->voltage[1]*~current_in[1] + f->voltage[2]*~current_in[2]).Mag();
-		//power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
-			
-		//Follows convention of three phase calculations below
-		indiv_power_in[0] = f->voltage[0]*~current_in[0];
-		indiv_power_in[1] = complex(-1.0) * f->voltage[1]*~current_in[1];
-		indiv_power_in[2] = f->voltage[2]*~current_in[2];
+		if (SpecialLnk!=SPLITPHASE) 
+		{
+			//Original code - attempted to split so single phase matches three phase in terms of output capabilities
+			//power_in = (f->voltage[0]*~current_in[0] - f->voltage[1]*~current_in[1] + f->voltage[2]*~current_in[2]).Mag();
+			//power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
+				
+			//Follows convention of three phase calculations below
+			indiv_power_in[0] = f->voltage[0]*~current_in[0];
+			indiv_power_in[1] = complex(-1.0) * f->voltage[1]*~current_in[1];
+			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
-		indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
-		indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~t->current_inj[1];
-		indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
+			indiv_power_out[0] = t->voltage[0]*~current_out[0];
+			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~current_out[1];
+			indiv_power_out[2] = t->voltage[2]*~current_out[2];
+		}
+		else  
+		{
+			//Original code - attempted to split so matches three phase below
+			//power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
+			//power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
+			//Follows convention of three phase calculations below
+			indiv_power_in[0] = f->voltage[0]*~current_in[0];
+			indiv_power_in[1] = f->voltage[1]*~current_in[1];
+			indiv_power_in[2] = f->voltage[2]*~current_in[2];
+
+			indiv_power_out[0] = t->voltage[0]*~current_out[0];
+			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~current_out[1];
+			indiv_power_out[2] = t->voltage[2]*~current_out[2];
+
+		}
 	}
-	else  
+	else
 	{
-		//Original code - attempted to split so matches three phase below
-		//power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
-		//power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
-		//Follows convention of three phase calculations below
-		indiv_power_in[0] = f->voltage[0]*~current_in[0];
-		indiv_power_in[1] = f->voltage[1]*~current_in[1];
-		indiv_power_in[2] = f->voltage[2]*~current_in[2];
+		if (SpecialLnk!=SPLITPHASE) 
+		{
+			//Original code - attempted to split so single phase matches three phase in terms of output capabilities
+			//power_in = (f->voltage[0]*~current_in[0] - f->voltage[1]*~current_in[1] + f->voltage[2]*~current_in[2]).Mag();
+			//power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
+				
+			//Follows convention of three phase calculations below
+			indiv_power_in[0] = f->voltage[0]*~current_in[0];
+			indiv_power_in[1] = complex(-1.0) * f->voltage[1]*~current_in[1];
+			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
-		indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
-		indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~t->current_inj[1];
-		indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
+			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
+			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~t->current_inj[1];
+			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
+		}
+		else  
+		{
+			//Original code - attempted to split so matches three phase below
+			//power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
+			//power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
+			//Follows convention of three phase calculations below
+			indiv_power_in[0] = f->voltage[0]*~current_in[0];
+			indiv_power_in[1] = f->voltage[1]*~current_in[1];
+			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
+			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
+			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~t->current_inj[1];
+			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
+		}
 	}
-	
 	//Set direction flag.  Can be a little odd in split phase, since circulating currents.
 	set_flow_directions();
 
@@ -2090,35 +2196,24 @@ void link::calculate_power()
 		node *f = OBJECTDATA(from, node);
 		node *t = OBJECTDATA(to, node);
 
-		if ((SpecialLnk == REGULATOR) && (solver_method == SM_NR))	//Regulators are mostly lost-less right now, so implement similar to FBS
-		{
-			current_in[0] = d_mat[0][0]*t->current_inj[0]+
-							d_mat[0][1]*t->current_inj[1]+
-							d_mat[0][2]*t->current_inj[2];
-
-			current_in[1] = d_mat[1][0]*t->current_inj[0]+
-							d_mat[1][1]*t->current_inj[1]+
-							d_mat[1][2]*t->current_inj[2];
-
-			current_in[2] = d_mat[2][0]*t->current_inj[0]+
-							d_mat[2][1]*t->current_inj[1]+
-							d_mat[2][2]*t->current_inj[2];
-		}
-
-		indiv_power_in[0] = f->voltage[0]*~current_in[0];
-		indiv_power_in[1] = f->voltage[1]*~current_in[1];
-		indiv_power_in[2] = f->voltage[2]*~current_in[2];
-
 		if (solver_method == SM_NR)
 		{
 			if (SpecialLnk == SWITCH)
 			{
+				indiv_power_in[0] = (a_mat[0][0].Re() == 0.0) ? 0.0 : f->voltage[0]*~current_in[0];
+				indiv_power_in[1] = (a_mat[1][1].Re() == 0.0) ? 0.0 : f->voltage[1]*~current_in[1];
+				indiv_power_in[2] = (a_mat[2][2].Re() == 0.0) ? 0.0 : f->voltage[2]*~current_in[2];
+
 				indiv_power_out[0] = (a_mat[0][0].Re() == 0.0) ? 0.0 : t->voltage[0]*~current_out[0];
 				indiv_power_out[1] = (a_mat[1][1].Re() == 0.0) ? 0.0 : t->voltage[1]*~current_out[1];
 				indiv_power_out[2] = (a_mat[2][2].Re() == 0.0) ? 0.0 : t->voltage[2]*~current_out[2];
 			}
 			else
 			{
+				indiv_power_in[0] = f->voltage[0]*~current_in[0];
+				indiv_power_in[1] = f->voltage[1]*~current_in[1];
+				indiv_power_in[2] = f->voltage[2]*~current_in[2];
+
 				indiv_power_out[0] = t->voltage[0]*~current_out[0];
 				indiv_power_out[1] = t->voltage[1]*~current_out[1];
 				indiv_power_out[2] = t->voltage[2]*~current_out[2];
@@ -2126,6 +2221,10 @@ void link::calculate_power()
 		}
 		else
 		{
+			indiv_power_in[0] = f->voltage[0]*~current_in[0];
+			indiv_power_in[1] = f->voltage[1]*~current_in[1];
+			indiv_power_in[2] = f->voltage[2]*~current_in[2];
+
 			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
 			indiv_power_out[1] = t->voltage[1]*~t->current_inj[1];
 			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
