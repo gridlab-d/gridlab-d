@@ -16,6 +16,7 @@ clock {
 module powerflow { solver_method NR; };
 module assert;
 
+
 object overhead_line_conductor:100 {
 	geometric_mean_radius 0.0244;
 	resistance 0.306;
@@ -71,6 +72,21 @@ object overhead_line:12 {
 	to node2;
 	length 2000;
 	configuration line_configuration:300;
+	object complex_assert {
+		target current_in_A;
+		within 5;
+		value 347.9-34.9d;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 5;
+		value 323.7-154.2d;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 5;
+		value 336.8+85.0d;
+	};
 }
 
 object node {
@@ -134,6 +150,21 @@ object overhead_line:34 {
 	to load4;
 	length 2500;
 	configuration line_configuration:300;
+	object complex_assert {
+		target current_in_A;
+		within 5;
+		value 1042.8-34.9d;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 5;
+		value 970.2-154.2d;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 5;
+		value 1009.6+85.0d;
+	};
 }
 
 object load {

@@ -67,6 +67,21 @@ object overhead_line:12 {
 	to node:2;
 	length 2000;
 	configuration line_configuration:300;
+	object complex_assert {
+		target current_in_A;
+		within 10;
+		value 230.1-35.9d;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 10;
+		value 345.7-152.6d;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 10;
+		value 455.1+84.7d;
+	};
 }
 
 object node:2 {
@@ -128,6 +143,21 @@ object overhead_line:34 {
 	to load:4;
 	length 2500;
 	configuration line_configuration:300;
+	object complex_assert {
+		target current_in_A;
+		within 10;
+		value 689.7-35.9d;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 10;
+		value 1036.0-152.6d;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 10;
+		value 1364.0+84.7d;
+	};
 }
 
 object load:4 {

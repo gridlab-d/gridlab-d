@@ -12,6 +12,7 @@ clock {
 //#define stylesheet="C:\Users\Jason\Documents\GridLAB-D\trunk\VS2005\gridlabd-2_0";
 module powerflow;
 module assert;
+module tape;
 
 object overhead_line_conductor:100 {
 	geometric_mean_radius 0.0244;
@@ -63,6 +64,27 @@ object overhead_line:12 {
 	to node:2;
 	length 2000;
 	configuration line_configuration:300;
+	object recorder {
+		file "line12.csv";
+		interval 1;
+		limit 1000;
+		property current_out_A,current_out_B,current_out_C,current_in_A,current_in_B,current_in_C,phases,status,from,to,power_in,power_out,power_losses,flow_direction,length,configuration;
+	};
+	object complex_assert {
+		target current_in_A;
+		within 5;
+		value 335.0-35.7d;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 5;
+		value 331.8-154.0d;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 5;
+		value 341.6+85.6d;
+	};
 }
 
 object node:2 {
@@ -124,6 +146,27 @@ object overhead_line:34 {
 	to load:4;
 	length 2500;
 	configuration line_configuration:300;
+	object recorder {
+		file "line34.csv";
+		interval 1;
+		limit 1000;
+		property current_out_A,current_out_B,current_out_C,current_in_A,current_in_B,current_in_C,phases,status,from,to,power_in,power_out,power_losses,flow_direction,length,configuration;
+	};
+	object complex_assert {
+		target current_in_A;
+		within 5;
+		value 1041.9-64.9d;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 10;
+		value 973.7+175.9d;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 5;
+		value 1007.0+55.0d;
+	};
 }
 
 object load:4 {

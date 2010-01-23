@@ -15,6 +15,7 @@ clock {
 //#define stylesheet="C:\Users\Jason\Documents\GridLAB-D\trunk\VS2005\gridlabd-2_0";
 module powerflow;
 module assert;
+module tape;
 
 object overhead_line_conductor:100 {
 	geometric_mean_radius 0.0244;
@@ -70,6 +71,27 @@ object overhead_line:12 {
 	to node2;
 	length 2000;
 	configuration line_configuration:300;
+	object recorder {
+		file "line12.csv";
+		interval 1;
+		limit 1000;
+		property current_out_A,current_out_B,current_out_C,current_in_A,current_in_B,current_in_C,phases,status,from,to,power_in,power_out,power_losses,flow_direction,length,configuration;
+	};
+	object complex_assert {
+		target current_in_A;
+		within 5;
+		value 347.9-34.9d;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 5;
+		value 323.7-154.2d;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 5;
+		value 336.8+85.0d;
+	};
 }
 
 object node {
@@ -79,6 +101,12 @@ object node {
 	voltage_B -3599.779-6235.000j;
 	voltage_C -3599.779+6235.000j;
 	nominal_voltage 7199.558;
+	object recorder {
+		file "yybsd2.csv";
+		interval 1;
+		limit 1000;
+		property voltage_A,voltage_B,voltage_C,voltage_AB,voltage_BC,voltage_CA,current_A,current_B,current_C,power_A,power_B,power_C,shunt_A,shunt_B,shunt_C;
+	};
 	object complex_assert {
 		target voltage_A;
 		within 5;
@@ -110,6 +138,12 @@ object node {
 	voltage_B -1200.889-2080.000j;
 	voltage_C -1200.889+2080.000j;
 	nominal_voltage 2401.777;
+	object recorder {
+		file "yybsd3.csv";
+		interval 1;
+		limit 1000;
+		property voltage_A,voltage_B,voltage_C,voltage_AB,voltage_BC,voltage_CA,current_A,current_B,current_C,power_A,power_B,power_C,shunt_A,shunt_B,shunt_C;
+	};
 	object complex_assert {
 		target voltage_A;
 		within 5;
@@ -133,8 +167,35 @@ object overhead_line:34 {
 	to load4;
 	length 2500;
 	configuration line_configuration:300;
+	object recorder {
+		file "line34.csv";
+		interval 1;
+		limit 1000;
+		property current_out_A,current_out_B,current_out_C,current_in_A,current_in_B,current_in_C,phases,status,from,to,power_in,power_out,power_losses,flow_direction,length,configuration;
+	};
+	object complex_assert {
+		target current_in_A;
+		within 5;
+		value 1042.8-34.9d;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 5;
+		value 970.2-154.2d;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 5;
+		value 1009.6+85.0d;
+	};
 }
 
+// node resets current to 0 at the end of every sync
+// pubish new public variable in link.h; in postsync
+// look @ both NR & FB -> focus on NR but FB should still work
+// NR only solves well-conditioned systems; FB will solve any system
+// go back to FB
+// Kersting will include everything but center-tapped transformers
 object load {
 	name load4;
 	phases "ABCN";
@@ -145,6 +206,12 @@ object load {
 	constant_power_B +1800000.000+871779.789j;
 	constant_power_C +1800000.000+871779.789j;
 	nominal_voltage 2401.777;
+	object recorder {
+		file "yybsd4.csv";
+		interval 1;
+		limit 1000;
+		property voltage_A,voltage_B,voltage_C,voltage_AB,voltage_BC,voltage_CA,current_A,current_B,current_C,power_A,power_B,power_C,shunt_A,shunt_B,shunt_C;
+	};
 	object complex_assert {
 		target voltage_A;
 		within 5;
