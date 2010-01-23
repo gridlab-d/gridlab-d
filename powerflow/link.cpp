@@ -130,6 +130,12 @@ link::link(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "power_losses_A[VA]", PADDR(indiv_power_loss[0]),
 			PT_complex, "power_losses_B[VA]", PADDR(indiv_power_loss[1]),
 			PT_complex, "power_losses_C[VA]", PADDR(indiv_power_loss[2]),
+			PT_complex, "current_out_A[A]", PADDR(read_I_out[0]),
+			PT_complex, "current_out_B[A]", PADDR(read_I_out[1]),
+			PT_complex, "current_out_C[A]", PADDR(read_I_out[2]),
+			PT_complex, "current_in_A[A]", PADDR(read_I_in[0]),
+			PT_complex, "current_in_B[A]", PADDR(read_I_in[1]),
+			PT_complex, "current_in_C[A]", PADDR(read_I_in[2]),
 			PT_set, "flow_direction", PADDR(flow_direction),
 				PT_KEYWORD, "UNKNOWN", (set)FD_UNKNOWN,
 				PT_KEYWORD, "AF", (set)FD_A_NORMAL,
@@ -1693,17 +1699,22 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 	if ((solver_method==SM_FBS))
 	{
 		node *f;
-		node *t;
+		node *t; //@# make else/if statement for solver method NR; & set current_out->to t->node current_inj;
 		set reverse = get_flow(&f,&t);
 
+		// update published current_out values;
+		read_I_out[0] = t->current_inj[0];
+		read_I_out[1] = t->current_inj[1];
+		read_I_out[2] = t->current_inj[2];
+		
 		if (!is_open())
 		{
 			/* compute and update voltages */
 			complex v;
 			v = A_mat[0][0] * f->voltage[0] +
-				A_mat[0][1] * f->voltage[1] +
-				A_mat[0][2] * f->voltage[2] -
-				B_mat[0][0] * t->current_inj[0] -
+				A_mat[0][1] * f->voltage[1] + // 
+				A_mat[0][2] * f->voltage[2] - //@todo current inj; flowing from t node
+				B_mat[0][0] * t->current_inj[0] - // current injection put into link from end mode
 				B_mat[0][1] * t->current_inj[1] -
 				B_mat[0][2] * t->current_inj[2];
 			LOCKED(to, t->voltage[0] = v);
@@ -1721,6 +1732,7 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 				B_mat[2][1] * t->current_inj[1] -
 				B_mat[2][2] * t->current_inj[2];
 			LOCKED(to, t->voltage[2] = v);
+
 #ifdef SUPPORT_OUTAGES		
 			t->condition=f->condition;
 		}
@@ -1847,6 +1859,11 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		power_in = ((fnode->voltage[0]*~current_in[0]).Mag() + (fnode->voltage[1]*~current_in[1]).Mag() + (fnode->voltage[2]*~current_in[2]).Mag());
 		power_out = ((tnode->voltage[0]*~current_out[0]).Mag() + (tnode->voltage[1]*~current_out[1]).Mag() + (tnode->voltage[2]*~current_out[2]).Mag());
 	}
+	 // updates published current_in variable
+		read_I_in[0] = current_in[0];
+		read_I_in[1] = current_in[1];
+		read_I_in[2] = current_in[2];
+
 
 	// This portion can be removed once tape/recorders are being updated in commit.
 	if (solver_method == SM_FBS || (solver_method == SM_NR && NR_cycle == true))

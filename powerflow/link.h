@@ -67,6 +67,8 @@ public:
 	OBJECT *to;				///< to_node - load node
 	complex current_in[3];		///< current flow to link (w.r.t from node)
 	complex current_out[3];	///< current flow out of link (w.r.t. to node)
+	complex read_I_in[3];	///< published current flow to link (w.r.t from node)
+	complex read_I_out[3];  ///< published current flow out of link (w.r.t to node)
 	complex power_in;		///< power flow in (w.r.t from node)
 	complex power_out;		///< power flow out (w.r.t to node)
 	complex power_loss;		///< power loss in transformer
