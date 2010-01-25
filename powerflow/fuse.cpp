@@ -94,6 +94,9 @@ int fuse::init(OBJECT *parent)
 		area or utilize another object (such as a circuit breaker in a house model) to limit the current flow.
 		*/
 
+	//Special flag moved to be universal for all solvers - mainly so phase checks catch it now
+	SpecialLnk = SWITCH;
+
 	int result = link::init(parent);
 
 	if (current_limit<=0.0)
@@ -157,7 +160,7 @@ int fuse::init(OBJECT *parent)
 	}
 	else if (solver_method==SM_NR)
 	{
-		SpecialLnk = SWITCH;	//Flag us as a switch, since we'll work the same way anyways
+		//Flagged us as a switch, since we'll work the same way anyways
 
 		//Check to see which phases we have
 		//Phase A

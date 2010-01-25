@@ -717,7 +717,8 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			/* TROUBLESHOOT
 			A node has more phases present than it has sources coming in.  Under the Forward-Back sweep algorithm,
 			the system should be strictly radial.  This scenario implies either a meshed system or unconnected
-			phases between the from and to nodes of a connected line.  Please adjust the phases appropriately.
+			phases between the from and to nodes of a connected line.  Please adjust the phases appropriately.  Also
+			be sure no open switches are the sole connection for a phase, else this will fail as well.
 			*/
 		}
 	}

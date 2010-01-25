@@ -320,8 +320,8 @@ int link::init(OBJECT *parent)
 	phase_f_test = (fNode->phases & phases_test);		//Will need to be handled differently if in the future explicit N/G phases are introduced.
 	phase_t_test = (tNode->phases & phases_test);	
 																		
-	if ((SpecialLnk==DELTAGWYE) | (SpecialLnk==SPLITPHASE))	//Delta-Gwye and Split-phase transformers will cause problems, handle special
-	{
+	if ((SpecialLnk==DELTAGWYE) | (SpecialLnk==SPLITPHASE) | (SpecialLnk==SWITCH))	//Delta-Gwye and Split-phase transformers will cause problems, handle special.
+	{																				//Switches/fuses have the potential, so put them in here too.
 		if (SpecialLnk==SPLITPHASE)
 		{
 			phase_f_test &= ~(PHASE_S);	//Pull off the single phase portion of from node
@@ -334,7 +334,7 @@ int link::init(OBJECT *parent)
 				have at least the phases of the line connecting them.
 				*/
 		}
-		else	//Has to be D-Gwye then
+		else if (SpecialLnk==DELTAGWYE)	//D-Gwye then
 		{
 			phase_t_test &= ~(PHASE_N | PHASE_D);	//Pull off the neutral and Delta phase portion of from node (no idea if ABCD or ABCN would be convention)
 			phase_f_test &= ~(PHASE_N | PHASE_D);	//Pull off the neutral and Delta phase portion of to node
@@ -342,6 +342,21 @@ int link::init(OBJECT *parent)
 			if ((phase_f_test != (phases & ~(PHASE_N | PHASE_D))) || (phase_t_test != (phases & ~(PHASE_N | PHASE_D))))	//Phase mismatch on the line
 				GL_THROW("line:%d - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 				//Defined above
+		}
+		else	//Must be a switch then
+		{
+			//Do an initial check just to make sure the connection is physically possible
+			if ((phase_f_test != phases_test) || (phase_t_test != phases_test))	//Phase mismatch on the line
+				GL_THROW("switch:%d - %s has a phase mismatch at one or both ends",obj->id,obj->name);
+				//Defined above
+
+			//Now only update if we are closed
+			if (status==LS_CLOSED)
+			{
+				//Set up the phase test on the to node to make sure all are hit (only do to node)
+				tNode->busphasesIn |= phases_test;
+				fNode->busphasesOut |= phases_test;
+			}
 		}
 	}
 	else												//Everything else

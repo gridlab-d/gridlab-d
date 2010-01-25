@@ -93,6 +93,9 @@ int switch_object::create()
 
 int switch_object::init(OBJECT *parent)
 {
+	//Special flag moved to be universal for all solvers - mainly so phase checks catch it now
+	SpecialLnk = SWITCH;
+
 	int result = link::init(parent);
 
 	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = (is_closed() && has_phase(PHASE_A) ? 1.0 : 0.0);
@@ -107,8 +110,7 @@ int switch_object::init(OBJECT *parent)
 	}
 	else
 	{
-		//Flag it as special (we'll forgo inversion processes on this)
-		SpecialLnk = SWITCH;
+		//Flagged it as special (we'll forgo inversion processes on this)
 
 		//Initialize off-diagonals just in case
 		From_Y[0][1] = From_Y[0][2] = From_Y[1][0] = 0.0;
