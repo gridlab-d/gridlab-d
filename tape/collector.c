@@ -160,8 +160,8 @@ AGGREGATION *link_aggregates(char *aggregate_list, char *group)
 			last=aggr;
 			aggr->next = NULL;
 		}
-		//else
-		//	return NULL; // allowable to have null (zero-length) aggrs
+		else
+			return NULL; // allowable to have null (zero-length) aggrs, but only give time-varying aggregates
 	}
 	return first;
 }
@@ -207,17 +207,32 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	
 	if((my->status == TS_OPEN) && (t0 > obj->clock)){
 		obj->clock = t0;
-		if((my->interval > 0) && (my->last.ts + my->interval <= t0) && (my->last.value[0] != 0)){
+		if((my->interval > 0) && (my->last.ts < t0) && (my->last.value[0] != 0)){
 			collector_write(obj);
-			my->last.ts = t0;
+			//my->last.ts = t0;
+			my->last.value[0] = 0;
 		}
 	}
 
-	if(my->aggr != NULL && (my->aggr = link_aggregates(my->property,my->group)),read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
-	{
-		sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property, my->group);
-		close_collector(my);
-		my->status = TS_ERROR;
+	//if(my->aggr != NULL && (my->aggr = link_aggregates(my->property,my->group)),read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
+	if(my->aggr != NULL && (my->interval == 0 || my->interval == -1)){
+		if(read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
+		{
+			sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property, my->group);
+			close_collector(my);
+			my->status = TS_ERROR;
+		}
+	}
+
+	if(my->aggr != NULL && my->interval > 0){
+		if((t0 >= my->last.ts + my->interval) || (t0 == my->last.ts)){
+			if(read_aggregates(my->aggr,buffer,sizeof(buffer))==0){
+				sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property, my->group);
+				close_collector(my);
+				my->status = TS_ERROR;
+			}
+			my->last.ts = t0;
+		}
 	}
 
 	/* check trigger, if any */
@@ -250,7 +265,7 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			strncpy(my->last.value, buffer, sizeof(my->last.value));
 			my->last.ts = t0;
 			collector_write(obj);
-		} else if(my->interval > 0){
+		} else if(my->interval > 0 && my->last.ts == t0){
 			strncpy(my->last.value, buffer, sizeof(my->last.value));
 		}
 	}
