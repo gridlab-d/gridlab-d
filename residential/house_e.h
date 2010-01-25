@@ -174,59 +174,59 @@ public:
 	set auxiliary_strategy;
 
 	typedef enum{
-		AT_UNKNOWN,
-		AT_NONE,
-		AT_ELECTRIC,
+		AT_UNKNOWN = 0,
+		AT_NONE = 1,
+		AT_ELECTRIC = 2,
 	} AUXILIARYSYSTEMTYPE;
 	AUXILIARYSYSTEMTYPE auxiliary_system_type;
 
 	typedef enum{
-		HT_UNKNOWN,
-		HT_NONE,
-		HT_GAS,
-		HT_HEAT_PUMP,
-		HT_RESISTANCE,
+		HT_UNKNOWN = 0,
+		HT_NONE = 1,
+		HT_GAS = 2,
+		HT_HEAT_PUMP = 3,
+		HT_RESISTANCE = 4,
 	} HEATSYSTEMTYPE;
 	HEATSYSTEMTYPE heating_system_type;
 
 	typedef enum {
-		CT_UNKNOWN,
-		CT_NONE,
-		CT_ELECTRIC,
+		CT_UNKNOWN = 0,
+		CT_NONE = 1,
+		CT_ELECTRIC = 2,
 	} COOLSYSTEMTYPE;
 	COOLSYSTEMTYPE cooling_system_type;
 
 	typedef enum {
-		FT_UNKNOWN,
-		FT_NONE,
-		FT_ONE_SPEED,
-		FT_TWO_SPEED,
+		FT_UNKNOWN = 0,
+		FT_NONE = 1,
+		FT_ONE_SPEED = 2,
+		FT_TWO_SPEED = 3,
 	} FANTYPE;
 	FANTYPE fan_type;
 
 	typedef enum {
-		GM_OTHER,
-		GM_GLASS,
-		GM_LOW_E_GLASS,
+		GM_OTHER = 0,
+		GM_GLASS = 1,
+		GM_LOW_E_GLASS = 2,
 	} GLASSTYPE;
 	GLASSTYPE glass_type;
 
 	typedef enum {
-		WF_NONE,
-		WF_ALUMINUM,
-		WF_THERMAL_BREAK,
-		WF_WOOD,
-		WF_INSULATED,
+		WF_NONE = 0,
+		WF_ALUMINUM = 1,
+		WF_THERMAL_BREAK = 2,
+		WF_WOOD = 3,
+		WF_INSULATED = 4,
 	} WINDOWFRAME;
 	WINDOWFRAME window_frame;
 
 	typedef enum {
-		GT_OTHER,
-		GT_CLEAR,
-		GT_ABS,
-		GT_REFL,
-		GT_LOW_S,
-		GT_HIGH_S,
+		GT_OTHER = 0,
+		GT_CLEAR = 1,
+		GT_ABS = 2,
+		GT_REFL = 3,
+		GT_LOW_S = 4,
+		GT_HIGH_S = 5,
 	} GLAZINGTREATMENT;
 	GLAZINGTREATMENT glazing_treatment;
 
@@ -278,7 +278,9 @@ public:
 		SM_AUX		=3,				///< supplemental heating
 		SM_COOL		=4,				///< cooling mode
 	} SYSTEMMODE;					///< system mode
-	SYSTEMMODE system_mode;			///< system mode at t1
+	SYSTEMMODE system_mode,			///< system mode at t1
+		last_system_mode;
+	int64 last_mode_timer;
 
 	// derived/calculated variables
 	double volume;					///< house_e air volume

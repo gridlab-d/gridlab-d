@@ -644,6 +644,12 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD,"OFF",SM_OFF,
 				PT_KEYWORD,"COOL",SM_COOL,
 				PT_KEYWORD,"AUX",SM_AUX,
+			PT_enumeration,"last_system_mode",PADDR(last_system_mode),PT_DESCRIPTION,"heating/cooling system operation state",
+				PT_KEYWORD,"UNKNOWN",SM_UNKNOWN,
+				PT_KEYWORD,"HEAT",SM_HEAT,
+				PT_KEYWORD,"OFF",SM_OFF,
+				PT_KEYWORD,"COOL",SM_COOL,
+				PT_KEYWORD,"AUX",SM_AUX,
 			PT_enumeration,"heating_system_type",PADDR(heating_system_type),
 				PT_KEYWORD,"NONE",HT_NONE,
 				PT_KEYWORD,"GAS",HT_GAS,
@@ -702,6 +708,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD, "AVERAGE", ME_AVERAGE,
 				PT_KEYWORD, "GOOD", ME_GOOD,
 				PT_KEYWORD, "VERY_GOOD", ME_VERY_GOOD,
+			PT_int64, "last_mode_timer", PADDR(last_mode_timer),
 			PT_double, "hvac_motor_efficiency[unit]", PADDR(hvac_motor_efficiency), PT_DESCRIPTION, "when using motor model, percent efficiency of hvac motor",
 			PT_double, "hvac_motor_loss_power_factor[unit]", PADDR(hvac_motor_loss_power_factor), PT_DESCRIPTION, "when using motor model, power factor of motor losses",
 			PT_double, "Rroof[degF.sf.h/Btu]", PADDR(Rroof),PT_DESCRIPTION,"roof R-value",
@@ -1334,6 +1341,8 @@ void house_e::set_window_Rvalue(){
 				}
 				break;
 		}
+	} else {//if(glass_type == GM_OTHER){
+		Rwindows = 2.0;
 	}
 }
 /** Map circuit variables to meter.  Initalize house_e and HVAC model properties,
@@ -1449,8 +1458,10 @@ int house_e::init(OBJECT *parent)
 	set_thermal_integrity();
 
 	//	COP only affects heat pumps
-	if (heating_COP<=0.0)		heating_COP = 2.5;
-	if (cooling_COP<=0.0)		cooling_COP = 3.5;
+	if (heating_COP==0.0)		heating_COP = 2.5;
+	if (heating_COP < 0.0)		heating_COP = -heating_COP;
+	if (cooling_COP==0.0)		cooling_COP = 3.5;
+	if (cooling_COP < 0.0)		cooling_COP = -cooling_COP;
 
 	if (number_of_stories < 1.0)
 		number_of_stories = 1.0;
@@ -1559,7 +1570,9 @@ int house_e::init(OBJECT *parent)
 	}
 
     if (system_mode==SM_UNKNOWN) system_mode = SM_OFF;	// heating/cooling mode {HEAT, COOL, OFF}
-	
+	if (last_system_mode == SM_UNKNOWN) last_system_mode = SM_OFF;
+	if (last_mode_timer == 0) last_mode_timer = 3600*6; // six hours
+
 	if (aux_heat_capacity<=0.0 && auxiliary_system_type != AT_NONE)
 	{
 		double round_value = 0.0;
@@ -2112,12 +2125,14 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t2 = TS_NEVER, t;
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
-
+	
+	outside_temperature = *pTout;
+	
 	if (*NR_mode == false)
 	{
 		/* update HVAC power before panel sync */
 		if (t0==0 || t1>t0){
-			outside_temperature = *pTout;
+
 
 			// update the state of the system
 			update_system(dt1);
@@ -2321,6 +2336,24 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		return TS_NEVER; // next time will be calculated in sync_model
 	}
 
+	if(t0 < thermostat_last_cycle_time + last_mode_timer){
+		last_system_mode = SM_OFF;
+	}
+
+	switch(system_mode){
+		case SM_HEAT:
+		case SM_AUX:
+			if(cooling_setpoint - heating_setpoint < thermostat_deadband){
+				cooling_setpoint = heating_setpoint + thermostat_deadband;
+			}
+			break;
+		case SM_COOL:
+			if(cooling_setpoint - heating_setpoint < thermostat_deadband){
+				heating_setpoint = cooling_setpoint - thermostat_deadband;
+			}
+			break;
+	}
+
 	// check for deadband overlap
 	if ((cooling_setpoint-tdead<heating_setpoint+tdead) &&
 //		(system_type&ST_AC))
@@ -2347,7 +2380,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				 || (auxiliary_strategy & AX_TIMER	 && t0 >= thermostat_last_cycle_time + aux_heat_time_delay))
 				 || (auxiliary_strategy & AX_LOCKOUT && *pTout <= aux_heat_temp_lockout)
 				){
-				system_mode = SM_AUX;
+				last_system_mode = system_mode = SM_AUX;
 				thermostat_last_cycle_time = t1;
 			} else if(Tair > TheatOff - terr/2){
 				system_mode = SM_OFF;
@@ -2371,7 +2404,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 //				(system_type&ST_AC))
 				(cooling_system_type != CT_NONE ))
 			{
-				system_mode = SM_COOL;
+				last_system_mode = system_mode = SM_COOL;
 				thermostat_last_cycle_time = t1;
 			}
 			else if(Tair < TheatOn - terr/2)
@@ -2382,12 +2415,12 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 					(auxiliary_strategy & AX_DEADBAND) && // turn aux on if deadband is set
 					(!(auxiliary_strategy & AX_LOCKOUT) || (*pTout <= aux_heat_temp_lockout))) // If the air of the house is 2x outside the deadband range, it needs AUX help
 				{
-					system_mode = SM_AUX;
+					last_system_mode = system_mode = SM_AUX;
 					thermostat_last_cycle_time = t1;
 				}
 				else
 				{
-					system_mode = SM_HEAT;
+					last_system_mode = system_mode = SM_HEAT;
 					thermostat_last_cycle_time = t1;
 				}
 			}
