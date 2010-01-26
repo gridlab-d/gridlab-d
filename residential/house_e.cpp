@@ -2340,13 +2340,14 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		last_system_mode = SM_OFF;
 	}
 
-	switch(system_mode){
+	switch(last_system_mode){
 		case SM_HEAT:
 		case SM_AUX:
 			if(cooling_setpoint - heating_setpoint < thermostat_deadband){
 				cooling_setpoint = heating_setpoint + thermostat_deadband;
 			}
 			break;
+		case SM_OFF: //Let's make the assumption that cooling wins in this case.
 		case SM_COOL:
 			if(cooling_setpoint - heating_setpoint < thermostat_deadband){
 				heating_setpoint = cooling_setpoint - thermostat_deadband;
