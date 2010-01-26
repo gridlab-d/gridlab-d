@@ -240,11 +240,9 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 	line *LineDevice;
 	line_configuration *LineConfig;
 	triplex_line_configuration *TripLineConfig;
-	node *TempNode;
 	overhead_line_conductor *OHConductor;
 	underground_line_conductor *UGConductor;
 	triplex_line_conductor *TLConductor;
-	double max_volt_error;
 	int64 pf_result;
 	int fidx, tidx, pidx;
 	double cont_rating;
@@ -262,12 +260,6 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 
 	//Pull out fault check object info
 	fault_check *FaultyObject = OBJECTDATA(faultobj,fault_check);
-
-	//Find the maximum voltage error for the NR solver - use the swing bus (since normal NR solver just does that)
-	tempobj = gl_get_object(NR_busdata[0].name);	//Get object link - 0 should be swing bus
-	TempNode = OBJECTDATA(tempobj,node);			//Get the node link
-
-	max_volt_error = TempNode->nominal_voltage * default_maximum_voltage_error;	//Calculate the maximum voltage error
 
 	//Now we go into two while loops so reconfigurations are attempted until a solution is found (or limits are reached)
 	while (reconfig_number < reconfig_attempts)	//Reconfiguration count loop
@@ -371,7 +363,7 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 			pf_bad_computations = false;	//Reset singularity checker
 
 			//Perform NR solver
-			pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, max_volt_error, &pf_bad_computations);
+			pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &pf_bad_computations);
 
 			//De-flag any admittance changes (so other iterations don't take longer
 			NR_admit_change = false;

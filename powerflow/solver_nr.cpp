@@ -89,7 +89,7 @@ void merge_sort(Y_NR *Input_Array, unsigned int Alen, Y_NR *Work_Array){	//Merge
 	n>0 to indicate success after n interations, or 
 	n<0 to indicate failure after n iterations
  **/
-int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, double max_voltage_error, bool *bad_computations)
+int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, bool *bad_computations)
 {
 	//Internal iteration counter - just NR limits
 	int64 Iteration;
@@ -2924,6 +2924,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		temp_index = -1;
 		temp_index_b = -1;
+		newiter = false;	//Reset iteration requester flag - defaults to not needing another
 
 		for (indexer=0; indexer<bus_count; indexer++)
 		{
@@ -3025,8 +3026,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						
 						//Pull off the magnitude (no sense calculating it twice)
 						CurrConvVal=DVConvCheck[jindex].Mag();
-						if (CurrConvVal > Maxmismatch)	//Update our convergence check if it is bigger
-							Maxmismatch=CurrConvVal;
+						if (CurrConvVal > bus[indexer].max_volt_error)	//Check for convergence
+							newiter=true;								//Flag that a new iteration must occur
+
+						if (CurrConvVal > Maxmismatch)	//See if the current differential is the largest found so far or not
+							Maxmismatch = CurrConvVal;	//It is, store it
 
 					}//End For loop for phase traversion
 				}//End not split phase update
@@ -3040,15 +3044,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		//Turn off reallocation flag no matter what
 		NR_realloc_needed = false;
 		
-		//New convergence test - voltage check
-		newiter=false;
-		if ( Maxmismatch <= max_voltage_error)
-		{
-			gl_verbose("Power flow calculation converges at Iteration %d \n",Iteration-1);
-		}
-		else if ( Maxmismatch > max_voltage_error)
-			newiter = true;
-
 		/* De-allocate storage - superLU matrix types must be destroyed at every iteration, otherwise they balloon fast (65 MB norma becomes 1.5 GB) */
 #ifdef WIN32
 		//superLU_MT commands
@@ -3063,8 +3058,13 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		//Break us out if we are done or are singular		
 		if (( newiter == false ) || (info!=0))
+		{
+			if (newiter == false)
+			{
+				gl_verbose("Power flow calculation converges at Iteration %d \n",Iteration+1);
+			}
 			break;
-
+		}
 	}	//End iteration loop
 
 	//Check to see how we are ending

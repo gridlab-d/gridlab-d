@@ -29,6 +29,7 @@ typedef struct  {
 	double Jacob_C[3];		// Element c in equation (39), which is used to update the Jacobian matrix at each iteration
 	double Jacob_D[3];		// Element d in equation (40), which is used to update the Jacobian matrix at each iteration
 	unsigned int Matrix_Loc;// Starting index of this object's place in all matrices/equations
+	double max_volt_error;	///< Maximum voltage error specified for that node
 	char *name;				///< original name
 } BUSDATA;
 
@@ -59,6 +60,6 @@ typedef struct {
 } Bus_admit;
 
 
-int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, double max_voltage_error, bool *bad_computations);
+int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, bool *bad_computations);
 
 #endif

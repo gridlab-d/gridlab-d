@@ -1572,7 +1572,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				{
 					bool bad_computation=false;
 
-					int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, maximum_voltage_error, &bad_computation);
+					int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &bad_computation);
 
 					//De-flag the change
 					NR_admit_change = false;
@@ -2365,6 +2365,9 @@ int *node::NR_populate(void)
 
 		//Link our name in
 		NR_busdata[NR_curr_bus].name = me->name;
+
+		//Link our maximum error vlaue
+		NR_busdata[NR_curr_bus].max_volt_error = maximum_voltage_error;
 
 		//Populate voltage
 		NR_busdata[NR_curr_bus].V = &voltage[0];
