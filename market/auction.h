@@ -14,10 +14,12 @@
 #include "gridlabd.h"
 
 /** Bid structure for markets */
+typedef enum {BS_UNKNOWN=0, BS_OFF=1, BS_ON=2} BIDDERSTATE;
 typedef struct s_bid {
 	OBJECT *from;		/**< object from which bid was received */
 	double quantity; 	/**< bid quantity (negative is sell, positive is buy */
 	double price; 		/**< bid price */
+	BIDDERSTATE state;	/**< state of bidder (unknown=0, off=1, on=2) */
 } BID;
 typedef int KEY;
 
@@ -29,6 +31,8 @@ private:
 	BID *bids;
 	KEY *keys;
 	double total;
+	double total_on;
+	double total_off;
 private:
 	static void sort(BID *list, KEY *keys, const int len, const bool reverse);
 public:
@@ -40,7 +44,9 @@ public:
 	KEY resubmit(BID *bid, KEY key);
 	void sort(bool reverse=false);
 	BID *getbid(KEY n);
-	inline double get_total() { return total;} 
+	inline double get_total() { return total;};
+	inline double get_total_on() { return total_on;};
+	inline double get_total_off() { return total_off;};
 };
 
 class auction {
@@ -77,7 +83,7 @@ public:
 	OBJECT *linkref;	/**< reference link object that contains power_out (see Qload) */
 	
 public:
-	KEY submit(OBJECT *from, double quantity, double price, KEY key=-1);
+	KEY submit(OBJECT *from, double quantity, double price, KEY key=-1, BIDDERSTATE state=BS_UNKNOWN);
 	TIMESTAMP nextclear() const;
 	void clear_market(void);
 public:

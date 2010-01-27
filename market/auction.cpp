@@ -36,6 +36,20 @@ EXPORT int64 submit_bid(OBJECT *obj, OBJECT *from, double quantity, double price
 	}
 }
 
+EXPORT int64 submit_bid_state(OBJECT *obj, OBJECT *from, double quantity, double price, unsigned int is_on, KEY bid_id)
+{
+	char biddername[64];
+	if (obj->oclass==auction::oclass)
+	{
+		auction *mkt = OBJECTDATA(obj,auction);
+		return mkt->submit(from,quantity,price,bid_id,is_on?BS_ON:BS_OFF);
+	}
+	else
+	{
+		gl_error("%s submitted a bid to an object that is not an auction", gl_name(from,biddername,sizeof(biddername)));
+		return -1;
+	}
+}
 /* Class registration is only called once to register the class with the core */
 auction::auction(MODULE *module)
 {
@@ -69,6 +83,7 @@ auction::auction(MODULE *module)
 			PT_double, "pricecap", PADDR(pricecap), PT_DESCRIPTION, "the maximum price (magnitude) allowed",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		gl_publish_function(oclass,	"submit_bid", (FUNCTIONADDR)submit_bid);
+		gl_publish_function(oclass,	"submit_bid_state", (FUNCTIONADDR)submit_bid_state);
 		defaults = this;
 		memset(this,0,sizeof(auction));
 	}
@@ -181,10 +196,11 @@ void auction::clear_market(void)
 	/* handle linkref */
 	if (Qload!=NULL)
 	{	
+		double total_unknown = asks.get_total() - asks.get_total_on() - asks.get_total_off();
 		BID unresponsive;
 		unresponsive.from = linkref;
 		unresponsive.price = pricecap;
-		unresponsive.quantity = *Qload - asks.get_total();
+		unresponsive.quantity = *Qload - asks.get_total_on() - total_unknown/2; /* estimate load on as 1/2 unknown load */
 		asks.submit(&unresponsive);
 	}
 	
@@ -350,7 +366,7 @@ void auction::clear_market(void)
 	else if (next.price>pricecap) next.price = pricecap;
 }
 
-KEY auction::submit(OBJECT *from, double quantity, double price, KEY key)
+KEY auction::submit(OBJECT *from, double quantity, double price, KEY key, BIDDERSTATE state)
 {
 	if (key>=0) // resubmit
 	{
@@ -359,7 +375,7 @@ KEY auction::submit(OBJECT *from, double quantity, double price, KEY key)
 		if (verbose) gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s", 
 			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
 			fabs(quantity), unit, price, unit);
-		BID bid = {from,fabs(quantity),price};
+		BID bid = {from,fabs(quantity),price,state};
 		if (quantity<0)
 			return asks.resubmit(&bid,key);
 		else if (quantity>0)
@@ -509,7 +525,18 @@ KEY curve::submit(BID *bid)
 	keys[n_bids] = n_bids;
 	BID *next = bids + n_bids;
 	*next = *bid;
+
+	/* handle bid state */
+	switch (bid->state) {
+	case BS_OFF:
+		total_off += bid->quantity;
+		break;
+	case BS_ON:
+		total_on += bid->quantity;
+		break;
+	}
 	total += bid->quantity;
+
 	return n_bids++;
 }
 
@@ -517,7 +544,31 @@ KEY curve::resubmit(BID *bid, KEY key)
 {
 	if (key<n_bids)
 	{
+		/* undo effect of old state */
+		BID *old = &(bids[keys[key]]);
+		switch (old->state) {
+		case BS_OFF:
+			total_off -= old->quantity;
+			break;
+		case BS_ON:
+			total_on -= old->quantity;
+			break;
+		}
+		total -= old->quantity;
+
+		/* replace old bid with new bid */
 		bids[keys[key]] = *bid;
+
+		/* impose effect of new state */
+		switch (bid->state) {
+		case BS_OFF:
+			total_off += bid->quantity;
+			break;
+		case BS_ON:
+			total_on += bid->quantity;
+			break;
+		}
+		total += bid->quantity;
 		return key;
 	}
 	else
