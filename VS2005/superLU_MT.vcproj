@@ -110,7 +110,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\third_party\superLU_MT\Need;..\third_party\superLU_MT\SRC"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_PTHREAD"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_PTHREAD;_CRT_SECURE_NO_WARNINGS;"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
