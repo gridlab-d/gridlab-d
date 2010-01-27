@@ -1859,6 +1859,8 @@ void house_e::update_system(double dt)
 	double heating_capacity_adj = design_heating_capacity*(0.34148808 + 0.00894102*(*pTout) + 0.00010787*(*pTout)*(*pTout)); 
 	double cooling_capacity_adj = design_cooling_capacity*(1.48924533 - 0.00514995*(*pTout));
 	adj_heating_cap = heating_capacity_adj;//variable for debug purposes
+
+	latent_load_fraction = 0.3 / (1 + exp(4-10*(*pRhout)));
 	
 #pragma message("house_e: add update_system voltage adjustment for heating")
 	double voltage_adj = (((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0) * load.impedance_fraction + ((pCircuit_V[0]).Mag() / 240.0) * load.current_fraction + load.power_fraction);
@@ -1889,7 +1891,7 @@ void house_e::update_system(double dt)
 				sys_rated_cap = system_rated_capacity;//debug variable
 				break;
 			case HT_HEAT_PUMP:
-				heating_demand = design_heating_capacity / heating_cop_adj * KWPBTUPH;
+				heating_demand = heating_capacity_adj / heating_cop_adj * KWPBTUPH;
 				system_rated_capacity = heating_capacity_adj*voltage_adj + fan_power*BTUPHPKW;
 				system_rated_power = heating_demand;
 				sys_rated_cap = system_rated_capacity;//debug variable
@@ -1942,7 +1944,7 @@ void house_e::update_system(double dt)
 				sys_rated_cap = system_rated_capacity;//debug variable
 				break;
 			case CT_ELECTRIC:
-				cooling_demand = design_cooling_capacity / cooling_cop_adj * KWPBTUPH;
+				cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
 				system_rated_capacity = -cooling_capacity_adj / (1 + latent_load_fraction) + fan_power*BTUPHPKW;
 				system_rated_power = cooling_demand;
 				sys_rated_cap = system_rated_capacity;//debug variable
@@ -2126,13 +2128,11 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER, t;
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
 	
-	outside_temperature = *pTout;
-	
 	if (*NR_mode == false)
 	{
 		/* update HVAC power before panel sync */
 		if (t0==0 || t1>t0){
-
+			outside_temperature = *pTout;
 
 			// update the state of the system
 			update_system(dt1);
