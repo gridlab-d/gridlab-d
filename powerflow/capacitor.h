@@ -26,6 +26,7 @@ public:
 	double capacitor_A;			// Capacitance value for phase A or phase AB
 	double capacitor_B;			// Capacitance value for phase B or phase BC
 	double capacitor_C;			// Capacitance value for phase C or phase CA
+	CAPCONTROL control;			// control operation strategy; 0 - manual, 1 - VAr, 2- voltage, 3 - VAr primary,voltage backup.
 	CAPCONTROL2 control_level;  // define bank or individual control
 	CAPSWITCH switchA_state;	// capacitor A switch open or close
 	CAPSWITCH switchB_state;	// capacitor B switch open or close
@@ -37,7 +38,6 @@ public:
 	double lockout_time;		// Time for capacitor to remain locked out from further switching operations (VARVOLT control)
 
 protected:
-	CAPCONTROL control;			// control operation strategy; 0 - manual, 1 - VAr, 2- voltage, 3 - VAr primary,voltage backup.
 	int64 time_to_change;       // time until state change
 	int64 dwell_time_left;		// time until dwell interval is met
 	int64 lockout_time_left_A;	// time until lockout interval is met for phase A
