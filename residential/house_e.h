@@ -107,12 +107,11 @@ public:
 	double design_heating_setpoint;	///< design heating setpoint (degF)
 	double design_cooling_setpoint;	///< design cooling setpoint (degF)
 	double design_heating_capacity;	///< space heating capacity (BTUh/sf)
-	double adj_heating_cap;
 	double design_cooling_capacity;	///< space cooling capacity (BTUh/sf)
 	double heating_COP;				///< space heating COP
 	double cooling_COP;				///< space cooling COP
-	double adj_heating_cop;
-	double sol_inc;
+	double sol_inc;//debug variable so we can look at Qs. Qs is the total rate of solar energy in the house. Note that a 
+	//fraction of Qs is applied to the air according to the value of air_heat_fraction. The remaining is applied to the mass
 	double over_sizing_factor;		///< Future: equipment over sizing factor
 	double rated_heating_capacity;	///< rated heating capacity of the system (BTUh/sf; varies w.r.t Tout),
 	double rated_cooling_capacity;	///< rated cooling capacity of the system (BTUh/sf; varies w.r.t Tout)
@@ -146,7 +145,6 @@ public:
 	// current hvac properties
 	double system_rated_power;		///< rated power of the system
 	double system_rated_capacity;	///< rated capacity of the system
-	double sys_rated_cap;
 
 	/* inherited res_enduse::load is hvac system load */
 	double hvac_load;
@@ -286,7 +284,12 @@ public:
 	double volume;					///< house_e air volume
 	double air_mass;				///< mass of air (lbs)
 	double air_thermal_mass;		///< thermal mass of air (BTU/F)
-	double solar_load;				///< solar load (BTU/h)
+	double solar_load;				///< solar load (BTU/h) is set equal to Qs
+	//Qs reads in data that is assumed to be in W/sf and
+	//converts the data into Btu/hr.
+	//please note that the product of 
+	//gross_wall_area*window_wall_ratio*glazing_shgc*window_exterior_transmission_coefficient should be the
+	//same as the equivalent solar aperature located in Rob Pratt's ETP Excel spreadsheet.
 	double cooling_design_temperature;
 	double heating_design_temperature;
 	double design_peak_solar;
