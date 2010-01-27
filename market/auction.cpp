@@ -65,6 +65,8 @@ auction::auction(MODULE *module)
 			PT_double, "std168", PADDR(std168), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "weekly stdev of price",
 			PT_object, "network", PADDR(network), PT_DESCRIPTION, "the comm network used by object to talk to the market (if any)",
 			PT_bool, "verbose", PADDR(verbose), PT_DESCRIPTION, "enable verbose auction operations",
+			PT_object, "linkref", PADDR(linkref), PT_DESCRIPTION, "reference to link object that has demand as power_out (only used when not all loads are bidding)",
+			PT_double, "pricecap", PADDR(pricecap), PT_DESCRIPTION, "the maximum price (magnitude) allowed",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		gl_publish_function(oclass,	"submit_bid", (FUNCTIONADDR)submit_bid);
 		defaults = this;
@@ -78,6 +80,7 @@ int auction::create(void)
 	memcpy(this,defaults,sizeof(auction));
 	lasthr = thishr = -1;
 	verbose = 0;
+	pricecap = 0;
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -102,6 +105,23 @@ int auction::init(OBJECT *parent)
 		return 0;
 	}
 #endif
+	if (linkref!=NULL)
+	{
+		if (!gl_object_isa(linkref,"link","powerflow"))
+		{
+			gl_error("%s (auction:%d) linkref '%s' does not reference a powerflow link object", obj->name?obj->name:"anonymous", obj->id, linkref->name);
+			return 0;
+		}
+		Qload = (double*)gl_get_addr(linkref,"power_out");
+		if (Qload==NULL)
+		{
+			gl_error("%s (auction:%d) linkref '%s' does not publish power_out", obj->name?obj->name:"anonymous", obj->id, linkref->name);
+			return 0;
+		}
+	}
+	else
+		Qload = NULL;
+	if (pricecap==0) pricecap=9999;
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -158,10 +178,20 @@ TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 void auction::clear_market(void)
 {
+	/* handle linkref */
+	if (Qload!=NULL)
+	{	
+		BID unresponsive;
+		unresponsive.from = linkref;
+		unresponsive.price = pricecap;
+		unresponsive.quantity = *Qload - asks.get_total();
+		asks.submit(&unresponsive);
+	}
+	
 	/* sort the bids */
 	offers.sort(false);
 	asks.sort(true);
-	
+
 	if (asks.getcount()>0 && offers.getcount()>0)
 	{
 		/* clear market */
@@ -314,6 +344,10 @@ void auction::clear_market(void)
 	/* clear the bid lists */
 	asks.clear();
 	offers.clear();
+
+	/* limit price */
+	if (next.price<-pricecap) next.price = -pricecap;
+	else if (next.price>pricecap) next.price = pricecap;
 }
 
 KEY auction::submit(OBJECT *from, double quantity, double price, KEY key)
@@ -432,6 +466,7 @@ curve::curve(void)
 	bids = NULL;
 	keys = NULL;
 	n_bids = 0;
+	total = 0;
 }
 
 curve::~curve(void)
@@ -443,6 +478,7 @@ curve::~curve(void)
 void curve::clear(void)
 {
 	n_bids = 0;
+	total = 0;
 }
 
 BID *curve::getbid(KEY n)
@@ -473,6 +509,7 @@ KEY curve::submit(BID *bid)
 	keys[n_bids] = n_bids;
 	BID *next = bids + n_bids;
 	*next = *bid;
+	total += bid->quantity;
 	return n_bids++;
 }
 

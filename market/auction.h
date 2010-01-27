@@ -28,6 +28,7 @@ private:
 	int n_bids;
 	BID *bids;
 	KEY *keys;
+	double total;
 private:
 	static void sort(BID *list, KEY *keys, const int len, const bool reverse);
 public:
@@ -39,6 +40,7 @@ public:
 	KEY resubmit(BID *bid, KEY key);
 	void sort(bool reverse=false);
 	BID *getbid(KEY n);
+	inline double get_total() { return total;} 
 };
 
 class auction {
@@ -46,6 +48,7 @@ public:
 	bool verbose;
 	typedef enum {AT_NONE=0, AT_SINGLE=1, AT_DOUBLE=2} AUCTIONTYPE;
 private:
+	double *Qload;		/**< total load (used to determine unresponsive load when not all load bid) */
 	curve asks;			/**< demand curve */ 
 	curve offers;		/**< supply curve */
 protected:
@@ -60,6 +63,7 @@ public:
 	TIMESTAMP clearat;	/**< next clearing time */
 	TIMESTAMP checkat;	/**< next price check time */
 	object network;		/**< comm network to use */
+	double pricecap;	/**< maximum price allowed */
 
 	double avg24;		/**< daily average of price */
 	double std24;		/**< daily stdev of price */
@@ -70,6 +74,7 @@ public:
 	double prices[168]; /**< price history */
 	int64 count;		/**< number of prices in history */
 	int16 lasthr, thishr;
+	OBJECT *linkref;	/**< reference link object that contains power_out (see Qload) */
 	
 public:
 	KEY submit(OBJECT *from, double quantity, double price, KEY key=-1);

@@ -393,7 +393,7 @@ static char *setup_class(CLASS *oclass)
 	static char buffer[65536] = "";
 	int len = 0;
 	PROPERTY *prop;
-	len += sprintf(buffer+len,"\tOBJECT obj; obj.oclass = oclass; %s *t = (%s*)(&obj)+1;\n",oclass->name,oclass->name);
+	len += sprintf(buffer+len,"\tOBJECT obj; obj.oclass = oclass; %s *t = (%s*)((&obj)+1);\n",oclass->name,oclass->name);
 	//len += sprintf(buffer+len,"\tif (callback->define_map(oclass,\n");
 	len += sprintf(buffer+len,"\toclass->size = sizeof(%s);\n", oclass->name);
 	for (prop=oclass->pmap; prop!=NULL; prop=prop->next)
