@@ -19,22 +19,27 @@ public:
 		CONNECT_TYPE_MAX
 	} connect_type;
 				
-	enum Contro1 {
+	typedef enum {
 		MANUAL=1,
-		OUTPUT_VOLTAGE,
-		REMOTE_NODE,
-		LINE_DROP_COMP
-	} Control;
+		OUTPUT_VOLTAGE=2,
+		REMOTE_NODE=3,
+		LINE_DROP_COMP=4
+	} Control_enum;
 
-	enum control_level {
+	typedef enum {
 		INDIVIDUAL=1,
-		BANK
-	} control_level;
+		BANK=2
+	} control_level_enum;
 
 	enum Type {
 		A = 1,
 		B
 	} Type;
+
+
+	//Split out for access in other objects, rather than an in-line declaration like Type and connect_type above
+	Control_enum Control;
+	control_level_enum control_level;
 
 	/* get_name acquires the name of an object or 'unnamed' if non set */
 	inline const char *get_name(void) const { static char tmp[64]; OBJECT *obj=OBJECTHDR(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};
