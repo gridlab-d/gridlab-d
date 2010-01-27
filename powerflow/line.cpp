@@ -91,6 +91,9 @@ int line::init(OBJECT *parent)
 	if (pFrom->nominal_voltage != pTo->nominal_voltage)
 		throw "from and to node nominal voltage mismatch";
 
+	if (solver_method == SM_NR && length == 0.0)
+		throw "Newton-Raphson method does not support zero length lines at this time";
+
 	return result;
 }
 

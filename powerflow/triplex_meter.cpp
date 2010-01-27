@@ -222,7 +222,8 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		measured_current[1] = current_inj[1];
 		measured_current[2] = current_inj[2];
 
-		if (dt > 0 && last_t != dt)
+//		if (dt > 0 && last_t != dt)
+		if (dt > 0)
 		{	
 			measured_real_energy += measured_real_power * TO_HOURS(dt);
 			measured_reactive_energy += measured_reactive_power * TO_HOURS(dt);
@@ -245,59 +246,65 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		if (measured_real_power>measured_demand) 
 			measured_demand=measured_real_power;
 
-	}
 	
-	if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
-	{
-		process_bill(t1);
-
-		// Decide when the next billing HAS to be processed (one month later)
-		if (monthly_bill == previous_monthly_bill)
+	
+		if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
 		{
-			DATETIME t_next;
-			gl_localtime(t1,&t_next);
+			process_bill(t1);
 
-			t_next.day = bill_day;
-
-			if (t_next.month != 12)
-				t_next.month += 1;
-			else
+			// Decide when the next billing HAS to be processed (one month later)
+			if (monthly_bill == previous_monthly_bill)
 			{
-				t_next.month = 1;
-				t_next.year += 1;
-			}
+				DATETIME t_next;
+				gl_localtime(t1,&t_next);
 
-			next_time =	gl_mktime(&t_next);
+				t_next.day = bill_day;
+
+				if (t_next.month != 12)
+					t_next.month += 1;
+				else
+				{
+					t_next.month = 1;
+					t_next.year += 1;
+				}
+
+				next_time =	gl_mktime(&t_next);
+			}
+		}
+
+		if(bill_mode == BM_HOURLY && power_market != NULL && price_prop != NULL){
+			double *pprice = (gl_get_double(power_market, price_prop));
+			double seconds;
+			price = *pprice;
+
+			if (dt != last_t)
+				seconds = (double)(dt);
+			else
+				seconds = 0;
+
+			hourly_acc += seconds/3600 * price * measured_real_power/1000;
+
+			process_bill(t1);
+
+			if (monthly_bill == previous_monthly_bill)
+			{
+				DATETIME t_next;
+				gl_localtime(t1,&t_next);
+
+				t_next.day = bill_day;
+
+				if (t_next.month != 12)
+					t_next.month += 1;
+				else
+				{
+					t_next.month = 1;
+					t_next.year += 1;
+				}
+
+				next_time =	gl_mktime(&t_next);
+			}
 		}
 	}
-
-	if(bill_mode == BM_HOURLY && power_market != NULL && price_prop != NULL){
-		double *pprice = (gl_get_double(power_market, price_prop));
-		price = *pprice;
-		double hrs = (double)(t1-t0);
-		hourly_acc += hrs/3600.0 * price * measured_real_power/1000;
-
-		process_bill(t1);
-
-		if (monthly_bill == previous_monthly_bill)
-		{
-			DATETIME t_next;
-			gl_localtime(t1,&t_next);
-
-			t_next.day = bill_day;
-
-			if (t_next.month != 12)
-				t_next.month += 1;
-			else
-			{
-				t_next.month = 1;
-				t_next.year += 1;
-			}
-
-			next_time =	gl_mktime(&t_next);
-		}
-	}
-
 	rv = triplex_node::postsync(t1);
 
 	if (next_time != 0 && next_time < rv)
@@ -343,6 +350,8 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 		last_bill_month = dtime.month;
 		hourly_acc = 0;
 	}
+	
+
 	
 	return monthly_bill;
 }
