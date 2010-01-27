@@ -222,6 +222,10 @@ PROPERTY *class_find_property(CLASS *oclass,		/**< the object class */
 							  PROPERTYNAME name)	/**< the property name */
 {
 	PROPERTY *prop;
+	
+	if(oclass == NULL)
+		return NULL;
+
 	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 	{
 		if (strcmp(name,prop->name)==0)

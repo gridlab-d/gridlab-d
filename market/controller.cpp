@@ -37,6 +37,7 @@ controller::controller(MODULE *module){
 			PT_char32, "load", PADDR(load), PT_DESCRIPTION, "the current controlled load",
 			PT_char32, "total", PADDR(total), PT_DESCRIPTION, "the uncontrolled load (if any)",
 			PT_object, "market", PADDR(pMarket), PT_DESCRIPTION, "the market to bid into",
+			PT_char32, "state", PADDR(state), PT_DESCRIPTION, "the state property of the controlled load",
 			PT_double, "bid_price", PADDR(last_p), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid price",
 			PT_double, "bid_quant", PADDR(last_q), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid quantity",
 			PT_double, "set_temp", PADDR(set_temp), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the reset value",
@@ -64,6 +65,7 @@ void controller::cheat(){
 			sprintf(demand, "heating_demand");
 			sprintf(total, "panel.power");
 			sprintf(load, "hvac_load");
+			sprintf(state, "power_state");
 			kT_L = -2;
 			kT_H = -2;
 			Tmin = -5;
@@ -76,6 +78,7 @@ void controller::cheat(){
 			sprintf(demand, "cooling_demand");
 			sprintf(total, "panel.power");
 			sprintf(load, "hvac_load");
+			sprintf(state, "power_state");
 			kT_L = 2;
 			kT_H = 2;
 			Tmin = 0;
@@ -88,6 +91,7 @@ void controller::cheat(){
 			sprintf(demand, "heating_demand");
 			sprintf(total, "panel.power");
 			sprintf(load, "hvac_load");
+			sprintf(state, "power_state");
 			kT_L = -2;
 			kT_H = -2;
 			Tmin = -5;
@@ -100,6 +104,7 @@ void controller::cheat(){
 			sprintf(demand, "cooling_demand");
 			sprintf(total, "panel.power");
 			sprintf(load, "hvac_load");
+			sprintf(state, "power_state");
 			kT_L = 2;
 			kT_H = 2;
 			Tmin = -3;
@@ -196,6 +201,15 @@ int controller::init(OBJECT *parent){
 	double period = market->period;
 	next_run = gl_globalclock + (TIMESTAMP)(period - fmod(gl_globalclock+period,period));
 	
+	if(state[0] != 0){
+		// grab state pointer
+		pState = gl_get_enum_by_name(parent, state);
+		if(pState == 0){
+			gl_error("state property name \'%s\' is not published by parent class", state);
+			return 0;
+		}
+	}
+
 	return 1;
 }
 
@@ -260,14 +274,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	if(bid > 0.0 && *pDemand > 0){
 		last_p = bid;
 		last_q = *pDemand;
-		lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id);
+		lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
 		residual -= *pLoad;
 	} else {
 		last_p = 0;
 		last_q = 0;
 	}
 	if (residual>0)
-		lastbid_id = market->submit(OBJECTHDR(this), -residual, 9999, bid_id);
+		lastbid_id = market->submit(OBJECTHDR(this), -residual, 9999, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
 	else if(residual < 0)
 		gl_warning("controller:%d: residual unresponsive load is negative! (%.1f kW)", hdr->id, residual);
 

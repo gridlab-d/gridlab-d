@@ -823,6 +823,7 @@ typedef struct s_callbacks {
 	} file;
 	struct s_objvar_struct {
 		complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
+		enumeration *(*enum_var)(OBJECT *obj, PROPERTY *prop);
 		int16 *(*int16_var)(OBJECT *obj, PROPERTY *prop);
 		int32 *(*int32_var)(OBJECT *obj, PROPERTY *prop);
 		int64 *(*int64_var)(OBJECT *obj, PROPERTY *prop);
@@ -832,6 +833,7 @@ typedef struct s_callbacks {
 	} objvar;
 	struct s_objvar_name_struct {
 		complex *(*complex_var)(OBJECT *obj, char *name);
+		enumeration *(*enum_var)(OBJECT *obj, char *name);
 		int16 *(*int16_var)(OBJECT *obj, char *name);
 		int32 *(*int32_var)(OBJECT *obj, char *name);
 		int64 *(*int64_var)(OBJECT *obj, char *name);

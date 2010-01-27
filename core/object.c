@@ -462,6 +462,26 @@ OBJECT *object_get_object_by_name(OBJECT *obj, char *name)
 	}
 }
 
+enumeration *object_get_enum(OBJECT *obj, PROPERTY *prop){
+	if(object_prop_in_class(obj, prop) && prop->ptype == PT_enumeration && prop->access != PA_PRIVATE){
+		return (enumeration *)((char *)(obj) + sizeof(OBJECT) + (int64)(prop->addr));
+	} else {
+		errno = ENOENT;
+		return NULL;
+	}
+}
+
+enumeration *object_get_enum_by_name(OBJECT *obj, char *name){
+	PROPERTY *prop = class_find_property(obj->oclass, name);
+
+	if(prop != NULL && prop->access != PA_PRIVATE){
+		return (enumeration *)((char *)(obj) + sizeof(OBJECT) + (int64)(prop->addr));
+	} else {
+		errno = ENOENT;
+		return NULL;
+	}
+}
+
 /* Get the pointer to the value of a 16-bit integer property. 
  * Returns NULL if the property is not found or if the value the right type.
  */

@@ -249,7 +249,7 @@ int convert_to_enumeration(char *buffer, /**< a pointer to the string buffer */
 	{
 		if (strcmp(keys->name,buffer)==0)
 		{
-			*(unsigned long*)data=keys->value;
+			*(unsigned int64*)data=keys->value;
 			found = true;
 			break;
 		}

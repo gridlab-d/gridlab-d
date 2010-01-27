@@ -586,6 +586,10 @@ inline char *gl_getvalue(OBJECT *obj,
 
 #define gl_get_complex_by_name (*callback->objvarname.complex_var)
 
+#define gl_get_enum (*callback->objvar.enum_var)
+
+#define gl_get_enum_by_name (*callback->objvarname.enum_var)
+
 #define gl_get_int16 (*callback->objvar.int16_var)
 
 #define gl_get_int16_by_name (*callback->objvarname.int16_var)
