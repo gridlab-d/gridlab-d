@@ -171,16 +171,20 @@ int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
 	AGGREGATION *p;
 	int offset=0;
 	int count=0;
+	char32 fmt;
 
+	gl_global_getvar("double_format", fmt, 32);
 	for (p=aggr; p!=NULL && offset<size-33; p=p->next)
 	{
 		if (offset>0) strcpy(buffer+offset++,",");
-		offset+=sprintf(buffer+offset,"%lg",gl_run_aggregate(p));
+		offset+=sprintf(buffer+offset,fmt,gl_run_aggregate(p));
 		buffer[offset]='\0';
 		count++;
 	}
 	return count;
 }
+
+
 
 EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
