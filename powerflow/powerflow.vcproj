@@ -267,7 +267,7 @@
 			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
-			UseOfMFC="1"
+			UseOfMFC="0"
 			CharacterSet="2"
 			DeleteExtensionsOnClean="*.obj;*.ilk;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;$(TargetPath)"
 			WholeProgramOptimization="1"
@@ -310,9 +310,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunit.lib CBLAS.lib superLU.lib"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(OutDir)"
+				AdditionalDependencies="cppunit.lib CBLAS.lib pthreadVC2.lib superLU_MT.lib"
+				LinkIncremental="2"
+				AdditionalLibraryDirectories="..\third_party\superLU_MT\Need;&quot;$(OutDir)&quot;"
 				IgnoreDefaultLibraryNames="LIBCMT.lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
