@@ -1856,9 +1856,6 @@ void house_e::update_system(double dt)
 	double heating_capacity_adj = design_heating_capacity*(0.34148808 + 0.00894102*(*pTout) + 0.00010787*(*pTout)*(*pTout)); 
 	double cooling_capacity_adj = design_cooling_capacity*(1.48924533 - 0.00514995*(*pTout));
 
-
-	latent_load_fraction = 0.3 / (1 + exp(4-10*(*pRhout)));
-	
 #pragma message("house_e: add update_system voltage adjustment for heating")
 	double voltage_adj = (((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0) * load.impedance_fraction + ((pCircuit_V[0]).Mag() / 240.0) * load.current_fraction + load.power_fraction);
 	double voltage_adj_resistive = ((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0);
@@ -1935,7 +1932,8 @@ void house_e::update_system(double dt)
 				break;
 			case CT_ELECTRIC:
 				cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
-				system_rated_capacity = -cooling_capacity_adj / (1 + latent_load_fraction) + fan_power*BTUPHPKW;
+				// DPC: the latent_load_fraction is not as great counted when humidity is low
+				system_rated_capacity = -cooling_capacity_adj / (1 + latent_load_fraction/(1 + exp(4-10*(*pRhout)))) + fan_power*BTUPHPKW;
 				system_rated_power = cooling_demand;
 				break;
 		}
