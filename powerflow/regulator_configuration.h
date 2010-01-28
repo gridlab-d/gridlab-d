@@ -10,14 +10,14 @@
 class regulator_configuration : public powerflow_library
 {
 public:
-	enum connect_type {
+	typedef enum {
 		WYE_WYE=1,
 		OPEN_DELTA_ABBC,
 		OPEN_DELTA_BCAC,
 		OPEN_DELTA_CABA,
 		CLOSED_DELTA,
 		CONNECT_TYPE_MAX
-	} connect_type;
+	} connect_type_enum;
 				
 	typedef enum {
 		MANUAL=1,
@@ -31,15 +31,17 @@ public:
 		BANK=2
 	} control_level_enum;
 
-	enum Type {
+	typedef enum {
 		A = 1,
 		B
-	} Type;
+	} Type_enum;
 
 
-	//Split out for access in other objects, rather than an in-line declaration like Type and connect_type above
+	//Split out for access in other objects, fixes some odd enum issues
 	Control_enum Control;
 	control_level_enum control_level;
+	Type_enum Type;
+	connect_type_enum connect_type;
 
 	/* get_name acquires the name of an object or 'unnamed' if non set */
 	inline const char *get_name(void) const { static char tmp[64]; OBJECT *obj=OBJECTHDR(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};
