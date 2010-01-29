@@ -1,0 +1,72 @@
+//This will test the accuracy of the HVAC energy use and temperature behavior
+//This test is an example of a peak heating day
+//test_HVAC_peak_heat.glm created by Andy Fisher
+#set minimum_timestep=1;
+
+module residential{
+	implicit_enduses NONE;
+}
+module tape;
+module assert;
+module climate;
+module powerflow;
+
+clock{
+	timezone PST+8PDT;
+	starttime '2001-01-05 05:00:00';
+	stoptime '2001-01-06 05:00:05';
+}
+
+
+object climate{
+	tmyfile "WA-Yakima.tmy2";
+}
+
+schedule heatspt{
+	* * * * * 60;
+}
+
+schedule coolspt{
+	* * * * * 75;
+}
+
+object triplex_meter{
+	nominal_voltage 120;
+	phases AS;
+	object house{
+		system_mode OFF;
+		auxiliary_strategy DEADBAND;
+		heating_system_type HEAT_PUMP;
+		cooling_system_type ELECTRIC;
+		air_temperature 60;
+		mass_temperature 60;
+		heating_setpoint heatspt*1;
+		cooling_setpoint coolspt*1;
+		object recorder{
+			property panel.energy;
+			file "test_HVAC_peak_heat.csv";
+			interval 1;
+			limit 86403;
+		};
+		object complex_assert{
+			target "panel.energy";
+			in '2001-01-06 5:00:03';
+			once ONCE_TRUE;
+			value 100.353+0i;
+			within 1.00353;//asserting house_e within 1 percent of Rob's ETP result
+		};
+	};
+	object recorder{
+		property measured_real_power,measured_real_energy;
+		file "test_HVAC_peak_energy.csv";
+		interval 1;
+		limit 86403;
+	};
+	object double_assert{
+		target "measured_real_energy";
+		in '2001-01-06 5:00:03';
+		once ONCE_TRUE;
+		value 100353;
+		within 1003.53;//asserting house_e within 1 percent of Rob's ETP result
+	};
+}
