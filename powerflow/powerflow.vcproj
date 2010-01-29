@@ -125,7 +125,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include"
+				AdditionalIncludeDirectories="..\core;&quot;..\third_party\cppunit-1.12.0\include&quot;;..\third_party\SuperLU_3.1\SRC;..\third_party\superLU_MT\SRC;..\third_party\superLU_MT\Need"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
