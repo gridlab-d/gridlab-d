@@ -316,7 +316,7 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 	// post bid
 	if(bid_mode == BM_ON){
-		int bid_id = (lastbid_id ==
+		int bid_id = (lastbid_id == *pMarketID ? lastbid_id : -1);
 		if(thermostat_mode == TM_HEAT){
 			bid_price = heat_bid;
 			bid_quant = heat_demand;
