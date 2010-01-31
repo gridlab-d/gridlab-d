@@ -13,6 +13,7 @@ clock {
 #define stylesheet="C:\Documents and Settings\D3Y074\My Documents\GridLab-D\trunk\VS2005\gridlabd-2_0";
 module powerflow ;
 module assert;
+module tape;
 
 
 // Phase Conductor for 601: 556,500 26/7 ACSR
@@ -290,6 +291,19 @@ object node:633 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
+	 object complex_assert {
+		target voltage_A;
+		value 2445.01-2.56d;
+		within 5;
+	 };	 object complex_assert {
+		target voltage_B;
+		value 2498.09-121.77d;
+		within 5;
+	 };	 object complex_assert {
+		target voltage_C;
+		value 2437.32+117.82d;
+		within 5;
+	 };
 }
 
 object node:630 {
@@ -308,6 +322,19 @@ object node:632 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
+	 object complex_assert {
+		target voltage_A;
+		value 2452.21-2.49d;
+		within 5;
+	 };	 object complex_assert {
+		target voltage_B;
+		value 2502.56-121.72d;
+		within 5;
+	 };	 object complex_assert {
+		target voltage_C;
+		value 2443.56+117.83d;
+		within 5;
+	 };
 }
 
 object node:650 {
@@ -318,6 +345,19 @@ object node:650 {
       voltage_B -1200.8886-2080.000j;
       voltage_C -1200.8886+2080.000j;
       nominal_voltage 2401.7771;
+	 object complex_assert {
+		target voltage_A;
+		value 2401.7771;
+		within 5;
+	 };	 object complex_assert {
+		target voltage_B;
+		value 2401.7771-120.0d;
+		within 5;
+	 };	 object complex_assert {
+		target voltage_C;
+		value 2401.7771+120.0d;
+		within 5;
+	 };
 } 
  
 object node:680 {
@@ -327,6 +367,22 @@ object node:680 {
        voltage_B -1200.8886-2080.000j;
        voltage_C -1200.8886+2080.000j;
        nominal_voltage 2401.7771;
+		object complex_assert {
+			target voltage_A;
+			value 2377.75-5.3d;
+			within 5;
+		};	 
+		object complex_assert {
+			target voltage_B;
+			value 2528.82-122.34dd;
+			within 5;
+		};	
+		object complex_assert {
+			target voltage_C;
+			value 2348.46+116.02d;
+			within 10;  //@note: V_C not exactly matching with IEEE 13-node test feeder
+		};
+		
 }
  
  
@@ -337,6 +393,17 @@ object node:684 {
       voltage_B -1200.8886-2080.000j;
       voltage_C -1200.8886+2080.000j;
       nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_A;
+		value 2373.65-5.32d;
+		within 5;
+	};	 
+	object complex_assert {
+		target voltage_C; 
+		value 2343.65+115.78d;
+		within 5;  
+	};
+
 } 
  
  
