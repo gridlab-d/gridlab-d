@@ -52,8 +52,8 @@ object triplex_meter{
 			target "panel.energy";
 			in '2001-07-23 1:00:49';
 			once ONCE_TRUE;
-			value 18.293+0i;
-			within 0.18293;//asserting house_e within 1 percent of Rob's ETP result
+			value 18.575+0i;
+			within 0.18575;//asserting house_e within 1 percent of Rob's ETP result
 		};
 	};
 	object recorder{
@@ -66,7 +66,7 @@ object triplex_meter{
 		target "measured_real_energy";
 		in '2001-07-23 1:00:49';
 		once ONCE_TRUE;
-		value 18293;
-		within 182.93;//asserting house_e within 1 percent of Rob's ETP result
+		value 18575;
+		within 185.75;//asserting house_e within 1 percent of Rob's ETP result
 	};
 }
