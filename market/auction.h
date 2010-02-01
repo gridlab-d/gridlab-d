@@ -23,6 +23,9 @@ typedef struct s_bid {
 } BID;
 typedef int KEY;
 
+EXPORT int64 submit_bid(OBJECT *obj, OBJECT *from, double quantity, double price, KEY bid_id);
+EXPORT int64 submit_bid_state(OBJECT *obj, OBJECT *from, double quantity, double price, unsigned int is_on, KEY bid_id);
+
 /** Supply/Demand curve */
 class curve {
 private:

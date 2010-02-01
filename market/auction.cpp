@@ -137,6 +137,9 @@ int auction::init(OBJECT *parent)
 	else
 		Qload = NULL;
 	if (pricecap==0) pricecap=9999;
+	if(period == 0.0){
+		period = 300.0; // five minutes
+	}
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -330,7 +333,7 @@ void auction::clear_market(void)
 			std72 = 0.0;
 			for(i = 1; i <= 72 && i <= count; ++i){
 				int j = (168 - i + count) % 168;
-				std24 += prices[j] * prices[j];
+				std72 += prices[j] * prices[j];
 			}
 			std72 /= (count > 72 ? 72 : count);
 			std72 -= avg72*avg72;

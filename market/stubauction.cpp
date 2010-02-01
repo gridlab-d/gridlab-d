@@ -41,6 +41,7 @@ stubauction::stubauction(MODULE *module)
 			PT_double, "std72", PADDR(std72), PT_DESCRIPTION, "three day price stdev",
 			PT_double, "avg168", PADDR(avg168), PT_DESCRIPTION, "weekly average of price",
 			PT_double, "std168", PADDR(std168), PT_DESCRIPTION, "weekly stdev of price",
+			PT_int64, "market_id", PADDR(market_id), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "unique identifier of market clearing",
 			PT_bool, "verbose", PADDR(verbose), PT_DESCRIPTION, "enable verbose stubauction operations",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
@@ -61,6 +62,8 @@ int stubauction::create(void)
 int stubauction::init(OBJECT *parent)
 {
 	OBJECT *obj=OBJECTHDR(this);
+	market_id = 0;
+	if(period == 0) period = 300;
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -88,12 +91,13 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 
 		gl_localtime(clearat,&dt);
-		if (verbose) gl_output("   ...%s clearing process started at %s", gl_name(OBJECTHDR(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+//		if (verbose) gl_output("   ...%s clearing process started at %s", gl_name(OBJECTHDR(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 
 		/* clear market */
 		thishr = dt.hour;
 		
 		last_price = next_price;
+		++market_id;
 
 //		if(lasthr != thishr){
 		if(t0 != t1 && 0 == t1 % 3600){
@@ -143,9 +147,9 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			std72 = 0.0;
 			for(i = 1; i <= 72 && i <= count; ++i){
 				j = (168 - i + count) % 168;
-				std24 += prices[j] * prices[j];
+				std72 += prices[j] * prices[j];
 			}
-			std24 /= (count > 72 ? 72 : count);
+			std72 /= (count > 72 ? 72 : count);
 			std72 -= avg72*avg72;
 			std72 = sqrt(fabs(std72));
 
@@ -157,7 +161,7 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 		clearat = nextclear();
 		gl_localtime(clearat,&dt);
-		if (verbose) gl_output("   ...%s opens for clearing of market_id %d at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), (int32)market_id, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+//		if (verbose) gl_output("   ...%s opens for clearing of market_id %d at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), (int32)market_id, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 	}
 	return -clearat; /* soft return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
