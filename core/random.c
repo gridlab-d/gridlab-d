@@ -96,18 +96,33 @@ int random_nargs(char *name)
 	return 0;
 }
 
+/** randwarn checks to see if non-determinism warning is necessary **/
+int randwarn()
+{
+	static int warned=0;
+	if (global_nondeterminism_warning && !warned)
+	{
+		warned=1;
+		output_warning("non-deterministic behavior probable--rand was called while running multiple threads");
+	}
+
+	return rand();
+}
+
 /* uniform distribution in range (0,1( */
 double randunit(void)
 {
 	double u;
 	unsigned int ur;
+
 	if (ur_state!=NULL) 
 		srand(*ur_state);
-	ur = rand();
+	ur = randwarn();
 	if (ur_state!=NULL)
 		*ur_state = ur;
 	u = ur/(RAND_MAX+1.0);
 	if (u<1) return u;
+
 	return randunit();
 }
 double randunit_pos(void)

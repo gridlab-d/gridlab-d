@@ -447,6 +447,9 @@ STATUS exec_start(void)
 	if (global_runchecks)
 		return module_checkall();
 
+	/* enable non-determinism check, if any */
+	if (global_randomseed!=0 && global_threadcount>1)
+		global_nondeterminism_warning = 1;
 
 	if (!global_debug_mode)
 	{

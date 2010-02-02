@@ -1,7 +1,7 @@
 // test schedule transforms
 
-#define debug=1
-#define verbose=1
+#set randomseed=17
+#set threadcount=2
 
 module residential {
 	default_outdoor_temperature 70.5;

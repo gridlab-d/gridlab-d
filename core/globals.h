@@ -141,6 +141,8 @@ GLOBAL char global_sync_dumpfile[1024] INIT(""); /**< enable sync event dump fil
 
 GLOBAL int global_streaming_io_enabled INIT(0); /**< flag to enable compact streams instead of XML or GLM */
 
+GLOBAL int global_nondeterminism_warning INIT(0); /**< flag to enable nondeterminism warning (use of rand when multithreading */
+
 #ifdef __cplusplus
 }
 #endif

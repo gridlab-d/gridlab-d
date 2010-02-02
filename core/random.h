@@ -33,6 +33,7 @@ extern "C" {
 #endif
 	int random_init(void);
 	int random_test(void);
+	int randwarn(void);
 	double randunit(void);
 	double random_degenerate(double a);
 	double random_uniform(double a, double b);
