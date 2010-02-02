@@ -85,6 +85,7 @@ public:
 	double last_price,	bid_price;
 	double last_quant,	bid_quant;
 	double market_period;
+	double avg_price;
 private:
 	void cheat();
 	void fetch(double **value, char *name, OBJECT *parent, PROPERTY **prop, char *goal);

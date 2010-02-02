@@ -36,6 +36,9 @@ double_controller::double_controller(MODULE *module){
 			PT_enumeration, "setup_mode", PADDR(setup_mode),
 				PT_KEYWORD, "NONE", ST_NONE,
 				PT_KEYWORD, "HOUSE", ST_HOUSE,
+			PT_enumeration, "bid_mode", PADDR(bid_mode),
+				PT_KEYWORD, "ON", BM_ON,
+				PT_KEYWORD, "OFF", BM_OFF,
 			PT_int64, "last_mode_timer", PADDR(last_mode_timer),
 			PT_double, "cool_ramp_low", PADDR(cool_ramp_low),
 			PT_double, "cool_ramp_high", PADDR(cool_ramp_high),
@@ -63,8 +66,10 @@ double_controller::double_controller(MODULE *module){
 			PT_char32, "load", PADDR(load), PT_DESCRIPTION, "the current controlled load",
 			PT_char32, "total", PADDR(total), PT_DESCRIPTION, "the uncontrolled load (if any)",
 			PT_double, "last_price", PADDR(last_price),
+			PT_double, "temperature", PADDR(temperature),
 			PT_double, "cool_bid", PADDR(cool_bid),
 			PT_double, "heat_bid", PADDR(heat_bid),
+			PT_double, "avg_price", PADDR(avg_price),
 			
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(double_controller));
@@ -161,12 +166,14 @@ int double_controller::init(OBJECT *parent){
 		return 0;
 	}
 	fetch(&temperature_ptr, temperature_name, parent, &temperature_prop, "temperature_name");
-	fetch(&load_ptr, load_name, parent, &load_prop, "load_name");
-	fetch(&total_load_ptr, total_load_name, parent, &total_load_prop, "total_load_name");
 	fetch(&cool_setpoint_ptr, cool_setpoint_name, parent, &cool_setpoint_prop, "cool_setpoint_name");
-	fetch(&cool_demand_ptr, cool_demand_name, parent, &cool_demand_prop, "cool_demand_prop");
 	fetch(&heat_setpoint_ptr, heat_setpoint_name, parent, &heat_setpoint_prop, "heat_setpoint_name");
-	fetch(&heat_demand_ptr, heat_demand_name, parent, &heat_demand_prop, "heat_demand_name");
+	if(bid_mode == BM_ON){
+		fetch(&load_ptr, load_name, parent, &load_prop, "load_name");
+		fetch(&total_load_ptr, total_load_name, parent, &total_load_prop, "total_load_name");
+		fetch(&cool_demand_ptr, cool_demand_name, parent, &cool_demand_prop, "cool_demand_prop");
+		fetch(&heat_demand_ptr, heat_demand_name, parent, &heat_demand_prop, "heat_demand_name");
+	}
 
 	if(heat_ramp_low > 0 || heat_ramp_high > 0){
 		gl_error("%s: heating ramp values must be non-positive", namestr);
@@ -195,13 +202,14 @@ TIMESTAMP double_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 		thermostat_mode = TM_OFF;
 
 	if(next_run == 0){
-		cool_set_base = *cool_setpoint_ptr;
-		heat_set_base = *heat_setpoint_ptr;
+		cool_setpoint = cool_set_base = *cool_setpoint_ptr;
+		heat_setpoint = heat_set_base = *heat_setpoint_ptr;
 	}
 	if(t0 == next_run){
-		cool_temp_min = cool_set_base - cool_range_low;
+		// pos/neg is factored into the range
+		cool_temp_min = cool_set_base + cool_range_low;
 		cool_temp_max = cool_set_base + cool_range_high;
-		heat_temp_min = heat_set_base - heat_range_low;
+		heat_temp_min = heat_set_base + heat_range_low;
 		heat_temp_max = heat_set_base + heat_range_high;
 		temperature = *temperature_ptr;
 	}
@@ -290,7 +298,7 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			} 
 			break;
-	}
+	} // end switch
 
 	// if this turns on, it will be...
 	if(heat_bid > cool_bid){
@@ -301,40 +309,46 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		thermostat_mode = TM_OFF; // equally demanded, or both == 0.0
 	}
 
+
 	// determine quantity
-	if(cool_bid > 0.0){
+	// specific to market bids
+	if(cool_bid > 0.0 && bid_mode == BM_ON){
 		cool_demand = *cool_demand_ptr;
 	} else {
 		cool_demand = 0.0;
 	} 
 
-	if(heat_bid > 0.0){
+	if(heat_bid > 0.0 && bid_mode == BM_ON){
 		heat_demand = *heat_demand_ptr;
 	} else {
 		heat_demand = 0.0;
 	}
 
-	// post bid
+
+	if(thermostat_mode == TM_HEAT){
+		bid_price = heat_bid;
+	} else if(thermostat_mode == TM_COOL){
+		bid_price = cool_bid;
+	} else if(thermostat_mode == TM_OFF){
+		bid_price = 0.0;
+	}
+
 	if(bid_mode == BM_ON){
 		int bid_id = (lastbid_id == *pMarketID ? lastbid_id : -1);
+
 		if(thermostat_mode == TM_HEAT){
-			bid_price = heat_bid;
 			bid_quant = heat_demand;
 		} else if(thermostat_mode == TM_COOL){
-			bid_price = cool_bid;
 			bid_quant = cool_demand;
 		} else if(thermostat_mode == TM_OFF){
-			bid_price = 0.0;
 			bid_quant = 0.0;
 		}
+
 		if(state_ptr != 0){
 			lastbid_id = submit_bid_state(pMarket, hdr, -bid_quant, bid_price, bid_id, (*state_ptr > 0 ? 1 : 0));
 		} else {
 			lastbid_id = submit_bid(pMarket, hdr, -bid_quant, bid_price, bid_id);
 		}
-	} else {
-		bid_price = 0.0;
-		bid_quant = 0.0;
 	}
 
 	//return next_run > 0 ? next_run : TS_NEVER;
@@ -347,52 +361,62 @@ TIMESTAMP double_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		//return TS_NEVER;
 	}
 
+	double cool_bound, heat_bound;
+
 	next_run = (TIMESTAMP)(*pPeriod) + t1;
 	
 	// update price & determine auction results
 	if(*pMarketID != lastmkt_id){
 		lastmkt_id = *pMarketID;
+		avg_price = 0.0;
 		if(*pAvg24 == 0.0 || *pStd24 == 0.0 || cool_set_base == 0.0 || heat_set_base == 0.0){
 			//return next_run; // not enough input data
 			return TS_NEVER;
 		}
 
-		if(bid_mode == BM_ON){
-			// compare current bid to market results
-			if(*pNextP > bid_price){ // market price greater than our bid
-				cool_setpoint = cool_temp_max;
-				heat_setpoint = heat_temp_min;
-			} else {
-				if(cool_bid > 0.0){
-					double ramp = (temperature > cool_set_base ? cool_ramp_high : cool_ramp_low);
-					cool_setpoint = cool_set_base + (*pNextP - *pAvg24) * fabs(cool_limit - cool_set_base) / (ramp * *pStd24);
-					if(cool_setpoint > cool_temp_max){
-						cool_setpoint = cool_temp_max;
-					} else if(cool_setpoint < cool_limit){
-						cool_setpoint = cool_limit;
-					}
-				} else {
+		avg_price = *pAvg24;
+
+		if(*pNextP > *pAvg24){ // high prices un-cool and un-heat
+			cool_bound = cool_temp_max;
+			heat_bound = heat_temp_min;
+		} else {
+			cool_bound = cool_temp_min;
+			heat_bound = heat_temp_max;
+		}
+		// compare current bid to market results
+		if(bid_mode == BM_ON && *pNextP > bid_price){ // only if we care about 'beating the market'
+			// market price greater than our bid
+			cool_setpoint = cool_temp_max;
+			heat_setpoint = heat_temp_min;
+		} else {
+			if(cool_bid > 0.0 || bid_mode == BM_OFF){
+				double ramp = (temperature > cool_set_base ? cool_ramp_high : cool_ramp_low);
+				cool_setpoint = cool_set_base + (*pNextP - *pAvg24) * fabs(cool_bound - cool_set_base) / (ramp * *pStd24);
+				if(cool_setpoint > cool_temp_max){
 					cool_setpoint = cool_temp_max;
+				} else if(cool_setpoint < cool_bound){
+					cool_setpoint = cool_bound;
 				}
-				if(heat_bid > 0.0){
-					double ramp = (temperature > heat_set_base ? heat_ramp_high : heat_ramp_low);
-					heat_setpoint = heat_set_base + (*pNextP - *pAvg24) * fabs(heat_limit - heat_set_base) / (ramp * *pStd24);
-					if(heat_setpoint < heat_temp_min){
-						heat_setpoint = heat_temp_min;
-					} else if(heat_setpoint > heat_limit){
-						heat_setpoint = heat_limit;
-					}
-				} else {
-					heat_setpoint = heat_temp_min;
-				}
+			} else {
+				cool_setpoint = cool_temp_max;
 			}
-		} else { // determine setpoints from current price
-			;
+			if(heat_bid > 0.0 || bid_mode == BM_OFF){
+				double ramp = (temperature > heat_set_base ? heat_ramp_high : heat_ramp_low);
+				heat_setpoint = heat_set_base + (*pNextP - *pAvg24) * fabs(heat_bound - heat_set_base) / (ramp * *pStd24);
+				if(heat_setpoint < heat_temp_min){
+					heat_setpoint = heat_temp_min;
+				} else if(heat_setpoint > heat_bound){
+					heat_setpoint = heat_bound;
+				}
+			} else {
+				heat_setpoint = heat_temp_min;
+			}
 		}
 	}
 
-	// clip setpoints
 	// post setpoints
+	*cool_setpoint_ptr = cool_setpoint;
+	*heat_setpoint_ptr = heat_setpoint;
 
 	return next_run > 0 ? next_run : TS_NEVER;
 	//return TS_NEVER;
