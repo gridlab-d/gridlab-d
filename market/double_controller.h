@@ -85,7 +85,7 @@ public:
 	double last_price,	bid_price;
 	double last_quant,	bid_quant;
 	double market_period;
-	double avg_price;
+	double price, avg_price, stdev_price;
 private:
 	void cheat();
 	void fetch(double **value, char *name, OBJECT *parent, PROPERTY **prop, char *goal);
@@ -103,6 +103,7 @@ private:
 	double *temperature_ptr;
 	double *load_ptr;
 	double *total_load_ptr;
+	double *deadband_ptr;
 	enumeration *state_ptr;
 
 	double cool_limit, heat_limit;

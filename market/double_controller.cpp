@@ -61,15 +61,19 @@ double_controller::double_controller(MODULE *module){
 			PT_char32, "total_load_name", PADDR(total_load_name),
 			PT_object, "market", PADDR(pMarket), PT_DESCRIPTION, "the market to bid into",
 			PT_double, "market_period", PADDR(market_period),
-			PT_double, "bid_price", PADDR(last_price), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid price",
-			PT_double, "bid_quant", PADDR(last_quant), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid quantity",
+			PT_double, "bid_price", PADDR(bid_price), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid price",
+			PT_double, "bid_quant", PADDR(bid_quant), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid quantity",
 			PT_char32, "load", PADDR(load), PT_DESCRIPTION, "the current controlled load",
 			PT_char32, "total", PADDR(total), PT_DESCRIPTION, "the uncontrolled load (if any)",
 			PT_double, "last_price", PADDR(last_price),
 			PT_double, "temperature", PADDR(temperature),
 			PT_double, "cool_bid", PADDR(cool_bid),
 			PT_double, "heat_bid", PADDR(heat_bid),
+			PT_double, "cool_demand", PADDR(cool_demand),
+			PT_double, "heat_demand", PADDR(heat_demand),
+			PT_double, "price", PADDR(price),
 			PT_double, "avg_price", PADDR(avg_price),
+			PT_double, "stdev_price", PADDR(stdev_price),
 			
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(double_controller));
@@ -174,6 +178,10 @@ int double_controller::init(OBJECT *parent){
 		fetch(&cool_demand_ptr, cool_demand_name, parent, &cool_demand_prop, "cool_demand_prop");
 		fetch(&heat_demand_ptr, heat_demand_name, parent, &heat_demand_prop, "heat_demand_name");
 	}
+	
+	if(deadband_name[0] != 0){
+		deadband_ptr = gl_get_double_by_name(parent, deadband_name);
+	}
 
 	if(heat_ramp_low > 0 || heat_ramp_high > 0){
 		gl_error("%s: heating ramp values must be non-positive", namestr);
@@ -200,6 +208,11 @@ int double_controller::init(OBJECT *parent){
 TIMESTAMP double_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 	if(thermostat_mode == TM_INVALID)
 		thermostat_mode = TM_OFF;
+
+	if(deadband_ptr != 0){
+		
+		deadband = *deadband_ptr;
+	}
 
 	if(next_run == 0){
 		cool_setpoint = cool_set_base = *cool_setpoint_ptr;
@@ -247,17 +260,25 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	} else {
 		cool_ramp = (temperature > cool_set_base ? cool_ramp_high : cool_ramp_low);
 		cool_limit = (temperature > cool_set_base ? cool_temp_max : cool_temp_min);
-		cool_bid = *pAvg24 + (temperature - cool_set_base) * (cool_ramp * *pStd24) / fabs(cool_limit - cool_set_base);
+		if(*pStd24 != 0.0){
+			cool_bid = *pAvg24 + (temperature - cool_set_base) * (cool_ramp * *pStd24) / fabs(cool_limit - cool_set_base);
+		} else {
+			cool_bid = *pAvg24;
+		}
 	}
 	// heating bid
 	if(temperature > heat_temp_max){
 		heat_bid = 0.0;
-	} else if(temperature < heat_temp_max){
+	} else if(temperature < heat_temp_min){
 		heat_bid = 9999.0;
 	} else {
 		heat_ramp = (temperature > heat_set_base ? heat_ramp_high : heat_ramp_low);
 		heat_limit = (temperature > heat_set_base ? heat_temp_max : heat_temp_min);
-		heat_bid = *pAvg24 + (temperature - heat_set_base) * (heat_ramp * *pStd24) / fabs(heat_limit - heat_set_base);
+		if(*pStd24 != 0.0){
+			heat_bid = *pAvg24 + (temperature - heat_set_base) * (heat_ramp * *pStd24) / fabs(heat_limit - heat_set_base);
+		} else {
+			heat_bid = *pAvg24;
+		}
 	}
 
 	// clip setpoints and bids
@@ -279,6 +300,11 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		case RM_STICKY:
 			break;
 		case RM_NONE:
+			if(cool_bid > 0.0){ /* "cooling wins" theory */
+				heat_bid = 0.0;
+				heat_limit = heat_set_base;
+			}
+			break;
 		default:
 			// if the two limits are close, clip whichever one has not been used recently (else cooling)
 			// if new limit would not bid at current temperature, update accordingly
@@ -330,7 +356,7 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	} else if(thermostat_mode == TM_COOL){
 		bid_price = cool_bid;
 	} else if(thermostat_mode == TM_OFF){
-		bid_price = 0.0;
+		bid_price = (heat_bid > cool_bid ? heat_bid : cool_bid);
 	}
 
 	if(bid_mode == BM_ON){
@@ -374,7 +400,9 @@ TIMESTAMP double_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			return TS_NEVER;
 		}
 
+		price = *pNextP;
 		avg_price = *pAvg24;
+		stdev_price = *pStd24;
 
 		if(*pNextP > *pAvg24){ // high prices un-cool and un-heat
 			cool_bound = cool_temp_max;
@@ -391,7 +419,8 @@ TIMESTAMP double_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		} else {
 			if(cool_bid > 0.0 || bid_mode == BM_OFF){
 				double ramp = (temperature > cool_set_base ? cool_ramp_high : cool_ramp_low);
-				cool_setpoint = cool_set_base + (*pNextP - *pAvg24) * fabs(cool_bound - cool_set_base) / (ramp * *pStd24);
+				double cool_offset = (*pNextP - *pAvg24) * fabs(cool_bound - cool_set_base) / (ramp * *pStd24);
+				cool_setpoint = cool_set_base + cool_offset;
 				if(cool_setpoint > cool_temp_max){
 					cool_setpoint = cool_temp_max;
 				} else if(cool_setpoint < cool_bound){
@@ -402,7 +431,8 @@ TIMESTAMP double_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			}
 			if(heat_bid > 0.0 || bid_mode == BM_OFF){
 				double ramp = (temperature > heat_set_base ? heat_ramp_high : heat_ramp_low);
-				heat_setpoint = heat_set_base + (*pNextP - *pAvg24) * fabs(heat_bound - heat_set_base) / (ramp * *pStd24);
+				double heat_offset = (*pNextP - *pAvg24) * fabs(heat_bound - heat_set_base) / (ramp * *pStd24);
+				heat_setpoint = heat_set_base + heat_offset;
 				if(heat_setpoint < heat_temp_min){
 					heat_setpoint = heat_temp_min;
 				} else if(heat_setpoint > heat_bound){
@@ -412,6 +442,39 @@ TIMESTAMP double_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 				heat_setpoint = heat_temp_min;
 			}
 		}
+	}
+
+	// verify that the setpoints make sense
+	switch(resolve_mode){
+		default:
+		case RM_STICKY:
+			if(last_mode == TM_OFF || last_mode == TM_COOL){
+				if(cool_setpoint - heat_setpoint < deadband){
+					heat_setpoint = cool_setpoint - deadband;
+				}
+			} else if(last_mode == TM_HEAT){
+				if(cool_setpoint - heat_setpoint < deadband){
+					cool_setpoint = heat_setpoint + deadband;
+				}
+			}
+			break;
+		case RM_DEADBAND:
+			// make sure there's space between the two deadbands
+			if(cool_setpoint - heat_setpoint < deadband){
+				double mid = (cool_setpoint + heat_setpoint) / 2;
+				cool_setpoint = mid + deadband/2;
+				heat_setpoint = mid - deadband/2;
+			}
+			break;
+	}
+
+	// enforce base setpoints 
+	if(cool_setpoint < heat_set_base){
+		heat_setpoint = heat_set_base;
+		cool_setpoint = heat_setpoint + deadband;
+	} else if(heat_setpoint > cool_set_base){
+		cool_setpoint = cool_set_base;
+		heat_setpoint = cool_setpoint - deadband;
 	}
 
 	// post setpoints

@@ -14,6 +14,7 @@
 
 #include "gridlabd.h"
 #include "auction.h"
+#include "stubauction.h"
 
 CLASS *auction::oclass = NULL;
 auction *auction::defaults = NULL;
@@ -29,8 +30,9 @@ EXPORT int64 submit_bid(OBJECT *obj, OBJECT *from, double quantity, double price
 		auction *mkt = OBJECTDATA(obj,auction);
 		return mkt->submit(from,quantity,price,bid_id);
 	}
-	else
-	{
+	else if(obj->oclass == stubauction::oclass){
+		return -1;
+	} else	{
 		gl_error("%s submitted a bid to an object that is not an auction", gl_name(from,biddername,sizeof(biddername)));
 		return -1;
 	}
@@ -43,9 +45,9 @@ EXPORT int64 submit_bid_state(OBJECT *obj, OBJECT *from, double quantity, double
 	{
 		auction *mkt = OBJECTDATA(obj,auction);
 		return mkt->submit(from,quantity,price,bid_id,is_on?BS_ON:BS_OFF);
-	}
-	else
-	{
+	} else if(obj->oclass == stubauction::oclass){
+		return -1;
+	} else {
 		gl_error("%s submitted a bid to an object that is not an auction", gl_name(from,biddername,sizeof(biddername)));
 		return -1;
 	}
