@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;&quot;..\third_party\cppunit-1.12.0\include&quot;;..\third_party\SuperLU_3.1\SRC;..\third_party\superLU_MT\SRC;..\third_party\superLU_MT\Need"
+				AdditionalIncludeDirectories="..\core;&quot;..\third_party\cppunit-1.12.0\include&quot;;..\third_party\superLU_MT\SRC"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_TESTING"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -66,9 +66,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				LinkLibraryDependencies="false"
 				AdditionalDependencies="cppunitd.lib CBLAS.lib pthreadVC2.lib superLU_MT.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\third_party\superLU_MT\Need;&quot;$(OutDir)&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -125,8 +126,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;&quot;..\third_party\cppunit-1.12.0\include&quot;;..\third_party\SuperLU_3.1\SRC;..\third_party\superLU_MT\SRC;..\third_party\superLU_MT\Need"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE"
+				AdditionalIncludeDirectories="..\core;&quot;..\third_party\cppunit-1.12.0\include&quot;;..\third_party\superLU_MT\SRC"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_TESTING"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -147,9 +148,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunitd.lib"
+				AdditionalDependencies="cppunitd.lib CBLAS.lib pthreadVC2.lib superLU_MT.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="$(OutDir)"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -206,7 +207,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include;..\third_party\superLU_MT\SRC;..\third_party\superLU_MT\Need"
+				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include;..\third_party\superLU_MT\SRC"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -228,7 +229,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="cppunit.lib CBLAS.lib pthreadVC2.lib superLU_MT.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\third_party\superLU_MT\Need;&quot;$(OutDir)&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				IgnoreDefaultLibraryNames="LIBCMT.lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -265,7 +266,7 @@
 		<Configuration
 			Name="Release|x64"
 			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			CharacterSet="2"
@@ -290,7 +291,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include;..\third_party\superLU_MT\SRC;..\third_party\superLU_MT\Need"
+				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include;..\third_party\superLU_MT\SRC"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -312,12 +313,13 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="cppunit.lib CBLAS.lib pthreadVC2.lib superLU_MT.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\third_party\superLU_MT\Need;&quot;$(OutDir)&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				IgnoreDefaultLibraryNames="LIBCMT.lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -427,7 +429,7 @@
 		</Configuration>
 		<Configuration
 			Name="QuickDebug|x64"
-			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
