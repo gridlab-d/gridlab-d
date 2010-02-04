@@ -19,6 +19,10 @@ schedule test_schedule {
 	30-59 * * * * 1
 }
 
+class house {
+	double myvalue;
+}
+
 object house {
 	// transform references property in as-yet undefined object
 	cooling_setpoint House1.cooling_setpoint+1;

@@ -5180,10 +5180,10 @@ STATUS loadall(char *file){
 	/* load the appropriate type of file */
 	if (global_streaming_io_enabled)
 	{
-		FILE *fp = fopen(file,"r");
+		FILE *fp = fopen(file,"rb");
 		if (fp==NULL || stream_in(fp,SF_ALL)<0)
 		{
-			output_error("%s: unable to read stream", filename);
+			output_error("%s: unable to read stream", file);
 			return FAILED;
 		}
 		else

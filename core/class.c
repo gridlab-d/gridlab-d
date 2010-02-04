@@ -52,6 +52,7 @@
 #include "timestamp.h"
 #include "loadshape.h"
 #include "enduse.h"
+#include "stream.h"
 
 static unsigned int class_count = 0;
 
@@ -70,9 +71,11 @@ static struct s_property_specs { /**<	the property type conversion specification
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
 	int (*string_to_data)(char *,void*,PROPERTY*); /**< the function to convert from a string to data */
 	int (*create)(void*); /**< the function used to create the property, if any */
+	int (*stream_in)(FILE*,void*,PROPERTY*); /**< the function to read data from a stream */
+	int (*stream_out)(FILE*,void*,PROPERTY*); /**< the function to write data to a stream */
 } property_type[] = {
 	{"void", 0, convert_from_void,convert_to_void},
-	{"double", sizeof(double), convert_from_double,convert_to_double},
+	{"double", sizeof(double), convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double},
 	{"complex", sizeof(complex), convert_from_complex,convert_to_complex},
 	{"enumeration",sizeof(long), convert_from_enumeration,convert_to_enumeration},
 	{"set",sizeof(int64), convert_from_set,convert_to_set},

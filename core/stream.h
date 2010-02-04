@@ -19,4 +19,7 @@ int64 stream_out(FILE *fp, int flags);
 int64 stream_in(FILE *fp, int flags);
 char* stream_context();
 
+int stream_in_double(FILE*,void*,struct s_property_map*);
+int stream_out_double(FILE*,void*,struct s_property_map*);
+
 #endif

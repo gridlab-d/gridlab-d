@@ -46,7 +46,7 @@ int saveall(char *filename)
 	/* setup output stream */
 	if (filename[0]=='-')
 		fp = stdout;
-	else if ((fp=fopen(filename,"w"))==NULL){
+	else if ((fp=fopen(filename,"wb"))==NULL){
 		output_error("saveall: unable to open stream \'%s\' for writing", filename);
 		return 0;
 	}

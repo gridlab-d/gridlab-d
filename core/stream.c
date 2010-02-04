@@ -16,6 +16,11 @@
 
 /* stream format - binary is normal, undefine BINARY to debug the stream visually */
 #define BINARY
+#ifndef _DEBUG
+#ifndef BINARY
+#error Binary must be defined for release versions of stream.c
+#endif
+#endif
 
 /* output macros */
 static unsigned char b,t;
@@ -28,12 +33,12 @@ static unsigned int64 n;
 #ifdef BINARY
 #define COMPRESS(S,L) {if ((n=stream_compress(fp,S,L))<=0) return -1; else count+=n;} 
 #define PUTD(S,L) {n=(L);if(fwrite(&n,2,1,fp)!=1 || fwrite((S),1,L,fp)!=L) return -1; else count+=n+2;}
-#define PUTC(C) {c=(C);PUTD(&c,1)}
-#define PUTS(S) {s=(S);PUTD(&s,2)}
-#define PUTL(L) {l=(L);PUTD(&l,4)}
-#define PUTQ(Q) {q=(Q);PUTD(&q,8)}
+#define PUTC(C) {c=(unsigned char)(C);PUTD(&c,1)}
+#define PUTS(S) {s=(unsigned short)(S);PUTD(&s,2)}
+#define PUTL(L) {l=(unsigned long)(L);PUTD(&l,4)}
+#define PUTQ(Q) {q=(unsigned int64)(Q);PUTD(&q,8)}
 #define PUTX(T,X) {if ((n=stream_out_##T(fp,(X)))<0) return -1; else count+=n;}
-#define PUTT(B,T) {b=SB_##B;t=ST_##T;s=(unsigned short)((b<<8)|t);PUTD(&s,2)}
+#define PUTT(B,T) {unsigned short w=0; b=SB_##B; t=ST_##T; if (fwrite(&w,2,1,fp)!=1 || fwrite(&b,1,1,fp)!=1 || fwrite(&t,1,1,fp)!=1) return -1; else count+=4;}
 #else
 static char indent[256]="";
 void indent_more() { if (strlen(indent)<sizeof(indent)/sizeof(indent[0])) strcat(indent," ");}
@@ -47,13 +52,17 @@ void indent_less() { if (indent[0]!='\0') indent[strlen(indent)-1] = '\0';}
 #define PUTT(B,T) {if (SB_##B==SB_BEGIN || ST_##T==ST_BEGIN) indent_more(); if(fprintf(fp,"%s[%s %s]\n",indent,#B,#T)<=0) return -1; else count+=2; if (SB_##B==SB_END || ST_##T==ST_END) indent_less();}
 #endif
 
-#define GETD(S,L) {char _buf[4096]; if(fread(&n,2,1,fp)!=1 || n!=(L) || n>sizeof(_buf) || fread(_buf,1,n,fp)!=n) return -1; else count+=n+2;}
-#define GETC(C) {c=(C);GETD(&c,1)}
-#define GETS(S) {s=(S);GETD(&s,2)}
-#define GETL(L) {l=(L);GETD(&l,4)}
-#define GETQ(Q)
-#define GETX(T,X)
-#define GETT(B,T)
+#define GETD(S,L) {if(fread(&n,2,1,fp)!=1 || n>(L) || fread((S),n,1,fp)!=1) return -1; else count+=n+2;}
+#define GETC(C) GETD(&(C),1)
+#define GETS(S) GETD(&(S),2)
+#define GETL(L) GETD(&(L),4)
+#define GETQ(Q) GETD(&(Q),8)
+static int ok=1;
+#define GETBT (ok?(ok=0,fread(&n,2,1,fp)==1 && n==0 && fread(&b,1,1,fp)==1 && fread(&t,1,1,fp)==1):1)
+#define OK (ok=1)
+#define B(X) (b==SB_##X)
+#define T(X) (t==ST_##X)
+
 
 /* stream block tokens */
 enum {
@@ -119,7 +128,7 @@ char *stream_context()
 	sprintf(buffer,"block %d, token %d",b,t);
 	return buffer;
 }
-void stream_error(char *format, ...)
+int stream_error(char *format, ...)
 {
 	char buffer[1024];
 	va_list ptr;
@@ -127,8 +136,20 @@ void stream_error(char *format, ...)
 	vsprintf(buffer,format,ptr);
 	va_end(ptr);
 	output_error("- stream(%d:%d) - %s", b,t,buffer);
-	return;
+	return -1;
 }
+
+int stream_warning(char *format, ...)
+{
+	char buffer[1024];
+	va_list ptr;
+	va_start(ptr,format);
+	vsprintf(buffer,format,ptr);
+	va_end(ptr);
+	output_warning("- stream(%d:%d) - %s", b,t,buffer);
+	return -1;
+}
+
 /** stream_compress
 
 	Format of compressed stream 
@@ -266,39 +287,42 @@ int64 stream_out_module(FILE *fp, MODULE *m)
 	PUTS(m->minor);
 
 	PUTT(MODULE,END);
+
 	return count;
 }
 int64 stream_in_module(FILE *fp)
 {
 	int64 count=0;
-	char module_name[1024]; 
-	unsigned short major, minor;
 	MODULE *m;
 
-	GETT(MODULE,BEGIN);
-
-	GETT(MODULE,NAME);
-	GETD(module_name,sizeof(module_name));
-
-	m = module_load(module_name,0,NULL);
-	if (m==NULL)
+	while (GETBT && B(MODULE) && T(BEGIN))
 	{
-		stream_error("module %s version is not found", module_name);
-		return -1;
+		char name[1024]; 
+		memset(name,0,sizeof(name));
+		OK;
+		while (GETBT && B(MODULE) && !T(END))
+		{
+			OK;
+			if T(NAME) 
+			{
+				GETD(name,sizeof(name));
+				m = module_load(name,0,NULL);
+				if (m==NULL)
+					return stream_error("module %s version is not found", name);
+			}
+			else if T(VERSION) 
+			{
+				unsigned short major, minor;
+				GETS(major);
+				GETS(minor);
+				if (m->major!=major || m->minor!=minor)
+					return stream_error("module %s version %d.%02d specified does not match version %d.%02d found", name, major, minor, m->major, m->minor);
+			}
+			else
+				stream_warning("ignoring token %d in module stream", t);
+		}
+		OK;
 	}
-
-	GETT(MODULE,VERSION);
-	GETS(major);
-	GETS(minor);
-
-	GETT(MODULE,END);
-
-	if (m->major!=major || m->minor!=minor)
-	{
-		stream_error("module %s version %d.%02d specified does not match version %d.%02d found", module_name, major, minor, m->major, m->minor);
-		return -1;
-	}
-
 	return count;
 }
 
@@ -318,7 +342,7 @@ int64 stream_out_unit(FILE *fp, UNIT *u)
 }
 
 /*******************************************************
- * UNIT
+ * KEYWORD
  */
 int64 stream_out_keyword(FILE *fp, KEYWORD *k)
 {
@@ -373,6 +397,10 @@ int64 stream_out_property(FILE *fp, PROPERTY *p)
 	PUTT(PROPERTY,END);
 	return count;
 }
+int64 stream_in_property(FILE *fp, PROPERTY *p)
+{
+	return 0;
+}
 
 /*******************************************************
  * GLOBALS 
@@ -390,13 +418,43 @@ int64 stream_out_global(FILE *fp, GLOBALVAR *v)
 	PUTT(GLOBAL,NAME);
 	PUTD(v->name,strlen(v->name));
 
-	PUTT(GLOBAL,PROPERTY);
-	PUTX(property, v->prop);
-
 	PUTT(GLOBAL,VALUE);
 	PUTD(value,strlen(value));
 
 	PUTT(GLOBAL,END);
+	return count;
+}
+int64 stream_in_global(FILE *fp)
+{
+	int64 count=0;
+	GLOBALVAR *v;
+
+	while (GETBT && B(GLOBAL) && T(BEGIN))
+	{
+		char name[1024]; 
+		char value[1024]; 
+		memset(name,0,sizeof(name));
+		memset(value,0,sizeof(value));
+		OK;
+		while (GETBT && B(GLOBAL) && !T(END))
+		{
+			OK;
+			if T(NAME) 
+			{
+				GETD(name,sizeof(name));
+				v = global_find(name,NULL);
+			}
+			else if T(VALUE) 
+			{
+				GETD(value,sizeof(value));
+				if (v->prop->access==PA_PUBLIC && strcmp(value,"")!=0 && strcmp(value,"\"\"")!=0) /* only public variables are loaded */
+					global_setvar(name,value,NULL);
+			}
+			else
+				stream_warning("ignoring token %d in global stream", t);
+		}
+		OK;
+	}
 	return count;
 }
 
@@ -420,20 +478,80 @@ int64 stream_out_class(FILE *fp, CLASS *oclass)
 				PUTT(CLASS,NAME);
 				PUTD(oclass->name,strlen(oclass->name));
 
-				PUTT(BEGIN,PROPERTY);
 				extended = TRUE;
 			}
 
 			PUTT(CLASS,PROPERTY);
-			PUTX(property,prop);
+			PUTD(prop->name,strlen(prop->name));
+
+			PUTT(CLASS,TYPE);
+			PUTL(prop->ptype);
+
+			if (prop->unit)
+			{
+				PUTT(CLASS,UNIT);
+				PUTD(prop->unit->name,strlen(prop->unit->name));
+			}
+
+			/* TODO */
+			//PUTT(CLASS,CODE);
+			//PUTD(code,sizeof(code));
 		}
 	}
 
 	/* close class if extended */
 	if (extended)
 	{
-		PUTT(END,PROPERTY)
 		PUTT(CLASS,END);
+	}
+	return count;
+}
+int stream_in_class(FILE *fp)
+{
+	int64 count=0;
+	CLASS *c;
+
+	while (GETBT && B(CLASS) && T(BEGIN))
+	{
+		char cname[1024]; 
+		char pname[1024]; 
+		char ptype[1024];
+		char punit[1024];
+		char code[65536];
+		memset(cname,0,sizeof(cname));
+		memset(pname,0,sizeof(pname));
+		memset(ptype,0,sizeof(ptype));
+		memset(punit,0,sizeof(punit));
+		memset(code,0,sizeof(code));
+		OK;
+		while (GETBT && B(CLASS) && !T(END))
+		{
+			OK;
+			if T(NAME) 
+			{
+				GETD(cname,sizeof(cname));
+			}
+			else if T(PROPERTY) 
+			{
+				GETD(pname,sizeof(pname));
+			}
+			else if T(TYPE)
+			{
+				GETD(ptype,sizeof(ptype));
+			}
+			else if T(UNIT)
+			{
+				GETD(punit,sizeof(punit));
+			}
+			// TODO
+			//else if T(CODE)
+			//{
+			//	GETD(code,sizeof(code));
+			//}
+			else
+				stream_warning("ignoring token %d in global stream", t);
+		}
+		OK;
 	}
 	return count;
 }
@@ -526,7 +644,7 @@ int64 stream_out_schedule(FILE *fp, SCHEDULE *sch)
 
 #ifdef COMPRESS
 	PUTT(SCHEDULE,DATA);
-	COMPRESS(sch,sizeof(SCHEDULE));
+	COMPRESS((char*)sch,sizeof(SCHEDULE));
 #else
 	PUTT(SCHEDULE,NAME);
 	PUTD(sch->name,strlen(sch->name));
@@ -622,40 +740,28 @@ int64 stream_out(FILE *fp, int flags)
 	/* higher stream level data goes here... */
 
 	/* modules (not optional) */
-	PUTT(BEGIN,MODULE);
 	for (mod=module_get_first(); (flags&SF_MODULES) && mod!=NULL; mod=mod->next)
 		PUTX(module,mod);
-	PUTT(END,MODULE);
 
 	/* globals */
-	PUTT(BEGIN,MODULE);
 	while ((flags&SF_GLOBALS) && (gvar=global_getnext(gvar))!=NULL)
 		PUTX(global,gvar);
-	PUTT(END,MODULE);
 
 	/* classes */
-	PUTT(BEGIN,CLASS);
 	for (oclass=class_get_first_class(); (flags&SF_CLASSES) && oclass!=NULL; oclass=oclass->next)
 		PUTX(class,oclass);
-	PUTT(END,CLASS);
 
 	/* schedules */
-	PUTT(BEGIN,SCHEDULE);
 	while ((sch=schedule_getnext(sch))!=NULL)
 		PUTX(schedule,sch);
-	PUTT(END,SCHEDULE);
 
 	/* objects */
-	PUTT(BEGIN,OBJECT);
 	for (obj=object_get_first(); (flags&SF_OBJECTS) && obj!=NULL; obj=obj->next)
 		PUTX(object,obj);
-	PUTT(END,OBJECT);
 
-	/* schedules */
-	PUTT(BEGIN,TRANSFORM);
+	/* transforms */
 	while ((xform=scheduletransform_getnext(xform))!=NULL)
 		PUTX(transform,xform);
-	PUTT(END,TRANSFORM);
 
 	return count;
 }
@@ -663,7 +769,49 @@ int64 stream_out(FILE *fp, int flags)
 int64 stream_in(FILE *fp, int flags)
 {
 	int64 count = 0;
-	GETD(STREAM_NAME,strlen(STREAM_NAME));
 
+	
+	{	char stream_name[] = STREAM_NAME;
+		GETD(stream_name,sizeof(stream_name));
+		if (strcmp(stream_name,STREAM_NAME)!=0)
+			return stream_error("stream_in(): stream name '%s' mismatch", stream_name);
+	}
+
+	{	unsigned short stream_version = STREAM_VERSION;
+		GETS(stream_version);
+		if (stream_version!=STREAM_VERSION)
+			return stream_error("stream_in(): stream version %d mismatch", stream_version);
+	}
+
+	while (!feof(fp) && !ferror(fp))
+	{
+		stream_in_module(fp);
+		stream_in_global(fp);
+		stream_in_class(fp);
+	}
+
+	if (!feof(fp) || !ok)
+		return stream_error("stream_in(): unhandled block/token at position %d", count);
+	else if (ferror(fp))
+		return stream_error("stream_in(): %s", strerror(errno));
+	else
+		return count;
+}
+
+
+/*******************************************************
+ * OUTPUT PROPERTIES
+ */
+
+int stream_out_double(FILE *fp,void *ptr,PROPERTY *prop)
+{
+	int count=0;
+	PUTQ(*(double*)ptr);
+	return count;
+}
+int stream_in_double(FILE *fp,void *ptr,PROPERTY *prop)
+{
+	int count=0;
+	GETQ(*(double*)ptr);
 	return count;
 }
