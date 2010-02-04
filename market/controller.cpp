@@ -63,7 +63,7 @@ void controller::cheat(){
 			sprintf(target, "air_temperature");
 			sprintf(setpoint, "heating_setpoint");
 			sprintf(demand, "heating_demand");
-			sprintf(total, "panel.power");
+			sprintf(total, "total_load");
 			sprintf(load, "hvac_load");
 			sprintf(state, "power_state");
 			kT_L = -2;
@@ -76,7 +76,7 @@ void controller::cheat(){
 			sprintf(target, "air_temperature");
 			sprintf(setpoint, "cooling_setpoint");
 			sprintf(demand, "cooling_demand");
-			sprintf(total, "panel.power");
+			sprintf(total, "total_load");
 			sprintf(load, "hvac_load");
 			sprintf(state, "power_state");
 			kT_L = 2;
@@ -89,7 +89,7 @@ void controller::cheat(){
 			sprintf(target, "air_temperature");
 			sprintf(setpoint, "heating_setpoint");
 			sprintf(demand, "heating_demand");
-			sprintf(total, "panel.power");
+			sprintf(total, "total_load");
 			sprintf(load, "hvac_load");
 			sprintf(state, "power_state");
 			kT_L = -2;
@@ -102,7 +102,7 @@ void controller::cheat(){
 			sprintf(target, "air_temperature");
 			sprintf(setpoint, "cooling_setpoint");
 			sprintf(demand, "cooling_demand");
-			sprintf(total, "panel.power");
+			sprintf(total, "total_load");
 			sprintf(load, "hvac_load");
 			sprintf(state, "power_state");
 			kT_L = 2;
@@ -182,7 +182,7 @@ int controller::init(OBJECT *parent){
 			dir = 1;
 		} else if(high < low){
 			dir = -1;
-		} else if(high == low){
+		} else if((high == low) && (fabs(kT_H) > 0.001 || fabs(kT_L) > 0.001)){
 			dir = 0;
 			gl_warning("%s: controller has no price ramp", namestr);
 			/* occurs given no price variation, or no control width (use a normal thermostat?) */
@@ -274,14 +274,25 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	if(bid > 0.0 && *pDemand > 0){
 		last_p = bid;
 		last_q = *pDemand;
-		lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
+		//lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
+		if(pState != 0){
+			lastbid_id = submit_bid_state(pMarket, hdr, -last_q, last_p, bid_id, (*pState > 0 ? 1 : 0));
+		} else {
+			lastbid_id = submit_bid(pMarket, hdr, -last_q, last_p, bid_id);
+		}
 		residual -= *pLoad;
 	} else {
 		last_p = 0;
 		last_q = 0;
 	}
-	if (residual>0)
-		lastbid_id = market->submit(OBJECTHDR(this), -residual, 9999, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
+	if (residual>0){
+		//lastbid_id = market->submit(OBJECTHDR(this), -residual, 9999, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
+		if(pState != 0){
+			lastbid_id = submit_bid_state(pMarket, hdr, -last_q, 9999.0, bid_id, (*pState > 0 ? 1 : 0));
+		} else {
+			lastbid_id = submit_bid(pMarket, hdr, -last_q, 9999.0, bid_id);
+		}
+	}
 	else if(residual < 0)
 		gl_warning("controller:%d: residual unresponsive load is negative! (%.1f kW)", hdr->id, residual);
 
