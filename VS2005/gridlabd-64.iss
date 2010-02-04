@@ -171,7 +171,7 @@ Source: tape_memory.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
 ;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: reliability.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\reliability
-Source: ..\..\..\market\Win32\Release\market.dll; DestDir: {app}\lib; Flags: ignoreversion
+Source: market.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: tape_plot.dll; DestDir: {app}\lib; Flags: ignoreversion
 
