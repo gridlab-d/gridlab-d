@@ -175,6 +175,7 @@ Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: tape_plot.dll; DestDir: {app}\lib; Flags: ignoreversion
 
 ;; sample files
+Source: pthreadVC2.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\tape
 Source: assert.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
 Source: ..\..\..\models\residential_loads.glm; DestDir: {app}\samples
