@@ -3,8 +3,11 @@
  */
 
 #include "solver_nr.h"
-#ifdef WIN32
-#include <pdsp_defs.h>	//superLU_MT in WIN32
+
+#define MT // this enables multithreaded SuperLU
+
+#ifdef MT
+#include <pdsp_defs.h>	//superLU_MT 
 #else
 #include <slu_ddefs.h>	//Sequential superLU (other platforms)
 #endif
@@ -151,7 +154,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	unsigned int m,n;
 	double *sol_LU;
 	
-#ifndef WIN32
+#ifndef MT
 	superlu_options_t options;	//Additional variables for sequential superLU
 	SuperLUStat_t stat;
 #endif
@@ -2855,7 +2858,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			B_LU.ncol = 1;
 		}
 
-#ifndef WIN32
+#ifndef MT
 		/* superLU sequential options*/
 		set_default_options ( &options );
 #endif
@@ -2900,7 +2903,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		Bstore->lda = m;
 		Bstore->nzval = rhs_LU;
 
-#ifdef WIN32
+#ifdef MT
 		//superLU_MT commands
 
 		//Populate perm_c
@@ -3045,7 +3048,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		NR_realloc_needed = false;
 		
 		/* De-allocate storage - superLU matrix types must be destroyed at every iteration, otherwise they balloon fast (65 MB norma becomes 1.5 GB) */
-#ifdef WIN32
+#ifdef MT
 		//superLU_MT commands
 		Destroy_SuperNode_SCP(&L_LU);
 		Destroy_CompCol_NCP(&U_LU);

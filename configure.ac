@@ -82,7 +82,7 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
-AC_PROG_MKDIR_P
+#AC_PROG_MKDIR_P
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
@@ -92,24 +92,24 @@ test "$HAVE_XERCES" = "yes" || \
 installed, you probably need to use one or more of the --with-xerces options. \
 Try `./configure --help[`] for more information.])
 AX_LIB_SUPERLU
-if test "$HAVE_SUPERLU" != "yes"; then
-	if test -f third_party/SuperLU_3.1/lib/libsuperlu_3.1.a; then
-		SUPERLU_LIBS=$PWD/third_party/SuperLU_3.1/lib/libsuperlu_3.1.a
-	elif test -f third_party/SuperLU_3.1/lib/libsuperlu.a; then
-		SUPERLU_LIBS=$PWD/third_party/SuperLU_3.1/lib/libsuperlu.a
-	else
-		AC_MSG_FAILURE([SuperLU library not found. If SuperLU is not properly \
-installed, you probably need to use one or more of the --with-superlu options. \
-Try `./configure --help[`] for more information.])
-	fi
-	SUPERLU_CPPFLAGS=-I$PWD/third_party/SuperLU_3.1/SRC
+#if test "$HAVE_SUPERLU" != "yes"; then
+#	if test -f third_party/SuperLU_3.1/lib/libsuperlu_3.1.a; then
+#		SUPERLU_LIBS=$PWD/third_party/SuperLU_3.1/lib/libsuperlu_3.1.a
+#	elif test -f third_party/SuperLU_3.1/lib/libsuperlu.a; then
+#		SUPERLU_LIBS=$PWD/third_party/SuperLU_3.1/lib/libsuperlu.a
+#	else
+#		AC_MSG_FAILURE([SuperLU library not found. If SuperLU is not properly \
+#installed, you probably need to use one or more of the --with-superlu options. \
+#Try `./configure --help[`] for more information.])
+#	fi
+	SUPERLU_CPPFLAGS=-I$PWD/third_party/superLU_MT/SRC
 	SUPERLU_LDFLAGS=""
 	AC_SUBST(SUPERLU_CPPFLAGS)
 	AC_SUBST(SUPERLU_LDFLAGS)
 	AC_SUBST(SUPERLU_LIBS)
 	AC_DEFINE_UNQUOTED(HAVE_SUPERLU)
 	HAVE_SUPERLU=yes
-fi
+#fi
 
 DX_INIT_DOXYGEN(gridlabd, [doxygen/gridlabd.conf])
 DX_HTML_FEATURE (ON)
