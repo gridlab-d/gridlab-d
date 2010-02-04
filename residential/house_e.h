@@ -148,6 +148,7 @@ public:
 
 	/* inherited res_enduse::load is hvac system load */
 	double hvac_load;
+	double total_load;
 	enduse total; /* total load */
 	double heating_demand;
 	double cooling_demand;

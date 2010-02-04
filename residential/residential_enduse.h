@@ -17,6 +17,12 @@ typedef enum {
 	OV_OFF = -1,
 } OVERRIDE;
 
+typedef enum {
+	PS_UNKNOWN=-1,
+	PS_OFF=0,
+	PS_ON=1
+} POWERSTATE;
+
 class residential_enduse  
 {
 public:
@@ -24,7 +30,7 @@ public:
 	enduse load;	// load data
 	loadshape shape;
 	OVERRIDE override;
-
+	POWERSTATE power_state;
 public:
 	static CLASS *oclass;
 	residential_enduse(MODULE *mod);

@@ -717,6 +717,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "hvac_power_factor[unit]", PADDR(hvac_power_factor), PT_DESCRIPTION,"power factor of hvac",
 			
 			PT_double,"hvac_load",PADDR(hvac_load),PT_DESCRIPTION,"heating/cooling system load",
+			PT_double,"total_load",PADDR(total_load),
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
 			PT_double,"design_internal_gain_density[W/sf]",PADDR(design_internal_gain_density),PT_DESCRIPTION,"average density of heat generating devices in the house",
 #ifdef _DEBUG
@@ -2369,21 +2370,25 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				 || (auxiliary_strategy & AX_LOCKOUT && *pTout <= aux_heat_temp_lockout)
 				){
 				last_system_mode = system_mode = SM_AUX;
+				power_state = PS_ON;
 				thermostat_last_cycle_time = t1;
 			} else if(Tair > TheatOff - terr/2){
 				system_mode = SM_OFF;
+				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
 			}
 			break;
 		case SM_AUX:
 			if(Tair > TheatOff - terr/2){
 				system_mode = SM_OFF;
+				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
 			}
 			break;
 		case SM_COOL:
 			if(Tair < TcoolOff - terr/2){
 				system_mode = SM_OFF;
+				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
 			}
 			break;
@@ -2393,6 +2398,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				(cooling_system_type != CT_NONE ))
 			{
 				last_system_mode = system_mode = SM_COOL;
+				power_state = PS_ON;
 				thermostat_last_cycle_time = t1;
 			}
 			else if(Tair < TheatOn - terr/2)
@@ -2404,11 +2410,13 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 					(!(auxiliary_strategy & AX_LOCKOUT) || (*pTout <= aux_heat_temp_lockout))) // If the air of the house is 2x outside the deadband range, it needs AUX help
 				{
 					last_system_mode = system_mode = SM_AUX;
+					power_state = PS_ON;
 					thermostat_last_cycle_time = t1;
 				}
 				else
 				{
 					last_system_mode = system_mode = SM_HEAT;
+					power_state = PS_ON;
 					thermostat_last_cycle_time = t1;
 				}
 			}
@@ -2533,6 +2541,8 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	/* using an enduse structure for the total is more a matter of having all the values add up for the house,
 	 * and it should not sync the struct! ~MH */
 	//TIMESTAMP t = gl_enduse_sync(&total,t1); if (t<t2) t2 = t;
+
+	total_load = total.total.Mag();
 
 	// compute line currents and post to meter
 	if (obj->parent != NULL)
