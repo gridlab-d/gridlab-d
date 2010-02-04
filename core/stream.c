@@ -442,7 +442,7 @@ int64 stream_in_global(FILE *fp)
 			if T(NAME) 
 			{
 				GETD(name,sizeof(name));
-				v = global_find(name,NULL);
+				v = global_find(name);
 			}
 			else if T(VALUE) 
 			{
@@ -803,13 +803,13 @@ int64 stream_in(FILE *fp, int flags)
  * OUTPUT PROPERTIES
  */
 
-int stream_out_double(FILE *fp,void *ptr,struct s_property_map *prop)
+int stream_out_double(FILE *fp,void *ptr,PROPERTY *prop)
 {
 	int count=0;
 	PUTQ(*(double*)ptr);
 	return count;
 }
-int stream_in_double(FILE *fp,void *ptr,struct s_property_map *prop)
+int stream_in_double(FILE *fp,void *ptr,PROPERTY *prop)
 {
 	int count=0;
 	GETQ(*(double*)ptr);
