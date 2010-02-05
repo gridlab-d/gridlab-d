@@ -110,8 +110,8 @@ public:
 	double design_cooling_capacity;	///< space cooling capacity (BTUh/sf)
 	double heating_COP;				///< space heating COP
 	double cooling_COP;				///< space cooling COP
-	double sol_inc;//debug variable so we can look at Qs. Qs is the total rate of solar energy in the house. Note that a 
-	//fraction of Qs is applied to the air according to the value of air_heat_fraction. The remaining is applied to the mass
+	double sol_inc;					///< debug variable so we can look at Qs. Qs is the total rate of solar energy in the house. Note that a 
+									///< fraction of Qs is applied to the air according to the value of air_heat_fraction. The remaining is applied to the mass
 	double over_sizing_factor;		///< Future: equipment over sizing factor
 	double rated_heating_capacity;	///< rated heating capacity of the system (BTUh/sf; varies w.r.t Tout),
 	double rated_cooling_capacity;	///< rated cooling capacity of the system (BTUh/sf; varies w.r.t Tout)

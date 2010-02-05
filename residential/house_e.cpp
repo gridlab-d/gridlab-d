@@ -1795,9 +1795,9 @@ void house_e::update_model(double dt)
 
 	for (i=1; i<9; i++) //Compass points of pSolar include direct normal and diffuse radiation into one value
 		Qs += pSolar[i];
-
+	
 	Qs *= 3.412 * (gross_wall_area*window_wall_ratio) / 8.0 * (glazing_shgc * window_exterior_transmission_coefficient);
-	sol_inc = pSolar[i];
+	sol_inc = Qs/(gross_wall_area*window_wall_ratio*glazing_shgc*window_exterior_transmission_coefficient); // gives Qs in Btu/(hr*sf)
 
 
 	if (Qs<0)
