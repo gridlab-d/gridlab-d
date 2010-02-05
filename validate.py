@@ -91,8 +91,8 @@ def run_tests(argv):
 			if file.startswith("test_") and file.endswith(".glm") and file[0] != '.':
 				autotestfiles.append((path, file))
 	
-	for path, file in autotestfiles:
-		print("Found file: \'"+file+"\'")
+#	for path, file in autotestfiles:
+#		print("Found file: \'"+file+"\'")
 	
 	#build test dirs
 	#for file in autotestfiles:
@@ -119,7 +119,7 @@ def run_tests(argv):
 		#run file with:
 		outfile = open(os.path.join(xpath,"outfile.txt"), "w")
 		errfile = open(os.path.join(xpath,"errfile.txt"), "w")
-		#print("NOTICE:  Running \'"+xfile+"\'")
+		print("NOTICE:  Running \'"+xfile+"\'")
 		start_time = time.time();
 		rv = subprocess.call(["gridlabd",xfile],stdout=outfile,stderr=errfile)
 		end_time = time.time();
