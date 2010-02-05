@@ -14,7 +14,7 @@ module powerflow;
 clock{
 	timezone PST+8PDT;
 	starttime '2001-02-16 00:00:00';
-	stoptime '2001-02-17 00:00:47';
+	stoptime '2001-02-17 00:00:03';
 }
 
 
@@ -46,27 +46,27 @@ object triplex_meter{
 			property panel.energy;
 			file "test_HVAC_common_heat.csv";
 			interval 1;
-			limit 86444;
+			limit 86441;
 		};
 		object complex_assert{
 			target "panel.energy";
-			in '2001-02-17 0:00:44';
+			in '2001-02-17 0:00:01';
 			once ONCE_TRUE;
-			value 30.072+0i;
-			within 0.451125;//asserting house_e within 1.5 percent of Rob's ETP result
+			value 29.778+0i;
+			within 0.14889;//asserting house_e within 0.5 percent of Rob's ETP result
 		};
 	};
 	object recorder{
-		property measured_real_power,measured_real_energy;
-		file "test_HVAC_common_heat.csv";
+		property measured_real_energy;
+		file "test_HVAC_common_heat_energy.csv";
 		interval 1;
-		limit 86444;
+		limit 86441;
 	};
 	object double_assert{
 		target "measured_real_energy";
-		in '2001-02-17 0:00:44';
+		in '2001-02-17 0:00:01';
 		once ONCE_TRUE;
-		value 30072;
-		within 451.125;//asserting house_e within 1.5 percent of Rob's ETP result
+		value 29778;
+		within 148.89;//asserting house_e within 0.5 percent of Rob's ETP result
 	};
 }

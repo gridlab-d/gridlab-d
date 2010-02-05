@@ -12,9 +12,9 @@ module climate;
 module powerflow;
 
 clock{
-	timezone PST+8PDT;
+	timezone PST+0PDT;
 	starttime '2001-07-24 01:00:00';
-	stoptime '2001-07-25 01:00:24';
+	stoptime '2001-07-25 01:00:21';
 }
 
 
@@ -46,27 +46,27 @@ object triplex_meter{
 			property panel.energy;
 			file "test_HVAC_common_cool.csv";
 			interval 1;
-			limit 86449;
+			limit 86425;
 		};
 		object complex_assert{
 			target "panel.energy";
-			in '2001-07-25 1:00:22';
+			in '2001-07-25 1:00:19';
 			once ONCE_TRUE;
-			value 9.079+0i;
-			within 0.09079;//asserting house_e within 1 percent of Rob's ETP result
+			value 9.143+0i;
+			within 0.045715;//asserting house_e within 0.5 percent of Rob's ETP result
 		};
 	};
 	object recorder{
-		property measured_real_power,measured_real_energy;
-		file "test_HVAC_peak_cool.csv";
+		property measured_real_energy;
+		file "test_HVAC_common_cool_energy.csv";
 		interval 1;
-		limit 86449;
+		limit 86425;
 	};
 	object double_assert{
 		target "measured_real_energy";
-		in '2001-07-25 1:00:22';
+		in '2001-07-25 1:00:19';
 		once ONCE_TRUE;
-		value 9079;
-		within 90.79;//asserting house_e within 1 percent of Rob's ETP result
+		value 9143;
+		within 45.715;//asserting house_e within 0.5 percent of Rob's ETP result
 	};
 }
