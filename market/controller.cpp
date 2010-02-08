@@ -155,19 +155,19 @@ int controller::init(OBJECT *parent){
 	market = OBJECTDATA(pMarket, auction);
 
 	if(target[0] == 0){
-		GL_THROW("target property not specified");
+		GL_THROW("controller: %i, target property not specified", hdr->id);
 	}
 	if(setpoint[0] == 0){
-		GL_THROW("setpoint property not specified");;
+		GL_THROW("controller: %i, setpoint property not specified", hdr->id);;
 	}
 	if(demand[0] == 0){
-		GL_THROW("demand property not specified");
+		GL_THROW("controller: %i, demand property not specified", hdr->id);
 	}
 	if(total[0] == 0){
-		GL_THROW("total property not specified");
+		GL_THROW("controller: %i, total property not specified", hdr->id);
 	}
 	if(load[0] == 0){
-		GL_THROW("load property not specified");
+		GL_THROW("controller: %i, load property not specified", hdr->id);
 	}
 	fetch(&pMonitor, target, parent);
 	fetch(&pSetpoint, setpoint, parent);
@@ -271,12 +271,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	// bid the response part of the load
 	double residual = *pTotal;
 	int bid_id = (lastbid_id == market->market_id ? lastbid_id : -1);
+	// override
+	//bid_id = -1;
 	if(bid > 0.0 && *pDemand > 0){
 		last_p = bid;
 		last_q = *pDemand;
 		//lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
 		if(pState != 0){
-			lastbid_id = submit_bid_state(pMarket, hdr, -last_q, last_p, bid_id, (*pState > 0 ? 1 : 0));
+			lastbid_id = submit_bid_state(pMarket, hdr, -last_q, last_p, (*pState > 0 ? 1 : 0), bid_id);
 		} else {
 			lastbid_id = submit_bid(pMarket, hdr, -last_q, last_p, bid_id);
 		}

@@ -50,6 +50,7 @@ public:
 	inline double get_total() { return total;};
 	inline double get_total_on() { return total_on;};
 	inline double get_total_off() { return total_off;};
+	friend class auction;
 };
 
 class auction {
@@ -80,7 +81,7 @@ public:
 	double std72;
 	double avg168;		/**< weekly average of price */
 	double std168;		/**< weekly stdev of price */
-	double prices[168]; /**< price history */
+	double prices[168*60]; /**< price history */
 	int64 count;		/**< number of prices in history */
 	int16 lasthr, thishr;
 	OBJECT *linkref;	/**< reference link object that contains power_out (see Qload) */

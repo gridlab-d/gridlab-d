@@ -53,6 +53,7 @@ public:
 	double last_q;
 	double set_temp;
 	int may_run;
+
 private:
 	TIMESTAMP next_run;
 	double *pMonitor;

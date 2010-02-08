@@ -27,6 +27,7 @@ EXPORT int64 submit_bid(OBJECT *obj, OBJECT *from, double quantity, double price
 	char biddername[64];
 	if (obj->oclass==auction::oclass)
 	{
+		gl_verbose("%s submits stateless bid for %.0f at %.0f", gl_name(from,biddername,sizeof(biddername)),quantity,price);
 		auction *mkt = OBJECTDATA(obj,auction);
 		return mkt->submit(from,quantity,price,bid_id);
 	}
@@ -43,6 +44,7 @@ EXPORT int64 submit_bid_state(OBJECT *obj, OBJECT *from, double quantity, double
 	char biddername[64];
 	if (obj->oclass==auction::oclass)
 	{
+		gl_verbose("%s submits stateful (%s) bid for %.0f at %.0f", gl_name(from,biddername,sizeof(biddername)),is_on?"on":"off",quantity,price);
 		auction *mkt = OBJECTDATA(obj,auction);
 		return mkt->submit(from,quantity,price,bid_id,is_on?BS_ON:BS_OFF);
 	} else if(obj->oclass == stubauction::oclass){
@@ -83,6 +85,13 @@ auction::auction(MODULE *module)
 			PT_bool, "verbose", PADDR(verbose), PT_DESCRIPTION, "enable verbose auction operations",
 			PT_object, "linkref", PADDR(linkref), PT_DESCRIPTION, "reference to link object that has demand as power_out (only used when not all loads are bidding)",
 			PT_double, "pricecap", PADDR(pricecap), PT_DESCRIPTION, "the maximum price (magnitude) allowed",
+
+			PT_double, "demand.total", PADDR(asks.total),
+			PT_double, "demand.total_on", PADDR(asks.total_on),
+			PT_double, "demand.total_off", PADDR(asks.total_off),
+			PT_double, "supply.total", PADDR(offers.total),
+			PT_double, "supply.total_on", PADDR(offers.total_on),
+			PT_double, "supply.total_off", PADDR(offers.total_off),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		gl_publish_function(oclass,	"submit_bid", (FUNCTIONADDR)submit_bid);
 		gl_publish_function(oclass,	"submit_bid_state", (FUNCTIONADDR)submit_bid_state);
@@ -201,12 +210,31 @@ void auction::clear_market(void)
 	/* handle linkref */
 	if (Qload!=NULL)
 	{	
+		char name[256];
 		double total_unknown = asks.get_total() - asks.get_total_on() - asks.get_total_off();
+		double refload = (*Qload);
+		if (strcmp(unit,"")!=0) 
+		{
+			if (gl_convert("W",unit,&refload)==0)
+				GL_THROW("linkref %s uses units of (W) and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), unit);
+			else if (verbose) gl_output("linkref converted %.3f W to %.3f %s", *Qload, refload, unit);
+		}
+		if (total_unknown>0)
+			gl_warning("total_unknown is %.0f -> some controllers are not providing their states with their bids", total_unknown);
 		BID unresponsive;
 		unresponsive.from = linkref;
 		unresponsive.price = pricecap;
-		unresponsive.quantity = *Qload - asks.get_total_on() - total_unknown/2; /* estimate load on as 1/2 unknown load */
-		asks.submit(&unresponsive);
+		unresponsive.state = BS_UNKNOWN;
+		unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
+		if (unresponsive.quantity<0)
+		{
+			gl_warning("linkref %s has negative unresponsive load--this is probably due to improper bidding", gl_name(linkref,name,sizeof(name)), unresponsive.quantity);
+		}
+		else if (unresponsive.quantity>0)
+		{
+			asks.submit(&unresponsive);
+			gl_verbose("linkref %s has %.3f unresponsive load", gl_name(linkref,name,sizeof(name)), -unresponsive.quantity);
+		}
 	}
 	
 	/* sort the bids */
@@ -298,57 +326,65 @@ void auction::clear_market(void)
 		next.quantity = clear.quantity;
 
 		if(lasthr != thishr){
+			unsigned int sph = (unsigned int)(3600/period);
+			unsigned int sph24 = 24*sph;
+			unsigned int sph72 = 72*sph;
+			unsigned int sph168 = 168*sph;
+
 			/* add price/quantity to the history */
-			prices[count%168] = next.price;
+			prices[count%sph168] = next.price;
 			++count;
 			
 			/* update the daily and weekly averages */
 			avg168 = 0.0;
-			for(i = 0; i < count && i < 168; ++i){
+			for(i = 0; i < count && i < sph168; ++i){
 				avg168 += prices[i];
 			}
-			avg168 /= (count > 168 ? 168 : count);
+			avg168 /= (count > sph168 ? sph168 : count);
 
 			avg72 = 0.0;
-			for(i = 1; i <= 72 && i <= count; ++i){
-				int j = (168 - i + count) % 168;
+			for(i = 1; i <= sph72 && i <= count; ++i){
+				unsigned int j = (sph168 - i + count) % sph168;
 				avg72 += prices[j];
 			}
-			avg72 /= (count > 72 ? 72 : count);
+			avg72 /= (count > sph72 ? sph72 : count);
 
 			avg24 = 0.0;
-			for(i = 1; i <= 24 && i <= count; ++i){
-				int j = (168 - i + count) % 168;
+			for(i = 1; i <= sph24 && i <= count; ++i){
+				unsigned int j = (sph168 - i + count) % sph168;
 				avg24 += prices[j];
 			}
-			avg24 /= (count > 24 ? 24 : count);
+			avg24 /= (count > sph24 ? sph24 : count);
 
 			/* update the daily & weekly standard deviations */
 			std168 = 0.0;
-			for(i = 0; i < count && i < 168; ++i){
+			for(i = 0; i < count && i < sph168; ++i){
 				std168 += prices[i] * prices[i];
 			}
-			std168 /= (count > 168 ? 168 : count);
+			std168 /= (count > sph168 ? sph168 : count);
 			std168 -= avg168*avg168;
 			std168 = sqrt(fabs(std168));
+			if (std168<0.01) std168=0.01;
 
 			std72 = 0.0;
-			for(i = 1; i <= 72 && i <= count; ++i){
-				int j = (168 - i + count) % 168;
+			for(i = 1; i <= sph72 && i <= count; ++i){
+				unsigned int j = (sph168 - i + count) % sph168;
 				std72 += prices[j] * prices[j];
 			}
-			std72 /= (count > 72 ? 72 : count);
+			std72 /= (count > sph72 ? sph72 : count);
 			std72 -= avg72*avg72;
 			std72 = sqrt(fabs(std72));
+			if (std72<0.01) std72=0.01;
 
 			std24 = 0.0;
-			for(i = 1; i <= 24 && i <= count; ++i){
-				int j = (168 - i + count) % 168;
+			for(i = 1; i <= sph24 && i <= count; ++i){
+				unsigned int j = (sph168 - i + count) % sph168;
 				std24 += prices[j] * prices[j];
 			}
-			std24 /= (count > 24 ? 24 : count);
+			std24 /= (count > sph24 ? sph24 : count);
 			std24 -= avg24*avg24;
 			std24 = sqrt(fabs(std24));
+			if (std24<0.01) std24=0.01;
 
 			/* update reference hour */
 			lasthr = thishr;
@@ -373,9 +409,18 @@ void auction::clear_market(void)
 
 KEY auction::submit(OBJECT *from, double quantity, double price, KEY key, BIDDERSTATE state)
 {
+	char myname[64];
+
+	/* suppress demand bidding until market stabilizes */
+	unsigned int sph24 = (unsigned int)(3600/period*24);
+	if (count<sph24 && quantity<0)
+	{
+		if (verbose) gl_output("   ...  %s ignoring demand bid during first 24 hours", gl_name(OBJECTHDR(this),myname,sizeof(myname)));
+		return -1;
+	}
+
 	if (key>=0) // resubmit
 	{
-		char myname[64];
 		char biddername[64];
 		if (verbose) gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s", 
 			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
@@ -385,8 +430,9 @@ KEY auction::submit(OBJECT *from, double quantity, double price, KEY key, BIDDER
 			return asks.resubmit(&bid,key);
 		else if (quantity>0)
 			return offers.resubmit(&bid,key);
+
 		char name[64];
-		gl_warning("zero quantity bid from %s is ignored", gl_name(from,name,sizeof(name)));
+		gl_debug("zero quantity bid from %s is ignored", gl_name(from,name,sizeof(name)));
 		return 0;
 	}
 	else {
@@ -395,13 +441,14 @@ KEY auction::submit(OBJECT *from, double quantity, double price, KEY key, BIDDER
 		if (verbose) gl_output("   ...  %s receives %s from object %s for %.2f %s at $%.2f/%s", 
 			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
 			fabs(quantity), unit, price, unit);
-		BID bid = {from,fabs(quantity),price};
+		BID bid = {from,fabs(quantity),price,state};
 		if (quantity<0)
 			return asks.submit(&bid);
 		else if (quantity>0)
 			return offers.submit(&bid);
+
 		char name[64];
-		gl_warning("zero quantity bid from %s is ignored", gl_name(from,name,sizeof(name)));
+		gl_debug("zero quantity bid from %s is ignored", gl_name(from,name,sizeof(name)));
 		return -1;
 	}
 }
@@ -500,6 +547,8 @@ void curve::clear(void)
 {
 	n_bids = 0;
 	total = 0;
+	total_on = 0;
+	total_off = 0;
 }
 
 BID *curve::getbid(KEY n)
@@ -590,7 +639,7 @@ void curve::sort(BID *list, KEY *key, const int len, const bool reverse)
 	//merge sort
 	if (len>0)
 	{
-#define BUFSIZE 1024
+#define BUFSIZE 2048
 		int split = len/2;
 		int *a = key, *b = key+split;
 		if (split>1) sort(list,a,split,reverse);

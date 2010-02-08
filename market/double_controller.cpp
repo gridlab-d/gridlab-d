@@ -98,6 +98,7 @@ void double_controller::cheat(){
 			strcpy(heat_demand_name, "heating_demand");
 			strcpy(load_name, "hvac_load");
 			strcpy(total_load_name, "total_load");
+			strcpy(state_name,"power_state");
 			break;
 		default:
 			break;
@@ -108,7 +109,7 @@ void double_controller::fetch(double **value, char *name, OBJECT *parent, PROPER
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_property(parent, name);
 	if(*name == 0){
-		GL_THROW("%s property not specified", goal);
+		GL_THROW("double_controller:%i, %s property not specified", hdr->id,goal);
 	}
 	if(*prop == NULL){
 		char tname[32];
@@ -199,6 +200,8 @@ int double_controller::init(OBJECT *parent){
 		gl_error("%s: heating and cooling maximum temperature ranges must be non-negative", namestr);
 		return 0;
 	}
+
+	state_ptr = (enumeration*)gl_get_addr(parent,state_name);
 
 	next_run = 0;
 
@@ -361,6 +364,8 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 	if(bid_mode == BM_ON){
 		int bid_id = (lastbid_id == *pMarketID ? lastbid_id : -1);
+		// override
+		//bid_id = -1;
 
 		if(thermostat_mode == TM_HEAT){
 			bid_quant = heat_demand;
@@ -370,10 +375,13 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			bid_quant = 0.0;
 		}
 
-		if(state_ptr != 0){
-			lastbid_id = submit_bid_state(pMarket, hdr, -bid_quant, bid_price, bid_id, (*state_ptr > 0 ? 1 : 0));
-		} else {
-			lastbid_id = submit_bid(pMarket, hdr, -bid_quant, bid_price, bid_id);
+		if (bid_quant!=0)
+		{
+			if(state_ptr != 0){
+				lastbid_id = submit_bid_state(pMarket, hdr, -bid_quant, bid_price, (*state_ptr > 0 ? 1 : 0), bid_id);
+			} else {
+				lastbid_id = submit_bid(pMarket, hdr, -bid_quant, bid_price, bid_id);
+			}
 		}
 	}
 
