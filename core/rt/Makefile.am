@@ -3,7 +3,7 @@ pkgrtdir = $(pkgsysconfdir)/rt
 dist_pkgrt_DATA = gridlabd.conf debugger.conf gnuplot.conf gridlabd.h
 
 install-data-local:
-	[ -d "$(DESTDIR)$(pkgrtdir)" ] || $(MKDIR_P) $(DESTDIR)$(pkgrtdir)
+	[ -d "$(DESTDIR)$(pkgrtdir)" ] || mkdir -p $(DESTDIR)$(pkgrtdir)
 	echo "GLROOT=''" > $(DESTDIR)$(pkgrtdir)/gridlabd.sh
 	echo "#export GLROOT=$(DESTDIR)" >> $(DESTDIR)$(pkgrtdir)/gridlabd.sh
 	echo "#export PATH=\$$PATH:\$$GLROOT$(bindir)" >> $(DESTDIR)$(pkgrtdir)/gridlabd.sh
