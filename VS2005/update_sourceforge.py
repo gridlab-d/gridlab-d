@@ -6,7 +6,7 @@ import os,stat,time
 #
 
 thirty_days = 60 * 60 * 24 * 30 # Thirty days in seconds
-SF_PATH = "J:\\"
+SF_PATH = "L:\\"
 
 def testFile(fileName):
 	ct = int(time.time())
