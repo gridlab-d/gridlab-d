@@ -55,7 +55,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"tank_UA[Btu.h/degF]",PADDR(tank_UA), PT_DESCRIPTION, "the UA of the tank (surface area divided by R-value)",
 			PT_double,"tank_diameter[ft]",PADDR(tank_diameter), PT_DESCRIPTION, "the diameter of the water heater tank",
 			PT_double,"water_demand[gpm]",PADDR(water_demand), PT_DESCRIPTION, "the hot water draw from the water heater",
-			PT_double,"heating_element_capacity[W]",PADDR(heating_element_capacity), PT_DESCRIPTION,  "the power of the heating element",
+			PT_double,"heating_element_capacity[kW]",PADDR(heating_element_capacity), PT_DESCRIPTION,  "the power of the heating element",
 			PT_double,"inlet_water_temperature[degF]",PADDR(Tinlet), PT_DESCRIPTION,  "the inlet temperature of the water tank",
 			PT_enumeration,"heat_mode",PADDR(heat_mode), PT_DESCRIPTION, "the energy source for heating the water heater",
 				PT_KEYWORD,"ELECTRIC",ELECTRIC,
@@ -189,17 +189,17 @@ int waterheater::init(OBJECT *parent)
 	if (heating_element_capacity <= 0.0)
 	{
 		if (tank_volume >= 50)
-			heating_element_capacity = 4500;
+			heating_element_capacity = 4.500;
 		else 
 		{
 			// Smaller tanks can be either 3200, 3500, or 4500...
 			double randVal = gl_random_uniform(0,1);
 			if (randVal < 0.33)
-				heating_element_capacity = 3200;
+				heating_element_capacity = 3.200;
 			else if (randVal < 0.67)
-				heating_element_capacity = 3500;
+				heating_element_capacity = 3.500;
 			else
-				heating_element_capacity = 4500;
+				heating_element_capacity = 4.500;
 		}
 	}
 
@@ -430,7 +430,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	// determine the power used
 	if (heat_needed == TRUE){
-		/* power_kw */ load.total = heating_element_capacity/1000 * (heat_mode == GASHEAT ? 0.01 : 1.0);
+		/* power_kw */ load.total = heating_element_capacity * (heat_mode == GASHEAT ? 0.01 : 1.0);
 		actual_load = load.total.Re() * load.voltage_factor;
 	} else {
 		/* power_kw */ load.total = 0.0;
@@ -467,7 +467,10 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if(override == OV_NORMAL){
 		if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
-			return -(TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND); // negative means soft transition
+		{
+			TIMESTAMP t_to_trans = (t1+time_to_transition*3600.0/TS_SECOND);
+			return -(t_to_trans); // negative means soft transition
+		}
 		// less than one second means never
 		else
 			return TS_NEVER; 
@@ -745,6 +748,9 @@ double waterheater::dhdt(double h)
 	// Pre-set some algebra just for efficiency...
 	const double mdot = water_demand * 60 * RHOWATER / GALPCF;		// lbm/hr...
     const double c1 = RHOWATER * Cp * area * (/*Tupper*/ Tw - Tlower);	// Btu/ft...
+
+	if (water_demand > 0.0)
+		double aaa=1;
 	
     // check c1 before dividing by it
     if (c1 <= ROUNDOFF)
@@ -767,7 +773,7 @@ double waterheater::actual_kW(void)
 	if (heat_needed)
     {
 		if(heat_mode == GASHEAT){
-			return heating_element_capacity / 1000; /* gas heating is voltage independent.  convert W->kW. */
+			return heating_element_capacity; /* gas heating is voltage independent. */
 		}
 		const double actual_voltage = pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
         if (actual_voltage > 2.0*nominal_voltage)
@@ -782,8 +788,8 @@ double waterheater::actual_kW(void)
             else
                 return 0.0;         // @TODO:  This condition should trip the breaker with a counter
         }
-		double test = heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage) / 1000;
-		return heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage) / 1000; /* convert heater[W] to kW */
+		double test = heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage);
+		return test;
     }
 	else
 		return 0.0;
