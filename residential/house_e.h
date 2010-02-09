@@ -103,6 +103,15 @@ public:
 	TIMESTAMP thermostat_last_cycle_time;
 	double heating_setpoint;		///< heating setpoint (degF)
 	double cooling_setpoint;		///< cooling setpoint (degF)
+
+	// hvac control variable
+	enum {TC_FULL=0, TC_BAND=1, TC_NONE=2} thermostat_control;	///< method of HVAC control
+	double TcoolOn;		///< temperature above which cooling turns on
+	double TcoolOff;	///< temperature below which cooling turns off
+	double TheatOn;		///< temperature below which heating turns on
+	double TheatOff;	///< temperature above which heating turns off
+	double TauxOn;		///< temperature below which aux heating turns on
+
 	// hvac characteristics
 	double design_heating_setpoint;	///< design heating setpoint (degF)
 	double design_cooling_setpoint;	///< design cooling setpoint (degF)

@@ -743,6 +743,10 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"dTair",PADDR(dTair),
 			PT_double,"sol_inc",PADDR(sol_inc),
 #endif
+			PT_enumeration,"thermostat_control", PADDR(thermostat_control), PT_DESCRIPTION, "determine level of internal thermostatic control",
+				PT_KEYWORD, "FULL", TC_FULL, // setpoint/deadband controls HVAC
+				PT_KEYWORD, "BAND", TC_BAND, // T<mode>{On,Off} control HVAC (setpoints/deadband are ignored)
+				PT_KEYWORD, "NONE", TC_NONE, // system_mode controls HVAC (setpoints/deadband and T<mode>{On,Off} are ignored)
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
@@ -793,7 +797,7 @@ int house_e::create()
 	load.power_fraction = 0.8;
 	load.impedance_fraction = 0.2;
 	load.current_fraction = 0.0;
-	design_internal_gain_density = 0.6;//gl_random_triangle(4,6);
+	design_internal_gain_density = 0.6;
 	thermal_integrity_level = TI_UNKNOWN;
 	hvac_breaker_rating = 0;
 	hvac_power_factor = 0;
@@ -1520,8 +1524,8 @@ int house_e::init(OBJECT *parent)
 	if (design_heating_setpoint==0.0) design_heating_setpoint = 70.0;
 	if (design_peak_solar<=0.0)	design_peak_solar = 195.0; //From Rob's defaults
 
-	if (thermostat_deadband<=0.0)	thermostat_deadband = 2.0;
-	if (thermostat_cycle_time<=0.0) thermostat_cycle_time = 120.0;
+	if (thermostat_deadband<=0.0)	thermostat_deadband = 2.0; // F
+	if (thermostat_cycle_time<=0.0) thermostat_cycle_time = 120; // seconds
 	if (Tair==0.0){
 		/* bind limits between 60 and 140 degF */
 		double Thigh = cooling_setpoint+thermostat_deadband/2.0;
@@ -2002,66 +2006,7 @@ void house_e::update_system(double dt)
 			load.current.SetRect(fan_power * fan_current_fraction, fan_power * fan_current_fraction * sqrt( 1 / (fan_power_factor * fan_power_factor) - 1));
 	}
 
-	/*
-	// manually add 'total', we should be unshaped
-	// central-air fan consumes only ~5% of total energy when using GAS, 2% when ventilating at low power
-	load.current = load.admittance = complex(0,0);
-	if(!(system_type&ST_GAS)){
-		complex Drawn_load = 0.0;
-		complex temp_power;
-		complex curr_angle;
-		
-		//Calculate "current" power draw of furnace
-		Drawn_load += (load.total*load.power_fraction);
-		
-		//Current fraction
-		temp_power = ~(load.total*load.current_fraction / 240.0);
-		curr_angle.SetPolar(1.0,pCircuit_V[0].Arg());
-		Drawn_load += pCircuit_V[0] * ~(temp_power/~curr_angle);
-
-		//Impedance fraction
-		if ((load.total.Mag() != 0.0) && (load.impedance_fraction != 0.0))
-		{
-			temp_power = ~((complex(240.0,0) * complex(240.0,0)) / (load.total*load.impedance_fraction));
-			Drawn_load += (pCircuit_V[0] * ~pCircuit_V[0])/(~temp_power);
-		}
-
-		// design_heating_capacity scaled by ZIP(voltage)		
-		system_rated_capacity *= system_rated_power == 0.0 ? 0.0 : Drawn_load.Mag()/system_rated_power;
-	
-	}
-
-	if ((system_type&ST_VAR) && (system_mode==SM_OFF))
-	{
-		load.total =  design_heating_capacity*KWPBTUPH*0.02;
-		load.heatgain = design_heating_capacity*0.02;
-	}
-	else
-	{
-		load.total = system_rated_power * ((system_mode==SM_HEAT || system_mode==SM_AUX) && (system_type&ST_GAS) ? 0.05 : 1.0);
-		load.heatgain = system_rated_capacity;
-	}
-
-
-
-	if (load.power_factor != 0.0)
-	{
-		if(system_type&ST_RST && (system_mode == SM_HEAT || system_mode == SM_AUX)){
-			load.power = complex(0,0);
-			load.admittance = complex(load.total.Re() , load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) ); // explicitly all kZ by flag
-			load.current = complex(0,0);
-		} else {
-			load.power = complex(load.power_fraction * load.total.Re() , load.power_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
-			load.admittance = complex(load.impedance_fraction * load.total.Re() , load.impedance_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
-			load.current = complex(load.current_fraction * load.total.Re(), load.current_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
-		}
-	}
-	else
-	{
-		load.power = complex(0,0);
-		load.admittance = complex(0,0);
-		load.current = complex(0,0);
-	}*/
+	// update load
 	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor * (load.impedance_fraction + load.current_fraction * load.voltage_factor));
 }
 
@@ -2202,7 +2147,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		// enforce dwell time
 		if (t2!=TS_NEVER)
 		{
-			double t = ceil((t2<0 ? -t2 : t2)/system_dwell_time)*system_dwell_time;
+			TIMESTAMP t = (TIMESTAMP)(ceil((t2<0 ? -t2 : t2)/system_dwell_time)*system_dwell_time);
 			t2 = (t2<0 ? -t : t);
 		}
 
@@ -2276,12 +2221,6 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 void house_e::update_Tevent()
 {
 	OBJECT *obj = OBJECTHDR(this);
-	double tdead = thermostat_deadband/2;
-	double terr = dTair/3600; // this is the time-error of 1 second uncertainty
-	const double TcoolOn = cooling_setpoint+tdead;
-	const double TcoolOff = cooling_setpoint-tdead;
-	const double TheatOn = heating_setpoint-tdead;
-	const double TheatOff = heating_setpoint+tdead;
 
 	// Tevent is based on temperature bracket and assumes state is correct
 	switch(system_mode) {
@@ -2307,17 +2246,23 @@ void house_e::update_Tevent()
 }
 
 /** The PLC control code for house_e thermostat.  The heat or cool mode is based
-	on the house_e air temperature, thermostat setpoints and deadband.
+    on the house_e air temperature, thermostat setpoints and deadband.  This
+    function will update T<mode>{On,Off} as necessary to maintain the setpoints.
 **/
 TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 {
-	double tdead = thermostat_deadband/2;
 	double terr = dTair/3600; // this is the time-error of 1 second uncertainty
-	const double TcoolOn = cooling_setpoint+tdead;
-	const double TcoolOff = cooling_setpoint-tdead;
-	const double TheatOn = heating_setpoint-tdead;
-	const double TheatOff = heating_setpoint+tdead;
-	const double TauxOn = TheatOn-aux_heat_deadband;
+
+	// only update the T<mode>{On,Off} is the thermostat is full
+	if (thermostat_control==TC_FULL)
+	{
+		double tdead = thermostat_deadband/2;
+		TcoolOn = cooling_setpoint+tdead;
+		TcoolOff = cooling_setpoint-tdead;
+		TheatOn = heating_setpoint-tdead;
+		TheatOff = heating_setpoint+tdead;
+		TauxOn = TheatOn-aux_heat_deadband;
+	}
 
 	// check for thermostat cycle lockout
 	if(t0 < thermostat_last_cycle_time + thermostat_cycle_time){
@@ -2331,29 +2276,31 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	switch(last_system_mode){
 		case SM_HEAT:
 		case SM_AUX:
-			if(cooling_setpoint - heating_setpoint < thermostat_deadband){
-				cooling_setpoint = heating_setpoint + thermostat_deadband;
-			}
+			if (TcoolOff<TheatOff)
+				TcoolOff = TheatOff;
 			break;
 		case SM_OFF: //Let's make the assumption that cooling wins in this case.
 		case SM_COOL:
-			if(cooling_setpoint - heating_setpoint < thermostat_deadband){
-				heating_setpoint = cooling_setpoint - thermostat_deadband;
-			}
+			if (TcoolOff<TheatOff)
+				TheatOff = TcoolOff;
 			break;
 	}
 
 	// check for deadband overlap
-	if ((cooling_setpoint-tdead<heating_setpoint+tdead) &&
-//		(system_type&ST_AC))
-		(cooling_system_type != CT_NONE))
+	if (TcoolOff<TheatOff && cooling_system_type!=CT_NONE)
 	{
-		gl_error("house_e: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", cooling_setpoint-tdead, heating_setpoint+tdead);
+		char buffer[64];
+		gl_error("%s: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", gl_name(OBJECTHDR(this),buffer,sizeof(buffer)), TcoolOff, TheatOff);
 		return TS_INVALID;
 	}
 
+	// unknown mode treated changed to off
 	if(system_mode == SM_UNKNOWN)
+	{
+		char buffer[64];
+		gl_warning("%s: system_mode was unknown, changed to off", gl_name(OBJECTHDR(this),buffer,sizeof(buffer)));
 		system_mode = SM_OFF;
+	}
 	
 	/* rationale behind thermostat_last_cycle_time:
 		at this point, the system's handling PLC code, between presync and sync. t0 is when
@@ -2361,7 +2308,9 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		off of t1. -mhauer
 	*/
 	// change control mode if necessary
-	switch(system_mode){
+	if (thermostat_control!=TC_NONE)
+	{
+		switch(system_mode) {
 		case SM_HEAT:
 			/* if (aux deadband OR timer tripped) AND below aux lockout, go auxiliary */
 			if ( auxiliary_system_type != AT_NONE	 &&
@@ -2421,6 +2370,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			}
 			break;
+		}
 	}
 
 	return TS_NEVER;
