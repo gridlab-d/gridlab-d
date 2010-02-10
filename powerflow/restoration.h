@@ -26,6 +26,7 @@ public:
 	int reconfig_iter_limit;	//Number of iterations to let PF go before flagging this as a bad reconfiguration
 	int reconfig_number;		//Number of reconfigurations that have been attempted at this timestep
 	int reconfig_iterations;	//Number of iterations that have been performed on this reconfiguration
+	bool populate_tree;			//Flag to populate Parent/Child tree structure
 
 	restoration(MODULE *mod);
 	inline restoration(CLASS *cl=oclass):powerflow_library(cl){};

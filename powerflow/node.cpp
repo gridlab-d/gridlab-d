@@ -2394,6 +2394,46 @@ int *node::NR_populate(void)
 			*/
 		}
 
+		//If a restoration object is present, create space for an equivalent table
+		if (restoration_object != NULL)
+		{
+			if (NR_connected_links[0] != 1)	//Make sure we aren't an only child
+			{
+				NR_busdata[NR_curr_bus].Child_Nodes = (int *)gl_malloc((NR_connected_links[0]-1)*sizeof(int));
+
+				if (NR_busdata[NR_curr_bus].Child_Nodes == NULL)
+				{
+					GL_THROW("NR: Failed to allocate child node table for node:%d - %s",OBJECTHDR(this)->id,OBJECTHDR(this)->name);
+					/*  TROUBLESHOOT
+					While attempting to allocate memory for a tree table for the restoration module, memory failed to be allocated.
+					Make sure you ahve enough memory and try again.  If the problem persists, please submit your code and a bug report
+					to the trac website.
+					*/
+				}
+
+				NR_busdata[NR_curr_bus].Child_Node_idx = 0;	//Initialize the population index
+			}
+			else	//Only child, ensure we set it as zero
+			{
+				if (bustype == SWING)	//Swing bus isn't an only child, it's a single parent
+				{
+					NR_busdata[NR_curr_bus].Child_Nodes = (int *)gl_malloc(sizeof(int));	//Just allocate one spot in this case
+
+					if (NR_busdata[NR_curr_bus].Child_Nodes == NULL)
+					{
+						GL_THROW("NR: Failed to allocate child node table for node:%d - %s",OBJECTHDR(this)->id,OBJECTHDR(this)->name);
+						//Defined above
+					}
+
+					NR_busdata[NR_curr_bus].Parent_Node = 0;	//We're our own parent (the implications are astounding)
+				}
+				else	//Normal only child
+				{
+					NR_busdata[NR_curr_bus].Child_Nodes = 0;
+				}
+			}
+		}
+
 		//Populate our size
 		NR_busdata[NR_curr_bus].Link_Table_Size = NR_connected_links[0];
 

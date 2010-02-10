@@ -98,12 +98,14 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 
 	if (NR_cycle==false)	//Getting ready to do a solution, we should see check for "unsupported" systems
 	{
+		//Map to the restoration object
+		rest_obj = OBJECTDATA(restoration_object,restoration);
+
 		//Call the connectivity check
-		support_check(0);
+		support_check(0,rest_obj->populate_tree);
 
 		//Extra code - may be replaced or handled elsewhere
 		//Go through the list now - if something is unsupported, call a reconfiguration
-		rest_obj = OBJECTDATA(restoration_object,restoration);
 
 		for (index=0; index<NR_bus_count; index++)
 		{
@@ -165,6 +167,33 @@ void fault_check::search_links(unsigned int node_int)
 			else
 				node_val = temp_branch.from;
 
+			//Populate the parent/child tree if wanted
+			if (rest_object->populate_tree == true)
+			{
+				if (from_val)	//we're the from end
+				{
+					//This means we are the to end's parent - just write this.  If mesh or multi-sourced, this will just get overwritten
+					NR_busdata[temp_branch.to].Parent_Node = temp_branch.from;
+
+					//This also means the to end is our child
+					if (NR_busdata[temp_branch.from].Child_Node_idx < NR_busdata[temp_branch.from].Link_Table_Size)	//Still in a valid range
+					{
+						NR_busdata[temp_branch.from].Child_Nodes[NR_busdata[temp_branch.from].Child_Node_idx] = temp_branch.to;	//Store the to value
+						NR_busdata[temp_branch.from].Child_Node_idx++;	//Increment the pointer
+					}
+					else
+					{
+						GL_THROW("NR: Too many children were attempted to be populated!");
+						/*  TROUBLESHOOT
+						While populating the tree structure for the restoration module, a memory allocation limit
+						was exceeded.  Please ensure no new nodes have been introduced into the system and try again.  If
+						the error persists, please submit you code and a bug report using the trac website.
+						*/
+					}
+				}
+				//To end, we don't want to do anything (should all be handled from from end)
+			}
+
 			if (rest_object->Connectivity_Matrix[node_int][node_val]!=3)	//Not a Switch
 			{
 				//This means it is a fuse or link, which for now we handle the same
@@ -211,13 +240,20 @@ void fault_check::search_links(unsigned int node_int)
 	}//End link table loop
 }
 
-void fault_check::support_check(unsigned int swing_node_int)
+void fault_check::support_check(unsigned int swing_node_int,bool rest_pop_tree)
 {
 	unsigned int index;
 
 	//Reset the node status list
 	for (index=0; index<NR_bus_count; index++)
 		Supported_Nodes[index] = 0;
+
+	//See if we want the tree structure populated
+	if (rest_pop_tree == true)
+	{
+		for (index=0; index<NR_bus_count; index++)
+			NR_busdata[index].Child_Node_idx = 0;	//Zero the child object index
+	}
 
 	//Swing node has support
 	Supported_Nodes[swing_node_int] = 1;

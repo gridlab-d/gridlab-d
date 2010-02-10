@@ -31,6 +31,9 @@ typedef struct  {
 	unsigned int Matrix_Loc;// Starting index of this object's place in all matrices/equations
 	double max_volt_error;	///< Maximum voltage error specified for that node
 	char *name;				///< original name
+	int Parent_Node;		///< index to parent node in BUSDATA structure - restoration related - may not be valid for meshed systems or reverse flow
+	int *Child_Nodes;		///< index to child nodes in BUSDATA structure - restoration related - may not be valid for meshed systems or reverse flow
+	unsigned int Child_Node_idx;		///< indexing variable to know location of next valid Child_Nodes entry
 } BUSDATA;
 
 typedef struct {

@@ -34,6 +34,7 @@ restoration::restoration(MODULE *mod) : powerflow_library(mod)
 			PT_char1024,"configuration_file",PADDR(configuration_file),
 			PT_int32,"reconfig_attempts",PADDR(reconfig_attempts),
 			PT_int32,"reconfig_iteration_limit",PADDR(reconfig_iter_limit),
+			PT_bool,"populate_tree",PADDR(populate_tree),
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -50,6 +51,7 @@ int restoration::create(void)
 
 	reconfig_attempts = 0;
 	reconfig_iter_limit = 0;
+	populate_tree = false;
 
 	return 1;
 }
@@ -336,7 +338,7 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 			*******************/
 
 		//Check to see if everything is supported again - not sure if this will be necessary or not
-		FaultyObject->support_check(0);		//Start a new support check
+		FaultyObject->support_check(0,populate_tree);		//Start a new support check
 
 		//See if anything is unsupported
 		fc_all_supported = true;
