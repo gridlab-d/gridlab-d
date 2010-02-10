@@ -1,14 +1,14 @@
 SUBDIRS = rt
-pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
-dist_pkgsysconf_DATA = tzinfo.txt unitfile.txt
-bin_PROGRAMS = gridlabd
+dist_pkglib_DATA = tzinfo.txt unitfile.txt
+pkglib_PROGRAMS = gridlabd.bin
+dist_pkglib_SCRIPTS = gridlabd
 CC = $(PTHREAD_CC)
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 # Add -pg to AM_CXXFLAGS and AM_CPPFLAGS to enable profiling.
 # Debug symbols must also be included with -g if not done elsewhere.
 AM_CXXFLAGS = $(PTHREAD_CFLAGS)
 AM_LDFLAGS = $(EXTRA_gridlabd_LDFLAGS) -ldl -lxerces-c $(PTHREAD_LIBS) $(PTHREAD_CFLAGS)
-gridlabd_SOURCES = build.h main.c \
+gridlabd_bin_SOURCES = build.h main.c \
 	aggregate.c aggregate.h \
 	class.c  class.h \
 	cmdarg.c cmdarg.h \
@@ -53,7 +53,7 @@ gridlabd_SOURCES = build.h main.c \
 	timestamp.c timestamp.h \
 	unit.c unit.h \
 	version.h
-EXTRA_gridlabd_SOURCES = \
+EXTRA_gridlabd_bin_SOURCES = \
 	cmex.c cmex.h
 
 legal.c: buildnum build.h
@@ -67,8 +67,20 @@ buildnum:
 		echo '#define "$$Revision: 0"' > build.h; \
 	fi
 
+install-data-local:
+	test -d "$(DESTDIR)$(bindir)" || mkdir -p "$(DESTDIR)$(bindir)"
+	test -d "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	if test "`dirname '$(DESTDIR)$(bindir)'`" -ef "`dirname '$(DESTDIR)$(libdir)'`"; then \
+		$(LN_S) -f ../lib/@PACKAGE@/gridlabd "$(DESTDIR)$(bindir)/gridlabd"; \
+	else \
+		$(LN_S) -f "$(DESTDIR)$(pkglibdir)/gridlabd" "$(DESTDIR)$(bindir)/gridlabd"; \
+	fi
+
+uninstall-local:
+	-rm $(DESTDIR)$(bindir)/gridlabd
+
 uninstall-hook:
-	-rmdir $(DESTDIR)$(pkgsysconfdir)
+	-rmdir $(DESTDIR)$(pkglibdir)
 
 dist-hook:
 	. ../utilities/build_number -b .. > $(distdir)/build.h

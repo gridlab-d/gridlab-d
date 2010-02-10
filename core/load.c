@@ -161,12 +161,10 @@ typedef struct _stat STAT;
 #define FSTAT _fstat
 #define tzset _tzset
 #define snprintf _snprintf
-#define LIBPREFIX ""
 #else
 #include <unistd.h>
 typedef struct stat STAT;
 #define FSTAT fstat
-#define LIBPREFIX "lib"
 #endif
 
 #define QNAN (sqrt(-1)) /* used to force a quiet NAN return value for bad results */
@@ -510,7 +508,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		sprintf(cfile,"%s%s.cpp", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(ofile,"%s%s.o", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(file,"%s%s", (use_msvc||global_gdb||global_gdb_window)?"":tmp, oclass->name);
-		sprintf(afile, LIBPREFIX "%s" DLEXT , oclass->name);
+		sprintf(afile, "%s" DLEXT , oclass->name);
 
 		/* peek at library file */
 		fp = fopen(afile,"r");

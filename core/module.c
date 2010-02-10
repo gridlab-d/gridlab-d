@@ -21,7 +21,6 @@
 	#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 	#define _WIN32_WINNT 0x0400
 	#include <windows.h>
-	#define LIBPREFIX
 	#ifndef DLEXT
 		#define DLEXT ".dll"
 	#endif
@@ -32,7 +31,6 @@
 #ifndef MINGW
 	#include "dlfcn.h"
 #endif
-	#define LIBPREFIX "lib"
 	#ifndef DLEXT
 		#define DLEXT ".so"
 	#endif
@@ -301,7 +299,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		output_verbose("%s(%d): module '%s' memory allocated", __FILE__, __LINE__, file);
 
 	/* locate the module */
-	snprintf(pathname, 1024, LIBPREFIX "%s" DLEXT, file);
+	snprintf(pathname, 1024, "%s" DLEXT, file);
 	tpath = find_file(pathname, NULL, X_OK|R_OK);
 	if(tpath == NULL)
 	{

@@ -1,5 +1,5 @@
-pkglib_LTLIBRARIES = libnetwork.la
-libnetwork_la_SOURCES =          \
+pkglib_LTLIBRARIES = network.la
+network_la_SOURCES =             \
 	capbank.cpp     capbank.h     \
 	check.cpp                     \
 	export.cpp                    \
@@ -16,7 +16,7 @@ libnetwork_la_SOURCES =          \
 	relay.cpp       relay.h       \
 	transformer.cpp transformer.h \
 	varmap.c
-libnetwork_la_LDFLAGS = -no-undefined -version-info 0:0:0
+network_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)

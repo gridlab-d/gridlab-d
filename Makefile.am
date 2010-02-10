@@ -3,12 +3,15 @@
 # This file is distributed under the same terms as GridLAB-D.
 
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS =  core assert climate commercial network powerflow residential tape generators plc tape_file tape_plot market reliability
+SUBDIRS =  core assert climate commercial network powerflow residential tape \
+			  generators plc tape_file tape_plot market reliability
 # previously:  core assert climate commercial network powerflow residential tape generators plc tape_file tape_plot market reliability 
 
 include aminclude.am
 
-EXTRA_DIST = doxygen/*.*
+dist_doc_DATA = BUILD COPYRIGHT LICENSE README-LINUX README-MACOSX
+
+EXTRA_DIST = doxygen/*.* VERSION third_party/CBLAS third_party/superLU_MT
 
 over: clean all
 

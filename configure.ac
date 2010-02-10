@@ -11,6 +11,7 @@ AC_CONFIG_SRCDIR([core/aggregate.c])
 AC_CONFIG_HEADER([core/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
+LT_INIT([disable-static])
 
 AC_PREFIX_DEFAULT([/usr])
 AC_CANONICAL_HOST
@@ -60,7 +61,9 @@ CFLAGS="$CFLAGS $GLFLAGS"
 
 case "$host_os" in
 darwin*)
-     LIBEXT=.dylib
+     export LIBTOOL=`which glibtool`
+     export LIBTOOLIZE=`which glibtoolize`
+     LIBEXT=.so
      ;;
 cygwin*)
      AC_LIBTOOL_WIN32_DLL
@@ -112,14 +115,14 @@ AX_LIB_SUPERLU
 #fi
 
 DX_INIT_DOXYGEN(gridlabd, [doxygen/gridlabd.conf])
-DX_HTML_FEATURE (ON)
-DX_CHM_FEATURE (OFF)
-DX_CHI_FEATURE (OFF)
-DX_MAN_FEATURE (OFF)
-DX_RTF_FEATURE (OFF)
-DX_XML_FEATURE (OFF)
-DX_PDF_FEATURE (OFF)
-DX_PS_FEATURE (OFF)
+DX_HTML_FEATURE([ON])
+DX_CHM_FEATURE([OFF])
+DX_CHI_FEATURE([OFF])
+DX_MAN_FEATURE([OFF])
+DX_RTF_FEATURE([OFF])
+DX_XML_FEATURE([OFF])
+DX_PDF_FEATURE([OFF])
+DX_PS_FEATURE([OFF])
 
 # Checks for libraries.
 AC_LANG_PUSH([C++])

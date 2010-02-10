@@ -1,5 +1,5 @@
-pkglib_LTLIBRARIES = libresidential.la
-libresidential_la_SOURCES =                    \
+pkglib_LTLIBRARIES = residential.la
+residential_la_SOURCES =                       \
 	clotheswasher.cpp      clotheswasher.h      \
 	dishwasher.cpp         dishwasher.h         \
 	dryer.cpp              dryer.h              \
@@ -21,7 +21,7 @@ libresidential_la_SOURCES =                    \
 	solvers.cpp            solvers.h            \
 	waterheater.cpp        waterheater.h        \
 	zipload.cpp            zipload.h
-libresidential_la_LDFLAGS = -no-undefined -version-info 0:0:0
+residential_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)

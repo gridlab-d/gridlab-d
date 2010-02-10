@@ -1,21 +1,18 @@
 
-pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
-tmydir = $(pkgsysconfdir)/tmy
-dist_tmy_DATA = ??.zip
+dist_pkglib_DATA = ??.zip
 dist_noinst_SCRIPTS = extract_tmy build_pkgs
 
 TMY_SITE = rredc.nrel.gov
 
 install-data-hook:
-	mkdir -p $(DESTDIR)$(tmydir)
-	cd $(DESTDIR)$(tmydir) && for f in ??.zip; do unzip -fqq $$f; done
+	mkdir -p $(DESTDIR)$(pkglibdir)
+	cd $(DESTDIR)$(pkglibdir) && for f in ??.zip; do unzip -fqq $$f; done
 
 uninstall-local:
-	-cd $(DESTDIR)$(tmydir) && rm ??-*.glm ??-*.tmy2
+	-cd $(DESTDIR)$(pkglibdir) && rm ??-*.glm ??-*.tmy2
 
 uninstall-hook:
-	-rmdir $(DESTDIR)$(tmydir)
-	-rmdir $(DESTDIR)$(pkgsysconfdir)
+	-rmdir $(DESTDIR)$(pkglibdir)
 
 tmy: tmy2_pc.zip
 	unzip -fqq -u tmy2_pc \*.tm2

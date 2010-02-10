@@ -1,6 +1,6 @@
 SUBDIRS=tmy
-pkglib_LTLIBRARIES = libclimate.la
-libclimate_la_SOURCES =                \
+pkglib_LTLIBRARIES = climate.la
+climate_la_SOURCES =                   \
 	climate.cpp        climate.h        \
 	csv_reader.cpp     csv_reader.h     \
 	init.cpp                            \
@@ -9,7 +9,7 @@ libclimate_la_SOURCES =                \
 	test.cpp           test.h           \
 	weather.cpp        weather.h        \
 	weather_reader.cpp weather_reader.h
-libclimate_la_LDFLAGS = -no-undefined -version-info 1:0:0
+climate_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 1:0:0
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)

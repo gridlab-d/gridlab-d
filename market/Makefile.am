@@ -1,5 +1,5 @@
-pkglib_LTLIBRARIES = libmarket.la
-libmarket_la_SOURCES =              \
+pkglib_LTLIBRARIES = market.la
+market_la_SOURCES =                 \
 	auction.cpp    auction.h         \
 	controller.cpp controller.h      \
 	init.cpp                         \
@@ -10,7 +10,7 @@ libmarket_la_SOURCES =              \
 	double_controller.cpp double_controller.h	\
 	# DO NOT EDIT THE FOLLOWING LINE \
 	# NEWCLASS
-libmarket_la_LDFLAGS = -no-undefined -version-info 0:0:0
+market_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)

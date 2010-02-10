@@ -1,6 +1,6 @@
 AM_CPPFLAGS = $(SUPERLU_CPPFLAGS)
-pkglib_LTLIBRARIES = libpowerflow.la 
-libpowerflow_la_SOURCES =                                      \
+pkglib_LTLIBRARIES = powerflow.la 
+powerflow_la_SOURCES =                                         \
 	billdump.cpp                   billdump.h                   \
 	capacitor.cpp                  capacitor.h                  \
 	fault_check.cpp                fault_check.h                \
@@ -49,7 +49,7 @@ libpowerflow_la_SOURCES =                                      \
 	undergroundline_test.h                                      \
 	voltdump.cpp voltdump.h                                     \
 	volt_var_control.cpp           volt_var_control.h
-libpowerflow_la_LDFLAGS = -no-undefined -version-info 0:0:0 $(SUPERLU_LDFLAGS) $(SUPERLU_LIBS)
+powerflow_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0 $(SUPERLU_LDFLAGS) $(SUPERLU_LIBS)
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)
