@@ -377,6 +377,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\core\interpolate.h"
+					>
+				</File>
+				<File
 					RelativePath="..\core\kill.h"
 					>
 				</File>
@@ -454,6 +458,10 @@
 				</File>
 				<File
 					RelativePath="..\core\schedule.h"
+					>
+				</File>
+				<File
+					RelativePath="..\core\stream.h"
 					>
 				</File>
 				<File
@@ -671,6 +679,18 @@
 							PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS"
 							UsePrecompiledHeader="0"
 							WarningLevel="2"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\core\interpolate.c"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
 				</File>
@@ -943,6 +963,18 @@
 				</File>
 				<File
 					RelativePath="..\core\schedule.c"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\core\stream.c"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
