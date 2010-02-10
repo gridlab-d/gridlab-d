@@ -61,11 +61,19 @@ legal.c: buildnum build.h
 build.h: buildnum
 
 buildnum:
-	if [ -f ../utilities/build_number ]; then \
-		. ../utilities/build_number -b .. > build.h; \
+	if test -f ../utilities/build_number; then \
+		if test -f build.h; then \
+			. ../utilities/build_number -b .. > buildnum.h; \
+			[ "`cat buildnum.h`" = "`cat build.h`" ] || mv -f buildnum.h build.h; \
+			test -f buildnum.h && rm buildnum.h || true; \
+		else \
+			. ../utilities/build_number -b .. > build.h; \
+		fi; \
 	elif [ ! -f build.h ]; then \
 		echo '#define "$$Revision: 0"' > build.h; \
 	fi
+
+.PHONY: buildnum
 
 install-data-local:
 	test -d "$(DESTDIR)$(bindir)" || mkdir -p "$(DESTDIR)$(bindir)"
@@ -82,6 +90,5 @@ uninstall-local:
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)
 
-dist-hook:
-	. ../utilities/build_number -b .. > $(distdir)/build.h
+dist-hook: buildnum
 

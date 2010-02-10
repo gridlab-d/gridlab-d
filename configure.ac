@@ -11,7 +11,7 @@ AC_CONFIG_SRCDIR([core/aggregate.c])
 AC_CONFIG_HEADER([core/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
-LT_INIT([disable-static])
+AC_DISABLE_STATIC
 
 AC_PREFIX_DEFAULT([/usr])
 AC_CANONICAL_HOST

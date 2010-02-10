@@ -28,6 +28,10 @@
 #include "file.h"
 #include "odbc.h"
 
+#ifndef WIN32
+#define strtok_s strtok_r
+#endif
+
 CLASS *recorder_class = NULL;
 static OBJECT *last_recorder = NULL;
 
