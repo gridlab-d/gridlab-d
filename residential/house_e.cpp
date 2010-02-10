@@ -2278,11 +2278,17 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		case SM_AUX:
 			if (TcoolOff<TheatOff)
 				TcoolOff = TheatOff;
+			if (TcoolOn<TcoolOff+thermostat_deadband)
+				TcoolOn = TcoolOff+thermostat_deadband;
 			break;
 		case SM_OFF: //Let's make the assumption that cooling wins in this case.
 		case SM_COOL:
 			if (TcoolOff<TheatOff)
 				TheatOff = TcoolOff;
+			if (TheatOff<TheatOn-thermostat_deadband)
+				TheatOff = TheatOn-thermostat_deadband;
+			if (TauxOn<TheatOn-aux_heat_deadband)
+				TauxOn = TheatOn-aux_heat_deadband;
 			break;
 	}
 
