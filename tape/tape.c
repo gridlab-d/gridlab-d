@@ -183,6 +183,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(recorder,char1024,property);
 	PUBLISH_STRUCT(recorder,char32,trigger);
 	PUBLISH_STRUCT(recorder,char1024,file);
+	PUBLISH_STRUCT(recorder,char1024,multifile);
 	//PUBLISH_STRUCT(recorder,int64,interval);
 	PUBLISH_STRUCT(recorder,int32,limit);
 	PUBLISH_STRUCT(recorder,char1024,plotcommands);

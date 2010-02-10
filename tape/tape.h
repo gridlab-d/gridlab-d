@@ -119,6 +119,11 @@ struct shaper {
 struct recorder {
 	/* public */
 	char1024 file;
+	char1024 multifile;
+	char1024 multitempfile;
+	FILE *multifp, *inputfp;
+	int16 multirun_ct;
+	char1024 multirun_header;
 	char8 filetype;
 	int16 format; /* 0=YYYY-MM-DD HH:MM:SS; 1=timestamp */
 	double dInterval;

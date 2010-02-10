@@ -40,6 +40,7 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 		last_recorder = *obj;
 		gl_set_parent(*obj,parent);
 		strcpy(my->file,"");
+		strcpy(my->multifile,"");
 		strcpy(my->filetype,"txt");
 		strcpy(my->delim,",");
 		strcpy(my->property,"(undefined)");
@@ -81,6 +82,153 @@ static int recorder_open(OBJECT *obj)
 		/* use object name-id as default file name */
 		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, my->filetype);
 
+	/* open multiple-run input file & temp output file */
+	if(my->type == FT_FILE && my->multifile[0] != 0){
+		if(my->interval < 1){
+			gl_error("transient recorders cannot use multi-run output files");
+			return 0;
+		}
+		sprintf(my->multitempfile, "temp_%s", my->file);
+		my->multifp = fopen(my->multitempfile, "w");
+		if(my->multifp == NULL){
+			gl_error("unable to open \'%s\' for multi-run output", my->multitempfile);
+		} else {
+			time_t now=time(NULL);
+
+			my->inputfp = fopen(my->multifile, "r");
+
+			// write header into temp file
+			fprintf(my->multifp,"# file...... %s\n", my->file);
+			fprintf(my->multifp,"# date...... %s", asctime(localtime(&now)));
+#ifdef WIN32
+			fprintf(my->multifp,"# user...... %s\n", getenv("USERNAME"));
+			fprintf(my->multifp,"# host...... %s\n", getenv("MACHINENAME"));
+#else
+			fprintf(my->multifp,"# user...... %s\n", getenv("USER"));
+			fprintf(my->multifp,"# host...... %s\n", getenv("HOST"));
+#endif
+			fprintf(my->multifp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
+			fprintf(my->multifp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
+			fprintf(my->multifp,"# interval.. %d\n", my->interval);
+			fprintf(my->multifp,"# limit..... %d\n", my->limit);
+			fprintf(my->multifp,"# property.. %s\n", my->property);
+			//fprintf(my->multifp,"# timestamp,%s\n", my->property);
+		}
+		if(my->inputfp != NULL){
+			char1024 inbuffer;
+			char *data;
+			int get_col = 0;
+			do{
+				if(0 != fgets(inbuffer, 1024, my->inputfp)){
+					char *end = strchr(inbuffer, '\n');
+					data = inbuffer+strlen("# file...... ");
+					if(end != 0){
+						*end = 0; // trim the trailing newline
+					}
+					//					   "# columns... "
+					if(strncmp(inbuffer, "# file", strlen("# file")) == 0){
+						; // ignore
+					} else if(strncmp(inbuffer, "# date", strlen("# date")) == 0){
+						; // ignore
+					} else if(strncmp(inbuffer, "# user", strlen("# user")) == 0){
+						; // ignore
+					} else if(strncmp(inbuffer, "# host", strlen("# host")) == 0){
+						; // ignore
+					} else if(strncmp(inbuffer, "# target", strlen("# target")) == 0){
+						// verify same target
+						char256 target;
+						sprintf(target, "%s %d", obj->parent->oclass->name, obj->parent->id);
+						if(0 != strncmp(target, data, strlen(data))){
+							gl_error("recorder:%i: re-recording target mismatch: was %s, now %s", obj->id, data, target);
+						}
+					} else if(strncmp(inbuffer, "# trigger", strlen("# trigger")) == 0){
+						// verify same trigger, or absence thereof
+						;
+					} else if(strncmp(inbuffer, "# interval", strlen("# interval")) == 0){
+						// verify same interval
+						int interval = atoi(data);
+						if(interval != my->interval){
+							gl_error("recorder:%i: re-recording interval mismatch: was %i, now %i", obj->id, interval, my->interval);
+						}
+					} else if(strncmp(inbuffer, "# limit", strlen("# limit")) == 0){
+						// verify same limit
+						int limit = atoi(data);
+						if(limit != my->limit){
+							gl_error("recorder:%i: re-recording limit mismatch: was %i, now %i", obj->id, limit, my->limit);
+						}
+					} else if(strncmp(inbuffer, "# property", strlen("# property")) == 0){
+						// verify same columns
+						if(0 != strncmp(my->property, data, strlen(my->property))){
+							gl_error("recorder:%i: re-recording property mismatch: was %s, now %s", obj->id, data, my->property);
+						}
+						// next line is full header column list
+						get_col = 1;
+					}
+				} else {
+					gl_error("error reading multi-read input file \'%s\'", my->multifile);
+					break;
+				}
+			} while(inbuffer[0] == '#' && get_col == 0);
+			// get full column list
+			if(0 != fgets(inbuffer, 1024, my->inputfp)){
+				int rep=0;
+				int replen = strlen("# repetition");
+				int len, lenmax = 1024, i = 0;
+				char1024 propstr, shortstr;
+				PROPERTY *tprop = my->target;
+				gl_verbose("read last buffer");
+				if(strncmp(inbuffer, "# repetition", replen) == 0){
+					char *trim;
+					rep = atoi(inbuffer + replen + 1); // skip intermediate space
+					++rep;
+					fprintf(my->multifp, "# repetition %i\n", rep);
+					fgets(inbuffer, 1024, my->inputfp);
+					trim = strchr(inbuffer, '\n');
+					if(trim) *trim = 0;
+				} else { // invalid input file or somesuch, we could error ... or we can trample onwards with our output file.
+					rep = 0;
+					fprintf(my->multifp, "# repetition %i\n", rep);
+				}
+				// following block matches below
+				while(tprop != NULL){
+					sprintf(shortstr, ",%s(%i)", tprop->name, rep);
+					len = strlen(shortstr);
+					if(len > lenmax){
+						gl_error("multi-run recorder output full property list is larger than the buffer, please start a new file!");
+						break; // will still print everything up to this one
+					}
+					strncpy(propstr+i, shortstr, len+1);
+					i += len;
+					tprop = tprop->next;
+				}
+				fprintf(my->multifp, "%s%s\n", inbuffer, propstr);
+			}
+		} else { /* new file, so write repetition & properties with (0) */
+			char1024 propstr, shortstr;
+			int len, lenmax = 1024, i = 0;
+			PROPERTY *tprop = my->target;
+			fprintf(my->multifp, "# repetition 0\n");
+			// no string from previous runs to append new props to
+			sprintf(propstr, "# timestamp");
+			len = strlen(propstr);
+			lenmax-=len;
+			i = len;
+			// following block matches above
+			while(tprop != NULL){
+				sprintf(shortstr, ",%s(0)", tprop->name);
+				len = strlen(shortstr);
+				if(len > lenmax){
+					gl_error("multi-run recorder output full property list is larger than the buffer, please start a new file!");
+					break; // will still print everything up to this one
+				}
+				strncpy(propstr+i, shortstr, len+1);
+				i += len;
+				tprop = tprop->next;
+			}
+			fprintf(my->multifp, "%s\n", propstr);
+		}
+	}
+
 	/* if type is file or file is stdin */
 	my->ops = get_ftable(type)->recorder;
 	if(my->ops == NULL)
@@ -95,7 +243,30 @@ static int write_recorder(struct recorder *my, char *ts, char *value)
 
 static void close_recorder(struct recorder *my)
 {
-	if (my->ops) my->ops->close(my);
+	if (my->ops){
+		my->ops->close(my);
+	}
+	if(my->multifp){
+		if(0 != fclose(my->multifp)){
+			gl_error("unable to close multi-run temp file \'%s\'", my->multitempfile);
+			perror("fclose(): ");
+		}
+
+		my->multifp = 0; // since it's closed
+
+		if(my->inputfp != NULL){
+			fclose(my->inputfp);
+			if(0 != remove(my->multifile)){ // old file
+				gl_error("unable to remove out-of-data multi-run file \'%s\'", my->multifile);
+				perror("remove(): ");
+			}
+		}
+		if(0 != rename(my->multitempfile, my->multifile)){
+			gl_error("unable to rename multi-run file \'%s\' to \'%s\'", my->multitempfile, my->multifile);
+			perror("rename(): ");
+		}
+		
+	}
 }
 
 static TIMESTAMP recorder_write(OBJECT *obj)
@@ -122,6 +293,58 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 	}
 	else
 		my->samples++;
+
+	/* at this point we've written the sample to the normal recorder output */
+
+	// if file based
+	if(my->multifp != NULL){
+		char1024 inbuffer;
+		char1024 outbuffer;
+		char *lasts = 0;
+		char *in_ts = 0;
+		char *in_tok = 0;
+
+		memset(inbuffer, 0, sizeof(inbuffer));
+		
+		if(my->inputfp != NULL){
+			// read line
+			do{
+				if(0 == fgets(inbuffer, 1024, my->inputfp)){
+					if(feof(my->inputfp)){
+						// if there is no more data to append rows to, we're done with the aggregate 
+						//fclose(my->multifp); // happens in close()
+						//fclose(my->inputfp); // one-over read never happens
+						return TS_NEVER;
+					} else {
+						gl_error("error reading past recordings file");
+						my->status = TS_ERROR;
+						return TS_NEVER;
+					}
+				}
+				// if first char == '#', re-read
+			} while(inbuffer[0] == '#');
+			
+			// NOTE: this is not thread safe!
+			// split on first comma
+			in_ts = strtok_s(inbuffer, ",\n", &lasts);
+			in_tok = strtok_s(NULL, "\n", &lasts);
+
+			if(in_ts == NULL){
+				gl_error("unable to indentify a timestamp within the line read from ");
+			}
+
+			// compare timestamps if my->format == 0
+				//	warn if timestamps mismatch
+			if(strcmp(in_ts, ts) != 0){
+				gl_warning("timestamp mismatch between current input line and simulation time");
+			}
+			sprintf(outbuffer, "%s,%s", in_tok, my->last.value);
+		} else { // no input file ~ write normal output
+			strcpy(outbuffer, my->last.value);
+		}
+		// fprintf 
+		fprintf(my->multifp, "%s,%s\n", ts, outbuffer);
+	}
 	return TS_NEVER;
 }
 
