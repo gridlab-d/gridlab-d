@@ -19,7 +19,7 @@ clock{
 
 
 object climate{
-	tmyfile "WA-Yakima.tmy2";
+	tmyfile "../WA-Yakima.tmy2";
 }
 
 schedule heatspt{
