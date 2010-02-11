@@ -2411,6 +2411,12 @@ int *node::NR_populate(void)
 					*/
 				}
 
+				//Initialize the children and the parent
+				NR_busdata[NR_curr_bus].Parent_Node = -1;
+
+				for (unsigned int index=0; index<(NR_connected_links[0]-1); index++)
+					NR_busdata[NR_curr_bus].Child_Nodes[index] = -1;
+
 				NR_busdata[NR_curr_bus].Child_Node_idx = 0;	//Initialize the population index
 			}
 			else	//Only child, ensure we set it as zero
@@ -2424,6 +2430,8 @@ int *node::NR_populate(void)
 						GL_THROW("NR: Failed to allocate child node table for node:%d - %s",OBJECTHDR(this)->id,OBJECTHDR(this)->name);
 						//Defined above
 					}
+
+					NR_busdata[NR_curr_bus].Child_Nodes[0] = -1;	//Initialize it to -1 - flags as unpopulated
 
 					NR_busdata[NR_curr_bus].Parent_Node = 0;	//We're our own parent (the implications are astounding)
 				}
