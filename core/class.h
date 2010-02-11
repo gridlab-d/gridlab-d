@@ -243,6 +243,7 @@ DELEGATEDTYPE *class_register_type(CLASS *oclass, char *type,int (*from_string)(
 int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...);
 
 unsigned long property_size(PROPERTY *prop);
+unsigned long property_size_by_type(PROPERTYTYPE type);
 int property_create(PROPERTY *prop, void *addr);
 PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation);
 

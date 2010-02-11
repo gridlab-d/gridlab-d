@@ -7,6 +7,8 @@
 #include "module.h"
 #include "globals.h"
 #include "schedule.h"
+#include "class.h"
+#include "object.h"
 
 /* stream name - this should never be changed */
 #define STREAM_NAME "GRIDLABD"
@@ -28,15 +30,16 @@ static unsigned char c;
 static unsigned short s;
 static unsigned long l;
 static unsigned int64 q;
-static unsigned int64 n;
+static unsigned short n;
+static unsigned int64 nn;
 
 #ifdef BINARY
-#define COMPRESS(S,L) {if ((n=stream_compress(fp,S,L))<=0) return -1; else count+=n;} 
-#define PUTD(S,L) {n=(L);if(fwrite(&n,2,1,fp)!=1 || fwrite((S),1,L,fp)!=L) return -1; else count+=n+2;}
-#define PUTC(C) {c=(unsigned char)(C);PUTD(&c,1)}
-#define PUTS(S) {s=(unsigned short)(S);PUTD(&s,2)}
-#define PUTL(L) {l=(unsigned long)(L);PUTD(&l,4)}
-#define PUTQ(Q) {q=(unsigned int64)(Q);PUTD(&q,8)}
+#define COMPRESS(S,L) {if ((nn=stream_compress(fp,(S),(L)))<=0) return -1; else count+=nn;} 
+#define PUTD(S,L) {n=(L);if(fwrite(&n,sizeof(n),1,fp)!=1 || fwrite((S),1,L,fp)!=L) return -1; else count+=n+2;}
+#define PUTC(C) {c=(unsigned char)(C);PUTD(&c,sizeof(c))}
+#define PUTS(S) {s=(unsigned short)(S);PUTD(&s,sizeof(s))}
+#define PUTL(L) {l=(unsigned long)(L);PUTD(&l,sizeof(l))}
+#define PUTQ(Q) {q=(unsigned int64)(Q);PUTD(&q,sizeof(q))}
 #define PUTX(T,X) {if ((n=stream_out_##T(fp,(X)))<0) return -1; else count+=n;}
 #define PUTT(B,T) {unsigned short w=0; b=SB_##B; t=ST_##T; if (fwrite(&w,2,1,fp)!=1 || fwrite(&b,1,1,fp)!=1 || fwrite(&t,1,1,fp)!=1) return -1; else count+=4;}
 #else
@@ -52,17 +55,17 @@ void indent_less() { if (indent[0]!='\0') indent[strlen(indent)-1] = '\0';}
 #define PUTT(B,T) {if (SB_##B==SB_BEGIN || ST_##T==ST_BEGIN) indent_more(); if(fprintf(fp,"%s[%s %s]\n",indent,#B,#T)<=0) return -1; else count+=2; if (SB_##B==SB_END || ST_##T==ST_END) indent_less();}
 #endif
 
-#define GETD(S,L) {if(fread(&n,2,1,fp)!=1 || n>(L) || fread((S),n,1,fp)!=1) return -1; else count+=n+2;}
-#define GETC(C) GETD(&(C),1)
-#define GETS(S) GETD(&(S),2)
-#define GETL(L) GETD(&(L),4)
-#define GETQ(Q) GETD(&(Q),8)
+#define DECOMPRESS(S,L) {if ((nn=stream_decompress(fp,(S),(L)))<=0) return -1; else count+=nn;}
+#define GETD(S,L) {if(fread(&n,sizeof(n),1,fp)!=1 || n>(L) || fread((S),n,1,fp)!=1) return -1; else count+=n+2;}
+#define GETC(C) GETD(&(C),sizeof(c))
+#define GETS(S) GETD(&(S),sizeof(s))
+#define GETL(L) GETD(&(L),sizeof(l))
+#define GETQ(Q) GETD(&(Q),sizeof(q))
 static int ok=1;
-#define GETBT (ok?(ok=0,fread(&n,2,1,fp)==1 && n==0 && fread(&b,1,1,fp)==1 && fread(&t,1,1,fp)==1):1)
+#define GETBT (ok?(ok=0,fread(&n,sizeof(n),1,fp)==1 && n==0 && fread(&b,1,1,fp)==1 && fread(&t,1,1,fp)==1):1)
 #define OK (ok=1)
 #define B(X) (b==SB_##X)
 #define T(X) (t==ST_##X)
-
 
 /* stream block tokens */
 enum {
@@ -234,7 +237,7 @@ size_t stream_compress(FILE *fp, char *buf, size_t len)
 					if (fwrite(&runlen,1,sizeof(runlen),fp)<0) return -1;
 					if (fwrite(&diff,1,sizeof(diff),fp)<0) return -1;
 					if (fputc(*run,fp)<0) return -1; 
-					count+=3;
+					count+=4;
 
 					// start over with a new run
 					runlen = 0;
@@ -251,7 +254,7 @@ size_t stream_compress(FILE *fp, char *buf, size_t len)
 				if (fwrite(&runlen,1,sizeof(runlen),fp)<0) return -1;
 				if (fwrite(&diff,1,sizeof(diff),fp)<0) return -1;
 				if (fputc(*run,fp)<0) return -1; 
-				count+=3;
+				count+=4;
 
 				// change to a raw buffer
 				state = RAW;
@@ -266,8 +269,97 @@ size_t stream_compress(FILE *fp, char *buf, size_t len)
 		// get next run candidate
 		diff = dp;
 	}
+	
+	// terminate compressed stream
+	rawlen=0;
+	if (fwrite(&rawlen,sizeof(rawlen),1,fp)<0) return -1; else count+=2;
+
+	// stream len confirmation code
+	if (fwrite(&count,sizeof(count),1,fp)<0) return -1; else count+=2;
+
 	output_debug("stream_compress(): %d kB -> %d kB (%.1f%%)", original/1000+1, count/1000+1, (double)count*100/(double)original);
 	return count;
+}
+
+/** stream_compress
+
+	Format of compressed stream 
+
+	[US/len] [bit15 runlen flag, bit 0-14 data len]
+	
+	Bit 15 clear : raw data follows for len given
+	[UC/data ... ]
+
+	Bit 15 set : compressed data 
+	[SC/delta] differential to apply to each value
+	[SC/value] initial value
+
+ **/
+size_t stream_decompress(FILE *fp, const char *buf, const size_t len)
+{
+	char *ptr = buf;
+	size_t count=0, buflen=0;
+	size_t confirm=0;
+	struct {
+		unsigned int runlen:15;
+		unsigned int is_compressed:1;
+	} runstate;
+	for (buflen=0; buflen<len; buflen+=runstate.runlen)
+	{
+		if (fread(&runstate,2,1,fp)!=1)
+			return stream_error("stream_decompress(): failed to read runlen");
+		else
+			count+=2;
+
+		// check for end of compressed stream
+		if (runstate.runlen==0)
+			break;
+
+		// handle run data
+		if (runstate.is_compressed) // compression flag set
+		{
+			char delta;
+			unsigned char value;
+			if (fread(&delta,1,1,fp)!=1 || fread(&value,1,1,fp)!=1) 
+				return stream_error("stream_decompress(): failed to read delta/value");
+			else
+				count += 2;
+			if (delta==0)
+			{
+				memset(ptr,value,runstate.runlen+1);
+				ptr += runstate.runlen+1;
+			}
+			else
+			{
+				unsigned short run = runstate.runlen+1;
+				while (run-->0)
+				{
+					*ptr++ = value;
+					value += delta;
+				}
+			}
+		}
+		else // no compression
+		{
+			if (fread(ptr,1,runstate.runlen,fp)!=runstate.runlen)
+				return stream_error("stream_decompress(): failed to read raw data");
+			else
+			{
+				ptr += runstate.runlen;
+				count += runstate.runlen;
+			}
+		}
+	}
+
+	// check for overrun
+	if (buflen>len)
+		return stream_error("stream_decompress(): stream overrun--possible invalid stream");
+
+	// read confirmation code
+	if (fread(&confirm,sizeof(confirm),1,fp)==1 && confirm==count)
+		return count;
+	else
+		return stream_error("stream_decompress(): stream confirmation code mismatched--probable invalid stream");
 }
 
 /*******************************************************
@@ -549,7 +641,7 @@ int stream_in_class(FILE *fp)
 			//	GETD(code,sizeof(code));
 			//}
 			else
-				stream_warning("ignoring token %d in global stream", t);
+				stream_warning("ignoring token %d in class stream", t);
 		}
 		OK;
 	}
@@ -563,6 +655,9 @@ int64 stream_out_object(FILE *fp, OBJECT *obj)
 {
 	int64 count=0;
 	PUTT(OBJECT,BEGIN);
+
+	PUTT(OBJECT,CLASS);
+	PUTD(obj->oclass->name,strlen(obj->oclass->name));
 
 	PUTT(OBJECT,ID);
 	PUTL(obj->id);
@@ -578,9 +673,6 @@ int64 stream_out_object(FILE *fp, OBJECT *obj)
 		PUTT(OBJECT,GROUP);
 		PUTD(obj->groupid,strlen(obj->groupid));
 	}
-
-	PUTT(OBJECT,CLASS);
-	PUTD(obj->oclass->name,strlen(obj->oclass->name));
 
 	if (obj->parent)
 	{
@@ -619,17 +711,122 @@ int64 stream_out_object(FILE *fp, OBJECT *obj)
 		{
 			char value[4096]="";
 			void *addr = (void*)((char*)(obj+1)+(unsigned int64)p->addr);
-			object_get_value_by_addr(obj,addr,value,sizeof(value),p);
-			
 			PUTT(OBJECT,PROPERTY);
-			PUTL((unsigned long)(p->addr));
-
-			PUTT(OBJECT,VALUE);
-			PUTD(value,strlen(value));
+			PUTL(p->ptype);
+			PUTS(p->addr);
+			if (p->ptype==PT_object)
+			{
+				OBJECT *ref = *(OBJECT**)addr;
+				unsigned long id = ref==NULL ? -1 : ref->id;
+				PUTL(id);
+			}
+			else
+			{
+				PUTD(addr,property_size(p));
+			}
 		}
 	}
 
 	PUTT(OBJECT,END);
+	return count;
+}
+int64 stream_in_object(fp)
+{
+	int64 count=0;
+	OBJECT *obj = NULL;
+	char name[65536];
+	memset(name,0,sizeof(name));
+
+	while (GETBT && B(OBJECT) && T(BEGIN))
+	{
+		OK;
+		while (GETBT && B(OBJECT) && !T(END))
+		{
+			char buffer[1024];
+			memset(buffer,0,sizeof(buffer));
+			OK;
+			if T(CLASS)
+			{
+				CLASS *oclass;
+				GETD(buffer,sizeof(buffer));
+				oclass = class_get_class_from_classname(buffer);
+				if (oclass==NULL)
+					return stream_error("class '%s' not found", buffer);
+				if (oclass->create==NULL)
+					return stream_error("class '%s' does not implement object creation", buffer);
+				if (oclass->create(&obj,NULL)==0)
+					return stream_error("failed to create object of class '%s'", buffer);
+			}
+			else if T(ID)
+			{
+				unsigned long id;
+				GETL(id);
+				if (id!=obj->id)
+					return stream_error("object id %d mismatched--object sequence is not valid", id);
+			}
+			else if T(NAME)
+			{
+				GETD(buffer,sizeof(buffer));
+				obj->name = malloc(strlen(buffer)+1);
+				strcpy(obj->name,buffer);
+			}
+			else if T(GROUP)
+			{
+				GETD(obj->groupid,sizeof(obj->groupid));
+			}
+			else if T(PARENT)
+			{
+				GETL(obj->parent);
+				// this gets fixed after all objects are loaded
+			}
+			else if T(RANK)
+			{
+				GETL(obj->rank);
+			}
+			else if T(CLOCK)
+			{
+				GETQ(obj->clock);
+			}
+			else if T(VALIDTO)
+			{
+				GETQ(obj->valid_to);
+			}
+			else if T(LATITUDE)
+			{
+				GETD(&(obj->latitude),sizeof(obj->latitude));
+			}
+			else if T(LONGITUDE)
+			{
+				GETD(&(obj->longitude),sizeof(obj->longitude));
+			}
+			else if T(INSVC)
+			{
+				GETQ(obj->in_svc);
+			}
+			else if T(OUTSVC)
+			{
+				GETQ(obj->out_svc);
+			}
+			else if T(FLAGS)
+			{
+				GETL(obj->flags);
+			}
+			else if T(PROPERTY)
+			{
+				unsigned short addr;
+				PROPERTYTYPE ptype;
+				GETL(ptype);
+				GETS(addr);
+				GETD((char*)(obj+1)+addr,property_size_by_type(ptype));
+			}
+			else
+				stream_warning("ignoring token %d in object stream", t);
+		}
+		OK;
+
+		// TODO indexing, see load.c:load_set_index()
+		obj = NULL;
+	}
 	return count;
 }
 
@@ -655,6 +852,30 @@ int64 stream_out_schedule(FILE *fp, SCHEDULE *sch)
 
 	PUTT(SCHEDULE,END);
 
+	return count;
+}
+int64 stream_in_schedule(fp)
+{
+	int64 count=0;
+
+	while (GETBT && B(SCHEDULE) && T(BEGIN))
+	{
+		OK;
+		while (GETBT && B(SCHEDULE) && !T(END))
+		{
+			OK;
+			if T(DATA) 
+			{
+				SCHEDULE *sch = schedule_new();
+				DECOMPRESS((char*)sch,sizeof(SCHEDULE));
+				schedule_add(sch);
+			}
+			// TODO other terms
+			else
+				stream_warning("ignoring token %d in schedule stream", t);
+		}
+		OK;
+	}
 	return count;
 }
 
@@ -684,11 +905,7 @@ int64 stream_out_transform(FILE *fp, SCHEDULEXFORM *xform)
 		if (object_locate_property(xform->source,&obj,&prop))
 		{
 			PUTT(TRANSFORM,OBJECT);
-
-			PUTT(OBJECT,ID);
 			PUTL(obj->id);
-
-			PUTT(TRANSFORM,PROPERTY);
 			PUTL((unsigned long)(prop->addr));
 		}
 		else
@@ -701,12 +918,8 @@ int64 stream_out_transform(FILE *fp, SCHEDULEXFORM *xform)
 		stream_error("transform uses undefined source type (%d)", xform->source_type);
 		return -1;
 	}
-
-	PUTT(TRANSFORM,OBJECT);
 	PUTL(xform->target_obj->id);
-
-	PUTT(TRANSFORM,PROPERTY);
-	PUTL((unsigned long)(xform->target_prop->addr));
+	PUTL(xform->target_prop->addr);
 
 	PUTT(TRANSFORM,SCALE);
 	PUTQ(xform->scale);
@@ -717,6 +930,83 @@ int64 stream_out_transform(FILE *fp, SCHEDULEXFORM *xform)
 	PUTT(TRANSFORM,END);
 	return count;
 }
+int64 stream_in_transform(fp)
+{
+	int64 count=0;
+
+	while (GETBT && B(TRANSFORM) && T(BEGIN))
+	{
+		SCHEDULEXFORM *xform = (SCHEDULEXFORM*)malloc(sizeof(SCHEDULEXFORM));
+		OK;
+		while (GETBT && B(TRANSFORM) && !T(END))
+		{
+			OK;
+			if T(TYPE) 
+			{
+				GETL(xform->source_type,sizeof(xform->source_type));
+			}
+			else if T(SCHEDULE)
+			{
+				SCHEDULE *sch;
+				char schedule_name[64];
+				memset(schedule_name,0,sizeof(schedule_name));
+				if (xform->source_type!=XS_SCHEDULE)
+					return stream_error("stream_in_transform(): schedule not expected");
+				GETD(schedule_name,sizeof(schedule_name));
+				sch = schedule_find_byname(schedule_name);
+				if (sch==NULL)
+					return stream_error("stream_in_transform(): schedule '%s' not found", schedule_name);
+				else
+					xform->source_addr = sch;
+
+				// target
+				GETL(xform->target_obj);
+				// id will get fixed up later
+				GETL(xform->target_prop);
+				// addr will get fixed up later
+			}
+			else if T(OBJECT)
+			{
+				unsigned long object_id;
+				unsigned long prop_addr;
+				char prop_name[64];
+				memset(prop_name,0,sizeof(prop_name));
+				if (xform->source_type!=XS_DOUBLE && xform->source_type!=XS_COMPLEX && xform->source_type!=XS_LOADSHAPE && xform->source_type!=XS_ENDUSE)
+					return stream_error("stream_in_transform(): property not expected");
+
+				// source
+				GETL(object_id);
+				GETL(prop_addr);
+				xform->source = (char*)(object_find_by_id(object_id)+1)+prop_addr;
+				if (xform->source==NULL)
+					return stream_error("stream_in_transform(): source object id=%d not found", object_id);
+
+				// target
+				GETL(object_id);
+				xform->target_obj = object_find_by_id(object_id);
+				if (xform->target_obj == NULL)
+					return stream_error("stream_in_transform(): target object id=%d not found", object_id);
+				GETD(prop_name,sizeof(prop_name));
+				xform->target_prop = class_find_property(xform->target_obj->oclass,prop_name);
+				if (xform->target_prop==NULL)
+					return stream_error("stream_in_transform(): target property name=%s not found", prop_name);
+			}
+			else if T(SCALE)
+			{
+				GETQ(xform->scale);
+			}
+			else if T(BIAS)
+			{
+				GETQ(xform->bias);
+			}
+			else
+				stream_warning("ignoring token %d in object stream", t);
+		}
+		OK;
+	}
+	return count;
+}
+
 
 /*******************************************************
  * OUTPUT STREAM
@@ -739,6 +1029,10 @@ int64 stream_out(FILE *fp, int flags)
 
 	/* higher stream level data goes here... */
 
+	/* schedules */
+	while ((sch=schedule_getnext(sch))!=NULL)
+		PUTX(schedule,sch);
+
 	/* modules (not optional) */
 	for (mod=module_get_first(); (flags&SF_MODULES) && mod!=NULL; mod=mod->next)
 		PUTX(module,mod);
@@ -751,10 +1045,6 @@ int64 stream_out(FILE *fp, int flags)
 	for (oclass=class_get_first_class(); (flags&SF_CLASSES) && oclass!=NULL; oclass=oclass->next)
 		PUTX(class,oclass);
 
-	/* schedules */
-	while ((sch=schedule_getnext(sch))!=NULL)
-		PUTX(schedule,sch);
-
 	/* objects */
 	for (obj=object_get_first(); (flags&SF_OBJECTS) && obj!=NULL; obj=obj->next)
 		PUTX(object,obj);
@@ -763,13 +1053,16 @@ int64 stream_out(FILE *fp, int flags)
 	while ((xform=scheduletransform_getnext(xform))!=NULL)
 		PUTX(transform,xform);
 
+	PUTT(END,END);
+	output_verbose("stream_out() sent %"FMT_INT64"d bytes", count);
 	return count;
 }
 
 int64 stream_in(FILE *fp, int flags)
 {
 	int64 count = 0;
-
+	OBJECT *obj;
+	SCHEDULEXFORM *xform=NULL;
 	
 	{	char stream_name[] = STREAM_NAME;
 		GETD(stream_name,sizeof(stream_name));
@@ -785,17 +1078,58 @@ int64 stream_in(FILE *fp, int flags)
 
 	while (!feof(fp) && !ferror(fp))
 	{
-		stream_in_module(fp);
-		stream_in_global(fp);
-		stream_in_class(fp);
+		int c=0;
+		if (GETBT && B(END) && T(END))
+			break;
+		c += stream_in_object(fp);
+		c += stream_in_global(fp);
+		c += stream_in_schedule(fp);
+		c += stream_in_module(fp);
+		c += stream_in_class(fp);
+		c += stream_in_transform(fp);
+		if (c==0)
+			return stream_error("stream_in(): unable to continue");
+		else
+			count += c;
 	}
 
 	if (!feof(fp) || !ok)
 		return stream_error("stream_in(): unhandled block/token at position %d", count);
 	else if (ferror(fp))
 		return stream_error("stream_in(): %s", strerror(errno));
-	else
-		return count;
+
+	// fixup object parents and object properties
+	for (obj=object_get_first(); obj!=NULL; obj=obj->next)
+	{
+		PROPERTY *p;
+		obj->parent = object_find_by_id(obj->parent);
+		for (p=class_get_first_property(obj->oclass); p!=NULL; p=class_get_next_property(p))
+		{
+			if (p->ptype==PT_object)
+			{
+				OBJECT **ref = (OBJECT*)((char*)(obj+1)+(unsigned short)p->addr);
+				*ref = object_find_by_id((unsigned long)(*ref));
+			}
+		}
+	}
+
+	// fixup transform targets
+	while ((xform=scheduletransform_getnext(xform))!=NULL)
+	{
+		PROPERTY *p;
+		xform->target_obj = object_find_by_id(xform->target_obj);
+		for (p=class_get_first_property(xform->target_obj->oclass); p!=NULL; p=class_get_next_property(p))
+		{
+			if (p->addr == xform->target_prop)
+			{
+				xform->target_prop = p;
+				xform->target = (double*)((char*)(xform->target_obj+1)+(unsigned long)p->addr);
+			}
+		}
+	}
+
+	output_verbose("stream_in() received %"FMT_INT64"d bytes", count);
+	return count;
 }
 
 

@@ -59,6 +59,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 		 char *argv[]) /**< a list of pointers to the command-line arguments */
 {
 	int rv = 0;
+	time_t t_load = time(NULL);
 	global_process_id = getpid();
 #if defined WIN32 && _DEBUG 
 	atexit(pause_at_exit);
@@ -135,6 +136,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	}
 	
 	/* start the processing environment */
+	output_verbose("load time: %d sec", time(NULL) - t_load);
 	output_verbose("starting up %s environment", global_environment);
 	if (environment_start(argc,argv)==FAILED)
 	{

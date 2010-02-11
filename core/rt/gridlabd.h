@@ -853,6 +853,7 @@ typedef struct s_callbacks {
 		SCHEDULEINDEX (*index)(SCHEDULE *sch, TIMESTAMP ts);
 		double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
 		long (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
+		SCHEDULE *(*find)(char *name);
 	} schedule;
 	struct {
 		loadshape *(*create)(loadshape *s);

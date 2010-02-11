@@ -508,10 +508,8 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		return NULL;
 	}
 
-	/* create the schedule */
-	sch = (SCHEDULE*)malloc(sizeof(SCHEDULE));
-	memset(sch,0,sizeof(SCHEDULE));
-
+	/* create a new schedule */
+	sch = schedule_new();
 	if (sch==NULL)
 	{
 		output_error("schedule_create(char *name='%s', char *definition='%s') memory allocation failed)", name, definition);
@@ -541,23 +539,6 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		return NULL;
 	}
 	strcpy(sch->definition,definition);
-
-	/* clear arrays */
-	sch->block = 0;
-	memset(sch->blockname,0,sizeof(sch->blockname));
-	memset(sch->data,0,sizeof(sch->data));
-	memset(sch->dtnext,0,sizeof(sch->dtnext));
-	memset(sch->index,0,sizeof(sch->index));
-	memset(sch->sum,0,sizeof(sch->sum));
-	memset(sch->abs,0,sizeof(sch->abs));
-	memset(sch->count,0,sizeof(sch->count));
-	memset(sch->weight,0,sizeof(sch->weight));
-	memset(sch->minutes,0,sizeof(sch->minutes));
-	sch->next_t = TS_NEVER;
-	sch->value = 0.0;
-	sch->flags = 0;
-	sch->duration = 0.0;
-	sch->next = NULL;
 
 	/* compile the schedule */
 	if (schedule_compile(sch))
@@ -615,8 +596,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 			return NULL;
 
 		/* attach to schedule list */
-		sch->next = schedule_list;
-		schedule_list = sch;
+		schedule_add(sch);
 		return sch;
 	}
 	else
@@ -625,6 +605,23 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		free(sch);
 		return NULL;
 	}
+}
+
+SCHEDULE *schedule_new(void)
+{
+	/* create the schedule */
+	SCHEDULE *sch = (SCHEDULE*)malloc(sizeof(SCHEDULE));
+	if (sch==NULL) return NULL;
+
+	/* initialize */
+	memset(sch,0,sizeof(SCHEDULE));
+	sch->next_t = TS_NEVER;
+	return sch;
+}
+void schedule_add(SCHEDULE *sch)
+{
+	sch->next = schedule_list;
+	schedule_list = sch;
 }
 
 /** validate a schedule, if desired 

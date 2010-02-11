@@ -96,6 +96,8 @@ extern "C" {
 SCHEDULE *schedule_getnext(SCHEDULE *sch);
 SCHEDULE *schedule_find_byname(char *name);
 SCHEDULE *schedule_create(char *name, char *definition);
+SCHEDULE *schedule_new(void);
+void schedule_add(SCHEDULE *sch);
 int schedule_validate(SCHEDULE *sch, int flags);
 int schedule_normalize(SCHEDULE *sch, int flags);
 SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts);

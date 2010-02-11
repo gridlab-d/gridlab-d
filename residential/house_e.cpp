@@ -848,10 +848,12 @@ int house_e::create()
 			{
 				char name[64];
 				sprintf(name,"residential-%s-default",euname);
-				// matched enduse
+				// matched enduse and doesn't already exist
 				if (strcmp(eu->schedule_name,name)==0)
 				{
-					SCHEDULE *sched = gl_schedule_create(eu->schedule_name,eu->schedule_definition);
+					SCHEDULE *sched = gl_schedule_find(name);
+					if (sched==NULL)
+						sched = gl_schedule_create(eu->schedule_name,eu->schedule_definition);
 					IMPLICITENDUSE *item = (IMPLICITENDUSE*)gl_malloc(sizeof(IMPLICITENDUSE));
 					memset(item,0,sizeof(IMPLICITENDUSE));
 					gl_enduse_create(&(item->load));

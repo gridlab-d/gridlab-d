@@ -344,6 +344,7 @@
 		</Configuration>
 		<Configuration
 			Name="QuickDebug|Win32"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			>
 			<Tool

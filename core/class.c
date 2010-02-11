@@ -176,6 +176,11 @@ unsigned long property_size(PROPERTY *prop)
 		return 0;
 }
 
+unsigned long property_size_by_type(PROPERTYTYPE type)
+{
+	return property_type[type].size;
+}
+
 int property_create(PROPERTY *prop, void *addr)
 {
 	if (prop && prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)

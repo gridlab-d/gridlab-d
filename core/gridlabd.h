@@ -874,6 +874,11 @@ inline char* gl_name(OBJECT *my, char *buffer, size_t size)
 	return buffer;
 }
 
+inline SCHEDULE *gl_schedule_find(char *name)
+{
+	return callback->schedule.find(name);
+}
+
 inline SCHEDULE *gl_schedule_create(char *name, char *definition)
 {
 	return callback->schedule.create(name,definition);

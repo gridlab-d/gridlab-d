@@ -173,7 +173,7 @@ static CALLBACKS callbacks = {
 	object_find_name,
 	object_get_oflags,
 	object_get_count,
-	{schedule_create, schedule_index, schedule_value, schedule_dtnext},
+	{schedule_create, schedule_index, schedule_value, schedule_dtnext, schedule_find_byname},
 	{loadshape_create,loadshape_init},
 	{enduse_create,enduse_sync},
 	{interpolate_linear, interpolate_quadratic}
