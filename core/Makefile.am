@@ -8,7 +8,7 @@ AM_CFLAGS = $(PTHREAD_CFLAGS)
 # Debug symbols must also be included with -g if not done elsewhere.
 AM_CXXFLAGS = $(PTHREAD_CFLAGS)
 AM_LDFLAGS = $(EXTRA_gridlabd_LDFLAGS) -ldl -lxerces-c $(PTHREAD_LIBS) $(PTHREAD_CFLAGS)
-gridlabd_bin_SOURCES = build.h main.c \
+gridlabd_bin_SOURCES = main.c build.h \
 	aggregate.c aggregate.h \
 	class.c  class.h \
 	cmdarg.c cmdarg.h \
@@ -55,8 +55,8 @@ gridlabd_bin_SOURCES = build.h main.c \
 	version.h
 EXTRA_gridlabd_bin_SOURCES = \
 	cmex.c cmex.h
-
-legal.c: buildnum build.h
+BUILT_SOURCES = build.h
+CLEANFILES = build.h
 
 build.h: buildnum
 
@@ -64,12 +64,12 @@ buildnum:
 	if test -f ../utilities/build_number; then \
 		if test -f build.h; then \
 			. ../utilities/build_number -b .. > buildnum.h; \
-			[ "`cat buildnum.h`" = "`cat build.h`" ] || mv -f buildnum.h build.h; \
+			test "`cat buildnum.h`" = "`cat build.h`" || mv -f buildnum.h build.h; \
 			test -f buildnum.h && rm buildnum.h || true; \
 		else \
 			. ../utilities/build_number -b .. > build.h; \
 		fi; \
-	elif [ ! -f build.h ]; then \
+	elif test ! -f build.h; then \
 		echo '#define "$$Revision: 0"' > build.h; \
 	fi
 
@@ -89,6 +89,4 @@ uninstall-local:
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)
-
-dist-hook: buildnum
 

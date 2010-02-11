@@ -13,19 +13,19 @@ dist_doc_DATA = BUILD COPYRIGHT LICENSE README-LINUX README-MACOSX
 
 EXTRA_DIST = doxygen/*.* VERSION third_party/CBLAS third_party/superLU_MT
 
+uninstall-hook:
+	-rmdir $(DESTDIR)$(pkglibdir)
+	-rmdir $(DESTDIR)$(docdir)
+
 over: clean all
 
-repo-clean:
-	svn status | grep '^?' | cut -c 8- | xargs rm
-
-uninstall-hook:
-	-rmdir $(DESTDIR)$(sysconfdir)/$(PACKAGE)/rt
-	-rmdir $(DESTDIR)$(sysconfdir)/$(PACKAGE)
-	-rmdir $(DESTDIR)$(pkglibdir)
+clean-wc:
+	@echo -e "\nThis removes all unversioned files and directories in the working copy."
+	@unset REPLY && read -t 60 -p "Clean working copy (type 'yes' to proceed)? " && test "`echo "$$REPLY" | tr '[:upper:]' '[:lower:]'`" = "yes"
+	. utilities/cleanwc
 
 validate: 
 	python validate.py
 
-compare-source:
-	bash ./compare-sources $(SUBDIRS)
+.PHONY: over clean-wc validate
 

@@ -1,0 +1,2 @@
+#!/bin/bash
+svn status | grep '^?' | cut -c 8- | xargs rm -rfv

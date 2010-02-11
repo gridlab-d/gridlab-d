@@ -943,7 +943,7 @@ int64 stream_in_transform(fp)
 			OK;
 			if T(TYPE) 
 			{
-				GETL(xform->source_type,sizeof(xform->source_type));
+				GETL(xform->source_type);
 			}
 			else if T(SCHEDULE)
 			{
