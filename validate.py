@@ -9,6 +9,7 @@ import smtplib
 import time
 import subprocess
 import time
+import archive_failed_tests
 
 tmppath = os.getenv("PATH")
 os.putenv("PATH",tmppath+";..\\..\\..\\VS2005\\Win32\\Release")
@@ -97,6 +98,7 @@ def run_tests(argv):
 	#build test dirs
 	#for file in autotestfiles:
 	errlist=[]
+	testerrlist = []
 	cleanlist=[]
 	for path, file in autotestfiles:
 		err = False
@@ -195,6 +197,7 @@ def run_tests(argv):
 				err = True
 		if err:
 			# zip target directory
+			testerrlist.append(file[:-4])
 			errlist.append((path,file))
 			
 		os.chdir(currpath)
@@ -214,6 +217,7 @@ def run_tests(argv):
 	print("Validation detected "+str(err_ct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(round(dt,2))+" seconds.")
 	for errpath, errfile in errlist:
 		print(" * "+os.path.join(errpath, errfile))
+	archive_failed_tests.createArchiveFiles(testerrlist)
 	
 	exit(err_ct+ex_ct)
 #end run_tests()
