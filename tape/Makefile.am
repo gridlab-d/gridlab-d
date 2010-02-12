@@ -11,7 +11,7 @@ tape_la_SOURCES =            \
 	recorder.c                \
 	shaper.c                  \
 	tape.c        tape.h
-tape_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0
+tape_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0 -ldl
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)

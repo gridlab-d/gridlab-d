@@ -7,7 +7,7 @@ plc_la_SOURCES =         \
 	plc.cpp     plc.h     \
 	plc_test.h            \
 	test.cpp
-plc_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0
+plc_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0 -ldl
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)

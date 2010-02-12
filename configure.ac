@@ -89,12 +89,17 @@ AC_PROG_LN_S
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
+if `$LD --version | grep -q '^GNU ld'`; then
+	LDFLAGS="$LDFLAGS -Wl,--no-undefined"
+	export LDFLAGS
+fi
+
 AX_LIB_XERCES
 test "$HAVE_XERCES" = "yes" || \
 		AC_MSG_FAILURE([Xerces library not found. If Xerces is not properly \
 installed, you probably need to use one or more of the --with-xerces options. \
 Try `./configure --help[`] for more information.])
-AX_LIB_SUPERLU
+#AX_LIB_SUPERLU
 #if test "$HAVE_SUPERLU" != "yes"; then
 #	if test -f third_party/SuperLU_3.1/lib/libsuperlu_3.1.a; then
 #		SUPERLU_LIBS=$PWD/third_party/SuperLU_3.1/lib/libsuperlu_3.1.a
@@ -110,8 +115,7 @@ AX_LIB_SUPERLU
 	AC_SUBST(SUPERLU_CPPFLAGS)
 	AC_SUBST(SUPERLU_LDFLAGS)
 	AC_SUBST(SUPERLU_LIBS)
-	AC_DEFINE_UNQUOTED(HAVE_SUPERLU)
-	HAVE_SUPERLU=yes
+	AC_DEFINE_UNQUOTED([HAVE_SUPERLU], [1], "Define to 1 if you have the SuperLU libraries (-lsuperlu)")
 #fi
 
 DX_INIT_DOXYGEN(gridlabd, [doxygen/gridlabd.conf])
