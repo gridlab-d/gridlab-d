@@ -155,14 +155,14 @@ EXPORT int commit_complex_assert(OBJECT *obj)
 			double real_error = error.Re();
 			double imag_error = error.Im();
 	
-			if ((_isnan(real_error) || abs(real_error)>ca->within) && (ca->operation == ca->FULL || ca->operation == ca->REAL))
+			if ((_isnan(real_error) || fabs(real_error)>ca->within) && (ca->operation == ca->FULL || ca->operation == ca->REAL))
 			{
 				gl_verbose("Assert failed on %s: real part of %s %g not within %f of given value %g", 
 				gl_name(obj->parent,buff,64), ca->target, x->Re(), ca->within, ca->value.Re());
 
 				return 0;
 			}
-			if ((_isnan(imag_error) || abs(imag_error)>ca->within) && (ca->operation == ca->FULL || ca->operation == ca->IMAGINARY))
+			if ((_isnan(imag_error) || fabs(imag_error)>ca->within) && (ca->operation == ca->FULL || ca->operation == ca->IMAGINARY))
 			{
 				gl_verbose("Assert failed on %s: imaginary part of %s %+gi not within %f of given value %+gi", 
 				gl_name(obj->parent,buff,64), ca->target, x->Im(), ca->within, ca->value.Im());
@@ -175,7 +175,7 @@ EXPORT int commit_complex_assert(OBJECT *obj)
 			complex val = *x;
 			double magnitude_error = val.Mag() - ca->value.Mag();
 
-			if ( _isnan(magnitude_error) || abs(magnitude_error) > ca->within )
+			if ( _isnan(magnitude_error) || fabs(magnitude_error) > ca->within )
 			{
 				gl_verbose("Assert failed on %s: Magnitude of %s (%g) not within %f of given value %g", 
 				gl_name(obj->parent,buff,64), ca->target, val.Mag(), ca->within, ca->value.Mag());
@@ -188,7 +188,7 @@ EXPORT int commit_complex_assert(OBJECT *obj)
 			complex val = *x;
 			double angle_error = val.Arg() - ca->value.Arg();
 
-			if ( _isnan(angle_error) || abs(angle_error) > ca->within )
+			if ( _isnan(angle_error) || fabs(angle_error) > ca->within )
 			{
 				gl_verbose("Assert failed on %s: Angle of %s (%g) not within %f of given value %g", 
 				gl_name(obj->parent,buff,64), ca->target, val.Arg(), ca->within, ca->value.Arg());
@@ -202,12 +202,12 @@ EXPORT int commit_complex_assert(OBJECT *obj)
 		complex error = *x - ca->value;
 		double real_error = error.Re();
 		double imag_error = error.Im();
-		if ((_isnan(real_error) || abs(real_error)<ca->within)||(_isnan(imag_error) || abs(imag_error)<ca->within)){
-			if (_isnan(real_error) || abs(real_error)<ca->within) {
+		if ((_isnan(real_error) || fabs(real_error)<ca->within)||(_isnan(imag_error) || fabs(imag_error)<ca->within)){
+			if (_isnan(real_error) || fabs(real_error)<ca->within) {
 				gl_verbose("Assert failed on %s: real part of %s %g is within %f of %g", 
 				gl_name(obj->parent,buff,64), ca->target, x->Re(), ca->within, ca->value.Re());
 			}
-			if (_isnan(imag_error) || abs(imag_error)<ca->within) {
+			if (_isnan(imag_error) || fabs(imag_error)<ca->within) {
 				gl_verbose("Assert failed on %s: imaginary part of %s %+gi is within %f of %gi", 
 				gl_name(obj->parent,buff,64), ca->target, x->Im(), ca->within, ca->value.Im());
 			}

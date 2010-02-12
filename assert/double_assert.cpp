@@ -152,7 +152,7 @@ EXPORT int commit_double_assert(OBJECT *obj)
 	}
 	else if (da->status == da->ASSERT_TRUE)
 	{
-		double m = abs(*x-da->value);
+		double m = fabs(*x-da->value);
 		if (_isnan(m) || m>da->within)
 		{				
 			gl_verbose("Assert failed on %s: %s %g not within %f of given value %g", 
@@ -164,7 +164,7 @@ EXPORT int commit_double_assert(OBJECT *obj)
 	}
 	else if (da->status == da->ASSERT_FALSE)
 	{
-		double m = abs(*x-da->value);
+		double m = fabs(*x-da->value);
 		if (_isnan(m) || m<da->within)
 		{				
 			gl_verbose("Assert failed on %s: %s %g is within %f of given value %g", 
