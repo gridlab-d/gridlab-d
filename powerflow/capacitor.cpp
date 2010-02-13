@@ -318,9 +318,9 @@ int capacitor::init(OBJECT *parent)
 	}
 
 	//Set transition variables to beginning value initially
-	switchA_state_Prev = switchA_state_Next = switchA_state;
-	switchB_state_Prev = switchB_state_Next = switchB_state;
-	switchC_state_Prev = switchC_state_Next = switchC_state;
+	switchA_state_Req_Next = switchA_state_Prev = switchA_state_Next = switchA_state;
+	switchB_state_Req_Next = switchB_state_Prev = switchB_state_Next = switchB_state;
+	switchC_state_Req_Next = switchC_state_Prev = switchC_state_Next = switchC_state;
 
 	//Perform phase checks - make sure what we want to look at actually exists
 	if (((control!=MANUAL) && (control!=VOLT)) && ((RLink->phases & pt_phase) != pt_phase))	//VAR, VOLTVAR, CURRENT
