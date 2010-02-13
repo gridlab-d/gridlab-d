@@ -12,7 +12,8 @@ import time
 import archive_failed_tests
 
 tmppath = os.getenv("PATH")
-os.putenv("PATH",tmppath+";..\\..\\..\\VS2005\\Win32\\Release")
+os.putenv("PATH","..\\..\\..\\VS2005\\Win32\\Release;"+tmppath)
+os.putenv("GLPATH","..\\..\\..\\VS2005\\Win32\\Release")
 
 def do_help():
 	print("validate.py - GridLAB-D autotest/validation script")
@@ -217,7 +218,8 @@ def run_tests(argv):
 	print("Validation detected "+str(err_ct)+" models with errors and "+str(ex_ct)+" models with exceptions in "+str(round(dt,2))+" seconds.")
 	for errpath, errfile in errlist:
 		print(" * "+os.path.join(errpath, errfile))
-	archive_failed_tests.createArchiveFiles(testerrlist)
+	if len(testerrlist) > 0:
+		archive_failed_tests.createArchiveFiles(testerrlist)
 	
 	exit(err_ct+ex_ct)
 #end run_tests()
