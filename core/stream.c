@@ -969,8 +969,6 @@ int64 stream_in_transform(fp)
 			{
 				unsigned long object_id;
 				unsigned long prop_addr;
-				char prop_name[64];
-				memset(prop_name,0,sizeof(prop_name));
 				if (xform->source_type!=XS_DOUBLE && xform->source_type!=XS_COMPLEX && xform->source_type!=XS_LOADSHAPE && xform->source_type!=XS_ENDUSE)
 					return stream_error("stream_in_transform(): property not expected");
 
@@ -986,10 +984,14 @@ int64 stream_in_transform(fp)
 				xform->target_obj = object_find_by_id(object_id);
 				if (xform->target_obj == NULL)
 					return stream_error("stream_in_transform(): target object id=%d not found", object_id);
-				GETD(prop_name,sizeof(prop_name));
-				xform->target_prop = class_find_property(xform->target_obj->oclass,prop_name);
+				GETL(prop_addr,sizeof(prop_addr));
+				for (xform->target_prop = class_get_first_property(xform->target_obj->oclass); xform->target_prop!=NULL; xform->target_prop = class_get_next_property(xform->target_prop))
+				{
+					if (xform->target_prop->addr == prop_addr)
+						break;
+				}
 				if (xform->target_prop==NULL)
-					return stream_error("stream_in_transform(): target property name=%s not found", prop_name);
+					return stream_error("stream_in_transform(): target property at addr %d not found", prop_addr);
 			}
 			else if T(SCALE)
 			{
@@ -1080,7 +1082,7 @@ int64 stream_in(FILE *fp, int flags)
 	{
 		int c=0;
 		if (GETBT && B(END) && T(END))
-			break;
+			goto Done;
 		c += stream_in_object(fp);
 		c += stream_in_global(fp);
 		c += stream_in_schedule(fp);
@@ -1098,6 +1100,7 @@ int64 stream_in(FILE *fp, int flags)
 	else if (ferror(fp))
 		return stream_error("stream_in(): %s", strerror(errno));
 
+Done:
 	// fixup object parents and object properties
 	for (obj=object_get_first(); obj!=NULL; obj=obj->next)
 	{
