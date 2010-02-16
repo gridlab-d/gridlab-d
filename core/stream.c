@@ -984,7 +984,7 @@ int64 stream_in_transform(fp)
 				xform->target_obj = object_find_by_id(object_id);
 				if (xform->target_obj == NULL)
 					return stream_error("stream_in_transform(): target object id=%d not found", object_id);
-				GETL(prop_addr,sizeof(prop_addr));
+				GETL(prop_addr);
 				for (xform->target_prop = class_get_first_property(xform->target_obj->oclass); xform->target_prop!=NULL; xform->target_prop = class_get_next_property(xform->target_prop))
 				{
 					if (xform->target_prop->addr == prop_addr)
