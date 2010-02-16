@@ -14,6 +14,7 @@
 	- \p --dumpall	toggles a complete model dump when the simulation exits
 	- \p --quiet	toggles all messages except \b error and \b fatal messages
 	- \p --profile	toggles performance profiling
+	- \p --compile  toggles compile-only run mode (model is loaded and saved, but not run)
 
 	The following command-line processes can be called
 	- \p --license	prints the software license
@@ -268,6 +269,8 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			global_profiler=!global_profiler;
 		else if (strcmp(*argv,"--pause")==0)
 			global_pauseatexit=!global_pauseatexit;
+		else if (strcmp(*argv,"--compile")==0)
+			global_compileonly = !global_compileonly;
 		else if (strcmp(*argv,"--license")==0)
 			legal_license();
 		else if (strcmp(*argv, "-V")==0 ||strcmp(*argv, "--version")==0)

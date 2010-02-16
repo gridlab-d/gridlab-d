@@ -87,6 +87,7 @@ static struct s_varmap {
 	{"sync_dumpfile",PT_char1024, &global_sync_dumpfile, PA_PUBLIC},
 #endif
 	{"streaming_io",PT_int32, &global_streaming_io_enabled, PA_PROTECTED},
+	{"compileonly",PT_int32, &global_compileonly, PA_PROTECTED},
 	/* add new global variables here */
 };
 
