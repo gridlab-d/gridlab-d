@@ -6,11 +6,14 @@
  *
  */
 #include <sys/types.h>
-//#include <sys/time.h>
-//#include <sys/times.h>
-//#include <sys/resource.h>
+#ifdef WIN32
 #include <time.h>
 #include <windows.h>
+#else
+#include <sys/time.h>
+#include <sys/times.h>
+#include <sys/resource.h>
+#endif /* WIN32 */
 
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS) 
 	#define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64 
@@ -18,6 +21,7 @@
 	#define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL 
 #endif 
 
+#ifdef WIN32
 //sj: implement gettimeofday in windows
 struct timezone 
 {  
@@ -70,6 +74,7 @@ struct timeval *tv;
  
   return(tmp);
 }
+#endif /* WIN32 */
 
 double dclock()
 {
