@@ -2067,6 +2067,10 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	
 	if (*NR_mode == false)
 	{
+		if(!heat_start){
+			// force an update of the outside temperature, even if we don't do anything with it
+			outside_temperature = *pTout;
+		}
 		/* update HVAC power before panel sync */
 		if (t0==0 || t1>t0){
 			outside_temperature = *pTout;
@@ -2092,10 +2096,13 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 #endif
 		}
 
-		if (t0==0 || t1>t0)
+		if ((t0==0 || t1>t0) || (!heat_start)){
 
 			// update the model of house
 			update_model(dt1);
+			heat_start = true;
+
+		}
 
 		// determine temperature of next event
 		update_Tevent();
@@ -2493,8 +2500,6 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				c->reclose = TS_NEVER;
 			}
 		}
-
-		heat_start = true;
 
 		// sync time
 		if (t2 > c->reclose)
