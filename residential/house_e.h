@@ -335,6 +335,7 @@ private:
 	static double warn_high_temp;
 	static double system_dwell_time; // time interval at which hvac checks its state (approximates true dwell time)
 	bool check_start;
+	bool heat_start;
 	bool *NR_mode;			//Toggle for NR soling cycle.  If not NR, just goes to false
 	TIMESTAMP Off_Return;	//Return time for the accumulation cycle in NR
 

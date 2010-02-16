@@ -1360,6 +1360,8 @@ int house_e::init(OBJECT *parent)
 
 	Off_Return = TS_NEVER;
 
+	heat_start = false;
+
 	// local object name,	meter object name
 	struct {
 			complex **var;
@@ -2390,7 +2392,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 
 	// clear accumulator
-	if(t0 != 0 && t1 > t0){
+	if((t0 != 0 && t1 > t0) || (!heat_start)){
 		total.heatgain = 0;
 	}
 	total.total = total.power = total.current = total.admittance = complex(0,0);
@@ -2485,12 +2487,14 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				total.power += c->pLoad->power;
 				total.current += c->pLoad->current;
 				total.admittance += c->pLoad->admittance;
-				if(t0 != 0 && t1 > t0){
+				if((t0 != 0 && t1 > t0) || (!heat_start)){
 					total.heatgain += c->pLoad->heatgain;
 				}
 				c->reclose = TS_NEVER;
 			}
 		}
+
+		heat_start = true;
 
 		// sync time
 		if (t2 > c->reclose)
