@@ -160,7 +160,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		load.power_factor = (angleval < 0) ? -1.0 * cos(angleval) : cos(angleval);
 
 		//Determine the heat contributions - percentage of real power
-		load.heatgain = load.total.Re() * load.heatgain_fraction;
+		load.heatgain = load.total.Re() * load.heatgain_fraction * BTUPHPKW;
 	}
 	else	//Breaker's open - nothing happens
 	{
