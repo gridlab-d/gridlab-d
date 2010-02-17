@@ -9,6 +9,8 @@ SUBDIRS =  core assert climate commercial network powerflow residential tape \
 
 include aminclude.am
 
+docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
+
 dist_doc_DATA = BUILD COPYRIGHT LICENSE README-LINUX README-MACOSX
 
 EXTRA_DIST = doxygen/*.* VERSION third_party/CBLAS third_party/superLU_MT
@@ -27,5 +29,5 @@ clean-wc:
 validate: 
 	python validate.py
 
-.PHONY: over clean-wc validate
+#.PHONY: over clean-wc validate
 
