@@ -64,6 +64,8 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 	return 0; 
 }
 
+#endif /* WIN32 */
+
 double extract(tv)
 struct timeval *tv;
 {
@@ -74,7 +76,6 @@ struct timeval *tv;
  
   return(tmp);
 }
-#endif /* WIN32 */
 
 double dclock()
 {
