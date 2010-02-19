@@ -167,41 +167,86 @@ int node::init(OBJECT *parent)
 	{
 		OBJECT *obj = OBJECTHDR(this);
 
-		FINDLIST *buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
-
-		if ((buslist==NULL) || (buslist->hit_count==0))
+		//Check for a swing bus if we haven't found one already
+		if (NR_swing_bus == NULL)
 		{
-			//See if it is a meter
-			gl_free(buslist);
-			buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"meter",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
+			OBJECT *temp_obj = NULL;
+			node *list_node;
+			unsigned int swing_count = 0;
+			FINDLIST *bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",FT_END);
 
-			if ((buslist==NULL) || (buslist->hit_count==0))	//Not a meter either, see if it is a load
+			//Parse the findlist
+			while(temp_obj=gl_find_next(bus_list,temp_obj))
 			{
-				//See if it is a meter
-				gl_free(buslist);
-				buslist = gl_find_objects(FL_NEW,FT_CLASS,SAME,"load",AND,FT_PROPERTY,"bustype",SAME,"SWING",FT_END);
+				list_node = OBJECTDATA(temp_obj,node);
 
-				if ((buslist==NULL) || (buslist->hit_count==0))	//Not a meter either, see if it is a load
+				if (list_node->bustype==SWING)
 				{
-					GL_THROW("NR: no swing bus found");
-					/*	TROUBLESHOOT
-					No swing bus was located in the test system.  Newton-Raphson requires at least one node
-					be designated "bustype SWING".
-					*/
+					NR_swing_bus=temp_obj;
+					swing_count++;
 				}
 			}
-		}
 
-		if (buslist->hit_count>1)
-			GL_THROW("NR: more than one swing bus found!");
-			/*	TROUBLESHOOT
-			More than one swing bus was found.  Newton-Raphson currently only supports one swing bus
-			at this time.  Please split the system into individual files or consider merging the system to
-			only one swing bus.
-			*/
+			//Do the same for meters
+			gl_free(bus_list);
+			bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"meter",FT_END);
 
-		//Get the swing bus object identifier
-		OBJECT *SwingBusObj = gl_find_next(buslist,NULL);
+			//Reset temp_obj
+			temp_obj = NULL;
+
+			//Parse the findlist
+			while(temp_obj=gl_find_next(bus_list,temp_obj))
+			{
+				list_node = OBJECTDATA(temp_obj,node);
+
+				if (list_node->bustype==SWING)
+				{
+					NR_swing_bus=temp_obj;
+					swing_count++;
+				}
+			}
+
+			//Do the same for loads
+			gl_free(bus_list);
+			bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"load",FT_END);
+
+			//Reset temp_obj
+			temp_obj = NULL;
+
+			//Parse the findlist
+			while(temp_obj=gl_find_next(bus_list,temp_obj))
+			{
+				list_node = OBJECTDATA(temp_obj,node);
+
+				if (list_node->bustype==SWING)
+				{
+					NR_swing_bus=temp_obj;
+					swing_count++;
+				}
+			}
+
+			//Free the buslist
+			gl_free(bus_list);
+
+			if (swing_count==0)
+			{
+				GL_THROW("NR: no swing bus found");
+				/*	TROUBLESHOOT
+				No swing bus was located in the test system.  Newton-Raphson requires at least one node
+				be designated "bustype SWING".
+				*/
+			}
+
+			if (swing_count>1)
+			{
+				GL_THROW("NR: more than one swing bus found!");
+				/*	TROUBLESHOOT
+				More than one swing bus was found.  Newton-Raphson currently only supports one swing bus
+				at this time.  Please split the system into individual files or consider merging the system to
+				only one swing bus.
+				*/
+			}
+		}//end swing bus search
 
 		//Check for parents to see if they are a parent/childed load
 		if ((obj->parent!=NULL) && (OBJECTDATA(obj->parent,node)->bustype!=SWING))	//Has a parent that isn't a swing bus, let's see if it is a node and link it up 
@@ -247,7 +292,7 @@ int node::init(OBJECT *parent)
 				}
 				else					//We should be successful, but let's flag ourselves appropriately
 				{	//Essentially a replication of the no-phase section with more check
-					if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | ((obj->parent->parent!=SwingBusObj) && (obj->parent->parent!=NULL)))	//Our parent is another child
+					if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | ((obj->parent->parent!=NR_swing_bus) && (obj->parent->parent!=NULL)))	//Our parent is another child
 					{
 						GL_THROW("NR: Grandchildren are not supported at this time!");
 						/*  TROUBLESHOOT
@@ -300,7 +345,7 @@ int node::init(OBJECT *parent)
 			}
 			else		//Phase compatible, no issues
 			{
-				if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | ((obj->parent->parent!=SwingBusObj) && (obj->parent->parent!=NULL)))	//Our parent is another child
+				if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | ((obj->parent->parent!=NR_swing_bus) && (obj->parent->parent!=NULL)))	//Our parent is another child
 				{
 					GL_THROW("NR: Grandchildren are not supported at this time!");
 					//Defined above
@@ -354,7 +399,7 @@ int node::init(OBJECT *parent)
 
 		if ((obj->parent==NULL) && (bustype!=SWING)) // need to find a swing bus to be this node's parent
 		{
-			gl_set_parent(obj,SwingBusObj);
+			gl_set_parent(obj,NR_swing_bus);
 		}
 
 		/* Make sure we aren't the swing bus */
