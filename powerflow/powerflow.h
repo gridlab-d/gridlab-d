@@ -42,6 +42,7 @@ GLOBAL bool NR_cycle INIT(true);					/**< Newton-Raphson pass indicator - false 
 GLOBAL bool NR_admit_change INIT(true);				/**< Newton-Raphson admittance matrix change detector - used to prevent complete recalculation of admittance at every timestep */
 GLOBAL int NR_superLU_procs INIT(1);				/**< Newton-Raphson related - superLU MT processor count to request - separate from thread_count */
 GLOBAL TIMESTAMP NR_retval INIT(TS_NEVER);			/**< Newton-Raphson current return value - if t0 objects know we aren't going anywhere */
+GLOBAL OBJECT *NR_swing_bus INIT(NULL);				/**< Newton-Raphson swing bus */
 GLOBAL double acceleration_factor INIT(1.4);		/**< Acceleration factor for Gauss-Seidel to increase convergence speed */
 GLOBAL bool show_matrix_values INIT(false);			/**< flag to enable dumping matrix calculations as they occur */
 GLOBAL double primary_voltage_ratio INIT(60.0);		/**< primary voltage ratio (@todo explain primary_voltage_ratio in powerflow (ticket #131) */
