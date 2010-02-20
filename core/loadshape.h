@@ -19,6 +19,7 @@ typedef enum {
 	MT_PULSED,		/**< machine outputs pulses of fixed area with varying frequency to match value */
 	MT_MODULATED,	/**< machine outputs pulses of fixed frequency with varying area to match value */
 	MT_QUEUED,		/**< machine accrues values and output pulses of fixed area with varying frequency */
+	MT_SCHEDULED,	/**< machine output values on a schedule */
 } MACHINETYPE; /** type of machine */
 typedef enum {
 	MPT_UNKNOWN=0,
@@ -34,6 +35,8 @@ typedef enum {
 typedef enum {
 	MS_OFF=0,
 	MS_ON=1,
+	MS_RAMPUP=2,
+	MS_RAMPDOWN=3,
 } MACHINESTATE;
 struct s_loadshape {
 	/* the output value must be first for transform to stream */
@@ -68,6 +71,14 @@ struct s_loadshape {
 			double pulsevalue;	/**< the value of the fixed part of the pulse */
 			double q_on, q_off;	/**< the queue thresholds (in units of 1 pulse) */
 		} queued;
+		struct {
+			double low, high;			/**< the low and high values in the schedule */
+			double on_time, off_time;	/**< the hour of day when the high value comes on and goes off */
+			double on_ramp, off_ramp;	/**< the rate at which the high value comes on and off */
+			double on_end, off_end;		/**< ramp end times are computed internally to ease sync calcs */
+			unsigned char weekdays;		/**< bitfield indicating which weekdays the schedule is active (Sun=b0, Mon=b1, etc.) */
+			unsigned int dt;			/**< the time resolution of the schedule (default is 3600s) */
+		} scheduled;
 	} params;	/**< the machine parameters (depends on #type) */
 
 	/* internal machine parameters */

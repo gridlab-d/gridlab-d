@@ -126,19 +126,44 @@ int isdst(TIMESTAMP t)
 	return dststart[year] <= t && t < dstend[year];
 }
 
+/** Calculate the current TZ offset in seconds
+ **/
+int local_tzoffset(TIMESTAMP t)
+{
+	static old_t = 0;
+	static old_tzoffset = 0;
+	if (old_t==0 || old_t!=t)
+		old_tzoffset = tzoffset + isdst(t)?3600:0;
+	return old_tzoffset;
+}
+
 /** Converts a GMT timestamp to local datetime struct
 	Adjusts to TZ if possible 
  **/
 int local_datetime(TIMESTAMP ts, DATETIME *dt)
 {
+
 	int n;
 	TIMESTAMP rem = 0;
-	TIMESTAMP local = LOCALTIME(ts);
-	int tsyear = timestamp_year(local, &rem);
+	TIMESTAMP local;
+	int tsyear;
 	
+	/* allow caching */
+	static TIMESTAMP old_ts =0;
+	static DATETIME old_dt;
+
 	if(dt == NULL){
 		return 0;
 	}
+
+	/* check cache */
+	if (old_ts == ts && old_ts!=0)
+		memcpy(dt,&old_dt,sizeof(DATETIME));
+	else
+		old_ts = 0;
+
+	local = LOCALTIME(ts);
+	tsyear = timestamp_year(local, &rem);
 
 	if (rem < 0){
 		/* throw_exception("local_datetime(TIMESTAMP=%"FMT_INT64"d, DATETIME *dt={...}): unable to determine local time %"FMT_INT64"ds %s", ts, rem, tzvalid?(dt->is_dst ? tzdst : tzstd) : "GMT",sizeof(dt->tz)); */
@@ -214,6 +239,9 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	/* determine timezone */
 	strncpy(dt->tz, tzvalid ? (dt->is_dst ? tzdst : tzstd) : "GMT", sizeof(dt->tz));
 
+	/* cache result */
+	old_ts = ts;
+	memcpy(&old_dt,dt,sizeof(old_dt));
 	return 1;
 }
 

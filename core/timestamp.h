@@ -79,6 +79,8 @@ char *timestamp_set_tz(char *tzname);
 TIMESTAMP timestamp_from_local(time_t t);
 time_t timestamp_to_local(TIMESTAMP t);
 
+int local_tzoffset(TIMESTAMP t);
+
 #ifdef __cplusplus
 }
 #endif

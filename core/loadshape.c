@@ -301,11 +301,127 @@ static void sync_queued(loadshape *ls, double dt)
 		ls->r = 1/random_exponential(ls->schedule->value*ls->params.pulsed.scalar*queue_value);
 	}
 	/* else state remains unchanged */
-
-	/* udpate q */ 
-	ls->q += ls->r * dt;
 #undef duration
-	
+
+}
+
+static void sync_scheduled(loadshape *ls, TIMESTAMP t1)
+{
+	double dt = ls->t0>0 ? (double)(t1 - ls->t0)/3600 : 0.0;
+	if (t1>=ls->t2)
+	{
+		if (ls->t2==TS_ZERO) // initial state
+		{
+			throw_exception("unable to determine scheduled loadshape initial state");
+			// TODO: need to figure out to do this
+		}
+		/* state change now */
+		switch (ls->s) {
+		case MS_OFF:
+			ls->r = ls->params.scheduled.on_ramp;
+			ls->s = MS_RAMPUP;
+			dt = (24-ls->params.scheduled.off_time + ls->params.scheduled.on_time);
+			break;
+		case MS_RAMPUP:
+			ls->r = 0;
+			ls->s = MS_ON;
+			dt = (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp;
+			break;
+		case MS_ON:
+			ls->r = ls->params.scheduled.off_ramp;
+			ls->s = MS_RAMPDOWN;
+			dt = (ls->params.scheduled.off_time - ls->params.scheduled.on_time - (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp);
+			break;
+		case MS_RAMPDOWN:
+			ls->r = 0;
+			ls->s = MS_ON;
+			dt = (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.off_ramp;
+			break;
+		default:
+			dt = 0;
+			break;
+		}
+		if (dt < ls->params.scheduled.dt && dt>0)
+			ls->t2 = t1 + (TIMESTAMP)dt;
+		else
+			ls->t2 = TS_NEVER;
+	}
+	else
+		ls->q += ls->r * dt;
+}
+
+/** Convert a scheduled loadshape weekday parameter to string representing the weekdays (UMTWRFSH)
+	@return A string containing bits found in the bitfield (U=0, M=1, T=2, W=3, R=4, F=5, S=6, H=7)
+ **/
+static char *weekdays="UMTWRFSH";
+char *schedule_weekday_to_string(unsigned char days)
+{
+	static char result[9];
+	int i;
+	int n=0;
+	for (i=0; i<8; i++)
+	{
+		if ((days&(1<<i))!=0)
+			result[n++] = weekdays[i];
+	}
+	result[n++] = '\0';
+	return result;
+}
+/** Convert a string representing weekdays (UMTWRFSH) to a scheduled loadshape parameter
+    @return the days found in the string as a bitfield (U=0, M=1, T=2, W=3, R=4, F=5, S=6, H=7)
+ **/
+unsigned char schedule_string_to_weekday(char *days)
+{
+	unsigned char result=0;
+	int i;
+	for (i=0; i<8; i++)
+	{
+		if (strchr(days,weekdays[i]))
+			result |= (1<<i);
+	}
+	return result;
+}
+/** Convert a truncated normal distribution description string (min<mean~stdev<max) to a sample
+    @return 1 on success, 0 on failure.
+ **/
+int sample_from_diversity(double *param, char *value)
+{
+	float min, mean, stdev, max;
+	if (sscanf(value,"%f<%f~%f<%f", &min, &mean, &stdev, &max)==4)
+	{
+	}
+	else if (sscanf(value,"%f<%f~%f", &min, &mean, &stdev)==3)
+	{
+		max = mean + 3*stdev;
+	}
+	else if (sscanf(value,"%f~%f<%f", &mean, &stdev, &max)==3)
+	{
+		min = mean - 3*stdev;
+	}
+	else if (sscanf(value,"%f~%f", &mean, &stdev)==2)
+	{
+		max = mean + 3*stdev;
+		min = mean - 3*stdev;
+	}
+	else if (sscanf(value,"%f", &mean)==1)
+	{
+		min = max = mean ;
+		stdev = 0;
+	}
+	else
+		return 0;
+	if (min <= mean && mean <= max && stdev >=0)
+	{
+		/* compute the value */
+		if (stdev==0)
+			*param = mean;
+		else do {
+			*param = random_normal(mean,stdev);
+		} while (*param<min || *param>max);
+		return 1;
+	}
+	else
+		return 0;
 }
 
 /** Create a loadshape
@@ -333,10 +449,6 @@ int loadshape_initall(void)
 
 void loadshape_recalc(loadshape *ls)
 {
-	/* no schedule -> don't touch the loadshape */
-	if (ls->schedule==NULL)
-		return;
-
 	switch (ls->type) {
 	case MT_ANALOG:
 		break;
@@ -353,17 +465,20 @@ void loadshape_recalc(loadshape *ls)
 	case MT_QUEUED:
 		ls->d[MS_OFF] = ls->params.queued.q_off;
 		ls->d[MS_ON] = ls->params.queued.q_on;
-		if (ls->s == 0) /* load is off */
+		if (ls->s == 0 && ls->schedule!=NULL) /* load is off */
 		{
 			/* recalculate time to next on */
 			ls->r = 1/random_exponential(ls->schedule->value * ls->params.pulsed.scalar * (ls->params.queued.q_on - ls->params.queued.q_off));
 		}
 		break;
+	case MT_SCHEDULED:
+		ls->d[MS_OFF] = ls->params.scheduled.low;
+		ls->d[MS_ON] = ls->params.scheduled.high;
 	default:
 		break;
 	}
 
-	if (ls->schedule->duration==0)
+	if (ls->schedule!=NULL && ls->schedule->duration==0)
 	{
 		ls->load = 0;
 		ls->t2=TS_NEVER;
@@ -380,7 +495,7 @@ int loadshape_init(loadshape *ls) /**< load shape */
 	}
 
 	/* no schedule -> nothing to initialized */
-	if (ls->schedule==NULL){
+	if (ls->schedule==NULL && ls->type!=MT_SCHEDULED){
 		output_error("loadshape_init(): a loadshape without a schedule is meaningless");
 		ls->t2 = TS_NEVER;
 		return 0;
@@ -507,6 +622,52 @@ int loadshape_init(loadshape *ls) /**< load shape */
 			return 1;
 		}
 		break;
+	case MT_SCHEDULED:
+
+		if (ls->params.scheduled.on_time<0 || ls->params.scheduled.on_time>24)
+		{
+			output_error("loadshape_init() scheduled on-time must be between 0 and 24");
+			return 1;
+		}
+
+		if (ls->params.scheduled.off_time<0 || ls->params.scheduled.off_time>24)
+		{
+			output_error("loadshape_init() scheduled off-time must be between 0 and 24");
+			return 1;
+		}
+
+		if (ls->params.scheduled.on_ramp<=0)
+		{
+			output_error("loadshape_init() scheduled on-ramp must be positive");
+			return 1;
+		}
+
+		if (ls->params.scheduled.off_ramp<=0)
+		{
+			output_error("loadshape_init() scheduled off-ramp must be positive");
+			return 1;
+		}
+
+		/* compute on/off times */
+		ls->params.scheduled.on_end = ls->params.scheduled.on_time + (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp;
+		ls->params.scheduled.off_end = ls->params.scheduled.off_time + (ls->params.scheduled.low-ls->params.scheduled.high)/ls->params.scheduled.off_ramp;
+
+		if (ls->params.scheduled.off_time<=ls->params.scheduled.on_end && ls->params.scheduled.on_end <=ls->params.scheduled.off_end)
+		{
+			output_error("loadshape_init() scheduled on ramp overlaps with off time");
+			return 1;
+		}
+
+		if (ls->params.scheduled.on_time<=ls->params.scheduled.off_end && ls->params.scheduled.off_end <=ls->params.scheduled.on_end)
+		{
+			output_error("loadshape_init() scheduled off ramp overlaps with on time");
+			return 1;
+		}
+
+		/* initial power factor */
+		ls->dPdV = 1.0;
+
+		return 0;
 	default:
 		output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) load shape type is invalid",ls->schedule->name);
 		return 1;
@@ -618,6 +779,17 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 			break;
 		}
 	}
+
+	/* else the loadshape is not driven by a schedule */
+	else {
+		switch (ls->type) {
+		case MT_SCHEDULED:
+			sync_scheduled(ls,t1);
+			break;
+		default:
+			break;
+		}
+	}
 #ifdef _DEBUG
 //	output_debug("loadshape %s: load = %.3f", ls->schedule->name, ls->load);
 //	output_debug("loadshape %s: t2-t1 = %d", ls->schedule->name, ls->t2 - global_clock);
@@ -690,6 +862,10 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 			return 0;
 		}
 		break;
+	case MT_SCHEDULED:
+		return sprintf(string,"type: scheduled; weekdays: %s; on-time: %.3g; off-time: %.3g; on-ramp: %.3g; off-ramp: %.3g; low: %.3g; high: %.3g; dt: %.3g m",
+			schedule_weekday_to_string(ls->params.scheduled.weekdays), ls->params.scheduled.on_time, ls->params.scheduled.off_time, 
+			ls->params.scheduled.on_ramp, ls->params.scheduled.off_ramp, ls->params.scheduled.low, ls->params.scheduled.high, ls->params.scheduled.dt/60);
 	}
 	return 1;
 } 
@@ -718,7 +894,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 		char *value = strchr(token,':');
 
 		/* isolate param and token and eliminte leading whitespaces */
-		while (isspace(*param) || iscntrl(*param)) param++;		
+		while (*param!='\0' && (isspace(*param) || iscntrl(*param))) param++;		
 		if (value==NULL)
 			value="1";
 		else
@@ -751,7 +927,6 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 			}
 			else if (strcmp(value,"queued")==0)
 			{
-				output_warning("convert_to_loadshape(string='%-.64s...', ...) queued loadshapes are fully supported",string);
 				ls->type = MT_QUEUED;
 				ls->params.queued.energy = 0.0;
 				ls->params.queued.pulsetype = MPT_UNKNOWN;
@@ -759,6 +934,20 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				ls->params.queued.scalar = 0,0;
 				ls->params.queued.q_on = 0,0;
 				ls->params.queued.q_off = 0,0;
+			}
+			else if (strcmp(value,"scheduled")==0)
+			{
+				ls->type = MT_SCHEDULED;
+				memset(&(ls->params.scheduled),0,sizeof(ls->params.scheduled));
+				/* defaults */
+				ls->params.scheduled.dt = 3600;
+				ls->params.scheduled.weekdays = 0x3e; // M-F
+				ls->params.scheduled.low = 0.0; // 0.0
+				ls->params.scheduled.on_time = 8.0; // 8 am
+				ls->params.scheduled.on_ramp = 1.0; // 1/h
+				ls->params.scheduled.high = 1.0; // 1.0
+				ls->params.scheduled.off_time = 16.0; // 4 pm
+				ls->params.scheduled.off_ramp = 1.0; // 1/h
 			}
 			else
 			{
@@ -1092,7 +1281,56 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 			else if (ls->type==MT_QUEUED)
 				ls->params.queued.q_off = atof(value);
 		}
-		else
+		else if (strcmp(param,"weekdays")==0)
+		{
+			if (ls->type!=MT_SCHEDULED)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
+			else
+				ls->params.scheduled.weekdays = schedule_string_to_weekday(value);
+		}
+		else if (strcmp(param,"low")==0)
+		{
+			if (ls->type!=MT_SCHEDULED)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
+			else if (sample_from_diversity(&ls->params.scheduled.low,value)==0)
+				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
+		}
+		else if (strcmp(param,"on-time")==0)
+		{
+			if (ls->type!=MT_SCHEDULED)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
+			else if	(sample_from_diversity(&ls->params.scheduled.on_time,value)==0)
+				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
+		}
+		else if (strcmp(param,"on-ramp")==0)
+		{
+			if (ls->type!=MT_SCHEDULED)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
+			else if	(sample_from_diversity(&ls->params.scheduled.on_ramp,value)==0)
+				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
+		}
+		else if (strcmp(param,"high")==0)
+		{
+			if (ls->type!=MT_SCHEDULED)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
+			else if	(sample_from_diversity(&ls->params.scheduled.high,value)==0)
+				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
+		}
+		else if (strcmp(param,"off-time")==0)
+		{
+			if (ls->type!=MT_SCHEDULED)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
+			else if (sample_from_diversity(&ls->params.scheduled.off_time,value)==0)
+				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
+		}
+		else if (strcmp(param,"off-ramp")==0)
+		{
+			if (ls->type!=MT_SCHEDULED)
+				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
+			else if (sample_from_diversity(&ls->params.scheduled.off_ramp,value)==0)
+				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
+		}
+		else if (strcmp(param,"")!=0)
 		{
 			output_error("convert_to_loadshape(string='%-.64s...', ...) parameter '%s' is not valid",string,param);
 			return 0;
