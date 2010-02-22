@@ -96,6 +96,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		}
 	}
 
+
 	if (NR_cycle==false)	//Getting ready to do a solution, we should see check for "unsupported" systems
 	{
 		//Map to the restoration object
@@ -126,12 +127,12 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 
 void fault_check::search_links(unsigned int node_int)
 {
-	unsigned int index;
+	unsigned int index, temp_child_idx;
 	bool both_handled, from_val;
 	int branch_val, node_val;
 	BRANCHDATA temp_branch;
 	restoration *rest_object;
-
+	
 	//Loop through the connectivity and populate appropriately
 	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)	//parse through our connected link
 	{
@@ -176,10 +177,26 @@ void fault_check::search_links(unsigned int node_int)
 					NR_busdata[temp_branch.to].Parent_Node = temp_branch.from;
 
 					//This also means the to end is our child
-					if (NR_busdata[temp_branch.from].Child_Node_idx < NR_busdata[temp_branch.from].Link_Table_Size)	//Still in a valid range
+					temp_child_idx = NR_busdata[temp_branch.from].Link_Table_Size;
+					if (NR_busdata[temp_branch.from].Child_Node_idx < temp_child_idx)	//Still in a valid range
 					{
+						if (rest_object ->Connectivity_Matrix[temp_branch.from][ temp_branch.to] != 3)  
+							// if the branch is not a switch connection
+						{
 						NR_busdata[temp_branch.from].Child_Nodes[NR_busdata[temp_branch.from].Child_Node_idx] = temp_branch.to;	//Store the to value
 						NR_busdata[temp_branch.from].Child_Node_idx++;	//Increment the pointer
+						}
+						else if ((rest_object ->Connectivity_Matrix[temp_branch.from][ temp_branch.to] == 3) && (*temp_branch.status == true))  
+							//  if the branch is a closed switch connection
+						{
+							NR_busdata[temp_branch.from].Child_Nodes[NR_busdata[temp_branch.from].Child_Node_idx] = temp_branch.to;	//Store the to value
+							NR_busdata[temp_branch.from].Child_Node_idx++;	//Increment the pointer
+						}
+						else
+							// if the branch is open switch, the child is not populated for this branch
+						{
+							 temp_child_idx -= 1;
+						}
 					}
 					else
 					{
