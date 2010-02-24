@@ -55,9 +55,9 @@ fi
 
 # Putting -ansi in CPPFLAGS causes errors that prevent building.
 #CPPFLAGS="$CPPFLAGS $GLFLAGS -ansi"
-CPPFLAGS="$CPPFLAGS $GLFLAGS -march=$host_os"
-CXXFLAGS="$CXXFLAGS $GLFLAGS -march=$host_os"
-CFLAGS="$CFLAGS $GLFLAGS -march=$host_os"
+CPPFLAGS="$CPPFLAGS $GLFLAGS -march=$host_cpu"
+CXXFLAGS="$CXXFLAGS $GLFLAGS -march=$host_cpu"
+CFLAGS="$CFLAGS $GLFLAGS -march=$host_cpu"
 
 case "$host_os" in
 darwin*)
