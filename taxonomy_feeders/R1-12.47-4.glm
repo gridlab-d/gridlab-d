@@ -13,7 +13,7 @@ clock{
 #set profiler=1
 module tape;
 module powerflow{
-	solver_method FBS;
+	solver_method NR;
 	//acceleration_factor 1.4;
 	default_maximum_voltage_error 1e-9;
 };
