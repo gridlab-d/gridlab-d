@@ -17,4 +17,7 @@ else:
 
 installer_name = installer_prefix + "-%4d_%02d_%02d-nightly"%(y,m,d)
 
-subprocess.call(["copy","Win32\\Release\\"+installer_name+".exe" ,to_dir],shell=True) 
+if("win32" in installer_name):
+	subprocess.call(["copy","Win32\\Release\\"+installer_name+".exe" ,to_dir],shell=True)
+else if("x64" in installer_name):
+	subprocess.call(["copy","x64\\Release\\"+installer_name+".exe" ,to_dir],shell=True)
