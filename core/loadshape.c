@@ -280,12 +280,12 @@ TurnOn:
 static void sync_queued(loadshape *ls, double dt)
 {
 	double queue_value = (ls->d[1] - ls->d[0]);
-	if (ls->params.modulated.pulsetype==MPT_POWER)
-		ls->load = ls->s * ls->params.modulated.pulsevalue * ls->dPdV; 
+	if (ls->params.queued.pulsetype==MPT_POWER)
+		ls->load = ls->s * ls->params.queued.pulsevalue * ls->dPdV; 
 	else /* MPT_TIME */
-		ls->load = ls->s * ls->params.modulated.energy / ls->params.modulated.pulsevalue / ls->params.modulated.scalar * ls->dPdV;		
+		ls->load = ls->s * ls->params.queued.energy / ls->params.queued.pulsevalue / ls->params.queued.scalar * ls->dPdV;		
 
-#define duration ((ls->params.modulated.energy*queue_value)/ ls->load)
+#define duration ((ls->params.queued.energy*queue_value)/ ls->load)
 
 	/* update s and r */
 	if (ls->q > ls->d[0])
@@ -310,44 +310,95 @@ static void sync_scheduled(loadshape *ls, TIMESTAMP t1)
 	double dt = ls->t0>0 ? (double)(t1 - ls->t0)/3600 : 0.0;
 	if (t1>=ls->t2)
 	{
-		if (ls->t2==TS_ZERO) // initial state
+		/* initial state */
+		if (ls->t2==TS_ZERO) 
 		{
-			throw_exception("unable to determine scheduled loadshape initial state");
-			// TODO: need to figure out to do this
+			DATETIME now;
+			double hour;
+			int skipday;
+			if (!local_datetime(t1,&now))
+				throw_exception("unable to determine schedule loadshape initial state: time is not valid");
+			hour = now.hour + now.minute/60.0 + now.second/3600.0;
+			skipday = !(ls->params.scheduled.weekdays & (1<<now.weekday));
+
+			if (hour < ls->params.scheduled.on_time)
+			{
+				ls->s = MS_OFF;
+				ls->q = ls->params.scheduled.low;
+				ls->r = 0; 
+				dt = ls->params.scheduled.on_time - hour;
+			}
+			else if (hour < ls->params.scheduled.on_time + (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp)
+			{
+				ls->s = MS_RAMPUP;
+				ls->q = ls->params.scheduled.low;
+				ls->r = skipday ? 0 : ls->params.scheduled.on_ramp;
+				dt = hour - ls->params.scheduled.on_time + (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp;
+			}
+			else if (hour < ls->params.scheduled.off_time)
+			{
+				ls->s = MS_ON;
+				ls->q = skipday ? ls->params.scheduled.low : ls->params.scheduled.high;
+				ls->r = 0;
+				dt = hour - ls->params.scheduled.off_time;
+			}
+			else if (hour < ls->params.scheduled.off_time - ls->params.scheduled.on_time - (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp)
+			{
+				ls->s = MS_RAMPDOWN;
+				ls->q = skipday ? ls->params.scheduled.low : ls->params.scheduled.high;
+				ls->r = skipday ? 0 : ls->params.scheduled.off_ramp;
+				dt = hour - ls->params.scheduled.off_time - ls->params.scheduled.on_time - (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp;
+			}
+			else
+			{
+				ls->s = MS_OFF;
+				ls->q = ls->params.scheduled.low;
+				ls->r = 0;
+				dt = 24-hour+ls->params.scheduled.on_time;;
+			}
 		}
+		
 		/* state change now */
-		switch (ls->s) {
-		case MS_OFF:
-			ls->r = ls->params.scheduled.on_ramp;
-			ls->s = MS_RAMPUP;
-			dt = (24-ls->params.scheduled.off_time + ls->params.scheduled.on_time);
-			break;
-		case MS_RAMPUP:
-			ls->r = 0;
-			ls->s = MS_ON;
-			dt = (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp;
-			break;
-		case MS_ON:
-			ls->r = ls->params.scheduled.off_ramp;
-			ls->s = MS_RAMPDOWN;
-			dt = (ls->params.scheduled.off_time - ls->params.scheduled.on_time - (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp);
-			break;
-		case MS_RAMPDOWN:
-			ls->r = 0;
-			ls->s = MS_ON;
-			dt = (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.off_ramp;
-			break;
-		default:
-			dt = 0;
-			break;
+		else 
+		{
+			int weekday = ((int)(t1/86400)+4)%7;
+			int skipday = !(ls->params.scheduled.weekdays & (1<<weekday));
+			switch (ls->s) {
+			case MS_OFF:
+				ls->r = ls->params.scheduled.on_ramp;
+				ls->q = ls->params.scheduled.low;
+				ls->s = MS_RAMPUP;
+				dt = (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp;
+				break;
+			case MS_RAMPUP:
+				ls->r = 0;
+				ls->q = ls->params.scheduled.low;
+				ls->s = MS_ON;
+				dt = (ls->params.scheduled.off_time - ls->params.scheduled.on_time - (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp);
+				break;
+			case MS_ON:
+				ls->r = ls->params.scheduled.off_ramp;
+				ls->q = skipday ? ls->params.scheduled.low : ls->params.scheduled.high;
+				ls->s = MS_RAMPDOWN;
+				dt = (ls->params.scheduled.low-ls->params.scheduled.high)/ls->params.scheduled.off_ramp;
+				break;
+			case MS_RAMPDOWN:
+				ls->r = 0;
+				ls->q = skipday ? ls->params.scheduled.low : ls->params.scheduled.high;
+				ls->s = MS_OFF;
+				dt = (24-ls->params.scheduled.off_time + ls->params.scheduled.on_time);
+				break;
+			default:
+				dt = 0;
+				break;
+			}
 		}
-		if (dt < ls->params.scheduled.dt && dt>0)
-			ls->t2 = t1 + (TIMESTAMP)dt;
-		else
-			ls->t2 = TS_NEVER;
+		ls->t2 = t1 + (TIMESTAMP)dt*3600;
 	}
 	else
 		ls->q += ls->r * dt;
+	
+	ls->load = ls->q;
 }
 
 /** Convert a scheduled loadshape weekday parameter to string representing the weekdays (UMTWRFSH)
@@ -642,9 +693,9 @@ int loadshape_init(loadshape *ls) /**< load shape */
 			return 1;
 		}
 
-		if (ls->params.scheduled.off_ramp<=0)
+		if (ls->params.scheduled.off_ramp>=0)
 		{
-			output_error("loadshape_init() scheduled off-ramp must be positive");
+			output_error("loadshape_init() scheduled off-ramp must be negative");
 			return 1;
 		}
 
@@ -947,7 +998,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				ls->params.scheduled.on_ramp = 1.0; // 1/h
 				ls->params.scheduled.high = 1.0; // 1.0
 				ls->params.scheduled.off_time = 16.0; // 4 pm
-				ls->params.scheduled.off_ramp = 1.0; // 1/h
+				ls->params.scheduled.off_ramp = -1.0; // 1/h
 			}
 			else
 			{
