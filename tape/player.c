@@ -207,6 +207,11 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	struct player *my = OBJECTDATA(obj,struct player);
 	TIMESTAMP t1 = (TS_OPEN == my->status) ? my->next.ts : TS_NEVER;
 	if (my->status==TS_INIT){
+
+		/* get local target if remote is not used and "value" is defined by the user at runtime */
+		if (my->target==NULL)
+			my->target = gl_get_property(obj,"value");
+
 		if(player_open(obj) == 0)
 		{
 			gl_error("sync_player: Unable to open player file '%s' for object '%s'", my->file, obj->name?obj->name:"(anon)");
