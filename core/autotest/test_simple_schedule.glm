@@ -18,4 +18,6 @@ class house {
 
 object house {
 	occupancy "type: scheduled; weekdays: MTWRF; on-time: 7<8~1<9; off-time: 17";
+	// don't really have an idea about an assert to use here
 }
+
