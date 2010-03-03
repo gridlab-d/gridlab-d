@@ -7,9 +7,10 @@
 #
 
 OLDSUBDIRS="$(grep ^SUBDIRS Makefile.am)"
-DIRS=$(echo $OLDSUBDIRS | cut -f2- -d=)
+DIRS=$(echo $OLDSUBDIRS | cut -f2- -d= | cut -f1 -d#)
 echo "Packages listed: $DIRS"
 remake="no"
+
 for D in $DIRS ; do
 	echo -n "Checking $D..."
 	if [ -d $D -a -f $D/Makefile.am ]; then
@@ -28,7 +29,7 @@ if [ "$remake" == "yes" ]; then
 		cp Makefile.am Makefile.org
 	fi
 	echo "Updating Makefile.am to exclude missing packages"
-	cat Makefile.am | sed -e "s/^SUBDIRS = /SUBDIRS = $SUBDIRS\n# previously: /" > .tmp.$$
+	cat Makefile.am | sed -e "s/^SUBDIRS = .*/SUBDIRS = $SUBDIRS # previously: $DIRS/" > .tmp.$$
 	mv .tmp.$$ Makefile.am
 
 	if [ ! -f configure.org ]; then
