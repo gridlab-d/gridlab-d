@@ -1,0 +1,66 @@
+// Validation test for example 11.1 in Kersting, chapter 11
+// (a very basic test of the center-tapped transformer)
+// sets up a single three-phase node at 7200 V and connects it to a triplex node
+// at 240v12 via a 50 kVA center-tapped transformer. On the triplex side of the 
+// system, there are loads between line 1 and neutral, line 2 and neutral, and line 1 - line 2
+// this test validates the voltages across those loads
+
+// created by: alek332
+
+clock {
+     timezone CST+6CDT;
+     timestamp '2006-01-01 00:00:00';
+}
+
+module powerflow;
+module assert;
+
+object node {
+     name 3phase;
+     phases ABCN;
+     nominal_voltage 7200;
+}
+
+object transformer_configuration {
+     name default_transformer;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type PADMOUNT;
+     primary_voltage 7200 V;
+     secondary_voltage 120 V;
+     power_rating 50.0;
+	 powerA_rating 50.0;
+	 resistance 0.011;
+	 reactance 0.018;
+}
+
+object transformer {
+     name center_tap_transformer_A;
+     phases AS;
+     from 3phase;
+     to trip_node;
+     configuration default_transformer;
+}
+
+object triplex_node {
+	name trip_node;
+     phases AS;
+	 impedance_1 1.4+0.5j;
+	 impedance_2  0.9+0.4j;
+	 impedance_12 2.0+1.2j;
+     nominal_voltage 120.00;
+	 object complex_assert {
+		target voltage_1;
+		value 118-0.6131d; // result of last working run: +118.001-1.26275j
+		within .05;
+	 };
+	 object complex_assert {
+		target voltage_2;
+		value 117.9-0.61421d; // result of last working run: +117.846-1.26343j
+		within .05;
+	 };
+	 object complex_assert {
+		target voltage_12;
+		value 235.9-0.6147d; // result of last working run: +235.848-2.52617j
+		within .05;
+	 };
+}
