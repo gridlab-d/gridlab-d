@@ -1548,8 +1548,8 @@ int house_e::init(OBJECT *parent)
 	{	
 		round_value = 0.0;
 		design_cooling_capacity = (1.0 + over_sizing_factor) * (1.0 + latent_load_fraction) * ((envelope_UA + airchange_UA) * (cooling_design_temperature - design_cooling_setpoint) + design_internal_gains + (design_peak_solar * window_area * glazing_shgc * window_exterior_transmission_coefficient));
-		round_value = (design_cooling_capacity - 3000.0) / 6000.0;
-		design_cooling_capacity = ceil(round_value) * 6000.0;
+		round_value = (design_cooling_capacity + 6000.0) / 6000.0;
+		design_cooling_capacity = floor(round_value) * 6000.0;
 	}
 
 	if(auxiliary_system_type != AT_NONE && heating_system_type == HT_NONE)
@@ -1570,8 +1570,8 @@ int house_e::init(OBJECT *parent)
 			design_heating_capacity = design_cooling_capacity; /* primary is to reverse the heat pump */
 		} else {
 			design_heating_capacity = (1.0 + over_sizing_factor) * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
-			round_value = (design_heating_capacity-5000.0) / 10000.0;
-			design_heating_capacity = ceil(round_value) * 10000.0;
+			round_value = (design_heating_capacity  + 10000.0) / 10000.0;
+			design_heating_capacity = floor(round_value) * 10000.0;
 		}
 	}
 
