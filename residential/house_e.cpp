@@ -1548,7 +1548,7 @@ int house_e::init(OBJECT *parent)
 	{	
 		round_value = 0.0;
 		design_cooling_capacity = (1.0 + over_sizing_factor) * (1.0 + latent_load_fraction) * ((envelope_UA + airchange_UA) * (cooling_design_temperature - design_cooling_setpoint) + design_internal_gains + (design_peak_solar * window_area * glazing_shgc * window_exterior_transmission_coefficient));
-		round_value = (design_cooling_capacity + 3000.0) / 6000.0;
+		round_value = (design_cooling_capacity - 3000.0) / 6000.0;
 		design_cooling_capacity = ceil(round_value) * 6000.0;
 	}
 
