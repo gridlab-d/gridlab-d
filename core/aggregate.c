@@ -72,24 +72,29 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 	}
 
 	//Change made for collector to handle propeties of objects
-		pgm = find_mkpgm(group_expression);
+	pgm = find_mkpgm(group_expression);
+	if(pgm != NULL){
 		list = find_runpgm(NULL,pgm);
-		obj = find_first(list);
-		
-		pinfo = class_find_property(obj->oclass,aggrval);
-		if (pinfo==NULL)
-		{
-			aggrpart = strrchr(aggrval,'.');
-			/* if an aggregate part is found */
-			if (aggrpart!=NULL)
-				*aggrpart++ = '\0';	// split the value and the part
-			else
-				aggrpart=""; // no part given
+		if(list != NULL){
+			obj = find_first(list);
+			if(obj != NULL){
+				pinfo = class_find_property(obj->oclass,aggrval);
+				if (pinfo==NULL)
+				{
+					aggrpart = strrchr(aggrval,'.');
+					/* if an aggregate part is found */
+					if (aggrpart!=NULL)
+						*aggrpart++ = '\0';	// split the value and the part
+					else
+						aggrpart=""; // no part given
+				}
+					else
+				{
+					aggrpart=""; // no part given
+				}
+			}
 		}
-			else
-		{
-			aggrpart=""; // no part given
-		}
+	}
 	//Change ends here
 
 	if(sscanf(aggrval, "%32[A-Za-z0-9_][%[A-Za-z0-9_]]", aggrprop, aggrunit) == 2){
