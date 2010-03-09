@@ -1346,7 +1346,7 @@ static int real_value(PARSER, double *value)
 	int size=sizeof(result);
 	START;
 	if (*_p=='+' || *_p=='-') COPY(result);
-	while (size>1 && isdigit(*_p)) COPY(result);
+	while (size>1 && isdigit(*_p)) {COPY(result);++ndigits;}
 	if (*_p=='.') COPY(result);
 	while (size>1 && isdigit(*_p)) {COPY(result);ndigits++;}
 	if (ndigits>0 && (*_p=='E' || *_p=='e')) 

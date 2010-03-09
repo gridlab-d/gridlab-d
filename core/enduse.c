@@ -174,8 +174,6 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 	OUTPUT(power_factor);
 	OUTPUT(power.r);
 	OUTPUT_NZ(power.i);
-	OUTPUT(power.r);
-	OUTPUT_NZ(power.i);
 	return len;
 }
 
