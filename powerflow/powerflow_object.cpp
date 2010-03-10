@@ -257,7 +257,7 @@ EXPORT int create_powerflow_object(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_powerflow_object: %s", msg);
 	}
@@ -276,7 +276,7 @@ EXPORT int init_powerflow_object(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (powerflow_object:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 

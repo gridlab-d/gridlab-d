@@ -314,7 +314,7 @@ EXPORT int create_pqload(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_pqload: %s", msg);
 	}

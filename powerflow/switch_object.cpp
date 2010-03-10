@@ -349,7 +349,7 @@ EXPORT int create_switch(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_switch: %s", msg);
 	}
@@ -368,7 +368,7 @@ EXPORT int init_switch(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (switch:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0;

@@ -87,7 +87,7 @@ EXPORT int create_underground_line_conductor(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_underground_line_conductor: %s", msg);
 	}

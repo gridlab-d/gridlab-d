@@ -599,7 +599,7 @@ EXPORT int create_restoration(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
 		return 0;
@@ -612,7 +612,7 @@ EXPORT int init_restoration(OBJECT *obj, OBJECT *parent)
 	try {
 			return OBJECTDATA(obj,restoration)->init(parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("%s %s (id=%d): %s", obj->name?obj->name:"unnamed", obj->oclass->name, obj->id, msg);
 		return 0;

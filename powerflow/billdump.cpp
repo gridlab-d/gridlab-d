@@ -143,7 +143,7 @@ EXPORT int create_billdump(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_billdump: %s", msg);
 	}
@@ -156,7 +156,7 @@ EXPORT int init_billdump(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (billdump:%d): %s", obj->name, obj->id, msg);
 		return 0; 

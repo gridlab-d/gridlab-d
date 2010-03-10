@@ -702,7 +702,7 @@ EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_transformer: %s", msg);
 	}
@@ -723,7 +723,7 @@ EXPORT int init_transformer(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (transformer:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 

@@ -92,7 +92,7 @@ EXPORT int create_volt_var_control(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_volt_var_control: %s", msg);
 	}
@@ -112,7 +112,7 @@ EXPORT int init_volt_var_control(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (volt_var_control:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 

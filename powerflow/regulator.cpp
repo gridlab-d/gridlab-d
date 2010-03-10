@@ -822,7 +822,7 @@ EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_regulator: %s", msg);
 	}
@@ -841,7 +841,7 @@ EXPORT int init_regulator(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (regulator:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 

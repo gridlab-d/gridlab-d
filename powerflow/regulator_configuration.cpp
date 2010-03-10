@@ -206,7 +206,7 @@ EXPORT int create_regulator_configuration(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_regulator_configuration: %s", msg);
 	}
@@ -219,7 +219,7 @@ EXPORT int init_regulator_configuration(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (regulator_configuration:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 

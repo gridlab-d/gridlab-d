@@ -1383,7 +1383,7 @@ EXPORT int commit_frequency_gen(OBJECT *obj)
 		fgen->iter_passes=0;	//Reset counter
 		return 1;
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (frequency_gen:%d): %s", fgen->get_name(), fgen->get_id(), msg);
 		return 0; 
@@ -1414,7 +1414,7 @@ EXPORT int create_frequency_gen(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
 		return 0;
@@ -1427,7 +1427,7 @@ EXPORT int init_frequency_gen(OBJECT *obj, OBJECT *parent)
 	try {
 			return OBJECTDATA(obj,frequency_gen)->init(parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("%s %s (id=%d): %s", obj->name?obj->name:"unnamed", obj->oclass->name, obj->id, msg);
 		return 0;
@@ -1461,7 +1461,7 @@ EXPORT TIMESTAMP sync_frequency_gen(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("frequency_gen %s (%s:%d): %s", obj->name, obj->oclass->name, obj->id, msg);
 	}

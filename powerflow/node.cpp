@@ -2117,7 +2117,7 @@ EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_node: %s", msg);
 	}
@@ -2138,7 +2138,7 @@ EXPORT int init_node(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (node:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
@@ -2171,7 +2171,7 @@ EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("node %s (%s:%d): %s", obj->name, obj->oclass->name, obj->id, msg);
 	}

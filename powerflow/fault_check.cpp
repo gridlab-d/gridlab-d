@@ -303,7 +303,7 @@ EXPORT int create_fault_check(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
 		return 0;
@@ -316,7 +316,7 @@ EXPORT int init_fault_check(OBJECT *obj, OBJECT *parent)
 	try {
 			return OBJECTDATA(obj,fault_check)->init(parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("%s %s (id=%d): %s", obj->name?obj->name:"unnamed", obj->oclass->name, obj->id, msg);
 		return 0;
@@ -350,7 +350,7 @@ EXPORT TIMESTAMP sync_fault_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("fault_check %s (%s:%d): %s", obj->name, obj->oclass->name, obj->id, msg);
 	}

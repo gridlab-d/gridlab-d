@@ -445,7 +445,7 @@ EXPORT int create_fuse(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	} 
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_fuse: %s", msg);
 	}
@@ -458,7 +458,7 @@ EXPORT int init_fuse(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (fuse:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
@@ -480,7 +480,7 @@ EXPORT int commit_fuse(OBJECT *obj)
 		}
 		return fsr->fuse_state(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (fuse:%d): %s", fsr->get_name(), fsr->get_id(), msg);
 		return 0; 

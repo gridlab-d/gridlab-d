@@ -161,7 +161,7 @@ EXPORT int create_series_reactor(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_series_reactor: %s", msg);
 	}
@@ -180,7 +180,7 @@ EXPORT int init_series_reactor(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (series_reactor:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0;

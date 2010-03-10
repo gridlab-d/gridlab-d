@@ -90,7 +90,7 @@ EXPORT int create_motor(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_induction_motor: %s", msg);
 	}
@@ -111,7 +111,7 @@ EXPORT int init_motor(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (motor:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 

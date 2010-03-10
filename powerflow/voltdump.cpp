@@ -140,7 +140,7 @@ EXPORT int create_voltdump(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_voltdump: %s", msg);
 	}
@@ -153,7 +153,7 @@ EXPORT int init_voltdump(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (voltdump:%d): %s", obj->name, obj->id, msg);
 		return 0; 
@@ -173,7 +173,7 @@ EXPORT int commit_voltdump(OBJECT *obj){
 	voltdump *my = OBJECTDATA(obj,voltdump);
 	try {
 		return my->commit(obj->clock);
-	} catch(char *msg){
+	} catch(const char *msg){
 		GL_THROW("%s (voltdump:%d): %s", obj->name, obj->id, msg);
 		return 0; 
 	}

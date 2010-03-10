@@ -221,7 +221,7 @@ EXPORT int create_substation(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_substation: %s", msg);
 	}
@@ -234,7 +234,7 @@ EXPORT int init_substation(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (substation:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 

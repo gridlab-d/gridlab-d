@@ -361,7 +361,7 @@ EXPORT int create_underground_line(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_underground_line: %s", msg);
 	}
@@ -400,7 +400,7 @@ EXPORT int init_underground_line(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (underground_line:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 

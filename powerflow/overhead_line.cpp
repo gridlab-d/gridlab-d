@@ -310,7 +310,7 @@ EXPORT int create_overhead_line(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_overhead_line: %s", msg);
 	}
@@ -349,7 +349,7 @@ EXPORT int init_overhead_line(OBJECT *obj)
 	try {
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		GL_THROW("%s (overhead_line:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
