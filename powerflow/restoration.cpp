@@ -6,7 +6,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <vector>
 #include <iostream>
+
 using namespace std;
 
 #include "restoration.h"
@@ -20,6 +22,7 @@ using namespace std;
 // restoration CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 CLASS* restoration::oclass = NULL;
+
 CLASS* restoration::pclass = NULL;
 
 restoration::restoration(MODULE *mod) : powerflow_library(mod)
@@ -52,6 +55,7 @@ int restoration::create(void)
 	reconfig_attempts = 0;
 	reconfig_iter_limit = 0;
 	populate_tree = false;
+
 
 	return 1;
 }
@@ -205,33 +209,210 @@ void restoration::PopulateConnectivity(int frombus, int tobus, OBJECT *linkingob
 	Connectivity_Matrix[tobus][frombus] = link_type;
 }
 
-//Function to check voltages and determine if a reconfiguration is necessary
-bool restoration::VoltageCheck(void)
+//Function to calculate the magnitude of node voltage in per unit
+double restoration::VoltagePerUnit(int node_id, int node_phase) // inputs are node_id and phase
 {
-	OBJECT *TempObj;			//Variables for nominal voltage example.  May be changed/removed
-	node *TempNode;
-	double ex_nom_volts;
-	/* ------------ Array access testing ------------- */
-		//Voltages would be checked here
-
-		//This is an example of pulling the nominal voltage from the first item in NR_busdata (this is the swing bus, but the principle holds)
+		double MagV_PU;
+		OBJECT *TempObj;			//Variables for nominal voltage example.  May be changed/removed
+		node *TempNode;
+		double ex_nom_volts;
 			//Get the object information
-			TempObj = gl_get_object(NR_busdata[0].name);
+			TempObj = gl_get_object(NR_busdata[node_id].name);
 
 			//Associate this with a node object
 			TempNode = OBJECTDATA(TempObj,node);
 
 			//Extract the nominal voltage value
 			ex_nom_volts = TempNode->nominal_voltage;
-
-		//print first voltage for now - this is just an example of obtaining the voltages (for check)
-		printf("Volt Check Post - %f %f\n",NR_busdata[0].V[1].Re(),NR_busdata[0].V[1].Im());
-
-	/* ---------- End array access testing ------------ */
-
-	//Set to always return true right now - indicates all voltages passed
-	return true;
+			MagV_PU = NR_busdata[node_id].V[node_phase].Mag()/ex_nom_volts; 
+			return MagV_PU;
 }
+
+
+//Function to check if the per phase node voltage is in the permitted range
+bool restoration::VoltageCheck(double MagV_PU)
+{
+	if ((MagV_PU > 0.927) && (MagV_PU < 1.05))
+	{
+			return true;
+	}
+	else 
+	{
+		return false;
+	}
+}
+
+//Function to find the feeder_id for each node, starting from the initiating node for each feeder. Using Depth first search 
+void restoration :: Feeder_id_Mark(int initial_node, int feeder)
+{
+	unsigned int indexx, indexbr;
+	unsigned int conval;
+		visited_flag[initial_node] = true;
+	//	printf("%s  feeder %d \n",NR_busdata[initial_node].name, feeder );   
+		feeder_id[initial_node] = feeder;
+		for(indexx=0;indexx<NR_bus_count;indexx++)
+		{
+		conval = Connectivity_Matrix[initial_node][indexx];
+				if (conval != 0)
+					{
+						if ((conval != 3) && (visited_flag[indexx]==false))  // If it is not a switch (it could be a line, fuse, transformer or voltage regulator)
+							Feeder_id_Mark(indexx,feeder); 
+						else if ((conval == 3) && (visited_flag[indexx]==false))  // If it is a switch
+						{ 
+								for (indexbr=0; indexbr<NR_branch_count; indexbr++)
+								{
+									if ((NR_branchdata[indexbr].from == initial_node) && (NR_branchdata[indexbr].to == indexx) && (*NR_branchdata[indexbr].status) == true) // If switch is closed										{
+										Feeder_id_Mark(indexx,feeder);
+								}
+						}
+			} /*End of if  (conval != 0) which indicates that a link is exisiting)*/
+		} /*End of bus node traversion*/
+} /*End of Feeder_id_Mark()*/
+
+int restoration :: Search_sec_switches(int initial_node)
+{
+	bool encounter_tie_switch; // flag if encounter a tie switch on the searching path
+	int  temp_node_id, temp_branch_id;
+	unsigned int indexx, indexy, sec_switch_sum;
+	encounter_tie_switch = false;
+	sec_switch_sum = 0;
+	for( indexx = 0; indexx < NR_bus_count; indexx ++)
+	{
+		if (NR_busdata[initial_node].Parent_Node != -1) 
+		{
+			temp_node_id = NR_busdata[initial_node].Parent_Node ;
+			if (Connectivity_Matrix[initial_node][temp_node_id] == 3) // if there is a sectionaling switch between parent node and inital_node, push it back to the candidate sectionaling switch array
+				{		 
+					for ( indexy = 0; indexy < NR_busdata[temp_node_id].Link_Table_Size; indexy ++)
+					{
+					    temp_branch_id = NR_busdata[temp_node_id].Link_Table[indexy];
+						if ((NR_branchdata[temp_branch_id].from == initial_node)  || (NR_branchdata[temp_branch_id].to == initial_node))
+						{
+							candidate_sec_switch[sec_switch_sum] = temp_branch_id;
+							break;
+						}
+					}
+					 sec_switch_sum++;
+				}
+			for ( indexy = 0; indexy < NR_busdata[temp_node_id].Link_Table_Size; indexy ++)
+					{
+						temp_branch_id = NR_busdata[temp_node_id].Link_Table[indexy]; //Branch data temp_branch;
+						{
+							 if ((feeder_id[NR_branchdata[temp_branch_id].from]) != (feeder_id[NR_branchdata[temp_branch_id].to])) // if there is a tie-switch 
+							 {
+								  encounter_tie_switch = true;
+							 }
+						}
+					}
+			if (encounter_tie_switch == true)
+				{ 
+					break;
+				}
+		 initial_node = temp_node_id;
+		}
+		else  if (NR_busdata[initial_node].Parent_Node == -1)
+			break;
+	}
+	return sec_switch_sum; 
+} // end of function
+
+// function to check if two nodes are connected in the system
+bool restoration::connected_path(unsigned int node_int, unsigned int node_end, unsigned int last_node)
+{
+	unsigned int index;
+	bool both_handled, from_val, end_flag;
+	int branch_val, node_val;
+	BRANCHDATA temp_branch;
+	restoration *rest_object;
+
+	end_flag = false;
+	visited_flag[last_node] = true;
+	//Loop through the connectivity and populate appropriately
+	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)	//parse through our connected link
+	{
+		visited_flag[node_int] = true;
+		both_handled = false;	//Reset flag
+
+		temp_branch = NR_branchdata[NR_busdata[node_int].Link_Table[index]];	//Get connecting link information
+
+		//See which end we are, and if the other end has been handled
+		if (temp_branch.from == node_int)	//We're the from
+		{
+			from_val = true;	//Flag us as the from end (so we don't have to check it again later)
+
+			if ((visited_flag[temp_branch.to]==true) || (temp_branch.to == sub_transmission_node))
+             		both_handled=true;	//Handled
+			}
+			else	//Must be the to
+			{
+				from_val = false;	//Flag us as the to end (so we don't have to check it again later)
+
+				if  ((visited_flag[temp_branch.from]==true) || (temp_branch.from == sub_transmission_node))	//Handled
+				both_handled=true;
+			}	
+
+		    //If not handled, proceed with logic-ness
+		if (both_handled==false)
+		{
+			//Link to the restoration object for now.  This may later become self-contained.
+			rest_object = OBJECTDATA(restoration_object,restoration);
+
+			//Figure out the indexing so we can tell what we are
+			if (from_val)	//From end
+				node_val = temp_branch.to;
+			else
+				node_val = temp_branch.from;
+
+			if (rest_object->Connectivity_Matrix[node_int][node_val]!=3)	//Not a Switch
+			{
+				//This means it is a fuse or link, which for now we handle the same
+	
+				//Flag us
+				if (from_val)	//From end
+				{
+					branch_val = temp_branch.to;
+				}
+				else	//To end
+				{
+					branch_val = temp_branch.from;
+				}
+
+				//Recursion!!
+				if (branch_val == node_end)
+				{
+					end_flag = true;
+					break;
+				}
+				printf("path node: %s:\n", NR_busdata[branch_val].name);
+				connected_path(branch_val, node_end, last_node);
+			}
+			else	//We must be a switch
+			{
+				if (*temp_branch.status==1)	//We're closed!
+				{
+					//Flag us
+					if (from_val)	//From end
+					{
+						branch_val = temp_branch.to;
+					}
+					else	//To end
+					{
+						branch_val = temp_branch.from;
+					}
+					if (branch_val == node_end)
+					{
+						end_flag = true;
+						break;
+					}
+					//Recursion!!
+					printf("path node: %s:\n", NR_busdata[branch_val].name);
+					connected_path(branch_val, node_end,last_node );
+				}
+			} // end of else
+		}//End both not handled (work to be done)
+	}//End link table loop
+		return end_flag;
+}	
 
 //Function to perform the reconfiguration - functionalized so fault_check can call it before the NR solver goes off (and call the solver within)
 void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
@@ -242,165 +423,528 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 	line *LineDevice;
 	line_configuration *LineConfig;
 	triplex_line_configuration *TripLineConfig;
+	node *TempNode;
 	overhead_line_conductor *OHConductor;
 	underground_line_conductor *UGConductor;
 	triplex_line_conductor *TLConductor;
+	double max_volt_error, min_V_system;
 	int64 pf_result;
 	int fidx, tidx, pidx;
 	double cont_rating;
-	bool pf_bad_computations, pf_valid_solution, fc_all_supported, good_solution, rating_exceeded;
+	bool pf_bad_computations, pf_valid_solution, fc_all_supported, good_solution, rating_exceeded, separation_oos, system_restored; // bool separation_oos indicates if the switching operations that separate the out-of-service area are requried.
 	complex temp_current[3];
+	unsigned int indexx, indexy, indexz, num_unsupported, indexbr, tempbr, temp_num_switch;
+	unsigned int tie_switch_number,sec_switch_number;
+	int conval;
+	int temp_feeder_id, temp_branch_id, initial_search_node;
+	vector<int> candidate_tie_switch;
+	vector<int> candidate_switch_operation;
+    vector<int> temp_switch;
+  
+
+
 
 	if (t0 != prev_time)	//Perform new timestep updates
 	{
 		reconfig_number = 0;	//Reset number of reconfigurations that have occurred
+		reconfig_switch_number = 0; // Reset number of switching operations that have occurred
+		reconfig_iterations=0;	//Reset number of pf iterations that have occurred 
 		prev_time = t0;			//Update time value
 	}
 
 	//Get the current time into a manageable structure - to be used later
-	 gl_localtime(t0, &CurrTimeVal);
+	gl_localtime(t0, &CurrTimeVal);
 
 	//Pull out fault check object info
 	fault_check *FaultyObject = OBJECTDATA(faultobj,fault_check);
 
+	//Find the maximum voltage error for the NR solver - use the swing bus (since normal NR solver just does that)
+	tempobj = gl_get_object(NR_busdata[0].name);	//Get object link - 0 should be swing bus
+	TempNode = OBJECTDATA(tempobj,node);			//Get the node link
+
+	max_volt_error = TempNode->nominal_voltage * default_maximum_voltage_error;	//Calculate the maximum voltage error
+
 	//Now we go into two while loops so reconfigurations are attempted until a solution is found (or limits are reached)
-	while (reconfig_number < reconfig_attempts)	//Reconfiguration count loop
+	
+	FILE *FPCONNECT = fopen("connectout.txt","w");
+    printf("***********A fault is detected in the system.****************\n");
+	/* Mark the feeder_id for each node */
+	feeder_id = (int*)gl_malloc(NR_bus_count * sizeof(int)); 
+	visited_flag = (bool*)gl_malloc(NR_bus_count * sizeof(bool)); 
+	// Initiate to mark the feeder_id for all the node is -1;
+	for (indexx=0; indexx<NR_bus_count; indexx++)
 	{
-		//Reset tracking variables
-		good_solution = false;
-		reconfig_iterations=0;	//Reset number of iterations that have occurred on this attempt
+		feeder_id[indexx] = -1;
+	}
 
-		//If we've been called, there is a fault somewhere (fault_check has summoned us)
-		/***********************
+	// Find all the initiating node for each feeder 
+	for(indexx=0;indexx<NR_bus_count;indexx++)
+	{
+		conval = Connectivity_Matrix[0][indexx];
+		if (conval == 4)
+		{
+				indexy = indexx; // Find the sub-transmission node in the system
+				sub_transmission_node = indexy;
+				break;
+		}
+	}
 
-		This is where the list of candidate switching operations would be generated/found - likely based off of the Connectivity_Matrix
-
-		***********************/
-
-		/**********************
-		
-		This is where a switch status would be changed based on the reconfiguration.  For the purposes of an example, I will just find all
-		switches in the system and close them
-
-		***********************/
-
-			//EXAMPLE CODE - Find all switches in the system and close them
-			//Very crude, just find every switch (possibly even duplication since they exist twice in connectivity) and close them
-			//May need refinement, but is only here to show a quick example
-			unsigned int indexx, indexy, indexz;
-			int conval;
-			BRANCHDATA temp_branch;
-
-			for (indexx=0; indexx<NR_bus_count; indexx++)
+		// Store the initial node for each feeder and mark the feeder id for each node 
+	feeder_number = 0;
+	for (indexx =0; indexx< NR_bus_count; indexx++)
+	{
+		conval = Connectivity_Matrix[indexy][indexx];
+		if (( conval  == 4 ) && ( indexx != 0 ))
+		{
+			feeder_number += 1;
+		}
+	} // count the total number of feeders
+	feeder_initial_node = (int*)gl_malloc(feeder_number * sizeof(int)); // feeder_inital_node record the initial node connecting to the the subtransmission node for each feeder;
+	temp_feeder_id = 0;
+	indexbr = 0;
+	for (indexx =0; indexx< NR_bus_count; indexx++)
+	{
+		conval = Connectivity_Matrix[indexy][indexx];
+		if (( conval  == 4 ) && ( indexx != 0 ))
+		{
+			Connectivity_Matrix[indexy][indexx] = 0; 
+			Connectivity_Matrix[indexx][indexy] = 0; // temporary disconnect the link between feeder initiating node and sub-transmission node
+			feeder_initial_node[indexbr] = indexx;
+	//		printf("initial_node at feeder: %d name : %s\n", indexbr, NR_busdata[indexx].name);
+			indexbr+=1;
+			feeder_id[indexx] = temp_feeder_id;
+			// initially mark all the nodes in the system as unvisited;
+			for (indexz =0; indexz< NR_bus_count; indexz++)
 			{
-				for (indexy=0; indexy<NR_bus_count; indexy++)
-				{
-					conval = Connectivity_Matrix[indexx][indexy];
+				visited_flag[indexz] = false; 
+			}
+			Feeder_id_Mark(indexx, temp_feeder_id); // Mark the feeder_id for each node
+			Connectivity_Matrix[indexy][indexx] = conval; 
+			Connectivity_Matrix[indexx][indexy] = conval; // recovery the link between the feeder initiating node and sub-transmission node
+			temp_feeder_id++;
+		} //  end of if	
+	} // end of for NR_bus_count traverse
 
-					//See if it is a switch
-					if (conval==CONN_SWITCH)
-					{
-						//Find the switch based on its ends (search the connecting nodes shorter link list
-						for (indexz=0; indexz<NR_busdata[indexx].Link_Table_Size; indexz++)
-						{
-							temp_branch = NR_branchdata[NR_busdata[indexx].Link_Table[indexz]];	//Get current "link of interest" info
+	// Calculate the total number of unsupported node
+	num_unsupported = 0;
+	for(indexx=0;indexx<=NR_bus_count;indexx++)
+	{
+		if (FaultyObject->Supported_Nodes[indexx] == 0)
+		num_unsupported++; 
+	} // end of for
 
-							if (((temp_branch.from==indexx) && (temp_branch.to==indexy)) || ((temp_branch.from==indexy) && (temp_branch.to==indexx)))	//Check both ways so we can fail out in a pickle
+	// Save the node id of unsupported node in the array of "unsupported_node" 
+	unsupported_node = (int*)gl_malloc(num_unsupported * sizeof(int));
+	indexy = 0;
+	for(indexx=0;indexx<=NR_bus_count;indexx++)
+	{
+		if (FaultyObject->Supported_Nodes[indexx] == 0)
+		{
+			unsupported_node[indexy] = indexx;
+			NR_busdata[indexx].Child_Node_idx = 0; // For the unsupported node, the total number of child node is zero;
+			NR_busdata[indexx].Parent_Node = -1; // For the unsupported node, the parent_node is not existing. It be set to -1;
+			printf("unsupported node : %s\n", NR_busdata[indexx].name);
+			indexz = indexx;
+			indexy++;
+		} // end of if
+	} // end of for
+	fprintf(FPCONNECT, "The number of unsupported node in the system is ");
+	fprintf(FPCONNECT, "%d .\n", indexy);
+
+	printf("*****************************************************************\n");
+	/* Searching for all the tie switches and sectionalizing switch in the system
+    Searching for the tie switches connecting to the out-of-service area */
+
+	// Firstly, Searching for all the tie switches and sectionalizing switch in the system
+	tie_switch_number = 0;
+	sec_switch_number = 0;
+  
+   for ( indexbr = 0; indexbr < NR_branch_count; indexbr ++) // count the total number of tie-switches and sec-switches in the system
+   {
+	   indexx = ( NR_branchdata[indexbr]. from);
+       indexy = ( NR_branchdata[indexbr]. to);
+	   conval = Connectivity_Matrix[indexx][indexy];
+	   if ( conval == CONN_SWITCH)
+	   {
+		   if  ((*NR_branchdata[indexbr].status) == true)
+			   sec_switch_number++;
+		   else 
+			   tie_switch_number++;
+	   } 
+   } // end of NR_branch travesion
+
+	tie_switch = (int*)gl_malloc(tie_switch_number * sizeof(int));
+    sec_switch = (int*)gl_malloc(sec_switch_number * sizeof(int));
+    tie_switch_number = 0; 
+    sec_switch_number = 0;
+
+	// Searching for all the tie-switches and sectionaling switches in the system, and save them in the array of sec_switch and tie_switch respectively
+   for ( indexbr = 0; indexbr < NR_branch_count; indexbr ++) // count the total number of tie-switches and sec-switches in the system
+   {
+	   indexx = ( NR_branchdata[indexbr]. from);
+       indexy = ( NR_branchdata[indexbr]. to);
+	   conval = Connectivity_Matrix[indexx][indexy];
+	   if ( conval == CONN_SWITCH)
+	   {
+		   if  ((*NR_branchdata[indexbr].status) == true)
+		   {
+				sec_switch[sec_switch_number] = indexbr;
+   			    sec_switch_number++;
+		   }
+		   else
+		   {
+    			tie_switch[tie_switch_number] = indexbr;	
+				tie_switch_number++;
+		   }
+	   } 
+   } // end of NR_branch travesion
+
+	printf(" The total number of tie-switch in the system is %d.\n", tie_switch_number); //  to be removed
+	printf(" The total number of sectionalizing switch in the system is %d.\n", sec_switch_number); // to be removed
+		
+	// Secondly, searching for the tie-switches connecting to the out-of-service area		
+		
+	unsigned int temp_num;
+	candidate_tie_switch.reserve(tie_switch_number); 
+	for (indexbr = 0; indexbr < tie_switch_number; indexbr ++)
+	{
+		temp_num = tie_switch[indexbr];
+		for (indexx = 0; indexx < num_unsupported; indexx++)
+		{
+			if ( (NR_branchdata[temp_num].from == unsupported_node[indexx])  ||  (NR_branchdata[temp_num].to == unsupported_node[indexx] ))
+			{
+				candidate_tie_switch.push_back(temp_num);  // save the candidate switch in the list
+				break;
+			}
+		}
+	}
+
+	// if there is not a single tie-switch connecting to the out-of-service area, no restoration strategy can be found. Printing the notice.
+	
+	while (candidate_tie_switch.empty())
+	{
+		printf(" There is not a single tie-switch connecting to the out-of-service area. \n");
+		printf(" The system can not be restored. \n");
+		reconfig_attempts = 0 ;
+		break;
+	}
+   
+	/* Candidate solution searching and checking phase*/
+   while (reconfig_switch_number < tie_switch_number)
+	{
+		reconfig_switch_number++;
+		// When the number of  tie switching operation is just one , which is closing the tie switch
+        if ( reconfig_switch_number == 1) 
+		{
+			tempbr = candidate_tie_switch.size();
+			for ( indexx = 0; indexx < tempbr; indexx++)
+			{
+				candidate_switch_operation.push_back(candidate_tie_switch.at(indexx)); //  candidate_switch_operation store the switching operations when reconfig_switch_number is one.
+			}
+		}
+
+		// When the number of  tie switching operation is two
+       /* firstly, searching for the tie switch operations*/
+		if ( reconfig_switch_number == 2)
+		{
+			temp_num_switch = 0; // temp_num_switch records the number of tie-switching operation pairs
+			for (indexx = 0; indexx < candidate_tie_switch.size(); indexx++)
+			{
+			      tempbr = candidate_tie_switch.at(indexx); // for each switch connecting to the out-of-service area
+				  for ( indexy = 0; indexy < tie_switch_number; indexy ++ )
+				  {
+					  indexz = tie_switch[indexy];
+					  if ( feeder_id[NR_branchdata[tempbr].from] == -1)   // find one end of the tie-switch that in the out-of-service area
+					  {
+                          temp_feeder_id = feeder_id[(NR_branchdata[tempbr].to)];
+					  }
+					  else if ( feeder_id[NR_branchdata[tempbr].to] == -1) // find one end of the tie-switch that in the out-of-service area
+					  {
+						  temp_feeder_id = feeder_id[(NR_branchdata[tempbr].from)];
+					  }
+					  if  (((feeder_id[NR_branchdata[indexz].from]) ==  temp_feeder_id) || ((feeder_id[NR_branchdata[indexz].to]) ==  temp_feeder_id))
+					  {						   
+							if ( indexz != tempbr)		
 							{
-
-
-								break;	//Found what we want, so no need to continue looping
+							temp_switch.push_back(tempbr);
+							temp_switch.push_back(indexz);
+							temp_num_switch+=2;
 							}
-						}
+					  }
+				  } // end of for indexy
+			}// end of for candidate_tie_switch traverse
 
-						if (indexz==NR_busdata[indexx].Link_Table_Size)	//Made it all the way to the end :(
+        temp_switch.push_back(-1); // -1 is flag to indicate the following operationgs.
+		temp_num_switch++;
+
+ // Searching for the switching operation pairs that are both connecting to the out-of-service area directly
+		for (indexx =0; indexx < candidate_tie_switch.size(); indexx++)
+		{
+			for (indexy = indexx+1; indexy < candidate_tie_switch.size(); indexy++)
+			{
+				temp_switch.push_back(candidate_tie_switch.at(indexx));
+				temp_num_switch++;
+				temp_switch.push_back(candidate_tie_switch.at(indexy));
+				temp_num_switch++;
+			}
+		}
+
+		candidate_sec_switch = (int*)gl_malloc(sec_switch_number * sizeof(int)); 
+		
+		separation_oos = false;
+		for ( indexx =0; indexx < temp_num_switch; indexx ++)
+		{ 
+			temp_branch_id = temp_switch.at(indexx);
+			if ((temp_branch_id == -1) && ( temp_branch_id != temp_switch.back()))
+			{
+				separation_oos = true;
+				indexx ++;
+			}
+			else if ((temp_branch_id == -1) && ( temp_branch_id == temp_switch.back()))
+			{
+				break;
+			}
+
+			if (separation_oos == false)
+			{
+				if ( feeder_id[NR_branchdata[temp_branch_id].from] == -1)
+				{
+					temp_feeder_id = feeder_id[NR_branchdata[temp_branch_id].to] ;
+				}
+				else if  ( feeder_id[NR_branchdata[temp_branch_id].to] == -1)
+				{
+					temp_feeder_id = feeder_id[NR_branchdata[temp_branch_id].from];
+				}
+				indexx++;
+				temp_branch_id = temp_switch.at(indexx);
+				if ( feeder_id[NR_branchdata[temp_branch_id].from] == temp_feeder_id )
+				{
+					initial_search_node =  (NR_branchdata[temp_branch_id].from);
+				}
+				else if ( feeder_id[NR_branchdata[temp_branch_id].to] == temp_feeder_id )
+				{
+					initial_search_node = (NR_branchdata[temp_branch_id].to);
+				}
+				indexy = Search_sec_switches(initial_search_node); // indexy return the number of sectionaling switches are found for the tie-switch pair
+				if (indexy > 0)
+				{
+					for ( indexz = indexy; indexz > 0; indexz--)
+					{
+						candidate_switch_operation.push_back(temp_switch.at(indexx-1));
+						candidate_switch_operation.push_back(temp_switch.at(indexx));
+						candidate_switch_operation.push_back(candidate_sec_switch[indexz-1]); // candidate_switch_operation store the switching operations
+					}
+				}
+			}
+			if  (separation_oos ==true)
+			{
+					for ( indexbr = 0; indexbr < sec_switch_number; indexbr++)
+					{
+						if ((feeder_id[NR_branchdata[sec_switch[indexbr]].from] == -1) && (feeder_id[NR_branchdata[sec_switch[indexbr]].to] == -1))
 						{
-							GL_THROW("A switch object could not be found in reconfiguration");	//This error indicates Connectivity_Matrix flagged a switch, but the node has no record of it
-							//Troubleshoot to be added if kept in here
+						candidate_switch_operation.push_back(temp_switch.at(indexx));
+						candidate_switch_operation.push_back(temp_switch.at(indexx+1));
+						candidate_switch_operation.push_back(sec_switch[indexbr]); // candidate_switch_operation store the switching operations
 						}
-						else	//Proceed with the closing
-						{
+					}
+					indexx++;
+			} // end of else (separation_oss == true)
+		}
+        
+		candidate_tie_switch.clear();
+	    tempbr	= temp_switch.size();
+
+		for (indexx = 0; indexx < tempbr; indexx++)
+		{
+			candidate_tie_switch.push_back(temp_switch.back());// copy the tie-switching operations into the candidate_tie_switch 
+			temp_switch.pop_back(); // remove the last candidate switch in the list of temp_switch
+		}
+	} // end of  reconfig_switch_number == 2
+
+  /* Change the switch status in the candidate list, if the candidate switch is closed, open this switch. Or if the candidate switch
+	is open, then close this switch*/
+		while (!candidate_switch_operation.empty()) // If there is a candidate switch in the solution list
+		{
+			for ( indexx = 0; indexx < (2*reconfig_switch_number -1); indexx++)
+			{
+			temp_branch_id = candidate_switch_operation.back();// Get the last candidate switch in the list
+			temp_switch.push_back(temp_branch_id);
+			candidate_switch_operation.pop_back(); // remove the last candidate switch in the list
+
 							//Get the switch's object linking
-							tempobj = gl_get_object(temp_branch.name);
+							tempobj = gl_get_object(NR_branchdata[temp_branch_id].name);
 
 							//Now pull it into switch properties
 							SwitchDevice = OBJECTDATA(tempobj,switch_object);
 
-							//Close it
-							SwitchDevice->set_switch(true);	//True = closed, false = open
-						}
-					}//end it is a switch
-				}//end column traversion
-			}//end row traversion
+					if  ((feeder_id[NR_branchdata[temp_branch_id].from]) != (feeder_id[NR_branchdata[temp_branch_id].to])) //  if it is a tie switch
+								{
+								//Close it
+								SwitchDevice->set_switch(true);	//True = closed, false = open
+								}
+					else  //
+								{
+								//Open it
+								SwitchDevice->set_switch(false);	//True = closed, false = open
+								}  
 
-			/*******************
-			End Simple example
-			*******************/
-
-		//Check to see if everything is supported again - not sure if this will be necessary or not
-		FaultyObject->support_check(0,populate_tree);		//Start a new support check
-
-		//See if anything is unsupported
-		fc_all_supported = true;
-		for (indexx=0; indexx<NR_bus_count; indexx++)
-		{
-			if (FaultyObject->Supported_Nodes[indexx]==0)	//No Support
-			{
-				fc_all_supported = false;	//Flag as a defect
-				gl_verbose("Reconfiguration attempt failed - unsupported nodes were still located");
-				/* TROUBLESHOOT
-				After performing the reconfiguration logic, some nodes are still unsupported.  This is considered a failed
-				reconfiguration, so another will be attempted.
-				*/
-				break;						//Only takes one failure to need to get out of here
 			}
-		}
 
-		//Set the pf solution flag
-		pf_valid_solution = false;
+			//Check to see if everything is supported again - not sure if this will be necessary or not
+			FaultyObject->support_check(0,populate_tree);		//Start a new support check
+			//See if anything is unsupported
+			fc_all_supported = true;
+			for (indexx=0; indexx<NR_bus_count; indexx++)
+			{
+				if (FaultyObject->Supported_Nodes[indexx]==0)	//No Support
+				{
+					fc_all_supported = false;	//Flag as a defect
+//					printf("unsupported node:%s.\n",NR_busdata[indexx].name);
+					gl_verbose("Reconfiguration attempt failed - unsupported nodes were still located");
+					/* TROUBLESHOOT
+					After performing the reconfiguration logic, some nodes are still unsupported.  This is considered a failed
+					reconfiguration, so another will be attempted.
+					*/
+//					break;						//Only takes one failure to need to get out of here
+				}
+			}
+
+			//Set the pf solution flag
+			pf_valid_solution = false;
 
 		//Re-solve powerflow at this point - assuming the system appears valid
-		while ((reconfig_iterations < reconfig_iter_limit) && (fc_all_supported==true))	//Only let powerflow iterate so many times
-		{
-			pf_bad_computations = false;	//Reset singularity checker
-
-			//Perform NR solver
-			pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &pf_bad_computations);
-
-			//De-flag any admittance changes (so other iterations don't take longer
-			NR_admit_change = false;
-
-			if (pf_bad_computations==true)	//Singular attempt, fail - not sure how it will get here with the fault_check call above, but added for completeness
+			while ((reconfig_iterations < reconfig_iter_limit) && (fc_all_supported==true))	//Only let powerflow iterate so many times
 			{
-				pf_valid_solution = false;
+				//Reset tracking variables
+				good_solution = false;
+				min_V = (double*)gl_malloc(feeder_number * sizeof(double));
+				node_id_minV = (int*)gl_malloc(feeder_number *sizeof(int));
+				for (indexx = 0; indexx < feeder_number; indexx ++)  // give the initiating value of the min_V at each feeder
+				{
+					min_V[indexx] = 1.000;
+					node_id_minV[indexx] = 0;
+				}
 
-				gl_verbose("Restoration attempt failed - singular system matrix.");
-				/*  TROUBLESHOOT
-				The restoration object has attempted a reconfiguration that did not restore the system.
-				Another reconfiguration will be attempted.
-				*/
 
-				break;	//Get out of this while, no sense solving a singular matrix more than once
-			}
-			else if (pf_result<0)	//Failure to converge, but just numerical issues, not singular.  Do another pass
-			{
-				pf_valid_solution = false;	//Set it just to be safe
+				pf_bad_computations = false;	//Reset singularity checker
 
-				reconfig_iterations++;	//Increment the powerflow iteration counter
-			}
-			else	//Must be a successful solution then
-			{
-				pf_valid_solution = true;
 
-				break;	//Get out of the while, we've solved successfully
-			}
-		}//end while for pf iterations
+
+				//Perform NR solver
+				pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &pf_bad_computations);
+				//De-flag any admittance changes (so other iterations don't take longer
+				NR_admit_change = false;
+
+				if (pf_bad_computations==true)	//Singular attempt, fail - not sure how it will get here with the fault_check call above, but added for completeness
+				{
+					pf_valid_solution = false;
+
+					gl_verbose("Restoration attempt failed - singular system matrix.");
+					/*  TROUBLESHOOT
+					The restoration object has attempted a reconfiguration that did not restore the system.
+					Another reconfiguration will be attempted.
+					*/
+
+					break;	//Get out of this while, no sense solving a singular matrix more than once
+				}
+				else if (pf_result<0)	//Failure to converge, but just numerical issues, not singular.  Do another pass
+				{
+					pf_valid_solution = false;	//Set it just to be safe
+
+					reconfig_iterations++;	//Increment the powerflow iteration counter
+				}
+				else	//Must be a successful solution then
+				{
+					pf_valid_solution = true;
+
+					break;	//Get out of the while, we've solved successfully
+				}
+			}//end while for pf iterations
 
 		//See if it was a valid solution, if so, check system conditions (voltages/currents)
 		if (pf_valid_solution==true)
 		{
 			//Check voltages - handled in the other function (not sure what we want to do here - presumably make sure it isn't too low or something
-			good_solution = VoltageCheck();
+			bool VoltageCheckResult;
+			unsigned int indexx, indexy, indexz; temp_feeder_id;
+			double tempV;
+			bool temp_flag;
+			for (indexx=0; indexx <NR_bus_count; indexx++)
+			{
+				for (indexy=0; indexy<3; indexy ++)
+				{
+				    temp_feeder_id = feeder_id[indexx];
+					tempV = VoltagePerUnit(indexx, indexy);
+					for ( indexz = 0; indexz < feeder_number; indexz ++)
+					{
+						if (( tempV != 0) && ( temp_feeder_id == indexz))
+						{
+							if (tempV < min_V[indexz])
+							{
+								min_V[indexz] = tempV;           // record the value of min_V at each feeder 
+								node_id_minV[indexz] = indexx; // record the min_V node id at each feeder
+							}
+							if (tempV > max_V)
+							{
+								max_V = tempV;
+								node_id_maxV = indexx;  // record the value of max_V and max_V node id in the system
+							}
+						}
+					}// end of tempV! = 0 and feeder_id is located
+				} // end of loop of indexy
+        } // end of loop of indexx
+           
+			    
+			min_V_system = 1.000;
+			for ( indexz = 0; indexz < feeder_number; indexz ++)	 
+			{
+				if ( min_V[indexz] < min_V_system)
+				{
+					min_V_system = min_V[indexz];
+					indexx = indexz; 
+				}
+			}
+
+			temp_flag = VoltageCheck(min_V_system);
+	        if ( temp_flag == false)
+			{
+				fprintf(FPCONNECT, "\n\n");
+				fprintf(FPCONNECT, "The following restoration plan is failed :");
+				fprintf(FPCONNECT, "The node_id of minimum voltage in the system is ");
+				fprintf(FPCONNECT, "%s", NR_busdata[node_id_minV[indexx]].name);
+				fprintf(FPCONNECT, ".\n");
+				fprintf(FPCONNECT, "The minimum voltage in the system is ");
+				fprintf(FPCONNECT, "%f", min_V_system);
+				fprintf(FPCONNECT, "of the nominal voltage. ");
+				tempbr = temp_switch.size();
+				for ( indexz = 0; indexz <tempbr; indexz++)
+				{
+			 		temp_branch_id = temp_switch.at(indexz);
+					indexx = ((NR_branchdata[temp_branch_id]).from); 
+					indexy = ((NR_branchdata[temp_branch_id]).to);  		
+					 if ((*NR_branchdata[temp_branch_id].status) == true)   // The switch is closed
+						 {
+	//						fprintf(FPCONNECT, "close the switch between  %s and  %s \n", NR_busdata[indexx].name, NR_busdata[indexy].name);
+						 }
+					 else if ((*NR_branchdata[temp_branch_id].status) == false)   // The switch is open	
+						 {
+	//						fprintf(FPCONNECT, "open the switch between  %s and  %s \n", NR_busdata[indexx].name, NR_busdata[indexy].name);
+						 }
+				}
+			}
+
+//	for (indexx = 0; indexx < NR_bus_count; indexx++)
+//	  {
+//			tempV = VoltagePerUnit(indexx, 0);
+//			fprintf(FPCONNECT,NR_busdata[indexx].name);
+//			fprintf(FPCONNECT," - ");
+//			fprintf(FPCONNECT,"%f", tempV);			
+//			fprintf(FPCONNECT,"\n");
+//	  }
+
+	   VoltageCheckResult = temp_flag;	
+	   good_solution =  VoltageCheckResult; ////VoltageCheckResult///////////////////////////////////////////////////////////////////////////////////////////////
+
 
 			//Check branch currents, if something is a line (switches, xformers, etc. unhandled at this time)
 			if (good_solution==true)	//Voltage passed, onward
@@ -445,127 +989,177 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 						}//end triplex
 						else //Must be UG or OH
 						{
-							//Get the line configuration
-							LineConfig = OBJECTDATA(LineDevice->configuration,line_configuration);
-
-							//Pick a phase that exists.  Assumes all wires are the same on the line
-							if ((LineDevice->phases & PHASE_A) == PHASE_A)
-							{
-								pidx=0;
-							}
-							else if ((LineDevice->phases & PHASE_B) == PHASE_B)
-							{
-								pidx=1;
-							}
-							else	//Must be C only
-							{
-								pidx=2;
-							}
-
-							//See which type of conductor we need to use
-							if (gl_object_isa(tempobj,"overhead_line","powerflow"))
-							{
-								if (pidx==0)	//A
-								{
-									OHConductor = OBJECTDATA(LineConfig->phaseA_conductor,overhead_line_conductor);
-								}
-								else if (pidx==1)	//B
-								{
-									OHConductor = OBJECTDATA(LineConfig->phaseB_conductor,overhead_line_conductor);
-								}
-								else	//Must be C
-								{
-									OHConductor = OBJECTDATA(LineConfig->phaseC_conductor,overhead_line_conductor);
-								}
-
-								//Grab the appropriate continuous rating - Summer is assumed to be April - September (6 months each)
-								if ((CurrTimeVal.month >= 4) && (CurrTimeVal.month <=9))	//Summer
-								{
-									cont_rating = OHConductor->summer.continuous;
-								}
-								else	//Winter
-								{
-									cont_rating = OHConductor->winter.continuous;
-								}
-							}//end OH
-							else	//Must be UG
-							{
-								if (pidx==0)	//A
-								{
-									UGConductor = OBJECTDATA(LineConfig->phaseA_conductor,underground_line_conductor);
-								}
-								else if (pidx==1)	//B
-								{
-									UGConductor = OBJECTDATA(LineConfig->phaseB_conductor,underground_line_conductor);
-								}
-								else	//Must be C
-								{
-									UGConductor = OBJECTDATA(LineConfig->phaseC_conductor,underground_line_conductor);
-								}
-
-								//Grab the appropriate continuous rating - Summer is assumed to be April - September (6 months each)
-								if ((CurrTimeVal.month >= 4) && (CurrTimeVal.month <=9))	//Summer
-								{
-									cont_rating = UGConductor->summer.continuous;
-								}
-								else	//Winter
-								{
-									cont_rating = UGConductor->winter.continuous;
-								}
-							}//end UG
-						}//end UG/OH line
-
-						//Reset rating variable
-						rating_exceeded = false;
-
-						if (cont_rating != 0.0)	//Zero rating is taken to mean ratings aren't going to be examined
-						{
-							//See if any measurements exceeded the ratings
-							if ((LineDevice->phases & PHASE_S) == PHASE_S)	//Triplex line
-							{
-								rating_exceeded |= (temp_current[0].Mag() > cont_rating);
-								rating_exceeded |= (temp_current[1].Mag() > cont_rating);
-							}
-							else	//Normal lines
-							{
+								//Get the line configuration
+								LineConfig = OBJECTDATA(LineDevice->configuration,line_configuration);
+	
+								//Pick a phase that exists.  Assumes all wires are the same on the line
 								if ((LineDevice->phases & PHASE_A) == PHASE_A)
 								{
-									rating_exceeded |= (temp_current[0].Mag() > cont_rating);
+									pidx=0;
+								}
+								else if ((LineDevice->phases & PHASE_B) == PHASE_B)
+								{
+									pidx=1;
+								}
+								else	//Must be C only
+								{
+									pidx=2;
 								}
 
-								if ((LineDevice->phases & PHASE_B) == PHASE_B)
+							//See which type of conductor we need to use
+								if (gl_object_isa(tempobj,"overhead_line","powerflow"))
 								{
+									if (pidx==0)	//A
+									{
+										OHConductor = OBJECTDATA(LineConfig->phaseA_conductor,overhead_line_conductor);
+									}
+									else if (pidx==1)	//B
+									{
+										OHConductor = OBJECTDATA(LineConfig->phaseB_conductor,overhead_line_conductor);
+									}
+									else	//Must be C
+									{
+										OHConductor = OBJECTDATA(LineConfig->phaseC_conductor,overhead_line_conductor);
+									}
+
+									//Grab the appropriate continuous rating - Summer is assumed to be April - September (6 months each)
+									if ((CurrTimeVal.month >= 4) && (CurrTimeVal.month <=9))	//Summer
+									{
+										cont_rating = OHConductor->summer.continuous;
+									}
+									else	//Winter
+									{
+										cont_rating = OHConductor->winter.continuous;
+									}
+								}//end OH
+									else	//Must be UG
+								{
+									if (pidx==0)	//A
+									{
+										UGConductor = OBJECTDATA(LineConfig->phaseA_conductor,underground_line_conductor);
+									}
+									else if (pidx==1)	//B
+									{
+										UGConductor = OBJECTDATA(LineConfig->phaseB_conductor,underground_line_conductor);
+									}
+									else	//Must be C
+									{
+										UGConductor = OBJECTDATA(LineConfig->phaseC_conductor,underground_line_conductor);
+									}
+	
+									//Grab the appropriate continuous rating - Summer is assumed to be April - September (6 months each)
+									if ((CurrTimeVal.month >= 4) && (CurrTimeVal.month <=9))	//Summer
+									{
+										cont_rating = UGConductor->summer.continuous;
+									}
+									else	//Winter
+									{
+										cont_rating = UGConductor->winter.continuous;
+									}
+								}//end UG
+							}//end UG/OH line
+
+							//Reset rating variable
+							rating_exceeded = false;
+
+							if (cont_rating != 0.0)	//Zero rating is taken to mean ratings aren't going to be examined
+							{
+								//See if any measurements exceeded the ratings
+								if ((LineDevice->phases & PHASE_S) == PHASE_S)	//Triplex line
+								{
+									rating_exceeded |= (temp_current[0].Mag() > cont_rating);
 									rating_exceeded |= (temp_current[1].Mag() > cont_rating);
 								}
-
-								if ((LineDevice->phases & PHASE_C) == PHASE_C)
+								else	//Normal lines
 								{
-									rating_exceeded |= (temp_current[2].Mag() > cont_rating);
+									if ((LineDevice->phases & PHASE_A) == PHASE_A)
+									{
+										rating_exceeded |= (temp_current[0].Mag() > cont_rating);
+									}	
+
+									if ((LineDevice->phases & PHASE_B) == PHASE_B)
+									{
+										rating_exceeded |= (temp_current[1].Mag() > cont_rating);
+									}
+
+									if ((LineDevice->phases & PHASE_C) == PHASE_C)
+									{
+										rating_exceeded |= (temp_current[2].Mag() > cont_rating);
+									}
 								}
-							}
-						}//end cont rating not 0.0
+							}//end cont rating not 0.0
 
-						if (rating_exceeded == true)	//Exceeded a limit
-						{
-							good_solution = false;	//Flag as bad solution
+							if (rating_exceeded == true)	//Exceeded a limit
+							{
+								good_solution = false;	//Flag as bad solution
 							break;					//Get us out of the branch current checks (only takes 1 bad one)
-						}
-					}//end it is a line
-				}//end branch current checks
-			}//end voltage checks passed
-			//Defaulted else - voltage check didn't pass
-		}//end valid pf solution checks
+							}
+						}//end it is a line
+					}//end branch current checks
+				}//end voltage checks passed
+			}//end valid pf solution checks
 
-		//Check to see if we're done, or need to reconfigure again
-		if ((good_solution == true) && (pf_valid_solution == true))
-		{
-			break;	//Get us out
-		}
+			//Check to see if we're done, or need to reconfigure again, and print out of the solutions( switching operations)
+			if ((good_solution == true) && (pf_valid_solution == true))
+			{
+				tempbr = temp_switch.size();
+				system_restored = true;	
+				printf("\n The system is successfully restored by the following switching operations:\n");
+				for ( indexz = 0; indexz <tempbr; indexz++)
+				{
+			 		temp_branch_id = temp_switch.at(indexz);
+					indexx = ((NR_branchdata[temp_branch_id]).from); 
+					indexy = ((NR_branchdata[temp_branch_id]).to);  		
+					 if ((*NR_branchdata[temp_branch_id].status) == true)   // The switch is closed
+						 {
+							printf("---close the switch between bus %s and bus %s \n", NR_busdata[indexx].name, NR_busdata[indexy].name);
+						 }
+					 else if ((*NR_branchdata[temp_branch_id].status) == false)   // The switch is open	
+						 {
+							printf("---open the switch between bus %s and bus %s \n", NR_busdata[indexx].name, NR_busdata[indexy].name);
+						 }
+				}
+				for ( indexz = 0; indexz < feeder_number; indexz ++)	 
+				{
+					min_V_system= min_V[indexz]*100;
+					printf("The minimum voltage at feeder %d is %5.2f  percent of norminal Voltage at node",indexz, min_V_system);
+					printf("%s. \n",NR_busdata[node_id_minV[indexz]].name);						
+				}
+				break;
+			}
 
-		reconfig_number++;	//Increment the reconfiguration counter
-	}//end reconfiguration while loop
+			//  change the system to the original status, since the candidate solution is not a good solution
+			tempbr = temp_switch.size();
+			for ( indexz = 0; indexz < tempbr; indexz++)
+			{
+			        temp_branch_id = temp_switch.at(indexz);
 
-	if (reconfig_number == reconfig_attempts)
+							//Get the switch's object linking
+							tempobj = gl_get_object(NR_branchdata[temp_branch_id].name);
+
+							//Now pull it into switch properties
+							SwitchDevice = OBJECTDATA(tempobj,switch_object);
+
+
+					if  ((feeder_id[NR_branchdata[temp_branch_id].from]) != (feeder_id[NR_branchdata[temp_branch_id].to])) //  if it is a tie switch
+								{
+								//Open it
+								SwitchDevice->set_switch(false);	//True = closed, false = open
+								}
+					else  //
+								{
+								//Close it
+								SwitchDevice->set_switch(true);	//True = closed, false = open
+								}  
+			}
+			temp_switch.clear();
+			reconfig_number++;	//Increment the reconfiguration counter
+		}//end of while the candidate_switch_operations is not empty 
+	if (system_restored == true)
+		break;
+	}//end reconfiguration while  reconfig_switch_number < tie_switch_number
+     
+	if (reconfig_number == reconfig_attempts ) 
 	{
 		GL_THROW("Feeder reconfiguration failed.");
 		/*  TROUBLESHOOT
@@ -599,7 +1193,7 @@ EXPORT int create_restoration(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (const char *msg)
+	catch (char *msg)
 	{
 		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
 		return 0;
@@ -612,7 +1206,7 @@ EXPORT int init_restoration(OBJECT *obj, OBJECT *parent)
 	try {
 			return OBJECTDATA(obj,restoration)->init(parent);
 	}
-	catch (const char *msg)
+	catch (char *msg)
 	{
 		gl_error("%s %s (id=%d): %s", obj->name?obj->name:"unnamed", obj->oclass->name, obj->id, msg);
 		return 0;
