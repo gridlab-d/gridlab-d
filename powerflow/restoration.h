@@ -23,10 +23,13 @@ public:
 	char1024 configuration_file;
 	int **Connectivity_Matrix;
 
-	int reconfig_attempts;		//Number of reconfigurations/timestep to try before giving up
-	int reconfig_iter_limit;	//Number of iterations to let PF go before flagging this as a bad reconfiguration
-	int reconfig_number;		//Number of reconfigurations that have been attempted at this timestep
-	int reconfig_iterations;	//Number of iterations that have been performed on this reconfiguration
+	unsigned int reconfig_switch_number; // Number of switches that will be operated during a reconfiguration;
+	unsigned int reconfig_attempts;		//Number of reconfigurations/timestep to try before giving up
+	unsigned int reconfig_iter_limit;	//Number of iterations to let PF go before flagging this as a bad reconfiguration
+	unsigned int reconfig_number;		//Number of reconfigurations that have been attempted at this timestep
+	unsigned int reconfig_iterations;	//Number of iterations that have been performed on this reconfiguration
+	unsigned int feeder_number; // Total number of feeders in the multi-feeder system
+	unsigned int sub_transmission_node; // Record the sub_transmission_node
 	bool populate_tree;			//Flag to populate Parent/Child tree structure
 
 	restoration(MODULE *mod);
