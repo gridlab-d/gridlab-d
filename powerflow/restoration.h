@@ -6,6 +6,7 @@
 
 #include "powerflow.h"
 #include "powerflow_library.h"
+#include <vector>
 
 #define CONN_NONE 0		//No connectivity
 #define CONN_LINE 1		//Normal "line" - OH, UH, Triplex, transformer
@@ -36,10 +37,27 @@ public:
 	void CreateConnectivity(void);
 	void PopulateConnectivity(int frombus, int tobus, OBJECT *linkingobj);
 	void Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0);
-	bool VoltageCheck(void);
+	void Feeder_id_Mark(int initial_node, int feeder);
+    int Search_sec_switches(int initial_node);
+	bool VoltageCheck(double MagV_PU);
+	double VoltagePerUnit(int node_id, int node_phase);
+	bool connected_path(unsigned int node_int, unsigned int node_end, unsigned int last_node);
 
 private:
 	TIMESTAMP prev_time;	//Previous timestamp - mainly for intialization
+	double *min_V;
+	double max_V;
+	int *node_id_minV;
+	int node_id_maxV; 
+	int *feeder_id; // Each node is belong to one feeder in the original system. The feeder id for each node is recorded.
+	int *candidate_sec_switch;
+	bool *visited_flag; // Visited_flag used in the DepthFirstSearch function
+	int *BFS_queue; // Visited node is recorded in the BreadthFirsthSearch funtion
+	int *unsupported_node;  // All the unsupported_node in the system 
+	int *tie_switch; // All the tie_switch in the system
+	int *sec_switch; // sectionalizing switch
+	bool VoltageCheckResult;  // Voltage check result
+    int *feeder_initial_node; //feeder_inital_node record the initial node connecting to the the subtransmission node for each feeder;
 };
 
 #endif // _RESTORATION_H
