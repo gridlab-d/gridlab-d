@@ -37,7 +37,11 @@ public:
 	double prices[168]; /**< price history */
 	int64 count;		/**< number of prices in history */
 	int16 lasthr, thishr;
-	
+	typedef enum {
+		CON_NORMAL=0,
+		CON_DISABLED=1,
+	} AVGCONTROL;
+	AVGCONTROL control_mode;
 public:
 	TIMESTAMP nextclear() const;
 public:

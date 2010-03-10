@@ -43,6 +43,9 @@ stubauction::stubauction(MODULE *module)
 			PT_double, "std168", PADDR(std168), PT_DESCRIPTION, "weekly stdev of price",
 			PT_int64, "market_id", PADDR(market_id), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "unique identifier of market clearing",
 			PT_bool, "verbose", PADDR(verbose), PT_DESCRIPTION, "enable verbose stubauction operations",
+			PT_enumeration,"control_mode",PADDR(control_mode),PT_DESCRIPTION,"the control mode to use for determining average and deviation calculations",
+				PT_KEYWORD,"NORMAL",CON_NORMAL,
+				PT_KEYWORD,"DISABLED",CON_DISABLED,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(stubauction));
@@ -55,6 +58,7 @@ int stubauction::create(void)
 	memcpy(this,defaults,sizeof(stubauction));
 	lasthr = thishr = -1;
 	verbose = 0;
+	control_mode = CON_NORMAL;
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -106,52 +110,54 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			++count;
 			
 			/* update the daily and weekly averages */
-			avg168 = 0.0;
-			for(i = 0; i < count && i < 168; ++i){
-				avg168 += prices[i];
-			}
-			avg168 /= (count > 168 ? 168 : count);
+			if(control_mode == CON_NORMAL){
+				avg168 = 0.0;
+				for(i = 0; i < count && i < 168; ++i){
+					avg168 += prices[i];
+				}
+				avg168 /= (count > 168 ? 168 : count);
 
-			avg24 = 0.0;
-			for(i = 1; i <= 24 && i <= count; ++i){
-				j = (168 - i + count) % 168;
-				avg24 += prices[j];
-			}
-			avg24 /= (count > 24 ? 24 : count);
+				avg24 = 0.0;
+				for(i = 1; i <= 24 && i <= count; ++i){
+					j = (168 - i + count) % 168;
+					avg24 += prices[j];
+				}
+				avg24 /= (count > 24 ? 24 : count);
 
-			avg72 = 0.0;
-			for(i = 1; i <= 72 && i <= count; ++i){
-				j = (168 - i + count) % 168;
-				avg72 += prices[j];
-			}
-			avg72 /= (count > 72 ? 72 : count);
+				avg72 = 0.0;
+				for(i = 1; i <= 72 && i <= count; ++i){
+					j = (168 - i + count) % 168;
+					avg72 += prices[j];
+				}
+				avg72 /= (count > 72 ? 72 : count);
 
-			/* update the daily & weekly standard deviations */
-			std168 = 0.0;
-			for(i = 0; i < count && i < 168; ++i){
-				std168 += prices[i] * prices[i];
-			}
-			std168 /= (count > 168 ? 168 : count);
-			std168 -= avg168*avg168;
-			std168 = sqrt(fabs(std168));
+				/* update the daily & weekly standard deviations */
+				std168 = 0.0;
+				for(i = 0; i < count && i < 168; ++i){
+					std168 += prices[i] * prices[i];
+				}
+				std168 /= (count > 168 ? 168 : count);
+				std168 -= avg168*avg168;
+				std168 = sqrt(fabs(std168));
 
-			std24 = 0.0;
-			for(i = 1; i <= 24 && i <= count; ++i){
-				j = (168 - i + count) % 168;
-				std24 += prices[j] * prices[j];
-			}
-			std24 /= (count > 24 ? 24 : count);
-			std24 -= avg24*avg24;
-			std24 = sqrt(fabs(std24));
+				std24 = 0.0;
+				for(i = 1; i <= 24 && i <= count; ++i){
+					j = (168 - i + count) % 168;
+					std24 += prices[j] * prices[j];
+				}
+				std24 /= (count > 24 ? 24 : count);
+				std24 -= avg24*avg24;
+				std24 = sqrt(fabs(std24));
 
-			std72 = 0.0;
-			for(i = 1; i <= 72 && i <= count; ++i){
-				j = (168 - i + count) % 168;
-				std72 += prices[j] * prices[j];
+				std72 = 0.0;
+				for(i = 1; i <= 72 && i <= count; ++i){
+					j = (168 - i + count) % 168;
+					std72 += prices[j] * prices[j];
+				}
+				std72 /= (count > 72 ? 72 : count);
+				std72 -= avg72*avg72;
+				std72 = sqrt(fabs(std72));
 			}
-			std72 /= (count > 72 ? 72 : count);
-			std72 -= avg72*avg72;
-			std72 = sqrt(fabs(std72));
 
 			/* update reference hour */
 			lasthr = thishr;
