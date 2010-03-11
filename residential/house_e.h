@@ -119,8 +119,7 @@ public:
 	double design_cooling_capacity;	///< space cooling capacity (BTUh/sf)
 	double heating_COP;				///< space heating COP
 	double cooling_COP;				///< space cooling COP
-	double sol_inc;					///< debug variable so we can look at Qs. Qs is the total rate of solar energy in the house. Note that a 
-									///< fraction of Qs is applied to the air according to the value of air_heat_fraction. The remaining is applied to the mass
+
 	double over_sizing_factor;		///< Future: equipment over sizing factor
 	double rated_heating_capacity;	///< rated heating capacity of the system (BTUh/sf; varies w.r.t Tout),
 	double rated_cooling_capacity;	///< rated cooling capacity of the system (BTUh/sf; varies w.r.t Tout)
@@ -315,6 +314,7 @@ public:
 	double *pTout;	// pointer to outdoor temperature (see climate)
 	double *pRhout;	// pointer to outdoor humidity (see climate)
 	double *pSolar;	// pointer to solar radiation array (see climate)
+	double incident_solar_radiation;///< This variable hold the average incident solar radiation hitting the house in Btu/(hr*sf)
 
 	double Tair;
 	double Tmaterials;
@@ -326,7 +326,7 @@ private:
 	void set_window_Rvalue();
 	// internal variables used to track state of house */
 	double dTair;
-	double a,b,c,c1,c2,A3,A4,k1,k2,r1,r2,Teq,Tevent,Qi,Qa,Qm;
+	double a,b,c,c1,c2,A3,A4,k1,k2,r1,r2,Teq,Tevent,Qi,Qa,Qm,adj_cooling_cap,adj_heating_cap,adj_cooling_cop,adj_heating_cop;
 #ifdef _DEBUG
 	double d;
 #endif

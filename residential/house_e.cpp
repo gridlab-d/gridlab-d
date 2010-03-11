@@ -571,6 +571,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"airchange_UA[Btu/degF.h]",PADDR(airchange_UA),PT_DESCRIPTION,"additional UA due to air infiltration",
 			PT_double,"internal_gain[Btu/h]",PADDR(total.heatgain),PT_DESCRIPTION,"internal heat gains",
 			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),PT_DESCRIPTION,"solar heat gains",
+			PT_double,"incident_solar_radiation[Btu/h.sf]",PADDR(incident_solar_radiation),PT_DESCRIPTION,"average incident solar radiation hitting the house",
 			PT_double,"heat_cool_gain[Btu/h]",PADDR(load.heatgain),PT_DESCRIPTION,"system heat gains(losses)",
 
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),PT_DESCRIPTION,"deadband of thermostat control",
@@ -741,7 +742,10 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"Qm",PADDR(Qm),
 			PT_double,"Qh",PADDR(load.heatgain),
 			PT_double,"dTair",PADDR(dTair),
-			PT_double,"sol_inc",PADDR(sol_inc),
+			PT_double,"adj_cooling_cap",PADDR(adj_cooling_cap),
+			PT_double,"adj_heating_cap",PADDR(adj_heating_cap),
+			PT_double,"adj_cooling_cop",PADDR(adj_cooling_cop),
+			PT_double,"adj_heating_cop",PADDR(adj_heating_cop),
 #endif
 			PT_enumeration,"thermostat_control", PADDR(thermostat_control), PT_DESCRIPTION, "determine level of internal thermostatic control",
 				PT_KEYWORD, "FULL", TC_FULL, // setpoint/deadband controls HVAC
@@ -1541,7 +1545,7 @@ int house_e::init(OBJECT *parent)
 	if (over_sizing_factor<=0.0)  over_sizing_factor = 0.0;
 	if (cooling_design_temperature == 0.0)	cooling_design_temperature = 95.0;
 	if (design_internal_gains<=0.0) design_internal_gains =  167.09 * pow(floor_area,0.442); // Numerical estimate of internal gains
-	if (latent_load_fraction<=0.0) latent_load_fraction = 0.35;
+	if (latent_load_fraction<=0.0) latent_load_fraction = 0.30;
 
 	double round_value = 0.0;
 	if (design_cooling_capacity<=0.0 && cooling_system_type != CT_NONE)	// calculate basic load then round to nearest standard HVAC sizing
@@ -1798,14 +1802,17 @@ void house_e::update_model(double dt)
 #endif
 
 	/* compute solar gains */
-	Qs = 0; 
+	//Qs = 0;
+	incident_solar_radiation = 0;
 	int i;
 
 	for (i=1; i<9; i++) //Compass points of pSolar include direct normal and diffuse radiation into one value
-		Qs += pSolar[i];
-	
-	Qs *= 3.412 * (gross_wall_area*window_wall_ratio) / 8.0 * (glazing_shgc * window_exterior_transmission_coefficient);
-	sol_inc = Qs/(gross_wall_area*window_wall_ratio*glazing_shgc*window_exterior_transmission_coefficient); // gives Qs in Btu/(hr*sf)
+		incident_solar_radiation += pSolar[i];
+		//Qs += pSolar[i];
+	incident_solar_radiation *= 3.412/8;// incident_solar_radiation is now in Btu/(h*sf)
+	Qs = incident_solar_radiation*solar_heatgain_factor;//solar_heatgain_factor is the equivalent solar aperature spec in Rob's Sheet
+	//Qs *= 3.412 * (gross_wall_area*window_wall_ratio) / 8.0 * (glazing_shgc * window_exterior_transmission_coefficient);
+	//sol_inc = Qs/(gross_wall_area*window_wall_ratio*glazing_shgc*window_exterior_transmission_coefficient); // gives Qs in Btu/(hr*sf)
 
 
 	if (Qs<0)
@@ -1861,10 +1868,12 @@ void house_e::update_system(double dt)
 		cooling_cop_adj = cooling_COP / (-0.01363961 + 0.01066989*(*pTout));
 		heating_cop_adj = heating_COP / (2.03914613 - 0.03906753*(*pTout) + 0.00045617*(*pTout)*(*pTout) - 0.00000203*(*pTout)*(*pTout)*(*pTout));
 	}
-
+	adj_cooling_cop = cooling_cop_adj;
+	adj_heating_cop = heating_cop_adj;
 	double heating_capacity_adj = design_heating_capacity*(0.34148808 + 0.00894102*(*pTout) + 0.00010787*(*pTout)*(*pTout)); 
 	double cooling_capacity_adj = design_cooling_capacity*(1.48924533 - 0.00514995*(*pTout));
-
+	adj_cooling_cap = cooling_capacity_adj;
+	adj_heating_cap = heating_capacity_adj;
 #pragma message("house_e: add update_system voltage adjustment for heating")
 	double voltage_adj = (((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0) * load.impedance_fraction + ((pCircuit_V[0]).Mag() / 240.0) * load.current_fraction + load.power_fraction);
 	double voltage_adj_resistive = ((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0);
@@ -1942,7 +1951,7 @@ void house_e::update_system(double dt)
 			case CT_ELECTRIC:
 				cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
 				// DPC: the latent_load_fraction is not as great counted when humidity is low
-				system_rated_capacity = -cooling_capacity_adj / (1 + latent_load_fraction/(1 + exp(4-10*(*pRhout)))) + fan_power*BTUPHPKW;
+				system_rated_capacity = -cooling_capacity_adj / (1 + 0.1 + latent_load_fraction/(1 + exp(4-10*(*pRhout)))) + fan_power*BTUPHPKW;
 				system_rated_power = cooling_demand;
 				break;
 		}
