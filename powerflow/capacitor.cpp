@@ -65,8 +65,8 @@ capacitor::capacitor(MODULE *mod):node(mod)
 				PT_KEYWORD, "VOLT", VOLT,
 				PT_KEYWORD, "VARVOLT", VARVOLT,
 				PT_KEYWORD, "CURRENT", CURRENT,
-			PT_double, "voltage_set_high[V]", PADDR(voltage_set_high), 
-			PT_double, "voltage_set_low[V]", PADDR(voltage_set_low),
+			PT_double, "voltage_set_high[V]", PADDR(voltage_set_high), // Turn off if voltage is above this set point
+			PT_double, "voltage_set_low[V]", PADDR(voltage_set_low), // Turns on if voltage is below this set point
 			PT_double, "VAr_set_high[VAr]", PADDR(VAr_set_high),
 			PT_double, "VAr_set_low[VAr]", PADDR(VAr_set_low),
 			PT_double, "current_set_low[A]", PADDR(current_set_low),
