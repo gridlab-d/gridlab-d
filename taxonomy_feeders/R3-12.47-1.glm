@@ -1,16 +1,19 @@
-// $Id: R3-12.47-1.glm 384 2009-06-30 16:45:05 ychen $
+// $Id: R3-12.47-1.glm 
 //*********************************************
 
 clock{
-	 timezone EST+5EDT;
-	 timestamp '2000-01-01 0:00:00';
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-01 1:00:00';
+	timezone EST+8EDT;
 }
 
 //#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 //#set savefile="testing.xml";
+#set profiler=1
 //*********************************************
 // modules
-#set profiler=1
+
+module tape;
 module powerflow{
 	solver_method NR;
 	//acceleration_factor 1.4;
@@ -10178,27 +10181,24 @@ object regulator:3653 {
 	to R3-12-47-1_meter_65;
 	phases ABCN;
 	configuration regulator_configuration:3654;
+	object recorder {
+		 property tap_A,tap_B,tap_C,power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_in.real,power_in.imag;
+		 limit 1440;
+		 interval 60;
+		 file "R3-12.27-1_reg_output.csv";
+	};
 }
 
 
 object regulator_configuration:3654 {
 	name feeder_reg_cfg;
+	Control OUTPUT_VOLTAGE;
+	band_center 7200.0;
+	band_width 60.0;
 	connect_type WYE_WYE;
-	band_center 120;
-	band_width 2;
 	time_delay 30;
 	raise_taps 16;
 	lower_taps 16;
-	current_transducer_ratio  600;
-	power_transducer_ratio   60;
-	compensator_r_setting_A   6.0;
-	compensator_r_setting_B   6.0;
-	compensator_r_setting_C   6.0;
-	compensator_x_setting_A   12.0;
-	compensator_x_setting_B   12.0;
-	compensator_x_setting_C   12.0;
-	CT_phase ABC;
-	PT_phase ABC;
 	regulation 0.10;
 	tap_pos_A 0;
 	tap_pos_B 0;

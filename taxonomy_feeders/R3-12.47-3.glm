@@ -10,7 +10,12 @@ clock{
 
 //*********************************************
 // modules
-module powerflow;
+module powerflow{
+	solver_method NR;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+};
+
 
 
 object capacitor:12598 {
@@ -20591,6 +20596,7 @@ object node:2069 {
 
 object node:12603 {
 	name R3-12-47-3_node_2001;
+	bustype SWING;
 	phases ABCN;
 	nominal_voltage 7199.558;
 	voltage_A 7199.558+0.0j;

@@ -1,16 +1,18 @@
-// $Id: R1-12.47-4.glm 384 2009-06-30 16:44:57 ychen $
+// $Id: R1-12.47-4.glm 
 //*********************************************
 
 clock{
-	 timezone EST+5EDT;
-	 timestamp '2000-01-01 0:00:00';
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-01 1:00:00';
+	timezone EST+8EDT;
 }
 
 //#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 //#set savefile="testing.xml";
+#set profiler=1
 //*********************************************
 // modules
-#set profiler=1
+
 module tape;
 module powerflow{
 	solver_method NR;
@@ -116,7 +118,7 @@ object fuse:817 {
 	phases ABCN;
 	from R1-12-47-4_node_54;
 	to R1-12-47-4_node_294;
-	current_limit 3;
+	current_limit 20;
 	status CLOSED;
 }
 
@@ -125,7 +127,7 @@ object fuse:818 {
 	phases ABCN;
 	from R1-12-47-4_node_55;
 	to R1-12-47-4_node_295;
-	current_limit 3;
+	current_limit 20;
 	status CLOSED;
 }
 
@@ -161,7 +163,7 @@ object fuse:822 {
 	phases ABCN;
 	from R1-12-47-4_node_63;
 	to R1-12-47-4_node_299;
-	current_limit 15;
+	current_limit 25;
 	status CLOSED;
 }
 
@@ -287,7 +289,7 @@ object fuse:836 {
 	phases ABCN;
 	from R1-12-47-4_node_176;
 	to R1-12-47-4_node_77;
-	current_limit 65;
+	current_limit 90;
 	status CLOSED;
 }
 
@@ -305,7 +307,7 @@ object fuse:838 {
 	phases ABCN;
 	from R1-12-47-4_node_120;
 	to R1-12-47-4_node_224;
-	current_limit 3;
+	current_limit 25;
 	status CLOSED;
 }
 
@@ -314,7 +316,7 @@ object fuse:839 {
 	phases ABCN;
 	from R1-12-47-4_node_140;
 	to R1-12-47-4_node_225;
-	current_limit 3;
+	current_limit 15;
 	status CLOSED;
 }
 
@@ -350,7 +352,7 @@ object fuse:843 {
 	phases ABCN;
 	from R1-12-47-4_node_115;
 	to R1-12-47-4_node_229;
-	current_limit 8;
+	current_limit 25;
 	status CLOSED;
 }
 
@@ -359,7 +361,7 @@ object fuse:844 {
 	phases ABCN;
 	from R1-12-47-4_node_126;
 	to R1-12-47-4_node_230;
-	current_limit 3;
+	current_limit 15;
 	status CLOSED;
 }
 
@@ -422,7 +424,7 @@ object fuse:851 {
 	phases ABCN;
 	from R1-12-47-4_node_162;
 	to R1-12-47-4_node_249;
-	current_limit 3;
+	current_limit 15;
 	status CLOSED;
 }
 
@@ -431,7 +433,7 @@ object fuse:852 {
 	phases ABCN;
 	from R1-12-47-4_node_164;
 	to R1-12-47-4_node_250;
-	current_limit 8;
+	current_limit 25;
 	status CLOSED;
 }
 
@@ -3409,27 +3411,24 @@ object regulator:876 {
 	to R1-12-47-4_meter_13;
 	phases ABCN;
 	configuration regulator_configuration:877;
+	object recorder {
+		 property tap_A,tap_B,tap_C,power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_in.real,power_in.imag;
+		 limit 1440;
+		 interval 60;
+		 file "R1-12.27-4_reg_output.csv";
+	};
 }
 
 
 object regulator_configuration:877 {
 	name feeder_reg_cfg;
+	Control OUTPUT_VOLTAGE;
+	band_center 7200.0;
+	band_width 60.0;
 	connect_type WYE_WYE;
-	band_center 120;
-	band_width 2;
 	time_delay 30;
 	raise_taps 16;
 	lower_taps 16;
-	current_transducer_ratio  600;
-	power_transducer_ratio   60;
-	compensator_r_setting_A   6.0;
-	compensator_r_setting_B   6.0;
-	compensator_r_setting_C   6.0;
-	compensator_x_setting_A   12.0;
-	compensator_x_setting_B   12.0;
-	compensator_x_setting_C   12.0;
-	CT_phase ABC;
-	PT_phase ABC;
 	regulation 0.10;
 	tap_pos_A 0;
 	tap_pos_B 0;
