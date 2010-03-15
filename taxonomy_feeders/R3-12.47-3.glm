@@ -7,7 +7,7 @@ clock{
 }
 
 //#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-
+#set profiler=1
 //*********************************************
 // modules
 module powerflow{
@@ -114084,5 +114084,3 @@ object underground_line_conductor:15 {
 	shield_gmr 0.00;
 	shield_resistance 0.00;
 }
-
-
