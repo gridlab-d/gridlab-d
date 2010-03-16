@@ -517,7 +517,11 @@ char *tz_dst(char *tzspec){
  **/
 void set_tzspec(int year, char *tzname, SPEC *pStart, SPEC *pEnd){
 	int y;
-	
+
+	if(pStart == 0 && pEnd == 0){
+		return;
+	}
+
 	for (y = year - YEAR0; y < sizeof(tszero) / sizeof(tszero[0]); y++)
 	{
 		dststart[y] = compute_dstevent(y + YEAR0, pStart, tzoffset);
