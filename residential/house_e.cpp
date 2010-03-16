@@ -843,7 +843,7 @@ int house_e::create()
 		while (n_eu-->0)
 		{
 			char *euname = eulist[n_eu];
-			strlwr(euname);
+			_strlwr(euname);
 			
 			// find the implicit enduse description
 			struct s_implicit_enduse_list *eu = NULL;
@@ -2285,7 +2285,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	// check for thermostat cycle lockout
-	if(t0 < thermostat_last_cycle_time + thermostat_cycle_time){
+	if(t1 < thermostat_last_cycle_time + thermostat_cycle_time){
 		return TS_NEVER; // next time will be calculated in sync_model
 	}
 
