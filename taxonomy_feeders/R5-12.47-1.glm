@@ -26,18 +26,23 @@ object capacitor:1724 {
 	pt_phase B;
 	parent R5-12-47-1_node_261;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 8300; 
+	voltage_set_low 7900;
 	capacitor_A 0.4 MVAr;
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 7970;
 	nominal_voltage 7967.434;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R5-12.47-1_capacitor1.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 object capacitor:1725 {
@@ -46,18 +51,23 @@ object capacitor:1725 {
 	pt_phase B;
 	parent R5-12-47-1_node_262;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 8300; 
+	voltage_set_low 7900;
 	capacitor_A 0.2 MVAr;
 	capacitor_B 0.2 MVAr;
 	capacitor_C 0.2 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 7970;
 	nominal_voltage 7967.434;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R5-12.47-1_capacitor2.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 object capacitor:1726 {
@@ -66,18 +76,23 @@ object capacitor:1726 {
 	pt_phase B;
 	parent R5-12-47-1_node_263;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 8300; 
+	voltage_set_low 7900;
 	capacitor_A 0.4 MVAr;
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 7970;
 	nominal_voltage 7967.434;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R5-12.47-1_capacitor3.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 

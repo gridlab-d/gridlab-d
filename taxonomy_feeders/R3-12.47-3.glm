@@ -10,6 +10,8 @@ clock{
 #set profiler=1
 //*********************************************
 // modules
+
+module tape;
 module powerflow{
 	solver_method NR;
 	//acceleration_factor 1.4;
@@ -24,18 +26,23 @@ object capacitor:12598 {
 	pt_phase A;
 	parent R3-12-47-3_node_518;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 7300; 
+	voltage_set_low 7100; 
 	capacitor_A 0.3 MVAr;
 	capacitor_B 0.3 MVAr;
 	capacitor_C 0.3 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 7200;
 	nominal_voltage 7199.558;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R3-12.47-3_capacitor1.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 object capacitor:12599 {
@@ -44,18 +51,23 @@ object capacitor:12599 {
 	pt_phase A;
 	parent R3-12-47-3_node_1988;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 7300; 
+	voltage_set_low 7100; 
 	capacitor_A 0.2 MVAr;
 	capacitor_B 0.2 MVAr;
 	capacitor_C 0.2 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 7200;
 	nominal_voltage 7199.558;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R3-12.47-3_capacitor2.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 

@@ -27,18 +27,23 @@ object capacitor:2042 {
 	pt_phase B;
 	parent R2-25-00-1_node_35;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 14500; 
+	voltage_set_low 13500; 
 	capacitor_A 0.4 MVAr;
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 14380;
 	nominal_voltage 14376.022;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R2-25.00-1_capacitor1.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 object capacitor:2043 {
@@ -47,18 +52,23 @@ object capacitor:2043 {
 	pt_phase B;
 	parent R2-25-00-1_node_104;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 14500; 
+	voltage_set_low 13500; 
 	capacitor_A 0.4 MVAr;
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 14380;
 	nominal_voltage 14376.022;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R2-25.00-1_capacitor2.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 object capacitor:2044 {
@@ -67,18 +77,23 @@ object capacitor:2044 {
 	pt_phase B;
 	parent R2-25-00-1_node_164;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 14500; 
+	voltage_set_low 13500; 
 	capacitor_A 0.4 MVAr;
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 14380;
 	nominal_voltage 14376.022;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R2-25.00-1_capacitor3.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 object capacitor:2045 {
@@ -87,18 +102,23 @@ object capacitor:2045 {
 	pt_phase B;
 	parent R2-25-00-1_node_265;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 14500; 
+	voltage_set_low 13500; 
 	capacitor_A 0.3 MVAr;
 	capacitor_B 0.3 MVAr;
 	capacitor_C 0.3 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 14380;
 	nominal_voltage 14376.022;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R2-25.00-1_capacitor4.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 object capacitor:2046 {
@@ -112,13 +132,16 @@ object capacitor:2046 {
 	capacitor_B 0.4 MVAr;
 	capacitor_C 0.4 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 14380;
 	nominal_voltage 14376.022;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R2-25.00-1_capacitor5.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 

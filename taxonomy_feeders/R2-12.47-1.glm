@@ -27,18 +27,23 @@ object capacitor:1824 {
 	pt_phase B;
 	parent R2-12-47-1_node_187;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 7300; 
+	voltage_set_low 7100; 
 	capacitor_A 0.2 MVAr;
 	capacitor_B 0.2 MVAr;
 	capacitor_C 0.2 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 7200;
 	nominal_voltage 7199.558;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R2-12.47-1_capacitor1.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 

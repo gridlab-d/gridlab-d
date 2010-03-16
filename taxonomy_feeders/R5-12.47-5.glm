@@ -26,18 +26,23 @@ object capacitor:4173 {
 	pt_phase B;
 	parent R5-12-47-5_node_20;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 7300; 
+	voltage_set_low 7100; 
 	capacitor_A 0.3 MVAr;
 	capacitor_B 0.3 MVAr;
 	capacitor_C 0.3 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 7200;
 	nominal_voltage 7199.558;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R5-12.47-5_capacitor1.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 object capacitor:4174 {
@@ -46,18 +51,23 @@ object capacitor:4174 {
 	pt_phase B;
 	parent R5-12-47-5_node_479;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 7300; 
+	voltage_set_low 7100; 
 	capacitor_A 0.3 MVAr;
 	capacitor_B 0.3 MVAr;
 	capacitor_C 0.3 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 7200;
 	nominal_voltage 7199.558;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R5-12.47-5_capacitor2.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 object capacitor:4175 {
@@ -66,18 +76,23 @@ object capacitor:4175 {
 	pt_phase B;
 	parent R5-12-47-5_node_623;
 	phases_connected ABC;
-	control MANUAL;
+	control VOLT;
+	voltage_set_high 7300; 
+	voltage_set_low 7100; 
 	capacitor_A 0.3 MVAr;
 	capacitor_B 0.3 MVAr;
 	capacitor_C 0.3 MVAr;
 	control_level INDIVIDUAL;
-	switchA CLOSED;
-	switchB CLOSED;
-	switchC CLOSED;
-	time_delay 2.0;
-	dwell_time 3.0;
+	time_delay 30.0;
+	dwell_time 30.0;
 	cap_nominal_voltage 7200;
 	nominal_voltage 7199.558;
+	object recorder {
+		property "switchA,switchB,switchC,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		file R5-12.47-5_capacitor3.csv;
+		interval 60;
+		limit 1440;
+	};
 }
 
 
@@ -1013,7 +1028,7 @@ object fuse:4093 {
 	phases ABCN;
 	from R5-12-47-5_node_874;
 	to R5-12-47-5_node_878;
-	current_limit 200;
+	current_limit 250;
 	status CLOSED;
 }
 
