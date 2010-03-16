@@ -1500,7 +1500,7 @@ int house_e::init(OBJECT *parent)
 	if (Rwindows<=0)			set_window_Rvalue();
 	if (Rdoors<=0)				Rdoors = 5.0;
 	
-	air_density = 0.0735;			// density of air [lb/cf]
+	air_density = 0.0735;		// density of air [lb/cf]
 	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
 
 	//house_e properties for HVAC
@@ -1510,7 +1510,7 @@ int house_e::init(OBJECT *parent)
 	if (air_heat_fraction==0) air_heat_fraction=0.5;
 	if (air_heat_fraction<0.0 || air_heat_fraction>1.0) throw "air heat fraction is not between 0 and 1";
 	if (total_thermal_mass_per_floor_area <= 0.0) total_thermal_mass_per_floor_area = 2.0;
-	if (interior_surface_heat_transfer_coeff <= 0.0) interior_surface_heat_transfer_coeff = 1.00;
+	if (interior_surface_heat_transfer_coeff <= 0.0) interior_surface_heat_transfer_coeff = 1.46;
 
 	if (airchange_per_hour<=0)	airchange_per_hour = 0.5;//gl_random_triangle(0.5,1);
 	if (airchange_UA <= 0) airchange_UA = airchange_per_hour * volume * air_density * air_heat_capacity;
@@ -1551,9 +1551,9 @@ int house_e::init(OBJECT *parent)
 	if (design_cooling_capacity<=0.0 && cooling_system_type != CT_NONE)	// calculate basic load then round to nearest standard HVAC sizing
 	{	
 		round_value = 0.0;
-		design_cooling_capacity = (1.0 + over_sizing_factor) * (1.0 + latent_load_fraction) * ((envelope_UA + airchange_UA) * (cooling_design_temperature - design_cooling_setpoint) + design_internal_gains + (design_peak_solar * window_area * glazing_shgc * window_exterior_transmission_coefficient));
-		round_value = (design_cooling_capacity + 5999.99) / 6000.0;
-		design_cooling_capacity = floor(round_value) * 6000.0;
+		design_cooling_capacity = (1.0 + over_sizing_factor) * (1.0 + latent_load_fraction) * ((envelope_UA + airchange_UA) * (cooling_design_temperature - design_cooling_setpoint) + design_internal_gains + (design_peak_solar * solar_heatgain_factor));
+		round_value = (design_cooling_capacity) / 6000.0;
+		design_cooling_capacity = ceil(round_value) * 6000.0;//design_cooling_capacity is rounded up to the next 6000 btu/hr
 	}
 
 	if(auxiliary_system_type != AT_NONE && heating_system_type == HT_NONE)
@@ -1574,8 +1574,8 @@ int house_e::init(OBJECT *parent)
 			design_heating_capacity = design_cooling_capacity; /* primary is to reverse the heat pump */
 		} else {
 			design_heating_capacity = (1.0 + over_sizing_factor) * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
-			round_value = (design_heating_capacity  + 9999.99) / 10000.0;
-			design_heating_capacity = floor(round_value) * 10000.0;
+			round_value = (design_heating_capacity) / 10000.0;
+			design_heating_capacity = ceil(round_value) * 10000.0;//design_heating_capacity is rounded up to the next 10,000 btu/hr
 		}
 	}
 
@@ -1587,8 +1587,8 @@ int house_e::init(OBJECT *parent)
 	{
 		double round_value = 0.0;
 		aux_heat_capacity = (1.0 + over_sizing_factor) * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
-		round_value = (aux_heat_capacity+9999.99) / 10000.0;
-		aux_heat_capacity = floor(round_value) * 10000.0;
+		round_value = (aux_heat_capacity) / 10000.0;
+		aux_heat_capacity = ceil(round_value) * 10000.0;//aux_heat_capacity is rounded up to the next 10,000 btu/hr
 	}
 
 	if (aux_heat_deadband<=0.0)		aux_heat_deadband = thermostat_deadband;
@@ -1601,8 +1601,8 @@ int house_e::init(OBJECT *parent)
 		double design_cooling_cfm;
 		double gtr_cfm;
 	
-		design_heating_cfm = (design_heating_capacity > aux_heat_capacity ? design_heating_capacity : aux_heat_capacity) / (0.018 * (heating_supply_air_temp - design_heating_setpoint)) / 60.0;
-		design_cooling_cfm = design_cooling_capacity / (1.0 + latent_load_fraction) / (0.018 * (design_cooling_setpoint - cooling_supply_air_temp)) / 60.0;
+		design_heating_cfm = (design_heating_capacity > aux_heat_capacity ? design_heating_capacity : aux_heat_capacity) / (air_density * air_heat_capacity * (heating_supply_air_temp - design_heating_setpoint)) / 60.0;
+		design_cooling_cfm = design_cooling_capacity / (1.0 + latent_load_fraction) / (air_density * air_heat_capacity * (design_cooling_setpoint - cooling_supply_air_temp)) / 60.0;
 		gtr_cfm = (design_heating_cfm > design_cooling_cfm ? design_heating_cfm : design_cooling_cfm);
 		fan_design_airflow = gtr_cfm;
 	}
@@ -1610,7 +1610,7 @@ int house_e::init(OBJECT *parent)
 	if (fan_design_power<=0.0){
 		double roundval;
 		//	
-		roundval = ceil((0.117 * duct_pressure_drop * fan_design_airflow / 0.42 / 745.7 + 1.0/16.0)*8);
+		roundval = ceil((0.117 * duct_pressure_drop * fan_design_airflow / 0.42 / 745.7)*8);
 		fan_design_power = roundval / 8.0 * 745.7 / 0.88; // fan rounds to the nearest 1/8 HP
 	}
 
