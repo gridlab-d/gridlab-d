@@ -101,7 +101,8 @@ void CGldEditorView::LoadObject(OBJECT *obj)
 	int Type = list.InsertColumn(nCol++,"Type",LVCFMT_LEFT,W(100),nCol);
 	int Class = list.InsertColumn(nCol++,"Class",LVCFMT_LEFT,W(150),nCol);
 	int Access = list.InsertColumn(nCol++,"Access",LVCFMT_LEFT,W(100),nCol);
-	int Data = list.InsertColumn(nCol++,"Data",LVCFMT_LEFT,wr.Width()-nWid,nCol);
+	int Data = list.InsertColumn(nCol++,"Data",LVCFMT_RIGHT,W(100),nCol);
+	int Description = list.InsertColumn(nCol++,"Description",LVCFMT_LEFT,wr.Width()-nWid,nCol);
 	#undef W
 
 	int nItem;
@@ -194,6 +195,7 @@ void CGldEditorView::LoadObject(OBJECT *obj)
 			list.SetItemText(nItem,Class,oclass->name);
 			list.SetItemText(nItem,Access,convert_from_enumeration(buffer,sizeof(buffer),&(prop->access),object_access_property())?buffer:"");
 			list.SetItemText(nItem,Data,object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))?buffer:"(error)");
+			list.SetItemText(nItem,Description,prop->description);
 		}
 	};
 }
