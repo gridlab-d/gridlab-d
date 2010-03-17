@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\pthreads;..\third_party\superLU_MT\SRC"
+				AdditionalIncludeDirectories="..\pthreads;..\third_party\superLU_MT"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_PTHREAD;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -113,7 +113,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\pthreads;..\third_party\superLU_MT\SRC"
+				AdditionalIncludeDirectories="..\pthreads;..\third_party\superLU_MT"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_PTHREAD;_CRT_SECURE_NO_WARNINGS;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -180,7 +180,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\pthreads;..\third_party\superLU_MT\SRC"
+				AdditionalIncludeDirectories="..\pthreads;..\third_party\superLU_MT"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_PTHREAD;_CRT_SECURE_NO_WARNINGS;"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -245,7 +245,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\pthreads;..\third_party\superLU_MT\SRC"
+				AdditionalIncludeDirectories="..\pthreads;..\third_party\superLU_MT"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_PTHREAD;_CRT_SECURE_NO_WARNINGS;"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -292,767 +292,767 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\await.c"
+				RelativePath="..\third_party\superLU_MT\await.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\cgscon.c"
+				RelativePath="..\third_party\superLU_MT\cgscon.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\cgsequ.c"
+				RelativePath="..\third_party\superLU_MT\cgsequ.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\cgsrfs.c"
+				RelativePath="..\third_party\superLU_MT\cgsrfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\cgstrs.c"
+				RelativePath="..\third_party\superLU_MT\cgstrs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\clacon.c"
+				RelativePath="..\third_party\superLU_MT\clacon.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\clangs.c"
+				RelativePath="..\third_party\superLU_MT\clangs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\claqgs.c"
+				RelativePath="..\third_party\superLU_MT\claqgs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\cmatgen.c"
+				RelativePath="..\third_party\superLU_MT\cmatgen.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\cmyblas2.c"
+				RelativePath="..\third_party\superLU_MT\cmyblas2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\colamd.c"
+				RelativePath="..\third_party\superLU_MT\colamd.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\cpivotgrowth.c"
+				RelativePath="..\third_party\superLU_MT\cpivotgrowth.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\creadhb.c"
+				RelativePath="..\third_party\superLU_MT\creadhb.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\creadmt.c"
+				RelativePath="..\third_party\superLU_MT\creadmt.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\csp_blas2.c"
+				RelativePath="..\third_party\superLU_MT\csp_blas2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\csp_blas3.c"
+				RelativePath="..\third_party\superLU_MT\csp_blas3.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dclock.c"
+				RelativePath="..\third_party\superLU_MT\dclock.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dcomplex.c"
+				RelativePath="..\third_party\superLU_MT\dcomplex.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dgscon.c"
+				RelativePath="..\third_party\superLU_MT\dgscon.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dgsequ.c"
+				RelativePath="..\third_party\superLU_MT\dgsequ.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dgsrfs.c"
+				RelativePath="..\third_party\superLU_MT\dgsrfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dgstrs.c"
+				RelativePath="..\third_party\superLU_MT\dgstrs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dlacon.c"
+				RelativePath="..\third_party\superLU_MT\dlacon.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dlamch.c"
+				RelativePath="..\third_party\superLU_MT\dlamch.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dlangs.c"
+				RelativePath="..\third_party\superLU_MT\dlangs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dlaqgs.c"
+				RelativePath="..\third_party\superLU_MT\dlaqgs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dmatgen.c"
+				RelativePath="..\third_party\superLU_MT\dmatgen.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dmyblas2.c"
+				RelativePath="..\third_party\superLU_MT\dmyblas2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dpivotgrowth.c"
+				RelativePath="..\third_party\superLU_MT\dpivotgrowth.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dreadhb.c"
+				RelativePath="..\third_party\superLU_MT\dreadhb.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dreadmt.c"
+				RelativePath="..\third_party\superLU_MT\dreadmt.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dsp_blas2.c"
+				RelativePath="..\third_party\superLU_MT\dsp_blas2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dsp_blas3.c"
+				RelativePath="..\third_party\superLU_MT\dsp_blas3.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\dzsum1.c"
+				RelativePath="..\third_party\superLU_MT\dzsum1.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\get_perm_c.c"
+				RelativePath="..\third_party\superLU_MT\get_perm_c.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\heap_relax_snode.c"
+				RelativePath="..\third_party\superLU_MT\heap_relax_snode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\icmax1.c"
+				RelativePath="..\third_party\superLU_MT\icmax1.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\izmax1.c"
+				RelativePath="..\third_party\superLU_MT\izmax1.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\lsame.c"
+				RelativePath="..\third_party\superLU_MT\lsame.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\memory_leak.c"
+				RelativePath="..\third_party\superLU_MT\memory_leak.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\mmd.c"
+				RelativePath="..\third_party\superLU_MT\mmd.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgssv.c"
+				RelativePath="..\third_party\superLU_MT\pcgssv.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgssvx.c"
+				RelativePath="..\third_party\superLU_MT\pcgssvx.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_bmod1D.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_bmod1D.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_bmod1D_mv2.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_bmod1D_mv2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_bmod2D.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_bmod2D.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_bmod2D_mv2.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_bmod2D_mv2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_column_bmod.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_column_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_column_dfs.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_column_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_copy_to_ucol.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_copy_to_ucol.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_factor_snode.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_factor_snode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_init.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_init.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_mark_busy_descends.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_mark_busy_descends.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_panel_bmod.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_panel_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_panel_dfs.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_panel_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_pivotL.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_pivotL.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_pruneL.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_pruneL.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_relax_snode.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_relax_snode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_scheduler.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_scheduler.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_snode_bmod.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_snode_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_snode_dfs.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_snode_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_thread.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_thread.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_thread_finalize.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_thread_finalize.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcgstrf_thread_init.c"
+				RelativePath="..\third_party\superLU_MT\pcgstrf_thread_init.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcmemory.c"
+				RelativePath="..\third_party\superLU_MT\pcmemory.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcutil.c"
+				RelativePath="..\third_party\superLU_MT\pcutil.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgssv.c"
+				RelativePath="..\third_party\superLU_MT\pdgssv.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgssvx.c"
+				RelativePath="..\third_party\superLU_MT\pdgssvx.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_bmod1D.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_bmod1D.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_bmod1D_mv2.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_bmod1D_mv2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_bmod2D.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_bmod2D.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_bmod2D_mv2.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_bmod2D_mv2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_column_bmod.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_column_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_column_dfs.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_column_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_copy_to_ucol.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_copy_to_ucol.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_factor_snode.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_factor_snode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_init.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_init.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_mark_busy_descends.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_mark_busy_descends.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_panel_bmod.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_panel_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_panel_dfs.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_panel_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_pivotL.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_pivotL.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_pruneL.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_pruneL.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_relax_snode.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_relax_snode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_scheduler.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_scheduler.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_snode_bmod.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_snode_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_snode_dfs.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_snode_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_thread.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_thread.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_thread_finalize.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_thread_finalize.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdgstrf_thread_init.c"
+				RelativePath="..\third_party\superLU_MT\pdgstrf_thread_init.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdmemory.c"
+				RelativePath="..\third_party\superLU_MT\pdmemory.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdutil.c"
+				RelativePath="..\third_party\superLU_MT\pdutil.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pmemory.c"
+				RelativePath="..\third_party\superLU_MT\pmemory.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgssv.c"
+				RelativePath="..\third_party\superLU_MT\psgssv.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgssvx.c"
+				RelativePath="..\third_party\superLU_MT\psgssvx.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_bmod1D.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_bmod1D.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_bmod1D_mv2.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_bmod1D_mv2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_bmod2D.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_bmod2D.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_bmod2D_mv2.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_bmod2D_mv2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_column_bmod.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_column_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_column_dfs.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_column_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_copy_to_ucol.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_copy_to_ucol.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_factor_snode.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_factor_snode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_init.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_init.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_mark_busy_descends.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_mark_busy_descends.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_panel_bmod.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_panel_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_panel_dfs.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_panel_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_pivotL.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_pivotL.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_pruneL.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_pruneL.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_relax_snode.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_relax_snode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_scheduler.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_scheduler.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_snode_bmod.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_snode_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_snode_dfs.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_snode_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_thread.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_thread.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_thread_finalize.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_thread_finalize.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psgstrf_thread_init.c"
+				RelativePath="..\third_party\superLU_MT\psgstrf_thread_init.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psmemory.c"
+				RelativePath="..\third_party\superLU_MT\psmemory.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\psutil.c"
+				RelativePath="..\third_party\superLU_MT\psutil.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pxgstrf_finalize.c"
+				RelativePath="..\third_party\superLU_MT\pxgstrf_finalize.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pxgstrf_mark_busy_descends.c"
+				RelativePath="..\third_party\superLU_MT\pxgstrf_mark_busy_descends.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pxgstrf_pruneL.c"
+				RelativePath="..\third_party\superLU_MT\pxgstrf_pruneL.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pxgstrf_relax_snode.c"
+				RelativePath="..\third_party\superLU_MT\pxgstrf_relax_snode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pxgstrf_scheduler.c"
+				RelativePath="..\third_party\superLU_MT\pxgstrf_scheduler.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pxgstrf_super_bnd_dfs.c"
+				RelativePath="..\third_party\superLU_MT\pxgstrf_super_bnd_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pxgstrf_synch.c"
+				RelativePath="..\third_party\superLU_MT\pxgstrf_synch.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgssv.c"
+				RelativePath="..\third_party\superLU_MT\pzgssv.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgssvx.c"
+				RelativePath="..\third_party\superLU_MT\pzgssvx.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_bmod1D.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_bmod1D.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_bmod1D_mv2.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_bmod1D_mv2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_bmod2D.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_bmod2D.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_bmod2D_mv2.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_bmod2D_mv2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_column_bmod.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_column_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_column_dfs.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_column_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_copy_to_ucol.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_copy_to_ucol.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_factor_snode.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_factor_snode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_init.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_init.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_mark_busy_descends.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_mark_busy_descends.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_panel_bmod.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_panel_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_panel_dfs.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_panel_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_pivotL.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_pivotL.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_pruneL.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_pruneL.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_relax_snode.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_relax_snode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_scheduler.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_scheduler.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_snode_bmod.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_snode_bmod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_snode_dfs.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_snode_dfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_thread.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_thread.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_thread_finalize.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_thread_finalize.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzgstrf_thread_init.c"
+				RelativePath="..\third_party\superLU_MT\pzgstrf_thread_init.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzmemory.c"
+				RelativePath="..\third_party\superLU_MT\pzmemory.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzutil.c"
+				RelativePath="..\third_party\superLU_MT\pzutil.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\qrnzcnt.c"
+				RelativePath="..\third_party\superLU_MT\qrnzcnt.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\scomplex.c"
+				RelativePath="..\third_party\superLU_MT\scomplex.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\scsum1.c"
+				RelativePath="..\third_party\superLU_MT\scsum1.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\sgscon.c"
+				RelativePath="..\third_party\superLU_MT\sgscon.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\sgsequ.c"
+				RelativePath="..\third_party\superLU_MT\sgsequ.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\sgsrfs.c"
+				RelativePath="..\third_party\superLU_MT\sgsrfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\sgstrs.c"
+				RelativePath="..\third_party\superLU_MT\sgstrs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\slacon.c"
+				RelativePath="..\third_party\superLU_MT\slacon.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\slamch.c"
+				RelativePath="..\third_party\superLU_MT\slamch.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\slangs.c"
+				RelativePath="..\third_party\superLU_MT\slangs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\slaqgs.c"
+				RelativePath="..\third_party\superLU_MT\slaqgs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\smatgen.c"
+				RelativePath="..\third_party\superLU_MT\smatgen.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\smyblas2.c"
+				RelativePath="..\third_party\superLU_MT\smyblas2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\sp_coletree.c"
+				RelativePath="..\third_party\superLU_MT\sp_coletree.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\sp_colorder.c"
+				RelativePath="..\third_party\superLU_MT\sp_colorder.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\sp_ienv.c"
+				RelativePath="..\third_party\superLU_MT\sp_ienv.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\spivotgrowth.c"
+				RelativePath="..\third_party\superLU_MT\spivotgrowth.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\sreadhb.c"
+				RelativePath="..\third_party\superLU_MT\sreadhb.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\sreadmt.c"
+				RelativePath="..\third_party\superLU_MT\sreadmt.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\ssp_blas2.c"
+				RelativePath="..\third_party\superLU_MT\ssp_blas2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\ssp_blas3.c"
+				RelativePath="..\third_party\superLU_MT\ssp_blas3.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\superlu_timer.c"
+				RelativePath="..\third_party\superLU_MT\superlu_timer.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\util.c"
+				RelativePath="..\third_party\superLU_MT\util.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\xerbla.c"
+				RelativePath="..\third_party\superLU_MT\xerbla.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zgscon.c"
+				RelativePath="..\third_party\superLU_MT\zgscon.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zgsequ.c"
+				RelativePath="..\third_party\superLU_MT\zgsequ.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zgsrfs.c"
+				RelativePath="..\third_party\superLU_MT\zgsrfs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zgstrs.c"
+				RelativePath="..\third_party\superLU_MT\zgstrs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zlacon.c"
+				RelativePath="..\third_party\superLU_MT\zlacon.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zlangs.c"
+				RelativePath="..\third_party\superLU_MT\zlangs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zlaqgs.c"
+				RelativePath="..\third_party\superLU_MT\zlaqgs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zmatgen.c"
+				RelativePath="..\third_party\superLU_MT\zmatgen.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zmyblas2.c"
+				RelativePath="..\third_party\superLU_MT\zmyblas2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zpivotgrowth.c"
+				RelativePath="..\third_party\superLU_MT\zpivotgrowth.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zreadhb.c"
+				RelativePath="..\third_party\superLU_MT\zreadhb.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zreadmt.c"
+				RelativePath="..\third_party\superLU_MT\zreadmt.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zsp_blas2.c"
+				RelativePath="..\third_party\superLU_MT\zsp_blas2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\zsp_blas3.c"
+				RelativePath="..\third_party\superLU_MT\zsp_blas3.c"
 				>
 			</File>
 		</Filter>
@@ -1062,59 +1062,53 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\colamd.h"
+				RelativePath="..\third_party\superLU_MT\colamd.h"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pcsp_defs.h"
+				RelativePath="..\third_party\superLU_MT\pcsp_defs.h"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pdsp_defs.h"
+				RelativePath="..\third_party\superLU_MT\pdsp_defs.h"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pssp_defs.h"
+				RelativePath="..\third_party\superLU_MT\pssp_defs.h"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pxgstrf_synch.h"
+				RelativePath="..\third_party\superLU_MT\pxgstrf_synch.h"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\pzsp_defs.h"
+				RelativePath="..\third_party\superLU_MT\pzsp_defs.h"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\slu_dcomplex.h"
+				RelativePath="..\third_party\superLU_MT\slu_dcomplex.h"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\slu_mt_Cnames.h"
+				RelativePath="..\third_party\superLU_MT\slu_mt_Cnames.h"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\slu_mt_machines.h"
+				RelativePath="..\third_party\superLU_MT\slu_mt_machines.h"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\slu_mt_util.h"
+				RelativePath="..\third_party\superLU_MT\slu_mt_util.h"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\slu_scomplex.h"
+				RelativePath="..\third_party\superLU_MT\slu_scomplex.h"
 				>
 			</File>
 			<File
-				RelativePath="..\third_party\superLU_MT\SRC\supermatrix.h"
+				RelativePath="..\third_party\superLU_MT\supermatrix.h"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
-			>
 		</Filter>
 	</Files>
 	<Globals>
