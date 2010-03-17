@@ -101,6 +101,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "validate", "validate.vcproj
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pthreads", "..\pthreads\pthreads.vcproj", "{813FB401-55B7-4215-9BB1-4ECDB809FFCD}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GldEditor", "..\GldEditor\GldEditor.vcproj", "{F21B300C-C8F1-4A96-A008-DC155AA59F8D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -480,6 +482,18 @@ Global
 		{813FB401-55B7-4215-9BB1-4ECDB809FFCD}.Release|Win32.Build.0 = Release|Win32
 		{813FB401-55B7-4215-9BB1-4ECDB809FFCD}.Release|x64.ActiveCfg = Release|x64
 		{813FB401-55B7-4215-9BB1-4ECDB809FFCD}.Release|x64.Build.0 = Release|x64
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.Debug|Win32.Build.0 = Debug|Win32
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.Debug|x64.ActiveCfg = Debug|Win32
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.MatlabDebug|x64.ActiveCfg = Debug|Win32
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.QuickDebug|Win32.ActiveCfg = Debug|Win32
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.QuickDebug|Win32.Build.0 = Debug|Win32
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.QuickDebug|x64.ActiveCfg = Debug|Win32
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.Release|Win32.ActiveCfg = Release|Win32
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.Release|Win32.Build.0 = Release|Win32
+		{F21B300C-C8F1-4A96-A008-DC155AA59F8D}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
