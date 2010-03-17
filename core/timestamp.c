@@ -123,7 +123,7 @@ int isdst(TIMESTAMP t)
 {
 	int year = timestamp_year(t + tzoffset, NULL) - YEAR0;
 	
-	return dststart[year] <= t && t < dstend[year];
+	return dststart>=0 && dststart[year] <= t && t < dstend[year];
 }
 
 /** Calculate the current TZ offset in seconds
@@ -377,7 +377,7 @@ TIMESTAMP compute_dstevent(int year, SPEC *spec, time_t offset){
 		|| spec->minute<0 || spec->minute>59
 		|| spec->month<0 || spec->month>11
 		|| spec->nth<0 || spec->nth>5){
-		output_error("compute_dstevent: ");
+		output_error("compute_dstevent: date/time values are not valid");
 		return -1;
 	}
 
@@ -518,14 +518,19 @@ char *tz_dst(char *tzspec){
 void set_tzspec(int year, char *tzname, SPEC *pStart, SPEC *pEnd){
 	int y;
 
-	if(pStart == 0 && pEnd == 0){
-		return;
-	}
+	//if(pStart == 0 && pEnd == 0){
+	//	return;
+	//}
 
 	for (y = year - YEAR0; y < sizeof(tszero) / sizeof(tszero[0]); y++)
 	{
-		dststart[y] = compute_dstevent(y + YEAR0, pStart, tzoffset);
-		dstend[y] = compute_dstevent(y + YEAR0, pEnd, tzoffset);
+		if (pStart!=NULL && pEnd!=NULL) // no DST events (cf. ticket:372)
+		{
+			dststart[y] = compute_dstevent(y + YEAR0, pStart, tzoffset);
+			dstend[y] = compute_dstevent(y + YEAR0, pEnd, tzoffset);
+		}
+		else
+			dststart[y] = dstend[y] = -1; 
 	}
 }
 
