@@ -28,7 +28,7 @@ object capacitor:9650 {
 	phases_connected ABC;
 	control VOLT;
 	voltage_set_high 7300; 
-	voltage_set_low 7100; 
+	voltage_set_low 7075; 
 	capacitor_A 0.2 MVAr;
 	capacitor_B 0.2 MVAr;
 	capacitor_C 0.2 MVAr;
@@ -101,7 +101,7 @@ object capacitor:9653 {
 	phases_connected ABC;
 	control VOLT;
 	voltage_set_high 7300; 
-	voltage_set_low 7100; 
+	voltage_set_low 7050; 
 	capacitor_A 0.2 MVAr;
 	capacitor_B 0.2 MVAr;
 	capacitor_C 0.2 MVAr;
@@ -126,7 +126,7 @@ object capacitor:9654 {
 	phases_connected   C;
 	control VOLT;
 	voltage_set_high 7300; 
-	voltage_set_low 7100; 
+	voltage_set_low 7000; 
 	capacitor_C 0.05 MVAr;
 	control_level INDIVIDUAL;
 	time_delay 30.0;
@@ -27310,7 +27310,7 @@ object regulator:9656 {
 object regulator_configuration:9657 {
 	name feeder_reg_cfg;
 	Control OUTPUT_VOLTAGE;
-	band_center 7200.0;
+	band_center 7970;
 	band_width 60.0;
 	connect_type WYE_WYE;
 	time_delay 30;
