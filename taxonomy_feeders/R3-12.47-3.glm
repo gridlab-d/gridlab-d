@@ -20,7 +20,6 @@ module powerflow{
 };
 
 
-
 object capacitor:12598 {
 	name R3-12-47-3_cap_1;
 	phases ABCN;
@@ -21590,6 +21589,7 @@ object overhead_line:10716 {
 	configuration line_configuration:25;
 }
 
+
 object overhead_line:10718 {
 	name R3-12-47-3_ol_109;
 	phases ABCN;
@@ -34207,6 +34207,14 @@ object overhead_line:12432 {
 	length 250.500;
 	configuration line_configuration:25;
 }
+object overhead_line:10716 {
+	name R3-12-47-3_ol_1511;
+	phases ABCN;
+	from R3-12-47-3_node_122;
+	to R3-12-47-3_node_121;
+	length 120.000;
+	configuration line_configuration:25;
+}
 
 
 object overhead_line_conductor:2 {
@@ -34264,21 +34272,12 @@ object regulator:12601 {
 object regulator_configuration:12602 {
 	name feeder_reg_cfg;
 	connect_type WYE_WYE;
-	band_center 120;
-	band_width 2;
+	Control OUTPUT_VOLTAGE;
+	band_center 7200.0;
+	band_width 60.0;
 	time_delay 30;
 	raise_taps 16;
 	lower_taps 16;
-	current_transducer_ratio  600;
-	power_transducer_ratio   60;
-	compensator_r_setting_A   6.0;
-	compensator_r_setting_B   6.0;
-	compensator_r_setting_C   6.0;
-	compensator_x_setting_A   12.0;
-	compensator_x_setting_B   12.0;
-	compensator_x_setting_C   12.0;
-	CT_phase ABC;
-	PT_phase ABC;
 	regulation 0.10;
 	tap_pos_A 0;
 	tap_pos_B 0;
@@ -34363,7 +34362,7 @@ object switch:12586 {
 	phases ABCN;
 	from R3-12-47-3_node_386;
 	to R3-12-47-3_node_2000;
-	status OPEN;
+	status CLOSED;
 }
 
 object switch:12587 {
