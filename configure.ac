@@ -55,9 +55,9 @@ fi
 
 # Putting -ansi in CPPFLAGS causes errors that prevent building.
 #CPPFLAGS="$CPPFLAGS $GLFLAGS -ansi"
-CPPFLAGS="$CPPFLAGS $GLFLAGS -march=$host_cpu"
-CXXFLAGS="$CXXFLAGS $GLFLAGS -march=$host_cpu"
-CFLAGS="$CFLAGS $GLFLAGS -march=$host_cpu"
+CPPFLAGS="$CPPFLAGS $GLFLAGS"
+CXXFLAGS="$CXXFLAGS $GLFLAGS"
+CFLAGS="$CFLAGS $GLFLAGS"
 
 case "$host_os" in
 darwin*)
@@ -99,24 +99,6 @@ test "$HAVE_XERCES" = "yes" || \
 		AC_MSG_FAILURE([Xerces library not found. If Xerces is not properly \
 installed, you probably need to use one or more of the --with-xerces options. \
 Try `./configure --help[`] for more information.])
-#AX_LIB_SUPERLU
-#if test "$HAVE_SUPERLU" != "yes"; then
-#	if test -f third_party/SuperLU_3.1/lib/libsuperlu_3.1.a; then
-#		SUPERLU_LIBS=$PWD/third_party/SuperLU_3.1/lib/libsuperlu_3.1.a
-#	elif test -f third_party/SuperLU_3.1/lib/libsuperlu.a; then
-#		SUPERLU_LIBS=$PWD/third_party/SuperLU_3.1/lib/libsuperlu.a
-#	else
-#		AC_MSG_FAILURE([SuperLU library not found. If SuperLU is not properly \
-#installed, you probably need to use one or more of the --with-superlu options. \
-#Try `./configure --help[`] for more information.])
-#	fi
-	SUPERLU_CPPFLAGS=-I$PWD/third_party/superLU_MT/SRC
-	SUPERLU_LDFLAGS=""
-	AC_SUBST(SUPERLU_CPPFLAGS)
-	AC_SUBST(SUPERLU_LDFLAGS)
-	AC_SUBST(SUPERLU_LIBS)
-	AC_DEFINE_UNQUOTED([HAVE_SUPERLU], [1], "Define to 1 if you have the SuperLU libraries (-lsuperlu)")
-#fi
 
 DX_INIT_DOXYGEN(gridlabd, [doxygen/gridlabd.conf])
 DX_HTML_FEATURE([ON])
@@ -185,6 +167,8 @@ AC_CONFIG_FILES([./Makefile \
 	tape_file/Makefile \
 	tape_plot/Makefile \
 	tape/Makefile \
+	third_party/CBLAS/Makefile \
+	third_party/superLU_MT/Makefile \
 	])
 
 AC_SUBST(CPPFLAGS)
