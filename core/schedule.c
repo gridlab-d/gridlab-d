@@ -172,6 +172,21 @@ int schedule_matcher(char *pattern, unsigned char *table, int max, int base)
 	return 1;
 }
 
+/// find_value_index -- search for a value in a schedule index
+/// @return the index number
+int find_value_index (SCHEDULE *sch, /// schedule to search
+					  unsigned char block, /// block to search
+					  double value) /// value to find
+{
+	int ndx;
+	for (ndx=0; ndx<(int)(sch->count[block]); ndx++)
+	{
+		if (sch->data[block*MAXVALUES+ndx] == value)
+			return ndx;
+	}
+	return -1;
+}
+
 /* compiles a single schedule block and report errors
    returns 1 on success, 0 on failure 
  */
@@ -192,7 +207,8 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 	}
 
 	/* first index is always default value 0 */
-	for (index=1; (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL; index++)
+	sch->count[sch->block*MAXVALUES]=1;
+	for (index=1; (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL;)
 	{
 		struct {
 			char *name;
@@ -209,6 +225,8 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}, *match;
 		unsigned int calendar;
 		double value=1.0; /* default value is 1.0 */
+		int ndx;
+
 		// bound checking
 		if(index > 63){
 			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, sch->block);
@@ -228,10 +246,14 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}
 		else
 		{
-			sch->data[sch->block*MAXVALUES+index] = value;
+			if ((ndx=find_value_index(sch,sch->block,value))==-1)
+			{	
+				ndx = ++index;
+				sch->data[sch->block*MAXVALUES+ndx] = value;
+				sch->count[sch->block]++;
+			}
 			sch->sum[sch->block] += value;
 			sch->abs[sch->block] += (value<0?-value:value); // check to see if the value already exists in the value array, if so, don't ++index and use existing indexed value
-			sch->count[sch->block]++;
 		}
 
 		/* compile matching tables */
@@ -256,6 +278,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 			unsigned int calendar = weekday*2+is_leapyear;
 			unsigned int month;
 			unsigned int days[] = {31,(is_leapyear?29:28),31,30,31,30,31,31,30,31,30,31};
+			unsigned int n = sch->block*MAXVALUES + ndx;
 			minute = 0;
 			for (month=0; month<12; month++)
 			{
@@ -298,9 +321,8 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 								else
 								{
 									/* associate this time with the current value */
-									unsigned int ndx = sch->block*MAXVALUES + index;
-									sch->index[calendar][minute] = ndx;
-									sch->weight[ndx]++;
+									sch->index[calendar][minute] = n;
+									sch->weight[n]++;
 									sch->minutes[sch->block]++;
 
 								}
@@ -639,11 +661,12 @@ int schedule_validate(SCHEDULE *sch, int flags)
 	for (b=0; b<MAXBLOCKS; b++) {
 		for (i=1; i<=sch->count[b]; i++)
 		{
-			double value = sch->data[b*MAXBLOCKS+i];
-			int unit =  (value==1.0);
-			int zero = (value==0.0);
-			int positive = (value>0.0);
-			int negative = (value<0.0);
+			double value = sch->data[b*MAXVALUES+i];
+			int weight = sch->weight[b*MAXVALUES+i];
+			int unit =  (weight>0 && value==1.0);
+			int zero = (weight>0 && value==0.0);
+			int positive = (weight>0 && value>0.0);
+			int negative = (weight>0 && value<0.0);
 			if ((flags&SN_BOOLEAN) && !(unit || zero))
 			{
 				output_error("schedule %s fails 'boolean' validation in block %s at schedule index %d", sch->name, sch->blockname[b], i);
@@ -697,13 +720,13 @@ int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
 				if (sch->weight[i]!=0)
 				{
 					nonzero = 1;
-					scale[i] += sch->data[b*MAXBLOCKS+i] * sch->weight[i] / sch->minutes[b];
+					scale[i] += sch->data[b*MAXVALUES+i] * sch->weight[i] / sch->minutes[b];
 				}
 			}
 			if (nonzero)
 			{
 				for (i=1; i<=sch->count[b]; i++)
-					sch->data[b*MAXBLOCKS+i]*=scale[i];
+					sch->data[b*MAXVALUES+i]*=scale[i];
 			}
 		}
 
@@ -718,7 +741,7 @@ int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
 				/* normalize the values */
 				count++;
 				for (i=1; i<=sch->count[b]; i++)
-					sch->data[b*MAXBLOCKS+i]/=scale;
+					sch->data[b*MAXVALUES+i]/=scale;
 			}
 		}
 	}
