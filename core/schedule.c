@@ -207,7 +207,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 	}
 
 	/* first index is always default value 0 */
-	sch->count[sch->block*MAXVALUES]=1;
+	sch->count[sch->block]=1;
 	for (index=1; (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL;)
 	{
 		struct {
