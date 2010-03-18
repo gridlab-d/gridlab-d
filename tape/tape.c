@@ -163,14 +163,14 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	gl_global_create("tape::gnuplot_path",PT_char1024,&tape_gnuplot_path,NULL);
 
 	/* register the first class implemented, use SHARE to reveal variables */
-	player_class = gl_register_class(module,"player",sizeof(struct player),PC_BOTTOMUP); 
+	player_class = gl_register_class(module,"player",sizeof(struct player),PC_PRETOPDOWN); 
 	PUBLISH_STRUCT(player,char32,property);
 	PUBLISH_STRUCT(player,char1024,file);
 	PUBLISH_STRUCT(player,char8,filetype);
 	PUBLISH_STRUCT(player,int32,loop);
 
 	/* register the first class implemented, use SHARE to reveal variables */
-	shaper_class = gl_register_class(module,"shaper",sizeof(struct shaper),PC_BOTTOMUP); 
+	shaper_class = gl_register_class(module,"shaper",sizeof(struct shaper),PC_PRETOPDOWN); 
 	PUBLISH_STRUCT(shaper,char1024,file);
 	PUBLISH_STRUCT(shaper,char8,filetype);
 	PUBLISH_STRUCT(shaper,char256,group);
