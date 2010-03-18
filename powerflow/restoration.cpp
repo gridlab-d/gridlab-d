@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <vector>
 #include <iostream>
 
 using namespace std;
@@ -433,13 +432,14 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 	double cont_rating;
 	bool pf_bad_computations, pf_valid_solution, fc_all_supported, good_solution, rating_exceeded, separation_oos, system_restored; // bool separation_oos indicates if the switching operations that separate the out-of-service area are requried.
 	complex temp_current[3];
-	unsigned int indexx, indexy, indexz, num_unsupported, indexbr, tempbr, temp_num_switch;
+	unsigned int indexx, indexy, indexz, num_unsupported, indexbr, tempbr, temp_num_switch, temp_idx;
 	unsigned int tie_switch_number,sec_switch_number;
 	int conval;
 	int temp_feeder_id, temp_branch_id, initial_search_node;
-	vector<int> candidate_tie_switch;
-	vector<int> candidate_switch_operation;
-    vector<int> temp_switch;
+	VECTARRAY candidate_tie_switch;
+	VECTARRAY candidate_switch_operation;
+    VECTARRAY temp_switch;
+	int array_expected_size;
   
 
 
@@ -605,7 +605,20 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 	// Secondly, searching for the tie-switches connecting to the out-of-service area		
 		
 	unsigned int temp_num;
-	candidate_tie_switch.reserve(tie_switch_number); 
+
+	candidate_tie_switch.Data = (int*)gl_malloc(tie_switch_number*sizeof(int)); 
+	if (candidate_tie_switch.Data == NULL)
+		GL_THROW("Candidate tie switch memory allocation failed");
+
+	candidate_tie_switch.DataLength = tie_switch_number;
+
+	//Initialize it
+	for (indexbr = 0; indexbr < tie_switch_number; indexbr++)
+		candidate_tie_switch.Data[indexbr] = -1;
+
+	temp_idx = 0;	//Reset pointer
+	candidate_tie_switch.IdxVar = 0;
+
 	for (indexbr = 0; indexbr < tie_switch_number; indexbr ++)
 	{
 		temp_num = tie_switch[indexbr];
@@ -613,22 +626,41 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 		{
 			if ( (NR_branchdata[temp_num].from == unsupported_node[indexx])  ||  (NR_branchdata[temp_num].to == unsupported_node[indexx] ))
 			{
-				candidate_tie_switch.push_back(temp_num);  // save the candidate switch in the list
+				candidate_tie_switch.Data[temp_idx] = temp_num;// save the candidate switch in the list
+				temp_idx++;
 				break;
 			}
 		}
 	}
 
+	//Store how many elements we actually needed (original statements below implies it may not always use full values)
+	candidate_tie_switch.IdxVar = temp_idx;
+
 	// if there is not a single tie-switch connecting to the out-of-service area, no restoration strategy can be found. Printing the notice.
 	
-	while (candidate_tie_switch.empty())
+	if (candidate_tie_switch.Data[0] == -1)
 	{
 		printf(" There is not a single tie-switch connecting to the out-of-service area. \n");
 		printf(" The system can not be restored. \n");
 		reconfig_attempts = 0 ;
-		break;
 	}
-   
+
+	//Allocate the candidate_switch_operation array - initial guess on size, this will likely need to be refined when there is more time to examine the algorithm (vector removal code)
+	array_expected_size = tie_switch_number*(tie_switch_number + 6*sec_switch_number + candidate_tie_switch.IdxVar);
+	candidate_switch_operation.Data = (int*)gl_malloc(array_expected_size*sizeof(int));
+	if (candidate_switch_operation.Data == NULL)
+		GL_THROW("candidate switch operation data malloc failed");
+
+	candidate_switch_operation.DataLength = array_expected_size;
+	candidate_switch_operation.IdxVar = 0;
+  
+	temp_switch.DataLength = (2*tie_switch_number+1)*candidate_tie_switch.IdxVar+1;
+	temp_switch.Data = (int*)gl_malloc(temp_switch.DataLength*sizeof(int));
+	if (temp_switch.Data == NULL)
+		GL_THROW("temp_switch malloc failed.");
+
+	temp_switch.IdxVar = 0;
+
 	/* Candidate solution searching and checking phase*/
    while (reconfig_switch_number < tie_switch_number)
 	{
@@ -636,10 +668,11 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 		// When the number of  tie switching operation is just one , which is closing the tie switch
         if ( reconfig_switch_number == 1) 
 		{
-			tempbr = candidate_tie_switch.size();
+			tempbr = candidate_tie_switch.IdxVar;
 			for ( indexx = 0; indexx < tempbr; indexx++)
 			{
-				candidate_switch_operation.push_back(candidate_tie_switch.at(indexx)); //  candidate_switch_operation store the switching operations when reconfig_switch_number is one.
+				candidate_switch_operation.Data[candidate_switch_operation.IdxVar] = candidate_tie_switch.Data[indexx]; //  candidate_switch_operation store the switching operations when reconfig_switch_number is one.
+				candidate_switch_operation.IdxVar++;
 			}
 		}
 
@@ -648,9 +681,9 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 		if ( reconfig_switch_number == 2)
 		{
 			temp_num_switch = 0; // temp_num_switch records the number of tie-switching operation pairs
-			for (indexx = 0; indexx < candidate_tie_switch.size(); indexx++)
+			for (indexx = 0; indexx < candidate_tie_switch.IdxVar; indexx++)
 			{
-			      tempbr = candidate_tie_switch.at(indexx); // for each switch connecting to the out-of-service area
+				  tempbr = candidate_tie_switch.Data[indexx]; // for each switch connecting to the out-of-service area
 				  for ( indexy = 0; indexy < tie_switch_number; indexy ++ )
 				  {
 					  indexz = tie_switch[indexy];
@@ -666,25 +699,30 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 					  {						   
 							if ( indexz != tempbr)		
 							{
-							temp_switch.push_back(tempbr);
-							temp_switch.push_back(indexz);
+							temp_switch.Data[temp_switch.IdxVar] = tempbr;
+							temp_switch.IdxVar++;
+							temp_switch.Data[temp_switch.IdxVar] = indexz;
+							temp_switch.IdxVar++;
 							temp_num_switch+=2;
 							}
 					  }
 				  } // end of for indexy
 			}// end of for candidate_tie_switch traverse
 
-        temp_switch.push_back(-1); // -1 is flag to indicate the following operationgs.
+		temp_switch.Data[temp_switch.IdxVar] = -1; // -1 is flag to indicate the following operationgs.
+		temp_switch.IdxVar++;
 		temp_num_switch++;
 
  // Searching for the switching operation pairs that are both connecting to the out-of-service area directly
-		for (indexx =0; indexx < candidate_tie_switch.size(); indexx++)
+		for (indexx =0; indexx < candidate_tie_switch.IdxVar; indexx++)
 		{
-			for (indexy = indexx+1; indexy < candidate_tie_switch.size(); indexy++)
+			for (indexy = indexx+1; indexy < candidate_tie_switch.IdxVar; indexy++)
 			{
-				temp_switch.push_back(candidate_tie_switch.at(indexx));
+				temp_switch.Data[temp_switch.IdxVar] = candidate_tie_switch.Data[indexx];
+				temp_switch.IdxVar++;
 				temp_num_switch++;
-				temp_switch.push_back(candidate_tie_switch.at(indexy));
+				temp_switch.Data[temp_switch.IdxVar] = candidate_tie_switch.Data[indexy];
+				temp_switch.IdxVar++;
 				temp_num_switch++;
 			}
 		}
@@ -694,13 +732,13 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 		separation_oos = false;
 		for ( indexx =0; indexx < temp_num_switch; indexx ++)
 		{ 
-			temp_branch_id = temp_switch.at(indexx);
-			if ((temp_branch_id == -1) && ( temp_branch_id != temp_switch.back()))
+			temp_branch_id = temp_switch.Data[indexx];
+			if ((temp_branch_id == -1) && ( temp_branch_id != temp_switch.Data[(temp_switch.IdxVar-1)]))
 			{
 				separation_oos = true;
 				indexx ++;
 			}
-			else if ((temp_branch_id == -1) && ( temp_branch_id == temp_switch.back()))
+			else if ((temp_branch_id == -1) && ( temp_branch_id == temp_switch.Data[(temp_switch.IdxVar-1)]))
 			{
 				break;
 			}
@@ -716,7 +754,7 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 					temp_feeder_id = feeder_id[NR_branchdata[temp_branch_id].from];
 				}
 				indexx++;
-				temp_branch_id = temp_switch.at(indexx);
+				temp_branch_id = temp_switch.Data[indexx];
 				if ( feeder_id[NR_branchdata[temp_branch_id].from] == temp_feeder_id )
 				{
 					initial_search_node =  (NR_branchdata[temp_branch_id].from);
@@ -730,9 +768,12 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 				{
 					for ( indexz = indexy; indexz > 0; indexz--)
 					{
-						candidate_switch_operation.push_back(temp_switch.at(indexx-1));
-						candidate_switch_operation.push_back(temp_switch.at(indexx));
-						candidate_switch_operation.push_back(candidate_sec_switch[indexz-1]); // candidate_switch_operation store the switching operations
+						candidate_switch_operation.Data[candidate_switch_operation.IdxVar] = temp_switch.Data[(indexx-1)];
+						candidate_switch_operation.IdxVar++;
+						candidate_switch_operation.Data[candidate_switch_operation.IdxVar]= temp_switch.Data[indexx];
+						candidate_switch_operation.IdxVar++;
+						candidate_switch_operation.Data[candidate_switch_operation.IdxVar] = candidate_sec_switch[indexz-1]; // candidate_switch_operation store the switching operations
+						candidate_switch_operation.IdxVar++;
 					}
 				}
 			}
@@ -742,34 +783,52 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 					{
 						if ((feeder_id[NR_branchdata[sec_switch[indexbr]].from] == -1) && (feeder_id[NR_branchdata[sec_switch[indexbr]].to] == -1))
 						{
-						candidate_switch_operation.push_back(temp_switch.at(indexx));
-						candidate_switch_operation.push_back(temp_switch.at(indexx+1));
-						candidate_switch_operation.push_back(sec_switch[indexbr]); // candidate_switch_operation store the switching operations
+						candidate_switch_operation.Data[candidate_switch_operation.IdxVar] = temp_switch.Data[indexx];
+						candidate_switch_operation.IdxVar++;
+						candidate_switch_operation.Data[candidate_switch_operation.IdxVar] = temp_switch.Data[(indexx+1)];
+						candidate_switch_operation.IdxVar++;
+						candidate_switch_operation.Data[candidate_switch_operation.IdxVar] = sec_switch[indexbr]; // candidate_switch_operation store the switching operations
+						candidate_switch_operation.IdxVar++;
 						}
 					}
 					indexx++;
 			} // end of else (separation_oss == true)
 		}
         
-		candidate_tie_switch.clear();
-	    tempbr	= temp_switch.size();
+		tempbr	= temp_switch.IdxVar;
+
+		if (tempbr > candidate_tie_switch.DataLength)	//It's bigger - realloc - hopefully we won't need to do this
+		{
+			gl_free(candidate_tie_switch.Data);
+			candidate_tie_switch.Data=(int*)gl_malloc(tempbr*sizeof(int));
+			if (candidate_tie_switch.Data == NULL)
+				GL_THROW("Malloc of candidate_tie_switch failed");
+
+			candidate_tie_switch.DataLength = tempbr;
+			candidate_tie_switch.IdxVar = 0;
+		}
+		else	//Size is ok
+			candidate_tie_switch.IdxVar = 0;
 
 		for (indexx = 0; indexx < tempbr; indexx++)
 		{
-			candidate_tie_switch.push_back(temp_switch.back());// copy the tie-switching operations into the candidate_tie_switch 
-			temp_switch.pop_back(); // remove the last candidate switch in the list of temp_switch
+			temp_switch.IdxVar--;	//Put to "current" location
+			candidate_tie_switch.Data[candidate_tie_switch.IdxVar] = temp_switch.Data[temp_switch.IdxVar];// copy the tie-switching operations into the candidate_tie_switch 
+			candidate_tie_switch.IdxVar++;
 		}
 	} // end of  reconfig_switch_number == 2
 
   /* Change the switch status in the candidate list, if the candidate switch is closed, open this switch. Or if the candidate switch
 	is open, then close this switch*/
-		while (!candidate_switch_operation.empty()) // If there is a candidate switch in the solution list
+	while (candidate_switch_operation.IdxVar != 0) // If there is a candidate switch in the solution list
 		{
 			for ( indexx = 0; indexx < (2*reconfig_switch_number -1); indexx++)
 			{
-			temp_branch_id = candidate_switch_operation.back();// Get the last candidate switch in the list
-			temp_switch.push_back(temp_branch_id);
-			candidate_switch_operation.pop_back(); // remove the last candidate switch in the list
+			candidate_switch_operation.IdxVar--;	//Always is at "next" spot, so we need to go down
+			temp_branch_id = candidate_switch_operation.Data[candidate_switch_operation.IdxVar];// Get the last candidate switch in the list
+			temp_switch.Data[temp_switch.IdxVar] = temp_branch_id;
+			temp_switch.IdxVar++;
+
 
 							//Get the switch's object linking
 							tempobj = gl_get_object(NR_branchdata[temp_branch_id].name);
@@ -916,10 +975,10 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 				fprintf(FPCONNECT, "The minimum voltage in the system is ");
 				fprintf(FPCONNECT, "%f", min_V_system);
 				fprintf(FPCONNECT, "of the nominal voltage. ");
-				tempbr = temp_switch.size();
+				tempbr = temp_switch.IdxVar;
 				for ( indexz = 0; indexz <tempbr; indexz++)
 				{
-			 		temp_branch_id = temp_switch.at(indexz);
+			 		temp_branch_id = temp_switch.Data[indexz];
 					indexx = ((NR_branchdata[temp_branch_id]).from); 
 					indexy = ((NR_branchdata[temp_branch_id]).to);  		
 					 if ((*NR_branchdata[temp_branch_id].status) == true)   // The switch is closed
@@ -1102,12 +1161,12 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 			//Check to see if we're done, or need to reconfigure again, and print out of the solutions( switching operations)
 			if ((good_solution == true) && (pf_valid_solution == true))
 			{
-				tempbr = temp_switch.size();
+				tempbr = temp_switch.IdxVar;
 				system_restored = true;	
 				printf("\n The system is successfully restored by the following switching operations:\n");
 				for ( indexz = 0; indexz <tempbr; indexz++)
 				{
-			 		temp_branch_id = temp_switch.at(indexz);
+					temp_branch_id = temp_switch.Data[indexz];
 					indexx = ((NR_branchdata[temp_branch_id]).from); 
 					indexy = ((NR_branchdata[temp_branch_id]).to);  		
 					 if ((*NR_branchdata[temp_branch_id].status) == true)   // The switch is closed
@@ -1129,10 +1188,10 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 			}
 
 			//  change the system to the original status, since the candidate solution is not a good solution
-			tempbr = temp_switch.size();
+			tempbr = temp_switch.IdxVar;
 			for ( indexz = 0; indexz < tempbr; indexz++)
 			{
-			        temp_branch_id = temp_switch.at(indexz);
+					temp_branch_id = temp_switch.Data[indexz];
 
 							//Get the switch's object linking
 							tempobj = gl_get_object(NR_branchdata[temp_branch_id].name);
@@ -1152,7 +1211,7 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 								SwitchDevice->set_switch(true);	//True = closed, false = open
 								}  
 			}
-			temp_switch.clear();
+			temp_switch.IdxVar=0;
 			reconfig_number++;	//Increment the reconfiguration counter
 		}//end of while the candidate_switch_operations is not empty 
 	if (system_restored == true)
@@ -1168,6 +1227,11 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 		the value of reconfig_attempts.
 		*/
 	}
+
+	//Remove dynamic allocation stuff - this will be handled better once the code is all finalized
+	gl_free(candidate_tie_switch.Data);
+	gl_free(candidate_switch_operation.Data);
+	gl_free(temp_switch.Data);
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <math.h>
 #include <iostream>
-#include <vector>
+
 using namespace std;
 
 #include "fault_check.h"

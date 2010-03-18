@@ -6,13 +6,18 @@
 
 #include "powerflow.h"
 #include "powerflow_library.h"
-#include <vector>
 
 #define CONN_NONE 0		//No connectivity
 #define CONN_LINE 1		//Normal "line" - OH, UH, Triplex, transformer
 #define CONN_FUSE 2		//Fuse connection
 #define CONN_SWITCH 3	//Switch connection - controllable via "status"
 #define CONN_XFRM 4		//Transformer connection or regulator
+
+typedef struct  {
+	int *Data;					//Pointer for the array
+	unsigned int DataLength;	//Length of the allocated space
+	unsigned int IdxVar;					//Variable for misc tracking - like how much space actually used
+} VECTARRAY;
 
 class restoration : public powerflow_library
 {
