@@ -57,6 +57,9 @@ EXTRA_gridlabd_bin_SOURCES = \
 	cmex.c cmex.h
 BUILT_SOURCES = build.h
 CLEANFILES = build.h
+pkginclude_HEADERS = \
+	build.h class.h complex.h debug.h enduse.h exception.h loadshape.h lock.h \
+	module.h object.h schedule.h test.h version.h
 
 build.h: buildnum
 
