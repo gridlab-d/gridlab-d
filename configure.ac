@@ -53,11 +53,17 @@ if [[ "$optimization" ]]; then
 	GLFLAGS="$GLFLAGS -O$optimization"
 fi
 
+case "$host_cpu" in
+	i386) AC_MSG_FAILURE([Sorry, i386 is not a supported architecture]);;
+	i486|i586|i686) march="-march=$host_cpu";;
+	*) march="";;
+esac
+
 # Putting -ansi in CPPFLAGS causes errors that prevent building.
 #CPPFLAGS="$CPPFLAGS $GLFLAGS -ansi"
-CPPFLAGS="$CPPFLAGS $GLFLAGS"
-CXXFLAGS="$CXXFLAGS $GLFLAGS"
-CFLAGS="$CFLAGS $GLFLAGS"
+CPPFLAGS="$CPPFLAGS $GLFLAGS $march"
+CXXFLAGS="$CXXFLAGS $GLFLAGS $march"
+CFLAGS="$CFLAGS $GLFLAGS $march"
 
 case "$host_os" in
 darwin*)

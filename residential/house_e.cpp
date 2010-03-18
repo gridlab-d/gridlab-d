@@ -88,7 +88,7 @@
 #include "complex.h"
 
 #ifndef WIN32
-char *strlwr(char *s)
+char *_strlwr(char *s)
 {
 	char *r=s;
 	while (*s!='\0') 
