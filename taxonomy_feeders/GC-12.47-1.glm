@@ -1,4 +1,5 @@
 // $Id: GC-12.47-1.glm 
+// 12.47 kV feeder
 //*********************************************
 
 clock{
@@ -114,13 +115,13 @@ object load:36 {
 	name GC-12-47-1_load_1;
 	parent GC-12-47-1_meter_1;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
 	constant_power_A 585277.7504+357997.618j;
 	constant_power_B 596917.157+361239.5414j;
 	constant_power_C 592476.6189+358995.6939j;
-	nominal_voltage 7199.558;
+	nominal_voltage 7200;
 	load_class I;
 }
 
@@ -128,13 +129,13 @@ object load:37 {
 	name GC-12-47-1_load_2;
 	parent GC-12-47-1_meter_2;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
 	constant_power_A 585277.7504+357997.618j;
 	constant_power_B 596917.157+361239.5414j;
 	constant_power_C 592476.6189+358995.6939j;
-	nominal_voltage 7199.558;
+	nominal_voltage 7200;
 	load_class I;
 }
 
@@ -142,13 +143,13 @@ object load:38 {
 	name GC-12-47-1_load_3;
 	parent GC-12-47-1_meter_3;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
 	constant_power_A 585277.7504+357997.618j;
 	constant_power_B 596917.157+361239.5414j;
 	constant_power_C 592476.6189+358995.6939j;
-	nominal_voltage 7199.558;
+	nominal_voltage 7200;
 	load_class I;
 }
 
@@ -156,293 +157,293 @@ object load:38 {
 object meter:39 {
 	name GC-12-47-1_meter_1;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object meter:40 {
 	name GC-12-47-1_meter_2;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object meter:41 {
 	name GC-12-47-1_meter_3;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 // Meter at feeder
 object meter:73 {
 	name GC-12-47-1_meter_4;
 	phases ABCN;
-	nominal_voltage 7199.558; 
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200; 
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
 }
 
 
 object node:9 {
 	name GC-12-47-1_node_1;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:10 {
 	name GC-12-47-1_node_2;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:11 {
 	name GC-12-47-1_node_3;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:12 {
 	name GC-12-47-1_node_4;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:13 {
 	name GC-12-47-1_node_5;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:14 {
 	name GC-12-47-1_node_6;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:15 {
 	name GC-12-47-1_node_7;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:16 {
 	name GC-12-47-1_node_8;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:17 {
 	name GC-12-47-1_node_9;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:18 {
 	name GC-12-47-1_node_10;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:19 {
 	name GC-12-47-1_node_11;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:20 {
 	name GC-12-47-1_node_12;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:21 {
 	name GC-12-47-1_node_13;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:22 {
 	name GC-12-47-1_node_14;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:23 {
 	name GC-12-47-1_node_15;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:24 {
 	name GC-12-47-1_node_16;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:25 {
 	name GC-12-47-1_node_17;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:26 {
 	name GC-12-47-1_node_18;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:27 {
 	name GC-12-47-1_node_19;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:28 {
 	name GC-12-47-1_node_20;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:29 {
 	name GC-12-47-1_node_21;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:30 {
 	name GC-12-47-1_node_22;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:31 {
 	name GC-12-47-1_node_23;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:32 {
 	name GC-12-47-1_node_24;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:33 {
 	name GC-12-47-1_node_25;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:34 {
 	name GC-12-47-1_node_26;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:35 {
 	name GC-12-47-1_node_27;
 	parent GC-12-47-1_meter_4;
 	phases ABCN;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
-	nominal_voltage 7199.558;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
+	nominal_voltage 7200;
 }
 
 object node:76 {
 	name GC-12-47-1_node_28;
 	phases ABCN;
 	bustype SWING;
-	nominal_voltage 7199.558;
-	voltage_A 7199.558+0.0j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+	voltage_A 7200+0.0j;
+	voltage_B -3600-6235j;
+	voltage_C -3600+6235j;
 }
 
 

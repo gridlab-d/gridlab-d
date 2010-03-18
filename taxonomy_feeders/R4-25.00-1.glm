@@ -1,4 +1,5 @@
 // $Id: R4-25.00-1.glm
+// 24.9 kV feeder
 //*********************************************
 
 clock{
@@ -407,11 +408,11 @@ object load:259 {
 	name R4-25-00-1_load_1;
 	parent R4-25-00-1_meter_1;
 	phases ACN;
-	voltage_A 14376.022+0.0j;
-	voltage_C -7188.011+12450.000j;
+	voltage_A 14376.02+0.0j;
+	voltage_C -7188.01+12450j;
 	constant_power_A 5000+1000j;
 	constant_power_C 5000+1000j;
-	nominal_voltage 14376.022;
+	nominal_voltage 14376.02;
 	load_class C;
 }
 
@@ -419,1700 +420,1700 @@ object load:259 {
 object meter:680 {
 	name R4-25-00-1_meter_1;
 	phases ACN;
-	voltage_A 14376.022+0.0j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 // Meter at feeder
 object meter:1210 {
 	name R4-25-00-1_meter_2;
 	phases ABCN;
-	nominal_voltage 14376.022; 
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
+	nominal_voltage 14376.02; 
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
 }
 
 
 object node:29 {
 	name R4-25-00-1_node_1;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:30 {
 	name R4-25-00-1_node_2;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:31 {
 	name R4-25-00-1_node_3;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:32 {
 	name R4-25-00-1_node_4;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:33 {
 	name R4-25-00-1_node_5;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:34 {
 	name R4-25-00-1_node_6;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:35 {
 	name R4-25-00-1_node_7;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:36 {
 	name R4-25-00-1_node_8;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:37 {
 	name R4-25-00-1_node_9;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:38 {
 	name R4-25-00-1_node_10;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:39 {
 	name R4-25-00-1_node_11;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:40 {
 	name R4-25-00-1_node_12;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:41 {
 	name R4-25-00-1_node_13;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:42 {
 	name R4-25-00-1_node_14;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:43 {
 	name R4-25-00-1_node_15;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:44 {
 	name R4-25-00-1_node_16;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:45 {
 	name R4-25-00-1_node_17;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:46 {
 	name R4-25-00-1_node_18;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:47 {
 	name R4-25-00-1_node_19;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:48 {
 	name R4-25-00-1_node_20;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:49 {
 	name R4-25-00-1_node_21;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:50 {
 	name R4-25-00-1_node_22;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:51 {
 	name R4-25-00-1_node_23;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:52 {
 	name R4-25-00-1_node_24;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:53 {
 	name R4-25-00-1_node_25;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:54 {
 	name R4-25-00-1_node_26;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:55 {
 	name R4-25-00-1_node_27;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:56 {
 	name R4-25-00-1_node_28;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:57 {
 	name R4-25-00-1_node_29;
 	phases AN;
-	voltage_A 14376.022+0.0j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	nominal_voltage 14376.02;
 }
 
 object node:58 {
 	name R4-25-00-1_node_30;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:59 {
 	name R4-25-00-1_node_31;
 	phases AN;
-	voltage_A 14376.022+0.0j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	nominal_voltage 14376.02;
 }
 
 object node:60 {
 	name R4-25-00-1_node_32;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:61 {
 	name R4-25-00-1_node_33;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:62 {
 	name R4-25-00-1_node_34;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:63 {
 	name R4-25-00-1_node_35;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:64 {
 	name R4-25-00-1_node_36;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:65 {
 	name R4-25-00-1_node_37;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:66 {
 	name R4-25-00-1_node_38;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:67 {
 	name R4-25-00-1_node_39;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:68 {
 	name R4-25-00-1_node_40;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:69 {
 	name R4-25-00-1_node_41;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:70 {
 	name R4-25-00-1_node_42;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:71 {
 	name R4-25-00-1_node_43;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:72 {
 	name R4-25-00-1_node_44;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:73 {
 	name R4-25-00-1_node_45;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:74 {
 	name R4-25-00-1_node_46;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:75 {
 	name R4-25-00-1_node_47;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:76 {
 	name R4-25-00-1_node_48;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:77 {
 	name R4-25-00-1_node_49;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:78 {
 	name R4-25-00-1_node_50;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:79 {
 	name R4-25-00-1_node_51;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:80 {
 	name R4-25-00-1_node_52;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:81 {
 	name R4-25-00-1_node_53;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:82 {
 	name R4-25-00-1_node_54;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:83 {
 	name R4-25-00-1_node_55;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:84 {
 	name R4-25-00-1_node_56;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:85 {
 	name R4-25-00-1_node_57;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:86 {
 	name R4-25-00-1_node_58;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:87 {
 	name R4-25-00-1_node_59;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:88 {
 	name R4-25-00-1_node_60;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:89 {
 	name R4-25-00-1_node_61;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:90 {
 	name R4-25-00-1_node_62;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:91 {
 	name R4-25-00-1_node_63;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:92 {
 	name R4-25-00-1_node_64;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:93 {
 	name R4-25-00-1_node_65;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:94 {
 	name R4-25-00-1_node_66;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:95 {
 	name R4-25-00-1_node_67;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:96 {
 	name R4-25-00-1_node_68;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:97 {
 	name R4-25-00-1_node_69;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:98 {
 	name R4-25-00-1_node_70;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:99 {
 	name R4-25-00-1_node_71;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:100 {
 	name R4-25-00-1_node_72;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:101 {
 	name R4-25-00-1_node_73;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:102 {
 	name R4-25-00-1_node_74;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:103 {
 	name R4-25-00-1_node_75;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:104 {
 	name R4-25-00-1_node_76;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:105 {
 	name R4-25-00-1_node_77;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:106 {
 	name R4-25-00-1_node_78;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:107 {
 	name R4-25-00-1_node_79;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:108 {
 	name R4-25-00-1_node_80;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:109 {
 	name R4-25-00-1_node_81;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:110 {
 	name R4-25-00-1_node_82;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:111 {
 	name R4-25-00-1_node_83;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:112 {
 	name R4-25-00-1_node_84;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:113 {
 	name R4-25-00-1_node_85;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:114 {
 	name R4-25-00-1_node_86;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:115 {
 	name R4-25-00-1_node_87;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:116 {
 	name R4-25-00-1_node_88;
 	phases AN;
-	voltage_A 14376.022+0.0j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	nominal_voltage 14376.02;
 }
 
 object node:117 {
 	name R4-25-00-1_node_89;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:118 {
 	name R4-25-00-1_node_90;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:119 {
 	name R4-25-00-1_node_91;
 	phases AN;
-	voltage_A 14376.022+0.0j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	nominal_voltage 14376.02;
 }
 
 object node:120 {
 	name R4-25-00-1_node_92;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:121 {
 	name R4-25-00-1_node_93;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:122 {
 	name R4-25-00-1_node_94;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:123 {
 	name R4-25-00-1_node_95;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:124 {
 	name R4-25-00-1_node_96;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:125 {
 	name R4-25-00-1_node_97;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:126 {
 	name R4-25-00-1_node_98;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:127 {
 	name R4-25-00-1_node_99;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:128 {
 	name R4-25-00-1_node_100;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:129 {
 	name R4-25-00-1_node_101;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:130 {
 	name R4-25-00-1_node_102;
 	phases AN;
-	voltage_A 14376.022+0.0j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	nominal_voltage 14376.02;
 }
 
 object node:131 {
 	name R4-25-00-1_node_103;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:132 {
 	name R4-25-00-1_node_104;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:133 {
 	name R4-25-00-1_node_105;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:134 {
 	name R4-25-00-1_node_106;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:135 {
 	name R4-25-00-1_node_107;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:136 {
 	name R4-25-00-1_node_108;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:137 {
 	name R4-25-00-1_node_109;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:138 {
 	name R4-25-00-1_node_110;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:139 {
 	name R4-25-00-1_node_111;
 	phases AN;
-	voltage_A 14376.022+0.0j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	nominal_voltage 14376.02;
 }
 
 object node:140 {
 	name R4-25-00-1_node_112;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:141 {
 	name R4-25-00-1_node_113;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:142 {
 	name R4-25-00-1_node_114;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:143 {
 	name R4-25-00-1_node_115;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:144 {
 	name R4-25-00-1_node_116;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:145 {
 	name R4-25-00-1_node_117;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:146 {
 	name R4-25-00-1_node_118;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:147 {
 	name R4-25-00-1_node_119;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:148 {
 	name R4-25-00-1_node_120;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:149 {
 	name R4-25-00-1_node_121;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:150 {
 	name R4-25-00-1_node_122;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:151 {
 	name R4-25-00-1_node_123;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:152 {
 	name R4-25-00-1_node_124;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:153 {
 	name R4-25-00-1_node_125;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:154 {
 	name R4-25-00-1_node_126;
 	phases AN;
-	voltage_A 14376.022+0.0j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	nominal_voltage 14376.02;
 }
 
 object node:155 {
 	name R4-25-00-1_node_127;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:156 {
 	name R4-25-00-1_node_128;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:157 {
 	name R4-25-00-1_node_129;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:158 {
 	name R4-25-00-1_node_130;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:159 {
 	name R4-25-00-1_node_131;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:160 {
 	name R4-25-00-1_node_132;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:161 {
 	name R4-25-00-1_node_133;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:162 {
 	name R4-25-00-1_node_134;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:163 {
 	name R4-25-00-1_node_135;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:164 {
 	name R4-25-00-1_node_136;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:165 {
 	name R4-25-00-1_node_137;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:166 {
 	name R4-25-00-1_node_138;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:167 {
 	name R4-25-00-1_node_139;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:168 {
 	name R4-25-00-1_node_140;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:169 {
 	name R4-25-00-1_node_141;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:170 {
 	name R4-25-00-1_node_142;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:171 {
 	name R4-25-00-1_node_143;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:172 {
 	name R4-25-00-1_node_144;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:173 {
 	name R4-25-00-1_node_145;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:174 {
 	name R4-25-00-1_node_146;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:175 {
 	name R4-25-00-1_node_147;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:176 {
 	name R4-25-00-1_node_148;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:177 {
 	name R4-25-00-1_node_149;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:178 {
 	name R4-25-00-1_node_150;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:179 {
 	name R4-25-00-1_node_151;
 	phases ACN;
-	voltage_A 14376.022+0.0j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:180 {
 	name R4-25-00-1_node_152;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:181 {
 	name R4-25-00-1_node_153;
 	phases AN;
-	voltage_A 14376.022+0.0j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	nominal_voltage 14376.02;
 }
 
 object node:182 {
 	name R4-25-00-1_node_154;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:183 {
 	name R4-25-00-1_node_155;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:184 {
 	name R4-25-00-1_node_156;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:185 {
 	name R4-25-00-1_node_157;
 	phases AN;
-	voltage_A 14376.022+0.0j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	nominal_voltage 14376.02;
 }
 
 object node:186 {
 	name R4-25-00-1_node_158;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:187 {
 	name R4-25-00-1_node_159;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:188 {
 	name R4-25-00-1_node_160;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:189 {
 	name R4-25-00-1_node_161;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:190 {
 	name R4-25-00-1_node_162;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:191 {
 	name R4-25-00-1_node_163;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:192 {
 	name R4-25-00-1_node_164;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:193 {
 	name R4-25-00-1_node_165;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:194 {
 	name R4-25-00-1_node_166;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:195 {
 	name R4-25-00-1_node_167;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:196 {
 	name R4-25-00-1_node_168;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:197 {
 	name R4-25-00-1_node_169;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:198 {
 	name R4-25-00-1_node_170;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:199 {
 	name R4-25-00-1_node_171;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:200 {
 	name R4-25-00-1_node_172;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:201 {
 	name R4-25-00-1_node_173;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:202 {
 	name R4-25-00-1_node_174;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:203 {
 	name R4-25-00-1_node_175;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:204 {
 	name R4-25-00-1_node_176;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:205 {
 	name R4-25-00-1_node_177;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:206 {
 	name R4-25-00-1_node_178;
 	phases BN;
-	voltage_B -7188.011-12450.000j;
-	nominal_voltage 14376.022;
+	voltage_B -7188.01-12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:207 {
 	name R4-25-00-1_node_179;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:208 {
 	name R4-25-00-1_node_180;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:209 {
 	name R4-25-00-1_node_181;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:210 {
 	name R4-25-00-1_node_182;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:211 {
 	name R4-25-00-1_node_183;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:212 {
 	name R4-25-00-1_node_184;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:213 {
 	name R4-25-00-1_node_185;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:214 {
 	name R4-25-00-1_node_186;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:215 {
 	name R4-25-00-1_node_187;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:216 {
 	name R4-25-00-1_node_188;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:217 {
 	name R4-25-00-1_node_189;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:218 {
 	name R4-25-00-1_node_190;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:219 {
 	name R4-25-00-1_node_191;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:220 {
 	name R4-25-00-1_node_192;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:221 {
 	name R4-25-00-1_node_193;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:222 {
 	name R4-25-00-1_node_194;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:223 {
 	name R4-25-00-1_node_195;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:224 {
 	name R4-25-00-1_node_196;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:225 {
 	name R4-25-00-1_node_197;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:226 {
 	name R4-25-00-1_node_198;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:227 {
 	name R4-25-00-1_node_199;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:228 {
 	name R4-25-00-1_node_200;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:229 {
 	name R4-25-00-1_node_201;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:230 {
 	name R4-25-00-1_node_202;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:231 {
 	name R4-25-00-1_node_203;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:232 {
 	name R4-25-00-1_node_204;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:233 {
 	name R4-25-00-1_node_205;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:234 {
 	name R4-25-00-1_node_206;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:235 {
 	name R4-25-00-1_node_207;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:236 {
 	name R4-25-00-1_node_208;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:237 {
 	name R4-25-00-1_node_209;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:238 {
 	name R4-25-00-1_node_210;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:239 {
 	name R4-25-00-1_node_211;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:240 {
 	name R4-25-00-1_node_212;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:241 {
 	name R4-25-00-1_node_213;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:242 {
 	name R4-25-00-1_node_214;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:243 {
 	name R4-25-00-1_node_215;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:244 {
 	name R4-25-00-1_node_216;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:245 {
 	name R4-25-00-1_node_217;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:246 {
 	name R4-25-00-1_node_218;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:247 {
 	name R4-25-00-1_node_219;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:248 {
 	name R4-25-00-1_node_220;
 	phases AN;
-	voltage_A 14376.022+0.0j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	nominal_voltage 14376.02;
 }
 
 object node:249 {
 	name R4-25-00-1_node_221;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:250 {
 	name R4-25-00-1_node_222;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:251 {
 	name R4-25-00-1_node_223;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:252 {
 	name R4-25-00-1_node_224;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:253 {
 	name R4-25-00-1_node_225;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:254 {
 	name R4-25-00-1_node_226;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:255 {
 	name R4-25-00-1_node_227;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:256 {
 	name R4-25-00-1_node_228;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:257 {
 	name R4-25-00-1_node_229;
 	phases CN;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:258 {
 	name R4-25-00-1_node_230;
 	parent R4-25-00-1_meter_2;
 	phases ABCN;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
-	nominal_voltage 14376.022;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
+	nominal_voltage 14376.02;
 }
 
 object node:1213 {
 	name R4-25-00-1_node_231;
 	phases ABCN;
 	bustype SWING;
-	nominal_voltage 14376.022;
-	voltage_A 14376.022+0.0j;
-	voltage_B -7188.011-12450.000j;
-	voltage_C -7188.011+12450.000j;
+	nominal_voltage 14376.02;
+	voltage_A 14376.02+0.0j;
+	voltage_B -7188.01-12450j;
+	voltage_C -7188.01+12450j;
 }
 
 
@@ -4925,7 +4926,7 @@ object transformer:980  {
 object transformer_configuration:821 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 5;
 	powerA_rating 5;
@@ -4936,7 +4937,7 @@ object transformer_configuration:821 {
 object transformer_configuration:822 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 15.0;
 	powerA_rating 15.0;
@@ -4947,7 +4948,7 @@ object transformer_configuration:822 {
 object transformer_configuration:823 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 10.0;
 	powerA_rating 10.0;
@@ -4958,7 +4959,7 @@ object transformer_configuration:823 {
 object transformer_configuration:824 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 25.0;
 	powerA_rating 25.0;
@@ -4969,7 +4970,7 @@ object transformer_configuration:824 {
 object transformer_configuration:825 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type PADMOUNT;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 25.0;
 	powerA_rating 25.0;
@@ -4980,7 +4981,7 @@ object transformer_configuration:825 {
 object transformer_configuration:826 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type PADMOUNT;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 15.0;
 	powerA_rating 15.0;
@@ -4991,7 +4992,7 @@ object transformer_configuration:826 {
 object transformer_configuration:827 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 25.0;
 	powerB_rating 25.0;
@@ -5002,7 +5003,7 @@ object transformer_configuration:827 {
 object transformer_configuration:828 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 15.0;
 	powerB_rating 15.0;
@@ -5013,7 +5014,7 @@ object transformer_configuration:828 {
 object transformer_configuration:829 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 5;
 	powerB_rating 5;
@@ -5024,7 +5025,7 @@ object transformer_configuration:829 {
 object transformer_configuration:830 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 10.0;
 	powerB_rating 10.0;
@@ -5035,7 +5036,7 @@ object transformer_configuration:830 {
 object transformer_configuration:831 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type PADMOUNT;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 10.0;
 	powerB_rating 10.0;
@@ -5046,7 +5047,7 @@ object transformer_configuration:831 {
 object transformer_configuration:832 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type PADMOUNT;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 15.0;
 	powerB_rating 15.0;
@@ -5057,7 +5058,7 @@ object transformer_configuration:832 {
 object transformer_configuration:833 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type PADMOUNT;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 25.0;
 	powerB_rating 25.0;
@@ -5068,7 +5069,7 @@ object transformer_configuration:833 {
 object transformer_configuration:834 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 15.0;
 	powerC_rating 15.0;
@@ -5079,7 +5080,7 @@ object transformer_configuration:834 {
 object transformer_configuration:835 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 25.0;
 	powerC_rating 25.0;
@@ -5090,7 +5091,7 @@ object transformer_configuration:835 {
 object transformer_configuration:836 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 10.0;
 	powerC_rating 10.0;
@@ -5101,7 +5102,7 @@ object transformer_configuration:836 {
 object transformer_configuration:837 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 37.5;
 	powerC_rating 37.5;
@@ -5112,7 +5113,7 @@ object transformer_configuration:837 {
 object transformer_configuration:838 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type POLETOP;
-	primary_voltage 14376.022 V;
+	primary_voltage 14376.02 V;
 	secondary_voltage 120 V;
 	power_rating 5;
 	powerC_rating 5;
@@ -6413,8 +6414,8 @@ object triplex_line_configuration:1 {
 object triplex_meter:540 {
 	name R4-25-00-1_tm_1;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6422,8 +6423,8 @@ object triplex_meter:540 {
 object triplex_meter:541 {
 	name R4-25-00-1_tm_2;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6431,8 +6432,8 @@ object triplex_meter:541 {
 object triplex_meter:542 {
 	name R4-25-00-1_tm_3;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6440,8 +6441,8 @@ object triplex_meter:542 {
 object triplex_meter:543 {
 	name R4-25-00-1_tm_4;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6449,8 +6450,8 @@ object triplex_meter:543 {
 object triplex_meter:544 {
 	name R4-25-00-1_tm_5;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6458,8 +6459,8 @@ object triplex_meter:544 {
 object triplex_meter:545 {
 	name R4-25-00-1_tm_6;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6467,8 +6468,8 @@ object triplex_meter:545 {
 object triplex_meter:546 {
 	name R4-25-00-1_tm_7;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6476,8 +6477,8 @@ object triplex_meter:546 {
 object triplex_meter:547 {
 	name R4-25-00-1_tm_8;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6485,8 +6486,8 @@ object triplex_meter:547 {
 object triplex_meter:548 {
 	name R4-25-00-1_tm_9;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6494,8 +6495,8 @@ object triplex_meter:548 {
 object triplex_meter:549 {
 	name R4-25-00-1_tm_10;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6503,8 +6504,8 @@ object triplex_meter:549 {
 object triplex_meter:550 {
 	name R4-25-00-1_tm_11;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6512,8 +6513,8 @@ object triplex_meter:550 {
 object triplex_meter:551 {
 	name R4-25-00-1_tm_12;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6521,8 +6522,8 @@ object triplex_meter:551 {
 object triplex_meter:552 {
 	name R4-25-00-1_tm_13;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6530,8 +6531,8 @@ object triplex_meter:552 {
 object triplex_meter:553 {
 	name R4-25-00-1_tm_14;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6539,8 +6540,8 @@ object triplex_meter:553 {
 object triplex_meter:554 {
 	name R4-25-00-1_tm_15;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6548,8 +6549,8 @@ object triplex_meter:554 {
 object triplex_meter:555 {
 	name R4-25-00-1_tm_16;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6557,8 +6558,8 @@ object triplex_meter:555 {
 object triplex_meter:556 {
 	name R4-25-00-1_tm_17;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6566,8 +6567,8 @@ object triplex_meter:556 {
 object triplex_meter:557 {
 	name R4-25-00-1_tm_18;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6575,8 +6576,8 @@ object triplex_meter:557 {
 object triplex_meter:558 {
 	name R4-25-00-1_tm_19;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6584,8 +6585,8 @@ object triplex_meter:558 {
 object triplex_meter:559 {
 	name R4-25-00-1_tm_20;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6602,8 +6603,8 @@ object triplex_meter:560 {
 object triplex_meter:561 {
 	name R4-25-00-1_tm_22;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6611,8 +6612,8 @@ object triplex_meter:561 {
 object triplex_meter:562 {
 	name R4-25-00-1_tm_23;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6620,8 +6621,8 @@ object triplex_meter:562 {
 object triplex_meter:563 {
 	name R4-25-00-1_tm_24;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6629,8 +6630,8 @@ object triplex_meter:563 {
 object triplex_meter:564 {
 	name R4-25-00-1_tm_25;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6638,8 +6639,8 @@ object triplex_meter:564 {
 object triplex_meter:565 {
 	name R4-25-00-1_tm_26;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6647,8 +6648,8 @@ object triplex_meter:565 {
 object triplex_meter:566 {
 	name R4-25-00-1_tm_27;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6656,8 +6657,8 @@ object triplex_meter:566 {
 object triplex_meter:567 {
 	name R4-25-00-1_tm_28;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6665,8 +6666,8 @@ object triplex_meter:567 {
 object triplex_meter:568 {
 	name R4-25-00-1_tm_29;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6674,8 +6675,8 @@ object triplex_meter:568 {
 object triplex_meter:569 {
 	name R4-25-00-1_tm_30;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6683,8 +6684,8 @@ object triplex_meter:569 {
 object triplex_meter:570 {
 	name R4-25-00-1_tm_31;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6692,8 +6693,8 @@ object triplex_meter:570 {
 object triplex_meter:571 {
 	name R4-25-00-1_tm_32;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6701,8 +6702,8 @@ object triplex_meter:571 {
 object triplex_meter:572 {
 	name R4-25-00-1_tm_33;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6710,8 +6711,8 @@ object triplex_meter:572 {
 object triplex_meter:573 {
 	name R4-25-00-1_tm_34;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6719,8 +6720,8 @@ object triplex_meter:573 {
 object triplex_meter:574 {
 	name R4-25-00-1_tm_35;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6728,8 +6729,8 @@ object triplex_meter:574 {
 object triplex_meter:575 {
 	name R4-25-00-1_tm_36;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6737,8 +6738,8 @@ object triplex_meter:575 {
 object triplex_meter:576 {
 	name R4-25-00-1_tm_37;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6746,8 +6747,8 @@ object triplex_meter:576 {
 object triplex_meter:577 {
 	name R4-25-00-1_tm_38;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6764,8 +6765,8 @@ object triplex_meter:578 {
 object triplex_meter:579 {
 	name R4-25-00-1_tm_40;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6773,8 +6774,8 @@ object triplex_meter:579 {
 object triplex_meter:580 {
 	name R4-25-00-1_tm_41;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6791,8 +6792,8 @@ object triplex_meter:581 {
 object triplex_meter:582 {
 	name R4-25-00-1_tm_43;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6800,8 +6801,8 @@ object triplex_meter:582 {
 object triplex_meter:583 {
 	name R4-25-00-1_tm_44;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6818,8 +6819,8 @@ object triplex_meter:584 {
 object triplex_meter:585 {
 	name R4-25-00-1_tm_46;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6827,8 +6828,8 @@ object triplex_meter:585 {
 object triplex_meter:586 {
 	name R4-25-00-1_tm_47;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6845,8 +6846,8 @@ object triplex_meter:587 {
 object triplex_meter:588 {
 	name R4-25-00-1_tm_49;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6854,8 +6855,8 @@ object triplex_meter:588 {
 object triplex_meter:589 {
 	name R4-25-00-1_tm_50;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6872,8 +6873,8 @@ object triplex_meter:590 {
 object triplex_meter:591 {
 	name R4-25-00-1_tm_52;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6881,8 +6882,8 @@ object triplex_meter:591 {
 object triplex_meter:592 {
 	name R4-25-00-1_tm_53;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6890,8 +6891,8 @@ object triplex_meter:592 {
 object triplex_meter:593 {
 	name R4-25-00-1_tm_54;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6908,8 +6909,8 @@ object triplex_meter:594 {
 object triplex_meter:595 {
 	name R4-25-00-1_tm_56;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6917,8 +6918,8 @@ object triplex_meter:595 {
 object triplex_meter:596 {
 	name R4-25-00-1_tm_57;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6935,8 +6936,8 @@ object triplex_meter:597 {
 object triplex_meter:598 {
 	name R4-25-00-1_tm_59;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6944,8 +6945,8 @@ object triplex_meter:598 {
 object triplex_meter:599 {
 	name R4-25-00-1_tm_60;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6953,8 +6954,8 @@ object triplex_meter:599 {
 object triplex_meter:600 {
 	name R4-25-00-1_tm_61;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6962,8 +6963,8 @@ object triplex_meter:600 {
 object triplex_meter:601 {
 	name R4-25-00-1_tm_62;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6971,8 +6972,8 @@ object triplex_meter:601 {
 object triplex_meter:602 {
 	name R4-25-00-1_tm_63;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6980,8 +6981,8 @@ object triplex_meter:602 {
 object triplex_meter:603 {
 	name R4-25-00-1_tm_64;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6989,8 +6990,8 @@ object triplex_meter:603 {
 object triplex_meter:604 {
 	name R4-25-00-1_tm_65;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -6998,8 +6999,8 @@ object triplex_meter:604 {
 object triplex_meter:605 {
 	name R4-25-00-1_tm_66;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7007,8 +7008,8 @@ object triplex_meter:605 {
 object triplex_meter:606 {
 	name R4-25-00-1_tm_67;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7016,8 +7017,8 @@ object triplex_meter:606 {
 object triplex_meter:607 {
 	name R4-25-00-1_tm_68;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7025,8 +7026,8 @@ object triplex_meter:607 {
 object triplex_meter:608 {
 	name R4-25-00-1_tm_69;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7034,8 +7035,8 @@ object triplex_meter:608 {
 object triplex_meter:609 {
 	name R4-25-00-1_tm_70;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7043,8 +7044,8 @@ object triplex_meter:609 {
 object triplex_meter:610 {
 	name R4-25-00-1_tm_71;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7052,8 +7053,8 @@ object triplex_meter:610 {
 object triplex_meter:611 {
 	name R4-25-00-1_tm_72;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7061,8 +7062,8 @@ object triplex_meter:611 {
 object triplex_meter:612 {
 	name R4-25-00-1_tm_73;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7070,8 +7071,8 @@ object triplex_meter:612 {
 object triplex_meter:613 {
 	name R4-25-00-1_tm_74;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7079,8 +7080,8 @@ object triplex_meter:613 {
 object triplex_meter:614 {
 	name R4-25-00-1_tm_75;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7088,8 +7089,8 @@ object triplex_meter:614 {
 object triplex_meter:615 {
 	name R4-25-00-1_tm_76;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7097,8 +7098,8 @@ object triplex_meter:615 {
 object triplex_meter:616 {
 	name R4-25-00-1_tm_77;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7115,8 +7116,8 @@ object triplex_meter:617 {
 object triplex_meter:618 {
 	name R4-25-00-1_tm_79;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7124,8 +7125,8 @@ object triplex_meter:618 {
 object triplex_meter:619 {
 	name R4-25-00-1_tm_80;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7133,8 +7134,8 @@ object triplex_meter:619 {
 object triplex_meter:620 {
 	name R4-25-00-1_tm_81;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7142,8 +7143,8 @@ object triplex_meter:620 {
 object triplex_meter:621 {
 	name R4-25-00-1_tm_82;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7151,8 +7152,8 @@ object triplex_meter:621 {
 object triplex_meter:622 {
 	name R4-25-00-1_tm_83;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7169,8 +7170,8 @@ object triplex_meter:623 {
 object triplex_meter:624 {
 	name R4-25-00-1_tm_85;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7178,8 +7179,8 @@ object triplex_meter:624 {
 object triplex_meter:625 {
 	name R4-25-00-1_tm_86;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7187,8 +7188,8 @@ object triplex_meter:625 {
 object triplex_meter:626 {
 	name R4-25-00-1_tm_87;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7196,8 +7197,8 @@ object triplex_meter:626 {
 object triplex_meter:627 {
 	name R4-25-00-1_tm_88;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7205,8 +7206,8 @@ object triplex_meter:627 {
 object triplex_meter:628 {
 	name R4-25-00-1_tm_89;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7214,8 +7215,8 @@ object triplex_meter:628 {
 object triplex_meter:629 {
 	name R4-25-00-1_tm_90;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7223,8 +7224,8 @@ object triplex_meter:629 {
 object triplex_meter:630 {
 	name R4-25-00-1_tm_91;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7232,8 +7233,8 @@ object triplex_meter:630 {
 object triplex_meter:631 {
 	name R4-25-00-1_tm_92;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7241,8 +7242,8 @@ object triplex_meter:631 {
 object triplex_meter:632 {
 	name R4-25-00-1_tm_93;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7250,8 +7251,8 @@ object triplex_meter:632 {
 object triplex_meter:633 {
 	name R4-25-00-1_tm_94;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7259,8 +7260,8 @@ object triplex_meter:633 {
 object triplex_meter:634 {
 	name R4-25-00-1_tm_95;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7268,8 +7269,8 @@ object triplex_meter:634 {
 object triplex_meter:635 {
 	name R4-25-00-1_tm_96;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7277,8 +7278,8 @@ object triplex_meter:635 {
 object triplex_meter:636 {
 	name R4-25-00-1_tm_97;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7286,8 +7287,8 @@ object triplex_meter:636 {
 object triplex_meter:637 {
 	name R4-25-00-1_tm_98;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7295,8 +7296,8 @@ object triplex_meter:637 {
 object triplex_meter:638 {
 	name R4-25-00-1_tm_99;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7304,8 +7305,8 @@ object triplex_meter:638 {
 object triplex_meter:639 {
 	name R4-25-00-1_tm_100;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7313,8 +7314,8 @@ object triplex_meter:639 {
 object triplex_meter:640 {
 	name R4-25-00-1_tm_101;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7322,8 +7323,8 @@ object triplex_meter:640 {
 object triplex_meter:641 {
 	name R4-25-00-1_tm_102;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7331,8 +7332,8 @@ object triplex_meter:641 {
 object triplex_meter:642 {
 	name R4-25-00-1_tm_103;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7340,8 +7341,8 @@ object triplex_meter:642 {
 object triplex_meter:643 {
 	name R4-25-00-1_tm_104;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7349,8 +7350,8 @@ object triplex_meter:643 {
 object triplex_meter:644 {
 	name R4-25-00-1_tm_105;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7358,8 +7359,8 @@ object triplex_meter:644 {
 object triplex_meter:645 {
 	name R4-25-00-1_tm_106;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7367,8 +7368,8 @@ object triplex_meter:645 {
 object triplex_meter:646 {
 	name R4-25-00-1_tm_107;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7376,8 +7377,8 @@ object triplex_meter:646 {
 object triplex_meter:647 {
 	name R4-25-00-1_tm_108;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7385,8 +7386,8 @@ object triplex_meter:647 {
 object triplex_meter:648 {
 	name R4-25-00-1_tm_109;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7394,8 +7395,8 @@ object triplex_meter:648 {
 object triplex_meter:649 {
 	name R4-25-00-1_tm_110;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7403,8 +7404,8 @@ object triplex_meter:649 {
 object triplex_meter:650 {
 	name R4-25-00-1_tm_111;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7412,8 +7413,8 @@ object triplex_meter:650 {
 object triplex_meter:651 {
 	name R4-25-00-1_tm_112;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7421,8 +7422,8 @@ object triplex_meter:651 {
 object triplex_meter:652 {
 	name R4-25-00-1_tm_113;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7430,8 +7431,8 @@ object triplex_meter:652 {
 object triplex_meter:653 {
 	name R4-25-00-1_tm_114;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7439,8 +7440,8 @@ object triplex_meter:653 {
 object triplex_meter:654 {
 	name R4-25-00-1_tm_115;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7448,8 +7449,8 @@ object triplex_meter:654 {
 object triplex_meter:655 {
 	name R4-25-00-1_tm_116;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7457,8 +7458,8 @@ object triplex_meter:655 {
 object triplex_meter:656 {
 	name R4-25-00-1_tm_117;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7484,8 +7485,8 @@ object triplex_meter:658 {
 object triplex_meter:659 {
 	name R4-25-00-1_tm_120;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7493,8 +7494,8 @@ object triplex_meter:659 {
 object triplex_meter:660 {
 	name R4-25-00-1_tm_121;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7502,8 +7503,8 @@ object triplex_meter:660 {
 object triplex_meter:661 {
 	name R4-25-00-1_tm_122;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7511,8 +7512,8 @@ object triplex_meter:661 {
 object triplex_meter:662 {
 	name R4-25-00-1_tm_123;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7529,8 +7530,8 @@ object triplex_meter:663 {
 object triplex_meter:664 {
 	name R4-25-00-1_tm_125;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7538,8 +7539,8 @@ object triplex_meter:664 {
 object triplex_meter:665 {
 	name R4-25-00-1_tm_126;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7547,8 +7548,8 @@ object triplex_meter:665 {
 object triplex_meter:666 {
 	name R4-25-00-1_tm_127;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7556,8 +7557,8 @@ object triplex_meter:666 {
 object triplex_meter:667 {
 	name R4-25-00-1_tm_128;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7565,8 +7566,8 @@ object triplex_meter:667 {
 object triplex_meter:668 {
 	name R4-25-00-1_tm_129;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7574,8 +7575,8 @@ object triplex_meter:668 {
 object triplex_meter:669 {
 	name R4-25-00-1_tm_130;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7583,8 +7584,8 @@ object triplex_meter:669 {
 object triplex_meter:670 {
 	name R4-25-00-1_tm_131;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7592,8 +7593,8 @@ object triplex_meter:670 {
 object triplex_meter:671 {
 	name R4-25-00-1_tm_132;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7601,8 +7602,8 @@ object triplex_meter:671 {
 object triplex_meter:672 {
 	name R4-25-00-1_tm_133;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7610,8 +7611,8 @@ object triplex_meter:672 {
 object triplex_meter:673 {
 	name R4-25-00-1_tm_134;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7619,8 +7620,8 @@ object triplex_meter:673 {
 object triplex_meter:674 {
 	name R4-25-00-1_tm_135;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7628,8 +7629,8 @@ object triplex_meter:674 {
 object triplex_meter:675 {
 	name R4-25-00-1_tm_136;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7637,8 +7638,8 @@ object triplex_meter:675 {
 object triplex_meter:676 {
 	name R4-25-00-1_tm_137;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7646,8 +7647,8 @@ object triplex_meter:676 {
 object triplex_meter:677 {
 	name R4-25-00-1_tm_138;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7655,8 +7656,8 @@ object triplex_meter:677 {
 object triplex_meter:678 {
 	name R4-25-00-1_tm_139;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7664,8 +7665,8 @@ object triplex_meter:678 {
 object triplex_meter:679 {
 	name R4-25-00-1_tm_140;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7674,8 +7675,8 @@ object triplex_meter:679 {
 object triplex_node:260 {
 	name R4-25-00-1_tn_1;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7683,8 +7684,8 @@ object triplex_node:260 {
 object triplex_node:261 {
 	name R4-25-00-1_tn_2;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7692,8 +7693,8 @@ object triplex_node:261 {
 object triplex_node:262 {
 	name R4-25-00-1_tn_3;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7701,8 +7702,8 @@ object triplex_node:262 {
 object triplex_node:263 {
 	name R4-25-00-1_tn_4;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7710,8 +7711,8 @@ object triplex_node:263 {
 object triplex_node:264 {
 	name R4-25-00-1_tn_5;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7719,8 +7720,8 @@ object triplex_node:264 {
 object triplex_node:265 {
 	name R4-25-00-1_tn_6;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7728,8 +7729,8 @@ object triplex_node:265 {
 object triplex_node:266 {
 	name R4-25-00-1_tn_7;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7737,8 +7738,8 @@ object triplex_node:266 {
 object triplex_node:267 {
 	name R4-25-00-1_tn_8;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7746,8 +7747,8 @@ object triplex_node:267 {
 object triplex_node:268 {
 	name R4-25-00-1_tn_9;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7755,8 +7756,8 @@ object triplex_node:268 {
 object triplex_node:269 {
 	name R4-25-00-1_tn_10;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7764,8 +7765,8 @@ object triplex_node:269 {
 object triplex_node:270 {
 	name R4-25-00-1_tn_11;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7773,8 +7774,8 @@ object triplex_node:270 {
 object triplex_node:271 {
 	name R4-25-00-1_tn_12;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7782,8 +7783,8 @@ object triplex_node:271 {
 object triplex_node:272 {
 	name R4-25-00-1_tn_13;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7791,8 +7792,8 @@ object triplex_node:272 {
 object triplex_node:273 {
 	name R4-25-00-1_tn_14;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7800,8 +7801,8 @@ object triplex_node:273 {
 object triplex_node:274 {
 	name R4-25-00-1_tn_15;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7809,8 +7810,8 @@ object triplex_node:274 {
 object triplex_node:275 {
 	name R4-25-00-1_tn_16;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7818,8 +7819,8 @@ object triplex_node:275 {
 object triplex_node:276 {
 	name R4-25-00-1_tn_17;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7827,8 +7828,8 @@ object triplex_node:276 {
 object triplex_node:277 {
 	name R4-25-00-1_tn_18;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7836,8 +7837,8 @@ object triplex_node:277 {
 object triplex_node:278 {
 	name R4-25-00-1_tn_19;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7845,8 +7846,8 @@ object triplex_node:278 {
 object triplex_node:279 {
 	name R4-25-00-1_tn_20;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7863,8 +7864,8 @@ object triplex_node:280 {
 object triplex_node:281 {
 	name R4-25-00-1_tn_22;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7872,8 +7873,8 @@ object triplex_node:281 {
 object triplex_node:282 {
 	name R4-25-00-1_tn_23;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7881,8 +7882,8 @@ object triplex_node:282 {
 object triplex_node:283 {
 	name R4-25-00-1_tn_24;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7890,8 +7891,8 @@ object triplex_node:283 {
 object triplex_node:284 {
 	name R4-25-00-1_tn_25;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7899,8 +7900,8 @@ object triplex_node:284 {
 object triplex_node:285 {
 	name R4-25-00-1_tn_26;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7908,8 +7909,8 @@ object triplex_node:285 {
 object triplex_node:286 {
 	name R4-25-00-1_tn_27;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7917,8 +7918,8 @@ object triplex_node:286 {
 object triplex_node:287 {
 	name R4-25-00-1_tn_28;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7926,8 +7927,8 @@ object triplex_node:287 {
 object triplex_node:288 {
 	name R4-25-00-1_tn_29;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7935,8 +7936,8 @@ object triplex_node:288 {
 object triplex_node:289 {
 	name R4-25-00-1_tn_30;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7944,8 +7945,8 @@ object triplex_node:289 {
 object triplex_node:290 {
 	name R4-25-00-1_tn_31;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7953,8 +7954,8 @@ object triplex_node:290 {
 object triplex_node:291 {
 	name R4-25-00-1_tn_32;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7962,8 +7963,8 @@ object triplex_node:291 {
 object triplex_node:292 {
 	name R4-25-00-1_tn_33;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7971,8 +7972,8 @@ object triplex_node:292 {
 object triplex_node:293 {
 	name R4-25-00-1_tn_34;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7980,8 +7981,8 @@ object triplex_node:293 {
 object triplex_node:294 {
 	name R4-25-00-1_tn_35;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7989,8 +7990,8 @@ object triplex_node:294 {
 object triplex_node:295 {
 	name R4-25-00-1_tn_36;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -7998,8 +7999,8 @@ object triplex_node:295 {
 object triplex_node:296 {
 	name R4-25-00-1_tn_37;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8007,8 +8008,8 @@ object triplex_node:296 {
 object triplex_node:297 {
 	name R4-25-00-1_tn_38;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8025,8 +8026,8 @@ object triplex_node:298 {
 object triplex_node:299 {
 	name R4-25-00-1_tn_40;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8034,8 +8035,8 @@ object triplex_node:299 {
 object triplex_node:300 {
 	name R4-25-00-1_tn_41;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8052,8 +8053,8 @@ object triplex_node:301 {
 object triplex_node:302 {
 	name R4-25-00-1_tn_43;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8061,8 +8062,8 @@ object triplex_node:302 {
 object triplex_node:303 {
 	name R4-25-00-1_tn_44;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8079,8 +8080,8 @@ object triplex_node:304 {
 object triplex_node:305 {
 	name R4-25-00-1_tn_46;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8088,8 +8089,8 @@ object triplex_node:305 {
 object triplex_node:306 {
 	name R4-25-00-1_tn_47;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8106,8 +8107,8 @@ object triplex_node:307 {
 object triplex_node:308 {
 	name R4-25-00-1_tn_49;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8115,8 +8116,8 @@ object triplex_node:308 {
 object triplex_node:309 {
 	name R4-25-00-1_tn_50;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8133,8 +8134,8 @@ object triplex_node:310 {
 object triplex_node:311 {
 	name R4-25-00-1_tn_52;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8142,8 +8143,8 @@ object triplex_node:311 {
 object triplex_node:312 {
 	name R4-25-00-1_tn_53;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8151,8 +8152,8 @@ object triplex_node:312 {
 object triplex_node:313 {
 	name R4-25-00-1_tn_54;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8169,8 +8170,8 @@ object triplex_node:314 {
 object triplex_node:315 {
 	name R4-25-00-1_tn_56;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8178,8 +8179,8 @@ object triplex_node:315 {
 object triplex_node:316 {
 	name R4-25-00-1_tn_57;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8196,8 +8197,8 @@ object triplex_node:317 {
 object triplex_node:318 {
 	name R4-25-00-1_tn_59;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8205,8 +8206,8 @@ object triplex_node:318 {
 object triplex_node:319 {
 	name R4-25-00-1_tn_60;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8214,8 +8215,8 @@ object triplex_node:319 {
 object triplex_node:320 {
 	name R4-25-00-1_tn_61;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8223,8 +8224,8 @@ object triplex_node:320 {
 object triplex_node:321 {
 	name R4-25-00-1_tn_62;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8232,8 +8233,8 @@ object triplex_node:321 {
 object triplex_node:322 {
 	name R4-25-00-1_tn_63;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8241,8 +8242,8 @@ object triplex_node:322 {
 object triplex_node:323 {
 	name R4-25-00-1_tn_64;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8250,8 +8251,8 @@ object triplex_node:323 {
 object triplex_node:324 {
 	name R4-25-00-1_tn_65;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8259,8 +8260,8 @@ object triplex_node:324 {
 object triplex_node:325 {
 	name R4-25-00-1_tn_66;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8268,8 +8269,8 @@ object triplex_node:325 {
 object triplex_node:326 {
 	name R4-25-00-1_tn_67;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8277,8 +8278,8 @@ object triplex_node:326 {
 object triplex_node:327 {
 	name R4-25-00-1_tn_68;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8286,8 +8287,8 @@ object triplex_node:327 {
 object triplex_node:328 {
 	name R4-25-00-1_tn_69;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8295,8 +8296,8 @@ object triplex_node:328 {
 object triplex_node:329 {
 	name R4-25-00-1_tn_70;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8304,8 +8305,8 @@ object triplex_node:329 {
 object triplex_node:330 {
 	name R4-25-00-1_tn_71;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8313,8 +8314,8 @@ object triplex_node:330 {
 object triplex_node:331 {
 	name R4-25-00-1_tn_72;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8322,8 +8323,8 @@ object triplex_node:331 {
 object triplex_node:332 {
 	name R4-25-00-1_tn_73;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8331,8 +8332,8 @@ object triplex_node:332 {
 object triplex_node:333 {
 	name R4-25-00-1_tn_74;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8340,8 +8341,8 @@ object triplex_node:333 {
 object triplex_node:334 {
 	name R4-25-00-1_tn_75;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8349,8 +8350,8 @@ object triplex_node:334 {
 object triplex_node:335 {
 	name R4-25-00-1_tn_76;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8358,8 +8359,8 @@ object triplex_node:335 {
 object triplex_node:336 {
 	name R4-25-00-1_tn_77;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8376,8 +8377,8 @@ object triplex_node:337 {
 object triplex_node:338 {
 	name R4-25-00-1_tn_79;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8385,8 +8386,8 @@ object triplex_node:338 {
 object triplex_node:339 {
 	name R4-25-00-1_tn_80;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8394,8 +8395,8 @@ object triplex_node:339 {
 object triplex_node:340 {
 	name R4-25-00-1_tn_81;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8403,8 +8404,8 @@ object triplex_node:340 {
 object triplex_node:341 {
 	name R4-25-00-1_tn_82;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8412,8 +8413,8 @@ object triplex_node:341 {
 object triplex_node:342 {
 	name R4-25-00-1_tn_83;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8430,8 +8431,8 @@ object triplex_node:343 {
 object triplex_node:344 {
 	name R4-25-00-1_tn_85;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8439,8 +8440,8 @@ object triplex_node:344 {
 object triplex_node:345 {
 	name R4-25-00-1_tn_86;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8448,8 +8449,8 @@ object triplex_node:345 {
 object triplex_node:346 {
 	name R4-25-00-1_tn_87;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8457,8 +8458,8 @@ object triplex_node:346 {
 object triplex_node:347 {
 	name R4-25-00-1_tn_88;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8466,8 +8467,8 @@ object triplex_node:347 {
 object triplex_node:348 {
 	name R4-25-00-1_tn_89;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8475,8 +8476,8 @@ object triplex_node:348 {
 object triplex_node:349 {
 	name R4-25-00-1_tn_90;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8484,8 +8485,8 @@ object triplex_node:349 {
 object triplex_node:350 {
 	name R4-25-00-1_tn_91;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8493,8 +8494,8 @@ object triplex_node:350 {
 object triplex_node:351 {
 	name R4-25-00-1_tn_92;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8502,8 +8503,8 @@ object triplex_node:351 {
 object triplex_node:352 {
 	name R4-25-00-1_tn_93;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8511,8 +8512,8 @@ object triplex_node:352 {
 object triplex_node:353 {
 	name R4-25-00-1_tn_94;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8520,8 +8521,8 @@ object triplex_node:353 {
 object triplex_node:354 {
 	name R4-25-00-1_tn_95;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8529,8 +8530,8 @@ object triplex_node:354 {
 object triplex_node:355 {
 	name R4-25-00-1_tn_96;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8538,8 +8539,8 @@ object triplex_node:355 {
 object triplex_node:356 {
 	name R4-25-00-1_tn_97;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8547,8 +8548,8 @@ object triplex_node:356 {
 object triplex_node:357 {
 	name R4-25-00-1_tn_98;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8556,8 +8557,8 @@ object triplex_node:357 {
 object triplex_node:358 {
 	name R4-25-00-1_tn_99;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8565,8 +8566,8 @@ object triplex_node:358 {
 object triplex_node:359 {
 	name R4-25-00-1_tn_100;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8574,8 +8575,8 @@ object triplex_node:359 {
 object triplex_node:360 {
 	name R4-25-00-1_tn_101;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8583,8 +8584,8 @@ object triplex_node:360 {
 object triplex_node:361 {
 	name R4-25-00-1_tn_102;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8592,8 +8593,8 @@ object triplex_node:361 {
 object triplex_node:362 {
 	name R4-25-00-1_tn_103;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8601,8 +8602,8 @@ object triplex_node:362 {
 object triplex_node:363 {
 	name R4-25-00-1_tn_104;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8610,8 +8611,8 @@ object triplex_node:363 {
 object triplex_node:364 {
 	name R4-25-00-1_tn_105;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8619,8 +8620,8 @@ object triplex_node:364 {
 object triplex_node:365 {
 	name R4-25-00-1_tn_106;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8628,8 +8629,8 @@ object triplex_node:365 {
 object triplex_node:366 {
 	name R4-25-00-1_tn_107;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8637,8 +8638,8 @@ object triplex_node:366 {
 object triplex_node:367 {
 	name R4-25-00-1_tn_108;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8646,8 +8647,8 @@ object triplex_node:367 {
 object triplex_node:368 {
 	name R4-25-00-1_tn_109;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8655,8 +8656,8 @@ object triplex_node:368 {
 object triplex_node:369 {
 	name R4-25-00-1_tn_110;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8664,8 +8665,8 @@ object triplex_node:369 {
 object triplex_node:370 {
 	name R4-25-00-1_tn_111;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8673,8 +8674,8 @@ object triplex_node:370 {
 object triplex_node:371 {
 	name R4-25-00-1_tn_112;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8682,8 +8683,8 @@ object triplex_node:371 {
 object triplex_node:372 {
 	name R4-25-00-1_tn_113;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8691,8 +8692,8 @@ object triplex_node:372 {
 object triplex_node:373 {
 	name R4-25-00-1_tn_114;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8700,8 +8701,8 @@ object triplex_node:373 {
 object triplex_node:374 {
 	name R4-25-00-1_tn_115;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8709,8 +8710,8 @@ object triplex_node:374 {
 object triplex_node:375 {
 	name R4-25-00-1_tn_116;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8718,8 +8719,8 @@ object triplex_node:375 {
 object triplex_node:376 {
 	name R4-25-00-1_tn_117;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8745,8 +8746,8 @@ object triplex_node:378 {
 object triplex_node:379 {
 	name R4-25-00-1_tn_120;
 	phases BS;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8754,8 +8755,8 @@ object triplex_node:379 {
 object triplex_node:380 {
 	name R4-25-00-1_tn_121;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8763,8 +8764,8 @@ object triplex_node:380 {
 object triplex_node:381 {
 	name R4-25-00-1_tn_122;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8772,8 +8773,8 @@ object triplex_node:381 {
 object triplex_node:382 {
 	name R4-25-00-1_tn_123;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8790,8 +8791,8 @@ object triplex_node:383 {
 object triplex_node:384 {
 	name R4-25-00-1_tn_125;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8799,8 +8800,8 @@ object triplex_node:384 {
 object triplex_node:385 {
 	name R4-25-00-1_tn_126;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8808,8 +8809,8 @@ object triplex_node:385 {
 object triplex_node:386 {
 	name R4-25-00-1_tn_127;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8817,8 +8818,8 @@ object triplex_node:386 {
 object triplex_node:387 {
 	name R4-25-00-1_tn_128;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8826,8 +8827,8 @@ object triplex_node:387 {
 object triplex_node:388 {
 	name R4-25-00-1_tn_129;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8835,8 +8836,8 @@ object triplex_node:388 {
 object triplex_node:389 {
 	name R4-25-00-1_tn_130;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8844,8 +8845,8 @@ object triplex_node:389 {
 object triplex_node:390 {
 	name R4-25-00-1_tn_131;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8853,8 +8854,8 @@ object triplex_node:390 {
 object triplex_node:391 {
 	name R4-25-00-1_tn_132;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8862,8 +8863,8 @@ object triplex_node:391 {
 object triplex_node:392 {
 	name R4-25-00-1_tn_133;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8871,8 +8872,8 @@ object triplex_node:392 {
 object triplex_node:393 {
 	name R4-25-00-1_tn_134;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8880,8 +8881,8 @@ object triplex_node:393 {
 object triplex_node:394 {
 	name R4-25-00-1_tn_135;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8889,8 +8890,8 @@ object triplex_node:394 {
 object triplex_node:395 {
 	name R4-25-00-1_tn_136;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8898,8 +8899,8 @@ object triplex_node:395 {
 object triplex_node:396 {
 	name R4-25-00-1_tn_137;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8907,8 +8908,8 @@ object triplex_node:396 {
 object triplex_node:397 {
 	name R4-25-00-1_tn_138;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8916,8 +8917,8 @@ object triplex_node:397 {
 object triplex_node:398 {
 	name R4-25-00-1_tn_139;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8925,8 +8926,8 @@ object triplex_node:398 {
 object triplex_node:399 {
 	name R4-25-00-1_tn_140;
 	phases CS;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8936,8 +8937,8 @@ object triplex_node:400 {
 	phases BS;
 	parent R4-25-00-1_tm_1;
 	power_1 8000+1624.8j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8947,8 +8948,8 @@ object triplex_node:401 {
 	phases CS;
 	parent R4-25-00-1_tm_2;
 	power_1 9000+1827.9j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8958,8 +8959,8 @@ object triplex_node:402 {
 	phases CS;
 	parent R4-25-00-1_tm_3;
 	power_1 4000+812.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8969,8 +8970,8 @@ object triplex_node:403 {
 	phases CS;
 	parent R4-25-00-1_tm_4;
 	power_1 3000+609.3j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8980,8 +8981,8 @@ object triplex_node:404 {
 	phases CS;
 	parent R4-25-00-1_tm_5;
 	power_1 7000+1421.7j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -8991,8 +8992,8 @@ object triplex_node:405 {
 	phases CS;
 	parent R4-25-00-1_tm_6;
 	power_1 18000+3655.8j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9002,8 +9003,8 @@ object triplex_node:406 {
 	phases CS;
 	parent R4-25-00-1_tm_7;
 	power_1 15000+3046.5j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9013,8 +9014,8 @@ object triplex_node:407 {
 	phases CS;
 	parent R4-25-00-1_tm_8;
 	power_1 6000+1218.6j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9024,8 +9025,8 @@ object triplex_node:408 {
 	phases CS;
 	parent R4-25-00-1_tm_9;
 	power_1 8000+1624.8j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9035,8 +9036,8 @@ object triplex_node:409 {
 	phases CS;
 	parent R4-25-00-1_tm_10;
 	power_1 7000+1421.7j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9046,8 +9047,8 @@ object triplex_node:410 {
 	phases CS;
 	parent R4-25-00-1_tm_11;
 	power_1 1000+203.1j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9057,8 +9058,8 @@ object triplex_node:411 {
 	phases CS;
 	parent R4-25-00-1_tm_12;
 	power_1 2000+406.2j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9068,8 +9069,8 @@ object triplex_node:412 {
 	phases BS;
 	parent R4-25-00-1_tm_13;
 	power_1 10000+2031j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9079,8 +9080,8 @@ object triplex_node:413 {
 	phases BS;
 	parent R4-25-00-1_tm_14;
 	power_1 16000+3249.6j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9090,8 +9091,8 @@ object triplex_node:414 {
 	phases BS;
 	parent R4-25-00-1_tm_15;
 	power_1 10000+2031j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9101,8 +9102,8 @@ object triplex_node:415 {
 	phases BS;
 	parent R4-25-00-1_tm_16;
 	power_1 5000+1015.5j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9112,8 +9113,8 @@ object triplex_node:416 {
 	phases BS;
 	parent R4-25-00-1_tm_17;
 	power_1 7000+1421.7j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9123,8 +9124,8 @@ object triplex_node:417 {
 	phases BS;
 	parent R4-25-00-1_tm_18;
 	power_1 3000+609.3j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9134,8 +9135,8 @@ object triplex_node:418 {
 	phases BS;
 	parent R4-25-00-1_tm_19;
 	power_1 6000+3000j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9145,8 +9146,8 @@ object triplex_node:419 {
 	phases BS;
 	parent R4-25-00-1_tm_20;
 	power_1 13000+2640.3j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9167,8 +9168,8 @@ object triplex_node:421 {
 	phases BS;
 	parent R4-25-00-1_tm_22;
 	power_1 2300+1200j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9178,8 +9179,8 @@ object triplex_node:422 {
 	phases CS;
 	parent R4-25-00-1_tm_23;
 	power_1 6000+1218.6j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9189,8 +9190,8 @@ object triplex_node:423 {
 	phases BS;
 	parent R4-25-00-1_tm_24;
 	power_1 2000+406.2j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9200,8 +9201,8 @@ object triplex_node:424 {
 	phases CS;
 	parent R4-25-00-1_tm_25;
 	power_1 11000+2234.1j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9211,8 +9212,8 @@ object triplex_node:425 {
 	phases CS;
 	parent R4-25-00-1_tm_26;
 	power_1 9000+1827.9j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9222,8 +9223,8 @@ object triplex_node:426 {
 	phases CS;
 	parent R4-25-00-1_tm_27;
 	power_1 12000+2437.2j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9233,8 +9234,8 @@ object triplex_node:427 {
 	phases CS;
 	parent R4-25-00-1_tm_28;
 	power_1 6000+1218.6j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9244,8 +9245,8 @@ object triplex_node:428 {
 	phases CS;
 	parent R4-25-00-1_tm_29;
 	power_1 12000+2437.2j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9255,8 +9256,8 @@ object triplex_node:429 {
 	phases CS;
 	parent R4-25-00-1_tm_30;
 	power_1 16000+3249.6j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9266,8 +9267,8 @@ object triplex_node:430 {
 	phases CS;
 	parent R4-25-00-1_tm_31;
 	power_1 4000+2000j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9277,8 +9278,8 @@ object triplex_node:431 {
 	phases CS;
 	parent R4-25-00-1_tm_32;
 	power_1 7000+1421.7j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9288,8 +9289,8 @@ object triplex_node:432 {
 	phases CS;
 	parent R4-25-00-1_tm_33;
 	power_1 8000+1624.8j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9299,8 +9300,8 @@ object triplex_node:433 {
 	phases CS;
 	parent R4-25-00-1_tm_34;
 	power_1 3000+609.3j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9310,8 +9311,8 @@ object triplex_node:434 {
 	phases CS;
 	parent R4-25-00-1_tm_35;
 	power_1 15000+3046.5j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9321,8 +9322,8 @@ object triplex_node:435 {
 	phases CS;
 	parent R4-25-00-1_tm_36;
 	power_1 10000+2031j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9332,8 +9333,8 @@ object triplex_node:436 {
 	phases CS;
 	parent R4-25-00-1_tm_37;
 	power_1 3000+609.3j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9343,8 +9344,8 @@ object triplex_node:437 {
 	phases CS;
 	parent R4-25-00-1_tm_38;
 	power_1 4000+2000j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9365,8 +9366,8 @@ object triplex_node:439 {
 	phases BS;
 	parent R4-25-00-1_tm_40;
 	power_1 9000+1827.9j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9376,8 +9377,8 @@ object triplex_node:440 {
 	phases CS;
 	parent R4-25-00-1_tm_41;
 	power_1 2300+1200j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9398,8 +9399,8 @@ object triplex_node:442 {
 	phases BS;
 	parent R4-25-00-1_tm_43;
 	power_1 22000+4468.2j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9409,8 +9410,8 @@ object triplex_node:443 {
 	phases CS;
 	parent R4-25-00-1_tm_44;
 	power_1 2300+1200j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9431,8 +9432,8 @@ object triplex_node:445 {
 	phases BS;
 	parent R4-25-00-1_tm_46;
 	power_1 2000+406.2j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9442,8 +9443,8 @@ object triplex_node:446 {
 	phases CS;
 	parent R4-25-00-1_tm_47;
 	power_1 2300+1200j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9464,8 +9465,8 @@ object triplex_node:448 {
 	phases BS;
 	parent R4-25-00-1_tm_49;
 	power_1 2300+1200j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9475,8 +9476,8 @@ object triplex_node:449 {
 	phases CS;
 	parent R4-25-00-1_tm_50;
 	power_1 4000+812.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9497,8 +9498,8 @@ object triplex_node:451 {
 	phases BS;
 	parent R4-25-00-1_tm_52;
 	power_1 2300+1200j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9508,8 +9509,8 @@ object triplex_node:452 {
 	phases CS;
 	parent R4-25-00-1_tm_53;
 	power_1 8000+1624.8j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9519,8 +9520,8 @@ object triplex_node:453 {
 	phases CS;
 	parent R4-25-00-1_tm_54;
 	power_1 1000+203.1j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9541,8 +9542,8 @@ object triplex_node:455 {
 	phases BS;
 	parent R4-25-00-1_tm_56;
 	power_1 2300+1200j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9552,8 +9553,8 @@ object triplex_node:456 {
 	phases CS;
 	parent R4-25-00-1_tm_57;
 	power_1 2300+1200j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9574,8 +9575,8 @@ object triplex_node:458 {
 	phases BS;
 	parent R4-25-00-1_tm_59;
 	power_1 2300+1200j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9585,8 +9586,8 @@ object triplex_node:459 {
 	phases CS;
 	parent R4-25-00-1_tm_60;
 	power_1 2300+1200j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9596,8 +9597,8 @@ object triplex_node:460 {
 	phases CS;
 	parent R4-25-00-1_tm_61;
 	power_1 6000+1218.6j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9607,8 +9608,8 @@ object triplex_node:461 {
 	phases CS;
 	parent R4-25-00-1_tm_62;
 	power_1 4000+812.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9618,8 +9619,8 @@ object triplex_node:462 {
 	phases CS;
 	parent R4-25-00-1_tm_63;
 	power_1 4000+812.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9629,8 +9630,8 @@ object triplex_node:463 {
 	phases CS;
 	parent R4-25-00-1_tm_64;
 	power_1 9000+1827.9j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9640,8 +9641,8 @@ object triplex_node:464 {
 	phases CS;
 	parent R4-25-00-1_tm_65;
 	power_1 8000+1624.8j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9651,8 +9652,8 @@ object triplex_node:465 {
 	phases CS;
 	parent R4-25-00-1_tm_66;
 	power_1 11000+2234.1j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9662,8 +9663,8 @@ object triplex_node:466 {
 	phases CS;
 	parent R4-25-00-1_tm_67;
 	power_1 6000+1218.6j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9673,8 +9674,8 @@ object triplex_node:467 {
 	phases CS;
 	parent R4-25-00-1_tm_68;
 	power_1 4000+812.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9684,8 +9685,8 @@ object triplex_node:468 {
 	phases CS;
 	parent R4-25-00-1_tm_69;
 	power_1 10000+2031j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9695,8 +9696,8 @@ object triplex_node:469 {
 	phases CS;
 	parent R4-25-00-1_tm_70;
 	power_1 4000+812.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9706,8 +9707,8 @@ object triplex_node:470 {
 	phases CS;
 	parent R4-25-00-1_tm_71;
 	power_1 15000+7500j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9717,8 +9718,8 @@ object triplex_node:471 {
 	phases BS;
 	parent R4-25-00-1_tm_72;
 	power_1 11000+2234.1j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9728,8 +9729,8 @@ object triplex_node:472 {
 	phases CS;
 	parent R4-25-00-1_tm_73;
 	power_1 29000+5889.9j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9739,8 +9740,8 @@ object triplex_node:473 {
 	phases CS;
 	parent R4-25-00-1_tm_74;
 	power_1 2000+406.2j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9750,8 +9751,8 @@ object triplex_node:474 {
 	phases CS;
 	parent R4-25-00-1_tm_75;
 	power_1 4000+812.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9761,8 +9762,8 @@ object triplex_node:475 {
 	phases CS;
 	parent R4-25-00-1_tm_76;
 	power_1 16000+3249.6j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9772,8 +9773,8 @@ object triplex_node:476 {
 	phases CS;
 	parent R4-25-00-1_tm_77;
 	power_1 6000+1218.6j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9794,8 +9795,8 @@ object triplex_node:478 {
 	phases BS;
 	parent R4-25-00-1_tm_79;
 	power_1 1000+203.1j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9805,8 +9806,8 @@ object triplex_node:479 {
 	phases BS;
 	parent R4-25-00-1_tm_80;
 	power_1 4000+2000j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9816,8 +9817,8 @@ object triplex_node:480 {
 	phases BS;
 	parent R4-25-00-1_tm_81;
 	power_1 12000+2437.2j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9827,8 +9828,8 @@ object triplex_node:481 {
 	phases BS;
 	parent R4-25-00-1_tm_82;
 	power_1 3000+609.3j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9838,8 +9839,8 @@ object triplex_node:482 {
 	phases BS;
 	parent R4-25-00-1_tm_83;
 	power_1 8000+1624.8j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9860,8 +9861,8 @@ object triplex_node:484 {
 	phases CS;
 	parent R4-25-00-1_tm_85;
 	power_1 8000+1624.8j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9871,8 +9872,8 @@ object triplex_node:485 {
 	phases CS;
 	parent R4-25-00-1_tm_86;
 	power_1 8000+1624.8j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9882,8 +9883,8 @@ object triplex_node:486 {
 	phases CS;
 	parent R4-25-00-1_tm_87;
 	power_1 7000+1421.7j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9893,8 +9894,8 @@ object triplex_node:487 {
 	phases CS;
 	parent R4-25-00-1_tm_88;
 	power_1 9000+1827.9j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9904,8 +9905,8 @@ object triplex_node:488 {
 	phases CS;
 	parent R4-25-00-1_tm_89;
 	power_1 11000+2234.1j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9915,8 +9916,8 @@ object triplex_node:489 {
 	phases CS;
 	parent R4-25-00-1_tm_90;
 	power_1 11000+2234.1j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9926,8 +9927,8 @@ object triplex_node:490 {
 	phases CS;
 	parent R4-25-00-1_tm_91;
 	power_1 6000+1218.6j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9937,8 +9938,8 @@ object triplex_node:491 {
 	phases CS;
 	parent R4-25-00-1_tm_92;
 	power_1 5000+1015.5j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9948,8 +9949,8 @@ object triplex_node:492 {
 	phases CS;
 	parent R4-25-00-1_tm_93;
 	power_1 5000+1015.5j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9959,8 +9960,8 @@ object triplex_node:493 {
 	phases CS;
 	parent R4-25-00-1_tm_94;
 	power_1 14000+2843.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9970,8 +9971,8 @@ object triplex_node:494 {
 	phases CS;
 	parent R4-25-00-1_tm_95;
 	power_1 4000+812.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9981,8 +9982,8 @@ object triplex_node:495 {
 	phases CS;
 	parent R4-25-00-1_tm_96;
 	power_1 5000+1015.5j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -9992,8 +9993,8 @@ object triplex_node:496 {
 	phases CS;
 	parent R4-25-00-1_tm_97;
 	power_1 9000+1827.9j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10003,8 +10004,8 @@ object triplex_node:497 {
 	phases CS;
 	parent R4-25-00-1_tm_98;
 	power_1 1000+203.1j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10014,8 +10015,8 @@ object triplex_node:498 {
 	phases CS;
 	parent R4-25-00-1_tm_99;
 	power_1 8000+1624.8j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10025,8 +10026,8 @@ object triplex_node:499 {
 	phases CS;
 	parent R4-25-00-1_tm_100;
 	power_1 7000+1421.7j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10036,8 +10037,8 @@ object triplex_node:500 {
 	phases CS;
 	parent R4-25-00-1_tm_101;
 	power_1 14000+2843.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10047,8 +10048,8 @@ object triplex_node:501 {
 	phases CS;
 	parent R4-25-00-1_tm_102;
 	power_1 2000+406.2j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10058,8 +10059,8 @@ object triplex_node:502 {
 	phases CS;
 	parent R4-25-00-1_tm_103;
 	power_1 13000+2640.3j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10069,8 +10070,8 @@ object triplex_node:503 {
 	phases CS;
 	parent R4-25-00-1_tm_104;
 	power_1 8000+1624.8j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10080,8 +10081,8 @@ object triplex_node:504 {
 	phases CS;
 	parent R4-25-00-1_tm_105;
 	power_1 3000+609.3j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10091,8 +10092,8 @@ object triplex_node:505 {
 	phases CS;
 	parent R4-25-00-1_tm_106;
 	power_1 10000+2031j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10102,8 +10103,8 @@ object triplex_node:506 {
 	phases CS;
 	parent R4-25-00-1_tm_107;
 	power_1 4000+2000j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10113,8 +10114,8 @@ object triplex_node:507 {
 	phases CS;
 	parent R4-25-00-1_tm_108;
 	power_1 7000+1421.7j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10124,8 +10125,8 @@ object triplex_node:508 {
 	phases CS;
 	parent R4-25-00-1_tm_109;
 	power_1 12000+2437.2j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10135,8 +10136,8 @@ object triplex_node:509 {
 	phases CS;
 	parent R4-25-00-1_tm_110;
 	power_1 7000+1421.7j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10146,8 +10147,8 @@ object triplex_node:510 {
 	phases CS;
 	parent R4-25-00-1_tm_111;
 	power_1 1000+203.1j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10157,8 +10158,8 @@ object triplex_node:511 {
 	phases BS;
 	parent R4-25-00-1_tm_112;
 	power_1 2000+406.2j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10168,8 +10169,8 @@ object triplex_node:512 {
 	phases BS;
 	parent R4-25-00-1_tm_113;
 	power_1 1000+203.1j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10179,8 +10180,8 @@ object triplex_node:513 {
 	phases BS;
 	parent R4-25-00-1_tm_114;
 	power_1 6000+1218.6j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10190,8 +10191,8 @@ object triplex_node:514 {
 	phases BS;
 	parent R4-25-00-1_tm_115;
 	power_1 6000+3000j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10201,8 +10202,8 @@ object triplex_node:515 {
 	phases BS;
 	parent R4-25-00-1_tm_116;
 	power_1 10000+5000j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10212,8 +10213,8 @@ object triplex_node:516 {
 	phases BS;
 	parent R4-25-00-1_tm_117;
 	power_1 1000+203.1j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10245,8 +10246,8 @@ object triplex_node:519 {
 	phases BS;
 	parent R4-25-00-1_tm_120;
 	power_1 4000+2000j;
-	voltage_1 -60.000-103.923j;
-	voltage_2 -60.000-103.923j;
+	voltage_1 -60-103.92j;
+	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10256,8 +10257,8 @@ object triplex_node:520 {
 	phases CS;
 	parent R4-25-00-1_tm_121;
 	power_1 7000+1421.7j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10267,8 +10268,8 @@ object triplex_node:521 {
 	phases CS;
 	parent R4-25-00-1_tm_122;
 	power_1 4000+2000j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10278,8 +10279,8 @@ object triplex_node:522 {
 	phases CS;
 	parent R4-25-00-1_tm_123;
 	power_1 1000+203.1j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10300,8 +10301,8 @@ object triplex_node:524 {
 	phases CS;
 	parent R4-25-00-1_tm_125;
 	power_1 4000+812.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10311,8 +10312,8 @@ object triplex_node:525 {
 	phases CS;
 	parent R4-25-00-1_tm_126;
 	power_1 10000+2031j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10322,8 +10323,8 @@ object triplex_node:526 {
 	phases CS;
 	parent R4-25-00-1_tm_127;
 	power_1 7000+1421.7j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10333,8 +10334,8 @@ object triplex_node:527 {
 	phases CS;
 	parent R4-25-00-1_tm_128;
 	power_1 16000+3249.6j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10344,8 +10345,8 @@ object triplex_node:528 {
 	phases CS;
 	parent R4-25-00-1_tm_129;
 	power_1 2000+406.2j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10355,8 +10356,8 @@ object triplex_node:529 {
 	phases CS;
 	parent R4-25-00-1_tm_130;
 	power_1 11000+2234.1j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10366,8 +10367,8 @@ object triplex_node:530 {
 	phases CS;
 	parent R4-25-00-1_tm_131;
 	power_1 18000+3655.8j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10377,8 +10378,8 @@ object triplex_node:531 {
 	phases CS;
 	parent R4-25-00-1_tm_132;
 	power_1 4000+812.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10388,8 +10389,8 @@ object triplex_node:532 {
 	phases CS;
 	parent R4-25-00-1_tm_133;
 	power_1 1000+203.1j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10399,8 +10400,8 @@ object triplex_node:533 {
 	phases CS;
 	parent R4-25-00-1_tm_134;
 	power_1 16000+3249.6j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10410,8 +10411,8 @@ object triplex_node:534 {
 	phases CS;
 	parent R4-25-00-1_tm_135;
 	power_1 7000+1421.7j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10421,8 +10422,8 @@ object triplex_node:535 {
 	phases CS;
 	parent R4-25-00-1_tm_136;
 	power_1 9000+1827.9j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10432,8 +10433,8 @@ object triplex_node:536 {
 	phases CS;
 	parent R4-25-00-1_tm_137;
 	power_1 8000+1624.8j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10443,8 +10444,8 @@ object triplex_node:537 {
 	phases CS;
 	parent R4-25-00-1_tm_138;
 	power_1 6000+3000j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10454,8 +10455,8 @@ object triplex_node:538 {
 	phases CS;
 	parent R4-25-00-1_tm_139;
 	power_1 14000+2843.4j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
@@ -10465,8 +10466,8 @@ object triplex_node:539 {
 	phases CS;
 	parent R4-25-00-1_tm_140;
 	power_1 10000+5000j;
-	voltage_1 -60.000+103.923j;
-	voltage_2 -60.000+103.923j;
+	voltage_1 -60+103.92j;
+	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
