@@ -23,13 +23,29 @@ class house {
 	double myvalue;
 }
 
+module tape;
+class player {
+	double value;
+}
+object player {
+	name t_mass;
+	file t_mass.csv;
+}
+
 object house {
+	
 	// transform references property in as-yet undefined object
 	cooling_setpoint House1.cooling_setpoint+1;
+	
 	// transform references property in this objecct
 	heating_setpoint this.cooling_setpoint-5;
+	
 	// transform references schedule
 	air_temperature test_schedule+70;
+	
+	// transform references player
+	mass_temperature t_mass.value;	
+	
 	object double_assert {
 		status ASSERT_TRUE;
 		once ONCE_DONE;

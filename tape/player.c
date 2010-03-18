@@ -230,7 +230,10 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			my->status = TS_ERROR;
 		}
 		if (my->target!=NULL)
-			gl_set_value(obj->parent,GETADDR(obj->parent,my->target),my->next.value,my->target); /* pointer => int64 */
+		{
+			OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
+			gl_set_value(target,GETADDR(target,my->target),my->next.value,my->target); /* pointer => int64 */
+		}
 		t1 = player_read(obj);
 	}
 	obj->clock = t0;
