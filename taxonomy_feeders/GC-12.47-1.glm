@@ -8,8 +8,6 @@ clock{
 	timezone EST+8EDT;
 }
 
-//#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
-//#set savefile="testing.xml";
 #set profiler=1
 //*********************************************
 // modules
@@ -17,10 +15,39 @@ clock{
 module tape;
 module powerflow{
 	solver_method NR;
-	//acceleration_factor 1.4;
 	default_maximum_voltage_error 1e-9;
 };
+//*********************************************
 
+object regulator:74 {
+	name GC-12-47-1_reg_1;
+	from GC-12-47-1_node_28;
+	to GC-12-47-1_meter_4;
+	phases ABCN;
+	configuration regulator_configuration:75;
+	object recorder {
+		 property tap_A,tap_B,tap_C,power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_in.real,power_in.imag;
+		 limit 1440;
+		 interval 60;
+		 file "GC-12.27-1_reg_output.csv";
+	};
+}
+
+
+object regulator_configuration:75 {
+	name feeder_reg_cfg;
+	Control OUTPUT_VOLTAGE;
+	band_center 7200.0;
+	band_width 120;
+	connect_type WYE_WYE;
+	time_delay 30;
+	raise_taps 16;
+	lower_taps 16;
+	regulation 0.10;
+	tap_pos_A 0;
+	tap_pos_B 0;
+	tap_pos_C 0;
+}
 
 object capacitor:72 {
 	name GC-12-47-1_cap_1;
@@ -446,36 +473,6 @@ object node:76 {
 	voltage_C -3600+6235j;
 }
 
-
-object regulator:74 {
-	name GC-12-47-1_reg_1;
-	from GC-12-47-1_node_28;
-	to GC-12-47-1_meter_4;
-	phases ABCN;
-	configuration regulator_configuration:75;
-	object recorder {
-		 property tap_A,tap_B,tap_C,power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_in.real,power_in.imag;
-		 limit 1440;
-		 interval 60;
-		 file "GC-12.27-1_reg_output.csv";
-	};
-}
-
-
-object regulator_configuration:75 {
-	name feeder_reg_cfg;
-	Control OUTPUT_VOLTAGE;
-	band_center 7200.0;
-	band_width 60.0;
-	connect_type WYE_WYE;
-	time_delay 30;
-	raise_taps 16;
-	lower_taps 16;
-	regulation 0.10;
-	tap_pos_A 0;
-	tap_pos_B 0;
-	tap_pos_C 0;
-}
 
 
 object switch:67 {
