@@ -209,6 +209,11 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}, *match;
 		unsigned int calendar;
 		double value=1.0; /* default value is 1.0 */
+		// bound checking
+		if(index > 63){
+			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, sch->block);
+			return 0;
+		}
 		/* remove leading whitespace */
 		while (isspace(*token)) token++;
 		if (strcmp(token,"")==0)
@@ -223,9 +228,9 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}
 		else
 		{
-			sch->data[sch->block*MAXBLOCKS+index] = value;
+			sch->data[sch->block*MAXVALUES+index] = value;
 			sch->sum[sch->block] += value;
-			sch->abs[sch->block] += (value<0?-value:value);
+			sch->abs[sch->block] += (value<0?-value:value); // check to see if the value already exists in the value array, if so, don't ++index and use existing indexed value
 			sch->count[sch->block]++;
 		}
 
@@ -293,7 +298,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 								else
 								{
 									/* associate this time with the current value */
-									unsigned int ndx = sch->block*MAXBLOCKS + index;
+									unsigned int ndx = sch->block*MAXVALUES + index;
 									sch->index[calendar][minute] = ndx;
 									sch->weight[ndx]++;
 									sch->minutes[sch->block]++;
@@ -758,6 +763,8 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 double schedule_value(SCHEDULE *sch,		/**< the schedule to read */
 					  SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
+	long int cal = GET_CALENDAR(index);
+	long int min = GET_MINUTE(index);
 	return sch->data[sch->index[GET_CALENDAR(index)][GET_MINUTE(index)]];
 }
 
