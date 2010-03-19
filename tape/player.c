@@ -107,9 +107,29 @@ static void close_player(struct player *my)
 	(my->ops->close)(my);
 }
 
+static void trim(char *str, char *to){
+	int i = 0, j = 0;
+	if(str == 0)
+		return;
+	while(str[i] != 0 && isspace(str[i])){
+		++i;
+	}
+	while(str[i] != 0){
+		to[j] = str[i];
+		++j;
+		++i;
+	}
+	--j;
+	while(j > 0 && isspace(to[j])){
+		to[j] = 0; // remove trailing whitespace
+		--j;
+	}
+}
+
 static TIMESTAMP player_read(OBJECT *obj)
 {
 	char buffer[64];
+	char timebuf[64], valbuf[64], tbuf[64];
 	int Y,m,d,H,M,S;
 	struct player *my = OBJECTDATA(obj,struct player);
 	char unit[2];
@@ -120,6 +140,10 @@ static TIMESTAMP player_read(OBJECT *obj)
 Retry:
 	result = my->ops->read(my, buffer, sizeof(buffer));
 
+	memset(timebuf, 0, 64);
+	memset(valbuf, 0, 64);
+	memset(tbuf, 0, 64);
+	memset(value, 0, 32);
 	if (result==NULL)
 	{
 		if (my->loopnum>0)
@@ -137,35 +161,23 @@ Retry:
 	}
 	if (result[0]=='#' || result[0]=='\n') /* ignore comments and blank lines */
 		goto Retry;
-	if (sscanf(result,"%" FMT_INT64 "d,%31[^\n]", &t1,value)==2)
-	{
-		if (my->loop==my->loopnum) {
-			my->next.ts = t1;
-			while(value[voff] == ' '){
-				++voff;
-			}
-			strcpy(my->next.value, value+voff);
-		}
-	}
-	else if (sscanf(result,"%" FMT_INT64 "d%1[^,],%31[^\n]", &t1, unit, value)==3)
-	{
+
+	if(sscanf(result, "%[^,],%[^\n\r]", tbuf, valbuf) == 2){
+		trim(tbuf, timebuf);
+		trim(valbuf, value);
+		if (sscanf(timebuf,"%d-%d-%d %d:%d:%d",&Y,&m,&d,&H,&M,&S)==6)
 		{
-			int64 scale=1;
-			switch(unit[0]) {
-			case 's': scale=TS_SECOND; break;
-			case 'm': scale=60*TS_SECOND; break;
-			case 'h': scale=3600*TS_SECOND; break;
-			case 'd': scale=86400*TS_SECOND; break;
-			default: break;
-			}
-			t1 *= scale; 
-			if (result[0]=='+'){ /* timeshifts have leading + */
-				my->next.ts += t1;
-				while(value[voff] == ' '){
-					++voff;
-				}
-				strcpy(my->next.value, value+voff);
-			} else if (my->loop==my->loopnum){ /* absolute times are ignored on all but first loops */
+			//struct tm dt = {S,M,H,d,m-1,Y-1900,0,0,0};
+			DATETIME dt;
+			dt.year = Y;
+			dt.month = m;
+			dt.day = d;
+			dt.hour = H;
+			dt.minute = M;
+			dt.second = S;
+			dt.tz[0] = 0;
+			t1 = (TIMESTAMP)gl_mktime(&dt);
+			if (t1!=TS_INVALID && my->loop==my->loopnum){
 				my->next.ts = t1;
 				while(value[voff] == ' '){
 					++voff;
@@ -173,31 +185,51 @@ Retry:
 				strcpy(my->next.value, value+voff);
 			}
 		}
-	}
-	else if (sscanf(result,"%d-%d-%d %d:%d:%d,%31[^\n]",&Y,&m,&d,&H,&M,&S,value)==7)
-	{
-		//struct tm dt = {S,M,H,d,m-1,Y-1900,0,0,0};
-		DATETIME dt;
-		dt.year = Y;
-		dt.month = m;
-		dt.day = d;
-		dt.hour = H;
-		dt.minute = M;
-		dt.second = S;
-		dt.tz[0] = 0;
-		t1 = (TIMESTAMP)gl_mktime(&dt);
-		if (t1!=TS_INVALID && my->loop==my->loopnum){
-			my->next.ts = t1;
-			while(value[voff] == ' '){
-				++voff;
+		else if (sscanf(timebuf,"%" FMT_INT64 "d%1s", &t1, unit)==2)
+		{
+			{
+				int64 scale=1;
+				switch(unit[0]) {
+				case 's': scale=TS_SECOND; break;
+				case 'm': scale=60*TS_SECOND; break;
+				case 'h': scale=3600*TS_SECOND; break;
+				case 'd': scale=86400*TS_SECOND; break;
+				default: break;
+				}
+				t1 *= scale; 
+				if (result[0]=='+'){ /* timeshifts have leading + */
+					my->next.ts += t1;
+					while(value[voff] == ' '){
+						++voff;
+					}
+					strcpy(my->next.value, value+voff);
+				} else if (my->loop==my->loopnum){ /* absolute times are ignored on all but first loops */
+					my->next.ts = t1;
+					while(value[voff] == ' '){
+						++voff;
+					}
+					strcpy(my->next.value, value+voff);
+				}
 			}
-			strcpy(my->next.value, value+voff);
 		}
+		else if (sscanf(timebuf,"%" FMT_INT64 "d", &t1)==1)
+		{
+			if (my->loop==my->loopnum) {
+				my->next.ts = t1;
+				while(value[voff] == ' '){
+					++voff;
+				}
+				strcpy(my->next.value, value+voff);
+			}
+		}
+		else
+		{
+			gl_warning("player was unable to parse timestamp \'%s\'", result);
+		}
+	} else {
+		gl_warning("player was unable to split input string \'%s\'", result);
 	}
-	else
-	{
-		gl_warning("player was unable to parse timestamp \'%s\'", result);
-	}
+
 Done:
 	return my->next.ts;
 }
