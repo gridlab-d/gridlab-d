@@ -1884,6 +1884,16 @@ OBJECT *object_find_name(OBJECTNAME name){
 OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name){
 	OBJECTTREE *item = NULL;
 
+	if((isalpha(name[0]) != 0) || (name[0] == '_')){
+		; // good
+	} else {
+		if(global_relax_naming_rules == 0){
+			output_error("object name '%s' invalid, names must start with a letter or an underscore", name);
+			return NULL;
+		} else {
+			output_warning("object name '%s' does not follow strict naming rules and may not link correctly during load time", name);
+		}
+	}
 	if(obj->name != NULL){
 		object_tree_delete(obj,name);
 	}
