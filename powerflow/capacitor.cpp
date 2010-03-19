@@ -951,6 +951,49 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 	}
 }
 
+//Function to toggle capacitor bank status
+//Used by VVC to bypass private variable restrictions, as well as capacitor internal delays
+void capacitor::toggle_bank_status(bool des_status){
+
+	if (des_status==true)	//We want to go to a closed state
+	{
+		if ((phases_connected & PHASE_A)  == PHASE_A)
+		{
+			switchA_state = switchA_state_Next = switchA_state_Prev = CLOSED;
+		}
+
+		if ((phases_connected & PHASE_B)  == PHASE_B)
+		{
+			switchB_state = switchB_state_Next = switchB_state_Prev = CLOSED;
+		}
+
+		if ((phases_connected & PHASE_C)  == PHASE_C)
+		{
+			switchC_state = switchC_state_Next = switchC_state_Prev = CLOSED;
+		}
+	}
+	else	//Open us up
+	{
+		if ((phases_connected & PHASE_A)  == PHASE_A)
+		{
+			switchA_state = switchA_state_Next = switchA_state_Prev = OPEN;
+		}
+
+		if ((phases_connected & PHASE_B)  == PHASE_B)
+		{
+			switchB_state = switchB_state_Next = switchB_state_Prev = OPEN;
+		}
+
+		if ((phases_connected & PHASE_C)  == PHASE_C)
+		{
+			switchC_state = switchC_state_Next = switchC_state_Prev = OPEN;
+		}
+	}
+
+	//Eliminate any delay imposed
+	time_to_change = dwell_time_left = 0;
+}
+
 int capacitor::isa(char *classname)
 {
 	return strcmp(classname,"capacitor")==0 || node::isa(classname);

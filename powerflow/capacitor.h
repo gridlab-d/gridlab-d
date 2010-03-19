@@ -36,6 +36,7 @@ public:
 	double time_delay;          // control time delay
 	double dwell_time;			// Time for system to remain constant before a state change will be passed
 	double lockout_time;		// Time for capacitor to remain locked out from further switching operations (VARVOLT control)
+	void toggle_bank_status(bool des_status);	//Function to toggle capacitor state (mainly bypass all timers for VVC controller)
 
 protected:
 	int64 time_to_change;       // time until state change
