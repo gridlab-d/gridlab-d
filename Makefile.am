@@ -11,9 +11,9 @@ include aminclude.am
 
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 
-dist_doc_DATA = BUILD COPYRIGHT LICENSE README-LINUX README-MACOSX
+dist_doc_DATA = BUILD COPYRIGHT LICENSE README-LINUX README-MACOSX VERSION
 
-EXTRA_DIST = doxygen/*.* VERSION
+EXTRA_DIST = doxygen/*.* gridlabd.spec
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)
@@ -28,6 +28,9 @@ clean-wc:
 
 validate: 
 	python validate.py
+
+dist-rpm: dist-gzip
+	rpmbuild -tb $(distdir).tar.gz
 
 #.PHONY: over clean-wc validate
 

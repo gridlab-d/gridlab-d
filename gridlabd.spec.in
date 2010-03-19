@@ -1,0 +1,73 @@
+Summary: GridLAB-D power distribution system simulation and analysis tool.
+Name: gridlabd
+Version: @PACKAGE_VERSION@
+Release: 1%{?dist}
+License: Unknown
+Group: Simulators
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+BuildRequires: xerces-c-devel >= 2.8
+Requires: xerces-c >= 2.8
+Packager: Brandon Carpenter <brandon.carpenter@pnl.gov>
+URL: http://www.gridlabd.org
+Source0: %{name}-%{version}.tar.gz
+
+%description
+GridLAB-D™ is a new power distribution system simulation and analysis tool
+that provides valuable information to users who design and operate
+distribution systems, and to utilities that wish to take advantage of the
+latest energy technologies. It incorporates the most advanced modeling
+techniques, with high-performance algorithms to deliver the best in end-use
+modeling. GridLAB-D™ is coupled with distribution automation models and
+software integration tools for users of many power system analysis tools.
+
+GridLAB-D™ was developed by the U.S. Department of Energy (DOE) at Pacific
+Northwest National Laboratory (PNNL), in collaboration with industry and
+academia.
+
+%prep
+%setup -q
+
+%build
+%configure
+make %{?_smp_mflags}
+
+%install
+rm -rf %{buildroot}
+%makeinstall
+rm -f %{buildroot}%{_libdir}/gridlabd/*.la
+
+%clean
+rm -rf %{buildroot}
+
+%post
+
+%postun
+
+%files
+%defattr(-,root,root,-)
+%{_bindir}/gridlabd
+%{_libdir}/gridlabd/*
+%doc %{_docdir}/gridlabd/*
+
+
+%package devel
+Summary: Development files for GridLAB-D.
+Group: Simulators
+
+%description devel
+GridLAB-D™ is a new power distribution system simulation and analysis tool
+that provides valuable information to users who design and operate
+distribution systems, and to utilities that wish to take advantage of the
+latest energy technologies. It incorporates the most advanced modeling
+techniques, with high-performance algorithms to deliver the best in end-use
+modeling. GridLAB-D™ is coupled with distribution automation models and
+software integration tools for users of many power system analysis tools.
+
+GridLAB-D™ was developed by the U.S. Department of Energy (DOE) at Pacific
+Northwest National Laboratory (PNNL), in collaboration with industry and
+academia.
+
+%files devel
+%defattr(-,root,root,-)
+%{_includedir}/gridlabd/*.h
+

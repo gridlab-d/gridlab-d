@@ -175,6 +175,7 @@ AC_CONFIG_FILES([./Makefile \
 	tape/Makefile \
 	third_party/CBLAS/Makefile \
 	third_party/superLU_MT/Makefile \
+	gridlabd.spec \
 	])
 
 AC_SUBST(CPPFLAGS)

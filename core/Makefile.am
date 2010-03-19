@@ -82,7 +82,7 @@ install-data-local:
 	test -d "$(DESTDIR)$(bindir)" || mkdir -p "$(DESTDIR)$(bindir)"
 	test -d "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
 	if test "`dirname '$(DESTDIR)$(bindir)'`" -ef "`dirname '$(DESTDIR)$(libdir)'`"; then \
-		$(LN_S) -f ../lib/@PACKAGE@/gridlabd "$(DESTDIR)$(bindir)/gridlabd"; \
+		$(LN_S) -f ../`basename $(libdir)`/@PACKAGE@/gridlabd "$(DESTDIR)$(bindir)/gridlabd"; \
 	else \
 		$(LN_S) -f "$(DESTDIR)$(pkglibdir)/gridlabd" "$(DESTDIR)$(bindir)/gridlabd"; \
 	fi
