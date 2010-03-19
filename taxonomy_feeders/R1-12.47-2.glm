@@ -9,6 +9,7 @@ clock{
 }
 
 #set profiler=1
+#set relax_naming_rules=1
 //*********************************************
 // modules
 
@@ -4983,42 +4984,42 @@ object overhead_line:1987 {
 
 
 object overhead_line_conductor:3 {
-	name 4/0 ACSR;
+	//name 4/0 ACSR;
 	rating.summer.continuous 334.0;
 	geometric_mean_radius 0.00814 ft;
 	resistance 0.56300;
 }
 
 object overhead_line_conductor:4 {
-	name 4 CU;
+	//name 4 CU;
 	rating.summer.continuous 149.0;
 	geometric_mean_radius 0.00663 ft;
 	resistance 1.50000;
 }
 
 object overhead_line_conductor:6 {
-	name 4 AAAC;
+	//name 4 AAAC;
 	rating.summer.continuous 120.0;
 	geometric_mean_radius 0.00700 ft;
 	resistance 2.40970;
 }
 
 object overhead_line_conductor:7 {
-	name 2 AAAC;
+	//name 2 AAAC;
 	rating.summer.continuous 197.0;
 	geometric_mean_radius 0.00883 ft;
 	resistance 1.51970;
 }
 
 object overhead_line_conductor:8 {
-	name 2 ACSR;
+	//name 2 ACSR;
 	rating.summer.continuous 180.0;
 	geometric_mean_radius 0.00418 ft;
 	resistance 1.62570;
 }
 
 object overhead_line_conductor:9 {
-	name 1/0 AAC;
+	//name 1/0 AAC;
 	rating.summer.continuous 230.0;
 	geometric_mean_radius 0.01203 ft;
 	resistance 0.95300;
@@ -18441,7 +18442,7 @@ object underground_line:1981 {
 
 
 object underground_line_conductor:2 {
-	name 1000 AAC (Tape);
+	//name 1000 AAC (Tape);
 	rating.summer.continuous 775.0;
 	outer_diameter 1.87;
 	conductor_gmr 0.0371 ft;
@@ -18456,7 +18457,7 @@ object underground_line_conductor:2 {
 }
 
 object underground_line_conductor:5 {
-	name 1/0 AAC (Conc);
+	//name 1/0 AAC (Conc);
 	rating.summer.continuous 142.0;
 	outer_diameter 1.27;
 	conductor_gmr 0.01142 ft;

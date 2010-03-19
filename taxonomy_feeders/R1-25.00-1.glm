@@ -9,6 +9,7 @@ clock{
 }
 
 #set profiler=1
+#set relax_naming_rules=1
 //*********************************************
 // modules
 
@@ -6141,42 +6142,42 @@ object overhead_line:1143 {
 
 
 object overhead_line_conductor:4 {
-	name 4/0 ACSR;
+	//name 4/0 ACSR;
 	rating.summer.continuous 334.0;
 	geometric_mean_radius 0.00814 ft;
 	resistance 0.56300;
 }
 
 object overhead_line_conductor:5 {
-	name 4 CU;
+	//name 4 CU;
 	rating.summer.continuous 149.0;
 	geometric_mean_radius 0.00663 ft;
 	resistance 1.50000;
 }
 
 object overhead_line_conductor:7 {
-	name 2 ACSR;
+	//name 2 ACSR;
 	rating.summer.continuous 180.0;
 	geometric_mean_radius 0.00418 ft;
 	resistance 1.62570;
 }
 
 object overhead_line_conductor:8 {
-	name 1/0 AAC;
+	//name 1/0 AAC;
 	rating.summer.continuous 230.0;
 	geometric_mean_radius 0.01203 ft;
 	resistance 0.95300;
 }
 
 object overhead_line_conductor:9 {
-	name 4 AAAC;
+	//name 4 AAAC;
 	rating.summer.continuous 120.0;
 	geometric_mean_radius 0.00700 ft;
 	resistance 2.40970;
 }
 
 object overhead_line_conductor:10 {
-	name 2 AAAC;
+	//name 2 AAAC;
 	rating.summer.continuous 197.0;
 	geometric_mean_radius 0.00883 ft;
 	resistance 1.51970;
@@ -8168,16 +8169,16 @@ object triplex_line:661 {
 
 
 object triplex_line_conductor: {
-	name 1/0 AA triplex;
+	name triplex_1/0 AA;
 	resistance 0.97;
 	geometric_mean_radius 0.0111;
 }
 
 
 object triplex_line_configuration:1 {
-	conductor_1 1/0 AA triplex;
-	conductor_2 1/0 AA triplex;
-	conductor_N 1/0 AA triplex;
+	conductor_1 triplex_1/0 AA;
+	conductor_2 triplex_1/0 AA;
+	conductor_N triplex_1/0 AA;
 	insulation_thickness 0.08;
 	diameter 0.368;
 }
@@ -10100,7 +10101,7 @@ object underground_line:1144 {
 
 
 object underground_line_conductor:2 {
-	name 1/0 AAC (Conc);
+	//name 1/0 AAC (Conc);
 	rating.summer.continuous 142.0;
 	outer_diameter 1.27;
 	conductor_gmr 0.01142 ft;
@@ -10115,7 +10116,7 @@ object underground_line_conductor:2 {
 }
 
 object underground_line_conductor:3 {
-	name 4/0 AAC (Conc);
+	//name 4/0 AAC (Conc);
 	rating.summer.continuous 214.0;
 	outer_diameter 1.32;
 	conductor_gmr 0.0177 ft;
@@ -10130,7 +10131,7 @@ object underground_line_conductor:3 {
 }
 
 object underground_line_conductor:6 {
-	name 1000 AAC (Tape);
+	//name 1000 AAC (Tape);
 	rating.summer.continuous 775.0;
 	outer_diameter 1.87;
 	conductor_gmr 0.0371 ft;

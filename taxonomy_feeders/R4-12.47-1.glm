@@ -9,6 +9,7 @@ clock{
 }
 
 #set profiler=1
+#set relax_naming_rules=1
 //*********************************************
 // modules
 
@@ -34894,7 +34895,7 @@ object underground_line:3794 {
 
 
 object underground_line_conductor:7 {
-	name 2 AL (Conc);
+	//name 2 AL (Conc);
 	rating.summer.continuous 112.0;
 	outer_diameter 1.09;
 	conductor_gmr 0.0088 ft;

@@ -9,6 +9,7 @@ clock {
 }
 
 #set profiler=1
+#set relax_naming_rules=1
 //*********************************************
 // modules
 
@@ -2007,7 +2008,7 @@ object underground_line:207 {
 
 
 object underground_line_conductor:2 {
-	name 1000 AAC (Conc);
+	//name 1000 AAC (Conc);
 	rating.summer.continuous 488.0;
 	outer_diameter 2.15;
 	conductor_gmr 0.0371 ft;
@@ -2022,7 +2023,7 @@ object underground_line_conductor:2 {
 }
 
 object underground_line_conductor:8 {
-	name 1/0 AAC (Conc);
+	//name 1/0 AAC (Conc);
 	rating.summer.continuous 142.0;
 	outer_diameter 1.27;
 	conductor_gmr 0.01142 ft;
