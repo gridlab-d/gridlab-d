@@ -861,12 +861,15 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	return t2;
 }
 
-TIMESTAMP scheduletransform_syncall(TIMESTAMP t1)
+TIMESTAMP scheduletransform_syncall(TIMESTAMP t1, XFORMSOURCE restrict)
 {
 	SCHEDULEXFORM *xform;
 	/* process the schedule transformations */
 	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
-		*(xform->target) = *(xform->source) * xform->scale + xform->bias;
+	{	
+		if (xform->source_type&restrict)
+			*(xform->target) = *(xform->source) * xform->scale + xform->bias;
+	}
 	return TS_NEVER;
 }
 

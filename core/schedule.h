@@ -69,7 +69,15 @@ struct s_schedule {
 	SCHEDULE *next;	/* next schedule in list */
 };
 
-typedef enum {XS_UNKNOWN=0, XS_DOUBLE, XS_COMPLEX, XS_LOADSHAPE, XS_ENDUSE, XS_SCHEDULE} XFORMSOURCE;
+typedef enum {
+	XS_UNKNOWN	= 0x00, 
+	XS_DOUBLE	= 0x01, 
+	XS_COMPLEX	= 0x02, 
+	XS_LOADSHAPE= 0x04, 
+	XS_ENDUSE	= 0x08, 
+	XS_SCHEDULE = 0x10,
+	XS_ALL		= 0x1f,
+	} XFORMSOURCE;
 typedef struct s_schedulexform {
 	double *source;
 	XFORMSOURCE source_type;
@@ -105,7 +113,7 @@ double schedule_value(SCHEDULE *sch, SCHEDULEINDEX index);
 long schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
 TIMESTAMP schedule_sync(SCHEDULE *sch, TIMESTAMP t);
 TIMESTAMP schedule_syncall(TIMESTAMP t);
-TIMESTAMP scheduletransform_syncall(TIMESTAMP t);
+TIMESTAMP scheduletransform_syncall(TIMESTAMP t, XFORMSOURCE restrict);
 int schedule_test(void);
 void schedule_dump(SCHEDULE *sch, char *file);
 
