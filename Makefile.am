@@ -9,11 +9,12 @@ SUBDIRS = third_party/CBLAS third_party/superLU_MT core assert climate \
 
 include aminclude.am
 
+distdir = $(PACKAGE)-src-$(VERSION)
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 
-dist_doc_DATA = BUILD COPYRIGHT LICENSE README-LINUX README-MACOSX VERSION
+dist_doc_DATA = BUILD COPYRIGHT LICENSE README-LINUX README-MACOSX
 
-EXTRA_DIST = doxygen/*.* gridlabd.spec
+EXTRA_DIST = doxygen/*.* gridlabd.spec VERSION
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)

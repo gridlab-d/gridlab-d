@@ -3,8 +3,19 @@
 # Process this file with autoconf to produce a configure script.
 # This file is distributed under the same terms as GridLAB-D.
 
+# Parse version info from core/version.h into ./version.sh
+esyscmd([sed 's/^#define\s\+\(REV_\)\?\(MAJOR\|MINOR\|PATCH\|BRANCH\)\s\+\(\S\+\)\s*$/\2=\3/;t;d' core/version.h > version.sh])
+# Define M4 macros for version info
+define([pkgversion], esyscmd([sh -c ". ./version.sh; echo \$MAJOR.\$MINOR.\$PATCH | tr -d '\n'"]))dnl
+define([pkgbranch], esyscmd([sh -c ". ./version.sh; echo \$BRANCH | tr -d '\n'"]))dnl
+define([svnversion], esyscmd([sh -c "svnversion -n | sed 's/^exported$/0/;s/[^A-Za-z0-9]/_/g'"]))dnl
+# Export version info as autoconf variables
+AC_DEFINE(PACKAGE_BASEVERSION, [pkgversion], [Package Base Version])
+AC_DEFINE(PACKAGE_BRANCH, [pkgbranch], [Package Branch Name])
+AC_DEFINE(PACKAGE_REVISION, [svnversion], [SVN Revision])
+
 AC_PREREQ(2.59)
-AC_INIT([Gridlab-D], 1.1, [David Chassin <david.chassin@pnl.gov>], gridlabd)
+AC_INIT([Gridlab-D], [pkgversion.svnversion], [David Chassin <david.chassin@pnl.gov>], gridlabd)
 AC_CONFIG_SRCDIR([core/aggregate.c])
 # Older versions of automake may require the that following macro be replaced
 # with AM_CONFIG_HEADER([core/config.h]).
