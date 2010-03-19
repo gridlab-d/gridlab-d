@@ -179,9 +179,9 @@ int find_value_index (SCHEDULE *sch, /// schedule to search
 					  double value) /// value to find
 {
 	int ndx;
-	for (ndx=0; ndx<(int)(sch->count[block]); ndx++)
+	for (ndx=0; ndx<=(int)(sch->count[block]); ndx++)
 	{
-		if (sch->data[block*MAXVALUES+ndx] == value)
+		if ((float)(sch->data[block*MAXVALUES+ndx]) == (float)value)
 			return ndx;
 	}
 	return -1;
