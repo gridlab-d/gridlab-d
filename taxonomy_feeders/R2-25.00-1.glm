@@ -10281,7 +10281,7 @@ object transformer_configuration:1646 {
 
 
 object triplex_line:1127 {
-	name 124280202RA_TL;
+	name R2-25-00-1_tl_1;
 	phases AS;
 	from R2-25-00-1_tn_1;
 	to R2-25-00-1_tm_1;
@@ -10290,7 +10290,7 @@ object triplex_line:1127 {
 }
 
 object triplex_line:1128 {
-	name 124280226RA_TL;
+	name R2-25-00-1_tl_2;
 	phases AS;
 	from R2-25-00-1_tn_2;
 	to R2-25-00-1_tm_2;
@@ -10299,7 +10299,7 @@ object triplex_line:1128 {
 }
 
 object triplex_line:1129 {
-	name 124280226RB_TL;
+	name R2-25-00-1_tl_3;
 	phases BS;
 	from R2-25-00-1_tn_3;
 	to R2-25-00-1_tm_3;
@@ -10308,7 +10308,7 @@ object triplex_line:1129 {
 }
 
 object triplex_line:1130 {
-	name 124280226RC_TL;
+	name R2-25-00-1_tl_4;
 	phases CS;
 	from R2-25-00-1_tn_4;
 	to R2-25-00-1_tm_4;
@@ -10317,7 +10317,7 @@ object triplex_line:1130 {
 }
 
 object triplex_line:1131 {
-	name 124280266RA_TL;
+	name R2-25-00-1_tl_5;
 	phases AS;
 	from R2-25-00-1_tn_5;
 	to R2-25-00-1_tm_5;
@@ -10326,7 +10326,7 @@ object triplex_line:1131 {
 }
 
 object triplex_line:1132 {
-	name 124359939RA_TL;
+	name R2-25-00-1_tl_6;
 	phases AS;
 	from R2-25-00-1_tn_6;
 	to R2-25-00-1_tm_6;
@@ -10335,7 +10335,7 @@ object triplex_line:1132 {
 }
 
 object triplex_line:1133 {
-	name 124359939RB_TL;
+	name R2-25-00-1_tl_7;
 	phases BS;
 	from R2-25-00-1_tn_7;
 	to R2-25-00-1_tm_7;
@@ -10344,7 +10344,7 @@ object triplex_line:1133 {
 }
 
 object triplex_line:1134 {
-	name 124359939RC_TL;
+	name R2-25-00-1_tl_8;
 	phases CS;
 	from R2-25-00-1_tn_8;
 	to R2-25-00-1_tm_8;
@@ -10353,7 +10353,7 @@ object triplex_line:1134 {
 }
 
 object triplex_line:1135 {
-	name 124359987RC_TL;
+	name R2-25-00-1_tl_9;
 	phases CS;
 	from R2-25-00-1_tn_9;
 	to R2-25-00-1_tm_9;
@@ -10362,7 +10362,7 @@ object triplex_line:1135 {
 }
 
 object triplex_line:1136 {
-	name 124359995RA_TL;
+	name R2-25-00-1_tl_10;
 	phases AS;
 	from R2-25-00-1_tn_10;
 	to R2-25-00-1_tm_10;
@@ -10371,7 +10371,7 @@ object triplex_line:1136 {
 }
 
 object triplex_line:1137 {
-	name 124360027RB_TL;
+	name R2-25-00-1_tl_11;
 	phases BS;
 	from R2-25-00-1_tn_11;
 	to R2-25-00-1_tm_11;
@@ -10380,7 +10380,7 @@ object triplex_line:1137 {
 }
 
 object triplex_line:1138 {
-	name 124360067RA_TL;
+	name R2-25-00-1_tl_12;
 	phases AS;
 	from R2-25-00-1_tn_12;
 	to R2-25-00-1_tm_12;
@@ -10389,7 +10389,7 @@ object triplex_line:1138 {
 }
 
 object triplex_line:1139 {
-	name 124360067RB_TL;
+	name R2-25-00-1_tl_13;
 	phases BS;
 	from R2-25-00-1_tn_13;
 	to R2-25-00-1_tm_13;
@@ -10398,7 +10398,7 @@ object triplex_line:1139 {
 }
 
 object triplex_line:1140 {
-	name 124360067RC_TL;
+	name R2-25-00-1_tl_14;
 	phases CS;
 	from R2-25-00-1_tn_14;
 	to R2-25-00-1_tm_14;
@@ -10407,7 +10407,7 @@ object triplex_line:1140 {
 }
 
 object triplex_line:1141 {
-	name 124360091RA_TL;
+	name R2-25-00-1_tl_15;
 	phases AS;
 	from R2-25-00-1_tn_15;
 	to R2-25-00-1_tm_15;
@@ -10416,7 +10416,7 @@ object triplex_line:1141 {
 }
 
 object triplex_line:1142 {
-	name 124360139RA_TL;
+	name R2-25-00-1_tl_16;
 	phases AS;
 	from R2-25-00-1_tn_16;
 	to R2-25-00-1_tm_16;
@@ -10425,7 +10425,7 @@ object triplex_line:1142 {
 }
 
 object triplex_line:1143 {
-	name 124360187RA_TL;
+	name R2-25-00-1_tl_17;
 	phases AS;
 	from R2-25-00-1_tn_17;
 	to R2-25-00-1_tm_17;
@@ -10434,7 +10434,7 @@ object triplex_line:1143 {
 }
 
 object triplex_line:1144 {
-	name 124360347RA_TL;
+	name R2-25-00-1_tl_18;
 	phases AS;
 	from R2-25-00-1_tn_18;
 	to R2-25-00-1_tm_18;
@@ -10443,7 +10443,7 @@ object triplex_line:1144 {
 }
 
 object triplex_line:1145 {
-	name 124361172RC_TL;
+	name R2-25-00-1_tl_19;
 	phases CS;
 	from R2-25-00-1_tn_19;
 	to R2-25-00-1_tm_19;
@@ -10452,7 +10452,7 @@ object triplex_line:1145 {
 }
 
 object triplex_line:1146 {
-	name 124360211RC_TL;
+	name R2-25-00-1_tl_20;
 	phases CS;
 	from R2-25-00-1_tn_20;
 	to R2-25-00-1_tm_20;
@@ -10461,7 +10461,7 @@ object triplex_line:1146 {
 }
 
 object triplex_line:1147 {
-	name 124360227RA_TL;
+	name R2-25-00-1_tl_21;
 	phases AS;
 	from R2-25-00-1_tn_21;
 	to R2-25-00-1_tm_21;
@@ -10470,7 +10470,7 @@ object triplex_line:1147 {
 }
 
 object triplex_line:1148 {
-	name 124360227RB_TL;
+	name R2-25-00-1_tl_22;
 	phases BS;
 	from R2-25-00-1_tn_22;
 	to R2-25-00-1_tm_22;
@@ -10479,7 +10479,7 @@ object triplex_line:1148 {
 }
 
 object triplex_line:1149 {
-	name 124360227RC_TL;
+	name R2-25-00-1_tl_23;
 	phases CS;
 	from R2-25-00-1_tn_23;
 	to R2-25-00-1_tm_23;
@@ -10488,7 +10488,7 @@ object triplex_line:1149 {
 }
 
 object triplex_line:1150 {
-	name 124360235RC_TL;
+	name R2-25-00-1_tl_24;
 	phases CS;
 	from R2-25-00-1_tn_24;
 	to R2-25-00-1_tm_24;
@@ -10497,7 +10497,7 @@ object triplex_line:1150 {
 }
 
 object triplex_line:1151 {
-	name 124360243RA_TL;
+	name R2-25-00-1_tl_25;
 	phases AS;
 	from R2-25-00-1_tn_25;
 	to R2-25-00-1_tm_25;
@@ -10506,7 +10506,7 @@ object triplex_line:1151 {
 }
 
 object triplex_line:1152 {
-	name 124360243RB_TL;
+	name R2-25-00-1_tl_26;
 	phases BS;
 	from R2-25-00-1_tn_26;
 	to R2-25-00-1_tm_26;
@@ -10515,7 +10515,7 @@ object triplex_line:1152 {
 }
 
 object triplex_line:1153 {
-	name 124360243RC_TL;
+	name R2-25-00-1_tl_27;
 	phases CS;
 	from R2-25-00-1_tn_27;
 	to R2-25-00-1_tm_27;
@@ -10524,7 +10524,7 @@ object triplex_line:1153 {
 }
 
 object triplex_line:1154 {
-	name 124360251RB_TL;
+	name R2-25-00-1_tl_28;
 	phases BS;
 	from R2-25-00-1_tn_28;
 	to R2-25-00-1_tm_28;
@@ -10533,7 +10533,7 @@ object triplex_line:1154 {
 }
 
 object triplex_line:1155 {
-	name 124360283RC_TL;
+	name R2-25-00-1_tl_29;
 	phases CS;
 	from R2-25-00-1_tn_29;
 	to R2-25-00-1_tm_29;
@@ -10542,7 +10542,7 @@ object triplex_line:1155 {
 }
 
 object triplex_line:1156 {
-	name 124360291RA_TL;
+	name R2-25-00-1_tl_30;
 	phases AS;
 	from R2-25-00-1_tn_30;
 	to R2-25-00-1_tm_30;
@@ -10551,7 +10551,7 @@ object triplex_line:1156 {
 }
 
 object triplex_line:1157 {
-	name 124360299RA_TL;
+	name R2-25-00-1_tl_31;
 	phases AS;
 	from R2-25-00-1_tn_31;
 	to R2-25-00-1_tm_31;
@@ -10560,7 +10560,7 @@ object triplex_line:1157 {
 }
 
 object triplex_line:1158 {
-	name 124360299RB_TL;
+	name R2-25-00-1_tl_32;
 	phases BS;
 	from R2-25-00-1_tn_32;
 	to R2-25-00-1_tm_32;
@@ -10569,7 +10569,7 @@ object triplex_line:1158 {
 }
 
 object triplex_line:1159 {
-	name 124360299RC_TL;
+	name R2-25-00-1_tl_33;
 	phases CS;
 	from R2-25-00-1_tn_33;
 	to R2-25-00-1_tm_33;
@@ -10578,7 +10578,7 @@ object triplex_line:1159 {
 }
 
 object triplex_line:1160 {
-	name 124360323RA_TL;
+	name R2-25-00-1_tl_34;
 	phases AS;
 	from R2-25-00-1_tn_34;
 	to R2-25-00-1_tm_34;
@@ -10587,7 +10587,7 @@ object triplex_line:1160 {
 }
 
 object triplex_line:1161 {
-	name 124360323RB_TL;
+	name R2-25-00-1_tl_35;
 	phases BS;
 	from R2-25-00-1_tn_35;
 	to R2-25-00-1_tm_35;
@@ -10596,7 +10596,7 @@ object triplex_line:1161 {
 }
 
 object triplex_line:1162 {
-	name 124360323RC_TL;
+	name R2-25-00-1_tl_36;
 	phases CS;
 	from R2-25-00-1_tn_36;
 	to R2-25-00-1_tm_36;
@@ -10605,7 +10605,7 @@ object triplex_line:1162 {
 }
 
 object triplex_line:1163 {
-	name 124360331RC_TL;
+	name R2-25-00-1_tl_37;
 	phases CS;
 	from R2-25-00-1_tn_37;
 	to R2-25-00-1_tm_37;
@@ -10614,7 +10614,7 @@ object triplex_line:1163 {
 }
 
 object triplex_line:1164 {
-	name 124360339RB_TL;
+	name R2-25-00-1_tl_38;
 	phases BS;
 	from R2-25-00-1_tn_38;
 	to R2-25-00-1_tm_38;
@@ -10623,7 +10623,7 @@ object triplex_line:1164 {
 }
 
 object triplex_line:1165 {
-	name 124361324RA_TL;
+	name R2-25-00-1_tl_39;
 	phases AS;
 	from R2-25-00-1_tn_39;
 	to R2-25-00-1_tm_39;
@@ -10632,7 +10632,7 @@ object triplex_line:1165 {
 }
 
 object triplex_line:1166 {
-	name 124360363RA_TL;
+	name R2-25-00-1_tl_40;
 	phases AS;
 	from R2-25-00-1_tn_40;
 	to R2-25-00-1_tm_40;
@@ -10641,7 +10641,7 @@ object triplex_line:1166 {
 }
 
 object triplex_line:1167 {
-	name 124360363RB_TL;
+	name R2-25-00-1_tl_41;
 	phases BS;
 	from R2-25-00-1_tn_41;
 	to R2-25-00-1_tm_41;
@@ -10650,7 +10650,7 @@ object triplex_line:1167 {
 }
 
 object triplex_line:1168 {
-	name 124360363RC_TL;
+	name R2-25-00-1_tl_42;
 	phases CS;
 	from R2-25-00-1_tn_42;
 	to R2-25-00-1_tm_42;
@@ -10659,7 +10659,7 @@ object triplex_line:1168 {
 }
 
 object triplex_line:1169 {
-	name 124360403RC_TL;
+	name R2-25-00-1_tl_43;
 	phases CS;
 	from R2-25-00-1_tn_43;
 	to R2-25-00-1_tm_43;
@@ -10668,7 +10668,7 @@ object triplex_line:1169 {
 }
 
 object triplex_line:1170 {
-	name 124360411RA_TL;
+	name R2-25-00-1_tl_44;
 	phases AS;
 	from R2-25-00-1_tn_44;
 	to R2-25-00-1_tm_44;
@@ -10677,7 +10677,7 @@ object triplex_line:1170 {
 }
 
 object triplex_line:1171 {
-	name 124360419RC_TL;
+	name R2-25-00-1_tl_45;
 	phases CS;
 	from R2-25-00-1_tn_45;
 	to R2-25-00-1_tm_45;
@@ -10686,7 +10686,7 @@ object triplex_line:1171 {
 }
 
 object triplex_line:1172 {
-	name 124360427RC_TL;
+	name R2-25-00-1_tl_46;
 	phases CS;
 	from R2-25-00-1_tn_46;
 	to R2-25-00-1_tm_46;
@@ -10695,7 +10695,7 @@ object triplex_line:1172 {
 }
 
 object triplex_line:1173 {
-	name 124360435RB_TL;
+	name R2-25-00-1_tl_47;
 	phases BS;
 	from R2-25-00-1_tn_47;
 	to R2-25-00-1_tm_47;
@@ -10704,7 +10704,7 @@ object triplex_line:1173 {
 }
 
 object triplex_line:1174 {
-	name 124360443RC_TL;
+	name R2-25-00-1_tl_48;
 	phases CS;
 	from R2-25-00-1_tn_48;
 	to R2-25-00-1_tm_48;
@@ -10713,7 +10713,7 @@ object triplex_line:1174 {
 }
 
 object triplex_line:1175 {
-	name 124360451RB_TL;
+	name R2-25-00-1_tl_49;
 	phases BS;
 	from R2-25-00-1_tn_49;
 	to R2-25-00-1_tm_49;
@@ -10722,7 +10722,7 @@ object triplex_line:1175 {
 }
 
 object triplex_line:1176 {
-	name 124360467RA_TL;
+	name R2-25-00-1_tl_50;
 	phases AS;
 	from R2-25-00-1_tn_50;
 	to R2-25-00-1_tm_50;
@@ -10731,7 +10731,7 @@ object triplex_line:1176 {
 }
 
 object triplex_line:1177 {
-	name 124361203RA_TL;
+	name R2-25-00-1_tl_51;
 	phases AS;
 	from R2-25-00-1_tn_51;
 	to R2-25-00-1_tm_51;
@@ -10740,7 +10740,7 @@ object triplex_line:1177 {
 }
 
 object triplex_line:1178 {
-	name 124360515RA_TL;
+	name R2-25-00-1_tl_52;
 	phases AS;
 	from R2-25-00-1_tn_52;
 	to R2-25-00-1_tm_52;
@@ -10749,7 +10749,7 @@ object triplex_line:1178 {
 }
 
 object triplex_line:1179 {
-	name 124360515RB_TL;
+	name R2-25-00-1_tl_53;
 	phases BS;
 	from R2-25-00-1_tn_53;
 	to R2-25-00-1_tm_53;
@@ -10758,7 +10758,7 @@ object triplex_line:1179 {
 }
 
 object triplex_line:1180 {
-	name 124360515RC_TL;
+	name R2-25-00-1_tl_54;
 	phases CS;
 	from R2-25-00-1_tn_54;
 	to R2-25-00-1_tm_54;
@@ -10767,7 +10767,7 @@ object triplex_line:1180 {
 }
 
 object triplex_line:1181 {
-	name 124360523RC_TL;
+	name R2-25-00-1_tl_55;
 	phases CS;
 	from R2-25-00-1_tn_55;
 	to R2-25-00-1_tm_55;
@@ -10776,7 +10776,7 @@ object triplex_line:1181 {
 }
 
 object triplex_line:1182 {
-	name 124360539RC_TL;
+	name R2-25-00-1_tl_56;
 	phases CS;
 	from R2-25-00-1_tn_56;
 	to R2-25-00-1_tm_56;
@@ -10785,7 +10785,7 @@ object triplex_line:1182 {
 }
 
 object triplex_line:1183 {
-	name 124360547RA_TL;
+	name R2-25-00-1_tl_57;
 	phases AS;
 	from R2-25-00-1_tn_57;
 	to R2-25-00-1_tm_57;
@@ -10794,7 +10794,7 @@ object triplex_line:1183 {
 }
 
 object triplex_line:1184 {
-	name 124360547RB_TL;
+	name R2-25-00-1_tl_58;
 	phases BS;
 	from R2-25-00-1_tn_58;
 	to R2-25-00-1_tm_58;
@@ -10803,7 +10803,7 @@ object triplex_line:1184 {
 }
 
 object triplex_line:1185 {
-	name 124360547RC_TL;
+	name R2-25-00-1_tl_59;
 	phases CS;
 	from R2-25-00-1_tn_59;
 	to R2-25-00-1_tm_59;
@@ -10812,7 +10812,7 @@ object triplex_line:1185 {
 }
 
 object triplex_line:1186 {
-	name 124360571RA_TL;
+	name R2-25-00-1_tl_60;
 	phases AS;
 	from R2-25-00-1_tn_60;
 	to R2-25-00-1_tm_60;
@@ -10821,7 +10821,7 @@ object triplex_line:1186 {
 }
 
 object triplex_line:1187 {
-	name 124360571RB_TL;
+	name R2-25-00-1_tl_61;
 	phases BS;
 	from R2-25-00-1_tn_61;
 	to R2-25-00-1_tm_61;
@@ -10830,7 +10830,7 @@ object triplex_line:1187 {
 }
 
 object triplex_line:1188 {
-	name 124360571RC_TL;
+	name R2-25-00-1_tl_62;
 	phases CS;
 	from R2-25-00-1_tn_62;
 	to R2-25-00-1_tm_62;
@@ -10839,7 +10839,7 @@ object triplex_line:1188 {
 }
 
 object triplex_line:1189 {
-	name 124360579RB_TL;
+	name R2-25-00-1_tl_63;
 	phases BS;
 	from R2-25-00-1_tn_63;
 	to R2-25-00-1_tm_63;
@@ -10848,7 +10848,7 @@ object triplex_line:1189 {
 }
 
 object triplex_line:1190 {
-	name 124360611RA_TL;
+	name R2-25-00-1_tl_64;
 	phases AS;
 	from R2-25-00-1_tn_64;
 	to R2-25-00-1_tm_64;
@@ -10857,7 +10857,7 @@ object triplex_line:1190 {
 }
 
 object triplex_line:1191 {
-	name 124360619RC_TL;
+	name R2-25-00-1_tl_65;
 	phases CS;
 	from R2-25-00-1_tn_65;
 	to R2-25-00-1_tm_65;
@@ -10866,7 +10866,7 @@ object triplex_line:1191 {
 }
 
 object triplex_line:1192 {
-	name 124360635RA_TL;
+	name R2-25-00-1_tl_66;
 	phases AS;
 	from R2-25-00-1_tn_66;
 	to R2-25-00-1_tm_66;
@@ -10875,7 +10875,7 @@ object triplex_line:1192 {
 }
 
 object triplex_line:1193 {
-	name 124360635RB_TL;
+	name R2-25-00-1_tl_67;
 	phases BS;
 	from R2-25-00-1_tn_67;
 	to R2-25-00-1_tm_67;
@@ -10884,7 +10884,7 @@ object triplex_line:1193 {
 }
 
 object triplex_line:1194 {
-	name 124360635RC_TL;
+	name R2-25-00-1_tl_68;
 	phases CS;
 	from R2-25-00-1_tn_68;
 	to R2-25-00-1_tm_68;
@@ -10893,7 +10893,7 @@ object triplex_line:1194 {
 }
 
 object triplex_line:1195 {
-	name 124360643RA_TL;
+	name R2-25-00-1_tl_69;
 	phases AS;
 	from R2-25-00-1_tn_69;
 	to R2-25-00-1_tm_69;
@@ -10902,7 +10902,7 @@ object triplex_line:1195 {
 }
 
 object triplex_line:1196 {
-	name 124360643RB_TL;
+	name R2-25-00-1_tl_70;
 	phases BS;
 	from R2-25-00-1_tn_70;
 	to R2-25-00-1_tm_70;
@@ -10911,7 +10911,7 @@ object triplex_line:1196 {
 }
 
 object triplex_line:1197 {
-	name 124360643RC_TL;
+	name R2-25-00-1_tl_71;
 	phases CS;
 	from R2-25-00-1_tn_71;
 	to R2-25-00-1_tm_71;
@@ -10920,7 +10920,7 @@ object triplex_line:1197 {
 }
 
 object triplex_line:1198 {
-	name 124360675RA_TL;
+	name R2-25-00-1_tl_72;
 	phases AS;
 	from R2-25-00-1_tn_72;
 	to R2-25-00-1_tm_72;
@@ -10929,7 +10929,7 @@ object triplex_line:1198 {
 }
 
 object triplex_line:1199 {
-	name 124360675RB_TL;
+	name R2-25-00-1_tl_73;
 	phases BS;
 	from R2-25-00-1_tn_73;
 	to R2-25-00-1_tm_73;
@@ -10938,7 +10938,7 @@ object triplex_line:1199 {
 }
 
 object triplex_line:1200 {
-	name 124360675RC_TL;
+	name R2-25-00-1_tl_74;
 	phases CS;
 	from R2-25-00-1_tn_74;
 	to R2-25-00-1_tm_74;
@@ -10947,7 +10947,7 @@ object triplex_line:1200 {
 }
 
 object triplex_line:1201 {
-	name 124360699RA_TL;
+	name R2-25-00-1_tl_75;
 	phases AS;
 	from R2-25-00-1_tn_75;
 	to R2-25-00-1_tm_75;
@@ -10956,7 +10956,7 @@ object triplex_line:1201 {
 }
 
 object triplex_line:1202 {
-	name 124360715RA_TL;
+	name R2-25-00-1_tl_76;
 	phases AS;
 	from R2-25-00-1_tn_76;
 	to R2-25-00-1_tm_76;
@@ -10965,7 +10965,7 @@ object triplex_line:1202 {
 }
 
 object triplex_line:1203 {
-	name 124360715RB_TL;
+	name R2-25-00-1_tl_77;
 	phases BS;
 	from R2-25-00-1_tn_77;
 	to R2-25-00-1_tm_77;
@@ -10974,7 +10974,7 @@ object triplex_line:1203 {
 }
 
 object triplex_line:1204 {
-	name 124360715RC_TL;
+	name R2-25-00-1_tl_78;
 	phases CS;
 	from R2-25-00-1_tn_78;
 	to R2-25-00-1_tm_78;
@@ -10983,7 +10983,7 @@ object triplex_line:1204 {
 }
 
 object triplex_line:1205 {
-	name 124360755RA_TL;
+	name R2-25-00-1_tl_79;
 	phases AS;
 	from R2-25-00-1_tn_79;
 	to R2-25-00-1_tm_79;
@@ -10992,7 +10992,7 @@ object triplex_line:1205 {
 }
 
 object triplex_line:1206 {
-	name 124360771RA_TL;
+	name R2-25-00-1_tl_80;
 	phases AS;
 	from R2-25-00-1_tn_80;
 	to R2-25-00-1_tm_80;
@@ -11001,7 +11001,7 @@ object triplex_line:1206 {
 }
 
 object triplex_line:1207 {
-	name 124360771RB_TL;
+	name R2-25-00-1_tl_81;
 	phases BS;
 	from R2-25-00-1_tn_81;
 	to R2-25-00-1_tm_81;
@@ -11010,7 +11010,7 @@ object triplex_line:1207 {
 }
 
 object triplex_line:1208 {
-	name 124360771RC_TL;
+	name R2-25-00-1_tl_82;
 	phases CS;
 	from R2-25-00-1_tn_82;
 	to R2-25-00-1_tm_82;
@@ -11019,7 +11019,7 @@ object triplex_line:1208 {
 }
 
 object triplex_line:1209 {
-	name 124360827RC_TL;
+	name R2-25-00-1_tl_83;
 	phases CS;
 	from R2-25-00-1_tn_83;
 	to R2-25-00-1_tm_83;
@@ -11028,7 +11028,7 @@ object triplex_line:1209 {
 }
 
 object triplex_line:1210 {
-	name 124361291RC_TL;
+	name R2-25-00-1_tl_84;
 	phases CS;
 	from R2-25-00-1_tn_84;
 	to R2-25-00-1_tm_84;
@@ -11037,7 +11037,7 @@ object triplex_line:1210 {
 }
 
 object triplex_line:1211 {
-	name 124360923RA_TL;
+	name R2-25-00-1_tl_85;
 	phases AS;
 	from R2-25-00-1_tn_85;
 	to R2-25-00-1_tm_85;
@@ -11046,7 +11046,7 @@ object triplex_line:1211 {
 }
 
 object triplex_line:1212 {
-	name 124360923RB_TL;
+	name R2-25-00-1_tl_86;
 	phases BS;
 	from R2-25-00-1_tn_86;
 	to R2-25-00-1_tm_86;
@@ -11055,7 +11055,7 @@ object triplex_line:1212 {
 }
 
 object triplex_line:1213 {
-	name 124360923RC_TL;
+	name R2-25-00-1_tl_87;
 	phases CS;
 	from R2-25-00-1_tn_87;
 	to R2-25-00-1_tm_87;
@@ -11064,7 +11064,7 @@ object triplex_line:1213 {
 }
 
 object triplex_line:1214 {
-	name 124360931RC_TL;
+	name R2-25-00-1_tl_88;
 	phases CS;
 	from R2-25-00-1_tn_88;
 	to R2-25-00-1_tm_88;
@@ -11073,7 +11073,7 @@ object triplex_line:1214 {
 }
 
 object triplex_line:1215 {
-	name 124360939RA_TL;
+	name R2-25-00-1_tl_89;
 	phases AS;
 	from R2-25-00-1_tn_89;
 	to R2-25-00-1_tm_89;
@@ -11082,7 +11082,7 @@ object triplex_line:1215 {
 }
 
 object triplex_line:1216 {
-	name 124360947RC_TL;
+	name R2-25-00-1_tl_90;
 	phases CS;
 	from R2-25-00-1_tn_90;
 	to R2-25-00-1_tm_90;
@@ -11091,7 +11091,7 @@ object triplex_line:1216 {
 }
 
 object triplex_line:1217 {
-	name 123005102RA_TL;
+	name R2-25-00-1_tl_91;
 	phases AS;
 	from R2-25-00-1_tn_91;
 	to R2-25-00-1_tm_91;
@@ -11100,7 +11100,7 @@ object triplex_line:1217 {
 }
 
 object triplex_line:1218 {
-	name 123005102RB_TL;
+	name R2-25-00-1_tl_92;
 	phases BS;
 	from R2-25-00-1_tn_92;
 	to R2-25-00-1_tm_92;
@@ -11109,7 +11109,7 @@ object triplex_line:1218 {
 }
 
 object triplex_line:1219 {
-	name 123005102RC_TL;
+	name R2-25-00-1_tl_93;
 	phases CS;
 	from R2-25-00-1_tn_93;
 	to R2-25-00-1_tm_93;
@@ -11118,7 +11118,7 @@ object triplex_line:1219 {
 }
 
 object triplex_line:1220 {
-	name 124360971RC_TL;
+	name R2-25-00-1_tl_94;
 	phases CS;
 	from R2-25-00-1_tn_94;
 	to R2-25-00-1_tm_94;
@@ -11127,7 +11127,7 @@ object triplex_line:1220 {
 }
 
 object triplex_line:1221 {
-	name 124360979RA_TL;
+	name R2-25-00-1_tl_95;
 	phases AS;
 	from R2-25-00-1_tn_95;
 	to R2-25-00-1_tm_95;
@@ -11136,7 +11136,7 @@ object triplex_line:1221 {
 }
 
 object triplex_line:1222 {
-	name 124360979RB_TL;
+	name R2-25-00-1_tl_96;
 	phases BS;
 	from R2-25-00-1_tn_96;
 	to R2-25-00-1_tm_96;
@@ -11145,7 +11145,7 @@ object triplex_line:1222 {
 }
 
 object triplex_line:1223 {
-	name 124360979RC_TL;
+	name R2-25-00-1_tl_97;
 	phases CS;
 	from R2-25-00-1_tn_97;
 	to R2-25-00-1_tm_97;
@@ -11154,7 +11154,7 @@ object triplex_line:1223 {
 }
 
 object triplex_line:1224 {
-	name 124361011RA_TL;
+	name R2-25-00-1_tl_98;
 	phases AS;
 	from R2-25-00-1_tn_98;
 	to R2-25-00-1_tm_98;
@@ -11163,7 +11163,7 @@ object triplex_line:1224 {
 }
 
 object triplex_line:1225 {
-	name 124361059RA_TL;
+	name R2-25-00-1_tl_99;
 	phases AS;
 	from R2-25-00-1_tn_99;
 	to R2-25-00-1_tm_99;
@@ -11172,7 +11172,7 @@ object triplex_line:1225 {
 }
 
 object triplex_line:1226 {
-	name 124361059RB_TL;
+	name R2-25-00-1_tl_100;
 	phases BS;
 	from R2-25-00-1_tn_100;
 	to R2-25-00-1_tm_100;
@@ -11181,7 +11181,7 @@ object triplex_line:1226 {
 }
 
 object triplex_line:1227 {
-	name 124361059RC_TL;
+	name R2-25-00-1_tl_101;
 	phases CS;
 	from R2-25-00-1_tn_101;
 	to R2-25-00-1_tm_101;
@@ -11190,7 +11190,7 @@ object triplex_line:1227 {
 }
 
 object triplex_line:1228 {
-	name 124361099RA_TL;
+	name R2-25-00-1_tl_102;
 	phases AS;
 	from R2-25-00-1_tn_102;
 	to R2-25-00-1_tm_102;
@@ -11199,7 +11199,7 @@ object triplex_line:1228 {
 }
 
 object triplex_line:1229 {
-	name 124361123RA_TL;
+	name R2-25-00-1_tl_103;
 	phases AS;
 	from R2-25-00-1_tn_103;
 	to R2-25-00-1_tm_103;
@@ -11208,7 +11208,7 @@ object triplex_line:1229 {
 }
 
 object triplex_line:1230 {
-	name 124361131RC_TL;
+	name R2-25-00-1_tl_104;
 	phases CS;
 	from R2-25-00-1_tn_104;
 	to R2-25-00-1_tm_104;
@@ -11217,7 +11217,7 @@ object triplex_line:1230 {
 }
 
 object triplex_line:1231 {
-	name 124361179RA_TL;
+	name R2-25-00-1_tl_105;
 	phases AS;
 	from R2-25-00-1_tn_105;
 	to R2-25-00-1_tm_105;
@@ -11226,7 +11226,7 @@ object triplex_line:1231 {
 }
 
 object triplex_line:1232 {
-	name 124361187RA_TL;
+	name R2-25-00-1_tl_106;
 	phases AS;
 	from R2-25-00-1_tn_106;
 	to R2-25-00-1_tm_106;
@@ -11235,7 +11235,7 @@ object triplex_line:1232 {
 }
 
 object triplex_line:1233 {
-	name 124361187RB_TL;
+	name R2-25-00-1_tl_107;
 	phases BS;
 	from R2-25-00-1_tn_107;
 	to R2-25-00-1_tm_107;
@@ -11244,7 +11244,7 @@ object triplex_line:1233 {
 }
 
 object triplex_line:1234 {
-	name 124361187RC_TL;
+	name R2-25-00-1_tl_108;
 	phases CS;
 	from R2-25-00-1_tn_108;
 	to R2-25-00-1_tm_108;
@@ -11253,7 +11253,7 @@ object triplex_line:1234 {
 }
 
 object triplex_line:1235 {
-	name 124360803RA_TL;
+	name R2-25-00-1_tl_109;
 	phases AS;
 	from R2-25-00-1_tn_109;
 	to R2-25-00-1_tm_109;
@@ -11262,7 +11262,7 @@ object triplex_line:1235 {
 }
 
 object triplex_line:1236 {
-	name 124361219RA_TL;
+	name R2-25-00-1_tl_110;
 	phases AS;
 	from R2-25-00-1_tn_110;
 	to R2-25-00-1_tm_110;
@@ -11271,7 +11271,7 @@ object triplex_line:1236 {
 }
 
 object triplex_line:1237 {
-	name 124361227RA_TL;
+	name R2-25-00-1_tl_111;
 	phases AS;
 	from R2-25-00-1_tn_111;
 	to R2-25-00-1_tm_111;
@@ -11280,7 +11280,7 @@ object triplex_line:1237 {
 }
 
 object triplex_line:1238 {
-	name 124361227RB_TL;
+	name R2-25-00-1_tl_112;
 	phases BS;
 	from R2-25-00-1_tn_112;
 	to R2-25-00-1_tm_112;
@@ -11289,7 +11289,7 @@ object triplex_line:1238 {
 }
 
 object triplex_line:1239 {
-	name 124361227RC_TL;
+	name R2-25-00-1_tl_113;
 	phases CS;
 	from R2-25-00-1_tn_113;
 	to R2-25-00-1_tm_113;
@@ -11298,7 +11298,7 @@ object triplex_line:1239 {
 }
 
 object triplex_line:1240 {
-	name 124361235RA_TL;
+	name R2-25-00-1_tl_114;
 	phases AS;
 	from R2-25-00-1_tn_114;
 	to R2-25-00-1_tm_114;
@@ -11307,7 +11307,7 @@ object triplex_line:1240 {
 }
 
 object triplex_line:1241 {
-	name 124361235RB_TL;
+	name R2-25-00-1_tl_115;
 	phases BS;
 	from R2-25-00-1_tn_115;
 	to R2-25-00-1_tm_115;
@@ -11316,7 +11316,7 @@ object triplex_line:1241 {
 }
 
 object triplex_line:1242 {
-	name 124361235RC_TL;
+	name R2-25-00-1_tl_116;
 	phases CS;
 	from R2-25-00-1_tn_116;
 	to R2-25-00-1_tm_116;
@@ -11325,7 +11325,7 @@ object triplex_line:1242 {
 }
 
 object triplex_line:1243 {
-	name 124361251RC_TL;
+	name R2-25-00-1_tl_117;
 	phases CS;
 	from R2-25-00-1_tn_117;
 	to R2-25-00-1_tm_117;
@@ -11334,7 +11334,7 @@ object triplex_line:1243 {
 }
 
 object triplex_line:1244 {
-	name 124361267RB_TL;
+	name R2-25-00-1_tl_118;
 	phases BS;
 	from R2-25-00-1_tn_118;
 	to R2-25-00-1_tm_118;
@@ -11343,7 +11343,7 @@ object triplex_line:1244 {
 }
 
 object triplex_line:1245 {
-	name 124361275RA_TL;
+	name R2-25-00-1_tl_119;
 	phases AS;
 	from R2-25-00-1_tn_119;
 	to R2-25-00-1_tm_119;
@@ -11352,7 +11352,7 @@ object triplex_line:1245 {
 }
 
 object triplex_line:1246 {
-	name 124361275RB_TL;
+	name R2-25-00-1_tl_120;
 	phases BS;
 	from R2-25-00-1_tn_120;
 	to R2-25-00-1_tm_120;
@@ -11361,7 +11361,7 @@ object triplex_line:1246 {
 }
 
 object triplex_line:1247 {
-	name 124361275RC_TL;
+	name R2-25-00-1_tl_121;
 	phases CS;
 	from R2-25-00-1_tn_121;
 	to R2-25-00-1_tm_121;
@@ -11370,7 +11370,7 @@ object triplex_line:1247 {
 }
 
 object triplex_line:1248 {
-	name 124360203RC_TL;
+	name R2-25-00-1_tl_122;
 	phases CS;
 	from R2-25-00-1_tn_122;
 	to R2-25-00-1_tm_122;
@@ -11379,7 +11379,7 @@ object triplex_line:1248 {
 }
 
 object triplex_line:1249 {
-	name 124361307RC_TL;
+	name R2-25-00-1_tl_123;
 	phases CS;
 	from R2-25-00-1_tn_123;
 	to R2-25-00-1_tm_123;
@@ -11388,7 +11388,7 @@ object triplex_line:1249 {
 }
 
 object triplex_line:1250 {
-	name 124361323RA_TL;
+	name R2-25-00-1_tl_124;
 	phases AS;
 	from R2-25-00-1_tn_124;
 	to R2-25-00-1_tm_124;
@@ -11397,7 +11397,7 @@ object triplex_line:1250 {
 }
 
 object triplex_line:1251 {
-	name 124361323RB_TL;
+	name R2-25-00-1_tl_125;
 	phases BS;
 	from R2-25-00-1_tn_125;
 	to R2-25-00-1_tm_125;
@@ -11406,7 +11406,7 @@ object triplex_line:1251 {
 }
 
 object triplex_line:1252 {
-	name 124361323RC_TL;
+	name R2-25-00-1_tl_126;
 	phases CS;
 	from R2-25-00-1_tn_126;
 	to R2-25-00-1_tm_126;
@@ -11415,7 +11415,7 @@ object triplex_line:1252 {
 }
 
 object triplex_line:1253 {
-	name 124361331RB_TL;
+	name R2-25-00-1_tl_127;
 	phases BS;
 	from R2-25-00-1_tn_127;
 	to R2-25-00-1_tm_127;
@@ -11424,7 +11424,7 @@ object triplex_line:1253 {
 }
 
 object triplex_line:1254 {
-	name 124361363RA_TL;
+	name R2-25-00-1_tl_128;
 	phases AS;
 	from R2-25-00-1_tn_128;
 	to R2-25-00-1_tm_128;
@@ -11433,7 +11433,7 @@ object triplex_line:1254 {
 }
 
 object triplex_line:1255 {
-	name 124361363RB_TL;
+	name R2-25-00-1_tl_129;
 	phases BS;
 	from R2-25-00-1_tn_129;
 	to R2-25-00-1_tm_129;
@@ -11442,7 +11442,7 @@ object triplex_line:1255 {
 }
 
 object triplex_line:1256 {
-	name 124361363RC_TL;
+	name R2-25-00-1_tl_130;
 	phases CS;
 	from R2-25-00-1_tn_130;
 	to R2-25-00-1_tm_130;
@@ -11451,7 +11451,7 @@ object triplex_line:1256 {
 }
 
 object triplex_line:1257 {
-	name 124361379RA_TL;
+	name R2-25-00-1_tl_131;
 	phases AS;
 	from R2-25-00-1_tn_131;
 	to R2-25-00-1_tm_131;
@@ -11460,7 +11460,7 @@ object triplex_line:1257 {
 }
 
 object triplex_line:1258 {
-	name 124361387RA_TL;
+	name R2-25-00-1_tl_132;
 	phases AS;
 	from R2-25-00-1_tn_132;
 	to R2-25-00-1_tm_132;
@@ -11469,7 +11469,7 @@ object triplex_line:1258 {
 }
 
 object triplex_line:1259 {
-	name 124361387RB_TL;
+	name R2-25-00-1_tl_133;
 	phases BS;
 	from R2-25-00-1_tn_133;
 	to R2-25-00-1_tm_133;
@@ -11478,7 +11478,7 @@ object triplex_line:1259 {
 }
 
 object triplex_line:1260 {
-	name 124361387RC_TL;
+	name R2-25-00-1_tl_134;
 	phases CS;
 	from R2-25-00-1_tn_134;
 	to R2-25-00-1_tm_134;
@@ -11487,7 +11487,7 @@ object triplex_line:1260 {
 }
 
 object triplex_line:1261 {
-	name 124361395RC_TL;
+	name R2-25-00-1_tl_135;
 	phases CS;
 	from R2-25-00-1_tn_135;
 	to R2-25-00-1_tm_135;
@@ -11496,7 +11496,7 @@ object triplex_line:1261 {
 }
 
 object triplex_line:1262 {
-	name 124361411RB_TL;
+	name R2-25-00-1_tl_136;
 	phases BS;
 	from R2-25-00-1_tn_136;
 	to R2-25-00-1_tm_136;
@@ -11505,7 +11505,7 @@ object triplex_line:1262 {
 }
 
 object triplex_line:1263 {
-	name 124361419RA_TL;
+	name R2-25-00-1_tl_137;
 	phases AS;
 	from R2-25-00-1_tn_137;
 	to R2-25-00-1_tm_137;
@@ -11514,7 +11514,7 @@ object triplex_line:1263 {
 }
 
 object triplex_line:1264 {
-	name 124361483RA_TL;
+	name R2-25-00-1_tl_138;
 	phases AS;
 	from R2-25-00-1_tn_138;
 	to R2-25-00-1_tm_138;
@@ -11523,7 +11523,7 @@ object triplex_line:1264 {
 }
 
 object triplex_line:1265 {
-	name 124361483RB_TL;
+	name R2-25-00-1_tl_139;
 	phases BS;
 	from R2-25-00-1_tn_139;
 	to R2-25-00-1_tm_139;
@@ -11532,7 +11532,7 @@ object triplex_line:1265 {
 }
 
 object triplex_line:1266 {
-	name 124361483RC_TL;
+	name R2-25-00-1_tl_140;
 	phases CS;
 	from R2-25-00-1_tn_140;
 	to R2-25-00-1_tm_140;
@@ -11541,7 +11541,7 @@ object triplex_line:1266 {
 }
 
 object triplex_line:1267 {
-	name 124361507RC_TL;
+	name R2-25-00-1_tl_141;
 	phases CS;
 	from R2-25-00-1_tn_141;
 	to R2-25-00-1_tm_141;
@@ -11550,7 +11550,7 @@ object triplex_line:1267 {
 }
 
 object triplex_line:1268 {
-	name 124361523RB_TL;
+	name R2-25-00-1_tl_142;
 	phases BS;
 	from R2-25-00-1_tn_142;
 	to R2-25-00-1_tm_142;
@@ -11559,7 +11559,7 @@ object triplex_line:1268 {
 }
 
 object triplex_line:1269 {
-	name 124361531RC_TL;
+	name R2-25-00-1_tl_143;
 	phases CS;
 	from R2-25-00-1_tn_143;
 	to R2-25-00-1_tm_143;
@@ -11568,7 +11568,7 @@ object triplex_line:1269 {
 }
 
 object triplex_line:1270 {
-	name 124361587RB_TL;
+	name R2-25-00-1_tl_144;
 	phases BS;
 	from R2-25-00-1_tn_144;
 	to R2-25-00-1_tm_144;
@@ -11577,7 +11577,7 @@ object triplex_line:1270 {
 }
 
 object triplex_line:1271 {
-	name 124361595RB_TL;
+	name R2-25-00-1_tl_145;
 	phases BS;
 	from R2-25-00-1_tn_145;
 	to R2-25-00-1_tm_145;
@@ -11586,7 +11586,7 @@ object triplex_line:1271 {
 }
 
 object triplex_line:1272 {
-	name 124361635RA_TL;
+	name R2-25-00-1_tl_146;
 	phases AS;
 	from R2-25-00-1_tn_146;
 	to R2-25-00-1_tm_146;
@@ -11595,7 +11595,7 @@ object triplex_line:1272 {
 }
 
 object triplex_line:1273 {
-	name 124361643RC_TL;
+	name R2-25-00-1_tl_147;
 	phases CS;
 	from R2-25-00-1_tn_147;
 	to R2-25-00-1_tm_147;
@@ -11604,7 +11604,7 @@ object triplex_line:1273 {
 }
 
 object triplex_line:1274 {
-	name 124361667RA_TL;
+	name R2-25-00-1_tl_148;
 	phases AS;
 	from R2-25-00-1_tn_148;
 	to R2-25-00-1_tm_148;
@@ -11613,7 +11613,7 @@ object triplex_line:1274 {
 }
 
 object triplex_line:1275 {
-	name 124361707RB_TL;
+	name R2-25-00-1_tl_149;
 	phases BS;
 	from R2-25-00-1_tn_149;
 	to R2-25-00-1_tm_149;
@@ -11622,7 +11622,7 @@ object triplex_line:1275 {
 }
 
 object triplex_line:1276 {
-	name 124361771RA_TL;
+	name R2-25-00-1_tl_150;
 	phases AS;
 	from R2-25-00-1_tn_150;
 	to R2-25-00-1_tm_150;
@@ -11631,7 +11631,7 @@ object triplex_line:1276 {
 }
 
 object triplex_line:1277 {
-	name 124361779RA_TL;
+	name R2-25-00-1_tl_151;
 	phases AS;
 	from R2-25-00-1_tn_151;
 	to R2-25-00-1_tm_151;
@@ -11640,7 +11640,7 @@ object triplex_line:1277 {
 }
 
 object triplex_line:1278 {
-	name 124360195RA_TL;
+	name R2-25-00-1_tl_152;
 	phases AS;
 	from R2-25-00-1_tn_152;
 	to R2-25-00-1_tm_152;
@@ -11649,7 +11649,7 @@ object triplex_line:1278 {
 }
 
 object triplex_line:1279 {
-	name 124361827RB_TL;
+	name R2-25-00-1_tl_153;
 	phases BS;
 	from R2-25-00-1_tn_153;
 	to R2-25-00-1_tm_153;
@@ -11658,7 +11658,7 @@ object triplex_line:1279 {
 }
 
 object triplex_line:1280 {
-	name 124361867RA_TL;
+	name R2-25-00-1_tl_154;
 	phases AS;
 	from R2-25-00-1_tn_154;
 	to R2-25-00-1_tm_154;
@@ -11667,7 +11667,7 @@ object triplex_line:1280 {
 }
 
 object triplex_line:1281 {
-	name 124361867RB_TL;
+	name R2-25-00-1_tl_155;
 	phases BS;
 	from R2-25-00-1_tn_155;
 	to R2-25-00-1_tm_155;
@@ -11676,7 +11676,7 @@ object triplex_line:1281 {
 }
 
 object triplex_line:1282 {
-	name 124361867RC_TL;
+	name R2-25-00-1_tl_156;
 	phases CS;
 	from R2-25-00-1_tn_156;
 	to R2-25-00-1_tm_156;
@@ -11685,7 +11685,7 @@ object triplex_line:1282 {
 }
 
 object triplex_line:1283 {
-	name 124361891RA_TL;
+	name R2-25-00-1_tl_157;
 	phases AS;
 	from R2-25-00-1_tn_157;
 	to R2-25-00-1_tm_157;
@@ -11694,7 +11694,7 @@ object triplex_line:1283 {
 }
 
 object triplex_line:1284 {
-	name 124361907RA_TL;
+	name R2-25-00-1_tl_158;
 	phases AS;
 	from R2-25-00-1_tn_158;
 	to R2-25-00-1_tm_158;
@@ -11703,7 +11703,7 @@ object triplex_line:1284 {
 }
 
 object triplex_line:1285 {
-	name 124361923RB_TL;
+	name R2-25-00-1_tl_159;
 	phases BS;
 	from R2-25-00-1_tn_159;
 	to R2-25-00-1_tm_159;
@@ -11712,7 +11712,7 @@ object triplex_line:1285 {
 }
 
 object triplex_line:1286 {
-	name 124361939RC_TL;
+	name R2-25-00-1_tl_160;
 	phases CS;
 	from R2-25-00-1_tn_160;
 	to R2-25-00-1_tm_160;
@@ -11721,7 +11721,7 @@ object triplex_line:1286 {
 }
 
 object triplex_line:1287 {
-	name 124361963RA_TL;
+	name R2-25-00-1_tl_161;
 	phases AS;
 	from R2-25-00-1_tn_161;
 	to R2-25-00-1_tm_161;
@@ -11730,7 +11730,7 @@ object triplex_line:1287 {
 }
 
 object triplex_line:1288 {
-	name 124361995RA_TL;
+	name R2-25-00-1_tl_162;
 	phases AS;
 	from R2-25-00-1_tn_162;
 	to R2-25-00-1_tm_162;
@@ -11739,7 +11739,7 @@ object triplex_line:1288 {
 }
 
 object triplex_line:1289 {
-	name 124361995RB_TL;
+	name R2-25-00-1_tl_163;
 	phases BS;
 	from R2-25-00-1_tn_163;
 	to R2-25-00-1_tm_163;
@@ -11748,7 +11748,7 @@ object triplex_line:1289 {
 }
 
 object triplex_line:1290 {
-	name 124361995RC_TL;
+	name R2-25-00-1_tl_164;
 	phases CS;
 	from R2-25-00-1_tn_164;
 	to R2-25-00-1_tm_164;
@@ -11757,7 +11757,7 @@ object triplex_line:1290 {
 }
 
 object triplex_line:1291 {
-	name 124362019RA_TL;
+	name R2-25-00-1_tl_165;
 	phases AS;
 	from R2-25-00-1_tn_165;
 	to R2-25-00-1_tm_165;
@@ -11766,7 +11766,7 @@ object triplex_line:1291 {
 }
 
 object triplex_line:1292 {
-	name 124362019RB_TL;
+	name R2-25-00-1_tl_166;
 	phases BS;
 	from R2-25-00-1_tn_166;
 	to R2-25-00-1_tm_166;
@@ -11775,7 +11775,7 @@ object triplex_line:1292 {
 }
 
 object triplex_line:1293 {
-	name 124362019RC_TL;
+	name R2-25-00-1_tl_167;
 	phases CS;
 	from R2-25-00-1_tn_167;
 	to R2-25-00-1_tm_167;
@@ -11784,7 +11784,7 @@ object triplex_line:1293 {
 }
 
 object triplex_line:1294 {
-	name 124362027RA_TL;
+	name R2-25-00-1_tl_168;
 	phases AS;
 	from R2-25-00-1_tn_168;
 	to R2-25-00-1_tm_168;
@@ -11793,7 +11793,7 @@ object triplex_line:1294 {
 }
 
 object triplex_line:1295 {
-	name 124362027RB_TL;
+	name R2-25-00-1_tl_169;
 	phases BS;
 	from R2-25-00-1_tn_169;
 	to R2-25-00-1_tm_169;
@@ -11802,7 +11802,7 @@ object triplex_line:1295 {
 }
 
 object triplex_line:1296 {
-	name 124362027RC_TL;
+	name R2-25-00-1_tl_170;
 	phases CS;
 	from R2-25-00-1_tn_170;
 	to R2-25-00-1_tm_170;
@@ -11811,7 +11811,7 @@ object triplex_line:1296 {
 }
 
 object triplex_line:1297 {
-	name 124362035RA_TL;
+	name R2-25-00-1_tl_171;
 	phases AS;
 	from R2-25-00-1_tn_171;
 	to R2-25-00-1_tm_171;
@@ -11820,7 +11820,7 @@ object triplex_line:1297 {
 }
 
 object triplex_line:1298 {
-	name 124362051RA_TL;
+	name R2-25-00-1_tl_172;
 	phases AS;
 	from R2-25-00-1_tn_172;
 	to R2-25-00-1_tm_172;
@@ -11829,7 +11829,7 @@ object triplex_line:1298 {
 }
 
 object triplex_line:1299 {
-	name 124362083RA_TL;
+	name R2-25-00-1_tl_173;
 	phases AS;
 	from R2-25-00-1_tn_173;
 	to R2-25-00-1_tm_173;
@@ -11838,7 +11838,7 @@ object triplex_line:1299 {
 }
 
 object triplex_line:1300 {
-	name 124362091RA_TL;
+	name R2-25-00-1_tl_174;
 	phases AS;
 	from R2-25-00-1_tn_174;
 	to R2-25-00-1_tm_174;
@@ -11847,7 +11847,7 @@ object triplex_line:1300 {
 }
 
 object triplex_line:1301 {
-	name 124362091RB_TL;
+	name R2-25-00-1_tl_175;
 	phases BS;
 	from R2-25-00-1_tn_175;
 	to R2-25-00-1_tm_175;
@@ -11856,7 +11856,7 @@ object triplex_line:1301 {
 }
 
 object triplex_line:1302 {
-	name 124362091RC_TL;
+	name R2-25-00-1_tl_176;
 	phases CS;
 	from R2-25-00-1_tn_176;
 	to R2-25-00-1_tm_176;
@@ -11865,7 +11865,7 @@ object triplex_line:1302 {
 }
 
 object triplex_line:1303 {
-	name 124362123RA_TL;
+	name R2-25-00-1_tl_177;
 	phases AS;
 	from R2-25-00-1_tn_177;
 	to R2-25-00-1_tm_177;
@@ -11874,7 +11874,7 @@ object triplex_line:1303 {
 }
 
 object triplex_line:1304 {
-	name 124362139RA_TL;
+	name R2-25-00-1_tl_178;
 	phases AS;
 	from R2-25-00-1_tn_178;
 	to R2-25-00-1_tm_178;
@@ -11883,7 +11883,7 @@ object triplex_line:1304 {
 }
 
 object triplex_line:1305 {
-	name 124362139RB_TL;
+	name R2-25-00-1_tl_179;
 	phases BS;
 	from R2-25-00-1_tn_179;
 	to R2-25-00-1_tm_179;
@@ -11892,7 +11892,7 @@ object triplex_line:1305 {
 }
 
 object triplex_line:1306 {
-	name 124362139RC_TL;
+	name R2-25-00-1_tl_180;
 	phases CS;
 	from R2-25-00-1_tn_180;
 	to R2-25-00-1_tm_180;
@@ -11901,7 +11901,7 @@ object triplex_line:1306 {
 }
 
 object triplex_line:1307 {
-	name 124362163RB_TL;
+	name R2-25-00-1_tl_181;
 	phases BS;
 	from R2-25-00-1_tn_181;
 	to R2-25-00-1_tm_181;
@@ -11910,7 +11910,7 @@ object triplex_line:1307 {
 }
 
 object triplex_line:1308 {
-	name 124362179RA_TL;
+	name R2-25-00-1_tl_182;
 	phases AS;
 	from R2-25-00-1_tn_182;
 	to R2-25-00-1_tm_182;
@@ -11919,7 +11919,7 @@ object triplex_line:1308 {
 }
 
 object triplex_line:1309 {
-	name 124362187RA_TL;
+	name R2-25-00-1_tl_183;
 	phases AS;
 	from R2-25-00-1_tn_183;
 	to R2-25-00-1_tm_183;
@@ -11928,7 +11928,7 @@ object triplex_line:1309 {
 }
 
 object triplex_line:1310 {
-	name 124362187RB_TL;
+	name R2-25-00-1_tl_184;
 	phases BS;
 	from R2-25-00-1_tn_184;
 	to R2-25-00-1_tm_184;
@@ -11937,7 +11937,7 @@ object triplex_line:1310 {
 }
 
 object triplex_line:1311 {
-	name 124362187RC_TL;
+	name R2-25-00-1_tl_185;
 	phases CS;
 	from R2-25-00-1_tn_185;
 	to R2-25-00-1_tm_185;
@@ -11946,7 +11946,7 @@ object triplex_line:1311 {
 }
 
 object triplex_line:1312 {
-	name 124362211RB_TL;
+	name R2-25-00-1_tl_186;
 	phases BS;
 	from R2-25-00-1_tn_186;
 	to R2-25-00-1_tm_186;
@@ -11955,7 +11955,7 @@ object triplex_line:1312 {
 }
 
 object triplex_line:1313 {
-	name 124362235RB_TL;
+	name R2-25-00-1_tl_187;
 	phases BS;
 	from R2-25-00-1_tn_187;
 	to R2-25-00-1_tm_187;
@@ -11964,7 +11964,7 @@ object triplex_line:1313 {
 }
 
 object triplex_line:1314 {
-	name 124362259RA_TL;
+	name R2-25-00-1_tl_188;
 	phases AS;
 	from R2-25-00-1_tn_188;
 	to R2-25-00-1_tm_188;
@@ -11973,7 +11973,7 @@ object triplex_line:1314 {
 }
 
 object triplex_line:1315 {
-	name 124362267RA_TL;
+	name R2-25-00-1_tl_189;
 	phases AS;
 	from R2-25-00-1_tn_189;
 	to R2-25-00-1_tm_189;
@@ -11982,7 +11982,7 @@ object triplex_line:1315 {
 }
 
 object triplex_line:1316 {
-	name 124362267RB_TL;
+	name R2-25-00-1_tl_190;
 	phases BS;
 	from R2-25-00-1_tn_190;
 	to R2-25-00-1_tm_190;
@@ -11991,7 +11991,7 @@ object triplex_line:1316 {
 }
 
 object triplex_line:1317 {
-	name 124362267RC_TL;
+	name R2-25-00-1_tl_191;
 	phases CS;
 	from R2-25-00-1_tn_191;
 	to R2-25-00-1_tm_191;
@@ -12000,7 +12000,7 @@ object triplex_line:1317 {
 }
 
 object triplex_line:1318 {
-	name 124362043RA_TL;
+	name R2-25-00-1_tl_192;
 	phases AS;
 	from R2-25-00-1_tn_192;
 	to R2-25-00-1_tm_192;
@@ -12009,7 +12009,7 @@ object triplex_line:1318 {
 }
 
 object triplex_line:1319 {
-	name 124361540RA_TL;
+	name R2-25-00-1_tl_193;
 	phases AS;
 	from R2-25-00-1_tn_193;
 	to R2-25-00-1_tm_193;
@@ -12018,7 +12018,7 @@ object triplex_line:1319 {
 }
 
 object triplex_line:1320 {
-	name 124360811RA_TL;
+	name R2-25-00-1_tl_194;
 	phases AS;
 	from R2-25-00-1_tn_194;
 	to R2-25-00-1_tm_194;
@@ -12027,7 +12027,7 @@ object triplex_line:1320 {
 }
 
 object triplex_line:1321 {
-	name 124363340RC_TL;
+	name R2-25-00-1_tl_195;
 	phases CS;
 	from R2-25-00-1_tn_195;
 	to R2-25-00-1_tm_195;
@@ -12036,7 +12036,7 @@ object triplex_line:1321 {
 }
 
 object triplex_line:1322 {
-	name 124360483RA_TL;
+	name R2-25-00-1_tl_196;
 	phases AS;
 	from R2-25-00-1_tn_196;
 	to R2-25-00-1_tm_196;
@@ -12045,7 +12045,7 @@ object triplex_line:1322 {
 }
 
 object triplex_line:1323 {
-	name 124360907RC_TL;
+	name R2-25-00-1_tl_197;
 	phases CS;
 	from R2-25-00-1_tn_197;
 	to R2-25-00-1_tm_197;
@@ -12054,7 +12054,7 @@ object triplex_line:1323 {
 }
 
 object triplex_line:1324 {
-	name 124363417RA_TL;
+	name R2-25-00-1_tl_198;
 	phases AS;
 	from R2-25-00-1_tn_198;
 	to R2-25-00-1_tm_198;
@@ -12063,7 +12063,7 @@ object triplex_line:1324 {
 }
 
 object triplex_line:1325 {
-	name 124362227RA_TL;
+	name R2-25-00-1_tl_199;
 	phases AS;
 	from R2-25-00-1_tn_199;
 	to R2-25-00-1_tm_199;
@@ -12072,7 +12072,7 @@ object triplex_line:1325 {
 }
 
 object triplex_line:1326 {
-	name 124361819RA_TL;
+	name R2-25-00-1_tl_200;
 	phases AS;
 	from R2-25-00-1_tn_200;
 	to R2-25-00-1_tm_200;
@@ -12081,7 +12081,7 @@ object triplex_line:1326 {
 }
 
 object triplex_line:1327 {
-	name 124363461RA_TL;
+	name R2-25-00-1_tl_201;
 	phases AS;
 	from R2-25-00-1_tn_201;
 	to R2-25-00-1_tm_201;
@@ -12090,7 +12090,7 @@ object triplex_line:1327 {
 }
 
 object triplex_line:1328 {
-	name 124361987RC_TL;
+	name R2-25-00-1_tl_202;
 	phases CS;
 	from R2-25-00-1_tn_202;
 	to R2-25-00-1_tm_202;
@@ -12100,16 +12100,16 @@ object triplex_line:1328 {
 
 
 object triplex_line_conductor: {
-	name 1/0 AA triplex;
+	name TLC 1/0 AA triplex;
 	resistance 0.97;
 	geometric_mean_radius 0.0111;
 }
 
 
 object triplex_line_configuration:1 {
-	conductor_1 1/0 AA triplex;
-	conductor_2 1/0 AA triplex;
-	conductor_N 1/0 AA triplex;
+	conductor_1 TLC 1/0 AA triplex;
+	conductor_2 TLC 1/0 AA triplex;
+	conductor_N TLC 1/0 AA triplex;
 	insulation_thickness 0.08;
 	diameter 0.368;
 }

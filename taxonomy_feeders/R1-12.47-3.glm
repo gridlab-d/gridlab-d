@@ -1878,7 +1878,7 @@ object transformer_configuration:148 {
 
 
 object triplex_line:131 {
-	name 201084RB_TL;
+	name R1-12-47-3_tl_1;
 	phases BS;
 	from R1-12-47-3_tn_1;
 	to R1-12-47-3_tm_1;
@@ -1888,16 +1888,16 @@ object triplex_line:131 {
 
 
 object triplex_line_conductor: {
-	name 1/0 AA triplex;
+	name TLC 1/0 AA triplex;
 	resistance 0.97;
 	geometric_mean_radius 0.0111;
 }
 
 
 object triplex_line_configuration:1 {
-	conductor_1 1/0 AA triplex;
-	conductor_2 1/0 AA triplex;
-	conductor_N 1/0 AA triplex;
+	conductor_1 TLC 1/0 AA triplex;
+	conductor_2 TLC 1/0 AA triplex;
+	conductor_N TLC 1/0 AA triplex;
 	insulation_thickness 0.08;
 	diameter 0.368;
 }
