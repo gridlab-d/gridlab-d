@@ -55,7 +55,7 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 			PT_char1024, "desired_voltages",PADDR(desired_voltage_txt),PT_DESCRIPTION,"Desired operating voltages for the regulators, separated by commas",
 			PT_char1024, "max_vdrop",PADDR(max_vdrop_txt),PT_DESCRIPTION,"Maximum voltage drop between feeder and end measurements for each regulator, separated by commas",
 			PT_char1024, "high_load_deadband",PADDR(vbw_high_txt),PT_DESCRIPTION,"High loading case voltage deadband for each regulator, separated by commas",
-			PT_double, "low_load_deadband",PADDR(vbw_low_txt),PT_DESCRIPTION,"Low loading case voltage deadband for each regulator, separated by commas",
+			PT_char1024, "low_load_deadband",PADDR(vbw_low_txt),PT_DESCRIPTION,"Low loading case voltage deadband for each regulator, separated by commas",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
