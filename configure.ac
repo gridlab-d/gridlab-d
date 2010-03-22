@@ -4,11 +4,11 @@
 # This file is distributed under the same terms as GridLAB-D.
 
 # Parse version info from core/version.h into ./version.sh
-esyscmd([sed 's/^#define\s\+\(REV_\)\?\(MAJOR\|MINOR\|PATCH\|BRANCH\)\s\+\(\S\+\)\s*$/\2=\3/;t;d' core/version.h > version.sh])
+esyscmd([sh -c 'cat core/version.h | tr -d "\r" | while read DEFINE NAME VALUE EXTRA; do [ "$DEFINE" != "#define" ] || case $NAME in REV_*|BRANCH) echo ${NAME#REV_}=$VALUE;; esac; done > version.sh; echo VERSION=\"\$MAJOR.\$MINOR.\$PATCH\" >> version.sh'])
 # Define M4 macros for version info
-define([pkgversion], esyscmd([sh -c ". ./version.sh; echo \$MAJOR.\$MINOR.\$PATCH | tr -d '\n'"]))dnl
+define([pkgversion], esyscmd([sh -c ". ./version.sh; echo \$VERSION | tr -d '\n'"]))dnl
 define([pkgbranch], esyscmd([sh -c ". ./version.sh; echo \$BRANCH | tr -d '\n'"]))dnl
-define([svnversion], esyscmd([sh -c "svnversion -n | sed 's/^exported$/0/;s/[^A-Za-z0-9]/_/g'"]))dnl
+define([svnversion], esyscmd([sh -c "svnversion | sed 's/^exported$/0/;s/[^A-Za-z0-9]/_/g' | tr -d '\n'"]))dnl
 # Export version info as autoconf variables
 AC_DEFINE(PACKAGE_BASEVERSION, [pkgversion], [Package Base Version])
 AC_DEFINE(PACKAGE_BRANCH, [pkgbranch], [Package Branch Name])
