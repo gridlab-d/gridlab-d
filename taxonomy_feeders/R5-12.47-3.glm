@@ -9,7 +9,6 @@ clock{
 }
 
 #set profiler=1
-#set relax_naming_rules=1
 //*********************************************
 // modules
 
@@ -84,7 +83,7 @@ object capacitor:9651 {
 	phases_connected   C;
 	control VOLT;
 	voltage_set_high 7300; 
-	voltage_set_low 7100; 
+	voltage_set_low 7050; 
 	capacitor_C 0.05 MVAr;
 	control_level INDIVIDUAL;
 	time_delay 30.0;
@@ -107,7 +106,7 @@ object capacitor:9652 {
 	phases_connected ABC;
 	control VOLT;
 	voltage_set_high 7300; 
-	voltage_set_low 7100; 
+	voltage_set_low 7025; 
 	capacitor_A 0.2 MVAr;
 	capacitor_B 0.2 MVAr;
 	capacitor_C 0.2 MVAr;
@@ -27274,49 +27273,49 @@ object overhead_line {
 }
 
 object overhead_line_conductor:2 {
-	name 4 CU;
+	//name 4 CU;
 	rating.summer.continuous 149.0;
 	geometric_mean_radius 0.00663 ft;
 	resistance 1.50000;
 }
 
 object overhead_line_conductor:3 {
-	name 123.3 AAAC;
+	//name 123.3 AAAC;
 	rating.summer.continuous 256.0;
 	geometric_mean_radius 0.01200 ft;
 	resistance 0.16600;
 }
 
 object overhead_line_conductor:6 {
-	name 795 AAC;
+	//name 795 AAC;
 	rating.summer.continuous 878.0;
 	geometric_mean_radius 0.03280 ft;
 	resistance 0.13100;
 }
 
 object overhead_line_conductor:7 {
-	name 636 AAC;
+	//name 636 AAC;
 	rating.summer.continuous 858.0;
 	geometric_mean_radius 0.02940 ft;
 	resistance 0.16300;
 }
 
 object overhead_line_conductor:8 {
-	name 343 ACSR;
+	//name 343 ACSR;
 	rating.summer.continuous 531.0;
 	geometric_mean_radius 0.02240 ft;
 	resistance 0.30600;
 }
 
 object overhead_line_conductor:9 {
-	name 1/0 ACSR;
+	//name 1/0 ACSR;
 	rating.summer.continuous 230.0;
 	geometric_mean_radius 0.00446 ft;
 	resistance 1.04100;
 }
 
 object overhead_line_conductor:10 {
-	name 1/0 AAAC;
+	//name 1/0 AAAC;
 	rating.summer.continuous 266.0;
 	geometric_mean_radius 0.01142 ft;
 	resistance 0.95300;

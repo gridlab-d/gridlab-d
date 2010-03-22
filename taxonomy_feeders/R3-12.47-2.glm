@@ -9,7 +9,6 @@ clock{
 }
 
 #set profiler=1
-#set relax_naming_rules=1
 //*********************************************
 // modules
 
@@ -4873,70 +4872,70 @@ object overhead_line:721 {
 
 
 object overhead_line_conductor:2 {
-	name 123.3 AAAC;
+	//name 123.3 AAAC;
 	rating.summer.continuous 256.0;
 	geometric_mean_radius 0.01200 ft;
 	resistance 0.16600;
 }
 
 object overhead_line_conductor:3 {
-	name 559.5 AAAC;
+	//name 559.5 AAAC;
 	rating.summer.continuous 663.0;
 	geometric_mean_radius 0.02710 ft;
 	resistance 0.03690;
 }
 
 object overhead_line_conductor:4 {
-	name 4 CW;
+	//name 4 CW;
 	rating.summer.continuous 180.0;
 	geometric_mean_radius 0.00340 ft;
 	resistance 0.28600;
 }
 
 object overhead_line_conductor:5 {
-	name 4 CU;
+	//name 4 CU;
 	rating.summer.continuous 149.0;
 	geometric_mean_radius 0.00663 ft;
 	resistance 1.50000;
 }
 
 object overhead_line_conductor:6 {
-	name 1/0 AAAC;
+	//name 1/0 AAAC;
 	rating.summer.continuous 266.0;
 	geometric_mean_radius 0.01142 ft;
 	resistance 0.95300;
 }
 
 object overhead_line_conductor:7 {
-	name 2 CU;
+	//name 2 CU;
 	rating.summer.continuous 204.0;
 	geometric_mean_radius 0.00836 ft;
 	resistance 0.94500;
 }
 
 object overhead_line_conductor:8 {
-	name 312.8 AAAC;
+	//name 312.8 AAAC;
 	rating.summer.continuous 460.0;
 	geometric_mean_radius 0.02020 ft;
 	resistance 0.06570;
 }
 
 object overhead_line_conductor:9 {
-	name 336.4 AAC;
+	//name 336.4 AAC;
 	rating.summer.continuous 443.0;
 	geometric_mean_radius 0.02270 ft;
 	resistance 0.05230;
 }
 
 object overhead_line_conductor:14 {
-	name 556.5 AAC;
+	//name 556.5 AAC;
 	rating.summer.continuous 605.0;
 	geometric_mean_radius 0.02920 ft;
 	resistance 0.03180;
 }
 
 object overhead_line_conductor:15 {
-	name Busbar;
+	//name Busbar;
 	rating.summer.continuous 600.0;
 	geometric_mean_radius 0.00801 ft;
 	resistance 0.30590;

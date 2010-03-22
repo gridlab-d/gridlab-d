@@ -9,7 +9,6 @@ clock{
 }
 
 #set profiler=1
-#set relax_naming_rules=1
 //*********************************************
 // modules
 

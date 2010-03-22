@@ -9,7 +9,6 @@ clock{
 }
 
 #set profiler=1
-#set relax_naming_rules=1
 //*********************************************
 // modules
 
@@ -34249,42 +34248,42 @@ object overhead_line:10716 {
 
 
 object overhead_line_conductor:2 {
-	name 3/0 ACSR;
+	//name 3/0 ACSR;
 	rating.summer.continuous 300.0;
 	geometric_mean_radius 0.00600 ft;
 	resistance 0.63800;
 }
 
 object overhead_line_conductor:3 {
-	name 4 CW;
+	//name 4 CW;
 	rating.summer.continuous 180.0;
 	geometric_mean_radius 0.00340 ft;
 	resistance 0.28600;
 }
 
 object overhead_line_conductor:8 {
-	name 4 CU;
+	//name 4 CU;
 	rating.summer.continuous 149.0;
 	geometric_mean_radius 0.00663 ft;
 	resistance 1.50000;
 }
 
 object overhead_line_conductor:10 {
-	name 1/0 AAC;
+	//name 1/0 AAC;
 	rating.summer.continuous 230.0;
 	geometric_mean_radius 0.01203 ft;
 	resistance 0.95300;
 }
 
 object overhead_line_conductor:11 {
-	name 636 AAC;
+	//name 636 AAC;
 	rating.summer.continuous 858.0;
 	geometric_mean_radius 0.02940 ft;
 	resistance 0.16300;
 }
 
 object overhead_line_conductor:12 {
-	name 336 ACSR;
+	//name 336 ACSR;
 	rating.summer.continuous 530.0;
 	geometric_mean_radius 0.02300 ft;
 	resistance 0.30300;

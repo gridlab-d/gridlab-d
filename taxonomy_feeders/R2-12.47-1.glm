@@ -9,7 +9,6 @@ clock{
 }
 
 #set profiler=1
-#set relax_naming_rules=1
 //*********************************************
 // modules
 
@@ -8332,98 +8331,98 @@ object overhead_line:1728 {
 
 
 object overhead_line_conductor:4 {
-	name 336.4 AAC;
+	//name 336.4 AAC;
 	rating.summer.continuous 443.0;
 	geometric_mean_radius 0.02270 ft;
 	resistance 0.05230;
 }
 
 object overhead_line_conductor:5 {
-	name 4 AAAC;
+	//name 4 AAAC;
 	rating.summer.continuous 120.0;
 	geometric_mean_radius 0.00700 ft;
 	resistance 2.40970;
 }
 
 object overhead_line_conductor:6 {
-	name 4 CU;
+	//name 4 CU;
 	rating.summer.continuous 149.0;
 	geometric_mean_radius 0.00663 ft;
 	resistance 1.50000;
 }
 
 object overhead_line_conductor:10 {
-	name 556.5 AAC;
+	//name 556.5 AAC;
 	rating.summer.continuous 605.0;
 	geometric_mean_radius 0.02920 ft;
 	resistance 0.03180;
 }
 
 object overhead_line_conductor:11 {
-	name 266.8 AAC;
+	//name 266.8 AAC;
 	rating.summer.continuous 388.0;
 	geometric_mean_radius 0.02020 ft;
 	resistance 0.06570;
 }
 
 object overhead_line_conductor:12 {
-	name 4 ACSR;
+	//name 4 ACSR;
 	rating.summer.continuous 123.0;
 	geometric_mean_radius 0.00437 ft;
 	resistance 2.53069;
 }
 
 object overhead_line_conductor:13 {
-	name 4 AAC;
+	//name 4 AAC;
 	rating.summer.continuous 120.0;
 	geometric_mean_radius 0.00756 ft;
 	resistance 0.42000;
 }
 
 object overhead_line_conductor:14 {
-	name 123.3 AAAC;
+	//name 123.3 AAAC;
 	rating.summer.continuous 256.0;
 	geometric_mean_radius 0.01200 ft;
 	resistance 0.16600;
 }
 
 object overhead_line_conductor:15 {
-	name 2 CU;
+	//name 2 CU;
 	rating.summer.continuous 204.0;
 	geometric_mean_radius 0.00836 ft;
 	resistance 0.94500;
 }
 
 object overhead_line_conductor:16 {
-	name 6 CU;
+	//name 6 CU;
 	rating.summer.continuous 112.0;
 	geometric_mean_radius 0.00526 ft;
 	resistance 2.39000;
 }
 
 object overhead_line_conductor:17 {
-	name 1/0 ACSR;
+	//name 1/0 ACSR;
 	rating.summer.continuous 230.0;
 	geometric_mean_radius 0.00446 ft;
 	resistance 1.04100;
 }
 
 object overhead_line_conductor:18 {
-	name 2 AAC;
+	//name 2 AAC;
 	rating.summer.continuous 164.0;
 	geometric_mean_radius 0.00883 ft;
 	resistance 1.51970;
 }
 
 object overhead_line_conductor:19 {
-	name 2 AAAC;
+	//name 2 AAAC;
 	rating.summer.continuous 197.0;
 	geometric_mean_radius 0.00883 ft;
 	resistance 1.51970;
 }
 
 object overhead_line_conductor:20 {
-	name 6 AAC;
+	//name 6 AAC;
 	rating.summer.continuous 90.0;
 	geometric_mean_radius 0.00599 ft;
 	resistance 0.67000;
