@@ -16,7 +16,6 @@
 #include <errno.h>
 #include <math.h>
 #include <iostream>
-using namespace std;
 
 #include "volt_var_control.h"
 
@@ -38,8 +37,8 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 			PT_enumeration, "control_method", PADDR(control_method),PT_DESCRIPTION,"IVVC activated or in standby",
 				PT_KEYWORD, "ACTIVE", ACTIVE,
 				PT_KEYWORD, "STANDBY", STANDBY,
-			PT_double, "capacitor_delay[s]", PADDR(cap_time_delay),PT_DESCRIPTION,"Capacitor default time delay - overridden by local defintions",
-			PT_double, "regulator_delay[s]", PADDR(reg_time_delay),PT_DESCRIPTION,"Regulator default time delay - not overriden by local definitions",
+			PT_double, "capacitor_delay[s]", PADDR(cap_time_delay),PT_DESCRIPTION,"Default capacitor time delay - overridden by local defintions",
+			PT_double, "regulator_delay[s]", PADDR(reg_time_delay),PT_DESCRIPTION,"Default regulator time delay - overriden by local definitions",
 			PT_double, "desired_pf", PADDR(desired_pf),PT_DESCRIPTION,"Desired power-factor magnitude at the substation transformer or regulator",
 			PT_double, "d_max", PADDR(d_max),PT_DESCRIPTION,"Scaling constant for capacitor switching on - typically 0.3 - 0.6",
 			PT_double, "d_min", PADDR(d_min),PT_DESCRIPTION,"Scaling constant for capacitor switching off - typically 0.1 - 0.4",
@@ -48,15 +47,15 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "A",(set)PHASE_A,
 				PT_KEYWORD, "B",(set)PHASE_B,
 				PT_KEYWORD, "C",(set)PHASE_C,
-			PT_object, "feeder_regulator",PADDR(feeder_regulator_obj),PT_DESCRIPTION,"Voltage regulator for the system",
+			PT_char1024, "regulator_list",PADDR(regulator_list),PT_DESCRIPTION,"List of voltage regulators for the system, separated by commas",
 			PT_char1024, "capacitor_list",PADDR(capacitor_list),PT_DESCRIPTION,"List of controllable capacitors on the system separated by commas",
 			PT_char1024, "voltage_measurements",PADDR(measurement_list),PT_DESCRIPTION,"List of voltage measurement devices, separated by commas",
-			PT_double, "minimum_voltage[V]",PADDR(minimum_voltage),PT_DESCRIPTION,"Minimum voltage allowed for feeder",
-			PT_double, "maximum_voltage[V]",PADDR(maximum_voltage),PT_DESCRIPTION,"Maximum voltage allowed for feeder",
-			PT_double, "desired_voltage[V]",PADDR(desired_voltage),PT_DESCRIPTION,"Desired operating voltage for the feeder",
-			PT_double, "max_vdrop[V]",PADDR(max_vdrop),PT_DESCRIPTION,"Maximum voltage drop between feeder and end measurement",
-			PT_double, "high_load_deadband[V]",PADDR(vbw_high),PT_DESCRIPTION,"High loading case voltage deadband",
-			PT_double, "low_load_deadband[V]",PADDR(vbw_low),PT_DESCRIPTION,"Low loading case voltage deadband",
+			PT_char1024, "minimum_voltages",PADDR(minimum_voltage_txt),PT_DESCRIPTION,"Minimum voltages allowed for feeder, separated by commas",
+			PT_char1024, "maximum_voltages",PADDR(maximum_voltage_txt),PT_DESCRIPTION,"Maximum voltages allowed for feeder, separated by commas",
+			PT_char1024, "desired_voltages",PADDR(desired_voltage_txt),PT_DESCRIPTION,"Desired operating voltages for the regulators, separated by commas",
+			PT_char1024, "max_vdrop",PADDR(max_vdrop_txt),PT_DESCRIPTION,"Maximum voltage drop between feeder and end measurements for each regulator, separated by commas",
+			PT_char1024, "high_load_deadband",PADDR(vbw_high_txt),PT_DESCRIPTION,"High loading case voltage deadband for each regulator, separated by commas",
+			PT_double, "low_load_deadband",PADDR(vbw_low_txt),PT_DESCRIPTION,"Low loading case voltage deadband for each regulator, separated by commas",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -72,29 +71,36 @@ int volt_var_control::create(void)
 	phases = PHASE_A;	//Arbitrary - set so powerflow_object shuts up (library doesn't grant us access to time functions)
 
 	control_method = ACTIVE;	//Turn it on by default
+	prev_mode = ACTIVE;			//Flag so it will go straight in by default (subject to regulator checks)
+
 	cap_time_delay = 5.0;		//5 second default capacitor delay
 	reg_time_delay = 5.0;		//5 second default regulator delay
 	desired_pf = 0.98;
 	d_min = 0.3;				//Chosen from Borozan paper defaults
 	d_max = 0.6;				//Chosen from Borozan paper defaults
 	substation_lnk_obj = NULL;
-	feeder_regulator_obj = NULL;
+	pRegulator_list = NULL;
+	pRegulator_configs = NULL;
 	pCapacitor_list = NULL;
 	Capacitor_size = NULL;
 	pMeasurement_list = NULL;
-	minimum_voltage = -1;		//Flag to ensure it is set
-	maximum_voltage = -1;		//Flag to ensure it is set
-	desired_voltage = -1;		//Flag to ensure it is set
-	max_vdrop = -1;				//Flag to ensure it is set
+	minimum_voltage = NULL;		
+	maximum_voltage = NULL;		
+	desired_voltage = NULL;		
+	max_vdrop = NULL;			
 
-	vbw_low = -1;				//Flag to ensure is set
-	vbw_high = -1;
+	vbw_low = NULL;				
+	vbw_high = NULL;
 
+	num_regs = 1;				//Default to 1 for parsing.  Will update in init
 	num_caps = 1;				//Default to 1 for parsing.  Will update in init
-	num_meas = 1;				//Default to 1 for parsing.  Will update in init
-
+	
+	num_meas = NULL;
+	
 	Regulator_Change = false;	//Start by assuming no regulator change is occurring
-	TRegUpdate = 0;
+	TRegUpdate = NULL;
+	RegUpdateTimes = NULL;
+	CapUpdateTimes = NULL;
 	TCapUpdate = 0;
 	TUpdateStatus = false;		//Flag for control_method transitions
 	pf_phase = 0;				//No phases monitored by default - will drop to link if unpopulated
@@ -103,7 +109,7 @@ int volt_var_control::create(void)
 
 	prev_time = 0;
 
-	PrevRegState = regulator_configuration::MANUAL;	//Assumes was in manual
+	PrevRegState = NULL;
 
 
 	return result;
@@ -113,14 +119,20 @@ int volt_var_control::init(OBJECT *parent)
 {
 	int retval = powerflow_object::init(parent);
 
-	int index;
-	char *token;
+	int index, indexa;
+	int64 addy_math;
+	char *token, *token_a, *token_b, *token_c;
+	char **token_end = NULL;
+	char tempchar[64];
+	char numchar[3];	//Assumes we'll never have more than 99 regulators - I hope this is valid
 	OBJECT *temp_obj;
 	capacitor **pCapacitor_list_temp;
 	double *temp_cap_size;
-	int *temp_cap_idx, *temp_cap_idx_work;
-	double cap_adder;
+	int *temp_cap_idx, *temp_cap_idx_work, *temp_meas_idx;
+	double cap_adder, temp_double, nom_volt;
 	set temp_phase;
+	int num_min_volt, num_max_volt, num_des_volt, num_max_vdrop, num_vbw_low, num_vbw_high, total_meas;
+	bool reg_list_type;
 
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -177,36 +189,516 @@ int volt_var_control::init(OBJECT *parent)
 		*/
 	}
 
-	//Make sure the regulator is populated as well (may be the same as substation_lnk, but we'll keep separate just in case)
-	if (feeder_regulator_obj == NULL)
+	//Figure out number of minimum voltages specified
+	index=0;
+	num_min_volt = 1;
+	while (minimum_voltage_txt[index] != NULL)
 	{
-		GL_THROW("volt_var_control %s: feeder regulator is not specified",obj->name);
+		if (minimum_voltage_txt[index] == 44)	//Comma
+			num_min_volt++;					//increment the number of min voltages
+
+		index++;	//increment the pointer
+	}
+
+	//See if one is really there
+	if ((num_min_volt == 1) && (minimum_voltage_txt[0] == NULL))	//Is empty :(
+	{
+		num_min_volt = 0;	//Primarily as a flag
+	}
+	
+	//Figure out number of maximum voltages specified
+	index=0;
+	num_max_volt = 1;
+	while (maximum_voltage_txt[index] != NULL)
+	{
+		if (maximum_voltage_txt[index] == 44)	//Comma
+			num_max_volt++;					//increment the number of max voltages
+
+		index++;	//increment the pointer
+	}
+
+	//See if one is really there
+	if ((num_max_volt == 1) && (maximum_voltage_txt[0] == NULL))	//Is empty :(
+	{
+		num_max_volt = 0;	//Primarily as a flag
+	}
+	
+	//Figure out number of desired voltages specified
+	index=0;
+	num_des_volt=1;
+	while (desired_voltage_txt[index] != NULL)
+	{
+		if (desired_voltage_txt[index] == 44)	//Comma
+			num_des_volt++;					//increment the number of desired voltages
+
+		index++;	//increment the pointer
+	}
+
+	//See if one is really there
+	if ((num_des_volt == 1) && (desired_voltage_txt[0] == NULL))	//Is empty :(
+	{
+		num_des_volt = 0;	//Primarily as a flag
+	}
+
+	//Figure out number of vdrops specified
+	index=0;
+	num_max_vdrop=1;
+	while (max_vdrop_txt[index] != NULL)
+	{
+		if (max_vdrop_txt[index] == 44)	//Comma
+			num_max_vdrop++;					//increment the number of max voltage drops
+
+		index++;	//increment the pointer
+	}
+
+	//See if one is really there
+	if ((num_max_vdrop == 1) && (max_vdrop_txt[0] == NULL))	//Is empty :(
+	{
+		num_max_vdrop = 0;	//Primarily as a flag
+	}
+
+	//Figure out number of low load bandwidths
+	index=0;
+	num_vbw_low=1;
+	while (vbw_low_txt[index] != NULL)
+	{
+		if (vbw_low_txt[index] == 44)	//Comma
+			num_vbw_low++;					//increment the number of low bandwidths
+
+		index++;	//increment the pointer
+	}
+
+	//See if one is really there
+	if ((num_vbw_low == 1) && (vbw_low_txt[0] == NULL))	//Is empty :(
+	{
+		num_vbw_low = 0;	//Primarily as a flag
+	}
+
+	//Figure out number of high load bandwidths
+	index=0;
+	num_vbw_high=1;
+	while (vbw_high_txt[index] != NULL)
+	{
+		if (vbw_high_txt[index] == 44)	//Comma
+			num_vbw_high++;					//increment the number of high bandwidths
+
+		index++;	//increment the pointer
+	}
+
+	//See if one is really there
+	if ((num_vbw_high == 1) && (vbw_high_txt[0] == NULL))	//Is empty :(
+	{
+		num_vbw_high = 0;	//Primarily as a flag
+	}
+
+	//Figure out the number of regulators we have
+	index=0;
+	while (regulator_list[index] != NULL)
+	{
+		if (regulator_list[index] == 44)	//Found a comma!
+			num_regs++;						//Increment the number of regulators present
+		
+		index++;	//Increment the pointer
+	}
+
+	if (num_regs==1)	//Only 1 column, make sure something is actually in there
+	{
+		temp_obj = gl_get_object((char *)regulator_list);
+
+		if (temp_obj == NULL)	//Not really an object, must be no controllable capacitors
+			num_regs = 0;
+	}
+
+	if (num_regs > 0)
+	{
+		//Allocate the relevant variables - lots of them - single allocs are probably pretty silly, but meh
+			pRegulator_list = (regulator **)gl_malloc(num_regs*sizeof(regulator*));
+			
+			if (pRegulator_list == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				/*  TROUBLESHOOT
+				While attempting to allocate one of the storage vectors for the regulators,
+				an error was encountered.  Please try again.  If the error persists, please
+				submit your code and a bug report via the trac website.
+				*/
+			}
+
+			pRegulator_configs = (regulator_configuration **)gl_malloc(num_regs*sizeof(regulator_configuration*));
+
+			if (pRegulator_configs == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			PrevRegState = (regulator_configuration::Control_enum*)gl_malloc(num_regs*sizeof(regulator_configuration::Control_enum));
+
+			if (PrevRegState == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			//Allocate measurement pointers
+			pMeasurement_list = (node***)gl_malloc(num_regs*sizeof(node**));
+			if (pMeasurement_list == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			num_meas = (int*)gl_malloc(num_regs*sizeof(int));
+			if (num_meas == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			TRegUpdate = (TIMESTAMP *)gl_malloc(num_regs*sizeof(TIMESTAMP));
+
+			if (TRegUpdate == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			//Init this one right now
+			for (index=0; index<num_regs; index++)
+			{
+				TRegUpdate[index] = TS_NEVER;
+			}
+
+			RegUpdateTimes = (double*)gl_malloc(num_regs*sizeof(double));
+
+			if (RegUpdateTimes == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			reg_step_up = (double*)gl_malloc(num_regs*sizeof(double));
+
+			if (reg_step_up == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			reg_step_down = (double*)gl_malloc(num_regs*sizeof(double));
+			
+			if (reg_step_down == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			RegToNodes = (node**)gl_malloc(num_regs*sizeof(node*));
+
+			if (RegToNodes == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			vbw_high = (double*)gl_malloc(num_regs*sizeof(double));
+
+			if (vbw_high == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			vbw_low = (double*)gl_malloc(num_regs*sizeof(double));
+
+			if (vbw_low == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			max_vdrop = (double*)gl_malloc(num_regs*sizeof(double));
+
+			if (max_vdrop == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			desired_voltage = (double*)gl_malloc(num_regs*sizeof(double));
+
+			if (desired_voltage == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			maximum_voltage = (double*)gl_malloc(num_regs*sizeof(double));
+
+			if (maximum_voltage == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+			minimum_voltage = (double*)gl_malloc(num_regs*sizeof(double));
+
+			if (minimum_voltage == NULL)
+			{
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
+				//defined above
+			}
+
+		//Now populate each of these massive arrays
+			//start with the regulators, their configurations, and related items
+			token = strtok(regulator_list,",");
+			for (index=0; index<num_regs; index++)
+			{
+
+				temp_obj = gl_get_object((char *)token);
+				
+				if (temp_obj != NULL)	//Valid object!
+				{
+					pRegulator_list[index] = OBJECTDATA(temp_obj, regulator);	//Store the regulator
+
+					pRegulator_configs[index] = OBJECTDATA(pRegulator_list[index]->configuration,regulator_configuration);	//Store the configuration
+
+					RegToNodes[index] = OBJECTDATA(pRegulator_list[index]->to,node);	//Store the to node
+
+					if (pRegulator_configs[index]->time_delay != 0)	//Delay specified
+					{
+						RegUpdateTimes[index] = pRegulator_configs[index]->time_delay;	//use this delay
+					}
+					else
+					{
+						RegUpdateTimes[index] = reg_time_delay;	//Use the default
+					}
+
+					reg_step_up[index] = pRegulator_configs[index]->band_center * pRegulator_configs[index]->regulation / ((double) pRegulator_configs[index]->raise_taps);	//Store upstep value
+
+					reg_step_down[index] = pRegulator_configs[index]->band_center * pRegulator_configs[index]->regulation / ((double) pRegulator_configs[index]->lower_taps);	//Store downstep value
+
+				}//end valid object 
+				else	//General catch
+				{
+					GL_THROW("volt_var_control %s: item %s in regulator_list not found",obj->name,(char *)token);
+					/*  TROUBLESHOOT
+					While attempting to populate the regulator list, an invalid object was found.  Please check
+					the object name.
+					*/
+				}
+
+				token = strtok(NULL,",");
+			}//end token FOR - populate regulators, configurations, to nodes, and updates
+
+			//Now parse out individual lists - see how they are set
+				//General catch of all voltages
+				if ((num_des_volt != num_min_volt) || (num_min_volt != num_max_volt))
+				{
+					gl_warning("volt_var_control %s: Desired, minimum, and maximum voltages don't match",obj->name);
+					/*  TROUBLESHOOT
+					The lists for desired_voltages, minimum_voltages, and maximum_voltages should all have the same
+					number of elements.  If they don't, if at each field has at least one specification, the first for
+					each will be used on all regulators.  If they don't all have at least one specification, the whole set
+					will be set to default values.
+					*/
+
+					//Not equal, see if they all have at least one
+					if ((num_des_volt > 0) && (num_min_volt > 0) && (num_max_volt > 0))
+					{
+						//Set all to 1 as a flag
+						num_des_volt = num_min_volt = num_max_volt = 1;
+					}
+					else	//At least one must be 0, so they all get defaulted
+					{
+						num_des_volt = num_min_volt = num_max_volt = 0;
+					}
+				}//end list element mismatch
+
+				if (num_des_volt > 0)	//One for each regulator or 1 value for all - loop precursor (point the tokens)
+				{
+					token_a = strtok(minimum_voltage_txt,",");
+					token_b = strtok(maximum_voltage_txt,",");
+					token_c = strtok(desired_voltage_txt,",");
+				}
+
+				//Extract all set point values
+				for (index=0; index<num_regs; index++)
+				{
+					if (num_des_volt == num_regs)	//One for each regulator
+					{
+						//Convert them into numbers
+						minimum_voltage[index] = strtod(token_a,token_end);
+						maximum_voltage[index] = strtod(token_b,token_end);
+						desired_voltage[index] = strtod(token_c,token_end);
+
+						//Grab next token
+						token_a = strtok(NULL,",");
+						token_b = strtok(NULL,",");
+						token_c = strtok(NULL,",");
+
+					}//one for each regulator
+					else if (num_des_volt == 1)		//Use one value for all
+					{
+						//Convert them into numbers
+						minimum_voltage[index] = strtod(token_a,token_end);
+						maximum_voltage[index] = strtod(token_b,token_end);
+						desired_voltage[index] = strtod(token_c,token_end);
+					}//one value for all
+					else							//Use defaults on all
+					{
+						//If default, we need the to node nominal voltage
+						nom_volt = RegToNodes[index]->nominal_voltage;
+
+						minimum_voltage[index] = 0.95*nom_volt;
+						maximum_voltage[index] = 1.05*nom_volt;
+						desired_voltage[index] = nom_volt;
+					}
+
+					//Make sure voltages are ok
+					if (minimum_voltage[index] >= maximum_voltage[index])
+					{
+						GL_THROW("volt_var_control %s: Minimum voltage limit on regulator %d must be less than the maximum voltage limit of the system",obj->name,(index+1));
+						/*  TROUBLESHOOT
+						The minimum_voltage value must be less than the maximum_voltage value to ensure proper system operation.
+						*/
+					}
+
+					//Make sure desired voltage is within operating limits
+					if ((desired_voltage[index] < minimum_voltage[index]) || (desired_voltage[index] > maximum_voltage[index]))
+					{
+						GL_THROW("volt_var_control %s: Desired voltage on regulator %d is outside the minimum and maximum set points.",obj->name,(index+1));
+						/*  TROUBLESHOOT
+						The desired_voltage property is specified in the range outside of the minimum_voltage and maximum_voltage
+						set points.  It needs to lie between these points for proper operation.  Please adjust the values, or leave
+						desired_voltage blank to let the system decide.
+						*/
+					}
+				}//end regulator traversion for min/max/des voltages
+
+				//Now figure out vbw_low, vbw_high, and max_vdrop
+				if ((num_max_vdrop != num_vbw_low) || (num_vbw_low != num_vbw_high))
+				{
+					gl_warning("volt_var_control %s: VDrop, low V BW, and high V BW don't match",obj->name);
+					/*  TROUBLESHOOT
+					The lists for maximum voltage drop, voltage drop low loading, and voltage drop high loading
+					should all have the same number of elements.  If they don't, if at each field has at least one specification, the first for
+					each will be used on all regulators.  If they don't all have at least one specification, the whole set
+					will be set to default values.
+					*/
+
+					//Not equal, see if they all have at least one
+					if ((num_max_vdrop > 0) && (num_vbw_low > 0) && (num_vbw_high > 0))
+					{
+						//Set all to 1 as a flag
+						num_max_vdrop = num_vbw_low = num_vbw_high = 1;
+					}
+					else	//At least one must be 0, so they all get defaulted
+					{
+						num_max_vdrop = num_vbw_low = num_vbw_high = 0;
+					}
+				}//end list element mismatch
+
+				if (num_max_vdrop > 0)	//One for each regulator or 1 value for all - loop precursor (point the tokens)
+				{
+					token_a = strtok(max_vdrop_txt,",");
+					token_b = strtok(vbw_low_txt,",");
+					token_c = strtok(vbw_high_txt,",");
+				}
+
+				//Extract all set point values
+				for (index=0; index<num_regs; index++)
+				{
+					if (num_max_vdrop == num_regs)	//One for each regulator
+					{
+						//Convert them into numbers
+						max_vdrop[index] = strtod(token_a,token_end);
+						vbw_low[index] = strtod(token_b,token_end);
+						vbw_high[index] = strtod(token_c,token_end);
+
+						//Grab next token
+						token_a = strtok(NULL,",");
+						token_b = strtok(NULL,",");
+						token_c = strtok(NULL,",");
+
+					}//one for each regulator
+					else if (num_max_vdrop == 1)		//Use one value for all
+					{
+						//Convert them into numbers
+						max_vdrop[index] = strtod(token_a,token_end);
+						vbw_low[index] = strtod(token_b,token_end);
+						vbw_high[index] = strtod(token_c,token_end);
+					}//one value for all
+					else							//Use defaults on all
+					{
+						max_vdrop[index] = 1.5*reg_step_up[index];	//Arbitrarily set to 1.5x a step change
+
+						//Set low bandwidth to 2 tap positions out of whack
+						vbw_low[index] = 2.0*reg_step_up[index];
+
+						//Set high bandwidth to 1 tap positions out of whack (more constrained than vbw_low)
+						vbw_high[index] = reg_step_up[index];
+
+					}//end defaults
+
+					//Check to make sure max_vdrop isn't negative
+					if (max_vdrop <= 0)
+					{
+						GL_THROW("volt_var_control %s: Maximum expected voltage drop specified for regulator %d should be a positive non-zero number.",obj->name,(index+1));
+						/*  TROUBLESHOOT
+						The max_vdrop property must be greater than 0 for proper operation of the coordinated Volt-VAr control scheme.
+						*/
+					}
+
+					//Make sure bandwidth values aren't negative
+					if (vbw_low[index] <= 0)
+					{
+						GL_THROW("volt_var_control %s: Low loading deadband (bandwidth) for regulator %d  must be a positive non-zero number",obj->name,(index+1));
+						/*  TROUBLESHOOT
+						The low_load_deadband setting must be greater than 0 for proper operation of the Volt-VAr controller.
+						*/
+					}
+
+					if (vbw_high[index] <= 0)
+					{
+						GL_THROW("volt_var_control %s: High loading deadband (bandwidth) for regulator %d must be a positive non-zero number",obj->name,(index+1));
+						/*  TROUBLESHOOT
+						The high_load_deadband setting must be greater than 0 for proper operation of the Volt-VAr controller.
+						*/
+					}
+
+					//vbw_high is supposed to be less than vbw_low (heavy loading means we should be more constrained)
+					if (vbw_high[index] > vbw_low[index])
+					{
+						gl_warning("volt_var_control %s: Low loading deadband for regulator %d is expected to be larger than the high loading deadband",obj->name,(index+1));
+						/*  TROUBLESHOOT
+						The high_load_deadband is larger than the low_load_deadband setting.  The algorithm proposed in the referenced paper
+						suggests low_load_deadband should be larger (less constrained) than the high load.  This may need to be fixed to be
+						consistent with expected results.
+						*/
+					}
+				}//Feeder traversion for vdrop, vbw's
+
+	}//End num_regs > 0
+	else	//no regulators found
+	{
+		GL_THROW("volt_var_control %s: regulator_list is empty",obj->name);
 		/*  TROUBLESHOOT
-		The volt_var_control object requires a regulator to control for coordinated action.  Please specify
+		The volt_var_control object requires at one regulator regulator to control for coordinated action.  Please specify
 		an appropriate regulator on the system.
 		*/
 	}
 
-	//Link the regulator
-	feeder_regulator = OBJECTDATA(feeder_regulator_obj,regulator);
-
-	//Grab it's config as well
-	feeder_reg_config = OBJECTDATA(feeder_regulator->configuration,regulator_configuration);
-
-	//Compute the regulator voltage steps
-	reg_step_up = feeder_reg_config->band_center * feeder_reg_config->regulation / ((double) feeder_reg_config->raise_taps);
-	reg_step_down = feeder_reg_config->band_center * feeder_reg_config->regulation / ((double) feeder_reg_config->lower_taps);
-
-	//See if the regulator is in manual mode, if we are on right now
+	//See if any regulator is in manual mode, if we are on right now
 	if (control_method == ACTIVE)
 	{
-		if (feeder_reg_config->Control != regulator_configuration::MANUAL)	//We're on, but regulator not in manual.  Set up as a transition
+		for (index=0; index<num_regs; index++)	//See if any are in manual
 		{
-			prev_mode = STANDBY;
-		}
-		else	//We're on and the regulator is in manual, start up that way
-		{
-			prev_mode = ACTIVE;
+			if (pRegulator_configs[index]->Control != regulator_configuration::MANUAL)	//We're on, but regulator not in manual.  Set up as a transition
+			{
+				prev_mode = STANDBY;	
+				break;		//Only takes one
+			}
 		}
 	}
 	else	//We're in standby, so we don't care what the regulator is doing right now
@@ -214,140 +706,21 @@ int volt_var_control::init(OBJECT *parent)
 		prev_mode = STANDBY;
 	}
 
-	if (substation_lnk_obj == NULL)	//If nothing specified, just use the feeder regulator
+	if (substation_lnk_obj == NULL)	//If nothing specified, just use the first feeder regulator
 	{
-		gl_warning("volt_var_control %s: A link to monitor power-factor was not specified, using feeder regulator.",obj->name);
+		gl_warning("volt_var_control %s: A link to monitor power-factor was not specified, using first regulator.",obj->name);
 		/*  TROUBLESHOOT
 		The volt_var_control object requires a link-based object to measure power factor.  Since one was not specified, the control
-		scheme will just monitor the power values of the feeder regulator.
+		scheme will just monitor the power values of the first feeder regulator.
 		*/
 
 		//Assigns regulator to the link object
-		substation_lnk_obj = feeder_regulator_obj;
+		substation_link = pRegulator_list[index];
 	}
-
-	//Link it up
-	substation_link = OBJECTDATA(substation_lnk_obj,link);
-
-	//See if minimum and maximum voltages are set.  If not, base on nominal
-	if ((minimum_voltage == -1) || (maximum_voltage == -1))
+	else	//It is defined
 	{
-		node *temp_node = OBJECTDATA(feeder_regulator->to,node);
-		double nom_volt = temp_node->nominal_voltage;
-
-		if (minimum_voltage == -1)
-		{
-			minimum_voltage = 0.95*nom_volt;
-			gl_warning("volt_var_control %s: Minimum voltage not specified, taking as 0.95 p.u. of regulator TO-end nominal",obj->name);
-		}
-
-		if (maximum_voltage == -1)
-		{
-			maximum_voltage = 1.05*nom_volt;
-			gl_warning("volt_var_control %s: Maximum voltage not specified, taking as 1.05 p.u. of regulator TO-end nominal",obj->name);
-		}
-	}
-
-	//Make sure voltages are ok
-	if (minimum_voltage >= maximum_voltage)
-	{
-		GL_THROW("volt_var_control %s: Minimum voltage limit must be less than the maximum voltage limit of the system",obj->name);
-		/*  TROUBLESHOOT
-		The minimum_voltage value must be less than the maximum_voltage value to ensure proper system operation.
-		*/
-	}
-
-	//Check desired voltage
-	if (desired_voltage == -1)	//Uninitialized
-	{
-		desired_voltage = (minimum_voltage+maximum_voltage)/2;	//Just set to mid-point of range
-		gl_warning("volt_var_control %s: Desired voltage not specified, so taking as midpoint of min and max limits",obj->name);
-	}
-
-	//Make sure desired voltage is within operating limits
-	if ((desired_voltage < minimum_voltage) || (desired_voltage > maximum_voltage))
-	{
-		GL_THROW("volt_var_control %s: Desired voltage is outside the minimum and maximum set points.",obj->name);
-		/*  TROUBLESHOOT
-		The desired_voltage property is specified in the range outside of the minimum_voltage and maximum_voltage
-		set points.  It needs to lie between these points for proper operation.  Please adjust the values, or leave
-		desired_voltage blank to let the system decide.
-		*/
-	}
-
-	//See if max_vdrop has been set.  Validity will be check next
-	if (max_vdrop == -1)	//Not set
-	{
-		max_vdrop = 1.5*reg_step_up;	//Arbitrarily set to 1.5x a step change
-
-		gl_warning("volt_var_control %s: Maximum expected voltage drop was set to 1.5x an upper tap change.",obj->name);
-		/*  TROUBLESHOOT
-		The max_vdrop property was not set, so it was defaulted to 1.5x the upper tap change of the regulator.  If a tighter
-		constraint is required, please specify a value in max_vdrop.
-		*/
-	}
-
-	//Check to make sure max_vdrop isn't negative
-	if (max_vdrop <= 0)
-	{
-		GL_THROW("volt_var_control %s: Maximum expected voltage drop should be a positive non-zero number.",obj->name);
-		/*  TROUBLESHOOT
-		The max_vdrop property must be greater than 0 for proper operation of the coordinated Volt-VAr control scheme.
-		*/
-	}
-
-	//See if vbw_low is set (may be invalidly set at this point, but that gets checked below
-	if (vbw_low == -1)	//Not set
-	{
-		//Set to 2 tap positions out of whack
-		vbw_low = 2.0*reg_step_up;
-
-		gl_warning("voltage_var_control %s: Low loading deadband not specified, so set to 2x upper tap change",obj->name);
-		/*  TROUBLESHOOT
-		The low_load_deadband value was not specified, so it is taken as 2x an upper tap change.  If a tighter constraint is
-		desired, please specify a value in low_load_deadband.
-		*/
-	}
-
-	//See if vbw_high is set (may be invalidly set at this point, but that gets checked below
-	if (vbw_high == -1)	//Not set
-	{
-		//Set to 1 tap positions out of whack (more constrained than vbw_low)
-		vbw_high = reg_step_up;
-
-		gl_warning("voltage_var_control %s: High loading deadband not specified, so set to an upper tap change",obj->name);
-		/*  TROUBLESHOOT
-		The high_load_deadband value was not specified, so it is taken as an upper tap change.  If a tighter constraint is
-		desired, please specify a value in high_load_deadband.
-		*/
-	}
-
-	//Make sure bandwidth values aren't negative
-	if (vbw_low <= 0)
-	{
-		GL_THROW("volt_var_control %s: Low loading deadband (bandwidth) must be a positive non-zero number",obj->name);
-		/*  TROUBLESHOOT
-		The low_load_deadband setting must be greater than 0 for proper operation of the Volt-VAr controller.
-		*/
-	}
-
-	if (vbw_high <= 0)
-	{
-		GL_THROW("volt_var_control %s: High loading deadband (bandwidth) must be a positive non-zero number",obj->name);
-		/*  TROUBLESHOOT
-		The high_load_deadband setting must be greater than 0 for proper operation of the Volt-VAr controller.
-		*/
-	}
-
-	//vbw_high is supposed to be less than vbw_low (heavy loading means we should be more constrained)
-	if (vbw_high > vbw_low)
-	{
-		gl_warning("volt_var_control %s: Low loading deadband is expected to be larger than the high loading deadband",obj->name);
-		/*  TROUBLESHOOT
-		The high_load_deadband is larger than the low_load_deadband setting.  The algorithm proposed in the referenced paper
-		suggests low_load_deadband should be larger (less constrained) than the high load.  This may need to be fixed to be
-		consistent with expected results.
-		*/
+		//Link it up
+		substation_link = OBJECTDATA(substation_lnk_obj,link);
 	}
 
 	//Determine how many capacitors we have to play with
@@ -373,7 +746,7 @@ int volt_var_control::init(OBJECT *parent)
 		if (num_caps == 1)	//Only one capacitor
 		{
 			//malloc the list (there is only 1, so this pretty stupid, but meh)
-			pCapacitor_list = (capacitor **)gl_malloc(sizeof(capacitor));
+			pCapacitor_list = (capacitor **)gl_malloc(sizeof(capacitor*));
 
 			if (pCapacitor_list == NULL)
 			{
@@ -394,8 +767,17 @@ int volt_var_control::init(OBJECT *parent)
 				//Defined above
 			}
 
-			//Parse the list now
-			token = strtok(capacitor_list,",");
+			//malloc the update time vector (there is only 1 again, but consistency is key)
+			CapUpdateTimes = (double *)gl_malloc(sizeof(double));
+
+			if (CapUpdateTimes == NULL)
+			{
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
+				//Defined above
+			}
+
+			//Parse the list now - the list is the capacitor
+			token = capacitor_list;
 
 			temp_obj = gl_get_object((char *)token);
 				
@@ -423,6 +805,15 @@ int volt_var_control::init(OBJECT *parent)
 				}
 				Capacitor_size[0] = cap_adder;	//Store the size
 
+				//Check on the time delays - use default if unspecified
+				if (pCapacitor_list[0]->time_delay != 0)
+				{
+					CapUpdateTimes[0] = pCapacitor_list[0]->time_delay;	//Store it
+				}
+				else
+				{
+					CapUpdateTimes[0] = cap_time_delay;		//Use the default
+				}
 			}
 			else	//General catch, not sure how it would get here
 			{
@@ -437,7 +828,7 @@ int volt_var_control::init(OBJECT *parent)
 		else	//More than one
 		{
 			//malloc the temp list
-			pCapacitor_list_temp = (capacitor **)gl_malloc(num_caps*sizeof(capacitor));
+			pCapacitor_list_temp = (capacitor **)gl_malloc(num_caps*sizeof(capacitor*));
 
 			if (pCapacitor_list_temp == NULL)
 			{
@@ -446,9 +837,18 @@ int volt_var_control::init(OBJECT *parent)
 			}
 
 			//malloc the actual list
-			pCapacitor_list = (capacitor **)gl_malloc(num_caps*sizeof(capacitor));
+			pCapacitor_list = (capacitor **)gl_malloc(num_caps*sizeof(capacitor*));
 
 			if (pCapacitor_list == NULL)
+			{
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
+				//Defined above
+			}
+
+			//Malloc the update times
+			CapUpdateTimes = (double *)gl_malloc(num_caps*sizeof(double));
+
+			if (CapUpdateTimes == NULL)
 			{
 				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
@@ -520,6 +920,16 @@ int volt_var_control::init(OBJECT *parent)
 							cap_adder += pCapacitor_list_temp[index]->capacitor_C;
 					}
 					Capacitor_size[index] = cap_adder;	//Store the size
+
+					//Check on the time delays - use default if unspecified
+					if (pCapacitor_list_temp[index]->time_delay != 0)
+					{
+						CapUpdateTimes[index] = pCapacitor_list_temp[index]->time_delay;	//Store it
+					}
+					else
+					{
+						CapUpdateTimes[index] = cap_time_delay;		//Use the default
+					}
 				}
 				else	//General catch
 				{
@@ -598,51 +1008,258 @@ int volt_var_control::init(OBJECT *parent)
 			}//end manual mode if
 		}//End cap list traversion for manual mode caps
 	}//End cap list if
+	else	//Implies no capacitors
+	{
+		gl_warning("volt_var_control %s: No capacitors specified.",obj->name);
+		/*  TROUBLESHOOT
+		The capacitor_list in the volt_var_control is empty.  This means no
+		capacitors are controlled by the volt_var_control object, which more or
+		less means you have voltage setpoint regulators and no need for a central
+		control.
+		*/
+	}
 
 	//Now figure out the measurements
+	//Initialize measurement count list
+	for (index=0; index<num_regs; index++)
+	{
+		num_meas[index] = 0;
+	}
+
+	//Determine how many points are present
 	index=0;
+	total_meas=1;
 	while (measurement_list[index] != NULL)
 	{
 		if (measurement_list[index] == 44)	//Found a comma!
-			num_meas++;						//Increment the number of measurements present
+			total_meas++;						//Increment the number of measurements present
 		
 		index++;	//Increment the pointer
 	}
 
-	if (num_meas==1)	//Only 1 column, make sure something is actually in there
+	//Only 1 measurement found - figure out where it needs to go - or toss an error
+	if (total_meas == 1)
 	{
-		temp_obj = gl_get_object((char *)measurement_list);
-
-		if (temp_obj == NULL)	//Not really an object, must be no measurement points
-			num_meas = 0;
-	}
-
-	if (num_meas > 0)
-	{
-		//malloc the list (if there is only 1, this might be pretty stupid)
-		pMeasurement_list = (node **)gl_malloc(num_meas*sizeof(node));
-
-		if (pMeasurement_list == NULL)
+		//See if it is an actual list
+		if (measurement_list[0] != 0)
 		{
-			GL_THROW("volt_var_control %s: Failed to allocate measurement memory",obj->name);
+			if (num_regs != 1)	//More than one regulator, so this is unacceptable
+			{
+				GL_THROW("volt_var_control %s: A measurement is missing a regulator association",obj->name);
+				//Defined below
+			}
+			//Defaulted else - 1 regulator, this will be checked below
+		}//End the list is valid
+		else	//Empty list, so we really don't have any measurements
+		{
+			total_meas = 0;
+		}
+	}//end 1 measurement
+
+	//Determine how to proceed, are we referenced or not
+	if ((num_regs == 1) && (total_meas > 1))	//1 regulator and more than 1 point found
+	{
+		//initialize the character array
+		for (index=0; index<64; index++)
+			tempchar[index] = 0;
+
+		//Find the first comma
+		token_b = measurement_list;
+		token = strchr(token_b,',');
+
+		//Find the second comma
+		token++;						//Get us one past the comma
+		token_a = strchr(token,',');	//Find the next one
+
+		//Reference the storage array
+		token_b = tempchar;
+
+		if (token_a == NULL)	//Only two items in the list
+		{
+			//Copy in the value
+			while (*token != NULL)
+			{
+				*token_b++ = *token++;
+			}
+		}
+		else	//More to come, but we don't care
+		{
+			//Copy the contents in
+			while (token < token_a)
+			{
+				*token_b++ = *token++;	
+			}
+		}//End more than 2 items
+
+		token = tempchar;
+
+		//See if #2 is an object or a number
+		temp_obj = gl_get_object((char *)token);
+
+		if (temp_obj != NULL)	//It's real, so we are just an object list
+		{
+			reg_list_type=false;	//Arbitrary flagging 
+		}
+		else	//It's a number, so proceed like any other regulator
+		{
+			reg_list_type=true;		//Catch us
+		}
+	}
+	else if ((num_regs == 1) && (total_meas == 1))
+	{
+		//1 reg and 1 measurement, make sure it is a valid object before proceeding
+		token = strtok(measurement_list,",");	//Get first item (valid)
+		temp_obj = gl_get_object((char *)token);
+
+		if (temp_obj == NULL)	//Not a valid object, error!
+		{
+			GL_THROW("volt_var_control %s: Measurement %s is not a valid node!",obj->name,(char *)token);
 			/*  TROUBLESHOOT
-			The volt_var_control failed to allocate memory for the voltage measurements table.
-			Please try again.  If the error persists, please submit your code and a bug report via
-			the trac website.
+			While parsing the measurement list, an invalid object was found.  Please verify the object
+			name and try again.
 			*/
 		}
 
-		//Parse the list now
-		token = strtok(measurement_list,",");
-		for (index = 0; index < num_meas; index++)
+		reg_list_type = false;	//Flag as special - single measurement point for a single regulator
+	}
+	//Else implies no measurements and/or num_regs > 1 - those will be caught separately below
+
+	//Make sure we found an even number if there is more than one regulator attached - otherwise it is mismatched
+	if ((num_regs > 1) || (reg_list_type == true))	//more than one regulator, or we're a standard list
+	{
+		index = total_meas >> 1;
+		temp_double = total_meas - ((double)(index << 1));
+
+		if (temp_double != 0)	//Should be no remainder
 		{
-			temp_obj = gl_get_object((char *)token);
-			
-			if (temp_obj != NULL)	//Valid object!
+			GL_THROW("volt_var_control %s: A measurement is missing a regulator association",obj->name);
+			/*  TROUBLESHOOT
+			If more than one regulator is present, the measurement_list must be specified as a comma-delimited
+			pair with the measurement node and the integer of the regulator it is associated with (e.g., 709,2 associates
+			node 702 with regulator 2 of regulator_list).
+			*/
+		}
+
+		total_meas = (total_meas >> 1);	//Assign in so we can use temp_double again
+
+		if (total_meas != 0)	//There's at least something in there
+		{
+			//List is assumed valid, now figure out how big everything needs to be
+			token = measurement_list;	//Start the list
+
+			for (index=0; index<total_meas; index++)
 			{
-				pMeasurement_list[index] = OBJECTDATA(temp_obj,node);	//Store it as a node
+				//Find the first comma
+				token_a = strchr(token,',');
+
+				//Find the second comma
+				token_a++;						//Get us one past the comma
+				token_b = strchr(token_a,',');	//Find the next one
+
+				//Zero the character array
+				numchar[0] = numchar[1] = numchar[2] = 0;
+
+				//Reference the storage array
+				token_c = numchar;
+
+				//Make sure we aren't over two digits long - if we need more than 99 regulators, I don't want to hear about it
+				addy_math = token_b - token_a;
+
+				if (addy_math > 2)	//Too many characters
+				{
+					GL_THROW("volt_var_control %s: Measurement list item pair %d is invalid.",obj->name,(index+1));
+					/*  TROUBLESHOOT
+					While parsing the measurement list, an invalid pair was encountered.  This may be due to a typo, or
+					there may not be a proper regulator specification.  if more than one regulator is being controlled,
+					the list must be specified as "node,reg" pairs.
+					*/
+				}
+
+				if (index == (total_meas-1))	//Last item of the list
+				{
+					//Copy in the value
+					while (*token_a != NULL)
+					{
+						*token_c++ = *token_a++;
+					}
+				}
+				else	//More to come, but we don't care
+				{
+					//Copy the contents in
+					while (token_a < token_b)
+					{
+						*token_c++ = *token_a++;	
+					}
+				}//End normal
+
+				token = numchar;	//Reference the temporary array
+
+				indexa = ((int)(strtod(token,token_end))-1);	//Convert back
+
+				if ((indexa <0) || (indexa > (num_regs-1)))		//Pre-offset for C indexing
+				{
+					GL_THROW("volt_var_control %s: Measurement list references a nonexistant regulator %d",obj->name,(indexa+1));
+					/*  TROUBLESHOOT
+					While parsing the measurement list, an invalid regulator reference number was encountered.  These numbers should
+					match the position of the regulator in the regulator_list variable.  Please double check your values and try again.
+					*/
+				}
+
+				num_meas[indexa]++;		//Increment the counter
+				token = ++token_b;		//Set up for the next item
 			}
-			else
+		}//End at least one measurement total (feeders checked individually next)
+		//Else is no measurements specified, this will be handled in the general catch below
+
+		//Check to see if any individual regulator has no measurment points
+		for (index=0; index<num_regs; index++)
+		{
+			if (num_meas[index] == 0)
+				num_meas[index] = -1;	//Default case - gets one
+		}
+
+		//Allocate working index
+		temp_meas_idx = (int*)gl_malloc(num_regs*sizeof(int));
+		if (temp_meas_idx == NULL)
+		{
+			GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
+			//Defined below
+		}
+
+		//Now time for mallocs
+		for (index=0; index<num_regs; index++)
+		{
+			if (num_meas[index] == -1)	//Default flag - only 1 item
+			{
+				pMeasurement_list[index] = (node**)gl_malloc(sizeof(node*));
+			}
+			else	//There was at least one
+			{
+				pMeasurement_list[index] = (node**)gl_malloc(num_meas[index]*sizeof(node*));
+			}
+			
+			if (*pMeasurement_list[index] == NULL)
+			{
+				GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
+				/*  TROUBLESHOOT
+				While attempting to allocate space for the measurment list, a memory allocation error occurred.
+				Please try again.  If the problem persists, please submit your code and a bug report via the trac website.
+				*/
+			}
+
+			//Zero the accumulator while we're at it
+			temp_meas_idx[index] = 0;
+		}
+
+		//Now populate the list
+		token = strtok(measurement_list,",");	//Start the list
+		for (index=0; index<total_meas; index++)
+		{
+			//First item is the object, grab it
+			temp_obj = gl_get_object((char *)token);
+
+			//Make sure it is valid
+			if (temp_obj == NULL)
 			{
 				GL_THROW("volt_var_control %s: measurement object %s was not found!",obj->name,token);
 				/*  TROUBLESHOOT
@@ -651,39 +1268,97 @@ int volt_var_control::init(OBJECT *parent)
 				your code and a bug report via the trac website.
 				*/
 			}
+			
+			token = strtok(NULL,",");	//Pull next - starts on obj, we want to do a count
 
-			token = strtok(NULL,",");
-		}//end token FOR
-	}//End measurement list if
-	else	//0 measurements
-	{
-		gl_warning("volt_var_control %s: No measurement point specified - defaulting to load side of regulator",obj->name);
-		/*  TROUBLESHOOT
-		If no measuremnt points are specified for the volt_var_control object, it will default to the load side of the 
-		feeder regulator.  Please specify measurement points for better control.
-		*/
+			indexa = ((int)(strtod(token,token_end))-1);	//Convert back
 
-		num_meas = 1;	//We're going to give it one
+			pMeasurement_list[indexa][temp_meas_idx[indexa]] = OBJECTDATA(temp_obj,node);	//Store it in the list
 
-		//malloc the list - there's only 1, so this is probably stupid, but meh
-		pMeasurement_list = (node **)gl_malloc(sizeof(node));
+			temp_meas_idx[indexa]++;	//Increment the storage pointer
 
-		if (pMeasurement_list == NULL)
-		{
-			GL_THROW("volt_var_control %s: Failed to allocate measurement memory",obj->name);
-			/*  TROUBLESHOOT
-			The volt_var_control failed to allocate memory for the voltage measurements table.
-			Please try again.  If the error persists, please submit your code and a bug report via
-			the trac website.
-			*/
+			token = strtok(NULL,",");		//Progress to the next "object"
 		}
 
-		//Populate the list now
-		pMeasurement_list[0] = OBJECTDATA(feeder_regulator->to,node);	//Store it as a node
-	}//End 0 measurements default
+		//Free up our temporary memory use
+		gl_free(temp_meas_idx);
 
-	//Populate the two side of the regulator for future use - need it for VO in feeder logic
-	RegToNode = OBJECTDATA(feeder_regulator->to,node);
+		//Now loop through again - find any "zero" lists and populate them
+		for (index=0; index<num_regs; index++)
+		{
+			if (num_meas[index] == -1)	//This was a default case
+			{
+				pMeasurement_list[index][0] = RegToNodes[index];	//Default is just use the load side
+
+				gl_warning("volt_var_control %s: No measurement point specified for reg %d - defaulting to load side of regulator",obj->name,(index+1));
+				/*  TROUBLESHOOT
+				If no measuremnt points are specified for a regualtor in the volt_var_control object, it will default
+				to the load side of the regulator.  Please specify measurement points for better control.
+				*/
+
+				num_meas[index] = 1;	//Update the number to be "normal"
+			}
+		}//end second pass of regulator list
+	}//End more than one regulator, or dual listed
+	else	//1 regulator - dualed list is not necessary
+	{
+		if (total_meas != 0)	//There's at least something in there
+		{
+			//Allocate space
+			pMeasurement_list[0] = (node**)gl_malloc(total_meas*sizeof(node*));
+
+			if (*pMeasurement_list[0] == NULL)
+			{
+				GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
+				//Defined above
+			}
+
+			//Use a temporary index
+			indexa=0;
+
+			//Now populate the list
+			token = strtok(measurement_list,",");	//Start the list
+			for (index=0; index<total_meas; index++)
+			{
+				//First item is the object, grab it
+				temp_obj = gl_get_object((char *)token);
+
+				//Make sure it is valid
+				if (temp_obj == NULL)
+				{
+					GL_THROW("volt_var_control %s: measurement object %s was not found!",obj->name,token);
+					/*  TROUBLESHOOT
+					While parsing the measurment list for the volt_var_control object, a measurement point
+					was not found.  Please check the name and try again.  If the problem persists, please submit 
+					your code and a bug report via the trac website.
+					*/
+				}
+				
+				pMeasurement_list[0][indexa] = OBJECTDATA(temp_obj,node);	//Store it in the list
+
+				indexa++;	//Increment the storage pointer
+
+				token = strtok(NULL,",");		//Progress to the next "object"
+			}//End measurement list
+		}//End at least one measurement total
+		else	//Empty, so default for us!
+		{
+			//Allocate space
+			pMeasurement_list[0] = (node**)gl_malloc(sizeof(node*));
+
+			if (pMeasurement_list[0] == NULL)
+			{
+				GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
+				//Defined above
+			}
+
+			//Put the to side of the regulator in there
+			pMeasurement_list[0][0] = RegToNodes[0];
+
+			//Set the measurement list
+			num_meas[0] = 1;
+		}//end default
+	}//end 1 regulator, not dual listed
 
 	//Determine phases to monitor - if none selected, default to the link phases
 	if ((pf_phase & (PHASE_A | PHASE_B | PHASE_C)) == 0)	//No phase (that we care about)
@@ -731,22 +1406,37 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP tret = powerflow_object::presync(t0);
+	TIMESTAMP treg_min;
 	double vmin[3], VDrop[3], VSet[3], VRegTo[3];
-	int indexer;
+	int indexer, index, reg_index;
 	char temp_var_u, temp_var_d;
 	int prop_tap_changes[3];
 	bool limit_hit = false;	//mainly for banked operations
 	char LimitExceed = 0x00;	// U_D - XCBA_XCBA
 
-	if (t0 >= TRegUpdate)
+	//Start out assuming a regulator change hasn't occurred
+	Regulator_Change = false;
+
+	//Now loop through the list - if one is over t0, then it is still changing
+	for (index=0; index<num_regs; index++)
 	{
-		Regulator_Change = false;	//Unflag the regulator change status
+		if ((t0 < TRegUpdate[index]) && (TRegUpdate[index] != TS_NEVER))
+		{
+			Regulator_Change = true;	//Flag a regulator change status
+			break;						//Only takes 1 true to be done
+		}
 	}
 
-	if (TUpdateStatus && (TRegUpdate <= t0))	//See if we're "recovering" from a transition
+	//Secondary check - see if we're "recovering" from a transition
+	if (TUpdateStatus == true)
 	{
-		TUpdateStatus = false;	//Clear the flag
-		TRegUpdate = TS_NEVER;		//Let us proceed
+		//Old logic checked for TRegUpdate <= t0 as well - if we have TUpdateStatus true, all times should be t0 anyways
+		TUpdateStatus = false;			//Clear the flag
+
+		for (index=0; index<num_regs; index++)
+		{
+			TRegUpdate[index] = TS_NEVER;	//Let us proceed
+		}
 	}
 
 	if (NR_cycle == true)	//Accumulation cycle checks
@@ -766,11 +1456,14 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 	{
 		if (control_method == ACTIVE)	//We're active, implies were in standby before
 		{
-			//Store the state of the regulator
-			PrevRegState = feeder_reg_config->Control;
+			for (indexer=0; indexer < num_regs; indexer++)
+			{
+				//Store the state of the regulator
+				PrevRegState[indexer] = pRegulator_configs[indexer]->Control;
 
-			//Now force it into manual mode
-			feeder_reg_config->Control = regulator_configuration::MANUAL;
+				//Now force it into manual mode
+				pRegulator_configs[indexer]->Control = regulator_configuration::MANUAL;
+			}//end feeder change
 
 			//Now let's do the same for capacitors
 			for (indexer=0; indexer < num_caps; indexer++)
@@ -781,7 +1474,11 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 		}
 		else	//Now in standby, implies were active before
 		{
-			feeder_reg_config->Control = PrevRegState;	//Put the regulator's mode back
+			//Put regulators back into previous mode
+			for (indexer=0; indexer < num_regs; indexer++)
+			{
+				pRegulator_configs[indexer]->Control = PrevRegState[indexer];	//Put the regulator's mode back
+			}
 
 			//Put capacitors back in previous mode
 			for (indexer=0; indexer < num_caps; indexer++)
@@ -790,313 +1487,530 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 			}
 		}
 
-		TRegUpdate = t0;				//Flag us to stay here.  This will force another iteration
+		for (indexer=0; indexer<num_regs; indexer++)
+		{
+			TRegUpdate[indexer] = t0;				//Flag us to stay here.  This will force another iteration
+		}
+
 		TUpdateStatus = true;		//Flag the update
 		prev_mode = control_method;	//Update the tracker
 	}
 
-	if ((solver_method == SM_NR) && (NR_cycle == false) && (Regulator_Change == false) && (control_method == ACTIVE))	//Solution pass and not in an existing change - also are turned on
+	if ((solver_method == SM_NR) && (NR_cycle == false) && (control_method == ACTIVE))	//Solution pass and are turned on
 	{
-		//Initialize "minimums" to something big
-		vmin[0] = vmin[1] = vmin[2] = 999999999999.0;
-
-		//Initialize VDrop and VSet value
-		VDrop[0] = VDrop[1] = VDrop[2] = 0.0;
-		VSet[0] = VSet[1] = VSet[2] = desired_voltage;	//Default VSet to where we want
-
-		//Initialize tap changes
-		prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;
-
-		//Parse through the measurement list - find the lowest voltage - do by PT_PHASE
-		for (indexer=0; indexer<num_meas; indexer++)
+		for (reg_index=0; reg_index<num_regs; reg_index++)
 		{
-			//See if this node has phase A
-			if ((pMeasurement_list[indexer]->phases & PHASE_A) == PHASE_A)	//Has phase A
+			if ((TRegUpdate[reg_index] <= t0) || (TRegUpdate[reg_index] == TS_NEVER))	//See if we're allowed to update
 			{
-				if (pMeasurement_list[indexer]->voltage[0].Mag() < vmin[0])	//New minimum
+				//Clear flag
+				LimitExceed = 0x00;
+
+				//Initialize "minimums" to something big
+				vmin[0] = vmin[1] = vmin[2] = 999999999999.0;
+
+				//Initialize VDrop and VSet value
+				VDrop[0] = VDrop[1] = VDrop[2] = 0.0;
+				VSet[0] = VSet[1] = VSet[2] = desired_voltage[reg_index];	//Default VSet to where we want
+
+				//Initialize tap changes
+				prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;
+
+				//Parse through the measurement list - find the lowest voltage - do by PT_PHASE
+				for (indexer=0; indexer<num_meas[reg_index]; indexer++)
 				{
-					vmin[0] = pMeasurement_list[indexer]->voltage[0].Mag();
-				}
-			}
-
-			//See if this node has phase B
-			if ((pMeasurement_list[indexer]->phases & PHASE_B) == PHASE_B)	//Has phase B
-			{
-				if (pMeasurement_list[indexer]->voltage[1].Mag() < vmin[1])	//New minimum
-				{
-					vmin[1] = pMeasurement_list[indexer]->voltage[1].Mag();
-				}
-			}
-
-			//See if this node has phase C
-			if ((pMeasurement_list[indexer]->phases & PHASE_C) == PHASE_C)	//Has phase A
-			{
-				if (pMeasurement_list[indexer]->voltage[2].Mag() < vmin[2])	//New minimum
-				{
-					vmin[2] = pMeasurement_list[indexer]->voltage[2].Mag();
-				}
-			}
-		}
-
-		//Populate VRegTo (to end voltages)
-		VRegTo[0] = RegToNode->voltage[0].Mag();
-		VRegTo[1] = RegToNode->voltage[1].Mag();
-		VRegTo[2] = RegToNode->voltage[2].Mag();
-
-		//Populate VDrop and VSet based on PT_PHASE
-		if ((feeder_reg_config->PT_phase & PHASE_A) == PHASE_A)	//We have an A
-		{
-			VDrop[0] = VRegTo[0] - vmin[0];		//Calculate the drop
-			VSet[0] = desired_voltage + VDrop[0];			//Calculate where we want to be
-
-			//Make sure it isn't too big or small - otherwise toss a warning (it will cause problem)
-			if (VSet[0] > maximum_voltage)	//Will exceed
-			{
-				gl_verbose("volt_var_control %s: The set point for phase A will exceed the maximum allowed voltage!",OBJECTHDR(this)->name);
-				/*  TROUBLESHOOT
-				The set point necessary to maintain the end point voltage exceeds the maximum voltage limit specified by the system.  Either
-				increase this maximum_voltage limit, or configure your system differently.
-				*/
-
-				//See what region we are currently in
-				if (feeder_regulator->tap[0] > 0)	//In raise region
-				{
-					if ((VRegTo[0] + reg_step_up) > maximum_voltage)
+					//See if this node has phase A
+					if ((pMeasurement_list[reg_index][indexer]->phases & PHASE_A) == PHASE_A)	//Has phase A
 					{
-						LimitExceed |= 0x10;	//Flag A as above
+						if (pMeasurement_list[reg_index][indexer]->voltage[0].Mag() < vmin[0])	//New minimum
+						{
+							vmin[0] = pMeasurement_list[reg_index][indexer]->voltage[0].Mag();
+						}
+					}
+
+					//See if this node has phase B
+					if ((pMeasurement_list[reg_index][indexer]->phases & PHASE_B) == PHASE_B)	//Has phase B
+					{
+						if (pMeasurement_list[reg_index][indexer]->voltage[1].Mag() < vmin[1])	//New minimum
+						{
+							vmin[1] = pMeasurement_list[reg_index][indexer]->voltage[1].Mag();
+						}
+					}
+
+					//See if this node has phase C
+					if ((pMeasurement_list[reg_index][indexer]->phases & PHASE_C) == PHASE_C)	//Has phase A
+					{
+						if (pMeasurement_list[reg_index][indexer]->voltage[2].Mag() < vmin[2])	//New minimum
+						{
+							vmin[2] = pMeasurement_list[reg_index][indexer]->voltage[2].Mag();
+						}
 					}
 				}
-				else	//Must be in lower region
+
+				//Populate VRegTo (to end voltages)
+				VRegTo[0] = RegToNodes[reg_index]->voltage[0].Mag();
+				VRegTo[1] = RegToNodes[reg_index]->voltage[1].Mag();
+				VRegTo[2] = RegToNodes[reg_index]->voltage[2].Mag();
+
+				//Populate VDrop and VSet based on PT_PHASE
+				if ((pRegulator_configs[reg_index]->PT_phase & PHASE_A) == PHASE_A)	//We have an A
 				{
-					if ((VRegTo[0] + reg_step_down) > maximum_voltage)
+					VDrop[0] = VRegTo[0] - vmin[0];		//Calculate the drop
+					VSet[0] = desired_voltage[reg_index] + VDrop[0];			//Calculate where we want to be
+
+					//Make sure it isn't too big or small - otherwise toss a warning (it will cause problem)
+					if (VSet[0] > maximum_voltage[reg_index])	//Will exceed
 					{
-						LimitExceed |= 0x10;	//Flag A as above
+						gl_verbose("volt_var_control %s: The set point for phase A will exceed the maximum allowed voltage!",OBJECTHDR(this)->name);
+						/*  TROUBLESHOOT
+						The set point necessary to maintain the end point voltage exceeds the maximum voltage limit specified by the system.  Either
+						increase this maximum_voltage limit, or configure your system differently.
+						*/
+
+						//See what region we are currently in
+						if (pRegulator_list[reg_index]->tap[0] > 0)	//In raise region
+						{
+							if ((VRegTo[0] + reg_step_up[reg_index]) > maximum_voltage[reg_index])
+							{
+								LimitExceed |= 0x10;	//Flag A as above
+							}
+						}
+						else	//Must be in lower region
+						{
+							if ((VRegTo[0] + reg_step_down[reg_index]) > maximum_voltage[reg_index])
+							{
+								LimitExceed |= 0x10;	//Flag A as above
+							}
+						}
+					}
+					else if (VSet[0] < minimum_voltage[reg_index])	//Will exceed
+					{
+						gl_verbose("volt_var_control %s: The set point for phase A will exceed the minimum allowed voltage!",OBJECTHDR(this)->name);
+						/*  TROUBLESHOOT
+						The set point necessary to maintain the end point voltage exceeds the minimum voltage limit specified by the system.  Either
+						decrease this minimum_voltage limit, or configure your system differently.
+						*/
+
+						//See what region we are currently in
+						if (pRegulator_list[reg_index]->tap[0] > 0)	//In raise region
+						{
+							if ((VRegTo[0] - reg_step_up[reg_index]) < minimum_voltage[reg_index])
+							{
+								LimitExceed |= 0x01;	//Flag A as below
+							}
+						}
+						else	//Must be in lower region
+						{
+							if ((VRegTo[0] - reg_step_down[reg_index]) < minimum_voltage[reg_index])
+							{
+								LimitExceed |= 0x01;	//Flag A as below
+							}
+						}
 					}
 				}
-			}
-			else if (VSet[0] < minimum_voltage)	//Will exceed
-			{
-				gl_verbose("volt_var_control %s: The set point for phase A will exceed the minimum allowed voltage!",OBJECTHDR(this)->name);
-				/*  TROUBLESHOOT
-				The set point necessary to maintain the end point voltage exceeds the minimum voltage limit specified by the system.  Either
-				decrease this minimum_voltage limit, or configure your system differently.
-				*/
 
-				//See what region we are currently in
-				if (feeder_regulator->tap[0] > 0)	//In raise region
+				if ((pRegulator_configs[reg_index]->PT_phase & PHASE_B) == PHASE_B)	//We have a B
 				{
-					if ((VRegTo[0] - reg_step_up) < minimum_voltage)
+					VDrop[1] = VRegTo[1] - vmin[1];		//Calculate the drop
+					VSet[1] = desired_voltage[reg_index] + VDrop[1];			//Calculate where we want to be
+
+					//Make sure it isn't too big or small - otherwise toss a warning (it will cause problem)
+					if (VSet[1] > maximum_voltage[reg_index])	//Will exceed
 					{
-						LimitExceed |= 0x01;	//Flag A as below
+						gl_verbose("volt_var_control %s: The set point for phase B will exceed the maximum allowed voltage!",OBJECTHDR(this)->name);
+
+						//See what region we are currently in
+						if (pRegulator_list[reg_index]->tap[1] > 0)	//In raise region
+						{
+							if ((VRegTo[1] + reg_step_up[reg_index]) > maximum_voltage[reg_index])
+							{
+								LimitExceed |= 0x20;	//Flag B as above
+							}
+						}
+						else	//Must be in lower region
+						{
+							if ((VRegTo[1] + reg_step_down[reg_index]) > maximum_voltage[reg_index])
+							{
+								LimitExceed |= 0x20;	//Flag B as above
+							}
+						}
+					}
+					else if (VSet[1] < minimum_voltage[reg_index])	//Will exceed
+					{
+						gl_verbose("volt_var_control %s: The set point for phase B will exceed the minimum allowed voltage!",OBJECTHDR(this)->name);
+
+						//See what region we are currently in
+						if (pRegulator_list[reg_index]->tap[1] > 0)	//In raise region
+						{
+							if ((VRegTo[1] - reg_step_up[reg_index]) < minimum_voltage[reg_index])
+							{
+								LimitExceed |= 0x02;	//Flag B as below
+							}
+						}
+						else	//Must be in lower region
+						{
+							if ((VRegTo[1] - reg_step_down[reg_index]) > minimum_voltage[reg_index])
+							{
+								LimitExceed |= 0x02;	//Flag B as below
+							}
+						}
 					}
 				}
-				else	//Must be in lower region
+
+				if ((pRegulator_configs[reg_index]->PT_phase & PHASE_C) == PHASE_C)	//We have a C
 				{
-					if ((VRegTo[0] - reg_step_down) < minimum_voltage)
+					VDrop[2] = VRegTo[2] - vmin[2];		//Calculate the drop
+					VSet[2] = desired_voltage[reg_index] + VDrop[2];			//Calculate where we want to be
+					//Make sure it isn't too big or small - otherwise toss a warning (it will cause problem)
+
+					if (VSet[2] > maximum_voltage[reg_index])	//Will exceed
 					{
-						LimitExceed |= 0x01;	//Flag A as below
+						gl_verbose("volt_var_control %s: The set point for phase C will exceed the maximum allowed voltage!",OBJECTHDR(this)->name);
+
+						//See what region we are currently in
+						if (pRegulator_list[reg_index]->tap[2] > 0)	//In raise region
+						{
+							if ((VRegTo[2] + reg_step_up[reg_index]) > maximum_voltage[reg_index])
+							{
+								LimitExceed |= 0x40;	//Flag C as above
+							}
+						}
+						else	//Must be in lower region
+						{
+							if ((VRegTo[2] + reg_step_down[reg_index]) > maximum_voltage[reg_index])
+							{
+								LimitExceed |= 0x40;	//Flag C as above
+							}
+						}
+					}
+					else if (VSet[2] < minimum_voltage[reg_index])	//Will exceed
+					{
+						gl_verbose("volt_var_control %s: The set point for phase C will exceed the minimum allowed voltage!",OBJECTHDR(this)->name);
+
+						//See what region we are currently in
+						if (pRegulator_list[reg_index]->tap[2] > 0)	//In raise region
+						{
+							if ((VRegTo[2] - reg_step_up[reg_index]) < minimum_voltage[reg_index])
+							{
+								LimitExceed |= 0x04;	//Flag C as below
+							}
+						}
+						else	//Must be in lower region
+						{
+							if ((VRegTo[2] - reg_step_down[reg_index]) < minimum_voltage[reg_index])
+							{
+								LimitExceed |= 0x04;	//Flag C as below
+							}
+						}
 					}
 				}
-			}
-		}
 
-		if ((feeder_reg_config->PT_phase & PHASE_B) == PHASE_B)	//We have a B
-		{
-			VDrop[1] = VRegTo[1] - vmin[1];		//Calculate the drop
-			VSet[1] = desired_voltage + VDrop[1];			//Calculate where we want to be
-
-			//Make sure it isn't too big or small - otherwise toss a warning (it will cause problem)
-			if (VSet[1] > maximum_voltage)	//Will exceed
-			{
-				gl_verbose("volt_var_control %s: The set point for phase B will exceed the maximum allowed voltage!",OBJECTHDR(this)->name);
-
-				//See what region we are currently in
-				if (feeder_regulator->tap[1] > 0)	//In raise region
+				//Now determine what kind of regulator we are
+				if (pRegulator_configs[reg_index]->control_level == regulator_configuration::INDIVIDUAL)	//Individually handled
 				{
-					if ((VRegTo[1] + reg_step_up) > maximum_voltage)
+					//Handle phases
+					for (indexer=0; indexer<3; indexer++)	//Loop through phases
 					{
-						LimitExceed |= 0x20;	//Flag B as above
-					}
-				}
-				else	//Must be in lower region
-				{
-					if ((VRegTo[1] + reg_step_down) > maximum_voltage)
+						LimitExceed &= 0x7F;	//Use bit 8 as a validity flag (to save a variable)
+						
+						if ((indexer==0) && ((pRegulator_configs[reg_index]->PT_phase & PHASE_A) == PHASE_A))	//We have an A
+						{
+							temp_var_d = 0x01;		//A base lower "Limit" checker
+							temp_var_u = 0x10;		//A base upper "Limit" checker
+							LimitExceed |= 0x80;	//Valid phase
+						}
+
+						if ((indexer==1) && ((pRegulator_configs[reg_index]->PT_phase & PHASE_B) == PHASE_B))	//We have a B
+						{
+							temp_var_d = 0x02;		//B base lower "Limit" checker
+							temp_var_u = 0x20;		//B base upper "Limit" checker
+							LimitExceed |= 0x80;	//Valid phase
+						}
+
+						if ((indexer==2) && ((pRegulator_configs[reg_index]->PT_phase & PHASE_C) == PHASE_C))	//We have a C
+						{
+							temp_var_d = 0x04;		//C base lower "Limit" checker
+							temp_var_u = 0x40;		//C base upper "Limit" checker
+							LimitExceed |= 0x80;	//Valid phase
+						}
+
+						if ((LimitExceed & 0x80) == 0x80)	//Valid phase
+						{
+							//Make sure we aren't below the minimum or above the maximum first				  (***** This below here \/ \/ *************) - sub with step check! **************
+							if (((vmin[indexer] > maximum_voltage[reg_index]) || (VRegTo[indexer] > maximum_voltage[reg_index])) && ((LimitExceed & temp_var_d) != temp_var_d))		//Above max, but won't go below
+							{
+								//Flag us for a down tap
+								prop_tap_changes[indexer] = -1;
+							}
+							else if (((vmin[indexer] < minimum_voltage[reg_index]) || (VRegTo[indexer] < minimum_voltage[reg_index])) && ((LimitExceed & temp_var_u) != temp_var_u))	//Below min, but won't exceed
+							{
+								//Flag us for an up tap
+								prop_tap_changes[indexer] = 1;
+							}
+							else	//Normal operation
+							{
+								//See if we are in high load or low load conditions
+								if (VDrop[indexer] > max_vdrop[reg_index])	//High loading
+								{
+									//See if we're outside our range
+									if (((VSet[indexer] + vbw_high[reg_index]) < VRegTo[indexer]) && ((LimitExceed & temp_var_d) != temp_var_d)) 	//Above deadband, but can go down
+									{
+										//Check the theoretical change - make sure we won't exceed any limits
+										if (pRegulator_list[reg_index]->tap[indexer] > 0)	//Step up region
+										{
+											//Find out what a step down will get us theoretically
+											if ((VRegTo[indexer] - reg_step_up[reg_index]) < minimum_voltage[reg_index])	//We'll fall below
+											{
+												prop_tap_changes[indexer] = 0;	//No change allowed
+											}
+											else	//Change allowed
+											{
+												prop_tap_changes[indexer] = -1;  //Try to tap us down
+											}
+										}
+										else	//Must be lower region
+										{
+											//Find out what a step down will get us theoretically
+											if ((VRegTo[indexer] - reg_step_down[reg_index]) < minimum_voltage[reg_index])	//We'll fall below
+											{
+												prop_tap_changes[indexer] = 0;	//No change allowed
+											}
+											else	//Change allowed
+											{
+												prop_tap_changes[indexer] = -1;  //Try to tap us down
+											}
+										}
+									}//end above deadband
+									else if (((VSet[indexer] - vbw_high[reg_index]) > VRegTo[indexer]) && ((LimitExceed & temp_var_u) != temp_var_u))	//Below deadband, but can go up
+									{
+										//Check the theoretical change - make sure we won't exceed any limits
+										if (pRegulator_list[reg_index]->tap[indexer] > 0)	//Step up region
+										{
+											//Find out what a step up will get us theoretically
+											if ((VRegTo[indexer] + reg_step_up[reg_index]) > maximum_voltage[reg_index])	//We'll exceed
+											{
+												prop_tap_changes[indexer] = 0;	//No change allowed
+											}
+											else	//Change allowed
+											{
+												prop_tap_changes[indexer] = 1;  //Try to tap us up
+											}
+										}
+										else	//Must be lower region
+										{
+											//Find out what a step up will get us theoretically
+											if ((VRegTo[indexer] + reg_step_down[reg_index]) > maximum_voltage[reg_index])	//We'll fall exceed
+											{
+												prop_tap_changes[indexer] = 0;	//No change allowed
+											}
+											else	//Change allowed
+											{
+												prop_tap_changes[indexer] = 1;  //Try to tap us up
+											}
+										}
+									}//end below deadband
+									//defaulted else - inside the deadband, so we don't care
+								}//end high loading
+								else	//Low loading
+								{
+									//See if we're outside our range
+									if (((VSet[indexer] + vbw_low[reg_index]) < VRegTo[indexer]) && ((LimitExceed & temp_var_d) != temp_var_d))	//Above deadband, but can go down
+									{
+										//Check the theoretical change - make sure we won't exceed any limits
+										if (pRegulator_list[reg_index]->tap[indexer] > 0)	//Step up region
+										{
+											//Find out what a step down will get us theoretically
+											if ((VRegTo[indexer] - reg_step_up[reg_index]) < minimum_voltage[reg_index])	//We'll fall below
+											{
+												prop_tap_changes[indexer] = 0;	//No change allowed
+											}
+											else	//Change allowed
+											{
+												prop_tap_changes[indexer] = -1;  //Try to tap us down
+											}
+										}
+										else	//Must be lower region
+										{
+											//Find out what a step down will get us theoretically
+											if ((VRegTo[indexer] - reg_step_down[reg_index]) < minimum_voltage[reg_index])	//We'll fall below
+											{
+												prop_tap_changes[indexer] = 0;	//No change allowed
+											}
+											else	//Change allowed
+											{
+												prop_tap_changes[indexer] = -1;  //Try to tap us down
+											}
+										}
+									}//end above deadband
+									else if (((VSet[indexer] - vbw_low[reg_index]) > VRegTo[indexer]) && ((LimitExceed & temp_var_u) != temp_var_u))	//Below deadband, but can go up
+									{
+										//Check the theoretical change - make sure we won't exceed any limits
+										if (pRegulator_list[reg_index]->tap[indexer] > 0)	//Step up region
+										{
+											//Find out what a step up will get us theoretically
+											if ((VRegTo[indexer] + reg_step_up[reg_index]) > maximum_voltage[reg_index])	//We'll exceed
+											{
+												prop_tap_changes[indexer] = 0;	//No change allowed
+											}
+											else	//Change allowed
+											{
+												prop_tap_changes[indexer] = 1;  //Try to tap us up
+											}
+										}
+										else	//Must be lower region
+										{
+											//Find out what a step up will get us theoretically
+											if ((VRegTo[indexer] + reg_step_down[reg_index]) > maximum_voltage[reg_index])	//We'll fall exceed
+											{
+												prop_tap_changes[indexer] = 0;	//No change allowed
+											}
+											else	//Change allowed
+											{
+												prop_tap_changes[indexer] = 1;  //Try to tap us up
+											}
+										}
+									}//end below deadband
+									//defaulted else - inside the deadband, so we don't care
+								}//end low loading
+							}//end normal ops
+						}//End valid phase
+					}//end phase FOR
+
+					//Apply the taps - loop through phases (nonexistant phases should just be 0
+					//Default assume no change will occur
+					Regulator_Change = false;
+					TRegUpdate[reg_index] = TS_NEVER;
+
+					for (indexer=0; indexer<3; indexer++)
 					{
-						LimitExceed |= 0x20;	//Flag B as above
-					}
-				}
-			}
-			else if (VSet[1] < minimum_voltage)	//Will exceed
-			{
-				gl_verbose("volt_var_control %s: The set point for phase B will exceed the minimum allowed voltage!",OBJECTHDR(this)->name);
+						if (prop_tap_changes[indexer] > 0)	//Want to tap up
+						{
+							//Make sure we aren't railed
+							if (pRegulator_list[reg_index]->tap[indexer] >= pRegulator_configs[reg_index]->raise_taps)
+							{
+								//Just leave us railed - explicity done in case it somehow ends up over raise_taps (not sure how that would happen)
+								pRegulator_list[reg_index]->tap[indexer] = pRegulator_configs[reg_index]->raise_taps;
+							}
+							else	//Must have room
+							{
+								pRegulator_list[reg_index]->tap[indexer]++;	//Increment
 
-				//See what region we are currently in
-				if (feeder_regulator->tap[1] > 0)	//In raise region
+								//Flag as change
+								Regulator_Change = true;
+								TRegUpdate[reg_index] = t0 + (TIMESTAMP)RegUpdateTimes[reg_index];	//Set return time
+							}
+						}//end tap up
+						else if (prop_tap_changes[indexer] < 0)	//Tap down
+						{
+							//Make sure we aren't railed
+							if (pRegulator_list[reg_index]->tap[indexer] <= -pRegulator_configs[reg_index]->lower_taps)
+							{
+								//Just leave us railed - explicity done in case it somehow ends up under lower_taps (not sure how that would happen)
+								pRegulator_list[reg_index]->tap[indexer] = -pRegulator_configs[reg_index]->lower_taps;
+							}
+							else	//Must have room
+							{
+								pRegulator_list[reg_index]->tap[indexer]--;	//Decrement
+
+								//Flag the change
+								Regulator_Change = true;
+								TRegUpdate[reg_index] = t0 + (TIMESTAMP)RegUpdateTimes[reg_index];	//Set return time
+							}
+						}//end tap down
+						//Defaulted else - no change
+					}//end phase FOR
+				}//end individual
+				else	//Must be banked then
 				{
-					if ((VRegTo[1] - reg_step_up) < minimum_voltage)
+					//Banked will take first PT_PHASE it matches.  If there's more than one, I don't want to know
+					if ((pRegulator_configs[reg_index]->PT_phase & PHASE_A) == PHASE_A)	//We have an A
 					{
-						LimitExceed |= 0x02;	//Flag B as below
+						indexer = 0;		//Index for A-based voltages
+						temp_var_d = 0x01;	//A base lower "Limit" checker
+						temp_var_u = 0x10;	//A base upper "Limit" checker
 					}
-				}
-				else	//Must be in lower region
-				{
-					if ((VRegTo[1] - reg_step_down) > minimum_voltage)
+					else if ((pRegulator_configs[reg_index]->PT_phase & PHASE_B) == PHASE_B)	//We have a B
 					{
-						LimitExceed |= 0x02;	//Flag B as below
+						indexer = 1;		//Index for B-based voltages
+						temp_var_d = 0x02;	//B base lower "Limit" checker
+						temp_var_u = 0x20;	//B base upper "Limit" checker
 					}
-				}
-			}
-		}
-
-		if ((feeder_reg_config->PT_phase & PHASE_C) == PHASE_C)	//We have a C
-		{
-			VDrop[2] = VRegTo[2] - vmin[2];		//Calculate the drop
-			VSet[2] = desired_voltage + VDrop[2];			//Calculate where we want to be
-			//Make sure it isn't too big or small - otherwise toss a warning (it will cause problem)
-
-			if (VSet[2] > maximum_voltage)	//Will exceed
-			{
-				gl_verbose("volt_var_control %s: The set point for phase C will exceed the maximum allowed voltage!",OBJECTHDR(this)->name);
-
-				//See what region we are currently in
-				if (feeder_regulator->tap[2] > 0)	//In raise region
-				{
-					if ((VRegTo[2] + reg_step_up) > maximum_voltage)
+					else	//Must be C then
 					{
-						LimitExceed |= 0x40;	//Flag C as above
+						indexer = 2;		//Index for C-based voltages
+						temp_var_d = 0x04;	//C base lower "Limit" checker
+						temp_var_u = 0x40;	//C base upper "Limit" checker
 					}
-				}
-				else	//Must be in lower region
-				{
-					if ((VRegTo[2] + reg_step_down) > maximum_voltage)
-					{
-						LimitExceed |= 0x40;	//Flag C as above
-					}
-				}
-			}
-			else if (VSet[2] < minimum_voltage)	//Will exceed
-			{
-				gl_verbose("volt_var_control %s: The set point for phase C will exceed the minimum allowed voltage!",OBJECTHDR(this)->name);
 
-				//See what region we are currently in
-				if (feeder_regulator->tap[2] > 0)	//In raise region
-				{
-					if ((VRegTo[2] - reg_step_up) < minimum_voltage)
-					{
-						LimitExceed |= 0x04;	//Flag C as below
-					}
-				}
-				else	//Must be in lower region
-				{
-					if ((VRegTo[2] - reg_step_down) < minimum_voltage)
-					{
-						LimitExceed |= 0x04;	//Flag C as below
-					}
-				}
-			}
-		}
-
-		//Now determine what kind of regulator we are
-		if (feeder_reg_config->control_level == regulator_configuration::INDIVIDUAL)	//Individually handled
-		{
-			//Handle phases
-			for (indexer=0; indexer<3; indexer++)	//Loop through phases
-			{
-				LimitExceed &= 0x7F;	//Use bit 8 as a validity flag (to save a variable)
-				
-				if ((indexer==0) && ((feeder_reg_config->PT_phase & PHASE_A) == PHASE_A))	//We have an A
-				{
-					temp_var_d = 0x01;		//A base lower "Limit" checker
-					temp_var_u = 0x10;		//A base upper "Limit" checker
-					LimitExceed |= 0x80;	//Valid phase
-				}
-
-				if ((indexer==1) && ((feeder_reg_config->PT_phase & PHASE_B) == PHASE_B))	//We have a B
-				{
-					temp_var_d = 0x02;		//B base lower "Limit" checker
-					temp_var_u = 0x20;		//B base upper "Limit" checker
-					LimitExceed |= 0x80;	//Valid phase
-				}
-
-				if ((indexer==2) && ((feeder_reg_config->PT_phase & PHASE_C) == PHASE_C))	//We have a C
-				{
-					temp_var_d = 0x04;		//C base lower "Limit" checker
-					temp_var_u = 0x40;		//C base upper "Limit" checker
-					LimitExceed |= 0x80;	//Valid phase
-				}
-
-				if ((LimitExceed & 0x80) == 0x80)	//Valid phase
-				{
-					//Make sure we aren't below the minimum or above the maximum first				  (***** This below here \/ \/ *************) - sub with step check! **************
-					if (((vmin[indexer] > maximum_voltage) || (VRegTo[indexer] > maximum_voltage)) && ((LimitExceed & temp_var_d) != temp_var_d))		//Above max, but won't go below
+					//Make sure we aren't below the minimum or above the maximum first
+					if (((vmin[indexer] > maximum_voltage[reg_index]) || (VRegTo[indexer] > maximum_voltage[reg_index])) && ((LimitExceed & temp_var_d) != temp_var_d))		//Above max, but can go down
 					{
 						//Flag us for a down tap
-						prop_tap_changes[indexer] = -1;
+						prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = -1;
 					}
-					else if (((vmin[indexer] < minimum_voltage) || (VRegTo[indexer] < minimum_voltage)) && ((LimitExceed & temp_var_u) != temp_var_u))	//Below min, but won't exceed
+					else if (((vmin[indexer] < minimum_voltage[reg_index]) || (VRegTo[indexer] < minimum_voltage[reg_index])) && ((LimitExceed & temp_var_u) != temp_var_u))	//Below min, but can go up
 					{
 						//Flag us for an up tap
-						prop_tap_changes[indexer] = 1;
+						prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 1;
 					}
 					else	//Normal operation
 					{
 						//See if we are in high load or low load conditions
-						if (VDrop[indexer] > max_vdrop)	//High loading
+						if (VDrop[indexer] > max_vdrop[reg_index])	//High loading
 						{
 							//See if we're outside our range
-							if (((VSet[indexer] + vbw_high) < VRegTo[indexer]) && ((LimitExceed & temp_var_d) != temp_var_d)) 	//Above deadband, but can go down
+							if (((VSet[indexer] + vbw_high[reg_index]) < VRegTo[indexer]) && ((LimitExceed & temp_var_d) != temp_var_d))	//Above deadband, but can go down too
 							{
 								//Check the theoretical change - make sure we won't exceed any limits
-								if (feeder_regulator->tap[indexer] > 0)	//Step up region
+								if (pRegulator_list[reg_index]->tap[indexer] > 0)	//Step up region
 								{
 									//Find out what a step down will get us theoretically
-									if ((VRegTo[indexer] - reg_step_up) < minimum_voltage)	//We'll fall below
+									if ((VRegTo[indexer] - reg_step_up[reg_index]) < minimum_voltage[reg_index])	//We'll fall below
 									{
-										prop_tap_changes[indexer] = 0;	//No change allowed
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
 									}
 									else	//Change allowed
 									{
-										prop_tap_changes[indexer] = -1;  //Try to tap us down
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = -1;  //Try to tap us down
 									}
 								}
 								else	//Must be lower region
 								{
 									//Find out what a step down will get us theoretically
-									if ((VRegTo[indexer] - reg_step_down) < minimum_voltage)	//We'll fall below
+									if ((VRegTo[indexer] - reg_step_down[reg_index]) < minimum_voltage[reg_index])	//We'll fall below
 									{
-										prop_tap_changes[indexer] = 0;	//No change allowed
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
 									}
 									else	//Change allowed
 									{
-										prop_tap_changes[indexer] = -1;  //Try to tap us down
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = -1;  //Try to tap us down
 									}
 								}
 							}//end above deadband
-							else if (((VSet[indexer] - vbw_high) > VRegTo[indexer]) && ((LimitExceed & temp_var_u) != temp_var_u))	//Below deadband, but can go up
+							else if (((VSet[indexer] - vbw_high[reg_index]) > VRegTo[indexer]) && ((LimitExceed & temp_var_u) != temp_var_u))	//Below deadband, but can go up
 							{
 								//Check the theoretical change - make sure we won't exceed any limits
-								if (feeder_regulator->tap[indexer] > 0)	//Step up region
+								if (pRegulator_list[reg_index]->tap[indexer] > 0)	//Step up region
 								{
 									//Find out what a step up will get us theoretically
-									if ((VRegTo[indexer] + reg_step_up) > maximum_voltage)	//We'll exceed
+									if ((VRegTo[indexer] + reg_step_up[reg_index]) > maximum_voltage[reg_index])	//We'll exceed
 									{
-										prop_tap_changes[indexer] = 0;	//No change allowed
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
 									}
 									else	//Change allowed
 									{
-										prop_tap_changes[indexer] = 1;  //Try to tap us up
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 1;  //Try to tap us up
 									}
 								}
 								else	//Must be lower region
 								{
 									//Find out what a step up will get us theoretically
-									if ((VRegTo[indexer] + reg_step_down) > maximum_voltage)	//We'll fall exceed
+									if ((VRegTo[indexer] + reg_step_down[reg_index]) > maximum_voltage[reg_index])	//We'll fall exceed
 									{
-										prop_tap_changes[indexer] = 0;	//No change allowed
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
 									}
 									else	//Change allowed
 									{
-										prop_tap_changes[indexer] = 1;  //Try to tap us up
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 1;  //Try to tap us up
 									}
 								}
 							}//end below deadband
@@ -1105,349 +2019,161 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 						else	//Low loading
 						{
 							//See if we're outside our range
-							if (((VSet[indexer] + vbw_low) < VRegTo[indexer]) && ((LimitExceed & temp_var_d) != temp_var_d))	//Above deadband, but can go down
+							if (((VSet[indexer] + vbw_low[reg_index]) < VRegTo[indexer]) && ((LimitExceed & temp_var_d) != temp_var_d))	//Above deadband, but can go down
 							{
 								//Check the theoretical change - make sure we won't exceed any limits
-								if (feeder_regulator->tap[indexer] > 0)	//Step up region
+								if (pRegulator_list[reg_index]->tap[indexer] > 0)	//Step up region
 								{
 									//Find out what a step down will get us theoretically
-									if ((VRegTo[indexer] - reg_step_up) < minimum_voltage)	//We'll fall below
+									if ((VRegTo[indexer] - reg_step_up[reg_index]) < minimum_voltage[reg_index])	//We'll fall below
 									{
-										prop_tap_changes[indexer] = 0;	//No change allowed
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
 									}
 									else	//Change allowed
 									{
-										prop_tap_changes[indexer] = -1;  //Try to tap us down
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = -1;  //Try to tap us down
 									}
 								}
 								else	//Must be lower region
 								{
 									//Find out what a step down will get us theoretically
-									if ((VRegTo[indexer] - reg_step_down) < minimum_voltage)	//We'll fall below
+									if ((VRegTo[indexer] - reg_step_down[reg_index]) < minimum_voltage[reg_index])	//We'll fall below
 									{
-										prop_tap_changes[indexer] = 0;	//No change allowed
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
 									}
 									else	//Change allowed
 									{
-										prop_tap_changes[indexer] = -1;  //Try to tap us down
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = -1;  //Try to tap us down
 									}
 								}
 							}//end above deadband
-							else if (((VSet[indexer] - vbw_low) > VRegTo[indexer]) && ((LimitExceed & temp_var_u) != temp_var_u))	//Below deadband, but can go up
+							else if (((VSet[indexer] - vbw_low[reg_index]) > VRegTo[indexer]) && ((LimitExceed & temp_var_d) != temp_var_d))	//Below deadband, but can go up
 							{
 								//Check the theoretical change - make sure we won't exceed any limits
-								if (feeder_regulator->tap[indexer] > 0)	//Step up region
+								if (pRegulator_list[reg_index]->tap[indexer] > 0)	//Step up region
 								{
 									//Find out what a step up will get us theoretically
-									if ((VRegTo[indexer] + reg_step_up) > maximum_voltage)	//We'll exceed
+									if ((VRegTo[indexer] + reg_step_up[reg_index]) > maximum_voltage[reg_index])	//We'll exceed
 									{
-										prop_tap_changes[indexer] = 0;	//No change allowed
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
 									}
 									else	//Change allowed
 									{
-										prop_tap_changes[indexer] = 1;  //Try to tap us up
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 1;  //Try to tap us up
 									}
 								}
 								else	//Must be lower region
 								{
 									//Find out what a step up will get us theoretically
-									if ((VRegTo[indexer] + reg_step_down) > maximum_voltage)	//We'll fall exceed
+									if ((VRegTo[indexer] + reg_step_down[reg_index]) > maximum_voltage[reg_index])	//We'll fall exceed
 									{
-										prop_tap_changes[indexer] = 0;	//No change allowed
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
 									}
 									else	//Change allowed
 									{
-										prop_tap_changes[indexer] = 1;  //Try to tap us up
+										prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 1;  //Try to tap us up
 									}
 								}
 							}//end below deadband
 							//defaulted else - inside the deadband, so we don't care
 						}//end low loading
 					}//end normal ops
-				}//End valid phase
-			}//end phase FOR
 
-			//Apply the taps - loop through phases (nonexistant phases should just be 0
-			//Default assume no change will occur
-			Regulator_Change = false;
-			TRegUpdate = TS_NEVER;
-
-			for (indexer=0; indexer<3; indexer++)
-			{
-				if (prop_tap_changes[indexer] > 0)	//Want to tap up
-				{
-					//Make sure we aren't railed
-					if (feeder_regulator->tap[indexer] >= feeder_reg_config->raise_taps)
+					//Check on the assumption of differential banked (offsets can be present, just all move simultaneously)
+					//We'll only check prop->A, since it is banked
+					Regulator_Change = false;	//Start with no change assumption
+					TRegUpdate[reg_index] = TS_NEVER;
+					if (prop_tap_changes[0] > 0)	//Want a tap up
 					{
-						//Just leave us railed - explicity done in case it somehow ends up over raise_taps (not sure how that would happen)
-						feeder_regulator->tap[indexer] = feeder_reg_config->raise_taps;
-					}
-					else	//Must have room
+						//Check individually - set to rail if they are at or exceed - this may lose the offset, but I don't know how they'd ever exceed a limit anyways
+						if (pRegulator_list[reg_index]->tap[0] >= pRegulator_configs[reg_index]->raise_taps)
+						{
+							pRegulator_list[reg_index]->tap[0] = pRegulator_configs[reg_index]->raise_taps;	//Set at limit
+							limit_hit = true;											//Flag that a limit was hit
+						}
+
+						if (pRegulator_list[reg_index]->tap[1] >= pRegulator_configs[reg_index]->raise_taps)
+						{
+							pRegulator_list[reg_index]->tap[1] = pRegulator_configs[reg_index]->raise_taps;	//Set at limit
+							limit_hit = true;											//Flag that a limit was hit
+						}
+
+						if (pRegulator_list[reg_index]->tap[2] >= pRegulator_configs[reg_index]->raise_taps)
+						{
+							pRegulator_list[reg_index]->tap[2] = pRegulator_configs[reg_index]->raise_taps;	//Set at limit
+							limit_hit = true;											//Flag that a limit was hit
+						}
+
+						if (limit_hit == false)	//We can still proceed
+						{
+							pRegulator_list[reg_index]->tap[0]++;	//Increment them all
+							pRegulator_list[reg_index]->tap[1]++;
+							pRegulator_list[reg_index]->tap[2]++;
+
+							Regulator_Change = true;					//Flag the change
+							TRegUpdate[reg_index] = t0 + (TIMESTAMP)RegUpdateTimes[reg_index];	//Set return time
+						}
+						//Default else - limit hit, so "no change"
+					}//end tap up
+					else if (prop_tap_changes[0] < 0)	//Want a tap down
 					{
-						feeder_regulator->tap[indexer]++;	//Increment
-
-						//Flag as change
-						Regulator_Change = true;
-						TRegUpdate = t0 + (TIMESTAMP)reg_time_delay;	//Set return time
-					}
-				}//end tap up
-				else if (prop_tap_changes[indexer] < 0)	//Tap down
-				{
-					//Make sure we aren't railed
-					if (feeder_regulator->tap[indexer] <= -feeder_reg_config->lower_taps)
-					{
-						//Just leave us railed - explicity done in case it somehow ends up under lower_taps (not sure how that would happen)
-						feeder_regulator->tap[indexer] = -feeder_reg_config->lower_taps;
-					}
-					else	//Must have room
-					{
-						feeder_regulator->tap[indexer]--;	//Decrement
-
-						//Flag the change
-						Regulator_Change = true;
-						TRegUpdate = t0 + (TIMESTAMP)reg_time_delay;	//Set return time
-					}
-				}//end tap down
-				//Defaulted else - no change
-			}//end phase FOR
-		}//end individual
-		else	//Must be banked then
-		{
-			//Banked will take first PT_PHASE it matches.  If there's more than one, I don't want to know
-			if ((feeder_reg_config->PT_phase & PHASE_A) == PHASE_A)	//We have an A
-			{
-				indexer = 0;		//Index for A-based voltages
-				temp_var_d = 0x01;	//A base lower "Limit" checker
-				temp_var_u = 0x10;	//A base upper "Limit" checker
-			}
-			else if ((feeder_reg_config->PT_phase & PHASE_B) == PHASE_B)	//We have a B
-			{
-				indexer = 1;		//Index for B-based voltages
-				temp_var_d = 0x02;	//B base lower "Limit" checker
-				temp_var_u = 0x20;	//B base upper "Limit" checker
-			}
-			else	//Must be C then
-			{
-				indexer = 2;		//Index for C-based voltages
-				temp_var_d = 0x04;	//C base lower "Limit" checker
-				temp_var_u = 0x40;	//C base upper "Limit" checker
-			}
-
-			//Make sure we aren't below the minimum or above the maximum first
-			if (((vmin[indexer] > maximum_voltage) || (VRegTo[indexer] > maximum_voltage)) && ((LimitExceed & temp_var_d) != temp_var_d))		//Above max, but can go down
-			{
-				//Flag us for a down tap
-				prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = -1;
-			}
-			else if (((vmin[indexer] < minimum_voltage) || (VRegTo[indexer] < minimum_voltage)) && ((LimitExceed & temp_var_u) != temp_var_u))	//Below min, but can go up
-			{
-				//Flag us for an up tap
-				prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 1;
-			}
-			else	//Normal operation
-			{
-				//See if we are in high load or low load conditions
-				if (VDrop[indexer] > max_vdrop)	//High loading
-				{
-					//See if we're outside our range
-					if (((VSet[indexer] + vbw_high) < VRegTo[indexer]) && ((LimitExceed & temp_var_d) != temp_var_d))	//Above deadband, but can go down too
-					{
-						//Check the theoretical change - make sure we won't exceed any limits
-						if (feeder_regulator->tap[indexer] > 0)	//Step up region
+						//Check individually - set to rail if they are at or exceed - this may lose the offset, but I don't know how they'd ever exceed a limit anyways
+						if (pRegulator_list[reg_index]->tap[0] <= -pRegulator_configs[reg_index]->lower_taps)
 						{
-							//Find out what a step down will get us theoretically
-							if ((VRegTo[indexer] - reg_step_up) < minimum_voltage)	//We'll fall below
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
-							}
-							else	//Change allowed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = -1;  //Try to tap us down
-							}
+							pRegulator_list[reg_index]->tap[0] = -pRegulator_configs[reg_index]->lower_taps;	//Set at limit
+							limit_hit = true;											//Flag that a limit was hit
 						}
-						else	//Must be lower region
+
+						if (pRegulator_list[reg_index]->tap[1] <= -pRegulator_configs[reg_index]->lower_taps)
 						{
-							//Find out what a step down will get us theoretically
-							if ((VRegTo[indexer] - reg_step_down) < minimum_voltage)	//We'll fall below
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
-							}
-							else	//Change allowed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = -1;  //Try to tap us down
-							}
+							pRegulator_list[reg_index]->tap[1] = -pRegulator_configs[reg_index]->lower_taps;	//Set at limit
+							limit_hit = true;											//Flag that a limit was hit
 						}
-					}//end above deadband
-					else if (((VSet[indexer] - vbw_high) > VRegTo[indexer]) && ((LimitExceed & temp_var_u) != temp_var_u))	//Below deadband, but can go up
-					{
-						//Check the theoretical change - make sure we won't exceed any limits
-						if (feeder_regulator->tap[indexer] > 0)	//Step up region
+
+						if (pRegulator_list[reg_index]->tap[2] <= -pRegulator_configs[reg_index]->lower_taps)
 						{
-							//Find out what a step up will get us theoretically
-							if ((VRegTo[indexer] + reg_step_up) > maximum_voltage)	//We'll exceed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
-							}
-							else	//Change allowed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 1;  //Try to tap us up
-							}
+							pRegulator_list[reg_index]->tap[2] = -pRegulator_configs[reg_index]->lower_taps;	//Set at limit
+							limit_hit = true;											//Flag that a limit was hit
 						}
-						else	//Must be lower region
+
+						if (limit_hit == false)	//We can still proceed
 						{
-							//Find out what a step up will get us theoretically
-							if ((VRegTo[indexer] + reg_step_down) > maximum_voltage)	//We'll fall exceed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
-							}
-							else	//Change allowed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 1;  //Try to tap us up
-							}
+							pRegulator_list[reg_index]->tap[0]--;	//Decrement them all
+							pRegulator_list[reg_index]->tap[1]--;
+							pRegulator_list[reg_index]->tap[2]--;
+
+							Regulator_Change = true;					//Flag the change
+							TRegUpdate[reg_index] = t0 + (TIMESTAMP)RegUpdateTimes[reg_index];	//Set return time
 						}
-					}//end below deadband
-					//defaulted else - inside the deadband, so we don't care
-				}//end high loading
-				else	//Low loading
-				{
-					//See if we're outside our range
-					if (((VSet[indexer] + vbw_low) < VRegTo[indexer]) && ((LimitExceed & temp_var_d) != temp_var_d))	//Above deadband, but can go down
-					{
-						//Check the theoretical change - make sure we won't exceed any limits
-						if (feeder_regulator->tap[indexer] > 0)	//Step up region
-						{
-							//Find out what a step down will get us theoretically
-							if ((VRegTo[indexer] - reg_step_up) < minimum_voltage)	//We'll fall below
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
-							}
-							else	//Change allowed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = -1;  //Try to tap us down
-							}
-						}
-						else	//Must be lower region
-						{
-							//Find out what a step down will get us theoretically
-							if ((VRegTo[indexer] - reg_step_down) < minimum_voltage)	//We'll fall below
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
-							}
-							else	//Change allowed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = -1;  //Try to tap us down
-							}
-						}
-					}//end above deadband
-					else if (((VSet[indexer] - vbw_low) > VRegTo[indexer]) && ((LimitExceed & temp_var_d) != temp_var_d))	//Below deadband, but can go up
-					{
-						//Check the theoretical change - make sure we won't exceed any limits
-						if (feeder_regulator->tap[indexer] > 0)	//Step up region
-						{
-							//Find out what a step up will get us theoretically
-							if ((VRegTo[indexer] + reg_step_up) > maximum_voltage)	//We'll exceed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
-							}
-							else	//Change allowed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 1;  //Try to tap us up
-							}
-						}
-						else	//Must be lower region
-						{
-							//Find out what a step up will get us theoretically
-							if ((VRegTo[indexer] + reg_step_down) > maximum_voltage)	//We'll fall exceed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 0;	//No change allowed
-							}
-							else	//Change allowed
-							{
-								prop_tap_changes[0] = prop_tap_changes[1] = prop_tap_changes[2] = 1;  //Try to tap us up
-							}
-						}
-					}//end below deadband
-					//defaulted else - inside the deadband, so we don't care
-				}//end low loading
-			}//end normal ops
-
-			//Check on the assumption of differential banked (offsets can be present, just all move simultaneously)
-			//We'll only check prop->A, since it is banked
-			Regulator_Change = false;	//Start with no change assumption
-			TRegUpdate = TS_NEVER;
-			if (prop_tap_changes[0] > 0)	//Want a tap up
-			{
-				//Check individually - set to rail if they are at or exceed - this may lose the offset, but I don't know how they'd ever exceed a limit anyways
-				if (feeder_regulator->tap[0] >= feeder_reg_config->raise_taps)
-				{
-					feeder_regulator->tap[0] = feeder_reg_config->raise_taps;	//Set at limit
-					limit_hit = true;											//Flag that a limit was hit
-				}
-
-				if (feeder_regulator->tap[1] >= feeder_reg_config->raise_taps)
-				{
-					feeder_regulator->tap[1] = feeder_reg_config->raise_taps;	//Set at limit
-					limit_hit = true;											//Flag that a limit was hit
-				}
-
-				if (feeder_regulator->tap[2] >= feeder_reg_config->raise_taps)
-				{
-					feeder_regulator->tap[2] = feeder_reg_config->raise_taps;	//Set at limit
-					limit_hit = true;											//Flag that a limit was hit
-				}
-
-				if (limit_hit == false)	//We can still proceed
-				{
-					feeder_regulator->tap[0]++;	//Increment them all
-					feeder_regulator->tap[1]++;
-					feeder_regulator->tap[2]++;
-
-					Regulator_Change = true;					//Flag the change
-					TRegUpdate = t0 + (TIMESTAMP)reg_time_delay;	//Set return time
-				}
-				//Default else - limit hit, so "no change"
-			}//end tap up
-			else if (prop_tap_changes[0] < 0)	//Want a tap down
-			{
-				//Check individually - set to rail if they are at or exceed - this may lose the offset, but I don't know how they'd ever exceed a limit anyways
-				if (feeder_regulator->tap[0] <= -feeder_reg_config->lower_taps)
-				{
-					feeder_regulator->tap[0] = -feeder_reg_config->lower_taps;	//Set at limit
-					limit_hit = true;											//Flag that a limit was hit
-				}
-
-				if (feeder_regulator->tap[1] <= -feeder_reg_config->lower_taps)
-				{
-					feeder_regulator->tap[1] = -feeder_reg_config->lower_taps;	//Set at limit
-					limit_hit = true;											//Flag that a limit was hit
-				}
-
-				if (feeder_regulator->tap[2] <= -feeder_reg_config->lower_taps)
-				{
-					feeder_regulator->tap[2] = -feeder_reg_config->lower_taps;	//Set at limit
-					limit_hit = true;											//Flag that a limit was hit
-				}
-
-				if (limit_hit == false)	//We can still proceed
-				{
-					feeder_regulator->tap[0]--;	//Decrement them all
-					feeder_regulator->tap[1]--;
-					feeder_regulator->tap[2]--;
-
-					Regulator_Change = true;					//Flag the change
-					TRegUpdate = t0 + (TIMESTAMP)reg_time_delay;	//Set return time
-				}
-				//Default else - limit hit, so "no change"
-			}//end tap down
-			//Defaulted else - no change requested
-		}//End banked mode
+						//Default else - limit hit, so "no change"
+					}//end tap down
+					//Defaulted else - no change requested
+				}//End banked mode
+			}//End allowed to update if
+		}//End regulator traversion for
 	}//end valid cycle
 
 	//See how we need to proceed
-	if (tret < TRegUpdate)	//Normal return is before the timer
+	
+	//Find the minimum update first
+	treg_min = TS_NEVER;
+	for (index=0; index<num_regs; index++)
+	{
+		if (TRegUpdate[index] < treg_min)
+		{
+			treg_min = TRegUpdate[index];
+		}
+	}
+
+	if (tret < treg_min)	//Normal return is before the timer
 		return tret;
 	else	//Timer return is first - make this a "suggested" return
-		return -TRegUpdate;
+	{
+		if (treg_min == TS_NEVER)	//Final check to make sure we don't return "-infinity"
+			return TS_NEVER;
+		else
+			return -treg_min;
+	}
 }
 
 TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
@@ -1461,7 +2187,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 	double temp_size;
 
 	//Grab power values and all of those related calculations
-	if ((((solver_method == SM_NR) && (NR_cycle == true)) || (solver_method != SM_NR)) && (control_method == ACTIVE))	//Accumulation cycle, or not NR
+	if ((((solver_method == SM_NR) && (NR_cycle == true)) || (solver_method != SM_NR)) && (control_method == ACTIVE) && (Regulator_Change == false))	//Accumulation cycle, or not NR - also no regulator changes in progress
 	{
 		link_power_vals = complex(0.0,0.0);	//Zero the power
 
@@ -1521,7 +2247,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 
 			if (change_requested == true)	//Something changed
 			{
-				TCapUpdate = t0 + (TIMESTAMP)cap_time_delay;	//Figure out where we wnat to go
+				TCapUpdate = t0 + (TIMESTAMP)CapUpdateTimes[index];	//Figure out where we want to go
 
 				return t0;	//But then stay here, mainly so the capacitor change we just enacted goes through
 			}

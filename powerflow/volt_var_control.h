@@ -9,8 +9,8 @@
 #include "capacitor.h"
 
 typedef enum {
-		STANDBY=0,		//IVVC is off
-		ACTIVE=1		//IVVC is on
+		STANDBY=0,		//CVVC is off
+		ACTIVE=1		//CVVC is on
 		} VOLTVARSTATE;
 
 class volt_var_control : public powerflow_object
@@ -26,15 +26,15 @@ public:
 	double d_max;						//Scaling constant for capacitor switching on - typically 0.3 - 0.6
 	double d_min;						//Scaling constant for capacitor switching off - typically 0.1 - 0.4
 	OBJECT *substation_lnk_obj;			//Power factor measurement link
-	OBJECT *feeder_regulator_obj;		//Feeder level regulator
+	char1024 regulator_list;			//List of regulators, separated by commas
 	char1024 capacitor_list;			//List of controllable capacitors, separated by commas
-	char1024 measurement_list;			//List of available voltage measurement points, separated by commas
-	double minimum_voltage;				//Minimum allowable voltage of the system
-	double maximum_voltage;				//Maximum allowable voltage of the system
-	double desired_voltage;				//Desired operating point voltage
-	double max_vdrop;					//Maximum allowed voltage drop
-	double vbw_low;						//Bandwidth (deadband) for low loading
-	double vbw_high;					//Bandwidth (deadband) for high loading
+	char1024 measurement_list;			//List of available voltage measurement points, separated by commas with the regulator index between
+	char1024 minimum_voltage_txt;		//List of minimum allowable voltage of the system
+	char1024 maximum_voltage_txt;		//List of maximum allowable voltage of the system
+	char1024 desired_voltage_txt;		//List of desired operating point voltages
+	char1024 max_vdrop_txt;				//List of maximum allowed voltage drops
+	char1024 vbw_low_txt;				//List of bandwidth (deadband) for low loading
+	char1024 vbw_high_txt;				//List of bandwidth (deadband) for high loading
 	set pf_phase;						//Phases for power factor monitoring to occur
 	double react_pwr;					//Reactive power quantity at the substation
 	double curr_pf;						//Current pf at the substation
@@ -51,23 +51,33 @@ public:
 private:
 	VOLTVARSTATE prev_mode;						//Previous mode of Volt-VAr controller - used to transitions
 	link *substation_link;						//Object to obtain power-factor measurments
-	regulator *feeder_regulator;				//Feeder regulator link
-	regulator_configuration *feeder_reg_config;	//Feeder regulator configuration
+	regulator **pRegulator_list;				//Regulators
+	regulator_configuration **pRegulator_configs;	//Regulator configurations
 	capacitor **pCapacitor_list;				//Capacitors to monitor
 	double *Capacitor_size;						//Size of various capacitors
-	node **pMeasurement_list;					//Measurement points - they are assumed to be nodes at some level
-	node *RegToNode;							//To Node (Load side) of regulator - for voltage VO measurements
+	double *minimum_voltage;					//Minimum allowable voltage of the system
+	double *maximum_voltage;					//Maximum allowable voltage of the system
+	double *desired_voltage;					//Desired operating point voltages
+	double *max_vdrop;							//Maximum allowed voltage drops
+	double *vbw_low;							//Bandwidth (deadband) for low loading
+	double *vbw_high;							//Bandwidth (deadband) for high loading
+
+	node ***pMeasurement_list;					//Measurement points - they are assumed to be nodes at some level
+	node **RegToNodes;							//To Node (Load side) of regulators - for voltage VO measurements
 	int num_caps;								//Number of capacitors under our control
-	int num_meas;								//Number of voltage measurements to monitor
+	int num_regs;								//Number of regulators under our control
+	int *num_meas;								//Number of voltage measurements to monitor
 	bool Regulator_Change;						//Flag to indicate a regulator change is in progress - used to hold off VAr-based switching
-	double reg_step_up;							//Feeder regulator step for upper taps
-	double reg_step_down;						//Feeder regulator step for lower taps (may be same as reg_step_up)
-	TIMESTAMP TRegUpdate;						//Regulator update time to proceed towards
+	double *reg_step_up;						//Regulator step for upper taps
+	double *reg_step_down;						//Regulator step for lower taps (may be same as reg_step_up)
+	double *RegUpdateTimes;						//Regulator progression times (differential)
+	TIMESTAMP *TRegUpdate;						//Regulator update times to proceed towards (absolute)
+	double *CapUpdateTimes;						//Capacitor progression times (differential)
 	TIMESTAMP TCapUpdate;						//Capacitor time to proceed towards
 	bool TUpdateStatus;							//Status variable for TUpdate - used for transitioning between Active/Standby states
 	bool first_cycle;
-	regulator_configuration::Control_enum PrevRegState;	//Previous state of the regulator
-	capacitor::CAPCONTROL *PrevCapState;				//Previous state of the capacitors
+	regulator_configuration::Control_enum *PrevRegState;	//Previous state of the regulators
+	capacitor::CAPCONTROL *PrevCapState;					//Previous state of the capacitors
 	TIMESTAMP prev_time;
 	void size_sorter(double *cap_size, int *cap_Index, int cap_num, double *temp_cap_size, int *temp_cap_Index);					//Capacitor size sorting function (recursive)
 };
