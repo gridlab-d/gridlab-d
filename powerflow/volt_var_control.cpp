@@ -192,16 +192,16 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of minimum voltages specified
 	index=0;
 	num_min_volt = 1;
-	while (minimum_voltage_txt[index] != NULL)
+	while (minimum_voltage_txt[index] != '\0')
 	{
-		if (minimum_voltage_txt[index] == 44)	//Comma
+		if (minimum_voltage_txt[index] == ',')	//Comma
 			num_min_volt++;					//increment the number of min voltages
 
 		index++;	//increment the pointer
 	}
 
 	//See if one is really there
-	if ((num_min_volt == 1) && (minimum_voltage_txt[0] == NULL))	//Is empty :(
+	if ((num_min_volt == 1) && (minimum_voltage_txt[0] == '\0'))	//Is empty :(
 	{
 		num_min_volt = 0;	//Primarily as a flag
 	}
@@ -209,16 +209,16 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of maximum voltages specified
 	index=0;
 	num_max_volt = 1;
-	while (maximum_voltage_txt[index] != NULL)
+	while (maximum_voltage_txt[index] != '\0')
 	{
-		if (maximum_voltage_txt[index] == 44)	//Comma
+		if (maximum_voltage_txt[index] == ',')	//Comma
 			num_max_volt++;					//increment the number of max voltages
 
 		index++;	//increment the pointer
 	}
 
 	//See if one is really there
-	if ((num_max_volt == 1) && (maximum_voltage_txt[0] == NULL))	//Is empty :(
+	if ((num_max_volt == 1) && (maximum_voltage_txt[0] == '\0'))	//Is empty :(
 	{
 		num_max_volt = 0;	//Primarily as a flag
 	}
@@ -226,16 +226,16 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of desired voltages specified
 	index=0;
 	num_des_volt=1;
-	while (desired_voltage_txt[index] != NULL)
+	while (desired_voltage_txt[index] != '\0')
 	{
-		if (desired_voltage_txt[index] == 44)	//Comma
+		if (desired_voltage_txt[index] == ',')	//Comma
 			num_des_volt++;					//increment the number of desired voltages
 
 		index++;	//increment the pointer
 	}
 
 	//See if one is really there
-	if ((num_des_volt == 1) && (desired_voltage_txt[0] == NULL))	//Is empty :(
+	if ((num_des_volt == 1) && (desired_voltage_txt[0] == '\0'))	//Is empty :(
 	{
 		num_des_volt = 0;	//Primarily as a flag
 	}
@@ -243,16 +243,16 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of vdrops specified
 	index=0;
 	num_max_vdrop=1;
-	while (max_vdrop_txt[index] != NULL)
+	while (max_vdrop_txt[index] != '\0')
 	{
-		if (max_vdrop_txt[index] == 44)	//Comma
+		if (max_vdrop_txt[index] == ',')	//Comma
 			num_max_vdrop++;					//increment the number of max voltage drops
 
 		index++;	//increment the pointer
 	}
 
 	//See if one is really there
-	if ((num_max_vdrop == 1) && (max_vdrop_txt[0] == NULL))	//Is empty :(
+	if ((num_max_vdrop == 1) && (max_vdrop_txt[0] == '\0'))	//Is empty :(
 	{
 		num_max_vdrop = 0;	//Primarily as a flag
 	}
@@ -260,16 +260,16 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of low load bandwidths
 	index=0;
 	num_vbw_low=1;
-	while (vbw_low_txt[index] != NULL)
+	while (vbw_low_txt[index] != '\0')
 	{
-		if (vbw_low_txt[index] == 44)	//Comma
+		if (vbw_low_txt[index] == ',')	//Comma
 			num_vbw_low++;					//increment the number of low bandwidths
 
 		index++;	//increment the pointer
 	}
 
 	//See if one is really there
-	if ((num_vbw_low == 1) && (vbw_low_txt[0] == NULL))	//Is empty :(
+	if ((num_vbw_low == 1) && (vbw_low_txt[0] == '\0'))	//Is empty :(
 	{
 		num_vbw_low = 0;	//Primarily as a flag
 	}
@@ -277,25 +277,25 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of high load bandwidths
 	index=0;
 	num_vbw_high=1;
-	while (vbw_high_txt[index] != NULL)
+	while (vbw_high_txt[index] != '\0')
 	{
-		if (vbw_high_txt[index] == 44)	//Comma
+		if (vbw_high_txt[index] == ',')	//Comma
 			num_vbw_high++;					//increment the number of high bandwidths
 
 		index++;	//increment the pointer
 	}
 
 	//See if one is really there
-	if ((num_vbw_high == 1) && (vbw_high_txt[0] == NULL))	//Is empty :(
+	if ((num_vbw_high == 1) && (vbw_high_txt[0] == '\0'))	//Is empty :(
 	{
 		num_vbw_high = 0;	//Primarily as a flag
 	}
 
 	//Figure out the number of regulators we have
 	index=0;
-	while (regulator_list[index] != NULL)
+	while (regulator_list[index] != '\0')
 	{
-		if (regulator_list[index] == 44)	//Found a comma!
+		if (regulator_list[index] == ',')	//Found a comma!
 			num_regs++;						//Increment the number of regulators present
 		
 		index++;	//Increment the pointer
@@ -454,7 +454,6 @@ int volt_var_control::init(OBJECT *parent)
 			token = strtok(regulator_list,",");
 			for (index=0; index<num_regs; index++)
 			{
-
 				temp_obj = gl_get_object((char *)token);
 				
 				if (temp_obj != NULL)	//Valid object!
@@ -725,9 +724,9 @@ int volt_var_control::init(OBJECT *parent)
 
 	//Determine how many capacitors we have to play with
 	index=0;
-	while (capacitor_list[index] != NULL)
+	while (capacitor_list[index] != '\0')
 	{
-		if (capacitor_list[index] == 44)	//Found a comma!
+		if (capacitor_list[index] == ',')	//Found a comma!
 			num_caps++;						//Increment the number of capacitors present
 		
 		index++;	//Increment the pointer
@@ -1029,9 +1028,9 @@ int volt_var_control::init(OBJECT *parent)
 	//Determine how many points are present
 	index=0;
 	total_meas=1;
-	while (measurement_list[index] != NULL)
+	while (measurement_list[index] != '\0')
 	{
-		if (measurement_list[index] == 44)	//Found a comma!
+		if (measurement_list[index] == ',')	//Found a comma!
 			total_meas++;						//Increment the number of measurements present
 		
 		index++;	//Increment the pointer
@@ -1074,10 +1073,10 @@ int volt_var_control::init(OBJECT *parent)
 		//Reference the storage array
 		token_b = tempchar;
 
-		if (token_a == NULL)	//Only two items in the list
+		if (token_a == '\0')	//Only two items in the list
 		{
 			//Copy in the value
-			while (*token != NULL)
+			while (*token != '\0')
 			{
 				*token_b++ = *token++;
 			}
@@ -1178,7 +1177,7 @@ int volt_var_control::init(OBJECT *parent)
 				if (index == (total_meas-1))	//Last item of the list
 				{
 					//Copy in the value
-					while (*token_a != NULL)
+					while (*token_a != '\0')
 					{
 						*token_c++ = *token_a++;
 					}
@@ -1238,7 +1237,7 @@ int volt_var_control::init(OBJECT *parent)
 				pMeasurement_list[index] = (node**)gl_malloc(num_meas[index]*sizeof(node*));
 			}
 			
-			if (*pMeasurement_list[index] == NULL)
+			if (pMeasurement_list[index] == NULL)
 			{
 				GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
 				/*  TROUBLESHOOT
@@ -1307,7 +1306,7 @@ int volt_var_control::init(OBJECT *parent)
 			//Allocate space
 			pMeasurement_list[0] = (node**)gl_malloc(total_meas*sizeof(node*));
 
-			if (*pMeasurement_list[0] == NULL)
+			if (pMeasurement_list[0] == NULL)
 			{
 				GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
 				//Defined above
