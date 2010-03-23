@@ -80,6 +80,8 @@ private:
 	capacitor::CAPCONTROL *PrevCapState;					//Previous state of the capacitors
 	TIMESTAMP prev_time;
 	void size_sorter(double *cap_size, int *cap_Index, int cap_num, double *temp_cap_size, int *temp_cap_Index);					//Capacitor size sorting function (recursive)
+	char *dbl_token(char *start_token, double *dbl_val);	//Function to parse a comma-separated list to get the next double (or the last double)
+	char *obj_token(char *start_token, OBJECT **obj_val);	//Function to parse a comma-separated list to get the next object (or the last object)
 };
 
 #endif // _VOLT_VAR_CONTROL_H

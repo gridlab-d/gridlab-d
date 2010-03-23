@@ -121,15 +121,14 @@ int volt_var_control::init(OBJECT *parent)
 
 	int index, indexa;
 	int64 addy_math;
-	char *token, *token_a, *token_b, *token_c;
-	char **token_end = NULL;
-	char tempchar[64];
+	char *token_a, *token_b, *token_c, *token_a1, *token_b1, *token_c1;
+	char tempchar[1024];
 	char numchar[3];	//Assumes we'll never have more than 99 regulators - I hope this is valid
 	OBJECT *temp_obj;
 	capacitor **pCapacitor_list_temp;
 	double *temp_cap_size;
 	int *temp_cap_idx, *temp_cap_idx_work, *temp_meas_idx;
-	double cap_adder, temp_double, nom_volt;
+	double cap_adder, temp_double, nom_volt, default_min, default_max, default_des, default_max_vdrop, default_vbw_low, default_vbw_high;
 	set temp_phase;
 	int num_min_volt, num_max_volt, num_des_volt, num_max_vdrop, num_vbw_low, num_vbw_high, total_meas;
 	bool reg_list_type;
@@ -192,7 +191,7 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of minimum voltages specified
 	index=0;
 	num_min_volt = 1;
-	while (minimum_voltage_txt[index] != '\0')
+	while ((minimum_voltage_txt[index] != '\0') && (index < 1024))
 	{
 		if (minimum_voltage_txt[index] == ',')	//Comma
 			num_min_volt++;					//increment the number of min voltages
@@ -209,7 +208,7 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of maximum voltages specified
 	index=0;
 	num_max_volt = 1;
-	while (maximum_voltage_txt[index] != '\0')
+	while ((maximum_voltage_txt[index] != '\0') && (index < 1024))
 	{
 		if (maximum_voltage_txt[index] == ',')	//Comma
 			num_max_volt++;					//increment the number of max voltages
@@ -226,7 +225,7 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of desired voltages specified
 	index=0;
 	num_des_volt=1;
-	while (desired_voltage_txt[index] != '\0')
+	while ((desired_voltage_txt[index] != '\0') && (index < 1024))
 	{
 		if (desired_voltage_txt[index] == ',')	//Comma
 			num_des_volt++;					//increment the number of desired voltages
@@ -243,7 +242,7 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of vdrops specified
 	index=0;
 	num_max_vdrop=1;
-	while (max_vdrop_txt[index] != '\0')
+	while ((max_vdrop_txt[index] != '\0') && (index < 1024))
 	{
 		if (max_vdrop_txt[index] == ',')	//Comma
 			num_max_vdrop++;					//increment the number of max voltage drops
@@ -260,7 +259,7 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of low load bandwidths
 	index=0;
 	num_vbw_low=1;
-	while (vbw_low_txt[index] != '\0')
+	while ((vbw_low_txt[index] != '\0') && (index < 1024))
 	{
 		if (vbw_low_txt[index] == ',')	//Comma
 			num_vbw_low++;					//increment the number of low bandwidths
@@ -277,7 +276,7 @@ int volt_var_control::init(OBJECT *parent)
 	//Figure out number of high load bandwidths
 	index=0;
 	num_vbw_high=1;
-	while (vbw_high_txt[index] != '\0')
+	while ((vbw_high_txt[index] != '\0') && (index < 1024))
 	{
 		if (vbw_high_txt[index] == ',')	//Comma
 			num_vbw_high++;					//increment the number of high bandwidths
@@ -293,7 +292,7 @@ int volt_var_control::init(OBJECT *parent)
 
 	//Figure out the number of regulators we have
 	index=0;
-	while (regulator_list[index] != '\0')
+	while ((regulator_list[index] != '\0') && (index < 1024))
 	{
 		if (regulator_list[index] == ',')	//Found a comma!
 			num_regs++;						//Increment the number of regulators present
@@ -451,10 +450,11 @@ int volt_var_control::init(OBJECT *parent)
 
 		//Now populate each of these massive arrays
 			//start with the regulators, their configurations, and related items
-			token = strtok(regulator_list,",");
+			token_a = regulator_list;
 			for (index=0; index<num_regs; index++)
 			{
-				temp_obj = gl_get_object((char *)token);
+				//Extract the object information
+				token_a1 = obj_token(token_a, &temp_obj);
 				
 				if (temp_obj != NULL)	//Valid object!
 				{
@@ -480,14 +480,22 @@ int volt_var_control::init(OBJECT *parent)
 				}//end valid object 
 				else	//General catch
 				{
-					GL_THROW("volt_var_control %s: item %s in regulator_list not found",obj->name,(char *)token);
+					if (token_a1 != NULL)
+					{
+						//Remove the comma from the list
+						*--token_a1 = '\0';
+					}
+					//Else is the end of list, so it should already be \0-ed
+
+					GL_THROW("volt_var_control %s: item %s in regulator_list not found",obj->name,token_a);
 					/*  TROUBLESHOOT
 					While attempting to populate the regulator list, an invalid object was found.  Please check
 					the object name.
 					*/
 				}
 
-				token = strtok(NULL,",");
+				//Update the pointer
+				token_a = token_a1;
 			}//end token FOR - populate regulators, configurations, to nodes, and updates
 
 			//Now parse out individual lists - see how they are set
@@ -514,12 +522,36 @@ int volt_var_control::init(OBJECT *parent)
 					}
 				}//end list element mismatch
 
-				if (num_des_volt > 0)	//One for each regulator or 1 value for all - loop precursor (point the tokens)
+				if (num_des_volt > 1)	//One for each regulator
 				{
-					token_a = strtok(minimum_voltage_txt,",");
-					token_b = strtok(maximum_voltage_txt,",");
-					token_c = strtok(desired_voltage_txt,",");
+					//Point to list
+					token_a = minimum_voltage_txt;
+					token_b = maximum_voltage_txt;
+					token_c = desired_voltage_txt;
+
+					//Initialize output pointers - just so compiler shuts up
+					token_a1 = token_a;
+					token_b1 = token_b;
+					token_c1 = token_c;
 				}
+				else if (num_des_volt == 1)	//1 value for all
+				{
+					//Point to list
+					token_a = minimum_voltage_txt;
+					token_b = maximum_voltage_txt;
+					token_c = desired_voltage_txt;
+
+					//Initialize output pointers - just so compiler shuts up
+					token_a1 = token_a;
+					token_b1 = token_b;
+					token_c1 = token_c;
+
+					//Parse them out
+					token_a1 = dbl_token(token_a,&default_min);
+					token_b1 = dbl_token(token_b,&default_max);
+					token_c1 = dbl_token(token_c,&default_des);
+				}
+				//Default else - calculated based off of nominal voltage
 
 				//Extract all set point values
 				for (index=0; index<num_regs; index++)
@@ -527,22 +559,22 @@ int volt_var_control::init(OBJECT *parent)
 					if (num_des_volt == num_regs)	//One for each regulator
 					{
 						//Convert them into numbers
-						minimum_voltage[index] = strtod(token_a,token_end);
-						maximum_voltage[index] = strtod(token_b,token_end);
-						desired_voltage[index] = strtod(token_c,token_end);
+						token_a1 = dbl_token(token_a,&minimum_voltage[index]);
+						token_b1 = dbl_token(token_b,&maximum_voltage[index]);
+						token_c1 = dbl_token(token_c,&desired_voltage[index]);
 
-						//Grab next token
-						token_a = strtok(NULL,",");
-						token_b = strtok(NULL,",");
-						token_c = strtok(NULL,",");
+						//Progress
+						token_a = token_a1;
+						token_b = token_b1;
+						token_c = token_c1;
 
 					}//one for each regulator
 					else if (num_des_volt == 1)		//Use one value for all
 					{
 						//Convert them into numbers
-						minimum_voltage[index] = strtod(token_a,token_end);
-						maximum_voltage[index] = strtod(token_b,token_end);
-						desired_voltage[index] = strtod(token_c,token_end);
+						minimum_voltage[index] = default_min;
+						maximum_voltage[index] = default_max;
+						desired_voltage[index] = default_des;
 					}//one value for all
 					else							//Use defaults on all
 					{
@@ -598,12 +630,36 @@ int volt_var_control::init(OBJECT *parent)
 					}
 				}//end list element mismatch
 
-				if (num_max_vdrop > 0)	//One for each regulator or 1 value for all - loop precursor (point the tokens)
+				if (num_max_vdrop > 1)	//One for each regulator - loop precursor (point the tokens)
 				{
-					token_a = strtok(max_vdrop_txt,",");
-					token_b = strtok(vbw_low_txt,",");
-					token_c = strtok(vbw_high_txt,",");
+					//Point to list
+					token_a = max_vdrop_txt;
+					token_b = vbw_low_txt;
+					token_c = vbw_high_txt;
+
+					//Initialize output pointers - just so compiler shuts up
+					token_a1 = token_a;
+					token_b1 = token_b;
+					token_c1 = token_c;
 				}
+				else if (num_max_vdrop == 1)	//One for all regulators
+				{
+					//Point to list
+					token_a = max_vdrop_txt;
+					token_b = vbw_low_txt;
+					token_c = vbw_high_txt;
+
+					//Initialize output pointers - just so compiler shuts up
+					token_a1 = token_a;
+					token_b1 = token_b;
+					token_c1 = token_c;
+
+					//Extract the values
+					token_a1 = dbl_token(token_a,&default_max_vdrop);
+					token_b1 = dbl_token(token_b,&default_vbw_low);
+					token_c1 = dbl_token(token_c,&default_vbw_high);
+				}
+				//Defaulted else - calculate
 
 				//Extract all set point values
 				for (index=0; index<num_regs; index++)
@@ -611,22 +667,21 @@ int volt_var_control::init(OBJECT *parent)
 					if (num_max_vdrop == num_regs)	//One for each regulator
 					{
 						//Convert them into numbers
-						max_vdrop[index] = strtod(token_a,token_end);
-						vbw_low[index] = strtod(token_b,token_end);
-						vbw_high[index] = strtod(token_c,token_end);
+						token_a1 = dbl_token(token_a,&max_vdrop[index]);
+						token_b1 = dbl_token(token_b,&vbw_low[index]);
+						token_c1 = dbl_token(token_c,&vbw_high[index]);
 
 						//Grab next token
-						token_a = strtok(NULL,",");
-						token_b = strtok(NULL,",");
-						token_c = strtok(NULL,",");
-
+						token_a = token_a1;
+						token_b = token_b1;
+						token_c = token_c1;
 					}//one for each regulator
 					else if (num_max_vdrop == 1)		//Use one value for all
 					{
-						//Convert them into numbers
-						max_vdrop[index] = strtod(token_a,token_end);
-						vbw_low[index] = strtod(token_b,token_end);
-						vbw_high[index] = strtod(token_c,token_end);
+						//Store values
+						max_vdrop[index] = default_max_vdrop;
+						vbw_low[index] = default_vbw_low;
+						vbw_high[index] = default_vbw_high;
 					}//one value for all
 					else							//Use defaults on all
 					{
@@ -724,7 +779,7 @@ int volt_var_control::init(OBJECT *parent)
 
 	//Determine how many capacitors we have to play with
 	index=0;
-	while (capacitor_list[index] != '\0')
+	while ((capacitor_list[index] != '\0') && (index < 1024))
 	{
 		if (capacitor_list[index] == ',')	//Found a comma!
 			num_caps++;						//Increment the number of capacitors present
@@ -776,9 +831,9 @@ int volt_var_control::init(OBJECT *parent)
 			}
 
 			//Parse the list now - the list is the capacitor
-			token = capacitor_list;
+			token_a = capacitor_list;
 
-			temp_obj = gl_get_object((char *)token);
+			temp_obj = gl_get_object(token_a);
 				
 			if (temp_obj != NULL)	//Valid object!
 			{
@@ -890,10 +945,11 @@ int volt_var_control::init(OBJECT *parent)
 			}
 
 			//Parse the list now
-			token = strtok(capacitor_list,",");
+			token_a = capacitor_list;
 			for (index = 0; index < num_caps; index++)
 			{
-				temp_obj = gl_get_object((char *)token);
+				//Extract the object information
+				token_a1 = obj_token(token_a, &temp_obj);
 				
 				if (temp_obj != NULL)	//Valid object!
 				{
@@ -932,14 +988,22 @@ int volt_var_control::init(OBJECT *parent)
 				}
 				else	//General catch
 				{
-					GL_THROW("volt_var_control %s: item %s in capacitor_list not found",obj->name,(char *)token);
+					if (token_a1 != NULL)
+					{
+						//Remove the comma from the list
+						*--token_a1 = '\0';
+					}
+					//Else is the end of list, so it should already be \0-ed
+
+					GL_THROW("volt_var_control %s: item %s in capacitor_list not found",obj->name,token_a);
 					/*  TROUBLESHOOT
 					While attempting to populate the capacitor list, an invalid object was found.  Please check
 					the object name.
 					*/
 				}
 
-				token = strtok(NULL,",");
+				//Update the pointer
+				token_a = token_a1;
 			}//end token FOR
 
 			//Sort the lists on size and distance (assumes put in distance order) - Biggest to smallest, and furthest to closest
@@ -1028,7 +1092,7 @@ int volt_var_control::init(OBJECT *parent)
 	//Determine how many points are present
 	index=0;
 	total_meas=1;
-	while (measurement_list[index] != '\0')
+	while ((measurement_list[index] != '\0') && (index < 1024))
 	{
 		if (measurement_list[index] == ',')	//Found a comma!
 			total_meas++;						//Increment the number of measurements present
@@ -1059,41 +1123,41 @@ int volt_var_control::init(OBJECT *parent)
 	if ((num_regs == 1) && (total_meas > 1))	//1 regulator and more than 1 point found
 	{
 		//initialize the character array
-		for (index=0; index<64; index++)
+		for (index=0; index<1024; index++)
 			tempchar[index] = 0;
 
 		//Find the first comma
 		token_b = measurement_list;
-		token = strchr(token_b,',');
+		token_b1 = strchr(token_b,',');
 
 		//Find the second comma
-		token++;						//Get us one past the comma
-		token_a = strchr(token,',');	//Find the next one
+		token_b1++;						//Get us one past the comma
+		token_a = strchr(token_b1,',');	//Find the next one
 
 		//Reference the storage array
 		token_b = tempchar;
 
-		if (token_a == '\0')	//Only two items in the list
+		if (*token_a == '\0')	//Only two items in the list
 		{
 			//Copy in the value
-			while (*token != '\0')
+			while (*token_b1 != '\0')
 			{
-				*token_b++ = *token++;
+				*token_b++ = *token_b1++;
 			}
 		}
 		else	//More to come, but we don't care
 		{
 			//Copy the contents in
-			while (token < token_a)
+			while (token_b1 < token_a)
 			{
-				*token_b++ = *token++;	
+				*token_b++ = *token_b1++;	
 			}
 		}//End more than 2 items
 
-		token = tempchar;
+		token_b1 = tempchar;
 
 		//See if #2 is an object or a number
-		temp_obj = gl_get_object((char *)token);
+		temp_obj = gl_get_object(token_b1);
 
 		if (temp_obj != NULL)	//It's real, so we are just an object list
 		{
@@ -1107,12 +1171,14 @@ int volt_var_control::init(OBJECT *parent)
 	else if ((num_regs == 1) && (total_meas == 1))
 	{
 		//1 reg and 1 measurement, make sure it is a valid object before proceeding
-		token = strtok(measurement_list,",");	//Get first item (valid)
-		temp_obj = gl_get_object((char *)token);
+		token_a = measurement_list;	//Get first item (valid)
 
+		//Extract the object information
+		token_a1 = obj_token(token_a, &temp_obj);
+		
 		if (temp_obj == NULL)	//Not a valid object, error!
 		{
-			GL_THROW("volt_var_control %s: Measurement %s is not a valid node!",obj->name,(char *)token);
+			GL_THROW("volt_var_control %s: Measurement %s is not a valid node!",obj->name,token_a);
 			/*  TROUBLESHOOT
 			While parsing the measurement list, an invalid object was found.  Please verify the object
 			name and try again.
@@ -1144,12 +1210,12 @@ int volt_var_control::init(OBJECT *parent)
 		if (total_meas != 0)	//There's at least something in there
 		{
 			//List is assumed valid, now figure out how big everything needs to be
-			token = measurement_list;	//Start the list
+			token_b1 = measurement_list;	//Start the list
 
 			for (index=0; index<total_meas; index++)
 			{
 				//Find the first comma
-				token_a = strchr(token,',');
+				token_a = strchr(token_b1,',');
 
 				//Find the second comma
 				token_a++;						//Get us one past the comma
@@ -1191,9 +1257,9 @@ int volt_var_control::init(OBJECT *parent)
 					}
 				}//End normal
 
-				token = numchar;	//Reference the temporary array
+				token_b1 = numchar;	//Reference the temporary array
 
-				indexa = ((int)(strtod(token,token_end))-1);	//Convert back
+				indexa = ((int)(strtod(token_b1,NULL))-1);	//Convert back
 
 				if ((indexa <0) || (indexa > (num_regs-1)))		//Pre-offset for C indexing
 				{
@@ -1205,7 +1271,7 @@ int volt_var_control::init(OBJECT *parent)
 				}
 
 				num_meas[indexa]++;		//Increment the counter
-				token = ++token_b;		//Set up for the next item
+				token_b1 = ++token_b;		//Set up for the next item
 			}
 		}//End at least one measurement total (feeders checked individually next)
 		//Else is no measurements specified, this will be handled in the general catch below
@@ -1251,16 +1317,23 @@ int volt_var_control::init(OBJECT *parent)
 		}
 
 		//Now populate the list
-		token = strtok(measurement_list,",");	//Start the list
+		token_a = measurement_list;	//Start the list
 		for (index=0; index<total_meas; index++)
 		{
 			//First item is the object, grab it
-			temp_obj = gl_get_object((char *)token);
-
+			token_a1 = obj_token(token_a, &temp_obj);
+			
 			//Make sure it is valid
 			if (temp_obj == NULL)
 			{
-				GL_THROW("volt_var_control %s: measurement object %s was not found!",obj->name,token);
+				if (token_a1 != NULL)
+				{
+					//Remove the comma from the list
+					*--token_a1 = '\0';
+				}
+				//Else is the end of list, so it should already be \0-ed
+
+				GL_THROW("volt_var_control %s: measurement object %s was not found!",obj->name,token_a);
 				/*  TROUBLESHOOT
 				While parsing the measurment list for the volt_var_control object, a measurement point
 				was not found.  Please check the name and try again.  If the problem persists, please submit 
@@ -1268,15 +1341,18 @@ int volt_var_control::init(OBJECT *parent)
 				*/
 			}
 			
-			token = strtok(NULL,",");	//Pull next - starts on obj, we want to do a count
+			//Update the pointer
+			token_a = token_a1;
 
-			indexa = ((int)(strtod(token,token_end))-1);	//Convert back
+			token_a1 = dbl_token(token_a,&temp_double);	//Pull next - starts on obj, we want to do a count
+
+			token_a = token_a1;	//Update the pointer
+
+			indexa = ((int)temp_double)-1;	//Figure out the index
 
 			pMeasurement_list[indexa][temp_meas_idx[indexa]] = OBJECTDATA(temp_obj,node);	//Store it in the list
 
 			temp_meas_idx[indexa]++;	//Increment the storage pointer
-
-			token = strtok(NULL,",");		//Progress to the next "object"
 		}
 
 		//Free up our temporary memory use
@@ -1316,28 +1392,36 @@ int volt_var_control::init(OBJECT *parent)
 			indexa=0;
 
 			//Now populate the list
-			token = strtok(measurement_list,",");	//Start the list
+			token_a = measurement_list;	//Start the list
 			for (index=0; index<total_meas; index++)
 			{
 				//First item is the object, grab it
-				temp_obj = gl_get_object((char *)token);
-
+				token_a1 = obj_token(token_a, &temp_obj);
+				
 				//Make sure it is valid
 				if (temp_obj == NULL)
 				{
-					GL_THROW("volt_var_control %s: measurement object %s was not found!",obj->name,token);
+					if (token_a1 != NULL)
+					{
+						//Remove the comma from the list
+						*--token_a1 = '\0';
+					}
+					//Else is the end of list, so it should already be \0-ed
+
+					GL_THROW("volt_var_control %s: measurement object %s was not found!",obj->name,token_a);
 					/*  TROUBLESHOOT
 					While parsing the measurment list for the volt_var_control object, a measurement point
 					was not found.  Please check the name and try again.  If the problem persists, please submit 
 					your code and a bug report via the trac website.
 					*/
 				}
-				
+
+				//Update the pointer - no numbers here, so this goes to next object
+				token_a = token_a1;
+
 				pMeasurement_list[0][indexa] = OBJECTDATA(temp_obj,node);	//Store it in the list
 
 				indexa++;	//Increment the storage pointer
-
-				token = strtok(NULL,",");		//Progress to the next "object"
 			}//End measurement list
 		}//End at least one measurement total
 		else	//Empty, so default for us!
@@ -2299,6 +2383,98 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 			return tret;	//Return where ever we wanted to go
 		}//End TCap nevative
 	}//End Non-accumulation cycle
+}
+
+//Function to parse a comma-separated list to get the next double (or the last double)
+char *volt_var_control::dbl_token(char *start_token, double *dbl_val)
+{
+	char workArray[64];	//If we ever need over 64, this will need changing
+	char *outIndex, *workIndex, *end_token;
+	char index;
+
+	//Initialize work variable
+	for (index=0; index<64; index++)
+		workArray[index] = 0;
+
+	//Link the output
+	workIndex = workArray;
+
+	//Look for a comma in the input value
+	outIndex = strchr(start_token,',');	//Look for commas, or none
+
+	if (outIndex == NULL)	//No commas found
+	{
+		while (*start_token != '\0')
+		{
+			*workIndex++ = *start_token++;
+		}
+
+		end_token = NULL;
+	}
+	else	//Comma found, but we only want to go just before it
+	{
+		while (start_token < outIndex)
+		{
+			*workIndex++ = *start_token++;
+		}
+
+		end_token = start_token+1;
+	}
+
+	//Point back to the beginning
+	workIndex = workArray;
+
+	//Convert it
+	*dbl_val = strtod(workIndex,NULL);
+
+	//Return the end pointer
+	return end_token;
+}
+
+//Function to parse a comma-separated list to get the next object (or the last object)
+char *volt_var_control::obj_token(char *start_token, OBJECT **obj_val)
+{
+	char workArray[64];	//Hopefully, names will never be over 64 characters - seems to get upset if we do more
+	char *outIndex, *workIndex, *end_token;
+	char index;
+
+	//Initialize work variable
+	for (index=0; index<64; index++)
+		workArray[index] = 0;
+
+	//Link the output
+	workIndex = workArray;
+
+	//Look for a comma in the input value
+	outIndex = strchr(start_token,',');	//Look for commas, or none
+
+	if (outIndex == NULL)	//No commas found
+	{
+		while (*start_token != '\0')
+		{
+			*workIndex++ = *start_token++;
+		}
+
+		end_token = NULL;
+	}
+	else	//Comma found, but we only want to go just before it
+	{
+		while (start_token < outIndex)
+		{
+			*workIndex++ = *start_token++;
+		}
+
+		end_token = start_token+1;
+	}
+
+	//Point back to the beginning
+	workIndex = workArray;
+
+	//Get the object
+	*obj_val = gl_get_object(workIndex);
+
+	//Return the end pointer
+	return end_token;
 }
 
 // Function to sort capacitors based on size - assumes they are banked in operation (only 1 size provided)
