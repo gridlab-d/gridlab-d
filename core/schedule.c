@@ -179,7 +179,7 @@ int find_value_index (SCHEDULE *sch, /// schedule to search
 					  double value) /// value to find
 {
 	int ndx;
-	for (ndx=0; ndx<=(int)(sch->count[block]); ndx++)
+	for (ndx=0; ndx<(int)(sch->count[block]); ndx++)
 	{
 		if ((float)(sch->data[block*MAXVALUES+ndx]) == (float)value)
 			return ndx;
@@ -193,7 +193,6 @@ int find_value_index (SCHEDULE *sch, /// schedule to search
 int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 {
 	char *token = NULL;
-	unsigned char index=0;
 	unsigned int minute=0;
 
 	/* check block count */
@@ -208,7 +207,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 
 	/* first index is always default value 0 */
 	sch->count[sch->block]=1;
-	for (index=1; (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL;)
+	while ( (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL )
 	{
 		struct {
 			char *name;
@@ -227,11 +226,6 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		double value=1.0; /* default value is 1.0 */
 		int ndx;
 
-		// bound checking
-		if(index > 63){
-			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, sch->block);
-			return 0;
-		}
 		/* remove leading whitespace */
 		while (isspace(*token)) token++;
 		if (strcmp(token,"")==0)
@@ -248,9 +242,14 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		{
 			if ((ndx=find_value_index(sch,sch->block,value))==-1)
 			{	
-				ndx = ++index;
+				ndx = sch->count[sch->block]++;
+				// bound checking
+				if(ndx > MAXVALUES-1)
+				{
+					output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, sch->block);
+					return 0;
+				}
 				sch->data[sch->block*MAXVALUES+ndx] = value;
-				sch->count[sch->block]++;
 			}
 			sch->sum[sch->block] += value;
 			sch->abs[sch->block] += (value<0?-value:value); // check to see if the value already exists in the value array, if so, don't ++index and use existing indexed value
