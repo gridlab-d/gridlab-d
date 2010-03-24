@@ -75,9 +75,9 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_double, "power_1_reac[VAr]", PADDR(power1.Im()),
 			PT_double, "power_2_reac[VAr]", PADDR(power2.Im()),
 			PT_double, "power_12_reac[VAr]", PADDR(power12.Im()),
-			PT_complex, "shunt_1[S]", PADDR(shunt1),
-			PT_complex, "shunt_2[S]", PADDR(shunt2),
-			PT_complex, "shunt_12[S]", PADDR(shunt12),
+			PT_complex, "shunt_1[S]", PADDR(pub_shunt[0]),
+			PT_complex, "shunt_2[S]", PADDR(pub_shunt[1]),
+			PT_complex, "shunt_12[S]", PADDR(pub_shunt[2]),
 			PT_complex, "impedance_1[Ohm]", PADDR(impedance[0]),
 			PT_complex, "impedance_2[Ohm]", PADDR(impedance[1]),
 			PT_complex, "impedance_12[Ohm]", PADDR(impedance[2]),
@@ -102,6 +102,7 @@ int triplex_node::create(void)
 {
 	int result = node::create();
 	maximum_voltage_error = 0;
+	pub_shunt[0] = pub_shunt[1] = pub_shunt[2] = 0;
 	shunt1 = complex(0,0);
 	shunt2 = complex(0,0);
 	shunt12 = complex(0,0);
@@ -110,12 +111,15 @@ int triplex_node::create(void)
 
 int triplex_node::init(OBJECT *parent)
 {
-	if ((shunt1.IsZero())&&(impedance[0]!=0))
-		shunt1 = complex(1,0)/impedance[0];
-	if ((shunt2.IsZero())&&(impedance[1]!=0))
-		shunt2 = complex(1,0)/impedance[1];
-	if ((shunt12.IsZero())&&(impedance[2]!=0))
-		shunt12 = complex(1,0)/impedance[2];
+	if ((pub_shunt[0] == 0) && (impedance[0] != 0))
+		shunt[0] = complex(1.0,0)/impedance[0];
+
+	if ((pub_shunt[1] == 0) && (impedance[1] != 0))
+		shunt[1] = complex(1.0,0)/impedance[1];
+
+	if ((pub_shunt[2] == 0) && (impedance[2] != 0))
+		shunt[2] = complex(1.0,0)/impedance[2];
+
 	return node::init(parent);
 }
 
@@ -135,12 +139,21 @@ TIMESTAMP triplex_node::sync(TIMESTAMP t0)
 	OBJECT *obj = OBJECTHDR(this);
 
 	//Update shunt value here, otherwise it will only be a static value
-	if ((shunt1.IsZero())&&(impedance[0]!=0))
-		shunt1 = complex(1,0)/impedance[0];
-	if ((shunt2.IsZero())&&(impedance[1]!=0))
-		shunt2 = complex(1,0)/impedance[1];
-	if ((shunt12.IsZero())&&(impedance[2]!=0))
-		shunt12 = complex(1,0)/impedance[2];
+	//Prioritizes shunt over impedance
+	if ((pub_shunt[0] == 0) && (impedance[0] != 0))	//Impedance specified
+		shunt[0] = complex(1.0,0)/impedance[0];
+	else											//Shunt specified (impedance ignored)
+		shunt[0] = pub_shunt[0];
+
+	if ((pub_shunt[1] == 0) && (impedance[1] != 0))	//Impedance specified
+		shunt[1] = complex(1.0,0)/impedance[1];		
+	else											//Shunt specified (impedance ignored)
+		shunt[1] = pub_shunt[1];
+
+	if ((pub_shunt[2] == 0) && (impedance[2] != 0))	//Impedance specified
+		shunt[2] = complex(1.0,0)/impedance[2];		
+	else											//Shunt specified (impedance ignored)
+		shunt[2] = pub_shunt[2];
 
 	return node::sync(t0);
 }
