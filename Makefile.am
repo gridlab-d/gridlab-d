@@ -33,5 +33,21 @@ validate:
 dist-rpm: dist-gzip
 	rpmbuild -tb $(distdir).tar.gz
 
+RPMBUILDDIR = $(HOME)/rpmbuild
+
+rpm-prep:
+	@DIR="$(RPMBUILDDIR)" && if [ "$${DIR:0:1}" != "/" ]; then \
+		echo >&2 "ERROR: RPMBUILDDIR must be an absolute path"; exit 1; \
+	fi
+	@if [ -f "$$HOME/.rpmmacros" ]; then \
+		sed -i 's/^\(%_topdir\)/#\1/' $$HOME/.rpmmacros; \
+		echo >&2 "WARNING: $$HOME/.rpmmacros already exists; commenting out _topdir macros"; \
+	fi
+	@echo "%_topdir $(RPMBUILDDIR)" >> $$HOME/.rpmmacros
+	@echo "RPMs will be built in $(RPMBUILDDIR)"
+	@for DIR in $(RPMBUILDDIR)/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}; do \
+		test -d "$$DIR" || mkdir -p "$$DIR"; \
+	done
+
 #.PHONY: over clean-wc validate
 
