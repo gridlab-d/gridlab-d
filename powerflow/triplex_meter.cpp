@@ -220,7 +220,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 		measured_current[0] = current_inj[0];
 		measured_current[1] = current_inj[1];
-		measured_current[2] = current_inj[2];
+		measured_current[2] = -(measured_current[1]+measured_current[0]);
 
 //		if (dt > 0 && last_t != dt)
 		if (dt > 0)
