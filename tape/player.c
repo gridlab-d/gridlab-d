@@ -241,7 +241,7 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	if (my->status==TS_INIT){
 
 		/* get local target if remote is not used and "value" is defined by the user at runtime */
-		if (my->target==NULL)
+		if (my->target==NULL && obj->parent == NULL)
 			my->target = gl_get_property(obj,"value");
 
 		if(player_open(obj) == 0)
