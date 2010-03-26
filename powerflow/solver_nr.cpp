@@ -2948,10 +2948,15 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					if (CurrConvVal > Maxmismatch)	//Update our convergence check if it is bigger
 						Maxmismatch=CurrConvVal;
 
+					if (CurrConvVal > bus[indexer].max_volt_error)	//Check for convergence
+						newiter=true;								//Flag that a new iteration must occur
+
 					CurrConvVal=DVConvCheck[1].Mag();
 					if (CurrConvVal > Maxmismatch)	//Update our convergence check if it is bigger
 						Maxmismatch=CurrConvVal;
 
+					if (CurrConvVal > bus[indexer].max_volt_error)	//Check for convergence
+						newiter=true;								//Flag that a new iteration must occur
 				}//end split phase update
 				else										//Not split phase
 				{
