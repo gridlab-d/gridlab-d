@@ -15,7 +15,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <iostream>
 
 #include "volt_var_control.h"
 
