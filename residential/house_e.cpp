@@ -805,6 +805,7 @@ int house_e::create()
 	thermal_integrity_level = TI_UNKNOWN;
 	hvac_breaker_rating = 0;
 	hvac_power_factor = 0;
+	Tmaterials = 0.0;
 
 	cooling_supply_air_temp = 50.0;
 	heating_supply_air_temp = 150.0;
@@ -1630,8 +1631,8 @@ int house_e::init(OBJECT *parent)
 			Tair = gl_random_uniform(cooling_setpoint-thermostat_deadband/2,cooling_setpoint+thermostat_deadband/2);
 	}
 
-	
-	Tmaterials = Tair;	
+	if (Tmaterials == 0.0)
+		Tmaterials = Tair;	
 
 	// Set/calculate HVAC motor parameters
 	if (motor_model != MM_NONE)
