@@ -588,36 +588,42 @@ int transformer::init(OBJECT *parent)
 					z2 = complex(config->impedance2.Re(),config->impedance2.Im()) * complex(za_baselo,0);
 				}
 
+				
+				// Scale zc so you get proper answers
+				zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
+
 				//Make intermediate variable for the nasty denominators
 				complex indet;
-
-				zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-					
-				//indet=complex(1.0,0)/(z1*z2*nt*nt + z1*z0 + z2*z0);
-				indet=complex(1.0,0)/(z1*z2*nt*nt + z1*(z0*zc/(z0 + zc)) + z2*(z0*zc/(z0+zc)));
+				indet=complex(1.0)/(z1*z2*zc*nt*nt+z0*(z2*zc+z1*zc+z1*z2*nt*nt));
 
 				//Store all information into b_mat (pull it out later) - phases handled in link
 				// Yto_00	Yto_01   To_Y00
 				// Yto_10	Yto_11	 To_Y10
 				// From_Y00	From_Y01 YFrom_00
+				//
+				// Translates into			b_mat*[V1; V2; VSource] = [I1; I2; ISource]
+				//      V1 V2 Vsource			
+				// I1
+				// I2
+				// ISource
 
 				//Put in a_mat first, it gets scaled
 				//Yto
-				a_mat[0][0] = -(z0/zc + 1) * z2 * nt * nt - z0; //-z2*nt*nt-z0;
-				a_mat[0][1] = z0; //z0;
-				a_mat[1][0] = -z0; //-z0;
-				a_mat[1][1] = (z0/zc + 1) * z1 * nt * nt + z0; //z1*nt*nt+z0;
-				
+				a_mat[0][0] = -(z2*zc*nt*nt+z0*zc+z0*z2*nt*nt);	//-z2*nt*nt-z0;
+				a_mat[0][1] = z0*zc;							//z0;
+				a_mat[1][0] = -z0*zc;							//-z0;
+				a_mat[1][1] = (z1*zc*nt*nt+z0*zc+z0*z1*nt*nt);	//z1*nt*nt+z0;
+
 				//To_Y
-				a_mat[0][2] = z2*nt; //z2*nt;
-				a_mat[1][2] = -z1*nt; //-z1*nt;
+				a_mat[0][2] = z2*zc*nt;		//z2*nt;
+				a_mat[1][2] = -z1*zc*nt;	//-z1*nt;
 
 				//From_Y
-				a_mat[2][0] = -(z0/zc + 1)*z2*nt; //-z2*nt;
-				a_mat[2][1] = -(z0/zc + 1)*z1*nt; //-z1*nt;
+				a_mat[2][0] = -z2*zc*nt;	//-z2*nt;
+				a_mat[2][1] = -z1*zc*nt;	//-z1*nt;
 
 				//Yfrom
-				a_mat[2][2] = (z0/zc + 1)*(z1+z2); //z1+z2;
+				a_mat[2][2] = (z2*zc+z1*zc+z1*z2*nt*nt);	//z1+z2;
 
 				//Form it into b_mat
 				for (char xindex=0; xindex<3; xindex++)
