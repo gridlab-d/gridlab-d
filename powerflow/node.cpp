@@ -225,6 +225,25 @@ int node::init(OBJECT *parent)
 				}
 			}
 
+			//Do the same for triplex nodes
+			gl_free(bus_list);
+			bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_node",FT_END);
+
+			//Reset temp_obj
+			temp_obj = NULL;
+
+			//Parse the findlist
+			while(temp_obj=gl_find_next(bus_list,temp_obj))
+			{
+				list_node = OBJECTDATA(temp_obj,node);
+
+				if (list_node->bustype==SWING)
+				{
+					NR_swing_bus=temp_obj;
+					swing_count++;
+				}
+			}
+
 			//Free the buslist
 			gl_free(bus_list);
 
