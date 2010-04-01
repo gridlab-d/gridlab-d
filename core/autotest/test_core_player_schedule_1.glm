@@ -20,7 +20,7 @@ clock{
 }
 object player{
 	name cool_stp;
-	file "test_core_player_schedule_1.player";
+	file "../test_core_player_schedule_1.player";
 	loop 2;
 };
 object house{
@@ -38,7 +38,7 @@ object house{
 		within 1e-6;
 		object player{
 			property value;
-			file "test_core_player_schedule_2.player";
+			file "../test_core_player_schedule_2.player";
 			loop 2;
 		};
 	};
