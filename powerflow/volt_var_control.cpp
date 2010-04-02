@@ -1136,7 +1136,7 @@ int volt_var_control::init(OBJECT *parent)
 		//Reference the storage array
 		token_b = tempchar;
 
-		if (*token_a == '\0')	//Only two items in the list
+		if (token_a == NULL)	//Only two items in the list
 		{
 			//Copy in the value
 			while (*token_b1 != '\0')
@@ -1422,6 +1422,9 @@ int volt_var_control::init(OBJECT *parent)
 
 				indexa++;	//Increment the storage pointer
 			}//End measurement list
+
+			//Assign in our value to num_meas
+			num_meas[0] = total_meas;
 		}//End at least one measurement total
 		else	//Empty, so default for us!
 		{
