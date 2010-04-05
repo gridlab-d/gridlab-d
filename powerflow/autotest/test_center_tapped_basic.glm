@@ -1,16 +1,19 @@
 // Validation test for example 11.1 in Kersting, chapter 11
-// (a very basic test of the center-tapped transformer)
+// <Tests the functionality of a center-tapped transformer, as well as
+// the calculation of power and accumulation of energy in a triplex_meter>
+
 // sets up a single three-phase node at 7200 V and connects it to a triplex meter
 // at 240v12 via a 50 kVA center-tapped transformer. On the triplex side of the 
 // system, there are loads between line 1 and neutral, line 2 and neutral, and line 1 - line 2
 // this test validates the voltages across those loads; triplex meter includes validation
-// tests for measured_current, measured_voltage, and measured power
+// tests for measured_current, measured_voltage, measured power, and measured_real_energy using FBS
 
+// player files used: center_tapped_basic_energy.player
 // created by: alek332
 
 clock {
      timezone CST+6CDT;
-     timestamp '2006-01-01 00:00:00';
+     timestamp '2006-01-01 00:00:00 CST';
 }
 
 module powerflow {
@@ -55,16 +58,6 @@ object triplex_meter {
 	impedance_12 2.0+1.2j;
 	nominal_voltage 120.00;
 	bill_mode UNIFORM;
-	object complex_assert {
-		target indiv_measured_power_1;
-		value 21199+25.9925d; // result of last working run: +21199+25.9925d
-		within .32;
-	 };
-	object complex_assert {
-		target indiv_measured_power_2;
-		value +23106.6+11859.2j; // result of last working run: +23106.6+11859.2j
-		within .32;					// (multiplying complex conjugates gives negative??)
-	 };
 	object complex_assert {
 		target measured_current_N;
 		value -40.94+147.0d; // result of last working run: +118.001-1.26275j
@@ -118,5 +111,34 @@ object triplex_meter {
 		target voltage_12;
 		value 235.9-0.6147d; // result of last working run: +235.848-2.52617j
 		within .05;
+	 };
+		object complex_assert {
+		target measured_power;
+		value 47168.7+26.64d; // result of last working run: +21199+25.9925d
+		within 1;
+	 };
+	 object double_assert {
+		target "measured_real_energy";
+		within 5;
+		object player {
+			property value;
+			file ../center_tapped_basic_energy.player;
+		};
+	 };
+	object complex_assert {
+		target indiv_measured_power_1;
+		value 21199+25.9925d; // result of last working run: +21199+25.9925d
+		within .32;
+	 };
+	object complex_assert {
+		target indiv_measured_power_2;
+		value +23106.6+11859.2j; // result of last working run: +23106.6+11859.2j
+		within .32;					// (multiplying complex conjugates gives negative??)
+	 };
+	  object recorder {
+		interval 3600;
+		limit 30;
+		file "meter_power.csv"; // <- recorder with the results below
+		property indiv_measured_power_1,indiv_measured_power_2,indiv_measured_power_N,measured_power,measured_real_energy;
 	 };
 }

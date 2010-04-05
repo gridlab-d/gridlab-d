@@ -1,12 +1,14 @@
 // Validation test for example 11.1 in Kersting, chapter 11
+// <Tests the functionality of a center-tapped transformer, as well as
+// the calculation of power and accumulation of energy in a triplex_meter>
 
-// (a very basic test of the center-tapped transformer)
 // sets up a single three-phase node at 7200 V and connects it to a triplex meter
 // at 240v12 via a 50 kVA center-tapped transformer. On the triplex side of the 
 // system, there are loads between line 1 and neutral, line 2 and neutral, and line 1 - line 2
 // this test validates the voltages across those loads; triplex meter includes validation
-// tests for measured_current, measured_voltage, and measured_power with Newton Raphson
+// tests for measured_current, measured_voltage, measured power, and measured_real_energy using NR
 
+// player files used: center_tapped_basic_energy.player
 // created by: alek332
 
 clock {
@@ -44,42 +46,10 @@ object transformer {
      name center_tap_transformer_A;
      phases AS;
      from 3phase;
-     to trip_node;
+     to load_node;
      configuration default_transformer;
 }
 
-// triplex secondary line
-object triplex_node {
-	name trip_node;
-     phases AS;
-     nominal_voltage 120.00;
-}
-
-
-// configuration arbitrary
-object triplex_line_conductor {
-      name 1/0 AA triplex;
-      resistance 0.97;
-      geometric_mean_radius 0.0111;
-}
-
-object triplex_line_configuration {
-      name TLCFG;
-      conductor_1 1/0 AA triplex;
-      conductor_2 1/0 AA triplex;
-      conductor_N 1/0 AA triplex;
-      insulation_thickness 0.08;
-      diameter 0.368;
-}
-
-// triplex_line necessary in simulation to make NR solver happy
-object triplex_line {
-	from trip_node;
-	to load_node;
-	phases AS;
-	length 0.0000001; // extremely small length to simulte direct connection to 
-	configuration TLCFG; // transformer.
-};
 
 // load node
 object triplex_meter {
@@ -90,10 +60,50 @@ object triplex_meter {
 	impedance_12 2.0+1.2j;
 	nominal_voltage 120.00;
 	bill_mode UNIFORM;
-	object complex_assert {
-		target measured_power;
-		value 42161.35+21149.7357j; 
-		within 40;
+	// object complex_assert { // doesn't work yet
+		// target measured_current_N;
+		// value -40.94+147.0d; //
+		// within 1;
+	 // };
+	 object complex_assert {
+		target measured_current_1;
+		value 179.6-26.6d; 
+		within .11;
+	 };
+	 object complex_assert {
+		target measured_current_2;
+		value 220.4+152.2d; 
+		within .11;
+	 };
+	 object complex_assert {
+		target measured_voltage_N;
+		value 0; 
+		within .11;
+	 };
+	 object complex_assert {
+		target measured_voltage_1;
+		value 118-0.6131d; 
+		within .11;
+	 };
+	 object complex_assert {
+		target measured_voltage_2;
+		value 117.9-0.61421d; 
+		within .11;
+	 };
+	 object complex_assert {
+		target voltage_1;
+		value 118-0.6131d; 
+		within .11;
+	 };
+	 object complex_assert {
+		target voltage_2;
+		value 117.9-0.61421d; 
+		within .11;
+	 };
+	 object complex_assert {
+		target voltage_12;
+		value 235.9-0.6147d; 
+		within .11;
 	 };
 	object complex_assert {
 		target indiv_measured_power_1;
@@ -104,50 +114,24 @@ object triplex_meter {
 		target indiv_measured_power_2;
 		value +23106.6+11859.2j; 
 		within 28;					
+	 };	 
+	object complex_assert {
+		target measured_power;
+		value 47168.7+26.64d; 
+		within 4;
 	 };
-	// object complex_assert { // doesn't work yet
-		// target measured_current_N;
-		// value -40.94+147.0d; //
-		// within 1;
-	 // };
-	 object complex_assert {
-		target measured_current_1;
-		value 179.6-26.6d; 
-		within .25;
+	 object double_assert {
+		target "measured_real_energy";
+		within 7;
+		object player {
+			property value;
+			file ../center_tapped_basic_energy.player;
+		};
 	 };
-	 object complex_assert {
-		target measured_current_2;
-		value 220.4+152.2d; 
-		within .25;
-	 };
-	 object complex_assert {
-		target measured_voltage_N;
-		value 0; 
-		within .25;
-	 };
-	 object complex_assert {
-		target measured_voltage_1;
-		value 118-0.6131d; 
-		within .25;
-	 };
-	 object complex_assert {
-		target measured_voltage_2;
-		value 117.9-0.61421d; 
-		within .25;
-	 };
-	 object complex_assert {
-		target voltage_1;
-		value 118-0.6131d; 
-		within .25;
-	 };
-	 object complex_assert {
-		target voltage_2;
-		value 117.9-0.61421d; 
-		within .25;
-	 };
-	 object complex_assert {
-		target voltage_12;
-		value 235.9-0.6147d; 
-		within .25;
+	object recorder {
+		interval 3600;
+		limit 30;
+		file "meter_energy.csv"; 
+		property measured_real_energy;
 	 };
 }
