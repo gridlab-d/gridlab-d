@@ -575,6 +575,8 @@ inline char *gl_getvalue(OBJECT *obj,
 
 #define gl_get_object (*callback->get_object)
 
+#define gl_name_object (*callback->name_object)
+
 #define gl_get_object_count (*callback->object_count)
 
 #define gl_get_object_prop (*callback->objvar.object_var)

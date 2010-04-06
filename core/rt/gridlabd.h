@@ -846,6 +846,7 @@ typedef struct s_callbacks {
 	} convert;
 	MODULE *(*module_find)(char *name);
 	OBJECT *(*get_object)(char *name);
+	int (*name_object)(OBJECT *obj, char *buffer, int len);
 	int (*get_oflags)(KEYWORD **extflags);
 	unsigned int (*object_count)(void);
 	struct {

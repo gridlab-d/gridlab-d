@@ -191,6 +191,7 @@ typedef struct s_callbacks {
 	} convert;
 	MODULE *(*module_find)(char *name);
 	OBJECT *(*get_object)(char *name);
+	int (*name_object)(OBJECT *obj, char *buffer, int len);
 	int (*get_oflags)(KEYWORD **extflags);
 	unsigned int (*object_count)(void);
 	struct {
@@ -243,6 +244,7 @@ OBJECT *object_get_reference(OBJECT *obj, char *name);
 int object_isa(OBJECT *obj, char *type);
 OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name);
 OBJECT *object_find_name(OBJECTNAME name);
+int object_build_name(OBJECT *obj, char *buffer, int len);
 int object_locate_property(void *addr, OBJECT **pObj, PROPERTY **pProp);
 
 int object_get_oflags(KEYWORD **extflags);

@@ -9,6 +9,7 @@ tape_la_SOURCES =            \
 	odbc.c        odbc.h      \
 	player.c                  \
 	recorder.c                \
+	multi_recorder.c          \
 	shaper.c                  \
 	tape.c        tape.h
 tape_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0 -ldl

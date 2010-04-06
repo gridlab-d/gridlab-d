@@ -171,6 +171,7 @@ static CALLBACKS callbacks = {
 	{class_string_to_property, class_property_to_string,},
 	module_find,
 	object_find_name,
+	object_build_name,
 	object_get_oflags,
 	object_get_count,
 	{schedule_create, schedule_index, schedule_value, schedule_dtnext, schedule_find_byname},

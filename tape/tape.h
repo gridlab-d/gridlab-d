@@ -46,6 +46,12 @@ typedef struct {
 	double min, max;
 } VARMAP;
 
+typedef struct s_recobjmap {
+	OBJECT *obj;
+	PROPERTY prop; // must be an instance
+	struct s_recobjmap *next;
+} RECORDER_MAP;
+
 /** @}
   @addtogroup player
 	@{ 
@@ -136,6 +142,7 @@ struct recorder {
 	char32 columns;
 	char32 trigger;
 	/* private */
+	RECORDER_MAP *rmap;
 	TAPEOPS *ops;
 	FILETYPE type;
 	union {

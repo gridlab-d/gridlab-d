@@ -43,6 +43,7 @@ VARMAP varmap[] = {
 extern CLASS *player_class;
 extern CLASS *shaper_class;
 extern CLASS *recorder_class;
+extern CLASS *multi_recorder_class;
 extern CLASS *collector_class;
 
 
@@ -202,6 +203,29 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 			PT_KEYWORD, "SVG",    SVG, 
 			NULL) < 1)
 		GL_THROW("Could not publish property output for recorder");
+
+		/* register the other classes as needed, */
+	multi_recorder_class = gl_register_class(module,"multi_recorder",sizeof(struct recorder),PC_POSTTOPDOWN);
+	if(gl_publish_variable(multi_recorder_class,
+		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
+		PT_char1024, "property", ((char*)&(my.property) - (char *)&my),
+		PT_char32, "trigger", ((char*)&(my.trigger) - (char *)&my),
+		PT_char1024, "file", ((char*)&(my.file) - (char *)&my),
+		PT_char1024, "multifile", ((char*)&(my.multifile) - (char *)&my),
+		PT_int32, "limit", ((char*)&(my.limit) - (char *)&my),
+		PT_char1024, "plotcommands", ((char*)&(my.plotcommands) - (char *)&my),
+		PT_char32, "xdata", ((char*)&(my.xdata) - (char *)&my),
+		PT_char32, "columns", ((char*)&(my.columns) - (char *)&my),
+		PT_enumeration, "output", ((char*)&(my.output) - (char *)&my),
+			PT_KEYWORD, "SCREEN", SCREEN,
+			PT_KEYWORD, "EPS",    EPS,
+			PT_KEYWORD, "GIF",    GIF,
+			PT_KEYWORD, "JPG",    JPG,
+			PT_KEYWORD, "PDF",    PDF,
+			PT_KEYWORD, "PNG",    PNG,
+			PT_KEYWORD, "SVG",    SVG, 
+			NULL) < 1)
+		GL_THROW("Could not publish property output for multi_recorder");
 
 	/* register the other classes as needed, */
 	collector_class = gl_register_class(module,"collector",sizeof(struct collector),PC_POSTTOPDOWN);

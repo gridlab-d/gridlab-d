@@ -1877,6 +1877,39 @@ OBJECT *object_find_name(OBJECTNAME name){
 	}
 }
 
+int object_build_name(OBJECT *obj, char *buffer, int len){
+	char b[256];
+	char *ptr = 0;
+	int L; // to not confuse l and 1 visually
+
+	if(obj == 0){
+		return 0;
+	}
+	if(buffer == 0){
+		return 0;
+	}
+
+	if(obj->name){
+		L = (int)strlen(obj->name);
+		ptr = obj->name;
+	} else {
+		sprintf(b, "%s %i", obj->oclass->name, obj->id);
+		L = (int)strlen(b);
+		ptr = b;
+	}
+
+	if(L > len){
+		output_error("object_build_name(): unable to build name for '%s', input buffer too short", obj->name);
+		return 0;
+	} else {
+		strcpy(buffer, obj->name);
+		return L;
+	}
+
+	output_error("object_build_name(): control unexpectedly reached end of method");
+	return 0; // shouldn't reach this
+}
+
 /** Sets the name of an object.  This is useful if the internal name cannot be relied upon, 
 	as when multiple modules are being used.
 	Throws an exception when a memory error occurs or when the name is already taken by another object.
