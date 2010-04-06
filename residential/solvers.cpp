@@ -76,7 +76,7 @@ double e2solve(double a,/**< the parameter \p a */
 	}
 
 	// solve using Newton's method
-	int iter = 100;
+	int iter = default_etp_iterations;
 	if (t!=0) // initial t changed to inflexion point
 		double f = EVAL(t,a,n,b,m,c);
 	double dfdt = EVAL(t,a*n,n,b*m,m,0); 

@@ -38,6 +38,7 @@ bool default_NR_mode = false;
 double default_outdoor_temperature = 74.0;
 double default_humidity = 75.0;
 double default_solar[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+int64 default_etp_iterations = 100;
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -52,6 +53,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("residential::default_outdoor_temperature",PT_double,&default_outdoor_temperature,PT_UNITS,"degF",PT_DESCRIPTION,"outdoor air temperature when no climate data is found",NULL);
 	gl_global_create("residential::default_humidity",PT_double,&default_outdoor_temperature,PT_UNITS,"%",PT_DESCRIPTION,"humidity when no climate data is found",NULL);
 	gl_global_create("residential::default_solar",PT_double,&default_solar,PT_SIZE,9,PT_UNITS,"Btu/sf",PT_DESCRIPTION,"solar gains when no climate data is found",NULL);
+	gl_global_create("residential::default_etp_iterations",PT_int64,&default_etp_iterations,PT_DESCRIPTION,"number of iterations ETP solver will run",NULL);
 
 	new residential_enduse(module);
 	new house(module);
