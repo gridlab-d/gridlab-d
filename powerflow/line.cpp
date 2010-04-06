@@ -83,13 +83,14 @@ int line::create()
 int line::init(OBJECT *parent)
 {
 	int result = link::init(parent);
+	
 
 	node *pFrom = OBJECTDATA(from,node);
 	node *pTo = OBJECTDATA(to,node);
 
 	/* check for node nominal voltage mismatch */
-	if (pFrom->nominal_voltage != pTo->nominal_voltage)
-		throw "from and to node nominal voltage mismatch";
+	if ((pFrom->nominal_voltage - pTo->nominal_voltage) > fabs(0.001*pFrom->nominal_voltage))
+		throw "from and to node nominal voltage mismatch of greater than 0.1%";
 
 	if (solver_method == SM_NR && length == 0.0)
 		throw "Newton-Raphson method does not support zero length lines at this time";
