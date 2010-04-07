@@ -533,6 +533,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\multi_recorder.c"
+				>
+			</File>
+			<File
 				RelativePath="..\tape\odbc.c"
 				>
 			</File>
