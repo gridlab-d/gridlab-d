@@ -23,7 +23,7 @@ module assert;
 module tape;
 
 object node {
-     name 3phase;
+     name three-phase;
      phases ABCN;
 	 bustype SWING;
      nominal_voltage 7200;
@@ -45,7 +45,7 @@ object transformer_configuration {
 object transformer {
      name center_tap_transformer_A;
      phases AS;
-     from 3phase;
+     from three-phase;
      to load_node;
      configuration default_transformer;
 }
@@ -60,11 +60,11 @@ object triplex_meter {
 	impedance_12 2.0+1.2j;
 	nominal_voltage 120.00;
 	bill_mode UNIFORM;
-	// object complex_assert { // doesn't work yet
-		// target measured_current_N;
-		// value -40.94+147.0d; //
-		// within 1;
-	 // };
+	object complex_assert { // doesn't work yet
+		target measured_current_N;
+		value -40.94+147.0d; //
+		within 1;
+	 };
 	 object complex_assert {
 		target measured_current_1;
 		value 179.6-26.6d; 

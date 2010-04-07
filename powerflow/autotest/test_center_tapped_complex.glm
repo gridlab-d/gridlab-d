@@ -24,7 +24,7 @@ module tape;
 
 // source identical to example 11.1
 object node {
-     name 3phase;
+     name three-phase;
 	 bustype SWING;
      phases ABCN;
 	 voltage_A 7200+0j;
@@ -50,7 +50,7 @@ object transformer_configuration {
 object transformer {
      name center_tap_transformer_A;
      phases AS;
-     from 3phase;
+     from three-phase;
      to trip_node;
      configuration default_transformer;
 }
@@ -68,16 +68,16 @@ object triplex_node {
 // triplex secondary from transformer node to load; the numbers for the line
 // match the parameters in the text
 object triplex_line_conductor {
-      name 1/0 AA triplex;
+      name one-zero AA triplex;
       resistance 0.97;
       geometric_mean_radius 0.0111;
 }
 
 object triplex_line_configuration {
       name TLCFG;
-      conductor_1 1/0 AA triplex;
-      conductor_2 1/0 AA triplex;
-      conductor_N 1/0 AA triplex;
+      conductor_1 one-zero AA triplex;
+      conductor_2 one-zero AA triplex;
+      conductor_N one-zero AA triplex;
       insulation_thickness 0.08;
       diameter 0.368;
 }

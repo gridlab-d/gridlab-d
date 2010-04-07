@@ -23,7 +23,7 @@ module assert;
 module tape;
 
 object node {
-     name 3phase;
+     name three-phase;
      phases ABCN;
 	 bustype SWING;
      nominal_voltage 7200;
@@ -44,7 +44,7 @@ object transformer_configuration {
 object transformer {
      name center_tap_transformer_A;
      phases AS;
-     from 3phase;
+     from three-phase;
      to trip_node;
      configuration default_transformer;
 }
