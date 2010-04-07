@@ -341,7 +341,9 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 	fprintf(my->fp,"# user...... %s\n", getenv("USER"));
 	fprintf(my->fp,"# host...... %s\n", getenv("HOST"));
 #endif
-	fprintf(my->fp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
+	if(obj->parent){
+		fprintf(my->fp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
+	}
 	fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
 	fprintf(my->fp,"# interval.. %d\n", my->interval);
 	fprintf(my->fp,"# limit..... %d\n", my->limit);
