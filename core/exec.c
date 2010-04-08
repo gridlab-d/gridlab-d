@@ -531,7 +531,7 @@ STATUS exec_start(void)
 	TRY {
 
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
-		while (iteration_counter>0 && sync.step_to<min(global_stoptime,TS_NEVER) && sync.hard_event>0 && !stop_now) 
+		while (iteration_counter>0 && sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0 && !stop_now) 
 		{
 			/* set time context */
 			output_set_time_context(sync.step_to);
