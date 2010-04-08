@@ -130,6 +130,9 @@ TIMESTAMP triplex_node::presync(TIMESTAMP t0)
 	else
 		NR_mode = false;		//Just put as false for other methods
 
+	//Clear the shunt values
+	shunt[0] = shunt[1] = shunt[2] = 0.0;
+
 	return node::presync(t0);
 }
 
@@ -141,19 +144,19 @@ TIMESTAMP triplex_node::sync(TIMESTAMP t0)
 	//Update shunt value here, otherwise it will only be a static value
 	//Prioritizes shunt over impedance
 	if ((pub_shunt[0] == 0) && (impedance[0] != 0))	//Impedance specified
-		shunt[0] = complex(1.0,0)/impedance[0];
+		shunt[0] += complex(1.0,0)/impedance[0];
 	else											//Shunt specified (impedance ignored)
-		shunt[0] = pub_shunt[0];
+		shunt[0] += pub_shunt[0];
 
 	if ((pub_shunt[1] == 0) && (impedance[1] != 0))	//Impedance specified
-		shunt[1] = complex(1.0,0)/impedance[1];		
+		shunt[1] += complex(1.0,0)/impedance[1];		
 	else											//Shunt specified (impedance ignored)
-		shunt[1] = pub_shunt[1];
+		shunt[1] += pub_shunt[1];
 
 	if ((pub_shunt[2] == 0) && (impedance[2] != 0))	//Impedance specified
-		shunt[2] = complex(1.0,0)/impedance[2];		
+		shunt[2] += complex(1.0,0)/impedance[2];		
 	else											//Shunt specified (impedance ignored)
-		shunt[2] = pub_shunt[2];
+		shunt[2] += pub_shunt[2];
 
 	return node::sync(t0);
 }
