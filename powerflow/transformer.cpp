@@ -182,21 +182,25 @@ int transformer::init(OBJECT *parent)
 
 				//Other matrices
 				A_mat[0][1] = A_mat[0][2] = A_mat[1][0] = A_mat[1][2] = A_mat[2][0] = A_mat[2][1] = 0.0;
+				a_mat[0][1] = a_mat[0][2] = a_mat[1][0] = a_mat[1][2] = a_mat[2][0] = a_mat[2][1] = 0.0;
 				if (has_phase(PHASE_A))
 				{
-					a_mat[0][0] = ( complex(nt_a,0) * (zc + zt_a)) / (zc - zt_a);
+					//a_mat[0][0] = ( complex(nt_a,0) * (zc + zt_a)) / (zc - zt_a);
+					a_mat[0][0] = zc;
 					d_mat[0][0] = Izt / nt / nt;
 					A_mat[0][0] = nt_a;
 				}
 				if (has_phase(PHASE_B))
 				{
-					a_mat[1][1] = ( complex(nt_b,0) * (zc + zt_b)) / (zc - zt_b);
+					//a_mat[1][1] = ( complex(nt_b,0) * (zc + zt_b)) / (zc - zt_b);
+					a_mat[1][1] = zc;
 					d_mat[1][1] = Izt / nt / nt;
 					A_mat[1][1] = nt_b;
 				}
 				if (has_phase(PHASE_C))
 				{
-					a_mat[2][2] = ( complex(nt_c,0) * (zc + zt_c)) / (zc - zt_c);
+					//a_mat[2][2] = ( complex(nt_c,0) * (zc + zt_c)) / (zc - zt_c);
+					a_mat[2][2] = zc;
 					d_mat[2][2] = Izt / nt / nt;
 					A_mat[2][2] = nt_c;
 				}
@@ -243,7 +247,7 @@ int transformer::init(OBJECT *parent)
 				b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
 
 				//used for power loss calculations
-				a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = nt;
+				//a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = nt;
 
 				//Pre-inverted matrix for power losses
 				d_mat[0][0] = Izt / nt / nt;

@@ -1417,15 +1417,18 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 				//Calculate current out
 				current_out[0] = A_mat[0][0]*current_in[0]+
 								 A_mat[0][1]*current_in[1]+
-								 A_mat[0][2]*current_in[2];
+								 A_mat[0][2]*current_in[2]-
+								 a_mat[0][0]*tnode->voltage[0]*voltage_ratio;
 
 				current_out[1] = A_mat[1][0]*current_in[0]+
 								 A_mat[1][1]*current_in[1]+
-								 A_mat[1][2]*current_in[2];
+								 A_mat[1][2]*current_in[2]-
+								 a_mat[0][0]*tnode->voltage[1]*voltage_ratio;
 
 				current_out[2] = A_mat[2][0]*current_in[0]+
 								 A_mat[2][1]*current_in[1]+
-								 A_mat[2][2]*current_in[2];
+								 A_mat[2][2]*current_in[2]-
+								 a_mat[0][0]*tnode->voltage[2]*voltage_ratio;
 
 				//Current in is just the same
 				fnode->current_inj[0] += current_in[0];
