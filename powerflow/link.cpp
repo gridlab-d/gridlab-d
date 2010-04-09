@@ -1375,36 +1375,44 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 			complex vtemp[3];
 			complex itemp[3];
 			complex current_temp[3];
+			complex invsquared;
 
 			if ((voltage_ratio!=1.0) && (SpecialLnk != DELTAGWYE) && (SpecialLnk != SPLITPHASE) && (SpecialLnk != REGULATOR))
 			{
+				invsquared = 1.0 / (voltage_ratio * voltage_ratio);
 				//(-a*Vout+Vin)
 				vtemp[0] = fnode->voltage[0]-
-						   a_mat[0][0]*tnode->voltage[0]-
-						   a_mat[0][1]*tnode->voltage[1]-
-						   a_mat[0][2]*tnode->voltage[2];
+						   A_mat[0][0]*tnode->voltage[0]-
+						   A_mat[0][1]*tnode->voltage[1]-
+						   A_mat[0][2]*tnode->voltage[2];
 
 				vtemp[1] = fnode->voltage[1]-
-						   a_mat[1][0]*tnode->voltage[0]-
-						   a_mat[1][1]*tnode->voltage[1]-
-						   a_mat[1][2]*tnode->voltage[2];
+						   A_mat[1][0]*tnode->voltage[0]-
+						   A_mat[1][1]*tnode->voltage[1]-
+						   A_mat[1][2]*tnode->voltage[2];
 
 				vtemp[2] = fnode->voltage[2]-
-						   a_mat[2][0]*tnode->voltage[0]-
-						   a_mat[2][1]*tnode->voltage[1]-
-						   a_mat[2][2]*tnode->voltage[2];
+						   A_mat[2][0]*tnode->voltage[0]-
+						   A_mat[2][1]*tnode->voltage[1]-
+						   A_mat[2][2]*tnode->voltage[2];
 
-				current_in[0] = d_mat[0][0]*vtemp[0]+
-								d_mat[0][1]*vtemp[1]+
-								d_mat[0][2]*vtemp[2];
+				//Put across admittance
+				itemp[0] = b_mat[0][0]*vtemp[0]+
+						   b_mat[0][1]*vtemp[1]+
+						   b_mat[0][2]*vtemp[2];
 
-				current_in[1] = d_mat[1][0]*vtemp[0]+
-								d_mat[1][1]*vtemp[1]+
-								d_mat[1][2]*vtemp[2];
+				itemp[1] = b_mat[1][0]*vtemp[0]+
+						   b_mat[1][1]*vtemp[1]+
+						   b_mat[1][2]*vtemp[2];
 
-				current_in[2] = d_mat[2][0]*vtemp[0]+
-								d_mat[2][1]*vtemp[1]+
-								d_mat[2][2]*vtemp[2];
+				itemp[2] = b_mat[2][0]*vtemp[0]+
+						   b_mat[2][1]*vtemp[1]+
+						   b_mat[2][2]*vtemp[2];
+
+				//Scale the "b_mat" value by the inverse (make it high-side impedance)
+				current_in[0] = itemp[0]*invsquared;
+				current_in[1] = itemp[1]*invsquared;
+				current_in[2] = itemp[2]*invsquared;
 
 				//Calculate current out
 				current_out[0] = A_mat[0][0]*current_in[0]+
@@ -1879,6 +1887,13 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		read_I_in[1] = current_in[1];
 		read_I_in[2] = current_in[2];
 
+	//Do the same for current out - if NR (FBS done above)
+	if (solver_method == SM_NR)
+	{
+		read_I_out[0] = current_out[0];
+		read_I_out[1] = current_out[1];
+		read_I_out[2] = current_out[2];
+	}
 
 	// This portion can be removed once tape/recorders are being updated in commit.
 	if (solver_method == SM_FBS || (solver_method == SM_NR && NR_cycle == true))
