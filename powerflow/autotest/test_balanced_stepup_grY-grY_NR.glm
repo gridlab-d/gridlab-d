@@ -13,6 +13,7 @@ clock {
 }
 
 //#define stylesheet="C:\Users\Jason\Documents\GridLAB-D\trunk\VS2005\gridlabd-2_0";
+#set relax_naming_rules=1
 module powerflow { solver_method NR; };
 module assert;
 

@@ -19,6 +19,7 @@ module assert;
 module tape;
 
 //#define stylesheet="C:\Documents and Settings\d3x289\Desktop\GLD_8_7\trunk\VS2005\gridlabd-2_0";
+#set relax_naming_rules=1
 
 object overhead_line_conductor:100 {
 	geometric_mean_radius 0.0244;

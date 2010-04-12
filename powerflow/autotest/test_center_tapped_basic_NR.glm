@@ -11,6 +11,9 @@
 // player files used: center_tapped_basic_energy.player
 // created by: alek332
 
+
+#set relax_naming_rules=1
+
 clock {
      timezone CST+6CDT;
      timestamp '2006-01-01 00:00:00';

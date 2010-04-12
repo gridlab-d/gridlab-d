@@ -10,6 +10,7 @@ clock {
 	timezone EST+5EDT;
 }
 
+#set relax_naming_rules=1
 module powerflow{
 	solver_method NR;
 }
