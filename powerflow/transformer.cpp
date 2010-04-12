@@ -91,7 +91,7 @@ int transformer::init(OBJECT *parent)
 	V_base = config->V_secondary;
 	voltage_ratio = nt = config->V_primary / config->V_secondary;
 	zt = (config->impedance * V_base * V_base) / (config->kVA_rating * 1000.0);
-	zc = (config->shunt_impedance * V_base * V_base) / (config->kVA_rating * 1000.0);
+	zc =  complex(V_base,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 
 	for (int i = 0; i < 3; i++) 
 	{
@@ -145,27 +145,39 @@ int transformer::init(OBJECT *parent)
 			{
 				if (has_phase(PHASE_A))
 				{
-					A_mat[0][0] = (zc - zt_a) / ( complex(nt_a,0) * (zc + zt_a));
-					a_mat[0][0] = complex(1,0) / A_mat[0][0];
-					b_mat[0][0] = zt_a / A_mat[0][0];
-					d_mat[0][0] = (zt_a + zc) / ( complex(nt_a,0) * zc);
+					A_mat[0][0] = 1/nt_a;
+					a_mat[0][0] = nt_a;
+					b_mat[0][0] = complex(nt_a,0) * zt_a;
+					d_mat[0][0] = (complex(1,0) + zt_a) / (complex(nt_a,0) * zc);
+					//A_mat[0][0] = (zc - zt_a) / ( complex(nt_a,0) * (zc + zt_a));
+					//a_mat[0][0] = complex(1,0) / A_mat[0][0];
+					//b_mat[0][0] = zt_a / A_mat[0][0];
+					//d_mat[0][0] = (zt_a + zc) / ( complex(nt_a,0) * zc);
 
 				}
 
 				if (has_phase(PHASE_B))
 				{
-					A_mat[1][1] = (zc - zt_b) / ( complex(nt_b,0) * (zc + zt_b));
-					a_mat[1][1] = complex(1,0) / A_mat[1][1];
-					b_mat[1][1] = zt_b / A_mat[1][1];
-					d_mat[1][1] = (zt_b + zc) / ( complex(nt_b,0) * zc);
+					A_mat[1][1] = 1/nt_b;
+					a_mat[1][1] = nt_b;
+					b_mat[1][1] = complex(nt_b,0) * zt_b;
+					d_mat[1][1] = (complex(1,0) + zt_b) / (complex(nt_b,0) * zc);
+					//A_mat[1][1] = (zc - zt_b) / ( complex(nt_b,0) * (zc + zt_b));
+					//a_mat[1][1] = complex(1,0) / A_mat[1][1];
+					//b_mat[1][1] = zt_b / A_mat[1][1];
+					//d_mat[1][1] = (zt_b + zc) / ( complex(nt_b,0) * zc);
 				}
 
 				if (has_phase(PHASE_C))
 				{
-					A_mat[2][2] = (zc - zt_c) / ( complex(nt_c,0) * (zc + zt_c));
-					a_mat[2][2] = complex(1,0) / A_mat[2][2];
-					b_mat[2][2] = zt_c / A_mat[2][2];
-					d_mat[2][2] = (zt_c + zc) / ( complex(nt_c,0) * zc);
+					A_mat[2][2] = 1/nt_c;
+					a_mat[2][2] = nt_c;
+					b_mat[2][2] = complex(nt_c,0) * zt_c;
+					d_mat[2][2] = (complex(1,0) + zt_c) / (complex(nt_c,0) * zc);
+					//A_mat[2][2] = (zc - zt_c) / ( complex(nt_c,0) * (zc + zt_c));
+					//a_mat[2][2] = complex(1,0) / A_mat[2][2];
+					//b_mat[2][2] = zt_c / A_mat[2][2];
+					//d_mat[2][2] = (zt_c + zc) / ( complex(nt_c,0) * zc);
 				}
 			}
 			else if ((solver_method==SM_GS) || (solver_method==SM_NR))
