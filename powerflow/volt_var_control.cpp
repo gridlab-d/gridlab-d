@@ -769,6 +769,12 @@ int volt_var_control::init(OBJECT *parent)
 
 		//Assigns regulator to the link object
 		substation_link = pRegulator_list[index];
+
+		if (solver_method == SM_FBS)
+		{
+			//populate the lnk_obj as well if FBS (we'll need it for parenting)
+			substation_lnk_obj = OBJECTHDR(pRegulator_list[index]);
+		}
 	}
 	else	//It is defined
 	{
@@ -1474,13 +1480,30 @@ int volt_var_control::init(OBJECT *parent)
 		//Set our rank above links - this will put us before regs on the down sweep and before caps on the upsweep (but after current calculations)
 		gl_set_rank(obj,2);
 	}
-	else	//FBS mainly - put us above the regulator
+	else if (solver_method == SM_FBS)	//FBS - need to be below substation_link for power/voltage calculations.  Regs shouldn't be issue
 	{
-		//TBD
-		GL_THROW("Solver methods other than Newton-Raphson are unsupported at this time.");
+		//Parent us to the substation link to make sure our ranking is happy - do this explicitly.
+		//If we already have a parent, over-write it - need to be below voltage updates and power calculations of substation_link
+		index = gl_set_parent(obj,substation_lnk_obj);
+
+		if (index < 0)	//Make sure it worked
+		{
+			GL_THROW("Error setting parent");
+			/*  TROUBLESHOOT
+			An error has occurred while setting the parent field of the volt_var_control.  Please
+			submit a bug report and your code so this error can be diagnosed further.
+			*/
+		}
+
+		//Rank us 1 below the parent (same as substation link to end)
+		gl_set_rank(obj,substation_link->to->rank);
+	}
+	else	//Any future solvers and GS - GS doesn't play nice with regulators anyways
+	{
+		GL_THROW("Solver methods other than NR and FBS are unsupported at this time.");
 		/*  TROUBLESHOOT
-		The volt_var_control object only supports the Newton-Raphson solver at this time.
-		Forward-Back Sweep will be implemented at a future date.
+		The volt_var_control object only supports the Newton-Raphson and Forward-Back Sweep
+		solvers at this time.  Other solvers (Gauss-Seidel) may be implemented at a future date.
 		*/
 	}
 
@@ -1524,7 +1547,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 		}
 	}
 
-	if (NR_cycle == true)	//Accumulation cycle checks
+	if (((solver_method == SM_NR) && (NR_cycle == true)) || (solver_method != SM_NR))	//Accumulation cycle checks
 	{
 		if (t0 != prev_time)	//New timestep
 		{
@@ -1581,7 +1604,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 		prev_mode = control_method;	//Update the tracker
 	}
 
-	if ((solver_method == SM_NR) && (NR_cycle == false) && (control_method == ACTIVE))	//Solution pass and are turned on
+	if ((((solver_method == SM_NR) && (NR_cycle == false)) || (solver_method != SM_NR)) && (control_method == ACTIVE))	//Solution pass and are turned on
 	{
 		for (reg_index=0; reg_index<num_regs; reg_index++)
 		{
@@ -2268,6 +2291,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 	complex link_power_vals;
 	int index;
 	bool change_requested;
+	bool allow_change;
 	capacitor::CAPSWITCH bank_status;
 	double temp_size;
 
@@ -2275,6 +2299,13 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 	if ((((solver_method == SM_NR) && (NR_cycle == true)) || (solver_method != SM_NR)) && (control_method == ACTIVE) && (Regulator_Change == false))	//Accumulation cycle, or not NR - also no regulator changes in progress
 	{
 		link_power_vals = complex(0.0,0.0);	//Zero the power
+
+		if (solver_method == SM_NR)
+		{
+			//We're technically before the power calculations on link, so force them
+			//not issue with FBS because we have to be below to get votlage updates 
+			substation_link->calculate_power();
+		}
 
 		//Pull out phases as necessary
 		if ((pf_phase & PHASE_A) == PHASE_A)
@@ -2291,8 +2322,14 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 
 		curr_pf = link_power_vals.Re()/link_power_vals.Mag();	//Pull in power factor
 
+		//Update "proceeding" variable
+		if (((solver_method == SM_NR) && (first_cycle==true)) || ((solver_method == SM_FBS) && (first_cycle == false)))
+			allow_change = true;	//Intermediate assignment since FBS likes to mess up power calculations on the first cycle
+		else
+			allow_change = false;
+
 		//Now check to see if this is a first pass or not
-		if ((curr_pf < desired_pf) && (first_cycle==true) && (TCapUpdate <= t0))
+		if ((curr_pf < desired_pf) && (allow_change==true) && (TCapUpdate <= t0))
 		{
 			change_requested = false;	//Start out assuming no change
 
@@ -2383,7 +2420,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 		else	//TCap is in the past, so it's gone
 		{
 			return tret;	//Return where ever we wanted to go
-		}//End TCap nevative
+		}//End TCap negative
 	}//End Non-accumulation cycle
 }
 
