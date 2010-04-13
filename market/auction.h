@@ -61,6 +61,7 @@ private:
 	double *Qload;		/**< total load (used to determine unresponsive load when not all load bid) */
 	curve asks;			/**< demand curve */ 
 	curve offers;		/**< supply curve */
+	int retry;
 protected:
 public:
 	AUCTIONTYPE type;	/**< auction type */

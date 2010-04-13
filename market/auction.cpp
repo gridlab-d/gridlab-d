@@ -183,6 +183,7 @@ TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	retry = 0;
 	if (t1>=clearat)
 	{
 		DATETIME dt;
@@ -202,7 +203,7 @@ TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		gl_localtime(clearat,&dt);
 		if (verbose) gl_output("   ...%s opens for clearing of market_id %d at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), (int32)market_id, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 	}
-	return -clearat; /* soft return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+	return (retry ? t1 : -clearat); /* soft return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
 void auction::clear_market(void)
@@ -219,18 +220,18 @@ void auction::clear_market(void)
 				GL_THROW("linkref %s uses units of (W) and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), unit);
 			else if (verbose) gl_output("linkref converted %.3f W to %.3f %s", *Qload, refload, unit);
 		}
-		if (total_unknown>0)
+		if (total_unknown > 0.001) // greater than one mW ~ allows rounding errors
 			gl_warning("total_unknown is %.0f -> some controllers are not providing their states with their bids", total_unknown);
 		BID unresponsive;
 		unresponsive.from = linkref;
 		unresponsive.price = pricecap;
 		unresponsive.state = BS_UNKNOWN;
 		unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
-		if (unresponsive.quantity<0)
+		if (unresponsive.quantity < -0.001)
 		{
 			gl_warning("linkref %s has negative unresponsive load--this is probably due to improper bidding", gl_name(linkref,name,sizeof(name)), unresponsive.quantity);
 		}
-		else if (unresponsive.quantity>0)
+		else if (unresponsive.quantity > 0.001)
 		{
 			asks.submit(&unresponsive);
 			gl_verbose("linkref %s has %.3f unresponsive load", gl_name(linkref,name,sizeof(name)), -unresponsive.quantity);
@@ -384,7 +385,11 @@ void auction::clear_market(void)
 			std24 /= (count > sph24 ? sph24 : count);
 			std24 -= avg24*avg24;
 			std24 = sqrt(fabs(std24));
-			if (std24<0.01) std24=0.01;
+			if (std24<0.01){
+				std24=0.01;
+			}
+
+			retry = 1; // reiterate to pass the updated values to the controllers
 
 			/* update reference hour */
 			lasthr = thishr;
