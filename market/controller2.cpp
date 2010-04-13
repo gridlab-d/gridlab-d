@@ -313,7 +313,12 @@ int controller2::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 	}
 	
 
-	T_limit = (observation > expectation && ramp > 0.0 ? range_high : range_low);
+	//T_limit = (observation > expectation && ramp > 0.0 ? range_high : range_low);
+	if(observation > expectation){
+		T_limit = (ramp > 0.0 ? range_high : range_low);
+	} else {
+		T_limit = (ramp > 0.0 ? range_low : range_high);
+	}
 	T_set = first_setpoint;
 
 	// is legit to set expectation to the mean
