@@ -4356,7 +4356,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 			size -= 1;
 			n += 1;
 		}
-		if(bnest == 0 && hassc > 0){
+		if(bnest == 0 && hassc > 0 && nesting != startnest){ // make sure we read ALL of an #if block, if possible
 			/* end of block */
 			return n;
 		}
