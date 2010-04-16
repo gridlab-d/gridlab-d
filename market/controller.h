@@ -45,9 +45,11 @@ public:
 	char total[33];
 	char load[33];
 	char state[33];
+	char32 avg_target;
+	char32 std_target;
 	OBJECT *pMarket;
 	auction *market;
-	int32 lastbid_id;
+	int64 lastbid_id;
 	int64 lastmkt_id;
 	double last_p;
 	double last_q;
@@ -61,6 +63,8 @@ private:
 	double *pDemand;
 	double *pTotal;
 	double *pLoad;
+	double *pAvg;
+	double *pStd;
 	enumeration *pState;
 	double setpoint0;
 	void cheat();

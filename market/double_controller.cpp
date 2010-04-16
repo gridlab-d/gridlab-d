@@ -82,6 +82,8 @@ double_controller::double_controller(MODULE *module){
 
 int double_controller::create(){
 	memset(this, 0, sizeof(double_controller));
+	sprintf(avg_target, "avg24");
+	sprintf(std_target, "std24");
 	return 1;
 }
 
@@ -147,18 +149,18 @@ int double_controller::init(OBJECT *parent){
 	}
 
 	//market = OBJECTDATA(pMarket, auction);
-	pAvg24 =	gl_get_double_by_name(pMarket, "avg24");
-	pStd24 =	gl_get_double_by_name(pMarket, "std24");
 	pPeriod =	gl_get_double_by_name(pMarket, "period");
 	pNextP = 	gl_get_double_by_name(pMarket, "next.P");
 	pMarketID = gl_get_int64_by_name(pMarket, "market_id");
+	pAvg =		gl_get_double_by_name(pMarket, avg_target);
+	pStd =		gl_get_double_by_name(pMarket, std_target);
 
-	if(pAvg24 == 0){
-		gl_error("%s: double_controller market has no avg24 (and is not a market)", namestr);
+	if(pAvg == 0){
+		gl_error("%s: double_controller market has no %s average property", namestr, avg_target);
 		return 0;
 	}
-	if(pStd24 == 0){
-		gl_error("%s: double_controller market has no std24 (and is not a market)", namestr);
+	if(pStd == 0){
+		gl_error("%s: double_controller market has no %s standard deviation property", namestr, std_target);
 		return 0;
 	}if(pPeriod == 0){
 		gl_error("%s: double_controller market has no period (and is not a market)", namestr);
@@ -263,10 +265,10 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	} else {
 		cool_ramp = (temperature > cool_set_base ? cool_ramp_high : cool_ramp_low);
 		cool_limit = (temperature > cool_set_base ? cool_temp_max : cool_temp_min);
-		if(*pStd24 != 0.0){
-			cool_bid = *pAvg24 + (temperature - cool_set_base) * (cool_ramp * *pStd24) / fabs(cool_limit - cool_set_base);
+		if(*pStd != 0.0){
+			cool_bid = *pAvg + (temperature - cool_set_base) * (cool_ramp * *pStd) / fabs(cool_limit - cool_set_base);
 		} else {
-			cool_bid = *pAvg24;
+			cool_bid = *pAvg;
 		}
 	}
 	// heating bid
@@ -277,10 +279,10 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	} else {
 		heat_ramp = (temperature > heat_set_base ? heat_ramp_high : heat_ramp_low);
 		heat_limit = (temperature > heat_set_base ? heat_temp_max : heat_temp_min);
-		if(*pStd24 != 0.0){
-			heat_bid = *pAvg24 + (temperature - heat_set_base) * (heat_ramp * *pStd24) / fabs(heat_limit - heat_set_base);
+		if(*pStd != 0.0){
+			heat_bid = *pAvg + (temperature - heat_set_base) * (heat_ramp * *pStd) / fabs(heat_limit - heat_set_base);
 		} else {
-			heat_bid = *pAvg24;
+			heat_bid = *pAvg;
 		}
 	}
 
@@ -403,16 +405,16 @@ TIMESTAMP double_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	if(*pMarketID != lastmkt_id){
 		lastmkt_id = *pMarketID;
 		avg_price = 0.0;
-		if(*pAvg24 == 0.0 || *pStd24 == 0.0 || cool_set_base == 0.0 || heat_set_base == 0.0){
+		if(*pAvg == 0.0 || *pStd == 0.0 || cool_set_base == 0.0 || heat_set_base == 0.0){
 			//return next_run; // not enough input data
 			return TS_NEVER;
 		}
 
 		price = *pNextP;
-		avg_price = *pAvg24;
-		stdev_price = *pStd24;
+		avg_price = *pAvg;
+		stdev_price = *pStd;
 
-		if(*pNextP > *pAvg24){ // high prices un-cool and un-heat
+		if(*pNextP > *pAvg){ // high prices un-cool and un-heat
 			cool_bound = cool_temp_max;
 			heat_bound = heat_temp_min;
 		} else {
@@ -427,7 +429,7 @@ TIMESTAMP double_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		} else {
 			if(cool_bid > 0.0 || bid_mode == BM_OFF){
 				double ramp = (temperature > cool_set_base ? cool_ramp_high : cool_ramp_low);
-				double cool_offset = (*pNextP - *pAvg24) * fabs(cool_bound - cool_set_base) / (ramp * *pStd24);
+				double cool_offset = (*pNextP - *pAvg) * fabs(cool_bound - cool_set_base) / (ramp * *pStd);
 				cool_setpoint = cool_set_base + cool_offset;
 				if(cool_setpoint > cool_temp_max){
 					cool_setpoint = cool_temp_max;
@@ -439,7 +441,7 @@ TIMESTAMP double_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			}
 			if(heat_bid > 0.0 || bid_mode == BM_OFF){
 				double ramp = (temperature > heat_set_base ? heat_ramp_high : heat_ramp_low);
-				double heat_offset = (*pNextP - *pAvg24) * fabs(heat_bound - heat_set_base) / (ramp * *pStd24);
+				double heat_offset = (*pNextP - *pAvg) * fabs(heat_bound - heat_set_base) / (ramp * *pStd);
 				heat_setpoint = heat_set_base + heat_offset;
 				if(heat_setpoint < heat_temp_min){
 					heat_setpoint = heat_temp_min;

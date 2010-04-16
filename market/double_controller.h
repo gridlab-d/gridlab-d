@@ -77,6 +77,8 @@ public:
 	char32 state_name;
 	char32 load_name;
 	char32 total_load_name;
+	char32 avg_target;
+	char32 std_target;
 
 	//auction *market;
 	OBJECT *pMarket;
@@ -106,8 +108,10 @@ private:
 	double *deadband_ptr;
 	enumeration *state_ptr;
 
+	double *pAvg;
+	double *pStd;
+
 	double cool_limit, heat_limit;
-	double *pAvg24, *pStd24;
 	double *pPeriod;
 	double *pNextP;
 	int64 *pMarketID;

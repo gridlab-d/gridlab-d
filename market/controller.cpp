@@ -38,6 +38,8 @@ controller::controller(MODULE *module){
 			PT_char32, "total", PADDR(total), PT_DESCRIPTION, "the uncontrolled load (if any)",
 			PT_object, "market", PADDR(pMarket), PT_DESCRIPTION, "the market to bid into",
 			PT_char32, "state", PADDR(state), PT_DESCRIPTION, "the state property of the controlled load",
+			PT_char32, "avg_target", PADDR(avg_target),
+			PT_char32, "std_target", PADDR(std_target),
 			PT_double, "bid_price", PADDR(last_p), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid price",
 			PT_double, "bid_quant", PADDR(last_q), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the bid quantity",
 			PT_double, "set_temp", PADDR(set_temp), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the reset value",
@@ -49,6 +51,8 @@ controller::controller(MODULE *module){
 
 int controller::create(){
 	memset(this, 0, sizeof(controller));
+	sprintf(avg_target, "avg24");
+	sprintf(std_target, "std24");
 	return 1;
 }
 
@@ -126,7 +130,7 @@ void controller::fetch(double **prop, char *name, OBJECT *parent){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		sprintf(tname, "controller:%i", hdr->id);
-		GL_THROW("%s: controller unable to find %s", namestr, name);
+		throw("%s: controller unable to find %s", namestr, name);
 	}
 }
 
@@ -169,11 +173,14 @@ int controller::init(OBJECT *parent){
 	if(load[0] == 0){
 		GL_THROW("controller: %i, load property not specified", hdr->id);
 	}
+
 	fetch(&pMonitor, target, parent);
 	fetch(&pSetpoint, setpoint, parent);
 	fetch(&pDemand, demand, parent);
 	fetch(&pTotal, total, parent);
 	fetch(&pLoad, load, parent);
+	fetch(&pAvg, avg_target, pMarket);
+	fetch(&pStd, std_target, pMarket);
 
 	if(dir == 0){
 		double high = kT_H * Tmax;
@@ -252,7 +259,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		} else if(*pMonitor > max){
 			bid = 0.0;
 		} else {
-			bid = market->avg24; // override due to lack of "real" curve
+			bid = *pAvg; // override due to lack of "real" curve
 		}
 	}
 
@@ -266,11 +273,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	}
 
 	if(bid < 0.0)
-		bid = market->avg24 + (*pMonitor - setpoint0) * (k_T * market->std24) / fabs(T_lim - setpoint0);
+		bid = *pAvg + (*pMonitor - setpoint0) * (k_T * *pStd) / fabs(T_lim - setpoint0);
 
 	// bid the response part of the load
 	double residual = *pTotal;
-	int bid_id = (lastbid_id == market->market_id ? lastbid_id : -1);
+	int bid_id = (KEY)(lastbid_id == market->market_id ? lastbid_id : -1);
 	// override
 	//bid_id = -1;
 	if(bid > 0.0 && *pDemand > 0){
@@ -314,7 +321,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 
 	if(market->market_id != lastmkt_id){
 		lastmkt_id = market->market_id;
-		if(market->avg24 == 0.0 || market->std24 == 0.0 || setpoint0 == 0.0){
+		if(*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0){
 			return TS_NEVER; /* not enough input data */
 		}
 		// update using last price
@@ -329,7 +336,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 				set_temp = min;
 			}
 		} else {
-			set_temp = setpoint0 + (market->next.price - market->avg24) * fabs(T_lim - setpoint0) / (k_T * market->std24);
+			set_temp = setpoint0 + (market->next.price - *pAvg) * fabs(T_lim - setpoint0) / (k_T * *pStd);
 			may_run = 1;
 		}
 
