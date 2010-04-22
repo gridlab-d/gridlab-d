@@ -24,6 +24,7 @@ public:
 	double humidity;
 	double solar_dir;
 	double solar_diff;
+	double solar_global;
 	double wind_speed;
 	double rainfall;
 	double snowdepth;

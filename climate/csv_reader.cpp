@@ -339,7 +339,7 @@ int csv_reader::read_line(char *line){
 	return 1;
 }
 
-TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *wind, double *rain, double *snow){
+TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *wind, double *rain, double *snow){
 	DATETIME now, then;
 //	TIMESTAMP until;
 	int next_year = 0;
@@ -382,6 +382,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			*humid = samples[index]->humidity;
 			*direct = samples[index]->solar_dir;
 			*diffuse = samples[index]->solar_diff;
+			*global = samples[index]->solar_global;
 			*wind = samples[index]->wind_speed;
 			*rain = samples[index]->rainfall;
 			*snow = samples[index]->snowdepth;
@@ -390,6 +391,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			*humid = samples[sample_ct - 1]->humidity;
 			*direct = samples[sample_ct - 1]->solar_dir;
 			*diffuse = samples[sample_ct - 1]->solar_diff;
+			*global = samples[sample_ct - 1]->solar_global;
 			*wind = samples[sample_ct - 1]->wind_speed;
 			*rain = samples[sample_ct - 1]->rainfall;
 			*snow = samples[sample_ct - 1]->snowdepth;
@@ -444,6 +446,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 	*humid = samples[index]->humidity;
 	*direct = samples[index]->solar_dir;
 	*diffuse = samples[index]->solar_diff;
+	*global = samples[index]->solar_global;
 	*wind = samples[index]->wind_speed;
 	*rain = samples[index]->rainfall;
 	*snow = samples[index]->snowdepth;

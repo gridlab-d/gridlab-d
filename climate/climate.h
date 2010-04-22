@@ -42,6 +42,7 @@ typedef struct s_tmy {
 	double rh; // %rh
 	double dnr;
 	double dhr;
+	double ghr;
 	double solar[CP_LAST]; // W/sf
 	double solar_raw;
 	double windspeed;
@@ -119,11 +120,11 @@ public:
 	 * @param hour - hour of the observation
 	 * @param wind Wind speed (optional)
 	 */
-	int read_data(double *dnr, double *dhr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind=0,double *precip=0, double *snowDepth=0);
+	int read_data(double *dnr, double *dhr, double *ghr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind=0,double *precip=0, double *snowDepth=0);
 
 	/** obtain records **/
 
-	double calc_solar(COMPASS_PTS cpt, short doy, double lat, double sol_time, double dnr, double dhr,double vert_angle);
+	double calc_solar(COMPASS_PTS cpt, short doy, double lat, double sol_time, double dnr, double dhr, double ghr, double gnd_ref, double vert_angle);
 
 };
 
@@ -140,12 +141,14 @@ public:
 	double solar_flux[CP_LAST]; ///< Solar flux array (W/sf) Elements are in order: [S, SE, SW, E, W, NE, NW, N, H]
 	double solar_direct;
 	double solar_diffuse;
+	double solar_global;
 	double solar_raw;
 	double wind_speed; ///< wind speed (m/s)
 	double wind_dir; ///< wind direction (0-360)
 	double wind_gust; ///< wind gusts (m/s)
 	double rainfall; // in/h
 	double snowdepth; // in
+	double ground_reflectivity; // %
 	struct {
 		double low;
 		double low_day;

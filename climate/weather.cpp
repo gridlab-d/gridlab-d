@@ -23,6 +23,7 @@ weather::weather(MODULE *module){
 			PT_double,"humidity[%]",PADDR(humidity),
 			PT_double,"solar_dir[W/sf]",PADDR(solar_dir),
 			PT_double,"solar_diff[W/sf]",PADDR(solar_diff),
+			PT_double,"solar_global[W/sf]",PADDR(solar_global),
 			PT_double,"wind_speed[mph]", PADDR(wind_speed),
 			PT_double,"rainfall[in/h]",PADDR(rainfall),
 			PT_double,"snowdepth[in]",PADDR(snowdepth),

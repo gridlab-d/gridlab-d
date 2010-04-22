@@ -66,7 +66,7 @@ public:
 	CSVSTATUS status;
 
 	int open(const char *file);
-	TIMESTAMP get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *wind, double *rain, double *snow);
+	TIMESTAMP get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *wind, double *rain, double *snow);
 };
 #endif
 

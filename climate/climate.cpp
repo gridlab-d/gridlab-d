@@ -104,17 +104,18 @@ int tmy2_reader::header_info(char* city, char* state, int* degrees, int* minutes
 	@param hour hour of day
 */
 
-int tmy2_reader::read_data(double *dnr, double *dhr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind, double *precip, double *snowDepth){
-	int tmp_dnr, tmp_dhr, tmp_tdb, tmp_rh, tmp_ws, tmp_precip, tmp_sf;
+int tmy2_reader::read_data(double *dnr, double *dhr, double *ghr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind, double *precip, double *snowDepth){
+	int tmp_dnr, tmp_dhr, tmp_tdb, tmp_rh, tmp_ws, tmp_precip, tmp_sf, tmp_ghr;
 	//sscanf(buf, "%*2s%2d%2d%2d%*14s%4d%*2s%4d%*40s%4d%8*s%3d%*s",month,day,hour,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh);
 	int tmh, tday, thr;
 	if(month == NULL) month = &tmh;
 	if(day == NULL) day = &tday;
 	if(hour == NULL) hour = &thr;
-	sscanf(buf, "%*2s%2d%2d%2d%*14s%4d%*2s%4d%*34s%4d%8*s%3d%*13s%3d%*25s%3d%*7s%3d",month,day,hour,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh, &tmp_ws,&tmp_precip,&tmp_sf);
-				/* 3__5__7__9___23_27__29_33___67_71_79__82___95_98_ */
+	sscanf(buf, "%*2s%2d%2d%2d%*8s%4d%*2s%4d%*2s%4d%*34s%4d%8*s%3d%*13s%3d%*25s%3d%*7s%3d",month,day,hour,&tmp_ghr,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh, &tmp_ws,&tmp_precip,&tmp_sf);
+				/* 3__5__7__9___17_20_23_27__29_33___67_71_79__82___95_98_ */
 	if(dnr) *dnr = tmp_dnr;
 	if(dhr) *dhr = tmp_dhr;
+	if(ghr) *ghr = tmp_ghr;
 	if(tdb)
 	{
 		*tdb = ((double)tmp_tdb)/10.0;
@@ -143,15 +144,19 @@ int tmy2_reader::read_data(double *dnr, double *dhr, double *tdb, double *rh, in
 	@param sol_time the solar time of day
 	@param dnr Direct Normal Radiation
 	@param dhr Diffuse Horizontal Radiation
+	@param ghr Global Horizontal Radiation
+	@param gnd_ref Ground Reflectivity
 	@param vert_angle the angle of the surface relative to the horizon (Default is 90 degrees)
 */
-double tmy2_reader::calc_solar(COMPASS_PTS cpt, short doy, double lat, double sol_time, double dnr, double dhr,double vert_angle = 90)
+double tmy2_reader::calc_solar(COMPASS_PTS cpt, short doy, double lat, double sol_time, double dnr, double dhr, double ghr, double gnd_ref, double vert_angle = 90)
 {
 	SolarAngles *sa = new SolarAngles();
 	double surface_angle = surface_angles[cpt];
 	double cos_incident = sa->cos_incident(lat,RAD(vert_angle),RAD(surface_angle),sol_time,doy);
 
-	double solar = ((double)dnr * cos_incident + dhr);
+	//double solar = (dnr * cos_incident + dhr/2 + ghr * gnd_ref);
+	double solar = dnr * cos_incident + dhr;
+
 	if (peak_solar==0 || solar>peak_solar) peak_solar = solar;
 	return solar;
 }
@@ -210,6 +215,7 @@ climate::climate(MODULE *module)
 			PT_double,"solar_west",PADDR(solar_flux[CP_W]),
 			PT_double,"solar_northwest",PADDR(solar_flux[CP_NW]),
 			PT_double,"solar_raw[W/sf]",PADDR(solar_raw),
+			PT_double,"ground_reflectivity[%]",PADDR(ground_reflectivity),
 			PT_object,"reader",PADDR(reader),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(climate));
@@ -220,6 +226,7 @@ climate::climate(MODULE *module)
 		humidity = 0.75;
 		rainfall = 0.0;
 		snowdepth = 0.0;
+		ground_reflectivity = 0.3;
 		//solar_flux = malloc(8 * sizeof(double));
 		solar_flux[0] = solar_flux[1] = solar_flux[2] = solar_flux[3] = solar_flux[4] = solar_flux[5] = solar_flux[6] = solar_flux[7] = solar_flux[8] = 0.0; // W/sf normal
 		//solar_flux_S = solar_flux_SE = solar_flux_SW = solar_flux_E = solar_flux_W = solar_flux_NE = solar_flux_NW = solar_flux_N = 0.0; // W/sf normal
@@ -301,7 +308,7 @@ int climate::init(OBJECT *parent)
 	}
 
 	int month, day, hour;//, year;
-	double dnr,dhr, wspeed,precip,snowdepth;
+	double dnr,dhr,ghr,wspeed,precip,snowdepth;
 	//char cty[50];
 	//char st[3];
 	int lat_deg,lat_min,long_deg,long_min;
@@ -314,7 +321,7 @@ int climate::init(OBJECT *parent)
 	while (line<8760 && file.next())
 	{
 
-		file.read_data(&dnr,&dhr,&temperature,&humidity,&month,&day,&hour,&wspeed,&precip,&snowdepth);
+		file.read_data(&dnr,&dhr,&ghr,&temperature,&humidity,&month,&day,&hour,&wspeed,&precip,&snowdepth);
 
 		int doy = sa->day_of_yr(month,day);
 		int hoy = (doy - 1) * 24 + (hour-1);
@@ -325,6 +332,10 @@ int climate::init(OBJECT *parent)
 				return 0;
 			}
 			if(0 == gl_convert("W/m^2", "W/sf", &(dhr))){
+				gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
+				return 0;
+			}
+			if(0 == gl_convert("W/m^2", "W/sf", &(ghr))){
 				gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
 				return 0;
 			}
@@ -339,6 +350,7 @@ int climate::init(OBJECT *parent)
 			tmy[hoy].rh = humidity;
 			tmy[hoy].dnr = dnr;
 			tmy[hoy].dhr = dhr;
+			tmy[hoy].ghr = ghr;
 			tmy[hoy].rainfall = precip;
 			tmy[hoy].snowdepth = snowdepth;
 			tmy[hoy].solar_raw = dnr;
@@ -348,9 +360,9 @@ int climate::init(OBJECT *parent)
 
 			for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				if(c_point == CP_H)
-					sol_rad = file.calc_solar(CP_E,doy,RAD(degrees),sol_time,dnr,dhr,0.0);//(double)dnr * cos_incident + dhr;
+					sol_rad = file.calc_solar(CP_E,doy,RAD(degrees),sol_time,dnr,dhr,ghr,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
 				else
-					sol_rad = file.calc_solar(c_point,doy,RAD(degrees),sol_time,dnr,dhr);//(double)dnr * cos_incident + dhr;
+					sol_rad = file.calc_solar(c_point,doy,RAD(degrees),sol_time,dnr,dhr,ghr,ground_reflectivity);//(double)dnr * cos_incident + dhr;
 				/* TMY2 solar radiation data is in Watt-hours per square meter. */
 				tmy[hoy].solar[c_point] = sol_rad;
 
@@ -383,7 +395,7 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 {
 	if(t0 > TS_ZERO && reader_type == RT_CSV){
 		csv_reader *cr = OBJECTDATA(reader,csv_reader);
-		return cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &wind_speed, &rainfall, &snowdepth);
+		return cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &wind_speed, &rainfall, &snowdepth);
 	}
 	if (t0>TS_ZERO && tmy!=NULL)
 	{
@@ -403,6 +415,7 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 				humidity = tmy[hoy].rh;
 				solar_direct = tmy[hoy].dnr;
 				solar_diffuse = tmy[hoy].dhr;
+				solar_global = tmy[hoy].ghr;
 				solar_raw = tmy[hoy].solar_raw;
 				this->wind_speed = tmy[hoy].windspeed;
 				this->rainfall = tmy[hoy].rainfall;
@@ -420,6 +433,7 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 				humidity = gl_lerp(now, hoy0, tmy[hoy].rh, hoy1, tmy[hoy+1%8760].rh);
 				solar_direct = gl_lerp(now, hoy0, tmy[hoy].dnr, hoy1, tmy[hoy+1%8760].dnr);
 				solar_diffuse = gl_lerp(now, hoy0, tmy[hoy].dhr, hoy1, tmy[hoy+1%8760].dhr);
+				solar_global = gl_lerp(now, hoy0, tmy[hoy].ghr, hoy1, tmy[hoy+1%8760].ghr);
 				wind_speed = gl_lerp(now, hoy0, tmy[hoy].windspeed, hoy1, tmy[hoy+1%8760].windspeed);
 				rainfall = gl_lerp(now, hoy0, tmy[hoy].rainfall, hoy1, tmy[hoy+1%8760].rainfall);
 				snowdepth = gl_lerp(now, hoy0, tmy[hoy].snowdepth, hoy1, tmy[hoy+1%8760].snowdepth);
@@ -438,6 +452,7 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 				humidity = gl_qerp(now, hoy0, tmy[hoy].rh, hoy1, tmy[hoy+1%8760].rh, hoy2, tmy[hoy+2%8760].rh);
 				solar_direct = gl_qerp(now, hoy0, tmy[hoy].dnr, hoy1, tmy[hoy+1%8760].dnr, hoy2, tmy[hoy+2%8760].dnr);
 				solar_diffuse = gl_qerp(now, hoy0, tmy[hoy].dhr, hoy1, tmy[hoy+1%8760].dhr, hoy2, tmy[hoy+2%8760].dhr);
+				solar_global = gl_qerp(now, hoy0, tmy[hoy].ghr, hoy1, tmy[hoy+1%8760].ghr, hoy2, tmy[hoy+2%8760].ghr);
 				wind_speed = gl_qerp(now, hoy0, tmy[hoy].windspeed, hoy1, tmy[hoy+1%8760].windspeed, hoy2, tmy[hoy+2%8760].windspeed);
 				rainfall = gl_qerp(now, hoy0, tmy[hoy].rainfall, hoy1, tmy[hoy+1%8760].rainfall, hoy2, tmy[hoy+2%8760].rainfall);
 				snowdepth = gl_qerp(now, hoy0, tmy[hoy].snowdepth, hoy1, tmy[hoy+1%8760].snowdepth, hoy2, tmy[hoy+2%8760].snowdepth);
