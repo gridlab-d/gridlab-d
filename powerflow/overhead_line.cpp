@@ -68,7 +68,7 @@ int overhead_line::init(OBJECT *parent)
 	test_phases(config,'C');
 	test_phases(config,'N');
 	
-	if (!config->line_spacing || !gl_object_isa(config->line_spacing, "line_spacing"))
+	if ((!config->line_spacing || !gl_object_isa(config->line_spacing, "line_spacing")) && config->impedance11 == 0.0 && config->impedance22 == 0.0 && config->impedance33 == 0.0)
 		throw "invalid or missing line spacing on overhead line";
 		/*  TROUBLESHOOT
 		The configuration object for the overhead line is missing the line_spacing configuration
@@ -82,126 +82,163 @@ int overhead_line::init(OBJECT *parent)
 
 void overhead_line::recalc(void)
 {
-	double dab, dbc, dac, dan, dbn, dcn;
-	double gmr_a, gmr_b, gmr_c, gmr_n, res_a, res_b, res_c, res_n;
-	complex z_aa, z_ab, z_ac, z_an, z_bb, z_bc, z_bn, z_cc, z_cn, z_nn;
+	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 	double miles = length / 5280.0;
 
-	line_configuration *config = OBJECTDATA(configuration, line_configuration);
-
-	#define GMR(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
-		OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->geometric_mean_radius : 0.0)
-	#define RES(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
-		OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->resistance : 0.0)
-	#define DIST(ph1, ph2) (has_phase(PHASE_##ph1) && has_phase(PHASE_##ph2) && config->line_spacing ? \
-		OBJECTDATA(config->line_spacing, line_spacing)->distance_##ph1##to##ph2 : 0.0)
-
-	gmr_a = GMR(A);
-	gmr_b = GMR(B);
-	gmr_c = GMR(C);
-	gmr_n = GMR(N);
-	//res_a = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(A);
-	//res_b = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(B);
-	//res_c = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(C);
-	//res_n = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(N);
-	res_a = RES(A);
-	res_b = RES(B);
-	res_c = RES(C);
-	res_n = RES(N);
-	dab = DIST(A, B);
-	dbc = DIST(B, C);
-	dac = DIST(A, C);
-	dan = DIST(A, N);
-	dbn = DIST(B, N);
-	dcn = DIST(C, N);
-
-	#undef GMR
-	#undef RES
-	#undef DIST
-
-	if (has_phase(PHASE_A)) {
-		if (gmr_a > 0.0 && res_a > 0.0)
-			z_aa = complex(res_a + 0.0953, 0.12134 * (log(1.0 / gmr_a) + 7.93402));
-		else
-			z_aa = 0.0;
-		if (has_phase(PHASE_B) && dab > 0.0)
-			z_ab = complex(0.0953, 0.12134 * (log(1.0 / dab) + 7.93402));
-		else
-			z_ab = 0.0;
-		if (has_phase(PHASE_C) && dac > 0.0)
-			z_ac = complex(0.0953, 0.12134 * (log(1.0 / dac) + 7.93402));
-		else
-			z_ac = 0.0;
-		if (has_phase(PHASE_N) && dan > 0.0)
-			z_an = complex(0.0953, 0.12134 * (log(1.0 / dan) + 7.93402));
-		else
-			z_an = 0.0;
-	} else {
-		z_aa = z_ab = z_ac = z_an = 0.0;
-	}
-
-	if (has_phase(PHASE_B)) {
-		if (gmr_b > 0.0 && res_b > 0.0)
-			z_bb = complex(res_b + 0.0953, 0.12134 * (log(1.0 / gmr_b) + 7.93402));
-		else
-			z_bb = 0.0;
-		if (has_phase(PHASE_C) && dbc > 0.0)
-			z_bc = complex(0.0953, 0.12134 * (log(1.0 / dbc) + 7.93402));
-		else
-			z_bc = 0.0;
-		if (has_phase(PHASE_N) && dbn > 0.0)
-			z_bn = complex(0.0953, 0.12134 * (log(1.0 / dbn) + 7.93402));
-		else
-			z_bn = 0.0;
-	} else {
-		z_bb = z_bc = z_bn = 0.0;
-	}
-
-	if (has_phase(PHASE_C)) {
-		if (gmr_c > 0.0 && res_c > 0.0)
-			z_cc = complex(res_c + 0.0953, 0.12134 * (log(1.0 / gmr_c) + 7.93402));
-		else
-			z_cc = 0.0;
-		if (has_phase(PHASE_N) && dcn > 0.0)
-			z_cn = complex(0.0953, 0.12134 * (log(1.0 / dcn) + 7.93402));
-		else
-			z_cn = 0.0;
-	} else {
-		z_cc = z_cn = 0.0;
-	}
-
-	complex z_nn_inv = 0;
-	if (has_phase(PHASE_N) && gmr_n > 0.0 && res_n > 0.0){
-		z_nn = complex(res_n + 0.0953, 0.12134 * (log(1.0 / gmr_n) + 7.93402));
-		z_nn_inv = z_nn^(-1.0);
+	if (config->impedance11 != 0 || config->impedance22 != 0 || config->impedance33 != 0)
+	{
+		for (int i = 0; i < 3; i++) 
+		{
+			for (int j = 0; j < 3; j++) 
+			{
+				b_mat[i][j] = 0.0;
+			}
+		}
+		// User defined z-matrix - only assign parts of matrix if phase exists
+		if (has_phase(PHASE_A))
+		{
+			b_mat[0][0] = config->impedance11 * miles;
+			
+			if (has_phase(PHASE_B))
+				b_mat[0][1] = b_mat[1][0] = config->impedance12 * miles;
+			if (has_phase(PHASE_C))
+				b_mat[0][2] = b_mat[2][0] = config->impedance13 * miles;
+		}
+		if (has_phase(PHASE_B))
+		{
+			b_mat[1][1] = config->impedance22 * miles;
+			
+			if (has_phase(PHASE_C))
+				b_mat[1][2] = b_mat[2][1] = config->impedance23 * miles;
+		
+		}
+		if (has_phase(PHASE_C))
+			b_mat[2][2] = config->impedance33 * miles;
 	}
 	else
-		z_nn = 0.0;
+	{
+		// Use Kersting's equations to define the z-matrix
+		double dab, dbc, dac, dan, dbn, dcn;
+		double gmr_a, gmr_b, gmr_c, gmr_n, res_a, res_b, res_c, res_n;
+		complex z_aa, z_ab, z_ac, z_an, z_bb, z_bc, z_bn, z_cc, z_cn, z_nn;
+		
 
-	b_mat[0][0] = (z_aa - z_an * z_an * z_nn_inv) * miles;
-	b_mat[0][1] = (z_ab - z_an * z_bn * z_nn_inv) * miles;
-	b_mat[0][2] = (z_ac - z_an * z_cn * z_nn_inv) * miles;
-	b_mat[1][0] = (z_ab - z_bn * z_an * z_nn_inv) * miles;
-	b_mat[1][1] = (z_bb - z_bn * z_bn * z_nn_inv) * miles;
-	b_mat[1][2] = (z_bc - z_bn * z_cn * z_nn_inv) * miles;
-	b_mat[2][0] = (z_ac - z_cn * z_an * z_nn_inv) * miles;
-	b_mat[2][1] = (z_bc - z_cn * z_bn * z_nn_inv) * miles;
-	b_mat[2][2] = (z_cc - z_cn * z_cn * z_nn_inv) * miles;
+		#define GMR(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
+			OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->geometric_mean_radius : 0.0)
+		#define RES(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
+			OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->resistance : 0.0)
+		#define DIST(ph1, ph2) (has_phase(PHASE_##ph1) && has_phase(PHASE_##ph2) && config->line_spacing ? \
+			OBJECTDATA(config->line_spacing, line_spacing)->distance_##ph1##to##ph2 : 0.0)
 
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
+		gmr_a = GMR(A);
+		gmr_b = GMR(B);
+		gmr_c = GMR(C);
+		gmr_n = GMR(N);
+		//res_a = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(A);
+		//res_b = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(B);
+		//res_c = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(C);
+		//res_n = (status==IMPEDANCE_CHANGED && (affected_phases&PHASE_A)) ? resistance/miles : RES(N);
+		res_a = RES(A);
+		res_b = RES(B);
+		res_c = RES(C);
+		res_n = RES(N);
+		dab = DIST(A, B);
+		dbc = DIST(B, C);
+		dac = DIST(A, C);
+		dan = DIST(A, N);
+		dbn = DIST(B, N);
+		dcn = DIST(C, N);
+
+		#undef GMR
+		#undef RES
+		#undef DIST
+
+		if (has_phase(PHASE_A)) {
+			if (gmr_a > 0.0 && res_a > 0.0)
+				z_aa = complex(res_a + 0.0953, 0.12134 * (log(1.0 / gmr_a) + 7.93402));
+			else
+				z_aa = 0.0;
+			if (has_phase(PHASE_B) && dab > 0.0)
+				z_ab = complex(0.0953, 0.12134 * (log(1.0 / dab) + 7.93402));
+			else
+				z_ab = 0.0;
+			if (has_phase(PHASE_C) && dac > 0.0)
+				z_ac = complex(0.0953, 0.12134 * (log(1.0 / dac) + 7.93402));
+			else
+				z_ac = 0.0;
+			if (has_phase(PHASE_N) && dan > 0.0)
+				z_an = complex(0.0953, 0.12134 * (log(1.0 / dan) + 7.93402));
+			else
+				z_an = 0.0;
+		} else {
+			z_aa = z_ab = z_ac = z_an = 0.0;
+		}
+
+		if (has_phase(PHASE_B)) {
+			if (gmr_b > 0.0 && res_b > 0.0)
+				z_bb = complex(res_b + 0.0953, 0.12134 * (log(1.0 / gmr_b) + 7.93402));
+			else
+				z_bb = 0.0;
+			if (has_phase(PHASE_C) && dbc > 0.0)
+				z_bc = complex(0.0953, 0.12134 * (log(1.0 / dbc) + 7.93402));
+			else
+				z_bc = 0.0;
+			if (has_phase(PHASE_N) && dbn > 0.0)
+				z_bn = complex(0.0953, 0.12134 * (log(1.0 / dbn) + 7.93402));
+			else
+				z_bn = 0.0;
+		} else {
+			z_bb = z_bc = z_bn = 0.0;
+		}
+
+		if (has_phase(PHASE_C)) {
+			if (gmr_c > 0.0 && res_c > 0.0)
+				z_cc = complex(res_c + 0.0953, 0.12134 * (log(1.0 / gmr_c) + 7.93402));
+			else
+				z_cc = 0.0;
+			if (has_phase(PHASE_N) && dcn > 0.0)
+				z_cn = complex(0.0953, 0.12134 * (log(1.0 / dcn) + 7.93402));
+			else
+				z_cn = 0.0;
+		} else {
+			z_cc = z_cn = 0.0;
+		}
+
+		complex z_nn_inv = 0;
+		if (has_phase(PHASE_N) && gmr_n > 0.0 && res_n > 0.0){
+			z_nn = complex(res_n + 0.0953, 0.12134 * (log(1.0 / gmr_n) + 7.93402));
+			z_nn_inv = z_nn^(-1.0);
+		}
+		else
+			z_nn = 0.0;
+
+		b_mat[0][0] = (z_aa - z_an * z_an * z_nn_inv) * miles;
+		b_mat[0][1] = (z_ab - z_an * z_bn * z_nn_inv) * miles;
+		b_mat[0][2] = (z_ac - z_an * z_cn * z_nn_inv) * miles;
+		b_mat[1][0] = (z_ab - z_bn * z_an * z_nn_inv) * miles;
+		b_mat[1][1] = (z_bb - z_bn * z_bn * z_nn_inv) * miles;
+		b_mat[1][2] = (z_bc - z_bn * z_cn * z_nn_inv) * miles;
+		b_mat[2][0] = (z_ac - z_cn * z_an * z_nn_inv) * miles;
+		b_mat[2][1] = (z_bc - z_cn * z_bn * z_nn_inv) * miles;
+		b_mat[2][2] = (z_cc - z_cn * z_cn * z_nn_inv) * miles;
+	}
+
+	// This part is the same in both methods.
+	for (int i = 0; i < 3; i++) 
+	{
+		for (int j = 0; j < 3; j++) 
+		{
 			a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
 			c_mat[i][j] = 0.0;
 			B_mat[i][j] = b_mat[i][j];
 		}
 	}
 
-
-	OBJECT *obj = GETOBJECT(this);
-
 #ifdef _TESTING
 	if (show_matrix_values)
 	{
+		OBJECT *obj = GETOBJECT(this);
+
 		gl_testmsg("overhead_line: %d a matrix",obj->id);
 		print_matrix(a_mat);
 
@@ -242,23 +279,55 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 
 	if (ph=='A')
 	{
-		condCheck = (config->phaseA_conductor && !gl_object_isa(config->phaseA_conductor, "overhead_line_conductor"));
-		condNotPres = ((!config->phaseA_conductor) && has_phase(PHASE_A));
+		if (config->impedance11 == 0.0)
+		{
+			condCheck = (config->phaseA_conductor && !gl_object_isa(config->phaseA_conductor, "overhead_line_conductor"));
+			condNotPres = ((!config->phaseA_conductor) && has_phase(PHASE_A));
+		}
+		else
+		{
+			condCheck = false;
+			condNotPres = false;
+		}
 	}
 	else if (ph=='B')
 	{
-		condCheck = (config->phaseB_conductor && !gl_object_isa(config->phaseB_conductor, "overhead_line_conductor"));
-		condNotPres = ((!config->phaseB_conductor) && has_phase(PHASE_B));
+		if (config->impedance22 == 0.0)
+		{
+			condCheck = (config->phaseB_conductor && !gl_object_isa(config->phaseB_conductor, "overhead_line_conductor"));
+			condNotPres = ((!config->phaseB_conductor) && has_phase(PHASE_B));
+		}
+		else
+		{
+			condCheck = false;
+			condNotPres = false;
+		}
 	}
 	else if (ph=='C')
 	{
-		condCheck = (config->phaseC_conductor && !gl_object_isa(config->phaseC_conductor, "overhead_line_conductor"));
-		condNotPres = ((!config->phaseC_conductor) && has_phase(PHASE_C));
+		if (config->impedance33 == 0.0)
+		{
+			condCheck = (config->phaseC_conductor && !gl_object_isa(config->phaseC_conductor, "overhead_line_conductor"));
+			condNotPres = ((!config->phaseC_conductor) && has_phase(PHASE_C));
+		}
+		else
+		{
+			condCheck = false;
+			condNotPres = false;
+		}
 	}
 	else if (ph=='N')
+	{
+		if (config->impedance11 == 0.0 && config->impedance22 == 0.0 && config->impedance33 == 0.0)
 		{
-		condCheck = (config->phaseN_conductor && !gl_object_isa(config->phaseN_conductor, "overhead_line_conductor"));
-		condNotPres = ((!config->phaseN_conductor) && has_phase(PHASE_N));
+			condCheck = (config->phaseN_conductor && !gl_object_isa(config->phaseN_conductor, "overhead_line_conductor"));
+			condNotPres = ((!config->phaseN_conductor) && has_phase(PHASE_N));
+		}
+		else
+		{
+			condCheck = false;
+			condNotPres = false;
+		}
 	}
 	//Nothing else down here.  Should never get anything besides ABCN to check
 

@@ -38,6 +38,12 @@ line_configuration::line_configuration(MODULE *mod) : powerflow_library(mod)
 			PT_object, "conductor_C",PADDR(phaseC_conductor),
 			PT_object, "conductor_N",PADDR(phaseN_conductor),
 			PT_object, "spacing",PADDR(line_spacing),
+			PT_complex, "z11[Ohm/mile]",PADDR(impedance11),
+			PT_complex, "z12[Ohm/mile]",PADDR(impedance12),
+			PT_complex, "z13[Ohm/mile]",PADDR(impedance13),
+			PT_complex, "z22[Ohm/mile]",PADDR(impedance22),
+			PT_complex, "z23[Ohm/mile]",PADDR(impedance23),
+			PT_complex, "z33[Ohm/mile]",PADDR(impedance33),
             NULL) < 1) GL_THROW("unable to publish line_configuration properties in %s",__FILE__);
     }
 }
@@ -50,6 +56,7 @@ int line_configuration::create(void)
 	phaseC_conductor = NULL;
 	phaseN_conductor = NULL;
 	line_spacing = NULL;
+	impedance11 = impedance12 = impedance13 = impedance22 = impedance23 = impedance33 = complex(0,0);
 
 	return 1;
 }

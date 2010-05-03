@@ -2143,7 +2143,42 @@ EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 	return 0;
 }
 
+// Commit function
+EXPORT int commit_node(OBJECT *obj)
+{
+	node *pNode = OBJECTDATA(obj,node);
+	try {
+		// This zeroes out all of the unused phases at each node in the FBS method
+		if (solver_method==SM_FBS)
+		{
+			if (pNode->has_phase(PHASE_A)) {
+			//leave it
+			}
+			else
+				pNode->voltage[0] = complex(0,0);
 
+			if (pNode->has_phase(PHASE_B)) {
+				//leave it
+			}
+			else
+				pNode->voltage[1] = complex(0,0);
+
+			if (pNode->has_phase(PHASE_C)) {
+				//leave it
+			}
+			else
+				pNode->voltage[2] = complex(0,0);
+			
+		}
+		return 1;
+	}
+	catch (char *msg)
+	{
+		GL_THROW("%s (node:%d): %s", pNode->get_name(), pNode->get_id(), msg);
+		return 0; 
+	}
+
+}
 
 /**
 * Object initialization is called once after all object have been created
