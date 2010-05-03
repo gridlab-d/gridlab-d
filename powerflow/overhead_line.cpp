@@ -100,16 +100,25 @@ void overhead_line::recalc(void)
 			b_mat[0][0] = config->impedance11 * miles;
 			
 			if (has_phase(PHASE_B))
-				b_mat[0][1] = b_mat[1][0] = config->impedance12 * miles;
+			{
+				b_mat[0][1] = config->impedance12 * miles;
+				b_mat[1][0] = config->impedance21 * miles;
+			}
 			if (has_phase(PHASE_C))
-				b_mat[0][2] = b_mat[2][0] = config->impedance13 * miles;
+			{
+				b_mat[0][2] = config->impedance13 * miles;
+				b_mat[2][0] = config->impedance31 * miles;
+			}
 		}
 		if (has_phase(PHASE_B))
 		{
 			b_mat[1][1] = config->impedance22 * miles;
 			
 			if (has_phase(PHASE_C))
-				b_mat[1][2] = b_mat[2][1] = config->impedance23 * miles;
+			{
+				b_mat[1][2] = config->impedance23 * miles;
+				b_mat[2][1] = config->impedance32 * miles;
+			}
 		
 		}
 		if (has_phase(PHASE_C))

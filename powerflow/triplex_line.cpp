@@ -66,96 +66,170 @@ int triplex_line::init(OBJECT *parent)
 }
 void triplex_line::recalc(void)
 {
-	// create local variables that will be used to calculate matrices.
-	double dcond,ins_thick,D12,D13,D23;
-	double r1,r2,rn,gmr1,gmr2,gmrn;
-	complex zp11,zp22,zp33,zp12,zp13,zp23;
-	complex zs[3][3];
-
-	// Gather data stored in configuration objects
 	triplex_line_configuration *line_config = OBJECTDATA(configuration,triplex_line_configuration);
-	dcond = line_config->diameter;
-	ins_thick = line_config->ins_thickness;
-
-	triplex_line_conductor *l1 = OBJECTDATA(line_config->phaseA_conductor,triplex_line_conductor);
-	triplex_line_conductor *l2 = OBJECTDATA(line_config->phaseB_conductor,triplex_line_conductor);
-	triplex_line_conductor *lN = OBJECTDATA(line_config->phaseC_conductor,triplex_line_conductor);
-
-	if (l1 == NULL || l2 == NULL || lN == NULL)
-	{
-		GL_THROW("triplex_line_configuration:%d (%s) is missing a conductor specification.",line_config->get_id(),line_config->get_name());
-		/* TROUBLESHOOT
-		At this point, triplex lines are assumed to have three conductor values: conductor_1, conductor_2,
-		and conductor_N.  If any of these are missing, the triplex line cannot be specified.  Please
-		verify that your triplex_line_configuration object contains all of the neccessary conductor values.
-		*/
-	}
-
-	r1 = l1->resistance;
-	r2 = l2->resistance;
-	rn = lN->resistance;
-	gmr1 = l1->geometric_mean_radius;
-	gmr2 = l2->geometric_mean_radius;
-	gmrn = lN->geometric_mean_radius;
-
-	// Perform calculations and fill in values in the matrices
-	D12 = (dcond + 2 * ins_thick)/12;
-	D13 = (dcond + ins_thick)/12;
-	D23 = D13;
-
-	zp11 = complex(r1,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmr1) + 7.93402);
-	zp22 = complex(r2,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmr2) + 7.93402);
-	zp33 = complex(rn,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmrn) + 7.93402);
-	zp12 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D12) + 7.93402);
-	zp13 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D13) + 7.93402);
-	zp23 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D23) + 7.93402);
 	
-	if (solver_method==SM_FBS)
+	if (line_config->impedance11 != 0.0 || line_config->impedance22 != 0.0)
 	{
-		zs[0][0] = zp11-((zp13*zp13)/zp33);
-		zs[0][1] = zp12-((zp13*zp23)/zp33);
-		zs[1][0] = -(zp12-((zp13*zp23)/zp33));
-		zs[1][1] = -(zp22-((zp23*zp23)/zp33));
-		zs[0][2] = complex(0,0);
-		zs[1][2] = complex(0,0);
-		zs[2][2] = complex(0,0);
-		zs[2][1] = complex(0,0);
-		zs[2][0] = complex(0,0);
-	}
-	else if (solver_method==SM_GS)
-	{
-		zs[0][0] = zp11;
-		zs[0][1] = zp12;
-		zs[0][2] = zp13;
-		zs[1][0] = zp12;
-		zs[1][1] = zp22;
-		zs[1][2] = zp23;
-		zs[2][0] = zp13;
-		zs[2][1] = zp23;
-		zs[2][2] = zp33;
+		gl_warning("Using a 2x2 z-matrix, instead of geometric values, is an under-determined system. Ground and/or neutral currents will be incorrect.");
+	
+		complex miles = complex(length/5280,0);
+		if (solver_method == SM_FBS)
+		{
+			b_mat[0][0] = B_mat[0][0] = line_config->impedance11 * miles;
+			b_mat[0][1] = B_mat[0][1] = line_config->impedance12 * miles;
+			b_mat[1][0] = B_mat[1][0] = line_config->impedance21 * miles;
+			b_mat[1][1] = B_mat[1][1] = line_config->impedance22 * miles; 
+			b_mat[2][0] = B_mat[2][0] = complex(0,0);
+			b_mat[2][1] = B_mat[2][1] = complex(0,0);
+			b_mat[2][2] = B_mat[2][2] = complex(0,0);
+			b_mat[0][2] = B_mat[0][2] = complex(0,0);
+			b_mat[1][2] = B_mat[1][2] = complex(0,0);
 
-	}
-	else if (solver_method==SM_NR)
-	{
-		//Inverted
-		complex tempval = (-zp11*zp33*zp22+zp11*zp23*zp23+zp13*zp13*zp22+zp12*zp12*zp33-complex(2.0,0)*zp12*zp13*zp23);
+			tn[0] = 0;
+			tn[1] = 0;
+			tn[2] = 0;
+		}
+		else if (solver_method == SM_NR)
+		{
+			complex temp_value = complex(1,0) / (line_config->impedance11 * line_config->impedance22 - line_config->impedance12 * line_config->impedance21 );
 
-		zs[0][0] = -(zp22*zp33-zp23*zp23)/tempval;
-		zs[0][1] = (-zp12*zp33+zp13*zp23)/tempval;
-		zs[1][0] = -(-zp12*zp33+zp13*zp23)/tempval;
-		zs[1][1] = -(-zp11*zp33+zp13*zp13)/tempval;
+			b_mat[0][0] = B_mat[0][0] = complex(1,0) / miles * line_config->impedance22 * temp_value;
+			b_mat[0][1] = B_mat[0][1] = complex(-1,0) / miles * line_config->impedance12 * temp_value;
+			b_mat[1][0] = B_mat[1][0] = complex(-1,0) / miles * line_config->impedance21 * temp_value;
+			b_mat[1][1] = B_mat[1][1] = complex(1,0) / miles * line_config->impedance11 * temp_value;
+			b_mat[2][0] = B_mat[2][0] = complex(0,0);
+			b_mat[2][1] = B_mat[2][1] = complex(0,0);
+			b_mat[2][2] = B_mat[2][2] = complex(0,0);
+			b_mat[0][2] = B_mat[0][2] = complex(0,0);
+			b_mat[1][2] = B_mat[1][2] = complex(0,0);
 
-		zs[0][2] = 0.0;
-		zs[1][2] = 0.0;
-		zs[2][2] = 0.0;
-		zs[2][1] = 0.0;
-		zs[2][0] = 0.0;
+			tn[0] = 0;
+			tn[1] = 0;
+			tn[2] = 0;
+		}
+		else
+			GL_THROW("Only NR and FBS support z-matrix components.");
+
 	}
 	else
 	{
-		throw "unsupported solver method";
+		// create local variables that will be used to calculate matrices.
+		double dcond,ins_thick,D12,D13,D23;
+		double r1,r2,rn,gmr1,gmr2,gmrn;
+		complex zp11,zp22,zp33,zp12,zp13,zp23;
+		complex zs[3][3];
+
+		// Gather data stored in configuration objects
+		dcond = line_config->diameter;
+		ins_thick = line_config->ins_thickness;
+
+		triplex_line_conductor *l1 = OBJECTDATA(line_config->phaseA_conductor,triplex_line_conductor);
+		triplex_line_conductor *l2 = OBJECTDATA(line_config->phaseB_conductor,triplex_line_conductor);
+		triplex_line_conductor *lN = OBJECTDATA(line_config->phaseC_conductor,triplex_line_conductor);
+
+		if (l1 == NULL || l2 == NULL || lN == NULL)
+		{
+			GL_THROW("triplex_line_configuration:%d (%s) is missing a conductor specification.",line_config->get_id(),line_config->get_name());
+			/* TROUBLESHOOT
+			At this point, triplex lines are assumed to have three conductor values: conductor_1, conductor_2,
+			and conductor_N.  If any of these are missing, the triplex line cannot be specified.  Please
+			verify that your triplex_line_configuration object contains all of the neccessary conductor values.
+			*/
+		}
+
+		r1 = l1->resistance;
+		r2 = l2->resistance;
+		rn = lN->resistance;
+		gmr1 = l1->geometric_mean_radius;
+		gmr2 = l2->geometric_mean_radius;
+		gmrn = lN->geometric_mean_radius;
+
+		// Perform calculations and fill in values in the matrices
+		D12 = (dcond + 2 * ins_thick)/12;
+		D13 = (dcond + ins_thick)/12;
+		D23 = D13;
+
+		zp11 = complex(r1,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmr1) + 7.93402);
+		zp22 = complex(r2,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmr2) + 7.93402);
+		zp33 = complex(rn,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmrn) + 7.93402);
+		zp12 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D12) + 7.93402);
+		zp13 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D13) + 7.93402);
+		zp23 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D23) + 7.93402);
+		
+		if (solver_method==SM_FBS)
+		{
+			zs[0][0] = zp11-((zp13*zp13)/zp33);
+			zs[0][1] = zp12-((zp13*zp23)/zp33);
+			zs[1][0] = -(zp12-((zp13*zp23)/zp33));
+			zs[1][1] = -(zp22-((zp23*zp23)/zp33));
+			zs[0][2] = complex(0,0);
+			zs[1][2] = complex(0,0);
+			zs[2][2] = complex(0,0);
+			zs[2][1] = complex(0,0);
+			zs[2][0] = complex(0,0);
+		}
+		else if (solver_method==SM_GS)
+		{
+			zs[0][0] = zp11;
+			zs[0][1] = zp12;
+			zs[0][2] = zp13;
+			zs[1][0] = zp12;
+			zs[1][1] = zp22;
+			zs[1][2] = zp23;
+			zs[2][0] = zp13;
+			zs[2][1] = zp23;
+			zs[2][2] = zp33;
+
+		}
+		else if (solver_method==SM_NR)
+		{
+			//Inverted
+			complex tempval = (-zp11*zp33*zp22+zp11*zp23*zp23+zp13*zp13*zp22+zp12*zp12*zp33-complex(2.0,0)*zp12*zp13*zp23);
+
+			zs[0][0] = -(zp22*zp33-zp23*zp23)/tempval;
+			zs[0][1] = (-zp12*zp33+zp13*zp23)/tempval;
+			zs[1][0] = -(-zp12*zp33+zp13*zp23)/tempval;
+			zs[1][1] = -(-zp11*zp33+zp13*zp13)/tempval;
+
+			zs[0][2] = 0.0;
+			zs[1][2] = 0.0;
+			zs[2][2] = 0.0;
+			zs[2][1] = 0.0;
+			zs[2][0] = 0.0;
+		}
+		else
+		{
+			throw "unsupported solver method";
+		}
+
+		
+		
+		if (solver_method==SM_FBS) {
+			tn[0] = -zp13/zp33;
+			tn[1] = -zp23/zp33;
+			tn[2] = 0;
+
+			multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
+			multiply(length/5280.0,zs,B_mat);
+		}
+		else if (solver_method == SM_GS)
+		{
+			multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
+			multiply(length/5280.0,zs,B_mat);
+		}
+		else if (solver_method == SM_NR)
+		{
+			//Copied from SM_FBS - used for extra current flow (not used in any powerflow convergence calculations)
+			tn[0] = -zp13/zp33;
+			tn[1] = -zp23/zp33;
+			tn[2] = 0;
+
+			multiply(1/(length/5280.0),zs,b_mat); // Length comes in ft, convert to miles.
+			multiply(1/(length/5280.0),zs,B_mat); // We're in admittance form now, so multiply by 1/L.
+		}
 	}
 
+	// Same in all cases
 	a_mat[0][0] = complex(1,0);
 	a_mat[0][1] = complex(0,0);
 	a_mat[0][2] = complex(0,0);
@@ -195,31 +269,7 @@ void triplex_line::recalc(void)
 	A_mat[2][0] = complex(0,0);
 	A_mat[2][1] = complex(0,0);
 	A_mat[2][2] = complex(1,0);
-	
-	if (solver_method==SM_FBS) {
-		tn[0] = -zp13/zp33;
-		tn[1] = -zp23/zp33;
-		tn[2] = 0;
 
-		multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
-		multiply(length/5280.0,zs,B_mat);
-	}
-	else if (solver_method == SM_GS)
-	{
-		multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
-		multiply(length/5280.0,zs,B_mat);
-	}
-	else if (solver_method == SM_NR)
-	{
-		//Copied from SM_FBS - used for extra current flow (not used in any powerflow convergence calculations)
-		tn[0] = -zp13/zp33;
-		tn[1] = -zp23/zp33;
-		tn[2] = 0;
-
-		multiply(1/(length/5280.0),zs,b_mat); // Length comes in ft, convert to miles.
-		multiply(1/(length/5280.0),zs,B_mat); // We're in admittance form now, so multiply by 1/L.
-	}
-	
 	// print out matrices when testing.
 #ifdef _TESTING
 	if (show_matrix_values)

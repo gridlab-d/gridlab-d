@@ -36,6 +36,10 @@ triplex_line_configuration::triplex_line_configuration(MODULE *mod) : line_confi
 			PT_double, "insulation_thickness[in]", PADDR(ins_thickness),
 			PT_double, "diameter[in]",PADDR(diameter),
 			PT_object, "spacing",PADDR(line_spacing),
+			PT_complex, "z11[Ohm/mile]",PADDR(impedance11),
+			PT_complex, "z12[Ohm/mile]",PADDR(impedance12),
+			PT_complex, "z21[Ohm/mile]",PADDR(impedance21),
+			PT_complex, "z22[Ohm/mile]",PADDR(impedance22),
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }

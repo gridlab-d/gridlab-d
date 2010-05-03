@@ -20,8 +20,11 @@ public:
 	complex impedance11;	// Used when defining the z-bus matrix explicitely.
 	complex impedance12;	// For ABC phasing, 1-A, 2-B, 3-C; For triplex 1-ph1, 2-ph2, 3-0
 	complex impedance13;
+	complex impedance21;
 	complex impedance22;
 	complex impedance23;
+	complex impedance31;
+	complex impedance32;
 	complex impedance33;
 	
 	line_configuration(MODULE *mod);
