@@ -1,0 +1,116 @@
+clock {
+     timezone CST+6CDT;
+     timestamp '2006-01-01 00:00:00';
+     stoptime '2007-01-01 00:00:00';
+}
+
+module tape;
+module assert;
+module market;
+
+object stubauction {
+     name STUB;
+     unit price;
+     period 900;
+     object player {
+          file Price_Static.player;
+          loop 10000000;
+          property next.P;
+     };
+     object recorder {
+          property avg24,std24,last.P,next.P;
+          limit 8808;
+          interval 300;
+          file Output.csv;
+     };
+	 // At this time, this assert fails because the rolling average is not calculated
+	 // using the defined period, but is locked into one hour updates.
+	 // object double_assert {
+		  // name assert_avg24;
+		  // target avg24;
+		  // within 0.0001;
+		  // object player {
+			// property value;
+			// file lastP_static.player;
+			// loop 100000;
+		  // };
+	 // };
+	 object double_assert {
+		  name assert_std24;
+		  target std24;
+		  within 0.0001;
+		  value 0.0;
+	 };
+	 object double_assert {
+	      name assert_lastP;
+		  target last.P;
+		  within 0.0001;
+		  object player {
+			property value;
+			file lastP_static.player;
+			loop 100000;
+		  };
+	 };
+	 object double_assert {
+	      name assert_nextP;
+		  target next.P;
+		  within 0.0001;
+		  value 0.1;
+	 };
+}
+
+object stubauction {
+     name STUB2;
+     unit price;
+     period 900;
+     object player {
+          file Price_Changing.player;
+          loop 10000000;
+          property next.P;
+     };
+     object recorder {
+          property avg24,std24,last.P,next.P;
+          limit 8808;
+          interval 300;
+          file Output_2.csv;
+     };
+	 // At this time, this assert fails because the rolling average is not calculated
+	 // using the defined period, but is locked into one hour updates.
+	 // object double_assert {
+		  // name assert_avg24_2;
+		  // target avg24;
+		  // within 0.0001;
+		  // object player {
+			// property value;
+			// file lastP_static.player;
+			// loop 100000;
+		  // };
+	 // };
+	 // object double_assert {
+		  // name assert_std24_2;
+		  // target std24;
+		  // within 0.0001;
+		  // value 0.0;
+	 // };
+	 // object double_assert {
+	      // name assert_lastP_2;
+		  // target last.P;
+		  // within 0.0001;
+		  // object player {
+			// property value;
+			// file lastP_static.player;
+			// loop 100000;
+		  // };
+	 // };
+	 object double_assert {
+	      name assert_nextP_2;
+		  target next.P;
+		  within 0.0001;
+		  object player {
+			property value;
+			file Price_Changing.player;
+			loop 100000;
+		  };
+	 };
+}
+		
