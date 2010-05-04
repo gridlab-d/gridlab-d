@@ -203,7 +203,7 @@ int transformer::init(OBJECT *parent)
 				if (has_phase(PHASE_A))
 				{
 					//a_mat[0][0] = ( complex(nt,0) * (zc + zt)) / (zc - zt);
-					a_mat[0][0] = zc;
+					a_mat[0][0] = 0;
 					d_mat[0][0] = Izt / nt / nt;
 					A_mat[0][0] = complex(nt,0);//* (zc) / (zc + zt);
 					c_mat[0][0] = nt;
@@ -211,7 +211,7 @@ int transformer::init(OBJECT *parent)
 				if (has_phase(PHASE_B))
 				{
 					//a_mat[1][1] = ( complex(nt,0) * (zc + zt)) / (zc - zt);
-					a_mat[1][1] = zc;
+					a_mat[1][1] = 0;
 					d_mat[1][1] = Izt / nt / nt;
 					A_mat[1][1] = complex(nt,0);// * (zc) / (zc + zt);
 					c_mat[1][1] = nt;
@@ -219,7 +219,7 @@ int transformer::init(OBJECT *parent)
 				if (has_phase(PHASE_C))
 				{
 					//a_mat[2][2] = ( complex(nt,0) * (zc + zt)) / (zc - zt);
-					a_mat[2][2] = zc;
+					a_mat[2][2] = 0;
 					d_mat[2][2] = Izt / nt / nt;
 					A_mat[2][2] = complex(nt,0);//* (zc) / (zc + zt);
 					c_mat[2][2] = nt;
@@ -527,6 +527,7 @@ int transformer::init(OBJECT *parent)
 					d_mat[2][1] = complex(-1,0)/nt;
 
 					A_mat[0][2] = A_mat[1][2] = (zc / (zc + z0) ) * complex(1,0)/nt; 
+
 				}
 
 				b_mat[0][0] = (z0 / zc + complex(1,0))*(z1*nt) + z0/nt;
