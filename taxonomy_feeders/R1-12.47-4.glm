@@ -157,7 +157,7 @@
       phases ABCN;
       from R1-12-47-4_node_55;
       to R1-12-47-4_node_295;
-      current_limit 20;
+      current_limit 30;
       status CLOSED;
  }
 
@@ -364,7 +364,7 @@
       phases ABCN;
       from R1-12-47-4_node_111;
       to R1-12-47-4_node_227;
-      current_limit 15;
+      current_limit 25;
       status CLOSED;
  }
 
