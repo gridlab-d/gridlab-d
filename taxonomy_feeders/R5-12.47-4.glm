@@ -144,7 +144,7 @@
       phases ABCN;
       from R5-12-47-4_node_280;
       to R5-12-47-4_node_281;
-      current_limit 15;
+      current_limit 25;
       status CLOSED;
  }
 
@@ -279,7 +279,7 @@
       phases ABCN;
       from R5-12-47-4_node_8;
       to R5-12-47-4_node_579;
-      current_limit 100;
+      current_limit 150;
       status CLOSED;
  }
 
@@ -828,7 +828,7 @@
       phases ABCN;
       from R5-12-47-4_node_171;
       to R5-12-47-4_node_172;
-      current_limit 7;
+      current_limit 15;
       status CLOSED;
  }
 
@@ -1732,9 +1732,9 @@
       voltage_A 7200+0.0j;
       voltage_B -3600-6235j;
       voltage_C -3600+6235j;
-      constant_power_A 428670+0j;
-      constant_power_B 428670+0j;
-      constant_power_C 428670+0j;
+      constant_power_A 428670+50j;
+      constant_power_B 428670+50j;
+      constant_power_C 428670+50j;
       nominal_voltage 7200;
       load_class R;
  }

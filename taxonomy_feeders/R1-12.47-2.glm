@@ -1104,9 +1104,9 @@
       voltage_A 7200+0.0j;
       voltage_B -3600-6235j;
       voltage_C -3600+6235j;
-      constant_power_A 82333+0j;
-      constant_power_B 82333+0j;
-      constant_power_C 82334+0j;
+      constant_power_A 82333+50j;
+      constant_power_B 82333+50j;
+      constant_power_C 82334+50j;
       nominal_voltage 7200;
       load_class C;
  }

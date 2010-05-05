@@ -1160,7 +1160,7 @@
       voltage_C -3983.72+6900j;
       constant_power_A 0+0j;
       constant_power_B 2400+1900j;
-      constant_power_C 700+0j;
+      constant_power_C 700+50j;
       nominal_voltage 7967.43;
       load_class C;
  }
@@ -1248,7 +1248,7 @@
       voltage_A 7967.43+0.0j;
       voltage_B -3983.72-6900j;
       constant_power_A 1052+604j;
-      constant_power_B 14+0j;
+      constant_power_B 14+3j;
       nominal_voltage 7967.43;
       load_class C;
  }
@@ -1462,7 +1462,7 @@
       voltage_A 7967.43+0.0j;
       voltage_B -3983.72-6900j;
       constant_power_A 1034+579j;
-      constant_power_B 4+0j;
+      constant_power_B 4+1j;
       nominal_voltage 7967.43;
       load_class C;
  }
