@@ -34,7 +34,7 @@
  object regulator_configuration:1862 {
       name feeder_reg_cfg;
       Control OUTPUT_VOLTAGE;
-      band_center 19918.0;
+      band_center 20748.0;
       band_width 332;
       connect_type WYE_WYE;
       time_delay 30;

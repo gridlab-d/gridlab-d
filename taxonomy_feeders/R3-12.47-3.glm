@@ -35,7 +35,7 @@
       name feeder_reg_cfg;
       connect_type WYE_WYE;
       Control OUTPUT_VOLTAGE;
-      band_center 7200.0;
+      band_center 7500.0;
       band_width 120;
       time_delay 30;
       raise_taps 16;
