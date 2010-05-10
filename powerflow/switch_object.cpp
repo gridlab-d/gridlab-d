@@ -68,6 +68,18 @@ switch_object::switch_object(MODULE *mod) : link(mod)
 
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "link",
+			PT_enumeration, "phase_A_state", PADDR(phase_A_state),
+				PT_KEYWORD, "OPEN", OPEN,
+				PT_KEYWORD, "CLOSED", CLOSED,
+			PT_enumeration, "phase_B_state", PADDR(phase_B_state),
+				PT_KEYWORD, "OPEN", OPEN,
+				PT_KEYWORD, "CLOSED", CLOSED,
+			PT_enumeration, "phase_C_state", PADDR(phase_C_state),
+				PT_KEYWORD, "OPEN", OPEN,
+				PT_KEYWORD, "CLOSED", CLOSED,
+			PT_enumeration, "operating_mode", PADDR(switch_banked_mode),
+				PT_KEYWORD, "INDIVIDUAL", INDIVIDUAL_SW,
+				PT_KEYWORD, "BANKED", BANKED_SW,
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		if (gl_publish_function(oclass,"close",(FUNCTIONADDR)switch_close)==NULL)
@@ -87,12 +99,21 @@ int switch_object::isa(char *classname)
 int switch_object::create()
 {
 	int result = link::create();
+
+	prev_full_status = 0x00;		//Flag as all open initially
+	switch_banked_mode = BANKED_SW;	//Assume operates in banked mode normally
+	phase_A_state = CLOSED;			//All switches closed by default
+	phase_B_state = CLOSED;
+	phase_C_state = CLOSED;
+
 	prev_SW_time = 0;
 	return result;
 }
 
 int switch_object::init(OBJECT *parent)
 {
+	double phase_total, switch_total;
+
 	//Special flag moved to be universal for all solvers - mainly so phase checks catch it now
 	SpecialLnk = SWITCH;
 
@@ -116,27 +137,135 @@ int switch_object::init(OBJECT *parent)
 		From_Y[0][1] = From_Y[0][2] = From_Y[1][0] = 0.0;
 		From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = 0.0;
 
-		if (status==LS_OPEN)
+		if (switch_banked_mode == BANKED_SW)
 		{
-			From_Y[0][0] = complex(0.0,0.0);
-			From_Y[1][1] = complex(0.0,0.0);
-			From_Y[2][2] = complex(0.0,0.0);
+			//Banked mode is operated by majority rule.  If the majority are a different state, all become that state
+			phase_total = (double)(has_phase(PHASE_A) + has_phase(PHASE_B) + has_phase(PHASE_C));	//See how many switches we have
+
+			switch_total = 0.0;
+			if (has_phase(PHASE_A) && (phase_A_state == CLOSED))
+				switch_total += 1.0;
+
+			if (has_phase(PHASE_B) && (phase_B_state == CLOSED))
+				switch_total += 1.0;
+
+			if (has_phase(PHASE_C) && (phase_C_state == CLOSED))
+				switch_total += 1.0;
+
+			switch_total /= phase_total;
+
+			if (switch_total > 0.5)	//In two switches, a stalemate occurs.  We'll consider this a "maintain status quo" state
+			{
+				status = LS_CLOSED;	//If it wasn't here, it is now
+				phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Set all to closed - phase checks will sort it out
+			}
+			else	//Minority or stalemate
+			{
+				if (switch_total == 0.5)	//Stalemate
+				{
+					if (status == LS_OPEN)	//These check assume phase_X_state will be manipulated, not status
+					{
+						phase_A_state = phase_B_state = phase_C_state = OPEN;
+					}
+					else	//Closed
+					{
+						phase_A_state = phase_B_state = phase_C_state = CLOSED;
+					}
+				}
+				else	//Not stalemate - open all
+				{
+					status = LS_OPEN;
+					phase_A_state = phase_B_state = phase_C_state = OPEN;	//Set all to open - phase checks will sort it out
+				}
+			}
+
+			if (status==LS_OPEN)
+			{
+				From_Y[0][0] = complex(0.0,0.0);
+				From_Y[1][1] = complex(0.0,0.0);
+				From_Y[2][2] = complex(0.0,0.0);
+
+				phase_A_state = phase_B_state = phase_C_state = OPEN;	//All open
+				prev_full_status = 0x00;								//Confirm here
+			}
+			else
+			{
+				if (has_phase(PHASE_A))
+				{
+					From_Y[0][0] = complex(1e4,1e4);
+					phase_A_state = CLOSED;							//Flag as closed
+					prev_full_status |= 0x04;
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					From_Y[1][1] = complex(1e4,1e4);
+					phase_B_state = CLOSED;							//Flag as closed
+					prev_full_status |= 0x02;
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					From_Y[2][2] = complex(1e4,1e4);
+					phase_C_state = CLOSED;							//Flag as closed
+					prev_full_status |= 0x01;
+				}
+			}
 		}
-		else
+		else	//Individual mode
 		{
-			if (has_phase(PHASE_A))
+			if (status==LS_OPEN)	//Take this as all should be open
 			{
-				From_Y[0][0] = complex(1e4,1e4);
-			}
+				From_Y[0][0] = complex(0.0,0.0);
+				From_Y[1][1] = complex(0.0,0.0);
+				From_Y[2][2] = complex(0.0,0.0);
 
-			if (has_phase(PHASE_B))
-			{
-				From_Y[1][1] = complex(1e4,1e4);
+				phase_A_state = phase_B_state = phase_C_state = OPEN;	//All open
+				prev_full_status = 0x00;								//Confirm here
 			}
-
-			if (has_phase(PHASE_C))
+			else	//LS_CLOSED - handle individually
 			{
-				From_Y[2][2] = complex(1e4,1e4);
+				if (has_phase(PHASE_A))
+				{
+					if (phase_A_state == CLOSED)
+					{
+						From_Y[0][0] = complex(1e4,1e4);
+						prev_full_status |= 0x04;
+					}
+					else	//Must be open
+					{
+						From_Y[0][0] = complex(0.0,0.0);
+						prev_full_status &=0xFB;
+					}
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					if (phase_B_state == CLOSED)
+					{
+						From_Y[1][1] = complex(1e4,1e4);
+						prev_full_status |= 0x02;
+					}
+					else	//Must be open
+					{
+						From_Y[1][1] = complex(0.0,0.0);
+						prev_full_status &=0xFD;
+					}
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					if (phase_C_state == CLOSED)
+					{
+						From_Y[2][2] = complex(1e4,1e4);
+						prev_full_status |= 0x01;
+					}
+					else	//Must be open
+					{
+						From_Y[2][2] = complex(0.0,0.0);
+						prev_full_status &=0xFE;
+					}
+				}
 			}
 		}
 	}
@@ -148,59 +277,167 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = TS_NEVER;
 	node *tnode = OBJECTDATA(to,node);
-	node *f;
-	node *t;
-	set reverse = get_flow(&f,&t);
+	unsigned char pres_status;
+	double phase_total, switch_total;
 
 	if (solver_method==SM_NR)	//Newton-Raphson checks
 	{
-		if (status==LS_OPEN)
+		pres_status = 0x00;	//Reset individual status indicator - assumes all start open
+
+		if (switch_banked_mode == BANKED_SW)	//Banked mode
 		{
-			if (prev_SW_time!=t0)			//If new timestep, zero end voltage again (it will get resolved if it shouldn't be)
+			if (status == prev_status)
 			{
-				tnode->voltage[0] = 0.0;
-				tnode->voltage[1] = 0.0;
-				tnode->voltage[2] = 0.0;
-			}
+				//Banked mode is operated by majority rule.  If the majority are a different state, all become that state
+				phase_total = (double)(has_phase(PHASE_A) + has_phase(PHASE_B) + has_phase(PHASE_C));	//See how many switches we have
 
-			if (has_phase(PHASE_A))
-			{
-				From_Y[0][0] = complex(0.0,0.0);	//Update admittance
-				a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
-			}
+				switch_total = 0.0;
+				if (has_phase(PHASE_A) && (phase_A_state == CLOSED))
+					switch_total += 1.0;
 
-			if (has_phase(PHASE_B))
-			{
-				From_Y[1][1] = complex(0.0,0.0);	//Update admittance
-				a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
-			}
+				if (has_phase(PHASE_B) && (phase_B_state == CLOSED))
+					switch_total += 1.0;
 
-			if (has_phase(PHASE_C))
+				if (has_phase(PHASE_C) && (phase_C_state == CLOSED))
+					switch_total += 1.0;
+
+				switch_total /= phase_total;
+
+				if (switch_total > 0.5)	//In two switches, a stalemate occurs.  We'll consider this a "maintain status quo" state
+				{
+					status = LS_CLOSED;	//If it wasn't here, it is now
+					phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Set all to closed - phase checks will sort it out
+				}
+				else	//Minority or stalemate
+				{
+					if (switch_total == 0.5)	//Stalemate
+					{
+						if (status == LS_OPEN)	//These check assume phase_X_state will be manipulated, not status
+						{
+							phase_A_state = phase_B_state = phase_C_state = OPEN;
+						}
+						else	//Closed
+						{
+							phase_A_state = phase_B_state = phase_C_state = CLOSED;
+						}
+					}
+					else	//Not stalemate - open all
+					{
+						status = LS_OPEN;
+						phase_A_state = phase_B_state = phase_C_state = OPEN;	//Set all to open - phase checks will sort it out
+					}
+				}
+			}//End status is same
+			else	//Not the same - force the inputs
 			{
-				From_Y[2][2] = complex(0.0,0.0);	//Update admittance
-				a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
-			}
-		}//end open
-		else					//Must be closed then
+				if (status==LS_OPEN)
+					phase_A_state = phase_B_state = phase_C_state = OPEN;	//Flag all as open
+				else
+					phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Flag all as closed
+			}//End not same
+
+			if (status==LS_OPEN)
+			{
+				if (has_phase(PHASE_A))
+				{
+					From_Y[0][0] = complex(0.0,0.0);	//Update admittance
+					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					From_Y[1][1] = complex(0.0,0.0);	//Update admittance
+					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					From_Y[2][2] = complex(0.0,0.0);	//Update admittance
+					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+			}//end open
+			else					//Must be closed then
+			{
+				if (has_phase(PHASE_A))
+				{
+					From_Y[0][0] = complex(1e4,1e4);	//Update admittance
+					a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+					pres_status |= 0x04;				//Flag as closed
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					From_Y[1][1] = complex(1e4,1e4);	//Update admittance
+					a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+					pres_status |= 0x02;				//Flag as closed
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					From_Y[2][2] = complex(1e4,1e4);	//Update admittance
+					a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+					pres_status |= 0x01;				//Flag as closed
+				}
+			}//end closed
+		}//End banked mode
+		else	//Individual mode
 		{
-			if (has_phase(PHASE_A))
+			if (status == LS_OPEN)	//Fully opened means all go open
 			{
-				From_Y[0][0] = complex(1e4,1e4);	//Update admittance
-				a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
-			}
+				From_Y[0][0] = complex(0.0,0.0);
+				From_Y[1][1] = complex(0.0,0.0);
+				From_Y[2][2] = complex(0.0,0.0);
 
-			if (has_phase(PHASE_B))
-			{
-				From_Y[1][1] = complex(1e4,1e4);	//Update admittance
-				a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+				phase_A_state = phase_B_state = phase_C_state = OPEN;	//All open
 			}
+			else	//Closed means a phase-by-phase basis
+			{
+				if (has_phase(PHASE_A))
+				{
+					if (phase_A_state == CLOSED)
+					{
+						From_Y[0][0] = complex(1e4,1e4);
+						pres_status |= 0x04;
+					}
+					else	//Must be open
+					{
+						From_Y[0][0] = complex(0.0,0.0);
+					}
+				}
 
-			if (has_phase(PHASE_C))
-			{
-				From_Y[2][2] = complex(1e4,1e4);	//Update admittance
-				a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+				if (has_phase(PHASE_B))
+				{
+					if (phase_B_state == CLOSED)
+					{
+						From_Y[1][1] = complex(1e4,1e4);
+						pres_status |= 0x02;
+					}
+					else	//Must be open
+					{
+						From_Y[1][1] = complex(0.0,0.0);
+					}
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					if (phase_C_state == CLOSED)
+					{
+						From_Y[2][2] = complex(1e4,1e4);
+						pres_status |= 0x01;
+					}
+					else	//Must be open
+					{
+						From_Y[2][2] = complex(0.0,0.0);
+					}
+				}
 			}
-		}//end closed
+		}//end individual mode
+
+		//Check status before running sync (since it will clear it)
+		if ((status != prev_status) || (pres_status != prev_full_status))
+			NR_admit_change = true;	//Flag an admittance change
+
+		prev_full_status = pres_status;	//Update the status flags
 	}//end SM_NR
 #ifdef SUPPORT_OUTAGES
 	set trip = (f->is_contact_any() || t->is_contact_any());
@@ -227,23 +464,9 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 	if (prev_SW_time!=t0)	//Update tracking variable
 		prev_SW_time=t0;
 
-	//Check status before running sync (since it will clear it)
-	if (status != prev_status)
-		NR_admit_change = true;	//Flag an admittance change
-
 	TIMESTAMP t2=link::sync(t0);
 
 	return t1<t2?t1:t2;
-}
-
-TIMESTAMP switch_object::postsync(TIMESTAMP t0)
-{
-	TIMESTAMP t2 = link::postsync(t0);
-	node *f;
-	node *t;
-	set reverse = get_flow(&f,&t);
-	
-	return t2;
 }
 
 //Function to externally set switch status - mainly for "out of step" updates under NR solver
@@ -315,6 +538,199 @@ void switch_object::set_switch(bool desired_status)
 		other changes are performed.
 		*/
 	}
+}
+
+//Function to externally set switch status - mainly for "out of step" updates under NR solver
+//where admittance needs to be updated - this function provides individual switching ability
+//0 = open, 1 = closed, 2 = don't care (leave as was)
+void switch_object::set_switch_full(char desired_status_A, char desired_status_B, char desired_status_C)
+{
+	double phase_total, switch_total;
+	unsigned char pres_status;
+
+	if (desired_status_A == 0)
+		phase_A_state = OPEN;
+	else if (desired_status_A == 1)
+		phase_A_state = CLOSED;
+	//defaulted else - do nothing, leave it as it is
+
+	if (desired_status_B == 0)
+		phase_B_state = OPEN;
+	else if (desired_status_B == 1)
+		phase_B_state = CLOSED;
+	//defaulted else - do nothing, leave it as it is
+
+	if (desired_status_C == 0)
+		phase_C_state = OPEN;
+	else if (desired_status_C == 1)
+		phase_C_state = CLOSED;
+	//defaulted else - do nothing, leave it as it is
+
+	//Copied initially from sync
+	if (solver_method==SM_NR)	//Newton-Raphson checks
+	{
+		pres_status = 0x00;	//Reset individual status indicator - assumes all start open
+
+		if (switch_banked_mode == BANKED_SW)	//Banked mode
+		{
+			if (status == prev_status)
+			{
+				//Banked mode is operated by majority rule.  If the majority are a different state, all become that state
+				phase_total = (double)(has_phase(PHASE_A) + has_phase(PHASE_B) + has_phase(PHASE_C));	//See how many switches we have
+
+				switch_total = 0.0;
+				if (has_phase(PHASE_A) && (phase_A_state == CLOSED))
+					switch_total += 1.0;
+
+				if (has_phase(PHASE_B) && (phase_B_state == CLOSED))
+					switch_total += 1.0;
+
+				if (has_phase(PHASE_C) && (phase_C_state == CLOSED))
+					switch_total += 1.0;
+
+				switch_total /= phase_total;
+
+				if (switch_total > 0.5)	//In two switches, a stalemate occurs.  We'll consider this a "maintain status quo" state
+				{
+					status = LS_CLOSED;	//If it wasn't here, it is now
+					phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Set all to closed - phase checks will sort it out
+				}
+				else	//Minority or stalemate
+				{
+					if (switch_total == 0.5)	//Stalemate
+					{
+						if (status == LS_OPEN)	//These check assume phase_X_state will be manipulated, not status
+						{
+							phase_A_state = phase_B_state = phase_C_state = OPEN;
+						}
+						else	//Closed
+						{
+							phase_A_state = phase_B_state = phase_C_state = CLOSED;
+						}
+					}
+					else	//Not stalemate - open all
+					{
+						status = LS_OPEN;
+						phase_A_state = phase_B_state = phase_C_state = OPEN;	//Set all to open - phase checks will sort it out
+					}
+				}
+			}//End status is same
+			else	//Not the same - force the inputs
+			{
+				if (status==LS_OPEN)
+					phase_A_state = phase_B_state = phase_C_state = OPEN;	//Flag all as open
+				else
+					phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Flag all as closed
+			}//End not same
+
+			if (status==LS_OPEN)
+			{
+				if (has_phase(PHASE_A))
+				{
+					From_Y[0][0] = complex(0.0,0.0);	//Update admittance
+					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					From_Y[1][1] = complex(0.0,0.0);	//Update admittance
+					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					From_Y[2][2] = complex(0.0,0.0);	//Update admittance
+					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+				}
+			}//end open
+			else					//Must be closed then
+			{
+				if (has_phase(PHASE_A))
+				{
+					From_Y[0][0] = complex(1e4,1e4);	//Update admittance
+					a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+					pres_status |= 0x04;				//Flag as closed
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					From_Y[1][1] = complex(1e4,1e4);	//Update admittance
+					a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+					pres_status |= 0x02;				//Flag as closed
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					From_Y[2][2] = complex(1e4,1e4);	//Update admittance
+					a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+					pres_status |= 0x01;				//Flag as closed
+				}
+			}//end closed
+		}//End banked mode
+		else	//Individual mode
+		{
+			if (status == LS_OPEN)	//Fully opened means all go open
+			{
+				From_Y[0][0] = complex(0.0,0.0);
+				From_Y[1][1] = complex(0.0,0.0);
+				From_Y[2][2] = complex(0.0,0.0);
+
+				phase_A_state = phase_B_state = phase_C_state = OPEN;	//All open
+			}
+			else	//Closed means a phase-by-phase basis
+			{
+				if (has_phase(PHASE_A))
+				{
+					if (phase_A_state == CLOSED)
+					{
+						From_Y[0][0] = complex(1e4,1e4);
+						pres_status |= 0x04;
+					}
+					else	//Must be open
+					{
+						From_Y[0][0] = complex(0.0,0.0);
+					}
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					if (phase_B_state == CLOSED)
+					{
+						From_Y[1][1] = complex(1e4,1e4);
+						pres_status |= 0x02;
+					}
+					else	//Must be open
+					{
+						From_Y[1][1] = complex(0.0,0.0);
+					}
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					if (phase_C_state == CLOSED)
+					{
+						From_Y[2][2] = complex(1e4,1e4);
+						pres_status |= 0x01;
+					}
+					else	//Must be open
+					{
+						From_Y[2][2] = complex(0.0,0.0);
+					}
+				}
+			}
+		}//end individual mode
+
+		//Flag an update - assume this was called for a reason
+		NR_admit_change = true;	//Flag an admittance change
+
+		//Update overall status flag
+		prev_status = status;
+
+		//Update individual status flag
+		prev_full_status = pres_status;
+
+	}//end SM_NR
+	//If FBS, do nothing.  Reconfiguration doesn't support FBS right now, and reconfiguration is the only thing using this
 }
 
 //////////////////////////////////////////////////////////////////////////
