@@ -13,7 +13,7 @@ object stubauction {
      unit price;
      period 900;
      object player {
-          file Price_Static.player;
+          file ../Price_Static.player;
           loop 10000000;
           property next.P;
      };
@@ -47,7 +47,7 @@ object stubauction {
 		  within 0.0001;
 		  object player {
 			property value;
-			file lastP_static.player;
+			file ../lastP_static.player;
 			loop 100000;
 		  };
 	 };

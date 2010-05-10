@@ -200,6 +200,8 @@ TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 		char name[64];
 		clearat = nextclear();
+		// kick this over every hour to prevent odd behavior
+		checkat = gl_globalclock + (TIMESTAMP)(3600.0 - fmod(gl_globalclock+3600.0,3600.0));
 		gl_localtime(clearat,&dt);
 		if (verbose) gl_output("   ...%s opens for clearing of market_id %d at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), (int32)market_id, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 	}
@@ -208,199 +210,207 @@ TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 void auction::clear_market(void)
 {
+	unsigned int sph24 = (unsigned int)(3600/period*24);
 	/* handle linkref */
-	if (Qload!=NULL)
-	{	
-		char name[256];
-		double total_unknown = asks.get_total() - asks.get_total_on() - asks.get_total_off();
-		double refload = (*Qload);
-		if (strcmp(unit,"")!=0) 
-		{
-			if (gl_convert("W",unit,&refload)==0)
-				GL_THROW("linkref %s uses units of (W) and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), unit);
-			else if (verbose) gl_output("linkref converted %.3f W to %.3f %s", *Qload, refload, unit);
-		}
-		if (total_unknown > 0.001) // greater than one mW ~ allows rounding errors
-			gl_warning("total_unknown is %.0f -> some controllers are not providing their states with their bids", total_unknown);
-		BID unresponsive;
-		unresponsive.from = linkref;
-		unresponsive.price = pricecap;
-		unresponsive.state = BS_UNKNOWN;
-		unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
-		if (unresponsive.quantity < -0.001)
-		{
-			gl_warning("linkref %s has negative unresponsive load--this is probably due to improper bidding", gl_name(linkref,name,sizeof(name)), unresponsive.quantity);
-		}
-		else if (unresponsive.quantity > 0.001)
-		{
-			asks.submit(&unresponsive);
-			gl_verbose("linkref %s has %.3f unresponsive load", gl_name(linkref,name,sizeof(name)), -unresponsive.quantity);
-		}
-	}
-	
-	/* sort the bids */
-	offers.sort(false);
-	asks.sort(true);
-
-	if (asks.getcount()>0 && offers.getcount()>0)
+	if(count >= sph24)
 	{
-		/* clear market */
-		unsigned int i=0, j=0;
-		BID *buy=asks.getbid(i), *sell=offers.getbid(j);
-		BID clear = {NULL,0,0};
-		double demand_quantity=0, supply_quantity=0;
-		double a=0, b=0;
-		bool check=false;
+		if (Qload!=NULL)
+		{	
+			char name[256];
+			double total_unknown = asks.get_total() - asks.get_total_on() - asks.get_total_off();
+			double refload = (*Qload);
+			if (strcmp(unit,"")!=0) 
+			{
+				if (gl_convert("W",unit,&refload)==0)
+					GL_THROW("linkref %s uses units of (W) and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), unit);
+				else if (verbose) gl_output("linkref converted %.3f W to %.3f %s", *Qload, refload, unit);
+			}
+			if (total_unknown > 0.001) // greater than one mW ~ allows rounding errors
+				gl_warning("total_unknown is %.0f -> some controllers are not providing their states with their bids", total_unknown);
+			BID unresponsive;
+			unresponsive.from = linkref;
+			unresponsive.price = pricecap;
+			unresponsive.state = BS_UNKNOWN;
+			unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
+			if (unresponsive.quantity < -0.001)
+			{
+				gl_warning("linkref %s has negative unresponsive load--this is probably due to improper bidding", gl_name(linkref,name,sizeof(name)), unresponsive.quantity);
+			}
+			else if (unresponsive.quantity > 0.001)
+			{
+				asks.submit(&unresponsive);
+				gl_verbose("linkref %s has %.3f unresponsive load", gl_name(linkref,name,sizeof(name)), -unresponsive.quantity);
+			}
+		}
+		
+		/* sort the bids */
+		offers.sort(false);
+		asks.sort(true);
 
-		// dump curves
-		if (verbose)
+		if ((asks.getcount()>0) && offers.getcount()>0)
+		{
+			/* clear market */
+			unsigned int i=0, j=0;
+			BID *buy=asks.getbid(i), *sell=offers.getbid(j);
+			BID clear = {NULL,0,0};
+			double demand_quantity=0, supply_quantity=0;
+			double a=0, b=0;
+			bool check=false;
+
+			// dump curves
+			if (verbose)
+			{
+				char name[64];
+				gl_output("   ...  supply curve");
+				for (i=0; i<offers.getcount(); i++){
+					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
+				}
+				gl_output("   ...  demand curve");
+				for (i=0; i<asks.getcount(); i++){
+					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+				}
+			}
+
+			i=j=0;
+			while (i<asks.getcount() && j<offers.getcount() && buy->price>=sell->price)
+			{
+				double buy_quantity = demand_quantity + buy->quantity;
+				double sell_quantity = supply_quantity + sell->quantity;
+				if (buy_quantity > sell_quantity)
+				{
+					clear.quantity = supply_quantity = sell_quantity;
+					a = b = buy->price;
+					sell = offers.getbid(++j);
+					check = false;
+				}
+				else if (buy_quantity < sell_quantity)
+				{
+					clear.quantity = demand_quantity = buy_quantity;
+					a = b = sell->price;
+					buy = asks.getbid(++i);
+					check = false;
+				}
+				else /* buy quantity equal sell quantity but price split */
+				{
+					clear.quantity = demand_quantity = supply_quantity = buy_quantity;
+					a = buy->price;
+					b = sell->price;
+					buy = asks.getbid(++i);
+					sell = offers.getbid(++j);
+					check = true;
+				}
+			}
+		
+			/* check for split price at single quantity */
+			while (check)
+			{
+				if (i>0 && i<asks.getcount() && (a<b ? a : b) <= buy->price)
+				{
+					b = buy->price;
+					buy = asks.getbid(++i);
+				}
+				else if (j>0 && j<offers.getcount() && (a<b ? a : b) <= sell->price)
+				{
+					a = sell->price;
+					sell = offers.getbid(++j);
+				}
+				else
+					check = false;
+			}
+			clear.price = a<b ? a : b;
+		
+			/* check for zero demand but non-zero first unit sell price */
+			if (clear.quantity==0 && offers.getcount()>0)
+			{
+				clear.price = offers.getbid(0)->price;
+			}
+		
+			/* post the price */
+			char name[64];
+			if (verbose) gl_output("   ...  %s clears %.2f %s at $%.2f/%s", gl_name(OBJECTHDR(this),name,sizeof(name)), clear.quantity, unit, clear.price, unit);
+			next.price = clear.price;
+			next.quantity = clear.quantity;
+		}
+		else
 		{
 			char name[64];
-			gl_output("   ...  supply curve");
-			for (i=0; i<offers.getcount(); i++){
-				gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
-			}
-			gl_output("   ...  demand curve");
-			for (i=0; i<asks.getcount(); i++){
-				gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
-			}
+			next.price = 0;
+			next.quantity = 0;
+			gl_warning("market '%s' fails to clear due to missing %s", gl_name(OBJECTHDR(this),name,sizeof(name)), asks.getcount()==0?(offers.getcount()==0?"buyers and sellers":"buyers"):"sellers");
 		}
-
-		i=j=0;
-		while (i<asks.getcount() && j<offers.getcount() && buy->price>=sell->price)
-		{
-			double buy_quantity = demand_quantity + buy->quantity;
-			double sell_quantity = supply_quantity + sell->quantity;
-			if (buy_quantity > sell_quantity)
-			{
-				clear.quantity = supply_quantity = sell_quantity;
-				a = b = buy->price;
-				sell = offers.getbid(++j);
-				check = false;
-			}
-			else if (buy_quantity < sell_quantity)
-			{
-				clear.quantity = demand_quantity = buy_quantity;
-				a = b = sell->price;
-				buy = asks.getbid(++i);
-				check = false;
-			}
-			else /* buy quantity equal sell quantity but price split */
-			{
-				clear.quantity = demand_quantity = supply_quantity = buy_quantity;
-				a = buy->price;
-				b = sell->price;
-				buy = asks.getbid(++i);
-				sell = offers.getbid(++j);
-				check = true;
-			}
-		}
-	
-		/* check for split price at single quantity */
-		while (check)
-		{
-			if (i>0 && i<asks.getcount() && (a<b ? a : b) <= buy->price)
-			{
-				b = buy->price;
-				buy = asks.getbid(++i);
-			}
-			else if (j>0 && j<offers.getcount() && (a<b ? a : b) <= sell->price)
-			{
-				a = sell->price;
-				sell = offers.getbid(++j);
-			}
-			else
-				check = false;
-		}
-		clear.price = a<b ? a : b;
-	
-		/* check for zero demand but non-zero first unit sell price */
-		if (clear.quantity==0 && offers.getcount()>0)
-		{
-			clear.price = offers.getbid(0)->price;
-		}
-	
-		/* post the price */
+	} else {
 		char name[64];
-		if (verbose) gl_output("   ...  %s clears %.2f %s at $%.2f/%s", gl_name(OBJECTHDR(this),name,sizeof(name)), clear.quantity, unit, clear.price, unit);
-		next.price = clear.price;
-		next.quantity = clear.quantity;
+		if (verbose) gl_output("   ...  %s does not clear while it populates initial states for the first 24 hours", gl_name(OBJECTHDR(this),name,sizeof(name)));
+	}	// end if count >= sph24 
 
-		if(lasthr != thishr){
-			unsigned int sph = (unsigned int)(3600/period);
-			unsigned int sph24 = 24*sph;
-			unsigned int sph72 = 72*sph;
-			unsigned int sph168 = 168*sph;
+	if(lasthr != thishr){
+		unsigned int i = 0;
+		unsigned int sph = (unsigned int)(3600/period);
+		unsigned int sph24 = 24*sph;
+		unsigned int sph72 = 72*sph;
+		unsigned int sph168 = 168*sph;
 
-			/* add price/quantity to the history */
-			prices[count%sph168] = next.price;
-			++count;
-			
-			/* update the daily and weekly averages */
-			avg168 = 0.0;
-			for(i = 0; i < count && i < sph168; ++i){
-				avg168 += prices[i];
-			}
-			avg168 /= (count > sph168 ? sph168 : count);
-
-			avg72 = 0.0;
-			for(i = 1; i <= sph72 && i <= count; ++i){
-				unsigned int j = (sph168 - i + count) % sph168;
-				avg72 += prices[j];
-			}
-			avg72 /= (count > sph72 ? sph72 : count);
-
-			avg24 = 0.0;
-			for(i = 1; i <= sph24 && i <= count; ++i){
-				unsigned int j = (sph168 - i + count) % sph168;
-				avg24 += prices[j];
-			}
-			avg24 /= (count > sph24 ? sph24 : count);
-
-			/* update the daily & weekly standard deviations */
-			std168 = 0.0;
-			for(i = 0; i < count && i < sph168; ++i){
-				std168 += prices[i] * prices[i];
-			}
-			std168 /= (count > sph168 ? sph168 : count);
-			std168 -= avg168*avg168;
-			std168 = sqrt(fabs(std168));
-			if (std168<0.01) std168=0.01;
-
-			std72 = 0.0;
-			for(i = 1; i <= sph72 && i <= count; ++i){
-				unsigned int j = (sph168 - i + count) % sph168;
-				std72 += prices[j] * prices[j];
-			}
-			std72 /= (count > sph72 ? sph72 : count);
-			std72 -= avg72*avg72;
-			std72 = sqrt(fabs(std72));
-			if (std72<0.01) std72=0.01;
-
-			std24 = 0.0;
-			for(i = 1; i <= sph24 && i <= count; ++i){
-				unsigned int j = (sph168 - i + count) % sph168;
-				std24 += prices[j] * prices[j];
-			}
-			std24 /= (count > sph24 ? sph24 : count);
-			std24 -= avg24*avg24;
-			std24 = sqrt(fabs(std24));
-			if (std24<0.01){
-				std24=0.01;
-			}
-
-			retry = 1; // reiterate to pass the updated values to the controllers
-
-			/* update reference hour */
-			lasthr = thishr;
+		/* add price/quantity to the history */
+		prices[count%sph168] = next.price;
+		++count;
+		
+		/* update the daily and weekly averages */
+		avg168 = 0.0;
+		for(i = 0; i < count && i < sph168; ++i){
+			avg168 += prices[i];
 		}
-	}
-	else
-	{
-		char name[64];
-		next.price = 0;
-		next.quantity = 0;
-		gl_warning("market '%s' fails to clear due to missing %s", gl_name(OBJECTHDR(this),name,sizeof(name)), asks.getcount()==0?(offers.getcount()==0?"buyers and sellers":"buyers"):"sellers");
+		avg168 /= (count > sph168 ? sph168 : count);
+
+		avg72 = 0.0;
+		for(i = 1; i <= sph72 && i <= count; ++i){
+			unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
+			avg72 += prices[j];
+		}
+		avg72 /= (count > sph72 ? sph72 : count);
+
+		avg24 = 0.0;
+		for(i = 1; i <= sph24 && i <= count; ++i){
+			unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
+			avg24 += prices[j];
+		}
+		avg24 /= (count > sph24 ? sph24 : (unsigned int)count);
+
+		/* update the daily & weekly standard deviations */
+		std168 = 0.0;
+		for(i = 0; i < count && i < sph168; ++i){
+			std168 += prices[i] * prices[i];
+		}
+		std168 /= (count > sph168 ? sph168 : (unsigned int)count);
+		std168 -= avg168*avg168;
+		std168 = sqrt(fabs(std168));
+		if (std168<0.01) std168=0.01;
+
+		std72 = 0.0;
+		for(i = 1; i <= sph72 && i <= (unsigned int)count; ++i){
+			unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
+			std72 += prices[j] * prices[j];
+		}
+		std72 /= (count > sph72 ? sph72 : (unsigned int)count);
+		std72 -= avg72*avg72;
+		std72 = sqrt(fabs(std72));
+		if (std72<0.01) std72=0.01;
+
+		std24 = 0.0;
+		for(i = 1; i <= sph24 && i <= (unsigned int)count; ++i){
+			unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
+			std24 += prices[j] * prices[j];
+		}
+		std24 /= (count > sph24 ? sph24 : (unsigned int)count);
+		std24 -= avg24*avg24;
+		std24 = sqrt(fabs(std24));
+		if (std24<0.01){
+			std24=0.01;
+		}
+
+		retry = 1; // reiterate to pass the updated values to the controllers
+
+		/* update reference hour */
+		lasthr = thishr;
 	}
 
 	/* clear the bid lists */
