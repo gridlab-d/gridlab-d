@@ -71,6 +71,13 @@ int stubauction::init(OBJECT *parent)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
+
+int stubauction::isa(char *classname)
+{
+	return strcmp(classname,"stubauction")==0;
+}
+
+
 /* Presync is called when the clock needs to advance on the first top-down pass */
 TIMESTAMP stubauction::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
@@ -83,10 +90,7 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	int64 i = 0;
 	int64 j = 0;
 	DATETIME dt;
-	char buffer[256];
-	char myname[64];
-	char name[64];
-
+	
 	if(t0 == 0){
 		clearat = nextclear();
 	}
@@ -217,6 +221,15 @@ EXPORT int init_stubauction(OBJECT *obj, OBJECT *parent)
 		gl_error("init_stubauction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
 	}
 	return 1;
+}
+
+EXPORT int isa_stubauction(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,stubauction)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_stubauction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

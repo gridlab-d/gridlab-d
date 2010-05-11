@@ -210,6 +210,13 @@ int double_controller::init(OBJECT *parent){
 	return 1;
 }
 
+
+int double_controller::isa(char *classname)
+{
+	return strcmp(classname,"double_controller")==0;
+}
+
+
 TIMESTAMP double_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 	if(thermostat_mode == TM_INVALID)
 		thermostat_mode = TM_OFF;
@@ -532,6 +539,15 @@ EXPORT int init_double_controller(OBJECT *obj, OBJECT *parent)
 		gl_error("init_double_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
 	}
 	return 1;
+}
+
+EXPORT int isa_double_controller(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,double_controller)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_double_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

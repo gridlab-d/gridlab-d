@@ -100,6 +100,12 @@ auction::auction(MODULE *module)
 	}
 }
 
+
+int auction::isa(char *classname)
+{
+	return strcmp(classname,"auction")==0;
+}
+
 /* Object creation is called once for each object that is created by the core */
 int auction::create(void)
 {
@@ -503,6 +509,15 @@ EXPORT int init_auction(OBJECT *obj, OBJECT *parent)
 		gl_error("init_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
 	}
 	return 1;
+}
+
+EXPORT int isa_auction(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,auction)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_auction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

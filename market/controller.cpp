@@ -220,6 +220,13 @@ int controller::init(OBJECT *parent){
 	return 1;
 }
 
+
+int controller::isa(char *classname)
+{
+	return strcmp(classname,"controller")==0;
+}
+
+
 TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 	if(setpoint0 == -1){
 		setpoint0 = *pSetpoint;
@@ -391,6 +398,15 @@ EXPORT int init_controller(OBJECT *obj, OBJECT *parent)
 		gl_error("init_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
 	}
 	return 1;
+}
+
+EXPORT int isa_controller(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,controller)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

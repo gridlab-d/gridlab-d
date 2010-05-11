@@ -217,6 +217,13 @@ int controller2::init(OBJECT *parent){
 	return 1;
 }
 
+
+int controller2::isa(char *classname)
+{
+	return strcmp(classname,"controller2")==0;
+}
+
+
 TIMESTAMP controller2::presync(TIMESTAMP t0, TIMESTAMP t1){
 	// get observations
 	if(observation_addr != 0){
@@ -424,6 +431,15 @@ EXPORT int init_controller2(OBJECT *obj, OBJECT *parent)
 		gl_error("init_controller2(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
 	}
 	return 1;
+}
+
+EXPORT int isa_controller2(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,controller2)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_controller2(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
