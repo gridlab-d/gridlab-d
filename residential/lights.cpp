@@ -170,6 +170,11 @@ int lights::init(OBJECT *parent)
 	return residential_enduse::init(parent);
 }
 
+int lights::isa(char *classname)
+{
+	return (strcmp(classname,"lights")==0 || residential_enduse::isa(classname));
+}
+
 TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	double val = 0.0;
@@ -243,6 +248,15 @@ EXPORT int init_lights(OBJECT *obj)
 			The initialization operation of the specified object failed.  
 			The message given provide additional details and can be looked up under the Exceptions section.
 		 */
+		return 0;
+	}
+}
+
+EXPORT int isa_lights(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,lights)->isa(classname);
+	} else {
 		return 0;
 	}
 }

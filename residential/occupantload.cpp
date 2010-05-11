@@ -110,6 +110,11 @@ int occupantload::init(OBJECT *parent)
 	return 1;
 }
 
+int occupantload::isa(char *classname)
+{
+	return (strcmp(classname,"occupantload")==0 || residential_enduse::isa(classname));
+}
+
 TIMESTAMP occupantload::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	/* sanity checks */
@@ -171,6 +176,15 @@ EXPORT int init_occupantload(OBJECT *obj)
 {
 	occupantload *my = OBJECTDATA(obj,occupantload);
 	return my->init(obj->parent);
+}
+
+EXPORT int isa_occupantload(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,occupantload)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_occupantload(OBJECT *obj, TIMESTAMP t0)

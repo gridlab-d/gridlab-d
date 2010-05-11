@@ -965,6 +965,11 @@ int house_e::init_climate()
 	return 1;
 }
 
+int house_e::isa(char *classname)
+{
+	return (strcmp(classname,"clotheswasher")==0 || residential_enduse::isa(classname));
+}
+
 void house_e::set_thermal_integrity(){
 	switch (thermal_integrity_level) {
 		case TI_VERY_LITTLE:
@@ -2125,7 +2130,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		 */
 		// this is always false if thermostat_cycle_time == 0
 		if(t < thermostat_last_cycle_time + thermostat_cycle_time){
-			dt2 = thermostat_last_cycle_time + thermostat_cycle_time;
+			dt2 = (double)(thermostat_last_cycle_time + thermostat_cycle_time);
 		} else {
 			dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
 		}
@@ -2552,12 +2557,23 @@ TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	IMPLICITENDUSE *eu;
+	//OBJECT *obj = OBJECTHDR(this);
+	//char one[128], two[128];
 	for (eu=implicit_enduse_list; eu!=NULL; eu=eu->next)
 	{
 		TIMESTAMP t = 0;
 		t = gl_enduse_sync(&(eu->load),t1);
 		if (t<t2) t2 = t;
 	}
+	//DATETIME dt1, dt2;
+	//gl_localtime(t1,&dt1);
+	//gl_strftime(&dt1, two, 127);
+	//gl_localtime(t2,&dt2);
+	//gl_strftime(&dt2, one, 127);
+	//gl_verbose("house_e:%d ~ sync_eu %s at %s", obj->id, one, two);
+	//if(0 == strcmp("(invalid time)", gl_strftime(t2))){
+		//gl_verbose("TAKE NOTE OF THIS TIMESTEP");
+	//}
 	return t2;
 }
 
@@ -2648,6 +2664,15 @@ EXPORT int init_house(OBJECT *obj)
 	catch (char *msg)
 	{
 		gl_error("house_e:%d (%s) %s", obj->id, obj->name?obj->name:"anonymous", msg);
+		return 0;
+	}
+}
+
+EXPORT int isa_house(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,house_e)->isa(classname);
+	} else {
 		return 0;
 	}
 }

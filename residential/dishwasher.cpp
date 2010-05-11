@@ -102,6 +102,12 @@ int dishwasher::init(OBJECT *parent)
 	return residential_enduse::init(parent);
 }
 
+int dishwasher::isa(char *classname)
+{
+	return (strcmp(classname,"dishwasher")==0 || residential_enduse::isa(classname));
+}
+
+
 TIMESTAMP dishwasher::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	TIMESTAMP t2 = residential_enduse::sync(t0, t1);
@@ -149,6 +155,15 @@ EXPORT int init_dishwasher(OBJECT *obj)
 {
 	dishwasher *my = OBJECTDATA(obj,dishwasher);
 	return my->init(obj->parent);
+}
+
+EXPORT int isa_dishwasher(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,dishwasher)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_dishwasher(OBJECT *obj, TIMESTAMP t0)

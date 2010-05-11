@@ -154,6 +154,11 @@ int freezer::init(OBJECT *parent)
 	return residential_enduse::init(parent);
 }
 
+int freezer::isa(char *classname)
+{
+	return (strcmp(classname,"freezer")==0 || residential_enduse::isa(classname));
+}
+
 TIMESTAMP freezer::presync(TIMESTAMP t0, TIMESTAMP t1){
 	OBJECT *hdr = OBJECTHDR(this);
 	double *pTout = 0, t = 0.0, dt = 0.0;
@@ -328,6 +333,15 @@ EXPORT int init_freezer(OBJECT *obj)
 {
 	freezer *my = OBJECTDATA(obj,freezer);
 	return my->init(obj->parent);
+}
+
+EXPORT int isa_freezer(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,freezer)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 /*	determine if we're turning the motor on or off and nothing else. */

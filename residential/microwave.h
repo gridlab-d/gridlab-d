@@ -40,6 +40,7 @@ public:
 	int create();
 	void init_noshape();
 	int init(OBJECT *parent);
+	int isa(char *classname);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	double update_state(double dt=0.0);
 	TIMESTAMP update_state_cycle(TIMESTAMP t0, TIMESTAMP t1);

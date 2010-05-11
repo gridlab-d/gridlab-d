@@ -89,6 +89,11 @@ int range::init(OBJECT *parent)
 	return residential_enduse::init(parent);
 }
 
+int range::isa(char *classname)
+{
+	return (strcmp(classname,"range")==0 || residential_enduse::isa(classname));
+}
+
 TIMESTAMP range::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	double val = 0.0;
@@ -151,6 +156,15 @@ EXPORT int init_range(OBJECT *obj)
 {
 	range *my = OBJECTDATA(obj,range);
 	return my->init(obj->parent);
+}
+
+EXPORT int isa_range(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,range)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0)

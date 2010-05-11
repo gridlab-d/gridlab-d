@@ -349,6 +349,11 @@ int evcharger::init(OBJECT *parent)
 	return residential_enduse::init(parent);
 }
 
+int evcharger::isa(char *classname)
+{
+	return (strcmp(classname,"evcharger")==0 || residential_enduse::isa(classname));
+}
+
 double evcharger::update_state(double dt /* seconds */) 
 {
 	OBJECT *obj = OBJECTHDR(this);
@@ -570,6 +575,15 @@ EXPORT int init_evcharger(OBJECT *obj)
 	catch (char *msg)
 	{
 		gl_error("%s (%s:%d): %s", obj->name?obj->name:"anonymous object",obj->oclass->name,obj->id,msg);
+		return 0;
+	}
+}
+
+EXPORT int isa_evcharger(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,evcharger)->isa(classname);
+	} else {
 		return 0;
 	}
 }

@@ -74,6 +74,11 @@ int plugload::init(OBJECT *parent)
 	return residential_enduse::init(parent);
 }
 
+int plugload::isa(char *classname)
+{
+	return (strcmp(classname,"plugload")==0 || residential_enduse::isa(classname));
+}
+
 TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	TIMESTAMP t2 = TS_NEVER;
@@ -131,6 +136,15 @@ EXPORT int init_plugload(OBJECT *obj)
 {
 	plugload *my = OBJECTDATA(obj,plugload);
 	return my->init(obj->parent);
+}
+
+EXPORT int isa_plugload(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,plugload)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_plugload(OBJECT *obj, TIMESTAMP t0)

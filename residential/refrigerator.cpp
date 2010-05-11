@@ -157,7 +157,11 @@ int refrigerator::init(OBJECT *parent)
 	load.total = Qr * KWPBTUPH;
 
 	return residential_enduse::init(parent);
-;
+}
+
+int refrigerator::isa(char *classname)
+{
+	return (strcmp(classname,"refrigerator")==0 || residential_enduse::isa(classname));
 }
 
 TIMESTAMP refrigerator::presync(TIMESTAMP t0, TIMESTAMP t1){
@@ -320,6 +324,15 @@ EXPORT int init_refrigerator(OBJECT *obj)
 {
 	refrigerator *my = OBJECTDATA(obj,refrigerator);
 	return my->init(obj->parent);
+}
+
+EXPORT int isa_refrigerator(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,refrigerator)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 /*	determine if we're turning the motor on or off and nothing else. */

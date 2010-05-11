@@ -92,6 +92,11 @@ int ZIPload::init(OBJECT *parent)
 	return residential_enduse::init(parent);
 }
 
+int ZIPload::isa(char *classname)
+{
+	return (strcmp(classname,"ZIPload")==0 || residential_enduse::isa(classname));
+}
+
 TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	TIMESTAMP t2 = TS_NEVER;
@@ -197,6 +202,16 @@ EXPORT int init_ZIPload(OBJECT *obj)
 	ZIPload *my = OBJECTDATA(obj,ZIPload);
 	return my->init(obj->parent);
 }
+
+EXPORT int isa_ZIPload(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,ZIPload)->isa(classname);
+	} else {
+		return 0;
+	}
+}
+
 
 EXPORT TIMESTAMP sync_ZIPload(OBJECT *obj, TIMESTAMP t0)
 {

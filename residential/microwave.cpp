@@ -141,6 +141,11 @@ int microwave::init(OBJECT *parent)
 	return residential_enduse::init(parent);
 }
 
+int microwave::isa(char *classname)
+{
+	return (strcmp(classname,"microwave")==0 || residential_enduse::isa(classname));
+}
+
 // periodically activates for the tail demand % of a cycle_time period.  Has a random offset to prevent
 //	lock-step behavior across uniform devices
 // start ....... on .. off
@@ -308,6 +313,15 @@ EXPORT int init_microwave(OBJECT *obj)
 {
 	microwave *my = OBJECTDATA(obj,microwave);
 	return my->init(obj->parent);
+}
+
+EXPORT int isa_microwave(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,microwave)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_microwave(OBJECT *obj, TIMESTAMP t0)

@@ -104,6 +104,10 @@ int residential_enduse::init(OBJECT *parent)
 	return 1;
 }
 
+int residential_enduse::isa(char *classname){
+	return strcmp(classname,"residential_enduse")==0;
+}
+
 TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	OBJECT *obj = OBJECTHDR(this);
@@ -151,6 +155,15 @@ EXPORT int init_residential_enduse(OBJECT *obj)
 	catch (char *msg)
 	{
 		gl_error("%s::%s.init(OBJECT *obj={name='%s', id=%d}): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, msg);
+		return 0;
+	}
+}
+
+EXPORT int isa_residential_enduse(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,residential_enduse)->isa(classname);
+	} else {
 		return 0;
 	}
 }

@@ -295,6 +295,12 @@ int waterheater::init(OBJECT *parent)
 	return residential_enduse::init(parent);
 }
 
+int waterheater::isa(char *classname)
+{
+	return (strcmp(classname,"waterheater")==0 || residential_enduse::isa(classname));
+}
+
+
 void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 	Ton  = tank_setpoint - thermostat_deadband/2;
 	Toff = tank_setpoint + thermostat_deadband/2;
@@ -923,6 +929,16 @@ EXPORT int init_waterheater(OBJECT *obj)
 	waterheater *my = OBJECTDATA(obj,waterheater);
 	return my->init(obj->parent);
 }
+
+EXPORT int isa_waterheater(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,waterheater)->isa(classname);
+	} else {
+		return 0;
+	}
+}
+
 
 EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {

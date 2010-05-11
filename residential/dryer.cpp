@@ -113,6 +113,12 @@ int dryer::init(OBJECT *parent)
 	return rv;
 }
 
+int dryer::isa(char *classname)
+{
+	return (strcmp(classname,"dryer")==0 || residential_enduse::isa(classname));
+}
+
+
 TIMESTAMP dryer::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	// compute the seconds in this time step
@@ -270,6 +276,15 @@ EXPORT int init_dryer(OBJECT *obj)
 {
 	dryer *my = OBJECTDATA(obj,dryer);
 	return my->init(obj->parent);
+}
+
+EXPORT int isa_dryer(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,dryer)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_dryer(OBJECT *obj, TIMESTAMP t0)

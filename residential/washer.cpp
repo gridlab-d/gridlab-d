@@ -30,6 +30,11 @@ void washer::create()
 	kwh_meter = 0.0;
 }
 
+int washer::isa(char *classname)
+{
+	return (strcmp(classname,"washer")==0 || residential_enduse::isa(classname));
+}
+
 
 TIMESTAMP washer::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
@@ -68,6 +73,15 @@ EXPORT int create_washer(OBJECT **obj, OBJECT *parent)
 		return 1;
 	}
 	return 0;
+}
+
+EXPORT int isa_washer(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,washer)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_washer(OBJECT *obj, TIMESTAMP t0)

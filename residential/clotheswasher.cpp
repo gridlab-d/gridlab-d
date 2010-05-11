@@ -114,6 +114,11 @@ int clotheswasher::init(OBJECT *parent)
 	return res;
 }
 
+int clotheswasher::isa(char *classname)
+{
+	return (strcmp(classname,"clotheswasher")==0 || residential_enduse::isa(classname));
+}
+
 TIMESTAMP clotheswasher::presync(TIMESTAMP t0, TIMESTAMP t1){
 	return TS_NEVER;
 }
@@ -292,6 +297,15 @@ EXPORT int init_clotheswasher(OBJECT *obj)
 {
 	clotheswasher *my = OBJECTDATA(obj,clotheswasher);
 	return my->init(obj->parent);
+}
+
+EXPORT int isa_clotheswasher(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,clotheswasher)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 EXPORT TIMESTAMP sync_clotheswasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

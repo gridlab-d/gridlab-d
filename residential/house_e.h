@@ -361,6 +361,7 @@ public:
 
 	int init(OBJECT *parent);
 	int init_climate(void);
+	int isa(char *classname);
 
 	CIRCUIT *attach(OBJECT *obj, double limit, int is220=false, enduse *pEnduse=NULL);
 	void attach_implicit_enduses(void);

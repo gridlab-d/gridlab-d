@@ -22,6 +22,7 @@ public:
 	washer();
 	~washer();
 	void create();
+	int isa(char *classname);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	void pre_update(void);
 	void post_update(void);
