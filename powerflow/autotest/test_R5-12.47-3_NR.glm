@@ -1,7 +1,7 @@
  // $Id: R5-12.47-3.glm
  // 13.8 kV feeder
  //*********************************************
- // validates voltages with FBS at selected load, node, meter, triplex_node, and
+ // validates voltages with NR at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 //
 //
@@ -10,7 +10,6 @@
 //
 // written by alek332
 
-// off by 10-12 on several triplex nodes for NR vs FBS; search for @off
  clock{
       timestamp '2000-01-01 0:00:00';
       stoptime '2000-01-01 1:00:00';
@@ -24,7 +23,7 @@
  module assert;
  module tape;
  module powerflow{
-      solver_method FBS;
+      solver_method NR;
       default_maximum_voltage_error 1e-6;
  };
 
@@ -6210,21 +6209,21 @@
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		value +7696.29-163.363j;
-		within 6.5;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		target voltage_B;
 		value -4036.75-6378.55j;
-		within 6.5;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		target voltage_C;
 		value -3573.29+6735.36j;
-		within 6.5;
+		within 1;
 	};
  }
 
@@ -10707,7 +10706,7 @@
 		// interval 60;
 		// limit 1440;
 		// file "711.csv";
-	// }; // @off by 10
+	// };
 	object complex_assert{
 		target voltage_A;
 		once ONCE_TRUE;
@@ -10720,7 +10719,7 @@
 		in '2000-01-01 00:03:00 EST';
 		target voltage_B;
 		value -4001.12-5707.69j;
-		within 10;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
@@ -13661,7 +13660,7 @@
 		// interval 60;
 		// limit 1440;
 		// file "1109.csv";
-	// }; // @off by 11
+	// };
 	object complex_assert{
 		target voltage_A;
 		once ONCE_TRUE;
@@ -13674,7 +13673,7 @@
 		in '2000-01-01 00:03:00 EST';
 		target voltage_B;
 		value -3917.05-5648.21j;
-		within 11;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
@@ -16082,20 +16081,20 @@
 		// interval 60;
 		// limit 1440;
 		// file "1439.csv";
-	// }; // @off by 12
+	// };
 	object complex_assert{
 		target voltage_A;
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		value +7406.36-1.72952d;
-		within 12;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		target voltage_B;
 		value -4042.93-5187j;
-		within 12;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;

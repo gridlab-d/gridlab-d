@@ -1,7 +1,7 @@
  // $Id: R5-25.00-1.glm
  // 22.9 kV feeder
  //*********************************************
-// validates voltages with FBS at selected load, node, meter, triplex_node, and
+// validates voltages with NR at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 //
 // additionally validates power_in/out at several triplex nodes
@@ -11,8 +11,6 @@
 //
 // written by alek332
 
-// two triplex nodes record voltages in FBS that are 0 in NR;
-// search for @off
  clock{
       timestamp '2000-01-01 0:00:00';
       stoptime '2000-01-01 1:00:00';
@@ -26,7 +24,7 @@
  module assert;
  module tape;
  module powerflow{
-      solver_method FBS;
+      solver_method NR;
       default_maximum_voltage_error 1e-6;
  };
 
@@ -1546,7 +1544,7 @@
 		value +274.175+119.533d;
 		within 1;
 	};
-  }
+ }
 
  // Meter at feeder
  object meter:3919 {
@@ -2111,23 +2109,21 @@
       phases BN;
       voltage_B -6610.66-11450j;
       nominal_voltage 13221.32;
-	  // voltage_A	voltage_B	voltage_C
-// +13150.4-14.3936j	-6588.79-11380.7j	+0+0j
-  	 // object recorder {
+	  	 // object recorder {
 		// property voltage_A,voltage_B,voltage_C;
 		// interval 60;
 		// limit 1440;
 		// file "134.csv";
-	// }; // @off on voltage_A; NR gives 0
-	// object complex_assert{
-		// target voltage_A;
-		// value +0+0j;
-		// within 1;
 	// };
+	object complex_assert{
+		target voltage_A;
+		value +0+0j;
+		within 1;
+	};
 	object complex_assert{
 		target voltage_B;
 		value -6589.19-11387j;
-		within 8;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
@@ -3147,7 +3143,7 @@
 	object complex_assert{
 		target voltage_B;
 		value -6595.89-11379.5j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
@@ -4330,17 +4326,17 @@
 	object complex_assert{
 		target voltage_A;
 		value +13137.4-56.6797j;
-		within 6;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value -6595.17-11382.2j;
-		within 6;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 	value -6502.83+11374.4j;
-		within 6;
+		within 1;
 	};
  }
 
@@ -6172,25 +6168,22 @@
       phases AN;
       voltage_A 13221.32+0.0j;
       nominal_voltage 13221.32;
-	  // FBS voltage_A	voltage_B	voltage_C
-// +13149.5-14.3148j	-6588.89-11381j	+0+0j
-	// @off on voltage B; should be 0
 	  // object recorder {
 		// property voltage_A,voltage_B,voltage_C;
 		// interval 60;
 		// limit 1440;
 		// file "663.csv";
 	// };
- 	object complex_assert{
+	object complex_assert{
 		target voltage_A;
 		value +13155.2-0.0501003d;
-		within 6;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_B;
-		// value +0+0j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_B;
+		value +0+0j;
+		within 1;
+	};
 	object complex_assert{
 		target voltage_C;
 		value +0+0j;
@@ -8899,17 +8892,17 @@
 	object complex_assert{
 		target voltage_A;
 		value +13153.2-33.7722j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value -6599.57-11392.7j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -6544.62+11396.4j;
-		within 4;
+		within 1;
 	};
  }
 

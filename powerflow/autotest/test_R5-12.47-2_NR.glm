@@ -1,7 +1,7 @@
  // $Id: R5-12.47-2.glm
  // 12.47 kV feeder
  //*********************************************
-// validates voltages with FBS at selected load, node, meter, triplex_node, and
+// validates voltages with NR at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 //	
 // additionally, validates power_in/out/losses on several triplex_lines
@@ -10,8 +10,6 @@
 // transformers)
 // written by alek332
 
-// a lot of the nodes are off by 4-10; some triplex nodes are off by 
-// as much as 200. search for @off
  clock{
       timestamp '2000-01-01 0:00:00';
       stoptime '2000-01-01 1:00:00';
@@ -24,7 +22,7 @@
  module assert;
  module tape;
  module powerflow{
-      solver_method FBS;
+      solver_method NR;
       default_maximum_voltage_error 1e-6;
  };
 
@@ -823,21 +821,21 @@
 		// interval 60;
 		// limit 1440;
 		// file "379.csv";
-	// }; // @off by 7
+	// };
 	object complex_assert{
 		target voltage_A;
 		value +269.762-1.28139j;
-		within 7;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value -136.856-232.982j;
-		within 7;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -133.725+234.443j;
-		within 7;
+		within 1;
 	};
  }
 
@@ -1158,23 +1156,23 @@
 		// interval 60;
 		// limit 1440;
 		// file "403.csv";
-	// }; //@off by 10
+	// };
 	object complex_assert{
 		target voltage_A;
 		value +264.272-6.21409j;
-		within 10;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		once ONCE_TRUE;
 		in '2000-01-01 00:06:00 EST';
 		value -137.112-230.844j;
-		within 10;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -131.849+233.065j;
-		within 10;
+		within 1;
 	};
  }
 
@@ -1309,21 +1307,21 @@
 		// interval 60;
 		// limit 1440;
 		// file "413.csv";
-	// }; //@off by 10
+	// };
 	object complex_assert{
 		target voltage_A;
 		value +267.681-2.49633j;
-		within 10;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value -137.291-230.774j;
-		within 10;
+		within 1.5;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -131.688+233.191j;
-		within 10;
+		within 1;
 	};
  }
 
@@ -1429,23 +1427,23 @@
 		// interval 60;
 		// limit 1440;
 		// file "838.csv";
-	// }; // @off by 9
+	// };
 	object complex_assert{
 		target voltage_A;
 		value +268.277-1.93686j;
-		within 9;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		value -137.008-231.425j;
-		within 9;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -132.438+233.486j;
-		within 9;
+		within 1;
 	};
  }
 
@@ -1741,16 +1739,16 @@
 		// interval 60;
 		// limit 1440;
 		// file "872.csv";
-	// }; // @off by 10
+	// };
 	object complex_assert{
 		target voltage_A;
 		value +268.445-0.363048d;
-		within 10;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value -137.722-229.309j;
-		within 10;
+		within 2;
 	};
 	object complex_assert{
 		target voltage_C;
@@ -1941,27 +1939,27 @@
 		// interval 60;
 		// limit 1440;
 		// file "69.csv";
-	// }; // @off by 280
+	// };
 	object complex_assert{
 		target voltage_A;
 		once ONCE_TRUE;
 		in '2000-01-01 00:06:00 EST';
 		value +6944.64-60.8114j;
-		within 280;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
 		in '2000-01-01 00:06:00 EST';
 		target voltage_B;
 		value -3558.73-5989.49j;
-		within 280;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
 		in '2000-01-01 00:06:00 EST';
 		target voltage_C;
 		value -3420.11+6047.84j;
-		within 280;
+		within 1;
 	};
  }
 
@@ -2745,27 +2743,27 @@
 		// interval 60;
 		// limit 1440;
 		// file "162.csv";
-	// }; // @off by approx 175
+	// };
 	object complex_assert{
 		target voltage_A;
 		once ONCE_TRUE;
 		in '2000-01-01 00:05:00 EST';
 		value +7010.78-31.9704j;
-		within 175;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		once ONCE_TRUE;
 		in '2000-01-01 00:05:00 EST';
 		value -3555.52-6055.45j;
-		within 175;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		once ONCE_TRUE;
 		in '2000-01-01 00:05:00 EST';
 		value -3476.43+6092.17j;
-		within 175;
+		within 1;
 	};
  }
 
@@ -3917,27 +3915,27 @@
 		// interval 60;
 		// limit 1440;
 		// file "296.csv";
-	// }; // @off by 250
+	// };
 	object complex_assert{
 		target voltage_A;
 		once ONCE_TRUE;
 		in '2000-01-01 00:07:00 EST';
 		value +6953.45-61.0386j;
-		within 250;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		once ONCE_TRUE;
 		in '2000-01-01 00:07:00 EST';
 		value -3565.32-5994.18j;
-		within 250;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		once ONCE_TRUE;
 		in '2000-01-01 00:07:00 EST';
 		value -3423.54+6056.57j;
-		within 250;
+		within 1;
 	};
  }
 
@@ -8710,12 +8708,12 @@
       to R5-12-47-2_tm_19;
       length 30;
       configuration triplex_line_configuration:1;
-	// object recorder {
-		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
-		// interval 60;
-		// limit 1440;
-		// file "TLN892.csv";
-	// };
+	object recorder {
+		property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
+		interval 60;
+		limit 1440;
+		file "TLN892.csv";
+	};
 	 object complex_assert{
 		target power_in_A;
 		value +2304.46+1201.79j;
@@ -8749,7 +8747,7 @@
  object complex_assert{
 		target power_losses_A;
 		value +4.45976+1.7871j;
-		within .5;
+		within .1;
 	};
 	object complex_assert{
 		target power_losses_B;
@@ -9556,7 +9554,7 @@
  object complex_assert{
 		target power_losses_A;
 		value +4.49068+1.79949i;
-		within .4;
+		within .1;
 	};
 	object complex_assert{
 		target power_losses_B;
@@ -9780,11 +9778,11 @@
 		// interval 60;
 		// limit 1440;
 		// file "TLN999.csv";
-	// }; // @off by 10
+	// };
 	 object complex_assert{
 		target power_in_A;
 		value +12745.7+6724.13j;
-		within 10;
+		within 2;
 	};
 	object complex_assert{
 		target power_in_B;
@@ -9814,7 +9812,7 @@
  object complex_assert{
 		target power_losses_A;
 		value +134.505+53.8984j;
-		within 10;
+		within 2;
 	};
 	object complex_assert{
 		target power_losses_B;
@@ -10166,16 +10164,16 @@
 		// interval 60;
 		// limit 1440;
 		// file "707.csv";
-	// }; // @off by approx 4
+	// };
 	object complex_assert{
 		target voltage_1;
 		value +114.925-0.951206i;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_2;
 		value +115.984-1.02882i;
-		within 4;
+		within 1;
 	};	
  }
 
@@ -10762,12 +10760,12 @@
 	object complex_assert{
 		target voltage_1;
 		value +113.933-0.981986i;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_2;
 		value +115.227-1.21909i;
-		within 4;
+		within 1;
 	};	
  }
 
@@ -11431,16 +11429,16 @@
 		// interval 60;
 		// limit 1440;
 		// file "430.csv";
-	// }; // @off by 4
+	// };
 	object complex_assert{
 		target voltage_1;
 		value -56.9599+100.724j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_2;
 		value -57.0082+100.886j;
-		within 4;
+		within 1;
 	};	
  }
 
@@ -12077,16 +12075,16 @@
 		// interval 60;
 		// limit 1440;
 		// file "500.csv";
-	// }; // @off by 5
+	// };
 	object complex_assert{
 		target voltage_1;
 		value -59.2015-99.5585j;
-		within 5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_2;
 		value -59.3507-99.7149j;
-		within 5;
+		within 1;
 	};
  }
 
@@ -13586,16 +13584,16 @@
 		// interval 60;
 		// limit 1440;
 		// file "645.csv";
-	// }; //@off by 4
+	// };
 	object complex_assert{
 		target voltage_1;
 		value +114.009-1.0089i;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_2;
 		value +115.301-1.24614i;
-		within 4;
+		within 1;
 	};
  }
 
@@ -14086,16 +14084,16 @@
 		// interval 60;
 		// limit 1440;
 		// file "689.csv";
-	// }; // @off by 5
+	// };
 	object complex_assert{
 		target voltage_1;
 		value -56.6893+100.136j;
-		within 5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_2;
 		value -57.0305+100.924j;
-		within 5;
+		within 1;
 	};
  }
 

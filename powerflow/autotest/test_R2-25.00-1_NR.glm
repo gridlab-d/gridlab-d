@@ -1,7 +1,7 @@
 // $Id: R2-25.00-1.glm 
 // 24.9 kV feeder
 //*********************************************
-// validates voltages with FBS at selected load, node, meter, triplex_node, and
+// validates voltages with NR at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 
 // written by: alek332
@@ -17,7 +17,7 @@ clock{
 
 module tape;
 module powerflow{
-	solver_method FBS;
+	solver_method NR;
 	default_maximum_voltage_error 1e-9;
 };
 module assert;
@@ -1247,17 +1247,17 @@ object load:398 {
 	object complex_assert{
 		target voltage_A;
 		value +0+0j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value +0+0j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value +269.569+118.61d;
-		within 5.5;
+		within 1;
 	};	
 }
 
@@ -1734,17 +1734,17 @@ object load:435 {
 	object complex_assert{
 		target voltage_A;
 		value +270.785-5.57528j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value -138.254-234.953j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -131.265+235.706j;
-		within 5.5;
+		within 1;
 	};	
 }
 
@@ -2022,17 +2022,17 @@ object meter:1066 {
 	object complex_assert{
 		target voltage_A;
 		value +0+0j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value -142.582-231.379j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value +0+0j;
-		within 5.5;
+		within 1;
 	};	
 }
 
@@ -2527,17 +2527,17 @@ object meter:1124 {
 	object complex_assert{
 		target voltage_A;
 		value +275.258-1.92277j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value -138.854-237.41j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -135.441+239.069j;
-		within 5.5;
+		within 1;
 	};	
 }
 
@@ -3127,17 +3127,17 @@ object node:121 {
 	object complex_assert{
 		target voltage_A;
 		value +14122.4-237.389j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value -7183.52-12245.3j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -6882.7+12282j;
-		within 5.5;
+		within 1;
 	};	
 }
 
@@ -4191,17 +4191,17 @@ object node:252 {
 	object complex_assert{
 		target voltage_A;
 		value +14300.5-67.2621j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value -7191.72-12360.7j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -7081.55+12406.7j;
-		within 5.5;
+		within 1;
 	};	
 }
 
@@ -5201,17 +5201,17 @@ object node:2050 {
 	object complex_assert{
 		target voltage_A;
 		value +14376+0j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value -7188.01-12450j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -7188.01+12450j;
-		within 5.5;
+		within 1;
 	};	
 }
 
@@ -12371,12 +12371,12 @@ object triplex_meter:863 {
 	object complex_assert{
 		target voltage_1;
 		value -57.0107-96.3171j;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_2;
 		value -60.33-105.142j;
-		within 5.5;
+		within 1;
 	};
 }
 
@@ -12738,12 +12738,12 @@ object triplex_meter:902 {
 	object complex_assert{
 		target voltage_1;
 		value +111.179-3.05936i;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_2;
 		value +119.664-1.31246i;
-		within 5.5;
+		within 1;
 	};
 }
 
@@ -15077,12 +15077,12 @@ object triplex_node:554 {
 	object complex_assert{
 		target voltage_1;
 		value +117.993-1.62187i;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_2;
 		value +118.178-1.62053i;
-		within 5.5;
+		within 1;
 	};
 }
 
@@ -16232,12 +16232,12 @@ object triplex_node:675 {
 	object complex_assert{
 		target voltage_1;
 		value +117.753-0.938229i;
-		within 5.5;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_2;
 		value +119.438-0.631734i;
-		within 5.5;
+		within 1;
 	};
 }
 

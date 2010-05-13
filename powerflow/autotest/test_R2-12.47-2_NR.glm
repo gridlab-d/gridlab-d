@@ -1,7 +1,7 @@
 // $Id: R2-12.47-2.glm 
 // 12.47 kV feeder
 //*********************************************
-// validates voltages with FBS at selected load, node, meter, triplex_node, and
+// validates voltages with NR at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 
 // search for @IMPORTANT to find the nodes whose values are off on the
@@ -20,7 +20,7 @@ clock{
 
 module tape;
 module powerflow{
-	solver_method FBS;
+	solver_method NR;
 	default_maximum_voltage_error 1e-9;
 };
 module assert;

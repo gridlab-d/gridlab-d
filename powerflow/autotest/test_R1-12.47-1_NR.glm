@@ -2,7 +2,7 @@
 // 12.5 kV feeder
 //*********************************************
 // validation tests for R1-12.47-1.glm
-// validates voltages with FBS at selected load, node, meter, triplex_node, and
+// validates voltages with NR at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 // created by: alek332
 clock{
@@ -17,7 +17,7 @@ clock{
 
 module tape;
 module powerflow{
-	solver_method FBS;
+	solver_method NR;
 	default_maximum_voltage_error 1e-9;
 };
 module assert;

@@ -1,7 +1,7 @@
 // $Id: R4-25.00-1.glm
 // 24.9 kV feeder
 //*********************************************
-// validates voltages with FBS at selected load, node, meter, triplex_node, and
+// validates voltages with NR at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 // also validates power_in and power_out at select transformers
 // written by: alek332
@@ -18,7 +18,7 @@ clock{
 module assert;
 module tape;
 module powerflow{
-	solver_method FBS;
+	solver_method NR;
 	default_maximum_voltage_error 1e-9;
 };
 //*********************************************

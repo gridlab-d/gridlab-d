@@ -3,11 +3,10 @@
 // $Id: R1-12.47-3.glm 
 
 //*********************************************
-// validates voltages with FBS at selected load, node, meter, triplex_node, and
+// validates voltages with NR at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 // also validates power_in and power_out at select transformer objects
-//
-// written by alek332
+
 clock{
 	timestamp '2000-01-01 0:00:00';
 	stoptime '2000-01-01 1:00:00';
@@ -21,7 +20,7 @@ clock{
 module assert;
 module tape;
 module powerflow{
-	solver_method FBS;
+	solver_method NR;
 	default_maximum_voltage_error 1e-9;
 };
 //*********************************************

@@ -1,7 +1,7 @@
 // $Id: R2-12.47-1.glm 
 // 12.47 kV feeder
 //*********************************************
-// validates voltages with FBS at selected load, node, meter, triplex_node, and
+// validates voltages with NR at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 // also validates power_in,power_out, and power_losses at
 // SINGLE_PHASE_CENTER_TAPPED transformers 1119 and 1207;
@@ -20,7 +20,7 @@ clock{
 
 module tape;
 module powerflow{
-	solver_method FBS;
+	solver_method NR;
 	default_maximum_voltage_error 1e-9;
 };
 module assert;
@@ -1869,21 +1869,21 @@ object meter:914 {
 		// limit 1440;
 		// file "914.csv";
 	// };
-	object complex_assert{
-		target voltage_A;
-		value +269.021-1.96566d;
-		within 1;
-	};
-	object complex_assert{
-		target voltage_B;
-		value +0+0j;
-		within 1;
-	};
-	object complex_assert{
-		target voltage_C;
-		value +0+0j;
-		within 1;
-	};
+	// object complex_assert{
+		// target voltage_A;
+		// value +269.021-1.96566d;
+		// within 1;
+	// };
+	// object complex_assert{
+		// target voltage_B;
+		// value +0+0j;
+		// within 1;
+	// };
+	// object complex_assert{
+		// target voltage_C;
+		// value +0+0j;
+		// within 1;
+	// };
 }
 
 object meter:915 {

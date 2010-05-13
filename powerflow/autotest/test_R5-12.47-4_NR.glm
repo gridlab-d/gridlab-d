@@ -1,7 +1,7 @@
  // $Id: R5-12.47-4.glm
  // 12.47 kV feeder
  //*********************************************
-  // validates voltages with FBS at selected load, node, meter, triplex_node, and
+  // validates voltages with NR at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 //
 // additionally, validates power_in/out/losses on several triplex_lines
@@ -11,8 +11,6 @@
 //
 // written by alek332
 
-// outputs error in FBS:
-// convergence iteration limit reached for object node 803
  clock{
       timestamp '2000-01-01 0:00:00';
       stoptime '2000-01-01 1:00:00';
@@ -1343,33 +1341,33 @@
       constant_power_C 13362.894+8138.4445j;
       nominal_voltage 7200;
       load_class C;
-	  	 object recorder {
-		property voltage_A,voltage_B,voltage_C;
-		interval 60;
-		limit 1440;
-		file "718.csv";
+	  	 // object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "718.csv";
+	// };
+	object complex_assert{
+		target voltage_A;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value +270.202-2.16073j;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_A;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value +270.202-2.16073j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_B;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -138.723-232.982j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_C;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -133.063+234.909j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_B;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -138.723-232.982j;
+		within 1;
+	};
+	object complex_assert{
+		target voltage_C;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -133.063+234.909j;
+		within 1;
+	};
  }
 
  object load:719 {
@@ -1722,33 +1720,33 @@
       constant_power_C 47115.8893+28695.1352j;
       nominal_voltage 7200;
       load_class C;
-	  	  	 object recorder {
-		property voltage_A,voltage_B,voltage_C;
-		interval 60;
-		limit 1440;
-		file "745.csv";
+	  	  	 // object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "745.csv";
+	// };
+	object complex_assert{
+		target voltage_A;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value +270.043-2.29404j;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_A;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value +270.043-2.29404j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_B;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -138.759-232.77j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_C;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -132.868+234.838j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_B;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -138.759-232.77j;
+		within 1;
+	};
+	object complex_assert{
+		target voltage_C;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -132.868+234.838j;
+		within 1;
+	};
  }
 
  object load:746 {
@@ -1882,33 +1880,33 @@
       voltage_B -3600-6235j;
       voltage_C -3600+6235j;
       nominal_voltage 7200;
-	object recorder {
-		property voltage_A,voltage_B,voltage_C;
-		interval 60;
-		limit 1440;
-		file "1283.csv";
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "1283.csv";
+	// };
+	object complex_assert{
+		target voltage_A;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value +270.337-2.04519j;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_A;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value +270.337-2.04519j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_B;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -138.61-233.078j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_C;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -133.209+234.984j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_B;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -138.61-233.078j;
+		within 1;
+	};
+	object complex_assert{
+		target voltage_C;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -133.209+234.984j;
+		within 1;
+	};
  }
 
  object meter:1284 {
@@ -2098,33 +2096,33 @@
       voltage_B -3600-6235j;
       voltage_C -3600+6235j;
       nominal_voltage 7200;
-	  object recorder {
-		property voltage_A,voltage_B,voltage_C;
-		interval 60;
-		limit 1440;
-		file "1305.csv";
+	  // object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "1305.csv";
+	// };
+	object complex_assert{
+		target voltage_A;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value +269.976-2.51763j;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_A;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value +269.976-2.51763j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_B;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -139.027-232.693j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_C;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -132.669+234.873j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_B;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -139.027-232.693j;
+		within 1;
+	};
+	object complex_assert{
+		target voltage_C;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -132.669+234.873j;
+		within 1;
+	};
  }
 
  object meter:1306 {
@@ -2901,33 +2899,33 @@
       voltage_B -3600-6235j;
       voltage_C -3600+6235j;
       nominal_voltage 7200;
-	  object recorder {
-		property voltage_A,voltage_B,voltage_C;
-		interval 60;
-		limit 1440;
-		file "139.csv";
+	  // object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "139.csv";
+	// };
+	object complex_assert{
+		target voltage_A;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value +7122.89-11.3891j;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_A;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value +7122.89-11.3891j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_B;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -3589.75-6161.35j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_C;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -3549.12+6174.19j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_B;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -3589.75-6161.35j;
+		within 1;
+	};
+	object complex_assert{
+		target voltage_C;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -3549.12+6174.19j;
+		within 1;
+	};
 
  }
 
@@ -3429,33 +3427,33 @@
       voltage_B -3600-6235j;
       voltage_C -3600+6235j;
       nominal_voltage 7200;
-	  object recorder {
-		property voltage_A,voltage_B,voltage_C;
-		interval 60;
-		limit 1440;
-		file "205.csv";
+	  // object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "205.csv";
+	// };
+	object complex_assert{
+		target voltage_A;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value +7173.5-2.57263j;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_A;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value +7173.5-2.57263j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_B;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -3590.73-6204.72j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_C;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -3579.77+6209.79j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_B;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -3590.73-6204.72j;
+		within 1;
+	};
+	object complex_assert{
+		target voltage_C;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -3579.77+6209.79j;
+		within 1;
+	};
 
  }
 
@@ -4538,33 +4536,33 @@
       voltage_B -3600-6235j;
       voltage_C -3600+6235j;
       nominal_voltage 7200;
-	  object recorder {
-		property voltage_A,voltage_B,voltage_C;
-		interval 60;
-		limit 1440;
-		file "332.csv";
+	  // object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "332.csv";
+	// };
+	object complex_assert{
+		target voltage_A;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value +7022.95-50.8608j;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_A;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value +7022.95-50.8608j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_B;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -3600.9-6058.33j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_C;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:07:00 EST';
-		// value -3463.02+6102.98j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_B;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -3600.9-6058.33j;
+		within 1;
+	};
+	object complex_assert{
+		target voltage_C;
+		once ONCE_TRUE;
+		in '2000-01-01 00:07:00 EST';
+		value -3463.02+6102.98j;
+		within 1;
+	};
 
  }
 
@@ -7569,42 +7567,42 @@
       to R5-12-47-4_node_367;
       length 11.853;
       configuration line_configuration:27;
-	  	object recorder {
-		property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
-		interval 60;
-		limit 1440;
-		file "OL1789.csv";
+	  	// object recorder {
+		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
+		// interval 60;
+		// limit 1440;
+		// file "OL1789.csv";
+	// };
+	 object complex_assert{
+		target power_in_A;
+		value +6726.09+31.7864d;
+		within 2;
 	};
-	 // object complex_assert{
-		// target power_in_A;
-		// value +6726.09+31.7864d;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_in_B;
-		// value +0+0j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_in_C;
-		// value +0+0j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_A;
-		// value +6726.09+31.7863d;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_B;
-		// value +0+0j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_C;
-		// value +0+0j;
-		// within 2;
-	// };
+	object complex_assert{
+		target power_in_B;
+		value +0+0j;
+		within 2;
+	};
+	object complex_assert{
+		target power_in_C;
+		value +0+0j;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_A;
+		value +6726.09+31.7863d;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_B;
+		value +0+0j;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_C;
+		value +0+0j;
+		within 2;
+	};
  }
 
  object overhead_line:1790 {
@@ -7803,42 +7801,42 @@
       to R5-12-47-4_node_569;
       length 127.232;
       configuration line_configuration:32;
-	  	  	object recorder {
-		property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
-		interval 60;
-		limit 1440;
-		file "OL1965.csv";
+	  	  	// object recorder {
+		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
+		// interval 60;
+		// limit 1440;
+		// file "OL1965.csv";
+	// };
+	 object complex_assert{
+		target power_in_A;
+		value +10007.3+5036.64j;
+		within 2;
 	};
-	 // object complex_assert{
-		// target power_in_A;
-		// value +10007.3+5036.64j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_in_B;
-		// value +10007.3+5035.74j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_in_C;
-		// value +30076.1+15373.6j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_A;
-		// value +10007.3+5036.6j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_B;
-		// value +10007.1+5035.75j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_C;
-		// value +30075.1+15372.9j;
-		// within 2;
-	// };
+	object complex_assert{
+		target power_in_B;
+		value +10007.3+5035.74j;
+		within 2;
+	};
+	object complex_assert{
+		target power_in_C;
+		value +30076.1+15373.6j;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_A;
+		value +10007.3+5036.6j;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_B;
+		value +10007.1+5035.75j;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_C;
+		value +30075.1+15372.9j;
+		within 2;
+	};
  }
 
  object overhead_line:1966 {
@@ -8874,42 +8872,42 @@
       to R5-12-47-4_node_196;
       length 12.111;
       configuration line_configuration:29;
-	  	object recorder {
-		property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
-		interval 60;
-		limit 1440;
-		file "OL2087.csv";
+	  	// object recorder {
+		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
+		// interval 60;
+		// limit 1440;
+		// file "OL2087.csv";
+	// };
+	 object complex_assert{
+		target power_in_A;
+		value +22698.5+13945.3j;
+		within 2;
 	};
-	 // object complex_assert{
-		// target power_in_A;
-		// value +22698.5+13945.3j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_in_B;
-		// value +23503.5+14373.9j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_in_C;
-		// value +22588.1+13865.5j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_A;
-		// value +22698.5+13945.4j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_B;
-		// value +23503.4+14373.9j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_C;
-		// value +22588+13865.5j;
-		// within 2;
-	// };
+	object complex_assert{
+		target power_in_B;
+		value +23503.5+14373.9j;
+		within 2;
+	};
+	object complex_assert{
+		target power_in_C;
+		value +22588.1+13865.5j;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_A;
+		value +22698.5+13945.4j;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_B;
+		value +23503.4+14373.9j;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_C;
+		value +22588+13865.5j;
+		within 2;
+	};
  }
 
  object overhead_line:2088 {
@@ -9063,52 +9061,52 @@
       to R5-12-47-4_node_450;
       length 296.204;
       configuration line_configuration:26;
-	  	  	object recorder {
-		property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
-		interval 60;
-		limit 1440;
-		file "OL2136.csv";
+	  	  	// object recorder {
+		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
+		// interval 60;
+		// limit 1440;
+		// file "OL2136.csv";
+	// };
+	 object complex_assert{
+		target power_in_A;
+		once ONCE_TRUE;
+		in '2000-01-01 00:05:00 EST';
+		value +239591+156357j;
+		within 2;
 	};
-	 // object complex_assert{
-		// target power_in_A;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:05:00 EST';
-		// value +239591+156357j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_in_B;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:05:00 EST';
-		// value +405548+257618j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_in_C;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:05:00 EST';
-		// value +0+0j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_A;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:05:00 EST';
-		// value +239535+156294j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_B;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:05:00 EST';
-		// value +405556+257371j;
-		// within 2;
-	// };
-	// object complex_assert{
-		// target power_out_C;
-		// value +0+0j;
-		// within 2;
-	// };
+	object complex_assert{
+		target power_in_B;
+		once ONCE_TRUE;
+		in '2000-01-01 00:05:00 EST';
+		value +405548+257618j;
+		within 2;
+	};
+	object complex_assert{
+		target power_in_C;
+		once ONCE_TRUE;
+		in '2000-01-01 00:05:00 EST';
+		value +0+0j;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_A;
+		once ONCE_TRUE;
+		in '2000-01-01 00:05:00 EST';
+		value +239535+156294j;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_B;
+		once ONCE_TRUE;
+		in '2000-01-01 00:05:00 EST';
+		value +405556+257371j;
+		within 2;
+	};
+	object complex_assert{
+		target power_out_C;
+		value +0+0j;
+		within 2;
+	};
  }
 
  object overhead_line:2144 {
@@ -9685,52 +9683,52 @@
       to R5-12-47-4_node_499;
       length 8.285;
       configuration line_configuration:33;
-	  	  	object recorder {
-		property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
-		interval 60;
-		limit 1440;
-		file "OL2258.csv";
+	  	  	// object recorder {
+		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
+		// interval 60;
+		// limit 1440;
+		// file "OL2258.csv";
+	// };
+	 object complex_assert{
+		target power_in_A;
+		once ONCE_TRUE;
+		in '2000-01-01 00:06:00 EST';
+		value +239706+156419j;
+		within 4;
 	};
-	 // object complex_assert{
-		// target power_in_A;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:06:00 EST';
-		// value +239706+156419j;
-		// within 4;
-	// };
-	// object complex_assert{
-		// target power_in_B;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:06:00 EST';
-		// value +470709+297317j;
-		// within 4;
-	// };
-	// object complex_assert{
-		// target power_in_C;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:06:00 EST';
-		// value +0+0j;
-		// within 4;
-	// };
-	// object complex_assert{
-		// target power_out_A;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:06:00 EST';
-		// value +239704+156417j;
-		// within 4;
-	// };
-	// object complex_assert{
-		// target power_out_B;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:06:00 EST';
-		// value +470708+297307j;
-		// within 20;
-	// };
-	// object complex_assert{
-		// target power_out_C;
-		// value +0+0j;
-		// within 4;
-	// };
+	object complex_assert{
+		target power_in_B;
+		once ONCE_TRUE;
+		in '2000-01-01 00:06:00 EST';
+		value +470709+297317j;
+		within 4;
+	};
+	object complex_assert{
+		target power_in_C;
+		once ONCE_TRUE;
+		in '2000-01-01 00:06:00 EST';
+		value +0+0j;
+		within 4;
+	};
+	object complex_assert{
+		target power_out_A;
+		once ONCE_TRUE;
+		in '2000-01-01 00:06:00 EST';
+		value +239704+156417j;
+		within 4;
+	};
+	object complex_assert{
+		target power_out_B;
+		once ONCE_TRUE;
+		in '2000-01-01 00:06:00 EST';
+		value +470708+297307j;
+		within 20;
+	};
+	object complex_assert{
+		target power_out_C;
+		value +0+0j;
+		within 4;
+	};
  }
 
  object overhead_line:2271 {
@@ -13973,26 +13971,26 @@
       voltage_2 -60-103.92j;
       voltage_N 0;
       nominal_voltage 120;
-	object recorder {
-		property voltage_1,voltage_2;
-		interval 60;
-		limit 1440;
-		file "1100.csv";
+	// object recorder {
+		// property voltage_1,voltage_2;
+		// interval 60;
+		// limit 1440;
+		// file "1100.csv";
+	// };
+	object complex_assert{
+		target voltage_1;
+		once ONCE_TRUE;
+		in '2000-01-01 00:03:00 EST';
+		value -58.6576-96.6539j;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_1;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:03:00 EST';
-		// value -58.6576-96.6539j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_2;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:03:00 EST';
-		// value -61.2948-100.29j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_2;
+		once ONCE_TRUE;
+		in '2000-01-01 00:03:00 EST';
+		value -61.2948-100.29j;
+		within 1;
+	};
  }
 
  object triplex_meter:1101 {
@@ -14570,22 +14568,22 @@
       voltage_2 120;
       voltage_N 0;
       nominal_voltage 120;
-	  	object recorder {
-		property voltage_1,voltage_2;
-		interval 60;
-		limit 1440;
-		file "1164.csv";
+	  	// object recorder {
+		// property voltage_1,voltage_2;
+		// interval 60;
+		// limit 1440;
+		// file "1164.csv";
+	// };
+	object complex_assert{
+		target voltage_1;
+		value +113.352-1.52101i;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_1;
-		// value +113.352-1.52101i;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_2;
-		// value +116.255-1.80517i;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_2;
+		value +116.255-1.80517i;
+		within 1;
+	};
  }
 
  object triplex_meter:1165 {
@@ -15549,26 +15547,26 @@
       voltage_2 -60-103.92j;
       voltage_N 0;
       nominal_voltage 120;
-	  	object recorder {
-		property voltage_1,voltage_2;
-		interval 60;
-		limit 1440;
-		file "1271.csv";
+	  	// object recorder {
+		// property voltage_1,voltage_2;
+		// interval 60;
+		// limit 1440;
+		// file "1271.csv";
+	// };
+	object complex_assert{
+		target voltage_1;
+		value -59.5629-98.3613j;
+		within 1;
+		once ONCE_TRUE;
+		in '2000-01-01 00:03:00 EST';
 	};
-	// object complex_assert{
-		// target voltage_1;
-		// value -59.5629-98.3613j;
-		// within 1;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:03:00 EST';
-	// };
-	// object complex_assert{
-		// target voltage_2;
-		// value -60.7751-100.045j;
-		// within 1;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:03:00 EST';
-	// };
+	object complex_assert{
+		target voltage_2;
+		value -60.7751-100.045j;
+		within 1;
+		once ONCE_TRUE;
+		in '2000-01-01 00:03:00 EST';
+	};
  }
 
  object triplex_meter:1272 {
@@ -16100,26 +16098,26 @@
       voltage_2 -60-103.92j;
       voltage_N 0;
       nominal_voltage 120;
-	  	object recorder {
-		property voltage_1,voltage_2;
-		interval 60;
-		limit 1440;
-		file "805.csv";
+	  	// object recorder {
+		// property voltage_1,voltage_2;
+		// interval 60;
+		// limit 1440;
+		// file "805.csv";
+	// };
+	object complex_assert{
+		target voltage_1;
+		once ONCE_TRUE;
+		in '2000-01-01 00:03:00 EST';
+		value -60.5183-99.459j;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_1;
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:03:00 EST';
-		// value -60.5183-99.459j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// once ONCE_TRUE;
-		// in '2000-01-01 00:03:00 EST';
-		// target voltage_2;
-		// value -60.4762-99.4205j;
-		// within 1;
-	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:03:00 EST';
+		target voltage_2;
+		value -60.4762-99.4205j;
+		within 1;
+	};
  }
 
  object triplex_node:806 {
@@ -18467,22 +18465,22 @@
       voltage_2 120;
       voltage_N 0;
       nominal_voltage 120;
-	  	object recorder {
-		property voltage_1,voltage_2;
-		interval 60;
-		limit 1440;
-		file "1040.csv";
+	  	// object recorder {
+		// property voltage_1,voltage_2;
+		// interval 60;
+		// limit 1440;
+		// file "1040.csv";
+	// };
+	object complex_assert{
+		target voltage_1;
+		value +113.351-1.96835i;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_1;
-		// value +113.351-1.96835i;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_2;
-		// value +115.882-2.24427i;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_2;
+		value +115.882-2.24427i;
+		within 1;
+	};
  }
 
  object triplex_node:1041 {
@@ -19132,22 +19130,22 @@
       voltage_2 -60+103.92j;
       voltage_N 0;
       nominal_voltage 120;
-	  	object recorder {
-		property voltage_1,voltage_2;
-		interval 60;
-		limit 1440;
-		file "1099.csv";
+	  	// object recorder {
+		// property voltage_1,voltage_2;
+		// interval 60;
+		// limit 1440;
+		// file "1099.csv";
+	// };
+	object complex_assert{
+		target voltage_1;
+		value -55.7615+99.2399j;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_1;
-		// value -55.7615+99.2399j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_2;
-		// value -56.7663+101.442j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_2;
+		value -56.7663+101.442j;
+		within 1;
+	};
  }
 
  object underground_line:1744 {

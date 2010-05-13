@@ -1,7 +1,7 @@
 // $Id: R3-12.47-2.glm 
 // 12.47 kV feeder
 //*********************************************
-// validates voltages with FBS at selected load, node, meter, and triplex_node/meter
+// validates voltages with NR at selected load, node, meter, and triplex_node/meter
 // objects
 //
 // also validates power_in,power_out and power losses at selected
@@ -21,7 +21,7 @@ clock{
 module assert;
 module tape;
 module powerflow{
-	solver_method FBS;
+	solver_method NR;
 	default_maximum_voltage_error 1e-9;
 };
 //*********************************************
@@ -523,7 +523,7 @@ object load:319 {
 	constant_power_A 6156.2257+1836.7523j;
 	nominal_voltage 7200;
 	load_class C;
- 	// object recorder {
+	// object recorder {
 		// property voltage_A,voltage_B,voltage_C;
 		// interval 60;
 		// limit 1440;
@@ -532,18 +532,18 @@ object load:319 {
 	object complex_assert{
 		target voltage_A;
 		value +266.562-3.06862d;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value  +0+0j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value +0+0j;
-		within 4;
-	}; 
+		within 1;
+	};
 }
 
 object load:320 {
@@ -989,17 +989,17 @@ object load:355 {
 	object complex_assert{
 		target voltage_A;
 		value +0+0j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value  -147.811-217.809j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value +0+0j;
-		within 4;
+		within 1;
 	};
 }
 
@@ -1024,17 +1024,17 @@ object load:356 {
 	object complex_assert{
 		target voltage_A;
 		value +274.529-2.38247j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value  -139.375-236.384j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -135.202+238.996j;
-		within 4;
+		within 1;
 	};
 }
 
@@ -1097,17 +1097,17 @@ object load:360 {
 	object complex_assert{
 		target voltage_A;
 		value +271.491-5.97522j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value  -141.229-231.655j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -130.613+238.417j;
-		within 4;
+		within 1;
 	};
 }
 
@@ -1429,17 +1429,17 @@ object meter:389 {
 	object complex_assert{
 		target voltage_A;
 		value +271.324-6.23322j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value  -141.329-231.384j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -130.28+238.345j;
-		within 4;
+		within 1;
 	};
 }
 
@@ -1630,17 +1630,17 @@ object meter:411 {
 	object complex_assert{
 		target voltage_A;
 		value +0+0j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value  +0+0j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value +270.861+117.675d;
-		within 4;
+		within 1;
 	};
 }
 
@@ -1857,17 +1857,17 @@ object meter:435 {
 	object complex_assert{
 		target voltage_A;
 		value +273.67-1.90469j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value  -138.503-235.843j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -135.211+238.067j;
-		within 4;
+		within 1;
 	};
 }
 
@@ -2589,17 +2589,17 @@ object node:128 {
 	object complex_assert{
 		target voltage_A;
 		value +7055.86-150.523j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value  -3666.17-6023.15j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -3398.75+6193.89j;
-		within 4;
+		within 1;
 	};
 }
 
@@ -3183,17 +3183,17 @@ object node:191 {
 	object complex_assert{
 		target voltage_A;
 		value +7058.41-149.478j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value  -3666.46-6025.82j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -3400.79+6195.4j;
-		within 4;
+		within 1;
 	};
 }
 
@@ -3880,17 +3880,17 @@ object node:267 {
 	object complex_assert{
 		target voltage_A;
 		value +7056.25-156.011j;
-		within 10;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value  -3671.56-6020.04j;
-		within 10;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -3393.78+6197.11j;
-		within 10;
+		within 1;
 	};
 }
 
@@ -4325,17 +4325,17 @@ object node:787 {
 	object complex_assert{
 		target voltage_A;
 		value +7200+0j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_B;
 		value  -3600-6235j;
-		within 4;
+		within 1;
 	};
 	object complex_assert{
 		target voltage_C;
 		value -3600+6235j;
-		within 4;
+		within 1;
 	};
 }
 
@@ -6296,47 +6296,47 @@ object underground_line:599 {
 	 object complex_assert{
 		target power_in_A;
 		value +20527.3+6153.75j;
-		within 1;
+		within 2;
 	};
 	object complex_assert{
 		target power_in_B;
 		value +21457.9+6390.58j;
-		within 1;
+		within 2;
 	};
 	object complex_assert{
 		target power_in_C;
 		value +20870.8+6239.82j;
-		within 1;
+		within 2;
 	};
 	object complex_assert{
 		target power_out_A;
 		value +20527+6153.61j;
-		within 1;
+		within 2;
 	};
 	object complex_assert{
 		target power_out_B;
 		value +21457.6+6390.43j;
-		within 1;
+		within 2;
 	};
 	object complex_assert{
 		target power_out_C;
 		value +20870.6+6239.67j;
-		within 1;
+		within 2;
 	};
  object complex_assert{
 		target power_losses_A;
 		value +0.271257+0.136778j;
-		within 1;
+		within .1;
 	};
 	object complex_assert{
 		target power_losses_B;
 		value +0.29974+0.149037j;
-		within 1;
+		within .1;
 	};
 	object complex_assert{
 		target power_losses_C;
 		value +0.282142+0.143862j;
-		within 1;
+		within .1;
 	};
 }
 
@@ -6629,17 +6629,17 @@ object underground_line:627 {
  object complex_assert{
 		target power_losses_A;
 		value +0.0474938+0.0172876j;
-		within 1;
+		within .1;
 	};
 	object complex_assert{
 		target power_losses_B;
 		value +0+0j;
-		within 1;
+		within 2;
 	};
 	object complex_assert{
 		target power_losses_C;
 		value +0+0j;
-		within 1;
+		within 2;
 	};
 }
 
@@ -7001,47 +7001,47 @@ object underground_line:666 {
 	 object complex_assert{
 		target power_in_A;
 		value +0+0j;
-		within 4;
+		within 2;
 	};
 	object complex_assert{
 		target power_in_B;
 		value +0+0j;
-		within 4;
+		within 2;
 	};
 	object complex_assert{
 		target power_in_C;
 		value +0+0j;
-		within 4;
+		within 2;
 	};
 	object complex_assert{
 		target power_out_A;
 		value +0+0j;
-		within 4;
+		within 2;
 	};
 	object complex_assert{
 		target power_out_B;
 		value +0+0j;
-		within 4;
+		within 2;
 	};
 	object complex_assert{
 		target power_out_C;
 		value +0+0j;
-		within 4;
+		within 2;
 	};
  object complex_assert{
 		target power_losses_A;
 		value +0+0j;
-		within 4;
+		within 2;
 	};
 	object complex_assert{
 		target power_losses_B;
 		value +0+0j;
-		within 4;
+		within 2;
 	};
 	object complex_assert{
 		target power_losses_C;
 		value +0+0j;
-		within 4;
+		within 2;
 	};
 }
 
@@ -7423,7 +7423,7 @@ object underground_line:708 {
 	configuration line_configuration:42;
 }
 
-object underground_line:709 { 
+object underground_line:709 {
 	name R3-12-47-2_ul_113;
 	phases ABCN;
 	from R3-12-47-2_node_130;
@@ -7436,51 +7436,50 @@ object underground_line:709 {
 		// limit 1440;
 		// file "UL709.csv";
 	// };
-	// @imp FBS value for power_in/out is off by approx from NR 10 
 	 object complex_assert{
-		target power_in_A; 
+		target power_in_A;
 		value +1.33434e+006+422809j;
-		within 15;
+		within 2;
 	};
 	object complex_assert{
 		target power_in_B;
 		value +1.3672e+006+432902j;
-		within 20;
+		within 5;
 	};
 	object complex_assert{
 		target power_in_C;
 		value +1.29446e+006+408777j;
-		within 15;
+		within 5;
 	};
 	object complex_assert{
 		target power_out_A;
 		value +1.33e+006+418886j;
-		within 15;
+		within 4;
 	};
 	object complex_assert{
 		target power_out_B;
 		value +1.36255e+006+428634j;
-		within 15;
+		within 4;
 	};
 	object complex_assert{
 		target power_out_C;
 		value +1.29045e+006+404952j;
-		within 15;
+		within 4;
 	};
  object complex_assert{
 		target power_losses_A;
 		value +4339.05+3923.37j;
-		within 4;
+		within 2;
 	};
 	object complex_assert{
 		target power_losses_B;
 		value +4645.66+4267.27j;
-		within 4;
+		within 2;
 	};
 	object complex_assert{
 		target power_losses_C;
 		value +4002.92+3824.33j;
-		within 4;
+		within 2;
 	};
 }
 
