@@ -83,7 +83,7 @@ public:
 
 	//auction *market;
 	OBJECT *pMarket;
-	int32 lastbid_id;
+	int64 lastbid_id;
 	int64 lastmkt_id;
 	double last_price,	bid_price;
 	double last_quant,	bid_quant;

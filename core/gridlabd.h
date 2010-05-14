@@ -5,14 +5,14 @@
 	@addtogroup module_api Runtime module API
 	@brief The GridLAB-D external module header file
 
-	The runtime module API links the GridLAB-D core to modules that are created to 
+	The runtime module API links the GridLAB-D core to modules that are created to
 	perform various modeling tasks.  The core interacts with each module according
 	to a set script that determines which exposed module functions are called and
 	when.  The general sequence of calls is as follows:
 	- <b>Registration</b>: A module registers the object classes it implements and
 	registers the variables that each class publishes.
 	- <b>Creation</b>: The core calls object creation functions during the model
-	load operation for each object that is created.  Basic initialization can be 
+	load operation for each object that is created.  Basic initialization can be
 	completed at this point.
 	- <b>Definition</b>: The core sets the values of all published variables that have
 	been specified in the model being loaded.  After this is completed, all references
@@ -33,18 +33,18 @@
 	Note that object destruction is not supported at this time.
 
 	 GridLAB-D modules usually require a number of functions to access data and interaction
-	 with the core.  These include 
+	 with the core.  These include
 	 - memory locking,
-	 - memory exception handlers, 
+	 - memory exception handlers,
 	 - variable publishers,
-	 - output functions, 
-	 - management routines, 
-	 - module management, 
+	 - output functions,
+	 - management routines,
+	 - module management,
 	 - class registration,
-	 - object management, 
-	 - property management, 
-	 - object search, 
-	 - random number generators, and 
+	 - object management,
+	 - property management,
+	 - object search,
+	 - random number generators, and
 	 - time management.
 
 	@todo Many of the module API macros would be better implemented as inline functions (ticket #9)
@@ -121,7 +121,7 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 			return NULL;
 		}
 
-		node_class = gl_register_class(module,"node",sizeof(node),PC_BOTTOMUP); 
+		node_class = gl_register_class(module,"node",sizeof(node),PC_BOTTOMUP);
 		PUBLISH_CLASS(node,complex,V);
 		PUBLISH_CLASS(node,complex,S);
 
@@ -129,7 +129,7 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 	}
 	@endcode
 
-	@{ 
+	@{
  **/
 /** The PUBLISH_STRUCT macro is used to publish a member of a structure.
  **/
@@ -165,8 +165,8 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
  */
 /**	@defgroup gridlabd_h_exception Exception handling
 
-	Module exception handling is provided for modules implemented in C to perform exception handling, 
-	as well to allow C++ code to throw exceptions to the core's main exception handler. 
+	Module exception handling is provided for modules implemented in C to perform exception handling,
+	as well to allow C++ code to throw exceptions to the core's main exception handler.
 
 	Typical use is like this:
 
@@ -184,7 +184,7 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 		// more code
 
 	} GL_CATCH(char *msg) {
-		
+
 		// exception handler
 
 	} GL_ENDCATCH;
@@ -204,7 +204,7 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
  **/
 #define GL_TRY { EXCEPTIONHANDLER *_handler = (*callback->exception.create_exception_handler)(); if (_handler==NULL) (*callback->output_error)("%s(%d): module exception handler creation failed",__FILE__,__LINE__); else if (setjmp(_handler->buf)==0) {
 /* TROUBLESHOOT
-	This error is caused when the system is unable to implement an exception handler for a module. 
+	This error is caused when the system is unable to implement an exception handler for a module.
 	This is an internal error and should be reported to the module developer.
  */
 /** The behavior of GL_THROW(Msg,...) differs depending on the situation:
@@ -214,9 +214,9 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
  **/
 #define GL_THROW (*callback->exception.throw_exception)
 /** The argument \p msg provides access to the exception message thrown.
-	Otherwise, GL_CATCH(Msg) blocks function like all other code blocks. 
+	Otherwise, GL_CATCH(Msg) blocks function like all other code blocks.
 
-	The behavior of GL_THROW(Msg) is not defined inside GL_CATCH(Msg) blocks.  
+	The behavior of GL_THROW(Msg) is not defined inside GL_CATCH(Msg) blocks.
 
 	GL_CATCH blocks must always be terminated by a #GL_ENDCATCH statement.
  **/
@@ -280,7 +280,7 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 
 	@{
  **/
-/** Allocate a block of memory from the core's heap.  
+/** Allocate a block of memory from the core's heap.
 	This is necessary for any memory that the core will have to manage.
 	@see malloc()
  **/
@@ -297,7 +297,7 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 
 	@{
  **/
-/** Defines the callback table for the module.  
+/** Defines the callback table for the module.
 	Callback function provide module with direct access to important core functions.
 	@see struct s_callback
  **/
@@ -346,7 +346,7 @@ inline int gl_module_depends(char *name, /**< module name */
 
 	@{
  **/
-/** Allow an object class to be registered with the core.  
+/** Allow an object class to be registered with the core.
 	Note that C file may publish structures, even they are not implemented as classes.
 	@see class_register()
  **/
@@ -358,7 +358,7 @@ inline int gl_module_depends(char *name, /**< module name */
  */
 /**	@defgroup gridlabd_h_object Object management
 
-	Object management macros are create to allow modules to create, test, 
+	Object management macros are create to allow modules to create, test,
 	control ranks, and reveal members of objects and registered classes.
 
 	@{
@@ -379,7 +379,7 @@ inline int gl_module_depends(char *name, /**< module name */
 #define gl_create_foreign (*callback->create.foreign)
 
 /** Object type test
-	
+
 	Checks the type (and supertypes) of an object.
 
 	@see object_isa()
@@ -415,10 +415,10 @@ inline FUNCTIONADDR gl_get_function(OBJECT *obj, char *name)
 #define gl_get_function (*callback->function.get)
 #endif
 
-/** Changes the dependency rank of an object.  
-	Normally dependency rank is determined by the object parent, 
+/** Changes the dependency rank of an object.
+	Normally dependency rank is determined by the object parent,
 	but an object's rank may be increased using this call.
-	An object's rank may not be decreased.  
+	An object's rank may not be decreased.
 	@see object_set_rank(), object_set_parent()
  **/
 #ifdef __cplusplus
@@ -431,9 +431,9 @@ inline int gl_set_dependent(OBJECT *obj, /**< object to set dependency */
 
 /** Establishes the rank of an object relative to another object (it's parent).
 	When an object is parent to another object, it's rank is always greater.
-	Object of higher rank are processed first on top-down passes, 
-	and later on bottom-up passes.  
-	Objects of the same rank may be processed in parallel, 
+	Object of higher rank are processed first on top-down passes,
+	and later on bottom-up passes.
+	Objects of the same rank may be processed in parallel,
 	if system resources make it possible.
 	@see object_set_rank(), object_set_parent()
  **/
@@ -447,9 +447,9 @@ inline int gl_set_parent(OBJECT *obj, /**< object to set parent of */
 
 /** Adjusts the rank of an object relative to another object (it's parent).
 	When an object is parent to another object, it's rank is always greater.
-	Object of higher rank are processed first on top-down passes, 
-	and later on bottom-up passes.  
-	Objects of the same rank may be processed in parallel, 
+	Object of higher rank are processed first on top-down passes,
+	and later on bottom-up passes.
+	Objects of the same rank may be processed in parallel,
 	if system resources make it possible.
 	@see object_set_rank(), object_set_parent()
  **/
@@ -532,9 +532,9 @@ inline int gl_set_value(OBJECT *obj, /**< the object to alter */
 	@see object_get_value_by_name()
  **/
 #ifdef __cplusplus
-inline int gl_get_value_by_name(OBJECT *obj, 
-								PROPERTYNAME name, 
-								char *value, 
+inline int gl_get_value_by_name(OBJECT *obj,
+								PROPERTYNAME name,
+								char *value,
 								int size)
 { return (*callback->properties.get_value_by_name)(obj,name,value,size);}
 #else
@@ -700,7 +700,7 @@ inline char *gl_getvalue(OBJECT *obj,
 #define gl_random_lognormal (*callback->random.lognormal)
 
 /** Generate a Bernoulli distributed random number
-	@see random_bernoulli()	
+	@see random_bernoulli()
  **/
 #define gl_random_bernoulli (*callback->random.bernoulli)
 
@@ -901,7 +901,7 @@ inline long gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
 	return callback->schedule.dtnext(sch,index);
 }
 
-inline enduse *gl_enduse_create(enduse *e)
+inline int gl_enduse_create(enduse *e)
 {
 	return callback->enduse.create(e);
 }
@@ -915,7 +915,9 @@ inline loadshape *gl_loadshape_create(SCHEDULE *s)
 {
 	loadshape *ls = (loadshape*)malloc(sizeof(loadshape));
 	memset(ls,0,sizeof(loadshape));
-	callback->loadshape.create(ls);
+	if (0 == callback->loadshape.create(ls)){
+		return NULL;
+	}
 	ls->schedule = s;
 	return ls;
 }
@@ -951,13 +953,13 @@ inline char *gl_strftime(TIMESTAMP ts)
  **/
 
 /** Linearly interpolate a value between two points
-	
+
  **/
 #define gl_lerp (*callback->interpolate.linear)
 /**@}*/
 
 /** Quadratically interpolate a value between two points
-	
+
  **/
 #define gl_qerp (*callback->interpolate.quadratic)
 /**@}*/

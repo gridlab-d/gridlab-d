@@ -324,7 +324,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		return TS_NEVER;
 	}
 
-	next_run += market->period;
+	next_run += (TIMESTAMP)(market->period);
 
 	if(market->market_id != lastmkt_id){
 		lastmkt_id = market->market_id;

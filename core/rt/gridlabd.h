@@ -857,10 +857,11 @@ typedef struct s_callbacks {
 		SCHEDULE *(*find)(char *name);
 	} schedule;
 	struct {
-		loadshape *(*create)(loadshape *s);
+		int (*create)(loadshape *s);
 		int (*init)(loadshape *s);
 	} loadshape;
 	struct {
+		int (*create)(struct s_enduse *e);
 		TIMESTAMP (*sync)(enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1);
 	} enduse;
 	struct {

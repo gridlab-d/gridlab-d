@@ -36,6 +36,10 @@ public class GridlabD {
 	public static final int OF_NONE = 0;
 	public static final int OF_HASPLC = 1;
 	public static final int OF_LOCKED = 2;
+	public static final int OF_RECALC = 8;
+	public static final int OF_FOREIGN = 16;
+	public static final int OF_SKIPSAFE = 32;
+	public static final int OF_RERANK = 16384;
 	/* Inner classes */
 	/**
 	 * Simple Complex number class.
@@ -262,6 +266,10 @@ public class GridlabD {
 		proptype.put("char1024",new Long(1025));
 		proptype.put("complex", new Long(24)); /* under win32 msvc2k5 */
 		proptype.put("object", new Long(8));
+		proptype.put("bool", new Long(4));
+		proptype.put("timestamp", new Long(8)); // int64
+		proptype.put("loadshape", new Long(256)); /* slight overestimation, but close enough -mhauer */
+		proptype.put("enduse", new Long(256));
 		//System.out.println("Attempting to load glmjava.dll");
 		try{
 			System.loadLibrary("glmjava");
@@ -366,4 +374,20 @@ public class GridlabD {
 	public static native int global_setvar(String def, String args);
 	public static native String global_getvar(String name); /* WARNING ~ parametric */
 	public static native long global_find(String name); /* returns GLOBALVAR * */
+	public static native double clip(double x, double a, double b);
+	public static native int bitof(long x);
+	public static native String name(long myaddr);
+	public static native long find_schedule(String name);
+	public static native long schedule_create(String name, String def);
+	public static native long schedule_index(long sch, long ts);
+	public static native double schedule_value(long sch, long index);
+	public static native long schedule_dtnext(long sch, long index);
+	public static native long enduse_create();
+	public static native int enduse_sync(long e, long t1);
+	public static native long loadshape_create(long sched_addr);
+	public static native double get_loadshape_value(long ls_addr)
+	// gl_strftime(DATETIME *, char *, int) // not sure about passing DATETIME over
+	public static native String strftime(long ts);
+	public static native double lerp(double t, double x0, double y0, double x1, double y1);
+	public static native double 1erp(double t, double x0, double y0, double x1, double y1, double x2, double y2);
 }

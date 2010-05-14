@@ -321,6 +321,10 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_testmsg(JNIEnv *env, jobject _this, j
 	return len;
 }
 
+//
+// gl_malloc is not exposed ~ dynamic memory in Java for use within Java should be kept in the JVM. -MH
+//
+
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_module_find(JNIEnv *env, jobject _this, jstring modulename){
 	int64 rv = 0;
 	char *instr = (char *)env->GetStringUTFChars(modulename, NULL);
@@ -360,6 +364,21 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_find_1module(JNIEnv *env, jobject _t
 	return rv;
 }
 
+// new
+EXPORT jlong JNICALL Java_gridlabd_GridlabD_find_1property(JNIEnv *env, jobject _this, jlong oclass_addr, jstring propname){
+	char *instr = (char *)env->GetStringUTFChars(propname, NULL);
+	int64 rv = (int64)(gl_find_property((CLASS *)oclass_addr, instr));
+	env->ReleaseStringUTFChars(propname, instr);
+	return rv;
+}
+
+// new
+EXPORT jint JNICALL Java_gridlabd_GridlabD_module_1depends(JNIEnv *env, jobject _this, jstring modname, jint major, jint minor, jint build){
+	char *instr = (char *)env->GetStringUTFChars(modname, NULL);
+	int rv = gl_module_depends(instr, (unsigned char)major, (unsigned char)minor, (unsigned char)build);
+	return rv;
+}
+
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_register_1class(JNIEnv *env, jobject _this, jlong moduleaddr, jstring classname, jint passconfig){
 	char *instr = (char *)env->GetStringUTFChars(classname, NULL);
 	int64 rv = (int64)gl_register_class((MODULE *)moduleaddr, instr, 0, (PASSCONFIG)(0xFF & passconfig));
@@ -373,6 +392,12 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_create_1object(JNIEnv *env, jobject 
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_create_1array(JNIEnv *env, jobject _this, jlong oclass_addr, jlong size, jint n_objects){
 	return (int64)(gl_create_array((CLASS *)oclass_addr, n_objects));
+}
+
+// new
+EXPORT jlong JNICALL Java_gridlabd_GridlabD_create_foreign(JNIEnv *env, jobject _this, jlong inobj){
+	OBJECT *ptr = gl_create_foreign((OBJECT *)inobj);
+	return (jlong)ptr;
 }
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_object_1isa(JNIEnv *env, jobject _this, jlong obj_addr, jstring _typename){
@@ -431,6 +456,12 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_publish_1function(JNIEnv *env, jobje
 	return 0; /*****/
 }
 
+//FUNCTIONADDR class_get_function(char *classname, char *functionname)
+EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1function(JNIEnv *env, jobject _this, jstring classstr, jstring ftnstr){
+	gl_error("get_function from Java not supported (still working on mapping functions to methods)");
+	return 0;
+}
+
 EXPORT jint JNICALL Java_gridlabd_GridlabD_set_1dependent(JNIEnv *env, jobject _this, jlong from_addr, jlong to_addr){
 	return gl_set_dependent((OBJECT *)from_addr, (OBJECT *)to_addr);
 }
@@ -457,6 +488,7 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1property(JNIEnv *env, jobject _
 	return rv;
 }
 
+// does not have gl_ parallel?
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1property_1by_1name(JNIEnv *env, jobject _this, jstring objectname, jstring propertyname){
 	char *ostr = (char *)env->GetStringUTFChars(objectname, NULL);
 	char *pstr = (char *)env->GetStringUTFChars(propertyname, NULL);
@@ -592,12 +624,23 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1object_1prop(JNIEnv *env, jobje
 	return i;
 }
 
+// new for glmjava
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1object_1by_1name(JNIEnv *env, jobject _this, jlong object_addr, jstring propertyname){
 	char *pname =(char *)env->GetStringUTFChars(propertyname, NULL);
 	int64 rv = (int64)gl_get_object_prop((OBJECT *)object_addr, gl_get_property((OBJECT *)object_addr, pname));
 	env->ReleaseStringUTFChars(propertyname, pname);
 	return rv;
 }
+
+//	 The following gl functions are not mapped with the JNI due to the bitwise nature of the FINDLIST struct.  -mhauer
+// gl_find_objects
+// gl_find_next
+// gl_findlist_copy
+// gl_findlist_add
+// gl_findlist_del
+// gl_findlist_clear
+
+// gl_free is not relevant to glmjava modules. -mhauer
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_create_1aggregate(JNIEnv *env, jobject _this, jstring aggregator, jstring group_expression){
 	char *agstr = (char *)env->GetStringUTFChars(aggregator, NULL);
@@ -611,6 +654,10 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_create_1aggregate(JNIEnv *env, jobje
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_run_1aggregate(JNIEnv *env, jobject _this, jlong aggregate_addr){
 	return gl_run_aggregate((s_aggregate *)aggregate_addr);
 }
+
+// gl_randomtype
+// gl_randomvalue
+// gl_psuedorandom
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1unifrom(JNIEnv *env, jobject _this, jdouble a, jdouble b){
 	return gl_random_uniform(a, b);
@@ -643,12 +690,24 @@ EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1exponential(JNIEnv *env, j
 	return gl_random_exponential(l);
 }
 
+// gl_random_triangle
+// gl_random_gamma
+// gl_random_beta
+// gl_random_weibull
+// gl_random_rayleight
+
+// gl_globalclock
+
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_parsetime(JNIEnv *env, jobject _this, jstring value){
 	char *timestr = (char *)env->GetStringUTFChars(value, NULL);
 	int64 rv = gl_parsetime(timestr);
 	env->ReleaseStringUTFChars(value, timestr);
 	return rv;
 }
+
+// gl_printtime
+// gl_mktime
+// gl_strtime
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_todays(JNIEnv *env, jobject _this, jlong t){
 	return gl_todays(t);
@@ -661,6 +720,11 @@ EXPORT jdouble JNICALL Java_gridlabd_GridlabD_tohours(JNIEnv *env, jobject _this
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_tominutes(JNIEnv *env, jobject _this, jlong t){
 	return gl_tominutes(t);
 }
+
+// gl_toseconds
+// gl_localtime
+// gl_getweekday
+// gl_gethour
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_global_1create(JNIEnv *env, jobject _this, jstring name, jstring args){
 	char *namestr = (char *)env->GetStringUTFChars(name, NULL);
@@ -695,10 +759,132 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_global_1find(JNIEnv *env, jobject _t
 	return rv;
 }
 
+// clip
+EXPORT jdouble Java_gridlabd_GridlabD_clip(JNIEnv *env, jobject _this, jdouble x, jdouble a, jdouble b){
+	return clip(x, a, b);
+}
+
+// bitof
+EXPORT jint Java_gridlabd_GridlabD_bitof(JNIEnv *env, jobject _this, jlong x){
+	return bitof(x);
+}
+
+// gl_name
+EXPORT jstring Java_gridlabd_GridlabD_name(JNIEnv *env, jobject _this, jlong myaddr){
+	char buffer[256];
+	char *ptr;
+	OBJECT *my = (OBJECT *)myaddr;
+	if(my == 0){
+		return NULL;
+	}
+	ptr = gl_name(my, buffer, 255);
+	if(ptr){
+		return env->NewStringUTF(buffer);
+	} else {
+		return NULL;
+	}
+}
+
+// gl_schedule_find
+JNIEXPORT jlong JNICALL Java_gridlabd_GridlabD_find_1schedule(JNIEnv *env, jobject _this, jstring name){
+	char *namestr = (char *)env->GetStringUTFChars(name, NULL);
+	return (jlong)(callback->schedule.find(namestr));
+}
+
+// gl_schedule_create
+JNIEXPORT jlong JNICALL Java_gridlabd_GridlabD_schedule_1create(JNIEnv *env, jobject _this, jstring name, jstring def){
+	char *namestr = (char *)(env->GetStringUTFChars(name, NULL));
+	char *definition = (char *)(env->GetStringUTFChars(def, NULL));
+	return (jlong)(callback->schedule.create(namestr, definition));
+}
+
+// gl_schedule_index
+JNIEXPORT jlong JNICALL Java_gridlabd_GridlabD_schedule_1index(JNIEnv *env, jobject _this, jlong sch, jlong ts){
+	return (jlong)(callback->schedule.index((SCHEDULE *)(sch), (TIMESTAMP)(ts)));
+}
+
+// gl_schedule_value
+JNIEXPORT jdouble JNICALL Java_gridlabd_GridlabD_schedule_1value(JNIEnv *env, jobject _this, jlong sch, jlong index){
+	return (jdouble)(callback->schedule.value((SCHEDULE *)sch, (SCHEDULEINDEX)index));
+}
+
+// gl_schedule_dtnext
+JNIEXPORT jlong JNICALL Java_gridlabd_GridlabD_schedule_1dtnext(JNIEnv *env, jobject _this, jlong sch, jlong index){
+	return (jlong)(callback->schedule.dtnext((SCHEDULE *)(sch), (SCHEDULEINDEX)index));
+}
+
+// gl_enduse_create
+JNIEXPORT jlong JNICALL Java_gridlabd_GridlabD_enduse_1create(JNIEnv *env, jobject _this){
+	enduse *eu = (enduse *)malloc(sizeof(enduse));
+	memset(eu, 0, sizeof(enduse));
+	if(1 == (callback->enduse.create(eu))){
+		return (jlong)(eu);
+	} else {
+		return 0;
+	}
+}
+
+// gl_enduse_sync
+JNIEXPORT jlong JNICALL Java_gridlabd_GridlabD_enduse_1sync(JNIEnv *env, jobject _this, jlong e, jlong t1){
+	return (callback->enduse.sync((enduse *)e, PC_BOTTOMUP,(TIMESTAMP)t1));
+}
+
+// gl_loadshape_create
+JNIEXPORT jlong JNICALL Java_gridlabd_GridlabD_loadshape_1create(JNIEnv *env, jobject _this, jlong sched_addr){
+	loadshape *ls;
+	if(sched_addr == 0){
+		return 0;
+	}
+	ls = (loadshape *)malloc(sizeof(loadshape));
+	memset(ls, 0, sizeof(loadshape));
+	if(0 == callback->loadshape.create(ls)){
+		return 0;
+	} 
+	ls->schedule = (SCHEDULE *)sched_addr;
+	return (jlong)ls;
+}
+
+// gl_get_loadshape_value
+JNIEXPORT jdouble JNICALL Java_gridlabd_GridlabD_get_1loadshape_1value(JNIEnv *env, jobject _this, jlong ls_addr){
+	if(ls_addr != 0){
+		loadshape *ls = (loadshape *)ls_addr;
+		return (jdouble)(ls->load);
+	} else {
+		return 0.0;
+	}
+}
+
+// not sure about passing DATETIME structures through the JNI. -mhauer
+// gl_strftime(DATETIME *, char *, int)
+//JNIEXPORT jstring JNICALL Java_gridlabd_GridlabD_strftime(JNIEnv *env, jobject _this, );
+
+// gl_strftime(TIMESTAMP)
+JNIEXPORT jstring JNICALL Java_gridlabd_GridlabD_(JNIEnv *env, jobject _this, jlong ts){
+	char buffer[64];
+	DATETIME dt;
+	strcpy(buffer,"(invalid time)");
+	if(gl_localtime(ts, &dt)){
+		gl_strftime(&dt, buffer, sizeof(buffer));
+	}
+	return env->NewStringUTF(buffer);
+}
+
+// gl_lerp
+JNIEXPORT jdouble JNICALL Java_gridlabd_GridlabD_lerp(JNIEnv *env, jobject _this, jdouble t, jdouble x0, jdouble y0, jdouble x1, jdouble y1){
+	return gl_lerp(t, x0, y0, x1, y1);
+}
+
+// gl_qerp
+JNIEXPORT jdouble JNICALL Java_gridlabd_GridlabD_qerp(JNIEnv *env, jobject _this, jdouble t, jdouble x0, jdouble y0, jdouble x1, jdouble y1, jdouble x2, jdouble y2){
+	return gl_qerp(t, x0, y0, x1, y1, x2, y2);
+}
+
 
 
 /*** LINE ***/
-/* JNIEXPORT jint JNICALL Java_gridlabd_GridlabD_(JNIEnv *env, jobject this, ...); */
+/*
+JNIEXPORT jint JNICALL Java_gridlabd_GridlabD_(JNIEnv *env, jobject _this, ...);
+*/
 
 /* the find object code will need some figuring to get the find list to cooperate, likely will be skipped
  * in favor of straight addrs */

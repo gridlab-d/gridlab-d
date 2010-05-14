@@ -87,7 +87,7 @@ static struct s_property_specs { /**<	the property type conversion specification
 	{"char256", sizeof(char256), convert_from_char256,convert_to_char256},
 	{"char1024", sizeof(char1024), convert_from_char1024,convert_to_char1024},
 	{"object", sizeof(OBJECT*), convert_from_object,convert_to_object},
-	{"delegated", -1, convert_from_delegated, convert_to_delegated},
+	{"delegated", (size_t)-1, convert_from_delegated, convert_to_delegated},
 	{"bool", sizeof(unsigned int), convert_from_boolean, convert_to_boolean},
 	{"timestamp", sizeof(int64), convert_from_timestamp_stub, convert_to_timestamp_stub},
 	{"double_array", sizeof(double), convert_from_double_array, convert_to_double_array},

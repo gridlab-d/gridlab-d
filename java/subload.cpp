@@ -26,6 +26,7 @@ EXPORT int notify_java(OBJECT *obj, NOTIFYMODULE msg);
 EXPORT int isa_java(OBJECT *obj, char *classname);
 EXPORT int64 plc_java(OBJECT *obj, TIMESTAMP t1);
 EXPORT int recalc_java(OBJECT *obj);
+EXPORT int commit_java(OBJECT *obj);
 
 CLASS *java_init(CALLBACKS *, JAVACALLBACKS *, MODULE *, char *, int, char *[]);
 
@@ -44,6 +45,7 @@ EXPORT MODULE *subload(char *modname, MODULE **pMod, CLASS **cptr, int argc, cha
 		c->plc = (FUNCTIONADDR)plc_java;
 		c->recalc = (FUNCTIONADDR)recalc_java;
 		c->sync = (FUNCTIONADDR)sync_java;
+		c->commit = (FUNCTIONADDR)commit_java;
 		c = c->next;
 	}
 	return mod;
@@ -90,6 +92,23 @@ EXPORT int init_java(OBJECT *obj, OBJECT *parent){
 		return 0;
 	}
 	int rv = jnienv->CallStaticIntMethod(cls, cfunc, (int64)obj, (int64)parent);
+	return rv;
+}
+
+EXPORT int commit_java(OBJECT *obj){
+	JNIEnv *jnienv = (JNIEnv *)getvar("jnienv", NULL, NULL);
+	char *name = obj->oclass->name;
+	jclass cls = jnienv->FindClass(name);
+	if(cls == NULL){
+		gl_error("commit_java: unable to find %s.class", name);
+		return 0;
+	}
+	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "commit", "(J)I");
+	if(cfunc == NULL){
+		gl_error("commit_java: unable to find int %s.commit(long)", name);
+		return 0;
+	}
+	int rv = jnienv->CallStaticIntMethod(cls, cfunc, (int64)obj);
 	return rv;
 }
 

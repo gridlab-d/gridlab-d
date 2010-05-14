@@ -77,6 +77,24 @@ public class SampleClass{
 		return 1;
 	}
 
+	/*	public static int commit(long oaddr)
+	 *	The commit function is an optional step for classes to update or output any strictly
+	 *	internal states between timesteps.  Commit() is not called between iterations, but
+	 *	between clock changes.
+	 *	Objects that call commit() should not refer to external objects during the commit step,
+	 *	as the rank order is not maintained.
+	 *	@return Nonzero if successful, zero if the object is in an inconsistant state.
+	 */
+	public static int commit(long oaddr){
+		SampleClass sc = objtable.get(new Long(oaddr));
+		if(sc == null){
+			GridlabD.error("SampleClass.commit(): not one of our objects at 0x"+Long.toHexString(oaddr));
+		}
+		/* your code here */
+		System.out.println("SampleClass.commit()");
+		/* success */
+		return 1;
+	}
 	/*	public static long sync(long oaddr, long t0, int pass)
 	 *	Users are expected to implement their own GClass.sync() in order to receive
 	 *	periodic attention from the core as to when events are happening to at least one

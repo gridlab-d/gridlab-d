@@ -202,11 +202,11 @@ typedef struct s_callbacks {
 		SCHEDULE *(*find)(char *name);
 	} schedule;
 	struct {
-		struct s_loadshape *(*create)(struct s_loadshape *s);
+		int (*create)(struct s_loadshape *s);
 		int (*init)(struct s_loadshape *s);
 	} loadshape;
 	struct {
-		struct s_enduse *(*create)(struct s_enduse *e);
+		int (*create)(struct s_enduse *e);
 		TIMESTAMP (*sync)(struct s_enduse *e, PASSCONFIG pass, TIMESTAMP t1);
 	} enduse;
 	struct {
