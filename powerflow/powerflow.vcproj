@@ -227,7 +227,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunit.lib CBLAS.lib pthreadVC2.lib superLU_MT.lib"
+				AdditionalDependencies="CBLAS.lib pthreadVC2.lib superLU_MT.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				IgnoreDefaultLibraryNames="LIBCMT.lib"
