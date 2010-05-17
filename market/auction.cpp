@@ -253,6 +253,10 @@ void auction::clear_market(void)
 
 	if ((asks.getcount()>0) && offers.getcount()>0)
 	{
+		TIMESTAMP submit_time = gl_globalclock;
+		DATETIME dt;
+		gl_localtime(submit_time,&dt);
+		char buffer[256];
 		/* clear market */
 		unsigned int i=0, j=0;
 		BID *buy=asks.getbid(i), *sell=offers.getbid(j);
@@ -331,7 +335,7 @@ void auction::clear_market(void)
 	
 		/* post the price */
 		char name[64];
-		if (verbose) gl_output("   ...  %s clears %.2f %s at $%.2f/%s", gl_name(OBJECTHDR(this),name,sizeof(name)), clear.quantity, unit, clear.price, unit);
+		if (verbose) gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), clear.quantity, unit, clear.price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		next.price = clear.price;
 		next.quantity = clear.quantity;
 	}
@@ -425,7 +429,10 @@ void auction::clear_market(void)
 KEY auction::submit(OBJECT *from, double quantity, double price, KEY key, BIDDERSTATE state)
 {
 	char myname[64];
-
+	TIMESTAMP submit_time = gl_globalclock;
+	DATETIME dt;
+	gl_localtime(submit_time,&dt);
+	char buffer[256];
 	/* suppress demand bidding until market stabilizes */
 	unsigned int sph24 = (unsigned int)(3600/period*24);
 	if (count<sph24 && quantity<0)
@@ -437,9 +444,9 @@ KEY auction::submit(OBJECT *from, double quantity, double price, KEY key, BIDDER
 	if (key>=0) // resubmit
 	{
 		char biddername[64];
-		if (verbose) gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s", 
+		if (verbose) gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s at %s", 
 			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
-			fabs(quantity), unit, price, unit);
+			fabs(quantity), unit, price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		BID bid = {from,fabs(quantity),price,state};
 		if (quantity<0)
 			return asks.resubmit(&bid,key);
@@ -453,9 +460,9 @@ KEY auction::submit(OBJECT *from, double quantity, double price, KEY key, BIDDER
 	else {
 		char myname[64];
 		char biddername[64];
-		if (verbose) gl_output("   ...  %s receives %s from object %s for %.2f %s at $%.2f/%s", 
+		if (verbose) gl_output("   ...  %s receives %s from object %s for %.2f %s at $%.2f/%s at %s", 
 			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
-			fabs(quantity), unit, price, unit);
+			fabs(quantity), unit, price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		BID bid = {from,fabs(quantity),price,state};
 		if (quantity<0)
 			return asks.submit(&bid);
