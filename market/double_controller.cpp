@@ -60,7 +60,6 @@ double_controller::double_controller(MODULE *module){
 			PT_char32, "load_name", PADDR(load_name),
 			PT_char32, "total_load_name", PADDR(total_load_name),
 			PT_char32, "deadband_name", PADDR(deadband_name),
-			PT_char32, "load_name", PADDR(load_name),
 			PT_char32, "state_name", PADDR(state_name),
 			PT_object, "market", PADDR(pMarket), PT_DESCRIPTION, "the market to bid into",
 			PT_double, "market_period", PADDR(market_period),
