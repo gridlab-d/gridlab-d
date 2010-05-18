@@ -652,7 +652,7 @@ void office::update_control_setpoints()
 	TheatOn = zone.control.heating_setpoint - zone.control.setpoint_deadband;
 	TheatOff = zone.control.heating_setpoint + zone.control.setpoint_deadband;
 	if (TcoolOff - TheatOff <= 0) // deadband needs to be smaller/ setpoints need to be farther apart
-		throw "thermostat deadband causes heating/cooling turn-off points to overlap";
+		throw (char *)"thermostat deadband causes heating/cooling turn-off points to overlap";
 	zone.control.ventilation_fraction = zone.current.occupancy>0 ? zone.hvac.minimum_ach : 0;
 }
 
