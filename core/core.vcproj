@@ -204,12 +204,12 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 			/>
-			<Tool
+			<!-- Tool
 				Name="VCCustomBuildTool"
 				Description="Copying Microsoft Runtime"
 				CommandLine="xcopy /d /y &quot;$(VCInstallDir)\redist\x86\Microsoft.VC80.CRT\*.*&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
 				Outputs="$(OutDir)\Microsoft.VC80.CRT.manifest;$(OutDir)\msvcm80.dll;$(OutDir)\msvcp80.dll;$(OutDir)\msvcr80.dll"
-			/>
+			/ -->
 			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
@@ -289,12 +289,12 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 			/>
-			<Tool
+			<!-- Tool
 				Name="VCCustomBuildTool"
 				Description="Copying Microsoft Runtime"
 				CommandLine="xcopy /d /y &quot;$(VCInstallDir)\redist\amd64\Microsoft.VC80.CRT\*.*&quot; &quot;$(OutDir)&quot;&#x0D;&#x0A;"
 				Outputs="$(OutDir)\Microsoft.VC80.CRT.manifest;$(OutDir)\msvcm80.dll;$(OutDir)\msvcp80.dll;$(OutDir)\msvcr80.dll"
-			/>
+			/ -->
 			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
