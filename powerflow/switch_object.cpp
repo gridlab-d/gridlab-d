@@ -156,8 +156,15 @@ int switch_object::init(OBJECT *parent)
 
 			if (switch_total > 0.5)	//In two switches, a stalemate occurs.  We'll consider this a "maintain status quo" state
 			{
-				status = LS_CLOSED;	//If it wasn't here, it is now
-				phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Set all to closed - phase checks will sort it out
+				//Initial check, make sure stays open
+				if (status == LS_OPEN)
+				{
+					phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Set all to open - phase checks will sort it out
+				}
+				else
+				{
+					phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Set all to closed - phase checks will sort it out
+				}
 			}
 			else	//Minority or stalemate
 			{
