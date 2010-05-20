@@ -3,7 +3,7 @@ WORKDIR=..\third_party
 CPPUNIT=cppunit-1.12.0
 
 all: $(WORKDIR)\$(CPPUNIT)\COPYING
-	"$(VCTOOLSDIR)vcbuild.exe" /nologo /platform:$(PLATFORM) cppunit-lib.vcproj $(CONFIG)
+	"$(VCTOOLSDIR)vcbuild.exe" /nologo /useenv /platform:$(PLATFORM) cppunit-lib.vcproj $(CONFIG)
 #	msbuild.exe /nologo /t:Build /p:Platform=$(PLATFORM),Configuration=$(CONFIG) cppunit-lib.vcproj
 
 clean: $(WORKDIR)\$(CPPUNIT)\COPYING
