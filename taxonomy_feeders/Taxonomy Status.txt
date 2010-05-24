@@ -1,0 +1,8 @@
+This Document is meant to describe the current status of the Taxonomy Feeders.
+
+11/15/2008: Initial feeders presented as part of the Modern Grid Initiative work for 2008.
+
+3/1/2010: Files were cleanedup for consistency and all feeders were amended to include regulators.  
+          Currently these regulators will work in a time-series simulation with the following 
+          control methods: MANUAL, OUTPUT_VOLTAGE, and REMOTE_NODE.  
+
