@@ -6,13 +6,22 @@
 
 #include "powerflow.h"
 
+typedef enum {
+		SINGLE=0,		//Runs one fault_check, right at the beginning of powerflow
+		ONCHANGE=1,	//Runs fault_check everytime a Jacobian reconfiguration is requested
+		ALLT=2			//Runs fault_check on every iteration
+		} FCSTATE;
+
 class fault_check : public powerflow_object
 {
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
 public:
-	int *Supported_Nodes;		//Nodes with source support (connected to swing somehow)
+	int **Supported_Nodes;		//Nodes with source support (connected to swing somehow)
+
+	FCSTATE fcheck_state;		//Mode variable
+	char1024 output_filename;	//File name to output unconnected bus values
 
 	fault_check(MODULE *mod);
 	fault_check(CLASS *cl=oclass):powerflow_object(cl){};
@@ -21,8 +30,11 @@ public:
 	int isa(char *classname);
 	void search_links(unsigned int node_int);	//Function to check connectivity and support of nodes
 	void support_check(unsigned int swing_node_int, bool rest_pop_tree);	//Function that performs the connectivity check - this way so can be easily externally accessed
+	void reset_support_check(void);		//Function to re-init the support matrix
+	void write_output_file(TIMESTAMP tval);		//Function to write out "unsupported" items
 
 	TIMESTAMP sync(TIMESTAMP t0);
+
 
 private:
 	TIMESTAMP prev_time;	//Previous timestamp - mainly for intialization

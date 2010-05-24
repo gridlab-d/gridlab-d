@@ -86,6 +86,7 @@ int fuse::create()
 int fuse::init(OBJECT *parent)
 {
 	int jindex, kindex;
+	unsigned char goodphases = 0x00;
 
 	if ((phases & PHASE_S) == PHASE_S)
 		GL_THROW("fuses cannot be placed on triplex circuits");
@@ -168,6 +169,7 @@ int fuse::init(OBJECT *parent)
 		{
 			From_Y[0][0] = complex(1e4,1e4);	//Update admittance
 			a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+			goodphases |= 0x04;					//Set as good phase
 		}
 
 		//Phase B
@@ -175,6 +177,7 @@ int fuse::init(OBJECT *parent)
 		{
 			From_Y[1][1] = complex(1e4,1e4);	//Update admittance
 			a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+			goodphases |= 0x02;					//Set as good phase
 		}
 
 		//Phase C
@@ -182,7 +185,14 @@ int fuse::init(OBJECT *parent)
 		{
 			From_Y[2][2] = complex(1e4,1e4);	//Update admittance
 			a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+			goodphases |= 0x01;					//Set as good phase
 		}
+
+		//Mask out the USB
+		goodphases |= 0xF8;
+
+		//Update our phases
+		NR_branchdata[NR_branch_reference].phases &= goodphases;
 	}
 	else
 	{
@@ -202,6 +212,7 @@ TIMESTAMP fuse::postsync(TIMESTAMP t0)
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	char jindex;
+	unsigned char goodphases = 0x00;
 	TIMESTAMP Ret_Val[3];
 
 	//Update time variable
@@ -215,6 +226,7 @@ TIMESTAMP fuse::postsync(TIMESTAMP t0)
 		if (phase_A_status == GOOD)	//Only bother if we are in service
 		{
 			Ret_Val[0] = TS_NEVER;		//We're still good, so we don't care when we come back
+			goodphases |= 0x04;			//Mark as good
 		}
 		else						//We're blown
 		{
@@ -233,6 +245,7 @@ TIMESTAMP fuse::postsync(TIMESTAMP t0)
 		if (phase_B_status == GOOD)	//Only bother if we are in service
 		{
 			Ret_Val[1] = TS_NEVER;		//We're still good, so we don't care when we come back
+			goodphases |= 0x02;			//Mark as good
 		}
 		else						//We're blown
 		{
@@ -252,6 +265,7 @@ TIMESTAMP fuse::postsync(TIMESTAMP t0)
 		if (phase_C_status == GOOD)	//Only bother if we are in service
 		{
 			Ret_Val[2] = TS_NEVER;		//We're still good, so we don't care when we come back
+			goodphases |= 0x01;			//Mark as good
 		}
 		else						//We're blown
 		{
@@ -263,6 +277,15 @@ TIMESTAMP fuse::postsync(TIMESTAMP t0)
 	}
 	else
 		Ret_Val[2] = TS_NEVER;		//No phase A, make us really big
+
+	if (solver_method == SM_NR)	//Update NR solver
+	{
+		//Mask out the USB of goodphases
+		goodphases |= 0xF8;
+
+		//Update our phases
+		NR_branchdata[NR_branch_reference].phases &= goodphases;
+	}
 
 	//Normal link update
 	TIMESTAMP t1 = link::postsync(t0);
@@ -306,6 +329,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 {
 	char indexval;
 	char phase_verbose;
+	unsigned char work_phase;
 	FUSESTATE *valstate;
 	TIMESTAMP *fixtime;
 	OBJECT *hdr = OBJECTHDR(this);
@@ -344,6 +368,8 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 	//See which phases we need to check
 	if ((phases & phase_to_check) == phase_to_check)	//Check phase
 	{
+		work_phase = 0x01 << indexval;	//Working variable, primarily for NR
+
 		if (*valstate == GOOD)	//Only bother if we are in service
 		{
 			//Check both directions, that way if we are reverse flowed it doesn't matter
@@ -361,6 +387,9 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 					From_Y[indexval][indexval] = complex(0.0,0.0);	//Update admittance
 					a_mat[indexval][indexval] = 0.0;				//Update the voltage ratio matrix as well (for power calcs)
 					NR_admit_change = true;							//Flag for an admittance update
+					
+					work_phase = !work_phase;	//Compliment us
+					NR_branchdata[NR_branch_reference].phases &= work_phase;	//Remove this bit
 				}
 
 				//Get an update time
@@ -380,6 +409,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 				{
 					From_Y[indexval][indexval] = complex(1e4,1e4);	//Update admittance
 					a_mat[indexval][indexval] = 1.0;				//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases |= work_phase;	//Make sure we're still flagged as valid
 				}
 			}
 		}
@@ -397,6 +427,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 					From_Y[indexval][indexval] = complex(1e4,1e4);	//Update admittance
 					a_mat[indexval][indexval] = 1.0;				//Update the voltage ratio matrix as well (for power calcs)
 					NR_admit_change = true;							//Flag for an admittance update
+					NR_branchdata[NR_branch_reference].phases |= work_phase;	//Flag us back into service
 				}
 
 				*valstate = GOOD;
@@ -416,6 +447,10 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 				{
 					From_Y[indexval][indexval] = complex(0.0,0.0);	//Update admittance
 					a_mat[indexval][indexval] = 0.0;				//Update the voltage ratio matrix as well (for power calcs)
+
+					work_phase = !work_phase;	//Compliment us
+					NR_branchdata[NR_branch_reference].phases &= work_phase;	//Ensure this bit is removed
+
 				}
 			}
 		}

@@ -349,18 +349,21 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 				{
 					From_Y[0][0] = complex(0.0,0.0);	//Update admittance
 					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove this bit
 				}
 
 				if (has_phase(PHASE_B))
 				{
 					From_Y[1][1] = complex(0.0,0.0);	//Update admittance
 					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove this bit
 				}
 
 				if (has_phase(PHASE_C))
 				{
 					From_Y[2][2] = complex(0.0,0.0);	//Update admittance
 					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove this bit
 				}
 			}//end open
 			else					//Must be closed then
@@ -370,6 +373,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 					From_Y[0][0] = complex(1e4,1e4);	//Update admittance
 					a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					pres_status |= 0x04;				//Flag as closed
+					NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
 				}
 
 				if (has_phase(PHASE_B))
@@ -377,6 +381,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 					From_Y[1][1] = complex(1e4,1e4);	//Update admittance
 					a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					pres_status |= 0x02;				//Flag as closed
+					NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
 				}
 
 				if (has_phase(PHASE_C))
@@ -384,6 +389,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 					From_Y[2][2] = complex(1e4,1e4);	//Update admittance
 					a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					pres_status |= 0x01;				//Flag as closed
+					NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
 				}
 			}//end closed
 		}//End banked mode
@@ -396,6 +402,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 				From_Y[2][2] = complex(0.0,0.0);
 
 				phase_A_state = phase_B_state = phase_C_state = OPEN;	//All open
+				NR_branchdata[NR_branch_reference].phases &= 0xF0;		//Remove all our phases
 			}
 			else	//Closed means a phase-by-phase basis
 			{
@@ -405,10 +412,12 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 					{
 						From_Y[0][0] = complex(1e4,1e4);
 						pres_status |= 0x04;
+						NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
 					}
 					else	//Must be open
 					{
 						From_Y[0][0] = complex(0.0,0.0);
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Make sure we're removed
 					}
 				}
 
@@ -418,10 +427,12 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 					{
 						From_Y[1][1] = complex(1e4,1e4);
 						pres_status |= 0x02;
+						NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
 					}
 					else	//Must be open
 					{
 						From_Y[1][1] = complex(0.0,0.0);
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Make sure we're removed
 					}
 				}
 
@@ -431,10 +442,12 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 					{
 						From_Y[2][2] = complex(1e4,1e4);
 						pres_status |= 0x01;
+						NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
 					}
 					else	//Must be open
 					{
 						From_Y[2][2] = complex(0.0,0.0);
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Make sure we're removed
 					}
 				}
 			}
@@ -493,18 +506,21 @@ void switch_object::set_switch(bool desired_status)
 				{
 					From_Y[0][0] = complex(0.0,0.0);	//Update admittance
 					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Ensure we're not set
 				}
 
 				if (has_phase(PHASE_B))
 				{
 					From_Y[1][1] = complex(0.0,0.0);	//Update admittance
 					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Ensure we're not set
 				}
 
 				if (has_phase(PHASE_C))
 				{
 					From_Y[2][2] = complex(0.0,0.0);	//Update admittance
 					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Ensure we're not set
 				}
 			}//end open
 			else					//Must be closed then
@@ -513,18 +529,21 @@ void switch_object::set_switch(bool desired_status)
 				{
 					From_Y[0][0] = complex(1e4,1e4);	//Update admittance
 					a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
 				}
 
 				if (has_phase(PHASE_B))
 				{
 					From_Y[1][1] = complex(1e4,1e4);	//Update admittance
 					a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
 				}
 
 				if (has_phase(PHASE_C))
 				{
 					From_Y[2][2] = complex(1e4,1e4);	//Update admittance
 					a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
 				}
 			}//end closed
 
@@ -636,18 +655,21 @@ void switch_object::set_switch_full(char desired_status_A, char desired_status_B
 				{
 					From_Y[0][0] = complex(0.0,0.0);	//Update admittance
 					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Ensure we're not set
 				}
 
 				if (has_phase(PHASE_B))
 				{
 					From_Y[1][1] = complex(0.0,0.0);	//Update admittance
 					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Ensure we're not set
 				}
 
 				if (has_phase(PHASE_C))
 				{
 					From_Y[2][2] = complex(0.0,0.0);	//Update admittance
 					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Ensure we're not set
 				}
 			}//end open
 			else					//Must be closed then
@@ -657,6 +679,7 @@ void switch_object::set_switch_full(char desired_status_A, char desired_status_B
 					From_Y[0][0] = complex(1e4,1e4);	//Update admittance
 					a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					pres_status |= 0x04;				//Flag as closed
+					NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
 				}
 
 				if (has_phase(PHASE_B))
@@ -664,6 +687,7 @@ void switch_object::set_switch_full(char desired_status_A, char desired_status_B
 					From_Y[1][1] = complex(1e4,1e4);	//Update admittance
 					a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					pres_status |= 0x02;				//Flag as closed
+					NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
 				}
 
 				if (has_phase(PHASE_C))
@@ -671,6 +695,7 @@ void switch_object::set_switch_full(char desired_status_A, char desired_status_B
 					From_Y[2][2] = complex(1e4,1e4);	//Update admittance
 					a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					pres_status |= 0x01;				//Flag as closed
+					NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
 				}
 			}//end closed
 		}//End banked mode
@@ -683,6 +708,7 @@ void switch_object::set_switch_full(char desired_status_A, char desired_status_B
 				From_Y[2][2] = complex(0.0,0.0);
 
 				phase_A_state = phase_B_state = phase_C_state = OPEN;	//All open
+				NR_branchdata[NR_branch_reference].phases &= 0xF0;	//Ensure we're not set
 			}
 			else	//Closed means a phase-by-phase basis
 			{
@@ -692,10 +718,12 @@ void switch_object::set_switch_full(char desired_status_A, char desired_status_B
 					{
 						From_Y[0][0] = complex(1e4,1e4);
 						pres_status |= 0x04;
+						NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
 					}
 					else	//Must be open
 					{
 						From_Y[0][0] = complex(0.0,0.0);
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Ensure we're not set
 					}
 				}
 
@@ -705,10 +733,12 @@ void switch_object::set_switch_full(char desired_status_A, char desired_status_B
 					{
 						From_Y[1][1] = complex(1e4,1e4);
 						pres_status |= 0x02;
+						NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
 					}
 					else	//Must be open
 					{
 						From_Y[1][1] = complex(0.0,0.0);
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Ensure we're not set
 					}
 				}
 
@@ -718,10 +748,12 @@ void switch_object::set_switch_full(char desired_status_A, char desired_status_B
 					{
 						From_Y[2][2] = complex(1e4,1e4);
 						pres_status |= 0x01;
+						NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
 					}
 					else	//Must be open
 					{
 						From_Y[2][2] = complex(0.0,0.0);
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Ensure we're not set
 					}
 				}
 			}

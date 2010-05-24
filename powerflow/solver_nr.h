@@ -9,7 +9,8 @@
 
 typedef struct  {
 	int type;				///< bus type (0=PQ, 1=PV, 2=SWING)
-	unsigned char phases;	///< Phases property - used for construction of matrices (skip bad entries)
+	unsigned char phases;	///< Phases property - used for construction of matrices (skip bad entries) - [Split Phase | House present | To side of SPCT | Diff Phase Child | D | A | B | C]
+	unsigned char origphases;	///< Original phases property - follows same format - used to save what object's original capabilities
 	complex *V;				///< bus voltage
 	complex *S;				///< constant power
 	complex *Y;				///< constant admittance (impedance loads)
@@ -42,6 +43,7 @@ typedef struct {
 	complex *YSfrom;		///< self admittance seen on from side
 	complex *YSto;			///< self admittance seen on to side
 	unsigned char phases;	///< Phases property - used for construction of matrices
+	unsigned char origphases;	///< Original phases property - follows same format - used to save what object's original capabilities
 	int from;				///< index into bus data
 	int to;					///< index into bus data
 	bool *status;			///< status of the object, if it is a switch (restoration module usage)

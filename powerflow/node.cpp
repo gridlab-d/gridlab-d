@@ -2452,15 +2452,8 @@ int *node::NR_populate(void)
 		//Bus type
 		NR_busdata[NR_curr_bus].type = (int)bustype;
 
-		//Populate phases - see if it is Delta or not
-		if (has_phase(PHASE_D))	//Check because Delta is forced to be ABCD (even if it wasn't) due to how matrices are handled
-		{
-			NR_busdata[NR_curr_bus].phases = 0xF;	//ABCD, if an S ever exists here, I don't want to know about it
-		}
-		else
-		{
-			NR_busdata[NR_curr_bus].phases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
-		}
+		//Populate phases
+		NR_busdata[NR_curr_bus].phases = 128*has_phase(PHASE_S) + 8*has_phase(PHASE_D) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 
 		//Link our name in
 		NR_busdata[NR_curr_bus].name = me->name;
@@ -2570,6 +2563,9 @@ int *node::NR_populate(void)
 
 		//Store our reference value
 		NR_node_reference = NR_curr_bus;
+
+		//Populate original phases
+		NR_busdata[NR_curr_bus].origphases = NR_busdata[NR_curr_bus].phases;
 
 		//Increment pointer bus
 		NR_curr_bus++;

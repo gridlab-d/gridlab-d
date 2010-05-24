@@ -423,6 +423,8 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			node *fnode = OBJECTDATA(from,node);
 			node *tnode = OBJECTDATA(to,node);
 			unsigned int *LinkTableLoc = NULL;
+			unsigned char working_phase;
+			char *temp_phase;
 			int IndVal = 0;
 			OBJECT *obj = OBJECTHDR(this);
 
@@ -511,6 +513,55 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 
 				//Populate phases property
 				NR_branchdata[NR_curr_branch].phases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
+				
+				//Populate original phases property
+				NR_branchdata[NR_curr_branch].origphases = NR_branchdata[NR_curr_branch].phases;
+
+				if (SpecialLnk == SWITCH)	//If we're a fuse or switch, make sure our "open" phases are correct
+				{
+					working_phase = 0xF0;	//Start with mask for all USB
+
+					//Update initial stati as necessary as well - do for fuses and switches (both encoded the same SpecialLnk)
+					if (gl_object_isa(obj,"switch","powerflow"))
+					{
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_A_state"));
+
+						if (*temp_phase == 1)
+							working_phase |= 0x04;
+
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_B_state"));
+
+						if (*temp_phase == 1)
+							working_phase |= 0x02;
+
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_C_state"));
+
+						if (*temp_phase == 1)
+							working_phase |= 0x01;
+					}
+					else if (gl_object_isa(obj,"fuse","powerflow"))
+					{
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_A_status"));
+
+						if (*temp_phase == 0)
+							working_phase |= 0x04;
+
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_B_status"));
+
+						if (*temp_phase == 0)
+							working_phase |= 0x02;
+
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_C_status"));
+
+						if (*temp_phase == 0)
+							working_phase |= 0x01;
+					}
+					else	//Not sure how we'll get here, just make normal phase
+						working_phase |= 0x0F;
+
+					//Update phase value
+					NR_branchdata[NR_curr_branch].phases &= working_phase;
+				}
 
 				//If we're a SPCT transformer, add in the "special" phase flag for our to node
 				if (SpecialLnk==SPLITPHASE)
