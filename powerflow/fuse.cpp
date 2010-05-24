@@ -86,7 +86,6 @@ int fuse::create()
 int fuse::init(OBJECT *parent)
 {
 	int jindex, kindex;
-	unsigned char goodphases = 0x00;
 
 	if ((phases & PHASE_S) == PHASE_S)
 		GL_THROW("fuses cannot be placed on triplex circuits");
@@ -169,7 +168,6 @@ int fuse::init(OBJECT *parent)
 		{
 			From_Y[0][0] = complex(1e4,1e4);	//Update admittance
 			a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
-			goodphases |= 0x04;					//Set as good phase
 		}
 
 		//Phase B
@@ -177,7 +175,6 @@ int fuse::init(OBJECT *parent)
 		{
 			From_Y[1][1] = complex(1e4,1e4);	//Update admittance
 			a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
-			goodphases |= 0x02;					//Set as good phase
 		}
 
 		//Phase C
@@ -185,14 +182,7 @@ int fuse::init(OBJECT *parent)
 		{
 			From_Y[2][2] = complex(1e4,1e4);	//Update admittance
 			a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
-			goodphases |= 0x01;					//Set as good phase
 		}
-
-		//Mask out the USB
-		goodphases |= 0xF8;
-
-		//Update our phases
-		NR_branchdata[NR_branch_reference].phases &= goodphases;
 	}
 	else
 	{
