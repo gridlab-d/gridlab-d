@@ -40,18 +40,25 @@ battery::battery(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
-				PT_KEYWORD,"UNKNOWN",UNKNOWN,
-				PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
-				PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
-				PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
-				PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN, //PV must operate in this mode
-				PT_KEYWORD,"POWER_DRIVEN",POWER_DRIVEN,
+				PT_KEYWORD,"UNKNOWN",GM_UNKNOWN,
+				PT_KEYWORD,"CONSTANT_V",GM_CONSTANT_V,
+				PT_KEYWORD,"CONSTANT_PQ",GM_CONSTANT_PQ,
+				PT_KEYWORD,"CONSTANT_PF",GM_CONSTANT_PF,
+				PT_KEYWORD,"SUPPLY_DRIVEN",GM_SUPPLY_DRIVEN, //PV must operate in this mode
+				PT_KEYWORD,"POWER_DRIVEN",GM_POWER_DRIVEN,
+				PT_KEYWORD,"VOLTAGE_CONTROLLED",GM_VOLTAGE_CONTROLLED,
+				PT_KEYWORD,"POWER_VOLTAGE_HYBRID",GM_POWER_VOLTAGE_HYBRID,
+
+			PT_enumeration,"additional_controls",PADDR(additional_controls),
+				PT_KEYWORD,"NONE",AC_NONE,
+				PT_KEYWORD,"LINEAR_TEMPERATURE",AC_LINEAR_TEMPERATURE,
 
 			PT_enumeration,"generator_status",PADDR(gen_status_v),
 				PT_KEYWORD,"OFFLINE",OFFLINE,
 				PT_KEYWORD,"ONLINE",ONLINE,	
 
 			PT_enumeration,"rfb_size", PADDR(rfb_size_v),
+				PT_KEYWORD, "HOUSEHOLD", HOUSEHOLD,
 				PT_KEYWORD, "SMALL", SMALL, 
 				PT_KEYWORD, "MED_COMMERCIAL", MED_COMMERCIAL,
 				PT_KEYWORD, "MED_HIGH_ENERGY", MED_HIGH_ENERGY,
@@ -61,15 +68,39 @@ battery::battery(MODULE *module)
 				PT_KEYWORD,"AC",AC,
 				PT_KEYWORD,"DC",DC,
 
+			PT_enumeration,"battery_state",PADDR(battery_state),
+				PT_KEYWORD,"CHARGING",BS_CHARGING,
+				PT_KEYWORD,"DISCHARGING",BS_DISCHARGING,
+				PT_KEYWORD,"WAITING",BS_WAITING,
+				PT_KEYWORD,"FULL",BS_FULL,
+				PT_KEYWORD,"EMPTY",BS_EMPTY,
+				PT_KEYWORD,"CONFLICTED",BS_CONFLICTED,
+
+			PT_double, "number_battery_state_changes", PADDR(no_of_cycles),
+			PT_double, "monitored_power[W]", PADDR(check_power),
 			PT_double, "power_set_high[W]", PADDR(power_set_high),
-			PT_double, "power_set_low[W}", PADDR(power_set_low),
+			PT_double, "power_set_low[W]", PADDR(power_set_low),
+			PT_double, "power_set_high_highT[W]", PADDR(power_set_high_highT),
+			PT_double, "power_set_low_highT[W]", PADDR(power_set_low_highT),
+			PT_double, "check_power_low[W]", PADDR(check_power_low),
+			PT_double, "check_power_high[W]", PADDR(check_power_high),
+			PT_double, "voltage_set_high[V]", PADDR(voltage_set_high),
+			PT_double, "voltage_set_low[V]", PADDR(voltage_set_low),
+			PT_double, "deadband[V]", PADDR(deadband),
 			PT_double, "Rinternal[Ohm]", PADDR(Rinternal),
 			PT_double, "V_Max[V]", PADDR(V_Max), 
 			PT_complex, "I_Max[A]", PADDR(I_Max),
 			PT_double, "E_Max[Wh]", PADDR(E_Max),
+			PT_double, "P_Max[W]", PADDR(Max_P),
 			PT_double, "Energy[Wh]",PADDR(Energy),
 			PT_double, "efficiency[unit]", PADDR(efficiency),
 			PT_double, "base_efficiency[unit]", PADDR(base_efficiency),
+			PT_double, "parasitic_power_draw[W]", PADDR(parasitic_power_draw),
+			PT_double, "sensitivity", PADDR(sensitivity),
+			PT_double, "high_temperature", PADDR(high_temperature),
+			PT_double, "midpoint_temperature", PADDR(midpoint_temperature),
+			PT_double, "low_temperature", PADDR(low_temperature),
+
 			//PT_int64, "generator_mode_choice", PADDR(generator_mode_choice),
 
 			PT_double, "Rated_kVA[kVA]", PADDR(Rated_kVA),
@@ -94,10 +125,6 @@ battery::battery(MODULE *module)
 				PT_KEYWORD, "S",(set)PHASE_S,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
-
-
-
-
 		memset(this,0,sizeof(battery));
 		/* TODO: set the default values of all properties here */
 	}
@@ -108,19 +135,25 @@ int battery::create(void)
 {
 	memcpy(this,defaults,sizeof(*this));
 	
-	
-	//generator_mode_choice = CONSTANT_PQ;
 	gen_status_v = ONLINE;
-	rfb_size_v = SMALL;
+	//rfb_size_v = SMALL;
 
 	Rinternal = 10;
 	V_Max = 0;
 	I_Max = 0;
 	E_Max = 0;
-	Energy = 0;
+	Energy = -1;
 	recalculate = true;
 	margin = 1000;
 	number_of_phases_out = 0;
+	no_of_cycles = 0;
+	deadband = 0;
+	parasitic_power_draw = 0;
+	additional_controls = AC_NONE;
+	midpoint_temperature = 50;
+	low_temperature = 0;
+	high_temperature = 100;
+	sensitivity = 0.5;
 	
 	Max_P = 0;//< maximum real power capacity in kW
     Min_P = 0;//< minimus real power capacity in kW
@@ -132,6 +165,7 @@ int battery::create(void)
 	
 	efficiency =  0;
 	base_efficiency = 0;
+	Iteration_Toggle = false;
 
 	E_Next = 0;
 	connected = true;
@@ -141,24 +175,11 @@ int battery::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
-
-
-/*
-double battery::timestamp_to_hours(TIMESTAMP t)
-{
-	return (double)t/HOUR;
-}
-*/
-
-
 /* Object initialization is called once after all object have been created */
 int battery::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
 
-	//gl_verbose("battery init: finished initializing variables");
-
-	
 	static complex default_line123_voltage[1], default_line1_current[1];
 	int i;
 
@@ -202,8 +223,12 @@ int battery::init(OBJECT *parent)
 			{&pCircuit_V,			"voltage_12"}, // assumes 1N and 2N follow immediately in memory
 			{&pLine_I,				"current_1"}, // assumes 2 and 3(N) follow immediately in memory
 			{&pLine12,				"current_12"}, // maps current load 1-2 onto triplex load
-			/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
+			{&pPower,				"measured_power"}, //looks at power being transferred through triplex meter
 		};
+
+		//Connect the NR mode indicator
+		NR_mode = get_bool(parent,"NR_mode");
+
 		// attach meter variables to each circuit
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 		{
@@ -222,6 +247,7 @@ int battery::init(OBJECT *parent)
 	}
 	else if (parent != NULL && strcmp(parent->oclass->name,"inverter") == 0)
 	{
+		number_of_phases_out = 0; 
 		struct {
 			complex **var;
 			char *varname;
@@ -273,29 +299,75 @@ int battery::init(OBJECT *parent)
 		default_line123_voltage[2] = complex(480*cos(-2*PI/3),480*sin(-2*PI/3));
 	}
 
-
-	//gl_verbose("battery init: finished connecting with meter");
-
-
-	/* TODO: set the context-dependent initial value of properties */
-	//double ZB, SB, EB;
-	//complex tst;
-	if (gen_mode_v==UNKNOWN)
+	if (gen_mode_v==GM_UNKNOWN)
 	{
-		OBJECT *obj = OBJECTHDR(this);
-		throw("Generator control mode is not specified");
+		throw("Generator (id:%d) generator_mode is not specified",obj->id);
 	}
-	if (gen_status_v==0)
+	else if (gen_mode_v == GM_VOLTAGE_CONTROLLED)
+	{	
+		GL_THROW("VOLTAGE_CONTROLLED generator_mode is not yet implemented.");
+	}
+		
+	if (additional_controls == AC_LINEAR_TEMPERATURE)
+	{
+		static FINDLIST *climates = NULL;
+		int not_found = 0;
+		if (climates==NULL && not_found==0) 
+		{
+			climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
+			if (climates==NULL)
+			{
+				not_found = 1;
+				gl_warning("battery: no climate data found, using static data");
+
+				//default to mock data
+				static double tout=59.0, solar=1000;
+				pTout = &tout;
+				pSolar = &solar;
+			}
+			else if (climates->hit_count>1)
+			{
+				gl_warning("battery: %d climates found, using first one defined", climates->hit_count);
+			}
+		}
+		if (climates!=NULL)
+		{
+			if (climates->hit_count==0)
+			{
+				//default to mock data
+				static double tout=59.0, solar=1000;
+				pTout = &tout;
+				pSolar = &solar;
+			}
+			else //climate data was found
+			{
+				OBJECT *clim = gl_find_next(climates,NULL);
+				if (clim->rank<=obj->rank)
+					gl_set_dependent(clim,obj);
+				pTout = (double*)GETADDR(clim,gl_get_property(clim,"temperature"));
+				pSolar = (double*)GETADDR(clim,gl_get_property(clim,"solar_flux"));
+			}
+		}
+	}
+
+	if (gen_status_v == OFFLINE)
 	{
 		//OBJECT *obj = OBJECTHDR(this);
-		throw("Generator is out of service!");
+		gl_warning("Generator (id:%d) is out of service!",obj->id);
 	}
 	else
 	{
-		switch(rfb_size_v){
+		switch(rfb_size_v)
+		{
+			case HOUSEHOLD:
+				V_Max = 260;
+				I_Max = 15;
+				Max_P = V_Max.Mag()*I_Max.Mag(); 
+				E_Max = 6*Max_P; //Wh		 -- 6 hours of maximum
+				base_efficiency = 0.9; // roundtrip
+				break;
 			case SMALL:
 				V_Max = 75.2; //V
-				//V_Max = 500;
 				I_Max = 250; //A
 				Max_P = 18800; //W
 				E_Max = 160000; //Wh
@@ -323,27 +395,49 @@ int battery::init(OBJECT *parent)
 				base_efficiency = 0.9; // roundtrip
 				break;
 			default:
-				V_Max = 115; //V
-				I_Max = 435; //A
-				Max_P = 50000; //W
-				E_Max = 175000; //Wh
-				base_efficiency = 0.8; // roundtrip
+				if (V_Max == 0)
+				{
+					gl_warning("V_max was not given -- using default value (battery: %d)",obj->id);
+					V_Max = 115; //V
+				}
+				if (I_Max == 0)
+				{
+					gl_warning("I_max was not given -- using default value (battery: %d)",obj->id);
+					I_Max = 435; //A
+				}
+				if (Max_P == 0)
+				{
+					gl_warning("Max_P was not given -- using default value (battery: %d)",obj->id);
+					Max_P = V_Max.Re()*I_Max.Re(); //W
+				}
+				if (E_Max == 0)
+				{
+					gl_warning("E_max was not given -- using default value (battery: %d)",obj->id);
+					E_Max = 6*Max_P; //Wh
+				}
+				if (base_efficiency == 0)
+				{
+					gl_warning("base_efficiency was not given -- using default value (battery: %d)",obj->id);
+					base_efficiency = 0.8; // roundtrip
+				}
 				break;
+		}
+	}
+	if (power_set_high <= power_set_low)
+		gl_warning("power_set_high is less than power_set_low -- oscillations will most likely occur");
+
+	if (Energy < 0)
+	{
+		gl_warning("Initial Energy was not set, or set to a negative number.  Randomizing initial value.");
+		Energy = gl_random_normal(E_Max/2,E_Max/20);
 	}
 
-	if ((power_set_high-power_set_low) <= 2*Max_P)
-		gl_warning("Your high and low power setpoints are set close enough together that oscillation may occur. You may want to set to wider limits.");
-	Energy = gl_random_normal(E_Max/2,E_Max/20);
-	//I_Max = I_Max / 5;
 	recalculate = true;
 	power_transferred = 0;
 
 	first_time_step = 0;
 
-	////gl_verbose("battery init: about to exit");
 	return 1; /* return 1 on success, 0 on failure */
-}
-
 }
 
 
@@ -360,16 +454,6 @@ complex *battery::get_complex(OBJECT *obj, char *name)
 	return (complex*)GETADDR(obj,p);
 }
 
-
-
-
-
-
-/** This method has the potential to become much more complex, as it starts taking into account the effect of
-internal resistances and a separate internal voltage.  For now, it is a simple linear march from time t0 to 
-a steady state endpoint.
-
-*/
 
 TIMESTAMP battery::rfb_event_time(TIMESTAMP t0, complex power, double e){
 	if((e < margin) && (power < 0)){
@@ -426,192 +510,555 @@ TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	if (gen_mode_v == POWER_DRIVEN && number_of_phases_out == 3)
+
+
+	if (gen_mode_v == GM_POWER_DRIVEN || gen_mode_v == GM_POWER_VOLTAGE_HYBRID) 
 	{
-		complex volt[3];
-		double check_power;
-		TIMESTAMP dt,t_energy_limit;
+		if (number_of_phases_out == 3)
+		{
+			if (gen_mode_v == GM_POWER_VOLTAGE_HYBRID)
+				GL_THROW("generator_mode POWER_VOLTAGE_HYBRID is not supported in 3-phase yet (only split phase is supported");
 
-		for (int i=0;i<3;i++)
-		{
-			volt[i] = pCircuit_V[i];
-		}
+			complex volt[3];
+			TIMESTAMP dt,t_energy_limit;
 
-		if (first_time_step == 0)
-		{
-			dt = 0;
-		}
-		else if (prev_time == 0)
-		{
-			prev_time = t1;
-			dt = 0;
-		}
-		else if (prev_time < t1)
-		{
-			dt = t1 - prev_time;
-			prev_time = t1;
-		}
-		else
-			dt = 0;
-		
-		if (prev_state == -1) //discharge
-		{
-			Energy = Energy - (1 / base_efficiency) * power_transferred * (double)dt / 3600;
-			if (Energy < 0)
-				Energy = 0;
-		}
-		else if (prev_state == 1) //charge
-			Energy = Energy + base_efficiency * power_transferred * (double)dt / 3600;
-
-		check_power = (*pPower).Mag();
-
-		if (first_time_step > 0)
-		{
-			if (volt[0].Mag() > V_Max.Mag() || volt[1].Mag() > V_Max.Mag() || volt[2].Mag() > V_Max.Mag())
+			for (int i=0;i<3;i++)
 			{
-				gl_warning("The voltages at the batteries meter are higher than rated. No power output.");
-				pLine_I[0] += complex(0,0);
-				pLine_I[1] += complex(0,0);
-				pLine_I[2] += complex(0,0);
-
-				last_current[0] = complex(0,0);
-				last_current[1] = complex(0,0);
-				last_current[2] = complex(0,0);
-
-				return TS_NEVER;
+				volt[i] = pCircuit_V[i];
 			}
-			else if (check_power > power_set_high && Energy > 0) //discharge
+
+			if (first_time_step == 0)
 			{
-				prev_state = -1;
-
-				pLine_I[0] += complex(-I_Max.Mag()/3,0,A); //generation, pure real power
-				pLine_I[1] += complex(-I_Max.Mag()/3,-2*PI/3,A);
-				pLine_I[2] += complex(-I_Max.Mag()/3,2*PI/3,A);
-
-				last_current[0] = complex(-I_Max.Mag()/3,0,A);;
-				last_current[1] = complex(-I_Max.Mag()/3,-2*PI/3,A);
-				last_current[2] = complex(-I_Max.Mag()/3,2*PI/3,A);
-
-				power_transferred = 0;
-
-				for (int i=0;i<3;i++)
-				{	
-					power_transferred += last_current[i].Mag()*volt[i].Mag();
-				}
-
-				VA_Out = power_transferred;
-				
-				t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
-				if (t_energy_limit == 0)
-					t_energy_limit = 1;
-
-				return -(t1 + t_energy_limit);
+				dt = 0;
 			}
-			else if (check_power < power_set_low && Energy < E_Max) //charge
+			else if (prev_time == 0)
 			{
-				prev_state = 1;
-
-				pLine_I[0] += complex(I_Max.Mag()/3,0,A); //load, pure real power
-				pLine_I[1] += complex(I_Max.Mag()/3,-2*PI/3,A);
-				pLine_I[2] += complex(I_Max.Mag()/3,2*PI/3,A);
-
-				last_current[0] = complex(I_Max.Mag()/3,0,A);
-				last_current[1] = complex(I_Max.Mag()/3,-2*PI/3,A);
-				last_current[2] = complex(I_Max.Mag()/3,2*PI/3,A);
-
-				power_transferred = 0;
-
-				for (int i=0;i<3;i++)
-				{	
-					power_transferred += last_current[i].Mag()*volt[i].Mag();
-				}
-				
-				VA_Out = power_transferred;
-
-				t_energy_limit = TIMESTAMP(3600 * (E_Max - Energy) / power_transferred);
-				if (t_energy_limit == 0)
-					t_energy_limit = 1;
-
-				return -(t1 + t_energy_limit);
+				prev_time = t1;
+				dt = 0;
 			}
-			else if (check_power < (power_set_low + Max_P) && prev_state == 1 && Energy < E_Max) //keep charging until out of "deadband"
+			else if (prev_time < t1)
 			{
-				prev_state = 1;
-
-				pLine_I[0] += complex(I_Max.Mag()/3,0,A); //load, pure real power
-				pLine_I[1] += complex(I_Max.Mag()/3,-2*PI/3,A);
-				pLine_I[2] += complex(I_Max.Mag()/3,2*PI/3,A);
-
-				last_current[0] = complex(I_Max.Mag()/3,0,A);
-				last_current[1] = complex(I_Max.Mag()/3,-2*PI/3,A);
-				last_current[2] = complex(I_Max.Mag()/3,2*PI/3,A);
-
-				power_transferred = 0;
-
-				for (int i=0;i<3;i++)
-				{	
-					power_transferred += last_current[i].Mag()*volt[i].Mag();
-				}
-				
-				VA_Out = power_transferred;
-
-				t_energy_limit = TIMESTAMP(3600 * (E_Max - Energy) / power_transferred);
-				if (t_energy_limit == 0)
-					t_energy_limit = 1;
-
-				return -(t1 + t_energy_limit);
+				dt = t1 - prev_time;
+				prev_time = t1;
 			}
-			else if (check_power > (power_set_high - Max_P) && prev_state == -1 && Energy > 0) //keep discharging until out of "deadband"
+			else
+				dt = 0;
+			
+			if (prev_state == -1) //discharge
 			{
-				prev_state = -1;
+				Energy = Energy - (1 / base_efficiency) * power_transferred * (double)dt / 3600;
+				if (Energy < 0)
+					Energy = 0;
+			}
+			else if (prev_state == 1) //charge
+				Energy = Energy + base_efficiency * power_transferred * (double)dt / 3600;
 
-				pLine_I[0] += complex(-I_Max.Mag()/3,0,A); //generation, pure real power
-				pLine_I[1] += complex(-I_Max.Mag()/3,-2*PI/3,A);
-				pLine_I[2] += complex(-I_Max.Mag()/3,2*PI/3,A);
+			check_power = (*pPower).Mag();
 
-				last_current[0] = complex(-I_Max.Mag()/3,0,A);
-				last_current[1] = complex(-I_Max.Mag()/3,-2*PI/3,A);
-				last_current[2] = complex(-I_Max.Mag()/3,2*PI/3,A);
+			if (first_time_step > 0)
+			{
+				if (volt[0].Mag() > V_Max.Mag() || volt[1].Mag() > V_Max.Mag() || volt[2].Mag() > V_Max.Mag())
+				{
+					gl_warning("The voltages at the batteries meter are higher than rated. No power output.");
+					battery_state = BS_WAITING;
 
-				power_transferred = 0;
+					pLine_I[0] += complex(0,0);
+					pLine_I[1] += complex(0,0);
+					pLine_I[2] += complex(0,0);
 
-				for (int i=0;i<3;i++)
-				{	
-					power_transferred += last_current[i].Mag()*volt[i].Mag();
+					last_current[0] = complex(0,0);
+					last_current[1] = complex(0,0);
+					last_current[2] = complex(0,0);
+
+					return TS_NEVER;
 				}
+				else if (check_power > power_set_high && Energy > 0) //discharge
+				{
+					prev_state = -1;
+					battery_state = BS_DISCHARGING;
 
-				VA_Out = -power_transferred;
-				
-				t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
+					pLine_I[0] += complex(-I_Max.Mag()/3,0,A); //generation, pure real power
+					pLine_I[1] += complex(-I_Max.Mag()/3,-2*PI/3,A);
+					pLine_I[2] += complex(-I_Max.Mag()/3,2*PI/3,A);
 
-				if (t_energy_limit == 0)
-					t_energy_limit = 1;
+					last_current[0] = complex(-I_Max.Mag()/3,0,A);;
+					last_current[1] = complex(-I_Max.Mag()/3,-2*PI/3,A);
+					last_current[2] = complex(-I_Max.Mag()/3,2*PI/3,A);
 
-				return -(t1 + t_energy_limit);
+					power_transferred = 0;
+
+					for (int i=0;i<3;i++)
+					{	
+						power_transferred += last_current[i].Mag()*volt[i].Mag();
+					}
+
+					VA_Out = power_transferred;
+					
+					t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
+					if (t_energy_limit == 0)
+						t_energy_limit = 1;
+
+					return -(t1 + t_energy_limit);
+				}
+				else if (check_power < power_set_low && Energy < E_Max) //charge
+				{
+					prev_state = 1;
+					battery_state = BS_CHARGING;
+
+					pLine_I[0] += complex(I_Max.Mag()/3,0,A); //load, pure real power
+					pLine_I[1] += complex(I_Max.Mag()/3,-2*PI/3,A);
+					pLine_I[2] += complex(I_Max.Mag()/3,2*PI/3,A);
+
+					last_current[0] = complex(I_Max.Mag()/3,0,A);
+					last_current[1] = complex(I_Max.Mag()/3,-2*PI/3,A);
+					last_current[2] = complex(I_Max.Mag()/3,2*PI/3,A);
+
+					power_transferred = 0;
+
+					for (int i=0;i<3;i++)
+					{	
+						power_transferred += last_current[i].Mag()*volt[i].Mag();
+					}
+					
+					VA_Out = power_transferred;
+
+					t_energy_limit = TIMESTAMP(3600 * (E_Max - Energy) / power_transferred);
+					if (t_energy_limit == 0)
+						t_energy_limit = 1;
+
+					return -(t1 + t_energy_limit);
+				}
+				else if (check_power < (power_set_low + Max_P) && prev_state == 1 && Energy < E_Max) //keep charging until out of "deadband"
+				{
+					prev_state = 1; //charging
+					battery_state = BS_CHARGING;
+
+					pLine_I[0] += complex(I_Max.Mag()/3,0,A); //load, pure real power
+					pLine_I[1] += complex(I_Max.Mag()/3,-2*PI/3,A);
+					pLine_I[2] += complex(I_Max.Mag()/3,2*PI/3,A);
+
+					last_current[0] = complex(I_Max.Mag()/3,0,A);
+					last_current[1] = complex(I_Max.Mag()/3,-2*PI/3,A);
+					last_current[2] = complex(I_Max.Mag()/3,2*PI/3,A);
+
+					power_transferred = 0;
+
+					for (int i=0;i<3;i++)
+					{	
+						power_transferred += last_current[i].Mag()*volt[i].Mag();
+					}
+					
+					VA_Out = power_transferred;
+
+					t_energy_limit = TIMESTAMP(3600 * (E_Max - Energy) / power_transferred);
+					if (t_energy_limit == 0)
+						t_energy_limit = 1;
+
+					return -(t1 + t_energy_limit);
+				}
+				else if (check_power > (power_set_high - Max_P) && prev_state == -1 && Energy > 0) //keep discharging until out of "deadband"
+				{
+					prev_state = -1;
+					battery_state = BS_DISCHARGING;
+
+					pLine_I[0] += complex(-I_Max.Mag()/3,0,A); //generation, pure real power
+					pLine_I[1] += complex(-I_Max.Mag()/3,-2*PI/3,A);
+					pLine_I[2] += complex(-I_Max.Mag()/3,2*PI/3,A);
+
+					last_current[0] = complex(-I_Max.Mag()/3,0,A);
+					last_current[1] = complex(-I_Max.Mag()/3,-2*PI/3,A);
+					last_current[2] = complex(-I_Max.Mag()/3,2*PI/3,A);
+
+					power_transferred = 0;
+
+					for (int i=0;i<3;i++)
+					{	
+						power_transferred += last_current[i].Mag()*volt[i].Mag();
+					}
+
+					VA_Out = -power_transferred;
+					
+					t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
+
+					if (t_energy_limit == 0)
+						t_energy_limit = 1;
+
+					return -(t1 + t_energy_limit);
+				}
+				else
+				{
+					if (Energy <= 0)
+						battery_state = BS_EMPTY;
+					else if (Energy >= E_Max)
+						battery_state = BS_FULL;
+					else
+						battery_state = BS_WAITING;
+
+					pLine_I[0] += complex(0,0);
+					pLine_I[1] += complex(0,0);
+					pLine_I[2] += complex(0,0);
+
+					last_current[0] = complex(0,0);
+					last_current[1] = complex(0,0);
+					last_current[2] = complex(0,0);
+
+					prev_state = 0;
+					power_transferred = 0;
+					VA_Out = power_transferred;
+					return TS_NEVER;
+				}
 			}
 			else
 			{
-				pLine_I[0] += complex(0,0);
-				pLine_I[1] += complex(0,0);
-				pLine_I[2] += complex(0,0);
+				if (Energy <= 0)
+					battery_state = BS_EMPTY;
+				else if (Energy >= E_Max)
+					battery_state = BS_FULL;
+				else
+					battery_state = BS_WAITING;
 
-				last_current[0] = complex(0,0);
-				last_current[1] = complex(0,0);
-				last_current[2] = complex(0,0);
-
-				prev_state = 0;
-				power_transferred = 0;
-				VA_Out = power_transferred;
+				first_time_step = 1;
 				return TS_NEVER;
 			}
-		}
-		else
+		} //End three phase GM_POWER_DRIVEN and HYBRID
+		else if (number_of_phases_out == 4) // Split-phase
 		{
-			first_time_step = 1;
-			return TS_NEVER;
-		}
+			if (*NR_mode == false)
+			{
+				complex volt;
+				TIMESTAMP dt,t_energy_limit;
 
-	}
+				volt = pCircuit_V[0]; // 240-V circuit (we're assuming it can only be hooked here now
+
+				if (first_time_step == 0)
+				{
+					dt = 0;
+				}
+				else if (prev_time == 0)
+				{
+					prev_time = t1;
+					dt = 0;
+				}
+				else if (prev_time < t1)
+				{
+					dt = t1 - prev_time;
+					prev_time = t1;
+				}
+				else
+					dt = 0;
+				
+				if (prev_state == -1) //discharge
+				{
+					Energy = Energy - (1 / base_efficiency) * power_transferred * (double)dt / 3600;
+					if (Energy < 0)
+						Energy = 0;
+				}
+				else if (prev_state == 1) //charge
+				{
+					Energy = Energy + base_efficiency * power_transferred * (double)dt / 3600;
+					if (Energy > E_Max)
+						Energy = E_Max;
+				}
+				check_power = (*pPower).Mag();
+
+				if (additional_controls == AC_LINEAR_TEMPERATURE)
+				{
+					double sens2 = (1 - sensitivity)/(-sensitivity);
+
+					// high setpoint - high temperature
+					double slope1_hi = power_set_high_highT / (high_temperature - midpoint_temperature * sens2);
+					double yint1_hi = -midpoint_temperature * sens2 * slope1_hi;
+
+					// high setpoint - low temperature
+					double slope1_lo = (power_set_high - (slope1_hi * midpoint_temperature + yint1_hi)) / (low_temperature - midpoint_temperature);
+					double yint1_lo = power_set_high - low_temperature * slope1_lo;
+
+					// low setpoint - high temperature
+					double slope2_hi = power_set_low_highT / (high_temperature - midpoint_temperature * sens2);
+					double yint2_hi = -midpoint_temperature * sens2 * slope2_hi;
+
+					// low setpoint - low temperature
+					double slope2_lo = (power_set_low - (slope2_hi * midpoint_temperature + yint2_hi)) / (low_temperature - midpoint_temperature);
+					double yint2_lo = power_set_low - low_temperature * slope2_lo;
+				
+					if (*pTout > midpoint_temperature)
+					{
+						check_power_high = slope1_hi * (*pTout) + yint1_hi;
+						check_power_low = slope2_hi * (*pTout) + yint2_hi;
+					}
+					else
+					{
+						check_power_high = slope1_lo * (*pTout) + yint1_lo;
+						check_power_low = slope2_lo * (*pTout) + yint2_lo;
+					}
+				}
+				else
+				{
+					check_power_high = power_set_high;
+					check_power_low = power_set_low;
+				}
+
+				if (first_time_step > 0)
+				{
+					if (volt.Mag() > V_Max.Mag() || volt.Mag()/240 < 0.9 || volt.Mag()/240 > 1.1)
+					{
+						gl_verbose("The voltages at the batteries meter are higher than rated, or outside of ANSI emergency specifications. No power output.");
+						battery_state = BS_WAITING;
+
+						last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
+						*pLine12 += last_current[0];
+
+						
+
+						return TS_NEVER;
+					}
+					// if the power flowing through the transformer has exceeded our setpoint, or the voltage has dropped below
+					// our setpoint (if in HYBRID mode), then start discharging to help out
+					else if ((check_power > check_power_high || (volt.Mag() < voltage_set_low && gen_mode_v == GM_POWER_VOLTAGE_HYBRID)) && Energy > 0) //start discharging
+					{
+						if (volt.Mag() > voltage_set_high) // conflicting states between power and voltage control
+						{
+							if (prev_state != 0)
+								no_of_cycles += 1;
+
+							last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
+							*pLine12 += last_current[0];
+							
+
+							VA_Out = power_transferred = 0;
+							battery_state = BS_CONFLICTED;
+
+							return TS_NEVER;
+						}
+						else
+						{
+							if (prev_state != -1)
+								no_of_cycles +=1;
+
+							prev_state = -1;  //discharging
+							battery_state = BS_DISCHARGING;
+							double power_desired = check_power - check_power_high;
+							if (power_desired <= 0) // we're in voltage support mode
+							{
+								last_current[0].SetPolar(-I_Max.Mag(),volt.Arg());
+								*pLine12 += last_current[0]; //generation, pure real power
+								
+							}
+							else // We're load following
+							{
+								if (power_desired >= Max_P)
+									power_desired = Max_P;
+
+								double current_desired = -power_desired/volt.Mag();
+								last_current[0].SetPolar(current_desired,volt.Arg());
+								*pLine12 += last_current[0];
+							}
+							
+							power_transferred = last_current[0].Mag()*volt.Mag();
+
+							VA_Out = power_transferred;
+							
+							t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+					}
+					// If the power has dropped below our setpoint, or voltage has risen to above our setpoint,
+					// then start charging to help lower voltage and/or increase power through the transformer
+					else if ((check_power < check_power_low || (gen_mode_v == GM_POWER_VOLTAGE_HYBRID && volt.Mag() > voltage_set_high)) && Energy < E_Max) //charge
+					{
+						if (volt.Mag() < voltage_set_low) // conflicting states between power and voltage control
+						{
+							if (prev_state != 0)
+								no_of_cycles += 1;
+							last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
+							*pLine12 += last_current[0];
+
+							VA_Out = power_transferred = 0;
+							battery_state = BS_CONFLICTED;
+
+							return TS_NEVER;
+						}
+						else
+						{
+							if (prev_state != 1)
+								no_of_cycles +=1;
+
+							prev_state = 1;  //charging
+							battery_state = BS_CHARGING;
+							double power_desired = check_power_low - check_power;
+
+							if (power_desired <= 0) // We're in voltage management mode
+							{
+								last_current[0].SetPolar(I_Max.Mag(),volt.Arg());
+								*pLine12 += last_current[0]; //load, pure real power
+								
+							}
+							else // We're in load tracking mode
+							{
+								if (power_desired >= Max_P)
+									power_desired = Max_P;
+
+								double current_desired = power_desired/volt.Mag();
+								last_current[0].SetPolar(current_desired,volt.Arg());
+								*pLine12 += last_current[0];
+							}
+			
+							power_transferred = last_current[0].Mag()*volt.Mag();
+							
+							VA_Out = power_transferred;
+
+							t_energy_limit = TIMESTAMP(3600 * (E_Max - Energy) / power_transferred);
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+					}
+					//keep charging until out of "deadband"
+					else if ((check_power < check_power_low || (gen_mode_v == GM_POWER_VOLTAGE_HYBRID && volt.Mag() > voltage_set_high - deadband))&& prev_state == 1 && Energy < E_Max) 
+					{
+						if (volt.Mag() < voltage_set_low) // conflicting states between power and voltage control
+						{
+							if (prev_state != 0)
+								no_of_cycles += 1;
+
+							last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
+							*pLine12 += last_current[0];
+
+							VA_Out = power_transferred = 0;
+							battery_state = BS_CONFLICTED;
+
+							return TS_NEVER;
+						}
+						else
+						{
+							if (prev_state != 1)
+								no_of_cycles +=1;
+
+							prev_state = 1; //charging
+							battery_state = BS_CHARGING;
+
+							double power_desired = check_power_low - check_power;
+
+							if (power_desired <= 0) // We're in voltage management mode
+							{
+								last_current[0].SetPolar(I_Max.Mag(),volt.Arg());
+								*pLine12 += last_current[0]; //load, pure real power
+								
+							}
+							else // We're in load tracking mode
+							{
+								if (power_desired >= Max_P)
+									power_desired = Max_P;
+
+								double current_desired = power_desired/volt.Mag();
+								last_current[0].SetPolar(current_desired, volt.Arg());
+								*pLine12 += last_current[0];
+							}
+			
+							power_transferred = last_current[0].Mag()*volt.Mag();
+							
+							VA_Out = power_transferred;
+
+							t_energy_limit = TIMESTAMP(3600 * (E_Max - Energy) / power_transferred);
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+					}
+					//keep discharging until out of "deadband"
+					else if ((check_power > check_power_high || (gen_mode_v == GM_POWER_VOLTAGE_HYBRID && volt.Mag() < voltage_set_low + deadband)) && prev_state == -1 && Energy > 0) 
+					{
+						if (volt.Mag() > voltage_set_high) // conflicting states between power and voltage control
+						{
+							if (prev_state != 0)
+								no_of_cycles += 1;
+
+							last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
+							*pLine12 += last_current[0];
+
+							VA_Out = power_transferred = 0;
+							battery_state = BS_CONFLICTED;
+
+							return TS_NEVER;
+						}
+						else
+						{
+							if (prev_state != -1)
+								no_of_cycles +=1;
+
+							prev_state = -1; //discharging
+							battery_state = BS_DISCHARGING;
+
+							double power_desired = check_power - check_power_high;
+							if (power_desired <= 0) // we're in voltage support mode
+							{
+								last_current[0].SetPolar(-I_Max.Mag(),volt.Arg());
+								*pLine12 += last_current[0]; //generation, pure real power
+								
+							}
+							else // We're load following
+							{
+								if (power_desired >= Max_P)
+									power_desired = Max_P;
+
+								double current_desired = -power_desired/volt.Mag();
+								last_current[0].SetPolar(current_desired,volt.Arg());
+								*pLine12 += last_current[0];						
+							}
+
+							power_transferred = last_current[0].Mag()*volt.Mag();
+
+							VA_Out = power_transferred;
+							
+							t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
+
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+					}
+					else
+					{
+						if (prev_state != 0)
+							no_of_cycles +=1;
+
+						last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
+						*pLine12 += last_current[0];
+
+						prev_state = 0;
+						if (Energy <= 0)
+							battery_state = BS_EMPTY;
+						else if (Energy >= E_Max)
+							battery_state = BS_FULL;
+						else
+							battery_state = BS_WAITING;
+
+						power_transferred = 0;
+						VA_Out = power_transferred;
+						return TS_NEVER;
+					}
+				}
+				else
+				{
+					if (Energy <= 0)
+						battery_state = BS_EMPTY;
+					else if (Energy >= E_Max)
+						battery_state = BS_FULL;
+					else
+						battery_state = BS_WAITING;
+
+					first_time_step = 1;
+					return TS_NEVER;
+				}
+			} // NR_cycle
+		} //End split phase GM_POWER_DRIVEN and HYBRID
+	}// End GM_POWER_DRIVEN and HYBRID controls
 	else
 	{
 		//gather V_Out
@@ -830,20 +1277,47 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
-return TS_NEVER;
+	return TS_NEVER;
 }
 
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 
-	pLine_I[0] -= last_current[0];
-	pLine_I[1] -= last_current[1];
-	pLine_I[2] -= last_current[2];
+	TIMESTAMP result;
+	if (*NR_mode == false)
+	{
+		Iteration_Toggle = !Iteration_Toggle;
+		if (number_of_phases_out == 3)
+		{
+			pLine_I[0] -= last_current[0];
+			pLine_I[1] -= last_current[1];
+			pLine_I[2] -= last_current[2];
+		}
+		else if (number_of_phases_out == 4)
+		{
+			complex temp;
+			temp = *pLine12;
+			temp -= last_current[0];
+			*pLine12 = temp;
+		}
+		result = TS_NEVER;
+	}
+	else
+		result = TS_NEVER;
 
-	TIMESTAMP t2 = TS_NEVER;
-	/* TODO: implement post-topdown behavior */
-	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+	if (Iteration_Toggle == true)
+		return result;
+	else
+		return TS_NEVER;
+}
+
+bool *battery::get_bool(OBJECT *obj, char *name)
+{
+	PROPERTY *p = gl_get_property(obj,name);
+	if (p==NULL || p->ptype!=PT_bool)
+		return NULL;
+	return (bool*)GETADDR(obj,p);
 }
 
 //////////////////////////////////////////////////////////////////////////
