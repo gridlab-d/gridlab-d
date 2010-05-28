@@ -589,6 +589,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"design_peak_solar[Btu/h.sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design solar load",
 			PT_double,"design_internal_gains[W/sf]", PADDR(design_internal_gains),PT_DESCRIPTION,"system design internal gains",
 			PT_double,"air_heat_fraction[pu]", PADDR(air_heat_fraction), PT_DESCRIPTION, "fraction of heat gain/loss that goes to air (as opposed to mass)",
+			PT_double,"mass_solar_gain_fraction[pu]", PADDR(mass_solar_gain_fraction), PT_DESCRIPTION, "fraction of the heat gain/loss from the solar gains that goes to the mass",
+			PT_double,"mass_internal_gain_fraction[pu]", PADDR(mass_internal_gain_fraction), PT_DESCRIPTION, "fraction of heat gain/loss from the internal gains that goes to the mass",
 
 			PT_double,"auxiliary_heat_capacity[Btu/h]",PADDR(aux_heat_capacity),PT_DESCRIPTION,"installed auxiliary heating capacity",
 			PT_double,"aux_heat_deadband[degF]",PADDR(aux_heat_deadband),PT_DESCRIPTION,"temperature offset from standard heat activation to auxiliary heat activation",
@@ -1513,8 +1515,17 @@ int house_e::init(OBJECT *parent)
 	if (volume==0) volume = ceiling_height*floor_area;					// volume of air [cf]
 	if (air_mass==0) air_mass = air_density*volume;						// mass of air [lb]
 	if (air_thermal_mass==0) air_thermal_mass = 3*air_heat_capacity*air_mass;	// thermal mass of air [BTU/F]  //*3 multiplier is to reflect that the air mass includes surface effects from the mass as well.  
-	if (air_heat_fraction==0) air_heat_fraction=0.5;
+	//if (air_heat_fraction==0) air_heat_fraction=0.5;
+	if (air_heat_fraction!=0) {
+		gl_warning("The air_heat_fraction is no longer used to determine heat gain/loss to the air. Setting mass_solar_gain_fraction and mass_internal_gain_fraction to 1-air_heat_fraction specified for house %s.", obj->name);
+		mass_solar_gain_fraction=1-air_heat_fraction;
+		mass_internal_gain_fraction=1-air_heat_fraction;
+	}
+	if (mass_solar_gain_fraction==0) mass_solar_gain_fraction=0.5; // Rob Pratt's implimentation for heat gain from the solar gains
+	if (mass_internal_gain_fraction==0) mass_internal_gain_fraction=0.5; // Rob Pratt's implimentation for heat gain from internal gains
 	if (air_heat_fraction<0.0 || air_heat_fraction>1.0) throw "air heat fraction is not between 0 and 1";
+	if (mass_solar_gain_fraction<0.0 || mass_solar_gain_fraction>1.0) throw "the solar gain fraction to mass is not between 0 and 1";
+	if (mass_internal_gain_fraction<0.0 || mass_internal_gain_fraction>1.0) throw "the internal gain fraction to mass is not between 0 and 1";
 	if (total_thermal_mass_per_floor_area <= 0.0) total_thermal_mass_per_floor_area = 2.0;
 	if (interior_surface_heat_transfer_coeff <= 0.0) interior_surface_heat_transfer_coeff = 1.46;
 
@@ -1826,8 +1837,8 @@ void house_e::update_model(double dt)
 
 	// split gains to air and mass
 	Qi = total.heatgain - load.heatgain;
-	Qa = Qh + air_heat_fraction*(Qi + Qs);
-	Qm = (1-air_heat_fraction)*(Qi + Qs);
+	Qa = Qh + (1-mass_internal_gain_fraction)*Qi + (1-mass_solar_gain_fraction)*Qs;
+	Qm = mass_internal_gain_fraction*Qi + mass_solar_gain_fraction*Qs;
 
 	d = Qa + Qm + (Ua+airchange_UA)*Tout;
 	Teq = d/c;

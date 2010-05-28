@@ -85,7 +85,9 @@ public:
 	double house_content_thermal_mass;			///< house thermal mass (BTU/F)
 	double total_thermal_mass_per_floor_area;	///<Total thermal mass per unit of floor area (Rob's rule of thumb is 2 for wood frame)
 	double interior_surface_heat_transfer_coeff;///< Rob's rule of thumb is 1
-	double air_heat_fraction;					///< fraction of gains that go to air
+	double air_heat_fraction;					///< fraction of gains that go to air - this variable is not needed consider deleting?
+	double mass_solar_gain_fraction;			///< fraction of solar gains that goes to the mass
+	double mass_internal_gain_fraction;		///< fraction of the internal gains that goes to the mass
 	double number_of_stories;
 
 	// window variables
