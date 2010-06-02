@@ -64,10 +64,31 @@ if [[ "$optimization" ]]; then
 	GLFLAGS="$GLFLAGS -O$optimization"
 fi
 
-case "$host_cpu" in
-	i386) AC_MSG_FAILURE([Sorry, i386 is not a supported architecture]);;
-	i486|i586|i686) march="-march=$host_cpu";;
-	*) march="";;
+case "$host_os" in
+darwin*)
+     export LIBTOOL=`which glibtool`
+     export LIBTOOLIZE=`which glibtoolize`
+     LIBEXT=.so
+	 march=""
+     ;;
+cygwin*)
+     AC_LIBTOOL_WIN32_DLL
+     LIBEXT=.a
+	 march=""
+     ;;
+mingw*)
+     AC_LIBTOOL_WIN32_DLL
+     LIBEXT=.dll
+	 march=""
+     ;;
+*)
+     LIBEXT=.so
+	 case "$host_cpu" in
+		i386) AC_MSG_FAILURE([Sorry, i386 is not a supported architecture]);;
+		i486|i586|i686) march="-march=$host_cpu";;
+		*) march="";;
+	 esac
+     ;;
 esac
 
 # Putting -ansi in CPPFLAGS causes errors that prevent building.
@@ -76,24 +97,6 @@ CPPFLAGS="$CPPFLAGS $GLFLAGS $march"
 CXXFLAGS="$CXXFLAGS $GLFLAGS $march"
 CFLAGS="$CFLAGS $GLFLAGS $march"
 
-case "$host_os" in
-darwin*)
-     export LIBTOOL=`which glibtool`
-     export LIBTOOLIZE=`which glibtoolize`
-     LIBEXT=.so
-     ;;
-cygwin*)
-     AC_LIBTOOL_WIN32_DLL
-     LIBEXT=.a
-     ;;
-mingw*)
-     AC_LIBTOOL_WIN32_DLL
-     LIBEXT=.dll
-     ;;
-*)
-     LIBEXT=.so
-     ;;
-esac
 AC_SUBST(LIBEXT)
 AC_DEFINE_UNQUOTED([DLEXT], ["$LIBEXT"], "Dynamic library extension")
 
