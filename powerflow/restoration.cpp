@@ -33,7 +33,6 @@ restoration::restoration(MODULE *mod) : powerflow_library(mod)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		
 		if(gl_publish_variable(oclass,
-			PT_char1024,"configuration_file",PADDR(configuration_file),
 			PT_int32,"reconfig_attempts",PADDR(reconfig_attempts),
 			PT_int32,"reconfig_iteration_limit",PADDR(reconfig_iter_limit),
 			PT_bool,"populate_tree",PADDR(populate_tree),
@@ -48,7 +47,6 @@ int restoration::isa(char *classname)
 
 int restoration::create(void)
 {
-	*configuration_file = NULL;
 	prev_time = 0;
 
 	reconfig_attempts = 0;
@@ -62,7 +60,6 @@ int restoration::create(void)
 int restoration::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	FILE *CONFIGINFO;
 
 	if (solver_method == SM_NR)
 	{
@@ -70,32 +67,6 @@ int restoration::init(OBJECT *parent)
 		{
 			restoration_object = obj;	//Set up the global
 			
-			if (*configuration_file == NULL)	//Make sure an input has been specified
-			{
-				GL_THROW("Please specify a restoration configuration file.");
-				/*  TROUBLESHOOT
-				The restoration object requires an input file that determines how
-				reconfiguration will occur.  Please specify this file to proceed.
-				*/
-			}
-
-			//Perform file open and close - make sure the file we specified exists
-			CONFIGINFO = fopen(configuration_file,"r");		//Open the file for reading (not sure how you'll want to actually do this)
-
-			//Check it
-			if (CONFIGINFO==NULL)
-			{
-				GL_THROW("Configuration file could not be opened!");
-				/*  TROUBLESHOOT
-				The configuration file specified for the restoration object does not appear
-				to exist, or it can not be opened.  Make sure no other program is using this file
-				and that it is in the same folder as the model GLM file.
-				*/
-			}
-
-			//close the handle
-			fclose(CONFIGINFO);
-
 			//Check limits - post warnings as necessary
 			if (reconfig_attempts==0)
 			{
@@ -441,9 +412,6 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
     VECTARRAY temp_switch;
 	int array_expected_size;
   
-
-
-
 	if (t0 != prev_time)	//Perform new timestep updates
 	{
 		reconfig_number = 0;	//Reset number of reconfigurations that have occurred
@@ -527,18 +495,18 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 
 	// Calculate the total number of unsupported node
 	num_unsupported = 0;
-	for(indexx=0;indexx<=NR_bus_count;indexx++)
+	for(indexx=0; indexx < NR_bus_count;indexx++)
 	{
-		if (FaultyObject->Supported_Nodes[indexx] == 0)
+		if ((FaultyObject->Supported_Nodes[indexx][0] == 0) || (FaultyObject->Supported_Nodes[indexx][1] == 0) || (FaultyObject->Supported_Nodes[indexx][2] == 0))	//Any fault is treated as 3-phase fault
 		num_unsupported++; 
 	} // end of for
 
 	// Save the node id of unsupported node in the array of "unsupported_node" 
 	unsupported_node = (int*)gl_malloc(num_unsupported * sizeof(int));
 	indexy = 0;
-	for(indexx=0;indexx<=NR_bus_count;indexx++)
+	for(indexx=0;indexx < NR_bus_count; indexx++)
 	{
-		if (FaultyObject->Supported_Nodes[indexx] == 0)
+		if ((FaultyObject->Supported_Nodes[indexx][0] == 0) || (FaultyObject->Supported_Nodes[indexx][1] == 0) || (FaultyObject->Supported_Nodes[indexx][2] == 0))	//Any fault is treated as 3-phase fault
 		{
 			unsupported_node[indexy] = indexx;
 			NR_busdata[indexx].Child_Node_idx = 0; // For the unsupported node, the total number of child node is zero;
@@ -855,7 +823,7 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 			fc_all_supported = true;
 			for (indexx=0; indexx<NR_bus_count; indexx++)
 			{
-				if (FaultyObject->Supported_Nodes[indexx]==0)	//No Support
+				if ((FaultyObject->Supported_Nodes[indexx][0] == 0) || (FaultyObject->Supported_Nodes[indexx][0] == 0) || (FaultyObject->Supported_Nodes[indexx][0] == 0))	//Look for any phase fault - ignores single phase
 				{
 					fc_all_supported = false;	//Flag as a defect
 //					printf("unsupported node:%s.\n",NR_busdata[indexx].name);

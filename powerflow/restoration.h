@@ -25,7 +25,6 @@ public:
 	static CLASS *oclass;
 	static CLASS *pclass;
 public:
-	char1024 configuration_file;
 	int **Connectivity_Matrix;
 
 	unsigned int reconfig_switch_number; // Number of switches that will be operated during a reconfiguration;
@@ -60,7 +59,6 @@ private:
 	int *feeder_id; // Each node is belong to one feeder in the original system. The feeder id for each node is recorded.
 	int *candidate_sec_switch;
 	bool *visited_flag; // Visited_flag used in the DepthFirstSearch function
-	int *BFS_queue; // Visited node is recorded in the BreadthFirsthSearch funtion
 	int *unsupported_node;  // All the unsupported_node in the system 
 	int *tie_switch; // All the tie_switch in the system
 	int *sec_switch; // sectionalizing switch

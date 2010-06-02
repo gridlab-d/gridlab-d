@@ -507,6 +507,7 @@ void switch_object::set_switch(bool desired_status)
 					From_Y[0][0] = complex(0.0,0.0);	//Update admittance
 					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Ensure we're not set
+					phase_A_state = OPEN;				//Open this phase
 				}
 
 				if (has_phase(PHASE_B))
@@ -514,6 +515,7 @@ void switch_object::set_switch(bool desired_status)
 					From_Y[1][1] = complex(0.0,0.0);	//Update admittance
 					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Ensure we're not set
+					phase_B_state = OPEN;				//Open this phase
 				}
 
 				if (has_phase(PHASE_C))
@@ -521,6 +523,7 @@ void switch_object::set_switch(bool desired_status)
 					From_Y[2][2] = complex(0.0,0.0);	//Update admittance
 					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Ensure we're not set
+					phase_C_state = OPEN;				//Open this phase
 				}
 			}//end open
 			else					//Must be closed then
@@ -530,6 +533,7 @@ void switch_object::set_switch(bool desired_status)
 					From_Y[0][0] = complex(1e4,1e4);	//Update admittance
 					a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
+					phase_A_state = CLOSED;				//Close this phase
 				}
 
 				if (has_phase(PHASE_B))
@@ -537,6 +541,7 @@ void switch_object::set_switch(bool desired_status)
 					From_Y[1][1] = complex(1e4,1e4);	//Update admittance
 					a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
+					phase_B_state = CLOSED;				//Close this phase
 				}
 
 				if (has_phase(PHASE_C))
@@ -544,6 +549,7 @@ void switch_object::set_switch(bool desired_status)
 					From_Y[2][2] = complex(1e4,1e4);	//Update admittance
 					a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
+					phase_C_state = CLOSED;				//Close this phase
 				}
 			}//end closed
 
