@@ -321,7 +321,7 @@ public:
 	double Tair;
 	double Tmaterials;
 	double outside_temperature;
-	double outdoor_RH;
+	double outdoor_rh;
 
 private:
 	void set_thermal_integrity();
