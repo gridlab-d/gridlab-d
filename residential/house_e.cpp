@@ -616,6 +616,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			//PT_double,"COP_coeff",PADDR(COP_coeff),PT_DESCRIPTION,"effective system performance coefficient",
 			PT_double,"air_temperature[degF]",PADDR(Tair),PT_DESCRIPTION,"indoor air temperature",
 			PT_double,"outdoor_temperature[degF]",PADDR(outside_temperature),PT_DESCRIPTION,"outdoor air temperature",
+			PT_double,"outdoor_RH[%]",PADDR(outdoor_RH),PT_DESCRIPTION,"outdoor relative humidity",
 			PT_double,"mass_heat_capacity[Btu/degF]",PADDR(house_content_thermal_mass),PT_DESCRIPTION,"interior mass heat capacity",
 			PT_double,"mass_heat_coeff[Btu/degF.h]",PADDR(house_content_heat_transfer_coeff),PT_DESCRIPTION,"interior mass heat exchange coefficient",
 			PT_double,"mass_temperature[degF]",PADDR(Tmaterials),PT_DESCRIPTION,"interior mass temperature",
@@ -2096,10 +2097,12 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if(!heat_start){
 			// force an update of the outside temperature, even if we don't do anything with it
 			outside_temperature = *pTout;
+			outdoor_RH = *pRhout;
 		}
 		/* update HVAC power before panel sync */
 		if (t0==0 || t1>t0){
 			outside_temperature = *pTout;
+			outdoor_RH = *pRhout;
 
 			// update the state of the system
 			update_system(dt1);
