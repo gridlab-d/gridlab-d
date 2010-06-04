@@ -106,8 +106,12 @@ int csv_reader::open(const char *file){
 		++linenum;
 		// consume leading whitespace?
 		// comments following valid lines?
+		size_t _len = strlen(line);
 		if(line[0] == '#'){	// comment
 			continue;
+		}
+		else if(strlen(line) < 1){
+			continue; // blank line
 		}
 		else if(line[0] == '$'){	// property
 			if(0 == read_prop(line+1)){
@@ -139,6 +143,7 @@ int csv_reader::open(const char *file){
 	for(i = 0, wtr = weather_root; i < sample_ct && wtr != NULL; ++i, wtr=wtr->next){
 		samples[i] = wtr;
 	}
+	sample_ct = i; // if wtr was the limiting factor, truncate the count
 
 //	index = -1;	// forces to start on zero-eth index
 
@@ -290,16 +295,20 @@ int csv_reader::read_line(char *line){
 	weather *sample = new weather();
 //	OBJECT *my = 0;
 
+	strncpy(buffer, line, 1023);
+	token = strtok(buffer, " ,\t\n\r");
+
+	if(token == 0){
+		return 1; // blank line 
+	}
+
 	if(weather_root == 0){
 		weather_root = sample;
 	} else {
 		weather_last->next = sample;
 	}
 	weather_last = sample;
-	
-	strncpy(buffer, line, 1023);
 
-	token = strtok(buffer, ",\n\r");
 	if(timefmt[0] == 0){
 		if(sscanf(token, "%d:%d:%d:%d:%d", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
 			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with default format", token);
@@ -371,7 +380,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 //			strcpy(guess_dt.tz, "GMT");
 			guess_ts = (TIMESTAMP)gl_mktime(&guess_dt);
 
-			if(guess_ts < t0){
+			if(guess_ts <= t0){
 				break;
 			}
 		}
