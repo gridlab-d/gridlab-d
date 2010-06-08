@@ -185,7 +185,7 @@
 			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
-			UseOfMFC="0"
+			UseOfMFC="1"
 			CharacterSet="2"
 			DeleteExtensionsOnClean="*.obj;*.ilk;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;$(TargetPath)"
 			WholeProgramOptimization="1"

@@ -187,6 +187,7 @@
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
+			UseOfMFC="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -211,7 +212,7 @@
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="..\pthreads"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__CLEANUP_C;PTW32_BUILD"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
