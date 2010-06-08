@@ -12,62 +12,58 @@
 
 #include <stdarg.h>
 #include "gridlabd.h"
+#include "market.h"
+#include "bid.h"
+#include "curve.h"
 
-/** Bid structure for markets */
-typedef enum {BS_UNKNOWN=0, BS_OFF=1, BS_ON=2} BIDDERSTATE;
-typedef struct s_bid {
-	OBJECT *from;		/**< object from which bid was received */
-	double quantity; 	/**< bid quantity (negative is sell, positive is buy */
-	double price; 		/**< bid price */
-	BIDDERSTATE state;	/**< state of bidder (unknown=0, off=1, on=2) */
-} BID;
-typedef int KEY;
+typedef struct s_statistic {
+	char32 statname;
+	STATMODE stat_mode;
+	STATTYPE stat_type;
+	TIMESTAMP interval;
+	double value;
+	PROPERTY *prop;
+	struct s_statistic *next;
+} STATISTIC;
 
-EXPORT int64 submit_bid(OBJECT *obj, OBJECT *from, double quantity, double price, KEY bid_id);
-EXPORT int64 submit_bid_state(OBJECT *obj, OBJECT *from, double quantity, double price, unsigned int is_on, KEY bid_id);
-
-/** Supply/Demand curve */
-class curve {
-private:
-	int len;
-	int n_bids;
-	BID *bids;
-	KEY *keys;
-	double total;
-	double total_on;
-	double total_off;
-private:
-	static void sort(BID *list, KEY *keys, const int len, const bool reverse);
-public:
-	curve(void);
-	~curve(void);
-	inline unsigned int getcount() { return n_bids;};
-	void clear(void);
-	KEY submit(BID *bid);
-	KEY resubmit(BID *bid, KEY key);
-	void sort(bool reverse=false);
-	BID *getbid(KEY n);
-	inline double get_total() { return total;};
-	inline double get_total_on() { return total_on;};
-	inline double get_total_off() { return total_off;};
-	friend class auction;
-};
+typedef struct s_market_frame{
+	int64 market_id;
+	TIMESTAMP start_time;
+	TIMESTAMP end_time;
+	CLEARINGTYPE clearing_type;
+	double clearing_price;
+	double clearing_quantity;
+	double marginal_quantity;
+	double seller_total_quantity;
+	double buyer_total_quantity;
+	double seller_min_price;
+	struct s_market_frame *next;
+	double *statistics;
+} MARKETFRAME;
 
 class auction {
 public:
 	bool verbose;
 	typedef enum {AT_NONE=0, AT_SINGLE=1, AT_DOUBLE=2} AUCTIONTYPE;
 private:
+	// functions
+	int init_statistics();
+	int update_statistics();
+	int push_market_frame(TIMESTAMP t1);
+	TIMESTAMP pop_market_frame(TIMESTAMP t1);
+	// variables
 	double *Qload;		/**< total load (used to determine unresponsive load when not all load bid) */
 	curve asks;			/**< demand curve */ 
 	curve offers;		/**< supply curve */
 	int retry;
 protected:
 public:
+	int32 immediate;	// debug variable
 	AUCTIONTYPE type;	/**< auction type */
 	char32 unit;		/**< unit of quantity (see unitfile.txt) */
-	double period;		/**< time period of auction closing (s) */
-	double latency;		/**< delay after closing before unit commitment (s) */
+	double dPeriod, dLatency;
+	TIMESTAMP period;		/**< time period of auction closing (s) */
+	TIMESTAMP latency;		/**< delay after closing before unit commitment (s) */
 	int64 market_id;	/**< id of market to clear */
 	BID last;			/**< last clearing result */
 	BID next;			/**< next clearing result */
@@ -86,9 +82,43 @@ public:
 	int64 count;		/**< number of prices in history */
 	int16 lasthr, thishr;
 	OBJECT *linkref;	/**< reference link object that contains power_out (see Qload) */
+
+	// new stuff
+	SPECIALMODE special_mode;
+	CLEARINGTYPE clearing_type;
+	double fixed_price;
+	double fixed_quantity;
+	double init_price;
+	double init_stdev;
+	OBJECT *capacity_reference_object;
+	char32 capacity_reference_propname;
+	PROPERTY *capacity_reference_property;
+	int32 warmup;
 	
+	// statistics
+	double *new_prices;
+	double *statdata;
+	unsigned int price_index;
+	unsigned int64 price_count;
+	size_t history_count;
+	// latency market frame queue
+	MARKETFRAME next_frame;
+	MARKETFRAME past_frame;
+	MARKETFRAME current_frame;
+	MARKETFRAME cleared_frame;
+	MARKETFRAME *framedata;
+	MARKETFRAME *back;
+	unsigned int latency_front;
+	unsigned int latency_back;
+	size_t latency_count;
+	size_t latency_stride;
+	// statics
+	static STATISTIC *stats;
+	static TIMESTAMP longest_statistic;
+	static size_t statistic_count;
+	static int statistic_check;
 public:
-	KEY submit(OBJECT *from, double quantity, double price, KEY key=-1, BIDDERSTATE state=BS_UNKNOWN);
+	KEY submit(OBJECT *from, double quantity, double real_price, KEY key=-1, BIDDERSTATE state=BS_UNKNOWN);
 	TIMESTAMP nextclear() const;
 	void clear_market(void);
 public:
@@ -104,6 +134,8 @@ public:
 	static CLASS *oclass;
 	static auction *defaults;
 };
+
+EXPORT int64 get_market_for_time(OBJECT *obj, TIMESTAMP ts);
 
 #endif
 

@@ -511,11 +511,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bid.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\controller.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\controller2.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\curve.cpp"
 				>
 			</File>
 			<File
@@ -545,11 +553,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bid.h"
+				>
+			</File>
+			<File
 				RelativePath=".\controller.h"
 				>
 			</File>
 			<File
 				RelativePath=".\controller2.h"
+				>
+			</File>
+			<File
+				RelativePath=".\curve.h"
 				>
 			</File>
 			<File

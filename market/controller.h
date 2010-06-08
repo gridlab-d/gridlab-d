@@ -30,6 +30,7 @@ public:
 		SM_HOUSE_COOL,
 		SM_HOUSE_PREHEAT,
 		SM_HOUSE_PRECOOL,
+		SM_WATERHEATER,
 	} SIMPLE_MODE;
 	SIMPLE_MODE simplemode;
 	
@@ -38,6 +39,18 @@ public:
 		BM_ON,
 	} BIDMODE;
 	BIDMODE bidmode;
+
+	typedef enum {
+		CN_RAMP,
+		CN_DOUBLE_RAMP,
+	} CONTROLMODE;
+	CONTROLMODE control_mode;
+	
+	typedef enum {
+		RM_DEADBAND,
+		RM_SLIDING,
+	} RESOLVEMODE;
+	RESOLVEMODE resolve_mode;
 
 	double kT_L, kT_H, Tmin, Tmax;
 	char target[33];
@@ -57,6 +70,13 @@ public:
 	double set_temp;
 	int may_run;
 
+	// new stuff
+	double ramp_low, ramp_high;
+	int64 period;
+	double slider_setting_heat;
+	double slider_setting_cool;
+	double range_low;
+	double range_high;
 private:
 	TIMESTAMP next_run;
 	double *pMonitor;
