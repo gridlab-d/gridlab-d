@@ -523,6 +523,35 @@ inline int gl_set_value(OBJECT *obj, /**< the object to alter */
 #define gl_set_value (*callback->properties.set_value_by_addr)
 #endif
 
+#ifdef __cplusplus
+/* 'stolen' from rt/gridlabd.h, something dchassin squirreled in. -mhauer */
+/// Set the typed value of a property
+/// @return nothing
+template <class T> inline int gl_set_value(OBJECT *obj, ///< the object whose property value is being obtained
+											PROPERTY *prop, ///< the name of the property being obtained
+											T &value) ///< a reference to the local value where the property's value is being copied
+{
+	//T *ptr = (T*)gl_get_addr(obj,propname);
+	char buffer[256];
+	T *ptr = (T *)((char *)(obj + 1) + (int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
+	// @todo it would be a good idea to check the property type here
+	if (ptr==NULL)
+		GL_THROW("property %s not found in object %s", prop->name, gl_name(obj, buffer, 255));
+	if(obj->oclass->notify){
+		if(obj->oclass->notify(obj,NM_PREUPDATE,prop) == 0){
+			gl_error("preupdate notify failure on %s in %s", prop->name, obj->name ? obj->name : "an unnamed object");
+		}
+	}
+	*ptr = value;
+	if(obj->oclass->notify){
+		if(obj->oclass->notify(obj,NM_POSTUPDATE,prop) == 0){
+			gl_error("postupdate notify failure on %s in %s", prop->name, obj->name ? obj->name : "an unnamed object");
+		}
+	}
+	return 1;
+}
+#endif
+
 /** Get a reference to another object
 	@see object_get_reference()
  **/
