@@ -1042,13 +1042,16 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 	}
 
 	/* translate key */
-	if(key < 0){ // new bid ~ rebuild key
+	if(key == -1 || key == 0xccccccccffffffff){ // new bid ~ rebuild key
 		//write_bid(key, market_id, -1, BID_UNKNOWN);
 		biddef.bid = -1;
 		biddef.bid_type = BID_UNKNOWN;
 		biddef.market = -1;
 		biddef.raw = -1;
 	} else {
+		if((key & 0xFFFFFFFF00000000) == 0xCCCCCCCC00000000){
+			key &= 0x00000000FFFFFFFF;
+		}
 		translate_bid(biddef, key);
 	}
 
@@ -1076,6 +1079,7 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 		else {
 			// BID_UNKNOWN indicates a new bid
 		}
+		return biddef.raw;
 	}
 	else if (biddef.market < 0 || biddef.bid_type == BID_UNKNOWN){
 		char myname[64];
@@ -1099,7 +1103,7 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 		biddef.bid_type = (quantity > 0 ? BID_SELL : BID_BUY);
 		write_bid(out, biddef.market, biddef.bid, biddef.bid_type);
 		biddef.raw = out;
-		return out;
+		return biddef.raw;
 	} else { // key between cleared market and 'market_id' ~ points to an old market
 		if(verbose){
 			char myname[64];
