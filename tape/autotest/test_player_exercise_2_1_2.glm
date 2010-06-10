@@ -1,0 +1,20 @@
+//Exercise 2.1.2
+
+module tape;
+module residential {
+	implicit_enduses NONE;
+}
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-29 00:00:00';
+}
+
+object house {
+	object player {
+		property heating_setpoint;
+		file "../exercise_2_1_1.player";
+		loop 27;
+	};
+}

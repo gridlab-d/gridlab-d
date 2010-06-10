@@ -1,0 +1,18 @@
+clock {
+	timezone PST+8PDT;
+	starttime '2005-01-01 00:00:00 PST';
+	stoptime '2005-01-08 00:00:00 PST';  //one week
+}
+
+module residential;
+object house:..100 {
+}
+module tape;
+
+object collector {
+	file exercise_2_4_2.csv;
+	group "class=house";
+	property "avg(air_temperature),std(air_temperature),max(air_temperature),min(air_temperature)";
+	interval 3600;
+	limit 768;
+}
