@@ -527,6 +527,7 @@ int auction::push_market_frame(TIMESTAMP t1){
 	frame->start_time = cleared_frame.start_time;
 	frame->end_time = cleared_frame.end_time;
 	frame->clearing_price = cleared_frame.clearing_price;
+	frame->clearing_quantity = cleared_frame.clearing_quantity;
 	frame->marginal_quantity = cleared_frame.marginal_quantity;
 	frame->seller_total_quantity = cleared_frame.seller_total_quantity;
 	frame->buyer_total_quantity = cleared_frame.buyer_total_quantity;
@@ -569,6 +570,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	current_frame.start_time = frame->start_time;
 	current_frame.end_time = frame->end_time;
 	current_frame.clearing_price = frame->clearing_price;
+	current_frame.clearing_quantity = frame->clearing_quantity;
 	current_frame.marginal_quantity = frame->marginal_quantity;
 	current_frame.seller_total_quantity = frame->seller_total_quantity;
 	current_frame.buyer_total_quantity = frame->buyer_total_quantity;
@@ -584,6 +586,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 		next_frame.start_time = nframe->start_time;
 		next_frame.end_time = nframe->end_time;
 		next_frame.clearing_price = nframe->clearing_price;
+		next_frame.clearing_quantity = nframe->clearing_quantity;
 		next_frame.marginal_quantity = nframe->marginal_quantity;
 		next_frame.seller_total_quantity = nframe->seller_total_quantity;
 		next_frame.buyer_total_quantity = nframe->buyer_total_quantity;
@@ -622,13 +625,7 @@ TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 			next.quantity = next.price = 0;
 		}
 	}
-	return -clearat; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
-}
 
-/* Postsync is called when the clock needs to advance on the second top-down pass */
-TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
-{
-	retry = 0;
 	if (t1>=clearat)
 	{
 		DATETIME dt;
@@ -651,6 +648,15 @@ TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		gl_localtime(clearat,&dt);
 		if (verbose) gl_output("   ...%s opens for clearing of market_id %d at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), (int32)market_id, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 	}
+
+	return -clearat; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+}
+
+/* Postsync is called when the clock needs to advance on the second top-down pass */
+TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
+{
+	retry = 0;
+	
 	return (retry ? t1 : -clearat); /* soft return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
