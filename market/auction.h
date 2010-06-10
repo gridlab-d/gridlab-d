@@ -94,6 +94,7 @@ public:
 	char32 capacity_reference_propname;
 	PROPERTY *capacity_reference_property;
 	int32 warmup;
+	double clearing_scalar;
 	
 	// statistics
 	double *new_prices;

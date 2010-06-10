@@ -181,6 +181,7 @@ int auction::create(void)
 	pricecap = 0;
 	warmup = 1;
 	market_id = 1;
+	clearing_scalar = 0.5;
 	/* process dynamic statistics */
 	if(statistic_check == -1){
 		int rv;
@@ -356,6 +357,12 @@ int auction::init(OBJECT *parent)
 				gl_set_value(obj, stat->prop, init_price);
 			}
 		}
+	}
+	if(clearing_scalar <= 0.0){
+		clearing_scalar = 0.5;
+	}
+	if(clearing_scalar >= 1.0){
+		clearing_scalar = 0.5;
 	}
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -650,6 +657,8 @@ TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 void auction::clear_market(void)
 {
 	unsigned int sph24 = (unsigned int)(3600/period*24);
+	BID unresponsive;
+
 	/* handle linkref */
 	if (Qload!=NULL && special_mode != MD_BUYERS) // buyers-only means no unresponsive bid
 	{	
@@ -687,7 +696,7 @@ void auction::clear_market(void)
 		double total_unknown = asks.get_total() - asks.get_total_on() - asks.get_total_off();
 		double *pRefload = gl_get_double(capacity_reference_object, capacity_reference_property);
 		double refload;
-		BID unresponsive;
+		
 
 		if(pRefload == NULL){
 			GL_THROW("unable to retreive property '%s' from capacity reference object '%s'", capacity_reference_property->name, capacity_reference_object->name);
@@ -731,11 +740,15 @@ void auction::clear_market(void)
 	}
 	if(special_mode == MD_BUYERS){
 		asks.sort(true);
-		if(asks.getcount() > 0){
+		if(offers.getcount() > 0){
 			gl_warning("Buyer-only auction was given offering bids");
 		}
 		offers.clear();
 		submit(OBJECTHDR(this), -fixed_quantity, fixed_price, -1, BS_ON);
+	}
+	if(special_mode == MD_NONE){
+		offers.sort(false);
+		asks.sort(true);
 	}
 
 	if ((asks.getcount()>0) && offers.getcount()>0)
@@ -749,7 +762,7 @@ void auction::clear_market(void)
 		BID *buy = asks.getbid(i), *sell = offers.getbid(j);
 		BID clear = {NULL,0,0};
 		double demand_quantity = 0, supply_quantity = 0;
-		double a=0, b=0;
+		double a=this->pricecap, b=-pricecap;
 		bool check=false;
 		
 		// dump curves
@@ -799,6 +812,7 @@ void auction::clear_market(void)
 			}
 		}
 	
+#if 0
 		/* check for split price at single quantity */
 		while (check)
 		{
@@ -815,12 +829,69 @@ void auction::clear_market(void)
 			else
 				check = false;
 		}
-		clear.price = a < b ? a : b;
+#endif
+		if(a == b){
+			clear.price = a;
+		}
+		if(check){ /* there was price agreement or quantity disagreement */
+			clear.price = a;
+			if(supply_quantity == demand_quantity){
+				if(a != buy->price && b != sell->price && a == b){
+					clearing_type = CT_EXACT; // price changed in both directions
+				} else if (a == buy->price && b != sell->price){
+					// sell price increased ~ marginal buyer since all sellers satisfied
+					clearing_type = CT_BUYER;
+				} else if (a != buy->price && b == sell->price){
+					// buy price increased ~ marginal seller since all buyers satisfied
+					clearing_type = CT_SELLER;
+				} else if(a == buy->price && b == sell->price){
+					// possible when a == b, q_buy == q_sell, and either the buyers or sellers are exhausted
+					if(i == asks.getcount() && j == offers.getcount()){
+						clearing_type = CT_EXACT;
+					} else if (i == asks.getcount()){ // exhausted buyers
+						clearing_type = CT_SELLER;
+					} else if (j == offers.getcount()){ // exhausted sellers
+						clearing_type = CT_BUYER;
+					}
+				} else {
+					double avg;
+					clearing_type = CT_PRICE; // marginal price
+					avg = (a+b) / 2;
+					// needs to be just off such that it does not trigger any other bids
+					if(avg < buy->price){
+						clear.price = buy->price + 0.0001;
+					} else if(avg > sell->price){
+						clear.price = sell->price - 0.0001;
+					} else {
+						clear.price = avg;
+					}
+				}
+			}
+		}
+#if 0
+		else { /* condition: q_buy == q_sell && a >= b && buy < sell */
+			double avg;
+			clearing_type = CT_PRICE; // marginal price
+			avg = (a+b) / 2;
+			// needs to be just off such that it does not trigger any other bids
+			if(avg < buy->price){
+				clear.price = buy->price + 0.0001;
+			}
+			if(avg > sell->price){
+				clear.price = sell->price - 0.0001;
+			}
+		}
+#endif
 	
 		/* check for zero demand but non-zero first unit sell price */
 		if (clear.quantity==0 && offers.getcount()>0)
 		{
-			clear.price = offers.getbid(0)->price;
+			clearing_type = CT_NULL;
+			//clear.price = offers.getbid(0)->price;
+			clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;
+		} else if (clear.quantity <= unresponsive.quantity){
+			clearing_type = CT_FAILURE;
+			clear.price = offers.getbid(0)->price + 0.0001; // one penny too high
 		}
 	
 		/* post the price */
@@ -925,10 +996,11 @@ void auction::clear_market(void)
 	cleared_frame.end_time = gl_globalclock + latency + period;
 	cleared_frame.clearing_price = next.price;
 	cleared_frame.clearing_quantity = next.quantity;
+	cleared_frame.clearing_type = clearing_type;
 	double marginal_buy, marginal_sell;
 	marginal_buy = asks.get_total_at(next.price);
 	marginal_sell = offers.get_total_at(next.price);
-	cleared_frame.marginal_quantity = (marginal_buy > marginal_sell ? marginal_sell : marginal_buy);
+	cleared_frame.marginal_quantity = (marginal_buy < marginal_sell ? marginal_sell : marginal_buy);
 	cleared_frame.buyer_total_quantity = asks.get_total();
 	cleared_frame.seller_total_quantity = offers.get_total();
 	cleared_frame.seller_min_price = offers.get_min();
@@ -970,7 +1042,7 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 	}
 
 	/* translate key */
-	if(key == -1){ // new bid ~ rebuild key
+	if(key < 0){ // new bid ~ rebuild key
 		//write_bid(key, market_id, -1, BID_UNKNOWN);
 		biddef.bid = -1;
 		biddef.bid_type = BID_UNKNOWN;
@@ -982,7 +1054,7 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 
 	if (biddef.market > market_id)
 	{	// future market
-		;
+		gl_error("bidding into future markets is not yet supported");
 	}
 	else if (biddef.market == market_id) // resubmit
 	{
