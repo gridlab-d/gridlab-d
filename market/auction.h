@@ -79,7 +79,7 @@ public:
 	double avg168;		/**< weekly average of price */
 	double std168;		/**< weekly stdev of price */
 	double prices[168*60]; /**< price history */
-	int64 count;		/**< number of prices in history */
+	int64 count;		/**< used for sampled-hourly data */
 	int16 lasthr, thishr;
 	OBJECT *linkref;	/**< reference link object that contains power_out (see Qload) */
 
@@ -94,6 +94,7 @@ public:
 	char32 capacity_reference_propname;
 	PROPERTY *capacity_reference_property;
 	int32 warmup;
+	int64 total_samples;
 	double clearing_scalar;
 	
 	// statistics

@@ -1014,6 +1014,7 @@ void auction::clear_market(void)
 	TIMESTAMP rt = pop_market_frame(gl_globalclock);
 	update_statistics();
 	push_market_frame(gl_globalclock);
+	++total_samples;
 
 	/* clear the bid lists */
 	asks.clear();
@@ -1041,7 +1042,7 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 	} else {
 		price = real_price;
 	}
-	if (count<sph24 && quantity<0 && warmup)
+	if (total_samples<sph24 && quantity<0 && warmup)
 	{
 		if (verbose) gl_output("   ...  %s ignoring demand bid during first 24 hours", gl_name(OBJECTHDR(this),myname,sizeof(myname)));
 		return -1;
