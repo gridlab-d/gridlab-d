@@ -8,7 +8,7 @@ market_la_SOURCES =                 \
 	main.cpp                         \
 	market.h                         \
 	stubauction.cpp stubauction.h    \
-	controller2.cpp controller2.h	 \
+	passive_controller.cpp passive_controller.h	 \
 	double_controller.cpp double_controller.h	\
 	# DO NOT EDIT THE FOLLOWING LINE \
 	# NEWCLASS
