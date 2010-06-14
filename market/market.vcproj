@@ -519,10 +519,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\controller2.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\curve.cpp"
 				>
 			</File>
@@ -536,6 +532,10 @@
 			</File>
 			<File
 				RelativePath="main.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\passive_controller.cpp"
 				>
 			</File>
 			<File
@@ -561,10 +561,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\controller2.h"
-				>
-			</File>
-			<File
 				RelativePath=".\curve.h"
 				>
 			</File>
@@ -574,6 +570,10 @@
 			</File>
 			<File
 				RelativePath="market.h"
+				>
+			</File>
+			<File
+				RelativePath=".\passive_controller.h"
 				>
 			</File>
 			<File
