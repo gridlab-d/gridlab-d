@@ -1024,7 +1024,7 @@ int class_define_set_member(CLASS *oclass, /**< pointer to the class which imple
  */
 FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTIONADDR call)
 {
-	FUNCTION *func;
+	FUNCTION *func, *tempfunc;
 	if (class_get_function(oclass->name,functionname)!=NULL)
 	{
 		output_error("class_define_function(CLASS *class={name='%s',...}, FUNCTIONNAME functionname='%s', ...) the function name has already been defined", oclass->name, functionname);
@@ -1049,8 +1049,17 @@ FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTI
 	func->oclass = oclass;
 	if (oclass->fmap==NULL)
 		oclass->fmap = func;
-	else
+	else if (oclass->fmap->next == NULL)
 		oclass->fmap->next = func;
+	else	//More than one attached
+	{
+		tempfunc = oclass->fmap;
+		while (tempfunc->next != NULL)
+			tempfunc = tempfunc->next;
+
+		tempfunc->next = func;
+	}
+
 	return func;
 }
 
