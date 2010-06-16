@@ -34,6 +34,8 @@ stubauction::stubauction(MODULE *module)
 			PT_char32, "unit", PADDR(unit), PT_DESCRIPTION, "unit of quantity",
 			PT_double, "period[s]", PADDR(period), PT_DESCRIPTION, "interval of time between market clearings",
 			PT_double, "last.P", PADDR(last_price), PT_DESCRIPTION, "last cleared price", 
+			PT_double, "current_market.clearing_price", PADDR(next_price),  PT_DESCRIPTION, "next cleared price",
+			PT_double, "past_market.clearing_price", PADDR(last_price), PT_DESCRIPTION, "last cleared price", 
 			PT_double, "next.P", PADDR(next_price),  PT_DESCRIPTION, "next cleared price",
 			PT_double, "avg24", PADDR(avg24), PT_DESCRIPTION, "daily average of price",
 			PT_double, "std24", PADDR(std24), PT_DESCRIPTION, "daily stdev of price",
