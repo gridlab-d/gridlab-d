@@ -373,9 +373,9 @@ int passive_controller::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 
 	//T_limit = (observation > expectation && ramp > 0.0 ? range_high : range_low);
 	if(observation > expectation){
-		T_limit = range_high;
+		T_limit = (ramp > 0.0 ? range_high : range_low);
 	} else {
-		T_limit = range_low;
+		T_limit = (ramp > 0.0 ? range_low : range_high);
 	}
 	T_set = base_setpoint;
 
