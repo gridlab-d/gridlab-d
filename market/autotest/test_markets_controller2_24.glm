@@ -821,7 +821,7 @@ object triplex_meter {
 	nominal_voltage 120;
 	object house {
 		cooling_setpoint 75;
-		object controller2 {
+		object passive_controller {
 			base_setpoint 78;
 			control_mode RAMP;
 			sensitivity 1;
@@ -845,7 +845,7 @@ object triplex_meter {
 			};
 		};
 		heating_setpoint 65;
-		object controller2 {
+		object passive_controller {
 			base_setpoint 62;
 			control_mode RAMP;
 			sensitivity 1;
