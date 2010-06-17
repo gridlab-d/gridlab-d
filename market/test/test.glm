@@ -7,6 +7,7 @@
 #setenv GLPATH=../../core;../../core/etc
 #setenv GRIDLABD=../../core
 #include "rt/debugger.conf"
+#set suppress_repeat_messages=0
 
 module market;
 module tape;
@@ -22,6 +23,7 @@ object auction {
 	unit "MWh";
 	period 3600;
 	latency 86400;
+	verbose TRUE;
 	object recorder {
 		file "test.csv";
 		property "last.Q,last.P,next.Q,next.P";
@@ -57,7 +59,8 @@ class test {
 	{
 		double quantity = gl_random_lognormal(3,1);
 		double price = gl_random_lognormal(2,1);
-		lastbid_id = (int32)submit_bid(market,my,role==BUYER?-quantity:quantity,price,*thismkt_id!=lastmkt_id?-1:lastbid_id);
+		int64 negone = -1;
+		lastbid_id = (int32)submit_bid(market,my,role==BUYER?-quantity:quantity,price,*thismkt_id!=lastmkt_id?negone:lastbid_id);
 		count--;
 		lastmkt_id = *thismkt_id;
 		if (count>0)

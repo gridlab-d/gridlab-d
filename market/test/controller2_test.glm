@@ -22,10 +22,10 @@ object stubauction {
 
 object waterheater{
 	name TheHeater;
-	object controller2 {
+	object passive_controller {
 		name TheBrains;
 		sensitivity 2.0;
-		control_mode PROBOFF;
+		control_mode PROBABILITY_OFF;
 		expectation_obj TheAuctionHouse;
 		expectation_prop avg24;
 		setpoint_prop tank_setpoint;

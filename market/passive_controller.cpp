@@ -109,6 +109,7 @@ passive_controller::passive_controller(MODULE *mod){
 			PT_object,"observation_object",PADDR(observation_object),PT_DESCRIPTION,"the object to observe",
 			PT_char32,"observation_property",PADDR(observation_propname),PT_DESCRIPTION,"the name of the observation property",
 /**/		PT_char32,"mean_observation_prop",PADDR(observation_mean_propname),PT_DEPRECATED,PT_DESCRIPTION,"the name of the mean observation property",
+			PT_char32,"stdev_observation_prop",PADDR(observation_stdev_propname),PT_DEPRECATED,PT_DESCRIPTION,"the name of the standard deviation observation property",
 			PT_char32,"stdev_observation_property",PADDR(observation_stdev_propname),PT_DESCRIPTION,"the name of the standard deviation observation property",
 /**/		PT_int32,"cycle_length",PADDR(cycle_length),PT_DEPRECATED,PT_DESCRIPTION,"length of time between processing cycles",
 			PT_double,"base_setpoint",PADDR(base_setpoint),PT_DESCRIPTION,"the base setpoint to base control off of",
@@ -150,6 +151,8 @@ int passive_controller::create(){
 
 int passive_controller::init(OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
+	gl_set_dependent(hdr, expectation_object);
+	gl_set_dependent(hdr, observation_object);
 	if(parent == NULL){
 		gl_error("passive_controller has no parent and will be operating in 'dummy' mode");
 	} else {
@@ -257,10 +260,6 @@ TIMESTAMP passive_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 	} else {
 		expectation = 0;
 	}
-	return TS_NEVER;
-}
-
-TIMESTAMP passive_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	// determine output based on control mode
 	if(t1 <= last_cycle + period || period == 0){
 		last_cycle = t1; // advance cycle time
@@ -297,6 +296,48 @@ TIMESTAMP passive_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 	}
 	return (period > 0 ? last_cycle+period : TS_NEVER);
+}
+
+TIMESTAMP passive_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
+#if 0
+	// determine output based on control mode
+	if(t1 <= last_cycle + period || period == 0){
+		last_cycle = t1; // advance cycle time
+		switch(control_mode){
+			case CM_NONE:
+				// no control ~ let it slide
+				break;
+			case CM_RAMP:
+				if(calc_ramp(t0, t1) != 0){
+					GL_THROW("error occured when handling the ramp control mode");
+				}
+				break;
+			case CM_PROBOFF:
+				if(calc_proboff(t0, t1) != 0){
+					GL_THROW("error occured when handling the probabilistic cutoff control mode");
+				}
+				break;
+			case CM_DUTYCYCLE:
+				if(calc_dutycycle(t0, t1) != 0){
+					GL_THROW("error occured when handling the duty cycle control mode");
+				}
+				break;
+			default:
+				GL_THROW("passive_controller has entered an invalid control mode");
+				break;
+		}
+
+		// determine if input is chained first
+		if(output_setpoint_addr != 0){
+			*(double *)output_setpoint_addr = output_setpoint;
+		}
+		if(output_state_addr != 0){
+			*(int *)output_state_addr = output_state;
+		}
+	}
+	return (period > 0 ? last_cycle+period : TS_NEVER);
+#endif
+	return TS_NEVER;
 }
 
 TIMESTAMP passive_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){

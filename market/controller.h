@@ -52,6 +52,14 @@ public:
 	} RESOLVEMODE;
 	RESOLVEMODE resolve_mode;
 
+	typedef enum{
+		TM_INVALID=0,
+		TM_OFF=1,
+		TM_HEAT=2,
+		TM_COOL=3,
+	} THERMOSTATMODE;
+	THERMOSTATMODE thermostat_mode, last_mode;
+
 	double kT_L, kT_H, Tmin, Tmax;
 	char target[33];
 	char setpoint[33];
@@ -73,10 +81,35 @@ public:
 	// new stuff
 	double ramp_low, ramp_high;
 	int64 period;
+	double slider_setting;
 	double slider_setting_heat;
 	double slider_setting_cool;
 	double range_low;
 	double range_high;
+	double heat_range_high;
+	double heat_range_low;
+	double heat_ramp_high;
+	double heat_ramp_low;
+	double cool_range_high;
+	double cool_range_low;
+	double cool_ramp_high;
+	double cool_ramp_low;
+	char32 heating_setpoint;
+	char32 cooling_setpoint;
+	char32 heating_demand;
+	char32 cooling_demand;
+	char32 heating_total;
+	char32 cooling_total;
+	char32 heating_load;
+	char32 cooling_load;
+	char32 heating_state;
+	char32 cooling_state;
+	char32 deadband;
+
+	double setpoint0;
+	double heating_setpoint0;
+	double cooling_setpoint0;
+
 private:
 	TIMESTAMP next_run;
 	double *pMonitor;
@@ -87,12 +120,24 @@ private:
 	double *pAvg;
 	double *pStd;
 	enumeration *pState;
-	double setpoint0;
 	void cheat();
 	void fetch(double **prop, char *name, OBJECT *parent);
 	int dir;
 	double min, max;
 	double T_lim, k_T;
+	double heat_min, heat_max;
+	double cool_min, cool_max;
+	double *pDeadband;
+	double *pHeatingSetpoint;
+	double *pCoolingSetpoint;
+	double *pHeatingDemand;
+	double *pCoolingDemand;
+	double *pHeatingTotal;
+	double *pCoolingTotal;
+	double *pHeatingLoad;
+	double *pCoolingLoad;
+	enumeration *pHeatingState;
+	enumeration *pCoolingState;
 };
 
 #endif // _controller_H
