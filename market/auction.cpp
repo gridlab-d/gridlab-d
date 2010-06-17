@@ -205,11 +205,14 @@ int auction::init(OBJECT *parent)
 	OBJECT *obj=OBJECTHDR(this);
 	unsigned int i = 0;
 
+#if NEVER
+	// no longer used
 	if (type==AT_NONE)
 	{
 		gl_error("%s (auction:%d) market type not specified", obj->name?obj->name:"anonymous", obj->id);
 		return 0;
 	}
+#endif
 #ifdef NEVER // this is not needed 
 	if (network==NULL)
 	{
@@ -291,12 +294,12 @@ int auction::init(OBJECT *parent)
 	}
 
 	if(special_mode != MD_NONE){
-		if(fixed_quantity <= 0.0){
-			gl_error("%s (auction:%d) is using a one-sided market with a non-positive fixed quantity", obj->name?obj->name:"anonymous", obj->id);
+		if(fixed_quantity < 0.0){
+			gl_error("%s (auction:%d) is using a one-sided market with a negative fixed quantity", obj->name?obj->name:"anonymous", obj->id);
 			return 0;
 		}
-		if(fixed_price <= 0.0){
-			gl_warning("%s (auction:%d) is using a one-sided market with a non-positive price and may behave strangely", obj->name?obj->name:"anonymous", obj->id);
+		if(fixed_price < 0.0){
+			gl_warning("%s (auction:%d) is using a one-sided market with a negative price and may behave strangely", obj->name?obj->name:"anonymous", obj->id);
 		}
 	}
 
@@ -742,7 +745,7 @@ void auction::clear_market(void)
 			gl_warning("Seller-only auction was given purchasing bids");
 		}
 		asks.clear();
-		submit(OBJECTHDR(this), fixed_quantity, fixed_price, -1, BS_ON);
+		submit(OBJECTHDR(this), -fixed_quantity, fixed_price, -1, BS_ON);
 	}
 	if(special_mode == MD_BUYERS){
 		asks.sort(true);
@@ -750,7 +753,7 @@ void auction::clear_market(void)
 			gl_warning("Buyer-only auction was given offering bids");
 		}
 		offers.clear();
-		submit(OBJECTHDR(this), -fixed_quantity, fixed_price, -1, BS_ON);
+		submit(OBJECTHDR(this), fixed_quantity, fixed_price, -1, BS_ON);
 	}
 	if(special_mode == MD_NONE){
 		offers.sort(false);
@@ -897,7 +900,7 @@ void auction::clear_market(void)
 			clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;
 		} else if (clear.quantity <= unresponsive.quantity){
 			clearing_type = CT_FAILURE;
-			clear.price = offers.getbid(0)->price + 0.0001; // one penny too high
+			clear.price = offers.getbid(0)->price + 0.0001;
 		}
 	
 		/* post the price */
@@ -909,9 +912,20 @@ void auction::clear_market(void)
 	else
 	{
 		char name[64];
-		next.price = 0;
-		next.quantity = 0;
-		gl_warning("market '%s' fails to clear due to missing %s", gl_name(OBJECTHDR(this),name,sizeof(name)), asks.getcount()==0?(offers.getcount()==0?"buyers and sellers":"buyers"):"sellers");
+		if(offers.getcount() > 0){
+			next.price = offers.getbid(0)->price - (special_mode == MD_BUYERS ? 0 : 0.0001);
+			next.quantity = 0;
+			//clear.price = offers.getbid(0)->price-0.0001;
+			//clear.quantity = 0;
+			clearing_type = CT_NULL;
+		} else {
+			next.price = 0;
+			next.quantity = 0;
+			//clear.price = 0;
+			//clear.quantity = 0;
+			clearing_type = CT_NULL;
+			gl_warning("market '%s' fails to clear due to missing %s", gl_name(OBJECTHDR(this),name,sizeof(name)), asks.getcount()==0?(offers.getcount()==0?"buyers and sellers":"buyers"):"sellers");
+		}
 
 	}
 
