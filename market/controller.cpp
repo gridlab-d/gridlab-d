@@ -392,9 +392,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				if(*pStd == 0){
 					set_temp = setpoint0;
 				} else if(clear_price < *pAvg && range_low != 0){
-					set_temp = (clear_price - *pAvg) * fabs(ramp_low) / (range_low * *pStd);
+					set_temp = (clear_price - *pAvg) * fabs(ramp_low) / ((dir ? range_low : range_high) * *pStd);
 				} else if(clear_price > *pAvg && range_high != 0){
-					set_temp = (clear_price - *pAvg) * fabs(ramp_high) / (range_high * *pStd);
+					set_temp = (clear_price - *pAvg) * fabs(ramp_high) / ((dir ? range_high : range_low) * *pStd);
 				} else {
 					set_temp = setpoint0;
 				}
@@ -542,9 +542,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 						*pHeatingSetpoint = set_temp = heating_setpoint0;
 					} else {
 						if(clear_price > *pAvg){
-							*pHeatingSetpoint = set_temp = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_ramp_low) / (heat_range_low * *pStd);
+							*pHeatingSetpoint = set_temp = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_ramp_low) / (heat_range_high * *pStd);
 						} else if(clear_price < *pAvg){
-							*pHeatingSetpoint = set_temp = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_ramp_high) / (heat_range_high * *pStd);
+							*pHeatingSetpoint = set_temp = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_ramp_high) / (heat_range_low * *pStd);
 						} else {
 							*pHeatingSetpoint = set_temp = heating_setpoint0;
 						}
