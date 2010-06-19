@@ -531,6 +531,7 @@ int auction::push_market_frame(TIMESTAMP t1){
 	frame->end_time = cleared_frame.end_time;
 	frame->clearing_price = cleared_frame.clearing_price;
 	frame->clearing_quantity = cleared_frame.clearing_quantity;
+	frame->clearing_type = cleared_frame.clearing_type;
 	frame->marginal_quantity = cleared_frame.marginal_quantity;
 	frame->seller_total_quantity = cleared_frame.seller_total_quantity;
 	frame->buyer_total_quantity = cleared_frame.buyer_total_quantity;
@@ -574,6 +575,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	current_frame.end_time = frame->end_time;
 	current_frame.clearing_price = frame->clearing_price;
 	current_frame.clearing_quantity = frame->clearing_quantity;
+	current_frame.clearing_type = frame->clearing_type;
 	current_frame.marginal_quantity = frame->marginal_quantity;
 	current_frame.seller_total_quantity = frame->seller_total_quantity;
 	current_frame.buyer_total_quantity = frame->buyer_total_quantity;
@@ -590,6 +592,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 		next_frame.end_time = nframe->end_time;
 		next_frame.clearing_price = nframe->clearing_price;
 		next_frame.clearing_quantity = nframe->clearing_quantity;
+		next_frame.clearing_type = nframe->clearing_type;
 		next_frame.marginal_quantity = nframe->marginal_quantity;
 		next_frame.seller_total_quantity = nframe->seller_total_quantity;
 		next_frame.buyer_total_quantity = nframe->buyer_total_quantity;
