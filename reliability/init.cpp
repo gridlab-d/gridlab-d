@@ -8,7 +8,12 @@
 #include <math.h>
 #include "gridlabd.h"
 
+#define _RELIABILITY_CPP
 #include "reliability.h"
+#undef  _RELIABILITY_CPP
+
+#include "metrics.h"
+#include "eventgen.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -18,14 +23,11 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
-	gl_global_create("reliability::major_event_threshold",PT_double,&metrics::major_event_threshold,NULL);
-	gl_global_create("reliability::report_event_log",PT_bool,&metrics::report_event_log,NULL);
+	gl_global_create("reliability::maximum_event_length",PT_double,&event_max_duration,PT_UNITS,"s",PT_DESCRIPTION,"Maximum duration of any faulting event",NULL);
+	gl_global_create("reliability::report_event_log",PT_bool,&metrics::report_event_log,PT_DESCRIPTION,"Should the metrics object dump a logfile?",NULL);
 
 	new metrics(module);
 	new eventgen(module);
-	/*** DO NOT EDIT NEXT LINE ***/
-	//NEWCLASS()
-
 
 	/* always return the first class registered */
 	return metrics::oclass;

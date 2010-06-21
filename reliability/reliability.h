@@ -8,25 +8,15 @@
 #include <stdarg.h>
 #include "gridlabd.h"
 
-/*** DO NOT DELETE THE NEXT LINE ***/
-//NEWCLASS
-#include "metrics.h"
-#include "eventgen.h"
-
-/* optional exports */
-#ifdef OPTIONAL
-
-/* TODO: define this function to enable checks routine */
-EXPORT int check(void);
-
-/* TODO: define this function to allow direct import of models */
-EXPORT int import_file(char *filename);
-
-/* TODO: define this function to allow direct export of models */
-EXPORT int export_file(char *filename);
-
-/* TODO: define this function to allow export of KML data for a single object */
-EXPORT int kmldump(FILE *fp, OBJECT *obj);
+#ifdef _RELIABILITY_CPP
+#define GLOBAL
+#define INIT(A) = (A)
+#else
+#define GLOBAL extern
+#define INIT(A)
 #endif
+
+//Module globals
+GLOBAL double event_max_duration INIT(432000.0);	/**< Maximum length of any event on the system - given in seconds - defaults to 5 days*/
 
 #endif
