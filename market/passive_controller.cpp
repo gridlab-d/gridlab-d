@@ -364,19 +364,46 @@ int passive_controller::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 		gl_warning("invalid ramp parameters");
 	}
 
+	/*
 	if(observation > expectation){ // net ramp direction
 		ramp = ramp_high;
 	} else {
 		ramp = ramp_low;
 	}
-	
+	*/
 
 	//T_limit = (observation > expectation && ramp > 0.0 ? range_high : range_low);
 	if(observation > expectation){
-		T_limit = (ramp > 0.0 ? range_high : range_low);
+		if(ramp_low > 0.0){
+			T_limit = range_high;
+			ramp = ramp_high;
+		} else {
+			T_limit = range_low;
+			ramp = ramp_low;
+		}
+		//T_limit = (ramp_low > 0.0 ? range_high : range_low);
+	} else if (observation < expectation){
+		if(ramp_low < 0.0){
+			T_limit = range_high;
+			ramp = ramp_high;
+		} else {
+			T_limit = range_low;
+			ramp = ramp_low;
+		}
+		//T_limit = (ramp_low 0.0 ? range_low : range_high);
 	} else {
-		T_limit = (ramp > 0.0 ? range_low : range_high);
+		output_setpoint = base_setpoint;
+		output_state = 0;
+		return 0;
 	}
+
+	if(T_limit == 0){
+		// zero range short-circuit
+		output_setpoint = base_setpoint;
+		output_state = 0;
+		return 0;
+	}
+
 	T_set = base_setpoint;
 
 	// is legit to set expectation to the mean
