@@ -969,6 +969,46 @@ void auction::clear_market(void)
 		}
 
 	}
+	
+	double marginal_total = 0.0;
+	double marginal_quantity = 0.0;
+	if(clearing_type == CT_BUYER){
+		unsigned int i = 0;
+		double marginal_subtotal = 0.0;
+		for(i = 0; i < asks.getcount(); ++i){
+			if(asks.getbid(i)->price < next.price){
+				marginal_subtotal += asks.getbid(i)->quantity;
+			} else {
+				break;
+			}
+		}
+		marginal_quantity = next.quantity - marginal_subtotal;
+		for(; i < asks.getcount(); ++i){
+			if(asks.getbid(i)->price == next.price)
+				marginal_total += asks.getbid(i)->quantity;
+			else
+				break;
+		}
+	} else if (clearing_type == CT_SELLER){
+		unsigned int i = 0;
+		double marginal_subtotal = 0.0;
+		for(i = 0; i < offers.getcount(); ++i){
+			if(offers.getbid(i)->price < next.price){
+				marginal_subtotal += offers.getbid(i)->quantity;
+			} else {
+				break;
+			}
+		}
+		marginal_quantity = next.quantity - marginal_subtotal;
+		for(; i < offers.getcount(); ++i){
+			if(offers.getbid(i)->price == next.price)
+				marginal_total += offers.getbid(i)->quantity;
+			else
+				break;
+		}
+	} else {
+		marginal_quantity = 0.0;
+	}
 
 	if(history_count > 0){
 		if(price_index == history_count){
@@ -1058,10 +1098,11 @@ void auction::clear_market(void)
 	cleared_frame.clearing_price = next.price;
 	cleared_frame.clearing_quantity = next.quantity;
 	cleared_frame.clearing_type = clearing_type;
-	double marginal_buy, marginal_sell;
-	marginal_buy = asks.get_total_at(next.price);
-	marginal_sell = offers.get_total_at(next.price);
-	cleared_frame.marginal_quantity = (marginal_buy < marginal_sell ? marginal_sell : marginal_buy);
+	//double marginal_buy, marginal_sell;
+	//marginal_buy = asks.get_total_at(next.price);
+	//marginal_sell = offers.get_total_at(next.price);
+	//cleared_frame.marginal_quantity = (marginal_buy < marginal_sell ? marginal_sell : marginal_buy);
+	cleared_frame.marginal_quantity = marginal_quantity;
 	cleared_frame.buyer_total_quantity = asks.get_total();
 	cleared_frame.seller_total_quantity = offers.get_total();
 	cleared_frame.seller_min_price = offers.get_min();
