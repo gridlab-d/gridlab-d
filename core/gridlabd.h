@@ -522,6 +522,8 @@ inline int gl_set_value(OBJECT *obj, /**< the object to alter */
 #else
 #define gl_set_value (*callback->properties.set_value_by_addr)
 #endif
+
+char* gl_name(OBJECT *my, char *buffer, size_t size);
 #ifdef __cplusplus
 /* 'stolen' from rt/gridlabd.h, something dchassin squirreled in. -mhauer */
 /// Set the typed value of a property
