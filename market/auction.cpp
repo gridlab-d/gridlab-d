@@ -64,10 +64,10 @@ auction::auction(MODULE *module)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
-			PT_enumeration, "type", PADDR(type), PT_DEPRECATED, PT_DESCRIPTION, "type of market",
+/**/		PT_enumeration, "type", PADDR(type), PT_DEPRECATED, PT_DESCRIPTION, "type of market",
 				PT_KEYWORD, "NONE", AT_NONE,
 				PT_KEYWORD, "DOUBLE", AT_DOUBLE,
-			PT_char32, "unit", PADDR(unit), PT_DESCRIPTION, "unit of quantity",
+/**/		PT_char32, "unit", PADDR(unit), PT_DESCRIPTION, "unit of quantity",
 			PT_double, "period[s]", PADDR(dPeriod), PT_DESCRIPTION, "interval of time between market clearings",
 			PT_double, "latency[s]", PADDR(dLatency), PT_DESCRIPTION, "latency between market clearing and delivery", 
 			PT_int64, "market_id", PADDR(market_id), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "unique identifier of market clearing",
@@ -81,18 +81,18 @@ auction::auction(MODULE *module)
 			PT_double, "std72", PADDR(std72), PT_DEPRECATED, PT_DESCRIPTION, "three day price stdev",
 			PT_double, "avg168", PADDR(avg168), PT_DEPRECATED, PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "weekly average of price",
 			PT_double, "std168", PADDR(std168), PT_DEPRECATED, PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "weekly stdev of price",
-			PT_object, "network", PADDR(network), PT_DESCRIPTION, "the comm network used by object to talk to the market (if any)",
+/**/		PT_object, "network", PADDR(network), PT_DESCRIPTION, "the comm network used by object to talk to the market (if any)",
 			PT_bool, "verbose", PADDR(verbose), PT_DESCRIPTION, "enable verbose auction operations",
 			PT_object, "linkref", PADDR(linkref), PT_DEPRECATED, PT_DESCRIPTION, "reference to link object that has demand as power_out (only used when not all loads are bidding)",
 			PT_double, "pricecap", PADDR(pricecap), PT_DEPRECATED, PT_DESCRIPTION, "the maximum price (magnitude) allowed",
 			PT_double, "price_cap", PADDR(pricecap), PT_DESCRIPTION, "the maximum price (magnitude) allowed",
 
-			PT_double, "demand.total", PADDR(asks.total),
-			PT_double, "demand.total_on", PADDR(asks.total_on),
-			PT_double, "demand.total_off", PADDR(asks.total_off),
-			PT_double, "supply.total", PADDR(offers.total),
-			PT_double, "supply.total_on", PADDR(offers.total_on),
-			PT_double, "supply.total_off", PADDR(offers.total_off),
+			PT_double, "demand.total", PADDR(asks.total),PT_DEPRECATED,
+			PT_double, "demand.total_on", PADDR(asks.total_on),PT_DEPRECATED,
+			PT_double, "demand.total_off", PADDR(asks.total_off),PT_DEPRECATED,
+			PT_double, "supply.total", PADDR(offers.total),PT_DEPRECATED,
+			PT_double, "supply.total_on", PADDR(offers.total_on),PT_DEPRECATED,-
+			PT_double, "supply.total_off", PADDR(offers.total_off),PT_DEPRECATED,
 			//PT_int32, "immediate", PADDR(immediate),
 			PT_enumeration, "special_mode", PADDR(special_mode),
 				PT_KEYWORD, "NONE", MD_NONE,
@@ -670,6 +670,7 @@ void auction::clear_market(void)
 {
 	unsigned int sph24 = (unsigned int)(3600/period*24);
 	BID unresponsive;
+	extern double bid_offset;
 
 	/* handle linkref */
 	if (Qload!=NULL && special_mode != MD_BUYERS) // buyers-only means no unresponsive bid
@@ -741,29 +742,66 @@ void auction::clear_market(void)
 		}
 	}
 
+	double single_quantity = 0.0;
+	double single_price = 0.0;
 	/* sort the bids */
-	if(special_mode == MD_SELLERS){
-		offers.sort(false);
-		if(asks.getcount() > 0){
-			gl_warning("Seller-only auction was given purchasing bids");
-		}
-		asks.clear();
-		submit(OBJECTHDR(this), -fixed_quantity, fixed_price, -1, BS_ON);
-	}
-	if(special_mode == MD_BUYERS){
-		asks.sort(true);
-		if(offers.getcount() > 0){
-			gl_warning("Buyer-only auction was given offering bids");
-		}
-		offers.clear();
-		submit(OBJECTHDR(this), fixed_quantity, fixed_price, -1, BS_ON);
-	}
-	if(special_mode == MD_NONE){
-		offers.sort(false);
-		asks.sort(true);
+	switch(special_mode){
+		case MD_SELLERS:
+			offers.sort(false);
+			if(fixed_price * fixed_quantity != 0.0){
+				gl_warning("fixed_price and fixed_quantity are set in the same single auction market ~ only fixed_price will be used");
+			}
+			if(fixed_price != 0.0){
+				for(unsigned int i = 0;  offers.getbid(i)->price >= fixed_price && i < offers.getcount(); ++i){
+					single_quantity += offers.getbid(i)->quantity;
+				}
+			} else if(fixed_quantity > 0.0){
+				for(unsigned int i = 0; i < offers.getcount() && single_quantity < fixed_quantity; ++i){
+					single_price = offers.getbid(i)->price;
+					single_quantity += offers.getbid(i)->quantity;
+				}
+			}
+			break;
+		case MD_BUYERS:
+			if(fixed_price * fixed_quantity != 0.0){
+				gl_warning("fixed_price and fixed_quantity are set in the same single auction market ~ only fixed_price will be used");
+			}
+			if(fixed_price > 0.0){
+				for(unsigned int i = 0;  asks.getbid(i)->price <= fixed_price && i < asks.getcount(); ++i){
+					single_quantity += asks.getbid(i)->quantity;
+				}
+			} else if(fixed_quantity > 0.0){
+				for(unsigned int i = 0; i < asks.getcount() && single_quantity < fixed_quantity; ++i){
+					single_price = asks.getbid(i)->price;
+					single_quantity += asks.getbid(i)->quantity;
+				}
+			}
+			break;
+		case MD_FIXED_SELLER:
+			offers.sort(false);
+			if(asks.getcount() > 0){
+				gl_warning("Seller-only auction was given purchasing bids");
+			}
+			asks.clear();
+			submit(OBJECTHDR(this), -fixed_quantity, fixed_price, -1, BS_ON);
+			break;
+		case MD_FIXED_BUYER:
+			asks.sort(true);
+			if(offers.getcount() > 0){
+				gl_warning("Buyer-only auction was given offering bids");
+			}
+			offers.clear();
+			submit(OBJECTHDR(this), fixed_quantity, fixed_price, -1, BS_ON);
+			break;
+		case MD_NONE:
+			offers.sort(false);
+			asks.sort(true);
+			break;
 	}
 
-	if ((asks.getcount()>0) && offers.getcount()>0)
+	if(special_mode == MD_SELLERS || special_mode == MD_BUYERS){
+		;
+	} else if ((asks.getcount()>0) && offers.getcount()>0)
 	{
 		TIMESTAMP submit_time = gl_globalclock;
 		DATETIME dt;
@@ -871,9 +909,9 @@ void auction::clear_market(void)
 					avg = (a+b) / 2;
 					// needs to be just off such that it does not trigger any other bids
 					if(avg < buy->price){
-						clear.price = buy->price + 0.0001;
+						clear.price = buy->price + bid_offset;
 					} else if(avg > sell->price){
-						clear.price = sell->price - 0.0001;
+						clear.price = sell->price - bid_offset;
 					} else {
 						clear.price = avg;
 					}
@@ -887,10 +925,10 @@ void auction::clear_market(void)
 			avg = (a+b) / 2;
 			// needs to be just off such that it does not trigger any other bids
 			if(avg < buy->price){
-				clear.price = buy->price + 0.0001;
+				clear.price = buy->price + bid_offset;
 			}
 			if(avg > sell->price){
-				clear.price = sell->price - 0.0001;
+				clear.price = sell->price - bid_offset;
 			}
 		}
 #endif
@@ -903,7 +941,7 @@ void auction::clear_market(void)
 			clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;
 		} else if (clear.quantity <= unresponsive.quantity){
 			clearing_type = CT_FAILURE;
-			clear.price = offers.getbid(0)->price + 0.0001;
+			clear.price = offers.getbid(0)->price + bid_offset;
 		}
 	
 		/* post the price */
@@ -916,9 +954,9 @@ void auction::clear_market(void)
 	{
 		char name[64];
 		if(offers.getcount() > 0){
-			next.price = offers.getbid(0)->price - (special_mode == MD_BUYERS ? 0 : 0.0001);
+			next.price = offers.getbid(0)->price - (special_mode == MD_BUYERS ? 0 : bid_offset);
 			next.quantity = 0;
-			//clear.price = offers.getbid(0)->price-0.0001;
+			//clear.price = offers.getbid(0)->price-bid_offset;
 			//clear.quantity = 0;
 			clearing_type = CT_NULL;
 		} else {
@@ -1066,15 +1104,15 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 	}
 
 	/* translate key */
-	if(key == -1 || key == 0xccccccccffffffff){ // new bid ~ rebuild key
+	if(key == -1 || key == 0xccccccccffffffffULL){ // new bid ~ rebuild key
 		//write_bid(key, market_id, -1, BID_UNKNOWN);
 		biddef.bid = -1;
 		biddef.bid_type = BID_UNKNOWN;
 		biddef.market = -1;
 		biddef.raw = -1;
 	} else {
-		if((key & 0xFFFFFFFF00000000) == 0xCCCCCCCC00000000){
-			key &= 0x00000000FFFFFFFF;
+		if((key & 0xFFFFFFFF00000000ULL) == 0xCCCCCCCC00000000ULL){
+			key &= 0x00000000FFFFFFFFULL;
 		}
 		translate_bid(biddef, key);
 	}

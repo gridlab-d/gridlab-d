@@ -14,6 +14,8 @@
 #include "passive_controller.h"
 #include "double_controller.h"
 
+double bid_offset = 0.0001;
+
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
 	if (set_callback(fntable)==NULL)
@@ -21,6 +23,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		errno = EINVAL;
 		return NULL;
 	}
+
+	gl_global_create("market::bid_offset",PT_double,&bid_offset,PT_UNITS,"$",PT_DESCRIPTION,"the bid offset value that prevents bids from being wrongly triggered",NULL);
 
 	new auction(module);
 	new controller(module);
