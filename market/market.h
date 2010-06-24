@@ -17,6 +17,8 @@ typedef enum t_auction_special_mode {
 	MD_NONE = 0,
 	MD_SELLERS = 1,
 	MD_BUYERS = 2,
+	MD_FIXED_BUYER = 3,
+	MD_FIXED_SELLER = 4,
 } SPECIALMODE; // it's special!
 
 typedef enum t_auction_verbose {
