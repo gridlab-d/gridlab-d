@@ -34,14 +34,16 @@ EXPORT int64 submit_bid_state(OBJECT *obj, OBJECT *from, double quantity, double
 }
 
 void translate_bid(BIDDEF &biddef, KEY key){
+	int64 mask = 0xFFFFFFFFFFFF0000;
 	biddef.raw = key;
 	biddef.bid = (int16)(key & 0x7FFF);
-	biddef.market = (key & 0xFFFFFFFFFFFF0000) >> 16;
+	biddef.market = (key & mask) >> 16;
 	biddef.bid_type = (key & 0x8000) ? BID_BUY : BID_SELL;
 }
 
 void write_bid(KEY &key, int64 market, int64 bid, BIDTYPE type){
-	key = ((market & 0xFFFFFFFFFFFF) << 16) + (type == BID_BUY ? 0x8000 : 0) + (bid & 0x7FFFF);
+	int64 mask = 0xFFFFFFFFFFFF0000;
+	key = ((market & mask) << 16) + (type == BID_BUY ? 0x8000 : 0) + (bid & 0x7FFFF);
 }
 
 // EOF
