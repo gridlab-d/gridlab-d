@@ -1,0 +1,1 @@
+rsync -avP -e "ssh -i /home/Administrator/.ssh/id_dsa" %1 %2
