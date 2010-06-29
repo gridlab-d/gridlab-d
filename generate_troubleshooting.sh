@@ -8,4 +8,4 @@ then
 fi
 
 cp utilities/troubleshooting.css $DOCS
-awk -f ./utilities/troubleshooting.awk */*.{c,cpp} > $DOCS/troubleshooting.html
+awk -f ./utilities/troubleshooting.awk */*.{c,cpp} > $DOCS/index.html
