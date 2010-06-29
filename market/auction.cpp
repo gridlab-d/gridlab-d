@@ -66,6 +66,7 @@ auction::auction(MODULE *module)
 		if (gl_publish_variable(oclass,
 /**/		PT_enumeration, "type", PADDR(type), PT_DEPRECATED, PT_DESCRIPTION, "type of market",
 				PT_KEYWORD, "NONE", AT_NONE,
+				PT_KEYWORD, "SINGLE", AT_SINGLE,
 				PT_KEYWORD, "DOUBLE", AT_DOUBLE,
 /**/		PT_char32, "unit", PADDR(unit), PT_DESCRIPTION, "unit of quantity",
 			PT_double, "period[s]", PADDR(dPeriod), PT_DESCRIPTION, "interval of time between market clearings",
@@ -491,20 +492,20 @@ int auction::update_statistics(){
 			current->value = mean;
 		} else if(current->stat_type == SY_STDEV){
 			double x = 0.0;
-			if(0){
+			if(sample_need > total_samples){
 				//	still in initial period, don't update
-				continue;
+			} else {
+				stdev = 0.0;
+				for(i = 0; i < sample_need; ++i){
+					idx = (start + i + history_count) % history_count;
+					x = new_prices[idx] - mean;
+					stdev += x * x;
+				}
+				stdev /= sample_need;
+				current->value = sqrt(stdev);
 			}
-			stdev = 0.0;
-			for(i = 0; i < sample_need; ++i){
-				idx = (start + i + history_count) % history_count;
-				x = new_prices[idx] - mean;
-				stdev += x * x;
-			}
-			stdev /= sample_need;
-			current->value = sqrt(stdev);
 		}
-		if(immediate){
+		if(latency == 0){
 			gl_set_value(obj, current->prop, current->value);
 		}
 	}
@@ -615,6 +616,7 @@ TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 		clearat = nextclear();
 		DATETIME dt;
 		gl_localtime(clearat,&dt);
+		update_statistics();
 		char buffer[256];
 		char myname[64];
 		if (verbose) gl_output("   ...%s first clearing at %s", gl_name(OBJECTHDR(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
@@ -673,7 +675,7 @@ void auction::clear_market(void)
 	extern double bid_offset;
 
 	/* handle linkref */
-	if (Qload!=NULL && special_mode != MD_BUYERS) // buyers-only means no unresponsive bid
+	if (Qload!=NULL && special_mode != MD_FIXED_BUYER) // buyers-only means no unresponsive bid
 	{	
 		char name[256];
 		double total_unknown = asks.get_total() - asks.get_total_on() - asks.get_total_off();
@@ -704,13 +706,12 @@ void auction::clear_market(void)
 	}
 
 	/* handle unbidding capacity */
-	if(capacity_reference_property != NULL && special_mode != MD_BUYERS){
+	if(capacity_reference_property != NULL && special_mode != MD_FIXED_BUYER){
 		char name[256];
 		double total_unknown = asks.get_total() - asks.get_total_on() - asks.get_total_off();
 		double *pRefload = gl_get_double(capacity_reference_object, capacity_reference_property);
 		double refload;
 		
-
 		if(pRefload == NULL){
 			GL_THROW("unable to retreive property '%s' from capacity reference object '%s'", capacity_reference_property->name, capacity_reference_object->name);
 		} else {
@@ -976,7 +977,7 @@ void auction::clear_market(void)
 		unsigned int i = 0;
 		double marginal_subtotal = 0.0;
 		for(i = 0; i < asks.getcount(); ++i){
-			if(asks.getbid(i)->price < next.price){
+			if(asks.getbid(i)->price > next.price){
 				marginal_subtotal += asks.getbid(i)->quantity;
 			} else {
 				break;
@@ -1005,7 +1006,7 @@ void auction::clear_market(void)
 				marginal_total += offers.getbid(i)->quantity;
 			else
 				break;
-		}
+		}	
 	} else {
 		marginal_quantity = 0.0;
 	}
@@ -1107,10 +1108,35 @@ void auction::clear_market(void)
 	cleared_frame.seller_total_quantity = offers.get_total();
 	cleared_frame.seller_min_price = offers.get_min();
 
-	TIMESTAMP rt = pop_market_frame(gl_globalclock);
-	update_statistics();
-	push_market_frame(gl_globalclock);
-	++total_samples;
+	if(latency > 0){
+		TIMESTAMP rt = pop_market_frame(gl_globalclock);
+		update_statistics();
+		push_market_frame(gl_globalclock);
+		++total_samples;
+	} else {
+		unsigned int i;
+		STATISTIC *stat = 0;
+		OBJECT *obj = OBJECTHDR(this);
+		memcpy(&past_frame, &current_frame, latency_stride);
+		// ~ copy new data in
+		current_frame.market_id = cleared_frame.market_id;
+		current_frame.start_time = cleared_frame.start_time;
+		current_frame.end_time = cleared_frame.end_time;
+		current_frame.clearing_price = cleared_frame.clearing_price;
+		current_frame.clearing_quantity = cleared_frame.clearing_quantity;
+		current_frame.clearing_type = cleared_frame.clearing_type;
+		current_frame.marginal_quantity = cleared_frame.marginal_quantity;
+		current_frame.seller_total_quantity = cleared_frame.seller_total_quantity;
+		current_frame.buyer_total_quantity = cleared_frame.buyer_total_quantity;
+		current_frame.seller_min_price = cleared_frame.seller_min_price;
+		// 'immediate' stats written straight to properties in update_stats()
+		// copy statistics
+		//for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
+		//	gl_set_value(obj, stat->prop, cleared_frame.statistics[i]);
+		//}
+		update_statistics();
+		++total_samples;
+	}
 
 	/* clear the bid lists */
 	asks.clear();
