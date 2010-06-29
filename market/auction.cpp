@@ -368,6 +368,10 @@ int auction::init(OBJECT *parent)
 	if(clearing_scalar >= 1.0){
 		clearing_scalar = 0.5;
 	}
+	current_frame.clearing_price = init_price;
+	past_frame.clearing_price = init_price;
+	if(latency > 0)
+		next_frame.clearing_price = init_price;
 	return 1; /* return 1 on success, 0 on failure */
 }
 
