@@ -1,6 +1,11 @@
 #!/bin/bash
 
-export DOCS=i:/html/documents
+export DOCS=`pwd`/../documents/troubleshooting
+
+if [ ! -e $DOCS ]
+then
+	mkdir $DOCS
+fi
 
 cp utilities/troubleshooting.css $DOCS
-./utilities/troubleshooting.awk */*.{c,cpp} > $DOCS/troubleshooting.html
+awk -f ./utilities/troubleshooting.awk */*.{c,cpp} > $DOCS/troubleshooting.html
