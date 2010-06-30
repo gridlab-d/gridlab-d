@@ -110,7 +110,7 @@ pqload::pqload(MODULE *mod) : load(mod)
 	defaults = this;
 	memset(this,0,sizeof(pqload));
 	input[5] = 1.0; /* constant term */
-	imped_p[5] = INFINITY;
+	//imped_p[5] = 0;
 	strcpy(schedule, "* * * * *:1.0;");
 	temp_nom = zero_F;
 	load_class = LC_UNKNOWN;
@@ -263,7 +263,7 @@ TIMESTAMP pqload::sync(TIMESTAMP t0)
 	output[0] = output[1] = output[2] = output[3] = output[4] = output[5] = 0.0;
 	for(i = 0; i < 6; ++i){
 		output[0] += imped_p[i] * input[i];
-		output[1] -= (imped_q[i]!=0.0) ? input[i] / (SysFreq*imped_q[i]) : 0;	//XC = 1/(jwc)
+		output[1] += input[i] * imped_q[i];
 		output[2] += current_m[i] * input[i];
 		output[3] += current_a[i] * input[i];
 		output[4] += power_p[i] * input[i];
@@ -278,7 +278,8 @@ TIMESTAMP pqload::sync(TIMESTAMP t0)
 
 	constant_power[0] = constant_power[1] = constant_power[2] = kP;
 	constant_current[0] = constant_current[1] = constant_current[2] = kI;
-	constant_impedance[0] = constant_impedance[1] = constant_impedance[2] = kZ;
+	if (kZ != 0.0)
+		constant_impedance[0] = constant_impedance[1] = constant_impedance[2] = kZ;
 
 	//Must be at the bottom, or the new values will be calculated after the fact
 	result = load::sync(t0);
