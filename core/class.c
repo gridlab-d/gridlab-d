@@ -305,6 +305,7 @@ PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE pt
 			The function was called with unit that is defined in units file <code>.../etc/unitfile.txt</code>.  Try using a defined unit or adding
 			the desired unit to the units file and try again.
 		 */
+	memset(prop, 0, sizeof(PROPERTY));
 	prop->access = PA_PUBLIC;
 	prop->addr = (void*)(int64)oclass->size;
 	prop->size = 0;
@@ -524,6 +525,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 		errno = ENOMEM;
 		goto Error;
 	}
+	memset(prop, 0, sizeof(PROPERTY));
 	prop->ptype = proptype;
 	prop->size = 0;
 	prop->access = PA_PUBLIC;
