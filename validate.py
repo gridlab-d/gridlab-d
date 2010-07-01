@@ -10,6 +10,7 @@ import time
 import subprocess
 import time
 import archive_failed_tests
+import getopt
 
 def do_help():
 	print("validate.py - GridLAB-D autotest/validation script")
@@ -29,27 +30,12 @@ def do_help():
 def run_tests(argv):
 	clean = 0
 	printerr = 1
-	#scan for --help and --clean
-	if len(argv) > 1:
-		for arg in argv:
-			if "--help" in arg:
-				do_help();
-				sys.exit(0)
-			if "--clean" in arg:
-				clean = 1
-			if "--error" in arg:
-				if printerr == 0:
-					printerr = 1
-				if printerr == 1:
-					printerr = 0
-
-#	print("Starting autotest script")
-	
 	there_dir = os.getcwd()
 	err_ct = 0
 	ex_ct = 0
 	first_time = time.time()
 	end_time = 0
+	installed_dir = '/'
 	
 #	if clean == 1:
 #		print("Go clean?")
@@ -57,19 +43,54 @@ def run_tests(argv):
 	# determine where the script starts
 	here_dir = os.getcwd()
 #	print("Starting from \'"+here_dir+"\'")
+	#scan for --help and --clean
+	# Process command line arguments
+	try:
+		# process arguments Single character options with arguments are followed by :
+		# Multi-character options with arguments are followed by =
+		opts, args = getopt.getopt(argv[1:], "",["idir=",'help','clean','error'])
+    	
+		for o,a in opts:
+			if "--help" in o or "-h" in o:
+				do_help();
+				sys.exit(0)
+			elif "--clean" in o:
+				clean = 1
+			elif "--error" in o:
+				if printerr == 0:
+					printerr = 1
+				if printerr == 1:
+					printerr = 0
+			elif "--idir" in o:
+				installed_dir = a
+		
+		for arg in args:
+			there_dir = arg
+			break
+            
+	except getopt.GetoptError,error:
+		print error.msg
+		print error.opt
+		do_help()
+		return 2
+
 	
-	#determine where we _want_ the script to start
-	if len(argv) > 1:
-		argn = 1
-		while argn < len(argv):
-			if argv[argn][0] == '-':
-				argn+=1
-				# ignore anything that looks like a flag
-			else:
-				there_dir = argv[argn]
-				# take the first path and be done with it
-				# poor form but we're not doing much complicated
-				break
+
+	
+	if(sys.platform == 'win32'):
+		cwd = sys.path[0]
+		os.environ["PATH"]+=os.pathsep+cwd + "\\VS2005\\Win32\\Release"
+		os.environ["GLPATH"]=cwd+"\\VS2005\\Win32\\Release"
+	elif(sys.platform.startswith('linux')):
+		os.environ["PATH"]+= os.pathsep+ installed_dir +"/bin"
+		os.environ["GLPATH"]=installed_dir + "/lib/gridlabd"
+	else:
+		print "Validate not supported on this platform",sys.platform
+		sys.exit(1)
+		
+
+	#print("Starting autotest script")
+	
 	
 	#locate autotest dirs
 	#autotestdirs = find_autotest_dirs(there_dir)
@@ -221,18 +242,6 @@ def run_tests(argv):
 #end run_tests()
 
 if __name__ == '__main__':
-	tmppath = os.getenv("PATH")
-	cwd = sys.path[0]
-	if(sys.platform == 'win32'):
-			os.environ["PATH"]+=os.pathsep+cwd + "\\VS2005\\Win32\\Release"
-			os.environ["GLPATH"]=cwd+"\\VS2005\\Win32\\Release"
-	elif(sys.platform.startswith('linux')):
-			print "Linux"
-			os.environ["PATH"]+= os.pathsep+ "/tmp/gridlabd/bin"
-			os.environ["GLPATH"]=cwd+"/tmp/gridlabd/lib/gridlabd"
-	else:
-			print "Validate not supported on this platform",sys.platform
-			sys.exit(1)
 	run_tests(sys.argv)
 #end main
 
