@@ -34,7 +34,7 @@ def run_tests(argv):
 		for arg in argv:
 			if "--help" in arg:
 				do_help();
-				exit(0)
+				sys.exit(0)
 			if "--clean" in arg:
 				clean = 1
 			if "--error" in arg:
@@ -217,7 +217,7 @@ def run_tests(argv):
 	if len(testerrlist) > 0:
 		archive_failed_tests.createArchiveFiles(testerrlist)
 	
-	exit(err_ct+ex_ct)
+	sys.exit(err_ct+ex_ct)
 #end run_tests()
 
 if __name__ == '__main__':
