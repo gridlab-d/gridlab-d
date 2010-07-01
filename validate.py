@@ -228,8 +228,8 @@ if __name__ == '__main__':
 			os.environ["GLPATH"]=cwd+"\\VS2005\\Win32\\Release"
 	elif(sys.platform.startswith('linux')):
 			print "Linux"
-			os.environ["PATH"]+= os.pathsep+cwd + "/core"
-			os.environ["GLPATH"]=cwd+"/core"
+			os.environ["PATH"]+= os.pathsep+ "/tmp/gridlabd/bin"
+			os.environ["GLPATH"]=cwd+"/tmp/gridlabd/lib/gridlabd"
 	else:
 			print "Validate not supported on this platform",sys.platform
 			sys.exit(1)
