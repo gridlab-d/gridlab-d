@@ -224,8 +224,8 @@ if __name__ == '__main__':
 	tmppath = os.getenv("PATH")
 	cwd = sys.path[0]
 	if(sys.platform == 'win32'):
-			os.environ["PATH"]+=os.pathsep+cwd + "\\VS2005\\Win32\\Release")
-			os.environ["GLPATH"]=cwd+"\\VS2005\\Win32\\Release")
+			os.environ["PATH"]+=os.pathsep+cwd + "\\VS2005\\Win32\\Release"
+			os.environ["GLPATH"]=cwd+"\\VS2005\\Win32\\Release"
 	elif(sys.platform.startswith('linux')):
 			print "Linux"
 			os.environ["PATH"]+= os.pathsep+cwd + "/core"
