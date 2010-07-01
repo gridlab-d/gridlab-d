@@ -11,10 +11,6 @@ import subprocess
 import time
 import archive_failed_tests
 
-tmppath = os.getenv("PATH")
-os.putenv("PATH","..\\..\\..\\VS2005\\Win32\\Release;"+tmppath)
-os.putenv("GLPATH","..\\..\\..\\VS2005\\Win32\\Release")
-
 def do_help():
 	print("validate.py - GridLAB-D autotest/validation script")
 	print("     validate.py [dir=.] ~ runs the autotest script with \'dir\' used as")
@@ -225,6 +221,18 @@ def run_tests(argv):
 #end run_tests()
 
 if __name__ == '__main__':
+	tmppath = os.getenv("PATH")
+	cwd = sys.path[0]
+	if(sys.platform == 'win32'):
+			os.environ["PATH"]+=os.pathsep+cwd + "\\VS2005\\Win32\\Release")
+			os.environ["GLPATH"]=cwd+"\\VS2005\\Win32\\Release")
+	elif(sys.platform.startswith('linux')):
+			print "Linux"
+			os.environ["PATH"]+= os.pathsep+cwd + "/core"
+			os.environ["GLPATH"]=cwd+"/core"
+	else:
+			print "Validate not supported on this platform",sys.platform
+			sys.exit(1)
 	run_tests(sys.argv)
 #end main
 
