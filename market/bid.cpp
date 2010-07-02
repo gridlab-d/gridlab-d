@@ -43,7 +43,7 @@ void translate_bid(BIDDEF &biddef, KEY key){
 
 void write_bid(KEY &key, int64 market, int64 bid, BIDTYPE type){
 	int64 mask = 0x8FFFFFFFFFFF0000LL;
-	key = ((market & mask) << 16) + (type == BID_BUY ? 0x8000 : 0) + (bid & 0x7FFFF);
+	key = ((market << 16) & mask) + (type == BID_BUY ? 0x8000 : 0) + (bid & 0x7FFFF);
 }
 
 // EOF
