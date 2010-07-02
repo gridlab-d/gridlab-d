@@ -757,30 +757,67 @@ void auction::clear_market(void)
 				gl_warning("fixed_price and fixed_quantity are set in the same single auction market ~ only fixed_price will be used");
 			}
 			if(fixed_price != 0.0){
+				single_price = fixed_price;
 				for(unsigned int i = 0;  offers.getbid(i)->price >= fixed_price && i < offers.getcount(); ++i){
 					single_quantity += offers.getbid(i)->quantity;
+				}
+				if(single_quantity > 0.0){
+					clearing_type = CT_EXACT;
+				} else {
+					clearing_type = CT_NULL;
 				}
 			} else if(fixed_quantity > 0.0){
 				for(unsigned int i = 0; i < offers.getcount() && single_quantity < fixed_quantity; ++i){
 					single_price = offers.getbid(i)->price;
 					single_quantity += offers.getbid(i)->quantity;
 				}
+				if(single_quantity > fixed_quantity){
+					single_quantity = fixed_quantity;
+					clearing_type = CT_SELLER;
+				} else if(single_quantity == fixed_quantity){
+					clearing_type = CT_EXACT;
+				} else {
+					clearing_type = CT_FAILURE;
+					single_quantity = 0.0;
+					single_price = 0.0;
+				}
 			}
+			next.quantity = single_quantity;
+			next.price = single_price;
 			break;
 		case MD_BUYERS:
 			if(fixed_price * fixed_quantity != 0.0){
 				gl_warning("fixed_price and fixed_quantity are set in the same single auction market ~ only fixed_price will be used");
 			}
 			if(fixed_price > 0.0){
+				single_price = fixed_price;
 				for(unsigned int i = 0;  asks.getbid(i)->price <= fixed_price && i < asks.getcount(); ++i){
 					single_quantity += asks.getbid(i)->quantity;
 				}
+				if(single_quantity > 0.0){
+					clearing_type = CT_EXACT;
+				} else {
+					clearing_type = CT_NULL;
+				}
+
 			} else if(fixed_quantity > 0.0){
 				for(unsigned int i = 0; i < asks.getcount() && single_quantity < fixed_quantity; ++i){
 					single_price = asks.getbid(i)->price;
 					single_quantity += asks.getbid(i)->quantity;
 				}
+				if(single_quantity > fixed_quantity){
+					single_quantity = fixed_quantity;
+					clearing_type = CT_BUYER;
+				} else if(single_quantity == fixed_quantity){
+					clearing_type = CT_EXACT;
+				} else {
+					clearing_type = CT_FAILURE;
+					single_quantity = 0.0;
+					single_price = 0.0;
+				}
 			}
+			next.quantity = single_quantity;
+			next.price = single_price;
 			break;
 		case MD_FIXED_SELLER:
 			offers.sort(false);
