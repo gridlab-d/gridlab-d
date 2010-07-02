@@ -116,9 +116,9 @@ EXPORT int commit_enum_assert(OBJECT *obj)
 		}
 		else if (ea->status == ea->ASSERT_TRUE)
 		{
-			if ( (ea->value - *x) > 0.1 || (ea->value - *x) < -0.1 ) 
+			if (ea->value != *x) 
 			{
-				gl_verbose("Assert failed on %s: %s did not match %g", 
+				gl_verbose("Assert failed on %s: %s did not match %i", 
 					gl_name(obj->parent,buff,64), ea->target, ea->value);
 				return 0;
 			}
@@ -131,9 +131,9 @@ EXPORT int commit_enum_assert(OBJECT *obj)
 		}
 		else if (ea->status == ea->ASSERT_FALSE)
 		{
-			if ( (ea->value - *x) < 0.1 && (ea->value - *x) > -0.1 ) 
+			if (ea->value == *x)
 			{
-				gl_verbose("Assert failed on %s: %s did match %s", 
+				gl_verbose("Assert failed on %s: %s did match %i", 
 					gl_name(obj->parent,buff,64), ea->target, ea->value);
 				return 0;
 			}
