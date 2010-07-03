@@ -976,11 +976,19 @@ void auction::clear_market(void)
 #endif
 	
 		/* check for zero demand but non-zero first unit sell price */
-		if (clear.quantity==0 && offers.getcount()>0)
+		if (clear.quantity==0)// && offers.getcount()>0)
 		{
 			clearing_type = CT_NULL;
 			//clear.price = offers.getbid(0)->price;
-			clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;
+			//clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;
+			if(offers.getcount() > 0 && asks.getcount() == 0){
+				clear.price = offers.getbid(0)->price - bid_offset;
+			} else if(offers.getcount() == 0 && asks.getcount() > 0){
+				clear.price = asks.getbid(0)->price + bid_offset;
+			} else {
+				clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;;
+			}
+			
 		} else if (clear.quantity <= unresponsive.quantity){
 			clearing_type = CT_FAILURE;
 			clear.price = offers.getbid(0)->price + bid_offset;
@@ -995,20 +1003,27 @@ void auction::clear_market(void)
 	else
 	{
 		char name[64];
-		if(offers.getcount() > 0){
-			next.price = offers.getbid(0)->price - (special_mode == MD_BUYERS ? 0 : bid_offset);
-			next.quantity = 0;
+//		if(offers.getcount() > 0){
+//			next.price = offers.getbid(0)->price - (special_mode == MD_BUYERS ? 0 : bid_offset);
+//			next.quantity = 0;
 			//clear.price = offers.getbid(0)->price-bid_offset;
 			//clear.quantity = 0;
-			clearing_type = CT_NULL;
-		} else {
-			next.price = 0;
+//			clearing_type = CT_NULL;
+//		} else {
+			//next.price = 0;
+			if(offers.getcount() > 0 && asks.getcount() == 0){
+				next.price = offers.getbid(0)->price - bid_offset;
+			} else if(offers.getcount() == 0 && asks.getcount() > 0){
+				next.price = asks.getbid(0)->price + bid_offset;
+			} else {
+				next.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;;
+			}
 			next.quantity = 0;
 			//clear.price = 0;
 			//clear.quantity = 0;
 			clearing_type = CT_NULL;
 			gl_warning("market '%s' fails to clear due to missing %s", gl_name(OBJECTHDR(this),name,sizeof(name)), asks.getcount()==0?(offers.getcount()==0?"buyers and sellers":"buyers"):"sellers");
-		}
+//		}
 
 	}
 	
