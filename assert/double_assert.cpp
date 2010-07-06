@@ -35,7 +35,7 @@ double_assert::double_assert(MODULE *module)
 				PT_KEYWORD,"ONCE_DONE",ONCE_DONE,
 			PT_double, "value", PADDR(value),
 			PT_double, "within", PADDR(within),
-			PT_char32, "target", PADDR(target),			
+			PT_char1024, "target", PADDR(target),			
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;

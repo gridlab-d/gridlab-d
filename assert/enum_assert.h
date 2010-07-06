@@ -17,7 +17,7 @@ private:
 protected:
 public:
 	enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} status; //Assert whether the target value should be
-	char32 target;											//within the range (True), outside of a 
+	char1024 target;											//within the range (True), outside of a 
 	int32 value;											//range (False) or shouldn't be checked (None).
 	//double within;
 

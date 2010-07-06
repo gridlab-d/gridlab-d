@@ -31,7 +31,7 @@ enum_assert::enum_assert(MODULE *module)
 				PT_KEYWORD,"ASSERT_FALSE",ASSERT_FALSE,
 				PT_KEYWORD,"ASSERT_NONE",ASSERT_NONE,
 			PT_int32, "value", PADDR(value),
-			PT_char32, "target", PADDR(target),	
+			PT_char1024, "target", PADDR(target),	
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;

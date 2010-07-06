@@ -42,7 +42,7 @@ complex_assert::complex_assert(MODULE *module)
 				PT_KEYWORD,"ANGLE",ANGLE, // If using, please specify in radians
 			PT_complex, "value", PADDR(value),
 			PT_double, "within", PADDR(within),
-			PT_char32, "target", PADDR(target),	
+			PT_char1024, "target", PADDR(target),	
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;
