@@ -678,6 +678,8 @@ void auction::clear_market(void)
 	BID unresponsive;
 	extern double bid_offset;
 
+	memset(&unresponsive, 0, sizeof(unresponsive));
+
 	/* handle linkref */
 	if (Qload!=NULL && special_mode != MD_FIXED_BUYER) // buyers-only means no unresponsive bid
 	{	
@@ -723,10 +725,14 @@ void auction::clear_market(void)
 		}
 
 		if(strcmp(unit, "") != 0){
-			if(gl_convert(capacity_reference_property->unit->name,unit,&refload) == 0){
-				GL_THROW("capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), capacity_reference_property->unit->name, unit);
-			} else if (verbose){
-				gl_output("capacity_reference_property converted %.3f %s to %.3f %s", *pRefload, capacity_reference_property->unit->name, refload, unit);
+			if(capacity_reference_property->unit != 0){
+				if(gl_convert(capacity_reference_property->unit->name,unit,&refload) == 0){
+					GL_THROW("capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), capacity_reference_property->unit->name, unit);
+				} else if (verbose){
+					gl_output("capacity_reference_property converted %.3f %s to %.3f %s", *pRefload, capacity_reference_property->unit->name, refload, unit);
+				}
+			} else {
+				GL_THROW("capacity_reference_property %s has no units and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), unit);
 			}
 		}
 		if (total_unknown > 0.001){ // greater than one mW ~ allows rounding errors
@@ -928,34 +934,46 @@ void auction::clear_market(void)
 		if(check){ /* there was price agreement or quantity disagreement */
 			clear.price = a;
 			if(supply_quantity == demand_quantity){
-				if(a != buy->price && b != sell->price && a == b){
-					clearing_type = CT_EXACT; // price changed in both directions
-				} else if (a == buy->price && b != sell->price){
-					// sell price increased ~ marginal buyer since all sellers satisfied
-					clearing_type = CT_BUYER;
-				} else if (a != buy->price && b == sell->price){
-					// buy price increased ~ marginal seller since all buyers satisfied
-					clearing_type = CT_SELLER;
-				} else if(a == buy->price && b == sell->price){
-					// possible when a == b, q_buy == q_sell, and either the buyers or sellers are exhausted
+				if(i == asks.getcount() || j == offers.getcount()){
 					if(i == asks.getcount() && j == offers.getcount()){
 						clearing_type = CT_EXACT;
-					} else if (i == asks.getcount()){ // exhausted buyers
+					} else if (i == asks.getcount() && a == sell->price){ // exhausted buyers, sellers unsatisfied at same price
 						clearing_type = CT_SELLER;
-					} else if (j == offers.getcount()){ // exhausted sellers
+					} else if (j == offers.getcount() && b == buy->price){ // exhausted sellers, buyers unsatisfied at same price
 						clearing_type = CT_BUYER;
+					} else { // both sides satisfied at price, but one side exhausted
+						clearing_type = CT_EXACT;
 					}
 				} else {
-					double avg;
-					clearing_type = CT_PRICE; // marginal price
-					avg = (a+b) / 2;
-					// needs to be just off such that it does not trigger any other bids
-					if(avg < buy->price){
-						clear.price = buy->price + bid_offset;
-					} else if(avg > sell->price){
-						clear.price = sell->price - bid_offset;
+					if(a != buy->price && b != sell->price && a == b){
+						clearing_type = CT_EXACT; // price changed in both directions
+					} else if (a == buy->price && b != sell->price){
+						// sell price increased ~ marginal buyer since all sellers satisfied
+						clearing_type = CT_BUYER;
+					} else if (a != buy->price && b == sell->price){
+						// buy price increased ~ marginal seller since all buyers satisfied
+						clearing_type = CT_SELLER;
+					} else if(a == buy->price && b == sell->price){
+						// possible when a == b, q_buy == q_sell, and either the buyers or sellers are exhausted
+						if(i == asks.getcount() && j == offers.getcount()){
+							clearing_type = CT_EXACT;
+						} else if (i == asks.getcount()){ // exhausted buyers
+							clearing_type = CT_SELLER;
+						} else if (j == offers.getcount()){ // exhausted sellers
+							clearing_type = CT_BUYER;
+						}
 					} else {
-						clear.price = avg;
+						double avg;
+						clearing_type = CT_PRICE; // marginal price
+						avg = (a+b) / 2;
+						// needs to be just off such that it does not trigger any other bids
+						if(avg < buy->price){
+							clear.price = buy->price + bid_offset;
+						} else if(avg > sell->price){
+							clear.price = sell->price - bid_offset;
+						} else {
+							clear.price = avg;
+						}
 					}
 				}
 			}
@@ -1075,77 +1093,78 @@ void auction::clear_market(void)
 		//int update_rv = update_statistics();
 		++price_index;
 	}
+	if(period <= 3600){
+		if(lasthr != thishr){
+			unsigned int i = 0;
+			unsigned int sph = (unsigned int)(3600/period);
+			unsigned int sph24 = 24*sph;
+			unsigned int sph72 = 72*sph;
+			unsigned int sph168 = 168*sph;
 
-	if(lasthr != thishr){
-		unsigned int i = 0;
-		unsigned int sph = (unsigned int)(3600/period);
-		unsigned int sph24 = 24*sph;
-		unsigned int sph72 = 72*sph;
-		unsigned int sph168 = 168*sph;
+			/* add price/quantity to the history */
+			prices[count%sph168] = next.price;
+			++count;
+			
+			/* update the daily and weekly averages */
+			avg168 = 0.0;
+			for(i = 0; i < count && i < sph168; ++i){
+				avg168 += prices[i];
+			}
+			avg168 /= (count > sph168 ? sph168 : count);
 
-		/* add price/quantity to the history */
-		prices[count%sph168] = next.price;
-		++count;
-		
-		/* update the daily and weekly averages */
-		avg168 = 0.0;
-		for(i = 0; i < count && i < sph168; ++i){
-			avg168 += prices[i];
+			avg72 = 0.0;
+			for(i = 1; i <= sph72 && i <= count; ++i){
+				unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
+				avg72 += prices[j];
+			}
+			avg72 /= (count > sph72 ? sph72 : count);
+
+			avg24 = 0.0;
+			for(i = 1; i <= sph24 && i <= count; ++i){
+				unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
+				avg24 += prices[j];
+			}
+			avg24 /= (count > sph24 ? sph24 : (unsigned int)count);
+
+			/* update the daily & weekly standard deviations */
+			std168 = 0.0;
+			for(i = 0; i < count && i < sph168; ++i){
+				std168 += prices[i] * prices[i];
+			}
+			std168 /= (count > sph168 ? sph168 : (unsigned int)count);
+			std168 -= avg168*avg168;
+			std168 = sqrt(fabs(std168));
+			if (std168<0.01) std168=0.01;
+
+			std72 = 0.0;
+			for(i = 1; i <= sph72 && i <= (unsigned int)count; ++i){
+				unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
+				std72 += prices[j] * prices[j];
+			}
+			std72 /= (count > sph72 ? sph72 : (unsigned int)count);
+			std72 -= avg72*avg72;
+			std72 = sqrt(fabs(std72));
+			if (std72 < 0.01){
+				std72 = 0.01;
+			}
+
+			std24 = 0.0;
+			for(i = 1; i <= sph24 && i <= (unsigned int)count; ++i){
+				unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
+				std24 += prices[j] * prices[j];
+			}
+			std24 /= (count > sph24 ? sph24 : (unsigned int)count);
+			std24 -= avg24*avg24;
+			std24 = sqrt(fabs(std24));
+			if (std24<0.01){
+				std24=0.01;
+			}
+
+			retry = 1; // reiterate to pass the updated values to the controllers
+
+			/* update reference hour */
+			lasthr = thishr;
 		}
-		avg168 /= (count > sph168 ? sph168 : count);
-
-		avg72 = 0.0;
-		for(i = 1; i <= sph72 && i <= count; ++i){
-			unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
-			avg72 += prices[j];
-		}
-		avg72 /= (count > sph72 ? sph72 : count);
-
-		avg24 = 0.0;
-		for(i = 1; i <= sph24 && i <= count; ++i){
-			unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
-			avg24 += prices[j];
-		}
-		avg24 /= (count > sph24 ? sph24 : (unsigned int)count);
-
-		/* update the daily & weekly standard deviations */
-		std168 = 0.0;
-		for(i = 0; i < count && i < sph168; ++i){
-			std168 += prices[i] * prices[i];
-		}
-		std168 /= (count > sph168 ? sph168 : (unsigned int)count);
-		std168 -= avg168*avg168;
-		std168 = sqrt(fabs(std168));
-		if (std168<0.01) std168=0.01;
-
-		std72 = 0.0;
-		for(i = 1; i <= sph72 && i <= (unsigned int)count; ++i){
-			unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
-			std72 += prices[j] * prices[j];
-		}
-		std72 /= (count > sph72 ? sph72 : (unsigned int)count);
-		std72 -= avg72*avg72;
-		std72 = sqrt(fabs(std72));
-		if (std72 < 0.01){
-			std72 = 0.01;
-		}
-
-		std24 = 0.0;
-		for(i = 1; i <= sph24 && i <= (unsigned int)count; ++i){
-			unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
-			std24 += prices[j] * prices[j];
-		}
-		std24 /= (count > sph24 ? sph24 : (unsigned int)count);
-		std24 -= avg24*avg24;
-		std24 = sqrt(fabs(std24));
-		if (std24<0.01){
-			std24=0.01;
-		}
-
-		retry = 1; // reiterate to pass the updated values to the controllers
-
-		/* update reference hour */
-		lasthr = thishr;
 	}
 
 	// update cleared_frame data
@@ -1170,7 +1189,6 @@ void auction::clear_market(void)
 		push_market_frame(gl_globalclock);
 		++total_samples;
 	} else {
-		unsigned int i;
 		STATISTIC *stat = 0;
 		OBJECT *obj = OBJECTHDR(this);
 		memcpy(&past_frame, &current_frame, latency_stride);
@@ -1185,11 +1203,6 @@ void auction::clear_market(void)
 		current_frame.seller_total_quantity = cleared_frame.seller_total_quantity;
 		current_frame.buyer_total_quantity = cleared_frame.buyer_total_quantity;
 		current_frame.seller_min_price = cleared_frame.seller_min_price;
-		// 'immediate' stats written straight to properties in update_stats()
-		// copy statistics
-		//for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
-		//	gl_set_value(obj, stat->prop, cleared_frame.statistics[i]);
-		//}
 		update_statistics();
 		++total_samples;
 	}
