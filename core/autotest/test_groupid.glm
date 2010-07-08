@@ -1,6 +1,6 @@
 // $Id$
 // 
-// Test group extension
+// Test groupid function
 
 clock {
 	starttime '2000-01-01 0:00:00 PST';
@@ -10,23 +10,18 @@ module residential {
 	implicit_enduses NONE;
 }
 
-class house {
-	char32 group;
-}
-
 object house:..10 {
 	groupid A;
 }
 
-object house:..10 {
+object house:..12 {
 	groupid B;
 }
 
 module tape;
 
 object collector {
-	//group "class=house AND group=A";
-	group "groupid=A";
+	group "class=house AND groupid=A";
 	property "count(floor_area)";
 	limit 10;
 	interval 3600;
