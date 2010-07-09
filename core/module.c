@@ -319,9 +319,9 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	if (hLib==NULL)
 	{
 #if defined WIN32 && ! defined MINGW
-		output_verbose("%s(%d): module '%s' load failed - %s (error code %d)", __FILE__, __LINE__, file, strerror(errno), GetLastError());
+		output_error("%s(%d): module '%s' load failed - %s (error code %d)", __FILE__, __LINE__, file, strerror(errno), GetLastError());
 #else
-		output_verbose("%s(%d): module '%s' load failed - %s", __FILE__, __LINE__, file, dlerror());
+		output_error("%s(%d): module '%s' load failed - %s", __FILE__, __LINE__, file, dlerror());
 #endif
 		dlload_error(pathname);
 		errno = ENOENT;
