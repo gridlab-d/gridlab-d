@@ -276,7 +276,7 @@ int auction::init(OBJECT *parent)
 			//statprop.interval = (TIMESTAMP)(this->period);
 		} else if(statprop->interval % (int64)(this->period) != 0){
 			static int was_also_warned = 0;
-			gl_warning("market statistic '%s' interval not a multiple of market priod, rounding towards one interval", statprop->prop->name);
+			gl_warning("market statistic '%s' interval not a multiple of market period, rounding towards one interval", statprop->prop->name);
 			//statprop.interval = (TIMESTAMP)(this->period) * r;
 		}
 	}
@@ -315,9 +315,15 @@ int auction::init(OBJECT *parent)
 		int64 stataddr = addr + sizeof(MARKETFRAME);
 		int64 nextaddr = addr + latency_stride;
 		frameptr = (MARKETFRAME *)(addr);
-		frameptr->statistics = (double *)(stataddr);
+		if(statistic_count > 0){
+			frameptr->statistics = (double *)(stataddr);
+		} else {
+			frameptr->statistics = 0;
+		}
 		if(i+1 < latency_count){
 			frameptr->next = (MARKETFRAME *)(nextaddr);
+		} else if(i+1 == latency_count){
+			frameptr->next = framedata; // last->next = first
 		}
 	}
 	latency_front = latency_back = 0;
