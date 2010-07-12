@@ -942,7 +942,11 @@ void auction::clear_market(void)
 					} else if (j == offers.getcount() && b == buy->price){ // exhausted sellers, buyers unsatisfied at same price
 						clearing_type = CT_BUYER;
 					} else { // both sides satisfied at price, but one side exhausted
-						clearing_type = CT_EXACT;
+						if(a == b){
+							clearing_type = CT_EXACT;
+						} else {
+							clearing_type = CT_PRICE;
+						}
 					}
 				} else {
 					if(a != buy->price && b != sell->price && a == b){
@@ -963,17 +967,29 @@ void auction::clear_market(void)
 							clearing_type = CT_BUYER;
 						}
 					} else {
-						double avg;
 						clearing_type = CT_PRICE; // marginal price
-						avg = (a+b) / 2;
-						// needs to be just off such that it does not trigger any other bids
-						if(avg < buy->price){
-							clear.price = buy->price + bid_offset;
-						} else if(avg > sell->price){
-							clear.price = sell->price - bid_offset;
-						} else {
-							clear.price = avg;
-						}
+					}
+				}
+			}
+			if(clearing_type == CT_PRICE){
+				double avg;
+				avg = (a+b) / 2;
+				// needs to be just off such that it does not trigger any other bids
+				// i == asks.getcount() && j == offers.getcount()
+				// a = buy->price, b = sell->price
+				if(a == pricecap){
+					clear.price = b + bid_offset;
+				} else if(b == -pricecap){
+					clear.price = a - bid_offset;
+				} else if(0){
+					;
+				} else {
+					if(avg < buy->price){
+						clear.price = buy->price + bid_offset;
+					} else if(avg > sell->price){
+						clear.price = sell->price - bid_offset;
+					} else {
+						clear.price = avg;
 					}
 				}
 			}
@@ -1021,28 +1037,16 @@ void auction::clear_market(void)
 	else
 	{
 		char name[64];
-//		if(offers.getcount() > 0){
-//			next.price = offers.getbid(0)->price - (special_mode == MD_BUYERS ? 0 : bid_offset);
-//			next.quantity = 0;
-			//clear.price = offers.getbid(0)->price-bid_offset;
-			//clear.quantity = 0;
-//			clearing_type = CT_NULL;
-//		} else {
-			//next.price = 0;
-			if(offers.getcount() > 0 && asks.getcount() == 0){
-				next.price = offers.getbid(0)->price - bid_offset;
-			} else if(offers.getcount() == 0 && asks.getcount() > 0){
-				next.price = asks.getbid(0)->price + bid_offset;
-			} else {
-				next.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;;
-			}
-			next.quantity = 0;
-			//clear.price = 0;
-			//clear.quantity = 0;
-			clearing_type = CT_NULL;
-			gl_warning("market '%s' fails to clear due to missing %s", gl_name(OBJECTHDR(this),name,sizeof(name)), asks.getcount()==0?(offers.getcount()==0?"buyers and sellers":"buyers"):"sellers");
-//		}
-
+		if(offers.getcount() > 0 && asks.getcount() == 0){
+			next.price = offers.getbid(0)->price - bid_offset;
+		} else if(offers.getcount() == 0 && asks.getcount() > 0){
+			next.price = asks.getbid(0)->price + bid_offset;
+		} else {
+			next.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;;
+		}
+		next.quantity = 0;
+		clearing_type = CT_NULL;
+		gl_warning("market '%s' fails to clear due to missing %s", gl_name(OBJECTHDR(this),name,sizeof(name)), asks.getcount()==0?(offers.getcount()==0?"buyers and sellers":"buyers"):"sellers");
 	}
 	
 	double marginal_total = 0.0;
