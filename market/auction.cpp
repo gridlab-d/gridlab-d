@@ -972,17 +972,27 @@ void auction::clear_market(void)
 				}
 			}
 			if(clearing_type == CT_PRICE){
-				double avg;
+				double avg, dHigh, dLow;
 				avg = (a+b) / 2;
+				dHigh = (i == asks.getcount() ? a : buy->price);
+				dLow = (j == offers.getcount() ? b : sell->price);
 				// needs to be just off such that it does not trigger any other bids
 				// i == asks.getcount() && j == offers.getcount()
 				// a = buy->price, b = sell->price
-				if(a == pricecap){
-					clear.price = b + bid_offset;
-				} else if(b == -pricecap){
-					clear.price = a - bid_offset;
-				} else if(0){
-					;
+				if(a == pricecap && b != -pricecap){
+					clear.price = (buy->price > b ? buy->price + bid_offset : b);
+				} else if(a != pricecap && b == -pricecap){
+					clear.price = (sell->price < a ? sell->price - bid_offset : a);
+				} else if(a == pricecap && b == -pricecap){
+					if(i == asks.getcount() && j == offers.getcount()){
+						clear.price = 0; // no additional bids on either side
+					} else if(i == asks.getcount()){ // buyers left
+						clear.price = buy->price + bid_offset;
+					} else if(j == asks.getcount()){ // sellers left
+						clear.price = sell->price - bid_offset;
+					} else { // additional bids on both sides, just no clearing
+						clear.price = (dHigh + dLow) / 2;
+					}
 				} else {
 					if(avg < buy->price){
 						clear.price = buy->price + bid_offset;
