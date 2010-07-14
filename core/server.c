@@ -156,7 +156,7 @@ void handleRequest(int newsockfd)
 				break;
 			}
 			if (object_get_value_by_name(obj,property,buf,sizeof(buf)))
-          output_debug("set %s.%s=%s", name,property,value);
+			          output_debug("set %s.%s=%s", name,property,value);
 			sprintf(output,"%s\n",buf);
 		}
 		else if (strcmp(method,"POST")==0)
@@ -231,7 +231,7 @@ void handleRequest(int newsockfd)
 		}
 		*********************/
 		sprintf(xml,"HTTP/1.1 %d OK\n"
-			"Server: gridlabd %.%.% (%s) \n"
+			"Server: gridlabd %d.%d.%d (%s) \n"
 			"Connection: close"
 			"\nContent-type: text/xml\n\n"
 			"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
