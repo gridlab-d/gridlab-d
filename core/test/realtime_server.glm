@@ -1,0 +1,29 @@
+module tape;
+
+class realtime_server {
+	double data;
+	intrinsic create(object parent) {
+		data = 0;
+		gl_verbose("realtime_server: new object created");
+		return SUCCESS;
+	};
+	intrinsic init(object parent) {
+		if (data==0) data=gl_random_normal(0,1);
+		gl_verbose("realtime_server(%s): initialization complete (data=%.3f)", my->name, data);
+		return SUCCESS;
+	};
+	intrinsic sync(TIMESTAMP t0, TIMESTAMP t1) {
+		TIMESTAMP t2 = ((t1/3600)+1)*3600;
+		data+=gl_random_normal(0,1);
+		gl_verbose("realtime_server(%s): data updated (data=%.3f)", my->name, data);
+		return t2;
+	};
+}
+
+clock {
+	timezone PST+8PDT;
+}
+
+object realtime_server {
+	name "MyServer";
+}
