@@ -68,6 +68,7 @@ controller::controller(MODULE *module){
 			PT_double, "cooling_ramp_low", PADDR(cool_ramp_low),
 			PT_double, "heating_base_setpoint[degF]", PADDR(heating_setpoint0),
 			PT_double, "cooling_base_setpoint[degF]", PADDR(cooling_setpoint0),
+			PT_char32, "deadband", PADDR(deadband),
 			// redefinitions
 			PT_char32, "average_target", PADDR(avg_target),
 			PT_char32, "standard_deviation_target", PADDR(std_target),
@@ -170,8 +171,10 @@ void controller::fetch(double **prop, char *name, OBJECT *parent){
 	if(*prop == NULL){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
+		char msg[256];
 		sprintf(tname, "controller:%i", hdr->id);
-		throw("%s: controller unable to find %s", namestr, name);
+		sprintf(msg, "%s: controller unable to find %s", namestr, name);
+		throw(msg);
 	}
 }
 
