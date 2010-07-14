@@ -214,6 +214,15 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	CLASS *previous = NULL;
 	CLASS *c;
 
+#ifdef NEVER /* this shouldn't ever be necessary but sometimes for debugging purposes it is helpful */
+	/* if LD_LIBRARY_PATH is not set, default to current directory */
+	if (getenv("LD_LIBRARY_PATH")==NULL)
+	{
+		putenv("LD_LIBRARY_PATH=.");
+		output_verbose("Setting default LD_LIBRARY_DEFAULT to current directory");
+	}
+#endif
+
 	if (mod!=NULL)
 	{
 		output_verbose("%s(%d): module '%s' already loaded", __FILE__, __LINE__, file);
@@ -322,6 +331,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		output_error("%s(%d): module '%s' load failed - %s (error code %d)", __FILE__, __LINE__, file, strerror(errno), GetLastError());
 #else
 		output_error("%s(%d): module '%s' load failed - %s", __FILE__, __LINE__, file, dlerror());
+		output_debug("%s(%d): path to module is '%s'", tpath);
 #endif
 		dlload_error(pathname);
 		errno = ENOENT;
