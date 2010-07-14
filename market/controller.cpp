@@ -53,6 +53,7 @@ controller::controller(MODULE *module){
 			PT_enumeration, "resolve_mode", PADDR(resolve_mode),
 				PT_KEYWORD, "DEADBAND", RM_DEADBAND,
 				PT_KEYWORD, "SLIDING", RM_SLIDING,
+			PT_double, "slider_setting",PADDR(slider_setting),
 			PT_double, "slider_setting_heat", PADDR(slider_setting_heat),
 			PT_double, "slider_setting_cool", PADDR(slider_setting_cool),
 			PT_double, "range_low[degF]", PADDR(range_low),
@@ -234,10 +235,10 @@ int controller::init(OBJECT *parent){
 		fetch(&pCoolingDemand, cooling_demand, parent);
 		fetch(&pCoolingTotal, cooling_total, parent);
 		fetch(&pCoolingLoad, cooling_load, parent);
+		fetch(&pDeadband, deadband, parent);
 	}
 	fetch(&pAvg, avg_target, pMarket);
 	fetch(&pStd, std_target, pMarket);
-	fetch(&pDeadband, deadband, parent);
 	
 
 	if(dir == 0){
@@ -293,30 +294,33 @@ int controller::init(OBJECT *parent){
 			return 0;
 		}
 	}
-
-	if(slider_setting < 0.0){
-		gl_warning("slider_setting is negative, reseting to 0.0");
-		slider_setting = 0.0;
+	if(control_mode == CN_DOUBLE_RAMP){
+		if(slider_setting < 0.0){
+			gl_warning("slider_setting is negative, reseting to 0.0");
+			slider_setting = 0.0;
+		}
+		if(slider_setting > 1.0){
+			gl_warning("slider_setting is greater than 1.0, reseting to 1.0");
+			slider_setting = 1.0;
+		}
 	}
-	if(slider_setting_heat < 0.0){
-		gl_warning("slider_setting_heat is negative, reseting to 0.0");
-		slider_setting_heat = 0.0;
-	}
-	if(slider_setting_cool < 0.0){
-		gl_warning("slider_setting_cool is negative, reseting to 0.0");
-		slider_setting_cool = 0.0;
-	}
-	if(slider_setting > 1.0){
-		gl_warning("slider_setting is greater than 1.0, reseting to 1.0");
-		slider_setting = 1.0;
-	}
-	if(slider_setting_heat > 1.0){
-		gl_warning("slider_setting_heat is greater than 1.0, reseting to 1.0");
-		slider_setting_heat = 1.0;
-	}
-	if(slider_setting_cool > 1.0){
-		gl_warning("slider_setting_cool is greater than 1.0, reseting to 1.0");
-		slider_setting_cool = 1.0;
+	if(control_mode == CN_DOUBLE_RAMP){
+		if(slider_setting_heat < 0.0){
+			gl_warning("slider_setting_heat is negative, reseting to 0.0");
+			slider_setting_heat = 0.0;
+		}
+		if(slider_setting_cool < 0.0){
+			gl_warning("slider_setting_cool is negative, reseting to 0.0");
+			slider_setting_cool = 0.0;
+		}
+		if(slider_setting_heat > 1.0){
+			gl_warning("slider_setting_heat is greater than 1.0, reseting to 1.0");
+			slider_setting_heat = 1.0;
+		}
+		if(slider_setting_cool > 1.0){
+			gl_warning("slider_setting_cool is greater than 1.0, reseting to 1.0");
+			slider_setting_cool = 1.0;
+		}
 	}
 
 	return 1;
@@ -344,9 +348,12 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 		slider_setting_cool = 1.0;
 
 	if(setpoint0 == -1){
-		setpoint0 = *pSetpoint;
-		heating_setpoint0 = *pHeatingSetpoint;
-		cooling_setpoint0 = *pCoolingSetpoint;
+		if(control_mode == CN_RAMP){
+			setpoint0 = *pSetpoint;
+		} else if(control_mode == CN_DOUBLE_RAMP){
+			heating_setpoint0 = *pHeatingSetpoint;
+			cooling_setpoint0 = *pCoolingSetpoint;
+		}
 	}
 	if(t0 == next_run){
 		if(control_mode == CN_RAMP){
