@@ -7,7 +7,7 @@ AM_CFLAGS = $(PTHREAD_CFLAGS)
 # Add -pg to AM_CXXFLAGS and AM_CPPFLAGS to enable profiling.
 # Debug symbols must also be included with -g if not done elsewhere.
 AM_CXXFLAGS = $(PTHREAD_CFLAGS)
-AM_LDFLAGS = $(EXTRA_gridlabd_LDFLAGS) -ldl -lxerces-c $(PTHREAD_LIBS) $(PTHREAD_CFLAGS)
+AM_LDFLAGS = $(EXTRA_gridlabd_LDFLAGS) -ldl -lX11 -L/usr/lib/X11 -lxerces-c $(PTHREAD_LIBS) $(PTHREAD_CFLAGS)
 gridlabd_bin_SOURCES = main.c build.h \
 	aggregate.c aggregate.h \
 	class.c  class.h \
@@ -52,6 +52,7 @@ gridlabd_bin_SOURCES = main.c build.h \
 	threadpool.c threadpool.h \
 	timestamp.c timestamp.h \
 	unit.c unit.h \
+	xcore.cpp xcore.h \
 	version.h
 EXTRA_gridlabd_bin_SOURCES = \
 	cmex.c cmex.h

@@ -14,12 +14,15 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <signal.h>
 
 #include "environment.h"
 #include "exec.h"
 #include "save.h"
 #include "matlab.h"
 #include "server.h"
+#include "xcore.h"
 
 /** Starts the environment selected by the global_environment variable
  **/
@@ -72,6 +75,15 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 #else
 		output_fatal("server environment not supported on this platform");
 		return FAILED;
+#endif
+	}
+	else if (strcmp(global_environment,"X11")==0)
+	{
+#ifndef WIN32
+		xstart();
+		return exec_start();
+#else
+		output_fatal("X11 not supported");
 #endif
 	}
 	else
