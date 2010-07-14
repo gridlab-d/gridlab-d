@@ -630,6 +630,13 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				output_verbose("linking inline code from '%s'", ofile);
 				if (exec("%s %s %s %s -shared -Wl,%s -o %s -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile)==FAILED)
 					return FAILED;
+
+				if (global_getvar("control_textrel_shlib_t",NULL,0)!=NULL)
+				{
+					/* SE linux need the new module marked as relocatable (textrel_shlib_t) */
+					exec("chcon -t textrel_shlib_t '%s'", afile);
+				}
+
 				unlink(ofile);
 			}
 			else
