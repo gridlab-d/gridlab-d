@@ -81,7 +81,7 @@ def run_tests(argv):
 		cwd = sys.path[0]
 		os.environ["PATH"]+=os.pathsep+cwd + "\\VS2005\\Win32\\Release"
 		os.environ["GLPATH"]=cwd+"\\VS2005\\Win32\\Release"
-	elif(sys.platform.startswith('linux')):
+	elif(sys.platform.startswith('linux') or sys.platform.startswith('darwin')):
 		os.environ["PATH"]+= os.pathsep+ installed_dir +"/bin"
 		os.environ["GLPATH"]=installed_dir + "/lib/gridlabd"
 	else:
