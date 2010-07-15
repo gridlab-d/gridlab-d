@@ -827,8 +827,12 @@ void auction::clear_market(void)
 			}
 			if(fixed_price != 0.0){
 				single_price = fixed_price;
-				for(unsigned int i = 0;  offers.getbid(i)->price >= fixed_price && i < offers.getcount(); ++i){
-					single_quantity += offers.getbid(i)->quantity;
+				for(unsigned int i = 0; i < offers.getcount(); ++i){
+					if(offers.getbid(i)->price >= fixed_price){
+						single_quantity += offers.getbid(i)->quantity;
+					} else {
+						break;
+					}
 				}
 				if(single_quantity > 0.0){
 					clearing_type = CT_EXACT;
@@ -860,8 +864,12 @@ void auction::clear_market(void)
 			}
 			if(fixed_price > 0.0){
 				single_price = fixed_price;
-				for(unsigned int i = 0;  asks.getbid(i)->price <= fixed_price && i < asks.getcount(); ++i){
-					single_quantity += asks.getbid(i)->quantity;
+				for(unsigned int i = 0;  i < asks.getcount(); ++i){
+					if(asks.getbid(i)->price <= fixed_price){
+						single_quantity += asks.getbid(i)->quantity;
+					} else {
+						break;
+					}
 				}
 				if(single_quantity > 0.0){
 					clearing_type = CT_EXACT;
