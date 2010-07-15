@@ -560,6 +560,32 @@ int auction::push_market_frame(TIMESTAMP t1){
 	return 1;
 }
 
+int auction::check_next_market(TIMESTAMP t1){
+	MARKETFRAME *frame = 0;
+	frame = (MARKETFRAME *)(latency_front * this->latency_stride + (int64)framedata);
+	if(frame->start_time > t1 && frame->start_time <= t1 + period){
+		OBJECT *obj = OBJECTHDR(this);
+		MARKETFRAME *nframe = frame;
+		unsigned int i = 0;
+		STATISTIC *stat;
+		next_frame.market_id = nframe->market_id;
+		next_frame.start_time = nframe->start_time;
+		next_frame.end_time = nframe->end_time;
+		next_frame.clearing_price = nframe->clearing_price;
+		next_frame.clearing_quantity = nframe->clearing_quantity;
+		next_frame.clearing_type = nframe->clearing_type;
+		next_frame.marginal_quantity = nframe->marginal_quantity;
+		next_frame.seller_total_quantity = nframe->seller_total_quantity;
+		next_frame.buyer_total_quantity = nframe->buyer_total_quantity;
+		next_frame.seller_min_price = nframe->seller_min_price;
+		for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
+			gl_set_value(obj, stat->prop, frame->statistics[i]);
+		}
+		return 1;
+	}
+	return 0;
+}
+
 /*	Fill in the exposed current market values with those within the */
 TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	MARKETFRAME *frame = 0;
@@ -576,7 +602,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	frame = (MARKETFRAME *)(latency_front * this->latency_stride + (int64)framedata);
 
 	// grab first sample as next but not current if it's *almost* time to push data
-	if(latency > 0 && t1 >= (frame->start_time - period) && t1 < frame->start_time){
+/*	if(latency > 0 && t1 >= (frame->start_time - period) && t1 < frame->start_time){
 		MARKETFRAME *nframe = frame;
 		next_frame.market_id = nframe->market_id;
 		next_frame.start_time = nframe->start_time;
@@ -589,7 +615,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 		next_frame.buyer_total_quantity = nframe->buyer_total_quantity;
 		next_frame.seller_min_price = nframe->seller_min_price;
 		return frame->start_time;
-	}
+	}*/
 
 	if(t1 < frame->start_time){
 		gl_verbose("market latency queue data is not yet applicable");
@@ -614,7 +640,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 		gl_set_value(obj, stat->prop, frame->statistics[i]);
 	}
 	// ~ if latency > 0, cache next frame
-	if(latency > 0){
+	/*if(latency > 0){
 		MARKETFRAME *nframe = frame->next;
 		next_frame.market_id = nframe->market_id;
 		next_frame.start_time = nframe->start_time;
@@ -630,7 +656,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 		for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
 			gl_set_value(obj, stat->prop, frame->statistics[i]);
 		}
-	}
+	}*/
 	// having used this index, push the index forward
 	latency_front = (latency_front + 1) % latency_count;
 	return TS_NEVER;
@@ -1222,9 +1248,11 @@ void auction::clear_market(void)
 	cleared_frame.seller_min_price = offers.get_min();
 
 	if(latency > 0){
-		TIMESTAMP rt = pop_market_frame(gl_globalclock);
+		TIMESTAMP rt;
+		rt = pop_market_frame(gl_globalclock);
 		update_statistics();
 		push_market_frame(gl_globalclock);
+		check_next_market(gl_globalclock);
 		++total_samples;
 	} else {
 		STATISTIC *stat = 0;

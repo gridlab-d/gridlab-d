@@ -50,6 +50,7 @@ private:
 	int init_statistics();
 	int update_statistics();
 	int push_market_frame(TIMESTAMP t1);
+	int check_next_market(TIMESTAMP t1);
 	TIMESTAMP pop_market_frame(TIMESTAMP t1);
 	// variables
 	double *Qload;		/**< total load (used to determine unresponsive load when not all load bid) */
