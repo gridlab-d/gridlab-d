@@ -13,7 +13,7 @@ CURDIR=`dirname "$BINPATH"`
 pushd "$CURDIR" > /dev/null
 export GRIDLABD="$PWD"
 if [ -n "$GLPATH" ]; then
-	export GLPATH="$PWD:GLPATH"
+	export GLPATH="$PWD:$GLPATH"
 else
 	export GLPATH="$PWD"
 fi
