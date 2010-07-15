@@ -32,6 +32,6 @@ if __name__ == "__main__":
 	for filename in os.listdir(SF_PATH):
 		#print "Testing",SF_PATH + "\\" +filename
 		if testFile(filename,days):
-			print "delete",SF_PATH + "\\" +filename
+			print "delete",SF_PATH + "/" +filename
 			if(not DRY_RUN):
-				os.unlink(SF_PATH + "\\" +filename)
+				os.unlink(SF_PATH + "/" +filename)
