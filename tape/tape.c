@@ -51,7 +51,6 @@ extern CLASS *collector_class;
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
-#define LIBPREFIX
 #ifndef DLEXT
 #define DLEXT ".dll"
 #endif
@@ -60,7 +59,6 @@ extern CLASS *collector_class;
 #define snprintf _snprintf
 #else /* ANSI */
 #include "dlfcn.h"
-#define LIBPREFIX "lib"
 #ifndef DLEXT
 #define DLEXT ".so"
 #else
@@ -98,7 +96,7 @@ TAPEFUNCS *get_ftable(char *mode){
 		GL_THROW("get_ftable(char *mode='%s'): out of memory", mode);
 		return NULL; /* out of memory */
 	}
-	snprintf(modname, 1024, LIBPREFIX "tape_%s" DLEXT, mode);
+	snprintf(modname, 1024, "tape_%s" DLEXT, mode);
 	tpath = gl_findfile(modname, NULL, 0|4);
 	if(tpath == NULL){
 		GL_THROW("unable to locate %s", modname);
