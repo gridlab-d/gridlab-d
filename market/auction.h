@@ -34,6 +34,7 @@ typedef struct s_market_frame{
 	double clearing_price;
 	double clearing_quantity;
 	double marginal_quantity;
+	double total_marginal_quantity;
 	double seller_total_quantity;
 	double buyer_total_quantity;
 	double seller_min_price;
@@ -120,6 +121,10 @@ public:
 	static TIMESTAMP longest_statistic;
 	static size_t statistic_count;
 	static int statistic_check;
+public:
+	double unresponsive_buy, unresponsive_sell;
+	double responsive_buy, responsive_sell;
+	double total_buy, total_sell;
 public:
 	KEY submit(OBJECT *from, double quantity, double real_price, KEY key=-1, BIDDERSTATE state=BS_UNKNOWN);
 	TIMESTAMP nextclear() const;

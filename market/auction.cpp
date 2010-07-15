@@ -118,6 +118,7 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "FAILURE", CT_FAILURE,
 				PT_KEYWORD, "NULL", CT_NULL,
 			PT_double, "current_market.marginal_quantity", PADDR(current_frame.marginal_quantity),
+			PT_double, "current_market.total_marginal_quantity", PADDR(current_frame.total_marginal_quantity),
 			PT_double, "current_market.seller_total_quantity", PADDR(current_frame.seller_total_quantity),
 			PT_double, "current_market.buyer_total_quantity", PADDR(current_frame.buyer_total_quantity),
 			PT_double, "current_market.seller_min_price", PADDR(current_frame.seller_min_price),
@@ -134,6 +135,7 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "FAILURE", CT_FAILURE,
 				PT_KEYWORD, "NULL", CT_NULL,
 			PT_double, "next_market.marginal_quantity", PADDR(next_frame.marginal_quantity),
+			PT_double, "next_market.total_marginal_quantity", PADDR(next_frame.total_marginal_quantity),
 			PT_double, "next_market.seller_total_quantity", PADDR(next_frame.seller_total_quantity),
 			PT_double, "next_market.buyer_total_quantity", PADDR(next_frame.buyer_total_quantity),
 			PT_double, "next_market.seller_min_price", PADDR(next_frame.seller_min_price),
@@ -150,9 +152,17 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "FAILURE", CT_FAILURE,
 				PT_KEYWORD, "NULL", CT_NULL,
 			PT_double, "past_market.marginal_quantity", PADDR(past_frame.marginal_quantity),
+			PT_double, "past_market.total_marginal_quantity", PADDR(past_frame.total_marginal_quantity),
 			PT_double, "past_market.seller_total_quantity", PADDR(past_frame.seller_total_quantity),
 			PT_double, "past_market.buyer_total_quantity", PADDR(past_frame.buyer_total_quantity),
 			PT_double, "past_market.seller_min_price", PADDR(past_frame.seller_min_price),
+			//PT_double, "total_supply", PADDR(total_sell),
+			//PT_double, "total_demand", PADDR(total_buy),
+			//PT_double, "total_responsive_supply", PADDR(responsive_sell),
+			//PT_double, "total_responsive_demand", PADDR(responsive_buy),
+			//PT_double, "total_unresponsive_supply", PADDR(unresponsive_sell),
+			//PT_double, "total_unresponsive_demand", PADDR(unresponsive_buy),
+
 			PT_int32, "warmup", PADDR(warmup),
 
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -544,6 +554,7 @@ int auction::push_market_frame(TIMESTAMP t1){
 	frame->clearing_quantity = cleared_frame.clearing_quantity;
 	frame->clearing_type = cleared_frame.clearing_type;
 	frame->marginal_quantity = cleared_frame.marginal_quantity;
+	frame->total_marginal_quantity = cleared_frame.total_marginal_quantity;
 	frame->seller_total_quantity = cleared_frame.seller_total_quantity;
 	frame->buyer_total_quantity = cleared_frame.buyer_total_quantity;
 	frame->seller_min_price = cleared_frame.seller_min_price;
@@ -575,6 +586,7 @@ int auction::check_next_market(TIMESTAMP t1){
 		next_frame.clearing_quantity = nframe->clearing_quantity;
 		next_frame.clearing_type = nframe->clearing_type;
 		next_frame.marginal_quantity = nframe->marginal_quantity;
+		next_frame.total_marginal_quantity = nframe->total_marginal_quantity;
 		next_frame.seller_total_quantity = nframe->seller_total_quantity;
 		next_frame.buyer_total_quantity = nframe->buyer_total_quantity;
 		next_frame.seller_min_price = nframe->seller_min_price;
@@ -632,6 +644,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	current_frame.clearing_quantity = frame->clearing_quantity;
 	current_frame.clearing_type = frame->clearing_type;
 	current_frame.marginal_quantity = frame->marginal_quantity;
+	current_frame.total_marginal_quantity = frame->total_marginal_quantity;
 	current_frame.seller_total_quantity = frame->seller_total_quantity;
 	current_frame.buyer_total_quantity = frame->buyer_total_quantity;
 	current_frame.seller_min_price = frame->seller_min_price;
@@ -914,17 +927,39 @@ void auction::clear_market(void)
 		bool check=false;
 		
 		// dump curves
-		if (verbose)
+		if (1)
 		{
 			char name[64];
-			gl_output("   ...  supply curve");
+			unresponsive_sell = 0.0;
+			unresponsive_buy = 0.0;
+			if (verbose){
+				gl_output("   ...  supply curve");
+			}
 			for (i=0; i<offers.getcount(); i++){
-				gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
+				if (verbose){
+					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
+				}
+				if(offers.getbid(i)->price == -pricecap){
+					unresponsive_sell += offers.getbid(i)->quantity;
+				} else {
+					responsive_sell += offers.getbid(i)->quantity;
+				}
 			}
-			gl_output("   ...  demand curve");
+			total_sell = responsive_sell + unresponsive_sell;
+			if (verbose){
+				gl_output("   ...  demand curve");
+			}
 			for (i=0; i<asks.getcount(); i++){
-				gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+				if (verbose){
+					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+				}
+				if(asks.getbid(i)->price == pricecap){
+					unresponsive_buy += asks.getbid(i)->quantity;
+				} else {
+					responsive_buy += asks.getbid(i)->quantity;
+				}
 			}
+			total_buy = responsive_buy + unresponsive_buy;
 		}
 
 		i = j = 0;
@@ -1083,9 +1118,16 @@ void auction::clear_market(void)
 				clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;;
 			}
 			
-		} else if (clear.quantity <= unresponsive.quantity){
+		} else if (clear.quantity < unresponsive_buy){
 			clearing_type = CT_FAILURE;
-			clear.price = offers.getbid(0)->price + bid_offset;
+			clear.price = pricecap;
+		} else if (clear.quantity < unresponsive_sell){
+			clearing_type = CT_FAILURE;
+			clear.price = -pricecap;
+		} else if (clear.quantity == unresponsive_buy && clear.quantity == unresponsive_sell){
+			// only cleared unresponsive loads
+			clearing_type = CT_PRICE;
+			clear.price = 0.0;
 		}
 	
 		/* post the price */
@@ -1243,6 +1285,7 @@ void auction::clear_market(void)
 	//marginal_sell = offers.get_total_at(next.price);
 	//cleared_frame.marginal_quantity = (marginal_buy < marginal_sell ? marginal_sell : marginal_buy);
 	cleared_frame.marginal_quantity = marginal_quantity;
+	cleared_frame.total_marginal_quantity = marginal_total;
 	cleared_frame.buyer_total_quantity = asks.get_total();
 	cleared_frame.seller_total_quantity = offers.get_total();
 	cleared_frame.seller_min_price = offers.get_min();
@@ -1266,6 +1309,7 @@ void auction::clear_market(void)
 		current_frame.clearing_quantity = cleared_frame.clearing_quantity;
 		current_frame.clearing_type = cleared_frame.clearing_type;
 		current_frame.marginal_quantity = cleared_frame.marginal_quantity;
+		current_frame.total_marginal_quantity = cleared_frame.total_marginal_quantity;
 		current_frame.seller_total_quantity = cleared_frame.seller_total_quantity;
 		current_frame.buyer_total_quantity = cleared_frame.buyer_total_quantity;
 		current_frame.seller_min_price = cleared_frame.seller_min_price;
