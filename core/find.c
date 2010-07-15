@@ -1268,9 +1268,17 @@ char *find_file(char *name, /**< the name of the file to find */
 {
 	static char filepath[1024];
 	static char tempfp[1024];
-	char *glpath = path?path:getenv("GLPATH");
-	int found;
-	char *dir = NULL;
+	char envbuf[1024];
+	char *glpath = path ? path : getenv("GLPATH");
+	char *dir;
+
+#ifdef WIN32
+#	define delim ";"
+#	define pathsep "\\"
+#else
+#	define delim ":"
+#	define pathsep "/"
+#endif
 
 	/*
 	CAVEAT
@@ -1281,52 +1289,39 @@ char *find_file(char *name, /**< the name of the file to find */
 		strncpy(filepath, name, 1024);
 		return filepath;
 	}
-#ifdef WIN32
-	if(module_get_exe_path(filepath, 1024)){
-		sprintf(tempfp, "%s%s", filepath, name);
-		if(access(tempfp, mode) == 0)
-			return tempfp;
-		sprintf(tempfp, "%setc\\%s", filepath, name);
-		if(access(tempfp, mode) == 0)
-			return tempfp;
-		sprintf(tempfp, "%slib\\%s", filepath, name);
-		if(access(tempfp, mode) == 0)
-			return tempfp;
-	}
-#else
-	sprintf(tempfp, "/usr/lib/gridlabd/%s", name);
-	if(access(tempfp, mode) == 0){
-		return tempfp;
-	}
-	sprintf(tempfp, "/usr/etc/gridlabd/%s", name);
-	if(access(tempfp, mode) == 0){
-		return tempfp;
-	}
-#endif
-	strncpy(filepath,name,sizeof(filepath));
 
 	/* locate unit file on GLPATH if not found locally */
-	while (!(found=(access(filepath,mode)==0)) && glpath!=NULL)
+	strncpy(envbuf, glpath, sizeof(envbuf));
+	dir = strtok(envbuf, delim);
+	while (dir)
 	{
-		char envbuf[1024];
-#ifdef WIN32
-		char *delim = ";";
-#else
-		char *delim = ":";
-#endif
-		strcpy(envbuf,glpath);
-		dir = strtok(dir?NULL:envbuf,delim);
-		if (dir==NULL)
-			break;
-		strcpy(filepath,dir);
-#ifdef WIN32
-		strcat(filepath,"\\");
-#else
-		strcat(filepath,"/");
-#endif
-		strcat(filepath,name);
+		snprintf(filepath, sizeof(filepath), "%s%s%s", dir, pathsep, name);
+		if (!access(filepath,mode))
+			return filepath;
+		dir = strtok(NULL, delim);
 	}
-	return found?filepath:NULL;
+
+#ifdef WIN32
+	if(module_get_exe_path(filepath, 1024)){
+		snprintf(tempfp, sizeof(tempfp), "%s%s", filepath, name);
+		if(access(tempfp, mode) == 0)
+			return tempfp;
+		snprintf(tempfp, sizeof(tempfp), "%setc\\%s", filepath, name);
+		if(access(tempfp, mode) == 0)
+			return tempfp;
+		snprintf(tempfp, sizeof(tempfp), "%slib\\%s", filepath, name);
+		if(access(tempfp, mode) == 0)
+			return tempfp;
+	}
+#else
+	snprintf(tempfp, sizeof(tempfp), "/usr/lib/gridlabd/%s", name);
+	if(access(tempfp, mode) == 0)
+		return tempfp;
+	snprintf(tempfp, sizeof(tempfp), "/usr/etc/gridlabd/%s", name);
+	if(access(tempfp, mode) == 0)
+		return tempfp;
+#endif
+	return NULL;
 }
 
 /**@}*/
