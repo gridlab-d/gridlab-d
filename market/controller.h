@@ -60,7 +60,7 @@ public:
 	} THERMOSTATMODE;
 	THERMOSTATMODE thermostat_mode, last_mode;
 
-	double kT_L, kT_H, Tmin, Tmax;
+	double kT_L, kT_H;
 	char target[33];
 	char setpoint[33];
 	char demand[33];

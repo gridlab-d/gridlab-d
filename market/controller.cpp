@@ -28,10 +28,10 @@ controller::controller(MODULE *module){
 			PT_enumeration, "bid_mode", PADDR(bidmode),
 				PT_KEYWORD, "ON", BM_ON,
 				PT_KEYWORD, "OFF", BM_OFF,
-			PT_double, "ramp_low", PADDR(ramp_low), PT_DESCRIPTION, "the comfort response below the setpoint",
-			PT_double, "ramp_high", PADDR(ramp_high), PT_DESCRIPTION, "the comfort response above the setpoint",
-			PT_double, "Tmin", PADDR(Tmin), PT_DESCRIPTION, "the setpoint limit on the low side",
-			PT_double, "Tmax", PADDR(Tmax), PT_DESCRIPTION, "the setpoint limit on the high side",
+			PT_double, "ramp_low[degF]", PADDR(ramp_low), PT_DESCRIPTION, "the comfort response below the setpoint",
+			PT_double, "ramp_high[degF]", PADDR(ramp_high), PT_DESCRIPTION, "the comfort response above the setpoint",
+			PT_double, "range_low", PADDR(range_low), PT_DESCRIPTION, "the setpoint limit on the low side",
+			PT_double, "range_high", PADDR(range_high), PT_DESCRIPTION, "the setpoint limit on the high side",
 			PT_char32, "target", PADDR(target), PT_DESCRIPTION, "the observed property (e.g., air temperature)",
 			PT_char32, "setpoint", PADDR(setpoint), PT_DESCRIPTION, "the controlled property (e.g., heating setpoint)",
 			PT_char32, "demand", PADDR(demand), PT_DESCRIPTION, "the controlled load when on",
@@ -56,8 +56,6 @@ controller::controller(MODULE *module){
 			PT_double, "slider_setting",PADDR(slider_setting),
 			PT_double, "slider_setting_heat", PADDR(slider_setting_heat),
 			PT_double, "slider_setting_cool", PADDR(slider_setting_cool),
-			PT_double, "range_low[degF]", PADDR(range_low),
-			PT_double, "range_high[degF]", PADDR(range_high),
 			// double ramp
 			PT_double, "heating_range_high[degF]", PADDR(heat_range_high),
 			PT_double, "heating_range_low[degF]", PADDR(heat_range_low),
@@ -103,8 +101,8 @@ void controller::cheat(){
 			sprintf(state, "power_state");
 			ramp_low = -2;
 			ramp_high = -2;
-			Tmin = -5;
-			Tmax = 0;
+			range_low = -5;
+			range_high = 0;
 			dir = -1;
 			break;
 		case SM_HOUSE_COOL:
@@ -116,8 +114,8 @@ void controller::cheat(){
 			sprintf(state, "power_state");
 			ramp_low = 2;
 			ramp_high = 2;
-			Tmin = 0;
-			Tmax = 5;
+			range_low = 0;
+			range_high = 5;
 			dir = 1;
 			break;
 		case SM_HOUSE_PREHEAT:
@@ -129,8 +127,8 @@ void controller::cheat(){
 			sprintf(state, "power_state");
 			ramp_low = -2;
 			ramp_high = -2;
-			Tmin = -5;
-			Tmax = 3;
+			range_low = -5;
+			range_high = 3;
 			dir = -1;
 			break;
 		case SM_HOUSE_PRECOOL:
@@ -142,8 +140,8 @@ void controller::cheat(){
 			sprintf(state, "power_state");
 			ramp_low = 2;
 			ramp_high = 2;
-			Tmin = -3;
-			Tmax = 5;
+			range_low = -3;
+			range_high = 5;
 			dir = 1;
 			break;
 		case SM_WATERHEATER:
@@ -155,8 +153,8 @@ void controller::cheat(){
 			sprintf(state, "power_state");
 			ramp_low = -2;
 			ramp_high = -2;
-			Tmin = 0;
-			Tmax = 10;
+			range_low = 0;
+			range_high = 10;
 			break;
 		default:
 			break;
@@ -242,8 +240,8 @@ int controller::init(OBJECT *parent){
 	
 
 	if(dir == 0){
-		double high = ramp_high * Tmax;
-		double low = ramp_low * Tmin;
+		double high = ramp_high * range_high;
+		double low = ramp_low * range_low;
 		if(high > low){
 			dir = 1;
 		} else if(high < low){
@@ -357,8 +355,8 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 	}
 	if(t0 == next_run){
 		if(control_mode == CN_RAMP){
-			min = setpoint0 + Tmin * slider_setting;
-			max = setpoint0 + Tmax * slider_setting;
+			min = setpoint0 + range_low * slider_setting;
+			max = setpoint0 + range_high * slider_setting;
 		} else if(control_mode == CN_DOUBLE_RAMP){
 			cool_min = cooling_setpoint0 + cool_range_low * slider_setting_cool;
 			cool_max = cooling_setpoint0 + cool_range_high * slider_setting_cool;
