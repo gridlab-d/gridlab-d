@@ -11,8 +11,10 @@
 #include <ctype.h>
 #ifdef WIN32
   #include <io.h>
+  #define Snprintf _snprintf
 #else
   #include <unistd.h>
+  #define Snprintf snprintf
 #endif
 #include "globals.h"
 #include "output.h"
@@ -717,7 +719,7 @@ PGMCONSTFLAGS find_pgmconstants(FINDPGM *pgm)
 
 }
 
-static FINDPGM *add_pgm(FINDPGM **pgm, COMPAREFUNC op, unsigned short target, FINDVALUE value, FOUNDACTION pos, FOUNDACTION neg)
+static FINDPGM *add_pgm(FINDPGM **pgm, COMPAREFUNC op, int64 target, FINDVALUE value, FOUNDACTION pos, FOUNDACTION neg)
 {
 	/* create program entry */
 	FINDPGM *item = (FINDPGM*)malloc(sizeof(FINDPGM));
@@ -730,6 +732,7 @@ static FINDPGM *add_pgm(FINDPGM **pgm, COMPAREFUNC op, unsigned short target, FI
 		item->pos = pos;
 		item->neg = neg;
 		item->next = NULL;
+		item->fclass = NULL;
 
 		/* attach to existing program */
 		if (*pgm!=NULL)
@@ -760,9 +763,16 @@ FINDLIST *find_runpgm(FINDLIST *list, FINDPGM *pgm)
 	if (pgm!=NULL)
 	{
 		OBJECT *obj;
+		int64 targ, a, b;
+//		printf("%s + %x\n",(pgm->fclass ? pgm->fclass->name : "anon"), pgm->target);
 		for (obj=find_first(list); obj!=NULL; obj=find_next(list,obj))
 		{
-			if ((*pgm->op)((void*)(((char*)obj)+pgm->target),pgm->value))
+//			printf("%lli + %lli = %lli\n",(int64)obj, (int64)pgm->target, (int64)(((int64)obj)+pgm->target));
+			a = (int64)obj;
+			b = (int64)pgm->target;
+			targ = a + b;
+
+			if ((*pgm->op)((void *)targ,pgm->value))
 			{	if (pgm->pos) (*pgm->pos)(list,obj); }
 			else
 			{	if (pgm->neg) (*pgm->neg)(list,obj); }
@@ -1000,6 +1010,7 @@ static int expression(PARSER, FINDPGM **pgm)
 {
 	char32 pname;
 	char256 pvalue;
+	PROPERTY *prop = 0;
 	FINDOP op = EQ;
 	START;
 	if WHITE ACCEPT;
@@ -1032,6 +1043,11 @@ static int expression(PARSER, FINDPGM **pgm)
 				v.pointer=(void*)oclass;
 				add_pgm(pgm,comparemap[op].pointer,OFFSET(oclass),v,NULL,findlist_del);
 				(*pgm)->constflags |= CF_CLASS; /* this will always reduce in a set class of fixed class, leaving it invariant if already so */
+				if((*pgm)->fclass == NULL){
+					(*pgm)->fclass = oclass;
+				} else {
+					output_warning("multiple classes used in the same expression, may cause errors");
+				}
 				ACCEPT;	DONE;
 			}
 		}
@@ -1222,6 +1238,43 @@ static int expression(PARSER, FINDPGM **pgm)
 				Remove the "flags" criteria and try again.
 			 */
 		}
+		else if((*pgm != 0) && (prop = ((*pgm)->fclass == 0 ? 0 : class_find_property((*pgm)->fclass, pname)),prop != 0))
+		{
+			/* searches for a specific property & its value within a pgm with one class */
+			FINDVALUE v;
+			switch(prop->ptype){
+				unsigned long tint;
+				case PT_double:
+					if(0 == convert_to_double(pvalue, &v.real, prop)){
+						output_error("unable to read double for %s", prop->name);
+						REJECT;
+					}
+					add_pgm(pgm, comparemap[op].real, ((int64)prop->addr+sizeof(OBJECT)), v, NULL, findlist_del);
+					break;
+				case PT_int16:
+				case PT_int32:
+				case PT_int64:
+					v.integer = atoi(pvalue);
+					add_pgm(pgm, comparemap[op].integer, ((int64)prop->addr+sizeof(OBJECT)), v, NULL, findlist_del);
+					break;
+				case PT_enumeration:
+					convert_to_enumeration(pvalue, &tint, prop);
+					v.integer = tint; // c2enum casts to a ul, so put in a temp value
+					add_pgm(pgm, comparemap[op].integer, ((int64)prop->addr+sizeof(OBJECT)), v, NULL, findlist_del);
+					break;
+				case PT_char8:
+				case PT_char32:
+				case PT_char256:
+				case PT_char1024:
+					strcpy(v.string, pvalue);
+					add_pgm(pgm, comparemap[op].string, ((int64)prop->addr+sizeof(OBJECT)), v, NULL, findlist_del);
+					break;
+				default:
+					output_error("property type for %s not supported", pname);
+					REJECT;
+			}
+			ACCEPT;DONE;
+		}
 		else
 			output_error("find expression refers to unknown or unsupported property '%s'", pname);
 			/* TROUBLESHOOT
@@ -1295,7 +1348,7 @@ char *find_file(char *name, /**< the name of the file to find */
 	dir = strtok(envbuf, delim);
 	while (dir)
 	{
-		snprintf(filepath, sizeof(filepath), "%s%s%s", dir, pathsep, name);
+		Snprintf(filepath, sizeof(filepath), "%s%s%s", dir, pathsep, name);
 		if (!access(filepath,mode))
 			return filepath;
 		dir = strtok(NULL, delim);
@@ -1303,21 +1356,21 @@ char *find_file(char *name, /**< the name of the file to find */
 
 #ifdef WIN32
 	if(module_get_exe_path(filepath, 1024)){
-		snprintf(tempfp, sizeof(tempfp), "%s%s", filepath, name);
+		Snprintf(tempfp, sizeof(tempfp), "%s%s", filepath, name);
 		if(access(tempfp, mode) == 0)
 			return tempfp;
-		snprintf(tempfp, sizeof(tempfp), "%setc\\%s", filepath, name);
+		Snprintf(tempfp, sizeof(tempfp), "%setc\\%s", filepath, name);
 		if(access(tempfp, mode) == 0)
 			return tempfp;
-		snprintf(tempfp, sizeof(tempfp), "%slib\\%s", filepath, name);
+		Snprintf(tempfp, sizeof(tempfp), "%slib\\%s", filepath, name);
 		if(access(tempfp, mode) == 0)
 			return tempfp;
 	}
 #else
-	snprintf(tempfp, sizeof(tempfp), "/usr/lib/gridlabd/%s", name);
+	Snprintf(tempfp, sizeof(tempfp), "/usr/lib/gridlabd/%s", name);
 	if(access(tempfp, mode) == 0)
 		return tempfp;
-	snprintf(tempfp, sizeof(tempfp), "/usr/etc/gridlabd/%s", name);
+	Snprintf(tempfp, sizeof(tempfp), "/usr/etc/gridlabd/%s", name);
 	if(access(tempfp, mode) == 0)
 		return tempfp;
 #endif
