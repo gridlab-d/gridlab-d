@@ -79,7 +79,7 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	}
 	else if (strcmp(global_environment,"X11")==0)
 	{
-#ifndef WIN32
+#ifdef X11
 		xstart();
 		return exec_start();
 #else
