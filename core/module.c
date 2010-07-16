@@ -9,6 +9,8 @@
 #if defined WIN32 && ! defined MINGW
 #include <io.h>
 #else
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 #include <math.h>
@@ -317,7 +319,21 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		tpath=pathname;
 	}
 	else
+	{
+#ifndef WIN32
+		/* if the path is a relative path */
+		struct stat buf;
+		if (tpath[0]!='/' && stat(tpath,&buf)==0) 
+		{
+			char buffer[1024];
+
+			/* add ./ to the beginning of the path */
+			sprintf(buffer,"./%s", tpath);
+			strcpy(tpath,buffer);
+		}
+#endif
 		output_verbose("full path to library '%s' is '%s'", file, tpath);
+	}
 
 	/* convert path delims based on OS preference */
 	for (p=strchr(tpath,from); p!=NULL; p=strchr(p,from))
