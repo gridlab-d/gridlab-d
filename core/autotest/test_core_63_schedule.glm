@@ -1,8 +1,4 @@
-// test_core_63_schedule.glm tests two to things. 
-// First, it tests to see if a 1 block 96 line schedule with 63 values will build with no errors. 
-// Second, it test to see whether the transform of the schedule puts the correct value in to base_power of the ZIPload object in the house.
-// The property, base_power, is asserted with a player file containing the same transformation values of the schedule shown.
-// Andy Fisher
+
 
 #set minimum_timestep=1;
 
@@ -116,8 +112,8 @@ schedule zip_power {
 		45-59 22 * * * 89.0476;
 		0-14 23 * * * 89.3651;
 		15-29 23 * * * 89.3651;
-		30-44 23 * * * 89.6825;
-		45-59 23 * * * 89.6825;
+//		30-44 23 * * * 89.6825;
+//		45-59 23 * * * 89.6825;
 }
 
 	
@@ -127,9 +123,21 @@ object triplex_meter {
 	phases AS;
 	nominal_voltage 120;
 	object house {
+		system_mode OFF;
+		auxiliary_strategy DEADBAND;
+		auxiliary_system_type NONE;
+		heating_system_type RESISTANCE;
+		cooling_system_type ELECTRIC;
+		air_temperature 60.0;
+		mass_temperature 60.2;
+		heating_setpoint 70;
+		cooling_setpoint 75;
+		number_of_stories 2;
+		window_wall_ratio 0.07;
+		heating_COP 1.00;
 		object ZIPload {
 			heat_fraction 1;
-			base_power zip_power*1+1;		
+			base_power zip_power*1;		
 			power_pf 1;
 			power_fraction 1;
 			current_pf 0;
@@ -148,10 +156,10 @@ object triplex_meter {
 				within 1e-4;
 				object player{
 					property value;
-					file "../test_core_63_schedule.player";
-					loop 1;
+					file "test_core_63_schedule.player";
 				};
 			};
 		};
 	};
 }
+ 	  	 
