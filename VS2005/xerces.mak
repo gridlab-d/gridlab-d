@@ -3,8 +3,8 @@ WORKDIR=..\third_party
 XERCES=xerces-c-src_2_8_0
 
 all: $(WORKDIR)\$(XERCES)\credits.txt
-	"$(VCTOOLSDIR)vcbuild.exe" /nologo /useenv /platform:$(PLATFORM) xerces-lib.vcproj $(CONFIG)
-#	msbuild.exe /nologo /t:Build /p:Platform=$(PLATFORM),Configuration=$(CONFIG) xerces-lib.vcproj
+#	"$(VCTOOLSDIR)vcbuild.exe" /nologo /useenv /platform:$(PLATFORM) xerces-lib.vcproj $(CONFIG)
+	msbuild.exe /nologo /t:Build /p:Platform=$(PLATFORM),Configuration=$(CONFIG) xerces-lib.vcproj
 
 clean:
 	"$(VCTOOLSDIR)vcbuild.exe" /clean /nologo /platform:$(PLATFORM) xerces-lib.vcproj $(CONFIG)
