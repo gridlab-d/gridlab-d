@@ -273,6 +273,20 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			global_compileonly = !global_compileonly;
 		else if (strcmp(*argv,"--license")==0)
 			legal_license();
+		else if (strcmp(*argv,"--server_portnum")==0 || strcmp(*argv,"-P")==0)
+		{
+			if (argc-1>0)
+				global_server_portnum = (argc--,atoi(*++argv));
+			else
+			{
+				output_fatal("missing server port number");
+				/*	TROUBLESHOOT
+					The <b>-P</b> or <b>--server_portnum</b> command line directive
+					was not followed by a valid number.  The correct syntax is
+					<b>-P <i>number</i></b> or <b>--server_portnum <i>number</i></b>.
+				 */
+			}
+		}
 		else if (strcmp(*argv, "-V")==0 ||strcmp(*argv, "--version")==0)
 		{
 			char *buildinfo = strstr(BUILD,":");

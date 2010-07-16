@@ -16,7 +16,6 @@
 #include <pthread.h>
 
 #define MAXSTR		1024		// maximum string length
-#define PORTNUM		80		// default port (httpd port)
 
 void server_request(int);	// Function to handle clients' request(s)
 
@@ -51,7 +50,7 @@ void *server_routine(int sockfd)
 
 STATUS server_startup(int argc, char *argv[])
 {
-	int portNumber = PORTNUM;
+	int portNumber = global_server_portnum;
 	int sockfd,childpid;
 	struct sockaddr_in serv_addr;
 	int status;

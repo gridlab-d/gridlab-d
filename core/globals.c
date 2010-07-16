@@ -88,7 +88,8 @@ static struct s_varmap {
 #endif
 	{"streaming_io",PT_int32, &global_streaming_io_enabled, PA_PROTECTED},
 	{"compileonly",PT_int32, &global_compileonly, PA_PROTECTED},
-	{"relax_naming_rules",PT_int32,&global_relax_naming_rules, PA_PUBLIC}
+	{"relax_naming_rules",PT_int32,&global_relax_naming_rules, PA_PUBLIC},
+	{"server_portnum",PT_int32,&global_server_portnum, PA_PUBLIC},
 	/* add new global variables here */
 };
 
