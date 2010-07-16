@@ -1282,6 +1282,12 @@ char *find_file(char *name, /**< the name of the file to find */
 #	define pathsep "/"
 #endif
 
+	if(path == 0){
+		glpath = getenv("GLPATH");
+	} else {
+		glpath = path;
+	}
+
 	/*
 	CAVEAT
 		Access() is a potential security hole and should never be used.
@@ -1293,14 +1299,16 @@ char *find_file(char *name, /**< the name of the file to find */
 	}
 
 	/* locate unit file on GLPATH if not found locally */
-	strncpy(envbuf, glpath, sizeof(envbuf));
-	dir = strtok(envbuf, delim);
-	while (dir)
-	{
-		Snprintf(filepath, sizeof(filepath), "%s%s%s", dir, pathsep, name);
-		if (!access(filepath,mode))
-			return filepath;
-		dir = strtok(NULL, delim);
+	if(glpath != 0){
+		strncpy(envbuf, glpath, sizeof(envbuf));
+		dir = strtok(envbuf, delim);
+		while (dir)
+		{
+			Snprintf(filepath, sizeof(filepath), "%s%s%s", dir, pathsep, name);
+			if (!access(filepath,mode))
+				return filepath;
+			dir = strtok(NULL, delim);
+		}
 	}
 
 #ifdef WIN32
