@@ -159,9 +159,7 @@ typedef struct s_callbacks {
 		char *(*getvar)(char *name, char *buffer, int size);
 		GLOBALVAR *(*find)(char *name);
 	} global;
-#ifndef NOLOCKS
 	int64 *lock_count, *lock_spin;
-#endif
 	struct {
 		char *(*find_file)(char *name, char *path, int mode);
 	} file;
