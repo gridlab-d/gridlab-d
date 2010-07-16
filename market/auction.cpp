@@ -502,7 +502,7 @@ int auction::update_statistics(){
 			stop = price_index - 1;
 		}
 		//start = (unsigned int)((history_count + stop - sample_need + 1) % history_count);
-		start = (unsigned int)((history_count + stop - sample_need) % history_count);
+		start = (unsigned int)((history_count + stop - sample_need - 1) % history_count); // one off for initial period delay
 		for(i = 0; i < sample_need; ++i){
 			idx = (start + i + history_count) % history_count;
 			mean += new_prices[idx];
@@ -512,8 +512,9 @@ int auction::update_statistics(){
 			current->value = mean;
 		} else if(current->stat_type == SY_STDEV){
 			double x = 0.0;
-			if(sample_need > total_samples){
-				//	still in initial period, don't update
+			if(sample_need + (current->stat_mode == ST_PAST ? 1 : 0) > total_samples){ // extra sample for 'past' values
+				//	still in initial period, use init_stdev
+				current->value = init_stdev;
 			} else {
 				stdev = 0.0;
 				for(i = 0; i < sample_need; ++i){
@@ -635,7 +636,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	}
 	// valid, time-applicable data
 	// ~ copy current data to past_frame
-	memcpy(&past_frame, &current_frame, latency_stride);
+	memcpy(&past_frame, &current_frame, sizeof(MARKETFRAME)); // not copying lagging stats
 	// ~ copy new data in
 	current_frame.market_id = frame->market_id;
 	current_frame.start_time = frame->start_time;
@@ -1308,7 +1309,7 @@ void auction::clear_market(void)
 	} else {
 		STATISTIC *stat = 0;
 		OBJECT *obj = OBJECTHDR(this);
-		memcpy(&past_frame, &current_frame, latency_stride);
+		memcpy(&past_frame, &current_frame, sizeof(MARKETFRAME)); // just the frame
 		// ~ copy new data in
 		current_frame.market_id = cleared_frame.market_id;
 		current_frame.start_time = cleared_frame.start_time;
