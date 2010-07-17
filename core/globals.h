@@ -98,7 +98,7 @@ GLOBAL int global_process_id INIT(0); /**< the main process id */
 GLOBAL char global_execname[1024] INIT(""); /**< the main program full path */
 GLOBAL char global_tmp[1024] /**< location for temp files */
 #ifdef WIN32
-							INIT("c:/temp"); 
+							INIT("C:\\WINDOWS\\TEMP"); 
 #else
 							INIT("/tmp"); 
 #endif

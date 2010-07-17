@@ -132,6 +132,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #include "config.h"
 #else // not a build using automake
 #define DLEXT ".dll"
+#define REALTIME_LDFLAGS "-export-all-symbols"
 #endif // HAVE_CONFIG_H
 
 #include <stdlib.h>
@@ -139,6 +140,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #include <string.h>
 #include <ctype.h>
 #include <float.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
@@ -156,6 +158,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #endif
 
 #ifdef WIN32
+#include <io.h>
 #include <process.h>
 typedef struct _stat STAT;
 #define FSTAT _fstat
@@ -459,6 +462,65 @@ static void reset_line(FILE *fp, char *file)
 		write_file(fp,"#line %s \"%s\"\n", outlinenum,forward_slashes(file));
 }
 
+// Recursively make directories if they don't exist
+static int mkdirs(char *path)
+{
+	int rc;
+	struct stat st;
+
+#ifdef WIN32
+#	define PATHSEP '\\'
+#	define mkdir _mkdir
+#	define access _access
+#else
+#	define PATHSEP '/'
+#endif
+
+	if (!path) {
+		errno = EINVAL;
+		return -1;
+	}
+	if ((rc = access(path, F_OK)) && errno == ENOENT) {
+		// path doesn't exist
+		char *pos, *end, *tmp;
+		output_verbose("creating directory '%s'", path);
+		if (!(tmp = (char *) malloc(strlen(path) + 1))) {
+			errno = ENOMEM;
+			output_fatal("%s", strerror(errno));
+			return -1;
+		}
+		strcpy(tmp, path);
+		end = tmp + strlen(tmp);
+		// trim off components to find the shortest path that exists
+		for (pos = end - 1; pos > tmp; pos--) {
+			if (*pos == PATHSEP) {
+				*pos = '\0';
+				if (!(rc = access(tmp, F_OK)))
+					break;
+				if (errno != ENOENT) {
+					output_error("%s: %s", tmp, strerror(errno));
+					free(tmp);
+					return -1;
+				}
+			}
+		}
+		// add back components creating them as we go
+		for (; pos < end; pos++) {
+			if (*pos == '\0') {
+				*pos = PATHSEP;
+				if ((rc = mkdir(tmp, 0775)) && errno != EEXIST) {
+					output_error("%s: %s", tmp, strerror(errno));
+					free(tmp);
+					return -1;
+				}
+			}
+		}
+		free(tmp);
+		return 0;
+	}
+	return rc;
+}
+
 static STATUS compile_code(CLASS *oclass, int64 functions)
 {
 	char include_file_str[1024];
@@ -505,6 +567,8 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		global_getvar("tmp",tmp,sizeof(tmp));
 		if (strlen(tmp)>0 && tmp[strlen(tmp)-1]!='/' && tmp[strlen(tmp)-1]!='\\')
 			strcat(tmp,"/");
+		if (mkdirs(tmp))
+			return FAILED;
 		sprintf(cfile,"%s%s.cpp", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(ofile,"%s%s.o", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(file,"%s%s", (use_msvc||global_gdb||global_gdb_window)?"":tmp, oclass->name);
@@ -611,12 +675,8 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 #endif
 
 				char execstr[1024];
-				char exportsyms[64]="-export-all-symbols";
+				char exportsyms[64] = REALTIME_LDFLAGS;
 
-				/* Mac OS X uses different exportsyms command */
-				if (strcmp(DLEXT,".dylib")==0)
-					strcpy(exportsyms,"-dynamiclib");
-				
 				sprintf(execstr, "%s %s %s -I \"%s\" -c \"%s\" -o \"%s\"", getenv("CXX")?getenv("CXX"):"g++", getenv("CXXFLAGS")?getenv("CXXFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", global_include, cfile, ofile);
 				output_verbose("compile string: \"%s\"", execstr);
 				//if (exec("g++ %s -I\"%s\" -c \"%s\" -o \"%s\"", global_debug_output?"-g -O0":"", global_include, cfile, ofile)==FAILED)

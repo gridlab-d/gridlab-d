@@ -64,10 +64,13 @@ if [[ "$optimization" ]]; then
 	GLFLAGS="$GLFLAGS -O$optimization"
 fi
 
+GLRT_LDFLAGS="-export-all-symbols"
+
 case "$host_os" in
 darwin*)
      export LIBTOOL=`which glibtool`
      export LIBTOOLIZE=`which glibtoolize`
+     GLRT_LDFLAGS="-bundle"
      LIBEXT=.so
 	 march=""
      ;;
@@ -97,8 +100,9 @@ CPPFLAGS="$CPPFLAGS $GLFLAGS $march"
 CXXFLAGS="$CXXFLAGS $GLFLAGS $march"
 CFLAGS="$CFLAGS $GLFLAGS $march"
 
+AC_DEFINE_UNQUOTED([REALTIME_LDFLAGS], ["$GLRT_LDFLAGS"], [Realtime linker flags])
 AC_SUBST(LIBEXT)
-AC_DEFINE_UNQUOTED([DLEXT], ["$LIBEXT"], "Dynamic library extension")
+AC_DEFINE_UNQUOTED([DLEXT], ["$LIBEXT"], [Dynamic library extension])
 
 # Checks for programs.
 AC_PROG_CXX

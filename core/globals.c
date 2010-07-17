@@ -10,6 +10,8 @@
  @{
  **/
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include "output.h"
 #include "globals.h"
@@ -93,12 +95,55 @@ static struct s_varmap {
 	/* add new global variables here */
 };
 
+#ifdef WIN32
+#	define TMP "C:\\WINDOWS\\TEMP"
+#	define PATHSEP "\\"
+#	define HOMEVAR "HOMEPATH"
+#	define USERVAR "USERNAME"
+#	define snprintf _snprintf
+#else
+#	define TMP "/tmp"
+#	define PATHSEP "/"
+#	define HOMEVAR "HOME"
+#	define USERVAR "USER"
+#endif
+
+static void buildtmp(void)
+{
+	char *tmp, *home, *user;
+
+	if ((tmp = getenv("GLTEMP"))) {
+		snprintf(global_tmp, sizeof(global_tmp), "%s", tmp);
+		return;
+	}
+	if (home = getenv(HOMEVAR)) {
+#ifdef WIN32
+		char *drive;
+		if (!(drive = getenv("HOMEDRIVE")))
+			drive = "";
+		snprintf(global_tmp, sizeof(global_tmp),
+				"%s%s\\Local Settings\\Temp\\gridlabd", drive, home);
+#else
+		snprintf(global_tmp, sizeof(global_tmp), "%s/.gridlabd/tmp", home);
+#endif
+		return;
+	}
+	if (!(tmp = getenv("TMP")) && !(tmp = getenv("TEMP")))
+		tmp = TMP;
+	user = getenv(USERVAR);
+	snprintf(global_tmp, sizeof(global_tmp), "%s%s%s" PATHSEP "gridlabd",
+			tmp, (user ? PATHSEP : ""), (user ? user : ""));
+}
+
 /** Register global variables
 	@return SUCCESS or FAILED
  **/
 STATUS global_init(void)
 {
 	unsigned int i;
+
+	buildtmp();
+
 	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++){
 		struct s_varmap *p = &(map[i]);
 		GLOBALVAR *var = global_create(p->name, p->type, p->addr, PT_ACCESS, p->access, NULL);

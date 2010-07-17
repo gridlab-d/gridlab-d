@@ -9,12 +9,9 @@
  **/
 
 #include <ctype.h>
-#if defined WIN32 || defined WIN64
-  #include <io.h>
-  #define Snprintf _snprintf
-#else
-  #include <unistd.h>
-  #define Snprintf snprintf
+#include <stdio.h>
+#ifdef WIN32
+#	define snprintf _snprintf
 #endif
 #include "globals.h"
 #include "output.h"
@@ -1304,7 +1301,7 @@ char *find_file(char *name, /**< the name of the file to find */
 		dir = strtok(envbuf, delim);
 		while (dir)
 		{
-			Snprintf(filepath, sizeof(filepath), "%s%s%s", dir, pathsep, name);
+			snprintf(filepath, sizeof(filepath), "%s%s%s", dir, pathsep, name);
 			if (!access(filepath,mode))
 				return filepath;
 			dir = strtok(NULL, delim);
@@ -1313,21 +1310,21 @@ char *find_file(char *name, /**< the name of the file to find */
 
 #ifdef WIN32
 	if(module_get_exe_path(filepath, 1024)){
-		Snprintf(tempfp, sizeof(tempfp), "%s%s", filepath, name);
+		snprintf(tempfp, sizeof(tempfp), "%s%s", filepath, name);
 		if(access(tempfp, mode) == 0)
 			return tempfp;
-		Snprintf(tempfp, sizeof(tempfp), "%setc\\%s", filepath, name);
+		snprintf(tempfp, sizeof(tempfp), "%setc\\%s", filepath, name);
 		if(access(tempfp, mode) == 0)
 			return tempfp;
-		Snprintf(tempfp, sizeof(tempfp), "%slib\\%s", filepath, name);
+		snprintf(tempfp, sizeof(tempfp), "%slib\\%s", filepath, name);
 		if(access(tempfp, mode) == 0)
 			return tempfp;
 	}
 #else
-	Snprintf(tempfp, sizeof(tempfp), "/usr/lib/gridlabd/%s", name);
+	snprintf(tempfp, sizeof(tempfp), "/usr/lib/gridlabd/%s", name);
 	if(access(tempfp, mode) == 0)
 		return tempfp;
-	Snprintf(tempfp, sizeof(tempfp), "/usr/etc/gridlabd/%s", name);
+	snprintf(tempfp, sizeof(tempfp), "/usr/etc/gridlabd/%s", name);
 	if(access(tempfp, mode) == 0)
 		return tempfp;
 #endif
