@@ -27,6 +27,13 @@ AC_DISABLE_STATIC
 AC_PREFIX_DEFAULT([/usr])
 AC_CANONICAL_HOST
 
+if [[ -z "$docdir" ]]; then
+	if [[ -z "$datarootdir" ]]; then
+		AC_SUBST([datarootdir], [\${prefix}/share])
+	fi
+	AC_SUBST([docdir], [\${datarootdir}/doc/\${PACKAGE_TARNAME}])
+fi
+
 AC_ARG_ENABLE([debug],
 				  AS_HELP_STRING([--enable-debug],
 				  					  [turn on debugging @<:@default=yes@:>@]),
