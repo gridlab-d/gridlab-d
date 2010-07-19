@@ -10,7 +10,6 @@ residential_la_SOURCES =                       \
 	init.cpp                                    \
 	lights.cpp             lights.h             \
 	main.cpp                                    \
-	meter.h                                     \
 	microwave.cpp          microwave.h          \
 	occupantload.cpp       occupantload.h       \
 	plugload.cpp           plugload.h           \
