@@ -718,11 +718,20 @@ typedef enum {
 	RT_WEIBULL,		/**< Weibull distribution; double lambda, double k */
 } RANDOMTYPE; ///< The random distribution types
 
+/* object flags */
+#define OF_NONE		0x0000 /**< Object flag; none set */
+#define OF_HASPLC	0x0001 /**< Object flag; external PLC is attached, disables local PLC */
+#define OF_LOCKED	0x0002 /**< Object flag; data write pending, reread recommended after lock clears */
+#define OF_RECALC	0x0008 /**< Object flag; recalculation of derived values is needed */
+#define OF_FOREIGN	0x0010 /**< Object flag; indicates that object was created in a DLL and memory cannot be freed by core */
+#define OF_SKIPSAFE	0x0020 /**< Object flag; indicates that skipping updates is safe */
+#define OF_RERANK	0x4000 /**< Internal use only */
+
 /******************************************************************************
  * Memory locking support
  */
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(__GNUC__)
 	#include <intrin.h>
 	#pragma intrinsic(_InterlockedCompareExchange)
 	#define cmpxchg(dest, xchg, comp) ((unsigned long) _InterlockedCompareExchange((long *) dest, (long) xchg, (long) comp))
@@ -732,8 +741,11 @@ typedef enum {
 	#define cmpxchg(dest, xchg, comp) (OSAtomicCompareAndSwapLong((long) comp, (long) xchg, (long *) dest) ? xchg : comp)
 	#define HAVE_CMPXCHG
 #else
+#ifdef _GCC_HAVE_SYNC_COMPARE_AND_SWAP_16
 	#define cmpxchg(dest, xchg, comp) __sync_val_compare_and_swap(dest, comp, xchg)
 	#define HAVE_CMPXCHG
+#endif
+
 #endif /* defined(WIN32) */
 
 #ifndef HAVE_CMPXCHG
@@ -741,11 +753,12 @@ typedef enum {
 #endif /* !defined(CMPXCHG) */
 
 #ifdef NOLOCKS
-	#define LOCK(flags)
-	#define UNLOCK(flags)
-	#define LOCK_OBJECT(obj)
-	#define UNLOCK_OBJECT(obj)
-	#define LOCKED(obj, command)
+	// this is meant to catch cases where the installed compiler does not support locking
+	#define LOCK(flags) ERROR_LOCKS_NOT_SUPPORTED_BY_THE_SPECIFIED_MACHINE_ARCHITECTURE
+	#define UNLOCK(flags) ERROR_LOCKS_NOT_SUPPORTED_BY_THE_SPECIFIED_MACHINE_ARCHITECTURE
+	#define LOCK_OBJECT(obj) ERROR_LOCKS_NOT_SUPPORTED_BY_THE_SPECIFIED_MACHINE_ARCHITECTURE
+	#define UNLOCK_OBJECT(obj) ERROR_LOCKS_NOT_SUPPORTED_BY_THE_SPECIFIED_MACHINE_ARCHITECTURE
+	#define LOCKED(obj, command) ERROR_LOCKS_NOT_SUPPORTED_BY_THE_SPECIFIED_MACHINE_ARCHITECTURE
 #else /* !defined(NOLOCKS) */
 
 static __inline int lock(unsigned long *flags)

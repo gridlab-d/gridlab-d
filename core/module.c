@@ -347,7 +347,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		output_error("%s(%d): module '%s' load failed - %s (error code %d)", __FILE__, __LINE__, file, strerror(errno), GetLastError());
 #else
 		output_error("%s(%d): module '%s' load failed - %s", __FILE__, __LINE__, file, dlerror());
-		output_debug("%s(%d): path to module is '%s'", tpath);
+		output_debug("%s(%d): path to module is '%s'", __FILE__, __LINE__, tpath);
 #endif
 		dlload_error(pathname);
 		errno = ENOENT;
