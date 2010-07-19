@@ -9,11 +9,11 @@ SUBDIRS = third_party/CBLAS third_party/superLU_MT core assert climate \
 
 include aminclude.am
 
-distdir = $(PACKAGE)-src-$(VERSION)
+distdir = $(PACKAGE)_$(VERSION)
 
 dist_doc_DATA = COPYRIGHT LICENSE
 
-EXTRA_DIST = debian doxygen/*.* gridlabd.spec VERSION
+EXTRA_DIST = debian doxygen/*.* gridlabd.spec VERSION README-LINUX README-MACOSX
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)
@@ -29,16 +29,12 @@ clean-wc:
 validate: 
 	python validate.py
 
-update-deb-version:
-	@echo -e "gridlabd ($(VERSION)-1) unstable; urgency=low\n\n  * Version $(VERSION) release.\n\n -- GridLAB-D Team <gridlabd@pnl.gov> `date -R`\n" | cat -- - debian/changelog > debian/changelog.new
-	mv debian/changelog.new debian/changelog
-
-check-deb-version:
-	head -n 1 debian/changelog | grep '^gridlabd ($(VERSION)-1) unstable;' || $(MAKE) update-deb-version
-
-dist-deb: dist-gzip check-deb-version
-	ln -s $(distdir).tar.gz ../$(PACKAGE)_$(VERSION).orig.tar.gz
-	dpkg-buildpackage -tc
+dist-deb: distdir
+	echo -e "gridlabd ($(VERSION)-1) unstable; urgency=low\n\n  * Version $(VERSION) release.\n  * View recent changes at: https://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:RecentChanges\n\n -- GridLAB-D Team <gridlabd@pnl.gov> `date -R`\n" > $(distdir)/debian/changelog
+	ln -s $(distdir) $(distdir)-1
+	(cd $(distdir)-1 && dpkg-buildpackage -tc -us -uc)
+	rm -f $(distdir)-1
+	$(am__remove_distdir)
 
 dist-rpm: dist-gzip
 	rpmbuild -tb $(distdir).tar.gz

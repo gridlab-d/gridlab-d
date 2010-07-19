@@ -2,7 +2,7 @@ Source: gridlabd
 Section: non-free/science
 Priority: extra
 Maintainer: GridLAB-D Team <gridlabd@pnl.gov>
-Build-Depends: debhelper (>= 7), autotools-dev, libx11-dev, libxerces-c2-dev, libc6-dev
+Build-Depends: debhelper (>= 7), autotools-dev, libxerces-c2-dev, libc6-dev
 Standards-Version: 3.8.3
 Homepage: http://www.gridlabd.org/
 

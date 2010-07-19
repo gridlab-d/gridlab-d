@@ -56,7 +56,7 @@ gridlabd_bin_SOURCES = main.c build.h \
 	version.h \
 	# xcore.cpp xcore.h 
 EXTRA_gridlabd_bin_SOURCES = \
-	cmex.c cmex.h
+	cmex.c cmex.h xcore.cpp xcore.h
 BUILT_SOURCES = build.h
 CLEANFILES = build.h
 pkginclude_HEADERS = \

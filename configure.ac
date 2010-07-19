@@ -8,7 +8,7 @@ esyscmd([sh -c 'cat core/version.h | tr -d "\r" | while read DEFINE NAME VALUE E
 # Define M4 macros for version info
 define([pkgversion], esyscmd([sh -c ". ./version.sh; echo \$VERSION | tr -d '\n'"]))dnl
 define([pkgbranch], esyscmd([sh -c ". ./version.sh; echo \$BRANCH | tr -d '\n'"]))dnl
-define([svnversion], esyscmd([sh -c "svnversion | sed 's/^exported$/0/;s/[^A-Za-z0-9]/_/g' | tr -d '\n'"]))dnl
+define([svnversion], esyscmd([sh -c "svnversion | sed 's/^exported$/0/;s/[^A-Za-z0-9]/+/g' | tr -d '\n'"]))dnl
 # Export version info as autoconf variables
 AC_DEFINE(PACKAGE_BASEVERSION, [pkgversion], [Package Base Version])
 AC_DEFINE(PACKAGE_BRANCH, [pkgbranch], [Package Branch Name])
