@@ -11,9 +11,9 @@ include aminclude.am
 
 distdir = $(PACKAGE)-src-$(VERSION)
 
-dist_doc_DATA = BUILD COPYRIGHT LICENSE README-LINUX README-MACOSX
+dist_doc_DATA = COPYRIGHT LICENSE
 
-EXTRA_DIST = doxygen/*.* gridlabd.spec VERSION
+EXTRA_DIST = debian doxygen/*.* gridlabd.spec VERSION
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)
@@ -28,6 +28,17 @@ clean-wc:
 
 validate: 
 	python validate.py
+
+update-deb-version:
+	@echo -e "gridlabd ($(VERSION)-1) unstable; urgency=low\n\n  * Version $(VERSION) release.\n\n -- GridLAB-D Team <gridlabd@pnl.gov> `date -R`\n" | cat -- - debian/changelog > debian/changelog.new
+	mv debian/changelog.new debian/changelog
+
+check-deb-version:
+	head -n 1 debian/changelog | grep '^gridlabd ($(VERSION)-1) unstable;' || $(MAKE) update-deb-version
+
+dist-deb: dist-gzip check-deb-version
+	ln -s $(distdir).tar.gz ../$(PACKAGE)_$(VERSION).orig.tar.gz
+	dpkg-buildpackage -tc
 
 dist-rpm: dist-gzip
 	rpmbuild -tb $(distdir).tar.gz

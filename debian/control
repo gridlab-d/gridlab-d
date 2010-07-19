@@ -1,0 +1,41 @@
+Source: gridlabd
+Section: non-free/science
+Priority: extra
+Maintainer: GridLAB-D Team <gridlabd@pnl.gov>
+Build-Depends: debhelper (>= 7), autotools-dev, libx11-dev, libxerces-c2-dev, libc6-dev
+Standards-Version: 3.8.3
+Homepage: http://www.gridlabd.org/
+
+Package: gridlabd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: power distribution system simulator and analysis tool
+ GridLAB-D™ is a new power distribution system simulation and analysis tool
+ that provides valuable information to users who design and operate
+ distribution systems, and to utilities that wish to take advantage of the
+ latest energy technologies. It incorporates the most advanced modeling
+ techniques, with high-performance algorithms to deliver the best in end-use
+ modeling. GridLAB-D™ is coupled with distribution automation models and
+ software integration tools for users of many power system analysis tools.
+ .
+ GridLAB-D™ was developed by the U.S. Department of Energy (DOE) at Pacific
+ Northwest National Laboratory (PNNL), in collaboration with industry and
+ academia.
+
+Package: gridlabd-dev
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: power distribution system simulator and analysis tool
+ GridLAB-D™ is a new power distribution system simulation and analysis tool
+ that provides valuable information to users who design and operate
+ distribution systems, and to utilities that wish to take advantage of the
+ latest energy technologies. It incorporates the most advanced modeling
+ techniques, with high-performance algorithms to deliver the best in end-use
+ modeling. GridLAB-D™ is coupled with distribution automation models and
+ software integration tools for users of many power system analysis tools.
+ .
+ GridLAB-D™ was developed by the U.S. Department of Energy (DOE) at Pacific
+ Northwest National Laboratory (PNNL), in collaboration with industry and
+ academia.
+ .
+ This package contains the GridLAB-D development libraries.

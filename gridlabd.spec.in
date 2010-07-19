@@ -7,7 +7,7 @@ Group: Simulators
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: xerces-c-devel >= 2.8
 Requires: xerces-c >= 2.8
-Packager: Brandon Carpenter <brandon.carpenter@pnl.gov>
+Packager: GridLAB-D Team <gridlabd@pnl.gov>
 URL: http://www.gridlabd.org
 Source0: %{name}-src-%{version}.tar.gz
 
