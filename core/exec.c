@@ -925,7 +925,7 @@ STATUS exec_start(void)
 	//mc_end_time = GetMachineCycleCount();
 	//printf("%ld\n",(mc_end_time-mc_start_time));
 	end = clock();
-	printf("%f\n", (double)(end - start) / (double)CLOCKS_PER_SEC);
+	//printf("%f\n", (double)(end - start) / (double)CLOCKS_PER_SEC);
 
 	/* deallocate threadpool */
 	if (!global_debug_mode)
