@@ -64,6 +64,11 @@
 #include "loadshape.h"
 #include "enduse.h"
 #include "globals.h"
+#include "math.h"
+#include "time.h"
+#include "lock.h"
+
+#include "pthread.h"
 
 /** The main system initialization sequence
 	@return 1 on success, 0 on failure
@@ -101,6 +106,21 @@ int exec_init()
 	return 1;
 }
 
+//sjin: GetMachineCycleCount
+/*int mc_start_time;
+int mc_end_time;
+int GetMachineCycleCount(void)
+{      
+   __int64 cycles;
+   _asm rdtsc; // won't work on 486 or below - only pentium or above
+
+   _asm lea ebx,cycles;
+   _asm mov [ebx],eax;
+   _asm mov [ebx+4],edx;
+   return cycles;
+}*/
+clock_t start, end;
+
 #ifndef _MAX_PATH
 #define _MAX_PATH 1024
 #endif
@@ -120,6 +140,14 @@ int64 lock_count = 0, lock_spin = 0;
 #endif
 
 extern int stop_now;
+
+//sjin: struct for pthread_create arguments
+struct arg_data {
+	int thread;
+	void *item;
+	int incr;
+};
+struct arg_data arg_data_array[2];
 
 INDEX **exec_getranks(void)
 {
@@ -152,8 +180,11 @@ static STATUS setup_ranks(void)
 				continue;
 
 			/* add this object to the ranks for this passconfig */
-			if (index_insert(ranks[i],obj,obj->rank)==FAILED)
+			if (index_insert(ranks[i],obj,obj->rank)==FAILED) 
 				return FAILED;
+			//sjin: print out obj id, pass, rank information
+			//else 
+			//	printf("obj[%d]: pass = %d, rank = %d\n", obj->id, passtype[i], obj->rank);
 		}
 
 		if (global_debug_mode==0 && global_nolocks==0)
@@ -179,11 +210,121 @@ static STATUS show_progress(void)
 	return SUCCESS;
 }
 
-static void do_object_sync(int thread, void *item)
+//sjin: remove old do_object_sync of threadpool
+//static void do_object_sync(int thread, void *item)
+//{
+//	struct sync_data *data = &thread_data->data[thread];
+//	OBJECT *obj = (OBJECT *) item;
+//	TIMESTAMP this_t;
+//
+//	/* check in and out-of-service dates */
+//	if (global_clock<obj->in_svc)
+//		this_t = obj->in_svc; /* yet to go in service */
+//	else if (global_clock<=obj->out_svc)
+//	{
+//		this_t = object_sync(obj, global_clock, passtype[pass]);
+//#ifdef _DEBUG
+//		/* sync dumpfile */
+//		if (global_sync_dumpfile[0]!='\0')
+//		{
+//			static FILE *fp = NULL;
+//			if (fp==NULL)
+//			{
+//				static int tried = 0;
+//				if (!tried)
+//				{
+//					fp = fopen(global_sync_dumpfile,"wt");
+//					if (fp==NULL)
+//						output_error("sync_dumpfile '%s' is not writeable", global_sync_dumpfile);
+//					else
+//						fprintf(fp,"timestamp,pass,iteration,thread,object,sync\n");	
+//					tried = 1;
+//				}
+//			}
+//			if (fp!=NULL)
+//			{
+//				static int64 lasttime = 0;
+//				static char lastdate[64]="";
+//				char syncdate[64]="";
+//				static char *passname;
+//				static int lastpass = -1;
+//				char objname[1024];
+//				if (lastpass!=passtype[pass])
+//				{
+//					lastpass=passtype[pass];
+//					switch(lastpass) {
+//					case PC_PRETOPDOWN: passname = "PRESYNC"; break;
+//					case PC_BOTTOMUP: passname = "SYNC"; break;
+//					case PC_POSTTOPDOWN: passname = "POSTSYNC"; break;
+//					default: passname = "UNKNOWN"; break;
+//					}
+//				}
+//				if (lasttime!=global_clock)
+//				{
+//					lasttime = global_clock;
+//					convert_from_timestamp(global_clock,lastdate,sizeof(lastdate));
+//				}
+//				convert_from_timestamp(this_t<0?-this_t:this_t,syncdate,sizeof(syncdate));
+//				if (obj->name==NULL) sprintf(objname,"%s:%d", obj->oclass->name, obj->id);
+//				else strcpy(objname,obj->name);
+//				fprintf(fp,"%s,%s,%d,%d,%s,%s\n",lastdate,passname,global_iteration_limit-iteration_counter,thread,objname,syncdate);
+//			}
+//		}
+//#endif
+//	}
+//	else 
+//		this_t = TS_NEVER; /* already out of service */
+//
+//	/* check for "soft" event (events that are ignored when stopping) */
+//	if (this_t < -1)
+//		this_t = -this_t;
+//	else if (this_t != TS_NEVER)
+//		data->hard_event++;  /* this counts the number of hard events */
+//
+//	/* check for stopped clock */
+//	if (this_t < global_clock) {
+//		output_error("%s: object %s stopped its clock (exec)!", simtime(), object_name(obj));
+//		/* TROUBLESHOOT
+//			This indicates that one of the objects in the simulator has encountered a
+//			state where it cannot calculate the time to the next state.  This usually
+//			is caused by a bug in the module that implements that object's class.
+//		 */
+//		data->status = FAILED;
+//	} else {
+//		/* check for iteration limit approach */
+//		if (iteration_counter == 2 && this_t == global_clock) {
+//			output_verbose("%s: object %s iteration limit imminent",
+//								simtime(), object_name(obj));
+//		}
+//		else if (iteration_counter == 1 && this_t == global_clock) {
+//			output_error("convergence iteration limit reached for object %s:%d", obj->oclass->name, obj->id);
+//			/* TROUBLESHOOT
+//				This indicates that the core's solver was unable to determine
+//				a steady state for all objects for any time horizon.  Identify
+//				the object that is causing the convergence problem and contact
+//				the developer of the module that implements that object's class.
+//			 */
+//		}
+//
+//		/* manage minimum timestep */
+//		if (global_minimum_timestep>1 && this_t>global_clock && this_t<TS_NEVER)
+//			this_t = (((this_t-1)/global_minimum_timestep)+1)*global_minimum_timestep;
+//
+//		/* if this event precedes next step, next step is now this event */
+//		if (data->step_to > this_t)
+//			data->step_to = this_t;
+//	}
+//}
+
+//sjin: implement new ss_do_object_sync for pthreads
+static void ss_do_object_sync(int thread, void *item)
 {
 	struct sync_data *data = &thread_data->data[thread];
 	OBJECT *obj = (OBJECT *) item;
 	TIMESTAMP this_t;
+	
+	//printf("thread %d\t%d\t%s\n", thread, obj->rank, obj->name);
+	//this_t = object_sync(obj, global_clock, passtype[pass]);
 
 	/* check in and out-of-service dates */
 	if (global_clock<obj->in_svc)
@@ -279,8 +420,32 @@ static void do_object_sync(int thread, void *item)
 			this_t = (((this_t-1)/global_minimum_timestep)+1)*global_minimum_timestep;
 
 		/* if this event precedes next step, next step is now this event */
-		if (data->step_to > this_t)
+		if (data->step_to > this_t) {
+			//LOCK(data);
 			data->step_to = this_t;
+			//UNLOCK(data);
+		}
+		//printf("data->step_to=%d, this_t=%d\n", data->step_to, this_t);
+	}
+}
+
+//sjin: implement new ss_do_object_sync_list for pthreads
+static void ss_do_object_sync_list(void *threadarg)
+{
+	LISTITEM *ptr;
+	int iPtr;
+
+	struct arg_data *mydata = (struct arg_data *) threadarg;
+	int thread = mydata->thread;
+	void *item = mydata->item;
+	int incr = mydata->incr;
+
+	iPtr = 0;
+	for (ptr = item; ptr != NULL; ptr=ptr->next) {
+		if (iPtr < incr) {
+			ss_do_object_sync(thread, ptr->data);
+			iPtr++;
+		}
 	}
 }
 
@@ -420,12 +585,22 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
  **/
 STATUS exec_start(void)
 {
-	threadpool_t threadpool = INVALID_THREADPOOL;
+	//sjin: remove threadpool
+	//threadpool_t threadpool = INVALID_THREADPOOL;
 	struct sync_data sync = {TS_NEVER,0,SUCCESS};
 	TIMESTAMP start_time = global_clock;
 	int64 passes = 0, tsteps = 0;
 	time_t started_at = realtime_now();
-	int j;
+	int j, k;
+
+	//sjin: implement pthreads
+	pthread_t *thread_id;
+	//sjin: add some variables for pthread implementation
+	LISTITEM *ptr;
+	int iPtr, incr;
+
+	//sjin
+	//OBJECT *obj;
 
 	/* perform object initialization */
 	if (init_all() == FAILED)
@@ -451,6 +626,10 @@ STATUS exec_start(void)
 		return FAILED;
 	}
 
+	//sjin: print out obj information
+	//for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
+	//	printf("obj id: %d, rank = %d\n", obj->id, obj->rank);
+
 	/* run checks */
 	if (global_runchecks)
 		return module_checkall();
@@ -473,17 +652,18 @@ STATUS exec_start(void)
 			global_threadcount = processor_count();
 		output_verbose("detected %d processor(s)", processor_count());
 
-		/* allocate and initialize threadpool */
-		threadpool = tp_alloc(&global_threadcount, do_object_sync);
-		if (threadpool == INVALID_THREADPOOL) {
-			output_error("threadpool creation failed");
-			/* TROUBLESHOOT
-				The multithreading setup procedure failed.  This is usually preceded 
-				by a more detailed message that explains why it failed.  Follow
-				the guidance for that message and try again.
-			 */
-			return FAILED;
-		}
+		//sjin: remove threadpool
+		///* allocate and initialize threadpool */
+		//threadpool = tp_alloc(&global_threadcount, do_object_sync);
+		//if (threadpool == INVALID_THREADPOOL) {
+		//	output_error("threadpool creation failed");
+		//	/* TROUBLESHOOT
+		//		The multithreading setup procedure failed.  This is usually preceded 
+		//		by a more detailed message that explains why it failed.  Follow
+		//		the guidance for that message and try again.
+		//	 */
+		//	return FAILED;
+		//}
 		output_verbose("using %d helper thread(s)", global_threadcount);
 
 		/* allocate thread synchronization data */
@@ -499,7 +679,7 @@ STATUS exec_start(void)
 		}
 		thread_data->count = global_threadcount;
 		thread_data->data = (struct sync_data *) (thread_data + 1);
-		for (j = 0; j < thread_data->count; j++)
+		for (j = 0; j < thread_data->count; j++) 
 			thread_data->data[j].status = SUCCESS;
 	}
 	else
@@ -526,6 +706,10 @@ STATUS exec_start(void)
 	signal(SIGABRT, exec_sighandler);
 	signal(SIGINT, exec_sighandler);
 	signal(SIGTERM, exec_sighandler);
+
+	//sjin: GetMachineCycleCount
+	//mc_start_time = GetMachineCycleCount();
+	start = clock();
 
 	/* main loop exception handler */
 	TRY {
@@ -594,7 +778,59 @@ STATUS exec_start(void)
 					}
 					else
 					{
-						tp_exec(threadpool, ranks[pass]->ordinal[i]);
+						//sjin: remove threadpool
+						//tp_exec(threadpool, ranks[pass]->ordinal[i]);
+
+						//sjin: implement pthreads
+						incr = ceil((float) ranks[pass]->ordinal[i]->size / global_threadcount);
+						//printf("pass %d, incr = %d, size = %d\n", pass, incr, ranks[pass]->ordinal[i]->size);
+						thread_id = (pthread_t *) malloc(global_threadcount * sizeof(pthread_t));
+						/* if the number of objects is less than or equal to the number of threads, each thread process one object */
+						if (incr <= 1) {
+							//printf("incr = %d\n", incr);
+							iPtr = -1; 
+							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr = ptr->next) {
+								iPtr ++;
+								//printf("<= %d: ranks[%d]->ordinal[%d]->size = %d\n", iPtr, pass, i, ranks[pass]->ordinal[i]->size);
+								arg_data_array[iPtr].thread = iPtr;
+								arg_data_array[iPtr].item = ptr;
+								arg_data_array[iPtr].incr = 1;
+								pthread_create(&thread_id[iPtr], NULL, ss_do_object_sync_list, (void *) &arg_data_array[iPtr]);
+							}
+							for (j = 0; j < iPtr+1; j++) 
+								pthread_join(thread_id[j], NULL);
+						/* if the number of objects is greater than the number of threads, each thread process the same number of 
+						   objects (incr), except that the last thread may process less objects */
+						} else {
+							//printf("incr = %d\n", incr);
+							iPtr = -1;
+							j = 0;
+							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr = ptr->next) {
+								iPtr ++;
+								if (iPtr % incr == 0) {
+									//printf("> thread %d, start from object %d: ranks[%d]->ordinal[%d]->size = %d\n", j, iPtr, pass, i, ranks[pass]->ordinal[i]->size);
+									arg_data_array[j].thread = j;
+									arg_data_array[j].item = ptr;
+									arg_data_array[j].incr = incr;
+									pthread_create(&thread_id[j], NULL, ss_do_object_sync_list, (void *) &arg_data_array[j]);
+									j++;
+								}
+							}
+							for (k = 0; k < j; k++) {
+								//printf("k=%d, j=%d\n",k,j);
+								pthread_join(thread_id[k], NULL);
+								//printf("done!\n");
+							}
+						}
+
+						//if (iPtr+1 < global_threadcount) 
+						/*if (incr <= 1) 
+							for (j = 0; j < iPtr+1; j++) 
+								pthread_join(thread_id[j], NULL);
+						else
+							for (j = 0; j < global_threadcount; j++) 
+								pthread_join(thread_id[j], NULL);*/
+						//sjin: end of implementing pthreads
 
 						for (j = 0; j < thread_data->count; j++) {
 							if (thread_data->data[j].status == FAILED) {
@@ -685,10 +921,17 @@ STATUS exec_start(void)
 	}
 	ENDCATCH
 
+	//sjin: GetMachineCycleCount
+	//mc_end_time = GetMachineCycleCount();
+	//printf("%ld\n",(mc_end_time-mc_start_time));
+	end = clock();
+	printf("%f\n", (double)(end - start) / (double)CLOCKS_PER_SEC);
+
 	/* deallocate threadpool */
 	if (!global_debug_mode)
 	{
-		tp_release(threadpool);
+		//sjin: remove threadpool
+		//tp_release(threadpool);
 		free(thread_data);
 
 #ifdef NEVER

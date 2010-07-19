@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\third_party\cppunit-1.12.0\include;..\third_party\xerces-c-src_2_8_0\src"
+				AdditionalIncludeDirectories="..\third_party\cppunit-1.12.0\include;..\third_party\xerces-c-src_2_8_0\src;..\pthreads;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;PAUSE_AT_EXIT;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -69,10 +69,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="xerces-c_2D.lib user32.lib"
+				AdditionalDependencies="xerces-c_2D.lib user32.lib pthreadVC2.lib"
 				OutputFile="$(OutDir)\$(SolutionName).exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="$(OutDir)"
+				AdditionalLibraryDirectories="$(OutDir);..\pthreads"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -221,7 +221,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\third_party\cppunit-1.12.0\include;..\third_party\xerces-c-src_2_8_0\src"
+				AdditionalIncludeDirectories="..\third_party\cppunit-1.12.0\include;..\third_party\xerces-c-src_2_8_0\src;..\pthreads"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -241,10 +241,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="xerces-c_2.lib"
+				AdditionalDependencies="xerces-c_2.lib pthreadVC2.lib"
 				OutputFile="$(OutDir)\$(SolutionName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(OutDir)"
+				AdditionalLibraryDirectories="$(OutDir);..\pthreads"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -924,11 +924,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>
