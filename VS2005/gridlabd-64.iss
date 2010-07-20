@@ -47,6 +47,7 @@ Name: core; Description: Core Files; Types: typical custom; Flags: fixed
 ; --DEBUG--
 Name: modules; Description: Modules; Types: typical custom
 Name: modules\climate; Description: Climate Module; Types: typical custom
+Name: modules\market; Description: Market Module; Types: typical custom
 Name: modules\powerflow; Description: Power Flow Module; Types: typical custom
 Name: modules\residential; Description: Residential Module; Types: typical custom
 Name: modules\tape; Description: Tape Module; Types: typical custom
@@ -160,6 +161,7 @@ Source: commercial.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: mo
 ;Source: climateview.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\network
 Source: plc.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\plc
+Source: market.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\market
 Source: powerflow.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\powerflow
 Source: residential.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\residential
 Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\generators
@@ -171,7 +173,6 @@ Source: tape_memory.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
 ;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: reliability.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\reliability
-Source: market.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: tape_plot.dll; DestDir: {app}\lib; Flags: ignoreversion
 

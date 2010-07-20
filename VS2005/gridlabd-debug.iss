@@ -49,6 +49,7 @@ Name: modules\climate; Description: Climate Module; Types: typical custom
 Name: modules\commercial; Description: Commercial Module; Types: typical custom
 Name: modules\network; Description: Network Module; Types: typical custom
 Name: modules\plc; Description: PLC Module; Types: typical custom
+Name: modules\market; Description: Market Module; Types: typical custom
 Name: modules\powerflow; Description: Power Flow Module; Types: typical custom
 Name: modules\residential; Description: Residential Module; Types: typical custom
 Name: modules\tape; Description: Tape Module; Types: typical custom
@@ -91,6 +92,7 @@ Source: commercial.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: mo
 Source: climateview.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\network
 Source: plc.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\plc
+Source: market.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\market
 Source: powerflow.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\powerflow
 Source: residential.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\residential
 Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
@@ -118,6 +120,7 @@ Source: climate.pdb; DestDir: {app}\lib; Components: modules\climate debug
 Source: commercial.pdb; DestDir: {app}\lib; Components: modules\commercial debug
 Source: network.pdb; DestDir: {app}\lib; Components: modules\network debug
 Source: plc.pdb; DestDir: {app}\lib; Components: modules\plc debug
+Source: market.pdb; DestDir: {app}\lib; Components: modules\market debug
 Source: powerflow.pdb; DestDir: {app}\lib; Components: modules\powerflow debug
 Source: residential.pdb; DestDir: {app}\lib; Components: modules\residential debug
 Source: tape.pdb; DestDir: {app}\lib; Components: modules\tape debug
