@@ -51,7 +51,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("residential::default_line_voltage",PT_complex,&default_line_voltage,PT_SIZE,3,PT_UNITS,"V",PT_DESCRIPTION,"line voltage to use when no circuit is attached",NULL);
 	gl_global_create("residential::default_line_current",PT_complex,&default_line_current,PT_SIZE,3,PT_UNITS,"A",PT_DESCRIPTION,"line current calculated when no circuit is attached",NULL);
 	gl_global_create("residential::default_outdoor_temperature",PT_double,&default_outdoor_temperature,PT_UNITS,"degF",PT_DESCRIPTION,"outdoor air temperature when no climate data is found",NULL);
-	gl_global_create("residential::default_humidity",PT_double,&default_outdoor_temperature,PT_UNITS,"%",PT_DESCRIPTION,"humidity when no climate data is found",NULL);
+	gl_global_create("residential::default_humidity",PT_double,&default_humidity,PT_UNITS,"%",PT_DESCRIPTION,"humidity when no climate data is found",NULL);
 	gl_global_create("residential::default_solar",PT_double,&default_solar,PT_SIZE,9,PT_UNITS,"Btu/sf",PT_DESCRIPTION,"solar gains when no climate data is found",NULL);
 	gl_global_create("residential::default_etp_iterations",PT_int64,&default_etp_iterations,PT_DESCRIPTION,"number of iterations ETP solver will run",NULL);
 
