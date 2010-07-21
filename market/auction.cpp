@@ -673,6 +673,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	}*/
 	// having used this index, push the index forward
 	latency_front = (latency_front + 1) % latency_count;
+	++total_samples;
 	return TS_NEVER;
 }
 
@@ -1305,7 +1306,6 @@ void auction::clear_market(void)
 		update_statistics();
 		push_market_frame(gl_globalclock);
 		check_next_market(gl_globalclock);
-		++total_samples;
 	} else {
 		STATISTIC *stat = 0;
 		OBJECT *obj = OBJECTHDR(this);
@@ -1322,8 +1322,9 @@ void auction::clear_market(void)
 		current_frame.seller_total_quantity = cleared_frame.seller_total_quantity;
 		current_frame.buyer_total_quantity = cleared_frame.buyer_total_quantity;
 		current_frame.seller_min_price = cleared_frame.seller_min_price;
-		update_statistics();
 		++total_samples;
+		update_statistics();
+		
 	}
 
 	/* clear the bid lists */
