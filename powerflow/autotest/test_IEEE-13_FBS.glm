@@ -11,8 +11,7 @@ clock {
 }
 
 #define stylesheet="C:\Documents and Settings\D3Y074\My Documents\GridLab-D\trunk\VS2005\gridlabd-2_0";
-#set relax_naming_rules=1
-module powerflow ;
+module powerflow;
 module assert;
 module tape;
 
@@ -181,7 +180,7 @@ object line_configuration:607 {
 // Define line objects
 object overhead_line:632645 {
      phases "BCN";
-     name 632-645;
+     name line_632-645;
      from node:632;
      to load:645;
      length 500;
@@ -190,7 +189,7 @@ object overhead_line:632645 {
 
 object overhead_line:645646 {
      phases "BCN";
-     name 645-646;
+     name line_645-646;
      from load:645;
      to load:646;
      length 300;
@@ -199,7 +198,7 @@ object overhead_line:645646 {
 
 object overhead_line:630632 {
      phases "ABCN";
-     name 630-632;
+     name line_630-632;
      from node:630;
      to node:632;
      length 2000;
@@ -209,7 +208,7 @@ object overhead_line:630632 {
 //Split line for distributed load
 object overhead_line:6326321 {
      phases "ABCN";
-     name 632-6321;
+     name line_632-6321;
      from node:632;
      to load:6321;
      length 500;
@@ -218,7 +217,7 @@ object overhead_line:6326321 {
 
 object overhead_line:6321671 {
      phases "ABCN";
-     name 6321-671;
+     name line_6321-671;
      from load:6321;
      to load:671;
      length 1500;
@@ -228,7 +227,7 @@ object overhead_line:6321671 {
 
 object overhead_line:671680 {
      phases "ABCN";
-     name 671-680;
+     name line_671-680;
      from load:671;
      to node:680;
      length 1000;
@@ -237,7 +236,7 @@ object overhead_line:671680 {
 
 object overhead_line:671684 {
      phases "ACN";
-     name 671-684;
+     name line_671-684;
      from load:671;
      to node:684;
      length 300;
@@ -246,7 +245,7 @@ object overhead_line:671684 {
 
  object overhead_line:684611 {
       phases "CN";
-      name 684-611;
+      name line_684-611;
       from node:684;
       to load:611;
       length 300;
@@ -255,7 +254,7 @@ object overhead_line:671684 {
 
 object underground_line:684652 {
       phases "AN";
-      name 684-652;
+      name line_684-652;
       from node:684;
       to load:652;
       length 800;
@@ -264,7 +263,7 @@ object underground_line:684652 {
 
 object underground_line:692675 {
      phases "ABC";
-     name 692-675;
+     name line_692-675;
      from load:692;
      to load:675;
      length 500;
@@ -273,7 +272,7 @@ object underground_line:692675 {
 
 object overhead_line:632633 {
      phases "ABCN";
-     name 632-633;
+     name line_632-633;
      from node:632;
      to node:633;
      length 500;
@@ -286,7 +285,7 @@ object overhead_line:632633 {
 
 // Create node objects
 object node:633 {
-     name 633;
+     name n633;
      phases "ABCN";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -308,7 +307,7 @@ object node:633 {
 }
 
 object node:630 {
-     name 630;
+     name n630;
      phases "ABCN";
      voltage_A 2401.7771+0j;
      voltage_B -1200.8886-2080.000j;
@@ -317,7 +316,7 @@ object node:630 {
 }
  
 object node:632 {
-     name 632;
+     name n632;
      phases "ABCN";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -339,7 +338,7 @@ object node:632 {
 }
 
 object node:650 {
-      name 650;
+      name n650;
       phases "ABCN";
       bustype SWING;
       voltage_A 2401.7771;
@@ -362,7 +361,7 @@ object node:650 {
 } 
  
 object node:680 {
-       name 680;
+       name n680;
        phases "ABCN";
        voltage_A 2401.7771;
        voltage_B -1200.8886-2080.000j;
@@ -388,7 +387,7 @@ object node:680 {
  
  
 object node:684 {
-      name 684;
+      name n684;
       phases "ACN";
       voltage_A 2401.7771;
       voltage_B -1200.8886-2080.000j;
@@ -412,7 +411,7 @@ object node:684 {
 // Create load objects 
 
 object load:634 {
-     name 634;
+     name l634;
      phases "ABCN";
      voltage_A 480.000+0j;
      voltage_B -240.000-415.6922j;
@@ -439,7 +438,7 @@ object load:634 {
 }
  
 object load:645 {
-     name 645;
+     name l645;
      phases "BCN";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -459,7 +458,7 @@ object load:645 {
 }
  
 object load:646 {
-     name 646;
+     name l646;
      phases "BCD";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -480,7 +479,7 @@ object load:646 {
  
  
 object load:652 {
-     name 652;
+     name l652;
      phases "AN";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -495,7 +494,7 @@ object load:652 {
 }
  
 object load:671 {
-     name 671;
+     name l671;
      phases "ABCD";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -522,7 +521,7 @@ object load:671 {
 }
  
 object load:675 {
-     name 675;
+     name l675;
      phases "ABC";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -552,7 +551,7 @@ object load:675 {
 }
  
 object load:692 {
-     name 692;
+     name l692;
      phases "ABCD";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -579,7 +578,7 @@ object load:692 {
 }
  
 object load:611 {
-     name 611;
+     name l611;
      phases "CN";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -597,8 +596,8 @@ object load:611 {
 // distributed load between node 632 and 671
 // 2/3 of load 1/4 of length down line: Kersting p.56
 object load:6711 {
-     name 6711;
-     parent 671;
+     name l6711;
+     parent l671;
      phases "ABC";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -610,7 +609,7 @@ object load:6711 {
 }
 
 object load:6321 {
-     name 6321;
+     name l6321;
      phases "ABCN";
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -626,7 +625,7 @@ object load:6321 {
 // Switch
 object switch:671692 {
      phases "ABCN";
-     name 671-692;
+     name switch_671-692;
      from load:671;
      to load:692;
      status CLOSED;
@@ -645,7 +644,7 @@ object transformer_configuration:400 {
   
 object transformer:633634 {
   	phases "ABCN";
-  	name 633-634;
+  	name transformer_633-634;
   	from node:633;
   	to load:634;
   	configuration transformer_configuration:400;
