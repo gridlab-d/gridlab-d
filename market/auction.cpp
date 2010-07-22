@@ -569,6 +569,9 @@ int auction::push_market_frame(TIMESTAMP t1){
 	back = frame;
 
 	latency_back = (latency_back + 1) % latency_count;
+	if(latency > 0){
+		++total_samples;
+	}
 	return 1;
 }
 
@@ -673,7 +676,6 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	}*/
 	// having used this index, push the index forward
 	latency_front = (latency_front + 1) % latency_count;
-	++total_samples;
 	return TS_NEVER;
 }
 
