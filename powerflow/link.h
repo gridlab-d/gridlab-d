@@ -58,7 +58,8 @@ public: /// @todo make this private and create interfaces to control values
 	void calculate_power_splitphase();
 	void set_flow_directions();
 	void calc_currents(complex *Current_Vals);	//Function to perform "immediate" current calculation - used by restoration object
-
+	int link_fault_on(char *fault_type, int *implemented_fault);		//Function to create fault on line
+	int link_fault_off(int *implemented_fault, char *imp_fault_name);	//Function to remove fault from line
 public:
 	bool status;	///< link status (open disconnect nodes)
 	bool prev_status;	///< Previous link status (used for recalculation detection)

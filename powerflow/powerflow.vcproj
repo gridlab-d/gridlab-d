@@ -586,6 +586,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\power_metrics.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\powerflow\powerflow.cpp"
 				>
 			</File>
@@ -757,6 +761,10 @@
 			</File>
 			<File
 				RelativePath="..\powerflow\overheadline_test.h"
+				>
+			</File>
+			<File
+				RelativePath=".\power_metrics.h"
 				>
 			</File>
 			<File

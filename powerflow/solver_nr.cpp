@@ -104,7 +104,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	double Maxmismatch;
 
 	//Phase collapser variable
-	unsigned char phase_worka, phase_workb, phase_workc;
+	unsigned char phase_worka, phase_workb, phase_workc, phase_workd, phase_worke;
 
 	//Temporary calculation variables
 	double tempIcalcReal, tempIcalcImag;
@@ -211,27 +211,38 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			//Now go through all of the branches to get the self admittance information (hinges on size)
 			for (kindexer=0; kindexer<(bus[indexer].Link_Table_Size);kindexer++)
 			{ 
-
 				//Assign jindexer as intermediate variable (easier for me this way)
 				jindexer = bus[indexer].Link_Table[kindexer];
 
-				if ((branch[jindexer].from == indexer) || (branch[jindexer].to == indexer))	//Bus is the from or to side of things
+				if ((branch[jindexer].from == indexer) || (branch[jindexer].to == indexer))	//Bus is the from or to side of things - not sure how it would be in link table otherwise, but meh
 				{
-					if (BA_diag[indexer].size == 3)		//Full three phase
+					if (((bus[indexer].phases & 0x07) == 0x07) || ((bus[indexer].phases & 0x08) == 0x08))		//Full three phase (or D = three phase)
 					{
 						for (jindex=0; jindex<3; jindex++)	//Add in all three phase values
 						{
-							for (kindex=0; kindex<3; kindex++)
+							//See if this phase is valid
+							phase_workb = 0x04 >> jindex;
+
+							if ((phase_workb & branch[jindexer].phases) == phase_workb)
 							{
-								if (branch[jindexer].from == indexer)	//We're the from version
+								for (kindex=0; kindex<3; kindex++)
 								{
-									tempY[jindex][kindex] += branch[jindexer].YSfrom[jindex*3+kindex];
+									//Check phase
+									phase_workd = 0x04 >> kindex;
+
+									if ((phase_workd & branch[jindexer].phases) == phase_workd)
+									{
+										if (branch[jindexer].from == indexer)	//We're the from version
+										{
+											tempY[jindex][kindex] += branch[jindexer].YSfrom[jindex*3+kindex];
+										}
+										else									//Must be the to version
+										{
+											tempY[jindex][kindex] += branch[jindexer].YSto[jindex*3+kindex];
+										}
+									}//End valid column phase
 								}
-								else									//Must be the to version
-								{
-									tempY[jindex][kindex] += branch[jindexer].YSto[jindex*3+kindex];
-								}
-							}
+							}//End valid row phase
 						}
 					}
 					else if ((bus[indexer].phases & 0x80) == 0x80)	//Split phase - add in 2x2 element to upper left 2x2
@@ -262,100 +273,194 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							tempY[1][0] += branch[jindexer].YSto[3];
 							tempY[1][1] += branch[jindexer].YSto[4];
 						}
-
 					}
 					else	//We must be a single or two-phase line - always populate the upper left portion of matrix (easier for later)
 					{
 						switch(bus[indexer].phases & 0x07) {
 							case 0x01:	//Only C
 								{
-									if (branch[jindexer].from == indexer)	//From branch
+									if ((branch[jindexer].phases & 0x01) == 0x01)	//Phase C valid on branch
 									{
-										tempY[0][0] += branch[jindexer].YSfrom[8];
-									}
-									else									//To branch
-									{
-										tempY[0][0] += branch[jindexer].YSto[8];
-									}
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[8];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[8];
+										}
+									}//End valid phase C
 									break;
 								}
 							case 0x02:	//Only B
 								{
-									if (branch[jindexer].from == indexer)	//From branch
+									if ((branch[jindexer].phases & 0x02) == 0x02)	//Phase B valid on branch
 									{
-										tempY[0][0] += branch[jindexer].YSfrom[4];
-									}
-									else									//To branch
-									{
-										tempY[0][0] += branch[jindexer].YSto[4];
-									}
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[4];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[4];
+										}
+									}//End valid phase B
 									break;
 								}
 							case 0x03:	//B & C
 								{
-									if (branch[jindexer].from == indexer)	//From branch
+									phase_worka = (branch[jindexer].phases & 0x03);	//Extract branch phases
+
+									if (phase_worka == 0x03)	//Full B & C
 									{
-										tempY[0][0] += branch[jindexer].YSfrom[4];
-										tempY[0][1] += branch[jindexer].YSfrom[5];
-										tempY[1][0] += branch[jindexer].YSfrom[7];
-										tempY[1][1] += branch[jindexer].YSfrom[8];
-									}
-									else									//To branch
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[4];
+											tempY[0][1] += branch[jindexer].YSfrom[5];
+											tempY[1][0] += branch[jindexer].YSfrom[7];
+											tempY[1][1] += branch[jindexer].YSfrom[8];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[4];
+											tempY[0][1] += branch[jindexer].YSto[5];
+											tempY[1][0] += branch[jindexer].YSto[7];
+											tempY[1][1] += branch[jindexer].YSto[8];
+										}
+									}//End valid B & C
+									else if (phase_worka == 0x01)	//Only C branch
 									{
-										tempY[0][0] += branch[jindexer].YSto[4];
-										tempY[0][1] += branch[jindexer].YSto[5];
-										tempY[1][0] += branch[jindexer].YSto[7];
-										tempY[1][1] += branch[jindexer].YSto[8];
-									}
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[8];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[8];
+										}
+									}//end valid C
+									else if (phase_worka == 0x02)	//Only B branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[4];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[4];
+										}
+									}//end valid B
+									else	//Must be nothing then - all phases must be faulted, or something
+										;
 									break;
 								}
 							case 0x04:	//Only A
 								{
-									if (branch[jindexer].from == indexer)	//From branch
+									if ((branch[jindexer].phases & 0x04) == 0x04)	//Phase A is valid
 									{
-										tempY[0][0] += branch[jindexer].YSfrom[0];
-									}
-									else									//To branch
-									{
-										tempY[0][0] += branch[jindexer].YSto[0];
-									}
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+										}
+									}//end valid phase A
 									break;
 								}
 							case 0x05:	//A & C
 								{
-									if (branch[jindexer].from == indexer)	//From branch
+									phase_worka = branch[jindexer].phases & 0x05;	//Extract phases
+
+									if (phase_worka == 0x05)	//Both A & C valid
 									{
-										tempY[0][0] += branch[jindexer].YSfrom[0];
-										tempY[0][1] += branch[jindexer].YSfrom[2];
-										tempY[1][0] += branch[jindexer].YSfrom[6];
-										tempY[1][1] += branch[jindexer].YSfrom[8];
-									}
-									else									//To branch
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+											tempY[0][1] += branch[jindexer].YSfrom[2];
+											tempY[1][0] += branch[jindexer].YSfrom[6];
+											tempY[1][1] += branch[jindexer].YSfrom[8];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+											tempY[0][1] += branch[jindexer].YSto[2];
+											tempY[1][0] += branch[jindexer].YSto[6];
+											tempY[1][1] += branch[jindexer].YSto[8];
+										}
+									}//End A & C valid
+									else if (phase_worka == 0x04)	//Only A valid
 									{
-										tempY[0][0] += branch[jindexer].YSto[0];
-										tempY[0][1] += branch[jindexer].YSto[2];
-										tempY[1][0] += branch[jindexer].YSto[6];
-										tempY[1][1] += branch[jindexer].YSto[8];
-									}
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+										}
+									}//end only A valid
+									else if (phase_worka == 0x01)	//Only C valid
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[8];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[8];
+										}
+									}//end only C valid
+									else	//No connection - must be faulted
+										;
 									break;
 								}
 							case 0x06:	//A & B
 								{
-									if (branch[jindexer].from == indexer)	//From branch
-									{
-										tempY[0][0] += branch[jindexer].YSfrom[0];
-										tempY[0][1] += branch[jindexer].YSfrom[1];
-										tempY[1][0] += branch[jindexer].YSfrom[3];
-										tempY[1][1] += branch[jindexer].YSfrom[4];
-									}
-									else									//To branch
-									{
-										tempY[0][0] += branch[jindexer].YSto[0];
-										tempY[0][1] += branch[jindexer].YSto[1];
-										tempY[1][0] += branch[jindexer].YSto[3];
-										tempY[1][1] += branch[jindexer].YSto[4];
+									phase_worka = branch[jindexer].phases & 0x06;	//Extract phases
 
-									}
+									if (phase_worka == 0x06)	//Valid A & B phase
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+											tempY[0][1] += branch[jindexer].YSfrom[1];
+											tempY[1][0] += branch[jindexer].YSfrom[3];
+											tempY[1][1] += branch[jindexer].YSfrom[4];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+											tempY[0][1] += branch[jindexer].YSto[1];
+											tempY[1][0] += branch[jindexer].YSto[3];
+											tempY[1][1] += branch[jindexer].YSto[4];
+										}
+									}//End valid A & B
+									else if (phase_worka == 0x04)	//Only valid A
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+										}
+									}//end valid A
+									else if (phase_worka == 0x02)	//Only valid B
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[4];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[4];
+										}
+									}//end valid B
+									else	//Default - must be already handled
+										;
 									break;
 								}
 							default:	//How'd we get here?
@@ -440,23 +545,69 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}//end traversion of split-phase
 			else											//Three phase or some variety
 			{
-				for (jindex=0; jindex<3; jindex++)			//rows
+				//Make sure we aren't SPCT, otherwise things get jacked
+				if ((branch[jindexer].phases & 0x80) != 0x80)	//SPCT, but v_ratio not = 1
 				{
-					for (kindex=0; kindex<3; kindex++)		//columns
+					for (jindex=0; jindex<3; jindex++)			//rows
 					{
-						if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
-							size_offdiag_PQ += 1; 
+						//See if this phase is valid
+						phase_workb = 0x04 >> jindex;
 
-						if (((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))  
-							size_offdiag_PQ += 1; 
+						if ((phase_workb & branch[jindexer].phases) == phase_workb)	//Row check
+						{
+							for (kindex=0; kindex<3; kindex++)		//columns
+							{
+								//Check this phase as well
+								phase_workd = 0x04 >> kindex;
 
-						if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1)) 
-							size_offdiag_PQ += 1; 
+								if ((phase_workd & branch[jindexer].phases) == phase_workd)	//Column validity check
+								{
+									if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+										size_offdiag_PQ += 1; 
 
-						if (((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1)) 
-							size_offdiag_PQ += 1; 
-					}//end columns of 3 phase
-				}//end rows of 3 phase
+									if (((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))  
+										size_offdiag_PQ += 1; 
+
+									if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1)) 
+										size_offdiag_PQ += 1; 
+
+									if (((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1)) 
+										size_offdiag_PQ += 1; 
+								}//end column validity check
+							}//end columns of 3 phase
+						}//End row validity check
+					}//end rows of 3 phase
+				}//end not SPCT
+				else	//SPCT inmplementation
+				{
+					for (jindex=0; jindex<3; jindex++)			//rows
+					{
+						//See if this phase is valid
+						phase_workb = 0x04 >> jindex;
+
+						if ((phase_workb & branch[jindexer].phases) == phase_workb)	//Row check
+						{
+							for (kindex=0; kindex<3; kindex++)		//Row valid, traverse all columns for SPCT Yfrom
+							{
+								if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+									size_offdiag_PQ += 1; 
+
+								if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1)) 
+									size_offdiag_PQ += 1; 
+							}//end columns traverse
+
+							//If row is valid, now traverse the rows of that column for Yto
+							for (kindex=0; kindex<3; kindex++)
+							{
+								if (((branch[jindexer].Yto[kindex*3+jindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))  
+									size_offdiag_PQ += 1; 
+
+								if (((branch[jindexer].Yto[kindex*3+jindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1)) 
+									size_offdiag_PQ += 1; 
+							}//end rows traverse
+						}//End row validity check
+					}//end rows of 3 phase
+				}//End SPCT
 			}//end three phase
 		}//end line traversion
 
@@ -510,58 +661,69 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			{
 				for (jindex=0; jindex<3; jindex++)		//Loop through rows of admittance matrices				
 				{
-					for (kindex=0; kindex<3; kindex++)	//Loop through columns of admittance matrices
+					//See if this row is valid for this branch
+					phase_workd = 0x04 >> jindex;
+
+					if ((branch[jindexer].phases & phase_workd) == phase_workd)	//Validity check
 					{
-						//Indices counted out from Self admittance above.  needs doubling due to complex separation
-
-						if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
+						for (kindex=0; kindex<3; kindex++)	//Loop through columns of admittance matrices
 						{
-							Y_offdiag_PQ[indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
-							Y_offdiag_PQ[indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-							Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Im());
-							indexer += 1;
-							Y_offdiag_PQ[indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 3;
-							Y_offdiag_PQ[indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 3;
-							Y_offdiag_PQ[indexer].Y_value = (branch[jindexer].Yfrom[jindex*3+kindex]).Im();
-							indexer += 1;
-						}
+							//Extract column information
+							phase_worke = 0x04 >> kindex;
 
-						if (((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
-						{
-							Y_offdiag_PQ[indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
-							Y_offdiag_PQ[indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-							Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Im());
-							indexer += 1;
-							Y_offdiag_PQ[indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 3;
-							Y_offdiag_PQ[indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 3;
-							Y_offdiag_PQ[indexer].Y_value = (branch[jindexer].Yto[jindex*3+kindex]).Im();
-							indexer += 1;
-						}
+							if ((branch[jindexer].phases & phase_worke) == phase_worke)	//Valid column too!
+							{
+								//Indices counted out from Self admittance above.  needs doubling due to complex separation
+								if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
+								{
+									Y_offdiag_PQ[indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
+									Y_offdiag_PQ[indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
+									Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Im());
+									indexer += 1;
+									Y_offdiag_PQ[indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 3;
+									Y_offdiag_PQ[indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 3;
+									Y_offdiag_PQ[indexer].Y_value = (branch[jindexer].Yfrom[jindex*3+kindex]).Im();
+									indexer += 1;
+								}
 
-						if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
-						{
-							Y_offdiag_PQ[indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 3;
-							Y_offdiag_PQ[indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-							Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
-							indexer += 1;
-							Y_offdiag_PQ[indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
-							Y_offdiag_PQ[indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 3;
-							Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
-							indexer += 1;	
-						}
+								if (((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
+								{
+									Y_offdiag_PQ[indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
+									Y_offdiag_PQ[indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
+									Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Im());
+									indexer += 1;
+									Y_offdiag_PQ[indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 3;
+									Y_offdiag_PQ[indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 3;
+									Y_offdiag_PQ[indexer].Y_value = (branch[jindexer].Yto[jindex*3+kindex]).Im();
+									indexer += 1;
+								}
 
-						if (((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To reals
-						{
-							Y_offdiag_PQ[indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 3;
-							Y_offdiag_PQ[indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-							Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
-							indexer += 1;
-							Y_offdiag_PQ[indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
-							Y_offdiag_PQ[indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 3;
-							Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
-							indexer += 1;	
-						}
-					}//column end
+								if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
+								{
+									Y_offdiag_PQ[indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 3;
+									Y_offdiag_PQ[indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
+									Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+									indexer += 1;
+									Y_offdiag_PQ[indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
+									Y_offdiag_PQ[indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 3;
+									Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+									indexer += 1;	
+								}
+
+								if (((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To reals
+								{
+									Y_offdiag_PQ[indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 3;
+									Y_offdiag_PQ[indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
+									Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
+									indexer += 1;
+									Y_offdiag_PQ[indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
+									Y_offdiag_PQ[indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 3;
+									Y_offdiag_PQ[indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
+									indexer += 1;	
+								}
+							}//End valid column
+						}//column end
+					}//End valid row
 				}//row end
 			}//if all 3 end
 			else if (((bus[tempa].phases & 0x80) == 0x80) || ((bus[tempb].phases & 0x80) == 0x80))	//Someone's a triplex

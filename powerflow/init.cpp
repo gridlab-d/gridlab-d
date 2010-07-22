@@ -34,6 +34,7 @@
 #include "fault_check.h"
 #include "motor.h"
 #include "billdump.h"
+#include "power_metrics.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -102,6 +103,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new fault_check(module);
 	new motor(module);
 	new billdump(module);
+	new power_metrics(module);
 
 	/* always return the first class registered */
 	return node::oclass;

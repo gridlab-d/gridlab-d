@@ -23,6 +23,7 @@ powerflow_la_SOURCES =                                         \
 	powerflow.cpp                  powerflow.h                  \
 	powerflow_library.cpp          powerflow_library.h          \
 	powerflow_object.cpp           powerflow_object.h           \
+	power_metrics.cpp              power_metrics.h              \
 	pqload.cpp                     pqload.h                     \
 	regulator_configuration.cpp    regulator_configuration.h    \
 	regulator.cpp                  regulator.h                  \

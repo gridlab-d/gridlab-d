@@ -155,14 +155,6 @@ int node::create(void)
 
 int node::init(OBJECT *parent)
 {
-//#ifdef SUPPORT_OUTAGES
-	//if (solver_method!=SM_FBS)
-	//	gl_warning("Only the Forward-Back Sweep algorithm supports the reliability module at this time.");
-	//	/*  TROUBLESHOOT
-	//	The Forward-Back Swep algorithm is the only solver method that current supports the interactions
-	//	necessary to use the reliability module.  Switch to that solver method to continue.
-	//	*/
-//#endif
 	if (solver_method==SM_NR)
 	{
 		OBJECT *obj = OBJECTHDR(this);
@@ -801,6 +793,9 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links>0))
 			{
 				node *parNode = OBJECTDATA(SubNodeParent,node);
+
+				LOCK_OBJECT(SubNodeParent);	//Lock
+
 				parNode->NR_connected_links[0] += NR_connected_links[0];
 
 				//Check and see if we're a house-triplex.  If so, flag our parent so NR works
@@ -808,11 +803,15 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				{
 					parNode->house_present=true;
 				}
+
+				UNLOCK_OBJECT(SubNodeParent);	//Unlock
 			}
 		}
 
 		if (NR_busdata==NULL || NR_branchdata==NULL)	//First time any NR in (this should be the swing bus doing this)
 		{
+			LOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+
 			NR_busdata = (BUSDATA *)gl_malloc(NR_bus_count * sizeof(BUSDATA));
 			if (NR_busdata==NULL)
 			{
@@ -836,6 +835,9 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				return 0;
 			}
 			NR_curr_branch = 0;	//Pull pointer off flag so other objects know it's built
+
+			//Unlock the swing bus
+			UNLOCK_OBJECT(NR_swing_bus);
 
 			//Populate the connectivity matrix if a restoration object is present
 			if (restoration_object != NULL)
@@ -1429,6 +1431,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 
 				if (gl_object_isa(SubNodeParent,"load","powerflow"))	//Load gets cleared at every presync, so reaggregate :(
 				{
+					//Lock the parent for accumulation
+					LOCK_OBJECT(SubNodeParent);
+
 					//Import power and "load" characteristics
 					ParToLoad->power[0]+=power[0];
 					ParToLoad->power[1]+=power[1];
@@ -1441,9 +1446,15 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					ParToLoad->current[0]+=current[0];
 					ParToLoad->current[1]+=current[1];
 					ParToLoad->current[2]+=current[2];
+
+					//All done, unlock
+					UNLOCK_OBJECT(SubNodeParent);
 				}
 				else if (gl_object_isa(SubNodeParent,"node","powerflow"))	//"parented" node - update values - This has to go to the bottom
 				{												//since load/meter share with node (and load handles power in presync)
+					//Lock the parent for accumulation
+					LOCK_OBJECT(SubNodeParent);
+
 					//Import power and "load" characteristics
 					ParToLoad->power[0]+=power[0]-last_child_power[0][0];
 					ParToLoad->power[1]+=power[1]-last_child_power[0][1];
@@ -1469,6 +1480,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 						ParToLoad->nom_res_curr[1] += nom_res_curr[1];
 						ParToLoad->nom_res_curr[2] += nom_res_curr[2];
 					}
+
+					//Unlock the parent now that we are done
+					UNLOCK_OBJECT(SubNodeParent);
 				}
 				else
 				{
@@ -1501,6 +1515,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				//Post our loads up to our parent - in the appropriate fashion
 				node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
+				//Lock the parent for accumulation
+				LOCK_OBJECT(SubNodeParent);
+
 				//Update post them.  Row 1 is power, row 2 is admittance, row 3 is current
 				ParToLoad->Extra_Data[0] += power[0];
 				ParToLoad->Extra_Data[1] += power[1];
@@ -1513,6 +1530,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				ParToLoad->Extra_Data[6] += current[0];
 				ParToLoad->Extra_Data[7] += current[1];
 				ParToLoad->Extra_Data[8] += current[2];
+
+				//Finished, unlock parent
+				UNLOCK_OBJECT(SubNodeParent);
 			}
 
 			if (NR_cycle==true)	//Accumulation cycle, compute our current injections
@@ -1624,9 +1644,15 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				{
 					node *ParLoadObj=OBJECTDATA(SubNodeParent,node);
 
+					//Lock the parent object
+					LOCK_OBJECT(SubNodeParent);
+
 					ParLoadObj->current_inj[0] += current_inj[0];
 					ParLoadObj->current_inj[1] += current_inj[1];
 					ParLoadObj->current_inj[2] += current_inj[2];
+
+					//Unlock it
+					UNLOCK_OBJECT(SubNodeParent);
 				}
 			}
 
@@ -1638,7 +1664,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 
 					int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &bad_computation);
 
-					//De-flag the change
+					//De-flag the change - no contention should occur
 					NR_admit_change = false;
 
 					if (bad_computation==true)
@@ -1730,6 +1756,9 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	{
 		node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
+		//Lock the parent for writing
+		LOCK_OBJECT(SubNodeParent);
+
 		//Remove power and "load" characteristics
 		ParToLoad->power[0]-=last_child_power[0][0];
 		ParToLoad->power[1]-=last_child_power[0][1];
@@ -1742,6 +1771,9 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		ParToLoad->current[0]-=last_child_power[2][0];
 		ParToLoad->current[1]-=last_child_power[2][1];
 		ParToLoad->current[2]-=last_child_power[2][2];
+
+		//Unlock the parent now that it is done
+		UNLOCK_OBJECT(SubNodeParent);
 
 		if (has_phase(PHASE_S))	//Triplex slightly different
 			ParToLoad->current12-=last_child_current12;
@@ -2449,34 +2481,52 @@ int *node::NR_populate(void)
 		//Object header for names
 		OBJECT *me = OBJECTHDR(this);
 
+		//Lock the SWING for global operations
+		LOCK_OBJECT(NR_swing_bus);
+
+		NR_node_reference = NR_curr_bus;	//Grab the current location and keep it as our own
+		NR_curr_bus++;					//Increment the current bus pointer for next variable
+		UNLOCK_OBJECT(NR_swing_bus);	//All done playing with globals, unlock the swing so others can proceed
+
+		//Quick check to see if there problems
+		if (NR_node_reference == -1)
+		{
+			GL_THROW("NR: bus:%s failed to grab a unique bus index value!",me->name);
+			/*  TROUBLESHOOT
+			While attempting to gain a unique bus id for the Newton-Raphson solver, an error
+			was encountered.  This may be related to a parallelization effort.  Please try again.
+			If the error persists, please submit your code and a bug report via the trac website.
+			*/
+		}
+
 		//Bus type
-		NR_busdata[NR_curr_bus].type = (int)bustype;
+		NR_busdata[NR_node_reference].type = (int)bustype;
 
 		//Populate phases
-		NR_busdata[NR_curr_bus].phases = 128*has_phase(PHASE_S) + 8*has_phase(PHASE_D) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
+		NR_busdata[NR_node_reference].phases = 128*has_phase(PHASE_S) + 8*has_phase(PHASE_D) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 
 		//Link our name in
-		NR_busdata[NR_curr_bus].name = me->name;
+		NR_busdata[NR_node_reference].name = me->name;
 
 		//Link our maximum error vlaue
-		NR_busdata[NR_curr_bus].max_volt_error = maximum_voltage_error;
+		NR_busdata[NR_node_reference].max_volt_error = maximum_voltage_error;
 
 		//Populate voltage
-		NR_busdata[NR_curr_bus].V = &voltage[0];
+		NR_busdata[NR_node_reference].V = &voltage[0];
 		
 		//Populate power
-		NR_busdata[NR_curr_bus].S = &power[0];
+		NR_busdata[NR_node_reference].S = &power[0];
 
 		//Populate admittance
-		NR_busdata[NR_curr_bus].Y = &shunt[0];
+		NR_busdata[NR_node_reference].Y = &shunt[0];
 
 		//Populate current
-		NR_busdata[NR_curr_bus].I = &current[0];
+		NR_busdata[NR_node_reference].I = &current[0];
 
 		//Allocate our link list
-		NR_busdata[NR_curr_bus].Link_Table = (int *)gl_malloc(NR_connected_links[0]*sizeof(int));
+		NR_busdata[NR_node_reference].Link_Table = (int *)gl_malloc(NR_connected_links[0]*sizeof(int));
 		
-		if (NR_busdata[NR_curr_bus].Link_Table == NULL)
+		if (NR_busdata[NR_node_reference].Link_Table == NULL)
 		{
 			GL_THROW("NR: Failed to allocate link table for node:%d",OBJECTHDR(this)->id);
 			/*  TROUBLESHOOT
@@ -2491,9 +2541,9 @@ int *node::NR_populate(void)
 		{
 			if (NR_connected_links[0] != 1)	//Make sure we aren't an only child
 			{
-				NR_busdata[NR_curr_bus].Child_Nodes = (int *)gl_malloc((NR_connected_links[0]-1)*sizeof(int));
+				NR_busdata[NR_node_reference].Child_Nodes = (int *)gl_malloc((NR_connected_links[0]-1)*sizeof(int));
 
-				if (NR_busdata[NR_curr_bus].Child_Nodes == NULL)
+				if (NR_busdata[NR_node_reference].Child_Nodes == NULL)
 				{
 					GL_THROW("NR: Failed to allocate child node table for node:%d - %s",OBJECTHDR(this)->id,OBJECTHDR(this)->name);
 					/*  TROUBLESHOOT
@@ -2504,71 +2554,65 @@ int *node::NR_populate(void)
 				}
 
 				//Initialize the children and the parent
-				NR_busdata[NR_curr_bus].Parent_Node = -1;
+				NR_busdata[NR_node_reference].Parent_Node = -1;
 
 				for (unsigned int index=0; index<(NR_connected_links[0]-1); index++)
-					NR_busdata[NR_curr_bus].Child_Nodes[index] = -1;
+					NR_busdata[NR_node_reference].Child_Nodes[index] = -1;
 
-				NR_busdata[NR_curr_bus].Child_Node_idx = 0;	//Initialize the population index
+				NR_busdata[NR_node_reference].Child_Node_idx = 0;	//Initialize the population index
 			}
 			else	//Only child, ensure we set it as zero
 			{
 				if (bustype == SWING)	//Swing bus isn't an only child, it's a single parent
 				{
-					NR_busdata[NR_curr_bus].Child_Nodes = (int *)gl_malloc(sizeof(int));	//Just allocate one spot in this case
+					NR_busdata[NR_node_reference].Child_Nodes = (int *)gl_malloc(sizeof(int));	//Just allocate one spot in this case
 
-					if (NR_busdata[NR_curr_bus].Child_Nodes == NULL)
+					if (NR_busdata[NR_node_reference].Child_Nodes == NULL)
 					{
 						GL_THROW("NR: Failed to allocate child node table for node:%d - %s",OBJECTHDR(this)->id,OBJECTHDR(this)->name);
 						//Defined above
 					}
 
-					NR_busdata[NR_curr_bus].Child_Nodes[0] = -1;	//Initialize it to -1 - flags as unpopulated
+					NR_busdata[NR_node_reference].Child_Nodes[0] = -1;	//Initialize it to -1 - flags as unpopulated
 
-					NR_busdata[NR_curr_bus].Parent_Node = 0;	//We're our own parent (the implications are astounding)
+					NR_busdata[NR_node_reference].Parent_Node = 0;	//We're our own parent (the implications are astounding)
 				}
 				else	//Normal only child
 				{
-					NR_busdata[NR_curr_bus].Child_Nodes = 0;
+					NR_busdata[NR_node_reference].Child_Nodes = 0;
 				}
 			}
 		}
 
 		//Populate our size
-		NR_busdata[NR_curr_bus].Link_Table_Size = NR_connected_links[0];
+		NR_busdata[NR_node_reference].Link_Table_Size = NR_connected_links[0];
 
 		//See if we're a triplex
 		if (has_phase(PHASE_S))
 		{
 			if (house_present)	//We're a proud parent of a house!
 			{
-				NR_busdata[NR_curr_bus].house_var = &nom_res_curr[0];	//Separate storage area for nominal house currents
-				NR_busdata[NR_curr_bus].phases |= 0x40;					//Flag that we are a house-attached node
+				NR_busdata[NR_node_reference].house_var = &nom_res_curr[0];	//Separate storage area for nominal house currents
+				NR_busdata[NR_node_reference].phases |= 0x40;					//Flag that we are a house-attached node
 			}
 
-			NR_busdata[NR_curr_bus].extra_var = &current12;	//Stored in a separate variable and this is the easiest way for me to get it
+			NR_busdata[NR_node_reference].extra_var = &current12;	//Stored in a separate variable and this is the easiest way for me to get it
 		}
 		else if (SubNode==DIFF_PARENT)	//Differently connected load/node (only can't be S)
 		{
-			NR_busdata[NR_curr_bus].extra_var = Extra_Data;
-			NR_busdata[NR_curr_bus].phases |= 0x10;			//Special flag for a phase mismatch being present
+			NR_busdata[NR_node_reference].extra_var = Extra_Data;
+			NR_busdata[NR_node_reference].phases |= 0x10;			//Special flag for a phase mismatch being present
 		}
 
 		//Per unit values
-		NR_busdata[NR_curr_bus].kv_base = -1.0;
-		NR_busdata[NR_curr_bus].mva_base = -1.0;
+		NR_busdata[NR_node_reference].kv_base = -1.0;
+		NR_busdata[NR_node_reference].mva_base = -1.0;
 
 		//Set the matrix value to -1 to know it hasn't been set (probably not necessary)
-		NR_busdata[NR_curr_bus].Matrix_Loc = -1;
-
-		//Store our reference value
-		NR_node_reference = NR_curr_bus;
+		NR_busdata[NR_node_reference].Matrix_Loc = -1;
 
 		//Populate original phases
-		NR_busdata[NR_curr_bus].origphases = NR_busdata[NR_curr_bus].phases;
-
-		//Increment pointer bus
-		NR_curr_bus++;
+		NR_busdata[NR_node_reference].origphases = NR_busdata[NR_node_reference].phases;
 
 		return 0;
 }

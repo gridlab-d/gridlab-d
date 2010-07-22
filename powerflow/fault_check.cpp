@@ -53,6 +53,8 @@ int fault_check::create(void)
 	fcheck_state = SINGLE;	//Default to only one check
 	output_filename[0] = '\0';	//Empty file name
 
+	reliability_mode = false;	//By default, we find errors and fail - if true, dumps log, but continues on its merry way
+
 	return result;
 }
 
@@ -72,6 +74,20 @@ int fault_check::init(OBJECT *parent)
 		/*  TROUBLESHOOT
 		The fault_check object only works with the Newton-Raphson powerflow solver at this time.
 		Other solvers may be integrated at a future date.
+		*/
+	}
+
+	//Register us in the global - so faults know who they gonna call
+	if (fault_check_object == NULL)	//Make sure we're the only one
+	{
+		fault_check_object = obj;	//Link us up!
+	}
+	else
+	{
+		GL_THROW("Only one fault_check object is supported at this time");
+		/*  TROUBLESHOOT
+		At this time, a .GLM file can only contain one fault_check object.  Future implementations
+		may change this.  Please restrict yourself to one fault_check object in the mean time.
 		*/
 	}
 
@@ -191,11 +207,23 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 							write_output_file(t0);	//Write it
 						}
 
-						GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
-						/*  TROUBLESHOOT
-						An unsupported connection was found on the indicated bus in the system.  Since reconfiguration
-						is not enabled, the solver will fail here on the next iteration, so the system is broken early.
-						*/
+						//See what mode we are in
+						if (reliability_mode == false)
+						{
+							GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
+							/*  TROUBLESHOOT
+							An unsupported connection was found on the indicated bus in the system.  Since reconfiguration
+							is not enabled, the solver will fail here on the next iteration, so the system is broken early.
+							*/
+						}
+						else	//Must be in reliability mode
+						{
+							gl_warning("Unsupported phase on node %s",NR_busdata[index].name);
+							/*  TROUBLESHOOT
+							An unsupported connection was found on the indicated bus in the system.  Since reliability
+							is enabled, the solver will simply ignore the unsupported components for now.
+							*/
+						}
 					}
 				}
 			}//no restoration

@@ -6,22 +6,24 @@
 
 #include "powerflow.h"
 
-typedef enum {
-		SINGLE=0,		//Runs one fault_check, right at the beginning of powerflow
-		ONCHANGE=1,	//Runs fault_check everytime a Jacobian reconfiguration is requested
-		ALLT=2			//Runs fault_check on every iteration
-		} FCSTATE;
-
 class fault_check : public powerflow_object
 {
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
 public:
+	//Move typedef in here so reliabilty-related items can access the enumeration
+	typedef enum {
+			SINGLE=0,		//Runs one fault_check, right at the beginning of powerflow
+			ONCHANGE=1,	//Runs fault_check everytime a Jacobian reconfiguration is requested
+			ALLT=2			//Runs fault_check on every iteration
+			} FCSTATE;
+
 	int **Supported_Nodes;		//Nodes with source support (connected to swing somehow)
 
 	FCSTATE fcheck_state;		//Mode variable
 	char1024 output_filename;	//File name to output unconnected bus values
+	bool reliability_mode;		//Flag for reliability implementation
 
 	fault_check(MODULE *mod);
 	fault_check(CLASS *cl=oclass):powerflow_object(cl){};
