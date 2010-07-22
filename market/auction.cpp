@@ -502,7 +502,7 @@ int auction::update_statistics(){
 			stop = price_index - 1;
 		}
 		//start = (unsigned int)((history_count + stop - sample_need + 1) % history_count);
-		start = (unsigned int)((history_count + stop - sample_need - 1) % history_count); // one off for initial period delay
+		start = (unsigned int)((history_count + stop - sample_need) % history_count); // one off for initial period delay
 		for(i = 0; i < sample_need; ++i){
 			idx = (start + i + history_count) % history_count;
 			mean += new_prices[idx];
