@@ -1899,10 +1899,10 @@ int object_build_name(OBJECT *obj, char *buffer, int len){
 	}
 
 	if(L > len){
-		output_error("object_build_name(): unable to build name for '%s', input buffer too short", obj->name);
+		output_error("object_build_name(): unable to build name for '%s', input buffer too short", ptr);
 		return 0;
 	} else {
-		strcpy(buffer, obj->name);
+		strcpy(buffer, ptr);
 		return L;
 	}
 
