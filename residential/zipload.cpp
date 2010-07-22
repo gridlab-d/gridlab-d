@@ -119,8 +119,8 @@ int ZIPload::init(OBJECT *parent)
 		gl_warning("zipload_init: The demand response zipload is an experimental model at this time.");
 		
 		// Initial error checks
-		if (abs(eta) >= 1)
-			GL_THROW("zipload_init: demand_rate (eta) must be between (and not include) -1 and 1.");
+		if (abs(eta) > 1)
+			GL_THROW("zipload_init: demand_rate (eta) must be between -1 and 1.");
 		if (phi <= 0 || phi >= 1)
 			GL_THROW("zipload_init: duty_cycle (phi) must be between (and not include) 0 and 1.");
 		
