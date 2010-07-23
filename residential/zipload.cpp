@@ -117,24 +117,61 @@ int ZIPload::init(OBJECT *parent)
 	if (demand_response_mode == true)
 	{
 		gl_warning("zipload_init: The demand response zipload is an experimental model at this time.");
+		/*  TROUBLESHOOT
+		The warning is pretty obvious.  However, over time, we will be developing this model further.  If you have any questions 
+		about it, please see the Matlab files found in ../design/dr_model/ or read the paper titled "On the Equilibrium Dynamics of Demand Response"
+		submitted to HICSS 2011 or post your questions on the WIKI forum.
+		*/
 		
 		// Initial error checks
 		if (abs(eta) > 1)
+		{
 			GL_THROW("zipload_init: demand_rate (eta) must be between -1 and 1.");
-		if (phi <= 0 || phi >= 1)
-			GL_THROW("zipload_init: duty_cycle (phi) must be between (and not include) 0 and 1.");
-		
+			/*  TROUBLESHOOT
+			The demand rate is limited to values between -1 and 1 (inclusive).  Please reset to an appropriate value.
+			*/
+		}
+		if (phi < 0 || phi > 1)
+		{
+			GL_THROW("zipload_init: duty_cycle (phi) must be between 0 and 1.");
+			/*  TROUBLESHOOT
+			The duty cycle is only explicitly used if ron and roff are not set.  In normal operation, phi will be calculated from
+			ron and roff as a function of time.  However, if ron and roff are not set, the initial values for ron and roff are calculated
+			from phi.  Please set to a value between 1 and 0 (inclusive).
+			*/
+		}
 		
 		// Set up the buffers and perform some error checks
 		if (L > 0)
-			drm.nbins = L;
+			if (L < 70)
+				drm.nbins = L;
+			else
+			{
+				gl_warning("zipload_init: Using a value for thermostatic_control_range (L) greater than 50 may cause some instabilities.");
+				/*  TROUBLESHOOT
+				This warning is shown only as a reminder.  Large values of L (thermostatic_control_range) can cause instabilities for some
+				combinations of ron and roff.  If you receive inderminant numbers as part of the solution, try reducing L.
+				*/
+			}
 		else
+		{
 			GL_THROW("zipload_init: thermostatic_control_range (L) must be greater than 0.");
+			/*  TROUBLESHOOT
+			The thermostatic control range must be a positive integer value, since this is used to create the number of bins 
+			for the discrete solution.
+			*/
+		}
 
 		drm.off = (double*)malloc(sizeof(double)*L);
 		drm.on = (double*)malloc(sizeof(double)*L);
 		if (drm.off==NULL || drm.on==NULL)
+		{
 			GL_THROW("zipload_init: memory allocation error.  Please report this error.");
+			/*  TROUBLESHOOT
+			If you receive this error, something went horribly wrong with a memory allocation. Please report this to TRAC and provide
+			the glm file that caused it.
+			*/
+		}
 
 		/* setup the initial population */
 		if (ron == -1 || roff == -1)
@@ -143,20 +180,38 @@ int ZIPload::init(OBJECT *parent)
 			{
 				roff = phi/(1-phi);
 				ron = 1;
-				gl_warning("ron or roff was not set.  Using phi to calculate.");
+				gl_warning("ron or roff was not set.  Using phi to calculate.  Step changes in demand rates as a function of time will be ignored.");
+				/*  TROUBLESHOOT
+				Ideally, in the method currently being used, ron and roff (heating and cooling rates) should be used to calculate phi.
+				If you receive this error, the phi is being used to calculate ron and roff initially.  However, phi does not update  
+				ron and roff at each time step, so you will not be able to perform disturbances of demand.  If you wish this, please use
+				ron and roff as a function of time instead.
+				*/
 			}
 			else
 			{
 				roff = 1;
 				ron = (1-phi)/phi;
-				gl_warning("ron or roff was not set.  Using phi to calculate.");
+				gl_warning("ron or roff was not set.  Using phi to calculate. Step changes in demand rates as a function of time will be ignored.");
+				/*  TROUBLESHOOT
+				Ideally, in the method currently being used, ron and roff (heating and cooling rates) should be used to calculate phi.
+				If you receive this error, the phi is being used to calculate ron and roff initially.  However, phi does not update  
+				ron and roff at each time step, so you will not be able to perform disturbances of demand.  If you wish this, please use
+				ron and roff as a function of time instead.
+				*/
 			}
 		}
 		else
 			phi = roff / (ron + roff);
 
 		if (roff < 0 || ron < 0)
+		{
 			GL_THROW("zipload_init: rate_of_cooling and rate_of_heating must be greater than or equal to 0.");
+			/*  TROUBLESHOOT
+			Rates of heating and cooling should be positive or zero values.  These values describe how fast objects transition from a 
+			cooler to hotter temperature, or vice versa, and have been defined as positive values in this model.
+			*/
+		}
 
 		non = noff = 0;
 		double test_N = 0;
@@ -257,7 +312,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		N_off = N - N_on;
-
+		phi = roff / (ron + roff);
 		nominal_power = base_power * N_on / N;
 		double R = ron;
 		int dt = 0;
