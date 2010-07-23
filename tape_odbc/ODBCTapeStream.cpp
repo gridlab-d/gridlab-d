@@ -16,11 +16,11 @@ ODBCTapeStream::ODBCTapeStream(){
 ODBCTapeStream::ODBCTapeStream(char *fname, char *flags){
 	dbconn=0;
 	char host[256], uid[256], pwd[64], objname[1024];
-	if(sscanf(fname, "%256[^:]:%256[^:]:%64[^:]:%1024[^:]", host, uid, pwd, objname)==4){
+	if(sscanf(fname, "%256[^;];%256[^;];%64[^;];%1024[^;]", host, uid, pwd, objname)==4){
 //		printf("Four-point open: %s, ***, ***, %s\n", host, objname);
 		Open(host, objname, uid, pwd, flags);
 	}
-	else if(sscanf(fname, "%256[^:]:%1024[^:]", host, objname)==2){
+	else if(sscanf(fname, "%256[^;]:%1024[^;]", host, objname)==2){
 //		printf("Two-point open: %s, %s\n", host, objname);
 		Open(host, objname, flags);
 	}

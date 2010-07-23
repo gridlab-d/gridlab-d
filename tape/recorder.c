@@ -69,6 +69,7 @@ static int recorder_open(OBJECT *obj)
 	char32 type="file";
 	char1024 fname="";
 	char32 flags="w";
+	TAPEFUNCS *f = 0;
 	struct recorder *my = OBJECTDATA(obj,struct recorder);
 	
 	my->interval = (int64)(my->dInterval/TS_SECOND);
@@ -234,7 +235,12 @@ static int recorder_open(OBJECT *obj)
 	}
 
 	/* if type is file or file is stdin */
-	my->ops = get_ftable(type)->recorder;
+	f = get_ftable(type);
+	if(f != 0){
+		my->ops = f->recorder;
+	} else {
+		return 0;
+	}
 	if(my->ops == NULL)
 		return 0;
 	return my->ops->open(my, fname, flags);

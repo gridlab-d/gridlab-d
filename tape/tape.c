@@ -93,18 +93,18 @@ TAPEFUNCS *get_ftable(char *mode){
 	fptr = malloc(sizeof(TAPEFUNCS));
 	if(fptr == NULL)
 	{
-		GL_THROW("get_ftable(char *mode='%s'): out of memory", mode);
+		gl_error("get_ftable(char *mode='%s'): out of memory", mode);
 		return NULL; /* out of memory */
 	}
 	snprintf(modname, 1024, "tape_%s" DLEXT, mode);
 	tpath = gl_findfile(modname, NULL, 0|4);
 	if(tpath == NULL){
-		GL_THROW("unable to locate %s", modname);
+		gl_error("unable to locate %s", modname);
 		return NULL;
 	}
 	lib = fptr->hLib = DLLOAD(tpath);
 	if(fptr->hLib == NULL){
-		GL_THROW("tape module: unable to load DLL for %s", modname);
+		gl_error("tape module: unable to load DLL for %s", modname);
 		return NULL;
 	}
 	c = (CALLBACKS **)DLSYM(lib, "callback");
