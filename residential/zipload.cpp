@@ -404,7 +404,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		load.power_factor = 0.0;
 	}
 
-	if (next_time < t2)
+	if (next_time < t2 && next_time > 0)
 		t2 = next_time;
 	return t2;
 }
