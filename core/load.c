@@ -486,30 +486,28 @@ static int mkdirs(char *path)
 		output_verbose("creating directory '%s'", path);
 		if (!(tmp = (char *) malloc(strlen(path) + 1))) {
 			errno = ENOMEM;
-			output_fatal("%s", strerror(errno));
+			output_fatal("mkdirs() failed: '%s'", strerror(errno));
 			return -1;
 		}
 		strcpy(tmp, path);
 		end = tmp + strlen(tmp);
-		// trim off components to find the shortest path that exists
-		for (pos = end - 1; pos > tmp; pos--) {
-			if (*pos == PATHSEP) {
-				*pos = '\0';
-				if (!(rc = access(tmp, F_OK)))
-					break;
-				if (errno != ENOENT) {
-					output_error("%s: %s", tmp, strerror(errno));
-					free(tmp);
-					return -1;
-				}
+		// strip off directories until one is found that exists
+		while ((pos = strrchr(tmp, PATHSEP))) {
+			*pos = '\0';
+			if (!(*tmp) || !(rc = access(tmp, F_OK)))
+				break;
+			if (errno != ENOENT) {
+				output_error("cannot access directory '%s': %s", tmp, strerror(errno));
+				free(tmp);
+				return -1;
 			}
 		}
 		// add back components creating them as we go
-		for (; pos < end; pos++) {
+		for (pos = tmp + strlen(tmp); pos < end; pos = tmp + strlen(tmp)) {
 			if (*pos == '\0') {
 				*pos = PATHSEP;
 				if ((rc = mkdir(tmp, 0775)) && errno != EEXIST) {
-					output_error("%s: %s", tmp, strerror(errno));
+					output_error("cannot create directory '%s': %s", tmp, strerror(errno));
 					free(tmp);
 					return -1;
 				}
@@ -517,7 +515,8 @@ static int mkdirs(char *path)
 		}
 		free(tmp);
 		return 0;
-	}
+	} else if (rc)
+		output_error("cannot access directory '%s': %s", path, strerror(errno));
 	return rc;
 }
 
@@ -564,11 +563,13 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		INCLUDELIST *lptr = 0;
 
 		/* build class implementation files */
-		global_getvar("tmp",tmp,sizeof(tmp));
+		strncpy(tmp, global_tmp, sizeof(tmp));
+		if (mkdirs(tmp)) {
+			errno = 0;
+			return FAILED;
+		}
 		if (strlen(tmp)>0 && tmp[strlen(tmp)-1]!='/' && tmp[strlen(tmp)-1]!='\\')
 			strcat(tmp,"/");
-		if (mkdirs(tmp))
-			return FAILED;
 		sprintf(cfile,"%s%s.cpp", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(ofile,"%s%s.o", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
 		sprintf(file,"%s%s", (use_msvc||global_gdb||global_gdb_window)?"":tmp, oclass->name);
