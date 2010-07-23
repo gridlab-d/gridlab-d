@@ -39,7 +39,7 @@
 	#define HAVE_CMPXCHG
 #elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
 	#include <libkern/OSAtomic.h>
-	#define cmpxchg(dest, xchg, comp) (OSAtomicCompareAndSwapLong((long) comp, (long) xchg, (long *) dest) ? xchg : comp)
+	#define cmpxchg(dest, xchg, comp) (OSAtomicCompareAndSwapLong((long) comp, (long) xchg, (long *) dest))
 	#define HAVE_CMPXCHG
 #else
 	#define cmpxchg(dest, xchg, comp) __sync_val_compare_and_swap(dest, comp, xchg)
