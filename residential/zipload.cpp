@@ -185,7 +185,9 @@ int ZIPload::init(OBJECT *parent)
 				Ideally, in the method currently being used, ron and roff (heating and cooling rates) should be used to calculate phi.
 				If you receive this error, the phi is being used to calculate ron and roff initially.  However, phi does not update  
 				ron and roff at each time step, so you will not be able to perform disturbances of demand.  If you wish this, please use
-				ron and roff as a function of time instead.
+				ron and roff as a function of time instead.  This can also be caused by using a schedule or player transform to describe 
+				the ron or roff values - essentially during the initialization, the value is not described yet.  There is no current fix for
+				this, but can be "faked" by setting phi to the correct initial value and waiting a couple of timesteps for things to settle.
 				*/
 			}
 			else
@@ -197,7 +199,9 @@ int ZIPload::init(OBJECT *parent)
 				Ideally, in the method currently being used, ron and roff (heating and cooling rates) should be used to calculate phi.
 				If you receive this error, the phi is being used to calculate ron and roff initially.  However, phi does not update  
 				ron and roff at each time step, so you will not be able to perform disturbances of demand.  If you wish this, please use
-				ron and roff as a function of time instead.
+				ron and roff as a function of time instead.  This can also be caused by using a schedule or player transform to describe 
+				the ron or roff values - essentially during the initialization, the value is not described yet.  There is no current fix for
+				this, but can be "faked" by setting phi to the correct initial value and waiting a couple of timesteps for things to settle.
 				*/
 			}
 		}
