@@ -261,7 +261,7 @@ TIMESTAMP passive_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 		expectation = 0;
 	}
 	// determine output based on control mode
-	if(t1 <= last_cycle + period || period == 0){
+	if(last_cycle == 0 || t1 >= last_cycle + period || period == 0){
 		last_cycle = t1; // advance cycle time
 		switch(control_mode){
 			case CM_NONE:
