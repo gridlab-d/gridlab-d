@@ -1032,8 +1032,12 @@ void auction::clear_market(void)
 			clear.price = a;
 			if(supply_quantity == demand_quantity){
 				if(i == asks.getcount() || j == offers.getcount()){
-					if(i == asks.getcount() && j == offers.getcount()){
-						clearing_type = CT_EXACT;
+					if(i == asks.getcount() && j == offers.getcount()){ // both sides exhausted at same quantity
+						if(a == b){
+							clearing_type = CT_EXACT;
+						} else {
+							clearing_type = CT_PRICE;
+						}
 					} else if (i == asks.getcount() && a == sell->price){ // exhausted buyers, sellers unsatisfied at same price
 						clearing_type = CT_SELLER;
 					} else if (j == offers.getcount() && b == buy->price){ // exhausted sellers, buyers unsatisfied at same price
@@ -1155,8 +1159,10 @@ void auction::clear_market(void)
 			next.price = offers.getbid(0)->price - bid_offset;
 		} else if(offers.getcount() == 0 && asks.getcount() > 0){
 			next.price = asks.getbid(0)->price + bid_offset;
-		} else {
-			next.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;;
+		} else if(asks.getcount() > 0 && offers.getcount() > 0){
+			next.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;
+		} else if(asks.getcount() == 0 && offers.getcount() == 0){
+			next.price = 0.0;
 		}
 		next.quantity = 0;
 		clearing_type = CT_NULL;
