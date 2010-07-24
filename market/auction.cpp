@@ -32,6 +32,10 @@ EXPORT int64 get_market_for_time(OBJECT *obj, TIMESTAMP ts){
 	int64 market_id;
 	if(obj == 0){
 		gl_error("get_market_for_time() was called with a null object pointer");
+		/* TROUBLESHOOT
+			The call was made without specifying the object that called it.  Double-check the code where this
+			method was called and verify that a non-null object pointer is passed in.
+			*/
 		return -1;
 	}
 	pAuc = OBJECTDATA(obj, auction);
@@ -216,37 +220,24 @@ int auction::init(OBJECT *parent)
 	OBJECT *obj=OBJECTHDR(this);
 	unsigned int i = 0;
 
-#if NEVER
-	// no longer used
-	if (type==AT_NONE)
-	{
-		gl_error("%s (auction:%d) market type not specified", obj->name?obj->name:"anonymous", obj->id);
-		return 0;
-	}
-#endif
-#ifdef NEVER // this is not needed 
-	if (network==NULL)
-	{
-		gl_error("%s (auction:%d) market is not connected to a network", obj->name?obj->name:"anonymous", obj->id);
-		return 0;
-	}
-	else if (!gl_object_isa(network,"comm"))
-	{
-		gl_error("%s (auction:%d) network is not a comm object (type=%s)", obj->name?obj->name:"anonymous", obj->id, network->oclass->name);
-		return 0;
-	}
-#endif
 	if (linkref!=NULL)
 	{
 		if (!gl_object_isa(linkref,"link","powerflow"))
 		{
 			gl_error("%s (auction:%d) linkref '%s' does not reference a powerflow link object", obj->name?obj->name:"anonymous", obj->id, linkref->name);
+			/* TROUBLESHOOT
+				linkref must be an object reference to a powerflow::link object.  Verify that the property references that desired object in the model.
+				*/
 			return 0;
 		}
 		Qload = (double*)gl_get_addr(linkref,"power_out");
 		if (Qload==NULL)
 		{
 			gl_error("%s (auction:%d) linkref '%s' does not publish power_out", obj->name?obj->name:"anonymous", obj->id, linkref->name);
+			/* TROUBLESHOOT
+				linkref must be an object reference to a powerflow::link object that publishes power_out.  Verify that the powerflow module is from
+				version 2.0 or later.
+				*/
 			return 0;
 		}
 	}
@@ -281,13 +272,20 @@ int auction::init(OBJECT *parent)
 			static int was_warned = 0;
 			if(was_warned == 0){
 				gl_warning("market statistic '%s' samples faster than the market updates and will be filled with immediate data", statprop->prop->name);
+				/* TROUBLESHOOT
+					Market statistics are only calculated when the market clears.  Statistics shorter than the market clearing rate wind up being
+					equal to either the immediate price or to zero, due to the constant price during the specified interval.
+					*/
 				was_warned = 0;
 			}
 			//statprop.interval = (TIMESTAMP)(this->period);
 		} else if(statprop->interval % (int64)(this->period) != 0){
 			static int was_also_warned = 0;
 			gl_warning("market statistic '%s' interval not a multiple of market period, rounding towards one interval", statprop->prop->name);
-			//statprop.interval = (TIMESTAMP)(this->period) * r;
+			/* TROUBLESHOOT
+				Market statistics are only calculated when the market clears, and will be calculated assuming intervals that are multiples of the market's period.
+				*/
+			statprop->interval -= statprop->interval % (int64)(period);
 		}
 	}
 	/* reference object & property */	
@@ -296,10 +294,24 @@ int auction::init(OBJECT *parent)
 			capacity_reference_property = gl_get_property(capacity_reference_object, capacity_reference_propname);
 			if(capacity_reference_property == NULL){
 				gl_error("%s (auction:%d) capacity_reference_object of type '%s' does not contain specified reference property '%s'", obj->name?obj->name:"anonymous", obj->id, capacity_reference_object->oclass->name, capacity_reference_propname);
+				/* TROUBLESHOOT
+					capacity_reference_object must contain a property named by capacity_reference_property.  Review the published properties of the object specified
+					in capacity_reference_object.
+					*/
 				return 0;
+			}
+			if(capacity_reference_property->ptype != PT_DOUBLE){
+				gl_warning("%s (auction:%d) capacity_reference_property '%s' is not a double type property", obj->name?obj->name:"anonymous", obj->id, capacity_reference_propname);
+				/* TROUBLESHOOT
+					capacity_reference_property must specify a double property to work properly, and may behave unpredictably should it be pointed at
+					non-double properties.
+					*/
 			}
 		} else {
 			gl_error("%s (auction:%d) capacity_reference_object specified without a reference property", obj->name?obj->name:"anonymous", obj->id);
+			/* TROUBLESHOOT
+				capacity_reference_object can only be used when capacity_reference_property is specified.
+				*/
 			return 0;
 		}
 	}
@@ -307,10 +319,10 @@ int auction::init(OBJECT *parent)
 	if(special_mode != MD_NONE){
 		if(fixed_quantity < 0.0){
 			gl_error("%s (auction:%d) is using a one-sided market with a negative fixed quantity", obj->name?obj->name:"anonymous", obj->id);
+			/* TROUBLESHOOT
+				capacity_reference_object can only be used when capacity_reference_property is specified.
+				*/
 			return 0;
-		}
-		if(fixed_price < 0.0){
-			gl_warning("%s (auction:%d) is using a one-sided market with a negative price and may behave strangely", obj->name?obj->name:"anonymous", obj->id);
 		}
 	}
 
@@ -356,6 +368,9 @@ int auction::init(OBJECT *parent)
 
 	if(init_stdev < 0.0){
 		gl_error("auction init_stdev is negative!");
+		/* TROUBLESHOOT
+			By mathematical definition, real standard deviations cannot be negative.
+			*/
 		return 0;
 	}
 	STATISTIC *stat;
@@ -366,6 +381,10 @@ int auction::init(OBJECT *parent)
 			if(check == -1.0){
 				if(init_stdev == 0.0){
 					gl_error("auction standard deviation property '%s' while init_stdev is unset", stat->prop->name);
+					/* TROUBLESHOOT
+						Market standard deviation statistics should not collapse to zero, or the market will stall with an absence
+						of external price input.
+						*/
 					return 0;
 				} else {
 					gl_set_value(obj, stat->prop, init_stdev);
@@ -423,6 +442,9 @@ int auction::init_statistics(){
 			statprop.interval = strtol(period, 0, 10);
 			if(statprop.interval <= 0){
 				gl_warning("market statistic interval for '%s' is not positive, skipping", prop->name);
+				/* TROUBLESHOOT
+					Negative market statistic intervals are nonsensical.
+					*/
 				continue;
 			}
 			// scale by period_unit, if any
@@ -543,6 +565,10 @@ int auction::push_market_frame(TIMESTAMP t1){
 	size_t i = 0;
 	if((latency_back + 1) % latency_count == latency_front){
 		gl_error("market latency queue is overwriting as-yet unused data, so is not long enough or is not consuming data");
+		/* TROUBLESHOOT
+			This is indicative of problems with how the internal circular queue is being handled.  Please report this error on the GridLAB-D
+			TRAC site.
+			*/
 		return 0;
 	}
 	frame = (MARKETFRAME *)frame_addr;
@@ -758,6 +784,10 @@ void auction::clear_market(void)
 		{
 			if (gl_convert("W",unit,&refload)==0)
 				GL_THROW("linkref %s uses units of (W) and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), unit);
+				/* TROUBLESHOOT
+					Power markets must be trading in quantities measured with power units.  Change the market's unit property to some
+					quantity of watts -- W, MW, kW, mW, dW, etc.
+					*/
 			else if (verbose) gl_output("linkref converted %.3f W to %.3f %s", *Qload, refload, unit);
 		}
 		if (total_unknown > 0.001) // greater than one mW ~ allows rounding errors
@@ -787,6 +817,9 @@ void auction::clear_market(void)
 		
 		if(pRefload == NULL){
 			GL_THROW("unable to retreive property '%s' from capacity reference object '%s'", capacity_reference_property->name, capacity_reference_object->name);
+			/* TROUBLESHOOT
+				The specified capacity reference property cannot be retrieved as a double.  Verify that it is a double type property.
+				*/
 		} else {
 			refload = *pRefload;
 		}
@@ -795,14 +828,15 @@ void auction::clear_market(void)
 			if(capacity_reference_property->unit != 0){
 				if(gl_convert(capacity_reference_property->unit->name,unit,&refload) == 0){
 					GL_THROW("capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), capacity_reference_property->unit->name, unit);
+					/* TROUBLESHOOT
+						If capacity_reference_property has units specified, the units must be convertable to the units used by its auction object.
+						*/
 				} else if (verbose){
 					gl_output("capacity_reference_property converted %.3f %s to %.3f %s", *pRefload, capacity_reference_property->unit->name, refload, unit);
 				}
-			} else {
-				GL_THROW("capacity_reference_property %s has no units and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), unit);
-			}
+			} // else assume same units
 		}
-		if (total_unknown > 0.001){ // greater than one mW ~ allows rounding errors
+		if (total_unknown > 0.001){ // greater than one mW ~ allows rounding errors.  Threshold may be one kW given a MW-unit'ed market.
 			gl_warning("total_unknown is %.0f -> some controllers are not providing their states with their bids", total_unknown);
 		}
 		unresponsive.from = linkref;
@@ -1008,24 +1042,6 @@ void auction::clear_market(void)
 			}
 		}
 	
-#if 0
-		/* check for split price at single quantity */
-		while (check)
-		{
-			if (i > 0 && i < asks.getcount() && (a<b ? a : b) <= buy->price)
-			{
-				b = buy->price;
-				buy = asks.getbid(++i);
-			}
-			else if (j>0 && j<offers.getcount() && (a<b ? a : b) <= sell->price)
-			{
-				a = sell->price;
-				sell = offers.getbid(++j);
-			}
-			else
-				check = false;
-		}
-#endif
 		if(a == b){
 			clear.price = a;
 		}
@@ -1079,8 +1095,6 @@ void auction::clear_market(void)
 				dHigh = (i == asks.getcount() ? a : buy->price);
 				dLow = (j == offers.getcount() ? b : sell->price);
 				// needs to be just off such that it does not trigger any other bids
-				// i == asks.getcount() && j == offers.getcount()
-				// a = buy->price, b = sell->price
 				if(a == pricecap && b != -pricecap){
 					clear.price = (buy->price > b ? buy->price + bid_offset : b);
 				} else if(a != pricecap && b == -pricecap){
@@ -1106,27 +1120,11 @@ void auction::clear_market(void)
 				}
 			}
 		}
-#if 0
-		else { /* condition: q_buy == q_sell && a >= b && buy < sell */
-			double avg;
-			clearing_type = CT_PRICE; // marginal price
-			avg = (a+b) / 2;
-			// needs to be just off such that it does not trigger any other bids
-			if(avg < buy->price){
-				clear.price = buy->price + bid_offset;
-			}
-			if(avg > sell->price){
-				clear.price = sell->price - bid_offset;
-			}
-		}
-#endif
 	
 		/* check for zero demand but non-zero first unit sell price */
 		if (clear.quantity==0)// && offers.getcount()>0)
 		{
 			clearing_type = CT_NULL;
-			//clear.price = offers.getbid(0)->price;
-			//clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;
 			if(offers.getcount() > 0 && asks.getcount() == 0){
 				clear.price = offers.getbid(0)->price - bid_offset;
 			} else if(offers.getcount() == 0 && asks.getcount() > 0){
@@ -1299,10 +1297,6 @@ void auction::clear_market(void)
 	cleared_frame.clearing_price = next.price;
 	cleared_frame.clearing_quantity = next.quantity;
 	cleared_frame.clearing_type = clearing_type;
-	//double marginal_buy, marginal_sell;
-	//marginal_buy = asks.get_total_at(next.price);
-	//marginal_sell = offers.get_total_at(next.price);
-	//cleared_frame.marginal_quantity = (marginal_buy < marginal_sell ? marginal_sell : marginal_buy);
 	cleared_frame.marginal_quantity = marginal_quantity;
 	cleared_frame.total_marginal_quantity = marginal_total;
 	cleared_frame.buyer_total_quantity = asks.get_total();
@@ -1385,26 +1379,29 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 	if (biddef.market > market_id)
 	{	// future market
 		gl_error("bidding into future markets is not yet supported");
+		/* TROUBLESHOOT
+			Tracking bids input markets other than the immediately open one will be supported in the future.
+			*/
 	}
 	else if (biddef.market == market_id) // resubmit
 	{
 		char biddername[64];
 		KEY out;
-		if (verbose) gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s at %s", 
-			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
-			fabs(quantity), unit, price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		if (verbose){
+			gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s at %s", 
+				gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
+				fabs(quantity), unit, price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		}
 		BID bid = {from,fabs(quantity),price,state};
 		if(quantity == 0.0){
-			//char name[64];
-			//gl_debug("zero quantity bid from %s is ignored", gl_name(from,name,sizeof(name)));
 			return 0;
 		}
-		if (biddef.bid_type == BID_BUY)
+		if (biddef.bid_type == BID_BUY){
 			out = asks.resubmit(&bid,biddef.bid);
-		else if (biddef.bid_type == BID_SELL)
+		} else if (biddef.bid_type == BID_SELL){
 			out = offers.resubmit(&bid,biddef.bid);
-		else {
-			// BID_UNKNOWN indicates a new bid
+		} else {
+			;
 		}
 		return biddef.raw;
 	}
@@ -1412,9 +1409,11 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 		char myname[64];
 		char biddername[64];
 		KEY out;
-		if (verbose) gl_output("   ...  %s receives %s from object %s for %.2f %s at $%.2f/%s at %s", 
-			gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
-			fabs(quantity), unit, price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		if (verbose){
+			gl_output("   ...  %s receives %s from object %s for %.2f %s at $%.2f/%s at %s", 
+				gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
+				fabs(quantity), unit, price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		}
 		BID bid = {from,fabs(quantity),price,state};
 		if (quantity<0){
 			out = asks.submit(&bid);
