@@ -15,7 +15,7 @@
 static LOCALE *stack=NULL;
 void locale_push(void)
 {
-	char *tz = getenv("TZ");
+	char *tz = timestamp_current_timezone();
 	LOCALE *locale = (LOCALE*)malloc(sizeof(LOCALE));
 	if (locale==NULL)
 	{
