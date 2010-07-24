@@ -479,12 +479,12 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			/* WARNING ~ bid ID check will not work properly */
 			//lastbid_id = market->submit(OBJECTHDR(this), -residual, 9999, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
 			if(pState != 0){
-				lastbid_id = submit_bid_state(pMarket, hdr, -last_q, 9999.0, (*pState > 0 ? 1 : 0), bid_id);
+				lastbid_id = submit_bid_state(pMarket, hdr, -last_q, market->pricecap, (*pState > 0 ? 1 : 0), bid_id);
 			} else {
-				lastbid_id = submit_bid(pMarket, hdr, -last_q, 9999.0, bid_id);
+				lastbid_id = submit_bid(pMarket, hdr, -last_q, market->pricecap, bid_id);
 			}
 		}
-		else if(residual < 0)
+		else if(residual < -0.001)
 			gl_warning("controller:%d: residual unresponsive load is negative! (%.1f kW)", hdr->id, residual);
 	}
 	else if (control_mode == CN_DOUBLE_RAMP){
@@ -613,8 +613,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			last_q = *pCoolingDemand;
 			thermostat_mode = TM_COOL;
 		}
-		if(last_q > 0){
-			/* WARNING ~ bid ID check will not work properly */
+		if(last_q > 0.001){
 			int64 bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
 			lastbid_id = submit_bid(this->pMarket, OBJECTHDR(this), last_q, last_p, bid);
 		}

@@ -830,7 +830,6 @@ void auction::clear_market(void)
 				gl_warning("fixed_price and fixed_quantity are set in the same single auction market ~ only fixed_price will be used");
 			}
 			if(fixed_price != 0.0){
-				offers.sort(false);
 				single_price = fixed_price;
 				for(unsigned int i = 0; i < offers.getcount(); ++i){
 					if(offers.getbid(i)->price <= fixed_price){
@@ -864,11 +863,11 @@ void auction::clear_market(void)
 			next.price = single_price;
 			break;
 		case MD_BUYERS:
+			asks.sort(true);
 			if(fixed_price * fixed_quantity != 0.0){
 				gl_warning("fixed_price and fixed_quantity are set in the same single auction market ~ only fixed_price will be used");
 			}
-			if(fixed_price > 0.0){
-				asks.sort(true);
+			if(fixed_price != 0.0){
 				single_price = fixed_price;
 				for(unsigned int i = 0;  i < asks.getcount(); ++i){
 					if(asks.getbid(i)->price >= fixed_price){
