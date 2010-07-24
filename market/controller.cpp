@@ -371,6 +371,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	double bid = -1.0;
 	double demand = 0.0;
 	double rampify = 0.0;
+	extern double bid_offset;
 	OBJECT *hdr = OBJECTHDR(this);
 
 	/* short circuit */
@@ -397,7 +398,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			} else {
 				//set_temp = (market->next.price - *pAvg) * fabs(T_lim) / (k_T * *pStd);
-				if(*pStd == 0){
+				if(fabs(*pStd) < bid_offset){
 					set_temp = setpoint0;
 				} else if(clear_price < *pAvg && range_low != 0){
 					set_temp = (clear_price - *pAvg) * fabs(ramp_low) / ((dir > 0 ? range_low : range_high) * *pStd);
@@ -453,7 +454,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 
 		if(bid < 0.0)
-			bid = *pAvg + (*pMonitor - setpoint0) * (k_T * *pStd) / fabs(T_lim);
+			bid = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - setpoint0) * (k_T * *pStd) / fabs(T_lim) );
 
 		// bid the response part of the load
 		double residual = *pTotal;
@@ -530,7 +531,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					*pHeatingSetpoint = heat_min;
 					*pHeatingState = 0;
 					*pCoolingState = 1;
-					if(*pStd == 0.0){
+					if(fabs(*pStd) < bid_offset){
 						*pCoolingSetpoint = set_temp = cooling_setpoint0;
 					} else {
 						if(clear_price > *pAvg){
@@ -546,7 +547,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					*pCoolingSetpoint = cool_max;
 					*pCoolingState = 0;
 					*pHeatingState = 1;
-					if(*pStd == 0.0){
+					if(fabs(*pStd) < bid_offset){
 						*pHeatingSetpoint = set_temp = heating_setpoint0;
 					} else {
 						if(clear_price > *pAvg){
@@ -602,14 +603,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			double ramp, range;
 			ramp = (*pMonitor > *pHeatingSetpoint ? heat_ramp_high : heat_ramp_low);
 			range = (*pMonitor > *pHeatingSetpoint ? heat_range_high : heat_range_low);
-			last_p = *pAvg + (*pMonitor - *pHeatingSetpoint) * ramp * (*pStd) / fabs(range);
+			last_p = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - *pHeatingSetpoint) * ramp * (*pStd) / fabs(range) );
 			last_q = *pHeatingDemand;
 			thermostat_mode = TM_HEAT;
 		} else if(*pMonitor < cool_max && *pMonitor > cool_min){
 			double ramp, range;
 			ramp = (*pMonitor > *pCoolingSetpoint ? cool_ramp_high : cool_ramp_low);
 			range = (*pMonitor > *pCoolingSetpoint ? cool_range_high : cool_range_low);
-			last_p = *pAvg + (*pMonitor - *pCoolingSetpoint) * ramp * (*pStd) / fabs(range);
+			last_p = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0 : (*pMonitor - *pCoolingSetpoint) * ramp * (*pStd) / fabs(range) );
 			last_q = *pCoolingDemand;
 			thermostat_mode = TM_COOL;
 		}

@@ -349,6 +349,7 @@ int passive_controller::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 	double T_set;
 	double ramp;
 	double set_change;
+	extern double bid_offset;
 
 	if(!orig_setpoint){
 		base_setpoint = *(double *)output_setpoint_addr;
@@ -407,7 +408,7 @@ int passive_controller::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 	T_set = base_setpoint;
 
 	// is legit to set expectation to the mean
-	if(obs_stdev == 0.0){
+	if(obs_stdev < bid_offset){
 		set_change = 0.0;
 	} else {
 		set_change = (observation - expectation) * fabs(T_limit) / (ramp * obs_stdev);
@@ -438,6 +439,7 @@ int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 	double erf_in, erf_out;
 	double cdf_out;
 	double r;
+	extern double bid_offset;
 
 	
 	switch(distribution_type){
@@ -446,7 +448,7 @@ int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 			// k_w is a comfort setting
 			// r is compared to a uniformly random number on [0,1.0)
 			// erf_in = (x-mean) / (var^2 * sqrt(2))
-			if(obs_stdev == 0){ // short circuit
+			if(obs_stdev < bid_offset){ // short circuit
 				if(observation > obs_mean){
 					output_state = -1;
 					prob_off = 1.0;
