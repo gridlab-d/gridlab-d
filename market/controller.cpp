@@ -426,7 +426,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				set_temp = min;
 			}
 
-			*pSetpoint = setpoint0 + set_temp;
+			*pSetpoint = set_temp;
 			//gl_verbose("controller::postsync(): temp %f given p %f vs avg %f",set_temp, market->next.price, market->avg24);	
 		}
 
