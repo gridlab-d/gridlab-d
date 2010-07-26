@@ -300,7 +300,7 @@ int auction::init(OBJECT *parent)
 					*/
 				return 0;
 			}
-			if(capacity_reference_property->ptype != PT_DOUBLE){
+			if(capacity_reference_property->ptype != PT_double){
 				gl_warning("%s (auction:%d) capacity_reference_property '%s' is not a double type property", obj->name?obj->name:"anonymous", obj->id, capacity_reference_propname);
 				/* TROUBLESHOOT
 					capacity_reference_property must specify a double property to work properly, and may behave unpredictably should it be pointed at
