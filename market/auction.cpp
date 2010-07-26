@@ -1110,7 +1110,11 @@ void auction::clear_market(void)
 						clear.price = (dHigh + dLow) / 2;
 					}
 				} else {
-					if(i != asks.getcount() && avg < buy->price){
+					if(i != asks.getcount() && buy->price == a){
+						clear.price = a;
+					} else if (j != offers.getcount() && sell->price == b){
+						clear.price = b;
+					} else if(i != asks.getcount() && avg < buy->price){
 						clear.price = dHigh + bid_offset;
 					} else if(j != offers.getcount() && avg > sell->price){
 						clear.price = dLow - bid_offset;

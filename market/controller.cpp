@@ -82,6 +82,7 @@ int controller::create(){
 	sprintf(std_target, "std24");
 	slider_setting_heat = -1.0;
 	slider_setting_cool = -1.0;
+	lastbid_id = -1;
 	return 1;
 }
 
@@ -392,6 +393,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		if(market->market_id != lastmkt_id && (*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0)){
 			double clear_price;
 			lastmkt_id = market->market_id;
+			lastbid_id = -1; // clear last bid id, refers to an old market
 			// update using last price
 			// T_set,a = T_set + (P_clear - P_avg) * | T_lim - T_set | / (k_T * stdev24)
 
