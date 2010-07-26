@@ -1896,6 +1896,32 @@ void house_e::update_system(double dt)
 	double voltage_adj = (((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0) * load.impedance_fraction + ((pCircuit_V[0]).Mag() / 240.0) * load.current_fraction + load.power_fraction);
 	double voltage_adj_resistive = ((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0);
 	
+	// set system demand
+	switch(heating_system_type){
+		case HT_NONE:
+		case HT_GAS:
+			heating_demand = 0.0;
+			break;
+		case HT_RESISTANCE:
+			heating_demand = design_heating_capacity*KWPBTUPH;
+			break;
+		case HT_HEAT_PUMP:
+			if(system_mode == SM_AUX){ // only when we're 'running hot'
+				heating_demand = design_heating_capacity*KWPBTUPH;
+			} else {
+				heating_demand = heating_capacity_adj / heating_cop_adj * KWPBTUPH;
+			}
+			break;
+	}
+	switch(cooling_system_type){
+		case CT_NONE: /* shouldn't've gotten here... */
+			cooling_demand = 0.0;
+			break;
+		case CT_ELECTRIC:
+			cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
+			break;
+	}
+
 	switch (system_mode) {
 	case SM_HEAT:
 		// turn the fan on
@@ -1908,18 +1934,18 @@ void house_e::update_system(double dt)
 		//system_rated_capacity = design_heating_capacity*heating_capacity_adj;
 		switch(heating_system_type){
 			case HT_NONE: /* shouldn't've gotten here... */
-				heating_demand = 0.0;
+				//heating_demand = 0.0;
 				system_rated_capacity = 0.0;
 				system_rated_power = 0.0;
 				fan_power = 0.0; // turn it back off
 				break;
 			case HT_RESISTANCE:
-				heating_demand = design_heating_capacity*KWPBTUPH;
+				//heating_demand = design_heating_capacity*KWPBTUPH;
 				system_rated_capacity = design_heating_capacity*voltage_adj_resistive + fan_power*BTUPHPKW;
 				system_rated_power = heating_demand;
 				break;
 			case HT_HEAT_PUMP:
-				heating_demand = heating_capacity_adj / heating_cop_adj * KWPBTUPH;
+				//heating_demand = heating_capacity_adj / heating_cop_adj * KWPBTUPH;
 				system_rated_capacity = heating_capacity_adj*voltage_adj + fan_power*BTUPHPKW;
 				system_rated_power = heating_demand;
 				break;
@@ -1939,12 +1965,12 @@ void house_e::update_system(double dt)
 
 		switch(auxiliary_system_type){
 			case AT_NONE: // really shouldn't've gotten here!
-				heating_demand = 0.0;
+				//heating_demand = 0.0;
 				system_rated_capacity = 0.0;
 				system_rated_power = 0.0;
 				break;
 			case AT_ELECTRIC:
-				heating_demand = aux_heat_capacity*KWPBTUPH;
+				//heating_demand = aux_heat_capacity*KWPBTUPH;
 				system_rated_capacity = aux_heat_capacity*voltage_adj_resistive + fan_power*BTUPHPKW;
 				system_rated_power = heating_demand;
 				break;
@@ -1961,13 +1987,13 @@ void house_e::update_system(double dt)
 		//system_rated_capacity = -design_cooling_capacity/(1+latent_load_fraction)*cooling_capacity_adj;
 		switch(cooling_system_type){
 			case CT_NONE: /* shouldn't've gotten here... */
-				cooling_demand = 0.0;
+				//cooling_demand = 0.0;
 				system_rated_capacity = 0.0;
 				system_rated_power = 0.0;
 				fan_power = 0.0; // turn it back off
 				break;
 			case CT_ELECTRIC:
-				cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
+				//cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
 				// DPC: the latent_load_fraction is not as great counted when humidity is low
 				system_rated_capacity = -cooling_capacity_adj / (1 + 0.1 + latent_load_fraction/(1 + exp(4-10*(*pRhout)))) + fan_power*BTUPHPKW;
 				system_rated_power = cooling_demand;
