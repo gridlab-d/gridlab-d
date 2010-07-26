@@ -46,7 +46,7 @@ controller::controller(MODULE *module){
 			PT_double, "set_temp[degF]", PADDR(set_temp), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the reset value",
 			PT_double, "base_setpoint[degF]", PADDR(setpoint0),
 			// new stuff
-			PT_int64, "period", PADDR(period),
+			PT_double, "period[s]", PADDR(dPeriod), PT_DESCRIPTION, "interval of time between market clearings",
 			PT_enumeration, "control_mode", PADDR(control_mode),
 				PT_KEYWORD, "RAMP", CN_RAMP,
 				PT_KEYWORD, "DOUBLE_RAMP", CN_DOUBLE_RAMP,
@@ -261,6 +261,14 @@ int controller::init(OBJECT *parent){
 	}
 
 	setpoint0 = -1; // key to check first thing
+
+	if(dPeriod == 0.0){
+		dPeriod = 300.0;
+		period = 300; // five minutes
+	} else {
+		period = (TIMESTAMP)floor(dPeriod + 0.5);
+	}
+
 
 //	double period = market->period;
 //	next_run = gl_globalclock + (TIMESTAMP)(period - fmod(gl_globalclock+period,period));

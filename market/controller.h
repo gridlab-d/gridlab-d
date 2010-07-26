@@ -80,6 +80,7 @@ public:
 
 	// new stuff
 	double ramp_low, ramp_high;
+	double dPeriod;
 	int64 period;
 	double slider_setting;
 	double slider_setting_heat;
