@@ -44,6 +44,7 @@ public:
 	// sensitivity
 	double sensitivity;					///<
 	int64 period;
+	double dPeriod;
 	// observation tuple
 	double observation;					///<
 	double obs_mean;					///<

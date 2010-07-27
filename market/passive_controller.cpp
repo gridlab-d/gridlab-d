@@ -95,7 +95,7 @@ passive_controller::passive_controller(MODULE *mod){
 			PT_double,"expectation",PADDR(expectation),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the observed expected value",
 			// inputs
 /**/		PT_double,"sensitivity",PADDR(sensitivity),PT_DEPRECATED,PT_DESCRIPTION,"the sensitivity of the control actuator to observation deviations",
-			PT_int64,"period",PADDR(period),PT_DESCRIPTION,"the cycle period for the controller logic",
+			PT_double,"period[s]",PADDR(dPeriod),PT_DESCRIPTION,"the cycle period for the controller logic",
 /**/		PT_char32,"expectation_prop",PADDR(expectation_propname),PT_DEPRECATED,PT_DESCRIPTION,"the name of the property to observe for the expected value",
 /**/		PT_object,"expectation_obj",PADDR(expectation_object),PT_DEPRECATED,PT_DESCRIPTION,"the object to watch for the expectation property",
 			PT_char32,"expectation_property",PADDR(expectation_propname),PT_DESCRIPTION,"the name of the property to observe for the expected value",
@@ -222,8 +222,11 @@ int passive_controller::init(OBJECT *parent){
 		orig_setpoint = 1;
 	}
 
-	if(period < 0){
-		GL_THROW("control period is negative");
+	if(dPeriod == 0.0){
+		dPeriod = 300.0;
+		period = 300; // five minutes
+	} else {
+		period = (TIMESTAMP)floor(dPeriod + 0.5);
 	}
 
 	return 1;
