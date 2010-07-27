@@ -240,32 +240,33 @@ int passive_controller::isa(char *classname)
 
 
 TIMESTAMP passive_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
-	// get observations
-	if(observation_addr != 0){
-		observation = *(double *)observation_addr;
-	} else {
-		observation = 0;
-	}
-	if(observation_mean_addr != 0){
-		obs_mean = *(double *)observation_mean_addr;
-	} else {
-		obs_mean = 0;
-	}
-	if(observation_stdev_addr != 0){
-		obs_stdev = *(double *)observation_stdev_addr;
-	} else {
-		obs_stdev = 0;
-	}
-
-	// get expectation
-	if(expectation_addr != 0){
-		expectation = *(double *)expectation_addr;
-	} else {
-		expectation = 0;
-	}
 	// determine output based on control mode
 	if(last_cycle == 0 || t1 >= last_cycle + period || period == 0){
 		last_cycle = t1; // advance cycle time
+			// get observations
+		if(observation_addr != 0){
+			observation = *(double *)observation_addr;
+		} else {
+			observation = 0;
+		}
+		if(observation_mean_addr != 0){
+			obs_mean = *(double *)observation_mean_addr;
+		} else {
+			obs_mean = 0;
+		}
+		if(observation_stdev_addr != 0){
+			obs_stdev = *(double *)observation_stdev_addr;
+		} else {
+			obs_stdev = 0;
+		}
+
+		// get expectation
+		if(expectation_addr != 0){
+			expectation = *(double *)expectation_addr;
+		} else {
+			expectation = 0;
+		}
+
 		switch(control_mode){
 			case CM_NONE:
 				// no control ~ let it slide
