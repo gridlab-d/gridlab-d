@@ -858,8 +858,17 @@ void auction::clear_market(void)
 	double single_price = 0.0;
 	/* sort the bids */
 	switch(special_mode){
+		char name[64];
 		case MD_SELLERS:
 			offers.sort(false);
+			if (verbose){
+				gl_output("   ...  supply curve");
+			}
+			for (unsigned int i=0; i<offers.getcount(); i++){
+				if (verbose){
+					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
+				}
+			}
 			if(fixed_price * fixed_quantity != 0.0){
 				gl_warning("fixed_price and fixed_quantity are set in the same single auction market ~ only fixed_price will be used");
 			}
@@ -898,6 +907,14 @@ void auction::clear_market(void)
 			break;
 		case MD_BUYERS:
 			asks.sort(true);
+			if (verbose){
+				gl_output("   ...  demand curve");
+			}
+			for (unsigned int i=0; i<asks.getcount(); i++){
+				if (verbose){
+					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+				}
+			}
 			if(fixed_price * fixed_quantity != 0.0){
 				gl_warning("fixed_price and fixed_quantity are set in the same single auction market ~ only fixed_price will be used");
 			}
@@ -958,7 +975,15 @@ void auction::clear_market(void)
 	}
 
 	if(special_mode == MD_SELLERS || special_mode == MD_BUYERS){
-		;
+		char name[64];
+		char buffer[256];
+		DATETIME dt;
+		TIMESTAMP submit_time = gl_globalclock;
+		gl_localtime(submit_time,&dt);
+		if (verbose){
+			gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s", gl_name(OBJECTHDR(this),name,sizeof(name)),
+				next.quantity, unit, next.price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		}
 	} else if ((asks.getcount()>0) && offers.getcount()>0)
 	{
 		TIMESTAMP submit_time = gl_globalclock;
@@ -1055,9 +1080,9 @@ void auction::clear_market(void)
 						} else {
 							clearing_type = CT_PRICE;
 						}
-					} else if (i == asks.getcount() && a == sell->price){ // exhausted buyers, sellers unsatisfied at same price
+					} else if (i == asks.getcount() && b == sell->price){ // exhausted buyers, sellers unsatisfied at same price
 						clearing_type = CT_SELLER;
-					} else if (j == offers.getcount() && b == buy->price){ // exhausted sellers, buyers unsatisfied at same price
+					} else if (j == offers.getcount() && a == buy->price){ // exhausted sellers, buyers unsatisfied at same price
 						clearing_type = CT_BUYER;
 					} else { // both sides satisfied at price, but one side exhausted
 						if(a == b){
