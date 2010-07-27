@@ -1,0 +1,35 @@
+// test_lights_imp.glm tests that the implicit schedule for lights affects the light loading of the house correctly
+// fish334
+
+module residential {
+	implicit_enduses LIGHTS;
+}
+module tape;
+module assert;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2002-01-01 00:00:00';
+}
+
+object house {
+	system_mode OFF;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	number_of_stories 1;
+	object recorder {
+		property panel.energy,internal_gain;
+		file test_lights_imp.csv;
+		interval 3600;
+		limit 8760;
+	};
+	object complex_assert {
+		target panel.energy;
+		once ONCE_TRUE;
+		in '2001-12-31 23:00:00';
+		value 3531.39+885.051j;
+		within 0.01;
+	};
+}
