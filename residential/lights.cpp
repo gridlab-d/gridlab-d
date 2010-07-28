@@ -35,6 +35,15 @@ double lights::power_factor[_MAXTYPES] = {
 	0.97, // HID
 };
 
+double lights::power_fraction[_MAXTYPES][3] = {
+	// Z I P - should add to 1
+	1, 0, 0,// INCANDESCENT
+	0.4, 0, 0.6,// FLUORESCENT
+	0.4, 0, 0.6,// CFL
+	0.80, 0.1, 0.1,// SSL - these values are unvalidated
+	0.80, 0.1, 0.1,// HID - these values are unvalidated
+};
+
 // the constructor registers the class and properties and sets the defaults
 lights::lights(MODULE *mod) 
 : residential_enduse(mod)
@@ -84,7 +93,7 @@ int lights::create(void)
 
 	// name of enduse
 	load.name = oclass->name;
-
+	load.power_fraction = load.current_fraction = load.impedance_fraction = 0;
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	load.voltage_factor = 1.0;
 	load.power_factor = 0.95;
@@ -113,7 +122,12 @@ int lights::init(OBJECT *parent)
 
 	if (load.power_factor==0) load.power_factor = power_factor[type];
 	if (load.voltage_factor==0) load.voltage_factor = 1.0;
-
+	if ( (load.power_fraction + load.current_fraction + load.impedance_fraction) == 0.0)
+	{
+		load.power_fraction = power_fraction[type][2];
+		load.current_fraction = power_fraction[type][1];
+		load.impedance_fraction = power_fraction[type][0];
+	}
 	// check for the right kind of loadshape schedule 
 	if (shape.type!=MT_ANALOG && shape.type != MT_UNKNOWN)
 		throw("residential lighting only supports analog loadshapes");

@@ -23,6 +23,7 @@ public:
 		_MAXTYPES
 	} type;				///< lighting type
 	static double power_factor[_MAXTYPES]; ///< Lighting power factors (the ordinals must match the \p type enumeration)
+	static double power_fraction[_MAXTYPES][3];
 	enum {
 		INDOOR=0,		///< indoor lighting (100% indoor heat gain)
 		OUTDOOR=1,		///< outdoor lighting (0% indoor heat gain)
