@@ -29,6 +29,35 @@ clean-wc:
 validate: 
 	python validate.py
 
+$(PACKAGE_TARNAME).pkg: distdir
+	chmod 755 $(distdir)
+	cd $(distdir) && test ! -d etc || { test -d private || mkdir private; mv etc private/etc; }
+	-test ! -e $@ || rm -rf $@
+	env PATH=$$PATH:/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS \
+	PackageMaker --root $(distdir) --id gov.pnl.gridlabd --version $(PACKAGE_VERSION) --title $(PACKAGE_NAME) --domain system --resources Resources --out $@
+	$(am__remove_distdir)
+
+$(PACKAGE_TARNAME).dmg: $(PACKAGE_TARNAME).pkg
+	-test ! -e $@ || rm -rf $@
+	hdiutil create -size $$((`du -sm $< | cut -f 1` + 3))m -fs HFS+ -volname "$(PACKAGE_STRING)" $@
+	hdiutil attach -mountpoint ./dmg-mnt $@
+	mv $< dmg-mnt/
+	hdiutil detach dmg-mnt
+
+$(distdir).dmg: $(PACKAGE_TARNAME).dmg
+	-test ! -e $@ || rm -rf $@
+	hdiutil convert -format UDZO -o $@ $<
+	-rm -f $<
+
+clean-dist-osx:
+	-test ! -d dmg-mnt || hdiutil detach dmg-mnt
+	-rm -rf $(distdir) $(PACKAGE_TARNAME).pkg $(PACKAGE_TARNAME).dmg
+
+dist-osx:
+	trap '$(MAKE) clean-dist-osx' EXIT && \
+	$(MAKE) $(distdir).dmg && \
+	trap - EXIT
+
 dist-deb: distdir
 	echo -e "gridlabd ($(VERSION)-1) unstable; urgency=low\n\n  * Version $(VERSION) release.\n  * View recent changes at: https://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:RecentChanges\n\n -- GridLAB-D Team <gridlabd@pnl.gov> `date -R`\n" > $(distdir)/debian/changelog
 	ln -s $(distdir) $(distdir)-1
