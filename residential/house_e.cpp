@@ -2214,7 +2214,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (t2!=TS_NEVER)
 		{
 			TIMESTAMP t = (TIMESTAMP)(ceil((t2<0 ? -t2 : t2)/system_dwell_time)*system_dwell_time);
-			t2 = (t2<0 ? -t : t);
+			t2 = (t2<0 ? t : -t);
 		}
 
 		//Update the off-return value
