@@ -13,7 +13,7 @@ distdir = $(PACKAGE)_$(VERSION)
 
 dist_doc_DATA = COPYRIGHT LICENSE
 
-EXTRA_DIST = debian doxygen/*.* gridlabd.spec VERSION README-LINUX README-MACOSX
+EXTRA_DIST = debian doxygen/*.* gridlabd.spec Resources/*.* VERSION README-LINUX README-MACOSX
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)
@@ -29,34 +29,36 @@ clean-wc:
 validate: 
 	python validate.py
 
-$(PACKAGE_TARNAME).pkg: distdir
-	chmod 755 $(distdir)
-	cd $(distdir) && test ! -d etc || { test -d private || mkdir private; mv etc private/etc; }
-	-test ! -e $@ || rm -rf $@
+osx-dist/$(PACKAGE_TARNAME).pkg: all-recursive
+	rm -rf $@ $(@D)/$(distdir) $(@D)/Resources
+	mkdir -p $(@D) $(@D)/$(distdir) $(@D)/Resources
+	$(MAKE) install DESTDIR=$(CURDIR)/$(@D)/$(distdir)
+	cp Resources/*.rtf $(@D)/Resources/
+	cd $(@D)/$(distdir) && test ! -d etc || { test -d private || mkdir private; mv etc private/etc; }
 	env PATH=$$PATH:/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS \
-	PackageMaker --root $(distdir) --id gov.pnl.gridlabd --version $(PACKAGE_VERSION) --title $(PACKAGE_NAME) --domain system --resources Resources --out $@
-	$(am__remove_distdir)
+	PackageMaker --root $(@D)/$(distdir) --id gov.pnl.gridlabd --version "$(PACKAGE_VERSION)" --title "$(PACKAGE_NAME)" --domain system --resources $(@D)/Resources --out $@
+	rm -rf $(@D)/$(distdir) $(@D)/Resources
 
-$(PACKAGE_TARNAME).dmg: $(PACKAGE_TARNAME).pkg
-	-test ! -e $@ || rm -rf $@
+osx-dist/$(PACKAGE_TARNAME).dmg: osx-dist/$(PACKAGE_TARNAME).pkg
+	test ! -e $@ || rm -rf $@
 	hdiutil create -size $$((`du -sm $< | cut -f 1` + 3))m -fs HFS+ -volname "$(PACKAGE_STRING)" $@
-	hdiutil attach -mountpoint ./dmg-mnt $@
-	mv $< dmg-mnt/
-	hdiutil detach dmg-mnt
+	hdiutil attach -mountpoint $(@D)/mnt $@
+	mv $< $(@D)/mnt/
+	hdiutil detach $(@D)/mnt
 
-$(distdir).dmg: $(PACKAGE_TARNAME).dmg
-	-test ! -e $@ || rm -rf $@
+$(distdir).dmg: osx-dist/$(PACKAGE_TARNAME).dmg
+	test ! -e $@ || rm -rf $@
 	hdiutil convert -format UDZO -o $@ $<
-	-rm -f $<
+	rm -f $<
+	-rmdir $(<D)
 
 clean-dist-osx:
-	-test ! -d dmg-mnt || hdiutil detach dmg-mnt
-	-rm -rf $(distdir) $(PACKAGE_TARNAME).pkg $(PACKAGE_TARNAME).dmg
+	-test ! -d osx-dist/mnt || hdiutil detach osx-dist/mnt
+	-rm -rf osx-dist
 
 dist-osx:
 	trap '$(MAKE) clean-dist-osx' EXIT && \
-	$(MAKE) $(distdir).dmg && \
-	trap - EXIT
+	$(MAKE) $(distdir).dmg
 
 dist-deb: distdir
 	echo -e "gridlabd ($(VERSION)-1) unstable; urgency=low\n\n  * Version $(VERSION) release.\n  * View recent changes at: https://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:RecentChanges\n\n -- GridLAB-D Team <gridlabd@pnl.gov> `date -R`\n" > $(distdir)/debian/changelog
