@@ -273,7 +273,7 @@ int controller::init(OBJECT *parent){
 
 //	double period = market->period;
 //	next_run = gl_globalclock + (TIMESTAMP)(period - fmod(gl_globalclock+period,period));
-	next_run = gl_globalclock + (market->period - gl_globalclock%market->period);
+	next_run = gl_globalclock;// + (market->period - gl_globalclock%market->period);
 	
 	if(state[0] != 0){
 		// grab state pointer
@@ -329,7 +329,7 @@ int controller::init(OBJECT *parent){
 			slider_setting_cool = 1.0;
 		}
 	}
-
+	last_p = market->init_price;
 	return 1;
 }
 
@@ -385,12 +385,12 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 	/* short circuit */
 	if(t0 < next_run){
-		return TS_NEVER;
+		return next_run;
 	}
 
 	if(control_mode == CN_RAMP){
 		// if market has updated, continue onwards
-		if(market->market_id != lastmkt_id && (*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0)){
+		if(market->market_id != lastmkt_id){// && (*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0)){
 			double clear_price;
 			lastmkt_id = market->market_id;
 			lastbid_id = -1; // clear last bid id, refers to an old market
@@ -411,9 +411,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				if(fabs(*pStd) < bid_offset){
 					set_temp = setpoint0;
 				} else if(clear_price < *pAvg && range_low != 0){
-					set_temp = (clear_price - *pAvg) * fabs(ramp_low) / ((dir > 0 ? range_low : range_high) * *pStd);
+					set_temp = setpoint0 + (clear_price - *pAvg) * fabs(ramp_low) / ((dir > 0 ? range_low : range_high) * *pStd);
 				} else if(clear_price > *pAvg && range_high != 0){
-					set_temp = (clear_price - *pAvg) * fabs(ramp_high) / ((dir > 0 ? range_high : range_low) * *pStd);
+					set_temp = setpoint0 + (clear_price - *pAvg) * fabs(ramp_high) / ((dir > 0 ? range_high : range_low) * *pStd);
 				} else {
 					set_temp = setpoint0;
 				}
@@ -458,10 +458,15 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		if(*pMonitor > setpoint0){
 			k_T = ramp_high;
 			T_lim = max;
-		} else {
+		} else if(*pMonitor < setpoint0) {
 			k_T = ramp_low;
 			T_lim = min;
+		} else {
+			k_T = 0.0;
+			T_lim = 0.0;
 		}
+
+
 
 		if(bid < 0.0)
 			bid = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - setpoint0) * (k_T * *pStd) / fabs(T_lim) );
@@ -642,7 +647,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		return TS_NEVER;
 	}
 
-	next_run += (TIMESTAMP)(market->period);
+	next_run += (TIMESTAMP)(this->period);
 
 	
 	return TS_NEVER;
