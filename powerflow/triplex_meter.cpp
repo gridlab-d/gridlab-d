@@ -267,7 +267,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					t_next.month = 1;
 					t_next.year += 1;
 				}
-
+				t_next.tz[0] = 0;
 				next_time =	gl_mktime(&t_next);
 			}
 		}

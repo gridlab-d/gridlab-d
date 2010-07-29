@@ -293,10 +293,10 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 		/* adjust for GMT (or unspecified) */
 		if (strcmp(dt->tz, "GMT") == 0){
 			return ts;
-		} else if(strcmp(dt->tz, tzstd) == 0 || (strcmp(dt->tz, "")==0 && ts < dststart[dt->year - YEAR0] || ts >= dstend[dt->year - YEAR0])){
+		} else if(strcmp(dt->tz, tzstd) == 0 || ((strcmp(dt->tz, "")==0 && (ts < dststart[dt->year - YEAR0] || ts >= dstend[dt->year - YEAR0])))){
 			/* adjust to standard local time */
 			return ts + tzoffset;
-		} else if(strcmp(dt->tz, tzdst) == 0 || (strcmp(dt->tz, "")==0 && ts >= dststart[dt->year - YEAR0] && ts < dstend[dt->year - YEAR0])){
+		} else if(strcmp(dt->tz, tzdst) == 0 || ((strcmp(dt->tz, "")==0 && ts >= dststart[dt->year - YEAR0] && ts < dstend[dt->year - YEAR0]))){
 			/* adjust to daylight local time */
 			return ts + tzoffset - HOUR;
 		}
