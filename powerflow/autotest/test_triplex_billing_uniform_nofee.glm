@@ -7,7 +7,7 @@
 clock {
      timezone CST+6CDT;
      timestamp '2006-01-01 00:00:00';
-     stoptime '2006-12-31 00:00:00';
+     stoptime '2006-03-31 00:00:00';
 }
 
 #set profiler=1;
@@ -112,61 +112,61 @@ object triplex_meter {
 	 power_2 1;
 	 power_12 1;
 	 object recorder {
-		limit 70;
-		interval 86400;
+		limit 7000;
+		interval 83600;
 		file uniform_bills.csv; 
 		property monthly_energy,monthly_bill,previous_monthly_bill,previous_monthly_energy,monthly_fee,bill_mode,bill_day,price,first_tier_price,second_tier_price,third_tier_price,first_tier_energy,second_tier_energy,third_tier_energy;
 	};
-	object complex_assert{
+	object double_assert{
 		target monthly_bill; 
-		value 1.2816;
+		value 1.2774;
 		within .1; 
 		once ONCE_TRUE;
 		in '2006-01-11 00:00:00 CST';
 	};
-	object complex_assert{
+	object double_assert{
 		target monthly_bill; 
-		value 1.5768;
+		value 1.5726;
 		within .1; 
 		once ONCE_TRUE;
 		in '2006-01-16 00:00:00 CST';
 	};
-		object complex_assert{
+		object double_assert{
 		target monthly_bill; 
-		value 2.8584;
+		value 2.8542;
 		within .1; 
 		once ONCE_TRUE;
 		in '2006-01-26 00:00:00 CST';
 	};
-	object complex_assert{
+	object double_assert{
 		target monthly_energy; 
-		value 1.2816;
+		value 1.2774;
 		within .1; 
 		once ONCE_TRUE;
 		in '2006-01-11 00:00:00 CST';
 	};
-	object complex_assert{
+	object double_assert{
 		target monthly_energy; 
-		value 1.5768;
+		value 1.5726;
 		within .1; 
 		once ONCE_TRUE;
 		in '2006-01-16 00:00:00 CST';
 	};
-		object complex_assert{
+		object double_assert{
 		target monthly_energy; 
-		value 2.8584;
+		value 2.8542;
 		within .1; 
 		once ONCE_TRUE;
 		in '2006-01-26 00:00:00 CST';
 	};
-	object complex_assert{
+	object double_assert{
 		target previous_monthly_bill; 
 		value 3.8952;
 		within .1;  // @weird 
 		once ONCE_TRUE;
 		in '2006-02-08 00:00:00 CST';
 	};
-	object complex_assert{
+	object double_assert{
 		target previous_monthly_energy; 
 		value 3.8952;
 		within .1;  // @weird 
@@ -174,7 +174,7 @@ object triplex_meter {
 		in '2006-02-08 00:00:00 CST';
 	};
 	object player {
-          file billing_power.player;
+          file ../billing_power.player;
           loop 1;
           property power_1;
      };

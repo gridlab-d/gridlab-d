@@ -10,7 +10,7 @@
 clock {
      timezone CST+6CDT;
      timestamp '2006-01-01 00:00:00';
-   //  stoptime '2006-12-31 00:00:00';
+     stoptime '2006-12-31 00:00:00';
 }
 
 #set profiler=1;
@@ -32,7 +32,7 @@ object stubauction {
      period 3600;
      // This player sends a signal to the HOURLY meters in $/kW-hr
      object player {
-          file stub_bill_price.player;
+          file ../stub_bill_price.player;
           loop 100;
           property next.P;
      };
@@ -147,16 +147,16 @@ object triplex_meter {
 	 power_2 3;
 	 power_12 4;
 	 object recorder {
-		limit 100;
-		interval 84600;
+		limit 1000000;
+		interval 1800;
 		file stub_bills.csv; 
 		property monthly_bill;
 	};
-	object complex_assert{
+	object double_assert{
 		target monthly_bill; 
 		within .1; 
 		object player {
-          file stub_nofee_bill_value.player;
+          file ../stub_nofee_bill_value.player;
           loop 1;
           property value;
 		};
