@@ -436,7 +436,7 @@ int passive_controller::calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1){
 
 
 int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
-	if(observation_addr == 0 || observation_mean_addr == 0 || observation_stdev_addr == 0){
+	if(observation_addr == 0 || expectation_addr == 0 || observation_stdev_addr == 0){
 		gl_error("insufficient input for probabilistic shutoff control mode");
 		return -1;
 	}
@@ -453,7 +453,7 @@ int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 			// r is compared to a uniformly random number on [0,1.0)
 			// erf_in = (x-mean) / (var^2 * sqrt(2))
 			if(obs_stdev < bid_offset){ // short circuit
-				if(observation > obs_mean){
+				if(observation > expectation){
 					output_state = -1;
 					prob_off = 1.0;
 				} else {
@@ -462,7 +462,7 @@ int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 				}
 				return 0;
 			}
-			erf_in = (observation - obs_mean) / (obs_stdev*obs_stdev * sqrt(2.0));
+			erf_in = (observation - expectation) / (obs_stdev*obs_stdev * sqrt(2.0));
 			erf_out = tc_erf(erf_in);
 			cdf_out = 0.5 * (1 + erf_out);
 			prob_off = sensitivity * (cdf_out-0.5);			
