@@ -212,6 +212,17 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 	- Inside a GL_CATCH(Msg) block, GL_THROW(Msg,...) behavior is undefined (read \em bad).
 	- Outside a #GL_TRY or GL_CATCH(Msg) block, control is transfered to the main core exception handler.
  **/
+#ifdef __cplusplus
+inline void GL_THROW(char *format, ...)
+{
+	static char buffer[1024];
+	va_list ptr;
+	va_start(ptr,format);
+	vsprintf(buffer,format,ptr);
+	va_end(ptr);
+	throw (const char*) buffer;
+}
+#else
 #define GL_THROW (*callback->exception.throw_exception)
 /** The argument \p msg provides access to the exception message thrown.
 	Otherwise, GL_CATCH(Msg) blocks function like all other code blocks.
@@ -220,6 +231,7 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 
 	GL_CATCH blocks must always be terminated by a #GL_ENDCATCH statement.
  **/
+#endif
 #define GL_CATCH(Msg) } else {Msg = (*callback->exception.exception_msg)();
 /** GL_CATCH(Msg) blocks must always be terminated by a #GL_ENDCATCH statement.
  **/
