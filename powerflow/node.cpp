@@ -97,6 +97,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "shunt_A[S]", PADDR(shuntA),
 			PT_complex, "shunt_B[S]", PADDR(shuntB),
 			PT_complex, "shunt_C[S]", PADDR(shuntC),
+			PT_bool, "NR_mode", PADDR(NR_mode),
 
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     

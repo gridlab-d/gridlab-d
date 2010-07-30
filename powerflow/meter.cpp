@@ -135,6 +135,16 @@ int meter::init(OBJECT *parent)
 	last_t = dt = 0;
 	return node::init(parent);
 }
+TIMESTAMP meter::presync(TIMESTAMP t0)
+{
+	if (solver_method == SM_NR)
+		NR_mode = NR_cycle;		//COpy NR_cycle into NR_mode for generators
+	else
+		NR_mode = false;		//Just put as false for other methods
+
+	return TS_NEVER;
+}
+
 TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 

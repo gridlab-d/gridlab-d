@@ -142,6 +142,8 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0);
 	int isa(char *classname);
 
+	bool NR_mode;
+
 	LINKCONNECTED *attachlink(OBJECT *obj);
 	int *NR_populate(void);
 	object SubNodeParent;	/// Child node's original parent or child of parent

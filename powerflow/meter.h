@@ -40,6 +40,7 @@ public:
 	inline meter(CLASS *cl=oclass):node(cl){};
 	int create(void);
 	int init(OBJECT *parent);
+	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	int isa(char *classname);
 };
