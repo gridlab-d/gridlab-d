@@ -91,6 +91,7 @@ public:
 	double voltage_set_low;
 	double deadband;
 	double check_power;
+	double pf;
 	//double lockout_time;
 	//int lockout_flag;
 	//TIMESTAMP next_time;
@@ -107,6 +108,7 @@ public:
 	double sensitivity;
 	double check_power_high;
 	double check_power_low;
+	double B_scheduled_power;
 
 public:
 	/* required implementations */

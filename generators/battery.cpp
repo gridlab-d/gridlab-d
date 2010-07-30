@@ -77,6 +77,8 @@ battery::battery(MODULE *module)
 				PT_KEYWORD,"CONFLICTED",BS_CONFLICTED,
 
 			PT_double, "number_battery_state_changes", PADDR(no_of_cycles),
+
+			// Used for linear temperature control mode
 			PT_double, "monitored_power[W]", PADDR(check_power),
 			PT_double, "power_set_high[W]", PADDR(power_set_high),
 			PT_double, "power_set_low[W]", PADDR(power_set_low),
@@ -87,19 +89,25 @@ battery::battery(MODULE *module)
 			PT_double, "voltage_set_high[V]", PADDR(voltage_set_high),
 			PT_double, "voltage_set_low[V]", PADDR(voltage_set_low),
 			PT_double, "deadband[V]", PADDR(deadband),
+			PT_double, "sensitivity", PADDR(sensitivity),
+			PT_double, "high_temperature", PADDR(high_temperature),
+			PT_double, "midpoint_temperature", PADDR(midpoint_temperature),
+			PT_double, "low_temperature", PADDR(low_temperature),
+
+			//Used for PQ mode
+			PT_double, "scheduled_power[W]", PADDR(B_scheduled_power),
+
 			PT_double, "Rinternal[Ohm]", PADDR(Rinternal),
 			PT_double, "V_Max[V]", PADDR(V_Max), 
 			PT_complex, "I_Max[A]", PADDR(I_Max),
 			PT_double, "E_Max[Wh]", PADDR(E_Max),
 			PT_double, "P_Max[W]", PADDR(Max_P),
+			PT_double, "power_factor", PADDR(pf),
 			PT_double, "Energy[Wh]",PADDR(Energy),
 			PT_double, "efficiency[unit]", PADDR(efficiency),
 			PT_double, "base_efficiency[unit]", PADDR(base_efficiency),
 			PT_double, "parasitic_power_draw[W]", PADDR(parasitic_power_draw),
-			PT_double, "sensitivity", PADDR(sensitivity),
-			PT_double, "high_temperature", PADDR(high_temperature),
-			PT_double, "midpoint_temperature", PADDR(midpoint_temperature),
-			PT_double, "low_temperature", PADDR(low_temperature),
+
 
 			//PT_int64, "generator_mode_choice", PADDR(generator_mode_choice),
 
@@ -199,6 +207,8 @@ int battery::init(OBJECT *parent)
 		};
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	
+		NR_mode = get_bool(parent,"NR_mode");
+
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 			*(map[i].var) = get_complex(parent,map[i].varname);
 
@@ -423,7 +433,7 @@ int battery::init(OBJECT *parent)
 				break;
 		}
 	}
-	if (power_set_high <= power_set_low)
+	if (power_set_high <= power_set_low && (gen_mode_v == GM_POWER_DRIVEN || gen_mode_v == GM_POWER_VOLTAGE_HYBRID))
 		gl_warning("power_set_high is less than power_set_low -- oscillations will most likely occur");
 
 	if (Energy < 0)
@@ -1059,6 +1069,361 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			} // NR_cycle
 		} //End split phase GM_POWER_DRIVEN and HYBRID
 	}// End GM_POWER_DRIVEN and HYBRID controls
+	else if (gen_mode_v == GM_CONSTANT_PQ)
+	{
+		if (number_of_phases_out == 3) //Three phase meter
+		{
+			if (*NR_mode == false)
+			{
+				complex volt[3];
+				double high_voltage = 0, low_voltage = 999999999;
+				TIMESTAMP dt,t_energy_limit;
+
+				for (int jj=0; jj<3; jj++)
+				{
+					volt[jj] = pCircuit_V[jj]; // 240-V circuit (we're assuming it can only be hooked here now)
+					if (volt[jj].Mag() > high_voltage)
+						high_voltage = volt[jj].Mag();
+					if (volt[jj].Mag() < low_voltage)
+						low_voltage = volt[jj].Mag();
+				}
+				if (first_time_step == 0)
+				{
+					dt = 0;
+				}
+				else if (prev_time == 0)
+				{
+					prev_time = t1;
+					dt = 0;
+				}
+				else if (prev_time < t1)
+				{
+					dt = t1 - prev_time;
+					prev_time = t1;
+				}
+				else
+					dt = 0;
+				
+				if (prev_state == -1) //discharge
+				{
+					Energy = Energy - (1 / base_efficiency) * power_transferred * (double)dt / 3600;
+					if (Energy < 0)
+						Energy = 0;
+				}
+				else if (prev_state == 1) //charge
+				{
+					Energy = Energy + base_efficiency * power_transferred * (double)dt / 3600;
+					if (Energy > E_Max)
+						Energy = E_Max;
+				}
+
+				if (first_time_step > 0)
+				{
+					if (high_voltage > V_Max.Mag())
+					{
+						gl_verbose("The voltages at the battery meter are higher than rated. No power output.");
+						battery_state = BS_WAITING;
+						prev_state = 0;
+
+						for (int jj=0; jj<3; jj++)
+						{
+							last_current[jj].SetPolar(parasitic_power_draw/3/volt[jj].Mag(),volt[jj].Arg());
+							pLine_I[jj] += last_current[jj];
+						}
+						return TS_NEVER;
+					}
+					else // We're within the voltage limits, so follow the schedule
+					{
+						double power_desired;
+						if (abs(B_scheduled_power) < abs(Max_P))
+							 power_desired = B_scheduled_power;
+						else
+							power_desired = Max_P;
+
+						if (power_desired < 0.0 && Energy < E_Max)
+						{
+							battery_state = BS_CHARGING;
+							prev_state = 1;
+
+							VA_Out = power_transferred = 0;
+							for (int jj=0; jj<3; jj++)
+							{
+								last_current[jj].SetPolar((-power_desired + parasitic_power_draw)/3/volt[jj].Mag(),volt[jj].Arg());
+								pLine_I[jj] += last_current[jj];
+								VA_Out += last_current[jj].Mag()*volt[jj].Mag();
+							}					
+							power_transferred = VA_Out.Mag();
+
+							t_energy_limit = TIMESTAMP(3600 * (E_Max - Energy) / power_transferred);
+
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+						else if (power_desired > 0.0 && Energy > 0.0)
+						{
+							battery_state = BS_DISCHARGING;
+							prev_state = -1;
+
+							VA_Out = power_transferred = 0;
+							for (int jj=0; jj<3; jj++)
+							{
+								last_current[jj].SetPolar((-power_desired + parasitic_power_draw)/3/volt[jj].Mag(),volt[jj].Arg());
+								pLine_I[jj] += last_current[jj];
+								VA_Out += last_current[jj].Mag()*volt[jj].Mag();
+							}					
+							power_transferred = VA_Out.Mag();
+
+							t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
+
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+						else if (Energy <= 0.0)
+						{
+							battery_state = BS_EMPTY;
+							prev_state = 0;
+
+							VA_Out = power_transferred = 0.0;
+							last_current[0] = last_current[1] = last_current[2] = complex(0,0);
+							return TS_NEVER;
+						}
+						else if (Energy >= E_Max)
+						{
+							battery_state = BS_FULL;
+							prev_state = -1;
+
+							VA_Out = power_transferred = 0;
+							for (int jj=0; jj<3; jj++)
+							{
+								last_current[jj].SetPolar((parasitic_power_draw)/3/volt[jj].Mag(),volt[jj].Arg());
+								pLine_I[jj] += last_current[jj];
+								VA_Out += last_current[jj].Mag()*volt[jj].Mag();
+							}					
+							power_transferred = VA_Out.Mag();
+							t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
+
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+						else
+						{
+							battery_state = BS_WAITING;
+							prev_state = -1;
+
+							VA_Out = power_transferred = 0;
+							for (int jj=0; jj<3; jj++)
+							{
+								last_current[jj].SetPolar((parasitic_power_draw)/3/volt[jj].Mag(),volt[jj].Arg());
+								pLine_I[jj] += last_current[jj];
+								VA_Out += last_current[jj].Mag()*volt[jj].Mag();
+							}					
+							power_transferred = VA_Out.Mag();
+
+							t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
+
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+					}
+				}
+				else
+				{
+					if (Energy <= 0)
+					{
+						battery_state = BS_EMPTY;
+						prev_state = 0;
+					}
+					else if (Energy >= E_Max)
+					{
+						battery_state = BS_FULL;
+						prev_state = -1;
+					}
+					else
+					{
+						battery_state = BS_WAITING;
+						prev_state = 0;
+					}
+
+					first_time_step = 1;
+					return TS_NEVER;
+				}
+			}// End NR_Cycle
+		}// End 3-phase meter
+		else if (number_of_phases_out == 4) // Split-phase
+		{
+			if (*NR_mode == false)
+			{
+				complex volt;
+				TIMESTAMP dt,t_energy_limit;
+
+				volt = pCircuit_V[0]; // 240-V circuit (we're assuming it can only be hooked here now)
+
+				if (first_time_step == 0)
+				{
+					dt = 0;
+				}
+				else if (prev_time == 0)
+				{
+					prev_time = t1;
+					dt = 0;
+				}
+				else if (prev_time < t1)
+				{
+					dt = t1 - prev_time;
+					prev_time = t1;
+				}
+				else
+					dt = 0;
+				
+				if (prev_state == -1) //discharge
+				{
+					Energy = Energy - (1 / base_efficiency) * power_transferred * (double)dt / 3600;
+					if (Energy < 0)
+						Energy = 0;
+				}
+				else if (prev_state == 1) //charge
+				{
+					Energy = Energy + base_efficiency * power_transferred * (double)dt / 3600;
+					if (Energy > E_Max)
+						Energy = E_Max;
+				}
+
+				if (first_time_step > 0)
+				{
+					if (volt.Mag() > V_Max.Mag() || volt.Mag()/240 < 0.9 || volt.Mag()/240 > 1.1)
+					{
+						gl_verbose("The voltages at the battery meter are higher than rated, or outside of ANSI emergency specifications. No power output.");
+						battery_state = BS_WAITING;
+						prev_state = -1;
+
+						last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
+						*pLine12 += last_current[0];
+
+						return TS_NEVER;
+					}
+					else 
+					{
+						double power_desired;
+						if (abs(B_scheduled_power) < abs(Max_P))
+							 power_desired = B_scheduled_power;
+						else
+							power_desired = Max_P;
+
+						if (power_desired < 0.0 && Energy < E_Max)
+						{
+							battery_state = BS_CHARGING;
+							prev_state = 1;
+
+							double current_desired = -(power_desired - parasitic_power_draw) / volt.Mag();
+							last_current[0].SetPolar(current_desired,volt.Arg());
+							*pLine12 += last_current[0];
+
+							VA_Out = power_transferred = last_current[0].Mag()*volt.Mag();
+
+							t_energy_limit = TIMESTAMP(3600 * (E_Max - Energy) / power_transferred);
+
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+						else if (power_desired > 0.0 && Energy > 0.0)
+						{
+							battery_state = BS_DISCHARGING;
+							prev_state = -1;
+
+							double current_desired = -(power_desired - parasitic_power_draw) / volt.Mag();
+							last_current[0].SetPolar(current_desired,volt.Arg());
+							*pLine12 += last_current[0];
+
+							VA_Out = power_transferred = last_current[0].Mag()*volt.Mag();
+
+							t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
+
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+						else if (Energy <= 0.0)
+						{
+							battery_state = BS_EMPTY;
+							prev_state = 0;
+
+							VA_Out = power_transferred = 0.0;
+							last_current[0] = complex(0,0);
+							return TS_NEVER;
+						}
+						else if (Energy >= E_Max)
+						{
+							battery_state = BS_FULL;
+							prev_state = -1;
+
+							double current_desired = (parasitic_power_draw) / volt.Mag();
+							last_current[0].SetPolar(current_desired,volt.Arg());
+							*pLine12 += last_current[0];
+
+							VA_Out = power_transferred = last_current[0].Mag()*volt.Mag();
+
+							t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
+
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+						else
+						{
+							battery_state = BS_WAITING;
+							prev_state = -1;
+
+							double current_desired = (parasitic_power_draw) / volt.Mag();
+							last_current[0].SetPolar(current_desired,volt.Arg());
+							*pLine12 += last_current[0];
+
+							VA_Out = power_transferred = last_current[0].Mag()*volt.Mag();
+
+							t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
+
+							if (t_energy_limit == 0)
+								t_energy_limit = 1;
+
+							return -(t1 + t_energy_limit);
+						}
+					}
+				}
+				else
+				{
+					if (Energy <= 0)
+					{
+						battery_state = BS_EMPTY;
+						prev_state = 0;
+					}
+					else if (Energy >= E_Max)
+					{
+						battery_state = BS_FULL;
+						prev_state = -1;
+					}
+					else
+					{
+						battery_state = BS_WAITING;
+						prev_state = 0;
+					}
+
+					first_time_step = 1;
+					return TS_NEVER;
+				}
+			}// End NR_Cycle
+		}// End Split-phase
+	}// End Constant_PQ
 	else
 	{
 		//gather V_Out
