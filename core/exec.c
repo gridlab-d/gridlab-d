@@ -710,7 +710,7 @@ STATUS exec_start(void)
 	//sjin: GetMachineCycleCount
 	//mc_start_time = GetMachineCycleCount();
 	start = clock();
-
+	thread_id = (pthread_t *) malloc(global_threadcount * sizeof(pthread_t));
 	/* main loop exception handler */
 	TRY {
 
@@ -784,7 +784,8 @@ STATUS exec_start(void)
 						//sjin: implement pthreads
 						incr = ceil((float) ranks[pass]->ordinal[i]->size / global_threadcount);
 						//printf("pass %d, incr = %d, size = %d\n", pass, incr, ranks[pass]->ordinal[i]->size);
-						thread_id = (pthread_t *) malloc(global_threadcount * sizeof(pthread_t));
+						//thread_id = (pthread_t *) malloc(global_threadcount * sizeof(pthread_t));
+						// copying this further up
 						/* if the number of objects is less than or equal to the number of threads, each thread process one object */
 						if (incr <= 1) {
 							//printf("incr = %d\n", incr);
