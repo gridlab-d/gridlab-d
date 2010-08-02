@@ -36,7 +36,11 @@ double_assert::double_assert(MODULE *module)
 			PT_double, "value", PADDR(value),
 			PT_double, "within", PADDR(within),
 			PT_char1024, "target", PADDR(target),			
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1){
+				char msg[256];
+				sprintf(msg, "unable to publish properties in %s",__FILE__);
+				throw msg;
+		}
 
 		defaults = this;
 		status = ASSERT_TRUE;
@@ -58,7 +62,8 @@ int double_assert::create(void)
 int double_assert::init(OBJECT *parent)
 {
 	if (within <= 0.0)
-		GL_THROW ("A non-positive value has been specified for within.");
+		char *msg = "A non-positive value has been specified for within.";
+		throw msg;
 		/*  TROUBLESHOOT
 		Within is the range in which the check is being performed.  Please check to see that you have
 		specified a value for "within" and it is positive.
@@ -69,6 +74,7 @@ TIMESTAMP double_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	return TS_NEVER;
 }
+
 complex *double_assert::get_complex(OBJECT *obj, char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
@@ -115,7 +121,13 @@ EXPORT int init_double_assert(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_double_assert(OBJECT *obj, TIMESTAMP t0)
 {
 	double_assert *my = OBJECTDATA(obj,double_assert);
-	TIMESTAMP t1 = my->postsync(obj->clock, t0);
+	TIMESTAMP t1;
+	try {
+		t1 = my->postsync(obj->clock, t0);
+	} catch (char *msg){
+		gl_error("sync_double_assert: %s", msg);
+		t1 = TS_INVALID;
+	}
 	obj->clock = t0;
 	return t1;
 }
@@ -141,7 +153,7 @@ EXPORT int commit_double_assert(OBJECT *obj)
 	double *x = (double*)gl_get_double_by_name(obj->parent,da->target);
 	if (x==NULL) 
 	{
-		GL_THROW("Specified target %s for %s is not valid.",da->target,gl_name(obj->parent,buff,64));
+		gl_error("Specified target %s for %s is not valid.",da->target,gl_name(obj->parent,buff,64));
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 

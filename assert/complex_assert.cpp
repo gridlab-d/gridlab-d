@@ -43,7 +43,11 @@ complex_assert::complex_assert(MODULE *module)
 			PT_complex, "value", PADDR(value),
 			PT_double, "within", PADDR(within),
 			PT_char1024, "target", PADDR(target),	
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1){
+				char msg[256];
+				sprintf(msg, "unable to publish properties in %s",__FILE__);
+				throw msg;
+		}
 
 		defaults = this;
 		status = ASSERT_TRUE;
@@ -65,13 +69,14 @@ int complex_assert::create(void)
 
 int complex_assert::init(OBJECT *parent)
 {
-	if (within <= 0.0)
-		GL_THROW ("A non-positive value has been specified for within.");
+	if (within <= 0.0){
+		char *msg = "A non-positive value has been specified for within.";
+		throw msg;
 		/*  TROUBLESHOOT
 		Within is the range in which the check is being performed.  Please check to see that you have
 		specified a value for "within" and it is positive.
 		*/
-
+	}
 	return 1;
 }
 TIMESTAMP complex_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
@@ -113,14 +118,15 @@ EXPORT int init_complex_assert(OBJECT *obj, OBJECT *parent)
 	try 
 	{
 		if (obj!=NULL)
-			return OBJECTDATA(obj,complex_assert)->init(parent);
+			return OBJECTDATA(obj,complex_assert)->init(parent); 
 	}
 	catch (char *msg)
 	{
 		gl_error("init_complex_assert(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 	}
-	return 0;
+	return 0; // failure if obj == null or on exception
 }
+
 EXPORT int commit_complex_assert(OBJECT *obj)
 {
 	char buff[64];
@@ -139,7 +145,7 @@ EXPORT int commit_complex_assert(OBJECT *obj)
 	}
 	complex *x = (complex*)gl_get_complex_by_name(obj->parent,ca->target);
 	if (x==NULL) {
-		GL_THROW("Specified target %s for %s is not valid.",ca->target,gl_name(obj->parent,buff,64));
+		gl_error("Specified target %s for %s is not valid.",ca->target,gl_name(obj->parent,buff,64));
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -234,7 +240,13 @@ EXPORT int notify_complex_assert(OBJECT *obj, int update_mode, PROPERTY *prop){
 EXPORT TIMESTAMP sync_complex_assert(OBJECT *obj, TIMESTAMP t0)
 {
 	complex_assert *my = OBJECTDATA(obj,complex_assert);
-	TIMESTAMP t1 = my->postsync(obj->clock, t0);
+	TIMESTAMP t1;
+	try{
+		t1 = my->postsync(obj->clock, t0);
+	} catch (char *msg){
+		gl_error("sync_complex_assert: %s", msg);
+		t1 = TS_INVALID;
+	}
 	obj->clock = t0;
 	return t1;
 }
