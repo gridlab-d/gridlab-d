@@ -61,8 +61,8 @@ int double_assert::create(void)
 
 int double_assert::init(OBJECT *parent)
 {
+	char *msg = "A non-positive value has been specified for within.";
 	if (within <= 0.0)
-		char *msg = "A non-positive value has been specified for within.";
 		throw msg;
 		/*  TROUBLESHOOT
 		Within is the range in which the check is being performed.  Please check to see that you have

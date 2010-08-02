@@ -64,8 +64,11 @@ auction::auction(MODULE *module)
 	if (oclass==NULL)
 	{
 		oclass = gl_register_class(module,"auction",sizeof(auction),passconfig);
-		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__);
+		if (oclass==NULL){
+			char msg[256];
+			sprintf(msg, "unable to register object class implemented by %s", __FILE__);
+			throw msg;
+		}
 
 		if (gl_publish_variable(oclass,
 /**/		PT_enumeration, "type", PADDR(type), PT_DEPRECATED, PT_DESCRIPTION, "type of market",
@@ -169,7 +172,11 @@ auction::auction(MODULE *module)
 
 			PT_int32, "warmup", PADDR(warmup),
 
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1){
+				char msg[256];
+				sprintf(msg, "unable to publish properties in %s",__FILE__);
+				throw msg;
+			}
 		gl_publish_function(oclass,	"submit_bid", (FUNCTIONADDR)submit_bid);
 		gl_publish_function(oclass,	"submit_bid_state", (FUNCTIONADDR)submit_bid_state);
 		gl_publish_function(oclass, "get_market_for_time", (FUNCTIONADDR)get_market_for_time);
@@ -379,16 +386,7 @@ int auction::init(OBJECT *parent)
 		if(stat->stat_type == SY_STDEV){
 			check = *gl_get_double(obj, stat->prop);
 			if(check == -1.0){
-				if(init_stdev == 0.0){
-					gl_error("auction standard deviation property '%s' while init_stdev is unset", stat->prop->name);
-					/* TROUBLESHOOT
-						Market standard deviation statistics should not collapse to zero, or the market will stall with an absence
-						of external price input.
-						*/
-					return 0;
-				} else {
-					gl_set_value(obj, stat->prop, init_stdev);
-				}
+				gl_set_value(obj, stat->prop, init_stdev);
 			}
 		} else if(stat->stat_type == SY_MEAN){
 			check = *gl_get_double(obj, stat->prop);
@@ -782,13 +780,18 @@ void auction::clear_market(void)
 
 		if (strcmp(unit,"")!=0) 
 		{
-			if (gl_convert("W",unit,&refload)==0)
-				GL_THROW("linkref %s uses units of (W) and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), unit);
+			if (gl_convert("W",unit,&refload)==0){
+				char msg[256];
+				sprintf(msg, "linkref %s uses units of (W) and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), unit);
+				throw msg;
 				/* TROUBLESHOOT
 					Power markets must be trading in quantities measured with power units.  Change the market's unit property to some
 					quantity of watts -- W, MW, kW, mW, dW, etc.
 					*/
-			else if (verbose) gl_output("linkref converted %.3f W to %.3f %s", *Qload, refload, unit);
+			}
+			else if (verbose){
+				gl_output("linkref converted %.3f W to %.3f %s", *Qload, refload, unit);
+			}
 		}
 		if (total_unknown > 0.001) // greater than one mW ~ allows rounding errors
 			gl_warning("total_unknown is %.0f -> some controllers are not providing their states with their bids", total_unknown);
@@ -816,7 +819,9 @@ void auction::clear_market(void)
 		double refload;
 		
 		if(pRefload == NULL){
-			GL_THROW("unable to retreive property '%s' from capacity reference object '%s'", capacity_reference_property->name, capacity_reference_object->name);
+			char msg[256];
+			sprintf(msg, "unable to retreive property '%s' from capacity reference object '%s'", capacity_reference_property->name, capacity_reference_object->name);
+			throw msg;
 			/* TROUBLESHOOT
 				The specified capacity reference property cannot be retrieved as a double.  Verify that it is a double type property.
 				*/
@@ -827,7 +832,9 @@ void auction::clear_market(void)
 		if(strcmp(unit, "") != 0){
 			if(capacity_reference_property->unit != 0){
 				if(gl_convert(capacity_reference_property->unit->name,unit,&refload) == 0){
-					GL_THROW("capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), capacity_reference_property->unit->name, unit);
+					char msg[256];
+					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), capacity_reference_property->unit->name, unit);
+					throw msg;
 					/* TROUBLESHOOT
 						If capacity_reference_property has units specified, the units must be convertable to the units used by its auction object.
 						*/
