@@ -221,7 +221,7 @@ EXPORT int init_regulator_configuration(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (regulator_configuration:%d): %s", my->get_name(), my->get_id(), msg);
+		gl_error("%s (regulator_configuration:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
 	}
 }

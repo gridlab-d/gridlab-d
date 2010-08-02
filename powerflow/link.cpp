@@ -2234,7 +2234,7 @@ EXPORT int init_link(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (link:%d): %s", my->get_name(), my->get_id(), msg);
+		gl_error("%s (link:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
 	}
 }
@@ -2268,12 +2268,12 @@ EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	} 
 	catch (const char *error) 
 	{
-		GL_THROW("%s (link:%d): %s", pObj->get_name(), pObj->get_id(), error);
+		gl_error("%s (link:%d): %s", pObj->get_name(), pObj->get_id(), error);
 		return TS_INVALID; 
 	} 
 	catch (...) 
 	{
-		GL_THROW("%s (link:%d): unknown exception", pObj->get_name(), pObj->get_id());
+		gl_error("%s (link:%d): unknown exception", pObj->get_name(), pObj->get_id());
 		return TS_INVALID;
 	}
 }

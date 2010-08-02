@@ -32,6 +32,8 @@ underground_line::underground_line(MODULE *mod) : line(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+		gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ugline);
+		gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ugline);
     }
 }
 
@@ -462,11 +464,11 @@ EXPORT TIMESTAMP sync_underground_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 			throw "invalid pass request";
 		}
 	} catch (const char *error) {
-		GL_THROW("%s (underground_line:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return 0; 
+		gl_error("%s (underground_line:%d): %s", pObj->get_name(), pObj->get_id(), error);
+		return TS_INVALID; 
 	} catch (...) {
-		GL_THROW("%s (underground_line:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return 0;
+		gl_error("%s (underground_line:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
+		return TS_INVALID;
 	}
 }
 
@@ -478,7 +480,7 @@ EXPORT int init_underground_line(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (underground_line:%d): %s", my->get_name(), my->get_id(), msg);
+		gl_error("%s (underground_line:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
 	}
 }
@@ -492,5 +494,33 @@ EXPORT int recalc_underground_line(OBJECT *obj)
 {
 	OBJECTDATA(obj,underground_line)->recalc();
 	return 1;
+}
+
+EXPORT int create_fault_ugline(OBJECT *thisobj, char *fault_type, int *implemented_fault)
+{
+	int retval;
+
+	//Link to ourselves
+	underground_line *thisline = OBJECTDATA(thisobj,underground_line);
+
+	//Try to fault up
+	retval = thisline->link_fault_on(fault_type, implemented_fault);
+
+	return retval;
+}
+EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
+{
+	int retval;
+
+	//Link to ourselves
+	underground_line *thisline = OBJECTDATA(thisobj,underground_line);
+
+	//Clear the fault
+	retval = thisline->link_fault_off(implemented_fault, imp_fault_name);
+
+	//Clear the fault type
+	*implemented_fault = -1;
+
+	return retval;
 }
 /**@}**/

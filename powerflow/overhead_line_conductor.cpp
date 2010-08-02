@@ -101,7 +101,7 @@ EXPORT int init_overhead_line_conductor(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (overhead_line_conductor:%d): %s", my->get_name(), my->get_id(), msg);
+		gl_error("%s (overhead_line_conductor:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
 	}
 }

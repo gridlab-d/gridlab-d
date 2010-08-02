@@ -205,7 +205,7 @@ EXPORT int init_triplex_node(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (triplex_node:%d): %s", my->get_name(), my->get_id(), msg);
+		gl_error("%s (triplex_node:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
 	}
 }
@@ -236,11 +236,11 @@ EXPORT TIMESTAMP sync_triplex_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	} catch (const char *error) {
-		GL_THROW("%s (triplex_node:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return 0; 
+		gl_error("%s (triplex_node:%d): %s", pObj->get_name(), pObj->get_id(), error);
+		return TS_INVALID; 
 	} catch (...) {
-		GL_THROW("%s (triplex_node:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return 0;
+		gl_error("%s (triplex_node:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
+		return TS_INVALID;
 	}
 }
 

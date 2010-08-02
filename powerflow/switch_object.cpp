@@ -21,7 +21,7 @@ EXPORT int64 switch_close(OBJECT *obj)
 {
 	if (!gl_object_isa(obj,"switch"))
 	{
-		GL_THROW("powerflow.switch_close(): %s object (%s:%d) is not a switch", obj->name?obj->name:"anonymous", obj->oclass->name,obj->id);
+		gl_error("powerflow.switch_close(): %s object (%s:%d) is not a switch", obj->name?obj->name:"anonymous", obj->oclass->name,obj->id);
 		return 0;
 	}
 	switch_object *pSwitch = OBJECTDATA(obj,switch_object);
@@ -32,7 +32,7 @@ EXPORT int64 switch_open(OBJECT *obj)
 {
 	if (!gl_object_isa(obj,"switch"))
 	{
-		GL_THROW("powerflow::switch_open(): %s object (%s:%d) is not a switch", obj->name?obj->name:"anonymous", obj->oclass->name,obj->id);
+		gl_error("powerflow::switch_open(): %s object (%s:%d) is not a switch", obj->name?obj->name:"anonymous", obj->oclass->name,obj->id);
 		return 0;
 	}
 	switch_object *pSwitch = OBJECTDATA(obj,switch_object);
@@ -43,7 +43,7 @@ EXPORT int64 switch_status(OBJECT *obj)
 {
 	if (!gl_object_isa(obj,"switch"))
 	{
-		GL_THROW("powerflow::switch_open(): %s object (%s:%d) is not a switch", obj->name?obj->name:"anonymous", obj->oclass->name,obj->id);
+		gl_error("powerflow::switch_open(): %s object (%s:%d) is not a switch", obj->name?obj->name:"anonymous", obj->oclass->name,obj->id);
 		return 0;
 	}
 	switch_object *pSwitch = OBJECTDATA(obj,switch_object);
@@ -831,7 +831,7 @@ EXPORT int init_switch(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (switch:%d): %s", my->get_name(), my->get_id(), msg);
+		gl_error("%s (switch:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0;
 	}
 }
@@ -862,11 +862,11 @@ EXPORT TIMESTAMP sync_switch(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	} catch (const char *error) {
-		GL_THROW("%s (switch:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return 0;
+		gl_error("%s (switch:%d): %s", pObj->get_name(), pObj->get_id(), error);
+		return TS_INVALID;
 	} catch (...) {
-		GL_THROW("%s (switch:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return 0;
+		gl_error("%s (switch:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
+		return TS_INVALID;
 	}
 }
 

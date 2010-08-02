@@ -58,7 +58,6 @@ meter::meter(MODULE *mod) : node(mod)
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "node",
-			/// @todo three-phase meter should meter Q also (required complex)
 			PT_double, "measured_real_energy[Wh]", PADDR(measured_real_energy),
 			PT_double, "measured_reactive_energy[VAh]",PADDR(measured_reactive_energy),
 			PT_complex, "measured_power[VA]", PADDR(measured_power),
@@ -79,6 +78,7 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_complex, "measured_current_A[A]", PADDR(measured_current[0]),
 			PT_complex, "measured_current_B[A]", PADDR(measured_current[1]),
 			PT_complex, "measured_current_C[A]", PADDR(measured_current[2]),
+			PT_bool, "customer_interrupted", PADDR(meter_interrupted),
 #ifdef SUPPORT_OUTAGES
 			PT_int16, "sustained_count", PADDR(sustained_count),	//reliability sustained event counter
 			PT_int16, "momentary_count", PADDR(momentary_count),	//reliability momentary event counter
@@ -125,6 +125,8 @@ int meter::create()
 	measured_demand = 0.0;
 	measured_real_power = 0.0;
 	measured_reactive_power = 0.0;
+
+	meter_interrupted = false;	//We default to being in service
 
 	return result;
 }
@@ -237,7 +239,7 @@ EXPORT int init_meter(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (meter:%d): %s", my->get_name(), my->get_id(), msg);
+		gl_error("%s (meter:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
 	}
 }
@@ -261,11 +263,11 @@ EXPORT TIMESTAMP sync_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		}
 		throw "invalid pass request";
 	} catch (const char *error) {
-		GL_THROW("%s (meter:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return 0; 
+		gl_error("%s (meter:%d): %s", pObj->get_name(), pObj->get_id(), error);
+		return TS_INVALID; 
 	} catch (...) {
-		GL_THROW("%s (meter:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return 0;
+		gl_error("%s (meter:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
+		return TS_INVALID;
 	}
 }
 

@@ -21,4 +21,6 @@ private:
 	void test_phases(line_configuration *config, const char ph);
 };
 
+EXPORT int create_fault_ugline(OBJECT *thisobj, char *fault_type, int *implemented_fault);
+EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
 #endif // _UNDERGROUNDLINE_H

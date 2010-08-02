@@ -1385,7 +1385,7 @@ EXPORT int commit_frequency_gen(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (frequency_gen:%d): %s", fgen->get_name(), fgen->get_id(), msg);
+		gl_error("%s (frequency_gen:%d): %s", fgen->get_name(), fgen->get_id(), msg);
 		return 0; 
 	}
 

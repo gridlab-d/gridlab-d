@@ -32,6 +32,8 @@ overhead_line::overhead_line(MODULE *mod) : line(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
 			NULL) < 1) GL_THROW("unable to publish overhead_line properties in %s",__FILE__);
+		gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ohline);
+		gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ohline);
     }
 }
 
@@ -351,6 +353,7 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 		or invalid.
 		*/
 }
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: overhead_line
 //////////////////////////////////////////////////////////////////////////
@@ -413,11 +416,11 @@ EXPORT TIMESTAMP sync_overhead_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	} catch (const char *error) {
-		GL_THROW("%s (overhead_line:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return 0; 
+		gl_error("%s (overhead_line:%d): %s", pObj->get_name(), pObj->get_id(), error);
+		return TS_INVALID; 
 	} catch (...) {
-		GL_THROW("%s (overhead_line:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return 0;
+		gl_error("%s (overhead_line:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
+		return TS_INVALID;
 	}
 }
 
@@ -429,7 +432,7 @@ EXPORT int init_overhead_line(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (overhead_line:%d): %s", my->get_name(), my->get_id(), msg);
+		gl_error("%s (overhead_line:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
 	}
 }
@@ -444,5 +447,31 @@ EXPORT int recalc_overhead_line(OBJECT *obj)
 	OBJECTDATA(obj,overhead_line)->recalc();
 	return 1;
 }
+EXPORT int create_fault_ohline(OBJECT *thisobj, char *fault_type, int *implemented_fault)
+{
+	int retval;
 
+	//Link to ourselves
+	overhead_line *thisline = OBJECTDATA(thisobj,overhead_line);
+
+	//Try to fault up
+	retval = thisline->link_fault_on(fault_type, implemented_fault);
+
+	return retval;
+}
+EXPORT int fix_fault_ohline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
+{
+	int retval;
+
+	//Link to ourselves
+	overhead_line *thisline = OBJECTDATA(thisobj,overhead_line);
+
+	//Clear the fault
+	retval = thisline->link_fault_off(implemented_fault, imp_fault_name);
+	
+	//Clear the fault type
+	*implemented_fault = -1;
+
+	return retval;
+}
 /**@}**/

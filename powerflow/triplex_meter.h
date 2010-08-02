@@ -19,6 +19,7 @@ public:
 	double measured_demand; //< metered demand (peak of power)
 	double measured_real_power; //< metered real power
 	double measured_reactive_power; //< metered reactive power
+	bool tpmeter_interrupted;		///< Reliability flag - goes active if the customer is in an "interrupted" state
 	TIMESTAMP next_time;
 	TIMESTAMP dt;
 	TIMESTAMP last_t;

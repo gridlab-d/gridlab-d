@@ -97,7 +97,7 @@ EXPORT int init_powerflow_library(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (powerflow_library:%d): %s", my->get_name(), my->get_id(), msg);
+		gl_error("%s (powerflow_library:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
 	}
 }
@@ -122,11 +122,11 @@ EXPORT TIMESTAMP sync_powerflow_library(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pa
 			throw "invalid pass request";
 		}
 	} catch (const char *error) {
-		GL_THROW("%s (powerflow_library:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return 0; 
+		gl_error("%s (powerflow_library:%d): %s", pObj->get_name(), pObj->get_id(), error);
+		return TS_INVALID; 
 	} catch (...) {
-		GL_THROW("%s (powerflow_library:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return 0;
+		gl_error("%s (powerflow_library:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
+		return TS_INVALID;
 	}
 }
 

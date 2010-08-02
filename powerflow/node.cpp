@@ -2207,7 +2207,7 @@ EXPORT int commit_node(OBJECT *obj)
 	}
 	catch (char *msg)
 	{
-		GL_THROW("%s (node:%d): %s", pNode->get_name(), pNode->get_id(), msg);
+		gl_error("%s (node:%d): %s", pNode->get_name(), pNode->get_id(), msg);
 		return 0; 
 	}
 
@@ -2227,7 +2227,7 @@ EXPORT int init_node(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (node:%d): %s", my->get_name(), my->get_id(), msg);
+		gl_error("%s (node:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
 	}
 }

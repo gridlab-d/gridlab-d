@@ -334,10 +334,10 @@ EXPORT int init_pqload(OBJECT *obj)
 	try {
 		result = ((pqload*) (obj + 1))->init(obj->parent);
 	} catch (const char *error) {
-		GL_THROW("%s:%d: %s", obj->oclass->name, obj->id, error);
+		gl_error("%s:%d: %s", obj->oclass->name, obj->id, error);
 		return 0;
 	} catch (...) {
-		GL_THROW("%s:%d: %s", obj->oclass->name, obj->id, "unknown exception");
+		gl_error("%s:%d: %s", obj->oclass->name, obj->id, "unknown exception");
 		return 0;
 	}
 	return result;
@@ -369,11 +369,11 @@ EXPORT TIMESTAMP sync_pqload(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	} catch (const char *error) {
-		GL_THROW("%s (pqload:%d): %s", obj->name, obj->oclass->name, obj->id, error);
-		return 0;
+		gl_error("%s (pqload:%d): %s", obj->name, obj->oclass->name, obj->id, error);
+		return TS_INVALID;
 	} catch (...) {
-		GL_THROW("%s (pqload:%d): %s", obj->name, obj->oclass->name, obj->id, "unknown exception");
-		return 0;
+		gl_error("%s (pqload:%d): %s", obj->name, obj->oclass->name, obj->id, "unknown exception");
+		return TS_INVALID;
 	}
 }
 

@@ -155,7 +155,7 @@ EXPORT int init_voltdump(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (voltdump:%d): %s", obj->name, obj->id, msg);
+		gl_error("%s (voltdump:%d): %s", obj->name, obj->id, msg);
 		return 0; 
 	}
 }
@@ -174,7 +174,7 @@ EXPORT int commit_voltdump(OBJECT *obj){
 	try {
 		return my->commit(obj->clock);
 	} catch(const char *msg){
-		GL_THROW("%s (voltdump:%d): %s", obj->name, obj->id, msg);
+		gl_error("%s (voltdump:%d): %s", obj->name, obj->id, msg);
 		return 0; 
 	}
 }

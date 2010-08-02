@@ -77,6 +77,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_complex, "measured_current_1[A]", PADDR(measured_current[0]),
 			PT_complex, "measured_current_2[A]", PADDR(measured_current[1]),
 			PT_complex, "measured_current_N[A]", PADDR(measured_current[2]),
+			PT_bool, "customer_interrupted", PADDR(tpmeter_interrupted),
 #ifdef SUPPORT_OUTAGES
 			PT_int16, "sustained_count", PADDR(sustained_count),	//reliability sustained event counter
 			PT_int16, "momentary_count", PADDR(momentary_count),	//reliability momentary event counter
@@ -137,6 +138,8 @@ int triplex_meter::create()
 	price = 0.0;
 	tier_price[0] = tier_price[1] = tier_price[2] = 0;
 	tier_energy[0] = tier_energy[1] = tier_energy[2] = 0;
+
+	tpmeter_interrupted = false;	//Assumes we start as "uninterrupted"
 
 
 	return result;
@@ -392,7 +395,7 @@ EXPORT int init_triplex_meter(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (triplex_meter:%d): %s", my->get_name(), my->get_id(), msg);
+		gl_error("%s (triplex_meter:%d): %s", my->get_name(), my->get_id(), msg);
 		return 0; 
 	}
 }
@@ -416,11 +419,11 @@ EXPORT TIMESTAMP sync_triplex_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		}
 		throw "invalid pass request";
 	} catch (const char *error) {
-		GL_THROW("%s (triplex_meter:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return 0; 
+		gl_error("%s (triplex_meter:%d): %s", pObj->get_name(), pObj->get_id(), error);
+		return TS_INVALID; 
 	} catch (...) {
-		GL_THROW("%s (triplex_meter:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return 0;
+		gl_error("%s (triplex_meter:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
+		return TS_INVALID;
 	}
 }
 

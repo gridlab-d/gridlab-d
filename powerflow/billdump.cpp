@@ -158,7 +158,7 @@ EXPORT int init_billdump(OBJECT *obj)
 	}
 	catch (const char *msg)
 	{
-		GL_THROW("%s (billdump:%d): %s", obj->name, obj->id, msg);
+		gl_error("%s (billdump:%d): %s", obj->name, obj->id, msg);
 		return 0; 
 	}
 }
@@ -177,7 +177,7 @@ EXPORT int commit_billdump(OBJECT *obj){
 	try {
 		return my->commit(obj->clock);
 	} catch(char *msg){
-		GL_THROW("%s (billdump:%d): %s", obj->name, obj->id, msg);
+		gl_error("%s (billdump:%d): %s", obj->name, obj->id, msg);
 		return 0; 
 	}
 }

@@ -2653,7 +2653,7 @@ EXPORT TIMESTAMP sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 			throw "invalid pass request";
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("volt_var_control %s (%s:%d): %s", obj->name, obj->oclass->name, obj->id, msg);
 	}

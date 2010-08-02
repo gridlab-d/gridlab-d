@@ -20,6 +20,7 @@ public:
 	double measured_real_power;		///< metered real power
 	double measured_reactive_power; ///< metered reactive power
 	complex indiv_measured_power[3];///< metered power on each phase
+	bool meter_interrupted;			///< Reliability flag - goes active if the customer is in an "interrupted" state
 	TIMESTAMP dt;
 	TIMESTAMP last_t;
 

@@ -215,10 +215,10 @@ EXPORT int init_load(OBJECT *obj)
 	try {
 		result = ((load*) (obj + 1))->init();
 	} catch (const char *error) {
-		GL_THROW("%s:%d: %s", obj->oclass->name, obj->id, error);
+		gl_error("%s:%d: %s", obj->oclass->name, obj->id, error);
 		return 0; 
 	} catch (...) {
-		GL_THROW("%s:%d: %s", obj->oclass->name, obj->id, "unknown exception");
+		gl_error("%s:%d: %s", obj->oclass->name, obj->id, "unknown exception");
 		return 0;
 	}
 	return result;
@@ -250,11 +250,11 @@ EXPORT TIMESTAMP sync_load(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	} catch (const char *error) {
-		GL_THROW("%s (load:%d): %s", obj->name, obj->oclass->name, obj->id, error);
-		return 0; 
+		gl_error("%s (load:%d): %s", obj->name, obj->oclass->name, obj->id, error);
+		return TS_INVALID; 
 	} catch (...) {
-		GL_THROW("%s (load:%d): %s", obj->name, obj->oclass->name, obj->id, "unknown exception");
-		return 0;
+		gl_error("%s (load:%d): %s", obj->name, obj->oclass->name, obj->id, "unknown exception");
+		return TS_INVALID;
 	}
 }
 
