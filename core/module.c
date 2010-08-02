@@ -132,6 +132,7 @@ void *module_malloc(size_t size)
 	lock(&malloc_lock);
 	ptr = (void*)malloc(size);
 	unlock(&malloc_lock);
+	return ptr;
 }
 void *module_free(void *ptr)
 {
