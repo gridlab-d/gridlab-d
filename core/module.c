@@ -125,7 +125,7 @@ void dlload_error(const char *filename)
 }
 
 /* MALLOC/FREE - GL threadsafe versions */
-static int malloc_lock;
+static int malloc_lock = 0;
 void *module_malloc(size_t size)
 {
 	void *ptr;

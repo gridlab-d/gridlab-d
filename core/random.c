@@ -26,6 +26,7 @@
 #include "exception.h"
 #include "globals.h"
 #include "complex.h"
+#include "lock.h"
 
 #ifdef WIN32
 #define finite _finite
@@ -114,16 +115,24 @@ double randunit(void)
 {
 	double u;
 	unsigned int ur;
+	static int random_lock=0;
 
+	lock(&random_lock);
+	
 	if (ur_state!=NULL) 
 		srand(*ur_state);
+TryAgain:
 	ur = randwarn();
 	if (ur_state!=NULL)
 		*ur_state = ur;
 	u = ur/(RAND_MAX+1.0);
-	if (u<1) return u;
+	if (u>=1) 
+		goto TryAgain;
 
-	return randunit();
+	unlock(&random_lock);
+	
+	return u;
+
 }
 double randunit_pos(void)
 {
