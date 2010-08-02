@@ -19,7 +19,7 @@
 #include "pqload.h"
 
 SCHED_LIST *new_slist(){
-	SCHED_LIST *l = (SCHED_LIST *)malloc(sizeof(SCHED_LIST));
+	SCHED_LIST *l = (SCHED_LIST *)gl_malloc(sizeof(SCHED_LIST));
 	memset(l, 0, sizeof(SCHED_LIST));
 	return l;
 }
@@ -32,7 +32,7 @@ int delete_slist(SCHED_LIST *l){
 	if(l->next != NULL){
 		rv = delete_slist(l->next); /* shouldn't be non-negative but check anyway */
 	}
-	free(l);
+	gl_free(l);
 	return rv;
 }
 

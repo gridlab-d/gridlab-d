@@ -124,6 +124,23 @@ void dlload_error(const char *filename)
 #endif
 }
 
+/* MALLOC/FREE - GL threadsafe versions */
+static int malloc_lock;
+void *module_malloc(size_t size)
+{
+	void *ptr;
+	lock(&malloc_lock);
+	ptr = (void*)malloc(size);
+	unlock(&malloc_lock);
+}
+void *module_free(void *ptr)
+{
+	lock(&malloc_lock);
+	free(ptr);
+	unlock(&malloc_lock);
+	return ptr;
+}
+
 /* these are the core functions available to loadable modules
  * the structure is defined in object.h */
 int64 lock_count;
@@ -149,8 +166,8 @@ static CALLBACKS callbacks = {
 	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr,class_string_to_propertytype},
 	{find_objects,find_next,findlist_copy,findlist_add,findlist_del,findlist_clear},
 	class_find_property,
-	malloc,
-	free,
+	module_malloc,
+	module_free,
 	aggregate_mkgroup,
 	aggregate_value,
 	module_getvar_addr,

@@ -61,7 +61,7 @@ KEYWORD oflags[] = {
 int object_get_oflags(KEYWORD **extflags){
 	int flag_size = sizeof(oflags);
 	
-	*extflags = malloc(flag_size);
+	*extflags = module_malloc(flag_size);
 	
 	if(extflags == NULL){
 		output_error("object_get_oflags: malloc failure");

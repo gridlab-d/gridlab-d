@@ -273,7 +273,7 @@ static int compare(OBJECT *obj, FINDTYPE ftype, FINDOP op, void *value, char *pr
 FINDLIST *new_list(unsigned int n)
 {
 	unsigned int size = (n>>3)+1;
-	FINDLIST *list = malloc(sizeof(FINDLIST)+size-1);
+	FINDLIST *list = module_malloc(sizeof(FINDLIST)+size-1);
 	if (list==NULL)
 	{
 		errno=ENOMEM;
@@ -461,7 +461,7 @@ FINDLIST *find_objects(FINDLIST *start, ...)
 					the search rule and try again.  If the search rule comes from a module, report the 
 					problem.
 				 */
-				if (start == FL_NEW) free(result);
+				if (start == FL_NEW) module_free(result);
 				return NULL;
 			}
 
@@ -501,7 +501,7 @@ int find_makearray(FINDLIST *list, /**< the search list to scan */
 	int n = list->hit_count, i;
 	if (n<=0 || obj==NULL)
 		return 0;
-	(*objs) = (OBJECT**)malloc(sizeof(OBJECT*)*(n+1)); /* one extra for handy NULL to terminate list */
+	(*objs) = (OBJECT**)module_malloc(sizeof(OBJECT*)*(n+1)); /* one extra for handy NULL to terminate list */
 	for ( i=0 ; i<n && obj!=NULL; obj=find_next(list,obj),i++)
 		(*objs)[i] = obj;
 	objs[n]=NULL;/* NULL to terminate list */
@@ -683,7 +683,7 @@ int compare_integer64_nl(void *a, FINDVALUE b) {
 FINDLIST *findlist_copy(FINDLIST *list)
 {
 	unsigned int size = sizeof(FINDLIST)+(list->result_size>>3);
-	FINDLIST *new_list = malloc(size);
+	FINDLIST *new_list = module_malloc(size);
 	memcpy(new_list,list,size);
 	return new_list;
 }

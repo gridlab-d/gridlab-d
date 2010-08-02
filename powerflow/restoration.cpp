@@ -130,7 +130,7 @@ void restoration::CreateConnectivity(void)
 	//Second dimension allocation
 	for (indexx=0; indexx<NR_bus_count; indexx++)
 	{
-		Connectivity_Matrix[indexx] = (int*)malloc(NR_bus_count * sizeof(int));
+		Connectivity_Matrix[indexx] = (int*)gl_malloc(NR_bus_count * sizeof(int));
 		if (Connectivity_Matrix[indexx]==NULL)
 		{
 			GL_THROW("Restoration: memory allocation failure for connectivity table");
