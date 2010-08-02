@@ -38,7 +38,9 @@
 #include "output.h"
 #include "globals.h"
 #include "exception.h"
+#include "lock.h"
 
+static unsigned long output_lock = 0;
 static char buffer[65536];
 #define CHECK 0xcdcd
 int overflow=CHECK;
@@ -275,10 +277,12 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 	/* check for repeated message */
 	static char lastfmt[4096] = "";
 	static int count=0;
+	int result = 0;
+	lock(&output_lock);
 	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
-		return 0;
+		goto Unlock;
 	}
 	else
 	{
@@ -293,16 +297,19 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 			else len += sprintf(buffer+len,"\nFATAL [%s] : ",time_context);
 		}
 		else if (format==NULL)
-			return 0;
+			goto Unlock;
 		va_start(ptr,format);
 		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 		va_end(ptr);
 	}
 Output:
 	if (redirect.error)
-		return fprintf(redirect.error,"FATAL [%s] : %s\n", time_context, buffer);
+		result = fprintf(redirect.error,"FATAL [%s] : %s\n", time_context, buffer);
 	else
-		return (*printerr)("FATAL [%s] : %s\n", time_context, buffer);
+		result = (*printerr)("FATAL [%s] : %s\n", time_context, buffer);
+Unlock:
+	unlock(&output_lock);
+	return result;
 }
 
 /** Output an error message to the stdout stream using printf style argument processing
@@ -316,10 +323,12 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 	/* check for repeated message */
 	static char lastfmt[4096] = "";
 	static int count=0;
+	int result = 0;
+	lock(&output_lock);
 	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
-		return 0;
+		goto Unlock;
 	}
 	else
 	{
@@ -334,7 +343,7 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 			else len += sprintf(buffer+len,"\nERROR [%s] : ",time_context);
 		}
 		else if (format==NULL)
-			return 0;
+			goto Unlock;
 		va_start(ptr,format);
 		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 		va_end(ptr);
@@ -345,9 +354,12 @@ Output:
 		(*notify_error)();
 
 	if (redirect.error)
-		return fprintf(redirect.error,"ERROR [%s] : %s\n",time_context, buffer);
+		result = fprintf(redirect.error,"ERROR [%s] : %s\n",time_context, buffer);
 	else
-		return (*printerr)("ERROR [%s] : %s\n", time_context, buffer);
+		result = (*printerr)("ERROR [%s] : %s\n", time_context, buffer);
+Unlock:
+	unlock(&output_lock);
+	return result;
 }
 
 /** Output an error message to the stdout stream using printf style argument processing
@@ -361,10 +373,12 @@ int output_error_raw(char *format,...) /**< \bprintf style argument list */
 	/* check for repeated message */
 	static char lastfmt[4096] = "";
 	static int count=0;
+	int result = 0;
+	lock(&output_lock);
 	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
-		return 0;
+		goto Unlock;
 	}
 	else
 	{
@@ -379,7 +393,7 @@ int output_error_raw(char *format,...) /**< \bprintf style argument list */
 			else len += sprintf(buffer+len,"\n");
 		}
 		else if (format==NULL)
-			return 0;
+			goto Unlock;
 		va_start(ptr,format);
 		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 		va_end(ptr);
@@ -390,9 +404,12 @@ Output:
 		(*notify_error)();
 
 	if (redirect.error)
-		return fprintf(redirect.error,"%s\n", buffer);
+		result= fprintf(redirect.error,"%s\n", buffer);
 	else
-		return (*printerr)("%s\n", buffer);
+		result= (*printerr)("%s\n", buffer);
+Unlock:
+	unlock(&output_lock);
+	return result;
 }
 
 /** Output an test message to the stdout stream using printf style argument processing
@@ -407,8 +424,11 @@ int output_test(char *format,...) /**< \bprintf style argument list */
 	char minor_b[32], major_b[32];
 	va_list ptr;
 
+	int result = 0;
+	lock(&output_lock);
+
 	if(format == NULL){
-		return 0;
+		goto Unlock;
 	}
 
 	va_start(ptr,format);
@@ -431,7 +451,11 @@ int output_test(char *format,...) /**< \bprintf style argument list */
 		fprintf(fp,"Command line: %s\n", global_getvar("command_line", NULL, 0));
 	}
 
-	return fprintf(fp,"%s\n", buffer);
+	result = fprintf(fp,"%s\n", buffer);
+Unlock:
+	unlock(&output_lock);
+	return result;
+
 }
 
 /** Output a warning message to the stdout stream using printf style argument processing
@@ -447,10 +471,12 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 		/* check for repeated message */
 		static char lastfmt[4096] = "";
 		static int count=0;
+		int result = 0;
+		lock(&output_lock);
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
-			return 0;
+			goto Unlock;
 		}
 		else
 		{
@@ -465,16 +491,19 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 				else len += sprintf(buffer+len,"\nWARNING [%s] : ", time_context);
 			}
 			else if (format==NULL)
-				return 0;
+				goto Unlock;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 			va_end(ptr);
 		}
 Output:
 		if (redirect.warning)
-			return fprintf(redirect.warning,"WARNING [%s] : %s\n",time_context, buffer);
+			result = fprintf(redirect.warning,"WARNING [%s] : %s\n",time_context, buffer);
 		else
-			return (*printerr)("WARNING [%s] : %s\n", time_context, buffer);
+			result = (*printerr)("WARNING [%s] : %s\n", time_context, buffer);
+Unlock:
+		unlock(&output_lock);
+		return result;
 	}
 	return 0;
 }
@@ -492,10 +521,12 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 		/* check for repeated message */
 		static char lastfmt[4096] = "";
 		static int count=0;
+		int result = 0;
+		lock(&output_lock);
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
-			return 0;
+			goto Unlock;
 		}
 		else
 		{
@@ -510,16 +541,19 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 				else len += sprintf(buffer+len,"\nDEBUG [%s] : ",time_context);
 			}
 			else if (format==NULL)
-				return 0;
+				goto Unlock;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 			va_end(ptr);
 		}
 Output:
 		if (redirect.debug)
-			return fprintf(redirect.debug,"DEBUG [%s] : %s\n",time_context, buffer);
+			result = fprintf(redirect.debug,"DEBUG [%s] : %s\n",time_context, buffer);
 		else
-			return (*printerr)("DEBUG [%s] : %s\n", time_context, buffer);
+			result = (*printerr)("DEBUG [%s] : %s\n", time_context, buffer);
+Unlock:
+		unlock(&output_lock);
+		return result;
 	}
 	return 0;
 }
@@ -538,10 +572,12 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 		/* check for repeated message */
 		static char lastfmt[4096] = "";
 		static int count=0;
+		int result = 0;
+		lock(&output_lock);
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
-			return 0;
+			goto Unlock;
 		}
 		else
 		{
@@ -555,16 +591,19 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 				if(format == 0) goto Output;
 			}
 			else if (format==NULL)
-				return 0;
+				goto Unlock;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 			va_end(ptr);
 		}
 Output:
 		if (redirect.verbose)
-			return fprintf(redirect.verbose,"%s\n",buffer);
+			result = fprintf(redirect.verbose,"%s\n",buffer);
 		else
-			return (*printerr)("   ... %s\n",buffer);
+			result = (*printerr)("   ... %s\n",buffer);
+Unlock:
+		unlock(&output_lock);
+	return result;
 	}
 	return 0;
 }
@@ -581,10 +620,12 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 		static char lastfmt[4096] = "";
 		static int count=0;
 		size_t sz = strlen(format?format:"");
+		int result = 0;
+		lock(&output_lock);
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
-			return 0;
+			goto Unlock;
 		}
 		else
 		{
@@ -598,16 +639,19 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 				if(format == NULL) goto Output;
 			}
 			if (format==NULL)
-				return 0;
+				goto Unlock;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
 			va_end(ptr);
 		}
 Output:
 		if (redirect.output)
-			return fprintf(redirect.output,"%s\n",buffer);
+			result = fprintf(redirect.output,"%s\n",buffer);
 		else
-			return (*printstd)("%s\n",buffer);
+			result = (*printstd)("%s\n",buffer);
+Unlock:
+		unlock(&output_lock);
+		return result;
 	}
 	return 0;
 }
@@ -665,6 +709,8 @@ int output_raw(char *format,...) /**< \bprintf style argument list */
 	if (!global_quiet_mode)
 	{
 		va_list ptr;
+		int result = 0;
+		lock(&output_lock);
 
 		va_start(ptr,format);
 		vsprintf(buffer,format,ptr); /* note the lack of check on buffer overrun */
@@ -673,10 +719,12 @@ int output_raw(char *format,...) /**< \bprintf style argument list */
 			if (redirect.output)
 			{	int len = fprintf(redirect.output,"%s",buffer);
 				fflush(redirect.output);
-				return len;
+				result =  len;
 			}
 			else
-				return (*printerr)("%s",buffer);
+				result = (*printerr)("%s",buffer);
+		unlock(&output_lock);
+		return result;
 	}
 	return 0;
 }
