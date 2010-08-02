@@ -134,12 +134,11 @@ void *module_malloc(size_t size)
 	unlock(&malloc_lock);
 	return ptr;
 }
-void *module_free(void *ptr)
+void module_free(void *ptr)
 {
 	lock(&malloc_lock);
 	free(ptr);
 	unlock(&malloc_lock);
-	return ptr;
 }
 
 /* these are the core functions available to loadable modules

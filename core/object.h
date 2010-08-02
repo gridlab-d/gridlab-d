@@ -82,7 +82,7 @@ typedef struct s_callbacks {
 		FUNCTIONADDR (*get)(char*,char*);
 	} function;
 	int (*define_enumeration_member)(CLASS*,char*,char*,enumeration);
-	int (*define_set_member)(CLASS*,char*,char*,unsigned long);
+	int (*define_set_member)(CLASS*,char*,char*,unsigned int64);
 	int (*set_dependent)(OBJECT*,OBJECT*);
 	int (*set_parent)(OBJECT*,OBJECT*);
 	int (*set_rank)(OBJECT*,unsigned int);

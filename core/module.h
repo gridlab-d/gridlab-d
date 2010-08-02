@@ -65,7 +65,7 @@ extern "C" {
 	int module_saveobj_xml(FILE *fp, MODULE *mod);
 	MODULE *module_get_first();
 	void *module_malloc(size_t size);
-	void *module_free(void *ptr);
+	void module_free(void *ptr);
 #ifdef __cplusplus
 }
 #endif
