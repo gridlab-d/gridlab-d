@@ -16,6 +16,7 @@
 #include "output.h"
 #include "globals.h"
 #include "module.h"
+#include "lock.h"
 
 static GLOBALVAR *global_varlist = NULL, *lastvar = NULL;
 
@@ -397,6 +398,8 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 	if (strcmp(name,"")!=0) /* something was defined */
 	{
 		GLOBALVAR *var = global_find(name);
+		static int globalvar_lock = 0;
+		int retval;
 		if (var==NULL)
 		{
 			if (global_strictnames)
@@ -414,7 +417,10 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 			/** @todo autotype global variables when creating them (ticket #26) */
 			var = global_create(name,PT_char1024,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
 		}
-		if (class_string_to_property(var->prop,(void*)var->prop->addr,value)==0){
+		lock(&globalvar_lock);
+		retval = class_string_to_property(var->prop,(void*)var->prop->addr,value);
+		unlock(&globalvar_lock);
+		if (retval==0){
 			output_error("global_setvar(): unable to set %s to %s",name,value);
 			/* TROUBLESHOOT
 				The input value was not convertable into the desired type for the input
@@ -422,7 +428,6 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 				the input value appropriately.
 			 */
 			return FAILED;
-//			var->prop->addr = "";
 		}
 		else if (var->callback) 
 			var->callback(var->name);
