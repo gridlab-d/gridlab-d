@@ -1696,58 +1696,49 @@ int object_tree_rebalance(OBJECTTREE *tree) /* AVL logic */
  */
 static int addto_tree(OBJECTTREE **tree, OBJECTTREE *item){
 	int rel = strcmp((*tree)->name, item->name);
-	int right = 0, left = 0, ir = 0, il = 0, rv = 0;
+	int right = 0, left = 0, ir = 0, il = 0, rv = 0, height = 0;
 
+	// find location to insert new object
 	if(rel > 0){
-		(*tree)->balance--;
 		if((*tree)->before == NULL){
 			(*tree)->before = item;
-			return 1;
 		} else {
 			rv = addto_tree(&((*tree)->before), item);
 			if(global_no_balance){
 				return rv + 1;
 			}
-			if((*tree)->balance > 1){
-				if((*tree)->after->balance < 0){ /* inner left is heavy */
-					rotate_tree_right(&((*tree)->after));
-				}
-				rotate_tree_left(tree);
-			} else if((*tree)->balance < -1) {
-				if((*tree)->before->balance > 0){ /* inner right is heavy */
-					rotate_tree_left(&((*tree)->before));
-				}
-				rotate_tree_right(tree);
-			}
-			return tree_get_height(*tree); /* verify after rotations */
 		}
 	} else if(rel<0) {
-		(*tree)->balance++;
 		if((*tree)->after == NULL) {
 			(*tree)->after = item;
-			return 1;
 		} else {
 			rv = addto_tree(&((*tree)->after),item);
 			if(global_no_balance){
 				return rv + 1;
 			}
-			if((*tree)->balance > 1){
-				if((*tree)->after->balance < 0){ /* inner left is heavy */
-					rotate_tree_right(&((*tree)->after));
-				}
-				rotate_tree_left(tree);	//	was left/right
-			} else if((*tree)->balance < -1){
-				if((*tree)->before->balance > 0){ /* inner right is heavy */
-					rotate_tree_left(&((*tree)->before));
-				}
-				rotate_tree_right(tree);
-			}
-			return tree_get_height(*tree); /* verify after rotations */
 		}
 	} else {
 		return (*tree)->obj==item->obj;
 	}
-	return 0;
+
+	// check balance
+	right = tree_get_height((*tree)->after);
+	left = tree_get_height((*tree)->before);
+	(*tree)->balance = right - left;
+
+	// rotations needed?
+	if((*tree)->balance > 1){
+		if((*tree)->after->balance < 0){ /* inner left is heavy */
+			rotate_tree_right(&((*tree)->after));
+		}
+		rotate_tree_left(tree);	//	was left/right
+	} else if((*tree)->balance < -1){
+		if((*tree)->before->balance > 0){ /* inner right is heavy */
+			rotate_tree_left(&((*tree)->before));
+		}
+		rotate_tree_right(tree);
+	}
+	return tree_get_height(*tree); /* verify after rotations */
 }
 
 /*	Add an object to the object tree.  Throws exceptions on memory errors.
