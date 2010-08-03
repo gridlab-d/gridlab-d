@@ -144,7 +144,7 @@ TIMESTAMP meter::presync(TIMESTAMP t0)
 	else
 		NR_mode = false;		//Just put as false for other methods
 
-	return TS_NEVER;
+	return node::presync(t0);
 }
 
 TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
