@@ -5,8 +5,8 @@ Release: 1%{?dist}
 License: Unknown
 Group: Simulators
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-BuildRequires: xerces-c-devel >= 2.8
-Requires: xerces-c >= 2.8
+BuildRequires: xerces-c-devel >= 2.7
+Requires: xerces-c >= 2.7
 Packager: GridLAB-D Team <gridlabd@pnl.gov>
 URL: http://www.gridlabd.org
 Source0: %{name}_%{version}.tar.gz

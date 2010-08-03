@@ -125,7 +125,7 @@ if `$LD --version | grep -q '^GNU ld'`; then
 	export LDFLAGS
 fi
 
-AX_LIB_XERCES
+AX_LIB_XERCES([2.7])
 test "$HAVE_XERCES" = "yes" || \
 		AC_MSG_FAILURE([Xerces library not found. If Xerces is not properly \
 installed, you probably need to use one or more of the --with-xerces options. \
