@@ -55,7 +55,7 @@ Name: modules\legacy; Description: Legacy Modules; Types: typical custom
 Name: modules\legacy\commercial; Description: Commercial Module; Types: typical custom
 Name: modules\legacy\reliability; Description: Reliability Module; Types: typical custom
 Name: modules\legacy\generators; Description: Generators Module; Types: typical custom
-Name: modules\legacy\network; Description: Network Module; Types: typical custom
+;Name: modules\legacy\network; Description: Network Module; Types: typical custom
 Name: modules\legacy\plc; Description: PLC Module; Types: typical custom
 Name: samples; Description: Sample Models; Types: typical custom
 Name: Compilers; Description: Download and install MinGW
@@ -159,7 +159,7 @@ Source: tzinfo.txt; DestDir: {app}\etc; Components: core
 Source: climate.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\climate
 Source: commercial.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\commercial
 ;Source: climateview.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\network
+;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\network
 Source: plc.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\plc
 Source: market.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\market
 Source: powerflow.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\powerflow
@@ -170,7 +170,7 @@ Source: tape_file.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: tape_memory.dll; DestDir: {app}\lib; Flags: ignoreversion
 ;;Source: tape_odbc.dll; DestDir: {app}\lib; Flags: ignoreversion
 ;;Source: glmjava.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
 ;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
 Source: reliability.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\reliability
 Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
