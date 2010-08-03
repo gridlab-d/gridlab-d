@@ -378,6 +378,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	double bid = -1.0;
+	int64 no_bid = 0; // flag gets set when the current temperature drops in between the the heating setpoint and cooling setpoint curves
 	double demand = 0.0;
 	double rampify = 0.0;
 	extern double bid_offset;
@@ -398,28 +399,17 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			// T_set,a = T_set + (P_clear - P_avg) * | T_lim - T_set | / (k_T * stdev24)
 
 			clear_price = market->current_frame.clearing_price;
-			if(clear_price > last_p){ // if we lost the auction
-				/* failed to win auction */
-				may_run = 0;
-				if(dir > 0){
-					set_temp = max;
-				} else {
-					set_temp = min;
-				}
+			if(fabs(*pStd) < bid_offset){
+				set_temp = setpoint0;
+			} else if(clear_price < *pAvg && range_low != 0){
+				set_temp = setpoint0 + (clear_price - *pAvg) * fabs(range_low) / (ramp_low * *pStd);
+			} else if(clear_price > *pAvg && range_high != 0){
+				set_temp = setpoint0 + (clear_price - *pAvg) * fabs(range_high) / (ramp_high * *pStd);
 			} else {
-				//set_temp = (market->next.price - *pAvg) * fabs(T_lim) / (k_T * *pStd);
-				if(fabs(*pStd) < bid_offset){
-					set_temp = setpoint0;
-				} else if(clear_price < *pAvg && range_low != 0){
-					set_temp = setpoint0 + (clear_price - *pAvg) * fabs(ramp_low) / ((dir > 0 ? range_low : range_high) * *pStd);
-				} else if(clear_price > *pAvg && range_high != 0){
-					set_temp = setpoint0 + (clear_price - *pAvg) * fabs(ramp_high) / ((dir > 0 ? range_high : range_low) * *pStd);
-				} else {
-					set_temp = setpoint0;
-				}
-				
-				may_run = 1;
+				set_temp = setpoint0;
 			}
+			
+			may_run = 1;
 
 			// clip
 			if(set_temp > max){
@@ -437,18 +427,21 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				bid = 9999.0;
 			} else if (*pMonitor < min){
 				bid = 0.0;
+				no_bid = 1;
 			}
 		} else if(dir < 0){
 			if(*pMonitor < min){
 				bid = 9999.0;
 			} else if(*pMonitor > max){
 				bid = 0.0;
+				no_bid = 1;
 			}
 		} else if(dir == 0){
 			if(*pMonitor < min){
 				bid = 9999.0;
 			} else if(*pMonitor > max){
 				bid = 0.0;
+				no_bid = 1;
 			} else {
 				bid = *pAvg; // override due to lack of "real" curve
 			}
@@ -457,10 +450,10 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		// calculate bid price
 		if(*pMonitor > setpoint0){
 			k_T = ramp_high;
-			T_lim = max;
+			T_lim = range_high;
 		} else if(*pMonitor < setpoint0) {
 			k_T = ramp_low;
-			T_lim = min;
+			T_lim = range_low;
 		} else {
 			k_T = 0.0;
 			T_lim = 0.0;
@@ -468,8 +461,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 
 
-		if(bid < 0.0)
+		if(bid < 0.0 && *pMonitor != setpoint0) {
 			bid = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - setpoint0) * (k_T * *pStd) / fabs(T_lim) );
+		} else if(*pMonitor == setpoint0) {
+			bid = *pAvg;
+		}
 
 		// bid the response part of the load
 		double residual = *pTotal;
@@ -477,7 +473,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		int64 bid_id = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
 		// override
 		//bid_id = -1;
-		if(bid > 0.0 && *pDemand > 0){
+		if(*pDemand > 0 && no_bid != 1){
 			last_p = bid;
 			last_q = *pDemand;
 			//lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
@@ -490,20 +486,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		} else {
 			last_p = 0;
 			last_q = 0;
+			gl_verbose("%s's is not bidding", hdr->name);
 		}
-		if (residual>0){
-			/* WARNING ~ bid ID check will not work properly */
-			//lastbid_id = market->submit(OBJECTHDR(this), -residual, 9999, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
-			if(pState != 0){
-				lastbid_id = submit_bid_state(pMarket, hdr, -last_q, market->pricecap, (*pState > 0 ? 1 : 0), bid_id);
-			} else {
-				lastbid_id = submit_bid(pMarket, hdr, -last_q, market->pricecap, bid_id);
-			}
-		}
-		else if(residual < -0.001)
+		if(residual < -0.001)
 			gl_warning("controller:%d: residual unresponsive load is negative! (%.1f kW)", hdr->id, residual);
-	}
-	else if (control_mode == CN_DOUBLE_RAMP){
+	} else if (control_mode == CN_DOUBLE_RAMP){
 		/*
 		double heat_range_high;
 		double heat_range_low;
@@ -514,73 +501,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		double cool_ramp_high;
 		double cool_ramp_low;
 		*/
-
-		// if the market has updated, 
-		if(lastmkt_id < market->market_id){
-			// retrieve cleared price
-			double clear_price;
-			clear_price = market->current_frame.clearing_price;
-			if(clear_price == last_p){
-				// determine what to do at the marginal price
-				switch(market->clearing_type){
-					case CT_SELLER:	// may need to curtail
-						break;
-					case CT_PRICE:	// should not occur
-					case CT_NULL:	// q zero or logic error ~ should not occur
-						gl_warning("clearing price and bid price are equal with a market clearing type that involves inequal prices");
-						break;
-					default:
-						break;
-				}
-			} else if(clear_price > last_p){
-				// cheapskates-R-us, did not win power
-				may_run = 0;
-				*pHeatingSetpoint = heat_min;
-				*pCoolingSetpoint = cool_max;
-				*pHeatingState = 0;
-				*pCoolingState = 0;
-			} else { // clear_price < last_p, we got a deal!
-				may_run = 1;
-				if(last_mode == TM_OFF || last_mode == TM_COOL){
-					//set_temp = (clear_price - *pAvg) * fabs(ramp_high) / (range_high * *pStd);
-					*pHeatingSetpoint = heat_min;
-					*pHeatingState = 0;
-					*pCoolingState = 1;
-					if(fabs(*pStd) < bid_offset){
-						*pCoolingSetpoint = set_temp = cooling_setpoint0;
-					} else {
-						if(clear_price > *pAvg){
-							*pCoolingSetpoint = set_temp = cooling_setpoint0 + (clear_price - *pAvg) * fabs(cool_ramp_high) / (cool_range_high * *pStd);
-						} else if(clear_price < *pAvg){
-							*pCoolingSetpoint = set_temp = cooling_setpoint0 + (clear_price - *pAvg) * fabs(cool_ramp_low) / (cool_ramp_low * *pStd);
-						} else {
-							*pCoolingSetpoint = set_temp = cooling_setpoint0;
-						}
-					}
-				} else if(last_mode == TM_HEAT){
-					//set_temp = (clear_price - *pAvg) * fabs(ramp_high) / (range_high * *pStd);
-					*pCoolingSetpoint = cool_max;
-					*pCoolingState = 0;
-					*pHeatingState = 1;
-					if(fabs(*pStd) < bid_offset){
-						*pHeatingSetpoint = set_temp = heating_setpoint0;
-					} else {
-						if(clear_price > *pAvg){
-							*pHeatingSetpoint = set_temp = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_ramp_low) / (heat_range_high * *pStd);
-						} else if(clear_price < *pAvg){
-							*pHeatingSetpoint = set_temp = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_ramp_high) / (heat_range_low * *pStd);
-						} else {
-							*pHeatingSetpoint = set_temp = heating_setpoint0;
-						}
-					}
-				}
-			}
-			// calculate setpoints
-			lastmkt_id = market->market_id;
-		}
 		// find crossover
 		double midpoint = 0.0;
-		if(heat_max - cool_min > *pDeadband){
+		if(cool_min - heat_max < *pDeadband){
 			switch(resolve_mode){
 				case RM_DEADBAND:
 					midpoint = (heat_max + cool_min) / 2;
@@ -599,6 +522,43 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					break;
 			}
 		}
+		// if the market has updated, 
+		if(lastmkt_id < market->market_id){
+			// retrieve cleared price
+			double clear_price;
+			clear_price = market->current_frame.clearing_price;
+			if(clear_price == last_p){
+				// determine what to do at the marginal price
+				switch(market->clearing_type){
+					case CT_SELLER:	// may need to curtail
+						break;
+					case CT_PRICE:	// should not occur
+					case CT_NULL:	// q zero or logic error ~ should not occur
+						gl_warning("clearing price and bid price are equal with a market clearing type that involves inequal prices");
+						break;
+					default:
+						break;
+				}
+			}
+			may_run = 1;
+			if(fabs(*pStd) < bid_offset){
+				*pCoolingSetpoint = cooling_setpoint0;
+				*pHeatingSetpoint = heating_setpoint0;
+			} else {
+				if(clear_price > *pAvg){
+					*pCoolingSetpoint = cooling_setpoint0 + (clear_price - *pAvg) * fabs(cool_range_high) / (cool_ramp_high * *pStd);
+					*pHeatingSetpoint = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_range_high) / (heat_ramp_high * *pStd);
+				} else if(clear_price < *pAvg){
+					*pCoolingSetpoint = cooling_setpoint0 + (clear_price - *pAvg) * fabs(cool_range_low) / (cool_ramp_low * *pStd);
+					*pHeatingSetpoint = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_range_low) / (heat_ramp_low * *pStd);
+				} else {
+					*pCoolingSetpoint = cooling_setpoint0;
+					*pHeatingSetpoint = heating_setpoint0;
+				}
+			}
+			// calculate setpoints
+			lastmkt_id = market->market_id;
+		}
 		// submit bids
 		last_p = 0.0;
 		last_q = 0.0;
@@ -616,9 +576,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			thermostat_mode = TM_OFF;
 		} else if(*pMonitor < heat_max && *pMonitor > heat_min){
 			double ramp, range;
-			ramp = (*pMonitor > *pHeatingSetpoint ? heat_ramp_high : heat_ramp_low);
-			range = (*pMonitor > *pHeatingSetpoint ? heat_range_high : heat_range_low);
-			last_p = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - *pHeatingSetpoint) * ramp * (*pStd) / fabs(range) );
+			ramp = (*pMonitor > heating_setpoint0 ? heat_ramp_high : heat_ramp_low);
+			range = (*pMonitor > heating_setpoint0 ? heat_range_high : heat_range_low);
+			last_p = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - heating_setpoint0) * ramp * (*pStd) / fabs(range) );
 			last_q = *pHeatingDemand;
 			thermostat_mode = TM_HEAT;
 		} else if(*pMonitor < cool_max && *pMonitor > cool_min){
