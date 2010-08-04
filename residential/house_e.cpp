@@ -2127,7 +2127,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 		if (n<0 || n>2)
 			GL_THROW("%s:%d circuit %d has an invalid circuit type (%d)", obj->oclass->name, obj->id, c->id, (int)c->type);
 		c->pLoad->voltage_factor = c->pV->Mag() / ((c->pLoad->config&EUC_IS220) ? 240 : 120);
-		if (c->pLoad->voltage_factor > 1.2 || c->pLoad->voltage_factor < 0.8)
+		if (c->pLoad->voltage_factor > 1.06 || c->pLoad->voltage_factor < 0.88)
 			gl_warning("%s - %s:%d is outside of ANSI standards (voltage = %.0f percent of nominal 120/240)", obj->name, obj->oclass->name,obj->id,c->pLoad->voltage_factor*100);
 	}
 	return TS_NEVER;
