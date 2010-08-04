@@ -1161,6 +1161,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				//Intermediate store the admittance matrices so they can be directly indexed later
 				switch(branch[jindexer].phases & 0x07) {
+					case 0x00:	//No phases (open switch or reliability excluded item)
+						{
+							temp_size_c = -99;	//Arbitrary flag
+							break;
+						}
 					case 0x01:	//C only
 						{
 							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[8];
@@ -1232,6 +1237,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							break;
 						}
 				}//end line switch/case
+
+				if (temp_size_c==-99)
+				{
+					continue;	//Next iteration of branch loop
+				}
 
 				if (temp_size_c==-1)	//Make sure it is right
 				{
