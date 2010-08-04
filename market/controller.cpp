@@ -476,6 +476,12 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		if(*pDemand > 0 && no_bid != 1){
 			last_p = bid;
 			last_q = *pDemand;
+			if(0 != strcmp(market->unit, "")){
+				if(0 == gl_convert("kW", market->unit, &(last_q))){
+					gl_error("unable to convert bid units from 'kW' to '%s'", market->unit);
+					return TS_INVALID;
+				}
+			}
 			//lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
 			if(pState != 0){
 				lastbid_id = submit_bid_state(pMarket, hdr, -last_q, last_p, (*pState > 0 ? 1 : 0), bid_id);
