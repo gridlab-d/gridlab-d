@@ -30,9 +30,24 @@
 #ifndef _LOCK_H
 #define _LOCK_H
 
-#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE___SYNC_BOOL_COMPARE_AND_SWAP
 	#define atomic_compare_and_swap __sync_bool_compare_and_swap
-	#define atomic_increment(ptr) __sync_add_and_fetch(ptr, 1)
+	#ifdef HAVE___SYNC_ADD_AND_FETCH
+		#define atomic_increment(ptr) __sync_add_and_fetch(ptr, 1)
+	#else
+		static inline unsigned int atomic_increment(unsigned int *ptr)
+		{
+			unsigned int value;
+			do {
+				value = *ptr;
+			} while (!__sync_bool_compare_and_swap(ptr, value, value + 1));
+			return value;
+		}
+	#endif
 #elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
 	#include <libkern/OSAtomic.h>
 	#define atomic_compare_and_swap(dest, comp, xchg) OSAtomicCompareAndSwap32Barrier(comp, xchg, (int32_t *) dest)

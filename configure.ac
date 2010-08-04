@@ -141,6 +141,17 @@ DX_XML_FEATURE([OFF])
 DX_PDF_FEATURE([OFF])
 DX_PS_FEATURE([OFF])
 
+GLD_CHECK_BUILTIN(
+	[__sync_bool_compare_and_swap],
+	[],
+	[volatile unsigned int value = 0;
+	 __sync_bool_compare_and_swap(&value, value, 1);])
+GLD_CHECK_BUILTIN(
+	[__sync_add_and_fetch],
+	[],
+	[volatile unsigned int value = 0;
+	 __sync_add_and_fetch(&value, 1);])
+
 # Checks for libraries.
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADER([cppunit/config-auto.h], [],
