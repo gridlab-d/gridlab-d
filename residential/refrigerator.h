@@ -38,7 +38,6 @@ public:
 	double Tevent;	///< Temperature we will switch the motor on or off.  Available for SmartGrid PLC code to nudge.
 
 	MOTORSTATE motor_state;
-	enduse load;
 	TIMESTAMP last_time, next_time;
 
 public:

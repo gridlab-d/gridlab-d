@@ -227,10 +227,6 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	const double COP = COPcoef*((-3.5/45)*(Tout-70)+4.5);
 
-	// calculate power & accumulate energy
-	load.total = Qr * KWPBTUPH * COP;
-	load.energy += load.total * nHours;
-
 	// change control mode if appropriate
 	if(motor_state == S_ON){
 		Qr = rated_capacity;
@@ -239,6 +235,9 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 	} else{
 		throw "refrigerator motor state is ambiguous";
 	}
+
+	// calculate power from motor state
+	load.power = Qr * KWPBTUPH * COP;
 
 	// compute constants
 	const double C1 = Cf/(UAr+UAf);
@@ -252,7 +251,9 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 	} else if(t < 0){
 		GL_THROW("refrigerator control logic error, dt < 0");
 	}
-	
+
+	TIMESTAMP t2 = gl_enduse_sync(&(residential_enduse::load),t1);
+
 	// if fridge is undersized or time exceeds balance of time or external event pending
 	next_time = (TIMESTAMP)(t1 +  (t > 0 ? t : -t) * (3600.0/TS_SECOND) + 1);
 	return next_time > TS_NEVER ? TS_NEVER : -next_time;
