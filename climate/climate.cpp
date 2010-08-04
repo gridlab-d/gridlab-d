@@ -28,6 +28,45 @@ double surface_angles[] = {
 	-135,	// NW
 };
 
+
+EXPORT int64 calculate_solar_radiation_degrees(OBJECT *obj, double tilt, double orientation, double *value){
+	return calculate_solar_radiation_radians(obj, RAD(tilt), RAD(orientation), value);
+}
+
+EXPORT int64 calculate_solar_radiation_radians(OBJECT *obj, double tilt, double orientation, double *value){
+	static SolarAngles sa; // just for the functions
+	double ghr, dhr, dnr = 0.0;
+	double cos_incident = 0.0;
+	double std_time = 0.0;
+	double solar_time = 0.0;
+	short int doy = 0;
+	DATETIME dt;
+
+
+	climate *cli;
+	if(obj == 0 || value == 0){
+		//throw "climate/calc_solar: null object pointer in arguement";
+		return 0;
+	}
+	cli = OBJECTDATA(obj, climate);
+	if(gl_object_isa(obj, "climate", "climate") == 0){
+		//throw "climate/calc_solar: input object is not a climate object";
+		return 0;
+	}
+	ghr = cli->solar_global;
+	dhr = cli->solar_diffuse;
+	dnr = cli->solar_direct;
+
+	gl_localtime(obj->clock, &dt);
+	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0;
+	solar_time = sa.solar_time(std_time, doy, cli->tz_meridian, obj->longitude);
+	cos_incident = sa.cos_incident(RAD(obj->latitude), tilt, orientation, solar_time, doy);
+
+	*value = dnr * cos_incident + dhr * (1 + cos(tilt)) / 2 + ghr * (1 - cos(tilt)) * cli->ground_reflectivity / 2;
+
+	return 1;
+}
+
 /**
 	@addtogroup tmy TMY2 data
 	@ingroup climate
@@ -191,6 +230,8 @@ climate::climate(MODULE *module)
 			PT_double,"humidity[%]",PADDR(humidity),
 			PT_double,"solar_flux[W/sf]",PADDR(solar_flux),	PT_SIZE, 9,
 			PT_double,"solar_direct[W/sf]",PADDR(solar_direct),
+			PT_double,"solar_diffuse[W/sf]",PADDR(solar_diffuse),
+			PT_double,"solar_global[W/sf]",PADDR(solar_global),
 			PT_double,"wind_speed[mph]", PADDR(wind_speed),
 			PT_double,"wind_dir[deg]", PADDR(wind_dir),
 			PT_double,"wind_gust[mph]", PADDR(wind_gust),
@@ -233,6 +274,8 @@ climate::climate(MODULE *module)
 		tmy = NULL;
 		sa = new SolarAngles();
 		defaults = this;
+		gl_publish_function(oclass,	"calculate_solar_radiation_degrees", (FUNCTIONADDR)calculate_solar_radiation_degrees);
+		gl_publish_function(oclass,	"calculate_solar_radiation_radians", (FUNCTIONADDR)calculate_solar_radiation_radians);
 	}
 }
 
@@ -242,9 +285,19 @@ int climate::create(void)
 	return 1;
 }
 
+int climate::isa(char *classname)
+{
+	if(classname != 0)
+		return (0 == strcmp(classname,"climate"));
+	else
+		return 0;
+}
+
 int climate::init(OBJECT *parent)
 {
 	char *dot = 0;
+	OBJECT *obj=OBJECTHDR(this);
+
 	reader_type = RT_NONE;
 
 	// ignore "" files ~ manual climate control is a feature
@@ -315,9 +368,9 @@ int climate::init(OBJECT *parent)
 	/* The city/state data isn't used anywhere.  -mhauer */
 	//file.header_info(cty,st,&lat_deg,&lat_min,&long_deg,&long_min);
 	file.header_info(NULL,NULL,&lat_deg,&lat_min,&long_deg,&long_min);
-	double degrees = (double)lat_deg + ((double)lat_min) / 60;
-	double long_degrees = (double)long_deg + ((double)long_min) / 60;
-	double tz_meridian =  15 * abs(file.tz_offset);//std_meridians[-file.tz_offset-5];
+	obj->latitude = (double)lat_deg + ((double)lat_min) / 60;
+	obj->longitude = (double)long_deg + ((double)long_min) / 60;
+	tz_meridian =  15 * abs(file.tz_offset);//std_meridians[-file.tz_offset-5];
 	while (line<8760 && file.next())
 	{
 
@@ -355,14 +408,14 @@ int climate::init(OBJECT *parent)
 			tmy[hoy].snowdepth = snowdepth;
 			tmy[hoy].solar_raw = dnr;
 			// calculate the solar radiation
-			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(long_degrees));
+			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(obj->longitude));
 			double sol_rad = 0.0;
 
 			for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				if(c_point == CP_H)
-					sol_rad = file.calc_solar(CP_E,doy,RAD(degrees),sol_time,dnr,dhr,ghr,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
+					sol_rad = file.calc_solar(CP_E,doy,RAD(obj->latitude),sol_time,dnr,dhr,ghr,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
 				else
-					sol_rad = file.calc_solar(c_point,doy,RAD(degrees),sol_time,dnr,dhr,ghr,ground_reflectivity);//(double)dnr * cos_incident + dhr;
+					sol_rad = file.calc_solar(c_point,doy,RAD(obj->latitude),sol_time,dnr,dhr,ghr,ground_reflectivity);//(double)dnr * cos_incident + dhr;
 				/* TMY2 solar radiation data is in Watt-hours per square meter. */
 				tmy[hoy].solar[c_point] = sol_rad;
 
@@ -494,6 +547,14 @@ EXPORT int create_climate(OBJECT **obj, ///< a pointer to the OBJECT*
 	return 0;
 }
 
+EXPORT int isa_climate(OBJECT *obj, char *classname)
+{
+	if(obj != 0 && classname != 0)
+		return OBJECTDATA(obj,climate)->isa(classname);
+	else
+		return 0;
+}
+
 /// Initialize the climate object
 EXPORT int init_climate(OBJECT *obj, /// a pointer to the OBJECT
 						OBJECT *parent) /// a poitner to the parent OBJECT
@@ -510,7 +571,21 @@ EXPORT int init_climate(OBJECT *obj, /// a pointer to the OBJECT
 EXPORT TIMESTAMP sync_climate(OBJECT *obj, /// a pointer to the OBJECT
 							  TIMESTAMP t0) /// the time to which the OBJECT's clock should advance
 {
-	TIMESTAMP t1 = OBJECTDATA(obj,climate)->sync(t0); // presync really
+	TIMESTAMP t1 = TS_NEVER;
+	try
+	{
+		t1 = OBJECTDATA(obj,climate)->sync(t0); // presync really
+	}
+	catch(char *msg)
+	{
+		gl_error("climate::sync exception caught: %s", msg);
+		t1 = TS_INVALID;
+	}
+	catch (...)
+	{
+		gl_error("climate::sync exception caught: no info");
+		t1 = TS_INVALID;
+	}
 	obj->clock = t0;
 	return t1;
 }

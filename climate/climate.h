@@ -50,6 +50,10 @@ typedef struct s_tmy {
 	double snowdepth; // in
 } TMYDATA;
 
+/* published functions */
+EXPORT int64 calculate_solar_radiation_degrees(OBJECT *obj, double tilt, double orientation, double *value);
+EXPORT int64 calculate_solar_radiation_radians(OBJECT *obj, double tilt, double orientation, double *value);
+
 /**
  * This implements a Gridlab-D specific TMY2 data reader.  It was implemented
  * to pull specific information from the TMY2 raw format, including latitude
@@ -157,6 +161,8 @@ public:
 		double solar;
 	} record;
 	CLIMATE_INTERPOLATE interpolate;
+	// add some of the init() vars that are useful to capture
+	double tz_meridian;
 private:
 	enum READERTYPE {
 		RT_NONE,
@@ -174,6 +180,7 @@ public:
 	climate(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
+	int isa(char *classname);
 	TIMESTAMP sync(TIMESTAMP t0);
 }; ///< climate data 
 

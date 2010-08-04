@@ -2620,7 +2620,11 @@ int *node::NR_populate(void)
 
 EXPORT int isa_node(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,node)->isa(classname);
+	if(obj != 0 && classname != 0){
+		return OBJECTDATA(obj,node)->isa(classname);
+	} else {
+		return 0;
+	}
 }
 
 /**@}*/
