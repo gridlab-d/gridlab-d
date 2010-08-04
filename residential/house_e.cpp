@@ -1912,7 +1912,7 @@ void house_e::update_system(double dt)
 			break;
 		case HT_HEAT_PUMP:
 			if(system_mode == SM_AUX){ // only when we're 'running hot'
-				heating_demand = design_heating_capacity*KWPBTUPH;
+				heating_demand = aux_heat_capacity*KWPBTUPH;
 			} else {
 				heating_demand = heating_capacity_adj / heating_cop_adj * KWPBTUPH;
 			}
