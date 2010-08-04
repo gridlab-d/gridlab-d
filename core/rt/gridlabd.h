@@ -582,6 +582,7 @@ struct s_object_list {
 	OBJECTNAME name;
 	int tp_affinity; /**< threadpool processor affinity */
 	NAMESPACE *space; /**< namespace of object */
+	unsigned int lock; /**< object lock */
 	unsigned long flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 }; /**< Object header structure */
@@ -731,63 +732,46 @@ typedef enum {
  * Memory locking support
  */
 
-#if defined(WIN32) && !defined(__GNUC__)
-	#include <intrin.h>
-	#pragma intrinsic(_InterlockedCompareExchange)
-	#define cmpxchg(dest, xchg, comp) ((unsigned long) _InterlockedCompareExchange((long *) dest, (long) xchg, (long) comp))
-	#define HAVE_CMPXCHG
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
+	#define atomic_compare_and_swap __sync_bool_compare_and_swap
+	#define atomic_increment(ptr) __sync_add_and_fetch(ptr, 1)
 #elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
 	#include <libkern/OSAtomic.h>
-	#define cmpxchg(dest, xchg, comp) (OSAtomicCompareAndSwapLong((long) comp, (long) xchg, (long *) dest) ? xchg : comp)
-	#define HAVE_CMPXCHG
+	#define atomic_compare_and_swap(dest, comp, xchg) OSAtomicCompareAndSwap32Barrier(comp, xchg, (int32_t *) dest)
+	#define atomic_increment(ptr) OSAtomicIncrement32Barrier((int32_t *) ptr)
+#elif defined(WIN32)
+	#include <intrin.h>
+	#pragma intrinsic(_InterlockedCompareExchange)
+	#pragma intrinsic(_InterlockedIncrement)
+	#define atomic_compare_and_swap(dest, comp, xchg) (_InterlockedCompareExchange((long *) dest, xchg, comp) == comp)
+	#define atomic_increment(ptr) _InterlockedIncrement((long *) ptr)
+	#ifndef inline
+		#define inline __inline
+	#endif
 #else
-#ifdef _GCC_HAVE_SYNC_COMPARE_AND_SWAP_16
-	#define cmpxchg(dest, xchg, comp) __sync_val_compare_and_swap(dest, comp, xchg)
-	#define HAVE_CMPXCHG
+	#error "Locking is not supported on this system"
 #endif
 
-#endif /* defined(WIN32) */
-
-#ifndef HAVE_CMPXCHG
-	#define NOLOCKS 1
-#endif /* !defined(CMPXCHG) */
-
-#ifdef NOLOCKS
-	// this is meant to catch cases where the installed compiler does not support locking
-	#define LOCK(flags) ERROR_LOCKS_NOT_SUPPORTED_BY_THE_SPECIFIED_MACHINE_ARCHITECTURE
-	#define UNLOCK(flags) ERROR_LOCKS_NOT_SUPPORTED_BY_THE_SPECIFIED_MACHINE_ARCHITECTURE
-	#define LOCK_OBJECT(obj) ERROR_LOCKS_NOT_SUPPORTED_BY_THE_SPECIFIED_MACHINE_ARCHITECTURE
-	#define UNLOCK_OBJECT(obj) ERROR_LOCKS_NOT_SUPPORTED_BY_THE_SPECIFIED_MACHINE_ARCHITECTURE
-	#define LOCKED(obj, command) ERROR_LOCKS_NOT_SUPPORTED_BY_THE_SPECIFIED_MACHINE_ARCHITECTURE
-#else /* !defined(NOLOCKS) */
-
-static __inline int lock(unsigned long *flags)
+static inline void lock(unsigned int *lock)
 {
-	unsigned int f;
-	register int spin=0;
-	do {
-		spin++;
-		f = *flags;
-	} while (f & OF_LOCKED || cmpxchg(flags, f | OF_LOCKED, f) & OF_LOCKED);
-	return spin;
-}
-
-static __inline void unlock(unsigned long *flags)
-{
-	unsigned int f;
+	unsigned int value;
 
 	do {
-		f = *flags;
-	} while (f & OF_LOCKED && cmpxchg(flags, f ^ OF_LOCKED, f) != f);
+		value = *lock;
+	} while ((value & 1) || !atomic_compare_and_swap(lock, value, value + 1));
 }
 
-#define LOCK(flags) ((*(callback->lock_count))++, (*(callback->lock_spin))+=lock(flags)) /**< Locks an item */
-#define UNLOCK(flags) unlock(flags) /**< Unlocks an item */
-#define LOCK_OBJECT(obj) ((*(callback->lock_count))++, (*(callback->lock_spin))+=lock(&((obj)->flags))) /**< Locks an object */
-#define UNLOCK_OBJECT(obj) unlock(&((obj)->flags)) /**< Unlocks an object */
+static inline void unlock(unsigned int *lock)
+{
+	atomic_increment(lock);
+}
+
+#define LOCK(lock) lock(lock) /**< Locks an item */
+#define UNLOCK(lock) unlock(lock) /**< Unlocks an item */
+#define LOCK_OBJECT(obj) lock(&((obj)->lock)) /**< Locks an object */
+#define UNLOCK_OBJECT(obj) unlock(&((obj)->lock)) /**< Unlocks an object */
 #define LOCKED(obj,command) (LOCK_OBJECT(obj),(command),UNLOCK_OBJECT(obj))
 
-#endif /* defined(NOLOCKS) */
 
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;

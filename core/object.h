@@ -54,6 +54,7 @@ typedef struct s_object_list {
 	OBJECTNAME name;
 	int tp_affinity; /**< threadpool processor affinity */
 	NAMESPACE *space; /**< namespace of object */
+	unsigned int lock; /**< object lock */
 	unsigned long flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 } OBJECT; /**< Object header structure */
