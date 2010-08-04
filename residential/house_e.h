@@ -323,6 +323,8 @@ public:
 	double outside_temperature;
 	double outdoor_rh;
 
+	double is_AUX_on,is_HEAT_on,is_COOL_on;	// A logic statement so that the population dynamics of the AC can be observed with collectors.
+
 private:
 	void set_thermal_integrity();
 	void set_window_shgc();

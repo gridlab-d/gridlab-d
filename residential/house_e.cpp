@@ -628,6 +628,10 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"interior_surface_heat_transfer_coeff[Btu/h.degF.sf]",PADDR(interior_surface_heat_transfer_coeff),
 			PT_double,"number_of_stories",PADDR(number_of_stories),PT_DESCRIPTION,"number of stories within the structure",
 
+			PT_double,"is_AUX_on",PADDR(is_AUX_on),PT_DESCRIPTION,"logic statement to determine population statistics - is the AUX on? 0 no, 1 yes",
+			PT_double,"is_HEAT_on",PADDR(is_HEAT_on),PT_DESCRIPTION,"logic statement to determine population statistics - is the HEAT on? 0 no, 1 yes",
+			PT_double,"is_COOL_on",PADDR(is_COOL_on),PT_DESCRIPTION,"logic statement to determine population statistics - is the COOL on? 0 no, 1 yes",
+
 			PT_set,"system_type",PADDR(system_type),PT_DESCRIPTION,"heating/cooling system type/options",
 				PT_KEYWORD, "GAS",	(set)ST_GAS,
 				PT_KEYWORD, "AIRCONDITIONING", (set)ST_AC,
@@ -832,6 +836,7 @@ int house_e::create()
 	hvac_motor_loss_power_factor = 0.125;
 	hvac_motor_real_loss = 0;
 	hvac_motor_reactive_loss = 0;
+	is_AUX_on = is_HEAT_on = is_COOL_on = 0;
 
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
@@ -1929,7 +1934,6 @@ void house_e::update_system(double dt)
 			fan_power = fan_design_power/1000.0; /* convert to kW */
 		else
 			fan_power = 0.0;
-
 		//heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)*KWPBTUPH;
 		//system_rated_capacity = design_heating_capacity*heating_capacity_adj;
 		switch(heating_system_type){
@@ -1995,7 +1999,7 @@ void house_e::update_system(double dt)
 			case CT_ELECTRIC:
 				//cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
 				// DPC: the latent_load_fraction is not as great counted when humidity is low
-				system_rated_capacity = -cooling_capacity_adj / (1 + 0.1 + latent_load_fraction/(1 + exp(4-10*(*pRhout)))) + fan_power*BTUPHPKW;
+				system_rated_capacity = -cooling_capacity_adj / (1 + 0.1 + latent_load_fraction/(1 + exp(4-10*(*pRhout))))*voltage_adj + fan_power*BTUPHPKW;
 				system_rated_power = cooling_demand;
 				break;
 		}
@@ -2062,6 +2066,24 @@ void house_e::update_system(double dt)
 			load.admittance.SetRect(system_rated_power + fan_power * fan_impedance_fraction, fan_power * fan_impedance_fraction * sqrt( 1 / (fan_power_factor * fan_power_factor) - 1));
 			load.current.SetRect(fan_power * fan_current_fraction, fan_power * fan_current_fraction * sqrt( 1 / (fan_power_factor * fan_power_factor) - 1));
 	}
+
+	if ( system_mode == SM_HEAT && (heating_system_type == HT_HEAT_PUMP || heating_system_type == HT_RESISTANCE || heating_system_type == HT_GAS) )
+	{
+		is_AUX_on = is_COOL_on = 0;
+		is_HEAT_on = 1;
+	}
+	else if ( system_mode == SM_COOL && cooling_system_type == CT_ELECTRIC)
+	{
+		is_AUX_on = is_HEAT_on = 0;
+		is_COOL_on = 1;
+	}
+	else if ( system_mode == SM_AUX && auxiliary_system_type == AT_ELECTRIC)
+	{
+		is_COOL_on = is_HEAT_on = 0;
+		is_AUX_on = 1;
+	}
+	else
+		is_COOL_on = is_HEAT_on = is_AUX_on = 0;
 
 	// update load
 	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor * (load.impedance_fraction + load.current_fraction * load.voltage_factor));
