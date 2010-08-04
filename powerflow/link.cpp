@@ -1751,6 +1751,9 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 									 tnode->voltage[1]*b_mat[1][1];
 				}
 
+				//Find neutral
+				current_out[2] = -(current_out[0] + current_out[1]);
+
 			}//end split-phase, center tapped xformer
 			else if (has_phase(PHASE_S))	//Split-phase line
 			{
@@ -1769,7 +1772,8 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 				current_in[1] = From_Y[1][0]*vtemp[0]+
 								From_Y[1][1]*vtemp[1];
 
-				current_in[2] = tnode->current_inj[2];			//I don't think this line ever does anything
+				//Calculate neutral current
+				current_in[2] = tn[0]*current_in[0] + tn[1]*current_in[1];
 
 				//Cuurent out is the same as current in for triplex (simple lines)
 				current_out[0] = current_in[0];
@@ -1782,7 +1786,6 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 				//Current in is just the same
 				fnode->current_inj[0] += current_in[0];
 				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += tnode->current_inj[2];	//I don't think this line ever does anything
 
 				//Unlock it
 				UNLOCK_OBJECT(from);
@@ -1912,7 +1915,11 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		// update published current_out values;
 		read_I_out[0] = t->current_inj[0];
 		read_I_out[1] = t->current_inj[1];
-		read_I_out[2] = t->current_inj[2];
+
+		if (has_phase(PHASE_S) && (voltage_ratio != 1.0))	//Implies SPCT
+			read_I_out[2] = -t->current_inj[1] - t->current_inj[0];	//Implies ground at TP Node, so I_n is full neutral + ground
+		else
+			read_I_out[2] = t->current_inj[2];
 		
 		if (!is_open())
 		{
@@ -2074,6 +2081,7 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 	//Do the same for current out - if NR (FBS done above)
 	if (solver_method == SM_NR)
 	{
+		//Populate the outputs now
 		read_I_out[0] = current_out[0];
 		read_I_out[1] = current_out[1];
 		read_I_out[2] = current_out[2];
