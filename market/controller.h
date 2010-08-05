@@ -139,6 +139,12 @@ private:
 	double *pCoolingLoad;
 	enumeration *pHeatingState;
 	enumeration *pCoolingState;
+	double *pAuxState;
+	double *pHeatState;
+	double *pCoolState;
+	char32 heat_state;
+	char32 cool_state;
+	char32 aux_state;
 };
 
 #endif // _controller_H

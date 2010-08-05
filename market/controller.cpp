@@ -82,6 +82,7 @@ int controller::create(){
 	sprintf(std_target, "std24");
 	slider_setting_heat = -1.0;
 	slider_setting_cool = -1.0;
+	
 	lastbid_id = -1;
 	return 1;
 }
@@ -225,7 +226,10 @@ int controller::init(OBJECT *parent){
 		fetch(&pDemand, demand, parent);
 		fetch(&pTotal, total, parent);
 		fetch(&pLoad, load, parent);
-	} else if(control_mode == CN_DOUBLE_RAMP){
+	} else if(control_mode == CN_DOUBLE_RAMP){	
+		sprintf(aux_state, "is_AUX_on");
+		sprintf(heat_state, "is_HEAT_on");
+		sprintf(cool_state, "is_COOL_on");
 		fetch(&pHeatingSetpoint, heating_setpoint, parent);
 		fetch(&pHeatingDemand, heating_demand, parent);
 		fetch(&pHeatingTotal, heating_total, parent);
@@ -235,6 +239,9 @@ int controller::init(OBJECT *parent){
 		fetch(&pCoolingTotal, cooling_total, parent);
 		fetch(&pCoolingLoad, cooling_load, parent);
 		fetch(&pDeadband, deadband, parent);
+		fetch(&pAuxState, aux_state, parent);
+		fetch(&pHeatState, heat_state, parent);
+		fetch(&pCoolState, cool_state, parent);
 	}
 	fetch(&pAvg, avg_target, pMarket);
 	fetch(&pStd, std_target, pMarket);
@@ -260,8 +267,14 @@ int controller::init(OBJECT *parent){
 			 */
 		}
 	}
+	if(setpoint0==0)
+		setpoint0 = -1; // key to check first thing
 
-	setpoint0 = -1; // key to check first thing
+	if(heating_setpoint0==0)
+		heating_setpoint0 = -1;
+
+	if(cooling_setpoint0==0)
+		cooling_setpoint0 = -1;
 
 	if(dPeriod == 0.0){
 		dPeriod = 300.0;
@@ -353,15 +366,14 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 		slider_setting_heat = 1.0;
 	if(slider_setting_cool > 1.0)
 		slider_setting_cool = 1.0;
+	
+	if(control_mode == CN_RAMP && setpoint0 == -1)
+		setpoint0 = *pSetpoint;
+	if(control_mode == CN_DOUBLE_RAMP && heating_setpoint0 == -1)
+		heating_setpoint0 = *pHeatingSetpoint;
+	if(control_mode == CN_DOUBLE_RAMP && cooling_setpoint0 == -1)
+		cooling_setpoint0 = *pCoolingSetpoint;
 
-	if(setpoint0 == -1){
-		if(control_mode == CN_RAMP){
-			setpoint0 = *pSetpoint;
-		} else if(control_mode == CN_DOUBLE_RAMP){
-			heating_setpoint0 = *pHeatingSetpoint;
-			cooling_setpoint0 = *pCoolingSetpoint;
-		}
-	}
 	if(t0 == next_run){
 		if(control_mode == CN_RAMP){
 			min = setpoint0 + range_low * slider_setting;
@@ -383,6 +395,8 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	double rampify = 0.0;
 	extern double bid_offset;
 	OBJECT *hdr = OBJECTHDR(this);
+
+
 
 	/* short circuit */
 	if(t0 < next_run){
@@ -489,6 +503,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				lastbid_id = submit_bid(pMarket, hdr, -last_q, last_p, bid_id);
 			}
 			residual -= *pLoad;
+
 		} else {
 			last_p = 0;
 			last_q = 0;
@@ -507,6 +522,21 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		double cool_ramp_high;
 		double cool_ramp_low;
 		*/
+
+		// Determine the system_mode the HVAC is in
+		if(resolve_mode == RM_SLIDING){
+			if(*pHeatState == 1 || *pAuxState == 1){
+				thermostat_mode = TM_HEAT;
+			} else if(*pCoolState == 1){
+				thermostat_mode = TM_COOL;
+			} else if(*pHeatState == 0 && *pAuxState == 0 && *pCoolState == 0){
+				thermostat_mode = TM_OFF;
+			} else {
+				gl_error("The HVAC is in two or more modes at once. This is impossible");
+				if(resolve_mode == RM_SLIDING)
+					return TS_INVALID; // If the HVAC is in two modes at once then the sliding resolve mode will have conflicting state input so stop the simulation.
+			}
+		}
 		// find crossover
 		double midpoint = 0.0;
 		if(cool_min - heat_max < *pDeadband){
@@ -517,9 +547,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					cool_min = midpoint + *pDeadband/2;
 					break;
 				case RM_SLIDING:
-					if(last_mode == TM_OFF || last_mode == TM_COOL){
+					if(thermostat_mode == TM_OFF || thermostat_mode == TM_COOL){
 						heat_max = cool_min - *pDeadband;
-					} else if (last_mode == TM_HEAT){
+					} else if (thermostat_mode == TM_HEAT){
 						cool_min = heat_max + *pDeadband;
 					}
 					break;
@@ -571,33 +601,28 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		if(*pMonitor > cool_max){
 			last_p = market->pricecap;
 			last_q = *pCoolingDemand;
-			thermostat_mode = TM_COOL;
 		} else if(*pMonitor < heat_min){
 			last_p = market->pricecap;
 			last_q = *pHeatingDemand;
-			thermostat_mode = TM_HEAT;
 		} else if(*pMonitor > heat_max && *pMonitor < cool_min){
 			last_p = 0.0;
 			last_q = 0.0;
-			thermostat_mode = TM_OFF;
 		} else if(*pMonitor < heat_max && *pMonitor > heat_min){
 			double ramp, range;
 			ramp = (*pMonitor > heating_setpoint0 ? heat_ramp_high : heat_ramp_low);
 			range = (*pMonitor > heating_setpoint0 ? heat_range_high : heat_range_low);
 			last_p = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - heating_setpoint0) * ramp * (*pStd) / fabs(range) );
 			last_q = *pHeatingDemand;
-			thermostat_mode = TM_HEAT;
 		} else if(*pMonitor < cool_max && *pMonitor > cool_min){
 			double ramp, range;
 			ramp = (*pMonitor > *pCoolingSetpoint ? cool_ramp_high : cool_ramp_low);
 			range = (*pMonitor > *pCoolingSetpoint ? cool_range_high : cool_range_low);
 			last_p = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0 : (*pMonitor - *pCoolingSetpoint) * ramp * (*pStd) / fabs(range) );
 			last_q = *pCoolingDemand;
-			thermostat_mode = TM_COOL;
 		}
 		if(last_q > 0.001){
 			int64 bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
-			lastbid_id = submit_bid(this->pMarket, OBJECTHDR(this), last_q, last_p, bid);
+			lastbid_id = submit_bid(this->pMarket, OBJECTHDR(this), -last_q, last_p, bid);
 		}
 	}
 	char timebuf[128];
