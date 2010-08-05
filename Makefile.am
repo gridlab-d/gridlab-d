@@ -3,7 +3,7 @@
 # This file is distributed under the same terms as GridLAB-D.
 
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = third_party/CBLAS third_party/superLU_MT core assert climate \
+SUBDIRS = . third_party/CBLAS third_party/superLU_MT core assert climate \
 			 commercial network powerflow residential tape generators plc \
 			 tape_file tape_plot market reliability
 
@@ -14,6 +14,17 @@ distdir = $(PACKAGE)_$(VERSION)
 dist_doc_DATA = COPYRIGHT LICENSE
 
 EXTRA_DIST = debian doxygen/*.* gridlabd.spec Resources/*.* VERSION README-LINUX README-MACOSX
+
+if MISSING_XERCES
+all-local:
+	@echo
+	@echo "Missing dependency: libxerces-c:"
+	@echo
+	@echo "  libxerces-c was not found during configuration and is a required dependency."
+	@echo "  See the output of ./configure for more information."
+	@echo
+	@exit 1
+endif
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)

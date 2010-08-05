@@ -9,10 +9,6 @@ esyscmd([sh -c 'cat core/version.h | tr -d "\r" | while read DEFINE NAME VALUE E
 define([pkgversion], esyscmd([sh -c ". ./version.sh; echo \$VERSION | tr -d '\n'"]))dnl
 define([pkgbranch], esyscmd([sh -c ". ./version.sh; echo \$BRANCH | tr -d '\n'"]))dnl
 define([svnversion], esyscmd([sh -c "svnversion | sed 's/^exported$/0/;s/[^A-Za-z0-9]/+/g' | tr -d '\n'"]))dnl
-# Export version info as autoconf variables
-AC_DEFINE(PACKAGE_BASEVERSION, [pkgversion], [Package Base Version])
-AC_DEFINE(PACKAGE_BRANCH, [pkgbranch], [Package Branch Name])
-AC_DEFINE(PACKAGE_REVISION, [svnversion], [SVN Revision])
 
 AC_PREREQ(2.59)
 AC_INIT([Gridlab-D], [pkgversion.svnversion], [David Chassin <david.chassin@pnl.gov>], gridlabd)
@@ -26,6 +22,11 @@ AC_DISABLE_STATIC
 
 AC_PREFIX_DEFAULT([/usr])
 AC_CANONICAL_HOST
+
+# Export version info as autoconf variables
+AC_SUBST(PACKAGE_BASEVERSION, [pkgversion])
+AC_SUBST(PACKAGE_BRANCH, [pkgbranch])
+AC_SUBST(PACKAGE_REVISION, [svnversion])
 
 if [[ -z "$docdir" ]]; then
 	if [[ -z "$datarootdir" ]]; then
@@ -52,16 +53,6 @@ AC_ARG_ENABLE([optimization],
 				  	 no) optimization=0 ;;
 				  	 *) AC_MSG_ERROR([bad value ${enableval} for --enable-optimization]) ;;
 				  	esac], [optimization=0])
-
-#AC_ARG_ENABLE([cppunit],
-#				  AS_HELP_STRING([--enable-cppunit],
-#				  					  [turn on unit testing @<:@default=yes@:>@]),
-#				  [case "${enableval}" in
-#				  	 yes) WANT_CPPUNIT=true ;;
-#				  	 no) WANT_CPPUNIT=false ;;
-#				  	 *) AC_MSG_ERROR([bad value ${enableval} for --enable-cppunit]) ;;
-#				  	esac], [WANT_CPPUNIT=true])
-#AM_CONDITIONAL(WANT_CPPUNIT, test x$WANT_CPPUNIT = xtrue)
 
 GLFLAGS="$GLFLAGS -I`pwd`/core"
 if [[ "$debug" = "true" ]]; then
@@ -126,10 +117,11 @@ if `$LD --version | grep -q '^GNU ld'`; then
 fi
 
 AX_LIB_XERCES([2.7])
-test "$HAVE_XERCES" = "yes" || \
-		AC_MSG_FAILURE([Xerces library not found. If Xerces is not properly \
-installed, you probably need to use one or more of the --with-xerces options. \
-Try `./configure --help[`] for more information.])
+AC_SUBST([HAVE_XERCES])
+#test "$HAVE_XERCES" = "yes" || \
+#		AC_MSG_FAILURE([Xerces library not found. If Xerces is not properly \
+#installed, you probably need to use one or more of the --with-xerces options. \
+#Try `./configure --help[`] for more information.])
 
 DX_INIT_DOXYGEN(gridlabd, [doxygen/gridlabd.conf])
 DX_HTML_FEATURE([ON])
@@ -145,30 +137,39 @@ GLD_CHECK_BUILTIN(
 	[__sync_bool_compare_and_swap],
 	[],
 	[volatile unsigned int value = 0;
-	 __sync_bool_compare_and_swap(&value, value, 1);])
+	 __sync_bool_compare_and_swap(&value, value, 1);],
+	[HAVE_SYNC_BOOL_COMPARE_AND_SWAP=yes],
+	[HAVE_SYNC_BOOL_COMPARE_AND_SWAP=no])
 GLD_CHECK_BUILTIN(
 	[__sync_add_and_fetch],
 	[],
 	[volatile unsigned int value = 0;
-	 __sync_add_and_fetch(&value, 1);])
+	 __sync_add_and_fetch(&value, 1);],
+	[HAVE_SYNC_ADD_AND_FETCH=yes],
+	[HAVE_SYNC_ADD_AND_FETCH=no])
 
-# Checks for libraries.
-AC_LANG_PUSH([C++])
-AC_CHECK_HEADER([cppunit/config-auto.h], [],
-   [CPPFLAGS="$CPPFLAGS -D_NO_CPPUNIT"])
-#   [AC_MSG_FAILURE([Missing cppunit headers.])])
-#AC_CHECK_LIB([cppunit], [CppUnit::TestFactoryRegistry::getRegistry])
-LIBS_ORIG=$LIBS
-echo "LIBS: " $LIBS
-LIBS="-ldl -lcppunit $LIBS"
-echo "LIBS: " $LIBS
-AC_LINK_IFELSE(AC_LANG_PROGRAM([[#include <cppunit/extensions/TestFactoryRegistry.h>]],[[CppUnit::Test *suite = CppUnit::TestFactoryRegistry::getRegistry().makeTest();]]),[],[LIBS=$LIBS_ORIG])
-#LIBS=$LIBS_ORIG
-AC_LANG_POP([C++])
+# Check for CppUnit
+AM_PATH_CPPUNIT([1.12], [HAVE_CPPUNIT=yes], [HAVE_CPPUNIT=no])
+if test x"$HAVE_CPPUNIT" = xyes; then
+	AC_MSG_CHECKING([if compiler can link libcppunit])
+	AC_LANG_PUSH([C++])
+	SAVED_CXXFLAGS="$CFLAGS"
+	SAVED_LIBS="$LIBS"
+	CFLAGS="$CFLAGS $CPPUNIT_CFLAGS"
+	LIBS="$LIBS $CPPUNIT_LIBS"
+	AC_LINK_IFELSE([AC_LANG_PROGRAM(
+		[#include <cppunit/extensions/TestFactoryRegistry.h>],
+		[CppUnit::TestFactoryRegistry::getRegistry();])],,
+		[HAVE_CPPUNIT=no])
+	AC_LANG_POP([C++])
+	AC_MSG_RESULT([$HAVE_CPPUNIT])
+	if test x"$HAVE_CPPUNIT" != xyes; then
+		CFLAGS="$SAVED_CFLAGS"
+		LIBS="$SAVED_LIBS"
+	fi
+fi
+test x"$HAVE_CPPUNIT" = xyes || CPPFLAGS="$CPPFLAGS -D_NO_CPPUNIT"
 
-#AM_PATH_CPPUNIT(1.12.0)
-#AC_CHECK_LIB([cppunit], [main], [],
-#   [AC_MSG_FAILURE([Missing cppunit shared library.])])
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -214,6 +215,43 @@ AC_CONFIG_FILES([./Makefile \
 	gridlabd.spec \
 	])
 
+AM_CONDITIONAL([MISSING_XERCES], [test x$HAVE_XERCES != xyes])
 AC_SUBST(CPPFLAGS)
 AC_OUTPUT
 
+BINDIR=`eval echo $(eval echo $bindir)`
+LIBDIR=`eval echo $(eval echo $libdir)`
+DOCDIR=`eval echo $(eval echo $docdir)`
+test -n "$DX_DOXYGEN" && HAVE_DOXYGEN="$DX_DOXYGEN" || HAVE_DOXYGEN=no
+test x"$HAVE_XERCES" = xyes && CONFIG_RESULT=OK || { CONFIG_RESULT=failed; HAVE_XERCES="$HAVE_XERCES (required)"; }
+
+AC_MSG_RESULT([
+-----------------------------------------------------------------------
+
+  $PACKAGE $VERSION: Automatic configuration $CONFIG_RESULT.
+
+  Dependencies:
+
+    Doxygen: .................... $HAVE_DOXYGEN
+    libcppunit: ................. $HAVE_CPPUNIT
+    libxerces-c: ................ $HAVE_XERCES
+
+  Atomic Builtins:
+
+    __sync_bool_compare_and_swap: $HAVE_SYNC_BOOL_COMPARE_AND_SWAP
+    __sync_add_and_fetch: ....... $HAVE_SYNC_ADD_AND_FETCH
+
+  Installation paths:
+
+    Scripts: .................... $BINDIR
+    Libraries: .................. $LIBDIR/$PACKAGE
+    Documentation: .............. $DOCDIR
+
+  Building:
+
+    type 'make' to compile $PACKAGE.
+    type 'make install' to install $PACKAGE.
+    type 'make install DESTDIR=ROOT' to install $PACKAGE in ROOT.
+
+-----------------------------------------------------------------------
+])
