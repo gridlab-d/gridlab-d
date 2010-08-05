@@ -277,7 +277,7 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 		} else {
 			dt = update_state(gl_toseconds(t1-t0));
 		}
-		load.power.SetPowerFactor( (state==ON ? shape.params.analog.power : standby_power), power_factor);
+		load.power.SetPowerFactor( (state==ON ? shape.params.analog.power : standby_power), load.power_factor);
 	}
 
 	gl_enduse_sync(&(residential_enduse::load),t1);
