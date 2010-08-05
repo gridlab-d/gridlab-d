@@ -112,8 +112,8 @@ schedule zip_power {
 		45-59 22 * * * 89.0476;
 		0-14 23 * * * 89.3651;
 		15-29 23 * * * 89.3651;
-//		30-44 23 * * * 89.6825;
-//		45-59 23 * * * 89.6825;
+		30-44 23 * * * 89.6825;
+		45-59 23 * * * 89.6825;
 }
 
 	
@@ -137,7 +137,7 @@ object triplex_meter {
 		heating_COP 1.00;
 		object ZIPload {
 			heat_fraction 1;
-			base_power zip_power*1;		
+			base_power zip_power*1+1;		
 			power_pf 1;
 			power_fraction 1;
 			current_pf 0;
