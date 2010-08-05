@@ -56,6 +56,7 @@ int plugload::create()
 	// name of enduse
 	load.name = oclass->name;
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.power_fraction = load.current_fraction = load.impedance_fraction = 0;
 	load.heatgain_fraction = 0.90;
 	load.power_factor = 0.90;
 	//load.power_fraction = 1.0;
@@ -70,6 +71,13 @@ int plugload::init(OBJECT *parent)
 	hdr->flags |= OF_SKIPSAFE;
 
 	load.breaker_amps = 40;
+
+	if ( (load.power_fraction + load.current_fraction + load.impedance_fraction) == 0.0)
+	{
+		load.power_fraction = 1.0;
+		load.current_fraction = 0.0;
+		load.impedance_fraction = 0.0;
+	}
 
 	return residential_enduse::init(parent);
 }
