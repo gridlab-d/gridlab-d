@@ -1750,6 +1750,8 @@ void house_e::attach_implicit_enduses()
 	IMPLICITENDUSE *item;
 	for (item=implicit_enduse_list; item!=NULL; item=item->next){
 		attach(NULL,item->amps,item->is220,&(item->load));
+		if (item->is220)
+			item->load.config |= EUC_IS220;
 	}
 
 	return;
