@@ -2315,10 +2315,15 @@ void house_e::update_Tevent()
 	// Tevent is based on temperature bracket and assumes state is correct
 	switch(system_mode) {
 
-	case SM_HEAT: case SM_AUX: // temperature rising actively
+	case SM_HEAT: 
+		if (dTair > 0) // temperature rising actively
+			Tevent = TheatOff;
+		else if (auxiliary_strategy == AX_DEADBAND) // temperature is falling
+			Tevent = TauxOn;
+		break;
+	case SM_AUX:  // temperature, we hope, is rising
 		Tevent = TheatOff;
 		break;
-
 	case SM_COOL: // temperature falling actively
 		Tevent = TcoolOff;
 		break;
