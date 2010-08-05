@@ -15,9 +15,7 @@ clock {
 
 #set stoptime=2000-01-01 0:00:07 PST
 
-module commercial{
-	default_outdoor_temperature 59.0 degF;
-}
+module commercial;
 module tape;
 module assert;
 

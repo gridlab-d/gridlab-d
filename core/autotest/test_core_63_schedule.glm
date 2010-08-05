@@ -156,7 +156,7 @@ object triplex_meter {
 				within 1e-4;
 				object player{
 					property value;
-					file "test_core_63_schedule.player";
+					file "../test_core_63_schedule.player";
 				};
 			};
 		};
