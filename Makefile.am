@@ -112,11 +112,11 @@ $(scratchdir)/pkg: $(scratchdir)/.xerces.stamp distdir
 	cp $(scratchdir)/$(XERCES_TARNAME)/lib/libxerces-c.* $@/libxerces-c/usr/lib/
 	$(am__remove_distdir)
 
-$(scratchdir)/$(PACKAGE_TARNAME).pkg: $(scratchdir)/pkg
+$(scratchdir)/$(PACKAGE_TARNAME).mpkg: $(scratchdir)/pkg
 	env PATH=$$PATH:/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS \
 	PackageMaker --doc Resources/GridLAB-D.pmdoc --version "$(PACKAGE_VERSION)" --title "$(PACKAGE_NAME)" --out $@
 
-$(scratchdir)/$(PACKAGE_TARNAME).dmg: $(scratchdir)/$(PACKAGE_TARNAME).pkg
+$(scratchdir)/$(PACKAGE_TARNAME).dmg: $(scratchdir)/$(PACKAGE_TARNAME).mpkg
 	test ! -e $@ || rm -f $@
 	hdiutil create -size $$((`du -sm $< | cut -f 1` + 3))m -fs HFS+ -volname "$(PACKAGE_STRING)" $@
 	hdiutil attach -mountpoint $(@D)/mnt $@
