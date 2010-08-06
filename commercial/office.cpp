@@ -848,6 +848,9 @@ EXPORT int create_office(OBJECT **obj, OBJECT *parent)
 	} catch (char *msg) {
 		gl_error("create_office: %s", msg);
 		return 0;
+	} catch (const char *msg) {
+		gl_error("create_office: %s", msg);
+		return 0;
 	}
 }
 
@@ -858,6 +861,9 @@ EXPORT int init_office(OBJECT *obj, OBJECT *parent)
 			return OBJECTDATA(obj,office)->init(parent);
 		return 0;
 	} catch (char *msg) {
+		gl_error("init_%s(obj=%d;%s): %s", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed", msg);
+		return 0;
+	} catch (const char *msg) {
 		gl_error("init_%s(obj=%d;%s): %s", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed", msg);
 		return 0;
 	}
@@ -885,6 +891,9 @@ EXPORT TIMESTAMP sync_office(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	} catch (char *msg) {
 		gl_error("sync_office(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return TS_INVALID; /* halt the clock */
+	} catch (const char *msg) {
+		gl_error("sync_office(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return TS_INVALID; /* halt the clock */
 	}
 }
 
@@ -893,6 +902,9 @@ EXPORT TIMESTAMP plc_office(OBJECT *obj, TIMESTAMP t1)
 	try {
 		return OBJECTDATA(obj,office)->plc(obj->clock,t1);
 	} catch (char *msg) {
+		gl_error("plc_%s(obj=%d;%s): %s", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed", msg);
+		return TS_INVALID;
+	} catch (const char *msg) {
 		gl_error("plc_%s(obj=%d;%s): %s", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed", msg);
 		return TS_INVALID;
 	}
