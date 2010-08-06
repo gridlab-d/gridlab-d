@@ -87,6 +87,21 @@ clean-wc:
 check validate: 
 	python validate.py
 
+XERCES_TARNAME = xerces-c-src_2_8_0
+XERCESCROOT = $(CURDIR)/osx-dist/$(XERCES_TARNAME)
+
+osx-dist/libxerces-c:
+	-rm -f $@
+	test ! -e osx-dist/$(XERCES_TARNAME) || rm -rf osx-dist/$(XERCES_TARNAME)
+	test -d osx-dist || mkdir osx-dist
+	tar -xzf third_party/$(XERCES_TARNAME).tar.gz -C osx-dist
+	export XERCESCROOT=$(XERCESCROOT) && cd osx-dist/$(XERCES_TARNAME)/src/xercesc && ./runConfigure -p macosx && make
+	ln -sf osx-dist/$(XERCES_TARNAME) os-dist/xerces-c
+
+osx-dist/gridlab-d: osx-dist/xerces-c distdir
+	cd $(distdir) && ./configure --with-xerces=$(XERCESCROOT) && make install DESTDIR=$(CURDIR)/$@
+	$(am__remove_distdir)
+
 osx-dist/$(PACKAGE_TARNAME).pkg: all-recursive
 	rm -rf $@ $(@D)/$(distdir) $(@D)/Resources
 	mkdir -p $(@D) $(@D)/$(distdir) $(@D)/Resources
