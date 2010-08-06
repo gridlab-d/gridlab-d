@@ -116,12 +116,9 @@ if `$LD --version | grep -q '^GNU ld'`; then
 	export LDFLAGS
 fi
 
+unset XERCES_VERSION
 AX_LIB_XERCES([2.7])
 AC_SUBST([HAVE_XERCES])
-#test "$HAVE_XERCES" = "yes" || \
-#		AC_MSG_FAILURE([Xerces library not found. If Xerces is not properly \
-#installed, you probably need to use one or more of the --with-xerces options. \
-#Try `./configure --help[`] for more information.])
 
 DX_INIT_DOXYGEN(gridlabd, [doxygen/gridlabd.conf])
 DX_HTML_FEATURE([ON])
@@ -223,7 +220,14 @@ BINDIR=`eval echo $(eval echo $bindir)`
 LIBDIR=`eval echo $(eval echo $libdir)`
 DOCDIR=`eval echo $(eval echo $docdir)`
 test -n "$DX_DOXYGEN" && HAVE_DOXYGEN="$DX_DOXYGEN" || HAVE_DOXYGEN=no
-test x"$HAVE_XERCES" = xyes && CONFIG_RESULT=OK || { CONFIG_RESULT=failed; HAVE_XERCES="$HAVE_XERCES (required)"; }
+if test x"$HAVE_XERCES" = xyes; then
+	CONFIG_RESULT=OK
+	test -z "$XERCES_VERSION" || expr "$XERCES_VERSION" \< 3 >/dev/null || AC_MSG_WARN([libxerces-c version may not be suitable for building $PACKAGE: $XERCES_VERSION])
+else
+	CONFIG_RESULT=failed
+	HAVE_XERCES="$HAVE_XERCES (required)"
+	AC_MSG_WARN([missing libxerces-c; build will fail until dependency is met])
+fi
 
 AC_MSG_RESULT([
 -----------------------------------------------------------------------

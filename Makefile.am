@@ -18,10 +18,12 @@ EXTRA_DIST = debian doxygen/*.* gridlabd.spec Resources/*.* VERSION README-LINUX
 if MISSING_XERCES
 all-local:
 	@echo
-	@echo "Missing dependency: libxerces-c:"
-	@echo
-	@echo "  libxerces-c was not found during configuration and is a required dependency."
-	@echo "  See the output of ./configure for more information."
+	@echo "  Missing dependency: libxerces-c"
+	@echo ""
+	@echo "    libxerces-c was not found during configuration and is a required dependency."
+	@echo "    Install the libxerces-c development libraries and re-run ./configure or run"
+	@echo "    ./configure with the --with-xerces option.  Try './configure --help' for"
+	@echo "    more information."
 	@echo
 	@exit 1
 endif
