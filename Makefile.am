@@ -112,33 +112,28 @@ $(scratchdir)/pkg: $(scratchdir)/.xerces.stamp distdir
 	cp $(scratchdir)/$(XERCES_TARNAME)/lib/libxerces-c.* $@/libxerces-c/usr/lib/
 	$(am__remove_distdir)
 
-osx-dist/$(PACKAGE_TARNAME).pkg: all-recursive
-	rm -rf $@ $(@D)/$(distdir) $(@D)/Resources
-	mkdir -p $(@D) $(@D)/$(distdir) $(@D)/Resources
-	$(MAKE) install DESTDIR=$(CURDIR)/$(@D)/$(distdir)
-	cp Resources/*.rtf $(@D)/Resources/
-	cd $(@D)/$(distdir) && test ! -d etc || { test -d private || mkdir private; mv etc private/etc; }
+$(scratchdir)/$(PACKAGE_TARNAME).pkg: $(scratchdir)/pkg
 	env PATH=$$PATH:/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS \
-	PackageMaker --root $(@D)/$(distdir) --id gov.pnl.gridlabd --version "$(PACKAGE_VERSION)" --title "$(PACKAGE_NAME)" --domain system --resources $(@D)/Resources --out $@
-	rm -rf $(@D)/$(distdir) $(@D)/Resources
+	PackageMaker --doc Resources/GridLAB-D.pmdoc --version "$(PACKAGE_VERSION)" --title "$(PACKAGE_NAME)" --out $@
 
-osx-dist/$(PACKAGE_TARNAME).dmg: osx-dist/$(PACKAGE_TARNAME).pkg
-	test ! -e $@ || rm -rf $@
+$(scratchdir)/$(PACKAGE_TARNAME).dmg: $(scratchdir)/$(PACKAGE_TARNAME).pkg
+	test ! -e $@ || rm -f $@
 	hdiutil create -size $$((`du -sm $< | cut -f 1` + 3))m -fs HFS+ -volname "$(PACKAGE_STRING)" $@
 	hdiutil attach -mountpoint $(@D)/mnt $@
 	mv $< $(@D)/mnt/
 	hdiutil detach $(@D)/mnt
 
-$(distdir).dmg: osx-dist/$(PACKAGE_TARNAME).dmg
+$(distdir).dmg: $(scratchdir)/$(PACKAGE_TARNAME).dmg
 	test ! -e $@ || rm -rf $@
 	hdiutil convert -format UDZO -o $@ $<
 	rm -f $<
 	-rmdir $(<D)
 
 clean-dist-osx:
-	-test ! -d osx-dist/mnt || hdiutil detach osx-dist/mnt
-	-rm -rf osx-dist
+	-test ! -d $(scratchdir)/mnt || hdiutil detach $(scratchdir)/mnt
+	-rm -rf $(scratchdir)
 
+# Build a .mpkg installer package for Mac OS X
 dist-osx:
 	trap '$(MAKE) clean-dist-osx' EXIT && \
 	$(MAKE) $(distdir).dmg
