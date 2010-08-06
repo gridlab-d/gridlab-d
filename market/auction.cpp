@@ -1107,6 +1107,7 @@ void auction::clear_market(void)
 					} else if (a != buy->price && b == sell->price){
 						// buy price increased ~ marginal seller since all buyers satisfied
 						clearing_type = CT_SELLER;
+						clear.price = b; // use seller's price, not buyer's price
 					} else if(a == buy->price && b == sell->price){
 						// possible when a == b, q_buy == q_sell, and either the buyers or sellers are exhausted
 						if(i == asks.getcount() && j == offers.getcount()){
