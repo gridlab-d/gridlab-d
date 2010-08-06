@@ -285,6 +285,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 				if (!matcher[3].table[month])
 				{
 					minute+=60*24*days[month];
+					weekday+=days[month];
 					continue;
 				}
 				for (day=0; day<days[month]; weekday++,day++)
