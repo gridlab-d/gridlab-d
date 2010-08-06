@@ -7,6 +7,7 @@ module tape;
 //#endif
 
 #include "../WA-Yakima.glm"
+#set tmp="../test_solar"
 
 clock {
 	timezone PST+5PDT;
@@ -28,10 +29,19 @@ class solar {
 	};
 	intrinsic init(object parent) {
 		if (efficiency==0) efficiency = 0.85;
-		else if (efficiency<0) throw "efficiency must be positive";
-		if (area<=0) throw "area must be positive";
+		else if (efficiency<0){
+			gl_error("efficiency must be positive");
+			return FAILED;
+		}
+		if (area<=0){
+			gl_error("area must be positive");
+			return FAILED;
+		}
 		flux = (double*)gl_get_addr(weather,"solar_flux");
-		if (type==FIXED && flux==NULL) throw "solar flux data not available";
+		if (type==FIXED && flux==NULL){
+			gl_error("solar flux data not available");
+			return FAILED;
+		}
 		return SUCCESS;
 	};
 	intrinsic presync(TIMESTAMP t0, TIMESTAMP t1) {
@@ -54,7 +64,7 @@ object solar {
 	area 1000;
 	type TRACKING;
 	object double_assert {
-		in '2009-12-31 23:00:00 EST';
+		in '2009-12-31 23:00:00 PST';
 		status ASSERT_TRUE;
 		target energy;
 		value 135.2;
@@ -75,7 +85,7 @@ object solar {
 	type FIXED;
 	orientation SOUTHWEST;
 	object double_assert {
-		in '2009-12-31 23:00:00 EST';
+		in '2009-12-31 23:00:00 PST';
 		status ASSERT_TRUE;
 		target energy;
 		value 99.2;
