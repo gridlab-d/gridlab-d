@@ -30,14 +30,59 @@ uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)
 	-rmdir $(DESTDIR)$(docdir)
 
+help:
+	@echo "Cleaning targets:"
+	@echo "  clean        - Erase from the build tree the files built by 'make all'"
+	@echo "  distclean    - Same as 'make clean' plus erase anything ./configure created"
+	@echo "  mostlyclean  - Erase intermediate files (such as .o files)"
+	@echo ""
+	@echo "Building targets:"
+	@echo "  all            - Build $(PACKAGE) (same as 'make')"
+	@echo "  install        - Install $(PACKAGE) on the system"
+	@echo "  install DESTDIR=\$$ROOT  - Install $(PACKAGE) in \$$ROOT"
+	@echo "  install-strip  - Same as install, but follow by stripping debug symbols"
+	@echo "  uninstall      - Erase files installed by 'make install'"
+	@echo ""
+	@echo "Testing targets:"
+	@echo "  validate  - Run the test/validation suite (requires Python)"
+	@echo ""
+	@echo "Packaging targets:"
+	@echo "  dist          - same as 'make dist-gzip'"
+	@echo "  dist-bzip2    - Generate a bzip2 tar archive of the distribution"
+	@echo "  dist-deb      - Create Debian binary and source deb packages"
+	@echo "  dist-deb-bin  - Create Debian binary-only deb package"
+	@echo "  dist-deb-src  - Create Debian source-only deb package"
+	@echo "  dist-gzip     - Generate a gzip tar archive of the distribution"
+	@echo "  dist-lzma     - Generate an lzma tar archive of the distribution"
+	@echo "  dist-osx      - Create Mac OS X package installer (OS X w/ XCode only)"
+	@echo "  dist-rpm      - Create binary-only RPM package"
+	@echo "  dist-shar     - Generate a shar archive of the distribution"
+	@echo "  dist-tarZ     - Generate a compressed tar archive of the distribution"
+	@echo "  dist-xz       - Generate an xz tar archive of the distribution"
+	@echo "  dist-zip      - Generate a zip archive of the distribution"
+	@echo "  rpm-prep      - Create \$$HOME/.rpmmacros suitable for building RPMs in"
+	@echo "                  \$$HOME/rpmbuild as non-root user"
+	@echo ""
+	@echo "Documentation targets:"
+	@echo "  doxygen-doc  - Generate doxygen documentation (only if doxygen was found"
+	@echo "                 by ./configure)"
+	@echo ""
+	@echo "Developer targets (may require special tools):"
+	@echo "  clean-wc   - Recursively remove all files and directories not under"
+	@echo "               revision control (will prompt to confirm first)"
+	@echo "  ctags      - Generate vi-style tags files"
+	@echo "  tags       - Generate emacs-style TAGS files"
+	@echo "  maintainer-clean"
+
 over: clean all
 
+# Recursively remove all files and directories not under revision control
 clean-wc:
 	@echo -e "\nThis removes all unversioned files and directories in the working copy."
 	@unset REPLY && read -t 60 -p "Clean working copy (type 'yes' to proceed)? " && test "`echo "$$REPLY" | tr '[:upper:]' '[:lower:]'`" = "yes"
 	. utilities/cleanwc
 
-validate: 
+check validate: 
 	python validate.py
 
 osx-dist/$(PACKAGE_TARNAME).pkg: all-recursive
@@ -71,18 +116,29 @@ dist-osx:
 	trap '$(MAKE) clean-dist-osx' EXIT && \
 	$(MAKE) $(distdir).dmg
 
+# Build deb (binary and source) packages
 dist-deb: distdir
 	echo -e "gridlabd ($(VERSION)-1) unstable; urgency=low\n\n  * Version $(VERSION) release.\n  * View recent changes at: https://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:RecentChanges\n\n -- GridLAB-D Team <gridlabd@pnl.gov> `date -R`\n" > $(distdir)/debian/changelog
 	ln -s $(distdir) $(distdir)-1
-	(cd $(distdir)-1 && dpkg-buildpackage -tc -us -uc)
+	(cd $(distdir)-1 && dpkg-buildpackage -tc -us -uc $(DEBFLAGS))
 	rm -f $(distdir)-1
 	$(am__remove_distdir)
 
+# Build Debian deb binary package
+dist-deb-bin:
+	$(MAKE) dist-deb DEBFLAGS=-b
+
+# Build Debian deb source package
+dist-deb-src:
+	$(MAKE) dist-deb DEBFLAGS=-S
+
+# Build RPM binary package
 dist-rpm: dist-gzip
 	rpmbuild -tb $(distdir).tar.gz
 
 RPMBUILDDIR = $(HOME)/rpmbuild
 
+# Create $(HOME)/.rpmmacros file suitable for building RPMs in $(RPMBUILDDIR) as non-root user
 rpm-prep:
 	@DIR="$(RPMBUILDDIR)" && if [ "$${DIR:0:1}" != "/" ]; then \
 		echo >&2 "ERROR: RPMBUILDDIR must be an absolute path"; exit 1; \
