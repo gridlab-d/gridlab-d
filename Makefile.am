@@ -25,7 +25,7 @@ all-local:
 	@echo "    ./configure with the --with-xerces option.  Try './configure --help' for"
 	@echo "    more information."
 	@echo
-	@exit 1
+	@false
 endif
 
 uninstall-hook:
@@ -87,19 +87,23 @@ clean-wc:
 check validate: 
 	python validate.py
 
+scratchdir = scratch
 XERCES_TARNAME = xerces-c-src_2_8_0
-XERCESCROOT = $(CURDIR)/osx-dist/$(XERCES_TARNAME)
+XERCESCROOT = $(CURDIR)/$(scratchdir)/$(XERCES_TARNAME)
 
-osx-dist/libxerces-c:
+$(scratchdir)/.xerces.stamp: third_party/$(XERCES_TARNAME).tar.gz
 	-rm -f $@
-	test ! -e osx-dist/$(XERCES_TARNAME) || rm -rf osx-dist/$(XERCES_TARNAME)
-	test -d osx-dist || mkdir osx-dist
-	tar -xzf third_party/$(XERCES_TARNAME).tar.gz -C osx-dist
-	export XERCESCROOT=$(XERCESCROOT) && cd osx-dist/$(XERCES_TARNAME)/src/xercesc && ./runConfigure -p macosx && make
-	ln -sf osx-dist/$(XERCES_TARNAME) os-dist/xerces-c
+	test ! -e $(@D)/$(XERCES_TARNAME) || rm -rf $(@D)/$(XERCES_TARNAME)
+	test -d $(@D) || mkdir -p $(@D)
+	tar -xzf $< -C $(@D)
+	export XERCESCROOT=$(CURDIR)/$(@D)/$(XERCES_TARNAME) && \
+		cd $(@D)/$(XERCES_TARNAME)/src/xercesc && \
+		./runConfigure -p macosx && make
+	touch $@
+#	ln -sf $(scratchdir)/$(XERCES_TARNAME) os-dist/xerces-c
 
-osx-dist/gridlab-d: osx-dist/xerces-c distdir
-	cd $(distdir) && ./configure --with-xerces=$(XERCESCROOT) && make install DESTDIR=$(CURDIR)/$@
+$(scratchdir)/gridlab-d: $(scratchdir)/.xerces.stamp distdir
+	cd $(distdir) && ./configure --with-xerces=$(CURDIR)/$(scratchdir)/$(XERCES_TARNAME) && make install DESTDIR=$(CURDIR)/$@
 	$(am__remove_distdir)
 
 osx-dist/$(PACKAGE_TARNAME).pkg: all-recursive
