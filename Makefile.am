@@ -100,10 +100,16 @@ $(scratchdir)/.xerces.stamp: third_party/$(XERCES_TARNAME).tar.gz
 		cd $(@D)/$(XERCES_TARNAME)/src/xercesc && \
 		./runConfigure -p macosx && make
 	touch $@
-#	ln -sf $(scratchdir)/$(XERCES_TARNAME) os-dist/xerces-c
 
-$(scratchdir)/gridlab-d: $(scratchdir)/.xerces.stamp distdir
-	cd $(distdir) && ./configure --with-xerces=$(CURDIR)/$(scratchdir)/$(XERCES_TARNAME) && make install DESTDIR=$(CURDIR)/$@
+$(scratchdir)/pkg: $(scratchdir)/.xerces.stamp distdir
+	test ! -e $@ || rm -rf $@
+	test -d $@/core || mkdir -p $@/core
+	cd $(distdir) && ./configure --with-xerces=$(CURDIR)/$(scratchdir)/$(XERCES_TARNAME) && make install DESTDIR=$(CURDIR)/$@/core
+	cd $@ && mkdir -p climate-data/usr/lib/gridlabd devel/usr/lib/gridlabd libxerces-c/usr/lib
+	mv $@/core/usr/lib/gridlabd/*.zip $@/climate-data/usr/lib/gridlabd/
+	mv $@/core/usr/include $@/devel/usr/include
+	mv $@/core/usr/lib/gridlabd/*.la $@/devel/usr/lib/gridlabd/
+	cp $(scratchdir)/$(XERCES_TARNAME)/lib/libxerces-c.* $@/libxerces-c/usr/lib/
 	$(am__remove_distdir)
 
 osx-dist/$(PACKAGE_TARNAME).pkg: all-recursive
