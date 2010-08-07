@@ -701,13 +701,15 @@ EXPORT TIMESTAMP sync_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		switch (pass) {
 		case PC_PRETOPDOWN:
 			t2 = my->presync(obj->clock,t1);
+			obj->clock = t1;
 			break;
 		case PC_BOTTOMUP:
 			t2 = my->sync(obj->clock, t1);
+			//obj->clock = t1;
 			break;
 		case PC_POSTTOPDOWN:
 			t2 = my->postsync(obj->clock,t1);
-			obj->clock = t1;
+			//obj->clock = t1;
 			break;
 		default:
 			GL_THROW("invalid pass request (%d)", pass);
