@@ -30,6 +30,6 @@ object house {
 		once ONCE_TRUE;
 		in '2001-12-31 23:00:00';
 		value 3531.39+885.051j;
-		within 0.01;
+		within 3.531;
 	};
 }
