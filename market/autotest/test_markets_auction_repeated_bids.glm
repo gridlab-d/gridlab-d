@@ -114,7 +114,7 @@
 //Seller2: bid 40, quantity: 5
 //Seller3: bid 40, quantity: 5
 
-#set tmp=../test_markets_auction_simultaneous
+#set tmp=../test_markets_auction_repeated_bids
 #setenv GRIDLABD=../../../core
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
