@@ -591,10 +591,24 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			switch(resolve_mode){
 				case RM_DEADBAND:
 					midpoint = (heat_max + cool_min) / 2;
-					heat_max = midpoint - *pDeadband/2;
-					cool_min = midpoint + *pDeadband/2;
+					if(midpoint - *pDeadband/2 < heating_setpoint0 || midpoint + *pDeadband/2 > cooling_setpoint0) {
+						gl_error("The midpoint between the max heating setpoint and the min cooling setpoint must be half a deadband away from each base setpoint");
+						return TS_INVALID;
+					} else { 
+						heat_max = midpoint - *pDeadband/2;
+						cool_min = midpoint + *pDeadband/2;
+					}
 					break;
 				case RM_SLIDING:
+					if(heat_max > cooling_setpoint0 - *pDeadband) {
+						gl_error("the max heating setpoint must be a full deadband less than the cooling_base_setpoint");
+						return TS_INVALID;
+					}
+
+					if(cool_min < heating_setpoint0 + *pDeadband) {
+						gl_error("The min cooling setpoint must be a full deadband greater than the heating_base_setpoint");
+						return TS_INVALID;
+					}
 					if(thermostat_mode == TM_OFF || thermostat_mode == TM_COOL){
 						heat_max = cool_min - *pDeadband;
 					} else if (thermostat_mode == TM_HEAT){
