@@ -25,6 +25,7 @@ controller::controller(MODULE *module){
 				PT_KEYWORD, "HOUSE_PREHEAT", SM_HOUSE_PREHEAT,
 				PT_KEYWORD, "HOUSE_PRECOOL", SM_HOUSE_PRECOOL,
 				PT_KEYWORD, "WATERHEATER", SM_WATERHEATER,
+				PT_KEYWORD, "DOUBLE_RAMP", SM_DOUBLE_RAMP,
 			PT_enumeration, "bid_mode", PADDR(bidmode),
 				PT_KEYWORD, "ON", BM_ON,
 				PT_KEYWORD, "OFF", BM_OFF,
@@ -68,6 +69,10 @@ controller::controller(MODULE *module){
 			PT_double, "heating_base_setpoint[degF]", PADDR(heating_setpoint0),
 			PT_double, "cooling_base_setpoint[degF]", PADDR(cooling_setpoint0),
 			PT_char32, "deadband", PADDR(deadband),
+			PT_char32, "heating_setpoint", PADDR(heating_setpoint),
+			PT_char32, "heating_demand", PADDR(heating_demand),
+			PT_char32, "cooling_setpoint", PADDR(cooling_setpoint),
+			PT_char32, "cooling_demand", PADDR(cooling_demand),
 			// redefinitions
 			PT_char32, "average_target", PADDR(avg_target),
 			PT_char32, "standard_deviation_target", PADDR(std_target),
@@ -158,6 +163,27 @@ void controller::cheat(){
 			range_low = 0;
 			range_high = 10;
 			break;
+		case SM_DOUBLE_RAMP:
+			sprintf(target, "air_temperature");
+			sprintf(heating_setpoint, "heating_setpoint");
+			sprintf(heating_demand, "heating_demand");
+			sprintf(heating_total, "total_load");		// using total instead of heating_total
+			sprintf(heating_load, "hvac_load");			// using load instead of heating_load
+			sprintf(cooling_setpoint, "cooling_setpoint");
+			sprintf(cooling_demand, "cooling_demand");
+			sprintf(cooling_total, "total_load");		// using total instead of cooling_total
+			sprintf(cooling_load, "hvac_load");			// using load instead of cooling_load
+			sprintf(deadband, "thermostat_deadband");
+			sprintf(load, "hvac_load");
+			heat_ramp_low = -2;
+			heat_ramp_high = -2;
+			heat_range_low = -5;
+			heat_range_high = 0;
+			cool_ramp_low = 2;
+			cool_ramp_high = 2;
+			cool_range_low = 0;
+			cool_range_high = 5;
+			break;
 		default:
 			break;
 	}
@@ -174,7 +200,10 @@ void controller::fetch(double **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "controller:%i", hdr->id);
-		sprintf(msg, "%s: controller unable to find %s", namestr, name);
+		if(*name == NULL)
+			sprintf(msg, "%s: controller unable to find property: name is NULL", namestr);
+		else
+			sprintf(msg, "%s: controller unable to find %s", namestr, name);
 		throw(msg);
 	}
 }
@@ -207,10 +236,10 @@ int controller::init(OBJECT *parent){
 	if(target[0] == 0){
 		GL_THROW("controller: %i, target property not specified", hdr->id);
 	}
-	if(setpoint[0] == 0){
+	if(setpoint[0] == 0 && control_mode == CN_RAMP){
 		GL_THROW("controller: %i, setpoint property not specified", hdr->id);;
 	}
-	if(demand[0] == 0){
+	if(demand[0] == 0 && control_mode == CN_RAMP){
 		GL_THROW("controller: %i, demand property not specified", hdr->id);
 	}
 	if(total[0] == 0){
@@ -218,6 +247,24 @@ int controller::init(OBJECT *parent){
 	}
 	if(load[0] == 0){
 		GL_THROW("controller: %i, load property not specified", hdr->id);
+	}
+
+	if(heating_setpoint[0] == 0 && control_mode == CN_DOUBLE_RAMP){
+		GL_THROW("controller: %i, heating_setpoint property not specified", hdr->id);;
+	}
+	if(heating_demand[0] == 0 && control_mode == CN_DOUBLE_RAMP){
+		GL_THROW("controller: %i, heating_demand property not specified", hdr->id);
+	}
+
+	if(cooling_setpoint[0] == 0 && control_mode == CN_DOUBLE_RAMP){
+		GL_THROW("controller: %i, cooling_setpoint property not specified", hdr->id);;
+	}
+	if(cooling_demand[0] == 0 && control_mode == CN_DOUBLE_RAMP){
+		GL_THROW("controller: %i, cooling_demand property not specified", hdr->id);
+	}
+
+	if(deadband[0] == 0 && control_mode == CN_DOUBLE_RAMP){
+		GL_THROW("controller: %i, deadband property not specified", hdr->id);
 	}
 
 	fetch(&pMonitor, target, parent);
@@ -232,12 +279,12 @@ int controller::init(OBJECT *parent){
 		sprintf(cool_state, "is_COOL_on");
 		fetch(&pHeatingSetpoint, heating_setpoint, parent);
 		fetch(&pHeatingDemand, heating_demand, parent);
-		fetch(&pHeatingTotal, heating_total, parent);
-		fetch(&pHeatingLoad, heating_load, parent);
+		fetch(&pHeatingTotal, total, parent);
+		fetch(&pHeatingLoad, total, parent);
 		fetch(&pCoolingSetpoint, cooling_setpoint, parent);
 		fetch(&pCoolingDemand, cooling_demand, parent);
-		fetch(&pCoolingTotal, cooling_total, parent);
-		fetch(&pCoolingLoad, cooling_load, parent);
+		fetch(&pCoolingTotal, total, parent);
+		fetch(&pCoolingLoad, load, parent);
 		fetch(&pDeadband, deadband, parent);
 		fetch(&pAuxState, aux_state, parent);
 		fetch(&pHeatState, heat_state, parent);
