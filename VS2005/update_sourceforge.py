@@ -48,10 +48,13 @@ if __name__ == "__main__":
 			print "Invalid argument"
 			do_help()
 	pattern = re.compile(prefix+"([0-9]{4})_([0-9]{2})_([0-9]{2})-nightly\\.exe")
-	
-	for filename in os.listdir(SF_PATH):
+	count = 1
+	dirlist = os.listdir(SF_PATH)
+	dirlist.reverse()
+	for filename in dirlist:
 		#print "Testing",SF_PATH + "\\" +filename
-		if testFile(pattern,filename,days,prefix):
+		if testFile(pattern,filename,days,prefix) and (count > days):
 			print "delete",SF_PATH + "/" +filename
 			if(not DRY_RUN):
 				os.unlink(SF_PATH + "/" +filename)
+		count += 1
