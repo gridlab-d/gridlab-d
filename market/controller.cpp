@@ -362,7 +362,7 @@ int controller::init(OBJECT *parent){
 			return 0;
 		}
 	}
-	if(control_mode == CN_DOUBLE_RAMP){
+	if(control_mode == CN_RAMP){
 		if(slider_setting < 0.0){
 			gl_warning("slider_setting is negative, reseting to 0.0");
 			slider_setting = 0.0;
@@ -627,6 +627,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			}
 			may_run = 1;
+			// calculate setpoints
 			if(fabs(*pStd) < bid_offset){
 				*pCoolingSetpoint = cooling_setpoint0;
 				*pHeatingSetpoint = heating_setpoint0;
@@ -642,7 +643,16 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					*pHeatingSetpoint = heating_setpoint0;
 				}
 			}
-			// calculate setpoints
+			//clip
+			if(*pCoolingSetpoint > cool_max)
+				*pCoolingSetpoint = cool_max;
+			if(*pCoolingSetpoint < cool_min)
+				*pCoolingSetpoint = cool_min;
+			if(*pHeatingSetpoint > heat_max)
+				*pHeatingSetpoint = heat_max;
+			if(*pHeatingSetpoint < heat_min)
+				*pHeatingSetpoint = heat_min;
+
 			lastmkt_id = market->market_id;
 		}
 		// submit bids
