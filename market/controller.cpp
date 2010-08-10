@@ -179,10 +179,10 @@ void controller::cheat(){
 			heat_ramp_low = -2;
 			heat_ramp_high = -2;
 			heat_range_low = -5;
-			heat_range_high = 0;
+			heat_range_high = 5;
 			cool_ramp_low = 2;
 			cool_ramp_high = 2;
-			cool_range_low = 0;
+			cool_range_low = 5;
 			cool_range_high = 5;
 			break;
 		default:
@@ -607,7 +607,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			}
 		}
 		// if the market has updated, 
-		if(lastmkt_id < market->market_id){
+		if(lastmkt_id != market->market_id){
+			lastmkt_id = market->market_id;
+			lastbid_id = -1;
 			// retrieve cleared price
 			double clear_price;
 			clear_price = market->current_frame.clearing_price;
