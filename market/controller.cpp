@@ -175,6 +175,7 @@ void controller::cheat(){
 			sprintf(cooling_load, "hvac_load");			// using load instead of cooling_load
 			sprintf(deadband, "thermostat_deadband");
 			sprintf(load, "hvac_load");
+			sprintf(total, "total_load");
 			heat_ramp_low = -2;
 			heat_ramp_high = -2;
 			heat_range_low = -5;
@@ -707,7 +708,7 @@ EXPORT int create_controller(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_controller: %s", msg);
 	}
@@ -722,10 +723,11 @@ EXPORT int init_controller(OBJECT *obj, OBJECT *parent)
 			return OBJECTDATA(obj,controller)->init(parent);
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		char name[64];
 		gl_error("init_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		return 0;
 	}
 	return 1;
 }
@@ -759,11 +761,12 @@ EXPORT TIMESTAMP sync_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			obj->clock = t1;
 			break;
 		default:
-			GL_THROW("invalid pass request (%d)", pass);
+			gl_error("invalid pass request (%d)", pass);
+			return TS_INVALID;
 			break;
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		char name[64];
 		gl_error("sync_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
