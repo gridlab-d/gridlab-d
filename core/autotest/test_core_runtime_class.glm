@@ -8,7 +8,6 @@
 
 module market;
 module tape;
-module assert;
 module residential {
 	implicit_enduses NONE;
 }
@@ -135,10 +134,10 @@ object auction {
 		lastbid_id = -1;
 		lastmkt_id = -1;
 		if (market==NULL)
-			throw "market is not defined";
+			throw (char*)"market is not defined";
 		thismkt_id = (int64*)gl_get_addr(market,"market_id");
 		if (thismkt_id==NULL)
-			throw "market does not define market_id";
+			throw (char*)"market does not define market_id";
 		return SUCCESS;
 	};
 	intrinsic sync (TIMESTAMP t0, TIMESTAMP t1)
