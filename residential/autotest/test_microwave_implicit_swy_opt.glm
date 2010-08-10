@@ -1,0 +1,40 @@
+//test_microwave_implicit_swy.glm
+
+//this program contains one house with a single microwave using the implicit schedule and the hvac turned off
+//this program will validate power through energy usage as well as energy.
+//by d3y334
+
+module assert;
+module tape;
+module residential {
+	implicit_enduses MICROWAVE;
+}
+
+clock {
+	timestamp '2001-05-01 0:00:00';
+	stoptime '2001-05-02 2:00:00';
+	timezone PST+8PDT;
+}
+
+
+
+object house {
+	heating_setpoint 5;
+	cooling_setpoint 300;
+	air_temperature 70;
+	outdoor_temperature 73;
+	object complex_assert {
+		in '2001-05-02 1:00:00';
+		once ONCE_TRUE;
+		target "panel.energy";
+		value 0.025+0.025j;
+		within 0.01;
+	};
+	object recorder {
+		property panel.energy;
+		file "test_microwave_implicit_swy.csv";
+		interval 3600;
+		limit 24;
+	};
+}
+
