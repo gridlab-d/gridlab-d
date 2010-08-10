@@ -5,8 +5,8 @@
 //values are correct is to check whether the calculated bidding
 //prices are correct (this calculation uses these values)
 
-#set tmp=c:/Users/doro353/Documents
-#setenv GRIDLABD=c:/Users/doro353/Documents/gridlab-d/trunk/core
+#set tmp=../test_markets_controller_heating_inelastic_matching_period
+#setenv GRIDLABD=../../../core
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 
