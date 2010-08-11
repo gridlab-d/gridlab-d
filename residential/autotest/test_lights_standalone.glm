@@ -5,7 +5,7 @@
 clock {
 	timezone PST+8PDT;
 	starttime '2001-01-01 00:00:00 PST';
-	stoptime '2002-01-01 00:00:00 PST';
+	stoptime '2002-01-01 01:00:00 PST';
 }
 
 schedule lighting {
@@ -25,12 +25,13 @@ object lights {
 	name "direct-power";
 	power_fraction 1.0;
 	type CFL; // -> PF = -0.92
+	power_factor -0.92;
 	shape "type: analog; schedule: lighting";
 	object complex_assert {
-		in '2001-12-31 23:59:59 PST';
+		in '2002-01-01 00:00:00 PST';
 		target energy;
 		within 1;
-		value +1431+610i;
+		value +954.5-406.6j;
 	};
 }
 
@@ -42,12 +43,13 @@ object lights {
 	installed_power 500 W; 
 	power_fraction 1.0;
 	type CFL; // -> PF = -0.92
+	power_factor -0.92;
 	shape "type: analog; schedule: lighting";
 	object complex_assert {
-		in '2001-12-31 23:59:59 PST';
+		in '2002-01-01 00:00:00 PST';
 		target energy;
 		within 1;
-		value +715+305i;
+		value +477.3-203.3j;
 	};
 }
 
@@ -57,12 +59,21 @@ object lights {
 object lights {
 	name "scaled-power";
 	type CFL; // -> PF = -0.92
+	power_factor -0.92;
 	power_fraction 1.0;
 	shape "type: analog; schedule: lighting; power: 500 W";
 	object complex_assert {
-		in '2001-12-31 23:59:59 PST';
+		in '2002-01-01 00:00:00 PST';
 		target energy;
 		within 1;
-		value +715+305i;
+		value +477.3-203.3j;
 	};
 }
+
+object multi_recorder {
+	parent direct-power;
+	property energy,installed-power:energy,scaled-power:energy;
+	file test_lights_standalone.csv;
+	interval 3600;
+	limit 8760;
+}	
