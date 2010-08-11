@@ -732,6 +732,7 @@ typedef enum {
  * Memory locking support
  */
 
+#if defined(USE_RUNTIME_LOCKING)
 #if defined(WIN32) && !defined(__GNUC__)
 	#include <intrin.h>
 	#pragma intrinsic(_InterlockedCompareExchange)
@@ -748,6 +749,10 @@ typedef enum {
 #else
 	#define atomic_compare_and_swap __sync_bool_compare_and_swap
 	#define atomic_increment(ptr) __sync_add_and_fetch(ptr, 1)
+#endif
+#else
+	#define atomic_compare_and_swap(dest, comp, xchg)
+	#define atomic_increment(ptr)
 #endif
 
 static inline void lock(unsigned int *lock)
