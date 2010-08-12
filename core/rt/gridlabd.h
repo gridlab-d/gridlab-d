@@ -750,10 +750,7 @@ typedef enum {
 	#define atomic_compare_and_swap __sync_bool_compare_and_swap
 	#define atomic_increment(ptr) __sync_add_and_fetch(ptr, 1)
 #endif
-#else
-	#define atomic_compare_and_swap(dest, comp, xchg)
-	#define atomic_increment(ptr)
-#endif
+
 
 static inline void lock(unsigned int *lock)
 {
@@ -775,6 +772,15 @@ static inline void unlock(unsigned int *lock)
 #define UNLOCK_OBJECT(obj) unlock(&((obj)->lock)) /**< Unlocks an object */
 #define LOCKED(obj,command) (LOCK_OBJECT(obj),(command),UNLOCK_OBJECT(obj))
 
+#else
+
+#define LOCK(lock)
+#define UNLOCK(lock)
+#define LOCK_OBJECT(obj)
+#define UNLOCK_OBJECT(obj)
+#define LOCKED(obj, command)
+
+#endif
 
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;
