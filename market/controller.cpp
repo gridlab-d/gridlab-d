@@ -73,6 +73,7 @@ controller::controller(MODULE *module){
 			PT_char32, "heating_demand", PADDR(heating_demand),
 			PT_char32, "cooling_setpoint", PADDR(cooling_setpoint),
 			PT_char32, "cooling_demand", PADDR(cooling_demand),
+			PT_double, "sliding_time_delay[s]", PADDR(sliding_time_delay), PT_DESCRIPTION, "time interval desired for the sliding resolve mode to change from cooling or heating to off",
 			// redefinitions
 			PT_char32, "average_target", PADDR(avg_target),
 			PT_char32, "standard_deviation_target", PADDR(std_target),
@@ -335,7 +336,12 @@ int controller::init(OBJECT *parent){
 //	double period = market->period;
 //	next_run = gl_globalclock + (TIMESTAMP)(period - fmod(gl_globalclock+period,period));
 	next_run = gl_globalclock;// + (market->period - gl_globalclock%market->period);
-	
+	time_off = TS_NEVER;
+	if(sliding_time_delay == 0)
+		dtime_delay = 21600; // default sliding_time_delay of 6 hours
+	else
+		dtime_delay = (int64)sliding_time_delay;
+
 	if(state[0] != 0){
 		// grab state pointer
 		pState = gl_get_enum_by_name(parent, state);
@@ -432,6 +438,15 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 			heat_min = heating_setpoint0 + heat_range_low * slider_setting_heat;
 			heat_max = heating_setpoint0 + heat_range_high * slider_setting_heat;
 		}
+		if(thermostat_mode != TM_INVALID && thermostat_mode != TM_OFF || t1 >= time_off)
+			last_mode = thermostat_mode;
+		else 
+			last_mode = TM_OFF;// this initializes last mode to off
+
+		if(thermostat_mode != TM_INVALID)
+			previous_mode = thermostat_mode;
+		else
+			previous_mode = TM_OFF;
 	}
 	return TS_NEVER;
 }
@@ -575,10 +590,16 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		if(resolve_mode == RM_SLIDING){
 			if(*pHeatState == 1 || *pAuxState == 1){
 				thermostat_mode = TM_HEAT;
+				if(last_mode == TM_OFF)
+					time_off = TS_NEVER;
 			} else if(*pCoolState == 1){
 				thermostat_mode = TM_COOL;
+				if(last_mode == TM_OFF)
+					time_off = TS_NEVER;
 			} else if(*pHeatState == 0 && *pAuxState == 0 && *pCoolState == 0){
 				thermostat_mode = TM_OFF;
+				if(previous_mode != TM_OFF)
+					time_off = t1 + dtime_delay;
 			} else {
 				gl_error("The HVAC is in two or more modes at once. This is impossible");
 				if(resolve_mode == RM_SLIDING)
@@ -609,9 +630,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 						gl_error("The min cooling setpoint must be a full deadband greater than the heating_base_setpoint");
 						return TS_INVALID;
 					}
-					if(thermostat_mode == TM_OFF || thermostat_mode == TM_COOL){
+					if(last_mode == TM_OFF || last_mode == TM_COOL){
 						heat_max = cool_min - *pDeadband;
-					} else if (thermostat_mode == TM_HEAT){
+					} else if (last_mode == TM_HEAT){
 						cool_min = heat_max + *pDeadband;
 					}
 					break;
@@ -681,17 +702,25 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		} else if(*pMonitor > heat_max && *pMonitor < cool_min){
 			last_p = 0.0;
 			last_q = 0.0;
-		} else if(*pMonitor < heat_max && *pMonitor > heat_min){
+		} else if(*pMonitor <= heat_max && *pMonitor >= heat_min){
 			double ramp, range;
 			ramp = (*pMonitor > heating_setpoint0 ? heat_ramp_high : heat_ramp_low);
 			range = (*pMonitor > heating_setpoint0 ? heat_range_high : heat_range_low);
-			last_p = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - heating_setpoint0) * ramp * (*pStd) / fabs(range) );
+			if(*pMonitor != cooling_setpoint0){
+				last_p = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - heating_setpoint0) * ramp * (*pStd) / fabs(range) );
+			} else {
+				last_p = *pAvg;
+			}
 			last_q = *pHeatingDemand;
-		} else if(*pMonitor < cool_max && *pMonitor > cool_min){
+		} else if(*pMonitor <= cool_max && *pMonitor >= cool_min){
 			double ramp, range;
-			ramp = (*pMonitor > *pCoolingSetpoint ? cool_ramp_high : cool_ramp_low);
-			range = (*pMonitor > *pCoolingSetpoint ? cool_range_high : cool_range_low);
-			last_p = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0 : (*pMonitor - *pCoolingSetpoint) * ramp * (*pStd) / fabs(range) );
+			ramp = (*pMonitor > cooling_setpoint0 ? cool_ramp_high : cool_ramp_low);
+			range = (*pMonitor > cooling_setpoint0 ? cool_range_high : cool_range_low);
+			if(*pMonitor != cooling_setpoint0){
+				last_p = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0 : (*pMonitor - cooling_setpoint0) * ramp * (*pStd) / fabs(range) );
+			} else {
+				last_p = *pAvg;
+			}
 			last_q = *pCoolingDemand;
 		}
 		if(last_q > 0.001){

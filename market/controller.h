@@ -59,7 +59,7 @@ public:
 		TM_HEAT=2,
 		TM_COOL=3,
 	} THERMOSTATMODE;
-	THERMOSTATMODE thermostat_mode, last_mode;
+	THERMOSTATMODE thermostat_mode, last_mode, previous_mode;
 
 	double kT_L, kT_H;
 	char target[33];
@@ -111,6 +111,7 @@ public:
 	double setpoint0;
 	double heating_setpoint0;
 	double cooling_setpoint0;
+	double sliding_time_delay;
 
 private:
 	TIMESTAMP next_run;
@@ -146,6 +147,8 @@ private:
 	char32 heat_state;
 	char32 cool_state;
 	char32 aux_state;
+	int64 dtime_delay;
+	TIMESTAMP time_off;
 };
 
 #endif // _controller_H
