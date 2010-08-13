@@ -906,7 +906,7 @@ void auction::clear_market(void)
 				} else {
 					clearing_type = CT_FAILURE;
 					single_quantity = 0.0;
-					single_price = 0.0;
+					single_price = offers.getbid(0)->price - bid_offset;
 				}
 			}
 			next.quantity = single_quantity;
@@ -953,7 +953,7 @@ void auction::clear_market(void)
 				} else {
 					clearing_type = CT_FAILURE;
 					single_quantity = 0.0;
-					single_price = 0.0;
+					single_price = asks.getbid(0)->price + bid_offset;
 				}
 			}
 			next.quantity = single_quantity;
