@@ -879,21 +879,7 @@ void auction::clear_market(void)
 			if(fixed_price * fixed_quantity != 0.0){
 				gl_warning("fixed_price and fixed_quantity are set in the same single auction market ~ only fixed_price will be used");
 			}
-			if(fixed_price != 0.0){
-				single_price = fixed_price;
-				for(unsigned int i = 0; i < offers.getcount(); ++i){
-					if(offers.getbid(i)->price <= fixed_price){
-						single_quantity += offers.getbid(i)->quantity;
-					} else {
-						break;
-					}
-				}
-				if(single_quantity > 0.0){
-					clearing_type = CT_EXACT;
-				} else {
-					clearing_type = CT_NULL;
-				}
-			} else if(fixed_quantity > 0.0){
+			if(fixed_quantity > 0.0){
 				for(unsigned int i = 0; i < offers.getcount() && single_quantity < fixed_quantity; ++i){
 					single_price = offers.getbid(i)->price;
 					single_quantity += offers.getbid(i)->quantity;
@@ -908,7 +894,24 @@ void auction::clear_market(void)
 					single_quantity = 0.0;
 					single_price = offers.getbid(0)->price - bid_offset;
 				}
-			}
+			} else if(fixed_quantity < 0.0){
+				gl_error("fixed_quantity is negative");
+				return TS_INVALID
+			} else {
+				single_price = fixed_price;
+				for(unsigned int i = 0; i < offers.getcount(); ++i){
+					if(offers.getbid(i)->price <= fixed_price){
+						single_quantity += offers.getbid(i)->quantity;
+					} else {
+						break;
+					}
+				}
+				if(single_quantity > 0.0){
+					clearing_type = CT_EXACT;
+				} else {
+					clearing_type = CT_NULL;
+				}
+			} 
 			next.quantity = single_quantity;
 			next.price = single_price;
 			break;
@@ -925,22 +928,7 @@ void auction::clear_market(void)
 			if(fixed_price * fixed_quantity != 0.0){
 				gl_warning("fixed_price and fixed_quantity are set in the same single auction market ~ only fixed_price will be used");
 			}
-			if(fixed_price != 0.0){
-				single_price = fixed_price;
-				for(unsigned int i = 0;  i < asks.getcount(); ++i){
-					if(asks.getbid(i)->price >= fixed_price){
-						single_quantity += asks.getbid(i)->quantity;
-					} else {
-						break;
-					}
-				}
-				if(single_quantity > 0.0){
-					clearing_type = CT_EXACT;
-				} else {
-					clearing_type = CT_NULL;
-				}
-
-			} else if(fixed_quantity > 0.0){
+			if(fixed_quantity > 0.0){
 				for(unsigned int i = 0; i < asks.getcount() && single_quantity < fixed_quantity; ++i){
 					single_price = asks.getbid(i)->price;
 					single_quantity += asks.getbid(i)->quantity;
@@ -954,6 +942,23 @@ void auction::clear_market(void)
 					clearing_type = CT_FAILURE;
 					single_quantity = 0.0;
 					single_price = asks.getbid(0)->price + bid_offset;
+				}
+			} else if(fixed_quantity < 0.0){
+				gl_error("fixed_quantity is negative");
+				return TS_INVALID
+			} else {
+				single_price = fixed_price;
+				for(unsigned int i = 0;  i < asks.getcount(); ++i){
+					if(asks.getbid(i)->price >= fixed_price){
+						single_quantity += asks.getbid(i)->quantity;
+					} else {
+						break;
+					}
+				}
+				if(single_quantity > 0.0){
+					clearing_type = CT_EXACT;
+				} else {
+					clearing_type = CT_NULL;
 				}
 			}
 			next.quantity = single_quantity;
