@@ -895,8 +895,7 @@ void auction::clear_market(void)
 					single_price = offers.getbid(0)->price - bid_offset;
 				}
 			} else if(fixed_quantity < 0.0){
-				gl_error("fixed_quantity is negative");
-				return TS_INVALID
+				GL_THROW("fixed_quantity is negative");
 			} else {
 				single_price = fixed_price;
 				for(unsigned int i = 0; i < offers.getcount(); ++i){
@@ -944,8 +943,7 @@ void auction::clear_market(void)
 					single_price = asks.getbid(0)->price + bid_offset;
 				}
 			} else if(fixed_quantity < 0.0){
-				gl_error("fixed_quantity is negative");
-				return TS_INVALID
+				GL_THROW("fixed_quantity is negative");
 			} else {
 				single_price = fixed_price;
 				for(unsigned int i = 0;  i < asks.getcount(); ++i){
@@ -1525,6 +1523,11 @@ EXPORT int init_auction(OBJECT *obj, OBJECT *parent)
 		char name[64];
 		gl_error("init_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
 	}
+	catch (const char *msg)
+	{
+		char name[64];
+		gl_error("init_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+	}
 	return 1;
 }
 
@@ -1558,6 +1561,11 @@ EXPORT TIMESTAMP sync_auction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			obj->clock = t1;
 	}
 	catch (char *msg)
+	{
+		char name[64];
+		gl_error("sync_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+	}
+	catch (const char *msg)
 	{
 		char name[64];
 		gl_error("sync_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
