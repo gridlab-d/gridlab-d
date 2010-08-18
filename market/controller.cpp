@@ -438,7 +438,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 			heat_min = heating_setpoint0 + heat_range_low * slider_setting_heat;
 			heat_max = heating_setpoint0 + heat_range_high * slider_setting_heat;
 		}
-		if(thermostat_mode != TM_INVALID && thermostat_mode != TM_OFF || t1 >= time_off)
+		if((thermostat_mode != TM_INVALID && thermostat_mode != TM_OFF) || t1 >= time_off)
 			last_mode = thermostat_mode;
 		else 
 			last_mode = TM_OFF;// this initializes last mode to off
@@ -586,26 +586,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		double cool_ramp_low;
 		*/
 
-		// Determine the system_mode the HVAC is in
-		if(resolve_mode == RM_SLIDING){
-			if(*pHeatState == 1 || *pAuxState == 1){
-				thermostat_mode = TM_HEAT;
-				if(last_mode == TM_OFF)
-					time_off = TS_NEVER;
-			} else if(*pCoolState == 1){
-				thermostat_mode = TM_COOL;
-				if(last_mode == TM_OFF)
-					time_off = TS_NEVER;
-			} else if(*pHeatState == 0 && *pAuxState == 0 && *pCoolState == 0){
-				thermostat_mode = TM_OFF;
-				if(previous_mode != TM_OFF)
-					time_off = t1 + dtime_delay;
-			} else {
-				gl_error("The HVAC is in two or more modes at once. This is impossible");
-				if(resolve_mode == RM_SLIDING)
-					return TS_INVALID; // If the HVAC is in two modes at once then the sliding resolve mode will have conflicting state input so stop the simulation.
-			}
-		}
+
 		// find crossover
 		double midpoint = 0.0;
 		if(cool_min - heat_max < *pDeadband){
@@ -736,6 +717,26 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 }
 
 TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	// Determine the system_mode the HVAC is in
+	if(resolve_mode == RM_SLIDING){
+		if(*pHeatState == 1 || *pAuxState == 1){
+			thermostat_mode = TM_HEAT;
+			if(last_mode == TM_OFF)
+				time_off = TS_NEVER;
+		} else if(*pCoolState == 1){
+			thermostat_mode = TM_COOL;
+			if(last_mode == TM_OFF)
+				time_off = TS_NEVER;
+		} else if(*pHeatState == 0 && *pAuxState == 0 && *pCoolState == 0){
+			thermostat_mode = TM_OFF;
+			if(previous_mode != TM_OFF)
+				time_off = t1 + dtime_delay;
+		} else {
+			gl_error("The HVAC is in two or more modes at once. This is impossible");
+			if(resolve_mode == RM_SLIDING)
+				return TS_INVALID; // If the HVAC is in two modes at once then the sliding resolve mode will have conflicting state input so stop the simulation.
+		}
+	}
 
 	if(t0 < next_run){
 		return TS_NEVER;
