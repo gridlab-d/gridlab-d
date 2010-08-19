@@ -440,7 +440,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 		if((thermostat_mode != TM_INVALID && thermostat_mode != TM_OFF) || t1 >= time_off)
 			last_mode = thermostat_mode;
-		else 
+		else if(thermostat_mode == TM_INVALID)
 			last_mode = TM_OFF;// this initializes last mode to off
 
 		if(thermostat_mode != TM_INVALID)

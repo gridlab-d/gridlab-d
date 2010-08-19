@@ -2069,23 +2069,7 @@ void house_e::update_system(double dt)
 			load.current.SetRect(fan_power * fan_current_fraction, fan_power * fan_current_fraction * sqrt( 1 / (fan_power_factor * fan_power_factor) - 1));
 	}
 
-	if ( system_mode == SM_HEAT && (heating_system_type == HT_HEAT_PUMP || heating_system_type == HT_RESISTANCE || heating_system_type == HT_GAS) )
-	{
-		is_AUX_on = is_COOL_on = 0;
-		is_HEAT_on = 1;
-	}
-	else if ( system_mode == SM_COOL && cooling_system_type == CT_ELECTRIC)
-	{
-		is_AUX_on = is_HEAT_on = 0;
-		is_COOL_on = 1;
-	}
-	else if ( system_mode == SM_AUX && auxiliary_system_type == AT_ELECTRIC)
-	{
-		is_COOL_on = is_HEAT_on = 0;
-		is_AUX_on = 1;
-	}
-	else
-		is_COOL_on = is_HEAT_on = is_AUX_on = 0;
+
 
 	// update load
 	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor * (load.impedance_fraction + load.current_fraction * load.voltage_factor));
@@ -2475,6 +2459,24 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 			break;
 		}
 	}
+	
+	if ( system_mode == SM_HEAT && (heating_system_type == HT_HEAT_PUMP || heating_system_type == HT_RESISTANCE || heating_system_type == HT_GAS) )
+	{
+		is_AUX_on = is_COOL_on = 0;
+		is_HEAT_on = 1;
+	}
+	else if ( system_mode == SM_COOL && cooling_system_type == CT_ELECTRIC)
+	{
+		is_AUX_on = is_HEAT_on = 0;
+		is_COOL_on = 1;
+	}
+	else if ( system_mode == SM_AUX && auxiliary_system_type == AT_ELECTRIC)
+	{
+		is_COOL_on = is_HEAT_on = 0;
+		is_AUX_on = 1;
+	}
+	else
+		is_COOL_on = is_HEAT_on = is_AUX_on = 0;
 
 	return TS_NEVER;
 }
