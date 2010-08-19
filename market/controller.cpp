@@ -77,6 +77,25 @@ controller::controller(MODULE *module){
 			// redefinitions
 			PT_char32, "average_target", PADDR(avg_target),
 			PT_char32, "standard_deviation_target", PADDR(std_target),
+#ifdef _DEBUG
+			PT_enumeration, "current_mode", PADDR(thermostat_mode),
+				PT_KEYWORD, "INVALID", TM_INVALID,
+				PT_KEYWORD, "OFF", TM_OFF,
+				PT_KEYWORD, "HEAT", TM_HEAT,
+				PT_KEYWORD, "COOL", TM_COOL,
+			PT_enumeration, "dominant_mode", PADDR(last_mode),
+				PT_KEYWORD, "INVALID", TM_INVALID,
+				PT_KEYWORD, "OFF", TM_OFF,
+				PT_KEYWORD, "HEAT", TM_HEAT,
+				PT_KEYWORD, "COOL", TM_COOL,
+			PT_enumeration, "previous_mode", PADDR(previous_mode),
+				PT_KEYWORD, "INVALID", TM_INVALID,
+				PT_KEYWORD, "OFF", TM_OFF,
+				PT_KEYWORD, "HEAT", TM_HEAT,
+				PT_KEYWORD, "COOL", TM_COOL,
+			PT_double, "heat_max", PADDR(heat_max),
+			PT_double, "cool_min", PADDR(cool_min),
+#endif
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(controller));
 	}
@@ -428,7 +447,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 	if(control_mode == CN_DOUBLE_RAMP && cooling_setpoint0 == -1)
 		cooling_setpoint0 = *pCoolingSetpoint;
 
-	if(t0 == next_run){
+	if(t0 == next_run || t0 == 0){
 		if(control_mode == CN_RAMP){
 			min = setpoint0 + range_low * slider_setting;
 			max = setpoint0 + range_high * slider_setting;
