@@ -85,8 +85,8 @@ def run_tests(argv):
 			os.environ["PATH"]+=os.pathsep+cwd + "\\VS2005\\x64\\Release"
 			os.environ["GLPATH"]=cwd+"\\VS2005\\x64\\Release"
 		elif platform.architecture()[0] == '32bit':
-			os.environ["PATH"]+=os.pathsep+cwd + "\\VS2005\\Win32\\Release"
-			os.environ["GLPATH"]=cwd+"\\VS2005\\Win32\\Release"
+			os.environ["PATH"]="c:\\MinGW\\bin"+os.pathsep+os.environ["PATH"]+os.pathsep+cwd + "\\VS2005\\Win32\\Release"
+			os.environ["GLPATH"]=cwd+"\\VS2005\\Win32\\Release;"+os.pathsep+cwd +"\\core"
 	elif(sys.platform.startswith('linux') or sys.platform.startswith('darwin')):
 		os.environ["PATH"]+= os.pathsep+ installed_dir +"/bin"
 		os.environ["GLPATH"]=installed_dir + "/lib/gridlabd"
