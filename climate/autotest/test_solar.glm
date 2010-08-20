@@ -8,6 +8,7 @@ module tape;
 
 #include "../WA-Yakima.glm"
 #set tmp="../test_solar"
+#setenv GRIDLABD=../../../core;
 
 clock {
 	timezone PST+5PDT;
