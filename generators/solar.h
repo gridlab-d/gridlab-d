@@ -52,7 +52,7 @@ public:
 	//double vTout;
 	double *pRhout;
 	double *pSolar;
-
+	bool *NR_mode;			//Toggle for NR solving cycle.  If not NR, just goes to fals
 
 //	double Rated_kW; //< nominal power in kW
 //	double Rated_pf; //< power factor, P/(P^2+Q^2)^0.5
@@ -118,6 +118,7 @@ public:
 	void derate_panel(double Tamb, double Insol);
 	void calculate_IV(double Tamb, double Insol);
 	int init_climate(void);
+	bool *get_bool(OBJECT *obj, char *name);
 
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);

@@ -177,6 +177,8 @@ int inverter::init(OBJECT *parent)
 		};
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	
+		NR_mode = get_bool(parent,"NR_mode");
+
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 			*(map[i].var) = get_complex(parent,map[i].varname);
 
@@ -204,6 +206,9 @@ int inverter::init(OBJECT *parent)
 			{&pLine12,				"current_12"}, // maps current load 1-2 onto triplex load
 			/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 		};
+
+		NR_mode = get_bool(parent,"NR_mode");
+
 		// attach meter variables to each circuit
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 		{
@@ -244,6 +249,8 @@ int inverter::init(OBJECT *parent)
 		};
 
 		gl_warning("Inverter:%d has no parent meter object defined; using static voltages", obj->id);
+		
+		NR_mode = false;
 
 		// attach meter variables to each circuit in the default_meter
 		*(map[0].var) = &default_line123_voltage[0];
@@ -351,444 +358,465 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	phaseA_V_Out = pCircuit_V[0];	//Syncs the meter parent to the generator.
-	phaseB_V_Out = pCircuit_V[1];
-	phaseC_V_Out = pCircuit_V[2];
-
-	internal_losses = 1 - calculate_loss(Rtotal, Ltotal, Ctotal, DC, AC);
-	//gl_verbose("inverter sync: internal losses are: %f", 1 - internal_losses);
-	frequency_losses = 1 - calculate_frequency_loss(output_frequency, Rtotal,Ltotal, Ctotal);
-	//gl_verbose("inverter sync: frequency losses are: %f", 1 - frequency_losses);
-
-	switch(gen_mode_v)
+	if (*NR_mode == false)
 	{
-		case CONSTANT_PF:
-		{
-			VA_In = V_In * ~ I_In; //DC
+		phaseA_V_Out = pCircuit_V[0];	//Syncs the meter parent to the generator.
+		phaseB_V_Out = pCircuit_V[1];
+		phaseC_V_Out = pCircuit_V[2];
 
-			// need to differentiate between different pulses...
+		internal_losses = 1 - calculate_loss(Rtotal, Ltotal, Ctotal, DC, AC);
+		//gl_verbose("inverter sync: internal losses are: %f", 1 - internal_losses);
+		frequency_losses = 1 - calculate_frequency_loss(output_frequency, Rtotal,Ltotal, Ctotal);
+		//gl_verbose("inverter sync: frequency losses are: %f", 1 - frequency_losses);
+
 		
-			VA_Out = VA_In * efficiency * internal_losses * frequency_losses;
-			//losses = VA_Out * Rtotal / (Rtotal + Rload);
-			//VA_Out = VA_Out * Rload / (Rtotal + Rload);
-
-			if (number_of_phases_out == 4)  //Triplex-line -> Assume it's only across the 240 V for now.
+		switch(gen_mode_v)
+		{
+			case CONSTANT_PF:
 			{
-				power_A = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
-				if (phaseA_V_Out.Mag() != 0.0)
-					phaseA_I_Out = ~(power_A / phaseA_V_Out);
-				else
-					phaseA_I_Out = complex(0.0,0.0);
+				VA_In = V_In * ~ I_In; //DC
 
-				*pLine12 += -phaseA_I_Out;
+				// need to differentiate between different pulses...
+			
+				VA_Out = VA_In * efficiency * internal_losses * frequency_losses;
+				//losses = VA_Out * Rtotal / (Rtotal + Rload);
+				//VA_Out = VA_Out * Rload / (Rtotal + Rload);
 
-				//Update this value for later removal
-				last_current[3] = -phaseA_I_Out;
-				
-				//Get rid of these for now
-				//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
-				//phaseA_I_Out = filter_current_impact_out(phaseA_I_Out, phaseA_V_Internal);
-			}
-			else if (number_of_phases_out == 3)
-			{
-				power_A = power_B = power_C = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/3;
-				if (phaseA_V_Out.Mag() != 0.0)
-					phaseA_I_Out = ~(power_A / phaseA_V_Out); // /sqrt(2.0);
-				else
-					phaseA_I_Out = complex(0.0,0.0);
-				if (phaseB_V_Out.Mag() != 0.0)
-					phaseB_I_Out = ~(power_B / phaseB_V_Out); // /sqrt(2.0);
-				else
-					phaseB_I_Out = complex(0.0,0.0);
-				if (phaseC_V_Out.Mag() != 0.0)
-					phaseC_I_Out = ~(power_C / phaseC_V_Out); // /sqrt(2.0);
-				else
-					phaseC_I_Out = complex(0.0,0.0);
-
-				pLine_I[0] += -phaseA_I_Out;
-				pLine_I[1] += -phaseB_I_Out;
-				pLine_I[2] += -phaseC_I_Out;
-
-				//Update this value for later removal
-				last_current[0] = -phaseA_I_Out;
-				last_current[1] = -phaseB_I_Out;
-				last_current[2] = -phaseC_I_Out;
-
-				//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
-				//complex phaseB_V_Internal = filter_voltage_impact_source(phaseB_I_Out, phaseB_V_Out);
-				//complex phaseC_V_Internal = filter_voltage_impact_source(phaseC_I_Out, phaseC_V_Out);
-
-				//phaseA_I_Out = filter_current_impact_out(phaseA_I_Out, phaseA_V_Internal);
-				//phaseB_I_Out = filter_current_impact_out(phaseB_I_Out, phaseB_V_Internal);
-				//phaseC_I_Out = filter_current_impact_out(phaseC_I_Out, phaseC_V_Internal);
-			}
-			else if(number_of_phases_out == 2)
-			{
-				OBJECT *obj = OBJECTHDR(this);
-				node *par = OBJECTDATA(obj->parent, node);
-
-				if (par->has_phase(PHASE_A) && phaseA_V_Out.Mag() != 0)
-				{
-					power_A = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
-					phaseA_I_Out = ~(power_A / phaseA_V_Out);
-				}
-				else 
-					phaseA_I_Out = complex(0,0);
-
-				if (par->has_phase(PHASE_B) && phaseB_V_Out.Mag() != 0)
-				{
-					power_B = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
-					phaseB_I_Out = ~(power_B / phaseB_V_Out);
-				}
-				else 
-					phaseB_I_Out = complex(0,0);
-
-				if (par->has_phase(PHASE_C) && phaseC_V_Out.Mag() != 0)
-				{
-					power_C = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
-					phaseC_I_Out = ~(power_C / phaseC_V_Out);
-				}
-				else 
-					phaseC_I_Out = complex(0,0);
-
-				pLine_I[0] += -phaseA_I_Out;
-				pLine_I[1] += -phaseB_I_Out;
-				pLine_I[2] += -phaseC_I_Out;
-
-				//Update this value for later removal
-				last_current[0] = -phaseA_I_Out;
-				last_current[1] = -phaseB_I_Out;
-				last_current[2] = -phaseC_I_Out;
-
-			}
-			else if(number_of_phases_out == 1)
-			{
-				if(phaseA_V_Out.Mag() != 0)
+				if (number_of_phases_out == 4)  //Triplex-line -> Assume it's only across the 240 V for now.
 				{
 					power_A = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
-					phaseA_I_Out = ~(power_A / phaseA_V_Out); 
+					if (phaseA_V_Out.Mag() != 0.0)
+						phaseA_I_Out = ~(power_A / phaseA_V_Out);
+					else
+						phaseA_I_Out = complex(0.0,0.0);
+
+					*pLine12 += -phaseA_I_Out;
+
+					//Update this value for later removal
+					last_current[3] = -phaseA_I_Out;
+					
+					//Get rid of these for now
 					//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
 					//phaseA_I_Out = filter_current_impact_out(phaseA_I_Out, phaseA_V_Internal);
 				}
-				else if(phaseB_V_Out.Mag() != 0)
+				else if (number_of_phases_out == 3)
 				{
-					power_B = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
-					phaseB_I_Out = ~(power_B / phaseB_V_Out); 
+					power_A = power_B = power_C = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/3;
+					if (phaseA_V_Out.Mag() != 0.0)
+						phaseA_I_Out = ~(power_A / phaseA_V_Out); // /sqrt(2.0);
+					else
+						phaseA_I_Out = complex(0.0,0.0);
+					if (phaseB_V_Out.Mag() != 0.0)
+						phaseB_I_Out = ~(power_B / phaseB_V_Out); // /sqrt(2.0);
+					else
+						phaseB_I_Out = complex(0.0,0.0);
+					if (phaseC_V_Out.Mag() != 0.0)
+						phaseC_I_Out = ~(power_C / phaseC_V_Out); // /sqrt(2.0);
+					else
+						phaseC_I_Out = complex(0.0,0.0);
+
+					pLine_I[0] += -phaseA_I_Out;
+					pLine_I[1] += -phaseB_I_Out;
+					pLine_I[2] += -phaseC_I_Out;
+
+					//Update this value for later removal
+					last_current[0] = -phaseA_I_Out;
+					last_current[1] = -phaseB_I_Out;
+					last_current[2] = -phaseC_I_Out;
+
+					//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
 					//complex phaseB_V_Internal = filter_voltage_impact_source(phaseB_I_Out, phaseB_V_Out);
-					//phaseB_I_Out = filter_current_impact_out(phaseB_I_Out, phaseB_V_Internal);
-				}
-				else if(phaseC_V_Out.Mag() != 0)
-				{
-					power_C = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
-					phaseC_I_Out = ~(power_C / phaseC_V_Out); 
 					//complex phaseC_V_Internal = filter_voltage_impact_source(phaseC_I_Out, phaseC_V_Out);
+
+					//phaseA_I_Out = filter_current_impact_out(phaseA_I_Out, phaseA_V_Internal);
+					//phaseB_I_Out = filter_current_impact_out(phaseB_I_Out, phaseB_V_Internal);
 					//phaseC_I_Out = filter_current_impact_out(phaseC_I_Out, phaseC_V_Internal);
 				}
+				else if(number_of_phases_out == 2)
+				{
+					OBJECT *obj = OBJECTHDR(this);
+					node *par = OBJECTDATA(obj->parent, node);
+
+					if (par->has_phase(PHASE_A) && phaseA_V_Out.Mag() != 0)
+					{
+						power_A = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+						phaseA_I_Out = ~(power_A / phaseA_V_Out);
+					}
+					else 
+						phaseA_I_Out = complex(0,0);
+
+					if (par->has_phase(PHASE_B) && phaseB_V_Out.Mag() != 0)
+					{
+						power_B = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+						phaseB_I_Out = ~(power_B / phaseB_V_Out);
+					}
+					else 
+						phaseB_I_Out = complex(0,0);
+
+					if (par->has_phase(PHASE_C) && phaseC_V_Out.Mag() != 0)
+					{
+						power_C = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+						phaseC_I_Out = ~(power_C / phaseC_V_Out);
+					}
+					else 
+						phaseC_I_Out = complex(0,0);
+
+					pLine_I[0] += -phaseA_I_Out;
+					pLine_I[1] += -phaseB_I_Out;
+					pLine_I[2] += -phaseC_I_Out;
+
+					//Update this value for later removal
+					last_current[0] = -phaseA_I_Out;
+					last_current[1] = -phaseB_I_Out;
+					last_current[2] = -phaseC_I_Out;
+
+				}
+				else if(number_of_phases_out == 1)
+				{
+					if(phaseA_V_Out.Mag() != 0)
+					{
+						power_A = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+						phaseA_I_Out = ~(power_A / phaseA_V_Out); 
+						//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
+						//phaseA_I_Out = filter_current_impact_out(phaseA_I_Out, phaseA_V_Internal);
+					}
+					else if(phaseB_V_Out.Mag() != 0)
+					{
+						power_B = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+						phaseB_I_Out = ~(power_B / phaseB_V_Out); 
+						//complex phaseB_V_Internal = filter_voltage_impact_source(phaseB_I_Out, phaseB_V_Out);
+						//phaseB_I_Out = filter_current_impact_out(phaseB_I_Out, phaseB_V_Internal);
+					}
+					else if(phaseC_V_Out.Mag() != 0)
+					{
+						power_C = complex(VA_Out.Mag()*abs(power_factor),power_factor/abs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+						phaseC_I_Out = ~(power_C / phaseC_V_Out); 
+						//complex phaseC_V_Internal = filter_voltage_impact_source(phaseC_I_Out, phaseC_V_Out);
+						//phaseC_I_Out = filter_current_impact_out(phaseC_I_Out, phaseC_V_Internal);
+					}
+					else
+					{
+						gl_warning("None of the phases specified have voltages!");
+						phaseA_I_Out = phaseB_I_Out = phaseC_I_Out = complex(0.0,0.0);
+					}
+					pLine_I[0] += -phaseA_I_Out;
+					pLine_I[1] += -phaseB_I_Out;
+					pLine_I[2] += -phaseC_I_Out;
+
+					//Update this value for later removal
+					last_current[0] = -phaseA_I_Out;
+					last_current[1] = -phaseB_I_Out;
+					last_current[2] = -phaseC_I_Out;
+
+				}
 				else
 				{
-					gl_warning("None of the phases specified have voltages!");
-					phaseA_I_Out = phaseB_I_Out = phaseC_I_Out = complex(0.0,0.0);
+					throw ("The number of phases given is unsupported.");
 				}
-				pLine_I[0] += -phaseA_I_Out;
-				pLine_I[1] += -phaseB_I_Out;
-				pLine_I[2] += -phaseC_I_Out;
-
-				//Update this value for later removal
-				last_current[0] = -phaseA_I_Out;
-				last_current[1] = -phaseB_I_Out;
-				last_current[2] = -phaseC_I_Out;
-
+				return TS_NEVER;
 			}
-			else
+				break;
+			case CONSTANT_PQ:
 			{
-				throw ("The number of phases given is unsupported.");
-			}
-			return TS_NEVER;
-		}
-			break;
-		case CONSTANT_PQ:
-		{
-			GL_THROW("Constant PQ mode not supported at this time");
-			/* TROUBLESHOOT
-			This will be worked on at a later date and is not yet correctly implemented.
-			*/
-			gl_verbose("inverter sync: constant pq");
-			//TODO
-			//gather V_Out for each phase
-			//gather V_In (DC) from line -- can not gather V_In, for now set equal to V_Out
-			//P_Out is either set or input from elsewhere
-			//Q_Out is either set or input from elsewhere
-			//Gather Rload
+				GL_THROW("Constant PQ mode not supported at this time");
+				/* TROUBLESHOOT
+				This will be worked on at a later date and is not yet correctly implemented.
+				*/
+				gl_verbose("inverter sync: constant pq");
+				//TODO
+				//gather V_Out for each phase
+				//gather V_In (DC) from line -- can not gather V_In, for now set equal to V_Out
+				//P_Out is either set or input from elsewhere
+				//Q_Out is either set or input from elsewhere
+				//Gather Rload
 
-			if(parent_string = "meter")
-			{
-				VA_Out = complex(P_Out,Q_Out);
-			}
-			else if (parent_string = "triplex_meter")
-			{
-				VA_Out = complex(P_Out,Q_Out);
-			}
-			else
-			{
-				phaseA_I_Out = pLine_I[0];
-				phaseB_I_Out = pLine_I[1];
-				phaseC_I_Out = pLine_I[2];
-
-				//Erm, there's no good way to handle this from a "multiply attached" point of view.
-				//TODO: Think about how to do this if the need arrises
-
-				VA_Out = phaseA_V_Out * (~ phaseA_I_Out) + phaseB_V_Out * (~ phaseB_I_Out) + phaseC_V_Out * (~ phaseC_I_Out);
-			}
-
-			pf_out = P_Out/VA_Out.Mag();
-			
-			//VA_Out = VA_In * efficiency * internal_losses;
-
-			if (number_of_phases_out == 3)
-			{
-				power_A = power_B = power_C = VA_Out /3;
-				phaseA_I_Out = (power_A / phaseA_V_Out); // /sqrt(2.0);
-				phaseB_I_Out = (power_B / phaseB_V_Out); // /sqrt(2.0);
-				phaseC_I_Out = (power_C / phaseC_V_Out); // /sqrt(2.0);
-
-				phaseA_I_Out = ~ phaseA_I_Out;
-				phaseB_I_Out = ~ phaseB_I_Out;
-				phaseC_I_Out = ~ phaseC_I_Out;
-
-			}
-			else if(number_of_phases_out == 1)
-			{
-				if(phaseAOut)
+				if(parent_string = "meter")
 				{
-					power_A = VA_Out;
-					phaseA_I_Out = (power_A / phaseA_V_Out); // /sqrt(2);
+					VA_Out = complex(P_Out,Q_Out);
+				}
+				else if (parent_string = "triplex_meter")
+				{
+					VA_Out = complex(P_Out,Q_Out);
+				}
+				else
+				{
+					phaseA_I_Out = pLine_I[0];
+					phaseB_I_Out = pLine_I[1];
+					phaseC_I_Out = pLine_I[2];
+
+					//Erm, there's no good way to handle this from a "multiply attached" point of view.
+					//TODO: Think about how to do this if the need arrises
+
+					VA_Out = phaseA_V_Out * (~ phaseA_I_Out) + phaseB_V_Out * (~ phaseB_I_Out) + phaseC_V_Out * (~ phaseC_I_Out);
+				}
+
+				pf_out = P_Out/VA_Out.Mag();
+				
+				//VA_Out = VA_In * efficiency * internal_losses;
+
+				if (number_of_phases_out == 3)
+				{
+					power_A = power_B = power_C = VA_Out /3;
+					phaseA_I_Out = (power_A / phaseA_V_Out); // /sqrt(2.0);
+					phaseB_I_Out = (power_B / phaseB_V_Out); // /sqrt(2.0);
+					phaseC_I_Out = (power_C / phaseC_V_Out); // /sqrt(2.0);
+
 					phaseA_I_Out = ~ phaseA_I_Out;
-				}
-				else if(phaseBOut)
-				{
-					power_B = VA_Out;
-					phaseB_I_Out = (power_B / phaseB_V_Out);  // /sqrt(2);
 					phaseB_I_Out = ~ phaseB_I_Out;
-				}
-				else if(phaseCOut)
-				{
-					power_C = VA_Out;
-					phaseC_I_Out = (power_C / phaseC_V_Out); // /sqrt(2);
 					phaseC_I_Out = ~ phaseC_I_Out;
+
+				}
+				else if(number_of_phases_out == 1)
+				{
+					if(phaseAOut)
+					{
+						power_A = VA_Out;
+						phaseA_I_Out = (power_A / phaseA_V_Out); // /sqrt(2);
+						phaseA_I_Out = ~ phaseA_I_Out;
+					}
+					else if(phaseBOut)
+					{
+						power_B = VA_Out;
+						phaseB_I_Out = (power_B / phaseB_V_Out);  // /sqrt(2);
+						phaseB_I_Out = ~ phaseB_I_Out;
+					}
+					else if(phaseCOut)
+					{
+						power_C = VA_Out;
+						phaseC_I_Out = (power_C / phaseC_V_Out); // /sqrt(2);
+						phaseC_I_Out = ~ phaseC_I_Out;
+					}
+					else
+					{
+						throw ("none of the phases have voltages!");
+					}
 				}
 				else
 				{
-					throw ("none of the phases have voltages!");
+					throw ("unsupported number of phases");
 				}
-			}
-			else
-			{
-				throw ("unsupported number of phases");
-			}
 
-			VA_In = VA_Out / (efficiency * internal_losses * frequency_losses);
-			losses = VA_Out * (1 - (efficiency * internal_losses * frequency_losses));
+				VA_In = VA_Out / (efficiency * internal_losses * frequency_losses);
+				losses = VA_Out * (1 - (efficiency * internal_losses * frequency_losses));
 
-			//V_In = complex(0,0);
-			//
-			////is there a better way to do this?
-			//if(phaseAOut){
-			//	V_In += abs(phaseA_V_Out.Re());
-			//}
-			//if(phaseBOut){
-			//	V_In += abs(phaseB_V_Out.Re());
-			//}
-			//if(phaseCOut){
-			//	V_In += abs(phaseC_V_Out.Re());
-			//}else{
-			//	throw ("none of the phases have voltages!");
-			//}
+				//V_In = complex(0,0);
+				//
+				////is there a better way to do this?
+				//if(phaseAOut){
+				//	V_In += abs(phaseA_V_Out.Re());
+				//}
+				//if(phaseBOut){
+				//	V_In += abs(phaseB_V_Out.Re());
+				//}
+				//if(phaseCOut){
+				//	V_In += abs(phaseC_V_Out.Re());
+				//}else{
+				//	throw ("none of the phases have voltages!");
+				//}
 
-			V_In = Vdc;
+				V_In = Vdc;
 
 
 
-			I_In = VA_In / V_In;
-			I_In = ~I_In;
+				I_In = VA_In / V_In;
+				I_In = ~I_In;
 
-			V_In = filter_voltage_impact_source(I_In, V_In);
-			I_In = filter_current_impact_source(I_In, V_In);
+				V_In = filter_voltage_impact_source(I_In, V_In);
+				I_In = filter_current_impact_source(I_In, V_In);
 
-			gl_verbose("Inverter sync: V_In asked for by inverter is: (%f , %f)", V_In.Re(), V_In.Im());
-			gl_verbose("Inverter sync: I_In asked for by inverter is: (%f , %f)", I_In.Re(), I_In.Im());
+				gl_verbose("Inverter sync: V_In asked for by inverter is: (%f , %f)", V_In.Re(), V_In.Im());
+				gl_verbose("Inverter sync: I_In asked for by inverter is: (%f , %f)", I_In.Re(), I_In.Im());
 
 
-			pLine_I[0] += phaseA_I_Out;
-			pLine_I[1] += phaseB_I_Out;
-			pLine_I[2] += phaseC_I_Out;
-
-			//Update this value for later removal
-			last_current[0] = phaseA_I_Out;
-			last_current[1] = phaseB_I_Out;
-			last_current[2] = phaseC_I_Out;
-
-			return TS_NEVER;
-		}
-			break;
-		case CONSTANT_V:
-		{
-			GL_THROW("Constant V mode not supported at this time");
-			/* TROUBLESHOOT
-			This will be worked on at a later date and is not yet correctly implemented.
-			*/
-			gl_verbose("inverter sync: constant v");
-			bool changed = false;
-			
-			//TODO
-			//Gather V_Out
-			//Gather VA_Out
-			//Gather Rload
-			if(phaseAOut)
-			{
-				if (phaseA_V_Out.Re() < (V_Set_A - margin))
-				{
-					phaseA_I_Out = phaseA_I_Out_prev + I_step_max/2;
-					changed = true;
-				}
-				else if (phaseA_V_Out.Re() > (V_Set_A + margin))
-				{
-					phaseA_I_Out = phaseA_I_Out_prev - I_step_max/2;
-					changed = true;
-				}
-				else
-				{
-					changed = false;
-				}
-			}
-			if (phaseBOut)
-			{
-				if (phaseB_V_Out.Re() < (V_Set_B - margin))
-				{
-					phaseB_I_Out = phaseB_I_Out_prev + I_step_max/2;
-					changed = true;
-				}
-				else if (phaseB_V_Out.Re() > (V_Set_B + margin))
-				{
-					phaseB_I_Out = phaseB_I_Out_prev - I_step_max/2;
-					changed = true;
-				}
-				else
-				{
-					changed = false;
-				}
-			}
-			if (phaseCOut)
-			{
-				if (phaseC_V_Out.Re() < (V_Set_C - margin))
-				{
-					phaseC_I_Out = phaseC_I_Out_prev + I_step_max/2;
-					changed = true;
-				}
-				else if (phaseC_V_Out.Re() > (V_Set_C + margin))
-				{
-					phaseC_I_Out = phaseC_I_Out_prev - I_step_max/2;
-					changed = true;
-				}
-				else
-				{
-					changed = false;
-				}
-			}
-			
-			power_A = (~phaseA_I_Out) * phaseA_V_Out;
-			power_B = (~phaseB_I_Out) * phaseB_V_Out;
-			power_C = (~phaseC_I_Out) * phaseC_V_Out;
-
-			//check if inverter is overloaded -- if so, cap at max power
-			if (((power_A + power_B + power_C) > Rated_kVA) ||
-				((power_A.Re() + power_B.Re() + power_C.Re()) > Max_P) ||
-				((power_A.Im() + power_B.Im() + power_C.Im()) > Max_Q))
-			{
-				VA_Out = Rated_kVA / number_of_phases_out;
-				//if it's maxed out, don't ask for the simulator to re-call
-				changed = false;
-				if(phaseAOut)
-				{
-					phaseA_I_Out = VA_Out / phaseA_V_Out;
-					phaseA_I_Out = (~phaseA_I_Out);
-				}
-				if(phaseBOut)
-				{
-					phaseB_I_Out = VA_Out / phaseB_V_Out;
-					phaseB_I_Out = (~phaseB_I_Out);
-				}
-				if(phaseCOut)
-				{
-					phaseC_I_Out = VA_Out / phaseC_V_Out;
-					phaseC_I_Out = (~phaseC_I_Out);
-				}
-			}
-			
-			//check if power is negative for some reason, should never be
-			if(power_A < 0)
-			{
-				power_A = 0;
-				phaseA_I_Out = 0;
-				throw("phaseA power is negative!");
-			}
-			if(power_B < 0)
-			{
-				power_B = 0;
-				phaseB_I_Out = 0;
-				throw("phaseB power is negative!");
-			}
-			if(power_C < 0)
-			{
-				power_C = 0;
-				phaseC_I_Out = 0;
-				throw("phaseC power is negative!");
-			}
-
-			VA_In = VA_Out / (efficiency * internal_losses * frequency_losses);
-			losses = VA_Out * (1 - (efficiency * internal_losses * frequency_losses));
-
-			//V_In = complex(0,0);
-			//
-			////is there a better way to do this?
-			//if(phaseAOut){
-			//	V_In += abs(phaseA_V_Out.Re());
-			//}
-			//if(phaseBOut){
-			//	V_In += abs(phaseB_V_Out.Re());
-			//}
-			//if(phaseCOut){
-			//	V_In += abs(phaseC_V_Out.Re());
-			//}else{
-			//	throw ("none of the phases have voltages!");
-			//}
-
-			V_In = Vdc;
-
-			I_In = VA_In / V_In;
-			I_In  = ~I_In;
-			
-			gl_verbose("Inverter sync: I_In asked for by inverter is: (%f , %f)", I_In.Re(), I_In.Im());
-
-			V_In = filter_voltage_impact_source(I_In, V_In);
-			I_In = filter_current_impact_source(I_In, V_In);
-
-			//TODO: check P and Q components to see if within bounds
-
-			if(changed)
-			{
 				pLine_I[0] += phaseA_I_Out;
 				pLine_I[1] += phaseB_I_Out;
 				pLine_I[2] += phaseC_I_Out;
-				
+
 				//Update this value for later removal
 				last_current[0] = phaseA_I_Out;
 				last_current[1] = phaseB_I_Out;
 				last_current[2] = phaseC_I_Out;
 
-				TIMESTAMP t2 = t1 + 10 * 60 * TS_SECOND;
-				return t2;
+				return TS_NEVER;
 			}
-			else
+				break;
+			case CONSTANT_V:
+			{
+				GL_THROW("Constant V mode not supported at this time");
+				/* TROUBLESHOOT
+				This will be worked on at a later date and is not yet correctly implemented.
+				*/
+				gl_verbose("inverter sync: constant v");
+				bool changed = false;
+				
+				//TODO
+				//Gather V_Out
+				//Gather VA_Out
+				//Gather Rload
+				if(phaseAOut)
+				{
+					if (phaseA_V_Out.Re() < (V_Set_A - margin))
+					{
+						phaseA_I_Out = phaseA_I_Out_prev + I_step_max/2;
+						changed = true;
+					}
+					else if (phaseA_V_Out.Re() > (V_Set_A + margin))
+					{
+						phaseA_I_Out = phaseA_I_Out_prev - I_step_max/2;
+						changed = true;
+					}
+					else
+					{
+						changed = false;
+					}
+				}
+				if (phaseBOut)
+				{
+					if (phaseB_V_Out.Re() < (V_Set_B - margin))
+					{
+						phaseB_I_Out = phaseB_I_Out_prev + I_step_max/2;
+						changed = true;
+					}
+					else if (phaseB_V_Out.Re() > (V_Set_B + margin))
+					{
+						phaseB_I_Out = phaseB_I_Out_prev - I_step_max/2;
+						changed = true;
+					}
+					else
+					{
+						changed = false;
+					}
+				}
+				if (phaseCOut)
+				{
+					if (phaseC_V_Out.Re() < (V_Set_C - margin))
+					{
+						phaseC_I_Out = phaseC_I_Out_prev + I_step_max/2;
+						changed = true;
+					}
+					else if (phaseC_V_Out.Re() > (V_Set_C + margin))
+					{
+						phaseC_I_Out = phaseC_I_Out_prev - I_step_max/2;
+						changed = true;
+					}
+					else
+					{
+						changed = false;
+					}
+				}
+				
+				power_A = (~phaseA_I_Out) * phaseA_V_Out;
+				power_B = (~phaseB_I_Out) * phaseB_V_Out;
+				power_C = (~phaseC_I_Out) * phaseC_V_Out;
+
+				//check if inverter is overloaded -- if so, cap at max power
+				if (((power_A + power_B + power_C) > Rated_kVA) ||
+					((power_A.Re() + power_B.Re() + power_C.Re()) > Max_P) ||
+					((power_A.Im() + power_B.Im() + power_C.Im()) > Max_Q))
+				{
+					VA_Out = Rated_kVA / number_of_phases_out;
+					//if it's maxed out, don't ask for the simulator to re-call
+					changed = false;
+					if(phaseAOut)
+					{
+						phaseA_I_Out = VA_Out / phaseA_V_Out;
+						phaseA_I_Out = (~phaseA_I_Out);
+					}
+					if(phaseBOut)
+					{
+						phaseB_I_Out = VA_Out / phaseB_V_Out;
+						phaseB_I_Out = (~phaseB_I_Out);
+					}
+					if(phaseCOut)
+					{
+						phaseC_I_Out = VA_Out / phaseC_V_Out;
+						phaseC_I_Out = (~phaseC_I_Out);
+					}
+				}
+				
+				//check if power is negative for some reason, should never be
+				if(power_A < 0)
+				{
+					power_A = 0;
+					phaseA_I_Out = 0;
+					throw("phaseA power is negative!");
+				}
+				if(power_B < 0)
+				{
+					power_B = 0;
+					phaseB_I_Out = 0;
+					throw("phaseB power is negative!");
+				}
+				if(power_C < 0)
+				{
+					power_C = 0;
+					phaseC_I_Out = 0;
+					throw("phaseC power is negative!");
+				}
+
+				VA_In = VA_Out / (efficiency * internal_losses * frequency_losses);
+				losses = VA_Out * (1 - (efficiency * internal_losses * frequency_losses));
+
+				//V_In = complex(0,0);
+				//
+				////is there a better way to do this?
+				//if(phaseAOut){
+				//	V_In += abs(phaseA_V_Out.Re());
+				//}
+				//if(phaseBOut){
+				//	V_In += abs(phaseB_V_Out.Re());
+				//}
+				//if(phaseCOut){
+				//	V_In += abs(phaseC_V_Out.Re());
+				//}else{
+				//	throw ("none of the phases have voltages!");
+				//}
+
+				V_In = Vdc;
+
+				I_In = VA_In / V_In;
+				I_In  = ~I_In;
+				
+				gl_verbose("Inverter sync: I_In asked for by inverter is: (%f , %f)", I_In.Re(), I_In.Im());
+
+				V_In = filter_voltage_impact_source(I_In, V_In);
+				I_In = filter_current_impact_source(I_In, V_In);
+
+				//TODO: check P and Q components to see if within bounds
+
+				if(changed)
+				{
+					pLine_I[0] += phaseA_I_Out;
+					pLine_I[1] += phaseB_I_Out;
+					pLine_I[2] += phaseC_I_Out;
+					
+					//Update this value for later removal
+					last_current[0] = phaseA_I_Out;
+					last_current[1] = phaseB_I_Out;
+					last_current[2] = phaseC_I_Out;
+
+					TIMESTAMP t2 = t1 + 10 * 60 * TS_SECOND;
+					return t2;
+				}
+				else
+				{
+					pLine_I[0] += phaseA_I_Out;
+					pLine_I[1] += phaseB_I_Out;
+					pLine_I[2] += phaseC_I_Out;
+
+					//Update this value for later removal
+					last_current[0] = phaseA_I_Out;
+					last_current[1] = phaseB_I_Out;
+					last_current[2] = phaseC_I_Out;
+
+					return TS_NEVER;
+				}
+			}
+				break;
+			case SUPPLY_DRIVEN: {
+				GL_THROW("SUPPLY_DRIVEN mode for inverters not supported at this time");
+			}
+			default:
 			{
 				pLine_I[0] += phaseA_I_Out;
 				pLine_I[1] += phaseB_I_Out;
@@ -801,12 +829,16 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				return TS_NEVER;
 			}
+				break;
 		}
-			break;
-		case SUPPLY_DRIVEN: {
-			GL_THROW("SUPPLY_DRIVEN mode for inverters not supported at this time");
+		if (number_of_phases_out == 4)
+		{
+			*pLine12 += phaseA_I_Out;
+
+			//Update this value for later removal
+			last_current[3] = phaseA_I_Out;
 		}
-		default:
+		else
 		{
 			pLine_I[0] += phaseA_I_Out;
 			pLine_I[1] += phaseB_I_Out;
@@ -817,31 +849,12 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			last_current[1] = phaseB_I_Out;
 			last_current[2] = phaseC_I_Out;
 
-			return TS_NEVER;
 		}
-			break;
-	}
-	if (number_of_phases_out == 4)
-	{
-		*pLine12 += phaseA_I_Out;
 
-		//Update this value for later removal
-		last_current[3] = phaseA_I_Out;
+		return TS_NEVER;
 	}
 	else
-	{
-		pLine_I[0] += phaseA_I_Out;
-		pLine_I[1] += phaseB_I_Out;
-		pLine_I[2] += phaseC_I_Out;
-
-		//Update this value for later removal
-		last_current[0] = phaseA_I_Out;
-		last_current[1] = phaseB_I_Out;
-		last_current[2] = phaseC_I_Out;
-
-	}
-
-	return TS_NEVER;
+		return TS_NEVER;
 }
 
 //	complex PA,QA,PB,QB,PC,QC;
@@ -874,17 +887,27 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2 = TS_NEVER;
+	if (*NR_mode == false)
+	{
+		//Remove our parent contributions (so XMLs look proper)
+		pLine_I[0] -= last_current[0];
+		pLine_I[1] -= last_current[1];
+		pLine_I[2] -= last_current[2];
 
-	//Remove our parent contributions (so XMLs look proper)
-	pLine_I[0] -= last_current[0];
-	pLine_I[1] -= last_current[1];
-	pLine_I[2] -= last_current[2];
-
-	if (number_of_phases_out == 4)	//Triplex connection
-		*pLine12 -= last_current[3];
+		if (number_of_phases_out == 4)	//Triplex connection
+			*pLine12 -= last_current[3];
+	}
 
 	///* TODO: implement post-topdown behavior */
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+}
+
+bool *inverter::get_bool(OBJECT *obj, char *name)
+{
+	PROPERTY *p = gl_get_property(obj,name);
+	if (p==NULL || p->ptype!=PT_bool)
+		return NULL;
+	return (bool*)GETADDR(obj,p);
 }
 
 //////////////////////////////////////////////////////////////////////////

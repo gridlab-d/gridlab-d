@@ -71,10 +71,12 @@ public:
 	complex last_current[4];	//Previously applied power output (used to remove from parent so XML files look proper)
 	//complex power_A_sch; // scheduled power
 	//complex power_B_sch;
-	//complex power_C_sch;    
+	//complex power_C_sch;  
+	bool *NR_mode;			//Toggle for NR solving cycle.  If not NR, just goes to fals
 
 public:
 	/* required implementations */
+	bool *get_bool(OBJECT *obj, char *name);
 	inverter(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);

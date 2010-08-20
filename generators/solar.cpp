@@ -54,12 +54,12 @@ solar::solar(MODULE *module)
 				PT_KEYWORD,"AC",AC,
 				PT_KEYWORD,"DC",DC,
 
-			PT_double, "noct", PADDR(NOCT),
-			PT_double, "Tcell", PADDR(Tcell),
-			PT_double, "Tambient", PADDR(Tambient),
-			PT_double, "Insolation", PADDR(Insolation),
-			PT_double, "Rinternal", PADDR(Rinternal),
-			PT_double, "Rated_Insolation", PADDR(Rated_Insolation),
+			PT_double, "noct[degC]", PADDR(NOCT),
+			PT_double, "Tcell[degC]", PADDR(Tcell),
+			PT_double, "Tambient[degC]", PADDR(Tambient),
+			PT_double, "Insolation[W/m^2]", PADDR(Insolation),
+			PT_double, "Rinternal[Ohm]", PADDR(Rinternal),
+			PT_double, "Rated_Insolation[W/m^2]", PADDR(Rated_Insolation),
 			PT_double, "V_Max[V]", PADDR(V_Max), 
 			PT_complex, "Voc_Max[V]", PADDR(Voc_Max),
 			PT_complex, "Voc[V]", PADDR(Voc),
@@ -253,6 +253,8 @@ int solar::init(OBJECT *parent)
 		{
 			*(map[i].var) = get_complex(parent,map[i].varname);
 		}
+
+		NR_mode = get_bool(parent,"NR_mode");
 	}
 	else if	(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0)
 	{
@@ -270,6 +272,8 @@ int solar::init(OBJECT *parent)
 
 		// provide initial values for voltages
 		default_line_voltage[0] = complex(V_Max.Re()/sqrt(3.0),0);
+
+		NR_mode = false;
 	}
 		
 	switch(panel_type_v)
@@ -317,22 +321,24 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//gl_verbose("solar sync: started");
 
 	//V_Out = pCircuit_V[0];	//Syncs the meter parent to the generator.
-	
-	Insolation = pSolar[0];	
-
-	if(0 == gl_convert("W/sf","W/m^2", &Insolation))
+	if (*NR_mode == false)
 	{
-		gl_error("climate::init unable to gl_convert() 'W/sf' to 'W/m^2'!");
-		return 0;
+		Insolation = pSolar[0];	
+
+		if(0 == gl_convert("W/sf","W/m^2", &Insolation))
+		{
+			gl_error("climate::init unable to gl_convert() 'W/sf' to 'W/m^2'!");
+			return 0;
+		}
+		
+		Tambient = *pTout;
+		calculate_IV(Tambient, Insolation);
+		pLine_I[0] = I_Out;
+		pCircuit_V[0] = V_Out;
+		//gl_verbose("solar sync: sent I to the meter: (%f , %f)", I_Out.Re(), I_Out.Im());
+		//gl_verbose("solar sync: sent V to the meter: (%f , %f)", V_Out.Re(), V_Out.Im());
+		//gl_verbose("solar sync: sent the current to meter");
 	}
-	
-	Tambient = *pTout;
-	calculate_IV(Tambient, Insolation);
-	pLine_I[0] = I_Out;
-	pCircuit_V[0] = V_Out;
-	//gl_verbose("solar sync: sent I to the meter: (%f , %f)", I_Out.Re(), I_Out.Im());
-	//gl_verbose("solar sync: sent V to the meter: (%f , %f)", V_Out.Re(), V_Out.Im());
-	//gl_verbose("solar sync: sent the current to meter");
 
 	TIMESTAMP t2 = TS_NEVER;
 
@@ -393,6 +399,13 @@ complex *solar::get_complex(OBJECT *obj, char *name)
 	return (complex*)GETADDR(obj,p);
 }
 
+bool *solar::get_bool(OBJECT *obj, char *name)
+{
+	PROPERTY *p = gl_get_property(obj,name);
+	if (p==NULL || p->ptype!=PT_bool)
+		return NULL;
+	return (bool*)GETADDR(obj,p);
+}
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
