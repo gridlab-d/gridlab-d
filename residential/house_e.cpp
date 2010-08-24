@@ -725,6 +725,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "hvac_power_factor[unit]", PADDR(hvac_power_factor), PT_DESCRIPTION,"power factor of hvac",
 			
 			PT_double,"hvac_load",PADDR(hvac_load),PT_DESCRIPTION,"heating/cooling system load",
+			PT_complex,"hvac_power",PADDR(hvac_power),PT_DESCRIPTION,"describes hvac load complex power consumption",
 			PT_double,"total_load",PADDR(total_load),
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
 			PT_double,"design_internal_gain_density[W/sf]",PADDR(design_internal_gain_density),PT_DESCRIPTION,"average density of heat generating devices in the house",
@@ -2069,10 +2070,9 @@ void house_e::update_system(double dt)
 			load.current.SetRect(fan_power * fan_current_fraction, fan_power * fan_current_fraction * sqrt( 1 / (fan_power_factor * fan_power_factor) - 1));
 	}
 
-
-
 	// update load
 	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor * (load.impedance_fraction + load.current_fraction * load.voltage_factor));
+	hvac_power = load.power + load.admittance + load.current;
 }
 
 /**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time

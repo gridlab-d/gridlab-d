@@ -155,6 +155,7 @@ public:
 	// current hvac properties
 	double system_rated_power;		///< rated power of the system
 	double system_rated_capacity;	///< rated capacity of the system
+	complex hvac_power;				///< actual power draw of the hvac system (includes fan and motor where applicable)
 
 	/* inherited res_enduse::load is hvac system load */
 	double hvac_load;
