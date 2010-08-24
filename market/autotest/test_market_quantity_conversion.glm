@@ -1,5 +1,8 @@
 //test_market_quantity_conversion.glm tests to make sure bid quantity units are properly converted in controller
 
+#set tmp=../test_market_quantity_conversion.glm
+#setenv GRIDLABD=../../../core
+
 clock {
 	timezone PST+8PDT;
 	starttime '2001-01-01 00:00:00';

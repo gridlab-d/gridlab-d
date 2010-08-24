@@ -2,9 +2,7 @@
 // d3y334
 
 #set tmp=../test_core_runtime_class
-#setenv GLPATH=../../../core;../../../core/etc
 #setenv GRIDLABD=../../../core
-#set include=../../../core
 
 module market;
 module tape;

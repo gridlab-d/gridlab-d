@@ -1,9 +1,8 @@
 // Exercise 4.4.1
 
 #set tmp=../test_market_exercise_4_4_1
-#setenv GLPATH=../../../core;../../../core/etc
 #setenv GRIDLABD=../../../core
-#set include=../../../core
+
 
 module tape;
 module market;

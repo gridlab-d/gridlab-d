@@ -1,5 +1,8 @@
 // test_market_controller_incompatible_units_exc.glm tests to see if there is a catch for incompatible units between the controller and the auction
 
+#set tmp=../test_unitless_bid_quantity_err
+#setenv GRIDLABD=../../../core
+
 module market;
 module residential {
 	implicit_enduses NONE;

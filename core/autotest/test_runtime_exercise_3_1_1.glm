@@ -1,7 +1,5 @@
 #set tmp=../test_runtime_exercise_3_1_1
-#setenv GLPATH=../../../core;../../../core/etc
 #setenv GRIDLABD=../../../core
-#set include=../../../core
 
 clock {
 	timezone PST+8PDT;

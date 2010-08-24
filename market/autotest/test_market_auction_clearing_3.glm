@@ -5,10 +5,7 @@
 // these duplicated bid quantities. Ensure the market resolves to the correct final values. 
 
 #set tmp=../test_market_auction_clearing_3
-#setenv path=c:/mingw/bin
-#setenv INCLUDE=c:/mingw/include
 #setenv GRIDLABD=../../../core
-#set suppress_repeat_messages=0
 
 module tape;
 module market;

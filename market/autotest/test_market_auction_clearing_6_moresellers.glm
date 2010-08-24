@@ -2,10 +2,7 @@
 // such as one seller and three buyers and vice versa. Ensure the market still clears to a reasonable value. 
 
 #set tmp=../test_market_auction_clearing_6_moresellers
-#setenv path=c:/mingw/bin
-#setenv INCLUDE=c:/mingw/include
 #setenv GRIDLABD=../../../core
-#set suppress_repeat_messages=0
 
 module tape;
 module market;

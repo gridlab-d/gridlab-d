@@ -2,10 +2,8 @@
 // Ensure the market still clears to a reasonable value. 
 
 #set tmp=../test_market_auction_clearing_6_morebuyers
-#setenv path=c:/mingw/bin
-#setenv INCLUDE=c:/mingw/include
-#set include=../../../core
-#set suppress_repeat_messages=0
+#setenv GRIDLABD=../../../core
+
 
 module tape;
 module market;

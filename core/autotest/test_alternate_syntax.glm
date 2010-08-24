@@ -5,9 +5,8 @@
 //
 
 #set tmp=../test_alternate_syntax
-#setenv GLPATH=../../../core;../../../core/etc
 #setenv GRIDLABD=../../../core
-#set include=../../../core
+
 class test {
 	enumeration {NO=0, YES=1} value;
     intrinsic create(object parent)

@@ -9,10 +9,7 @@
 // appropriate error/warning is generated when it is exceeded. 
 
 #set tmp=../test_market_auction_timing_5
-#setenv path=c:/mingw/bin
-#setenv INCLUDE=c:/mingw/include
-#set include=../../../core
-#set suppress_repeat_messages=0
+#setenv GRIDLABD=../../../core
 
 module tape;
 module market;

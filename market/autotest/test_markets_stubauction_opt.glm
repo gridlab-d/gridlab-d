@@ -2,6 +2,10 @@
 // of all rolling averages and standard deviations within the stubauction module
 // d3y334
 
+
+#set tmp=../test_markets_stubauction_opt
+#setenv GRIDLABD=../../../core
+
 module market;
 module tape;
 module assert;
