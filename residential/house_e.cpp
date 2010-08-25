@@ -2072,7 +2072,7 @@ void house_e::update_system(double dt)
 
 	// update load
 	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor * (load.impedance_fraction + load.current_fraction * load.voltage_factor));
-	hvac_power = load.power + load.admittance + load.current;
+	hvac_power = load.power + load.admittance*load.voltage_factor*load.voltage_factor + load.current*load.voltage_factor;
 }
 
 /**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time

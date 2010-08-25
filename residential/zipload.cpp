@@ -52,6 +52,7 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 			PT_double,"impedance_pf",PADDR(impedance_pf), PT_DESCRIPTION, "power factor for constant impedance portion",
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",
 			PT_double,"breaker_val[A]",PADDR(breaker_val), PT_DESCRIPTION, "Amperage of connected breaker",
+			PT_complex,"actual_power[kVA]",PADDR(actual_power),PT_DESCRIPTION,"variable to pull actual load as function of voltage",
 
 			// Variables for demand response mode
 			PT_bool,"demand_response_mode",PADDR(demand_response_mode), PT_DESCRIPTION, "Activates equilibrium dynamic representation of demand response",
@@ -386,6 +387,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		//Compute total power - not sure if needed, but will use below
 		load.total = load.power + load.current + load.admittance;
+		actual_power = load.power + load.current * load.voltage_factor + load.admittance * load.voltage_factor * load.voltage_factor;
 
 		//Update power factor, just in case
 		angleval = load.total.Arg();
