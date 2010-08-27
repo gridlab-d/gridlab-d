@@ -69,6 +69,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"height[ft]",PADDR(h), PT_DESCRIPTION, "the height of the hot water column within the water tank",
 			PT_double,"demand[gpm]",PADDR(water_demand), PT_DESCRIPTION, "the water consumption",
 			PT_double,"actual_load[kW]",PADDR(actual_load),PT_DESCRIPTION, "the actual load based on the current voltage across the coils",
+			PT_double,"is_waterheater_on",PADDR(is_waterheater_on),PT_DESCRIPTION, "simple logic output to determine state of waterheater (1-on, 0-off)",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -94,6 +95,7 @@ int waterheater::create()
 	heat_mode = ELECTRIC;
 	tank_setpoint = 0.0;
 	thermostat_deadband = 0.0;
+	is_waterheater_on = 0;
 //	power_kw = complex(0,0);
 	Tw = 0.0;
 
@@ -433,14 +435,17 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if(Tw > 212.0 - thermostat_deadband){ // if it's trying boil, turn it off!
 		heat_needed = FALSE;
+		is_waterheater_on = 0;
 	}
 	// determine the power used
 	if (heat_needed == TRUE){
 		/* power_kw */ load.total = heating_element_capacity * (heat_mode == GASHEAT ? 0.01 : 1.0);
 		actual_load = load.total.Re() * load.voltage_factor;
+		is_waterheater_on = 1;
 	} else {
 		/* power_kw */ load.total = 0.0;
 		actual_load = 0.0;
+		is_waterheater_on = 0;
 	}
 
 	TIMESTAMP t2 = residential_enduse::sync(t0,t1);

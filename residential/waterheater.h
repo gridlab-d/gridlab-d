@@ -69,7 +69,7 @@ public:
 
 	// Convenience values (some pre-computed here and there for efficiency)...
 	bool heat_needed;				///< need to maintain this bit of state because of Tstat deadband...
-
+	double is_waterheater_on;		///< Simple logic for determining state of waterheater 1-on, 0-off
 public:
 	double tank_volume;					///< tank size [gal]
 	double tank_UA;						///< tank UA [BTU/hr-F]
