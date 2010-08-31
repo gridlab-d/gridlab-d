@@ -97,6 +97,7 @@ int lights::create(void)
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	load.voltage_factor = 1.0;
 	load.power_factor = 0.95;
+	load.breaker_amps = 0;
 
 	return res;
 }
@@ -170,7 +171,8 @@ int lights::init(OBJECT *parent)
 	}
 
 	//load.power_factor = power_factor[type];
-	load.breaker_amps = 40;
+	if(load.breaker_amps == 0)
+		load.breaker_amps = 40;
 
 	if(placement == INDOOR){
 		load.heatgain_fraction = 0.90;
