@@ -81,6 +81,7 @@ int dryer::create()
 	load.voltage_factor = 1.0;
 	load.power_factor = 0.95;
 	load.power_fraction = 1.0;
+	coil_power = -1;
 
 	load.config = EUC_IS220;
 
@@ -213,7 +214,7 @@ double dryer::update_state(double dt)
 
 		// running in constant power mode with intermittent coil
 		load.power.SetPowerFactor(motor_power/1000, load.power_factor);
-		load.admittance = complex(0,0,J); // no separate coil load for now
+		load.admittance = complex(coil_power/1000,0,J); // no separate coil load for now
 		load.current = complex(0,0,J);
 
 		// remaining time
@@ -249,10 +250,14 @@ double dryer::update_state(double dt)
 	}
 
 	// compute the total electrical load
-	load.total = load.power + ~(load.current + load.admittance**pCircuit->pV)**pCircuit->pV/1000;
+	load.total = load.power + load.current + load.admittance;
 
 	// compute the total heat gain
 	load.heatgain = load.total.Mag() * heat_fraction;
+
+	// Simple error catch to stop infinite loops because of rounding errors
+	if (dt > 0 && dt < 1)
+		dt = 1;
 
 	return dt;
 }
