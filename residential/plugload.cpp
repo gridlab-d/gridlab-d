@@ -40,6 +40,7 @@ plugload::plugload(MODULE *module) : residential_enduse(module)
 			PT_double,"circuit_split",PADDR(circuit_split),
 			PT_double,"demand[unit]",PADDR(shape.load),
 			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power), PT_DESCRIPTION, "installed plugs capacity",
+			PT_complex,"actual_power[kVA]",PADDR(plugs_actual_power),PT_DESCRIPTION,"actual power demand",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -120,6 +121,8 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		load.power = load.current = load.admittance = complex(0,0,J);
 
 	gl_enduse_sync(&(residential_enduse::load),t1);
+
+	plugs_actual_power = load.power + (load.current + load.admittance * load.voltage_factor) * load.voltage_factor;
 	return t2;
 }
 

@@ -83,6 +83,7 @@ public:
 	double *pTout;
 
 	double actual_load;
+	complex waterheater_actual_power;	///< the actual power draw of the object after accounting for voltage
 	
 
 public:

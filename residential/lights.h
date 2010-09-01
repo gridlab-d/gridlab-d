@@ -31,6 +31,7 @@ public:
 	double circuit_split;			///< -1=100% negative, 0=balanced, +1=100% positive (DEPRECATED)
 	double power_density;			///< Installed lighting power density [W/sf]
 	double curtailment;				///< fractional curtailment of lighting [pu]
+	complex lights_actual_power;	///< actual light power demand as function of voltage
 
 public:
 	static CLASS *oclass, *pclass;

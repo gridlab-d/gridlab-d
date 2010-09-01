@@ -56,6 +56,7 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 			PT_complex,"stall_impedance[Ohm]", PADDR(stall_impedance),
 			PT_double,"trip_delay[s]", PADDR(trip_delay),
 			PT_double,"reset_delay[s]", PADDR(reset_delay),
+			PT_complex,"actual_power[kVA]",PADDR(dryer_actual_power),
 			PT_enumeration,"state", PADDR(state),
 				PT_KEYWORD,"STOPPED",STOPPED,
 				PT_KEYWORD,"RUNNING",RUNNING,
@@ -251,6 +252,7 @@ double dryer::update_state(double dt)
 
 	// compute the total electrical load
 	load.total = load.power + load.current + load.admittance;
+	dryer_actual_power = load.power + (load.current + load.admittance * load.voltage_factor )* load.voltage_factor;
 
 	// compute the total heat gain
 	load.heatgain = load.total.Mag() * heat_fraction;

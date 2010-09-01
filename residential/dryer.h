@@ -16,6 +16,7 @@
 class dryer : public residential_enduse
 {
 public:
+	complex dryer_actual_power;			///< actual complex power drawn from power system
 	double circuit_split;				///< -1=100% negative, 0=balanced, +1=100% positive
 	double motor_power;					///< installed dryer motor power [W] (default = random uniform between 150-350 W)
 	double coil_power;					///< installed heating coil power [W] (default = random uniform between 3500-5000 W, 0 for gas)

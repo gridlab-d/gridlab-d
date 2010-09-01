@@ -78,6 +78,7 @@ lights::lights(MODULE *mod)
 			PT_double,"power_density[W/sf]",PADDR(power_density), PT_DESCRIPTION, "installed power density",
 			PT_double,"curtailment[pu]", PADDR(curtailment), PT_DESCRIPTION, "lighting curtailment factor",
 			PT_double,"demand[pu]", PADDR(shape.load), PT_DESCRIPTION, "the current lighting demand",
+			PT_complex,"actual_power[kVA]", PADDR(lights_actual_power), PT_DESCRIPTION, "actual power demand of lights object",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The file that implements the specified class cannot publisht the variables in the class.
@@ -220,6 +221,8 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	gl_enduse_sync(&(residential_enduse::load),t1);
+	lights_actual_power = load.power + (load.current + load.admittance * load.voltage_factor) * load.voltage_factor;
+
 	return t2;
 }
 
