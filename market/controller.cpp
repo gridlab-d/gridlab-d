@@ -107,7 +107,7 @@ int controller::create(){
 	sprintf(std_target, "std24");
 	slider_setting_heat = -1.0;
 	slider_setting_cool = -1.0;
-	
+	sliding_time_delay = -1;
 	lastbid_id = -1;
 	return 1;
 }
@@ -356,7 +356,7 @@ int controller::init(OBJECT *parent){
 //	next_run = gl_globalclock + (TIMESTAMP)(period - fmod(gl_globalclock+period,period));
 	next_run = gl_globalclock;// + (market->period - gl_globalclock%market->period);
 	time_off = TS_NEVER;
-	if(sliding_time_delay == 0)
+	if(sliding_time_delay < 0 )
 		dtime_delay = 21600; // default sliding_time_delay of 6 hours
 	else
 		dtime_delay = (int64)sliding_time_delay;
@@ -447,7 +447,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 	if(control_mode == CN_DOUBLE_RAMP && cooling_setpoint0 == -1)
 		cooling_setpoint0 = *pCoolingSetpoint;
 
-	if(t0 == next_run || t0 == 0){
+	if(t1 == next_run || t0 == 0){
 		if(control_mode == CN_RAMP){
 			min = setpoint0 + range_low * slider_setting;
 			max = setpoint0 + range_high * slider_setting;
@@ -481,7 +481,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 
 	/* short circuit */
-	if(t0 < next_run){
+	if(t1 < next_run){
 		return next_run;
 	}
 
@@ -737,6 +737,10 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	// Determine the system_mode the HVAC is in
+	if(t1 < next_run){
+		return next_run;
+	}
+
 	if(resolve_mode == RM_SLIDING){
 		if(*pHeatState == 1 || *pAuxState == 1){
 			thermostat_mode = TM_HEAT;
@@ -755,10 +759,6 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			if(resolve_mode == RM_SLIDING)
 				return TS_INVALID; // If the HVAC is in two modes at once then the sliding resolve mode will have conflicting state input so stop the simulation.
 		}
-	}
-
-	if(t0 < next_run){
-		return TS_NEVER;
 	}
 
 	next_run += (TIMESTAMP)(this->period);
