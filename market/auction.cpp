@@ -110,6 +110,9 @@ auction::auction(MODULE *module)
 			PT_double, "fixed_quantity", PADDR(fixed_quantity),
 			PT_object, "capacity_reference_object", PADDR(capacity_reference_object),
 			PT_char32, "capacity_reference_property", PADDR(capacity_reference_propname),
+			PT_double, "capacity_reference_bid_price", PADDR(capacity_reference_bid_price),
+			PT_double, "max_capacity_reference_bid_quantity", PADDR(max_capacity_reference_bid_quantity),
+			PT_double, "capacity_reference_bid_quantity", PADDR(capacity_reference_bid_quantity),
 			PT_double, "init_price", PADDR(init_price),
 			PT_double, "init_stdev", PADDR(init_stdev),
 
@@ -252,7 +255,7 @@ int auction::init(OBJECT *parent)
 	{
 		Qload = NULL;
 	}
-
+	
 	if (pricecap==0){
 		pricecap = 9999.0;
 	}
@@ -858,6 +861,34 @@ void auction::clear_market(void)
 		{
 			asks.submit(&unresponsive);
 			gl_verbose("capacity_reference_property %s has %.3f unresponsive load", gl_name(linkref,name,sizeof(name)), -unresponsive.quantity);
+		}
+	}
+
+	/* handle bidding capacity reference */
+	if(capacity_reference_object != NULL && special_mode == MD_NONE) {
+		double *pCaprefq = gl_get_double(capacity_reference_object, capacity_reference_property);
+		double caprefq;
+		if(pCaprefq == NULL) {
+			char msg[256];
+			sprintf(msg, "unable to retreive property '%s' from capacity reference object '%s'", capacity_reference_property->name, capacity_reference_object->name);
+			throw msg;
+		}
+		caprefq = *pCaprefq;
+		if(strcmp(unit, "") != 0) {
+			if (capacity_reference_property->unit != 0) {
+				if(gl_convert(capacity_reference_property->unit->name,unit,&caprefq) == 0) {
+					char msg[256];
+					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", capacity_reference_property->name, capacity_reference_property->unit->name, unit);
+					throw msg;
+				} else {
+					capacity_reference_bid_quantity = caprefq;
+					if(capacity_reference_bid_quantity < max_capacity_reference_bid_quantity) {
+						submit(OBJECTHDR(this), capacity_reference_bid_quantity, capacity_reference_bid_price, -1, BS_ON);
+					} else {
+						submit(OBJECTHDR(this), max_capacity_reference_bid_quantity, pricecap, -1, BS_ON);
+					}
+				}
+			}
 		}
 	}
 
