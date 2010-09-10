@@ -402,7 +402,8 @@ RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)
 		PROPERTY *target = NULL;
 		double scale = 1.0;
 
-		if(2 == sscanf(itemptr, "%[^:]:%[^\n\r\0]", objstr, itemstr)){
+		//if(2 == sscanf(itemptr, "%[^:]:%[^\n\r\0]", objstr, itemstr)){
+		if(2 == sscanf(itemptr, "%[^:]:%s", objstr, itemstr)){	//changed this line because of conflicts in rh5
 			item = itemstr;
 			target_obj = gl_get_object(objstr);
 			if(target_obj == 0){
