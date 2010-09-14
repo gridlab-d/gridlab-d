@@ -127,8 +127,9 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "EXACT", CT_EXACT,
 				PT_KEYWORD, "FAILURE", CT_FAILURE,
 				PT_KEYWORD, "NULL", CT_NULL,
-			PT_double, "current_market.marginal_quantity", PADDR(current_frame.marginal_quantity),
-			PT_double, "current_market.total_marginal_quantity", PADDR(current_frame.total_marginal_quantity),
+			PT_double, "current_market.marginal_quantity_load", PADDR(current_frame.marginal_quantity),
+			PT_double, "current_market.marginal_quantity_bid", PADDR(current_frame.total_marginal_quantity),
+			PT_double, "current_market.marginal_quantity_frac", PADDR(current_frame.marginal_frac),
 			PT_double, "current_market.seller_total_quantity", PADDR(current_frame.seller_total_quantity),
 			PT_double, "current_market.buyer_total_quantity", PADDR(current_frame.buyer_total_quantity),
 			PT_double, "current_market.seller_min_price", PADDR(current_frame.seller_min_price),
@@ -144,8 +145,9 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "EXACT", CT_EXACT,
 				PT_KEYWORD, "FAILURE", CT_FAILURE,
 				PT_KEYWORD, "NULL", CT_NULL,
-			PT_double, "next_market.marginal_quantity", PADDR(next_frame.marginal_quantity),
-			PT_double, "next_market.total_marginal_quantity", PADDR(next_frame.total_marginal_quantity),
+			PT_double, "next_market.marginal_quantity_load", PADDR(next_frame.marginal_quantity),
+			PT_double, "next_market.marginal_quantity_bid", PADDR(next_frame.total_marginal_quantity),
+			PT_double, "next_market.marginal_quantity_frac", PADDR(next_frame.marginal_frac),
 			PT_double, "next_market.seller_total_quantity", PADDR(next_frame.seller_total_quantity),
 			PT_double, "next_market.buyer_total_quantity", PADDR(next_frame.buyer_total_quantity),
 			PT_double, "next_market.seller_min_price", PADDR(next_frame.seller_min_price),
@@ -161,8 +163,9 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "EXACT", CT_EXACT,
 				PT_KEYWORD, "FAILURE", CT_FAILURE,
 				PT_KEYWORD, "NULL", CT_NULL,
-			PT_double, "past_market.marginal_quantity", PADDR(past_frame.marginal_quantity),
-			PT_double, "past_market.total_marginal_quantity", PADDR(past_frame.total_marginal_quantity),
+			PT_double, "past_market.marginal_quantity_load", PADDR(past_frame.marginal_quantity),
+			PT_double, "past_market.marginal_quantity_bid", PADDR(past_frame.total_marginal_quantity),
+			PT_double, "past_market.marginal_quantity_frac", PADDR(past_frame.marginal_frac),
 			PT_double, "past_market.seller_total_quantity", PADDR(past_frame.seller_total_quantity),
 			PT_double, "past_market.buyer_total_quantity", PADDR(past_frame.buyer_total_quantity),
 			PT_double, "past_market.seller_min_price", PADDR(past_frame.seller_min_price),
@@ -586,6 +589,7 @@ int auction::push_market_frame(TIMESTAMP t1){
 	frame->seller_total_quantity = cleared_frame.seller_total_quantity;
 	frame->buyer_total_quantity = cleared_frame.buyer_total_quantity;
 	frame->seller_min_price = cleared_frame.seller_min_price;
+	frame->marginal_frac = cleared_frame.marginal_frac;
 	// set stats
 	for(i = 0, stat = this->stats; i < statistic_count && stat != 0; ++i, stat = stat->next){
 		stats[i] = stat->value;
@@ -621,6 +625,7 @@ int auction::check_next_market(TIMESTAMP t1){
 		next_frame.seller_total_quantity = nframe->seller_total_quantity;
 		next_frame.buyer_total_quantity = nframe->buyer_total_quantity;
 		next_frame.seller_min_price = nframe->seller_min_price;
+		next_frame.marginal_frac = nframe->marginal_frac;
 		for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
 			gl_set_value(obj, stat->prop, frame->statistics[i]);
 		}
@@ -679,6 +684,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	current_frame.seller_total_quantity = frame->seller_total_quantity;
 	current_frame.buyer_total_quantity = frame->buyer_total_quantity;
 	current_frame.seller_min_price = frame->seller_min_price;
+	current_frame.marginal_frac = frame->marginal_frac;
 	// copy statistics
 	for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
 		gl_set_value(obj, stat->prop, frame->statistics[i]);
@@ -1244,6 +1250,7 @@ void auction::clear_market(void)
 	
 	double marginal_total = 0.0;
 	double marginal_quantity = 0.0;
+	double marginal_frac = 0.0;
 	if(clearing_type == CT_BUYER){
 		unsigned int i = 0;
 		double marginal_subtotal = 0.0;
@@ -1261,6 +1268,7 @@ void auction::clear_market(void)
 			else
 				break;
 		}
+		marginal_frac = marginal_quantity / marginal_total;
 	} else if (clearing_type == CT_SELLER){
 		unsigned int i = 0;
 		double marginal_subtotal = 0.0;
@@ -1278,8 +1286,10 @@ void auction::clear_market(void)
 			else
 				break;
 		}	
+		marginal_frac = marginal_quantity / marginal_total;
 	} else {
 		marginal_quantity = 0.0;
+		marginal_frac = 0.0;
 	}
 
 	if(history_count > 0){
@@ -1376,6 +1386,7 @@ void auction::clear_market(void)
 	cleared_frame.buyer_total_quantity = asks.get_total();
 	cleared_frame.seller_total_quantity = offers.get_total();
 	cleared_frame.seller_min_price = offers.get_min();
+	cleared_frame.marginal_frac = marginal_frac;
 
 	if(latency > 0){
 		TIMESTAMP rt;
@@ -1399,6 +1410,7 @@ void auction::clear_market(void)
 		current_frame.seller_total_quantity = cleared_frame.seller_total_quantity;
 		current_frame.buyer_total_quantity = cleared_frame.buyer_total_quantity;
 		current_frame.seller_min_price = cleared_frame.seller_min_price;
+		current_frame.marginal_frac = cleared_frame.marginal_frac;
 		++total_samples;
 		update_statistics();
 		

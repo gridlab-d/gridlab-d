@@ -35,6 +35,7 @@ typedef struct s_market_frame{
 	double clearing_quantity;
 	double marginal_quantity;
 	double total_marginal_quantity;
+	double marginal_frac;
 	double seller_total_quantity;
 	double buyer_total_quantity;
 	double seller_min_price;
