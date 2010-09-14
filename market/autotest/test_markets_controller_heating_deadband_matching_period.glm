@@ -132,8 +132,8 @@ object triplex_meter {
 			bid_mode ON;
 			control_mode DOUBLE_RAMP;
 			resolve_mode DEADBAND;
-			slider_setting_heat 1;
-			slider_setting_cool 1;
+			// slider_setting_heat 1;
+			// slider_setting_cool 1;
 			heating_base_setpoint 65;
 			cooling_base_setpoint 70;
 			period 900;
