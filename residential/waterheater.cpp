@@ -69,6 +69,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"height[ft]",PADDR(h), PT_DESCRIPTION, "the height of the hot water column within the water tank",
 			PT_double,"demand[gpm]",PADDR(water_demand), PT_DESCRIPTION, "the water consumption",
 			PT_double,"actual_load[kW]",PADDR(actual_load),PT_DESCRIPTION, "the actual load based on the current voltage across the coils",
+			PT_double,"previous_load[kW]",PADDR(prev_load),PT_DESCRIPTION, "the actual load based on current voltage stored for use in controllers",
 			PT_complex,"actual_power[kVA]",PADDR(waterheater_actual_power), PT_DESCRIPTION, "the actual power based on the current voltage across the coils",
 			PT_double,"is_waterheater_on",PADDR(is_waterheater_on),PT_DESCRIPTION, "simple logic output to determine state of waterheater (1-on, 0-off)",
 			NULL)<1) 
@@ -475,6 +476,14 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	waterheater_actual_power = load.power + (load.current + load.admittance * load.voltage_factor )* load.voltage_factor;
 	actual_load = waterheater_actual_power.Re();
+
+	if (actual_load != 0.0)
+	{
+		prev_load = actual_load;
+		power_state = PS_ON;
+	}
+	else
+		power_state = PS_OFF;
 
 //	gl_enduse_sync(&(residential_enduse::load),t1);
 
