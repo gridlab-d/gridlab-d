@@ -109,6 +109,10 @@ int controller::create(){
 	slider_setting_cool = -1.0;
 	sliding_time_delay = -1;
 	lastbid_id = -1;
+	heat_range_low = -5;
+	heat_range_high = 3;
+	cool_range_low = -3;
+	cool_range_high = 5;
 	return 1;
 }
 
@@ -364,6 +368,7 @@ int controller::init(OBJECT *parent){
 	if(state[0] != 0){
 		// grab state pointer
 		pState = gl_get_enum_by_name(parent, state);
+		last_pState = 0;
 		if(pState == 0){
 			gl_error("state property name \'%s\' is not published by parent class", state);
 			return 0;
@@ -456,6 +461,26 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 			cool_max = cooling_setpoint0 + cool_range_high * slider_setting_cool;
 			heat_min = heating_setpoint0 + heat_range_low * slider_setting_heat;
 			heat_max = heating_setpoint0 + heat_range_high * slider_setting_heat;
+			if (slider_setting_cool != 0.0) {
+				if (cool_range_low != 0.0)
+					cool_ramp_low = (-1 - 2 * (1 - slider_setting_cool)) / cool_range_low;
+				else
+					cool_ramp_low = 0;
+				if (cool_range_high != 0.0)
+					cool_ramp_high = (1 + 2 * (1 - slider_setting_cool)) / cool_range_high;
+				else
+					cool_ramp_high = 0;
+			}
+			if (slider_setting_heat != 0.0) {
+				if (heat_range_low != 0.0)
+					heat_ramp_low = (1 + 2 * (1 - slider_setting_heat)) / heat_range_low;
+				else
+					heat_ramp_low = 0;
+				if (heat_range_high != 0)
+					heat_ramp_high = (-1 - 2 * (1 - slider_setting_heat)) / heat_range_high;
+				else
+					heat_ramp_high = 0;
+			}
 		}
 		if((thermostat_mode != TM_INVALID && thermostat_mode != TM_OFF) || t1 >= time_off)
 			last_mode = thermostat_mode;
@@ -480,9 +505,12 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 
 
-	/* short circuit */
+	/* short circuit if the state variable doesn't change during the specified interval */
 	if(t1 < next_run){
-		return next_run;
+		if (pState == 0)
+			return next_run;
+		else if (*pState == last_pState)
+			return next_run;
 	}
 
 	if(control_mode == CN_RAMP){
@@ -555,8 +583,6 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			T_lim = 0.0;
 		}
 
-
-
 		if(bid < 0.0 && *pMonitor != setpoint0) {
 			bid = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - setpoint0) * (k_T * *pStd) / fabs(T_lim) );
 		} else if(*pMonitor == setpoint0) {
@@ -605,6 +631,8 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		double cool_ramp_low;
 		*/
 
+		DATETIME t_next;
+		gl_localtime(t1,&t_next);
 
 		// find crossover
 		double midpoint = 0.0;
@@ -691,18 +719,26 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			lastmkt_id = market->market_id;
 		}
 		// submit bids
+		double previous_q = last_q; //store the last value, in case we need it
 		last_p = 0.0;
 		last_q = 0.0;
+		// We have to cool
 		if(*pMonitor > cool_max){
 			last_p = market->pricecap;
 			last_q = *pCoolingDemand;
-		} else if(*pMonitor < heat_min){
+		} 
+		// We have to heat
+		else if(*pMonitor < heat_min){
 			last_p = market->pricecap;
 			last_q = *pHeatingDemand;
-		} else if(*pMonitor > heat_max && *pMonitor < cool_min){
+		} 
+		// We're floating in between heating and cooling
+		else if(*pMonitor > heat_max && *pMonitor < cool_min){
 			last_p = 0.0;
 			last_q = 0.0;
-		} else if(*pMonitor <= heat_max && *pMonitor >= heat_min){
+		} 
+		// We might heat, if the price is right
+		else if(*pMonitor <= heat_max && *pMonitor >= heat_min){
 			double ramp, range;
 			ramp = (*pMonitor > heating_setpoint0 ? heat_ramp_high : heat_ramp_low);
 			range = (*pMonitor > heating_setpoint0 ? heat_range_high : heat_range_low);
@@ -712,7 +748,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				last_p = *pAvg;
 			}
 			last_q = *pHeatingDemand;
-		} else if(*pMonitor <= cool_max && *pMonitor >= cool_min){
+		} 
+		// We might cool, if the price is right
+		else if(*pMonitor <= cool_max && *pMonitor >= cool_min){
 			double ramp, range;
 			ramp = (*pMonitor > cooling_setpoint0 ? cool_ramp_high : cool_ramp_low);
 			range = (*pMonitor > cooling_setpoint0 ? cool_range_high : cool_range_low);
@@ -724,10 +762,27 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			last_q = *pCoolingDemand;
 		}
 		if(last_q > 0.001){
-			int64 bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
-			lastbid_id = submit_bid(this->pMarket, OBJECTHDR(this), -last_q, last_p, bid);
+			if (pState != 0 ) {
+				int64 bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
+				lastbid_id = submit_bid_state(this->pMarket, OBJECTHDR(this), -last_q, last_p, (*pState > 0 ? 1 : 0), bid);
+			}
+			else {
+				int64 bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
+				lastbid_id = submit_bid(this->pMarket, OBJECTHDR(this), -last_q, last_p, bid);
+			}
+		}
+		else if (previous_q > 0.001) // This bids if the object is on, but planning to turn off, then the capacity object knows its on
+		{
+			if (pState != 0 ) {
+				int64 bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
+				lastbid_id = submit_bid_state(this->pMarket, OBJECTHDR(this), -previous_q, -market->pricecap, (*pState > 0 ? 1 : 0), bid);
+			}
 		}
 	}
+
+	if (pState != 0)
+		last_pState = *pState;
+
 	char timebuf[128];
 	gl_printtime(t1,timebuf,127);
 	//gl_verbose("controller:%i::sync(): bid $%f for %f kW at %s",hdr->id,last_p,last_q,timebuf);

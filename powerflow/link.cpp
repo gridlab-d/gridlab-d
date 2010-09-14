@@ -120,6 +120,7 @@ link::link(MODULE *mod) : powerflow_object(mod)
 			PT_object, "to", PADDR(to),
 			PT_complex, "power_in[VA]", PADDR(power_in),
 			PT_complex, "power_out[VA]", PADDR(power_out),
+			PT_double, "power_out_real[W]", PADDR(power_out.Re()),
 			PT_complex, "power_losses[VA]", PADDR(power_loss),
 			PT_complex, "power_in_A[VA]", PADDR(indiv_power_in[0]),
 			PT_complex, "power_in_B[VA]", PADDR(indiv_power_in[1]),

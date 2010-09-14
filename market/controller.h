@@ -123,6 +123,7 @@ private:
 	double *pAvg;
 	double *pStd;
 	enumeration *pState;
+	enumeration last_pState;
 	void cheat();
 	void fetch(double **prop, char *name, OBJECT *parent);
 	int dir;

@@ -725,6 +725,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "hvac_power_factor[unit]", PADDR(hvac_power_factor), PT_DESCRIPTION,"power factor of hvac",
 			
 			PT_double,"hvac_load",PADDR(hvac_load),PT_DESCRIPTION,"heating/cooling system load",
+			PT_double,"last_heating_load",PADDR(last_heating_load),PT_DESCRIPTION,"stores the previous heating/cooling system load",
+			PT_double,"last_cooling_load",PADDR(last_cooling_load),PT_DESCRIPTION,"stores the previous heating/cooling system load",
 			PT_complex,"hvac_power",PADDR(hvac_power),PT_DESCRIPTION,"describes hvac load complex power consumption",
 			PT_double,"total_load",PADDR(total_load),
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
@@ -2072,6 +2074,10 @@ void house_e::update_system(double dt)
 
 	// update load
 	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor * (load.impedance_fraction + load.current_fraction * load.voltage_factor));
+	if (system_mode == SM_COOL)
+		last_cooling_load = hvac_load;
+	else if (system_mode == SM_AUX || system_mode == SM_HEAT)
+		last_heating_load = hvac_load;
 	hvac_power = load.power + load.admittance*load.voltage_factor*load.voltage_factor + load.current*load.voltage_factor;
 }
 
@@ -2395,6 +2401,10 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		off of t1. -mhauer
 	*/
 	// change control mode if necessary
+
+	DATETIME t_next;
+	gl_localtime(t1,&t_next);
+
 	if (thermostat_control!=TC_NONE)
 	{
 		switch(system_mode) {

@@ -742,6 +742,7 @@ TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 		/* clear market */
 		thishr = dt.hour;
+		double thismin = dt.minute;
 		clear_market();
 
 		// advance market_id
@@ -799,7 +800,7 @@ void auction::clear_market(void)
 		if (total_unknown > 0.001) // greater than one mW ~ allows rounding errors
 			gl_warning("total_unknown is %.0f -> some controllers are not providing their states with their bids", total_unknown);
 		BID unresponsive;
-		unresponsive.from = linkref;
+		unresponsive.from = capacity_reference_object;
 		unresponsive.price = pricecap;
 		unresponsive.state = BS_UNKNOWN;
 		unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
@@ -827,7 +828,7 @@ void auction::clear_market(void)
 			throw msg;
 			/* TROUBLESHOOT
 				The specified capacity reference property cannot be retrieved as a double.  Verify that it is a double type property.
-				*/
+			*/
 		} else {
 			refload = *pRefload;
 		}
@@ -849,7 +850,8 @@ void auction::clear_market(void)
 		if (total_unknown > 0.001){ // greater than one mW ~ allows rounding errors.  Threshold may be one kW given a MW-unit'ed market.
 			gl_warning("total_unknown is %.0f -> some controllers are not providing their states with their bids", total_unknown);
 		}
-		unresponsive.from = linkref;
+		//unresponsive.from = linkref;
+		unresponsive.from = capacity_reference_object;
 		unresponsive.price = pricecap;
 		unresponsive.state = BS_UNKNOWN;
 		unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
@@ -863,6 +865,7 @@ void auction::clear_market(void)
 			gl_verbose("capacity_reference_property %s has %.3f unresponsive load", gl_name(linkref,name,sizeof(name)), -unresponsive.quantity);
 		}
 	}
+
 
 	/* handle bidding capacity reference */
 	if(capacity_reference_object != NULL && special_mode == MD_NONE) {
@@ -881,12 +884,8 @@ void auction::clear_market(void)
 					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", capacity_reference_property->name, capacity_reference_property->unit->name, unit);
 					throw msg;
 				} else {
-					capacity_reference_bid_quantity = caprefq;
-					if(capacity_reference_bid_quantity < max_capacity_reference_bid_quantity) {
-						submit(OBJECTHDR(this), capacity_reference_bid_quantity, capacity_reference_bid_price, -1, BS_ON);
-					} else {
-						submit(OBJECTHDR(this), max_capacity_reference_bid_quantity, pricecap, -1, BS_ON);
-					}
+					submit(OBJECTHDR(this), max_capacity_reference_bid_quantity, capacity_reference_bid_price, -1, BS_ON);
+					if (verbose) gl_output("Capacity reference object: %s bids %.2f at %.2f", capacity_reference_object->name, max_capacity_reference_bid_quantity, capacity_reference_bid_price);
 				}
 			}
 		}
@@ -1045,6 +1044,8 @@ void auction::clear_market(void)
 			char name[64];
 			unresponsive_sell = 0.0;
 			unresponsive_buy = 0.0;
+			responsive_sell = 0.0; //
+			responsive_buy = 0.0; //
 			if (verbose){
 				gl_output("   ...  supply curve");
 			}
@@ -1072,7 +1073,9 @@ void auction::clear_market(void)
 					responsive_buy += asks.getbid(i)->quantity;
 				}
 			}
+
 			total_buy = responsive_buy + unresponsive_buy;
+			
 		}
 
 		i = j = 0;
