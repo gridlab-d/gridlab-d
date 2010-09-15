@@ -106,6 +106,9 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "NONE", MD_NONE,
 				PT_KEYWORD, "SELLERS_ONLY", MD_SELLERS,
 				PT_KEYWORD, "BUYERS_ONLY", MD_BUYERS,
+			PT_enumeration, "statistic_mode", PADDR(statistic_mode),
+				PT_KEYWORD, "ON", ST_ON,
+				PT_KEYWORD, "OFF", ST_OFF,
 			PT_double, "fixed_price", PADDR(fixed_price),
 			PT_double, "fixed_quantity", PADDR(fixed_quantity),
 			PT_object, "capacity_reference_object", PADDR(capacity_reference_object),
@@ -552,8 +555,10 @@ int auction::update_statistics(){
 				current->value = sqrt(stdev);
 			}
 		}
-		if(latency == 0){
-			gl_set_value(obj, current->prop, current->value);
+		if(statistic_mode == ST_ON){
+			if(latency == 0){
+				gl_set_value(obj, current->prop, current->value);
+			}
 		}
 	}
 	return 1;
@@ -626,8 +631,10 @@ int auction::check_next_market(TIMESTAMP t1){
 		next_frame.buyer_total_quantity = nframe->buyer_total_quantity;
 		next_frame.seller_min_price = nframe->seller_min_price;
 		next_frame.marginal_frac = nframe->marginal_frac;
-		for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
-			gl_set_value(obj, stat->prop, frame->statistics[i]);
+		if(statistic_mode == ST_ON){
+			for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
+				gl_set_value(obj, stat->prop, frame->statistics[i]);
+			}
 		}
 		return 1;
 	}
@@ -686,8 +693,10 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	current_frame.seller_min_price = frame->seller_min_price;
 	current_frame.marginal_frac = frame->marginal_frac;
 	// copy statistics
-	for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
-		gl_set_value(obj, stat->prop, frame->statistics[i]);
+	if(statistic_mode == ST_ON){
+		for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
+			gl_set_value(obj, stat->prop, frame->statistics[i]);
+		}
 	}
 	// ~ if latency > 0, cache next frame
 	/*if(latency > 0){

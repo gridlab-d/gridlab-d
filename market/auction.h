@@ -47,6 +47,7 @@ class auction {
 public:
 	bool verbose;
 	typedef enum {AT_NONE=0, AT_SINGLE=1, AT_DOUBLE=2} AUCTIONTYPE;
+	typedef enum {ST_ON=0, ST_OFF=1} STATISTICMODE;
 private:
 	// functions
 	int init_statistics();
@@ -89,6 +90,7 @@ public:
 	// new stuff
 	SPECIALMODE special_mode;
 	CLEARINGTYPE clearing_type;
+	STATISTICMODE statistic_mode;
 	double fixed_price;
 	double fixed_quantity;
 	double init_price;
