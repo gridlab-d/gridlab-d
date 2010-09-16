@@ -7,6 +7,7 @@
 
 #set tmp=../test_markets_controller_cooling_inelastic_matching_period
 #setenv GRIDLABD=../../../core
+#set suppress_repeat_messages=1;
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 
@@ -49,6 +50,18 @@ schedule controller_bids {
 	* 16 * * * 82.1669;
 }
 
+schedule cooling_setpoints {
+	0-14 14 * * * 70;
+	15-29 14 * * * 70;
+	30-44 14 * * * 72.5;
+	45-59 14 * * * 72.5;
+	0-14 15 * * * 70;
+	15-29 15 * * * 72.5;
+	30-44 15 * * * 72.5;
+	45-59 15 * * * 72.5;
+	* 16 * * * 72.5;
+}
+
 object climate {
 	name "Yakima WA";
 	tmyfile "../WA-Yakima.tmy2";
@@ -75,6 +88,13 @@ object auction {
 		file "test_markets_controller_cooling_inelastic_matching_period_output.csv";
 		interval 900;
 		limit 168;
+	};
+	//=IF(OR(C10=D10,I10=0),B10,IF(C10>D10,B10+(C10-D10)*ABS(E10)/(G10*I10),B10+(C10-D10)*ABS(F10)/(H10*I10)))
+	object multi_recorder {
+		property cool_control:base_setpoint,current_market.clearing_price,current_price_mean_30min,cool_control:range_high,cool_control:range_low,cool_control:ramp_high,cool_control:ramp_low,current_price_stdev_30min,house1:cooling_setpoint;
+		file "controller_cooling_intelastic_matching_period_calculate_setpoint.csv";
+		interval 900;
+		limit 4320;
 	};
 	//put the following into cell K10 into the calculate_bid_price file and drag down to check if bid prices are calculated correctly:
 	//=IF(OR(C10<D10+H10,C10>D10+I10),IF(C10<D10+H10,0000,IF(C10>D10+I10,9999,INVALID)),IF(C10<D10,IF(H10=0,0,B10+((C10-D10)*E10*G10)/ABS(H10)),IF(I10=0,0,B10+((C10-D10)*F10*G10)/ABS(I10))))
@@ -105,22 +125,30 @@ object triplex_meter {
 			// interval 2 h;
 			// limit 4380;
 		// };
+		object double_assert {
+				value cooling_setpoints*1;
+				target "cooling_setpoint";
+				within 1e-3;
+		};
 		object controller {
-			name cool_control;
-			simple_mode HOUSE_COOL;
+			name cool_control;			
 			market Market_1;
 			bid_mode ON;
 			slider_setting 1;
 			period 900;
 			average_target current_price_mean_30min;
 			standard_deviation_target current_price_stdev_30min;
-			// setpoint cooling_setpoint;
-			// target air_temperature;
+			setpoint cooling_setpoint;
+			target air_temperature;
 			// base_setpoint 78;
 			// control_mode RAMP;
-			// demand cooling_demand;
-			// load hvac_load;
-			// total total_load;
+			demand cooling_demand;
+			load hvac_load;
+			total total_load;
+			ramp_low 2;
+			ramp_high 2;
+			range_low 0;
+			range_high 5;
 			// object multi_recorder {
 				// property simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house1:power_state,house1:cooling_demand,house1:cooling_setpoint,house1:air_temperature,house1:system_mode,average_target,standard_deviation_target,house1:hvac_load,house1:outdoor_temperature;
 				// file "check_defaults_output1.csv";
