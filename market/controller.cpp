@@ -457,11 +457,10 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 			min = setpoint0 + range_low * slider_setting;
 			max = setpoint0 + range_high * slider_setting;
 		} else if(control_mode == CN_DOUBLE_RAMP){
-			cool_min = cooling_setpoint0 + cool_range_low * slider_setting_cool;
-			cool_max = cooling_setpoint0 + cool_range_high * slider_setting_cool;
-			heat_min = heating_setpoint0 + heat_range_low * slider_setting_heat;
-			heat_max = heating_setpoint0 + heat_range_high * slider_setting_heat;
+
 			if (slider_setting_cool != 0.0) {
+				cool_min = cooling_setpoint0 + cool_range_low * slider_setting_cool;
+				cool_max = cooling_setpoint0 + cool_range_high * slider_setting_cool;
 				if (cool_range_low != 0.0)
 					cool_ramp_low = (-1 - 2 * (1 - slider_setting_cool)) / cool_range_low;
 				else
@@ -470,8 +469,13 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 					cool_ramp_high = (1 + 2 * (1 - slider_setting_cool)) / cool_range_high;
 				else
 					cool_ramp_high = 0;
+			} else {
+				cool_min = cooling_setpoint0 + cool_range_low;
+				cool_max = cooling_setpoint0 + cool_range_high;
 			}
 			if (slider_setting_heat != 0.0) {
+				heat_min = heating_setpoint0 + heat_range_low * slider_setting_heat;
+				heat_max = heating_setpoint0 + heat_range_high * slider_setting_heat;
 				if (heat_range_low != 0.0)
 					heat_ramp_low = (1 + 2 * (1 - slider_setting_heat)) / heat_range_low;
 				else
@@ -480,6 +484,9 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 					heat_ramp_high = (-1 - 2 * (1 - slider_setting_heat)) / heat_range_high;
 				else
 					heat_ramp_high = 0;
+			} else {
+				heat_min = heating_setpoint0 + heat_range_low;
+				heat_max = heating_setpoint0 + heat_range_high;
 			}
 		}
 		if((thermostat_mode != TM_INVALID && thermostat_mode != TM_OFF) || t1 >= time_off)

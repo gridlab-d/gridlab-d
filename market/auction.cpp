@@ -131,6 +131,7 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "FAILURE", CT_FAILURE,
 				PT_KEYWORD, "NULL", CT_NULL,
 			PT_double, "current_market.marginal_quantity_load", PADDR(current_frame.marginal_quantity),
+			PT_double, "current_market.marginal_quantity", PADDR(current_frame.marginal_quantity),
 			PT_double, "current_market.marginal_quantity_bid", PADDR(current_frame.total_marginal_quantity),
 			PT_double, "current_market.marginal_quantity_frac", PADDR(current_frame.marginal_frac),
 			PT_double, "current_market.seller_total_quantity", PADDR(current_frame.seller_total_quantity),
