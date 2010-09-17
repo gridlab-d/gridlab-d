@@ -105,9 +105,9 @@ int controller::create(){
 	memset(this, 0, sizeof(controller));
 	sprintf(avg_target, "avg24");
 	sprintf(std_target, "std24");
-	slider_setting_heat = 1.0;
-	slider_setting_cool = 1.0;
-	slider_setting = 1.0;
+	slider_setting_heat = -1.0;
+	slider_setting_cool = -1.0;
+	slider_setting = -1.0;
 	sliding_time_delay = -1;
 	lastbid_id = -1;
 	heat_range_low = -5;
@@ -455,10 +455,22 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 	if(t1 == next_run || t0 == 0){
 		if(control_mode == CN_RAMP){
-			min = setpoint0 + range_low * slider_setting;
-			max = setpoint0 + range_high * slider_setting;
+			if(slider_setting != 0) {
+				min = setpoint0 + range_low * slider_setting;
+				max = setpoint0 + range_high * slider_setting;
+				if(range_low != 0)
+					ramp_low = (-1 - 2 * (1 - slider_setting)) / range_low;
+				else
+					ramp_low = 0;
+				if(range_high != 0)
+					ramp_high = (1 + 2 * (1 - slider_setting)) / range_high;
+				else 
+					ramp_high = 0;
+			} else {
+				min = setpoint0 + range_low;
+				max = setpoint0 + range_high;
+			}
 		} else if(control_mode == CN_DOUBLE_RAMP){
-
 			if (slider_setting_cool != 0.0) {
 				cool_min = cooling_setpoint0 + cool_range_low * slider_setting_cool;
 				cool_max = cooling_setpoint0 + cool_range_high * slider_setting_cool;
