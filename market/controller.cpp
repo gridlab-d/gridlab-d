@@ -105,8 +105,9 @@ int controller::create(){
 	memset(this, 0, sizeof(controller));
 	sprintf(avg_target, "avg24");
 	sprintf(std_target, "std24");
-	slider_setting_heat = -1.0;
-	slider_setting_cool = -1.0;
+	slider_setting_heat = 1.0;
+	slider_setting_cool = 1.0;
+	slider_setting = 1.0;
 	sliding_time_delay = -1;
 	lastbid_id = -1;
 	heat_range_low = -5;
