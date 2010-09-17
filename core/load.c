@@ -3694,7 +3694,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			double *target = (double*)((char*)(obj+1) + (int64)prop->addr);
 
 			/* add the transform list */
-			if (!schedule_add_xform(xstype,source,target,scale,bias,obj,prop))
+			if (!schedule_add_xform(xstype,source,target,scale,bias,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))
 			{
 				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 				REJECT;
@@ -3745,6 +3745,11 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				else if (strcmp(propname,"valid_to")==0)
 				{
 					obj->valid_to = atoi64(propval); // @todo convert_to_timestamp should be used
+					ACCEPT;
+				}
+				else if (strcmp(propname,"schedule_skew")==0)
+				{
+					obj->schedule_skew = atoi64(propval);
 					ACCEPT;
 				}
 				else if (strcmp(propname,"latitude")==0)

@@ -576,6 +576,7 @@ struct s_object_list {
 	OBJECTRANK rank; /**< object's rank */
 	TIMESTAMP clock; /**< object's private clock */
 	TIMESTAMP valid_to;	/**< object's valid-until time */
+	TIMESTAMP schedule_skew;
 	double latitude, longitude; /**< object's geo-coordinates */
 	TIMESTAMP in_svc, /**< time at which object begin's operating */
 		out_svc; /**< time at which object ceases operating */

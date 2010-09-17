@@ -36,7 +36,8 @@ int schedule_add_xform(XFORMSOURCE stype,	/* specifies the type of source */
 					   double scale,		/* transform scalar */
 					   double bias,			/* transform offset */
 					   OBJECT *obj,			/* object containing target value */
-					   PROPERTY *prop)		/* property associated with target value */
+					   PROPERTY *prop,		/* property associated with target value */
+					   SCHEDULE *sched)		/* schedule object assoicated with target value, if stype == XS_SCHEDULE */
 {
 	SCHEDULEXFORM *xform = (SCHEDULEXFORM*)malloc(sizeof(SCHEDULEXFORM));
 	if (xform==NULL)
@@ -44,6 +45,7 @@ int schedule_add_xform(XFORMSOURCE stype,	/* specifies the type of source */
 	xform->source_type = stype;
 	xform->source = source;
 	xform->source_addr = source; /* this assumes the double is the first member of the structure */
+	xform->source_schedule = sched;
 	xform->target_obj = obj;
 	xform->target_prop = prop;
 	xform->target = target;
@@ -835,9 +837,13 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 	if (value!=sch->value || sch->duration!=duration)
 	{
 		/* record the next value and its duration */
+		if(sch->value != value){
+			sch->since = t;
+		}
 		sch->value = value;
 		sch->duration = duration / 60;
 		sch->fraction = schedule_weight(sch,index) / duration;
+		
 	}
 
 	/* compute the time of the next schedule change */
@@ -867,8 +873,20 @@ TIMESTAMP scheduletransform_syncall(TIMESTAMP t1, XFORMSOURCE restrict)
 	/* process the schedule transformations */
 	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
 	{	
-		if (xform->source_type&restrict)
-			*(xform->target) = *(xform->source) * xform->scale + xform->bias;
+		if (xform->source_type&restrict){
+			if((xform->source_type == XS_SCHEDULE) && (xform->target_obj->schedule_skew != 0)){
+				TIMESTAMP t = t1 - xform->target_obj->schedule_skew; // subtract so the +12 is 'twelve seconds later', not earlier
+				if((t < xform->source_schedule->since) || (t >= xform->source_schedule->next_t)){
+					int64 index = schedule_index(xform->source_schedule,t);
+					double value = schedule_value(xform->source_schedule,index);
+					*(xform->target) = value * xform->scale + xform->bias;
+				} else {
+					*(xform->target) = *(xform->source) * xform->scale + xform->bias;
+				}
+			} else {
+				*(xform->target) = *(xform->source) * xform->scale + xform->bias;
+			}
+		}
 	}
 	return TS_NEVER;
 }

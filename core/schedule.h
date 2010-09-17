@@ -63,6 +63,7 @@ struct s_schedule {
 	unsigned int count[MAXBLOCKS];		/**< the number of values given in each block */
 	unsigned int minutes[MAXBLOCKS];	/**< the total number of minutes associate with each block */
 	TIMESTAMP next_t;					/**< the time of the next schedule event */
+	TIMESTAMP since;
 	double duration;					/**< the duration of the current scheduled value (in hours) */
 	double fraction;					/**< the fractional weight of the block of the current value (pu time) */
 	int flags;							/**< the schedule flags (see SN_*) */
@@ -82,6 +83,7 @@ typedef struct s_schedulexform {
 	double *source;
 	XFORMSOURCE source_type;
 	void *source_addr;
+	SCHEDULE *source_schedule;
 	double *target;
 	struct s_object_list *target_obj;
 	struct s_property_map *target_prop;
@@ -117,7 +119,7 @@ TIMESTAMP scheduletransform_syncall(TIMESTAMP t, XFORMSOURCE restrict);
 int schedule_test(void);
 void schedule_dump(SCHEDULE *sch, char *file);
 
-int schedule_add_xform(XFORMSOURCE stype, double *source, double *target, double scale, double bias, struct s_object_list *obj, struct s_property_map *prop);
+int schedule_add_xform(XFORMSOURCE stype, double *source, double *target, double scale, double bias, struct s_object_list *obj, struct s_property_map *prop, SCHEDULE *s);
 SCHEDULEXFORM *scheduletransform_getnext(SCHEDULEXFORM *xform);
 
 #ifdef __cplusplus
