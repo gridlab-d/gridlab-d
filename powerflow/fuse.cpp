@@ -386,7 +386,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 				*fixtime = Prev_Time + (int64)(3600*gl_random_exponential(1.0/mean_replacement_time));
 
 				//Announce it for giggles
-				gl_verbose("Phase %c of fuse:%d (%s) just blew",phase_verbose,hdr->id,hdr->name);
+				gl_warning("Phase %c of fuse:%d (%s) just blew",phase_verbose,hdr->id,hdr->name);
 			}
 			else	//Still good
 			{
@@ -424,7 +424,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 				*fixtime = TS_NEVER;	//Update the time check just in case
 
 				//Send an announcement for giggles
-				gl_verbose("Phase %c of fuse:%d (%s) just returned to service",phase_verbose,hdr->id,hdr->name);
+				gl_warning("Phase %c of fuse:%d (%s) just returned to service",phase_verbose,hdr->id,hdr->name);
 			}
 			else //Still driving there or on break, no fixed yet
 			{
