@@ -72,6 +72,31 @@ load::load(MODULE *mod) : node(mod)
 			PT_complex,	"measured_voltage_BC",PADDR(measured_voltage_BC),
 			PT_complex,	"measured_voltage_CA",PADDR(measured_voltage_CA),
 
+			// This allows the user to set a base power on each phase, and specify the power as a function
+			// of ZIP and pf for each phase (similar to zipload).  This will override the constant values
+			// above if specified, otherwise, constant values work as stated
+			PT_double, "base_power_A[W]",PADDR(base_power[0]),
+			PT_double, "base_power_B[W]",PADDR(base_power[1]),
+			PT_double, "base_power_C[W]",PADDR(base_power[2]),
+			PT_double, "power_pf_A[pu]",PADDR(power_pf[0]),
+			PT_double, "current_pf_A[pu]",PADDR(current_pf[0]),
+			PT_double, "impedance_pf_A[pu]",PADDR(impedance_pf[0]),
+			PT_double, "power_pf_B[pu]",PADDR(power_pf[1]),
+			PT_double, "current_pf_B[pu]",PADDR(current_pf[1]),
+			PT_double, "impedance_pf_B[pu]",PADDR(impedance_pf[1]),
+			PT_double, "power_pf_C[pu]",PADDR(power_pf[2]),
+			PT_double, "current_pf_C[pu]",PADDR(current_pf[2]),
+			PT_double, "impedance_pf_C[pu]",PADDR(impedance_pf[2]),
+			PT_double, "power_fraction_A[pu]",PADDR(power_fraction[0]),
+			PT_double, "current_fraction_A[pu]",PADDR(current_fraction[0]),
+			PT_double, "impedance_fraction_A[pu]",PADDR(impedance_fraction[0]),
+			PT_double, "power_fraction_B[pu]",PADDR(power_fraction[1]),
+			PT_double, "current_fraction_B[pu]",PADDR(current_fraction[1]),
+			PT_double, "impedance_fraction_B[pu]",PADDR(impedance_fraction[1]),
+			PT_double, "power_fraction_C[pu]",PADDR(power_fraction[2]),
+			PT_double, "current_fraction_C[pu]",PADDR(current_fraction[2]),
+			PT_double, "impedance_fraction_C[pu]",PADDR(impedance_fraction[2]),
+
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -86,6 +111,13 @@ int load::create(void)
 	int res = node::create();
         
 	maximum_voltage_error = 0;
+	base_power[0] = base_power[1] = base_power[2] = 0;
+	power_fraction[0] = power_fraction[1] = power_fraction[2] = 0;
+	current_fraction[0] = current_fraction[1] = current_fraction[2] = 0;
+	impedance_fraction[0] = impedance_fraction[1] = impedance_fraction[2] = 0;
+	power_pf[0] = power_pf[1] = power_pf[2] = 1;
+	current_pf[0] = current_pf[1] = current_pf[2] = 1;
+	impedance_pf[0] = impedance_pf[1] = impedance_pf[2] = 1;
 	load_class = LC_UNKNOWN;
 
     return res;
@@ -108,6 +140,77 @@ TIMESTAMP load::presync(TIMESTAMP t0)
 
 TIMESTAMP load::sync(TIMESTAMP t0)
 {
+	for (int index=0; index<3; index++)
+	{
+		if (base_power[index] != 0.0)
+		{
+			// Put in the constant power portion
+			if (power_fraction[index] != 0.0)
+			{
+				double real_power,imag_power;
+
+				real_power = base_power[index]*power_fraction[index];
+				imag_power = (power_pf[index] == 0.0) ? 0.0 : real_power * sqrt(1.0/(power_pf[index] * power_pf[index]) - 1.0);
+
+				if (power_pf[index] < 0)
+				{
+					imag_power *= -1.0;	//Adjust imaginary portion for negative PF
+				}
+				constant_power[index] = complex(real_power,imag_power);
+			}
+			else
+			{
+				constant_power[index] = complex(0,0);
+			}
+		
+			// Put in the constant current portion and adjust the angle
+			if (current_fraction[index] != 0.0)
+			{
+				double real_power,imag_power,angle;
+				complex temp_curr;
+
+				real_power = base_power[index]*current_fraction[index];
+				imag_power = (current_pf[index] == 0.0) ? 0.0 : real_power * sqrt(1.0/(current_pf[index] * current_pf[index]) - 1.0);
+
+				if (current_pf[index] < 0)
+				{
+					imag_power *= -1.0;	//Adjust imaginary portion for negative PF
+				}
+				
+				temp_curr = ~complex(real_power,imag_power) / complex(nominal_voltage,0);
+				angle = temp_curr.Arg() + voltage[index].Arg();
+				temp_curr.SetPolar(temp_curr.Mag(),angle);
+
+				constant_current[index] = temp_curr;
+			}
+			else
+			{
+				constant_current[index] = complex(0,0);
+			}
+
+			// Put in the constant impedance portion
+			if (impedance_fraction[index] != 0.0)
+			{
+				double real_power,imag_power;
+
+				real_power = base_power[index]*impedance_fraction[index];
+				imag_power = (impedance_pf[index] == 0.0) ? 0.0 : real_power * sqrt(1.0/(impedance_pf[index] * impedance_pf[index]) - 1.0);
+
+				if (impedance_pf[index] < 0)
+				{
+					imag_power *= -1.0;	//Adjust imaginary portion for negative PF
+				}
+
+				constant_impedance[index] = ~( complex(nominal_voltage * nominal_voltage, 0) / complex(real_power,imag_power) );
+
+			}
+			else
+			{
+				constant_impedance[index] = complex(0,0);
+			}
+		}
+	}
+
 	if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS/NR and parented load
 	{													//associated with change due to player methods
 
