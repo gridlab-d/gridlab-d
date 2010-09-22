@@ -29,7 +29,7 @@ public:
 	CIRCUIT *pCircuit;	// pointer to circuit data
 	enduse load;	// load data
 	loadshape shape;
-	OVERRIDE override;
+	OVERRIDE re_override;
 	POWERSTATE power_state;
 public:
 	static CLASS *oclass;

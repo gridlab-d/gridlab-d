@@ -2021,7 +2021,7 @@ void house_e::update_system(double dt)
 		
 	}
 
-	if(this->override == OV_OFF){
+	if(this->re_override == OV_OFF){
 		system_mode = SM_OFF;
 		fan_power = 0;
 		system_rated_capacity = 0.0;

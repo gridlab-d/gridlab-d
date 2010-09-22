@@ -144,7 +144,7 @@ int lights::init(OBJECT *parent)
 			Use either scaled power or installed power to define the lighting load and try again.
 		 */
 
-	// installed power intially overrides use of power density
+	// installed power intially re_overrides use of power density
 	double *floor_area = parent?gl_get_double_by_name(parent, "floor_area"):NULL;
 	if (shape.params.analog.power==0 && shape.schedule==NULL) 
 	{		

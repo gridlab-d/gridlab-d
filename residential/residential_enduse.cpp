@@ -39,7 +39,7 @@ residential_enduse::residential_enduse(MODULE *mod)
 		if (gl_publish_variable(oclass,
 			PT_loadshape,"shape",PADDR(shape),
 			PT_enduse,"",PADDR(load),
-			PT_enumeration,"override",PADDR(override),
+			PT_enumeration,"override",PADDR(re_override),
 				PT_KEYWORD,"ON",OV_ON,
 				PT_KEYWORD,"NORMAL",OV_NORMAL,
 				PT_KEYWORD,"OFF",OV_OFF,
@@ -65,7 +65,7 @@ int residential_enduse::create(bool connect_shape)
 	load.breaker_amps = 20;
 	load.config = 0;
 	load.heatgain_fraction = 1.0; /* power has no effect on heat loss */
-	override = OV_NORMAL;
+	re_override = OV_NORMAL;
 	power_state = PS_UNKNOWN;
 	return 1;
 }

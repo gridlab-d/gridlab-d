@@ -427,11 +427,11 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 	double Tamb = get_Tambient(location);
 
-	// use override to control heat_needed state
+	// use re_override to control heat_needed state
 	// runs after thermostat() but before "the usual" calculations
-	if(override == OV_ON){
+	if(re_override == OV_ON){
 		heat_needed = TRUE;
-	} else if(override == OV_OFF){
+	} else if(re_override == OV_OFF){
 		heat_needed = FALSE;
 	}
 
@@ -487,7 +487,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 //	gl_enduse_sync(&(residential_enduse::load),t1);
 
-	if(override == OV_NORMAL){
+	if(re_override == OV_NORMAL){
 		if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
 		{
 			TIMESTAMP t_to_trans = (t1+time_to_transition*3600.0/TS_SECOND);
@@ -754,6 +754,11 @@ SingleZone:
 			break;
 	}
 
+	if (heat_needed == TRUE)
+		power_state = PS_ON;
+	else
+		power_state = PS_OFF;
+
 	return;
 }
 
@@ -792,7 +797,7 @@ double waterheater::actual_kW(void)
     static int trip_counter = 0;
 
 	// calculate rated heat capacity adjusted for the current line voltage
-	if (heat_needed)
+	if (heat_needed && re_override != OV_OFF)
     {
 		if(heat_mode == GASHEAT){
 			return heating_element_capacity; /* gas heating is voltage independent. */
