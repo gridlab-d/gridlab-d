@@ -193,20 +193,23 @@ int passive_controller::init(OBJECT *parent){
 				GL_THROW("passive_controller parent \"%s\" does not contain property \"%s\"", 
 					(parent->name ? parent->name : "anon"), output_state_propname);
 			}
-			output_setpoint_addr = (void *)((unsigned int64)parent + sizeof(OBJECT) + (unsigned int64)output_state_prop->addr);
+			output_state_addr = (void *)((unsigned int64)parent + sizeof(OBJECT) + (unsigned int64)output_state_prop->addr);
 		}
 		
 		// output_setpoint
-		if(output_setpoint_propname[0] == 0 && output_setpoint_propname[0] == 0){
-			GL_THROW("passive_controller has no output properties");
-		}
-		if(output_setpoint_propname[0] != 0){
-			output_setpoint_property = gl_get_property(parent, output_setpoint_propname);
-			if(output_setpoint_property == NULL){
-				GL_THROW("passive_controller parent \"%s\" does not contain property \"%s\"", 
-					(parent->name ? parent->name : "anon"), output_setpoint_propname);
+		if (control_mode != this->CM_PROBOFF)
+		{
+			if(output_setpoint_propname[0] == 0 && output_setpoint_propname[0] == 0){
+				GL_THROW("passive_controller has no output properties");
 			}
-			output_setpoint_addr = (void *)((unsigned int64)parent + sizeof(OBJECT) + (unsigned int64)output_setpoint_property->addr);
+			if(output_setpoint_propname[0] != 0){
+				output_setpoint_property = gl_get_property(parent, output_setpoint_propname);
+				if(output_setpoint_property == NULL){
+					GL_THROW("passive_controller parent \"%s\" does not contain property \"%s\"", 
+						(parent->name ? parent->name : "anon"), output_setpoint_propname);
+				}
+				output_setpoint_addr = (void *)((unsigned int64)parent + sizeof(OBJECT) + (unsigned int64)output_setpoint_property->addr);
+			}
 		}
 	}
 
@@ -465,7 +468,7 @@ int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 			erf_in = (observation - expectation) / (obs_stdev*obs_stdev * sqrt(2.0));
 			erf_out = tc_erf(erf_in);
 			cdf_out = 0.5 * (1 + erf_out);
-			prob_off = sensitivity * (cdf_out-0.5);			
+			prob_off = comfort_level * (cdf_out-0.5);			
 			break;
 		case PDT_EXPONENTIAL:
 			prob_off = comfort_level * (1 - exp(-observation/expectation));
@@ -483,7 +486,7 @@ int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 	if(r < prob_off){
 		output_state = -1; // off?
 	} else {
-		output_state = 0;
+		output_state = 0; //Normal
 	}
 
 	return 0;
