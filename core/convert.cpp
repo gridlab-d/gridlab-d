@@ -700,7 +700,10 @@ int convert_from_object(char *buffer, /**< pointer to the string buffer */
 		strcpy(buffer,"");
 
 	if (obj->name != NULL){
-		if ((strlen(obj->name) != 0) && (strlen(obj->name) < (size_t)(size - 1))){
+		size_t a = strlen(obj->name);
+		size_t b = size - 1;
+		//if ((strlen(obj->name) != 0) && (strlen(obj->name) < (size_t)(size - 1))){
+		if((a != 0) && (a < b)){
 			strcat(buffer, obj->name);
 			return 1;
 		}
