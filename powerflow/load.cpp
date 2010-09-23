@@ -75,9 +75,9 @@ load::load(MODULE *mod) : node(mod)
 			// This allows the user to set a base power on each phase, and specify the power as a function
 			// of ZIP and pf for each phase (similar to zipload).  This will override the constant values
 			// above if specified, otherwise, constant values work as stated
-			PT_double, "base_power_A[W]",PADDR(base_power[0]),
-			PT_double, "base_power_B[W]",PADDR(base_power[1]),
-			PT_double, "base_power_C[W]",PADDR(base_power[2]),
+			PT_double, "base_power_A[VA]",PADDR(base_power[0]),
+			PT_double, "base_power_B[VA]",PADDR(base_power[1]),
+			PT_double, "base_power_C[VA]",PADDR(base_power[2]),
 			PT_double, "power_pf_A[pu]",PADDR(power_pf[0]),
 			PT_double, "current_pf_A[pu]",PADDR(current_pf[0]),
 			PT_double, "impedance_pf_A[pu]",PADDR(impedance_pf[0]),
@@ -149,8 +149,16 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 			{
 				double real_power,imag_power;
 
-				real_power = base_power[index]*power_fraction[index];
-				imag_power = (power_pf[index] == 0.0) ? 0.0 : real_power * sqrt(1.0/(power_pf[index] * power_pf[index]) - 1.0);
+				if (power_pf[index] == 0.0)
+				{				
+					real_power = 0.0;
+					imag_power = base_power[index] * power_fraction[index];
+				}
+				else
+				{
+					real_power = base_power[index] * power_fraction[index] * power_pf[index];
+					imag_power = real_power * sqrt(1.0/(power_pf[index] * power_pf[index]) - 1.0);
+				}
 
 				if (power_pf[index] < 0)
 				{
@@ -166,20 +174,29 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 			// Put in the constant current portion and adjust the angle
 			if (current_fraction[index] != 0.0)
 			{
-				double real_power,imag_power,angle;
+				double real_power,imag_power,temp_angle;
 				complex temp_curr;
 
-				real_power = base_power[index]*current_fraction[index];
-				imag_power = (current_pf[index] == 0.0) ? 0.0 : real_power * sqrt(1.0/(current_pf[index] * current_pf[index]) - 1.0);
+				if (current_pf[index] == 0.0)
+				{				
+					real_power = 0.0;
+					imag_power = base_power[index] * current_fraction[index];
+				}
+				else
+				{
+					real_power = base_power[index] * current_fraction[index] * current_pf[index];
+					imag_power = real_power * sqrt(1.0/(current_pf[index] * current_pf[index]) - 1.0);
+				}
 
 				if (current_pf[index] < 0)
 				{
 					imag_power *= -1.0;	//Adjust imaginary portion for negative PF
 				}
 				
+				// Calculate then shift the constant current to use the posted voltage as the reference angle
 				temp_curr = ~complex(real_power,imag_power) / complex(nominal_voltage,0);
-				angle = temp_curr.Arg() + voltage[index].Arg();
-				temp_curr.SetPolar(temp_curr.Mag(),angle);
+				temp_angle = temp_curr.Arg() + voltage[index].Arg();
+				temp_curr.SetPolar(temp_curr.Mag(),temp_angle);
 
 				constant_current[index] = temp_curr;
 			}
@@ -193,8 +210,16 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 			{
 				double real_power,imag_power;
 
-				real_power = base_power[index]*impedance_fraction[index];
-				imag_power = (impedance_pf[index] == 0.0) ? 0.0 : real_power * sqrt(1.0/(impedance_pf[index] * impedance_pf[index]) - 1.0);
+				if (impedance_pf[index] == 0.0)
+				{				
+					real_power = 0.0;
+					imag_power = base_power[index] * impedance_fraction[index];
+				}
+				else
+				{
+					real_power = base_power[index] * impedance_fraction[index] * impedance_pf[index];
+					imag_power = real_power * sqrt(1.0/(impedance_pf[index] * impedance_pf[index]) - 1.0);
+				}
 
 				if (impedance_pf[index] < 0)
 				{
