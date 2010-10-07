@@ -446,9 +446,26 @@ int climate::init(OBJECT *parent)
 
 TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 {
+	int rv = 0;
 	if(t0 > TS_ZERO && reader_type == RT_CSV){
+		DATETIME now;
+		gl_localtime(t0, &now);
+		//OBJECT *obj = OBJECTHDR(this);
 		csv_reader *cr = OBJECTDATA(reader,csv_reader);
-		return cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &wind_speed, &rainfall, &snowdepth);
+		rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &wind_speed, &rainfall, &snowdepth);
+		// calculate the solar radiation
+		double sol_time = sa->solar_time((double)now.hour+now.minute/60.0+now.second/3600.0,now.yearday,RAD(tz_meridian),RAD(reader->longitude));
+		double sol_rad = 0.0;
+
+		for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
+			if(c_point == CP_H)
+				sol_rad = file.calc_solar(CP_E,now.yearday,RAD(reader->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
+			else
+				sol_rad = file.calc_solar(c_point,now.yearday,RAD(reader->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity);//(double)dnr * cos_incident + dhr;
+			/* TMY2 solar radiation data is in Watt-hours per square meter. */
+			solar_flux[c_point] = sol_rad;
+		}
+		return rv;
 	}
 	if (t0>TS_ZERO && tmy!=NULL)
 	{

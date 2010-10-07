@@ -71,6 +71,7 @@ int csv_reader::open(const char *file){
 	int has_cols = 0;
 	int linenum = 0;
 	int i = 0;
+	OBJECT *obj = OBJECTHDR(this);
 	weather *wtr = 0;
 
 	if(file == 0){
@@ -146,6 +147,11 @@ int csv_reader::open(const char *file){
 	sample_ct = i; // if wtr was the limiting factor, truncate the count
 
 //	index = -1;	// forces to start on zero-eth index
+
+	// post-process
+	// calculate object lat/long
+	obj->latitude = lat_deg + (lat_deg > 0 ? lat_min : -lat_min) / 60;
+	obj->longitude = long_deg + (long_deg > 0 ? long_min : -long_min / 60);
 
 	return 1;
 }
