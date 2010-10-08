@@ -299,7 +299,7 @@ int controller::init(OBJECT *parent){
 		fetch(&pDemand, demand, parent);
 		fetch(&pTotal, total, parent);
 		fetch(&pLoad, load, parent);
-	} else if(control_mode == CN_DOUBLE_RAMP){	
+	} else if(control_mode == CN_DOUBLE_RAMP){
 		sprintf(aux_state, "is_AUX_on");
 		sprintf(heat_state, "is_HEAT_on");
 		sprintf(cool_state, "is_COOL_on");
@@ -318,7 +318,7 @@ int controller::init(OBJECT *parent){
 	}
 	fetch(&pAvg, avg_target, pMarket);
 	fetch(&pStd, std_target, pMarket);
-	
+
 
 	if(dir == 0){
 		double high = ramp_high * range_high;
@@ -445,7 +445,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 		slider_setting_heat = 1.0;
 	if(slider_setting_cool > 1.0)
 		slider_setting_cool = 1.0;
-	
+
 	if(control_mode == CN_RAMP && setpoint0 == -1)
 		setpoint0 = *pSetpoint;
 	if(control_mode == CN_DOUBLE_RAMP && heating_setpoint0 == -1)
@@ -464,7 +464,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 					ramp_low = 0;
 				if(range_high != 0)
 					ramp_high = (1 + 2 * (1 - slider_setting)) / range_high;
-				else 
+				else
 					ramp_high = 0;
 			} else {
 				min = setpoint0 + range_low;
@@ -552,7 +552,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			} else {
 				set_temp = setpoint0;
 			}
-			
+
 			may_run = 1;
 
 			// clip
@@ -563,7 +563,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			}
 
 			*pSetpoint = set_temp;
-			//gl_verbose("controller::postsync(): temp %f given p %f vs avg %f",set_temp, market->next.price, market->avg24);	
+			//gl_verbose("controller::postsync(): temp %f given p %f vs avg %f",set_temp, market->next.price, market->avg24);
 		}
 
 		if(dir > 0){
@@ -663,7 +663,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					if(midpoint - *pDeadband/2 < heating_setpoint0 || midpoint + *pDeadband/2 > cooling_setpoint0) {
 						gl_error("The midpoint between the max heating setpoint and the min cooling setpoint must be half a deadband away from each base setpoint");
 						return TS_INVALID;
-					} else { 
+					} else {
 						heat_max = midpoint - *pDeadband/2;
 						cool_min = midpoint + *pDeadband/2;
 					}
@@ -689,7 +689,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					break;
 			}
 		}
-		// if the market has updated, 
+		// if the market has updated,
 		if(lastmkt_id != market->market_id){
 			lastmkt_id = market->market_id;
 			lastbid_id = -1;
@@ -746,17 +746,17 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		if(*pMonitor > cool_max){
 			last_p = market->pricecap;
 			last_q = *pCoolingDemand;
-		} 
+		}
 		// We have to heat
 		else if(*pMonitor < heat_min){
 			last_p = market->pricecap;
 			last_q = *pHeatingDemand;
-		} 
+		}
 		// We're floating in between heating and cooling
 		else if(*pMonitor > heat_max && *pMonitor < cool_min){
 			last_p = 0.0;
 			last_q = 0.0;
-		} 
+		}
 		// We might heat, if the price is right
 		else if(*pMonitor <= heat_max && *pMonitor >= heat_min){
 			double ramp, range;
@@ -768,7 +768,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				last_p = *pAvg;
 			}
 			last_q = *pHeatingDemand;
-		} 
+		}
 		// We might cool, if the price is right
 		else if(*pMonitor <= cool_max && *pMonitor >= cool_min){
 			double ramp, range;
@@ -780,6 +780,12 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				last_p = *pAvg;
 			}
 			last_q = *pCoolingDemand;
+		}
+		if(0 != strcmp(market->unit, "")){
+			if(0 == gl_convert("kW", market->unit, &(last_q))){
+				gl_error("unable to convert bid units from 'kW' to '%s'", market->unit);
+				return TS_INVALID;
+			}
 		}
 		if(last_q > 0.001){
 			if (pState != 0 ) {
@@ -838,7 +844,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 
 	next_run += (TIMESTAMP)(this->period);
 
-	
+
 	return TS_NEVER;
 }
 
