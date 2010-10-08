@@ -181,6 +181,9 @@ auction::auction(MODULE *module)
 			//PT_double, "total_unresponsive_demand", PADDR(unresponsive_buy),
 
 			PT_int32, "warmup", PADDR(warmup),
+			PT_enumeration, "ignore_pricecap", PADDR(ignore_pricecap),
+				PT_KEYWORD, "FALSE", IP_FALSE,
+				PT_KEYWORD, "TRUE", IP_TRUE,
 
 			NULL)<1){
 				char msg[256];
@@ -228,6 +231,7 @@ int auction::create(void)
 	for(stat = stats; stat != NULL; stat = stat->next){
 		gl_set_value(OBJECTHDR(this), stat->prop, val);
 	}
+	statistic_mode = ST_ON;
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -509,6 +513,7 @@ int auction::update_statistics(){
 	unsigned int start = 0, stop = 0;
 	unsigned int i = 0;
 	unsigned int idx = 0;
+	unsigned int skipped = 0;
 	double mean = 0.0;
 	double stdev = 0.0;
 	if(statistic_count < 1){
@@ -535,9 +540,18 @@ int auction::update_statistics(){
 		start = (unsigned int)((history_count + stop - sample_need) % history_count); // one off for initial period delay
 		for(i = 0; i < sample_need; ++i){
 			idx = (start + i + history_count) % history_count;
-			mean += new_prices[idx];
+			if( (ignore_pricecap == IP_FALSE) || 
+				((new_prices[idx] != pricecap) && (new_prices[idx] != -pricecap))){
+				mean += new_prices[idx];
+			} else {
+				++skipped;
+			}
 		}
-		mean /= sample_need;
+		if(skipped != sample_need){
+			mean /= sample_need;
+		} else {
+			mean = 0; // problem!
+		}
 		if(current->stat_type == SY_MEAN){
 			current->value = mean;
 		} else if(current->stat_type == SY_STDEV){
@@ -549,10 +563,17 @@ int auction::update_statistics(){
 				stdev = 0.0;
 				for(i = 0; i < sample_need; ++i){
 					idx = (start + i + history_count) % history_count;
-					x = new_prices[idx] - mean;
-					stdev += x * x;
+					if( (ignore_pricecap == IP_FALSE) || 
+						((new_prices[idx] != pricecap) && (new_prices[idx] != -pricecap))){
+							x = new_prices[idx] - mean;
+							stdev += x * x;
+					}
 				}
-				stdev /= sample_need;
+				if(skipped != sample_need){
+					stdev /= sample_need;
+				} else {
+					stdev = 0; // problem!
+				}
 				current->value = sqrt(stdev);
 			}
 		}
@@ -1220,7 +1241,13 @@ void auction::clear_market(void)
 			} else if(offers.getcount() == 0 && asks.getcount() > 0){
 				clear.price = asks.getbid(0)->price + bid_offset;
 			} else {
-				clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;;
+				if(offers.getbid(0)->price == pricecap){
+					clear.price == asks.getbid(0)->price + bid_offset;
+				} else if (asks.getbid(0)->price == -pricecap){
+					clear.price == offers.getbid(0)->price - bid_offset;
+				} else {
+					clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;;
+				}
 			}
 			
 		} else if (clear.quantity < unresponsive_buy){

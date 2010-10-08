@@ -48,6 +48,8 @@ public:
 	bool verbose;
 	typedef enum {AT_NONE=0, AT_SINGLE=1, AT_DOUBLE=2} AUCTIONTYPE;
 	typedef enum {ST_ON=0, ST_OFF=1} STATISTICMODE;
+	typedef enum {IP_FALSE=0, IP_TRUE=1} IGNOREPRICECAP;
+	IGNOREPRICECAP ignore_pricecap;
 private:
 	// functions
 	int init_statistics();

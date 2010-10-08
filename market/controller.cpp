@@ -29,6 +29,9 @@ controller::controller(MODULE *module){
 			PT_enumeration, "bid_mode", PADDR(bidmode),
 				PT_KEYWORD, "ON", BM_ON,
 				PT_KEYWORD, "OFF", BM_OFF,
+			PT_enumeration, "use_override", PADDR(use_override),
+				PT_KEYWORD, "OFF", OU_OFF,
+				PT_KEYWORD, "ON", OU_ON,
 			PT_double, "ramp_low[degF]", PADDR(ramp_low), PT_DESCRIPTION, "the comfort response below the setpoint",
 			PT_double, "ramp_high[degF]", PADDR(ramp_high), PT_DESCRIPTION, "the comfort response above the setpoint",
 			PT_double, "range_low", PADDR(range_low), PT_DESCRIPTION, "the setpoint limit on the low side",
@@ -57,6 +60,7 @@ controller::controller(MODULE *module){
 			PT_double, "slider_setting",PADDR(slider_setting),
 			PT_double, "slider_setting_heat", PADDR(slider_setting_heat),
 			PT_double, "slider_setting_cool", PADDR(slider_setting_cool),
+			PT_char32, "override", PADDR(re_override),
 			// double ramp
 			PT_double, "heating_range_high[degF]", PADDR(heat_range_high),
 			PT_double, "heating_range_low[degF]", PADDR(heat_range_low),
@@ -96,6 +100,7 @@ controller::controller(MODULE *module){
 			PT_double, "heat_max", PADDR(heat_max),
 			PT_double, "cool_min", PADDR(cool_min),
 #endif
+			PT_int32, "bid_delay", PADDR(bid_delay),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(controller));
 	}
@@ -114,6 +119,7 @@ int controller::create(){
 	heat_range_high = 3;
 	cool_range_low = -3;
 	cool_range_high = 5;
+	use_override = OU_OFF;
 	return 1;
 }
 
@@ -259,6 +265,18 @@ int controller::init(OBJECT *parent){
 	gl_set_dependent(hdr, pMarket);
 	market = OBJECTDATA(pMarket, auction);
 
+	if(period == 0){
+		period = market->period;
+	}
+
+	if(bid_delay < 0){
+		bid_delay = -bid_delay;
+	}
+	if(bid_delay > period){
+		gl_warning("");
+		bid_delay = 0;
+	}
+
 	if(target[0] == 0){
 		GL_THROW("controller: %i, target property not specified", hdr->id);
 	}
@@ -393,6 +411,15 @@ int controller::init(OBJECT *parent){
 			return 0;
 		}
 	}
+	// get override, if set
+	if(re_override[0] != 0){
+		pOverride = gl_get_enum_by_name(parent, re_override);
+	}
+	if((pOverride == 0) && (use_override == OU_ON)){
+		gl_error("use_override is ON but no valid override property name is given");
+		return 0;
+	}
+
 	if(control_mode == CN_RAMP){
 		if(slider_setting < 0.0){
 			gl_warning("slider_setting is negative, reseting to 0.0");
@@ -420,6 +447,7 @@ int controller::init(OBJECT *parent){
 			gl_warning("slider_setting_cool is greater than 1.0, reseting to 1.0");
 			slider_setting_cool = 1.0;
 		}
+		// get override, if set
 	}
 	last_p = market->init_price;
 	return 1;
@@ -526,11 +554,15 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 
 	/* short circuit if the state variable doesn't change during the specified interval */
-	if(t1 < next_run){
-		if (pState == 0)
-			return next_run;
-		else if (*pState == last_pState)
-			return next_run;
+	if((t1 < next_run) && (market->market_id == lastmkt_id)){
+		if(t1 == next_run - bid_delay){
+			; // continue
+		} else {
+			if (pState == 0)
+				return next_run;
+			else if (*pState == last_pState)
+				return next_run;
+		}
 	}
 
 	if(control_mode == CN_RAMP){
@@ -553,7 +585,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				set_temp = setpoint0;
 			}
 
-			may_run = 1;
+			if((use_override == OU_ON) && (pOverride != 0)){
+				if(clear_price <= last_p){
+					// if we're willing to pay as much as, or for more than the offered price, then run.
+					*pOverride = 1;
+				} else {
+					*pOverride = -1;
+				}
+			}
 
 			// clip
 			if(set_temp > max){
@@ -703,7 +742,8 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 						break;
 					case CT_PRICE:	// should not occur
 					case CT_NULL:	// q zero or logic error ~ should not occur
-						gl_warning("clearing price and bid price are equal with a market clearing type that involves inequal prices");
+						// occurs during the zero-eth market.
+						//gl_warning("clearing price and bid price are equal with a market clearing type that involves inequal prices");
 						break;
 					default:
 						break;
@@ -726,6 +766,20 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					*pHeatingSetpoint = heating_setpoint0;
 				}
 			}
+
+			// apply overrides
+			if((use_override == OU_ON)){
+				if(last_q != 0.0){
+					if(market->current_frame.clearing_price <= last_p){				
+						*pOverride = 1;
+					} else {
+						*pOverride = -1;
+					}
+				} else { // equality
+					*pOverride = 0; // 'normal operation'
+				}
+			}
+
 			//clip
 			if(*pCoolingSetpoint > cool_max)
 				*pCoolingSetpoint = cool_max;
@@ -737,7 +791,10 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				*pHeatingSetpoint = heat_min;
 
 			lastmkt_id = market->market_id;
+
+
 		}
+		
 		// submit bids
 		double previous_q = last_q; //store the last value, in case we need it
 		last_p = 0.0;
@@ -818,8 +875,8 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	// Determine the system_mode the HVAC is in
-	if(t1 < next_run){
-		return next_run;
+	if(t1 < next_run-bid_delay){
+		return next_run-bid_delay;
 	}
 
 	if(resolve_mode == RM_SLIDING){
@@ -845,7 +902,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	next_run += (TIMESTAMP)(this->period);
 
 
-	return TS_NEVER;
+	return (next_run - bid_delay);
 }
 
 //////////////////////////////////////////////////////////////////////////

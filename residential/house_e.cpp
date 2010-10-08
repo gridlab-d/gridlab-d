@@ -2021,19 +2021,6 @@ void house_e::update_system(double dt)
 		
 	}
 
-	if(this->re_override == OV_OFF){
-		system_mode = SM_OFF;
-		fan_power = 0;
-		system_rated_capacity = 0.0;
-		system_rated_power = 0.0;
-		cooling_demand = 0.0;
-		heating_demand = 0.0;
-		load.power.SetRect(0.0, 0.0);
-		load.admittance.SetRect(0.0, 0.0);
-		load.current.SetRect(0.0, 0.0);
-		load.total.SetRect(0.0, 0.0);
-	}
-
 	/* calculate the power consumption */
 	load.total = system_rated_power + fan_power;
 	load.heatgain = system_rated_capacity;
@@ -2152,7 +2139,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		t2 = sync_enduses(t0, t1);
 #ifdef _DEBUG
-		gl_debug("house %s (%d) sync_enduses event at '%s'", obj->name, obj->id, gl_strftime(t2));
+//		gl_debug("house %s (%d) sync_enduses event at '%s'", obj->name, obj->id, gl_strftime(t2));
 #endif
 
 		// get the fractions to properly apply themselves
@@ -2163,7 +2150,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (t < t2) {
 			t2 = t;
 #ifdef _DEBUG
-			gl_debug("house %s (%d) sync_panel event '%s'", obj->name, obj->id, gl_strftime(t2));
+//			gl_debug("house %s (%d) sync_panel event '%s'", obj->name, obj->id, gl_strftime(t2));
 #endif
 		}
 
@@ -2195,7 +2182,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (isnan(dt2) || !isfinite(dt2) || dt2<0)
 		{
 #ifdef _DEBUG
-		gl_debug("house %s (%d) time to next event is indeterminate", obj->name, obj->id);
+//		gl_debug("house %s (%d) time to next event is indeterminate", obj->name, obj->id);
 #endif
 			// try again in 1 second if there is a solution in the future
 			//if (sgn(dTair)==sgn(Tevent-Tair) && Tevent) 
@@ -2208,7 +2195,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 			// need to do a second pass to get next state
 			t = t1+1; if (t<t2) t2 = t;
 #ifdef _DEBUG
-		gl_debug("house %s (%d) time to next event is less than time resolution", obj->name, obj->id);
+//		gl_debug("house %s (%d) time to next event is less than time resolution", obj->name, obj->id);
 #endif
 		}
 		else
@@ -2216,14 +2203,14 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 			// next event is found
 			t = t1+(TIMESTAMP)(ceil(dt2)*TS_SECOND); if (t<t2) t2 = t;
 #ifdef _DEBUG
-		gl_debug("house %s (%d) time to next event is %.2f hrs", obj->name, obj->id, dt2/3600);
+//		gl_debug("house %s (%d) time to next event is %.2f hrs", obj->name, obj->id, dt2/3600);
 #endif
 		}
 
 #ifdef _DEBUG
 		char tbuf[64];
 		gl_printtime(t2, tbuf, 64);
-		gl_debug("house %s (%d) next event at '%s'", obj->name, obj->id, tbuf);
+//		gl_debug("house %s (%d) next event at '%s'", obj->name, obj->id, tbuf);
 #endif
 
 		// enforce dwell time
@@ -2350,6 +2337,19 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		TheatOff = heating_setpoint+tdead;
 		TauxOn = TheatOn-aux_heat_deadband;
 	}
+
+	// skip the historisis and turn on or off, if the HVAC is in a state where it _could_ be on or off.
+	if (this->re_override == OV_ON){
+		TcoolOn = TcoolOff;
+		TheatOn = TheatOff;
+		re_override = OV_NORMAL;
+		thermostat_last_cycle_time = gl_globalclock - thermostat_cycle_time - 1;
+	} else if(this->re_override == OV_OFF){
+		TcoolOff = TcoolOn;
+		TheatOff = TheatOn;
+		re_override = OV_NORMAL;
+		thermostat_last_cycle_time = gl_globalclock - thermostat_cycle_time - 1;
+	} 
 
 	// check for thermostat cycle lockout
 	if(t1 < thermostat_last_cycle_time + thermostat_cycle_time){

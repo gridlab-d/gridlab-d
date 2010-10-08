@@ -61,6 +61,12 @@ public:
 	} THERMOSTATMODE;
 	THERMOSTATMODE thermostat_mode, last_mode, previous_mode;
 
+	typedef enum {
+		OU_OFF=0,
+		OU_ON=1
+	} OVERRIDE_USE;
+	OVERRIDE_USE use_override;
+
 	double kT_L, kT_H;
 	char target[33];
 	char setpoint[33];
@@ -107,11 +113,13 @@ public:
 	char32 heating_state;
 	char32 cooling_state;
 	char32 deadband;
+	char32 re_override;
 
 	double setpoint0;
 	double heating_setpoint0;
 	double cooling_setpoint0;
 	double sliding_time_delay;
+	int bid_delay;
 
 private:
 	TIMESTAMP next_run;
@@ -150,6 +158,8 @@ private:
 	char32 aux_state;
 	int64 dtime_delay;
 	TIMESTAMP time_off;
+
+	enumeration *pOverride;
 };
 
 #endif // _controller_H
