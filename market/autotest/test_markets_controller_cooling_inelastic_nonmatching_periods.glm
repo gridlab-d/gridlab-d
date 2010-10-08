@@ -122,24 +122,24 @@ object triplex_meter {
 			// limit 4380;
 		// };
 		object controller {
-			name cool_control;
+			name cool_control;			
 			market Market_1;
-			bid_mode ON;
-			slider_setting 1;
+			bid_mode ON;			
 			period 300;
 			average_target current_price_mean_30min;
-			standard_deviation_target current_price_stdev_30min;
-			setpoint cooling_setpoint;
+			standard_deviation_target current_price_stdev_30min;		
+			control_mode RAMP;
 			target air_temperature;
-			// base_setpoint 78;
-			// control_mode RAMP;
+			setpoint cooling_setpoint;
 			demand cooling_demand;
-			load hvac_load;
 			total total_load;
+			load hvac_load;
+			slider_setting 0; //set to 0 or ramps will be overwritten
 			ramp_low 2;
 			ramp_high 2;
 			range_low 0;
 			range_high 5;
+
 			// object multi_recorder {
 				// property simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house1:power_state,house1:cooling_demand,house1:cooling_setpoint,house1:air_temperature,house1:system_mode,average_target,standard_deviation_target,house1:hvac_load,house1:outdoor_temperature;
 				// file "check_defaults_output1.csv";
