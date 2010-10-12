@@ -315,7 +315,13 @@ TIMESTAMP pqload::sync(TIMESTAMP t0)
 	/* ---scale by schedule here--- */
 
 	constant_power[0] = constant_power[1] = constant_power[2] = kP;
-	constant_current[0] = constant_current[1] = constant_current[2] = kI;
+	// rotate currents by voltage angles
+	//constant_current[0] = constant_current[1] = constant_current[2] = kI;
+	for(i = 0; i < 3; ++i){
+		double v_angle = voltage[i].Arg();
+		constant_current[i].SetPolar(output[2], output[3] * PI/180.0 + v_angle);
+	}
+
 	if (kZ != 0.0)
 		constant_impedance[0] = constant_impedance[1] = constant_impedance[2] = kZ;
 
