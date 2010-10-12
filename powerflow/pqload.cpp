@@ -174,6 +174,44 @@ int pqload::init(OBJECT *parent){
 	int rv = 0;
 	int w_rv = 0;
 
+	// init_weather from house_e.cpp:init_weather
+	static FINDLIST *climates = NULL;
+	OBJECT *hdr = OBJECTHDR(this);
+	int not_found = 0;
+	if (climates==NULL && not_found==0) 
+	{
+		climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
+		if (climates==NULL)
+		{
+			not_found = 1;
+			gl_warning("pqload: no climate data found");
+		}
+		else if (climates->hit_count>1)
+		{
+			gl_warning("pqload: %d climates found, using first one defined", climates->hit_count);
+		}
+	}
+	if (climates!=NULL)
+	{
+		if (climates->hit_count==0)
+		{
+			//default to mock data
+		}
+		else //climate data was found
+		{
+			// force rank of object w.r.t climate
+			OBJECT *obj = gl_find_next(climates,NULL);
+			if(weather == NULL){
+				weather = NULL;
+			} else {
+				if (obj->rank<=hdr->rank)
+					gl_set_dependent(obj,hdr);
+				weather = obj;
+			}
+		}
+	}
+
+	// old check
 	if(weather != NULL){
 		temperature = gl_get_property(weather, "temperature");
 		if(temperature == NULL){
