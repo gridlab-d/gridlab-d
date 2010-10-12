@@ -118,6 +118,8 @@ auction::auction(MODULE *module)
 			PT_double, "capacity_reference_bid_quantity", PADDR(capacity_reference_bid_quantity),
 			PT_double, "init_price", PADDR(init_price),
 			PT_double, "init_stdev", PADDR(init_stdev),
+			PT_double, "future_mean_price", PADDR(future_mean_price),
+			PT_bool, "use_future_mean_price", PADDR(use_future_mean_price),
 
 			PT_timestamp, "current_market.start_time", PADDR(current_frame.start_time),
 			PT_timestamp, "current_market.end_time", PADDR(current_frame.end_time),
@@ -213,6 +215,7 @@ int auction::create(void)
 	memcpy(this,defaults,sizeof(auction));
 	lasthr = thishr = -1;
 	verbose = 0;
+	use_future_mean_price = 0;
 	pricecap = 0;
 	warmup = 1;
 	market_id = 1;
@@ -552,6 +555,8 @@ int auction::update_statistics(){
 		} else {
 			mean = 0; // problem!
 		}
+		if(use_future_mean_price)
+			mean = future_mean_price;
 		if(current->stat_type == SY_MEAN){
 			current->value = mean;
 		} else if(current->stat_type == SY_STDEV){

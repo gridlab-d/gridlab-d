@@ -46,6 +46,7 @@ typedef struct s_market_frame{
 class auction {
 public:
 	bool verbose;
+	bool use_future_mean_price;
 	typedef enum {AT_NONE=0, AT_SINGLE=1, AT_DOUBLE=2} AUCTIONTYPE;
 	typedef enum {ST_ON=0, ST_OFF=1} STATISTICMODE;
 	typedef enum {IP_FALSE=0, IP_TRUE=1} IGNOREPRICECAP;
@@ -95,6 +96,8 @@ public:
 	STATISTICMODE statistic_mode;
 	double fixed_price;
 	double fixed_quantity;
+	double future_mean_price; // right now the future mean price will be fed with a player
+	
 	double init_price;
 	double init_stdev;
 	OBJECT *capacity_reference_object;
