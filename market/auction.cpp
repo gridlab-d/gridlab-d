@@ -1495,6 +1495,7 @@ void auction::record_bid(OBJECT *from, double quantity, double real_price, BIDDE
 	char *unkState = "unknown";
 	char *offState = "off";
 	char *onState = "on";
+	char *unk = "unknown time";
 	char buffer[256];
 	char bigbuffer[1024];
 	char *pState;
@@ -1515,7 +1516,7 @@ void auction::record_bid(OBJECT *from, double quantity, double real_price, BIDDE
 					pState = onState;
 					break;
 			}
-			tStr = (gl_strtime(&dt,buffer,sizeof(buffer)) ? buffer : "unknown time");
+			tStr = (gl_strtime(&dt,buffer,sizeof(buffer)) ? buffer : unk);
 			sprintf(bigbuffer, "%d,%s,%s,%f,%f,%s", (int32)market_id, tStr, gl_name(from, name_buffer, 256), real_price, quantity, pState);
 			fprintf(trans_file, "%s\n", bigbuffer);
 			--trans_log_count;
