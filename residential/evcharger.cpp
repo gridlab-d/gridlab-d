@@ -114,7 +114,7 @@ EVPROFILEITEM *add_demand_profile(EVDEMAND *data)
 {
 	EVPROFILEITEM *item = new EVPROFILEITEM;
 	if (item==NULL)
-		throw "evcharter.cpp: add_demand_profile() memory allocation failed";
+		GL_THROW( "evcharter.cpp: add_demand_profile() memory allocation failed" );
 	item->data = data;
 	item->next = first_demand_profile;
 	return first_demand_profile = item;
@@ -124,12 +124,12 @@ EVDEMAND *load_demand_profile(char *filename)
 	char *filepath = gl_findfile(filename,NULL,FF_READ);
 	if (filepath==NULL)	
 	{
-		gl_error("searching for demand profile file '%s'",filename);
-		throw "unable to find demand profile";
+		//gl_error("searching for demand profile file '%s'",filename);
+		GL_THROW( "unable to find demand profile" );
 	}
 	EVDEMAND *data = new EVDEMAND;
 	if (data==NULL)
-			throw "unable to allocate memory for new demand profile";
+			GL_THROW( "unable to allocate memory for new demand profile" );
 	memset(data,0,sizeof(EVDEMAND));
 
 	int daytype = WEEKDAY;
@@ -140,8 +140,8 @@ EVDEMAND *load_demand_profile(char *filename)
 	FILE *fp = fopen(filepath,"r");
 	if (fp==NULL)
 	{	
-		gl_error("reading file %s line %d",filename,linenum);
-		throw "unable to open demand profile";
+		//gl_error("reading file %s line %d",filename,linenum);
+		GL_THROW( "unable to read demand profile in '%s' at line %d", filename, linenum );
 	}
 	char line[1024];
 	double *hdr[8]; memset(hdr,0,sizeof(hdr));
@@ -165,15 +165,15 @@ EVDEMAND *load_demand_profile(char *filename)
 					daytype = WEEKEND;
 				else
 				{
-					gl_output("%s(%d): '%s' is an invalid daytype name",filename,linenum,blockname);
-					throw "invalid block name";
+					GL_THROW("%s(%d): '%s' is an invalid daytype name",filename,linenum,blockname);
+					//throw "invalid block name";
 				}
 				data->n_daytypes++;
 			}
 			else
 			{
-				gl_output("%s(%d): daytype name syntax is not recognized",filename,linenum,blockname);
-				throw "unable to read block name";
+				GL_THROW("%s(%d): daytype name syntax is not recognized",filename,linenum,blockname);
+				//throw "unable to read block name";
 			}
 		}
 		else if (isalpha(line[0])) // header
@@ -187,7 +187,7 @@ EVDEMAND *load_demand_profile(char *filename)
 				if (nhdr>sizeof(hdr)/sizeof(hdr[0]))
 				{
 					gl_output("%s(%d): too many heading items listed (max is %d)",filename,linenum,sizeof(hdr)/sizeof(hdr[0]));
-					throw "too many heading items in demand profile";
+					GL_THROW( "too many heading items in demand profile" );
 				}
 				if (strcmp(dir,"ARR")==0)
 					event = ARRIVE;
@@ -195,8 +195,8 @@ EVDEMAND *load_demand_profile(char *filename)
 					event = DEPART;
 				else
 				{
-					gl_output("%s(%d): '%s' is not an appropriate event direction (e.g., ARR, DEP)",filename,linenum,dir);
-					throw "unrecognized event direction in demand profile";
+					GL_THROW("%s(%d): '%s' is not an appropriate event direction (e.g., ARR, DEP)",filename,linenum,dir);
+					//throw "unrecognized event direction in demand profile";
 				}
 				if (strcmp(trip,"HOME")==0)
 					hdr[nhdr++] = data->home[daytype][event];
@@ -208,8 +208,8 @@ EVDEMAND *load_demand_profile(char *filename)
 					hdr[nhdr++] = data->longtrip[daytype][event];
 				else
 				{
-					gl_output("%s(%d): '%s' is not an appropriate trip location (e.g., HOME, WORK)",filename,linenum,dir);
-					throw "unrecognized trip location in demand profile";
+					GL_THROW("%s(%d): '%s' is not an appropriate trip location (e.g., HOME, WORK)",filename,linenum,dir);
+					//throw "unrecognized trip location in demand profile";
 				}
 				offset += 8;
 			}
@@ -233,7 +233,7 @@ EVDEMAND *load_demand_profile(char *filename)
 	if (ferror(fp))
 	{
 		gl_error("%s(%d): %s",filename,linenum,strerror(errno));
-		throw "unable to read demand profile";
+		GL_THROW( "unable to read demand profile" );
 	}
 	fclose(fp);
 	return data;
@@ -361,7 +361,7 @@ double evcharger::update_state(double dt /* seconds */)
 	{
 		DATETIME now;
 		if (!gl_localtime(obj->clock,&now))
-			throw "unable to obtain current time";
+			GL_THROW( "unable to obtain current time" );
 		/*	TROUBLESHOOT
 			The clock likely was not properly initialized, or the object clock has been overwritten with
 			garbage.  Please verify that the clock is set by the input model.
@@ -411,7 +411,7 @@ double evcharger::update_state(double dt /* seconds */)
 		//	charge = 0.25;
 		//	break;
 		default:
-			throw "invalid state";
+			GL_THROW( "invalid state" );
 			/*	TROUBLESHOOT
 				The evcharger vehicle has found itself in an ambiguous state while calculating its state
 				and level of charge.  Please verify that the object was initialized with "state" as either
@@ -436,7 +436,7 @@ double evcharger::update_state(double dt /* seconds */)
 				charge_kw = amps[(int)charger_type] * pCircuit->pV->Mag() * charge_throttle /1000;
 				break;
 			default:
-				throw "invalid charger_type";
+				GL_THROW( "invalid charger_type" );
 				/*	TROUBLESHOOT
 					The vehicle charger is not in a valid state.  It may not have been declared properly in
 					the model file.  Please verify that the "charger_type" property is either "LOW", "MEDIUM",
@@ -505,7 +505,7 @@ double evcharger::update_state(double dt /* seconds */)
 	//	load.power = complex(0,0,J);
 	//	break;
 	default:
-		throw "invalid state";
+		GL_THROW( "invalid state" );
 		/*	TROUBLESHOOT
 			The evcharger vehicle has found itself in an ambiguous state while calculating its
 			effects on its parent house.  Please verify that the object was initialized with 
@@ -517,7 +517,7 @@ double evcharger::update_state(double dt /* seconds */)
 	}
 
 	if (!isfinite(charge))
-		throw "charge state error (not a number)"; // this is really bad
+		GL_THROW( "charge state error (not a number)" ); // this is really bad
 	/*	TROUBLESHOOT
 		The charge value is no longer a finite value.  Please submit a bug report with the
 		entire offending model file, or create a simplified model using subsections of the
@@ -572,7 +572,7 @@ EXPORT int init_evcharger(OBJECT *obj)
 		evcharger *my = OBJECTDATA(obj,evcharger);
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("%s (%s:%d): %s", obj->name?obj->name:"anonymous object",obj->oclass->name,obj->id,msg);
 		return 0;
@@ -596,7 +596,7 @@ EXPORT TIMESTAMP sync_evcharger(OBJECT *obj, TIMESTAMP t0)
 		obj->clock = t0;
 		return t1;
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("%s (%s:%d): %s", obj->name?obj->name:"anonymous object",obj->oclass->name,obj->id,msg);
 		return TS_INVALID;
