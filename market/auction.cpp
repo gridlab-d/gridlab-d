@@ -186,6 +186,8 @@ auction::auction(MODULE *module)
 			PT_enumeration, "ignore_pricecap", PADDR(ignore_pricecap),
 				PT_KEYWORD, "FALSE", IP_FALSE,
 				PT_KEYWORD, "TRUE", IP_TRUE,
+			PT_char256, "transaction_log_file", PADDR(trans_log),
+			PT_int32, "transaction_log_limit", PADDR(trans_log_max),
 
 			NULL)<1){
 				char msg[256];
@@ -243,6 +245,22 @@ int auction::init(OBJECT *parent)
 {
 	OBJECT *obj=OBJECTHDR(this);
 	unsigned int i = 0;
+
+	if(trans_log[0] != 0){
+		time_t now = time(NULL);
+		trans_file = fopen(trans_log, "w");
+		if(trans_file == 0){
+			gl_error("%s (auction:%d) unable to open '%s' as a transaction log output file", obj->name?obj->name:"anonymous", obj->id, trans_log);
+			return 0;
+		}
+		// else write transaction file header, a la recorder file headers
+		fprintf(trans_file, "# %s\n", trans_log);
+		fprintf(trans_file, "# %s", asctime(localtime(&now))); // return char already included in asctime
+		fprintf(trans_file, "# %s\n", obj->name?obj->name:"anonymous");
+		fprintf(trans_file, "# market_id,timestamp,bidder_name,bid_price,bid_quantity,bid_state\n");
+		fflush(trans_file);
+		trans_log_count = trans_log_max;
+	}
 
 	if (linkref!=NULL)
 	{
@@ -748,6 +766,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	return TS_NEVER;
 }
 
+
 /* Presync is called when the clock needs to advance on the first top-down pass */
 TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
@@ -1247,11 +1266,11 @@ void auction::clear_market(void)
 				clear.price = asks.getbid(0)->price + bid_offset;
 			} else {
 				if(offers.getbid(0)->price == pricecap){
-					clear.price == asks.getbid(0)->price + bid_offset;
+					clear.price = asks.getbid(0)->price + bid_offset;
 				} else if (asks.getbid(0)->price == -pricecap){
-					clear.price == offers.getbid(0)->price - bid_offset;
+					clear.price = offers.getbid(0)->price - bid_offset;
 				} else {
-					clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;;
+					clear.price = offers.getbid(0)->price + (asks.getbid(0)->price - offers.getbid(0)->price) * clearing_scalar;
 				}
 			}
 			
@@ -1465,6 +1484,47 @@ void auction::clear_market(void)
 	/* limit price */
 	if (next.price<-pricecap) next.price = -pricecap;
 	else if (next.price>pricecap) next.price = pricecap;
+
+	if(trans_file){
+		fflush(trans_file);
+	}
+}
+
+void auction::record_bid(OBJECT *from, double quantity, double real_price, BIDDERSTATE state){
+	char name_buffer[256];
+	char *unkState = "unknown";
+	char *offState = "off";
+	char *onState = "on";
+	char buffer[256];
+	char bigbuffer[1024];
+	char *pState;
+	char *tStr;
+	DATETIME dt;
+	TIMESTAMP submit_time = gl_globalclock;
+	if(trans_file){ // copied from version below
+		if((this->trans_log_max <= 0) || (trans_log_count > 0)){
+			gl_localtime(submit_time,&dt);
+			switch(state){
+				case BS_UNKNOWN:
+					pState = unkState;
+					break;
+				case BS_OFF:
+					pState = offState;
+					break;
+				case BS_ON:
+					pState = onState;
+					break;
+			}
+			tStr = (gl_strtime(&dt,buffer,sizeof(buffer)) ? buffer : "unknown time");
+			sprintf(bigbuffer, "%d,%s,%s,%f,%f,%s", (int32)market_id, tStr, gl_name(from, name_buffer, 256), real_price, quantity, pState);
+			fprintf(trans_file, "%s\n", bigbuffer);
+			--trans_log_count;
+		} else {
+			fprintf(trans_file, "# end of file \n");
+			fclose(trans_file);
+			trans_file = 0;
+		}
+	}
 }
 
 KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, BIDDERSTATE state)
@@ -1531,6 +1591,7 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 		} else {
 			;
 		}
+		record_bid(from, quantity, real_price, state);
 		return biddef.raw;
 	}
 	else if (biddef.market < 0 || biddef.bid_type == BID_UNKNOWN){
@@ -1556,6 +1617,8 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 		biddef.market = market_id;
 		biddef.bid_type = (quantity > 0 ? BID_SELL : BID_BUY);
 		write_bid(out, biddef.market, biddef.bid, biddef.bid_type);
+		// interject transaction log file writing here
+		record_bid(from, quantity, real_price, state);
 		biddef.raw = out;
 		return biddef.raw;
 	} else { // key between cleared market and 'market_id' ~ points to an old market

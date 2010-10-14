@@ -58,6 +58,7 @@ private:
 	int push_market_frame(TIMESTAMP t1);
 	int check_next_market(TIMESTAMP t1);
 	TIMESTAMP pop_market_frame(TIMESTAMP t1);
+	void record_bid(OBJECT *from, double quantity, double real_price, BIDDERSTATE state);
 	// variables
 	double *Qload;		/**< total load (used to determine unresponsive load when not all load bid) */
 	curve asks;			/**< demand curve */ 
@@ -136,6 +137,11 @@ public:
 	double unresponsive_buy, unresponsive_sell;
 	double responsive_buy, responsive_sell;
 	double total_buy, total_sell;
+	char256 trans_log;
+	int64 trans_log_max;
+private:
+	FILE *trans_file;
+	int64 trans_log_count;
 public:
 	KEY submit(OBJECT *from, double quantity, double real_price, KEY key=-1, BIDDERSTATE state=BS_UNKNOWN);
 	TIMESTAMP nextclear() const;
