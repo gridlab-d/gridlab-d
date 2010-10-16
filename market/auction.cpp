@@ -188,6 +188,11 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "TRUE", IP_TRUE,
 			PT_char256, "transaction_log_file", PADDR(trans_log),
 			PT_int32, "transaction_log_limit", PADDR(trans_log_max),
+			PT_char256, "curve_log_file", PADDR(curve_log),
+			PT_int32, "curve_log_limit", PADDR(curve_log_max),
+			PT_enumeration, "curve_log_info", PADDR(curve_log_info),
+				PT_KEYWORD, "NORMAL", CO_NORMAL,
+				PT_KEYWORD, "EXTRA", CO_EXTRA,
 
 			NULL)<1){
 				char msg[256];
@@ -260,6 +265,21 @@ int auction::init(OBJECT *parent)
 		fprintf(trans_file, "# market_id,timestamp,bidder_name,bid_price,bid_quantity,bid_state\n");
 		fflush(trans_file);
 		trans_log_count = trans_log_max;
+	}
+
+	if(curve_log[0] != 0){
+		time_t now = time(NULL);
+		curve_file = fopen(curve_log, "w");
+		if(curve_file == 0){
+			gl_error("%s (auction:%d) unable to open '%s' as an aurction curve log output file", obj->name?obj->name:"anonymous", obj->id, trans_log);
+			return 0;
+		}
+		fprintf(curve_file, "# %s\n", curve_log);
+		fprintf(curve_file, "# %s", asctime(localtime(&now))); // return char already included in asctime
+		fprintf(curve_file, "# %s\n", obj->name?obj->name:"anonymous");
+		fprintf(curve_file, "# market_id,timestamp,sort_index,bidder_name,bid_quantity,bid_price\n");
+		fflush(curve_file);
+		curve_log_count = curve_log_max;
 	}
 
 	if (linkref!=NULL)
@@ -826,6 +846,64 @@ TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	retry = 0;
 	
 	return (retry ? t1 : -clearat); /* soft return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+}
+
+void auction::record_curve(double bu, double su){
+	char name[64];
+	char timestr[64];
+	DATETIME dt;
+	unsigned int i = 0;
+
+	gl_localtime(gl_globalclock, &dt);
+	gl_strtime(&dt, timestr, 63);
+
+	if(CO_EXTRA == curve_log_info)
+		fprintf(curve_file, "# supply curve at %s: %f total and %f unresponsive\n", timestr, cleared_frame.seller_total_quantity, su);
+	for (i=0; i<offers.getcount(); i++){
+		fprintf(curve_file, "%d,%s,%4d,%s,%.3f %s,%.2f $/%s\n",(int32)market_id,timestr,i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
+	}
+
+	if(CO_EXTRA == curve_log_info)
+		fprintf(curve_file, "# demand curve at %s: %f total and %f unresponsive\n", timestr, cleared_frame.buyer_total_quantity, bu);
+	for (i=0; i<asks.getcount(); i++){
+		fprintf(curve_file, "%d,%s,%4d,%s,%.3f %s,%.2f $/%s\n",(int32)market_id,timestr,i,gl_name(asks.getbid(i)->from,name,sizeof(name)), -asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+//		fprintf(curve_file, "%d,%4d,%s asks %.3f %s at %.2f $/%s\n",(int32)market_id,i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+	}
+
+	if(CO_EXTRA == curve_log_info){
+		char tstr[256];
+		switch(cleared_frame.clearing_type){
+			case CT_NULL:
+				sprintf(tstr, "null");
+				break;
+			case CT_SELLER:
+				sprintf(tstr, "marginal_seller");
+				break;
+			case CT_BUYER:
+				sprintf(tstr, "marginal_buyer");
+				break;
+			case CT_PRICE:
+				sprintf(tstr, "marginal_price");
+				break;
+			case CT_EXACT:
+				sprintf(tstr, "exact_p_and_q");
+				break;
+			case CT_FAILURE:
+				sprintf(tstr, "failure");
+				break;
+		}
+		fprintf(curve_file, "# curve cleared %f %s at $%f with %s type\n", cleared_frame.clearing_quantity, unit, cleared_frame.clearing_price, tstr);
+	}
+
+	if(curve_log_max > 0){
+		--curve_log_count;
+		if (curve_log_count == 0){
+			fclose(curve_file);
+			curve_file = 0;
+		}
+	} else {
+		fflush(curve_file);
+	}
 }
 
 void auction::clear_market(void)
@@ -1475,6 +1553,11 @@ void auction::clear_market(void)
 		++total_samples;
 		update_statistics();
 		
+	}
+
+	// record the results
+	if(curve_file != 0){
+		record_curve(unresponsive_buy, unresponsive_sell);
 	}
 
 	/* clear the bid lists */

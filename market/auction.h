@@ -51,6 +51,8 @@ public:
 	typedef enum {ST_ON=0, ST_OFF=1} STATISTICMODE;
 	typedef enum {IP_FALSE=0, IP_TRUE=1} IGNOREPRICECAP;
 	IGNOREPRICECAP ignore_pricecap;
+	typedef enum {CO_NORMAL=0, CO_EXTRA=1} CURVEOUTPUT;
+	CURVEOUTPUT curve_log_info;
 private:
 	// functions
 	int init_statistics();
@@ -59,6 +61,7 @@ private:
 	int check_next_market(TIMESTAMP t1);
 	TIMESTAMP pop_market_frame(TIMESTAMP t1);
 	void record_bid(OBJECT *from, double quantity, double real_price, BIDDERSTATE state);
+	void record_curve(double, double);
 	// variables
 	double *Qload;		/**< total load (used to determine unresponsive load when not all load bid) */
 	curve asks;			/**< demand curve */ 
@@ -139,9 +142,13 @@ public:
 	double total_buy, total_sell;
 	char256 trans_log;
 	int64 trans_log_max;
+	char256 curve_log;
+	int64 curve_log_max;
 private:
 	FILE *trans_file;
 	int64 trans_log_count;
+	FILE *curve_file;
+	int64 curve_log_count;
 public:
 	KEY submit(OBJECT *from, double quantity, double real_price, KEY key=-1, BIDDERSTATE state=BS_UNKNOWN);
 	TIMESTAMP nextclear() const;
