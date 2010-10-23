@@ -43,7 +43,8 @@ public:
 		BM_NONE,
 		BM_UNIFORM,
 		BM_TIERED,
-		BM_HOURLY
+		BM_HOURLY,
+		BM_TIERED_RTP
 	} BILLMODE;
 	BILLMODE bill_mode;
 	OBJECT *power_market;
@@ -51,6 +52,7 @@ public:
 	int32 bill_day;					//Day bill is to be processed (assumed to occur at midnight of that day)
 	int last_bill_month;			//Keeps track of which month we are looking at
 	double price;					//Standard uniform pricing
+	double price_base;
 	double tier_price[3], tier_energy[3];  //Allows for additional tiers of pricing over the standard price in TIERED
 
 	double process_bill(TIMESTAMP t1);
