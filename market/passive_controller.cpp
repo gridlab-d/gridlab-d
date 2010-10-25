@@ -508,7 +508,7 @@ EXPORT int create_passive_controller(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		gl_error("create_passive_controller: %s", msg);
 	}
@@ -523,7 +523,7 @@ EXPORT int init_passive_controller(OBJECT *obj, OBJECT *parent)
 			return OBJECTDATA(obj,passive_controller)->init(parent);
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		char name[64];
 		gl_error("init_passive_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
@@ -562,7 +562,7 @@ EXPORT TIMESTAMP sync_passive_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG p
 			break;
 		}
 	}
-	catch (char *msg)
+	catch (const char *msg)
 	{
 		char name[64];
 		gl_error("sync_passive_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
