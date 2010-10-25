@@ -924,6 +924,7 @@ EXPORT int create_controller(OBJECT **obj, OBJECT *parent)
 	catch (const char *msg)
 	{
 		gl_error("create_controller: %s", msg);
+		return 0;
 	}
 	return 1;
 }
@@ -983,6 +984,7 @@ EXPORT TIMESTAMP sync_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	{
 		char name[64];
 		gl_error("sync_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		t2 = TS_INVALID;
 	}
 	return t2;
 }

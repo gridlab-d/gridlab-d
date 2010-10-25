@@ -71,37 +71,16 @@ auction::auction(MODULE *module)
 		}
 
 		if (gl_publish_variable(oclass,
-/**/		PT_enumeration, "type", PADDR(type), PT_DEPRECATED, PT_DESCRIPTION, "type of market",
-				PT_KEYWORD, "NONE", AT_NONE,
-				PT_KEYWORD, "SINGLE", AT_SINGLE,
-				PT_KEYWORD, "DOUBLE", AT_DOUBLE,
-/**/		PT_char32, "unit", PADDR(unit), PT_DESCRIPTION, "unit of quantity",
+			PT_char32, "unit", PADDR(unit), PT_DESCRIPTION, "unit of quantity",
 			PT_double, "period[s]", PADDR(dPeriod), PT_DESCRIPTION, "interval of time between market clearings",
 			PT_double, "latency[s]", PADDR(dLatency), PT_DESCRIPTION, "latency between market clearing and delivery", 
 			PT_int64, "market_id", PADDR(market_id), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "unique identifier of market clearing",
-			PT_double, "last.Q", PADDR(last.quantity), PT_DEPRECATED, PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "last cleared quantity", 
-			PT_double, "last.P", PADDR(last.price), PT_DEPRECATED, PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "last cleared price", 
-			PT_double, "next.Q", PADDR(next.quantity), PT_DEPRECATED, PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "next cleared quantity", 
-			PT_double, "next.P", PADDR(next.price),  PT_DEPRECATED, PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "next cleared price",
-			PT_double, "avg24", PADDR(avg24), PT_DEPRECATED, PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "daily average of price",
-			PT_double, "std24", PADDR(std24), PT_DEPRECATED, PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "daily stdev of price",
-			PT_double, "avg72", PADDR(avg72), PT_DEPRECATED, PT_DESCRIPTION, "three day price average",
-			PT_double, "std72", PADDR(std72), PT_DEPRECATED, PT_DESCRIPTION, "three day price stdev",
-			PT_double, "avg168", PADDR(avg168), PT_DEPRECATED, PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "weekly average of price",
-			PT_double, "std168", PADDR(std168), PT_DEPRECATED, PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "weekly stdev of price",
 /**/		PT_object, "network", PADDR(network), PT_DESCRIPTION, "the comm network used by object to talk to the market (if any)",
 			PT_bool, "verbose", PADDR(verbose), PT_DESCRIPTION, "enable verbose auction operations",
 			PT_object, "linkref", PADDR(linkref), PT_DEPRECATED, PT_DESCRIPTION, "reference to link object that has demand as power_out (only used when not all loads are bidding)",
 			PT_double, "pricecap", PADDR(pricecap), PT_DEPRECATED, PT_DESCRIPTION, "the maximum price (magnitude) allowed",
 			PT_double, "price_cap", PADDR(pricecap), PT_DESCRIPTION, "the maximum price (magnitude) allowed",
 
-			PT_double, "demand.total", PADDR(asks.total),PT_DEPRECATED,
-			PT_double, "demand.total_on", PADDR(asks.total_on),PT_DEPRECATED,
-			PT_double, "demand.total_off", PADDR(asks.total_off),PT_DEPRECATED,
-			PT_double, "supply.total", PADDR(offers.total),PT_DEPRECATED,
-			PT_double, "supply.total_on", PADDR(offers.total_on),PT_DEPRECATED,-
-			PT_double, "supply.total_off", PADDR(offers.total_off),PT_DEPRECATED,
-			//PT_int32, "immediate", PADDR(immediate),
 			PT_enumeration, "special_mode", PADDR(special_mode),
 				PT_KEYWORD, "NONE", MD_NONE,
 				PT_KEYWORD, "SELLERS_ONLY", MD_SELLERS,
@@ -175,12 +154,6 @@ auction::auction(MODULE *module)
 			PT_double, "past_market.seller_total_quantity", PADDR(past_frame.seller_total_quantity),
 			PT_double, "past_market.buyer_total_quantity", PADDR(past_frame.buyer_total_quantity),
 			PT_double, "past_market.seller_min_price", PADDR(past_frame.seller_min_price),
-			//PT_double, "total_supply", PADDR(total_sell),
-			//PT_double, "total_demand", PADDR(total_buy),
-			//PT_double, "total_responsive_supply", PADDR(responsive_sell),
-			//PT_double, "total_responsive_demand", PADDR(responsive_buy),
-			//PT_double, "total_unresponsive_supply", PADDR(unresponsive_sell),
-			//PT_double, "total_unresponsive_demand", PADDR(unresponsive_buy),
 
 			PT_int32, "warmup", PADDR(warmup),
 			PT_enumeration, "ignore_pricecap", PADDR(ignore_pricecap),
@@ -282,32 +255,6 @@ int auction::init(OBJECT *parent)
 		curve_log_count = curve_log_max;
 	}
 
-	if (linkref!=NULL)
-	{
-		if (!gl_object_isa(linkref,"link","powerflow"))
-		{
-			gl_error("%s (auction:%d) linkref '%s' does not reference a powerflow link object", obj->name?obj->name:"anonymous", obj->id, linkref->name);
-			/* TROUBLESHOOT
-				linkref must be an object reference to a powerflow::link object.  Verify that the property references that desired object in the model.
-				*/
-			return 0;
-		}
-		Qload = (double*)gl_get_addr(linkref,"power_out");
-		if (Qload==NULL)
-		{
-			gl_error("%s (auction:%d) linkref '%s' does not publish power_out", obj->name?obj->name:"anonymous", obj->id, linkref->name);
-			/* TROUBLESHOOT
-				linkref must be an object reference to a powerflow::link object that publishes power_out.  Verify that the powerflow module is from
-				version 2.0 or later.
-				*/
-			return 0;
-		}
-	}
-	else
-	{
-		Qload = NULL;
-	}
-	
 	if (pricecap==0){
 		pricecap = 9999.0;
 	}
@@ -407,7 +354,7 @@ int auction::init(OBJECT *parent)
 		if(i+1 < latency_count){
 			frameptr->next = (MARKETFRAME *)(nextaddr);
 		} else if(i+1 == latency_count){
-			frameptr->next = framedata; // last->next = first
+			frameptr->next = framedata;
 		}
 	}
 	latency_front = latency_back = 0;
@@ -527,14 +474,6 @@ int auction::init_statistics(){
 				tail->next = sp;
 				tail = sp;
 			}
-			// init statistic 
-			// handled in create()
-			/*
-			if(statprop.stat_type == SY_MEAN){
-				gl_set_value(obj, sp->prop, init_price);
-			} else if(statprop.stat_type == SY_STDEV){
-				gl_set_value(obj, sp->prop, init_stdev);
-			}*/
 
 			++statistic_count;
 			if(statprop.interval > longest_statistic){
@@ -577,7 +516,6 @@ int auction::update_statistics(){
 		} else if(current->stat_mode == ST_PAST){
 			stop = price_index - 1;
 		}
-		//start = (unsigned int)((history_count + stop - sample_need + 1) % history_count);
 		start = (unsigned int)((history_count + stop - sample_need) % history_count); // one off for initial period delay
 		for(i = 0; i < sample_need; ++i){
 			idx = (start + i + history_count) % history_count;
@@ -717,25 +655,8 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 		gl_verbose("market latency queue has no data");
 		return TS_NEVER;
 	}
-	//frame = &(framedata[latency_front]);
 
 	frame = (MARKETFRAME *)(latency_front * this->latency_stride + (int64)framedata);
-
-	// grab first sample as next but not current if it's *almost* time to push data
-/*	if(latency > 0 && t1 >= (frame->start_time - period) && t1 < frame->start_time){
-		MARKETFRAME *nframe = frame;
-		next_frame.market_id = nframe->market_id;
-		next_frame.start_time = nframe->start_time;
-		next_frame.end_time = nframe->end_time;
-		next_frame.clearing_price = nframe->clearing_price;
-		next_frame.clearing_quantity = nframe->clearing_quantity;
-		next_frame.clearing_type = nframe->clearing_type;
-		next_frame.marginal_quantity = nframe->marginal_quantity;
-		next_frame.seller_total_quantity = nframe->seller_total_quantity;
-		next_frame.buyer_total_quantity = nframe->buyer_total_quantity;
-		next_frame.seller_min_price = nframe->seller_min_price;
-		return frame->start_time;
-	}*/
 
 	if(t1 < frame->start_time){
 		gl_verbose("market latency queue data is not yet applicable");
@@ -763,24 +684,6 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 			gl_set_value(obj, stat->prop, frame->statistics[i]);
 		}
 	}
-	// ~ if latency > 0, cache next frame
-	/*if(latency > 0){
-		MARKETFRAME *nframe = frame->next;
-		next_frame.market_id = nframe->market_id;
-		next_frame.start_time = nframe->start_time;
-		next_frame.end_time = nframe->end_time;
-		next_frame.clearing_price = nframe->clearing_price;
-		next_frame.clearing_quantity = nframe->clearing_quantity;
-		next_frame.clearing_type = nframe->clearing_type;
-		next_frame.marginal_quantity = nframe->marginal_quantity;
-		next_frame.seller_total_quantity = nframe->seller_total_quantity;
-		next_frame.buyer_total_quantity = nframe->buyer_total_quantity;
-		next_frame.seller_min_price = nframe->seller_min_price;
-		// copy statistics
-		for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
-			gl_set_value(obj, stat->prop, frame->statistics[i]);
-		}
-	}*/
 	// having used this index, push the index forward
 	latency_front = (latency_front + 1) % latency_count;
 	return TS_NEVER;
@@ -803,11 +706,9 @@ TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 	else
 	{
 		/* if clock has advanced to a market clearing time */
-//		if (t1>t0 && fmod((double)(t1/TS_SECOND),period)==0)
 		if (t1>t0 && ((t1/TS_SECOND) % period)==0)
 		{
 			/* save the last clearing and reset the next clearing */
-			last = next;
 			next.from = NULL; /* in the context of a clearing, from is the marginal resource */
 			next.quantity = next.price = 0;
 		}
@@ -843,9 +744,7 @@ TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP auction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	retry = 0;
-	
-	return (retry ? t1 : -clearat); /* soft return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+	return -clearat; /* soft return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
 void auction::record_curve(double bu, double su){
@@ -867,7 +766,6 @@ void auction::record_curve(double bu, double su){
 		fprintf(curve_file, "# demand curve at %s: %f total and %f unresponsive\n", timestr, cleared_frame.buyer_total_quantity, bu);
 	for (i=0; i<asks.getcount(); i++){
 		fprintf(curve_file, "%d,%s,%4d,%s,%.3f %s,%.2f $/%s\n",(int32)market_id,timestr,i,gl_name(asks.getbid(i)->from,name,sizeof(name)), -asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
-//		fprintf(curve_file, "%d,%4d,%s asks %.3f %s at %.2f $/%s\n",(int32)market_id,i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
 	}
 
 	if(CO_EXTRA == curve_log_info){
@@ -913,46 +811,6 @@ void auction::clear_market(void)
 	extern double bid_offset;
 
 	memset(&unresponsive, 0, sizeof(unresponsive));
-
-	/* handle linkref */
-	if (Qload!=NULL && special_mode != MD_FIXED_BUYER) // buyers-only means no unresponsive bid
-	{	
-		char name[256];
-		double total_unknown = asks.get_total() - asks.get_total_on() - asks.get_total_off();
-		double refload = (*Qload);
-
-		if (strcmp(unit,"")!=0) 
-		{
-			if (gl_convert("W",unit,&refload)==0){
-				char msg[256];
-				sprintf(msg, "linkref %s uses units of (W) and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), unit);
-				throw msg;
-				/* TROUBLESHOOT
-					Power markets must be trading in quantities measured with power units.  Change the market's unit property to some
-					quantity of watts -- W, MW, kW, mW, dW, etc.
-					*/
-			}
-			else if (verbose){
-				gl_output("linkref converted %.3f W to %.3f %s", *Qload, refload, unit);
-			}
-		}
-		if (total_unknown > 0.001) // greater than one mW ~ allows rounding errors
-			gl_warning("total_unknown is %.0f -> some controllers are not providing their states with their bids", total_unknown);
-		BID unresponsive;
-		unresponsive.from = capacity_reference_object;
-		unresponsive.price = pricecap;
-		unresponsive.state = BS_UNKNOWN;
-		unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
-		if (unresponsive.quantity < -0.001)
-		{
-			gl_warning("linkref %s has negative unresponsive load--this is probably due to improper bidding", gl_name(linkref,name,sizeof(name)), unresponsive.quantity);
-		}
-		else if (unresponsive.quantity > 0.001)
-		{
-			asks.submit(&unresponsive);
-			gl_verbose("linkref %s has %.3f unresponsive load", gl_name(linkref,name,sizeof(name)), -unresponsive.quantity);
-		}
-	}
 
 	/* handle unbidding capacity */
 	if(capacity_reference_property != NULL && special_mode != MD_FIXED_BUYER){
@@ -1218,7 +1076,7 @@ void auction::clear_market(void)
 		}
 
 		i = j = 0;
-		this->clearing_type = CT_NULL;
+		clearing_type = CT_NULL;
 		while (i<asks.getcount() && j<offers.getcount() && buy->price>=sell->price)
 		{
 			double buy_quantity = demand_quantity + buy->quantity;
@@ -1439,79 +1297,10 @@ void auction::clear_market(void)
 		//int update_rv = update_statistics();
 		++price_index;
 	}
-	if(period <= 3600){
-		if(lasthr != thishr){
-			unsigned int i = 0;
-			unsigned int sph = (unsigned int)(3600/period);
-			unsigned int sph24 = 24*sph;
-			unsigned int sph72 = 72*sph;
-			unsigned int sph168 = 168*sph;
 
-			/* add price/quantity to the history */
-			prices[count%sph168] = next.price;
-			++count;
-			
-			/* update the daily and weekly averages */
-			avg168 = 0.0;
-			for(i = 0; i < count && i < sph168; ++i){
-				avg168 += prices[i];
-			}
-			avg168 /= (count > sph168 ? sph168 : count);
-
-			avg72 = 0.0;
-			for(i = 1; i <= sph72 && i <= count; ++i){
-				unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
-				avg72 += prices[j];
-			}
-			avg72 /= (count > sph72 ? sph72 : count);
-
-			avg24 = 0.0;
-			for(i = 1; i <= sph24 && i <= count; ++i){
-				unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
-				avg24 += prices[j];
-			}
-			avg24 /= (count > sph24 ? sph24 : (unsigned int)count);
-
-			/* update the daily & weekly standard deviations */
-			std168 = 0.0;
-			for(i = 0; i < count && i < sph168; ++i){
-				std168 += prices[i] * prices[i];
-			}
-			std168 /= (count > sph168 ? sph168 : (unsigned int)count);
-			std168 -= avg168*avg168;
-			std168 = sqrt(fabs(std168));
-			if (std168<0.01) std168=0.01;
-
-			std72 = 0.0;
-			for(i = 1; i <= sph72 && i <= (unsigned int)count; ++i){
-				unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
-				std72 += prices[j] * prices[j];
-			}
-			std72 /= (count > sph72 ? sph72 : (unsigned int)count);
-			std72 -= avg72*avg72;
-			std72 = sqrt(fabs(std72));
-			if (std72 < 0.01){
-				std72 = 0.01;
-			}
-
-			std24 = 0.0;
-			for(i = 1; i <= sph24 && i <= (unsigned int)count; ++i){
-				unsigned int j = (sph168 - i + (unsigned int)count) % sph168;
-				std24 += prices[j] * prices[j];
-			}
-			std24 /= (count > sph24 ? sph24 : (unsigned int)count);
-			std24 -= avg24*avg24;
-			std24 = sqrt(fabs(std24));
-			if (std24<0.01){
-				std24=0.01;
-			}
-
-			retry = 1; // reiterate to pass the updated values to the controllers
-
-			/* update reference hour */
-			lasthr = thishr;
-		}
-	}
+	/* limit price */
+	if (next.price<-pricecap) next.price = -pricecap;
+	else if (next.price>pricecap) next.price = pricecap;
 
 	// update cleared_frame data
 	cleared_frame.market_id = this->market_id;
@@ -1563,10 +1352,6 @@ void auction::clear_market(void)
 	/* clear the bid lists */
 	asks.clear();
 	offers.clear();
-
-	/* limit price */
-	if (next.price<-pricecap) next.price = -pricecap;
-	else if (next.price>pricecap) next.price = pricecap;
 
 	if(trans_file){
 		fflush(trans_file);
@@ -1742,6 +1527,12 @@ EXPORT int create_auction(OBJECT **obj, OBJECT *parent)
 	catch (char *msg)
 	{
 		gl_error("create_auction: %s", msg);
+		return 0;
+	}
+	catch (const char *msg)
+	{
+		gl_error("create_auction: %s", msg);
+		return 0;
 	}
 	return 1;
 }
@@ -1757,11 +1548,13 @@ EXPORT int init_auction(OBJECT *obj, OBJECT *parent)
 	{
 		char name[64];
 		gl_error("init_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		return 0;
 	}
 	catch (const char *msg)
 	{
 		char name[64];
 		gl_error("init_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		return 0;
 	}
 	return 1;
 }
@@ -1799,11 +1592,13 @@ EXPORT TIMESTAMP sync_auction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	{
 		char name[64];
 		gl_error("sync_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		t2 = TS_INVALID;
 	}
 	catch (const char *msg)
 	{
 		char name[64];
 		gl_error("sync_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		t2 = TS_INVALID;
 	}
 	return t2;
 }

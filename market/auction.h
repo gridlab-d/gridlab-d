@@ -47,7 +47,6 @@ class auction {
 public:
 	bool verbose;
 	bool use_future_mean_price;
-	typedef enum {AT_NONE=0, AT_SINGLE=1, AT_DOUBLE=2} AUCTIONTYPE;
 	typedef enum {ST_ON=0, ST_OFF=1} STATISTICMODE;
 	typedef enum {IP_FALSE=0, IP_TRUE=1} IGNOREPRICECAP;
 	IGNOREPRICECAP ignore_pricecap;
@@ -63,36 +62,27 @@ private:
 	void record_bid(OBJECT *from, double quantity, double real_price, BIDDERSTATE state);
 	void record_curve(double, double);
 	// variables
-	double *Qload;		/**< total load (used to determine unresponsive load when not all load bid) */
 	curve asks;			/**< demand curve */ 
 	curve offers;		/**< supply curve */
 	int retry;
+	BID next;			/**< next clearing result */
 protected:
 public:
 	int32 immediate;	// debug variable
-	AUCTIONTYPE type;	/**< auction type */
 	char32 unit;		/**< unit of quantity (see unitfile.txt) */
 	double dPeriod, dLatency;
 	TIMESTAMP period;		/**< time period of auction closing (s) */
 	TIMESTAMP latency;		/**< delay after closing before unit commitment (s) */
 	int64 market_id;	/**< id of market to clear */
-	BID last;			/**< last clearing result */
-	BID next;			/**< next clearing result */
+
 	TIMESTAMP clearat;	/**< next clearing time */
 	TIMESTAMP checkat;	/**< next price check time */
 	object network;		/**< comm network to use */
 	double pricecap;	/**< maximum price allowed */
-
-	double avg24;		/**< daily average of price */
-	double std24;		/**< daily stdev of price */
-	double avg72;
-	double std72;
-	double avg168;		/**< weekly average of price */
-	double std168;		/**< weekly stdev of price */
 	double prices[168*60]; /**< price history */
 	int64 count;		/**< used for sampled-hourly data */
 	int16 lasthr, thishr;
-	OBJECT *linkref;	/**< reference link object that contains power_out (see Qload) */
+	OBJECT *linkref;	/**< reference link object that contains the total load (used to determine unresponsive load when not all load bid) */
 
 	// new stuff
 	SPECIALMODE special_mode;

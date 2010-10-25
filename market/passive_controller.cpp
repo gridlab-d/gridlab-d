@@ -440,7 +440,7 @@ int passive_controller::calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1){
 
 int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 	if(observation_addr == 0 || expectation_addr == 0 || observation_stdev_addr == 0){
-		gl_error("insufficient input for probabilistic shutoff control mode");
+		GL_THROW("insufficient input for probabilistic shutoff control mode");
 		return -1;
 	}
 	double erf_in, erf_out;
@@ -511,6 +511,7 @@ EXPORT int create_passive_controller(OBJECT **obj, OBJECT *parent)
 	catch (const char *msg)
 	{
 		gl_error("create_passive_controller: %s", msg);
+		return 0;
 	}
 	return 1;
 }
@@ -527,6 +528,7 @@ EXPORT int init_passive_controller(OBJECT *obj, OBJECT *parent)
 	{
 		char name[64];
 		gl_error("init_passive_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		return 0;
 	}
 	return 1;
 }
@@ -558,7 +560,9 @@ EXPORT TIMESTAMP sync_passive_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG p
 			obj->clock = t1;
 			break;
 		default:
-			GL_THROW("invalid pass request (%d)", pass);
+			//GL_THROW("invalid pass request (%d)", pass);
+			gl_error("invalid pass request (%d)", pass);
+			t2 = TS_INVALID;
 			break;
 		}
 	}
@@ -566,6 +570,7 @@ EXPORT TIMESTAMP sync_passive_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG p
 	{
 		char name[64];
 		gl_error("sync_passive_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		t2 = TS_INVALID;
 	}
 	return t2;
 }

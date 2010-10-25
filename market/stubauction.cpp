@@ -206,6 +206,7 @@ EXPORT int create_stubauction(OBJECT **obj, OBJECT *parent)
 	catch (const char *msg)
 	{
 		gl_error("create_stubauction: %s", msg);
+		return 0;
 	}
 	return 1;
 }
@@ -221,6 +222,7 @@ EXPORT int init_stubauction(OBJECT *obj, OBJECT *parent)
 	{
 		char name[64];
 		gl_error("init_stubauction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		return 0;
 	}
 	return 1;
 }
@@ -248,7 +250,9 @@ EXPORT TIMESTAMP sync_stubauction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			t2 = my->postsync(obj->clock,t1);
 			break;
 		default:
-			GL_THROW("invalid pass request (%d)", pass);
+			//GL_THROW("invalid pass request (%d)", pass);
+			gl_error("invalid pass request (%d)", pass);
+			t2 = TS_INVALID;
 			break;
 		}
 		if (pass==clockpass)
@@ -258,6 +262,7 @@ EXPORT TIMESTAMP sync_stubauction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	{
 		char name[64];
 		gl_error("sync_stubauction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
+		t2 = TS_INVALID;
 	}
 	return t2;
 }
