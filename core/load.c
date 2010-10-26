@@ -199,6 +199,19 @@ static char *format_object(OBJECT *obj)
 	return buffer;
 }
 
+static char *strip_right_white(char *b){
+	size_t len, i;
+	len = strlen(b) - 1;
+	for(i = len; i >= 0; --i){
+		if(b[i] == '\r' || b[i] == '\n' || b[i] == ' ' || b[i] == '\t'){
+			b[i] = '\0';
+		} else {
+			break;
+		}
+	}
+	return b;
+}
+
 /* inline source code support */
 char code_block[65536] = "";
 char global_block[65536] = "";
@@ -4614,7 +4627,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			output_error_raw("%s(%d): %sifdef macro missing term",filename,linenum,MACRO);
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, NULL, 0)==NULL && getenv(value)==NULL)
+		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, NULL, 0)==NULL && getenv(value)==NULL)
+		strcpy(value, strip_right_white(term+1));
+		if (global_getvar(value, NULL, 0)==NULL && getenv(value)==NULL)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
 		nesting++;
@@ -4632,7 +4647,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		while(isspace((unsigned char)(*term)))
 			++term;
-		if (sscanf(term,"\"%[^\"\n]",value)==1 && find_file(value, NULL, 0)==NULL)
+		//if (sscanf(term,"\"%[^\"\n]",value)==1 && find_file(value, NULL, 0)==NULL)
+		strcpy(value, strip_right_white(term));
+		if (find_file(value, NULL, 0)==NULL)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
 		nesting++;
@@ -4648,7 +4665,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			output_error_raw("%s(%d): %sifndef macro missing term",filename,linenum,MACRO);
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n\r]",value)==1 && (global_getvar(value, NULL, 0)!=NULL || getenv(value)!=NULL))
+		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, NULL, 0)!=NULL || getenv(value)!=NULL))
+		strcpy(value, strip_right_white(term+1));
+		if(global_getvar(value, NULL, 0)!=NULL || getenv(value)!=NULL)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
 		nesting++;
@@ -4755,18 +4774,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n\r]",value)==1)
-		{
-/*			if(0 == putenv(value)){;
-				strcpy(line,"\n");
-				return SUCCESS;
-			}
-			else
-			{
-				output_fatal("unable to putenv(%s)", value);
-				return FAILED;
-			}
- */
+		//if (sscanf(term+1,"%[^\n\r]",value)==1)
+		strcpy(value, strip_right_white(term+1));
+		if(1){
 #ifdef WIN32
 			putenv(value);
 #else
@@ -4794,8 +4804,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n\r]",value)==1)
-		{
+		//if (sscanf(term+1,"%[^\n\r]",value)==1)
+		strcpy(value, strip_right_white(term+1));
+		if(1){
 			STATUS result;
 			if (strchr(value,'=')==NULL)
 			{
@@ -4831,8 +4842,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n\r]",value)==1)
-		{
+		//if (sscanf(term+1,"%[^\n\r]",value)==1)
+		strcpy(value, strip_right_white(term+1));
+		if(1){
 			char path[1024];
 			sprintf(path,"PATH=%s",value);
 #ifdef WIN32
@@ -4861,8 +4873,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n\r]",value)==1)
-		{
+		//if (sscanf(term+1,"%[^\n\r]",value)==1)
+		strcpy(value, strip_right_white(term+1));
+		if(1){
 			char path[1024];
 			sprintf(path,"GLPATH=%s",value);
 #ifdef WIN32
@@ -4890,8 +4903,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n\r]",value)==1)
-		{
+		//if (sscanf(term+1,"%[^\n\r]",value)==1)
+		strcpy(value, strip_right_white(term+1));
+		if(1){
 			char path[1024];
 			sprintf(path,"INCLUDE=%s",value);
 #ifdef WIN32
@@ -4920,8 +4934,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n\r]",value)==1)
-		{
+		//if (sscanf(term+1,"%[^\n\r]",value)==1)
+		strcpy(value, strip_right_white(term+1));
+		if(1){
 			STATUS result;
 			int oldstrict = global_strictnames;
 			if (strchr(value,'=')==NULL)
@@ -4951,8 +4966,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n\r]",value)==1)
-		{
+		//if (sscanf(term+1,"%[^\n\r]",value)==1)
+		strcpy(value, strip_right_white(term+1));
+		if(1){
 			output_error_raw("%s(%d): %s", filename, linenum, value);
 			strcpy(line,"\n");
 			return TRUE;
@@ -4974,8 +4990,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n\r]",value)==1)
-		{
+		//if (sscanf(term+1,"%[^\n\r]",value)==1)
+		strcpy(value, strip_right_white(term+1));
+		if(1){
 			//output_message("%s(%d): ERROR - %s", filename, linenum, value);
 			output_error_raw("%s(%d):\t%s", filename, linenum, value);
 			strcpy(line,"\n");
@@ -4998,8 +5015,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		if (sscanf(term+1,"%[^\n\r]",value)==1)
-		{
+		//if (sscanf(term+1,"%[^\n\r]",value)==1)
+		strcpy(value, strip_right_white(term+1));
+		if(1){
 			output_error_raw("%s(%d): WARNING - %s", filename, linenum, value);
 			strcpy(line,"\n");
 			return TRUE;
