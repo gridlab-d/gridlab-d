@@ -160,9 +160,9 @@ int triplex_meter::init(OBJECT *parent)
 #endif
 
 	if(power_market != 0){
-		price_prop = gl_get_property(power_market, "next.P");
+		price_prop = gl_get_property(power_market, "current_market.clearing_price");
 		if(price_prop == 0){
-			GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'next.P\'", (power_market->name ? power_market->name : "(anon)"));
+			GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'current_market.clearing_price\'", (power_market->name ? power_market->name : "(anon)"));
 		}
 	}
 	check_prices();
