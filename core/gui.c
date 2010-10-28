@@ -135,7 +135,19 @@ UNIT *gui_get_unit(GUIENTITY *entity)
 	return entity->unit;
 }
 
+#ifdef X11
+/* X11 operations */
+void gui_X11_start(void)
+{
+}
+#endif
+
 /* HTML OPERATIONS */
+void gui_html_start(void)
+{
+	// TODO
+}
+
 static void gui_html_output_entity(GUIENTITY *entity)
 {
 	switch (entity->type) {

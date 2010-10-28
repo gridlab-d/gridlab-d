@@ -72,5 +72,8 @@ UNIT *gui_get_unit(GUIENTITY *entity);
 
 int gui_is_grouping(GUIENTITY *entity);
 
+void gui_html_start(void);
+void gui_X11_start(void);
+
 #endif
 

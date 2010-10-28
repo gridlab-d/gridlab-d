@@ -23,6 +23,7 @@
 #include "matlab.h"
 #include "server.h"
 #include "xcore.h"
+#include "gui.h"
 
 /** Starts the environment selected by the global_environment variable
  **/
@@ -68,6 +69,8 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	{
 #ifndef WIN32
 		output_verbose("starting server");
+		if (gui_get_root())
+			gui_html_start();
 		if (server_startup(argc,argv))
 			return exec_start();
 		else
@@ -81,6 +84,8 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	{
 #ifdef X11
 		xstart();
+		if (gui_get_root())
+			gui_X11_start();
 		return exec_start();
 #else
 		output_fatal("X11 not supported");
