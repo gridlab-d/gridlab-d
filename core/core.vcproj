@@ -587,7 +587,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\gui.c"
+				RelativePath="..\core\gui.c"
 				>
 			</File>
 			<File
@@ -754,6 +754,10 @@
 			</File>
 			<File
 				RelativePath="..\core\globals.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\gui.h"
 				>
 			</File>
 			<File
