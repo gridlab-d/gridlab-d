@@ -1,0 +1,49 @@
+// GUI example 1
+//
+gui {
+	title global modelname;
+	group {
+		title link House1:name;
+		row { // first row
+			text value "Floor area:";
+			input {
+				link House1:floorarea;
+				unit "sf";
+			}
+		}
+		row { // second row
+			text value "Floor area:";
+			check link House1:system_type;
+		}
+		row { // third row
+			text value "System mode: ";
+			check link House1:system_mode;
+		}
+		row { // fourth row
+			text value "Construction quality";
+			select link House1:thermal_integrity_level;
+		}
+		row {
+			text value "File name:";
+			span {
+				input global modelname;
+				action save;
+				action load;
+			}
+		}
+	}
+	row {
+		span {
+			action restart;
+			action run;
+			action pause;
+			action stop;
+		}
+	}
+	status global last_message;
+}
+
+module residential;
+object house {
+	name "House1";
+}

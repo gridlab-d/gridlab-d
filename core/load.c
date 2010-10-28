@@ -179,6 +179,7 @@ typedef struct stat STAT;
 #include "random.h"
 #include "convert.h"
 #include "schedule.h"
+#include "gui.h"
 
 static unsigned int linenum=1;
 static int include_fail = 0;
@@ -4213,6 +4214,208 @@ static int schedule(PARSER)
 	DONE;
 }
 
+static int gui_link_globalvar(PARSER, GLOBALVAR **var)
+{
+	char varname[64];
+	START;
+	if (LITERAL("link") && WHITE,LITERAL(":") && name(HERE,varname,sizeof(varname)))
+	{
+		*var = global_find(varname);
+		ACCEPT;
+	}
+	else
+		REJECT;
+	DONE;
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+// GUI parser
+
+static int gui_entity_parameter(PARSER, GUIENTITY *entity)
+{
+	char buffer[1024];
+	char varname[64];
+	char objname[64];
+	char propname[64];
+	START;
+	if WHITE ACCEPT;
+	if LITERAL("global")
+	{
+		ACCEPT;
+		if WHITE ACCEPT;
+		if (TERM(name(HERE,varname,sizeof(varname))) && WHITE,LITERAL(";"))
+		{
+			gui_set_variablename(entity,varname);
+			if (gui_get_variable(entity))
+			{
+				ACCEPT;
+				DONE;
+			}
+			else
+			{
+				output_error_raw("%s(%d): invalid gui global variable '%s'", filename, linenum,varname);
+				REJECT;
+			}
+		}
+		else
+		{
+			output_error_raw("%s(%d): invalid gui global variable specification", filename, linenum);
+			REJECT;
+		}
+	}
+	if LITERAL("link") 
+	{
+		ACCEPT;
+		if WHITE ACCEPT;
+		if (TERM(name(HERE,objname,sizeof(objname))) && LITERAL(":") && TERM(name(HERE,propname,sizeof(propname))) && WHITE,LITERAL(";"))
+		{
+			gui_set_objectname(entity,objname);
+			gui_set_propertyname(entity,propname);
+			ACCEPT; 
+			DONE;
+		}
+		else
+		{
+			output_error_raw("%s(%d): invalid gui link object:property specification", filename, linenum);
+			REJECT;
+		}
+	}
+	if LITERAL("value") 
+	{ 
+		ACCEPT;
+		if WHITE ACCEPT;
+		if (TERM(value(HERE,buffer,sizeof(buffer))) && WHITE,LITERAL(";"))
+		{
+			gui_set_value(entity,buffer);
+			ACCEPT; 
+			DONE;
+		}
+		else
+		{
+			output_error_raw("%s(%d): invalid gui value specification", filename, linenum);
+			REJECT;
+		}
+	}
+	if LITERAL("unit") 
+	{ 
+		ACCEPT;
+		if WHITE ACCEPT;
+		if (TERM(value(HERE,buffer,sizeof(buffer))) && WHITE,LITERAL(";"))
+		{
+			gui_set_unit(entity,buffer);
+			if (gui_get_unit(entity))
+			{
+				ACCEPT; 
+				DONE;
+			}
+			else
+			{
+				output_error_raw("%s(%d): invalid gui unit '%s'", filename, linenum, buffer);
+				REJECT;
+			}
+		}
+		else
+		{
+			output_error_raw("%s(%d): invalid gui unit specification", filename, linenum);
+			REJECT;
+		}
+		ACCEPT;  
+		DONE;
+	}
+	REJECT;
+}
+
+static int gui_entity_action(PARSER, GUIENTITY *entity)
+{
+	START;
+	if WHITE ACCEPT;
+	if LITERAL("action")
+	{
+		ACCEPT;
+		if WHITE ACCEPT;
+		if (TERM(value(HERE,entity->action,sizeof(entity->action))) && WHITE,LITERAL(";"))
+		{
+			ACCEPT;
+			DONE;
+		}
+		else {
+			output_error_raw("%s(%d): invalid gui action specification", filename, linenum);
+			REJECT;
+		}
+	}
+	REJECT;
+}
+
+static int gui_entity_type(PARSER, GUIENTITYTYPE *type)
+{
+	START;
+	if WHITE ACCEPT;
+	if LITERAL("title") { ACCEPT; *type = GUI_TITLE; DONE; };
+	if LITERAL("status") { ACCEPT; *type = GUI_STATUS; DONE; };
+	if LITERAL("row") { ACCEPT; *type = GUI_ROW; DONE; };
+	if LITERAL("tab") { ACCEPT; *type = GUI_TAB; DONE; };
+	if LITERAL("page") { ACCEPT; *type = GUI_PAGE; DONE; };
+	if LITERAL("group") { ACCEPT; *type = GUI_GROUP; DONE; };
+	if LITERAL("span") { ACCEPT; *type = GUI_SPAN; DONE; };
+	if LITERAL("text") { ACCEPT; *type = GUI_TEXT; DONE; };
+	if LITERAL("input") { ACCEPT; *type = GUI_INPUT; DONE; };
+	if LITERAL("check") { ACCEPT; *type = GUI_CHECK; DONE; };
+	if LITERAL("radio") { ACCEPT; *type = GUI_RADIO; DONE; };
+	if LITERAL("select") { ACCEPT; *type = GUI_SELECT; DONE; };
+	if LITERAL("action") { ACCEPT; *type = GUI_ACTION; DONE; };
+	REJECT;
+}
+
+static int gui_entity(PARSER, GUIENTITY *parent)
+{
+	char buffer[1024];
+	GUIENTITY *entity = gui_create_entity();
+	START;
+	if WHITE ACCEPT;
+	if TERM(gui_entity_type(HERE,&(entity->type)))
+	{ 
+		gui_set_parent(entity,parent);
+		if WHITE ACCEPT;
+		if LITERAL("{")
+		{
+			ACCEPT;
+			while (true) {
+				if WHITE ACCEPT;
+				if (gui_is_grouping(entity) && TERM(gui_entity(HERE,entity))) 
+				{
+					ACCEPT; 
+					continue; 
+				}
+				if (TERM(gui_entity_parameter(HERE,entity))) { ACCEPT; continue; }
+				if (TERM(gui_entity_action(HERE,entity))) { ACCEPT; continue; }
+				if LITERAL("}") { ACCEPT; break; }
+				output_error_raw("%s(%d): unknown gui entity", filename, linenum);
+				REJECT;
+			} 
+			DONE;
+		}
+		if TERM(gui_entity_parameter(HERE,entity)) { ACCEPT; DONE; }
+		if (TERM(gui_entity_action(HERE,entity))) { ACCEPT; DONE; }
+		REJECT;
+	}
+	REJECT;
+}
+
+static int gui(PARSER)
+{
+	START;
+	if WHITE ACCEPT;
+	if (LITERAL("gui") && WHITE,LITERAL("{"))
+	{
+		while TERM(gui_entity(HERE,NULL)) ACCEPT;
+		if (WHITE,LITERAL("}")) ACCEPT;
+	}
+	else REJECT;
+	DONE;
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+
 static int gridlabd_file(PARSER)
 {
 	START;
@@ -4226,6 +4429,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(import(HERE)) {ACCEPT; DONE; }
 	OR if TERM(library(HERE)) {ACCEPT; DONE; }
 	OR if TERM(schedule(HERE)) {ACCEPT; DONE; }
+	OR if TERM(gui(HERE)) {ACCEPT; DONE;}
 	OR if (*(HERE)=='\0') {ACCEPT; DONE;}
 	else REJECT;
 	DONE;
