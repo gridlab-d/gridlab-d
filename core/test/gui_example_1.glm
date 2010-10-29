@@ -7,7 +7,7 @@ gui {
 		row { // first row
 			text value "Floor area:";
 			input {
-				link House1:floorarea;
+				link House1:floor_area;
 				unit "sf";
 			}
 		}
@@ -40,10 +40,14 @@ gui {
 			action stop;
 		}
 	}
-	status global last_message;
+	status value "Ready";
 }
 
-module residential;
+module residential {
+	implicit_enduses NONE;
+}
+
 object house {
 	name "House1";
+	floor_area 200 m^2;
 }

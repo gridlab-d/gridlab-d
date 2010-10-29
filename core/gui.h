@@ -40,10 +40,8 @@ typedef struct s_guientity {
 	struct s_guientity *next;
 	struct s_guientity *parent;
 	/* internal variables */
-	OBJECT *obj;
-	PROPERTY *prop;
 	GLOBALVAR *var;
-	void *addr;
+	void *data;
 	UNIT *unit;
 } GUIENTITY;
 
@@ -61,19 +59,23 @@ void gui_set_parent(GUIENTITY *entity, GUIENTITY *parent);
 
 GUIENTITY *gui_get_root(void);
 GUIENTITY *gui_get_last(void);
+GUIENTITYTYPE gui_get_type(GUIENTITY *entity);
 GUIENTITY *gui_get_parent(GUIENTITY *entity);
 GUIENTITY *gui_get_next(GUIENTITY *entity);
+char *gui_get_name(GUIENTITY *entity);
 char *gui_get_value(GUIENTITY *entity);
+void *gui_get_data(GUIENTITY *entity);
 GLOBALVAR *gui_get_variable(GUIENTITY *entity);
-OBJECT *gui_get_object(GUIENTITY *entity);
-PROPERTY *gui_get_property(GUIENTITY *entity);
 int gui_get_span(GUIENTITY *entity);
 UNIT *gui_get_unit(GUIENTITY *entity);
 
 int gui_is_grouping(GUIENTITY *entity);
+int gui_is_header(GUIENTITY *entity);
 
 void gui_html_start(void);
 void gui_X11_start(void);
+
+STATUS gui_html_output_all(void);
 
 #endif
 

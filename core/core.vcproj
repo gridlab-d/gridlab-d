@@ -757,10 +757,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\gui.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\gridlabd.h"
 				>
 			</File>
@@ -901,15 +897,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\x86\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -936,11 +932,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 			</Filter>

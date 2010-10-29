@@ -80,6 +80,10 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 		return FAILED;
 #endif
 	}
+	else if (strcmp(global_environment,"html")==0)
+	{
+		return gui_html_output_all();
+	}
 	else if (strcmp(global_environment,"X11")==0)
 	{
 #ifdef X11
