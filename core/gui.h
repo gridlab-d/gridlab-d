@@ -37,16 +37,20 @@ typedef struct s_guientity {
 	char propertyname[64]; // ref property
 	char action[64]; // action value
 	int span; // col span
+	int size; // size spec
 	struct s_guientity *next;
 	struct s_guientity *parent;
 	/* internal variables */
 	GLOBALVAR *var;
+	OBJECT *obj;
+	PROPERTY *prop;
 	void *data;
 	UNIT *unit;
 } GUIENTITY;
 
 GUIENTITY *gui_create_entity();
 
+void gui_set_srcref(GUIENTITY *entity, char *filename, int linenum);
 void gui_set_type(GUIENTITY *entity, GUIENTITYTYPE type);
 void gui_set_value(GUIENTITY *entity, char *value);
 void gui_set_variablename(GUIENTITY *entity, char *globalname);
@@ -63,6 +67,8 @@ GUIENTITYTYPE gui_get_type(GUIENTITY *entity);
 GUIENTITY *gui_get_parent(GUIENTITY *entity);
 GUIENTITY *gui_get_next(GUIENTITY *entity);
 char *gui_get_name(GUIENTITY *entity);
+OBJECT *gui_get_object(GUIENTITY *entity);
+PROPERTY *gui_get_property(GUIENTITY *entity);
 char *gui_get_value(GUIENTITY *entity);
 void *gui_get_data(GUIENTITY *entity);
 GLOBALVAR *gui_get_variable(GUIENTITY *entity);

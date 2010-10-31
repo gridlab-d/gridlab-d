@@ -4235,6 +4235,7 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 {
 	char buffer[1024];
 	char varname[64];
+	char modname[64];
 	char objname[64];
 	char propname[64];
 	START;
@@ -4243,12 +4244,20 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 	{
 		ACCEPT;
 		if WHITE ACCEPT;
-		if (TERM(name(HERE,varname,sizeof(varname))) && WHITE,LITERAL(";"))
+		if (TERM(name(HERE,modname,sizeof(modname))) && LITERAL("::") && TERM(name(HERE,varname,sizeof(varname))) && (WHITE,LITERAL(";")))
 		{
+			char fullname[256];
+			ACCEPT;
+			sprintf(fullname,"%s::%s",modname,varname);
+			gui_set_variablename(entity,fullname);
+			DONE;
+		}
+		OR if (TERM(name(HERE,varname,sizeof(varname))) && (WHITE,LITERAL(";")))
+		{
+			ACCEPT;
 			gui_set_variablename(entity,varname);
 			if (gui_get_variable(entity))
 			{
-				ACCEPT;
 				DONE;
 			}
 			else
@@ -4263,7 +4272,7 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 			REJECT;
 		}
 	}
-	if LITERAL("link") 
+	OR if LITERAL("link") 
 	{
 		ACCEPT;
 		if WHITE ACCEPT;
@@ -4280,7 +4289,7 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 			REJECT;
 		}
 	}
-	if LITERAL("value") 
+	OR if LITERAL("value") 
 	{ 
 		ACCEPT;
 		if WHITE ACCEPT;
@@ -4296,7 +4305,7 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 			REJECT;
 		}
 	}
-	if LITERAL("unit") 
+	OR if LITERAL("unit") 
 	{ 
 		ACCEPT;
 		if WHITE ACCEPT;
@@ -4322,6 +4331,23 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 		ACCEPT;  
 		DONE;
 	}
+	OR if LITERAL("size") 
+	{ 
+		ACCEPT;
+		if WHITE ACCEPT;
+		if (TERM(integer(HERE,&entity->size)) && WHITE,LITERAL(";"))
+		{
+			ACCEPT; 
+			DONE;
+		}
+		else
+		{
+			output_error_raw("%s(%d): invalid gui size specification", filename, linenum);
+			REJECT;
+		}
+		ACCEPT;  
+		DONE;
+	}
 	REJECT;
 }
 
@@ -4331,6 +4357,9 @@ static int gui_entity_action(PARSER, GUIENTITY *entity)
 	if WHITE ACCEPT;
 	if LITERAL("action")
 	{
+		GUIENTITY *entity = gui_create_entity();
+		gui_set_type(entity,GUI_ACTION);
+		gui_set_srcref(entity,filename,linenum);
 		ACCEPT;
 		if WHITE ACCEPT;
 		if (TERM(value(HERE,entity->action,sizeof(entity->action))) && WHITE,LITERAL(";"))
@@ -4362,18 +4391,20 @@ static int gui_entity_type(PARSER, GUIENTITYTYPE *type)
 	if LITERAL("check") { ACCEPT; *type = GUI_CHECK; DONE; };
 	if LITERAL("radio") { ACCEPT; *type = GUI_RADIO; DONE; };
 	if LITERAL("select") { ACCEPT; *type = GUI_SELECT; DONE; };
-	if LITERAL("action") { ACCEPT; *type = GUI_ACTION; DONE; };
 	REJECT;
 }
 
 static int gui_entity(PARSER, GUIENTITY *parent)
 {
 	char buffer[1024];
-	GUIENTITY *entity = gui_create_entity();
+	int type;
 	START;
 	if WHITE ACCEPT;
-	if TERM(gui_entity_type(HERE,&(entity->type)))
+	if TERM(gui_entity_type(HERE,&type))
 	{ 
+		GUIENTITY *entity = gui_create_entity();
+		gui_set_type(entity,type);
+		gui_set_srcref(entity,filename,linenum);
 		gui_set_parent(entity,parent);
 		if WHITE ACCEPT;
 		if LITERAL("{")
