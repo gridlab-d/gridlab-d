@@ -326,11 +326,9 @@ static void gui_entity_html_content(GUIENTITY *entity)
 			{
 				int value = *(int*)gui_get_data(entity);
 				char *checked = (value==key->value)?"CHECKED":"";
-				char label[64];
-				char *p;
+				char label[64], *p;
 				strcpy(label,key->name);
-				strlwr(label+1);
-				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' ';
+				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
 				if (key->value!=0)
 					fprintf(fp,"<NOBR><INPUT CLASS=\"%s\"TYPE=\"checkbox\" NAME=\"%s\" VALUE=\"%"FMT_INT64"d\" %s ONCHANGE=\"update_%s(this)\"/>%s</NOBR>\n",
 						ptype, gui_get_name(entity), key->value, checked, ptype, label);
@@ -346,11 +344,9 @@ static void gui_entity_html_content(GUIENTITY *entity)
 			{
 				int value = *(int*)gui_get_data(entity);
 				char *checked = (value==key->value)?"CHECKED":"";
-				char label[64];
-				char *p;
+				char label[64], *p;
 				strcpy(label,key->name);
-				strlwr(label+1);
-				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' ';
+				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
 				fprintf(fp,"<NOBR><INPUT CLASS=\"%s\" TYPE=\"radio\" NAME=\"%s\" VALUE=\"%"FMT_INT64"d\" %s ONCHANGE=\"update_%s(this)\" />%s</NOBR>\n",
 					ptype, gui_get_name(entity), key->value, checked, ptype, label);
 			}
@@ -369,11 +365,9 @@ static void gui_entity_html_content(GUIENTITY *entity)
 			{
 				int value = *(int*)gui_get_data(entity);
 				char *checked = (value==key->value)?"SELECTED":"";
-				char label[64];
-				char *p;
+				char label[64], *p;
 				strcpy(label,key->name);
-				strlwr(label+1);
-				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' ';
+				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
 				fprintf(fp,"<OPTION VALUE=\"%"FMT_INT64"d\" %s />%s</OPTION>\n",
 					key->value, checked, label);
 			}
