@@ -83,5 +83,8 @@ void gui_X11_start(void);
 
 STATUS gui_html_output_all(void);
 
+size_t gui_glm_write_all(FILE *fp);
+
+
 #endif
 

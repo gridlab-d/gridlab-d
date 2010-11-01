@@ -237,20 +237,27 @@ UNIT *gui_get_unit(GUIENTITY *entity)
 }
 
 #ifdef X11
+/**************************************************************************/
 /* X11 operations */
+/**************************************************************************/
 void gui_X11_start(void)
 {
 }
 #endif
 
+/**************************************************************************/
 /* HTML OPERATIONS */
+/**************************************************************************/
 void gui_html_start(void)
 {
 	// TODO start server
 }
 
 #define MAX_TABLES 16
-static int table=-1, row[MAX_TABLES], col[MAX_TABLES], span=0;
+#define MAX_SPANS 16
+static int table=-1, row[MAX_TABLES], col[MAX_TABLES];
+static int span=0;
+char *options="";
 static void newtable(GUIENTITY *entity)
 {
 	if (table<MAX_TABLES)
@@ -258,7 +265,7 @@ static void newtable(GUIENTITY *entity)
 		table++;
 		row[table]=0;
 		col[table]=0;
-		fprintf(fp,"\t<TABLE> <!-- table %d %s -->\n",table,gui_get_typename(entity));
+		fprintf(fp,"\t<TABLE %s> <!-- table %d %s -->\n",options,table,gui_get_typename(entity));
 	}
 	else
 		output_error_raw("%s: ERROR: table nesting exceeded limit of %d", entity->srcref, MAX_TABLES);
@@ -266,6 +273,8 @@ static void newtable(GUIENTITY *entity)
 static void newrow(GUIENTITY *entity)
 {
 	if (table<0) newtable(entity);
+	if (col[table]>0) fprintf(fp,"\t</TD> <!-- col %d -->\n", col[table]);
+	col[table]=0;
 	if (row[table]>0) fprintf(fp,"\t</TR> <!-- row %d -->\n", row[table]);
 	row[table]++;
 	fprintf(fp,"\t<TR> <!-- row %d -->\n", row[table]);
@@ -276,7 +285,13 @@ static void newcol(GUIENTITY *entity)
 	if (table<0 || row[table]==0) newrow(entity);
 	if (col[table]>0) fprintf(fp,"\t</TD> <!-- col %d -->\n", col[table]);
 	col[table]++;
-	fprintf(fp,"\t<TD> <!-- col %d -->\n", col[table]);
+	if (entity->type==GUI_SPAN)
+	{
+		fprintf(fp,"\t<TD COLSPAN=\"%d\"> <!-- col %d -->\n", entity->size, col[table]);
+		if (entity->size==0) output_warning("%s: not all browsers accept span size 0 (meaning to end), span size may not work as expected", entity->srcref);
+	}
+	else
+		fprintf(fp,"\t<TD> <!-- col %d -->\n", col[table]);
 }
 static void endtable()
 {
@@ -396,9 +411,12 @@ static void gui_entity_html_open(GUIENTITY *entity)
 	case GUI_PAGE: 
 		break;
 	case GUI_GROUP:
+		endtable();
 		fprintf(fp,"<FIELDSET>\n");
+		newtable(entity);
 		break;
 	case GUI_SPAN: 
+		newcol(entity);
 		span++;
 		break;
 	case GUI_TEXT: 
@@ -431,7 +449,8 @@ static void gui_entity_html_close(GUIENTITY *entity)
 		break;
 	case GUI_PAGE: 
 		break;
-	case GUI_GROUP: 
+	case GUI_GROUP:
+		endtable();
 		fprintf(fp,"</FIELDSET>\n");
 		break;
 	case GUI_SPAN: 
@@ -510,7 +529,78 @@ STATUS gui_html_output_all(void)
 	// body entities
 	fprintf(fp,"<BODY>\n");
 	gui_html_output_children(NULL);
+	endtable();
 	fprintf(fp,"</BODY>\n</HTML>\n");
 	return SUCCESS;
 }
 
+/**************************************************************************/
+/* GLM OPERATIONS */
+/**************************************************************************/
+char *gui_glm_typename(GUIENTITYTYPE type)
+{
+	char *typename[] = {
+		NULL, 
+		"row", "tab", "page", "group", "span", NULL,
+		"title", "status", "text", "input", "check", "radio", "select", "action", NULL,
+	};
+	if (type>=0 || type<sizeof(typename)/sizeof(typename[0]))
+		return typename[type];
+	else
+		return NULL;
+}
+size_t gui_glm_write(FILE *fp, GUIENTITY *entity, int indent)
+{
+	size_t count=0;
+	GUIENTITY *parent = entity;
+	char *typename = gui_glm_typename(parent->type);
+	char tabs[] = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
+	if (indent<0) tabs[0]='\0'; else if (indent<sizeof(tabs)) tabs[indent]='\0';
+	if (typename==NULL)
+		return FAILED;
+	
+	if (entity->type==GUI_ACTION)
+	{
+		count += fprintf(fp,"%saction %s;\n",tabs,entity->action);
+	}
+	else
+	{
+		count += fprintf(fp,"%s%s {\n",tabs,typename);
+
+		if (gui_get_object(entity))
+			count += fprintf(fp,"%s\tlink %s:%s;\n", tabs,entity->objectname,entity->propertyname);
+		else if (gui_get_variable(entity))
+			count += fprintf(fp,"%s\tglobal %s;\n", tabs,entity->globalname);
+		else if (entity->value[0]!='\0')
+			count += fprintf(fp,"%s\tvalue \"%s\";\n", tabs,entity->value);
+		if (entity->unit)
+			count += fprintf(fp,"%s\tunit \"%s\";\n", tabs,entity->unit);
+		if (entity->size>0)
+			count += fprintf(fp,"%s\tsize %d;\n", tabs,entity->size);
+		if (entity->action[0]!='\0')
+			count += fprintf(fp,"%s\taction %s;\n", tabs,entity->action);
+
+		if (gui_is_grouping(entity))
+			for ( entity=gui_root ; entity!=NULL ; entity=entity->next )
+				if (entity->parent==parent)
+					count+=gui_glm_write(fp,entity,indent+1);
+
+		count += fprintf(fp,"%s}\n",tabs);
+	}
+	return count;
+}
+size_t gui_glm_write_all(FILE *fp)
+{
+	size_t count=0;
+	GUIENTITY *entity;
+	if (gui_root==NULL)
+		return 0;
+	count += fprintf(fp,"gui {\n");
+	for ( entity=gui_get_root() ; entity!=NULL ; entity=entity->next )
+	{
+		if (entity->parent==NULL)
+			count += gui_glm_write(fp,entity,1);
+	}
+	count += fprintf(fp,"}\n");
+	return count;
+}

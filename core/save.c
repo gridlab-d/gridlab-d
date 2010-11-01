@@ -11,6 +11,7 @@
 #include "stream.h"
 #include "save.h"
 #include "exec.h"
+#include "gui.h"
 
 #define DEFAULT_FORMAT "gld"
 
@@ -109,9 +110,21 @@ int savetxt(char *filename,FILE *fp)
 	count += fprintf(fp,"# classes.... %d\n", class_get_count());
 	count += fprintf(fp,"# objects.... %d\n", object_get_count());
 
+	/* save gui, if any */
+	if (gui_get_root()!=NULL)
+	{
+		count += fprintf(fp,"\n########################################################\n");
+		count += fprintf(fp,"\n# GUI\n");
+		count += (int)gui_glm_write_all(fp);
+		count += fprintf(fp,"\n");
+	}
+
 	/* save clock */
+		count += fprintf(fp,"\n########################################################\n");
+		count += fprintf(fp,"\n# CLOCK\n");
 	count += fprintf(fp,"clock {\n");
 	count += fprintf(fp,"\ttick 1e%+d;\n",TS_SCALE);
+	count += fprintf(fp,"\ttimezone %s;\n", timestamp_current_timezone());
 	count += fprintf(fp,"\ttimestamp %s;\n", convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"(invalid)");
 	if (getenv("TZ"))
 		count += fprintf(fp,"\ttimezone %s;\n", getenv("TZ"));

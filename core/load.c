@@ -4214,6 +4214,9 @@ static int schedule(PARSER)
 	DONE;
 }
 
+////////////////////////////////////////////////////////////////////////////////////
+// GUI parser
+
 static int gui_link_globalvar(PARSER, GLOBALVAR **var)
 {
 	char varname[64];
@@ -4227,9 +4230,6 @@ static int gui_link_globalvar(PARSER, GLOBALVAR **var)
 		REJECT;
 	DONE;
 }
-
-////////////////////////////////////////////////////////////////////////////////////
-// GUI parser
 
 static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 {
@@ -4351,7 +4351,7 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 	REJECT;
 }
 
-static int gui_entity_action(PARSER, GUIENTITY *entity)
+static int gui_entity_action(PARSER, GUIENTITY *parent)
 {
 	START;
 	if WHITE ACCEPT;
@@ -4360,6 +4360,7 @@ static int gui_entity_action(PARSER, GUIENTITY *entity)
 		GUIENTITY *entity = gui_create_entity();
 		gui_set_type(entity,GUI_ACTION);
 		gui_set_srcref(entity,filename,linenum);
+		entity->parent = parent;
 		ACCEPT;
 		if WHITE ACCEPT;
 		if (TERM(value(HERE,entity->action,sizeof(entity->action))) && WHITE,LITERAL(";"))

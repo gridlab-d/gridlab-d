@@ -26,6 +26,7 @@ gui {
 		row {
 			text value "File name:";
 			span {
+				size 1;
 				input global modelname;
 				action save;
 				action load;
@@ -41,6 +42,7 @@ gui {
 	}
 	row {
 		span {
+			size 2;
 			action restart;
 			action run;
 			action pause;
