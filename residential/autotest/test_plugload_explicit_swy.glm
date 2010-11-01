@@ -4,9 +4,9 @@
 //This test validates power, energy, and heat gain.
 
 clock {
+	timezone PST+8PDT;
 	timestamp '2001-05-01 0:00:00';
 	stoptime '2001-05-02 1:00:00';
-	timezone PST+8PDT;
 }
 
 module assert;

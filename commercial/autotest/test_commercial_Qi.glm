@@ -8,9 +8,9 @@
 // payroll: d3y332
 
 clock {
+	timezone PST+8PDT;
 	timestamp '2000-01-01 0:00:00';
 	stoptime '2000-02-01 0:00:00';
-	timezone PST+8PDT;
 }
 
 //#set stoptime=2000-01-01 0:00:08 PST

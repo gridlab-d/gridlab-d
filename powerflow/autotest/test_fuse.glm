@@ -4,8 +4,8 @@
 // the phase that blows actually creates an open in the circuit.
 
 clock {
+	timezone PST+8PDT;
 	timestamp '2000-01-01 12:00:00';
-	timezone PST+8EDT;
 }
 
 module powerflow;
