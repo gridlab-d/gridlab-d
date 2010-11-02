@@ -897,15 +897,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\x86\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -932,11 +932,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>
@@ -1151,6 +1151,10 @@
 			<Filter
 				Name="Support Files"
 				>
+				<File
+					RelativePath=".\rt\gridlabd.css"
+					>
+				</File>
 				<File
 					RelativePath=".\rt\gridlabd.js"
 					>
