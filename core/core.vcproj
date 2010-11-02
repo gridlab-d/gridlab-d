@@ -1152,14 +1152,6 @@
 				Name="Support Files"
 				>
 				<File
-					RelativePath=".\rt\gridlabd.css"
-					>
-				</File>
-				<File
-					RelativePath=".\rt\gridlabd.js"
-					>
-				</File>
-				<File
 					RelativePath=".\rt\gridlabd.syn"
 					>
 				</File>
@@ -1356,6 +1348,30 @@
 					</File>
 					<File
 						RelativePath="..\VERSION"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="WebGUI"
+					>
+					<File
+						RelativePath=".\rt\gridlabd.css"
+						>
+					</File>
+					<File
+						RelativePath=".\rt\gridlabd.js"
+						>
+					</File>
+					<File
+						RelativePath=".\gui\tab_b.gif"
+						>
+					</File>
+					<File
+						RelativePath=".\gui\tab_l.gif"
+						>
+					</File>
+					<File
+						RelativePath=".\gui\tab_r.gif"
 						>
 					</File>
 				</Filter>
