@@ -265,7 +265,6 @@ static void newtable(GUIENTITY *entity)
 		table++;
 		row[table]=0;
 		col[table]=0;
-		fprintf(fp,"\t<TABLE %s> <!-- table %d %s -->\n",options,table,gui_get_typename(entity));
 	}
 	else
 		output_error_raw("%s: ERROR: table nesting exceeded limit of %d", entity->srcref, MAX_TABLES);
@@ -273,32 +272,33 @@ static void newtable(GUIENTITY *entity)
 static void newrow(GUIENTITY *entity)
 {
 	if (table<0) newtable(entity);
-	if (col[table]>0) fprintf(fp,"\t</TD> <!-- col %d -->\n", col[table]);
+	if (row[table]==0) fprintf(fp,"\t<table %s> <!-- table %d %s -->\n",options,table,gui_get_typename(entity));
+	if (col[table]>0) fprintf(fp,"\t</td> <!-- col %d -->\n", col[table]);
 	col[table]=0;
-	if (row[table]>0) fprintf(fp,"\t</TR> <!-- row %d -->\n", row[table]);
+	if (row[table]>0) fprintf(fp,"\t</tr> <!-- row %d -->\n", row[table]);
 	row[table]++;
-	fprintf(fp,"\t<TR> <!-- row %d -->\n", row[table]);
+	fprintf(fp,"\t<tr> <!-- row %d -->\n", row[table]);
 }
 static void newcol(GUIENTITY *entity)
 {
 	if (span>0) return;
 	if (table<0 || row[table]==0) newrow(entity);
-	if (col[table]>0) fprintf(fp,"\t</TD> <!-- col %d -->\n", col[table]);
+	if (col[table]>0) fprintf(fp,"\t</td> <!-- col %d -->\n", col[table]);
 	col[table]++;
 	if (entity->type==GUI_SPAN)
 	{
-		fprintf(fp,"\t<TD COLSPAN=\"%d\"> <!-- col %d -->\n", entity->size, col[table]);
+		fprintf(fp,"\t<td colspan=\"%d\"> <!-- col %d -->\n", entity->size, col[table]);
 		if (entity->size==0) output_warning("%s: not all browsers accept span size 0 (meaning to end), span size may not work as expected", entity->srcref);
 	}
 	else
-		fprintf(fp,"\t<TD> <!-- col %d -->\n", col[table]);
+		fprintf(fp,"\t<td> <!-- col %d -->\n", col[table]);
 }
 static void endtable()
 {
 	if (table<0) return;
-	if (col[table]>0) fprintf(fp,"\t</TD> <!-- col %d -->\n", col[table]);
-	if (row[table]>0) fprintf(fp,"\t</TR> <!-- row %d -->\n", row[table]);
-	fprintf(fp,"\t</TABLE> <!-- table %d -->\n", table--);
+	if (col[table]>0) fprintf(fp,"\t</td> <!-- col %d -->\n", col[table]);
+	if (row[table]>0) fprintf(fp,"\t</td> <!-- row %d -->\n", row[table]);
+	fprintf(fp,"\t</table> <!-- table %d -->\n", table--);
 }
 
 static void gui_entity_html_content(GUIENTITY *entity)
@@ -306,13 +306,15 @@ static void gui_entity_html_content(GUIENTITY *entity)
 	char *ptype = gui_get_property(entity) ? class_get_property_typename(entity->prop->ptype) : "";
 	switch (entity->type) {
 	case GUI_TITLE: 
-		if (!gui_is_header(entity))
-			fprintf(fp,"<LEGEND>%s</LEGEND>\n",gui_get_value(entity));
-		else
-			fprintf(fp,"<TITLE>%s</TITLE>\n",gui_get_value(entity));
+		if (entity->parent==NULL)
+			fprintf(fp,"<title>%s</title>\n",gui_get_value(entity));
+		else if (entity->parent->type==GUI_GROUP)
+			fprintf(fp,"<legend>%s</legend>\n",gui_get_value(entity));
+		else 
+			fprintf(fp,"<h%d>%s</h%d>\n",table+1,gui_get_value(entity),table+1);
 		break;
 	case GUI_STATUS: 
-		fprintf(fp,"<SCRIPT LANG=\"jscript\"> window.status=\"%s\";</SCRIPT>\n", gui_get_value(entity));
+		fprintf(fp,"<script lang=\"jscript\"> window.status=\"%s\";</script>\n", gui_get_value(entity));
 		break;
 	case GUI_ROW:
 		break;
@@ -326,11 +328,11 @@ static void gui_entity_html_content(GUIENTITY *entity)
 		break;
 	case GUI_TEXT: 
 		if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
-		fprintf(fp,"<DIV CLASS=\"text\">%s</DIV>",gui_get_value(entity));
+		fprintf(fp,"<span class=\"text\">%s</span>",gui_get_value(entity));
 		break;
 	case GUI_INPUT:
 		if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
-		fprintf(fp,"<INPUT CLASS=\"%s\" TYPE=\"text\" NAME=\"%s\" VALUE=\"%s\" ONCHANGE=\"update_%s(this)\"/>\n", ptype, gui_get_name(entity),gui_get_value(entity), ptype);
+		fprintf(fp,"<input class=\"%s\" type=\"text\" name=\"%s\" value=\"%s\" onchange=\"update_%s(this)\"/>\n", ptype, gui_get_name(entity),gui_get_value(entity), ptype);
 		break;
 	case GUI_CHECK: 
 		{	
@@ -340,12 +342,12 @@ static void gui_entity_html_content(GUIENTITY *entity)
 			for (key=prop->keywords; key!=NULL; key=key->next)
 			{
 				int value = *(int*)gui_get_data(entity);
-				char *checked = (value==key->value)?"CHECKED":"";
+				char *checked = (value==key->value)?"checked":"";
 				char label[64], *p;
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
 				if (key->value!=0)
-					fprintf(fp,"<NOBR><INPUT CLASS=\"%s\"TYPE=\"checkbox\" NAME=\"%s\" VALUE=\"%"FMT_INT64"d\" %s ONCHANGE=\"update_%s(this)\"/>%s</NOBR>\n",
+					fprintf(fp,"<nobr><input class=\"%s\"type=\"checkbox\" name=\"%s\" value=\"%"FMT_INT64"d\" %s onchange=\"update_%s(this)\"/>%s</nobr>\n",
 						ptype, gui_get_name(entity), key->value, checked, ptype, label);
 			}
 		}
@@ -358,11 +360,11 @@ static void gui_entity_html_content(GUIENTITY *entity)
 			for (key=prop->keywords; key!=NULL; key=key->next)
 			{
 				int value = *(int*)gui_get_data(entity);
-				char *checked = (value==key->value)?"CHECKED":"";
+				char *checked = (value==key->value)?"checked":"";
 				char label[64], *p;
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
-				fprintf(fp,"<NOBR><INPUT CLASS=\"%s\" TYPE=\"radio\" NAME=\"%s\" VALUE=\"%"FMT_INT64"d\" %s ONCHANGE=\"update_%s(this)\" />%s</NOBR>\n",
+				fprintf(fp,"<nobr><input class=\"%s\" type=\"radio\" name=\"%s\" value=\"%"FMT_INT64"d\" %s onchange=\"update_%s(this)\" />%s</NOBR>\n",
 					ptype, gui_get_name(entity), key->value, checked, ptype, label);
 			}
 		}
@@ -371,27 +373,27 @@ static void gui_entity_html_content(GUIENTITY *entity)
 		{
 			PROPERTY *prop = gui_get_property(entity);
 			KEYWORD *key = NULL;
-			char *multiple = (prop->ptype==PT_set?"MULTIPLE":"");
+			char *multiple = (prop->ptype==PT_set?"multiple":"");
 			char size[64] = "";
-			if (entity->size>0) sprintf(size,"SIZE=\"%d\"",entity->size);
+			if (entity->size>0) sprintf(size,"size=\"%d\"",entity->size);
 			if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
-			fprintf(fp,"<SELECT CLASS=\"%s\" NAME=\"%s\" %s %s ONCHANGE=\"update_%s(this)\">\n", ptype, gui_get_name(entity),multiple,size,ptype);
+			fprintf(fp,"<select class=\"%s\" name=\"%s\" %s %s onchange=\"update_%s(this)\">\n", ptype, gui_get_name(entity),multiple,size,ptype);
 			for (key=prop->keywords; key!=NULL; key=key->next)
 			{
 				int value = *(int*)gui_get_data(entity);
-				char *checked = (value==key->value)?"SELECTED":"";
+				char *checked = (value==key->value)?"selected":"";
 				char label[64], *p;
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
-				fprintf(fp,"<OPTION VALUE=\"%"FMT_INT64"d\" %s />%s</OPTION>\n",
+				fprintf(fp,"<option value=\"%"FMT_INT64"d\" %s>%s</option>\n",
 					key->value, checked, label);
 			}
-			fprintf(fp,"</SELECT>\n");
+			fprintf(fp,"</select>\n");
 		}
 		break;
 	case GUI_ACTION: 
 		if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
-		fprintf(fp,"<INPUT CLASS=\"action\" TYPE=\"submit\" NAME=\"action\" VALUE=\"%s\"  ONCLICK=\"click(this)\" />\n",entity->action);
+		fprintf(fp,"<input class=\"action\" type=\"submit\" name=\"action\" value=\"%s\" onclick=\"click(this)\" />\n",entity->action);
 		break;
 	default: break;
 	}
@@ -411,8 +413,8 @@ static void gui_entity_html_open(GUIENTITY *entity)
 	case GUI_PAGE: 
 		break;
 	case GUI_GROUP:
-		endtable();
-		fprintf(fp,"<FIELDSET>\n");
+		newcol(entity);
+		fprintf(fp,"<fieldset>\n");
 		newtable(entity);
 		break;
 	case GUI_SPAN: 
@@ -428,7 +430,6 @@ static void gui_entity_html_open(GUIENTITY *entity)
 	case GUI_RADIO: 
 		break;
 	case GUI_SELECT: 
-		// TODO expand for each member
 		break;
 	case GUI_ACTION: 
 		break;
@@ -444,6 +445,7 @@ static void gui_entity_html_close(GUIENTITY *entity)
 	case GUI_STATUS: 
 		break;
 	case GUI_ROW: 
+		newrow(entity);
 		break;
 	case GUI_TAB: 
 		break;
@@ -451,7 +453,7 @@ static void gui_entity_html_close(GUIENTITY *entity)
 		break;
 	case GUI_GROUP:
 		endtable();
-		fprintf(fp,"</FIELDSET>\n");
+		fprintf(fp,"</fieldset>\n");
 		break;
 	case GUI_SPAN: 
 		span--;
@@ -501,7 +503,7 @@ void gui_include_script(char *lang, char *file)
 			if (len>=0)
 			{
 				buffer[len]='\0';
-				fprintf(fp,"<SCRIPT LANG=\"%s\">\n%s\n</SCRIPT>\n",lang,buffer);
+				fprintf(fp,"<script lang=\"%s\">\n%s\n</script>\n",lang,buffer);
 			}
 			else
 				output_error("unable to read '%s'", path);
@@ -516,21 +518,21 @@ STATUS gui_html_output_all(void)
 	fp = stdout;
 
 	// header entities
-	fprintf(fp,"<HTML>\n<HEAD>\n");
+	fprintf(fp,"<html>\n<head>\n");
 	for (entity=gui_get_root(); entity!=NULL; entity=entity->next)
 	{
 		if (gui_is_header(entity))
 			gui_entity_html_content(entity);
 	}
-	fprintf(fp,"</HEAD>\n");
+	fprintf(fp,"</head>\n");
 
 	gui_include_script("jscript","gridlabd.js");
 
 	// body entities
-	fprintf(fp,"<BODY>\n");
+	fprintf(fp,"<body>\n");
 	gui_html_output_children(NULL);
 	endtable();
-	fprintf(fp,"</BODY>\n</HTML>\n");
+	fprintf(fp,"</body>\n</html>\n");
 	return SUCCESS;
 }
 
