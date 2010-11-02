@@ -184,6 +184,8 @@ char *gui_get_value(GUIENTITY *entity)
 		entity->var = global_find(entity->globalname);
 		global_getvar(entity->globalname,entity->value,sizeof(entity->value));
 	}
+	else if (gui_get_environment(entity))
+		strcpy(entity->value,entity->env);
 	return entity->value;
 }
 OBJECT *gui_get_object(GUIENTITY *entity)
@@ -233,6 +235,11 @@ GLOBALVAR *gui_get_variable(GUIENTITY *entity)
 	if (entity->var==NULL) entity->var = global_find(entity->globalname);
 	return entity->var;
 }
+char *gui_get_environment(GUIENTITY *entity)
+{
+	if (entity->env==NULL) entity->env = getenv(entity->globalname);
+	return entity->env;
+}
 int gui_get_span(GUIENTITY *entity)
 {
 	return entity->span;
@@ -242,9 +249,141 @@ UNIT *gui_get_unit(GUIENTITY *entity)
 	return entity->unit;
 }
 
+/**************************************************************************/
+/* COMMAND LINE OPERATIONS */
+/**************************************************************************/
+int gui_cmd_entity(int item, GUIENTITY *entity)
+{
+	switch (entity->type) {
+	case GUI_TITLE: 
+		fprintf(stdout, "%s", gui_get_value(entity));
+		break;
+	case GUI_STATUS: 
+		break;
+	case GUI_ROW: 
+		if (item>0) fprintf(stdout,"\n%2d. ",item);
+		return 1;
+		break;
+	case GUI_TAB:
+		break;
+	case GUI_PAGE: 
+		break;
+	case GUI_GROUP:
+		break;
+	case GUI_SPAN: 
+		break;
+	case GUI_TEXT: 
+		break;
+	case GUI_INPUT:
+		fprintf(stdout," [%s]",gui_get_value(entity));
+		break;
+	case GUI_CHECK: 
+		fprintf(stdout," [%s]",gui_get_value(entity));
+		break;
+	case GUI_RADIO: 
+		fprintf(stdout," [%s]",gui_get_value(entity));
+		break;
+	case GUI_SELECT: 
+		fprintf(stdout," [%s]",gui_get_value(entity));
+		break;
+	case GUI_ACTION: 
+		break;	
+	default:
+		break;
+	}
+	return 0;
+}
+
+void gui_cmd_prompt(GUIENTITY *parent)
+{
+	char buffer[1024];
+	int item=0, ans=-1;
+	char *label;
+	GUIENTITY *entity;
+	for ( entity=gui_root ; entity!=NULL ; entity=entity->next )
+	{
+		if ( entity->parent==parent )
+		{
+			if ( entity->type==GUI_TITLE )
+				label = gui_get_value(entity);
+			else
+				break;
+		}
+	}
+Retry:
+	fprintf(stdout,"\n%s> [%s] ",label, gui_get_value(entity));
+	fflush(stdout);
+	gets(buffer);
+	if (strcmp(buffer,"")==0)
+		return;
+	if (entity->obj && !object_set_value_by_name(entity->obj,entity->propertyname,buffer))
+	{
+		fprintf(stdout,"Invalid input, try again.\n");
+		goto Retry;
+	}
+	else if (entity->var && global_setvar(entity->globalname,buffer)==FAILED)
+	{
+		fprintf(stdout,"Invalid input, try again.\n");
+		goto Retry;
+	}
+	else if (entity->env)
+	{
+		char env[1024];
+		sprintf("%s=%s",entity->env,buffer);
+		if (!_putenv(env))
+		{
+			fprintf(stdout,"Invalid input, try again.\n");
+		goto Retry;
+		}
+	}
+}
+
+void gui_cmd_menu(GUIENTITY *parent)
+{
+	char buffer[1024];
+	GUIENTITY *entity;
+	GUIENTITY *list[100];
+
+	while (1) {
+		int item=0, ans=-1;
+
+		for ( entity=gui_root ; entity!=NULL ; entity=entity->next )
+		{
+			if ( entity->parent==parent && gui_cmd_entity(item+1,entity))
+				list[++item]=entity; 
+			else if (item>0 && list[item]==entity->parent)
+				gui_cmd_entity(item+1,entity);
+		}
+		if (item==0)
+			break;
+		fprintf(stdout,"\n 0. %s\n",parent?"Return":"Done");
+Retry:
+		fprintf(stdout,"\nGLM> [%d] ",ans<item?ans+1:0);
+		fflush(stdout);
+		gets(buffer);
+		ans = atoi(buffer);
+		if (ans<0 || ans>item)
+		{
+			fprintf(stdout,"Input must be between 0 and %d\n", item);
+			goto Retry;
+		}
+		else if ( ans==0 )
+			break;
+		if ( list[ans]->type==GUI_ROW )
+			gui_cmd_prompt(list[ans]);
+		else if ( gui_is_grouping(list[ans]) )
+			gui_cmd_menu(list[ans]);
+	}
+}
+
+void gui_cmd_start(void)
+{
+	gui_cmd_menu(NULL);
+} 
+
 #ifdef X11
 /**************************************************************************/
-/* X11 operations */
+/* X11 OPERATIONS */
 /**************************************************************************/
 void gui_X11_start(void)
 {
@@ -617,4 +756,15 @@ size_t gui_glm_write_all(FILE *fp)
 	}
 	count += fprintf(fp,"}\n");
 	return count;
+}
+
+/**************************************************************************/
+/* LOAD OPERATIONS */
+/**************************************************************************/
+void gui_wait(void)
+{
+	char *env = global_getvar("environment",NULL,NULL);
+	if (strcmp(env,"batch")==0)
+		gui_cmd_start();
+	// TODO HTML, X11 startup
 }

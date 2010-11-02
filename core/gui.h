@@ -42,6 +42,7 @@ typedef struct s_guientity {
 	struct s_guientity *parent;
 	/* internal variables */
 	GLOBALVAR *var;
+	char *env;
 	OBJECT *obj;
 	PROPERTY *prop;
 	void *data;
@@ -72,6 +73,7 @@ PROPERTY *gui_get_property(GUIENTITY *entity);
 char *gui_get_value(GUIENTITY *entity);
 void *gui_get_data(GUIENTITY *entity);
 GLOBALVAR *gui_get_variable(GUIENTITY *entity);
+char *gui_get_environment(GUIENTITY *entity);
 int gui_get_span(GUIENTITY *entity);
 UNIT *gui_get_unit(GUIENTITY *entity);
 
@@ -85,6 +87,7 @@ STATUS gui_html_output_all(void);
 
 size_t gui_glm_write_all(FILE *fp);
 
+void gui_wait(void);
 
 #endif
 

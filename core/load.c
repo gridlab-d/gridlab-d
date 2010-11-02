@@ -4256,7 +4256,7 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 		{
 			ACCEPT;
 			gui_set_variablename(entity,varname);
-			if (gui_get_variable(entity))
+			if (gui_get_variable(entity) || gui_get_environment(entity))
 			{
 				DONE;
 			}
@@ -4440,7 +4440,11 @@ static int gui(PARSER)
 	if (LITERAL("gui") && WHITE,LITERAL("{"))
 	{
 		while TERM(gui_entity(HERE,NULL)) ACCEPT;
-		if (WHITE,LITERAL("}")) ACCEPT;
+		if (WHITE,LITERAL("}")) 
+		{
+			ACCEPT;
+			gui_wait();
+		}
 	}
 	else REJECT;
 	DONE;
