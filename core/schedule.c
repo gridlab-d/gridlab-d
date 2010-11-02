@@ -659,9 +659,11 @@ void schedule_add(SCHEDULE *sch)
 int schedule_validate(SCHEDULE *sch, int flags)
 {
 	unsigned int b,i;
+	unsigned long int nzct = 0; // nonzero count
 	int failed=0;
 	for (b=0; b<MAXBLOCKS; b++) {
-		for (i=1; i<=sch->count[b]; i++)
+		i = (flags & SN_NONZERO ? 0 : 1);
+		for (; i<=sch->count[b]; i++)
 		{
 			double value = sch->data[b*MAXVALUES+i];
 			int weight = sch->weight[b*MAXVALUES+i];
@@ -669,6 +671,8 @@ int schedule_validate(SCHEDULE *sch, int flags)
 			int zero = (weight>0 && value==0.0);
 			int positive = (weight>0 && value>0.0);
 			int negative = (weight>0 && value<0.0);
+			if(value != 0.0)
+				nzct += weight;
 			if ((flags&SN_BOOLEAN) && !(unit || zero))
 			{
 				output_error("schedule %s fails 'boolean' validation in block %s at schedule index %d", sch->name, sch->blockname[b], i);
@@ -685,6 +689,10 @@ int schedule_validate(SCHEDULE *sch, int flags)
 				failed = 1;
 			}
 		}
+	}
+	if((flags & SN_NONZERO) && (nzct != (7 * (365+366) * 24 * 60))){
+		output_error("schedule %s fails 'nonzero' validation with unfilled entries", sch->name);
+		failed = 1;
 	}
 	return !failed;
 }
