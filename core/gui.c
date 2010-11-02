@@ -21,6 +21,12 @@ static GUIENTITY *gui_root = NULL;
 static GUIENTITY *gui_last = NULL;
 static FILE *fp = NULL;
 
+#ifdef _DEBUG
+#define TABLEOPTIONS " border=0 CELLPADDING=0 CELLSPACING=0"
+#else
+#define TABLEOPTIONS 
+#endif
+
 GUIENTITY *gui_get_root(void)
 {
 	return gui_root;
@@ -254,10 +260,15 @@ void gui_html_start(void)
 }
 
 #define MAX_TABLES 16
-#define MAX_SPANS 16
-static int table=-1, row[MAX_TABLES], col[MAX_TABLES];
-static int span=0;
-char *options="";
+static int table=-1, row[MAX_TABLES], col[MAX_TABLES], span[MAX_TABLES];
+static void startspan()
+{
+	if (table>=0) span[table]++;
+}
+static void endspan()
+{
+	if (table>=0) span[table]--;
+}
 static void newtable(GUIENTITY *entity)
 {
 	if (table<MAX_TABLES)
@@ -272,32 +283,32 @@ static void newtable(GUIENTITY *entity)
 static void newrow(GUIENTITY *entity)
 {
 	if (table<0) newtable(entity);
-	if (row[table]==0) fprintf(fp,"\t<table %s> <!-- table %d %s -->\n",options,table,gui_get_typename(entity));
-	if (col[table]>0) fprintf(fp,"\t</td> <!-- col %d -->\n", col[table]);
+	if (row[table]==0) fprintf(fp,"\t<table" TABLEOPTIONS "> <!-- table %d %s -->\n",table,gui_get_typename(entity));
+	if (col[table]>0) fprintf(fp,"\t</td> <!-- table %d col %d -->\n", table, col[table]);
 	col[table]=0;
-	if (row[table]>0) fprintf(fp,"\t</tr> <!-- row %d -->\n", row[table]);
+	if (row[table]>0) fprintf(fp,"\t</tr> <!--  table %d row %d -->\n", table, row[table]);
 	row[table]++;
 	fprintf(fp,"\t<tr> <!-- row %d -->\n", row[table]);
 }
 static void newcol(GUIENTITY *entity)
 {
-	if (span>0) return;
+	if (span[table]>0) return;
 	if (table<0 || row[table]==0) newrow(entity);
-	if (col[table]>0) fprintf(fp,"\t</td> <!-- col %d -->\n", col[table]);
+	if (col[table]>0) fprintf(fp,"\t</td> <!-- table %d col %d -->\n",  table, col[table]);
 	col[table]++;
 	if (entity->type==GUI_SPAN)
 	{
-		fprintf(fp,"\t<td colspan=\"%d\"> <!-- col %d -->\n", entity->size, col[table]);
+		fprintf(fp,"\t<td colspan=\"%d\"> <!-- table %d col %d -->\n", entity->size, table, col[table]);
 		if (entity->size==0) output_warning("%s: not all browsers accept span size 0 (meaning to end), span size may not work as expected", entity->srcref);
 	}
 	else
-		fprintf(fp,"\t<td> <!-- col %d -->\n", col[table]);
+		fprintf(fp,"\t<td> <!-- table %d col %d -->\n", table, col[table]);
 }
 static void endtable()
 {
 	if (table<0) return;
-	if (col[table]>0) fprintf(fp,"\t</td> <!-- col %d -->\n", col[table]);
-	if (row[table]>0) fprintf(fp,"\t</td> <!-- row %d -->\n", row[table]);
+	if (col[table]>0) fprintf(fp,"\t</td> <!-- table %d col %d -->\n", table, col[table]);
+	if (row[table]>0) fprintf(fp,"\t</tr> <!-- table %d row %d -->\n", table, row[table]);
 	fprintf(fp,"\t</table> <!-- table %d -->\n", table--);
 }
 
@@ -364,7 +375,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 				char label[64], *p;
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
-				fprintf(fp,"<nobr><input class=\"%s\" type=\"radio\" name=\"%s\" value=\"%"FMT_INT64"d\" %s onchange=\"update_%s(this)\" />%s</NOBR>\n",
+				fprintf(fp,"<nobr><input class=\"%s\" type=\"radio\" name=\"%s\" value=\"%"FMT_INT64"d\" %s onchange=\"update_%s(this)\" />%s</nobr>\n",
 					ptype, gui_get_name(entity), key->value, checked, ptype, label);
 			}
 		}
@@ -419,7 +430,7 @@ static void gui_entity_html_open(GUIENTITY *entity)
 		break;
 	case GUI_SPAN: 
 		newcol(entity);
-		span++;
+		startspan();
 		break;
 	case GUI_TEXT: 
 		break;
@@ -456,7 +467,7 @@ static void gui_entity_html_close(GUIENTITY *entity)
 		fprintf(fp,"</fieldset>\n");
 		break;
 	case GUI_SPAN: 
-		span--;
+		endspan();
 		break;
 	case GUI_TEXT: 
 		break;
@@ -486,7 +497,7 @@ void gui_html_output_children(GUIENTITY *entity)
 	if (entity!=NULL) gui_entity_html_close(entity);
 }
 
-void gui_include_script(char *lang, char *file)
+void gui_include_element(char *tag, char *options, char *file)
 {
 	char *path = find_file(file,NULL,4);
 	if (!path)
@@ -503,7 +514,7 @@ void gui_include_script(char *lang, char *file)
 			if (len>=0)
 			{
 				buffer[len]='\0';
-				fprintf(fp,"<script lang=\"%s\">\n%s\n</script>\n",lang,buffer);
+				fprintf(fp,"<%s%s%s>\n%s\n</%s>\n",tag,options?" ":"",options?options:"",buffer,tag);
 			}
 			else
 				output_error("unable to read '%s'", path);
@@ -526,7 +537,8 @@ STATUS gui_html_output_all(void)
 	}
 	fprintf(fp,"</head>\n");
 
-	gui_include_script("jscript","gridlabd.js");
+	gui_include_element("script","lang=\"jscript\"","gridlabd.js");
+	gui_include_element("style",NULL,"gridlabd.css");
 
 	// body entities
 	fprintf(fp,"<body>\n");
