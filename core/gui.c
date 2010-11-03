@@ -313,7 +313,8 @@ void gui_cmd_prompt(GUIENTITY *parent)
 Retry:
 	fprintf(stdout,"\n%s> [%s] ",label, gui_get_value(entity));
 	fflush(stdout);
-	gets(buffer);
+	fgets(buffer,sizeof(buffer),stdin);
+	buffer[strlen(buffer)]='\0';
 	if (strcmp(buffer,"")==0)
 		return;
 	if (entity->obj && !object_set_value_by_name(entity->obj,entity->propertyname,buffer))
@@ -356,11 +357,12 @@ void gui_cmd_menu(GUIENTITY *parent)
 		}
 		if (item==0)
 			break;
-		fprintf(stdout,"\n 0. %s\n",parent?"Return":"Done");
+		fprintf(stdout,"\n\n 0. %s\n",parent?"Return":"Done");
 Retry:
 		fprintf(stdout,"\nGLM> [%d] ",ans<item?ans+1:0);
 		fflush(stdout);
-		gets(buffer);
+		fgets(buffer,sizeof(buffer),stdin);
+		buffer[strlen(buffer)]='\0';
 		ans = atoi(buffer);
 		if (ans<0 || ans>item)
 		{
@@ -764,6 +766,9 @@ size_t gui_glm_write_all(FILE *fp)
 void gui_wait(void)
 {
 	char *env = global_getvar("environment",NULL,NULL);
+#ifdef _DEBUG
+	output_verbose("starting gui environment for %s", env);
+#endif	
 	if (strcmp(env,"batch")==0)
 		gui_cmd_start();
 	// TODO HTML, X11 startup
