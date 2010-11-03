@@ -329,12 +329,12 @@ Retry:
 	else if (entity->env)
 	{
 		char env[1024];
+#ifdef WIN32
 		sprintf("%s=%s",entity->env,buffer);
-		if (!_putenv(env))
-		{
-			fprintf(stdout,"Invalid input, try again.\n");
-		goto Retry;
-		}
+		putenv(env);
+#else
+		setenv(entity->env,buffer,1);
+#endif
 	}
 }
 
