@@ -308,7 +308,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					t_next.month = 1;
 					t_next.year += 1;
 				}
-
+				t_next.tz[0] = 0;
 				next_time =	gl_mktime(&t_next);
 			}
 		}
@@ -327,6 +327,9 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 	DATETIME dtime;
 	gl_localtime(t1,&dtime);
 
+	if (dtime.day == 30 && dtime.hour == 23)
+		gl_warning("Pause for me");
+	
 	monthly_energy = measured_real_energy/1000 - previous_energy_total;
 	monthly_bill = monthly_fee;
 	switch(bill_mode){
@@ -347,6 +350,7 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 			break;
 		case BM_HOURLY:
 			monthly_bill += hourly_acc;
+			break;
 		case BM_TIERED_RTP:
 			monthly_bill += hourly_acc;
 			if(monthly_energy < tier_energy[0])
