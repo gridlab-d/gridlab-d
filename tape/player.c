@@ -75,7 +75,8 @@ static int player_open(OBJECT *obj)
 	char1024 fname="";
 	char32 flags="r";
 	struct player *my = OBJECTDATA(obj,struct player);
-	
+	TAPEFUNCS *tf = 0;
+
 	/* if prefix is omitted (no colons found) */
 	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
 	{
@@ -91,7 +92,10 @@ static int player_open(OBJECT *obj)
 		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, my->filetype);
 
 	/* if type is file or file is stdin */
-	my->ops = get_ftable(type)->player;
+	tf = get_ftable(type);
+	if(tf == NULL)
+		return 0;
+	my->ops = tf->player;
 	if(my->ops == NULL)
 		return 0;
 	else return (my->ops->open)(my, fname, flags);

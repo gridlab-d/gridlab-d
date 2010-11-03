@@ -81,7 +81,8 @@ static int multi_recorder_open(OBJECT *obj)
 	char1024 fname="";
 	char32 flags="w";
 	struct recorder *my = OBJECTDATA(obj,struct recorder);
-	
+	TAPEFUNCS *tf = 0;
+
 	my->interval = (int64)(my->dInterval/TS_SECOND);
 	/* if prefix is omitted (no colons found) */
 	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
@@ -261,7 +262,10 @@ static int multi_recorder_open(OBJECT *obj)
 	}
 
 	/* if type is file or file is stdin */
-	my->ops = get_ftable(type)->recorder;
+	tf = get_ftable(type);
+	if(tf == NULL)
+		return 0;
+	my->ops = tf->recorder;
 	if(my->ops == NULL)
 		return 0;
 	return my->ops->open(my, fname, flags);

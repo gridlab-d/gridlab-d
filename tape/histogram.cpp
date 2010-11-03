@@ -212,6 +212,7 @@ int histogram::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 	char tprop[64], tpart[8];
 	int e = 0;
+	TAPEFUNCS *tf = 0;
 	tprop[0]=0;
 	tpart[0] = 0;
 
@@ -358,7 +359,10 @@ int histogram::init(OBJECT *parent)
 		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, ftype);
 
 	/* if type is file or file is stdin */
-	ops = get_ftable(ftype)->histogram; /* same mentality as a recorder, 'cept for the header properties */
+	tf = get_ftable(type);
+	if(tf == NULL)
+		return 0;
+	ops = tf->histogram; /* same mentality as a recorder, 'cept for the header properties */
 	if(ops == NULL)
 		return 0;
 	return ops->open(this, fname, flags);

@@ -69,6 +69,7 @@ static int collector_open(OBJECT *obj)
 	char32 type="file";
 	char1024 fname="";
 	char32 flags="w";
+	TAPEFUNCS *tf = 0;
 	struct collector *my = OBJECTDATA(obj,struct collector);
 	
 	my->interval = (int64)(my->dInterval/TS_SECOND);
@@ -97,7 +98,10 @@ static int collector_open(OBJECT *obj)
 	}
 
 	/* if type is file or file is stdin */
-	my->ops = get_ftable(type)->collector;
+	tf = get_ftable(type);
+	if(tf == NULL)
+		return 0;
+	my->ops = tf->collector;
 	if(my->ops == NULL)
 		return 0;
 	return my->ops->open(my, fname, flags);
