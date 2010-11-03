@@ -69,7 +69,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_double, "measured_demand[W]", PADDR(measured_demand),
 			PT_double, "measured_real_power[W]", PADDR(measured_real_power),
 			PT_double, "measured_reactive_power[W]", PADDR(measured_reactive_power),
-			
+
 			// added to record last voltage/current
 			PT_complex, "measured_voltage_1[V]", PADDR(measured_voltage[0]),
 			PT_complex, "measured_voltage_2[V]", PADDR(measured_voltage[1]),
@@ -192,8 +192,8 @@ int triplex_meter::check_prices(){
 			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
 				GL_THROW("triplex_meter tiers cannot have negative values");
 		}
-	} 
-	
+	}
+
 	if(bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP){
 		if(power_market == 0 || price_prop == 0){
 			GL_THROW("triplex_meter cannot use real time energy prices without a power market that publishes the next price");
@@ -231,7 +231,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 //		if (dt > 0 && last_t != dt)
 		if (dt > 0)
-		{	
+		{
 			measured_real_energy += measured_real_power * TO_HOURS(dt);
 			measured_reactive_energy += measured_reactive_power * TO_HOURS(dt);
 		}
@@ -250,11 +250,11 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 								+ (indiv_measured_power[1]).Im()
 								+ (indiv_measured_power[2]).Im();
 
-		if (measured_real_power>measured_demand) 
+		if (measured_real_power>measured_demand)
 			measured_demand=measured_real_power;
 
-	
-	
+
+
 		if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
 		{
 			process_bill(t1);
@@ -279,7 +279,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 		}
 
-		if( (bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP) && power_market != NULL && price_prop != NULL){			
+		if( (bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP) && power_market != NULL && price_prop != NULL){
 			double seconds;
 			if (dt != last_t)
 				seconds = (double)(dt);
@@ -320,16 +320,13 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	else
 		return rv;
 	//return triplex_node::postsync(t1);
-	
+
 }
 
 double triplex_meter::process_bill(TIMESTAMP t1){
 	DATETIME dtime;
 	gl_localtime(t1,&dtime);
 
-	if (dtime.day == 30 && dtime.hour == 23)
-		gl_warning("Pause for me");
-	
 	monthly_energy = measured_real_energy/1000 - previous_energy_total;
 	monthly_bill = monthly_fee;
 	switch(bill_mode){
@@ -344,9 +341,9 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 			else if(monthly_energy < tier_energy[1])
 				monthly_bill += price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]);
 			else if(monthly_energy < tier_energy[2])
-				monthly_bill += price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]);
+				monthly_bill += price*tier_energy[0] + tier_price[0]*(tier_energy[1] - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]);
 			else
-				monthly_bill += price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]) + tier_price[2]*(monthly_energy - tier_energy[2]);
+				monthly_bill += price*tier_energy[0] + tier_price[0]*(tier_energy[1] - tier_energy[0]) + tier_price[1]*(tier_energy[2] - tier_energy[1]) + tier_price[2]*(monthly_energy - tier_energy[2]);
 			break;
 		case BM_HOURLY:
 			monthly_bill += hourly_acc;
@@ -358,12 +355,12 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 			else if(monthly_energy < tier_energy[1])
 				monthly_bill += price_base*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]);
 			else if(monthly_energy < tier_energy[2])
-				monthly_bill += price_base*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]);
+				monthly_bill += price_base*tier_energy[0] + tier_price[0]*(tier_energy[1] - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]);
 			else
-				monthly_bill += price_base*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]) + tier_price[2]*(monthly_energy - tier_energy[2]);			
+				monthly_bill += price_base*tier_energy[0] + tier_price[0]*(tier_energy[1] - tier_energy[0]) + tier_price[1]*(tier_energy[2] - tier_energy[1]) + tier_price[2]*(monthly_energy - tier_energy[2]);
 			break;
 	}
-	
+
 	if (dtime.day == bill_day && dtime.hour == 0 && dtime.month != last_bill_month)
 	{
 		previous_monthly_bill = monthly_bill;
@@ -372,9 +369,9 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 		last_bill_month = dtime.month;
 		hourly_acc = 0;
 	}
-	
 
-	
+
+
 	return monthly_bill;
 }
 
@@ -415,7 +412,7 @@ EXPORT int init_triplex_meter(OBJECT *obj)
 	catch (const char *msg)
 	{
 		gl_error("%s (triplex_meter:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
+		return 0;
 	}
 }
 
@@ -439,7 +436,7 @@ EXPORT TIMESTAMP sync_triplex_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		throw "invalid pass request";
 	} catch (const char *error) {
 		gl_error("%s (triplex_meter:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
+		return TS_INVALID;
 	} catch (...) {
 		gl_error("%s (triplex_meter:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
 		return TS_INVALID;
