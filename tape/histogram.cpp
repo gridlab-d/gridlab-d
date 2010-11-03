@@ -359,7 +359,7 @@ int histogram::init(OBJECT *parent)
 		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, ftype);
 
 	/* if type is file or file is stdin */
-	tf = get_ftable(type);
+	tf = get_ftable(ftype);
 	if(tf == NULL)
 		return 0;
 	ops = tf->histogram; /* same mentality as a recorder, 'cept for the header properties */
