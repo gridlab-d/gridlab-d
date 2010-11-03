@@ -314,7 +314,7 @@ Retry:
 	fprintf(stdout,"\n%s> [%s] ",label, gui_get_value(entity));
 	fflush(stdout);
 	fgets(buffer,sizeof(buffer),stdin);
-	buffer[strlen(buffer)]='\0';
+	buffer[strlen(buffer)-1]='\0';
 	if (strcmp(buffer,"")==0)
 		return;
 	if (entity->obj && !object_set_value_by_name(entity->obj,entity->propertyname,buffer))
@@ -339,11 +339,36 @@ Retry:
 	}
 }
 
+/* returns count of input items below it */
+int gui_cmd_input_count(GUIENTITY *entity)
+{
+	GUIENTITY *item;
+	int count = 0;
+	for ( item=gui_root; item!=NULL ; item=item->next )
+	{
+		if (item->parent!=entity)
+			continue;
+		switch (item->type) {
+		case GUI_INPUT:
+		case GUI_CHECK:
+		case GUI_RADIO:
+		case GUI_SELECT:
+			count++;
+			break;
+		default:
+			count += gui_cmd_input_count(item);
+			break;
+		}
+	}
+	return count;
+}
+
 void gui_cmd_menu(GUIENTITY *parent)
 {
 	char buffer[1024];
 	GUIENTITY *entity;
 	GUIENTITY *list[100];
+	int count;
 
 	while (1) {
 		int item=0, ans=-1;
@@ -362,7 +387,7 @@ Retry:
 		fprintf(stdout,"\nGLM> [%d] ",ans<item?ans+1:0);
 		fflush(stdout);
 		fgets(buffer,sizeof(buffer),stdin);
-		buffer[strlen(buffer)]='\0';
+		buffer[strlen(buffer)-1]='\0';
 		ans = atoi(buffer);
 		if (ans<0 || ans>item)
 		{
@@ -371,9 +396,10 @@ Retry:
 		}
 		else if ( ans==0 )
 			break;
-		if ( list[ans]->type==GUI_ROW )
+		count = gui_cmd_input_count(list[ans]);
+		if ( count==1 )
 			gui_cmd_prompt(list[ans]);
-		else if ( gui_is_grouping(list[ans]) )
+		else if ( count>0 )
 			gui_cmd_menu(list[ans]);
 	}
 }
