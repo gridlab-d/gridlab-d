@@ -1,0 +1,30 @@
+// gui example 3
+
+#define AVG_SF=2500
+#define STD_SF=500
+
+module residential {
+	implicit_enduses LIGHTS;
+}
+
+gui {
+	title value "GUI Example 3";
+	row {
+		title value "End-uses enabled";
+		input global residential::implicit_enduses;
+	}
+	row {
+		title value "Mean floor area";
+		input global AVG_SF;
+	}
+	row {
+		title value "Stdev floor area";
+		input global STD_SF;
+	}
+}
+
+#print "Floor area is ${AVG_SF} +/- ${STD_SF} sf"
+
+object house:..10 {
+	floor_area random.normal(${AVG_SF},${STD_SF});
+}
