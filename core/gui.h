@@ -12,20 +12,34 @@
 
 typedef enum {
 	GUI_UNKNOWN=0,
+
+	/* DO NOT CHANGE THE ORDER OF THE GROUPS!!! */
 	GUI_ROW, // a row group
 	GUI_TAB, // a tab group (includes tabs at top)
 	GUI_PAGE, // a page group (includes navigation |< < > >| buttons at top)
 	GUI_GROUP, // a group of entities with a labeled border around it
 	GUI_SPAN, // a group of entities that are not in columns
 	_GUI_GROUPING_END, // end of grouping entities
+
 	GUI_TITLE, // the title of the page, tab, or block
 	GUI_STATUS, // the status message of the page
 	GUI_TEXT, // a plain text entity 
+	_GUI_LABELING_END, // end of labeling entities
+
 	GUI_INPUT, // an input textbox
 	GUI_CHECK, // a check box (set)
 	GUI_RADIO, // a radio button (enumeration)
 	GUI_SELECT, // a select drop down (enumeration)
+	_GUI_INPUT_END, // end of input entities
+
+	GUI_BROWSE, // a text browsing entity
+	GUI_TABLE, // a tabulate presentation
+	GUI_GRAPH, // a graphing presentation
+	_GUI_OUTPUT_END, // end of output entities
+
 	GUI_ACTION, // an action button
+	_GUI_ACTION_END, // end of action entities
+
 } GUIENTITYTYPE;
 
 typedef struct s_guientity {
@@ -38,6 +52,10 @@ typedef struct s_guientity {
 	char action[64]; // action value
 	int span; // col span
 	int size; // size spec
+	int height; // height spec
+	int width; // width spec
+	char source[1024]; // source file for data (output only)
+	char options[1024]; // options for output
 	struct s_guientity *next;
 	struct s_guientity *parent;
 	/* internal variables */
@@ -61,6 +79,8 @@ void gui_set_span(GUIENTITY *entity, int span);
 void gui_set_unit(GUIENTITY *entity, char *unit);
 void gui_set_next(GUIENTITY *entity, GUIENTITY *next);
 void gui_set_parent(GUIENTITY *entity, GUIENTITY *parent);
+void gui_set_source(GUIENTITY *entity, char *source);
+void gui_set_options(GUIENTITY *entity, char *source);
 
 GUIENTITY *gui_get_root(void);
 GUIENTITY *gui_get_last(void);
@@ -78,6 +98,7 @@ int gui_get_span(GUIENTITY *entity);
 UNIT *gui_get_unit(GUIENTITY *entity);
 
 int gui_is_grouping(GUIENTITY *entity);
+int gui_is_labeling(GUIENTITY *entity);
 int gui_is_header(GUIENTITY *entity);
 
 void gui_html_start(void);

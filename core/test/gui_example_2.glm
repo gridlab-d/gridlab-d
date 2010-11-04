@@ -1,0 +1,24 @@
+// GUI example 1
+//
+
+#define HOUSE_SF_MEAN=2500
+#define HOUSE_SF_STDEV=500
+
+gui {
+	row {
+		title value "Average house size";
+		input global HOUSE_SF_MEAN;
+	}
+	row {
+		title value "House size stdev";
+		input global HOUSE_SF_STDEV;
+	}
+}
+
+module residential {
+	implicit_enduses LIGHTS;
+}
+
+object house:..10 {
+	floor_area random.normal(${HOUSE_SF_MEAN},${HOUSE_SF_STDEV});
+}

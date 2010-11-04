@@ -4305,7 +4305,38 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 			REJECT;
 		}
 	}
-	OR if LITERAL("unit") 
+	OR if LITERAL("source") 
+	{ 
+		ACCEPT;
+		if WHITE ACCEPT;
+		if (TERM(value(HERE,buffer,sizeof(buffer))) && WHITE,LITERAL(";"))
+		{
+			gui_set_source(entity,buffer);
+			ACCEPT; 
+			DONE;
+		}
+		else
+		{
+			output_error_raw("%s(%d): invalid gui value specification", filename, linenum);
+			REJECT;
+		}
+	}
+	OR if LITERAL("options") 
+	{ 
+		ACCEPT;
+		if WHITE ACCEPT;
+		if (TERM(value(HERE,buffer,sizeof(buffer))) && WHITE,LITERAL(";"))
+		{
+			gui_set_options(entity,buffer);
+			ACCEPT; 
+			DONE;
+		}
+		else
+		{
+			output_error_raw("%s(%d): invalid gui options specification", filename, linenum);
+			REJECT;
+		}
+	}	OR if LITERAL("unit") 
 	{ 
 		ACCEPT;
 		if WHITE ACCEPT;
@@ -4335,7 +4366,7 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 	{ 
 		ACCEPT;
 		if WHITE ACCEPT;
-		if (TERM(integer(HERE,&entity->size)) && WHITE,LITERAL(";"))
+		if (TERM(integer32(HERE,&entity->size)) && WHITE,LITERAL(";"))
 		{
 			ACCEPT; 
 			DONE;
@@ -4343,6 +4374,40 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 		else
 		{
 			output_error_raw("%s(%d): invalid gui size specification", filename, linenum);
+			REJECT;
+		}
+		ACCEPT;  
+		DONE;
+	}
+	OR if LITERAL("height") 
+	{ 
+		ACCEPT;
+		if WHITE ACCEPT;
+		if (TERM(integer32(HERE,&entity->height)) && WHITE,LITERAL(";"))
+		{
+			ACCEPT; 
+			DONE;
+		}
+		else
+		{
+			output_error_raw("%s(%d): invalid gui height specification", filename, linenum);
+			REJECT;
+		}
+		ACCEPT;  
+		DONE;
+	}	
+	OR if LITERAL("width") 
+	{ 
+		ACCEPT;
+		if WHITE ACCEPT;
+		if (TERM(integer32(HERE,&entity->width)) && WHITE,LITERAL(";"))
+		{
+			ACCEPT; 
+			DONE;
+		}
+		else
+		{
+			output_error_raw("%s(%d): invalid gui width specification", filename, linenum);
 			REJECT;
 		}
 		ACCEPT;  
@@ -4380,18 +4445,25 @@ static int gui_entity_type(PARSER, GUIENTITYTYPE *type)
 {
 	START;
 	if WHITE ACCEPT;
+	// labeling entities
 	if LITERAL("title") { ACCEPT; *type = GUI_TITLE; DONE; };
 	if LITERAL("status") { ACCEPT; *type = GUI_STATUS; DONE; };
-	if LITERAL("row") { ACCEPT; *type = GUI_ROW; DONE; };
-	if LITERAL("tab") { ACCEPT; *type = GUI_TAB; DONE; };
-	if LITERAL("page") { ACCEPT; *type = GUI_PAGE; DONE; };
-	if LITERAL("group") { ACCEPT; *type = GUI_GROUP; DONE; };
-	if LITERAL("span") { ACCEPT; *type = GUI_SPAN; DONE; };
 	if LITERAL("text") { ACCEPT; *type = GUI_TEXT; DONE; };
+	// input entities
 	if LITERAL("input") { ACCEPT; *type = GUI_INPUT; DONE; };
 	if LITERAL("check") { ACCEPT; *type = GUI_CHECK; DONE; };
 	if LITERAL("radio") { ACCEPT; *type = GUI_RADIO; DONE; };
 	if LITERAL("select") { ACCEPT; *type = GUI_SELECT; DONE; };
+	// output entities
+	if LITERAL("browse") { ACCEPT; *type = GUI_BROWSE; DONE; };
+	if LITERAL("table") { ACCEPT; *type = GUI_TABLE; DONE; };
+	if LITERAL("graph") { ACCEPT; *type = GUI_GRAPH; DONE; };
+	// grouping entities
+	if LITERAL("row") { ACCEPT; *type = GUI_ROW; DONE; };
+	if LITERAL("tab") { ACCEPT; *type = GUI_TAB; DONE; }; // beware not to put this before "table"
+	if LITERAL("page") { ACCEPT; *type = GUI_PAGE; DONE; };
+	if LITERAL("group") { ACCEPT; *type = GUI_GROUP; DONE; };
+	if LITERAL("span") { ACCEPT; *type = GUI_SPAN; DONE; };
 	REJECT;
 }
 

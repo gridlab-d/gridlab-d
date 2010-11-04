@@ -10,16 +10,34 @@ module residential {
 gui {
 	title value "GUI Example 3";
 	row {
-		title value "End-uses enabled";
-		input global residential::implicit_enduses;
+		text value "End-uses enabled";
+		span { size 3; check global residential::implicit_enduses; }
 	}
 	row {
-		title value "Mean floor area";
-		input global AVG_SF;
+		text value "Mean floor area";
+		span { size 3; input global AVG_SF; }
 	}
 	row {
-		title value "Stdev floor area";
-		input global STD_SF;
+		text value "Stdev floor area";
+		span { size 3; input global STD_SF; }
+	}
+	row {
+		text value "example.csv";
+		browse {
+			source "example.csv";
+			height 5;
+			width 40;
+		}
+		table {
+			source "data.csv";
+			height 10;
+			options "rules=all border=0 cellpadding=5";
+		}
+		graph {
+			source "example.csv";
+			height 150;
+			width 200;
+		}
 	}
 }
 
