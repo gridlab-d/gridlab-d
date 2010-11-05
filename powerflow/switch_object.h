@@ -45,5 +45,7 @@ public:
 	SWITCHSTATE phase_C_state;
 };
 
+EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool state);
+
 #endif // SWITCH_OBJECT_H
 /**@}**/

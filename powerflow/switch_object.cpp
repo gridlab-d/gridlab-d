@@ -82,12 +82,14 @@ switch_object::switch_object(MODULE *mod) : link(mod)
 				PT_KEYWORD, "BANKED", BANKED_SW,
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,"close",(FUNCTIONADDR)switch_close)==NULL)
-			GL_THROW("unable to publish switch close function");
-		if (gl_publish_function(oclass,"open",(FUNCTIONADDR)switch_open)==NULL)
-			GL_THROW("unable to publish switch open function");
-		if (gl_publish_function(oclass,"status",(FUNCTIONADDR)switch_status)==NULL)
-			GL_THROW("unable to publish switch open function");
+			if (gl_publish_function(oclass,"change_switch_state",(FUNCTIONADDR)change_switch_state)==NULL)
+				GL_THROW("Unable to publish switch state change function");
+		//if (gl_publish_function(oclass,"close",(FUNCTIONADDR)switch_close)==NULL)
+		//	GL_THROW("unable to publish switch close function");
+		//if (gl_publish_function(oclass,"open",(FUNCTIONADDR)switch_open)==NULL)
+		//	GL_THROW("unable to publish switch open function");
+		//if (gl_publish_function(oclass,"status",(FUNCTIONADDR)switch_status)==NULL)
+		//	GL_THROW("unable to publish switch open function");
     }
 }
 
@@ -455,7 +457,11 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 
 		//Check status before running sync (since it will clear it)
 		if ((status != prev_status) || (pres_status != prev_full_status))
+		{
+			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
 			NR_admit_change = true;	//Flag an admittance change
+			UNLOCK_OBJECT(NR_swing_bus);	//Finished
+		}
 
 		prev_full_status = pres_status;	//Update the status flags
 	}//end SM_NR
@@ -553,8 +559,14 @@ void switch_object::set_switch(bool desired_status)
 				}
 			}//end closed
 
+			//Lock the swing first
+			LOCK_OBJECT(NR_swing_bus);
+
 			//Flag an update
 			NR_admit_change = true;	//Flag an admittance change
+
+			//Unlock swing
+			UNLOCK_OBJECT(NR_swing_bus);
 
 			//Update prev_status
 			prev_status = status;
@@ -766,7 +778,9 @@ void switch_object::set_switch_full(char desired_status_A, char desired_status_B
 		}//end individual mode
 
 		//Flag an update - assume this was called for a reason
+		LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
 		NR_admit_change = true;	//Flag an admittance change
+		UNLOCK_OBJECT(NR_swing_bus);	//Unlock it
 
 		//Update overall status flag
 		prev_status = status;
@@ -873,6 +887,60 @@ EXPORT TIMESTAMP sync_switch(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int isa_switch(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,switch_object)->isa(classname);
+}
+
+//Function to change switch states
+EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool state)
+{
+	char desA, desB, desC;
+
+	//Map the switch
+	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
+
+	if (swtchobj->switch_banked_mode == switch_object::BANKED_SW)	//Banked mode - all become "state", just cause
+	{
+		swtchobj->set_switch(state);
+	}
+	else	//Must be individual
+	{
+		//Figure out what we need to call
+		if ((phase_change & 0x04) == 0x04)
+		{
+			if (state==true)
+				desA=1;	//Close it
+			else
+				desA=0;	//Open it
+		}
+		else	//Nope, no A
+			desA=2;		//I don't care
+
+		//Phase B
+		if ((phase_change & 0x02) == 0x02)
+		{
+			if (state==true)
+				desB=1;	//Close it
+			else
+				desB=0;	//Open it
+		}
+		else	//Nope, no B
+			desB=2;		//I don't care
+
+		//Phase C
+		if ((phase_change & 0x01) == 0x01)
+		{
+			if (state==true)
+				desC=1;	//Close it
+			else
+				desC=0;	//Open it
+		}
+		else	//Nope, no A
+			desC=2;		//I don't care
+
+		//Perform the switching!
+		swtchobj->set_switch_full(desA,desB,desC);
+	}//End individual adjustments
+
+	return 1;	//This will always succeed...because I say so!
 }
 
 /**@}**/
