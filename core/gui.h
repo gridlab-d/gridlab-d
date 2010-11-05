@@ -99,6 +99,10 @@ UNIT *gui_get_unit(GUIENTITY *entity);
 
 int gui_is_grouping(GUIENTITY *entity);
 int gui_is_labeling(GUIENTITY *entity);
+int gui_is_input(GUIENTITY *entity);
+int gui_is_output(GUIENTITY *entity);
+int gui_is_action(GUIENTITY *entity);
+
 int gui_is_header(GUIENTITY *entity);
 
 void gui_html_start(void);

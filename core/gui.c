@@ -93,7 +93,19 @@ int gui_is_grouping(GUIENTITY *entity)
 
 int gui_is_labeling(GUIENTITY *entity)
 {
-	return (entity->type<_GUI_LABELING_END && !gui_is_grouping(entity));
+	return (entity->type<_GUI_LABELING_END && entity->type>_GUI_GROUPING_END);
+}
+int gui_is_input(GUIENTITY *entity)
+{
+	return (entity->type<_GUI_INPUT_END && entity->type>_GUI_LABELING_END);
+}
+int gui_is_output(GUIENTITY *entity)
+{
+	return (entity->type<_GUI_OUTPUT_END && entity->type>_GUI_INPUT_END);
+}
+int gui_is_action(GUIENTITY *entity)
+{
+	return (entity->type<_GUI_ACTION_END && entity->type>_GUI_OUTPUT_END);
 }
 
 /* SET OPERATIONS */
@@ -362,17 +374,10 @@ int gui_cmd_input_count(GUIENTITY *entity)
 	{
 		if (item->parent!=entity)
 			continue;
-		switch (item->type) {
-		case GUI_INPUT:
-		case GUI_CHECK:
-		case GUI_RADIO:
-		case GUI_SELECT:
+		if (gui_is_input(item))
 			count++;
-			break;
-		default:
+		else
 			count += gui_cmd_input_count(item);
-			break;
-		}
 	}
 	return count;
 }
