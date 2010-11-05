@@ -602,12 +602,25 @@ static void gui_output_html_graph(GUIENTITY *entity)
 		fprintf(fp,"<span class=\"error\">Unable to run gnuplot</span>\n");
 		goto Done;
 	}
-	if ( entity->width>0 && entity->height>0 )
-		fprintf(plot,"set terminal png size %d,%d %s\n", entity->width, entity->height, entity->options);
+	if (entity->gnuplot[0]=='\0')
+	{
+		if ( entity->width>0 && entity->height>0 )
+			fprintf(plot,"set terminal png size %d,%d %s\n", entity->width, entity->height, entity->options);
+		else
+			fprintf(plot,"set terminal png %s\n", entity->options);
+		fprintf(plot,"set output '%s'\n",image);
+		fprintf(plot,"set key off\n");
+		fprintf(plot,"set datafile separator \",\"\n");
+		fprintf(plot,"set xdata time\n");
+		fprintf(plot,"set timefmt \"%%Y-%%m-%%d %%H:%%M:%%S\"\n");
+		fprintf(plot,"set format x \"%%H:%%M\"\n");
+		fprintf(plot,"set xlabel \"Time\"\n");
+		if (entity->unit)
+			fprintf(plot,"set ylabel \"%s\"\n",entity->unit->name);
+		fprintf(plot,"plot '%s' using 1:2\n",entity->source);
+	}
 	else
-		fprintf(plot,"set terminal png %s\n", entity->options);
-	fprintf(plot,"set output '%s'\n",image);
-	fprintf(plot,"plot sin(x)\n");
+		fprintf(plot,"%s",entity->gnuplot);
 	fclose(plot);
 	plot=NULL;
 

@@ -4217,6 +4217,23 @@ static int schedule(PARSER)
 ////////////////////////////////////////////////////////////////////////////////////
 // GUI parser
 
+static int gnuplot(PARSER, GUIENTITY *entity)
+{
+	char *p = entity->gnuplot;
+	int _n = 0;
+	while ( _p[_n]!='}' )
+	{
+		if (_p[_n]=='\n') linenum++;
+		*p++ = _p[_n++];
+		if ( p>entity->gnuplot+sizeof(entity->gnuplot) )
+		{
+			output_error_raw("%s(%d): gnuplot script too long", filename, linenum);
+			return _n;
+		}
+	}
+	return _n;
+}
+
 static int gui_link_globalvar(PARSER, GLOBALVAR **var)
 {
 	char varname[64];
@@ -4412,6 +4429,29 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 		}
 		ACCEPT;  
 		DONE;
+	}
+	OR if ( LITERAL("gnuplot") && WHITE,LITERAL("{") )
+	{
+		ACCEPT;
+		if ( TERM(gnuplot(HERE,entity)) )
+		{
+			ACCEPT;
+			if ( LITERAL("}") )
+			{
+				ACCEPT;
+				DONE;
+			}
+			else
+			{
+				output_error_raw("%s(%d): missing closing } after gnuplot script", filename, linenum);
+				REJECT;
+			}
+		}
+		else
+		{
+			output_error_raw("%s(%d): invalid gnuplot script", filename, linenum);
+			REJECT;
+		}
 	}
 	REJECT;
 }

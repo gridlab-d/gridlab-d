@@ -3,6 +3,8 @@
 #define AVG_SF=2500
 #define STD_SF=500
 
+#set starttime='2001-01-01'
+
 module residential {
 	implicit_enduses LIGHTS;
 }
@@ -21,22 +23,37 @@ gui {
 		text value "Stdev floor area";
 		span { size 3; input global STD_SF; }
 	}
-	row {
-		text value "example.csv";
-		browse {
-			source "example.csv";
-			height 5;
-			width 40;
-		}
-		table {
-			source "data.csv";
-			height 10;
-			options "rules=all border=0 cellpadding=5";
-		}
-		graph {
-			source "example.csv";
-			height 150;
-			width 200;
+	span {
+		size 3;
+		group {
+			graph {
+				source "data.csv";
+				width 640;
+				height 480;
+				gnuplot {
+					set terminal png size 640,480 
+					set title "Energy use"
+					set output 'data.csv.png'
+					set datafile separator ","
+					set xdata time
+					set key below
+					set timefmt "%Y-%m-%d %H:%M:%S"
+					set format x "%H:%M"
+					set xlabel "${starttime}"
+					set ylabel "Energy (kWh)"
+					plot 'data.csv' using 1:2 with lines title 'House 1'
+				}
+			}
+			browse {
+				source "data.csv";
+				height 32;
+				width 40;
+			}
+			table {
+				source "data.csv";
+				height 10;
+				options "rules=all border=0 cellpadding=5";
+			}
 		}
 	}
 }

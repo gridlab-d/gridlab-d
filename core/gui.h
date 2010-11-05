@@ -56,6 +56,7 @@ typedef struct s_guientity {
 	int width; // width spec
 	char source[1024]; // source file for data (output only)
 	char options[1024]; // options for output
+	char gnuplot[4096];	// gnuplot script
 	struct s_guientity *next;
 	struct s_guientity *parent;
 	/* internal variables */
