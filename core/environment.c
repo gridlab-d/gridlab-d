@@ -67,7 +67,6 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	}
 	else if (strcmp(global_environment,"server")==0)
 	{
-#ifndef WIN32
 		output_verbose("starting server");
 		if (gui_get_root())
 			gui_html_start();
@@ -75,10 +74,6 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 			return exec_start();
 		else
 			return FAILED;
-#else
-		output_fatal("server environment not supported on this platform");
-		return FAILED;
-#endif
 	}
 	else if (strcmp(global_environment,"html")==0)
 	{

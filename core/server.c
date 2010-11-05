@@ -4,20 +4,33 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef WIN32
+
+#include <winsock2.h>
+
+#else
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <sys/errno.h>
+#define SOCKET int
+#define INVALID_SOCKET (-1)
+
+#endif
+
 #include <memory.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/errno.h>
 #include <pthread.h>
 
 #define MAXSTR		1024		// maximum string length
 
 void server_request(int);	// Function to handle clients' request(s)
+void handleRequest(int newsockfd);
 
 #include "server.h"
 #include "output.h"
@@ -51,20 +64,34 @@ void *server_routine(int sockfd)
 STATUS server_startup(int argc, char *argv[])
 {
 	int portNumber = global_server_portnum;
-	int sockfd,childpid;
+	SOCKET sockfd;
+	int childpid;
 	struct sockaddr_in serv_addr;
 	int status;
 	char buf[MAXSTR],ack[MAXSTR];
 	pthread_t thread;
 
-	/* create a new socket */
-	if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0)
+#ifdef WIN32
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
-		output_error("can't open stream socket");
+		output_error("socket library initialization failed");
+		return FAILED;	
+	}
+#endif
+
+	/* create a new socket */
+	if ((sockfd = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP)) == INVALID_SOCKET)
+	{
+		output_error("can't create stream socket: %s",GetLastError());
 		return FAILED;
 	}
 
+#ifdef WIN32
+	memset(&serv_addr,0,sizeof(serv_addr));
+#else
 	bzero((char *)&serv_addr,sizeof(serv_addr)) ;
+#endif
 
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -73,7 +100,7 @@ STATUS server_startup(int argc, char *argv[])
 	/* bind socket to server address */
 	if (bind(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
 	{
-		output_error("can't bind local address");
+		output_error("can't bind to port %d on %d.%d.%d.%d",serv_addr.sin_port,serv_addr.sin_addr.S_un.S_un_b.s_b1,serv_addr.sin_addr.S_un.S_un_b.s_b2,serv_addr.sin_addr.S_un.S_un_b.s_b3,serv_addr.sin_addr.S_un.S_un_b.s_b4);
 		return FAILED;
 	}
 	

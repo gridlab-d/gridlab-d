@@ -69,7 +69,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="xerces-c_2D.lib user32.lib pthreadVC2.lib"
+				AdditionalDependencies="xerces-c_2D.lib user32.lib pthreadVC2.lib ws2_32.lib"
 				OutputFile="$(OutDir)\$(SolutionName).exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir);..\pthreads"
@@ -675,6 +675,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\server.c"
+				>
+			</File>
+			<File
 				RelativePath=".\stream.c"
 				>
 			</File>
@@ -853,6 +857,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\server.h"
+				>
+			</File>
+			<File
 				RelativePath=".\stream.h"
 				>
 			</File>
@@ -897,15 +905,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -932,11 +940,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 			</Filter>
