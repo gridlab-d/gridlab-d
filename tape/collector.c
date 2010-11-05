@@ -109,7 +109,16 @@ static int collector_open(OBJECT *obj)
 
 static int write_collector(struct collector *my, char *ts, char *value)
 {
-	return my->ops->write(my, ts, value);
+	static int32 last_flush = 0;
+	extern int32 flush_interval;
+	int result = my->ops->write(my, ts, value);
+	time_t now = time(NULL);
+	if ( flush_interval>0 && now>last_flush+flush_interval )
+	{
+		last_flush = now;
+		fflush(my->fp);
+	}
+	return result;
 }
 
 static void close_collector(struct collector *my){
