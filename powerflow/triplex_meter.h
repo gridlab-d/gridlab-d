@@ -51,9 +51,9 @@ public:
 	PROPERTY *price_prop;
 	int32 bill_day;					//Day bill is to be processed (assumed to occur at midnight of that day)
 	int last_bill_month;			//Keeps track of which month we are looking at
-	double price;					//Standard uniform pricing
-	double price_base;
-	double tier_price[3], tier_energy[3];  //Allows for additional tiers of pricing over the standard price in TIERED
+	double price, last_price;					//Standard uniform pricing
+	double price_base, last_price_base;
+	double tier_price[3], tier_energy[3], last_tier_price[3];  //Allows for additional tiers of pricing over the standard price in TIERED
 
 	double process_bill(TIMESTAMP t1);
 	int check_prices();

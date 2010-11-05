@@ -140,6 +140,11 @@ int triplex_meter::create()
 	price = 0.0;
 	tier_price[0] = tier_price[1] = tier_price[2] = 0;
 	tier_energy[0] = tier_energy[1] = tier_energy[2] = 0;
+	last_price = 0;
+	last_tier_price[0] = 0;
+	last_tier_price[1] = 0;
+	last_tier_price[2] = 0;
+	last_price_base = 0;
 
 	tpmeter_interrupted = false;	//Assumes we start as "uninterrupted"
 
@@ -201,6 +206,13 @@ int triplex_meter::check_prices(){
 		//price = *gl_get_double(power_market,price_prop);
 	}
 
+	// initialize these to the same value
+	last_price = price;
+	last_price_base = price_base;
+	last_tier_price[0] = tier_price[0];
+	last_tier_price[1] = tier_price[1];
+	last_tier_price[2] = tier_price[2];
+
 	return 0;
 }
 // Synchronize a distribution triplex_meter
@@ -257,7 +269,8 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 		if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
 		{
-			process_bill(t1);
+			if (dt > 0)
+				process_bill(t1);
 
 			// Decide when the next billing HAS to be processed (one month later)
 			if (monthly_bill == previous_monthly_bill)
@@ -285,14 +298,16 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				seconds = (double)(dt);
 			else
 				seconds = 0;
-
-			hourly_acc += seconds/3600 * price * measured_real_power/1000;
+			
+			if (seconds > 0)
+			{
+				hourly_acc += seconds/3600 * price * measured_real_power/1000;
+				process_bill(t1);
+			}
 
 			// Now that we've accumulated the bill for the last time period, update to the new price
 			double *pprice = (gl_get_double(power_market, price_prop));
-			price = *pprice;
-
-			process_bill(t1);
+			last_price = price = *pprice;
 
 			if (monthly_bill == previous_monthly_bill)
 			{
@@ -337,13 +352,13 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 			break;
 		case BM_TIERED:
 			if(monthly_energy < tier_energy[0])
-				monthly_bill += price * monthly_energy;
+				monthly_bill += last_price * monthly_energy;
 			else if(monthly_energy < tier_energy[1])
-				monthly_bill += price*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]);
+				monthly_bill += last_price*tier_energy[0] + last_tier_price[0]*(monthly_energy - tier_energy[0]);
 			else if(monthly_energy < tier_energy[2])
-				monthly_bill += price*tier_energy[0] + tier_price[0]*(tier_energy[1] - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]);
+				monthly_bill += last_price*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(monthly_energy - tier_energy[1]);
 			else
-				monthly_bill += price*tier_energy[0] + tier_price[0]*(tier_energy[1] - tier_energy[0]) + tier_price[1]*(tier_energy[2] - tier_energy[1]) + tier_price[2]*(monthly_energy - tier_energy[2]);
+				monthly_bill += last_price*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(tier_energy[2] - tier_energy[1]) + last_tier_price[2]*(monthly_energy - tier_energy[2]);
 			break;
 		case BM_HOURLY:
 			monthly_bill += hourly_acc;
@@ -351,13 +366,13 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 		case BM_TIERED_RTP:
 			monthly_bill += hourly_acc;
 			if(monthly_energy < tier_energy[0])
-				monthly_bill += price_base * monthly_energy;
+				monthly_bill += last_price_base * monthly_energy;
 			else if(monthly_energy < tier_energy[1])
-				monthly_bill += price_base*tier_energy[0] + tier_price[0]*(monthly_energy - tier_energy[0]);
+				monthly_bill += last_price_base*tier_energy[0] + last_tier_price[0]*(monthly_energy - tier_energy[0]);
 			else if(monthly_energy < tier_energy[2])
-				monthly_bill += price_base*tier_energy[0] + tier_price[0]*(tier_energy[1] - tier_energy[0]) + tier_price[1]*(monthly_energy - tier_energy[1]);
+				monthly_bill += last_price_base*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(monthly_energy - tier_energy[1]);
 			else
-				monthly_bill += price_base*tier_energy[0] + tier_price[0]*(tier_energy[1] - tier_energy[0]) + tier_price[1]*(tier_energy[2] - tier_energy[1]) + tier_price[2]*(monthly_energy - tier_energy[2]);
+				monthly_bill += last_price_base*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(tier_energy[2] - tier_energy[1]) + last_tier_price[2]*(monthly_energy - tier_energy[2]);
 			break;
 	}
 
@@ -370,7 +385,11 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 		hourly_acc = 0;
 	}
 
-
+	last_price = price;
+	last_price_base = price_base;
+	last_tier_price[0] = tier_price[0];
+	last_tier_price[1] = tier_price[1];
+	last_tier_price[2] = tier_price[2];
 
 	return monthly_bill;
 }
