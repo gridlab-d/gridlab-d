@@ -7,6 +7,11 @@
 #set verbose=1
 #set environment=html
 
+clock {
+	timezone PST8PDT;
+	starttime '2001-01-01 0:00:00 PST';
+}
+
 module residential {
 	implicit_enduses LIGHTS;
 }

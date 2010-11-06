@@ -69,6 +69,8 @@ typedef struct s_guientity {
 } GUIENTITY;
 
 GUIENTITY *gui_create_entity();
+typedef  int (*GUISTREAMFN)(void*,char*,...);
+void gui_set_html_stream(void *ref,GUISTREAMFN stream);
 
 void gui_set_srcref(GUIENTITY *entity, char *filename, int linenum);
 void gui_set_type(GUIENTITY *entity, GUIENTITYTYPE type);
@@ -109,6 +111,7 @@ int gui_is_header(GUIENTITY *entity);
 void gui_html_start(void);
 void gui_X11_start(void);
 
+int gui_html_output_page(char *page);
 STATUS gui_html_output_all(void);
 
 size_t gui_glm_write_all(FILE *fp);

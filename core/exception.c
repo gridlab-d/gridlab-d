@@ -108,6 +108,7 @@ void throw_exception(char *format, /**< the format string */
 	if (handlers)
 	{
 		strncpy(handlers->msg,buffer,sizeof(handlers->msg));
+		output_warning("%s", buffer);
 		longjmp(handlers->buf,handlers->id);
 	}
 	else

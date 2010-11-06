@@ -43,7 +43,10 @@
 #include <ctype.h>
 #include <string.h>
 #ifdef WIN32
+#include <windows.h>
+#include <winbase.h>
 #include <direct.h>
+#include <sys/timeb.h>
 #else
 #include <unistd.h>
 #endif
@@ -209,112 +212,6 @@ static STATUS show_progress(void)
 	realtime_schedule_event(realtime_now()+1,show_progress);
 	return SUCCESS;
 }
-
-//sjin: remove old do_object_sync of threadpool
-//static void do_object_sync(int thread, void *item)
-//{
-//	struct sync_data *data = &thread_data->data[thread];
-//	OBJECT *obj = (OBJECT *) item;
-//	TIMESTAMP this_t;
-//
-//	/* check in and out-of-service dates */
-//	if (global_clock<obj->in_svc)
-//		this_t = obj->in_svc; /* yet to go in service */
-//	else if (global_clock<=obj->out_svc)
-//	{
-//		this_t = object_sync(obj, global_clock, passtype[pass]);
-//#ifdef _DEBUG
-//		/* sync dumpfile */
-//		if (global_sync_dumpfile[0]!='\0')
-//		{
-//			static FILE *fp = NULL;
-//			if (fp==NULL)
-//			{
-//				static int tried = 0;
-//				if (!tried)
-//				{
-//					fp = fopen(global_sync_dumpfile,"wt");
-//					if (fp==NULL)
-//						output_error("sync_dumpfile '%s' is not writeable", global_sync_dumpfile);
-//					else
-//						fprintf(fp,"timestamp,pass,iteration,thread,object,sync\n");	
-//					tried = 1;
-//				}
-//			}
-//			if (fp!=NULL)
-//			{
-//				static int64 lasttime = 0;
-//				static char lastdate[64]="";
-//				char syncdate[64]="";
-//				static char *passname;
-//				static int lastpass = -1;
-//				char objname[1024];
-//				if (lastpass!=passtype[pass])
-//				{
-//					lastpass=passtype[pass];
-//					switch(lastpass) {
-//					case PC_PRETOPDOWN: passname = "PRESYNC"; break;
-//					case PC_BOTTOMUP: passname = "SYNC"; break;
-//					case PC_POSTTOPDOWN: passname = "POSTSYNC"; break;
-//					default: passname = "UNKNOWN"; break;
-//					}
-//				}
-//				if (lasttime!=global_clock)
-//				{
-//					lasttime = global_clock;
-//					convert_from_timestamp(global_clock,lastdate,sizeof(lastdate));
-//				}
-//				convert_from_timestamp(this_t<0?-this_t:this_t,syncdate,sizeof(syncdate));
-//				if (obj->name==NULL) sprintf(objname,"%s:%d", obj->oclass->name, obj->id);
-//				else strcpy(objname,obj->name);
-//				fprintf(fp,"%s,%s,%d,%d,%s,%s\n",lastdate,passname,global_iteration_limit-iteration_counter,thread,objname,syncdate);
-//			}
-//		}
-//#endif
-//	}
-//	else 
-//		this_t = TS_NEVER; /* already out of service */
-//
-//	/* check for "soft" event (events that are ignored when stopping) */
-//	if (this_t < -1)
-//		this_t = -this_t;
-//	else if (this_t != TS_NEVER)
-//		data->hard_event++;  /* this counts the number of hard events */
-//
-//	/* check for stopped clock */
-//	if (this_t < global_clock) {
-//		output_error("%s: object %s stopped its clock (exec)!", simtime(), object_name(obj));
-//		/* TROUBLESHOOT
-//			This indicates that one of the objects in the simulator has encountered a
-//			state where it cannot calculate the time to the next state.  This usually
-//			is caused by a bug in the module that implements that object's class.
-//		 */
-//		data->status = FAILED;
-//	} else {
-//		/* check for iteration limit approach */
-//		if (iteration_counter == 2 && this_t == global_clock) {
-//			output_verbose("%s: object %s iteration limit imminent",
-//								simtime(), object_name(obj));
-//		}
-//		else if (iteration_counter == 1 && this_t == global_clock) {
-//			output_error("convergence iteration limit reached for object %s:%d", obj->oclass->name, obj->id);
-//			/* TROUBLESHOOT
-//				This indicates that the core's solver was unable to determine
-//				a steady state for all objects for any time horizon.  Identify
-//				the object that is causing the convergence problem and contact
-//				the developer of the module that implements that object's class.
-//			 */
-//		}
-//
-//		/* manage minimum timestep */
-//		if (global_minimum_timestep>1 && this_t>global_clock && this_t<TS_NEVER)
-//			this_t = (((this_t-1)/global_minimum_timestep)+1)*global_minimum_timestep;
-//
-//		/* if this event precedes next step, next step is now this event */
-//		if (data->step_to > this_t)
-//			data->step_to = this_t;
-//	}
-//}
 
 //sjin: implement new ss_do_object_sync for pthreads
 static void ss_do_object_sync(int thread, void *item)
@@ -651,19 +548,6 @@ STATUS exec_start(void)
 		if (global_threadcount == 0)
 			global_threadcount = processor_count();
 		output_verbose("detected %d processor(s)", processor_count());
-
-		//sjin: remove threadpool
-		///* allocate and initialize threadpool */
-		//threadpool = tp_alloc(&global_threadcount, do_object_sync);
-		//if (threadpool == INVALID_THREADPOOL) {
-		//	output_error("threadpool creation failed");
-		//	/* TROUBLESHOOT
-		//		The multithreading setup procedure failed.  This is usually preceded 
-		//		by a more detailed message that explains why it failed.  Follow
-		//		the guidance for that message and try again.
-		//	 */
-		//	return FAILED;
-		//}
 		output_verbose("using %d helper thread(s)", global_threadcount);
 
 		/* allocate thread synchronization data */
@@ -688,16 +572,16 @@ STATUS exec_start(void)
 		output_message("GridLAB-D entering debug mode");
 	}
 
-#ifndef WIN32
 	/* realtime startup */
-	if (global_run_realtime)
+	if (global_run_realtime==1)
 	{
+		char buffer[64];
 		time(&global_clock);
-		output_verbose("realtime mode requires using now (%d) as starttime", global_clock);
+		output_verbose("realtime mode requires using now (%s) as starttime", convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"invalid time");
 		if (global_stoptime<global_clock)
 			global_stoptime=TS_NEVER;
 	}
-#endif
+
 	iteration_counter = global_iteration_limit;
 	sync.step_to = global_clock;
 	sync.hard_event = 1;
@@ -715,26 +599,33 @@ STATUS exec_start(void)
 	TRY {
 
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
-		while (iteration_counter>0 && sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0 && !stop_now) 
+		int running = sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0;
+		while (iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now) 
 		{
 			/* set time context */
 			output_set_time_context(sync.step_to);
 
 			sync.hard_event = (global_stoptime == TS_NEVER ? 0 : 1);
 
-#ifndef WIN32
 			/* realtime support */
 			if (global_run_realtime)
 			{
+#ifdef WIN32
+				struct timeb tv;
+				ftime(&tv);
+				output_verbose("waiting %d usec", 1000-tv.millitm);
+				Sleep(1000-tv.millitm );
+				global_clock = tv.time +1;
+#else
 				struct timeval tv;
 				gettimeofday(&tv);
 				output_verbose("waiting %d usec", 1000000-tv.tv_usec);
 				usleep(1000000-tv.tv_usec);
 				global_clock = tv.tv_sec+1;
+#endif
 				output_verbose("realtime clock advancing to %d", (int)global_clock);
 			}
 			else
-#endif
 				global_clock = sync.step_to;
 
 			/* synchronize all internal schedules */

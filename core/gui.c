@@ -19,13 +19,34 @@
 
 static GUIENTITY *gui_root = NULL;
 static GUIENTITY *gui_last = NULL;
-static FILE *fp = NULL;
+void *fp = NULL;
 
 #ifdef _DEBUG
 #define TABLEOPTIONS " border=0 CELLPADDING=0 CELLSPACING=0"
 #else
 #define TABLEOPTIONS 
 #endif
+
+static int gui_default_stream(void *ref,char *format,...)
+{
+	int len;
+	va_list ptr;
+
+	FILE *fp = (FILE*)ref;
+	if (fp==NULL) fp=stdout;
+	va_start(ptr,format);
+	len = vfprintf(fp,format,ptr);
+	va_end(ptr);
+
+	return len;
+}
+
+static GUISTREAMFN gui_html_output = gui_default_stream;
+void gui_set_html_stream(void *ref, GUISTREAMFN stream)
+{
+	gui_html_output = stream;
+	fp = ref;
+}
 
 GUIENTITY *gui_get_root(void)
 {
@@ -469,33 +490,33 @@ static void newtable(GUIENTITY *entity)
 static void newrow(GUIENTITY *entity)
 {
 	if (table<0) newtable(entity);
-	if (row[table]==0) fprintf(fp,"\t<table" TABLEOPTIONS "> <!-- table %d %s -->\n",table,gui_get_typename(entity));
-	if (col[table]>0) fprintf(fp,"\t</td> <!-- table %d col %d -->\n", table, col[table]);
+	if (row[table]==0) gui_html_output(fp,"\t<table" TABLEOPTIONS "> <!-- table %d %s -->\n",table,gui_get_typename(entity));
+	if (col[table]>0) gui_html_output(fp,"\t</td> <!-- table %d col %d -->\n", table, col[table]);
 	col[table]=0;
-	if (row[table]>0) fprintf(fp,"\t</tr> <!--  table %d row %d -->\n", table, row[table]);
+	if (row[table]>0) gui_html_output(fp,"\t</tr> <!--  table %d row %d -->\n", table, row[table]);
 	row[table]++;
-	fprintf(fp,"\t<tr> <!-- row %d -->\n", row[table]);
+	gui_html_output(fp,"\t<tr> <!-- row %d -->\n", row[table]);
 }
 static void newcol(GUIENTITY *entity)
 {
 	if (span[table]>0) return;
 	if (table<0 || row[table]==0) newrow(entity);
-	if (col[table]>0) fprintf(fp,"\t</td> <!-- table %d col %d -->\n",  table, col[table]);
+	if (col[table]>0) gui_html_output(fp,"\t</td> <!-- table %d col %d -->\n",  table, col[table]);
 	col[table]++;
 	if (entity->type==GUI_SPAN)
 	{
-		fprintf(fp,"\t<td colspan=\"%d\"> <!-- table %d col %d -->\n", entity->size, table, col[table]);
+		gui_html_output(fp,"\t<td colspan=\"%d\"> <!-- table %d col %d -->\n", entity->size, table, col[table]);
 		if (entity->size==0) output_warning("%s: not all browsers accept span size 0 (meaning to end), span size may not work as expected", entity->srcref);
 	}
 	else
-		fprintf(fp,"\t<td> <!-- table %d col %d -->\n", table, col[table]);
+		gui_html_output(fp,"\t<td> <!-- table %d col %d -->\n", table, col[table]);
 }
 static void endtable()
 {
 	if (table<0) return;
-	if (col[table]>0) fprintf(fp,"\t</td> <!-- table %d col %d -->\n", table, col[table]);
-	if (row[table]>0) fprintf(fp,"\t</tr> <!-- table %d row %d -->\n", table, row[table]);
-	fprintf(fp,"\t</table> <!-- table %d -->\n", table--);
+	if (col[table]>0) gui_html_output(fp,"\t</td> <!-- table %d col %d -->\n", table, col[table]);
+	if (row[table]>0) gui_html_output(fp,"\t</tr> <!-- table %d row %d -->\n", table, row[table]);
+	gui_html_output(fp,"\t</table> <!-- table %d -->\n", table--);
 }
 
 static void gui_output_html_textarea(GUIENTITY *entity)
@@ -507,24 +528,24 @@ static void gui_output_html_textarea(GUIENTITY *entity)
 	char cols[32]="";
 	if (entity->height>0) sprintf(rows," rows=\"%d\"",entity->height);
 	if (entity->width>0) sprintf(cols," cols=\"%d\"",entity->width);
-	fprintf(fp,"<textarea class=\"browse\"%s%s >\n",rows,cols);
+	gui_html_output(fp,"<textarea class=\"browse\"%s%s >\n",rows,cols);
 	if (src==NULL)
 	{
-		fprintf(fp,"***'%s' is not found: %s***",entity->source,strerror(errno));
+		gui_html_output(fp,"***'%s' is not found: %s***",entity->source,strerror(errno));
 		goto Done;
 	}
 	len = fread(buffer,1,sizeof(buffer),src);
 	if ( len<0 )
-		fprintf(fp,"***'%s' read failed: %s***",entity->source,strerror(errno));
+		gui_html_output(fp,"***'%s' read failed: %s***",entity->source,strerror(errno));
 	else if (len<sizeof(buffer))
 	{
 		buffer[len]='\0';
-		fprintf(fp,"%s",buffer);
+		gui_html_output(fp,"%s",buffer);
 	}
 	if ( len>=sizeof(buffer) )
-		fprintf(fp,"\n***file truncated***");
+		gui_html_output(fp,"\n***file truncated***");
 Done:
-	fprintf(fp,"</textarea>\n");
+	gui_html_output(fp,"</textarea>\n");
 }
 
 static void gui_output_html_table(GUIENTITY *entity)
@@ -535,10 +556,10 @@ static void gui_output_html_table(GUIENTITY *entity)
 	int row=0;
 	int col=0;
 	char header[1024];
-	fprintf(fp,"<table class=\"data\" %s>\n",entity->options);
+	gui_html_output(fp,"<table class=\"data\" %s>\n",entity->options);
 	if (src==NULL)
 	{
-		fprintf(fp,"***'%s' is not found: %s***",entity->source,strerror(errno));
+		gui_html_output(fp,"***'%s' is not found: %s***",entity->source,strerror(errno));
 		goto Done;
 	}
 	while ( fgets(line,sizeof(line),src)!=NULL )
@@ -555,24 +576,24 @@ static void gui_output_html_table(GUIENTITY *entity)
 			char *p = NULL;
 			if ( row++==0 )
 			{
-				fprintf(fp,"<tr>");
+				gui_html_output(fp,"<tr>");
 				while ( (p=strtok(p?NULL:header,","))!=NULL )
-					fprintf(fp,"<th>%s</th>", p);
-				fprintf(fp,"</tr>\n");
+					gui_html_output(fp,"<th>%s</th>", p);
+				gui_html_output(fp,"</tr>\n");
 			}
 			if ( entity->height==0 || row<=entity->height )
 			{
-				fprintf(fp,"<tr>");
+				gui_html_output(fp,"<tr>");
 				while ( (p=strtok(p?NULL:line,","))!=NULL )
-					fprintf(fp,"<td>%s</td>", p);
-				fprintf(fp,"</tr>\n");
+					gui_html_output(fp,"<td>%s</td>", p);
+				gui_html_output(fp,"</tr>\n");
 			}
 		}
 	}
 	if (ferror(src))
-		fprintf(fp,"<tr><td>ERROR: %s</td></tr>\n",strerror(errno));
+		gui_html_output(fp,"<tr><td>ERROR: %s</td></tr>\n",strerror(errno));
 Done:
-	fprintf(fp,"</table>\n");
+	gui_html_output(fp,"</table>\n");
 }
 
 static void gui_output_html_graph(GUIENTITY *entity)
@@ -599,7 +620,7 @@ static void gui_output_html_graph(GUIENTITY *entity)
 	plot = fopen(script,"w");
 	if ( plot==NULL )
 	{
-		fprintf(fp,"<span class=\"error\">Unable to run gnuplot</span>\n");
+		gui_html_output(fp,"<span class=\"error\">Unable to run gnuplot</span>\n");
 		goto Done;
 	}
 	if (entity->gnuplot[0]=='\0')
@@ -626,10 +647,10 @@ static void gui_output_html_graph(GUIENTITY *entity)
 
 	/* run gnuplot */
 	if (system(command)==0)
-		fprintf(fp,"<img src=\"%s\" alt=\"%s\"%s%s/>\n",image,entity->source,height,width);
+		gui_html_output(fp,"<img src=\"/output/%s\" alt=\"%s\"%s%s/>\n",image,entity->source,height,width);
 	else
 	{
-		fprintf(fp,"<span class=\"error\">Unable to run gnuplot</span>\n");
+		gui_html_output(fp,"<span class=\"error\">Unable to run gnuplot</span>\n");
 		goto Done;
 	}
 Done:
@@ -646,18 +667,18 @@ static void gui_entity_html_content(GUIENTITY *entity)
 	// labeling 
 	case GUI_TITLE: 
 		if (entity->parent==NULL)
-			fprintf(fp,"<title>%s</title>\n",gui_get_value(entity));
+			gui_html_output(fp,"<title>%s</title>\n",gui_get_value(entity));
 		else if (entity->parent->type==GUI_GROUP)
-			fprintf(fp,"<legend>%s</legend>\n",gui_get_value(entity));
+			gui_html_output(fp,"<legend>%s</legend>\n",gui_get_value(entity));
 		else 
-			fprintf(fp,"<h%d>%s</h%d>\n",table+1,gui_get_value(entity),table+1);
+			gui_html_output(fp,"<h%d>%s</h%d>\n",table+1,gui_get_value(entity),table+1);
 		break;
 	case GUI_STATUS: 
-		fprintf(fp,"<script lang=\"jscript\"> window.status=\"%s\";</script>\n", gui_get_value(entity));
+		gui_html_output(fp,"<script lang=\"jscript\"> window.status=\"%s\";</script>\n", gui_get_value(entity));
 		break;
 	case GUI_TEXT: 
 		if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
-		fprintf(fp,"<span class=\"text\">%s</span>\n",gui_get_value(entity));
+		gui_html_output(fp,"<span class=\"text\">%s</span>\n",gui_get_value(entity));
 		break;
 
 	// grouping
@@ -675,7 +696,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 	// inputting
 	case GUI_INPUT:
 		if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
-		fprintf(fp,"<input class=\"%s\" type=\"text\" name=\"%s\" value=\"%s\" onchange=\"update_%s(this)\"/>\n", ptype, gui_get_name(entity),gui_get_value(entity), ptype);
+		gui_html_output(fp,"<input class=\"%s\" type=\"text\" name=\"%s\" value=\"%s\" onchange=\"update_%s(this)\"/>\n", ptype, gui_get_name(entity),gui_get_value(entity), ptype);
 		break;
 	case GUI_CHECK: 
 		{	
@@ -690,7 +711,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
 				if (key->value!=0)
-					fprintf(fp,"<nobr><input class=\"%s\"type=\"checkbox\" name=\"%s\" value=\"%"FMT_INT64"d\" %s onchange=\"update_%s(this)\"/>%s</nobr>\n",
+					gui_html_output(fp,"<nobr><input class=\"%s\"type=\"checkbox\" name=\"%s\" value=\"%"FMT_INT64"d\" %s onchange=\"update_%s(this)\"/>%s</nobr>\n",
 						ptype, gui_get_name(entity), key->value, checked, ptype, label);
 			}
 		}
@@ -707,7 +728,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 				char label[64], *p;
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
-				fprintf(fp,"<nobr><input class=\"%s\" type=\"radio\" name=\"%s\" value=\"%"FMT_INT64"d\" %s onchange=\"update_%s(this)\" />%s</nobr>\n",
+				gui_html_output(fp,"<nobr><input class=\"%s\" type=\"radio\" name=\"%s\" value=\"%"FMT_INT64"d\" %s onchange=\"update_%s(this)\" />%s</nobr>\n",
 					ptype, gui_get_name(entity), key->value, checked, ptype, label);
 			}
 		}
@@ -720,7 +741,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 			char size[64] = "";
 			if (entity->size>0) sprintf(size,"size=\"%d\"",entity->size);
 			if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
-			fprintf(fp,"<select class=\"%s\" name=\"%s\" %s %s onchange=\"update_%s(this)\">\n", ptype, gui_get_name(entity),multiple,size,ptype);
+			gui_html_output(fp,"<select class=\"%s\" name=\"%s\" %s %s onchange=\"update_%s(this)\">\n", ptype, gui_get_name(entity),multiple,size,ptype);
 			for (key=prop->keywords; key!=NULL; key=key->next)
 			{
 				int value = *(int*)gui_get_data(entity);
@@ -728,10 +749,10 @@ static void gui_entity_html_content(GUIENTITY *entity)
 				char label[64], *p;
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
-				fprintf(fp,"<option value=\"%"FMT_INT64"d\" %s>%s</option>\n",
+				gui_html_output(fp,"<option value=\"%"FMT_INT64"d\" %s>%s</option>\n",
 					key->value, checked, label);
 			}
-			fprintf(fp,"</select>\n");
+			gui_html_output(fp,"</select>\n");
 		}
 		break;
 
@@ -752,7 +773,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 	// action
 	case GUI_ACTION: 
 		if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
-		fprintf(fp,"<input class=\"action\" type=\"submit\" name=\"action\" value=\"%s\" onclick=\"click(this)\" />\n",entity->action);
+		gui_html_output(fp,"<input class=\"action\" type=\"submit\" name=\"action\" value=\"%s\" onclick=\"click(this)\" />\n",entity->action);
 		break;
 	default: break;
 	}
@@ -773,7 +794,7 @@ static void gui_entity_html_open(GUIENTITY *entity)
 		break;
 	case GUI_GROUP:
 		newcol(entity);
-		fprintf(fp,"<fieldset>\n");
+		gui_html_output(fp,"<fieldset>\n");
 		newtable(entity);
 		break;
 	case GUI_SPAN: 
@@ -812,7 +833,7 @@ static void gui_entity_html_close(GUIENTITY *entity)
 		break;
 	case GUI_GROUP:
 		endtable();
-		fprintf(fp,"</fieldset>\n");
+		gui_html_output(fp,"</fieldset>\n");
 		break;
 	case GUI_SPAN: 
 		endspan();
@@ -862,7 +883,7 @@ void gui_include_element(char *tag, char *options, char *file)
 			if (len>=0)
 			{
 				buffer[len]='\0';
-				fprintf(fp,"<%s%s%s>\n%s\n</%s>\n",tag,options?" ":"",options?options:"",buffer,tag);
+				gui_html_output(fp,"<%s%s%s>\n%s\n</%s>\n",tag,options?" ":"",options?options:"",buffer,tag);
 			}
 			else
 				output_error("unable to read '%s'", path);
@@ -871,28 +892,52 @@ void gui_include_element(char *tag, char *options, char *file)
 	}
 }
 
-STATUS gui_html_output_all(void)
+int gui_html_output_page(char *page)
 {
 	GUIENTITY *entity;
-	fp = stdout;
-
+	int len = 0;
 	// header entities
-	fprintf(fp,"<html>\n<head>\n");
+	len += gui_html_output(fp,"<html>\n<head>\n");
 	for (entity=gui_get_root(); entity!=NULL; entity=entity->next)
 	{
 		if (gui_is_header(entity))
 			gui_entity_html_content(entity);
 	}
-	fprintf(fp,"</head>\n");
+	len += gui_html_output(fp,"</head>\n");
 
 	gui_include_element("script","lang=\"jscript\"","gridlabd.js");
 	gui_include_element("style",NULL,"gridlabd.css");
 
 	// body entities
-	fprintf(fp,"<body>\n");
+	len += gui_html_output(fp,"<body>\n");
 	gui_html_output_children(NULL);
 	endtable();
-	fprintf(fp,"</body>\n</html>\n");
+	len += gui_html_output(fp,"</body>\n</html>\n");
+
+	return len;
+}
+
+STATUS gui_html_output_all(void)
+{
+	GUIENTITY *entity;
+
+	// header entities
+	gui_html_output(fp,"<html>\n<head>\n");
+	for (entity=gui_get_root(); entity!=NULL; entity=entity->next)
+	{
+		if (gui_is_header(entity))
+			gui_entity_html_content(entity);
+	}
+	gui_html_output(fp,"</head>\n");
+
+	gui_include_element("script","lang=\"jscript\"","gridlabd.js");
+	gui_include_element("style",NULL,"gridlabd.css");
+
+	// body entities
+	gui_html_output(fp,"<body>\n");
+	gui_html_output_children(NULL);
+	endtable();
+	gui_html_output(fp,"</body>\n</html>\n");
 	return SUCCESS;
 }
 
