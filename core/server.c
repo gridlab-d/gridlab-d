@@ -39,7 +39,6 @@ int GetLastError()
 #endif
 
 void server_request(int);	// Function to handle clients' request(s)
-void handleRequest(SOCKET);
 void http_response(SOCKET);
 
 #include "server.h"
@@ -89,7 +88,11 @@ static void *server_routine(void *arg)
 		}
 		else if ((int)newsockfd > 0)
 		{
+#ifdef WIN32
 			output_verbose("accepting incoming connection from %d.%d.%d.%d on port %d", cli_addr.sin_addr.S_un.S_un_b.s_b1,cli_addr.sin_addr.S_un.S_un_b.s_b2,cli_addr.sin_addr.S_un.S_un_b.s_b3,cli_addr.sin_addr.S_un.S_un_b.s_b4,cli_addr.sin_port);
+#else
+			output_verbose("accepting incoming connection from on port %d",cli_addr.sin_port);
+#endif
 			http_response(newsockfd);
 		}
 #ifdef NEVER
@@ -138,11 +141,18 @@ STATUS server_startup(int argc, char *argv[])
 	/* bind socket to server address */
 	if (bind(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
 	{
+#ifdef WIN32
 		output_error("can't bind to %d.%d.%d.%d",serv_addr.sin_addr.S_un.S_un_b.s_b1,serv_addr.sin_addr.S_un.S_un_b.s_b2,serv_addr.sin_addr.S_un.S_un_b.s_b3,serv_addr.sin_addr.S_un.S_un_b.s_b4);
+#else
+		output_error("can't bind address");
+#endif
 		return FAILED;
 	}
+#ifdef WIN32
 	output_verbose("bind ok to %d.%d.%d.%d",serv_addr.sin_addr.S_un.S_un_b.s_b1,serv_addr.sin_addr.S_un.S_un_b.s_b2,serv_addr.sin_addr.S_un.S_un_b.s_b3,serv_addr.sin_addr.S_un.S_un_b.s_b4);
-	
+#else
+	output_verbose("bind ok to address");
+#endif	
 	/* listen for connection */
 	listen(sockfd,5);
 	output_verbose("server listening to port %d", portNumber);
@@ -442,6 +452,18 @@ int http_gui_request(HTTP *http,char *uri)
 	gui_set_html_stream((void*)http,http_format);
 	return gui_html_output_page(uri)>=0;
 }
+
+#ifndef WIN32
+#include <sys/stat.h>
+static int filelength(int fd)
+{
+	struct stat fs;
+	if (fstat(fd,&fs))
+		return 0;
+	else
+		return fs.st_size;
+}
+#endif
 
 int http_output_request(HTTP *http,char *uri)
 {
