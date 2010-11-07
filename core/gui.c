@@ -681,18 +681,6 @@ static void gui_entity_html_content(GUIENTITY *entity)
 		gui_html_output(fp,"<span class=\"text\">%s</span>\n",gui_get_value(entity));
 		break;
 
-	// grouping
-	case GUI_ROW:
-		break;
-	case GUI_TAB:
-		break;
-	case GUI_PAGE: 
-		break;
-	case GUI_GROUP: 
-		break;
-	case GUI_SPAN: 
-		break;
-
 	// inputting
 	case GUI_INPUT:
 		if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
@@ -781,16 +769,11 @@ static void gui_entity_html_content(GUIENTITY *entity)
 static void gui_entity_html_open(GUIENTITY *entity)
 {
 	switch (entity->type) {
-	case GUI_TITLE: 
-		break;
-	case GUI_STATUS: 
-		break;
-	case GUI_ROW: 
-		newrow(entity);
-		break;
-	case GUI_TAB:
+	case GUI_TAB: 
+		// TODO
 		break;
 	case GUI_PAGE: 
+		// TODO
 		break;
 	case GUI_GROUP:
 		newcol(entity);
@@ -801,35 +784,22 @@ static void gui_entity_html_open(GUIENTITY *entity)
 		newcol(entity);
 		startspan();
 		break;
-	case GUI_TEXT: 
+	default: 
 		break;
-	case GUI_INPUT:
-		break;
-	case GUI_CHECK: 
-		break;
-	case GUI_RADIO: 
-		break;
-	case GUI_SELECT: 
-		break;
-	case GUI_ACTION: 
-		break;
-	default: break;
 	}
 	gui_entity_html_content(entity);
 }
 static void gui_entity_html_close(GUIENTITY *entity)
 {
 	switch (entity->type) {
-	case GUI_TITLE: 
-		break;
-	case GUI_STATUS: 
-		break;
 	case GUI_ROW: 
 		newrow(entity);
 		break;
 	case GUI_TAB: 
+		// TODO
 		break;
 	case GUI_PAGE: 
+		// TODO
 		break;
 	case GUI_GROUP:
 		endtable();
@@ -838,22 +808,11 @@ static void gui_entity_html_close(GUIENTITY *entity)
 	case GUI_SPAN: 
 		endspan();
 		break;
-	case GUI_TEXT: 
+	default: 
 		break;
-	case GUI_INPUT:
-		break;
-	case GUI_CHECK: 
-		break;
-	case GUI_RADIO: 
-		break;
-	case GUI_SELECT: 
-		// TODO expand for each member
-		break;
-	case GUI_ACTION: 
-		break;
-	default: break;
 	}
 }
+
 void gui_html_output_children(GUIENTITY *entity)
 {
 	GUIENTITY *child;

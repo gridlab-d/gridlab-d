@@ -29,8 +29,18 @@
 
 #define MAXSTR		1024		// maximum string length
 
+static int shutdown_server = 0; /* flag to stop accepting incoming messages */
+
+#ifndef WIN32
+int GetLastError()
+{
+	return errno;
+}
+#endif
+
 void server_request(int);	// Function to handle clients' request(s)
-void handleRequest(SOCKET newsockfd);
+void handleRequest(SOCKET);
+void http_response(SOCKET);
 
 #include "server.h"
 #include "output.h"
@@ -39,23 +49,50 @@ void handleRequest(SOCKET newsockfd);
 
 #include "legal.h"
 
-void *server_routine(int sockfd)
+static size_t send_data(SOCKET s, char *buffer, size_t len)
 {
-	struct sockaddr_in cli_addr;
-	SOCKET newsockfd;
-	int clilen;
+#ifdef WIN32
+	return (size_t)send(s,buffer,len,0);
+#else
+	return (size_t)write(s,buffer,len);
+#endif	
+}
 
+static size_t recv_data(SOCKET s,char *buffer, size_t len)
+{
+#ifdef WIN32
+	return (size_t)recv(s,buffer,len,0);
+#else
+	return (size_t)read(s,(void *)buffer,len);
+#endif
+}
+
+static void *server_routine(void *arg)
+{
+	SOCKET sockfd = (SOCKET)arg;
 	// repeat forever..
-	while (1)
+	static int status = 0;
+	while (!shutdown_server)
 	{
-		clilen = sizeof(cli_addr);
+		struct sockaddr_in cli_addr;
+		SOCKET newsockfd;
+
+		int clilen = sizeof(cli_addr);
 
 		/* accept client request and get client address */
 		newsockfd = accept(sockfd,(struct sockaddr *)&cli_addr,&clilen);
-		output_verbose("accepting incoming connection from %d.%d.%d.%d on port %d", cli_addr.sin_addr.S_un.S_un_b.s_b1,cli_addr.sin_addr.S_un.S_un_b.s_b2,cli_addr.sin_addr.S_un.S_un_b.s_b3,cli_addr.sin_addr.S_un.S_un_b.s_b4,cli_addr.sin_port);
-		if (newsockfd<0 && errno!=EINTR)
-			output_error("server accept error on fd=%d: %s", sockfd, strerror(errno));
-		else if (newsockfd > 0)
+		if ((int)newsockfd<0 && errno!=EINTR)
+		{
+			status = GetLastError();
+			output_error("server accept error on fd=%d: code %d", sockfd, status);
+			break;
+		}
+		else if ((int)newsockfd > 0)
+		{
+			output_verbose("accepting incoming connection from %d.%d.%d.%d on port %d", cli_addr.sin_addr.S_un.S_un_b.s_b1,cli_addr.sin_addr.S_un.S_un_b.s_b2,cli_addr.sin_addr.S_un.S_un_b.s_b3,cli_addr.sin_addr.S_un.S_un_b.s_b4,cli_addr.sin_port);
+			http_response(newsockfd);
+		}
+#ifdef NEVER
 		{
 			handleRequest(newsockfd);
 #ifdef WIN32
@@ -64,17 +101,16 @@ void *server_routine(int sockfd)
 			close(newsockfd);
 #endif
 		}
+#endif
 	}
+	return (void*)&status;
 }
 
 STATUS server_startup(int argc, char *argv[])
 {
 	int portNumber = global_server_portnum;
 	SOCKET sockfd;
-	int childpid;
 	struct sockaddr_in serv_addr;
-	int status;
-	char buf[MAXSTR],ack[MAXSTR];
 	pthread_t thread;
 
 #ifdef WIN32
@@ -93,11 +129,7 @@ STATUS server_startup(int argc, char *argv[])
 		return FAILED;
 	}
 
-#ifdef WIN32
 	memset(&serv_addr,0,sizeof(serv_addr));
-#else
-	bzero((char *)&serv_addr,sizeof(serv_addr)) ;
-#endif
 
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -116,7 +148,7 @@ STATUS server_startup(int argc, char *argv[])
 	output_verbose("server listening to port %d", portNumber);
 
 	/* start the server thread */
-	if (pthread_create(&thread,NULL,server_routine,sockfd))
+	if (pthread_create(&thread,NULL,server_routine,(void*)sockfd))
 	{
 		output_error("server thread startup failed");
 		return FAILED;
@@ -126,228 +158,352 @@ STATUS server_startup(int argc, char *argv[])
 	return SUCCESS;
 }
 
-int html_response(void *ref, char *format, ...)
+/********************************************************
+ HTTP routines
+ */
+
+typedef struct s_http {
+	char query[1024];
+	char *buffer;
+	size_t len;
+	size_t max;
+	char *status;
+	char *type;
+	SOCKET s;
+} HTTP;
+
+static HTTP *http_create(SOCKET s)
+{
+	HTTP *http = (HTTP*)malloc(sizeof(HTTP));
+	memset(http,0,sizeof(HTTP));
+	http->s = s;
+	http->max = 4096;
+	http->buffer = malloc(http->max);
+	return http;
+}
+
+#define HTTP_CONTINUE "100 Continue"
+#define HTTP_SWITCHPROTOCOL "101 Switching Protocols"
+
+#define HTTP_OK "200 Ok"
+#define HTTP_CREATED "201 Created"
+#define HTTP_ACCEPTED "202 Accepted"
+#define HTTP_NONAUTHORITATIVEINFORMATION "203 Non-Authoritative Information"
+#define HTTP_NOCONTENT "204 No Content"
+#define HTTP_RESETCONTENT "205 Reset Content"
+#define HTTP_PARTIALCONTENT "206 Partial Content"
+
+#define HTTP_MULTIPLECHOICES "300 Multiple Choices"
+#define HTTP_MOVEDPERMANENTLY "301 Moved Permanently"
+#define HTTP_FOUND "302 Found"
+#define HTTP_SEEOTHER "303 See Other"
+#define HTTP_NOTMODIFIED "304 Not Modified"
+#define HTTP_USEPROXY "305 Use Proxy"
+#define HTTP_TEMPORARYREDIRECT "307 Temporary Redirect"
+
+#define HTTP_BADREQUEST "400 Bad Request"
+#define HTTP_UNAUTHORIZED "401 Unauthorized"
+#define HTTP_PAYMENTREQUIRED "402 Payment Required"
+#define HTTP_FORBIDDEN "403 Forbidden"
+#define HTTP_NOTFOUND "404 Not Found"
+#define HTTP_METHODNOTALLOWED "405 Method Not Allowed"
+#define HTTP_NOTACCEPTABLE "406 Not Acceptable"
+#define HTTP_PROXYAUTHENTICATIONREQUIRED "407 Proxy Authentication Required"
+#define HTTP_REQUESTTIMEOUT "408 Request Time-out"
+#define HTTP_CONFLICT "409 Conflict"
+#define HTTP_GONE "410 Gone"
+#define HTTP_LENGTHREQUIRED "411 Length Required"
+#define HTTP_PRECONDITIONFAILED "412 Precondition Failed"
+#define HTTP_REQUESTENTITYTOOLARGE "413 Request Entity Too Large"
+#define HTTP_REQUESTURITOOLARGE "414 Request-URI Too Large"
+#define HTTP_UNSUPPORTEDMEDIATYPE "415 Unsupported Media Type"
+#define HTTP_REQUESTEDRANGENOTSATISFIABLE "416 Requested range not satisfiable"
+#define HTTP_EXPECTATIONFAILED "417 Expectation Failed"
+#define HTTP_INTERNALSERVERERROR "500 Internal Server Error"
+#define HTTP_NOTIMPLEMENTED "501 Not Implemented"
+#define HTTP_BADGATEWAY "502 Bad Gateway"
+#define HTTP_SERVICEUNAVAILABLE "503 Service Unavailable"
+#define HTTP_GATEWAYTIMEOUT "504 Gateway Time-out"
+#define HTTP_VERSIONNOTSUPPORTED "505 HTTP Version not supported"
+
+static void http_status(HTTP *http, char *status)
+{
+	http->status = status;
+}
+static void http_type(HTTP *http, char *type)
+{
+	http->type = type;
+}
+static void http_send(HTTP *http)
+{
+	char header[1024];
+	int len=0;
+	len += sprintf(header+len, "HTTP/1.1 %s", http->status?http->status:HTTP_INTERNALSERVERERROR);
+	output_verbose("%s (len=%d)",header,http->len);
+	len += sprintf(header+len, "\nContent-Length: %d\n", http->len);
+	if (http->type)
+		len += sprintf(header+len, "Content-Type: %s\n", http->type);
+	len += sprintf(header+len,"\n");
+	send_data(http->s,header,len);
+	if (http->len>0)
+		send_data(http->s,http->buffer,http->len);
+	http->len = 0;
+}
+static void http_write(HTTP *http, char *data, int len)
+{
+	if (http->len+len>=http->max)
+	{
+		/* extend buffer */
+		void *old = http->buffer;
+		http->max *= 2;
+		http->buffer = malloc(http->max);
+		memcpy(http->buffer,old,http->len);
+		free(old);
+	}
+	memcpy(http->buffer+http->len,data,len);
+	http->len += len;
+}
+static void http_close(HTTP *http)
+{
+	if (http->len>0)
+		http_send(http);
+#ifdef WIN32
+	closesocket(http->s);
+#else
+	close(http->s);
+#endif
+}
+
+static void http_mime(HTTP *http, char *path)
+{
+	size_t len = strlen(path);
+	if (strcmp(path+len-4,".png")==0)
+		http->type = "image/png";
+	else
+		http->type = NULL;
+}
+
+static int http_format(HTTP *http, char *format, ...)
 {
 	int len;
-	char html[65536];
-	SOCKET s = (SOCKET)ref;
+	char data[65536];
 	va_list ptr;
 
 	va_start(ptr,format);
-	len = vsprintf(html,format,ptr);
+	len = vsprintf(data,format,ptr);
 	va_end(ptr);
 
-#ifdef WIN32
-	len = send(s,html,strlen(html),0);
-#else
-	len = write(newsockfd,html,strlen(html));
-#endif	
+	http_write(http,data,len);
+
 	return len;
 }
 
-void handleRequest(SOCKET newsockfd) 
+char *http_unquote(char *buffer)
 {
-	char input[MAXSTR],output[MAXSTR];
-	char method[64]="";
-	char name[1024]="";
-	char property[1024]="";
-	char value[1024]="";
-#define HTTP_OK 200
-#define HTTP_BADREQUEST 400
-#define HTTP_FORBIDDEN 403
-#define HTTP_NOTFOUND 404
-	int code=HTTP_OK;
-	int len;
-	int query_items;
+	char *eob = buffer+strlen(buffer)-1;
+	if (buffer[0]=='"') buffer++;
+	if (*eob=='"') *eob='\0';
+	return buffer;
+}
 
-	/* read socket */
-#ifdef WIN32
-	len = recv(newsockfd,(char*)input,MAXSTR,0);
-#else
-	len = read(newsockfd,(void *)input,MAXSTR);
-#endif
-	if (len<0)
-	{
-		output_error("socket read failed: error code %d",WSAGetLastError());
-		return;
-	}
-	input[len]='\0';
-
-	/* @todo process input and write to output */
-	output_verbose("received incoming request [%s]", input);
-	query_items = sscanf(input,"%63s /%1023[^/ ]/%1023[^= ]=%1023s",method,name,property,value);
-	if (strcmp(method,"GET")==0 && strcmp(name,"gui")==0)
-	{	
-		char html[65536];
-		int i=0;
-		int len;
-		gui_set_html_stream(newsockfd,html_response);
-		if (gui_html_output_page(property)<0)
+int http_xml_request(HTTP *http,char *uri)
+{
+	char arg1[1024], arg2[1024], arg3[1024], arg4[1024];
+	int nargs = sscanf(uri,"%1023[^/ ]/%1023[^= ]=%1023s",arg1,arg2,arg3);
+	char buffer[1024]="";
+	OBJECT *obj=NULL;
+	char *id;
+	switch (nargs) {
+	case 1: /* get global variable */
+		if (global_getvar(arg1,buffer,sizeof(buffer))==NULL)
 		{
-			sprintf(html,"HTTP/1.1 %d Not Found\n"
-				"Connection: close"
-				"\nContent-type: text/html\n\n",
-				HTTP_NOTFOUND, REV_MAJOR, REV_MINOR, REV_PATCH, BRANCH);
-#ifdef WIN32
-			len = send(newsockfd,html,strlen(html),0);
-#else
-			len = write(newsockfd,html,strlen(html));
-#endif
+			output_error("global variable '%s' not found", arg1);
+			return 0;
 		}
-		return;
-	}
-
-	/* XML response */
-	switch (query_items) {
+		/* TODO object dump */
+		http_format(http,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
+		http_format(http,"<globalvar>\n\t<name>%s</name>\n\t<value>%s</value>\n</globalvar>\n",
+			arg1, http_unquote(buffer));
+		return 1;
 	case 2:
-		output_verbose("2 terms received (method='%s', name='%s'", method, name);
-		if (strcmp(method,"GET")==0)
-		{
-			char buf[1024]="";
-			output_verbose("getting global '%s'", name);
-			if (global_getvar(name,buf,sizeof(buf))==NULL)
-			{
-				output_verbose("variable '%s' not found", name);
-				code=HTTP_NOTFOUND;
-			}
-			else
-				output_verbose("got %s=[%s]", name,buf);
-			sprintf(output,"%s\n",buf);
-		}
-		else if (strcmp(method,"POST")==0)
-		{
-			output_error("POST not supported yet");
-			code=HTTP_BADREQUEST;
-			sprintf(output,"%s\n","POST not supported yet");			
-		}
+		id = strchr(arg1,':');
+		if ( id==NULL )
+			obj = object_find_name(arg1);
 		else
+			obj = object_find_by_id(atoi(id+1));
+		if ( obj==NULL )
 		{
-			code = HTTP_BADREQUEST;
-			sprintf(output,"%s\n","method not supported");
+			output_error("object '%s' not found", arg1);
+			return 0;
 		}
-		break;
+		if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+		{
+			output_error("object '%s' property '%s' not found", arg1, arg2);
+			return 0;
+		}
+		http_format(http,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<property>\n");
+		http_format(http,"\t<object>%s</object>\n", arg1);
+		http_format(http,"\t<name>%s</name>\n", arg2);
+		http_format(http,"\t<value>%s</value>\n", http_unquote(buffer));
+		/* TODO add property type info */
+		http_format(http,"</property>\n");
+		return 1;
 	case 3:
-		output_verbose("3 terms received (method='%s', name='%s', property='%s'", method, name, property);
-		if (strcmp(method,"GET")==0)
-		{
-			char buf[1024]="";
-			OBJECT *obj;
-			char *id = strchr(name,':');
-			output_verbose("getting object '%s'", name);
-			if (id==NULL)
-				obj = object_find_name(name);
-			else
-				obj = object_find_by_id(atoi(id+1));
-			if (obj==NULL)
-			{
-				output_verbose("object '%s' not found", name);
-				code = HTTP_NOTFOUND;
-				sprintf(output,"%s\n","object not found");
-				break;
-			}
-			if (object_get_value_by_name(obj,property,buf,sizeof(buf)))
-			          output_debug("set %s.%s=%s", name,property,value);
-			sprintf(output,"%s\n",buf);
-		}
-		else if (strcmp(method,"POST")==0)
-		{
-			output_error("POST not supported yet");
-			code = HTTP_BADREQUEST;
-			sprintf(output,"%s\n","POST not supported yet");			
-		}
-		else	
-		{
-			code = HTTP_BADREQUEST;
-			sprintf(output,"%s\n","method not supported");	
-			}
 		break;
 	case 4:
-		output_verbose("4 terms received (method='%s', name='%s', property='%s', value='%s'", method, name, property, value);
-		if (strcmp(method,"GET")==0)
-		{
-			char buf[1024]="";
-			OBJECT *obj;
-			char *id = strchr(name,':');
-			output_verbose("getting object '%s'", name);
-			if (id==NULL)
-				obj = object_find_name(name);
-			else
-				obj = object_find_by_id(atoi(id+1));
-			if (obj==NULL)
-			{
-				output_verbose("object '%s' not found", name);
-				sprintf(output,"%s\n","object not found");
-				code = HTTP_NOTFOUND;
-				break;
-			}
-			if (strcmp(value,"")!=0)
-			{
-				output_verbose("set %s.%s=[%s]", name, property, value);
-				if (!object_set_value_by_name(obj,property,value))
-				{
-					code = HTTP_FORBIDDEN;
-					output_verbose("set failed!");
-				}
-			else
-			      output_debug("set %s.%s=%s", name,property,value);
-			}
-			if (object_get_value_by_name(obj,property,buf,sizeof(buf)))
-				output_verbose("got %s.%s=[%s]", name,property,buf);
-			sprintf(output,"%s\n",buf);
-		}
-		else if (strcmp(method,"POST")==0)
-		{
-			code = HTTP_BADREQUEST;
-			output_error("POST not supported yet");
-			sprintf(output,"%s\n","POST not supported yet");			
-		}
-		else
-		{
-			code = HTTP_BADREQUEST;
-			sprintf(output,"%s\n","method not supported");
-		}
-		break;
-	default:
-		code = HTTP_BADREQUEST;
-		sprintf(output,"%s\n","invalid query");
 		break;
 	}
-
-	/* write response */
-	{	char xml[1024];
-		int i=0;
-		if (strcmp(property,"")==0)
-			sprintf(xml,"HTTP/1.1 %d OK\n"
-				"Server: gridlabd %d.%d.%d (%s) \n"
-				"Connection: close"
-				"\nContent-type: text/xml\n\n"
-				"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-				"<resultset>\n"
-				"\t<global>%s</global>\n"
-				"\t<answer>%s</answer>\n"
-				"</resultset>\n", 
-				code, 
-				REV_MAJOR, REV_MINOR, REV_PATCH, BRANCH, 
-				name,output);
-		else
-			sprintf(xml,"HTTP/1.1 %d OK\n"
-				"Server: gridlabd %d.%d.%d (%s) \n"
-				"Connection: close"
-				"\nContent-type: text/xml\n\n"
-				"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-				"<resultset>\n"
-				"\t<object>%s</object>\n"
-				"\t<property>%s</property>\n"
-				"\t<answer>%s</answer>\n"
-				"</resultset>\n", 
-				code, 
-				REV_MAJOR, REV_MINOR, REV_PATCH, BRANCH, 
-				name,property,output);
-#ifdef WIN32
-		send(newsockfd,xml,strlen(xml),0);
-#else
-		write(newsockfd,xml,strlen(xml));
-#endif
-	}
-	output_verbose("response [%s] sent", output);
+	return 0;
 }
+
+int http_gui_request(HTTP *http,char *uri)
+{
+	gui_set_html_stream((void*)http,http_format);
+	return gui_html_output_page(uri)>=0;
+}
+
+int http_output_request(HTTP *http,char *uri)
+{
+	char fullpath[1024];
+	FILE *fp;
+	char *buffer;
+	int len;
+	strcpy(fullpath,global_workdir);
+	if (*(fullpath+strlen(fullpath)-1)!='/' || *(fullpath+strlen(fullpath)-1)!='\\' )
+		strcat(fullpath,"/");
+	strcat(fullpath,uri);
+	fp = fopen(fullpath,"rb");
+	if ( fp==NULL )
+	{
+		output_error("file '%s' not found", fullpath);
+		return 0;
+	}
+	len = filelength(fp->_file);
+	if (len<=0)
+	{
+		output_error("file '%s' not accessible", fullpath);
+		return 0;
+	}
+	buffer = (char*)malloc(len);
+	if (buffer==NULL)
+	{
+		output_error("file buffer for '%s' not available", fullpath);
+		return 0;
+	}
+	if (fread(buffer,1,len,fp)<=0)
+	{
+		output_error("file '%s' read failed", fullpath);
+		return 0;
+	}
+	http_write(http,buffer,len);
+	http_mime(http,uri);
+	fclose(fp);
+	return 1;
+}
+
+void http_response(SOCKET fd)
+{
+	HTTP *http = http_create(fd);
+	size_t len;
+	int content_length = 0;
+	char *user_agent = NULL;
+	char *host = NULL;
+	int keep_alive = 0;
+	char *connection = NULL;
+	char *accept = NULL;
+	struct s_map {
+		char *name;
+		enum {INTEGER,STRING} type;
+		void *value;
+		int sz;
+	} map[] = {
+		{"Content-Length", INTEGER, (void*)&content_length, 0},
+		{"Host", STRING, (void*)&host, 0},
+		{"Keep-Alive", INTEGER, (void*)&keep_alive, 0},
+		{"Connection", STRING, (void*)&connection, 0},
+		{"Accept", STRING, (void*)&accept, 0},
+	};
+
+	while ( (len=recv_data(fd,http->query,sizeof(http->query)))>0 )
+	{
+		/* first term is always the request */
+		char *request = http->query;
+		char method[32];
+		char uri[1024];
+		char version[32];
+		char *p = strchr(http->query,'\r\n');
+		int v;
+
+		/* read the request string */
+		if (sscanf(request,"%s %s %s",method,uri,version)!=3)
+		{
+			http_status(http,HTTP_BADREQUEST);
+			http_format(http,HTTP_BADREQUEST);
+			http_type(http,"text/html");
+			http_send(http);
+			break;
+		}
+
+		/* read the rest of the header */
+		while (p!=NULL && (p=strchr(p,'\r\n'))!=NULL) 
+		{
+ 			*p = '\0';
+			p+=2;
+			for ( v=0 ; v<sizeof(map)/sizeof(map[0]) ; v++ )
+			{
+				if (map[v].sz==0) map[v].sz = strlen(map[v].name);
+				if (strnicmp(map[v].name,p,map[v].sz)==0 && strncmp(p+map[v].sz,": ",2)==0)
+				{
+					if (map[v].type==INTEGER) { *(int*)(map[v].value) = atoi(p+map[v].sz+2); break; }
+					else if (map[v].type==STRING) { *(char**)map[v].value = p+map[v].sz+2; break; }
+				}
+			}
+		}
+		output_verbose("%s (host='%s', len=%d)",http->query,host?host:"???",content_length);
+
+		/* reject anything but a GET */
+		if (stricmp(method,"GET")!=0)
+		{
+			http_status(http,HTTP_METHODNOTALLOWED);
+			http_format(http,HTTP_METHODNOTALLOWED);
+			http_type(http,"text/html");
+			/* technically, we should add an Allow entry to the response header */
+			http_send(http);
+			break;
+		}
+
+		/* handle request */
+		if (strncmp(uri,"/gui/",5)==0 && http_gui_request(http,uri+5))
+		{
+			http_status(http,HTTP_OK);
+			http_type(http,"text/html");
+			http_send(http);
+		}
+		else if (strncmp(uri,"/output/",8)==0 && http_output_request(http,uri+8))
+		{
+			http_status(http,HTTP_OK);
+			http_send(http);
+		}
+		else if (strncmp(uri,"/",1)==0 && http_xml_request(http,uri+1))
+		{
+			http_status(http,HTTP_OK);
+			http_type(http,"text/xml");
+			http_send(http);
+		}
+		else 
+		{
+			http_status(http,HTTP_NOTFOUND);
+			http_format(http,HTTP_NOTFOUND);
+			http_type(http,"text/html");
+			http_send(http);
+		}
+
+		/* keep-alive not desired*/
+		if (stricmp(connection,"close")==0)
+			break;
+	}
+	http_close(http);
+	output_verbose("socket %d closed",http->s);
+}
+
+
