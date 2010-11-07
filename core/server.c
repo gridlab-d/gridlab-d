@@ -306,6 +306,57 @@ char *http_unquote(char *buffer)
 	return buffer;
 }
 
+static char hex(char c)
+{
+	switch (c) {
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+		return c-'0';
+	case 'A':
+	case 'B':
+	case 'C':
+	case 'D':
+	case 'E':
+	case 'F':
+		return c-'A'+10;
+	case 'a':
+	case 'b':
+	case 'c':
+	case 'd':
+	case 'e':
+	case 'f':
+		return c-'a'+10;
+	default:
+		return 0;
+	}
+}
+void http_decode(char *buffer)
+{
+	char result[1024], *in, *out = result;
+	for ( in=buffer ; *in!='\0' ; in++ )
+	{
+		if (*in=='%')
+		{
+			char hi = *++in;
+			char lo = *++in;
+			*out++ = hex(hi)*16 + hex(lo);			
+		}
+		else
+			*out++ = *in;
+	}
+	*out='\0';
+	strcpy(buffer,result);
+}
+
+
 int http_xml_request(HTTP *http,char *uri)
 {
 	char arg1[1024], arg2[1024], arg3[1024], arg4[1024];
@@ -313,8 +364,17 @@ int http_xml_request(HTTP *http,char *uri)
 	char buffer[1024]="";
 	OBJECT *obj=NULL;
 	char *id;
+
+	/* decode %.. */
+	http_decode(arg1);
+	http_decode(arg2);
+	http_decode(arg3);
+
+	/* process request */
 	switch (nargs) {
-	case 1: /* get global variable */
+
+	/* get global variable */
+	case 1: 
 		if (global_getvar(arg1,buffer,sizeof(buffer))==NULL)
 		{
 			output_error("global variable '%s' not found", arg1);
@@ -325,6 +385,8 @@ int http_xml_request(HTTP *http,char *uri)
 		http_format(http,"<globalvar>\n\t<name>%s</name>\n\t<value>%s</value>\n</globalvar>\n",
 			arg1, http_unquote(buffer));
 		return 1;
+
+	/* get object property */
 	case 2:
 		id = strchr(arg1,':');
 		if ( id==NULL )
@@ -336,6 +398,7 @@ int http_xml_request(HTTP *http,char *uri)
 			output_error("object '%s' not found", arg1);
 			return 0;
 		}
+GetValue:
 		if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
 		{
 			output_error("object '%s' property '%s' not found", arg1, arg2);
@@ -348,10 +411,28 @@ int http_xml_request(HTTP *http,char *uri)
 		/* TODO add property type info */
 		http_format(http,"</property>\n");
 		return 1;
+
+	/* set object property */
 	case 3:
-		break;
-	case 4:
-		break;
+		id = strchr(arg1,':');
+		if ( id==NULL )
+			obj = object_find_name(arg1);
+		else
+			obj = object_find_by_id(atoi(id+1));
+		if ( obj==NULL )
+		{
+			output_error("object '%s' not found", arg1);
+			return 0;
+		}
+		if ( !object_set_value_by_name(obj,arg2,arg3) )
+		{
+			output_error("cannot set object '%s' property '%s' to '%s'", arg1, arg2, arg3);
+			return 0;
+		}
+		goto GetValue;
+
+	default:
+		return 0;
 	}
 	return 0;
 }
