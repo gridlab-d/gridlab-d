@@ -1371,6 +1371,10 @@
 					Name="WebGUI"
 					>
 					<File
+						RelativePath=".\rt\favicon.ico"
+						>
+					</File>
+					<File
 						RelativePath=".\rt\gridlabd.css"
 						>
 					</File>

@@ -30,6 +30,18 @@
 #define MAXSTR		1024		// maximum string length
 
 static int shutdown_server = 0; /* flag to stop accepting incoming messages */
+SOCKET sockfd = (SOCKET)0;
+static void shutdown_now(void)
+{
+	extern int stop_now;
+	stop_now = 1;
+	shutdown_server = 1;
+#ifdef WIN32
+	shutdown(sockfd,SD_BOTH);
+#else
+	shutdown(sockfd,SHUT_RDWR);
+#endif
+}
 
 #ifndef WIN32
 int GetLastError()
@@ -68,9 +80,9 @@ static size_t recv_data(SOCKET s,char *buffer, size_t len)
 
 static void *server_routine(void *arg)
 {
-	SOCKET sockfd = (SOCKET)arg;
-	// repeat forever..
 	static int status = 0;
+	sockfd = (SOCKET)arg;
+	// repeat forever..
 	while (!shutdown_server)
 	{
 		struct sockaddr_in cli_addr;
@@ -84,7 +96,7 @@ static void *server_routine(void *arg)
 		{
 			status = GetLastError();
 			output_error("server accept error on fd=%d: code %d", sockfd, status);
-			break;
+			goto Done;
 		}
 		else if ((int)newsockfd > 0)
 		{
@@ -106,6 +118,8 @@ static void *server_routine(void *arg)
 		}
 #endif
 	}
+	output_verbose("server shutdown");
+Done:
 	return (void*)&status;
 }
 
@@ -394,6 +408,7 @@ int http_xml_request(HTTP *http,char *uri)
 		http_format(http,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
 		http_format(http,"<globalvar>\n\t<name>%s</name>\n\t<value>%s</value>\n</globalvar>\n",
 			arg1, http_unquote(buffer));
+		http_type(http,"text/xml");
 		return 1;
 
 	/* get object property */
@@ -420,6 +435,7 @@ GetValue:
 		http_format(http,"\t<value>%s</value>\n", http_unquote(buffer));
 		/* TODO add property type info */
 		http_format(http,"</property>\n");
+		http_type(http,"text/xml");
 		return 1;
 
 	/* set object property */
@@ -450,7 +466,13 @@ GetValue:
 int http_gui_request(HTTP *http,char *uri)
 {
 	gui_set_html_stream((void*)http,http_format);
-	return gui_html_output_page(uri)>=0;
+	if (gui_html_output_page(uri)>=0)
+	{
+		http_type(http,"text/html");
+		return 1;
+	}
+	else 
+		return 0;
 }
 
 #ifndef WIN32
@@ -504,6 +526,57 @@ int http_output_request(HTTP *http,char *uri)
 	return 1;
 }
 
+int http_action_request(HTTP *http,char *action)
+{
+	if (strcmp(action,"quit")==0)
+	{
+		shutdown_now();
+		return 1;
+	}
+	else
+		return 0;
+}
+
+int http_favicon(http)
+{
+	FILE *fp;
+	char *fullpath = find_file("favicon.ico",NULL,4);
+	char *buffer;
+	int len;
+
+	if ( fullpath==NULL )
+	{
+		output_error("file '%s' not found", fullpath);
+		return 0;
+	}
+	fp = fopen(fullpath,"rb");
+	if ( fp==NULL )
+	{
+		output_error("file '%s' open failed", fullpath);
+		return 0;
+	}
+	len = filelength(fileno(fp));
+	if (len<=0)
+	{
+		output_error("file '%s' not accessible", fullpath);
+		return 0;
+	}
+	buffer = (char*)malloc(len);
+	if (buffer==NULL)
+	{
+		output_error("file buffer for '%s' not available", fullpath);
+		return 0;
+	}
+	if (fread(buffer,1,len,fp)<=0)
+	{
+		output_error("file '%s' read failed", fullpath);
+		return 0;
+	}
+	http_write(http,buffer,len);
+	http_mime(http,"image/vnd.microsoft.icon");
+	fclose(fp);	return 0;
+}
+
 void http_response(SOCKET fd)
 {
 	HTTP *http = http_create(fd);
@@ -527,7 +600,7 @@ void http_response(SOCKET fd)
 		{"Accept", STRING, (void*)&accept, 0},
 	};
 
-	while ( (len=recv_data(fd,http->query,sizeof(http->query)))>0 )
+	while ( (int)(len=recv_data(fd,http->query,sizeof(http->query)))>0 )
 	{
 		/* first term is always the request */
 		char *request = http->query;
@@ -576,21 +649,44 @@ void http_response(SOCKET fd)
 		}
 
 		/* handle request */
-		if (strncmp(uri,"/gui/",5)==0 && http_gui_request(http,uri+5))
+		if (strncmp(uri,"/gui/",5)==0 )
 		{
-			http_status(http,HTTP_OK);
-			http_type(http,"text/html");
+			if ( http_gui_request(http,uri+5) )
+				http_status(http,HTTP_OK);
+			else
+				http_status(http,HTTP_NOTFOUND);
 			http_send(http);
 		}
-		else if (strncmp(uri,"/output/",8)==0 && http_output_request(http,uri+8))
+		else if (strncmp(uri,"/output/",8)==0 )
 		{
-			http_status(http,HTTP_OK);
+			if ( http_output_request(http,uri+8) )
+				http_status(http,HTTP_OK);
+			else
+				http_status(http,HTTP_NOTFOUND);
 			http_send(http);
 		}
-		else if (strncmp(uri,"/",1)==0 && http_xml_request(http,uri+1))
+		else if (strncmp(uri,"/action/",8)==0) 
 		{
-			http_status(http,HTTP_OK);
-			http_type(http,"text/xml");
+			if ( http_action_request(http,uri+8) )
+				http_status(http,HTTP_ACCEPTED);
+			else
+				http_status(http,HTTP_NOTFOUND);
+			http_send(http);
+		}
+		else if ( strcmp(uri,"/favicon.ico")==0 )
+		{
+			if ( http_favicon(http) )
+				http_status(http,HTTP_OK);
+			else
+				http_status(http,HTTP_NOTFOUND);
+			http_send(http);
+		}
+		else if (strncmp(uri,"/",1)==0 )
+		{
+			if ( http_xml_request(http,uri+1) )
+				http_status(http,HTTP_OK);
+			else
+				http_status(http,HTTP_NOTFOUND);
 			http_send(http);
 		}
 		else 

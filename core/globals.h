@@ -146,7 +146,12 @@ GLOBAL int global_nondeterminism_warning INIT(0); /**< flag to enable nondetermi
 GLOBAL int global_compileonly INIT(0); /**< flag to enable compile-only option (does not actually start the simulation) */
 
 GLOBAL int global_server_portnum INIT(10000); /**< port used in server mode (to be assigned by IANA Dec 2010) */
-GLOBAL char global_browser[1024] INIT("firefox"); /**< default browser to use for GUI */
+GLOBAL char global_browser[1024] /**< default browser to use for GUI */
+#ifdef WIN32
+	INIT("iexplore"); 
+#else
+	INIT("firefox"); 
+#endif
 #ifdef __cplusplus
 }
 #endif
