@@ -67,9 +67,8 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	}
 	else if (strcmp(global_environment,"server")==0)
 	{
+		// server only mode (no GUI)
 		output_verbose("starting server");
-		if (gui_get_root())
-			gui_html_start();
 		if (server_startup(argc,argv))
 			return exec_start();
 		else
@@ -77,7 +76,28 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	}
 	else if (strcmp(global_environment,"html")==0)
 	{
+		// this mode simply dumps the html data to a file
 		return gui_html_output_all();
+	}
+	else if (strcmp(global_environment,"gui")==0)
+	{
+		output_verbose("starting server");
+		if (server_startup(argc,argv))
+		{
+			char cmd[1024];
+#ifdef WIN32
+			sprintf(cmd,"start %s http://localhost:%d/gui/", global_browser, global_server_portnum);
+#else
+			sprintf(cmd,"%s http://localhost:%d/gui/ &", global_browser, global_server_portnum);
+#endif
+			if (system(cmd)!=0)
+				output_error("unable to start interface");
+			else
+				output_verbose("starting interface");
+			return exec_start();
+		}
+		else
+			return FAILED;
 	}
 	else if (strcmp(global_environment,"X11")==0)
 	{

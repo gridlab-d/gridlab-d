@@ -2,10 +2,7 @@
 
 #define AVG_SF=2500
 #define STD_SF=500
-#set server_portnum=10000
-#set starttime='2001-01-01'
 #set verbose=1
-#set environment=server
 
 clock {
 	timezone PST8PDT;
