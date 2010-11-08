@@ -32,6 +32,12 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 {
 	if (strcmp(global_environment,"batch")==0)
 	{
+		if (gui_get_root()) 
+		{
+			strcpy(global_environment,"gui");
+			goto UseGui;
+		}
+
 		/* do the run */
 		if (exec_start()==FAILED)
 		{
@@ -81,6 +87,7 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	}
 	else if (strcmp(global_environment,"gui")==0)
 	{
+UseGui:
 		output_verbose("starting server");
 		if (server_startup(argc,argv))
 		{
@@ -91,7 +98,10 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 			sprintf(cmd,"%s http://localhost:%d/gui/ &", global_browser, global_server_portnum);
 #endif
 			if (system(cmd)!=0)
+			{
 				output_error("unable to start interface");
+				strcpy(global_environment,"batch");
+			}
 			else
 				output_verbose("starting interface");
 			return exec_start();

@@ -979,11 +979,5 @@ size_t gui_glm_write_all(FILE *fp)
 /**************************************************************************/
 void gui_wait(void)
 {
-	char *env = global_getvar("environment",NULL,NULL);
-#ifdef _DEBUG
-	output_verbose("starting gui environment for %s", env);
-#endif	
-	if (strcmp(env,"batch")==0)
-		gui_cmd_start();
-	// TODO HTML, X11 startup
+	// this is called after a gui block is loaded 
 }
