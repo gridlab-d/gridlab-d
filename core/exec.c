@@ -496,8 +496,11 @@ STATUS exec_start(void)
 	LISTITEM *ptr;
 	int iPtr, incr;
 
-	//sjin
-	//OBJECT *obj;
+	/* check for a model */
+	if (object_get_count()==0)
+
+		/* no object -> nothing to do */
+		return SUCCESS;
 
 	/* perform object initialization */
 	if (init_all() == FAILED)
@@ -630,7 +633,7 @@ STATUS exec_start(void)
 
 			/* synchronize all internal schedules */
 			sync.step_to = syncall_internals(global_clock);
-			if(sync.step_to <= global_clock)
+			if(sync.step_to!=TS_NEVER && sync.step_to <= global_clock)
 				THROW("internal property sync failure");
 				/* TROUBLESHOOT
 					An internal property such as schedule, enduse or loadshape has failed to synchronize and the simulation aborted.
