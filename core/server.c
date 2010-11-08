@@ -602,7 +602,7 @@ void http_response(SOCKET fd)
 		}
 
 		/* keep-alive not desired*/
-		if (stricmp(connection,"close")==0)
+		if (connection && stricmp(connection,"close")==0)
 			break;
 	}
 	http_close(http);
