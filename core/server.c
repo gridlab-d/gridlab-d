@@ -481,7 +481,7 @@ int http_output_request(HTTP *http,char *uri)
 		output_error("file '%s' not found", fullpath);
 		return 0;
 	}
-	len = filelength(fp->_file);
+	len = filelength(fileno(fp));
 	if (len<=0)
 	{
 		output_error("file '%s' not accessible", fullpath);
@@ -534,7 +534,7 @@ void http_response(SOCKET fd)
 		char method[32];
 		char uri[1024];
 		char version[32];
-		char *p = strchr(http->query,'\r\n');
+		char *p = strchr(http->query,'\r');
 		int v;
 
 		/* read the request string */
@@ -548,7 +548,7 @@ void http_response(SOCKET fd)
 		}
 
 		/* read the rest of the header */
-		while (p!=NULL && (p=strchr(p,'\r\n'))!=NULL) 
+		while (p!=NULL && (p=strchr(p,'\r'))!=NULL) 
 		{
  			*p = '\0';
 			p+=2;
