@@ -380,10 +380,9 @@ void http_decode(char *buffer)
 	strcpy(buffer,result);
 }
 
-
 int http_xml_request(HTTP *http,char *uri)
 {
-	char arg1[1024], arg2[1024], arg3[1024], arg4[1024];
+	char arg1[1024]="", arg2[1024]="", arg3[1024]="";
 	int nargs = sscanf(uri,"%1023[^/ ]/%1023[^= ]=%1023s",arg1,arg2,arg3);
 	char buffer[1024]="";
 	OBJECT *obj=NULL;
