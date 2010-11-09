@@ -144,14 +144,18 @@ int tmy2_reader::header_info(char* city, char* state, int* degrees, int* minutes
 */
 
 int tmy2_reader::read_data(double *dnr, double *dhr, double *ghr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind, double *precip, double *snowDepth){
+	int rct = 0;
 	int tmp_dnr, tmp_dhr, tmp_tdb, tmp_rh, tmp_ws, tmp_precip, tmp_sf, tmp_ghr;
 	//sscanf(buf, "%*2s%2d%2d%2d%*14s%4d%*2s%4d%*40s%4d%8*s%3d%*s",month,day,hour,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh);
 	int tmh, tday, thr;
 	if(month == NULL) month = &tmh;
 	if(day == NULL) day = &tday;
 	if(hour == NULL) hour = &thr;
-	sscanf(buf, "%*2s%2d%2d%2d%*8s%4d%*2s%4d%*2s%4d%*34s%4d%8*s%3d%*13s%3d%*25s%3d%*7s%3d",month,day,hour,&tmp_ghr,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh, &tmp_ws,&tmp_precip,&tmp_sf);
+	rct = sscanf(buf, "%*2s%2d%2d%2d%*8s%4d%*2s%4d%*2s%4d%*34s%4d%*8s%3d%*13s%3d%*25s%3d%*7s%3d",month,day,hour,&tmp_ghr,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh, &tmp_ws,&tmp_precip,&tmp_sf);
 				/* 3__5__7__9___17_20_23_27__29_33___67_71_79__82___95_98_ */
+	if(rct != 11){
+		gl_warning("TMY reader did not get 11 values for line time %d/%d %d00", *month, *day, *hour);
+	}
 	if(dnr) *dnr = tmp_dnr;
 	if(dhr) *dhr = tmp_dhr;
 	if(ghr) *ghr = tmp_ghr;
