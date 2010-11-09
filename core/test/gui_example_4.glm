@@ -1,0 +1,28 @@
+// gui example 3
+
+#define AVG_SF=2500
+#define STD_SF=500
+#define NHOUSES=10
+#set verbose=0
+#set run_realtime=600
+
+clock {
+	timezone PST8PDT;
+	starttime '2001-01-01 0:00:00 PST';
+}
+
+module residential {
+	implicit_enduses LIGHTS;
+}
+
+gui {
+	page source "gui_example_4.html";
+}
+
+#print "Floor area is ${AVG_SF} +/- ${STD_SF} sf"
+
+object house:..${NHOUSES} {
+	floor_area random.normal(${AVG_SF},${STD_SF});
+	cooling_setpoint 72;
+	heating_setpoint 68;
+}

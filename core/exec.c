@@ -576,7 +576,7 @@ STATUS exec_start(void)
 	}
 
 	/* realtime startup */
-	if (global_run_realtime==1)
+	if (global_run_realtime>0)
 	{
 		char buffer[64];
 		time(&global_clock);
@@ -611,20 +611,26 @@ STATUS exec_start(void)
 			sync.hard_event = (global_stoptime == TS_NEVER ? 0 : 1);
 
 			/* realtime support */
-			if (global_run_realtime)
+			if (global_run_realtime>0)
 			{
 #ifdef WIN32
 				struct timeb tv;
 				ftime(&tv);
-				output_verbose("waiting %d usec", 1000-tv.millitm);
+				output_verbose("waiting %d msec", 1000-tv.millitm);
 				Sleep(1000-tv.millitm );
-				global_clock = tv.time +1;
+				if ( global_run_realtime==1 )
+					global_clock = tv.time + global_run_realtime;
+				else
+					global_clock += global_run_realtime;
 #else
 				struct timeval tv;
 				gettimeofday(&tv);
 				output_verbose("waiting %d usec", 1000000-tv.tv_usec);
 				usleep(1000000-tv.tv_usec);
-				global_clock = tv.tv_sec+1;
+				if ( global_run_realtime==1 )
+					global_clock = tv.tv_sec+global_run_realtime;
+				else
+					global_clock += global_run_realtime;
 #endif
 				output_verbose("realtime clock advancing to %d", (int)global_clock);
 			}

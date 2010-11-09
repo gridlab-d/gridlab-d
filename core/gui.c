@@ -659,10 +659,29 @@ Done:
 	return;
 }
 
+static int gui_html_source_page(char *source)
+{
+	char buffer[65536];
+	FILE *src = fopen(source,"rt");
+	int len;
+	if (src==NULL) return 0;
+	while ((len=fread(buffer,1,sizeof(buffer)-1,src))>0)
+	{
+		buffer[len]='\0';
+		gui_html_output(fp,"%s",buffer);
+	}
+	fclose(src);
+	return 1;
+}
 static void gui_entity_html_content(GUIENTITY *entity)
 {
 	char *ptype = gui_get_property(entity) ? class_get_property_typename(entity->prop->ptype) : "";
 	switch (entity->type) {
+
+	case GUI_PAGE:
+		if ( entity->source && !gui_html_source_page(entity->source) )
+			gui_html_output(fp,"ERROR: page '%s' not found: %s",entity->source,strerror(errno));
+		break;
 
 	// labeling 
 	case GUI_TITLE: 
@@ -772,9 +791,6 @@ static void gui_entity_html_open(GUIENTITY *entity)
 	case GUI_TAB: 
 		// TODO
 		break;
-	case GUI_PAGE: 
-		// TODO
-		break;
 	case GUI_GROUP:
 		newcol(entity);
 		gui_html_output(fp,"<fieldset>\n");
@@ -796,9 +812,6 @@ static void gui_entity_html_close(GUIENTITY *entity)
 		newrow(entity);
 		break;
 	case GUI_TAB: 
-		// TODO
-		break;
-	case GUI_PAGE: 
 		// TODO
 		break;
 	case GUI_GROUP:

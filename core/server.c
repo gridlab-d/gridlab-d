@@ -106,6 +106,8 @@ static void *server_routine(void *arg)
 			output_verbose("accepting incoming connection from on port %d",cli_addr.sin_port);
 #endif
 			http_response(newsockfd);
+			if (global_server_quit_on_close)
+				shutdown_now();
 		}
 #ifdef NEVER
 		{
@@ -177,8 +179,7 @@ STATUS server_startup(int argc, char *argv[])
 		output_error("server thread startup failed");
 		return FAILED;
 	}
-	output_verbose("server thread started, switching to realtime mode");
-	global_run_realtime = 1;
+
 	return SUCCESS;
 }
 
@@ -260,13 +261,15 @@ static void http_type(HTTP *http, char *type)
 }
 static void http_send(HTTP *http)
 {
-	char header[1024];
+	char header[4096];
 	int len=0;
 	len += sprintf(header+len, "HTTP/1.1 %s", http->status?http->status:HTTP_INTERNALSERVERERROR);
 	output_verbose("%s (len=%d)",header,http->len);
 	len += sprintf(header+len, "\nContent-Length: %d\n", http->len);
 	if (http->type)
 		len += sprintf(header+len, "Content-Type: %s\n", http->type);
+	len += sprintf(header+len, "Cache-Control: no-cache\n");
+	len += sprintf(header+len, "Cache-Control: no-store\n");
 	len += sprintf(header+len,"\n");
 	send_data(http->s,header,len);
 	if (http->len>0)
@@ -382,28 +385,38 @@ void http_decode(char *buffer)
 
 int http_xml_request(HTTP *http,char *uri)
 {
-	char arg1[1024]="", arg2[1024]="", arg3[1024]="";
-	int nargs = sscanf(uri,"%1023[^/ ]/%1023[^= ]=%1023s",arg1,arg2,arg3);
+	char arg1[1024]="", arg2[1024]="";
+	int nargs = sscanf(uri,"%1023[^/=\r\n]/%1023[^\r\n=]",arg1,arg2);
+	char *value = strchr(uri,'=');
 	char buffer[1024]="";
 	OBJECT *obj=NULL;
 	char *id;
 
+	/* value */
+	if (value) *value++;
+
 	/* decode %.. */
 	http_decode(arg1);
 	http_decode(arg2);
-	http_decode(arg3);
+	if (value) http_decode(value);
 
 	/* process request */
 	switch (nargs) {
 
 	/* get global variable */
 	case 1: 
+
+		/* find the variable */
 		if (global_getvar(arg1,buffer,sizeof(buffer))==NULL)
 		{
 			output_error("global variable '%s' not found", arg1);
 			return 0;
 		}
-		/* TODO object dump */
+
+		/* assignment, if any */
+		if (value) global_setvar(arg1,value);
+		
+		/* post the response */
 		http_format(http,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
 		http_format(http,"<globalvar>\n\t<name>%s</name>\n\t<value>%s</value>\n</globalvar>\n",
 			arg1, http_unquote(buffer));
@@ -412,6 +425,8 @@ int http_xml_request(HTTP *http,char *uri)
 
 	/* get object property */
 	case 2:
+
+		/* find the object */
 		id = strchr(arg1,':');
 		if ( id==NULL )
 			obj = object_find_name(arg1);
@@ -422,12 +437,22 @@ int http_xml_request(HTTP *http,char *uri)
 			output_error("object '%s' not found", arg1);
 			return 0;
 		}
-GetValue:
+
+		/* post the current value */
 		if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
 		{
 			output_error("object '%s' property '%s' not found", arg1, arg2);
 			return 0;
 		}
+
+		/* assignment, if any */
+		if ( value && !object_set_value_by_name(obj,arg2,value) )
+		{
+			output_error("cannot set object '%s' property '%s' to '%s'", arg1, arg2, value);
+			return 0;
+		}
+
+		/* post the response */
 		http_format(http,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<property>\n");
 		http_format(http,"\t<object>%s</object>\n", arg1);
 		http_format(http,"\t<name>%s</name>\n", arg2);
@@ -436,25 +461,6 @@ GetValue:
 		http_format(http,"</property>\n");
 		http_type(http,"text/xml");
 		return 1;
-
-	/* set object property */
-	case 3:
-		id = strchr(arg1,':');
-		if ( id==NULL )
-			obj = object_find_name(arg1);
-		else
-			obj = object_find_by_id(atoi(id+1));
-		if ( obj==NULL )
-		{
-			output_error("object '%s' not found", arg1);
-			return 0;
-		}
-		if ( !object_set_value_by_name(obj,arg2,arg3) )
-		{
-			output_error("cannot set object '%s' property '%s' to '%s'", arg1, arg2, arg3);
-			return 0;
-		}
-		goto GetValue;
 
 	default:
 		return 0;
@@ -529,6 +535,11 @@ int http_action_request(HTTP *http,char *action)
 {
 	if (strcmp(action,"quit")==0)
 	{
+		http_status(http,HTTP_ACCEPTED);
+		http_type(http,"text/plain");
+		http_format(http,"Goodbye");
+		http_send(http);
+		http_close(http);
 		shutdown_now();
 		return 1;
 	}
@@ -545,7 +556,7 @@ int http_favicon(http)
 
 	if ( fullpath==NULL )
 	{
-		output_error("file '%s' not found", fullpath);
+		output_error("file 'favicon.ico' not found", fullpath);
 		return 0;
 	}
 	fp = fopen(fullpath,"rb");
