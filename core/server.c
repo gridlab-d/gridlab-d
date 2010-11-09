@@ -31,16 +31,19 @@
 
 static int shutdown_server = 0; /* flag to stop accepting incoming messages */
 SOCKET sockfd = (SOCKET)0;
+
 static void shutdown_now(void)
 {
 	extern int stop_now;
 	stop_now = 1;
 	shutdown_server = 1;
+	if (sockfd!=(SOCKET)0)
 #ifdef WIN32
-	shutdown(sockfd,SD_BOTH);
+		shutdown(sockfd,SD_BOTH);
 #else
-	shutdown(sockfd,SHUT_RDWR);
+		shutdown(sockfd,SHUT_RDWR);
 #endif
+	sockfd = (SOCKET)0;
 }
 
 #ifndef WIN32
@@ -147,6 +150,7 @@ STATUS server_startup(int argc, char *argv[])
 		output_error("can't create stream socket: %s",GetLastError());
 		return FAILED;
 	}
+	atexit(shutdown_now);
 
 	memset(&serv_addr,0,sizeof(serv_addr));
 
