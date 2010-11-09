@@ -602,8 +602,9 @@ STATUS exec_start(void)
 	TRY {
 
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
-		int running = sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0;
-		while (iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now) 
+		int running; /* split into two tests to make it easier to tell what's going on */
+		while ( running = (sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0),
+			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 
 		{
 			/* set time context */
 			output_set_time_context(sync.step_to);
