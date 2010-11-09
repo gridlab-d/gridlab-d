@@ -3,7 +3,7 @@
 #define AVG_SF=2500
 #define STD_SF=500
 #define NHOUSES=10
-#set verbose=0
+#set verbose=1
 #set run_realtime=600
 
 clock {

@@ -9,48 +9,54 @@
 </table>
 
 <table>
-<tr><th>Average floorarea</th><td><div id="avg"> &ndash; </div></td></tr>
+<tr><th>Average floorarea</th><td><input id="avg" value="" onfocus="enable('avg');" /><input type="submit" name="avg_ok" value="&radic;" disabled onclick="save('avg','AVG_SF');" /><input type="submit" name="avg_undo" value="X" disabled onclick="reset('avg','AVG_SF');" /><input type="submit" name="avg_undo" value="?" onclick="help('avg');" /></td></tr>
+<tr><th>Floorarea mean</th><td><div id="avg_e"> &ndash; </div></td></tr>
 <tr><th>Floorarea stdev</th><td><div id="std"> &ndash; </div></td></tr>
 <tr><th>Clock</th><td><div id="clock"> &ndash; </div></td></tr>
 </table>
 
 <script type="text/javascript">
 
-function GLDGetGlobal(name)
+function save(name,variable)
 {
-    xml = new XMLHttpRequest();
-    xml.open("GET","/"+name,false);
-    xml.send();
-    doc = xml.responseXML;
-    var x = doc.getElementsByTagName("globalvar")
-    return x[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
+    GLDSetGlobal(variable,document.getElementById(name).value);
+    disable(name);
 }
-
-function GLDGetProperty(object,name)
+function reset(name,variable)
 {
-    xml = new XMLHttpRequest();
-    xml.open("GET","/"+object+"/"+name,false);
-    xml.send();
-    doc = xml.responseXML;
-    var x = doc.getElementsByTagName("property")
-    return x[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
+    document.getElementById(name).value = GLDGetGlobal(variable);
+    disable(name);
 }
-
+function enable(name)
+{
+    document.getElementById(name+"_ok").disabled = false;
+    document.getElementById(name+"_undo").disabled = false;
+}
+function disable(name)
+{
+    document.getElementById(name+"_ok").disabled = true;
+    document.getElementById(name+"_undo").disabled = true;
+}
 function load()
 {
     document.getElementById("nhouses").innerHTML = nhouses;
 
-    document.getElementById("avg").innerHTML = GLDGetGlobal("AVG_SF");
+    document.getElementById("avg").value = GLDGetGlobal("AVG_SF");
     document.getElementById("std").innerHTML = GLDGetGlobal("STD_SF");
     document.getElementById("clock").innerHTML = GLDGetGlobal("clock");
 
+    refresh();
+}
+
+function refresh()
+{
+    document.getElementById("avg_e").innerHTML = GLDGetGlobal("AVG_SF");
     for ( n=0 ; n<nhouses ; n++)
     {
         document.getElementById("tair"+n).innerHTML = GLDGetProperty("house:"+n,"air_temperature");
         document.getElementById("mode"+n).innerHTML = GLDGetProperty("house:"+n,"system_mode");
     }
-    
-    setTimeout("load()",1000);
+    setTimeout("refresh()",1000);
 }
 
 var nhouses = GLDGetGlobal("NHOUSES");
@@ -63,7 +69,7 @@ document.writeln("</table>");
 
 </script>
 
-<input type="submit" value="Quit" onclick="document.location='/action/quit'; window.close();" />
+<input type="submit" value="Quit" onclick="window.close();" />
 
 </body>
 </html>
