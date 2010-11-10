@@ -139,14 +139,14 @@ object triplex_meter {
 	};
 	object double_assert{
 		target monthly_bill; // accumulation of 2nd tier pricing
-		value 27;
+		value 21;
 		within .1;
 		once ONCE_TRUE;
 		in '2006-01-16 00:00:00 CST';
 	};
 	object double_assert{
 		target monthly_bill; // accumulation of 3rd tier pricing
-		value 69;
+		value 45;
 		within .1;
 		once ONCE_TRUE;
 		in '2006-01-21 00:00:00 CST';

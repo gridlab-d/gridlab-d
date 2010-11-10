@@ -139,21 +139,21 @@ object triplex_meter {
 	};
 	object double_assert{
 		target monthly_bill; // accumulation of 2nd tier pricing
-		value 37;
+		value 31;
 		within .1;
 		once ONCE_TRUE;
 		in '2006-01-16 00:00:00 CST';
 	};
 	object double_assert{
 		target monthly_bill; // accumulation of 3rd tier pricing
-		value 79;
+		value 55;
 		within .1;
 		once ONCE_TRUE;
 		in '2006-01-21 00:00:00 CST';
 	};
-		object double_assert{
+	object double_assert{
 		target previous_monthly_bill; 
-		value 171.4;
+		value 107.8;
 		within .1; // @weird -> same bound as earlier...
 		once ONCE_TRUE;
 		in '2006-02-03 00:00:00 CST';
