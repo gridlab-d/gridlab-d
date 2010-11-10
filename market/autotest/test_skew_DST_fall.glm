@@ -71,7 +71,6 @@ schedule skewed_prices {
 
 object auction {
 	name Market_1;
-	type DOUBLE;
 	unit kW;
 	period 1h;
 	verbose TRUE;

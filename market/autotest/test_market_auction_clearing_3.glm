@@ -169,7 +169,7 @@ schedule assert_clearing_quantity{
 
 object auction {
 	name Market_1;
-	type DOUBLE;
+
 	unit MWh;
 	period 3600;
 	verbose FALSE;

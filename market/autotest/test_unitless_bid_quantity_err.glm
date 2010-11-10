@@ -22,7 +22,7 @@ class auction {
 object auction {
 	name Market;
 	unit "MWh";
-	type DOUBLE;
+
 	period 3600;
 	pricecap 9999;
 	verbose TRUE;

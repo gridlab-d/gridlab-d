@@ -64,7 +64,6 @@ class auction {
 
 object auction {
 	name Market_1;
-	type DOUBLE;
 	unit MW;
 	period 60;
 	verbose TRUE;

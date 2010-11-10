@@ -166,7 +166,7 @@ schedule cq4 {
 
 object auction { // buyers_only,fixed_quantity
 	name Market_1;
-	type DOUBLE;
+
 	unit MWh;
 	period 3600;
 	verbose TRUE;
@@ -199,7 +199,7 @@ object auction { // buyers_only,fixed_quantity
 
 object auction { // buyers_only,fixed_price
 	name Market_2;
-	type DOUBLE;
+
 	unit MWh;
 	period 3600;
 	verbose TRUE;
@@ -232,7 +232,7 @@ object auction { // buyers_only,fixed_price
 
 object auction { // sellers_only,fixed_quantity
 	name Market_3;
-	type DOUBLE;
+
 	unit MWh;
 	period 3600;
 	verbose TRUE;
@@ -266,7 +266,7 @@ object auction { // sellers_only,fixed_quantity
 
 object auction { // sellers_only,fixed_price
 	name Market_4;
-	type DOUBLE;
+
 	unit MWh;
 	period 3600;
 	verbose TRUE;

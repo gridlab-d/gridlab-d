@@ -82,7 +82,7 @@ object auction {
 	latency 24h;
 	warmup 0;
 	init_stdev .001;
-	type DOUBLE;
+
 	unit MWh;
 	period 3600;
 	init_price 0;

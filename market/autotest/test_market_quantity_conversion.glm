@@ -30,7 +30,7 @@ object auction {
 	name auction1;
 	unit "W";
 	period 300;
-	type DOUBLE;
+
 	warmup 0;
 	latency 0;
 	verbose TRUE;
