@@ -98,10 +98,9 @@ schedule clear_quantity {
 object auction {
 	name Market;
 	unit "kW";
-	type DOUBLE;
 	period 3600;
 	verbose TRUE;
-	pricecap 9999;
+	price_cap 9999;
 	object recorder {
 		property last.P,last.Q,next.P,next.Q,avg24,std24,avg72,std72,avg168,std168;
 		file "test_market_auction.csv";
