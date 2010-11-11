@@ -749,6 +749,8 @@ static FINDPGM *add_pgm(FINDPGM **pgm, COMPAREFUNC op, unsigned short target, FI
 
 	return item;
 }
+
+/** Runs a search engine built by find_mkpgm **/
 FINDLIST *find_runpgm(FINDLIST *list, FINDPGM *pgm)
 {
 	if (list==NULL)
@@ -1240,6 +1242,7 @@ static int expression_list(PARSER, FINDPGM **pgm)
 	DONE;
 }
 
+/** Constructs a search engine for find_objects **/
 FINDPGM *find_mkpgm(char *search)
 {
 	STATUS status=FAILED;
