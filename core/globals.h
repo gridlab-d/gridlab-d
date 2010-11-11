@@ -89,7 +89,7 @@ GLOBAL char global_include[1024]
 #ifdef WIN32
 	INIT(""); 
 #else
-	INIT("/usr/etc/gridlabd");
+	INIT("");
 #endif /**< include path for models and code headers */
 GLOBAL int global_gdb INIT(0); /**< select gdb debugger */
 GLOBAL char global_trace[1024] INIT(""); /**< comma separate list of runtime calls that will be traced */

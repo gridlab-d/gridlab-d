@@ -3,6 +3,7 @@
 // Test groupid function
 
 clock {
+	timezone PST+8PDT;
 	starttime '2000-01-01 0:00:00 PST';
 }
 

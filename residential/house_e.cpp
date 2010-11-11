@@ -1825,10 +1825,6 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 
 void house_e::update_model(double dt)
 {
-#ifndef _DEBUG
-	double d;
-#endif
-
 	/* compute solar gains */
 	//Qs = 0;
 	incident_solar_radiation = 0;
