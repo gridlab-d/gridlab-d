@@ -3,26 +3,50 @@
 #define AVG_SF=2500
 #define STD_SF=500
 #define NHOUSES=10
-#set verbose=1
-#set run_realtime=600
+#set verbose=0
+#set server_quit_on_close=0
+#set run_realtime=0
+#define dt=600
 
 clock {
 	timezone PST8PDT;
 	starttime '2001-01-01 0:00:00 PST';
+	stoptime '2002-01-01 0:00:00 PST';
+}
+
+module tape {
+	csv_data_only 1;
+	csv_keep_clean 1;
+}
+
+module climate;
+object climate {
+	tmyfile "Washington/Seattle.tmy2";
+	interpolate QUADRATIC;
+	object recorder {
+		property "temperature";
+		file "outdoor.csv";
+		interval ${dt};
+	};
 }
 
 module residential {
 	implicit_enduses LIGHTS;
 }
 
-gui {
-	page source "gui_example_4.html";
-}
-
-#print "Floor area is ${AVG_SF} +/- ${STD_SF} sf"
-
 object house:..${NHOUSES} {
 	floor_area random.normal(${AVG_SF},${STD_SF});
 	cooling_setpoint 72;
 	heating_setpoint 68;
+}
+
+object collector {
+	group "class=house";
+	property "avg(air_temperature)";
+	interval ${dt};
+	file "indoor.csv";
+}
+
+gui {
+	page source "gui_example_4.html";
 }

@@ -1,0 +1,14 @@
+// $Id$
+// automatically generated Thu May  7 09:19:17 PDT 2009 from 94240.tm2
+module climate;
+class climate {
+	double elevation[m];
+	double tzoffset[h];
+}
+object climate {
+	name "Quillayute WA";
+	tmyfile "Washington/Quillayute.tmy2";
+	tzoffset -8;
+	elevation 55;
+}
+

@@ -23,6 +23,17 @@
 #include "../tape/histogram.h"
 #include "tape_file.h"
 
+int csv_data_only = 0; /* enable this option to suppress addition of lines starting with # in CSV */
+int csv_keep_clean = 0; /* enable this option to keep data flushed at end of line */
+EXPORT void set_csv_data_only()
+{
+	csv_data_only = 1;
+}
+EXPORT void set_csv_keep_clean()
+{
+	csv_keep_clean = 1;
+}
+
 /*******************************************************************
  * players 
  */
@@ -331,37 +342,42 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 	my->status=TS_OPEN;
 	my->samples=0;
 
-	/* put useful header information in file first */
-	fprintf(my->fp,"# file...... %s\n", my->file);
-	fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
+	if (!csv_data_only)
+	{
+		/* put useful header information in file first */
+		fprintf(my->fp,"# file...... %s\n", my->file);
+		fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
 #ifdef WIN32
-	fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
-	fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
+		fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
+		fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
 #else
-	fprintf(my->fp,"# user...... %s\n", getenv("USER"));
-	fprintf(my->fp,"# host...... %s\n", getenv("HOST"));
+		fprintf(my->fp,"# user...... %s\n", getenv("USER"));
+		fprintf(my->fp,"# host...... %s\n", getenv("HOST"));
 #endif
-	if(obj->parent){
-		fprintf(my->fp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
+		if(obj->parent){
+			fprintf(my->fp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
+		}
+		fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
+		fprintf(my->fp,"# interval.. %d\n", my->interval);
+		fprintf(my->fp,"# limit..... %d\n", my->limit);
+		fprintf(my->fp,"# timestamp,%s\n", my->property);
 	}
-	fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
-	fprintf(my->fp,"# interval.. %d\n", my->interval);
-	fprintf(my->fp,"# limit..... %d\n", my->limit);
-	fprintf(my->fp,"# timestamp,%s\n", my->property);
 
 	return 1;
 }
 
 EXPORT int write_recorder(struct recorder *my, char *timestamp, char *value)
 { 
-	return fprintf(my->fp,"%s,%s\n", timestamp, value);
+	int count = fprintf(my->fp,"%s,%s\n", timestamp, value);
+	if (csv_keep_clean) fflush(my->fp);
+	return count;
 }
 
 EXPORT void close_recorder(struct recorder *my)
 {
 	if (my->fp)
 	{
-		fprintf(my->fp,"# end of tape\n");
+		if (!csv_data_only) fprintf(my->fp,"# end of tape\n");
 		fclose(my->fp);
 		my->fp = NULL; // Defensive programming. For some reason GridlabD was 
 		// closing the same pointer twice, causing it to crash.
@@ -387,45 +403,49 @@ EXPORT int open_histogram(histogram *my, char *fname, char *flags)
 	my->t_count = TS_ZERO;
 	my->t_sample = TS_ZERO;
 
-	/* put useful header information in file first */
-	fprintf(my->fp,"# file...... %s\n", my->fname);
-	fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
+	if (!csv_data_only)
+	{
+		/* put useful header information in file first */
+		fprintf(my->fp,"# file...... %s\n", my->fname);
+		fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
 #ifdef WIN32
-	fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
-	fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
+		fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
+		fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
 #else
-	fprintf(my->fp,"# user...... %s\n", getenv("USER"));
-	fprintf(my->fp,"# host...... %s\n", getenv("HOST"));
+		fprintf(my->fp,"# user...... %s\n", getenv("USER"));
+		fprintf(my->fp,"# host...... %s\n", getenv("HOST"));
 #endif
-	if(obj->parent != NULL){
-		fprintf(my->fp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
-	} else {
-		fprintf(my->fp,"# group.... %s\n", my->group);
-	}
-//	fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
-	fprintf(my->fp,"# counting interval.. %d\n", my->counting_interval);
-	fprintf(my->fp,"# sampling interval.. %d\n", my->sampling_interval);
-	fprintf(my->fp,"# limit..... %d\n", my->limit);
-	if(my->bins[0] != 0){
-		fprintf(my->fp,"# timestamp,%s\n", my->bins);
-	} else {
-		int i = 0;
-		for(i = 0; i < my->bin_count; ++i){
-			fprintf(my->fp,"%s%f..%f%s",(my->bin_list[i].low_inc ? "[" : "("), my->bin_list[i].low_val, my->bin_list[i].high_val, (my->bin_list[i].high_inc ? "]" : ")"));
-			if(i+1 < my->bin_count){
-				fprintf(my->fp,",");
-			}
+		if(obj->parent != NULL){
+			fprintf(my->fp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
+		} else {
+			fprintf(my->fp,"# group.... %s\n", my->group);
 		}
-		fprintf(my->fp, "\n");
-	}
-	
+	//	fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
+		fprintf(my->fp,"# counting interval.. %d\n", my->counting_interval);
+		fprintf(my->fp,"# sampling interval.. %d\n", my->sampling_interval);
+		fprintf(my->fp,"# limit..... %d\n", my->limit);
+		if(my->bins[0] != 0){
+			fprintf(my->fp,"# timestamp,%s\n", my->bins);
+		} else {
+			int i = 0;
+			for(i = 0; i < my->bin_count; ++i){
+				fprintf(my->fp,"%s%f..%f%s",(my->bin_list[i].low_inc ? "[" : "("), my->bin_list[i].low_val, my->bin_list[i].high_val, (my->bin_list[i].high_inc ? "]" : ")"));
+				if(i+1 < my->bin_count){
+					fprintf(my->fp,",");
+				}
+			}
+			fprintf(my->fp, "\n");
+		}
+	}	
 
 	return 1;
 }
 
 EXPORT int write_histogram(histogram *my, char *timestamp, char *value)
 { 
-	return fprintf(my->fp,"%s,%s\n", timestamp, value);
+	int count = fprintf(my->fp,"%s,%s\n", timestamp, value);
+	if (csv_keep_clean) fflush(my->fp);
+	return count;
 }
 
 EXPORT void close_histogram(histogram *my)
@@ -462,35 +482,40 @@ EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 	my->type = FT_FILE;
 	my->samples=0;
 
-	/* put useful header information in file first */
-	count += fprintf(my->fp,"# file...... %s\n", my->file);
-	count += fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
+	if (!csv_data_only)
+	{
+		/* put useful header information in file first */
+		count += fprintf(my->fp,"# file...... %s\n", my->file);
+		count += fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
 #ifdef WIN32
-	count += fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
-	count += fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
+		count += fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
+		count += fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
 #else
-	count += fprintf(my->fp,"# user...... %s\n", getenv("USER"));
-	count += fprintf(my->fp,"# host...... %s\n", getenv("HOST"));
+		count += fprintf(my->fp,"# user...... %s\n", getenv("USER"));
+		count += fprintf(my->fp,"# host...... %s\n", getenv("HOST"));
 #endif
-	count += fprintf(my->fp,"# group..... %s\n", my->group);
-	count += fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
-	count += fprintf(my->fp,"# interval.. %d\n", my->interval);
-	count += fprintf(my->fp,"# limit..... %d\n", my->limit);
-	count += fprintf(my->fp,"# property.. timestamp,%s\n", my->property);
+		count += fprintf(my->fp,"# group..... %s\n", my->group);
+		count += fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
+		count += fprintf(my->fp,"# interval.. %d\n", my->interval);
+		count += fprintf(my->fp,"# limit..... %d\n", my->limit);
+		count += fprintf(my->fp,"# property.. timestamp,%s\n", my->property);
+	}
 
-	return count;
+	return 1;
 }
 
 EXPORT int write_collector(struct collector *my, char *timestamp, char *value)
 {
-	return fprintf(my->fp,"%s,%s\n", timestamp, value);
+	int count = fprintf(my->fp,"%s,%s\n", timestamp, value);
+	if (csv_keep_clean) fflush(my->fp);
+	return count;
 }
 
 EXPORT void close_collector(struct collector *my)
 {
 	if (my->fp)
 	{
-		fprintf(my->fp,"# end of tape\n");
+		if (!csv_data_only) fprintf(my->fp,"# end of tape\n");
 		fclose(my->fp);
 	}
 	my->fp = 0;

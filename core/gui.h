@@ -41,7 +41,7 @@ typedef enum {
 	_GUI_ACTION_END, // end of action entities
 
 } GUIENTITYTYPE;
-
+typedef enum {GUIACT_NONE=0, GUIACT_WAITING=1, GUIACT_PENDING=2, GUIACT_HALT=3} GUIACTIONSTATUS;
 typedef struct s_guientity {
 	GUIENTITYTYPE type;	// gui entity type (see GE_*)
 	char srcref[1024]; // reference to source file location
@@ -54,6 +54,8 @@ typedef struct s_guientity {
 	int size; // size spec
 	int height; // height spec
 	int width; // width spec
+	GUIACTIONSTATUS action_status;
+	char wait_for[64];
 	char source[1024]; // source file for data (output only)
 	char options[1024]; // options for output
 	char gnuplot[4096];	// gnuplot script
@@ -84,6 +86,10 @@ void gui_set_next(GUIENTITY *entity, GUIENTITY *next);
 void gui_set_parent(GUIENTITY *entity, GUIENTITY *parent);
 void gui_set_source(GUIENTITY *entity, char *source);
 void gui_set_options(GUIENTITY *entity, char *source);
+void gui_set_wait(GUIENTITY *entity, char *wait);
+
+STATUS gui_startup(int argc, char *argv[]);
+int gui_post_action(char *action);
 
 GUIENTITY *gui_get_root(void);
 GUIENTITY *gui_get_last(void);
@@ -111,12 +117,14 @@ int gui_is_header(GUIENTITY *entity);
 void gui_html_start(void);
 void gui_X11_start(void);
 
+void gui_wait_status(GUIACTIONSTATUS status);
+
 int gui_html_output_page(char *page);
 STATUS gui_html_output_all(void);
 
 size_t gui_glm_write_all(FILE *fp);
 
-void gui_wait(void);
+int gui_wait(void);
 
 #endif
 

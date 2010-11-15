@@ -152,7 +152,7 @@ GLOBAL char global_browser[1024] /**< default browser to use for GUI */
 #else
 	INIT("firefox"); 
 #endif
-GLOBAL int global_server_quit_on_close INIT(1); /** server will quit when connection is closed */
+GLOBAL int global_server_quit_on_close INIT(0); /** server will quit when connection is closed */
 
 #ifdef __cplusplus
 }

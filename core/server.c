@@ -27,6 +27,15 @@
 #include <errno.h>
 #include <pthread.h>
 
+#include "server.h"
+#include "output.h"
+#include "globals.h"
+#include "object.h"
+
+#include "legal.h"
+
+#include "gui.h"
+
 #define MAXSTR		1024		// maximum string length
 
 static int shutdown_server = 0; /* flag to stop accepting incoming messages */
@@ -44,6 +53,7 @@ static void shutdown_now(void)
 		shutdown(sockfd,SHUT_RDWR);
 #endif
 	sockfd = (SOCKET)0;
+	gui_wait_status(GUIACT_HALT);
 }
 
 #ifndef WIN32
@@ -56,17 +66,10 @@ int GetLastError()
 void server_request(int);	// Function to handle clients' request(s)
 void http_response(SOCKET);
 
-#include "server.h"
-#include "output.h"
-#include "globals.h"
-#include "object.h"
-
-#include "legal.h"
-
 static size_t send_data(SOCKET s, char *buffer, size_t len)
 {
 #ifdef WIN32
-	return (size_t)send(s,buffer,len,0);
+	return (size_t)send(s,buffer,(int)len,0);
 #else
 	return (size_t)write(s,buffer,len);
 #endif	
@@ -75,7 +78,7 @@ static size_t send_data(SOCKET s, char *buffer, size_t len)
 static size_t recv_data(SOCKET s,char *buffer, size_t len)
 {
 #ifdef WIN32
-	return (size_t)recv(s,buffer,len,0);
+	return (size_t)recv(s,buffer,(int)len,0);
 #else
 	return (size_t)read(s,(void *)buffer,len);
 #endif
@@ -111,6 +114,8 @@ static void *server_routine(void *arg)
 			http_response(newsockfd);
 			if (global_server_quit_on_close)
 				shutdown_now();
+			else
+				gui_wait_status(0);
 		}
 #ifdef NEVER
 		{
@@ -130,13 +135,19 @@ Done:
 
 STATUS server_startup(int argc, char *argv[])
 {
+	static int started = 0;
 	int portNumber = global_server_portnum;
 	SOCKET sockfd;
 	struct sockaddr_in serv_addr;
 	pthread_t thread;
-
 #ifdef WIN32
 	WSADATA wsaData;
+#endif
+
+	if (started)
+		return SUCCESS;
+
+#ifdef WIN32
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
 		output_error("socket library initialization failed");
@@ -184,6 +195,7 @@ STATUS server_startup(int argc, char *argv[])
 		return FAILED;
 	}
 
+	started = 1;
 	return SUCCESS;
 }
 
@@ -268,9 +280,9 @@ static void http_send(HTTP *http)
 	char header[4096];
 	int len=0;
 	len += sprintf(header+len, "HTTP/1.1 %s", http->status?http->status:HTTP_INTERNALSERVERERROR);
-	output_verbose("%s (len=%d)",header,http->len);
+	output_verbose("%s (len=%d, mime=%s)",header,http->len,http->type?http->type:"none");
 	len += sprintf(header+len, "\nContent-Length: %d\n", http->len);
-	if (http->type)
+	if (http->type && http->type[0]!='\0')
 		len += sprintf(header+len, "Content-Type: %s\n", http->type);
 	len += sprintf(header+len, "Cache-Control: no-cache\n");
 	len += sprintf(header+len, "Cache-Control: no-store\n");
@@ -280,7 +292,7 @@ static void http_send(HTTP *http)
 		send_data(http->s,http->buffer,http->len);
 	http->len = 0;
 }
-static void http_write(HTTP *http, char *data, int len)
+static void http_write(HTTP *http, char *data, size_t len)
 {
 	if (http->len+len>=http->max)
 	{
@@ -308,10 +320,25 @@ static void http_close(HTTP *http)
 static void http_mime(HTTP *http, char *path)
 {
 	size_t len = strlen(path);
-	if (strcmp(path+len-4,".png")==0)
-		http->type = "image/png";
-	else
-		http->type = NULL;
+	static struct s_map {
+		char *ext;
+		char *mime;
+	} map[] = {
+		{".png","image/png"},
+		{".js","text/javascript"},
+	};
+	int n;
+	for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
+	{
+		if (strcmp(path+len-strlen(map[n].ext),map[n].ext)==0)
+		{
+			http->type = map[n].mime;
+			return;
+		}
+	}
+	output_warning("mime type for '%s' is not known", path);
+	http->type = NULL;
+	return;
 }
 
 static int http_format(HTTP *http, char *format, ...)
@@ -494,6 +521,8 @@ static int filelength(int fd)
 	else
 		return fs.st_size;
 }
+#else
+#include <io.h>
 #endif
 
 int http_output_request(HTTP *http,char *uri)
@@ -501,7 +530,7 @@ int http_output_request(HTTP *http,char *uri)
 	char fullpath[1024];
 	FILE *fp;
 	char *buffer;
-	int len;
+	size_t len;
 	strcpy(fullpath,global_workdir);
 	if (*(fullpath+strlen(fullpath)-1)!='/' || *(fullpath+strlen(fullpath)-1)!='\\' )
 		strcat(fullpath,"/");
@@ -527,17 +556,170 @@ int http_output_request(HTTP *http,char *uri)
 	if (fread(buffer,1,len,fp)<=0)
 	{
 		output_error("file '%s' read failed", fullpath);
+		free(buffer);
 		return 0;
 	}
 	http_write(http,buffer,len);
 	http_mime(http,uri);
+	free(buffer);
 	fclose(fp);
 	return 1;
 }
+int http_run_java(HTTP *http,char *uri)
+{
+	output_error("java not supported yet");
+	return 0;
+}
+int http_run_perl(HTTP *http,char *uri)
+{
+	output_error("perl not supported yet");
+	return 0;
+}
+int http_run_python(HTTP *http,char *uri)
+{
+	output_error("python not supported yet");
+	return 0;
+}
+int http_run_gnuplot(HTTP *http,char *uri)
+{
+	char script[1024];
+	char command[1024];
+	char output[1024];
+	char *buffer;
+	FILE *fp;
+	size_t len;
+	char *mime = strchr(uri,'?');
+	char *ext = mime?strchr(mime,'/'):NULL;
+	char *plt = strrchr(uri,'.');
+	int rc = 0;
 
+	/* find mime and extension */
+	if (mime==NULL)
+	{
+		output_error("gnuplot request does not include mime type");
+		return 0;
+	}
+	else
+		*mime++ = '\0'; /* mime type actually start at next character */
+	if (ext) ext++;
+
+	/* if not a plot request */
+	if (plt==NULL || strcmp(plt,".plt")!=0)
+	{
+		output_error("gnuplot request does not specify is a plot script filename with extension .plt");
+		return 0;
+	}
+
+	/* setup gnuplot command */
+	sprintf(script,"%s",uri);
+#ifdef WIN32
+	sprintf(command,"wgnuplot %s",script);
+#else
+	sprintf(command,"gnuplot %s",script);
+#endif
+	/* temporary cut off of plt extension to build output file */
+	*plt = '\0'; sprintf(output,"%s.%s",uri,ext); *plt='.';
+
+	/* run gnuplot */
+	output_verbose("%s", command);
+	if ((rc=system(command))!=0)
+	{
+		switch (rc)
+		{
+		case -1: /* an error occurred */
+			output_error("unable to run gnuplot on '%s': %s", uri, strerror(errno));
+			break;
+		default:
+			output_error("gnuplot return error code %d on '%s'", rc, uri);
+			break;
+		}
+		return 0;
+	}
+
+	/* copy output to http */
+	fp = fopen(output,"rb");
+	if (fp==NULL)
+	{
+		output_error("unable to find gnuplot output '%s': %s", output, strerror(errno));
+		return 0;
+	}
+	len = filelength(fileno(fp));
+	if (len<0)
+	{
+		output_error("gnuplot output '%s' not accessible", output);
+		fclose(fp);
+		return 0;
+	}
+	if (len==0)
+	{
+		output_warning("gnuplot output '%s' is empty", output);
+		fclose(fp);
+		return 1;
+	}
+	buffer = (char*)malloc(len);
+	if (buffer==NULL)
+	{
+		output_error("gnuplot output buffer for '%s' not available", output);
+		fclose(fp);
+		return 0;
+	}
+	if (fread(buffer,1,len,fp)<=0)
+	{
+		output_error("gnuplot output '%s' read failed", output);
+		free(buffer);
+		fclose(fp);
+		return 0;
+	}
+	http_write(http,buffer,len);
+	http_mime(http,output);
+	free(buffer);
+	fclose(fp);
+	return 1;
+}
+int http_get_rt(HTTP *http,char *uri)
+{
+	FILE *fp;
+	char *buffer;
+	int len;
+	char *fullpath = find_file(uri,NULL,4);
+	if (fullpath==NULL)
+	{
+		output_error("file '%s' not found", fullpath);
+		return 0;
+	}
+	fp = fopen(fullpath,"rb");
+	if ( fp==NULL )
+	{
+		output_error("file '%s' open failed: %s", fullpath, strerror(errno));
+		return 0;
+	}
+	len = filelength(fileno(fp));
+	if (len<=0)
+	{
+		output_error("file '%s' not accessible: %s", fullpath, strerror(errno));
+		return 0;
+	}
+	buffer = (char*)malloc(len);
+	if (buffer==NULL)
+	{
+		output_error("file buffer for '%s' not available", fullpath);
+		return 0;
+	}
+	if (fread(buffer,1,len,fp)<=0)
+	{
+		output_error("file '%s' read failed: %s", fullpath, strerror(errno));
+		free(buffer);
+		return 0;
+	}
+	http_write(http,buffer,len);
+	http_mime(http,uri);
+	free(buffer);
+	fclose(fp);
+	return 1;
+}
 int http_action_request(HTTP *http,char *action)
 {
-	if (strcmp(action,"quit")==0)
+	if (gui_post_action(action)==-1)
 	{
 		http_status(http,HTTP_ACCEPTED);
 		http_type(http,"text/plain");
@@ -551,7 +733,7 @@ int http_action_request(HTTP *http,char *action)
 		return 0;
 }
 
-int http_favicon(http)
+int http_favicon(HTTP *http)
 {
 	FILE *fp;
 	char *fullpath = find_file("favicon.ico",NULL,4);
@@ -605,7 +787,7 @@ void http_response(SOCKET fd)
 		char *name;
 		enum {INTEGER,STRING} type;
 		void *value;
-		int sz;
+		size_t sz;
 	} map[] = {
 		{"Content-Length", INTEGER, (void*)&content_length, 0},
 		{"Host", STRING, (void*)&host, 0},
@@ -663,31 +845,7 @@ void http_response(SOCKET fd)
 		}
 
 		/* handle request */
-		if (strncmp(uri,"/gui/",5)==0 )
-		{
-			if ( http_gui_request(http,uri+5) )
-				http_status(http,HTTP_OK);
-			else
-				http_status(http,HTTP_NOTFOUND);
-			http_send(http);
-		}
-		else if (strncmp(uri,"/output/",8)==0 )
-		{
-			if ( http_output_request(http,uri+8) )
-				http_status(http,HTTP_OK);
-			else
-				http_status(http,HTTP_NOTFOUND);
-			http_send(http);
-		}
-		else if (strncmp(uri,"/action/",8)==0) 
-		{
-			if ( http_action_request(http,uri+8) )
-				http_status(http,HTTP_ACCEPTED);
-			else
-				http_status(http,HTTP_NOTFOUND);
-			http_send(http);
-		}
-		else if ( strcmp(uri,"/favicon.ico")==0 )
+		if ( strcmp(uri,"/favicon.ico")==0 )
 		{
 			if ( http_favicon(http) )
 				http_status(http,HTTP_OK);
@@ -695,10 +853,47 @@ void http_response(SOCKET fd)
 				http_status(http,HTTP_NOTFOUND);
 			http_send(http);
 		}
-		else if (strncmp(uri,"/",1)==0 )
+		else {
+			static struct s_map {
+				char *path;
+				int (*request)(HTTP*,char*);
+				char *success;
+				char *failure;
+			} map[] = {
+				/* this is the map of recognize request types */
+				{"/xml/",		http_xml_request,		HTTP_OK, HTTP_NOTFOUND},
+				{"/gui/",		http_gui_request,		HTTP_OK, HTTP_NOTFOUND},
+				{"/output/",	http_output_request,	HTTP_OK, HTTP_NOTFOUND},
+				{"/action/",	http_action_request,	HTTP_ACCEPTED,HTTP_NOTFOUND},
+				{"/rt/",		http_get_rt,			HTTP_OK, HTTP_NOTFOUND},
+				{"/perl/",		http_run_perl,			HTTP_OK, HTTP_NOTFOUND},
+				{"/gnuplot/",	http_run_gnuplot,		HTTP_OK, HTTP_NOTFOUND},
+				{"/java/",		http_run_java,			HTTP_OK, HTTP_NOTFOUND},
+				{"/python/",	http_run_python,		HTTP_OK, HTTP_NOTFOUND},
+			};
+			int n;
+			for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
+			{
+				size_t len = strlen(map[n].path);
+				if (strncmp(uri,map[n].path,len)==0)
+				{
+					if ( map[n].request(http,uri+len) )
+						http_status(http,map[n].success);
+					else
+						http_status(http,map[n].failure);
+					http_send(http);
+					goto Next;
+				}
+			}
+		}
+		/* deprecated XML usage */
+		if (strncmp(uri,"/",1)==0 )
 		{
 			if ( http_xml_request(http,uri+1) )
+			{	
+				output_warning("deprecate XML usage in request '%s'", uri);
 				http_status(http,HTTP_OK);
+			}
 			else
 				http_status(http,HTTP_NOTFOUND);
 			http_send(http);
@@ -712,6 +907,7 @@ void http_response(SOCKET fd)
 		}
 
 		/* keep-alive not desired*/
+Next:
 		if (connection && stricmp(connection,"close")==0)
 			break;
 	}

@@ -33,6 +33,7 @@ STATUS exec_start(void);
 char *simtime(void);
 STATUS t_setup_ranks(void);
 INDEX **exec_getranks(void);
+void exec_sleep(unsigned int usec);
 #ifdef __cplusplus
 }
 #endif

@@ -7,6 +7,6 @@
 
 #include "globals.h"
 
-STATUS server_start(int argc, char *argv[]);
+STATUS server_startup(int argc, char *argv[]);
 
 #endif

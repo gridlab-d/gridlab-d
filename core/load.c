@@ -4453,6 +4453,29 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 			REJECT;
 		}
 	}
+	OR if ( LITERAL("wait") && WHITE,LITERAL("{") )
+	{
+		ACCEPT;
+		if ( TERM(value(HERE,entity->wait_for,sizeof(entity->wait_for))) )
+		{
+			ACCEPT;
+			if ( LITERAL("}") )
+			{
+				ACCEPT;
+				DONE;
+			}
+			else
+			{
+				output_error_raw("%s(%d): missing closing } after gnuplot script", filename, linenum);
+				REJECT;
+			}
+		}
+		else
+		{
+			output_error_raw("%s(%d): invalid gnuplot script", filename, linenum);
+			REJECT;
+		}
+	}
 	REJECT;
 }
 
@@ -4554,8 +4577,12 @@ static int gui(PARSER)
 		while TERM(gui_entity(HERE,NULL)) ACCEPT;
 		if (WHITE,LITERAL("}")) 
 		{
+			if (gui_wait()==0)
+			{
+				output_error_raw("%s(%d): quit requested by user", filename, linenum);
+				REJECT;
+			}
 			ACCEPT;
-			gui_wait();
 		}
 	}
 	else REJECT;

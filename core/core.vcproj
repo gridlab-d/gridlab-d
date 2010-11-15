@@ -905,15 +905,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\core\asm\cmpxchg.h"
+				>
+			</File>
+			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
-				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -961,6 +961,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\test\data.plt"
+				>
+			</File>
+			<File
 				RelativePath="..\core\test\debugger.conf"
 				>
 			</File>
@@ -982,6 +986,14 @@
 			</File>
 			<File
 				RelativePath=".\test\gui_example_3.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\gui_example_4.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\gui_example_4.html"
 				>
 			</File>
 			<File

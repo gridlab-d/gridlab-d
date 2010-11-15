@@ -16,10 +16,14 @@
 #include "convert.h"
 #include "schedule.h"
 #include "gui.h"
+#include "server.h"
+#include "exec.h"
 
 static GUIENTITY *gui_root = NULL;
 static GUIENTITY *gui_last = NULL;
-void *fp = NULL;
+
+void *fp = NULL; /* output stream */
+GUIACTIONSTATUS wait_status = GUIACT_NONE;
 
 #ifdef _DEBUG
 #define TABLEOPTIONS " border=0 CELLPADDING=0 CELLSPACING=0"
@@ -180,6 +184,10 @@ void gui_set_options(GUIENTITY *entity, char *options)
 {
 	strncpy(entity->options,options,sizeof(entity->options));
 }
+void gui_set_wait(GUIENTITY *entity, char *wait)
+{
+	strncpy(entity->wait_for,wait,sizeof(entity->wait_for));
+}
 
 /* GET OPERATIONS */
 char *gui_get_dump(GUIENTITY *entity)
@@ -293,6 +301,33 @@ int gui_get_span(GUIENTITY *entity)
 UNIT *gui_get_unit(GUIENTITY *entity)
 {
 	return entity->unit;
+}
+
+/** Post GUI action 
+    @returns 0 if not accepted, 1 if accepted, -1 for server shutdown
+ **/
+int gui_post_action(char *action)
+{
+	GUIENTITY *entity;
+
+	/* built in actions */
+	if (strcmp(action,"quit")==0) return -1;
+	if (strcmp(action,"continue")==0)
+	{
+		wait_status = GUIACT_PENDING;
+		return 1;
+	}
+
+	/* gui-defined actions */
+	for (entity=gui_root; entity!=NULL; entity=entity->next)
+	{
+		if (entity->type==GUI_ACTION && strcmp(entity->action,action)==0)
+		{
+			entity->action_status = GUIACT_PENDING;
+			return 1;
+		}
+	}
+	return 0;
 }
 
 /**************************************************************************/
@@ -523,7 +558,7 @@ static void gui_output_html_textarea(GUIENTITY *entity)
 {
 	FILE *src = fopen(entity->source,"r");
 	char buffer[65536];
-	int len;
+	size_t len;
 	char rows[32]="";
 	char cols[32]="";
 	if (entity->height>0) sprintf(rows," rows=\"%d\"",entity->height);
@@ -552,7 +587,6 @@ static void gui_output_html_table(GUIENTITY *entity)
 {
 	FILE *src = fopen(entity->source,"r");
 	char line[65536];
-	int len;
 	int row=0;
 	int col=0;
 	char header[1024];
@@ -663,7 +697,7 @@ static int gui_html_source_page(char *source)
 {
 	char buffer[65536];
 	FILE *src = fopen(source,"rt");
-	int len;
+	size_t len;
 	if (src==NULL) return 0;
 	while ((len=fread(buffer,1,sizeof(buffer)-1,src))>0)
 	{
@@ -868,6 +902,15 @@ int gui_html_output_page(char *page)
 {
 	GUIENTITY *entity;
 	int len = 0;
+
+	// output specific page
+	if (page!=NULL)
+	{
+		for (entity=gui_get_root(); entity!=NULL; entity=entity->next)
+			if (strcmp(page,entity->value)==0)
+				return gui_html_source_page(entity->source);
+	}
+
 	// header entities
 	len += gui_html_output(fp,"<html>\n<head>\n");
 	for (entity=gui_get_root(); entity!=NULL; entity=entity->next)
@@ -990,7 +1033,60 @@ size_t gui_glm_write_all(FILE *fp)
 /**************************************************************************/
 /* LOAD OPERATIONS */
 /**************************************************************************/
-void gui_wait(void)
+STATUS gui_startup(int argc, char *argv[])
 {
-	// this is called after a gui block is loaded 
+	static int started = 0;
+	char cmd[1024];
+	if (started)
+		return SUCCESS;
+#ifdef WIN32
+	sprintf(cmd,"start %s http://localhost:%d/gui/", global_browser, global_server_portnum);
+#else
+	sprintf(cmd,"%s http://localhost:%d/gui/ &", global_browser, global_server_portnum);
+#endif
+	if (system(cmd)!=0)
+	{
+		output_error("unable to start interface");
+		strcpy(global_environment,"batch");
+	}
+	else
+		output_verbose("starting interface");
+	started = 1;
+	return SUCCESS;
+}
+/** wait for GUI action
+    @return 0 to halt system, 1 to continue
+ **/
+int gui_wait(void)
+{
+	if (server_startup(0,NULL)==FAILED)
+	{
+		output_error("gui is unable to start server");
+		return 0;
+	}
+	if (gui_startup(0,NULL)==FAILED)
+	{
+		output_error("gui is unable to start client");
+		return 0;
+	}
+
+	/* if not wait action is expected */
+	if (strcmp(gui_root->wait_for,"")==0)
+
+		/* immediate return success */
+		return 1;
+
+	/* begin waiting for action */
+	wait_status = GUIACT_WAITING;
+	while (wait_status==GUIACT_WAITING)
+		exec_sleep(250000);
+	if (wait_status==GUIACT_HALT)
+		return 0;
+	wait_status = GUIACT_NONE;
+	return 1;
+}
+
+void gui_wait_status(GUIACTIONSTATUS status)
+{
+	wait_status = status;
 }

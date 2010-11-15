@@ -25,6 +25,8 @@
 #include "xcore.h"
 #include "gui.h"
 
+#include "server.h"
+
 /** Starts the environment selected by the global_environment variable
  **/
 STATUS environment_start(int argc, /**< the number of arguments to pass to the environment */
@@ -89,23 +91,8 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	{
 UseGui:
 		output_verbose("starting server");
-		if (server_startup(argc,argv))
-		{
-			char cmd[1024];
-#ifdef WIN32
-			sprintf(cmd,"start %s http://localhost:%d/gui/", global_browser, global_server_portnum);
-#else
-			sprintf(cmd,"%s http://localhost:%d/gui/ &", global_browser, global_server_portnum);
-#endif
-			if (system(cmd)!=0)
-			{
-				output_error("unable to start interface");
-				strcpy(global_environment,"batch");
-			}
-			else
-				output_verbose("starting interface");
+		if (server_startup(argc,argv) && gui_startup(argc,argv))
 			return exec_start();
-		}
 		else
 			return FAILED;
 	}
@@ -118,6 +105,7 @@ UseGui:
 		return exec_start();
 #else
 		output_fatal("X11 not supported");
+		return FAILED;
 #endif
 	}
 	else

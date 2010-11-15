@@ -104,6 +104,7 @@ static int collector_open(OBJECT *obj)
 	my->ops = tf->collector;
 	if(my->ops == NULL)
 		return 0;
+	set_csv_options();
 	return my->ops->open(my, fname, flags);
 }
 

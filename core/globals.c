@@ -92,7 +92,9 @@ static struct s_varmap {
 	{"streaming_io",PT_int32, &global_streaming_io_enabled, PA_PROTECTED},
 	{"compileonly",PT_int32, &global_compileonly, PA_PROTECTED},
 	{"relax_naming_rules",PT_int32,&global_relax_naming_rules, PA_PUBLIC},
+	{"browser", PT_char1024, &global_browser, PA_PUBLIC},
 	{"server_portnum",PT_int32,&global_server_portnum, PA_PUBLIC},
+	{"server_quit_on_close",PT_int32,&global_server_quit_on_close, PA_PUBLIC},
 	/* add new global variables here */
 };
 

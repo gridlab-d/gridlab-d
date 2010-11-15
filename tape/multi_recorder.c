@@ -268,6 +268,7 @@ static int multi_recorder_open(OBJECT *obj)
 	my->ops = tf->recorder;
 	if(my->ops == NULL)
 		return 0;
+	set_csv_options();
 	return my->ops->open(my, fname, flags);
 }
 

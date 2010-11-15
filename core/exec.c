@@ -476,6 +476,15 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	return t2;
 }
 
+void exec_sleep(unsigned int usec)
+{
+#ifdef WIN32
+	Sleep(usec/1000);
+#else
+	usleep(usec);
+#endif
+}
+
 /** This is the main simulation loop
 	@return STATUS is SUCCESS if the simulation reached equilibrium, 
 	and FAILED if a problem was encountered.
