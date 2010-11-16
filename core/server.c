@@ -44,6 +44,7 @@ SOCKET sockfd = (SOCKET)0;
 static void shutdown_now(void)
 {
 	extern int stop_now;
+	output_verbose("server shutdown on exit in progress...");
 	stop_now = 1;
 	shutdown_server = 1;
 	if (sockfd!=(SOCKET)0)
@@ -54,6 +55,7 @@ static void shutdown_now(void)
 #endif
 	sockfd = (SOCKET)0;
 	gui_wait_status(GUIACT_HALT);
+	output_verbose("server shutdown on exit done");
 }
 
 #ifndef WIN32
@@ -150,7 +152,7 @@ STATUS server_startup(int argc, char *argv[])
 #ifdef WIN32
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
-		output_error("socket library initialization failed");
+		output_error("socket library initialization failed: %s",strerror(GetLastError()));
 		return FAILED;	
 	}
 #endif
@@ -158,13 +160,14 @@ STATUS server_startup(int argc, char *argv[])
 	/* create a new socket */
 	if ((sockfd = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP)) == INVALID_SOCKET)
 	{
-		output_error("can't create stream socket: %s",GetLastError());
+		output_error("can't create stream socket: %s",strerror(GetLastError()));
 		return FAILED;
 	}
 	atexit(shutdown_now);
 
 	memset(&serv_addr,0,sizeof(serv_addr));
 
+Retry:
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port = htons(portNumber);
@@ -172,10 +175,16 @@ STATUS server_startup(int argc, char *argv[])
 	/* bind socket to server address */
 	if (bind(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
 	{
+		if (portNumber<global_server_portnum+1000)
+		{
+			portNumber++;
+			output_warning("server port not available, trying port %d...", portNumber);
+			goto Retry;
+		}
 #ifdef WIN32
 		output_error("can't bind to %d.%d.%d.%d",serv_addr.sin_addr.S_un.S_un_b.s_b1,serv_addr.sin_addr.S_un.S_un_b.s_b2,serv_addr.sin_addr.S_un.S_un_b.s_b3,serv_addr.sin_addr.S_un.S_un_b.s_b4);
 #else
-		output_error("can't bind address");
+		output_error("can't bind address: %s",strerror(GetLastError()));
 #endif
 		return FAILED;
 	}
@@ -187,11 +196,12 @@ STATUS server_startup(int argc, char *argv[])
 	/* listen for connection */
 	listen(sockfd,5);
 	output_verbose("server listening to port %d", portNumber);
+	global_server_portnum = portNumber;
 
 	/* start the server thread */
 	if (pthread_create(&thread,NULL,server_routine,(void*)sockfd))
 	{
-		output_error("server thread startup failed");
+		output_error("server thread startup failed: %s",strerror(GetLastError()));
 		return FAILED;
 	}
 
@@ -298,7 +308,7 @@ static void http_write(HTTP *http, char *data, size_t len)
 	{
 		/* extend buffer */
 		void *old = http->buffer;
-		http->max *= 2;
+		http->max = (http->len+len);
 		http->buffer = malloc(http->max);
 		memcpy(http->buffer,old,http->len);
 		free(old);

@@ -1042,12 +1042,12 @@ STATUS gui_startup(int argc, char *argv[])
 #ifdef WIN32
 	sprintf(cmd,"start %s http://localhost:%d/gui/", global_browser, global_server_portnum);
 #else
-	sprintf(cmd,"%s http://localhost:%d/gui/ &", global_browser, global_server_portnum);
+	sprintf(cmd,"%s http://localhost:%d/gui/ & ps -p $! >/dev/null", global_browser, global_server_portnum);
 #endif
 	if (system(cmd)!=0)
 	{
 		output_error("unable to start interface");
-		strcpy(global_environment,"batch");
+		return FAILED;
 	}
 	else
 		output_verbose("starting interface");
