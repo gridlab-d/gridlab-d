@@ -233,6 +233,12 @@ static HTTP *http_create(SOCKET s)
 	return http;
 }
 
+static void http_reset(HTTP *http)
+{
+	http->status = NULL;
+	http->type = NULL;
+}
+
 #define HTTP_CONTINUE "100 Continue"
 #define HTTP_SWITCHPROTOCOL "101 Switching Protocols"
 
@@ -815,6 +821,9 @@ void http_response(SOCKET fd)
 		char version[32];
 		char *p = strchr(http->query,'\r');
 		int v;
+		
+		/* initialize the response */
+		http_reset(http);
 
 		/* read the request string */
 		if (sscanf(request,"%s %s %s",method,uri,version)!=3)

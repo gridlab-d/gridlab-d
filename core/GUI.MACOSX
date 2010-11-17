@@ -1,0 +1,85 @@
+Gnuplot for MacOSX
+------------------
+
+
+Compiling gnuplot on Mac OS X
+
+September 2006 updated July 2009
+
+This document explains how to compile gnuplot version 4.4 on Mac OS X 10.6. It was originally written in September 2006 for Mac OS X 10.4 but has been updated in July 2009 for Mac OS X 10.6. If you need the Mac OS 10.4 instructions then click here.
+gnuplot and Fink
+
+I had many problems trying to compile gnuplot using tools and libraries downloaded using fink. Eventually I had to re-install Mac OS X so that I had a fink-free system. I'm not saying that fink is bad. I'm just saying that you don't need fink to compile and use gnuplot.
+Xcode
+
+I used the gcc version that came with to compile everything. There seems to be a problem with the way gcc 4.x handles objective C. I installed the apple developer tools distributed by Apple in the xcode disk image, but I didn't install xcode itself.
+Aquaterm
+
+I used aquaterm with Mac OS X 10.4 but I don't use it with 10.6.
+PNG and GIF with TrueType
+
+For png and gif support you need to compile gd. Here are some quick instructions for compiling gd and its dependencies.
+
+Download the following packages:
+
+http://fontconfig.org/release/fontconfig-2.4.1.tar.gz
+
+http://download.savannah.gnu.org/releases/freetype/freetype-2.4.1.tar.gz
+
+http://www.ijg.org/files/jpegsrc.v8b.tar.gz
+
+http://www.zlib.net/zlib-1.2.5.tar.gz
+
+http://prdownloads.sourceforge.net/libpng/libpng-1.4.3.tar.gz?download
+
+http://pkgconfig.freedesktop.org/releases/pkg-config-0.25.tar.gz
+
+http://ftp.gnu.org/pub/gnu/readline/readline-5.0.tar.gz
+
+http://www.boutell.com/gd/http/gd-2.0.35.tar.gz
+
+For each of these packages EXCEPT READLINE you must do the following:
+
+bash$ tar -xzvf {packagename}.tar.gz
+bash$ cd {packagename}
+bash$ ./configure
+... lots of configure messages ...
+bash$ make
+bash$ sudo make install
+
+For readline, first you do the ./configure like this:
+
+bash$ ./configure --prefix=/opt/local
+
+then you must edit the file readline-5.0/shlib/Makefile. Change line 81 to the following:
+
+SHOBJ_LDFLAGS=-dynamiclib
+
+Now you can compile and install readline:
+
+bash$ make
+bash$ sudo make install
+
+As far as I remember, this is the order that you must install in: fontconfig, freetype, jpegsrc, zlib, libpng, pkg-config, readline, gd. There may be some flexibility in the order, but it is important to install gd last.
+Compiling gnuplot
+
+Once all that is done you should be ok to compile gnuplot. Download and extract the version 4.4 source code archive http://gnuplot.sourceforge.net/development/binaries/. By default, gnuplot will install to /usr/local/bin. I have added that directory to my path. But if you want it to install to /usr/bin then you can use the --exec-prefix=/usr configuration option, as shown below.
+
+bash$ ./configure â€“exec-prefix=/usr
+bash$ make
+bash$ sudo make install
+
+The following sections are copied verbatim from the original document: I haven't tested it with 10.6. Please send me your comments with respect to fonts on 10.6 and I will edit this document accordingly.
+TrueType Fonts
+
+So I compiled gd and gnuplot successfully with truetype support, but gnuplot can't find any fonts! gd can't find the fonts because something is wrong with fontconfig. The easy solution is to define the GDFONTPATH environment variable. But then I had another problem: the Apple fonts wouldn't work. So here's how I fixed both problems. First, I defined the GDFONTPATH environment variable:
+
+export GDFONTPATH=~/.fonts
+
+Then I copied the fonts from the /usr/local/fonts/truetype directory on my linux box to ~/.fonts on my Mac Mini.
+
+My gnuplot installation is working fairly well now, except I might go back and recompile freetype with kerning.
+Help!
+
+If it doesn't work then you can send me an email at andrew@howlettNOSPAM.net. Remove the NOSPAM characters from that address and your email should go to me.
+
