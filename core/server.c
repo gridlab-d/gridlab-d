@@ -665,8 +665,56 @@ int http_output_request(HTTP *http,char *uri)
  **/
 int http_run_java(HTTP *http,char *uri)
 {
-	output_error("java not supported yet");
-	return 0;
+	char script[1024];
+	char command[1024];
+	char output[1024];
+	char *mime = strchr(uri,'?');
+	char *ext = mime?strchr(mime,'/'):NULL;
+	char *jar = strrchr(uri,'.');
+	int rc = 0;
+
+	/* find mime and extension */
+	if (mime==NULL)
+	{
+		output_error("Java runtime request does not include mime type");
+		return 0;
+	}
+	else
+		*mime++ = '\0'; /* mime type actually start at next character */
+	if (ext) ext++;
+
+	/* if not a plot request */
+	if (jar==NULL || strcmp(jar,".jar")!=0)
+	{
+		output_error("Java runtime request does not specify is a Java runtime filename with extension .jar");
+		return 0;
+	}
+
+	/* setup gnuplot command */
+	sprintf(script,"%s",uri);
+	sprintf(command,"java -jar %s",script);
+
+	/* temporary cut off of plt extension to build output file */
+	*jar = '\0'; sprintf(output,"%s.%s",uri,ext); *jar='.';
+
+	/* run gnuplot */
+	output_verbose("%s", command);
+	if ((rc=system(command))!=0)
+	{
+		switch (rc)
+		{
+		case -1: /* an error occurred */
+			output_error("unable to run java runtime on '%s': %s", uri, strerror(errno));
+			break;
+		default:
+			output_error("Java runtime return error code %d on '%s'", rc, uri);
+			break;
+		}
+		return 0;
+	}
+
+	/* copy output to http */
+	return http_copy(http,"Java",output);
 }
 
 /** Process an incoming Perl data request
@@ -675,8 +723,56 @@ int http_run_java(HTTP *http,char *uri)
 
 int http_run_perl(HTTP *http,char *uri)
 {
-	output_error("perl not supported yet");
-	return 0;
+	char script[1024];
+	char command[1024];
+	char output[1024];
+	char *mime = strchr(uri,'?');
+	char *ext = mime?strchr(mime,'/'):NULL;
+	char *pl = strrchr(uri,'.');
+	int rc = 0;
+
+	/* find mime and extension */
+	if (mime==NULL)
+	{
+		output_error("Perl request does not include mime type");
+		return 0;
+	}
+	else
+		*mime++ = '\0'; /* mime type actually start at next character */
+	if (ext) ext++;
+
+	/* if not a plot request */
+	if (pl==NULL || strcmp(pl,".pl")!=0)
+	{
+		output_error("Perl request does not specify a Perl script filename with extension .pl");
+		return 0;
+	}
+
+	/* setup gnuplot command */
+	sprintf(script,"%s",uri);
+	sprintf(command,"perl %s",script);
+
+	/* temporary cut off of plt extension to build output file */
+	*pl = '\0'; sprintf(output,"%s.%s",uri,ext); *pl='.';
+
+	/* run gnuplot */
+	output_verbose("%s", command);
+	if ((rc=system(command))!=0)
+	{
+		switch (rc)
+		{
+		case -1: /* an error occurred */
+			output_error("unable to run Perl on '%s': %s", uri, strerror(errno));
+			break;
+		default:
+			output_error("Perl return error code %d on '%s'", rc, uri);
+			break;
+		}
+		return 0;
+	}
+
+	/* copy output to http */
+	return http_copy(http,"Perl",output);
 }
 
 /** Process an incoming Python data request
@@ -684,8 +780,56 @@ int http_run_perl(HTTP *http,char *uri)
  **/
 int http_run_python(HTTP *http,char *uri)
 {
-	output_error("python not supported yet");
-	return 0;
+	char script[1024];
+	char command[1024];
+	char output[1024];
+	char *mime = strchr(uri,'?');
+	char *ext = mime?strchr(mime,'/'):NULL;
+	char *py = strrchr(uri,'.');
+	int rc = 0;
+
+	/* find mime and extension */
+	if (mime==NULL)
+	{
+		output_error("Python request does not include mime type");
+		return 0;
+	}
+	else
+		*mime++ = '\0'; /* mime type actually start at next character */
+	if (ext) ext++;
+
+	/* if not a plot request */
+	if (py==NULL || strcmp(py,".py")!=0)
+	{
+		output_error("Python request does not specify a Python script filename with extension .py");
+		return 0;
+	}
+
+	/* setup gnuplot command */
+	sprintf(script,"%s",uri);
+	sprintf(command,"python %s",script);
+
+	/* temporary cut off of plt extension to build output file */
+	*py = '\0'; sprintf(output,"%s.%s",uri,ext); *py='.';
+
+	/* run gnuplot */
+	output_verbose("%s", command);
+	if ((rc=system(command))!=0)
+	{
+		switch (rc)
+		{
+		case -1: /* an error occurred */
+			output_error("unable to run Python on '%s': %s", uri, strerror(errno));
+			break;
+		default:
+			output_error("Python return error code %d on '%s'", rc, uri);
+			break;
+		}
+		return 0;
+	}
+
+	/* copy output to http */
+	return http_copy(http,"Python",output);
 }
 
 /** Process an incoming R data request
@@ -714,7 +858,7 @@ int http_run_r(HTTP *http,char *uri)
 	/* if not a plot request */
 	if (r==NULL || strcmp(r,".r")!=0)
 	{
-		output_error("R request does not specify is an R script filename with extension .r");
+		output_error("R request does not specify an R script filename with extension .r");
 		return 0;
 	}
 
@@ -771,7 +915,7 @@ int http_run_scilab(HTTP *http,char *uri)
 	/* if not a plot request */
 	if (sce==NULL || strcmp(sce,".sce")!=0)
 	{
-		output_error("Scilab request does not specify is a Scilab script filename with extension .sce");
+		output_error("Scilab request does not specify a Scilab script filename with extension .sce");
 		return 0;
 	}
 
@@ -828,7 +972,7 @@ int http_run_octave(HTTP *http,char *uri)
 	/* if not a plot request */
 	if (m==NULL || strcmp(m,".m")!=0)
 	{
-		output_error("Octave request does not specify is an Octave script filename with extension .m");
+		output_error("Octave request does not specify an Octave script filename with extension .m");
 		return 0;
 	}
 
@@ -885,7 +1029,7 @@ int http_run_gnuplot(HTTP *http,char *uri)
 	/* if not a plot request */
 	if (plt==NULL || strcmp(plt,".plt")!=0)
 	{
-		output_error("gnuplot request does not specify is a plot script filename with extension .plt");
+		output_error("gnuplot request does not specify a plot script filename with extension .plt");
 		return 0;
 	}
 
