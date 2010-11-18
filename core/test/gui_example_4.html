@@ -6,7 +6,7 @@
 
 <script src="/rt/gridlabd.js"></script>
 
-<body onload="refresh()" onunload="GLDAction('quit')" >
+<body onload="refresh();" onunload="GLDAction('quit');" >
 
 <table>
 <tr><td>Test of</td><td><div id="nhouses"> &ndash; </div></td><td>houses</td></tr>
@@ -29,8 +29,9 @@ document.getElementById("location").innerHTML = GLDGetProperty("climate:0","tmyf
 
 document.writeln("<table rules='inside'>");
 document.writeln("<tr><th>House</th><th>Air temperature</th><th>System mode</tr>");
-for (n=0; n<nhouses; n++)
-    document.writeln("<tr><td>"+n+"</td><td><div id='tair"+n+"'> &ndash; </div></td><td><div id='mode"+n+"'> &ndash; </div></td></tr>");
+for (n = 0; n < nhouses; n++) {
+	document.writeln("<tr><td>" + n + "</td><td><div id='tair" + n + "'> &ndash; </div></td><td><div id='mode" + n + "'> &ndash; </div></td></tr>");
+}
 document.writeln("</table>");
 
 function refresh()
@@ -41,7 +42,7 @@ function refresh()
         document.getElementById("mode"+n).innerHTML = GLDGetProperty("house:"+(n+2),"system_mode");
     }
     document.getElementById("graph1").src = "/output/please_wait.png";
-//  document.getElementById("graph1").src = "/gnuplot/temps.plt?image/png";
+//    document.getElementById("graph1").src = "/gnuplot/temps.plt?image/png";
     document.getElementById("graph1").src = "/r/temps.r?image/png";
     setTimeout("refresh()",1000);
 }
