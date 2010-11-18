@@ -41,12 +41,13 @@ function refresh()
         document.getElementById("mode"+n).innerHTML = GLDGetProperty("house:"+(n+2),"system_mode");
     }
     document.getElementById("graph1").src = "/output/please_wait.png";
-    document.getElementById("graph1").src = "/gnuplot/temps.plt?image/png";
-    setTimeout("refresh()",3000);
+//  document.getElementById("graph1").src = "/gnuplot/temps.plt?image/png";
+    document.getElementById("graph1").src = "/r/temps.r?image/png";
+    setTimeout("refresh()",1000);
 }
 </script>
 
-<img id="graph1" src="/output/please_wait.png" alt="My data" />
+<img id="graph1" src="/output/please_wait.png" alt="My data" height=480 width=640 />
 
 <input type="submit" value="Quit" onclick="window.close();" />
 

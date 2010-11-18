@@ -38,9 +38,15 @@
 
 #define MAXSTR		1024		// maximum string length
 
-static int shutdown_server = 0; /* flag to stop accepting incoming messages */
-SOCKET sockfd = (SOCKET)0;
+static int shutdown_server = 0; /**< flag to stop accepting incoming connections */
+SOCKET sockfd = (SOCKET)0; /**< socket on which incomming connections are accepted */
 
+/** Callback function to shut server down
+ 
+    This process halts both the server and the simulator.
+	
+	@return Nothing
+ **/
 static void shutdown_now(void)
 {
 	extern int stop_now;
@@ -59,6 +65,9 @@ static void shutdown_now(void)
 }
 
 #ifndef WIN32
+/** Retrieve the last error code (Linux only)
+	@returns errno code
+ **/
 int GetLastError()
 {
 	return errno;
@@ -68,6 +77,9 @@ int GetLastError()
 void server_request(int);	// Function to handle clients' request(s)
 void http_response(SOCKET);
 
+/** Send the data to the client
+	@returns the number of bytes sent if successful, -1 if failed (errno is set).
+ **/
 static size_t send_data(SOCKET s, char *buffer, size_t len)
 {
 #ifdef WIN32
@@ -77,6 +89,9 @@ static size_t send_data(SOCKET s, char *buffer, size_t len)
 #endif	
 }
 
+/** Receive data from the client (blocking)
+	@returns the number of bytes received if successful, -1 if failed (errno is set).
+ **/
 static size_t recv_data(SOCKET s,char *buffer, size_t len)
 {
 #ifdef WIN32
@@ -86,9 +101,19 @@ static size_t recv_data(SOCKET s,char *buffer, size_t len)
 #endif
 }
 
+/** Main server wait loop 
+    @returns a pointer to the status flag
+ **/
 static void *server_routine(void *arg)
 {
 	static int status = 0;
+	static int started = 0;
+	if (started)
+	{
+		output_error("server routine is already running");
+		return NULL;
+	}
+	started = 1;
 	sockfd = (SOCKET)arg;
 	// repeat forever..
 	while (!shutdown_server)
@@ -132,9 +157,13 @@ static void *server_routine(void *arg)
 	}
 	output_verbose("server shutdown");
 Done:
+	started = 0;
 	return (void*)&status;
 }
 
+/** Start accepting incoming connections on the designated server socket
+	@returns SUCCESS/FAILED status code
+ **/
 STATUS server_startup(int argc, char *argv[])
 {
 	static int started = 0;
@@ -223,6 +252,9 @@ typedef struct s_http {
 	SOCKET s;
 } HTTP;
 
+/** Create an HTTP connection handle
+    @returns HTTP connection handle pointer on success, NULL on failure
+ **/
 static HTTP *http_create(SOCKET s)
 {
 	HTTP *http = (HTTP*)malloc(sizeof(HTTP));
@@ -233,6 +265,11 @@ static HTTP *http_create(SOCKET s)
 	return http;
 }
 
+/** Reset an HTTP connection handle
+
+	This function clears the contents of HTTP connection block so that it can be reused to handle a new message.
+    @returns Nothing
+ **/
 static void http_reset(HTTP *http)
 {
 	http->status = NULL;
@@ -283,14 +320,17 @@ static void http_reset(HTTP *http)
 #define HTTP_GATEWAYTIMEOUT "504 Gateway Time-out"
 #define HTTP_VERSIONNOTSUPPORTED "505 HTTP Version not supported"
 
+/** Set the HTTP response status code **/
 static void http_status(HTTP *http, char *status)
 {
 	http->status = status;
 }
+/** Set the HTTP response message type **/
 static void http_type(HTTP *http, char *type)
 {
 	http->type = type;
 }
+/** Send the HTTP response **/
 static void http_send(HTTP *http)
 {
 	char header[4096];
@@ -308,6 +348,7 @@ static void http_send(HTTP *http)
 		send_data(http->s,http->buffer,http->len);
 	http->len = 0;
 }
+/** Write the contents of the HTTP message buffer **/
 static void http_write(HTTP *http, char *data, size_t len)
 {
 	if (http->len+len>=http->max)
@@ -322,6 +363,7 @@ static void http_write(HTTP *http, char *data, size_t len)
 	memcpy(http->buffer+http->len,data,len);
 	http->len += len;
 }
+/** Close the HTTP connection after sending content **/
 static void http_close(HTTP *http)
 {
 	if (http->len>0)
@@ -332,7 +374,7 @@ static void http_close(HTTP *http)
 	close(http->s);
 #endif
 }
-
+/** Set the response MIME type **/
 static void http_mime(HTTP *http, char *path)
 {
 	size_t len = strlen(path);
@@ -357,6 +399,7 @@ static void http_mime(HTTP *http, char *path)
 	return;
 }
 
+/** Format HTTP message content **/
 static int http_format(HTTP *http, char *format, ...)
 {
 	int len;
@@ -372,6 +415,7 @@ static int http_format(HTTP *http, char *format, ...)
 	return len;
 }
 
+/** Upquote message buffer content **/
 char *http_unquote(char *buffer)
 {
 	char *eob = buffer+strlen(buffer)-1;
@@ -380,6 +424,9 @@ char *http_unquote(char *buffer)
 	return buffer;
 }
 
+/** Get the value of a hex character
+	@returns the value corresponding to the hex code
+ **/
 static char hex(char c)
 {
 	switch (c) {
@@ -412,6 +459,8 @@ static char hex(char c)
 		return 0;
 	}
 }
+
+/** Decode the contents of a buffer (in place) **/
 void http_decode(char *buffer)
 {
 	char result[1024], *in, *out = result;
@@ -430,6 +479,9 @@ void http_decode(char *buffer)
 	strcpy(buffer,result);
 }
 
+/** Process an incoming XML data request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
 int http_xml_request(HTTP *http,char *uri)
 {
 	char arg1[1024]="", arg2[1024]="";
@@ -515,6 +567,9 @@ int http_xml_request(HTTP *http,char *uri)
 	return 0;
 }
 
+/** Process an incoming GUI request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
 int http_gui_request(HTTP *http,char *uri)
 {
 	gui_set_html_stream((void*)http,http_format);
@@ -529,11 +584,14 @@ int http_gui_request(HTTP *http,char *uri)
 
 #ifndef WIN32
 #include <sys/stat.h>
+/** Obtain the size of a file (non-Windows only)
+	@returns the number of bytes in the file or -1 on failure
+ **/
 static int filelength(int fd)
 {
 	struct stat fs;
 	if (fstat(fd,&fs))
-		return 0;
+		return -1;
 	else
 		return fs.st_size;
 }
@@ -541,69 +599,274 @@ static int filelength(int fd)
 #include <io.h>
 #endif
 
-int http_output_request(HTTP *http,char *uri)
+/** Copy the content of a file to the client
+	@returns the number of bytes sent
+ **/
+int http_copy(HTTP *http, char *context, char *source)
 {
-	char fullpath[1024];
-	FILE *fp;
 	char *buffer;
 	size_t len;
-	strcpy(fullpath,global_workdir);
-	if (*(fullpath+strlen(fullpath)-1)!='/' || *(fullpath+strlen(fullpath)-1)!='\\' )
-		strcat(fullpath,"/");
-	strcat(fullpath,uri);
-	fp = fopen(fullpath,"rb");
-	if ( fp==NULL )
+	FILE *fp = fopen(source,"rb");
+	if (fp==NULL)
 	{
-		output_error("file '%s' not found", fullpath);
+		output_error("unable to find %s output '%s': %s", context, source, strerror(errno));
 		return 0;
 	}
 	len = filelength(fileno(fp));
-	if (len<=0)
+	if (len<0)
 	{
-		output_error("file '%s' not accessible", fullpath);
+		output_error("%s output '%s' not accessible", context, source);
+		fclose(fp);
 		return 0;
+	}
+	if (len==0)
+	{
+		output_warning("%s output '%s' is empty", context, source);
+		fclose(fp);
+		return 1;
 	}
 	buffer = (char*)malloc(len);
 	if (buffer==NULL)
 	{
-		output_error("file buffer for '%s' not available", fullpath);
+		output_error("%s output buffer for '%s' not available", context, source);
+		fclose(fp);
 		return 0;
 	}
 	if (fread(buffer,1,len,fp)<=0)
 	{
-		output_error("file '%s' read failed", fullpath);
+		output_error("%s output '%s' read failed", context, source);
 		free(buffer);
+		fclose(fp);
 		return 0;
 	}
 	http_write(http,buffer,len);
-	http_mime(http,uri);
+	http_mime(http,source);
 	free(buffer);
 	fclose(fp);
 	return 1;
 }
+
+/** Process an incoming output data request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
+ 
+int http_output_request(HTTP *http,char *uri)
+{
+	char fullpath[1024];
+	strcpy(fullpath,global_workdir);
+	if (*(fullpath+strlen(fullpath)-1)!='/' || *(fullpath+strlen(fullpath)-1)!='\\' )
+		strcat(fullpath,"/");
+	strcat(fullpath,uri);
+	return http_copy(http,"file",fullpath);
+}
+
+/** Process an incoming Java request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
 int http_run_java(HTTP *http,char *uri)
 {
 	output_error("java not supported yet");
 	return 0;
 }
+
+/** Process an incoming Perl data request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
+
 int http_run_perl(HTTP *http,char *uri)
 {
 	output_error("perl not supported yet");
 	return 0;
 }
+
+/** Process an incoming Python data request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
 int http_run_python(HTTP *http,char *uri)
 {
 	output_error("python not supported yet");
 	return 0;
 }
+
+/** Process an incoming R data request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
+int http_run_r(HTTP *http,char *uri)
+{
+	char script[1024];
+	char command[1024];
+	char output[1024];
+	char *mime = strchr(uri,'?');
+	char *ext = mime?strchr(mime,'/'):NULL;
+	char *r = strrchr(uri,'.');
+	int rc = 0;
+
+	/* find mime and extension */
+	if (mime==NULL)
+	{
+		output_error("R request does not include mime type");
+		return 0;
+	}
+	else
+		*mime++ = '\0'; /* mime type actually start at next character */
+	if (ext) ext++;
+
+	/* if not a plot request */
+	if (r==NULL || strcmp(r,".r")!=0)
+	{
+		output_error("R request does not specify is an R script filename with extension .r");
+		return 0;
+	}
+
+	/* setup gnuplot command */
+	sprintf(script,"%s",uri);
+	sprintf(command,"r CMD BATCH %s",script);
+
+	/* temporary cut off of plt extension to build output file */
+	*r = '\0'; sprintf(output,"%s.%s",uri,ext); *r='.';
+
+	/* run gnuplot */
+	output_verbose("%s", command);
+	if ((rc=system(command))!=0)
+	{
+		switch (rc)
+		{
+		case -1: /* an error occurred */
+			output_error("unable to run R on '%s': %s", uri, strerror(errno));
+			break;
+		default:
+			output_error("R return error code %d on '%s'", rc, uri);
+			break;
+		}
+		return 0;
+	}
+
+	/* copy output to http */
+	return http_copy(http,"R",output);
+}
+
+/** Process an incoming Scilab data request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
+int http_run_scilab(HTTP *http,char *uri)
+{
+	char script[1024];
+	char command[1024];
+	char output[1024];
+	char *mime = strchr(uri,'?');
+	char *ext = mime?strchr(mime,'/'):NULL;
+	char *sce = strrchr(uri,'.');
+	int rc = 0;
+
+	/* find mime and extension */
+	if (mime==NULL)
+	{
+		output_error("Scilab request does not include mime type");
+		return 0;
+	}
+	else
+		*mime++ = '\0'; /* mime type actually start at next character */
+	if (ext) ext++;
+
+	/* if not a plot request */
+	if (sce==NULL || strcmp(sce,".sce")!=0)
+	{
+		output_error("Scilab request does not specify is a Scilab script filename with extension .sce");
+		return 0;
+	}
+
+	/* setup gnuplot command */
+	sprintf(script,"%s",uri);
+	sprintf(command,"scilab %s",script);
+
+	/* temporary cut off of plt extension to build output file */
+	*sce = '\0'; sprintf(output,"%s.%s",uri,ext); *sce='.';
+
+	/* run gnuplot */
+	output_verbose("%s", command);
+	if ((rc=system(command))!=0)
+	{
+		switch (rc)
+		{
+		case -1: /* an error occurred */
+			output_error("unable to run Scilab on '%s': %s", uri, strerror(errno));
+			break;
+		default:
+			output_error("Scilab return error code %d on '%s'", rc, uri);
+			break;
+		}
+		return 0;
+	}
+
+	/* copy output to http */
+	return http_copy(http,"Scilab",output);
+}
+
+/** Process an incoming Octave data request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
+int http_run_octave(HTTP *http,char *uri)
+{
+	char script[1024];
+	char command[1024];
+	char output[1024];
+	char *mime = strchr(uri,'?');
+	char *ext = mime?strchr(mime,'/'):NULL;
+	char *m = strrchr(uri,'.');
+	int rc = 0;
+
+	/* find mime and extension */
+	if (mime==NULL)
+	{
+		output_error("Octave request does not include mime type");
+		return 0;
+	}
+	else
+		*mime++ = '\0'; /* mime type actually start at next character */
+	if (ext) ext++;
+
+	/* if not a plot request */
+	if (m==NULL || strcmp(m,".m")!=0)
+	{
+		output_error("Octave request does not specify is an Octave script filename with extension .m");
+		return 0;
+	}
+
+	/* setup gnuplot command */
+	sprintf(script,"%s",uri);
+	sprintf(command,"octave %s",script);
+
+	/* temporary cut off of plt extension to build output file */
+	*m = '\0'; sprintf(output,"%s.%s",uri,ext); *m='.';
+
+	/* run gnuplot */
+	output_verbose("%s", command);
+	if ((rc=system(command))!=0)
+	{
+		switch (rc)
+		{
+		case -1: /* an error occurred */
+			output_error("unable to run R on '%s': %s", uri, strerror(errno));
+			break;
+		default:
+			output_error("R return error code %d on '%s'", rc, uri);
+			break;
+		}
+		return 0;
+	}
+
+	/* copy output to http */
+	return http_copy(http,"Octave",output);
+}
+
+/** Process an incoming Gnuplot data request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
 int http_run_gnuplot(HTTP *http,char *uri)
 {
 	char script[1024];
 	char command[1024];
 	char output[1024];
-	char *buffer;
-	FILE *fp;
-	size_t len;
 	char *mime = strchr(uri,'?');
 	char *ext = mime?strchr(mime,'/'):NULL;
 	char *plt = strrchr(uri,'.');
@@ -653,86 +916,26 @@ int http_run_gnuplot(HTTP *http,char *uri)
 	}
 
 	/* copy output to http */
-	fp = fopen(output,"rb");
-	if (fp==NULL)
-	{
-		output_error("unable to find gnuplot output '%s': %s", output, strerror(errno));
-		return 0;
-	}
-	len = filelength(fileno(fp));
-	if (len<0)
-	{
-		output_error("gnuplot output '%s' not accessible", output);
-		fclose(fp);
-		return 0;
-	}
-	if (len==0)
-	{
-		output_warning("gnuplot output '%s' is empty", output);
-		fclose(fp);
-		return 1;
-	}
-	buffer = (char*)malloc(len);
-	if (buffer==NULL)
-	{
-		output_error("gnuplot output buffer for '%s' not available", output);
-		fclose(fp);
-		return 0;
-	}
-	if (fread(buffer,1,len,fp)<=0)
-	{
-		output_error("gnuplot output '%s' read failed", output);
-		free(buffer);
-		fclose(fp);
-		return 0;
-	}
-	http_write(http,buffer,len);
-	http_mime(http,output);
-	free(buffer);
-	fclose(fp);
-	return 1;
+	return http_copy(http,"gnuplot",output);
 }
+
+/** Process an incoming runtime file request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
 int http_get_rt(HTTP *http,char *uri)
 {
-	FILE *fp;
-	char *buffer;
-	int len;
 	char *fullpath = find_file(uri,NULL,4);
-	if (fullpath==NULL)
+	if (!fullpath)
 	{
-		output_error("file '%s' not found", fullpath);
+		output_error("runtime file '%s' couldn't be located in GLPATH='%s'", uri,getenv("GLPATH"));
 		return 0;
 	}
-	fp = fopen(fullpath,"rb");
-	if ( fp==NULL )
-	{
-		output_error("file '%s' open failed: %s", fullpath, strerror(errno));
-		return 0;
-	}
-	len = filelength(fileno(fp));
-	if (len<=0)
-	{
-		output_error("file '%s' not accessible: %s", fullpath, strerror(errno));
-		return 0;
-	}
-	buffer = (char*)malloc(len);
-	if (buffer==NULL)
-	{
-		output_error("file buffer for '%s' not available", fullpath);
-		return 0;
-	}
-	if (fread(buffer,1,len,fp)<=0)
-	{
-		output_error("file '%s' read failed: %s", fullpath, strerror(errno));
-		free(buffer);
-		return 0;
-	}
-	http_write(http,buffer,len);
-	http_mime(http,uri);
-	free(buffer);
-	fclose(fp);
-	return 1;
+	return http_copy(http,"runtime",fullpath);
 }
+
+/** Process an incoming action request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
 int http_action_request(HTTP *http,char *action)
 {
 	if (gui_post_action(action)==-1)
@@ -749,46 +952,23 @@ int http_action_request(HTTP *http,char *action)
 		return 0;
 }
 
+/** Process an incoming favicon request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
 int http_favicon(HTTP *http)
 {
-	FILE *fp;
 	char *fullpath = find_file("favicon.ico",NULL,4);
-	char *buffer;
-	int len;
-
 	if ( fullpath==NULL )
 	{
 		output_error("file 'favicon.ico' not found", fullpath);
 		return 0;
 	}
-	fp = fopen(fullpath,"rb");
-	if ( fp==NULL )
-	{
-		output_error("file '%s' open failed", fullpath);
-		return 0;
-	}
-	len = filelength(fileno(fp));
-	if (len<=0)
-	{
-		output_error("file '%s' not accessible", fullpath);
-		return 0;
-	}
-	buffer = (char*)malloc(len);
-	if (buffer==NULL)
-	{
-		output_error("file buffer for '%s' not available", fullpath);
-		return 0;
-	}
-	if (fread(buffer,1,len,fp)<=0)
-	{
-		output_error("file '%s' read failed", fullpath);
-		return 0;
-	}
-	http_write(http,buffer,len);
-	http_mime(http,"image/vnd.microsoft.icon");
-	fclose(fp);	return 0;
+	return http_copy(http,"icon",fullpath);
 }
 
+/** Process an incoming request
+	@returns nothing
+ **/
 void http_response(SOCKET fd)
 {
 	HTTP *http = http_create(fd);
@@ -889,6 +1069,9 @@ void http_response(SOCKET fd)
 				{"/gnuplot/",	http_run_gnuplot,		HTTP_OK, HTTP_NOTFOUND},
 				{"/java/",		http_run_java,			HTTP_OK, HTTP_NOTFOUND},
 				{"/python/",	http_run_python,		HTTP_OK, HTTP_NOTFOUND},
+				{"/r/",			http_run_r,				HTTP_OK, HTTP_NOTFOUND},
+				{"/scilab/",	http_run_scilab,		HTTP_OK, HTTP_NOTFOUND},
+				{"/octave/",	http_run_octave,		HTTP_OK, HTTP_NOTFOUND},
 			};
 			int n;
 			for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
