@@ -49,10 +49,14 @@ function update_enumeration(obj)
 }
 function update_set(obj)
 {
-    if (obj.checked)
-	    update(document.location + "?target=" + obj.name + "&set=" + obj.value + "");
-	else
-	    update(document.location + "?target=" + obj.name + "&clear=" + obj.value + "");
+    if (obj.checked) 
+	{
+		update(document.location + "?target=" + obj.name + "&set=" + obj.value + "");
+	}
+	else 
+	{
+		update(document.location + "?target=" + obj.name + "&clear=" + obj.value + "");
+	}
 }
 function click_action(obj)
 {
@@ -66,13 +70,14 @@ function GLDGetGlobal(name)
     xml.open("GET","/xml/"+name,false);
     xml.send();
     doc = xml.responseXML;
-    if (doc)
-    {
-        var x = doc.getElementsByTagName("globalvar")
-        return x[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
-    }
-    else
-        return "(na)";
+    if (doc) {
+		var x = doc.getElementsByTagName("globalvar");
+		return x[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
+	}
+	else 
+	{
+		return "(na)";
+	}
 }
 function GLDSetGlobal(name,value)
 {
@@ -80,13 +85,14 @@ function GLDSetGlobal(name,value)
     xml.open("GET","/xml/"+name+"="+value,false);
     xml.send();
     doc = xml.responseXML;
-    if (doc)
-    {
-        var x = doc.getElementsByTagName("globalvar")
-        return x[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
-    }
-    else
-        return "(na)";
+    if (doc) {
+		var x = doc.getElementsByTagName("globalvar");
+		return x[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
+	}
+	else 
+	{
+		return "(na)";
+	}
 }
 function GLDGetProperty(object,name)
 {
@@ -94,27 +100,26 @@ function GLDGetProperty(object,name)
     xml.open("GET","/xml/"+object+"/"+name,false);
     xml.send();
     doc = xml.responseXML;
-    if (doc)
-    {
-        var x = doc.getElementsByTagName("property")
-        return x[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
-    }
-    else
-        return "(na)";
+    if (doc) {
+		var x = doc.getElementsByTagName("property");
+		return x[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
+	}
+	else {
+		return "(na)";
+	}
 }
-function GLDSetProperty(object,name,value)
-{
-    xml = new XMLHttpRequest();
-    xml.open("GET","/xml/"+object+"/"+name+"="+value,false);
-    xml.send();
-    doc = xml.responseXML;
-    if (doc)
-    {
-        var x = doc.getElementsByTagName("property")
-        return x[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
-    }
-    else
-        return "(na)";
+function GLDSetProperty(object, name, value){
+	xml = new XMLHttpRequest();
+	xml.open("GET", "/xml/" + object + "/" + name + "=" + value, false);
+	xml.send();
+	doc = xml.responseXML;
+	if (doc) {
+		var x = doc.getElementsByTagName("property");
+		return x[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
+	}
+	else {
+		return "(na)";
+	}
 }
 function GLDAction(name)
 {
