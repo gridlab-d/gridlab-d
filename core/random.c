@@ -35,17 +35,16 @@
 #define QNAN sqrt(-1) /* quiet NaN used only for low-key failures */
 
 static unsigned int *ur_state = NULL;
+//static unsigned int rv = 0;
 
 int random_init(void)
 {
 	/* randomizes the random number generator start value */
 	if (global_randomseed==0)
-		srand((unsigned int)time(NULL));
-	else
-	{
-		srand(1);
-		ur_state = &global_randomseed;
-	}
+		global_randomseed = (unsigned int)time(NULL);
+
+	srand(1);
+	ur_state = &global_randomseed;
 
 	return 1;
 }
