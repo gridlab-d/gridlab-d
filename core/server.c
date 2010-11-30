@@ -864,7 +864,7 @@ int http_run_r(HTTP *http,char *uri)
 
 	/* setup gnuplot command */
 	sprintf(script,"%s",uri);
-	sprintf(command,"r CMD BATCH %s",script);
+	sprintf(command,"r --vanilla CMD BATCH %s",script);
 
 	/* temporary cut off of plt extension to build output file */
 	*r = '\0'; sprintf(output,"%s.%s",uri,ext); *r='.';
