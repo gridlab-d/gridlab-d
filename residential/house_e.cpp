@@ -872,7 +872,8 @@ int house_e::create()
 						sched = gl_schedule_create(eu->schedule_name,eu->schedule_definition);
 					}
 					if(sched == NULL){
-						;
+						gl_error("error creating schedule for enduse \'%s\'", eu->schedule_name);
+						return FAILED;
 					}
 					IMPLICITENDUSE *item = (IMPLICITENDUSE*)gl_malloc(sizeof(IMPLICITENDUSE));
 					memset(item,0,sizeof(IMPLICITENDUSE));
