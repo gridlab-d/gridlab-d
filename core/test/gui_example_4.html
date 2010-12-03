@@ -34,8 +34,14 @@ for (n = 0; n < nhouses; n++) {
 }
 document.writeln("</table>");
 
+document.getElementById("avg").value = GLDGetGlobal("AVG_SF");
+document.getElementById("std").innerHTML = GLDGetGlobal("STD_SF");
+
+refresh();
+
 function refresh()
 {
+    document.getElementById("clock").innerHTML = GLDGetGlobal("clock");
     for ( n=0 ; n<nhouses ; n++)
     {
         document.getElementById("tair"+n).innerHTML = GLDGetProperty("house:"+(n+2),"air_temperature");
@@ -44,7 +50,7 @@ function refresh()
     document.getElementById("graph1").src = "/output/please_wait.png";
 //    document.getElementById("graph1").src = "/gnuplot/temps.plt?image/png";
     document.getElementById("graph1").src = "/r/temps.r?image/png";
-    setTimeout("refresh()",1000);
+    setTimeout("refresh()",5000);
 }
 </script>
 

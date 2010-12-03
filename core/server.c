@@ -342,6 +342,7 @@ static void http_send(HTTP *http)
 		len += sprintf(header+len, "Content-Type: %s\n", http->type);
 	len += sprintf(header+len, "Cache-Control: no-cache\n");
 	len += sprintf(header+len, "Cache-Control: no-store\n");
+	len += sprintf(header+len, "Expires: -1\n");
 	len += sprintf(header+len,"\n");
 	send_data(http->s,header,len);
 	if (http->len>0)
@@ -864,7 +865,11 @@ int http_run_r(HTTP *http,char *uri)
 
 	/* setup gnuplot command */
 	sprintf(script,"%s",uri);
-	sprintf(command,"r --vanilla CMD BATCH %s",script);
+#ifdef WIN32
+	sprintf(command,"r CMD BATCH %s",script);
+#else
+	sprintf(command,"R --vanilla CMD BATCH %s",script);
+#endif
 
 	/* temporary cut off of plt extension to build output file */
 	*r = '\0'; sprintf(output,"%s.%s",uri,ext); *r='.';
