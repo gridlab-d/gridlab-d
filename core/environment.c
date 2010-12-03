@@ -92,7 +92,15 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 UseGui:
 		output_verbose("starting server");
 		if (server_startup(argc,argv) && gui_startup(argc,argv))
-			return exec_start();
+		{
+			STATUS result = exec_start();
+			GUIENTITY *gui = gui_get_root();
+			if ( result==SUCCESS && gui->hold )
+			{
+				result = server_join();
+			}
+			return result;
+		}
 		else
 			return FAILED;
 	}

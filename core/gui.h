@@ -59,6 +59,7 @@ typedef struct s_guientity {
 	char source[1024]; // source file for data (output only)
 	char options[1024]; // options for output
 	char gnuplot[4096];	// gnuplot script
+	int hold; // gui will remain on at the end of the simulation
 	struct s_guientity *next;
 	struct s_guientity *parent;
 	/* internal variables */

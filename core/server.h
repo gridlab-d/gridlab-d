@@ -8,5 +8,6 @@
 #include "globals.h"
 
 STATUS server_startup(int argc, char *argv[]);
+STATUS server_join(void);
 
 #endif

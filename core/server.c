@@ -164,13 +164,13 @@ Done:
 /** Start accepting incoming connections on the designated server socket
 	@returns SUCCESS/FAILED status code
  **/
+static pthread_t thread;
 STATUS server_startup(int argc, char *argv[])
 {
 	static int started = 0;
 	int portNumber = global_server_portnum;
 	SOCKET sockfd;
 	struct sockaddr_in serv_addr;
-	pthread_t thread;
 #ifdef WIN32
 	WSADATA wsaData;
 #endif
@@ -236,6 +236,14 @@ Retry:
 
 	started = 1;
 	return SUCCESS;
+}
+STATUS server_join(void)
+{
+	void *result;
+	if (!pthread_join(thread,&result))
+		return (STATUS) result;	
+	else
+		return SUCCESS;
 }
 
 /********************************************************

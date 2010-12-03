@@ -11,7 +11,7 @@
 clock {
 	timezone PST8PDT;
 	starttime '2001-01-01 0:00:00 PST';
-	stoptime '2002-01-01 0:00:00 PST';
+	stoptime '2001-01-07 0:00:00 PST';
 }
 
 module tape {
@@ -48,5 +48,8 @@ object collector {
 }
 
 gui {
-	page source "gui_example_4.html";
+	page {
+		source "gui_example_4.html";
+		hold;
+	}
 }

@@ -4476,6 +4476,12 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 			REJECT;
 		}
 	}
+	OR if ( LITERAL("hold") && WHITE,LITERAL(";") )
+	{
+		ACCEPT;
+		entity->hold = 1;
+		DONE;
+	}
 	REJECT;
 }
 
@@ -4563,6 +4569,7 @@ static int gui_entity(PARSER, GUIENTITY *parent)
 		}
 		if TERM(gui_entity_parameter(HERE,entity)) { ACCEPT; DONE; }
 		if (TERM(gui_entity_action(HERE,entity))) { ACCEPT; DONE; }
+		if ( LITERAL(";" ) ) { ACCEPT; DONE; }
 		REJECT;
 	}
 	REJECT;

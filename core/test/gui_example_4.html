@@ -48,9 +48,9 @@ function refresh()
         document.getElementById("mode"+n).innerHTML = GLDGetProperty("house:"+(n+2),"system_mode");
     }
     document.getElementById("graph1").src = "/output/please_wait.png";
-//    document.getElementById("graph1").src = "/gnuplot/temps.plt?image/png";
-    document.getElementById("graph1").src = "/r/temps.r?image/png";
-    setTimeout("refresh()",5000);
+    document.getElementById("graph1").src = "/gnuplot/temps.plt?image/png";
+//    document.getElementById("graph1").src = "/r/temps.r?image/png";
+    setTimeout("refresh()",1000);
 }
 </script>
 
