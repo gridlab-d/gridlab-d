@@ -1,0 +1,35 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<title>GridLAB-D&trade; - GUI Example 4</title>
+</head>
+
+<script src="/rt/gridlabd.js"></script>
+
+<body onunload="GLDAction('quit');" >
+
+<table>
+<tr><th>State</th><td><script type="text/javascript">GUIinput('STATE');</script></td></tr>
+<tr><th>City</th><td><script type="text/javascript">GUIinput('CITY');</script></td></tr>
+<tr><th>Number of houses</th><td><script type="text/javascript">GUIinput('NHOUSES');</script></td></tr>
+<tr><th>Average floorarea</th><td><script type="text/javascript">GUIinput('AVG_SF');</script></td></tr>
+<tr><th>Stdev floorarea</th><td><script type="text/javascript">GUIinput('STD_SF');</script></td></tr>
+<tr><th>Start</th><td><script type="text/javascript">GUIinput('START');</script></td></tr>
+<tr><th>Stop</th><td><script type="text/javascript">GUIinput('STOP');</script></td></tr>
+</table>
+
+<script type="text/javascript">
+document.getElementById("STATE").value = GLDGetGlobal("STATE");
+document.getElementById("CITY").value = GLDGetGlobal("CITY");
+document.getElementById("NHOUSES").value = GLDGetGlobal("NHOUSES");
+document.getElementById("AVG_SF").value = GLDGetGlobal("AVG_SF");
+document.getElementById("STD_SF").value = GLDGetGlobal("STD_SF");
+document.getElementById("START").value = GLDGetGlobal("START");
+document.getElementById("STOP").value = GLDGetGlobal("STOP");
+
+</script>
+
+<input type="submit" value="Ok" onclick="GLDAction('done');" />
+
+</body>
+</html>

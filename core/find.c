@@ -920,13 +920,13 @@ static int time_value_datetime(PARSER, TIMESTAMP *t)
 	int64 Y,m,d,H,M,S;
 	START;
 	if WHITE ACCEPT;
-	if (LITERAL("'")
+	if ( (LITERAL("'")||LITERAL("\""))
 		&& TERM(integer(HERE,&Y)) && LITERAL("-")
 		&& TERM(integer(HERE,&m)) && LITERAL("-")
 		&& TERM(integer(HERE,&d)) && LITERAL(" ")
 		&& TERM(integer(HERE,&H)) && LITERAL(":")
 		&& TERM(integer(HERE,&M)) && LITERAL(":")
-		&& TERM(integer(HERE,&S)) && LITERAL("'"))
+		&& TERM(integer(HERE,&S)) && (LITERAL("'")||LITERAL("\"")))
 	{
 		DATETIME dt = {(unsigned short)Y,(unsigned short)m,(unsigned short)d,(unsigned short)H,(unsigned short)M,(unsigned short)S};
 		TIMESTAMP tt = mkdatetime(&dt);

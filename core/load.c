@@ -2058,14 +2058,14 @@ static int time_value_datetimezone(PARSER, TIMESTAMP *t)
 	DATETIME dt;
 	START;
 	if WHITE ACCEPT;
-	if LITERAL("'") ACCEPT;
+	if (LITERAL("'")||LITERAL("\"")) ACCEPT;
 	if (TERM(integer16(HERE,&dt.year)) && LITERAL("-")
 		&& TERM(integer16(HERE,&dt.month)) && LITERAL("-")
 		&& TERM(integer16(HERE,&dt.day)) && LITERAL(" ")
 		&& TERM(integer16(HERE,&dt.hour)) && LITERAL(":")
 		&& TERM(integer16(HERE,&dt.minute)) && LITERAL(":")
 		&& TERM(integer16(HERE,&dt.second)) && LITERAL(" ")
-		&& TERM(name(HERE,dt.tz,sizeof(dt.tz))) && LITERAL("'"))
+		&& TERM(name(HERE,dt.tz,sizeof(dt.tz))) && (LITERAL("'")||LITERAL("\"")))
 	{
 		dt.microsecond = 0;
 		dt.weekday = -1;
@@ -4453,28 +4453,10 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 			REJECT;
 		}
 	}
-	OR if ( LITERAL("wait") && WHITE,LITERAL("{") )
+	OR if ( LITERAL("wait") && WHITE,TERM(value(HERE,entity->wait_for,sizeof(entity->wait_for))) && WHITE,LITERAL(";")  )
 	{
 		ACCEPT;
-		if ( TERM(value(HERE,entity->wait_for,sizeof(entity->wait_for))) )
-		{
-			ACCEPT;
-			if ( LITERAL("}") )
-			{
-				ACCEPT;
-				DONE;
-			}
-			else
-			{
-				output_error_raw("%s(%d): missing closing } after gnuplot script", filename, linenum);
-				REJECT;
-			}
-		}
-		else
-		{
-			output_error_raw("%s(%d): invalid gnuplot script", filename, linenum);
-			REJECT;
-		}
+		DONE;
 	}
 	OR if ( LITERAL("hold") && WHITE,LITERAL(";") )
 	{

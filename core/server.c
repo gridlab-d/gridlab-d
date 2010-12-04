@@ -240,10 +240,13 @@ Retry:
 STATUS server_join(void)
 {
 	void *result;
-	if (!pthread_join(thread,&result))
+	if (pthread_join(thread,&result)==0)
 		return (STATUS) result;	
 	else
-		return SUCCESS;
+	{
+		output_error("server thread join failed: %s", strerror(GetLastError()));
+		return FAILED;
+	}
 }
 
 /********************************************************

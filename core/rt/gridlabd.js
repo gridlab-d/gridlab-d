@@ -153,3 +153,12 @@ function GUIhelp(name)
 {
     alert("No help available for '"+name+"'!");
 }
+
+// gui entities
+function GUIinput(name,specs)
+{
+    document.writeln('<input id="'+name+'" value="" onfocus="GUIenable(\''+name+'\');" />');
+    document.writeln('<input type="submit" name="'+name+'_ok" value="&radic;" disabled onclick="GUIsave(\''+name+'\',\''+name+'\');" />');
+    document.writeln('<input type="submit" name="'+name+'_undo" value="X" disabled onclick="GUIreset(\''+name+'\',\''+name+'\');" />');
+    document.writeln('<input type="submit" name="'+name+'_undo" value="?" onclick="GUIhelp(\''+name+'\');" />');
+}
