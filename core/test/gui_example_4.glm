@@ -16,7 +16,7 @@
 gui {
 	page {
 		source "gui_example_4-1.html";
-		wait "done";
+		wait "continue";
 	}
 }
 

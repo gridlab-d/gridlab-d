@@ -153,6 +153,10 @@ function GUIhelp(name)
 {
     alert("No help available for '"+name+"'!");
 }
+function GUInext()
+{
+    document.location = "/action/continue";
+}
 
 // gui entities
 function GUIinput(name,specs)
