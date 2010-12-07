@@ -327,7 +327,7 @@ static void ss_do_object_sync(int thread, void *item)
 }
 
 //sjin: implement new ss_do_object_sync_list for pthreads
-static void ss_do_object_sync_list(void *threadarg)
+static void *ss_do_object_sync_list(void *threadarg)
 {
 	LISTITEM *ptr;
 	int iPtr;
@@ -344,6 +344,7 @@ static void ss_do_object_sync_list(void *threadarg)
 			iPtr++;
 		}
 	}
+	return NULL;
 }
 
 static STATUS init_all(void)
@@ -496,6 +497,8 @@ STATUS exec_start(void)
 	struct sync_data sync = {TS_NEVER,0,SUCCESS};
 	TIMESTAMP start_time = global_clock;
 	int64 passes = 0, tsteps = 0;
+	int ptc_rv = 0;
+	int ptj_rv = 0;
 	time_t started_at = realtime_now();
 	int j, k;
 
@@ -692,7 +695,7 @@ STATUS exec_start(void)
 						//tp_exec(threadpool, ranks[pass]->ordinal[i]);
 
 						//sjin: implement pthreads
-						incr = ceil((float) ranks[pass]->ordinal[i]->size / global_threadcount);
+						incr = (int)ceil((float) ranks[pass]->ordinal[i]->size / global_threadcount);
 						//printf("pass %d, incr = %d, size = %d\n", pass, incr, ranks[pass]->ordinal[i]->size);
 						//thread_id = (pthread_t *) malloc(global_threadcount * sizeof(pthread_t));
 						// copying this further up
@@ -723,13 +726,43 @@ STATUS exec_start(void)
 									arg_data_array[j].thread = j;
 									arg_data_array[j].item = ptr;
 									arg_data_array[j].incr = incr;
-									pthread_create(&thread_id[j], NULL, ss_do_object_sync_list, (void *) &arg_data_array[j]);
+									ptc_rv = pthread_create(&thread_id[j], NULL, ss_do_object_sync_list, (void *) &arg_data_array[j]);
 									j++;
+									if(ptc_rv){
+										switch(ptc_rv){
+											case EAGAIN:
+												output_warning("pthread_create failed: insufficient resources");
+												break;
+											case EINVAL:
+												output_warning("pthread_create failed: invalid NULL attribute???");
+												break;
+											case EPERM:
+												output_warning("pthread_create failed: inappropriate permissions");
+												break;
+											default:
+												output_warning("pthread_create failed: nonstandard return from pthread_create (%i)", ptc_rv);
+										}
+									}
 								}
 							}
 							for (k = 0; k < j; k++) {
 								//printf("k=%d, j=%d\n",k,j);
-								pthread_join(thread_id[k], NULL);
+								ptj_rv = pthread_join(thread_id[k], NULL);
+								if(ptj_rv){
+									switch(ptj_rv){
+										case ESRCH:
+											output_warning("pthread_join failed: unrecognized thread ID");
+											break;
+										case EINVAL:
+											output_warning("pthread_join failed: call refers to non-joinable thread");
+											break;
+										case EDEADLK:
+											output_warning("pthread_join failed: deadlock detected");
+											break;
+										default:
+											output_warning("pthread_join failed: nonstandard return from pthread_create (%i)", ptc_rv);
+									}
+								}
 								//printf("done!\n");
 							}
 						}
