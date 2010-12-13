@@ -145,7 +145,7 @@ GLOBAL int global_streaming_io_enabled INIT(0); /**< flag to enable compact stre
 GLOBAL int global_nondeterminism_warning INIT(0); /**< flag to enable nondeterminism warning (use of rand when multithreading */
 GLOBAL int global_compileonly INIT(0); /**< flag to enable compile-only option (does not actually start the simulation) */
 
-GLOBAL int global_server_portnum INIT(10000); /**< port used in server mode (to be assigned by IANA Dec 2010) */
+GLOBAL int global_server_portnum INIT(6267); /**< port used in server mode (assigned by IANA Dec 2010) */
 GLOBAL char global_browser[1024] /**< default browser to use for GUI */
 #ifdef WIN32
 	INIT("iexplore"); 
