@@ -41,7 +41,7 @@ BEGIN {
         }
         if ( group != "" ) {
                 id = module "/" filename "(" line ")"
-                tag = "l_" line;
+                tag = "l" line;
                 if (debug) print "<!-- " id ": " gensub(/[ \t]+/," ","g",$0);
                 split($0,part,"\"");
                 message = part[2];
