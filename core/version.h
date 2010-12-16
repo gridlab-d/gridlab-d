@@ -3,8 +3,8 @@
 #ifndef _GRIDLABD_VERSION_H
 #define _GRIDLABD_VERSION_H
 
-#define REV_MAJOR 2
-#define REV_MINOR 1
+#define REV_MAJOR 3
+#define REV_MINOR 0
 #define REV_PATCH 0
 #define COPYRIGHT "Copyright (C) 2004-2009\nBattelle Memorial Institute\nAll Rights Reserved"
 #ifdef WIN32
@@ -12,7 +12,7 @@
 #else
 #include "build.h"
 #endif
-#define BRANCH "Eldorado" 
+#define BRANCH "Grizzly" 
 
 #endif
 

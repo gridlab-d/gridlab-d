@@ -49,8 +49,8 @@
 	Coulee			Version 1.2 originated at PNNL April 2008, released June 2008
 	Coyote			Version 1.3 originated at PNNL June 2008, not released
 	Diablo			Version 2.0 originated at PNNL August 2008
-	Eldorado
-	Four Corners
+	Eldorado		Version 2.1 originated at PNNL September 2009
+	Four Corners		Version 2.2 originated at PNNL November 2010
 	Grizzly
 	Hassyampa
 	Hatwai
