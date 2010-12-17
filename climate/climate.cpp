@@ -262,6 +262,7 @@ climate::climate(MODULE *module)
 			PT_double,"solar_raw[W/sf]",PADDR(solar_raw),
 			PT_double,"ground_reflectivity[%]",PADDR(ground_reflectivity),
 			PT_object,"reader",PADDR(reader),
+			PT_char1024,"forecast",PADDR(forecast),PT_DESCRIPTION,"forecasting specifications",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(climate));
 		strcpy(city,"");
@@ -445,12 +446,73 @@ int climate::init(OBJECT *parent)
 	}
 	file.close();
 
+	/* enable forecasting if specified */
+	if ( strcmp(forecast,"")!=0 && gl_forecast_create(obj,"")==NULL )
+	{
+		char buf[1024];
+		gl_error("%s: forecast '%s' is not valid", gl_name(obj,buf,sizeof(buf))?buf:"(object?)", forecast);
+		return 0;
+	}
+	else
+	{	/* initialize the forecast data entity */
+		FORECAST *fc = obj->forecast;
+		fc->propref = gl_find_property(obj->oclass,"temperature");
+		gl_forecast_save(fc,obj->clock,3600,0,NULL);
+	}
+
 	return 1;
 }
 
-TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
+void climate::update_forecasts(TIMESTAMP t0)
 {
-	int rv = 0;
+	static const int Nh = 72; /* number of hours in forecast */
+	static const int dt = 3600; /* number of seconds in forecast interval */
+
+	OBJECT *my = OBJECTHDR(this);
+	FORECAST *fc;
+	
+	for ( fc=my->forecast ; fc!=NULL ; fc=fc->next )
+	{
+		/* don't update forecasts that are already current */
+		if ( t0/dt==(fc->starttime/dt) ) continue;
+
+		int h, hoy;
+		double t[Nh];
+		for ( h=0 ; h<Nh ; h++ )
+		{
+			if (h==0)
+			{
+				/* actual values */
+				DATETIME ts;
+				if ( !gl_localtime(t0+(h*dt),&ts) )
+				{
+					GL_THROW("climate::sync -- unable to resolve localtime!");
+				}
+				int doy = sa->day_of_yr(ts.month,ts.day);
+				hoy = (doy - 1) * 24 + (ts.hour);
+			}
+			else if ( hoy==8760 )
+				hoy = 0;
+			else
+				hoy++;
+
+			/* this is an extremely naive model of forecast error */
+			t[h] = tmy[hoy].temp + gl_random_normal(0,h/10.0);
+		}
+		gl_forecast_save(fc,t0,dt,Nh,t);
+#ifdef NEVER
+		char buffer[1024];
+		int len = sprintf(buffer,"%d",fc->starttime);
+		for ( h=3; h<72; h+=3 )
+			len += sprintf(buffer+len,",%.1f",fc->values[h]);
+		printf("%s\n",buffer);
+#endif
+	}
+}
+
+TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
+{
+	TIMESTAMP rv = 0;
 	if(t0 > TS_ZERO && reader_type == RT_CSV){
 		DATETIME now;
 		gl_localtime(t0, &now);
@@ -544,6 +606,7 @@ TIMESTAMP climate::sync(TIMESTAMP t0) /* called in presync */
 			default:
 				GL_THROW("climate::sync -- unrecognize interpolation mode!");
 		}
+		update_forecasts(t0);
 		return -(t0+(3600*TS_SECOND-t0%(3600 *TS_SECOND))); /// negative means soft event
 	}
 	return TS_NEVER;
@@ -595,7 +658,7 @@ EXPORT TIMESTAMP sync_climate(OBJECT *obj, /// a pointer to the OBJECT
 	TIMESTAMP t1 = TS_NEVER;
 	try
 	{
-		t1 = OBJECTDATA(obj,climate)->sync(t0); // presync really
+		t1 = OBJECTDATA(obj,climate)->presync(t0); // presync really
 	}
 	catch(char *msg)
 	{

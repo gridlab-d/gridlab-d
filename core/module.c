@@ -196,7 +196,8 @@ static CALLBACKS callbacks = {
 	{schedule_create, schedule_index, schedule_value, schedule_dtnext, schedule_find_byname},
 	{loadshape_create,loadshape_init},
 	{enduse_create,enduse_sync},
-	{interpolate_linear, interpolate_quadratic}
+	{interpolate_linear, interpolate_quadratic},
+	{forecast_create, forecast_find, forecast_read, forecast_save},
 };
 
 MODULE *first_module = NULL;

@@ -1,0 +1,9 @@
+
+#include "WA-Yakima.glm"
+
+clock {
+	timezone PST+5PDT;
+	starttime '2009-01-01 0:00:00 PST';
+	stoptime '2010-01-01 0:00:00 PST';
+}
+

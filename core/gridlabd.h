@@ -998,7 +998,6 @@ inline char *gl_strftime(TIMESTAMP ts)
 
  **/
 #define gl_lerp (*callback->interpolate.linear)
-/**@}*/
 
 /** Quadratically interpolate a value between two points
 
@@ -1006,6 +1005,29 @@ inline char *gl_strftime(TIMESTAMP ts)
 #define gl_qerp (*callback->interpolate.quadratic)
 /**@}*/
 
+/******************************************************************************
+ * Forecasting routines
+ */
+/** @defgroup gridlabd_h_forecasting Forecasting routines
+ @{
+ **/
+
+/** Create a forecast entity for an object
+ **/
+#define gl_forecast_create (*callback->forecast.create)
+
+/** Find a forecast entity for an object
+ **/
+#define gl_forecast_find (*callback->forecast.find)
+
+/** Read a forecast entity for an object
+ **/
+#define gl_forecast_read (*callback->forecast.read)
+
+/** Save a forecast entity for an object
+ **/
+#define gl_forecast_save (*callback->forecast.save)
+/**@}*/
 
 /** @} **/
 #endif

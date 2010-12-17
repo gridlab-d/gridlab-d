@@ -32,12 +32,24 @@ typedef char FULLNAME[1024]; /** Full object name (including space name) */
 #define OF_RECALC	0x0008 /**< Object flag; recalculation of derived values is needed */
 #define OF_FOREIGN	0x0010 /**< Object flag; indicates that object was created in a DLL and memory cannot be freed by core */
 #define OF_SKIPSAFE	0x0020 /**< Object flag; indicates that skipping updates is safe */
+#define OF_FORECAST 0x0040 /**< Object flag; inidcates that the object has a valid forecast available */
 #define OF_RERANK	0x4000 /**< Internal use only */
 
 typedef struct s_namespace {
 	FULLNAME name;
 	struct s_namespace *next;
 } NAMESPACE;
+
+typedef struct s_forecast {
+	char1024 specification; /**< forecast specification (see forecasting docs for details) */
+	PROPERTY *propref; /**< property the forecast relates to */
+	int n_values; /**< number of values in the forecast */
+	TIMESTAMP starttime; /**< the start time of the forecast */
+	int32 timestep; /**< number of seconds per forecast timestep */
+	double *values; /**< values of the forecast (NULL if no forecast) */
+	TIMESTAMP (*external)(void *obj, void *fc); /**< external forecast update call */
+	struct s_forecast *next; /**< next forecast data block (NULL for last) */
+} FORECAST; /**< Forecast data block */
 
 typedef struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
@@ -48,7 +60,8 @@ typedef struct s_object_list {
 	OBJECTRANK rank; /**< object's rank */
 	TIMESTAMP clock; /**< object's private clock */
 	TIMESTAMP valid_to;	/**< object's valid-until time */
-	TIMESTAMP schedule_skew;
+	TIMESTAMP schedule_skew; /**< time skew applied to schedule operations involving this object */
+	FORECAST *forecast; /**< forecast data block */
 	double latitude, longitude; /**< object's geo-coordinates */
 	TIMESTAMP in_svc, /**< time at which object begin's operating */
 		out_svc; /**< time at which object ceases operating */
@@ -213,6 +226,12 @@ typedef struct s_callbacks {
 		double (*linear)(double t, double x0, double y0, double x1, double y1);
 		double (*quadratic)(double t, double x0, double y0, double x1, double y1, double x2, double y2);
 	} interpolate;
+	struct {
+		FORECAST *(*create)(OBJECT *obj, char *specs); /**< create a forecast using the specifications and append it to the object's forecast block */
+		FORECAST *(*find)(OBJECT *obj, char *name); /**< find the forecast for the named property, if any */
+		double (*read)(FORECAST *fc, TIMESTAMP ts); /**< read the forecast value for the time ts */
+		void (*save)(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double *data);
+	} forecast;
 } CALLBACKS; /**< core callback function table */
 
 #ifdef __cplusplus
@@ -299,6 +318,12 @@ int object_close_namespace(); /**< close the current namespace and restore the p
 int object_select_namespace(char *space); /**< change to another namespace */
 int object_push_namespace(char *space); /**< change to another namespace and push the one onto a stack */
 NAMESPACE *object_pop_namespace(); /**< restore the previous namespace from stack */
+
+/* forecasting API */
+FORECAST *forecast_create(OBJECT *obj, char *specs); /**< create a forecast using the specifications and append it to the object's forecast block */
+FORECAST *forecast_find(OBJECT *obj, char *name); /**< find the forecast for the named property, if any */
+double forecast_read(FORECAST *fc, TIMESTAMP ts); /**< read the forecast value for the time ts */
+void forecast_save(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double *data);
 
 #ifdef __cplusplus
 }

@@ -173,15 +173,18 @@ private:
 	tmy2_reader file;
 	weather_reader *reader_hndl;
 	TMYDATA *tmy;
+	char1024 forecast;
 public:
 	static CLASS *oclass;
 	static climate *defaults;
+public:
+	void update_forecasts(TIMESTAMP t0);
 public:
 	climate(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
 	int isa(char *classname);
-	TIMESTAMP sync(TIMESTAMP t0);
+	TIMESTAMP presync(TIMESTAMP t0);
 }; ///< climate data 
 
 #endif

@@ -568,6 +568,62 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="Tests"
+			>
+			<Filter
+				Name="CSV"
+				>
+				<File
+					RelativePath=".\test\csv_rdr\Thermal1.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\test\csv_rdr\weather.csv"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Forecasting"
+				>
+				<File
+					RelativePath=".\test\forecasting\test_forecasting.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\test\forecasting\WA-Yakima.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\test\forecasting\WA-Yakima.tmy2"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Autotest"
+				>
+				<File
+					RelativePath=".\autotest\test_csvreader_exercise_5_1_2.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_solar.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\WA-Yakima.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\WA-Yakima.tmy2"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\weather.csv"
+					>
+				</File>
+			</Filter>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

@@ -2080,4 +2080,119 @@ int object_locate_property(void *addr, OBJECT **pObj, PROPERTY **pProp)
 	}
 	return FAILED;
 }
+
+/** Forecast create 
+    The specifications for a forecast are as follows
+	"option: value; [option: value; [...]]" where
+	options is as follows:
+	'timestep' - identifies the timestep of the forecast
+	'length' - identifies the number of values in the forecast
+	'property' - identifies the property this forecast applies to
+	'external' - identifies the external function call to use to update the forecast
+	
+	The external function is specified as 'libname/functionname', the function 'functionname'
+	call must be in the DLL/SO/DYLIB file 'libfile' and have the following 
+	call prototype
+		TIMESTAMP functioname(OBJECT *obj, FORECAST *fc);
+	where the return value is the new forecast start time or TZ_INVALID is the forecast 
+	could not be updated (in which case the existing forecast 'fc' is not changed).
+
+	if 'external' is not defined, then the forecast is expected to be updated
+	during the object presync operation.  It is up to the class implementation of
+	presync to suppress update of the forecast when 'external' is set.
+		
+ **/
+FORECAST *forecast_create(OBJECT *obj, char *specs)
+{
+	FORECAST *f, *fc;
+
+	/* crate forecast entity */
+	fc = malloc(sizeof(FORECAST));
+	if ( fc==NULL ) 
+		throw_exception("forecast_create(): memory allocation failed");
+		/* TROUBLESHOOTING
+		   The forecast_create function could not allocate memory for 
+		   the FORECAST entity.  This is probably due to a lack of system
+		   memory or a problem with the memory allocation system.  Free up system
+		   memory, reducing the complexity and/or size of the model and try again.
+		 */
+	memset(fc,0,sizeof(FORECAST));
+
+	/* add to current list of forecasts */
+	fc->next = obj->forecast;
+	obj->forecast = fc;
+
+	/* extract forecast description */
+	/* TODO */
+	output_warning("forecast_create(): description parsing not implemented");
+
+	/* copy the description */
+	strncpy(fc->specification,specs,sizeof(fc->specification));
+
+	return fc;
+}
+
+/** Forecast find
+ **/
+FORECAST *forecast_find(OBJECT *obj, char *name)
+{
+	FORECAST *fc;
+	for ( fc=obj->forecast; fc!=NULL; fc=fc->next )
+	{
+		if (fc->propref && strcmp(fc->propref->name,name)==0)
+			return fc;
+	}
+	return NULL;
+}
+
+/** Forecast read
+ **/
+double forecast_read(FORECAST *fc, TIMESTAMP ts)
+{
+	int n;
+
+	/* prevent use of zero or negative timesteps */
+	if ( fc->timestep<=0 )
+		return QNAN;
+
+	/* time request is before start of forecast */
+	if ( ts < fc->starttime)
+		return QNAN;
+
+	/* compute offset to data entry */
+	n = ( ts - fc->starttime ) / fc->timestep;
+
+	/* time of request is after end of forecast */
+	if ( n >= fc->n_values )
+		return QNAN;
+
+	if ( fc->values )
+		return fc->values[n];
+	else
+		return QNAN;
+}
+
+/** Forecast save
+ **/
+void forecast_save(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double *data)
+{
+	fc->starttime = ts;
+	fc->timestep = tstep;
+	if ( fc->n_values != n_values )
+	{
+		if ( fc->values ) free(fc->values);
+		fc->values = malloc( n_values * sizeof(double) );
+		if ( fc->values == NULL ) 
+			throw_exception("forecast_save(): memory allocation failed");
+			/* TROUBLESHOOTING
+			   The forecast_create function could not allocate memory for 
+			   the FORECAST entity.  This is probably due to a lack of system
+			   memory or a problem with the memory allocation system.  Free up system
+			   memory, reducing the complexity and/or size of the model and try again.
+			 */
+		fc->n_values = n_values;
+	}
+	memcpy(fc->values,data,n_values*sizeof(double));
+}
+
 /** @} **/
