@@ -453,11 +453,12 @@ int climate::init(OBJECT *parent)
 		gl_error("%s: forecast '%s' is not valid", gl_name(obj,buf,sizeof(buf))?buf:"(object?)", forecast);
 		return 0;
 	}
-	else
+	else if (obj->forecast)
 	{	/* initialize the forecast data entity */
 		FORECAST *fc = obj->forecast;
 		fc->propref = gl_find_property(obj->oclass,"temperature");
 		gl_forecast_save(fc,obj->clock,3600,0,NULL);
+		obj->flags |= OF_FORECAST;
 	}
 
 	return 1;
