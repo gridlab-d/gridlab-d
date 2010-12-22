@@ -207,6 +207,7 @@ AC_CONFIG_FILES([./Makefile \
 	tape_file/Makefile \
 	tape_plot/Makefile \
 	tape/Makefile \
+	optimize/Makefile \
 	third_party/CBLAS/Makefile \
 	third_party/superLU_MT/Makefile \
 	gridlabd.spec \
