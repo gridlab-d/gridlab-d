@@ -35,7 +35,7 @@ class quadratic {
 
 object quadratic {
 	name quadratic;
-	a random.normal(0,1);
+	a -2;
 	b random.normal(0,1);
 	c random.normal(0,1);
 	x random.normal(0,1);

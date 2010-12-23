@@ -41,6 +41,10 @@ simple::simple(MODULE *module)
 			PT_double, "delta", PADDR(delta), PT_DESCRIPTION, "Change applied to decision variable",
 			PT_double, "epsilon", PADDR(epsilon), PT_DESCRIPTION, "Precision of objective value",
 			PT_int32, "trials", PADDR(trials), PT_DESCRIPTION, "Limits on number of trials",
+			PT_enumeration, "goal", PADDR(goal), PT_DESCRIPTION, "Optimization objective goal",
+				PT_KEYWORD, "EXTREMUM", OG_EXTREMUM,
+				PT_KEYWORD, "MINIMUM", OG_MINIMUM,
+				PT_KEYWORD, "MAXIMUM", OG_MAXIMUM,
 			NULL)<1)
 		{
 			static char msg[256];
@@ -102,8 +106,8 @@ int simple::init(OBJECT *parent)
 			return 0;
 		}
 
-		// set the object's rank
-		gl_set_rank(my,obj->rank+1);
+		// must outrank dependent objects
+		if ( my->rank<=obj->rank ) gl_set_rank(my,obj->rank+1);
 
 		// if not a constraint
 		if ( map[n].op==NULL )
@@ -232,7 +236,17 @@ TIMESTAMP simple::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 		if ( ddy==0 )
 		{
-			gl_error("The objective '%s' in simple optimizer object '%s' does not appear to have a non-zero second derivative", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???");
+			gl_error("The objective '%s' in simple optimizer object '%s' does not appear to have a non-zero second derivative near '%s=%g', which cannot lead to an extremum", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
+			return TS_INVALID;
+		}
+		else if ( ddy<0 && goal==OG_MINIMUM )
+		{
+			gl_error("The minimum objective '%s' in '%s' cannot be found from '%s=%g'", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
+			return TS_INVALID;
+		}
+		else if ( ddy>0 && goal==OG_MAXIMUM )
+		{
+			gl_error("The maximum objective '%s' in '%s' cannot be found from '%s=%g'", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
 			return TS_INVALID;
 		}
 		next_x = last_x - dy/ddy;

@@ -14,8 +14,11 @@
 #include "gridlabd.h"
 #include "optimize.h"
 
+typedef enum {OG_EXTREMUM, OG_MINIMUM, OG_MAXIMUM} OBJECTIVEGOAL;
+
 class simple {
 protected:
+	OBJECTIVEGOAL goal;
 	char1024 objective;
 	char1024 variable;
 	char1024 constraint;

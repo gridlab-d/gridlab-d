@@ -54,20 +54,40 @@ class cubic {
 }
 
 object cubic {
-	name cubic;
+	name cubic1;
 	a 1;
 	b -4;
 	c 4;
 	d 5;
 	x 3;
 }
+object cubic {
+	name cubic2;
+	a 1;
+	b -4;
+	c 4;
+	d 5;
+	x -3;
+}
+
 
 module optimize;
 
 object simple {
-	objective "cubic.y";
-	variable "cubic.x";
-	constraint "cubic.y<100";
+	goal MINIMUM;
+	objective "cubic1.y";
+	variable "cubic1.x";
+	constraint "cubic1.y<100";
+	delta 0.001;
+	epsilon 0.00001;
+	trials 5; 
+}
+
+object simple {
+	goal MAXIMUM;
+	objective "cubic2.y";
+	variable "cubic2.x";
+	constraint "cubic2.y<100";
 	delta 0.001;
 	epsilon 0.00001;
 	trials 5; 
