@@ -1,0 +1,191 @@
+// Copyright (C) 2008 Battelle Memorial Institute
+// 4 Node Feeder: Unbalanced step-down grY-grY
+
+#set tmp=.
+#define include=../../core
+
+clock {
+	timezone EST+5EDT;
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-02-01 0:00:00';
+}
+
+#set relax_naming_rules=1
+
+// setup voltage optimization
+module optimize;
+object simple {
+	objective Controller.target;
+	variable Controller.input;
+	delta 1;
+	epsilon 0.001;
+	trials 100;
+}
+
+// voltage controller
+class tap_controller {
+	double input;
+	double target;
+	object regulator;
+	object target_object;
+	char1024 target_property;
+	public int16 *tapA;
+	public int16 *tapB;
+	public int16 *tapC;
+	public double *pTarget;
+	intrinsic create(object parent) { return 1; };
+	intrinsic init(object parent) 
+	{
+		tapA = (int16*)gl_get_addr(regulator,"tap_A");
+		if ( !tapA ) gl_error("Tap A is not found in regulator");
+		tapB = (int16*)gl_get_addr(regulator,"tap_B");
+		if ( !tapB ) gl_error("Tap B is not found in regulator");
+		tapC = (int16*)gl_get_addr(regulator,"tap_C");
+		if ( !tapC ) gl_error("Tap C is not found in regulator");
+		pTarget = &(((complex*)gl_get_addr(target_object,target_property))->Re());
+		if ( !pTarget ) gl_error("Property '%s' is not found in target",target_property);
+		return tapA && tapB && tapC && pTarget; 
+	};
+	intrinsic presync(TIMESTAMP t0, TIMESTAMP t1)
+	{
+		gl_output("Tap control is %f", input);
+		if ( input>-16 && input<16 )
+			*tapA = *tapB = *tapC = (int16)(input+0.5);
+		return TS_NEVER;
+	};
+	intrinsic postsync(TIMESTAMP t0, TIMESTAMP t1)
+	{
+		target = *pTarget;
+		gl_output("Power losses are now %f", target);
+		return TS_NEVER;
+	};
+}
+object tap_controller {
+	name Controller;
+	input 0;
+	regulator Regulator;
+	target_object Line;
+	target_property power_losses;
+}
+
+module powerflow {
+	solver_method NR;
+}
+module tape;
+
+object regulator_configuration {
+	connect_type WYE_WYE;
+	name manual_regulator;
+	raise_taps 16;
+	lower_taps 16;
+	regulation 0.1;
+	Type A;
+	Control MANUAL;
+}
+
+object regulator {
+	name Regulator;
+	phases ABCN;
+	from node:1;
+	to node:2;
+	configuration manual_regulator;
+	tap_A 0;
+	tap_B 0;						// <- Input Paramaters A,B,C (-16 -> 16)
+	tap_C 0;
+}
+
+object node:1 {
+	phases "ABCN";
+	nominal_voltage 7200; 
+	bustype SWING;
+}
+
+object node:2 {
+	phases "ABCN";
+	nominal_voltage 7200;
+}
+
+object transformer_configuration:400 {
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+	install_type PADMOUNT;
+}
+
+object transformer:23 {
+	phases "ABCN";
+	from node:2;
+	to node:3;
+	configuration transformer_configuration:400;
+}
+
+object node:3 {
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
+}
+
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration:300 {
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
+}
+
+object overhead_line:34 {
+	name Line;
+	phases "ABCN";
+	from node:3;
+	to load:4;
+	length 2500;
+	configuration line_configuration:300;
+	// Optimization parameter would be losses here, or "power_losses.real" (this is a complex number, so you may need to add a variable in)
+}
+
+object load:4 {
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	constant_power_A +127500+79017j;
+	constant_power_B +180000+87177j;
+	constant_power_C +237500+78062j;
+	constant_current_A 53+20j;
+	constant_current_B -9-55j;
+	constant_current_C -40+35j;
+	constant_impedance_A 25+12j;
+	constant_impedance_B -1651-123j;
+	constant_impedance_C -125+546j;
+	nominal_voltage 2400;
+}
+
+
+////////////////////////////////////////////////////////
+// END
+////////////////////////////////////////////////////////
