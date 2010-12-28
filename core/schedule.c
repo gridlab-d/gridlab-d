@@ -23,6 +23,7 @@
 #endif
 
 static SCHEDULE *schedule_list = NULL;
+static unsigned long n_schedules = 0;
 static SCHEDULEXFORM *schedule_xformlist=NULL;
 
 SCHEDULEXFORM *scheduletransform_getnext(SCHEDULEXFORM *xform)
@@ -651,6 +652,7 @@ void schedule_add(SCHEDULE *sch)
 {
 	sch->next = schedule_list;
 	schedule_list = sch;
+	n_schedules++;
 }
 
 /** validate a schedule, if desired 
@@ -833,21 +835,22 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 	static SCHEDULEINDEX index = {0};
 	double value;
 	long dtnext;
-	double duration;
 	
 	/* get the current schedule status */
-	if (t!=last_t) index = schedule_index(sch,t);
+	if (t!=last_t) {
+		index = schedule_index(sch,t);
+		last_t = t;
+	}
 	value = schedule_value(sch,index);
 	dtnext = schedule_dtnext(sch,index)*60;
-	duration = (double)schedule_duration(sch,index);
 
 	/* if the schedule is changing value */
-	if (value!=sch->value || sch->duration!=duration)
+	if (value!=sch->value)
 	{
+		double duration = (double)schedule_duration(sch,index);
 		/* record the next value and its duration */
-		if(sch->value != value){
-			sch->since = t;
-		}
+		if(sch->value != value)
+			sch->since = last_t;
 		sch->value = value;
 		sch->duration = duration / 60;
 		sch->fraction = schedule_weight(sch,index) / duration;
@@ -885,7 +888,7 @@ TIMESTAMP scheduletransform_syncall(TIMESTAMP t1, XFORMSOURCE restrict)
 			if((xform->source_type == XS_SCHEDULE) && (xform->target_obj->schedule_skew != 0)){
 				TIMESTAMP t = t1 - xform->target_obj->schedule_skew; // subtract so the +12 is 'twelve seconds later', not earlier
 				if((t < xform->source_schedule->since) || (t >= xform->source_schedule->next_t)){
-					int64 index = schedule_index(xform->source_schedule,t);
+					SCHEDULEINDEX index = schedule_index(xform->source_schedule,t);
 					double value = schedule_value(xform->source_schedule,index);
 					*(xform->target) = value * xform->scale + xform->bias;
 				} else {
