@@ -892,6 +892,7 @@ STATUS exec_start(void)
 		double elapsed_wall = (double)(realtime_now()-started_at+1);
 		double sync_time = 0;
 		double sim_speed = object_get_count()/1000.0*elapsed_sim/elapsed_wall;
+		extern clock_t loadshape_synctime;
 		CLASS *cl;
 		if (global_threadcount==0) global_threadcount=1;
 		for (cl=class_get_first_class(); cl!=NULL; cl=cl->next)
@@ -904,6 +905,11 @@ STATUS exec_start(void)
 		output_profile("Parallelism             %8d thread%s", global_threadcount,global_threadcount>1?"s":"");
 		output_profile("Total time              %8.1f seconds", elapsed_wall);
 		output_profile("  Core time             %8.1f seconds (%.1f%%)", (elapsed_wall-sync_time),(elapsed_wall-sync_time)/elapsed_wall*100);
+		output_profile("    Compiler             (na) ");
+		output_profile("    Schedules            (na) ");
+		output_profile("    Loadshapes          %8.1f seconds (%.1f%%)", (double)loadshape_synctime/CLOCKS_PER_SEC);
+		output_profile("    End-uses             (na) ");
+		output_profile("    Transforms           (na) ");
 		output_profile("  Model time            %8.1f seconds/thread (%.1f%%)", sync_time,sync_time/elapsed_wall*100);
 		output_profile("Simulation time         %8.0f days", elapsed_sim/24);
 		if (sim_speed>10.0)
