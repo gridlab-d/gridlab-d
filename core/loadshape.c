@@ -870,8 +870,6 @@ static unsigned int waitcount;
 
 clock_t loadshape_synctime = 0;
 
-char *pad[] = {"                    ","                                        "};
-
 void *loadshape_syncproc(void *ptr)
 {
 	LOADSHAPESYNCDATA *data = (LOADSHAPESYNCDATA*)ptr;
@@ -916,8 +914,8 @@ void *loadshape_syncproc(void *ptr)
 		// unlock access to wait count
 		pthread_mutex_unlock(&waitlock);
 	}
-	pthread_exit((void*)t2);
-	return (void*)t2;
+	pthread_exit((void*)0);
+	return (void*)0;
 }
 TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 {
