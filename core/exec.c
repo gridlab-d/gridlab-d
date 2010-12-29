@@ -907,7 +907,7 @@ STATUS exec_start(void)
 		output_profile("  Core time             %8.1f seconds (%.1f%%)", (elapsed_wall-sync_time),(elapsed_wall-sync_time)/elapsed_wall*100);
 		output_profile("    Compiler             (na) ");
 		output_profile("    Schedules            (na) ");
-		output_profile("    Loadshapes          %8.1f seconds (%.1f%%)", (double)loadshape_synctime/CLOCKS_PER_SEC);
+		output_profile("    Loadshapes          %8.1f seconds (%.1f%%)", (double)loadshape_synctime/CLOCKS_PER_SEC,((double)loadshape_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
 		output_profile("    End-uses             (na) ");
 		output_profile("    Transforms           (na) ");
 		output_profile("  Model time            %8.1f seconds/thread (%.1f%%)", sync_time,sync_time/elapsed_wall*100);

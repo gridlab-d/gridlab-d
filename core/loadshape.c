@@ -862,10 +862,11 @@ typedef struct s_loadshapesyncdata {
 	TIMESTAMP t1;
 	TIMESTAMP t2;
 } LOADSHAPESYNCDATA;
-static pthread_cond_t start;
-static pthread_mutex_t startlock;
-static pthread_cond_t wait;
-static pthread_mutex_t waitlock;
+
+static pthread_cond_t start = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t startlock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t wait = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t waitlock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned int waitcount;
 
 clock_t loadshape_synctime = 0;
@@ -973,12 +974,6 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 					thread[ln].ls = s;
 				thread[ln].ns++;
 			}
-
-			// setup wait
-			start = PTHREAD_COND_INITIALIZER;
-			startlock = PTHREAD_MUTEX_INITIALIZER;
-			wait = PTHREAD_COND_INITIALIZER;
-			waitlock = PTHREAD_MUTEX_INITIALIZER;
 
 			// create threads
 			for (n=0; n<n_threads; n++)

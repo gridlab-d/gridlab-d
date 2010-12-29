@@ -11,17 +11,15 @@ module tape;
 module residential;
 
 #set profiler=1
-#set threadcount=2
 #set iteration_limit=10
-#set verbose=1
-#set debug=0
 
-object house:..50 {
+object house:..500 {
 	floor_area random.normal(1500,300);
-	object recorder {
-		property air_temperature;
-		file "house${id}.csv";
-		interval 3600;
-		limit 8760;
-	};
 }
+object collector {
+	group "class=house";
+	property avg(air_temperature);
+	file "house${id}.csv";
+	interval 3600;
+	limit 8760;
+};
