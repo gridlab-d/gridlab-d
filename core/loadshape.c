@@ -883,20 +883,13 @@ void *loadshape_syncproc(void *ptr)
 	while ( data->ok )
 	{
 		// lock access to wait count
-		output_debug("  %s (%d) locking start condition",pad[data->n?1:0],data->n);
 		pthread_mutex_lock(&startlock);
-		output_debug("  %s (%d) locked start condition",pad[data->n?1:0],data->n);
 
 		// wait for thread start condition
-		output_debug("  %s (%d) waiting for start condition",pad[data->n?1:0],data->n);
-		while (data->t0==next_t1) {
+		while (data->t0==next_t1) 
 			pthread_cond_wait(&start,&startlock);
-			output_debug("  %s (%d) start condition is %d==%d",pad[data->n?1:0],data->n,data->t0,next_t1);
-		}
-		output_debug("  %s (%d) passed start condition (t0=%d, t1=%d)",pad[data->n?1:0],data->n,(int)data->t0,(int)next_t1);
 		
 		// lock access to wait count
-		output_debug("  %s (%d) unlocking start condition",pad[data->n?1:0],data->n);
 		pthread_mutex_unlock(&startlock);
 
 		// process the list for this thread
@@ -908,23 +901,19 @@ void *loadshape_syncproc(void *ptr)
 		}
 
 		// signal completed condition
-		output_debug("  %s (%d) processing done (t2=%d)",pad[data->n?1:0],data->n,(int)t2);
 		data->t0 = next_t1;
 
 		// lock access to wait count
-		output_debug("  %s (%d) locking wait count",pad[data->n?1:0],data->n);
 		pthread_mutex_lock(&waitlock);
-		output_debug("  %s (%d) locked wait count",pad[data->n?1:0],data->n);
 
 		// signal thread is done for now
 		waitcount--;
 		if ( t2<next_t2 ) next_t2 = t2;
 
 		// signal change in wait condition
-		output_debug("  %s (%d) broadcasting waitcount==%d",pad[data->n?1:0],data->n, waitcount);
 		pthread_cond_broadcast(&wait);
 
-		output_debug("  %s (%d) unlocking wait count",pad[data->n?1:0],data->n);
+		// unlock access to wait count
 		pthread_mutex_unlock(&waitlock);
 	}
 	pthread_exit((void*)t2);
@@ -986,64 +975,58 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 					thread[n].ok = false;
 				}
 				else
-				{
 					thread[n].n = n;
-				}
 			}
 		}
 	}
 
-	if (n_threads<2) // no threading required
+	// don't update if next_t2 < next_t1
+	if ( next_t2>t1 && next_t2<TS_NEVER )
+		return next_t2;
+
+	// no threading required
+	if (n_threads<2) 
 	{
+		// process list directly
 		loadshape *s;
 		for (s=loadshape_list; s!=NULL; s=s->next)
 		{
 			TIMESTAMP t3 = loadshape_sync(s,t1);
 			if (t3<t2) t2 = t3;
 		}
+		next_t2 = t2;
 	}
 	else
 	{
-		unsigned int n;
-
-		// lock access to start condition
-		output_debug("locking start condition (t1=%d)", (int)t1);
-		pthread_mutex_lock(&startlock);
-		output_debug("locked start condition");
-
 		// lock access to wait count
-		output_debug("locking wait count");
 		pthread_mutex_lock(&waitlock);
-		output_debug("locked wait count");
 
 		// initialize wait count
 		waitcount = n_threads;
+
+		// lock access to start condition
+		pthread_mutex_lock(&startlock);
+
+		// update start condition
 		next_t1 = t1;
 		next_t2 = TS_NEVER;
 
 		// signal all the threads
-		output_debug("broadcasting start condition");
 		pthread_cond_broadcast(&start);
 
-		// unlock access to wait count
-		output_debug("unlocking start condition");
+		// unlock access to start count
 		pthread_mutex_unlock(&startlock);
 
 		// begin wait
-		output_debug("waiting for waitcount==0");
-		while (waitcount>0) {
+		while (waitcount>0) 
 			pthread_cond_wait(&wait,&waitlock);
-			output_debug("waitcount==%d", waitcount);
-		}
 		output_debug("passed waitcount==0 condition");
 
 		// unlock wait count
-		output_debug("unlocking wait count");
 		pthread_mutex_unlock(&waitlock);
 
 		// process results from all threads
 		if (next_t2<t2) t2=next_t2;
-		output_debug("update complete (t2=%d)",t2);
 	}
 
 	loadshape_synctime += clock() - ts;

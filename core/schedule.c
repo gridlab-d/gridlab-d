@@ -869,13 +869,21 @@ clock_t schedule_synctime = 0;
 TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is synchronized */
 {
 	SCHEDULE *sch;
-	TIMESTAMP t2 = TS_NEVER;
+	static TIMESTAMP t2 = TS_NEVER;
 	clock_t start = clock();
+
+	// use cached time (because nothing can change the previous result)
+	if ( t2>t1 && t2<TS_NEVER )
+		return t2;
+
+	// process each schedule directly
+	t2 = TS_NEVER;
 	for (sch=schedule_list; sch!=NULL; sch=sch->next)
 	{
 		TIMESTAMP t3 = schedule_sync(sch,t1);
 		if (t3<t2) t2 = t3;
 	}
+
 	schedule_synctime += clock() - start;
 	return t2;
 }
