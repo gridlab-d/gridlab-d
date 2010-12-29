@@ -60,6 +60,8 @@
 #include "loadshape.h"
 #include "enduse.h"
 
+clock_t loader_time = 0;
+
 STATUS load_module_list(FILE *fd,int* test_mod_num)
 {
 	/*
@@ -835,8 +837,12 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				   in normal more or leaving off the model file name.
 				 */
 			else {
+				clock_t start = clock();
+
 				if (!loadall(*argv))
 					return FAILED;
+				loader_time += clock() - start;
+
 				/* preserve name of first model only */
 				if (strcmp(global_modelname,"")==0)
 					strcpy(global_modelname,*argv);

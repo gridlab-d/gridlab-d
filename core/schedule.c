@@ -862,6 +862,7 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 	return sch->next_t;
 }
 
+clock_t schedule_synctime = 0;
 /** synchronized all the schedules to the time given
     @return the time of the next schedule change
  **/
@@ -869,18 +870,20 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 {
 	SCHEDULE *sch;
 	TIMESTAMP t2 = TS_NEVER;
+	clock_t start = clock();
 	for (sch=schedule_list; sch!=NULL; sch=sch->next)
 	{
 		TIMESTAMP t3 = schedule_sync(sch,t1);
 		if (t3<t2) t2 = t3;
 	}
-
+	schedule_synctime += clock() - start;
 	return t2;
 }
-
+clock_t transform_synctime = 0;
 TIMESTAMP scheduletransform_syncall(TIMESTAMP t1, XFORMSOURCE restrict)
 {
 	SCHEDULEXFORM *xform;
+	clock_t start = clock();
 	/* process the schedule transformations */
 	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
 	{	
@@ -899,6 +902,7 @@ TIMESTAMP scheduletransform_syncall(TIMESTAMP t1, XFORMSOURCE restrict)
 			}
 		}
 	}
+	transform_synctime += clock() - start;
 	return TS_NEVER;
 }
 

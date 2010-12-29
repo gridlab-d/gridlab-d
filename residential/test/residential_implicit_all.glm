@@ -13,13 +13,13 @@ module residential;
 #set profiler=1
 #set iteration_limit=10
 
-object house:..500 {
+object house:..100 {
 	floor_area random.normal(1500,300);
 }
 object collector {
 	group "class=house";
 	property avg(air_temperature);
-	file "house${id}.csv";
+	file "house.csv";
 	interval 3600;
-	limit 8760;
+	limit 24;
 };

@@ -139,15 +139,18 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 	return (e->shape && e->shape->type != MT_UNKNOWN) ? e->shape->t2 : TS_NEVER;
 }
 
+clock_t enduse_synctime = 0;
 TIMESTAMP enduse_syncall(TIMESTAMP t1)
 {
 	enduse *e;
 	TIMESTAMP t2 = TS_NEVER;
+	clock_t start = clock();
 	for (e=enduse_list; e!=NULL; e=e->next)
 	{
 		TIMESTAMP t3 = enduse_sync(e,PC_PRETOPDOWN,t1);
 		if (t3<t2) t2 = t3;
 	}
+	enduse_synctime += clock() - start;
 	return t2;
 }
 
