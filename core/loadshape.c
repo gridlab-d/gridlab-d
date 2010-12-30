@@ -863,10 +863,10 @@ typedef struct s_loadshapesyncdata {
 
 static pthread_cond_t start = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t startlock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t wait = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t waitlock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t done = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t donelock = PTHREAD_MUTEX_INITIALIZER;
 static TIMESTAMP next_t1, next_t2;
-static unsigned int waitcount;
+static unsigned int donecount;
 
 clock_t loadshape_synctime = 0;
 
@@ -880,14 +880,14 @@ void *loadshape_syncproc(void *ptr)
 	// begin processing loop
 	while ( data->ok )
 	{
-		// lock access to wait count
+		// lock access to start condition
 		pthread_mutex_lock(&startlock);
 
 		// wait for thread start condition
 		while (data->t0==next_t1) 
 			pthread_cond_wait(&start,&startlock);
 		
-		// lock access to wait count
+		// unlock access to start count
 		pthread_mutex_unlock(&startlock);
 
 		// process the list for this thread
@@ -901,18 +901,18 @@ void *loadshape_syncproc(void *ptr)
 		// signal completed condition
 		data->t0 = next_t1;
 
-		// lock access to wait count
-		pthread_mutex_lock(&waitlock);
+		// lock access to done condition
+		pthread_mutex_lock(&donelock);
 
 		// signal thread is done for now
-		waitcount--;
+		donecount--;
 		if ( t2<next_t2 ) next_t2 = t2;
 
-		// signal change in wait condition
-		pthread_cond_broadcast(&wait);
+		// signal change in done condition
+		pthread_cond_broadcast(&done);
 
-		// unlock access to wait count
-		pthread_mutex_unlock(&waitlock);
+		// unlock access to done count
+		pthread_mutex_unlock(&donelock);
 	}
 	pthread_exit((void*)0);
 	return (void*)0;
@@ -996,11 +996,11 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 	}
 	else
 	{
-		// lock access to wait count
-		pthread_mutex_lock(&waitlock);
+		// lock access to done count
+		pthread_mutex_lock(&donelock);
 
 		// initialize wait count
-		waitcount = n_threads;
+		donecount = n_threads;
 
 		// lock access to start condition
 		pthread_mutex_lock(&startlock);
@@ -1016,12 +1016,12 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 		pthread_mutex_unlock(&startlock);
 
 		// begin wait
-		while (waitcount>0) 
-			pthread_cond_wait(&wait,&waitlock);
-		output_debug("passed waitcount==0 condition");
+		while (donecount>0) 
+			pthread_cond_wait(&done,&donelock);
+		output_debug("passed donecount==0 condition");
 
-		// unlock wait count
-		pthread_mutex_unlock(&waitlock);
+		// unlock done count
+		pthread_mutex_unlock(&donelock);
 
 		// process results from all threads
 		if (next_t2<t2) t2=next_t2;
