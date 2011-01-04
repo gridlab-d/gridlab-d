@@ -526,6 +526,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\currdump.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\fault_check.cpp"
 				>
 			</File>
@@ -701,6 +705,10 @@
 			</File>
 			<File
 				RelativePath=".\check.h"
+				>
+			</File>
+			<File
+				RelativePath=".\currdump.h"
 				>
 			</File>
 			<File
