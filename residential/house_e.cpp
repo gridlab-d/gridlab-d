@@ -1548,7 +1548,7 @@ int house_e::init(OBJECT *parent)
 
 	double door_area = number_of_doors * 3.0 * 78.0 / 12.0; // 3' wide by 78" tall
 	double window_area = gross_wall_area * window_wall_ratio * exterior_wall_fraction;
-	double net_exterior_wall_area = exterior_wall_fraction * (gross_wall_area - window_area - door_area);
+	double net_exterior_wall_area = exterior_wall_fraction * gross_wall_area - window_area - door_area;
 	double exterior_ceiling_area = floor_area * exterior_ceiling_fraction / number_of_stories;
 	double exterior_floor_area = floor_area * exterior_floor_fraction / number_of_stories;
 
@@ -1650,8 +1650,12 @@ int house_e::init(OBJECT *parent)
 	if (fan_power <= 0.0)			fan_power = 0.0;
 
 	if (house_content_thermal_mass==0) house_content_thermal_mass = total_thermal_mass_per_floor_area*floor_area - 2 * air_heat_capacity*air_mass;		// thermal mass of house_e [BTU/F]
-    if (house_content_heat_transfer_coeff==0) house_content_heat_transfer_coeff = interior_surface_heat_transfer_coeff*( net_exterior_wall_area / exterior_wall_fraction + gross_wall_area * interior_exterior_wall_ratio + number_of_stories * exterior_ceiling_area / exterior_ceiling_fraction);	// heat transfer coefficient of house_e contents [BTU/hr.F]
-
+    if (house_content_heat_transfer_coeff==0) house_content_heat_transfer_coeff = 
+		interior_surface_heat_transfer_coeff * (
+		//  (net_exterior_wall_area / exterior_wall_fraction)
+		(gross_wall_area - window_area - door_area)
+		+ gross_wall_area * interior_exterior_wall_ratio + number_of_stories * exterior_ceiling_area / exterior_ceiling_fraction);	// heat transfer coefficient of house_e contents [BTU/hr.F]
+		// hs * ((Awt - Ag - Ad) + Awt * IWR + Ac * N / ECR)
 	if(Tair == 0){
 		if (system_mode==SM_OFF)
 			Tair = gl_random_uniform(heating_setpoint,cooling_setpoint);
