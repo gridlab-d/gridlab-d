@@ -22,7 +22,7 @@ EXPORT int64 submit_bid_state(OBJECT *obj, OBJECT *from, double quantity, double
 	char biddername[64];
 	if (obj->oclass==auction::oclass)
 	{
-		gl_verbose("%s submits stateful (%s) bid for %.0f at %.0f", gl_name(from,biddername,sizeof(biddername)),is_on?"on":"off",quantity,price);
+		gl_verbose("%s submits stateful (%s) bid for Q:%.2f at P:%.4f", gl_name(from,biddername,sizeof(biddername)),is_on?"on":"off",quantity,price);
 		auction *mkt = OBJECTDATA(obj,auction);
 		return mkt->submit(from,quantity,price,bid_id,is_on?BS_ON:BS_OFF);
 	} else if(obj->oclass == stubauction::oclass){

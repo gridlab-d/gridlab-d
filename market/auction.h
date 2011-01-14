@@ -37,11 +37,19 @@ typedef struct s_market_frame{
 	double total_marginal_quantity;
 	double marginal_frac;
 	double seller_total_quantity;
+	double buyer_total_unrep;
 	double buyer_total_quantity;
+	double cap_ref_unrep;
 	double seller_min_price;
 	struct s_market_frame *next;
 	double *statistics;
 } MARKETFRAME;
+
+typedef enum {
+	AM_NONE=0,
+	AM_DENY=1,
+	AM_PROB=2
+} MARGINMODE;
 
 class auction {
 public:
@@ -52,6 +60,7 @@ public:
 	IGNOREPRICECAP ignore_pricecap;
 	typedef enum {CO_NORMAL=0, CO_EXTRA=1} CURVEOUTPUT;
 	CURVEOUTPUT curve_log_info;
+	MARGINMODE margin_mode;
 private:
 	// functions
 	int init_statistics();

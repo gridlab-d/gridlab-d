@@ -118,6 +118,8 @@ auction::auction(MODULE *module)
 			PT_double, "current_market.seller_total_quantity", PADDR(current_frame.seller_total_quantity),
 			PT_double, "current_market.buyer_total_quantity", PADDR(current_frame.buyer_total_quantity),
 			PT_double, "current_market.seller_min_price", PADDR(current_frame.seller_min_price),
+			PT_double, "current_market.buyer_total_unrep", PADDR(current_frame.buyer_total_unrep),
+			PT_double, "current_market.cap_ref_unrep", PADDR(current_frame.cap_ref_unrep),
 
 			PT_timestamp, "next_market.start_time", PADDR(next_frame.start_time),
 			PT_timestamp, "next_market.end_time", PADDR(next_frame.end_time),
@@ -136,6 +138,7 @@ auction::auction(MODULE *module)
 			PT_double, "next_market.seller_total_quantity", PADDR(next_frame.seller_total_quantity),
 			PT_double, "next_market.buyer_total_quantity", PADDR(next_frame.buyer_total_quantity),
 			PT_double, "next_market.seller_min_price", PADDR(next_frame.seller_min_price),
+			PT_double, "next_market.cap_ref_unrep", PADDR(next_frame.cap_ref_unrep),
 
 			PT_timestamp, "past_market.start_time", PADDR(past_frame.start_time),
 			PT_timestamp, "past_market.end_time", PADDR(past_frame.end_time),
@@ -154,7 +157,12 @@ auction::auction(MODULE *module)
 			PT_double, "past_market.seller_total_quantity", PADDR(past_frame.seller_total_quantity),
 			PT_double, "past_market.buyer_total_quantity", PADDR(past_frame.buyer_total_quantity),
 			PT_double, "past_market.seller_min_price", PADDR(past_frame.seller_min_price),
+			PT_double, "past_market.cap_ref_unrep", PADDR(past_frame.cap_ref_unrep),
 
+			PT_enumeration, "margin_mode", PADDR(margin_mode),
+				PT_KEYWORD, "NORMAL", 0,
+				PT_KEYWORD, "DENY", AM_DENY,
+				PT_KEYWORD, "PROB", AM_PROB,
 			PT_int32, "warmup", PADDR(warmup),
 			PT_enumeration, "ignore_pricecap", PADDR(ignore_pricecap),
 				PT_KEYWORD, "FALSE", IP_FALSE,
@@ -598,6 +606,7 @@ int auction::push_market_frame(TIMESTAMP t1){
 	frame->buyer_total_quantity = cleared_frame.buyer_total_quantity;
 	frame->seller_min_price = cleared_frame.seller_min_price;
 	frame->marginal_frac = cleared_frame.marginal_frac;
+	frame->cap_ref_unrep = cleared_frame.cap_ref_unrep;
 	// set stats
 	for(i = 0, stat = this->stats; i < statistic_count && stat != 0; ++i, stat = stat->next){
 		stats[i] = stat->value;
@@ -634,6 +643,7 @@ int auction::check_next_market(TIMESTAMP t1){
 		next_frame.buyer_total_quantity = nframe->buyer_total_quantity;
 		next_frame.seller_min_price = nframe->seller_min_price;
 		next_frame.marginal_frac = nframe->marginal_frac;
+		next_frame.cap_ref_unrep = nframe->cap_ref_unrep;
 		if(statistic_mode == ST_ON){
 			for(i = 0, stat = this->stats; i < statistic_count, stat != 0; ++i, stat = stat->next){
 				gl_set_value(obj, stat->prop, frame->statistics[i]);
@@ -759,13 +769,13 @@ void auction::record_curve(double bu, double su){
 	if(CO_EXTRA == curve_log_info)
 		fprintf(curve_file, "# supply curve at %s: %f total and %f unresponsive\n", timestr, cleared_frame.seller_total_quantity, su);
 	for (i=0; i<offers.getcount(); i++){
-		fprintf(curve_file, "%d,%s,%4d,%s,%.3f,%.2f\n",(int32)market_id,timestr,i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,offers.getbid(i)->price);
+		fprintf(curve_file, "%d,%s,%4d,%s,%.3f %s,%.6f $/%s\n",(int32)market_id,timestr,i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
 	}
 
 	if(CO_EXTRA == curve_log_info)
 		fprintf(curve_file, "# demand curve at %s: %f total and %f unresponsive\n", timestr, cleared_frame.buyer_total_quantity, bu);
 	for (i=0; i<asks.getcount(); i++){
-		fprintf(curve_file, "%d,%s,%4d,%s,%.3f,%.2f\n",(int32)market_id,timestr,i,gl_name(asks.getbid(i)->from,name,sizeof(name)), -asks.getbid(i)->quantity,asks.getbid(i)->price);
+		fprintf(curve_file, "%d,%s,%4d,%s,%.3f %s,%.6f $/%s\n",(int32)market_id,timestr,i,gl_name(asks.getbid(i)->from,name,sizeof(name)), -asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
 	}
 
 	if(CO_EXTRA == curve_log_info){
@@ -809,12 +819,14 @@ void auction::clear_market(void)
 	unsigned int sph24 = (unsigned int)(3600/period*24);
 	BID unresponsive;
 	extern double bid_offset;
+	double cap_ref_unrep = 0.0;
 
 	memset(&unresponsive, 0, sizeof(unresponsive));
 
 	/* handle unbidding capacity */
 	if(capacity_reference_property != NULL && special_mode != MD_FIXED_BUYER){
 		char name[256];
+
 		double total_unknown = asks.get_total() - asks.get_total_on() - asks.get_total_off();
 		double *pRefload = gl_get_double(capacity_reference_object, capacity_reference_property);
 		double refload;
@@ -852,13 +864,14 @@ void auction::clear_market(void)
 		unresponsive.price = pricecap;
 		unresponsive.state = BS_UNKNOWN;
 		unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
+		cap_ref_unrep = unresponsive.quantity;
 		if (unresponsive.quantity < -0.001)
 		{
 			gl_warning("capacity_reference_property %s has negative unresponsive load--this is probably due to improper bidding", gl_name(linkref,name,sizeof(name)), unresponsive.quantity);
 		}
 		else if (unresponsive.quantity > 0.001)
 		{
-			asks.submit(&unresponsive);
+			submit_bid_state(OBJECTHDR(this), capacity_reference_object, -unresponsive.quantity, unresponsive.price, 1, -1);
 			gl_verbose("capacity_reference_property %s has %.3f unresponsive load", gl_name(linkref,name,sizeof(name)), -unresponsive.quantity);
 		}
 	}
@@ -1315,6 +1328,8 @@ void auction::clear_market(void)
 	cleared_frame.seller_total_quantity = offers.get_total();
 	cleared_frame.seller_min_price = offers.get_min();
 	cleared_frame.marginal_frac = marginal_frac;
+	cleared_frame.buyer_total_unrep = unresponsive_buy;
+	cleared_frame.cap_ref_unrep = cap_ref_unrep;
 
 	if(latency > 0){
 		TIMESTAMP rt;
@@ -1339,6 +1354,8 @@ void auction::clear_market(void)
 		current_frame.buyer_total_quantity = cleared_frame.buyer_total_quantity;
 		current_frame.seller_min_price = cleared_frame.seller_min_price;
 		current_frame.marginal_frac = cleared_frame.marginal_frac;
+		current_frame.buyer_total_unrep = cleared_frame.buyer_total_unrep;
+		current_frame.cap_ref_unrep = cleared_frame.cap_ref_unrep;
 		++total_samples;
 		update_statistics();
 		
@@ -1408,7 +1425,7 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 	/* suppress demand bidding until market stabilizes */
 	unsigned int sph24 = (unsigned int)(3600/period*24);
 	if(real_price > pricecap){
-		gl_warning("%s received a bid above the price cap, truncating");
+		gl_warning("%s received a bid above the price cap, truncating", gl_name(OBJECTHDR(this),myname,sizeof(myname)));
 		price = pricecap;
 	} else {
 		price = real_price;
@@ -1450,9 +1467,6 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 				fabs(quantity), unit, price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		}
 		BID bid = {from,fabs(quantity),price,state};
-		if(quantity == 0.0){
-			return 0;
-		}
 		if (biddef.bid_type == BID_BUY){
 			out = asks.resubmit(&bid,biddef.bid);
 		} else if (biddef.bid_type == BID_SELL){

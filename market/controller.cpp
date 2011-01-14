@@ -110,9 +110,9 @@ int controller::create(){
 	memset(this, 0, sizeof(controller));
 	sprintf(avg_target, "avg24");
 	sprintf(std_target, "std24");
-	slider_setting_heat = -1.0;
-	slider_setting_cool = -1.0;
-	slider_setting = -1.0;
+	slider_setting_heat = 0.0;
+	slider_setting_cool = 0.0;
+	slider_setting = 0.0;
 	sliding_time_delay = -1;
 	lastbid_id = -1;
 	heat_range_low = -5;
@@ -487,11 +487,11 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 				min = setpoint0 + range_low * slider_setting;
 				max = setpoint0 + range_high * slider_setting;
 				if(range_low != 0)
-					ramp_low = (-1 - 2 * (1 - slider_setting)) / range_low;
+					ramp_low = -2 - (1 - slider_setting);
 				else
 					ramp_low = 0;
 				if(range_high != 0)
-					ramp_high = (1 + 2 * (1 - slider_setting)) / range_high;
+					ramp_high = 2 + (1 - slider_setting);
 				else
 					ramp_high = 0;
 			} else {
@@ -503,11 +503,11 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 				cool_min = cooling_setpoint0 + cool_range_low * slider_setting_cool;
 				cool_max = cooling_setpoint0 + cool_range_high * slider_setting_cool;
 				if (cool_range_low != 0.0)
-					cool_ramp_low = (-1 - 2 * (1 - slider_setting_cool)) / cool_range_low;
+					cool_ramp_low = -2 - (1 - slider_setting_cool);
 				else
 					cool_ramp_low = 0;
 				if (cool_range_high != 0.0)
-					cool_ramp_high = (1 + 2 * (1 - slider_setting_cool)) / cool_range_high;
+					cool_ramp_high = 2 + (1 - slider_setting_cool);
 				else
 					cool_ramp_high = 0;
 			} else {
@@ -518,11 +518,11 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 				heat_min = heating_setpoint0 + heat_range_low * slider_setting_heat;
 				heat_max = heating_setpoint0 + heat_range_high * slider_setting_heat;
 				if (heat_range_low != 0.0)
-					heat_ramp_low = (1 + 2 * (1 - slider_setting_heat)) / heat_range_low;
+					heat_ramp_low = 2 + (1 - slider_setting_heat);
 				else
 					heat_ramp_low = 0;
 				if (heat_range_high != 0)
-					heat_ramp_high = (-1 - 2 * (1 - slider_setting_heat)) / heat_range_high;
+					heat_ramp_high = -2 - (1 - slider_setting_heat);
 				else
 					heat_ramp_high = 0;
 			} else {
@@ -772,7 +772,18 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			// apply overrides
 			if((use_override == OU_ON)){
 				if(last_q != 0.0){
-					if(market->current_frame.clearing_price <= last_p){				
+					if(clear_price == last_p && clear_price != market->pricecap){
+						if(market->margin_mode == AM_DENY){
+							*pOverride = -1;
+						} else if(market->margin_mode == AM_PROB){
+							double r = gl_random_uniform(0, 1.0);
+							if(r < market->current_frame.marginal_frac){
+								*pOverride = 1;
+							} else {
+								*pOverride = -1;
+							}
+						}
+					} else if(market->current_frame.clearing_price <= last_p){				
 						*pOverride = 1;
 					} else {
 						*pOverride = -1;
@@ -840,6 +851,10 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			}
 			last_q = *pCoolingDemand;
 		}
+			if(last_p > market->pricecap)
+				last_p = market->pricecap;
+			if(last_p < -market->pricecap)
+				last_p = -market->pricecap;
 		if(0 != strcmp(market->unit, "")){
 			if(0 == gl_convert("kW", market->unit, &(last_q))){
 				gl_error("unable to convert bid units from 'kW' to '%s'", market->unit);
@@ -856,11 +871,16 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				lastbid_id = submit_bid(this->pMarket, OBJECTHDR(this), -last_q, last_p, bid);
 			}
 		}
-		else if (previous_q > 0.001) // This bids if the object is on, but planning to turn off, then the capacity object knows its on
+		else
 		{
-			if (pState != 0 ) {
+			if (last_pState != *pState)
+			{
 				int64 bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
-				lastbid_id = submit_bid_state(this->pMarket, OBJECTHDR(this), -previous_q, -market->pricecap, (*pState > 0 ? 1 : 0), bid);
+				double my_bid = -market->pricecap;
+				if (*pState != 0)
+					my_bid = last_p;
+
+				lastbid_id = submit_bid_state(this->pMarket, OBJECTHDR(this), -last_q, my_bid, (*pState > 0 ? 1 : 0), bid);
 			}
 		}
 	}
@@ -901,7 +921,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 	}
 
-	next_run += (TIMESTAMP)(this->period);
+	next_run += (TIMESTAMP)(market->period);
 
 
 	return (next_run - bid_delay);
