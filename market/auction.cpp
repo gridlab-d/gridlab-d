@@ -769,13 +769,13 @@ void auction::record_curve(double bu, double su){
 	if(CO_EXTRA == curve_log_info)
 		fprintf(curve_file, "# supply curve at %s: %f total and %f unresponsive\n", timestr, cleared_frame.seller_total_quantity, su);
 	for (i=0; i<offers.getcount(); i++){
-		fprintf(curve_file, "%d,%s,%4d,%s,%.3f %s,%.6f\n",(int32)market_id,timestr,i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price);
+		fprintf(curve_file, "%d,%s,%4d,%s,%.3f,%.6f\n",(int32)market_id,timestr,i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,offers.getbid(i)->price);
 	}
 
 	if(CO_EXTRA == curve_log_info)
 		fprintf(curve_file, "# demand curve at %s: %f total and %f unresponsive\n", timestr, cleared_frame.buyer_total_quantity, bu);
 	for (i=0; i<asks.getcount(); i++){
-		fprintf(curve_file, "%d,%s,%4d,%s,%.3f %s,%.6f\n",(int32)market_id,timestr,i,gl_name(asks.getbid(i)->from,name,sizeof(name)), -asks.getbid(i)->quantity,unit,asks.getbid(i)->price);
+		fprintf(curve_file, "%d,%s,%4d,%s,%.3f,%.6f\n",(int32)market_id,timestr,i,gl_name(asks.getbid(i)->from,name,sizeof(name)), -asks.getbid(i)->quantity,asks.getbid(i)->price);
 	}
 
 	if(CO_EXTRA == curve_log_info){
