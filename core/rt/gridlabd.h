@@ -534,6 +534,20 @@ struct s_module_list {
 	MODULE *next;
 };
 
+/* Technology readiness levels (see http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Technology_Readiness_Levels) */
+typedef enum {
+	TRL_UNKNOWN			= 0,
+	TRL_PRINCIPLE		= 1,
+	TRL_CONCEPT			= 2,
+	TRL_PROOF			= 3,
+	TRL_STANDALONE		= 4,
+	TRL_INTEGRATED		= 5,
+	TRL_DEMONSTRATED	= 6,
+	TRL_PROTOTYPE		= 7,
+	TRL_QUALIFIED		= 8,
+	TRL_PROVEN			= 9,
+} TECHNOLOGYREADINESSLEVEL;
+
 typedef enum {CLASSVALID=0xc44d822e} CLASSMAGIC; ///< this is used to uniquely identify class structure
 
 struct s_class_list {
@@ -558,6 +572,7 @@ struct s_class_list {
 		int64 clocks;
 		int32 count;
 	} profiler;
+	TECHNOLOGYREADINESSLEVEL trl; // technology readiness level (1-9, 0=unknown)
 	CLASS *next;
 };
 

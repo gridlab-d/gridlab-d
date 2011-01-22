@@ -25,6 +25,18 @@ static KEYWORD df_keys[] = {
 	{"US", DF_US, df_keys+2},
 	{"EURO", DF_EURO, NULL},
 };
+static KEYWORD trl_keys[] = {
+	{"PRINCIPLE",	TRL_PRINCIPLE, trl_keys+1},
+	{"CONCEPT",		TRL_CONCEPT, trl_keys+2},
+	{"PROOF",		TRL_PROOF, trl_keys+3},
+	{"STANDALONE",	TRL_STANDALONE, trl_keys+4},
+	{"INTEGRATED",	TRL_INTEGRATED, trl_keys+5},
+	{"DEMONSTRATED",TRL_DEMONSTRATED, trl_keys+6},
+	{"PROTOTYPE",	TRL_PROTOTYPE, trl_keys+7},
+	{"QUALIFIED",	TRL_QUALIFIED, trl_keys+8},
+	{"PROVEN",		TRL_PROVEN, trl_keys+9},
+	{"UNKNOWN",		TRL_UNKNOWN, trl_keys+10},
+};
 
 static struct s_varmap {
 	char *name;
@@ -95,6 +107,7 @@ static struct s_varmap {
 	{"browser", PT_char1024, &global_browser, PA_PUBLIC},
 	{"server_portnum",PT_int32,&global_server_portnum, PA_PUBLIC},
 	{"server_quit_on_close",PT_int32,&global_server_quit_on_close, PA_PUBLIC},
+	{"technology_readiness_level", PT_enumeration, &technology_readiness_level, PA_PUBLIC, trl_keys},
 	/* add new global variables here */
 };
 

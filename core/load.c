@@ -5582,6 +5582,31 @@ Done:
 	if (fp!=NULL) fclose(fp);
 	return status;
 }
+
+TECHNOLOGYREADINESSLEVEL calculate_trl(void)
+{
+	char buffer[1024];
+	CLASS *oclass;
+
+	// start optimistically 
+	technology_readiness_level = TRL_PROVEN; 
+	
+	// examine each class loaded
+	for ( oclass=class_get_first_class() ; oclass!=NULL ; oclass=oclass->next )
+	{
+		// if class is inferior
+		if ( oclass->trl < technology_readiness_level )
+		{	
+
+			// downgrade trl
+			technology_readiness_level = oclass->trl;
+			output_verbose("class '%s' TRL is %s", oclass->name, global_getvar("technology_readiness_level",buffer,sizeof(buffer)));
+		}
+	}
+	output_verbose("model TRL is %s", global_getvar("technology_readiness_level",buffer,sizeof(buffer)));
+	return technology_readiness_level;
+}
+
 /** Load a file
 	@return STATUS is SUCCESS if the load was ok, FAILED if there was a problem
 	@todo Rollback the model data if the load failed (ticket #32)
@@ -5670,6 +5695,8 @@ STATUS loadall(char *file){
 //			object_remove_by_id(i);
 //		}
 //	}
+
+	calculate_trl();
 
 	loaded_files++;
 	return load_status;

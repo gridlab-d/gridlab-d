@@ -7,6 +7,8 @@
 #set profiler=1
 #define include=../../core
 
+module optimize;
+
 class quadratic {
 	double y;
 	double x;
@@ -40,8 +42,6 @@ object quadratic {
 	c 0.89;
 	x 0.52;
 }
-
-module optimize;
 
 object simple {
 	objective "quadratic.y";

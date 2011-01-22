@@ -41,6 +41,8 @@ simple::simple(MODULE *module)
 			sprintf(msg, "unable to register object class implemented by %s", __FILE__);
 			throw msg;
 		}
+		else
+			oclass->trl = TRL_STANDALONE;
 
 		if (gl_publish_variable(oclass,
 			PT_char1024, "objective", PADDR(objective), PT_DESCRIPTION, "Optimization objective value",
