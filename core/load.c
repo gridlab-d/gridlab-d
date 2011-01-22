@@ -5595,7 +5595,7 @@ TECHNOLOGYREADINESSLEVEL calculate_trl(void)
 	for ( oclass=class_get_first_class() ; oclass!=NULL ; oclass=oclass->next )
 	{
 		// if class is inferior
-		if ( oclass->trl < technology_readiness_level )
+		if ( oclass->profiler.numobjs>0 && oclass->trl<technology_readiness_level )
 		{	
 
 			// downgrade trl
