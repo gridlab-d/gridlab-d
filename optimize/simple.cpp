@@ -21,6 +21,14 @@ simple *simple::defaults = NULL;
 static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_POSTTOPDOWN;
 
+/* comparison operators */
+static inline bool lt(double a, double b) { return a<b; };
+static inline bool le(double a, double b) { return a<=b; };
+static inline bool eq(double a, double b) { return a==b; };
+static inline bool ne(double a, double b) { return a!=b; };
+static inline bool ge(double a, double b) { return a>=b; };
+static inline bool gt(double a, double b) { return a>b; };
+
 /* Class registration is only called once to register the class with the core */
 simple::simple(MODULE *module)
 {
@@ -78,7 +86,7 @@ int simple::init(OBJECT *parent)
 		char *name;
 		char *param;
 		double **var;
-		CONSTRAINTOP *op;
+		bool (**op)(double,double);
 		double *value;
 	} map[] = {
 		{"objective",	objective,	&pObjective},
@@ -92,7 +100,9 @@ int simple::init(OBJECT *parent)
 		char pname[1024];
 		OBJECT *obj;
 		PROPERTY *prop;
-		if (strcmp(map[n].param,"")!=0 && sscanf(map[n].param,"%[^.:].%s",oname,pname)!=2)
+		if ( strcmp(map[n].param,"")==0 )
+			continue;
+		if ( sscanf(map[n].param,"%[^.:].%[a-zA-Z0-9_.]",oname,pname)!=2 )
 		{
 			gl_error("%s could not be parsed, expected term in the form 'objectname'.'propertyname'", map[n].name);
 			return 0;
@@ -109,27 +119,51 @@ int simple::init(OBJECT *parent)
 		// must outrank dependent objects
 		if ( my->rank<=obj->rank ) gl_set_rank(my,obj->rank+1);
 
-		// if not a constraint
-		if ( map[n].op==NULL )
+		// get property
+		prop = gl_get_property(obj,pname);
+		if ( prop==NULL )
 		{
-			// get property
-			prop = gl_get_property(obj,pname);
-			if ( prop==NULL )
-			{
-				gl_error("property '%s' could not be found in object '%s'", pname, oname);
-				return 0;
-			}
-			if ( prop->ptype!=PT_double )
-			{
-				gl_error("property '%s' in object '%s' is not a double", pname, oname);
-				return 0;
-			}
-			*(map[n].var) = (double*)gl_get_addr(obj,pname);;
+			gl_error("property '%s' could not be found in object '%s'", pname, oname);
+			return 0;
 		}
+		if ( prop->ptype!=PT_double )
+		{
+			gl_error("property '%s' in object '%s' is not a double", pname, oname);
+			return 0;
+		}
+		*(map[n].var) = (double*)gl_get_addr(obj,pname);;
 
 		// parse constraint
-		else {
-			// TODO
+		if ( map[n].op!=NULL )
+		{
+			char varname[256], op[32], value[64];
+			switch (sscanf(constraint, "%[^ \t<=>!]%[<=>!]%s", varname, op, value)) {
+			case 0:
+				break;
+			case 1:
+				gl_error("constraint '%s' in object '%s' is missing a valid comparison operator", constraint, oname);
+				return 0;
+			case 2:
+				gl_error("constraint '%s' in object '%s' is missing a valid comparison value", constraint, oname);
+				return 0;
+			case 3:
+				{	if (strcmp(op,"<")==0) *(map[n].op) = lt; else
+					if (strcmp(op,"<=")==0) *(map[n].op) = le; else
+					if (strcmp(op,"==")==0) *(map[n].op) = eq; else
+					if (strcmp(op,">=")==0) *(map[n].op) = ge; else
+					if (strcmp(op,">")==0) *(map[n].op) = gt; else
+					if (strcmp(op,"!=")==0) *(map[n].op) = ne; else
+					{
+						gl_error("constraint '%s' in object '%s' operator '%s' is invalid", constraint, oname, op);
+						return 0;
+					}
+				}
+				*(map[n].value) = atof(value);
+				break;
+			default:
+				gl_error("constraint '%s' in object '%s' parsing resulted in an internal error", constraint, oname);
+				return 0;
+			}
 		}
 	}
 
@@ -162,11 +196,17 @@ int simple::init(OBJECT *parent)
 	}
 
 	// check the trial limit
-	if ( trials<=0 )
+	if ( trials<0 )
 	{
-		gl_error("The trial limit 'trials' in simple optimizer object '%s' must be a positive integer value", gl_name(my,buffer,sizeof(buffer))?buffer:"???");
+		gl_error("The trial limit 'trials' in simple optimizer object '%s' must be zero or a positive integer value", gl_name(my,buffer,sizeof(buffer))?buffer:"???");
 		return 0;
 	}
+
+	gl_verbose("optimization for %s:", gl_name(my,buffer,sizeof(buffer)));
+	gl_verbose("  %s(%s)", goal==OG_MINIMUM?"minimum":(goal==OG_MAXIMUM?"maximum":"extremum"),objective);
+	gl_verbose("    given %s", variable);
+	if (pConstraint)
+		gl_verbose("    subject to %s",constraint);
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -174,17 +214,23 @@ int simple::init(OBJECT *parent)
 	/* Presync is called when the clock needs to advance on the first top-down pass */
 TIMESTAMP simple::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	// first pass is never for a constraint
+	if (t1>t0) search_step=0;
+
 	// if more tries needed 
 	switch (pass) {
-	case 0:
+	case 0: // zero-order estimate
 		last_x = next_x;
 		*pVariable = next_x - delta;
 		break;
-	case 1:
+	case 1: // first-order estimate
 		*pVariable = next_x;
 		break;
-	case 2:
+	case 2: // second-order estimate
 		*pVariable = next_x + delta;
+		break;
+	case 3: // finalize
+		*pVariable = next_x;
 		break;
 	default:
 		break;
@@ -199,7 +245,7 @@ TIMESTAMP simple::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	char buffer[1024];
 
 	// trial limit reached or objective cannot be calculated
-	if ( trial>trials )
+	if ( trials>0 && trial>trials )
 	{
 		gl_error("The trial limit of %d in simple optimizer object '%s' has been reached", trials, gl_name(my,buffer,sizeof(buffer))?buffer:"???");
 		return TS_INVALID; /* stop */
@@ -211,55 +257,112 @@ TIMESTAMP simple::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	switch ( pass ) {
-	case 0:
-		// zero order values
+	case 0:	// zero order estimate
 		last_y = *pObjective;
+		gl_verbose("y  = %.4f", last_y);
 		pass = 1;
 		return t1; // need another pass
-	case 1:
-		// first order values
+	case 1:	// first order estimate
 		last_dy = (*pObjective - last_y)/delta;
 		last_y = *pObjective;
 		pass = 2;
 		return t1; // need another pass
-	case 2: 
-	{	// second order values
+	case 2: { // second order estimate
 		double dy = (*pObjective - last_y)/delta;
 		double ddy = (dy - last_dy)/delta;
 		dy = (dy+last_dy)/2;
 		gl_verbose("y' = %.4f", dy);
 		gl_verbose("y\" = %.4f", ddy);
 		if ( fabs(dy)<epsilon )
+			pass = 3;
+
+		else 
 		{
-			pass = 0;
-			return TS_NEVER; // done
+			if ( ddy==0 )
+			{
+				gl_error("The objective '%s' in simple optimizer object '%s' does not appear to have a non-zero second derivative near '%s=%g', which cannot lead to an extremum", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
+				return TS_INVALID;
+			}
+			else if ( ddy<0 && goal==OG_MINIMUM )
+			{
+				gl_error("The minimum objective '%s' in '%s' cannot be found from '%s=%g'", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
+				return TS_INVALID;
+			}
+			else if ( ddy>0 && goal==OG_MAXIMUM )
+			{
+				gl_error("The maximum objective '%s' in '%s' cannot be found from '%s=%g'", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
+				return TS_INVALID;
+			}
+			next_x = last_x - dy/ddy;
+			gl_verbose("x <- %.4f", next_x);
+			if ( pConstraint )
+			{
+				// determine which constaint violated
+				bool violation = constraint_broken(*pConstraint);
+
+				if ( search_step>0 && fabs(search_step)<epsilon )
+					pass = 3;
+
+				// if the constraint is on the decision variable
+				else if ( pConstraint==pVariable )
+				{
+					// and it is constrained
+					if ( violation )
+					{
+						// no brainer--we're done
+						*pVariable = constrain.value;
+						gl_verbose("%s constrained to %g", variable, constrain.value);
+						pass = 3;
+					}
+				}
+				else if ( violation ) // out of bounds
+				{
+					gl_verbose("constraint %s violated", constraint);
+					if ( search_step!=0 ) // was constrained
+					{
+						// not far enough
+						search_step /= 2;
+						next_x = last_x + search_step;
+						pass = 0;
+					}
+					else // newly constrained
+					{
+						// half step
+						search_step = -(dy/ddy);
+						next_x = last_x + search_step;
+						pass = 0;
+					}
+				}
+				else if ( search_step!=0 ) // was constrained but is in bounds now
+				{
+					// too far
+					search_step /= 2;
+					next_x = last_x - search_step;
+					pass = 0;
+				}
+				else // not constrained (yet)
+
+					// do nothing
+					pass = 0;
+			}
+			else
+				pass = 0;
+			gl_verbose("x <- %.4f", next_x);
 		}
-		if ( ddy==0 )
-		{
-			gl_error("The objective '%s' in simple optimizer object '%s' does not appear to have a non-zero second derivative near '%s=%g', which cannot lead to an extremum", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
-			return TS_INVALID;
-		}
-		else if ( ddy<0 && goal==OG_MINIMUM )
-		{
-			gl_error("The minimum objective '%s' in '%s' cannot be found from '%s=%g'", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
-			return TS_INVALID;
-		}
-		else if ( ddy>0 && goal==OG_MAXIMUM )
-		{
-			gl_error("The maximum objective '%s' in '%s' cannot be found from '%s=%g'", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
-			return TS_INVALID;
-		}
-		next_x = last_x - dy/ddy;
 		*pVariable = last_x;
-		gl_verbose("x <- %.4f", next_x);
-		pass = 0;
-		trials++;
+		trial++;
 		return t1;
-	} 
+		} 
+	case 3:
 	default:
 		pass=0;
 		return TS_NEVER;
 	}
+}
+
+bool simple::constraint_broken(double x)
+{
+	return !constrain.op(x,constrain.value);
 }
 
 

@@ -18,28 +18,29 @@ typedef enum {OG_EXTREMUM, OG_MINIMUM, OG_MAXIMUM} OBJECTIVEGOAL;
 
 class simple {
 protected:
-	OBJECTIVEGOAL goal;
-	char1024 objective;
-	char1024 variable;
-	char1024 constraint;
-	double delta;
-	double epsilon;
-	int32 trials;
+	OBJECTIVEGOAL goal; // objective goal description
+	char1024 objective; // objective variable name
+	char1024 variable; // decision variable name
+	char1024 constraint; // constraint description
+	double delta; // delta used in calculating slopes
+	double epsilon; // maximum error used in calculating completion
+	int32 trials; // maximum number of trials allowed
 private:
-	int32 trial;
-	int32 pass;
-	double last_x;
-	double last_y;
-	double last_dy;
-	double next_x;
-	double *pObjective;
-	double *pVariable;
-	double *pConstraint;
-	typedef enum {LT,LE,EQ,GE,GT,NE} CONSTRAINTOP;
+	int32 trial; // trial counter
+	int32 pass; // pass number (0-2 is order estimate, 3 is constrained)
+	double last_x; // last value of decision variable found
+	double last_y; // last value of objective variable found
+	double last_dy; // last slope of objective variable found
+	double next_x; // next value of decision variable to use
+	double *pObjective; // objective variable
+	double *pVariable; // decision variable
+	double *pConstraint; // constraint variable
 	struct {
-		CONSTRAINTOP op;
-		double value;
-	} constrain;
+		bool (*op)(double,double); // constraint operation
+		double value; // constraint value
+	} constrain; // describe a constraint
+	bool constraint_broken(double x); // detect constraint
+	double search_step; // use to deal with constraints
 public:
 	/* required implementations */
 	simple(MODULE *module);

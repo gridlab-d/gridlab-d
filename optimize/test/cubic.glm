@@ -77,7 +77,6 @@ object simple {
 	goal MINIMUM;
 	objective "cubic1.y";
 	variable "cubic1.x";
-	constraint "cubic1.y<100";
 	delta 0.001;
 	epsilon 0.00001;
 	trials 5; 
@@ -87,7 +86,6 @@ object simple {
 	goal MAXIMUM;
 	objective "cubic2.y";
 	variable "cubic2.x";
-	constraint "cubic2.y<100";
 	delta 0.001;
 	epsilon 0.00001;
 	trials 5; 

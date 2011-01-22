@@ -36,9 +36,9 @@ class quadratic {
 object quadratic {
 	name quadratic;
 	a -2;
-	b random.normal(0,1);
-	c random.normal(0,1);
-	x random.normal(0,1);
+	b 0.25;
+	c 0.89;
+	x 0.52;
 }
 
 module optimize;
@@ -46,7 +46,7 @@ module optimize;
 object simple {
 	objective "quadratic.y";
 	variable "quadratic.x";
+	constraint "quadratic.y>1.0";
 	delta 0.001;
 	epsilon 0.00001;
-	trials 1; 
 }
