@@ -77,12 +77,15 @@ static double tc_erf(double x)
     return two_sqrtpi*sum;
 }
 
-passive_controller::passive_controller(MODULE *mod){
+passive_controller::passive_controller(MODULE *mod)
+{
 	if(oclass == NULL){
 		oclass = gl_register_class(mod,"passive_controller",sizeof(passive_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
-		if(oclass == NULL){
-			GL_THROW("unable to register object class implemented by %s", __FILE__);
-		}
+		if (oclass==NULL)
+			throw "unable to register class passive_controller";
+		else
+			oclass->trl = TRL_QUALIFIED;
+
 		if(gl_publish_variable(oclass,
 			// series inputs
 /**/		PT_int32,"input_state",PADDR(input_state),

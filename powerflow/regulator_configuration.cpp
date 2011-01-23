@@ -32,7 +32,9 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 		// register the class definition
 		oclass = gl_register_class(mod,"regulator_configuration",sizeof(regulator_configuration),0x00);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class regulator_configuration";
+		else
+			oclass->trl = TRL_PROVEN;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

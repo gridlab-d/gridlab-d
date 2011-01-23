@@ -24,8 +24,10 @@ frequency_gen::frequency_gen(MODULE *mod) : powerflow_object(mod)
 	{
 		pclass = powerflow_object::oclass;
 		oclass = gl_register_class(mod,"frequency_gen",sizeof(frequency_gen),PC_PRETOPDOWN|PC_POSTTOPDOWN);
-		if(oclass == NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+		if (oclass==NULL)
+			throw "unable to register class frequency_gen";
+		else
+			oclass->trl = TRL_DEMONSTRATED;
 
 		if(gl_publish_variable(oclass,
 			PT_enumeration,"Frequency_Mode",PADDR(FreqObjectMode),PT_DESCRIPTION,"Frequency object operations mode",

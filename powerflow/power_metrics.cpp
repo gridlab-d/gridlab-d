@@ -24,9 +24,11 @@ power_metrics::power_metrics(MODULE *mod) : powerflow_library(mod)
 	if(oclass == NULL)
 	{
 		oclass = gl_register_class(mod,"power_metrics",sizeof(power_metrics),0x00);
-		if(oclass == NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
-		
+		if (oclass==NULL)
+			throw "unable to register class power_metrics";
+		else
+			oclass->trl = TRL_QUALIFIED;
+
 		if(gl_publish_variable(oclass,
 			PT_double, "SAIFI", PADDR(SAIFI),
 			PT_double, "SAIDI", PADDR(SAIDI),

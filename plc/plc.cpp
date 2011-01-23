@@ -48,6 +48,10 @@ plc::plc(MODULE *mod)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"plc",sizeof(plc),PC_BOTTOMUP);
+		if (oclass==NULL)
+			throw "unable to register class plc";
+		else
+			oclass->trl = TRL_INTEGRATED;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

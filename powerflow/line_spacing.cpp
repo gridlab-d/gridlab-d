@@ -24,9 +24,11 @@ line_spacing::line_spacing(MODULE *mod) : powerflow_library(mod)
 	if(oclass == NULL)
 	{
 		oclass = gl_register_class(mod,"line_spacing",sizeof(line_spacing),0x00);
-        if(oclass == NULL)
-            GL_THROW("unable to register line_spacing class implemented by %s",__FILE__);
-        
+		if (oclass==NULL)
+			throw "unable to register class line_spacing";
+		else
+			oclass->trl = TRL_PROVEN;
+
         if(gl_publish_variable(oclass,
 			PT_double, "distance_AB[ft]",PADDR(distance_AtoB),   
 			PT_double, "distance_BC[ft]",PADDR(distance_BtoC),   

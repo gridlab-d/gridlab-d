@@ -55,7 +55,9 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 		// register the class definition
 		oclass = gl_register_class(mod,"triplex_meter",sizeof(triplex_meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class triplex_meter";
+		else
+			oclass->trl = TRL_PROVEN;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

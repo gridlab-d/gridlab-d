@@ -29,7 +29,9 @@ powerflow_library::powerflow_library(MODULE *mod)
 	{
 		oclass = gl_register_class(mod,"powerflow_library",sizeof(powerflow_library),PC_NOSYNC);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class powerflow_library";
+		else
+			oclass->trl = TRL_PROVEN;
 	}
 }
 

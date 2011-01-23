@@ -182,6 +182,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 
 	/* register the first class implemented, use SHARE to reveal variables */
 	player_class = gl_register_class(module,"player",sizeof(struct player),PC_PRETOPDOWN); 
+	player_class->trl = TRL_PROVEN;
 	PUBLISH_STRUCT(player,char32,property);
 	PUBLISH_STRUCT(player,char1024,file);
 	PUBLISH_STRUCT(player,char8,filetype);
@@ -189,6 +190,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 
 	/* register the first class implemented, use SHARE to reveal variables */
 	shaper_class = gl_register_class(module,"shaper",sizeof(struct shaper),PC_PRETOPDOWN); 
+	shaper_class->trl = TRL_QUALIFIED;
 	PUBLISH_STRUCT(shaper,char1024,file);
 	PUBLISH_STRUCT(shaper,char8,filetype);
 	PUBLISH_STRUCT(shaper,char256,group);
@@ -198,6 +200,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 
 	/* register the other classes as needed, */
 	recorder_class = gl_register_class(module,"recorder",sizeof(struct recorder),PC_POSTTOPDOWN);
+	recorder_class->trl = TRL_PROVEN;
 	PUBLISH_STRUCT(recorder,char1024,property);
 	PUBLISH_STRUCT(recorder,char32,trigger);
 	PUBLISH_STRUCT(recorder,char1024,file);
@@ -223,6 +226,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 
 		/* register the other classes as needed, */
 	multi_recorder_class = gl_register_class(module,"multi_recorder",sizeof(struct recorder),PC_POSTTOPDOWN);
+	multi_recorder_class->trl = TRL_QUALIFIED;
 	if(gl_publish_variable(multi_recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
 		PT_char1024, "property", ((char*)&(my.property) - (char *)&my),
@@ -246,6 +250,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 
 	/* register the other classes as needed, */
 	collector_class = gl_register_class(module,"collector",sizeof(struct collector),PC_POSTTOPDOWN);
+	collector_class->trl = TRL_PROVEN;
 	PUBLISH_STRUCT(collector,char1024,property);
 	PUBLISH_STRUCT(collector,char32,trigger);
 	PUBLISH_STRUCT(collector,char1024,file);

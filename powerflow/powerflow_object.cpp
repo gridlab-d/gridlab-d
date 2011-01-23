@@ -102,7 +102,10 @@ powerflow_object::powerflow_object(MODULE *mod)
 		oclass = gl_register_class(mod,"powerflow_object",sizeof(powerflow_object),PC_NOSYNC);
 #endif
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class powerflow_object";
+		else
+			oclass->trl = TRL_PROVEN;
+
 		if(gl_publish_variable(oclass,
 			PT_set, "phases", PADDR(phases),
 				PT_KEYWORD, "G", (set)GROUND,

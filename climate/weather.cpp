@@ -18,6 +18,11 @@ weather::weather(MODULE *module){
 	if (oclass==NULL)
 	{
 		oclass = gl_register_class(module,"weather",sizeof(weather),NULL);
+		if (oclass==NULL)
+			throw "unable to register class weather";
+		else
+			oclass->trl = TRL_PROVEN;
+
 		if (gl_publish_variable(oclass,
 			PT_double,"temperature[degF]",PADDR(temperature),
 			PT_double,"humidity[%]",PADDR(humidity),

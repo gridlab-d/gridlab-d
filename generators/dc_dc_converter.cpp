@@ -33,7 +33,9 @@ dc_dc_converter::dc_dc_converter(MODULE *module)
 	{
 		oclass = gl_register_class(module,"dc_dc_converter",sizeof(dc_dc_converter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__); 
+			throw "unable to register class dc_dc_converter";
+		else
+			oclass->trl = TRL_PROOF;
 		
 		if (gl_publish_variable(oclass,
 

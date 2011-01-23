@@ -133,6 +133,10 @@ comm::comm(MODULE *mod)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"comm",sizeof(comm),PC_PRETOPDOWN);
+		if (oclass==NULL)
+			throw "unable to register class comm";
+		else
+			oclass->trl = TRL_PROOF;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

@@ -28,7 +28,9 @@ stubauction::stubauction(MODULE *module)
 	{
 		oclass = gl_register_class(module,"stubauction",sizeof(stubauction),passconfig);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__);
+			throw "unable to register class stubauction";
+		else
+			oclass->trl = TRL_QUALIFIED;
 
 		if (gl_publish_variable(oclass,
 			PT_char32, "unit", PADDR(unit), PT_DESCRIPTION, "unit of quantity",

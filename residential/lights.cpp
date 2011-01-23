@@ -56,11 +56,13 @@ lights::lights(MODULE *mod)
 		// register the class definition
 		oclass = gl_register_class(mod,"lights",sizeof(lights),PC_BOTTOMUP);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class lights";
 			/* TROUBLESHOOT
 				The file that implements the lights in the residential module cannot register the class.
 				This is an internal error.  Contact support for assistance.
 			 */
+		else
+			oclass->trl = TRL_QUALIFIED;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

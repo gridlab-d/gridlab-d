@@ -36,8 +36,10 @@ histogram::histogram(MODULE *mod)
 		gl_debug("construction histogram class");
 #endif
 		oclass = gl_register_class(mod,"histogram",sizeof(histogram), PC_PRETOPDOWN);
-        if(oclass == NULL)
-            GL_THROW("unable to register object class implemented by %s",__FILE__);
+		if (oclass==NULL)
+			throw "unable to register class histogram";
+		else
+			oclass->trl = TRL_PROTOTYPE;
         
         if(gl_publish_variable(oclass,
 			PT_char1024, "filename", PADDR(filename),

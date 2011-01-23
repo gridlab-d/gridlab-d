@@ -23,6 +23,10 @@ enum_assert::enum_assert(MODULE *module)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gl_register_class(module,"enum_assert",sizeof(enum_assert),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		if (oclass==NULL)
+			throw "unable to register class enum_assert";
+		else
+			oclass->trl = TRL_PROVEN;
 
 		if (gl_publish_variable(oclass,
 			// TO DO:  publish your variables here

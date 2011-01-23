@@ -69,7 +69,9 @@ link::link(MODULE *mod)
 		// register the class definition
 		link_class = oclass = gl_register_class(mod,"link",sizeof(link),PC_BOTTOMUP|PC_UNSAFE_OVERRIDE_OMIT);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class link";
+		else
+			oclass->trl = TRL_STANDALONE;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

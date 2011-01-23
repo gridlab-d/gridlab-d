@@ -30,8 +30,11 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 	{
 		pclass = powerflow_object::oclass;
 		oclass = gl_register_class(mod,"volt_var_control",sizeof(volt_var_control),PC_PRETOPDOWN|PC_POSTTOPDOWN);
-		if(oclass == NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+		if (oclass==NULL)
+			throw "unable to register class volt_var_control";
+		else
+			oclass->trl = TRL_PROVEN;
+
 		if(gl_publish_variable(oclass,
 			PT_enumeration, "control_method", PADDR(control_method),PT_DESCRIPTION,"IVVC activated or in standby",
 				PT_KEYWORD, "ACTIVE", ACTIVE,

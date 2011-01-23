@@ -11,12 +11,15 @@
 
 CLASS *double_controller::oclass = NULL;
 
-double_controller::double_controller(MODULE *module){
+double_controller::double_controller(MODULE *module)
+{
 	if (oclass==NULL)
 	{
 		oclass = gl_register_class(module,"double_controller",sizeof(double_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__);
+			throw "unable to register class double_controller";
+		else
+			oclass->trl = TRL_QUALIFIED;
 
 		if (gl_publish_variable(oclass,
 			PT_enumeration, "thermostat_mode", PADDR(thermostat_mode),

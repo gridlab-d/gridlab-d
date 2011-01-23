@@ -41,9 +41,11 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 	if(oclass == NULL)
 	{
 		oclass = gl_register_class(mod,"transformer_configuration",sizeof(transformer_configuration),PC_BOTTOMUP|PC_POSTTOPDOWN);
-		if(oclass == NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
-		
+		if (oclass==NULL)
+			throw "unable to register class transformer_configuration";
+		else
+			oclass->trl = TRL_PROVEN;
+
 		if(gl_publish_variable(oclass,
 			PT_enumeration,"connect_type",PADDR(connect_type),
 				PT_KEYWORD,"UNKNOWN",UNKNOWN,

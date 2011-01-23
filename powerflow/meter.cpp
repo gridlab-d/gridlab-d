@@ -53,7 +53,9 @@ meter::meter(MODULE *mod) : node(mod)
 		// register the class definition
 		oclass = gl_register_class(mod,"meter",sizeof(meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class meter";
+		else
+			oclass->trl = TRL_PROVEN;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

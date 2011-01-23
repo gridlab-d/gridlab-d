@@ -72,7 +72,10 @@ freezer::freezer(MODULE *module) : residential_enduse(module)
 	{
 		oclass = gl_register_class(module,"freezer",sizeof(freezer),PC_PRETOPDOWN | PC_BOTTOMUP);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class freezer";
+		else
+			oclass->trl = TRL_DEMONSTRATED;
+
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

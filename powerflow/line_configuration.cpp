@@ -29,8 +29,10 @@ line_configuration::line_configuration(MODULE *mod) : powerflow_library(mod)
 	if(oclass == NULL)
 	{
 		oclass = oclass = gl_register_class(mod,"line_configuration",sizeof(line_configuration),0x00);
-        if(oclass == NULL)
-            GL_THROW("unable to register line_configuration class implemented by %s",__FILE__);
+		if (oclass==NULL)
+			throw "unable to register class line_configuration";
+		else
+			oclass->trl = TRL_PROVEN;
         
         if(gl_publish_variable(oclass,
 			PT_object, "conductor_A",PADDR(phaseA_conductor),

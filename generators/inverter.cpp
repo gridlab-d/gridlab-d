@@ -33,7 +33,9 @@ inverter::inverter(MODULE *module)
 	{
 		oclass = gl_register_class(module,"inverter",sizeof(inverter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__); 
+			throw "unable to register class inverter";
+		else
+			oclass->trl = TRL_PROOF;
 		
 		if (gl_publish_variable(oclass,
 

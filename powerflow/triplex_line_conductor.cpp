@@ -24,9 +24,11 @@ triplex_line_conductor::triplex_line_conductor(MODULE *mod) : powerflow_library(
 	if(oclass == NULL)
 	{
 		oclass = gl_register_class(mod,"triplex_line_conductor",sizeof(triplex_line_conductor),0x00);
-        if(oclass == NULL)
-            GL_THROW("unable to register triplex_line_conductor class implemented by %s",__FILE__);
-        
+		if (oclass==NULL)
+			throw "unable to register class triplex_line_conductor";
+		else
+			oclass->trl = TRL_PROVEN;
+
         if(gl_publish_variable(oclass,
 			PT_double, "resistance[Ohm/mile]",PADDR(resistance),
 			PT_double, "geometric_mean_radius[ft]", PADDR(geometric_mean_radius),

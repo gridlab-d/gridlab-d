@@ -29,9 +29,11 @@ restoration::restoration(MODULE *mod) : powerflow_library(mod)
 	if(oclass == NULL)
 	{
 		oclass = gl_register_class(mod,"restoration",sizeof(restoration),0x00);
-		if(oclass == NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
-		
+		if (oclass==NULL)
+			throw "unable to register class restoration";
+		else
+			oclass->trl = TRL_PROTOTYPE;
+
 		if(gl_publish_variable(oclass,
 			PT_int32,"reconfig_attempts",PADDR(reconfig_attempts),
 			PT_int32,"reconfig_iteration_limit",PADDR(reconfig_iter_limit),

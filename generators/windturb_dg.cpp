@@ -23,6 +23,10 @@ windturb_dg::windturb_dg(MODULE *module)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gl_register_class(module,"windturb_dg",sizeof(windturb_dg),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		if (oclass==NULL)
+			throw "unable to register class windturb_dg";
+		else
+			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
 			// TO DO:  publish your variables here

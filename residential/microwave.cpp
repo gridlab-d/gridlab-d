@@ -32,7 +32,9 @@ microwave::microwave(MODULE *module) : residential_enduse(module)
 		// register the class definition
 		oclass = gl_register_class(module,"microwave",sizeof(microwave),PC_BOTTOMUP);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class microwave";
+		else
+			oclass->trl = TRL_DEMONSTRATED;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

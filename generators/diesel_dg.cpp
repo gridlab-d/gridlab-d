@@ -29,7 +29,9 @@ diesel_dg::diesel_dg(MODULE *module)
 	{
 		oclass = gl_register_class(module,"diesel_dg",sizeof(diesel_dg),passconfig);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__); 
+			throw "unable to register class diesel_dg";
+		else
+			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
 			PT_enumeration,"Gen_mode",PADDR(Gen_mode),

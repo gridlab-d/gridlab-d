@@ -33,8 +33,10 @@ fuse::fuse(MODULE *mod) : link(mod)
 		pclass = relay::oclass;
 		
 		oclass = gl_register_class(mod,"fuse",sizeof(fuse),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
-        if(oclass == NULL)
-            GL_THROW("unable to register object class implemented by %s",__FILE__);
+		if (oclass==NULL)
+			throw "unable to register class fuse";
+		else
+			oclass->trl = TRL_QUALIFIED;
         
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "link",

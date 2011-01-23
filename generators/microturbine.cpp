@@ -33,7 +33,9 @@ microturbine::microturbine(MODULE *module)
 	{
 		oclass = gl_register_class(module,"microturbine",sizeof(microturbine),passconfig);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__); 
+			throw "unable to register class microturbine";
+		else
+			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
 			PT_enumeration,"generator_mode",PADDR(gen_mode_v),

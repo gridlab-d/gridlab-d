@@ -24,9 +24,11 @@ underground_line_conductor::underground_line_conductor(MODULE *mod) : powerflow_
 	if(oclass == NULL)
 	{
 		oclass = gl_register_class(mod,"underground_line_conductor",sizeof(underground_line_conductor),0x00);
-        if(oclass == NULL)
-            GL_THROW("unable to register underground_line_conductor class implemented by %s",__FILE__);
-        
+		if (oclass==NULL)
+			throw "unable to register class underground_line_conductor";
+		else
+			oclass->trl = TRL_PROVEN;
+
         if(gl_publish_variable(oclass,
 			PT_double, "outer_diameter[in]",PADDR(outer_diameter),
 			PT_double, "conductor_gmr[ft]", PADDR(conductor_gmr),

@@ -26,9 +26,11 @@ triplex_line::triplex_line(MODULE *mod) : line(mod)
 		pclass = line::oclass;
 		
 		oclass = gl_register_class(mod,"triplex_line",sizeof(triplex_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
-        if(oclass == NULL)
-            GL_THROW("unable to register object class implemented by %s",__FILE__);
-        
+		if (oclass==NULL)
+			throw "unable to register class triplex_line";
+		else
+			oclass->trl = TRL_PROVEN;
+
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);

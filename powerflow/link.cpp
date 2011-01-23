@@ -110,8 +110,11 @@ link::link(MODULE *mod) : powerflow_object(mod)
 		pclass = powerflow_object::oclass;
 		oclass = gl_register_class(mod,"link",sizeof(link),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
-        if(gl_publish_variable(oclass,
+			throw "unable to register class link";
+		else
+			oclass->trl = TRL_PROVEN;
+		
+		if(gl_publish_variable(oclass,
 			PT_INHERIT, "powerflow_object",
 			PT_enumeration, "status", PADDR(status),
 				PT_KEYWORD, "CLOSED", LS_CLOSED,

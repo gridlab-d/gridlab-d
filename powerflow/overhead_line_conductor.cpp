@@ -24,9 +24,11 @@ overhead_line_conductor::overhead_line_conductor(MODULE *mod) : powerflow_librar
 	if(oclass == NULL)
 	{
 		oclass = gl_register_class(mod,"overhead_line_conductor",sizeof(overhead_line_conductor),0x00);
-        if(oclass == NULL)
-            GL_THROW("unable to register overhead_line_conductor class implemented by %s",__FILE__);
-        
+		if (oclass==NULL)
+			throw "unable to register class overhead_line_conductor";
+		else
+			oclass->trl = TRL_PROVEN;
+
         if(gl_publish_variable(oclass,
            PT_double, "geometric_mean_radius[ft]",PADDR(geometric_mean_radius),
            PT_double, "resistance[Ohm/mile]",PADDR(resistance),

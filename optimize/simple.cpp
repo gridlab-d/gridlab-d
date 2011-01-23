@@ -36,13 +36,9 @@ simple::simple(MODULE *module)
 	{
 		oclass = gl_register_class(module,"simple",sizeof(simple),passconfig);
 		if (oclass==NULL)
-		{
-			static char msg[256];
-			sprintf(msg, "unable to register object class implemented by %s", __FILE__);
-			throw msg;
-		}
+			throw "unable to register class simple";
 		else
-			oclass->trl = TRL_STANDALONE;
+			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
 			PT_char1024, "objective", PADDR(objective), PT_DESCRIPTION, "Optimization objective value",

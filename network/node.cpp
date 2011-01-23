@@ -80,7 +80,9 @@ node::node(MODULE *mod)
 		// register the class definition
 		node_class = oclass = gl_register_class(mod,"node",sizeof(node),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class node";
+		else
+			oclass->trl = TRL_STANDALONE;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

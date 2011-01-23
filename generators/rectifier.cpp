@@ -32,7 +32,9 @@ rectifier::rectifier(MODULE *module)
 	{
 		oclass = gl_register_class(module,"rectifier",sizeof(rectifier),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__); 
+			throw "unable to register class rectifier";
+		else
+			oclass->trl = TRL_PROOF;
 		
 		if (gl_publish_variable(oclass,
 

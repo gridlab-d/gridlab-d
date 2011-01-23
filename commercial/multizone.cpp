@@ -35,7 +35,9 @@ multizone::multizone(MODULE *module)
 	{
 		oclass = gl_register_class(module,"multizone",sizeof(multizone),passconfig);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__);
+			throw "unable to register class multizone";
+		else
+			oclass->trl = TRL_INTEGRATED;
 
 		if (gl_publish_variable(oclass,
 			/* TODO: add your published properties here */

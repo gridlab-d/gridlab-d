@@ -56,7 +56,9 @@ metrics::metrics(MODULE *module)
 	{
 		oclass = gl_register_class(module,"metrics",sizeof(metrics),PC_POSTTOPDOWN);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__);
+			throw "unable to register class metrics";
+		else
+			oclass->trl = TRL_DEMONSTRATED;
 
 		if (gl_publish_variable(oclass,
 			PT_char1024, "report_file", PADDR(report_file),

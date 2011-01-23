@@ -64,11 +64,10 @@ auction::auction(MODULE *module)
 	if (oclass==NULL)
 	{
 		oclass = gl_register_class(module,"auction",sizeof(auction),passconfig);
-		if (oclass==NULL){
-			char msg[256];
-			sprintf(msg, "unable to register object class implemented by %s", __FILE__);
-			throw msg;
-		}
+		if (oclass==NULL)
+			throw "unable to register class auction";
+		else
+			oclass->trl = TRL_QUALIFIED;
 
 		if (gl_publish_variable(oclass,
 			PT_char32, "unit", PADDR(unit), PT_DESCRIPTION, "unit of quantity",

@@ -98,6 +98,11 @@ office::office(MODULE *module)
 	if (oclass==NULL)
 	{
 		oclass = gl_register_class(module,"office",sizeof(office),passconfig); 
+		if (oclass==NULL)
+			throw "unable to register class office";
+		else
+			oclass->trl = TRL_DEMONSTRATED;
+
 		if (gl_publish_variable(oclass,
 			PT_double, "floor_area[sf]", PADDR(zone.design.floor_area),
 			

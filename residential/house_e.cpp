@@ -545,9 +545,10 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"house",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
-
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class house";
+		else
+			oclass->trl = TRL_PROVEN;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

@@ -32,7 +32,9 @@ plugload::plugload(MODULE *module) : residential_enduse(module)
 		// register the class definition
 		oclass = gl_register_class(module,"plugload",sizeof(plugload),PC_BOTTOMUP);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class plugload";
+		else
+			oclass->trl = TRL_QUALIFIED;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

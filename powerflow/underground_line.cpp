@@ -26,9 +26,11 @@ underground_line::underground_line(MODULE *mod) : line(mod)
 		pclass = line::oclass;
 		
 		oclass = gl_register_class(mod,"underground_line",sizeof(underground_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
-        if(oclass == NULL)
-            GL_THROW("unable to register object class implemented by %s",__FILE__);
-        
+		if (oclass==NULL)
+			throw "unable to register class underground_line";
+		else
+			oclass->trl = TRL_PROVEN;
+
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);

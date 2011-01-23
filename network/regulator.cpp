@@ -30,7 +30,9 @@ regulator::regulator(MODULE *mod) : link(mod)
 		// register the class definition
 		regulator_class = oclass = gl_register_class(mod,"regulator",sizeof(regulator),PC_BOTTOMUP);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class regulator";
+		else
+			oclass->trl = TRL_CONCEPT;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

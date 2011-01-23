@@ -38,7 +38,9 @@ power_electronics::power_electronics(MODULE *module)
 	{
 		oclass = gl_register_class(module,"power_electronics",sizeof(power_electronics),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__); 
+			throw "unable to register class power_electronics";
+		else
+			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
 			//should this be "GENERATOR_MODE" OR "gen_mode_v"?

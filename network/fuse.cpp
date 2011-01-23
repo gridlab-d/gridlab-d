@@ -29,7 +29,9 @@ fuse::fuse(MODULE *mod) : link(mod)
 		// register the class definition
 		fuse_class = oclass = gl_register_class(mod,"fuse",sizeof(fuse),PC_BOTTOMUP);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class fuse";
+		else
+			oclass->trl = TRL_STANDALONE;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

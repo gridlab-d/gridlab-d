@@ -36,7 +36,9 @@ battery::battery(MODULE *module)
 	{
 		oclass = gl_register_class(module,"battery",sizeof(battery),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s", __FILE__); 
+			throw "unable to register class battery";
+		else
+			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
 			PT_enumeration,"generator_mode",PADDR(gen_mode_v),

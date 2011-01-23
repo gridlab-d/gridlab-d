@@ -26,9 +26,11 @@ triplex_line_configuration::triplex_line_configuration(MODULE *mod) : line_confi
 		pclass = line_configuration::oclass;
 		
 		oclass = gl_register_class(mod,"triplex_line_configuration",sizeof(triplex_line_configuration),0x00);
-        if(oclass == NULL)
-            GL_THROW("unable to register object class implemented by %s",__FILE__);
-        
+		if (oclass==NULL)
+			throw "unable to register class triplex_line_configuration";
+		else
+			oclass->trl = TRL_PROVEN;
+
         if(gl_publish_variable(oclass,
 			PT_object, "conductor_1",PADDR(phaseA_conductor),
 			PT_object, "conductor_2",PADDR(phaseB_conductor),

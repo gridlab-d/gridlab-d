@@ -26,8 +26,10 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 	{
 		pclass = powerflow_object::oclass;
 		oclass = gl_register_class(mod,"fault_check",sizeof(fault_check),PC_BOTTOMUP);
-		if(oclass == NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+		if (oclass==NULL)
+			throw "unable to register class fault_check";
+		else
+			oclass->trl = TRL_DEMONSTRATED;
 		
 		if(gl_publish_variable(oclass,
 			PT_enumeration, "check_mode", PADDR(fcheck_state),PT_DESCRIPTION,"Frequency of fault checks",

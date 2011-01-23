@@ -56,7 +56,9 @@ relay::relay(MODULE *mod) : link(mod)
 		// register the class definition
 		relay_class = oclass = gl_register_class(mod,"relay",sizeof(relay),PC_BOTTOMUP);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class relay";
+		else
+			oclass->trl = TRL_PROOF;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

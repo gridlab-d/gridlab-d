@@ -61,7 +61,9 @@ generator::generator(MODULE *mod)
 		// register the class definition
 		generator_class = oclass = gl_register_class(mod,"generator",sizeof(generator),PC_BOTTOMUP);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class generator";
+		else
+			oclass->trl = TRL_STANDALONE;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,

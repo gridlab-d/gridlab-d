@@ -51,7 +51,9 @@ substation::substation(MODULE *mod) : node(mod)
 		// register the class definition
 		oclass = gl_register_class(mod,"substation",sizeof(substation),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class substation";
+		else
+			oclass->trl = TRL_PROTOTYPE;
 
 		// publish the class properties - based around meter object
 		if (gl_publish_variable(oclass,

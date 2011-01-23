@@ -32,8 +32,10 @@ series_reactor::series_reactor(MODULE *mod) : link(mod)
 		pclass = link::oclass;
 
 		oclass = gl_register_class(mod,"series_reactor",sizeof(series_reactor),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
-        if(oclass == NULL)
-            GL_THROW("unable to register object class implemented by %s",__FILE__);
+		if (oclass==NULL)
+			throw "unable to register class series_reactor";
+		else
+			oclass->trl = TRL_PROVEN;
 
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "link",

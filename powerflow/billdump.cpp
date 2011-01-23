@@ -29,7 +29,9 @@ billdump::billdump(MODULE *mod)
 		// register the class definition
 		oclass = gl_register_class(mod,"billdump",sizeof(billdump),PC_BOTTOMUP);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			throw "unable to register class billdump";
+		else
+			oclass->trl = TRL_QUALIFIED;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
