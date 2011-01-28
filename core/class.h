@@ -26,12 +26,23 @@ typedef char char1024[1025]; /**< strings up to 1024 characters */
 typedef char char256[257]; /**< strings up to 256 characters */
 typedef char char32[33]; /**< strings up to 32 characters */
 typedef char char8[9]; /** string up to 8 characters */
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+typedef int8_t    int8;     /* 8-bit integers */
+typedef int16_t   int16;    /* 16-bit integers */
+typedef int32_t   int32;    /* 32-bit integers */
+typedef uint32_t  uint32;   /* unsigned 32-bit integers */
+typedef uint64_t  uint64;   /* unsigned 64-bit integers */
+typedef uint64    set;      /* sets (each of up to 64 values may be defined) */
+#else /* no HAVE_STDINT_H */
 typedef char int8; /** 8-bit integers */
 typedef short int16; /** 16-bit integers */
 typedef int int32; /* 32-bit integers */
+typedef unsigned int64 set; /* sets (each of up to 64 values may be defined) */
+#endif /* HAVE_STDINT_H */
 typedef long enumeration; /* enumerations (any one of a list of values) */
 typedef struct s_object_list* object; /* GridLAB objects */
-typedef unsigned int64 set; /* sets (each of up to 64 values may be defined) */
 typedef double triplet[3];
 typedef complex triplex[3];
 #ifdef REAL4

@@ -19,6 +19,13 @@
 #include "convert.h"
 #include "object.h"
 
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+typedef uint32_t  uint32;   /* unsigned 32-bit integers */
+#else
+typedef unsigned int uint32;
+#endif
+
 /** Convert from a \e void
 	This conversion does not change the data
 	@return 6, the number of characters written to the buffer, 0 if not enough space
@@ -207,7 +214,7 @@ int convert_from_enumeration(char *buffer, /**< pointer to the string buffer */
 	int count = 0;
 	char temp[1025];
 	/* get the true value */
-	int value = *(unsigned long*)data;
+	int value = *(uint32*)data;
 
 	/* process the keyword list, if any */
 	for ( ; keys!=NULL ; keys=keys->next)
@@ -249,7 +256,7 @@ int convert_to_enumeration(char *buffer, /**< a pointer to the string buffer */
 	{
 		if (strcmp(keys->name,buffer)==0)
 		{
-			*(unsigned long*)data=keys->value;
+			*(uint32*)data=keys->value;
 			found = true;
 			break;
 		}
@@ -257,9 +264,9 @@ int convert_to_enumeration(char *buffer, /**< a pointer to the string buffer */
 	if (found)
 		return 1;
 	if (strncmp(buffer,"0x",2)==0)
-		return sscanf(buffer+2,"%x",(unsigned long*)data);
+		return sscanf(buffer+2,"%x",(uint32*)data);
 	if (isdigit(*buffer))
-		return sscanf(buffer,"%d",(unsigned long*)data);
+		return sscanf(buffer,"%d",(uint32*)data);
 	output_error("keyword '%s' is not valid for property %s", buffer,prop->name);
 	return 0;
 }
@@ -339,14 +346,14 @@ int convert_to_set(char *buffer, /**< a pointer to the string buffer */
 {
 	KEYWORD *keys=prop->keywords;
 	char temp[4096], *ptr;
-	unsigned long value=0;
+	uint32 value=0;
 	int count=0;
 
 	/* directly convert numeric strings */
 	if (strnicmp(buffer,"0x",2)==0)
-		return sscanf(buffer,"0x%x",(unsigned long *)data);
+		return sscanf(buffer,"0x%x",(uint32*)data);
 	else if (isdigit(buffer[0]))
-		return sscanf(buffer,"%d",(unsigned long *)data);
+		return sscanf(buffer,"%d",(uint32*)data);
 
 	/* prevent long buffer from being scanned */
 	if (strlen(buffer)>sizeof(temp)-1)
@@ -405,7 +412,7 @@ int convert_to_set(char *buffer, /**< a pointer to the string buffer */
 			}
 		}
 	}
-	*(unsigned long *)data = value;
+	*(uint32*)data = value;
 	return count;
 }
 

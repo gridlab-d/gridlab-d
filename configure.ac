@@ -170,7 +170,7 @@ test x"$HAVE_CPPUNIT" = xyes || CPPFLAGS="$CPPFLAGS -D_NO_CPPUNIT"
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([malloc.h memory.h stdlib.h string.h unistd.h])
+AC_CHECK_HEADERS([malloc.h memory.h stdlib.h string.h unistd.h stdint.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
