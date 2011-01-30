@@ -621,15 +621,20 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 EXPORT int create_climate(OBJECT **obj, ///< a pointer to the OBJECT*
 						  OBJECT *parent) ///< a pointer to the parent OBJECT
 {
-	*obj = gl_create_object(climate::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		climate *my = OBJECTDATA(*obj,climate);
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(climate::oclass);
+		if (*obj!=NULL)
+		{
+			climate *my = OBJECTDATA(*obj,climate);
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(climate);
 }
 
 EXPORT int isa_climate(OBJECT *obj, char *classname)
@@ -644,12 +649,17 @@ EXPORT int isa_climate(OBJECT *obj, char *classname)
 EXPORT int init_climate(OBJECT *obj, /// a pointer to the OBJECT
 						OBJECT *parent) /// a poitner to the parent OBJECT
 {
-	if (obj!=NULL)
+	try
 	{
-		climate *my = OBJECTDATA(obj,climate);
-		return my->init(parent);
+		if (obj!=NULL)
+		{
+			climate *my = OBJECTDATA(obj,climate);
+			return my->init(parent);
+		}
+		else
+			return 0;
 	}
-	return 0;
+	INIT_CATCHALL(climate);
 }
 
 /// Synchronize the cliamte object
@@ -661,21 +671,7 @@ EXPORT TIMESTAMP sync_climate(OBJECT *obj, /// a pointer to the OBJECT
 	{
 		t1 = OBJECTDATA(obj,climate)->presync(t0); // presync really
 	}
-	catch(char *msg)
-	{
-		gl_error("climate::sync exception caught: %s", msg);
-		t1 = TS_INVALID;
-	}
-	catch(const char *msg)
-	{
-		gl_error("climate::sync exception caught: %s", msg);
-		t1 = TS_INVALID;
-	}
-	catch (...)
-	{
-		gl_error("climate::sync exception caught: no info");
-		t1 = TS_INVALID;
-	}
+	SYNC_CATCHALL(climate);
 	obj->clock = t0;
 	return t1;
 }

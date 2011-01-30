@@ -141,20 +141,10 @@ EXPORT int create_multizone(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("create_multizone: %s", msg);
-	}
-	catch (const char *msg)
-	{
-		gl_error("create_multizone: %s", msg);
-	}
-	catch (int)
-	{
-		gl_error("create_multizone: unhandled exception");
-	}
-	return 1;
+	CREATE_CATCHALL(multizone);
 }
 
 EXPORT int init_multizone(OBJECT *obj, OBJECT *parent)
@@ -163,20 +153,10 @@ EXPORT int init_multizone(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,multizone)->init(parent);
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("init_multizone(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	catch (const char *msg)
-	{
-		gl_error("init_multizone(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	catch (...)
-	{
-		gl_error("init_multizone(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed");
-	}
-	return 1;
+	INIT_CATCHALL(multizone);
 }
 
 EXPORT TIMESTAMP sync_multizone(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
@@ -201,18 +181,7 @@ EXPORT TIMESTAMP sync_multizone(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		}
 		if (pass==clockpass)
 			obj->clock = t1;
+		return t2;
 	}
-	catch (char *msg)
-	{
-		gl_error("sync_multizone(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	catch (const char *msg)
-	{
-		gl_error("sync_multizone(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	catch (...)
-	{
-		gl_error("sync_multizone(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed");
-	}
-	return t2;
+	SYNC_CATCHALL(multizone);
 }

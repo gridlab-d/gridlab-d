@@ -21,7 +21,7 @@ weather::weather(MODULE *module){
 		if (oclass==NULL)
 			throw "unable to register class weather";
 		else
-			oclass->trl = TRL_PROVEN;
+			oclass->trl = TRL_CONCEPT;
 
 		if (gl_publish_variable(oclass,
 			PT_double,"temperature[degF]",PADDR(temperature),

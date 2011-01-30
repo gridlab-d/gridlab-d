@@ -107,20 +107,10 @@ EXPORT int create_complex_assert(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("create_complex_assert: %s", msg);
-	}
-	catch (const char *msg)
-	{
-		gl_error("create_complex_assert: %s", msg);
-	}
-	catch (...)
-	{
-		gl_error("create_complex_assert: unhandled exception");
-	}
-	return 1;
+	CREATE_CATCHALL(complex_assert);
 }
 
 
@@ -131,20 +121,10 @@ EXPORT int init_complex_assert(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,complex_assert)->init(parent); 
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("init_complex_assert(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	catch (const char *msg)
-	{
-		gl_error("init_complex_assert(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	catch (...)
-	{
-		gl_error("init_complex_assert: unhandled exception");
-	}
-	return 0; // failure if obj == null or on exception
+	INIT_CATCHALL(complex_assert);
 }
 
 EXPORT int commit_complex_assert(OBJECT *obj)
@@ -265,20 +245,7 @@ EXPORT TIMESTAMP sync_complex_assert(OBJECT *obj, TIMESTAMP t0)
 	{
 		t1 = my->postsync(obj->clock, t0);
 	} 
-	catch (char *msg)
-	{
-		gl_error("sync_complex_assert: %s", msg);
-		t1 = TS_INVALID;
-	} 
-	catch (const char *msg)
-	{
-		gl_error("sync_complex_assert: %s", msg);
-		t1 = TS_INVALID;
-	}
-	catch (...)
-	{
-		gl_error("sync_complex_assert: unhandled exception");
-	}
+	SYNC_CATCHALL(complex_assert);
 	obj->clock = t0;
 	return t1;
 }

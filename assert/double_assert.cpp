@@ -98,20 +98,10 @@ EXPORT int create_double_assert(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("create_double_assert: %s", msg);
-	}
-	catch (const char *msg)
-	{
-		gl_error("create_double_assert: %s", msg);
-	}
-	catch (...)
-	{
-		gl_error("create_double_assert: unhandled exception");
-	}
-	return 1;
+	CREATE_CATCHALL(double_assert);
 }
 
 
@@ -122,20 +112,10 @@ EXPORT int init_double_assert(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,double_assert)->init(parent);
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("init_double_assert(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	catch (const char *msg)
-	{
-		gl_error("init_double_assert(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	catch (...)
-	{
-		gl_error("init_double_assert(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed");
-	}
-	return 0;
+	INIT_CATCHALL(double_assert);
 }
 
 EXPORT TIMESTAMP sync_double_assert(OBJECT *obj, TIMESTAMP t0)
@@ -146,21 +126,7 @@ EXPORT TIMESTAMP sync_double_assert(OBJECT *obj, TIMESTAMP t0)
 	{
 		t1 = my->postsync(obj->clock, t0);
 	} 
-	catch (char *msg)
-	{
-		gl_error("sync_double_assert: %s", msg);
-		t1 = TS_INVALID;
-	}
-	catch (const char *msg)
-	{
-		gl_error("sync_double_assert: %s", msg);
-		t1 = TS_INVALID;
-	}
-	catch (...)
-	{
-		gl_error("sync_double_assert: unhandled exception");
-		t1 = TS_INVALID;
-	}
+	SYNC_CATCHALL(double_assert);
 	obj->clock = t0;
 	return t1;
 }
