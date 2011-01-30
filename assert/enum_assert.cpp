@@ -89,6 +89,14 @@ EXPORT int create_enum_assert(OBJECT **obj, OBJECT *parent)
 	{
 		gl_error("create_enum_assert: %s", msg);
 	}
+	catch (const char *msg)
+	{
+		gl_error("create_enum_assert: %s", msg);
+	}
+	catch (...)
+	{
+		gl_error("create_enum_assert: unhandled exception");
+	}
 	return 1;
 }
 
@@ -104,6 +112,14 @@ EXPORT int init_enum_assert(OBJECT *obj, OBJECT *parent)
 	catch (char *msg)
 	{
 		gl_error("init_enum_assert(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+	}
+	catch (const char *msg)
+	{
+		gl_error("init_enum_assert(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+	}
+	catch (...)
+	{
+		gl_error("init_enum_assert(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed");
 	}
 	return 0;
 }
@@ -165,10 +181,20 @@ EXPORT TIMESTAMP sync_enum_assert(OBJECT *obj, TIMESTAMP t0)
 {
 	enum_assert *my = OBJECTDATA(obj,enum_assert);
 	TIMESTAMP t1;
-	try {
+	try 
+	{
 		t1 = my->postsync(obj->clock, t0);
-	} catch (char *msg){
+	} 
+	catch (char *msg){
 		gl_error("sync_enum_assert: %s", msg);
+		t1 = TS_INVALID;
+	}
+	catch (const char *msg){
+		gl_error("sync_enum_assert: %s", msg);
+		t1 = TS_INVALID;
+	}
+	catch (...){
+		gl_error("sync_enum_assert: unhandled exception");
 		t1 = TS_INVALID;
 	}
 	obj->clock = t0;
