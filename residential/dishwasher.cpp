@@ -142,21 +142,30 @@ TIMESTAMP dishwasher::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 EXPORT int create_dishwasher(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(dishwasher::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		dishwasher *my = OBJECTDATA(*obj,dishwasher);
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(dishwasher::oclass);
+		if (*obj!=NULL)
+		{
+			dishwasher *my = OBJECTDATA(*obj,dishwasher);
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(dishwasher);
 }
 
 EXPORT int init_dishwasher(OBJECT *obj)
 {
-	dishwasher *my = OBJECTDATA(obj,dishwasher);
-	return my->init(obj->parent);
+	try
+	{
+		dishwasher *my = OBJECTDATA(obj,dishwasher);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(dishwasher);
 }
 
 EXPORT int isa_dishwasher(OBJECT *obj, char *classname)
@@ -170,10 +179,14 @@ EXPORT int isa_dishwasher(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_dishwasher(OBJECT *obj, TIMESTAMP t0)
 {
-	dishwasher *my = OBJECTDATA(obj, dishwasher);
-	TIMESTAMP t1 = my->sync(obj->clock, t0);
-	obj->clock = t0;
-	return t1;
+	try
+	{
+		dishwasher *my = OBJECTDATA(obj, dishwasher);
+		TIMESTAMP t1 = my->sync(obj->clock, t0);
+		obj->clock = t0;
+		return t1;
+	}
+	SYNC_CATCHALL(dishwasher);
 }
 
 /**@}**/

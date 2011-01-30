@@ -234,43 +234,28 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 EXPORT int create_lights(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(lights::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		lights *my = OBJECTDATA(*obj,lights);
-		gl_set_parent(*obj,parent);
-		try {
-			my->create();
-		}
-		catch (char *msg)
+		*obj = gl_create_object(lights::oclass);
+		if (*obj!=NULL)
 		{
-			gl_error("%s::%s.create(OBJECT **obj={name='%s', id=%d},...): %s", (*obj)->oclass->module->name, (*obj)->oclass->name, (*obj)->name, (*obj)->id, msg);
-			/* TROUBLESHOOT
-				The create operation of the specified object failed.  
-				The message given provide additional details and can be looked up under the Exceptions section.
-			 */
-			return 0;
+			lights *my = OBJECTDATA(*obj,lights);
+			gl_set_parent(*obj,parent);
+			return my->create();
 		}
-		return 1;
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(lights);
 }
 
 EXPORT int init_lights(OBJECT *obj)
 {
-	lights *my = OBJECTDATA(obj,lights);
 	try {
+		lights *my = OBJECTDATA(obj,lights);
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
-	{
-		gl_error("%s::%s.init(OBJECT *obj={name='%s', id=%d}): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, msg);
-		/* TROUBLESHOOT
-			The initialization operation of the specified object failed.  
-			The message given provide additional details and can be looked up under the Exceptions section.
-		 */
-		return 0;
-	}
+	INIT_CATCHALL(lights);
 }
 
 EXPORT int isa_lights(OBJECT *obj, char *classname)
@@ -284,25 +269,13 @@ EXPORT int isa_lights(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_lights(OBJECT *obj, TIMESTAMP t1)
 {
-	lights *my = OBJECTDATA(obj,lights);
 	try {
+		lights *my = OBJECTDATA(obj,lights);
 		TIMESTAMP t2 = my->sync(obj->clock, t1);
 		obj->clock = t1;
 		return t2;
 	}
-	catch (char *msg)
-	{
-		DATETIME dt;
-		char ts[64];
-		gl_localtime(t1,&dt);
-		gl_strtime(&dt,ts,sizeof(ts));
-		gl_error("%s::%s.init(OBJECT **obj={name='%s', id=%d},TIMESTAMP t1='%s'): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, ts, msg);
-		/* TROUBLESHOOT
-			The synchronization operation of the specified object failed.  
-			The message given provide additional details and can be looked up under the Exceptions section.
-		 */
-		return 0;
-	}
+	SYNC_CATCHALL(lights);
 }
 
 /**@}**/

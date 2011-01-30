@@ -143,21 +143,30 @@ TIMESTAMP range::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 EXPORT int create_range(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(range::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		range *my = OBJECTDATA(*obj,range);;
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(range::oclass);
+		if (*obj!=NULL)
+		{
+			range *my = OBJECTDATA(*obj,range);;
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(range);
 }
 
 EXPORT int init_range(OBJECT *obj)
 {
-	range *my = OBJECTDATA(obj,range);
-	return my->init(obj->parent);
+	try
+	{
+		range *my = OBJECTDATA(obj,range);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(range);
 }
 
 EXPORT int isa_range(OBJECT *obj, char *classname)
@@ -171,10 +180,14 @@ EXPORT int isa_range(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0)
 {
-	range *my = OBJECTDATA(obj, range);
-	TIMESTAMP t1 = my->sync(obj->clock, t0);
-	obj->clock = t0;
-	return t1;
+	try
+	{
+		range *my = OBJECTDATA(obj, range);
+		TIMESTAMP t1 = my->sync(obj->clock, t0);
+		obj->clock = t0;
+		return t1;
+	}
+	SYNC_CATCHALL(range);
 }
 
 /**@}**/

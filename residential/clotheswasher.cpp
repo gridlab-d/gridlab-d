@@ -282,21 +282,30 @@ double clotheswasher::update_state(double dt)
 
 EXPORT int create_clotheswasher(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(clotheswasher::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		clotheswasher *my = OBJECTDATA(*obj,clotheswasher);
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(clotheswasher::oclass);
+		if (*obj!=NULL)
+		{
+			clotheswasher *my = OBJECTDATA(*obj,clotheswasher);
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+	else
+		return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(clotheswasher);
 }
 
 EXPORT int init_clotheswasher(OBJECT *obj)
 {
-	clotheswasher *my = OBJECTDATA(obj,clotheswasher);
-	return my->init(obj->parent);
+	try
+	{
+		clotheswasher *my = OBJECTDATA(obj,clotheswasher);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(clotheswasher);
 }
 
 EXPORT int isa_clotheswasher(OBJECT *obj, char *classname)
@@ -310,11 +319,11 @@ EXPORT int isa_clotheswasher(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_clotheswasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	clotheswasher *my = OBJECTDATA(obj, clotheswasher);
-	if (obj->clock <= ROUNDOFF)
-		obj->clock = t0;  //set the object clock if it has not been set yet
 	try {
 		TIMESTAMP t1 = TS_NEVER;
+		clotheswasher *my = OBJECTDATA(obj, clotheswasher);
+		if (obj->clock <= ROUNDOFF)
+			obj->clock = t0;  //set the object clock if it has not been set yet
 		switch (pass) {
 		case PC_PRETOPDOWN:
 			return my->presync(obj->clock, t0);
@@ -326,14 +335,7 @@ EXPORT TIMESTAMP sync_clotheswasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	}
-	catch (int m)
-	{
-		gl_error("%s (clotheswasher:%d) model zone exception (code %d) not caught", obj->name?obj->name:"(anonymous waterheater)", obj->id, m);
-	}
-	catch (char *msg)
-	{
-		gl_error("%s (clotheswasher:%d) %s", obj->name?obj->name:"(anonymous clotheswasher)", obj->id, msg);
-	}
-	return TS_INVALID;}
+	SYNC_CATCHALL(clotheswasher);
+}
 
 /**@}**/

@@ -934,32 +934,40 @@ complex *house::get_complex(OBJECT *obj, char *name)
 
 EXPORT int create_house_a(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(house::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		house *my = OBJECTDATA(*obj,house);;
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(house::oclass);
+		if (*obj!=NULL)
+		{
+			house *my = OBJECTDATA(*obj,house);;
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(house_a);
 }
 
 EXPORT int init_house_a(OBJECT *obj)
 {
-	house *my = OBJECTDATA(obj,house);
-	my->init_climate();
-	return my->init(obj->parent);
+	try
+	{
+		house *my = OBJECTDATA(obj,house);
+		my->init_climate();
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(house_a);
 }
 
 EXPORT TIMESTAMP sync_house_a(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	house *my = OBJECTDATA(obj,house);
-	TIMESTAMP t1 = TS_NEVER;
-	if (obj->clock <= ROUNDOFF)
-		obj->clock = t0;  //set the object clock if it has not been set yet
-
 	try {
+		house *my = OBJECTDATA(obj,house);
+		TIMESTAMP t1 = TS_NEVER;
+		if (obj->clock <= ROUNDOFF)
+			obj->clock = t0;  //set the object clock if it has not been set yet
 		switch (pass) 
 		{
 			case PC_PRETOPDOWN:
@@ -975,18 +983,9 @@ EXPORT TIMESTAMP sync_house_a(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				gl_error("house::sync- invalid pass configuration");
 				t1 = TS_INVALID; // serious error in exec.c
 		}
-	} 
-	catch (char *msg)
-	{
-		gl_error("house::sync exception caught: %s", msg);
-		t1 = TS_INVALID;
+		return t1;
 	}
-	catch (...)
-	{
-		gl_error("house::sync exception caught: no info");
-		t1 = TS_INVALID;
-	}
-	return t1;
+	SYNC_CATCHALL(house_a);
 }
 
 EXPORT TIMESTAMP plc_house_a(OBJECT *obj, TIMESTAMP t0)

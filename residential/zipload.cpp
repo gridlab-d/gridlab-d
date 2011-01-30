@@ -417,21 +417,30 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 EXPORT int create_ZIPload(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(ZIPload::oclass);
-	if (*obj!=NULL)
+	try 
 	{
-		ZIPload *my = OBJECTDATA(*obj,ZIPload);;
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(ZIPload::oclass);
+		if (*obj!=NULL)
+		{
+			ZIPload *my = OBJECTDATA(*obj,ZIPload);;
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(ZIPload);
 }
 
 EXPORT int init_ZIPload(OBJECT *obj)
 {
-	ZIPload *my = OBJECTDATA(obj,ZIPload);
-	return my->init(obj->parent);
+	try
+	{
+		ZIPload *my = OBJECTDATA(obj,ZIPload);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(ZIPload);
 }
 
 EXPORT int isa_ZIPload(OBJECT *obj, char *classname)
@@ -446,10 +455,14 @@ EXPORT int isa_ZIPload(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_ZIPload(OBJECT *obj, TIMESTAMP t0)
 {
-	ZIPload *my = OBJECTDATA(obj, ZIPload);
-	TIMESTAMP t1 = my->sync(obj->clock, t0);
-	obj->clock = t0;
-	return t1;
+	try
+	{
+		ZIPload *my = OBJECTDATA(obj, ZIPload);
+		TIMESTAMP t1 = my->sync(obj->clock, t0);
+		obj->clock = t0;
+		return t1;
+	}
+	SYNC_CATCHALL(ZIPload);
 }
 
 /**@}**/

@@ -128,35 +128,27 @@ TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 EXPORT int create_residential_enduse(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(residential_enduse::oclass);
-	if (*obj!=NULL)
-	{
-		residential_enduse *my = OBJECTDATA(*obj,residential_enduse);
-		gl_set_parent(*obj,parent);
-		try {
-			my->create();
-		}
-		catch (char *msg)
+	try {
+		*obj = gl_create_object(residential_enduse::oclass);
+		if (*obj!=NULL)
 		{
-			gl_error("%s::%s.create(OBJECT **obj={name='%s', id=%d},...): %s", (*obj)->oclass->module->name, (*obj)->oclass->name, (*obj)->name, (*obj)->id, msg);
-			return 0;
+			residential_enduse *my = OBJECTDATA(*obj,residential_enduse);
+			gl_set_parent(*obj,parent);
+			return my->create();
 		}
-		return 1;
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(residential_enduse);
 }
 
 EXPORT int init_residential_enduse(OBJECT *obj)
 {
-	residential_enduse *my = OBJECTDATA(obj,residential_enduse);
 	try {
+		residential_enduse *my = OBJECTDATA(obj,residential_enduse);
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
-	{
-		gl_error("%s::%s.init(OBJECT *obj={name='%s', id=%d}): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, msg);
-		return 0;
-	}
+	INIT_CATCHALL(residential_enduse);
 }
 
 EXPORT int isa_residential_enduse(OBJECT *obj, char *classname)
@@ -176,15 +168,7 @@ EXPORT TIMESTAMP sync_residential_enduse(OBJECT *obj, TIMESTAMP t1)
 		obj->clock = t1;
 		return t2;
 	}
-	catch (char *msg)
-	{
-		DATETIME dt;
-		char ts[64];
-		gl_localtime(t1,&dt);
-		gl_strtime(&dt,ts,sizeof(ts));
-		gl_error("%s::%s.init(OBJECT **obj={name='%s', id=%d},TIMESTAMP t1='%s'): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, ts, msg);
-		return 0;
-	}
+	SYNC_CATCHALL(residential_enduse);
 }
 
 /**@}**/

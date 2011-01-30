@@ -272,21 +272,29 @@ double dryer::update_state(double dt)
 
 EXPORT int create_dryer(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(dryer::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		dryer *my = OBJECTDATA(*obj,dryer);
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(dryer::oclass);
+		if (*obj!=NULL)
+		{
+			dryer *my = OBJECTDATA(*obj,dryer);
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(dryer);
 }
 
 EXPORT int init_dryer(OBJECT *obj)
 {
-	dryer *my = OBJECTDATA(obj,dryer);
-	return my->init(obj->parent);
+	try
+	{
+		dryer *my = OBJECTDATA(obj,dryer);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(dryer);
 }
 
 EXPORT int isa_dryer(OBJECT *obj, char *classname)
@@ -300,10 +308,14 @@ EXPORT int isa_dryer(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_dryer(OBJECT *obj, TIMESTAMP t0)
 {
-	dryer *my = OBJECTDATA(obj, dryer);
-	TIMESTAMP t1 = my->sync(obj->clock, t0);
-	obj->clock = t0;
-	return t1;
+	try
+	{
+		dryer *my = OBJECTDATA(obj, dryer);
+		TIMESTAMP t1 = my->sync(obj->clock, t0);
+		obj->clock = t0;
+		return t1;
+	}
+	SYNC_CATCHALL(dryer);
 }
 
 /**@}**/

@@ -280,25 +280,27 @@ TIMESTAMP freezer::postsync(TIMESTAMP t0, TIMESTAMP t1){
 //////////////////////////////////////////////////////////////////////////
 EXPORT int create_freezer(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(freezer::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		freezer *my = OBJECTDATA(*obj,freezer);;
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(freezer::oclass);
+		if (*obj!=NULL)
+		{
+			freezer *my = OBJECTDATA(*obj,freezer);;
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(freezer);
 }
 
 EXPORT TIMESTAMP sync_freezer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	freezer *my = OBJECTDATA(obj,freezer);
-	TIMESTAMP t1 = TS_NEVER;
-	
-	// obj->clock = 0 is legit
-
 	try {
+		freezer *my = OBJECTDATA(obj,freezer);
+		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) 
 		{
 			case PC_PRETOPDOWN:
@@ -318,24 +320,19 @@ EXPORT TIMESTAMP sync_freezer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				gl_error("freezer::sync- invalid pass configuration");
 				t1 = TS_INVALID; // serious error in exec.c
 		}
-	} 
-	catch (char *msg)
-	{
-		gl_error("freezer::sync exception caught: %s", msg);
-		t1 = TS_INVALID;
+		return t1;
 	}
-	catch (...)
-	{
-		gl_error("freezer::sync exception caught: no info");
-		t1 = TS_INVALID;
-	}
-	return t1;
+	SYNC_CATCHALL(freezer);
 }
 
 EXPORT int init_freezer(OBJECT *obj)
 {
-	freezer *my = OBJECTDATA(obj,freezer);
-	return my->init(obj->parent);
+	try
+	{
+		freezer *my = OBJECTDATA(obj,freezer);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(freezer);
 }
 
 EXPORT int isa_freezer(OBJECT *obj, char *classname)

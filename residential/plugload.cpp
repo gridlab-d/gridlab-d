@@ -134,21 +134,30 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 EXPORT int create_plugload(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(plugload::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		plugload *my = OBJECTDATA(*obj,plugload);;
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(plugload::oclass);
+		if (*obj!=NULL)
+		{
+			plugload *my = OBJECTDATA(*obj,plugload);;
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(plugload);
 }
 
 EXPORT int init_plugload(OBJECT *obj)
 {
-	plugload *my = OBJECTDATA(obj,plugload);
-	return my->init(obj->parent);
+	try
+	{
+		plugload *my = OBJECTDATA(obj,plugload);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(plugload);
 }
 
 EXPORT int isa_plugload(OBJECT *obj, char *classname)
@@ -162,10 +171,14 @@ EXPORT int isa_plugload(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_plugload(OBJECT *obj, TIMESTAMP t0)
 {
-	plugload *my = OBJECTDATA(obj, plugload);
-	TIMESTAMP t1 = my->sync(obj->clock, t0);
-	obj->clock = t0;
-	return t1;
+	try
+	{
+		plugload *my = OBJECTDATA(obj, plugload);
+		TIMESTAMP t1 = my->sync(obj->clock, t0);
+		obj->clock = t0;
+		return t1;
+	}
+	SYNC_CATCHALL(plugload);
 }
 
 /**@}**/

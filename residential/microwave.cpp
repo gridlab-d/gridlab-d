@@ -168,9 +168,9 @@ TIMESTAMP microwave::update_state_cycle(TIMESTAMP t0, TIMESTAMP t1){
 
 	if(cycle_start == 0){
 		double off = gl_random_uniform(0, this->cycle_time);
-		cycle_start = ti1 + off;
-		cycle_on = (1 - shape.load) * cycle_time + cycle_start;
-		cycle_off = cycle_time + cycle_start;
+		cycle_start = (TIMESTAMP)(ti1 + off);
+		cycle_on = (TIMESTAMP)((1 - shape.load) * cycle_time) + cycle_start;
+		cycle_off = (TIMESTAMP)cycle_time + cycle_start;
 		state = OFF;
 		return (TIMESTAMP)cycle_on;
 	}
@@ -183,9 +183,9 @@ TIMESTAMP microwave::update_state_cycle(TIMESTAMP t0, TIMESTAMP t1){
 		cycle_start = cycle_off;
 	}
 	if(t0 == cycle_start){
-		cycle_on = (1 - shape.load) * cycle_time + cycle_start;
+		cycle_on = (TIMESTAMP)((1 - shape.load) * cycle_time) + cycle_start;
 		state = OFF;
-		cycle_off = cycle_time + cycle_start;
+		cycle_off = (TIMESTAMP)cycle_time + cycle_start;
 	}
 
 	if(state == ON)
@@ -300,32 +300,30 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 EXPORT int create_microwave(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(microwave::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		microwave *my = OBJECTDATA(*obj,microwave);;
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(microwave::oclass);
+		if (*obj!=NULL)
+		{
+			microwave *my = OBJECTDATA(*obj,microwave);;
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else 
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(microwave);
+
 }
 
 EXPORT int init_microwave(OBJECT *obj)
 {
-	microwave *my = OBJECTDATA(obj,microwave);
 	try {
+		microwave *my = OBJECTDATA(obj,microwave);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s::%s.init(OBJECT *obj={name='%s', id=%d}): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, msg);
-		/* TROUBLESHOOT
-			The initialization operation of the specified object failed.  
-			The message given provide additional details and can be looked up under the Exceptions section.
-		 */
-		return 0;
-	}
+	INIT_CATCHALL(microwave);
 }
 
 EXPORT int isa_microwave(OBJECT *obj, char *classname)
@@ -339,25 +337,13 @@ EXPORT int isa_microwave(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_microwave(OBJECT *obj, TIMESTAMP t0)
 {
-	microwave *my = OBJECTDATA(obj, microwave);
 	try {
+		microwave *my = OBJECTDATA(obj, microwave);
 		TIMESTAMP t2 = my->sync(obj->clock, t0);
 		obj->clock = t0;
 		return t2;
 	}
-	catch (char *msg)
-	{
-		DATETIME dt;
-		char ts[64];
-		gl_localtime(t0,&dt);
-		gl_strtime(&dt,ts,sizeof(ts));
-		gl_error("%s::%s.init(OBJECT **obj={name='%s', id=%d},TIMESTAMP t1='%s'): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, ts, msg);
-		/* TROUBLESHOOT
-			The synchronization operation of the specified object failed.  
-			The message given provide additional details and can be looked up under the Exceptions section.
-		 */
-		return 0;
-	}
+	SYNC_CATCHALL(microwave);
 }
 
 /**@}**/

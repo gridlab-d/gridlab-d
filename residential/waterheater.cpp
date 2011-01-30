@@ -490,7 +490,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if(re_override == OV_NORMAL){
 		if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
 		{
-			TIMESTAMP t_to_trans = (t1+time_to_transition*3600.0/TS_SECOND);
+			TIMESTAMP t_to_trans = (TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND);
 			return -(t_to_trans); // negative means soft transition
 		}
 		// less than one second means never
@@ -934,21 +934,30 @@ void waterheater::wrong_model(WRONGMODEL msg)
 
 EXPORT int create_waterheater(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(waterheater::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		waterheater *my = OBJECTDATA(*obj,waterheater);;
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(waterheater::oclass);
+		if (*obj!=NULL)
+		{
+			waterheater *my = OBJECTDATA(*obj,waterheater);;
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(waterheater);
 }
 
 EXPORT int init_waterheater(OBJECT *obj)
 {
-	waterheater *my = OBJECTDATA(obj,waterheater);
-	return my->init(obj->parent);
+	try
+	{
+		waterheater *my = OBJECTDATA(obj,waterheater);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(waterheater);
 }
 
 EXPORT int isa_waterheater(OBJECT *obj, char *classname)
@@ -963,10 +972,10 @@ EXPORT int isa_waterheater(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	waterheater *my = OBJECTDATA(obj, waterheater);
-	if (obj->clock <= ROUNDOFF)
-		obj->clock = t0;  //set the object clock if it has not been set yet
 	try {
+		waterheater *my = OBJECTDATA(obj, waterheater);
+		if (obj->clock <= ROUNDOFF)
+			obj->clock = t0;  //set the object clock if it has not been set yet
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -980,16 +989,9 @@ EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
+		return TS_INVALID;
 	}
-	catch (int m)
-	{
-		gl_error("%s (waterheater:%d) model zone exception (code %d) not caught", obj->name?obj->name:"(anonymous waterheater)", obj->id, m);
-	}
-	catch (char *msg)
-	{
-		gl_error("%s (waterheater:%d) %s", obj->name?obj->name:"(anonymous waterheater)", obj->id, msg);
-	}
-	return TS_INVALID;
+	SYNC_CATCHALL(waterheater);
 }
 
 EXPORT int commit_waterheater(OBJECT *obj)

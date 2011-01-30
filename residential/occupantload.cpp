@@ -163,21 +163,30 @@ TIMESTAMP occupantload::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 EXPORT int create_occupantload(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(occupantload::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		occupantload *my = OBJECTDATA(*obj,occupantload);;
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(occupantload::oclass);
+		if (*obj!=NULL)
+		{
+			occupantload *my = OBJECTDATA(*obj,occupantload);;
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(occupantload);
 }
 
 EXPORT int init_occupantload(OBJECT *obj)
 {
-	occupantload *my = OBJECTDATA(obj,occupantload);
-	return my->init(obj->parent);
+	try
+	{
+		occupantload *my = OBJECTDATA(obj,occupantload);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(occupantload);
 }
 
 EXPORT int isa_occupantload(OBJECT *obj, char *classname)
@@ -191,10 +200,14 @@ EXPORT int isa_occupantload(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_occupantload(OBJECT *obj, TIMESTAMP t0)
 {
-	occupantload *my = OBJECTDATA(obj, occupantload);
-	TIMESTAMP t1 = my->sync(obj->clock, t0);
-	obj->clock = t0;
-	return t1;
+	try
+	{
+		occupantload *my = OBJECTDATA(obj, occupantload);
+		TIMESTAMP t1 = my->sync(obj->clock, t0);
+		obj->clock = t0;
+		return t1;
+	}
+	SYNC_CATCHALL(occupantload);
 }
 
 /**@}**/

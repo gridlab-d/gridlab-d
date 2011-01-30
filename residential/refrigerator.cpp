@@ -271,25 +271,27 @@ TIMESTAMP refrigerator::postsync(TIMESTAMP t0, TIMESTAMP t1){
 //////////////////////////////////////////////////////////////////////////
 EXPORT int create_refrigerator(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(refrigerator::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		refrigerator *my = OBJECTDATA(*obj,refrigerator);;
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(refrigerator::oclass);
+		if (*obj!=NULL)
+		{
+			refrigerator *my = OBJECTDATA(*obj,refrigerator);;
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(refrigerator);
 }
 
 EXPORT TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	refrigerator *my = OBJECTDATA(obj,refrigerator);
-	TIMESTAMP t1 = TS_NEVER;
-
-	// obj->clock = 0 is legit
-
 	try {
+		refrigerator *my = OBJECTDATA(obj,refrigerator);
+		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) 
 		{
 			case PC_PRETOPDOWN:
@@ -309,24 +311,19 @@ EXPORT TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				gl_error("refrigerator::sync- invalid pass configuration");
 				t1 = TS_INVALID; // serious error in exec.c
 		}
+		return t1;
 	} 
-	catch (char *msg)
-	{
-		gl_error("refrigerator::sync exception caught: %s", msg);
-		t1 = TS_INVALID;
-	}
-	catch (...)
-	{
-		gl_error("refrigerator::sync exception caught: no info");
-		t1 = TS_INVALID;
-	}
-	return t1;
+	SYNC_CATCHALL(refrigerator);
 }
 
 EXPORT int init_refrigerator(OBJECT *obj)
 {
-	refrigerator *my = OBJECTDATA(obj,refrigerator);
-	return my->init(obj->parent);
+	try
+	{
+		refrigerator *my = OBJECTDATA(obj,refrigerator);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(refrigerator);
 }
 
 EXPORT int isa_refrigerator(OBJECT *obj, char *classname)

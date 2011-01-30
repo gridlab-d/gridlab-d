@@ -2732,15 +2732,20 @@ bool *house_e::get_bool(OBJECT *obj, char *name)
 
 EXPORT int create_house(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(house_e::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		house_e *my = OBJECTDATA(*obj,house_e);;
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(house_e::oclass);
+		if (*obj!=NULL)
+		{
+			house_e *my = OBJECTDATA(*obj,house_e);;
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(house);
 }
 
 EXPORT int init_house(OBJECT *obj)
@@ -2750,11 +2755,7 @@ EXPORT int init_house(OBJECT *obj)
 		my->init_climate();
 		return my->init(obj->parent);
 	}
-	catch (char *msg)
-	{
-		gl_error("house_e:%d (%s) %s", obj->id, obj->name?obj->name:"anonymous", msg);
-		return 0;
-	}
+	INIT_CATCHALL(house);
 }
 
 EXPORT int isa_house(OBJECT *obj, char *classname)
@@ -2768,42 +2769,33 @@ EXPORT int isa_house(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	house_e *my = OBJECTDATA(obj,house_e);
-	TIMESTAMP t1 = TS_NEVER;
-	if (obj->clock <= ROUNDOFF)
-		obj->clock = t0;  //set the object clock if it has not been set yet
 
 	try {
+		house_e *my = OBJECTDATA(obj,house_e);
+		TIMESTAMP t1 = TS_NEVER;
+		if (obj->clock <= ROUNDOFF)
+			obj->clock = t0;  //set the object clock if it has not been set yet
 		switch (pass) 
 		{
-			case PC_PRETOPDOWN:
-				t1 = my->presync(obj->clock, t0);
-				break;
+		case PC_PRETOPDOWN:
+			t1 = my->presync(obj->clock, t0);
+			break;
 
-			case PC_BOTTOMUP:
-				t1 = my->sync(obj->clock, t0);
-				obj->clock = t0;
-				break;
-			case PC_POSTTOPDOWN:
-				t1 = my->postsync(obj->clock, t0);
-				obj->clock = t0;
-				break;
-			default:
-				gl_error("house_e::sync- invalid pass configuration");
-				t1 = TS_INVALID; // serious error in exec.c
+		case PC_BOTTOMUP:
+			t1 = my->sync(obj->clock, t0);
+			obj->clock = t0;
+			break;
+		case PC_POSTTOPDOWN:
+			t1 = my->postsync(obj->clock, t0);
+			obj->clock = t0;
+			break;
+		default:
+			gl_error("house_e::sync- invalid pass configuration");
+			t1 = TS_INVALID; // serious error in exec.c
 		}
+		return t1;
 	} 
-	catch (char *msg)
-	{
-		gl_error("house_e::sync exception caught: %s", msg);
-		t1 = TS_INVALID;
-	}
-	catch (...)
-	{
-		gl_error("house_e::sync exception caught: no info");
-		t1 = TS_INVALID;
-	}
-	return t1;
+	SYNC_CATCHALL(house);
 }
 
 EXPORT TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0)

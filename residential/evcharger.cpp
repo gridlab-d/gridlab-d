@@ -558,15 +558,20 @@ void evcharger::load_demand_profile(void)
 
 EXPORT int create_evcharger(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(evcharger::oclass);
-	if (*obj!=NULL)
+	try
 	{
-		evcharger *my = OBJECTDATA(*obj,evcharger);;
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(evcharger::oclass);
+		if (*obj!=NULL)
+		{
+			evcharger *my = OBJECTDATA(*obj,evcharger);;
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(evcharger);
 }
 
 EXPORT int init_evcharger(OBJECT *obj)
@@ -575,11 +580,7 @@ EXPORT int init_evcharger(OBJECT *obj)
 		evcharger *my = OBJECTDATA(obj,evcharger);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (%s:%d): %s", obj->name?obj->name:"anonymous object",obj->oclass->name,obj->id,msg);
-		return 0;
-	}
+	INIT_CATCHALL(evcharger);
 }
 
 EXPORT int isa_evcharger(OBJECT *obj, char *classname)
@@ -599,11 +600,7 @@ EXPORT TIMESTAMP sync_evcharger(OBJECT *obj, TIMESTAMP t0)
 		obj->clock = t0;
 		return t1;
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (%s:%d): %s", obj->name?obj->name:"anonymous object",obj->oclass->name,obj->id,msg);
-		return TS_INVALID;
-	}
+	SYNC_CATCHALL(evcharger);
 }
 
 /**@}**/
