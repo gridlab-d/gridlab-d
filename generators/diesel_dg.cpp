@@ -253,12 +253,10 @@ EXPORT int create_diesel_dg(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	} 
-	catch (char *msg) 
-	{
-		gl_error("create_diesel_dg: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(diesel_dg);
 }
 
 EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent) 
@@ -267,12 +265,10 @@ EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,diesel_dg)->init(parent);
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("init_diesel_dg(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	return 0;
+	INIT_CATCHALL(diesel_dg);
 }
 
 EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
@@ -282,9 +278,9 @@ EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	try
 	{
 		switch (pass) {
-//		case PC_PRETOPDOWN:
+		case PC_PRETOPDOWN:
 //			t2 = my->presync(obj->clock,t1);
-//			break;
+			break;
 		case PC_BOTTOMUP:
 			t2 = my->sync(obj->clock,t1);
 			break;
@@ -298,9 +294,6 @@ EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		if (pass==clockpass)
 			obj->clock = t1;		
 	}
-	catch (char *msg)
-	{
-		gl_error("sync_diesel_dg(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
+	SYNC_CATCHALL(diesel_dg);
 	return t2;
 }

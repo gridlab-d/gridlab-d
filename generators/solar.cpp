@@ -423,12 +423,10 @@ EXPORT int create_solar(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	} 
-	catch (char *msg) 
-	{
-		gl_error("create_solar: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(solar);
 }
 
 EXPORT int init_solar(OBJECT *obj, OBJECT *parent) 
@@ -437,12 +435,10 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,solar)->init(parent);
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("init_solar(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	return 0;
+	INIT_CATCHALL(solar);
 }
 
 EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
@@ -468,9 +464,6 @@ EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		if (pass==clockpass)
 			obj->clock = t1;		
 	}
-	catch (char *msg)
-	{
-		gl_error("sync_solar(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
+	SYNC_CATCHALL(solar);
 	return t2;
 }

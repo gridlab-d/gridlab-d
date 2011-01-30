@@ -703,12 +703,10 @@ EXPORT int create_windturb_dg(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else 
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("create_windturb_dg: %s", msg);
-	}
-	return 1;
+	CREATE_CATCHALL(windturb_dg);
 }
 
 
@@ -719,12 +717,10 @@ EXPORT int init_windturb_dg(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,windturb_dg)->init(parent);
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("init_windturb_dg(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	return 0;
+	INIT_CATCHALL(windturb_dg);
 }
 
 EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
@@ -748,11 +744,7 @@ EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			break;
 		}
 	}
-
-	catch (char *msg)
-	{
-		gl_error("sync_windturb_dg(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
+	SYNC_CATCHALL(windturb_dg);
 	return t1;
 }
 

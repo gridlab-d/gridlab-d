@@ -184,12 +184,10 @@ EXPORT int create_energy_storage(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
-	} 
-	catch (char *msg) 
-	{
-		gl_error("create_energy_storage: %s", msg);
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(energy_storage);
 }
 
 EXPORT int init_energy_storage(OBJECT *obj, OBJECT *parent) 
@@ -198,12 +196,10 @@ EXPORT int init_energy_storage(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,energy_storage)->init(parent);
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("init_energy_storage(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	return 0;
+	INIT_CATCHALL(energy_storage);
 }
 
 EXPORT TIMESTAMP sync_energy_storage(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
@@ -229,9 +225,6 @@ EXPORT TIMESTAMP sync_energy_storage(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		if (pass==clockpass)
 			obj->clock = t1;		
 	}
-	catch (char *msg)
-	{
-		gl_error("sync_energy_storage(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
+	SYNC_CATCHALL(energy_storage);
 	return t2;
 }

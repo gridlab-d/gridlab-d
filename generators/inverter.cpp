@@ -927,13 +927,10 @@ EXPORT int create_inverter(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
-	} 
-	catch (char *msg) 
-	{
-		gl_error("create_inverter: %s", msg);
+		else
+			return 0;
 	}
-	
-	return 0;
+	CREATE_CATCHALL(inverter);
 }
 
 EXPORT int init_inverter(OBJECT *obj, OBJECT *parent) 
@@ -943,12 +940,7 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 		if (obj!=NULL)
 			return OBJECTDATA(obj,inverter)->init(parent);
 	}
-	catch (char *msg)
-	{
-		gl_error("init_inverter(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	
-	return 0;
+	INIT_CATCHALL(inverter);
 }
 
 EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
@@ -974,9 +966,6 @@ EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		if (pass==clockpass)
 			obj->clock = t1;		
 	}
-	catch (char *msg)
-	{
-		gl_error("sync_inverter(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
+	SYNC_CATCHALL(inverter);
 	return t2;
 }

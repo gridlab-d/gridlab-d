@@ -917,13 +917,10 @@ EXPORT int create_rectifier(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
-	} 
-	catch (char *msg) 
-	{
-		gl_error("create_rectifier: %s", msg);
+		else
+			return 0;
 	}
-	
-	return 0;
+	CREATE_CATCHALL(rectifier);
 }
 
 EXPORT int init_rectifier(OBJECT *obj, OBJECT *parent) 
@@ -932,13 +929,10 @@ EXPORT int init_rectifier(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,rectifier)->init(parent);
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("init_rectifier(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-
-	return 0;
+	INIT_CATCHALL(rectifier);
 }
 
 EXPORT TIMESTAMP sync_rectifier(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
@@ -964,9 +958,6 @@ EXPORT TIMESTAMP sync_rectifier(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		if (pass==clockpass)
 			obj->clock = t1;		
 	}
-	catch (char *msg)
-	{
-		gl_error("sync_rectifier(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
+	SYNC_CATCHALL(rectifier);
 	return t2;
 }

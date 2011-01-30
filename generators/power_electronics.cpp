@@ -25,10 +25,6 @@ power_electronics *power_electronics::defaults = NULL;
 static PASSCONFIG passconfig = PC_BOTTOMUP|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
-
-
-
-
 power_electronics::power_electronics(){}
 
 /* Class registration is only called once to register the class with the core */
@@ -514,13 +510,10 @@ EXPORT int create_power_electronics(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
-	} 
-	catch (char *msg) 
-	{
-		gl_error("create_power_electronics: %s", msg);
+		else
+			return 0;
 	}
-	
-	return 0;
+	CREATE_CATCHALL(power_electronics);
 }
 
 EXPORT int init_power_electronics(OBJECT *obj, OBJECT *parent) 
@@ -529,13 +522,10 @@ EXPORT int init_power_electronics(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,power_electronics)->init(parent);
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("init_power_electronics(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	
-	return 0;
+	INIT_CATCHALL(power_electronics);
 }
 
 EXPORT TIMESTAMP sync_power_electronics(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
@@ -561,9 +551,6 @@ EXPORT TIMESTAMP sync_power_electronics(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pa
 		if (pass==clockpass)
 			obj->clock = t1;		
 	}
-	catch (char *msg)
-	{
-		gl_error("sync_power_electronics(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
+	SYNC_CATCHALL(power_electronics);
 	return t2;
 }
