@@ -841,7 +841,8 @@ TIMESTAMP office::plc(TIMESTAMP t0, TIMESTAMP t1)
 
 EXPORT int create_office(OBJECT **obj, OBJECT *parent) 
 {
-	try {
+	try 
+	{
 		*obj = gl_create_object(office::oclass);
 		if (*obj!=NULL)
 		{
@@ -850,33 +851,53 @@ EXPORT int create_office(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 		return 0;
-	} catch (char *msg) {
+	} 
+	catch (char *msg) 
+	{
 		gl_error("create_office: %s", msg);
 		return 0;
-	} catch (const char *msg) {
+	} 
+	catch (const char *msg) 
+	{
 		gl_error("create_office: %s", msg);
+		return 0;
+	}
+	catch (...) 
+	{
+		gl_error("create_office: unhandled exception");
 		return 0;
 	}
 }
 
 EXPORT int init_office(OBJECT *obj, OBJECT *parent) 
 {
-	try {
+	try 
+	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,office)->init(parent);
 		return 0;
-	} catch (char *msg) {
+	} 
+	catch (char *msg) 
+	{
 		gl_error("init_%s(obj=%d;%s): %s", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed", msg);
 		return 0;
-	} catch (const char *msg) {
+	} 
+	catch (const char *msg) 
+	{
 		gl_error("init_%s(obj=%d;%s): %s", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed", msg);
+		return 0;
+	}
+	catch (...) 
+	{
+		gl_error("init_%s(obj=%d;%s): unhandled exception", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed");
 		return 0;
 	}
 }
 
 EXPORT TIMESTAMP sync_office(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
-	try {
+	try 
+	{
 		TIMESTAMP t2 = TS_NEVER;
 		office *my = OBJECTDATA(obj,office);
 		switch (pass) {
@@ -893,24 +914,43 @@ EXPORT TIMESTAMP sync_office(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		if (pass==clockpass)
 			obj->clock = t1;		
 		return t2;
-	} catch (char *msg) {
+	} 
+	catch (char *msg) 
+	{
 		gl_error("sync_office(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return TS_INVALID; /* halt the clock */
-	} catch (const char *msg) {
+	} 
+	catch (const char *msg) 
+	{
 		gl_error("sync_office(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return TS_INVALID; /* halt the clock */
+	}
+	catch (...) 
+	{
+		gl_error("sync_office(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed");
 		return TS_INVALID; /* halt the clock */
 	}
 }
 
 EXPORT TIMESTAMP plc_office(OBJECT *obj, TIMESTAMP t1)
 {
-	try {
+	try 
+	{
 		return OBJECTDATA(obj,office)->plc(obj->clock,t1);
-	} catch (char *msg) {
+	} 
+	catch (char *msg) 
+	{
 		gl_error("plc_%s(obj=%d;%s): %s", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed", msg);
 		return TS_INVALID;
-	} catch (const char *msg) {
+	} 
+	catch (const char *msg) 
+	{
 		gl_error("plc_%s(obj=%d;%s): %s", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed", msg);
+		return TS_INVALID;
+	}
+	catch (...) 
+	{
+		gl_error("plc_%s(obj=%d;%s): unhandled exception", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed");
 		return TS_INVALID;
 	}
 }

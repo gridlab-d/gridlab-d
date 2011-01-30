@@ -146,6 +146,14 @@ EXPORT int create_multizone(OBJECT **obj, OBJECT *parent)
 	{
 		gl_error("create_multizone: %s", msg);
 	}
+	catch (const char *msg)
+	{
+		gl_error("create_multizone: %s", msg);
+	}
+	catch (int)
+	{
+		gl_error("create_multizone: unhandled exception");
+	}
 	return 1;
 }
 
@@ -159,6 +167,14 @@ EXPORT int init_multizone(OBJECT *obj, OBJECT *parent)
 	catch (char *msg)
 	{
 		gl_error("init_multizone(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+	}
+	catch (const char *msg)
+	{
+		gl_error("init_multizone(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+	}
+	catch (...)
+	{
+		gl_error("init_multizone(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed");
 	}
 	return 1;
 }
@@ -189,6 +205,14 @@ EXPORT TIMESTAMP sync_multizone(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	catch (char *msg)
 	{
 		gl_error("sync_multizone(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+	}
+	catch (const char *msg)
+	{
+		gl_error("sync_multizone(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+	}
+	catch (...)
+	{
+		gl_error("sync_multizone(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed");
 	}
 	return t2;
 }
