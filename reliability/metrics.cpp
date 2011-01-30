@@ -926,12 +926,10 @@ EXPORT int create_metrics(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("create_metrics: %s", msg);
-	}
-	return 1;
+	CREATE_CATCHALL(metrics);
 }
 
 EXPORT int init_metrics(OBJECT *obj, OBJECT *parent)
@@ -940,12 +938,10 @@ EXPORT int init_metrics(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,metrics)->init(parent);
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("init_metrics(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	return 1;
+	INIT_CATCHALL(metrics);
 }
 
 EXPORT TIMESTAMP sync_metrics(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
@@ -966,10 +962,7 @@ EXPORT TIMESTAMP sync_metrics(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		}
 		if (pass==clockpass)
 			obj->clock = t1;
+		return t2;
 	}
-	catch (char *msg)
-	{
-		gl_error("sync_metrics(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	return t2;
+	SYNC_CATCHALL(metrics);
 }

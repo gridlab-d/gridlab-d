@@ -664,13 +664,10 @@ EXPORT int create_eventgen(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("create_eventgen: %s", msg);
-
-	}
-	return 1;
+	CREATE_CATCHALL(eventgen);
 }
 
 EXPORT int init_eventgen(OBJECT *obj, OBJECT *parent)
@@ -679,20 +676,18 @@ EXPORT int init_eventgen(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,eventgen)->init(parent);
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("init_eventgen(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	return 1;
+	INIT_CATCHALL(eventgen);
 }
 
 EXPORT TIMESTAMP sync_eventgen(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
-	TIMESTAMP t2 = TS_NEVER;
-	eventgen *my = OBJECTDATA(obj,eventgen);
 	try
 	{
+		TIMESTAMP t2 = TS_NEVER;
+		eventgen *my = OBJECTDATA(obj,eventgen);
 		switch (pass) {
 		case PC_PRETOPDOWN:
 			return my->presync(obj->clock,t1);
@@ -707,11 +702,8 @@ EXPORT TIMESTAMP sync_eventgen(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			GL_THROW("invalid pass request (%d)", pass);
 			break;
 		}
+		return t2;
 	}
-	catch (char *msg)
-	{
-		gl_error("sync_eventgen(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-	}
-	return t2;
+	SYNC_CATCHALL(eventgen);
 }
 /**@}*/
