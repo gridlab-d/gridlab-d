@@ -121,32 +121,46 @@ TIMESTAMP plc::sync(TIMESTAMP t0, TIMESTAMP t1)
 //////////////////////////////////////////////////////////////////////////
 EXPORT int create_plc(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(plc::oclass);
-	if (*obj!=NULL)
+	try 
 	{
-		plc *my = OBJECTDATA(*obj,plc);
-		gl_set_parent(*obj,parent);
-		my->create();
-		return 1;
+		*obj = gl_create_object(plc::oclass);
+		if (*obj!=NULL)
+		{
+			plc *my = OBJECTDATA(*obj,plc);
+			gl_set_parent(*obj,parent);
+			my->create();
+			return 1;
+		}
+		else
+			return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(plc);
 }
 
 EXPORT int init_plc(OBJECT *obj)
 {
-	if (obj!=NULL)
+	try
 	{
-		plc *my = OBJECTDATA(obj,plc);
-		return my->init(obj->parent);
+		if (obj!=NULL)
+		{
+			plc *my = OBJECTDATA(obj,plc);
+			return my->init(obj->parent);
+		}
+		else
+			return 0;
 	}
-	return 0;
+	INIT_CATCHALL(plc);
 }
 
 EXPORT TIMESTAMP sync_plc(OBJECT *obj, TIMESTAMP t0)
 {
-	TIMESTAMP t1 = OBJECTDATA(obj,plc)->sync(obj->clock,t0);
-	obj->clock = t0;
-	return t1;
+	try 
+	{
+		TIMESTAMP t1 = OBJECTDATA(obj,plc)->sync(obj->clock,t0);
+		obj->clock = t0;
+		return t1;
+	}
+	SYNC_CATCHALL(plc);
 }
 
 /**@}*/

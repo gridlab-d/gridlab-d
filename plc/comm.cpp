@@ -220,24 +220,38 @@ TIMESTAMP comm::sync(TIMESTAMP t0)
 //////////////////////////////////////////////////////////////////////////
 EXPORT int create_comm(OBJECT **obj, OBJECT *parent)
 {
-	*obj = gl_create_object(comm::oclass);
-	if (*obj!=NULL)
-		return OBJECTDATA(*obj,comm)->create();
-	return 0;
+	try
+	{
+		*obj = gl_create_object(comm::oclass);
+		if (*obj!=NULL)
+			return OBJECTDATA(*obj,comm)->create();
+		else
+			return 0;
+	}
+	CREATE_CATCHALL(comm);
 }
 
 EXPORT int init_comm(OBJECT *obj)
 {
-	if (obj!=NULL)
-		return OBJECTDATA(obj,comm)->init(obj->parent);
-	return 0;
+	try
+	{
+		if (obj!=NULL)
+			return OBJECTDATA(obj,comm)->init(obj->parent);
+		else
+			return 0;
+	}
+	INIT_CATCHALL(comm);
 }
 
 EXPORT TIMESTAMP sync_comm(OBJECT *obj, TIMESTAMP t0)
 {
-	TIMESTAMP t1 = OBJECTDATA(obj,comm)->sync(t0);
-	obj->clock = t0;
-	return t1;
+	try
+	{
+		TIMESTAMP t1 = OBJECTDATA(obj,comm)->sync(t0);
+		obj->clock = t0;
+		return t1;
+	}
+	SYNC_CATCHALL(comm);
 }
 
 //////////////////////////////////////////////////////////////////////////
