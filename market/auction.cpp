@@ -1536,18 +1536,10 @@ EXPORT int create_auction(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("create_auction: %s", msg);
-		return 0;
-	}
-	catch (const char *msg)
-	{
-		gl_error("create_auction: %s", msg);
-		return 0;
-	}
-	return 1;
+	CREATE_CATCHALL(auction);
 }
 
 EXPORT int init_auction(OBJECT *obj, OBJECT *parent)
@@ -1556,20 +1548,10 @@ EXPORT int init_auction(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,auction)->init(parent);
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		char name[64];
-		gl_error("init_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-		return 0;
-	}
-	catch (const char *msg)
-	{
-		char name[64];
-		gl_error("init_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-		return 0;
-	}
-	return 1;
+	INIT_CATCHALL(auction);
 }
 
 EXPORT int isa_auction(OBJECT *obj, char *classname)
@@ -1600,19 +1582,8 @@ EXPORT TIMESTAMP sync_auction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		}
 		if (pass==clockpass)
 			obj->clock = t1;
+		return t2;
 	}
-	catch (char *msg)
-	{
-		char name[64];
-		gl_error("sync_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-		t2 = TS_INVALID;
-	}
-	catch (const char *msg)
-	{
-		char name[64];
-		gl_error("sync_auction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-		t2 = TS_INVALID;
-	}
-	return t2;
+	SYNC_CATCHALL(auction);
 }
 

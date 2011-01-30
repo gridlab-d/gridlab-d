@@ -204,13 +204,10 @@ EXPORT int create_stubauction(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_stubauction: %s", msg);
-		return 0;
-	}
-	return 1;
+	CREATE_CATCHALL(stubauction);
 }
 
 EXPORT int init_stubauction(OBJECT *obj, OBJECT *parent)
@@ -219,14 +216,10 @@ EXPORT int init_stubauction(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,stubauction)->init(parent);
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		char name[64];
-		gl_error("init_stubauction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-		return 0;
-	}
-	return 1;
+	INIT_CATCHALL(stubauction);
 }
 
 EXPORT int isa_stubauction(OBJECT *obj, char *classname)
@@ -259,13 +252,8 @@ EXPORT TIMESTAMP sync_stubauction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		}
 		if (pass==clockpass)
 			obj->clock = t1;
+		return t2;
 	}
-	catch (const char *msg)
-	{
-		char name[64];
-		gl_error("sync_stubauction(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-		t2 = TS_INVALID;
-	}
-	return t2;
+	SYNC_CATCHALL(stubauction);
 }
 

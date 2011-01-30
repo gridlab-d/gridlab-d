@@ -377,7 +377,7 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	}
 
 	if(bid_mode == BM_ON){
-		int bid_id = (lastbid_id == *pMarketID ? lastbid_id : -1);
+		int64 bid_id = (lastbid_id == *pMarketID ? lastbid_id : -1);
 		// override
 		//bid_id = -1;
 
@@ -522,12 +522,10 @@ EXPORT int create_double_controller(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("create_double_controller: %s", msg);
-	}
-	return 1;
+	CREATE_CATCHALL(double_controller);
 }
 
 EXPORT int init_double_controller(OBJECT *obj, OBJECT *parent)
@@ -537,13 +535,10 @@ EXPORT int init_double_controller(OBJECT *obj, OBJECT *parent)
 		if (obj!=NULL){
 			return OBJECTDATA(obj,double_controller)->init(parent);
 		}
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		char name[64];
-		gl_error("init_double_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-	}
-	return 1;
+	INIT_CATCHALL(double_controller);
 }
 
 EXPORT int isa_double_controller(OBJECT *obj, char *classname)
@@ -576,13 +571,9 @@ EXPORT TIMESTAMP sync_double_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pa
 			GL_THROW("invalid pass request (%d)", pass);
 			break;
 		}
+		return t2;
 	}
-	catch (char *msg)
-	{
-		char name[64];
-		gl_error("sync_double_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-	}
-	return t2;
+	SYNC_CATCHALL(double_controller);
 }
 
 // EOF

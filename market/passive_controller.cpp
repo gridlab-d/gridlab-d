@@ -510,13 +510,10 @@ EXPORT int create_passive_controller(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_passive_controller: %s", msg);
-		return 0;
-	}
-	return 1;
+	CREATE_CATCHALL(passive_controller);
 }
 
 EXPORT int init_passive_controller(OBJECT *obj, OBJECT *parent)
@@ -526,14 +523,10 @@ EXPORT int init_passive_controller(OBJECT *obj, OBJECT *parent)
 		if (obj!=NULL){
 			return OBJECTDATA(obj,passive_controller)->init(parent);
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		char name[64];
-		gl_error("init_passive_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-		return 0;
-	}
-	return 1;
+	INIT_CATCHALL(passive_controller);
 }
 
 EXPORT int isa_passive_controller(OBJECT *obj, char *classname)
@@ -568,14 +561,9 @@ EXPORT TIMESTAMP sync_passive_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG p
 			t2 = TS_INVALID;
 			break;
 		}
+		return t2;
 	}
-	catch (const char *msg)
-	{
-		char name[64];
-		gl_error("sync_passive_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-		t2 = TS_INVALID;
-	}
-	return t2;
+	SYNC_CATCHALL(passive_controller);
 }
 
 // EOF

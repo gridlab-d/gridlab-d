@@ -944,30 +944,24 @@ EXPORT int create_controller(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_controller: %s", msg);
-		return 0;
-	}
-	return 1;
+	CREATE_CATCHALL(controller);
 }
 
 EXPORT int init_controller(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL){
+		if (obj!=NULL)
+		{
 			return OBJECTDATA(obj,controller)->init(parent);
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		char name[64];
-		gl_error("init_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-		return 0;
-	}
-	return 1;
+	INIT_CATCHALL(controller);
 }
 
 EXPORT int isa_controller(OBJECT *obj, char *classname)
@@ -1003,14 +997,9 @@ EXPORT TIMESTAMP sync_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			return TS_INVALID;
 			break;
 		}
+		return t2;
 	}
-	catch (const char *msg)
-	{
-		char name[64];
-		gl_error("sync_controller(obj=%s): %s", gl_name(obj,name,sizeof(name)), msg);
-		t2 = TS_INVALID;
-	}
-	return t2;
+	SYNC_CATCHALL(controller);
 }
 
 // EOF
