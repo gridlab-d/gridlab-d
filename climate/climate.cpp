@@ -666,6 +666,11 @@ EXPORT TIMESTAMP sync_climate(OBJECT *obj, /// a pointer to the OBJECT
 		gl_error("climate::sync exception caught: %s", msg);
 		t1 = TS_INVALID;
 	}
+	catch(const char *msg)
+	{
+		gl_error("climate::sync exception caught: %s", msg);
+		t1 = TS_INVALID;
+	}
 	catch (...)
 	{
 		gl_error("climate::sync exception caught: no info");
