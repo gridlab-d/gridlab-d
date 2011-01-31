@@ -266,43 +266,52 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 	if(dt->month > 12 || dt->month < 1)
 	{
 		output_fatal("Invalid month provided in datetime");
-		return ts;
+		return TS_INVALID;
 	}
 	else if(dt->day > daysinmonth[dt->month-1] || dt->day < 1)
 	{
-		output_fatal("Invalid day provided in datetime");
+		if(ISLEAPYEAR(dt->year) && dt->month == 2 && dt->day == 29){
+			;
+		} else {
+			output_fatal("Invalid day provided in datetime");
+			return TS_INVALID;
+		}
+	}
+	
+	/* add month */
+	for (n=1; n<dt->month; n++){
+		if(ISLEAPYEAR(dt->year) && n == 2){
+			ts += (daysinmonth[n - 1] + 1) * DAY;
+		} else {
+			ts += (daysinmonth[n - 1]) * DAY;
+		}
+		// ts += (daysinmonth[n - 1] + (n == 2 && ISLEAPYEAR(dt->year) ? 1 : 0)) * DAY;
+	}	
+
+	if(dt->hour < 0 || dt->hour > 23 || dt->minute < 0 || dt->minute > 60 || dt->second < 0 || dt->second > 62){
+		output_fatal("Invalid time of day provided in datetime");
 		return ts;
 	}
-	else
-	{
-		/* add month */
-		for (n=1; n<dt->month; n++){
-			ts += (daysinmonth[n - 1] + (n == 2 && ISLEAPYEAR(dt->year) ? 1 : 0)) * DAY;
-		}	
-	
-		if(dt->hour < 0 || dt->hour > 23 || dt->minute < 0 || dt->minute > 60 || dt->second < 0 || dt->second > 62){
-			output_fatal("Invalid time of day provided in datetime");
-			return ts;
-		}
-		/* add day, hour, minute, second, usecs */
-		ts += (dt->day - 1) * DAY + dt->hour * HOUR + dt->minute * MINUTE + dt->second * SECOND + dt->microsecond * MICROSECOND;
+	/* add day, hour, minute, second, usecs */
+	ts += (dt->day - 1) * DAY + dt->hour * HOUR + dt->minute * MINUTE + dt->second * SECOND + dt->microsecond * MICROSECOND;
 
-		if(dt->tz[0] == 0){
-			strcpy(dt->tz, (isdst(ts) ? tzdst : tzstd));
-		}
-		/* adjust for GMT (or unspecified) */
-		if (strcmp(dt->tz, "GMT") == 0){
-			return ts;
-		} else if(strcmp(dt->tz, tzstd) == 0 || ((strcmp(dt->tz, "")==0 && (ts < dststart[dt->year - YEAR0] || ts >= dstend[dt->year - YEAR0])))){
-			/* adjust to standard local time */
-			return ts + tzoffset;
-		} else if(strcmp(dt->tz, tzdst) == 0 || ((strcmp(dt->tz, "")==0 && ts >= dststart[dt->year - YEAR0] && ts < dstend[dt->year - YEAR0]))){
-			/* adjust to daylight local time */
-			return ts + tzoffset - HOUR;
-		}
+	if(dt->tz[0] == 0){
+		strcpy(dt->tz, (isdst(ts) ? tzdst : tzstd));
 	}
-	/* not a valid timezone */
-	return TS_INVALID;
+	/* adjust for GMT (or unspecified) */
+	if (strcmp(dt->tz, "GMT") == 0){
+		return ts;
+	} else if(strcmp(dt->tz, tzstd) == 0 || ((strcmp(dt->tz, "")==0 && (ts < dststart[dt->year - YEAR0] || ts >= dstend[dt->year - YEAR0])))){
+		/* adjust to standard local time */
+		return ts + tzoffset;
+	} else if(strcmp(dt->tz, tzdst) == 0 || ((strcmp(dt->tz, "")==0 && ts >= dststart[dt->year - YEAR0] && ts < dstend[dt->year - YEAR0]))){
+		/* adjust to daylight local time */
+		return ts + tzoffset - HOUR;
+	} else {
+		/* not a valid timezone */
+		return TS_INVALID;
+	}
+	return TS_INVALID; // heading off 'no return path' warnings
 }
 
 /** Convert a datetime struct to a string
