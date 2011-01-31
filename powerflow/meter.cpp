@@ -225,31 +225,25 @@ EXPORT int create_meter(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_meter: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(meter);
 }
 
 EXPORT int init_meter(OBJECT *obj)
 {
-	meter *my = OBJECTDATA(obj,meter);
 	try {
+		meter *my = OBJECTDATA(obj,meter);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (meter:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(meter);
 }
 
 EXPORT TIMESTAMP sync_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	meter *pObj = OBJECTDATA(obj,meter);
 	try {
+		meter *pObj = OBJECTDATA(obj,meter);
 		TIMESTAMP t1;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -264,13 +258,8 @@ EXPORT TIMESTAMP sync_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 		throw "invalid pass request";
-	} catch (const char *error) {
-		gl_error("%s (meter:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (meter:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
 	}
+	SYNC_CATCHALL(meter);
 }
 
 /**@}**/

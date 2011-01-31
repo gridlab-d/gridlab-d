@@ -440,18 +440,17 @@ EXPORT int create_underground_line(OBJECT **obj, OBJECT *parent)
 			underground_line *my = OBJECTDATA(*obj,underground_line);
 			gl_set_parent(*obj,parent);
 			return my->create();
-		}	}
-	catch (const char *msg)
-	{
-		gl_error("create_underground_line: %s", msg);
+		}	
+		else
+		return 0;
 	}
-	return 0;
+	CREATE_CATCHALL(underground_line);
 }
 
 EXPORT TIMESTAMP sync_underground_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	underground_line *pObj = OBJECTDATA(obj,underground_line);
 	try {
+		underground_line *pObj = OBJECTDATA(obj,underground_line);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -465,26 +464,17 @@ EXPORT TIMESTAMP sync_underground_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (underground_line:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (underground_line:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(underground_line);
 }
 
 EXPORT int init_underground_line(OBJECT *obj)
 {
-	underground_line *my = OBJECTDATA(obj,underground_line);
 	try {
+		underground_line *my = OBJECTDATA(obj,underground_line);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (underground_line:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(underground_line);
 }
 
 EXPORT int isa_underground_line(OBJECT *obj, char *classname)

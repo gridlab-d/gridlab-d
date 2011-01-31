@@ -823,12 +823,10 @@ EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_regulator: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(regulator);
 }
 
 /**
@@ -839,15 +837,11 @@ EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_regulator(OBJECT *obj)
 {
-	regulator *my = OBJECTDATA(obj,regulator);
 	try {
+		regulator *my = OBJECTDATA(obj,regulator);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (regulator:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(regulator);
 }
 
 /**
@@ -860,8 +854,8 @@ EXPORT int init_regulator(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_regulator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	regulator *pObj = OBJECTDATA(obj,regulator);
 	try {
+		regulator *pObj = OBJECTDATA(obj,regulator);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -875,13 +869,8 @@ EXPORT TIMESTAMP sync_regulator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (regulator:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (regulator:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(regulator);
 }
 
 EXPORT int isa_regulator(OBJECT *obj, char *classname)

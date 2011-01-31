@@ -1226,26 +1226,18 @@ EXPORT int create_restoration(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
-		return 0;
-	}
-	return 0;
+	CREATE_CATCHALL(restoration);
 }
 
 EXPORT int init_restoration(OBJECT *obj, OBJECT *parent)
 {
 	try {
-			return OBJECTDATA(obj,restoration)->init(parent);
+		return OBJECTDATA(obj,restoration)->init(parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", obj->name?obj->name:"unnamed", obj->oclass->name, obj->id, msg);
-		return 0;
-	}
-	return 1;
+	INIT_CATCHALL(restoration);
 }
 
 /**

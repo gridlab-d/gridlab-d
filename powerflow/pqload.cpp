@@ -360,12 +360,10 @@ EXPORT int create_pqload(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_pqload: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(pqload);
 }
 
 /**
@@ -376,17 +374,11 @@ EXPORT int create_pqload(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_pqload(OBJECT *obj)
 {
-	int result = 1;
 	try {
-		result = ((pqload*) (obj + 1))->init(obj->parent);
-	} catch (const char *error) {
-		gl_error("%s:%d: %s", obj->oclass->name, obj->id, error);
-		return 0;
-	} catch (...) {
-		gl_error("%s:%d: %s", obj->oclass->name, obj->id, "unknown exception");
-		return 0;
-	}
-	return result;
+		pqload *my = OBJECTDATA(obj,pqload);
+		return my->init(obj->parent);
+	} 
+	INIT_CATCHALL(pqload);
 }
 
 /**
@@ -414,13 +406,8 @@ EXPORT TIMESTAMP sync_pqload(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (pqload:%d): %s", obj->name, obj->oclass->name, obj->id, error);
-		return TS_INVALID;
-	} catch (...) {
-		gl_error("%s (pqload:%d): %s", obj->name, obj->oclass->name, obj->id, "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(pqload);
 }
 
 EXPORT int isa_pqload(OBJECT *obj, char *classname)

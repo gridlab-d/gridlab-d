@@ -91,12 +91,10 @@ EXPORT int create_motor(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_induction_motor: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(motor);
 }
 
 
@@ -109,15 +107,11 @@ EXPORT int create_motor(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_motor(OBJECT *obj)
 {
-	motor *my = OBJECTDATA(obj,motor);
 	try {
+		motor *my = OBJECTDATA(obj,motor);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (motor:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(motor);
 }
 
 /**
@@ -130,8 +124,8 @@ EXPORT int init_motor(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	motor *pObj = OBJECTDATA(obj,motor);
 	try {
+		motor *pObj = OBJECTDATA(obj,motor);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -145,13 +139,8 @@ EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (motor:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (motor:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(motor);
 }
 
 /**

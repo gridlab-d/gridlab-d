@@ -283,12 +283,10 @@ EXPORT int create_relay(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_relay: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(relay);
 }
 
 
@@ -313,15 +311,11 @@ EXPORT int commit_relay(OBJECT *obj)
 */
 EXPORT int init_relay(OBJECT *obj)
 {
-	relay *my = OBJECTDATA(obj,relay);
 	try {
+		relay *my = OBJECTDATA(obj,relay);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (relay:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(relay);
 }
 
 /**
@@ -334,8 +328,8 @@ EXPORT int init_relay(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_relay(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	relay *pObj = OBJECTDATA(obj,relay);
 	try {
+		relay *pObj = OBJECTDATA(obj,relay);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -349,13 +343,8 @@ EXPORT TIMESTAMP sync_relay(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (relay:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (relay:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(relay);
 }
 
 EXPORT int isa_relay(OBJECT *obj, char *classname)

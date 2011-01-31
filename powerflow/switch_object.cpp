@@ -825,12 +825,10 @@ EXPORT int create_switch(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_switch: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(switch);
 }
 
 /**
@@ -841,15 +839,11 @@ EXPORT int create_switch(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_switch(OBJECT *obj)
 {
-	switch_object *my = OBJECTDATA(obj,switch_object);
 	try {
+		switch_object *my = OBJECTDATA(obj,switch_object);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (switch:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0;
-	}
+	INIT_CATCHALL(switch);
 }
 
 /**
@@ -862,8 +856,8 @@ EXPORT int init_switch(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_switch(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	switch_object *pObj = OBJECTDATA(obj,switch_object);
 	try {
+		switch_object *pObj = OBJECTDATA(obj,switch_object);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -877,13 +871,8 @@ EXPORT TIMESTAMP sync_switch(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (switch:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID;
-	} catch (...) {
-		gl_error("%s (switch:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(switch);
 }
 
 EXPORT int isa_switch(OBJECT *obj, char *classname)

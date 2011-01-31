@@ -325,12 +325,10 @@ EXPORT int create_load(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_load: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(load);
 }
 
 /**
@@ -341,17 +339,11 @@ EXPORT int create_load(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_load(OBJECT *obj)
 {
-	int result = 1;
 	try {
-		result = ((load*) (obj + 1))->init();
-	} catch (const char *error) {
-		gl_error("%s:%d: %s", obj->oclass->name, obj->id, error);
-		return 0; 
-	} catch (...) {
-		gl_error("%s:%d: %s", obj->oclass->name, obj->id, "unknown exception");
-		return 0;
+		load *my = OBJECTDATA(obj,load);
+		return my->init();
 	}
-	return result;
+	INIT_CATCHALL(load);
 }
 
 /**
@@ -379,13 +371,8 @@ EXPORT TIMESTAMP sync_load(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (load:%d): %s", obj->name, obj->oclass->name, obj->id, error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (load:%d): %s", obj->name, obj->oclass->name, obj->id, "unknown exception");
-		return TS_INVALID;
 	}
+	SYNC_CATCHALL(load);
 }
 
 EXPORT int isa_load(OBJECT *obj, char *classname)

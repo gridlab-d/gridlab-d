@@ -416,31 +416,25 @@ EXPORT int create_triplex_meter(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_triplex_meter: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(triplex_meter);
 }
 
 EXPORT int init_triplex_meter(OBJECT *obj)
 {
-	triplex_meter *my = OBJECTDATA(obj,triplex_meter);
 	try {
+		triplex_meter *my = OBJECTDATA(obj,triplex_meter);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (triplex_meter:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0;
-	}
+	INIT_CATCHALL(triplex_meter);
 }
 
 EXPORT TIMESTAMP sync_triplex_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	triplex_meter *pObj = OBJECTDATA(obj,triplex_meter);
 	try {
+		triplex_meter *pObj = OBJECTDATA(obj,triplex_meter);
 		TIMESTAMP t1;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -455,13 +449,8 @@ EXPORT TIMESTAMP sync_triplex_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 		throw "invalid pass request";
-	} catch (const char *error) {
-		gl_error("%s (triplex_meter:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID;
-	} catch (...) {
-		gl_error("%s (triplex_meter:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
 	}
+	SYNC_CATCHALL(triplex_meter);
 }
 
 /**@}**/

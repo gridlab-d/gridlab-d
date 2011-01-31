@@ -471,29 +471,20 @@ EXPORT int create_fuse(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	} 
-	catch (const char *msg)
-	{
-		gl_error("create_fuse: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(fuse);
 }
 
 EXPORT int init_fuse(OBJECT *obj)
 {
-	fuse *my = OBJECTDATA(obj,fuse);
 	try {
+		fuse *my = OBJECTDATA(obj,fuse);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		GL_THROW("%s (fuse:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(fuse);
 }
-
-
-
 
 //Commit timestep - after all iterations are done
 EXPORT int commit_fuse(OBJECT *obj)
@@ -518,8 +509,8 @@ EXPORT int commit_fuse(OBJECT *obj)
 
 EXPORT TIMESTAMP sync_fuse(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	fuse *pObj = OBJECTDATA(obj,fuse);
 	try {
+		fuse *pObj = OBJECTDATA(obj,fuse);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -533,13 +524,8 @@ EXPORT TIMESTAMP sync_fuse(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (fuse:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (fuse:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
 	}
+	SYNC_CATCHALL(fuse);
 }
 
 /**

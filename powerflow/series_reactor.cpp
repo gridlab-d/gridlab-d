@@ -162,12 +162,10 @@ EXPORT int create_series_reactor(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_series_reactor: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(series_reactor);
 }
 
 /**
@@ -178,15 +176,11 @@ EXPORT int create_series_reactor(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_series_reactor(OBJECT *obj)
 {
-	series_reactor *my = OBJECTDATA(obj,series_reactor);
 	try {
+		series_reactor *my = OBJECTDATA(obj,series_reactor);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (series_reactor:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0;
-	}
+	INIT_CATCHALL(series_reactor);
 }
 
 /**
@@ -199,8 +193,8 @@ EXPORT int init_series_reactor(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_series_reactor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	series_reactor *pObj = OBJECTDATA(obj,series_reactor);
 	try {
+		series_reactor *pObj = OBJECTDATA(obj,series_reactor);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -214,13 +208,8 @@ EXPORT TIMESTAMP sync_series_reactor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (series_reactor:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID;
-	} catch (...) {
-		gl_error("%s (series_reactor:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(series_reactor);
 }
 
 EXPORT int isa_series_reactor(OBJECT *obj, char *classname)

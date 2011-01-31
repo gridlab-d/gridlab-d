@@ -222,31 +222,25 @@ EXPORT int create_substation(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_substation: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(substation);
 }
 
 EXPORT int init_substation(OBJECT *obj)
 {
-	substation *my = OBJECTDATA(obj,substation);
 	try {
+		substation *my = OBJECTDATA(obj,substation);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (substation:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(substation);
 }
 
 EXPORT TIMESTAMP sync_substation(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	substation *pObj = OBJECTDATA(obj,substation);
 	try {
+		substation *pObj = OBJECTDATA(obj,substation);
 		TIMESTAMP t1;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -261,13 +255,8 @@ EXPORT TIMESTAMP sync_substation(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 		throw "invalid pass request";
-	} catch (const char *error) {
-		gl_error("%s (substation:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (substation:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(substation);
 }
 
 /**@}**/

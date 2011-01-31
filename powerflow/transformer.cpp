@@ -738,11 +738,7 @@ EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 			return my->create();
 		}
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_transformer: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(transformer);
 }
 
 
@@ -755,15 +751,11 @@ EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_transformer(OBJECT *obj)
 {
-	transformer *my = OBJECTDATA(obj,transformer);
 	try {
+		transformer *my = OBJECTDATA(obj,transformer);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (transformer:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(transformer);
 }
 
 /**
@@ -776,8 +768,8 @@ EXPORT int init_transformer(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_transformer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	transformer *pObj = OBJECTDATA(obj,transformer);
 	try {
+		transformer *pObj = OBJECTDATA(obj,transformer);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -791,13 +783,8 @@ EXPORT TIMESTAMP sync_transformer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (transformer:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (transformer:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(transformer);
 }
 
 EXPORT int isa_transformer(OBJECT *obj, char *classname)

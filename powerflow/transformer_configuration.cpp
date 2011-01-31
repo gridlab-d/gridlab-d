@@ -40,7 +40,7 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 {
 	if(oclass == NULL)
 	{
-		oclass = gl_register_class(mod,"transformer_configuration",sizeof(transformer_configuration),PC_BOTTOMUP|PC_POSTTOPDOWN);
+		oclass = gl_register_class(mod,"transformer_configuration",sizeof(transformer_configuration),NULL);
 		if (oclass==NULL)
 			throw "unable to register class transformer_configuration";
 		else
@@ -214,26 +214,18 @@ EXPORT int create_transformer_configuration(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
-		return 0;
-	}
-	return 1;
+	CREATE_CATCHALL(transformer_configuration);
 }
 
 EXPORT int init_transformer_configuration(OBJECT *obj, OBJECT *parent)
 {
 	try {
-			return OBJECTDATA(obj,transformer_configuration)->init(parent);
+		return OBJECTDATA(obj,transformer_configuration)->init(parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", obj->name?obj->name:"unnamed", obj->oclass->name, obj->id, msg);
-		return 0;
-	}
-	return 1;
+	INIT_CATCHALL(transformer_configuration);
 }
 
 EXPORT TIMESTAMP sync_transformer_configuration(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

@@ -2224,12 +2224,10 @@ EXPORT int create_link(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_link: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(link);
 }
 
 /**
@@ -2240,15 +2238,11 @@ EXPORT int create_link(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_link(OBJECT *obj)
 {
-	link *my = OBJECTDATA(obj,link);
 	try {
+		link *my = OBJECTDATA(obj,link);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (link:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(link);
 }
 
 /**
@@ -2261,9 +2255,9 @@ EXPORT int init_link(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	link *pObj = OBJECTDATA(obj,link);
 	try 
 	{
+		link *pObj = OBJECTDATA(obj,link);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -2277,17 +2271,8 @@ EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} 
-	catch (const char *error) 
-	{
-		gl_error("%s (link:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} 
-	catch (...) 
-	{
-		gl_error("%s (link:%d): unknown exception", pObj->get_name(), pObj->get_id());
-		return TS_INVALID;
 	}
+	SYNC_CATCHALL(link);
 }
 
 EXPORT int isa_link(OBJECT *obj, char *classname)

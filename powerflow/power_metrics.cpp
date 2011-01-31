@@ -293,26 +293,18 @@ EXPORT int create_power_metrics(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
-		return 0;
-	}
-	return 0;
+	CREATE_CATCHALL(power_metrics);
 }
 
 EXPORT int init_power_metrics(OBJECT *obj, OBJECT *parent)
 {
 	try {
-			return OBJECTDATA(obj,power_metrics)->init(parent);
+		return OBJECTDATA(obj,power_metrics)->init(parent);
 	}
-	catch (char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", obj->name?obj->name:"unnamed", obj->oclass->name, obj->id, msg);
-		return 0;
-	}
-	return 1;
+	INIT_CATCHALL(power_metrics);
 }
 
 /**

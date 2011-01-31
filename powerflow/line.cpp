@@ -143,18 +143,16 @@ EXPORT int create_line(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_line: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(line);
 }
 
 EXPORT TIMESTAMP sync_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	line *pObj = OBJECTDATA(obj,line);
 	try {
+		line *pObj = OBJECTDATA(obj,line);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -168,26 +166,17 @@ EXPORT TIMESTAMP sync_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (line:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (line:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(line);
 }
 
 EXPORT int init_line(OBJECT *obj)
 {
-	line *my = OBJECTDATA(obj,line);
 	try {
+		line *my = OBJECTDATA(obj,line);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (line:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(line);
 }
 
 EXPORT int isa_line(OBJECT *obj, char *classname)

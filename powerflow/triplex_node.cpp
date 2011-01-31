@@ -185,12 +185,10 @@ EXPORT int create_triplex_node(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}	
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_triplex_node: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(triplex_node);
 }
 
 /**
@@ -201,15 +199,11 @@ EXPORT int create_triplex_node(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_triplex_node(OBJECT *obj)
 {
-	triplex_node *my = OBJECTDATA(obj,triplex_node);
 	try {
+		triplex_node *my = OBJECTDATA(obj,triplex_node);
 		return my->init();
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (triplex_node:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(triplex_node);
 }
 
 /**
@@ -222,8 +216,8 @@ EXPORT int init_triplex_node(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_triplex_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	triplex_node *pObj = OBJECTDATA(obj,triplex_node);
 	try {
+		triplex_node *pObj = OBJECTDATA(obj,triplex_node);
 		TIMESTAMP t1;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -237,13 +231,8 @@ EXPORT TIMESTAMP sync_triplex_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (triplex_node:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (triplex_node:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(triplex_node);
 }
 
 EXPORT int isa_triplex_node(OBJECT *obj, char *classname)

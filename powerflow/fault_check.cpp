@@ -545,26 +545,19 @@ EXPORT int create_fault_check(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
-		return 0;
-	}
-	return 1;
+	CREATE_CATCHALL(fault_check);
 }
 
 EXPORT int init_fault_check(OBJECT *obj, OBJECT *parent)
 {
 	try {
-			return OBJECTDATA(obj,fault_check)->init(parent);
+		fault_check *my = OBJECTDATA(obj,fault_check);
+		return my->init(parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", obj->name?obj->name:"unnamed", obj->oclass->name, obj->id, msg);
-		return 0;
-	}
-	return 1;
+	INIT_CATCHALL(fault_check);
 }
 
 /**
@@ -577,8 +570,8 @@ EXPORT int init_fault_check(OBJECT *obj, OBJECT *parent)
 */
 EXPORT TIMESTAMP sync_fault_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	fault_check *pObj = OBJECTDATA(obj,fault_check);
 	try {
+		fault_check *pObj = OBJECTDATA(obj,fault_check);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -593,15 +586,7 @@ EXPORT TIMESTAMP sync_fault_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	}
-	catch (const char *msg)
-	{
-		gl_error("fault_check %s (%s:%d): %s", obj->name, obj->oclass->name, obj->id, msg);
-	}
-	catch (...)
-	{
-		gl_error("fault_check %s (%s:%d): unknown exception", obj->name, obj->oclass->name, obj->id);
-	}
-	return TS_INVALID; /* stop the clock */
+	SYNC_CATCHALL(fault_check);
 }
 
 EXPORT int isa_fault_check(OBJECT *obj, char *classname)

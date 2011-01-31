@@ -144,44 +144,40 @@ EXPORT int create_billdump(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_billdump: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(billdump);
 }
 
 EXPORT int init_billdump(OBJECT *obj)
 {
-	billdump *my = OBJECTDATA(obj,billdump);
 	try {
+		billdump *my = OBJECTDATA(obj,billdump);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (billdump:%d): %s", obj->name, obj->id, msg);
-		return 0; 
-	}
+	INIT_CATCHALL(billdump);
 }
 
 EXPORT TIMESTAMP sync_billdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
-	billdump *my = OBJECTDATA(obj,billdump);
-	TIMESTAMP rv;
-	obj->clock = t1;
-	rv = my->runtime > t1 ? my->runtime : TS_NEVER;
-	return rv;
+	try
+	{
+		billdump *my = OBJECTDATA(obj,billdump);
+		TIMESTAMP rv;
+		obj->clock = t1;
+		rv = my->runtime > t1 ? my->runtime : TS_NEVER;
+		return rv;
+	}
+	SYNC_CATCHALL(billdump);
 }
 
 EXPORT int commit_billdump(OBJECT *obj){
-	billdump *my = OBJECTDATA(obj,billdump);
 	try {
+		billdump *my = OBJECTDATA(obj,billdump);
 		return my->commit(obj->clock);
-	} catch(char *msg){
-		gl_error("%s (billdump:%d): %s", obj->name, obj->id, msg);
-		return 0; 
 	}
+	I_CATCHALL(commit,billdump);
 }
 
 EXPORT int isa_billdump(OBJECT *obj, char *classname)

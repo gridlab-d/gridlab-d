@@ -87,25 +87,19 @@ EXPORT int create_overhead_line_conductor(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_overhead_line_conductor: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(overhead_line_conductor);
 }
 
 EXPORT int init_overhead_line_conductor(OBJECT *obj)
 {
-	overhead_line_conductor *my = OBJECTDATA(obj,overhead_line_conductor);
 	try {
+		overhead_line_conductor *my = OBJECTDATA(obj,overhead_line_conductor);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (overhead_line_conductor:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(overhead_line_conductor);
 }
 
 EXPORT TIMESTAMP sync_overhead_line_conductor(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

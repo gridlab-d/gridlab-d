@@ -2170,12 +2170,10 @@ EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_node: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(node);
 }
 
 // Commit function
@@ -2223,15 +2221,11 @@ EXPORT int commit_node(OBJECT *obj)
 */
 EXPORT int init_node(OBJECT *obj)
 {
-	node *my = OBJECTDATA(obj,node);
 	try {
+		node *my = OBJECTDATA(obj,node);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (node:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(node);
 }
 
 /**
@@ -2244,8 +2238,8 @@ EXPORT int init_node(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	node *pObj = OBJECTDATA(obj,node);
 	try {
+		node *pObj = OBJECTDATA(obj,node);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -2260,15 +2254,7 @@ EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	}
-	catch (const char *msg)
-	{
-		gl_error("node %s (%s:%d): %s", obj->name, obj->oclass->name, obj->id, msg);
-	}
-	catch (...)
-	{
-		gl_error("node %s (%s:%d): unknown exception", obj->name, obj->oclass->name, obj->id);
-	}
-	return TS_INVALID; /* stop the clock */
+	SYNC_CATCHALL(node);
 }
 
 /**

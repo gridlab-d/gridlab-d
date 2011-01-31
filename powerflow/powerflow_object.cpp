@@ -259,12 +259,10 @@ EXPORT int create_powerflow_object(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_powerflow_object: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(powerflow_object);
 }
 
 /**
@@ -275,15 +273,11 @@ EXPORT int create_powerflow_object(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_powerflow_object(OBJECT *obj)
 {
-	powerflow_object *my = OBJECTDATA(obj,powerflow_object);
 	try {
+		powerflow_object *my = OBJECTDATA(obj,powerflow_object);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (powerflow_object:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(powerflow_object);
 }
 
 /**
@@ -311,13 +305,8 @@ EXPORT TIMESTAMP sync_powerflow_object(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (powerflow_object:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (powerflow_object:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(powerflow_object);
 }
 
 EXPORT int isa_powerflow_object(OBJECT *obj, char *classname)

@@ -392,18 +392,16 @@ EXPORT int create_overhead_line(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_overhead_line: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(overhead_line);
 }
 
 EXPORT TIMESTAMP sync_overhead_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	overhead_line *pObj = OBJECTDATA(obj,overhead_line);
 	try {
+		overhead_line *pObj = OBJECTDATA(obj,overhead_line);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -417,26 +415,17 @@ EXPORT TIMESTAMP sync_overhead_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (overhead_line:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (overhead_line:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(overhead_line);
 }
 
 EXPORT int init_overhead_line(OBJECT *obj)
 {
-	overhead_line *my = OBJECTDATA(obj,overhead_line);
 	try {
+		overhead_line *my = OBJECTDATA(obj,overhead_line);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (overhead_line:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(overhead_line);
 }
 
 EXPORT int isa_overhead_line(OBJECT *obj, char *classname)

@@ -80,12 +80,10 @@ EXPORT int create_triplex_line_conductor(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_triplex_line_conductor: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(triplex_line_conductor);
 }
 
 EXPORT TIMESTAMP sync_triplex_line_conductor(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

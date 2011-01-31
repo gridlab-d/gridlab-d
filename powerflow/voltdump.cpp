@@ -141,44 +141,40 @@ EXPORT int create_voltdump(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_voltdump: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(voltdump);
 }
 
 EXPORT int init_voltdump(OBJECT *obj)
 {
-	voltdump *my = OBJECTDATA(obj,voltdump);
 	try {
+		voltdump *my = OBJECTDATA(obj,voltdump);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (voltdump:%d): %s", obj->name, obj->id, msg);
-		return 0; 
-	}
+	INIT_CATCHALL(voltdump);
 }
 
 EXPORT TIMESTAMP sync_voltdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
-	voltdump *my = OBJECTDATA(obj,voltdump);
-	TIMESTAMP rv;
-	obj->clock = t1;
-	rv = my->runtime > t1 ? my->runtime : TS_NEVER;
-	return rv;
+	try
+	{
+		voltdump *my = OBJECTDATA(obj,voltdump);
+		TIMESTAMP rv;
+		obj->clock = t1;
+		rv = my->runtime > t1 ? my->runtime : TS_NEVER;
+		return rv;
+	}
+	SYNC_CATCHALL(voltdump);
 }
 
 EXPORT int commit_voltdump(OBJECT *obj){
-	voltdump *my = OBJECTDATA(obj,voltdump);
 	try {
+		voltdump *my = OBJECTDATA(obj,voltdump);
 		return my->commit(obj->clock);
-	} catch(const char *msg){
-		gl_error("%s (voltdump:%d): %s", obj->name, obj->id, msg);
-		return 0; 
-	}
+	} 
+	I_CATCHALL(commit,voltdump);
 }
 
 EXPORT int isa_voltdump(OBJECT *obj, char *classname)

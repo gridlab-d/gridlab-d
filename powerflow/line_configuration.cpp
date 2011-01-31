@@ -93,12 +93,10 @@ EXPORT int create_line_configuration(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_line_configuration: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(line_configuration);
 }
 EXPORT TIMESTAMP sync_line_configuration(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {

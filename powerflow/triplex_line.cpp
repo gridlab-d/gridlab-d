@@ -333,18 +333,16 @@ EXPORT int create_triplex_line(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_triplex_line: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(triplex_line);
 }
 
 EXPORT TIMESTAMP sync_triplex_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	triplex_line *pObj = OBJECTDATA(obj,triplex_line);
 	try {
+		triplex_line *pObj = OBJECTDATA(obj,triplex_line);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -358,26 +356,17 @@ EXPORT TIMESTAMP sync_triplex_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (triplex_line:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (triplex_line:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
-	}
+	} 
+	SYNC_CATCHALL(triplex_line);
 }
 
 EXPORT int init_triplex_line(OBJECT *obj)
 {
-	triplex_line *my = OBJECTDATA(obj,triplex_line);
 	try {
+		triplex_line *my = OBJECTDATA(obj,triplex_line);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (triplex_line:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(triplex_line);
 }
 
 EXPORT int isa_triplex_line(OBJECT *obj, char *classname)

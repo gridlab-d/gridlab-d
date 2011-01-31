@@ -1023,12 +1023,10 @@ EXPORT int create_capacitor(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_capacitor: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(capacitor);
 }
 
 
@@ -1041,15 +1039,11 @@ EXPORT int create_capacitor(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_capacitor(OBJECT *obj)
 {
-	capacitor *my = OBJECTDATA(obj,capacitor);
 	try {
+		capacitor *my = OBJECTDATA(obj,capacitor);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (capacitor:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(capacitor);
 }
 
 /**
@@ -1062,8 +1056,8 @@ EXPORT int init_capacitor(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_capacitor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	capacitor *pObj = OBJECTDATA(obj,capacitor);
 	try {
+		capacitor *pObj = OBJECTDATA(obj,capacitor);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -1077,13 +1071,8 @@ EXPORT TIMESTAMP sync_capacitor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (capacitor:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (capacitor:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
 	}
+	SYNC_CATCHALL(capacitor);
 }
 
 /**

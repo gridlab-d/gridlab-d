@@ -1415,26 +1415,19 @@ EXPORT int create_frequency_gen(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
-		return 0;
-	}
-	return 1;
+	CREATE_CATCHALL(frequency_gen);
 }
 
 EXPORT int init_frequency_gen(OBJECT *obj, OBJECT *parent)
 {
 	try {
-			return OBJECTDATA(obj,frequency_gen)->init(parent);
+		frequency_gen *my = OBJECTDATA(obj,frequency_gen);
+		return my->init(parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", obj->name?obj->name:"unnamed", obj->oclass->name, obj->id, msg);
-		return 0;
-	}
-	return 1;
+	INIT_CATCHALL(frequency_gen);
 }
 
 /**
@@ -1447,8 +1440,8 @@ EXPORT int init_frequency_gen(OBJECT *obj, OBJECT *parent)
 */
 EXPORT TIMESTAMP sync_frequency_gen(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	frequency_gen *pObj = OBJECTDATA(obj,frequency_gen);
 	try {
+		frequency_gen *pObj = OBJECTDATA(obj,frequency_gen);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -1463,15 +1456,7 @@ EXPORT TIMESTAMP sync_frequency_gen(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	}
-	catch (const char *msg)
-	{
-		gl_error("frequency_gen %s (%s:%d): %s", obj->name, obj->oclass->name, obj->id, msg);
-	}
-	catch (...)
-	{
-		gl_error("frequency_gen %s (%s:%d): unknown exception", obj->name, obj->oclass->name, obj->id);
-	}
-	return TS_INVALID; /* stop the clock */
+	SYNC_CATCHALL(frequency_gen);
 }
 
 EXPORT int isa_frequency_gen(OBJECT *obj, char *classname)
