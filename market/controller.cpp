@@ -399,17 +399,17 @@ int controller::init(OBJECT *parent){
 	if(heating_state[0] != 0){
 		// grab state pointer
 		pHeatingState = gl_get_enum_by_name(parent, heating_state);
-		if(pState == 0){
-			gl_error("heating_state property name \'%s\' is not published by parent class", state);
+		if(pHeatingState == 0){
+			gl_error("heating_state property name \'%s\' is not published by parent class", heating_state);
 			return 0;
 		}
 	}
 
-	if(state[0] != 0){
+	if(cooling_state[0] != 0){
 		// grab state pointer
 		pCoolingState = gl_get_enum_by_name(parent, cooling_state);
-		if(pState == 0){
-			gl_error("cooling_state property name \'%s\' is not published by parent class", state);
+		if(pCoolingState == 0){
+			gl_error("cooling_state property name \'%s\' is not published by parent class", cooling_state);
 			return 0;
 		}
 	}
