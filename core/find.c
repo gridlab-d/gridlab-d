@@ -20,7 +20,7 @@
 #include "module.h"
 #include "timestamp.h"
 
-static FINDTYPE invar_types[] = {FT_ID, FT_SIZE, FT_CLASS, FT_PARENT, FT_RANK, FT_NAME, FT_LAT, FT_LONG, FT_INSVC, FT_OUTSVC, FT_MODULE,  0};
+static FINDTYPE invar_types[] = {FT_ID, FT_SIZE, FT_CLASS, FT_PARENT, FT_RANK, FT_NAME, FT_LAT, FT_LONG, FT_INSVC, FT_OUTSVC, FT_MODULE, FT_ISA, 0};
 
 static int compare_int(int64 a, FINDOP op, int64 b)
 {
@@ -250,6 +250,7 @@ static int compare(OBJECT *obj, FINDTYPE ftype, FINDOP op, void *value, char *pr
 	case FT_ID: return compare_int((int64)obj->id,op,(int64)*(OBJECTNUM*)value);
 	case FT_SIZE: return compare_int((int64)obj->oclass->size,op,(int64)*(int*)value);
 	case FT_CLASS: return compare_string((char*)obj->oclass->name,op,(char*)value);
+	case FT_ISA: return object_isa(obj,(char*)value);
 	case FT_MODULE: return compare_string((char*)obj->oclass->module->name,op,(char*)value);
 	case FT_GROUPID: return compare_string((char*)obj->groupid,op,(char*)value);
 	case FT_RANK: return compare_int((int64)obj->rank,op,(int64)*(int*)value);
@@ -316,6 +317,7 @@ FINDPGM *find_mkpgm(char *expression);
 		- \p FT_CLOCK	 compares object clock (expects \e TIMESTAMP value)
 		- \p FT_PROPERTY compares property (expects \e char* value)
 		- \p FT_MODULE	 compares module name
+		- \p FT_ISA		 compares object class name including parent classes (expected \e char* value)
 
 	Extended values of \p ftype are:
 		- \p CF_NAME	looks for a particular name
@@ -450,6 +452,7 @@ FINDLIST *find_objects(FINDLIST *start, ...)
 			case FT_PROPERTY:
 			case FT_MODULE:
 			case FT_GROUPID:
+			case FT_ISA:
 				sval = va_arg(ptr,char*);
 				value = sval;
 				break;
@@ -580,6 +583,8 @@ int compare_real_lt(void *a, FINDVALUE b) { return *(double*)a<b.real;}
 int compare_real_gt(void *a, FINDVALUE b) { return *(double*)a>b.real;}
 int compare_real_le(void *a, FINDVALUE b) { return *(double*)a<=b.real;}
 int compare_real_ge(void *a, FINDVALUE b) { return *(double*)a>=b.real;}
+
+int compare_isa(void *a, FINDVALUE b) { return object_isa((OBJECT*)a,b.string); }
 
 /* NOTE: this only works with short-circuiting logic! */
 int compare_string_eq(void *a, FINDVALUE b) {
@@ -966,20 +971,22 @@ static int compare_op(PARSER, FINDOP *op)
 	if (strncmp(_p,"<", 1)==0) {*op=LT; return 1;}
 	if (strncmp(_p,">", 1)==0) {*op=GT; return 1;}
 	if (strncmp(_p,"~", 1)==0) {*op=LIKE; return 1;}
+
+	if (strncmp(_p,":", 1)==0) {*op=ISA; return 1;}
 	return 0;
 }
 
 struct {
 	COMPAREFUNC pointer, integer, real, string;
 } comparemap[] = /** @todo add other integer sizes  (ticket #23) */
-{	{compare_pointer_eq, compare_integer_eq, compare_real_eq, compare_string_eq},
-	{compare_pointer_lt, compare_integer_lt, compare_real_lt, compare_string_lt},
-	{compare_pointer_gt, compare_integer_gt, compare_real_gt, compare_string_gt},
-	{compare_pointer_ne, compare_integer_ne, compare_real_ne, compare_string_ne},
-	{compare_pointer_le, compare_integer_le, compare_real_le, compare_string_le},
-	{compare_pointer_ge, compare_integer_ge, compare_real_ge, compare_string_ge},
-	{compare_pointer_li, compare_integer_li, compare_real_li, compare_string_li},
-	{compare_pointer_nl, compare_integer_nl, compare_real_nl, compare_string_nl}
+{	{compare_pointer_eq, compare_integer_eq, compare_real_eq, compare_string_eq}, // EQ=0
+	{compare_pointer_lt, compare_integer_lt, compare_real_lt, compare_string_lt}, // LT=1
+	{compare_pointer_gt, compare_integer_gt, compare_real_gt, compare_string_gt}, // GT=2
+	{compare_pointer_ne, compare_integer_ne, compare_real_ne, compare_string_ne}, // NE=3
+	{compare_pointer_le, compare_integer_le, compare_real_le, compare_string_le}, // LE=4
+	{compare_pointer_ge, compare_integer_ge, compare_real_ge, compare_string_ge}, // GE=5
+	{compare_pointer_li, compare_integer_li, compare_real_li, compare_string_li}, // 
+	{compare_pointer_nl, compare_integer_nl, compare_real_nl, compare_string_nl},
 };
 
 struct {
@@ -1032,6 +1039,24 @@ static int expression(PARSER, FINDPGM **pgm)
 			{
 				v.pointer=(void*)oclass;
 				add_pgm(pgm,comparemap[op].pointer,OFFSET(oclass),v,NULL,findlist_del);
+				(*pgm)->constflags |= CF_CLASS; /* this will always reduce in a set class of fixed class, leaving it invariant if already so */
+				ACCEPT;	DONE;
+			}
+		}
+		if (strcmp(pname,"isa")==0)
+		{
+			FINDVALUE v;
+			CLASS *oclass = class_get_class_from_classname(pvalue);
+			if (oclass==NULL)
+				output_error("class '%s' not found", pvalue);
+				/*	TROUBLESHOOT
+					A search rule specified a class that doesn't exist.  
+					Check the class name to make sure it exists and try again.
+				 */
+			else
+			{
+				v.pointer=(void*)oclass;
+				add_pgm(pgm,compare_isa,OFFSET(oclass),v,NULL,findlist_del);
 				(*pgm)->constflags |= CF_CLASS; /* this will always reduce in a set class of fixed class, leaving it invariant if already so */
 				ACCEPT;	DONE;
 			}
