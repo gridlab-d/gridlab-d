@@ -425,7 +425,11 @@ OBJECT *object_remove_by_id(OBJECTNUM id){
  **/
 void *object_get_addr(OBJECT *obj, /**< object to look in */
 					  char *name){ /**< name of property to find */
-	PROPERTY *prop = class_find_property(obj->oclass,name);
+	PROPERTY *prop;
+	if(obj == NULL)
+		return NULL;
+
+	prop = class_find_property(obj->oclass,name);
 	
 	if(prop != NULL && prop->access != PA_PRIVATE){
 		return (void *)((char *)(obj + 1) + (int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
@@ -672,13 +676,13 @@ int object_set_value_by_addr(OBJECT *obj, /**< the object to alter */
 
 	/* dispatch notifiers */
 	if(obj->oclass->notify){
-		if(obj->oclass->notify(obj,NM_PREUPDATE,prop) == 0){
+		if(obj->oclass->notify(obj,NM_PREUPDATE,prop,value) == 0){
 			output_error("preupdate notify failure on %s in %s", prop->name, obj->name ? obj->name : "an unnamed object");
 		}
 	}
 	result = class_string_to_property(prop,addr,value);
 	if(obj->oclass->notify){
-		if(obj->oclass->notify(obj,NM_POSTUPDATE,prop) == 0){
+		if(obj->oclass->notify(obj,NM_POSTUPDATE,prop,value) == 0){
 			output_error("postupdate notify failure on %s in %s", prop->name, obj->name ? obj->name : "an unnamed object");
 		}
 	}
@@ -1274,6 +1278,9 @@ int object_commit(OBJECT *obj){
  **/
 int object_isa(OBJECT *obj, /**< the object to test */
 			   char *type){ /**< the type of test */
+	if(obj == 0){
+		return 0;
+	}
 	if(strcmp(obj->oclass->name,type) == 0){
 		return 1;
 	} else if(obj->oclass->isa){

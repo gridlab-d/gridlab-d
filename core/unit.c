@@ -680,6 +680,7 @@ int unit_convert_complex(UNIT *pFrom, UNIT *pTo, complex *pValue)
 UNIT *unit_find(char *unit) /**< the name of the unit */
 {
 	UNIT *p;
+	int rv = 0;
 
 	TRY {
 		/* first time */
@@ -697,7 +698,16 @@ UNIT *unit_find(char *unit) /**< the name of the unit */
 	}
 	
 	/* derive entry if possible */
-	if (unit_derived(unit,unit)){
+	TRY {
+		rv = unit_derived(unit, unit);
+	} CATCH (char *msg) {
+		output_error("unit_find(char *unit='%s'): %s", unit,msg);
+		return NULL;
+	}
+	ENDCATCH;
+
+	//if (unit_derived(unit,unit)){
+	if(rv){
 		return unit_list;
 	} else {
 		output_error("could not find unit \'%s\'", unit);
