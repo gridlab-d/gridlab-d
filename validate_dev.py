@@ -218,6 +218,7 @@ def run_tests(argv):
 			errlist.append((path,file))
 			
 		os.chdir(currpath)
+		sys.stdout.flush()
 		#print("cwd: "+currpath)
 		# end autotestfiles loop
 
