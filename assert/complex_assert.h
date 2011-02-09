@@ -29,8 +29,6 @@ public:
 	complex_assert(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
-	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-
 
 public:
 	static CLASS *oclass;

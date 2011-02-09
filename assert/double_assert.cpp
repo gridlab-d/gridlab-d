@@ -21,7 +21,7 @@ double_assert::double_assert(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gl_register_class(module,"double_assert",sizeof(double_assert),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		oclass = gl_register_class(module,"double_assert",sizeof(double_assert),0x00);
 		if (oclass==NULL)
 			throw "unable to register class double_assert";
 		else
@@ -74,10 +74,6 @@ int double_assert::init(OBJECT *parent)
 		*/
 	return 1;
 }
-TIMESTAMP double_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
-{
-	return TS_NEVER;
-}
 
 complex *double_assert::get_complex(OBJECT *obj, char *name)
 {
@@ -120,16 +116,9 @@ EXPORT int init_double_assert(OBJECT *obj, OBJECT *parent)
 
 EXPORT TIMESTAMP sync_double_assert(OBJECT *obj, TIMESTAMP t0)
 {
-	double_assert *my = OBJECTDATA(obj,double_assert);
-	TIMESTAMP t1;
-	try 
-	{
-		t1 = my->postsync(obj->clock, t0);
-	} 
-	SYNC_CATCHALL(double_assert);
-	obj->clock = t0;
-	return t1;
+	return TS_NEVER;
 }
+
 EXPORT int commit_double_assert(OBJECT *obj)
 {
 	//OBJECT *obj;

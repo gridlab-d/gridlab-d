@@ -83,10 +83,6 @@ int complex_assert::init(OBJECT *parent)
 	}
 	return 1;
 }
-TIMESTAMP complex_assert::postsync(TIMESTAMP t0, TIMESTAMP t1)
-{
-	return TS_NEVER;
-}
 
 complex *complex_assert::get_complex(OBJECT *obj, char *name)
 {
@@ -239,13 +235,5 @@ EXPORT int notify_complex_assert(OBJECT *obj, int update_mode, PROPERTY *prop){
 
 EXPORT TIMESTAMP sync_complex_assert(OBJECT *obj, TIMESTAMP t0)
 {
-	complex_assert *my = OBJECTDATA(obj,complex_assert);
-	TIMESTAMP t1;
-	try
-	{
-		t1 = my->postsync(obj->clock, t0);
-	} 
-	SYNC_CATCHALL(complex_assert);
-	obj->clock = t0;
-	return t1;
+	return TS_NEVER;
 }
