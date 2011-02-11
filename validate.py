@@ -146,6 +146,7 @@ def run_tests(argv):
 		outfile = open(os.path.join(xpath,"outfile.txt"), "w")
 		errfile = open(os.path.join(xpath,"errfile.txt"), "w")
 		print("NOTICE:  Running \'"+xfile+"\'")
+		sys.stdout.flush()
 		start_time = time.time();
 		rv = subprocess.call(["gridlabd",xfile],stdout=outfile,stderr=errfile)
 		end_time = time.time();
