@@ -706,7 +706,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 				/* link new runtime module */
 				output_verbose("linking inline code from '%s'", ofile);
-				if (exec("%s %s %s %s -shared -Wl,%s -o %s -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile)==FAILED)
+				if (exec("%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile)==FAILED)
 					return FAILED;
 
 				if (global_getvar("control_textrel_shlib_t",NULL,0)!=NULL)
@@ -3383,6 +3383,11 @@ static int class_block(PARSER)
 
 				/* TODO add other intrinsics (notify, recalc, isa) */
 				if (!compile_code(oclass,functions)) REJECT;
+			} else { // if module != NULL
+				if(code_used){
+					output_error_raw("%s(%d): intrinsic functions found for compiled class", filename, linenum);
+					REJECT;
+				}
 			}				
 			ACCEPT;
 		}
