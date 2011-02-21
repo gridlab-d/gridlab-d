@@ -557,7 +557,9 @@ STATUS exec_start(void)
 	if (!global_debug_mode)
 	{
 		/* schedule progress report event */
-		realtime_schedule_event(realtime_now()+1,show_progress);
+		if(global_show_progress){
+			realtime_schedule_event(realtime_now()+1,show_progress);
+		}
 
 		/* set thread count equal to processor count if not passed on command-line */
 		if (global_threadcount == 0)

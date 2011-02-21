@@ -108,6 +108,7 @@ static struct s_varmap {
 	{"server_portnum",PT_int32,&global_server_portnum, PA_PUBLIC},
 	{"server_quit_on_close",PT_int32,&global_server_quit_on_close, PA_PUBLIC},
 	{"technology_readiness_level", PT_enumeration, &technology_readiness_level, PA_PUBLIC, trl_keys},
+	{"show_progress",PT_int32,&global_show_progress,PA_PUBLIC},
 	/* add new global variables here */
 };
 

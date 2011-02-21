@@ -157,6 +157,8 @@ GLOBAL int global_server_quit_on_close INIT(0); /** server will quit when connec
 
 GLOBAL int technology_readiness_level INIT(0); /**< the TRL of the model (see http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Technology_Readiness_Levels) */
 
+GLOBAL int global_show_progress INIT(1);
+
 #ifdef __cplusplus
 }
 #endif
