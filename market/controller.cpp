@@ -122,6 +122,7 @@ int controller::create(){
 	cool_range_low = -3;
 	cool_range_high = 5;
 	use_override = OU_OFF;
+	period = 0;
 	return 1;
 }
 
@@ -267,8 +268,10 @@ int controller::init(OBJECT *parent){
 	gl_set_dependent(hdr, pMarket);
 	market = OBJECTDATA(pMarket, auction);
 
-	if(period == 0){
+	if(dPeriod == 0.0){
 		period = market->period;
+	} else {
+		period = (TIMESTAMP)floor(dPeriod + 0.5);
 	}
 
 	if(bid_delay < 0){
@@ -368,14 +371,6 @@ int controller::init(OBJECT *parent){
 
 	if(cooling_setpoint0==0)
 		cooling_setpoint0 = -1;
-
-	if(dPeriod == 0.0){
-		dPeriod = 300.0;
-		period = 300; // five minutes
-	} else {
-		period = (TIMESTAMP)floor(dPeriod + 0.5);
-	}
-
 
 //	double period = market->period;
 //	next_run = gl_globalclock + (TIMESTAMP)(period - fmod(gl_globalclock+period,period));
@@ -923,7 +918,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 	}
 
-	next_run += (TIMESTAMP)(market->period);
+	next_run += (TIMESTAMP)(this->period);
 
 
 	return (next_run - bid_delay);

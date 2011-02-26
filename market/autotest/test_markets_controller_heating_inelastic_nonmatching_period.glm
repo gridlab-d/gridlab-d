@@ -89,6 +89,18 @@ schedule controller_bids {
 	45 4 * * * 82;
 }
 
+schedule clearing_quantities {
+	0-4 4 * * * 0;
+	5-9 4 * * * 11.7233;
+	10-14 4 * * * 11.7233;
+	15-19 4 * * * 0;
+	20-24 4 * * * 11.7233;
+	25-29 4 * * * 11.7233;
+	30-34 4 * * * 0;
+	35-39 4 * * * 0;
+	40-59 4 * * * 0;
+}
+
 object climate {
 	name "Yakima WA";
 	tmyfile "../WA-Yakima.tmy2";
@@ -101,18 +113,19 @@ class auction {
 
 object auction {
 	name Market_1;
-	unit MW;
+	unit kW;
 	period 300;
 	verbose TRUE;
-	special_mode SELLERS_ONLY;
+	special_mode BUYERS_ONLY;
 	fixed_price fixed_prices*1;
 	warmup 0;
 	init_price 100;
 	init_stdev 0;
 	object multi_recorder {
-		property heat_control:bid_price,current_market.clearing_price,current_market.clearing_quantity,current_market.clearing_type,current_market.marginal_quantity,current_price_mean_10min,current_price_stdev_10min,house1:air_temperature,house1:system_mode,house1:heating_setpoint;
+		//property heat_control:bid_price,current_market.clearing_price,current_market.clearing_quantity,current_market.clearing_type,current_market.marginal_quantity,current_price_mean_10min,current_price_stdev_10min,house1:air_temperature,house1:system_mode,house1:heating_setpoint;
+		property house1:air_temperature,house1:heating_setpoint,house1:cooling_setpoint,heat_control:bid_price,current_market.clearing_price,house1:system_mode,heat_control:bid_quantity,current_market.clearing_quantity;
 		file "test_markets_controller_heating_inelastic_nonmatching_period_output.csv";
-		interval 300;
+		interval 60;
 		limit 168;
 	};
 	//put the following into cell K10 into the calculate_bid_price file and drag down to check if bid prices are calculated correctly:
@@ -123,10 +136,23 @@ object auction {
 		interval 60;
 		limit 4320;
 	};
+	//put the following into cell F10 into the calculate_clearing_quantity file and drag down to check if clearing quantities are calculated correctly:
+	//=IF(MOD(ROW(),5)<>0,F9,IF(ROW()=10,0,IF(INDIRECT(ADDRESS(ROW()-1,2))>=C10,INDIRECT(ADDRESS(ROW()-1,4)),0)))
+	object multi_recorder {
+		property heat_control:bid_price,current_market.clearing_price,heat_control:bid_quantity,current_market.clearing_quantity;
+		file "calculate_clearing_quantity.csv";
+		interval 60;
+		limit 1440; //one day's worth of data
+	};
 	//recorder to fix the timestep so values will stay constant
 	object recorder {
 		interval 1;
 		property period;
+	};
+		object double_assert {
+		value clearing_quantities*1;
+		target "current_market.clearing_quantity";
+		within 1e-2;
 	};
 }
 

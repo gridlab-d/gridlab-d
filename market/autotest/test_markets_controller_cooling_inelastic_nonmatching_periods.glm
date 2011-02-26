@@ -65,6 +65,18 @@ schedule controller_bids {
 	* 16 * * * 82.1669;
 }
 
+schedule clearing_quantities {
+	0-14 14 * * * 0;
+	15-29 14 * * * 4.3699;
+	30-44 14 * * * 4.3699;
+	45-59 14 * * * 0;
+	0-14 15 * * * 4.3699;
+	15-29 15 * * * 4.3898;
+	30-44 15 * * * 0;
+	45-59 15 * * * 0;
+	* 16 * * * 0;
+}
+
 object climate {
 	name "Yakima WA";
 	tmyfile "../WA-Yakima.tmy2";
@@ -77,16 +89,17 @@ class auction {
 
 object auction {
 	name Market_1;
-	unit MW;
+	unit kW;
 	period 900;
 	verbose TRUE;
-	special_mode SELLERS_ONLY;
+	special_mode BUYERS_ONLY;
 	fixed_price fixed_prices*1;
 	warmup 0;
 	init_price 100;
 	init_stdev 0;
 	object multi_recorder {
-		property cool_control:bid_price,current_market.clearing_price,current_market.clearing_quantity,current_market.clearing_type,current_market.marginal_quantity,current_price_mean_30min,current_price_stdev_30min;
+		//property cool_control:bid_price,current_market.clearing_price,current_market.clearing_quantity,current_market.clearing_type,current_market.marginal_quantity,current_price_mean_30min,current_price_stdev_30min;
+		property house1:air_temperature,house1:heating_setpoint,house1:cooling_setpoint,cool_control:bid_price,current_market.clearing_price,house1:system_mode,cool_control:bid_quantity,current_market.clearing_quantity;
 		file "test_markets_controller_cooling_inelastic_nonmatching_periods_output.csv";
 		interval 300;
 		limit 168;
@@ -99,10 +112,23 @@ object auction {
 		interval 60;
 		limit 4320;
 	};
+	//put the following into cell F10 into the calculate_clearing_quantity file and drag down to check if clearing quantities are calculated correctly:
+	//=IF(MOD(ROW(),3)<>1,F9,IF(ROW()=10,0,IF(IF(INDIRECT(ADDRESS(ROW()-1,2))<>0,INDIRECT(ADDRESS(ROW()-1,2)),IF(INDIRECT(ADDRESS(ROW()-2,2))<>0,INDIRECT(ADDRESS(ROW()-2,2)),INDIRECT(ADDRESS(ROW()-3,2))))>=C10,IF(INDIRECT(ADDRESS(ROW()-1,4))<>0,INDIRECT(ADDRESS(ROW()-1,4)),IF(INDIRECT(ADDRESS(ROW()-2,4))<>0,INDIRECT(ADDRESS(ROW()-2,4)),INDIRECT(ADDRESS(ROW()-3,4)))),0)))
+	object multi_recorder {
+		property cool_control:bid_price,current_market.clearing_price,cool_control:bid_quantity,current_market.clearing_quantity;
+		file "calculate_clearing_quantity.csv";
+		interval 300;
+		limit 288; //one day's worth of data
+	};
 	//recorder to fix the timestep so values will stay constant
 	object recorder {
 		interval 1;
 		property period;
+	};
+	object double_assert {
+		value clearing_quantities*1;
+		target "current_market.clearing_quantity";
+		within 1e-2;
 	};
 }
 
@@ -139,12 +165,12 @@ object triplex_meter {
 			range_low 0;
 			range_high 5;
 
-			// object multi_recorder {
-				// property simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house1:power_state,house1:cooling_demand,house1:cooling_setpoint,house1:air_temperature,house1:system_mode,average_target,standard_deviation_target,house1:hvac_load,house1:outdoor_temperature;
-				// file "check_defaults_output1.csv";
-				// interval 90;
-				// limit 4320;
-			// };
+			object multi_recorder {
+				property simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house1:power_state,house1:cooling_demand,house1:cooling_setpoint,house1:air_temperature,house1:system_mode,average_target,standard_deviation_target,house1:hvac_load,house1:outdoor_temperature;
+				file "check_defaults_output1.csv";
+				interval 90;
+				limit 4320;
+			};
 			object double_assert {
 				value controller_bids*1;
 				target "bid_price";
