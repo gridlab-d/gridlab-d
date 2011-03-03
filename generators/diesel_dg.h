@@ -18,7 +18,7 @@ class diesel_dg
 {
 private:
 	/* TODO: put private variables here */
-	complex AMx[3][3];//generator impedance matrix
+	
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
 
@@ -27,13 +27,90 @@ protected:
 public:
 	/* TODO: put published variables here */
 	set phases;	/**< device phases (see PHASE codes) */
-    enum {CONSTANTE=1, CONSTANTPQ} Gen_mode;  //< meter type 
-	enum {OFFLINE=0, ONLINE=1} Gen_status;
+
+	enum {OFFLINE=1, ONLINE} Gen_status;
+	enum {INDUCTION=1, SYNCHRONOUS} Gen_type;
+	enum {CONSTANTE=1, CONSTANTP, CONSTANTPQ} Gen_mode;
+
+   // enum {CONSTANTE=1, CONSTANTPQ} Gen_mode;  //< meter type 
+	//enum {OFFLINE=0, ONLINE=1} Gen_status;
 //	double Rated_kW; //< nominal power in kW
 //	double Rated_pf; //< power factor, P/(P^2+Q^2)^0.5
 //	double Fuel_coefficient1;//< coefficient to calculate fuel cost
 //	double Fuel_coefficient2;//< coefficient to calculate fuel cost
 //	double Fuel_coefficient3;//< coefficient to calculate fuel cost
+
+	//Diesel engine inputs
+
+	complex AMx[3][3];			//Impedance matrix for Synchronous Generator
+	complex invAMx[3][3];		//Inverse of SG impedance matrix
+
+	double speed; // speed of an engine
+	double cylinders;//Total number of cylinders in a diesel engine
+	double stroke; //category of internal combustion engines
+	double torque;//Net brake load
+	double pressure;//Mean effective pressure
+	double time_operation; 
+	double fuel;//fuel consumption
+	double w_coolingwater;//weight of cooling water supplied per minute
+	double inlet_temperature; //Inlet temperature of cooling water in degC
+	double outlet_temperature;//outlet temperature of cooling water in degC
+	double air_fuel; //Air used per kg fuel
+	double room_temperature; //Room temperature in degC
+	double exhaust_temperature;//exhaust gas temperature in degC
+	double cylinder_length;
+	double cylinder_radius;//
+	double brake_diameter;//
+	double calotific_fuel;//calorific value of fuel
+	double steam_exhaust;//steam formed per kg of fuel in the exhaust
+	double specific_heat_steam;//specific heat of steam in exhaust
+	double specific_heat_dry;//specific heat of dry exhaust gases
+	double indicated_hp; //Indicated horse power is the power developed inside the cylinder
+	double brake_hp; //brake horse power is the output of the engine at the shaft measured by a dynamometer.
+	double thermal_efficiency;//thermal efficiency or mechanical efiiciency of the engine is efined as bp/ip
+	double energy_supplied; //energy supplied during the trail
+	double heat_equivalent_ip;//heat equivalent of IP in a given time of operation
+	double energy_coolingwater;//energy carried away by cooling water
+	double mass_exhaustgas; //mass of dry exhaust gas
+	double energy_exhaustgas;//energy carried away by dry exhaust gases
+	double energy_steam;//energy carried away by steam
+	double total_energy_exhaustgas;//total energy carried away by dry exhaust gases is the sum of energy carried away bt steam and energy carried away by dry exhaust gases
+	double unaccounted_energyloss;//unaccounted for energy loss
+
+	double Rated_V;
+	double Rated_VA;
+
+	//end of diesel engine inputs
+	
+	//Synchronous gen inputs
+	
+	double f;//system frquency
+	double poles;//Number of poles in the synchronous generator
+	double wm;//angular velocity in rad/sec
+	double Pconv;//Converted power = Mechanical input - (F & W loasses + Stray losses + Core losses)
+	double Tind;//Induced torque
+	double EA;//Internal generated voltage produced in one phase of the synchronous generator
+	double Vo;//Terminal voltage of the synchronous generator
+	double Rs1;//per phase resistance of the synchronous generator
+	double Xs1;//per phase synchronous reactance of the synchronous generator
+	double delta;//delta is the angle between EA and Vo. It is called torque angle
+	double IA;//Armature current
+    double Ploss;//Copper losses
+	double Pout;//The real electric output power of the synchronous generator
+	double effe;//electrical efficiency
+	double effo;//Overall efficiency
+
+	double pf;
+
+	double GenElecEff;
+	double TotalRealPow;
+	double TotalReacPow;
+
+	int64 time_advance;
+
+
+	//end of synchronous generator inputs
+
 	double Rs;//< internal transient resistance in p.u.
 	double Xs;//< internal transient impedance in p.u.
     double Rg;//< grounding resistance in p.u.
@@ -78,7 +155,7 @@ public:
 	diesel_dg(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
-//	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
+	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 public:

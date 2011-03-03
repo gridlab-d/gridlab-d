@@ -147,6 +147,8 @@ int node::create(void)
 	house_present = false;	//House attachment flag
 	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;	//Nominal house current variables
 
+	prev_phases = 0x00;
+
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
 	memset(current,0,sizeof(current));
@@ -223,6 +225,25 @@ int node::init(OBJECT *parent)
 			//Do the same for triplex nodes
 			gl_free(bus_list);
 			bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_node",FT_END);
+
+			//Reset temp_obj
+			temp_obj = NULL;
+
+			//Parse the findlist
+			while(temp_obj=gl_find_next(bus_list,temp_obj))
+			{
+				list_node = OBJECTDATA(temp_obj,node);
+
+				if (list_node->bustype==SWING)
+				{
+					NR_swing_bus=temp_obj;
+					swing_count++;
+				}
+			}
+
+			//And one more time for triplex meters
+			gl_free(bus_list);
+			bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_meter",FT_END);
 
 			//Reset temp_obj
 			temp_obj = NULL;
@@ -753,6 +774,14 @@ int node::init(OBJECT *parent)
 		voltaged[0] = voltage[0] + voltage[1];
 		voltaged[1] = voltage[0] - voltage[2];
 		voltaged[2] = voltage[1] - voltage[2];
+	}
+
+	//Populate last_voltage with initial values - just in case
+	if (solver_method == SM_NR)
+	{
+		last_voltage[0] = voltage[0];
+		last_voltage[1] = voltage[1];
+		last_voltage[2] = voltage[2];
 	}
 
 	return result;
@@ -1427,6 +1456,103 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		}
 	case SM_NR:
 		{
+			//Reliability check - sets and removes voltages (theory being previous answer better than starting at 0)
+			unsigned char phase_checks_var;
+
+			//Make sure we're a real boy - if we're not, do nothing (we'll steal mommy's or daddy's voltages in postsync)
+			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			{
+				//Figre out what has changed
+				phase_checks_var = ((NR_busdata[NR_node_reference].phases ^ prev_phases) & 0x8F);
+
+				if (phase_checks_var != 0x00)	//Something's changed
+				{
+					//See if it is a triplex
+					if ((NR_busdata[NR_node_reference].origphases & 0x80) == 0x80)
+					{
+						//See if A, B, or C appeared, or disappeared
+						if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x00)	//No phases means it was just removed
+						{
+							//Store V1 and V2
+							last_voltage[0] = voltage[0];
+							last_voltage[1] = voltage[1];
+							last_voltage[2] = voltage[2];
+
+							//Clear them out
+							voltage[0] = 0.0;
+							voltage[1] = 0.0;
+							voltage[2] = 0.0;
+						}
+						else	//Put back in service
+						{
+							voltage[0] = last_voltage[0];
+							voltage[1] = last_voltage[1];
+							voltage[2] = last_voltage[2];
+						}
+
+						//Recalculated V12, V1N, V2N in case a child uses them
+						voltaged[0] = voltage[0] + voltage[1];
+						voltaged[1] = voltage[0] - voltage[2];
+						voltaged[2] = voltage[0] - voltage[2];
+					}//End triplex
+					else	//Nope
+					{
+						//Find out changes, and direction
+						if ((phase_checks_var & 0x04) == 0x04)	//Phase A change
+						{
+							//See which way
+							if ((prev_phases & 0x04) == 0x04)	//Means A just disappeared
+							{
+								last_voltage[0] = voltage[0];	//Store the last value
+								voltage[0] = 0.0;				//Put us to zero, so volt_dump is happy
+							}
+							else	//A just came back
+							{
+								voltage[0] = last_voltage[0];	//Read in the previous values
+							}
+						}//End Phase A change
+
+						//Find out changes, and direction
+						if ((phase_checks_var & 0x02) == 0x02)	//Phase B change
+						{
+							//See which way
+							if ((prev_phases & 0x02) == 0x02)	//Means B just disappeared
+							{
+								last_voltage[1] = voltage[1];	//Store the last value
+								voltage[1] = 0.0;				//Put us to zero, so volt_dump is happy
+							}
+							else	//A just came back
+							{
+								voltage[1] = last_voltage[1];	//Read in the previous values
+							}
+						}//End Phase B change
+
+						//Find out changes, and direction
+						if ((phase_checks_var & 0x01) == 0x01)	//Phase C change
+						{
+							//See which way
+							if ((prev_phases & 0x01) == 0x01)	//Means C just disappeared
+							{
+								last_voltage[2] = voltage[2];	//Store the last value
+								voltage[2] = 0.0;				//Put us to zero, so volt_dump is happy
+							}
+							else	//A just came back
+							{
+								voltage[2] = last_voltage[2];	//Read in the previous values
+							}
+						}//End Phase C change
+
+						//Recalculated VAB, VBC, and VCA, in case a child uses them
+						voltaged[0] = voltage[0] - voltage[1];
+						voltaged[1] = voltage[1] - voltage[2];
+						voltaged[2] = voltage[2] - voltage[0];
+					}//End not triplex
+
+					//Assign current value in
+					prev_phases = NR_busdata[NR_node_reference].phases;
+				}//End Phase checks for reliability
+			}//End normal node
+
 			if ((SubNode==CHILD) && (NR_cycle==false))
 			{
 				//Post our loads up to our parent
@@ -2602,6 +2728,9 @@ int *node::NR_populate(void)
 
 		//Populate original phases
 		NR_busdata[NR_node_reference].origphases = NR_busdata[NR_node_reference].phases;
+
+		//Populate our tracking variable
+		prev_phases = NR_busdata[NR_node_reference].phases;
 
 		return 0;
 }

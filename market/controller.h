@@ -158,6 +158,7 @@ private:
 	char32 aux_state;
 	int64 dtime_delay;
 	TIMESTAMP time_off;
+	bool use_market_period;
 
 	enumeration *pOverride;
 };

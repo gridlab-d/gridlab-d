@@ -81,6 +81,7 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_complex, "measured_current_B[A]", PADDR(measured_current[1]),
 			PT_complex, "measured_current_C[A]", PADDR(measured_current[2]),
 			PT_bool, "customer_interrupted", PADDR(meter_interrupted),
+			PT_bool, "customer_interrupted_secondary", PADDR(meter_interrupted_secondary),
 #ifdef SUPPORT_OUTAGES
 			PT_int16, "sustained_count", PADDR(sustained_count),	//reliability sustained event counter
 			PT_int16, "momentary_count", PADDR(momentary_count),	//reliability momentary event counter
@@ -89,7 +90,27 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_int16, "t_flag", PADDR(t_flag),
 			PT_complex, "pre_load", PADDR(pre_load),
 #endif
-
+			PT_double, "monthly_bill[$]", PADDR(monthly_bill),
+			PT_double, "previous_monthly_bill[$]", PADDR(previous_monthly_bill),
+			PT_double, "previous_monthly_energy[kWh]", PADDR(previous_monthly_energy),
+			PT_double, "monthly_fee[$]", PADDR(monthly_fee),
+			PT_double, "monthly_energy[kWh]", PADDR(monthly_energy),
+			PT_enumeration, "bill_mode", PADDR(bill_mode),
+				PT_KEYWORD,"NONE",BM_NONE,
+				PT_KEYWORD,"UNIFORM",BM_UNIFORM,
+				PT_KEYWORD,"TIERED",BM_TIERED,
+				PT_KEYWORD,"HOURLY",BM_HOURLY,
+				PT_KEYWORD,"TIERED_RTP",BM_TIERED_RTP,
+			PT_object, "power_market", PADDR(power_market),
+			PT_int32, "bill_day", PADDR(bill_day),
+			PT_double, "price[$/kWh]", PADDR(price),
+			PT_double, "price_base[$/kWh]", PADDR(price_base), PT_DESCRIPTION, "Used only in TIERED_RTP mode to describe the price before the first tier",
+			PT_double, "first_tier_price[$/kWh]", PADDR(tier_price[0]),
+			PT_double, "first_tier_energy[kWh]", PADDR(tier_energy[0]),
+			PT_double, "second_tier_price[$/kWh]", PADDR(tier_price[1]),
+			PT_double, "second_tier_energy[kWh]", PADDR(tier_energy[1]),
+			PT_double, "third_tier_price[$/kWh]", PADDR(tier_price[2]),
+			PT_double, "third_tier_energy[kWh]", PADDR(tier_energy[2]),
 
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -129,6 +150,25 @@ int meter::create()
 	measured_reactive_power = 0.0;
 
 	meter_interrupted = false;	//We default to being in service
+	meter_interrupted_secondary = false;	//Default to no momentary interruptions
+
+	hourly_acc = 0.0;
+	monthly_bill = 0.0;
+	monthly_energy = 0.0;
+	previous_monthly_energy = 0.0;
+	bill_mode = BM_NONE;
+	power_market = 0;
+	price_prop = 0;
+	bill_day = 15;
+	last_bill_month = -1;
+	price = 0.0;
+	tier_price[0] = tier_price[1] = tier_price[2] = 0;
+	tier_energy[0] = tier_energy[1] = tier_energy[2] = 0;
+	last_price = 0;
+	last_tier_price[0] = 0;
+	last_tier_price[1] = 0;
+	last_tier_price[2] = 0;
+	last_price_base = 0;
 
 	return result;
 }
@@ -136,22 +176,91 @@ int meter::create()
 // Initialize a distribution meter, return 1 on success
 int meter::init(OBJECT *parent)
 {
+	if(power_market != 0){
+		price_prop = gl_get_property(power_market, "current_market.clearing_price");
+		if(price_prop == 0){
+			GL_THROW("meter::power_market object \'%s\' does not publish \'current_market.clearing_price\'", (power_market->name ? power_market->name : "(anon)"));
+		}
+	}
+	check_prices();
 	last_t = dt = 0;
 	return node::init(parent);
+}
+
+int meter::check_prices(){
+	if(bill_mode == BM_UNIFORM){
+		if(price < 0.0){
+			//GL_THROW("triplex_meter price is negative!"); // This shouldn't throw an error - negative prices are okay JCF
+		}
+	} else if(bill_mode == BM_TIERED || bill_mode == BM_TIERED_RTP){
+		if(tier_price[1] == 0){
+			tier_price[1] = tier_price[0];
+			tier_energy[1] = tier_energy[0];
+		}
+		if(tier_price[2] == 0){
+			tier_price[2] = tier_price[1];
+			tier_energy[2] = tier_energy[1];
+		}
+		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
+			GL_THROW("meter energy tiers quantity trend improperly");
+		}
+		for(int i = 0; i < 3; ++i){
+			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
+				GL_THROW("meter tiers cannot have negative values");
+		}
+	}
+
+	if(bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP){
+		if(power_market == 0 || price_prop == 0){
+			GL_THROW("meter cannot use real time energy prices without a power market that publishes the next price");
+		}
+		//price = *gl_get_double(power_market,price_prop);
+	}
+
+	// initialize these to the same value
+	last_price = price;
+	last_price_base = price_base;
+	last_tier_price[0] = tier_price[0];
+	last_tier_price[1] = tier_price[1];
+	last_tier_price[2] = tier_price[2];
+
+	return 0;
 }
 TIMESTAMP meter::presync(TIMESTAMP t0)
 {
 	if (solver_method == SM_NR)
-		NR_mode = NR_cycle;		//COpy NR_cycle into NR_mode for generators
+		NR_mode = NR_cycle;		//Copy NR_cycle into NR_mode for generators
 	else
 		NR_mode = false;		//Just put as false for other methods
 
 	return node::presync(t0);
 }
 
+TIMESTAMP meter::sync(TIMESTAMP t0)
+{
+	//Reliability check
+	if ((NR_mode == false) && (fault_check_object != NULL) && (solver_method == SM_NR))	//solver cycle and fault_check is present (so might need to set flag
+	{
+		if ((NR_busdata[NR_node_reference].origphases & NR_busdata[NR_node_reference].phases) != NR_busdata[NR_node_reference].origphases)	//We have a phase mismatch - something has been lost
+		{
+			meter_interrupted = true;	//Someone is out of service, they just may not know it
+
+			//See if we're flagged for a momentary as well - if we are, clear it
+			if (meter_interrupted_secondary == true)
+				meter_interrupted_secondary = false;
+		}
+		else
+		{
+			meter_interrupted = false;	//All is well
+		}
+	}
+
+	return node::sync(t0);
+}
+
+
 TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-
 	measured_voltage[0] = voltageA;
 	measured_voltage[1] = voltageB;
 	measured_voltage[2] = voltageC;
@@ -162,6 +271,9 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if ((solver_method == SM_NR && NR_cycle == true)||solver_method  == SM_FBS)
 	{
+		//Reliability addition - if momentary flag set - clear it
+		if (meter_interrupted_secondary == true)
+			meter_interrupted_secondary = false;
 
 		if (t1 > last_t)
 		{
@@ -200,9 +312,126 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 		if (measured_real_power > measured_demand) 
 			measured_demand = measured_real_power;
+
+		if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
+		{
+			if (dt > 0)
+				process_bill(t1);
+
+			// Decide when the next billing HAS to be processed (one month later)
+			if (monthly_bill == previous_monthly_bill)
+			{
+				DATETIME t_next;
+				gl_localtime(t1,&t_next);
+
+				t_next.day = bill_day;
+
+				if (t_next.month != 12)
+					t_next.month += 1;
+				else
+				{
+					t_next.month = 1;
+					t_next.year += 1;
+				}
+				t_next.tz[0] = 0;
+				next_time =	gl_mktime(&t_next);
+			}
+		}
+
+		if( (bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP) && power_market != NULL && price_prop != NULL){
+			double seconds;
+			if (dt != last_t)
+				seconds = (double)(dt);
+			else
+				seconds = 0;
+			
+			if (seconds > 0)
+			{
+				hourly_acc += seconds/3600 * price * measured_real_power/1000;
+				process_bill(t1);
+			}
+
+			// Now that we've accumulated the bill for the last time period, update to the new price
+			double *pprice = (gl_get_double(power_market, price_prop));
+			last_price = price = *pprice;
+
+			if (monthly_bill == previous_monthly_bill)
+			{
+				DATETIME t_next;
+				gl_localtime(t1,&t_next);
+
+				t_next.day = bill_day;
+
+				if (t_next.month != 12)
+					t_next.month += 1;
+				else
+				{
+					t_next.month = 1;
+					t_next.year += 1;
+				}
+				t_next.tz[0] = 0;
+				next_time =	gl_mktime(&t_next);
+			}
+		}
 	}
 
 	return node::postsync(t1);
+}
+
+double meter::process_bill(TIMESTAMP t1){
+	DATETIME dtime;
+	gl_localtime(t1,&dtime);
+
+	monthly_energy = measured_real_energy/1000 - previous_energy_total;
+	monthly_bill = monthly_fee;
+	switch(bill_mode){
+		case BM_NONE:
+			break;
+		case BM_UNIFORM:
+			monthly_bill += monthly_energy * price;
+			break;
+		case BM_TIERED:
+			if(monthly_energy < tier_energy[0])
+				monthly_bill += last_price * monthly_energy;
+			else if(monthly_energy < tier_energy[1])
+				monthly_bill += last_price*tier_energy[0] + last_tier_price[0]*(monthly_energy - tier_energy[0]);
+			else if(monthly_energy < tier_energy[2])
+				monthly_bill += last_price*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(monthly_energy - tier_energy[1]);
+			else
+				monthly_bill += last_price*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(tier_energy[2] - tier_energy[1]) + last_tier_price[2]*(monthly_energy - tier_energy[2]);
+			break;
+		case BM_HOURLY:
+			monthly_bill += hourly_acc;
+			break;
+		case BM_TIERED_RTP:
+			monthly_bill += hourly_acc;
+			if(monthly_energy < tier_energy[0])
+				monthly_bill += last_price_base * monthly_energy;
+			else if(monthly_energy < tier_energy[1])
+				monthly_bill += last_price_base*tier_energy[0] + last_tier_price[0]*(monthly_energy - tier_energy[0]);
+			else if(monthly_energy < tier_energy[2])
+				monthly_bill += last_price_base*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(monthly_energy - tier_energy[1]);
+			else
+				monthly_bill += last_price_base*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(tier_energy[2] - tier_energy[1]) + last_tier_price[2]*(monthly_energy - tier_energy[2]);
+			break;
+	}
+
+	if (dtime.day == bill_day && dtime.hour == 0 && dtime.month != last_bill_month)
+	{
+		previous_monthly_bill = monthly_bill;
+		previous_monthly_energy = monthly_energy;
+		previous_energy_total = measured_real_energy/1000;
+		last_bill_month = dtime.month;
+		hourly_acc = 0;
+	}
+
+	last_price = price;
+	last_price_base = price_base;
+	last_tier_price[0] = tier_price[0];
+	last_tier_price[1] = tier_price[1];
+	last_tier_price[2] = tier_price[2];
+
+	return monthly_bill;
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -396,16 +396,24 @@ RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)
 	complex oblig;
 	int partres = 0;
 	char name[128];
+	char256 pstr, ustr;
+	char *cpart = 0;
+	int64 cid = -1;
+	PROPERTY *prop = NULL;
+	PROPERTY *target = NULL;
+	double scale = 1.0;
 
 	strcpy(list,property_list); /* avoid destroying orginal list */
 	for (itemptr = strtok(list,","); itemptr != NULL; itemptr = strtok(NULL,","))
 	{
-		char256 pstr, ustr;
-		char *cpart = 0;
-		int64 cid = -1;
-		PROPERTY *prop = NULL;
-		PROPERTY *target = NULL;
-		double scale = 1.0;
+		cpart = 0;
+		cid = -1;
+		prop = NULL;
+		target = NULL;
+		scale = 1.0;
+		ustr[0] = 0;
+		pstr[0] = 0;
+		unit = NULL;
 
 		//if(2 == sscanf(itemptr, "%[^:]:%[^\n\r\0]", objstr, itemstr)){
 		if(2 == sscanf(itemptr, "%[^:]:%s", objstr, itemstr)){	//changed this line because of conflicts in rh5

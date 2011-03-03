@@ -73,6 +73,7 @@ load::load(MODULE *mod) : node(mod)
 			PT_complex,	"measured_voltage_AB",PADDR(measured_voltage_AB),
 			PT_complex,	"measured_voltage_BC",PADDR(measured_voltage_BC),
 			PT_complex,	"measured_voltage_CA",PADDR(measured_voltage_CA),
+			PT_bool, "phase_loss_protection", PADDR(three_phase_protect), PT_DESCRIPTION, "Trip all three phases of the load if a fault occurs",
 
 			// This allows the user to set a base power on each phase, and specify the power as a function
 			// of ZIP and pf for each phase (similar to zipload).  This will override the constant values
@@ -121,6 +122,7 @@ int load::create(void)
 	current_pf[0] = current_pf[1] = current_pf[2] = 1;
 	impedance_pf[0] = impedance_pf[1] = impedance_pf[2] = 1;
 	load_class = LC_UNKNOWN;
+	three_phase_protect = false;	//By default, let all three phases go
 
     return res;
 }
@@ -142,6 +144,8 @@ TIMESTAMP load::presync(TIMESTAMP t0)
 
 TIMESTAMP load::sync(TIMESTAMP t0)
 {
+	bool all_three_phases;
+
 	for (int index=0; index<3; index++)
 	{
 		if (base_power[index] != 0.0)
@@ -238,48 +242,137 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 		}
 	}
 
-	if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS/NR and parented load
-	{													//associated with change due to player methods
-
-		if (!(constant_impedance[0].IsZero()))
-			shunt[0] += complex(1.0)/constant_impedance[0];
-
-		if (!(constant_impedance[1].IsZero()))
-			shunt[1] += complex(1.0)/constant_impedance[1];
-		
-		if (!(constant_impedance[2].IsZero()))
-			shunt[2] += complex(1.0)/constant_impedance[2];
-		
-		power[0] += constant_power[0];
-		power[1] += constant_power[1];	
-		power[2] += constant_power[2];
-		current[0] += constant_current[0];
-		current[1] += constant_current[1];
-		current[2] += constant_current[2];
-	}
-	else
+	if (fault_check_object == NULL)	//Not reliability mode - normal mode
 	{
-		if(constant_impedance[0].IsZero())
-			shunt[0] = 0.0;
-		else
-			shunt[0] = complex(1)/constant_impedance[0];
+		if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS/NR and parented load
+		{													//associated with change due to player methods
 
-		if(constant_impedance[1].IsZero())
+			if (!(constant_impedance[0].IsZero()))
+				shunt[0] += complex(1.0)/constant_impedance[0];
+
+			if (!(constant_impedance[1].IsZero()))
+				shunt[1] += complex(1.0)/constant_impedance[1];
+			
+			if (!(constant_impedance[2].IsZero()))
+				shunt[2] += complex(1.0)/constant_impedance[2];
+			
+			power[0] += constant_power[0];
+			power[1] += constant_power[1];	
+			power[2] += constant_power[2];
+			current[0] += constant_current[0];
+			current[1] += constant_current[1];
+			current[2] += constant_current[2];
+		}
+		else
+		{
+			if(constant_impedance[0].IsZero())
+				shunt[0] = 0.0;
+			else
+				shunt[0] = complex(1)/constant_impedance[0];
+
+			if(constant_impedance[1].IsZero())
+				shunt[1] = 0.0;
+			else
+				shunt[1] = complex(1)/constant_impedance[1];
+			
+			if(constant_impedance[2].IsZero())
+				shunt[2] = 0.0;
+			else
+				shunt[2] = complex(1)/constant_impedance[2];
+			
+			power[0] = constant_power[0];
+			power[1] = constant_power[1];	
+			power[2] = constant_power[2];
+			current[0] = constant_current[0];
+			current[1] = constant_current[1];
+			current[2] = constant_current[2];
+		}
+	}
+	else	//Reliability mode
+	{
+		all_three_phases = true;	//By default, handle all the phases
+
+		//Check and see if we're a "protected" load
+		if (three_phase_protect == true)
+		{
+			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			{
+				//See if all phases are still in service
+				if ((NR_busdata[NR_node_reference].origphases & NR_busdata[NR_node_reference].phases) != NR_busdata[NR_node_reference].origphases)
+				{
+					//Assume all three trip
+					all_three_phases = false;
+				}
+			}
+			else	//It is a child - look at parent
+			{
+				//See if all phases are still in service
+				if ((NR_busdata[*NR_subnode_reference].origphases & NR_busdata[*NR_subnode_reference].phases) != NR_busdata[*NR_subnode_reference].origphases)
+				{
+					//Assume all three trip
+					all_three_phases = false;
+				}
+			}
+		}
+
+		if (all_three_phases == true)	//Handle all phases correctly
+		{
+			if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS/NR and parented load
+			{													//associated with change due to player methods
+
+				if (!(constant_impedance[0].IsZero()))
+					shunt[0] += complex(1.0)/constant_impedance[0];
+
+				if (!(constant_impedance[1].IsZero()))
+					shunt[1] += complex(1.0)/constant_impedance[1];
+				
+				if (!(constant_impedance[2].IsZero()))
+					shunt[2] += complex(1.0)/constant_impedance[2];
+				
+				power[0] += constant_power[0];
+				power[1] += constant_power[1];	
+				power[2] += constant_power[2];
+				current[0] += constant_current[0];
+				current[1] += constant_current[1];
+				current[2] += constant_current[2];
+			}
+			else
+			{
+				if(constant_impedance[0].IsZero())
+					shunt[0] = 0.0;
+				else
+					shunt[0] = complex(1)/constant_impedance[0];
+
+				if(constant_impedance[1].IsZero())
+					shunt[1] = 0.0;
+				else
+					shunt[1] = complex(1)/constant_impedance[1];
+				
+				if(constant_impedance[2].IsZero())
+					shunt[2] = 0.0;
+				else
+					shunt[2] = complex(1)/constant_impedance[2];
+				
+				power[0] = constant_power[0];
+				power[1] = constant_power[1];	
+				power[2] = constant_power[2];
+				current[0] = constant_current[0];
+				current[1] = constant_current[1];
+				current[2] = constant_current[2];
+			}
+		}//Handle all three
+		else	//Zero all three - may cause issues with P/C loads, but why parent a load to a load??
+		{
+			power[0] = 0.0;
+			power[1] = 0.0;
+			power[2] = 0.0;
+			shunt[0] = 0.0;
 			shunt[1] = 0.0;
-		else
-			shunt[1] = complex(1)/constant_impedance[1];
-		
-		if(constant_impedance[2].IsZero())
 			shunt[2] = 0.0;
-		else
-			shunt[2] = complex(1)/constant_impedance[2];
-		
-		power[0] = constant_power[0];
-		power[1] = constant_power[1];	
-		power[2] = constant_power[2];
-		current[0] = constant_current[0];
-		current[1] = constant_current[1];
-		current[2] = constant_current[2];
+			current[0] = 0.0;
+			current[1] = 0.0;
+			current[2] = 0.0;
+		}
 	}
 
 	//Must be at the bottom, or the new values will be calculated after the fact

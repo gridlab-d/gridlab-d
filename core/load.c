@@ -556,7 +556,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		{
 			output_error("'include' variable is not set and neither is GRIDLABD environment, compiler cannot proceed without a way to find rt/gridlabd.h");
 			/* TROUBLESHOOT
-				The runtime class compiler needs to find the file rt/gridlabd.h and uses either the <i>include<i> global variable or the <b>gridlabd</b> 
+				The runtime class compiler needs to find the file rt/gridlabd.h and uses either the <i>include</i> global variable or the <b>gridlabd</b> 
 				environment variable to find it.  Check the definition of the <b>gridlabd</b> environment variable or use the 
 				<code>#define include=<i>path</i></code> to specify the path to the <code>rt/gridlabd.h<code>.
 			 */
@@ -732,10 +732,22 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				// /Od /I "..\core" /I "..\third_party\cppunit-1.12.0\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" 
 				// /D "_TESTING" /D "_WINDLL" /D "_MBCS" /Gm /EHsc /RTC1 /MDd /Fo"Win32\Debug\powerflow\\" 
 				// /Fd"Win32\Debug\powerflow\vc80.pdb" /W3 /nologo /c /Wp64 /ZI /TP /wd4996 /errorReport:prompt
+				output_message("exec cd");
+				exec("cd");
+				output_message("exec dir /b");
+				exec("dir /b");
+				output_message("cl /Od /DWIN32 /D_DEBUG /D_WINDOWS /D_USRDLL /D_CRT_SECURE_NO_DEPRECATE /D_WINDLL /D_MBCS /Gm /EHsc /RTC1 "
+					"/MDd /nologo /W3 /Zi /TP /wd4996 /errorReport:prompt /c %s  %s%s%s /Fo %s"
+					"", cfile, strlen(global_include)>0?"/I \"":"", global_include, strlen(global_include)>0?"\"":"", file);
+				
 				if (exec("cl /Od /DWIN32 /D_DEBUG /D_WINDOWS /D_USRDLL /D_CRT_SECURE_NO_DEPRECATE /D_WINDLL /D_MBCS /Gm /EHsc /RTC1 "
-					"/MDd /nologo /W3 /Zi /TP /wd4996 /errorReport:prompt %s%s%s /c /Fo%s %s"
-					"",	strlen(global_include)>0?"/I \"":"", global_include, strlen(global_include)>0?"\"":"", file, cfile)==FAILED)
+					"/MDd /nologo /W3 /Zi /TP /wd4996 /errorReport:prompt /c %s  %s%s%s /Fo %s"
+					"", cfile, strlen(global_include)>0?"/I \"":"", global_include, strlen(global_include)>0?"\"":"", file)==FAILED)
+				{
+					output_message("cl /c %s", cfile);
+					exec("cl /c %s", cfile);
 					return FAILED;
+				}
 
 				// /OUT:"Win32\Debug\powerflow.dll" /INCREMENTAL /NOLOGO /LIBPATH:"Win32\Debug" /DLL /MANIFEST 
 				// /MANIFESTFILE:"Win32\Debug\powerflow\powerflow.dll.intermediate.manifest" /DEBUG 

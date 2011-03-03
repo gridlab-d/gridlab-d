@@ -44,9 +44,11 @@ typedef struct {
 	complex *YSto;			///< self admittance seen on to side
 	unsigned char phases;	///< Phases property - used for construction of matrices
 	unsigned char origphases;	///< Original phases property - follows same format - used to save what object's original capabilities
+	unsigned char faultphases;	///< Flags for induced faults - used to prevent restoration of objects that should otherwise still be broken
 	int from;				///< index into bus data
 	int to;					///< index into bus data
 	bool *status;			///< status of the object, if it is a switch (restoration module usage)
+	unsigned char lnk_type;	///< type of link the object is - 0 = UG/OH line, 1 = Triplex line, 2 = switch, 3 = fuse, 4 = transformer, 5 = sectionalizer, 6 = recloser
 	double v_ratio;			///< voltage ratio (v_from/v_to)
 	char *name;				///< original name
 } BRANCHDATA;

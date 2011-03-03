@@ -3,7 +3,7 @@
 	@file player.c
 	@addtogroup player Players
 	@ingroup tapes
- 
+
 	Tape players use the following properties
 	- \p file specifies the source of the data.  The format of a file specs is
 	[\p type]\p name[:\p flags]
@@ -24,7 +24,7 @@
 	+1h,-1.1-0.3j
 	+1h,-1.0-0.2j
 	\endverbatim
-	The first line specifies the starting time of the tape and the initial value.  The value must be formatted as a 
+	The first line specifies the starting time of the tape and the initial value.  The value must be formatted as a
 	string that is readable for the type of the data that is to receive the recording.  The remaining lines may
 	have either absolute timestamps or relative times (indicated by a leading + sign).  Relative times are useful
 	if the \p loop parameter is used.  When a loop is performed, only lines with relative timestamps are read and all
@@ -169,7 +169,7 @@ Retry:
 	if(sscanf(result, "%[^,],%[^\n\r]", tbuf, valbuf) == 2){
 		trim(tbuf, timebuf);
 		trim(valbuf, value);
-		if (sscanf(timebuf,"%d-%d-%d %d:%d:%d",&Y,&m,&d,&H,&M,&S)==6)
+		if (sscanf(timebuf,"%d-%d-%d %d:%d:%d",&Y,&m,&d,&H,&M,&S)>=4)
 		{
 			//struct tm dt = {S,M,H,d,m-1,Y-1900,0,0,0};
 			DATETIME dt;
@@ -200,7 +200,7 @@ Retry:
 				case 'd': scale=86400*TS_SECOND; break;
 				default: break;
 				}
-				t1 *= scale; 
+				t1 *= scale;
 				if (result[0]=='+'){ /* timeshifts have leading + */
 					my->next.ts += t1;
 					while(value[voff] == ' '){

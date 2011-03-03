@@ -1209,7 +1209,7 @@ int volt_var_control::init(OBJECT *parent)
 			/*  TROUBLESHOOT
 			If more than one regulator is present, the measurement_list must be specified as a comma-delimited
 			pair with the measurement node and the integer of the regulator it is associated with (e.g., 709,2 associates
-			node 702 with regulator 2 of regulator_list).
+			node 709 with regulator 2 of regulator_list).
 			*/
 		}
 

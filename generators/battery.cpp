@@ -124,6 +124,8 @@ battery::battery(MODULE *module)
 			PT_complex, "I_Internal[A]",PADDR(I_Internal),
 			PT_complex, "I_Prev[A]", PADDR(I_Prev),
 
+			PT_double,"power_transferred",PADDR(power_transferred),
+
 			//resistasnces and max P, Q
 
 			PT_set, "phases", PADDR(phases),
@@ -574,13 +576,13 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					gl_warning("The voltages at the batteries meter are higher than rated. No power output.");
 					battery_state = BS_WAITING;
 
-					pLine_I[0] += complex(0,0);
-					pLine_I[1] += complex(0,0);
-					pLine_I[2] += complex(0,0);
-
-					last_current[0] = complex(0,0);
-					last_current[1] = complex(0,0);
-					last_current[2] = complex(0,0);
+					last_current[0].SetPolar(parasitic_power_draw/3/volt[0].Mag(),volt[0].Arg());
+					last_current[1].SetPolar(parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
+					last_current[2].SetPolar(parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
+					
+					pLine_I[0] += last_current[0];
+					pLine_I[1] += last_current[1];
+					pLine_I[2] += last_current[2];
 
 					return TS_NEVER;
 				}
@@ -589,13 +591,17 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					prev_state = -1;
 					battery_state = BS_DISCHARGING;
 
-					pLine_I[0] += complex(-I_Max.Mag()/3,0,A); //generation, pure real power
-					pLine_I[1] += complex(-I_Max.Mag()/3,-2*PI/3,A);
-					pLine_I[2] += complex(-I_Max.Mag()/3,2*PI/3,A);
+					double test_current = Max_P / (volt[0].Mag() + volt[1].Mag() + volt[2].Mag());
+					if (test_current > I_Max.Mag()/3)
+						test_current = I_Max.Mag()/3;
 
-					last_current[0] = complex(-I_Max.Mag()/3,0,A);;
-					last_current[1] = complex(-I_Max.Mag()/3,-2*PI/3,A);
-					last_current[2] = complex(-I_Max.Mag()/3,2*PI/3,A);
+					last_current[0].SetPolar(-test_current + parasitic_power_draw/3/volt[0].Mag(),volt[0].Arg());
+					last_current[1].SetPolar(-test_current + parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
+					last_current[2].SetPolar(-test_current + parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
+					
+					pLine_I[0] += last_current[0];
+					pLine_I[1] += last_current[1];
+					pLine_I[2] += last_current[2];
 
 					power_transferred = 0;
 
@@ -617,13 +623,17 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					prev_state = 1;
 					battery_state = BS_CHARGING;
 
-					pLine_I[0] += complex(I_Max.Mag()/3,0,A); //load, pure real power
-					pLine_I[1] += complex(I_Max.Mag()/3,-2*PI/3,A);
-					pLine_I[2] += complex(I_Max.Mag()/3,2*PI/3,A);
+					double test_current = Max_P / (volt[0].Mag() + volt[1].Mag() + volt[2].Mag());
+					if (test_current > I_Max.Mag()/3)
+						test_current = I_Max.Mag()/3;
 
-					last_current[0] = complex(I_Max.Mag()/3,0,A);
-					last_current[1] = complex(I_Max.Mag()/3,-2*PI/3,A);
-					last_current[2] = complex(I_Max.Mag()/3,2*PI/3,A);
+					last_current[0].SetPolar(test_current + parasitic_power_draw/3/volt[0].Mag(),volt[0].Arg());
+					last_current[1].SetPolar(test_current + parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
+					last_current[2].SetPolar(test_current + parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
+					
+					pLine_I[0] += last_current[0];
+					pLine_I[1] += last_current[1];
+					pLine_I[2] += last_current[2];
 
 					power_transferred = 0;
 
@@ -640,18 +650,22 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 					return -(t1 + t_energy_limit);
 				}
-				else if (check_power < (power_set_low + Max_P) && prev_state == 1 && Energy < E_Max) //keep charging until out of "deadband"
+				else if ( (check_power < power_set_high - Max_P) && (prev_state == 1) && (Energy < E_Max) ) //keep charging until out of "deadband"
 				{
 					prev_state = 1; //charging
 					battery_state = BS_CHARGING;
 
-					pLine_I[0] += complex(I_Max.Mag()/3,0,A); //load, pure real power
-					pLine_I[1] += complex(I_Max.Mag()/3,-2*PI/3,A);
-					pLine_I[2] += complex(I_Max.Mag()/3,2*PI/3,A);
+					double test_current = Max_P / (volt[0].Mag() + volt[1].Mag() + volt[2].Mag());
+					if (test_current > I_Max.Mag()/3)
+						test_current = I_Max.Mag()/3;
 
-					last_current[0] = complex(I_Max.Mag()/3,0,A);
-					last_current[1] = complex(I_Max.Mag()/3,-2*PI/3,A);
-					last_current[2] = complex(I_Max.Mag()/3,2*PI/3,A);
+					last_current[0].SetPolar(test_current + parasitic_power_draw/3/volt[0].Mag(),volt[0].Arg());
+					last_current[1].SetPolar(test_current + parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
+					last_current[2].SetPolar(test_current + parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
+					
+					pLine_I[0] += last_current[0];
+					pLine_I[1] += last_current[1];
+					pLine_I[2] += last_current[2];
 
 					power_transferred = 0;
 
@@ -668,18 +682,22 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 					return -(t1 + t_energy_limit);
 				}
-				else if (check_power > (power_set_high - Max_P) && prev_state == -1 && Energy > 0) //keep discharging until out of "deadband"
+				else if ( (check_power > power_set_low + Max_P) && (prev_state == -1) && (Energy > 0) ) //keep discharging until out of "deadband"
 				{
 					prev_state = -1;
 					battery_state = BS_DISCHARGING;
+					
+					double test_current = Max_P / (volt[0].Mag() + volt[1].Mag() + volt[2].Mag());
+					if (test_current > I_Max.Mag()/3)
+						test_current = I_Max.Mag()/3;
 
-					pLine_I[0] += complex(-I_Max.Mag()/3,0,A); //generation, pure real power
-					pLine_I[1] += complex(-I_Max.Mag()/3,-2*PI/3,A);
-					pLine_I[2] += complex(-I_Max.Mag()/3,2*PI/3,A);
-
-					last_current[0] = complex(-I_Max.Mag()/3,0,A);
-					last_current[1] = complex(-I_Max.Mag()/3,-2*PI/3,A);
-					last_current[2] = complex(-I_Max.Mag()/3,2*PI/3,A);
+					last_current[0].SetPolar(-test_current + parasitic_power_draw/3/volt[0].Mag(),volt[0].Arg());
+					last_current[1].SetPolar(-test_current + parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
+					last_current[2].SetPolar(-test_current + parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
+					
+					pLine_I[0] += last_current[0];
+					pLine_I[1] += last_current[1];
+					pLine_I[2] += last_current[2];
 
 					power_transferred = 0;
 
@@ -706,13 +724,13 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					else
 						battery_state = BS_WAITING;
 
-					pLine_I[0] += complex(0,0);
-					pLine_I[1] += complex(0,0);
-					pLine_I[2] += complex(0,0);
+					last_current[0].SetPolar(parasitic_power_draw/3/volt[0].Mag(),volt[0].Arg());
+					last_current[1].SetPolar(parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
+					last_current[2].SetPolar(parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
 
-					last_current[0] = complex(0,0);
-					last_current[1] = complex(0,0);
-					last_current[2] = complex(0,0);
+					pLine_I[0] += last_current[0];
+					pLine_I[1] += last_current[1];
+					pLine_I[2] += last_current[2];
 
 					prev_state = 0;
 					power_transferred = 0;

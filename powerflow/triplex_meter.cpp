@@ -80,6 +80,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_complex, "measured_current_2[A]", PADDR(measured_current[1]),
 			PT_complex, "measured_current_N[A]", PADDR(measured_current[2]),
 			PT_bool, "customer_interrupted", PADDR(tpmeter_interrupted),
+			PT_bool, "customer_interrupted_secondary", PADDR(tpmeter_interrupted_secondary),
 #ifdef SUPPORT_OUTAGES
 			PT_int16, "sustained_count", PADDR(sustained_count),	//reliability sustained event counter
 			PT_int16, "momentary_count", PADDR(momentary_count),	//reliability momentary event counter
@@ -149,6 +150,7 @@ int triplex_meter::create()
 	last_price_base = 0;
 
 	tpmeter_interrupted = false;	//Assumes we start as "uninterrupted"
+	tpmeter_interrupted_secondary = false;	//Assumes start with no momentary interruptions
 
 
 	return result;
@@ -217,11 +219,37 @@ int triplex_meter::check_prices(){
 
 	return 0;
 }
+
+//Sync needed for reliability
+TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
+{
+	//Reliability check
+	if ((NR_mode == false) && (fault_check_object != NULL) && (solver_method == SM_NR))	//solver cycle and fault_check is present (so might need to set flag
+	{
+		if ((NR_busdata[NR_node_reference].origphases & NR_busdata[NR_node_reference].phases) != NR_busdata[NR_node_reference].origphases)	//We have a phase mismatch - something has been lost
+		{
+			tpmeter_interrupted = true;	//Someone is out of service, they just may not know it
+
+			//See if we were "momentary" as well - if so, clear us.
+			if (tpmeter_interrupted_secondary == true)
+				tpmeter_interrupted_secondary = false;
+		}
+		else
+		{
+			tpmeter_interrupted = false;	//All is well
+		}
+	}
+
+	return triplex_node::sync(t0);
+
+}
+
 // Synchronize a distribution triplex_meter
 TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP rv = TS_NEVER;
 	TIMESTAMP hr = TS_NEVER;
+
 	//measured_voltage[0] = voltageA;
 	//measured_voltage[1] = voltageB;
 	//measured_voltage[2] = voltageC;
@@ -231,6 +259,10 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if ((solver_method == SM_NR && NR_cycle == true)||solver_method  == SM_FBS)
 	{
+		//Reliability addition - clear momentary flag if set
+		if (tpmeter_interrupted_secondary == true)
+			tpmeter_interrupted_secondary = false;
+
 		if (t1 > last_t)
 		{
 			dt = t1 - last_t;

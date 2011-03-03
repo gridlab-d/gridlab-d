@@ -29,6 +29,7 @@ public:
 	double power_fraction[3];
 	double impedance_fraction[3];
 	double current_fraction[3];
+	bool three_phase_protect;
 
 	enum {LC_UNKNOWN=0, LC_RESIDENTIAL, LC_COMMERCIAL, LC_INDUSTRIAL, LC_AGRICULTURAL} load_class;
 

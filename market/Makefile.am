@@ -10,6 +10,8 @@ market_la_SOURCES =                 \
 	stubauction.cpp stubauction.h    \
 	passive_controller.cpp passive_controller.h	 \
 	double_controller.cpp double_controller.h	\
+	stub_bidder.cpp stub_bidder.h	 \
+	generator_controller.cpp generator_controller.h \
 	# DO NOT EDIT THE FOLLOWING LINE \
 	# NEWCLASS
 market_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0

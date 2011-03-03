@@ -37,7 +37,13 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "ONCHANGE", ONCHANGE,
 				PT_KEYWORD, "ALL", ALLT,
 			PT_char1024,"output_filename",PADDR(output_filename),
+			PT_bool,"reliability_mode",PADDR(reliability_mode),
+			PT_object,"eventgen_object",PADDR(rel_eventgen),
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			if (gl_publish_function(oclass,"reliability_alterations",(FUNCTIONADDR)powerflow_alterations)==NULL)
+				GL_THROW("Unable to publish remove from service function");
+			if (gl_publish_function(oclass,"handle_sectionalizer",(FUNCTIONADDR)handle_sectionalizer)==NULL)
+				GL_THROW("Unable to publish sectionalizer special function");
     }
 }
 
@@ -56,6 +62,8 @@ int fault_check::create(void)
 	output_filename[0] = '\0';	//Empty file name
 
 	reliability_mode = false;	//By default, we find errors and fail - if true, dumps log, but continues on its merry way
+
+	rel_eventgen = NULL;		//No object linked by default
 
 	return result;
 }
@@ -123,7 +131,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		}
 
 		//Create our node reference vector - one for each bus
-		Supported_Nodes = (int**)gl_malloc(NR_bus_count*sizeof(int));
+		Supported_Nodes = (int**)gl_malloc(NR_bus_count*sizeof(int*));
 		if (Supported_Nodes == NULL)
 		{
 			GL_THROW("fault_check: node status vector allocation failure");
@@ -144,6 +152,21 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 				//Defined above
 			}
 		}
+
+		//Replicate the above if reliability is running
+		if (reliability_mode == true)
+		{
+			//Create our node reference vector - one for each bus
+			Alteration_Nodes = (char*)gl_malloc(NR_bus_count*sizeof(char));
+			if (Alteration_Nodes == NULL)
+			{
+				GL_THROW("fault_check: node alteration status vector allocation failure");
+				/*  TROUBLESHOOT
+				The fault_check object has failed to allocate the node alteration information vector.  Please try
+				again and if the problem persists, submit your code and a bug report via the trac website.
+				*/
+			}
+		}//End reliability mode allocing
 	}//end 0th run
 
 	if (NR_cycle==false)	//Getting ready to do a solution, we should see check for "unsupported" systems
@@ -226,6 +249,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 							is enabled, the solver will simply ignore the unsupported components for now.
 							*/
 						}
+						break;	//Only need to do this once
 					}
 				}
 			}//no restoration
@@ -239,7 +263,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 }
 
 
-void fault_check::search_links(unsigned int node_int)
+void fault_check::search_links(int node_int)
 {
 	unsigned int index, temp_child_idx, indexb;
 	bool both_handled, from_val, first_resto, proceed_in;
@@ -379,9 +403,10 @@ void fault_check::search_links(unsigned int node_int)
 	}//End link table loop
 }
 
-void fault_check::support_check(unsigned int swing_node_int,bool rest_pop_tree)
+void fault_check::support_check(int swing_node_int,bool rest_pop_tree)
 {
 	unsigned int index;
+	unsigned char phase_vals;
 
 	//Reset the node status list
 	reset_support_check();
@@ -393,8 +418,14 @@ void fault_check::support_check(unsigned int swing_node_int,bool rest_pop_tree)
 			NR_busdata[index].Child_Node_idx = 0;	//Zero the child object index
 	}
 
-	//Swing node has support - assume it is three phase (all three don't necessarily have to be used)
-	Supported_Nodes[swing_node_int][0] = Supported_Nodes[swing_node_int][1] = Supported_Nodes[swing_node_int][2] = 1;
+	//Swing node has support - if the phase exists (changed for complete faults)
+	for (index=0; index<3; index++)
+	{
+		phase_vals = 0x04 >> index;	//Set up phase value
+
+		if ((NR_busdata[swing_node_int].phases & phase_vals) == phase_vals)	//Has this phase
+			Supported_Nodes[swing_node_int][index] = 1;	//Flag it as supported
+	}
 
 	//Call the node link-erator (node support check) - call it on the swing, the details are handled inside
 	search_links(swing_node_int);
@@ -439,6 +470,7 @@ void fault_check::reset_support_check(void)
 void fault_check::write_output_file(TIMESTAMP tval)
 {
 	unsigned int index;
+	DATETIME temp_time;
 	bool headerwritten = false;
 	char phase_outs;
 
@@ -464,7 +496,10 @@ void fault_check::write_output_file(TIMESTAMP tval)
 			//See if the header's been written
 			if (headerwritten == false)
 			{
-				fprintf(FPOutput,"Unsupported at timestamp %lld:\n\n",tval);
+				//Convert timestamp so readable
+				gl_localtime(tval,&temp_time);
+
+				fprintf(FPOutput,"Unsupported at timestamp %lld - %04d-%02d-%02d %02d:%02d:%02d =\n\n",tval,temp_time.year,temp_time.month,temp_time.day,temp_time.hour,temp_time.minute,temp_time.second);
 				headerwritten = true;	//Flag it as written
 			}
 
@@ -518,11 +553,536 @@ void fault_check::write_output_file(TIMESTAMP tval)
 		}//end unsupported
 	}//end bus traversion
 
-	fprintf(FPOutput,"\n\n\n");	//Put some blank lines between time entries
+	fprintf(FPOutput,"\n");	//Put some blank lines between time entries
 
 	//Close the file
 	fclose(FPOutput);
 }
+
+//Function to traverse powerflow and remove/restore now unsupported objects' phases (so NR solves happy)
+void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
+{
+	int base_bus_val;
+
+	//See if the "faulting branch" is the swing node
+	if (baselink_int == -99)	//Swing
+		base_bus_val = 0;	//Swing is always 0th position
+	else	//Not swing, see what our to side is
+	{
+		//Get to side
+		base_bus_val = NR_branchdata[baselink_int].to;
+
+		//Assuming radial, now make the system happy by removing/restoring unsupported phases
+		if (rest_mode == true)	//Restoration
+			NR_busdata[base_bus_val].phases |= (NR_branchdata[baselink_int].phases & 0x07);
+		else	//Removal mode
+			NR_busdata[base_bus_val].phases &= (NR_branchdata[baselink_int].phases & 0x07);
+	}
+
+	//Reset the alteration matrix
+	reset_alterations_check();
+
+	//First node is handled, one way or another
+	Alteration_Nodes[base_bus_val] = 1;
+
+	//See if the FROM side of our newly restored greatness is supported.  If it isn't, there's no point in proceeding
+	if (rest_mode == true)	//Restoration
+	{
+		gl_verbose("Alterations support check called restoration on bus %s",NR_busdata[base_bus_val].name);
+
+		if ((NR_busdata[base_bus_val].phases & 0x07) != 0x00)	//We have phase, means OK above us
+		{
+			//Recurse our way in - adjusted version of original search_links function above (but no storage, because we don't care now)
+			support_search_links(base_bus_val, base_bus_val, rest_mode);
+		}
+		else
+			return;	//No phases above us, so must be higher level fault.  No sense proceeding then
+	}
+	else	//Destructive!
+	{
+		gl_verbose("Alterations support check called removal on bus %s",NR_busdata[base_bus_val].name);
+
+		//Recurse our way in - adjusted version of original search_links function above (but no storage, because we don't care now)
+		support_search_links(base_bus_val, base_bus_val, rest_mode);
+	}
+}
+
+//Recursive function to traverse powerflow and alter phases as necessary
+//Based on search_links code from above
+void fault_check::support_search_links(int node_int, int node_start, bool impact_mode)
+{
+	unsigned int index;
+	bool both_handled, from_val;
+	int branch_val, return_val;
+	BRANCHDATA temp_branch;
+	unsigned char work_phases, phase_restrictions,temp_phases;
+	OBJECT *temp_obj;
+	FUNCTIONADDR funadd = NULL;
+
+	//Loop through the connectivity and populate appropriately
+	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)	//parse through our connected link
+	{
+		temp_branch = NR_branchdata[NR_busdata[node_int].Link_Table[index]];	//Get connecting link information
+
+		both_handled = false;	//Reset flag
+
+		//See which end we are, and if the other end has been handled
+		if (temp_branch.from == node_int)	//We're the from
+		{
+			from_val = true;	//Flag us as the from end (so we don't have to check it again later)
+		}
+		else	//Must be the to
+		{
+			from_val = false;	//Flag us as the to end (so we don't have to check it again later)
+		}
+
+		if ((node_int == node_start) && (from_val == false))	//We're the TO side of the base node, Oh Noes!
+		{
+			Alteration_Nodes[temp_branch.from] = 1;	//Flag us to prevent future issues (not sure how they'd happen)
+			continue;	//Nothing to do with this link, so I hereby render this iteration useless and proceed to skip it
+		}
+		else	//FROM side of any, or not the TO side as the base node
+		{
+			//See if both sides of this link are already set - if so, don't bother going back in
+			if ((Alteration_Nodes[temp_branch.to]==1) && (Alteration_Nodes[temp_branch.from]==1))
+				both_handled=true;
+		}
+
+		//If not handled, proceed with logic-ness
+		if (both_handled==false)
+		{
+			//Figure out the indexing so we can tell what we are
+			if (from_val)	//From end
+			{
+				branch_val = temp_branch.to;
+
+				if (impact_mode == false)	//Removal time
+				{
+					//Make sure our FROM end is valid first - just in case
+					if (Alteration_Nodes[temp_branch.from] == 1)
+					{
+						//Remove our phase portions - determine by our FROM end
+						work_phases = NR_busdata[temp_branch.from].phases & 0x07;
+
+						//See if we are split-phase
+						if ((NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x80) == 0x80)
+						{
+							//See if any support exists
+							if ((NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & work_phases) == 0x00)	//no longer any support
+							{
+								//Just remove it all
+								NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases = 0x00;
+							}
+							//Defaulted else - do nothing
+						}
+						else	//Not split-phase, normal - continue
+						{
+							//Remove components - USBs are typically node oriented, so they aren't included here
+							NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases &= work_phases;
+						}
+
+						//Now apply the phases on the TO end of this branch - first off, get base phases - D is omitted (D unsupported for now)
+						work_phases = NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x07;
+
+						//See if the line is a SPCT or Triplex - if so, bring the flag in.  If not, clear it
+						if ((NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x80) == 0x80)
+						{
+							work_phases |= 0xE0;	//SP, House?, To SPCT - flagged on
+						}
+						else if (work_phases == 0x07)	//Fully connected, we can pass D and diff conns
+						{
+							work_phases |= 0x18;	//House?, D
+						}
+
+						//Apply the change to the TO node
+						NR_busdata[temp_branch.to].phases &= work_phases;
+					}//End FROM end is valid
+					else	//FROM end not valid - hope we get hit by something else later
+					{
+						continue;
+					}
+				}//end FROM removal
+				else	//Restoration time
+				{
+					//Make sure our FROM end is valid first - just in case
+					if (Alteration_Nodes[temp_branch.from] == 1)
+					{
+						//Now see if we can even proceed - if we are a fault blocked area, then go no lower
+						phase_restrictions = ~(NR_branchdata[NR_busdata[node_int].Link_Table[index]].faultphases & 0x07);	//Get unrestricted
+
+						phase_restrictions &= (NR_branchdata[NR_busdata[node_int].Link_Table[index]].origphases & 0x07);	//Mask this with what we used to be
+
+						if (phase_restrictions == 0x00)	//No phases are available below here, go to next
+						{
+							continue;
+						}
+						else	//At least one phase is valid, proceed
+						{
+							//Restore our phase portions - determine by our FROM end and restrictions
+							work_phases = NR_busdata[temp_branch.from].phases & phase_restrictions;
+
+							if ((temp_branch.origphases & 0x80) == 0x80)	//See if we were split phase - if so and no phases are present, remove that too for good measure
+							{
+								if (work_phases != 0x00)
+									work_phases |= (NR_branchdata[NR_busdata[node_int].Link_Table[index]].origphases & 0xE0);	//Mask in SPCT-type flags
+							}
+
+							//Restore components - USBs are typically node oriented, so they aren't explicitly included here
+							NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases |= work_phases;
+
+							//Now apply the phases on the TO end of this branch - first off, get base phases
+							work_phases = NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x07;
+
+							//See if the line is a SPCT or Triplex - if so, bring the flag in.  If not, clear it
+							if ((NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x80) == 0x80)
+							{
+								work_phases |= (NR_busdata[temp_branch.to].origphases & 0xE0);	//SP, House?, To SPCT - flagged on
+							}
+							else if (work_phases == 0x07)	//Fully connected, we can pass D and diff conns
+							{
+								work_phases |= (NR_busdata[temp_branch.to].origphases & 0x18);	//D
+							}
+
+							//Apply the change to the TO node
+							NR_busdata[temp_branch.to].phases |= work_phases;
+						}
+					}//End FROM end is valid
+					else	//FROM end not valid - hope we get hit by something else later
+					{
+						continue;
+					}
+				}//End TO end restoration
+			}//End FROM end
+			else	//To end
+			{
+				branch_val = temp_branch.from;
+
+				if (impact_mode == false)	//Removal time
+				{
+					//Make sure our TO end is valid first - just in case
+					if (Alteration_Nodes[temp_branch.to] == 1)	//Implies TO is done, but not FROM.  Basically indicates reverse flow or a mesh - not necessarily good (solver won't care)
+					{
+						//Remove our phase portions - determine by our TO end
+						work_phases = NR_busdata[temp_branch.to].phases & 0x07;
+
+						if ((temp_branch.phases & 0x80) == 0x80)	//See if we are split phase - if so and no phases are present, remove that too for good measure
+						{
+							if (work_phases != 0x00)
+								work_phases |= 0xA0;	//Add in the split phase flag
+						}
+
+						//Remove components - USBs are typically node oriented, so they aren't included here
+						NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases &= work_phases;
+
+						//Now apply the phases on the FROM end of this branch - first off, get base phases - D is omitted (D unsupported for now)
+						work_phases = NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x07;
+
+						//See if the line is a SPCT or Triplex - if so, bring the flag in.  If not, clear it
+						if ((NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x80) == 0x80)
+						{
+							work_phases |= 0xE0;	//SP, House?, To SPCT - flagged on
+						}
+						else if (work_phases == 0x07)	//Fully connected, we can pass D and diff conns
+						{
+							work_phases |= 0x18;	//House?, D
+						}
+
+						//Apply the change to the FROM node
+						NR_busdata[temp_branch.from].phases &= work_phases;
+					}//End TO end is valid
+					else	//TO end not valid - hope we get hit by something else later
+					{
+						continue;
+					}
+				}//End removal - FROM end
+				else	//Restoration time
+				{
+					//Make sure our TO end is valid first - just in case
+					if (Alteration_Nodes[temp_branch.to] == 1)
+					{
+						//Now see if we can even proceed - if we are a fault blocked area, then go no lower
+						phase_restrictions = ~(NR_branchdata[NR_busdata[node_int].Link_Table[index]].faultphases & 0x07);	//Get unrestricted
+
+						phase_restrictions &= (NR_branchdata[NR_busdata[node_int].Link_Table[index]].origphases & 0x07);	//Mask this with what we used to be
+
+						if (phase_restrictions == 0x00)	//No phases are available below here, go to next
+						{
+							continue;
+						}
+						else	//At least one phase is valid, proceed
+						{
+							//Restore our phase portions - determine by our TO end and restrictions
+							work_phases = NR_busdata[temp_branch.to].phases & phase_restrictions;
+
+							if ((temp_branch.origphases & 0x80) == 0x80)	//See if we were split phase - if so and no phases are present, remove that too for good measure
+							{
+								if (work_phases != 0x00)
+									work_phases |= 0x80;	//Add in the split phase flag
+							}
+
+							//Restore components - USBs are typically node oriented, so they aren't explicitly included here
+							NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases |= work_phases;
+
+							//Now apply the phases on the TO end of this branch - first off, get base phases
+							work_phases = NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x07;
+
+							//See if the line is a SPCT or Triplex - if so, bring the flag in.  If not, clear it
+							if ((NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x80) == 0x80)
+							{
+								work_phases |= (NR_busdata[temp_branch.from].origphases & 0xE0);	//SP, House?, To SPCT - flagged on
+							}
+							else if (work_phases == 0x07)	//Fully connected, we can pass D and diff conns
+							{
+								work_phases |= (NR_busdata[temp_branch.from].origphases & 0x18);	//House?, D
+							}
+
+							//Apply the change to the TO node
+							NR_busdata[temp_branch.from].phases |= work_phases;
+						}
+					}//End TO end is valid
+					else	//TO end not valid - hope we get hit by something else later
+					{
+						continue;
+					}
+				}//End restoration - FROM end
+			}//End TO end
+
+			//See if we're a switch - if so, call the appropriate function
+			if (NR_branchdata[NR_busdata[node_int].Link_Table[index]].lnk_type == 2)
+			{
+				//Find this object
+				temp_obj = gl_get_object(NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+
+				//Make sure it worked
+				if (temp_obj == NULL)
+				{
+					GL_THROW("Failed to find switch object:%s for reliability manipulation",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					/*  TROUBLESHOOT
+					While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
+					Please try again.  If they error persists, please submit your code and a bug report to the trac website.
+					*/
+				}
+
+				//map the function
+				funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"reliability_operation"));
+
+				//make sure it worked
+				if (funadd==NULL)
+				{
+					GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					/*  TROUBLESHOOT
+					While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
+					was not located.  Ensure this object type supports special actions and try again.  If the problem persists, please submit a bug
+					report and your code to the trac website.
+					*/
+				}
+
+				//Call the update
+				temp_phases = (NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x07);
+				return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
+
+				if (return_val == 0)	//Failed :(
+				{
+					GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					/*  TROUBLESHOOT
+					While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
+					failed to execute properly.  If the problem persists, please submit a bug report and your code to the trac website.
+					*/
+				}
+			}
+			else if (NR_branchdata[NR_busdata[node_int].Link_Table[index]].lnk_type == 3)	//See if we're a fuse
+			{
+				//Find this object
+				temp_obj = gl_get_object(NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+
+				//Make sure it worked
+				if (temp_obj == NULL)
+				{
+					GL_THROW("Failed to find fuse object:%s for reliability manipulation",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					/*  TROUBLESHOOT
+					While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
+					Please try again.  If they error persists, please submit your code and a bug report to the trac website.
+					*/
+				}
+
+				//map the function
+				funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"reliability_operation"));
+
+				//make sure it worked
+				if (funadd==NULL)
+				{
+					GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					/*  TROUBLESHOOT
+					While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
+					was not located.  Ensure this object type supports special actions and try again.  If the problem persists, please submit a bug
+					report and your code to the trac website.
+					*/
+				}
+
+				//Call the update
+				temp_phases = (NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x07);
+				return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
+
+				if (return_val == 0)	//Failed :(
+				{
+					GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					/*  TROUBLESHOOT
+					While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
+					failed to execute properly.  If the problem persists, please submit a bug report and your code to the trac website.
+					*/
+				}
+			}//end fuse
+			else if (NR_branchdata[NR_busdata[node_int].Link_Table[index]].lnk_type == 6)	//Recloser
+			{
+				//Find this object
+				temp_obj = gl_get_object(NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+
+				//Make sure it worked
+				if (temp_obj == NULL)
+				{
+					GL_THROW("Failed to find recloser object:%s for reliability manipulation",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					/*  TROUBLESHOOT
+					While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
+					Please try again.  If they error persists, please submit your code and a bug report to the trac website.
+					*/
+				}
+
+				//map the function
+				funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"recloser_reliability_operation"));
+
+				//make sure it worked
+				if (funadd==NULL)
+				{
+					GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					//defined above
+				}
+
+				//Call the update
+				temp_phases = (NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x07);
+				return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
+
+				if (return_val == 0)	//Failed :(
+				{
+					GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					//Define above
+				}
+			}//end recloser
+			else if (NR_branchdata[NR_busdata[node_int].Link_Table[index]].lnk_type == 5)	//Sectionalizer
+			{
+				//Find this object
+				temp_obj = gl_get_object(NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+
+				//Make sure it worked
+				if (temp_obj == NULL)
+				{
+					GL_THROW("Failed to find sectionalizer object:%s for reliability manipulation",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					/*  TROUBLESHOOT
+					While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
+					Please try again.  If they error persists, please submit your code and a bug report to the trac website.
+					*/
+				}
+
+				//map the function
+				funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"sectionalizer_reliability_operation"));
+
+				//make sure it worked
+				if (funadd==NULL)
+				{
+					GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					//Defined above
+				}
+
+				//Call the update
+				temp_phases = (NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x07);
+				return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
+
+				if (return_val == 0)	//Failed :(
+				{
+					GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					//Defined above
+				}
+			}//end sectionalizer
+
+			//Flag us as handled
+			Alteration_Nodes[branch_val] = 1;
+
+			//Recursion!!
+			support_search_links(branch_val,node_start,impact_mode);
+		}//End both not handled (work to be done)
+	}//End link table loop
+}
+
+//Function to reset "touched" alteration variable
+void fault_check::reset_alterations_check(void)
+{
+	unsigned int index;
+
+	//Reset the node - just whether the algorithm has looked at it or not
+	for (index=0; index<NR_bus_count; index++)
+	{
+		Alteration_Nodes[index] = 0;	//Flag as untouched
+	}
+}
+
+//Function to progress downwards and flag momentary interruptions
+void fault_check::momentary_activation(int node_int)
+{
+	unsigned int index;
+	OBJECT *tmp_obj;
+	bool *momentary_flag;
+	PROPERTY *pval;
+
+	//See if we are a meter or triplex meter
+	tmp_obj = gl_get_object(NR_busdata[node_int].name);
+
+	//Make sure it worked
+	if (tmp_obj == NULL)
+	{
+		GL_THROW("Failed to map node:%s during momentary interruption!",NR_busdata[node_int].name);
+		/*  TROUBLESHOOT
+		While mapping a node object for the momentary fault inducing process, the node failed to be found.
+		Please try again and ensure the node exists.  If the error persists, please submit your code and a bug
+		report via the trac website.
+		*/
+	}
+
+	//See if we're a triplex meter or meter
+	if ((gl_object_isa(tmp_obj,"triplex_meter","powerflow")) || (gl_object_isa(tmp_obj,"meter","powerflow")))
+	{
+		//Find the momentary interruptions flag and set it!
+		pval = gl_get_property(tmp_obj,"customer_interrupted_secondary");
+
+		//Make sure it worked
+		if (pval == NULL)
+		{
+			GL_THROW("Failed to map momentary outage flag on node:%s",tmp_obj->name);
+			/*  TROUBLESHOOT
+			While attempting to map the momentary outage flag on a node, it failed to find said flag.
+			Please try again. If the error persists, please submit your code and a bug report via the
+			trac website.
+			*/
+		}
+
+		//Map it
+		momentary_flag = (bool*)GETADDR(tmp_obj,pval);
+
+		//Flag it
+		*momentary_flag = true;
+	}
+
+	//Loop through the link table
+	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)
+	{
+		//See if we're the from end of this link - if so, proceed
+		if (NR_branchdata[NR_busdata[node_int].Link_Table[index]].from == node_int)
+		{
+			//Recurse our way in!
+			momentary_activation(NR_branchdata[NR_busdata[node_int].Link_Table[index]].to);
+		}
+		//Defaulted else - must be the to end - we don't care
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: fault_check
 //////////////////////////////////////////////////////////////////////////
@@ -592,6 +1152,143 @@ EXPORT TIMESTAMP sync_fault_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int isa_fault_check(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,fault_check)->isa(classname);
+}
+
+//Function to remove/restore out of service items following a reliability fault
+EXPORT int powerflow_alterations(OBJECT *thisobj, int baselink, bool rest_mode)
+{
+	fault_check *thsfltchk = OBJECTDATA(thisobj,fault_check);
+
+	//Perform the removal
+	thsfltchk->support_check_alterations(baselink,rest_mode);
+
+	return 1;	
+}
+
+//Function to progress upstream from a sectionalizer and see if a recloser is present (and handle any future sectionalizers it encounters)
+EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
+{
+	double result_val;
+	unsigned int index;
+	int branch_val, node_val;
+	bool loop_complete, proper_exit;
+	double *rec_tries;
+	PROPERTY *Pval;
+	OBJECT *tmp_obj;
+	fault_check *fltyobj;
+
+	//Pull base branch
+	node_val = NR_branchdata[sectionalizer_number].from;
+
+	//Set flag
+	loop_complete = false;
+
+	//Big loop
+	while (loop_complete == false)
+	{
+		//set tracking flag
+		proper_exit = false;
+
+		//Progress upstream until a recloser, or the SWING is encountered
+		for (index=0; index<NR_busdata[node_val].Link_Table_Size; index++)	//parse through our connected link
+		{
+			//Pull the branch information
+			branch_val = NR_busdata[node_val].Link_Table[index];
+
+			//See if this node is a to - if so, proceed up.  If not, next search
+			if (NR_branchdata[branch_val].to == node_val)
+			{
+				//It is! - see if it is a recloser
+				if (NR_branchdata[branch_val].lnk_type == 6)
+				{
+					//Map the object
+					tmp_obj = gl_get_object(NR_branchdata[branch_val].name);
+
+					//Make sure it worked
+					if (tmp_obj == NULL)
+					{
+						GL_THROW("Failure to map recloser object %s during sectionalizer handling",NR_branchdata[branch_val].name);
+						/*  TROUBLESHOOT
+						While mapping a recloser as part of a sectionalizer's reliability function, said recloser failed to be
+						mapped correctly.  Please try again.  If the error persists, please submit your code and a bug report
+						via the trac website.
+						*/
+					}
+
+					//Increment its tries - map it first
+					Pval = gl_get_property(tmp_obj,"number_of_tries");
+
+					//Make sure it worked
+					if (Pval == NULL)
+					{
+						GL_THROW("Failed to map recloser:%s retry count!",NR_branchdata[branch_val].name);
+						/*  TROUBLESHOOT
+						While attempting to map a reclosers attempt count, an error was encountered.  Please try again.
+						If the error persists, please submit your code and a bug report via the trac website.
+						*/
+					}
+
+					//Map it
+					rec_tries = (double*)GETADDR(tmp_obj,Pval);
+
+					//Increment it
+					*rec_tries += 1;
+
+					//Store this as the return result
+					result_val = *rec_tries;
+
+					//Propogate downstream and momentary flag objects
+					//map the fault_check object - do as recursion and function is in space
+					fltyobj = OBJECTDATA(fault_check_object,fault_check);
+
+					//Call the function
+					fltyobj->momentary_activation(NR_branchdata[branch_val].to);
+					
+					//Flag a proper exit
+					proper_exit = true;
+
+					//Loop is complete
+					loop_complete = true;
+
+					//Out of here we go
+					break;
+				
+				}//Branch is a recloser
+				else	//Not a recloser - onwards and upwards
+				{
+					//Map our from node for the next search
+					node_val = NR_branchdata[branch_val].from;
+
+					//Make sure the from node isn't a SWING - if it is, we're done
+					if (NR_busdata[node_val].type == 2)
+					{
+						result_val = -1.0;		//Flag that a swing was found - failure :(
+						loop_complete = true;	//No more looping
+						proper_exit = true;		//Flag so don't get stuck
+						break;					//Out of the FOR we go
+					}
+					else	//Normal node
+					{
+						proper_exit = true;		//Flag proper exiting (not loop limit) so next can proceed
+						break;					//Pop out of this FOR loop and start the next
+					}
+				}//Branch isn't a recloser
+			}
+			else	//Not, so onward and upward!
+			{
+				continue;
+			}
+		}//end for loop
+		
+		//Generic check at end of FOR
+		if ((index>NR_busdata[node_val].Link_Table_Size) && (proper_exit==false))	//Full traversion - then failure
+		{
+			result_val = 0.0;		//Encode as a failure
+			loop_complete = true;	//Flag loop as over
+		}
+	}//End while
+
+	return result_val;
 }
 
 /**@}**/

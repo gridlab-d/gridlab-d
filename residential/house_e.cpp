@@ -732,6 +732,10 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"total_load",PADDR(total_load),
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
 			PT_double,"design_internal_gain_density[W/sf]",PADDR(design_internal_gain_density),PT_DESCRIPTION,"average density of heat generating devices in the house",
+			PT_timestamp,"hvac_last_on",PADDR(hvac_last_on),
+			PT_timestamp,"hvac_last_off",PADDR(hvac_last_off),
+			PT_double,"hvac_period_length",PADDR(hvac_period_length),
+			PT_double,"hvac_duty_cycle",PADDR(hvac_duty_cycle),
 #ifdef _DEBUG
 			// these are added in the debugging version so we can spy on ETP
 			PT_double,"a",PADDR(a),
@@ -2332,6 +2336,7 @@ void house_e::update_Tevent()
 TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 {
 	double terr = dTair/3600; // this is the time-error of 1 second uncertainty
+	bool turned_on, turned_off;
 
 	// only update the T<mode>{On,Off} is the thermostat is full
 	if (thermostat_control==TC_FULL)
@@ -2428,6 +2433,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				system_mode = SM_OFF;
 				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
+				turned_off = true;
 			}
 			break;
 		case SM_AUX:
@@ -2435,6 +2441,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				system_mode = SM_OFF;
 				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
+				turned_off = true;
 			}
 			break;
 		case SM_COOL:
@@ -2442,6 +2449,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				system_mode = SM_OFF;
 				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
+				turned_off = true;
 			}
 			break;
 		case SM_OFF:
@@ -2452,6 +2460,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				last_system_mode = system_mode = SM_COOL;
 				power_state = PS_ON;
 				thermostat_last_cycle_time = t1;
+				turned_on = true;
 			}
 			else if(Tair < TheatOn - terr/2)
 			{
@@ -2464,18 +2473,37 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 					last_system_mode = system_mode = SM_AUX;
 					power_state = PS_ON;
 					thermostat_last_cycle_time = t1;
+					turned_on = true;
 				}
 				else
 				{
 					last_system_mode = system_mode = SM_HEAT;
 					power_state = PS_ON;
 					thermostat_last_cycle_time = t1;
+					turned_on = true;
 				}
 			}
 			break;
 		}
 	}
 	
+	if(turned_on){
+		if(hvac_last_off != 0){
+			hvac_period_off = (double)(t1 - hvac_last_off)/60.0;
+		}
+		hvac_last_on = t1;
+	}
+	if(turned_off){
+		if(hvac_last_on != 0){
+			hvac_period_on = (double)(t1 - hvac_last_on)/60.0;
+		}
+		hvac_last_off = t1;
+	}
+	if(hvac_period_on != 0.0 && hvac_period_off != 0){
+		hvac_period_length = hvac_period_on + hvac_period_off;
+		hvac_duty_cycle = (double)hvac_period_on / (double)hvac_period_length;
+	}
+
 	if ( system_mode == SM_HEAT && (heating_system_type == HT_HEAT_PUMP || heating_system_type == HT_RESISTANCE || heating_system_type == HT_GAS) )
 	{
 		is_AUX_on = is_COOL_on = 0;

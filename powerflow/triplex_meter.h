@@ -20,6 +20,7 @@ public:
 	double measured_real_power; //< metered real power
 	double measured_reactive_power; //< metered reactive power
 	bool tpmeter_interrupted;		///< Reliability flag - goes active if the customer is in an "interrupted" state
+	bool tpmeter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in a "secondary interrupted" state - i.e., momentary
 	TIMESTAMP next_time;
 	TIMESTAMP dt;
 	TIMESTAMP last_t;
@@ -69,6 +70,7 @@ public:
 	inline triplex_meter(CLASS *cl=oclass):triplex_node(cl){};
 	int create(void);
 	int init(OBJECT *parent);
+	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	int isa(char *classname);
 };

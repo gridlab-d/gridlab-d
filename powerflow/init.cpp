@@ -35,6 +35,10 @@
 #include "motor.h"
 #include "billdump.h"
 #include "power_metrics.h"
+#include "currdump.h"
+#include "recloser.h"
+#include "sectionalizer.h"
+#include "emissions.h"
 
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
@@ -105,6 +109,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new motor(module);
 	new billdump(module);
 	new power_metrics(module);
+	new currdump(module);
+	new recloser(module);
+	new sectionalizer(module);
+	new emissions(module);
 
 	/* always return the first class registered */
 	return node::oclass;

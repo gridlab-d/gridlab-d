@@ -166,6 +166,13 @@ public:
 	double last_heating_load; ///< stores the previous heater load for use in the controller
 	double last_cooling_load; ///< stores the previous A/C load for use in the controller
 	
+	/* cycle tracking values */
+	TIMESTAMP hvac_last_on;
+	TIMESTAMP hvac_last_off;
+	double hvac_period_on;
+	double hvac_period_off;
+	double hvac_period_length; // minutes
+	double hvac_duty_cycle;
 
 
 	typedef enum {

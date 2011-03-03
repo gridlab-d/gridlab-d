@@ -53,6 +53,7 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",
 			PT_double,"breaker_val[A]",PADDR(breaker_val), PT_DESCRIPTION, "Amperage of connected breaker",
 			PT_complex,"actual_power[kVA]",PADDR(actual_power),PT_DESCRIPTION,"variable to pull actual load as function of voltage",
+			PT_double,"multipler",PADDR(multiplier),PT_DESCRIPTION,"this variable is used to modify the base power as a function of multiplier x base_power",
 
 			// Variables for demand response mode
 			PT_bool,"demand_response_mode",PADDR(demand_response_mode), PT_DESCRIPTION, "Activates equilibrium dynamic representation of demand response",
@@ -68,11 +69,16 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 			//PT_double,"total_off_time[h]",PADDR(toff),PT_DESCRIPTION, "total off time of device",
 			//PT_double,"total_on_time[h]",PADDR(ton),PT_DESCRIPTION, "total on time of device",
 			PT_int16,"temperature",PADDR(x),PT_DESCRIPTION, "temperature of the device's controlled media (eg air temp or water temp)",
-			PT_double,"duty_cycle",PADDR(phi),PT_DESCRIPTION, "duty cycle of the device",
+			PT_double,"phi",PADDR(phi),PT_DESCRIPTION, "duty cycle of the device",
 			//PT_double,"diversity_of_population",PADDR(PHI),PT_DESCRIPTION, "diversity of a population of devices",
 			PT_double,"demand_rate[1/h]",PADDR(eta),PT_DESCRIPTION, "consumer demand rate that prematurely turns on a device or population",
 			//PT_double,"effective_rate[K/h]",PADDR(rho),PT_DESCRIPTION, "effect rate at which devices heats up or cools down under consumer demand",
 			PT_double,"nominal_power",PADDR(nominal_power),PT_DESCRIPTION, "the rated amount of power demanded by devices that are on",
+
+			//Variables for creating a duty cycle
+			PT_double,"duty_cycle[pu]",PADDR(duty_cycle),PT_DESCRIPTION, "fraction of time in the on state",
+			PT_double,"period[h]",PADDR(period),PT_DESCRIPTION, "time interval to apply duty cycle",
+			PT_double,"phase[pu]",PADDR(phase),PT_DESCRIPTION, "initial phase of load; duty will be assumed to occur at beginning of period",
 			NULL)<1) 
 
 			GL_THROW("unable to publish properties in %s",__FILE__);
@@ -97,11 +103,16 @@ int ZIPload::create()
 	load.current_fraction = load.impedance_fraction = 0.0;
 	load.config = 0x0;	//110 by default
 	breaker_val = 1000.0;	//Obscene value so it never trips
+	multiplier = 1;
 
 	demand_response_mode = false;
 	ron = roff = -1;
 	phi = eta = 0.2;	
 	next_time = 0;
+
+	duty_cycle = 0;
+	period = 0;
+	phase = 0;
 
 	//Default values of other properties
 	power_pf = current_pf = impedance_pf = 1.0;
@@ -250,6 +261,37 @@ int ZIPload::init(OBJECT *parent)
 		
 	}
 
+	if (duty_cycle > 1 || duty_cycle < 0)
+	{
+		GL_THROW("Value of duty cycle is set to a value outside of 0-1.");
+		/*  TROUBLESHOOT
+		By definition, a duty cycle must be between, and including, 0 and 1.  Zero will turn the
+		duty cycle function OFF.  Please specify a duty_cycle value between 0 and 1.
+		*/
+	}
+
+	// We're using a duty cycle mode
+	if (duty_cycle != 0.0)
+	{
+		if (period <= 0)
+		{
+			GL_THROW("Period is less than or equal to zero.");
+			/*  TROUBLESHOOT
+			When using duty cycle mode, the period must be a positive value.
+			*/
+		}
+		if (phase < 0 || phase > 1)
+		{
+			GL_THROW("Phase is not between zero and one.");
+			/*  TROUBLESHOOT
+			When using duty cycle mode, the phase must be specified as a value between 0 and 1.  This
+			will set the initial phase as a percentage of the period.  The "duty" will assume to be
+			applied at the beginning of each period.  Randomizing this input value will prevent syncing of
+			objects.
+			*/
+		}
+	}
+
 	if (is_240)	//See if the 220/240 flag needs to be set
 	{
 		load.config |= EUC_IS220;
@@ -328,6 +370,37 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		next_time = t1 + dt;
 	}
 
+	// We're in duty cycle mode
+	if (duty_cycle != 0.0)
+	{
+		if (t0 != 0) // after first time step
+		{
+			double phase_shift = (t1 - last_time) / (period * 3600);
+			phase = phase + phase_shift;
+			last_time = t1;
+		}
+		else
+			last_time = t1;
+
+		if (phase >= 1)
+			phase = 0.0;
+
+		// Track the time of 2 transistions
+		if (t1 >= next_time)
+		{
+			if (duty_cycle > phase) // OFF->ON, a bit of an offset for rounding
+			{
+				multiplier = 1;
+				next_time = t1 + (period * 3600) * (duty_cycle - phase) + 1;
+			}
+			else					// ON->OFF
+			{
+				multiplier = 0;
+				next_time = t1 + (period * 3600) * (1 - phase) + 1;
+			}
+		}
+	}
+
 	if (pCircuit!=NULL){
 		if (is_240)
 		{
@@ -344,7 +417,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (pCircuit->status==BRK_CLOSED) 
 	{
 		//All values placed as kW/kVAr values - to be consistent with other loads
-		double demand_power = base_power;
+		double demand_power = multiplier * base_power;
 		
 		if (demand_response_mode == true)
 			demand_power = nominal_power;

@@ -34,8 +34,10 @@ overhead_line::overhead_line(MODULE *mod) : line(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
 			NULL) < 1) GL_THROW("unable to publish overhead_line properties in %s",__FILE__);
-		gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ohline);
-		gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ohline);
+			if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ohline)==NULL)
+				GL_THROW("Unable to publish fault creation function");
+			if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ohline)==NULL)
+				GL_THROW("Unable to publish fault restoration function");
     }
 }
 
@@ -438,7 +440,7 @@ EXPORT int recalc_overhead_line(OBJECT *obj)
 	OBJECTDATA(obj,overhead_line)->recalc();
 	return 1;
 }
-EXPORT int create_fault_ohline(OBJECT *thisobj, char *fault_type, int *implemented_fault)
+EXPORT int create_fault_ohline(OBJECT *thisobj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
 {
 	int retval;
 
@@ -446,11 +448,11 @@ EXPORT int create_fault_ohline(OBJECT *thisobj, char *fault_type, int *implement
 	overhead_line *thisline = OBJECTDATA(thisobj,overhead_line);
 
 	//Try to fault up
-	retval = thisline->link_fault_on(fault_type, implemented_fault);
+	retval = thisline->link_fault_on(fault_type, implemented_fault, repair_time, Extra_Data);
 
 	return retval;
 }
-EXPORT int fix_fault_ohline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
+EXPORT int fix_fault_ohline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name, void* Extra_Data)
 {
 	int retval;
 
@@ -458,7 +460,7 @@ EXPORT int fix_fault_ohline(OBJECT *thisobj, int *implemented_fault, char *imp_f
 	overhead_line *thisline = OBJECTDATA(thisobj,overhead_line);
 
 	//Clear the fault
-	retval = thisline->link_fault_off(implemented_fault, imp_fault_name);
+	retval = thisline->link_fault_off(implemented_fault, imp_fault_name, Extra_Data);
 	
 	//Clear the fault type
 	*implemented_fault = -1;

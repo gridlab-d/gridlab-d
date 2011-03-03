@@ -507,6 +507,8 @@ STATUS exec_start(void)
 	//sjin: add some variables for pthread implementation
 	LISTITEM *ptr;
 	int iPtr, incr;
+	struct arg_data *arg_data_array;
+	OBJECT *obj;
 
 	/* check for a model */
 	if (object_get_count()==0)
@@ -566,6 +568,9 @@ STATUS exec_start(void)
 			global_threadcount = processor_count();
 		output_verbose("detected %d processor(s)", processor_count());
 		output_verbose("using %d helper thread(s)", global_threadcount);
+		//sjin: allocate arg_data_array to store pthreads creation argument
+		arg_data_array = (struct arg_data *) malloc(sizeof(struct arg_data) 
+						 * global_threadcount);
 
 		/* allocate thread synchronization data */
 		thread_data = (struct thread_data *) malloc(sizeof(struct thread_data) +
@@ -620,6 +625,7 @@ STATUS exec_start(void)
 		while ( running = (sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0),
 			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 
 		{
+			//printf("Iteration increased!\n\n");
 			/* set time context */
 			output_set_time_context(sync.step_to);
 
@@ -696,7 +702,15 @@ STATUS exec_start(void)
 						//sjin: remove threadpool
 						//tp_exec(threadpool, ranks[pass]->ordinal[i]);
 
-						//sjin: implement pthreads
+						//sjin: if global_threadcount == 1, no pthread multhreading
+						if (global_threadcount == 1) {
+							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr=ptr->next) {
+								OBJECT *obj = ptr->data;
+								ss_do_object_sync(0, ptr->data);					
+								//printf("%d %s %d\n", obj->id, obj->name, obj->rank);
+							}
+							//printf("\n");
+						} else { //sjin: implement pthreads
 						incr = (int)ceil((float) ranks[pass]->ordinal[i]->size / global_threadcount);
 						//printf("pass %d, incr = %d, size = %d\n", pass, incr, ranks[pass]->ordinal[i]->size);
 						//thread_id = (pthread_t *) malloc(global_threadcount * sizeof(pthread_t));
@@ -711,7 +725,11 @@ STATUS exec_start(void)
 								arg_data_array[iPtr].thread = iPtr;
 								arg_data_array[iPtr].item = ptr;
 								arg_data_array[iPtr].incr = 1;
+									//printf("<=1: size = %d, iPtr = %d, incr = %d, thread id = %d\n", ranks[pass]->ordinal[i]->size, iPtr, incr, &thread_id[iPtr]);
 								pthread_create(&thread_id[iPtr], NULL, ss_do_object_sync_list, (void *) &arg_data_array[iPtr]);
+									//pthread_join(thread_id[iPtr], NULL);
+									//pthread_cancel(thread_id[iPtr]);
+									//printf("<=1:\tthread_id[%d].p = %p\t.x = %lu\n", iPtr, (void *) thread_id[iPtr].p, (unsigned long) thread_id[iPtr].x);
 							}
 							for (j = 0; j < iPtr+1; j++) 
 								pthread_join(thread_id[j], NULL);
@@ -776,7 +794,7 @@ STATUS exec_start(void)
 						else
 							for (j = 0; j < global_threadcount; j++) 
 								pthread_join(thread_id[j], NULL);*/
-						//sjin: end of implementing pthreads
+						} //sjin: end of implementing pthreads
 
 						for (j = 0; j < thread_data->count; j++) {
 							if (thread_data->data[j].status == FAILED) {

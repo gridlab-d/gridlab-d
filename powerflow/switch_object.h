@@ -34,18 +34,32 @@ public:
 
 	void set_switch(bool desired_status);
 	void set_switch_full(char desired_status_A, char desired_status_B, char desired_status_C);	//Used to set individual phases - 0 = open, 1 = closed, 2 = don't care (retain current)
-
-	TIMESTAMP prev_SW_time;	//Used to track switch opens/closes in NR.  Zeros end voltage on first run for other
+	void set_switch_full_reliability(unsigned char desired_status);
+	void set_switch_faulted_phases(unsigned char desired_status);
+	void switch_sync_function(void);			//Functionalized since it exists in two spots - no sense having to update two pieces of code
+	unsigned char switch_expected_sync_function(void);	//Function to determined expected results of sync - used for reliability
+	OBJECT **get_object(OBJECT *obj, char *name);	//Function to pull object property - reliability use
 
 	SWITCHBANK switch_banked_mode;
+	TIMESTAMP prev_SW_time;	//Used to track switch opens/closes in NR.  Zeros end voltage on first run for other
 
 	unsigned char phased_switch_status;	//Used to track individual phase switch position - mainly for reliability - use LSB - x0_XABC
+	unsigned char faulted_switch_phases;	//Used for phase faulting tracking - mainly for reliabiilty - replicated NR functionality so FBS can use it later
+	bool prefault_banked;				//Flag used to indicate if a switch was in banked mode pre-fault.  Needs to be swapped out to properly work
 	SWITCHSTATE phase_A_state;
 	SWITCHSTATE phase_B_state;
 	SWITCHSTATE phase_C_state;
+private:
+	OBJECT **eventgen_obj;					//Reliability variable - link to eventgen object
+	FUNCTIONADDR event_schedule;			//Reliability variable - links to "add_event" function in eventgen
+	bool event_schedule_map_attempt;		//Flag to see if we've tried to map the event_schedule variable, or not
 };
 
 EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool state);
+EXPORT int reliability_operation(OBJECT *thisobj, unsigned char desired_phases);
+EXPORT int create_fault_switch(OBJECT *thisobj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);
+EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name, void* Extra_Data);
+EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phases);
 
 #endif // SWITCH_OBJECT_H
 /**@}**/

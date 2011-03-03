@@ -20,6 +20,6 @@ public:
 private:
 	void test_phases(line_configuration *config, const char ph);
 };
-EXPORT int create_fault_ohline(OBJECT *thisobj, char *fault_type, int *implemented_fault);
-EXPORT int fix_fault_ohline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
+EXPORT int create_fault_ohline(OBJECT *thisobj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);
+EXPORT int fix_fault_ohline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name, void *Extra_Data);
 #endif // _OVERHEADLINE_H

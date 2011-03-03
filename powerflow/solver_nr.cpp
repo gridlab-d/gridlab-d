@@ -21,6 +21,7 @@ unsigned int size_offdiag_PQ;
 unsigned int size_diag_fixed;
 unsigned int total_variables;	//Total number of phases to be calculating (size of matrices)
 unsigned int max_size_offdiag_PQ, max_size_diag_fixed, max_total_variables, max_size_diag_update;	//Variables used to determine realloaction state
+unsigned int prev_m;	//Track size of matrix put into superLU form - may not need a realloc, but needs to be updated
 bool NR_realloc_needed;
 bool newiter;
 Bus_admit *BA_diag; /// BA_diag store the diagonal elements of the bus admittance matrix, the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
@@ -277,6 +278,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					else	//We must be a single or two-phase line - always populate the upper left portion of matrix (easier for later)
 					{
 						switch(bus[indexer].phases & 0x07) {
+							case 0x00:	//No phases (we've been faulted out
+								{
+									break;	//Just get us outta here
+								}
 							case 0x01:	//Only C
 								{
 									if ((branch[jindexer].phases & 0x01) == 0x01)	//Phase C valid on branch
@@ -2977,6 +2982,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			B_LU.Mtype = SLU_GE;
 			B_LU.nrow = m;
 			B_LU.ncol = 1;
+
+			//Update tracking variable
+			prev_m = m;
 		}
 		else if (NR_realloc_needed)	//Something changed, we'll just destroy everything and start over
 		{
@@ -3028,6 +3036,20 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			B_LU.Mtype = SLU_GE;
 			B_LU.nrow = m;
 			B_LU.ncol = 1;
+
+			//Update tracking variable
+			prev_m = m;
+		}
+		else if (prev_m != m)	//Non-reallocing size change occurred
+		{
+			//Update relevant portions
+			A_LU.nrow = n;
+			A_LU.ncol = m;
+
+			B_LU.nrow = m;
+
+			//Update tracking variable
+			prev_m = m;
 		}
 
 #ifndef MT

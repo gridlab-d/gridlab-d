@@ -722,7 +722,9 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		if ((prev_tap[0] != tap[0]) || (prev_tap[1] != tap[1]) || (prev_tap[2] != tap[2]))	//Change has occurred
 		{
 			//Flag an update
+			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
 			NR_admit_change = true;
+			UNLOCK_OBJECT(NR_swing_bus);	//Unlock
 
 			//Update our previous tap positions
 			prev_tap[0] = tap[0];

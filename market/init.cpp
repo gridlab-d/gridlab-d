@@ -13,6 +13,8 @@
 #include "stubauction.h"
 #include "passive_controller.h"
 #include "double_controller.h"
+#include "stub_bidder.h"
+#include "generator_controller.h"
 
 double bid_offset = 0.0001;
 
@@ -31,6 +33,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new stubauction(module);
 	new passive_controller(module);
 	new double_controller(module);
+	new stub_bidder(module);
+	new generator_controller(module);
 
 	/*** DO NOT EDIT NEXT LINE ***/
 	//NEWCLASS

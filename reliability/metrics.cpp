@@ -4,37 +4,7 @@
 	@class metrics Metrics analysis
 	@ingroup reliability
 
-	The metric analysis object reports reliability metrics for a system by observing the
-	duration and number of conditions when meter objects are not normal.  The
-	following metrics are calculated annual and reported to the \p report_file
-
-	-# \e SAIFI (System average interrupts frequency index) indicates how often 
-	   the average customer experiences a system interruption over a predefined period
-	   of time.  This is calculated using the formula
-
-	   \f[ SAIFI = \frac{\Sigma N_{customer\_interruptions}}{N_{customers}} \f]
-
-    -# \e SAIDI (System average interrupts duration index) indicates the total
-		duration of interrupt for the average customer during a predefined period of
-		time.  This is calculated using the formula
-
-	   \f[ SAIDI = \frac{\Sigma T_{customer\_interruptions}}{N_{customers}} \f]
-
-    -# \e CAIDI (Customer average interrupt duration index) represents the average
-		time required to restore service.  This is calculated using the formula
-
-		\f[ CAIDI = \frac{\Sigma T_{customer\_interruptions}}{N_{customers\_interrupted}} \f]
-    
-	-# \e CAIFI (Customer average interruption frequency index) gives the average freqeuncy
-		of sustained interruptions.  The customer is counted once, regardless of the number
-		of times interrupted.  This is calculated using the formula
-
-		\f[ CAIFI = \frac{\Sigma N_{customers\_interrupted}}{N_{customers\_interrupted}} \f]
-
-	See <b>IEEE Std 1366-2003</b> <i>IEEE Guide for Electric Power Distribution Reliability Indices</i>
-	for more information on how to compute distribution system reliability indices.
-
- **/
+**/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -66,6 +36,7 @@ metrics::metrics(MODULE *module)
 			PT_object, "module_metrics_object", PADDR(module_metrics_obj),
 			PT_char1024, "metrics_of_interest", PADDR(metrics_oi),
 			PT_double, "metric_interval[s]", PADDR(metric_interval_dbl),
+			PT_double, "report_interval[s]", PADDR(report_interval_dbl),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -77,12 +48,17 @@ int metrics::create(void)
 	module_metrics_obj = NULL;
 	metrics_oi[0] = '\0';
 	metric_interval_dbl = 0.0;
+	report_interval_dbl = 31536000.0;	//Defaults to a year
 
 	//Internal variables
 	num_indices = 0;
 	CalcIndices = NULL;
 	next_metric_interval = 0;
+	next_report_interval = 0;
+	next_annual_interval = 0;
+
 	metric_interval = 0;
+	report_interval = 0;
 	CustomerCount = 0;
 	Customers = NULL;
 	curr_time = TS_NEVER;	//Flagging value
@@ -93,6 +69,10 @@ int metrics::create(void)
 	reset_interval_func = NULL;
 	reset_annual_func = NULL;
 	compute_metrics = NULL;
+
+	secondary_interruptions_count = false;	//By default, we don't look for the secondary interruptions flag
+
+	Extra_Data = NULL;	//Start "extra" variable as null
 	
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -101,14 +81,16 @@ int metrics::create(void)
 int metrics::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
-	int index, indexa, returnval;
+	int index, indexa, indexb, returnval;
 	char1024 work_metrics;
 	char *startVal, *endVal, *workVal;
 	char1024 workbuffer;
+	char256 metricbuffer;
 	FILE *FPVal;
 	FINDLIST *CandidateObjs;
 	OBJECT *temp_obj;
 	bool *temp_bool;
+	FUNCTIONADDR funadd = NULL;
 
 	//Ensure our "module metrics" object is populated
 	if (module_metrics_obj == NULL)
@@ -119,6 +101,29 @@ int metrics::init(OBJECT *parent)
 		metrics calculator linked.  If this object is missing, metrics has no idea
 		what to calculate and will not proceed.
 		*/
+	}
+
+	//It's not null, map up the init function and call it (this must exist, even if it does nothing)
+	funadd = (FUNCTIONADDR)(gl_get_function(module_metrics_obj,"init_reliability"));
+					
+	//Make sure it was found
+	if (funadd == NULL)
+	{
+		GL_THROW("Unable to map reliability init function on %s in %s",module_metrics_obj->name,hdr->name);
+		/*  TROUBLESHOOT
+		While attempting to initialize the reliability module in the "module of interest" metrics device,
+		a error was encountered.  Ensure this object fully supports reliability and try again.  If the bug
+		persists, please submit your code and a bug report to the trac website.
+		*/
+	}
+
+	Extra_Data = ((void *(*)(OBJECT *, OBJECT *))(*funadd))(module_metrics_obj,hdr);
+
+	//Make sure it worked
+	if (Extra_Data==NULL)
+	{
+		GL_THROW("Unable to map reliability init function on %s in %s",module_metrics_obj->name,hdr->name);
+		//defined above
 	}
 
 	//Figure out how many indices we should be finding
@@ -213,10 +218,16 @@ int metrics::init(OBJECT *parent)
 			//Copy the value in
 			CalcIndices[index].MetricName[indexa] = *workVal;
 
+			//Copy into secondary
+			metricbuffer[indexa] = *workVal;
+
 			//Increment pointers
 			indexa++;
 			workVal++;
 		}
+
+		//apply the "_int" portion for the interval search
+		indexb = indexa-1;
 
 		//Now update pointers appropriately and proceed
 		endVal++;
@@ -234,6 +245,21 @@ int metrics::init(OBJECT *parent)
 			name and ensure the metric is being published in the module metrics object and try again.  If the error persists,
 			please submit your code and a bug report to the trac website.
 			*/
+		}
+
+		//Get the interval metric - if it exists - and there is room
+		if ((indexb+4) <= 256)
+		{
+			metricbuffer[indexb] = '_';
+			metricbuffer[(indexb+1)] = 'i';
+			metricbuffer[(indexb+2)] = 'n';
+			metricbuffer[(indexb+3)] = 't';
+			metricbuffer[(indexb+4)] = '\0';
+
+			//Try to map it
+			CalcIndices[index].MetricLocInterval = get_metric(module_metrics_obj,metricbuffer);
+
+			//No NULL check - if it wasn't found, we won't deal with it
 		}
 	}//end metric traversion
 	
@@ -303,6 +329,7 @@ int metrics::init(OBJECT *parent)
 
 	//Convert our calculation interval to a timestamp
 	metric_interval = (TIMESTAMP)metric_interval_dbl;
+	report_interval = (TIMESTAMP)report_interval_dbl;
 
 	//See if it is a year - flag appropriately
 	if (metric_interval == 31536000)
@@ -407,6 +434,53 @@ int metrics::init(OBJECT *parent)
 		//Write this value in
 		Customers[index].CustInterrupted = temp_bool;
 
+		if (index == 0)	//First customer, handle slightly different
+		{
+			//Populate the secondary index - needs to exist, even if never used
+			//Try to find our secondary "outage" indicator and map its address
+			temp_bool = get_outage_flag(temp_obj, "customer_interrupted_secondary");
+
+			//make sure it found it
+			if (temp_bool == NULL)	//Not found, assume no one else wants one
+			{
+				gl_warning("Unable to find secondary interruption flag, no secondary interruptions recorded in metrics:%s",hdr->name);
+				/*  TROUBLESHOOT
+				While attempting to link to the 'secondary customer interrupted' flag, it was not found.  THe object may not support
+				"secondary interruption counts" and this message is valid.  If a secondary count was desired, ensure the object
+				supports being polled by reliability as a customer (customer_interrupted_secondary exists as a published property) and
+				try again.  If the error persists, please submit your code and a bug report via the trac website.
+				*/
+			}
+			else	//One found, assume all want one now
+			{
+				secondary_interruptions_count = true;
+				
+				//Write this value in
+				Customers[index].CustInterrupted_Secondary = temp_bool;
+			}
+		}
+		else if (secondary_interruptions_count == true)	//Decided we want it
+		{
+			//Populate the secondary index - needs to exist, even if never used
+			//Try to find our secondary "outage" indicator and map its address
+			temp_bool = get_outage_flag(temp_obj, "customer_interrupted_secondary");
+
+			//make sure it found it
+			if (temp_bool == NULL)
+			{
+				GL_THROW("Unable to find secondary interruption flag for customer object %s in metrics:%s",temp_obj->name,hdr->name);
+				/*  TROUBLESHOOT
+				While attempting to link to the 'secondary customer interrupted' flag, an error occurred.  Please ensure the object
+				supports being polled by reliability as a customer (customer_interrupted_secondary exists as a published property) and
+				try again.  If the error persists, please submit your code and a bug report via the trac website.
+				*/
+			}
+
+			//Write this value in
+			Customers[index].CustInterrupted_Secondary = temp_bool;
+		}
+		//Defaulted else - unwanted
+
 	}//end population loop
 
 	//Free up list
@@ -414,6 +488,32 @@ int metrics::init(OBJECT *parent)
 
 	//Write the customer count and header information to the file we have going
 	fprintf(FPVal,"Number of customers = %d\n\n",CustomerCount);
+
+	//See if the particular metrics object has any "comments" to add to the file header (units, notes, etc.)
+	funadd = NULL;	//Reset function pointer - just in case
+
+	//Map up the "extra print" function - if it isn't there, well nothing is done
+	funadd = (FUNCTIONADDR)(gl_get_function(module_metrics_obj,"logfile_extra"));
+
+	//See if it was found
+	if (funadd != NULL)
+	{
+		//Do the extra printing
+		returnval = ((int (*)(OBJECT *, char *))(*funadd))(module_metrics_obj,workbuffer);
+
+		//Make sure it worked
+		if (returnval==0)
+		{
+			GL_THROW("Failed to write extra header material for %s in %s",module_metrics_obj->name,hdr->name);
+			/*  TROUBLESHOOT
+			While attempting to write the extra material into the file header, an error occurred.  Please try again.
+			If the error persists, please submit your code and a bug report via the trac website.
+			*/
+		}
+
+		//Print it out
+		fprintf(FPVal,"%s",workbuffer);
+	}
 
 	//Close the file handle
 	fclose(FPVal);
@@ -425,15 +525,24 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	DATETIME dt;
 	int returnval;
+	bool metrics_written;
 	OBJECT *hdr = OBJECTHDR(this);
-	int valid = gl_localtime(t1, &dt);
 	FILE *FPVal;
 
 	//Initialization
 	if (curr_time == TS_NEVER)
 	{
 		//Update time value trackers
-		next_metric_interval = t1 + metric_interval;
+		if (metric_interval == 0)	//No metric update interval - ensure never goes off
+		{
+			next_metric_interval = TS_NEVER;
+		}
+		else	//OK, proceed
+		{
+			next_metric_interval = t1 + metric_interval;
+		}
+
+		next_report_interval = t1 + report_interval;
 		next_annual_interval = t1 + 31536000;	//t1 + 365 days of seconds
 
 		//Outputs in CSV format - solves issue of column alignment - assuming we want event log
@@ -447,7 +556,16 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 			//Write header stuffs
 			fprintf(FPVal,"Events for year starting at %04d-%02d-%02d %02d:%02d:%02d\n",dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second);
-			fprintf(FPVal,"Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,Fault type,Number customers affected\n");
+
+			//Determine which header to write
+			if (secondary_interruptions_count == true)
+			{
+				fprintf(FPVal,"Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,Desired Fault type,Implemented Fault Type,Number customers affected,Secondary number of customers affected\n");
+			}
+			else //Nope
+			{
+				fprintf(FPVal,"Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,Desired Fault type,Implemented Fault Type,Number customers affected\n");
+			}
 
 			//Close the file handle
 			fclose(FPVal);
@@ -460,9 +578,28 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	//Only worry about checks once per timestep
 	if (curr_time != t0)
 	{
+		//Reset temp flag
+		metrics_written = false;
+
+		if (t0 >= next_report_interval)
+		{
+			//Write the output metric values
+			write_metrics();
+
+			//Update variable
+			metrics_written = true;
+
+			//Update the interval
+			next_report_interval = t0 + report_interval;
+		}
+
 		//See if it is time to write an update
 		if (t0 >= next_metric_interval)
 		{
+			//See if the metrics were written - if not, dumb them again for posterity
+			if (metrics_written == false)
+				write_metrics();
+
 			//Update the interval
 			next_metric_interval = t0 + metric_interval;
 
@@ -498,6 +635,11 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		//See if we've exceeded a year
 		if (t0 >= next_annual_interval)
 		{
+			//See if we need to write the file - if "metric_interval" just went off, no sense writing the same thing again
+			if (metrics_written == false)
+				write_metrics();
+
+			//Update interval
 			next_annual_interval = t0 + 31536000;	//t0 + 365 days of seconds
 
 			//Reset the stats
@@ -535,13 +677,23 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	//See who to return
 	if (next_metric_interval < next_annual_interval)
-		return -next_metric_interval;
+	{
+		if (next_metric_interval < next_report_interval)
+			return -next_metric_interval;
+		else
+			return -next_report_interval;
+	}
 	else
-		return -next_annual_interval;
+	{
+		if (next_annual_interval < next_report_interval)
+			return -next_annual_interval;
+		else
+			return -next_report_interval;
+	}
 }
 
-//Perform post-event analysis (update computations, write event file if necessary)
-void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj, TIMESTAMP event_start_time, TIMESTAMP event_end_time, char *fault_type, int number_customers_int)
+//Perform post-event analysis (update computations, write event file if necessary) - no secondary count
+void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj, TIMESTAMP event_start_time, TIMESTAMP event_end_time, char *fault_type, char *impl_fault, int number_customers_int)
 {
 	DATETIME start_dt, end_dt;
 	TIMESTAMP outage_length;
@@ -581,7 +733,55 @@ void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj, TIMESTAMP event_
 		FPVal = fopen(report_file,"at");
 
 		//Print the details out
-		fprintf(FPVal,"%d,%d,%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%s,%s,%s,%s,%d\n",annual_interval_event_count,metric_interval_event_count,start_dt.year,start_dt.month,start_dt.day,start_dt.hour,start_dt.minute,start_dt.second,end_dt.year,end_dt.month,end_dt.day,end_dt.hour,end_dt.minute,end_dt.second,fault_obj->oclass->name,fault_obj->name,hdr->name,fault_type,number_customers_int);
+		fprintf(FPVal,"%d,%d,%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%s,%s,%s,%s,%s,%d\n",annual_interval_event_count,metric_interval_event_count,start_dt.year,start_dt.month,start_dt.day,start_dt.hour,start_dt.minute,start_dt.second,end_dt.year,end_dt.month,end_dt.day,end_dt.hour,end_dt.minute,end_dt.second,fault_obj->oclass->name,fault_obj->name,event_obj->name,fault_type,impl_fault,number_customers_int);
+
+		//Close the file
+		fclose(FPVal);
+	}
+}
+
+//Perform post-event analysis (update computations, write event file if necessary) - assumes secondary count wanted
+void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj, TIMESTAMP event_start_time, TIMESTAMP event_end_time, char *fault_type, char *impl_fault, int number_customers_int, int number_customers_int_secondary)
+{
+	DATETIME start_dt, end_dt;
+	TIMESTAMP outage_length;
+	OBJECT *hdr = OBJECTHDR(this);
+	int returnval;
+	FILE *FPVal;
+
+	//Determine the actual outage length (may be off due to iterations and such)
+	outage_length = event_end_time - event_start_time;
+
+	//Perform the calculation
+	returnval = ((int (*)(OBJECT *, OBJECT *, int, int, int, TIMESTAMP, TIMESTAMP))(*compute_metrics))(hdr,module_metrics_obj,number_customers_int,number_customers_int_secondary,CustomerCount,outage_length,metric_interval);
+
+	//Make sure it worked
+	if (returnval != 1)
+	{
+		GL_THROW("Metrics:%s failed to perform a post-event metric update",hdr->name);
+		/*  TROUBLESHOOT
+		While attempting to provide a post-fault update of relevant metrics, the metrics
+		object encountered an error.  Please try your code again.  If the error persists,
+		please submit your code and a bug report using the trac website.
+		*/
+	}
+
+	//Increment the counters
+	metric_interval_event_count++;
+	annual_interval_event_count++;
+
+	//Now that that's done, let's see if we need to write a file output
+	if (report_event_log == true)
+	{
+		//Convert the times
+		gl_localtime(event_start_time,&start_dt);
+		gl_localtime(event_end_time,&end_dt);
+
+		//Open the file handle
+		FPVal = fopen(report_file,"at");
+
+		//Print the details out
+		fprintf(FPVal,"%d,%d,%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%s,%s,%s,%s,%s,%d,%d\n",annual_interval_event_count,metric_interval_event_count,start_dt.year,start_dt.month,start_dt.day,start_dt.hour,start_dt.minute,start_dt.second,end_dt.year,end_dt.month,end_dt.day,end_dt.hour,end_dt.minute,end_dt.second,fault_obj->oclass->name,fault_obj->name,event_obj->name,fault_type,impl_fault,number_customers_int,number_customers_int_secondary);
 
 		//Close the file
 		fclose(FPVal);
@@ -607,292 +807,91 @@ int metrics::get_interrupted_count(void)
 	return in_outage;
 }
 
-//static void set_values(OBJECT *obj, const char *targets, char *new_values, char *old_values=NULL, int size=0)
-//{
-//	const char *v=new_values, *p=targets;
-//	char propname[64];
-//	char value[64];
-//	while (p!=NULL && v!=NULL)
-//	{
-//		bool valid = sscanf(p,"%[A-Za-z._0-9]",propname)>0 && sscanf(v,"%[^;]",value)>0;
-//		if (valid) {
-//			gl_verbose("%s %s <- %s", obj->name?obj->name:"(null)",propname,value);
-//
-//			/* get the old value if desired */
-//			if (old_values)
-//			{
-//				if (strcmp(old_values,"")!=0)
-//					strcat(old_values,";");
-//				if (!gl_get_value_by_name(obj,propname,old_values+strlen(old_values),(int)(size-strlen(old_values))))
-//				{
-//					gl_error("eventgen refers to non-existant property %s in object %s (%s:%d)", propname,obj->name?obj->name:"anonymous",obj->oclass->name,obj->id);
-//					goto GetNext;
-//				}
-//			}
-//
-//			/* set the new value */
-//			gl_set_value_by_name(obj,propname,value);
-//GetNext:
-//			/* move to next property/value pair */
-//			p = strchr(p,';');
-//			v = strchr(v,';');
-//			while (p!=NULL && *p==';') p++;
-//			while (v!=NULL && *v==';') v++;
-//		}
-//		else
-//			p = v = NULL;
-//	}
-//}
+//Function to obtain number of customers experiencing outage condition - with secondary count
+void metrics::get_interrupted_count_secondary(int *in_outage, int *in_outage_secondary)
+{
+	int index, in_outage_temp, in_outage_temp_sec;
 
-/** Initiates an event and records it in the event log
-	@return a pointer to the object affected by the event
- **/
-//OBJECT *metrics::start_event(EVENT *pEvent,			/**< a pointer to the EVENT structure that defines this event */ 
-//							 FINDLIST *objectlist,	/**< the list of objects to be affected by the event */
-//							 const char *targets,	/**< the list of object properties to be modified */
-//							 char *event_values,	/**< the list of values to be used when modifying the properties */
-//							 char *old_values,		/**< storage space for the old values before modification */
-//							 int size)				/**< the size of the storage space for old values */
-//{
-//	/* check whether no event is pending (old_value is unpopulated) */
-//	if (strcmp(old_values,"")==0)
-//	{
-//		totals.Nevents++;
-//		gl_verbose("event %d starts", totals.Nevents); 
-//		gl_verbose("%d objects eligible", objectlist->hit_count);
-//
-//		/* pick an object at random */
-//		unsigned int nth = (unsigned int)gl_random_uniform(0,objectlist->hit_count);
-//		OBJECT *obj=gl_find_next(objectlist,NULL);
-//		while (nth-->0)
-//			obj=gl_find_next(objectlist,obj);
-//		gl_verbose("object %s (%s:%d) chosen", obj->name?obj->name:"anonymous", obj->oclass->name,obj->id);
-//		set_values(obj,targets,event_values,old_values,size);
-//		gl_verbose("old values = '%s'", old_values);
-//
-//		if (report_event_log)
-//		{
-//			/* record event in log */
-//			DATETIME dt; char buffer[64]="(na)"; 
-//			gl_localtime(pEvent->event_time,&dt);
-//			if (totals.Nevents==1)
-//			{
-//				fprintf(fp, "\nEVENT LOG FOR YEAR %d\n", dt.year);
-//				fprintf(fp, "=======================\n");
-//				fprintf(fp,"Event\tDateTime\t\tAffects\tProperties\t\tValues\tT_interrupted\tL_interrupted\tN_interrupted\n");
-//			}
-//			fprintf(fp,"%d\t", totals.Nevents);
-//			gl_strtime(&dt,buffer,sizeof(buffer));
-//			fprintf(fp,"%s\t", buffer);
-//			double t = pEvent->ri/60;
-//			if (obj->name)
-//				fprintf(fp,"%s\t", obj->name);
-//			else
-//				fprintf(fp,"%s:%d\t", obj->oclass->name, obj->id);
-//			fprintf(fp,"%s\t\t", targets);
-//			fprintf(fp,"%s\t", event_values);
-//			fprintf(fp,"%7.2f\t\t", t);
-//		}
-//		//find the interrupted load
-//		FINDLIST *load_meters = gl_findlist_copy(customers);
-//		OBJECT *interrupted_meters=NULL;
-//		complex *kva_in;
-//		complex *pload;
-//		totals.LT=0;//reset the total load value
-//		while ((interrupted_meters = gl_find_next(load_meters,interrupted_meters))!=NULL)
-//		{
-//			kva_in = gl_get_complex_by_name(interrupted_meters,"measured_power");
-//			totals.LT += (*kva_in).Mag();
-//			pload = gl_get_complex_by_name(interrupted_meters,"pre_load");
-//			(*pload) = (*kva_in);
-//		}
-//		
-//
-//		/* rest will be written when event ends */
-//		return obj;
-//	}
-//	return NULL;
-//}
+	//Reset counter
+	in_outage_temp = 0;
+	in_outage_temp_sec = 0;
 
-///** Restores service after an event **/
-//void metrics::end_event(OBJECT* obj,			/**< the object which is to be restored */
-//						const char *targets,	/**< the properties to be restored */
-//						char *old_values)		/**< the old values to be restored */
-//{
-//
-//
-//	/* check whether an event is already started (old_value is populated) */
-//	if (strcmp(old_values,"")!=0)
-//	{
-//		gl_verbose("event ends");
-//		gl_verbose("old values = '%s'",old_values);
-//
-//		FINDLIST *candidates = gl_findlist_copy(customers);
-//
-//		FINDLIST *unserved = gl_find_objects(candidates,FT_PROPERTY,"voltage_A",EQ,"0.0",AND,FT_PROPERTY,"voltage_B",EQ,"0.0",AND,FT_PROPERTY,"voltage_C",EQ,"0.0",NULL);
-//		
-//		FINDLIST *candidatessecond = gl_findlist_copy(customers);
-//
-//		FINDLIST *unservedtrip = gl_find_objects(candidatessecond,FT_PROPERTY,"voltage_1",EQ,"0.0",AND,FT_PROPERTY,"voltage_2",EQ,"0.0",NULL);
-//		
-//		FINDLIST *pmetercounter = gl_findlist_copy(unserved);
-//
-//		FINDLIST *tmetercounter = gl_findlist_copy(unservedtrip);
-//
-//		double S_lost=0;
-//		
-//		OBJECT *tripcust_mad=NULL;
-//		while ((tripcust_mad=gl_find_next(unservedtrip,tripcust_mad))!=NULL)
-//			gl_findlist_add(unserved,tripcust_mad);
-//
-//		OBJECT *int_load=NULL;
-//		complex *pload;
-//		while ((int_load = gl_find_next(unserved,int_load))!=NULL)
-//			{
-//				pload = gl_get_complex_by_name(int_load,"pre_load");
-//				S_lost += (*pload).Mag();
-//			}
-//		if (eventlist->ri>300){
-//			//calculate the total interrupted load over the entire year
-//			totals.Li +=S_lost;
-//			//calculate the total load interrupted minutes
-//			totals.LDI += S_lost * eventlist->ri/60;
-//		}
-//		
-//		if (report_event_log){
-//			fprintf(fp,"%9.3f\t", S_lost);
-//			fprintf(fp,"%8d\n", unserved->hit_count);
-//		}
-//		//sustained interruption variable calculations
-//		if (eventlist->ri > 300) { 
-//			//count the number of meters interrupted by the event
-//			totals.CI += unserved->hit_count;
-//			//calculate the customer minutes interrupted
-//			if (eventlist!=NULL) {
-//				totals.CMI += unserved->hit_count * eventlist->ri/60;
-//			}
-//		
-//			//increment sustained event counter for each power meter
-//			OBJECT *sust_pmeter=NULL;
-//			int16 *sust_pcount;
-//			while ((sust_pmeter=gl_find_next(pmetercounter,sust_pmeter))!=NULL){
-//				sust_pcount = gl_get_int16_by_name(sust_pmeter,"sustained_count");
-//				(*sust_pcount)++;
-//			}
-//			
-//			//increment sustained event counter for each triplex meter
-//			OBJECT *sust_tmeter=NULL;
-//			int16 *sust_tcount;
-//			while ((sust_tmeter=gl_find_next(tmetercounter,sust_tmeter))!=NULL){
-//				sust_tcount = gl_get_int16_by_name(sust_tmeter,"sustained_count");
-//				(*sust_tcount)++;
-//			}
-//
-//		//momentary interruption variable calculations
-//		} else {
-//			//determine the number of momentary events
-//			totals.CMIE += unserved->hit_count;
-//			//increment momentary event counter for each power meter
-//			OBJECT *momt_pmeter=NULL;
-//			int16 *momt_pcount;
-//			while ((momt_pmeter=gl_find_next(pmetercounter,momt_pmeter))!=NULL){
-//				momt_pcount = gl_get_int16_by_name(momt_pmeter,"momentary_count");
-//				(*momt_pcount)++;
-//			}
-//			
-//			//increment momentary event counter for each triplex meter
-//			OBJECT *momt_tmeter=NULL;
-//			int16 *momt_tcount;
-//			while ((momt_tmeter=gl_find_next(tmetercounter,momt_tmeter))!=NULL){
-//				momt_tcount = gl_get_int16_by_name(momt_tmeter,"momentary_count");
-//				(*momt_tcount)++;
-//			}
-//			
-//		}
-//		
-//		//determine the total amount of events experienced by each triplex meter
-//		OBJECT *totl_tmeter=NULL;
-//		int16 *totl_tcount;
-//		while ((totl_tmeter=gl_find_next(tmetercounter,totl_tmeter))!=NULL){
-//			totl_tcount = gl_get_int16_by_name(totl_tmeter,"total_count");
-//			(*totl_tcount)++;
-//		}
-//		
-//		//determine the total amount of events experienced by each power meter
-//		OBJECT *totl_pmeter=NULL;
-//		int16 *totl_pcount;
-//		while ((totl_pmeter=gl_find_next(pmetercounter,totl_pmeter))!=NULL){
-//			totl_pcount = gl_get_int16_by_name(totl_pmeter,"total_count");
-//			(*totl_pcount)++;
-//		}
-//		//determine the number of individual meters that experienced at least 1 sustained interruption
-//		candidates = gl_findlist_copy(customers);
-//		FINDLIST *sust_intr_cust = gl_find_objects(candidates,FT_PROPERTY,"sustained_count",GT,"0.0",NULL);
-//		//calculate the total number of customers that were interrupted by 
-//		totals.CN = sust_intr_cust->hit_count;
-//
-//		//set the CEMI and CEMSMI flags for each type of meter
-//		candidates = gl_findlist_copy(customers);
-//		OBJECT *k_sust_cust=NULL;
-//		int16 *s_count;
-//		int16 *sust_flag;
-//		while ((k_sust_cust=gl_find_next(candidates,k_sust_cust))!=NULL){
-//			s_count = gl_get_int16_by_name(k_sust_cust,"sustained_count");
-//			//if ((*s_count)>n){
-//			//	sust_flag = gl_get_int16_by_name(k_sust_cust,"s_flag");
-//			//	(*sust_flag)=1;
-//			//}
-//		}
-//
-//		candidates = gl_findlist_copy(customers);
-//		OBJECT *k_totl_cust=NULL;
-//		int16 *t_count;
-//		int16 *totl_flag;
-//		while ((k_totl_cust=gl_find_next(candidates,k_totl_cust))!=NULL){
-//			t_count = gl_get_int16_by_name(k_totl_cust,"total_count");
-//			//if ((*t_count)>n)
-//			//{
-//			//	totl_flag = gl_get_int16_by_name(k_totl_cust,"t_flag");
-//			//	(*totl_flag)=1;
-//			//}
-//		}
-//
-//		//find the number of meter who experienced more than n sustained and total events
-//		candidates = gl_findlist_copy(customers);
-//		FINDLIST *cemi_cust = gl_find_objects(candidates,FT_PROPERTY,"s_flag",EQ,"1",NULL);
-//		candidates = gl_findlist_copy(customers);
-//		FINDLIST *cemsmi_cust = gl_find_objects(candidates,FT_PROPERTY,"t_flag",EQ,"1",NULL);
-//		totals.CNK=cemi_cust->hit_count;
-//		totals.CNT=cemsmi_cust->hit_count;
-//
-//		//find how many times the recloser tried to close durring the event
-//		double relay_ops = 0;
-//		if ((gl_object_isa(obj,"relay","powerflow")))
-//		{
-//			if (eventlist->ri<=300)
-//			{
-//				int16 *r_operations;
-//				r_operations = gl_get_int16_by_name(obj,"recloser_tries");
-//				relay_ops = (*r_operations);
-//				totals.IMi += relay_ops * unserved->hit_count;
-//			}
-//		}
-//		if (!(gl_object_isa(obj,"relay","powerflow")))
-//		{
-//			relay_ops = 0;
-//			totals.IMi += relay_ops * unserved->hit_count;
-//		}
-//
-//		/* done */
-//		gl_free(candidates);
-//		gl_free(candidatessecond);
-//		fflush(fp);
-//
-//		/* restore previous values */
-//		set_values(obj,targets,old_values);
-//		strcpy(old_values,"");
-//	}
-//}
+	//Loop through the list and get the number of customer objects reported as interrupted
+	for (index=0; index<CustomerCount; index++)
+	{
+		if (*Customers[index].CustInterrupted == true)
+			in_outage_temp++;
+
+		//Assumes secondary metric exists, otherwise we shouldn't be here
+		if (*Customers[index].CustInterrupted_Secondary == true)
+			in_outage_temp_sec++;
+	}
+
+	//Pass the value back
+	*in_outage = in_outage_temp;
+	*in_outage_secondary = in_outage_temp_sec;
+}
+
+
+//Function to write output values of metrics
+void metrics::write_metrics(void)
+{
+	FILE *FPVAL;
+	int index;
+	bool first_written;
+
+	//Open the file
+	FPVAL = fopen(report_file,"at");
+
+	//Put a line in it
+	fprintf(FPVAL,"\n");
+
+	//Loop through the metrics and output them
+	for (index=0; index<num_indices; index++)
+	{
+		//First one slightly different
+		if (index==0)
+		{
+			//Print metric name and value
+			fprintf(FPVAL,"%s = %f",CalcIndices[index].MetricName,*CalcIndices[index].MetricLoc);
+		}
+		else
+		{
+			//Print metric name and value
+			fprintf(FPVAL,", %s = %f",CalcIndices[index].MetricName,*CalcIndices[index].MetricLoc);
+		}
+	}
+
+	fprintf(FPVAL,"\n");
+
+	//Write interval metrics - if desired
+	if (metric_interval != 0)
+	{
+		first_written = false;
+
+		for (index=0; index<num_indices; index++)
+		{
+			if (CalcIndices[index].MetricLocInterval != NULL)
+			{
+				if (first_written == false)
+				{
+					//Print metric name and value
+					fprintf(FPVAL,"Interval values: %s = %f",CalcIndices[index].MetricName,*CalcIndices[index].MetricLocInterval);
+					first_written = true;
+				}
+				else
+				{
+					//Print metric name and value
+					fprintf(FPVAL,", %s = %f",CalcIndices[index].MetricName,*CalcIndices[index].MetricLocInterval);
+				}
+			}
+		}
+		fprintf(FPVAL,"\n");
+	}//End metric intervals desired
+
+	//Close the file
+	fclose(FPVAL);
+}
 
 //Retrieve the address of a metric
 double *metrics::get_metric(OBJECT *obj, char *name)

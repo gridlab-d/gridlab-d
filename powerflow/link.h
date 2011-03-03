@@ -58,8 +58,10 @@ public: /// @todo make this private and create interfaces to control values
 	void calculate_power_splitphase();
 	void set_flow_directions();
 	void calc_currents(complex *Current_Vals);	//Function to perform "immediate" current calculation - used by restoration object
-	int link_fault_on(char *fault_type, int *implemented_fault);		//Function to create fault on line
-	int link_fault_off(int *implemented_fault, char *imp_fault_name);	//Function to remove fault from line
+	int link_fault_on(char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);		//Function to create fault on line
+	int link_fault_off(int *implemented_fault, char *imp_fault_name, void *Extra_Data);	//Function to remove fault from line
+	double mean_repair_time;
+	double *get_double(OBJECT *obj, char *name);	/**< Gets address of double - mainly for mean_repair_time */
 public:
 	bool status;	///< link status (open disconnect nodes)
 	bool prev_status;	///< Previous link status (used for recalculation detection)
@@ -76,6 +78,7 @@ public:
 	complex indiv_power_in[3];	///< power flow in (w.r.t. from node) - individual quantities
 	complex indiv_power_out[3];	///< power flow out (w.r.t. to node) - individual quantities
 	complex indiv_power_loss[3];///< power losses in the transformer - individual quantities
+	int protect_locations[3];	///< Links to protection object for different phase faults - part of reliability
 
 	int create(void);
 	int init(OBJECT *parent);

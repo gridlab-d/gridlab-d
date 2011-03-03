@@ -37,6 +37,9 @@ voltdump::voltdump(MODULE *mod)
 			PT_timestamp,"runtime",PADDR(runtime),PT_DESCRIPTION,"the time to check voltage data",
 			PT_char32,"filename",PADDR(filename),PT_DESCRIPTION,"the file to dump the voltage data into",
 			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
+			PT_enumeration, "mode", PADDR(mode),
+				PT_KEYWORD, "rect", VDM_RECT,
+				PT_KEYWORD, "polar", VDM_POLAR,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
@@ -48,6 +51,7 @@ int voltdump::create(void)
 	memset(group, 0, sizeof(char32));
 	runtime = TS_NEVER;
 	runcount = 0;
+	mode = VDM_RECT;
 	return 1;
 }
 
@@ -91,17 +95,32 @@ void voltdump::dump(TIMESTAMP t){
 	//nodeclass = node::oclass;
 	//vA=gl_find_property(nodeclass, "
 
+	int node_count = 0;
+	while (obj=gl_find_next(nodes,obj)){
+		if(gl_object_isa(obj, "node", "powerflow")){
+			node_count += 1;
+		}
+	}
 	/* print column names */
 	gl_printtime(t, timestr, 64);
-	fprintf(outfile,"# %s run at %s on %i nodes\n", filename, timestr, nodes->hit_count);
-	fprintf(outfile,"node_name,voltA_real,voltA_imag,voltB_real,voltB_imag,voltC_real,voltC_imag\n");
+	fprintf(outfile,"# %s run at %s on %i nodes\n", filename, timestr, node_count);
+	if (mode == VDM_RECT)
+		fprintf(outfile,"node_name,voltA_real,voltA_imag,voltB_real,voltB_imag,voltC_real,voltC_imag\n");
+	else if (mode == VDM_POLAR)
+		fprintf(outfile,"node_name,voltA_mag,voltA_angle,voltB_mag,voltB_angle,voltC_mag,voltC_angle\n");
+	
+	obj = 0;
 	while (obj=gl_find_next(nodes,obj)){
 		if(gl_object_isa(obj, "node", "powerflow")){
 			pnode = OBJECTDATA(obj,node);
 			if(obj->name == NULL){
 				sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
 			}
-			fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),pnode->voltage[0].Re(),pnode->voltage[0].Im(),pnode->voltage[1].Re(),pnode->voltage[1].Im(),pnode->voltage[2].Re(),pnode->voltage[2].Im());
+			if(mode == VDM_RECT){
+				fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),pnode->voltage[0].Re(),pnode->voltage[0].Im(),pnode->voltage[1].Re(),pnode->voltage[1].Im(),pnode->voltage[2].Re(),pnode->voltage[2].Im());
+			} else if(mode == VDM_POLAR){
+				fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),pnode->voltage[0].Mag(),pnode->voltage[0].Arg(),pnode->voltage[1].Mag(),pnode->voltage[1].Arg(),pnode->voltage[2].Mag(),pnode->voltage[2].Arg());
+			}
 		}
 	}
 	fclose(outfile);

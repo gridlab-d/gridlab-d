@@ -862,7 +862,9 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 				//Perform NR solver
 				pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &pf_bad_computations);
 				//De-flag any admittance changes (so other iterations don't take longer
+				LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
 				NR_admit_change = false;
+				UNLOCK_OBJECT(NR_swing_bus);	//Finished locking
 
 				if (pf_bad_computations==true)	//Singular attempt, fail - not sure how it will get here with the fault_check call above, but added for completeness
 				{

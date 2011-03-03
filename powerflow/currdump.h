@@ -1,29 +1,29 @@
 // $Id: meter.h 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
-#ifndef _VOLTDUMP_H
-#define _VOLTDUMP_H
+#ifndef _currdump_H
+#define _currdump_H
 
 #include "powerflow.h"
-#include "node.h"
+#include "link.h"
 
 typedef enum {
-	VDM_RECT,
-	VDM_POLAR
-} VDMODE;
+	CDM_RECT,
+	CDM_POLAR
+} CDMODE;
 
-class voltdump
+class currdump
 {
 public:
 	TIMESTAMP runtime;
 	char32 group;
 	char32 filename;
 	int32 runcount;
-	VDMODE mode;
+	CDMODE mode;
 public:
 	static CLASS *oclass;
 public:
-	voltdump(MODULE *mod);
+	currdump(MODULE *mod);
 	int create(void);
 	int init(OBJECT *parent);
 	int commit(TIMESTAMP t);
@@ -32,5 +32,5 @@ public:
 	void dump(TIMESTAMP t);
 };
 
-#endif // _VOLTDUMP_H
+#endif // _currdump_H
 

@@ -23,7 +23,7 @@ private:
 	double number_of_phases_out;
 	TIMESTAMP prev_time;
 	int first_time_step;
-	double power_transferred;
+	
 	int prev_state; //1 is charging, 0 is nothing, -1 is discharging
 
 	/* TODO: put private variables here */
@@ -34,6 +34,7 @@ protected:
 public:
 	/* TODO: put published variables here */
 	set phases;	/**< device phases (see PHASE codes) */
+	double power_transferred;
 	enum GENERATOR_MODE {
 		GM_UNKNOWN=0,
 		GM_CONSTANT_V=1, 

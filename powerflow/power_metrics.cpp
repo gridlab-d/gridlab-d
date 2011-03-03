@@ -1,14 +1,41 @@
 /** $Id: power_metrics.cpp 2010-06-14 15:00:00Z d3x593 $
 	Copyright (C) 2009 Battelle Memorial Institute
-**/
+
+	The metric analysis object reports reliability metrics for a system by observing the
+	duration and number of conditions when meter objects are not normal.  The
+	following metrics are calculated annual and reported to the \p report_file
+
+	-# \e SAIFI (System average interrupts frequency index) indicates how often 
+	   the average customer experiences a system interruption over a predefined period
+	   of time.  This is calculated using the formula
+
+	   \f[ SAIFI = \frac{\Sigma N_{customer\_interruptions}}{N_{customers}} \f]
+
+    -# \e SAIDI (System average interrupts duration index) indicates the total
+		duration of interrupt for the average customer during a predefined period of
+		time.  This is calculated using the formula
+
+	   \f[ SAIDI = \frac{\Sigma T_{customer\_interruptions}}{N_{customers}} \f]
+
+    -# \e CAIDI (Customer average interrupt duration index) represents the average
+		time required to restore service.  This is calculated using the formula
+
+		\f[ CAIDI = \frac{\Sigma T_{customer\_interruptions}}{N_{customers\_interrupted}} \f]
+    
+    -# \e MAIFI (Momentary average interruption frequency index) represents the average
+		frequency of momentary interruptions.  This is calculated using the formula
+
+		\f[ MAIFI = \frac{\Sigma T_{{momentary customer}\_interruptions}}{N_{customers}} \f]
+
+	See <b>IEEE Std 1366-2003</b> <i>IEEE Guide for Electric Power Distribution Reliability Indices</i>
+	for more information on how to compute distribution system reliability indices.
+
+ **/
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <iostream>
-
-using namespace std;
 
 #include "power_metrics.h"
 
@@ -31,13 +58,27 @@ power_metrics::power_metrics(MODULE *mod) : powerflow_library(mod)
 
 		if(gl_publish_variable(oclass,
 			PT_double, "SAIFI", PADDR(SAIFI),
+			PT_double, "SAIFI_int", PADDR(SAIFI_int),
 			PT_double, "SAIDI", PADDR(SAIDI),
+			PT_double, "SAIDI_int", PADDR(SAIDI_int),
 			PT_double, "CAIDI", PADDR(CAIDI),
+			PT_double, "CAIDI_int", PADDR(CAIDI_int),
 			PT_double, "ASAI", PADDR(ASAI),
+			PT_double, "ASAI_int", PADDR(ASAI_int),
+			PT_double, "MAIFI", PADDR(MAIFI),
+			PT_double, "MAIFI_int", PADDR(MAIFI_int),
+			PT_double, "base_time_value[s]", PADDR(stat_base_time_value),
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
-		gl_publish_function(oclass, "calc_metrics", (FUNCTIONADDR)calc_pfmetrics);
-		gl_publish_function(oclass,	"reset_interval_metrics", (FUNCTIONADDR)reset_pfinterval_metrics);
-		gl_publish_function(oclass,	"reset_annual_metrics", (FUNCTIONADDR)reset_pfannual_metrics);
+			if (gl_publish_function(oclass, "calc_metrics", (FUNCTIONADDR)calc_pfmetrics)==NULL)
+				GL_THROW("Unable to publish metrics calculation function");
+			if (gl_publish_function(oclass,	"reset_interval_metrics", (FUNCTIONADDR)reset_pfinterval_metrics)==NULL)
+				GL_THROW("Unable to publish interval metrics reset function");
+			if (gl_publish_function(oclass,	"reset_annual_metrics", (FUNCTIONADDR)reset_pfannual_metrics)==NULL)
+				GL_THROW("Unable to publish annual metrics reset function");
+			if (gl_publish_function(oclass,	"init_reliability", (FUNCTIONADDR)init_pf_reliability_extra)==NULL)
+				GL_THROW("Unable to publish powerflow reliability initialization function");
+			if (gl_publish_function(oclass,	"logfile_extra", (FUNCTIONADDR)logfile_extra)==NULL)
+				GL_THROW("Unable to publish powerflow reliability metrics extra header function");
     }
 }
 
@@ -52,134 +93,194 @@ int power_metrics::create(void)
 	SAIFI = 0.0;
 	SAIDI = 0.0;
 	CAIDI = 0.0;
-	ASAI = 0.0;
+	ASAI = 1.0;	//Start at full reliability
+	MAIFI = 0.0;
+
+	//Same goes for interval stats
+	SAIFI_int = 0.0;
+	SAIDI_int = 0.0;
+	CAIDI_int = 0.0;
+	ASAI_int = 1.0;	//Start at full reliability
+	MAIFI_int = 0.0;
 
 	num_cust_interrupted = 0;
 	num_cust_total = 0;
 	outage_length = 0;
 	outage_length_normalized = 0.0;
 
+	//basis times for statistics - defaults to minutes
+	stat_base_time_value = 60;
+
 	//intermediate variables
 	SAIFI_num = 0.0;
 	SAIDI_num = 0.0;
 	ASAI_num = 0.0;
+	MAIFI_num = 0.0;
+	SAIFI_num_int = 0.0;
+	SAIDI_num_int = 0.0;
+	ASAI_num_int = 0.0;
+	MAIFI_num_int = 0.0;
 
-	//Mapping variable
+	//Mapping variables
 	fault_check_object_lnk = NULL;
+	rel_metrics = NULL;
+
+	//Extra variable (recloser count)
+	Extra_PF_Data = 0.0;
 
 	return 1;
 }
 
 int power_metrics::init(OBJECT *parent)
 {
-	//Nothing in here - all variables are outputs for now, so if user overrode them, we'll override them back!
+	//Nothing to do in here - all variables are outputs for now, so if user overrode them, we'll override them back!
 	return 1;
 }
 
 //ASAI Calculation - Average Service Availability Index
 //ASAI = ((total number of customers * number of hours/year) - sum(restoration time per event * number of customers interrupted per event)) / (total number of customers * number of hours/year)
-double power_metrics::calc_ASAI(void)
+void power_metrics::calc_ASAI(void)
 {
-	double calcval, yearhours;
+	double yearhours;
 
 	if (num_cust_total != 0)
 	{
 		yearhours = num_cust_total * 8760.0;	//Nt * hours/year
 		ASAI_num += ((double)(outage_length * num_cust_interrupted))/3600.0;	//In hours (TIMESTAMP assumed to be seconds-level)
+		ASAI_num_int += ((double)(outage_length * num_cust_interrupted))/3600.0;	//In hours (TIMESTAMP assumed to be seconds-level)
 
-		calcval = (yearhours - ASAI_num) / yearhours;
+		ASAI = (yearhours - ASAI_num) / yearhours;
+		ASAI_int = (yearhours - ASAI_num_int) / yearhours;
 	}
 	else
 	{
-		calcval = 0.0;	//No customers = no index
+		ASAI = 0.0;	//No customers = no index
+		ASAI_int = 0.0;	//No customers = no index
 	}
-
-	return calcval;
 }
 
 //CAIDI Calculation - Customer Average Interruption Duration Index
 //CAIDI = SAIDI / SAIFI
-double power_metrics::calc_CAIDI(void)
+void power_metrics::calc_CAIDI(void)
 {
-	double calcval;
 	if (SAIFI != 0.0)
 	{
-		calcval = SAIDI / SAIFI;
+		CAIDI = SAIDI / SAIFI;
 	}
 	else
 	{
-		calcval = 0.0;
+		CAIDI = 0.0;
 	}
 
-	return calcval;
+	if (SAIFI_int != 0.0)
+	{
+		CAIDI_int = SAIDI_int / SAIFI_int;
+	}
+	else
+	{
+		CAIDI_int = 0.0;
+	}
 }
 
 //SAIDI Calculation - System Average Interruption Duration Index
 //SAIDI = sum(restoration time per event * number of customers interrupted per event) / total number of customers
-double power_metrics::calc_SAIDI(void)
+void power_metrics::calc_SAIDI(void)
 {
-	double calcval;
-
-	if (num_cust_total != 0.0)
+	if (num_cust_total != 0)
 	{
 		SAIDI_num += outage_length_normalized * ((double)(num_cust_interrupted));
-		calcval = SAIDI_num / num_cust_total;
+		SAIDI_num_int += outage_length_normalized * ((double)(num_cust_interrupted));
+		
+		SAIDI = SAIDI_num / ((double)num_cust_total);
+		SAIDI_int = SAIDI_num_int / ((double)num_cust_total);
 	}
 	else
 	{
-		calcval = 0.0;
+		SAIDI = 0.0;
+		SAIDI_int = 0.0;
 	}
-
-	return calcval;
 }
 
 //SAIFI Calculation - System Average Interruption Frequency Index
 //SAIFI = sum(number of customers interrupted per event) / total number of customers
-double power_metrics::calc_SAIFI(void)
+void power_metrics::calc_SAIFI(void)
 {
-	double calcval;
-
-	if (num_cust_total != 0.0)
+	if (num_cust_total != 0)
 	{
 		SAIFI_num += (double)(num_cust_interrupted);
-		calcval = SAIFI_num / ((double)(num_cust_total));
+		SAIFI_num_int += (double)(num_cust_interrupted);
+
+		SAIFI = SAIFI_num / ((double)(num_cust_total));
+		SAIFI_int = SAIFI_num_int / ((double)(num_cust_total));
 	}
 	else
 	{
-		calcval = 0.0;
+		SAIFI = 0.0;
+		SAIFI_int = 0.0;
 	}
+}
 
-	return calcval;
+//MAIFI Calculation - Momentary Average Interruption Frequency Index
+//MAIFI = sum(number momentary interrupts * number customers affected) / total number of customers
+void power_metrics::calc_MAIFI(void)
+{
+	if (num_cust_total != 0)
+	{
+		MAIFI_num += Extra_PF_Data*num_cust_momentary_interrupted;
+		MAIFI_num_int += Extra_PF_Data*num_cust_momentary_interrupted;
+
+		//See if it was a "momentary" outage - if so, add extra data
+		if (outage_length < 300)	//Less than 5 minutes - "normal" failures are considered momentary
+		{
+			MAIFI_num += (double)(num_cust_interrupted);
+			MAIFI_num_int += (double)(num_cust_interrupted);
+		}
+
+		MAIFI = MAIFI_num / ((double)(num_cust_total));
+		MAIFI_int = MAIFI_num_int / ((double)(num_cust_total));
+	}
+	else
+	{
+		MAIFI = 0.0;
+		MAIFI_int = 0.0;
+	}
 }
 
 //Class function to calculate metrics - makes memory exchanges easier and such
-void power_metrics::perform_rel_calcs(int number_int, int total_cust, TIMESTAMP rest_time_val, TIMESTAMP base_time_val)
+void power_metrics::perform_rel_calcs(int number_int, int number_int_secondary, int total_cust, TIMESTAMP rest_time_val, TIMESTAMP base_time_val)
 {
 	//Assign relevant quantities first
 	num_cust_interrupted = number_int;
+	num_cust_momentary_interrupted = number_int_secondary;
 	num_cust_total = total_cust;
 	outage_length = rest_time_val;
-	outage_length_normalized = ((double)(rest_time_val) / (double)(base_time_val));
+	outage_length_normalized = ((double)(rest_time_val) / stat_base_time_value);
 
 	//Perform calculations
-	SAIFI = calc_SAIFI();
-	SAIDI = calc_SAIDI();
-	CAIDI = calc_CAIDI();
-	ASAI = calc_ASAI();
+	if (outage_length > 300)	//"Momentary" by IEEE standards
+	{
+		calc_SAIFI();
+		calc_SAIDI();
+		calc_CAIDI();
+		calc_ASAI();
+	}
 
+	//Momentary gets done all times - just in case a "sustained" outage had momentary connotations
+	calc_MAIFI();
 }
 
 //Class function to reset various metrics - makes memory exchanges easier
 void power_metrics::reset_metrics_variables(bool annual_metrics)
 {
 	//"interval" get reset no matter what
-	SAIFI_num = 0.0;
-	SAIDI_num = 0.0;
-
+	SAIFI_num_int = 0.0;
+	SAIDI_num_int = 0.0;
+	MAIFI_num_int = 0.0;
+	
 	//Now check annual
-	if (annual_metrics == true)
+	if (annual_metrics == true)	//ASAI for whole simulation should really be reset here as well, but no rolling window implemented
 	{
-		ASAI_num = 0.0;
+		ASAI_num_int = 1.0;	//Default ASAI to perfect reliability
 	}
 }
 
@@ -223,20 +324,30 @@ void power_metrics::check_fault_check(void)
 			//Once we're sure it is in the proper mode, set the reliability flag so it doesn't stop us dead
 			fault_check_object_lnk->reliability_mode = true;
 
+			//While we're in here, see if we can do secondary events - otherwise warn us
+			if (fault_check_object_lnk->rel_eventgen == NULL)
+			{
+				gl_warning("No eventgen object mapped up to %s, unscheduled faults are not allowed",fault_check_object->name);
+				/*  TROUBLESHOOT
+				No eventgen object is specified on the fault_check field eventgen_object.  Without this specified, "unscheduled"
+				faults can not occur and will simply stop the simulation.  This includes fuses blowing and "non-faulted" switch
+				operations.
+				*/
+			}
 		}//Mapping of fault_check object
 	}//end fault_check_object_lnk is NULL
 	//Defaulted else - must already be populated
 }
 
 //Exported function for reliability module to call to calculate metrics
-EXPORT int calc_pfmetrics(OBJECT *callobj, OBJECT *calcobj, int number_int, int total_customers, TIMESTAMP rest_time_val, TIMESTAMP base_time_val)
+EXPORT int calc_pfmetrics(OBJECT *callobj, OBJECT *calcobj, int number_int, int number_int_secondary, int total_customers, TIMESTAMP rest_time_val, TIMESTAMP base_time_val)
 {
 	//Link to it
 	power_metrics *pmetrics_obj;
 	pmetrics_obj = OBJECTDATA(calcobj,power_metrics);
 
 	//Perform the calculation - pass into a class function so variables can be written willy-nilly
-	pmetrics_obj->perform_rel_calcs(number_int, total_customers, rest_time_val, base_time_val);
+	pmetrics_obj->perform_rel_calcs(number_int, number_int_secondary, total_customers, rest_time_val, base_time_val);
 
 	return 1;	//Success!
 }
@@ -270,6 +381,56 @@ EXPORT int reset_pfannual_metrics(OBJECT *callobj, OBJECT *calcobj)
 	return 1;	//Always successful - theoretically
 }
 
+//Exported function to initialize extra reliability variables - in this case, only a recloser reclose counter
+EXPORT void *init_pf_reliability_extra(OBJECT *myhdr, OBJECT *callhdr)
+{
+	void *Data_Index;
+	
+	//Link to us
+	power_metrics *pmetrics_obj;
+	pmetrics_obj = OBJECTDATA(myhdr,power_metrics);
+
+	//Map calling object
+	pmetrics_obj->rel_metrics = callhdr;
+
+	//Map the proper data index
+	Data_Index = (void *)&(pmetrics_obj->Extra_PF_Data);
+
+	//Check success
+	if (Data_Index != NULL)
+		return Data_Index;	//Success
+	else
+		return 0;	//Failure
+}
+
+//Exposed function for extra reliability log file information
+EXPORT int logfile_extra(OBJECT *myhdr, char *BufferArray)
+{
+	double time_interval_val;
+
+	//Map us
+	power_metrics *pmetrics_obj;
+	pmetrics_obj = OBJECTDATA(myhdr,power_metrics);
+
+	//Get the interval data
+	time_interval_val = pmetrics_obj->stat_base_time_value;
+
+	//See what it is and print appropriately
+	if (time_interval_val == 1.0)	//Seconds
+		sprintf(BufferArray,"1366 metrics based around 1-second base (outage-seconds)\n\n");
+	else if (time_interval_val == 60.0)	//Minutes
+		sprintf(BufferArray,"1366 metrics based around 1-minute base (outage-minutes)\n\n");
+	else if (time_interval_val == 3600.0)	//Hours
+		sprintf(BufferArray,"1366 metrics based around 1-hour base (outage-hours)\n\n");
+	else if (time_interval_val == 86400.0)	//Days
+		sprintf(BufferArray,"1366 metrics based around 1-day base (outage-days)\n\n");
+	else if (time_interval_val == 31536000.0)	//Years
+		sprintf(BufferArray,"1366 metrics based around 1-year base (outage-years)\n\n");
+	else	//Some "odd" interval - represent in seconds
+		sprintf(BufferArray,"1366 metrics uses time base of %.0f seconds\n\n",time_interval_val);
+
+	return 1;	//Always succeeds
+}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: power_metrics

@@ -364,17 +364,25 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 	char *item;
 	PROPERTY *first=NULL, *last=NULL;
 	UNIT *unit = NULL;
+	PROPERTY *prop;
+	PROPERTY *target;
 	char1024 list;
 	complex oblig;
+	double scale;
+	char256 pstr, ustr;
+	char *cpart = 0;
+	int64 cid = -1;
+
 	strcpy(list,property_list); /* avoid destroying orginal list */
 	for (item=strtok(list,","); item!=NULL; item=strtok(NULL,","))
 	{
-		char256 pstr, ustr;
-		char *cpart = 0;
-		int64 cid = -1;
-		PROPERTY *prop = NULL;
-		PROPERTY *target = NULL;
-		double scale = 1.0;
+		
+		prop = NULL;
+		target = NULL;
+		scale = 1.0;
+		unit = NULL;
+		cpart = 0;
+		cid = -1;
 
 		// everything that looks like a property name, then read units up to ]
 		while (isspace(*item)) item++;

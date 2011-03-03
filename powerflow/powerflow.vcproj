@@ -526,6 +526,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\currdump.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\emissions.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\fault_check.cpp"
 				>
 			</File>
@@ -606,6 +614,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\recloser.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\powerflow\regulator.cpp"
 				>
 			</File>
@@ -619,6 +631,10 @@
 			</File>
 			<File
 				RelativePath=".\restoration.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sectionalizer.cpp"
 				>
 			</File>
 			<File
@@ -708,6 +724,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\emissions.h"
+				>
+			</File>
+			<File
 				RelativePath=".\fault_check.h"
 				>
 			</File>
@@ -788,6 +808,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\recloser.h"
+				>
+			</File>
+			<File
 				RelativePath="..\powerflow\regulator.h"
 				>
 			</File>
@@ -809,6 +833,10 @@
 			</File>
 			<File
 				RelativePath=".\restoration.h"
+				>
+			</File>
+			<File
+				RelativePath=".\sectionalizer.h"
 				>
 			</File>
 			<File

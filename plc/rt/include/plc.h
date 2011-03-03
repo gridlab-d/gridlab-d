@@ -4,7 +4,7 @@
  */
 
 #define enumeration int
-#define BEGIN_DATA struct { char *name; enum {DT_INTEGER=6,DT_DOUBLE=1,PT_ENUM=3,PT_SET=4,PT_BOOL=14} type; void *addr; } data[] = {
+#define BEGIN_DATA struct { char *name; enum {DT_INTEGER=6,DT_DOUBLE=1,DT_ENUM=3,DT_SET=4,DT_BOOL=14} type; void *addr; } data[] = {
 typedef void (*SENDFN)(void *src,char *to,void *msg,unsigned int sz);
 typedef int (*RECVFN)(void *dst,char *from,void *data, unsigned int sz);
 #define INTEGER(N) {#N,DT_INTEGER,0},

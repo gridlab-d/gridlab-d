@@ -3,6 +3,8 @@ pkglib_LTLIBRARIES = powerflow.la
 powerflow_la_SOURCES =                                         \
 	billdump.cpp                   billdump.h                   \
 	capacitor.cpp                  capacitor.h                  \
+	currdump.cpp                   currdump.h                   \
+	emissions.cpp				   emissions.h					\
 	fault_check.cpp                fault_check.h                \
 	frequency_gen.cpp              frequency_gen.h              \
 	fuse.cpp                       fuse.h                       \
@@ -25,12 +27,14 @@ powerflow_la_SOURCES =                                         \
 	powerflow_object.cpp           powerflow_object.h           \
 	power_metrics.cpp              power_metrics.h              \
 	pqload.cpp                     pqload.h                     \
+	recloser.cpp			       recloser.h					\
 	regulator_configuration.cpp    regulator_configuration.h    \
 	regulator.cpp                  regulator.h                  \
 	regulator_test.h                                            \
 	relay.cpp                      relay.h                      \
 	relay_test.h                                                \
 	restoration.cpp                restoration.h                \
+	sectionalizer.cpp			   sectionalizer.h			    \
 	series_reactor.cpp             series_reactor.h             \
 	solver_nr.cpp                  solver_nr.h                  \
 	substation.cpp                 substation.h                 \
