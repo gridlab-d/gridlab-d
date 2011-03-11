@@ -56,8 +56,8 @@
 	#include <intrin.h>
 	#pragma intrinsic(_InterlockedCompareExchange)
 	#pragma intrinsic(_InterlockedIncrement)
-	#define atomic_compare_and_swap(dest, comp, xchg) (_InterlockedCompareExchange((int32 *) dest, xchg, comp) == comp)
-	#define atomic_increment(ptr) _InterlockedIncrement((int32 *) ptr)
+	#define atomic_compare_and_swap(dest, comp, xchg) (_InterlockedCompareExchange((int *) dest, xchg, comp) == comp)
+	#define atomic_increment(ptr) _InterlockedIncrement((int *) ptr)
 	#ifndef inline
 		#define inline __inline
 	#endif
