@@ -154,7 +154,7 @@ typedef enum {
 
 typedef struct s_keyword {
 	char name[32];
-	uint32 value;
+	uint64 value;
 	struct s_keyword *next;
 } KEYWORD;
 
