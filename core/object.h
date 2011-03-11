@@ -69,7 +69,7 @@ typedef struct s_object_list {
 	int tp_affinity; /**< threadpool processor affinity */
 	NAMESPACE *space; /**< namespace of object */
 	unsigned int lock; /**< object lock */
-	unsigned long flags; /**< object flags */
+	uint32 flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 } OBJECT; /**< Object header structure */
 
@@ -121,6 +121,7 @@ typedef struct s_callbacks {
 		void (*clear)(struct s_findlist*);
 	} find;
 	PROPERTY *(*find_property)(CLASS *, PROPERTYNAME);
+	/* void *(*malloc)(unsigned int); */
 	void *(*malloc)(size_t);
 	void (*free)(void*);
 	struct s_aggregate *(*create_aggregate)(char *aggregator, char *group_expression);
@@ -211,7 +212,7 @@ typedef struct s_callbacks {
 		SCHEDULE *(*create)(char *name, char *definition);
 		SCHEDULEINDEX (*index)(SCHEDULE *sch, TIMESTAMP ts);
 		double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
-		long (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
+		int32 (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
 		SCHEDULE *(*find)(char *name);
 	} schedule;
 	struct {

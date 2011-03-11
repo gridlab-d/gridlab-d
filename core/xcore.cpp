@@ -60,7 +60,7 @@ void xbutton(int x, int y, char *text)
 
 void* xmainloop(void*arg)
 {
-	long eventMask = StructureNotifyMask;
+	int32 eventMask = StructureNotifyMask;
 	XSelectInput( dsp, win, eventMask );
 
 	eventMask = ButtonPressMask|ButtonReleaseMask;
@@ -91,8 +91,8 @@ extern "C" int xstart(void)
 	if( !dsp ) return 1;
 
 	int screenNumber = DefaultScreen(dsp);
-	unsigned long white = WhitePixel(dsp,screenNumber);
-	unsigned long black = BlackPixel(dsp,screenNumber);
+	uint32 white = WhitePixel(dsp,screenNumber);
+	uint32 black = BlackPixel(dsp,screenNumber);
 
 	win = XCreateSimpleWindow(dsp,
 		DefaultRootWindow(dsp),
@@ -103,7 +103,7 @@ extern "C" int xstart(void)
 
 	XMapWindow( dsp, win );
 
-	long eventMask = StructureNotifyMask;
+	int32 eventMask = StructureNotifyMask;
 	XSelectInput( dsp, win, eventMask );
 
 	XEvent evt;

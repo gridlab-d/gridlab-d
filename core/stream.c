@@ -28,7 +28,7 @@
 static unsigned char b,t;
 static unsigned char c;
 static unsigned short s;
-static unsigned long l;
+static uint32 l;
 static unsigned int64 q;
 static unsigned short n;
 static unsigned int64 nn;
@@ -38,7 +38,7 @@ static unsigned int64 nn;
 #define PUTD(S,L) {n=(L);if(fwrite(&n,sizeof(n),1,fp)!=1 || fwrite((S),1,L,fp)!=L) return -1; else count+=n+2;}
 #define PUTC(C) {c=(unsigned char)(C);PUTD(&c,sizeof(c))}
 #define PUTS(S) {s=(unsigned short)(S);PUTD(&s,sizeof(s))}
-#define PUTL(L) {l=(unsigned long)(L);PUTD(&l,sizeof(l))}
+#define PUTL(L) {l=(uint32)(L);PUTD(&l,sizeof(l))}
 #define PUTQ(Q) {q=(unsigned int64)(Q);PUTD(&q,sizeof(q))}
 #define PUTX(T,X) {if ((n=stream_out_##T(fp,(X)))<0) return -1; else count+=n;}
 #define PUTT(B,T) {unsigned short w=0; b=SB_##B; t=ST_##T; if (fwrite(&w,2,1,fp)!=1 || fwrite(&b,1,1,fp)!=1 || fwrite(&t,1,1,fp)!=1) return -1; else count+=4;}
@@ -295,7 +295,7 @@ size_t stream_compress(FILE *fp, char *buf, size_t len)
 	[SC/value] initial value
 
  **/
-size_t stream_decompress(FILE *fp, const char *buf, const size_t len)
+size_t stream_decompress(FILE *fp, char *buf, const size_t len)
 {
 	char *ptr = buf;
 	size_t count=0, buflen=0;
@@ -717,7 +717,7 @@ int64 stream_out_object(FILE *fp, OBJECT *obj)
 			if (p->ptype==PT_object)
 			{
 				OBJECT *ref = *(OBJECT**)addr;
-				unsigned long id = ref==NULL ? -1 : ref->id;
+				uint32 id = ref==NULL ? -1 : ref->id;
 				PUTL(id);
 			}
 			else
@@ -759,7 +759,7 @@ int64 stream_in_object(fp)
 			}
 			else if T(ID)
 			{
-				unsigned long id;
+				uint32 id;
 				GETL(id);
 				if (id!=obj->id)
 					return stream_error("object id %d mismatched--object sequence is not valid", id);
@@ -906,7 +906,7 @@ int64 stream_out_transform(FILE *fp, SCHEDULEXFORM *xform)
 		{
 			PUTT(TRANSFORM,OBJECT);
 			PUTL(obj->id);
-			PUTL((unsigned long)(prop->addr));
+			PUTL((uint32)(prop->addr));
 		}
 		else
 		{
@@ -967,8 +967,8 @@ int64 stream_in_transform(fp)
 			}
 			else if T(OBJECT)
 			{
-				unsigned long object_id;
-				unsigned long prop_addr;
+				uint32 object_id;
+				uint32 prop_addr;
 				if (xform->source_type!=XS_DOUBLE && xform->source_type!=XS_COMPLEX && xform->source_type!=XS_LOADSHAPE && xform->source_type!=XS_ENDUSE)
 					return stream_error("stream_in_transform(): property not expected");
 
@@ -1111,7 +1111,7 @@ Done:
 			if (p->ptype==PT_object)
 			{
 				OBJECT **ref = (OBJECT*)((char*)(obj+1)+(unsigned short)p->addr);
-				*ref = object_find_by_id((unsigned long)(*ref));
+				*ref = object_find_by_id((uint32)(*ref));
 			}
 		}
 	}
@@ -1126,7 +1126,7 @@ Done:
 			if (p->addr == xform->target_prop)
 			{
 				xform->target_prop = p;
-				xform->target = (double*)((char*)(xform->target_obj+1)+(unsigned long)p->addr);
+				xform->target = (double*)((char*)(xform->target_obj+1)+(uint32)p->addr);
 			}
 		}
 	}

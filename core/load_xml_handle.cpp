@@ -519,7 +519,7 @@ char *gld_loadHndl::start_element_load(char *buffer, size_t len, const Attribute
 	static size_t wcs_major_len = mbstowcs(wcs_major, "major", 6);
 	static size_t wcs_minor_len = mbstowcs(wcs_minor, "minor", 6);
 	XMLCh *_major = NULL, *_minor = NULL;
-	long int major = 0, minor = 0;
+	int32 major = 0, minor = 0;
 	if(strcmp(buffer, "global") == 0){
 		stack_state = GLOBAL_STATE;
 	} else if(strcmp(buffer, "module") == 0){	//	LOAD THE MODULE

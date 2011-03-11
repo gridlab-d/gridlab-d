@@ -266,7 +266,7 @@ GLOBALVAR *global_create(char *name, ...){
 				throw_exception("global_create(char *name='%s',...): property keyword not specified after an enumeration property definition", name);
 			} else if(proptype == PT_KEYWORD && prop->ptype == PT_enumeration) {
 				char *keyword = va_arg(arg, char *);
-				long keyvalue = va_arg(arg, long);
+				int32 keyvalue = va_arg(arg, int32);
 				KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
 				if(key == NULL){
 					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
@@ -310,7 +310,7 @@ GLOBALVAR *global_create(char *name, ...){
 						break;
 				}
 			} else if(proptype == PT_SIZE){
-				prop->size = va_arg(arg, unsigned long);
+				prop->size = va_arg(arg, uint32);
 				if(prop->addr == 0){
 					if (prop->size > 0){
 						prop->addr = (PROPERTYADDR)malloc(prop->size * property_size(prop));

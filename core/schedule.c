@@ -23,7 +23,7 @@
 #endif
 
 static SCHEDULE *schedule_list = NULL;
-static unsigned long n_schedules = 0;
+static uint32 n_schedules = 0;
 static SCHEDULEXFORM *schedule_xformlist=NULL;
 
 SCHEDULEXFORM *scheduletransform_getnext(SCHEDULEXFORM *xform)
@@ -661,7 +661,7 @@ void schedule_add(SCHEDULE *sch)
 int schedule_validate(SCHEDULE *sch, int flags)
 {
 	unsigned int b,i;
-	unsigned long int nzct = 0; // nonzero count
+	uint32 nzct = 0; // nonzero count
 	int failed=0;
 	for (b=0; b<MAXBLOCKS; b++) {
 		i = (flags & SN_NONZERO ? 0 : 1);
@@ -798,21 +798,21 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 double schedule_value(SCHEDULE *sch,		/**< the schedule to read */
 					  SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
-	long int cal = GET_CALENDAR(index);
-	long int min = GET_MINUTE(index);
+	int32 cal = GET_CALENDAR(index);
+	int32 min = GET_MINUTE(index);
 	return sch->data[sch->index[GET_CALENDAR(index)][GET_MINUTE(index)]];
 }
 
 /** reads the time until the next change in the schedule 
 	@return time until next value change (in minutes)
  **/
-long schedule_dtnext(SCHEDULE *sch,			/**< the schedule to read */
+int32 schedule_dtnext(SCHEDULE *sch,			/**< the schedule to read */
 					 SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
 	return sch->dtnext[GET_CALENDAR(index)][GET_MINUTE(index)];
 }
 
-long schedule_duration(SCHEDULE *sch,			/**< the schedule to read */
+int32 schedule_duration(SCHEDULE *sch,			/**< the schedule to read */
 					   SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
 	int block = (sch->index[GET_CALENDAR(index)][GET_MINUTE(index)]>>6)&MAXBLOCKS; // these change if MAXVALUES or MAXBLOCKS changes
@@ -834,7 +834,7 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 	static TIMESTAMP last_t = 0;
 	static SCHEDULEINDEX index = {0};
 	double value;
-	long dtnext;
+	int32 dtnext;
 	
 	/* get the current schedule status */
 	if (t!=last_t) {

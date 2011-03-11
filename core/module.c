@@ -460,21 +460,21 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	return last_module;
 }
 
-int module_setvar(MODULE *mod, char *varname, char *value)
+int module_setvar(MODULE *mod, const char *varname, char *value)
 {
 	char modvarname[1024];
 	sprintf(modvarname,"%s::%s",mod->name,varname);
 	return global_setvar(modvarname,value)==SUCCESS;
 }
 
-void* module_getvar(MODULE *mod, char *varname, char *value, unsigned int size)
+void* module_getvar(MODULE *mod, const char *varname, char *value, unsigned int size)
 {
 	char modvarname[1024];
 	sprintf(modvarname,"%s::%s",mod->name,varname);
 	return global_getvar(modvarname,value,size);
 }
 
-void* module_getvar_old(MODULE *mod, char *varname, char *value, unsigned int size)
+void* module_getvar_old(MODULE *mod, const char *varname, char *value, unsigned int size)
 {
 	if (mod->getvar!=NULL)
 	{
@@ -495,7 +495,7 @@ void* module_getvar_old(MODULE *mod, char *varname, char *value, unsigned int si
 		return 0;
 }
 
-double* module_getvar_addr(MODULE *mod, char *varname)
+double* module_getvar_addr(MODULE *mod, const char *varname)
 {
 	char modvarname[1024];
 	GLOBALVAR *var;
@@ -716,7 +716,7 @@ MODULE *module_find(char *modname)
 
 }
 
-int module_import(MODULE *mod, char *filename)
+int module_import(MODULE *mod, const char *filename)
 {
 	if (mod->import_file == NULL)
 	{
@@ -726,7 +726,7 @@ int module_import(MODULE *mod, char *filename)
 	return (*mod->import_file)(filename);
 }
 
-int module_save(MODULE *mod, char *filename)
+int module_save(MODULE *mod, const char *filename)
 {
 	if (mod->export_file == NULL)
 	{
@@ -764,7 +764,7 @@ int module_check(MODULE *mod)
 	return (*mod->check)();
 }
 
-void module_libinfo(char *module_name)
+void module_libinfo(const char *module_name)
 {
 	MODULE *mod = module_load(module_name,0,NULL);
 	if (mod!=NULL)

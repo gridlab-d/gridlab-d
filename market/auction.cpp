@@ -21,7 +21,7 @@ auction *auction::defaults = NULL;
 STATISTIC *auction::stats = NULL;
 TIMESTAMP auction::longest_statistic = 0;
 int auction::statistic_check = -1;
-size_t auction::statistic_count = 0;
+uint32 auction::statistic_count = 0;
 
 static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_POSTTOPDOWN;
@@ -343,7 +343,7 @@ int auction::init(OBJECT *parent)
 	}
 
 	// initialize latency queue
-	latency_count = (size_t)(latency / period + 2);
+	latency_count = (uint32)(latency / period + 2);
 	latency_stride = sizeof(MARKETFRAME) + statistic_count * sizeof(double);
 	framedata = (MARKETFRAME *)malloc(latency_stride * latency_count);
 	memset(framedata, 0, latency_stride * latency_count);
@@ -370,7 +370,7 @@ int auction::init(OBJECT *parent)
 		statdata = (double *)malloc(sizeof(double) * statistic_count);
 	}
 	if(longest_statistic > 0){
-		history_count = (size_t)longest_statistic / (size_t)(this->period) + 2;
+		history_count = (uint32)longest_statistic / (uint32)(this->period) + 2;
 		new_prices = (double *)malloc(sizeof(double) * history_count);
 	} else {
 		history_count = 1;
@@ -496,7 +496,7 @@ int auction::init_statistics(){
 int auction::update_statistics(){
 	OBJECT *obj = OBJECTHDR(this);
 	STATISTIC *current = 0;
-	size_t sample_need = 0;
+	uint32 sample_need = 0;
 	unsigned int start = 0, stop = 0;
 	unsigned int i = 0;
 	unsigned int idx = 0;
@@ -517,7 +517,7 @@ int auction::update_statistics(){
 	}
 	for(current = stats; current != 0; current = current->next){
 		mean = 0.0;
-		sample_need = (size_t)(current->interval / this->period);
+		sample_need = (uint32)(current->interval / this->period);
 		if(current->stat_mode == ST_CURR){
 			stop = price_index;
 		} else if(current->stat_mode == ST_PAST){
@@ -581,7 +581,7 @@ int auction::push_market_frame(TIMESTAMP t1){
 	STATISTIC *stat = stats;
 	double *stats = 0;
 	int64 frame_addr = latency_stride * latency_back + (int64)framedata;
-	size_t i = 0;
+	uint32 i = 0;
 	if((latency_back + 1) % latency_count == latency_front){
 		gl_error("market latency queue is overwriting as-yet unused data, so is not long enough or is not consuming data");
 		/* TROUBLESHOOT
@@ -659,7 +659,7 @@ TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	OBJECT *obj = OBJECTHDR(this);
 	STATISTIC *stat = stats;
 	double *stats = 0;
-	size_t i = 0;
+	uint32 i = 0;
 	if(latency_front == latency_back){
 		gl_verbose("market latency queue has no data");
 		return TS_NEVER;

@@ -21,7 +21,11 @@
 #define isfinite _finite
 #endif
 
-#define int64 long long
+# if __WORDSIZE == 64
+#define int64 long int /**< standard version of 64-bit integers */
+#else
+#define int64 long long /**< standard version of 64-bit integers */
+#endif
 
 typedef enum {I='i',J='j',A='d'} CNOTATION; /**< complex number notation to use */
 #define CNOTATION_DEFAULT J /* never set this to A */
@@ -352,7 +356,8 @@ typedef char char8[9]; /** string up to 8 characters */
 typedef char int8; /** 8-bit integers */
 typedef short int16; /** 16-bit integers */
 typedef int int32; /* 32-bit integers */
-typedef long enumeration; /* enumerations (any one of a list of values) */
+typedef unsigned int uint32; /* 32-bit integers */
+typedef int32 enumeration; /* enumerations (any one of a list of values) */
 typedef TIMESTAMP timestamp;
 typedef struct s_object_list* object; /* GridLAB objects */
 typedef unsigned int64 set; /* sets (each of up to 64 values may be defined) */
@@ -453,7 +458,7 @@ typedef struct s_globalvar {
 	char name[256];
 	PROPERTY *prop;
 	struct s_globalvar *next;
-	unsigned long flags;
+	uint32 flags;
 } GLOBALVAR;
 
 typedef enum {
@@ -472,7 +477,7 @@ typedef struct s_exception_handler {
 
 typedef struct s_keyword KEYWORD;
 
-typedef unsigned long PROPERTYFLAGS;
+typedef uint32 PROPERTYFLAGS;
 #define PF_RECALC	0x0001 /**< property has a recalc trigger (only works if recalc_<class> is exported) */
 #define PF_CHARSET	0x0002 /**< set supports single character keywords (avoids use of |) */
 
@@ -480,7 +485,7 @@ struct s_property_map {
 	CLASS *oclass; /**< class implementing the property */
 	PROPERTYNAME name; /**< property name */
 	PROPERTYTYPE ptype; /**< property type */
-	unsigned long size; /**< property array size */
+	uint32 size; /**< property array size */
 	PROPERTYACCESS access; /**< property access flags */
 	UNIT *unit; /**< property unit, if any; \p NULL if none */
 	PROPERTYADDR addr; /**< property location, offset from OBJECT header */
@@ -509,7 +514,7 @@ struct s_delegatedvalue {
 }; /**< a delegation entry */
 struct s_keyword {
 	char name[32];
-	unsigned long value;
+	uint32 value;
 	struct s_keyword *next;
 };
 struct s_module_list {
@@ -611,7 +616,7 @@ struct s_object_list {
 	int tp_affinity; /**< threadpool processor affinity */
 	NAMESPACE *space; /**< namespace of object */
 	unsigned int lock; /**< object lock */
-	unsigned long flags; /**< object flags */
+	uint32 flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 }; /**< Object header structure */
 
@@ -643,7 +648,7 @@ struct s_schedule {
 	char blockname[MAXBLOCKS][64];		/**< the name of each block */
 	unsigned char block;				/**< the last block used (4 max) */
 	unsigned char index[14][366*24*60];	/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */
-	unsigned long dtnext[14][366*24*60];/**< the time until the next schedule change (in minutes) */
+	uint32 dtnext[14][366*24*60];/**< the time until the next schedule change (in minutes) */
 	double data[MAXBLOCKS*MAXVALUES];	/**< the list of values used in each block */
 	unsigned int weight[MAXBLOCKS*MAXVALUES];	/**< the weight (in minutes) associate with each value */
 	double sum[MAXBLOCKS];				/**< the sum of values for each block -- used to normalize */
@@ -766,8 +771,8 @@ typedef enum {
 	#include <intrin.h>
 	#pragma intrinsic(_InterlockedCompareExchange)
 	#pragma intrinsic(_InterlockedIncrement)
-	#define atomic_compare_and_swap(dest, comp, xchg) (_InterlockedCompareExchange((long *) dest, xchg, comp) == comp)
-	#define atomic_increment(ptr) _InterlockedIncrement((long *) ptr)
+	#define atomic_compare_and_swap(dest, comp, xchg) (_InterlockedCompareExchange((int32 *) dest, xchg, comp) == comp)
+	#define atomic_increment(ptr) _InterlockedIncrement((int32 *) ptr)
 	#ifndef inline
 		#define inline __inline
 	#endif
@@ -832,7 +837,7 @@ typedef struct s_callbacks {
 		FUNCTIONADDR (*get)(char*,char*);
 	} function;
 	int (*define_enumeration_member)(CLASS*,char*,char*,enumeration);
-	int (*define_set_member)(CLASS*,char*,char*,unsigned long);
+	int (*define_set_member)(CLASS*,char*,char*,uint32);
 	int (*set_dependent)(OBJECT*,OBJECT*);
 	int (*set_parent)(OBJECT*,OBJECT*);
 	int (*set_rank)(OBJECT*,unsigned int);
@@ -944,7 +949,7 @@ typedef struct s_callbacks {
 		SCHEDULE *(*create)(char *name, char *definition);
 		SCHEDULEINDEX (*index)(SCHEDULE *sch, TIMESTAMP ts);
 		double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
-		long (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
+		int32 (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
 		SCHEDULE *(*find)(char *name);
 	} schedule;
 	struct {
@@ -1156,7 +1161,7 @@ inline double gl_schedule_value(SCHEDULE *sch, SCHEDULEINDEX index)
 	return callback->schedule.value(sch,index);
 }
 
-inline long gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
+inline int32 gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
 {
 	return callback->schedule.dtnext(sch,index);
 }

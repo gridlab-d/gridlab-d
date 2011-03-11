@@ -32,6 +32,7 @@
 #ifndef _SCHEDULE_H
 #define _SCHEDULE_H
 
+#include "class.h"
 #include "timestamp.h"
 
 #define MAXBLOCKS 4
@@ -39,7 +40,7 @@
 #define GET_BLOCK(I) ((I)>>6)&0x02)
 #define GET_VALUE(I) ((I)&0x3f)
 
-typedef unsigned long SCHEDULEINDEX;
+typedef uint32 SCHEDULEINDEX;
 #define GET_CALENDAR(N) (((N)>>20)&0x0f)
 #define GET_MINUTE(N) ((N)&0x0fffff)
 #define SET_CALENDAR(N,X) (N)|=(((X)&0x0f)<<20)
@@ -112,7 +113,7 @@ int schedule_validate(SCHEDULE *sch, int flags);
 int schedule_normalize(SCHEDULE *sch, int flags);
 SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts);
 double schedule_value(SCHEDULE *sch, SCHEDULEINDEX index);
-long schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
+int32 schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
 TIMESTAMP schedule_sync(SCHEDULE *sch, TIMESTAMP t);
 TIMESTAMP schedule_syncall(TIMESTAMP t);
 TIMESTAMP scheduletransform_syncall(TIMESTAMP t, XFORMSOURCE restrict);

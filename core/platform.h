@@ -12,6 +12,8 @@
 #ifndef _PLATFORM_H
 #define _PLATFORM_H
 
+#include "config.h"
+
 #ifdef WIN32
 #if 0 /* not cooperating yet, needed for GLPATH expansion in exec_init() -mh*/
 #include <Windows.h>
@@ -39,7 +41,11 @@
 #endif
 #define strlwr _strlwr
 #else /* !WIN32 */
+# if __WORDSIZE == 64
+#define int64 long int /**< standard version of 64-bit integers */
+#else
 #define int64 long long /**< standard version of 64-bit integers */
+#endif
 #define FMT_INT64 "ll" /**< standard version of 64-bit integer printf format string */
 #define atoi64 atoll	/**< standard version of 64-bit atoi */
 #define stricmp strcasecmp	/**< deprecated stricmp */

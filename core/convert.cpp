@@ -519,7 +519,7 @@ int convert_from_char8(char *buffer, /**< pointer to the string buffer */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
 	char temp[1025];
-	char *format = "%s";
+	const char *format = "%s";
 	int count = 0;
 	if (strchr((char*)data,' ')!=NULL || strchr((char*)data,';')!=NULL || ((char*)data)[0]=='\0')
 		format = "\"%s\"";
@@ -562,7 +562,7 @@ int convert_from_char32(char *buffer, /**< pointer to the string buffer */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
 	char temp[1025];
-	char *format = "%s";
+	const char *format = "%s";
 	int count = 0;
 	if (strchr((char*)data,' ')!=NULL || strchr((char*)data,';')!=NULL || ((char*)data)[0]=='\0')
 		format = "\"%s\"";
@@ -605,7 +605,7 @@ int convert_from_char256(char *buffer, /**< pointer to the string buffer */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
 	char temp[1025];
-	char *format = "%s";
+	const char *format = "%s";
 	int count = 0;
 	if (strchr((char*)data,' ')!=NULL || strchr((char*)data,';')!=NULL || ((char*)data)[0]=='\0')
 		format = "\"%s\"";
@@ -649,7 +649,7 @@ int convert_from_char1024(char *buffer, /**< pointer to the string buffer */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
 	char temp[4097];
-	char *format = "%s";
+	const char *format = "%s";
 	int count = 0;
 	if (strchr((char*)data,' ')!=NULL || strchr((char*)data,';')!=NULL || ((char*)data)[0]=='\0')
 		format = "\"%s\"";

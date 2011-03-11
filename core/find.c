@@ -570,12 +570,12 @@ int compare_integer64_gt(void *a, FINDVALUE b) { return *(int64*)a>(int64)b.inte
 int compare_integer64_le(void *a, FINDVALUE b) { return *(int64*)a<=(int64)b.integer;}
 int compare_integer64_ge(void *a, FINDVALUE b) { return *(int64*)a>=(int64)b.integer;}
 
-int compare_integer_eq(void *a, FINDVALUE b) { return *(long*)a==(long)b.integer;}
-int compare_integer_ne(void *a, FINDVALUE b) { return *(long*)a!=(long)b.integer;}
-int compare_integer_lt(void *a, FINDVALUE b) { return *(long*)a<(long)b.integer;}
-int compare_integer_gt(void *a, FINDVALUE b) { return *(long*)a>(long)b.integer;}
-int compare_integer_le(void *a, FINDVALUE b) { return *(long*)a<=(long)b.integer;}
-int compare_integer_ge(void *a, FINDVALUE b) { return *(long*)a>=(long)b.integer;}
+int compare_integer_eq(void *a, FINDVALUE b) { return *(int32*)a==(int32)b.integer;}
+int compare_integer_ne(void *a, FINDVALUE b) { return *(int32*)a!=(int32)b.integer;}
+int compare_integer_lt(void *a, FINDVALUE b) { return *(int32*)a<(int32)b.integer;}
+int compare_integer_gt(void *a, FINDVALUE b) { return *(int32*)a>(int32)b.integer;}
+int compare_integer_le(void *a, FINDVALUE b) { return *(int32*)a<=(int32)b.integer;}
+int compare_integer_ge(void *a, FINDVALUE b) { return *(int32*)a>=(int32)b.integer;}
 
 int compare_real_eq(void *a, FINDVALUE b) { return *(double*)a==b.real;}
 int compare_real_ne(void *a, FINDVALUE b) { return *(double*)a!=b.real;}

@@ -938,7 +938,7 @@ inline double gl_schedule_value(SCHEDULE *sch, SCHEDULEINDEX index)
 	return callback->schedule.value(sch,index);
 }
 
-inline long gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
+inline int32 gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
 {
 	return callback->schedule.dtnext(sch,index);
 }

@@ -197,7 +197,7 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 //		gl_error("csv_reader::read_prop ~ unable to set property \'%s\' to \'%s\'", propstr, valstr);
 //		return 0;
 //	}	
-	void *addr = (void *)((unsigned long long int)this + (unsigned long long int)prop->addr);
+	void *addr = (void *)((uint64)this + (uint64)prop->addr);
 	if(prop->ptype == PT_double){
 		if(1 != sscanf(valstr, "%lg", addr)){
 			gl_error("csv_reader::read_prop ~ unable to set property \'%s\' to \'%s\'", propstr, valstr);
@@ -339,7 +339,7 @@ int csv_reader::read_line(char *line){
 
 	while((token=strtok(NULL, ",\n\r")) != 0 && col < column_ct){
 		if(columns[col]->ptype == PT_double){
-			double *dptr = (double *)((unsigned long long int)(columns[col]->addr) + (unsigned long long int)(sample));
+			double *dptr = (double *)((uint64)(columns[col]->addr) + (uint64)(sample));
 			if(sscanf(token, "%lg", dptr) != 1){
 				gl_error("csv_reader::read_line ~ unable to set value \'%s\' to double property \'%s\'", token, columns[col]->name);
 				/* TROUBLESHOOT

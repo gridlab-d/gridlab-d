@@ -33,7 +33,7 @@ typedef struct s_globalvar {
 	char name[256];
 	PROPERTY *prop;
 	struct s_globalvar *next;
-	unsigned long flags;
+	uint32 flags;
 	void (*callback)(char *); // this function will be called whenever the globalvar is set
 } GLOBALVAR;
 

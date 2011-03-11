@@ -77,7 +77,7 @@ static struct s_property_specs { /**<	the property type conversion specification
 	{"void", 0, convert_from_void,convert_to_void},
 	{"double", sizeof(double), convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double},
 	{"complex", sizeof(complex), convert_from_complex,convert_to_complex},
-	{"enumeration",sizeof(long), convert_from_enumeration,convert_to_enumeration},
+	{"enumeration",sizeof(int32), convert_from_enumeration,convert_to_enumeration},
 	{"set",sizeof(int64), convert_from_set,convert_to_set},
 	{"int16", sizeof(int16), convert_from_int16,convert_to_int16},
 	{"int32", sizeof(int32), convert_from_int32,convert_to_int32},
@@ -87,7 +87,7 @@ static struct s_property_specs { /**<	the property type conversion specification
 	{"char256", sizeof(char256), convert_from_char256,convert_to_char256},
 	{"char1024", sizeof(char1024), convert_from_char1024,convert_to_char1024},
 	{"object", sizeof(OBJECT*), convert_from_object,convert_to_object},
-	{"delegated", (size_t)-1, convert_from_delegated, convert_to_delegated},
+	{"delegated", (unsigned int)-1, convert_from_delegated, convert_to_delegated},
 	{"bool", sizeof(unsigned int), convert_from_boolean, convert_to_boolean},
 	{"timestamp", sizeof(int64), convert_from_timestamp_stub, convert_to_timestamp_stub},
 	{"double_array", sizeof(double), convert_from_double_array, convert_to_double_array},
@@ -168,7 +168,7 @@ PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop)
 /** Get the size of a single instance of a property
 	@return the size in bytes of the a property
  **/
-unsigned long property_size(PROPERTY *prop)
+uint32 property_size(PROPERTY *prop)
 {
 	if (prop && prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
 		return property_type[prop->ptype].size;
@@ -176,7 +176,7 @@ unsigned long property_size(PROPERTY *prop)
 		return 0;
 }
 
-unsigned long property_size_by_type(PROPERTYTYPE type)
+uint32 property_size_by_type(PROPERTYTYPE type)
 {
 	return property_type[type].size;
 }
@@ -762,7 +762,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			else if (proptype==PT_KEYWORD && prop->ptype==PT_enumeration)
 			{
 				char *keyword = va_arg(arg,char*);
-				long keyvalue = va_arg(arg,long);
+				int32 keyvalue = va_arg(arg,int32);
 				if (!class_define_enumeration_member(oclass,prop->name,keyword,keyvalue))
 				{
 					errno = EINVAL;
@@ -814,7 +814,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			}
 			else if (proptype==PT_SIZE)
 			{
-				prop->size = va_arg(arg,unsigned long);
+				prop->size = va_arg(arg,uint32);
 				if (prop->size<1)
 				{
 					errno = EINVAL;

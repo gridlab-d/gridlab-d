@@ -17,10 +17,10 @@ struct s_module_list {
 	CLASS *oclass;
 	unsigned short major;
 	unsigned short minor;
-	void* (*getvar)(char *varname,char *value,unsigned int size);
-	int (*setvar)(char *varname,char *value);
-	int (*import_file)(char *file);
-	int (*export_file)(char *file);
+	void* (*getvar)(const char *varname,char *value,unsigned int size);
+	int (*setvar)(const char *varname,char *value);
+	int (*import_file)(const char *file);
+	int (*export_file)(const char *file);
 	int (*check)();
 #ifndef _NO_CPPUNIT
 	int (*module_test)(TEST_CALLBACKS *callbacks,int argc,char* argv[]);
@@ -47,17 +47,17 @@ extern "C" {
 	int module_get_path(char *buf, int len, MODULE *mod);
 	MODULE *module_find(char *module_name);
 	MODULE *module_load(const char *file, int argc, char *argv[]);
-	void* module_getvar(MODULE *mod, char *varname, char *value, unsigned int size);
-	double *module_getvar_addr(MODULE *mod, char *varname);
+	void* module_getvar(MODULE *mod, const char *varname, char *value, unsigned int size);
+	double *module_getvar_addr(MODULE *mod, const char *varname);
 	int module_depends(char *name, unsigned char major, unsigned char minor, unsigned short build);
-	int module_setvar(MODULE *mod, char *varname, char *value);
-	int module_import(MODULE *mod, char *filename);
+	int module_setvar(MODULE *mod, const char *varname, char *value);
+	int module_import(MODULE *mod, const char *filename);
 	int module_check(MODULE *mod);
 	int module_checkall();
 	int module_saveall(FILE *fp);
 	int module_saveall_xml(FILE *fp);
 	int module_dumpall();
-	void module_libinfo(char *module_name);
+	void module_libinfo(const char *module_name);
 #ifndef _NO_CPPUNIT
 	int module_test(TEST_CALLBACKS *callbacks,int argc,char* argv[]);
 #endif

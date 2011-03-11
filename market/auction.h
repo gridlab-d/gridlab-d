@@ -118,7 +118,7 @@ public:
 	double *statdata;
 	unsigned int price_index;
 	unsigned int64 price_count;
-	size_t history_count;
+	uint32 history_count;
 	// latency market frame queue
 	MARKETFRAME next_frame;
 	MARKETFRAME past_frame;
@@ -128,12 +128,12 @@ public:
 	MARKETFRAME *back;
 	unsigned int latency_front;
 	unsigned int latency_back;
-	size_t latency_count;
-	size_t latency_stride;
+	uint32 latency_count;
+	uint32 latency_stride;
 	// statics
 	static STATISTIC *stats;
 	static TIMESTAMP longest_statistic;
-	static size_t statistic_count;
+	static uint32 statistic_count;
 	static int statistic_check;
 public:
 	double unresponsive_buy, unresponsive_sell;

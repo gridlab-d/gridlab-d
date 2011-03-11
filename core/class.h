@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <time.h>
 
+#include "config.h"
 #include "platform.h"
 #include "complex.h"
 #include "unit.h"
@@ -32,7 +33,7 @@ typedef char char8[9]; /** string up to 8 characters */
 typedef int8_t    int8;     /* 8-bit integers */
 typedef int16_t   int16;    /* 16-bit integers */
 typedef int32_t   int32;    /* 32-bit integers */
-//typedef uint32_t  uint32;   /* unsigned 32-bit integers */
+typedef uint32_t  uint32;   /* unsigned 32-bit integers */
 typedef uint64_t  uint64;   /* unsigned 64-bit integers */
 typedef uint64    set;      /* sets (each of up to 64 values may be defined) */
 #else /* no HAVE_STDINT_H */
@@ -40,9 +41,9 @@ typedef char int8; /** 8-bit integers */
 typedef short int16; /** 16-bit integers */
 typedef int int32; /* 32-bit integers */
 typedef unsigned int64 set; /* sets (each of up to 64 values may be defined) */
-#endif /* HAVE_STDINT_H */
-typedef long enumeration; /* enumerations (any one of a list of values) */
 typedef unsigned int uint32; /* unsigned 32-bit integers */
+#endif /* HAVE_STDINT_H */
+typedef uint32 enumeration; /* enumerations (any one of a list of values) */
 typedef struct s_object_list* object; /* GridLAB objects */
 typedef double triplet[3];
 typedef complex triplex[3];
@@ -155,7 +156,7 @@ typedef struct s_keyword {
 	struct s_keyword *next;
 } KEYWORD;
 
-typedef unsigned long PROPERTYFLAGS;
+typedef uint32 PROPERTYFLAGS;
 #define PF_RECALC	0x0001 /**< property has a recalc trigger (only works if recalc_<class> is exported) */
 #define PF_CHARSET	0x0002 /**< set supports single character keywords (avoids use of |) */
 #define PT_EXTENDED 0x0004 /**< indicates that the property was added at runtime */
@@ -166,7 +167,7 @@ typedef struct s_property_map {
 	CLASS *oclass; /**< class implementing the property */
 	PROPERTYNAME name; /**< property name */
 	PROPERTYTYPE ptype; /**< property type */
-	unsigned long size; /**< property array size */
+	uint32 size; /**< property array size */
 	PROPERTYACCESS access; /**< property access flags */
 	UNIT *unit; /**< property unit, if any; \p NULL if none */
 	PROPERTYADDR addr; /**< property location, offset from OBJECT header */
@@ -269,8 +270,8 @@ FUNCTIONADDR class_get_function(char *classname, char *functionname);
 DELEGATEDTYPE *class_register_type(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));
 int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...);
 
-unsigned long property_size(PROPERTY *prop);
-unsigned long property_size_by_type(PROPERTYTYPE type);
+uint32 property_size(PROPERTY *prop);
+uint32 property_size_by_type(PROPERTYTYPE type);
 int property_create(PROPERTY *prop, void *addr);
 PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation);
 
