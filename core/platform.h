@@ -12,7 +12,9 @@
 #ifndef _PLATFORM_H
 #define _PLATFORM_H
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #ifdef WIN32
 #if 0 /* not cooperating yet, needed for GLPATH expansion in exec_init() -mh*/
@@ -41,7 +43,7 @@
 #endif
 #define strlwr _strlwr
 #else /* !WIN32 */
-# if __WORDSIZE == 64
+#if __WORDSIZE == 64
 #define int64 long int /**< standard version of 64-bit integers */
 #else
 #define int64 long long /**< standard version of 64-bit integers */
