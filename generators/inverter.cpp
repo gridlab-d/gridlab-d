@@ -939,6 +939,8 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,inverter)->init(parent);
+		else
+			return 0;
 	}
 	INIT_CATCHALL(inverter);
 }

@@ -391,12 +391,12 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 			if (duty_cycle > phase) // OFF->ON, a bit of an offset for rounding
 			{
 				multiplier = 1;
-				next_time = t1 + (period * 3600) * (duty_cycle - phase) + 1;
+				next_time = t1 + (TIMESTAMP)((period * 3600) * (duty_cycle - phase) + 1);
 			}
 			else					// ON->OFF
 			{
 				multiplier = 0;
-				next_time = t1 + (period * 3600) * (1 - phase) + 1;
+				next_time = t1 + (TIMESTAMP)((period * 3600) * (1 - phase) + 1);
 			}
 		}
 	}

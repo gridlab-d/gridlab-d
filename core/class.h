@@ -44,6 +44,7 @@ typedef short int16; /** 16-bit integers */
 typedef int int32; /* 32-bit integers */
 typedef unsigned int64 set; /* sets (each of up to 64 values may be defined) */
 typedef unsigned int uint32; /* unsigned 32-bit integers */
+typedef unsigned int64 uint64;
 #endif /* HAVE_STDINT_H */
 typedef uint32 enumeration; /* enumerations (any one of a list of values) */
 typedef struct s_object_list* object; /* GridLAB objects */
