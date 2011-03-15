@@ -558,7 +558,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			/* TROUBLESHOOT
 				The runtime class compiler needs to find the file rt/gridlabd.h and uses either the <i>include</i> global variable or the <b>gridlabd</b> 
 				environment variable to find it.  Check the definition of the <b>gridlabd</b> environment variable or use the 
-				<code>#define include=<i>path</i></code> to specify the path to the <code>rt/gridlabd.h<code>.
+				<code>#define include=<i>path</i></code> to specify the path to the <code>rt/gridlabd.h</code>.
 			 */
 			return FAILED;
 		}
