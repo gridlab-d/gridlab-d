@@ -17,7 +17,7 @@ class currdump
 public:
 	TIMESTAMP runtime;
 	char32 group;
-	char32 filename;
+	char256 filename;
 	int32 runcount;
 	CDMODE mode;
 public:
