@@ -732,6 +732,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"total_load",PADDR(total_load),
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
 			PT_double,"design_internal_gain_density[W/sf]",PADDR(design_internal_gain_density),PT_DESCRIPTION,"average density of heat generating devices in the house",
+			PT_bool,"compressor_on",PADDR(compressor_on),
+			PT_int64,"compressor_count",PADDR(compressor_count),
 			PT_timestamp,"hvac_last_on",PADDR(hvac_last_on),
 			PT_timestamp,"hvac_last_off",PADDR(hvac_last_off),
 			PT_double,"hvac_period_length",PADDR(hvac_period_length),
@@ -988,7 +990,7 @@ int house_e::init_climate()
 
 int house_e::isa(char *classname)
 {
-	return (strcmp(classname,"clotheswasher")==0 || residential_enduse::isa(classname));
+	return (strcmp(classname,"house")==0 || residential_enduse::isa(classname));
 }
 
 void house_e::set_thermal_integrity(){
@@ -1472,7 +1474,7 @@ int house_e::init(OBJECT *parent)
 		if(heating_system_type == HT_UNKNOWN)		heating_system_type = HT_HEAT_PUMP;
 		if(cooling_system_type == CT_UNKNOWN)		cooling_system_type = CT_ELECTRIC;
 		if(fan_type == FT_UNKNOWN)					fan_type = FT_ONE_SPEED;
-		if(auxiliary_system_type == AT_UNKNOWN){
+		if(auxiliary_system_type == AT_UNKNOWN && heating_system_type == HT_HEAT_PUMP){
 			auxiliary_system_type = AT_ELECTRIC;
 			auxiliary_strategy = AX_DEADBAND;
 		}
@@ -2076,6 +2078,19 @@ void house_e::update_system(double dt)
 	else if (system_mode == SM_AUX || system_mode == SM_HEAT)
 		last_heating_load = hvac_load;
 	hvac_power = load.power + load.admittance*load.voltage_factor*load.voltage_factor + load.current*load.voltage_factor;
+	// increment compressor_count?
+	if(compressor_on){
+		// should it be off?
+		if(system_mode == SM_AUX || system_mode == SM_OFF){
+			compressor_on = false;
+		}
+	} else {
+		if(	(system_mode == SM_HEAT && heating_system_type == HT_HEAT_PUMP) ||
+			(system_mode == SM_COOL && cooling_system_type == CT_ELECTRIC)){
+			compressor_on = true;
+			++compressor_count;
+		}
+	}
 }
 
 /**  Updates the aggregated power from all end uses, calculates the HVAC kWh use for the next synch time
@@ -2349,23 +2364,23 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		TauxOn = TheatOn-aux_heat_deadband;
 	}
 
+	// check for thermostat cycle lockout
+	if(t1 < thermostat_last_cycle_time + thermostat_cycle_time){
+		return (thermostat_last_cycle_time + thermostat_cycle_time); // next time will be calculated in sync_model
+	}
+
 	// skip the historisis and turn on or off, if the HVAC is in a state where it _could_ be on or off.
 	if (this->re_override == OV_ON){
 		TcoolOn = TcoolOff;
 		TheatOn = TheatOff;
 		re_override = OV_NORMAL;
-		thermostat_last_cycle_time = gl_globalclock - thermostat_cycle_time - 1;
+//		thermostat_last_cycle_time = gl_globalclock - thermostat_cycle_time - 1;
 	} else if(this->re_override == OV_OFF){
 		TcoolOff = TcoolOn;
 		TheatOff = TheatOn;
 		re_override = OV_NORMAL;
-		thermostat_last_cycle_time = gl_globalclock - thermostat_cycle_time - 1;
+//		thermostat_last_cycle_time = gl_globalclock - thermostat_cycle_time - 1;
 	} 
-
-	// check for thermostat cycle lockout
-	if(t1 < thermostat_last_cycle_time + thermostat_cycle_time){
-		return TS_NEVER; // next time will be calculated in sync_model
-	}
 
 	if(t0 < thermostat_last_cycle_time + last_mode_timer){
 		last_system_mode = SM_OFF;
@@ -2586,7 +2601,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					c->status = BRK_FAULT;
 					c->reclose = TS_NEVER;
-					gl_warning("house_e:%d circuit breaker %d failed - enduse %s is no longer running", obj->id, c->id, c->pLoad->name);
+					gl_warning("house_e:%d, %s circuit breaker %d failed - enduse %s is no longer running", obj->id, obj->name, c->id, c->pLoad->name);
 				}
 
 				// must immediately reevaluate everything
