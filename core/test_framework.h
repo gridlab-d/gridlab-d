@@ -4,8 +4,6 @@
 #ifndef _TESTFRAMEWORK_H
 #define _TESTFRAMEWORK_H
 
-#ifndef _NO_CPPUNIT
-
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/TestResult.h>
 #include <cppunit/TestResultCollector.h>
@@ -15,6 +13,8 @@
 #include <cppunit/TextOutputter.h>
 #include "gridlabd.h"
 #include "test_callbacks.h"
+
+#ifndef _NO_CPPUNIT
 
 TEST_CALLBACKS *local_callbacks;
 

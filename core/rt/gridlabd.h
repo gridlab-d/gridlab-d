@@ -32,6 +32,8 @@ typedef enum {I='i',J='j',A='d'} CNOTATION; /**< complex number notation to use 
 #define PI 3.1415926535897932384626433832795
 #define E 2.71828182845905
 
+#define _NO_CPPUNIT
+
 /* only cpp code may actually do complex math */
 class complex {
 private:
@@ -970,6 +972,7 @@ typedef struct s_callbacks {
 		double (*read)(FORECAST *fc, TIMESTAMP *ts); 
 		void (*save)(FORECAST *fc, TIMESTAMP *ts, int32 tstep, int n_values, double *data);
 	} forecast;
+//	unsigned long (*property_size)(PROPERTY *prop);
 } CALLBACKS; /**< core callback function table */
 
 extern CALLBACKS *callback;
