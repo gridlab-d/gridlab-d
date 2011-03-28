@@ -400,7 +400,7 @@ TIMESTAMP compute_dstevent(int year, SPEC *spec, time_t offset){
 	}
 	
 	day1 = (ndays + DOW0+7)%7; /* weekday of first day of month */
-	d = ((8 - day1) + (spec->nth - 1) * 7);
+	d = ((7 - day1)%7+1 + (spec->nth - 1) * 7);
 	
 	while(d > daysinmonth[m] + ((m == 1 && ISLEAPYEAR(y)) ? 1 : 0)){
 		d -= 7;
