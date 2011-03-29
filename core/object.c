@@ -1055,6 +1055,10 @@ OBJECT *object_get_next(OBJECT *obj){ /**< the object from which to start */
 static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	OBJECTRANK parent_rank = -1;
+	if(obj == NULL){
+		output_error("set_rank called for a null object");
+		return -1;
+	}
 	if(rank >= object_get_count()){
 		output_error("%s: set_rank wigging out, rank > object count", object_name(first));
 		/*	TROUBLESHOOT
@@ -1103,11 +1107,17 @@ int object_set_rank(OBJECT *obj, /**< the object to set */
 }
 
 /** Set the parent of an object
-	@return the rank of the object after parent was set
+	@obj	the object that is setting a new parent
+	@parent	the new parent for obj.  May be null, removing the object's parent.
+	@return the rank of the object after parent was set, must be equal to or greater than original rank and greater than parent's rank.
  **/
 int object_set_parent(OBJECT *obj, /**< the object to set */
 					  OBJECT *parent) /**< the new parent of the object */
 {
+	if(obj == NULL){
+		output_error("object_set_parent was called with a null pointer");
+		return -1;
+	}
 	if(obj == parent){
 		output_error("object %s tried to set itself as its parent", object_name(obj));
 		return -1;
@@ -1126,6 +1136,14 @@ int object_set_parent(OBJECT *obj, /**< the object to set */
 int object_set_dependent(OBJECT *obj, /**< the object to set */
 						 OBJECT *dependent) /**< the dependent object */
 {
+	if(obj == NULL){
+		output_error("object_set_dependent was called with a null pointer");
+		return -1;
+	}
+	if(dependent == NULL){
+		output_error("object %s tried to set a null object as a dependent", object_name(obj));
+		return -1;
+	}
 	if(obj == dependent)
 		return -1;
 	return set_rank(dependent,obj->rank,NULL);
