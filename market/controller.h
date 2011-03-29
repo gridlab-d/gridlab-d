@@ -78,8 +78,8 @@ public:
 	char32 std_target;
 	OBJECT *pMarket;
 	auction *market;
-	int64 lastbid_id;
-	int64 lastmkt_id;
+	KEY lastbid_id;
+	KEY lastmkt_id;
 	double last_p;
 	double last_q;
 	double set_temp;

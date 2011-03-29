@@ -21,7 +21,7 @@ public:
 		double power_stop;		/// Stopping point of this linear section
 		double price;			/// Price at this flat portion
 		double power_delta;		/// Power delta of this linear section (power_stop - power_start)
-		int64 lastbid_id;		/// Last bid ID used for this section
+		KEY	   lastbid_id;		/// Last bid ID used for this section
 	} CURVEDETAILS; /// Bid curve details
 
 	typedef struct s_curveentry {

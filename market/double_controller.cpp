@@ -377,7 +377,7 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	}
 
 	if(bid_mode == BM_ON){
-		int64 bid_id = (lastbid_id == *pMarketID ? lastbid_id : -1);
+		KEY bid_id = (lastbid_id == *pMarketID ? lastbid_id : -1);
 		// override
 		//bid_id = -1;
 

@@ -55,8 +55,8 @@ TIMESTAMP stub_bidder::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if (t1==next_t || next_t==0)
 	{
-		next_t=t1+bid_period;
-		lastbid_id = (int32)submit_bid(market,OBJECTHDR(this),role==BUYER?-quantity:quantity,price,*thismkt_id!=lastmkt_id?new_bid_id:lastbid_id);
+		next_t=t1+(TIMESTAMP)bid_period;
+		lastbid_id = (KEY)submit_bid(market,OBJECTHDR(this),role==BUYER?-quantity:quantity,price,*thismkt_id!=lastmkt_id?new_bid_id:lastbid_id);
 		count--;
 		lastmkt_id = *thismkt_id;
 	}

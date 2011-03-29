@@ -29,8 +29,8 @@ public:
 	int64 *thismkt_id;
 private:
 	int64 next_t;
-	int64 new_bid_id;
-	int32 lastbid_id;
+	KEY new_bid_id;
+	KEY lastbid_id;
 	int64 lastmkt_id;
 };
 

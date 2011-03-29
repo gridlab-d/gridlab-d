@@ -278,7 +278,7 @@ int controller::init(OBJECT *parent){
 		bid_delay = -bid_delay;
 	}
 	if(bid_delay > period){
-		gl_warning("");
+		gl_warning("Bid delay is greater than the controller period. Resetting bid delay to 0.");
 		bid_delay = 0;
 	}
 
@@ -864,11 +864,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 		if(last_q > 0.001){
 			if (pState != 0 ) {
-				int64 bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
+				KEY bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
 				lastbid_id = submit_bid_state(this->pMarket, OBJECTHDR(this), -last_q, last_p, (*pState > 0 ? 1 : 0), bid);
 			}
 			else {
-				int64 bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
+				KEY bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
 				lastbid_id = submit_bid(this->pMarket, OBJECTHDR(this), -last_q, last_p, bid);
 			}
 		}
@@ -876,7 +876,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		{
 			if (last_pState != *pState)
 			{
-				int64 bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
+				KEY bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
 				double my_bid = -market->pricecap;
 				if (*pState != 0)
 					my_bid = last_p;

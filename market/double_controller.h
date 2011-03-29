@@ -83,8 +83,8 @@ public:
 
 	//auction *market;
 	OBJECT *pMarket;
-	int64 lastbid_id;
-	int64 lastmkt_id;
+	KEY lastbid_id;
+	KEY lastmkt_id;
 	double last_price,	bid_price;
 	double last_quant,	bid_quant;
 	double market_period;
