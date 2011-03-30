@@ -1191,18 +1191,21 @@ static int name(PARSER, char *result, int size)
 static int unitspec(PARSER, UNIT **unit)
 {
 	char result[1024];
-	int size=sizeof(result);
+	size_t size = sizeof(result);
 	START;
 	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='$' || *_p=='%' || *_p=='*' || *_p=='/' || *_p=='^') COPY(result);
 	result[_n]='\0';
 	TRY {
-		if ((*unit=unit_find(result))==NULL)
-			REJECT
-		else
-			return (int)strlen(result);
+		if ((*unit=unit_find(result))==NULL){
+			linenum=_l;
+			_n = 0;
+		} else {
+			_n = (int)strlen(result);
+		}
 	}
 	CATCH (char *msg) {
-		REJECT;
+		linenum=_l;
+		_n = 0;
 	}
 	ENDCATCH
 	DONE;

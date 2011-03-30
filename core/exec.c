@@ -383,7 +383,6 @@ static STATUS init_all(void)
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
-		return FAILED;
 	} ENDCATCH;
 	return SUCCESS;
 }
@@ -410,7 +409,6 @@ static STATUS commit_all(TIMESTAMP t0){
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
-		return FAILED;
 	} ENDCATCH;
 	return SUCCESS;
 }
@@ -659,13 +657,14 @@ STATUS exec_start(void)
 
 			/* synchronize all internal schedules */
 			sync.step_to = syncall_internals(global_clock);
-			if(sync.step_to!=TS_NEVER && sync.step_to <= global_clock)
+			if(sync.step_to!=TS_NEVER && sync.step_to <= global_clock){
 				THROW("internal property sync failure");
 				/* TROUBLESHOOT
 					An internal property such as schedule, enduse or loadshape has failed to synchronize and the simulation aborted.
 					This message should be preceded by a more informative message that explains which element failed and why.
 					Follow the troubleshooting recommendations for that message and try again.
 				 */
+			}
 
 			if (!global_debug_mode)
 			{

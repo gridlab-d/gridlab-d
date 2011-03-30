@@ -687,7 +687,6 @@ UNIT *unit_find(char *unit) /**< the name of the unit */
 		if (unit_list==NULL) unit_init();
 	} CATCH (char *msg) {
 		output_error("unit_find(char *unit='%s'): %s", unit,msg);
-		return NULL;
 	}
 	ENDCATCH;
 
@@ -702,7 +701,6 @@ UNIT *unit_find(char *unit) /**< the name of the unit */
 		rv = unit_derived(unit, unit);
 	} CATCH (char *msg) {
 		output_error("unit_find(char *unit='%s'): %s", unit,msg);
-		return NULL;
 	}
 	ENDCATCH;
 
