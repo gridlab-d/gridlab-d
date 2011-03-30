@@ -116,7 +116,8 @@ passive_controller::passive_controller(MODULE *mod)
 			PT_char32,"stdev_observation_property",PADDR(observation_stdev_propname),PT_DESCRIPTION,"the name of the standard deviation observation property",
 /**/		PT_int32,"cycle_length",PADDR(cycle_length),PT_DEPRECATED,PT_DESCRIPTION,"length of time between processing cycles",
 			PT_double,"base_setpoint",PADDR(base_setpoint),PT_DESCRIPTION,"the base setpoint to base control off of",
-			PT_bool,"critical_day",PADDR(critical_day),
+			PT_double,"critical_day",PADDR(critical_day),PT_DESCRIPTION,"used to switch between TOU and CPP days, 1 is CPP, 0 is TOU",
+			PT_bool,"two_tier_cpp",PADDR(check_two_tier_cpp),			
 			PT_double,"daily_elasticity",PADDR(dailyElasticity),
 			PT_double,"sub_elasticity_first_second",PADDR(subElasticityFirstSecond),
 			PT_double,"sub_elasticity_first_third",PADDR(subElasticityFirstThird),
@@ -125,7 +126,8 @@ passive_controller::passive_controller(MODULE *mod)
 			PT_int32,"first_tier_hours",PADDR(firstTierHours),
 			PT_double,"first_tier_price",PADDR(firstTierPrice),
 			PT_double,"second_tier_price",PADDR(secondTierPrice),
-			PT_double,"third_tier_price",PADDR(thirdTierPrice),	
+			PT_double,"third_tier_price",PADDR(thirdTierPrice),
+			PT_double,"price_offset",PADDR(price_offset),			
 			PT_bool,"pool_pump_model",PADDR(pool_pump_model),PT_DESCRIPTION,"Boolean flag for turning on the pool pump version of the DUTYCYCLE control",
 			PT_double,"base_duty_cycle",PADDR(base_duty_cycle),PT_DESCRIPTION,"This is the duty cycle before modification due to the price signal",
 
@@ -165,6 +167,7 @@ int passive_controller::create(){
 	comfort_level = 1.0;
 	zipLoadParent = false;
 	pool_pump_model = false;
+	check_two_tier_cpp = false;
 	return 1;
 }
 
@@ -172,10 +175,6 @@ int passive_controller::init(OBJECT *parent){
 	
 	OBJECT *hdr = OBJECTHDR(this);
 	PROPERTY *enduseProperty;
-
-	if (pool_pump_model == false)
-		gl_set_dependent(hdr, expectation_object);
-	gl_set_dependent(hdr, observation_object);
 
 	if(parent == NULL){
 		gl_error("passive_controller has no parent and will be operating in 'dummy' mode");
@@ -240,6 +239,10 @@ int passive_controller::init(OBJECT *parent){
 		}
 	}
 
+	if (pool_pump_model == false && control_mode != CM_ELASTICITY_MODEL)
+		gl_set_dependent(hdr, expectation_object);
+	gl_set_dependent(hdr, observation_object);
+
 	if(observation_object == NULL){
 		GL_THROW("passive_controller observation_object object is undefined, and can not function");
 	}
@@ -275,20 +278,66 @@ int passive_controller::init(OBJECT *parent){
 	}
 	
 	if(zipLoadParent == true && control_mode == CM_ELASTICITY_MODEL){
+	
+		elasticityPeriod = 24;
 
-		if (firstTierHours == 0)
-			GL_THROW("Please set first tier hours in the Elasticity Model");
-		if (secondTierHours == 0)
-			GL_THROW("Please set second tier prices in the Elasticity Model");
+		if(check_two_tier_cpp == true){
 
-		if (thirdTierHours == 0) thirdTierHours = 24 - (firstTierHours + secondTierHours);
+			if(critical_day >= 0.5){
 
-		elasticityPeriod = firstTierHours + secondTierHours + thirdTierHours;
+				if (thirdTierHours == 0)
+					GL_THROW("Please set third tier prices in the Elasticity Model");
 
-		if (elasticityPeriod != 24)
-			GL_THROW("Please set valid tier hours. The total of all the tier hours is not equal to 24.");
+				firstTierHours = elasticityPeriod - thirdTierHours;
+			}
+			else{
+
+				if (secondTierHours == 0)
+					GL_THROW("Please set second tier prices in the Elasticity Model");
+
+				firstTierHours = elasticityPeriod - secondTierHours;
+			}
+		}
+		else{
+
+			if(firstTierHours == 0)
+			{
+				if(critical_day >= 0.5){
+					
+					if (thirdTierHours == 0)
+						GL_THROW("Please set third tier prices in the Elasticity Model");
+
+					if (secondTierHours == 0)
+						GL_THROW("Please set second tier prices in the Elasticity Model");
+
+					firstTierHours = elasticityPeriod - thirdTierHours - secondTierHours;
+				}
+				else{
+
+					if (secondTierHours == 0)
+						GL_THROW("Please set second tier prices in the Elasticity Model");
+
+					firstTierHours = elasticityPeriod - secondTierHours;
+				}
+			}
+		}
+
+		if(check_two_tier_cpp != true){
+
+			if(critical_day >= 0.5){					
+				if((thirdTierHours+secondTierHours+firstTierHours) != elasticityPeriod)
+					GL_THROW("Please set the tier hours correctly in the Elasticity Model");
+			}
+			else{
+				if((secondTierHours+firstTierHours) != elasticityPeriod)
+					GL_THROW("Please set the tier hours correctly in the Elasticity Model");
+			}
+
+		}
 
 		ArraySize = (int)(((elasticityPeriod * 3600) / period));
+
+		if(price_offset==0) price_offset = 10E-6 ;	
 		
 		tier_prices = (double *)gl_malloc(ArraySize*sizeof(double));
 
@@ -449,12 +498,12 @@ TIMESTAMP passive_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 
 int passive_controller::calc_elasticity(TIMESTAMP t0, TIMESTAMP t1){
 
-
+	
 	if(zipLoadParent == true){
 		
 			double dt = t1 - t0;
 			
-			if((t1-starttime)%period==0  && (t1!=starttime) && starttime>0){
+			if((t1-starttime)%period==0 && (t1!=starttime) && starttime>0){
 
 				if(dt > 0)
 				{
@@ -480,8 +529,7 @@ int passive_controller::calc_elasticity(TIMESTAMP t0, TIMESTAMP t1){
 				for(int32 i=0; i < ArraySize; i++){
 					
 					totalClearedLoad += cleared_load[i];
-					pDailyAverage += (tier_prices[i]*((double)period/3600))*cleared_load[i];			
-						
+					pDailyAverage += (tier_prices[i]*((double)period/3600))*cleared_load[i];							
 				}
 
 				if(totalClearedLoad == 0)
@@ -493,22 +541,27 @@ int passive_controller::calc_elasticity(TIMESTAMP t0, TIMESTAMP t1){
 
 				if(qDailyAverage > 0.0){
 
-					double secondFirstMul = pow((secondTierPrice/firstTierPrice), subElasticityFirstSecond);
+					double secondFirstMul = pow((secondTierPrice/firstTierPrice), subElasticityFirstSecond);					
 					double tempDivider = secondFirstMul*secondTierHours + firstTierHours;
 
 					double qNewFirst = 0;
 					double qNewSecond = 0;
 
-						if(critical_day==true){
+						if(critical_day >= 0.5){
 
 							double thirdFirstMul = pow((thirdTierPrice/firstTierPrice), subElasticityFirstThird);
-							tempDivider = tempDivider + thirdFirstMul*thirdTierHours;
+							
+							if(check_two_tier_cpp == true){
 
-							qNewFirst = (qDailyAverage*elasticityPeriod)/tempDivider;
+								tempDivider = firstTierHours;
+							}
+				
+							tempDivider = tempDivider + thirdFirstMul*thirdTierHours;
+							qNewFirst = (qDailyAverage*elasticityPeriod)/tempDivider;							
 							qNewSecond = qNewFirst*secondFirstMul;
 
 							double qNewThird = qNewFirst*thirdFirstMul;
-							if(observation == thirdTierPrice)
+							if(fabs(observation - thirdTierPrice) <= price_offset)
 								*(double *)output_state_addr = 1 + (predicted_load - qNewThird)/predicted_load;
 						}
 						else{
@@ -516,14 +569,11 @@ int passive_controller::calc_elasticity(TIMESTAMP t0, TIMESTAMP t1){
 							qNewFirst = (qDailyAverage*elasticityPeriod)/tempDivider;
 							qNewSecond= qNewFirst*secondFirstMul;
 						}
-
-						if(observation == firstTierPrice){
-
+						
+						if(fabs(observation - firstTierPrice) <= price_offset){
 							*(double *)output_state_addr = 1 + (predicted_load - qNewFirst)/predicted_load;
-
 						}
-						else if(observation == secondTierPrice){
-
+						else if(fabs(observation - secondTierPrice) <= price_offset){
 							*(double *)output_state_addr = 1 + (predicted_load - qNewSecond)/predicted_load;
 						}	
 				}

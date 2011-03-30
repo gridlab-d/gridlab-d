@@ -89,9 +89,10 @@ public:
 	double base_setpoint;
 	bool pool_pump_model;				///< Boolean flag for turning on the pool pump model version of duty cycle control
 	double base_duty_cycle;
+	
 
 	bool zipLoadParent;
-	bool critical_day;
+	double critical_day;
 	double dailyElasticity;
 	double subElasticityFirstSecond;
 	double subElasticityFirstThird;
@@ -102,8 +103,10 @@ public:
 	double secondTierPrice;
 	double thirdTierPrice;
 	int32 elasticityPeriod;	
+	bool check_two_tier_cpp;
 
 	double *tier_prices;
+	double price_offset;
 	double *cleared_load;
 	double predicted_load;
 	enduse *current_load_enduse;

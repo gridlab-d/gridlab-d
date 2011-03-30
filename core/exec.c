@@ -462,6 +462,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
 	TIMESTAMP sc, ls, st, eu, t2;
 	sc = schedule_syncall(t1);
+	//sc = schedule_syncall_ss(t1);
 	ls = loadshape_syncall(t1);// if (abs(t)<t2) t2=t;
 	st = scheduletransform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);// if (abs(t)<t2) t2=t;
 
@@ -506,6 +507,8 @@ STATUS exec_start(void)
 	LISTITEM *ptr;
 	int iPtr, incr;
 	struct arg_data *arg_data_array;
+
+	OBJECT *obj;
 
 	/* check for a model */
 	if (object_get_count()==0)
@@ -565,6 +568,7 @@ STATUS exec_start(void)
 			global_threadcount = processor_count();
 		output_verbose("detected %d processor(s)", processor_count());
 		output_verbose("using %d helper thread(s)", global_threadcount);
+
 		//sjin: allocate arg_data_array to store pthreads creation argument
 		arg_data_array = (struct arg_data *) malloc(sizeof(struct arg_data) 
 						 * global_threadcount);

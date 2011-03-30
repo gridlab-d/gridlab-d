@@ -6,9 +6,9 @@
 #set relax_naming_rules=1
 
 clock {
+	timezone EST+8EDT;
 	timestamp '2010-01-01 0:00:00';
 	stoptime '2010-01-28 0:00:00';
-	timezone EST+8EDT;
 }
 
 module powerflow;

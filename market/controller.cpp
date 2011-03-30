@@ -648,7 +648,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		// bid the response part of the load
 		double residual = *pTotal;
 		/* WARNING ~ bid ID check will not work properly */
-		int64 bid_id = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
+		KEY bid_id = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
 		// override
 		//bid_id = -1;
 		if(*pDemand > 0 && no_bid != 1){
@@ -918,7 +918,8 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 	}
 
-	next_run += (TIMESTAMP)(this->period);
+	if(next_run <= t1)
+		next_run += (TIMESTAMP)(this->period);
 
 
 	return (next_run - bid_delay);

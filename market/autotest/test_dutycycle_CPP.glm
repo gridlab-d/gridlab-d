@@ -252,11 +252,11 @@ object house {
 				state_property override;
 				base_duty_cycle 0.2;
 				setpoint duty_cycle;
-				firstTierHours 12;
-				secondTierHours 12;
-				firstTierPrice 1;
-				secondTierPrice 2;
-				thirdTierPrice 10;
+				first_tier_hours 12;
+				second_tier_hours 12;
+				first_tier_price 1;
+				second_tier_price 2;
+				third_tier_price 10;
 		   };
 
      };
@@ -309,11 +309,11 @@ object house {
 				state_property override;
 				base_duty_cycle 0.33;
 				setpoint duty_cycle;
-				firstTierHours 12;
-				secondTierHours 12;
-				firstTierPrice 1;
-				secondTierPrice 2;
-				thirdTierPrice 10;
+				first_tier_hours 12;
+				second_tier_hours 12;
+				first_tier_price 1;
+				second_tier_price 2;
+				third_tier_price 10;
 		   };
 
      };

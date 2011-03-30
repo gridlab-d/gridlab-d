@@ -1,11 +1,11 @@
-//This file tests the operation of a cooling controller 
+//This file tests the operation of multiple cooling controllers 
 //in ramp mode in an inelastic market with a matching period
 //Since the averages and standard deviations in the controller
 //are not published properties, the only way to check if these
 //values are correct is to check whether the calculated bidding
 //prices are correct (this calculation uses these values)
 
-#set tmp=../test_markets_controller_cooling_inelastic_matching_period
+#set tmp=../test_markets_controller_cooling_inelastic_double
 #setenv GRIDLABD=../../../core
 #set suppress_repeat_messages=1;
 
@@ -50,18 +50,6 @@ schedule controller_bids {
 	* 16 * * * 82.1669;
 }
 
-schedule clearing_quantities {
-	0-14 14 * * * 0;
-	15-29 14 * * * 0.00289964;
-	30-44 14 * * * 0.0043699;
-	45-59 14 * * * 0;
-	0-14 15 * * * 0.0043699;
-	15-29 15 * * * 0.0043699;
-	30-44 15 * * * 0;
-	45-59 15 * * * 0;
-	* 16 * * * 0;
-}
-
 schedule cooling_setpoints {
 	0-14 14 * * * 70;
 	15-29 14 * * * 70;
@@ -74,6 +62,17 @@ schedule cooling_setpoints {
 	* 16 * * * 72.5;
 }
 
+schedule clearing_quantities {
+	0-14 14 * * * 0;
+	15-29 14 * * * 0.00579928;
+	30-44 14 * * * 0.0087398;
+	45-59 14 * * * 0;
+	0-14 15 * * * 0.0087398;
+	15-29 15 * * * 0.0087398;
+	30-44 15 * * * 0;
+	45-59 15 * * * 0;
+	* 16 * * * 0;
+}
 
 object climate {
 	name "Yakima WA";
@@ -97,14 +96,14 @@ object auction {
 	init_stdev 0;
 	object multi_recorder {
 		property cool_control:bid_price,current_market.clearing_price,current_market.clearing_quantity,current_market.clearing_type,current_market.marginal_quantity,current_price_mean_30min,current_price_stdev_30min;
-		file "test_markets_controller_cooling_inelastic_matching_period_output.csv";
+		file "test_markets_controller_cooling_inelastic_double_output.csv";
 		interval 900;
 		limit 168;
 	};
 	//=IF(OR(C10=D10,I10=0),B10,IF(C10>D10,B10+(C10-D10)*ABS(E10)/(G10*I10),B10+(C10-D10)*ABS(F10)/(H10*I10)))
 	object multi_recorder {
 		property cool_control:base_setpoint,current_market.clearing_price,current_price_mean_30min,cool_control:range_high,cool_control:range_low,cool_control:ramp_high,cool_control:ramp_low,current_price_stdev_30min,house1:cooling_setpoint;
-		file "controller_cooling_intelastic_matching_period_calculate_setpoint.csv";
+		file "test_markets_controller_cooling_inelastic_double_calculate_setpoint.csv";
 		interval 900;
 		limit 4320;
 	};
@@ -112,7 +111,7 @@ object auction {
 	//=IF(OR(C10<D10+H10,C10>D10+I10),IF(C10<D10+H10,0000,IF(C10>D10+I10,9999,INVALID)),IF(C10<D10,IF(H10=0,0,B10+((C10-D10)*E10*G10)/ABS(H10)),IF(I10=0,0,B10+((C10-D10)*F10*G10)/ABS(I10))))
 	object multi_recorder {
 		property current_price_mean_30min,house1:air_temperature,cool_control:base_setpoint,cool_control:ramp_low,cool_control:ramp_high,current_price_stdev_30min,cool_control:range_low,cool_control:range_high,cool_control:bid_price;
-		file "controller_cooling_inelastic_matching_period_calculate_bid_price.csv";
+		file "test_markets_controller_cooling_inelastic_double_calculate_bid_price.csv";
 		interval 90;
 		limit 4320;
 	};
@@ -143,11 +142,10 @@ object triplex_meter {
 			// limit 4380;
 		// };
 		object double_assert {
-			value cooling_setpoints*1;
-			target "cooling_setpoint";
-			within 1e-3;
+				value cooling_setpoints*1;
+				target "cooling_setpoint";
+				within 1e-3;
 		};
-			
 		object controller {
 			name cool_control;			
 			market Market_1;
@@ -169,6 +167,47 @@ object triplex_meter {
 			// object multi_recorder {
 				// property simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house1:power_state,house1:cooling_demand,house1:cooling_setpoint,house1:air_temperature,house1:system_mode,average_target,standard_deviation_target,house1:hvac_load,house1:outdoor_temperature;
 				// file "check_defaults_output1.csv";
+				// interval 90;
+				// limit 4320;
+			// };
+			object double_assert {
+				value controller_bids*1;
+				target "bid_price";
+				within 1e-3;
+			};
+		};
+	};
+	object house {
+		name house2;
+		weather "Yakima WA";
+		cooling_setpoint 70;
+		air_temperature 72;
+		object double_assert {
+				value cooling_setpoints*1;
+				target "cooling_setpoint";
+				within 1e-3;
+		};
+		object controller {
+			name cool_control2;			
+			market Market_1;
+			bid_mode ON;			
+			period 900;
+			average_target current_price_mean_30min;
+			standard_deviation_target current_price_stdev_30min;		
+			control_mode RAMP;
+			target air_temperature;
+			setpoint cooling_setpoint;
+			demand cooling_demand;
+			total total_load;
+			load hvac_load;
+			slider_setting 0; //set to 0 or ramps will be overwritten
+			ramp_low 2;
+			ramp_high 2;
+			range_low 0;
+			range_high 5;
+			// object multi_recorder {
+				// property simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house2:power_state,house2:cooling_demand,house2:cooling_setpoint,house2:air_temperature,house2:system_mode,average_target,standard_deviation_target,house2:hvac_load,house2:outdoor_temperature;
+				// file "check_defaults_output2.csv";
 				// interval 90;
 				// limit 4320;
 			// };

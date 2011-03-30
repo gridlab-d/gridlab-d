@@ -291,8 +291,8 @@ int node::init(OBJECT *parent)
 		}//end swing bus search
 
 		//Check for parents to see if they are a parent/childed load
-		if ((obj->parent!=NULL) && (OBJECTDATA(obj->parent,node)->bustype!=SWING))	//Has a parent that isn't a swing bus, let's see if it is a node and link it up 
-		{																			//(this will break anything intentionally done this way - e.g. switch between two nodes)
+		if (obj->parent!=NULL) 	//Has a parent, let's see if it is a node and link it up 
+		{						//(this will break anything intentionally done this way - e.g. switch between two nodes)
 			//See if it is a node/load/meter
 			if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow")))
 				GL_THROW("NR: Parent is not a node, load or meter!");
@@ -302,6 +302,17 @@ int node::init(OBJECT *parent)
 				*/
 
 			node *parNode = OBJECTDATA(obj->parent,node);
+
+			//See if it is a swing, just to toss a warning
+			if (parNode->bustype==SWING)
+			{
+				gl_warning("Node:%s is parented to a swing node and will get folded into it.",obj->name);
+				/*  TROUBLESHOOT
+				When a node has the parent field populated, it is assumed this is for a "zero-length" line connection.
+				If a swing node is specified, it will assume the node is linked to the swing node via a zero-length
+				connection.  If this is undesired, remove the parenting on the swing node.
+				*/
+			}
 
 			//Phase variable
 			set p_phase_to_check, c_phase_to_check;
@@ -1832,7 +1843,24 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			else if (NR_curr_bus==NR_bus_count)	//Population complete, we're not swing, let us go (or we never go on)
 				return t1;
 			else	//Population of data busses is not complete.  Flag us for a go-around, they should be ready next time
-				return t0;
+			{
+				if (NR_cycle==false)
+					return t0;
+				else	//True cycle - everything should have been populated by now
+				{
+					if (bustype==SWING)	//Only error on swing - if errors with others, seems to be upset.  Too lazy to track down why.
+					{
+						GL_THROW("All nodes were not properly populated");
+						/*  TROUBLESHOOT
+						The NR solver is still waiting to initialize an object on the second pass.  Everything should have
+						initialized on the first pass.  Look for orphaned node objects that do not have a line attached and
+						try again.  If the error persists, please submit your code and a bug report via the trac website.
+						*/
+					}
+					else
+						return t0;
+				}
+			}
 			break;
 		}
 	default:

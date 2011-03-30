@@ -145,15 +145,16 @@ object house {
 				  state_property multiplier;	
 				  
 				  critical_day true;
-				  dailyElasticity 0.11;
-				  subElasticityFirstSecond 0.12;
-				  subElasticityFirstThird 0.13;
-				  secondTierHours 6;
-				  thirdTierHours 2;
-				  firstTierHours 16;
-				  firstTierPrice 0.05;
-				  secondTierPrice 0.07;
-				  thirdTierPrice 0.1;		  
+				  two_tier_cpp true;
+				  daily_elasticity 0.11;
+				  sub_elasticity_first_second 0.12;
+				  sub_elasticity_first_third 0.13;
+				  second_tier_hours 4;
+				  third_tier_hours 4;
+				  first_tier_hours 16;
+				  first_tier_price 0.05;
+				  second_tier_price 0.07;
+				  third_tier_price 0.1;		  
 			};
 			
 			 object recorder {
@@ -161,18 +162,9 @@ object house {
 				  limit 100000000;
 				  interval 300;
 				  file results.csv;
-		   };
+		    };
 		   
-		   object double_assert{
-				  target "multiplier";	
-				  within 0.01;
-				  object player{
-				  
-					property value;
-					file ../Elasticity_Multiplier.player;
-					
-				 };
-		   };
+		 
 		   
        };     
 }

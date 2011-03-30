@@ -1146,6 +1146,7 @@ int object_set_dependent(OBJECT *obj, /**< the object to set */
 	}
 	if(obj == dependent)
 		return -1;
+	
 	return set_rank(dependent,obj->rank,NULL);
 }
 

@@ -4,7 +4,7 @@
 # This file is distributed under the same terms as GridLAB-D.
 
 # Parse version info from core/version.h into ./version.sh
-esyscmd([sh -c 'cat core/version.h | tr -d "\r" | while read DEFINE NAME VALUE EXTRA; do [ "$DEFINE" != "#define" ] || case $NAME in REV_*|BRANCH) echo ${NAME#REV_}=$VALUE;; esac; done > version.sh; echo VERSION=\"\$MAJOR.\$MINOR.\$PATCH\" >> version.sh'])
+esyscmd([sh -c 'cat core/version.h | tr -d "\r" | while read DEFINE NAME VALUE; do [ "$DEFINE" != "#define" ] || case $NAME in REV_*|BRANCH) echo ${NAME#REV_}=$VALUE;; esac; done > version.sh; echo VERSION=\"\$MAJOR.\$MINOR.\$PATCH\" >> version.sh'])
 # Define M4 macros for version info
 define([pkgversion], esyscmd([sh -c ". ./version.sh; echo \$VERSION | tr -d '\n'"]))dnl
 define([pkgbranch], esyscmd([sh -c ". ./version.sh; echo \$BRANCH | tr -d '\n'"]))dnl

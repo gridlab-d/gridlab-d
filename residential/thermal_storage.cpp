@@ -27,15 +27,15 @@ struct s_thermal_default_schedule_list {
 	char *schedule_definition;
 } thermal_default_schedule_list[] =
 {
-		"thermal_storage_discharge_default", 
-	{	"dischargetime {"
+	{	"thermal_storage_discharge_default", 
+		"dischargetime {"
 		"* 0-10 * * * 0.0;"
 		"* 11-20 * * * 1.0;"
 		"* 21-23 * * * 0.0;"
 		"}"
 	},
-		"thermal_storage_charge_default",
-	{	"chargetime {"
+	{	"thermal_storage_charge_default",
+		"chargetime {"
 		"* 0-10 * * * 1.0;"
 		"* 11-20 * * * 0.0;"
 		"* 21-23 * * * 1.0;"
