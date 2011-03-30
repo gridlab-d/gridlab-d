@@ -70,7 +70,8 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_complex, "indiv_measured_power_N[VA]", PADDR(indiv_measured_power[2]),
 			PT_double, "measured_demand[W]", PADDR(measured_demand),
 			PT_double, "measured_real_power[W]", PADDR(measured_real_power),
-			PT_double, "measured_reactive_power[W]", PADDR(measured_reactive_power),
+			PT_double, "measured_reactive_power[VAr]", PADDR(measured_reactive_power),
+			PT_complex, "meter_power_consumption[VA]", PADDR(tpmeter_power_consumption),
 
 			// added to record last voltage/current
 			PT_complex, "measured_voltage_1[V]", PADDR(measured_voltage[0]),
@@ -148,6 +149,7 @@ int triplex_meter::create()
 	last_tier_price[1] = 0;
 	last_tier_price[2] = 0;
 	last_price_base = 0;
+	tpmeter_power_consumption = complex(0,0);
 
 	tpmeter_interrupted = false;	//Assumes we start as "uninterrupted"
 	tpmeter_interrupted_secondary = false;	//Assumes start with no momentary interruptions
@@ -219,7 +221,13 @@ int triplex_meter::check_prices(){
 
 	return 0;
 }
+TIMESTAMP triplex_meter::presync(TIMESTAMP t0)
+{
+	if (tpmeter_power_consumption != complex(0,0))
+		power[0] = power[1] = 0.0;
 
+	return triplex_node::presync(t0);
+}
 //Sync needed for reliability
 TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 {
@@ -238,6 +246,12 @@ TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 		{
 			tpmeter_interrupted = false;	//All is well
 		}
+	}
+
+	if (tpmeter_power_consumption != complex(0,0))
+	{
+		power[0] += tpmeter_power_consumption/2;
+		power[1] += tpmeter_power_consumption/2;
 	}
 
 	return triplex_node::sync(t0);

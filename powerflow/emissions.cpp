@@ -38,108 +38,120 @@ emissions::emissions(MODULE *mod) : powerflow_object(mod)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		
 		if(gl_publish_variable(oclass,
-			PT_complex, "X1[kWh]", PADDR(Naturalgas_Max_Out),
-			PT_complex, "X2[kWh]", PADDR(Coal_Max_Out),
-			PT_complex, "X3[kWh]", PADDR(Biomass_Max_Out),
-			PT_complex, "X4[kWh]", PADDR(Geothermal_Max_Out),
-			PT_complex, "X5[kWh]", PADDR(Hydroelectric_Max_Out),
-			PT_complex, "X6[kWh]", PADDR(Nuclear_Max_Out),
-			PT_complex, "X7[kWh]", PADDR(Wind_Max_Out),
-			PT_complex, "X8[kWh]", PADDR(Petroleum_Max_Out),
-			PT_complex, "X9[kWh]", PADDR(Solarthermal_Max_Out),
 
-			PT_double, "X1C[Btu/kWh]", PADDR(Naturalgas_Conv_Eff),
-			PT_double, "X2C[Btu/kWh]", PADDR(Coal_Conv_Eff),
-			PT_double, "X3C[Btu/kWh]", PADDR(Biomass_Conv_Eff),
-			PT_double, "X4C[Btu/kWh]", PADDR(Geothermal_Conv_Eff),
-			PT_double, "X5C[Btu/kWh]", PADDR(Hydroelectric_Conv_Eff),
-			PT_double, "X6C[Btu/kWh]", PADDR(Nuclear_Conv_Eff),
-			PT_double, "X7C[Btu/kWh]", PADDR(Wind_Conv_Eff),
-			PT_double, "X8C[Btu/kWh]", PADDR(Petroleum_Conv_Eff),
-			PT_double, "X9C[Btu/kWh]", PADDR(Solarthermal_Conv_Eff),
+			PT_double, "Nuclear_Order", PADDR(Nuclear_Order),
+			PT_double, "Hydroelectric_Order", PADDR(Hydroelectric_Order),
+			PT_double, "Solarthermal_Order", PADDR(Solarthermal_Order),
+			PT_double, "Biomass_Order", PADDR(Biomass_Order),
+			PT_double, "Wind_Order", PADDR(Wind_Order),
+			PT_double, "Coal_Order", PADDR(Coal_Order),
+			PT_double, "Naturalgas_Order", PADDR(Naturalgas_Order),
+			PT_double, "Geothermal_Order", PADDR(Geothermal_Order),
+			PT_double, "Petroleum_Order", PADDR(Petroleum_Order),
 
-			PT_double, "X1_CO2[lb/Btu]", PADDR(Naturalgas_CO2),
-			PT_double, "X2_CO2[lb/Btu]", PADDR(Coal_CO2),
-			PT_double, "X3_CO2[lb/Btu]", PADDR(Biomass_CO2),
-			PT_double, "X4_CO2[lb/Btu]", PADDR(Geothermal_CO2),
-			PT_double, "X5_CO2[lb/Btu]", PADDR(Hydroelectric_CO2),
-			PT_double, "X6_CO2[lb/Btu]", PADDR(Nuclear_CO2),
-			PT_double, "X7_CO2[lb/Btu]", PADDR(Wind_CO2),
-			PT_double, "X8_CO2[lb/Btu]", PADDR(Petroleum_CO2),
-			PT_double, "X9_CO2[lb/Btu]", PADDR(Solarthermal_CO2),
+			PT_double, "Naturalgas_Max_Out[kWh]", PADDR(Naturalgas_Max_Out),
+			PT_double, "Coal_Max_Out[kWh]", PADDR(Coal_Max_Out),
+			PT_double, "Biomass_Max_Out[kWh]", PADDR(Biomass_Max_Out),
+			PT_double, "Geothermal_Max_Out[kWh]", PADDR(Geothermal_Max_Out),
+			PT_double, "Hydroelectric_Max_Out[kWh]", PADDR(Hydroelectric_Max_Out),
+			PT_double, "Nuclear_Max_Out[kWh]", PADDR(Nuclear_Max_Out),
+			PT_double, "Wind_Max_Out[kWh]", PADDR(Wind_Max_Out),
+			PT_double, "Petroleum_Max_Out[kWh]", PADDR(Petroleum_Max_Out),
+			PT_double, "Solarthermal_Max_Out[kWh]", PADDR(Solarthermal_Max_Out),
 
-			PT_double, "X1_SO2[lb/Btu]", PADDR(Naturalgas_SO2),
-			PT_double, "X2_SO2[lb/Btu]", PADDR(Coal_SO2),
-			PT_double, "X3_SO2[lb/Btu]", PADDR(Biomass_SO2),
-			PT_double, "X4_SO2[lb/Btu]", PADDR(Geothermal_SO2),
-			PT_double, "X5_SO2[lb/Btu]", PADDR(Hydroelectric_SO2),
-			PT_double, "X6_SO2[lb/Btu]", PADDR(Nuclear_SO2),
-			PT_double, "X7_SO2[lb/Btu]", PADDR(Wind_SO2),
-			PT_double, "X8_SO2[lb/Btu]", PADDR(Petroleum_SO2),
-			PT_double, "X9_SO2[lb/Btu]", PADDR(Solarthermal_SO2),
+			PT_double, "Naturalgas_Out[kWh]", PADDR(Naturalgas_Out),
+			PT_double, "Coal_Out[kWh]", PADDR(Coal_Out),
+			PT_double, "Biomass_Out[kWh]", PADDR(Biomass_Out),
+			PT_double, "Geothermal_Out[kWh]", PADDR(Geothermal_Out),
+			PT_double, "Hydroelectric_Out[kWh]", PADDR(Hydroelectric_Out),
+			PT_double, "Nuclear_Out[kWh]", PADDR(Nuclear_Out),
+			PT_double, "Wind_Out[kWh]", PADDR(Wind_Out),
+			PT_double, "Petroleum_Out[kWh]", PADDR(Petroleum_Out),
+			PT_double, "Solarthermal_Out[kWh]", PADDR(Solarthermal_Out),
+			
+			PT_double, "Naturalgas_Conv_Eff[Btu/kWh]", PADDR(Naturalgas_Conv_Eff),
+			PT_double, "Coal_Conv_Eff[Btu/kWh]", PADDR(Coal_Conv_Eff),
+			PT_double, "Biomass_Conv_Eff[Btu/kWh]", PADDR(Biomass_Conv_Eff),
+			PT_double, "Geothermal_Conv_Eff[Btu/kWh]", PADDR(Geothermal_Conv_Eff),
+			PT_double, "Hydroelectric_Conv_Eff[Btu/kWh]", PADDR(Hydroelectric_Conv_Eff),
+			PT_double, "Nuclear_Conv_Eff[Btu/kWh]", PADDR(Nuclear_Conv_Eff),
+			PT_double, "Wind_Conv_Eff[Btu/kWh]", PADDR(Wind_Conv_Eff),
+			PT_double, "Petroleum_Conv_Eff[Btu/kWh]", PADDR(Petroleum_Conv_Eff),
+			PT_double, "Solarthermal_Conv_Eff[Btu/kWh]", PADDR(Solarthermal_Conv_Eff),
 
-			PT_double, "X1_NOx[lb/Btu]", PADDR(Naturalgas_NOx),
-			PT_double, "X2_NOx[lb/Btu]", PADDR(Coal_NOx),
-			PT_double, "X3_NOx[lb/Btu]", PADDR(Biomass_NOx),
-			PT_double, "X4_NOx[lb/Btu]", PADDR(Geothermal_NOx),
-			PT_double, "X5_NOx[lb/Btu]", PADDR(Hydroelectric_NOx),
-			PT_double, "X6_NOx[lb/Btu]", PADDR(Nuclear_NOx),
-			PT_double, "X7_NOx[lb/Btu]", PADDR(Wind_NOx),
-			PT_double, "X8_NOx[lb/Btu]", PADDR(Petroleum_NOx),
-			PT_double, "X9_NOx[lb/Btu]", PADDR(Solarthermal_NOx),
+			PT_double, "Naturalgas_CO2[lb/Btu]", PADDR(Naturalgas_CO2),
+			PT_double, "Coal_CO2[lb/Btu]", PADDR(Coal_CO2),
+			PT_double, "Biomass_CO2[lb/Btu]", PADDR(Biomass_CO2),
+			PT_double, "Geothermal_CO2[lb/Btu]", PADDR(Geothermal_CO2),
+			PT_double, "Hydroelectric_CO2[lb/Btu]", PADDR(Hydroelectric_CO2),
+			PT_double, "Nuclear_CO2[lb/Btu]", PADDR(Nuclear_CO2),
+			PT_double, "Wind_CO2[lb/Btu]", PADDR(Wind_CO2),
+			PT_double, "Petroleum_CO2[lb/Btu]", PADDR(Petroleum_CO2),
+			PT_double, "Solarthermal_CO2[lb/Btu]", PADDR(Solarthermal_CO2),
 
-			PT_complex, "Naturalgas_Out[kWh]", PADDR(Naturalgas_Out),
-			PT_complex, "Coal_Out[kWh]", PADDR(Coal_Out),
-			PT_complex, "Biomass_Out[kWh]", PADDR(Biomass_Out),
-			PT_complex, "Geothermal_Out[kWh]", PADDR(Geothermal_Out),
-			PT_complex, "Hydroelectric_Out[kWh]", PADDR(Hydroelectric_Out),
-			PT_complex, "Nuclear_Out[kWh]", PADDR(Nuclear_Out),
-			PT_complex, "Wind_Out[kWh]", PADDR(Wind_Out),
-			PT_complex, "Petroleum_Out[kWh]", PADDR(Petroleum_Out),
-			PT_complex, "Solarthermal_Out[kWh]", PADDR(Solarthermal_Out),
+			PT_double, "Naturalgas_SO2[lb/Btu]", PADDR(Naturalgas_SO2),
+			PT_double, "Coal_SO2[lb/Btu]", PADDR(Coal_SO2),
+			PT_double, "Biomass_SO2[lb/Btu]", PADDR(Biomass_SO2),
+			PT_double, "Geothermal_SO2[lb/Btu]", PADDR(Geothermal_SO2),
+			PT_double, "Hydroelectric_SO2[lb/Btu]", PADDR(Hydroelectric_SO2),
+			PT_double, "Nuclear_SO2[lb/Btu]", PADDR(Nuclear_SO2),
+			PT_double, "Wind_SO2[lb/Btu]", PADDR(Wind_SO2),
+			PT_double, "Petroleum_SO2[lb/Btu]", PADDR(Petroleum_SO2),
+			PT_double, "Solarthermal_SO2[lb/Btu]", PADDR(Solarthermal_SO2),
 
+			PT_double, "Naturalgas_NOx[lb/Btu]", PADDR(Naturalgas_NOx),
+			PT_double, "Coal_NOx[lb/Btu]", PADDR(Coal_NOx),
+			PT_double, "Biomass_NOx[lb/Btu]", PADDR(Biomass_NOx),
+			PT_double, "Geothermal_NOx[lb/Btu]", PADDR(Geothermal_NOx),
+			PT_double, "Hydroelectric_NOx[lb/Btu]", PADDR(Hydroelectric_NOx),
+			PT_double, "Nuclear_NOx[lb/Btu]", PADDR(Nuclear_NOx),
+			PT_double, "Wind_NOx[lb/Btu]", PADDR(Wind_NOx),
+			PT_double, "Petroleum_NOx[lb/Btu]", PADDR(Petroleum_NOx),
+			PT_double, "Solarthermal_NOx[lb/Btu]", PADDR(Solarthermal_NOx),
 
-			PT_double, "Naturalgas_emissions_CO2", PADDR(Naturalgas_emissions_CO2),
-			PT_double, "Naturalgas_emissions_SO2", PADDR(Naturalgas_emissions_SO2),
-			PT_double, "Naturalgas_emissions_NOx", PADDR(Naturalgas_emissions_NOx),
+			PT_double, "Naturalgas_emissions_CO2[lb]", PADDR(Naturalgas_emissions_CO2),
+			PT_double, "Naturalgas_emissions_SO2[lb]", PADDR(Naturalgas_emissions_SO2),
+			PT_double, "Naturalgas_emissions_NOx[lb]", PADDR(Naturalgas_emissions_NOx),
 
-			PT_double, "Coal_emissions_CO2", PADDR(Coal_emissions_CO2),
-			PT_double, "Coal_emissions_SO2", PADDR(Coal_emissions_SO2),
-			PT_double, "Coal_emissions_NOx", PADDR(Coal_emissions_NOx),
+			PT_double, "Coal_emissions_CO2[lb]", PADDR(Coal_emissions_CO2),
+			PT_double, "Coal_emissions_SO2[lb]", PADDR(Coal_emissions_SO2),
+			PT_double, "Coal_emissions_NOx[lb]", PADDR(Coal_emissions_NOx),
 
-			PT_double, "Biomass_emissions_CO2", PADDR(Biomass_emissions_CO2),
-			PT_double, "Biomass_emissions_SO2", PADDR(Biomass_emissions_SO2),
-			PT_double, "Biomass_emissions_NOx", PADDR(Biomass_emissions_NOx),
+			PT_double, "Biomass_emissions_CO2[lb]", PADDR(Biomass_emissions_CO2),
+			PT_double, "Biomass_emissions_SO2[lb]", PADDR(Biomass_emissions_SO2),
+			PT_double, "Biomass_emissions_NOx[lb]", PADDR(Biomass_emissions_NOx),
 
-			PT_double, "Geothermal_emissions_CO2", PADDR(Geothermal_emissions_CO2),
-			PT_double, "Geothermal_emissions_SO2", PADDR(Geothermal_emissions_SO2),
-			PT_double, "Geothermal_emissions_NOx", PADDR(Geothermal_emissions_NOx),
+			PT_double, "Geothermal_emissions_CO2[lb]", PADDR(Geothermal_emissions_CO2),
+			PT_double, "Geothermal_emissions_SO2[lb]", PADDR(Geothermal_emissions_SO2),
+			PT_double, "Geothermal_emissions_NOx[lb]", PADDR(Geothermal_emissions_NOx),
 
-			PT_double, "Hydroelectric_emissions_CO2", PADDR(Hydroelectric_emissions_CO2),
-			PT_double, "Hydroelectric_emissions_SO2", PADDR(Hydroelectric_emissions_SO2),
-			PT_double, "Hydroelectric_emissions_NOx", PADDR(Hydroelectric_emissions_NOx),
+			PT_double, "Hydroelectric_emissions_CO2[lb]", PADDR(Hydroelectric_emissions_CO2),
+			PT_double, "Hydroelectric_emissions_SO2[lb]", PADDR(Hydroelectric_emissions_SO2),
+			PT_double, "Hydroelectric_emissions_NOx[lb]", PADDR(Hydroelectric_emissions_NOx),
 
-			PT_double, "Nuclear_emissions_CO2", PADDR(Nuclear_emissions_CO2),
-			PT_double, "Nuclear_emissions_SO2", PADDR(Nuclear_emissions_SO2),
-			PT_double, "Nuclear_emissions_NOx", PADDR(Nuclear_emissions_NOx),
+			PT_double, "Nuclear_emissions_CO2[lb]", PADDR(Nuclear_emissions_CO2),
+			PT_double, "Nuclear_emissions_SO2[lb]", PADDR(Nuclear_emissions_SO2),
+			PT_double, "Nuclear_emissions_NOx[lb]", PADDR(Nuclear_emissions_NOx),
 
-			PT_double, "Wind_emissions_CO2", PADDR(Wind_emissions_CO2),
-			PT_double, "Wind_emissions_SO2", PADDR(Wind_emissions_SO2),
-			PT_double, "Wind_emissions_NOx", PADDR(Wind_emissions_NOx),
+			PT_double, "Wind_emissions_CO2[lb]", PADDR(Wind_emissions_CO2),
+			PT_double, "Wind_emissions_SO2[lb]", PADDR(Wind_emissions_SO2),
+			PT_double, "Wind_emissions_NOx[lb]", PADDR(Wind_emissions_NOx),
 
-			PT_double, "Petroleum_emissions_CO2", PADDR(Petroleum_emissions_CO2),
-			PT_double, "Petroleum_emissions_SO2", PADDR(Petroleum_emissions_SO2),
-			PT_double, "Petroleum_emissions_NOx", PADDR(Petroleum_emissions_NOx),
+			PT_double, "Petroleum_emissions_CO2[lb]", PADDR(Petroleum_emissions_CO2),
+			PT_double, "Petroleum_emissions_SO2[lb]", PADDR(Petroleum_emissions_SO2),
+			PT_double, "Petroleum_emissions_NOx[lb]", PADDR(Petroleum_emissions_NOx),
 
-			PT_double, "Solarthermal_emissions_CO2", PADDR(Solarthermal_emissions_CO2),
-			PT_double, "Solarthermal_emissions_SO2", PADDR(Solarthermal_emissions_SO2),
-			PT_double, "Solarthermal_emissions_NOx", PADDR(Solarthermal_emissions_NOx),
+			PT_double, "Solarthermal_emissions_CO2[lb]", PADDR(Solarthermal_emissions_CO2),
+			PT_double, "Solarthermal_emissions_SO2[lb]", PADDR(Solarthermal_emissions_SO2),
+			PT_double, "Solarthermal_emissions_NOx[lb]", PADDR(Solarthermal_emissions_NOx),
 
-			PT_double, "Total_emissions_CO2", PADDR(Total_emissions_CO2),
-			PT_double, "Total_emissions_SO2", PADDR(Total_emissions_SO2),
-			PT_double, "Total_emissions_NOx", PADDR(Total_emissions_NOx),
+			PT_double, "Total_emissions_CO2[lb]", PADDR(Total_emissions_CO2),
+			PT_double, "Total_emissions_SO2[lb]", PADDR(Total_emissions_SO2),
+			PT_double, "Total_emissions_NOx[lb]", PADDR(Total_emissions_NOx),
 
-			PT_complex, "Total_energy_out", PADDR(Total_emissions_CO2),
+			PT_double, "Total_energy_out[kWh]", PADDR(Total_energy_out),
+
+			PT_double, "Region", PADDR(Region),
 
 			PT_double,"cycle_interval[s]", PADDR(cycle_interval),
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -170,7 +182,28 @@ int emissions::create(void)
 	cycle_power = 0.0;
 
 	//Initialize all of the emissions variables
-	Naturalgas_Max_Out = 0.0;
+	// Default dispatch order
+	Nuclear_Order = 0;
+	Hydroelectric_Order = 1;
+	Solarthermal_Order = 2;
+	Biomass_Order = 3;	
+	Wind_Order = 4;
+	Coal_Order = 5;
+	Naturalgas_Order= 6;
+	Geothermal_Order = 7;		
+	Petroleum_Order = 8;
+
+	Naturalgas_Out= 0.0;
+	Coal_Out = 0.0;
+	Biomass_Out = 0.0;
+	Geothermal_Out = 0.0;
+	Hydroelectric_Out = 0.0;
+	Nuclear_Out = 0.0;
+	Wind_Out = 0.0;
+	Petroleum_Out = 0.0;
+	Solarthermal_Out = 0.0;
+
+	Naturalgas_Max_Out= 0.0;
 	Coal_Max_Out = 0.0;
 	Biomass_Max_Out = 0.0;
 	Geothermal_Max_Out = 0.0;
@@ -179,6 +212,7 @@ int emissions::create(void)
 	Wind_Max_Out = 0.0;
 	Petroleum_Max_Out = 0.0;
 	Solarthermal_Max_Out = 0.0;
+
 	Naturalgas_Conv_Eff = 0.0;
 	Coal_Conv_Eff = 0.0;
 	Biomass_Conv_Eff = 0.0;
@@ -215,6 +249,7 @@ int emissions::create(void)
 	Wind_NOx = 0.0;
 	Petroleum_NOx = 0.0;
 	Solarthermal_NOx = 0.0;
+
 	Naturalgas_Out = 0.0;
 	Coal_Out = 0.0;
 	Biomass_Out = 0.0;
@@ -224,6 +259,7 @@ int emissions::create(void)
 	Wind_Out = 0.0;
 	Petroleum_Out = 0.0;
 	Solarthermal_Out = 0.0;
+
 	Naturalgas_emissions_CO2 = 0.0;
 	Naturalgas_emissions_SO2 = 0.0;
 	Naturalgas_emissions_NOx = 0.0;
@@ -306,56 +342,12 @@ int emissions::init(OBJECT *parent)
 
 	//Convert it to a TIMESTAMP
 	cycle_interval_TS = (TIMESTAMP)(cycle_interval);
-
-	//Other initialization values (I assume these will eventually be populated, since they effectively do nothing right now)
-	if(Naturalgas_Out==0) Naturalgas_Out = 0;
-
-	if(Coal_Out == 0) Coal_Out = 0;
-	if(Biomass_Out == 0) Biomass_Out = 0;
-	if(Geothermal_Out == 0) Geothermal_Out = 0;
-	if(Hydroelectric_Out == 0) Hydroelectric_Out = 0;
-	if(Nuclear_Out == 0) Nuclear_Out = 0;
-	if (Wind_Out == 0) Wind_Out =0;
-	if (Petroleum_Out == 0) Petroleum_Out = 0;
-	if(Solarthermal_Out == 0) Solarthermal_Out = 0;
-
-
-	if(Naturalgas_CO2 == 0) Naturalgas_CO2 = 0;
-	if(Coal_CO2 == 0) Coal_CO2 = 0;
-	if(Biomass_CO2 == 0) Biomass_CO2 = 0;
-	if(Geothermal_CO2 == 0) Geothermal_CO2 = 0;
-	if(Hydroelectric_CO2 == 0) Hydroelectric_CO2 = 0;
-	if(Nuclear_CO2 == 0) Nuclear_CO2 = 0;
-	if(Wind_CO2 == 0) Wind_CO2 = 0;
-	if(Petroleum_CO2 == 0) Petroleum_CO2 = 0;
-	if(Solarthermal_CO2 == 0) Solarthermal_CO2 = 0;
-
-	if(Naturalgas_SO2 == 0) Naturalgas_SO2 = 0;
-	if(Coal_SO2 == 0) Coal_SO2 = 0;
-	if(Biomass_SO2 == 0) Biomass_SO2 = 0;
-	if(Geothermal_SO2 == 0) Geothermal_SO2 = 0;
-	if(Hydroelectric_SO2 == 0) Hydroelectric_SO2 = 0;
-	if(Nuclear_SO2 == 0) Nuclear_SO2 = 0;
-	if(Wind_SO2 == 0) Wind_SO2 = 0;
-	if(Petroleum_SO2 == 0) Petroleum_SO2 = 0;
-	if(Solarthermal_SO2 == 0) Solarthermal_SO2 = 0;
-
-	if(Naturalgas_NOx == 0) Naturalgas_NOx = 0;
-	if(Coal_NOx == 0) Coal_NOx = 0;
-	if(Biomass_NOx == 0) Biomass_NOx = 0;
-	if(Geothermal_NOx == 0) Geothermal_NOx = 0;
-	if(Hydroelectric_NOx == 0) Hydroelectric_NOx = 0;
-	if(Nuclear_NOx == 0) Nuclear_NOx = 0;
-	if(Wind_NOx == 0) Wind_NOx = 0;
-	if(Petroleum_NOx == 0) Petroleum_NOx = 0;
-	if(Solarthermal_NOx == 0) Solarthermal_NOx = 0;		
-
 	return rval;
 }
 
 TIMESTAMP emissions::postsync(TIMESTAMP t0)
 {
-	double temp_energy;
+	double temp_energy, dispatch_order;;
 	complex temp_power;
 	complex energy_for_calc;
 	bool energy_requirement;
@@ -363,6 +355,8 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 	TIMESTAMP tret = powerflow_object::postsync(t0);
 
 	//First cycle, set up the interval
+
+	
 	if ((prev_cycle_time == 0) && (t0 != 0))
 	{
 		time_cycle_interval = t0 + cycle_interval_TS;
@@ -392,6 +386,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 		cycle_power = (temp_power.Re()) / 1000.0;
 	}
 
+	
 	//See if it is time for a computation!
 	if (curr_cycle_time >= time_cycle_interval)	//Update values
 	{
@@ -402,220 +397,347 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 		energy_for_calc = accumulated_energy;
 
 		//Proceed
-		if (Naturalgas_Max_Out.Mag() < energy_for_calc.Mag() && (energy_requirement == true))
-		{
-			Naturalgas_Out = Naturalgas_Max_Out;
-
-			Naturalgas_emissions_CO2 = Naturalgas_Out.Mag() * Naturalgas_Conv_Eff * Naturalgas_CO2;
-			Naturalgas_emissions_SO2 = Naturalgas_Out.Mag() * Naturalgas_Conv_Eff * Naturalgas_SO2;
-			Naturalgas_emissions_NOx = Naturalgas_Out.Mag() * Naturalgas_Conv_Eff * Naturalgas_NOx;
-
-			energy_for_calc = energy_for_calc - Naturalgas_Max_Out;
-		}
-		else if (energy_requirement == true)
-		{
-			Naturalgas_Out = energy_for_calc;
-
-			Naturalgas_emissions_CO2 = Naturalgas_Out.Mag() * Naturalgas_Conv_Eff * Naturalgas_CO2;
-			Naturalgas_emissions_SO2 = Naturalgas_Out.Mag() * Naturalgas_Conv_Eff * Naturalgas_SO2;
-			Naturalgas_emissions_NOx = Naturalgas_Out.Mag() * Naturalgas_Conv_Eff* Naturalgas_NOx;	
-
-			energy_requirement = false;
-
-			energy_for_calc = energy_for_calc - Naturalgas_Out;
-
-		}
-
-		if (Coal_Max_Out.Mag() < energy_for_calc.Mag() && energy_requirement == true)
-		{
-			Coal_Out = Coal_Max_Out;
-
-			Coal_emissions_CO2 = Coal_Out.Mag() * Coal_Conv_Eff * Coal_CO2;
-			Coal_emissions_SO2 = Coal_Out.Mag() * Coal_Conv_Eff * Coal_SO2;
-			Coal_emissions_NOx = Coal_Out.Mag() * Coal_Conv_Eff * Coal_NOx;
-
-			energy_for_calc = energy_for_calc - Coal_Max_Out; 
-		}
-		else if (energy_requirement == true)
-		{
-			Coal_Out = energy_for_calc;
-
-			Coal_emissions_CO2 = Coal_Out.Mag() * Coal_Conv_Eff * Coal_CO2;
-			Coal_emissions_SO2 = Coal_Out.Mag() * Coal_Conv_Eff * Coal_SO2;
-			Coal_emissions_NOx = Coal_Out.Mag() * Coal_Conv_Eff * Coal_NOx;	
-
-			energy_requirement = false;
-
-			energy_for_calc = energy_for_calc - Coal_Out; 
-
-		}
-		if (Biomass_Max_Out.Mag() < energy_for_calc.Mag() && energy_requirement == true)
-		{
-			Biomass_Out = Biomass_Max_Out ;
-
-			Biomass_emissions_CO2 = Biomass_Out.Mag() * Biomass_Conv_Eff * Biomass_CO2;
-			Biomass_emissions_SO2 = Biomass_Out.Mag() * Biomass_Conv_Eff * Biomass_SO2;
-			Biomass_emissions_NOx = Biomass_Out.Mag() * Biomass_Conv_Eff * Biomass_NOx;
-
-			energy_for_calc = energy_for_calc - Biomass_Max_Out;
-		}
-		else if (energy_requirement == true)
-		{
-			Biomass_Out = energy_for_calc;
-
-			Biomass_emissions_CO2 = Biomass_Out.Mag() * Biomass_Conv_Eff * Biomass_CO2;
-			Biomass_emissions_SO2 = Biomass_Out.Mag() * Biomass_Conv_Eff * Biomass_SO2;
-			Biomass_emissions_NOx = Biomass_Out.Mag() * Biomass_Conv_Eff * Biomass_NOx;
-
-			energy_requirement = false;
-
-			energy_for_calc = energy_for_calc - Biomass_Out;
 	
-		}
-		if (Geothermal_Max_Out.Mag() < energy_for_calc.Mag() && energy_requirement == true)
+		//dispatch based is based on the order specified in the glm file.
+
+for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 		{
-			Geothermal_Out = Geothermal_Max_Out;
-
-			Geothermal_emissions_CO2 = Geothermal_Out.Mag() * Geothermal_Conv_Eff * Geothermal_CO2;
-			Geothermal_emissions_SO2 = Geothermal_Out.Mag() * Geothermal_Conv_Eff * Geothermal_SO2;
-			Geothermal_emissions_NOx = Geothermal_Out.Mag() * Geothermal_Conv_Eff * Geothermal_NOx;
-
-			energy_for_calc = energy_for_calc - Geothermal_Max_Out;
-		}
-		else if (energy_requirement == true)
-		{
-			Geothermal_Out = energy_for_calc;
-
-			Geothermal_emissions_CO2 = Geothermal_Out.Mag() * Geothermal_Conv_Eff * Geothermal_CO2;
-			Geothermal_emissions_SO2 = Geothermal_Out.Mag() * Geothermal_Conv_Eff * Geothermal_SO2;
-			Geothermal_emissions_NOx = Geothermal_Out.Mag() * Geothermal_Conv_Eff * Geothermal_NOx;
-
-			energy_requirement = false;	
-
-			energy_for_calc = energy_for_calc - Geothermal_Out;
-
-		}
-		if (Hydroelectric_Max_Out.Mag() < energy_for_calc.Mag() && energy_requirement == true)
-		{
-			Hydroelectric_Out = Hydroelectric_Max_Out;
-
-			Hydroelectric_emissions_CO2 = Hydroelectric_Out.Mag() * Hydroelectric_Conv_Eff * Hydroelectric_CO2;
-			Hydroelectric_emissions_SO2 = Hydroelectric_Out.Mag() * Hydroelectric_Conv_Eff * Hydroelectric_SO2;
-			Hydroelectric_emissions_NOx = Hydroelectric_Out.Mag() * Hydroelectric_Conv_Eff * Hydroelectric_NOx;
-
-			energy_for_calc = energy_for_calc - Hydroelectric_Max_Out;
-		}
-		else if (energy_requirement == true)
-		{
-			Hydroelectric_Out = energy_for_calc;
-
 			
-			Hydroelectric_emissions_CO2 = Hydroelectric_Out.Mag() * Hydroelectric_Conv_Eff * Hydroelectric_CO2;
-			Hydroelectric_emissions_SO2 = Hydroelectric_Out.Mag() * Hydroelectric_Conv_Eff * Hydroelectric_SO2;
-			Hydroelectric_emissions_NOx = Hydroelectric_Out.Mag() * Hydroelectric_Conv_Eff * Hydroelectric_NOx;
+			if (dispatch_order == Nuclear_Order)
+			{
+	//Energy output of any power source based on its maximum capacity and requirement. If energy required is greater than the maximum capacity
+	//of the corresponding power source,the source would supply its maximum, otherwise it would supply only the required. The dispacth order is based on the users' choice.
 
-			energy_requirement = false;
+			if (Nuclear_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
 
-			energy_for_calc = energy_for_calc - Hydroelectric_Out;
+			{
+
+				Nuclear_Out = Nuclear_Max_Out;
+
+				Nuclear_emissions_CO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_CO2;
+				Nuclear_emissions_SO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_SO2;
+				Nuclear_emissions_NOx = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_NOx;
+
+				energy_for_calc = energy_for_calc - Nuclear_Max_Out;
+			}
+			else if (energy_requirement == true)
+			{
+				Nuclear_Out = energy_for_calc.Mag();
+
+
+				Nuclear_emissions_CO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_CO2;
+				Nuclear_emissions_SO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_SO2;
+				Nuclear_emissions_NOx = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_NOx;
+
+				energy_requirement = false;
+
+				energy_for_calc = energy_for_calc - Nuclear_Out;
+
+			}
+
+			else	//Not needed
+			{
+				Nuclear_Out = 0.0;
+
+			}
+			}
+			
+			if (dispatch_order == Hydroelectric_Order)
+			{
+
+			if (Hydroelectric_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+			{
+				Hydroelectric_Out = Hydroelectric_Max_Out;
+
+				Hydroelectric_emissions_CO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_CO2;
+				Hydroelectric_emissions_SO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_SO2;
+				Hydroelectric_emissions_NOx = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_NOx;
+
+				energy_for_calc = energy_for_calc - Hydroelectric_Max_Out;
+			}
+			else if (energy_requirement == true)
+			{
+				Hydroelectric_Out = energy_for_calc.Mag();
+
+
+
+				
+				Hydroelectric_emissions_CO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_CO2;
+				Hydroelectric_emissions_SO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_SO2;
+				Hydroelectric_emissions_NOx = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_NOx;
+
+				energy_requirement = false;
+
+				energy_for_calc = energy_for_calc - Hydroelectric_Out;		
+
+			}
+
+			else	//Not needed
+			{
+				Hydroelectric_Out = 0.0;
+
+			}
+
+			}
+
+			if (dispatch_order == Solarthermal_Order)
+			{
+
+			if (Solarthermal_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+			{
+				Solarthermal_Out = Solarthermal_Max_Out;
+
+				Solarthermal_emissions_CO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_CO2;
+				Solarthermal_emissions_SO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_SO2;
+				Solarthermal_emissions_NOx = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_NOx;
+
+				energy_for_calc = energy_for_calc - Solarthermal_Max_Out;
+			}
+			else if (energy_requirement == true)
+			{
+				Solarthermal_Out = energy_for_calc.Mag();
+
+
+
+				Solarthermal_emissions_CO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_CO2;
+				Solarthermal_emissions_SO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_SO2;
+				Solarthermal_emissions_NOx = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_NOx;
+				
+				energy_for_calc = energy_for_calc - Solarthermal_Out;
+				
+			}
+
+			else	//Not needed
+			{
+				Solarthermal_Out = 0.0;
+
+			}
+
+			}
+
+			if (dispatch_order == Biomass_Order)
+			{
+
+			if (Biomass_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+			{
+				Biomass_Out = Biomass_Max_Out ;
+
+				Biomass_emissions_CO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_CO2;
+				Biomass_emissions_SO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_SO2;
+				Biomass_emissions_NOx = Biomass_Out * Biomass_Conv_Eff * Biomass_NOx;
+
+				energy_for_calc = energy_for_calc - Biomass_Max_Out;
+			}
+			else if (energy_requirement == true)
+			{
+				Biomass_Out = energy_for_calc.Mag();
+
+
+
+				Biomass_emissions_CO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_CO2;
+				Biomass_emissions_SO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_SO2;
+				Biomass_emissions_NOx = Biomass_Out * Biomass_Conv_Eff * Biomass_NOx;
+
+				energy_requirement = false;
+
+				energy_for_calc = energy_for_calc - Biomass_Out;
 		
+			}
+			else	//Not needed
+			{
+				Biomass_Out = 0.0;
 
-		}
-		if (Nuclear_Max_Out.Mag() < energy_for_calc.Mag() && energy_requirement == true)
-		{
-			Nuclear_Out = Nuclear_Max_Out;
+			}
 
+			}
 
-			Nuclear_emissions_CO2 = Nuclear_Out.Mag() * Nuclear_Conv_Eff * Nuclear_CO2;
-			Nuclear_emissions_SO2 = Nuclear_Out.Mag() * Nuclear_Conv_Eff * Nuclear_SO2;
-			Nuclear_emissions_NOx = Nuclear_Out.Mag() * Nuclear_Conv_Eff * Nuclear_NOx;
+			if (dispatch_order == Wind_Order)
+			{
 
-			energy_for_calc = energy_for_calc - Nuclear_Max_Out;
-		}
-		else if (energy_requirement == true)
-		{
-			Nuclear_Out = energy_for_calc;
+			if (Wind_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+			{
+				Wind_Out = Wind_Max_Out;
 
-			Nuclear_emissions_CO2 = Nuclear_Out.Mag() * Nuclear_Conv_Eff * Nuclear_CO2;
-			Nuclear_emissions_SO2 = Nuclear_Out.Mag() * Nuclear_Conv_Eff * Nuclear_SO2;
-			Nuclear_emissions_NOx = Nuclear_Out.Mag() * Nuclear_Conv_Eff * Nuclear_NOx;
+				Wind_emissions_CO2 = Wind_Out * Wind_Conv_Eff * Wind_CO2;
+				Wind_emissions_SO2 = Wind_Out * Wind_Conv_Eff * Wind_SO2;
+				Wind_emissions_NOx = Wind_Out * Wind_Conv_Eff * Wind_NOx;
 
-			energy_requirement = false;
-
-			energy_for_calc = energy_for_calc - Nuclear_Out;
-
-		}
-		if (Wind_Max_Out.Mag() < energy_for_calc.Mag() && energy_requirement == true)
-		{
-			Wind_Out = Wind_Max_Out;
-
-			Wind_emissions_CO2 = Wind_Out.Mag() * Wind_Conv_Eff * Wind_CO2;
-			Wind_emissions_SO2 = Wind_Out.Mag() * Wind_Conv_Eff * Wind_SO2;
-			Wind_emissions_NOx = Wind_Out.Mag() * Wind_Conv_Eff * Wind_NOx;
-
-			energy_for_calc = energy_for_calc - Wind_Max_Out;
-		}
-		else if (energy_requirement == true)
-		{
-			Wind_Out = energy_for_calc;
-
-			Wind_emissions_CO2 = Wind_Out.Mag() * Wind_Conv_Eff * Wind_CO2;
-			Wind_emissions_SO2 = Wind_Out.Mag() * Wind_Conv_Eff * Wind_SO2;
-			Wind_emissions_NOx = Wind_Out.Mag() * Wind_Conv_Eff * Wind_NOx;	
-
-			energy_requirement = false;
-
-			energy_for_calc = energy_for_calc - Wind_Out;
+				energy_for_calc = energy_for_calc - Wind_Max_Out;
+			}
+			else if (energy_requirement == true)
+			{
+				Wind_Out = energy_for_calc.Mag();
 
 
-		}
-		if (Petroleum_Max_Out.Mag() < energy_for_calc.Mag() && energy_requirement == true)
-		{
-			Petroleum_Out = Petroleum_Max_Out;
 
-			Petroleum_emissions_CO2 = Petroleum_Out.Mag() * Petroleum_Conv_Eff * Petroleum_CO2;
-			Petroleum_emissions_SO2 = Petroleum_Out.Mag() * Petroleum_Conv_Eff * Petroleum_SO2;
-			Petroleum_emissions_NOx = Petroleum_Out.Mag() * Petroleum_Conv_Eff * Petroleum_NOx;
+				Wind_emissions_CO2 = Wind_Out * Wind_Conv_Eff * Wind_CO2;
+				Wind_emissions_SO2 = Wind_Out * Wind_Conv_Eff * Wind_SO2;
+				Wind_emissions_NOx = Wind_Out * Wind_Conv_Eff * Wind_NOx;	
 
-			energy_for_calc = energy_for_calc - Petroleum_Max_Out;
-		}
-		else if (energy_requirement == true)
-		{
-			Petroleum_Out = energy_for_calc;
+				energy_requirement = false;
 
-			Petroleum_emissions_CO2 = Petroleum_Out.Mag() * Petroleum_Conv_Eff * Petroleum_CO2;
-			Petroleum_emissions_SO2 = Petroleum_Out.Mag() * Petroleum_Conv_Eff * Petroleum_SO2;
-			Petroleum_emissions_NOx = Petroleum_Out.Mag() * Petroleum_Conv_Eff * Petroleum_NOx;	
+				energy_for_calc = energy_for_calc - Wind_Out;
+
+			}
 			
-			energy_requirement = false;
+			else	//Not needed
+			{
+				Wind_Out = 0.0;
 
-			energy_for_calc = energy_for_calc - Petroleum_Out;
-
-		}
-
-		if (Solarthermal_Max_Out.Mag() < energy_for_calc.Mag() && energy_requirement == true)
-		{
-			Solarthermal_Out = Solarthermal_Max_Out;
-
-			Solarthermal_emissions_CO2 = Solarthermal_Out.Mag() * Solarthermal_Conv_Eff * Solarthermal_CO2;
-			Solarthermal_emissions_SO2 = Solarthermal_Out.Mag() * Solarthermal_Conv_Eff * Solarthermal_SO2;
-			Solarthermal_emissions_NOx = Solarthermal_Out.Mag() * Solarthermal_Conv_Eff * Solarthermal_NOx;
-
-			energy_for_calc = energy_for_calc - Solarthermal_Max_Out;
-		}
-		else if (energy_requirement == true)
-		{
-			Solarthermal_Out = energy_for_calc;
-
-			Solarthermal_emissions_CO2 = Solarthermal_Out.Mag() * Solarthermal_Conv_Eff * Solarthermal_CO2;
-			Solarthermal_emissions_SO2 = Solarthermal_Out.Mag() * Solarthermal_Conv_Eff * Solarthermal_SO2;
-			Solarthermal_emissions_NOx = Solarthermal_Out.Mag() * Solarthermal_Conv_Eff * Solarthermal_NOx;
+			}
 			
-			energy_for_calc = energy_for_calc - Solarthermal_Out;
+			}
+
+			if (dispatch_order == Coal_Order)
+			{
+
+			if (Coal_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+			{
+				Coal_Out = Coal_Max_Out;
+
+				Coal_emissions_CO2 = Coal_Out * Coal_Conv_Eff * Coal_CO2;
+				Coal_emissions_SO2 = Coal_Out * Coal_Conv_Eff * Coal_SO2;
+				Coal_emissions_NOx = Coal_Out * Coal_Conv_Eff * Coal_NOx;
+
+				energy_for_calc = energy_for_calc - Coal_Max_Out; 
+			}
+			else if (energy_requirement == true)
+			{
+				Coal_Out = energy_for_calc.Mag();
+
+
+
+				Coal_emissions_CO2 = Coal_Out * Coal_Conv_Eff * Coal_CO2;
+				Coal_emissions_SO2 = Coal_Out * Coal_Conv_Eff * Coal_SO2;
+				Coal_emissions_NOx = Coal_Out * Coal_Conv_Eff * Coal_NOx;	
+
+				energy_requirement = false;
+
+				energy_for_calc = energy_for_calc - Coal_Out; 
+
+			}
+
+			else	//Not needed
+			{
+				Coal_Out = 0.0;
+
+			}
+
+			}
 
 			
+			if (dispatch_order == Naturalgas_Order)
+			{
+				if ((Naturalgas_Max_Out < energy_for_calc.Mag()) && (energy_requirement == true))
+				{
+					Naturalgas_Out = Naturalgas_Max_Out;
+
+					Naturalgas_emissions_CO2 = Naturalgas_Out * Naturalgas_Conv_Eff * Naturalgas_CO2;
+					Naturalgas_emissions_SO2 = Naturalgas_Out * Naturalgas_Conv_Eff * Naturalgas_SO2;
+					Naturalgas_emissions_NOx = Naturalgas_Out * Naturalgas_Conv_Eff * Naturalgas_NOx;
+
+					energy_for_calc = energy_for_calc - Naturalgas_Max_Out;
+				}
+				else if (energy_requirement == true)
+				{
+					Naturalgas_Out = energy_for_calc.Mag();
+
+
+					Naturalgas_emissions_CO2 = Naturalgas_Out * Naturalgas_Conv_Eff * Naturalgas_CO2;
+					Naturalgas_emissions_SO2 = Naturalgas_Out * Naturalgas_Conv_Eff * Naturalgas_SO2;
+					Naturalgas_emissions_NOx = Naturalgas_Out * Naturalgas_Conv_Eff* Naturalgas_NOx;	
+
+					energy_requirement = false;
+
+					energy_for_calc = energy_for_calc - Naturalgas_Out;
+
+				}
+				else	//Not needed
+				{
+					Naturalgas_Out = 0.0;
+
+				}
+			}
+
+			if (dispatch_order == Geothermal_Order)
+			{
+			
+			if (Geothermal_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+			{
+				Geothermal_Out = Geothermal_Max_Out;
+
+				Geothermal_emissions_CO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_CO2;
+				Geothermal_emissions_SO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_SO2;
+				Geothermal_emissions_NOx = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_NOx;
+
+				energy_for_calc = energy_for_calc - Geothermal_Max_Out;
+			}
+			else if (energy_requirement == true)
+			{
+				Geothermal_Out = energy_for_calc.Mag();
+
+
+				Geothermal_emissions_CO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_CO2;
+				Geothermal_emissions_SO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_SO2;
+				Geothermal_emissions_NOx = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_NOx;
+
+				energy_requirement = false;	
+
+				energy_for_calc = energy_for_calc - Geothermal_Out;
+
+			}
+			else	//Not needed
+			{
+				Geothermal_Out = 0.0;
+					
+			}
+
+			}
+
+			if (dispatch_order == Petroleum_Order)
+			{
+						
+			if (Petroleum_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+			{
+				Petroleum_Out = Petroleum_Max_Out;
+
+				Petroleum_emissions_CO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_CO2;
+				Petroleum_emissions_SO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_SO2;
+				Petroleum_emissions_NOx = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_NOx;
+
+				energy_for_calc = energy_for_calc - Petroleum_Max_Out;
+			}
+			else if (energy_requirement == true)
+			{
+				Petroleum_Out = energy_for_calc.Mag();
+
+				Petroleum_emissions_CO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_CO2;
+				Petroleum_emissions_SO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_SO2;
+				Petroleum_emissions_NOx = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_NOx;	
+				
+				energy_requirement = false;
+
+				energy_for_calc = energy_for_calc - Petroleum_Out;
+
+			}
+
+			else	//Not needed
+			{
+				Petroleum_Out = 0.0;
+					
+			}
+
+			}
+		}//end dispatch FOR loop
+		
+		//If energy required is greater than the energy available, the rest would be supplied by coal.
+		if (energy_for_calc.Mag() > 0)
+		{
+			
+			Coal_Out = Coal_Out + energy_for_calc.Mag();
 		}
 		
-		Total_energy_out = Naturalgas_Out + Coal_Out + Biomass_Out + Geothermal_Out + Hydroelectric_Out + Nuclear_Out + Wind_Out + Petroleum_Out + Solarthermal_Out;
+        Total_energy_out = Naturalgas_Out + Coal_Out + Biomass_Out + Geothermal_Out + Hydroelectric_Out + Nuclear_Out + Wind_Out + Petroleum_Out + Solarthermal_Out;
 
 		Total_emissions_CO2 = Naturalgas_emissions_CO2 + Coal_emissions_CO2 + Biomass_emissions_CO2 + Geothermal_emissions_CO2 + Hydroelectric_emissions_CO2 + Nuclear_emissions_CO2 + Wind_emissions_CO2 + Petroleum_emissions_CO2 + Solarthermal_emissions_CO2;
 

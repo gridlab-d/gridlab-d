@@ -24,12 +24,21 @@ public:
 		KEY	   lastbid_id;		/// Last bid ID used for this section
 	} CURVEDETAILS; /// Bid curve details
 
+	typedef enum e_genstate {
+		GEN_OFF = 0,		//Generator is offline
+		GEN_ACTIVE = 1,		//Generator is active and producing
+		GEN_STARTUP = 2,	//Generator would be starting up - used for bid tracking
+	} GENERATOR_STATE;
+
 	typedef struct s_curveentry {
 		CURVEDETAILS *Curve_Info;		//Pointer to particular bid curve of the time
 		int	number_bid_curve_sections;	//Number of pieces in this particular curve
 		TIMESTAMP bid_curve_parsed;		//Tracking variable - so know if need to update or not
+		bool valid_bid_period;			//Variable to indicate if the generator was allowed to bid here, or not
+		GENERATOR_STATE expected_state;	//Expected state of generator at this bid period - simple "post-clear" update to let next interval know how to bid
 	} CURVEENTRY;						//High-level structure for curves
 
+	GENERATOR_STATE gen_state;			//Current state of the generator (used to influence bids)
 	CURVEENTRY *bid_curve_values;		//Storage of bid curve for all latency periods
 	CURVEENTRY bid_curve_current;		//Currently parsed bid-curve - used to populate the other intervals
 	int number_bid_curve_sections;		//Number of sections in the current bid curve parse
@@ -52,12 +61,18 @@ public:
 	OBJECT *market_object;
 	TIMESTAMP market_period;
 	TIMESTAMP market_latency;
-	double gen_rating;
-	double current_power_output;
-	double last_power_output;
+	double gen_rating;				//Generator output rating
+	double current_power_output;	//Current generator output level
+	double last_power_output;		//Previous generator output level
 	char1024 bidding_curve_txt;
-	bool update_curve;
-	bool update_output;
+	bool update_curve;				//Flag to force an update of the curve
+	bool update_output;				//Flag to set an output update
+	double startup_cost;			//Cost associated with starting the generator
+	double shutdown_cost;			//Cost associated with shutting down the generator
+	double minimum_runtime_dbl;		//Minimum time for shutdown_cost to be accumulated over
+	double minimum_downtime_dbl;	//Minimum time a generator must remain off before it can bid again
+	double capacity_factor;			//Generator capacity factor
+	double amortization_value;		//Exponent term for amortization calculations
 
 private:
 	auction *auction_object;
@@ -65,7 +80,15 @@ private:
 	unsigned char phase_information;
 	unsigned char num_phases;
 	double price_cap_value;
+	double shutdown_cost_remaining;
+	double amortization_scaled;
+	double shutdown_current_cost;
 	TIMESTAMP next_clear;
+	TIMESTAMP market_bidding_time;
+	TIMESTAMP gen_started;
+	TIMESTAMP minimum_downtime;
+	int min_num_run_periods;
+	int num_runs_completed;
 };
 
 #endif // _GENCONTROLLER_H

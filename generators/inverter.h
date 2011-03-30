@@ -31,6 +31,8 @@ public:
 	complex V_In; // V_in (DC)
 	complex I_In; // I_in (DC)
 	complex VA_In; //power in (DC)
+
+	
 	complex VA_Out;
 	double P_Out;  // P_Out and Q_Out are set by the user as set values to output in CONSTANT_PQ mode
 	double Q_Out;

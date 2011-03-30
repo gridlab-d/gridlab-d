@@ -43,9 +43,11 @@ public:
 	double nominal_power;
 	int64 next_time, last_time; ///< used to keep track of time in "special" modes - DR, duty-cycle
 	double duty_cycle;			///< effective duty cycle of device
+	double last_duty_cycle;
 	double period;				///< period at which duty cycle is applied
 	double phase;				///< phase of the duty cycle in terms of 0-1
 	double multiplier;			///< static multiplier to modify base power ( load = base_power * multiplier )
+	double recovery_duty_cycle; ///<  duty cycle during recovery interval
 	 
 
 	typedef struct {

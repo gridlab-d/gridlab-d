@@ -233,8 +233,8 @@ int diesel_dg::create(void)
 
 
 			//End of synchronous generator inputs
-			Rated_V = 0.0;
-			Rated_VA = 0.0;
+			Rated_V = 480;
+			Rated_VA = 12000;
 
 				Rs = 0.025;				//Estimated values for synch representation.
 				Xs = 0.200;
@@ -258,8 +258,8 @@ int diesel_dg::create(void)
 			EfA_sch = 0.0;
 			EfB_sch = 0.0;
 			EfC_sch = 0.0;
-			Max_P = 0;
-			Max_Q = 0;
+			Max_P = 11000;
+			Max_Q = 6633.25;
 
 
 
@@ -372,64 +372,6 @@ return 1;
 TIMESTAMP diesel_dg::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 {
-		//double Pmech,
-
-		//indicated_hp = (100000/60)*(pressure*cylinder_length*(3.1416/4)*cylinder_radius*cylinder_radius*speed*cylinders);
-		//
-		//brake_hp = 2*3.1416*(speed/stroke)*(torque/cylinders)/60;
-
-		//thermal_efficiency = (brake_hp/indicated_hp)*100;
-
-		//energy_supplied = fuel * calotific_fuel;
-
-		//heat_equivalent_ip = indicated_hp * time_operation * 60/1000;
-
-		//energy_coolingwater = w_coolingwater * 4.187 * (outlet_temperature - inlet_temperature);
-
-		//mass_exhaustgas = (fuel * air_fuel) - (steam_exhaust * fuel);
-
-		//energy_exhaustgas = mass_exhaustgas * specific_heat_dry * (exhaust_temperature - room_temperature);
-
-		//energy_steam = (steam_exhaust * fuel) * (4.187 * (100 - room_temperature) + 2257.9 + specific_heat_steam * (exhaust_temperature - 100));
-
-		//total_energy_exhaustgas = energy_exhaustgas + energy_steam;
-
-		//unaccounted_energyloss = energy_supplied - heat_equivalent_ip - energy_coolingwater - total_energy_exhaustgas;	
-
-		//Pmech = brake_hp;
-
-		//Pconv = 1 * Pmech;  //TO DO:  friction and windage loss, misc. loss model
-
-		//current_A = current_B = current_C = 0.0;
-
-		/*
-
-	//Synchronous generator calculations
-        
-        wm = (120 * f/poles) * (2*3.1416/60);
-        
-        Pconv = brake_hp - (brake_hp*0.1);
-        
-        Tind = Pconv / wm;
-        
-       // EA = (wm * (Rs1 + 1i * Xs1)) * Tind /(3 * (Vo/sqrt(3)) * sin(delta*3.1416/180)); // internal generated voltage
-		EA = (wm * Xs1) * Tind /(3 * (Vo/sqrt(3.0)) * sin(delta*sqrt(3.0)/180));// internal generated voltage
-               
-        //IA = EA * sin(delta*3.1416/180) / ((Rs1 + 1i * Xs1) * cos(delta*3.1416/180));
-		IA = EA * sin(delta*3.1416/180) / (Xs1 * cos(delta*sqrt(3.0)/180));
-        
-        Ploss = IA * IA * Rs1;
-        
-        Pout = Pconv - Ploss;
-        
-        effe = Pout *100 / Pconv;
-        
-        effo = Pout * 100 / brake_hp;
-
-	//End of diesel power plant calculations
-
-		*/
-
 	   return TS_NEVER; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
@@ -500,21 +442,21 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		else if (Gen_mode == CONSTANTPQ)	//Gives a constant output power of real power converted Pout,  
 		{									//then Qout is found through a controllable power factor.
-			if (Pconva > 1.05*Max_P/3) {
-				Pconva = 1.05*Max_P/3;		//If air density increases, power extracted can be much greater
+			if (Pconva > 1*Max_P/3) {
+				Pconva = 1*Max_P/3;		//If air density increases, power extracted can be much greater
 			}								//than amount the generator can handle.  This limits to 5% overpower.
-			if (Pconvb > 1.05*Max_P/3) {
-				Pconvb = 1.05*Max_P/3;
+			if (Pconvb > 1*Max_P/3) {
+				Pconvb = 1*Max_P/3;
 			}
-			if (Pconvc > 1.05*Max_P/3) {
-				Pconvc = 1.05*Max_P/3;
+			if (Pconvc > 1*Max_P/3) {
+				Pconvc = 1*Max_P/3;
 			}
 			
 			current_A = -(~(complex(Pconva,(Pconva/pf)*sin(acos(pf)))/voltage_A));
 			current_B = -(~(complex(Pconvb,(Pconvb/pf)*sin(acos(pf)))/voltage_B));
 			current_C = -(~(complex(Pconvc,(Pconvc/pf)*sin(acos(pf)))/voltage_C));
 
-			for (k = 0; k < 6; k++)
+			for (k = 0; k < 100; k++)
 			{
 				PoutA = Pconva - current_A.Mag()*current_A.Mag()*(AMx[0][0] - AMx[0][1]).Re();
 				PoutB = Pconvb - current_B.Mag()*current_B.Mag()*(AMx[1][1] - AMx[0][1]).Re();

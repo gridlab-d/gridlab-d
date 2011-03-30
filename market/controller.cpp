@@ -269,10 +269,10 @@ int controller::init(OBJECT *parent){
 	market = OBJECTDATA(pMarket, auction);
 
 	if(dPeriod == 0.0){
-		use_market_period = true;
+		period = market->period;
 	} else {
 		period = (TIMESTAMP)floor(dPeriod + 0.5);
-	}
+	} 
 
 	if(bid_delay < 0){
 		bid_delay = -bid_delay;
@@ -458,10 +458,6 @@ int controller::isa(char *classname)
 
 
 TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
-	if(use_market_period){
-		period = market->period;
-		use_market_period = false;
-	}
 	if(slider_setting < 0.0)
 		slider_setting = 0.0;
 	if(slider_setting_heat < 0.0)

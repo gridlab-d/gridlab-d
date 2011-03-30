@@ -101,6 +101,10 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "shunt_C[S]", PADDR(shuntC),
 			PT_bool, "NR_mode", PADDR(NR_mode),
 
+			PT_enumeration, "service_status", PADDR(service_status),
+				PT_KEYWORD, "IN_SERVICE", ND_IN_SERVICE,
+				PT_KEYWORD, "OUT_OF_SERVICE", ND_OUT_OF_SERVICE,
+
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     
 			//Defaults setup
@@ -148,6 +152,9 @@ int node::create(void)
 	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;	//Nominal house current variables
 
 	prev_phases = 0x00;
+
+	// Only used in capacitors, at this time, but put into node for future functionality (maybe with reliability?)
+	service_status = ND_IN_SERVICE;
 
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));

@@ -41,6 +41,9 @@ public:
 	double monthly_bill;			//Accumulator for the current month's bill
 	double monthly_fee;				//Once a month flat fee for customer hook-up
 	double monthly_energy;			//Accumulator for the current month's energy
+	complex meter_power_consumption; //Represents standby power or losses assosciated with electric meters
+	int16 no_phases;
+
 	typedef enum {
 		BM_NONE,
 		BM_UNIFORM,

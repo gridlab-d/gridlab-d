@@ -176,6 +176,9 @@ public:
 	double hvac_period_length; // minutes
 	double hvac_duty_cycle;
 
+	/* Energy Storage Variable */
+	double thermal_storage_present;		//Indication of if thermal storage is present and available for drawing
+	double thermal_storage_inuse;		//Flag to indicate thermal storage is being pulled at the moment
 
 	typedef enum {
 		ST_GAS	= 0x00000001,	///< flag to indicate gas heating is used

@@ -103,6 +103,11 @@ public:
 			UNDERVOLT,		///< bus voltage is too low
 			OVERVOLT,		///< bus voltage is too high
 	} status;
+	enum { 
+		ND_OUT_OF_SERVICE = 0, ///< out of service flag for nodes
+		ND_IN_SERVICE = 1,     ///< in service flag for nodes - default
+	} service_status;
+		   
 	SUBNODETYPE SubNode;
 	set busflags;			///< node flags (see NF_*)
 	set busphasesIn;		///< phase check flags for "reconvergent" lines (input)

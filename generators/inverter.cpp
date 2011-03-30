@@ -856,7 +856,19 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		return TS_NEVER;
 	}
 	else
+	{
+		if (number_of_phases_out == 4)
+		{
+			*pLine12 += last_current[3];
+		}
+		else
+		{
+			pLine_I[0] += last_current[0];
+			pLine_I[1] += last_current[1];
+			pLine_I[2] += last_current[2];
+		}
 		return TS_NEVER;
+	}
 }
 
 //	complex PA,QA,PB,QB,PC,QC;
@@ -889,7 +901,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	if (*NR_mode == false)
+	//if (*NR_mode == false)
 	{
 		//Remove our parent contributions (so XMLs look proper)
 		pLine_I[0] -= last_current[0];

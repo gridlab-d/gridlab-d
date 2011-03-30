@@ -582,6 +582,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),PT_DESCRIPTION,"thermostat cooling setpoint",
 			PT_double,"design_heating_setpoint[degF]",PADDR(design_heating_setpoint),PT_DESCRIPTION,"system design heating setpoint",
 			PT_double,"design_cooling_setpoint[degF]",PADDR(design_cooling_setpoint),PT_DESCRIPTION,"system design cooling setpoint",
+			PT_double,"over_sizing_factor",PADDR(over_sizing_factor),PT_DESCRIPTION,"over sizes the heating and cooling system from standard specifications (0.2 ='s 120% sizing)",
 			
 			PT_double,"design_heating_capacity[Btu/h]",PADDR(design_heating_capacity),PT_DESCRIPTION,"system heating capacity",
 			PT_double,"design_cooling_capacity[Btu/h]",PADDR(design_cooling_capacity),PT_DESCRIPTION,"system cooling capacity",
@@ -632,6 +633,9 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"is_AUX_on",PADDR(is_AUX_on),PT_DESCRIPTION,"logic statement to determine population statistics - is the AUX on? 0 no, 1 yes",
 			PT_double,"is_HEAT_on",PADDR(is_HEAT_on),PT_DESCRIPTION,"logic statement to determine population statistics - is the HEAT on? 0 no, 1 yes",
 			PT_double,"is_COOL_on",PADDR(is_COOL_on),PT_DESCRIPTION,"logic statement to determine population statistics - is the COOL on? 0 no, 1 yes",
+			
+			PT_double,"thermal_storage_present",PADDR(thermal_storage_present),PT_DESCRIPTION,"logic statement for determining if energy storage is present",
+			PT_double,"thermal_storage_in_use",PADDR(thermal_storage_inuse),PT_DESCRIPTION,"logic statement for determining if energy storage is being utilized",
 
 			PT_set,"system_type",PADDR(system_type),PT_DESCRIPTION,"heating/cooling system type/options",
 				PT_KEYWORD, "GAS",	(set)ST_GAS,
@@ -847,6 +851,10 @@ int house_e::create()
 	hvac_motor_real_loss = 0;
 	hvac_motor_reactive_loss = 0;
 	is_AUX_on = is_HEAT_on = is_COOL_on = 0;
+
+	//Set thermal storage flag
+	thermal_storage_present = 0;
+	thermal_storage_inuse = 0;
 
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
@@ -1912,6 +1920,7 @@ void house_e::update_system(double dt)
 	adj_heating_cop = heating_cop_adj;
 	double heating_capacity_adj = design_heating_capacity*(0.34148808 + 0.00894102*(*pTout) + 0.00010787*(*pTout)*(*pTout)); 
 	double cooling_capacity_adj = design_cooling_capacity*(1.48924533 - 0.00514995*(*pTout));
+
 	adj_cooling_cap = cooling_capacity_adj;
 	adj_heating_cap = heating_capacity_adj;
 #pragma message("house_e: add update_system voltage adjustment for heating")
@@ -1940,7 +1949,14 @@ void house_e::update_system(double dt)
 			cooling_demand = 0.0;
 			break;
 		case CT_ELECTRIC:
-			cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
+			if (thermal_storage_present < 1)	//Thermal storage offline or not here
+			{
+				cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
+			}
+			else	//Thermal storage online and in use
+			{
+				cooling_demand = 0.0;
+			}
 			break;
 	}
 
@@ -1951,6 +1967,10 @@ void house_e::update_system(double dt)
 			fan_power = fan_design_power/1000.0; /* convert to kW */
 		else
 			fan_power = 0.0;
+
+		//Ensure thermal storage is not being used right now (currently supports only cooling modes)
+		thermal_storage_inuse = 0;
+
 		//heating_demand = design_heating_capacity*heating_capacity_adj/(heating_COP * heating_cop_adj)*KWPBTUPH;
 		//system_rated_capacity = design_heating_capacity*heating_capacity_adj;
 		switch(heating_system_type){
@@ -1984,6 +2004,9 @@ void house_e::update_system(double dt)
 		else
 			fan_power = 0.0;
 
+		//Ensure thermal storage is not being used right now
+		thermal_storage_inuse = 0;
+
 		switch(auxiliary_system_type){
 			case AT_NONE: // really shouldn't've gotten here!
 				//heating_demand = 0.0;
@@ -2012,12 +2035,23 @@ void house_e::update_system(double dt)
 				system_rated_capacity = 0.0;
 				system_rated_power = 0.0;
 				fan_power = 0.0; // turn it back off
+				thermal_storage_inuse = 0;	//No cooling means thermal storage won't be doing anything here
 				break;
 			case CT_ELECTRIC:
-				//cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
-				// DPC: the latent_load_fraction is not as great counted when humidity is low
-				system_rated_capacity = -cooling_capacity_adj / (1 + 0.1 + latent_load_fraction/(1 + exp(4-10*(*pRhout))))*voltage_adj + fan_power*BTUPHPKW;
-				system_rated_power = cooling_demand;
+				if (thermal_storage_present<1)	//If not 1, assumes thermal storage not available (not there, or discharged)
+				{
+					//cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
+					// DPC: the latent_load_fraction is not as great counted when humidity is low
+					system_rated_capacity = -cooling_capacity_adj / (1 + 0.1 + latent_load_fraction/(1 + exp(4-10*(*pRhout))))*voltage_adj + fan_power*BTUPHPKW;
+					system_rated_power = cooling_demand;
+					thermal_storage_inuse = 0;	//Set the flag that no thermal energy storage is being used
+				}
+				else	//Thermal storage is present and online
+				{
+					system_rated_capacity = fan_power*BTUPHPKW;	//Only the fan is going right now, so it is the only power and the only heat gain into the system
+					system_rated_power = cooling_demand;	//Should be 0.0 from above - basically handled inside the energy storage device
+					thermal_storage_inuse = 1;	//Flag that thermal energy storage being utilized
+				}
 				break;
 		}
 		break;
@@ -2030,6 +2064,7 @@ void house_e::update_system(double dt)
 		}
 		system_rated_capacity =  fan_power*BTUPHPKW;	// total heat gain of system
 		system_rated_power = 0.0;					// total power drawn by system
+		thermal_storage_inuse = 0;					//If the system is off, it isn't using thermal storage
 		
 	}
 

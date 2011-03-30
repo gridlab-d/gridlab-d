@@ -19,6 +19,7 @@ public:
 	double measured_demand; //< metered demand (peak of power)
 	double measured_real_power; //< metered real power
 	double measured_reactive_power; //< metered reactive power
+	complex tpmeter_power_consumption;
 	bool tpmeter_interrupted;		///< Reliability flag - goes active if the customer is in an "interrupted" state
 	bool tpmeter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in a "secondary interrupted" state - i.e., momentary
 	TIMESTAMP next_time;
@@ -70,6 +71,7 @@ public:
 	inline triplex_meter(CLASS *cl=oclass):triplex_node(cl){};
 	int create(void);
 	int init(OBJECT *parent);
+	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	int isa(char *classname);

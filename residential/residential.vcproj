@@ -574,6 +574,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\thermal_storage.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\residential\waterheater.cpp"
 				>
 			</File>
@@ -649,6 +653,10 @@
 			</File>
 			<File
 				RelativePath="..\residential\solvers.h"
+				>
+			</File>
+			<File
+				RelativePath=".\thermal_storage.h"
 				>
 			</File>
 			<File

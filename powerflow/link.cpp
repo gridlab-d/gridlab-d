@@ -625,15 +625,31 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 					//Set the branch phases
 					NR_branchdata[NR_branch_reference].phases |= 0x20;
 
-					//Set the To node phases
-					//Lock the to node
-					LOCK_OBJECT(to);
+					if (tnode->NR_node_reference == -99)	//To node is a child
+					{
+						//Set the To node phases
+						//Lock the to node
+						LOCK_OBJECT(tnode->SubNodeParent);
 
-					NR_busdata[tnode->NR_node_reference].phases |= 0x20;
-					NR_busdata[tnode->NR_node_reference].origphases |= 0x20;	//Make sure reliability gets updated right too!
+						NR_busdata[*tnode->NR_subnode_reference].phases |= 0x20;
+						NR_busdata[*tnode->NR_subnode_reference].origphases |= 0x20;	//Make sure reliability gets updated right too!
 
-					//Unlock to node
-					UNLOCK_OBJECT(to);
+						//Unlock to node
+						UNLOCK_OBJECT(tnode->SubNodeParent);
+
+					}
+					else	//Must be a "normal" node
+					{
+						//Set the To node phases
+						//Lock the to node
+						LOCK_OBJECT(to);
+
+						NR_busdata[tnode->NR_node_reference].phases |= 0x20;
+						NR_busdata[tnode->NR_node_reference].origphases |= 0x20;	//Make sure reliability gets updated right too!
+
+						//Unlock to node
+						UNLOCK_OBJECT(to);
+					}
 				}
 
 				//Populate to/from indices
@@ -3053,6 +3069,7 @@ double *link::get_double(OBJECT *obj, char *name)
 // 29 - FUS-BC or FUS-CB - Fuse action BC
 // 30 - FUS-AC or FUS-CA - Fuse action CA
 // 31 - FUS-ABC - Fuse action ABC
+// 32 - TLL - all lines fault - phases A, B, and C
 int link::link_fault_on(char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
 {
 	unsigned char phase_remove = 0x00;	//Default is no phases removed
@@ -3500,6 +3517,54 @@ int link::link_fault_on(char *fault_type, int *implemented_fault, TIMESTAMP *rep
 		phase_remove = temp_phases;	//Flag phase removing
 
 	}//End TLG
+	else if ((fault_type[0] == 'T') && (fault_type[1] == 'L') && (fault_type[2] == 'L'))	//TLL - triple-line-line fault
+	{
+		//Let's see what phases we have to play with
+		temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+		//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
+		switch (temp_phases)
+		{
+		case 0x00:	//No phases!
+			*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+			break;
+		case 0x01:	//Only phase C
+			NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+			*implemented_fault = 13;							//Flag as a C only OC fault
+			break;
+		case 0x02:	//Only phase B
+			NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+			*implemented_fault = 12;							//Flag as a B only OC fault
+			break;
+		case 0x03:	//B and C
+			NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+			*implemented_fault = 8;								//Flag as a B & C LL fault
+			break;
+		case 0x04:	//Only A
+			NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+			*implemented_fault = 11;							//Flag as a A only OC fault
+			break;
+		case 0x05:	//A and C
+			NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+			*implemented_fault = 9;								//Flag as A and C LL fault
+			break;
+		case 0x06:	//A and B
+			NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+			*implemented_fault = 7;								//Flag as A and B LL fault
+			break;
+		case 0x07:	//A, B, and C
+			NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+			*implemented_fault = 32;							//Flag as all three fault
+			break;
+		default:	//Not sure how we'd ever get here
+			GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
+			//Defined elsewhere
+			break;
+		}//end phase cases
+
+		phase_remove = temp_phases;	//Flag phase removing
+
+	}//End TLL
 	else if ((fault_type[0] == 'L') && (fault_type[1] == 'L'))	//Line-line fault
 	{
 		//Figure out who we want to alter - assume [3] is a -, so check [4]+
@@ -3558,15 +3623,15 @@ int link::link_fault_on(char *fault_type, int *implemented_fault, TIMESTAMP *rep
 				break;
 			case 0x01:	//Phase C
 				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 3;								//Flag as a C SLG fault
+				*implemented_fault = 13;							//Flag as a C OC fault
 				break;
 			case 0x02:	//Phase B
 				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 2;								//Flag as a B SLG fault
+				*implemented_fault = 12;							//Flag as a B OC fault
 				break;
 			case 0x04:	//Phase A
 				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 1;								//Flag as a A SLG fault
+				*implemented_fault = 11;							//Flag as a A OC fault
 				break;
 			default:	//No other cases should exist
 				GL_THROW("Fault type %s for link objects has an invalid phase specification");
@@ -3591,11 +3656,11 @@ int link::link_fault_on(char *fault_type, int *implemented_fault, TIMESTAMP *rep
 				break;
 			case 0x01:	//Only phase C
 				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 3;								//Flag as a C SLG fault
+				*implemented_fault = 13;							//Flag as a C OC fault
 				break;
 			case 0x02:	//Only phase B
 				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 2;								//Flag as a B SLG fault
+				*implemented_fault = 12;							//Flag as a B OC fault
 				break;
 			case 0x03:	//B and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
@@ -3603,7 +3668,7 @@ int link::link_fault_on(char *fault_type, int *implemented_fault, TIMESTAMP *rep
 				break;
 			case 0x04:	//Only A
 				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 1;								//Flag as a A SLG fault
+				*implemented_fault = 11;							//Flag as a A OC fault
 				break;
 			case 0x05:	//A and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
@@ -3677,11 +3742,11 @@ int link::link_fault_on(char *fault_type, int *implemented_fault, TIMESTAMP *rep
 				break;
 			case 0x01:	//Only phase C
 				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 3;								//Flag as a C SLG fault
+				*implemented_fault = 13;							//Flag as a C OC fault
 				break;
 			case 0x02:	//Only phase B
 				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 2;								//Flag as a B SLG fault
+				*implemented_fault = 12;							//Flag as a B OC fault
 				break;
 			case 0x03:	//B and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
@@ -3689,7 +3754,7 @@ int link::link_fault_on(char *fault_type, int *implemented_fault, TIMESTAMP *rep
 				break;
 			case 0x04:	//Only A
 				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 1;								//Flag as a A SLG fault
+				*implemented_fault = 11;							//Flag as an A OC fault
 				break;
 			case 0x05:	//A and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
@@ -5789,6 +5854,13 @@ int link::link_fault_off(int *implemented_fault, char *imp_fault_name, void *Ext
 			imp_fault_name[5] = 'B';
 			imp_fault_name[6] = 'C';
 			imp_fault_name[7] = '\0';
+			phase_restore = 0x07;	//Put A, B, and C back in service
+			break;
+		case 32:	//TLL
+			imp_fault_name[0] = 'T';
+			imp_fault_name[1] = 'L';
+			imp_fault_name[2] = 'L';
+			imp_fault_name[3] = '\0';
 			phase_restore = 0x07;	//Put A, B, and C back in service
 			break;
 		default:	//Should never get here

@@ -1,0 +1,113 @@
+// $id$
+//	Copyright (C) 2008 Battelle Memorial Institute
+
+// 3 Node system
+// Swing node and load connected by transmission lines
+// Capacitor node right in the middle with manual control
+
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+#set relax_naming_rules=1
+#define stylesheet=C:\Documents and Settings\d3x289\My Documents\GLD_Analysis_2011\Gridlabd\branch\2.2\VS2005\gridlabd-2_0
+#set savefile=mytest.xml
+
+module powerflow;
+module assert;
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration:300 {
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
+}
+
+
+object node {
+	phases "ABCN";
+	name TopNode;
+	bustype SWING;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	phases "ABCN";
+	from TopNode;
+	to CapNode;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object capacitor {
+	phases ABCD;
+	name CapNode;
+	phases_connected ABCD;
+	control MANUAL;
+	capacitor_A 0.5 MVAr;
+	capacitor_B 0.5 MVAr;
+	capacitor_C 0.5 MVAr;
+	control_level INDIVIDUAL;
+	switchA CLOSED;				//manual controls for load manipulation (don't use the switch player)
+	switchB CLOSED;
+	switchC OPEN;
+	nominal_voltage 7200;
+	service_status OUT_OF_SERVICE;
+ }
+
+
+object overhead_line {
+	phases "ABCN";
+	from CapNode;
+	to BottomLoad;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object load {
+	phases "ABCN";
+	name BottomLoad;
+	constant_power_A +5000.000-120.0j;
+	constant_power_B +2000.000+230.0j;
+	constant_power_C +2300.000+450.0j;
+	nominal_voltage 7200;
+	object complex_assert {
+		target "voltage_A";
+		value 7199.34-0.00437d;
+		within 0.1;
+	};
+	object complex_assert {
+		target "voltage_B";
+		value 7199.66-120d;
+		within 0.1;
+	};
+	object complex_assert {
+		target "voltage_C";
+		value 7199.33+119.999d;
+		within 0.1;
+	};
+}

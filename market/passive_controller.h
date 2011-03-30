@@ -31,6 +31,7 @@ public:
 		CM_RAMP=1,
 		CM_DUTYCYCLE=4,
 		CM_PROBOFF=5,	// probabilistic shut-off
+		CM_ELASTICITY_MODEL=6, //For the elasticity model to work
 	} CONTROLMODE;
 	CONTROLMODE control_mode;
 	// distribution type, for probabilistic control
@@ -86,10 +87,36 @@ public:
 	double range_high, range_low;
 	double prob_off;
 	double base_setpoint;
+	bool pool_pump_model;				///< Boolean flag for turning on the pool pump model version of duty cycle control
+	double base_duty_cycle;
+
+	bool zipLoadParent;
+	bool critical_day;
+	double dailyElasticity;
+	double subElasticityFirstSecond;
+	double subElasticityFirstThird;
+	int32 secondTierHours;
+	int32 thirdTierHours;
+	int32 firstTierHours;
+	double firstTierPrice;
+	double secondTierPrice;
+	double thirdTierPrice;
+	int32 elasticityPeriod;	
+
+	double *tier_prices;
+	double *cleared_load;
+	double predicted_load;
+	enduse *current_load_enduse;
+	int ArraySize;
+	int ArrayIndex;
+	int32 starttime;
+	int32 returnTime;
+
 private:
 	int calc_ramp(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_proboff(TIMESTAMP t0, TIMESTAMP t1);
+	int calc_elasticity(TIMESTAMP t0, TIMESTAMP t1);	
 	int orig_setpoint;
 	int64 last_cycle;
 };

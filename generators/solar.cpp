@@ -3,6 +3,18 @@
 	@file solar.cpp
 	@defgroup solar Diesel gensets
 	@ingroup generators
+// Assumptions :
+  1. All solar panels are tilted as per the site latitude to perform at their best efficiency
+  2. All the solar cells are connected in series in a solar module
+  3. 600Volts, 5/7.6 Amps, 200 Watts PV system is used for all residential , commercial and industrial applications. The number of modules will vary 
+     based on the surface area
+  4. A power derating of 10-15% is applied to take account of power losses and conversion in-efficiencies of the inverter.
+
+// References
+1. Photovoltaic Module Thermal/Wind performance: Long-term monitoring and Model development for energy rating , Solar program review meeting 2003, Govindswamy Tamizhmani et al
+2. COMPARISON OF ENERGY PRODUCTION AND PERFORMANCE FROM FLAT-PLATE PHOTOVOLTAIC MODULE TECHNOLOGIES DEPLOYED AT FIXED TILT, J.A. del Cueto
+3. Solar Collectors and Photovoltaic in energyPRO
+4.Calculation of the polycrystalline PV module temperature using a simple method of energy balance 
 
  @{
  **/
@@ -33,6 +45,7 @@ solar::solar(MODULE *module)
 		else
 			oclass->trl = TRL_PROOF;
 
+
 		if (gl_publish_variable(oclass,
 			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
 				PT_KEYWORD,"UNKNOWN",UNKNOWN,
@@ -46,7 +59,7 @@ solar::solar(MODULE *module)
 				PT_KEYWORD,"ONLINE",ONLINE,	
 
 			PT_enumeration,"panel_type", PADDR(panel_type_v),
-				PT_KEYWORD, "SINGLE_CRYSTAL_SILICON", SINGLE_CRYSTAL_SILICON, 
+				PT_KEYWORD, "SINGLE_CRYSTAL_SILICON", SINGLE_CRYSTAL_SILICON, //Mono-crystalline in production and the most efficient, efficiency 0.15-0.17
 				PT_KEYWORD, "MULTI_CRYSTAL_SILICON", MULTI_CRYSTAL_SILICON,
 				PT_KEYWORD, "AMORPHOUS_SILICON", AMORPHOUS_SILICON,
 				PT_KEYWORD, "THIN_FILM_GA_AS", THIN_FILM_GA_AS,
@@ -56,28 +69,41 @@ solar::solar(MODULE *module)
 				PT_KEYWORD,"AC",AC,
 				PT_KEYWORD,"DC",DC,
 
-			PT_double, "noct[degC]", PADDR(NOCT),
-			PT_double, "Tcell[degC]", PADDR(Tcell),
-			PT_double, "Tambient[degC]", PADDR(Tambient),
-			PT_double, "Insolation[W/m^2]", PADDR(Insolation),
+			PT_enumeration, "INSTALLATION_TYPE", PADDR(installation_type_v),
+			   PT_KEYWORD, "ROOF_MOUNTED", ROOF_MOUNTED,
+               PT_KEYWORD, "GROUND_MOUNTED",GROUND_MOUNTED,
+
+
+			PT_double, "NOCT[degF]", PADDR(NOCT), //Nominal operating cell temperature NOCT in deg C
+			//PT_double, "Tcell[degC]", PADDR(Tcell), //Temperature of PV cell or module??
+            PT_double, "Tmodule[degF]", PADDR(Tmodule), //Temperature of PV module
+			PT_double, "Tambient[degF]", PADDR(Tambient), //Ambient temperature
+			PT_double, "wind_speed[mph]", PADDR(wind_speed), //Wind speed
+			//PT_double, "Insolation[W/m^2]", PADDR(Insolation),
+			PT_double, "Insolation[W/sf]", PADDR(Insolation),
 			PT_double, "Rinternal[Ohm]", PADDR(Rinternal),
-			PT_double, "Rated_Insolation[W/m^2]", PADDR(Rated_Insolation),
-			PT_double, "V_Max[V]", PADDR(V_Max), 
-			PT_complex, "Voc_Max[V]", PADDR(Voc_Max),
-			PT_complex, "Voc[V]", PADDR(Voc),
+			//PT_double, "Rated_Insolation[W/m^2]", PADDR(Rated_Insolation),
+			PT_double, "Rated_Insolation[W/sf]", PADDR(Rated_Insolation),
+			PT_double, "Pmax_temp_coeff", PADDR(Pmax_temp_coeff),  //temp coefficient of rated Power in %/ deg C
+            PT_double, "Voc_temp_coeff", PADDR(Voc_temp_coeff),
+			//PT_double, "V_Max[V]", PADDR(V_Max), // Vmax of solar module found on specs
+			PT_complex, "V_Max[V]", PADDR(V_Max), // Vmax of solar module found on specs
+			PT_complex, "Voc_Max[V]", PADDR(Voc_Max),  //Voc max of solar module
+			PT_complex, "Voc[V]", PADDR(Voc), 
 			PT_double, "efficiency[unit]", PADDR(efficiency),
-			PT_double, "area[m^2]", PADDR(area),
+			PT_double, "area[sf]", PADDR(area),  //solar panel area
 			//PT_int64, "generator_mode_choice", PADDR(generator_mode_choice),
 
 			PT_double, "Rated_kVA[kVA]", PADDR(Rated_kVA),
 			//PT_double, "Rated_kV[kV]", PADDR(Rated_kV),
+			PT_complex, "P_Out[kW]", PADDR(P_Out),
 			PT_complex, "V_Out[V]", PADDR(V_Out),
 			PT_complex, "I_Out[A]", PADDR(I_Out),
 			PT_complex, "VA_Out[VA]", PADDR(VA_Out),
 
-			//resistasnces and max P, Q
+			//resistances and max P, Q
 
-			PT_set, "phases", PADDR(phases),
+			    PT_set, "phases", PADDR(phases),
 				PT_KEYWORD, "A",(set)PHASE_A,
 				PT_KEYWORD, "B",(set)PHASE_B,
 				PT_KEYWORD, "C",(set)PHASE_C,
@@ -88,17 +114,20 @@ solar::solar(MODULE *module)
 		defaults = this;
 		memset(this,0,sizeof(solar));
 
-		NOCT = 45;//celsius
-		Tcell = 21; //celsius
-		Tambient = 25; //celsius
+		//NOCT = 45; Tcell = 21; Tambient = 25;//degC ; Rated_Insolation = 1000;//rated insolation is 1000 W/m2 , taken from GE solar cell performance sheet
+		// 1 sq m  = 10.764 sq ft.
+		NOCT = 118.4; //degF
+        Tcell = 69.8;  //degF
+		Tambient = 77; //degF
 		Insolation = 0;
 		Rinternal = 0.05;
-		Rated_Insolation = 1200;
-		V_Max = 40;
-		Voc = complex(40,0);
-		Voc_Max = complex(40,0);
-		area = 10;
-		
+		Rated_Insolation = 92.902; //W/Sf for 1000 W/m2
+	    V_Max = complex (79.34,0);  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
+		Voc = complex (91.22,0);  //taken from GEPVp-200-M-Module performance characteristics, converted to degF
+		Voc_Max = complex(91.22,0); //taken from GEPVp-200-M-Module performance characteristics,  converted to degF
+		area = 323; //sq f , 30m2
+		//Pmax_temp_coeff = -0.5 ;// taken from performance curve of GE solar modules 
+        
 		efficiency = 0;
 	}
 }
@@ -134,13 +163,13 @@ int solar::init_climate()
 			gl_warning("solarpanel: no climate data found, using static data");
 
 			//default to mock data
-			static double tout=59.0, rhout=0.75, solar=1000;
-			pTout = &tout;
-			pRhout = &rhout;
-			pSolar = &solar;
+		static double tout=59.0, rhout=0.75, solar=1000;
+		pTout = &tout;
+		pRhout = &rhout;
+		pSolar = &solar;
 		}
 		else if (climates->hit_count>1)
-		{
+	{
 			gl_warning("solarpanel: %d climates found, using first one defined", climates->hit_count);
 		}
 	}
@@ -149,23 +178,23 @@ int solar::init_climate()
 		if (climates->hit_count==0)
 		{
 			//default to mock data
-			static double tout=59.0, rhout=0.75, solar=1000;
-			pTout = &tout;
-			pRhout = &rhout;
-			pSolar = &solar;
+		static double tout=59.0, rhout=0.75, solar=1000;
+		pTout = &tout;
+		pRhout = &rhout;
+		pSolar = &solar;
 			//gl_verbose("solar init: solar data is %f", *pSolar);
-		}
+	}
 		else //climate data was found
 		{
 			//gl_verbose("solar init: climate data was found!");
 			// force rank of object w.r.t climate
 			OBJECT *obj = gl_find_next(climates,NULL);
-			if (obj->rank<=hdr->rank)
-				gl_set_dependent(obj,hdr);
-			pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
-			pRhout = (double*)GETADDR(obj,gl_get_property(obj,"humidity"));
-			pSolar = (double*)GETADDR(obj,gl_get_property(obj,"solar_flux"));
-			//pSolar = (double*)GETADDR(obj,gl_get_property(obj,"global_solar"));
+		if (obj->rank<=hdr->rank)
+			gl_set_dependent(obj,hdr);
+		   pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
+	       pRhout = (double*)GETADDR(obj,gl_get_property(obj,"humidity"));
+		   pSolar = (double*)GETADDR(obj,gl_get_property(obj,"solar_flux"));
+			//pSolar = (double*)GETADDR(obj,gl_get_property(obj,"solar_global"));
 			//pSolar = (double*)malloc(50 * sizeof(double));
 
 			//the climate object's solar data doesn't seem to work... so.... use a mock version?
@@ -256,7 +285,7 @@ int solar::init(OBJECT *parent)
 			*(map[i].var) = get_complex(parent,map[i].varname);
 		}
 
-		NR_mode = get_bool(parent,"NR_mode");
+		//NR_mode = get_bool(parent,"NR_mode");
 	}
 	else if	(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0)
 	{
@@ -274,21 +303,30 @@ int solar::init(OBJECT *parent)
 
 		// provide initial values for voltages
 		default_line_voltage[0] = complex(V_Max.Re()/sqrt(3.0),0);
-
-		NR_mode = false;
+        	//default_line_voltage[0] = V_Max/sqrt(3.0);
+     
+		//NR_mode = false;
 	}
+	//1 m/s = 2.24 mph
 		
 	switch(panel_type_v)
 	{
 		case SINGLE_CRYSTAL_SILICON:
 			efficiency = 0.2;
-			break;
+          //  w1 = 0.942; // w1 is coeff for Tamb in deg C// convert to fahrenheit degF =degC+9/5+32
+           Pmax_temp_coeff = -0.00437/33.8 ;  // average values from ref 2 in per degF
+		   Voc_temp_coeff  = -0.00393/33.8;
+		   break;
 		case MULTI_CRYSTAL_SILICON:
 			efficiency = 0.15;
+			Pmax_temp_coeff = -0.00416/33.8; // average values from ref 2
+			Voc_temp_coeff  = -0.0039/33.8;
 			break;
 		case AMORPHOUS_SILICON:
 			efficiency = 0.07;
-			break;
+		   Pmax_temp_coeff = 0.1745/33.8; // average values from ref 2
+		   Voc_temp_coeff  = -0.00407/33.8;
+		   break;
 		case THIN_FILM_GA_AS:
 			efficiency = 0.3;
 			break;
@@ -296,13 +334,16 @@ int solar::init(OBJECT *parent)
 			efficiency = 0.15;
 			break;
 		default:
-			efficiency = 0.10;
+			if (efficiency == 0)
+				efficiency = 0.10;
 			break;
 	}
 		
 	//efficiency dictates how much of the rate insolation the panel can capture and
 	//turn into electricity
-	Max_P = Rated_Insolation * efficiency * area;
+
+	//Rated power output
+	Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
 	//gl_verbose("Max_P is : %f", Max_P);
 
 	solar::init_climate();
@@ -313,6 +354,7 @@ int solar::init(OBJECT *parent)
 TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	I_Out = complex(0,0);
+	
 
 	TIMESTAMP t2 = TS_NEVER;
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
@@ -323,23 +365,33 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//gl_verbose("solar sync: started");
 
 	//V_Out = pCircuit_V[0];	//Syncs the meter parent to the generator.
-	if (*NR_mode == false)
+	if (1)//*NR_mode == false)
 	{
-		Insolation = pSolar[0];	
+		Insolation = pSolar[0];	// solar insolation read from player file 
 
-		if(0 == gl_convert("W/sf","W/m^2", &Insolation))
-		{
-			gl_error("climate::init unable to gl_convert() 'W/sf' to 'W/m^2'!");
-			return 0;
+		//Conversion of degree  centrigade to degree fahrenheit
+		 // degree F = degree C* 1.8/32
+
+		Tambient = *pTout;  //Tamb read from player file
+        	
+    //Tmodule = w1 *Tamb + w2 * Insolation + w3* wind_speed + constant;
+		if (Insolation < 0.0){
+			Insolation = 0.0;
 		}
-		
-		Tambient = *pTout;
-		calculate_IV(Tambient, Insolation);
-		pLine_I[0] = I_Out;
-		pCircuit_V[0] = V_Out;
-		//gl_verbose("solar sync: sent I to the meter: (%f , %f)", I_Out.Re(), I_Out.Im());
-		//gl_verbose("solar sync: sent V to the meter: (%f , %f)", V_Out.Re(), V_Out.Im());
-		//gl_verbose("solar sync: sent the current to meter");
+			
+		Tmodule = Tambient+ (NOCT-68)/74.32 * Insolation;   //74.32 sf = 800 W/m2; 68 deg F = 20deg C
+         
+	     VA_Out = Max_P * Insolation/Rated_Insolation *(1+(Pmax_temp_coeff)*( Tmodule-77))*0.95*0.95; //derating due to manufacturing tolerance, derating sue to soiling both dimensionless
+	
+	     Voc = Voc_Max * (1+(Voc_temp_coeff)*(Tmodule-77));
+				    
+		 V_Out = V_Max * (Voc/Voc_Max);
+
+	     I_Out = (VA_Out/V_Out);
+
+		 *pLine_I =I_Out;
+         *pCircuit_V =V_Out;
+
 	}
 
 	TIMESTAMP t2 = TS_NEVER;
@@ -352,45 +404,9 @@ TIMESTAMP solar::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	/* TODO: implement post-topdown behavior */
-	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
-}
-
-void solar::derate_panel(double Tamb, double Insol)
-{
-	Tcell = Tamb + ((NOCT - 20)/0.8) * Insol/1000;
-	Rinternal=.0001*Tcell*Tcell;
-	//gl_verbose("solar sync: panel temperature is : %f", Tcell);
-	Voc = Voc_Max * (1 - (0.0037 * (Tcell - 25)));
-
-	if(100.00 > Insol)
-	{
-		VA_Out = 0;
-	}
-	else
-	{
-		VA_Out = complex(Max_P * (1 - (0.001 * (Tcell - 25))), 0);
-	}
-
-	//gl_verbose("solar sync: VA_Out real component is: (%f , %f)", VA_Out.Re()), VA_Out.Im();
-	VA_Out = complex(VA_Out.Re() * 0.97, VA_Out.Im()* 0.97); // mismatch derating
-	VA_Out = complex(VA_Out.Re() * 0.96, VA_Out.Im()* 0.96);
-}
 	
-void solar::calculate_IV(double Tamb, double Insol){
 
-	derate_panel(Tamb, Insol);
-	V_Out = V_Max * (Voc / Voc_Max);
-	if (V_Out.Mag() == 0.0)
-	{
-		I_Out = complex(0.0,0.0);
-	}
-	else
-	{
-		VA_Out = VA_Out * Insol/Rated_Insolation;
-		I_Out = (VA_Out / V_Out); 
-	}
-	//gl_verbose("solar sync: VA_Out after set is: %f, %fj", VA_Out.Re(), VA_Out.Im());
-	//gl_verbose("solar sync: I_Out is : (%f , %fj)", I_Out.Re(), I_Out.Im());
+return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
 complex *solar::get_complex(OBJECT *obj, char *name)

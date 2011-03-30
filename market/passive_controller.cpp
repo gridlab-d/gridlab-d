@@ -116,6 +116,19 @@ passive_controller::passive_controller(MODULE *mod)
 			PT_char32,"stdev_observation_property",PADDR(observation_stdev_propname),PT_DESCRIPTION,"the name of the standard deviation observation property",
 /**/		PT_int32,"cycle_length",PADDR(cycle_length),PT_DEPRECATED,PT_DESCRIPTION,"length of time between processing cycles",
 			PT_double,"base_setpoint",PADDR(base_setpoint),PT_DESCRIPTION,"the base setpoint to base control off of",
+			PT_bool,"critical_day",PADDR(critical_day),
+			PT_double,"daily_elasticity",PADDR(dailyElasticity),
+			PT_double,"sub_elasticity_first_second",PADDR(subElasticityFirstSecond),
+			PT_double,"sub_elasticity_first_third",PADDR(subElasticityFirstThird),
+			PT_int32,"second_tier_hours",PADDR(secondTierHours),
+			PT_int32,"third_tier_hours",PADDR(thirdTierHours),
+			PT_int32,"first_tier_hours",PADDR(firstTierHours),
+			PT_double,"first_tier_price",PADDR(firstTierPrice),
+			PT_double,"second_tier_price",PADDR(secondTierPrice),
+			PT_double,"third_tier_price",PADDR(thirdTierPrice),	
+			PT_bool,"pool_pump_model",PADDR(pool_pump_model),PT_DESCRIPTION,"Boolean flag for turning on the pool pump version of the DUTYCYCLE control",
+			PT_double,"base_duty_cycle",PADDR(base_duty_cycle),PT_DESCRIPTION,"This is the duty cycle before modification due to the price signal",
+
 			// probabilistic control inputs
 			PT_enumeration, "distribution_type",PADDR(distribution_type),
 				PT_KEYWORD, "NORMAL", PDT_NORMAL,
@@ -137,6 +150,7 @@ passive_controller::passive_controller(MODULE *mod)
 				PT_KEYWORD,"RAMP",CM_RAMP,
 				PT_KEYWORD,"DUTYCYCLE",CM_DUTYCYCLE,
 				PT_KEYWORD,"PROBABILITY_OFF",CM_PROBOFF,
+				PT_KEYWORD,"ELASTICITY_MODEL",CM_ELASTICITY_MODEL,
 			NULL) < 1)
 		{
 				GL_THROW("unable to publish properties in %s",__FILE__);
@@ -149,13 +163,20 @@ int passive_controller::create(){
 	memset(this, 0, sizeof(passive_controller));
 	sensitivity = 1.0;
 	comfort_level = 1.0;
+	zipLoadParent = false;
+	pool_pump_model = false;
 	return 1;
 }
 
 int passive_controller::init(OBJECT *parent){
+	
 	OBJECT *hdr = OBJECTHDR(this);
-	gl_set_dependent(hdr, expectation_object);
+	PROPERTY *enduseProperty;
+
+	if (pool_pump_model == false)
+		gl_set_dependent(hdr, expectation_object);
 	gl_set_dependent(hdr, observation_object);
+
 	if(parent == NULL){
 		gl_error("passive_controller has no parent and will be operating in 'dummy' mode");
 	} else {
@@ -177,15 +198,18 @@ int passive_controller::init(OBJECT *parent){
 			if(observation_prop != 0){
 				observation_addr = (void *)((unsigned int64)observation_object + sizeof(OBJECT) + (unsigned int64)observation_prop->addr);
 			}
-			// observation_mean_addr
-			observation_mean_prop = gl_get_property(observation_object, observation_mean_propname);
-			if(observation_mean_prop != 0){
-				observation_mean_addr = (void *)((unsigned int64)observation_object + sizeof(OBJECT) + (unsigned int64)observation_mean_prop->addr);
-			}
-			// observation_stdev_addr
-			stdev_observation_property = gl_get_property(observation_object, observation_stdev_propname);
-			if(stdev_observation_property != 0){
-				observation_stdev_addr = (void *)((unsigned int64)observation_object + sizeof(OBJECT) + (unsigned int64)stdev_observation_property->addr);
+			if (pool_pump_model == false)
+			{
+				// observation_mean_addr
+				observation_mean_prop = gl_get_property(observation_object, observation_mean_propname);
+				if(observation_mean_prop != 0){
+					observation_mean_addr = (void *)((unsigned int64)observation_object + sizeof(OBJECT) + (unsigned int64)observation_mean_prop->addr);
+				}
+				// observation_stdev_addr
+				stdev_observation_property = gl_get_property(observation_object, observation_stdev_propname);
+				if(stdev_observation_property != 0){
+					observation_stdev_addr = (void *)((unsigned int64)observation_object + sizeof(OBJECT) + (unsigned int64)stdev_observation_property->addr);
+				}
 			}
 
 		}
@@ -200,7 +224,7 @@ int passive_controller::init(OBJECT *parent){
 		}
 		
 		// output_setpoint
-		if (control_mode != this->CM_PROBOFF)
+		if (control_mode != this->CM_PROBOFF && control_mode != this->CM_ELASTICITY_MODEL)
 		{
 			if(output_setpoint_propname[0] == 0 && output_setpoint_propname[0] == 0){
 				GL_THROW("passive_controller has no output properties");
@@ -228,11 +252,69 @@ int passive_controller::init(OBJECT *parent){
 		orig_setpoint = 1;
 	}
 
+	if (pool_pump_model == true)
+	{
+		if (control_mode != CM_DUTYCYCLE)
+			GL_THROW("pool pump mode must be used with control mode set to DUTYCYCLE");
+		if (firstTierHours == 0 || secondTierHours == 0)
+			GL_THROW("Please set first and second tier hours in pool pump duty cycle mode");
+		if (firstTierPrice == 0 || secondTierPrice == 0)
+			GL_THROW("Please set first and second tier prices in pool pump duty cycle mode");
+	}
+
 	if(dPeriod == 0.0){
 		dPeriod = 300.0;
 		period = 300; // five minutes
 	} else {
 		period = (TIMESTAMP)floor(dPeriod + 0.5);
+	}
+
+	if (gl_object_isa(parent,"ZIPload","residential"))
+	{
+		zipLoadParent = true;
+	}
+	
+	if(zipLoadParent == true && control_mode == CM_ELASTICITY_MODEL){
+
+		if (firstTierHours == 0)
+			GL_THROW("Please set first tier hours in the Elasticity Model");
+		if (secondTierHours == 0)
+			GL_THROW("Please set second tier prices in the Elasticity Model");
+
+		if (thirdTierHours == 0) thirdTierHours = 24 - (firstTierHours + secondTierHours);
+
+		elasticityPeriod = firstTierHours + secondTierHours + thirdTierHours;
+
+		if (elasticityPeriod != 24)
+			GL_THROW("Please set valid tier hours. The total of all the tier hours is not equal to 24.");
+
+		ArraySize = (int)(((elasticityPeriod * 3600) / period));
+		
+		tier_prices = (double *)gl_malloc(ArraySize*sizeof(double));
+
+		if (tier_prices == NULL)
+			GL_THROW("Failure to allocate tier_prices array");
+
+		cleared_load = (double *)gl_malloc(ArraySize*sizeof(double));
+
+		if (cleared_load == NULL)
+			GL_THROW("Failure to allocate cleared_load array");
+
+		//Link up to parent object
+		enduseProperty = gl_get_property(parent,"base_power");
+		if (enduseProperty == NULL)
+			GL_THROW("Unable to map base power property");
+		
+		current_load_enduse = (enduse*)GETADDR(parent,enduseProperty);
+
+		//Initialize the array locations
+		ArrayIndex = 0;
+
+		for(int32 i=0; i < ArraySize; i++){
+			
+			tier_prices[i] = 0;
+			cleared_load[i] = 0;	
+		}
 	}
 
 	return 1;
@@ -246,6 +328,10 @@ int passive_controller::isa(char *classname)
 
 
 TIMESTAMP passive_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
+
+	if(starttime == 0)
+		starttime = (double)t0;	
+
 	// determine output based on control mode
 	if(last_cycle == 0 || t1 >= last_cycle + period || period == 0){
 		last_cycle = t1; // advance cycle time
@@ -290,6 +376,11 @@ TIMESTAMP passive_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 			case CM_DUTYCYCLE:
 				if(calc_dutycycle(t0, t1) != 0){
 					GL_THROW("error occured when handling the duty cycle control mode");
+				}
+				break;
+			case CM_ELASTICITY_MODEL:
+				if(calc_elasticity(t0, t1) != 0){
+					GL_THROW("error occured when handling the elasticity model control mode");
 				}
 				break;
 			default:
@@ -347,11 +438,107 @@ TIMESTAMP passive_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	}
 	return (period > 0 ? last_cycle+period : TS_NEVER);
 #endif
+
 	return TS_NEVER;
+
 }
 
 TIMESTAMP passive_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	return TS_NEVER;
+}
+
+int passive_controller::calc_elasticity(TIMESTAMP t0, TIMESTAMP t1){
+
+
+	if(zipLoadParent == true){
+		
+			double dt = t1 - t0;
+			
+			if((t1-starttime)%period==0  && (t1!=starttime) && starttime>0){
+
+				if(dt > 0)
+				{
+					cleared_load[ArrayIndex] = *(double *)current_load_enduse;
+					predicted_load =  *(double *)current_load_enduse;
+					tier_prices[ArrayIndex]	= observation;		
+
+					if(ArraySize-1 == ArrayIndex){
+							ArrayIndex = 0;
+					}
+					else{
+							ArrayIndex++;
+					}	
+				}
+			}
+
+			if(starttime>0){
+
+				double totalClearedLoad = 0;
+				double pDailyAverage = 0;
+				double qDailyAverage = 0;
+
+				for(int32 i=0; i < ArraySize; i++){
+					
+					totalClearedLoad += cleared_load[i];
+					pDailyAverage += (tier_prices[i]*((double)period/3600))*cleared_load[i];			
+						
+				}
+
+				if(totalClearedLoad == 0)
+						pDailyAverage = 0;
+				else
+					pDailyAverage /= totalClearedLoad;
+
+				qDailyAverage = pow(pDailyAverage, dailyElasticity);
+
+				if(qDailyAverage > 0.0){
+
+					double secondFirstMul = pow((secondTierPrice/firstTierPrice), subElasticityFirstSecond);
+					double tempDivider = secondFirstMul*secondTierHours + firstTierHours;
+
+					double qNewFirst = 0;
+					double qNewSecond = 0;
+
+						if(critical_day==true){
+
+							double thirdFirstMul = pow((thirdTierPrice/firstTierPrice), subElasticityFirstThird);
+							tempDivider = tempDivider + thirdFirstMul*thirdTierHours;
+
+							qNewFirst = (qDailyAverage*elasticityPeriod)/tempDivider;
+							qNewSecond = qNewFirst*secondFirstMul;
+
+							double qNewThird = qNewFirst*thirdFirstMul;
+							if(observation == thirdTierPrice)
+								*(double *)output_state_addr = 1 + (predicted_load - qNewThird)/predicted_load;
+						}
+						else{
+
+							qNewFirst = (qDailyAverage*elasticityPeriod)/tempDivider;
+							qNewSecond= qNewFirst*secondFirstMul;
+						}
+
+						if(observation == firstTierPrice){
+
+							*(double *)output_state_addr = 1 + (predicted_load - qNewFirst)/predicted_load;
+
+						}
+						else if(observation == secondTierPrice){
+
+							*(double *)output_state_addr = 1 + (predicted_load - qNewSecond)/predicted_load;
+						}	
+				}
+				else{
+
+					*(double *)output_state_addr = 1;
+
+				}
+					
+			}		
+		
+		}
+		
+		return 0;
+
 }
 
 int passive_controller::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
@@ -436,7 +623,52 @@ int passive_controller::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 
 
 int passive_controller::calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1){
-	// not sure.
+	
+	if (pool_pump_model == true)
+	{
+		OBJECT *hdr = OBJECTHDR(this);
+		
+		if(output_state_addr != 0){
+			output_state = *(int *)output_state_addr;
+		} else {
+			output_state = 0;
+		}
+		
+		if(output_setpoint_addr != 0){
+			output_setpoint = *(double *)output_setpoint_addr;
+		} else {
+			output_setpoint = 0;
+		}
+
+		// Note:  this method is only currently compatible w/ 2 tier TOU or 2 tier TOU + CPP
+		if (thirdTierPrice != 0.0 && observation >= thirdTierPrice) // we're in CPP
+		{
+			output_state = 1; // turn on override
+			//if (output_setpoint == -1) // if recovery_duty_cycle hasn't been set, use this value
+			//	output_setpoint = recovery_level;
+		}
+		else if (observation >= secondTierPrice) // we're in high TOU
+		{
+			if (output_state == 1)
+				output_state = -1; // turn off the override and let the pool pump recover
+			else if (output_state == 0) // we're back to normal operation
+			{
+				double hour_ratio = (double) secondTierHours / (firstTierHours + secondTierHours);
+				output_setpoint = base_duty_cycle * (firstTierPrice / (firstTierPrice + secondTierPrice)) / hour_ratio;
+			}
+
+		}
+		else // we're in low TOU
+		{
+			if (output_state == 1)
+				output_state = -1; // turn off the override and let the pool pump recover
+			else if (output_state == 0) // we're back to normal operation
+			{
+				double hour_ratio = (double) firstTierHours / (firstTierHours + secondTierHours);
+				output_setpoint = base_duty_cycle * (secondTierPrice / (firstTierPrice + secondTierPrice)) / hour_ratio;
+			}
+		}
+	}
 	return 0;
 }
 

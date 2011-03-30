@@ -21,16 +21,28 @@ public:
 	static CLASS *pclass;
 public:
 	//Maximum power outputs from different energy sources
-	complex Naturalgas_Max_Out;
-	complex Coal_Max_Out;
-	complex Biomass_Max_Out;
-	complex Geothermal_Max_Out;
-	complex Hydroelectric_Max_Out;
-	complex Nuclear_Max_Out;
-	complex Wind_Max_Out;
-	complex Petroleum_Max_Out;
-	complex Solarthermal_Max_Out;
 
+	double Nuclear_Order;
+	double Hydroelectric_Order;
+	double Solarthermal_Order;
+	double Biomass_Order;
+	double Wind_Order;
+	double Coal_Order;
+	double Naturalgas_Order;
+	double Geothermal_Order;
+	double Petroleum_Order;
+
+
+
+	double Naturalgas_Max_Out;
+	double Coal_Max_Out;
+	double Biomass_Max_Out;
+	double Geothermal_Max_Out;
+	double Hydroelectric_Max_Out;
+	double Nuclear_Max_Out;
+	double Wind_Max_Out;
+	double Petroleum_Max_Out;
+	double Solarthermal_Max_Out;
 
 	//Conversion efficiences of different energy sources
 	double Naturalgas_Conv_Eff;
@@ -74,15 +86,15 @@ public:
 	double Petroleum_NOx;
 	double Solarthermal_NOx;
 
-	complex Naturalgas_Out;
-	complex Coal_Out;
-	complex Biomass_Out;
-	complex Geothermal_Out;
-	complex Hydroelectric_Out;
-	complex Nuclear_Out;
-	complex Wind_Out;
-	complex Petroleum_Out;
-	complex Solarthermal_Out;
+	double Naturalgas_Out;
+	double Coal_Out;
+	double Biomass_Out;
+	double Geothermal_Out;
+	double Hydroelectric_Out;
+	double Nuclear_Out;
+	double Wind_Out;
+	double Petroleum_Out;
+	double Solarthermal_Out;
 
 	
 	double Naturalgas_emissions_CO2;
@@ -124,9 +136,11 @@ public:
 	double Total_emissions_CO2;
 	double Total_emissions_SO2;
 	double Total_emissions_NOx;
-	complex Total_energy_out;
+	double Total_energy_out;
 
 	double cycle_interval;
+
+	double Region;
 
 	//Link to the parent meter
 	meter *ParMeterObj;

@@ -7,6 +7,7 @@
 #include "powerflow.h"
 #include "node.h"
 #include "triplex_meter.h"
+#include "meter.h"
 
 class billdump
 {
@@ -15,6 +16,11 @@ public:
 	char32 group;
 	char32 filename;
 	int32 runcount;
+	typedef enum {
+		METER_TP,		
+		METER_3P,		
+	} METERTYPE;
+	METERTYPE meter_type;
 public:
 	static CLASS *oclass;
 public:

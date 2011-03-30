@@ -53,7 +53,7 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",
 			PT_double,"breaker_val[A]",PADDR(breaker_val), PT_DESCRIPTION, "Amperage of connected breaker",
 			PT_complex,"actual_power[kVA]",PADDR(actual_power),PT_DESCRIPTION,"variable to pull actual load as function of voltage",
-			PT_double,"multipler",PADDR(multiplier),PT_DESCRIPTION,"this variable is used to modify the base power as a function of multiplier x base_power",
+			PT_double,"multiplier",PADDR(multiplier),PT_DESCRIPTION,"this variable is used to modify the base power as a function of multiplier x base_power",
 
 			// Variables for demand response mode
 			PT_bool,"demand_response_mode",PADDR(demand_response_mode), PT_DESCRIPTION, "Activates equilibrium dynamic representation of demand response",
@@ -77,6 +77,7 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 
 			//Variables for creating a duty cycle
 			PT_double,"duty_cycle[pu]",PADDR(duty_cycle),PT_DESCRIPTION, "fraction of time in the on state",
+			PT_double,"recovery_duty_cycle[pu]",PADDR(recovery_duty_cycle),PT_DESCRIPTION, "fraction of time in the on state, while in recovery interval",
 			PT_double,"period[h]",PADDR(period),PT_DESCRIPTION, "time interval to apply duty cycle",
 			PT_double,"phase[pu]",PADDR(phase),PT_DESCRIPTION, "initial phase of load; duty will be assumed to occur at beginning of period",
 			NULL)<1) 
@@ -110,7 +111,7 @@ int ZIPload::create()
 	phi = eta = 0.2;	
 	next_time = 0;
 
-	duty_cycle = 0;
+	duty_cycle = recovery_duty_cycle = -1;
 	period = 0;
 	phase = 0;
 
@@ -263,15 +264,18 @@ int ZIPload::init(OBJECT *parent)
 
 	if (duty_cycle > 1 || duty_cycle < 0)
 	{
-		GL_THROW("Value of duty cycle is set to a value outside of 0-1.");
-		/*  TROUBLESHOOT
-		By definition, a duty cycle must be between, and including, 0 and 1.  Zero will turn the
-		duty cycle function OFF.  Please specify a duty_cycle value between 0 and 1.
-		*/
+		if (duty_cycle != -1)
+		{
+			GL_THROW("Value of duty cycle is set to a value outside of 0-1.");
+			/*  TROUBLESHOOT
+			By definition, a duty cycle must be between, and including, 0 and 1.  Zero will turn the
+			duty cycle function OFF.  Please specify a duty_cycle value between 0 and 1.
+			*/
+		}
 	}
 
 	// We're using a duty cycle mode
-	if (duty_cycle != 0.0)
+	if (duty_cycle != -1)
 	{
 		if (period <= 0)
 		{
@@ -313,6 +317,8 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double real_power = 0.0;
 	double imag_power = 0.0;
 	double angleval;
+
+	double test = multiplier;
 
 	if (demand_response_mode == true && next_time <= t1)
 	{
@@ -371,34 +377,94 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	// We're in duty cycle mode
-	if (duty_cycle != 0.0)
+	if (duty_cycle != -1)
 	{
+		double phase_shift = 0;
+
 		if (t0 != 0) // after first time step
 		{
-			double phase_shift = (t1 - last_time) / (period * 3600);
+			phase_shift = (t1 - last_time) / (period * 3600);
 			phase = phase + phase_shift;
 			last_time = t1;
 		}
 		else
 			last_time = t1;
 
-		if (phase >= 1)
-			phase = 0.0;
-
-		// Track the time of 2 transistions
-		if (t1 >= next_time)
+		if (this->re_override == OV_NORMAL) // Normal operation
 		{
-			if (duty_cycle > phase) // OFF->ON, a bit of an offset for rounding
+			if (phase >= 1)
+				phase = 0;
+
+			// Track the time of 2 transistions
+			if (t1 >= next_time || last_duty_cycle != duty_cycle)
 			{
-				multiplier = 1;
-				next_time = t1 + (TIMESTAMP)((period * 3600) * (duty_cycle - phase) + 1);
-			}
-			else					// ON->OFF
-			{
-				multiplier = 0;
-				next_time = t1 + (TIMESTAMP)((period * 3600) * (1 - phase) + 1);
+				if (duty_cycle > phase) // OFF->ON
+				{
+					multiplier = 1;
+					next_time = t1 + (period * 3600) * (duty_cycle - phase) + 1; // +1 a bit of an offset for rounding
+				}
+				else					// ON->OFF
+				{
+					multiplier = 0;
+					next_time = t1 + (period * 3600) * (1 - phase) + 1;
+				}
 			}
 		}
+		else if (this->re_override == OV_OFF) // After release or recovery time
+		{
+			if (phase <= 1 && t1>=next_time)
+			{
+				this->re_override = OV_NORMAL;
+				next_time = t1;
+			}
+			else if (t1 >= next_time || next_time == TS_NEVER) // we just came from override ON
+			{
+				if (recovery_duty_cycle > fmod(phase,1)) // OFF->ON 
+				{
+					multiplier = 1;
+
+					next_time = t1 + (period * 3600) * (recovery_duty_cycle - fmod(phase,1)) + 1; // +1 a bit of an offset for rounding
+					if (duty_cycle != 0.0)
+						phase -= 1 * recovery_duty_cycle / duty_cycle * (1 - fmod(phase,1)); // Track everything by the original duty cycle
+					else 
+						phase = 0; //Start over
+
+					/*if (phase < 0)
+					{
+						next_time = t1 + (period * 3600) * (recovery_duty_cycle - 0) + 1;
+						phase = 0;
+					}*/
+				}			
+				else					// ON->OFF
+				{
+					//if (multiplier == 1) // we just transitioned
+					//{
+						//if (phase >= 1 * recovery_duty_cycle / duty_cycle)
+						//	phase -= 1 * recovery_duty_cycle / duty_cycle; // Track everything by the original duty cycle
+						//else if (phase < 1)
+						//	this->re_override = OV_NORMAL;
+					//}
+					multiplier = 0;
+					next_time = t1 + (period * 3600) * (1 - fmod(phase,1)) + 1;
+				}
+			}
+
+
+		}
+		else // override is ON, so no power
+		{
+			if (multiplier == 1 && duty_cycle > phase)
+			{
+				// do nothing
+			}
+			else
+			{
+				multiplier = 0;
+				next_time = TS_NEVER;
+			}
+		}
+
+		last_duty_cycle = duty_cycle;
 	}
 
 	if (pCircuit!=NULL){

@@ -69,6 +69,7 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_double, "measured_demand[W]", PADDR(measured_demand),
 			PT_double, "measured_real_power[W]", PADDR(measured_real_power),
 			PT_double, "measured_reactive_power[VAr]", PADDR(measured_reactive_power),
+			PT_complex, "meter_power_consumption[VA]", PADDR(meter_power_consumption),
 			
 			// added to record last voltage/current
 			PT_complex, "measured_voltage_A[V]", PADDR(measured_voltage[0]),
@@ -169,6 +170,7 @@ int meter::create()
 	last_tier_price[1] = 0;
 	last_tier_price[2] = 0;
 	last_price_base = 0;
+	meter_power_consumption = complex(0,0);
 
 	return result;
 }
@@ -182,6 +184,19 @@ int meter::init(OBJECT *parent)
 			GL_THROW("meter::power_market object \'%s\' does not publish \'current_market.clearing_price\'", (power_market->name ? power_market->name : "(anon)"));
 		}
 	}
+
+	// Count the number of phases...for use with meter_power_consumption
+	if (meter_power_consumption != complex(0,0))
+	{
+		no_phases = 0;
+		if (has_phase(PHASE_A))
+			no_phases += 1;
+		if (has_phase(PHASE_B))
+			no_phases += 1;
+		if (has_phase(PHASE_C))
+			no_phases += 1;
+	}
+
 	check_prices();
 	last_t = dt = 0;
 	return node::init(parent);
@@ -228,6 +243,9 @@ int meter::check_prices(){
 }
 TIMESTAMP meter::presync(TIMESTAMP t0)
 {
+	if (meter_power_consumption != complex(0,0))
+		power[0] = power[1] = power[2] = 0.0;
+
 	if (solver_method == SM_NR)
 		NR_mode = NR_cycle;		//Copy NR_cycle into NR_mode for generators
 	else
@@ -253,6 +271,16 @@ TIMESTAMP meter::sync(TIMESTAMP t0)
 		{
 			meter_interrupted = false;	//All is well
 		}
+	}
+
+	if (meter_power_consumption != complex(0,0))
+	{
+		if (has_phase(PHASE_A))
+			power[0] += meter_power_consumption / no_phases;
+		if (has_phase(PHASE_B))
+			power[1] += meter_power_consumption / no_phases;
+		if (has_phase(PHASE_C))
+			power[2] += meter_power_consumption / no_phases;
 	}
 
 	return node::sync(t0);

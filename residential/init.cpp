@@ -26,6 +26,7 @@
 #include "dryer.h"
 #include "evcharger.h"
 #include "zipload.h"
+#include "thermal_storage.h"
 
 #include "residential_enduse.h"
 #include "house_e.h"
@@ -71,6 +72,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new dryer(module);
 	new evcharger(module);
 	new ZIPload(module);
+	new thermal_storage(module);
 
 	/* always return the first class registered */
 	return residential_enduse::oclass;

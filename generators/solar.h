@@ -30,7 +30,7 @@ public:
 	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2} gen_status_v;
 	enum POWER_TYPE{DC=1, AC=2} power_type_v;
 	enum PANEL_TYPE{SINGLE_CRYSTAL_SILICON=1, MULTI_CRYSTAL_SILICON=2, AMORPHOUS_SILICON=3, THIN_FILM_GA_AS=4, CONCENTRATOR=5} panel_type_v;
-
+    enum INSTALLATION_TYPE {ROOF_MOUNTED=1, GROUND_MOUNTED=2} installation_type_v;
 
 	//GENERATOR_MODE generator_mode_choice;
 	//GENERATOR_STATUS generator_status;
@@ -38,6 +38,7 @@ public:
 
 	double NOCT;
 	double Tcell;
+	double Tmodule;
 	double Tambient;
 	double Insolation;
 	double Rinternal;
@@ -46,6 +47,18 @@ public:
 	complex Voc;
 	complex Voc_Max;
 	double area;
+	double Tamb;
+	double wind_speed;
+	double Pmax_temp_coeff;
+    double Voc_temp_coeff;
+    double w1;
+    double w2;
+	double w3;
+	double constant;
+	complex P_Out;
+	complex V_Out;
+	complex I_Out;
+	complex VA_Out;
 	
 	double efficiency;
 	double *pTout;
@@ -79,13 +92,13 @@ public:
 	complex *pLine_I;			//< pointer to the three current on three lines
 
 
-	complex V_Out;
+	//double V_Out;
 	
 	//complex current_A;      // current
 	//complex current_B;
 	//complex current_C;
 
-	complex I_Out;
+	//double I_Out;
 
 	//complex EfA;// induced voltage on phase A in Volt
 	//complex EfB;
@@ -94,7 +107,7 @@ public:
 	//complex power_B;
 	//complex power_C;
 
-	complex VA_Out;
+	//double VA_Out;
 
 	//complex power_A_sch; // scheduled power
 	//complex power_B_sch;

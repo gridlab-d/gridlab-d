@@ -39,6 +39,9 @@ billdump::billdump(MODULE *mod)
 			PT_timestamp,"runtime",PADDR(runtime),PT_DESCRIPTION,"the time to check voltage data",
 			PT_char32,"filename",PADDR(filename),PT_DESCRIPTION,"the file to dump the voltage data into",
 			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
+			PT_enumeration,"meter_type",PADDR(meter_type), PT_DESCRIPTION, "describes whether to collect from 3-phase or S-phase meters",
+				PT_KEYWORD,"TRIPLEX_METER",METER_TP,
+				PT_KEYWORD,"METER",METER_3P,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
@@ -50,6 +53,7 @@ int billdump::create(void)
 	memset(group, 0, sizeof(char32));
 	runtime = TS_NEVER;
 	runcount = 0;
+	meter_type = METER_TP;
 	return 1;
 }
 
@@ -70,13 +74,27 @@ void billdump::dump(TIMESTAMP t){
 	OBJECT *obj = NULL;
 	FILE *outfile = NULL;
 	triplex_meter *pnode;
+	meter *qnode;
+	
+
 //	CLASS *nodeclass = NULL;
 //	PROPERTY *vA, *vB, *vC;
 
-	if(group[0] == 0){
-		nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_meter",FT_END);
-	} else {
-		nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_meter",AND,FT_GROUPID,SAME,group,FT_END);
+	if (meter_type == METER_TP)
+	{
+		if(group[0] == 0){
+			nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_meter",FT_END);
+		} else {
+			nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_meter",AND,FT_GROUPID,SAME,group,FT_END);
+		}
+	}
+	else
+	{
+		if(group[0] == 0){
+			nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"meter",FT_END);
+		} else {
+			nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"meter",AND,FT_GROUPID,SAME,group,FT_END);
+		}
 	}
 
 	if(nodes == NULL){
@@ -93,18 +111,36 @@ void billdump::dump(TIMESTAMP t){
 	//nodeclass = node::oclass;
 	//vA=gl_find_property(nodeclass, "
 
-	/* print column names */
-	gl_printtime(t, timestr, 64);
-	fprintf(outfile,"# %s run at %s on %i triplex meters\n", filename, timestr, nodes->hit_count);
-	//fprintf(outfile,"node_name,voltA_real,voltA_imag,voltB_real,voltB_imag,voltC_real,voltC_imag\n");
-	fprintf(outfile,"meter_name,previous_monthly_bill,previous_monthly_energy\n");
-	while (obj=gl_find_next(nodes,obj)){
-		if(gl_object_isa(obj, "triplex_meter", "powerflow")){
-			pnode = OBJECTDATA(obj,triplex_meter);
-			if(obj->name == NULL){
-				sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
+	if (meter_type == METER_TP)
+	{
+		/* print column names */
+		gl_printtime(t, timestr, 64);
+		fprintf(outfile,"# %s run at %s on %i triplex meters\n", filename, timestr, nodes->hit_count);
+		fprintf(outfile,"meter_name,previous_monthly_bill,previous_monthly_energy\n");
+		while (obj=gl_find_next(nodes,obj)){
+			if(gl_object_isa(obj, "triplex_meter", "powerflow")){
+				pnode = OBJECTDATA(obj,triplex_meter);
+				if(obj->name == NULL){
+					sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
+				}
+				fprintf(outfile,"%s,%f,%f\n",(obj->name ? obj->name : namestr),pnode->previous_monthly_bill,pnode->previous_monthly_energy);
 			}
-			fprintf(outfile,"%s,%f,%f\n",(obj->name ? obj->name : namestr),pnode->previous_monthly_bill,pnode->previous_monthly_energy);
+		}
+	}
+	else
+	{
+		/* print column names */
+		gl_printtime(t, timestr, 64);
+		fprintf(outfile,"# %s run at %s on %i meters\n", filename, timestr, nodes->hit_count);
+		fprintf(outfile,"meter_name,previous_monthly_bill,previous_monthly_energy\n");
+		while (obj=gl_find_next(nodes,obj)){
+			if(gl_object_isa(obj, "meter", "powerflow")){
+				qnode = OBJECTDATA(obj,meter);
+				if(obj->name == NULL){
+					sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
+				}
+				fprintf(outfile,"%s,%f,%f\n",(obj->name ? obj->name : namestr),qnode->previous_monthly_bill,qnode->previous_monthly_energy);
+			}
 		}
 	}
 	fclose(outfile);

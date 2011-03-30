@@ -1,0 +1,319 @@
+//Input feeder information for masters thesis.
+//Started on 10/21/09. This version created 26-Mar-2010 18:46:43.
+
+clock {
+     timezone PST+8PDT;
+     starttime '2000-01-01 00:00:00';
+     stoptime '2000-01-02 00:00:00';
+}
+
+#set minimum_timestep=60;
+
+module assert;
+module tape;
+module residential {
+     implicit_enduses NONE;
+};
+module powerflow {
+     solver_method NR;
+     NR_iteration_limit 50;
+};
+
+
+schedule my_price {
+	* 0-9 * * * 1;
+	* 10-21 * * * 2;
+	* 22-23 * * * 1;
+}
+
+// object stubauction {
+     // name STUB;
+     // unit price;
+     // period 300;
+     // next.P my_price*1;
+// }
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration:300 {
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
+}
+
+object transformer_configuration:400 {
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object node:1 {
+	phases "ABCN";
+	bustype SWING;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line:12 {
+	phases "ABCN";
+	from node:1;
+	to node:2;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node:2 {
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object transformer:23 {
+	phases "ABCN";
+	from node:2;
+	to node:3;
+	configuration transformer_configuration:400;
+}
+
+object node:3 {
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
+}
+
+object overhead_line:34 {
+	phases "ABCN";
+	from node:3;
+	to load:4;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object load:4 {
+	phases "ABCN";
+	name load4;
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	constant_power_A +1000;
+	constant_power_B +1000;
+	constant_power_C +1000;
+	nominal_voltage 2400;
+}
+
+object transformer_configuration {
+		name AS_config;
+		connect_type SINGLE_PHASE_CENTER_TAPPED;
+		install_type POLETOP;
+		powerA_rating 100;
+		primary_voltage 2401.777;
+		secondary_voltage 120.000;
+		impedance 0.0006+0.000136j;
+
+}
+
+object transformer {
+	phases AS;
+	configuration AS_config;
+	from load4;
+	to triplex_1;
+	nominal_voltage 2401.777;
+	object recorder {
+		file test_dutycycle.csv;
+		interval 60;
+		property power_out.real;
+	};
+	object complex_assert {
+		operation REAL;
+		target power_out;
+		within 3;
+		object player {
+			property value;
+			file ../dutycycle_player.player;
+			loop 1;
+		};
+	};	
+}
+
+object triplex_node {
+	name triplex_1;
+	nominal_voltage 120;
+	phases AS;
+}
+
+object triplex_line_configuration {
+     name TPLconfig;
+     conductor_1 object triplex_line_conductor {
+          resistance 0.97;
+          geometric_mean_radius 0.0111;
+     };
+
+     conductor_2 object triplex_line_conductor {
+          resistance 0.97;
+          geometric_mean_radius 0.0111;
+     };
+     conductor_N object triplex_line_conductor {
+          resistance 0.97;
+          geometric_mean_radius 0.0111;
+     };
+     insulation_thickness 0.08;
+     diameter 0.368;
+}
+
+object triplex_line {
+	configuration TPLconfig;
+	length 50;
+	phases AS;
+	from triplex_1;
+	name tpl1;
+	to triplex_2;	
+}
+
+object triplex_meter {
+	name triplex_2;
+	nominal_voltage 120;
+	phases AS;
+}
+
+object house {
+     parent triplex_2;
+     groupid Residential;
+     floor_area 1711;
+     //Thermal integrity -> Single Family 5
+     Rroof 34.06;
+     Rwall 19.73;
+     Rfloor 22.48;
+     glazing_layers 2;
+     glass_type 1;
+     glazing_treatment 1;
+     window_frame 2;
+     Rdoors 3.23;
+     airchange_per_hour 1.01;
+     cooling_COP 2.5;
+     air_temperature 71.71;
+     mass_temperature 71.71;
+     total_thermal_mass_per_floor_area 3.487;
+     heating_system_type NONE;
+     cooling_system_type NONE;
+     cooling_setpoint 100;
+     heating_setpoint 10;
+
+     object ZIPload {
+          // Pool Pump
+           base_power 1.5;
+		   duty_cycle 0.2;
+		   phase 0.7;
+		   period 6.2;
+           heatgain_fraction 0.0;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0;
+           current_fraction 0;
+           power_fraction 1;
+		   recovery_duty_cycle 0.55;
+		   
+		   // object passive_controller {
+				// period 300;
+				// control_mode DUTYCYCLE;
+				// pool_pump_model true;
+				// observation_object STUB;
+				// observation_property next.P;
+				// state_property override;
+				// base_duty_cycle 0.2;
+				// setpoint duty_cycle;
+				// firstTierHours 12;
+				// secondTierHours 12;
+				// firstTierPrice 1;
+				// secondTierPrice 2;
+				// thirdTierPrice 10;
+		   // };
+
+     };
+}
+
+object house {
+     parent triplex_2;
+     groupid Residential;
+     floor_area 1711;
+     //Thermal integrity -> Single Family 5
+     Rroof 34.06;
+     Rwall 19.73;
+     Rfloor 22.48;
+     glazing_layers 2;
+     glass_type 1;
+     glazing_treatment 1;
+     window_frame 2;
+     Rdoors 3.23;
+     airchange_per_hour 1.01;
+     cooling_COP 2.5;
+     air_temperature 71.71;
+     mass_temperature 71.71;
+     total_thermal_mass_per_floor_area 3.487;
+     heating_system_type NONE;
+     cooling_system_type NONE;
+     cooling_setpoint 100;
+     heating_setpoint 10;
+
+     object ZIPload {
+          // Pool Pump
+           base_power 1.23;
+		   duty_cycle 0.33;
+		   phase 0.2;
+		   period 3.7;
+           heatgain_fraction 0.0;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0;
+           current_fraction 0;
+           power_fraction 1;
+		   recovery_duty_cycle 0.55;
+		   
+		   // object passive_controller {
+				// period 300;
+				// control_mode DUTYCYCLE;
+				// pool_pump_model true;
+				// observation_object STUB;
+				// observation_property next.P;
+				// state_property override;
+				// base_duty_cycle 0.33;
+				// setpoint duty_cycle;
+				// firstTierHours 12;
+				// secondTierHours 12;
+				// firstTierPrice 1;
+				// secondTierPrice 2;
+				// thirdTierPrice 10;
+		   // };
+
+     };
+}
+
