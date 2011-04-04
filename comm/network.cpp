@@ -70,6 +70,7 @@ void network::update_latency(){
 		if(random_type != RT_INVALID){
 			latency = gl_randomvalue(random_type, latency_arg1, latency_arg2);
 			latency_last_update = gl_globalclock;
+			latency_next_update = gl_globalclock + latency_period;
 		} else {
 			; // latency does not use a distribution and does not require updating
 		}
@@ -95,6 +96,7 @@ int network::init(OBJECT *parent)
 		gl_warning("negative latency_period was reset to zero");
 		latency_period = 0.0;
 	}
+
 	if(bandwidth <= 0.0){
 		gl_error("non-positive bandwidth");
 		return 0;
@@ -121,6 +123,7 @@ int network::init(OBJECT *parent)
 	bandwidth_used = 0.0;
 	update_latency();
 	latency_last_update = gl_globalclock;
+	next_event = TS_NEVER;
 	// success
 	return 1;
 }
@@ -132,12 +135,250 @@ int network::isa(char *classname){
 TIMESTAMP network::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	OBJECT *obj = OBJECTHDR(this);
-	return TS_NEVER; 
+	// update latency?
+	if(latency_last_update + latency_period <= t1){
+		update_latency();
+	}
+	if ((latency_period <= 0.001) || 
+		(next_event != TS_NEVER) && (next_event < latency_next_update) ){
+		return next_event;
+	} else {
+		return latency_next_update; 
+	}
+}
+
+int network::attach(network_interface *nif){
+	if(nif == 0){
+		return 0;
+	}
+	if(first_if == 0){
+		first_if = nif;
+		last_if = nif;
+		nif->next = 0;
+	} else {
+		last_if->next = nif;
+		last_if = nif;
+		nif->next = 0;
+	}
+	
+	return 1;
 }
 
 //EXPORT int commit_network(OBJECT *obj){
 int network::commit(){
 	OBJECT *obj = OBJECTHDR(this);
+	TIMESTAMP t0 = obj->clock;
+	TIMESTAMP t1 = gl_globalclock;
+	double net_bw = 0.0;
+	double nif_bw = 0.0;
+	double net_bw_used = 0.0;	// tallies how much network bandwidth has been used thus far in practice
+	network_message *netmsg = 0;
+
+	// prompt interfaces to check for data to send
+	network_interface *nif = first_if;
+	for(; nif != 0; nif = nif->next){
+		nif->check_buffer();
+	}
+
+	// scan interfaces for messages, determine network bandwidth requirements
+	// not O(n^2) but limited to the count of messages that exist, could iterate on those iff messages were stored in a list
+	// THIS SHOULD NOT USE nif->send_rate_used OR nif->recv_rate_used!! at the moment, this is
+	//	making some guesses on how much bandwidth is wanted to send all the messages on the network
+	for(nif = first_if; nif != 0; nif = nif->next){
+		nif_bw = 0.0;
+		nif->bandwidth_used = 0.0;
+		nif->send_rate_used = 0;
+		if(nif->has_outbound()){
+			// check if interface is designed to send more than one message per second
+			for(netmsg = nif->peek_outbox(); netmsg != 0; netmsg = netmsg->next){
+				// note: if applicable, would check rx's bandwidth to limit tx's sent rate
+				// constrain by interface send rate
+				if(nif_bw + netmsg->size - netmsg->bytes_sent > nif->send_rate){
+					nif_bw = nif->send_rate; // unable to send all the existing message AND the rest of this message
+					break;
+				} else {
+					nif_bw += netmsg->size - netmsg->bytes_sent; // try to send the rest of this message
+				}
+			}
+			net_bw += nif_bw;
+		}
+	}
+
+	// determine what the network does with its traffic loading
+	// meant as a mental exercise.  remove this. -mh
+/*	if(net_bw > bandwidth){
+		switch(queue_resolution){
+			case QR_REJECT:
+				bandwidth_used = 0;
+				bytes_rejected = net_bw - bandwidth; // for reference, how far over we are
+				break;
+			case QR_QUEUE:
+				bandwidth_used = bandwidth;
+				break;
+			case QR_SCALE:
+				gl_error("communication network does not yet support interface transmission scaling");
+				return 0;
+			default:
+				break;
+		}
+	} else {
+		;
+	}*/
+
+	// "send" data
+	// operate on the messages
+	this->bandwidth_used = 0;
+	for(nif = first_if; nif != 0; nif = nif->next){
+		if(nif->has_outbound()){
+			nif->bandwidth_used = 0;
+			for(netmsg = nif->peek_outbox(); netmsg != 0; netmsg = netmsg->next){
+				// note: if applicable, would check rx's bandwidth to limit tx's sent rate.  may involve another pass to pre-determine nif transmission constraints
+				// determine how much is being sent
+				netmsg->send_rate = 0.0;
+				netmsg->buffer_rate = 0.0;
+				switch(queue_resolution){
+					// just needs to update send_rate and msg_state
+					case QR_REJECT:
+						// calculate available bandwidth for the message, if any
+						if(bandwidth - bandwidth_used > nif->send_rate - nif->send_rate_used){
+							// send
+							netmsg->send_rate = nif->send_rate - nif->send_rate_used;
+							netmsg->msg_state = NMS_SENDING;
+						} else { // resolve congestion
+							if(bandwidth == net_bw_used){
+								// out of bandwidth, start rejecting
+								netmsg->send_rate = 0;
+								if(netmsg->bytes_sent > 0){
+									netmsg->msg_state = NMS_DELAYED;
+								} else {
+									netmsg->msg_state = NMS_REJECTED;
+								}
+							} else {
+								// last few bytes/sec, make 'em count
+								netmsg->send_rate = bandwidth - bandwidth_used; // already know is l.t. NIF BW
+								netmsg->msg_state = NMS_SENDING;
+							}
+						}
+						break;
+					case QR_QUEUE:
+						if(bandwidth - bandwidth_used > nif->send_rate - nif->send_rate_used){
+							// send
+							netmsg->send_rate = nif->send_rate - nif->send_rate_used;
+							netmsg->msg_state = NMS_SENDING;
+						} else { // resolve congestion
+							if(bandwidth == bandwidth_used && buffer_size == buffer_used){
+								// out of bandwidth and full buffer, start rejecting
+								netmsg->send_rate = 0;
+								if(netmsg->bytes_sent > 0){
+									netmsg->msg_state = NMS_DELAYED;
+								} else {
+									netmsg->msg_state = NMS_REJECTED;
+								}
+							} else {
+								// use remain bandwidth (if any), buffer remainder
+								netmsg->send_rate = bandwidth - bandwidth_used; // already know is l.t. NIF BW
+								netmsg->buffer_rate = nif->send_rate - nif->send_rate_used - netmsg->send_rate;
+								netmsg->msg_state = NMS_SENDING;
+							}
+						}
+						break;
+					case QR_SCALE:
+						gl_error("communication network does not yet support interface transmission scaling");
+						return 0;
+					default:
+						gl_error("unrecognized communication resolution mode");
+						return 0;
+				}
+				// limit send_rate and buffer_rate based on remaining bytes to send
+				double rmn = netmsg->size - netmsg->bytes_sent;
+				if(rmn < netmsg->send_rate + netmsg->buffer_rate){
+					if(rmn < netmsg->send_rate){ // just in the bandwidth
+						netmsg->send_rate = rmn;
+						netmsg->buffer_rate = 0.0;
+					} else {
+						netmsg->buffer_rate = rmn - netmsg->send_rate;
+					}
+				}
+				// increment message & interface counters
+				netmsg->bytes_sent += netmsg->send_rate; // SR may be zero
+				netmsg->bytes_buffered += netmsg->buffer_rate; // BR may be zero
+				// netmsg->bytes_buffered = 
+				nif->bandwidth_used += netmsg->send_rate;
+				nif->bandwidth_used += netmsg->buffer_rate;
+				bandwidth_used += netmsg->send_rate;
+				buffer_used += netmsg->buffer_rate;
+			}
+		}
+	}
+
+	// if there's additional bandwidth, use it to unload the buffer back into the network
+	if(bandwidth_used < bandwidth){
+		double bandwidth_left = bandwidth - bandwidth_used;
+		if(buffer_used > 0){
+			for(nif = first_if; nif != 0 && bandwidth_left > 0.0; nif = nif->next){
+				if(nif->has_outbound()){
+					//	for each message,
+					for(netmsg = nif->peek_outbox(); netmsg != 0; netmsg = netmsg->next){
+						if(netmsg->bytes_buffered > 0.0){
+							if(netmsg->bytes_buffered > bandwidth_left){
+								netmsg->buffer_rate = -bandwidth_left;
+							} else {
+								netmsg->buffer_rate = -netmsg->bytes_buffered;
+							}
+							netmsg->bytes_buffered += netmsg->buffer_rate;
+							netmsg->bytes_recv -= netmsg->buffer_rate;
+							bandwidth_left += netmsg->bytes_buffered;
+							bandwidth_used -= netmsg->buffer_rate;		// netmsg->buffer_rate
+							netmsg->send_rate -= netmsg->buffer_rate;	//	is negative
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/* don't forget to "receive" the messages!!! */
+	network_message tempmsg;
+	for(nif = first_if; nif != 0; nif = nif->next){
+		if(nif->has_outbound()){
+			//	for each message,
+			for(netmsg = nif->peek_outbox(); netmsg != 0; netmsg = netmsg->next){
+				netmsg->bytes_recv += netmsg->send_rate;
+				if(netmsg->bytes_recv >= netmsg->size){
+					tempmsg.next = netmsg->next;
+					netmsg->msg_state = NMS_DELIVERED;
+					netmsg->rx_done_sec = gl_globalclock + (int64)ceil(latency);
+					netmsg->end_time = gl_globalclock + (int64)ceil(latency);
+//					memcpy(netmsg->pTo->data_buffer, netmsg->message, netmsg->buffer_size);
+					// move netmsg from this nif's outbox to the other nif's inbox					
+					// unlink netmsg from the list that it's in
+					if(netmsg->prev != 0)
+						netmsg->prev->next = netmsg->next;
+					if(tempmsg.next != 0)
+						tempmsg.next->prev = netmsg->prev;
+					if(nif->outbox == netmsg){ // make sure we pull this off the outbox, if it's the first one there
+						nif->outbox = tempmsg.next;
+					}
+					/* NOTE: puts these into the inbox in reverse order */
+					// link netmsg to the list it's going to
+					netmsg->next = netmsg->pTo->inbox;
+					if(netmsg->next != 0)
+						netmsg->next->prev = netmsg;
+					netmsg->pTo->inbox = netmsg;
+					// use a dummy msg to hold 'next'
+					netmsg = &tempmsg;
+				}
+			}
+		}
+	}
+
+	for(nif = first_if; nif != 0; nif = nif->next){
+		if(nif->has_inbound()){
+			nif->handle_inbox();
+		}
+	}
+
+
 	return 1;
 }
 
@@ -198,7 +439,7 @@ EXPORT TIMESTAMP sync_network(OBJECT *obj, TIMESTAMP t1)
 	network *my = OBJECTDATA(obj,network);
 	try {
 		TIMESTAMP t2 = my->sync(obj->clock, t1);
-		obj->clock = t1;
+		//obj->clock = t1; // update in commit
 		return t2;
 	}
 	catch (char *msg)
@@ -214,7 +455,9 @@ EXPORT TIMESTAMP sync_network(OBJECT *obj, TIMESTAMP t1)
 
 EXPORT int commit_network(OBJECT *obj){
 	network *my = OBJECTDATA(obj,network);
-	return my->commit();
+	int rv = my->commit();
+	obj->clock = gl_globalclock;
+	return rv;
 }
 
 EXPORT int notify_network(OBJECT *obj, int update_mode, PROPERTY *prop){

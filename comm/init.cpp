@@ -25,6 +25,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	}
 
 	new network(module);
+	new network_interface(module);
 
 	/* always return the first class registered */
 	return network::oclass;
