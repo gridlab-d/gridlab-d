@@ -129,6 +129,8 @@ public:
 	complex *Extra_Data;	/// Link to extra data information (NR)
 	unsigned int NR_connected_links[2];	/// Counter for number of connected links in the system
 	int *NR_link_table;		/// Pointer to link list table
+	
+	double mean_repair_time;	/// Node's mean repair time - mainly for swing at this point
 
 	int NR_node_reference;		/// Node's reference in NR_busdata
 	int *NR_subnode_reference;	/// Pointer to parent node's reference in NR_busdata - just in case things get inited out of synch

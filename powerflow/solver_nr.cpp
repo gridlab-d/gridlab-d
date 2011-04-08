@@ -2855,6 +2855,21 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		// Build the Amatrix, Amatrix includes all the elements of Y_offdiag_PQ, Y_diag_fixed and Y_diag_update.
 		size_Amatrix = size_offdiag_PQ*2 + size_diag_fixed*2 + 4*size_diag_update;
+
+		//Test to make sure it isn't an empty matrix - reliability induced 3-phase fault
+		if (size_Amatrix==0)
+		{
+			gl_warning("Empty powerflow connectivity matrix, your system is empty!");
+			/*  TROUBLESHOOT
+			Newton-Raphson has an empty admittance matrix that it is trying to solve.  Either the whole system
+			faulted, or something is not properly defined.  Please try again.  If the problem persists, please
+			submit your code and a bug report via the trac website.
+			*/
+
+			*bad_computations = false;	//Ensure output is flagged ok
+			return 0;					//Just return some arbitrary value - not technically bad
+		}
+
 		if (Y_Amatrix == NULL)
 		{
 			Y_Amatrix = (Y_NR *)gl_malloc((size_Amatrix) *sizeof(Y_NR));   // Amatrix includes all the elements of Y_offdiag_PQ, Y_diag_fixed and Y_diag_update.

@@ -144,7 +144,7 @@ object house {
 				  
 				  state_property multiplier;	
 				  
-				  critical_day false;
+				  critical_day 0;
 				  two_tier_cpp false;
 				  daily_elasticity 0.11;
 				  sub_elasticity_first_second 0.12;
@@ -162,9 +162,8 @@ object house {
 				  limit 100000000;
 				  interval 300;
 				  file results.csv;
-		    };
-			
-			  		 
+		    };	
+
 		     object double_assert{
 				  target "multiplier";	
 				  within 0.01;
@@ -176,5 +175,6 @@ object house {
 				 };
 		  };
 		 
+		     		 
        };     
 }

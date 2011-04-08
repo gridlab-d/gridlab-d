@@ -143,7 +143,7 @@ int local_tzoffset(TIMESTAMP t)
 int local_datetime(TIMESTAMP ts, DATETIME *dt)
 {
 
-	int n;
+	int64 n;
 	TIMESTAMP rem = 0;
 	TIMESTAMP local;
 	int tsyear;
@@ -166,10 +166,10 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	tsyear = timestamp_year(local, &rem);
 
 	if (rem < 0){
-		/* throw_exception("local_datetime(TIMESTAMP=%"FMT_INT64"d, DATETIME *dt={...}): unable to determine local time %"FMT_INT64"ds %s", ts, rem, tzvalid?(dt->is_dst ? tzdst : tzstd) : "GMT",sizeof(dt->tz)); */
+		/* THROW("local_datetime(TIMESTAMP=%"FMT_INT64"d, DATETIME *dt={...}): unable to determine local time %"FMT_INT64"ds %s", ts, rem, tzvalid?(dt->is_dst ? tzdst : tzstd) : "GMT",sizeof(dt->tz)); */
 		/* dt may not be initialized! -mh */
-		/* throw_exception("local_datetime(TIMESTAMP=%"FMT_INT64"d, DATETIME *dt={...}): unable to determine local time %"FMT_INT64"ds", ts, rem); */
-		throw_exception("local_datetime(...): unable to determine localtime; did you forget to initialize the clock?");
+		/* THROW("local_datetime(TIMESTAMP=%"FMT_INT64"d, DATETIME *dt={...}): unable to determine local time %"FMT_INT64"ds", ts, rem); */
+		THROW("local_datetime(...): unable to determine localtime; did you forget to initialize the clock?");
 		/*	TROUBLESHOOT
 			Though the associated message is casual, the simulation will generally not start up in a 
 			stable configuration if the clock is not given an initial value.
@@ -202,6 +202,10 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	while(rem >= n){
 		rem -= n; /* subtract n ticks from ts */
 		dt->month++; /* add to month */
+		if(dt->month == 12){
+			dt->month = 0;
+			++dt->year;
+		}
 		n = (daysinmonth[dt->month] + ((dt->month == 1 && ISLEAPYEAR(dt->year)) ? 1:0)) * 86400 * TS_SECOND;
 		if(n < 86400 * 28){ /**/
 			output_fatal("Breaking an infinite loop in local_datetime! (ts = %"FMT_INT64"ds", ts);
@@ -346,7 +350,7 @@ int strdatetime(DATETIME *t, char *buffer, int size){
 		len = sprintf(tbuffer,"%02d-%02d-%04d %02d:%02d:%02d",
 			t->day, t->month, t->year, t->hour, t->minute, t->second);
 	} else {
-		throw_exception("global_dateformat=%d is not valid", global_dateformat);
+		THROW("global_dateformat=%d is not valid", global_dateformat);
 		/* TROUBLESHOOT
 			The value of the global variable 'global_dateformat' is not valid.  
 			Check for attempts to set this variable and make sure that is one of the valid
@@ -549,12 +553,15 @@ void load_tzspecs(char *tz){
 	char buffer[1024];
 	int linenum = 0;
 	int year = YEAR0;
-	
+	int y;
+	int found;
+
+	found = 0;
 	tzvalid = 0;
 	pTzname = tz_name(tz);
 
 	if(pTzname == 0){
-		throw_exception("timezone '%s' was not understood by tz_name.", tz);
+		THROW("timezone '%s' was not understood by tz_name.", tz);
 		/* TROUBLESHOOT
 			The specific timezone is not valid.  
 			Try using a valid timezone or add the desired timezone to the timezone file <code>.../etc/tzinfo.txt</code> and try again.
@@ -567,7 +574,7 @@ void load_tzspecs(char *tz){
 	strncpy(tzdst, tz_dst(current_tzname), sizeof(tzdst));
 
 	if(filepath == NULL){
-		throw_exception("timezone specification file %s not found in GLPATH=%s: %s", TZFILE, getenv("GLPATH"), strerror(errno));
+		THROW("timezone specification file %s not found in GLPATH=%s: %s", TZFILE, getenv("GLPATH"), strerror(errno));
 		/* TROUBLESHOOT
 			The system could not locate the timezone file <code>tzinfo.txt</code>.
 			Check that the <code>etc</code> folder is included in the '''GLPATH''' environment variable and try again.
@@ -577,10 +584,15 @@ void load_tzspecs(char *tz){
 	fp = fopen(filepath,"r");
 	
 	if(fp == NULL){
-		throw_exception("%s: access denied: %s", filepath, strerror(errno));
+		THROW("%s: access denied: %s", filepath, strerror(errno));
 		/* TROUBLESHOOT
 			The system was unable to read the timezone file.  Check that the file has the correct permissions and try again.
 		 */
+	}
+
+	// zero previous DST start/end times
+	for (y = 0; y < sizeof(tszero) / sizeof(tszero[0]); y++){
+		dststart[y] = dstend[y] = -1;
 	}
 
 	while(fgets(buffer,sizeof(buffer),fp)){
@@ -629,15 +641,21 @@ void load_tzspecs(char *tz){
 
 		if(form == 1){ /* no DST */
 			set_tzspec(year, current_tzname, NULL, NULL);
+			found = 1;
 		} else if(form == 11) { /* full DST spec */
 			set_tzspec(year, current_tzname, &start, &end);
+			found = 1;
 		} else {
-			throw_exception("%s(%d): %s is not a valid timezone spec", filepath, linenum, buffer);
+			THROW("%s(%d): %s is not a valid timezone spec", filepath, linenum, buffer);
 			/* TROUBLESHOOT
 				The timezone specification is not valid.  Verify the syntax of the timezone spec and that it is defined in the timezone file 
 				<code>.../etc/tzinfo.txt</code> or add it, and try again.
 			 */
 		}
+	}
+
+	if(found == 0){
+		output_warning("%s(%d): timezone spec '%s' not found in 'tzinfo.txt', will include no DST information", filepath, linenum, current_tzname);
 	}
 
 	if(ferror(fp)){
@@ -662,7 +680,7 @@ char *timestamp_set_tz(char *tz_name){
 	
 	if(tz_name == NULL){
 		if (strcmp(_tzname[0], "") == 0){
-			throw_exception("timezone not identified");
+			THROW("timezone not identified");
 			/* TROUBLESHOOT
 				An attempt to use timezones was made before the timezome has been specified.  Try adding or moving the
 				timezone spec to the top of the <code>clock</code> directive and try again.  Alternatively, you can set the '''TZ''' environment
@@ -699,7 +717,7 @@ int convert_from_timestamp(TIMESTAMP ts, char *buffer, int size)
 				if (local_datetime(ts,&t))
 					len = strdatetime(&t,temp,sizeof(temp));
 				else
-					throw_exception("%"FMT_INT64"d is an invalid timestamp", ts);
+					THROW("%"FMT_INT64"d is an invalid timestamp", ts);
 					/* TROUBLESHOOT
 						An attempt to convert a timestamp to a date/time string has failed because the timezone isn't valid.
 						This is most likely an internal error and should be reported.

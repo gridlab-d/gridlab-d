@@ -100,6 +100,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "shunt_B[S]", PADDR(shuntB),
 			PT_complex, "shunt_C[S]", PADDR(shuntC),
 			PT_bool, "NR_mode", PADDR(NR_mode),
+			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
 
 			PT_enumeration, "service_status", PADDR(service_status),
 				PT_KEYWORD, "IN_SERVICE", ND_IN_SERVICE,
@@ -152,6 +153,8 @@ int node::create(void)
 	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;	//Nominal house current variables
 
 	prev_phases = 0x00;
+
+	mean_repair_time = 0.0;
 
 	// Only used in capacitors, at this time, but put into node for future functionality (maybe with reliability?)
 	service_status = ND_IN_SERVICE;
@@ -467,6 +470,17 @@ int node::init(OBJECT *parent)
 				a bug report detailing how you obtained this message.
 				*/
 		}
+
+		if (mean_repair_time < 0.0)
+		{
+			gl_warning("node:%s has a negative mean_repair_time, set to 1 hour",obj->name);
+			/*  TROUBLESHOOT
+			A node object had a mean_repair_time that is negative.  This ia not a valid setting.
+			The value has been changed to 0.  Please set the variable to an appropriate variable
+			*/
+
+			mean_repair_time = 0.0;	//Set to zero by default
+	}
 	}
 	else if (solver_method==SM_GS)
 	{

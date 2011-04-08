@@ -5150,6 +5150,18 @@ int link::link_fault_on(char *fault_type, int *implemented_fault, TIMESTAMP *rep
 					}
 				}
 
+				//Get the swing bus value
+				tmpobj = gl_get_object(NR_busdata[temp_node].name);
+
+				if (tmpobj == NULL)
+				{
+					GL_THROW("An attempt to find the swing node %s failed.",NR_busdata[temp_node].name);
+					/*  TROUBLESHOOT
+					While attempting to get the mean repair time for the swing bus, an error occurred.  Please try again.  If the error persists,
+					please submit a bug report and your code via the trac website.
+					*/
+				}
+
 				//Retrieve the mean_repair_time
 				temp_double_val = get_double(tmpobj,"mean_repair_time");
 

@@ -28,19 +28,19 @@
 	- <b>Core exceptions</b> should include the offending function
 	  call and the specifics of the error in context, as in	
 		\code 
-	  	throw_exception("object_tree_add(obj='%s:%d', name='%s'): memory allocation failed (%s)", 
+	  	THROW("object_tree_add(obj='%s:%d', name='%s'): memory allocation failed (%s)", 
 			obj->oclass->name, obj->id, name, strerror(errno));
 		\endcode
 	  For functions that a \p static, you should include the file in which
 	  it is implemented, as in
 		\code
-		throw_exception("object.c/addto_tree(tree.name='%s', item.name='%s'): strcmp() returned unexpected value %d", tree->name, item->name, rel);
+		THROW("object.c/addto_tree(tree.name='%s', item.name='%s'): strcmp() returned unexpected value %d", tree->name, item->name, rel);
 		\endcode
 	  One important situation to consider are exception that occur during I/O
 	  where the context in GridLAB may not be as important the context in the
 	  I/O stream, as in
 		\code
-		throw_exception("%s(%d): unexpected EOF", filename, linenum);
+		THROW("%s(%d): unexpected EOF", filename, linenum);
 		\endcode
 
 	- <b>Module exception</b> should include the offending object as well

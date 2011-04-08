@@ -144,8 +144,8 @@ object house {
 				  
 				  state_property multiplier;	
 				  
-				  critical_day false;
-				  two_tier_cpp false;
+				  critical_day 0;
+				  two_tier_cpp true;
 				  daily_elasticity 0.11;
 				  sub_elasticity_first_second 0.12;
 				  sub_elasticity_first_third 0.13;
@@ -163,7 +163,7 @@ object house {
 				  interval 300;
 				  file results.csv;
 		    };		
-
+			
 			object double_assert{
 				  target "multiplier";	
 				  within 0.01;
@@ -172,7 +172,7 @@ object house {
 					property value;
 					file ../Elasticity_Multiplier_NonCritical_With_Two_TierCPP.player;
 					
-				 };			
+			};
 			};
 			
        };     
