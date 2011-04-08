@@ -893,9 +893,10 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 }
 
 TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	TIMESTAMP rv = next_run - bid_delay;
 	// Determine the system_mode the HVAC is in
 	if(t1 < next_run-bid_delay){
-		return next_run-bid_delay;
+		return rv;
 	}
 
 	if(resolve_mode == RM_SLIDING){
@@ -918,11 +919,16 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 	}
 
-	if(next_run <= t1)
+	if (t1 - next_run < bid_delay){
+		rv = next_run;
+	}
+
+	if(next_run >= t1){
 		next_run += (TIMESTAMP)(this->period);
+		rv = next_run - bid_delay;
+	}
 
-
-	return (next_run - bid_delay);
+	return rv;
 }
 
 //////////////////////////////////////////////////////////////////////////
