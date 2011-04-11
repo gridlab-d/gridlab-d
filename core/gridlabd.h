@@ -54,7 +54,10 @@
 #ifndef _GRIDLABD_H
 #define _GRIDLABD_H
 
+/* permanently disable use of CPPUNIT */
+#ifndef _NO_CPPUNIT
 #define _NO_CPPUNIT
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

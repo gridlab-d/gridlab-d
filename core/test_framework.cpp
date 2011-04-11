@@ -1,5 +1,6 @@
 // $id$
 // Copyright (C) 2008 Battelle Memorial Institute
+#ifndef _NO_CPPUNIT
 #include <stdio.h>
 #include <stdlib.h>
 #include "test_framework.h"
@@ -21,4 +22,4 @@ CDECL
 #include <dlfcn.h>
 #endif
 
-
+#endif
