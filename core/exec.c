@@ -350,6 +350,7 @@ static void *ss_do_object_sync_list(void *threadarg)
 static STATUS init_all(void)
 {
 	OBJECT *obj;
+	STATUS rv = SUCCESS;
 	output_verbose("initializing objects...");
 
 	/* initialize loadshapes */
@@ -360,7 +361,7 @@ static STATUS init_all(void)
 		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
 		{
 			if (object_init(obj)==FAILED){
-				throw_exception("init_all(): object %s initialization failed", object_name(obj));
+				THROW("init_all(): object %s initialization failed", object_name(obj));
 				/* TROUBLESHOOT
 					The initialization of the named object has failed.  Make sure that the object's
 					requirements for initialization are satisfied and try again.
@@ -383,8 +384,9 @@ static STATUS init_all(void)
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
+		rv = FAILED;
 	} ENDCATCH;
-	return SUCCESS;
+	return rv;
 }
 
 static STATUS commit_all(TIMESTAMP t0){
@@ -394,7 +396,7 @@ static STATUS commit_all(TIMESTAMP t0){
 		{
 			if(obj->in_svc <= t0 && obj->out_svc >= t0){
 				if(object_commit(obj) == FAILED){
-					throw_exception("commit_all(): object %s commit failed", object_name(obj));
+					THROW("commit_all(): object %s commit failed", object_name(obj));
 					/* TROUBLESHOOT
 						The commit function of the named object has failed.  Make sure that the object's
 						requirements for commit'ing are satisfied and try again.  (likely internal state aberations)

@@ -8,12 +8,15 @@
 ; IMPORTANT NOTE: year sections must be in chronological order
 ;
 
+UTC0 ; Coordinated Universal Time ~ never uss DST
+GMT0 ; Grenich Mean Time, no DST
 EST5 ; Eastern no DST
 CST6 ; Central no DST
 MST7 ; Mountain no DST
 PST8 ; Pacific no DST
 
 [1970] ; Rules as of 1967
+GMT0GMT,M3.5.0/02:00,M10.5.0/2:00 ; GMT, DST last Sun/Mar to last Sun/Oct
 EST+5EDT,M4.5.0/02:00,M10.5.0/02:00 ; Eastern, DST last Sun/Apr to last Sun/Oct
 CST+6CDT,M4.5.0/02:00,M10.5.0/02:00 ; Central, DST last Sun/Apr to last Sun/Oct
 MST+7MDT,M4.5.0/02:00,M10.5.0/02:00 ; Mountain, DST last Sun/Apr to last Sun/Oct

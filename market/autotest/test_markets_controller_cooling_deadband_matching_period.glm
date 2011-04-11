@@ -65,6 +65,12 @@ schedule cooling_setpoints {
 object climate {
 	name "Yakima WA";
 	tmyfile "../WA-Yakima.tmy2";
+	object recorder {
+		file humidity.csv;
+		property humidity;
+		interval 3600;
+		limit 168;
+	};
 }
 
 class auction {
@@ -167,17 +173,17 @@ object triplex_meter {
 				// interval 900;
 				// limit 4320;
 			// };
-			object double_assert {
-				value controller_bids*1;
-				target "bid_price";
-				within 1e-3;
-			};
-		};
-		object double_assert {
-			value cooling_setpoints*1;
-			target cooling_setpoint;
-			within 1e-3;
-		};
+//			object double_assert {
+//				value controller_bids*1;
+//				target "bid_price";
+//				within 1e-3;
+//			};
+		}; // end controller
+//		object double_assert {
+//			value cooling_setpoints*1;
+//			target cooling_setpoint;
+//			within 1e-3;
+//		};
 	};
 }
 
