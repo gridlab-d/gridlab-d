@@ -265,14 +265,19 @@ int controller::init(OBJECT *parent){
 		return 0;
 	}
 
-	gl_set_dependent(hdr, pMarket);
-	market = OBJECTDATA(pMarket, auction);
+	if(gl_object_isa(pMarket, "auction")){
+		gl_set_dependent(hdr, pMarket);
+		market = OBJECTDATA(pMarket, auction);
+	} else {
+		gl_error("controllers only work when attached to an 'auction' object");
+		return 0;
+	}
 
 	if(dPeriod == 0.0){
 		period = market->period;
 	} else {
 		period = (TIMESTAMP)floor(dPeriod + 0.5);
-	} 
+	}
 
 	if(bid_delay < 0){
 		bid_delay = -bid_delay;
@@ -927,6 +932,8 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		next_run += (TIMESTAMP)(this->period);
 		rv = next_run - bid_delay;
 	}
+
+	
 
 	return rv;
 }

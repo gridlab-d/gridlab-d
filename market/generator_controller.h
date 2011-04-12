@@ -30,6 +30,8 @@ public:
 		GEN_STARTUP = 2,	//Generator would be starting up - used for bid tracking
 	} GENERATOR_STATE;
 
+	int gen_state_num;		//Numeric indication of the generator state - mainly to make post-processing easier for some people
+
 	typedef struct s_curveentry {
 		CURVEDETAILS *Curve_Info;		//Pointer to particular bid curve of the time
 		int	number_bid_curve_sections;	//Number of pieces in this particular curve

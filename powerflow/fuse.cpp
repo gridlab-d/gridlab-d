@@ -48,7 +48,7 @@ fuse::fuse(MODULE *mod) : link(mod)
 			PT_enumeration, "phase_C_status", PADDR(phase_C_state),
 				PT_KEYWORD, "BLOWN", BLOWN,
 				PT_KEYWORD, "GOOD", GOOD,
-			PT_enumeration, "repaire_dist_type", PADDR(restore_dist_type),
+			PT_enumeration, "repair_dist_type", PADDR(restore_dist_type),
 				PT_KEYWORD, "NONE", NONE,
 				PT_KEYWORD, "EXPONENTIAL", EXPONENTIAL,
 			PT_double, "current_limit[A]", PADDR(current_limit),

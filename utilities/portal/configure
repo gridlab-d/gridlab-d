@@ -1,0 +1,37 @@
+#!/bin/bash
+
+if [ -f .htaccess -a "$1" != "-f" ]; then
+	echo "ERROR: portal is already configured"
+	exit 1
+fi
+
+echo "Creating .htaccess"
+echo 'AuthType "Basic"
+AuthName "GridLAB-D Portal"
+AuthUserFile '$PWD'/.htpasswd
+AuthGroupFile '$PWD'/.htgroup
+Require valid-user
+' >.htaccess
+
+echo "Creating .htgroup"
+echo 'admins: admin
+users: ' >.htgroup
+
+echo "Creating .htpasswd with admin only"
+htpasswd -cm .htpasswd admin
+
+echo "Setting permissions"
+chown -R apache.apache .
+chmod -r 770 .
+chmod g+s jobs
+
+vi config
+vi config.sh
+
+echo "Restarting apache"
+echo '<Directory '$PWD'>
+	Options FollowSymLinks Includes Indexes
+	AllowOverride AuthConfig
+</Directory>' >/etc/httpd/conf.d/gridlabd.conf
+/sbin/service httpd reload
+

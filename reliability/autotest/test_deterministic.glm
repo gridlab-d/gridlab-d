@@ -1,13 +1,14 @@
-// Autotest for reliability functionality in powerflow module
-// Normal execution testing
+// Reliability autotest of interactions with powerflow
+// This file tests a deterministic actions, as well as an "unscheduled" event
 // 37-node IEEE feeder
 
 #set iteration_limit=20;
 #set randomseed=12150
+#set suppress_repeat_messages=0
 
 clock {
 	timestamp '2000-01-01 0:00:00';
-	stoptime '2000-01-02 00:00:00';
+	stoptime '2000-01-02 0:00:00';
 	timezone PST+8PDT;
 }
 
@@ -20,45 +21,83 @@ module assert;
 
 module reliability {
 	maximum_event_length 18000;	//Maximum length of events in seconds (manual events are excluded from this limit)
-	report_event_log false;
+	report_event_log true;
 	}
 
-object fault_check {				
+object fault_check {				//Fault check object - required to make powerflow properly handle faults
 	name test_fault;
-	check_mode ONCHANGE;			
-	eventgen_object testgendev_rand;
-	//output_filename testout.txt;	
+	check_mode ONCHANGE;			//Fault check mode - should be in ONCHANGE - reliability will change it
+	eventgen_object testgendev;		//Link to eventgen object - used to handle "unscheduled" events - fuses and switch openings
+	output_filename testout.txt;	//"unsupported node" dump file
 };
 
 object metrics {
 	name testmetrics;
-	report_file testmetrics.txt;						
-	module_metrics_object pwrmetrics;					
-	metrics_of_interest "SAIFI,SAIDI,CAIDI,ASAI,MAIFI";	
-	customer_group "groupid=METERTEST";					
-	metric_interval 5 h; 								
-	report_interval 5 h;								
+	report_file testmetrics.txt;						//Name of the output file
+	module_metrics_object pwrmetrics;					//Module-specific "metrics" object - a powerflow metrics object is specified here
+	metrics_of_interest "SAIFI,SAIDI,CAIDI,ASAI,MAIFI";	//Metrics to output into the report file
+	customer_group "groupid=METERTEST";					//Search criteria for determining "customers" of the system - similar to collectors - this group is both three-phase and triplex meters
+	metric_interval 5 h; 								//Interval to run metrics - (separate from "simulation-long" metrics) - set to 0 for no metric updates (defaults to no interval updates)
+	report_interval 5 h;								//Interval to dump metric updates to the output file.
 }
 
+//Manual object - swing fault
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name testgendever;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "SLG-A";			//Type of fault for the object to induce
+	manual_outages "node702-703,2000-01-01 5:03:00,2000-01-01 5:07:00";
+}
+
+//Manual object
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name testgendev;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "SLG-A";			//Type of fault for the object to induce
+	manual_outages "node711-741,2000-01-01 5:05:00,2000-01-01 5:10:00,node733-734,2000-01-01 5:21:00,2000-01-01 5:24:10";	//Defines manual outage - object name, time on (YYYY-MM-DD hh:mm:ss), time end
+}
+
+//Manual object
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name testgendevTLL;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "TLL";			//Type of fault for the object to induce
+	manual_outages "node711-741,2000-01-01 10:25:00,2000-01-01 10:40:00";	//Defines manual outage - object name, time on (YYYY-MM-DD hh:mm:ss), time end
+}
+
+//Manual object - fuse - same fuse being altered by player below
 object eventgen {
-	name testgendev_rand;
+	name testgen_fuse;
 	parent testmetrics;
-	target_group "class=underground_line AND groupid=PIEBYE";	
-	fault_type "DLG-X";						
-	failure_dist EXPONENTIAL;				
-	failure_dist_param_1 0.00005;			
-	restoration_dist PARETO;				
+	fault_type "FUS-ABC";
+	manual_outages "node703-703b,2000-01-01 5:10:11,2000-01-01 5:12:15,node703-703b,2000-01-01 15:10:11,2000-01-01 15:12:15";
 }
 
-object power_metrics {		
+//Manual object - switch
+object eventgen {
+	name testgen_sw;
+	parent testmetrics;
+	fault_type "SW-AC";	//Phases A and C will switch
+	manual_outages "sw_load834_834b,2000-01-01 5:10:11,2000-01-01 5:12:15";
+}
+
+//Manual object B
+object eventgen {
+	name testgendevB;
+	parent testmetrics;
+	fault_type "DLG-X";	//Random two line fault
+	manual_outages "node720-706,2000-01-01 5:02:05,2000-01-01 5:02:10,node704-714,2000-01-01 5:03:05,2000-01-01 5:03:10";
+}
+
+object power_metrics {		//Powerflow metrics object - performs 1366 metric calculations
 	name pwrmetrics;
-	base_time_value 1 h;	
+	base_time_value 1 h;	//Base time value for 1366-metrics.  Defaults to 1 minute
 	object double_assert {
 		target "SAIFI";
 		within 0.01;
 		object player {
 			property "value";
-			file ../random_SAIFI.csv;
+			file ../deterministic_SAIFI.csv;
 		};
 	};
 	object double_assert {
@@ -66,7 +105,7 @@ object power_metrics {
 		within 0.01;
 		object player {
 			property "value";
-			file ../random_SAIDI.csv;
+			file ../deterministic_SAIDI.csv;
 		};
 	};
 	object double_assert {
@@ -74,7 +113,7 @@ object power_metrics {
 		within 0.01;
 		object player {
 			property "value";
-			file ../random_CAIDI.csv;
+			file ../deterministic_CAIDI.csv;
 		};
 	};
 	object double_assert {
@@ -82,7 +121,7 @@ object power_metrics {
 		within 0.01;
 		object player {
 			property "value";
-			file ../random_MAIFI.csv;
+			file ../deterministic_MAIFI.csv;
 		};
 	};
 	object double_assert {
@@ -90,7 +129,7 @@ object power_metrics {
 		within 0.01;
 		object player {
 			property "value";
-			file ../random_SAIFI_int.csv;
+			file ../deterministic_SAIFI_int.csv;
 		};
 	};
 	object double_assert {
@@ -98,7 +137,7 @@ object power_metrics {
 		within 0.01;
 		object player {
 			property "value";
-			file ../random_SAIDI_int.csv;
+			file ../deterministic_SAIDI_int.csv;
 		};
 	};
 	object double_assert {
@@ -106,7 +145,7 @@ object power_metrics {
 		within 0.01;
 		object player {
 			property "value";
-			file ../random_CAIDI_int.csv;
+			file ../deterministic_CAIDI_int.csv;
 		};
 	};
 	object double_assert {
@@ -114,7 +153,7 @@ object power_metrics {
 		within 0.01;
 		object player {
 			property "value";
-			file ../random_MAIFI_int.csv;
+			file ../deterministic_MAIFI_int.csv;
 		};
 	};
 }
@@ -1165,6 +1204,14 @@ object meter {
 	phases ABC;
 	name load841;
 	nominal_voltage 4800;
+	object complex_assert {
+		target "measured_power_A";
+		within 0.2;
+		object player {
+			property "value";
+			file ../deterministic_powerA.csv;
+		};
+	};
 }
 
 object load {
@@ -1390,4 +1437,10 @@ object fuse {
 	phases ABC;
 	current_limit 500.0;
 	mean_replacement_time 7 min;
+}
+
+object player {
+	parent node703-703b;
+	property "current_limit";
+	file ../fuse_limit_manipulate.player;
 }

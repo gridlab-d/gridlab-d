@@ -602,6 +602,8 @@ STATUS exec_start(void)
 	int iPtr, incr;
 	struct arg_data *arg_data_array;
 
+	OBJECT *obj;
+
 	/* check for a model */
 	if (object_get_count()==0)
 

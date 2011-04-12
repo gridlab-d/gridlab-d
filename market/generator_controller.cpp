@@ -24,6 +24,8 @@ generator_controller::generator_controller(MODULE *module){
 			PT_enumeration,"generator_state", PADDR(gen_state), PT_DESCRIPTION, "Current generator state",
 				PT_KEYWORD, "OFF", GEN_OFF,
 				PT_KEYWORD, "RUNNING", GEN_ACTIVE,
+				PT_KEYWORD, "STARTING", GEN_STARTUP,
+			PT_int32,"generator_state_number", PADDR(gen_state_num), PT_DESCRIPTION, "Current generator state as numeric value",
 			PT_object,"market", PADDR(market_object), PT_DESCRIPTION, "Market the object will watch and bid into",
 			PT_char1024,"bid_curve", PADDR(bidding_curve_txt), PT_DESCRIPTION, "Bidding curve text format",
 			PT_bool,"update_curve", PADDR(update_curve), PT_DESCRIPTION, "Flag to force updating of bidding curve parse",
@@ -80,6 +82,7 @@ int generator_controller::create(void)
 	update_output = false;
 
 	gen_state = GEN_ACTIVE;			//Assumes start running
+	gen_state_num = 1;				//Replicates start running
 	startup_cost = 0;				//assumes no cost to start up
 	shutdown_cost = 0;				//assumes no cost to shut down
 	shutdown_cost_remaining = 0.0;	//No shutdown cost remaining
@@ -321,6 +324,9 @@ int generator_controller::init(OBJECT *parent)
 		positive or zero.
 		*/
 	}
+
+	//Set initial state properly
+	gen_state_num = (int)gen_state;
 
 	return 1;
 }
@@ -658,6 +664,9 @@ TIMESTAMP generator_controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	//Update value for keeping the accumulators right
 	last_power_output = current_power_output;
+
+	//Set initial state properly
+	gen_state_num = (int)gen_state;
 
 	//Return appropriately
 	if (next_clear != TS_NEVER)

@@ -1,0 +1,80 @@
+#!/bin/bash
+
+. config
+
+# setup accounting folder
+if [ ! -f acct ]; then
+	echo "# accounting started $(date)" >acct
+	echo "# date:jobdir:pid:user:project:seconds" >>acct
+fi
+
+# setup jobs folder
+if [ ! -d jobs ]; then
+	mkdir -p jobs
+fi
+
+# start server
+if [ "$1" == "start" ]; then
+
+	# server is already running
+	if [ -f .pid ]; then
+		exit 0;
+	fi
+
+	# cleanup on exit
+	trap 'rm -f .status .pid;' EXIT
+
+	# server files
+	echo $$ >.pid
+	echo "starting" >.status
+	echo "$(date): queue started"
+
+	# server loop
+	while [ true ]; do
+		for job in $(ls jobs); do
+			if [ "$(cat jobs/$job/.status)" == "Pending" ]; then
+				echo "running job $job" >.status
+				echo "$(date): starting job $job" >>.log
+				# run job
+				#find jobs/$job -type d -exec chmod g+w \{\} \;
+				if ( ./gldjob jobs/$job 2>&1 | sed -e "s/^/$(date): /" >>.log ); then
+					echo "$(date): job $job completed ok"
+				else
+					echo "$(date): job $job failed"
+				fi
+			fi
+		done
+		echo "idle" >.status
+		sleep 1
+	done
+
+# stop server
+elif [ "$1" == "stop" ]; then
+	if [ -f .pid ]; then
+		kill $(cat .pid)
+		echo "$(date): queue stopped"
+	fi
+
+# reset server
+elif [ "$1" == "reset" ]; then
+	pkill -e apache gldq
+	rm -f .pid .status
+	echo "$(date): server reset"
+
+# acct reset
+elif [ "$1" == "save" ]; then
+	if [ -z "$MAILTO" ]; then
+		save="acct-$(date +'%Y%m%d%H%M%S')"
+		mv acct $save
+		echo "$(date): accounting data saved to $save"
+	else
+		mail "$MAILTO" -s "GLD Portal accounting" <acct
+		rm acct
+		echo "$(date): accounting data mailed to '$MAILTO'"
+	fi
+	echo "# accounting started $(date)" >acct
+	echo "# date:jobdir:pid:user:project:seconds" >>acct
+# report server status
+else
+	cat .status
+fi

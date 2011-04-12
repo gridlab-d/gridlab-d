@@ -1,0 +1,58 @@
+#!/bin/bash
+
+workdir="$PWD/$1/workdir"
+jobdir="$PWD/$1"
+
+. config.sh
+acct=$PWD/acct
+
+mkdir $workdir
+cd $workdir
+stat="$jobdir/.status"
+desc="$jobdir/.description"
+user=$(cut -f3 -d' ' $jobdir/.htaccess)
+echo "Starting" >$stat
+echo "Started $(date +'%m/%d/%y %H:%M%p'); ">>$desc
+unzip -qq $jobdir/jobfile.zip >output.txt
+
+if [ -f "options.txt" ]; then
+	OPTIONS=$(cat options.txt)
+fi
+
+echo "Running" >$stat
+files=$(ls -1 | grep '\.glm$')
+
+if [ -z "$files" ]; then
+	echo "" >>output.txt
+	echo "Running 'gridlabd $OPTIONS'..." >>output.txt
+	if ( gridlabd $OPTIONS 1>>output.txt 2>&1 ); then
+		state="Done"
+	else
+		state="Error"
+	fi
+else
+	for glm in $files; do
+		echo "" >>output.txt
+		echo "Running 'gridlabd $OPTIONS $glm'..." >>output.txt
+		if ( gridlabd $OPTIONS $glm 1>>output.txt 2>&1 ); then
+			state="Done"
+		else
+			state="Error"
+		fi
+	done
+fi
+
+echo "Saving" >$stat
+rm -rf $jobdir/jobfile.zip
+zip -qq $jobdir/jobfile.zip *
+cp output.txt $jobdir
+
+echo "Cleanup" >$stat
+cd $jobdir
+rm -rf workdir
+
+usage="$(date +'%Y%m.%d %H%M.%S'):$1:$$:$user:$project:$SECONDS"
+echo $usage >$jobdir/usage.txt
+echo $state >.status
+echo "Completed $(date +'%m/%d/%y %H:%M%p'); ">>.description
+echo $usage >>$acct

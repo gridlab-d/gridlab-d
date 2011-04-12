@@ -1,0 +1,3 @@
+MAXPROCS=4
+NUMPROCS=128
+MAILTO="root@localhost"
