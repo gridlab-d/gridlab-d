@@ -115,14 +115,11 @@ void curve::sort(BID *list, KEY *key, const int len, const bool reverse)
 	//merge sort
 	if (len>0)
 	{
-#define BUFSIZE 2048
 		int split = len/2;
 		KEY *a = key, *b = key+split;
 		if (split>1) sort(list,a,split,reverse);
 		if (len-split>1) sort(list,b,len-split,reverse);
-		if (len>BUFSIZE)
-			throw "curve::sort(...) n_bids exceeds buffer size";
-		KEY res[BUFSIZE];
+		KEY *res = new KEY[len];
 		KEY *p = res;
 		do {
 			bool altb = list[*a].price < list[*b].price;

@@ -2939,6 +2939,7 @@ static int class_intrinsic_function(PARSER, CLASS *oclass, int64 *functions, cha
 			append_code("\t%s %s (%s) { OBJECT*my=((OBJECT*)this)-1;",ftype,fname,arglist);
 			append_code("\n\ttry %s ",source);
 			append_code("catch (char *msg) {callback->output_error(\"%%s[%%s:%%d] exception - %%s\",my->name?my->name:\"(unnamed)\",my->oclass->name,my->id,msg); return 0;} ");
+			append_code("catch (const char *msg) {callback->output_error(\"%%s[%%s:%%d] exception - %%s\",my->name?my->name:\"(unnamed)\",my->oclass->name,my->id,msg); return 0;} ");
 			append_code("catch (...) {callback->output_error(\"%%s[%%s:%%d] unhandled exception\",my->name?my->name:\"(unnamed)\",my->oclass->name,my->id); return 0;} ");
 			append_code("callback->output_error(\"%s::%s(%s) not all paths return a value\"); return 0;}\n",oclass->name,fname,arglist);
 			append_code("/*RESETLINE*/\n");
