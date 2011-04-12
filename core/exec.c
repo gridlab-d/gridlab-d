@@ -70,6 +70,7 @@
 #include "math.h"
 #include "time.h"
 #include "lock.h"
+#include "stream.h"
 
 #include "pthread.h"
 
@@ -213,6 +214,97 @@ static STATUS show_progress(void)
 	return SUCCESS;
 }
 
+/***********************************************************************/
+/* CHECKPOINTS (DPC Apr 2011) */
+
+void do_checkpoint(void)
+{
+	/* last checkpoint value */
+	static TIMESTAMP last_checkpoint = 0;
+	TIMESTAMP now = 0;
+
+	/* check point type selection */
+	switch (global_checkpoint_type) {
+
+	/* wallclock checkpoint interval */
+	case CPT_WALL: 
+
+		/* checkpoint based on wall time */
+		now = time(NULL);
+
+		/* default checkpoint for WALL */
+		if ( global_checkpoint_interval==0 )
+			global_checkpoint_interval = 3600;
+
+		break;
+	
+		/* simulation checkpoint interval */
+	case CPT_SIM: 
+
+		/* checkpoint based on sim time */
+		now = global_clock;
+
+		/* default checkpoint for SIM */
+		if ( global_checkpoint_interval==0 )
+			global_checkpoint_interval = 86400;
+
+		break;
+
+	/* no checkpoints used */
+	case CPT_NONE: 
+		now = 0;
+		break;
+	}
+
+	/* checkpoint may be needed */
+	if ( now > 0 )
+	{
+		/* initial value of last checkpoint */
+		if ( last_checkpoint==0 )
+			last_checkpoint = now;
+
+		/* checkpoint time lapsed */
+		if ( last_checkpoint + global_checkpoint_interval <= now )
+		{
+			static char fn[1024] = "";
+			FILE *fp = NULL;
+
+			/* default checkpoint filename */
+			if ( strcmp(global_checkpoint_file,"")==0 )
+			{
+				char *ext;
+
+				/* use the model name by default */
+				strcpy(global_checkpoint_file, global_modelname);
+				ext = strrchr(global_checkpoint_file,'.');
+
+				/* trim off the extension, if any */
+				if ( ext!=NULL && ( strcmp(ext,".glm")==0 || strcmp(ext,".xml")==0 ) )
+					*ext = '\0';
+			}
+
+			/* delete old checkpoint file if not desired */
+			if ( global_checkpoint_keepall==0 && strcmp(fn,"")!=0 )
+				unlink(fn);
+
+			/* create current checkpoint save filename */
+			sprintf(fn,"%s.%d",global_checkpoint_file,global_checkpoint_seqnum++);
+			fp = fopen(fn,"w");
+			if ( fp==NULL )
+				output_error("unable to open checkpoint file '%s' for writing");
+			else
+			{
+				if ( !stream_out(fp,SF_ALL) )
+					output_error("checkpoint failure (stream context is %s)",stream_context());
+				fclose(fp);
+				last_checkpoint = now;
+			}
+		}
+	}
+
+}
+
+/***********************************************************************/
 //sjin: implement new ss_do_object_sync for pthreads
 static void ss_do_object_sync(int thread, void *item)
 {
@@ -510,8 +602,6 @@ STATUS exec_start(void)
 	int iPtr, incr;
 	struct arg_data *arg_data_array;
 
-	OBJECT *obj;
-
 	/* check for a model */
 	if (object_get_count()==0)
 
@@ -628,6 +718,9 @@ STATUS exec_start(void)
 		while ( running = (sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0),
 			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 
 		{
+
+			do_checkpoint();
+
 			//printf("Iteration increased!\n\n");
 			/* set time context */
 			output_set_time_context(sync.step_to);

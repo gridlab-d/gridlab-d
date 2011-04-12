@@ -35,7 +35,12 @@ static KEYWORD trl_keys[] = {
 	{"PROTOTYPE",	TRL_PROTOTYPE, trl_keys+7},
 	{"QUALIFIED",	TRL_QUALIFIED, trl_keys+8},
 	{"PROVEN",		TRL_PROVEN, trl_keys+9},
-	{"UNKNOWN",		TRL_UNKNOWN, trl_keys+10},
+	{"UNKNOWN",		TRL_UNKNOWN, NULL},
+};
+static KEYWORD cpt_keys[] = {
+	{"NONE", CPT_NONE, cpt_keys+1},
+	{"WALL", CPT_WALL, cpt_keys+2},
+	{"SIM",  CPT_SIM,  NULL},
 };
 
 static struct s_varmap {
@@ -109,6 +114,11 @@ static struct s_varmap {
 	{"server_quit_on_close",PT_int32,&global_server_quit_on_close, PA_PUBLIC},
 	{"technology_readiness_level", PT_enumeration, &technology_readiness_level, PA_PUBLIC, trl_keys},
 	{"show_progress",PT_int32,&global_show_progress,PA_PUBLIC},
+	{"checkpoint_type", PT_enumeration, &global_checkpoint_type, PA_PUBLIC, cpt_keys},
+	{"checkpoint_file", PT_char1024, &global_checkpoint_file, PA_PUBLIC},
+	{"checkpoint_seqnum", PT_int32, &global_checkpoint_seqnum, PA_PUBLIC},
+	{"checkpoint_interval", PT_int32, &global_checkpoint_interval, PA_PUBLIC},
+	{"checkpoint_keepall", PT_int32, &global_checkpoint_keepall, PA_PUBLIC},
 	/* add new global variables here */
 };
 
