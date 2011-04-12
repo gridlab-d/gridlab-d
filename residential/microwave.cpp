@@ -85,15 +85,15 @@ void microwave::init_noshape(){
 		GL_THROW("microwave power can not exceed 4 kW (and most don't exceed 2 kW)");
 	}
 	if(shape.params.analog.power < 0.700){
-		gl_error("microwave installed power is smaller than traditional microwave ovens");
+		gl_warning("microwave installed power is smaller than traditional microwave ovens");
 	} else if(shape.params.analog.power > 1.800){
-		gl_error("microwave installed power is greater than traditional microwave ovens");
+		gl_warning("microwave installed power is greater than traditional microwave ovens");
 	}
 	if(standby_power < 0){
-		gl_error("negative standby power, reseting to 1%% of installed power");
+		gl_warning("negative standby power, resetting to 1%% of installed power");
 		standby_power = shape.params.analog.power * 0.01;
 	} else if(standby_power > shape.params.analog.power){
-		gl_error("standby power exceeds installed power, reseting to 1%% of installed power");
+		gl_warning("standby power exceeds installed power, resetting to 1%% of installed power");
 		standby_power = shape.params.analog.power * 0.01;
 	}
 	if(cycle_time < 0){

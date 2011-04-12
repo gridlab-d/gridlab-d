@@ -550,7 +550,7 @@ int loadshape_init(loadshape *ls) /**< load shape */
 
 	/* no schedule -> nothing to initialized */
 	if (ls->schedule==NULL && ls->type!=MT_SCHEDULED){
-		output_error("loadshape_init(): a loadshape without a schedule is meaningless");
+		output_warning("loadshape_init(): a loadshape without a schedule is meaningless");
 		ls->t2 = TS_NEVER;
 		return 0;
 	}
