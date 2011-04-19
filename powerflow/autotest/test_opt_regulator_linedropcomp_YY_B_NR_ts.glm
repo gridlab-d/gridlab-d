@@ -17,7 +17,7 @@ clock {
 }
 
 module powerflow {
-	solver_method NR;
+	solver_method FBS;
 };
 module assert;
 module tape;
@@ -166,17 +166,17 @@ object load {
 	nominal_voltage 7200;
 	
 	object player {
-		file regulator_load_phA.player;
+		file ../regulator_load_phA.player;
 		loop 6;
 		property constant_power_A;
 	};
 	object player {
-		file regulator_load_phB.player;
+		file ../regulator_load_phB.player;
 		loop 6;
 		property constant_power_B;
 	};
 	object player {
-		file regulator_load_phC.player;
+		file ../regulator_load_phC.player;
 		loop 6;
 		property constant_power_C;
 	};
@@ -190,3 +190,4 @@ object recorder {
 	parent Regulator;
 	property tap_A,tap_B,tap_C;
 }
+
