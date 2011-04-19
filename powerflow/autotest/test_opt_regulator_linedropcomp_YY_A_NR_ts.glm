@@ -17,7 +17,7 @@ clock {
 }
 
 module powerflow {
-	solver_method NR;
+	solver_method FBS;
 };
 module assert;
 module tape;
