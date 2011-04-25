@@ -713,7 +713,7 @@ int transformer::init(OBJECT *parent)
 
 
 /* This can be added back in after tape has been moved to commit
-EXPORT int commit_transformer(OBJECT *obj)
+EXPORT TIMESTAMP commit_transformer(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {	
 	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{	
@@ -723,7 +723,7 @@ EXPORT int commit_transformer(OBJECT *obj)
 		else
 			plink->calculate_power();
 	}
-	return 1;
+	return TS_NEVER;
 }
 */
 EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)

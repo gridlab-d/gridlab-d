@@ -99,7 +99,7 @@ EXPORT int init_enum_assert(OBJECT *obj, OBJECT *parent)
 	}
 	INIT_CATCHALL(enum_assert);
 }
-EXPORT int commit_enum_assert(OBJECT *obj)
+EXPORT TIMESTAMP commit_enum_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	char buff[64];
 	enum_assert *ea = OBJECTDATA(obj,enum_assert);
@@ -127,7 +127,7 @@ EXPORT int commit_enum_assert(OBJECT *obj)
 			{
 				gl_verbose("Assert passed on %s", 
 					gl_name(obj->parent,buff,64));
-				return 1;
+				return TS_NEVER;
 			}
 		}
 		else if (ea->status == ea->ASSERT_FALSE)
@@ -142,16 +142,16 @@ EXPORT int commit_enum_assert(OBJECT *obj)
 			{
 				gl_verbose("Assert passed on %s", 
 					gl_name(obj->parent,buff,64));
-				return 1;
+				return TS_NEVER;
 			}
 		}
 		else
 		{
 			gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
-			return 1;
+			return TS_NEVER;
 		}
 		gl_verbose("Assert passed on %s",gl_name(obj->parent,buff,64));
-		return 1; 
+		return TS_NEVER;
 }
 EXPORT TIMESTAMP sync_enum_assert(OBJECT *obj, TIMESTAMP t0)
 {

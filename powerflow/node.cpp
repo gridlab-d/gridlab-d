@@ -2352,7 +2352,7 @@ EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 }
 
 // Commit function
-EXPORT int commit_node(OBJECT *obj)
+EXPORT TIMESTAMP commit_node(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	node *pNode = OBJECTDATA(obj,node);
 	try {
@@ -2378,7 +2378,7 @@ EXPORT int commit_node(OBJECT *obj)
 				pNode->voltage[2] = complex(0,0);
 			
 		}
-		return 1;
+		return TS_NEVER;
 	}
 	catch (char *msg)
 	{

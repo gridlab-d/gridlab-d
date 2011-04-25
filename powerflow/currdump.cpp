@@ -125,7 +125,7 @@ void currdump::dump(TIMESTAMP t){
 	fclose(outfile);
 }
 
-int currdump::commit(TIMESTAMP t){
+TIMESTAMP currdump::commit(TIMESTAMP t){
 	if(runtime == 0){
 		runtime = t;
 	}
@@ -134,7 +134,7 @@ int currdump::commit(TIMESTAMP t){
 		dump(t);
 		++runcount;
 	}
-	return 1;
+	return TS_NEVER;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -189,13 +189,13 @@ EXPORT TIMESTAMP sync_currdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	return rv;
 }
 
-EXPORT int commit_currdump(OBJECT *obj){
+EXPORT TIMESTAMP commit_currdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	currdump *my = OBJECTDATA(obj,currdump);
 	try {
-		return my->commit(obj->clock);
+		return my->commit(t1);
 	} catch(const char *msg){
 		gl_error("%s (currdump:%d): %s", obj->name, obj->id, msg);
-		return 0; 
+		return 0;
 	}
 }
 

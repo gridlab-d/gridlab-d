@@ -804,14 +804,14 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 
 
 /* This can be added back in after tape has been moved to commit
-EXPORT int commit_regulator(OBJECT *obj)
+EXPORT TIMESTAMP commit_regulator(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if (solver_method==SM_FBS)
 	{
 		regulator *plink = OBJECTDATA(obj,regulator);
 		plink->calculate_power();
 	}
-	return 1;
+	return TS_NEVER;
 }
 */
 EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)

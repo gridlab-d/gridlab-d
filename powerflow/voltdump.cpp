@@ -126,7 +126,7 @@ void voltdump::dump(TIMESTAMP t){
 	fclose(outfile);
 }
 
-int voltdump::commit(TIMESTAMP t){
+TIMESTAMP voltdump::commit(TIMESTAMP t){
 	if(runtime == 0){
 		runtime = t;
 	}
@@ -135,7 +135,7 @@ int voltdump::commit(TIMESTAMP t){
 		dump(t);
 		++runcount;
 	}
-	return 1;
+	return TS_NEVER;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -188,10 +188,10 @@ EXPORT TIMESTAMP sync_voltdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	SYNC_CATCHALL(voltdump);
 }
 
-EXPORT int commit_voltdump(OBJECT *obj){
+EXPORT TIMESTAMP commit_voltdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	try {
 		voltdump *my = OBJECTDATA(obj,voltdump);
-		return my->commit(obj->clock);
+		return my->commit(t1);
 	} 
 	I_CATCHALL(commit,voltdump);
 }

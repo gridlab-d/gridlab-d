@@ -484,9 +484,9 @@ EXPORT int init_schedule(OBJECT *obj)
 	return my->init(obj->parent);
 }
 
-EXPORT int commit_schedule(OBJECT *obj){
+EXPORT TIMESTAMP commit_schedule(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	//gl_error("We're in the commit function, yay!");
-	return 1;
+	return TS_NEVER;
 }
 
 EXPORT TIMESTAMP sync_schedule(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

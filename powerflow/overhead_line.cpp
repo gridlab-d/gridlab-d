@@ -373,14 +373,14 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 
 /* This can be added back in after tape has been moved to commit
 
-EXPORT int commit_overhead_line(OBJECT *obj)
+EXPORT TIMESTAMP commit_overhead_line(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{
 		overhead_line *plink = OBJECTDATA(obj,overhead_line);
 		plink->calculate_power();
 	}
-	return 1;
+	return TS_NEVER;
 }
 */
 EXPORT int create_overhead_line(OBJECT **obj, OBJECT *parent)

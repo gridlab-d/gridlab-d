@@ -1102,14 +1102,14 @@ void switch_object::set_switch_faulted_phases(unsigned char desired_status)
 * @param parent a pointer to the parent of this object
 * @return 1 for a successfully created object, 0 for error
 */
-EXPORT int commit_switch_object(OBJECT *obj)
+EXPORT TIMESTAMP commit_switch_object(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if (solver_method==SM_FBS)
 	{
 		switch_object *plink = OBJECTDATA(obj,switch_object);
 		plink->calculate_power();
 	}
-	return 1;
+	return TS_NEVER;
 }
 EXPORT int create_switch(OBJECT **obj, OBJECT *parent)
 {

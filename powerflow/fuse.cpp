@@ -1095,7 +1095,7 @@ EXPORT int init_fuse(OBJECT *obj)
 }
 
 //Commit timestep - after all iterations are done
-EXPORT int commit_fuse(OBJECT *obj)
+EXPORT TIMESTAMP commit_fuse(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	fuse *fsr = OBJECTDATA(obj,fuse);
 	try
@@ -1105,10 +1105,10 @@ EXPORT int commit_fuse(OBJECT *obj)
 			link *plink = OBJECTDATA(obj,link);
 			plink->calculate_power();
 			
-			return fsr->fuse_state(obj->parent);
+			return (fsr->fuse_state(obj->parent) ? TS_NEVER : 0);
 		}
 		else
-			return 1;
+			return TS_NEVER;
 	}
 	catch (const char *msg)
 	{

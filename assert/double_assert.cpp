@@ -119,7 +119,7 @@ EXPORT TIMESTAMP sync_double_assert(OBJECT *obj, TIMESTAMP t0)
 	return TS_NEVER;
 }
 
-EXPORT int commit_double_assert(OBJECT *obj)
+EXPORT TIMESTAMP commit_double_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	//OBJECT *obj;
 	char buff[64];
@@ -132,7 +132,7 @@ EXPORT int commit_double_assert(OBJECT *obj)
 	} else if (da->once == da->ONCE_DONE){
 		if(da->once_value == da->value){
 			gl_verbose("Assert skipped with ONCE logic");
-			return 1;
+			return TS_NEVER;
 		} else {
 			da->once_value = da->value;
 		}
@@ -160,7 +160,7 @@ EXPORT int commit_double_assert(OBJECT *obj)
 			return 0;
 		}
 		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
-		return 1;
+		return TS_NEVER;
 	}
 	else if (da->status == da->ASSERT_FALSE)
 	{
@@ -172,12 +172,12 @@ EXPORT int commit_double_assert(OBJECT *obj)
 			return 0;
 		}
 		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
-		return 1;
+		return TS_NEVER;
 	}
 	else
 	{
 		gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
-		return 1;
+		return TS_NEVER;
 	}
 
 }
@@ -187,5 +187,5 @@ EXPORT int notify_double_assert(OBJECT *obj, int update_mode, PROPERTY *prop){
 	if(update_mode == NM_POSTUPDATE && (da->once == da->ONCE_DONE) && (strcmp(prop->name, "value") == 0)){
 		da->once = da->ONCE_TRUE;
 	}
-	return 1;
+	return TS_NEVER;
 }

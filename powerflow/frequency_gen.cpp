@@ -1378,12 +1378,12 @@ void frequency_gen::RemoveScheduled(TIMESTAMP t0)
 }
 
 //Commit timestep - after all iterations are done
-EXPORT int commit_frequency_gen(OBJECT *obj)
+EXPORT TIMESTAMP commit_frequency_gen(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	frequency_gen *fgen = OBJECTDATA(obj,frequency_gen);
 	try {
 		fgen->iter_passes=0;	//Reset counter
-		return 1;
+		return TS_NEVER;
 	}
 	catch (const char *msg)
 	{

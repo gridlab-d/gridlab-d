@@ -123,7 +123,7 @@ EXPORT int init_complex_assert(OBJECT *obj, OBJECT *parent)
 	INIT_CATCHALL(complex_assert);
 }
 
-EXPORT int commit_complex_assert(OBJECT *obj)
+EXPORT TIMESTAMP commit_complex_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	char buff[64];
 	complex_assert *ca = OBJECTDATA(obj,complex_assert);
@@ -134,7 +134,7 @@ EXPORT int commit_complex_assert(OBJECT *obj)
 	} else if (ca->once == ca->ONCE_DONE){
 		if(ca->once_value == ca->value){
 			gl_verbose("Assert skipped with ONCE logic");
-			return 1;
+			return TS_NEVER;
 		} else {
 			ca->once_value = ca->value;
 		}
@@ -219,10 +219,10 @@ EXPORT int commit_complex_assert(OBJECT *obj)
 	else
 	{
 		gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
-		return 1;
+		return TS_NEVER;
 	}
 	gl_verbose("Assert passed on %s",gl_name(obj->parent,buff,64));
-	return 1; 
+	return TS_NEVER;
 }
 
 EXPORT int notify_complex_assert(OBJECT *obj, int update_mode, PROPERTY *prop){

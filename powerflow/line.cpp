@@ -122,14 +122,14 @@ int line::isa(char *classname)
 
 
 /* This can be added back in after tape has been moved to commit
-EXPORT int commit_line(OBJECT *obj)
+EXPORT TIMESTAMP commit_line(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if (solver_method==SM_FBS)
 	{
 		line *plink = OBJECTDATA(obj,line);
 		plink->calculate_power();
 	}
-	return 1;
+	return TS_NEVER;
 }
 */
 EXPORT int create_line(OBJECT **obj, OBJECT *parent)

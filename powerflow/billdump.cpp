@@ -146,7 +146,7 @@ void billdump::dump(TIMESTAMP t){
 	fclose(outfile);
 }
 
-int billdump::commit(TIMESTAMP t){
+TIMESTAMP billdump::commit(TIMESTAMP t){
 	if(runtime == 0){
 		runtime = t;
 	}
@@ -155,7 +155,7 @@ int billdump::commit(TIMESTAMP t){
 		dump(t);
 		++runcount;
 	}
-	return 1;
+	return TS_NEVER;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -208,10 +208,10 @@ EXPORT TIMESTAMP sync_billdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	SYNC_CATCHALL(billdump);
 }
 
-EXPORT int commit_billdump(OBJECT *obj){
+EXPORT TIMESTAMP commit_billdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	try {
 		billdump *my = OBJECTDATA(obj,billdump);
-		return my->commit(obj->clock);
+		return my->commit(t1);
 	}
 	I_CATCHALL(commit,billdump);
 }

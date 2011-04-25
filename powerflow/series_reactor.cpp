@@ -142,14 +142,14 @@ int series_reactor::init(OBJECT *parent)
 * @param parent a pointer to the parent of this object
 * @return 1 for a successfully created object, 0 for error
 */
-EXPORT int commit_series_reactor(OBJECT *obj)
+EXPORT TIMESTAMP commit_series_reactor(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if (solver_method==SM_FBS)
 	{
 		series_reactor *plink = OBJECTDATA(obj,series_reactor);
 		plink->calculate_power();
 	}
-	return 1;
+	return TS_NEVER;
 }
 EXPORT int create_series_reactor(OBJECT **obj, OBJECT *parent)
 {

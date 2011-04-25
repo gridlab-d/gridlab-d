@@ -505,12 +505,12 @@ TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	return TS_NEVER;
 }
 
-int waterheater::commit(){
+TIMESTAMP waterheater::commit(){
 	Tw_old = Tw;
 	Tupper_old = /*Tupper*/ Tw;
 	Tlower_old = Tlower;
 	water_demand_old = water_demand;
-	return 1;
+	return TS_NEVER;
 }
 
 /** Tank state determined based on the height of the hot water column
@@ -994,7 +994,7 @@ EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	SYNC_CATCHALL(waterheater);
 }
 
-EXPORT int commit_waterheater(OBJECT *obj)
+EXPORT TIMESTAMP commit_waterheater(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	waterheater *my = OBJECTDATA(obj,waterheater);
 	return my->commit();

@@ -26,7 +26,7 @@ public:
 	voltdump(MODULE *mod);
 	int create(void);
 	int init(OBJECT *parent);
-	int commit(TIMESTAMP t);
+	TIMESTAMP commit(TIMESTAMP t);
 	int isa(char *classname);
 
 	void dump(TIMESTAMP t);

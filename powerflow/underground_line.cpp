@@ -424,14 +424,14 @@ void underground_line::test_phases(line_configuration *config, const char ph)
 
 
 /* This can be added back in after tape has been moved to commit
-EXPORT int commit_underground_line(OBJECT *obj)
+EXPORT TIMESTAMP commit_underground_line(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{
 		underground_line *plink = OBJECTDATA(obj,underground_line);
 		plink->calculate_power();
 	}
-	return 1;
+	return TS_NEVER;
 }*/
 EXPORT int create_underground_line(OBJECT **obj, OBJECT *parent)
 {

@@ -292,14 +292,14 @@ EXPORT int create_relay(OBJECT **obj, OBJECT *parent)
 
 
 /* This can be added back in after tape has been moved to commit
-EXPORT int commit_relay(OBJECT *obj)
+EXPORT TIMESTAMP commit_relay(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if (solver_method==SM_FBS)
 	{
 		relay *plink = OBJECTDATA(obj,relay);
 		plink->calculate_power();
 	}
-	return 1;
+	return TS_NEVER;
 }
 */
 

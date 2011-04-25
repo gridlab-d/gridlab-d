@@ -481,18 +481,22 @@ static STATUS init_all(void)
 	return rv;
 }
 
-static STATUS commit_all(TIMESTAMP t0){
+static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2){
 	OBJECT *obj;
+	TIMESTAMP min = TS_NEVER, curr = TS_NEVER;
 	TRY {
 		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
 		{
 			if(obj->in_svc <= t0 && obj->out_svc >= t0){
-				if(object_commit(obj) == FAILED){
+				curr = object_commit(obj, t0, t2);
+				if(curr == FAILED){
 					THROW("commit_all(): object %s commit failed", object_name(obj));
 					/* TROUBLESHOOT
 						The commit function of the named object has failed.  Make sure that the object's
 						requirements for commit'ing are satisfied and try again.  (likely internal state aberations)
 					 */
+				} else if(curr < min){
+					min = curr;
 				}
 			}
 		}
@@ -503,8 +507,9 @@ static STATUS commit_all(TIMESTAMP t0){
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
+		min = TS_INVALID;
 	} ENDCATCH;
-	return SUCCESS;
+	return min;
 }
 
 STATUS exec_test(struct sync_data *data, int pass, OBJECT *obj);
@@ -602,7 +607,7 @@ STATUS exec_start(void)
 	int iPtr, incr;
 	struct arg_data *arg_data_array;
 
-	OBJECT *obj;
+//	OBJECT *obj;
 
 	/* check for a model */
 	if (object_get_count()==0)
@@ -930,8 +935,12 @@ STATUS exec_start(void)
 			/* check for clock advance */
 			if (sync.step_to != global_clock)
 			{
-				if (commit_all(global_clock) == FAILED)
+				TIMESTAMP commit_time = TS_NEVER;
+				commit_time = commit_all(global_clock, sync.step_to);
+				if (commit_time <= global_clock)
 				{
+					// commit cannot force reiterations, and any event where the time is less than the global clock
+					//  indicates that the object is reporting a failure
 					output_error("model commit failed");
 					/* TROUBLESHOOT
 						The commit procedure failed.  This is usually preceded 
@@ -939,8 +948,9 @@ STATUS exec_start(void)
 						the guidance for that message and try again.
 					 */
 					return FAILED;
+				} else if(commit_time < sync.step_to){
+					sync.step_to = commit_time;
 				}
-
 				/* reset iteration count */
 				iteration_counter = global_iteration_limit;
 

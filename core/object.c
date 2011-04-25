@@ -1286,11 +1286,16 @@ int object_init(OBJECT *obj){ /**< the object to initialize */
 	return 1;
 }
 
-int object_commit(OBJECT *obj){
+TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
+	TIMESTAMP rv = 1;
 	if(obj->oclass->commit != NULL){
-		return (int)(*(obj->oclass->commit))(obj);
+		rv = (TIMESTAMP)(*(obj->oclass->commit))(obj, t1, t2);
 	}
-	return 1;
+	if(rv == 1){ // if 'old school' or no commit callback,
+		return TS_NEVER;
+	} else {
+		return rv;
+	}
 }
 
 /** Tests the type of an object

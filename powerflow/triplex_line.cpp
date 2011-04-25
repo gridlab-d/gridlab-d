@@ -312,14 +312,14 @@ void triplex_line::recalc(void)
 
 
 /* This can be added back in after tape has been moved to commit
-EXPORT int commit_triplex_line(OBJECT *obj)
+EXPORT TIMESTAMP commit_triplex_line(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{
 		triplex_line *plink = OBJECTDATA(obj,triplex_line);
 		plink->calculate_power_splitphase();
 	}
-	return 1;
+	return TS_NEVER;
 }
 */
 EXPORT int create_triplex_line(OBJECT **obj, OBJECT *parent)
