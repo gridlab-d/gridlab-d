@@ -229,6 +229,7 @@ int code_used = 0;
 #define FN_POSTSYNC	0x0040
 #define FN_PLC		0x0080
 #define FN_ISA		0x0100
+#define FN_COMMIT	0x0200
 
 /* used for tracking #include directives in files */
 #define BUFFERSIZE (65536*1000)
@@ -483,7 +484,7 @@ static void reset_line(FILE *fp, char *file)
 static int mkdirs(char *path)
 {
 	int rc;
-	struct stat st;
+	//struct stat st;
 
 #ifdef WIN32
 #	define PATHSEP '\\'
@@ -728,6 +729,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				if (functions&FN_NOTIFY) sprintf(exports+strlen(exports),"/EXPORT:notify_%s ",oclass->name);
 				if (functions&FN_PLC) sprintf(exports+strlen(exports),"/EXPORT:plc_%s ",oclass->name);
 				if (functions&FN_RECALC) sprintf(exports+strlen(exports),"/EXPORT:recalc_%s ",oclass->name);
+				if (functions&FN_COMMIT) sprintf(exports+strlen(exports),"/EXPORT:commit_%s ",oclass->name);
 
 				// /Od /I "..\core" /I "..\third_party\cppunit-1.12.0\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" 
 				// /D "_TESTING" /D "_WINDLL" /D "_MBCS" /Gm /EHsc /RTC1 /MDd /Fo"Win32\Debug\powerflow\\" 
@@ -2789,6 +2791,13 @@ static int class_intrinsic_function_name(PARSER, CLASS *oclass, int64 *function,
 		*function |= FN_ISA;
 		ACCEPT;
 	}
+	else if LITERAL("commit")
+	{
+		*ftype = "TIMESTAMP";
+		*fname = "commit";
+		*function |= FN_COMMIT;
+		ACCEPT;
+	}
 	else if TERM(name(HERE,buffer,sizeof(buffer)))
 	{
 		output_error_raw("%s(%d): '%s' is not a recognized intrinsic function", filename,linenum,buffer);
@@ -3371,6 +3380,14 @@ static int class_block(PARSER)
 					append_code("\tint64 t2 = ((%s*)(obj+1))->plc(obj->clock,t1);\n",oclass->name);
 					EXITING(obj,plc);
 					append_code("\treturn t2;\n}\n");
+				}
+				if (functions&FN_COMMIT) {
+					append_code("/*RESETLINE*/\n");
+					append_code("extern \"C\" TIMESTAMP commit_%s(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)\n{\n",oclass->name);
+					ENTERING(obj,commit);
+					append_code("\tTIMESTAMP ret = ((%s*)(obj+1))->commit(type, t1, t2);\n",oclass->name);
+					EXITING(obj,commit);
+					append_code("\treturn ret;\n}\n");
 				}
 				if (functions&FN_ISA) {
 					append_code("/*RESETLINE*/\n");
@@ -4541,7 +4558,7 @@ static int gui_entity_type(PARSER, GUIENTITYTYPE *type)
 
 static int gui_entity(PARSER, GUIENTITY *parent)
 {
-	char buffer[1024];
+	//char buffer[1024];
 	int type;
 	START;
 	if WHITE ACCEPT;
