@@ -226,10 +226,10 @@ int thermal_storage::init(OBJECT *parent)
 			}
 		}
 
-		gl_warning("thermal_storage \'recharge_time\' not set ~ defaulting to internal schedule");
+		gl_verbose("thermal_storage charging defaulting to internal schedule");
 		/*  TROUBLESHOOT
-		The value for recharge_time was not set via a schedule, player, or GLM value for the thermal_storage model.
-		An internal schedule will therefore be used.  Please specify a schedule if this behavior is not desired.
+		charge_schedule_type was not set to EXTERNAL, so the internal schedule definition will be used
+		for the recharging schedule.
 		*/
 
 		//Assign to the schedule value
@@ -264,10 +264,10 @@ int thermal_storage::init(OBJECT *parent)
 			}
 		}
 
-		gl_warning("thermal_storage \'discharge_time\' not set ~ defaulting to internal schedule");
+		gl_verbose("thermal_storage discharging defaulting to internal schedule");
 		/*  TROUBLESHOOT
-		The value for discharge_time was not set via a schedule, player, or GLM value for the thermal_storage model.
-		An internal schedule will therefore be used.  Please specify a schedule if this behavior is not desired.
+		discharge_schedule_type was not set to EXTERNAL, so the internal schedule definition will be used
+		for the discharging availability schedule.
 		*/
 
 		//Assign to the schedule value
