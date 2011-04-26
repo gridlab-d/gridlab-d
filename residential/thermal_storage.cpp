@@ -79,7 +79,7 @@ thermal_storage::thermal_storage(MODULE *mod)
 			PT_enumeration, "discharge_schedule_type", PADDR(discharge_schedule_type),PT_DESCRIPTION,"Scheduling method for discharging",
 				PT_KEYWORD, "INTERNAL", INTERNAL,
 				PT_KEYWORD, "EXTERNAL", EXTERNAL,
-			PT_enumeration, "charge_schedule_type", PADDR(charge_schedule_type),PT_DESCRIPTION,"Scheduling method for charging",
+			PT_enumeration, "recharge_schedule_type", PADDR(recharge_schedule_type),PT_DESCRIPTION,"Scheduling method for charging",
 				PT_KEYWORD, "INTERNAL", INTERNAL,
 				PT_KEYWORD, "EXTERNAL", EXTERNAL,
 			PT_double, "recharge_time", PADDR(recharge_time), PT_DESCRIPTION, "start time of charge cycle",		//schedule?
@@ -127,12 +127,12 @@ int thermal_storage::create(void)
 	discharge_time_ptr = NULL;
 
 	//Pointers for schedules
-	charge_schedule_vals = NULL;
+	recharge_schedule_vals = NULL;
 	discharge_schedule_vals = NULL;
 
 	//Set scheduling type for internal initially
 	discharge_schedule_type=INTERNAL;
-	charge_schedule_type=INTERNAL;
+	recharge_schedule_type=INTERNAL;
 
 	return res;
 }
@@ -204,19 +204,19 @@ int thermal_storage::init(OBJECT *parent)
 	k = k * 0.00052667;				//convert k from W/m/K to BTU/sec/m/degF
 
 	//Determine how to read the scheduling information - charging
-	if (charge_schedule_type==INTERNAL)
+	if (recharge_schedule_type==INTERNAL)
 	{
 		//See if someone else has already created such a schedule
-		charge_schedule_vals = gl_schedule_find(thermal_default_schedule_list[1].schedule_name);
+		recharge_schedule_vals = gl_schedule_find(thermal_default_schedule_list[1].schedule_name);
 
 		//If not found, create
-		if (charge_schedule_vals == NULL)
+		if (recharge_schedule_vals == NULL)
 		{
 			//Populate schedules - charging
-			charge_schedule_vals = gl_schedule_create(thermal_default_schedule_list[1].schedule_name,thermal_default_schedule_list[1].schedule_definition);
+			recharge_schedule_vals = gl_schedule_create(thermal_default_schedule_list[1].schedule_name,thermal_default_schedule_list[1].schedule_definition);
 
 			//Make sure it worked
-			if (charge_schedule_vals==NULL)
+			if (recharge_schedule_vals==NULL)
 			{
 				GL_THROW("Failure to create default charging schedule");
 				/*  TROUBLESHOOT
@@ -228,12 +228,12 @@ int thermal_storage::init(OBJECT *parent)
 
 		gl_verbose("thermal_storage charging defaulting to internal schedule");
 		/*  TROUBLESHOOT
-		charge_schedule_type was not set to EXTERNAL, so the internal schedule definition will be used
+		recharge_schedule_type was not set to EXTERNAL, so the internal schedule definition will be used
 		for the recharging schedule.
 		*/
 
 		//Assign to the schedule value
-		recharge_time_ptr = &charge_schedule_vals->value;
+		recharge_time_ptr = &recharge_schedule_vals->value;
 	}
 	else
 	{

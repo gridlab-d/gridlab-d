@@ -41,10 +41,10 @@ public:
 	double *thermal_storage_available;
 	double *thermal_storage_active;
 
-	SCHEDULE *charge_schedule_vals;
+	SCHEDULE *recharge_schedule_vals;
 	SCHEDULE *discharge_schedule_vals;
 
-	THERMAL_SCHEDULE_TYPE charge_schedule_type;		///< Determines if charging should occur via internal schedule, or an external property
+	THERMAL_SCHEDULE_TYPE recharge_schedule_type;		///< Determines if charging should occur via internal schedule, or an external property
 	THERMAL_SCHEDULE_TYPE discharge_schedule_type;	///< Determines if discharging should occur via internal schedule, or an external property
 
 private:
