@@ -12,6 +12,11 @@
 #include "residential.h"
 #include "residential_enduse.h"
 
+typedef enum {
+		INTERNAL=0,		//Use internal schedule
+		EXTERNAL=1		//Use published variables for schedule
+		} THERMAL_SCHEDULE_TYPE;
+
 class thermal_storage : public residential_enduse {
 public:
 	double total_capacity;			///< Scaled total capacity [Btu]
@@ -38,6 +43,9 @@ public:
 
 	SCHEDULE *charge_schedule_vals;
 	SCHEDULE *discharge_schedule_vals;
+
+	THERMAL_SCHEDULE_TYPE charge_schedule_type;		///< Determines if charging should occur via internal schedule, or an external property
+	THERMAL_SCHEDULE_TYPE discharge_schedule_type;	///< Determines if discharging should occur via internal schedule, or an external property
 
 private:
 	double *recharge_time_ptr;

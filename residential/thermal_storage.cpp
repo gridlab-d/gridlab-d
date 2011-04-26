@@ -75,7 +75,13 @@ thermal_storage::thermal_storage(MODULE *mod)
 			PT_double,"recharge_power[kW]",PADDR(recharge_power), PT_DESCRIPTION, "installed compressor power usage",
 			PT_double,"discharge_power[kW]",PADDR(discharge_power), PT_DESCRIPTION, "installed pump power usage",
 			PT_double,"recharge_pf",PADDR(recharge_power_factor), PT_DESCRIPTION, "installed pump power factor",
-			PT_double,"discharge_pf",PADDR(discharge_power_factor), PT_DESCRIPTION, "installed complressor power factor",
+			PT_double,"discharge_pf",PADDR(discharge_power_factor), PT_DESCRIPTION, "installed compressor power factor",
+			PT_enumeration, "discharge_schedule_type", PADDR(discharge_schedule_type),PT_DESCRIPTION,"Scheduling method for discharging",
+				PT_KEYWORD, "INTERNAL", INTERNAL,
+				PT_KEYWORD, "EXTERNAL", EXTERNAL,
+			PT_enumeration, "charge_schedule_type", PADDR(charge_schedule_type),PT_DESCRIPTION,"Scheduling method for charging",
+				PT_KEYWORD, "INTERNAL", INTERNAL,
+				PT_KEYWORD, "EXTERNAL", EXTERNAL,
 			PT_double, "recharge_time", PADDR(recharge_time), PT_DESCRIPTION, "start time of charge cycle",		//schedule?
 			PT_double, "discharge_time", PADDR(discharge_time), PT_DESCRIPTION, "end time of charge cycle",			//schedule?
 			PT_double, "discharge_rate", PADDR(discharge_rate), PT_DESCRIPTION, "rating of discharge or cooling",
@@ -106,8 +112,8 @@ int thermal_storage::create(void)
 	discharge_power = 0;
 	recharge_power_factor = 0;
 	discharge_power_factor = 0;
-	recharge_time = -1;
-	discharge_time = -1;
+	recharge_time = 0;
+	discharge_time = 0;
 	discharge_rate = 0;
 	state_of_charge = -1;
 	k = -1;
@@ -123,6 +129,10 @@ int thermal_storage::create(void)
 	//Pointers for schedules
 	charge_schedule_vals = NULL;
 	discharge_schedule_vals = NULL;
+
+	//Set scheduling type for internal initially
+	discharge_schedule_type=INTERNAL;
+	charge_schedule_type=INTERNAL;
 
 	return res;
 }
@@ -150,7 +160,6 @@ int thermal_storage::init(OBJECT *parent)
 	outside_temperature = &house_lnk->outside_temperature;
 	thermal_storage_available = &house_lnk->thermal_storage_present;
 	thermal_storage_active = &house_lnk->thermal_storage_inuse;
-
 
 	//Check the cooling capacity
 	if (*design_cooling_capacity == NULL)
@@ -194,6 +203,82 @@ int thermal_storage::init(OBJECT *parent)
 	if (k < 0)							k = 0; //assume no thermal conductivity
 	k = k * 0.00052667;				//convert k from W/m/K to BTU/sec/m/degF
 
+	//Determine how to read the scheduling information - charging
+	if (charge_schedule_type==INTERNAL)
+	{
+		//See if someone else has already created such a schedule
+		charge_schedule_vals = gl_schedule_find(thermal_default_schedule_list[1].schedule_name);
+
+		//If not found, create
+		if (charge_schedule_vals == NULL)
+		{
+			//Populate schedules - charging
+			charge_schedule_vals = gl_schedule_create(thermal_default_schedule_list[1].schedule_name,thermal_default_schedule_list[1].schedule_definition);
+
+			//Make sure it worked
+			if (charge_schedule_vals==NULL)
+			{
+				GL_THROW("Failure to create default charging schedule");
+				/*  TROUBLESHOOT
+				While attempting to create the default charging schedule in the thermal_storage object, an error occurred.  Please try again.
+				If the error persists, please submit your code and a bug report via the track website.
+				*/
+			}
+		}
+
+		gl_warning("thermal_storage \'recharge_time\' not set ~ defaulting to internal schedule");
+		/*  TROUBLESHOOT
+		The value for recharge_time was not set via a schedule, player, or GLM value for the thermal_storage model.
+		An internal schedule will therefore be used.  Please specify a schedule if this behavior is not desired.
+		*/
+
+		//Assign to the schedule value
+		recharge_time_ptr = &charge_schedule_vals->value;
+	}
+	else
+	{
+		//Assign the to published property
+		recharge_time_ptr = &recharge_time;
+	}
+
+	//Determine how to read the scheduling information - discharging
+	if (discharge_schedule_type==INTERNAL)
+	{
+		//See if someone else has already created such a schedule
+		discharge_schedule_vals = gl_schedule_find(thermal_default_schedule_list[0].schedule_name);
+
+		//If not found, create
+		if (discharge_schedule_vals == NULL)
+		{
+			//Populate schedules - discharging
+			discharge_schedule_vals = gl_schedule_create(thermal_default_schedule_list[0].schedule_name,thermal_default_schedule_list[0].schedule_definition);
+
+			//Make sure it worked
+			if (discharge_schedule_vals==NULL)
+			{
+				GL_THROW("Failure to create default discharging schedule");
+				/*  TROUBLESHOOT
+				While attempting to create the default discharging schedule in the thermal_storage object, an error occurred.  Please try again.
+				If the error persists, please submit your code and a bug report via the track website.
+				*/
+			}
+		}
+
+		gl_warning("thermal_storage \'discharge_time\' not set ~ defaulting to internal schedule");
+		/*  TROUBLESHOOT
+		The value for discharge_time was not set via a schedule, player, or GLM value for the thermal_storage model.
+		An internal schedule will therefore be used.  Please specify a schedule if this behavior is not desired.
+		*/
+
+		//Assign to the schedule value
+		discharge_time_ptr = &discharge_schedule_vals->value;
+	}
+	else
+	{
+		//Assigned to the published property
+		discharge_time_ptr = &discharge_time;
+	}
+
 	// waiting this long to initialize the parent class is normal
 	return residential_enduse::init(parent);
 }
@@ -210,84 +295,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 	next_timestep = TS_NEVER;
 	double actual_recharge_power;
 
-	//Initial check for which schedule to use
-	if (t0==0)
-	{
-		if (recharge_time < 0)
-		{
-			//See if someone else has already created such a schedule
-			charge_schedule_vals = gl_schedule_find(thermal_default_schedule_list[1].schedule_name);
-
-			//If not found, create
-			if (charge_schedule_vals == NULL)
-			{
-				//Populate schedules - charging
-				charge_schedule_vals = gl_schedule_create(thermal_default_schedule_list[1].schedule_name,thermal_default_schedule_list[1].schedule_definition);
-
-				//Make sure it worked
-				if (charge_schedule_vals==NULL)
-				{
-					GL_THROW("Failure to create default charging schedule");
-					/*  TROUBLESHOOT
-					While attempting to create the default charging schedule in the thermal_storage object, an error occurred.  Please try again.
-					If the error persists, please submit your code and a bug report via the track website.
-					*/
-				}
-			}
-
-			gl_warning("thermal_storage \'recharge_time\' not set ~ defaulting to internal schedule");
-			/*  TROUBLESHOOT
-			The value for recharge_time was not set via a schedule, player, or GLM value for the thermal_storage model.
-			An internal schedule will therefore be used.  Please specify a schedule if this behavior is not desired.
-			*/
-
-			//Assign to the schedule value
-			recharge_time_ptr = &charge_schedule_vals->value;
-		}
-		else
-		{
-			//Assign the to published property
-			recharge_time_ptr = &recharge_time;
-		}
-
-		if (discharge_time < 0)
-		{
-			//See if someone else has already created such a schedule
-			discharge_schedule_vals = gl_schedule_find(thermal_default_schedule_list[0].schedule_name);
-
-			//If not found, create
-			if (discharge_schedule_vals == NULL)
-			{
-				//Populate schedules - discharging
-				discharge_schedule_vals = gl_schedule_create(thermal_default_schedule_list[0].schedule_name,thermal_default_schedule_list[0].schedule_definition);
-
-				//Make sure it worked
-				if (discharge_schedule_vals==NULL)
-				{
-					GL_THROW("Failure to create default discharging schedule");
-					/*  TROUBLESHOOT
-					While attempting to create the default discharging schedule in the thermal_storage object, an error occurred.  Please try again.
-					If the error persists, please submit your code and a bug report via the track website.
-					*/
-				}
-			}
-
-			gl_warning("thermal_storage \'discharge_time\' not set ~ defaulting to internal schedule");
-			/*  TROUBLESHOOT
-			The value for discharge_time was not set via a schedule, player, or GLM value for the thermal_storage model.
-			An internal schedule will therefore be used.  Please specify a schedule if this behavior is not desired.
-			*/
-
-			//Assign to the schedule value
-			discharge_time_ptr = &discharge_schedule_vals->value;
-		}
-		else
-		{
-			//Assigned to the published property
-			discharge_time_ptr = &discharge_time;
-		}
-	}
-
+	//Make sure we aren't on the first run
 	if (t0 != 0)
 	{
 		if (*recharge_time_ptr == 1 && *discharge_time_ptr == 1)
@@ -410,6 +418,9 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		last_timestep = t0;
 	}
+	else	//First run
+		last_timestep = t1;	//Initialize variable
+
 	return t2;
 }
 
