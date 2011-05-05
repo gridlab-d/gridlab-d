@@ -87,8 +87,8 @@ public:
 
 	int on_message();
 	int check_buffer();
-	TIMESTAMP handle_inbox();
-	network_message *handle_inbox(network_message *);
+	TIMESTAMP handle_inbox(TIMESTAMP);
+	network_message *handle_inbox(TIMESTAMP, network_message *);
 	bool has_outbound(){return (outbox != 0);}		// returns true if there is a message being sent from this interface
 	bool has_inbound(){return (inbox != 0);}		// returns true if there is a message completely received by this interface
 	network_message *peek_outbox(){return outbox;}	// returns the first message in the outbox without modifying it

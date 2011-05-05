@@ -25,7 +25,7 @@ network_interface::network_interface(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"network_interface",sizeof(network_interface),PC_BOTTOMUP|PC_POSTTOPDOWN);
+		oclass = gl_register_class(mod,"network_interface",sizeof(network_interface),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 			/* TROUBLESHOOT
@@ -138,7 +138,11 @@ TIMESTAMP network_interface::sync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP network_interface::presync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	OBJECT *obj = OBJECTHDR(this);
-	return TS_NEVER; 
+	TIMESTAMP rv = TS_NEVER;
+	if(has_inbound()){
+		rv = handle_inbox(t1);
+	}
+	return rv; 
 }
 
 TIMESTAMP network_interface::postsync(TIMESTAMP t0, TIMESTAMP t1) 
@@ -229,9 +233,9 @@ int network_interface::check_buffer(){
 	return 1;
 }
 
-TIMESTAMP network_interface::handle_inbox(){
+TIMESTAMP network_interface::handle_inbox(TIMESTAMP t1){
 	// process the messages in the inbox, in FIFO fashion, even though it's been stacked up.
-	network_message *rv = handle_inbox(inbox);
+	network_message *rv = handle_inbox(t1, inbox);
 
 	inbox = rv;
 	next_msg_time = TS_NEVER;
@@ -253,11 +257,11 @@ TIMESTAMP network_interface::handle_inbox(){
  *		the messages.  It is possible that not all the messages marked as 'delivered' are
  *		ready to be processed at this point in time.
  */
-network_message *network_interface::handle_inbox(network_message *nm){
+network_message *network_interface::handle_inbox(TIMESTAMP t1, network_message *nm){
 	OBJECT *my = OBJECTHDR(this);
 	network_message *rv = 0;
 	if(nm != 0){ // it's been stacked, process in reverse order
-		rv = handle_inbox(nm->next);
+		rv = handle_inbox(t1, nm->next);
 		if (rv != nm->next){
 			free(nm->next);
 			nm->next = rv;
@@ -266,7 +270,7 @@ network_message *network_interface::handle_inbox(network_message *nm){
 		return 0;
 	}
 	// update interface, copy from nm
-	if(gl_globalclock >= nm->rx_done_sec){
+	if(t1 >= nm->rx_done_sec){
 		LOCK_OBJECT(my);
 		this->curr_buffer_size = nm->buffer_size;
 		memcpy(this->data_buffer, nm->message, nm->buffer_size);

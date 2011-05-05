@@ -338,6 +338,7 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 
 	/* don't forget to "receive" the messages!!! */
 	network_message tempmsg;
+	TIMESTAMP rv = TS_NEVER;
 	for(nif = first_if; nif != 0; nif = nif->next){
 		if(nif->has_outbound()){
 			//	for each message,
@@ -348,6 +349,8 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 					netmsg->msg_state = NMS_DELIVERED;
 					netmsg->rx_done_sec = gl_globalclock + (int64)ceil(latency);
 					netmsg->end_time = gl_globalclock + (int64)ceil(latency);
+					if(netmsg->end_time < rv)
+						rv = netmsg->end_time;
 //					memcpy(netmsg->pTo->data_buffer, netmsg->message, netmsg->buffer_size);
 					// move netmsg from this nif's outbox to the other nif's inbox					
 					// unlink netmsg from the list that it's in
@@ -371,7 +374,9 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 		}
 	}
 
-	TIMESTAMP rv = TS_NEVER, tv = TS_NEVER;
+	// moved to nif->presync()
+/*
+	TIMESTAMP tv = TS_NEVER;
 	for(nif = first_if; nif != 0; nif = nif->next){
 		if(nif->has_inbound()){
 			tv = nif->handle_inbox();
@@ -380,7 +385,7 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 			}
 		}
 	}
-
+*/
 
 	return rv;
 }
