@@ -71,7 +71,7 @@ public:
 	int isa(char *classname);
 	int notify(int, PROPERTY *);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	int commit();
+	TIMESTAMP commit(TIMESTAMP t1, TIMESTAMP t2);
 	int attach(network_interface *nif);
 };
 

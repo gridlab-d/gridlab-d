@@ -83,11 +83,11 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-	int commit();
+	TIMESTAMP commit(TIMESTAMP t1, TIMESTAMP t2);
 
 	int on_message();
 	int check_buffer();
-	void handle_inbox();
+	TIMESTAMP handle_inbox();
 	network_message *handle_inbox(network_message *);
 	bool has_outbound(){return (outbox != 0);}		// returns true if there is a message being sent from this interface
 	bool has_inbound(){return (inbox != 0);}		// returns true if there is a message completely received by this interface

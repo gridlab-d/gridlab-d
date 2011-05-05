@@ -118,7 +118,7 @@ int network_interface::init(OBJECT *parent)
 	if(ignore_size){
 		prev_buffer_size = buffer_size;
 	} else {
-		buffer_size = prev_buffer_size = gl_property_size(target);
+		buffer_size = prev_buffer_size = target->width;
 	}
 	pNetwork->attach(this);
 	// success
@@ -152,7 +152,7 @@ TIMESTAMP network_interface::postsync(TIMESTAMP t0, TIMESTAMP t1)
  * ni::commit() is where data is pulled from its parent, copied into the interface,
  *	and written to a message to be sent to another interface.
  */
-int network_interface::commit(){
+TIMESTAMP network_interface::commit(TIMESTAMP t1, TIMESTAMP t2){
 	return 1;
 }
 
@@ -229,7 +229,7 @@ int network_interface::check_buffer(){
 	return 1;
 }
 
-void network_interface::handle_inbox(){
+TIMESTAMP network_interface::handle_inbox(){
 	// process the messages in the inbox, in FIFO fashion, even though it's been stacked up.
 	network_message *rv = handle_inbox(inbox);
 
@@ -239,6 +239,7 @@ void network_interface::handle_inbox(){
 		if(nm->end_time < next_msg_time)
 			next_msg_time = nm->end_time;
 	}
+	return next_msg_time;
 }
 
 /**
@@ -353,9 +354,9 @@ EXPORT TIMESTAMP sync_network_interface(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pa
 	}
 }
 
-EXPORT int commit_network_interface(OBJECT *obj){
+EXPORT TIMESTAMP commit_network_interface(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	network_interface *my = OBJECTDATA(obj,network_interface);
-	return my->commit();
+	return my->commit(t1, t2);
 }
 
 //EXPORT int notify_network_interface(OBJECT *obj, int update_mode, PROPERTY *prop){

@@ -528,6 +528,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	memset(prop, 0, sizeof(PROPERTY));
 	prop->ptype = proptype;
 	prop->size = 0;
+	prop->width = property_type[proptype].size;
 	prop->access = PA_PUBLIC;
 	prop->oclass = oclass;
 	prop->flags = 0;

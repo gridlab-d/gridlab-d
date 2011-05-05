@@ -165,10 +165,9 @@ int network::attach(network_interface *nif){
 }
 
 //EXPORT int commit_network(OBJECT *obj){
-int network::commit(){
+TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t0 = obj->clock;
-	TIMESTAMP t1 = gl_globalclock;
 	double net_bw = 0.0;
 	double nif_bw = 0.0;
 	double net_bw_used = 0.0;	// tallies how much network bandwidth has been used thus far in practice
@@ -372,14 +371,18 @@ int network::commit(){
 		}
 	}
 
+	TIMESTAMP rv = TS_NEVER, tv = TS_NEVER;
 	for(nif = first_if; nif != 0; nif = nif->next){
 		if(nif->has_inbound()){
-			nif->handle_inbox();
+			tv = nif->handle_inbox();
+			if(tv < rv){
+				rv = tv;
+			}
 		}
 	}
 
 
-	return 1;
+	return rv;
 }
 
 //return my->notify(update_mode, prop);
@@ -453,9 +456,9 @@ EXPORT TIMESTAMP sync_network(OBJECT *obj, TIMESTAMP t1)
 	}
 }
 
-EXPORT int commit_network(OBJECT *obj){
+EXPORT TIMESTAMP commit_network(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	network *my = OBJECTDATA(obj,network);
-	int rv = my->commit();
+	TIMESTAMP rv = my->commit(t1, t2);
 	obj->clock = gl_globalclock;
 	return rv;
 }

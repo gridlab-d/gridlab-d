@@ -171,6 +171,7 @@ typedef struct s_property_map {
 	PROPERTYNAME name; /**< property name */
 	PROPERTYTYPE ptype; /**< property type */
 	uint32 size; /**< property array size */
+	uint32 width; /**< property byte size, copied from array in class.c */
 	PROPERTYACCESS access; /**< property access flags */
 	UNIT *unit; /**< property unit, if any; \p NULL if none */
 	PROPERTYADDR addr; /**< property location, offset from OBJECT header */

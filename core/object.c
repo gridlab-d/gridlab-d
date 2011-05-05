@@ -75,7 +75,7 @@ int object_get_oflags(KEYWORD **extflags){
 }
 
 PROPERTY *object_flag_property(){
-	static PROPERTY flags = {0, "flags", PT_set, 1, PA_PUBLIC, NULL, (void*)-4, NULL, oflags, NULL};
+	static PROPERTY flags = {0, "flags", PT_set, 1, 8, PA_PUBLIC, NULL, (void*)-4, NULL, oflags, NULL};
 	
 	return &flags;
 }
@@ -89,7 +89,7 @@ KEYWORD oaccess[] = {
 };
 
 PROPERTY *object_access_property(){
-	static PROPERTY flags = {0, "access", PT_enumeration, 1, PA_PUBLIC, NULL, (void*) -4, NULL, oaccess, NULL};
+	static PROPERTY flags = {0, "access", PT_enumeration, 1, 8, PA_PUBLIC, NULL, (void*) -4, NULL, oaccess, NULL};
 	
 	return &flags;
 }
