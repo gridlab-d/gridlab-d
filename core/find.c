@@ -1296,7 +1296,7 @@ char *find_file(char *name, /**< the name of the file to find */
 	static char filepath[1024];
 	static char tempfp[1024];
 	char envbuf[1024];
-	char *glpath = path ? path : getenv("GLPATH");
+	char *glpath;
 	char *dir;
 
 #ifdef WIN32
