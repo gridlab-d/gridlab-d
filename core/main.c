@@ -64,6 +64,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 #if defined WIN32 && _DEBUG 
 	atexit(pause_at_exit);
 #endif
+
 	/* main initialization */
 	if (!output_init(argc,argv) || !exec_init())
 		exit(6);
@@ -79,6 +80,9 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 		 */
 		exit(1);
 	}
+
+	/* see if newer version is available */
+	check_version();
 
 	/* setup the random number generator */
 	random_init();

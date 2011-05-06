@@ -31,6 +31,7 @@
 
  @{
  **/
+
 #include "version.h"
 
 #include "globals.h"
@@ -169,6 +170,34 @@ STATUS legal_license(void)
 		);
 	global_suppress_repeat_messages = surpress;
 	return SUCCESS;
+}
+
+/**************************************************************************************
+ 
+ CHECK VERSION
+
+ The purpose of check_version is to look for a file located at 
+ http://www.gridlabd.org/versions.xml or http://www.gridlabd.org/versions.txt
+ and verify whether the patch and build of this version is the latest one for the 
+ major/minor of this version.  If the patch or build is not the latest, a warning 
+ notice is displayed.
+
+ **************************************************************************************/
+#include <pthread.h>
+
+static pthread_t check_version_thread_id;
+
+void *check_version_proc(void *ptr)
+{
+	/** @todo check the version against latest available **/
+	return (void*)0;
+}
+
+void check_version(void)
+{
+	/* start version check thread */
+	if ( pthread_create(&check_version_thread_id,NULL,check_version_proc,NULL)!=0 )
+		output_error("check_version: unable to create thread");
 }
 
 /**@}*/
