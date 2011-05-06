@@ -43,6 +43,7 @@ gridlabd_bin_SOURCES = main.c build.h \
 	object.c object.h \
 	output.c output.h \
 	platform.h \
+	property.c property.h \
 	random.c random.h \
 	realtime.c realtime.h \
 	save.c save.h \
@@ -63,7 +64,7 @@ BUILT_SOURCES = build.h
 CLEANFILES = build.h
 pkginclude_HEADERS = \
 	build.h class.h complex.h debug.h enduse.h exception.h loadshape.h lock.h \
-	module.h object.h schedule.h test.h version.h
+	module.h object.h property.h schedule.h test.h version.h
 
 build.h: buildnum
 
