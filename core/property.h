@@ -19,7 +19,10 @@
 typedef struct s_class_list CLASS;
 
 // also in class.h
+#ifndef FADDR
+#define FADDR
 typedef int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
+#endif
 
 /* Valid GridLAB data types */
 typedef char char1024[1025]; /**< strings up to 1024 characters */

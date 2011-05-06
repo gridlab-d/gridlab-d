@@ -25,7 +25,10 @@
 
 //typedef struct s_class_list CLASS;
 
+#ifndef FADDR
+#define FADDR
 typedef int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
+#endif
 
 /* pass configuration */
 typedef unsigned char PASSCONFIG; /**< the pass configuration */
