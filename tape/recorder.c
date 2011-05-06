@@ -177,7 +177,7 @@ static int recorder_open(OBJECT *obj)
 			// get full column list
 			if(0 != fgets(inbuffer, 1024, my->inputfp)){
 				int rep=0;
-				int replen = strlen("# repetition");
+				int replen = (int)strlen("# repetition");
 				int len, lenmax = 1024, i = 0;
 				char1024 propstr, shortstr;
 				PROPERTY *tprop = my->target;
@@ -197,7 +197,7 @@ static int recorder_open(OBJECT *obj)
 				// following block matches below
 				while(tprop != NULL){
 					sprintf(shortstr, ",%s(%i)", tprop->name, rep);
-					len = strlen(shortstr);
+					len = (int)strlen(shortstr);
 					if(len > lenmax){
 						gl_error("multi-run recorder output full property list is larger than the buffer, please start a new file!");
 						break; // will still print everything up to this one
@@ -215,13 +215,13 @@ static int recorder_open(OBJECT *obj)
 			fprintf(my->multifp, "# repetition 0\n");
 			// no string from previous runs to append new props to
 			sprintf(propstr, "# timestamp");
-			len = strlen(propstr);
+			len = (int)strlen(propstr);
 			lenmax-=len;
 			i = len;
 			// following block matches above
 			while(tprop != NULL){
 				sprintf(shortstr, ",%s(0)", tprop->name);
-				len = strlen(shortstr);
+				len = (int)strlen(shortstr);
 				if(len > lenmax){
 					gl_error("multi-run recorder output full property list is larger than the buffer, please start a new file!");
 					break; // will still print everything up to this one
@@ -436,7 +436,7 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 		}
 		if(cid >= 0){ /* doing the complex part thing */
 			prop->ptype = PT_double;
-			(prop->addr) = (int64)(prop->addr) + cid;
+			(prop->addr) = (PROPERTYADDR)((int64)(prop->addr) + cid);
 		}
 	}
 	return first;

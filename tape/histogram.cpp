@@ -172,7 +172,7 @@ int parse_bin_enum(char *cptr, BIN *bin, PROPERTY *prop){
 	for(kw = prop->keywords; kw != NULL; kw = kw->next){
 		if(strcmp(kw->name, pos) == 0){
 			bin->low_inc = bin->high_inc = 1;
-			bin->low_val = bin->high_val = kw->value;
+			bin->low_val = bin->high_val = (double)(kw->value);
 			return 1;
 		}
 	}

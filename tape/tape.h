@@ -198,4 +198,7 @@ struct collector {
 	AGGREGATION *aggr;
 };
 /** @} */
+
+void set_csv_options(void);
+
 #endif

@@ -493,7 +493,7 @@ RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)
 		}
 		if(cid >= 0){ /* doing the complex part thing */
 			rmap->prop.ptype = PT_double;
-			(rmap->prop.addr) = (int64)(rmap->prop.addr) + cid;
+			(rmap->prop.addr) = (PROPERTYADDR)((int64)(rmap->prop.addr) + cid);
 		}
 	}
 	return first;

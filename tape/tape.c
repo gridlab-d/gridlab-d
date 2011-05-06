@@ -74,6 +74,7 @@ int csv_data_only = 0; /* enable this option to suppress addition of lines start
 int csv_keep_clean = 0; /* enable this option to keep data flushed at end of line */
 void (*update_csv_data_only)(void)=NULL;
 void (*update_csv_keep_clean)(void)=NULL;
+
 void set_csv_options(void)
 {
 	if (csv_data_only && update_csv_data_only)
