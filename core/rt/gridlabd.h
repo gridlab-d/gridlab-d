@@ -407,6 +407,9 @@ typedef enum {_PT_FIRST=-1,
 	PT_DESCRIPTION, /* used to provide helpful description of property */
 	PT_EXTEND, /* used to enlarge class size by the size of the current property being mapped */
 	PT_EXTENDBY, /* used to enlarge class size by the size provided in the next argument */
+	PT_DEPRECATED,
+	PT_HAS_NOTIFY,
+	PT_HAS_NOTIFY_OVERRIDE,
 } PROPERTYTYPE; /**< property types */
 typedef char CLASSNAME[64]; /**< the name a GridLAB class */
 typedef unsigned int OBJECTRANK; /**< Object rank number */

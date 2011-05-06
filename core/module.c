@@ -394,10 +394,10 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	pMinor = (int*)DLSYM(hLib, "minor");
 	mod->major = pMajor?*pMajor:0;
 	mod->minor = pMinor?*pMinor:0;
-	mod->import_file = (int(*)(char*))DLSYM(hLib,"import_file");
-	mod->export_file = (int(*)(char*))DLSYM(hLib,"export_file");
-	mod->setvar = (int(*)(char*,char*))DLSYM(hLib,"setvar");
-	mod->getvar = (void*(*)(char*,char*,unsigned int))DLSYM(hLib,"getvar");
+	mod->import_file = (int(*)(const char*))DLSYM(hLib,"import_file");
+	mod->export_file = (int(*)(const char*))DLSYM(hLib,"export_file");
+	mod->setvar = (int(*)(const char*,char*))DLSYM(hLib,"setvar");
+	mod->getvar = (void*(*)(const char*,char*,unsigned int))DLSYM(hLib,"getvar");
 	mod->check = (int(*)())DLSYM(hLib,"check");
 #ifndef _NO_CPPUNIT
 	mod->module_test = (int(*)(TEST_CALLBACKS*,int,char*[]))DLSYM(hLib,"module_test");

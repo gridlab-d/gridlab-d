@@ -27,6 +27,7 @@
 
 #include <float.h>
 #include <math.h>
+#include <ctype.h>
 
 #ifdef WIN32
 #define isnan _isnan  /* map isnan to appropriate function under Windows */
@@ -680,7 +681,14 @@ int object_set_value_by_addr(OBJECT *obj, /**< the object to alter */
 			output_error("preupdate notify failure on %s in %s", prop->name, obj->name ? obj->name : "an unnamed object");
 		}
 	}
-	result = class_string_to_property(prop,addr,value);
+	if(prop->notify){
+		if(prop->notify(obj, value) == 0){
+			output_error("property notify_%s_%s failure in %s", obj->oclass->name, prop->name, (obj->name ? obj->name : "an unnamed object"));
+		}
+	}
+	if(prop->notify_override != true){
+		result = class_string_to_property(prop,addr,value);
+	}
 	if(obj->oclass->notify){
 		if(obj->oclass->notify(obj,NM_POSTUPDATE,prop,value) == 0){
 			output_error("postupdate notify failure on %s in %s", prop->name, obj->name ? obj->name : "an unnamed object");
@@ -2135,7 +2143,8 @@ int object_locate_property(void *addr, OBJECT **pObj, PROPERTY **pProp)
  **/
 FORECAST *forecast_create(OBJECT *obj, char *specs)
 {
-	FORECAST *f, *fc;
+	//FORECAST *f;
+	FORECAST *fc;
 
 	/* crate forecast entity */
 	fc = malloc(sizeof(FORECAST));
@@ -2180,7 +2189,7 @@ FORECAST *forecast_find(OBJECT *obj, char *name)
  **/
 double forecast_read(FORECAST *fc, TIMESTAMP ts)
 {
-	int n;
+	int64 n;
 
 	/* prevent use of zero or negative timesteps */
 	if ( fc->timestep<=0 )

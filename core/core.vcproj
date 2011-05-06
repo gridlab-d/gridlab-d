@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="xerces-c_2D.lib user32.lib pthreadVC2.lib ws2_32.lib"
-				OutputFile="$(OutDir)\$(SolutionName).exe"
+				OutputFile="$(OutDir)\gridlabd.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir);..\pthreads"
 				IgnoreDefaultLibraryNames=""
@@ -659,6 +659,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\property.c"
+				>
+			</File>
+			<File
+				RelativePath=".\property.h"
+				>
+			</File>
+			<File
 				RelativePath="..\core\random.c"
 				>
 			</File>
@@ -865,18 +873,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\test.h"
-				>
-			</File>
-			<File
-				RelativePath="..\core\test_callbacks.h"
-				>
-			</File>
-			<File
-				RelativePath="..\core\test_framework.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\threadpool.h"
 				>
 			</File>
@@ -905,15 +901,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\x86\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File

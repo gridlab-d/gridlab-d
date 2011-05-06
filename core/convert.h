@@ -55,6 +55,11 @@ int convert_to_complex_array(char *buffer, void *data, PROPERTY *prop);
 int convert_unit_double(char *buffer,char *unit, double *data);
 int convert_unit_complex(char *buffer,char *unit, complex *data);
 
+int convert_from_real(char *a, int b, void *c, PROPERTY *d);//{return 0;}
+int convert_to_real(char *a, void *b, PROPERTY *c);//{return 0;}
+int convert_from_float(char *a, int b, void *c, PROPERTY *d);//{return 0;}
+int convert_to_float(char *a, void *b, PROPERTY *c);//{return 0;}
+
 #ifdef __cplusplus
 }
 #endif

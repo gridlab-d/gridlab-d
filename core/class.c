@@ -54,14 +54,35 @@
 #include "enduse.h"
 #include "stream.h"
 
+#if defined WIN32 && ! defined MINGW
+	#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+	#define _WIN32_WINNT 0x0400
+	#include <windows.h>
+	#ifndef DLEXT
+		#define DLEXT ".dll"
+	#endif
+	#define DLLOAD(P) LoadLibrary(P)
+	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
+	#define snprintf _snprintf
+#else /* ANSI */
+#ifndef MINGW
+	#include "dlfcn.h"
+#endif
+	#ifndef DLEXT
+		#define DLEXT ".so"
+	#endif
+#ifndef MINGW
+	#define DLLOAD(P) dlopen(P,RTLD_LAZY)
+#else
+	#define DLLOAD(P) dlopen(P)
+#endif
+	#define DLSYM(H,S) dlsym(H,S)
+#endif
+
 static unsigned int class_count = 0;
 
-int convert_from_real(char *a, int b, void *c, PROPERTY *d){return 0;}
-int convert_to_real(char *a, void *b, PROPERTY *c){return 0;}
-int convert_from_float(char *a, int b, void *c, PROPERTY *d){return 0;}
-int convert_to_float(char *a, void *b, PROPERTY *c){return 0;}
-
 /* IMPORTANT: this list must match PROPERTYTYPE enum in class.h */
+/* ALSO IMPORTANT: this list is mirrored in property.c */
 static struct s_property_specs { /**<	the property type conversion specifications.
 										It is critical that the order of entries in this list must match 
 										the order of entries in the enumeration #PROPERTYTYPE 
@@ -165,6 +186,7 @@ PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop)
 	}
 }
 
+#if 0
 /** Get the size of a single instance of a property
 	@return the size in bytes of the a property
  **/
@@ -194,6 +216,7 @@ int property_create(PROPERTY *prop, void *addr)
 	else
 		return 0;
 }
+#endif
 
 /* though improbable, this is to prevent more complicated, specifically crafted
 	inheritence loops.  these should be impossible if a class_register call is
@@ -510,6 +533,7 @@ CLASS *class_get_class_from_classname_in_module(char *name, MODULE *mod){
 	return NULL;
 }
 
+#if 0
 PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation)
 {
 	char unitspec[1024];
@@ -582,6 +606,8 @@ Error:
 	free(prop);
 	return NULL;
 }
+#endif
+
 /** Get the class from the class name.
 	@return a pointer to the class having that \p name,
 	or \p NULL if no match found.
@@ -867,6 +893,22 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			else if (proptype==PT_DESCRIPTION)
 			{
 				prop->description = va_arg(arg,char*);
+			}
+			else if(proptype == PT_HAS_NOTIFY || proptype == PT_HAS_NOTIFY_OVERRIDE)
+			{
+				char notify_fname[128];
+				sprintf(notify_fname, "notify_%s_%s", prop->oclass->name, prop->name);
+				prop->notify = (FUNCTIONADDR)DLSYM(prop->oclass->module->hLib, notify_fname);
+				if(prop->notify == 0){
+					errno = EINVAL;
+					output_error("Unable to find function '%s' in %s module", notify_fname, prop->oclass->module->name);
+					goto Error;
+				}
+				if(proptype == PT_HAS_NOTIFY_OVERRIDE){
+					prop->notify_override = true;
+				} else {
+					prop->notify_override = false;
+				}
 			}
 			else
 			{

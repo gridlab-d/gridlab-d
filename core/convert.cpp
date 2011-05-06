@@ -26,6 +26,12 @@ typedef uint32_t  uint32;   /* unsigned 32-bit integers */
 typedef unsigned int uint32;
 #endif
 
+// we're not really using these yet... -MH
+int convert_from_real(char *a, int b, void *c, PROPERTY *d){return 0;}
+int convert_to_real(char *a, void *b, PROPERTY *c){return 0;}
+int convert_from_float(char *a, int b, void *c, PROPERTY *d){return 0;}
+int convert_to_float(char *a, void *b, PROPERTY *c){return 0;}
+
 /** Convert from a \e void
 	This conversion does not change the data
 	@return 6, the number of characters written to the buffer, 0 if not enough space
