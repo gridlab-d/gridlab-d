@@ -187,5 +187,5 @@ EXPORT int notify_double_assert(OBJECT *obj, int update_mode, PROPERTY *prop){
 	if(update_mode == NM_POSTUPDATE && (da->once == da->ONCE_DONE) && (strcmp(prop->name, "value") == 0)){
 		da->once = da->ONCE_TRUE;
 	}
-	return TS_NEVER;
+	return 1;
 }
