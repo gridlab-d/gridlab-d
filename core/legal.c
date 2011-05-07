@@ -202,7 +202,7 @@ void *check_version_proc(void *ptr)
 	char *pv = NULL;
 
 	/* if result not found */
-	if ( result==NULL )
+	if ( result==NULL || result->body.size==0 )
 	{
 		output_warning("check_version: unable to read %s", url);
 		return (void*)1;
