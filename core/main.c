@@ -82,7 +82,8 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	}
 
 	/* see if newer version is available */
-	check_version();
+	if ( global_check_version )
+		check_version(1);
 
 	/* setup the random number generator */
 	random_init();

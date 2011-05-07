@@ -119,6 +119,7 @@ static struct s_varmap {
 	{"checkpoint_seqnum", PT_int32, &global_checkpoint_seqnum, PA_PUBLIC},
 	{"checkpoint_interval", PT_int32, &global_checkpoint_interval, PA_PUBLIC},
 	{"checkpoint_keepall", PT_int32, &global_checkpoint_keepall, PA_PUBLIC},
+	{"check_version", PT_int32, &global_check_version, PA_PUBLIC},
 	/* add new global variables here */
 };
 

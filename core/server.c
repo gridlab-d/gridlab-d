@@ -595,11 +595,10 @@ int http_gui_request(HTTP *http,char *uri)
 }
 
 #ifndef WIN32
-#include <sys/stat.h>
 /** Obtain the size of a file (non-Windows only)
 	@returns the number of bytes in the file or -1 on failure
  **/
-static int filelength(int fd)
+int filelength(int fd)
 {
 	struct stat fs;
 	if (fstat(fd,&fs))
@@ -607,8 +606,6 @@ static int filelength(int fd)
 	else
 		return fs.st_size;
 }
-#else
-#include <io.h>
 #endif
 
 /** Copy the content of a file to the client

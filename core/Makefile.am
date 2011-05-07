@@ -25,6 +25,7 @@ gridlabd_bin_SOURCES = main.c build.h \
 	globals.c globals.h \
 	gridlabd.h \
 	gui.c gui.h \
+	http_client.c http_client.h \
 	index.c index.h \
 	interpolate.c interpolate.h \
 	kill.c kill.h \

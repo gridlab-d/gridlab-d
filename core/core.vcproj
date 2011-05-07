@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="xerces-c_2D.lib user32.lib pthreadVC2.lib ws2_32.lib"
-				OutputFile="$(OutDir)\gridlabd.exe"
+				OutputFile="$(OutDir)\$(SolutionName).exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir);..\pthreads"
 				IgnoreDefaultLibraryNames=""
@@ -591,6 +591,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\http_client.c"
+				>
+			</File>
+			<File
 				RelativePath="..\core\index.c"
 				>
 			</File>
@@ -660,10 +664,6 @@
 			</File>
 			<File
 				RelativePath=".\property.c"
-				>
-			</File>
-			<File
-				RelativePath=".\property.h"
 				>
 			</File>
 			<File
@@ -777,6 +777,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\http_client.h"
+				>
+			</File>
+			<File
 				RelativePath="..\core\index.h"
 				>
 			</File>
@@ -849,6 +853,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\property.h"
+				>
+			</File>
+			<File
 				RelativePath="..\core\random.h"
 				>
 			</File>
@@ -870,6 +878,18 @@
 			</File>
 			<File
 				RelativePath=".\stream.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\test.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\test_callbacks.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\test_framework.h"
 				>
 			</File>
 			<File
@@ -901,15 +921,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath="..\core\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath="..\core\asm\x86\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\core\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1122,6 +1142,10 @@
 			</File>
 			<File
 				RelativePath="..\core\test\US OR Medford.tmy"
+				>
+			</File>
+			<File
+				RelativePath=".\test\versions.txt"
 				>
 			</File>
 			<File

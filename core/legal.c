@@ -185,19 +185,68 @@ STATUS legal_license(void)
  **************************************************************************************/
 #include <pthread.h>
 
+#include "http_client.h"
+
 static pthread_t check_version_thread_id;
 
 void *check_version_proc(void *ptr)
 {
+	int patch, build;
+#ifdef DEBUG
+	char *url = "http://www.gridlabd.org/versions.txt";
+#else
+	char *url = "file://versions.txt";
+#endif
+	HTTPRESULT *result = http_read(url);
+	char target[32];
+	char *pv = NULL;
+
+	/* if result not found */
+	if ( result==NULL )
+	{
+		output_warning("check_version: unable to read %s", url);
+		return (void*)1;
+	}
+
 	/** @todo check the version against latest available **/
+	if ( result->status>0 && result->status<400 )
+	{
+		output_warning("check_version: '%s' error %d", url, result->status);
+		return (void*)2;
+	}
+
+	/* read version data */
+	sprintf(target,"%d:%d:",REV_MAJOR,REV_MINOR);
+	pv = strstr(result->body.data,target);
+	if ( pv==NULL )
+	{
+		output_warning("check_version: '%s' has not entry for version %d.%d", url, REV_MAJOR, REV_MINOR);
+		return (void*)3;
+	}
+	if ( sscanf(pv,"%*d:%*d:%d:%d", &patch, &build)!=2 )
+	{
+		output_warning("check_version: '%s' entry for version %d.%d", url, REV_MAJOR, REV_MINOR);
+		return (void*)4;
+	}
+	if ( REV_PATCH<patch )
+	{
+		output_warning("check_version: a newer version of %s (%d.%d.%d-%d) is available", BRANCH, REV_MAJOR, REV_MINOR, patch, build);
+		return (void*)4;
+	}
+
+	/* done */
+	http_delete_result(result);
 	return (void*)0;
 }
 
-void check_version(void)
+void check_version(int mt)
 {
 	/* start version check thread */
-	if ( pthread_create(&check_version_thread_id,NULL,check_version_proc,NULL)!=0 )
-		output_error("check_version: unable to create thread");
+	if ( mt==0 || pthread_create(&check_version_thread_id,NULL,check_version_proc,NULL)!=0 )
+	{
+		/* unable to create a thread to do this so just do it inline (much slower) */
+		check_version_proc(NULL);
+	}
 }
 
 /**@}*/

@@ -9,6 +9,6 @@
 STATUS legal_notice(void);
 STATUS legal_license(void);
 
-void check_version(void);
+void check_version(int mt);
 
 #endif
