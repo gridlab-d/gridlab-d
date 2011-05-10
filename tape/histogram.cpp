@@ -45,7 +45,7 @@ histogram::histogram(MODULE *mod)
 			PT_char1024, "filename", PADDR(filename),
 			PT_char1024, "group", PADDR(group),
 			PT_char1024, "bins", PADDR(bins),
-			PT_char32, "property", PADDR(property),
+			PT_char256, "property", PADDR(property),
 			PT_double, "min", PADDR(min),
 			PT_double, "max", PADDR(max),
 			PT_double, "samplerate[s]", PADDR(sampling_interval),

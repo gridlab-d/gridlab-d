@@ -184,7 +184,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	/* register the first class implemented, use SHARE to reveal variables */
 	player_class = gl_register_class(module,"player",sizeof(struct player),PC_PRETOPDOWN); 
 	player_class->trl = TRL_PROVEN;
-	PUBLISH_STRUCT(player,char32,property);
+	PUBLISH_STRUCT(player,char256,property);
 	PUBLISH_STRUCT(player,char1024,file);
 	PUBLISH_STRUCT(player,char8,filetype);
 	PUBLISH_STRUCT(player,int32,loop);
@@ -195,7 +195,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(shaper,char1024,file);
 	PUBLISH_STRUCT(shaper,char8,filetype);
 	PUBLISH_STRUCT(shaper,char256,group);
-	PUBLISH_STRUCT(shaper,char32,property);
+	PUBLISH_STRUCT(shaper,char256,property);
 	PUBLISH_STRUCT(shaper,double,magnitude);
 	PUBLISH_STRUCT(shaper,double,events);
 
