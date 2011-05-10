@@ -60,7 +60,7 @@ struct player {
 	/* public */
 	char1024 file; /**< the name of the player source */
 	char8 filetype; /**< the type of the player source */
-	char32 property; /**< the target property */
+	char256 property; /**< the target property */
 	int32 loop; /**< the number of time to replay the tape */
 	/* private */
 	FILETYPE type;
@@ -94,7 +94,7 @@ struct shaper {
 	/* public */
 	char1024 file; /**< the name of the shaper source */
 	char8 filetype; /**< the type of the shaper source */
-	char32 property; /**< the target property */
+	char256 property; /**< the target property */
 	char256 group; /**< the object grouping to use in choosing the shape target */
 	double magnitude;	/**< the magnitude of a queue event (only used when \p events > 0) */
 	double events;		/* the number of queue events per interval (\p events = 0 => direct shape)*/

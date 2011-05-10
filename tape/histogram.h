@@ -48,7 +48,7 @@ public:
 	char32 ftype;
 	char8 flags;
 	char1024 group;
-	char32 property;
+	char256 property;
 	char1024 bins;
 	int32 bin_count;
 	double min;
