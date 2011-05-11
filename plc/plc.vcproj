@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include"
+				AdditionalIncludeDirectories="..\core;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -66,7 +66,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunitd.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
@@ -125,7 +124,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include"
+				AdditionalIncludeDirectories="..\core;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -147,7 +146,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunitd.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
@@ -206,7 +204,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include"
+				AdditionalIncludeDirectories="..\core;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -287,7 +285,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include"
+				AdditionalIncludeDirectories="..\core;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -307,7 +305,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunit.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
@@ -343,8 +340,8 @@
 		</Configuration>
 		<Configuration
 			Name="QuickDebug|Win32"
-			OutputDirectory="..\VS2005\$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			DeleteExtensionsOnClean="*.obj;*.ilk;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;$(TargetPath)"
@@ -367,7 +364,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include"
+				AdditionalIncludeDirectories="..\core;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -389,7 +386,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunitd.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
@@ -424,7 +420,7 @@
 		<Configuration
 			Name="QuickDebug|x64"
 			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			DeleteExtensionsOnClean="*.obj;*.ilk;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;$(TargetPath)"
@@ -448,7 +444,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include"
+				AdditionalIncludeDirectories="..\core;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -470,7 +466,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunitd.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
@@ -512,27 +507,27 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\plc\comm.cpp"
+				RelativePath=".\comm.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\plc\init.cpp"
+				RelativePath=".\init.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\plc\machine.cpp"
+				RelativePath=".\machine.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\plc\main.cpp"
+				RelativePath=".\main.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\plc\plc.cpp"
+				RelativePath=".\plc.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\plc\test.cpp"
+				RelativePath=".\test.cpp"
 				>
 			</File>
 		</Filter>
@@ -542,19 +537,19 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\plc\comm.h"
+				RelativePath=".\comm.h"
 				>
 			</File>
 			<File
-				RelativePath="..\plc\machine.h"
+				RelativePath=".\machine.h"
 				>
 			</File>
 			<File
-				RelativePath="..\plc\plc.h"
+				RelativePath=".\plc.h"
 				>
 			</File>
 			<File
-				RelativePath="..\plc\plc_test.h"
+				RelativePath=".\plc_test.h"
 				>
 			</File>
 		</Filter>
@@ -563,15 +558,15 @@
 			Filter="glm;plc;xml"
 			>
 			<File
-				RelativePath="..\plc\test\from.plc"
+				RelativePath=".\test\from.plc"
 				>
 			</File>
 			<File
-				RelativePath="..\plc\test\plc_test_1.glm"
+				RelativePath=".\test\plc_test_1.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\plc\test\to.plc"
+				RelativePath=".\test\to.plc"
 				>
 			</File>
 		</Filter>
@@ -579,7 +574,7 @@
 			Name="Runtime Files"
 			>
 			<File
-				RelativePath="..\plc\rt\include\plc.h"
+				RelativePath=".\rt\include\plc.h"
 				>
 			</File>
 		</Filter>

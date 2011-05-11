@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;&quot;..\third_party\cppunit-1.12.0\include&quot;;..\third_party\superLU_MT"
+				AdditionalIncludeDirectories="..\core;..\third_party\superLU_MT"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_TESTING"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -67,7 +67,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="false"
-				AdditionalDependencies="cppunitd.lib CBLAS.lib pthreadVC2.lib superLU_MT.lib"
+				AdditionalDependencies="CBLAS.lib pthreadVC2.lib superLU_MT.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
@@ -126,7 +126,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;&quot;..\third_party\cppunit-1.12.0\include&quot;;..\third_party\superLU_MT"
+				AdditionalIncludeDirectories="..\core;..\third_party\superLU_MT"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_TESTING"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -148,7 +148,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunitd.lib CBLAS.lib pthreadVC2.lib superLU_MT.lib"
+				AdditionalDependencies="CBLAS.lib pthreadVC2.lib superLU_MT.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
@@ -207,7 +207,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include;..\third_party\superLU_MT"
+				AdditionalIncludeDirectories="..\core;..\third_party\superLU_MT"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -266,7 +266,7 @@
 		<Configuration
 			Name="Release|x64"
 			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			CharacterSet="2"
@@ -291,7 +291,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include;..\third_party\superLU_MT"
+				AdditionalIncludeDirectories="..\core;..\third_party\superLU_MT"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -311,7 +311,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunit.lib CBLAS.lib pthreadVC2.lib superLU_MT.lib"
+				AdditionalDependencies="CBLAS.lib pthreadVC2.lib superLU_MT.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				IgnoreDefaultLibraryNames="LIBCMT.lib"
@@ -349,8 +349,8 @@
 		</Configuration>
 		<Configuration
 			Name="QuickDebug|Win32"
-			OutputDirectory="..\VS2005\$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			DeleteExtensionsOnClean="*.obj;*.ilk;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;$(TargetPath)"
@@ -373,7 +373,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include"
+				AdditionalIncludeDirectories="..\core;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -395,7 +395,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunitd.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
@@ -429,8 +428,8 @@
 		</Configuration>
 		<Configuration
 			Name="QuickDebug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			DeleteExtensionsOnClean="*.obj;*.ilk;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;$(TargetPath)"
@@ -454,7 +453,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;..\third_party\cppunit-1.12.0\include"
+				AdditionalIncludeDirectories="..\core;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -476,7 +475,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunitd.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
@@ -522,7 +520,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\capacitor.cpp"
+				RelativePath=".\capacitor.cpp"
 				>
 			</File>
 			<File
@@ -542,39 +540,39 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\fuse.cpp"
+				RelativePath=".\fuse.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\init.cpp"
+				RelativePath=".\init.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\line.cpp"
+				RelativePath=".\line.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\line_configuration.cpp"
+				RelativePath=".\line_configuration.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\line_spacing.cpp"
+				RelativePath=".\line_spacing.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\link.cpp"
+				RelativePath=".\link.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\load.cpp"
+				RelativePath=".\load.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\main.cpp"
+				RelativePath=".\main.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\meter.cpp"
+				RelativePath=".\meter.cpp"
 				>
 			</File>
 			<File
@@ -582,15 +580,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\node.cpp"
+				RelativePath=".\node.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\overhead_line.cpp"
+				RelativePath=".\overhead_line.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\overhead_line_conductor.cpp"
+				RelativePath=".\overhead_line_conductor.cpp"
 				>
 			</File>
 			<File
@@ -598,15 +596,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\powerflow.cpp"
+				RelativePath=".\powerflow.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\powerflow_library.cpp"
+				RelativePath=".\powerflow_library.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\powerflow_object.cpp"
+				RelativePath=".\powerflow_object.cpp"
 				>
 			</File>
 			<File
@@ -618,15 +616,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\regulator.cpp"
+				RelativePath=".\regulator.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\regulator_configuration.cpp"
+				RelativePath=".\regulator_configuration.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\relay.cpp"
+				RelativePath=".\relay.cpp"
 				>
 			</File>
 			<File
@@ -650,47 +648,47 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\switch_object.cpp"
+				RelativePath=".\switch_object.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\test.cpp"
+				RelativePath=".\test.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\transformer.cpp"
+				RelativePath=".\transformer.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\transformer_configuration.cpp"
+				RelativePath=".\transformer_configuration.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\triplex_line.cpp"
+				RelativePath=".\triplex_line.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\triplex_line_conductor.cpp"
+				RelativePath=".\triplex_line_conductor.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\triplex_line_configuration.cpp"
+				RelativePath=".\triplex_line_configuration.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\triplex_meter.cpp"
+				RelativePath=".\triplex_meter.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\triplex_node.cpp"
+				RelativePath=".\triplex_node.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\underground_line.cpp"
+				RelativePath=".\underground_line.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\underground_line_conductor.cpp"
+				RelativePath=".\underground_line_conductor.cpp"
 				>
 			</File>
 			<File
@@ -712,7 +710,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\capacitor.h"
+				RelativePath=".\capacitor.h"
 				>
 			</File>
 			<File
@@ -736,35 +734,35 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\fuse.h"
+				RelativePath=".\fuse.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\line.h"
+				RelativePath=".\line.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\line_configuration.h"
+				RelativePath=".\line_configuration.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\line_spacing.h"
+				RelativePath=".\line_spacing.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\link.h"
+				RelativePath=".\link.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\load.h"
+				RelativePath=".\load.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\meter.h"
+				RelativePath=".\meter.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\meter_test.h"
+				RelativePath=".\meter_test.h"
 				>
 			</File>
 			<File
@@ -772,19 +770,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\node.h"
+				RelativePath=".\node.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\overhead_line.h"
+				RelativePath=".\overhead_line.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\overhead_line_conductor.h"
+				RelativePath=".\overhead_line_conductor.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\overheadline_test.h"
+				RelativePath=".\overheadline_test.h"
 				>
 			</File>
 			<File
@@ -792,15 +790,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\powerflow.h"
+				RelativePath=".\powerflow.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\powerflow_library.h"
+				RelativePath=".\powerflow_library.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\powerflow_object.h"
+				RelativePath=".\powerflow_object.h"
 				>
 			</File>
 			<File
@@ -812,23 +810,23 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\regulator.h"
+				RelativePath=".\regulator.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\regulator_configuration.h"
+				RelativePath=".\regulator_configuration.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\regulator_test.h"
+				RelativePath=".\regulator_test.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\relay.h"
+				RelativePath=".\relay.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\relay_test.h"
+				RelativePath=".\relay_test.h"
 				>
 			</File>
 			<File
@@ -852,59 +850,59 @@
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\switch_object.h"
+				RelativePath=".\switch_object.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\test.h"
+				RelativePath=".\test.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\transformer.h"
+				RelativePath=".\transformer.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\transformer_configuration.h"
+				RelativePath=".\transformer_configuration.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\transformer_test.h"
+				RelativePath=".\transformer_test.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\triplex_line.h"
+				RelativePath=".\triplex_line.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\triplex_line_conductor.h"
+				RelativePath=".\triplex_line_conductor.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\triplex_line_configuration.h"
+				RelativePath=".\triplex_line_configuration.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\triplex_meter.h"
+				RelativePath=".\triplex_meter.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\triplex_node.h"
+				RelativePath=".\triplex_node.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\triplexline_test.h"
+				RelativePath=".\triplexline_test.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\underground_line.h"
+				RelativePath=".\underground_line.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\underground_line_conductor.h"
+				RelativePath=".\underground_line_conductor.h"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\undergroundline_test.h"
+				RelativePath=".\undergroundline_test.h"
 				>
 			</File>
 			<File
@@ -921,59 +919,59 @@
 			Filter="glm"
 			>
 			<File
-				RelativePath="..\powerflow\tests\4node\balanced_stepdown_D-D.glm"
+				RelativePath=".\tests\4node\balanced_stepdown_D-D.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\4node\balanced_stepdown_D-grY.glm"
+				RelativePath=".\tests\4node\balanced_stepdown_D-grY.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\4node\balanced_stepdown_grY-grY.glm"
+				RelativePath=".\tests\4node\balanced_stepdown_grY-grY.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\4node\balanced_stepup_D-D.glm"
+				RelativePath=".\tests\4node\balanced_stepup_D-D.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\4node\balanced_stepup_D-grY.glm"
+				RelativePath=".\tests\4node\balanced_stepup_D-grY.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\4node\balanced_stepup_grY-grY.glm"
+				RelativePath=".\tests\4node\balanced_stepup_grY-grY.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\37node\IEEE37-Dec17.glm"
+				RelativePath=".\tests\37node\IEEE37-Dec17.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\test\test.glm"
+				RelativePath=".\test\test.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\4node\unbalanced_stepdown_D-D.glm"
+				RelativePath=".\tests\4node\unbalanced_stepdown_D-D.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\4node\unbalanced_stepdown_D-grY.glm"
+				RelativePath=".\tests\4node\unbalanced_stepdown_D-grY.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\4node\unbalanced_stepdown_grY-grY.glm"
+				RelativePath=".\tests\4node\unbalanced_stepdown_grY-grY.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\4node\unbalanced_stepup_D-D.glm"
+				RelativePath=".\tests\4node\unbalanced_stepup_D-D.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\4node\unbalanced_stepup_D-grY.glm"
+				RelativePath=".\tests\4node\unbalanced_stepup_D-grY.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\powerflow\tests\4node\unbalanced_stepup_grY-grY.glm"
+				RelativePath=".\tests\4node\unbalanced_stepup_grY-grY.glm"
 				>
 			</File>
 		</Filter>

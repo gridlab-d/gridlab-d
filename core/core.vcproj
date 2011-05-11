@@ -543,15 +543,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\core\aggregate.c"
+				RelativePath=".\aggregate.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\class.c"
+				RelativePath=".\class.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\cmdarg.c"
+				RelativePath=".\cmdarg.c"
 				>
 			</File>
 			<File
@@ -559,7 +559,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\debug.c"
+				RelativePath=".\debug.c"
 				>
 			</File>
 			<File
@@ -567,27 +567,27 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\environment.c"
+				RelativePath=".\environment.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\exception.c"
+				RelativePath=".\exception.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\exec.c"
+				RelativePath=".\exec.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\find.c"
+				RelativePath=".\find.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\globals.c"
+				RelativePath=".\globals.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\gui.c"
+				RelativePath=".\gui.c"
 				>
 			</File>
 			<File
@@ -595,7 +595,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\index.c"
+				RelativePath=".\index.c"
 				>
 			</File>
 			<File
@@ -603,31 +603,31 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\kill.c"
+				RelativePath=".\kill.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\kml.c"
+				RelativePath=".\kml.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\legal.c"
+				RelativePath=".\legal.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\list.c"
+				RelativePath=".\list.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\load.c"
+				RelativePath=".\load.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\load_xml.cpp"
+				RelativePath=".\load_xml.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\core\load_xml_handle.cpp"
+				RelativePath=".\load_xml_handle.cpp"
 				>
 			</File>
 			<File
@@ -635,31 +635,31 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\local.c"
+				RelativePath=".\local.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\main.c"
+				RelativePath=".\main.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\match.c"
+				RelativePath=".\match.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\matlab.c"
+				RelativePath=".\matlab.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\module.c"
+				RelativePath=".\module.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\object.c"
+				RelativePath=".\object.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\output.c"
+				RelativePath=".\output.c"
 				>
 			</File>
 			<File
@@ -667,15 +667,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\random.c"
+				RelativePath=".\random.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\realtime.c"
+				RelativePath=".\realtime.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\save.c"
+				RelativePath=".\save.c"
 				>
 			</File>
 			<File
@@ -691,23 +691,23 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\test.c"
+				RelativePath=".\test.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test_framework.cpp"
+				RelativePath=".\test_framework.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\core\threadpool.c"
+				RelativePath=".\threadpool.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\timestamp.c"
+				RelativePath=".\timestamp.c"
 				>
 			</File>
 			<File
-				RelativePath="..\core\unit.c"
+				RelativePath=".\unit.c"
 				>
 			</File>
 		</Filter>
@@ -717,19 +717,19 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\core\aggregate.h"
+				RelativePath=".\aggregate.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\class.h"
+				RelativePath=".\class.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\cmdarg.h"
+				RelativePath=".\cmdarg.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\complex.h"
+				RelativePath=".\complex.h"
 				>
 			</File>
 			<File
@@ -737,11 +737,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\convert.h"
+				RelativePath=".\convert.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\debug.h"
+				RelativePath=".\debug.h"
 				>
 			</File>
 			<File
@@ -749,27 +749,27 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\environment.h"
+				RelativePath=".\environment.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\exception.h"
+				RelativePath=".\exception.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\exec.h"
+				RelativePath=".\exec.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\find.h"
+				RelativePath=".\find.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\globals.h"
+				RelativePath=".\globals.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\gridlabd.h"
+				RelativePath=".\gridlabd.h"
 				>
 			</File>
 			<File
@@ -781,7 +781,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\index.h"
+				RelativePath=".\index.h"
 				>
 			</File>
 			<File
@@ -789,31 +789,31 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\kill.h"
+				RelativePath=".\kill.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\kml.h"
+				RelativePath=".\kml.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\legal.h"
+				RelativePath=".\legal.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\list.h"
+				RelativePath=".\list.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\load.h"
+				RelativePath=".\load.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\load_xml.h"
+				RelativePath=".\load_xml.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\load_xml_handle.h"
+				RelativePath=".\load_xml_handle.h"
 				>
 			</File>
 			<File
@@ -821,35 +821,35 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\local.h"
+				RelativePath=".\local.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\lock.h"
+				RelativePath=".\lock.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\match.h"
+				RelativePath=".\match.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\matlab.h"
+				RelativePath=".\matlab.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\module.h"
+				RelativePath=".\module.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\object.h"
+				RelativePath=".\object.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\output.h"
+				RelativePath=".\output.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\platform.h"
+				RelativePath=".\platform.h"
 				>
 			</File>
 			<File
@@ -857,15 +857,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\random.h"
+				RelativePath=".\random.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\realtime.h"
+				RelativePath=".\realtime.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\save.h"
+				RelativePath=".\save.h"
 				>
 			</File>
 			<File
@@ -881,31 +881,31 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\test.h"
+				RelativePath=".\test.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test_callbacks.h"
+				RelativePath=".\test_callbacks.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test_framework.h"
+				RelativePath=".\test_framework.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\threadpool.h"
+				RelativePath=".\threadpool.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\timestamp.h"
+				RelativePath=".\timestamp.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\unit.h"
+				RelativePath=".\unit.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\version.h"
+				RelativePath=".\version.h"
 				>
 			</File>
 		</Filter>
@@ -921,15 +921,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\cmpxchg.h"
+				RelativePath=".\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\x86\cmpxchg.h"
+				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
-				RelativePath="..\core\asm\x86_64\cmpxchg.h"
+				RelativePath=".\asm\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -956,11 +956,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 			</Filter>
@@ -985,7 +985,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\debugger.conf"
+				RelativePath=".\test\debugger.conf"
 				>
 			</File>
 			<File
@@ -993,7 +993,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\gridlabd.conf"
+				RelativePath=".\test\gridlabd.conf"
 				>
 			</File>
 			<File
@@ -1029,7 +1029,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\core\test\metronome.glm"
+				RelativePath=".\test\metronome.glm"
 				>
 			</File>
 			<File
@@ -1045,15 +1045,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen.glm"
+				RelativePath=".\test\olypen.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_clallam_temperature.tape"
+				RelativePath=".\test\olypen_clallam_temperature.tape"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_cooking.shape"
+				RelativePath=".\test\olypen_cooking.shape"
 				>
 			</File>
 			<File
@@ -1061,51 +1061,51 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_fixed_price.shape"
+				RelativePath=".\test\olypen_fixed_price.shape"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_hotwater.shape"
+				RelativePath=".\test\olypen_hotwater.shape"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_library.glm"
+				RelativePath=".\test\olypen_library.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_lighting.shape"
+				RelativePath=".\test\olypen_lighting.shape"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_midc_price.tape"
+				RelativePath=".\test\olypen_midc_price.tape"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_occupancy.shape"
+				RelativePath=".\test\olypen_occupancy.shape"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_plugs.shape"
+				RelativePath=".\test\olypen_plugs.shape"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_tou_price.shape"
+				RelativePath=".\test\olypen_tou_price.shape"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_tou_price.tape"
+				RelativePath=".\test\olypen_tou_price.tape"
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\olypen_washing.shape"
+				RelativePath=".\test\olypen_washing.shape"
 				>
 			</File>
 			<File
-				RelativePath="..\test\input\pnnl14bus.glm"
+				RelativePath=".\test\input\pnnl14bus.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\test\input\pnnl300bus.glm"
+				RelativePath=".\test\input\pnnl300bus.glm"
 				>
 			</File>
 			<File
@@ -1113,11 +1113,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\test\input\residential_1home.glm"
+				RelativePath=".\test\input\residential_1home.glm"
 				>
 			</File>
 			<File
-				RelativePath="..\test\input\residential_5home.glm"
+				RelativePath=".\test\input\residential_5home.glm"
 				>
 			</File>
 			<File
@@ -1141,7 +1141,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\core\test\US OR Medford.tmy"
+				RelativePath=".\test\US OR Medford.tmy"
 				>
 			</File>
 			<File
@@ -1208,7 +1208,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\core\tzinfo.txt"
+					RelativePath=".\tzinfo.txt"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
