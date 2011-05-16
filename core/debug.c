@@ -1134,10 +1134,10 @@ Retry:
 			GLOBALVAR *var;
 			for (var=global_getnext(NULL); var!=NULL; var=global_getnext(var))
 			{
-				char *val = global_getvar(var->name, NULL, 0);
+				char *val = global_getvar(var->prop->name, NULL, 0);
 				if (val!=NULL && strlen(val)>64)
 					strcpy(val+28,"...");
-				output_message("%-32.32s: \"%s\"", var->name, val==NULL?"(error)":val);
+				output_message("%-32.32s: \"%s\"", var->prop->name, val==NULL?"(error)":val);
 			}
 		}
 		else if (strncmp(cmd,"set",max(1,strlen(cmd)))==0)

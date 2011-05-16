@@ -562,8 +562,8 @@ int module_saveall_xml(FILE *fp){
 		}
 		count += fprintf(fp, "\t\t<properties>\n");
 		while(gvptr != NULL){
-			if(strncmp(tname, gvptr->name, tlen) == 0){
-				count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", gvptr->name+tlen, class_property_to_string(gvptr->prop,(void*)gvptr->prop->addr,buffer,1024)>0 ? buffer : "...", gvptr->name+tlen);
+			if(strncmp(tname, gvptr->prop->name, tlen) == 0){
+				count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", gvptr->prop->name+tlen, class_property_to_string(gvptr->prop,(void*)gvptr->prop->addr,buffer,1024)>0 ? buffer : "...", gvptr->prop->name+tlen);
 			} // else we have a module::prop name
 			gvptr = global_getnext(gvptr);
 		}
@@ -795,9 +795,9 @@ void module_libinfo(const char *module_name)
 			output_raw("%s ", p->name);
 		while ((v=global_getnext(v))!=NULL)
 		{
-			if (strncmp(v->name,module_name,strlen(module_name))==0)
+			if (strncmp(v->prop->name,module_name,strlen(module_name))==0)
 			{
-				char *vn = strstr(v->name,"::");
+				char *vn = strstr(v->prop->name,"::");
 				if (vn!=NULL)
 					output_raw("%s ", vn+2);
 			}

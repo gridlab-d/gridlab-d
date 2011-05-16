@@ -860,9 +860,9 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 				fprintf(fp,"<TABLE BORDER=\"1\">\n");
 				while (var=global_getnext(var))
 				{
-					if (strstr(var->name,"::"))
+					if (strstr(var->prop->name,"::"))
 						continue; /* skip module globals (they'll get dumped later) */
-					fprintf(fp,"<TR><TH>%s</TH><TD><xsl:value-of select=\"%s\"/></TD></TR>\n",var->name,var->name);
+					fprintf(fp,"<TR><TH>%s</TH><TD><xsl:value-of select=\"%s\"/></TD></TR>\n",var->prop->name,var->prop->name);
 				}
 				fprintf(fp,"</TABLE>\n");
 
@@ -902,9 +902,9 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 					fprintf(fp,"<TR><TH>version.minor</TH><TD><xsl:value-of select=\"%s/version.minor\"/></TD></TR>",mod->name);
 					while (var=global_getnext(var))
 					{
-						if (strncmp(var->name,mod->name,strlen(mod->name))==0)
+						if (strncmp(var->prop->name,mod->name,strlen(mod->name))==0)
 						{
-							char *name = var->name + strlen(mod->name)+2; // offset name to after ::
+							char *name = var->prop->name + strlen(mod->name)+2; // offset name to after ::
 							fprintf(fp,"<TR><TH>%s</TH><TD><xsl:value-of select=\"%s/%s\"/></TD></TR>",name,mod->name,name);
 						}
 					}
@@ -974,9 +974,9 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 							fprintf(fp,"\tversion.minor <xsl:value-of select=\"version.minor\"/>;\n");
 							while (var=global_getnext(var))
 							{
-								if (strncmp(var->name,mod->name,strlen(mod->name))==0)
+								if (strncmp(var->prop->name,mod->name,strlen(mod->name))==0)
 								{
-									char *name = var->name + strlen(mod->name)+2; // offset name to after ::
+									char *name = var->prop->name + strlen(mod->name)+2; // offset name to after ::
 									fprintf(fp,"\t%s <xsl:value-of select=\"%s\"/>;\n",name,name);
 								}
 							}

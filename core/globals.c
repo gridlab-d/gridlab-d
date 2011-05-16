@@ -198,7 +198,7 @@ GLOBALVAR *global_find(char *name) /**< name of global variable to find */
 {
 	GLOBALVAR *var = NULL;
 	for(var = global_getnext(NULL); var != NULL; var = global_getnext(var)){
-		if(strcmp(var->name, name) == 0){
+		if(strcmp(var->prop->name, name) == 0){
 			return var;
 		}
 	}
@@ -264,7 +264,6 @@ GLOBALVAR *global_create(char *name, ...){
 		return NULL;
 	}
 
-	strncpy(var->name, name, sizeof(var->name));
 	var->prop = NULL;
 	var->next = NULL;
 
@@ -361,6 +360,7 @@ GLOBALVAR *global_create(char *name, ...){
 					Use a shorter name and try again.
 				 */
 			}
+
 			prop = property_malloc(proptype,NULL,name,addr,NULL);
 			if (prop==NULL)
 				throw_exception("global_create(char *name='%s',...): property '%s' could not be stored", name, name);
@@ -372,6 +372,8 @@ GLOBALVAR *global_create(char *name, ...){
 				lastprop->next = prop;
 			else
 				lastprop = prop;
+
+			strncpy(var->prop->name, name, sizeof(var->prop->name));
 
 			/* save enum property in case keywords come up */
 			if (prop->ptype>_PT_LAST)
@@ -403,7 +405,7 @@ GLOBALVAR *global_create(char *name, ...){
  **/
 STATUS global_setvar(char *def, ...) /**< the definition */
 {
-	char name[66]="", value[1024]="";
+	char name[65]="", value[1024]="";
 	if (sscanf(def,"%[^=]=%[^\r\n]",name,value)<2)
 	{
 		va_list ptr;
@@ -457,7 +459,7 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 			return FAILED;
 		}
 		else if (var->callback) 
-			var->callback(var->name);
+			var->callback(var->prop->name);
 
 		return SUCCESS;
 	}
@@ -508,7 +510,7 @@ void global_dump(void)
 	{
 		char buffer[1024];
 		if (class_property_to_string(var->prop, (void*)var->prop->addr,buffer,sizeof(buffer)))
-			output_message("%s=%s;", var->name, buffer);
+			output_message("%s=%s;", var->prop->name, buffer);
 	}
 }
 

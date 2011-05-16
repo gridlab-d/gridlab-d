@@ -413,7 +413,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 					{
 						PROPERTY *prop = var->prop;
 						char *proptype = class_get_property_typename(prop->ptype);
-						if (strncmp(var->name,mod->name,strlen(mod->name))!=0)
+						if (strncmp(var->prop->name,mod->name,strlen(mod->name))!=0)
 							continue;
 						if (proptype!=NULL){
 							if(prop->unit != NULL)
@@ -581,7 +581,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			while ((var=global_getnext(var))!=NULL)
 			{
 				if (n<sizeof(list)/sizeof(list[0]))
-					list[n++] = var->name;
+					list[n++] = var->prop->name;
 				else
 				{
 					output_fatal("--globals has insufficient buffer space to sort globals list");
@@ -597,7 +597,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			{
 				char buffer[1024];
 				var = global_find(list[i]);
-				printf("%s=%s;",var->name,global_getvar(var->name,buffer,sizeof(buffer))?buffer:"(error)");
+				printf("%s=%s;",var->prop->name,global_getvar(var->prop->name,buffer,sizeof(buffer))?buffer:"(error)");
 				if (var->prop->description || var->prop->flags&PF_DEPRECATED)
 					printf(" // %s%s", (var->prop->flags&PF_DEPRECATED)?"DEPRECATED ":"", var->prop->description?var->prop->description:"");
 				printf("\n");

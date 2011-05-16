@@ -267,7 +267,7 @@ char *gui_get_name(GUIENTITY *entity)
 		return buffer;
 	}
 	else if (gui_get_variable(entity))
-		return entity->var->name;
+		return entity->var->prop->name;
 	else
 		return "";
 }

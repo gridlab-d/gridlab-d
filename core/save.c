@@ -165,9 +165,9 @@ int savexml_strict(char *filename,FILE *fp)
 		while ((global=global_getnext(global))!=NULL)
 		{
 			/* ignore module globals */
-			if (strchr(global->name,':'))
+			if (strchr(global->prop->name,':'))
 				continue;
-			count += fprintf(fp,"\t<%s>%s</%s>\n", global->name, global_getvar(global->name,buffer,sizeof(buffer))==NULL?"[error]":buffer,global->name);
+			count += fprintf(fp,"\t<%s>%s</%s>\n", global->prop->name, global_getvar(global->prop->name,buffer,sizeof(buffer))==NULL?"[error]":buffer,global->prop->name);
 		}
 		count += fprintf(fp,"\t<timezone>%s</timezone>\n", timestamp_current_timezone());
 
@@ -231,9 +231,9 @@ int savexml_strict(char *filename,FILE *fp)
 			{
 				/* ignore globals not belonging to this module */
 				char modname[64], name[64];
-				if (sscanf(global->name,"%s:%s",modname,name)<2 || strcmp(modname,module->name)!=0)
+				if (sscanf(global->prop->name,"%s:%s",modname,name)<2 || strcmp(modname,module->name)!=0)
 					continue;
-				count += fprintf(fp,"\t\t<%s>%s</%s>\n", name, global_getvar(global->name,buffer,sizeof(buffer))==NULL?"[error]":buffer,name);
+				count += fprintf(fp,"\t\t<%s>%s</%s>\n", name, global_getvar(global->prop->name,buffer,sizeof(buffer))==NULL?"[error]":buffer,name);
 			}
 
 			/* objects */
@@ -329,9 +329,9 @@ int savexml(char *filename,FILE *fp)
 	count += fprintf(fp,"\t\t<object_count>%d</object_count>\n", object_get_count());
 	/* add global variables */
 	while(gvptr != NULL){
-		char *testp = strchr(gvptr->name, ':');
+		char *testp = strchr(gvptr->prop->name, ':');
 		if(testp == NULL){
-			count += fprintf(fp, "\t\t<%s>%s</%s>\n", gvptr->name, class_property_to_string(gvptr->prop,(void*)gvptr->prop->addr,buffer,1024)>0 ? buffer : "...", gvptr->name);
+			count += fprintf(fp, "\t\t<%s>%s</%s>\n", gvptr->prop->name, class_property_to_string(gvptr->prop,(void*)gvptr->prop->addr,buffer,1024)>0 ? buffer : "...", gvptr->prop->name);
 		} // else we have a module::prop name
 		gvptr = global_getnext(gvptr);
 	}

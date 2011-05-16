@@ -30,7 +30,6 @@ extern "C" {
 typedef enum {FAILED=FALSE, SUCCESS=TRUE} STATUS;
 
 typedef struct s_globalvar {
-	char name[256];
 	PROPERTY *prop;
 	struct s_globalvar *next;
 	uint32 flags;

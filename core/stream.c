@@ -502,13 +502,13 @@ int64 stream_out_global(FILE *fp, GLOBALVAR *v)
 	int64 count=0;
 	char value[4096];
 
-	if (global_getvar(v->name,value,sizeof(value))==NULL)
+	if (global_getvar(v->prop->name,value,sizeof(value))==NULL)
 		return -1;
 
 	PUTT(GLOBAL,BEGIN);
 	
 	PUTT(GLOBAL,NAME);
-	PUTD(v->name,strlen(v->name));
+	PUTD(v->prop->name,strlen(v->prop->name));
 
 	PUTT(GLOBAL,VALUE);
 	PUTD(value,strlen(value));
