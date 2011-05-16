@@ -379,7 +379,7 @@ int passive_controller::isa(char *classname)
 TIMESTAMP passive_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 	if(starttime == 0)
-		starttime = (double)t0;	
+		starttime = t0;	
 
 	// determine output based on control mode
 	if(last_cycle == 0 || t1 >= last_cycle + period || period == 0){
@@ -501,7 +501,7 @@ int passive_controller::calc_elasticity(TIMESTAMP t0, TIMESTAMP t1){
 	
 	if(zipLoadParent == true){
 		
-			double dt = t1 - t0;
+			double dt = (double)(t1 - t0);
 			
 			if((t1-starttime)%period==0 && (t1!=starttime) && starttime>0){
 
