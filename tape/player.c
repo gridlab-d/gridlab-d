@@ -135,6 +135,7 @@ static TIMESTAMP player_read(OBJECT *obj)
 	char buffer[64];
 	char timebuf[64], valbuf[64], tbuf[64];
 	int Y,m,d,H,M,S;
+	char tz[6];
 	struct player *my = OBJECTDATA(obj,struct player);
 	char unit[2];
 	TIMESTAMP t1;
@@ -148,6 +149,7 @@ Retry:
 	memset(valbuf, 0, 64);
 	memset(tbuf, 0, 64);
 	memset(value, 0, 32);
+	memset(tz, 0, 6);
 	if (result==NULL)
 	{
 		if (my->loopnum>0)
@@ -169,7 +171,26 @@ Retry:
 	if(sscanf(result, "%[^,],%[^\n\r]", tbuf, valbuf) == 2){
 		trim(tbuf, timebuf);
 		trim(valbuf, value);
-		if (sscanf(timebuf,"%d-%d-%d %d:%d:%d",&Y,&m,&d,&H,&M,&S)>=4)
+		if (sscanf(timebuf,"%d-%d-%d %d:%d:%d %4s",&Y,&m,&d,&H,&M,&S, tz)==7){
+			//struct tm dt = {S,M,H,d,m-1,Y-1900,0,0,0};
+			DATETIME dt;
+			dt.year = Y;
+			dt.month = m;
+			dt.day = d;
+			dt.hour = H;
+			dt.minute = M;
+			dt.second = S;
+			strcpy(dt.tz, tz);
+			t1 = (TIMESTAMP)gl_mktime(&dt);
+			if (t1!=TS_INVALID && my->loop==my->loopnum){
+				my->next.ts = t1;
+				while(value[voff] == ' '){
+					++voff;
+				}
+				strcpy(my->next.value, value+voff);
+			}
+		}
+		else if (sscanf(timebuf,"%d-%d-%d %d:%d:%d",&Y,&m,&d,&H,&M,&S)>=4)
 		{
 			//struct tm dt = {S,M,H,d,m-1,Y-1900,0,0,0};
 			DATETIME dt;
