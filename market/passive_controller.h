@@ -112,8 +112,8 @@ public:
 	enduse *current_load_enduse;
 	int ArraySize;
 	int ArrayIndex;
-	int32 starttime;
-	int32 returnTime;
+	TIMESTAMP starttime;
+	TIMESTAMP returnTime;
 
 private:
 	int calc_ramp(TIMESTAMP t0, TIMESTAMP t1);
