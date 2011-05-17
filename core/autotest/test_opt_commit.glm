@@ -1,0 +1,91 @@
+// This autotest is meant to test the intrinsic commit
+// function, and its ability to correctly influence the
+// simulation when it returns a timestamp
+// This file contains a simple runtime class with a
+// commit function that returns t0 + delay and increments
+// a counter each time the function is called. A recorder
+// is chosen with an interval that is twice as long as the
+// delay, so that the commit function should be called
+// twice for every time the recorder writes out.
+
+#set tmp=../test_opt_commit
+#setenv GRIDLABD=../../../core
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+module tape;
+module assert;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-01 00:12:00';
+}
+
+class test {
+	double interval;
+	int64 delay;
+	double counter;
+	int16 max_itr;
+	intrinsic create (object parent) {
+		return SUCCESS;
+	};
+	intrinsic init (object parent) {
+		interval = 0;
+		counter = 0;
+		delay = 60;
+		max_itr = 10;
+		return SUCCESS;
+	};
+	intrinsic presync(TIMESTAMP t0, TIMESTAMP t1) {
+		interval = t1 - t0;
+		if (counter <= max_itr)
+			counter = counter + 1;
+		return TS_NEVER;
+	};
+	intrinsic commit(TIMESTAMP t0, TIMESTAMP t1) {
+		if (counter > max_itr)
+			return TS_NEVER;
+		else 
+			return t0 + delay;
+	};
+}
+
+schedule counter_values {
+	0 * * * * 1;
+	1 * * * * 2;
+	2 * * * * 3;
+	3 * * * * 4;
+	4 * * * * 5;
+	5 * * * * 6;
+	6 * * * * 7;
+	7 * * * * 8;
+	8 * * * * 9;
+	9 * * * * 10;
+	10-12 * * * * 11;
+}
+
+schedule interval_values {
+	1-11 * * * * 60;
+	12 * * * * 120;
+}
+
+
+object test {
+	object recorder {
+		property interval,delay,counter;
+		file "commit_output.csv";
+		interval 120;
+		limit 12;
+	};
+	object double_assert {
+		value counter_values*1;
+		target counter;
+		within 1e-1;
+	};
+	object double_assert {
+		in '2001-01-01 00:01:00';
+		value interval_values*1;
+		target interval;
+		within 1e-1;
+	};
+}
