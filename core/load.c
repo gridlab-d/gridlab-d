@@ -3385,7 +3385,7 @@ static int class_block(PARSER)
 					append_code("/*RESETLINE*/\n");
 					append_code("extern \"C\" TIMESTAMP commit_%s(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)\n{\n",oclass->name);
 					ENTERING(obj,commit);
-					append_code("\tTIMESTAMP ret = ((%s*)(obj+1))->commit(type, t1, t2);\n",oclass->name);
+					append_code("\tTIMESTAMP ret = ((%s*)(obj+1))->commit(t1, t2);\n",oclass->name);
 					EXITING(obj,commit);
 					append_code("\treturn ret;\n}\n");
 				}
