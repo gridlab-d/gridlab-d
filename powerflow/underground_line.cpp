@@ -491,7 +491,7 @@ EXPORT int recalc_underground_line(OBJECT *obj)
 	return 1;
 }
 
-EXPORT int create_fault_ugline(OBJECT *thisobj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
+EXPORT int create_fault_ugline(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
 {
 	int retval;
 
@@ -499,7 +499,7 @@ EXPORT int create_fault_ugline(OBJECT *thisobj, char *fault_type, int *implement
 	underground_line *thisline = OBJECTDATA(thisobj,underground_line);
 
 	//Try to fault up
-	retval = thisline->link_fault_on(fault_type, implemented_fault,repair_time,Extra_Data);
+	retval = thisline->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time,Extra_Data);
 
 	return retval;
 }

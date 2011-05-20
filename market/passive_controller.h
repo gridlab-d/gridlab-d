@@ -90,7 +90,6 @@ public:
 	bool pool_pump_model;				///< Boolean flag for turning on the pool pump model version of duty cycle control
 	double base_duty_cycle;
 	
-
 	bool zipLoadParent;
 	double critical_day;
 	double dailyElasticity;
@@ -99,19 +98,61 @@ public:
 	int32 secondTierHours;
 	int32 thirdTierHours;
 	int32 firstTierHours;
+
 	double firstTierPrice;
 	double secondTierPrice;
 	double thirdTierPrice;
+
+	double oldFirstTierPrice;
+	double oldSecondTierPrice;
+	double oldThirdTierPrice;
+
+	double oldPriceRatioThirdFirst;
+	double newPriceRatioThirdFirst;
+	double oldPriceRatioSecondFirst;
+	double newPriceRatioSecondFirst;
+	double criticalPriceMultiplier;
+	double peakPriceMultiplier;
+	
+
+	bool linearizeElasticity;	
+	double priceDiffThird;
+	double priceDiffSecond;
+	double priceDiffFirst;
+
 	int32 elasticityPeriod;	
 	bool check_two_tier_cpp;
+
+	//to be deleted later
+	double dailyElasticityMultiplier;
+	double criticalpeakPriceMultiplier_test;
+	double peakPriceMultiplier_test;
+	//end of delete
 
 	double *tier_prices;
 	double price_offset;
 	double *cleared_load;
+	double *criticalPeakLoad;
+	double *peakLoad;
+	double *offPeakLoad;
 	double predicted_load;
+	double totalClearedLoad;
+	double totalOffPeakLoad;
+	double totalPeakLoad;
+	double totalCriticalPeakLoad;
+
 	enduse *current_load_enduse;
+	
 	int ArraySize;
+	int ThirdTierArraySize;
+	int SecondTierArraySize;
+	int FirstTierArraySize;
+
 	int ArrayIndex;
+	int ThirdTierArrayIndex;
+	int SecondTierArrayIndex;
+	int FirstTierArrayIndex;
+
 	TIMESTAMP starttime;
 	TIMESTAMP returnTime;
 

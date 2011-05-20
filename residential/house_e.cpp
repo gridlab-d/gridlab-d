@@ -2107,7 +2107,7 @@ void house_e::update_system(double dt)
 	}
 
 	// update load
-	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor * (load.impedance_fraction + load.current_fraction * load.voltage_factor));
+	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor*(load.current_fraction + load.impedance_fraction*load.voltage_factor));
 	if (system_mode == SM_COOL)
 		last_cooling_load = hvac_load;
 	else if (system_mode == SM_AUX || system_mode == SM_HEAT)

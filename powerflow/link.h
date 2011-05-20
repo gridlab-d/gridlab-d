@@ -58,7 +58,7 @@ public: /// @todo make this private and create interfaces to control values
 	void calculate_power_splitphase();
 	void set_flow_directions();
 	void calc_currents(complex *Current_Vals);	//Function to perform "immediate" current calculation - used by restoration object
-	int link_fault_on(char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);		//Function to create fault on line
+	int link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);		//Function to create fault on line
 	int link_fault_off(int *implemented_fault, char *imp_fault_name, void *Extra_Data);	//Function to remove fault from line
 	double mean_repair_time;
 	double *get_double(OBJECT *obj, char *name);	/**< Gets address of double - mainly for mean_repair_time */
@@ -72,6 +72,8 @@ public:
 	complex current_out[3];	///< current flow out of link (w.r.t. to node)
 	complex read_I_in[3];	///< published current flow to link (w.r.t from node)
 	complex read_I_out[3];  ///< published current flow out of link (w.r.t to node)
+	complex If_in[3];		///< fault current flowing in 
+	complex If_out[3];		///< fault current flowing out
 	complex power_in;		///< power flow in (w.r.t from node)
 	complex power_out;		///< power flow out (w.r.t to node)
 	complex power_loss;		///< power loss in transformer
@@ -116,6 +118,11 @@ public:
 	int kmldump(FILE *fp);
 
 	void *UpdateYVs(OBJECT *snode, char snodeside, complex *deltaV);
+
+	// Fault current calculation functions
+	void fault_current_calc(complex C[7][7], unsigned int removed_phase); // function traces up from fault to swing bus summing up the link objects' impedances
+											  // then calculates the fault current then passes that value back down to the faulted link objects.
+
 };
 
 void inverse(complex in[3][3], complex out[3][3]);
@@ -124,5 +131,8 @@ void multiply(complex a[3][3], complex b[3][3], complex c[3][3]);
 void subtract(complex a[3][3], complex b[3][3], complex c[3][3]);
 void addition(complex a[3][3], complex b[3][3], complex c[3][3]);
 void equalm(complex a[3][3], complex b[3][3]);
+void lu_decomp(complex a[7][7], complex l[7][7], complex u[7][7]); //lu decomposition function for a 7 by 7 matrix
+void forward_sub(complex l[7][7], complex b[7], complex z[7]); //backwards substitution  algorithm for a 7 by 7 system 
+void back_sub(complex u[7][7], complex z[7], complex x[7]); // forwards substitution algorithm for a 7 by 7 system
 #endif // _LINK_H
 

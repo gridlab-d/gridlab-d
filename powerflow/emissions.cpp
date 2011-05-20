@@ -183,15 +183,15 @@ int emissions::create(void)
 
 	//Initialize all of the emissions variables
 	// Default dispatch order
-	Nuclear_Order = 0;
-	Hydroelectric_Order = 1;
-	Solarthermal_Order = 2;
-	Biomass_Order = 3;	
-	Wind_Order = 4;
-	Coal_Order = 5;
-	Naturalgas_Order= 6;
-	Geothermal_Order = 7;		
-	Petroleum_Order = 8;
+	Nuclear_Order = 1;
+	Hydroelectric_Order = 2;
+	Solarthermal_Order = 3;
+	Biomass_Order = 4;	
+	Wind_Order = 5;
+	Coal_Order = 6;
+	Naturalgas_Order= 7;
+	Geothermal_Order = 8;		
+	Petroleum_Order = 9;
 
 	Naturalgas_Out= 0.0;
 	Coal_Out = 0.0;
@@ -340,6 +340,88 @@ int emissions::init(OBJECT *parent)
 		*/
 	}
 
+	if (Nuclear_Order==0)
+	{
+		gl_verbose("Emissions:%s has nuclear disabled.",obj->name);
+		/*  TROUBLESHOOT
+		The dispatch order for nuclear generators was set to 0, so these generator types will
+		be ignored from the emissions dispatch.  Ensure this was desired.
+		*/
+	}
+
+	if (Hydroelectric_Order==0)
+	{
+		gl_verbose("Emissions:%s has hydro disabled.",obj->name);
+		/*  TROUBLESHOOT
+		The dispatch order for hydroelectric generators was set to 0, so these generator types will
+		be ignored from the emissions dispatch.  Ensure this was desired.
+		*/
+	}
+
+	if (Solarthermal_Order==0)
+	{
+		gl_verbose("Emissions:%s has solar disabled.",obj->name);
+		/*  TROUBLESHOOT
+		The dispatch order for solar generators was set to 0, so these generator types will
+		be ignored from the emissions dispatch.  Ensure this was desired.
+		*/
+	}
+
+	if (Biomass_Order==0)
+	{
+		gl_verbose("Emissions:%s has biomass disabled.",obj->name);
+		/*  TROUBLESHOOT
+		The dispatch order for biomass generators was set to 0, so these generator types will
+		be ignored from the emissions dispatch.  Ensure this was desired.
+		*/
+	}
+
+	if (Wind_Order==0)
+	{
+		gl_verbose("Emissions:%s has wind disabled.",obj->name);
+		/*  TROUBLESHOOT
+		The dispatch order for wind generators was set to 0, so these generator types will
+		be ignored from the emissions dispatch.  Ensure this was desired.
+		*/
+	}
+
+	if (Coal_Order==0)
+	{
+		gl_verbose("Emissions:%s has coal disabled.",obj->name);
+		/*  TROUBLESHOOT
+		The dispatch order for coal generators was set to 0, so these generator types will
+		be ignored from the emissions dispatch.  Ensure this was desired.
+		*/
+	}
+
+	if (Naturalgas_Order==0)
+	{
+		gl_verbose("Emissions:%s has natural gas disabled.",obj->name);
+		/*  TROUBLESHOOT
+		The dispatch order for natural generators was set to 0, so these generator types will
+		be ignored from the emissions dispatch.  Ensure this was desired.
+		*/
+	}
+
+	if (Geothermal_Order==0)
+	{
+		gl_verbose("Emissions:%s has geothermal disabled.",obj->name);
+		/*  TROUBLESHOOT
+		The dispatch order for geothermal generators was set to 0, so these generator types will
+		be ignored from the emissions dispatch.  Ensure this was desired.
+		*/
+	}
+	
+	if (Petroleum_Order==0)
+	{
+		gl_verbose("Emissions:%s has petroleum disabled.",obj->name);
+		/*  TROUBLESHOOT
+		The dispatch order for petroleum generators was set to 0, so these generator types will
+		be ignored from the emissions dispatch.  Ensure this was desired.
+		*/
+	}
+
+
 	//Convert it to a TIMESTAMP
 	cycle_interval_TS = (TIMESTAMP)(cycle_interval);
 	return rval;
@@ -376,6 +458,16 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 		//Accumulate the energy value
 		temp_energy = cycle_power* dt_val/3600;
 		accumulated_energy += temp_energy;
+	// Maximum energy output of any power source depends on the cycle_interval.
+		Naturalgas_Max_Out = Naturalgas_Max_Out * cycle_interval/3600;
+		Coal_Max_Out = Coal_Max_Out  * cycle_interval/3600;
+		Biomass_Max_Out = Biomass_Max_Out  * cycle_interval/3600;
+		Geothermal_Max_Out = Geothermal_Max_Out  * cycle_interval/3600;
+		Hydroelectric_Max_Out = Hydroelectric_Max_Out  * cycle_interval/3600;
+		Nuclear_Max_Out = Nuclear_Max_Out  * cycle_interval/3600;
+		Wind_Max_Out = Wind_Max_Out  * cycle_interval/3600;
+		Petroleum_Max_Out = Petroleum_Max_Out  * cycle_interval/3600;
+		Solarthermal_Max_Out = Solarthermal_Max_Out  * cycle_interval/3600;
 	}
 
 	//Power determination code
@@ -385,7 +477,8 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 		temp_power = (ParMeterObj->indiv_measured_power[0] + ParMeterObj->indiv_measured_power[1] + ParMeterObj->indiv_measured_power[2]);
 		cycle_power = (temp_power.Re()) / 1000.0;
 	}
-
+	
+	
 	
 	//See if it is time for a computation!
 	if (curr_cycle_time >= time_cycle_interval)	//Update values
@@ -399,19 +492,18 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 		//Proceed
 	
 		//dispatch based is based on the order specified in the glm file.
-
-for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
+		//Order offset by 1 to get 1-9 range.  Zero is left in as a default condition (just in case an order is being swapped)
+		for (dispatch_order = 0; dispatch_order < 10; dispatch_order++)
 		{
-			
-			if (dispatch_order == Nuclear_Order)
-			{
+
 	//Energy output of any power source based on its maximum capacity and requirement. If energy required is greater than the maximum capacity
 	//of the corresponding power source,the source would supply its maximum, otherwise it would supply only the required. The dispacth order is based on the users' choice.
 
-			if (Nuclear_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+			if (dispatch_order == Nuclear_Order)
+			{
+				if ((Nuclear_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
 
 			{
-
 				Nuclear_Out = Nuclear_Max_Out;
 
 				Nuclear_emissions_CO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_CO2;
@@ -420,10 +512,9 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 
 				energy_for_calc = energy_for_calc - Nuclear_Max_Out;
 			}
-			else if (energy_requirement == true)
+				else if ((energy_requirement == true) && (dispatch_order != 0))
 			{
 				Nuclear_Out = energy_for_calc.Mag();
-
 
 				Nuclear_emissions_CO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_CO2;
 				Nuclear_emissions_SO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_SO2;
@@ -434,18 +525,20 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 				energy_for_calc = energy_for_calc - Nuclear_Out;
 
 			}
-
 			else	//Not needed
 			{
 				Nuclear_Out = 0.0;
 
+					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
+					Nuclear_emissions_CO2 = 0.0;
+					Nuclear_emissions_SO2 = 0.0;
+					Nuclear_emissions_NOx = 0.0;
 			}
 			}
 			
 			if (dispatch_order == Hydroelectric_Order)
 			{
-
-			if (Hydroelectric_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+				if ((Hydroelectric_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
 			{
 				Hydroelectric_Out = Hydroelectric_Max_Out;
 
@@ -455,13 +548,10 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 
 				energy_for_calc = energy_for_calc - Hydroelectric_Max_Out;
 			}
-			else if (energy_requirement == true)
+				else if ((energy_requirement == true) && (dispatch_order != 0))
 			{
 				Hydroelectric_Out = energy_for_calc.Mag();
 
-
-
-				
 				Hydroelectric_emissions_CO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_CO2;
 				Hydroelectric_emissions_SO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_SO2;
 				Hydroelectric_emissions_NOx = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_NOx;
@@ -471,19 +561,20 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 				energy_for_calc = energy_for_calc - Hydroelectric_Out;		
 
 			}
-
 			else	//Not needed
 			{
 				Hydroelectric_Out = 0.0;
 
+					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
+					Hydroelectric_emissions_CO2 = 0.0;
+					Hydroelectric_emissions_SO2 = 0.0;
+					Hydroelectric_emissions_NOx = 0.0;
 			}
-
 			}
 
 			if (dispatch_order == Solarthermal_Order)
 			{
-
-			if (Solarthermal_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+				if ((Solarthermal_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
 			{
 				Solarthermal_Out = Solarthermal_Max_Out;
 
@@ -493,11 +584,9 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 
 				energy_for_calc = energy_for_calc - Solarthermal_Max_Out;
 			}
-			else if (energy_requirement == true)
+				else if ((energy_requirement == true) && (dispatch_order != 0))
 			{
 				Solarthermal_Out = energy_for_calc.Mag();
-
-
 
 				Solarthermal_emissions_CO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_CO2;
 				Solarthermal_emissions_SO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_SO2;
@@ -506,19 +595,20 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 				energy_for_calc = energy_for_calc - Solarthermal_Out;
 				
 			}
-
 			else	//Not needed
 			{
 				Solarthermal_Out = 0.0;
 
+					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
+					Solarthermal_emissions_CO2 = 0.0;
+					Solarthermal_emissions_SO2 = 0.0;
+					Solarthermal_emissions_NOx = 0.0;
 			}
-
 			}
 
 			if (dispatch_order == Biomass_Order)
 			{
-
-			if (Biomass_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+				if ((Biomass_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
 			{
 				Biomass_Out = Biomass_Max_Out ;
 
@@ -528,11 +618,9 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 
 				energy_for_calc = energy_for_calc - Biomass_Max_Out;
 			}
-			else if (energy_requirement == true)
+				else if ((energy_requirement == true) && (dispatch_order != 0))
 			{
 				Biomass_Out = energy_for_calc.Mag();
-
-
 
 				Biomass_emissions_CO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_CO2;
 				Biomass_emissions_SO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_SO2;
@@ -546,15 +634,17 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 			else	//Not needed
 			{
 				Biomass_Out = 0.0;
-
+					
+					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
+					Biomass_emissions_CO2 = 0.0;
+					Biomass_emissions_SO2 = 0.0;
+					Biomass_emissions_NOx = 0.0;
 			}
-
 			}
 
 			if (dispatch_order == Wind_Order)
 			{
-
-			if (Wind_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+				if ((Wind_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
 			{
 				Wind_Out = Wind_Max_Out;
 
@@ -564,11 +654,9 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 
 				energy_for_calc = energy_for_calc - Wind_Max_Out;
 			}
-			else if (energy_requirement == true)
+				else if ((energy_requirement == true) && (dispatch_order != 0))
 			{
 				Wind_Out = energy_for_calc.Mag();
-
-
 
 				Wind_emissions_CO2 = Wind_Out * Wind_Conv_Eff * Wind_CO2;
 				Wind_emissions_SO2 = Wind_Out * Wind_Conv_Eff * Wind_SO2;
@@ -579,19 +667,20 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 				energy_for_calc = energy_for_calc - Wind_Out;
 
 			}
-			
 			else	//Not needed
 			{
 				Wind_Out = 0.0;
-
-			}
 			
+					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
+					Wind_emissions_CO2 = 0.0;
+					Wind_emissions_SO2 = 0.0;
+					Wind_emissions_NOx = 0.0;
+			}
 			}
 
 			if (dispatch_order == Coal_Order)
 			{
-
-			if (Coal_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+				if ((Coal_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
 			{
 				Coal_Out = Coal_Max_Out;
 
@@ -601,11 +690,9 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 
 				energy_for_calc = energy_for_calc - Coal_Max_Out; 
 			}
-			else if (energy_requirement == true)
+				else if ((energy_requirement == true) && (dispatch_order != 0))
 			{
 				Coal_Out = energy_for_calc.Mag();
-
-
 
 				Coal_emissions_CO2 = Coal_Out * Coal_Conv_Eff * Coal_CO2;
 				Coal_emissions_SO2 = Coal_Out * Coal_Conv_Eff * Coal_SO2;
@@ -616,19 +703,21 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 				energy_for_calc = energy_for_calc - Coal_Out; 
 
 			}
-
 			else	//Not needed
 			{
 				Coal_Out = 0.0;
-
+					
+					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
+					Coal_emissions_CO2 = 0.0;
+					Coal_emissions_SO2 = 0.0;
+					Coal_emissions_NOx = 0.0;
 			}
-
 			}
 
 			
 			if (dispatch_order == Naturalgas_Order)
 			{
-				if ((Naturalgas_Max_Out < energy_for_calc.Mag()) && (energy_requirement == true))
+				if ((Naturalgas_Max_Out < energy_for_calc.Mag()) && (energy_requirement == true) && (dispatch_order != 0))
 				{
 					Naturalgas_Out = Naturalgas_Max_Out;
 
@@ -638,10 +727,9 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 
 					energy_for_calc = energy_for_calc - Naturalgas_Max_Out;
 				}
-				else if (energy_requirement == true)
+				else if ((energy_requirement == true) && (dispatch_order != 0))
 				{
 					Naturalgas_Out = energy_for_calc.Mag();
-
 
 					Naturalgas_emissions_CO2 = Naturalgas_Out * Naturalgas_Conv_Eff * Naturalgas_CO2;
 					Naturalgas_emissions_SO2 = Naturalgas_Out * Naturalgas_Conv_Eff * Naturalgas_SO2;
@@ -655,14 +743,17 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 				else	//Not needed
 				{
 					Naturalgas_Out = 0.0;
-
+					
+					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
+					Naturalgas_emissions_CO2 = 0.0;
+					Naturalgas_emissions_SO2 = 0.0;
+					Naturalgas_emissions_NOx = 0.0;
 				}
 			}
 
 			if (dispatch_order == Geothermal_Order)
 			{
-			
-			if (Geothermal_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+				if ((Geothermal_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
 			{
 				Geothermal_Out = Geothermal_Max_Out;
 
@@ -672,10 +763,9 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 
 				energy_for_calc = energy_for_calc - Geothermal_Max_Out;
 			}
-			else if (energy_requirement == true)
+				else if ((energy_requirement == true) && (dispatch_order != 0))
 			{
 				Geothermal_Out = energy_for_calc.Mag();
-
 
 				Geothermal_emissions_CO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_CO2;
 				Geothermal_emissions_SO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_SO2;
@@ -690,14 +780,16 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 			{
 				Geothermal_Out = 0.0;
 					
+					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
+					Geothermal_emissions_CO2 = 0.0;
+					Geothermal_emissions_SO2 = 0.0;
+					Geothermal_emissions_NOx = 0.0;
 			}
-
 			}
 
 			if (dispatch_order == Petroleum_Order)
 			{
-						
-			if (Petroleum_Max_Out < energy_for_calc.Mag() && energy_requirement == true)
+				if ((Petroleum_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
 			{
 				Petroleum_Out = Petroleum_Max_Out;
 
@@ -707,7 +799,7 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 
 				energy_for_calc = energy_for_calc - Petroleum_Max_Out;
 			}
-			else if (energy_requirement == true)
+				else if ((energy_requirement == true) && (dispatch_order != 0))
 			{
 				Petroleum_Out = energy_for_calc.Mag();
 
@@ -720,20 +812,21 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 				energy_for_calc = energy_for_calc - Petroleum_Out;
 
 			}
-
 			else	//Not needed
 			{
 				Petroleum_Out = 0.0;
 					
+					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
+					Petroleum_emissions_CO2 = 0.0;
+					Petroleum_emissions_SO2 = 0.0;
+					Petroleum_emissions_NOx = 0.0;
 			}
-
 			}
 		}//end dispatch FOR loop
 		
 		//If energy required is greater than the energy available, the rest would be supplied by coal.
 		if (energy_for_calc.Mag() > 0)
 		{
-			
 			Coal_Out = Coal_Out + energy_for_calc.Mag();
 		}
 		
@@ -745,7 +838,6 @@ for (dispatch_order = 0; dispatch_order < 9; dispatch_order++)
 
 		Total_emissions_NOx = Naturalgas_emissions_NOx + Coal_emissions_NOx + Biomass_emissions_NOx + Geothermal_emissions_NOx + Hydroelectric_emissions_NOx + Nuclear_emissions_NOx + Wind_emissions_NOx + Petroleum_emissions_NOx + Solarthermal_emissions_NOx;
 
-		
 		//Zero the energy accumulator
 		accumulated_energy = 0.0;
 		

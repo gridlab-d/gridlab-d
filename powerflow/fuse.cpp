@@ -1209,7 +1209,7 @@ EXPORT int fuse_reliability_operation(OBJECT *thisobj, unsigned char desired_pha
 	return 1;	//This will always succeed...because I say so!
 }
 
-EXPORT int create_fault_fuse(OBJECT *thisobj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
+EXPORT int create_fault_fuse(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
 {
 	int retval;
 
@@ -1217,7 +1217,7 @@ EXPORT int create_fault_fuse(OBJECT *thisobj, char *fault_type, int *implemented
 	fuse *thisfuse = OBJECTDATA(thisobj,fuse);
 
 	//Try to fault up
-	retval = thisfuse->link_fault_on(fault_type, implemented_fault,repair_time,Extra_Data);
+	retval = thisfuse->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time,Extra_Data);
 
 	return retval;
 }

@@ -29,7 +29,21 @@ void print_matrix(complex mat[3][3]);
 #define IMPORT_CLASS(name) extern CLASS *name##_class
 
 typedef enum {SM_FBS=0, SM_GS=1, SM_NR=2} SOLVERMETHOD;		/**< powerflow solver methodology */
+typedef enum {MM_SUPERLU=0, MM_EXTERN=1} MATRIXSOLVERMETHOD;	/**< NR matrix solver methodlogy */
+
+//Structure to hold external LU solver calls
+typedef struct s_ext_fxn {
+	void *dllLink;
+	void *ext_init;
+	void *ext_alloc;
+	void *ext_solve;
+	void *ext_destroy;
+} EXT_LU_FXN_CALLS;
+
+GLOBAL char256 LUSolverName INIT("");				/**< filename for external LU solver */
+GLOBAL EXT_LU_FXN_CALLS LUSolverFcns;				/**< links to external LU solver functions */
 GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodology */
+GLOBAL MATRIXSOLVERMETHOD matrix_solver_method INIT(MM_SUPERLU);	/**< Newton-Raphson uses superLU as the default solver */
 GLOBAL bool GS_all_converged INIT(false);			/**< Gauss-Seidel convergence indicator (for post-convergence calculations */
 GLOBAL unsigned int NR_bus_count INIT(0);			/**< Newton-Raphson bus count - used for determining size of bus vector */
 GLOBAL unsigned int NR_branch_count INIT(0);		/**< Newton-Raphson branch count - used for determining size of branch vector */
@@ -37,7 +51,7 @@ GLOBAL BUSDATA *NR_busdata INIT(NULL);				/**< Newton-Raphson bus data pointer a
 GLOBAL BRANCHDATA *NR_branchdata INIT(NULL);		/**< Newton-Raphson branch data pointer array */
 GLOBAL int NR_curr_bus INIT(-1);					/**< Newton-Raphson current bus indicator - used to populate NR_busdata */
 GLOBAL int NR_curr_branch INIT(-1);					/**< Newton-Raphson current branch indicator - used to populate NR_branchdata */
-GLOBAL unsigned int NR_iteration_limit INIT(500);	/**< Newton-Raphson iteration limit (per GridLAB-D iteration) */
+GLOBAL int64 NR_iteration_limit INIT(500);			/**< Newton-Raphson iteration limit (per GridLAB-D iteration) */
 GLOBAL bool NR_cycle INIT(true);					/**< Newton-Raphson pass indicator - false = solution pass, true = metering/accumulation pass */
 GLOBAL bool NR_admit_change INIT(true);				/**< Newton-Raphson admittance matrix change detector - used to prevent complete recalculation of admittance at every timestep */
 GLOBAL int NR_superLU_procs INIT(1);				/**< Newton-Raphson related - superLU MT processor count to request - separate from thread_count */

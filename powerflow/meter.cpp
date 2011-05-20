@@ -256,10 +256,22 @@ TIMESTAMP meter::presync(TIMESTAMP t0)
 
 TIMESTAMP meter::sync(TIMESTAMP t0)
 {
+	int TempNodeRef;
+
 	//Reliability check
 	if ((NR_mode == false) && (fault_check_object != NULL) && (solver_method == SM_NR))	//solver cycle and fault_check is present (so might need to set flag
 	{
-		if ((NR_busdata[NR_node_reference].origphases & NR_busdata[NR_node_reference].phases) != NR_busdata[NR_node_reference].origphases)	//We have a phase mismatch - something has been lost
+		if (NR_node_reference==-99)	//Childed
+		{
+			TempNodeRef=*NR_subnode_reference;
+		}
+		else	//Normal
+		{
+			//Just assign it to our normal index
+			TempNodeRef=NR_node_reference;
+		}
+
+		if ((NR_busdata[TempNodeRef].origphases & NR_busdata[TempNodeRef].phases) != NR_busdata[TempNodeRef].origphases)	//We have a phase mismatch - something has been lost
 		{
 			meter_interrupted = true;	//Someone is out of service, they just may not know it
 

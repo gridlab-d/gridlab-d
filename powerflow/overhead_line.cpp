@@ -440,7 +440,7 @@ EXPORT int recalc_overhead_line(OBJECT *obj)
 	OBJECTDATA(obj,overhead_line)->recalc();
 	return 1;
 }
-EXPORT int create_fault_ohline(OBJECT *thisobj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
+EXPORT int create_fault_ohline(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
 {
 	int retval;
 
@@ -448,7 +448,7 @@ EXPORT int create_fault_ohline(OBJECT *thisobj, char *fault_type, int *implement
 	overhead_line *thisline = OBJECTDATA(thisobj,overhead_line);
 
 	//Try to fault up
-	retval = thisline->link_fault_on(fault_type, implemented_fault, repair_time, Extra_Data);
+	retval = thisline->link_fault_on(protect_obj, fault_type, implemented_fault, repair_time, Extra_Data);
 
 	return retval;
 }

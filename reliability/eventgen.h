@@ -34,6 +34,7 @@ typedef enum {
 
 typedef struct s_objevtdetails {
 	OBJECT *obj_of_int;		/// Object that will be made unreliable in some manner
+	OBJECT *obj_made_int;	/// Object unreliable action affects (protective device)
 	TIMESTAMP fail_time;	/// Timestep when this object is expected to fail
 	TIMESTAMP rest_time;	/// Timestep when this object is expected to be restored
 	TIMESTAMP fail_length;	/// Length of time (seconds) the object will fail for

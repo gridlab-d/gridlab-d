@@ -57,6 +57,27 @@
 #include "node.h"
 #include "transformer.h"
 
+//Library imports items - for external LU solver - stolen from somewhere else in GridLAB-D (tape, I believe)
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+#define _WIN32_WINNT 0x0400
+#include <windows.h>
+#ifndef DLEXT
+#define DLEXT ".dll"
+#endif
+#define DLLOAD(P) LoadLibrary(P)
+#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
+#define snprintf _snprintf
+#else /* ANSI */
+#include "dlfcn.h"
+#ifndef DLEXT
+#define DLEXT ".so"
+#else
+#endif
+#define DLLOAD(P) dlopen(P,RTLD_LAZY)
+#define DLSYM(H,S) dlsym(H,S)
+#endif
+
 CLASS *node::oclass = NULL;
 CLASS *node::pclass = NULL;
 
@@ -173,6 +194,10 @@ int node::init(OBJECT *parent)
 	if (solver_method==SM_NR)
 	{
 		OBJECT *obj = OBJECTHDR(this);
+		char1024 ext_lib_file_name;
+		char *extpath = NULL;
+		CALLBACKS **cbackval = NULL;
+		bool ExtLinkFailure;
 
 		//Check for a swing bus if we haven't found one already
 		if (NR_swing_bus == NULL)
@@ -459,17 +484,174 @@ int node::init(OBJECT *parent)
 		}
 
 		/* Make sure we aren't the swing bus */
-		if (this->bustype!=SWING)
+		if (bustype!=SWING)
 		{
 			/* still no swing bus found */
 			if (obj->parent==NULL)
-				throw "NR: no swing bus found or specified";
+				GL_THROW("NR: no swing bus found or specified");
 				/*	TROUBLESHOOT
 				Newton-Raphson failed to automatically assign a swing bus to the node.  This should
 				have been detected by this point and represents a bug in the solver.  Please submit
 				a bug report detailing how you obtained this message.
 				*/
 		}
+
+		//Use SWING node to hook in the solver - since it's called by SWING, might as well
+		if (bustype==SWING)
+		{
+			if (LUSolverName[0]=='\0')	//Empty name, default to superLU
+			{
+				matrix_solver_method=MM_SUPERLU;	//This is the default, but we'll set it here anyways
+			}
+			else	//Something is there, see if we can find it
+			{
+				//Initialize the global
+				LUSolverFcns.dllLink = NULL;
+				LUSolverFcns.ext_init = NULL;
+				LUSolverFcns.ext_alloc = NULL;
+				LUSolverFcns.ext_solve = NULL;
+				LUSolverFcns.ext_destroy = NULL;
+
+#ifdef WIN32
+				snprintf(ext_lib_file_name, 1024, "solver_%s" DLEXT,LUSolverName);
+#else
+				snprintf(ext_lib_file_name, 1024, "lib_solver_%s" DLEXT,LUSolverName);
+#endif
+	
+				extpath = gl_findfile(ext_lib_file_name, NULL, 0|4);
+
+				if (extpath!=NULL)	//Link up
+				{
+					//Link to the library
+					LUSolverFcns.dllLink = DLLOAD(extpath);
+
+					//Make sure it worked
+					if (LUSolverFcns.dllLink==NULL)
+					{
+						gl_warning("Failure to load solver_%s as a library, defaulting to superLU",LUSolverName);
+						/*  TROUBLESHOOT
+						While attempting to load the DLL for an external LU solver, the file did not appear to meet
+						the libary specifications.  superLU is being used instead.  Please check the library file and
+						try again.
+						*/
+						
+						//Set to superLU
+						matrix_solver_method = MM_SUPERLU;
+					}
+					else	//Found it right
+					{
+						//Set tracking flag - if anything fails, just revert to superLU and leave
+						ExtLinkFailure = false;
+
+						//Link the callback
+						cbackval = (CALLBACKS **)DLSYM(LUSolverFcns.dllLink, "callback");
+						
+						//I don't know what this does
+						if(cbackval)
+							*cbackval = callback;
+						
+						//Now link functions - Init
+						LUSolverFcns.ext_init = DLSYM(LUSolverFcns.dllLink,"LU_init");
+						
+						//Make sure it worked
+						if (LUSolverFcns.ext_init == NULL)
+						{
+							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName);
+							/*  TROUBLESHOOT
+							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
+							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert
+							to the superLU solver for Newton-Raphson.
+							*/
+
+							//Flag the failure
+							ExtLinkFailure = true;
+						}
+
+						//Now link functions - alloc
+						LUSolverFcns.ext_alloc = DLSYM(LUSolverFcns.dllLink,"LU_alloc");
+
+						//Make sure it worked
+						if (LUSolverFcns.ext_init == NULL)
+						{
+							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName);
+							/*  TROUBLESHOOT
+							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
+							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert
+							to the superLU solver for Newton-Raphson.
+							*/
+
+							//Flag the failure
+							ExtLinkFailure = true;
+						}
+
+						//Now link functions - solve
+						LUSolverFcns.ext_solve = DLSYM(LUSolverFcns.dllLink,"LU_solve");
+
+						//Make sure it worked
+						if (LUSolverFcns.ext_init == NULL)
+						{
+							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName);
+							/*  TROUBLESHOOT
+							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
+							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert
+							to the superLU solver for Newton-Raphson.
+							*/
+
+							//Flag the failure
+							ExtLinkFailure = true;
+						}
+
+						//Now link functions - destroy
+						LUSolverFcns.ext_destroy = DLSYM(LUSolverFcns.dllLink,"LU_destroy");
+
+						//Make sure it worked
+						if (LUSolverFcns.ext_init == NULL)
+						{
+							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName);
+							/*  TROUBLESHOOT
+							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
+							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert
+							to the superLU solver for Newton-Raphson.
+							*/
+
+							//Flag the failure
+							ExtLinkFailure = true;
+						}
+
+
+						//If any failed, just revert to superLU (probably shouldn't even check others after a failure, but meh)
+						if (ExtLinkFailure)
+						{
+							//Someone failed, just use superLU
+							matrix_solver_method=MM_SUPERLU;
+						}
+						else
+						{
+							gl_verbose("External solver solver_%s found, utilizing for NR",LUSolverName);
+							/*  TROUBLESHOOT
+							An external LU matrix solver library was specified and found, so NR will be calculated
+							using that instead of superLU.
+							*/
+
+							//Flag as an external solver
+							matrix_solver_method=MM_EXTERN;
+						}
+					}//End found proper DLL
+				}//end found external and linked
+				else	//Not found, just default to superLU
+				{
+					gl_warning("The external solver solver_%s could not be found, defaulting to superLU",LUSolverName);
+					/*  TROUBLESHOOT
+					While attempting to link an external LU matrix solver library, the file could not be found.  Ensure it is
+					in the proper GridLAB-D folder and is named correctly.  If the error persists, please submit your code and
+					a bug report via the trac website.
+					*/
+
+					//Flag as superLU
+					matrix_solver_method=MM_SUPERLU;
+				}//end failed to find/load
+			}//end somethign was attempted
+		}//End matrix solver if
 
 		if (mean_repair_time < 0.0)
 		{
@@ -565,7 +747,7 @@ int node::init(OBJECT *parent)
 		}
 
 		/* Make sure we aren't the swing bus */
-		if (this->bustype!=SWING)
+		if (bustype!=SWING)
 		{
 			/* still no swing bus found */
 			if (obj->parent==NULL)
@@ -1491,6 +1673,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			//Reliability check - sets and removes voltages (theory being previous answer better than starting at 0)
 			unsigned char phase_checks_var;
 
+			//See if we've been initialized or not
+			if (NR_node_reference!=-1)
+			{
 			//Make sure we're a real boy - if we're not, do nothing (we'll steal mommy's or daddy's voltages in postsync)
 			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
 			{
@@ -1816,6 +2001,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					UNLOCK_OBJECT(SubNodeParent);
 				}
 			}
+			}//end uninitialized
 
 			if ((NR_curr_bus==NR_bus_count) && (bustype==SWING))	//Only run the solver once everything has populated
 			{
@@ -2152,7 +2338,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 				currlink = OBJECTDATA(currlinkobj,link);
 				
 				//Update branch currents - explicitly check to and from in case this is a parent structure
-				if (((currlink->from)->id) == (OBJECTHDR(this)->id))	//see if we are the from end
+				if (((currlink->from)->id) == (obj->id))	//see if we are the from end
 				{
 					if  ((currlink->power_in.Mag()) > (currlink->power_out.Mag()))	//Make sure current flowing right direction
 					{
@@ -2161,7 +2347,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 						current_inj[2] += currlink->current_in[2];
 					}
 				}
-				else if (((currlink->to)->id) == (OBJECTHDR(this)->id))	//see if we are the to end
+				else if (((currlink->to)->id) == (obj->id))	//see if we are the to end
 				{
 					if ((currlink->power_in.Mag()) < (currlink->power_out.Mag()))	//Current is reversed, so this is a from to
 					{
@@ -2692,7 +2878,7 @@ int *node::NR_populate(void)
 		
 		if (NR_busdata[NR_node_reference].Link_Table == NULL)
 		{
-			GL_THROW("NR: Failed to allocate link table for node:%d",OBJECTHDR(this)->id);
+			GL_THROW("NR: Failed to allocate link table for node:%d",me->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate memory for the linking table for NR, memory failed to be
 			allocated.  Make sure you have enough memory and try again.  If this problem happens a second
@@ -2709,7 +2895,7 @@ int *node::NR_populate(void)
 
 				if (NR_busdata[NR_node_reference].Child_Nodes == NULL)
 				{
-					GL_THROW("NR: Failed to allocate child node table for node:%d - %s",OBJECTHDR(this)->id,OBJECTHDR(this)->name);
+					GL_THROW("NR: Failed to allocate child node table for node:%d - %s",me->id,me->name);
 					/*  TROUBLESHOOT
 					While attempting to allocate memory for a tree table for the restoration module, memory failed to be allocated.
 					Make sure you ahve enough memory and try again.  If the problem persists, please submit your code and a bug report
@@ -2733,7 +2919,7 @@ int *node::NR_populate(void)
 
 					if (NR_busdata[NR_node_reference].Child_Nodes == NULL)
 					{
-						GL_THROW("NR: Failed to allocate child node table for node:%d - %s",OBJECTHDR(this)->id,OBJECTHDR(this)->name);
+						GL_THROW("NR: Failed to allocate child node table for node:%d - %s",me->id,me->name);
 						//Defined above
 					}
 

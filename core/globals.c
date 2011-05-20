@@ -366,6 +366,7 @@ GLOBALVAR *global_create(char *name, ...){
 				throw_exception("global_create(char *name='%s',...): property '%s' could not be stored", name, name);
 			if (var->prop==NULL)
 				var->prop = prop;
+			strncpy(var->prop->name, name, sizeof(var->prop->name));
 
 			/* link map to oclass if not yet done */
 			if (lastprop!=NULL)

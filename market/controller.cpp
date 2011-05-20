@@ -928,12 +928,10 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		rv = next_run;
 	}
 
-	if(next_run >= t1){
+	if(next_run == t1){
 		next_run += (TIMESTAMP)(this->period);
 		rv = next_run - bid_delay;
 	}
-
-	
 
 	return rv;
 }

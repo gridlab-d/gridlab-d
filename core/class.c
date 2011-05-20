@@ -3,8 +3,8 @@
 	@file class.c
 	@addtogroup class Classes of objects
 	@ingroup core
-	
-	GridLAB-D modules implement classes of objects, 
+
+	GridLAB-D modules implement classes of objects,
 	which are supported by the functions in this module
 
 	Object classes are defined by runtime modules.  Each class
@@ -84,8 +84,8 @@ static unsigned int class_count = 0;
 /* IMPORTANT: this list must match PROPERTYTYPE enum in class.h */
 /* ALSO IMPORTANT: this list is mirrored in property.c */
 static struct s_property_specs { /**<	the property type conversion specifications.
-										It is critical that the order of entries in this list must match 
-										the order of entries in the enumeration #PROPERTYTYPE 
+										It is critical that the order of entries in this list must match
+										the order of entries in the enumeration #PROPERTYTYPE
 								  **/
 	char *name; /**< the property type name */
 	unsigned int size; /**< the size of 1 instance */
@@ -133,13 +133,13 @@ static CLASS *last_class = NULL; /**< last class in class list */
 	PROPERTY *p;
 	for (p=class_get_first_property(oclass);
 		p!=NULL && p->otype==oclass->type;
-		p=p->next) 
+		p=p->next)
 	{
 	// your code goes here
 	}
 	@endcode
 
-	@return a pointer to first PROPERTY in the CLASS definition, 
+	@return a pointer to first PROPERTY in the CLASS definition,
 	or \p NULL is none defined
  **/
 PROPERTY *class_get_first_property(CLASS *oclass) /**< the object class */
@@ -164,7 +164,7 @@ PROPERTY *class_get_next_property(PROPERTY *prop)
 		return NULL;
 }
 
-/** Search class hierarchy for a property 
+/** Search class hierarchy for a property
 	@return property pointer if found, NULL if not in class hierarchy
  **/
 PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop)
@@ -172,14 +172,14 @@ PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop)
 	if(oclass == prop->oclass)
 	{
 		return prop;
-	} 
-	else 
+	}
+	else
 	{
 		if(oclass->parent != NULL)
 		{
 			return class_prop_in_class(oclass->parent, prop);
-		} 
-		else 
+		}
+		else
 		{
 			return NULL;
 		}
@@ -253,7 +253,7 @@ PROPERTY *class_find_property(CLASS *oclass,		/**< the object class */
 							  PROPERTYNAME name)	/**< the property name */
 {
 	PROPERTY *prop;
-	
+
 	if(oclass == NULL)
 		return NULL;
 
@@ -304,7 +304,7 @@ PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE pt
 {
 	PROPERTY *prop = malloc(sizeof(PROPERTY));
 	UNIT *pUnit = NULL;
-	
+
 	TRY {
 		if (unit)
 			pUnit = unit_find(unit);
@@ -341,9 +341,9 @@ PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE pt
 	prop->next = NULL;
 	prop->oclass = oclass;
 	prop->ptype = ptype;
-	
+
 	oclass->size += property_type[ptype].size;
-	
+
 	class_add_property(oclass,prop);
 	return prop;
 }
@@ -371,7 +371,7 @@ char *class_get_property_typename(PROPERTYTYPE type) /**< the property type */
 {
 	if (type<=_PT_FIRST || type>=_PT_LAST)
 		return "##UNDEF##";
-	else 
+	else
 		return property_type[type].name;
 }
 
@@ -398,7 +398,7 @@ int class_string_to_propertytype(PROPERTYTYPE type, void *addr, char *value)
 }
 /** Convert a string value to property data.
 	The \p addr must be the physical address in memory.
-	@return the number of value read from the \p value string; 0 on failure 
+	@return the number of value read from the \p value string; 0 on failure
  **/
 int class_string_to_property(PROPERTY *prop, /**< the type of the property at the \p addr */
 							 void *addr,		/**< the address of the property's data */
@@ -442,7 +442,7 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 
  **/
 CLASS *class_register(MODULE *module,			/**< the module that implements the class */
-					  CLASSNAME name,			/**< the class name */ 
+					  CLASSNAME name,			/**< the class name */
 					  unsigned int size,		/**< the size of the data block */
 					  PASSCONFIG passconfig)	/**< the passes for which \p sync should be called */
 {
@@ -469,7 +469,7 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 			output_error("module %s cannot register class %s, it is already registered by module %s", module->name,name,oclass->module->name);
 			/*	TROUBLESHOOT
 				This error is caused by an attempt to define a new class which is already
-				defined in the module or namespace given.  This is generally caused by 
+				defined in the module or namespace given.  This is generally caused by
 				bug in a module or an incorrectly defined class.
 			 */
 			return NULL;
@@ -508,7 +508,7 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 }
 
 /** Get the first registered class
-	@return a pointer to the first registered CLASS, 
+	@return a pointer to the first registered CLASS,
 	or \p NULL if none registered.
  **/
 CLASS *class_get_first_class(void)
@@ -538,7 +538,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 {
 	char unitspec[1024];
 	PROPERTY *prop = (PROPERTY*)malloc(sizeof(PROPERTY));
-	
+
 	if (prop==NULL)
 	{
 		output_error("property_malloc(oclass='%s',...): memory allocation failed", oclass->name, name);
@@ -559,33 +559,33 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	prop->keywords = NULL;
 	prop->description = NULL;
 	prop->unit = NULL;
-	if (sscanf(name,"%[^[][%[A-Za-z0-9*/^]]",prop->name,unitspec)==2)
+	if (sscanf(name,"%[^[][%[%%A-Za-z0-9*/^]]",prop->name,unitspec)==2)
 	{
 		/* detect when a unit is associated with non-double/complex property */
 		if (prop->ptype!=PT_double && prop->ptype!=PT_complex)
 			output_error("property_malloc(oclass='%s',...): property %s cannot have unit '%s' because it is not a double or complex value",oclass->name, prop->name,unitspec);
 			/*	TROUBLESHOOT
-				Only <b>double</b> and <b>complex</b> properties can have units.  
+				Only <b>double</b> and <b>complex</b> properties can have units.
 				Either change the type of the property or remove the unit specification from the property's declaration.
 			 */
 
 		/* verify that the requested unit exists or can be derived */
-		else 
+		else
 		{
 			TRY {
 				if ((prop->unit = unit_find(unitspec))==NULL)
 					output_error("property_malloc(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
 					/*	TROUBLESHOOT
-						A class is attempting to publish a variable using a unit that is not defined.  
+						A class is attempting to publish a variable using a unit that is not defined.
 						This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
 					 */
 			} CATCH (char *msg) {
 					output_error("property_malloc(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
 					/*	TROUBLESHOOT
-						A class is attempting to publish a variable using a unit that is not defined.  
+						A class is attempting to publish a variable using a unit that is not defined.
 						This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
 					 */
 			} ENDCATCH;
 		}
@@ -598,7 +598,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	if (oclass!=NULL && class_find_property(oclass,prop->name))
 		output_warning("property_malloc(oclass='%s',...): property name '%s' is defined more than once", oclass->name, prop->name);
 		/*	TROUBLESHOOT
-			A class is attempting to publish a variable more than once.  
+			A class is attempting to publish a variable more than once.
 			This is caused by an repeated specification for a variable publication (in C++) or declaration (in GLM).
 		 */
 	return prop;
@@ -649,14 +649,14 @@ CLASS *class_get_class_from_classname(char *name) /**< a pointer to a \p NULL -t
 	The variable argument list must be \p NULL -terminated.
 	Each property declaration begins with a PROPERTYTYPE value,
 	followed by a \e char* pointing to the name of the
-	property, followed the offset from the end of the 
+	property, followed the offset from the end of the
 	OBJECT header's address (or the absolution address of the data
 	if PT_SIZE is used).  If the property name includes units in square
 	brackets, they will be separated from the name and added to
-	the property's definition, provided the are defined in the 
+	the property's definition, provided the are defined in the
 	file \b unitfile.txt.
 
-	You may use the flag PT_INHERIT to specify a parent class from which 
+	You may use the flag PT_INHERIT to specify a parent class from which
 	to inherit published properties.  If this is used, you may add the
 	PC_UNSAFE_OVERRIDE_OMIT flag in class_register to force child classes
 	to use all the pass configured.
@@ -672,7 +672,7 @@ CLASS *class_get_class_from_classname(char *name) /**< a pointer to a \p NULL -t
 	- \p PT_EXTEND will expand the size of the class by the size of the property being mapped
 	- \p PT_EXTENDBY will expand the size of the class by the unsigned int provided in the next argument
 
-	@return a count of variables mapped; <=0 indicates not all mapped 
+	@return a count of variables mapped; <=0 indicates not all mapped
 	(-count successfully mapped before it failed), errno:
 	- \p E2BIG: variable name too long to store
 	- \p ENOMEM: memory allocation failed
@@ -700,12 +700,12 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					output_error("class_define_map(oclass='%s',...): PT_INHERIT unexpected; class already inherits properties from class %s", oclass->name, oclass->parent);
 					/* TROUBLESHOOT
 						This error is caused by an attempt to incorrectly specify a class that
-						inherits variables from more than one other class.  This is almost 
+						inherits variables from more than one other class.  This is almost
 						always caused by a bug in the module's constructor for that class.
 					 */
 					goto Error;
 				}
-				else 
+				else
 				{
 					char *classname = va_arg(arg,char*);
 					PASSCONFIG no_override;
@@ -734,35 +734,35 @@ int class_define_map(CLASS *oclass, /**< the object class */
 						goto Error;
 					}
 					no_override = ~(~oclass->parent->passconfig|oclass->passconfig); /* parent bool-implies child (p->q=~p|q) */
-					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT 
-							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT) 
+					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT
+							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT)
 							&& no_override&PC_PRETOPDOWN)
 						output_warning("class_define_map(oclass='%s',...): class '%s' suppresses parent class '%s' PRETOPDOWN sync behavior by omitting override", oclass->name, oclass->name, oclass->parent->name);
 						/*	TROUBLESHOOT
-							A class is suppressing the <i>presync</i> event implemented by its parent 
+							A class is suppressing the <i>presync</i> event implemented by its parent
 							even though the parent is published with a flag that indicates this is unsafe.  Presumably
 							this is deliberate, but the warning is given just in case it's not intended.
 						 */
-					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT 
-							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT) 
+					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT
+							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT)
 							&& no_override&PC_BOTTOMUP)
 						output_warning("class_define_map(oclass='%s',...): class '%s' suppresses parent class '%s' BOTTOMUP sync behavior by omitting override", oclass->name, oclass->name, oclass->parent->name);
 						/*	TROUBLESHOOT
-							A class is suppressing the <i>sync</i> event implemented by its parent 
+							A class is suppressing the <i>sync</i> event implemented by its parent
 							even though the parent is published with a flag that indicates this is unsafe.  Presumably
 							this is deliberate, but the warning is given just in case it's not intended.
 						 */
-					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT 
-							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT) 
+					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT
+							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT)
 							&& no_override&PC_POSTTOPDOWN)
 						output_warning("class_define_map(oclass='%s',...): class '%s' suppresses parent class '%s' POSTTOPDOWN sync behavior by omitting override", oclass->name, oclass->name, oclass->parent->name);
 						/*	TROUBLESHOOT
-							A class is suppressing the <i>postsync</i> event implemented by its parent 
+							A class is suppressing the <i>postsync</i> event implemented by its parent
 							even though the parent is published with a flag that indicates this is unsafe.  Presumably
 							this is deliberate, but the warning is given just in case it's not intended.
 						 */
-					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT 
-							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT) 
+					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT
+							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT)
 							&& no_override&PC_UNSAFE_OVERRIDE_OMIT)
 						output_warning("class_define_map(oclass='%s',...): class '%s' does not assert UNSAFE_OVERRIDE_OMIT when parent class '%s' does", oclass->name, oclass->name, oclass->parent->name);
 						/*	TROUBLESHOOT
@@ -781,7 +781,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				errno = EINVAL;
 				output_error("class_define_map(oclass='%s',...): expected keyword missing after '%s'", oclass->name, class_get_property_typename(proptype));
 				/*	TROUBLESHOOT
-					The structure of class is being published with some special properties that only work in the context 
+					The structure of class is being published with some special properties that only work in the context
 					of a published variable.  This is caused by a problem with the module that publishes the class.
 				 */
 				goto Error;
@@ -805,7 +805,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			else if (proptype==PT_KEYWORD && prop->ptype==PT_set)
 			{
 				char *keyword = va_arg(arg,char*);
-				unsigned int64 keyvalue = va_arg(arg, int64); 
+				unsigned int64 keyvalue = va_arg(arg, int64);
 				if (!class_define_set_member(oclass,prop->name,keyword,keyvalue))
 				{
 					errno = EINVAL;
@@ -820,7 +820,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			}
 			else if (proptype==PT_ACCESS)
 			{
-				PROPERTYACCESS pa = va_arg(arg,PROPERTYACCESS); 
+				PROPERTYACCESS pa = va_arg(arg,PROPERTYACCESS);
 				switch (pa) {
 				case PA_PUBLIC:
 				case PA_PROTECTED:
@@ -847,7 +847,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					errno = EINVAL;
 					output_error("class_define_map(oclass='%s',...): property size must be greater than 0", oclass->name, proptype);
 					/*	TROUBLESHOOT
-						A class is attempting to define a repeated variable (such as an array) that contains less than 1 item.  
+						A class is attempting to define a repeated variable (such as an array) that contains less than 1 item.
 						This is caused by a problem in the module that published the class.
 					 */
 					goto Error;
@@ -876,16 +876,16 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					if ((prop->unit = unit_find(unitspec))==NULL)
 						output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
 						/*	TROUBLESHOOT
-							A class is attempting to publish a variable using a unit that is not defined.  
+							A class is attempting to publish a variable using a unit that is not defined.
 							This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
 						 */
 				} CATCH (char *msg) {
 						output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
 						/*	TROUBLESHOOT
-							A class is attempting to publish a variable using a unit that is not defined.  
+							A class is attempting to publish a variable using a unit that is not defined.
 							This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
 							This error immediately follows a throw event with the same message.
 						 */
 				} ENDCATCH;
@@ -934,7 +934,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			{
 				output_error("class_define_map(oclass='%s',...): substructure of property '%s' substructure could not be published", oclass->name, prop->name);
 				/*	TROUBLESHOOT
-					A class is publishing a property that has a substructure, which couldn't be published.  
+					A class is publishing a property that has a substructure, which couldn't be published.
 					This must be corrected in the code the declares the property or publishes the class.
 				 */
 				errno = E2BIG;
@@ -950,8 +950,8 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			{
 				output_error("class_define_map(oclass='%s',...): property name '%s' is too big", oclass->name, name);
 				/*	TROUBLESHOOT
-					A class is publishing a property using a name that is too big for the system.  
-					Property names are limited in length.  
+					A class is publishing a property using a name that is too big for the system.
+					Property names are limited in length.
 					This must be corrected in the code the declares the property or publishes the class.
 				 */
 				errno = E2BIG;
@@ -960,7 +960,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			if (strcmp(name,"parent")==0){
 				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/*	TROUBLESHOOT
-					A class is attempting to publish a variable with a name normally reserved for object headers.  
+					A class is attempting to publish a variable with a name normally reserved for object headers.
 					This is not allowed.  If the class is implemented in a module, this is problem with the module.
 					If the class is declared in a GLM file, you must correct the problem to avoid unpredictable
 					simulation behavior.
@@ -1074,7 +1074,7 @@ FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTI
 	{
 		output_error("class_define_function(CLASS *class={name='%s',...}, FUNCTIONNAME functionname='%s', ...) the function name has already been defined", oclass->name, functionname);
 		/* TROUBLESHOOT
-			The function in question has already been defined for the class.  
+			The function in question has already been defined for the class.
 			Only one function of any given name is permitted in each class.
 			Remove or correct the duplicate function declaration and try again.
 		 */
@@ -1233,7 +1233,7 @@ void class_profiles(void)
 	}
 	free(index);
 	output_profile("================ ======== ======== ========");
-	output_profile("%-16.16s %7.3f %8.1f%% %8.1f\n", 
+	output_profile("%-16.16s %7.3f %8.1f%% %8.1f\n",
 		"Total", (double)total/CLOCKS_PER_SEC,100.0,1000*(double)total/CLOCKS_PER_SEC/object_get_count());
 
 }
@@ -1294,7 +1294,7 @@ static int buffer_write(char *buffer, size_t len, char *format, ...){
 		return 0;
 	if(check == 0)
 		return 0;
-	
+
 	va_start(ptr,format);
 	count = vsprintf(temp, format, ptr);
 	va_end(ptr);
@@ -1308,7 +1308,7 @@ static int buffer_write(char *buffer, size_t len, char *format, ...){
 	}
 }
 
-/** Generate the XSD snippet of a class 
+/** Generate the XSD snippet of a class
 	@return the number of characters written to the buffer
  **/
 int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD */
@@ -1376,7 +1376,7 @@ int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD *
 				for (key=prop->keywords; key!=NULL; key=key->next){
 					n += buffer_write(buffer+n, len-n, "%s%s", key==prop->keywords?"":"|", key->name);
 				}
-				n += buffer_write(buffer+n, len-n, "\"/>\n"); 
+				n += buffer_write(buffer+n, len-n, "\"/>\n");
 			}
 			n += buffer_write(buffer+n, len-n, "\t\t\t\t\t</xs:restriction>\n");
 			n += buffer_write(buffer+n, len-n, "\t\t\t\t</xs:simpleType>\n");

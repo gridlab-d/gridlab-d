@@ -66,8 +66,9 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"GS",SM_GS,
 		PT_KEYWORD,"NR",SM_NR,
 		NULL);
+	gl_global_create("powerflow::lu_solver",PT_char256,&LUSolverName,NULL);
 	gl_global_create("powerflow::acceleration_factor",PT_double,&acceleration_factor,NULL);
-	gl_global_create("powerflow::NR_iteration_limit",PT_int32,&NR_iteration_limit,NULL);
+	gl_global_create("powerflow::NR_iteration_limit",PT_int64,&NR_iteration_limit,NULL);
 	gl_global_create("powerflow::NR_superLU_procs",PT_int32,&NR_superLU_procs,NULL);
 	gl_global_create("powerflow::default_maximum_voltage_error",PT_double,&default_maximum_voltage_error,NULL);
 

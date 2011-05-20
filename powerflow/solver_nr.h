@@ -47,10 +47,13 @@ typedef struct {
 	unsigned char faultphases;	///< Flags for induced faults - used to prevent restoration of objects that should otherwise still be broken
 	int from;				///< index into bus data
 	int to;					///< index into bus data
+	int fault_link_below;    ///< index indicating next faulted link object below the current link object
 	bool *status;			///< status of the object, if it is a switch (restoration module usage)
 	unsigned char lnk_type;	///< type of link the object is - 0 = UG/OH line, 1 = Triplex line, 2 = switch, 3 = fuse, 4 = transformer, 5 = sectionalizer, 6 = recloser
 	double v_ratio;			///< voltage ratio (v_from/v_to)
 	char *name;				///< original name
+	complex *If_from;		///< 3 phase fault currents on the from side
+	complex *If_to;			///< 3 phase fault currents on the to side 
 } BRANCHDATA;
 
 typedef struct Y_NR{
@@ -66,6 +69,18 @@ typedef struct {
 	char size;		///< size of the admittance diagonal - assumed square, useful for smaller size
 } Bus_admit;
 
+typedef struct {
+	double *a_LU;
+	double *rhs_LU;
+	int *cols_LU;
+	int *rows_LU;
+} NR_SOLVER_VARS;
+
+//Function prototypes for external solver interface
+//void *ext_solver_init(void *ext_array);
+//void ext_solver_alloc(void *ext_array, unsigned int rowcount, unsigned int colcount, bool admittance_change);
+//int ext_solver_solve(void *ext_array, NR_SOLVER_VARS *system_info_vars, unsigned int rowcount, unsigned int colcount);
+//void ext_solver_destroy(void *ext_array, bool new_iteration);
 
 int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, bool *bad_computations);
 

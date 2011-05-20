@@ -1,0 +1,344 @@
+// This is a 4 node system containing 3 phase lines.
+// This will test all fault types supported.
+
+module powerflow{
+	solver_method NR;
+};
+module tape;
+module assert;
+module reliability {
+	maximum_event_length 1800;
+	report_event_log TRUE;
+};
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-01 00:00:22';
+}
+
+//setup reliability
+object fault_check {				//Fault check object - required to make powerflow properly handle faults
+	name test_fault;
+	check_mode ONCHANGE;			//Fault check mode - should be in ONCHANGE - reliability will change it
+	eventgen_object SLG_A;		//Link to eventgen object - used to handle "unscheduled" events - fuses and switch openings
+	output_filename testout.txt;	//"unsupported node" dump file
+};
+
+object metrics {
+	name testmetrics;
+	report_file testmetrics.txt;						//Name of the output file
+	module_metrics_object pwrmetrics;					//Module-specific "metrics" object - a powerflow metrics object is specified here
+	metrics_of_interest "SAIFI,SAIDI,CAIDI,ASAI,MAIFI";	//Metrics to output into the report file
+	customer_group "groupid=METERTEST";					//Search criteria for determining "customers" of the system - similar to collectors - this group is both three-phase and triplex meters
+	//customer_group "class=meter";						//"Customers" are only 3-phase meters on the system
+	//customer_group "class=triplex_meter";				//"Customers" are only triplex meters on the system
+	metric_interval 5 h; 								//Interval to run metrics - (separate from "simulation-long" metrics) - set to 0 for no metric updates (defaults to no interval updates)
+	report_interval 5 h;								//Interval to dump metric updates to the output file.
+}
+
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name SLG_A;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "SLG-A";			//Type of fault for the object to induce
+	manual_outages "overhead_line_34,2001-01-01 0:00:01,2001-01-01 00:00:02";
+}
+
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name SLG_B;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "SLG-B";			//Type of fault for the object to induce
+	manual_outages "overhead_line_34,2001-01-01 0:00:03,2001-01-01 00:00:04";
+}
+
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name SLG_C;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "SLG-C";			//Type of fault for the object to induce
+	manual_outages "overhead_line_34,2001-01-01 0:00:05,2001-01-01 00:00:06";
+}
+
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name DLG_AB;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "DLG-AB";			//Type of fault for the object to induce
+	manual_outages "overhead_line_34,2001-01-01 0:00:07,2001-01-01 00:00:08";
+}
+
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name DLG_BC;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "DLG-BC";			//Type of fault for the object to induce
+	manual_outages "overhead_line_34,2001-01-01 0:00:09,2001-01-01 00:00:10";
+}
+
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name DLG_CA;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "DLG-CA";			//Type of fault for the object to induce
+	manual_outages "overhead_line_34,2001-01-01 0:00:11,2001-01-01 00:00:12";
+}
+
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name LL_AB;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "LL-AB";			//Type of fault for the object to induce
+	manual_outages "overhead_line_34,2001-01-01 0:00:13,2001-01-01 00:00:14";
+}
+
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name LL_BC;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "LL-BC";			//Type of fault for the object to induce
+	manual_outages "overhead_line_34,2001-01-01 0:00:15,2001-01-01 00:00:16";
+}
+
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name LL_CA;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "LL-CA";			//Type of fault for the object to induce
+	manual_outages "overhead_line_34,2001-01-01 0:00:17,2001-01-01 00:00:18";
+}
+
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name TLG;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "TLG";			//Type of fault for the object to induce
+	manual_outages "overhead_line_34,2001-01-01 0:00:19,2001-01-01 00:00:20";
+}
+
+object eventgen {				//Event generation object - induces actual faults on the system - this one is a manual object
+	name TLL;
+	parent testmetrics;			//Parent it to the reliability metrics object
+	fault_type "TLL";			//Type of fault for the object to induce
+	manual_outages "overhead_line_34,2001-01-01 0:00:21,2001-01-01 00:00:22";
+}
+
+object power_metrics {		//Powerflow metrics object - performs 1366 metric calculations
+	name pwrmetrics;
+	base_time_value 1 h;	//Base time value for 1366-metrics.  Defaults to 1 minute
+}
+
+//setup powerflow system
+object overhead_line_conductor {
+	name overhead_line_conductor_100;
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor {
+	name overhead_line_conductor_101;
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	name line_spacing_200;
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration {
+	name line_configuration_300;
+	conductor_A overhead_line_conductor_100;
+	conductor_B overhead_line_conductor_100;
+	conductor_C overhead_line_conductor_100;
+	conductor_N overhead_line_conductor_101;
+	spacing line_spacing_200;
+}
+
+object transformer_configuration {
+	name transformer_configuration_400;
+	connect_type WYE_WYE;
+	power_rating 6000;
+	powerA_rating 2000;
+	powerB_rating 2000;
+	powerC_rating 2000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object node {
+	name node1;
+	bustype SWING;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	name overhead_line_12;
+	phases "ABCN";
+	from node1;
+	to node2;
+	length 2000;
+	configuration line_configuration_300;
+	object recorder {
+		property fault_current_in_A,fault_current_in_B,fault_current_in_C;
+		file swing_bus_fault_current.csv;
+		interval 1;
+		limit 23;
+	};
+	object complex_assert {
+		status ASSERT_TRUE;
+		target fault_current_in_A;
+		object player {
+			property value;
+			file ../swing_bus_fault_current_A.player;
+			loop 0;
+		};
+		object player {
+			property within;
+			file ../swing_bus_A_within.player;//asserted to within 1% of the largest fault current component
+			loop 0;
+		};
+
+		within 0.1;
+	};
+	object complex_assert {
+		target fault_current_in_B;
+		object player {
+			property value;
+			file ../swing_bus_fault_current_B.player;
+			loop 0;
+		};
+		object player {
+			property within;
+			file ../swing_bus_B_within.player;//asserted to within 1% of the largest fault current component
+			loop 0;
+		};
+
+		within 0.1;
+	};
+	object complex_assert {
+		target fault_current_in_C;
+		object player {
+			property value;
+			file ../swing_bus_fault_current_C.player;
+			loop 0;
+		};
+		object player {
+			property within;
+			file ../swing_bus_C_within.player;//asserted to within 1% of the largest fault current component
+			loop 0;
+		};
+
+		within 0.1;
+	};
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object transformer {
+	name transformer_23;
+	phases "ABCN";
+	from node2;
+	to node3;
+	configuration transformer_configuration_400;
+}
+
+object node {
+	name node3;
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
+}
+
+object overhead_line {
+	name overhead_line_34;
+	phases "ABCN";
+	from node3;
+	to load4;
+	length 2500;
+	configuration line_configuration_300;
+	object recorder {
+		property fault_current_in_A,fault_current_in_B,fault_current_in_C;
+		file fault_bus_fault_current.csv;
+		interval 1;
+		limit 23;
+	};
+	object complex_assert {
+		status ASSERT_TRUE;
+		target fault_current_in_A;
+		object player {
+			property value;
+			file ../fault_bus_fault_current_A.player;
+			loop 0;
+		};
+		object player {
+			property within;
+			file ../fault_bus_A_within.player;//asserted to within 1% of the largest fault current component
+			loop 0;
+		};
+
+		within 0.1;
+	};
+	object complex_assert {
+		target fault_current_in_B;
+		object player {
+			property value;
+			file ../fault_bus_fault_current_B.player;
+			loop 0;
+		};
+		object player {
+			property within;
+			file ../fault_bus_B_within.player;//asserted to within 1% of the largest fault current component
+			loop 0;
+		};
+
+		within 0.1;
+	};
+	object complex_assert {
+		target fault_current_in_C;
+		object player {
+			property value;
+			file ../fault_bus_fault_current_C.player;
+			loop 0;
+		};
+		object player {
+			property within;
+			file ../fault_bus_C_within.player;//asserted to within 1% of the largest fault current component
+			loop 0;
+		};
+
+		within 0.1;
+	};
+}
+
+object meter {
+	name load4;
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	groupid METERTEST;
+	nominal_voltage 2400;
+}
+object load {
+	name load4a;
+	parent load4;
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	constant_power_A +1800000.000+871779.789j;
+	constant_power_B +1800000.000+871779.789j;
+	nominal_voltage 2400;
+}

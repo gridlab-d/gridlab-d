@@ -31,10 +31,15 @@ Y_NR *Y_diag_update;//Y_diag_update store the row,column and value of updated di
 Y_NR *Y_Amatrix;//Y_Amatrix store all the elements of Amatrix in equation AX=B;
 Y_NR *Y_Work_Amatrix;
 
+//Generic solver variables
+NR_SOLVER_VARS matrices_LU;
+
 //SuperLU variables
-double *a_LU,*rhs_LU;
-int *perm_c, *perm_r, *cols_LU, *rows_LU;
+int *perm_c, *perm_r;
 SuperMatrix A_LU,B_LU;
+
+//External solver global
+void *ext_solver_glob_vars;
 
 void merge_sort(Y_NR *Input_Array, unsigned int Alen, Y_NR *Work_Array){	//Merge sorting algorithm - basis stolen from auction.cpp in market module
 	unsigned int split_point;
@@ -162,6 +167,23 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 	//Ensure bad computations flag is set first
 	*bad_computations = false;
+
+	if (matrix_solver_method==MM_EXTERN)
+	{
+		//Call the initialization routine
+		ext_solver_glob_vars = ((void *(*)(void *))(LUSolverFcns.ext_init))(ext_solver_glob_vars);
+
+		//Make sure it worked (allocation check)
+		if (ext_solver_glob_vars==NULL)
+		{
+			GL_THROW("External LU matrix solver failed to allocate memory properly!");
+			/*  TROUBLESHOOT
+			While attempting to allocate memory for the external LU solver, an error occurred.
+			Please try again.  If the error persists, ensure your external LU solver is behaving correctly
+			and coordinate with their development team as necessary.
+			*/
+		}
+	}
 
 	if (NR_admit_change)	//If an admittance update was detected, fix it
 	{
@@ -2939,11 +2961,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		///* Initialize parameters. */
 		m = 2*total_variables; n = 2*total_variables; nnz = size_Amatrix;
 
-		if (a_LU == NULL)	//First run
+		if (matrices_LU.a_LU == NULL)	//First run
 		{
 			/* Set aside space for the arrays. */
-			a_LU = (double *) gl_malloc(nnz *sizeof(double));
-			if (a_LU==NULL)
+			matrices_LU.a_LU = (double *) gl_malloc(nnz *sizeof(double));
+			if (matrices_LU.a_LU==NULL)
 			{
 				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 				/*  TROUBLESHOOT
@@ -2953,19 +2975,21 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				*/
 			}
 			
-			rows_LU = (int *) gl_malloc(nnz *sizeof(int));
-			if (rows_LU == NULL)
+			matrices_LU.rows_LU = (int *) gl_malloc(nnz *sizeof(int));
+			if (matrices_LU.rows_LU == NULL)
 				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
-			cols_LU = (int *) gl_malloc((n+1) *sizeof(int));
-			if (cols_LU == NULL)
+			matrices_LU.cols_LU = (int *) gl_malloc((n+1) *sizeof(int));
+			if (matrices_LU.cols_LU == NULL)
 				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
 			/* Create the right-hand side matrix B. */
-			rhs_LU = (double *) gl_malloc(m *sizeof(double));
-			if (rhs_LU == NULL)
+			matrices_LU.rhs_LU = (double *) gl_malloc(m *sizeof(double));
+			if (matrices_LU.rhs_LU == NULL)
 				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
+			if (matrix_solver_method==MM_SUPERLU)
+			{
 			///* Set up the arrays for the permutations. */
 			perm_r = (int *) gl_malloc(m *sizeof(int));
 			if (perm_r == NULL)
@@ -2997,6 +3021,17 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			B_LU.Mtype = SLU_GE;
 			B_LU.nrow = m;
 			B_LU.ncol = 1;
+			}
+			else if (matrix_solver_method == MM_EXTERN)	//External routine
+			{
+				//Run allocation routine
+				((void (*)(void *,unsigned int, unsigned int, bool))(LUSolverFcns.ext_alloc))(ext_solver_glob_vars,n,n,NR_admit_change);
+			}
+			else
+			{
+				GL_THROW("Invalid matrix solution method specified for NR solver!");
+				//Defined elsewhere
+			}
 
 			//Update tracking variable
 			prev_m = m;
@@ -3004,31 +3039,39 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		else if (NR_realloc_needed)	//Something changed, we'll just destroy everything and start over
 		{
 			//Get rid of all of them first
-			gl_free(a_LU);
-			gl_free(rows_LU);
-			gl_free(cols_LU);
-			gl_free(rhs_LU);
+			gl_free(matrices_LU.a_LU);
+			gl_free(matrices_LU.rows_LU);
+			gl_free(matrices_LU.cols_LU);
+			gl_free(matrices_LU.rhs_LU);
+
+			if (matrix_solver_method==MM_SUPERLU)
+			{
+				//Free up superLU matrices
 			gl_free(perm_r);
 			gl_free(perm_c);
+			}
+			//Default else - don't care - destructions are presumed to be handled inside external LU's alloc function
 
 			/* Set aside space for the arrays. - Copied from above */
-			a_LU = (double *) gl_malloc(nnz *sizeof(double));
-			if (a_LU==NULL)
+			matrices_LU.a_LU = (double *) gl_malloc(nnz *sizeof(double));
+			if (matrices_LU.a_LU==NULL)
 				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 			
-			rows_LU = (int *) gl_malloc(nnz *sizeof(int));
-			if (rows_LU == NULL)
+			matrices_LU.rows_LU = (int *) gl_malloc(nnz *sizeof(int));
+			if (matrices_LU.rows_LU == NULL)
 				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
-			cols_LU = (int *) gl_malloc((n+1) *sizeof(int));
-			if (cols_LU == NULL)
+			matrices_LU.cols_LU = (int *) gl_malloc((n+1) *sizeof(int));
+			if (matrices_LU.cols_LU == NULL)
 				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
 			/* Create the right-hand side matrix B. */
-			rhs_LU = (double *) gl_malloc(m *sizeof(double));
-			if (rhs_LU == NULL)
+			matrices_LU.rhs_LU = (double *) gl_malloc(m *sizeof(double));
+			if (matrices_LU.rhs_LU == NULL)
 				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
+			if (matrix_solver_method==MM_SUPERLU)
+			{
 			///* Set up the arrays for the permutations. */
 			perm_r = (int *) gl_malloc(m *sizeof(int));
 			if (perm_r == NULL)
@@ -3051,33 +3094,61 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			B_LU.Mtype = SLU_GE;
 			B_LU.nrow = m;
 			B_LU.ncol = 1;
+			}
+			else if (matrix_solver_method == MM_EXTERN)	//External routine
+			{
+				//Run allocation routine
+				((void (*)(void *,unsigned int, unsigned int, bool))(LUSolverFcns.ext_alloc))(ext_solver_glob_vars,n,n,NR_admit_change);
+			}
+			else
+			{
+				GL_THROW("Invalid matrix solution method specified for NR solver!");
+				//Defined elsewhere
+			}
 
 			//Update tracking variable
 			prev_m = m;
 		}
 		else if (prev_m != m)	//Non-reallocing size change occurred
 		{
+			if (matrix_solver_method==MM_SUPERLU)
+			{
 			//Update relevant portions
 			A_LU.nrow = n;
 			A_LU.ncol = m;
 
 			B_LU.nrow = m;
+			}
+			else if (matrix_solver_method == MM_EXTERN)	//External routine - call full reallocation, just in case
+			{
+				//Run allocation routine
+				((void (*)(void *,unsigned int, unsigned int, bool))(LUSolverFcns.ext_alloc))(ext_solver_glob_vars,n,n,NR_admit_change);
+			}
+			else
+			{
+				GL_THROW("Invalid matrix solution method specified for NR solver!");
+				//Defined elsewhere
+			}
 
 			//Update tracking variable
 			prev_m = m;
 		}
 
 #ifndef MT
+		if (matrix_solver_method==MM_SUPERLU)
+		{
 		/* superLU sequential options*/
 		set_default_options ( &options );
+		}
+		//Default else - not superLU
 #endif
 		
 		for (indexer=0; indexer<size_Amatrix; indexer++)
 		{
-			rows_LU[indexer] = Y_Amatrix[indexer].row_ind ; // row pointers of non zero values
-			a_LU[indexer] = Y_Amatrix[indexer].Y_value;
+			matrices_LU.rows_LU[indexer] = Y_Amatrix[indexer].row_ind ; // row pointers of non zero values
+			matrices_LU.a_LU[indexer] = Y_Amatrix[indexer].Y_value;
 		}
-		cols_LU[0] = 0;
+		matrices_LU.cols_LU[0] = 0;
 		indexer = 0;
 		temp_index_c = 0;
 		for ( jindexer = 0; jindexer< (size_Amatrix-1); jindexer++)
@@ -3088,29 +3159,31 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			if (tempb > tempa)
 			{
 				temp_index_c += 1;
-				cols_LU[temp_index_c] = indexer;
+				matrices_LU.cols_LU[temp_index_c] = indexer;
 			}
 		}
-		cols_LU[n] = nnz ;// number of non-zeros;
+		matrices_LU.cols_LU[n] = nnz ;// number of non-zeros;
 
 		for (temp_index_c=0;temp_index_c<m;temp_index_c++)
 		{ 
-			rhs_LU[temp_index_c] = deltaI_NR[temp_index_c];
+			matrices_LU.rhs_LU[temp_index_c] = deltaI_NR[temp_index_c];
 		}
 
+		if (matrix_solver_method==MM_SUPERLU)
+		{
 		////* Create Matrix A in the format expected by Super LU.*/
 		//Populate the matrix values (temporary value)
 		Astore = (NCformat*)A_LU.Store;
 		Astore->nnz = nnz;
-		Astore->nzval = a_LU;
-		Astore->rowind = rows_LU;
-		Astore->colptr = cols_LU;
+			Astore->nzval = matrices_LU.a_LU;
+			Astore->rowind = matrices_LU.rows_LU;
+			Astore->colptr = matrices_LU.cols_LU;
 	    
 		// Create right-hand side matrix B in format expected by Super LU
 		//Populate the matrix (temporary values)
 		Bstore = (DNformat*)B_LU.Store;
 		Bstore->lda = m;
-		Bstore->nzval = rhs_LU;
+			Bstore->nzval = matrices_LU.rhs_LU;
 
 #ifdef MT
 		//superLU_MT commands
@@ -3130,6 +3203,23 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 #endif
 
 		sol_LU = (double*) ((DNformat*) B_LU.Store)->nzval;
+		}
+		else if (matrix_solver_method==MM_EXTERN)
+		{
+			//Call the solver
+			info = ((int (*)(void *,NR_SOLVER_VARS *, unsigned int, unsigned int))(LUSolverFcns.ext_solve))(ext_solver_glob_vars,&matrices_LU,n,1);
+
+			//Point the solution to the proper place
+			sol_LU = matrices_LU.rhs_LU;
+		}
+		else
+		{
+			GL_THROW("Invalid matrix solution method specified for NR solver!");
+			/*  TROUBLESHOOT
+			An invalid matrix solution method was selected for the Newton-Raphson solver method.
+			Valid options are the superLU solver or an external solver.  Please select one of these methods.
+			*/
+		}
 
 		//Update bus voltages - check convergence while we're here
 		Maxmismatch = 0;
@@ -3260,7 +3350,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		//Turn off reallocation flag no matter what
 		NR_realloc_needed = false;
-		
+
+		if (matrix_solver_method==MM_SUPERLU)
+		{
 		/* De-allocate storage - superLU matrix types must be destroyed at every iteration, otherwise they balloon fast (65 MB norma becomes 1.5 GB) */
 #ifdef MT
 		//superLU_MT commands
@@ -3272,6 +3364,17 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		Destroy_CompCol_Matrix( &U_LU );
 		StatFree ( &stat );
 #endif
+		}
+		else if (matrix_solver_method==MM_EXTERN)
+		{
+			//Call destruction routine
+			((void (*)(void *, bool))(LUSolverFcns.ext_destroy))(ext_solver_glob_vars,newiter);
+		}
+		else	//Not sure how we get here
+		{
+			GL_THROW("Invalid matrix solution method specified for NR solver!");
+			//Defined above
+		}
 
 		//Break us out if we are done or are singular		
 		if (( newiter == false ) || (info!=0))
@@ -3290,15 +3393,22 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		gl_verbose("Max solver mismatch of failed solution %f\n",Maxmismatch);
 		return -Iteration;
 	}
-	else if (info!=0)	//failure of computations (singular matrix, etc.) - 2 = singular matrix it appears - positive values = process errors (singular, etc), negative values = input argument/syntax error
+	else if (info!=0)	//failure of computations (singular matrix, etc.)
 	{
+		//For superLU - 2 = singular matrix it appears - positive values = process errors (singular, etc), negative values = input argument/syntax error
+		if (matrix_solver_method==MM_SUPERLU)
+		{
+			gl_verbose("superLU failed out with return value %d",info);
+		}
+		else if (matrix_solver_method==MM_EXTERN)
+		{
+			gl_verbose("External LU solver failed out with return value %d",info);
+		}
+		//Defaulted else - shouldn't exist (or make it this far), but if it does, we're failing anyways
+
 		*bad_computations = true;	//Flag our output as bad
 		return 0;					//Just return some arbitrary value
 	}
 	else	//Must have converged 
 		return Iteration;
 }
-
-
-
-

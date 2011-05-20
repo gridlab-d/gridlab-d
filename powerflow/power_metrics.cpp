@@ -276,11 +276,18 @@ void power_metrics::reset_metrics_variables(bool annual_metrics)
 	SAIFI_num_int = 0.0;
 	SAIDI_num_int = 0.0;
 	MAIFI_num_int = 0.0;
+
+	//Reset interval outputs as well
+	SAIFI_int = 0.0;
+	SAIDI_int = 0.0;
+	CAIDI_int = 0.0;
+	ASAI_int = 1.0;	//Start at full reliability
+	MAIFI_int = 0.0;
 	
 	//Now check annual
 	if (annual_metrics == true)	//ASAI for whole simulation should really be reset here as well, but no rolling window implemented
 	{
-		ASAI_num_int = 1.0;	//Default ASAI to perfect reliability
+		ASAI_num_int = 0.0;	//Default ASAI to perfect reliability (no interruptions)
 	}
 }
 

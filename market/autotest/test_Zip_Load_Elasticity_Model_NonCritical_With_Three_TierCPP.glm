@@ -1,7 +1,7 @@
 clock {
      timezone EST+5EDT;
      timestamp '2009-06-01 00:00:00';
-     stoptime '2009-06-01 01:00:00';
+     stoptime '2009-06-06 00:00:00';
 }
 
 #set profiler=1;
@@ -45,7 +45,7 @@ object stubauction {
 	
     object player {
         property next.P;
-        file ../TOU_Pricing.player;
+        file ../TOU_Pricing_2Tier_OnlyHigh.player;
         loop 1;
     };        
 }
@@ -132,33 +132,40 @@ object house {
               heat_fraction 0.89;
 			  			  
 			  object passive_controller {
+				  
 				  period 300;
-				  control_mode ELASTICITY_MODEL;
-				  distribution_type NORMAL;
+				  control_mode ELASTICITY_MODEL;				 
 				  observation_object Market1;
 				  observation_property next.P;
-				  stdev_observation_property std24;
-				  expectation_object Market1;
-				  expectation_property avg24;
-				  comfort_level 2.00;		
 				  
 				  state_property multiplier;	
 				  
 				  critical_day 0;
 				  two_tier_cpp false;
-				  daily_elasticity 0.11;
-				  sub_elasticity_first_second 0.12;
-				  sub_elasticity_first_third 0.13;
-				  second_tier_hours 8;
-				  third_tier_hours 8;
-				  first_tier_hours 16;
-				  first_tier_price 0.05;
-				  second_tier_price 0.07;
-				  third_tier_price 0.1;		  
+				  
+				  daily_elasticity -0.04;
+				  sub_elasticity_first_second -0.22;
+				  
+				  second_tier_hours 12;
+				  first_tier_hours 12;
+				  
+				  linearize_elasticity true;
+				  first_tier_price 1.0;
+				  second_tier_price 2.0;
+				 
+				  old_first_tier_price 1.5;	
+				  old_second_tier_price 1.5;
+				  
+				object recorder {
+				  property observation;
+				  limit 100000000;
+				  interval 300;
+				  file results1.csv;
+				};				  
 			};
 			
 			 object recorder {
-				  property multiplier;
+				  property multiplier, actual_power.real, base_power;
 				  limit 100000000;
 				  interval 300;
 				  file results.csv;
@@ -173,8 +180,7 @@ object house {
 					file ../Elasticity_Multiplier_NonCritical_With_Three_TierCPP.player;
 					
 				 };
-		  };
+			};				
 		 
-		     		 
        };     
 }

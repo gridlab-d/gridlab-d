@@ -560,11 +560,11 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			//Determine which header to write
 			if (secondary_interruptions_count == true)
 			{
-				fprintf(FPVal,"Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,Desired Fault type,Implemented Fault Type,Number customers affected,Secondary number of customers affected\n");
+				fprintf(FPVal,"Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,Desired Fault type,\"Protective\" Device,Implemented Fault Type,Number customers affected,Secondary number of customers affected\n");
 			}
 			else //Nope
 			{
-				fprintf(FPVal,"Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,Desired Fault type,Implemented Fault Type,Number customers affected\n");
+				fprintf(FPVal,"Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,Desired Fault type,\"Protective\" Device,Implemented Fault Type,Number customers affected\n");
 			}
 
 			//Close the file handle
@@ -693,7 +693,7 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 //Perform post-event analysis (update computations, write event file if necessary) - no secondary count
-void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj, TIMESTAMP event_start_time, TIMESTAMP event_end_time, char *fault_type, char *impl_fault, int number_customers_int)
+void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faulting_obj, TIMESTAMP event_start_time, TIMESTAMP event_end_time, char *fault_type, char *impl_fault, int number_customers_int)
 {
 	DATETIME start_dt, end_dt;
 	TIMESTAMP outage_length;
@@ -732,8 +732,17 @@ void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj, TIMESTAMP event_
 		//Open the file handle
 		FPVal = fopen(report_file,"at");
 
+		//Print the name of the "safety" device?
+		if (faulting_obj==NULL)
+		{
 		//Print the details out
-		fprintf(FPVal,"%d,%d,%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%s,%s,%s,%s,%s,%d\n",annual_interval_event_count,metric_interval_event_count,start_dt.year,start_dt.month,start_dt.day,start_dt.hour,start_dt.minute,start_dt.second,end_dt.year,end_dt.month,end_dt.day,end_dt.hour,end_dt.minute,end_dt.second,fault_obj->oclass->name,fault_obj->name,event_obj->name,fault_type,impl_fault,number_customers_int);
+			fprintf(FPVal,"%d,%d,%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%s,%s,%s,N/A,%s,%s,%d\n",annual_interval_event_count,metric_interval_event_count,start_dt.year,start_dt.month,start_dt.day,start_dt.hour,start_dt.minute,start_dt.second,end_dt.year,end_dt.month,end_dt.day,end_dt.hour,end_dt.minute,end_dt.second,fault_obj->oclass->name,fault_obj->name,event_obj->name,fault_type,impl_fault,number_customers_int);
+		}
+		else
+		{
+			//Print the details out
+			fprintf(FPVal,"%d,%d,%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%s,%s,%s,%s,%s,%s,%d\n",annual_interval_event_count,metric_interval_event_count,start_dt.year,start_dt.month,start_dt.day,start_dt.hour,start_dt.minute,start_dt.second,end_dt.year,end_dt.month,end_dt.day,end_dt.hour,end_dt.minute,end_dt.second,fault_obj->oclass->name,fault_obj->name,event_obj->name,faulting_obj->name,fault_type,impl_fault,number_customers_int);
+		}
 
 		//Close the file
 		fclose(FPVal);
@@ -741,7 +750,7 @@ void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj, TIMESTAMP event_
 }
 
 //Perform post-event analysis (update computations, write event file if necessary) - assumes secondary count wanted
-void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj, TIMESTAMP event_start_time, TIMESTAMP event_end_time, char *fault_type, char *impl_fault, int number_customers_int, int number_customers_int_secondary)
+void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faulting_obj, TIMESTAMP event_start_time, TIMESTAMP event_end_time, char *fault_type, char *impl_fault, int number_customers_int, int number_customers_int_secondary)
 {
 	DATETIME start_dt, end_dt;
 	TIMESTAMP outage_length;
@@ -780,8 +789,15 @@ void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj, TIMESTAMP ev
 		//Open the file handle
 		FPVal = fopen(report_file,"at");
 
-		//Print the details out
-		fprintf(FPVal,"%d,%d,%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%s,%s,%s,%s,%s,%d,%d\n",annual_interval_event_count,metric_interval_event_count,start_dt.year,start_dt.month,start_dt.day,start_dt.hour,start_dt.minute,start_dt.second,end_dt.year,end_dt.month,end_dt.day,end_dt.hour,end_dt.minute,end_dt.second,fault_obj->oclass->name,fault_obj->name,event_obj->name,fault_type,impl_fault,number_customers_int,number_customers_int_secondary);
+		//Print the details out - Print the name of the "safety" device?
+		if (faulting_obj==NULL)
+		{
+			fprintf(FPVal,"%d,%d,%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%s,%s,%s,N/A,%s,%s,%d,%d\n",annual_interval_event_count,metric_interval_event_count,start_dt.year,start_dt.month,start_dt.day,start_dt.hour,start_dt.minute,start_dt.second,end_dt.year,end_dt.month,end_dt.day,end_dt.hour,end_dt.minute,end_dt.second,fault_obj->oclass->name,fault_obj->name,event_obj->name,fault_type,impl_fault,number_customers_int,number_customers_int_secondary);
+		}
+		else
+		{
+			fprintf(FPVal,"%d,%d,%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%s,%s,%s,%s,%s,%s,%d,%d\n",annual_interval_event_count,metric_interval_event_count,start_dt.year,start_dt.month,start_dt.day,start_dt.hour,start_dt.minute,start_dt.second,end_dt.year,end_dt.month,end_dt.day,end_dt.hour,end_dt.minute,end_dt.second,fault_obj->oclass->name,fault_obj->name,event_obj->name,faulting_obj->name,fault_type,impl_fault,number_customers_int,number_customers_int_secondary);
+		}
 
 		//Close the file
 		fclose(FPVal);

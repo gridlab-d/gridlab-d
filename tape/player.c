@@ -134,6 +134,7 @@ static TIMESTAMP player_read(OBJECT *obj)
 {
 	char buffer[64];
 	char timebuf[64], valbuf[64], tbuf[64];
+
 	int Y,m,d,H,M,S;
 	char tz[6];
 	struct player *my = OBJECTDATA(obj,struct player);

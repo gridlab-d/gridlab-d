@@ -636,8 +636,14 @@ TIMESTAMP generator_controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 		update_output = false;
 
 		//Update capacity factor - only done once per market clearing right now
+		if (gen_rating != 0.0)
+		{
 		capacity_factor = current_power_output / gen_rating;
-
+	}
+		else	//If "no output" (easy way to turn a generator off), just set capacity factor to zero
+		{
+			capacity_factor = 0.0;
+		}
 	}
 
 	//Apply the power output
@@ -798,7 +804,28 @@ void generator_controller::parse_bid_curve(OBJECT *thisobj, TIMESTAMP t0)
 		//Get p-value
 		temp_double = strtod(curr_ptr,&end_ptr);
 
-		//make sure it is increasing
+		//make sure it is increasing - so long as it isn't the first bid
+		if ((index==0) && (temp_double == 0.0))	//First bid and zero - basically we're off
+		{
+			//Zero full items
+			bid_curve_current.Curve_Info[index].power_stop = 0.0;
+			bid_curve_current.Curve_Info[index].price = 0.0;
+			bid_curve_current.Curve_Info[index].power_delta = 0;
+
+			//Perform same actions as below, then escape
+			number_bid_curve_sections = (num_entries + 1);
+			
+			//Store relevant values
+			bid_curve_current.bid_curve_parsed = t0;
+			bid_curve_current.number_bid_curve_sections = number_bid_curve_sections;
+
+			//Deflag the update (if it actually was one, may have just been init)
+			update_curve = false;
+
+			return;	//Get us out of here
+		}
+		//Defaulted else - just continue on our merry way
+
 		if (plast >= temp_double)	//Same or greater, implies wrong direction!
 		{
 			GL_THROW("generator_controller:%s does not have a monotonically increasing bid curve!",thisobj->name);
@@ -973,10 +1000,12 @@ EXPORT TIMESTAMP sync_generator_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG
 	catch (const char *msg)
 	{
 		gl_error("generator_controller %s (%s:%d): %s", obj->name, obj->oclass->name, obj->id, msg);
+		return TS_INVALID;
 	}
 	catch (...)
 	{
 		gl_error("generator_controller %s (%s:%d): unknown exception", obj->name, obj->oclass->name, obj->id);
+		return TS_INVALID;
 	}
 	return t2;
 }

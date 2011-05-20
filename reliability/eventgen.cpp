@@ -320,6 +320,9 @@ int eventgen::init(OBJECT *parent)
 			//Store the object
 			UnreliableObjs[index].obj_of_int = temp_obj;
 
+			//Ensure the link to the protective device is NULLed
+			UnreliableObjs[index].obj_made_int = NULL;
+
 			//Store failure time
 			UnreliableObjs[index].fail_time = temp_time_A;
 
@@ -432,6 +435,9 @@ int eventgen::init(OBJECT *parent)
 			}
 
 			UnreliableObjs[index].obj_of_int = temp_obj;
+
+			//Just set object causing an action to NULL for now
+			UnreliableObjs[index].obj_made_int = NULL;
 
 			//Zero time for now - will get updated on next run
 			UnreliableObjs[index].fail_time = 0;
@@ -644,7 +650,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 						*/
 					}
 					
-					returnval = ((int (*)(OBJECT *, char *, int *, TIMESTAMP *, void *))(*funadd))(UnreliableObjs[index].obj_of_int,fault_type,&UnreliableObjs[index].implemented_fault,&mean_repair_time,metrics_obj->Extra_Data);
+					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *, void *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].obj_made_int,fault_type,&UnreliableObjs[index].implemented_fault,&mean_repair_time,metrics_obj->Extra_Data);
 
 					if (returnval == 0)	//Failed :(
 					{
@@ -744,11 +750,11 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 				//Call the event updater - call relevant version
 				if (*secondary_interruption_cnt == true)
 				{
-					metrics_obj->event_ended_sec(hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type,impl_fault,UnreliableObjs[index].customers_affected,UnreliableObjs[index].customers_affected_sec);
+					metrics_obj->event_ended_sec(hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].obj_made_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type,impl_fault,UnreliableObjs[index].customers_affected,UnreliableObjs[index].customers_affected_sec);
 				}
 				else	//no secondaries
 				{
-					metrics_obj->event_ended(hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type,impl_fault,UnreliableObjs[index].customers_affected);
+					metrics_obj->event_ended(hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].obj_made_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type,impl_fault,UnreliableObjs[index].customers_affected);
 				}
 
 				//All done, unlock it
@@ -847,7 +853,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 						//Defined above
 					}
 					
-					returnval = ((int (*)(OBJECT *, char *, int *, TIMESTAMP *, void *))(*funadd))(temp_struct->objdetails.obj_of_int,temp_struct->event_type,&temp_struct->objdetails.implemented_fault,&mean_repair_time,metrics_obj->Extra_Data);
+					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *, void *))(*funadd))(temp_struct->objdetails.obj_of_int,&temp_struct->objdetails.obj_made_int,temp_struct->event_type,&temp_struct->objdetails.implemented_fault,&mean_repair_time,metrics_obj->Extra_Data);
 
 					if (returnval == 0)	//Failed :(
 					{
@@ -922,11 +928,11 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 					//Call the event updater - call relevant version
 					if (*secondary_interruption_cnt == true)
 					{
-						metrics_obj->event_ended_sec(hdr,temp_struct->objdetails.obj_of_int,temp_struct->objdetails.fail_time,temp_struct->objdetails.rest_time,temp_struct->event_type,impl_fault,temp_struct->objdetails.customers_affected,temp_struct->objdetails.customers_affected_sec);
+						metrics_obj->event_ended_sec(hdr,temp_struct->objdetails.obj_of_int,temp_struct->objdetails.obj_made_int,temp_struct->objdetails.fail_time,temp_struct->objdetails.rest_time,temp_struct->event_type,impl_fault,temp_struct->objdetails.customers_affected,temp_struct->objdetails.customers_affected_sec);
 					}
 					else	//no secondaries
 					{
-						metrics_obj->event_ended(hdr,temp_struct->objdetails.obj_of_int,temp_struct->objdetails.fail_time,temp_struct->objdetails.rest_time,temp_struct->event_type,impl_fault,temp_struct->objdetails.customers_affected);
+						metrics_obj->event_ended(hdr,temp_struct->objdetails.obj_of_int,temp_struct->objdetails.obj_made_int,temp_struct->objdetails.fail_time,temp_struct->objdetails.rest_time,temp_struct->event_type,impl_fault,temp_struct->objdetails.customers_affected);
 					}
 
 					//All done, unlock it
@@ -1350,6 +1356,7 @@ int eventgen::add_unhandled_event(OBJECT *obj_to_fault, char *event_type, TIMEST
 	//Populate the details
 	memcpy(new_struct->event_type,event_type,33*sizeof(char));
 	new_struct->objdetails.obj_of_int = obj_to_fault;
+	new_struct->objdetails.obj_made_int = NULL;
 	new_struct->objdetails.fail_time = fail_time;
 	new_struct->objdetails.rest_time = rest_time;
 	new_struct->objdetails.fail_length = TS_NEVER;
