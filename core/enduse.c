@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <math.h>
+#include <pthread.h>
 
 #include "platform.h"
 #include "output.h"
@@ -21,6 +22,7 @@
 #include "gridlabd.h"
 
 static enduse *enduse_list = NULL;
+static unsigned int n_enduses = 0;
 
 #ifdef _DEBUG
 static unsigned int enduse_magic = 0x8c3d7762;
@@ -31,6 +33,7 @@ int enduse_create(enduse *data)
 	memset(data,0,sizeof(enduse));
 	data->next = enduse_list;
 	enduse_list = data;
+	n_enduses++;
 
 	// check the power factor
 	data->power_factor = 1.0;
@@ -139,10 +142,189 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 	return (e->shape && e->shape->type != MT_UNKNOWN) ? e->shape->t2 : TS_NEVER;
 }
 
+typedef struct s_endusesyncdata {
+	unsigned int n;
+	pthread_t pt;
+	bool ok;
+	enduse *e;
+	unsigned int ne;
+	TIMESTAMP t0;
+} ENDUSESYNCDATA;
+
+static pthread_cond_t start = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t startlock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t done = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t donelock = PTHREAD_MUTEX_INITIALIZER;
+static TIMESTAMP next_t1, next_t2;
+static unsigned int donecount;
+
 clock_t enduse_synctime = 0;
+
+void *enduse_syncproc(void *ptr)
+{
+	ENDUSESYNCDATA *data = (ENDUSESYNCDATA*)ptr;
+	enduse *e;
+	unsigned int n;
+	TIMESTAMP t2;
+
+	// begin processing loop
+	while (data->ok) 
+	{
+		// lock access to start condition
+		pthread_mutex_lock(&startlock);
+
+		// wait for thread start condition
+		while (data->t0==next_t1) 
+			pthread_cond_wait(&start,&startlock);
+		
+		// unlock access to start count
+		pthread_mutex_unlock(&startlock);
+
+		// process the list for this thread
+		t2 = TS_NEVER;
+		for ( e=data->e, n=0 ; e!=NULL, n<data->ne ; e=e->next, n++ )
+		{
+			TIMESTAMP t = enduse_sync(e, PC_PRETOPDOWN, next_t1);
+			if (t<t2) t2 = t;
+		}
+
+		// signal completed condition
+		data->t0 = next_t1;
+
+		// lock access to done condition
+		pthread_mutex_lock(&donelock);
+
+		// signal thread is done for now
+		donecount--;
+		if ( t2<next_t2 ) next_t2 = t2;
+
+		// signal change in done condition
+		pthread_cond_broadcast(&done);
+
+		// unlock access to done count
+		pthread_mutex_unlock(&donelock);
+	}
+	pthread_exit((void*)0);
+	return (void*)0;
+}
+
 TIMESTAMP enduse_syncall(TIMESTAMP t1)
 {
-	enduse *e;
+	static unsigned int n_threads=0;
+	static ENDUSESYNCDATA *thread = NULL;
+	TIMESTAMP t2 = TS_NEVER;
+	clock_t ts = clock();
+	
+	if (n_enduses==0)
+		return t2;
+
+	// number of threads desired
+	if (n_threads==0)
+	{
+		enduse *e;
+		int n_items, en = 0;
+
+		output_debug("enduse_syncall setting up for %d enduses", n_enduses);
+
+		// determine needed threads
+		n_threads = global_threadcount;
+		if (n_threads>1)
+		{
+			unsigned int n;
+			if (n_enduses<n_threads*4)
+				n_threads = n_enduses/4;
+
+			// determine enduses per thread
+			n_items = n_enduses/n_threads;
+			n_threads = n_enduses/n_items;
+			if (n_threads*n_items<n_enduses) // not enough slots yet
+				n_threads++; // add one underused thread
+
+			output_debug("enduse_syncall is using %d of %d available threads", n_threads,global_threadcount);
+			output_debug("enduse_syncall is assigning %d enduses per thread", n_items);
+
+			// allocate thread list
+			thread = (ENDUSESYNCDATA*)malloc(sizeof(ENDUSESYNCDATA)*n_threads);
+			memset(thread,0,sizeof(ENDUSESYNCDATA)*n_threads);
+
+			// assign starting enduse for each thread
+			for (e=enduse_list; e!=NULL; e=e->next)
+			{
+				if (thread[en].ne==n_items)
+					en++;
+				if (thread[en].ne==0)
+					thread[en].e = e;
+				thread[en].ne++;
+			}
+
+			// create threads
+			for (n=0; n<n_threads; n++)
+			{
+				thread[n].ok = true;
+				if (pthread_create(&(thread[n].pt),NULL,enduse_syncproc,&(thread[n]))!=0)
+				{
+					output_fatal("enduse_sync thread creation failed");
+					thread[n].ok = false;
+				}
+				else 
+					thread[n].n = n;
+			}
+		}
+	}
+
+	// don't update if next_t2 < next_t1
+	if (next_t2>t1 && next_t2<TS_NEVER)
+		return next_t2;
+
+	// no threading required
+	if (n_threads<2)
+	{
+		// process list directly
+		enduse *e;
+		for (e=enduse_list; e!=NULL; e=e->next)
+		{
+			TIMESTAMP t3 = enduse_sync(e, PC_PRETOPDOWN, t1);
+			if (t3<t2) t2 = t3;
+		}
+		next_t2 = t2;
+	}
+	else 
+	{
+		// lock access to done count
+		pthread_mutex_lock(&donelock);
+
+		// initialize wait count
+		donecount = n_threads;
+
+		// lock access to start condition
+		pthread_mutex_lock(&startlock);
+
+		// update start condition
+		next_t1 = t1;
+		next_t2 = TS_NEVER;
+
+		// signal all the threads
+		pthread_cond_broadcast(&start);
+
+		// unlock access to start count
+		pthread_mutex_unlock(&startlock);
+
+		// begin wait 
+		while (donecount>0)
+			pthread_cond_wait(&done,&donelock);
+		output_debug("passed donecount==0 condition");
+
+		// unclock done count
+		pthread_mutex_unlock(&donelock);
+
+		// process results from all threads
+		if (next_t2<t2) t2=next_t2;
+	}
+
+	enduse_synctime += clock() - ts;
+	return t2;
+
+	/*enduse *e;
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t start = clock();
 	for (e=enduse_list; e!=NULL; e=e->next)
@@ -151,7 +333,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 		if (t3<t2) t2 = t3;
 	}
 	enduse_synctime += clock() - start;
-	return t2;
+	return t2;*/
 }
 
 int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)

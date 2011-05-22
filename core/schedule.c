@@ -11,6 +11,7 @@
 #include <math.h>
 #include <float.h>
 #include <ctype.h>
+#include <pthread.h>
 
 #include "platform.h"
 #include "object.h"
@@ -862,13 +863,192 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 	return sch->next_t;
 }
 
+typedef struct s_schedulesyncdata {
+	unsigned int n;
+	pthread_t pt;
+	bool ok;
+	SCHEDULE *sch;
+	unsigned int nsch;
+	TIMESTAMP t0;
+} SCHEDULESYNCDATA;
+
+static pthread_cond_t start = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t startlock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t done = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t donelock = PTHREAD_MUTEX_INITIALIZER;
+static TIMESTAMP next_t1, next_t2;
+static unsigned int donecount;
+
 clock_t schedule_synctime = 0;
+
+void *schedule_syncproc(void *ptr)
+{
+	SCHEDULESYNCDATA *data = (SCHEDULESYNCDATA*)ptr;
+	SCHEDULE *sch;
+	unsigned int n;
+	TIMESTAMP t2;
+
+	// begin processing loop
+	while ( data->ok )
+	{
+		// lock access to start condition
+		pthread_mutex_lock(&startlock);
+
+		// wait for thread start condition
+		while (data->t0==next_t1) 
+			pthread_cond_wait(&start,&startlock);
+		
+		// unlock access to start count
+		pthread_mutex_unlock(&startlock);
+
+		// process the list for this thread
+		t2 = TS_NEVER;
+		for ( sch=data->sch, n=0 ; sch!=NULL, n<data->nsch ; sch=sch->next, n++ )
+		{
+			TIMESTAMP t = schedule_sync(sch,next_t1);
+			if (t<t2) t2 = t;
+		}
+
+		// signal completed condition
+		data->t0 = next_t1;
+
+		// lock access to done condition
+		pthread_mutex_lock(&donelock);
+
+		// signal thread is done for now
+		donecount--;
+		if ( t2<next_t2 ) next_t2 = t2;
+
+		// signal change in done condition
+		pthread_cond_broadcast(&done);
+
+		// unlock access to done count
+		pthread_mutex_unlock(&donelock);
+	}
+	pthread_exit((void*)0);
+	return (void*)0;
+}
+
 /** synchronized all the schedules to the time given
     @return the time of the next schedule change
  **/
 TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is synchronized */
 {
-	SCHEDULE *sch;
+	static unsigned int n_threads=0;
+	static SCHEDULESYNCDATA *thread = NULL;
+	TIMESTAMP t2 = TS_NEVER;
+	clock_t ts = clock();
+
+	if (n_schedules==0)
+		return t2;
+
+	// number of threads desired
+	if (n_threads==0) 
+	{
+		SCHEDULE *sch;
+		int n_items, schn=0;
+
+		output_debug("loadshape_syncall setting up for %d shapes", n_schedules);
+
+		// determine needed threads
+		n_threads = global_threadcount;
+		if (n_threads>1)
+		{
+			unsigned int n;
+			if (n_schedules<n_threads*4)
+				n_threads = n_schedules/4;
+
+			// determine shapes per thread
+			n_items = n_schedules/n_threads;
+			n_threads = n_schedules/n_items;
+			if (n_threads*n_items<n_schedules) // not enough slots yet
+				n_threads++; // add one underused threads
+
+			output_debug("schedule_syncall is using %d of %d available threads", n_threads, global_threadcount);
+			output_debug("schedule_syncall is assigning %d shapes per thread", n_items);
+
+			// allocate thread list
+			thread = (SCHEDULESYNCDATA*)malloc(sizeof(SCHEDULESYNCDATA)*n_threads);
+			memset(thread,0,sizeof(SCHEDULESYNCDATA)*n_threads);
+
+			// assign starting shape for each thread
+			for (sch=schedule_list; sch!=NULL; sch=sch->next)
+			{
+				if (thread[schn].nsch==n_items)
+					schn++;
+				if (thread[schn].nsch==0)
+					thread[schn].sch = sch;
+				thread[schn].nsch++;
+			}
+
+			// create threads
+			for (n=0; n<n_threads; n++)
+			{
+				thread[n].ok = true;
+				if ( pthread_create(&(thread[n].pt),NULL,schedule_syncproc,&(thread[n]))!=0 )
+				{
+					output_fatal("loadshape_sync thread creation failed");
+					thread[n].ok = false;
+				}
+				else
+					thread[n].n = n;
+			}
+		}
+	}
+
+	// don't update if next_t2 < next_t1
+	if ( next_t2>t1 && next_t2<TS_NEVER )
+		return next_t2;
+
+	// no threading required
+	if (n_threads<2) 
+	{
+		// process list directly
+		SCHEDULE *sch;
+		for (sch=schedule_list; sch!=NULL; sch=sch->next)
+		{
+			TIMESTAMP t3 = schedule_sync(sch,t1);
+			if (t3<t2) t2 = t3;
+		}
+		next_t2 = t2;
+	}
+	else
+	{
+		// lock access to done count
+		pthread_mutex_lock(&donelock);
+
+		// initialize wait count
+		donecount = n_threads;
+
+		// lock access to start condition
+		pthread_mutex_lock(&startlock);
+
+		// update start condition
+		next_t1 = t1;
+		next_t2 = TS_NEVER;
+
+		// signal all the threads
+		pthread_cond_broadcast(&start);
+
+		// unlock access to start count
+		pthread_mutex_unlock(&startlock);
+
+		// begin wait
+		while (donecount>0) 
+			pthread_cond_wait(&done,&donelock);
+		output_debug("passed donecount==0 condition");
+
+		// unlock done count
+		pthread_mutex_unlock(&donelock);
+
+		// process results from all threads
+		if (next_t2<t2) t2=next_t2;
+	}
+
+	schedule_synctime += clock() - ts;
+	return t2;
+
+	/*SCHEDULE *sch;
 	static TIMESTAMP t2 = TS_NEVER;
 	clock_t start = clock();
 
@@ -885,8 +1065,9 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	}
 
 	schedule_synctime += clock() - start;
-	return t2;
+	return t2;*/
 }
+
 clock_t transform_synctime = 0;
 TIMESTAMP scheduletransform_syncall(TIMESTAMP t1, XFORMSOURCE restrict)
 {
