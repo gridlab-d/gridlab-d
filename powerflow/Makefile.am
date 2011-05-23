@@ -54,7 +54,7 @@ powerflow_la_SOURCES =                                         \
 	undergroundline_test.h                                      \
 	voltdump.cpp voltdump.h                                     \
 	volt_var_control.cpp           volt_var_control.h
-powerflow_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0
+powerflow_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0 -ldl
 powerflow_la_LIBADD = ../third_party/superLU_MT/libsuperlu.la
 
 uninstall-hook:
