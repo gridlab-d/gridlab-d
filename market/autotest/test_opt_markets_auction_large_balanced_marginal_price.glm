@@ -8,7 +8,7 @@
 //Expected clearing price: 67.5
 //Expected clearing quantity: 67
 
-#set tmp=../test_markets_auction_large_balanced_marginal_price
+#set tmp=../test_opt_markets_auction_large_balanced_marginal_price
 #setenv GRIDLABD=../../../core
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0

@@ -4,7 +4,7 @@
 // Test the use of alternate property value syntax (A) ? (B) : (C);
 //
 
-#set tmp=../test_alternate_syntax
+#set tmp=../test_opt_alternate_syntax
 #setenv GRIDLABD=../../../core
 
 class test {

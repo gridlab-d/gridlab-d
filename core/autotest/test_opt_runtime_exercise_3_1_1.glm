@@ -1,4 +1,4 @@
-#set tmp=../test_runtime_exercise_3_1_1
+#set tmp=../test_opt_runtime_exercise_3_1_1
 #setenv GRIDLABD=../../../core
 
 clock {

@@ -1,7 +1,7 @@
 // test_core_runtime_class.glm tests to see if runtime classes will compile in gridlab-d
 // d3y334
 
-#set tmp=../test_core_runtime_class
+#set tmp=../test_opt_core_runtime_class
 #setenv GRIDLABD=../../../core
 
 module market;
