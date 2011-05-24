@@ -272,10 +272,6 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 		}
 	}
 
-	// don't update if next_t2 < next_t1
-	if (next_t2>t1 && next_t2<TS_NEVER)
-		return next_t2;
-
 	// no threading required
 	if (n_threads<2)
 	{
