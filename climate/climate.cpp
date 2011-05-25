@@ -446,6 +446,9 @@ int climate::init(OBJECT *parent)
 	}
 	file.close();
 
+	/* initialize climate to starttime */
+	presync(gl_globalclock);
+
 	/* enable forecasting if specified */
 	if ( strcmp(forecast,"")!=0 && gl_forecast_create(obj,"")==NULL )
 	{
