@@ -939,8 +939,10 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t ts = clock();
 
-	if (n_schedules==0)
-		return t2;
+	// skip schedule_syncall if there's no schedule in the glm
+	if (n_schedules == 0)
+		return TS_NEVER;
+
 
 	// number of threads desired
 	if (n_threads==0) 

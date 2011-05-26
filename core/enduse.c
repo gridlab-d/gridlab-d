@@ -215,8 +215,9 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t ts = clock();
 	
-	if (n_enduses==0)
-		return t2;
+	// skip enduse_syncall if there's no enduse in the glm
+	if (n_enduses == 0)
+		return TS_NEVER;
 
 	// number of threads desired
 	if (n_threads==0)

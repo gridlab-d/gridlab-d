@@ -924,6 +924,10 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t ts = clock();
 
+	// skip loadshape_syncall if there's no loadshape in the glm
+	if (n_shapes == 0)
+		return TS_NEVER;
+
 	// number of threads desired
 	if (n_threads==0) 
 	{
