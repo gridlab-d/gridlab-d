@@ -9,7 +9,7 @@ if [ -f xerces*.tar -a ! -d xerces* ]; then
 	tar xvf xerces*.tar
 fi
 if [ "$(uname)" == "Darwin" ]; then
-	cd xercex-c-3.1.1
+	cd xerces-c-3.1.1
 	./configure CFLAGS="-arch x86_64" CXXFLAGS="-arch x86_64"
 	make
 	sudo make install
