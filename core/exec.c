@@ -123,7 +123,7 @@ int GetMachineCycleCount(void)
    _asm mov [ebx+4],edx;
    return cycles;
 }*/
-clock_t start, end;
+clock_t cstart, cend;
 
 #ifndef _MAX_PATH
 #define _MAX_PATH 1024
@@ -561,7 +561,6 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
 	TIMESTAMP sc, ls, st, eu, t2;
 	sc = schedule_syncall(t1);
-	//sc = schedule_syncall_ss(t1);
 	ls = loadshape_syncall(t1);// if (abs(t)<t2) t2=t;
 	st = scheduletransform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);// if (abs(t)<t2) t2=t;
 
@@ -584,6 +583,105 @@ void exec_sleep(unsigned int usec)
 #endif
 }
 
+typedef struct s_objsyncdata {
+	unsigned int n; // thread id 0~n_threads for this object rank list
+	pthread_t pt;
+	bool ok;
+	//void *item;
+	LISTITEM *ls;
+	unsigned int nObj; // number of obj in this object rank list
+	unsigned int t0;
+	int i; // index of mutex or cond this object rank list uses 
+} OBJSYNCDATA;
+
+/*static pthread_cond_t start = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t startlock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t done = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t donelock = PTHREAD_MUTEX_INITIALIZER;
+static unsigned int next_t1;
+static unsigned int donecount;*/
+
+#define MAX_NUM_MUTEX 10000000 // max number of mutex, has to be <= number of object rank list in one iteration.
+
+static pthread_mutex_t startlock[MAX_NUM_MUTEX];
+static pthread_mutex_t donelock[MAX_NUM_MUTEX];
+static pthread_cond_t start[MAX_NUM_MUTEX];
+static pthread_cond_t done[MAX_NUM_MUTEX];
+
+static unsigned int next_t1[MAX_NUM_MUTEX];
+static unsigned int donecount[MAX_NUM_MUTEX];
+static unsigned int n_threads[MAX_NUM_MUTEX]; //number of thread used in the threadpool of an object rank list
+
+static void *obj_syncproc(void *ptr)
+{
+	OBJSYNCDATA *data = (OBJSYNCDATA*)ptr;
+	LISTITEM *s;
+	unsigned int n;
+	int i = data->i;
+
+	/*OBJECT *obj = data->ls->data;
+	printf("%d %s %d\n", obj->id, obj->name, obj->rank);
+	for (s=data->ls, n=0; s!=NULL, n<data->nObj; s=s->next,n++) {
+		OBJECT *obj = s->data;
+		//printf("thread %d, obj: %d %s %d\n", data->n, obj->id, obj->name, obj->rank);
+		ss_do_object_sync(data->n, s->data);
+	}*/
+	
+	// begin processing loop
+	while (data->ok)
+	{
+		// lock access to start condition
+		pthread_mutex_lock(&startlock[i]);
+		// wait for thread start condition)
+		///printf("old data->t0= %d ,next_t1[%d]= %d \n", data->t0, i, next_t1[i]);
+		while (data->t0 == next_t1[i]) 
+			pthread_cond_wait(&start[i], &startlock[i]);
+		// unlock access to start count
+		pthread_mutex_unlock(&startlock[i]);
+
+		// process the list for this thread
+		for (s=data->ls, n=0; s!=NULL, n<data->nObj; s=s->next,n++) {
+			OBJECT *obj = s->data;
+			//printf("thread %d, obj: %d %s %d\n", data->n, obj->id, obj->name, obj->rank);
+			ss_do_object_sync(data->n, s->data);
+		}
+
+		// signal completed condition
+		data->t0 = next_t1[i];
+		///printf("new data->t0= %d ,next_t1[%d]= %d \n", data->t0, i, next_t1[i]);
+
+		// lock access to done condition
+		pthread_mutex_lock(&donelock[i]);
+		// signal thread is done for now
+		donecount[i] --; 
+		///printf("donecount[%d]-- = %d from thread %d \n", i, donecount[i], data->n);
+		// signal change in done condition
+		pthread_cond_broadcast(&done[i]);
+		//unlock access to done count
+		pthread_mutex_unlock(&donelock[i]);
+	}
+
+	/*LISTITEM *ptr;
+	int iPtr;
+
+	struct arg_data *mydata = (struct arg_data *) threadarg;
+	int thread = mydata->thread;
+	void *item = mydata->item;
+	int incr = mydata->incr;
+
+	iPtr = 0;
+	for (ptr = item; ptr != NULL; ptr=ptr->next) {
+		if (iPtr < incr) {
+			ss_do_object_sync(thread, ptr->data);
+			iPtr++;
+		}
+	}
+	return NULL;*/
+
+	pthread_exit((void*)0);
+	return (void*)0;
+}
+
 /** This is the main simulation loop
 	@return STATUS is SUCCESS if the simulation reached equilibrium, 
 	and FAILED if a problem was encountered.
@@ -601,13 +699,21 @@ STATUS exec_start(void)
 	int j, k;
 
 	//sjin: implement pthreads
-	pthread_t *thread_id;
+	//pthread_t *thread_id;
 	//sjin: add some variables for pthread implementation
 	LISTITEM *ptr;
 	int iPtr, incr;
 	struct arg_data *arg_data_array;
 
-//	OBJECT *obj;
+	// Only setup threadpool for each object rank list at the first iteration;
+	// After the first iteration, setTP = false;
+	bool setTP = true; 
+	//int n_threads; //number of thread used in the threadpool of an object rank list
+	OBJSYNCDATA *thread = NULL;
+
+	OBJECT *obj;
+
+	int nObjRankList, iObjRankList;
 
 	/* check for a model */
 	if (object_get_count()==0)
@@ -713,10 +819,40 @@ STATUS exec_start(void)
 	signal(SIGINT, exec_sighandler);
 	signal(SIGTERM, exec_sighandler);
 
+	// count how many object rank list in one iteration
+	nObjRankList = 0;
+	/* scan the ranks of objects */
+	for (pass = 0; ranks[pass] != NULL; pass++)
+	{
+		int i;
+		/* process object in order of rank using index */
+		for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
+		{
+			/* skip empty lists */
+			if (ranks[pass]->ordinal[i] == NULL) 
+				continue;
+			nObjRankList++; // count how many object rank list in one iteration
+		}
+	}
+	///printf("nObjRankList=%d\n",nObjRankList);
+
+	if (nObjRankList > MAX_NUM_MUTEX) {
+		output_error("Too many object rank lists, exceeds the MAX_NUM_MUTEX");
+		exit(0);
+	}
+
+	// Initialize mutex and cond for object rank lists
+	for(k=0;k<nObjRankList;k++) {
+		pthread_mutex_init(&startlock[k], NULL);
+		pthread_mutex_init(&donelock[k], NULL);
+		pthread_cond_init(&start[k], NULL);
+		pthread_cond_init(&done[k], NULL);
+	}
+
 	//sjin: GetMachineCycleCount
 	//mc_start_time = GetMachineCycleCount();
-	start = clock();
-	thread_id = (pthread_t *) malloc(global_threadcount * sizeof(pthread_t));
+	cstart = clock();
+	//thread_id = (pthread_t *) malloc(global_threadcount * sizeof(pthread_t));
 	/* main loop exception handler */
 	TRY {
 
@@ -725,7 +861,8 @@ STATUS exec_start(void)
 		while ( running = (sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0),
 			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 
 		{
-
+			///printf("\n!!!!!!!!!!!!!!!!!!!!!New iteration started:!!!!!!!!!!!!!!!!!!!!!!!\n\n");
+		
 			do_checkpoint();
 
 			//printf("Iteration increased!\n\n");
@@ -762,6 +899,7 @@ STATUS exec_start(void)
 				global_clock = sync.step_to;
 
 			/* synchronize all internal schedules */
+			///printf("global_clock=%d\n",global_clock);
 			sync.step_to = syncall_internals(global_clock);
 			if(sync.step_to!=TS_NEVER && sync.step_to <= global_clock){
 				THROW("internal property sync failure");
@@ -779,10 +917,14 @@ STATUS exec_start(void)
 					thread_data->data[j].step_to = TS_NEVER;
 				}
 			}
+
+			iObjRankList = -1;
 			/* scan the ranks of objects */
 			for (pass = 0; ranks[pass] != NULL; pass++)
 			{
 				int i;
+
+				///printf("\npass %d::::::::::::::::::::::::::::::::::::\n",pass);
 
 				/* process object in order of rank using index */
 				for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
@@ -790,7 +932,10 @@ STATUS exec_start(void)
 					/* skip empty lists */
 					if (ranks[pass]->ordinal[i] == NULL) 
 						continue;
-					
+
+					iObjRankList ++;
+					///printf("\nProcessing object rank list %d:..................\n", iObjRankList);
+
 					if (global_debug_mode)
 					{
 						LISTITEM *item;
@@ -803,102 +948,102 @@ STATUS exec_start(void)
 					}
 					else
 					{
-						//sjin: remove threadpool
-						//tp_exec(threadpool, ranks[pass]->ordinal[i]);
-
 						//sjin: if global_threadcount == 1, no pthread multhreading
 						if (global_threadcount == 1) {
 							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr=ptr->next) {
 								OBJECT *obj = ptr->data;
 								ss_do_object_sync(0, ptr->data);					
-								//printf("%d %s %d\n", obj->id, obj->name, obj->rank);
+								///printf("%d %s %d\n", obj->id, obj->name, obj->rank);
 							}
 							//printf("\n");
 						} else { //sjin: implement pthreads
-						incr = (int)ceil((float) ranks[pass]->ordinal[i]->size / global_threadcount);
-						//printf("pass %d, incr = %d, size = %d\n", pass, incr, ranks[pass]->ordinal[i]->size);
-						//thread_id = (pthread_t *) malloc(global_threadcount * sizeof(pthread_t));
-						// copying this further up
-						/* if the number of objects is less than or equal to the number of threads, each thread process one object */
-						if (incr <= 1) {
-							//printf("incr = %d\n", incr);
-							iPtr = -1; 
-							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr = ptr->next) {
-								iPtr ++;
-								//printf("<= %d: ranks[%d]->ordinal[%d]->size = %d\n", iPtr, pass, i, ranks[pass]->ordinal[i]->size);
-								arg_data_array[iPtr].thread = iPtr;
-								arg_data_array[iPtr].item = ptr;
-								arg_data_array[iPtr].incr = 1;
-									//printf("<=1: size = %d, iPtr = %d, incr = %d, thread id = %d\n", ranks[pass]->ordinal[i]->size, iPtr, incr, &thread_id[iPtr]);
-								pthread_create(&thread_id[iPtr], NULL, ss_do_object_sync_list, (void *) &arg_data_array[iPtr]);
-									//pthread_join(thread_id[iPtr], NULL);
-									//pthread_cancel(thread_id[iPtr]);
-									//printf("<=1:\tthread_id[%d].p = %p\t.x = %lu\n", iPtr, (void *) thread_id[iPtr].p, (unsigned long) thread_id[iPtr].x);
-							}
-							for (j = 0; j < iPtr+1; j++) 
-								pthread_join(thread_id[j], NULL);
-						/* if the number of objects is greater than the number of threads, each thread process the same number of 
-						   objects (incr), except that the last thread may process less objects */
-						} else {
-							//printf("incr = %d\n", incr);
-							iPtr = -1;
-							j = 0;
-							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr = ptr->next) {
-								iPtr ++;
-								if (iPtr % incr == 0) {
-									//printf("> thread %d, start from object %d: ranks[%d]->ordinal[%d]->size = %d\n", j, iPtr, pass, i, ranks[pass]->ordinal[i]->size);
-									arg_data_array[j].thread = j;
-									arg_data_array[j].item = ptr;
-									arg_data_array[j].incr = incr;
-									ptc_rv = pthread_create(&thread_id[j], NULL, ss_do_object_sync_list, (void *) &arg_data_array[j]);
-									j++;
-									if(ptc_rv){
-										switch(ptc_rv){
-											case EAGAIN:
-												output_warning("pthread_create failed: insufficient resources");
-												break;
-											case EINVAL:
-												output_warning("pthread_create failed: invalid NULL attribute???");
-												break;
-											case EPERM:
-												output_warning("pthread_create failed: inappropriate permissions");
-												break;
-											default:
-												output_warning("pthread_create failed: nonstandard return from pthread_create (%i)", ptc_rv);
-										}
-									}
+							int n_items,objn=0,n;
+							int n_obj = ranks[pass]->ordinal[i]->size;
+							/*printf("ranks[%d]->ordinal[%d]->size=%d\n",pass,i,n_obj);
+							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr=ptr->next) {
+								OBJECT *obj = ptr->data;
+								printf("%d %s %d\n", obj->id, obj->name, obj->rank);
+							}*/
+							// Only create threadpool for each object rank list at the first iteration. 
+							// Reuse the threadppol of each object rank list at all other iterations.
+							if (setTP == true) { 
+								incr = (int)ceil((float) n_obj / global_threadcount);
+								// if the number of objects is less than or equal to the number of threads, each thread process one object 
+								if (incr <= 1) {
+									n_threads[iObjRankList] = n_obj;
+									n_items = 1;
+								// if the number of objects is greater than the number of threads, each thread process the same number of 
+								// objects (incr), except that the last thread may process less objects 
+								} else {
+									n_threads[iObjRankList] = (int)ceil((float) n_obj / incr);
+									n_items = incr;
 								}
-							}
-							for (k = 0; k < j; k++) {
-								//printf("k=%d, j=%d\n",k,j);
-								ptj_rv = pthread_join(thread_id[k], NULL);
-								if(ptj_rv){
-									switch(ptj_rv){
-										case ESRCH:
-											output_warning("pthread_join failed: unrecognized thread ID");
-											break;
-										case EINVAL:
-											output_warning("pthread_join failed: call refers to non-joinable thread");
-											break;
-										case EDEADLK:
-											output_warning("pthread_join failed: deadlock detected");
-											break;
-										default:
-											output_warning("pthread_join failed: nonstandard return from pthread_create (%i)", ptc_rv);
-									}
+								if (n_threads[iObjRankList] > global_threadcount) {
+									output_error("Running threads > global_threadcount");
+									exit(0);
 								}
-								//printf("done!\n");
+								///printf("incr=%d,n_threads=%d,n_items=%d\n",incr,n_threads[iObjRankList],n_items);
+								///printf("\nn_threads[%d]=%d, n_items=%d\n",iObjRankList,n_threads[iObjRankList],n_items);
+								// allocate thread list
+								thread = (OBJSYNCDATA*)malloc(sizeof(OBJSYNCDATA)*n_threads[iObjRankList]);
+								memset(thread,0,sizeof(OBJSYNCDATA)*n_threads[iObjRankList]);
+								// assign starting obj for each thread
+								for (ptr=ranks[pass]->ordinal[i]->first;ptr!=NULL;ptr=ptr->next)
+								{
+									if (thread[objn].nObj==n_items)
+										objn++;
+									if (thread[objn].nObj==0) {
+										thread[objn].ls=ptr;
+									}
+									thread[objn].nObj++;
+								}
+								// create threads
+								for (n=0; n<n_threads[iObjRankList]; n++) {
+									//printf("thread %d: *********************\n",n);
+									thread[n].ok = true;
+									thread[n].i = iObjRankList;
+									/*for (ptr = thread[n].ls, k=0; ptr != NULL, k<thread[n].nObj; ptr=ptr->next, k++) {
+										OBJECT *obj = ptr->data;
+										printf("%d %s %d\n", obj->id, obj->name, obj->rank);
+									}*/
+									/*obj = thread[n].ls->data;
+									printf("%d %s %d\n", obj->id, obj->name, obj->rank);*/
+									if (pthread_create(&(thread[n].pt),NULL,obj_syncproc,&(thread[n]))!=0) {
+										output_fatal("obj_sync thread creation failed");
+										thread[n].ok = false;
+									} else
+										thread[n].n = n;
+								}
+
 							}
+														
+							// lock access to done count
+							pthread_mutex_lock(&donelock[iObjRankList]);
+							
+							// initialize wait count
+							donecount[iObjRankList] = n_threads[iObjRankList];
+							///printf("donecount[%d]=%d\n",iObjRankList,donecount[iObjRankList]);
+
+							// lock access to start condition
+							pthread_mutex_lock(&startlock[iObjRankList]);
+							// update start condition
+							next_t1[iObjRankList] ++;
+							///printf("next_t1[%d]=%d\n",iObjRankList,next_t1[iObjRankList]);
+							// signal all the threads
+							pthread_cond_broadcast(&start[iObjRankList]);
+							// unlock access to start count
+							pthread_mutex_unlock(&startlock[iObjRankList]);
+
+							// begin wait
+							while (donecount[iObjRankList]>0)
+								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
+							// unlock done count
+							pthread_mutex_unlock(&donelock[iObjRankList]);
+						
+							///printf("Done!\n");
 						}
 
-						//if (iPtr+1 < global_threadcount) 
-						/*if (incr <= 1) 
-							for (j = 0; j < iPtr+1; j++) 
-								pthread_join(thread_id[j], NULL);
-						else
-							for (j = 0; j < global_threadcount; j++) 
-								pthread_join(thread_id[j], NULL);*/
-						} //sjin: end of implementing pthreads
+						//Sleep(5);		
 
 						for (j = 0; j < thread_data->count; j++) {
 							if (thread_data->data[j].status == FAILED) {
@@ -909,6 +1054,7 @@ STATUS exec_start(void)
 					}
 				}
 
+
 				/* run all non-schedule transforms */
 				{
 					TIMESTAMP st = scheduletransform_syncall(global_clock,XS_DOUBLE|XS_COMPLEX|XS_ENDUSE);// if (abs(t)<t2) t2=t;
@@ -916,6 +1062,7 @@ STATUS exec_start(void)
 						sync.step_to = st;
 				}
 			}
+			setTP = false;
 
 			if (!global_debug_mode)
 			{
@@ -970,7 +1117,7 @@ STATUS exec_start(void)
 				sync.status = FAILED;
 				THROW("convergence failure");
 			}
-		}
+		} // end of while loop
 
 		/* disable signal handler */
 		signal(SIGINT,NULL);
@@ -997,8 +1144,8 @@ STATUS exec_start(void)
 	//sjin: GetMachineCycleCount
 	//mc_end_time = GetMachineCycleCount();
 	//printf("%ld\n",(mc_end_time-mc_start_time));
-	end = clock();
-	//printf("%f\n", (double)(end - start) / (double)CLOCKS_PER_SEC);
+	cend = clock();
+	//printf("%f\n", (double)(cend - cstart) / (double)CLOCKS_PER_SEC);
 
 	/* deallocate threadpool */
 	if (!global_debug_mode)
@@ -1012,6 +1159,14 @@ STATUS exec_start(void)
 		if (!global_keep_progress)
 			output_raw("                                                           \r"); 
 #endif
+	}
+
+	// Destroy mutex and cond
+	for(k=0;k<nObjRankList;k++) {
+		pthread_mutex_destroy(&startlock[k], NULL);
+		pthread_mutex_destroy(&donelock[k], NULL);
+		pthread_cond_destroy(&start[k], NULL);
+		pthread_cond_destroy(&done[k], NULL);
 	}
 
 	/* report performance */
