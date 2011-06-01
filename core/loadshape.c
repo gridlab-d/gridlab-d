@@ -861,12 +861,12 @@ typedef struct s_loadshapesyncdata {
 	TIMESTAMP t0;
 } LOADSHAPESYNCDATA;
 
-static pthread_cond_t start = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t startlock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t done = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t donelock = PTHREAD_MUTEX_INITIALIZER;
-static TIMESTAMP next_t1, next_t2;
-static unsigned int donecount;
+static pthread_cond_t start_ls = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t startlock_ls = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t done_ls = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t donelock_ls = PTHREAD_MUTEX_INITIALIZER;
+static TIMESTAMP next_t1_ls, next_t2_ls;
+static unsigned int donecount_ls;
 
 clock_t loadshape_synctime = 0;
 
@@ -881,46 +881,47 @@ void *loadshape_syncproc(void *ptr)
 	while ( data->ok )
 	{
 		// lock access to start condition
-		pthread_mutex_lock(&startlock);
+		pthread_mutex_lock(&startlock_ls);
 
 		// wait for thread start condition
-		while (data->t0==next_t1) 
-			pthread_cond_wait(&start,&startlock);
+		while (data->t0==next_t1_ls) 
+			pthread_cond_wait(&start_ls,&startlock_ls);
 		
 		// unlock access to start count
-		pthread_mutex_unlock(&startlock);
+		pthread_mutex_unlock(&startlock_ls);
 
 		// process the list for this thread
 		t2 = TS_NEVER;
 		for ( s=data->ls, n=0 ; s!=NULL, n<data->ns ; s=s->next, n++ )
 		{
-			TIMESTAMP t = loadshape_sync(s,next_t1);
+			TIMESTAMP t = loadshape_sync(s,next_t1_ls);
 			if (t<t2) t2 = t;
 		}
 
 		// signal completed condition
-		data->t0 = next_t1;
+		data->t0 = next_t1_ls;
 
 		// lock access to done condition
-		pthread_mutex_lock(&donelock);
+		pthread_mutex_lock(&donelock_ls);
 
 		// signal thread is done for now
-		donecount--;
-		if ( t2<next_t2 ) next_t2 = t2;
+		donecount_ls--;
+		///printf("action: donecount_ls-- = %d\n", donecount_ls);
+		if ( t2<next_t2_ls ) next_t2_ls = t2;
 
 		// signal change in done condition
-		pthread_cond_broadcast(&done);
+		pthread_cond_broadcast(&done_ls);
 
 		// unlock access to done count
-		pthread_mutex_unlock(&donelock);
+		pthread_mutex_unlock(&donelock_ls);
 	}
 	pthread_exit((void*)0);
 	return (void*)0;
 }
 TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 {
-	static unsigned int n_threads=0;
-	static LOADSHAPESYNCDATA *thread = NULL;
+	static unsigned int n_threads_ls=0;
+	static LOADSHAPESYNCDATA *thread_ls = NULL;
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t ts = clock();
 
@@ -929,7 +930,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 		return TS_NEVER;
 
 	// number of threads desired
-	if (n_threads==0) 
+	if (n_threads_ls==0) 
 	{
 		loadshape *s;
 		int n_items, ln=0;
@@ -937,57 +938,57 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 		output_debug("loadshape_syncall setting up for %d shapes", n_shapes);
 
 		// determine needed threads
-		n_threads = global_threadcount;
-		if (n_threads>1)
+		n_threads_ls = global_threadcount;
+		if (n_threads_ls>1)
 		{
 			unsigned int n;
-			if (n_shapes<n_threads*4)
-				n_threads = n_shapes/4;
+			if (n_shapes<n_threads_ls*4)
+				n_threads_ls = n_shapes/4;
 
 			// determine shapes per thread
-			n_items = n_shapes/n_threads;
-			n_threads = n_shapes/n_items;
-			if (n_threads*n_items<n_shapes) // not enough slots yet
-				n_threads++; // add one underused threads
+			n_items = n_shapes/n_threads_ls;
+			n_threads_ls = n_shapes/n_items;
+			if (n_threads_ls*n_items<n_shapes) // not enough slots yet
+				n_threads_ls++; // add one underused threads
 
-			output_debug("loadshape_syncall is using %d of %d available threads", n_threads, global_threadcount);
+			output_debug("loadshape_syncall is using %d of %d available threads", n_threads_ls, global_threadcount);
 			output_debug("loadshape_syncall is assigning %d shapes per thread", n_items);
 
 			// allocate thread list
-			thread = (LOADSHAPESYNCDATA*)malloc(sizeof(LOADSHAPESYNCDATA)*n_threads);
-			memset(thread,0,sizeof(LOADSHAPESYNCDATA)*n_threads);
+			thread_ls = (LOADSHAPESYNCDATA*)malloc(sizeof(LOADSHAPESYNCDATA)*n_threads_ls);
+			memset(thread_ls,0,sizeof(LOADSHAPESYNCDATA)*n_threads_ls);
 
 			// assign starting shape for each thread
 			for (s=loadshape_list; s!=NULL; s=s->next)
 			{
-				if (thread[ln].ns==n_items)
+				if (thread_ls[ln].ns==n_items)
 					ln++;
-				if (thread[ln].ns==0)
-					thread[ln].ls = s;
-				thread[ln].ns++;
+				if (thread_ls[ln].ns==0)
+					thread_ls[ln].ls = s;
+				thread_ls[ln].ns++;
 			}
 
 			// create threads
-			for (n=0; n<n_threads; n++)
+			for (n=0; n<n_threads_ls; n++)
 			{
-				thread[n].ok = true;
-				if ( pthread_create(&(thread[n].pt),NULL,loadshape_syncproc,&(thread[n]))!=0 )
+				thread_ls[n].ok = true;
+				if ( pthread_create(&(thread_ls[n].pt),NULL,loadshape_syncproc,&(thread_ls[n]))!=0 )
 				{
 					output_fatal("loadshape_sync thread creation failed");
-					thread[n].ok = false;
+					thread_ls[n].ok = false;
 				}
 				else
-					thread[n].n = n;
+					thread_ls[n].n = n;
 			}
 		}
 	}
 
 	// don't update if next_t2 < next_t1
-	if ( next_t2>t1 && next_t2<TS_NEVER )
-		return next_t2;
+	if ( next_t2_ls>t1 && next_t2_ls<TS_NEVER )
+		return next_t2_ls;
 
 	// no threading required
-	if (n_threads<2) 
+	if (n_threads_ls<2) 
 	{
 		// process list directly
 		loadshape *s;
@@ -996,39 +997,42 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 			TIMESTAMP t3 = loadshape_sync(s,t1);
 			if (t3<t2) t2 = t3;
 		}
-		next_t2 = t2;
+		next_t2_ls = t2;
 	}
 	else
 	{
 		// lock access to done count
-		pthread_mutex_lock(&donelock);
+		pthread_mutex_lock(&donelock_ls);
 
 		// initialize wait count
-		donecount = n_threads;
+		donecount_ls = n_threads_ls;
 
 		// lock access to start condition
-		pthread_mutex_lock(&startlock);
+		pthread_mutex_lock(&startlock_ls);
 
 		// update start condition
-		next_t1 = t1;
-		next_t2 = TS_NEVER;
+		next_t1_ls = t1;
+		next_t2_ls = TS_NEVER;
 
 		// signal all the threads
-		pthread_cond_broadcast(&start);
+		pthread_cond_broadcast(&start_ls);
 
 		// unlock access to start count
-		pthread_mutex_unlock(&startlock);
+		pthread_mutex_unlock(&startlock_ls);
 
 		// begin wait
-		while (donecount>0) 
-			pthread_cond_wait(&done,&donelock);
+		while (donecount_ls>0) {
+			///printf("status: donecount_ls-- = %d\n", donecount_ls);
+			///printf("thread_ls.ok=%d\n",thread_ls->ok);
+			pthread_cond_wait(&done_ls,&donelock_ls);
+		}
 		output_debug("passed donecount==0 condition");
 
 		// unlock done count
-		pthread_mutex_unlock(&donelock);
+		pthread_mutex_unlock(&donelock_ls);
 
 		// process results from all threads
-		if (next_t2<t2) t2=next_t2;
+		if (next_t2_ls<t2) t2=next_t2_ls;
 	}
 
 	loadshape_synctime += clock() - ts;
