@@ -1163,10 +1163,10 @@ STATUS exec_start(void)
 
 	// Destroy mutex and cond
 	for(k=0;k<nObjRankList;k++) {
-		pthread_mutex_destroy(&startlock[k], NULL);
-		pthread_mutex_destroy(&donelock[k], NULL);
-		pthread_cond_destroy(&start[k], NULL);
-		pthread_cond_destroy(&done[k], NULL);
+		pthread_mutex_destroy(&startlock[k]);
+		pthread_mutex_destroy(&donelock[k]);
+		pthread_cond_destroy(&start[k]);
+		pthread_cond_destroy(&done[k]);
 	}
 
 	/* report performance */
