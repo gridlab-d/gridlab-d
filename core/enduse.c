@@ -235,6 +235,10 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 			if (n_enduses<n_threads_ed*4)
 				n_threads_ed = n_enduses/4;
 
+			// only need 1 thread if n_enduses is less than 4
+			if (n_threads_ed == 0)
+				n_threads_ed = 1;
+
 			// determine enduses per thread
 			n_items = n_enduses/n_threads_ed;
 			n_threads_ed = n_enduses/n_items;

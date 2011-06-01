@@ -945,6 +945,10 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 			if (n_shapes<n_threads_ls*4)
 				n_threads_ls = n_shapes/4;
 
+			// only need 1 thread if n_shapes is less than 4
+			if (n_threads_ls == 0)
+				n_threads_ls = 1;
+
 			// determine shapes per thread
 			n_items = n_shapes/n_threads_ls;
 			n_threads_ls = n_shapes/n_items;

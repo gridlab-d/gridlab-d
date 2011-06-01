@@ -960,6 +960,10 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 			if (n_schedules<n_threads_sch*4)
 				n_threads_sch = n_schedules/4;
 
+			// only need 1 thread if n_schedules is less than 4
+			if (n_threads_sch == 0)
+				n_threads_sch = 1;
+
 			// determine shapes per thread
 			n_items = n_schedules/n_threads_sch;
 			n_threads_sch = n_schedules/n_items;
