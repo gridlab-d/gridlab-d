@@ -27,7 +27,7 @@ static SCHEDULE *schedule_list = NULL;
 static uint32 n_schedules = 0;
 static SCHEDULEXFORM *schedule_xformlist=NULL;
 
-#ifdef _DEBUG_SCHEDULE_CHKSUM
+#ifdef _DEBUG
 unsigned int schedule_checksum(SCHEDULE *sch)
 {
 	unsigned int sum = 0;
@@ -637,9 +637,10 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		if ((sch->flags&(SN_POSITIVE|SN_NONZERO|SN_BOOLEAN)) != 0 && ! schedule_validate(sch,sch->flags))
 			return NULL;
 
-#ifdef _DEBUG_SCHEDULE_CHKSUM
+#ifdef _DEBUG
 		/* calculate checksum */
 		sch->checksum = schedule_checksum(sch);
+		output_debug("schedule '%s' checksum is %0x08d", sch->name, sch->checksum);
 #endif
 
 		/* attach to schedule list */
@@ -662,7 +663,7 @@ SCHEDULE *schedule_new(void)
 
 	/* initialize */
 	memset(sch,0,sizeof(SCHEDULE));
-#ifdef _DEBUG_SCHEDULE_CHKSUM
+#ifdef _DEBUG
 	sch->magic1 = sch->magic2 = SCHEDULE_MAGIC; 
 #endif
 		sch->next_t = TS_NEVER;
@@ -878,8 +879,8 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 	double value;
 	int32 dtnext;
 	
-#ifdef _DEBUG_SCHEDULE_CHKSUM
-	if ( sch->magic1!=SCHEDULE_MAGIC || sch->magic2!=SCHEDULE_MAGIC || sch->checksum!=schedule_checksum(sch) )
+#ifdef _DEBUG
+	if ( sch->magic1!=SCHEDULE_MAGIC || sch->magic2!=SCHEDULE_MAGIC ) // || sch->checksum!=schedule_checksum(sch) )
 		output_warning("schedule '%s' may be corrupted", sch->name);
 #endif
 
