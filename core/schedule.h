@@ -46,11 +46,18 @@ typedef uint32 SCHEDULEINDEX;
 #define SET_CALENDAR(N,X) (N)|=(((X)&0x0f)<<20)
 #define SET_MINUTE(N,X) (N)|=((X)&0x0fffff)
 
+#ifdef _DEBUG
+#define SCHEDULE_MAGIC 0x47ab617e
+#endif
+
 /** The SCHEDULE structure defines POSIX style schedules */
 typedef struct s_schedule SCHEDULE;
 struct s_schedule {
-	/* the output value must be first for transform to stream */
 	double value;						/**< the current scheduled value */
+#ifdef _DEBUG
+	unsigned int magic1;	/* values between magic1 and magic2 should never change once compiled */
+#endif
+	/* the output value must be first for transform to stream */
 	char name[64];						/**< the name of the schedule */
 	char definition[65536];				/**< the definition string of the schedule */
 	char blockname[MAXBLOCKS][64];		/**< the name of each block */
@@ -63,6 +70,10 @@ struct s_schedule {
 	double abs[MAXBLOCKS];				/**< the sum of the absolute values for each block -- used to normalize */
 	unsigned int count[MAXBLOCKS];		/**< the number of values given in each block */
 	unsigned int minutes[MAXBLOCKS];	/**< the total number of minutes associate with each block */
+#ifdef _DEBUG
+	unsigned int magic2;
+	unsigned int checksum;
+#endif
 	TIMESTAMP next_t;					/**< the time of the next schedule event */
 	TIMESTAMP since;
 	double duration;					/**< the duration of the current scheduled value (in hours) */
