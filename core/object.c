@@ -1020,9 +1020,19 @@ int object_get_value_by_addr(OBJECT *obj, /**< the object from which to get the 
 int object_get_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value, int size)
 {
 	char temp[1024];
-	char *buffer = object_property_to_string(obj,name, temp, 1023);
+	char *buffer;
+	if(value == 0){
+		output_error("object_get_value_by_name: 'value' is a null pointer");
+		return 0;
+	}
+	if(size < 1){
+		output_error("object_get_value_by_name: invalid buffer size of %i", size);
+		return 0;
+	}
+	buffer = object_property_to_string(obj,name, temp, 1023);
 	if(buffer==NULL)
 		return 0;
+	
 	strncpy(value,buffer,size);
 	return 1;
 }

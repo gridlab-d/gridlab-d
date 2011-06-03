@@ -1127,13 +1127,23 @@ inline char *gl_find_file(char *name, char *path, int mode) { return callback->f
 #define gl_printtime (*callback->time.convert_from_timestamp)
 
 inline char *gl_strftime(DATETIME *dt, char *buffer, int size) { return callback->time.strdatetime(dt,buffer,size)?buffer:NULL;};
-inline char *gl_strftime(TIMESTAMP ts)
+inline char *gl_strftime(TIMESTAMP ts, char *buffer, int size)
 {
-	static char buffer[64];
-	strcpy(buffer,"(invalid time)");
+	//static char buffer[64];
 	DATETIME dt;
-	gl_localtime(ts,&dt);
-	gl_strftime(&dt,buffer,sizeof(buffer));
+	if(buffer == 0){
+		output_error("gl_strftime: buffer is a null pointer");
+		return 0;
+	}
+	if(size < 15){
+		output_error("gl_strftime: buffer size is too small");
+		return 0;
+	}
+	if(gl_localtime(ts,&dt)){
+		return gl_strftime(&dt,buffer,size);
+	} else {
+		strncpy(buffer,"(invalid time)", size);
+	}
 	return buffer;
 }
 

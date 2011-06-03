@@ -2746,6 +2746,7 @@ TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
 
 void house_e::check_controls(void)
 {
+	char buffer[256];
 	if (warn_control)
 	{
 		OBJECT *obj = OBJECTHDR(this);
@@ -2753,21 +2754,21 @@ void house_e::check_controls(void)
 		if (Tair<warn_low_temp || Tair>warn_high_temp)
 		{
 			gl_warning("house_e:%d (%s) air temperature excursion (%.1f degF) at %s", 
-				obj->id, obj->name?obj->name:"anonymous", Tair, gl_strftime(obj->clock));
+				obj->id, obj->name?obj->name:"anonymous", Tair, gl_strftime(obj->clock, buffer, 255));
 		}
 
 		/* check for mass temperature excursion */
 		if (Tmaterials<warn_low_temp || Tmaterials>warn_high_temp)
 		{
 			gl_warning("house_e:%d (%s) mass temperature excursion (%.1f degF) at %s", 
-				obj->id, obj->name?obj->name:"anonymous", Tmaterials, gl_strftime(obj->clock));
+				obj->id, obj->name?obj->name:"anonymous", Tmaterials, gl_strftime(obj->clock, buffer, 255));
 		}
 
 		/* check for heating equipment sizing problem */
 		if ((system_mode==SM_HEAT || system_mode==SM_AUX) && Teq<heating_setpoint)
 		{
 			gl_warning("house_e:%d (%s) heating equipement undersized at %s", 
-				obj->id, obj->name?obj->name:"anonymous", gl_strftime(obj->clock));
+				obj->id, obj->name?obj->name:"anonymous", gl_strftime(obj->clock, buffer, 255));
 		}
 
 		/* check for cooling equipment sizing problem */
@@ -2777,15 +2778,15 @@ void house_e::check_controls(void)
 			Teq>cooling_setpoint)
 		{
 			gl_warning("house_e:%d (%s) cooling equipement undersized at %s", 
-				obj->id, obj->name?obj->name:"anonymous", gl_strftime(obj->clock));
+				obj->id, obj->name?obj->name:"anonymous", gl_strftime(obj->clock, buffer, 255));
 		}
 
 		/* check for invalid event temperature */
 		if ((dTair>0 && Tevent<Tair) || (dTair<0 && Tevent>Tair))
 		{
-			char buffer[1024];
+			char mode_buffer[1024];
 			gl_warning("house_e:%d (%s) possible control problem (system_mode %s) -- Tevent-Tair mismatch with dTair (Tevent=%.1f, Tair=%.1f, dTair=%.1f) at %s", 
-				obj->id, obj->name?obj->name:"anonymous", gl_getvalue(obj,"system_mode", buffer, 1023), Tevent, Tair, dTair, gl_strftime(obj->clock));
+				obj->id, obj->name?obj->name:"anonymous", gl_getvalue(obj,"system_mode", mode_buffer, 1023), Tevent, Tair, dTair, gl_strftime(obj->clock, buffer, 255));
 		}
 	}
 }
