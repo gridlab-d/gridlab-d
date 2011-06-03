@@ -590,11 +590,11 @@ inline int gl_get_value_by_name(OBJECT *obj,
 
 #ifdef __cplusplus
 inline char *gl_getvalue(OBJECT *obj,
-						 PROPERTYNAME name)
+						 PROPERTYNAME name, char *buffer, int sz)
 {
-	static char buffer[1024];
-	memset(buffer,0,sizeof(buffer));
-	return gl_get_value_by_name(obj,name,buffer,sizeof(buffer))>=0 ? buffer : NULL;
+	//static char buffer[1024];
+	memset(buffer,0,sz);
+	return gl_get_value_by_name(obj,name,buffer,sz)>=0 ? buffer : NULL;
 }
 #endif
 

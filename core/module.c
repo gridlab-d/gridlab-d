@@ -632,7 +632,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 			char *value = NULL;
 			if((prop->access != PA_PUBLIC) && (prop->access != PA_REFERENCE))
 				continue;
-			value = object_property_to_string(obj,prop->name);
+			value = object_property_to_string(obj,prop->name, buffer, 1023);
 			if (value!=NULL){
 				count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", prop->name, value, prop->name);
 			}
@@ -640,7 +640,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 		pclass = oclass->parent;
 		while(pclass != NULL){ /* inherited properties */
 			for (prop=pclass->pmap;prop!=NULL && prop->oclass==pclass;prop=prop->next){
-				char *value = object_property_to_string(obj,prop->name);
+				char *value = object_property_to_string(obj,prop->name, buffer, 1023);
 				if (value!=NULL){
 					count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", prop->name, value, prop->name);
 				}

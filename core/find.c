@@ -160,7 +160,8 @@ CompareInt:
 static int compare_property(OBJECT *obj, char *propname, FINDOP op, void *value)
 {
 	/** @todo comparisons should type based and not using string representation (ticket #20) */
-	char *propval = object_property_to_string(obj,propname);
+	char buffer[1024];
+	char *propval = object_property_to_string(obj,propname, buffer, 1023);
 	if (propval==NULL) return 0;
 	return compare_string(propval,op,(char*)value);
 }
@@ -1320,6 +1321,7 @@ char *find_file(char *name, /**< the name of the file to find */
 	 */
 	if(access(name, mode) == 0){
 		strncpy(filepath, name, 1024);
+		//sprintf(filepath, "%s%s%s", global_workdir, pathsep, name);
 		return filepath;
 	}
 

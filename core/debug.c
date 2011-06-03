@@ -416,6 +416,7 @@ static int exec_add_watchpoint(OBJECT *obj, /**< the object being watched */
 							   PROPERTY *prop) /**< the property being watched */
 {
 	WATCHPOINT *wp = (WATCHPOINT*)malloc(sizeof(WATCHPOINT));
+	char buffer[1024];
 	if (wp==NULL)
 	{
 		output_error("exec_add_watchpoint() - memory allocation failed");
@@ -433,7 +434,7 @@ static int exec_add_watchpoint(OBJECT *obj, /**< the object being watched */
 	if (prop==NULL)
 		object_dump(wp->buffer,sizeof(wp->buffer),obj);
 	else
-		strcpy(wp->buffer,object_property_to_string(obj,prop->name));
+		strcpy(wp->buffer,object_property_to_string(obj,prop->name, buffer, 1023));
 	wp->next = NULL;
 	if (last_watchpoint!=NULL) 
 		last_watchpoint->next=wp;
@@ -1326,7 +1327,8 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 				}
 				else
 				{
-					char *tmp = object_property_to_string(obj,wp->prop->name);
+					char temp[1024];
+					char *tmp = object_property_to_string(obj,wp->prop->name, temp, 1023);
 					if (tmp!=NULL && strcmp(tmp,wp->buffer)!=0)
 					{
 						output_debug("watchpoint %d stopped on object %s property %s", wp->num, get_objname(obj), wp->prop->name);

@@ -290,7 +290,7 @@ complex *object_get_complex_quick(OBJECT *pObj, PROPERTY *prop);
 char *object_get_string(OBJECT *pObj, PROPERTY *prop);
 char *object_get_string_by_name(OBJECT *obj, char *name);
 FUNCTIONADDR object_get_function(CLASSNAME classname, FUNCTIONNAME functionname);
-char *object_property_to_string(OBJECT *obj, char *name);
+char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz);
 char *object_get_unit(OBJECT *obj, char *name);
 int object_set_rank(OBJECT *obj, OBJECTRANK rank);
 

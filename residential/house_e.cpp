@@ -2783,8 +2783,9 @@ void house_e::check_controls(void)
 		/* check for invalid event temperature */
 		if ((dTair>0 && Tevent<Tair) || (dTair<0 && Tevent>Tair))
 		{
+			char buffer[1024];
 			gl_warning("house_e:%d (%s) possible control problem (system_mode %s) -- Tevent-Tair mismatch with dTair (Tevent=%.1f, Tair=%.1f, dTair=%.1f) at %s", 
-				obj->id, obj->name?obj->name:"anonymous", gl_getvalue(obj,"system_mode"), Tevent, Tair, dTair, gl_strftime(obj->clock));
+				obj->id, obj->name?obj->name:"anonymous", gl_getvalue(obj,"system_mode", buffer, 1023), Tevent, Tair, dTair, gl_strftime(obj->clock));
 		}
 	}
 }
