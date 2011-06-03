@@ -27,7 +27,7 @@ static SCHEDULE *schedule_list = NULL;
 static uint32 n_schedules = 0;
 static SCHEDULEXFORM *schedule_xformlist=NULL;
 
-#ifdef _DEBUG
+#ifdef _DEBUG_SCHEDULE_CHKSUM
 unsigned int schedule_checksum(SCHEDULE *sch)
 {
 	unsigned int sum = 0;
@@ -637,7 +637,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		if ((sch->flags&(SN_POSITIVE|SN_NONZERO|SN_BOOLEAN)) != 0 && ! schedule_validate(sch,sch->flags))
 			return NULL;
 
-#ifdef _DEBUG
+#ifdef _DEBUG_SCHEDULE_CHKSUM
 		/* calculate checksum */
 		sch->checksum = schedule_checksum(sch);
 #endif
@@ -662,7 +662,7 @@ SCHEDULE *schedule_new(void)
 
 	/* initialize */
 	memset(sch,0,sizeof(SCHEDULE));
-#ifdef _DEBUG
+#ifdef _DEBUG_SCHEDULE_CHKSUM
 	sch->magic1 = sch->magic2 = SCHEDULE_MAGIC; 
 #endif
 		sch->next_t = TS_NEVER;
@@ -791,6 +791,7 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 {
 	SCHEDULEINDEX ref = 0;
 	DATETIME dt;
+	unsigned int cal, min;
 	
 	/* determine the local time */
 	if (!local_datetime(ts,&dt))
@@ -803,10 +804,16 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 	}
 
 	/* determine which calendar is used based on the weekday of Jan 1 and LY status */
-	SET_CALENDAR(ref, ((dt.weekday-dt.yearday+53*7)%7)*2 + ISLEAPYEAR(dt.year));
+	cal = ((dt.weekday-dt.yearday+53*7)%7)*2 + ISLEAPYEAR(dt.year);
 
 	/* compute the minute of year */
-	SET_MINUTE(ref, (dt.yearday*24 + dt.hour)*60 + dt.minute);
+	min=(dt.yearday*24 + dt.hour)*60 + dt.minute;
+
+	if ( cal>=14 || min>=60*24*366 )
+		output_error("schedule_index(): timestamp %" FMT_INT64 "d has calendar %d minute %d which is invalid", ts, cal, min);
+
+	SET_CALENDAR(ref, cal);
+	SET_MINUTE(ref, min);
 
 	/* got it */
 	return ref;
@@ -820,7 +827,9 @@ double schedule_value(SCHEDULE *sch,		/**< the schedule to read */
 {
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
-	return sch->data[sch->index[GET_CALENDAR(index)][GET_MINUTE(index)]];
+	if ( cal>=14 || min>=60*24*366 )
+		output_error("schedule_index(): index %d has calendar %d minute %d which is invalid", index, cal, min);
+	return sch->data[sch->index[cal][min]];
 }
 
 /** reads the time until the next change in the schedule 
@@ -829,20 +838,33 @@ double schedule_value(SCHEDULE *sch,		/**< the schedule to read */
 int32 schedule_dtnext(SCHEDULE *sch,			/**< the schedule to read */
 					 SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
-	return sch->dtnext[GET_CALENDAR(index)][GET_MINUTE(index)];
+	int32 cal = GET_CALENDAR(index);
+	int32 min = GET_MINUTE(index);
+	if ( cal>=14 || min>=60*24*366 )
+		output_error("schedule_dtnext(): index %d has calendar %d minute %d which is invalid", index, cal, min);
+	return sch->dtnext[cal][min];
 }
 
 int32 schedule_duration(SCHEDULE *sch,			/**< the schedule to read */
 					   SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
-	int block = (sch->index[GET_CALENDAR(index)][GET_MINUTE(index)]>>6)&MAXBLOCKS; // these change if MAXVALUES or MAXBLOCKS changes
+	int32 cal = GET_CALENDAR(index);
+	int32 min = GET_MINUTE(index);
+	int block;
+	if ( cal>=14 || min>=60*24*366 )
+		output_error("schedule_duration(): index %d has calendar %d minute %d which is invalid", index, cal, min);
+	block = (sch->index[cal][min]>>6)&MAXBLOCKS; // these change if MAXVALUES or MAXBLOCKS changes
 	return sch->minutes[block];
 }
 
 double schedule_weight(SCHEDULE *sch,			/**< the schedule to read */
 					   SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
 {
-	return sch->weight[sch->index[GET_CALENDAR(index)][GET_MINUTE(index)]];
+	int32 cal = GET_CALENDAR(index);
+	int32 min = GET_MINUTE(index);
+	if ( cal>=14 || min>=60*24*366 )
+		output_error("schedule_weight(): index %d has calendar %d minute %d which is invalid", index, cal, min);
+	return sch->weight[sch->index[cal][min]];
 }
 
 /** synchronize the schedule to the time given
@@ -856,7 +878,7 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 	double value;
 	int32 dtnext;
 	
-#ifdef _DEBUG
+#ifdef _DEBUG_SCHEDULE_CHKSUM
 	if ( sch->magic1!=SCHEDULE_MAGIC || sch->magic2!=SCHEDULE_MAGIC || sch->checksum!=schedule_checksum(sch) )
 		output_warning("schedule '%s' may be corrupted", sch->name);
 #endif
