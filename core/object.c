@@ -201,10 +201,10 @@ OBJECT *object_find_by_id(OBJECTNUM id){ /**< object id number */
 
 	@return a pointer to the object name string
  **/
-char *object_name(OBJECT *obj){ /**< a pointer to the object */
-	static char32 oname="(invalid)";
+char *object_name(OBJECT *obj, char *oname, int size){ /**< a pointer to the object */
+	//static char32 oname="(invalid)";
 	
-	convert_from_object(oname, sizeof(oname), &obj, NULL);
+	convert_from_object(oname, size, &obj, NULL);
 	
 	return oname;
 }
@@ -216,7 +216,9 @@ char *object_get_unit(OBJECT *obj, char *name){
 	PROPERTY *prop = object_get_property(obj, name);
 	
 	if(prop == NULL){
-		throw_exception("property '%s' not found in object '%s'", name, object_name(obj));
+		char *buffer = (char *)malloc(64);
+		memset(buffer, 0, 64);
+		throw_exception("property '%s' not found in object '%s'", name, object_name(obj, buffer, 63));
 		/* TROUBLESHOOT
 			The property for which the unit was requested does not exist.  
 			Depending on where this occurs it's either a bug or an error in the model.
@@ -628,12 +630,8 @@ char *object_get_string_by_name(OBJECT *obj, char *name)
 /* this function finds the property associated with the addr of an object member */
 static PROPERTY *get_property_at_addr(OBJECT *obj, void *addr)
 {
-	static PROPERTY *prop = NULL;
+	PROPERTY *prop = NULL;
 	int64 offset = (int)((char*)addr - (char*)(obj+1));
-
-	/* reuse last result if possible */
-	if(prop!=NULL && object_prop_in_class(obj, prop) && (int64)(prop->addr) == offset && prop->access != PA_PRIVATE)  /* warning: cast from pointer to integer of different size */
-		return prop;
 
 	/* scan through properties of this class and stop when no more properties or class changes */
 	for (prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next->oclass==prop->oclass?prop->next:NULL))
@@ -1086,7 +1084,8 @@ static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 		return -1;
 	}
 	if(rank >= object_get_count()){
-		output_error("%s: set_rank wigging out, rank > object count", object_name(first));
+		char b[74];
+		output_error("%s: set_rank wigging out, rank > object count", object_name(first, b, 64));
 		/*	TROUBLESHOOT
 			As a sanity check, the rank of an object should not exceed the number of objects in the model.  If the model
 			is deliberately playing with the ranks, please either reduce the manual rank adjustment, or add a number of
@@ -1096,11 +1095,13 @@ static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 	}
 	if(obj==first)
 	{
-		output_error("%s: set_rank failed, parent loopback has occurred", object_name(first));
+		char b[64];
+		output_error("%s: set_rank failed, parent loopback has occurred", object_name(first, b, 63));
 		return -1;
 	}
 	if(obj->flags & OF_RERANK){
-		output_error("%s: object flaged as already re-ranked", object_name(obj));
+		char b[64];
+		output_error("%s: object flaged as already re-ranked", object_name(obj, b, 63));
 		return -1;
 	} else {
 		obj->flags |= OF_RERANK;
@@ -1145,7 +1146,8 @@ int object_set_parent(OBJECT *obj, /**< the object to set */
 		return -1;
 	}
 	if(obj == parent){
-		output_error("object %s tried to set itself as its parent", object_name(obj));
+		char b[64];
+		output_error("object %s tried to set itself as its parent", object_name(obj, b, 63));
 		return -1;
 	}
 	obj->parent = parent;
@@ -1167,7 +1169,8 @@ int object_set_dependent(OBJECT *obj, /**< the object to set */
 		return -1;
 	}
 	if(dependent == NULL){
-		output_error("object %s tried to set a null object as a dependent", object_name(obj));
+		char b[64];
+		output_error("object %s tried to set a null object as a dependent", object_name(obj, b, 63));
 		return -1;
 	}
 	if(obj == dependent)
@@ -1177,7 +1180,6 @@ int object_set_dependent(OBJECT *obj, /**< the object to set */
 }
 
 /* Convert the value of an object property to a string
- * Note that this function uses a single static buffer.
  */
 char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
 {
@@ -1225,8 +1227,9 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 	if(oclass->sync==NULL)
 	{
 		char buffer[64];
+		char buffer2[64];
 		char *passname = (pass==PC_PRETOPDOWN?"PC_PRETOPDOWN":(pass==PC_BOTTOMUP?"PC_BOTTOMUP":(pass==PC_POSTTOPDOWN?"PC_POSTTOPDOWN":"<unknown>")));
-		output_fatal("object_sync(OBJECT *obj='%s', TIMESTAMP ts='%s', PASSCONFIG pass=%s): int64 sync_%s(OBJECT*,TIMESTAMP,PASSCONFIG) is not implemented in module %s", object_name(obj), convert_from_timestamp(ts,buffer,sizeof(buffer))?buffer:"<invalid>", passname, oclass->name, oclass->module->name);
+		output_fatal("object_sync(OBJECT *obj='%s', TIMESTAMP ts='%s', PASSCONFIG pass=%s): int64 sync_%s(OBJECT*,TIMESTAMP,PASSCONFIG) is not implemented in module %s", object_name(obj, buffer2, 63), convert_from_timestamp(ts,buffer,sizeof(buffer))?buffer:"<invalid>", passname, oclass->name, oclass->module->name);
 		/*	TROUBLESHOOT
 			The indicated sync function is not implemented by the class given.  
 			This happens when the PASSCONFIG flag indicates a particular sync
@@ -1833,7 +1836,7 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
 /*	Finds a name in the tree
  */
 static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name){
-	static OBJECTTREE **temptree = NULL;
+	OBJECTTREE **temptree = NULL;
 
 	if(tree == NULL){
 		return NULL;

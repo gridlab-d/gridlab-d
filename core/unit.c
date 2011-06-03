@@ -293,6 +293,7 @@ int unit_derived(char *name,char *derivation)
 	double scalar = 1.0;
 	char lastOp = '\0', nextOp = '\0';
 	UNIT *lastUnit = NULL;
+	UNIT local;
 	char *p = derivation;
 	
 	if (unit_find_raw(name) != NULL){
@@ -337,7 +338,6 @@ int unit_derived(char *name,char *derivation)
 			if (pUnit == NULL){
 				double val;
 				if (sscanf(term,"%lf",&val) == 1){
-					static UNIT local;
 					if (nextOp =='+' || nextOp == '-'){ /* bias operation */
 						UNIT bias = {"", 0, 0, 0, 0, 0, 0, 0, val, unit_precision(term)};
 						local = bias;

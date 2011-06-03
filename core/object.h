@@ -302,7 +302,7 @@ int object_dump(char *buffer, int size, OBJECT *obj);
 int object_saveall(FILE *fp);
 int object_saveall_xml(FILE *fp);
 
-char *object_name(OBJECT *obj);
+char *object_name(OBJECT *obj, char *, int);
 int convert_from_latitude(double,void*,int);
 int convert_from_longitude(double,void*,int);
 double convert_to_latitude(char *buffer);

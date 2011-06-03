@@ -422,6 +422,8 @@ int output_test(char *format,...) /**< \bprintf style argument list */
 {
 	static FILE *fp = NULL;
 	char minor_b[32], major_b[32];
+	char testoutputfilename[1024];
+	char commandline[256];
 	va_list ptr;
 
 	int result = 0;
@@ -438,7 +440,7 @@ int output_test(char *format,...) /**< \bprintf style argument list */
 	if (fp==NULL)
 	{
 		time_t now = time(NULL);
-		fp = fopen(global_getvar("testoutputfile", NULL, 0), "w"); /* new style - mh*/
+		fp = fopen(global_getvar("testoutputfile", testoutputfilename, 1023), "w"); /* new style - mh*/
 		/* fp = fopen(global_testoutputfile,"w"); */ /* old style -mh */
 		if (fp==NULL)
 		{
@@ -448,7 +450,7 @@ int output_test(char *format,...) /**< \bprintf style argument list */
 		/* fprintf(fp,"GridLAB-D Version %d.%d\n", global_version_major, global_version_minor); */
 		fprintf(fp,"GridLAB-D Version %s.%s\n", global_getvar("version.major", major_b, 32), global_getvar("version.minor", minor_b, 32));
 		fprintf(fp,"Test results from run started %s", asctime(localtime(&now)));
-		fprintf(fp,"Command line: %s\n", global_getvar("command_line", NULL, 0));
+		fprintf(fp,"Command line: %s\n", global_getvar("command_line", commandline, 255));
 	}
 
 	result = fprintf(fp,"%s\n", buffer);

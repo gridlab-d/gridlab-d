@@ -374,7 +374,8 @@ static int append_global(char* format,...)
 }
 static void mark_linex(char *filename, int linenum)
 {
-	if (global_getvar("noglmrefs",NULL,0)==NULL)
+	char buffer[64];
+	if (global_getvar("noglmrefs",buffer, 63)==NULL)
 		append_code("#line %d \"%s\"\n", linenum, forward_slashes(filename));
 }
 static void mark_line()
@@ -443,6 +444,7 @@ static char *outfilename = NULL;
 static int write_file(FILE *fp, char *data, ...)
 {
 	char buffer[65536];
+	char var_buf[64];
 	char *c, *d=buffer;
 	int len=0;
 	int diff = 0;
@@ -462,7 +464,7 @@ static int write_file(FILE *fp, char *data, ...)
 			len++;
 		}
 		d =  c + strlen("/*RESETLINE*/\n");
-		if (global_getvar("noglmrefs",NULL,0)==NULL)
+		if (global_getvar("noglmrefs",var_buf,63)==NULL)
 			len += fprintf(fp,"#line %d \"%s\"\n", ++outlinenum+1,forward_slashes(outfilename));
 	}
 	for (b=d; *b!='\0'; b++)
@@ -476,7 +478,8 @@ static int write_file(FILE *fp, char *data, ...)
 }
 static void reset_line(FILE *fp, char *file)
 {
-	if (global_getvar("noglmrefs",NULL,0)==NULL)
+	char buffer[64];
+	if (global_getvar("noglmrefs", buffer, 63)==NULL)
 		write_file(fp,"#line %s \"%s\"\n", outlinenum,forward_slashes(file));
 }
 
@@ -541,7 +544,8 @@ static int mkdirs(char *path)
 static STATUS compile_code(CLASS *oclass, int64 functions)
 {
 	char include_file_str[1024];
-	bool use_msvc = (global_getvar("use_msvc",NULL,0)!=NULL);
+	char buffer[256];
+	bool use_msvc = (global_getvar("use_msvc",buffer,255)!=NULL);
 
 	include_file_str[0] = '\0';
 
@@ -577,6 +581,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		char afile[1024];
 		char file[1024];
 		char tmp[1024];
+		char tbuf[64];
 		size_t ifs_off = 0;
 		INCLUDELIST *lptr = 0;
 
@@ -645,7 +650,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 					"static CLASS *myclass = NULL;\n"
 					"static int setup_class(CLASS *);\n\n",
 					include_file_str,
-					global_getvar("use_msvc",NULL,0)!=NULL
+					global_getvar("use_msvc",tbuf,63)!=NULL
 					?
 						"int __declspec(dllexport) dllinit() { return 0;};\n"
 						"int __declspec(dllexport) dllkill() { return 0;};\n"
@@ -710,7 +715,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				if (exec("%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile)==FAILED)
 					return FAILED;
 
-				if (global_getvar("control_textrel_shlib_t",NULL,0)!=NULL)
+				if (global_getvar("control_textrel_shlib_t",tbuf,63)!=NULL)
 				{
 					/* SE linux need the new module marked as relocatable (textrel_shlib_t) */
 					exec("chcon -t textrel_shlib_t '%s'", afile);
@@ -2836,6 +2841,7 @@ static int source_code(PARSER, char *code, int size)
 {
 	int _n = 0;
 	int nest = 0;
+	char buffer[64];
 	enum {CODE,COMMENTBLOCK,COMMENTLINE,STRING,CHAR} state=CODE;
 	while (*_p!='\0')
 	{
@@ -2893,7 +2899,7 @@ static int source_code(PARSER, char *code, int size)
 		case COMMENTBLOCK:
 			if (c1=='*' && c2=='/')
 			{
-				if (!global_debug_output && global_getvar("noglmrefs",NULL,0)==NULL)
+				if (!global_debug_output && global_getvar("noglmrefs",buffer,63)==NULL)
 					sprintf(code+strlen(code),"#line %d \"%c\"\n", linenum,forward_slashes(filename));
 				state = CODE;
 			}
@@ -2968,6 +2974,7 @@ static int class_intrinsic_function(PARSER, CLASS *oclass, int64 *functions, cha
 static int class_export_function(PARSER, CLASS *oclass, char *fname, int fsize, char *arglist, int asize, char *code, int csize)
 {
 	int startline;
+	char buffer[64];
 	START;
 	if WHITE ACCEPT;
 	if (LITERAL("export") 
@@ -2980,7 +2987,7 @@ static int class_export_function(PARSER, CLASS *oclass, char *fname, int fsize, 
 			mark_linex(filename,startline);
 			append_code("\tstatic int64 %s (%s) %s;\n/*RESETLINE*/\n",fname,arglist,code);
 
-			if (global_getvar("noglmrefs",NULL,0)==NULL)
+			if (global_getvar("noglmrefs",buffer,63)==NULL)
 				append_init("#line %d \"%s\"\n"
 					"\tif ((*(callback->function.define))(oclass,\"%s\",(FUNCTIONADDR)&%s::%s)==NULL) return 0;\n"
 					"/*RESETLINE*/\n", startline, forward_slashes(filename),
@@ -3118,6 +3125,7 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 	static char code[65536];
 	char arglist[1024];
 	char fname[64];
+	char buffer[64];
 	CLASS *eclass;
 	PROPERTYTYPE type;
 	PROPERTYNAME propname;
@@ -3132,7 +3140,7 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 	else if TERM(class_external_function(HERE,oclass,&eclass,fname,sizeof(fname)))
 	{
 		append_global("FUNCTIONADDR %s::%s = NULL;\n",oclass->name,fname);
-		if (global_getvar("noglmrefs",NULL,0)==NULL)
+		if (global_getvar("noglmrefs",buffer,63)==NULL)
 			append_init("#line %d \"%s\"\n\tif ((%s::%s=gl_get_function(\"%s\",\"%s\"))==NULL) throw \"%s::%s not defined\";\n", 
 				linenum, forward_slashes(filename), oclass->name, fname, 
 				eclass->name, fname, eclass->name, fname);
@@ -5004,6 +5012,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 	char *var, *val, *save;	// used by *nix
 	int i, count;			// used by *nix
 #endif
+	char buffer[64];
 	if (strncmp(line,MACRO "endif",6)==0)
 	{
 		if (nesting>0)
@@ -5033,9 +5042,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			output_error_raw("%s(%d): %sifdef macro missing term",filename,linenum,MACRO);
 			return FALSE;
 		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, NULL, 0)==NULL && getenv(value)==NULL)
+		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, buffer, 63)==NULL && getenv(value)==NULL)
 		strcpy(value, strip_right_white(term+1));
-		if (global_getvar(value, NULL, 0)==NULL && getenv(value)==NULL)
+		if (global_getvar(value, buffer, 63)==NULL && getenv(value)==NULL)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
 		nesting++;
@@ -5071,9 +5080,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			output_error_raw("%s(%d): %sifndef macro missing term",filename,linenum,MACRO);
 			return FALSE;
 		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, NULL, 0)!=NULL || getenv(value)!=NULL))
+		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, buffer, 63)!=NULL || getenv(value)!=NULL))
 		strcpy(value, strip_right_white(term+1));
-		if(global_getvar(value, NULL, 0)!=NULL || getenv(value)!=NULL)
+		if(global_getvar(value, buffer, 63)!=NULL || getenv(value)!=NULL)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
 		nesting++;
@@ -5090,7 +5099,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		value = global_getvar(var, NULL, 0);
+		value = global_getvar(var, buffer, 63);
 		if (value==NULL)
 		{
 			output_error_raw("%s(%d): %s is not defined", filename,linenum,var);

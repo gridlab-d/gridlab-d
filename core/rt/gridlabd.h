@@ -997,13 +997,17 @@ typedef FUNCTIONADDR function;
 
 /// Get the name of an object
 /// @return a pointer to a static buffer containing the object's name
-inline char* gl_name(OBJECT *my) ///< pointer to the object
+inline char* gl_name(OBJECT *my, char *buffer, size_t size)
 {
-	static char buffer[1024];
+	char temp[256];
+	if(my == NULL || buffer == NULL) return NULL;
 	if (my->name==NULL)
-		sprintf(buffer,"%s:%d", my->oclass->name, my->id);
+		sprintf(temp,"%s:%d", my->oclass->name, my->id);
 	else
-		sprintf(buffer,"%s", my->name);
+		sprintf(temp,"%s", my->name);
+	if(size < strlen(temp))
+		return NULL;
+	strcpy(buffer, temp);
 	return buffer;
 }
 
@@ -1021,9 +1025,9 @@ inline void gl_throw(char *msg, ...) ///< printf-style argument list
 
 /// Get the string value of global variable
 /// @return A pointer to a static buffer containing the value
-inline char *gl_global_getvar(char *name) ///< pointer to string containing the name of the global variable
+inline char *gl_global_getvar(char *name, char *buffer, int size) ///< pointer to string containing the name of the global variable
 {
-	return callback->global.getvar(name,NULL,0);
+	return callback->global.getvar(name, buffer, size);
 }
 
 /// Create an object in the core
@@ -1066,9 +1070,10 @@ template <class T> inline void gl_get_value(OBJECT *obj, ///< the object whose p
 											T &value) ///< a reference to the local value where the property's value is being copied
 {
 	T *ptr = (T*)gl_get_addr(obj,propname);
+	char buffer[256];
 	// @todo it would be a good idea to check the property type here
 	if (ptr==NULL)
-		gl_throw("property %s not found in object %s", propname, gl_name(obj));
+		gl_throw("property %s not found in object %s", propname, gl_name(obj, buffer, 255));
 	value = *ptr;
 }
 
@@ -1079,9 +1084,10 @@ template <class T> inline void gl_set_value(OBJECT *obj, ///< the object whose p
 											T &value) ///< a reference to the local value where the property's value is being copied
 {
 	T *ptr = (T*)gl_get_addr(obj,propname);
+	char buffer[256];
 	// @todo it would be a good idea to check the property type here
 	if (ptr==NULL)
-		gl_throw("property %s not found in object %s", propname, gl_name(obj));
+		gl_throw("property %s not found in object %s", propname, gl_name(obj, buffer, 255));
 	*ptr = value;
 }
 
@@ -1132,11 +1138,11 @@ inline char *gl_strftime(TIMESTAMP ts, char *buffer, int size)
 	//static char buffer[64];
 	DATETIME dt;
 	if(buffer == 0){
-		output_error("gl_strftime: buffer is a null pointer");
+		callback->output_error("gl_strftime: buffer is a null pointer");
 		return 0;
 	}
 	if(size < 15){
-		output_error("gl_strftime: buffer size is too small");
+		callback->output_error("gl_strftime: buffer size is too small");
 		return 0;
 	}
 	if(gl_localtime(ts,&dt)){

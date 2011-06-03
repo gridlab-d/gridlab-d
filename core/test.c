@@ -38,7 +38,8 @@ STATUS test_init(void)
 	{
 		if (object_init(obj)==FAILED)
 		{
-			output_error("object %s initialization failed", object_name(obj));
+			char b[64];
+			output_error("object %s initialization failed", object_name(obj, b, 63));
 			return FAILED;
 		}
 	}
@@ -65,10 +66,11 @@ STATUS test_start(int argc, char *argv[])
 {
 	int mod_test_num = 1;
 	char mod_test[100];
+	char buffer[64];
 	char *mod_name;
 	int test_result = 0;
 	sprintf(mod_test,"mod_test%d",mod_test_num++);
-	mod_name = global_getvar(mod_test, NULL, 0);
+	mod_name = global_getvar(mod_test, buffer, 63);
 	module_load("tape",argc,argv);
 	while(mod_name != NULL)
 	{
@@ -102,7 +104,7 @@ STATUS test_start(int argc, char *argv[])
 		if(test_result == 0)
 			return FAILED;
 		sprintf(mod_test,"mod_test%d",mod_test_num++);
-		mod_name = global_getvar(mod_test, NULL, 0);
+		mod_name = global_getvar(mod_test, buffer, 63);
 	}
 	
 	return SUCCESS;
@@ -274,9 +276,10 @@ STATUS original_test_end(int argc, char *argv[])
 	AGGREGATION *aggr;
 	char *exp = "class=node";
 	char *agg = "max(V.ang)";
+	char b[64];
 
 	for (obj=find_first(find); obj!=NULL; obj=find_next(find,obj))
-		output_message("object %s found", object_name(obj));
+		output_message("object %s found", object_name(obj, b, 63));
 	free(find);
 
 	output_message("Aggregation of %s over %s...", agg,exp);

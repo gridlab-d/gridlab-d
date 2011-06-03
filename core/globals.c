@@ -482,15 +482,20 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 	This function searches global, user-defined, and module variables for a match.
 **/
 char *global_getvar(char *name, char *buffer, int size){
-	static char local_buff[1024];
+	//static char local_buff[1024];
 	char temp[1024];
 	int len = 0;
 	GLOBALVAR *var = NULL;
 	if(buffer == NULL){
-		buffer = local_buff; /* might as well hook into the old func. -mh */
-		size = 1024;
+		output_error("global_getvar: buffer not supplied");
+		return 0;
+	}
+	if(name == NULL){
+		output_error("global_getvar: variable name not supplied");
+		return NULL;
 	}
 	if(size < 1){
+		output_error("global_getvar: invalid buffer size");
 		return NULL; /* user error ... could force it, but that's asking for trouble. */
 	}
 	var = global_find(name);

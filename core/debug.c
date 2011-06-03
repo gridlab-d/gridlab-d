@@ -1135,7 +1135,8 @@ Retry:
 			GLOBALVAR *var;
 			for (var=global_getnext(NULL); var!=NULL; var=global_getnext(var))
 			{
-				char *val = global_getvar(var->prop->name, NULL, 0);
+				char buffer[256];
+				char *val = global_getvar(var->prop->name, buffer, 255);
 				if (val!=NULL && strlen(val)>64)
 					strcpy(val+28,"...");
 				output_message("%-32.32s: \"%s\"", var->prop->name, val==NULL?"(error)":val);
@@ -1444,7 +1445,8 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 
 	/* check for stopped clock */
 	if (this_t < global_clock) {
-		output_error("%s: object %s stopped its clock (debug)!", simtime(), object_name(obj));
+		char b[64];
+		output_error("%s: object %s stopped its clock (debug)!", simtime(), object_name(obj, b, 63));
 		/* TROUBLESHOOT
 			This indicates that one of the objects in the simulator has encountered a
 			state where it cannot calculate the time to the next state.  This usually
@@ -1457,8 +1459,9 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 	} else {
 		/* check for iteration limit approach */
 		if (iteration_counter == 2 && this_t == global_clock) {
+			char b[64];
 			output_verbose("%s: object %s iteration limit imminent",
-								simtime(), object_name(obj));
+								simtime(), object_name(obj, b, 63));
 		}
 		else if (iteration_counter == 1 && this_t == global_clock) {
 			output_error("convergence iteration limit reached for object %s (debug)", get_objname(obj));

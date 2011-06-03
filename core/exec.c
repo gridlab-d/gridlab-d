@@ -381,7 +381,8 @@ static void ss_do_object_sync(int thread, void *item)
 
 	/* check for stopped clock */
 	if (this_t < global_clock) {
-		output_error("%s: object %s stopped its clock (exec)!", simtime(), object_name(obj));
+		char b[64];
+		output_error("%s: object %s stopped its clock (exec)!", simtime(), object_name(obj, b, 63));
 		/* TROUBLESHOOT
 			This indicates that one of the objects in the simulator has encountered a
 			state where it cannot calculate the time to the next state.  This usually
@@ -391,8 +392,9 @@ static void ss_do_object_sync(int thread, void *item)
 	} else {
 		/* check for iteration limit approach */
 		if (iteration_counter == 2 && this_t == global_clock) {
+			char b[64];
 			output_verbose("%s: object %s iteration limit imminent",
-								simtime(), object_name(obj));
+								simtime(), object_name(obj, b, 63));
 		}
 		else if (iteration_counter == 1 && this_t == global_clock) {
 			output_error("convergence iteration limit reached for object %s:%d", obj->oclass->name, obj->id);
@@ -453,7 +455,9 @@ static STATUS init_all(void)
 		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
 		{
 			if (object_init(obj)==FAILED){
-				THROW("init_all(): object %s initialization failed", object_name(obj));
+				char *b = (char *)malloc(64);
+				memset(b, 0, 64);
+				THROW("init_all(): object %s initialization failed", object_name(obj, b, 63));
 				/* TROUBLESHOOT
 					The initialization of the named object has failed.  Make sure that the object's
 					requirements for initialization are satisfied and try again.
@@ -490,7 +494,9 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2){
 			if(obj->in_svc <= t0 && obj->out_svc >= t0){
 				curr = object_commit(obj, t0, t2);
 				if(curr == FAILED){
-					THROW("commit_all(): object %s commit failed", object_name(obj));
+					char *b = (char *)malloc(64);
+					memset(b, 0, 64);
+					THROW("commit_all(): object %s commit failed", object_name(obj, b, 63));
 					/* TROUBLESHOOT
 						The commit function of the named object has failed.  Make sure that the object's
 						requirements for commit'ing are satisfied and try again.  (likely internal state aberations)
@@ -1245,7 +1251,8 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 
 	/* check for stopped clock */
 	if (this_t < global_clock) {
-		output_error("%s: object %s stopped its clock! (test)", simtime(), object_name(obj));
+		char b[64];
+		output_error("%s: object %s stopped its clock! (test)", simtime(), object_name(obj, b, 63));
 		/* TROUBLESHOOT
 			This indicates that one of the objects in the simulator has encountered a
 			state where it cannot calculate the time to the next state.  This usually
@@ -1255,8 +1262,9 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 	} else {
 		/* check for iteration limit approach */
 		if (iteration_counter == 2 && this_t == global_clock) {
+			char b[64];
 			output_verbose("%s: object %s iteration limit imminent",
-								simtime(), object_name(obj));
+								simtime(), object_name(obj, b, 63));
 		}
 		else if (iteration_counter == 1 && this_t == global_clock) {
 			output_error("convergence iteration limit reached for object %s:%d (test)", obj->oclass->name, obj->id);

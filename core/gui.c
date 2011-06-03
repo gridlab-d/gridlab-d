@@ -208,14 +208,15 @@ GUIENTITY *gui_get_next(GUIENTITY *entity)
 char *gui_get_value(GUIENTITY *entity)
 {
 	OBJECT *obj = gui_get_object(entity);
+	char buffer[64];
 	if (obj)
 	{
 		if (strcmp(entity->propertyname,"name")==0)
-			strcpy(entity->value,object_name(obj));
+			strcpy(entity->value,object_name(obj, buffer, 63));
 		else if (strcmp(entity->propertyname,"class")==0)
 			strcpy(entity->value,obj->oclass->name);
 		else if (strcmp(entity->propertyname,"parent")==0)
-			strcpy(entity->value,obj->parent?object_name(obj->parent):"");
+			strcpy(entity->value,obj->parent?object_name(obj->parent, buffer, 63):"");
 		else if (strcmp(entity->propertyname,"rank")==0)
 			sprintf(entity->value,"%d",obj->rank);
 		else if (strcmp(entity->propertyname,"clock")==0)

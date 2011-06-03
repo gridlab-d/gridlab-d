@@ -407,9 +407,9 @@ static void sync_scheduled(loadshape *ls, TIMESTAMP t1)
 	@return A string containing bits found in the bitfield (U=0, M=1, T=2, W=3, R=4, F=5, S=6, H=7)
  **/
 static char *weekdays="UMTWRFSH";
-char *schedule_weekday_to_string(unsigned char days)
+char *schedule_weekday_to_string(unsigned char days, char *result)
 {
-	static char result[9];
+	//static char result[9];
 	int i;
 	int n=0;
 	for (i=0; i<8; i++)
@@ -1046,6 +1046,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 {
 	char *modulation[] = {"unknown","amplitude","pulsewidth","frequency"};
+	char buffer[9];
 	loadshape *ls = (loadshape*)data;
 	switch (ls->type) {
 	case MT_ANALOG:
@@ -1097,7 +1098,7 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 		break;
 	case MT_SCHEDULED:
 		return sprintf(string,"type: scheduled; weekdays: %s; on-time: %.3g; off-time: %.3g; on-ramp: %.3g; off-ramp: %.3g; low: %.3g; high: %.3g; dt: %.3g m",
-			schedule_weekday_to_string(ls->params.scheduled.weekdays), ls->params.scheduled.on_time, ls->params.scheduled.off_time, 
+			schedule_weekday_to_string(ls->params.scheduled.weekdays, buffer), ls->params.scheduled.on_time, ls->params.scheduled.off_time, 
 			ls->params.scheduled.on_ramp, ls->params.scheduled.off_ramp, ls->params.scheduled.low, ls->params.scheduled.high, ls->params.scheduled.dt/60);
 	}
 	return 1;
