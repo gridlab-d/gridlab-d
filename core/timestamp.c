@@ -34,6 +34,7 @@
 #include "find.h"
 #include "output.h"
 #include "globals.h"
+#include "lock.h"
 
 #ifndef WIN32
 	#define _tzname tzname
@@ -78,19 +79,24 @@ char *timestamp_current_timezone(void){
 /** Determine the year of a GMT timestamp
 	Apply remainder if given
  **/
-int timestamp_year(TIMESTAMP ts, TIMESTAMP *remainder){
-	static int year = 0;
+int timestamp_year(TIMESTAMP ts, TIMESTAMP *remainder)
+{
+#ifdef USE_TS_CACHE
+	static int year = 0; /* reuse last result */
+#else
+	unsigned int year = (unsigned int)(ts/86400/365.24); /* estimate the year */
+#endif
 	int tsyear = 0;
 	
 	if (tszero[0] == -1){	/* need to initialize tszero array */
 		TIMESTAMP ts = 0;
-		int year = YEAR0;
+		int year0 = YEAR0;
 		int n = (365 + YEAR0_ISLY) * DAY; /* n ticks in year */
-		while (ts < TS_MAX && year < 2969){
-			tszero[year-YEAR0] = ts;
+		while (ts < TS_MAX && year0 < 2969){
+			tszero[year0-YEAR0] = ts;
 			ts += n; /* add n ticks from ts */
-			year++; /* add to year */
-			n = (ISLEAPYEAR(year) ? 366 : 365) * DAY; /* n ticks is next year */
+			year0++; /* add to year */
+			n = (ISLEAPYEAR(year0) ? 366 : 365) * DAY; /* n ticks is next year */
 		}
 	}
 	
@@ -130,11 +136,18 @@ int isdst(TIMESTAMP t)
  **/
 int local_tzoffset(TIMESTAMP t)
 {
+#ifdef USE_TS_CACHE
 	static old_t = 0;
 	static old_tzoffset = 0;
 	if (old_t==0 || old_t!=t)
+	{
 		old_tzoffset = tzoffset + isdst(t)?3600:0;
+		old_t = t;
+	}
 	return old_tzoffset;
+#else
+	return tzoffset + isdst(t)?3600:0;
+#endif
 }
 
 /** Converts a GMT timestamp to local datetime struct
@@ -148,19 +161,23 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	TIMESTAMP local;
 	int tsyear;
 	
+#ifdef USE_TS_CACHE
 	/* allow caching */
 	static TIMESTAMP old_ts =0;
 	static DATETIME old_dt;
+#endif
 
 	if(dt == NULL){
 		return 0;
 	}
 
+#ifdef USE_TS_CACHE
 	/* check cache */
 	if (old_ts == ts && old_ts!=0)
 		memcpy(dt,&old_dt,sizeof(DATETIME));
 	else
 		old_ts = 0;
+#endif
 
 	local = LOCALTIME(ts);
 	tsyear = timestamp_year(local, &rem);
@@ -243,9 +260,11 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	/* determine timezone */
 	strncpy(dt->tz, tzvalid ? (dt->is_dst ? tzdst : tzstd) : "GMT", sizeof(dt->tz));
 
+#ifdef USE_TS_CACHE
 	/* cache result */
 	old_ts = ts;
 	memcpy(&old_dt,dt,sizeof(old_dt));
+#endif
 	return 1;
 }
 
@@ -671,14 +690,17 @@ void load_tzspecs(char *tz){
 /** Establish the default timezone for time conversion.
 	\p NULL \p tzname uses \p TZ environment for default
  **/
-char *timestamp_set_tz(char *tz_name){
-	static char guess[64];
-
+char *timestamp_set_tz(char *tz_name)
+{
 	if (tz_name == NULL){
 		tz_name=getenv("TZ");
 	}
 	
-	if(tz_name == NULL){
+	if(tz_name == NULL)
+	{
+		static char guess[64];
+		unsigned int tzlock=0;
+
 		if (strcmp(_tzname[0], "") == 0){
 			THROW("timezone not identified");
 			/* TROUBLESHOOT
@@ -689,11 +711,13 @@ char *timestamp_set_tz(char *tz_name){
 			 */
 		}
 		
+		lock(&tzlock);
 		if (_timezone % 60 == 0){
 			sprintf(guess, "%s%d%s", _tzname[0], _timezone / 3600, _tzname[1]);
 		} else {
 			sprintf(guess, "%s%d:%d%s", _tzname[0], _timezone / 3600, _timezone / 60, _tzname[1]);
 		}
+		unlock(&tzlock);
 		tz_name = guess;
 	}
 	

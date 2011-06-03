@@ -53,11 +53,11 @@ typedef uint32 SCHEDULEINDEX;
 /** The SCHEDULE structure defines POSIX style schedules */
 typedef struct s_schedule SCHEDULE;
 struct s_schedule {
+	/* the output value must be first for transform to stream */
 	double value;						/**< the current scheduled value */
 #ifdef _DEBUG
 	unsigned int magic1;	/* values between magic1 and magic2 should never change once compiled */
 #endif
-	/* the output value must be first for transform to stream */
 	char name[64];						/**< the name of the schedule */
 	char definition[65536];				/**< the definition string of the schedule */
 	char blockname[MAXBLOCKS][64];		/**< the name of each block */
