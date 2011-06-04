@@ -912,9 +912,6 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 #ifdef _DEBUG
 	if ( sch->magic1!=SCHEDULE_MAGIC || sch->magic2!=SCHEDULE_MAGIC ) // || sch->checksum!=schedule_checksum(sch) )
 		output_warning("schedule '%s' may be corrupted", sch->name);
-	else if ( strcmp(sch->name,"heating2")==0 )
-		output_test("time %"FMT_INT64"d: schedule '%s', value %g, duration %g, next_t %"FMT_INT64"d",
-			t, sch->name, sch->value, sch->duration, sch->next_t);
 #endif
 
 	/* determine whether the current schedule is still valid */
