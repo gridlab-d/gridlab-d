@@ -607,7 +607,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 				if (sch->data[index0]==sch->data[index1])
 				{	
 					/* if we haven't reached the maximum delta-t (for unsigned char dtnext) */
-					if (sch->dtnext[calendar][t]<255)
+					if (sch->dtnext[calendar][t+1]<255)
 
 						/* add 1 minute to next values time */
 						sch->dtnext[calendar][t] = sch->dtnext[calendar][t+1] + 1;
@@ -628,6 +628,37 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		/* special case for invariant schedule */
 		if (invariant)
 			memset(sch->dtnext,0,sizeof(sch->dtnext)); /* zero means never */
+
+		/* check for gaps in the schedule */
+		else
+		{
+			int ngaps = 0;
+			int ingap = 0;
+			for (calendar=0; calendar<14; calendar++)
+			{
+				int t;
+				for ( t=0; t<sizeof(sch->dtnext[calendar])/sizeof(sch->dtnext[calendar][0])-1; t++ )
+				{
+					if ( sch->dtnext[calendar][t] == 0 && !ingap)
+					{
+						int day = t/60/24;
+						int hour = t/60 - day*24;
+						int minute = t - hour*60 - day*24*60;
+						output_debug("schedule '%s' gap in calendar %d at day %d, hour %d, minute %d lasting %d minutes", sch->name, day, hour, minute);
+						ingap = 1;
+						ngaps++;
+					}
+					else if ( sch->dtnext[calendar][t] != 0 && ingap )
+						ingap = 0;
+				}
+			}
+			if (ngaps>0)
+				output_error("schedule '%s' has %d gaps which may cause erroneous results", sch->name, ngaps);
+				/* TROUBLESHOOT
+					The definition given the schedule has missing data that will cause time synchronization problems.
+					Make sure that all the time covered by the schedule has values given.
+				 */
+		}
 
 		/* normalize */
 		if (sch->flags!=0)
@@ -878,39 +909,34 @@ double schedule_weight(SCHEDULE *sch,			/**< the schedule to read */
 TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchronized */
 						TIMESTAMP t)	/**< the time to which the schedule is to be synchronized */
 {
-	static TIMESTAMP last_t = 0;
-	static SCHEDULEINDEX index = {0};
-	double value;
-	int32 dtnext;
-	
 #ifdef _DEBUG
 	if ( sch->magic1!=SCHEDULE_MAGIC || sch->magic2!=SCHEDULE_MAGIC ) // || sch->checksum!=schedule_checksum(sch) )
 		output_warning("schedule '%s' may be corrupted", sch->name);
+	else if ( strcmp(sch->name,"heating2")==0 )
+		output_test("time %"FMT_INT64"d: schedule '%s', value %g, duration %g, next_t %"FMT_INT64"d",
+			t, sch->name, sch->value, sch->duration, sch->next_t);
 #endif
 
-	/* get the current schedule status */
-	if (t!=last_t) {
-		index = schedule_index(sch,t);
-		last_t = t;
-	}
-	value = schedule_value(sch,index);
-	dtnext = schedule_dtnext(sch,index)*60;
-
-	/* if the schedule is changing value */
-	if (value!=sch->value)
+	/* determine whether the current schedule is still valid */
+	if ( sch->next_t==TS_NEVER || t >= sch->next_t )
 	{
-		double duration = (double)schedule_duration(sch,index);
-		/* record the next value and its duration */
-		if(sch->value != value)
-			sch->since = last_t;
-		sch->value = value;
-		sch->duration = duration / 60;
-		sch->fraction = schedule_weight(sch,index) / duration;
-		
+		/* move to the new schedule */
+		SCHEDULEINDEX index = schedule_index(sch,t);
+		int32 dtnext = schedule_dtnext(sch,index)*60;
+#ifdef _DEBUG
+		if ( dtnext==0 )
+			output_debug("schedule_sync(SCHEDULE *sch={name: '%s',...}, TIMESTAMP t=%"FMT_INT64"d) has a dtnext==0", sch->name, t);
+#endif
+		sch->value = schedule_value(sch,index);
+		sch->duration = schedule_duration(sch,index)/60.0;
+		sch->next_t = (dtnext==0 ? TS_NEVER : t + dtnext -  t % 60);
+#ifdef _DEBUG
+		output_test("time %"FMT_INT64"d: schedule '%s', value %g, duration %g, dt_next %d, next_t %"FMT_INT64"d",
+			t, sch->name, sch->value, sch->duration, dtnext, sch->next_t);
+#endif
 	}
 
 	/* compute the time of the next schedule change */
-	sch->next_t = (dtnext==0 ? TS_NEVER : t + dtnext -  t % 60);
 	return sch->next_t;
 }
 
@@ -1104,25 +1130,6 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 
 	schedule_synctime += clock() - ts;
 	return t2;
-
-	/*SCHEDULE *sch;
-	static TIMESTAMP t2 = TS_NEVER;
-	clock_t start = clock();
-
-	// use cached time (because nothing can change the previous result)
-	if ( t2>t1 && t2<TS_NEVER )
-		return t2;
-
-	// process each schedule directly
-	t2 = TS_NEVER;
-	for (sch=schedule_list; sch!=NULL; sch=sch->next)
-	{
-		TIMESTAMP t3 = schedule_sync(sch,t1);
-		if (t3<t2) t2 = t3;
-	}
-
-	schedule_synctime += clock() - start;
-	return t2;*/
 }
 
 clock_t transform_synctime = 0;
@@ -1235,11 +1242,17 @@ int schedule_test(void)
 	return failed;
 }
 
-void schedule_dump(SCHEDULE *sch, char *file)
+void schedule_dumpall(char *file)
 {
-	FILE *fp = fopen(file,"w");
-	int calendar;
+	SCHEDULE *sch;
+	for (sch=schedule_list; sch!=NULL; sch=sch->next)
+		schedule_dump(sch, file, sch==schedule_list?"w":"a");
+}
 
+void schedule_dump(SCHEDULE *sch, char *file, char *mode)
+{
+	FILE *fp = fopen(file,mode);
+	int calendar;
 
 	fprintf(fp,"schedule %s { %s }\n", sch->name, sch->definition);
 	fprintf(fp,"sizeof(SCHEDULE) = %.3f MB\n", (double)sizeof(SCHEDULE)/1024/1024);
@@ -1249,9 +1262,9 @@ void schedule_dump(SCHEDULE *sch, char *file)
 		int daysinmonth[] = {31,((calendar&1)?29:28),31,30,31,30,31,31,30,31,30,31};
 		char *monthname[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 		fprintf(fp,"\nYears:");
-		for (y=1970; y<2039; y++)
+		for (y=1970; y<2030; y++)
 		{
-			DATETIME dt = {y,0,1,0,0,0};
+			DATETIME dt = {y,1,1,0,0,0};
 			TIMESTAMP ts = mkdatetime(&dt);
 			SCHEDULEINDEX ndx = schedule_index(sch,ts);
 			if (GET_CALENDAR(ndx)==calendar)
@@ -1275,17 +1288,26 @@ void schedule_dump(SCHEDULE *sch, char *file)
 			{
 				int hour;
 				char wd[] = "SMTWTFSH";
-				DATETIME dt = {year,month,day,0,0,0,0,0,""};
+				DATETIME dt = {year,month+1,1,0,0,0,0,0,""};
 				TIMESTAMP ts = mkdatetime(&dt);
 				local_datetime(ts,&dt);
-				fprintf(fp,"      %c %2d",wd[dt.weekday],day+1);
+				fprintf(fp,"     %c %2d ",wd[(dt.weekday+day)%7],day+1);
 				for (hour=0; hour<24; hour++)
 				{
 					int minute=0;
-					DATETIME dt = {year,month,day,hour,0,0};
+					DATETIME dt = {year,month+1,day+1,hour,0,0};
 					TIMESTAMP ts = mkdatetime(&dt);
 					SCHEDULEINDEX ndx = schedule_index(sch,ts);
-					fprintf(fp,"%5g%c",schedule_value(sch,ndx),schedule_dtnext(sch,ndx)<60?'*':' ');
+					unsigned int dtn = schedule_dtnext(sch,ndx);
+					double value = schedule_value(sch,ndx);
+					if ( dtn < 60 )
+					{
+						SCHEDULEINDEX ndx2 = schedule_index(sch,ts+dtn);
+						double value2 = schedule_value(sch,ndx2);
+						fprintf(fp,"%5g%c",schedule_value(sch,ndx),value!=value2?'~':' ');
+					}
+					else 
+						fprintf(fp,"%5g ",schedule_value(sch,ndx));
 				}
 				fprintf(fp,"\n");
 			}

@@ -103,7 +103,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Updating XSL file in $(SolutionDir) for $(TargetPath)"
-				CommandLine="set GLPATH=win32\debug;core\rt;core&#x0D;&#x0A;set TZ=PST+8PDT&#x0D;&#x0A;&quot;$(TargetPath)&quot; --xsl climate,commercial,generators,market,network,plc,powerflow,residential,tape&#x0D;&#x0A;"
+				CommandLine="set GLPATH=win32\debug;core\rt;core&#x0D;&#x0A;set TZ=PST+8PDT&#x0D;&#x0A;&quot;$(TargetPath)&quot; --xsl climate,commercial,generators,market,powerflow,residential,tape&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -921,15 +921,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\x86\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -956,11 +956,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>

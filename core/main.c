@@ -192,6 +192,11 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	if (global_profiler)
 		class_profiles();
 
+#ifdef DUMP_SCHEDULES
+	/* dump a copy of the schedules for reference */
+	schedule_dumpall("schedules.txt");
+#endif
+
 	/* restore locale */
 	locale_pop();
 
