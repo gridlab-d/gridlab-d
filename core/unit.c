@@ -87,6 +87,7 @@
 #include "exception.h"
 #include "globals.h"
 #include "find.h"
+#include "lock.h"
 
 /* fundamental physical/economic constants */
 static double c = 2.997925e8;		/**< m/s */
@@ -468,13 +469,18 @@ int unit_derived(char *name,char *derivation)
  **/
 void unit_init(void)
 {
-	static int tried=0;
+	static int tried=0, trylock=0;
 	char *glpath = getenv("GLPATH");
 	FILE *fp = NULL;
 	char *tpath = find_file(filepath, NULL, 4);
+
 	/* try only once */
+	lock(&trylock);
 	if (tried)
+	{
+		unlock(&trylock);
 		return;
+	}
 	else
 		tried = 1;
 	
@@ -506,6 +512,7 @@ void unit_init(void)
 			The unit subsystem was not able to locate the unit file in the working directoy or in the directories
 			specified in GLPATH.
 		*/
+		unlock(&trylock);
 		return;
 	}
 
@@ -599,6 +606,9 @@ void unit_init(void)
 
 	/* done */
 	fclose(fp);
+	
+	unlock(&trylock);
+	return;
 }
 
 /** Convert a value from one unit to another
