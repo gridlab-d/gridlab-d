@@ -353,7 +353,12 @@ FINDPGM *find_mkpgm(char *expression);
 	@return a pointer for FINDLIST structure used by find_first(), find_next, and find_makearray(), will return NULL if an error occurs.
 **/
 FINDLIST *find_objects(FINDLIST *start, ...)
-{
+{	
+	int ival;
+	char *sval;
+	OBJECTNUM oval;
+	TIMESTAMP tval;
+	double rval;
 	OBJECT *obj;
 	FINDLIST *result = start;
 	if (start==FL_NEW || start==FL_GROUP)
@@ -422,11 +427,6 @@ FINDLIST *find_objects(FINDLIST *start, ...)
 
 			/* read value */
 			switch (ftype) {
-				static int ival;
-				static char *sval;
-				static OBJECTNUM oval;
-				static TIMESTAMP tval;
-				static double rval;
 			case FT_PARENT:
 			case FT_ID:
 				oval = va_arg(ptr,OBJECTNUM);
