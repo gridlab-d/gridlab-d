@@ -38,6 +38,7 @@
 #include "output.h"
 #include "globals.h"
 #include "module.h"
+#include "lock.h"
 
 /* object list */
 static OBJECTNUM next_object_id = 0;
@@ -211,8 +212,10 @@ char *object_name(OBJECT *obj, char *oname, int size){ /**< a pointer to the obj
 
 /** Get the unit of an object, if any
  **/
-char *object_get_unit(OBJECT *obj, char *name){
+char *object_get_unit(OBJECT *obj, char *name)
+{
 	static UNIT *dimless = NULL;
+	unsigned int unitlock = 0;
 	PROPERTY *prop = object_get_property(obj, name);
 	
 	if(prop == NULL){
@@ -226,9 +229,11 @@ char *object_get_unit(OBJECT *obj, char *name){
 		 */
 	}
 	
+	lock(&unitlock);
 	if(dimless == NULL){
 		dimless=unit_find("1");
 	}
+	unlock(&unitlock);
 	
 	if(prop->unit != NULL){
 		return prop->unit->name;
