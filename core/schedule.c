@@ -527,9 +527,14 @@ STATUS schedule_createproc(SCHEDULE *sch)
 	int status = SUCCESS;
 
 	pthread_mutex_lock(&sc_activelock);
+	while ( global_threadcount>1 && sc_running>=global_threadcount )
+	{
+		output_debug("schedule '%s' creation waiting (%d of %d active)", sch->name, sc_running, global_threadcount); 
+		pthread_cond_wait(&sc_active,&sc_activelock);
+	}
 	sc_running++;
 	if ( global_threadcount>1 )
-		output_debug("schedule '%s' creation deferred (%d of %d active)", sch->name, sc_running, global_threadcount); 
+		output_debug("deferred schedule '%s' creation starting (%d of %d active)", sch->name, sc_running, global_threadcount); 
 	pthread_cond_broadcast(&sc_active);
 	pthread_mutex_unlock(&sc_activelock);
 
@@ -749,12 +754,6 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	{
 		static unsigned int n_threads = 0;
 		static pthread_t thread_id;
-
-		/* wait until a thread becomes available */
-		pthread_mutex_lock(&sc_activelock);
-		while ( sc_running>=global_threadcount )
-			pthread_cond_wait(&sc_active,&sc_activelock);
-		pthread_mutex_unlock(&sc_activelock);
 		if ( pthread_create(&thread_id,NULL,schedule_createproc,(void*)sch)!=0 )
 		{
 			/* fails so do it inline */

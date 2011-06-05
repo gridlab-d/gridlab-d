@@ -3987,16 +3987,6 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 	int64 id=-1, id2=-1;
 	START;
 
-	/* objects should not be started until all deferred schedules are done */
-	if ( global_threadcount>1 )
-	{
-		if ( schedule_createwait()==FAILED )
-		{
-			output_error_raw("%s(%d): object create cannot proceed when a schedule error persists", filename, linenum);
-			REJECT;
-		}
-	}
-
 	if WHITE ACCEPT;
 	if (LITERAL("namespace") && (WHITE,TERM(name(HERE,space,sizeof(space)))) && (WHITE,LITERAL("{")))
 	{
@@ -4022,6 +4012,18 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 
 	if WHITE ACCEPT;
 	if (LITERAL("object") && WHITE) ACCEPT else REJECT /* enforced whitespace */
+
+	/* objects should not be started until all deferred schedules are done */
+	if ( global_threadcount>1 )
+	{
+		if ( schedule_createwait()==FAILED )
+		{
+			output_error_raw("%s(%d): object create cannot proceed when a schedule error persists", filename, linenum);
+			REJECT;
+		}
+	}
+
+
 	//if WHITE ACCEPT;
 	if TERM(object_name_id_range(HERE,classname,&id,&id2))
 	{
