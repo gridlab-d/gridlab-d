@@ -472,7 +472,7 @@ void unit_init(void)
 	static int tried=0, trylock=0;
 	char *glpath = getenv("GLPATH");
 	FILE *fp = NULL;
-	char *tpath = find_file(filepath, NULL, 4);
+	char tpath[1024];
 
 	/* try only once */
 	lock(&trylock);
@@ -484,7 +484,7 @@ void unit_init(void)
 	else
 		tried = 1;
 	
-	if(tpath != NULL)
+	if(find_file(filepath, NULL, 4, tpath,sizeof(tpath)) != NULL)
 		fp = fopen(tpath, "r");
 
 	/* locate unit file on GLPATH if not found locally */

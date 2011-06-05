@@ -97,7 +97,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	TAPEOPS *ops = NULL;
 	void *lib = NULL;
 	CALLBACKS **c = NULL;
-	char *tpath = NULL;
+	char tpath[1024];
 	while(fptr != NULL){
 		if(strcmp(fptr->mode, mode) == 0)
 			return fptr;
@@ -111,8 +111,8 @@ TAPEFUNCS *get_ftable(char *mode){
 		return NULL; /* out of memory */
 	}
 	snprintf(modname, 1024, "tape_%s" DLEXT, mode);
-	tpath = gl_findfile(modname, NULL, 0|4);
-	if(tpath == NULL){
+	
+	if(gl_findfile(modname, NULL, 0|4, tpath,sizeof(tpath)) == NULL){
 		gl_error("unable to locate %s", modname);
 		return NULL;
 	}
@@ -279,14 +279,14 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 EXPORT int check(void)
 {
 	unsigned int errcount=0;
-
+	char fpath[1024];
 	/* check players */
 	{	OBJECT *obj=NULL;
 		FINDLIST *players = gl_find_objects(FL_NEW,FT_CLASS,SAME,"tape",FT_END);
 		while ((obj=gl_find_next(players,obj))!=NULL)
 		{
 			struct player *pData = OBJECTDATA(obj,struct player);
-			if (gl_findfile(pData->file,NULL,FF_EXIST)==NULL)
+			if (gl_findfile(pData->file,NULL,FF_EXIST,fpath,sizeof(fpath))==NULL)
 			{
 				errcount++;
 				gl_error("player %s (id=%d) uses the file '%s', which cannot be found", obj->name?obj->name:"(unnamed)", obj->id, pData->file);
@@ -300,7 +300,7 @@ EXPORT int check(void)
 		while ((obj=gl_find_next(shapers,obj))!=NULL)
 		{
 			struct shaper *pData = OBJECTDATA(obj,struct shaper);
-			if (gl_findfile(pData->file,NULL,FF_EXIST)==NULL)
+			if (gl_findfile(pData->file,NULL,FF_EXIST,fpath,sizeof(fpath))==NULL)
 			{
 				errcount++;
 				gl_error("shaper %s (id=%d) uses the file '%s', which cannot be found", obj->name?obj->name:"(unnamed)", obj->id, pData->file);

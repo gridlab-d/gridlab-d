@@ -1292,10 +1292,12 @@ FINDPGM *find_mkpgm(char *search)
  **/
 char *find_file(char *name, /**< the name of the file to find */
 				char *path, /**< the path to search (or NULL to search the GLPATH environment) */
-				int mode) /**< the file access mode to use, see access() for valid modes */
+				int mode, /**< the file access mode to use, see access() for valid modes */
+				char *buffer, /**< the buffer into which the full path is written */
+				int len) /**< the len of the buffer */
 {
-	static char filepath[1024];
-	static char tempfp[1024];
+	char filepath[1024];
+	char tempfp[1024];
 	char envbuf[1024];
 	char *glpath;
 	char *dir;
@@ -1319,10 +1321,10 @@ char *find_file(char *name, /**< the name of the file to find */
 		Access() is a potential security hole and should never be used.
 		-HMUG man page
 	 */
-	if(access(name, mode) == 0){
-		strncpy(filepath, name, 1024);
-		//sprintf(filepath, "%s%s%s", global_workdir, pathsep, name);
-		return filepath;
+	if(access(name, mode) == 0)
+	{
+		strncpy(buffer, name, len);
+		return buffer;
 	}
 
 	/* locate unit file on GLPATH if not found locally */
@@ -1333,7 +1335,10 @@ char *find_file(char *name, /**< the name of the file to find */
 		{
 			snprintf(filepath, sizeof(filepath), "%s%s%s", dir, pathsep, name);
 			if (!access(filepath,mode))
-				return filepath;
+			{
+				strncpy(buffer,filepath,len);
+				return buffer;
+			}
 			dir = strtok(NULL, delim);
 		}
 	}
@@ -1342,21 +1347,36 @@ char *find_file(char *name, /**< the name of the file to find */
 	if(module_get_exe_path(filepath, 1024)){
 		snprintf(tempfp, sizeof(tempfp), "%s%s", filepath, name);
 		if(access(tempfp, mode) == 0)
-			return tempfp;
+		{
+			strncpy(buffer,tempfp,len);
+			return buffer;
+		}
 		snprintf(tempfp, sizeof(tempfp), "%setc\\%s", filepath, name);
 		if(access(tempfp, mode) == 0)
-			return tempfp;
+		{
+			strncpy(buffer,tempfp,len);
+			return buffer;
+		}
 		snprintf(tempfp, sizeof(tempfp), "%slib\\%s", filepath, name);
 		if(access(tempfp, mode) == 0)
-			return tempfp;
+		{
+			strncpy(buffer,tempfp,len);
+			return buffer;
+		}
 	}
 #else
 	snprintf(tempfp, sizeof(tempfp), "/usr/lib/gridlabd/%s", name);
 	if(access(tempfp, mode) == 0)
-		return tempfp;
+	{
+		strncpy(buffer,tempfp,len);
+		return buffer;
+	}
 	snprintf(tempfp, sizeof(tempfp), "/usr/etc/gridlabd/%s", name);
 	if(access(tempfp, mode) == 0)
-		return tempfp;
+	{
+		strncpy(buffer,tempfp,len);
+		return buffer;
+	}
 #endif
 	return NULL;
 }

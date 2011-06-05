@@ -17,10 +17,10 @@
  */
 int file_open_player(struct player *my, char *fname, char *flags)
 {
-	char *ff = gl_findfile(fname,NULL,FF_READ);
+	char ff[1024];
 
 	/* "-" means stdin */
-	my->fp = (strcmp(fname,"-")==0?stdin:(ff?fopen(ff,flags):NULL));
+	my->fp = (strcmp(fname,"-")==0?stdin:(gl_findfile(fname,NULL,FF_READ,ff,sizeof(ff))?fopen(ff,flags):NULL));
 	if (my->fp==NULL)
 	{
 		gl_error("player file %s: %s", fname, strerror(errno));
@@ -137,7 +137,7 @@ int file_open_shaper(struct shaper *my, char *fname, char *flags)
 	char line[1024], group[256]="(unnamed)";
 	float sum=0, load=0, peak=0;
 	float scale[12][31][7][24];
-	char *ff = gl_findfile(fname,NULL,FF_READ);
+	char ff[1024];
 
 	/* clear everything */
 	memset(scale,0,sizeof(scale));
@@ -145,7 +145,7 @@ int file_open_shaper(struct shaper *my, char *fname, char *flags)
 	file=fname;
 
 	/* "-" means stdin */
-	my->fp = (strcmp(fname,"-")==0?stdin:(ff?fopen(ff,flags):NULL));
+	my->fp = (strcmp(fname,"-")==0?stdin:(gl_findfile(fname,NULL,FF_READ,ff,sizeof(ff))?fopen(ff,flags):NULL));
 	if (my->fp==NULL)
 	{
 		gl_error("shaper file %s: %s", fname, strerror(errno));

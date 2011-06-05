@@ -221,7 +221,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	char *fmod;
 	bool isforeign = false;
 	char pathname[1024];
-	char *tpath = NULL;
+	char tpath[1024];
 #ifdef WIN32
 	char from='/', to='\\';
 #else
@@ -330,11 +330,11 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 
 	/* locate the module */
 	snprintf(pathname, 1024, "%s" DLEXT, file);
-	tpath = find_file(pathname, NULL, X_OK|R_OK);
-	if(tpath == NULL)
+
+	if(find_file(pathname, NULL, X_OK|R_OK, tpath,sizeof(tpath)) == NULL)
 	{
 		output_verbose("unable to locate %s in GLPATH, using library loader instead", pathname);
-		tpath=pathname;
+		strncpy(tpath,pathname,sizeof(tpath));
 	}
 	else
 	{

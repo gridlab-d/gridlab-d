@@ -4896,7 +4896,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	char *ext = 0;
 	char *name = 0;
 	STAT stat;
-	char *ff = find_file(incname,NULL,R_OK);
+	char ff[1024];
 	FILE *fp = 0;
 	char buffer2[20480];
 	unsigned int old_linenum = _linenum;
@@ -4947,7 +4947,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	}
 
 	/* open file */
-	fp = ff ? fopen(ff, "rt") : NULL;
+	fp = find_file(incname,NULL,R_OK,ff,sizeof(ff)) ? fopen(ff, "rt") : NULL;
 	
 	if(fp == NULL){
 		output_error_raw("%s(%d): include file open failed: %s", incname, _linenum, errno?strerror(errno):"(no details)");
@@ -5055,6 +5055,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+8,' ');
 		char value[1024];
+		char path[1024];
 		if (term==NULL)
 		{
 			output_error_raw("%s(%d): %sifexist macro missing term",filename,linenum,MACRO);
@@ -5064,7 +5065,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			++term;
 		//if (sscanf(term,"\"%[^\"\n]",value)==1 && find_file(value, NULL, 0)==NULL)
 		strcpy(value, strip_right_white(term));
-		if (find_file(value, NULL, 0)==NULL)
+		if (find_file(value, NULL, 0, path,sizeof(path))==NULL)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
 		nesting++;
@@ -5665,7 +5666,7 @@ STATUS loadall(char *file){
 	unsigned int old_obj_count = object_get_count();
 	unsigned int new_obj_count = 0;
 //	unsigned int i;
-	char *conf = find_file("gridlabd.conf",NULL,R_OK);
+	char conf[1024];
 	static int loaded_files = 0;
 	STATUS load_status = FAILED;
 
@@ -5678,7 +5679,7 @@ STATUS loadall(char *file){
 	if (loaded_files==0)
 	{
 		/* load the gridlabd.conf file */
-		if (conf==NULL)
+		if (find_file("gridlabd.conf",NULL,R_OK,conf,sizeof(conf))==NULL)
 			output_warning("gridlabd.conf was not found");
 			/* TROUBLESHOOT
 				The <code>gridlabd.conf</code> was not found in the <b>GLPATH</b> environment path.
@@ -5695,8 +5696,9 @@ STATUS loadall(char *file){
 		/* load the debugger.conf file */
 		if (global_debug_mode)
 		{
-			char *dbg = find_file("debugger.conf",NULL,R_OK);
-			if (dbg==NULL)
+			char dbg[1024];
+			
+			if (find_file("debugger.conf",NULL,R_OK,dbg,sizeof(dbg))==NULL)
 				output_warning("debugger.conf was not found");
 				/* TROUBLESHOOT
 					The <code>debugger.conf</code> was not found in the <b>GLPATH</b> environment path.

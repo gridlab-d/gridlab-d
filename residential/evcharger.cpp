@@ -121,8 +121,8 @@ EVPROFILEITEM *add_demand_profile(EVDEMAND *data)
 }
 EVDEMAND *load_demand_profile(char *filename)
 {
-	char *filepath = gl_findfile(filename,NULL,FF_READ);
-	if (filepath==NULL)	
+	char filepath[1024];
+	if (gl_findfile(filename,NULL,FF_READ,filepath,sizeof(filepath))==NULL)	
 	{
 		//gl_error("searching for demand profile file '%s'",filename);
 		GL_THROW( "unable to find demand profile" );

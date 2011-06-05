@@ -177,7 +177,7 @@ typedef struct s_callbacks {
 	} global;
 	int64 *lock_count, *lock_spin;
 	struct {
-		char *(*find_file)(char *name, char *path, int mode);
+		char *(*find_file)(char *name, char *path, int mode, char *buffer, int len);
 	} file;
 	struct s_objvar_struct {
 		complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);

@@ -310,8 +310,8 @@ int climate::init(OBJECT *parent)
 		return 1;
 
 	// open access to the TMY file
-	char *found_file = gl_findfile(tmyfile,NULL,FF_READ);
-	if (found_file==NULL) // TODO: get proper values for solar
+	char found_file[1024];
+	if (gl_findfile(tmyfile,NULL,FF_READ,found_file,sizeof(found_file))==NULL) // TODO: get proper values for solar
 	{
 		gl_error("weather file '%s' access failed", tmyfile);
 		return 0;

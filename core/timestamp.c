@@ -566,7 +566,7 @@ void set_tzspec(int year, char *tzname, SPEC *pStart, SPEC *pEnd){
 /** Load a timezone from the timezone info file 
  **/
 void load_tzspecs(char *tz){
-	char *filepath = find_file(TZFILE, NULL, FF_READ);
+	char filepath[1024];
 	char *pTzname = 0;
 	FILE *fp = NULL;
 	char buffer[1024];
@@ -592,7 +592,7 @@ void load_tzspecs(char *tz){
 	strncpy(tzstd, tz_std(current_tzname), sizeof(tzstd));
 	strncpy(tzdst, tz_dst(current_tzname), sizeof(tzdst));
 
-	if(filepath == NULL){
+	if(find_file(TZFILE, NULL, FF_READ,filepath,sizeof(filepath)) == NULL){
 		THROW("timezone specification file %s not found in GLPATH=%s: %s", TZFILE, getenv("GLPATH"), strerror(errno));
 		/* TROUBLESHOOT
 			The system could not locate the timezone file <code>tzinfo.txt</code>.

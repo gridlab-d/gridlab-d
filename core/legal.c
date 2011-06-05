@@ -84,12 +84,13 @@ STATUS legal_notice(void)
 	/* suppress copyright info if copyright file exists */
 	char copyright[1024] = "GridLAB-D " COPYRIGHT;
 	char *end = strchr(copyright,'\n');
-	int surpress = global_suppress_repeat_messages;
+	int suppress = global_suppress_repeat_messages;
+	char path[1024];
 	global_suppress_repeat_messages = 0;
 	while ((end = strchr(copyright,'\n'))!=NULL) {
 		*end = ' ';
 	}
-	if (find_file(copyright,NULL,FF_EXIST)==NULL)
+	if (find_file(copyright,NULL,FF_EXIST,path,sizeof(path))==NULL)
 	{
 		int build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
 		if (build>0)
@@ -111,7 +112,7 @@ STATUS legal_notice(void)
 			" (" BRANCH ")\n" COPYRIGHT
 				"", global_version_major, global_version_minor);
 	}
-	global_suppress_repeat_messages = surpress;
+	global_suppress_repeat_messages = suppress;
 	return SUCCESS; /* conditions of use have been met */
 }
 

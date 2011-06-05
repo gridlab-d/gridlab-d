@@ -195,7 +195,7 @@ int node::init(OBJECT *parent)
 	{
 		OBJECT *obj = OBJECTHDR(this);
 		char1024 ext_lib_file_name;
-		char *extpath = NULL;
+		char extpath[1024];
 		CALLBACKS **cbackval = NULL;
 		bool ExtLinkFailure;
 
@@ -517,10 +517,8 @@ int node::init(OBJECT *parent)
 #else
 				snprintf(ext_lib_file_name, 1024, "lib_solver_%s" DLEXT,LUSolverName);
 #endif
-	
-				extpath = gl_findfile(ext_lib_file_name, NULL, 0|4);
 
-				if (extpath!=NULL)	//Link up
+				if (gl_findfile(ext_lib_file_name, NULL, 0|4, extpath,sizeof(extpath))!=NULL)	//Link up
 				{
 					//Link to the library
 					LUSolverFcns.dllLink = DLLOAD(extpath);

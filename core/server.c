@@ -1081,8 +1081,8 @@ int http_run_gnuplot(HTTP *http,char *uri)
  **/
 int http_get_rt(HTTP *http,char *uri)
 {
-	char *fullpath = find_file(uri,NULL,4);
-	if (!fullpath)
+	char fullpath[1024];
+	if (!find_file(uri,NULL,4,fullpath,sizeof(fullpath)))
 	{
 		output_error("runtime file '%s' couldn't be located in GLPATH='%s'", uri,getenv("GLPATH"));
 		return 0;
@@ -1114,8 +1114,8 @@ int http_action_request(HTTP *http,char *action)
  **/
 int http_favicon(HTTP *http)
 {
-	char *fullpath = find_file("favicon.ico",NULL,4);
-	if ( fullpath==NULL )
+	char fullpath[1024];
+	if ( find_file("favicon.ico",NULL,4,fullpath,sizeof(fullpath))==NULL )
 	{
 		output_error("file 'favicon.ico' not found", fullpath);
 		return 0;
