@@ -195,10 +195,7 @@ OBJECT *object_find_by_id(OBJECTNUM id){ /**< object id number */
 }
 
 
-/** Get the name of an object.  Note that this
-	function uses a static buffer that must be
-	used immediately.  Subsequent calls will
-	reuse the same buffer.
+/** Get the name of an object. 
 
 	@return a pointer to the object name string
  **/
