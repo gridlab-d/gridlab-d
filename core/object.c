@@ -1356,13 +1356,11 @@ int object_dump(char *outbuffer, /**< the destination buffer */
 	char tmp2[1024];
 	int count = 0;
 	PROPERTY *prop = NULL;
-	static int safesize;
 	CLASS *pclass = NULL;
 	if(size>sizeof(buffer)){
 		size = sizeof(buffer);
 	}
-	safesize = size;
-
+	
 	count += sprintf(buffer + count, "object %s:%d {\n", obj->oclass->name, obj->id);
 
 	/* dump internal properties */
@@ -1391,7 +1389,7 @@ int object_dump(char *outbuffer, /**< the destination buffer */
 		char *value = object_property_to_string(obj, prop->name, tmp2, 1023);
 		if(value != NULL){
 			count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type : class_get_property_typename(prop->ptype), prop->name, value);
-			if(count > safesize){
+			if(count > size){
 				throw_exception("object_dump(char *buffer=%x, int size=%d, OBJECT *obj=%s:%d) buffer overrun", outbuffer, size, obj->oclass->name, obj->id);
 				/* TROUBLESHOOT
 					The buffer used to dump objects has overflowed.  This can only be fixed by increasing the size of the buffer and recompiling.
@@ -1408,7 +1406,7 @@ int object_dump(char *outbuffer, /**< the destination buffer */
 			char *value = object_property_to_string(obj, prop->name, tmp2, 1023);
 			if(value != NULL){
 				count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type : class_get_property_typename(prop->ptype), prop->name, value);
-				if(count > safesize){
+				if(count > size){
 					throw_exception("object_dump(char *buffer=%x, int size=%d, OBJECT *obj=%s:%d) buffer overrun", outbuffer, size, obj->oclass->name, obj->id);
 					/* TROUBLESHOOT
 						The buffer used to dump objects has overflowed.  This can only be fixed by increasing the size of the buffer and recompiling.
