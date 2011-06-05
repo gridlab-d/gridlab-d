@@ -131,6 +131,7 @@ TIMESTAMP scheduletransform_syncall(TIMESTAMP t, XFORMSOURCE restrict);
 int schedule_test(void);
 void schedule_dump(SCHEDULE *sch, char *file, char *mode);
 void schedule_dumpall(char *file);
+int schedule_createwait(void);
 
 int schedule_add_xform(XFORMSOURCE stype, double *source, double *target, double scale, double bias, struct s_object_list *obj, struct s_property_map *prop, SCHEDULE *s);
 SCHEDULEXFORM *scheduletransform_getnext(SCHEDULEXFORM *xform);

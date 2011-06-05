@@ -517,70 +517,21 @@ int schedule_compile(SCHEDULE *sch)
 	return 1;
 }
 
-/** Create a schedule. 
-	If the schedule has already been defined, the existing structure is returned, otherwise a new one is created. 
-	If the definition is not provided, then the named schedule is searched and NULL is returned if it is not found.
-	
-	Example:
-	<code>schedule_create("weekdays 8am-5pm 100%, weekends 9-noon 50%","* 8-17 * * 1-5; * 9-12 * * 0,6 0.5");</code>
-	
-	@return a pointer to the new schedule, NULL if failed
- **/
-SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
-						  char *definition)	/**< the definition of the schedule (using crontab format with semicolon delimiters), NULL is only a search */
+static pthread_cond_t sc_active = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t sc_activelock = PTHREAD_MUTEX_INITIALIZER;
+static STATUS sc_status = SUCCESS;
+static sc_running = 0;
+
+STATUS schedule_createproc(SCHEDULE *sch)
 {
-	/* find the schedule is already defined (by name) */
-	SCHEDULE *sch = schedule_find_byname(name);
-	if (sch!=NULL) 
-	{
-		if (definition!=NULL && strcmp(sch->definition,definition)!=0)
-		{
-			output_error("schedule_create(char *name='%s', char *definition='%s') definition does not match previous definition of schedule '%s')", name, definition, name);
-			/* TROUBLESHOOT
-				There is more than 1 schedule with a given name, but they have different definitions.  Under certain circumstances, this can 
-				lead to unpredictable simulation results and should be remedied by using a distinct name for each distinct schedule.
-			 */
-		}
-		return sch;
-	}
+	int status = SUCCESS;
 
-	/* create without a definition is simply a search */
-	else if (definition==NULL)
-	{
-		return NULL;
-	}
-
-	/* create a new schedule */
-	sch = schedule_new();
-	if (sch==NULL)
-	{
-		output_error("schedule_create(char *name='%s', char *definition='%s') memory allocation failed)", name, definition);
-		/* TROUBLESHOOT
-			The schedule module could not allocate enough memory to create a schedule item.  Try freeing system memory and try again.
-		 */
-		return NULL;
-	}
-	output_debug("schedule '%s' uses %.1f MB of memory", name, sizeof(SCHEDULE)/1000000.0);
-	if (strlen(name)>=sizeof(sch->name))
-	{
-		output_error("schedule_create(char *name='%s', char *definition='%s') name too long)", name, definition);
-		/* TROUBLESHOOT
-			The name given the schedule is too long to be used.  Use a name that is less than 64 characters and try again.
-		 */
-		free(sch);
-		return NULL;
-	}
-	strcpy(sch->name,name);
-	if (strlen(definition)>=sizeof(sch->definition))
-	{
-		output_error("schedule_create(char *name='%s', char *definition='%s') definition too long)", name, definition);
-		/* TROUBLESHOOT
-			The definition given the schedule is too long to be used.  Use a definition that is less than 1024 characters and try again.
-		 */
-		free(sch);
-		return NULL;
-	}
-	strcpy(sch->definition,definition);
+	pthread_mutex_lock(&sc_activelock);
+	sc_running++;
+	if ( global_threadcount>1 )
+		output_debug("schedule '%s' creation deferred (%d of %d active)", sch->name, sc_running, global_threadcount); 
+	pthread_cond_broadcast(&sc_active);
+	pthread_mutex_unlock(&sc_activelock);
 
 	/* compile the schedule */
 	if (schedule_compile(sch))
@@ -666,23 +617,151 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 
 		/* validate */
 		if ((sch->flags&(SN_POSITIVE|SN_NONZERO|SN_BOOLEAN)) != 0 && ! schedule_validate(sch,sch->flags))
-			return NULL;
+		{
+			status = FAILED;
+			goto Done;
+		}
 
 #ifdef _DEBUG
 		/* calculate checksum */
 		sch->checksum = schedule_checksum(sch);
 		output_debug("schedule '%s' checksum is %0x08d", sch->name, sch->checksum);
 #endif
-
-		/* attach to schedule list */
-		schedule_add(sch);
-		return sch;
+		status = SUCCESS;
 	}
 	else
+		status = FAILED;
+Done:
+	pthread_mutex_lock(&sc_activelock);
+	sc_running--;
+	sc_status=status;
+	pthread_cond_broadcast(&sc_active);
+	pthread_mutex_unlock(&sc_activelock);
+	if ( global_threadcount>1 )
 	{
-		/* error message should be given by schedule_compile */
+		if ( status==SUCCESS )
+			output_debug("deferred creation of schedule '%s' completed", sch->name);
+		else
+			output_error("deferred creation of schedule '%s' failed", sch->name);
+	}
+	return status;
+}
+
+/** Wait for deferred schedule creations to finish 
+    @return the global status of schedule creation
+ **/
+int schedule_createwait(void)
+{
+	pthread_mutex_lock(&sc_activelock);
+	while ( sc_running>0 )
+	{
+		output_debug("waiting for deferred schedule creations to complete (%d of %d active)", sc_running, global_threadcount);
+		pthread_cond_wait(&sc_active,&sc_activelock);
+	}
+	output_debug("all deferred schedule creations completed %s", sc_status==SUCCESS ? "successfully" : "with at least one failure");
+	pthread_mutex_unlock(&sc_activelock);
+	return sc_status;
+}
+
+/** Create a schedule. 
+	If the schedule has already been defined, the existing structure is returned, otherwise a new one is created. 
+	If the definition is not provided, then the named schedule is searched and NULL is returned if it is not found.
+	
+	Example:
+	<code>schedule_create("weekdays 8am-5pm 100%, weekends 9-noon 50%","* 8-17 * * 1-5; * 9-12 * * 0,6 0.5");</code>
+	
+	@return a pointer to the new schedule, NULL if failed
+ **/
+SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
+						  char *definition)	/**< the definition of the schedule (using crontab format with semicolon delimiters), NULL is only a search */
+{
+	/* find the schedule is already defined (by name) */
+	SCHEDULE *sch = schedule_find_byname(name);
+	if (sch!=NULL) 
+	{
+		if (definition!=NULL && strcmp(sch->definition,definition)!=0)
+		{
+			output_error("schedule_create(char *name='%s', char *definition='%s') definition does not match previous definition of schedule '%s')", name, definition, name);
+			/* TROUBLESHOOT
+				There is more than 1 schedule with a given name, but they have different definitions.  Under certain circumstances, this can 
+				lead to unpredictable simulation results and should be remedied by using a distinct name for each distinct schedule.
+			 */
+		}
+		return sch;
+	}
+
+	/* create without a definition is simply a search */
+	else if (definition==NULL)
+	{
+		return NULL;
+	}
+
+	/* create a new schedule */
+	sch = schedule_new();
+	if (sch==NULL)
+	{
+		output_error("schedule_create(char *name='%s', char *definition='%s') memory allocation failed)", name, definition);
+		/* TROUBLESHOOT
+			The schedule module could not allocate enough memory to create a schedule item.  Try freeing system memory and try again.
+		 */
+		return NULL;
+	}
+	output_debug("schedule '%s' uses %.1f MB of memory", name, sizeof(SCHEDULE)/1000000.0);
+	if (strlen(name)>=sizeof(sch->name))
+	{
+		output_error("schedule_create(char *name='%s', char *definition='%s') name too long)", name, definition);
+		/* TROUBLESHOOT
+			The name given the schedule is too long to be used.  Use a name that is less than 64 characters and try again.
+		 */
 		free(sch);
 		return NULL;
+	}
+	strcpy(sch->name,name);
+	if (strlen(definition)>=sizeof(sch->definition))
+	{
+		output_error("schedule_create(char *name='%s', char *definition='%s') definition too long)", name, definition);
+		/* TROUBLESHOOT
+			The definition given the schedule is too long to be used.  Use a definition that is less than 1024 characters and try again.
+		 */
+		free(sch);
+		return NULL;
+	}
+	strcpy(sch->definition,definition);
+
+	/* attach to schedule list */
+	schedule_add(sch);
+
+	/* singlethreaded creation */
+	if ( global_threadcount<=1 )
+	{
+		if ( schedule_createproc(sch)==SUCCESS )
+			return sch;
+		else
+		{
+			/* error message should be given by schedule_compile */
+			free(sch);
+			return NULL;
+		}
+	}
+
+	/* multithreaded creation */
+	else
+	{
+		static unsigned int n_threads = 0;
+		static pthread_t thread_id;
+
+		/* wait until a thread becomes available */
+		pthread_mutex_lock(&sc_activelock);
+		while ( sc_running>=global_threadcount )
+			pthread_cond_wait(&sc_active,&sc_activelock);
+		pthread_mutex_unlock(&sc_activelock);
+		if ( pthread_create(&thread_id,NULL,schedule_createproc,(void*)sch)!=0 )
+		{
+			/* fails so do it inline */
+			output_warning("schedule_createproc failed, schedule '%s' created inline instead", sch->name);
+			return schedule_createproc(sch) ? sch : NULL;
+		}
+		return sch;
 	}
 }
 
