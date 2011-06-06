@@ -783,10 +783,6 @@ void schedule_add(SCHEDULE *sch)
 	sch->next = schedule_list;
 	schedule_list = sch;
 	n_schedules++;
-
-	/* check the number of schedule (see ticket:529) */
-	if ( n_schedules >= 64 )
-		output_warning("schedule_add(SCHEDULE *sch='%s'): using more than 64 schedules can lead to erroneous results (see TRAC ticket:529)", sch->name);
 }
 
 /** validate a schedule, if desired 
