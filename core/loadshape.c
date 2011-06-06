@@ -858,6 +858,7 @@ typedef struct s_loadshapesyncdata {
 	loadshape *ls;
 	unsigned int ns;
 	TIMESTAMP t0;
+	unsigned int ran;
 } LOADSHAPESYNCDATA;
 
 static pthread_cond_t start_ls = PTHREAD_COND_INITIALIZER;
@@ -865,6 +866,7 @@ static pthread_mutex_t startlock_ls = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t done_ls = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t donelock_ls = PTHREAD_MUTEX_INITIALIZER;
 static TIMESTAMP next_t1_ls, next_t2_ls;
+static unsigned int run = 0;
 static unsigned int donecount_ls;
 
 clock_t loadshape_synctime = 0;
@@ -883,7 +885,7 @@ void *loadshape_syncproc(void *ptr)
 		pthread_mutex_lock(&startlock_ls);
 
 		// wait for thread start condition
-		while (data->t0==next_t1_ls) 
+		while ( data->t0==next_t1_ls && data->ran==run ) 
 			pthread_cond_wait(&start_ls,&startlock_ls);
 		
 		// unlock access to start count
@@ -899,6 +901,7 @@ void *loadshape_syncproc(void *ptr)
 
 		// signal completed condition
 		data->t0 = next_t1_ls;
+		data->ran++;
 
 		// lock access to done condition
 		pthread_mutex_lock(&donelock_ls);
@@ -1016,6 +1019,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 		// update start condition
 		next_t1_ls = t1;
 		next_t2_ls = TS_NEVER;
+		run++;
 
 		// signal all the threads
 		pthread_cond_broadcast(&start_ls);

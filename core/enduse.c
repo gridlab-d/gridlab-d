@@ -149,6 +149,7 @@ typedef struct s_endusesyncdata {
 	enduse *e;
 	unsigned int ne;
 	TIMESTAMP t0;
+	unsigned int ran;
 } ENDUSESYNCDATA;
 
 static pthread_cond_t start_ed = PTHREAD_COND_INITIALIZER;
@@ -157,6 +158,7 @@ static pthread_cond_t done_ed = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t donelock_ed = PTHREAD_MUTEX_INITIALIZER;
 static TIMESTAMP next_t1_ed, next_t2_ed;
 static unsigned int donecount_ed;
+static unsigned int run = 0;
 
 clock_t enduse_synctime = 0;
 
@@ -174,7 +176,7 @@ void *enduse_syncproc(void *ptr)
 		pthread_mutex_lock(&startlock_ed);
 
 		// wait for thread start condition
-		while (data->t0==next_t1_ed) 
+		while (data->t0==next_t1_ed && data->ran==run) 
 			pthread_cond_wait(&start_ed,&startlock_ed);
 		
 		// unlock access to start count
@@ -190,6 +192,7 @@ void *enduse_syncproc(void *ptr)
 
 		// signal completed condition
 		data->t0 = next_t1_ed;
+		data->ran++;
 
 		// lock access to done condition
 		pthread_mutex_lock(&donelock_ed);
@@ -303,6 +306,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 		// update start condition
 		next_t1_ed = t1;
 		next_t2_ed = TS_NEVER;
+		run++;
 
 		// signal all the threads
 		pthread_cond_broadcast(&start_ed);
