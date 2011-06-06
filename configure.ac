@@ -197,12 +197,10 @@ AC_CONFIG_FILES([./Makefile \
 	climate/Makefile \
 	climate/tmy/Makefile \
 	commercial/Makefile \
-	network/Makefile \
 	powerflow/Makefile \
 	residential/Makefile \
 	reliability/Makefile \
 	generators/Makefile\
-	plc/Makefile \
 	market/Makefile \
 	tape_file/Makefile \
 	tape_plot/Makefile \
