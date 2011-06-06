@@ -349,7 +349,8 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_module_var(JNIEnv *env, jobject 
 
 EXPORT jstring JNICALL Java_gridlabd_GridlabD_findfile(JNIEnv *env, jobject _this, jstring filename){
 	char *instr = (char *)env->GetStringUTFChars(filename, NULL);
-	char *filestr = gl_findfile(instr, NULL, 0);
+	char buffer[256];
+	char *filestr = gl_findfile(instr, NULL, 0, buffer, 255);
 	jstring rv = NULL;
 	if(filestr)
 		rv = env->NewStringUTF(filestr);
