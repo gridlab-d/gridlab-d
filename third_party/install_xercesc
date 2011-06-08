@@ -1,16 +1,18 @@
 #!/bin/bash
 
 if [ "$(uname)" == "Darwin" ]; then
-	[ ! -f xerces-c-src-3.1.1.tar -a -f xerces-c-src-3.1.1.tar.gz ] && gunzip xerces-c-src-3.1.1.tar.gz
-	[ ! -d xerces-c-src-3.1.1-0 -a -f xerces-c-src-3.1.1.tar ] && tar xvf xerces-c-src-3.1.1.tar
-	cd xerces-c-3.1.1
+	FILE=xerces-c-3.1.1
+	[ ! -f $FILE.tar -a -f $FILE.tar.gz ] && gunzip $FILE.tar.gz
+	[ ! -d $FILE-0 -a -f $FILE.tar ] && tar xvf $FILE.tar
+	cd $FILE
 	./configure CFLAGS="-arch x86_64" CXXFLAGS="-arch x86_64"
 	make
 	sudo make install
 elif [ "$(uname)" == "Linux" ]; then
-	[ ! -f xerces-c-src_2_8_0.tar -a -f xerces-c-src_2_8_0.tar.gz ] && gunzip xerces-c-src_2_8_0.tar.gz
-	[ ! -d xerces-c-src_2_8-0 -a -f xerces-c-src_2_8_0.tar ] && tar xvf xerces-c-src_2_8_0.tar
-	cd xerces-c-src_2_8_0
+	FILE=xerces-c-src_2_8_0
+	[ ! -f $FILE.tar -a -f $FILE.tar.gz ] && gunzip $FILE.tar.gz
+	[ ! -d $FILE-0 -a -f $FILE.tar ] && tar xvf $FILE.tar
+	cd $FILE
 	export XERCESCROOT=`pwd`
 	cd src/xercesc
 	./runConfigure -plinux -cgcc -xg++ -minmem -nsocket -tnative -rpthread
