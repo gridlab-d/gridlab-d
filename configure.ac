@@ -11,7 +11,7 @@ define([pkgbranch], esyscmd([sh -c ". ./version.sh; echo \$BRANCH | tr -d '\n'"]
 define([svnversion], esyscmd([sh -c "svnversion | sed 's/^exported$/0/;s/[^A-Za-z0-9]/+/g' | tr -d '\n'"]))dnl
 
 AC_PREREQ(2.59)
-AC_INIT([Gridlab-D], [pkgversion.svnversion], [gridlabd@pnnl.gov], gridlabd)
+AC_INIT([GridLAB-D], [pkgversion.svnversion], [gridlabd@pnnl.gov], gridlabd)
 AC_CONFIG_SRCDIR([core/aggregate.c])
 # Older versions of automake may require the that following macro be replaced
 # with AM_CONFIG_HEADER([core/config.h]).

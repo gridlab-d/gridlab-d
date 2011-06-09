@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "platform.h"
 #include "globals.h"
 #include "cmdarg.h"
 #include "output.h"
@@ -292,26 +293,12 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 		}
 		else if (strcmp(*argv, "-V")==0 ||strcmp(*argv, "--version")==0)
 		{
-			char *buildinfo = strstr(BUILD,":");
-			int build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
-			output_message("Revision major: %d", REV_MAJOR);
-			output_message("Revision minor: %d", REV_MINOR);
-			output_message("Patch number  : %d", REV_PATCH);
-			output_message("Branch name   : %s", BRANCH);
-			if (build>0)
-				output_message("Build number  : %d", build);
-			else
-				output_message("Build number  : %s",
-#ifdef WIN32
-#ifdef _DEBUG
-			"WIN32-DEBUG" 
+#ifdef VERSION
+			output_message("%s %s",PACKAGE_STRING, BRANCH);
 #else
-			"WIN32-RELEASE"
-#endif
-#else
-			"DEV"
-#endif		
+			output_message("GridLAB-D %d.%d.%d.%s %s",REV_MAJOR,REV_MINOR,REV_PATH,BUILD,BRANCH);
 			);
+#endif
 		}
 		else if (strcmp(*argv,"--dsttest")==0)
 			timestamp_test();
