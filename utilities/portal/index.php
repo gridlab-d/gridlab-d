@@ -30,19 +30,8 @@
 	echo "<TH>GridLAB-D&trade; job control</TH>"; 
 
 	// get version info
-	$vinfo = exec("echo $(gridlabd --version | cut -f2 -d:)");
-	$v = explode(' ',$vinfo);
-	$n = count($v);
-	$version = sprintf("%d.%d.%d", $v[0], $v[1], $v[2]);
-	for ( $i=3 ; $i<$n-1 ; $i++ )
-	{
-		if ( isset($branch) )
-			$branch = $branch . " " . $v[$i];
-		else
-			$branch = $v[$i];
-	}
-	$build = $v[$n-1];
-	echo "<TD ALIGN=\"right\">Version $version ($branch) Build $build</TD>";
+	$version = exec("echo $(gridlabd --version | cut -f2 -d:)");
+	echo "<TD ALIGN=\"right\">$version</TD>";
 	echo "</TR></TABLE><HR/>";
 
 	// check for file upload
