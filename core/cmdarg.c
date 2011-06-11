@@ -293,11 +293,24 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 		}
 		else if (strcmp(*argv, "-V")==0 ||strcmp(*argv, "--version")==0)
 		{
-#ifdef VERSION
+#ifdef PACKAGE_STRING
 			output_message("%s %s",PACKAGE_STRING, BRANCH);
 #else
-			char buildnum[]="$Rev$";
-			output_message("GridLAB-D %d.%d.%d.%s %s",REV_MAJOR,REV_MINOR,REV_PATCH,BUILD,BRANCH);
+#ifdef I64
+#define ARCH "WIN64"
+#else
+#define ARCH "WIN32" 
+#endif
+#ifdef _DEBUG
+#define REL "DEBUG"
+#else
+#define REL "RELEASE"
+#endif
+			int buildnum;
+			if (sscanf(BUILD,"$%*[^:]: %d",&buildnum)==1 && buildnum>0)
+				output_message("GridLAB-D %d.%d.%d.%d %s",REV_MAJOR,REV_MINOR,REV_PATCH,buildnum,BRANCH);
+			else	
+				output_message("GridLAB-D %d.%d.%d.%s-%s %s",REV_MAJOR,REV_MINOR,REV_PATCH,ARCH,REL,BRANCH);
 #endif
 		}
 		else if (strcmp(*argv,"--dsttest")==0)
