@@ -600,23 +600,14 @@ typedef struct s_objsyncdata {
 	int i; // index of mutex or cond this object rank list uses 
 } OBJSYNCDATA;
 
-/*static pthread_cond_t start = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t startlock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t done = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t donelock = PTHREAD_MUTEX_INITIALIZER;
-static unsigned int next_t1;
-static unsigned int donecount;*/
+static pthread_mutex_t *startlock;
+static pthread_mutex_t *donelock;
+static pthread_cond_t *start;
+static pthread_cond_t *done;
 
-#define MAX_NUM_MUTEX 10000000 // max number of mutex, has to be <= number of object rank list in one iteration.
-
-static pthread_mutex_t startlock[MAX_NUM_MUTEX];
-static pthread_mutex_t donelock[MAX_NUM_MUTEX];
-static pthread_cond_t start[MAX_NUM_MUTEX];
-static pthread_cond_t done[MAX_NUM_MUTEX];
-
-static unsigned int next_t1[MAX_NUM_MUTEX];
-static unsigned int donecount[MAX_NUM_MUTEX];
-static unsigned int n_threads[MAX_NUM_MUTEX]; //number of thread used in the threadpool of an object rank list
+static unsigned int *next_t1;
+static unsigned int *donecount;
+static unsigned int *n_threads; //number of thread used in the threadpool of an object rank list
 
 static void *obj_syncproc(void *ptr)
 {
@@ -840,15 +831,26 @@ STATUS exec_start(void)
 			nObjRankList++; // count how many object rank list in one iteration
 		}
 	}
-	///printf("nObjRankList=%d\n",nObjRankList);
 
-	if (nObjRankList > MAX_NUM_MUTEX) {
-		output_error("Too many object rank lists, exceeds the MAX_NUM_MUTEX");
-		exit(0);
-	}
+	/* allocate and initialize thread data */
+	output_debug("nObjRankList=%d ",nObjRankList);
 
-	// Initialize mutex and cond for object rank lists
-	for(k=0;k<nObjRankList;k++) {
+	next_t1 = malloc(sizeof(next_t1[0])*nObjRankList);
+	memset(next_t1,0,sizeof(next_t1[0])*nObjRankList);
+
+	donecount = malloc(sizeof(donecount[0])*nObjRankList);
+	memset(donecount,0,sizeof(donecount[0])*nObjRankList);
+
+	n_threads = malloc(sizeof(n_threads[0])*nObjRankList);
+	memset(n_threads,0,sizeof(n_threads[0])*nObjRankList);
+
+	// allocation and nitialize mutex and cond for object rank lists
+	startlock = malloc(sizeof(startlock[0])*nObjRankList);
+	donelock = malloc(sizeof(donelock[0])*nObjRankList);
+	start = malloc(sizeof(start[0])*nObjRankList);
+	done = malloc(sizeof(done[0])*nObjRankList);
+	for(k=0;k<nObjRankList;k++) 
+	{
 		pthread_mutex_init(&startlock[k], NULL);
 		pthread_mutex_init(&donelock[k], NULL);
 		pthread_cond_init(&start[k], NULL);

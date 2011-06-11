@@ -1835,7 +1835,8 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
 
 /*	Finds a name in the tree
  */
-static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name){
+static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name)
+{
 	OBJECTTREE **temptree = NULL;
 
 	if(tree == NULL){
