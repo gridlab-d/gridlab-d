@@ -297,7 +297,6 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			output_message("%s %s",PACKAGE_STRING, BRANCH);
 #else
 			output_message("GridLAB-D %d.%d.%d.%s %s",REV_MAJOR,REV_MINOR,REV_PATCH,BUILD,BRANCH);
-			);
 #endif
 		}
 		else if (strcmp(*argv,"--dsttest")==0)
