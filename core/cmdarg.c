@@ -1,4 +1,4 @@
-/** $Id: cmdarg.c 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file cmdarg.c
 	@addtogroup cmdarg Command-line arguments
@@ -296,7 +296,7 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 #ifdef VERSION
 			output_message("%s %s",PACKAGE_STRING, BRANCH);
 #else
-			char buildnum[]="$rev$";
+			char buildnum[]="$Rev$";
 			output_message("GridLAB-D %d.%d.%d.%s %s",REV_MAJOR,REV_MINOR,REV_PATCH,BUILD,BRANCH);
 #endif
 		}
