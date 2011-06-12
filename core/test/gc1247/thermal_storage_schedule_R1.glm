@@ -1,0 +1,13 @@
+//Region 1
+//Summer and Winter are the same
+schedule ts_recharge_schedule {
+	* 0-8 * * * 1.0;
+	* 9-20 * * * 0.0;
+	* 21-23 * * * 1.0;
+}
+
+schedule ts_discharge_schedule {
+	* 0-8 * * * 0.0;
+	* 9-20 * * * 1.0;
+	* 21-23 * * * 0.0;
+}

@@ -1,0 +1,11 @@
+schedule daily_elasticity_wtech {
+     // Weekday {
+	* * * * 1-5 -0.051;
+	* * * * 0,6 -0.043;
+};
+
+schedule daily_elasticity_wotech {
+     // Weekday {
+	* * * * 1-5 -0.041;
+	* * * * 0,6 -0.043;
+};
