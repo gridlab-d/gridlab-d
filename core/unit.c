@@ -614,25 +614,31 @@ void unit_init(void)
 /** Convert a value from one unit to another
 	@return 1 if successful, 0 if failed
  **/
-int unit_convert(char *from, char *to, double *pValue){
-	UNIT *pFrom = unit_find(from);
-	UNIT *pTo = unit_find(to);
-	if (pFrom != NULL){
-		if(pTo != NULL){
-			return unit_convert_ex(pFrom, pTo, pValue);
+int unit_convert(char *from, char *to, double *pValue)
+{
+	if (strcmp(from,to)==0)
+		return 1;
+	else
+	{
+		UNIT *pFrom = unit_find(from);
+		UNIT *pTo = unit_find(to);
+		if (pFrom != NULL){
+			if(pTo != NULL){
+				return unit_convert_ex(pFrom, pTo, pValue);
+			} else {
+				output_error("could not find 'to' unit %s for unit_convert", to);
+				/*	TROUBLESHOOT
+					The specified unit name was not found by the unit system.  Verify that it is a valid unit name.
+				*/
+			}
 		} else {
-			output_error("could not find 'to' unit %s for unit_convert", to);
+			output_error("could not find 'from' unit %s for unit_convert", from);
 			/*	TROUBLESHOOT
 				The specified unit name was not found by the unit system.  Verify that it is a valid unit name.
 			*/
 		}
-	} else {
-		output_error("could not find 'from' unit %s for unit_convert", from);
-		/*	TROUBLESHOOT
-			The specified unit name was not found by the unit system.  Verify that it is a valid unit name.
-		*/
+		return 0;
 	}
-	return 0;
 }
 
 /** Convert a value from one unit to another
