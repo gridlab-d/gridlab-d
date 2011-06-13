@@ -15,6 +15,7 @@
 #include "gridlabd.h"
 #include "auction.h"
 #include "stubauction.h"
+#include "lock.h"
 
 CLASS *auction::oclass = NULL;
 auction *auction::defaults = NULL;
@@ -1421,6 +1422,8 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 	gl_localtime(submit_time,&dt);
 	char buffer[256];
 	BIDDEF biddef;
+	OBJECT *self = OBJECTHDR(this);
+
 	/* suppress demand bidding until market stabilizes */
 	unsigned int sph24 = (unsigned int)(3600/period*24);
 	if(real_price > pricecap){
@@ -1449,6 +1452,7 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 		translate_bid(biddef, key);
 	}
 
+	LOCK_OBJECT(self);
 	if (biddef.market > market_id)
 	{	// future market
 		gl_error("bidding into future markets is not yet supported");
@@ -1474,6 +1478,7 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 			;
 		}
 		record_bid(from, quantity, real_price, state);
+		UNLOCK_OBJECT(self);
 		return biddef.raw;
 	}
 	else if (biddef.market < 0 || biddef.bid_type == BID_UNKNOWN){
@@ -1493,6 +1498,7 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 		} else {
 			char name[64];
 			gl_debug("zero quantity bid from %s is ignored", gl_name(from,name,sizeof(name)));
+			UNLOCK_OBJECT(self);
 			return -1;
 		}
 		biddef.bid = (int16)out;
@@ -1502,6 +1508,7 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 		// interject transaction log file writing here
 		record_bid(from, quantity, real_price, state);
 		biddef.raw = out;
+		UNLOCK_OBJECT(self);
 		return biddef.raw;
 	} else { // key between cleared market and 'market_id' ~ points to an old market
 		if(verbose){
@@ -1511,8 +1518,10 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 				gl_name(OBJECTHDR(this),myname,sizeof(myname)),quantity<0?"ask":"offer",
 				gl_name(from,biddername,sizeof(biddername)));
 		}
+		UNLOCK_OBJECT(self);
 		return 0;
 	}
+	UNLOCK_OBJECT(self);
 	return 0;
 }
 
