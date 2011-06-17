@@ -52,7 +52,6 @@ double_assert::double_assert(MODULE *module)
 		defaults = this;
 		status = ASSERT_TRUE;
 		within = 0.0;
-		within_mode = IN_ABS;
 		value = 0.0;
 		once = ONCE_FALSE;
 		once_value = 0;
@@ -145,10 +144,7 @@ EXPORT TIMESTAMP commit_double_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 		
 	double *x = (double*)gl_get_double_by_name(obj->parent,da->target);
 	if(da->within_mode == da->IN_RATIO){
-		range = da->value * da->within;
-		if(range < 0.001){ // minimum bounds
-			range = 0.001;
-		}
+		range = *x * da->within;
 	} else if(da->within_mode == da->IN_ABS){
 		range = da->within;
 	}
@@ -166,10 +162,10 @@ EXPORT TIMESTAMP commit_double_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	else if (da->status == da->ASSERT_TRUE)
 	{
 		double m = fabs(*x-da->value);
-		if (_isnan(m) || m>range)
+		if (_isnan(m) || m>da->within)
 		{				
 			gl_verbose("Assert failed on %s: %s %g not within %f of given value %g", 
-				gl_name(obj->parent, buff, 64), da->target, *x, range, da->value);
+				gl_name(obj->parent, buff, 64), da->target, *x, da->within, da->value);
 			return 0;
 		}
 		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
@@ -178,10 +174,10 @@ EXPORT TIMESTAMP commit_double_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	else if (da->status == da->ASSERT_FALSE)
 	{
 		double m = fabs(*x-da->value);
-		if (_isnan(m) || m<range)
+		if (_isnan(m) || m<da->within)
 		{				
 			gl_verbose("Assert failed on %s: %s %g is within %f of given value %g", 
-				gl_name(obj->parent, buff, 64), da->target, *x, range, da->value);
+				gl_name(obj->parent, buff, 64), da->target, *x, da->within, da->value);
 			return 0;
 		}
 		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));

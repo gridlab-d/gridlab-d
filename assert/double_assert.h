@@ -17,7 +17,6 @@ private:
 protected:
 public:
 	enum {ONCE_FALSE=0, ONCE_TRUE=1, ONCE_DONE=2} once;
-	enum {IN_ABS=0, IN_RATIO=1} within_mode;
 	double once_value;
 	enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} status; //Assert whether the target value should be
 	char1024 target;											//within the range (True), outside of a 
