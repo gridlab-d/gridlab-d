@@ -5077,6 +5077,11 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			++term;
 		//if (sscanf(term,"\"%[^\"\n]",value)==1 && find_file(value, NULL, 0)==NULL)
 		strcpy(value, strip_right_white(term));
+		if(value[0] == '"'){
+			char stripbuf[1024];
+			sscanf(value, "\"%[^\"\n]", stripbuf);
+			strcpy(value, stripbuf);
+		}
 		if (find_file(value, NULL, 0, path,sizeof(path))==NULL)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
