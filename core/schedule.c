@@ -983,6 +983,7 @@ double schedule_weight(SCHEDULE *sch,			/**< the schedule to read */
 TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchronized */
 						TIMESTAMP t)	/**< the time to which the schedule is to be synchronized */
 {
+	double value;
 #ifdef _DEBUG
 	if ( sch->magic1!=SCHEDULE_MAGIC || sch->magic2!=SCHEDULE_MAGIC ) // || sch->checksum!=schedule_checksum(sch) )
 		output_warning("schedule '%s' may be corrupted", sch->name);
@@ -998,7 +999,11 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 		if ( dtnext==0 )
 			output_debug("schedule_sync(SCHEDULE *sch={name: '%s',...}, TIMESTAMP t=%"FMT_INT64"d) has a dtnext==0", sch->name, t);
 #endif
-		sch->value = schedule_value(sch,index);
+		value = schedule_value(sch,index);
+		if(sch->value != value){
+			sch->since = t;
+		}
+		sch->value = value;
 		sch->duration = schedule_duration(sch,index)/60.0;
 		sch->next_t = (dtnext==0 ? TS_NEVER : t + dtnext -  t % 60);
 #ifdef _DEBUG
