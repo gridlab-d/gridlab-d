@@ -207,7 +207,7 @@ int network_interface::check_buffer(){
 			write_msg = true;
 		} else {
 			// do we have new data?
-			if(0 == memcmp(prev_data_buffer, (void *)(c), buffer_size)){
+			if(0 == memcmp(prev_data_buffer, (void *)(d), buffer_size)){
 				write_msg = false; // continue, no need to send the same data
 			} else {
 				write_msg = true;
@@ -224,7 +224,7 @@ int network_interface::check_buffer(){
 		//gl_set_value(obj, data_buffer, (char *)c, 0);
 		network_message *nm = (network_message *)malloc(sizeof(network_message));
 		memset(nm, 0, sizeof(network_message));
-		nm->send_message(this, gl_globalclock, pNetwork->latency); // this hooks the message in to the 
+		nm->send_message(this, gl_globalclock, pNetwork->latency); // this hooks the message in to the network
 		nm->next = outbox;
 		outbox = nm;
 		last_message_send_time = gl_globalclock;

@@ -341,6 +341,7 @@ PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE pt
 	prop->next = NULL;
 	prop->oclass = oclass;
 	prop->ptype = ptype;
+	prop->width = property_type[ptype].size;
 
 	oclass->size += property_type[ptype].size;
 

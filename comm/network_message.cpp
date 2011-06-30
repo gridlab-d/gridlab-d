@@ -99,6 +99,7 @@ int network_message::send_message(OBJECT *f, OBJECT *t, char *m, int len, double
 	rx_start_frac = fmod(latency+frac, 1.0);
 	// /new
 	msg_state = NMS_NONE;
+	last_update = ts;
 	// validate to & from interfaces
 	if(from == 0){
 		gl_error("send_message(): no 'from' interface");

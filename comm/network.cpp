@@ -72,7 +72,7 @@ void network::update_latency(){
 			latency_last_update = gl_globalclock;
 			latency_next_update = gl_globalclock + latency_period;
 		} else {
-			; // latency does not use a distribution and does not require updating
+			latency_next_update = TS_NEVER; // latency does not use a distribution and does not require updating
 		}
 		if(latency < 0.0){
 			gl_warning("random latency output of %f is reset to zero", latency);
@@ -177,6 +177,20 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 	network_interface *nif = first_if;
 	for(; nif != 0; nif = nif->next){
 		nif->check_buffer();
+	}
+
+	//since we can't sync, calculate actual exchanges here
+	for(nif = first_if; nif != 0; nif = nif->next){
+		if(nif->has_outbound()){
+			for(netmsg = nif->peek_outbox(); netmsg != 0; netmsg = netmsg->next){
+				// increment message & interface counters
+				double dt = gl_globalclock - netmsg->last_update;
+				netmsg->bytes_sent += netmsg->send_rate * dt; // SR may be zero
+				netmsg->bytes_buffered += netmsg->buffer_rate * dt; // BR may be zero
+				netmsg->bytes_recv += netmsg->send_rate * dt;
+				netmsg->last_update = gl_globalclock;
+			}
+		}
 	}
 
 	// scan interfaces for messages, determine network bandwidth requirements
@@ -298,9 +312,6 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 						netmsg->buffer_rate = rmn - netmsg->send_rate;
 					}
 				}
-				// increment message & interface counters
-				netmsg->bytes_sent += netmsg->send_rate; // SR may be zero
-				netmsg->bytes_buffered += netmsg->buffer_rate; // BR may be zero
 				// netmsg->bytes_buffered = 
 				nif->bandwidth_used += netmsg->send_rate;
 				nif->bandwidth_used += netmsg->buffer_rate;
@@ -319,13 +330,14 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 					//	for each message,
 					for(netmsg = nif->peek_outbox(); netmsg != 0; netmsg = netmsg->next){
 						if(netmsg->bytes_buffered > 0.0){
+							double dt = netmsg->last_update - gl_globalclock;
 							if(netmsg->bytes_buffered > bandwidth_left){
 								netmsg->buffer_rate = -bandwidth_left;
 							} else {
 								netmsg->buffer_rate = -netmsg->bytes_buffered;
 							}
-							netmsg->bytes_buffered += netmsg->buffer_rate;
-							netmsg->bytes_recv -= netmsg->buffer_rate;
+							netmsg->bytes_buffered += netmsg->buffer_rate * dt;
+							netmsg->bytes_recv -= netmsg->buffer_rate * dt;
 							bandwidth_left += netmsg->bytes_buffered;
 							bandwidth_used -= netmsg->buffer_rate;		// netmsg->buffer_rate
 							netmsg->send_rate -= netmsg->buffer_rate;	//	is negative
@@ -339,11 +351,13 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 	/* don't forget to "receive" the messages!!! */
 	network_message tempmsg;
 	TIMESTAMP rv = TS_NEVER;
+	double predicted_tx_sec = 0.0;
+	TIMESTAMP next_tx_sec = 0.0;
 	for(nif = first_if; nif != 0; nif = nif->next){
 		if(nif->has_outbound()){
 			//	for each message,
 			for(netmsg = nif->peek_outbox(); netmsg != 0; netmsg = netmsg->next){
-				netmsg->bytes_recv += netmsg->send_rate;
+				/*** NOTE: THIS MUST TAKE DT INTO EFFECT ***/
 				if(netmsg->bytes_recv >= netmsg->size){
 					tempmsg.next = netmsg->next;
 					netmsg->msg_state = NMS_DELIVERED;
@@ -369,6 +383,22 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 					netmsg->pTo->inbox = netmsg;
 					// use a dummy msg to hold 'next'
 					netmsg = &tempmsg;
+				} else {
+					// recalculate estimated transmission time
+					if(netmsg->send_rate > 0.0){
+						predicted_tx_sec = (netmsg->size - netmsg->bytes_recv) / netmsg->send_rate;
+						if(predicted_tx_sec < 1.0){
+							// run next step
+							next_tx_sec = gl_globalclock + 1; // will finish next second
+						} else {
+							// send rate will change when the tail of the message is sent
+							next_tx_sec = (int64)floor(predicted_tx_sec) + gl_globalclock;
+						}
+						if(next_tx_sec < rv){
+							rv = next_tx_sec;
+						} // if less than 1s to transmit, it'll wrap up in 1s
+					}
+					// no 'else', wait for other messages to free up bandwidth
 				}
 			}
 		}

@@ -55,6 +55,7 @@ public:
 //	double	rx_done_frac;
 	int64	tx_est;
 	int64	rx_est;
+	TIMESTAMP last_update;
 
 
 	// could be private with Network & NI friended, package-level privacy
