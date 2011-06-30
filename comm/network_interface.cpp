@@ -203,11 +203,11 @@ int network_interface::check_buffer(){
 		write_msg = true;
 	} else if(send_message_mode == NSM_UPDATE || send_message_mode == NSM_UPDATE_PERIOD){ // send on update
 		// do we have a base case?
-		if(prev_buffer_size == -1){
+		if(curr_buffer_size == -1){
 			write_msg = true;
 		} else {
 			// do we have new data?
-			if(0 == memcmp(prev_data_buffer, (void *)(d), buffer_size)){
+			if(0 == memcmp(data_buffer, (void *)(d), buffer_size)){
 				write_msg = false; // continue, no need to send the same data
 			} else {
 				write_msg = true;
@@ -217,8 +217,8 @@ int network_interface::check_buffer(){
 
 	if(write_msg){
 		curr_buffer_size = buffer_size;
-		memset(prev_data_buffer, 0, buffer_size);
-		memcpy(prev_data_buffer, data_buffer, buffer_size);
+//		memset(prev_data_buffer, 0, buffer_size);
+//		memcpy(prev_data_buffer, data_buffer, buffer_size);
 		memset(data_buffer, 0, buffer_size);
 		memcpy(data_buffer, (void *)(d), buffer_size);
 		//gl_set_value(obj, data_buffer, (char *)c, 0);
