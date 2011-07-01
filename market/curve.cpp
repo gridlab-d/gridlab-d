@@ -113,7 +113,7 @@ void curve::sort(bool reverse)
 void curve::sort(BID *list, KEY *key, const int len, const bool reverse)
 {
 	//merge sort
-	if (len>0)
+	if (len>1)
 	{
 		int split = len/2;
 		KEY *a = key, *b = key+split;
