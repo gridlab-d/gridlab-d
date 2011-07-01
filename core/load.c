@@ -5039,6 +5039,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 	}
 	else if (strncmp(line,MACRO "else",5)==0)
 	{
+		char *term;
 		if ( (suppress&(1<<(nesting-1))) == (1<<(nesting-1)) )
 			suppress &= ~(1<<(nesting-1));
 		else
