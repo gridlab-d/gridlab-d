@@ -64,7 +64,7 @@ int plugload::create()
 	load.power_factor = 0.90;
 	//load.power_fraction = 1.0;
 	load.voltage_factor = 1.0; // assume 'even' voltage, initially
-	shape.load = gl_random_uniform(0, 0.1);
+	shape.load = gl_random_uniform(RNGSTATE,0, 0.1);
 	return res;
 }
 

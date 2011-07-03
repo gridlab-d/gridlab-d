@@ -97,12 +97,12 @@ int dryer::init(OBJECT *parent)
 {
 	int rv = 0;
 	// default properties
-	if (motor_power==0) motor_power = gl_random_uniform(150,350);
+	if (motor_power==0) motor_power = gl_random_uniform(RNGSTATE,150,350);
 	if (heat_fraction==0) heat_fraction = 0.2; 
 	if (stall_voltage==0) stall_voltage  = 0.6*120;
 	if (trip_delay==0) trip_delay = 10;
 	if (reset_delay==0) reset_delay = 60;
-	if (coil_power==-1) coil_power = gl_random_uniform(3500,5000);
+	if (coil_power==-1) coil_power = gl_random_uniform(RNGSTATE,3500,5000);
 
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
@@ -152,7 +152,7 @@ double dryer::update_state(double dt)
 		{
 			state = RUNNING;
 			enduse_queue--;
-			cycle_time = cycle_duration>0 ? cycle_duration : gl_random_uniform(20,40)*60;
+			cycle_time = cycle_duration>0 ? cycle_duration : gl_random_uniform(RNGSTATE,20,40)*60;
 			state_time = 0;
 		}
 		break;

@@ -35,7 +35,6 @@
 #define QNAN sqrt(-1) /* quiet NaN used only for low-key failures */
 
 static unsigned int *ur_state = NULL;
-//static unsigned int rv = 0;
 
 int random_init(void)
 {
@@ -97,7 +96,7 @@ int random_nargs(char *name)
 }
 
 /** randwarn checks to see if non-determinism warning is necessary **/
-int randwarn()
+int randwarn(unsigned int *state)
 {
 	static int warned=0;
 	if (global_nondeterminism_warning && !warned)
@@ -105,40 +104,58 @@ int randwarn()
 		warned=1;
 		output_warning("non-deterministic behavior probable--rand was called while running multiple threads");
 	}
+	
+	if ( global_randomnumbergenerator==RNG2 )
+	{
+		/* use the stdc (RNG2) rand functions */
+		if ( state!=NULL )
+			srand(*state);
+		return rand();
+	}
+	else if ( global_randomnumbergenerator==RNG3 )
+	{
+		/* stateless - use the OS rng */
+		if ( state==NULL )
+			return rand();
 
-	return rand();
+		/* TODO: use a much longer cycle rng */
+		*state = (*state) * 214013L + 2531011L;
+		return ((*state)>>16)&RAND_MAX;
+	}
+	else
+	{
+		/* can't recognize what RNG is selected */
+		throw_exception("unknown random number generator selected (global_randomnumbergenerator==%d)", global_randomnumbergenerator);
+		return 0;
+	}
 }
 
 /* uniform distribution in range (0,1( */
-double randunit(void)
+double randunit(unsigned int *state)
 {
 	double u;
 	unsigned int ur;
 	static int random_lock=0;
 
-	lock(&random_lock);
-	
-	if (ur_state!=NULL) 
-		srand(*ur_state);
+	if ( state==NULL || state==ur_state )
+	{
+		state=ur_state;
+		lock(&random_lock);
+	}
+
 TryAgain:
-	ur = randwarn();
-	if (ur_state!=NULL)
-		*ur_state = ur;
+	ur = randwarn(state);
+	if (state!=NULL)
+		*state = ur;
 	u = ur/(RAND_MAX+1.0);
-	if (u>=1) 
+	if ( u<=0 || u>=1 ) 
 		goto TryAgain;
 
-	unlock(&random_lock);
+	if ( state==ur_state )
+		unlock(&random_lock);
 	
 	return u;
 
-}
-double randunit_pos(void)
-{
-	double ur = 0.0;
-	while (ur<=0)
-		ur = randunit();
-	return ur;
 }
 
 /** Generate the same number always.  This is the Dirac delta function:
@@ -147,7 +164,7 @@ double randunit_pos(void)
 	\f[ \varphi\left(a\right) = 1.0 \f]
 	
  **/
-double random_degenerate(double a)
+double random_degenerate(unsigned int *state, double a)
 {
 	/* returns a, i.e., Dirac delta function */
 	double aa = fabs(a);
@@ -173,7 +190,8 @@ double random_degenerate(double a)
 
 	Note that this uniform distribution includes \e a but does not include \e b.
  **/
-double random_uniform(double a, /**< the minimum number */ 
+double random_uniform(unsigned int *state, /**< the rng state */
+					  double a, /**< the minimum number */ 
 					  double b) /**< the maximum number */
 {
 	/* uniform distribution in range (a,b( */
@@ -196,7 +214,7 @@ double random_uniform(double a, /**< the minimum number */
 			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
 			Correct the functional definition of the random number and try again.
 		 */
-	return randunit()*(b-a)+a;
+	return randunit(state)*(b-a)+a;
 }
 
 /** Generate a Gaussian distributed random number 
@@ -211,8 +229,8 @@ double random_uniform(double a, /**< the minimum number */
 	{
 		double r, a, b;
 		do { 
-			a = 2*randunit()-1;
-			b = 2*randunit()-1;
+			a = 2*randunit(NULL)-1;
+			b = 2*randunit(NULL)-1;
 			r = a*a+b*b;
 		} while (r>=1);
 		return sqrt(-2*log(r)/r)*a*r*s+m;
@@ -220,11 +238,12 @@ double random_uniform(double a, /**< the minimum number */
 	\endcode
 	
 **/
-double random_normal(double m, /**< the mean of the distribution */ 
+double random_normal(unsigned int *state, /**< the rng state */
+					 double m, /**< the mean of the distribution */ 
 					 double s) /**< the standard deviation of the distribution */
 {
 	/* normal distribution centered on m, with variance s^2 */
-	double r=randunit();
+	double r=randunit(state);
 	if (s<0)
 		output_warning("random_normal(m=%g, s=%g): s is negative", m, s);
 		/* TROUBLESHOOT
@@ -232,8 +251,8 @@ double random_normal(double m, /**< the mean of the distribution */
 			Correct the functional definition of the random number and try again.
 		 */
 	while (r<=0 || r>1)
-		r=randunit();
-	return sqrt(-2*log(r)) * sin(2*PI*randunit())*s+m;
+		r=randunit(state);
+	return sqrt(-2*log(r)) * sin(2*PI*randunit(state))*s+m;
 }
 
 /** Generate a Bernoulli distributed random number 
@@ -243,7 +262,8 @@ double random_normal(double m, /**< the mean of the distribution */
 
 	Note that the Bernoulli distribution is a discrete distribution.
  **/
-double random_bernoulli(double p) /**< the probability of generating a 1 */
+double random_bernoulli(unsigned int *state, /**< the rng state */
+					    double p) /**< the probability of generating a 1 */
 {
 	double ap = fabs(p);
 	if (ap!=0 && (ap<1e-30 || ap>1e30))
@@ -259,7 +279,7 @@ if (p<0 || p>1)
 			Correct the functional definition of the random number and try again.
 		 */
 	/* 1 if rand<=p, 0 if rand>p */
-	return (p>=randunit()) ? 1 : 0;
+	return (p>=randunit(state)) ? 1 : 0;
 }
 
 /** Generate a number randomly sample uniformly from a list 
@@ -270,12 +290,13 @@ if (p<0 || p>1)
 
 	Note that the sampled distriution is a discrete distribution.
  **/
-double random_sampled(unsigned n, /**< the number of samples in the list */
+double random_sampled(unsigned int *state, /**< the rng state */
+					  unsigned n, /**< the number of samples in the list */
 					  double *x) /**< the sample list */
 {
 	if (n>0)
 	{
-		double v = x[(unsigned)(randunit()*n)];
+		double v = x[(unsigned)(randunit(state)*n)];
 		double av = fabs(v);
 		if (v!=0 && (v<1e-30 || v>1e30))
 			output_warning("random_sampled(n=%d,...): sampled value is not within normal bounds of +/-1e(+/-30)",n);
@@ -305,12 +326,13 @@ double random_sampled(unsigned n, /**< the number of samples in the list */
 	\f[ \varphi\left( x<k \right) = k \frac{m^k}{x^{k+1}} x \geq m \f]
 	The cumulative density function is \f[ \varphi\left( x<k \right) = 1-(\frac{m}{x})^k \f].
 **/
-double random_pareto(double m, /**< the minimum value */
+double random_pareto(unsigned int *state, /**< the rng state */
+					 double m, /**< the minimum value */
 					 double k) /**< the k value */
 {
 	double am = fabs(m);
 	double ak = fabs(k);
-	double r = randunit();
+	double r = randunit(state);
 	if (am!=0 && (am<1e-03 || am>1e30))
 		output_warning("random_pareto(m=%g, k=%g): m is not within the normal bounds of +/-1e(+/-30)", m, k);
 		/* TROUBLESHOOT
@@ -330,7 +352,7 @@ double random_pareto(double m, /**< the minimum value */
 			Correct the functional definition of the random number and try again.
 		 */
 	while (r<=0 || r>=1)
-		r = randunit();
+		r = randunit(state);
 	return m*pow(r,-1/k);
 }
 
@@ -339,10 +361,11 @@ double random_pareto(double m, /**< the minimum value */
 	The log-normal probability density function is
 	\f[ \varphi\left(x\right) = \frac{1}{\sqrt{2\pi}x\sigma}e^{\frac{\left(\ln x-\mu\right)^2}{2\sigma^2}}	\f]
  **/
-double random_lognormal(double gmu, /**< the geometric mean */
+double random_lognormal(unsigned int *state, /**< the rng state */
+					    double gmu, /**< the geometric mean */
 						double gsigma) /**< the geometric standard deviation */
 {
-	return exp(random_normal(0,1)*gsigma+gmu);
+	return exp(random_normal(state,0,1)*gsigma+gmu);
 }
 
 /** Generate an exponentially distributed random number 
@@ -356,9 +379,10 @@ double random_lognormal(double gmu, /**< the geometric mean */
 		\right\}
 	\f]
  **/
-double random_exponential(double lambda) /**< the rate parameter lambda */
+double random_exponential(unsigned int *state, /**< the rng state */
+					      double lambda) /**< the rate parameter lambda */
 {
-	double r=randunit();
+	double r=randunit(state);
 	if (lambda<=0)
 		throw_exception("random_exponential(l=%g): l must be greater than 0", lambda);
 		/* TROUBLESHOOT
@@ -372,7 +396,7 @@ double random_exponential(double lambda) /**< the rate parameter lambda */
 			Correct the functional definition of the random number and try again.
 		 */
 	while (r<=0 || r>=1)
-		r=randunit();
+		r=randunit(state);
 	return -log(r)/lambda;
 }
 
@@ -385,17 +409,18 @@ double random_exponential(double lambda) /**< the rate parameter lambda */
 	@note This distribution is not tested because the test requires the Gamma function, which itself would have to be implemented and tested.
 
  **/
-double random_weibull(double lambda, /**< scale parameter */
+double random_weibull(unsigned int *state, /**< the rng state */
+					  double lambda, /**< scale parameter */
 					  double k) /**< rate shape parameter */
 {
-	double r = randunit();
+	double r = randunit(state);
 	if (k<=0)
 		throw_exception("random_weibull(l=%g, k=%g): k must be greater than 0", lambda, k);
 		/* TROUBLESHOOT
 			An attempt to generate a random number used a parameter that was outside the expected range of real numbers.  
 			Correct the functional definition of the random number and try again.
 		 */
-	return lambda * pow(-log(1-randunit()),1/k);	
+	return lambda * pow(-log(1-randunit(state)),1/k);	
 }
 
 /** Generate a Rayleigh distributed random number
@@ -405,9 +430,10 @@ double random_weibull(double lambda, /**< scale parameter */
 	\f[ \varphi \left( x;\sigma \right) = \frac{x e^{-\frac{x^2}{2\sigma^2}} }{\sigma^2} \f]
 
  **/
-double random_rayleigh(double sigma) /**< mode parameter */
+double random_rayleigh(unsigned int *state, /**< the rng state */
+					   double sigma) /**< mode parameter */
 {
-	return sigma*sqrt(-2*log(1-randunit()));
+	return sigma*sqrt(-2*log(1-randunit(state)));
 }
 
 /** Generate a Gamma distributed random number
@@ -417,7 +443,8 @@ double random_rayleigh(double sigma) /**< mode parameter */
 	\f[ \varphi \left( x; \alpha,\beta\right) = \frac{1}{\Gamma(\alpha) \beta^\alpha} x^{\alpha-1} e^{-x/\beta} \f]
 
  **/
-double random_gamma(double alpha, double beta)
+double random_gamma(unsigned int *state, /**< the rng state */
+					double alpha, double beta)
 {
 	/* used a different method depending on alpha */
 	double na = floor(alpha);
@@ -426,7 +453,7 @@ double random_gamma(double alpha, double beta)
 		unsigned int i;
 		double prod = 1;
 		for (i=0; i<na; i++)
-			prod *= randunit_pos();
+			prod *= randunit(state);
 		return -beta * log(prod);
 	}
 	else if (na<1) /* a is small */
@@ -434,8 +461,8 @@ double random_gamma(double alpha, double beta)
 		double p, q, x, u, v;
 		p = E/(alpha+E);
 		do {
-			u = randunit();
-			v = randunit_pos();
+			u = randunit(state);
+			v = randunit(state);
 			if (u<p)
 			{
 				x = exp((1/alpha)*log(v));
@@ -446,7 +473,7 @@ double random_gamma(double alpha, double beta)
 				x = 1 - log(v);
 				q = exp((alpha-1)*log(x));
 			}
-		} while (randunit()>=q);
+		} while (randunit(state)>=q);
 		return beta*x;
 	}
 	else /* a is large */
@@ -455,10 +482,10 @@ double random_gamma(double alpha, double beta)
 		double x, y, v;
 		do {
 			do {
-				y = tan(PI*randunit());
+				y = tan(PI*randunit(state));
 				x = sqrta*y+alpha-1;
 			} while (x<=0);
-			v = randunit();
+			v = randunit(state);
 		} while (v>(1+y*y) * exp((alpha-1)*log(x/(alpha-1))-sqrta*y));
 		return beta*x;
 	}
@@ -472,11 +499,12 @@ double random_gamma(double alpha, double beta)
 
  **/
 
-double random_beta(double alpha, double beta) /**< event parameters */
+double random_beta(unsigned int *state, /**< the rng state */
+				   double alpha, double beta) /**< event parameters */
 {
 	/* use the transformer generator */
-	double x1 = random_gamma(alpha,1);
-	double x2 = random_gamma(beta,1);
+	double x1 = random_gamma(state,alpha,1);
+	double x2 = random_gamma(state,beta,1);
 	return x1 / (x1+x2);
 }
 
@@ -495,73 +523,74 @@ double random_beta(double alpha, double beta) /**< event parameters */
 
  **/
 
-double random_triangle(double a, double b)
+double random_triangle(unsigned int *state, /**< the rng state */
+					   double a, double b)
 {
-	return (randunit() + randunit())*(b-a)/2 + a;
+	return (randunit(state) + randunit(state))*(b-a)/2 + a;
 }
 
 /* internal function that generates a random number */
-static double _random_value(RANDOMTYPE type, va_list ptr)
+static double _random_value(RANDOMTYPE type, unsigned int *state, va_list ptr)
 {
 	switch (type) {
 	case RT_DEGENERATE:/* ... double value */
 		{	double a = va_arg(ptr,double);
-			return random_degenerate(a);
+			return random_degenerate(state, a);
 		}
 	case RT_UNIFORM:		/* ... double min, double max */
 		{	double min = va_arg(ptr,double);
 			double max = va_arg(ptr,double);
-			return random_uniform(min,max);
+			return random_uniform(state,min,max);
 		}
 	case RT_NORMAL:		/* ... double mean, double stdev */
 		{	double mu = va_arg(ptr,double);
 			double sigma = va_arg(ptr,double);
-			return random_normal(mu,sigma);
+			return random_normal(state,mu,sigma);
 		}
 	case RT_BERNOULLI:	/* ... double p */
-		return random_bernoulli(va_arg(ptr,double));
+		return random_bernoulli(state,va_arg(ptr,double));
 	case RT_SAMPLED: /* ... unsigned n_samples, double samples[n_samples] */
 		{	unsigned n_samples = va_arg(ptr,unsigned);
 			double *samples = va_arg(ptr,double*);
-			return random_sampled(n_samples,samples);
+			return random_sampled(state,n_samples,samples);
 		}
 	case RT_PARETO:	/* ... double base, double gamma */
 		{	double base = va_arg(ptr,double);
 			double gamma = va_arg(ptr,double);
-			return random_pareto(base,gamma);
+			return random_pareto(state,base,gamma);
 		}
 	case RT_LOGNORMAL:	/* ... double gmean, double gsigma */
 		{	double gmu = va_arg(ptr,double);
 			double gsigma = va_arg(ptr,double);
-			return random_lognormal(gmu,gsigma);
+			return random_lognormal(state,gmu,gsigma);
 		}
 	case RT_EXPONENTIAL: /* ... double lambda */
 		{	double lambda = va_arg(ptr,double);
-			return random_exponential(lambda);
+			return random_exponential(state,lambda);
 		}
 	case RT_RAYLEIGH: /* ... double sigma */
 		{	double sigma = va_arg(ptr,double);
-			return random_rayleigh(sigma);
+			return random_rayleigh(state,sigma);
 		}
 	case RT_WEIBULL: /* ... double lambda, double k */
 		{	double lambda = va_arg(ptr,double);
 			double k = va_arg(ptr,double);
-			return random_weibull(lambda,k);
+			return random_weibull(state,lambda,k);
 		}
 	case RT_GAMMA: /* ... double alpha, double beta */
 		{	double alpha = va_arg(ptr,double);
 			double beta = va_arg(ptr,double);
-			return random_gamma(alpha,beta);
+			return random_gamma(state,alpha,beta);
 		}
 	case RT_BETA: /* ... double alpha, double beta */
 		{	double alpha = va_arg(ptr,double);
 			double beta = va_arg(ptr,double);
-			return random_beta(alpha,beta);
+			return random_beta(state,alpha,beta);
 		}
 	case RT_TRIANGLE: /* ... double a, double b */
 		{	double a = va_arg(ptr,double);
 			double b = va_arg(ptr,double);
-			return random_triangle(a,b);
+			return random_triangle(state,a,b);
 		}
 	default:
 		throw_exception("_random_value(type=%d,...); type is not valid",type);
@@ -589,7 +618,7 @@ int random_apply(char *group_expression, /**< the group definition; see find_obj
 	for (obj=find_first(list); obj!=NULL; find_next(list,obj))
 	{
 		/* this is quite slow and should use a class property lookup */
-		object_set_double_by_name(obj,property,_random_value(type,ptr));
+		object_set_double_by_name(obj,property,_random_value(type,NULL,ptr));
 		count++;
 	}
 	va_end(ptr);
@@ -605,7 +634,7 @@ double random_value(RANDOMTYPE type, /**< the type of distribution desired */
 	double x;
 	va_list ptr;
 	va_start(ptr,type);
-	x = _random_value(type,ptr);
+	x = _random_value(type,NULL,ptr);
 	va_end(ptr);
 	return x;
 }
@@ -620,11 +649,7 @@ double pseudorandom_value(RANDOMTYPE type, /**< the type of distribution desired
 	double x;
 	va_list ptr;
 	va_start(ptr,state);
-	/* switch to deterministic sequence */
-	ur_state = state;
-	x = _random_value(type,ptr);
-	/* switch back to non-deterministic sequence */
-	ur_state = NULL;
+	x = _random_value(type,state,ptr);
 	va_end(ptr);
 	return x;
 }
@@ -719,11 +744,11 @@ int random_test(void)
 	output_test("\nBEGIN: random random distributions tests");
 
 	/* Dirac distribution test */
-	a = 10*randunit()/2-5;
+	a = 10*randunit(NULL)/2-5;
 	output_test("\ndegenerate(x=%g)",a);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_degenerate(a);
+		sample[i] = random_degenerate(NULL,a);
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
@@ -736,12 +761,12 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* uniform distribution test */
-	a = 10*randunit()/2;
-	b = 10*randunit()/2 + 5;
+	a = 10*randunit(NULL)/2;
+	b = 10*randunit(NULL)/2 + 5;
 	output_test("\nuniform(min=%g, max=%g)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_uniform(a,b);
+		sample[i] = random_uniform(NULL,a,b);
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
@@ -754,11 +779,11 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* Bernoulli distribution test */
-	a = randunit();
+	a = randunit(NULL);
 	output_test("\nBernoulli(prob=%g)",a);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_bernoulli(a);
+		sample[i] = random_bernoulli(NULL,a);
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
@@ -771,12 +796,12 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* normal distribution test */
-	a = 20*randunit()-5;
-	b = 5*randunit();
+	a = 20*randunit(NULL)-5;
+	b = 5*randunit(NULL);
 	output_test("\nnormal(mean=%g, stdev=%g)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_normal(a,b);
+		sample[i] = random_normal(NULL,a,b);
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
@@ -787,11 +812,11 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* exponential distribution test */
-	a = 1/randunit()-1;
+	a = 1/randunit(NULL)-1;
 	output_test("\nexponential(lambda=%g)",a);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_exponential(a);
+		sample[i] = random_exponential(NULL,a);
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
@@ -803,29 +828,28 @@ int random_test(void)
 	preverrors=errorcount;
 	
 	/* lognormal distribution test */
-	a = 2*randunit()-1;
-	b = 2*randunit();
+	a = 2*randunit(NULL)-1;
+	b = 2*randunit(NULL);
 	output_test("\nlognormal(gmean=%g, gstdev=%g)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_lognormal(a,b);
+		sample[i] = random_lognormal(NULL,a,b);
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
 	errorcount+=report("Mean",mean(sample,count),exp(a+b*b/2),0.01);
 	errorcount+=report("Stdev",stdev(sample,count),sqrt((exp(b*b)-1)*exp(2*a+b*b)),0.1);
-	errorcount+=report("Min",min(sample,count),0,0.1);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
 	/* Pareto distribution test */
-	a = 10*randunit();
-	b = randunit()*2+2;
+	a = 10*randunit(NULL);
+	b = randunit(NULL)*2+2;
 	output_test("\nPareto(base=%g, gamma=%g)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_pareto(a,b);
+		sample[i] = random_pareto(NULL,a,b);
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
@@ -837,12 +861,12 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* rayleigh distribution test */
-	a = 10*randunit();
-	b = 4*randunit();
+	a = 10*randunit(NULL);
+	b = 4*randunit(NULL);
 	output_test("\nRayleigh(sigma=%g)",a);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_rayleigh(a);
+		sample[i] = random_rayleigh(NULL,a);
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
@@ -853,12 +877,12 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* beta distribution test */
-	a = 15*randunit();
-	b = 4*randunit();
+	a = 15*randunit(NULL);
+	b = 4*randunit(NULL);
 	output_test("\nBeta(a=%f,b=%f)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_beta(a,b);
+		sample[i] = random_beta(NULL,a,b);
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
@@ -869,12 +893,12 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* gamma distribution test */
-	a = 15*randunit();
-	b = 4*randunit();
+	a = 15*randunit(NULL);
+	b = 4*randunit(NULL);
 	output_test("\nGamma(a=%f,b=%f)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_gamma(a,b);
+		sample[i] = random_gamma(NULL,a,b);
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
@@ -885,12 +909,12 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* triangle distribution test */
-	a = -randunit()*10;
-	b = randunit()*10;
+	a = -randunit(NULL)*10;
+	b = randunit(NULL)*10;
 	output_test("\nTriangle(a=%f,b=%f)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_triangle(a,b);
+		sample[i] = random_triangle(NULL,a,b);
 		if (!finite(sample[i]))
 			output_test("Sample %d is not a finite number!",i--);
 	}
@@ -905,7 +929,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		double set[10]={0,1,2,3,4,5,6,7,8,9};
-		sample[i] = random_sampled(10,set);
+		sample[i] = random_sampled(NULL,10,set);
 		if (!finite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
@@ -921,12 +945,12 @@ int random_test(void)
 	/* test non-deterministic sequences */
 	output_test("\nNon-deterministic test (N=%d)",count);
 	for (i=0; i<count; i++)
-		sample[i] = random_value(RT_NORMAL,0,1);
+		sample[i] = random_value(RT_NORMAL,0.0,1.0);
 	for (i=0; i<count; i++)
 	{
-		double v = random_value(RT_NORMAL,0,1);
-		if (sample[i] == v)
-			failed++,output_test("Sample %d matched (%f==%f)", sample[i],v);
+		double v = random_value(RT_NORMAL,0.0,1.0);
+		if ( sample[i] == v )
+			failed++,output_test("Sample %d matched (%f==%f)", i, sample[i],v);
 	}	
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
@@ -935,13 +959,13 @@ int random_test(void)
 	initstate = state = rand();
 	output_test("\nDeterministic test for state %u (N=%d)",initstate,count);
 	for (i=0; i<count; i++)
-		sample[i] = pseudorandom_value(RT_NORMAL,&state,0,1);
+		sample[i] = pseudorandom_value(RT_UNIFORM,&state,0.0,1.0);
 	state = initstate;
 	for (i=0; i<count; i++)
 	{
-		double v = pseudorandom_value(RT_NORMAL,&state,0,1);
+		double v = pseudorandom_value(RT_UNIFORM,&state,0.0,1.0);
 		if (sample[i] != v)
-			failed++,output_test("Sample %d did not match (%f!=%f)", sample[i],v);
+			failed++,output_test("Sample %d did not match (%f!=%f)", i, sample[i],v);
 	}	
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;

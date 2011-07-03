@@ -778,7 +778,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 						if(market->margin_mode == AM_DENY){
 							*pOverride = -1;
 						} else if(market->margin_mode == AM_PROB){
-							double r = gl_random_uniform(0, 1.0);
+							double r = gl_random_uniform(RNGSTATE,0, 1.0);
 							if(r < market->current_frame.marginal_frac){
 								*pOverride = 1;
 							} else {

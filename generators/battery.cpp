@@ -443,7 +443,7 @@ int battery::init(OBJECT *parent)
 	if (Energy < 0)
 	{
 		gl_warning("Initial Energy was not set, or set to a negative number.  Randomizing initial value.");
-		Energy = gl_random_normal(E_Max/2,E_Max/20);
+		Energy = gl_random_normal(RNGSTATE,E_Max/2,E_Max/20);
 	}
 
 	recalculate = true;

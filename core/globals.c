@@ -43,6 +43,11 @@ static KEYWORD cpt_keys[] = {
 	{"SIM",  CPT_SIM,  NULL},
 };
 
+static KEYWORD rng_keys[] = {
+	{"RNG2", RNG2, rng_keys+1},
+	{"RNG3", RNG3, NULL,},
+};
+
 static struct s_varmap {
 	char *name;
 	PROPERTYTYPE type;
@@ -120,6 +125,7 @@ static struct s_varmap {
 	{"checkpoint_interval", PT_int32, &global_checkpoint_interval, PA_PUBLIC},
 	{"checkpoint_keepall", PT_int32, &global_checkpoint_keepall, PA_PUBLIC},
 	{"check_version", PT_int32, &global_check_version, PA_PUBLIC},
+	{"random_number_generator", PT_enumeration, &global_randomnumbergenerator, PA_PUBLIC, rng_keys},
 	/* add new global variables here */
 };
 

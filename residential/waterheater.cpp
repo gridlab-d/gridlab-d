@@ -102,23 +102,23 @@ int waterheater::create()
 	Tw = 0.0;
 
 	// location...mostly in garage, a few inside...
-	location = gl_random_bernoulli(0.80) ? GARAGE : INSIDE;
+	location = gl_random_bernoulli(RNGSTATE,0.80) ? GARAGE : INSIDE;
 
 	// initialize randomly distributed values
-	tank_setpoint 		= clip(gl_random_normal(130,10),100,160);
-	thermostat_deadband	= clip(gl_random_normal(5, 1),1,10);
+	tank_setpoint 		= clip(gl_random_normal(RNGSTATE,130,10),100,160);
+	thermostat_deadband	= clip(gl_random_normal(RNGSTATE,5, 1),1,10);
 
 	/* initialize water tank thermostat */
-	tank_setpoint = gl_random_normal(125,5);
+	tank_setpoint = gl_random_normal(RNGSTATE,125,5);
 	if (tank_setpoint<90) tank_setpoint = 90;
 	if (tank_setpoint>160) tank_setpoint = 160;
 
 	/* initialize water tank deadband */
-	thermostat_deadband = fabs(gl_random_normal(2,1))+1;
+	thermostat_deadband = fabs(gl_random_normal(RNGSTATE,2,1))+1;
 	if (thermostat_deadband>10)
 		thermostat_deadband = 10;
 
-	tank_UA = clip(gl_random_normal(2.0, 0.20),0.1,10) * tank_volume/50;  
+	tank_UA = clip(gl_random_normal(RNGSTATE,2.0, 0.20),0.1,10) * tank_volume/50;  
 	if(tank_UA <= 1.0)
 		tank_UA = 2.0;	// "R-13"
 
@@ -197,7 +197,7 @@ int waterheater::init(OBJECT *parent)
 		else 
 		{
 			// Smaller tanks can be either 3200, 3500, or 4500...
-			double randVal = gl_random_uniform(0,1);
+			double randVal = gl_random_uniform(RNGSTATE,0,1);
 			if (randVal < 0.33)
 				heating_element_capacity = 3.200;
 			else if (randVal < 0.67)
@@ -210,7 +210,7 @@ int waterheater::init(OBJECT *parent)
 	// Other initial conditions
 
 	if(Tw < Tinlet){ // uninit'ed temperature
-		Tw = gl_random_uniform(tank_setpoint - thermostat_deadband, tank_setpoint + thermostat_deadband);
+		Tw = gl_random_uniform(RNGSTATE,tank_setpoint - thermostat_deadband, tank_setpoint + thermostat_deadband);
 	}
 	current_model = NONE;
 	load_state = STABLE;

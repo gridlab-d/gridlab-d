@@ -3159,7 +3159,7 @@ int link::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented
 			}
 
 			//Get a random value
-			randval = gl_random_sampled(numphase,tempphase);
+			randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 			//Put it back into proper format
 			rand_phases = (unsigned char)(randval);
@@ -3425,7 +3425,7 @@ int link::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented
 				else	//Must be 3, right?
 				{
 					//Pick a random phase - this will be the one we DON'T fault
-					randval = gl_random_sampled(numphase,tempphase);
+					randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 					//Set temp_phases appropriate
 					if (randval == 1)	//Leave phase C
@@ -3742,7 +3742,7 @@ int link::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented
 				else	//Must be 3, right?
 				{
 					//Pick a random phase - this will be the one we DON'T fault
-					randval = gl_random_sampled(numphase,tempphase);
+					randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 					//Set temp_phases appropriate
 					if (randval == 1)	//Leave phase C
@@ -3837,7 +3837,7 @@ int link::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented
 			}
 
 			//Get a random value
-			randval = gl_random_sampled(numphase,tempphase);
+			randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 			//Put it back into proper format
 			rand_phases = (unsigned char)(randval);
@@ -4082,7 +4082,7 @@ int link::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented
 				else	//Must be 3, right?
 				{
 					//Pick a random phase - this will be the one we DON'T fault
-					randval = gl_random_sampled(numphase,tempphase);
+					randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 					//Set temp_phases appropriate
 					if (randval == 1)	//Leave phase C
@@ -4515,7 +4515,7 @@ int link::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented
 			}
 
 			//Get a random value
-			randval = gl_random_sampled(numphase,tempphase);
+			randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 			//Put it back into proper format
 			rand_phases = (unsigned char)(randval);
@@ -4760,7 +4760,7 @@ int link::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented
 				else	//Must be 3, right?
 				{
 					//Pick a random phase - this will be the one we DON'T fault
-					randval = gl_random_sampled(numphase,tempphase);
+					randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 					//Set temp_phases appropriate
 					if (randval == 1)	//Leave phase C

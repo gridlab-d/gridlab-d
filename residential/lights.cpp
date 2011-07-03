@@ -151,7 +151,7 @@ int lights::init(OBJECT *parent)
 	if (shape.params.analog.power==0 && shape.schedule==NULL) 
 	{		
 		// set basic properties
-		if (power_density==0) power_density = gl_random_triangle(0.75, 1.25);  // W/sf
+		if (power_density==0) power_density = gl_random_triangle(RNGSTATE,0.75, 1.25);  // W/sf
 
 		if(floor_area == NULL)
 		{

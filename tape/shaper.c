@@ -146,7 +146,7 @@ static TIMESTAMP shaper_read(OBJECT *obj, TIMESTAMP t0, unsigned int n)
 
 		/* compute time to the start of the event */
 		/** @todo shaper queues shouldn't be uniform over the time step, but cumulative uniform (tape, medium priority) */
-		my->targets[n].ts = t0 + (TIMESTAMP)gl_random_uniform(0,my->step);
+		my->targets[n].ts = t0 + (TIMESTAMP)gl_random_uniform(&(obj->rng_state),0,my->step);
 	}
 
 	return my->targets[n].ts;
@@ -161,9 +161,9 @@ static TIMESTAMP shaper_update(OBJECT *obj, TIMESTAMP t0, unsigned int n)
 		/* value is directly injected */
 		*(my->targets[n].addr) = my->targets[n].value;
 	}
-	else if (*(my->targets[n].addr)==0 && gl_random_bernoulli(my->targets[n].value)==1)	/* shape queue event starts */
+	else if (*(my->targets[n].addr)==0 && gl_random_bernoulli(&(obj->rng_state),my->targets[n].value)==1)	/* shape queue event starts */
 	{	
-		double event_size = gl_random_uniform(0,1);
+		double event_size = gl_random_uniform(&(obj->rng_state),0,1);
 
 		/* magnitude is fixed */
 		*(my->targets[n].addr) = my->magnitude;

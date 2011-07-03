@@ -1146,57 +1146,57 @@ TIMESTAMP eventgen::gen_random_time(DISTTYPE rand_dist_type, double param_1, dou
 	{
 		case UNIFORM:
 			{
-				dbl_random_time = gl_random_uniform(param_1,param_2);
+				dbl_random_time = gl_random_uniform(RNGSTATE,param_1,param_2);
 				break;
 			}
 		case NORMAL:
 			{
-				dbl_random_time = gl_random_normal(param_1,param_2);
+				dbl_random_time = gl_random_normal(RNGSTATE,param_1,param_2);
 				break;
 			}
 		case LOGNORMAL:
 			{
-				dbl_random_time = gl_random_lognormal(param_1,param_2);
+				dbl_random_time = gl_random_lognormal(RNGSTATE,param_1,param_2);
 				break;
 			}
 		case BERNOULLI:
 			{
-				dbl_random_time = gl_random_bernoulli(param_1);
+				dbl_random_time = gl_random_bernoulli(RNGSTATE,param_1);
 				break;
 			}
 		case PARETO:
 			{
-				dbl_random_time = gl_random_pareto(param_1,param_2);
+				dbl_random_time = gl_random_pareto(RNGSTATE,param_1,param_2);
 				break;
 			}
 		case EXPONENTIAL:
 			{
-				dbl_random_time = gl_random_exponential(param_1);
+				dbl_random_time = gl_random_exponential(RNGSTATE,param_1);
 				break;
 			}
 		case RAYLEIGH:
 			{
-				dbl_random_time = gl_random_rayleigh(param_1);
+				dbl_random_time = gl_random_rayleigh(RNGSTATE,param_1);
 				break;
 			}
 		case WEIBULL:
 			{
-				dbl_random_time = gl_random_weibull(param_1,param_2);
+				dbl_random_time = gl_random_weibull(RNGSTATE,param_1,param_2);
 				break;
 			}
 		case GAMMA:
 			{
-				dbl_random_time = gl_random_gamma(param_1,param_2);
+				dbl_random_time = gl_random_gamma(RNGSTATE,param_1,param_2);
 				break;
 			}
 		case BETA:
 			{
-				dbl_random_time = gl_random_beta(param_1, param_2);
+				dbl_random_time = gl_random_beta(RNGSTATE,param_1, param_2);
 				break;
 			}
 		case TRIANGLE:
 			{
-				dbl_random_time = gl_random_triangle(param_1, param_2);
+				dbl_random_time = gl_random_triangle(RNGSTATE,param_1, param_2);
 				break;
 			}
 		default:

@@ -398,7 +398,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 						if (restore_dist_type == EXPONENTIAL)
 						{
 							//Update mean repair time
-							mean_repair_time = gl_random_exponential(1.0/mean_replacement_time);
+							mean_repair_time = gl_random_exponential(RNGSTATE,1.0/mean_replacement_time);
 							replacement_duration = (TIMESTAMP)(mean_repair_time);
 						}
 						else
@@ -440,7 +440,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 						if (restore_dist_type == EXPONENTIAL)
 						{
 							//Update mean repair time
-							mean_repair_time = gl_random_exponential(1.0/mean_replacement_time);
+							mean_repair_time = gl_random_exponential(RNGSTATE,1.0/mean_replacement_time);
 							replacement_duration = (TIMESTAMP)(mean_repair_time);
 						}
 						else
@@ -482,7 +482,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 						if (restore_dist_type == EXPONENTIAL)
 						{
 							//Update mean repair time
-							mean_repair_time = gl_random_exponential(1.0/mean_replacement_time);
+							mean_repair_time = gl_random_exponential(RNGSTATE,1.0/mean_replacement_time);
 							replacement_duration = (TIMESTAMP)(mean_repair_time);
 						}
 						else
@@ -1008,7 +1008,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 				A_mat[indexval][indexval] = d_mat[indexval][indexval] = 0.0;
 
 				//Get an update time
-				*fixtime = prev_fuse_time + (int64)(3600*gl_random_exponential(1.0/mean_replacement_time));
+				*fixtime = prev_fuse_time + (int64)(3600*gl_random_exponential(RNGSTATE,1.0/mean_replacement_time));
 
 				//Announce it for giggles
 				gl_warning("Phase %c of fuse:%d (%s) just blew",phase_verbose,hdr->id,hdr->name);

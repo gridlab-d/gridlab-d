@@ -300,7 +300,7 @@ static void sync_queued(loadshape *ls, double dt)
 	else if (ls->q < ls->d[1])
 	{
 		ls->s = 0;
-		ls->r = 1/random_exponential(ls->schedule->value*ls->params.pulsed.scalar*queue_value);
+		ls->r = 1/random_exponential(&(ls->rng_state),ls->schedule->value*ls->params.pulsed.scalar*queue_value);
 	}
 	/* else state remains unchanged */
 #undef duration
@@ -436,7 +436,7 @@ unsigned char schedule_string_to_weekday(char *days)
 /** Convert a truncated normal distribution description string (min<mean~stdev<max) to a sample
     @return 1 on success, 0 on failure.
  **/
-int sample_from_diversity(double *param, char *value)
+int sample_from_diversity(unsigned int *state, double *param, char *value)
 {
 	float min, mean, stdev, max;
 	if (sscanf(value,"%f<%f~%f<%f", &min, &mean, &stdev, &max)==4)
@@ -468,7 +468,7 @@ int sample_from_diversity(double *param, char *value)
 		if (stdev==0)
 			*param = mean;
 		else do {
-			*param = random_normal(mean,stdev);
+			*param = random_normal(state,mean,stdev);
 		} while (*param<min || *param>max);
 		return 1;
 	}
@@ -508,7 +508,7 @@ void loadshape_recalc(loadshape *ls)
 	case MT_PULSED:
 		ls->d[MS_OFF] = 1; /* scalar determine how many pulses per period are emitted */
 		ls->d[MS_ON] = 0;
-		ls->q = random_uniform(0,1);
+		ls->q = random_uniform(&(ls->rng_state), 0,1);
 		sync_pulsed(ls,0);
 		break;
 	case MT_MODULATED:
@@ -521,7 +521,7 @@ void loadshape_recalc(loadshape *ls)
 		if (ls->s == 0 && ls->schedule!=NULL) /* load is off */
 		{
 			/* recalculate time to next on */
-			ls->r = 1/random_exponential(ls->schedule->value * ls->params.pulsed.scalar * (ls->params.queued.q_on - ls->params.queued.q_off));
+			ls->r = 1/random_exponential(&(ls->rng_state),ls->schedule->value * ls->params.pulsed.scalar * (ls->params.queued.q_on - ls->params.queued.q_off));
 		}
 		break;
 	case MT_SCHEDULED:
@@ -727,11 +727,14 @@ int loadshape_init(loadshape *ls) /**< load shape */
 		break;
 	}
 	
+	/* initialize the random number generator state */
+	ls->rng_state = randwarn(NULL);
+
 	/* establish the initial parameters */
 	loadshape_recalc(ls);
 
 	/* randomize the initial state */
-	if (ls->q==0) ls->q = ls->d[0]<ls->d[1] ? random_uniform(ls->d[0], ls->d[1]) : random_uniform(ls->d[1], ls->d[0]); ; 
+	if (ls->q==0) ls->q = ls->d[0]<ls->d[1] ? random_uniform(&(ls->rng_state), ls->d[0], ls->d[1]) : random_uniform(&(ls->rng_state), ls->d[1], ls->d[0]); ; 
 
 	/* initial power per-unit factor */
 	if (ls->dPdV==0) ls->dPdV = 1.0;
@@ -1363,7 +1366,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 		else if (strcmp(param,"stdev")==0)
 		{
 			double dev = atof(value);
-			double err = random_triangle(-3,3);
+			double err = random_triangle(&(ls->rng_state),-3,3);
 			if (ls->type==MT_ANALOG)
 			{
 				if (ls->params.analog.energy!=0) 
@@ -1529,42 +1532,42 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if (sample_from_diversity(&ls->params.scheduled.low,value)==0)
+			else if (sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.low,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"on-time")==0)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if	(sample_from_diversity(&ls->params.scheduled.on_time,value)==0)
+			else if	(sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.on_time,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"on-ramp")==0)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if	(sample_from_diversity(&ls->params.scheduled.on_ramp,value)==0)
+			else if	(sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.on_ramp,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"high")==0)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if	(sample_from_diversity(&ls->params.scheduled.high,value)==0)
+			else if	(sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.high,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"off-time")==0)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if (sample_from_diversity(&ls->params.scheduled.off_time,value)==0)
+			else if (sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.off_time,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"off-ramp")==0)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if (sample_from_diversity(&ls->params.scheduled.off_ramp,value)==0)
+			else if (sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.off_ramp,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"")!=0)

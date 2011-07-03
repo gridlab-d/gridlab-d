@@ -69,6 +69,7 @@ typedef struct s_object_list {
 	int tp_affinity; /**< threadpool processor affinity */
 	NAMESPACE *space; /**< namespace of object */
 	unsigned int lock; /**< object lock */
+	unsigned int rng_state; /**< random number generator state */
 	uint32 flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 } OBJECT; /**< Object header structure */
@@ -130,21 +131,21 @@ typedef struct s_callbacks {
 	void *(*get_module_var)(MODULE *module, char *varname);
 	int (*depends)(char *name, unsigned char major, unsigned char minor, unsigned short build);
 	struct {
-		double (*uniform)(double a, double b);
-		double (*normal)(double m, double s);
-		double (*bernoulli)(double p);
-		double (*pareto)(double m, double a);
-		double (*lognormal)(double m, double s);
-		double (*sampled)(unsigned int n, double *x);
-		double (*exponential)(double l);
+		double (*uniform)(unsigned int *rng, double a, double b);
+		double (*normal)(unsigned int *rng, double m, double s);
+		double (*bernoulli)(unsigned int *rng, double p);
+		double (*pareto)(unsigned int *rng, double m, double a);
+		double (*lognormal)(unsigned int *rng,double m, double s);
+		double (*sampled)(unsigned int *rng,unsigned int n, double *x);
+		double (*exponential)(unsigned int *rng,double l);
 		RANDOMTYPE (*type)(char *name);
 		double (*value)(RANDOMTYPE type, ...);
 		double (*pseudo)(RANDOMTYPE type, unsigned int *state, ...);
-		double (*triangle)(double a, double b);
-		double (*beta)(double a, double b);
-		double (*gamma)(double a, double b);
-		double (*weibull)(double a, double b);
-		double (*rayleigh)(double a);
+		double (*triangle)(unsigned int *rng,double a, double b);
+		double (*beta)(unsigned int *rng,double a, double b);
+		double (*gamma)(unsigned int *rng,double a, double b);
+		double (*weibull)(unsigned int *rng,double a, double b);
+		double (*rayleigh)(unsigned int *rng,double a);
 	} random;
 	int (*object_isa)(OBJECT *obj, char *type);
 	DELEGATEDTYPE* (*register_type)(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));

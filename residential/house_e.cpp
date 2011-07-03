@@ -1586,7 +1586,7 @@ int house_e::init(OBJECT *parent)
 		double Tlow  = heating_setpoint-thermostat_deadband/2.0;
 		Thigh = clip(Thigh, 60.0, 140.0);
 		Tlow = clip(Tlow, 60.0, 140.0);
-		Tair = gl_random_uniform(Tlow, Thigh);	// air temperature [F]
+		Tair = gl_random_uniform(RNGSTATE,Tlow, Thigh);	// air temperature [F]
 	}
 	if (over_sizing_factor<=0.0)  over_sizing_factor = 0.0;
 	if (cooling_design_temperature == 0.0)	cooling_design_temperature = 95.0;
@@ -1673,11 +1673,11 @@ int house_e::init(OBJECT *parent)
 		// hs * ((Awt - Ag - Ad) + Awt * IWR + Ac * N / ECR)
 	if(Tair == 0){
 		if (system_mode==SM_OFF)
-			Tair = gl_random_uniform(heating_setpoint,cooling_setpoint);
+			Tair = gl_random_uniform(RNGSTATE,heating_setpoint,cooling_setpoint);
 		else if (system_mode==SM_HEAT || system_mode==SM_AUX)
-			Tair = gl_random_uniform(heating_setpoint-thermostat_deadband/2,heating_setpoint+thermostat_deadband/2);
+			Tair = gl_random_uniform(RNGSTATE,heating_setpoint-thermostat_deadband/2,heating_setpoint+thermostat_deadband/2);
 		else if (system_mode==SM_COOL)
-			Tair = gl_random_uniform(cooling_setpoint-thermostat_deadband/2,cooling_setpoint+thermostat_deadband/2);
+			Tair = gl_random_uniform(RNGSTATE,cooling_setpoint-thermostat_deadband/2,cooling_setpoint+thermostat_deadband/2);
 	}
 
 	if (Tmaterials == 0.0)
@@ -2620,13 +2620,13 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			if (current.Mag()>c->max_amps)
 			{
 				// probability of breaker failure increases over time
-				if (c->tripsleft>0 && gl_random_bernoulli(1/(c->tripsleft--))==0)
+				if (c->tripsleft>0 && gl_random_bernoulli(RNGSTATE,1/(c->tripsleft--))==0)
 				{
 					// breaker opens
 					c->status = BRK_OPEN;
 
 					// average five minutes before reclosing, exponentially distributed
-					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(1/300.0)*TS_SECOND); 
+					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(RNGSTATE,1/300.0)*TS_SECOND); 
 					gl_debug("house_e:%d circuit breaker %d tripped - enduse %s overload at %.0f A", obj->id, c->id,
 						c->pLoad->name, current.Mag());
 				}

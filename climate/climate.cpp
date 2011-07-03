@@ -501,7 +501,7 @@ void climate::update_forecasts(TIMESTAMP t0)
 				hoy++;
 
 			/* this is an extremely naive model of forecast error */
-			t[h] = tmy[hoy].temp + gl_random_normal(0,h/10.0);
+			t[h] = tmy[hoy].temp + gl_random_normal(RNGSTATE,0,h/10.0);
 		}
 		gl_forecast_save(fc,t0,dt,Nh,t);
 #ifdef NEVER

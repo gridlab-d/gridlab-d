@@ -91,7 +91,7 @@ int clotheswasher::create()
 int clotheswasher::init(OBJECT *parent)
 {
 	// default properties
-	if (shape.params.analog.power==0) shape.params.analog.power = gl_random_uniform(0.100,0.750);		// clotheswasher size [W]
+	if (shape.params.analog.power==0) shape.params.analog.power = gl_random_uniform(RNGSTATE,0.100,0.750);		// clotheswasher size [W]
 	if (load.heatgain_fraction==0) load.heatgain_fraction = 0.5; 
 	if (load.power_factor==0) load.power_factor = 0.95;
 	if (stall_voltage==0) stall_voltage  = 0.7*120;
@@ -168,7 +168,7 @@ double clotheswasher::update_state(double dt)
 		{
 			state = RUNNING;
 			enduse_queue--;
-			cycle_time = cycle_duration>0 ? cycle_duration : gl_random_uniform(20,40)*60;
+			cycle_time = cycle_duration>0 ? cycle_duration : gl_random_uniform(RNGSTATE,20,40)*60;
 			state_time = 0;
 		}
 		break;

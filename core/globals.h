@@ -169,6 +169,10 @@ GLOBAL int global_checkpoint_keepall INIT(0); /** determines whether all checkpo
 /* version check */
 GLOBAL int global_check_version INIT(0); /**< check version flag */
 
+/* random number generator */
+typedef enum {RNG2=2, RNG3=3} RANDOMNUMBERGENERATOR;
+GLOBAL int global_randomnumbergenerator INIT(RNG2); /**< select which random number generator to use */
+
 #ifdef __cplusplus
 }
 #endif

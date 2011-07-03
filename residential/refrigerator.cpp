@@ -122,13 +122,13 @@ int refrigerator::init(OBJECT *parent)
 	hdr->flags |= OF_SKIPSAFE;
 
 	// defaults for unset values */
-	if (size==0)				size = gl_random_uniform(20,40); // cf
-	if (thermostat_deadband==0) thermostat_deadband = gl_random_uniform(2,3);
-	if (Tset==0)				Tset = gl_random_uniform(35,39);
+	if (size==0)				size = gl_random_uniform(RNGSTATE,20,40); // cf
+	if (thermostat_deadband==0) thermostat_deadband = gl_random_uniform(RNGSTATE,2,3);
+	if (Tset==0)				Tset = gl_random_uniform(RNGSTATE,35,39);
 	if (UA == 0)				UA = 0.6;
-	if (UAr==0)					UAr = UA+size/40*gl_random_uniform(0.9,1.1);
-	if (UAf==0)					UAf = gl_random_uniform(0.9,1.1);
-	if (COPcoef==0)				COPcoef = gl_random_uniform(0.9,1.1);
+	if (UAr==0)					UAr = UA+size/40*gl_random_uniform(RNGSTATE,0.9,1.1);
+	if (UAf==0)					UAf = gl_random_uniform(RNGSTATE,0.9,1.1);
+	if (COPcoef==0)				COPcoef = gl_random_uniform(RNGSTATE,0.9,1.1);
 	if (Tout==0)				Tout = 59.0;
 	if (load.power_factor==0)		load.power_factor = 0.95;
 
@@ -141,7 +141,7 @@ int refrigerator::init(OBJECT *parent)
 	}
 
 	/* derived values */
-	Tair = gl_random_uniform(Tset-thermostat_deadband/2, Tset+thermostat_deadband/2);
+	Tair = gl_random_uniform(RNGSTATE,Tset-thermostat_deadband/2, Tset+thermostat_deadband/2);
 
 	// size is used to couple Cw and Qrated
 	Cf = size/10.0 * RHOWATER * CWATER;  // cf * lb/cf * BTU/lb/degF = BTU / degF
@@ -149,7 +149,7 @@ int refrigerator::init(OBJECT *parent)
 	rated_capacity = BTUPHPW * size*10; // BTU/h ... 10 BTU.h / cf (34W/cf, so ~700 for a full-sized refrigerator)
 
 	// duty cycle estimate for initial condition
-	if (gl_random_bernoulli(0.1)){
+	if (gl_random_bernoulli(RNGSTATE,0.1)){
 		Qr = rated_capacity;
 	} else {
 		Qr = 0;

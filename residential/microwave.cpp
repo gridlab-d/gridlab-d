@@ -70,7 +70,7 @@ int microwave::create()
 	load.power_factor = 0.95;
 
 	standby_power = 0.01;
-	shape.load = gl_random_uniform(0, 0.1);  // assuming a default maximum 10% of the sync time 
+	shape.load = gl_random_uniform(RNGSTATE,0, 0.1);  // assuming a default maximum 10% of the sync time 
 
 	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
 
@@ -167,7 +167,7 @@ TIMESTAMP microwave::update_state_cycle(TIMESTAMP t0, TIMESTAMP t1){
 	}
 
 	if(cycle_start == 0){
-		double off = gl_random_uniform(0, this->cycle_time);
+		double off = gl_random_uniform(RNGSTATE,0, this->cycle_time);
 		cycle_start = (TIMESTAMP)(ti1 + off);
 		cycle_on = (TIMESTAMP)((1 - shape.load) * cycle_time) + cycle_start;
 		cycle_off = (TIMESTAMP)cycle_time + cycle_start;
@@ -230,7 +230,7 @@ double microwave::update_state(double dt)
 		if (state_time>runtime)
 		{
 			state = ON;
-			runtime = gl_random_sampled(sizeof(rt)/sizeof(rt[0]),rt);
+			runtime = gl_random_sampled(RNGSTATE,sizeof(rt)/sizeof(rt[0]),rt);
 			state_time = 0;
 		}
 		else

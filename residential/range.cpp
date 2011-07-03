@@ -76,7 +76,7 @@ int range::init(OBJECT *parent)
 		heat_fraction = 0;
 	}
 	
-	if (shape.params.analog.power==0) shape.params.analog.power = gl_random_uniform(8,15);	// range size [W]; based on a GE drop-in range 11600kW;
+	if (shape.params.analog.power==0) shape.params.analog.power = gl_random_uniform(RNGSTATE,8,15);	// range size [W]; based on a GE drop-in range 11600kW;
 	if (load.power_factor==0) load.power_factor = 1.0;
 	if (load.heatgain_fraction==0) load.heatgain_fraction = 0.9;
 	if (load.voltage_factor==0) load.voltage_factor = 1.0;

@@ -330,12 +330,12 @@ static bool hiV[] = {false,true,true};
 int evcharger::init(OBJECT *parent)
 {
 	static double sizes[] = {20,30,30,40,40,40,50,50,50,50,60,60,60,70,70,80};
-	if (capacity==0) capacity = gl_random_sampled(sizeof(sizes)/sizeof(sizes[0]),sizes); 
+	if (capacity==0) capacity = gl_random_sampled(RNGSTATE,sizeof(sizes)/sizeof(sizes[0]),sizes); 
 	if (power_factor==0) power_factor = 0.95;
-	if (charge==0) charge = gl_random_uniform(0.25,1.0);
+	if (charge==0) charge = gl_random_uniform(RNGSTATE,0.25,1.0);
 	if (charge_throttle==0) charge_throttle = 1.0;
-	if (mileage==0) mileage = gl_random_uniform(0.8,1.2);
-	if (distance.work==0) distance.work = gl_random_lognormal(3,1);
+	if (mileage==0) mileage = gl_random_uniform(RNGSTATE,0.8,1.2);
+	if (distance.work==0) distance.work = gl_random_lognormal(RNGSTATE,3,1);
 	// these are not yet supported
 	//if (distance.shorttrip==0) distance.shorttrip = gl_random_lognormal(3,1);
 	//if (distance.longtrip==0) distance.longtrip = gl_random_lognormal(4,2);
@@ -382,14 +382,14 @@ double evcharger::update_state(double dt /* seconds */)
 		// implement any state change (arrival/departure)
 		switch (vehicle_state) {
 		case VS_HOME:
-			if (gl_random_bernoulli(demand.home*dt/3600))
+			if (gl_random_bernoulli(RNGSTATE,demand.home*dt/3600))
 			{
 				gl_debug("%s (%s:%d) leaves for work with %.0f%% charge",obj->name?obj->name:"anonymous",obj->oclass->name,obj->id,charge*100);
 				vehicle_state = VS_WORK;
 			}
 			break;
 		case VS_WORK:
-			if (gl_random_bernoulli(demand.work*dt/3600))
+			if (gl_random_bernoulli(RNGSTATE,demand.work*dt/3600))
 			{
 				vehicle_state = VS_HOME;
 				if (charge_at_work)

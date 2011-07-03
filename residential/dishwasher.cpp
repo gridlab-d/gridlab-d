@@ -69,7 +69,7 @@ int dishwasher::init(OBJECT *parent)
 {
 	// default properties
 	if(shape.params.analog.power == 0){
-		shape.params.analog.power = gl_random_uniform(1000, 3000);		// dishwasher size [W]
+		shape.params.analog.power = gl_random_uniform(RNGSTATE,1000, 3000);		// dishwasher size [W]
 	}
 	if(load.heatgain_fraction == 0){
 		load.heatgain_fraction = 0.50;  //Assuming 50% of the power is transformed to internal heat

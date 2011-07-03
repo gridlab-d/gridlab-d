@@ -359,13 +359,13 @@ int house::init(OBJECT *parent)
 	}
 		// Set defaults for published variables nor provided by model definition
 	while (floor_area <= 500)
-		floor_area = gl_random_normal(2500,300);		// house size (sf) by 100 ft incs;
+		floor_area = gl_random_normal(RNGSTATE,2500,300);		// house size (sf) by 100 ft incs;
 
 	if (ceiling_height <= ROUNDOFF)
 		ceiling_height = 8.0;
 
 	if (envelope_UA <= ROUNDOFF)
-		envelope_UA = gl_random_uniform(0.15,0.2)*floor_area;	// UA of house envelope [BTU/h.F]
+		envelope_UA = gl_random_uniform(RNGSTATE,0.15,0.2)*floor_area;	// UA of house envelope [BTU/h.F]
 
 	if (aspect_ratio <= ROUNDOFF)
 		aspect_ratio = 1.0;
@@ -374,16 +374,16 @@ int house::init(OBJECT *parent)
 		gross_wall_area = 4.0 * 2.0 * (aspect_ratio + 1.0) * ceiling_height * sqrt(floor_area/aspect_ratio);
 
 	if (airchange_per_hour <= ROUNDOFF)
-		airchange_per_hour = gl_random_uniform(4,6);			// air changes per hour [cf/h]
+		airchange_per_hour = gl_random_uniform(RNGSTATE,4,6);			// air changes per hour [cf/h]
 
 	if (thermostat_deadband <= ROUNDOFF)
 		thermostat_deadband = 2;							// thermostat hysteresis [F]
 
 	if (heating_setpoint <= ROUNDOFF)
-		heating_setpoint = gl_random_uniform(68,72);	// heating setpoint [F]
+		heating_setpoint = gl_random_uniform(RNGSTATE,68,72);	// heating setpoint [F]
 
 	if (cooling_setpoint <= ROUNDOFF)
-		cooling_setpoint = gl_random_uniform(76,80);	// cooling setpoint [F]
+		cooling_setpoint = gl_random_uniform(RNGSTATE,76,80);	// cooling setpoint [F]
 
 	if (window_wall_ratio <= ROUNDOFF)
 		window_wall_ratio = 0.15;						// assuming 15% window wall ratio
@@ -392,26 +392,26 @@ int house::init(OBJECT *parent)
 		glazing_shgc = 0.65;								// assuming generic double glazing
 
 	if (design_cooling_capacity <= ROUNDOFF)
-		design_cooling_capacity = gl_random_uniform(18,24); // Btuh/sf
+		design_cooling_capacity = gl_random_uniform(RNGSTATE,18,24); // Btuh/sf
 
 	if (design_heating_capacity <= ROUNDOFF)
-		design_heating_capacity = gl_random_uniform(18,24); // Btuh/sf
+		design_heating_capacity = gl_random_uniform(RNGSTATE,18,24); // Btuh/sf
 	
 	
 	// initalize/set hvac model parameters
     if (COP_coeff <= ROUNDOFF)
-	    COP_coeff = gl_random_uniform(0.9,1.1);	// coefficient of cops [scalar]
+	    COP_coeff = gl_random_uniform(RNGSTATE,0.9,1.1);	// coefficient of cops [scalar]
     
     if (Tair <= ROUNDOFF)
-	    Tair = gl_random_uniform(heating_setpoint+thermostat_deadband, cooling_setpoint-thermostat_deadband);	// air temperature [F]
+	    Tair = gl_random_uniform(RNGSTATE,heating_setpoint+thermostat_deadband, cooling_setpoint-thermostat_deadband);	// air temperature [F]
 	
     if (over_sizing_factor <= ROUNDOFF)
-        over_sizing_factor = gl_random_uniform(0.98,1.3);
+        over_sizing_factor = gl_random_uniform(RNGSTATE,0.98,1.3);
 
     heat_cool_mode = house::OFF;							// heating/cooling mode {HEAT, COOL, OFF}
 
     if (house_content_heat_transfer_coeff <= ROUNDOFF)
-	    house_content_heat_transfer_coeff = gl_random_uniform(0.5,1.0)*floor_area;	// heat transfer coefficient of house contents [BTU/hr.F]
+	    house_content_heat_transfer_coeff = gl_random_uniform(RNGSTATE,0.5,1.0)*floor_area;	// heat transfer coefficient of house contents [BTU/hr.F]
 
 	//house properties for HVAC
 	volume = 8*floor_area;									// volume of air [cf]
@@ -589,13 +589,13 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			if (c->max_amps>0 && current.Mag()>c->max_amps)
 			{
 				// probability of breaker failure increases over time
-				if (c->tripsleft>0 && gl_random_bernoulli(1/(c->tripsleft--))==0)
+				if (c->tripsleft>0 && gl_random_bernoulli(RNGSTATE,1/(c->tripsleft--))==0)
 				{
 					// breaker opens
 					c->status = BRK_OPEN;
 
 					// average five minutes before reclosing, exponentially distributed
-					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(1/300.0)*TS_SECOND); 
+					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(RNGSTATE,1/300.0)*TS_SECOND); 
 					gl_debug("house:%d circuit breaker %d tripped - enduse %s overload at %.0f A", obj->id, c->id,
 						c->pLoad->name, current.Mag());
 				}

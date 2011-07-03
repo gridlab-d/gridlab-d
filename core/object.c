@@ -291,6 +291,7 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	obj->out_svc = TS_NEVER;
 	obj->space = object_current_namespace();
 	obj->flags = OF_NONE;
+	obj->rng_state = randwarn(NULL);
 
 	for (prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)))
 		property_create(prop,(void*)((char *)(obj+1)+(int64)(prop->addr)));

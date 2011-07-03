@@ -1059,7 +1059,7 @@ int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 	if(prob_off < 0 || !isfinite(prob_off)){
 		prob_off = 0.0;
 	}
-	r = gl_random_uniform(0.0,1.0);
+	r = gl_random_uniform(RNGSTATE,0.0,1.0);
 	if(r < prob_off){
 		output_state = -1; // off?
 	} else {

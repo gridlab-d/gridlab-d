@@ -714,6 +714,8 @@ inline char *gl_getvalue(OBJECT *obj,
 	@{
  **/
 
+#define RNGSTATE (&(OBJECTHDR(this))->rng_state)
+
 /** Determine the distribution type to be used from its name
 	@see RANDOMTYPE, random_type()
  **/
