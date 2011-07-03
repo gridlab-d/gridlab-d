@@ -621,6 +621,7 @@ struct s_object_list {
 	int tp_affinity; /**< threadpool processor affinity */
 	NAMESPACE *space; /**< namespace of object */
 	unsigned int lock; /**< object lock */
+	unsigned int rng_state; /**< random number generator state */
 	uint32 flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 }; /**< Object header structure */
