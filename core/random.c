@@ -111,16 +111,25 @@ int randwarn(unsigned int *state)
 		if ( state!=NULL )
 			srand(*state);
 		return rand();
+		/* note that RNG2 does not write back the state */
 	}
 	else if ( global_randomnumbergenerator==RNG3 )
 	{
-		/* stateless - use the OS rng */
+#define MODULUS 2147483647
+#define MULTIPLIER 48271
+		static const unsigned int R = (MODULUS/MULTIPLIER);
+		static const unsigned int Q = (MODULUS%MULTIPLIER);
+
+		/* stateless - use the OS rng, which keeps its own internal state */
 		if ( state==NULL )
 			return rand();
 
-		/* TODO: use a much longer cycle rng */
-		*state = (*state) * 214013L + 2531011L;
+		/* large modulus generator by Steve Park - see http://www.cs.wm.edu/~va/software/park */
+		*state = MULTIPLIER*((*state)%Q) - R*((*state)/Q);
+		if ( *state < 0 )
+			(*state) += MODULUS;
 		return ((*state)>>16)&RAND_MAX;
+		/* note that RNG3 writes back the state */
 	}
 	else
 	{
@@ -145,7 +154,7 @@ double randunit(unsigned int *state)
 
 TryAgain:
 	ur = randwarn(state);
-	if (state!=NULL)
+	if (state!=NULL && global_randomnumbergenerator==RNG2 )
 		*state = ur;
 	u = ur/(RAND_MAX+1.0);
 	if ( u<=0 || u>=1 ) 
