@@ -115,19 +115,15 @@ int randwarn(unsigned int *state)
 	}
 	else if ( global_randomnumbergenerator==RNG3 )
 	{
-#define MODULUS 2147483647
-#define MULTIPLIER 48271
-		static const unsigned int R = (MODULUS/MULTIPLIER);
-		static const unsigned int Q = (MODULUS%MULTIPLIER);
-
 		/* stateless - use the OS rng, which keeps its own internal state */
 		if ( state==NULL )
 			return rand();
 
-		/* large modulus generator by Steve Park - see http://www.cs.wm.edu/~va/software/park */
-		*state = MULTIPLIER*((*state)%Q) - R*((*state)/Q);
-		if ( *state < 0 )
-			(*state) += MODULUS;
+		/* Park-Miller LCG allows very large modulus - this one is use in Cray RANF */
+#define MODULUS 281474976710656ULL (2^48)
+#define MULTIPLIER 44485709377909ULL
+		*state = (unsigned int)((MULTIPLIER*(unsigned int64)(*state))&0xffffffffffffULL); /* %2^48 same as &(2^48-1) */
+		/* state is truncated to 2^32 */
 		return ((*state)>>16)&RAND_MAX;
 		/* note that RNG3 writes back the state */
 	}
@@ -978,6 +974,16 @@ int random_test(void)
 	}	
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
+
+	/* test modulus */
+	initstate = state;
+	output_test("\nTesting modulus starting at state 0x%08x", state);
+	for ( randwarn(&state),count=1; state!=initstate && count!=0 ; count++)
+		randwarn(&state);
+	if ( count==0 )
+		output_test("Modulus exceeds 2^32");
+	else
+		output_test("Modulus = %d", count);
 
 	/* report results */
 	if (failed)
