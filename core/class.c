@@ -420,6 +420,7 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 							 char *value,		/**< the value buffer to which the string is to be written */
 							 int size)			/**< the maximum number of characters that can be written to the \p value buffer*/
 {
+	int rv = 0;
 	if (prop->ptype==PT_delegated)
 	{
 		output_error("unable to convert from delegated property value");
@@ -429,10 +430,21 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 		 */
 		return 0;
 	}
-	else if (prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
-		return (*property_type[prop->ptype].data_to_string)(value,size,addr,prop);
+	else if (prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST){
+		// note, need to append unit type
+		rv = (*property_type[prop->ptype].data_to_string)(value,size,addr,prop);
+		if(rv > 0 && prop->unit != 0)
+		{
+			strcat(value+rv," ");
+			strcat(value+rv+1,prop->unit->name);
+			rv += 1+strlen(prop->unit->name);
+		}
+	}
 	else
-		return 0;
+	{
+		rv = 0;
+	}
+	return rv;
 }
 
 

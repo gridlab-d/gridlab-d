@@ -499,6 +499,8 @@ struct s_property_map {
 	char *description; /**< description of property */
 	PROPERTY *next; /**< next property in property list */
 	PROPERTYFLAGS flags; /**< property flags (e.g., PF_RECALC) */
+	FUNCTIONADDR notify;
+	bool notify_override;
 }; /**< property definition item */
 
 struct s_unit {
@@ -971,9 +973,9 @@ typedef struct s_callbacks {
 		double (*quadratic)(double t, double x0, double y0, double x1, double y1, double x2, double y2);
 	} interpolate;
 	struct {
-		FORECAST *(*create)(OBJECT *obj, char *specs); 
-		FORECAST *(*find)(OBJECT *obj, char *name); 
-		double (*read)(FORECAST *fc, TIMESTAMP *ts); 
+		FORECAST *(*create)(OBJECT *obj, char *specs);
+		FORECAST *(*find)(OBJECT *obj, char *name);
+		double (*read)(FORECAST *fc, TIMESTAMP *ts);
 		void (*save)(FORECAST *fc, TIMESTAMP *ts, int32 tstep, int n_values, double *data);
 	} forecast;
 //	unsigned long (*property_size)(PROPERTY *prop);
