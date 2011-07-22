@@ -75,7 +75,7 @@ GLOBAL char global_kmlfile[1024] INIT(""); /**< Specifies KML file to dump */
 GLOBAL char global_modelname[1024] INIT(""); /**< Name of the current model */
 GLOBAL char global_execdir[1024] INIT(""); /**< Path to folder containing installed application files */
 GLOBAL bool global_strictnames INIT(true); /**< Enforce strict global naming (prevents globals from being implicitly created by assignment) */
-GLOBAL bool global_xmlstrict INIT(false); /**< Causes XML I/O to use strict XML data structures */
+GLOBAL bool global_xmlstrict INIT(true); /**< Causes XML I/O to use strict XML data structures */
 GLOBAL int global_relax_naming_rules INIT(0); /**< Causes the error to relax to a warning when object names start with numbers or special characters */
 GLOBAL char global_urlbase[1024] /**< default urlbase used for online resources */
 #ifdef _DEBUG

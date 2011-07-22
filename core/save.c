@@ -29,7 +29,8 @@ int saveall(char *filename)
 	} map[] = {
 		{"txt", savetxt},
 		{"gld", savetxt},
-		{"xml", savexml_strict},
+		//{"xml", savexml_strict},
+		{"xml", savexml},
 	};
 	int i;
 

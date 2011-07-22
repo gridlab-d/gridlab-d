@@ -19,6 +19,7 @@
 #include    <xercesc/sax2/DefaultHandler.hpp>
 #include    <xercesc/framework/XMLFormatter.hpp>
 #include <stdio.h>
+#include <ctype.h>
 #include <string.h>
 #include <wchar.h>
 #include <vector>

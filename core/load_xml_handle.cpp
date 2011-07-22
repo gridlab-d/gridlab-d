@@ -152,6 +152,8 @@ char *gld_loadHndl::read_clock_prop(char* buffer, size_t len){
 	} else if(strcmp(propname, "timestamp") == 0){
 		if(time_value_datetime(buffer, &tsval)){
 			global_clock = tsval;
+		} else if(time_value_datetimezone(buffer, &tsval)){
+			global_clock = tsval;
 		} else {
 			sprintf(errmsg, "timestamp \"%s\" could not be resolved", buffer);
 			return errmsg;
@@ -323,6 +325,29 @@ void gld_loadHndl::characters(const XMLCh* const chars, const unsigned int lengt
 		default:
 			return;	//	ignore whatever characters we read, we don't use them here.
 	}
+	if(len > 0){
+		int j = 0;
+		int i = 0;
+		for(i = 0; i < len; ++i){
+			if(isspace(buffer[i])){
+				++j;
+			}
+		}
+		if(i == j){
+			output_verbose("XML_Load: ignored: %i spaces.", length);
+			retval = 0;
+			return;
+		}
+	} else {
+		output_verbose("XML_Load: ignored empty characters() call");
+		retval = 0;
+		return;
+	}
+	if(buffer[0] == '"' && buffer[1] == '"'){
+		output_verbose("XML_Load: ignored empty doublequote characters() call");
+		retval = 0;
+		return;
+	}
 	switch(stack_state){
 		case MODULE_PROP:
 			retval = this->read_module_prop(buffer, len);
@@ -426,10 +451,10 @@ char *gld_loadHndl::end_element_global_prop(char *buffer, size_t len){
 }
 
 char *gld_loadHndl::end_element_clock_prop(char *buffer, size_t len){
-	if(strcmp(propname, buffer) == 0){
+//	if(strcmp(propname, buffer) == 0){
 		memset(propname, 0, len);
 		stack_state = CLOCK_STATE;
-	}
+//	}
 	return NULL;
 }
 
@@ -779,6 +804,12 @@ char *gld_loadHndl::start_element_clock(char *buffer, size_t len, const Attribut
 	} else if(strcmp(buffer, "timestamp") == 0){
 		stack_state = CLOCK_PROP;
 		strcpy(propname, "timestamp");
+	} else if(strcmp(buffer, "starttime") == 0){
+		stack_state = CLOCK_PROP;
+		strcpy(propname, "timestamp");
+	} else if(strcmp(buffer, "stoptime") == 0){
+		stack_state = CLOCK_PROP;
+		strcpy(propname, "stoptime");
 	} else {	//	bad keyword
 		sprintf(errmsg, "Unrecognized keyword in start_element_clock(%s)", buffer);
 		return errmsg;
