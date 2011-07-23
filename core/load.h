@@ -53,6 +53,7 @@ double load_latitude(char *buffer);
 double load_longitude(char *buffer);
 int time_value(char *, TIMESTAMP *t);
 int time_value_datetime(char *c, TIMESTAMP *t);
+int time_value_datetimezone(char *c, TIMESTAMP *t);
 int set_flags(OBJECT *obj, char1024 propval);
 UNRESOLVED *add_unresolved(OBJECT *by, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, unsigned int line, int flags);
 int load_resolve_all();

@@ -2075,7 +2075,7 @@ int time_value_datetime(PARSER, TIMESTAMP *t)
 	DONE;
 }
 
-static int time_value_datetimezone(PARSER, TIMESTAMP *t)
+int time_value_datetimezone(PARSER, TIMESTAMP *t)
 {
 	DATETIME dt;
 	START;
