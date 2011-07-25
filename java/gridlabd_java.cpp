@@ -661,34 +661,34 @@ EXPORT jdouble JNICALL Java_gridlabd_GridlabD_run_1aggregate(JNIEnv *env, jobjec
 // gl_psuedorandom
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1unifrom(JNIEnv *env, jobject _this, jdouble a, jdouble b){
-	return gl_random_uniform(a, b);
+	return gl_random_uniform(0, a, b);
 }
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1normal(JNIEnv *env, jobject _this, jdouble m, jdouble s){
-	return gl_random_normal(m, s);
+	return gl_random_normal(0, m, s);
 }
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1lognormal(JNIEnv *env, jobject _this, jdouble m, jdouble s){
-	return gl_random_lognormal(m, s);
+	return gl_random_lognormal(0, m, s);
 }
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1bernoulli(JNIEnv *env, jobject _this, jdouble p){
-	return gl_random_bernoulli(p);
+	return gl_random_bernoulli(0, p);
 }
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1pareto(JNIEnv *env, jobject _this, jdouble m, jdouble s){
-	return gl_random_pareto(m, s);
+	return gl_random_pareto(0, m, s);
 }
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1sampled(JNIEnv *env, jobject _this, jint n, jdoubleArray x){
 	double *_x = env->GetDoubleArrayElements(x, NULL);
-	double rv = gl_random_sampled(n, _x);
+	double rv = gl_random_sampled(0, n, _x);
 	env->ReleaseDoubleArrayElements(x, _x, 0);
 	return rv;
 }
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1exponential(JNIEnv *env, jobject _this, jdouble l){
-	return gl_random_exponential(l);
+	return gl_random_exponential(0, l);
 }
 
 // gl_random_triangle
