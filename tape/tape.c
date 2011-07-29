@@ -187,6 +187,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(player,char256,property);
 	PUBLISH_STRUCT(player,char1024,file);
 	PUBLISH_STRUCT(player,char8,filetype);
+	PUBLISH_STRUCT(player,char32,mode);
 	PUBLISH_STRUCT(player,int32,loop);
 
 	/* register the first class implemented, use SHARE to reveal variables */
@@ -194,6 +195,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	shaper_class->trl = TRL_QUALIFIED;
 	PUBLISH_STRUCT(shaper,char1024,file);
 	PUBLISH_STRUCT(shaper,char8,filetype);
+	PUBLISH_STRUCT(shaper,char32,mode);
 	PUBLISH_STRUCT(shaper,char256,group);
 	PUBLISH_STRUCT(shaper,char256,property);
 	PUBLISH_STRUCT(shaper,double,magnitude);
@@ -205,6 +207,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(recorder,char1024,property);
 	PUBLISH_STRUCT(recorder,char32,trigger);
 	PUBLISH_STRUCT(recorder,char1024,file);
+	PUBLISH_STRUCT(recorder,char8,filetype);
+	PUBLISH_STRUCT(recorder,char32,mode);
 	PUBLISH_STRUCT(recorder,char1024,multifile);
 	//PUBLISH_STRUCT(recorder,int64,interval);
 	PUBLISH_STRUCT(recorder,int32,limit);
@@ -233,6 +237,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 		PT_char1024, "property", ((char*)&(my.property) - (char *)&my),
 		PT_char32, "trigger", ((char*)&(my.trigger) - (char *)&my),
 		PT_char1024, "file", ((char*)&(my.file) - (char *)&my),
+		PT_char8, "filetype", ((char*)&(my.filetype) - (char *)&my),
+		PT_char32, "mode", ((char*)&(my.mode) - (char *)&my),
 		PT_char1024, "multifile", ((char*)&(my.multifile) - (char *)&my),
 		PT_int32, "limit", ((char*)&(my.limit) - (char *)&my),
 		PT_char1024, "plotcommands", ((char*)&(my.plotcommands) - (char *)&my),

@@ -61,6 +61,7 @@ EXPORT int create_shaper(OBJECT **obj, OBJECT *parent)
 		strcpy(my->filetype,"txt");
 		strcpy(my->property,"");
 		strcpy(my->group,"");
+		strcpy(my->mode, "file");
 		my->loopnum = 0;
 		my->status = TS_INIT;
 		my->targets = NULL;
@@ -85,12 +86,12 @@ static int shaper_open(OBJECT *obj)
 	struct shaper *my = OBJECTDATA(obj,struct shaper);
 	
 	/* if prefix is omitted (no colons found) */
-	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
-	{
+//	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
+//	{
 		/* filename is file by default */
 		strcpy(fname,my->file);
-		strcpy(type,"file");
-	}
+//		strcpy(type,"file");
+//	}
 
 	/* if no filename given */
 	if (strcmp(fname,"")==0)
@@ -99,7 +100,7 @@ static int shaper_open(OBJECT *obj)
 		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, my->filetype);
 
 	/* if type is file or file is stdin */
-	fns = get_ftable(type);
+	fns = get_ftable(my->mode);
 	if (fns==NULL)
 		return 0;
 	my->ops = fns->shaper;

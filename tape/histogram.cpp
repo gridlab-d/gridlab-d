@@ -43,6 +43,8 @@ histogram::histogram(MODULE *mod)
         
         if(gl_publish_variable(oclass,
 			PT_char1024, "filename", PADDR(filename),
+			PT_char8, "filetype", PADDR(ftype),
+			PT_char32, "mode", PADDR(mode),
 			PT_char1024, "group", PADDR(group),
 			PT_char1024, "bins", PADDR(bins),
 			PT_char256, "property", PADDR(property),
@@ -69,6 +71,7 @@ histogram::histogram(MODULE *mod)
 		binctr = NULL;
 		prop_ptr = NULL;
 		next_count = t_count = next_sample = t_sample = TS_ZERO;
+		strcpy(mode, "file");
 		flags[0]='w';
     }
 }
@@ -347,12 +350,12 @@ int histogram::init(OBJECT *parent)
 
 	/* open file ~ copied from recorder.c */
 		/* if prefix is omitted (no colons found) */
-	if (sscanf(filename,"%32[^:]:%1024[^:]:%[^:]",ftype,fname,flags)==1)
-	{
+//	if (sscanf(filename,"%32[^:]:%1024[^:]:%[^:]",ftype,fname,flags)==1)
+//	{
 		/* filename is file by default */
 		strcpy(fname,filename);
-		strcpy(ftype,"file");
-	}
+//		strcpy(ftype,"file");
+//	}
 
 	/* if no filename given */
 	if (strcmp(fname,"")==0)
@@ -361,7 +364,7 @@ int histogram::init(OBJECT *parent)
 		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, ftype);
 
 	/* if type is file or file is stdin */
-	tf = get_ftable(ftype);
+	tf = get_ftable(mode);
 	if(tf == NULL)
 		return 0;
 	ops = tf->histogram; /* same mentality as a recorder, 'cept for the header properties */

@@ -46,6 +46,7 @@ public:
 	char1024 filename;
 	char1024 fname;
 	char32 ftype;
+	char32 mode;
 	char8 flags;
 	char1024 group;
 	char256 property;

@@ -60,6 +60,7 @@ struct player {
 	/* public */
 	char1024 file; /**< the name of the player source */
 	char8 filetype; /**< the type of the player source */
+	char32 mode;
 	char256 property; /**< the target property */
 	int32 loop; /**< the number of time to replay the tape */
 	/* private */
@@ -94,6 +95,7 @@ struct shaper {
 	/* public */
 	char1024 file; /**< the name of the shaper source */
 	char8 filetype; /**< the type of the shaper source */
+	char32 mode;
 	char256 property; /**< the target property */
 	char256 group; /**< the object grouping to use in choosing the shape target */
 	double magnitude;	/**< the magnitude of a queue event (only used when \p events > 0) */
@@ -125,12 +127,13 @@ struct shaper {
 struct recorder {
 	/* public */
 	char1024 file;
+	char8 filetype;
+	char32 mode;
 	char1024 multifile;
 	char1024 multitempfile;
 	FILE *multifp, *inputfp;
 	int16 multirun_ct;
 	char1024 multirun_header;
-	char8 filetype;
 	int16 format; /* 0=YYYY-MM-DD HH:MM:SS; 1=timestamp */
 	double dInterval;
 	TIMESTAMP interval;
@@ -168,6 +171,7 @@ struct collector {
 	/* public */
 	char1024 file;
 	char8 filetype;
+	char32 mode;
 	int16 format; /* 0=YYYY-MM-DD HH:MM:SS; 1=timestamp */
 	double dInterval;
 	TIMESTAMP interval;

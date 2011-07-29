@@ -46,6 +46,7 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 		strcpy(my->file,"");
 		strcpy(my->multifile,"");
 		strcpy(my->filetype,"txt");
+		strcpy(my->mode, "file");
 		strcpy(my->delim,",");
 		strcpy(my->property,"(undefined)");
 		my->interval = -1; /* transients only */
@@ -74,12 +75,12 @@ static int recorder_open(OBJECT *obj)
 	
 	my->interval = (int64)(my->dInterval/TS_SECOND);
 	/* if prefix is omitted (no colons found) */
-	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
-	{
+//	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
+//	{
 		/* filename is file by default */
 		strcpy(fname,my->file);
-		strcpy(type,"file");
-	}
+//		strcpy(type,"file");
+//	}
 
 	/* if no filename given */
 	if (strcmp(fname,"")==0)
@@ -235,7 +236,7 @@ static int recorder_open(OBJECT *obj)
 	}
 
 	/* if type is file or file is stdin */
-	f = get_ftable(type);
+	f = get_ftable(my->mode);
 	if(f != 0){
 		my->ops = f->recorder;
 	} else {

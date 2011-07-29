@@ -58,6 +58,7 @@ EXPORT int create_multi_recorder(OBJECT **obj, OBJECT *parent)
 		strcpy(my->multifile,"");
 		strcpy(my->filetype,"txt");
 		strcpy(my->delim,",");
+		strcpy(my->mode, "file");
 		strcpy(my->property,"(undefined)");
 		my->interval = -1; /* transients only */
 		my->dInterval = -1.0;

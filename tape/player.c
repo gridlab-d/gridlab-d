@@ -57,6 +57,7 @@ EXPORT int create_player(OBJECT **obj, OBJECT *parent)
 		gl_set_parent(*obj,parent);
 		strcpy(my->file,"");
 		strcpy(my->filetype,"txt");
+		strcpy(my->mode, "file");
 		strcpy(my->property,"(undefined)");
 		my->next.ts = TS_ZERO;
 		strcpy(my->next.value,"");
@@ -78,12 +79,12 @@ static int player_open(OBJECT *obj)
 	TAPEFUNCS *tf = 0;
 
 	/* if prefix is omitted (no colons found) */
-	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
-	{
-		/* filename is file by default */
-		strcpy(fname,my->file);
-		strcpy(type,"file");
-	}
+//	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
+//	{
+//		/* filename is file by default */
+	strcpy(fname,my->file);
+//		strcpy(type,"file");
+//	}
 
 	/* if no filename given */
 	if (strcmp(fname,"")==0)
@@ -92,7 +93,7 @@ static int player_open(OBJECT *obj)
 		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, my->filetype);
 
 	/* if type is file or file is stdin */
-	tf = get_ftable(type);
+	tf = get_ftable(my->mode);
 	if(tf == NULL)
 		return 0;
 	my->ops = tf->player;
