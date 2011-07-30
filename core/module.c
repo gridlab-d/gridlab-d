@@ -20,7 +20,6 @@
 #endif
 
 #if defined WIN32 && ! defined MINGW
-	#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 	#define _WIN32_WINNT 0x0400
 	#include <windows.h>
 	#ifndef DLEXT
@@ -832,5 +831,137 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
 	return 0;
 }
 
+/***************************************************************************
+ * THREAD SCHEDULER
+ *
+ * Note: This is added in module.c because module is the only core element that
+ *       has the WINAPI.  Someday this should be split off into a separate file.
+ *
+ * This is an early prototype of processor/thread scheduling.  For now it
+ * only supports a single-threaded run, and it allocates a single processor
+ * exclusively to a single gridlabd run.  It only works on Windows XP/7.
+ *
+ * In the future this will need the following enhancements
+ *
+ * 1. Support multithreaded operation, which means that available processors
+ *    need to be assigned to threads, not processes.
+ *
+ * 2. Support multiple platforms.
+ *
+ * 3. Support waiting until processors become available instead of overloading.
+ *
+ * 4. Implement locking on process map creation to avoid clashes.
+ *
+ ***************************************************************************/
+#ifdef WIN32
+
+/* IMPORTANT: this will only work up to 64 processors (1 processor group) */
+static unsigned char procs[65536]; /* processor map */
+static unsigned char n_procs=0; /* number of processors */
+static unsigned short *process_map = NULL; /* global process map */
+static unsigned short my_proc=0; /* processor assigned to this process */
+
+/** Unschedule process
+ **/
+void sched_finish(void)
+{
+	if ( my_proc>=0 && my_proc<n_procs )
+		process_map[my_proc] = 0;
+}
+
+/** Clear process map
+ **/
+void sched_clear(void)
+{
+	if ( process_map!=NULL )
+	{
+		unsigned int n;
+		for ( n=0 ; n<n_procs ; n++ )
+		{
+			process_map[n] = 0;
+		}
+	}
+}
+
+/** Initialize the processor scheduling system
+
+    This function sets up the processor scheduling system
+	that is responsible to keep thread from migrating once
+	they are committed to a particular processor.
+ **/
+void sched_init(void)
+{
+	SYSTEM_INFO info;
+	unsigned short pid = (unsigned short)GetCurrentProcessId();
+	HANDLE hProc, hMap;
+	unsigned long mapsize = sizeof(unsigned short)*65536;
+	int n;
+
+	/* get total number of processors */
+	GetSystemInfo(&info);
+	n_procs = (unsigned char)info.dwNumberOfProcessors;
+
+	/* get global process map */
+	hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, "gridlabd-pmap");
+	if ( hMap==NULL ) 
+	{
+		/** @todo implement locking before creating the global process map */
+
+		/* create global process map */
+		hMap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, mapsize, "gridlabd-pmap");
+		if ( hMap==NULL )
+		{
+			output_warning("unable to create global process map, error code %d", GetLastError());
+			return;
+		}
+	}
+
+	/* access global process map */
+	process_map = (unsigned short*) MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS,0,0,mapsize);
+	if ( process_map==NULL )
+	{
+		output_warning("unable to access global process map, error code %d", GetLastError());
+		return;
+	}
+
+	/* get process info */
+	hProc = OpenProcess(PROCESS_ALL_ACCESS,FALSE,pid);
+	if ( hProc==NULL )
+	{
+		unsigned long  err = GetLastError();
+		output_warning("unable to access current process, err code %d", err);
+		return;
+	}	
+
+	/* find an available processor */
+	for ( n=0 ; n<n_procs ; n++ )
+	{
+		if ( process_map[n]==0 )
+			break;
+	}
+	if ( n==n_procs )
+	{
+		/** @todo wait for a processor to free up before running */
+		output_warning("no processor available to avoid overloading");
+		return;
+	}
+	my_proc = n;
+	process_map[n] = pid;
+	atexit(sched_finish);
+
+	/* set processor affinity */
+	if ( SetProcessAffinityMask(hProc,1<<n)==0 )
+	{
+		unsigned long  err = GetLastError();
+		output_warning("unable to set current process affinity mask, err code %d", err);
+	}
+	CloseHandle(hProc);
+}
+#else
+void sched_init(void)
+{
+	/** @todo implememt processor scheduling on non-windows platforms */
+}
+#endif
 
 /**@}*/

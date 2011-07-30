@@ -66,6 +66,13 @@ extern "C" {
 	MODULE *module_get_first();
 	void *module_malloc(size_t size);
 	void module_free(void *ptr);
+
+#ifdef WIN32
+	// added in module.c because it has WIN32 API
+	void sched_init(void);
+	void sched_clear(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

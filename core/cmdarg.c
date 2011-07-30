@@ -39,6 +39,7 @@
 	- \p --xmlencoding \e num	sets the XML encoding (8, 16, or 32)
 	- \p --xmlstrict            toggles XML to be strict
 	- \p --relax                allows implicit variable definition when assignments made
+	- \p --clearmap				clear the processor schedule
 
 	The following are only supported on Linux systems
 	- \p --pidfile[=filename]   creates a process id file while GridLAB-D is running (default is gridlabd.pid)
@@ -801,6 +802,8 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			global_streaming_io_enabled = !global_streaming_io_enabled;
 		else if (strcmp(*argv,"--server")==0)
 			strcpy(global_environment,"server");
+		else if (strcmp(*argv,"--clearmap")==0)
+			sched_clear();
 		else if (strcmp(*argv,"-h")==0 || strcmp(*argv,"--help")==0)
 		{
 			printf("Syntax: gridlabd [OPTIONS ...] <file> ... \nOptions:\n"
