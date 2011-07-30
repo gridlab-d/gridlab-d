@@ -960,8 +960,12 @@ void sched_init(void)
 #else
 void sched_init(void)
 {
-	/** @todo implememt processor scheduling on non-windows platforms */
+	/** @todo implement processor scheduling on non-windows platforms */
 }
+void sched_clear(void)
+{
+}
+
 #endif
 
 /**@}*/
