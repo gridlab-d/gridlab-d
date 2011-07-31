@@ -699,7 +699,7 @@ char *timestamp_set_tz(char *tz_name)
 	if(tz_name == NULL)
 	{
 		static char guess[64];
-		unsigned int tzlock=0;
+		static unsigned int tzlock=0;
 
 		if (strcmp(_tzname[0], "") == 0){
 			THROW("timezone not identified");
