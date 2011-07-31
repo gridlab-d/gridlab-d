@@ -62,8 +62,12 @@ void gld_loadHndl::writeChars(const XMLByte* const toWrite){
 	;
 }
 
+#if XERCES_VERSION_MAJOR < 3
+void gld_loadHndl::writeChars(const XMLByte* const toWrite, const unsigned int count, XMLFormatter* const formatter){
+#else
 void gld_loadHndl::writeChars(const XMLByte* const toWrite, const XMLSize_t count, XMLFormatter* const formatter){
-    //printf("%s", (char *)toWrite);
+#endif
+	//printf("%s", (char *)toWrite);
 	;
 }
 

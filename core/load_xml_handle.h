@@ -76,8 +76,11 @@ public:
 	bool did_load(){return load_state;}
 
 	void writeChars(const XMLByte* const toWrite);
+#if XERCES_VERSION_MAJOR < 3
+	virtual void writeChars(const XMLByte* const toWrite, const unsigned int count, XMLFormatter* const formatter);
+#else
 	virtual void writeChars(const XMLByte* const toWrite, const XMLSize_t count, XMLFormatter* const formatter);
-
+#endif
 	virtual void setDocumentLocator(const Locator *const locator);
 	virtual void endDocument();
     virtual void endElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname);
