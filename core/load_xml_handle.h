@@ -76,7 +76,7 @@ public:
 	bool did_load(){return load_state;}
 
 	void writeChars(const XMLByte* const toWrite);
-	virtual void writeChars(const XMLByte* const toWrite, const unsigned int count, XMLFormatter* const formatter);
+	virtual void writeChars(const XMLByte* const toWrite, const XMLSize_t count, XMLFormatter* const formatter);
 
 	virtual void setDocumentLocator(const Locator *const locator);
 	virtual void endDocument();

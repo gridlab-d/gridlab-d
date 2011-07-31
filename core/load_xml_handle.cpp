@@ -62,7 +62,7 @@ void gld_loadHndl::writeChars(const XMLByte* const toWrite){
 	;
 }
 
-void gld_loadHndl::writeChars(const XMLByte* const toWrite, const unsigned int count, XMLFormatter* const formatter){
+void gld_loadHndl::writeChars(const XMLByte* const toWrite, const XMLSize_t count, XMLFormatter* const formatter){
     //printf("%s", (char *)toWrite);
 	;
 }
