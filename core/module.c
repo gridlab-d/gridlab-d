@@ -853,12 +853,25 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
  * 4. Implement locking on process map creation to avoid clashes.
  *
  ***************************************************************************/
-#ifdef WIN32
+
+#include "gui.h"
+
+void sched_update(TIMESTAMP clock, GUIACTIONSTATUS status)
+{
+}
 
 /* IMPORTANT: this will only work up to 64 processors (1 processor group) */
 static unsigned char procs[65536]; /* processor map */
 static unsigned char n_procs=0; /* number of processors */
-static unsigned short *process_map = NULL; /* global process map */
+
+typedef struct s_gldprocinfo {
+	unsigned long lock;
+	unsigned short pid;
+	TIMESTAMP progress;
+	GUIACTIONSTATUS status;
+} GLDPROCINFO;
+
+static GLDPROCINFO *process_map = NULL; /* global process map */
 static unsigned short my_proc=0; /* processor assigned to this process */
 
 /** Unschedule process
@@ -866,7 +879,7 @@ static unsigned short my_proc=0; /* processor assigned to this process */
 void sched_finish(void)
 {
 	if ( my_proc>=0 && my_proc<n_procs )
-		process_map[my_proc] = 0;
+		process_map[my_proc].pid = 0;
 }
 
 /** Clear process map
@@ -878,10 +891,47 @@ void sched_clear(void)
 		unsigned int n;
 		for ( n=0 ; n<n_procs ; n++ )
 		{
-			process_map[n] = 0;
+			process_map[n].pid = 0;
 		}
 	}
 }
+void sched_print(void)
+{
+	if ( process_map!=NULL )
+	{
+		unsigned int n;
+		int first=1;
+		int old = global_suppress_repeat_messages;
+		global_suppress_repeat_messages = 0;
+		for ( n=0 ; n<n_procs ; n++ )
+		{
+			char *status;
+			char ts[64];
+			struct tm *tm = localtime(&process_map[n].progress);
+			switch ( process_map[n].status ) {
+			case GUIACT_NONE: status = "Running"; break;
+			case GUIACT_WAITING: status = "Waiting"; break;
+			case GUIACT_PENDING: status = "Pending"; break;
+			case GUIACT_HALT: status = "Halted"; break;
+			default: status = "Unknown"; break;
+			}
+			strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S %Z",tm);
+			if ( process_map[n].pid!=0 )
+			{
+				if ( first )
+				{
+					output_message("Proc  Pid  Status        Progress        ");
+					output_message("---- ----- ------- -----------------------");
+					first=0;
+				} 
+				output_message("%4d %5d %.7s %s", n, process_map[n].pid, status, process_map[n].progress==TS_ZERO?"INIT":ts);
+			}
+		}
+		global_suppress_repeat_messages = 1;
+	}
+}
+
+#ifdef WIN32
 
 /** Initialize the processor scheduling system
 
@@ -894,7 +944,7 @@ void sched_init(void)
 	SYSTEM_INFO info;
 	unsigned short pid = (unsigned short)GetCurrentProcessId();
 	HANDLE hProc, hMap;
-	unsigned long mapsize = sizeof(unsigned short)*65536;
+	unsigned long mapsize = sizeof(GLDPROCINFO)*65536;
 	int n;
 
 	/* get total number of processors */
@@ -917,7 +967,7 @@ void sched_init(void)
 	}
 
 	/* access global process map */
-	process_map = (unsigned short*) MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS,0,0,mapsize);
+	process_map = (GLDPROCINFO*) MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS,0,0,mapsize);
 	if ( process_map==NULL )
 	{
 		output_warning("unable to access global process map, error code %d", GetLastError());
@@ -936,7 +986,7 @@ void sched_init(void)
 	/* find an available processor */
 	for ( n=0 ; n<n_procs ; n++ )
 	{
-		if ( process_map[n]==0 )
+		if ( process_map[n].pid==0 )
 			break;
 	}
 	if ( n==n_procs )
@@ -946,7 +996,7 @@ void sched_init(void)
 		return;
 	}
 	my_proc = n;
-	process_map[n] = pid;
+	process_map[n].pid = pid;
 	atexit(sched_finish);
 
 	/* set processor affinity */
@@ -965,7 +1015,6 @@ void sched_init(void)
 void sched_clear(void)
 {
 }
-
 #endif
 
 /**@}*/

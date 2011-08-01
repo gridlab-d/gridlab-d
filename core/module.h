@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <float.h>
 #include "object.h"
+#include "gui.h"
 
 #include "test_callbacks.h"
 
@@ -71,6 +72,8 @@ extern "C" {
 	// added in module.c because it has WIN32 API
 	void sched_init(void);
 	void sched_clear(void);
+	void sched_print(void);
+	void sched_update(TIMESTAMP clock, GUIACTIONSTATUS status);
 #endif
 
 #ifdef __cplusplus

@@ -42,6 +42,7 @@ typedef enum {
 
 } GUIENTITYTYPE;
 typedef enum {GUIACT_NONE=0, GUIACT_WAITING=1, GUIACT_PENDING=2, GUIACT_HALT=3} GUIACTIONSTATUS;
+
 typedef struct s_guientity {
 	GUIENTITYTYPE type;	// gui entity type (see GE_*)
 	char srcref[1024]; // reference to source file location

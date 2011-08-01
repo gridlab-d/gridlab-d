@@ -804,6 +804,8 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 			strcpy(global_environment,"server");
 		else if (strcmp(*argv,"--clearmap")==0)
 			sched_clear();
+		else if (strcmp(*argv,"--pstatus")==0)
+			sched_print();
 		else if (strcmp(*argv,"-h")==0 || strcmp(*argv,"--help")==0)
 		{
 			printf("Syntax: gridlabd [OPTIONS ...] <file> ... \nOptions:\n"

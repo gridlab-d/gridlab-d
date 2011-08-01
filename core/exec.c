@@ -208,9 +208,11 @@ char *simtime(void)
 
 static STATUS show_progress(void)
 {
+	extern GUIACTIONSTATUS wait_status;
 	output_progress();
 	/* reschedule report */
 	realtime_schedule_event(realtime_now()+1,show_progress);
+	sched_update(global_clock,wait_status);
 	return SUCCESS;
 }
 
