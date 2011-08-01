@@ -1007,6 +1007,13 @@ void sched_init(void)
 	}
 	CloseHandle(hProc);
 }
+#elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
+
+void sched_init(void)
+{
+	output_warning("MACOSX processor control not implemented yet");
+}
+
 #else
 
 #include <sys/sysinfo.h>
