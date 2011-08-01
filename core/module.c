@@ -1008,12 +1008,61 @@ void sched_init(void)
 	CloseHandle(hProc);
 }
 #else
+
+#include <sys/sysinfo.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/shm.h>
+
 void sched_init(void)
 {
-	/** @todo implement processor scheduling on non-windows platforms */
-}
-void sched_clear(void)
-{
+	struct sysinfo info;
+	unsigned short pid = (unsigned short)getpid();
+	int fd;
+	unsigned long mapsize = sizeof(GLDPROCINFO)*65536;
+	int n;
+
+	/* get total number of processors */
+	sysinfo(&info);
+	n_procs = (unsigned char)info.procs;
+
+	/* get global process map */
+	fd = shm_open("gridlabd-pmap",O_CREAT|O_RDWR,0777);
+	if ( fd==-1 ) 
+	{
+		output_warning("unable to create global process map: %s", strerror(errno));
+		return;
+	}
+
+	/* access global process map */
+	process_map = (GLDPROCINFO*) mmap(NULL,mapsize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+	if ( process_map==NULL )
+	{
+		output_warning("unable to access global process map: %s", strerror(errno));
+		return;
+	}
+
+	/* find an available processor */
+	for ( n=0 ; n<n_procs ; n++ )
+	{
+		if ( process_map[n].pid==0 )
+			break;
+	}
+	if ( n==n_procs )
+	{
+		/** @todo wait for a processor to free up before running */
+		output_warning("no processor available to avoid overloading");
+		return;
+	}
+	my_proc = n;
+	process_map[n].pid = pid;
+	atexit(sched_finish);
+
+	/* set processor affinity */
+	if ( sched_setaffinity(pid,1<<n)==0 )
+		output_warning("unable to set current process affinity mask: %s", strerror(errno));
 }
 #endif
 
