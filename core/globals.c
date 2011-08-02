@@ -515,12 +515,15 @@ char *global_getvar(char *name, char *buffer, int size){
 void global_dump(void)
 {
 	GLOBALVAR *var=NULL;
+	int old = global_suppress_repeat_messages;
+	global_suppress_repeat_messages = 0;
 	while ((var=global_getnext(var))!=NULL)
 	{
 		char buffer[1024];
 		if (class_property_to_string(var->prop, (void*)var->prop->addr,buffer,sizeof(buffer)))
 			output_message("%s=%s;", var->prop->name, buffer);
 	}
+	global_suppress_repeat_messages = old;
 }
 
 /**@}**/
