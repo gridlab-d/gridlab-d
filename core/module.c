@@ -1025,9 +1025,10 @@ void sched_init(void)
 
 void sched_init(void)
 {
+	key_t shmkey = ftok("/tmp/gridlabd.shm",0x58a73d1f);
 	struct sysinfo info;
 	unsigned short pid = (unsigned short)getpid();
-	int fd;
+	int shmid;
 	unsigned long mapsize = sizeof(GLDPROCINFO)*65536;
 	int n;
 
@@ -1036,15 +1037,15 @@ void sched_init(void)
 	n_procs = (unsigned char)info.procs;
 
 	/* get global process map */
-	fd = shm_open("gridlabd-pmap",O_CREAT|O_RDWR,0777);
-	if ( fd==-1 ) 
+	shmid = shmget(shmkey,mapsize,IPC_CREAT|0666);
+	if ( shmid<0 ) 
 	{
 		output_warning("unable to create global process map: %s", strerror(errno));
 		return;
 	}
 
 	/* access global process map */
-	process_map = (GLDPROCINFO*) mmap(NULL,mapsize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+	process_map = (GLDPROCINFO*) shmat(shmid,NULL,0);
 	if ( process_map==NULL )
 	{
 		output_warning("unable to access global process map: %s", strerror(errno));
