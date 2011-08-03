@@ -869,6 +869,7 @@ typedef struct s_gldprocinfo {
 	unsigned short pid;
 	TIMESTAMP progress;
 	GUIACTIONSTATUS status;
+	char cmdline[64];
 } GLDPROCINFO;
 
 static GLDPROCINFO *process_map = NULL; /* global process map */
@@ -920,11 +921,10 @@ void sched_print(void)
 			{
 				if ( first )
 				{
-					output_message("Proc  Pid  Status        Progress        ");
-					output_message("---- ----- ------- -----------------------");
+					output_message("PROC   PID STATE                      CLOCK COMMAND");
 					first=0;
 				} 
-				output_message("%4d %5d %.7s %s", n, process_map[n].pid, status, process_map[n].progress==TS_ZERO?"INIT":ts);
+				output_message("%4d %5d %.7s %24.24s %s", n, process_map[n].pid, status, process_map[n].progress==TS_ZERO?"INIT":ts, process_map[n].cmdline);
 			}
 		}
 		global_suppress_repeat_messages = 1;
@@ -997,6 +997,7 @@ void sched_init(void)
 	}
 	my_proc = n;
 	process_map[n].pid = pid;
+	strncpy(process_map[n].cmdline,global_command_line,sizeof(process_map[n].cmdline)-1);
 	atexit(sched_finish);
 
 	/* set processor affinity */
@@ -1025,11 +1026,11 @@ void sched_init(void)
 
 void sched_init(void)
 {
-	key_t shmkey = ftok("/tmp/gridlabd.shm",0x58a73d1f);
+	unsigned long mapsize = sizeof(GLDPROCINFO)*65536;
+	key_t shmkey = ftok("/gridlabd-pmap",mapsize);
 	struct sysinfo info;
 	unsigned short pid = (unsigned short)getpid();
 	int shmid;
-	unsigned long mapsize = sizeof(GLDPROCINFO)*65536;
 	int n;
 
 	/* get total number of processors */
@@ -1066,6 +1067,7 @@ void sched_init(void)
 	}
 	my_proc = n;
 	process_map[n].pid = pid;
+	strncpy(process_map[n].cmdline,global_command_line,sizeof(process_map[n].cmdline)-1);
 	atexit(sched_finish);
 
 	/* set processor affinity */

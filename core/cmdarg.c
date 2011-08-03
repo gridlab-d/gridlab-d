@@ -1034,25 +1034,7 @@ static int help(int argc, char *argv[])
 STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				   char *argv[]) /**< a list pointers to the argument string */
 {
-	unsigned int pos=0;
-	int i;
-	char *pd1, *pd2;
 	STATUS status = SUCCESS;
-
-	/* capture the execdir */
-	strcpy(global_execname,argv[0]);
-	strcpy(global_execdir,argv[0]);
-	pd1 = strrchr(global_execdir,'/');
-	pd2 = strrchr(global_execdir,'\\');
-	if (pd1>pd2) *pd1='\0';
-	else if (pd2>pd1) *pd2='\0';
-
-	/* capture the command line */
-	for (i=0; i<argc; i++)
-	{
-		if (pos<sizeof(global_command_line)-strlen(argv[i]))
-			pos += sprintf(global_command_line+pos,"%s%s",pos>0?" ":"",argv[i]);
-	}
 
 	while (argv++,--argc>0)
 	{

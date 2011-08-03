@@ -61,10 +61,27 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	int rv = 0;
 	time_t t_load = time(NULL);
 	global_process_id = getpid();
+	char *pd1, *pd2;
+	int i, pos=0;
 
 #if defined WIN32 && _DEBUG 
 	atexit(pause_at_exit);
 #endif
+
+	/* capture the execdir */
+	strcpy(global_execname,argv[0]);
+	strcpy(global_execdir,argv[0]);
+	pd1 = strrchr(global_execdir,'/');
+	pd2 = strrchr(global_execdir,'\\');
+	if (pd1>pd2) *pd1='\0';
+	else if (pd2>pd1) *pd2='\0';
+
+	/* capture the command line */
+	for (i=0; i<argc; i++)
+	{
+		if (pos<sizeof(global_command_line)-strlen(argv[i]))
+			pos += sprintf(global_command_line+pos,"%s%s",pos>0?" ":"",argv[i]);
+	}
 
 	/* initialize scheduler */
 	sched_init();
