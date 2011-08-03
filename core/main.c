@@ -60,9 +60,10 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 {
 	int rv = 0;
 	time_t t_load = time(NULL);
-	global_process_id = getpid();
 	char *pd1, *pd2;
 	int i, pos=0;
+
+	global_process_id = getpid();
 
 #if defined WIN32 && _DEBUG 
 	atexit(pause_at_exit);
