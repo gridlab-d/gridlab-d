@@ -971,8 +971,17 @@ static int help(int argc, char *argv[])
 {
 	int i;
 	int old = global_suppress_repeat_messages;
+	size_t indent = 0;
 	global_suppress_repeat_messages = 0;
 	output_message("Syntax: gridlabd [<options>] file1 [file2 [...]]");
+
+	for ( i=0 ; i<sizeof(main)/sizeof(main[0]) ; i++ )
+	{
+		CMDARG arg = main[i];
+		size_t len = (arg.sopt?strlen(arg.sopt):0) + (arg.lopt?strlen(arg.lopt):0) + (arg.args?strlen(arg.args):0);
+		if (len>indent) indent = len;
+	}
+
 	for ( i=0 ; i<sizeof(main)/sizeof(main[0]) ; i++ )
 	{
 		CMDARG arg = main[i];
@@ -1011,7 +1020,7 @@ static int help(int argc, char *argv[])
 				strcat(buffer,arg.args);
 				strcat(buffer," ");
 			}
-			while ( strlen(buffer) < 40 )
+			while ( strlen(buffer) < indent+8 )
 				strcat(buffer," ");
 			strcat(buffer,arg.desc);
 			output_message("%s", buffer);
