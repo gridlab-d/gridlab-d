@@ -972,6 +972,7 @@ static int help(int argc, char *argv[])
 	int i;
 	int old = global_suppress_repeat_messages;
 	global_suppress_repeat_messages = 0;
+	output_message("Syntax: gridlabd [<options>] file1 [file2 [...]]");
 	for ( i=0 ; i<sizeof(main)/sizeof(main[0]) ; i++ )
 	{
 		CMDARG arg = main[i];
