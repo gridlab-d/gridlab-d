@@ -39,6 +39,7 @@
 #ifndef WIN32
 	#define _tzname tzname
 	#define _timezone timezone
+	#define _daylight daylight
 #endif
 
 #define TZFILE "tzinfo.txt"
@@ -713,12 +714,15 @@ char *timestamp_set_tz(char *tz_name)
 		
 		lock(&tzlock);
 		if (_timezone % 60 == 0){
-			sprintf(guess, "%s%d%s", _tzname[0], _timezone / 3600, _tzname[1]);
+			sprintf(guess, "%s%d%s", _tzname[0], (int)(_timezone / 3600), _daylight?_tzname[1]:"");
 		} else {
-			sprintf(guess, "%s%d:%d%s", _tzname[0], _timezone / 3600, _timezone / 60, _tzname[1]);
+			sprintf(guess, "%s%d:%d%s", _tzname[0], (int)(_timezone / 3600), (int)(_timezone / 60), _daylight?_tzname[1]:"");
 		}
+		if (_timezone==0 && _daylight==0)
+			tz_name="UTC0";
+		else
+			tz_name = guess;
 		unlock(&tzlock);
-		tz_name = guess;
 	}
 	
 	load_tzspecs(tz_name);

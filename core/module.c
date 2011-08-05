@@ -860,7 +860,6 @@ void sched_update(TIMESTAMP clock, GUIACTIONSTATUS status)
 {
 }
 
-/* IMPORTANT: this will only work up to 64 processors (1 processor group) */
 static unsigned char procs[65536]; /* processor map */
 static unsigned char n_procs=0; /* number of processors */
 
@@ -1008,16 +1007,9 @@ void sched_init(void)
 	}
 	CloseHandle(hProc);
 }
-#elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
-
-void sched_init(void)
-{
-	output_warning("MACOSX processor control not implemented yet");
-}
 
 #else
 
-#include <sys/sysinfo.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -1026,22 +1018,41 @@ void sched_init(void)
 
 void sched_init(void)
 {
-	unsigned long mapsize = sizeof(GLDPROCINFO)*65536;
-	key_t shmkey = ftok("/gridlabd-pmap",mapsize);
-	struct sysinfo info;
+	char *mfile = "/tmp/gridlabd-pmap";
+	unsigned long mapsize;
+	int fd = open(mfile,O_CREAT,0666);
+	key_t shmkey = ftok(mfile,sizeof(GLDPROCINFO));
 	unsigned short pid = (unsigned short)getpid();
 	int shmid;
 	int n;
 
 	/* get total number of processors */
-	sysinfo(&info);
-	n_procs = (unsigned char)info.procs;
+	n_procs = sysconf(_SC_NPROCESSORS_ONLN);
+	mapsize = sizeof(GLDPROCINFO)*n_procs;
+
+	/* check key */
+	if ( shmkey==-1 )
+	{
+		output_warning("error generating key to global process map: %s", strerror(errno));
+		return;
+	}
+	else
+		close(fd);
 
 	/* get global process map */
 	shmid = shmget(shmkey,mapsize,IPC_CREAT|0666);
 	if ( shmid<0 ) 
 	{
 		output_warning("unable to create global process map: %s", strerror(errno));
+		switch ( errno ) {
+		case EACCES: output_warning("access to global process map %s is denied", mfile); break;
+		case EEXIST: output_warning("global process map already exists"); break;
+		case EINVAL: output_warning("size of existing process map is not %d bytes or map size exceed system limit for shared memory", mapsize); break;
+		case ENOENT: output_warning("process map %s not found", mfile); break;
+		case ENOMEM: output_warning("process map too big"); break;
+		case ENOSPC: output_warning("shared memory limit exceeded"); break;
+		default: output_warning("unknown shmget error");
+		}
 		return;
 	}
 
@@ -1071,8 +1082,11 @@ void sched_init(void)
 	atexit(sched_finish);
 
 	/* set processor affinity */
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
+#else
 	if ( sched_setaffinity(pid,1<<n)==0 )
 		output_warning("unable to set current process affinity mask: %s", strerror(errno));
+#endif
 }
 #endif
 
