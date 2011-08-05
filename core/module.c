@@ -1010,6 +1010,12 @@ void sched_init(void)
 
 #else
 
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
+#include <mach/mach_init.h>
+#include <mach/thread_policy.h>
+struct thread_affinity_policy policy;
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -1083,6 +1089,9 @@ void sched_init(void)
 
 	/* set processor affinity */
 #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
+	policy.affinity_tag = n;
+	if ( thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, &policy, THREAD_AFFINITY_POLICY_COUNT)!=KERN_SUCCESS )
+		output_warning("unable to set thread policy: %s", strerror(errno));
 #else
 	if ( sched_setaffinity(pid,1<<n)==0 )
 		output_warning("unable to set current process affinity mask: %s", strerror(errno));
