@@ -441,6 +441,8 @@ TIMESTAMP compute_dstevent(int year, SPEC *spec, time_t offset){
 int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset){
 	int hours = 0, minutes = 0;
 	char buf1[32], buf2[32];
+	memset(buf1,0,sizeof(buf1));
+	memset(buf2,0,sizeof(buf2));
 	
 	if ((strchr(tzspec, ':') != NULL && sscanf(tzspec, "%[A-Z]%d:%d%[A-Z]", buf1, &hours, &minutes, buf2) < 3)
 			|| sscanf(tzspec, "%[A-Z]%d%[A-Z]", buf1, &hours, buf2) < 2){
