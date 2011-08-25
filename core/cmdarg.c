@@ -961,6 +961,7 @@ static CMDARG main[] = {
 	{"relax",		NULL,	relax,			NULL, "Allows implicit variable definition when assignments are made" },
 
 	{NULL,NULL,NULL,NULL, "Server mode"},
+	{"server",		NULL,	server,			NULL, "Enables the server"},
 	{"clearmap",	NULL,	clearmap,		NULL, "Clears the process map" },
 	{"pstatus",		NULL,	pstatus,		NULL, "Prints the process list" },
 	{"redirect",	NULL,	redirect,		"<stream>[:<file>]", "Redirects an output to stream to a file (or null)" },

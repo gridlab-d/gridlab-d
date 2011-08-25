@@ -38,14 +38,21 @@ static KEYWORD trl_keys[] = {
 	{"UNKNOWN",		TRL_UNKNOWN, NULL},
 };
 static KEYWORD cpt_keys[] = {
-	{"NONE", CPT_NONE, cpt_keys+1},
-	{"WALL", CPT_WALL, cpt_keys+2},
-	{"SIM",  CPT_SIM,  NULL},
+	{"NONE", CPT_NONE, cpt_keys+1},	/**< no checkpoint done */
+	{"WALL", CPT_WALL, cpt_keys+2},	/**< checkpoint on wall clock interval */
+	{"SIM",  CPT_SIM,  NULL},		/**< checkpoint on simulation clock interval */
 };
 
 static KEYWORD rng_keys[] = {
-	{"RNG2", RNG2, rng_keys+1},
-	{"RNG3", RNG3, NULL,},
+	{"RNG2", RNG2, rng_keys+1},		/**< version 2 random number generator (stateless) */
+	{"RNG3", RNG3, NULL,},			/**< version 3 random number generator (statefull) */
+};
+
+static KEYWORD mls_keys[] = {
+	{"INIT", MLS_INIT, rng_keys+1},			/**< main loop hasn't started yet */
+	{"RUNNING", MLS_RUNNING, rng_keys+2},	/**< main loop is running */
+	{"PAUSED", MLS_PAUSED, rng_keys+3},		/**< main loop is paused */
+	{"DONE", MLS_DONE, NULL},				/**< main loop is done */
 };
 
 static struct s_varmap {
@@ -126,6 +133,8 @@ static struct s_varmap {
 	{"checkpoint_keepall", PT_int32, &global_checkpoint_keepall, PA_PUBLIC},
 	{"check_version", PT_int32, &global_check_version, PA_PUBLIC},
 	{"random_number_generator", PT_enumeration, &global_randomnumbergenerator, PA_PUBLIC, rng_keys},
+	{"mainloop_state", PT_enumeration, &global_mainloopstate, PA_PUBLIC, mls_keys},
+	{"pauseat", PT_timestamp, &global_mainlooppauseat, PA_PUBLIC},
 	/* add new global variables here */
 };
 

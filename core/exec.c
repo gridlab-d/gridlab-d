@@ -681,6 +681,47 @@ static void *obj_syncproc(void *ptr)
 	return (void*)0;
 }
 
+/** MAIN LOOP CONTROL ******************************************************************/
+
+static pthread_mutex_t mls_lock;
+static pthread_cond_t mls_signal;
+
+void exec_mls_init(void)
+{
+	global_mainloopstate = MLS_INIT;
+	pthread_mutex_init(&mls_lock,NULL);
+	pthread_cond_init(&mls_signal,NULL);
+}
+
+void exec_mls_suspend(void)
+{
+	output_debug("pausing simulation");
+	if ( strcmp(global_environment,"server")!=0 )
+		output_warning("suspending simulation with no server active to receive resume command");
+	pthread_mutex_lock(&mls_lock);
+	global_mainloopstate = MLS_PAUSED;
+	while ( global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER ) 
+		pthread_cond_wait(&mls_signal, &mls_lock);
+	global_mainloopstate = MLS_RUNNING;
+	pthread_mutex_unlock(&mls_lock);
+}
+
+void exec_mls_resume(TIMESTAMP ts)
+{
+	output_debug("resuming simulation");
+	pthread_mutex_lock(&mls_lock);
+	global_mainlooppauseat = ts;
+	pthread_mutex_unlock(&mls_lock);
+	pthread_cond_broadcast(&mls_signal);
+}
+
+void exec_mls_done(void)
+{
+	global_mainloopstate = MLS_DONE;
+	pthread_mutex_destroy(&mls_lock);
+	pthread_cond_destroy(&mls_signal);
+}
+
 /** This is the main simulation loop
 	@return STATUS is SUCCESS if the simulation reached equilibrium, 
 	and FAILED if a problem was encountered.
@@ -868,11 +909,19 @@ STATUS exec_start(void)
 
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
 		int running; /* split into two tests to make it easier to tell what's going on */
+
+		/* initialize the main loop state control */
+		exec_mls_init();
+
 		while ( running = (sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0),
 			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 
 		{
 			///printf("\n!!!!!!!!!!!!!!!!!!!!!New iteration started:!!!!!!!!!!!!!!!!!!!!!!!\n\n");
 		
+			/* main loop control */
+			if ( global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER )
+				exec_mls_suspend();
+
 			do_checkpoint();
 
 			//printf("Iteration increased!\n\n");
@@ -1138,6 +1187,9 @@ STATUS exec_start(void)
 			char buffer[64];
 			output_verbose("simulation at steady state at %s", convert_from_timestamp(global_clock,buffer,sizeof(buffer))?buffer:"invalid time");
 		}
+
+		/* terminate main loop state control */
+		exec_mls_done();
 	}
 	CATCH(char *msg)
 	{

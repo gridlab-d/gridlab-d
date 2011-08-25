@@ -173,6 +173,10 @@ GLOBAL int global_check_version INIT(0); /**< check version flag */
 typedef enum {RNG2=2, RNG3=3} RANDOMNUMBERGENERATOR;
 GLOBAL int global_randomnumbergenerator INIT(RNG2); /**< select which random number generator to use */
 
+typedef enum {MLS_INIT, MLS_RUNNING, MLS_PAUSED, MLS_DONE} MAINLOOPSTATE;
+GLOBAL int global_mainloopstate INIT(MLS_INIT); /**< main loop processing state */
+GLOBAL TIMESTAMP global_mainlooppauseat INIT(TS_NEVER); /** time at which to pause main loop */
+
 #ifdef __cplusplus
 }
 #endif
