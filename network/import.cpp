@@ -33,7 +33,8 @@ int import_cdf(char *file)
 	enum {LD_INIT, LD_READY, LD_BUS, LD_BRANCH} state = LD_INIT;
 	// model variables
 	// branch variables
-	ff = gl_findfile(file,NULL,FF_READ);
+	char buffer[1024];
+	ff = gl_findfile(file,NULL,FF_READ,buffer,sizeof(buffer)-1);
 	fp = ff?fopen(ff, "r"):NULL;
 	if (fp==NULL)
 		return 0;

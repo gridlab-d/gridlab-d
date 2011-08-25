@@ -85,7 +85,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 			{	// fuse blows now
 				State=FS_BLOWN;
 				Tstate = t0;
-				Treset = t0 + (TIMESTAMP)(gl_random_normal(TresetAvg,TresetStd)*TS_SECOND);
+				Treset = t0 + (TIMESTAMP)(gl_random_normal(RNGSTATE,TresetAvg,TresetStd)*TS_SECOND);
 				return TS_NEVER;
 			}
 			else // fuse blows soon
