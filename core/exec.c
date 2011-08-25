@@ -212,7 +212,6 @@ static STATUS show_progress(void)
 	output_progress();
 	/* reschedule report */
 	realtime_schedule_event(realtime_now()+1,show_progress);
-	sched_update(global_clock,wait_status);
 	return SUCCESS;
 }
 
@@ -688,7 +687,7 @@ static pthread_cond_t mls_signal;
 
 void exec_mls_init(void)
 {
-	global_mainloopstate = MLS_INIT;
+	sched_update(global_clock,global_mainloopstate=MLS_INIT);
 	pthread_mutex_init(&mls_lock,NULL);
 	pthread_cond_init(&mls_signal,NULL);
 }
@@ -699,10 +698,10 @@ void exec_mls_suspend(void)
 	if ( strcmp(global_environment,"server")!=0 )
 		output_warning("suspending simulation with no server active to receive resume command");
 	pthread_mutex_lock(&mls_lock);
-	global_mainloopstate = MLS_PAUSED;
+	sched_update(global_clock,global_mainloopstate=MLS_PAUSED);
 	while ( global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER ) 
 		pthread_cond_wait(&mls_signal, &mls_lock);
-	global_mainloopstate = MLS_RUNNING;
+	sched_update(global_clock,global_mainloopstate=MLS_RUNNING);
 	pthread_mutex_unlock(&mls_lock);
 }
 
@@ -717,7 +716,7 @@ void exec_mls_resume(TIMESTAMP ts)
 
 void exec_mls_done(void)
 {
-	global_mainloopstate = MLS_DONE;
+	sched_update(global_clock,global_mainloopstate=MLS_DONE);
 	pthread_mutex_destroy(&mls_lock);
 	pthread_cond_destroy(&mls_signal);
 }
@@ -918,6 +917,9 @@ STATUS exec_start(void)
 		{
 			///printf("\n!!!!!!!!!!!!!!!!!!!!!New iteration started:!!!!!!!!!!!!!!!!!!!!!!!\n\n");
 		
+			/* update the process table info */
+			sched_update(global_clock,MLS_RUNNING);
+
 			/* main loop control */
 			if ( global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER )
 				exec_mls_suspend();

@@ -73,7 +73,7 @@ extern "C" {
 	void sched_init(void);
 	void sched_clear(void);
 	void sched_print(void);
-	void sched_update(TIMESTAMP clock, GUIACTIONSTATUS status);
+	void sched_update(TIMESTAMP clock, enumeration status);
 #endif
 
 #ifdef __cplusplus

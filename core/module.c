@@ -856,10 +856,6 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
 
 #include "gui.h"
 
-void sched_update(TIMESTAMP clock, GUIACTIONSTATUS status)
-{
-}
-
 static unsigned char procs[65536]; /* processor map */
 static unsigned char n_procs=0; /* number of processors */
 
@@ -867,12 +863,22 @@ typedef struct s_gldprocinfo {
 	unsigned long lock;
 	unsigned short pid;
 	TIMESTAMP progress;
-	GUIACTIONSTATUS status;
+	enumeration status;
 	char cmdline[64];
 } GLDPROCINFO;
 
 static GLDPROCINFO *process_map = NULL; /* global process map */
 static unsigned short my_proc=0; /* processor assigned to this process */
+
+/** update the process info **/
+void sched_update(TIMESTAMP clock, enumeration status)
+{
+	if ( my_proc>=0 && my_proc<n_procs )
+	{
+		process_map[my_proc].status = status;
+		process_map[my_proc].progress = clock;
+	}
+}
 
 /** Unschedule process
  **/
@@ -909,10 +915,10 @@ void sched_print(void)
 			char ts[64];
 			struct tm *tm = localtime(&process_map[n].progress);
 			switch ( process_map[n].status ) {
-			case GUIACT_NONE: status = "Running"; break;
-			case GUIACT_WAITING: status = "Waiting"; break;
-			case GUIACT_PENDING: status = "Pending"; break;
-			case GUIACT_HALT: status = "Halted"; break;
+			case MLS_INIT: status = "Init"; break;
+			case MLS_RUNNING: status = "Running"; break;
+			case MLS_PAUSED: status = "Paused"; break;
+			case MLS_DONE: status = "Done"; break;
 			default: status = "Unknown"; break;
 			}
 			strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S %Z",tm);
