@@ -31,6 +31,8 @@
 #include "output.h"
 #include "globals.h"
 #include "object.h"
+#include "exec.h"
+#include "timestamp.h"
 
 #include "legal.h"
 
@@ -1120,7 +1122,9 @@ int http_control_request(HTTP *http, char *action)
 		exec_mls_resume(TS_NEVER);
 	else if ( sscanf(action,"pauseat=%[-0-9 :A-Za-z]",buffer)==1 )
 	{
-		TIMESTAMP ts = convert_to_timestamp(buffer);
+		TIMESTAMP ts;
+		http_decode(buffer);
+		ts = convert_to_timestamp(buffer);
 		if ( ts!=TS_INVALID )
 			exec_mls_resume(ts);
 	}
