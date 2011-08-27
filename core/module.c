@@ -854,6 +854,12 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
  *
  ***************************************************************************/
 
+#ifdef WIN32
+/* WIN32 requires use of the compatibility kill implementation */
+#include "signal.h"
+extern int kill(unsigned short,int); /* defined in kill.c */
+#endif
+
 #include "gui.h"
 
 static unsigned char procs[65536]; /* processor map */
@@ -881,11 +887,7 @@ void sched_update(TIMESTAMP clock, enumeration status)
 }
 int sched_isdefunct(int pid)
 {
-#ifdef WIN32
-	return 0; /* TODO */
-#else
 	return kill(pid,0)==-1;
-#endif
 }
 
 /** Unschedule process
@@ -914,11 +916,7 @@ void sched_pkill(int pid)
 {
 	if ( process_map[pid].pid!=0 )
 	{
-#ifdef WIN32
-		output_error("pkill not implemented on Windows yet");
-#else
 		kill(process_map[pid].pid, SIGINT);
-#endif
 	}
 }
 void sched_print(void)
