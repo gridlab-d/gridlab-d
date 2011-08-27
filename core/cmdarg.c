@@ -5,46 +5,9 @@
 	@ingroup core
 
 	The command-line argument processing module processes arguments as they are encountered.
+	
+	Use the --help command line option to obtain a list of valid options.
 
-	The following command-line toggles are supported
-	- \p --warn		toggles the warning mode
-	- \p --check	toggles calls to module check functions
-	- \p --debug	toggles debug messages
-	- \p --debugger	enables the debugger and turns on debug messages
-	- \p --dumpall	toggles a complete model dump when the simulation exits
-	- \p --quiet	toggles all messages except \b error and \b fatal messages
-	- \p --profile	toggles performance profiling
-	- \p --compile  toggles compile-only run mode (model is loaded and saved, but not run)
-
-	The following command-line processes can be called
-	- \p --license	prints the software license
-	- \p --dsttest	performs a daylight saving time definitions in \b tzinfo.txt
-	- \p --unitstest	performs a test of the units in \b unitfile.txt
-	- \p --randtest	performs a test of the random number generators
-	- \p --scheduletest	performs a test of the built-in schedules
-	- \p --loadshapetest	performs a test of the built-in loadshapes 
-	- \p --endusetest	performs a test of the built-in enduses
-	- \p --testall \e file	performs module selftests of modules those listed in \e file
-	- \p --test	run the internal core self-test routines
-	- \p --define	define a global variable
-	- \p --libinfo \e module	prints information about the \e module
-	- \p --xsd \e module[:object]	prints the xsd of a module or object
-	- \p --xsl        creates the xsl for this version of gridlab-d
-	- \p --kml=file   output kml (Google Earth) file of model
-
-	The following system options may be changed
-	- \p --threadcount \e n		changes the number of thread to use during simulation (default is 0, meaning as many as useful)
-	- \p --output \e file		saves dump output to \e file (default is \p gridlabd.glm)
-	- \p --environment \e app	start the \e app as the processing environment (default is \p batch)
-	- \p --xmlencoding \e num	sets the XML encoding (8, 16, or 32)
-	- \p --xmlstrict            toggles XML to be strict
-	- \p --relax                allows implicit variable definition when assignments made
-	- \p --clearmap				clear the processor schedule
-
-	The following are only supported on Linux systems
-	- \p --pidfile[=filename]   creates a process id file while GridLAB-D is running (default is gridlabd.pid)
-	- \p --redirect \e stream[:file] redirects output stream to file
-	- \p --server      runs in server mode (pidfile and redirects all output)
  @{
  **/
 
@@ -890,6 +853,25 @@ static int pstatus(int argc, char *argv[])
 	sched_print();
 	return 0;
 }
+static int pkill(int argc, char *argv[])
+{
+	if (argc>0)
+	{
+		argc--;
+		sched_pkill(atoi(*++argv));
+		return 1;
+	}
+	else
+	{
+		output_fatal("processor number not specified");
+		/*	TROUBLESHOOT
+			The <b>--pkill</b> command line directive
+			was not followed by a valid processor number.
+			The correct syntax is <b>--pkill <i>processor_number</i></b>.
+		 */
+		return -1;
+	}
+}
 
 /*********************************************/
 /* ADD NEW CMDARG PROCESSORS ABOVE THIS HERE */
@@ -962,7 +944,8 @@ static CMDARG main[] = {
 
 	{NULL,NULL,NULL,NULL, "Server mode"},
 	{"server",		NULL,	server,			NULL, "Enables the server"},
-	{"clearmap",	NULL,	clearmap,		NULL, "Clears the process map" },
+	{"clearmap",	NULL,	clearmap,		NULL, "Clears the process map of defunct jobs" },
+	{"pkill",	NULL,	pkill,			"<procnum>", "Kills a run on a processor" },
 	{"pstatus",		NULL,	pstatus,		NULL, "Prints the process list" },
 	{"redirect",	NULL,	redirect,		"<stream>[:<file>]", "Redirects an output to stream to a file (or null)" },
 	{"server_portnum", "P", server_portnum, NULL, "Sets the server port number (default is 6267)" },

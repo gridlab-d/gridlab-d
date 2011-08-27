@@ -74,6 +74,7 @@ extern "C" {
 	void sched_clear(void);
 	void sched_print(void);
 	void sched_update(TIMESTAMP clock, enumeration status);
+	void sched_pkill(int pid);
 #endif
 
 #ifdef __cplusplus

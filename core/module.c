@@ -879,6 +879,14 @@ void sched_update(TIMESTAMP clock, enumeration status)
 		process_map[my_proc].progress = clock;
 	}
 }
+int sched_isdefunct(int pid)
+{
+#ifdef WIN32
+	/* TODO */
+#else
+	return kill(pid,0)==-1;
+#endif
+}
 
 /** Unschedule process
  **/
@@ -897,8 +905,20 @@ void sched_clear(void)
 		unsigned int n;
 		for ( n=0 ; n<n_procs ; n++ )
 		{
-			process_map[n].pid = 0;
+			if ( sched_isdefunct(process_map[n].pid) )
+				process_map[n].pid = 0;
 		}
+	}
+}
+void sched_pkill(int pid)
+{
+	if ( process_map[pid].pid!=0 )
+	{
+#ifdef WIN32
+		output_error("pkill not implemented on Windows yet");
+#else
+		kill(process_map[pid].pid, SIGINT);
+#endif
 	}
 }
 void sched_print(void)
@@ -921,6 +941,8 @@ void sched_print(void)
 			case MLS_DONE: status = "Done"; break;
 			default: status = "Unknown"; break;
 			}
+			if ( sched_isdefunct(process_map[n].pid,0) )
+				status = "Defunct";
 			strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S %Z",tm);
 			if ( process_map[n].pid!=0 )
 			{
