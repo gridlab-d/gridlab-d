@@ -882,7 +882,7 @@ void sched_update(TIMESTAMP clock, enumeration status)
 int sched_isdefunct(int pid)
 {
 #ifdef WIN32
-	/* TODO */
+	return 0; /* TODO */
 #else
 	return kill(pid,0)==-1;
 #endif
@@ -941,7 +941,7 @@ void sched_print(void)
 			case MLS_DONE: status = "Done"; break;
 			default: status = "Unknown"; break;
 			}
-			if ( sched_isdefunct(process_map[n].pid,0) )
+			if ( sched_isdefunct(process_map[n].pid) )
 				status = "Defunct";
 			strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S %Z",tm);
 			if ( process_map[n].pid!=0 )
