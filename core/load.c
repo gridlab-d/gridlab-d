@@ -4918,8 +4918,6 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 
 	strcpy(this->file, incname);
 	this->next = include_list;
-	output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'", 
-		incname, buffer, size, getenv("GLPATH") ? getenv("GLPATH") : "NULL", ff ? ff : "NULL");
 
 	buffer2[0]=0;
 	
@@ -4965,6 +4963,9 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 		output_error_raw("%s(%d): include file open failed: %s", incname, _linenum, errno?strerror(errno):"(no details)");
 		return -1;
 	}
+	else
+		output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'", 
+			incname, buffer, size, getenv("GLPATH") ? getenv("GLPATH") : "NULL", ff ? ff : "NULL");
 
 	old_linenum = linenum;
 	linenum = 1;
