@@ -882,7 +882,7 @@ typedef struct s_callbacks {
 		double (*pareto)(unsigned int *rng, double m, double a);
 		double (*lognormal)(unsigned int *rng, double m, double s);
 		double (*sampled)(unsigned int *rng, unsigned int n, double *x);
-		double (*exponential)(dunsigned int *rng, ouble l);
+		double (*exponential)(unsigned int *rng, double l);
 		RANDOMTYPE (*type)(char *name);
 		double (*value)(RANDOMTYPE type, ...);
 		double (*pseudo)(RANDOMTYPE type, unsigned int *state, ...);
