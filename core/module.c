@@ -858,6 +858,8 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
 /* WIN32 requires use of the compatibility kill implementation */
 #include "signal.h"
 extern int kill(unsigned short,int); /* defined in kill.c */
+#else
+#include <signal.h>
 #endif
 
 #include "gui.h"
