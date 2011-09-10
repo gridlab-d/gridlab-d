@@ -48,7 +48,7 @@
 			return value;
 		}
 	#endif
-#elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
+#elif defined(__APPLE__)
 	#include <libkern/OSAtomic.h>
 	#define atomic_compare_and_swap(dest, comp, xchg) OSAtomicCompareAndSwap32Barrier(comp, xchg, (int32_t *) dest)
 	#define atomic_increment(ptr) OSAtomicIncrement32Barrier((int32_t *) ptr)

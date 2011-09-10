@@ -43,6 +43,9 @@
 #endif
 #define strlwr _strlwr
 #else /* !WIN32 */
+#ifdef __APPLE__ /* although not advised, seems reliable enough */
+#define MACOSX
+#endif
 #if __WORDSIZE == 64
 #define int64 long int /**< standard version of 64-bit integers */
 #else

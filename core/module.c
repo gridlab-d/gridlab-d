@@ -1063,7 +1063,7 @@ void sched_init(void)
 
 #else
 
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
+#ifdef MACOSX
 #include <mach/mach_init.h>
 #include <mach/thread_policy.h>
 struct thread_affinity_policy policy;
@@ -1144,7 +1144,7 @@ void sched_init(void)
 	atexit(sched_finish);
 
 	/* set processor affinity */
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
+#ifdef MACOSX
 	policy.affinity_tag = n;
 	if ( thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, &policy, THREAD_AFFINITY_POLICY_COUNT)!=KERN_SUCCESS )
 		output_warning("unable to set thread policy: %s", strerror(errno));

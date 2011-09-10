@@ -149,7 +149,7 @@ GLOBAL int global_server_portnum INIT(6267); /**< port used in server mode (assi
 GLOBAL char global_browser[1024] /**< default browser to use for GUI */
 #ifdef WIN32
 	INIT("iexplore"); 
-#elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
+#elif defined(MACOSX)
 	INIT("safari");
 #else
 	INIT("firefox"); 
