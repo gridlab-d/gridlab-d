@@ -63,8 +63,12 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	time_t t_load = time(NULL);
 	char *pd1, *pd2;
 	int i, pos=0;
+	char *browser = getenv("GLBROWSER");
 
 	global_process_id = getpid();
+
+	if ( browser!= NULL )
+		strncpy(global_browser,browser,sizeof(global_browser)-1);
 
 #if defined WIN32 && _DEBUG 
 	atexit(pause_at_exit);

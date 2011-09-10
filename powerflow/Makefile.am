@@ -12,7 +12,6 @@ powerflow_la_SOURCES =                                         \
 	line_configuration.cpp         line_configuration.h         \
 	line.cpp                       line.h                       \
 	line_spacing.cpp               line_spacing.h               \
-	link.cpp                       link.h                       \
 	load.cpp                       load.h                       \
 	main.cpp                                                    \
 	meter.cpp                      meter.h                      \
@@ -24,7 +23,6 @@ powerflow_la_SOURCES =                                         \
 	overheadline_test.h                                         \
 	powerflow.cpp                  powerflow.h                  \
 	powerflow_library.cpp          powerflow_library.h          \
-	powerflow_object.cpp           powerflow_object.h           \
 	power_metrics.cpp              power_metrics.h              \
 	pqload.cpp                     pqload.h                     \
 	recloser.cpp			       recloser.h					\
@@ -53,6 +51,8 @@ powerflow_la_SOURCES =                                         \
 	underground_line.cpp           underground_line.h           \
 	undergroundline_test.h                                      \
 	voltdump.cpp voltdump.h                                     \
+	powerflow_object.cpp           powerflow_object.h           \
+	link.cpp                       link.h                       \
 	volt_var_control.cpp           volt_var_control.h
 powerflow_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0 -ldl
 powerflow_la_LIBADD = ../third_party/superLU_MT/libsuperlu.la

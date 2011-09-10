@@ -879,9 +879,12 @@ static int info(int argc, char *argv[])
 		char cmd[1024];
 #ifdef WIN32
 		sprintf(cmd,"start %s %s%s", global_browser, global_infourl, argv[1]);
+#elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
+		sprintf(cmd,"open -a %s %s%s, global_browser, global_infourl, argv[1]);
 #else
-		sprintf(cmd,"%s %s%s & ps -p $! >/dev/null", global_browser, global_infourl, argv[1]);
+		sprintf(cmd,"%s '%s%s' & ps -p $! >/dev/null", global_browser, global_infourl, argv[1]);
 #endif
+		output_verbose("Starting browser using command [%s]", cmd);
 		if (system(cmd)!=0)
 		{
 			output_error("unable to start browser");
