@@ -63,13 +63,15 @@ int kill(unsigned short pid,	/**< the window process id */
 {
 	char name[32];
 	HANDLE hEvent;
-	sprintf(name,"gridlabd.%d.%d",(int)pid,sig);
+	sprintf(name,"gridlabd.%d.%d",(int)pid,sig==0?SIGINT:sig); /* use INT for sig==0 just to check */
 	hEvent = OpenEventA(EVENT_MODIFY_STATE,FALSE,name);
 	if (hEvent==NULL)
 	{
 		output_error("unable to signal gridlabd process %d with signal %d (error %d)", pid, sig, GetLastError());
 		return 0;
 	}
+	else if ( sig==0 ) /* just checking it process exists */
+		return 1;
 	else
 	{
 		SetEvent(hEvent);

@@ -684,6 +684,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\test\residential_implicit_all.glm"
+				>
+			</File>
+			<File
 				RelativePath="..\test\input\residential_meter.glm"
 				>
 			</File>

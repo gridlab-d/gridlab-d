@@ -52,7 +52,8 @@ static KEYWORD mls_keys[] = {
 	{"INIT", MLS_INIT, rng_keys+1},			/**< main loop hasn't started yet */
 	{"RUNNING", MLS_RUNNING, rng_keys+2},	/**< main loop is running */
 	{"PAUSED", MLS_PAUSED, rng_keys+3},		/**< main loop is paused */
-	{"DONE", MLS_DONE, NULL},				/**< main loop is done */
+	{"DONE", MLS_DONE, rng_keys+4},			/**< main loop is done */
+	{"LOCKED", MLS_LOCKED, NULL},			/**< main loop is locked */
 };
 
 static struct s_varmap {

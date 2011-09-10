@@ -29,6 +29,7 @@
 #include "local.h"
 #include "exec.h"
 #include "kml.h"
+#include "kill.h"
 
 #if defined WIN32 && _DEBUG 
 /** Implements a pause on exit capability for Windows consoles
@@ -67,6 +68,11 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 
 #if defined WIN32 && _DEBUG 
 	atexit(pause_at_exit);
+#endif
+
+#ifdef WIN32
+	kill_starthandler();
+	atexit(kill_stophandler);
 #endif
 
 	/* capture the execdir */

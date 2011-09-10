@@ -737,6 +737,8 @@ EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
 	CREATE_CATCHALL(transformer);
 }

@@ -839,18 +839,14 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
  *
  * This is an early prototype of processor/thread scheduling.  For now it
  * only supports a single-threaded run, and it allocates a single processor
- * exclusively to a single gridlabd run.  It only works on Windows XP/7.
+ * exclusively to a single gridlabd run.
  *
- * In the future this will need the following enhancements
+ * @todo thread scheduling needs the following enhancements:
  *
  * 1. Support multithreaded operation, which means that available processors
  *    need to be assigned to threads, not processes.
  *
- * 2. Support multiple platforms.
- *
- * 3. Support waiting until processors become available instead of overloading.
- *
- * 4. Implement locking on process map creation to avoid clashes.
+ * 2. Support waiting until processors become available instead of overloading.
  *
  ***************************************************************************/
 
@@ -878,17 +874,32 @@ typedef struct s_gldprocinfo {
 static GLDPROCINFO *process_map = NULL; /* global process map */
 static unsigned short my_proc=0; /* processor assigned to this process */
 
+void sched_lock(unsigned short proc)
+{
+	if ( process_map )
+		lock(&process_map[proc].lock);
+}
+
+void sched_unlock(unsigned short proc)
+{
+	if ( process_map )
+		unlock(&process_map[proc].lock);
+}
+
 /** update the process info **/
 void sched_update(TIMESTAMP clock, enumeration status)
 {
 	if ( my_proc>=0 && my_proc<n_procs )
 	{
+		sched_lock(my_proc);
 		process_map[my_proc].status = status;
 		process_map[my_proc].progress = clock;
+		sched_unlock(my_proc);
 	}
 }
 int sched_isdefunct(int pid)
 {
+	/* signal 0 only checks process existence */
 	return kill(pid,0)==-1;
 }
 
@@ -897,7 +908,11 @@ int sched_isdefunct(int pid)
 void sched_finish(void)
 {
 	if ( my_proc>=0 && my_proc<n_procs )
+	{
+		sched_lock(my_proc);
 		process_map[my_proc].pid = 0;
+		sched_unlock(my_proc);
+	}
 }
 
 /** Clear process map
@@ -910,7 +925,11 @@ void sched_clear(void)
 		for ( n=0 ; n<n_procs ; n++ )
 		{
 			if ( sched_isdefunct(process_map[n].pid) )
+			{
+				sched_lock(n);
 				process_map[n].pid = 0;
+				sched_unlock(n);
+			}
 		}
 	}
 }
@@ -934,18 +953,20 @@ void sched_print(void)
 			char *status;
 			char ts[64];
 			struct tm *tm = localtime(&process_map[n].progress);
+			sched_lock(n);
 			switch ( process_map[n].status ) {
 			case MLS_INIT: status = "Init"; break;
 			case MLS_RUNNING: status = "Running"; break;
 			case MLS_PAUSED: status = "Paused"; break;
 			case MLS_DONE: status = "Done"; break;
+			case MLS_LOCKED: status = "Locked"; break;
 			default: status = "Unknown"; break;
 			}
-			if ( sched_isdefunct(process_map[n].pid) )
-				status = "Defunct";
-			strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S %Z",tm);
 			if ( process_map[n].pid!=0 )
 			{
+				if ( sched_isdefunct(process_map[n].pid) )
+					status = "Defunct";
+				strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S %Z",tm);
 				if ( first )
 				{
 					output_message("PROC   PID STATE                      CLOCK COMMAND");
@@ -953,6 +974,7 @@ void sched_print(void)
 				} 
 				output_message("%4d %5d %.7s %24.24s %s", n, process_map[n].pid, status, process_map[n].progress==TS_ZERO?"INIT":ts, process_map[n].cmdline);
 			}
+			sched_unlock(n);
 		}
 		global_suppress_repeat_messages = 1;
 	}
@@ -1013,8 +1035,10 @@ void sched_init(void)
 	/* find an available processor */
 	for ( n=0 ; n<n_procs ; n++ )
 	{
+		sched_lock(n);
 		if ( process_map[n].pid==0 )
 			break;
+		sched_unlock(n);
 	}
 	if ( n==n_procs )
 	{
@@ -1025,10 +1049,11 @@ void sched_init(void)
 	my_proc = n;
 	process_map[n].pid = pid;
 	strncpy(process_map[n].cmdline,global_command_line,sizeof(process_map[n].cmdline)-1);
+	sched_unlock(n);
 	atexit(sched_finish);
 
 	/* set processor affinity */
-	if ( SetProcessAffinityMask(hProc,1<<n)==0 )
+	if ( SetProcessAffinityMask(hProc,(DWORD_PTR)(1<<n))==0 )
 	{
 		unsigned long  err = GetLastError();
 		output_warning("unable to set current process affinity mask, err code %d", err);
@@ -1101,8 +1126,10 @@ void sched_init(void)
 	/* find an available processor */
 	for ( n=0 ; n<n_procs ; n++ )
 	{
+		sched_lock(n);
 		if ( process_map[n].pid==0 )
 			break;
+		sched_unlock(n);
 	}
 	if ( n==n_procs )
 	{
@@ -1113,6 +1140,7 @@ void sched_init(void)
 	my_proc = n;
 	process_map[n].pid = pid;
 	strncpy(process_map[n].cmdline,global_command_line,sizeof(process_map[n].cmdline)-1);
+	sched_unlock(n);
 	atexit(sched_finish);
 
 	/* set processor affinity */

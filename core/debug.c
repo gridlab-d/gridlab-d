@@ -1282,8 +1282,6 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 	static int firstcall=1;
 	if (firstcall)
 	{
-		kill_starthandler();
-		atexit(kill_stophandler);
 		firstcall=0;
 
 		/* disable repeated message trap */
