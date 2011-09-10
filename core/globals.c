@@ -136,6 +136,7 @@ static struct s_varmap {
 	{"random_number_generator", PT_enumeration, &global_randomnumbergenerator, PA_PUBLIC, rng_keys},
 	{"mainloop_state", PT_enumeration, &global_mainloopstate, PA_PUBLIC, mls_keys},
 	{"pauseat", PT_timestamp, &global_mainlooppauseat, PA_PUBLIC},
+	{"infourl", PT_char1024, &global_infourl, PA_PUBLIC},
 	/* add new global variables here */
 };
 

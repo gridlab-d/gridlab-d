@@ -177,6 +177,8 @@ typedef enum {MLS_INIT, MLS_RUNNING, MLS_PAUSED, MLS_DONE, MLS_LOCKED} MAINLOOPS
 GLOBAL int global_mainloopstate INIT(MLS_INIT); /**< main loop processing state */
 GLOBAL TIMESTAMP global_mainlooppauseat INIT(TS_NEVER); /** time at which to pause main loop */
 
+GLOBAL char global_infourl[1024] INIT("http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:Search/"); /** URL for info calls */
+
 #ifdef __cplusplus
 }
 #endif

@@ -872,6 +872,36 @@ static int pkill(int argc, char *argv[])
 		return -1;
 	}
 }
+static int info(int argc, char *argv[])
+{
+	if ( argc>1 )
+	{
+		char cmd[1024];
+#ifdef WIN32
+		sprintf(cmd,"start %s %s%s", global_browser, global_infourl, argv[1]);
+#else
+		sprintf(cmd,"%s %s%s & ps -p $! >/dev/null", global_browser, global_infourl, argv[1]);
+#endif
+		if (system(cmd)!=0)
+		{
+			output_error("unable to start browser");
+			return -1;
+		}
+		else
+			output_verbose("starting interface");
+		return 1;
+	}
+	else
+	{
+		output_fatal("info subject not specified");
+		/*	TROUBLESHOOT
+			The <b>--info</b> command line directive
+			was not followed by a valid subject to lookup.
+			The correct syntax is <b>--info <i>subject</i></b>.
+		 */
+		return -1;
+	}
+}
 
 /*********************************************/
 /* ADD NEW CMDARG PROCESSORS ABOVE THIS HERE */
@@ -926,6 +956,7 @@ static CMDARG main[] = {
 
 	{NULL,NULL,NULL,NULL, "Help"},
 	{"help",		"h",		help,		NULL, "Displays command line help" },
+	{"info",		NULL,		info,		"<subject>", "Obtain online help regarding <subject>"},
 	{"modhelp",		NULL,		modhelp,	"module[:class]", "Display structure of a class or all classes in a module" },
 
 	{NULL,NULL,NULL,NULL, "Process control"},
