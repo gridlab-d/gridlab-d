@@ -6,6 +6,8 @@
 
 #define MT // this enables multithreaded SuperLU
 
+//#define NR_MATRIX_OUT	//This directive enables a text file dump of the sparse-formatted admittance matrix - useful for debugging
+
 #ifdef MT
 #include <pdsp_defs.h>	//superLU_MT 
 #else
@@ -74,8 +76,19 @@ void merge_sort(Y_NR *Input_Array, unsigned int Alen, Y_NR *Work_Array){	//Merge
 			{
 				if (leftside->row_ind < rightside->row_ind)
 					*Final_P++ = *leftside++;
-				else
+				else if (leftside->row_ind > rightside->row_ind)
 					*Final_P++ = *rightside++;
+				else	//Catch for duplicate entries
+				{
+					GL_THROW("NR: duplicate entry found in admittance matrix - look for parallel lines!");
+					/*  TROUBLESHOOT
+					While sorting the admittance matrix for the Newton-Raphson solver, a duplicate entry was
+					found.  This is usually caused by a line between two nodes having another, parallel line between
+					the same two nodes.  This is only an issue if the parallel lines overlap in phase (e.g., AB and BC).
+					If no overlapping phase is present, this error should not occur.  Methods to narrow down the location
+					of this conflict are under development.
+					*/
+				}
 			}
 			else
 				*Final_P++ = *rightside++;
@@ -1780,16 +1793,16 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		for (jindexer=0; jindexer<bus_count;jindexer++) 
 		{
 			for (jindex=0; jindex<3; jindex++)
-					{
-						for (kindex=0; kindex<3; kindex++)
-						{		 
-						  if ((BA_diag[jindexer].Y[jindex][kindex]).Re() != 0 && bus[jindexer].type != 1 && jindex!=kindex)  
-						  size_diag_fixed += 1; 
-						  if ((BA_diag[jindexer].Y[jindex][kindex]).Im() != 0 && bus[jindexer].type != 1 && jindex!=kindex) 
-						  size_diag_fixed += 1; 
-						  else {}
-						 }
-					}
+			{
+				for (kindex=0; kindex<3; kindex++)
+				{		 
+				  if ((BA_diag[jindexer].Y[jindex][kindex]).Re() != 0 && bus[jindexer].type != 1 && jindex!=kindex)  
+					  size_diag_fixed += 1; 
+				  if ((BA_diag[jindexer].Y[jindex][kindex]).Im() != 0 && bus[jindexer].type != 1 && jindex!=kindex) 
+					  size_diag_fixed += 1; 
+				  else {}
+				 }
+			}
 		}
 		if (Y_diag_fixed == NULL)
 		{
@@ -2958,6 +2971,23 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		merge_sort(Y_Amatrix, size_Amatrix, Y_Work_Amatrix);
 		
+#ifdef NR_MATRIX_OUT
+		//Debugging code to export the sparse matrix values - useful for debugging issues, but needs preprocessor declaration
+		
+		//Open a text file
+		FILE *FPoutVal=fopen("matrixinfoout.txt","wt");
+
+		//Print the values - printed as "row index, column index, value"
+		//This particular output is after they have been column sorted for the algorithm
+		for (jindexer=0; jindexer<size_Amatrix; jindexer++)
+		{
+			fprintf(FPoutVal,"%d,%d,%f\n",Y_Amatrix[jindexer].row_ind,Y_Amatrix[jindexer].col_ind,Y_Amatrix[jindexer].Y_value);
+		}
+
+		//Close the file, we're done with it
+		fclose(FPoutVal);
+#endif
+
 		///* Initialize parameters. */
 		m = 2*total_variables; n = 2*total_variables; nnz = size_Amatrix;
 
@@ -2990,37 +3020,37 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 			if (matrix_solver_method==MM_SUPERLU)
 			{
-			///* Set up the arrays for the permutations. */
-			perm_r = (int *) gl_malloc(m *sizeof(int));
-			if (perm_r == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				///* Set up the arrays for the permutations. */
+				perm_r = (int *) gl_malloc(m *sizeof(int));
+				if (perm_r == NULL)
+					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
-			perm_c = (int *) gl_malloc(n *sizeof(int));
-			if (perm_c == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				perm_c = (int *) gl_malloc(n *sizeof(int));
+				if (perm_c == NULL)
+					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
-			//Set up storage pointers - single element, but need to be malloced for some reason
-			A_LU.Store = (void *)gl_malloc(sizeof(NCformat));
-			if (A_LU.Store == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				//Set up storage pointers - single element, but need to be malloced for some reason
+				A_LU.Store = (void *)gl_malloc(sizeof(NCformat));
+				if (A_LU.Store == NULL)
+					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
-			B_LU.Store = (void *)gl_malloc(sizeof(DNformat));
-			if (B_LU.Store == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				B_LU.Store = (void *)gl_malloc(sizeof(DNformat));
+				if (B_LU.Store == NULL)
+					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
-			//Populate these structures - A_LU matrix
-			A_LU.Stype = SLU_NC;
-			A_LU.Dtype = SLU_D;
-			A_LU.Mtype = SLU_GE;
-			A_LU.nrow = n;
-			A_LU.ncol = m;
+				//Populate these structures - A_LU matrix
+				A_LU.Stype = SLU_NC;
+				A_LU.Dtype = SLU_D;
+				A_LU.Mtype = SLU_GE;
+				A_LU.nrow = n;
+				A_LU.ncol = m;
 
-			//Populate these structures - B_LU matrix
-			B_LU.Stype = SLU_DN;
-			B_LU.Dtype = SLU_D;
-			B_LU.Mtype = SLU_GE;
-			B_LU.nrow = m;
-			B_LU.ncol = 1;
+				//Populate these structures - B_LU matrix
+				B_LU.Stype = SLU_DN;
+				B_LU.Dtype = SLU_D;
+				B_LU.Mtype = SLU_GE;
+				B_LU.nrow = m;
+				B_LU.ncol = 1;
 			}
 			else if (matrix_solver_method == MM_EXTERN)	//External routine
 			{
@@ -3047,8 +3077,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			if (matrix_solver_method==MM_SUPERLU)
 			{
 				//Free up superLU matrices
-			gl_free(perm_r);
-			gl_free(perm_c);
+				gl_free(perm_r);
+				gl_free(perm_c);
 			}
 			//Default else - don't care - destructions are presumed to be handled inside external LU's alloc function
 
@@ -3072,28 +3102,28 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 			if (matrix_solver_method==MM_SUPERLU)
 			{
-			///* Set up the arrays for the permutations. */
-			perm_r = (int *) gl_malloc(m *sizeof(int));
-			if (perm_r == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				///* Set up the arrays for the permutations. */
+				perm_r = (int *) gl_malloc(m *sizeof(int));
+				if (perm_r == NULL)
+					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
-			perm_c = (int *) gl_malloc(n *sizeof(int));
-			if (perm_c == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				perm_c = (int *) gl_malloc(n *sizeof(int));
+				if (perm_c == NULL)
+					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
 
-			//Update structures - A_LU matrix
-			A_LU.Stype = SLU_NC;
-			A_LU.Dtype = SLU_D;
-			A_LU.Mtype = SLU_GE;
-			A_LU.nrow = n;
-			A_LU.ncol = m;
+				//Update structures - A_LU matrix
+				A_LU.Stype = SLU_NC;
+				A_LU.Dtype = SLU_D;
+				A_LU.Mtype = SLU_GE;
+				A_LU.nrow = n;
+				A_LU.ncol = m;
 
-			//Update structures - B_LU matrix
-			B_LU.Stype = SLU_DN;
-			B_LU.Dtype = SLU_D;
-			B_LU.Mtype = SLU_GE;
-			B_LU.nrow = m;
-			B_LU.ncol = 1;
+				//Update structures - B_LU matrix
+				B_LU.Stype = SLU_DN;
+				B_LU.Dtype = SLU_D;
+				B_LU.Mtype = SLU_GE;
+				B_LU.nrow = m;
+				B_LU.ncol = 1;
 			}
 			else if (matrix_solver_method == MM_EXTERN)	//External routine
 			{
@@ -3113,11 +3143,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		{
 			if (matrix_solver_method==MM_SUPERLU)
 			{
-			//Update relevant portions
-			A_LU.nrow = n;
-			A_LU.ncol = m;
+				//Update relevant portions
+				A_LU.nrow = n;
+				A_LU.ncol = m;
 
-			B_LU.nrow = m;
+				B_LU.nrow = m;
 			}
 			else if (matrix_solver_method == MM_EXTERN)	//External routine - call full reallocation, just in case
 			{
@@ -3137,8 +3167,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 #ifndef MT
 		if (matrix_solver_method==MM_SUPERLU)
 		{
-		/* superLU sequential options*/
-		set_default_options ( &options );
+			/* superLU sequential options*/
+			set_default_options ( &options );
 		}
 		//Default else - not superLU
 #endif
@@ -3171,38 +3201,38 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		if (matrix_solver_method==MM_SUPERLU)
 		{
-		////* Create Matrix A in the format expected by Super LU.*/
-		//Populate the matrix values (temporary value)
-		Astore = (NCformat*)A_LU.Store;
-		Astore->nnz = nnz;
+			////* Create Matrix A in the format expected by Super LU.*/
+			//Populate the matrix values (temporary value)
+			Astore = (NCformat*)A_LU.Store;
+			Astore->nnz = nnz;
 			Astore->nzval = matrices_LU.a_LU;
 			Astore->rowind = matrices_LU.rows_LU;
 			Astore->colptr = matrices_LU.cols_LU;
-	    
-		// Create right-hand side matrix B in format expected by Super LU
-		//Populate the matrix (temporary values)
-		Bstore = (DNformat*)B_LU.Store;
-		Bstore->lda = m;
+		    
+			// Create right-hand side matrix B in format expected by Super LU
+			//Populate the matrix (temporary values)
+			Bstore = (DNformat*)B_LU.Store;
+			Bstore->lda = m;
 			Bstore->nzval = matrices_LU.rhs_LU;
 
 #ifdef MT
-		//superLU_MT commands
+			//superLU_MT commands
 
-		//Populate perm_c
-		get_perm_c(1, &A_LU, perm_c);
+			//Populate perm_c
+			get_perm_c(1, &A_LU, perm_c);
 
-		//Solve the system
-		pdgssv(NR_superLU_procs, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &info);
+			//Solve the system
+			pdgssv(NR_superLU_procs, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &info);
 #else
-		//sequential superLU
+			//sequential superLU
 
-		StatInit ( &stat );
+			StatInit ( &stat );
 
-		// solve the system
-		dgssv(&options, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &stat, &info);
+			// solve the system
+			dgssv(&options, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &stat, &info);
 #endif
 
-		sol_LU = (double*) ((DNformat*) B_LU.Store)->nzval;
+			sol_LU = (double*) ((DNformat*) B_LU.Store)->nzval;
 		}
 		else if (matrix_solver_method==MM_EXTERN)
 		{
@@ -3353,16 +3383,16 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		if (matrix_solver_method==MM_SUPERLU)
 		{
-		/* De-allocate storage - superLU matrix types must be destroyed at every iteration, otherwise they balloon fast (65 MB norma becomes 1.5 GB) */
+			/* De-allocate storage - superLU matrix types must be destroyed at every iteration, otherwise they balloon fast (65 MB norma becomes 1.5 GB) */
 #ifdef MT
-		//superLU_MT commands
-		Destroy_SuperNode_SCP(&L_LU);
-		Destroy_CompCol_NCP(&U_LU);
+			//superLU_MT commands
+			Destroy_SuperNode_SCP(&L_LU);
+			Destroy_CompCol_NCP(&U_LU);
 #else
-		//sequential superLU commands
-		Destroy_SuperNode_Matrix( &L_LU );
-		Destroy_CompCol_Matrix( &U_LU );
-		StatFree ( &stat );
+			//sequential superLU commands
+			Destroy_SuperNode_Matrix( &L_LU );
+			Destroy_CompCol_Matrix( &U_LU );
+			StatFree ( &stat );
 #endif
 		}
 		else if (matrix_solver_method==MM_EXTERN)

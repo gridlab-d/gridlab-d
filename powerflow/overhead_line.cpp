@@ -89,7 +89,10 @@ int overhead_line::init(OBJECT *parent)
 void overhead_line::recalc(void)
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
+	line_spacing *spacing_val = NULL;
 	double miles = length / 5280.0;
+	double cap_coeff;
+	complex cap_freq_mult;
 
 	if (config->impedance11 != 0 || config->impedance22 != 0 || config->impedance33 != 0)
 	{
@@ -129,6 +132,17 @@ void overhead_line::recalc(void)
 		}
 		if (has_phase(PHASE_C))
 			b_mat[2][2] = config->impedance33 * miles;
+
+		//Zero appropriate values
+		for (int i = 0; i < 3; i++) 
+		{
+			for (int j = 0; j < 3; j++) 
+			{
+				a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
+				c_mat[i][j] = 0.0;
+				B_mat[i][j] = b_mat[i][j];
+			}
+		}
 	}
 	else
 	{
@@ -136,14 +150,19 @@ void overhead_line::recalc(void)
 		double dab, dbc, dac, dan, dbn, dcn;
 		double gmr_a, gmr_b, gmr_c, gmr_n, res_a, res_b, res_c, res_n;
 		complex z_aa, z_ab, z_ac, z_an, z_bb, z_bc, z_bn, z_cc, z_cn, z_nn;
+		double p_aa, p_ab, p_ac, p_an, p_bb, p_bc, p_bn, p_cc, p_cn, p_nn;
+		double daap, dabp, dacp, danp, dbbp, dbcp, dbnp, dccp, dcnp, dnnp, diamA, diamB, diamC, diamN;
+		complex P_mat[3][3], Cabc_mat[3][3], temp_mat[3][3];
+		bool valid_capacitance;
 		
-
 		#define GMR(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
 			OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->geometric_mean_radius : 0.0)
 		#define RES(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
 			OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->resistance : 0.0)
 		#define DIST(ph1, ph2) (has_phase(PHASE_##ph1) && has_phase(PHASE_##ph2) && config->line_spacing ? \
 			OBJECTDATA(config->line_spacing, line_spacing)->distance_##ph1##to##ph2 : 0.0)
+		#define DIAM(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
+			OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->cable_diameter : 0.0)
 
 		gmr_a = GMR(A);
 		gmr_b = GMR(B);
@@ -164,9 +183,42 @@ void overhead_line::recalc(void)
 		dbn = DIST(B, N);
 		dcn = DIST(C, N);
 
+		diamA = DIAM(A);
+		diamB = DIAM(B);
+		diamC = DIAM(C);
+		diamN = DIAM(N);
+
 		#undef GMR
 		#undef RES
 		#undef DIST
+		#undef DIAM
+
+		if (use_line_cap == true)
+		{
+			//If capacitance calculations desired, compute overall coefficient
+			cap_coeff = 1.0/(PERMITIVITTY_AIR*2.0*PI);
+
+			//Set capacitor frequency/distance/scaling factor (rad/s*S)
+			cap_freq_mult = complex(0,(2.0*PI*nominal_frequency*0.000001*miles));
+
+			//Extract line spacing (nned for capacitance)
+			spacing_val = OBJECTDATA(config->line_spacing, line_spacing);
+
+			//Make sure it worked
+			if (spacing_val == NULL)
+			{
+				GL_THROW("Line spacing not found, capacitance calculations failed!");
+				/*  TROUBLESHOOT
+				The line spacing values could not be properly mapped.  Capacitance values
+				can not be calculated for this line (and other values may be in error).  Please
+				specific a proper line spacing and try again.
+				*/
+			}
+
+			//Start with the assumption the capacitance is valid for appropriate phases
+			valid_capacitance = true;
+		}
+		//Defaulted else - not really needed, since if not use_line_cap, these values are irrelevant
 
 		if (has_phase(PHASE_A)) {
 			if (gmr_a > 0.0 && res_a > 0.0)
@@ -185,7 +237,94 @@ void overhead_line::recalc(void)
 				z_an = complex(0.0953, 0.12134 * (log(1.0 / dan) + 7.93402));
 			else
 				z_an = 0.0;
+
+			//capacitance equations
+			if (use_line_cap == true)
+			{
+				if ((diamA > 0.0) && (spacing_val->distance_AtoE > 0.0))
+				{
+					//Define values - self image
+					daap = 2.0 * spacing_val->distance_AtoE;
+					p_aa = cap_coeff * log(daap/diamA*24.0);
+
+					//Get distances to relevant images
+					if (has_phase(PHASE_B))
+					{
+						//Calc distance
+						dabp = calc_image_dist(spacing_val->distance_AtoE,spacing_val->distance_BtoE,spacing_val->distance_AtoB);
+
+						//calculate the contribution
+						if (spacing_val->distance_AtoB != 0)
+						{
+							p_ab = cap_coeff * log(dabp/(spacing_val->distance_AtoB));
+						}
+						else
+						{
+							p_ab = 0.0;
+						}
+					}
+					else
+					{
+						p_ab = 0.0;
+					}
+
+					if (has_phase(PHASE_C))
+					{
+						//Calculate distance
+						dacp = calc_image_dist(spacing_val->distance_AtoE,spacing_val->distance_CtoE,spacing_val->distance_AtoC);
+
+						//calculate the contribution
+						if (spacing_val->distance_AtoC != 0)
+						{
+							p_ac = cap_coeff * log(dacp/(spacing_val->distance_AtoC));
+						}
+						else
+						{
+							p_ac = 0.0;
+						}
+					}
+					else
+					{
+						p_ac = 0.0;
+					}
+
+					if (has_phase(PHASE_N))
+					{
+						//Calculate the distance
+						danp = calc_image_dist(spacing_val->distance_AtoE,spacing_val->distance_NtoE,spacing_val->distance_AtoN);
+
+						//calculate the contribution
+						if (spacing_val->distance_AtoN != 0)
+						{
+							p_an = cap_coeff * log(danp/(spacing_val->distance_AtoN));
+						}
+						else
+						{
+							p_an = 0.0;
+						}
+					}
+					else
+					{
+						p_an = 0.0;
+					}
+				}
+				else	//If diamA is 0, nothing is valid, make all zero
+				{
+					valid_capacitance = false;	//Failed one line of it, so don't include capacitance anywhere
+					
+					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",OBJECTHDR(this)->name);
+					/*  TROUBLESHOOT
+					While attempting to calculate the shunt capacitance for an overhead line, an invalid parameter was encountered.
+					To calculate shunt capacitance, ensure the condutor to earth distance for each phase is defined, as well as the
+					diameter of that phases's cable.
+					*/
+
+					p_aa = p_ab = p_ac = p_an = 0.0;
+				}
+			}
+			//Defaulted else - not desired, so don't set anything
 		} else {
+			p_aa = p_ab = p_ac = p_an = 0.0;
 			z_aa = z_ab = z_ac = z_an = 0.0;
 		}
 
@@ -202,7 +341,71 @@ void overhead_line::recalc(void)
 				z_bn = complex(0.0953, 0.12134 * (log(1.0 / dbn) + 7.93402));
 			else
 				z_bn = 0.0;
+
+			//capacitance equations
+			if (use_line_cap == true)
+			{
+				if ((diamB > 0.0) && (spacing_val->distance_BtoE > 0.0))
+				{
+					//Define values - self image
+					dbbp = 2.0 * spacing_val->distance_BtoE;
+					p_bb = cap_coeff * log(dbbp/diamB*24.0);
+
+					//Get distances to relevant images - assuming weren't done above
+					if (has_phase(PHASE_C))
+					{
+						//Calculate distance
+						dbcp = calc_image_dist(spacing_val->distance_BtoE,spacing_val->distance_CtoE,spacing_val->distance_BtoC);
+
+						//calculate the contribution
+						if (spacing_val->distance_BtoC != 0)
+						{
+							p_bc = cap_coeff * log(dbcp/(spacing_val->distance_BtoC));
+						}
+						else
+						{
+							p_bc = 0.0;
+						}
+					}
+					else
+					{
+						p_bc = 0.0;
+					}
+
+					if (has_phase(PHASE_N))
+					{
+						//Calculate distance
+						dbnp = calc_image_dist(spacing_val->distance_BtoE,spacing_val->distance_NtoE,spacing_val->distance_BtoN);
+
+						//calculate the contribution
+						if (spacing_val->distance_BtoN != 0)
+						{
+							p_bn = cap_coeff * log(dbnp/(spacing_val->distance_BtoN));
+						}
+						else
+						{
+							p_bn = 0.0;
+						}
+
+					}
+					else
+					{
+						p_bn = 0.0;
+					}
+				}
+				else	//If diamb is 0, nothing is valid, make all zero
+				{
+					valid_capacitance = false;	//Failed one line of it, so don't include capacitance anywhere
+					
+					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",OBJECTHDR(this)->name);
+					//Defined above
+
+					p_bb = p_bc = p_bn = 0.0;
+				}
+			}
+			//Defaulted else - not desired, so don't set anything
 		} else {
+			p_bb = p_bc = p_bn = 0.0;
 			z_bb = z_bc = z_bn = 0.0;
 		}
 
@@ -215,7 +418,50 @@ void overhead_line::recalc(void)
 				z_cn = complex(0.0953, 0.12134 * (log(1.0 / dcn) + 7.93402));
 			else
 				z_cn = 0.0;
+
+			//capacitance equations
+			if (use_line_cap == true)
+			{
+				if ((diamC > 0.0) && (spacing_val->distance_CtoE > 0.0))
+				{
+					//Define values - self image
+					dccp = 2.0 * spacing_val->distance_CtoE;
+					p_cc = cap_coeff * log(dccp/diamC*24.0);
+
+					//Get distances to relevant images - assuming weren't done above
+					if (has_phase(PHASE_N))
+					{
+						//Calculate the distance
+						dcnp = calc_image_dist(spacing_val->distance_CtoE,spacing_val->distance_NtoE,spacing_val->distance_CtoN);
+
+						//calculate the contribution
+						if (spacing_val->distance_CtoN != 0)
+						{
+							p_cn = cap_coeff * log(dcnp/(spacing_val->distance_CtoN));
+						}
+						else
+						{
+							p_cn = 0.0;
+						}
+					}
+					else
+					{
+						p_cn = 0.0;
+					}
+				}
+				else	//If diamC is 0, nothing is valid, make all zero
+				{
+					valid_capacitance = false;	//Failed one line of it, so don't include capacitance anywhere
+
+					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",OBJECTHDR(this)->name);
+					//Defined above
+
+					p_cc = p_cn = 0.0;
+				}
+			}
+			//Defaulted else - not desired, so don't set anything
 		} else {
+			p_cc = p_cn = 0.0;
 			z_cc = z_cn = 0.0;
 		}
 
@@ -223,10 +469,35 @@ void overhead_line::recalc(void)
 		if (has_phase(PHASE_N) && gmr_n > 0.0 && res_n > 0.0){
 			z_nn = complex(res_n + 0.0953, 0.12134 * (log(1.0 / gmr_n) + 7.93402));
 			z_nn_inv = z_nn^(-1.0);
+
+			//capacitance equations
+			if (use_line_cap == true)
+			{
+				if ((diamN > 0.0) && (spacing_val->distance_NtoE > 0.0))
+				{
+					//Define values - self image
+					dnnp = 2.0 * spacing_val->distance_NtoE;
+					p_nn = cap_coeff * log(dnnp/diamN*24.0);
+				}
+				else	//If diamN is 0, nothing is valid, make all zero
+				{
+					valid_capacitance = false;	//Failed one line of it, so don't include capacitance anywhere
+
+					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",OBJECTHDR(this)->name);
+					//Defined above
+
+					p_nn = 0.0;
+				}
+			}
+			//Defaulted else - not desired, so don't set anything
 		}
 		else
+		{
+			p_nn = 0.0;
 			z_nn = 0.0;
+		}
 
+		//Update impedance
 		b_mat[0][0] = (z_aa - z_an * z_an * z_nn_inv) * miles;
 		b_mat[0][1] = (z_ab - z_an * z_bn * z_nn_inv) * miles;
 		b_mat[0][2] = (z_ac - z_an * z_cn * z_nn_inv) * miles;
@@ -236,16 +507,222 @@ void overhead_line::recalc(void)
 		b_mat[2][0] = (z_ac - z_cn * z_an * z_nn_inv) * miles;
 		b_mat[2][1] = (z_bc - z_cn * z_bn * z_nn_inv) * miles;
 		b_mat[2][2] = (z_cc - z_cn * z_cn * z_nn_inv) * miles;
-	}
 
-	// This part is the same in both methods.
-	for (int i = 0; i < 3; i++) 
-	{
-		for (int j = 0; j < 3; j++) 
+		if (valid_capacitance == true)	//All calculations worked
 		{
-			a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
-			c_mat[i][j] = 0.0;
-			B_mat[i][j] = b_mat[i][j];
+			//Create capacitance value, if wanted
+			if (use_line_cap == true)
+			{
+				if (p_nn != 0.0)
+				{
+					//Create the Pabc matric
+					P_mat[0][0] = p_aa - p_an*p_an/p_nn;
+					P_mat[0][1] = P_mat[1][0] = p_ab - p_an*p_bn/p_nn;
+					P_mat[0][2] = P_mat[2][0] = p_ac - p_an*p_cn/p_nn;
+
+					P_mat[1][1] = p_bb - p_bn*p_bn/p_nn;
+					P_mat[1][2] = P_mat[2][1] = p_bc - p_bn*p_cn/p_nn;
+
+					P_mat[2][2] = p_cc - p_cn*p_cn/p_nn;
+				}
+				else //Neutral must have had issues, ignore it
+				{
+					//Create the Pabc matric
+					P_mat[0][0] = p_aa;
+					P_mat[0][1] = P_mat[1][0] = p_ab;
+					P_mat[0][2] = P_mat[2][0] = p_ac;
+
+					P_mat[1][1] = p_bb;
+					P_mat[1][2] = P_mat[2][1] = p_bc;
+
+					P_mat[2][2] = p_cc;
+				}
+
+				//Zero the storage matrix
+				Cabc_mat[0][0] = Cabc_mat[0][1] = Cabc_mat[0][2] = 0.0;
+				Cabc_mat[1][0] = Cabc_mat[1][1] = Cabc_mat[1][2] = 0.0;
+				Cabc_mat[2][0] = Cabc_mat[2][1] = Cabc_mat[2][2] = 0.0;
+
+				//Now appropriately invert it - scale for frequency, distance, and microSiemens as well
+				if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+					Cabc_mat[0][0] = complex(1.0) / P_mat[0][0] * cap_freq_mult;
+				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+					Cabc_mat[1][1] = complex(1.0) / P_mat[1][1] * cap_freq_mult;
+				else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+					Cabc_mat[2][2] = complex(1.0) / P_mat[2][2] * cap_freq_mult;
+				else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+				{
+					complex detvalue = P_mat[0][0]*P_mat[2][2] - P_mat[0][2]*P_mat[2][0];
+
+					Cabc_mat[0][0] = P_mat[2][2] / detvalue * cap_freq_mult;
+					Cabc_mat[0][2] = P_mat[0][2] * -1.0 / detvalue * cap_freq_mult;
+					Cabc_mat[2][0] = P_mat[2][0] * -1.0 / detvalue * cap_freq_mult;
+					Cabc_mat[2][2] = P_mat[0][0] / detvalue * cap_freq_mult;
+				}
+				else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+				{
+					complex detvalue = P_mat[0][0]*P_mat[1][1] - P_mat[0][1]*P_mat[1][0];
+
+					Cabc_mat[0][0] = P_mat[1][1] / detvalue * cap_freq_mult;
+					Cabc_mat[0][1] = P_mat[0][1] * -1.0 / detvalue * cap_freq_mult;
+					Cabc_mat[1][0] = P_mat[1][0] * -1.0 / detvalue * cap_freq_mult;
+					Cabc_mat[1][1] = P_mat[0][0] / detvalue * cap_freq_mult;
+				}
+				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
+				{
+					complex detvalue = P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1];
+
+					Cabc_mat[1][1] = P_mat[2][2] / detvalue * cap_freq_mult;
+					Cabc_mat[1][2] = P_mat[1][2] * -1.0 / detvalue * cap_freq_mult;
+					Cabc_mat[2][1] = P_mat[2][1] * -1.0 / detvalue * cap_freq_mult;
+					Cabc_mat[2][2] = P_mat[1][1] / detvalue * cap_freq_mult;
+				}
+				else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+				{
+					complex detvalue = P_mat[0][0]*P_mat[1][1]*P_mat[2][2] - P_mat[0][0]*P_mat[1][2]*P_mat[2][1] - P_mat[0][1]*P_mat[1][0]*P_mat[2][2] + P_mat[0][1]*P_mat[2][0]*P_mat[1][2] + P_mat[1][0]*P_mat[0][2]*P_mat[2][1] - P_mat[0][2]*P_mat[1][1]*P_mat[2][0];
+
+					//Invert it
+					Cabc_mat[0][0] = (P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1]) / detvalue * cap_freq_mult;
+					Cabc_mat[0][1] = (P_mat[0][2]*P_mat[2][1] - P_mat[0][1]*P_mat[2][2]) / detvalue * cap_freq_mult;
+					Cabc_mat[0][2] = (P_mat[0][1]*P_mat[1][2] - P_mat[0][2]*P_mat[1][1]) / detvalue * cap_freq_mult;
+					Cabc_mat[1][0] = (P_mat[2][0]*P_mat[1][2] - P_mat[1][0]*P_mat[2][2]) / detvalue * cap_freq_mult;
+					Cabc_mat[1][1] = (P_mat[0][0]*P_mat[2][2] - P_mat[0][2]*P_mat[2][0]) / detvalue * cap_freq_mult;
+					Cabc_mat[1][2] = (P_mat[1][0]*P_mat[0][2] - P_mat[0][0]*P_mat[1][2]) / detvalue * cap_freq_mult;
+					Cabc_mat[2][0] = (P_mat[1][0]*P_mat[2][1] - P_mat[1][1]*P_mat[2][0]) / detvalue * cap_freq_mult;
+					Cabc_mat[2][1] = (P_mat[0][1]*P_mat[2][0] - P_mat[0][0]*P_mat[2][1]) / detvalue * cap_freq_mult;
+					Cabc_mat[2][2] = (P_mat[0][0]*P_mat[1][1] - P_mat[0][1]*P_mat[1][0]) / detvalue * cap_freq_mult;
+
+				}
+
+				//Update appropriate values - utilize P_mat as a temporary unity matrix
+				P_mat[0][0] = P_mat[1][1] = P_mat[2][2] = 1.0;
+				P_mat[0][1] = P_mat[0][2] = 0.0;
+				P_mat[1][0] = P_mat[1][2] = 0.0;
+				P_mat[2][0] = P_mat[2][1] = 0.0;
+
+				//a_mat & d_mat
+					//Zabc*Yabc
+					multiply(b_mat,Cabc_mat,temp_mat);
+
+					//0.5*Above - use A_mat temporarily
+					multiply(0.5,temp_mat,A_mat);
+
+					//Add unity to make a_mat
+					addition(P_mat,A_mat,a_mat);
+
+					//d_mat is the same as a_mat
+					equalm(a_mat,d_mat);
+
+				//c_mat
+					//Zabc*Yabc is temp_mat from above
+					//So Yabc*(Zabc*Yabc) - use A_mat again
+					multiply(Cabc_mat,temp_mat,A_mat);
+
+					//Multiply by 1/4 - use B_mat temporarily
+					multiply(0.25,A_mat,B_mat);
+
+					//Add to Yabc
+					addition(Cabc_mat,B_mat,c_mat);
+
+				//A_mat is phase dependent inversion - B_mat is a product associated with it
+				//Zero them first
+				for (int i = 0; i < 3; i++) 
+				{
+					for (int j = 0; j < 3; j++) 
+					{
+						A_mat[i][j] = B_mat[i][j] = 0.0;
+					}
+				}
+
+				//Invert appropriately - A_mat = inv(a_mat)
+				if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+				{
+					//Inverted value
+					A_mat[0][0] = complex(1.0) / a_mat[0][0];
+				}
+				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+				{
+					//Inverted value
+					A_mat[1][1] = complex(1.0) / a_mat[1][1];
+				}
+				else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+				{
+					//Inverted value
+					A_mat[2][2] = complex(1.0) / a_mat[2][2];
+				}
+				else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+				{
+					complex detvalue = a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0];
+
+					//Inverted value
+					A_mat[0][0] = a_mat[2][2] / detvalue;
+					A_mat[0][2] = a_mat[0][2] * -1.0 / detvalue;
+					A_mat[2][0] = a_mat[2][0] * -1.0 / detvalue;
+					A_mat[2][2] = a_mat[0][0] / detvalue;
+				}
+				else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+				{
+					complex detvalue = a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0];
+
+					//Inverted value
+					A_mat[0][0] = a_mat[1][1] / detvalue;
+					A_mat[0][1] = a_mat[0][1] * -1.0 / detvalue;
+					A_mat[1][0] = a_mat[1][0] * -1.0 / detvalue;
+					A_mat[1][1] = a_mat[0][0] / detvalue;
+				}
+				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
+				{
+					complex detvalue = a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1];
+
+					//Inverted value
+					A_mat[1][1] = a_mat[2][2] / detvalue;
+					A_mat[1][2] = a_mat[1][2] * -1.0 / detvalue;
+					A_mat[2][1] = a_mat[2][1] * -1.0 / detvalue;
+					A_mat[2][2] = a_mat[1][1] / detvalue;
+				}
+				else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+				{
+					complex detvalue = a_mat[0][0]*a_mat[1][1]*a_mat[2][2] - a_mat[0][0]*a_mat[1][2]*a_mat[2][1] - a_mat[0][1]*a_mat[1][0]*a_mat[2][2] + a_mat[0][1]*a_mat[2][0]*a_mat[1][2] + a_mat[1][0]*a_mat[0][2]*a_mat[2][1] - a_mat[0][2]*a_mat[1][1]*a_mat[2][0];
+
+					//Invert it
+					A_mat[0][0] = (a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1]) / detvalue;
+					A_mat[0][1] = (a_mat[0][2]*a_mat[2][1] - a_mat[0][1]*a_mat[2][2]) / detvalue;
+					A_mat[0][2] = (a_mat[0][1]*a_mat[1][2] - a_mat[0][2]*a_mat[1][1]) / detvalue;
+					A_mat[1][0] = (a_mat[2][0]*a_mat[1][2] - a_mat[1][0]*a_mat[2][2]) / detvalue;
+					A_mat[1][1] = (a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0]) / detvalue;
+					A_mat[1][2] = (a_mat[1][0]*a_mat[0][2] - a_mat[0][0]*a_mat[1][2]) / detvalue;
+					A_mat[2][0] = (a_mat[1][0]*a_mat[2][1] - a_mat[1][1]*a_mat[2][0]) / detvalue;
+					A_mat[2][1] = (a_mat[0][1]*a_mat[2][0] - a_mat[0][0]*a_mat[2][1]) / detvalue;
+					A_mat[2][2] = (a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0]) / detvalue;
+				}
+
+				//Now make B_mat value
+				multiply(A_mat,b_mat,B_mat);
+			}//End valid capacitance values
+			else
+			{	//Something failed, treat it like a normal line
+				for (int i = 0; i < 3; i++) 
+				{
+					for (int j = 0; j < 3; j++) 
+					{
+						a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
+						c_mat[i][j] = 0.0;
+						B_mat[i][j] = b_mat[i][j];
+					}
+				}
+			}
+		}
+		else	//Just zero everything
+		{
+			for (int i = 0; i < 3; i++) 
+			{
+				for (int j = 0; j < 3; j++) 
+				{
+					a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
+					c_mat[i][j] = 0.0;
+					B_mat[i][j] = b_mat[i][j];
+				}
+			}
 		}
 	}
 
@@ -356,6 +833,35 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 		The conductor specified for the indicated phase for the overhead line is missing
 		or invalid.
 		*/
+}
+
+/**
+* determines distance to images for calculation of
+* line capacitance calculations
+*
+* Calculates from line 1 to line 2
+*
+* * Inputs *
+* dist1_to_e - distance from line 1 to earth
+* dist2_to_e - distance from line 2 to earth
+* dist1_to_2 - distance from line 1 to line 2
+* 
+* * Outputs *
+* dist1_to_2p - distance from line 1 to line 2's image - same as line 2 to line 1's image (isosceles trapezoid)
+*/
+double overhead_line::calc_image_dist(double dist1_to_e, double dist2_to_e, double dist1_to_2)
+{
+	double dist1_to_1p, dist2_to_2p, dist1_to_2p;
+
+	//Distance to self images
+	dist1_to_1p = 2.0 * dist1_to_e;	//Image to 1 is just reflection underground
+	dist2_to_2p = 2.0 * dist2_to_e;	//image to 2 is just reflection underground
+
+	//Diagonals should be the same, since forms isosceles trapezoid - sqrt(c^2 + ab) - a & b are double sides (above ground to its image)
+	dist1_to_2p = sqrt(dist1_to_2*dist1_to_2 + dist1_to_1p*dist2_to_2p);	//sqrt(c^2 + ab)
+
+	//Put the value back
+	return dist1_to_2p;
 }
 
 //////////////////////////////////////////////////////////////////////////

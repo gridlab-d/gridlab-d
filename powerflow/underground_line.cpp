@@ -130,6 +130,15 @@ void underground_line::recalc(void)
 		}
 		if (has_phase(PHASE_C))
 			b_mat[2][2] = config->impedance33 * miles;
+
+		// Set auxillary matrices
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
+				c_mat[i][j] = 0.0;
+				B_mat[i][j] = b_mat[i][j];
+			}
+		}
 	}
 	else
 	{
@@ -138,7 +147,10 @@ void underground_line::recalc(void)
 		double rad_14, rad_25, rad_36;
 		double dia[7], res[7], gmr[7], gmrcn[3], rcn[3];
 		double d[6][6];
+		double perm_A, perm_B, perm_C, c_an, c_bn, c_cn, temp_denom;
+		complex cap_freq_coeff;
 		complex z[6][6]; //, z_ij[3][3], z_in[3][3], z_nj[3][3], z_nn[3][3], z_abc[3][3];
+		complex Y_ABC[3][3], U_ABC[3][3], temp_mat[3][3];
 
 		complex test;///////////////
 
@@ -188,12 +200,30 @@ void underground_line::recalc(void)
 		RCN(5) = has_phase(PHASE_B) && strands_5 > 0 ? RES(5) / strands_5 : 0.0;
 		RCN(6) = has_phase(PHASE_C) && strands_6 > 0 ? RES(6) / strands_6 : 0.0;
 
+		//Concentric neutral code
 		GMRCN(4) = !(has_phase(PHASE_A) && strands_4 > 0) ? 0.0 :
 			pow(GMR(4) * strands_4 * pow(rad_14, (strands_4 - 1)), (1.0 / strands_4));
 		GMRCN(5) = !(has_phase(PHASE_B) && strands_5 > 0) ? 0.0 :
 			pow(GMR(5) * strands_5 * pow(rad_25, (strands_5 - 1)), (1.0 / strands_5));
 		GMRCN(6) = !(has_phase(PHASE_C) && strands_6 > 0) ? 0.0 :
 			pow(GMR(6) * strands_6 * pow(rad_36, (strands_6 - 1)), (1.0 / strands_6));
+
+		//Capacitance stuff, if desired
+		if (use_line_cap == true)
+		{
+			//Extract relative permitivitty
+			perm_A = UG_GET(A, insulation_rel_permitivitty);
+			perm_B = UG_GET(B, insulation_rel_permitivitty);
+			perm_C = UG_GET(C, insulation_rel_permitivitty);
+
+			//Define the scaling constant for frequency, distance, and microS
+			cap_freq_coeff = complex(0,(2.0*PI*nominal_frequency*0.000001*miles));
+
+			//Zero capacitance matrix
+			Y_ABC[0][0] = Y_ABC[0][1] = Y_ABC[0][2] = 0.0;
+			Y_ABC[1][0] = Y_ABC[1][1] = Y_ABC[1][2] = 0.0;
+			Y_ABC[2][0] = Y_ABC[2][1] = Y_ABC[2][2] = 0.0;
+		}
 
 		#define DIST(ph1, ph2) (has_phase(PHASE_##ph1) && has_phase(PHASE_##ph2) && config->line_spacing ? \
 			OBJECTDATA(config->line_spacing, line_spacing)->distance_##ph1##to##ph2 : 0.0)
@@ -292,14 +322,240 @@ void underground_line::recalc(void)
 		multiply(z_p1, z_nj, z_p2);
 		subtract(z_ij, z_p2, z_abc);
 		multiply(miles, z_abc, b_mat);
-	}
 
-	// Same for both methods
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
-			a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
-			c_mat[i][j] = 0.0;
-			B_mat[i][j] = b_mat[i][j];
+		if (use_line_cap == true)
+		{
+			//Compute base capacitances - split denominator to handle 
+			if (has_phase(PHASE_A))
+			{
+				if ((dia[0]==0.0) || (rad_14==0.0) || (strands_4 == 0))	//Make sure conductor or "neutral ring" radius are not zero
+				{
+					gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+					/* TROUBLESHOOT
+					One phase of an underground line has either a conductor diameter, a concentric-neutral location diameter, or a neutral
+					strand count of zero.  This will lead to indeterminant values in the analysis.  Please fix these values, or run the simulation
+					with line capacitance disabled.
+					*/
+					
+					c_an = 0.0;
+				}
+				else	//All should be OK
+				{
+					//Compute the denominator (make sure it isn't zero)
+					temp_denom = log(rad_14/(dia[0] / 24.0)) - (1.0 / ((double)(strands_4))) * log(((double)(strands_4))*dia[3] / 24.0 / rad_14);
+
+					if (temp_denom == 0.0)
+					{
+						gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+						/*  TROUBLESHOOT
+						While computing the capacitance, a zero-value denominator was encountered.  Please check
+						your underground_conductor parameter values and try again.
+						*/
+						
+						c_an = 0.0;
+					}
+					else	//Valid, continue
+					{
+						//Calculate capacitance value for A
+						c_an = (2.0 * PI * PERMITIVITTY_FREE * perm_A) / temp_denom;
+					}
+				}
+			}
+			else //No phase A
+			{
+				c_an = 0.0;	//No capacitance
+			}
+
+			//Compute base capacitances - split denominator to handle 
+			if (has_phase(PHASE_B))
+			{
+				if ((dia[1]==0.0) || (rad_25==0.0) || (strands_5 == 0))	//Make sure conductor or "neutral ring" radius are not zero
+				{
+					gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+					//Defined above
+
+					c_bn = 0.0;
+				}
+				else	//All should be OK
+				{
+					//Compute the denominator (make sure it isn't zero)
+					temp_denom = log(rad_25/(dia[1] / 24.0)) - (1.0 / ((double)(strands_5))) * log(((double)(strands_5))*dia[4] / 24.0 / rad_25);
+
+					if (temp_denom == 0.0)
+					{
+						gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+						//Defined above
+
+						c_bn = 0.0;
+					}
+					else	//Valid, continue
+					{
+						//Calculate capacitance value for A
+						c_bn = (2.0 * PI * PERMITIVITTY_FREE * perm_B) / temp_denom;
+					}
+				}
+			}
+			else //No phase B
+			{
+				c_bn = 0.0;	//No capacitance
+			}
+
+			//Compute base capacitances - split denominator to handle 
+			if (has_phase(PHASE_C))
+			{
+				if ((dia[2]==0.0) || (rad_36==0.0) || (strands_6 == 0))	//Make sure conductor or "neutral ring" radius are not zero
+				{
+					gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+					//Defined above
+
+					c_cn = 0.0;
+				}
+				else	//All should be OK
+				{
+					//Compute the denominator (make sure it isn't zero)
+					temp_denom = log(rad_36/(dia[2] / 24.0)) - (1.0 / ((double)(strands_6))) * log(((double)(strands_6))*dia[5] / 24.0 / rad_36);
+
+					if (temp_denom == 0.0)
+					{
+						gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+						//Defined above
+
+						c_cn = 0.0;
+					}
+					else	//Valid, continue
+					{
+						//Calculate capacitance value for C
+						c_cn = (2.0 * PI * PERMITIVITTY_FREE * perm_C) / temp_denom;
+					}
+				}
+			}
+			else //No phase C
+			{
+				c_cn = 0.0;	//No capacitance
+			}
+
+			//Make admittance matrix
+			Y_ABC[0][0] = cap_freq_coeff * c_an;
+			Y_ABC[1][1] = cap_freq_coeff * c_bn;
+			Y_ABC[2][2] = cap_freq_coeff * c_cn;
+
+			//Y_ABC = Cabc_mat
+
+			//Create identity matrix
+			U_ABC[0][0] = U_ABC[1][1] = U_ABC[2][2] = 1.0;
+			U_ABC[0][1] = U_ABC[0][2] = 0.0;
+			U_ABC[1][0] = U_ABC[1][2] = 0.0;
+			U_ABC[2][0] = U_ABC[2][1] = 0.0;
+
+			//a_mat & d_mat
+				//Zabc*Yabc
+				multiply(b_mat,Y_ABC,temp_mat);
+
+				//0.5*Above - use A_mat temporarily
+				multiply(0.5,temp_mat,A_mat);
+
+				//Add unity to make a_mat
+				addition(U_ABC,A_mat,a_mat);
+
+				//d_mat is the same as a_mat
+				equalm(a_mat,d_mat);
+
+			//c_mat
+				//Zabc*Yabc is temp_mat from above
+				//So Yabc*(Zabc*Yabc) - use A_mat again
+				multiply(Y_ABC,temp_mat,A_mat);
+
+				//Multiply by 1/4 - use B_mat temporarily
+				multiply(0.25,A_mat,B_mat);
+
+				//Add to Yabc
+				addition(Y_ABC,B_mat,c_mat);
+
+			//A_mat is phase dependent inversion - B_mat is a product associated with it
+			//Zero them first
+			for (int i = 0; i < 3; i++) 
+			{
+				for (int j = 0; j < 3; j++) 
+				{
+					A_mat[i][j] = B_mat[i][j] = 0.0;
+				}
+			}
+
+			//Invert appropriately - A_mat = inv(a_mat)
+			if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+			{
+				//Inverted value
+				A_mat[0][0] = complex(1.0) / a_mat[0][0];
+			}
+			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+			{
+				//Inverted value
+				A_mat[1][1] = complex(1.0) / a_mat[1][1];
+			}
+			else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+			{
+				//Inverted value
+				A_mat[2][2] = complex(1.0) / a_mat[2][2];
+			}
+			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+			{
+				complex detvalue = a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0];
+
+				//Inverted value
+				A_mat[0][0] = a_mat[2][2] / detvalue;
+				A_mat[0][2] = a_mat[0][2] * -1.0 / detvalue;
+				A_mat[2][0] = a_mat[2][0] * -1.0 / detvalue;
+				A_mat[2][2] = a_mat[0][0] / detvalue;
+			}
+			else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+			{
+				complex detvalue = a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0];
+
+				//Inverted value
+				A_mat[0][0] = a_mat[1][1] / detvalue;
+				A_mat[0][1] = a_mat[0][1] * -1.0 / detvalue;
+				A_mat[1][0] = a_mat[1][0] * -1.0 / detvalue;
+				A_mat[1][1] = a_mat[0][0] / detvalue;
+			}
+			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
+			{
+				complex detvalue = a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1];
+
+				//Inverted value
+				A_mat[1][1] = a_mat[2][2] / detvalue;
+				A_mat[1][2] = a_mat[1][2] * -1.0 / detvalue;
+				A_mat[2][1] = a_mat[2][1] * -1.0 / detvalue;
+				A_mat[2][2] = a_mat[1][1] / detvalue;
+			}
+			else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+			{
+				complex detvalue = a_mat[0][0]*a_mat[1][1]*a_mat[2][2] - a_mat[0][0]*a_mat[1][2]*a_mat[2][1] - a_mat[0][1]*a_mat[1][0]*a_mat[2][2] + a_mat[0][1]*a_mat[2][0]*a_mat[1][2] + a_mat[1][0]*a_mat[0][2]*a_mat[2][1] - a_mat[0][2]*a_mat[1][1]*a_mat[2][0];
+
+				//Invert it
+				A_mat[0][0] = (a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1]) / detvalue;
+				A_mat[0][1] = (a_mat[0][2]*a_mat[2][1] - a_mat[0][1]*a_mat[2][2]) / detvalue;
+				A_mat[0][2] = (a_mat[0][1]*a_mat[1][2] - a_mat[0][2]*a_mat[1][1]) / detvalue;
+				A_mat[1][0] = (a_mat[2][0]*a_mat[1][2] - a_mat[1][0]*a_mat[2][2]) / detvalue;
+				A_mat[1][1] = (a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0]) / detvalue;
+				A_mat[1][2] = (a_mat[1][0]*a_mat[0][2] - a_mat[0][0]*a_mat[1][2]) / detvalue;
+				A_mat[2][0] = (a_mat[1][0]*a_mat[2][1] - a_mat[1][1]*a_mat[2][0]) / detvalue;
+				A_mat[2][1] = (a_mat[0][1]*a_mat[2][0] - a_mat[0][0]*a_mat[2][1]) / detvalue;
+				A_mat[2][2] = (a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0]) / detvalue;
+			}
+
+			//Now make B_mat value
+			multiply(A_mat,b_mat,B_mat);
+		}
+		else	//No line capacitance, carry on as usual
+		{
+			// Set auxillary matrices
+			for (int i = 0; i < 3; i++) {
+				for (int j = 0; j < 3; j++) {
+					a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
+					c_mat[i][j] = 0.0;
+					B_mat[i][j] = b_mat[i][j];
+				}
+			}
 		}
 	}
 

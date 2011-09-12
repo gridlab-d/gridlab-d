@@ -43,6 +43,7 @@ typedef struct s_ext_fxn {
 GLOBAL char256 LUSolverName INIT("");				/**< filename for external LU solver */
 GLOBAL EXT_LU_FXN_CALLS LUSolverFcns;				/**< links to external LU solver functions */
 GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodology */
+GLOBAL bool use_line_cap INIT(false);				/**< Flag to include line capacitance quantities */
 GLOBAL MATRIXSOLVERMETHOD matrix_solver_method INIT(MM_SUPERLU);	/**< Newton-Raphson uses superLU as the default solver */
 GLOBAL bool GS_all_converged INIT(false);			/**< Gauss-Seidel convergence indicator (for post-convergence calculations */
 GLOBAL unsigned int NR_bus_count INIT(0);			/**< Newton-Raphson bus count - used for determining size of bus vector */

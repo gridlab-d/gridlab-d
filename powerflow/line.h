@@ -6,6 +6,8 @@
 
 #define hasphase(ph) (SET_HAS(phase,PHASE##ph) | (phase_orig & PHASE_##ph))
 #define set_hasphase(set,ph) (SET_HAS(set,ph))
+#define PERMITIVITTY_AIR 0.014240	//microF/mile
+#define PERMITIVITTY_FREE 0.01420	//microF/mile
 
 typedef struct {
 	double continuous;

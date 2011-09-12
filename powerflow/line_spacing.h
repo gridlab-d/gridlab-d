@@ -20,6 +20,11 @@ public:
 	double distance_AtoN;   // distance between cables A and Neutral in feet
 	double distance_BtoN;   // distance between cables B and Neutral in feet
 	double distance_CtoN;   // distance between cables C and Neutral in feet
+
+	double distance_AtoE;	// distance bewteen cable A and the earth in feet
+	double distance_BtoE;	// distance between cable B and the earth in feet
+	double distance_CtoE;	// distance between cable C and the earth in feet
+	double distance_NtoE;	// distance between cable Neutral and the earth in feet
 	
 	line_spacing(MODULE *mod);
 	inline line_spacing(CLASS *cl=oclass):powerflow_library(cl){};

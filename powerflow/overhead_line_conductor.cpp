@@ -32,6 +32,7 @@ overhead_line_conductor::overhead_line_conductor(MODULE *mod) : powerflow_librar
         if(gl_publish_variable(oclass,
            PT_double, "geometric_mean_radius[ft]",PADDR(geometric_mean_radius),
            PT_double, "resistance[Ohm/mile]",PADDR(resistance),
+		   PT_double, "diameter[in]",PADDR(cable_diameter), PT_DESCRIPTION, "Diameter of line for capacitance calculations",
  		   PT_double, "rating.summer.continuous[A]", PADDR(summer.continuous),
 		   PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),
 		   PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),
@@ -47,6 +48,7 @@ int overhead_line_conductor::create(void)
 {
 	int result = powerflow_library::create();
 	
+	cable_diameter = 0.0;
 	//geometric_mean_radius = resistance = 0.0;
 	//summer.continuous = winter.continuous = 1000;
 	//summer.emergency = winter.emergency = 2000;

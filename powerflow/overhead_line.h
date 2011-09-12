@@ -17,6 +17,7 @@ public:
 	inline overhead_line(CLASS *cl=oclass):line(cl){};
 	int isa(char *classname);
 	int create(void);
+	double calc_image_dist(double dist1_to_e, double dist2_to_e, double dist1_to_2); //Calculates image distance
 private:
 	void test_phases(line_configuration *config, const char ph);
 };

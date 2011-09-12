@@ -38,6 +38,7 @@ underground_line_conductor::underground_line_conductor(MODULE *mod) : powerflow_
 			PT_double, "neutral_diameter[in]",PADDR(neutral_diameter),
 			PT_double, "neutral_resistance[Ohm/mile]",PADDR(neutral_resistance),
 			PT_int16,  "neutral_strands",PADDR(neutral_strands),
+			PT_double, "insulation_relative_permitivitty[unit]", PADDR(insulation_rel_permitivitty), PT_DESCRIPTION, "Permitivitty of insulation, relative to air",
 			PT_double, "shield_gmr[ft]",PADDR(shield_gmr),
 			PT_double, "shield_resistance[Ohm/mile]",PADDR(shield_resistance),
 			PT_double, "rating.summer.continuous[A]", PADDR(summer.continuous),
@@ -55,6 +56,7 @@ int underground_line_conductor::create(void)
 	neutral_resistance = shield_gmr = 0.0;
 	neutral_strands = 0;
 	shield_resistance = 0.0;
+	insulation_rel_permitivitty = 1.0;	//Assumed to be same as air
 	summer.continuous = winter.continuous = 1000;
 	summer.emergency = winter.emergency = 2000;
 	return result;

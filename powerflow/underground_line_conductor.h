@@ -20,6 +20,7 @@ public:
 	double neutral_diameter;
 	double neutral_resistance;
 	int16  neutral_strands;
+	double insulation_rel_permitivitty;
 	double shield_gmr;
 	double shield_resistance;
 	LINERATINGS winter, summer;

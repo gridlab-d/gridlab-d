@@ -21,6 +21,7 @@ public:
 public:
 	double geometric_mean_radius;
 	double resistance;
+	double cable_diameter;
 	LINERATINGS winter, summer;
 	
 	overhead_line_conductor(MODULE *mod);

@@ -562,10 +562,35 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 				}
 				else						//Simple line, they are all the same anyways
 				{
-					NR_branchdata[NR_branch_reference].Yfrom = &From_Y[0][0];
-					NR_branchdata[NR_branch_reference].Yto = &From_Y[0][0];
-					NR_branchdata[NR_branch_reference].YSfrom = &From_Y[0][0];
-					NR_branchdata[NR_branch_reference].YSto = &From_Y[0][0];
+					//See if capacitance is enabled, map a secondary matrix
+					if (use_line_cap == true)
+					{
+						//Allocate a matrix to store the secondary information (could use To_Y, but the may be confusing)
+						YSfrom = (complex *)gl_malloc(9*sizeof(complex));
+						if (YSfrom == NULL)
+						{
+							GL_THROW("NR: Memory allocation failure for line matrix.");
+							/*  TROUBLESHOOT
+							This is a bug.  Newton-Raphson tries to allocate memory for an additional
+							needed matrix when dealing with lines that have capacitance included.
+							This failed.  Please submit your code and a bug report on the trac site.
+							*/
+						}
+
+						//Link up appropriately
+						NR_branchdata[NR_branch_reference].Yfrom = &From_Y[0][0];
+						NR_branchdata[NR_branch_reference].Yto = &From_Y[0][0];
+						NR_branchdata[NR_branch_reference].YSfrom = YSfrom;
+						NR_branchdata[NR_branch_reference].YSto = YSfrom;
+
+					}
+					else	//No capacitance - proceed like normal
+					{
+						NR_branchdata[NR_branch_reference].Yfrom = &From_Y[0][0];
+						NR_branchdata[NR_branch_reference].Yto = &From_Y[0][0];
+						NR_branchdata[NR_branch_reference].YSfrom = &From_Y[0][0];
+						NR_branchdata[NR_branch_reference].YSto = &From_Y[0][0];
+					}
 				}
 
 				//Link the name
@@ -1030,16 +1055,38 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			}
 			else 				//Simple lines
 			{
-				//Compute total self admittance - include line charging capacitance
-				equalm(a_mat,Ylinecharge);
-				Ylinecharge[0][0]-=1;
-				Ylinecharge[1][1]-=1;
-				Ylinecharge[2][2]-=1;
-				multiply(2,Ylinecharge,Ylefttemp);
-				multiply(Y,Ylefttemp,Ylinecharge);
+				if (use_line_cap == true)	//Capacitance included
+				{
+					//Make "transfer matrices" admittance-less
+					equalm(Y,From_Y);
+					
+					//Compute total self admittance - include line charging capacitance
+					//Basically undo a_mat = I - 1/2 Zabc*Yabc
+					equalm(a_mat,Ylinecharge);
+					Ylinecharge[0][0]-=1;
+					Ylinecharge[1][1]-=1;
+					Ylinecharge[2][2]-=1;
+					multiply(2.0,Ylinecharge,Ylefttemp);
+					multiply(Y,Ylefttemp,Ylinecharge);
+					
+					//Split back in half for application to each side
+					multiply(0.5,Ylinecharge,Ylefttemp);
+					addition(Ylefttemp,Y,Yc);
 
-				addition(Ylinecharge,Y,From_Y);
-				//equalm(From_Y,To_Y);
+					//Now parse into the new storage structure (manual to ensure things are placed right)
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							YSfrom[jindex*3+kindex]=Yc[jindex][kindex];
+						}
+					}
+				}
+				else	//Normal execution
+				{
+					//Just post the admittance straight in - line charging doesn't exist anyways
+					equalm(Y,From_Y);
+				}
 			}
 			
 			//Update status variable
@@ -1988,35 +2035,57 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 				//See if phases are valid
 				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 				{
-					current_in[0] = From_Y[0][0]*vtemp[0]+
+					current_out[0] = From_Y[0][0]*vtemp[0]+
 									From_Y[0][1]*vtemp[1]+
 									From_Y[0][2]*vtemp[2];
 				}
 				else
-					current_in[0] = 0.0;
+					current_out[0] = 0.0;
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 				{
-					current_in[1] = From_Y[1][0]*vtemp[0]+
+					current_out[1] = From_Y[1][0]*vtemp[0]+
 									From_Y[1][1]*vtemp[1]+
 									From_Y[1][2]*vtemp[2];
 				}
 				else
-					current_in[1] = 0.0;
+					current_out[1] = 0.0;
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 				{
-					current_in[2] = From_Y[2][0]*vtemp[0]+
+					current_out[2] = From_Y[2][0]*vtemp[0]+
 								From_Y[2][1]*vtemp[1]+
 								From_Y[2][2]*vtemp[2];
 				}
 				else
-					current_in[2] = 0.0;
+					current_out[2] = 0.0;
 
-				//Current out is the same as current in for lines/simple devices
-				current_out[0] = current_in[0];
-				current_out[1] = current_in[1];
-				current_out[2] = current_in[2];
+				//Now calculate current_in
+				current_in[0] = c_mat[0][0]*tnode->voltage[0]+
+								c_mat[0][1]*tnode->voltage[1]+
+								c_mat[0][2]*tnode->voltage[2]+
+								d_mat[0][0]*current_out[0]+
+								d_mat[0][1]*current_out[1]+
+								d_mat[0][2]*current_out[2];
+
+				current_in[1] = c_mat[1][0]*tnode->voltage[0]+
+								c_mat[1][1]*tnode->voltage[1]+
+								c_mat[1][2]*tnode->voltage[2]+
+								d_mat[1][0]*current_out[0]+
+								d_mat[1][1]*current_out[1]+
+								d_mat[1][2]*current_out[2];
+
+				current_in[2] = c_mat[2][0]*tnode->voltage[0]+
+								c_mat[2][1]*tnode->voltage[1]+
+								c_mat[2][2]*tnode->voltage[2]+
+								d_mat[2][0]*current_out[0]+
+								d_mat[2][1]*current_out[1]+
+								d_mat[2][2]*current_out[2];
+
+				////Current out is the same as current in for lines/simple devices
+				//current_out[0] = current_in[0];
+				//current_out[1] = current_in[1];
+				//current_out[2] = current_in[2];
 
 				//Lock from object for current update
 				LOCK_OBJECT(from);
