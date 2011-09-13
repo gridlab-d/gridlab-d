@@ -120,6 +120,13 @@ void triplex_line::recalc(void)
 		double r1,r2,rn,gmr1,gmr2,gmrn;
 		complex zp11,zp22,zp33,zp12,zp13,zp23;
 		complex zs[3][3];
+		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
+
+		//Calculate coefficients for self and mutual impedance - incorporates frequency values
+		//Per Kersting (4.39) and (4.40) - coefficients end up same as OHLs
+		freq_coeff_real = 0.00158836*nominal_frequency;
+		freq_coeff_imag = 0.00202237*nominal_frequency;
+		freq_additive_term = log(EARTH_RESISTIVITY/nominal_frequency)/2.0 + 7.6786;
 
 		// Gather data stored in configuration objects
 		dcond = line_config->diameter;
@@ -151,12 +158,12 @@ void triplex_line::recalc(void)
 		D13 = (dcond + ins_thick)/12;
 		D23 = D13;
 
-		zp11 = complex(r1,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmr1) + 7.93402);
-		zp22 = complex(r2,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmr2) + 7.93402);
-		zp33 = complex(rn,0) + 0.09530 + complex(0.0,0.12134) * (log(1/gmrn) + 7.93402);
-		zp12 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D12) + 7.93402);
-		zp13 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D13) + 7.93402);
-		zp23 = complex(0.09530,0.0) + complex(0.0,0.12134) * (log(1/D23) + 7.93402);
+		zp11 = complex(r1,0) + freq_coeff_real + complex(0.0,freq_coeff_imag) * (log(1/gmr1) + freq_additive_term);
+		zp22 = complex(r2,0) + freq_coeff_real + complex(0.0,freq_coeff_imag) * (log(1/gmr2) + freq_additive_term);
+		zp33 = complex(rn,0) + freq_coeff_real + complex(0.0,freq_coeff_imag) * (log(1/gmrn) + freq_additive_term);
+		zp12 = complex(freq_coeff_real,0.0) + complex(0.0,freq_coeff_imag) * (log(1/D12) + freq_additive_term);
+		zp13 = complex(freq_coeff_real,0.0) + complex(0.0,freq_coeff_imag) * (log(1/D13) + freq_additive_term);
+		zp23 = complex(freq_coeff_real,0.0) + complex(0.0,freq_coeff_imag) * (log(1/D23) + freq_additive_term);
 		
 		if (solver_method==SM_FBS)
 		{

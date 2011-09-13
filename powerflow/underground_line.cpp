@@ -151,8 +151,15 @@ void underground_line::recalc(void)
 		complex cap_freq_coeff;
 		complex z[6][6]; //, z_ij[3][3], z_in[3][3], z_nj[3][3], z_nn[3][3], z_abc[3][3];
 		complex Y_ABC[3][3], U_ABC[3][3], temp_mat[3][3];
+		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
 
 		complex test;///////////////
+
+		//Calculate coefficients for self and mutual impedance - incorporates frequency values
+		//Per Kersting (4.39) and (4.40) - coefficients end up same as OHLs
+		freq_coeff_real = 0.00158836*nominal_frequency;
+		freq_coeff_imag = 0.00202237*nominal_frequency;
+		freq_additive_term = log(EARTH_RESISTIVITY/nominal_frequency)/2.0 + 7.6786;
 
 		#define DIA(i) (dia[i - 1])
 		#define RES(i) (res[i - 1])
@@ -263,9 +270,9 @@ void underground_line::recalc(void)
 		#undef DIA
 		#undef UG_GET
 
-		#define Z_GMR(i) (GMR(i) == 0.0 ? complex(0.0) : complex(0.0953 + RES(i), 0.12134 * (log(1.0 / GMR(i)) + 7.93402)))
-		#define Z_GMRCN(i) (GMRCN(i) == 0.0 ? complex(0.0) : complex(0.0953 + RCN(i), 0.12134 * (log(1.0 / GMRCN(i)) + 7.93402)))
-		#define Z_DIST(i, j) (D(i, j) == 0.0 ? complex(0.0) : complex(0.0953, 0.12134 * (log(1.0 / D(i, j)) + 7.93402)))
+		#define Z_GMR(i) (GMR(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term)))
+		#define Z_GMRCN(i) (GMRCN(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RCN(i), freq_coeff_imag * (log(1.0 / GMRCN(i)) + freq_additive_term)))
+		#define Z_DIST(i, j) (D(i, j) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term)))
 
 		for (int i = 1; i < 7; i++) {
 			for (int j = 1; j < 7; j++) {

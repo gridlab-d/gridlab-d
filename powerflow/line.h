@@ -8,6 +8,7 @@
 #define set_hasphase(set,ph) (SET_HAS(set,ph))
 #define PERMITIVITTY_AIR 0.014240	//microF/mile
 #define PERMITIVITTY_FREE 0.01420	//microF/mile
+#define EARTH_RESISTIVITY 100		//Ohm-meter
 
 typedef struct {
 	double continuous;

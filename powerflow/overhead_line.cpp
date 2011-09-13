@@ -154,7 +154,14 @@ void overhead_line::recalc(void)
 		double daap, dabp, dacp, danp, dbbp, dbcp, dbnp, dccp, dcnp, dnnp, diamA, diamB, diamC, diamN;
 		complex P_mat[3][3], Cabc_mat[3][3], temp_mat[3][3];
 		bool valid_capacitance;
+		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
 		
+		//Calculate coefficients for self and mutual impedance - incorporates frequency values
+		//Per Kersting (4.39) and (4.40)
+		freq_coeff_real = 0.00158836*nominal_frequency;
+		freq_coeff_imag = 0.00202237*nominal_frequency;
+		freq_additive_term = log(EARTH_RESISTIVITY/nominal_frequency)/2.0 + 7.6786;
+
 		#define GMR(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
 			OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->geometric_mean_radius : 0.0)
 		#define RES(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
@@ -222,19 +229,19 @@ void overhead_line::recalc(void)
 
 		if (has_phase(PHASE_A)) {
 			if (gmr_a > 0.0 && res_a > 0.0)
-				z_aa = complex(res_a + 0.0953, 0.12134 * (log(1.0 / gmr_a) + 7.93402));
+				z_aa = complex(res_a + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_a) + freq_additive_term));
 			else
 				z_aa = 0.0;
 			if (has_phase(PHASE_B) && dab > 0.0)
-				z_ab = complex(0.0953, 0.12134 * (log(1.0 / dab) + 7.93402));
+				z_ab = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dab) + freq_additive_term));
 			else
 				z_ab = 0.0;
 			if (has_phase(PHASE_C) && dac > 0.0)
-				z_ac = complex(0.0953, 0.12134 * (log(1.0 / dac) + 7.93402));
+				z_ac = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dac) + freq_additive_term));
 			else
 				z_ac = 0.0;
 			if (has_phase(PHASE_N) && dan > 0.0)
-				z_an = complex(0.0953, 0.12134 * (log(1.0 / dan) + 7.93402));
+				z_an = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dan) + freq_additive_term));
 			else
 				z_an = 0.0;
 
@@ -330,15 +337,15 @@ void overhead_line::recalc(void)
 
 		if (has_phase(PHASE_B)) {
 			if (gmr_b > 0.0 && res_b > 0.0)
-				z_bb = complex(res_b + 0.0953, 0.12134 * (log(1.0 / gmr_b) + 7.93402));
+				z_bb = complex(res_b + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_b) + freq_additive_term));
 			else
 				z_bb = 0.0;
 			if (has_phase(PHASE_C) && dbc > 0.0)
-				z_bc = complex(0.0953, 0.12134 * (log(1.0 / dbc) + 7.93402));
+				z_bc = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dbc) + freq_additive_term));
 			else
 				z_bc = 0.0;
 			if (has_phase(PHASE_N) && dbn > 0.0)
-				z_bn = complex(0.0953, 0.12134 * (log(1.0 / dbn) + 7.93402));
+				z_bn = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dbn) + freq_additive_term));
 			else
 				z_bn = 0.0;
 
@@ -411,11 +418,11 @@ void overhead_line::recalc(void)
 
 		if (has_phase(PHASE_C)) {
 			if (gmr_c > 0.0 && res_c > 0.0)
-				z_cc = complex(res_c + 0.0953, 0.12134 * (log(1.0 / gmr_c) + 7.93402));
+				z_cc = complex(res_c + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_c) + freq_additive_term));
 			else
 				z_cc = 0.0;
 			if (has_phase(PHASE_N) && dcn > 0.0)
-				z_cn = complex(0.0953, 0.12134 * (log(1.0 / dcn) + 7.93402));
+				z_cn = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dcn) + freq_additive_term));
 			else
 				z_cn = 0.0;
 
@@ -467,7 +474,7 @@ void overhead_line::recalc(void)
 
 		complex z_nn_inv = 0;
 		if (has_phase(PHASE_N) && gmr_n > 0.0 && res_n > 0.0){
-			z_nn = complex(res_n + 0.0953, 0.12134 * (log(1.0 / gmr_n) + 7.93402));
+			z_nn = complex(res_n + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_n) + freq_additive_term));
 			z_nn_inv = z_nn^(-1.0);
 
 			//capacitance equations
