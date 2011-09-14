@@ -333,6 +333,7 @@ int link::init(OBJECT *parent)
 		{
 			tNode->NR_connected_links[0]++;
 		}
+		fault_current_solved = -1;
 
 		break;
 	}
@@ -1092,7 +1093,18 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 			//Update status variable
 			prev_status = status;
 		}
-
+		//Check to see if a SC has occured and zero out the falut current
+		if(If_in[0] != 0 || If_in[1] != 0 || If_in[2] != 0){
+			fault_current_solved *= -1;
+			if(fault_current_solved < 0){
+				If_in[0] = 0;
+				If_in[1] = 0;
+				If_in[2] = 0;
+				If_out[0] = 0;
+				If_out[1] = 0;
+				If_out[2] = 0;
+			}
+		}
 		//Update time variable if necessary
 		if (prev_LTime != t0)
 		{

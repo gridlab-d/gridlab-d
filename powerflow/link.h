@@ -54,6 +54,7 @@ public: /// @todo make this private and create interfaces to control values
 	int NR_branch_reference;	//Index of NR_branchdata this link is contained in
 	SPECIAL_LINK SpecialLnk;	//Flag for exceptions to the normal handling
 	set flow_direction;		// Flag direction of powerflow: 1 is normal, -1 is reverse flow, 0 is no flow
+	double fault_current_solved;
 	void calculate_power();
 	void calculate_power_splitphase();
 	void set_flow_directions();
