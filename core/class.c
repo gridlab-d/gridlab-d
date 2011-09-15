@@ -84,10 +84,11 @@ static unsigned int class_count = 0;
 /* IMPORTANT: this list must match PROPERTYTYPE enum in class.h */
 /* ALSO IMPORTANT: this list is mirrored in property.c */
 static struct s_property_specs { /**<	the property type conversion specifications.
-										It is critical that the order of entries in this list must match
-										the order of entries in the enumeration #PROPERTYTYPE
+										It is critical that the order of entries in this list must match 
+										the order of entries in the enumeration #PROPERTYTYPE 
 								  **/
 	char *name; /**< the property type name */
+	char *xsdname;
 	unsigned int size; /**< the size of 1 instance */
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
 	int (*string_to_data)(char *,void*,PROPERTY*); /**< the function to convert from a string to data */
@@ -95,28 +96,28 @@ static struct s_property_specs { /**<	the property type conversion specification
 	int (*stream_in)(FILE*,void*,PROPERTY*); /**< the function to read data from a stream */
 	int (*stream_out)(FILE*,void*,PROPERTY*); /**< the function to write data to a stream */
 } property_type[] = {
-	{"void", 0, convert_from_void,convert_to_void},
-	{"double", sizeof(double), convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double},
-	{"complex", sizeof(complex), convert_from_complex,convert_to_complex},
-	{"enumeration",sizeof(int32), convert_from_enumeration,convert_to_enumeration},
-	{"set",sizeof(int64), convert_from_set,convert_to_set},
-	{"int16", sizeof(int16), convert_from_int16,convert_to_int16},
-	{"int32", sizeof(int32), convert_from_int32,convert_to_int32},
-	{"int64", sizeof(int64), convert_from_int64,convert_to_int64},
-	{"char8", sizeof(char8), convert_from_char8,convert_to_char8},
-	{"char32", sizeof(char32), convert_from_char32,convert_to_char32},
-	{"char256", sizeof(char256), convert_from_char256,convert_to_char256},
-	{"char1024", sizeof(char1024), convert_from_char1024,convert_to_char1024},
-	{"object", sizeof(OBJECT*), convert_from_object,convert_to_object},
-	{"delegated", (unsigned int)-1, convert_from_delegated, convert_to_delegated},
-	{"bool", sizeof(unsigned int), convert_from_boolean, convert_to_boolean},
-	{"timestamp", sizeof(int64), convert_from_timestamp_stub, convert_to_timestamp_stub},
-	{"double_array", sizeof(double), convert_from_double_array, convert_to_double_array},
-	{"complex_array", sizeof(complex), convert_from_complex_array, convert_to_complex_array},
-	{"real", sizeof(real), convert_from_real, convert_to_real},
-	{"float", sizeof(float), convert_from_float, convert_to_float},
-	{"loadshape", sizeof(loadshape), convert_from_loadshape, convert_to_loadshape, loadshape_create},
-	{"enduse",sizeof(enduse), convert_from_enduse, convert_to_enduse, enduse_create},
+	{"void", "string", 0, convert_from_void,convert_to_void},
+	{"double", "double", sizeof(double), convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double},
+	{"complex", "string", sizeof(complex), convert_from_complex,convert_to_complex},
+	{"enumeration", "string", sizeof(int32), convert_from_enumeration,convert_to_enumeration},
+	{"set", "string", sizeof(int64), convert_from_set,convert_to_set},
+	{"int16", "short", sizeof(int16), convert_from_int16,convert_to_int16},
+	{"int32", "int", sizeof(int32), convert_from_int32,convert_to_int32},
+	{"int64", "long", sizeof(int64), convert_from_int64,convert_to_int64},
+	{"char8", "string", sizeof(char8), convert_from_char8,convert_to_char8},
+	{"char32", "string", sizeof(char32), convert_from_char32,convert_to_char32},
+	{"char256", "string", sizeof(char256), convert_from_char256,convert_to_char256},
+	{"char1024", "string", sizeof(char1024), convert_from_char1024,convert_to_char1024},
+	{"object", "string", sizeof(OBJECT*), convert_from_object,convert_to_object},
+	{"delegated", "string", (unsigned int)-1, convert_from_delegated, convert_to_delegated},
+	{"bool", "string", sizeof(unsigned int), convert_from_boolean, convert_to_boolean},
+	{"timestamp", "string", sizeof(int64), convert_from_timestamp_stub, convert_to_timestamp_stub},
+	{"double_array", "string", sizeof(double), convert_from_double_array, convert_to_double_array},
+	{"complex_array", "string", sizeof(complex), convert_from_complex_array, convert_to_complex_array},
+	{"real", "string", sizeof(real), convert_from_real, convert_to_real},
+	{"float", "string", sizeof(float), convert_from_float, convert_to_float},
+	{"loadshape", "string", sizeof(loadshape), convert_from_loadshape, convert_to_loadshape, loadshape_create},
+	{"enduse", "string", sizeof(enduse), convert_from_enduse, convert_to_enduse, enduse_create},
 };
 
 /* object class list */
@@ -375,6 +376,18 @@ char *class_get_property_typename(PROPERTYTYPE type) /**< the property type */
 	else
 		return property_type[type].name;
 }
+
+/** Get the name of a property from its type
+	@return a pointer to a string containing the name of the property type
+ **/
+char *class_get_property_typexsdname(PROPERTYTYPE type) /**< the property type */
+{
+	if (type<=_PT_FIRST || type>=_PT_LAST)
+		return "##UNDEF##";
+	else
+		return property_type[type].xsdname;
+}
+
 
 /** Get the type of a property from its \p name
 	@return the property type
@@ -1331,22 +1344,23 @@ int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD *
 	size_t n=0;
 	PROPERTY *prop;
 	int i;
+	CLASS *oc = oclass;
 	extern KEYWORD oflags[];
 	struct {
 		char *name;
 		char *type;
 		KEYWORD *keys;
 	} attribute[]={
-		{"id", "int64",NULL},
-		{"parent", "object",NULL},
-		{"rank", "int32",NULL},
-		{"clock", "datetime",NULL},
-		{"valid_to", "datetime",NULL},
-		{"latitude", "latitude",NULL},
-		{"longitude", "longitude",NULL},
-		{"in_svc", "datetime",NULL},
-		{"out_svc", "datetime",NULL},
-		{"flags", "set",oflags},
+		{"id", "long",NULL},
+		{"parent", "string",NULL},
+		{"rank", "int",NULL},
+		{"clock", "string",NULL},
+		{"valid_to", "string",NULL},
+		{"latitude", "double",NULL},
+		{"longitude", "double",NULL},
+		{"in_svc", "string",NULL},
+		{"out_svc", "string",NULL},
+		{"flags", "string",oflags},
 	};
 	check = 1;
 	n += buffer_write(buffer+n, len-n, "<xs:element name=\"%s\">\n", oclass->name);
@@ -1373,27 +1387,29 @@ int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD *
 		n += buffer_write(buffer+n, len-n, "\t\t\t\t</xs:simpleType>\n");
 		n += buffer_write(buffer+n, len-n, "\t\t\t</xs:element>\n");
 	}
-	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
-	{
-		char *proptype=class_get_property_typename(prop->ptype);
-		if (prop->unit!=NULL){
-			n += buffer_write(buffer+n, len-n, "\t\t\t\t<xs:element name=\"%s\" type=\"xs:string\"/>\n", prop->name);
-		} else {
-			n += buffer_write(buffer+n, len-n, "\t\t\t<xs:element name=\"%s\">\n", prop->name);
-			n += buffer_write(buffer+n, len-n, "\t\t\t\t<xs:simpleType>\n");
-			n += buffer_write(buffer+n, len-n, "\t\t\t\t\t<xs:restriction base=\"xs:%s\">\n", proptype==NULL?"string":proptype);
-			if (prop->keywords!=NULL)
-			{
-				KEYWORD *key;
-				n += buffer_write(buffer+n, len-n, "\t\t\t\t\t<xs:pattern value=\"");
-				for (key=prop->keywords; key!=NULL; key=key->next){
-					n += buffer_write(buffer+n, len-n, "%s%s", key==prop->keywords?"":"|", key->name);
+	for(; oc != 0; oc = oc->parent){
+		for (prop=oc->pmap; prop!=NULL && prop->oclass==oc; prop=prop->next)
+		{
+			char *proptype=class_get_property_typexsdname(prop->ptype);
+			if (prop->unit!=NULL){
+				n += buffer_write(buffer+n, len-n, "\t\t\t\t<xs:element name=\"%s\" type=\"xs:string\"/>\n", prop->name);
+			} else {
+				n += buffer_write(buffer+n, len-n, "\t\t\t<xs:element name=\"%s\">\n", prop->name);
+				n += buffer_write(buffer+n, len-n, "\t\t\t\t<xs:simpleType>\n");
+				n += buffer_write(buffer+n, len-n, "\t\t\t\t\t<xs:restriction base=\"xs:%s\">\n", proptype==NULL?"string":proptype);
+				if (prop->keywords!=NULL)
+				{
+					KEYWORD *key;
+					n += buffer_write(buffer+n, len-n, "\t\t\t\t\t<xs:pattern value=\"");
+					for (key=prop->keywords; key!=NULL; key=key->next){
+						n += buffer_write(buffer+n, len-n, "%s%s", key==prop->keywords?"":"|", key->name);
+					}
+					n += buffer_write(buffer+n, len-n, "\"/>\n");
 				}
-				n += buffer_write(buffer+n, len-n, "\"/>\n");
+				n += buffer_write(buffer+n, len-n, "\t\t\t\t\t</xs:restriction>\n");
+				n += buffer_write(buffer+n, len-n, "\t\t\t\t</xs:simpleType>\n");
+				n += buffer_write(buffer+n, len-n, "\t\t\t</xs:element>\n");
 			}
-			n += buffer_write(buffer+n, len-n, "\t\t\t\t\t</xs:restriction>\n");
-			n += buffer_write(buffer+n, len-n, "\t\t\t\t</xs:simpleType>\n");
-			n += buffer_write(buffer+n, len-n, "\t\t\t</xs:element>\n");
 		}
 	}
 	n += buffer_write(buffer+n, len-n, "\t\t</xs:all>\n");

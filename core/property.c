@@ -27,6 +27,7 @@ static struct s_property_specs { /**<	the property type conversion specification
 										the order of entries in the enumeration #PROPERTYTYPE 
 								  **/
 	char *name; /**< the property type name */
+	char *xsdname;
 	unsigned int size; /**< the size of 1 instance */
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
 	int (*string_to_data)(char *,void*,PROPERTY*); /**< the function to convert from a string to data */
@@ -34,28 +35,28 @@ static struct s_property_specs { /**<	the property type conversion specification
 	int (*stream_in)(FILE*,void*,PROPERTY*); /**< the function to read data from a stream */
 	int (*stream_out)(FILE*,void*,PROPERTY*); /**< the function to write data to a stream */
 } property_type[] = {
-	{"void", 0, convert_from_void,convert_to_void},
-	{"double", sizeof(double), convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double},
-	{"complex", sizeof(complex), convert_from_complex,convert_to_complex},
-	{"enumeration",sizeof(int32), convert_from_enumeration,convert_to_enumeration},
-	{"set",sizeof(int64), convert_from_set,convert_to_set},
-	{"int16", sizeof(int16), convert_from_int16,convert_to_int16},
-	{"int32", sizeof(int32), convert_from_int32,convert_to_int32},
-	{"int64", sizeof(int64), convert_from_int64,convert_to_int64},
-	{"char8", sizeof(char8), convert_from_char8,convert_to_char8},
-	{"char32", sizeof(char32), convert_from_char32,convert_to_char32},
-	{"char256", sizeof(char256), convert_from_char256,convert_to_char256},
-	{"char1024", sizeof(char1024), convert_from_char1024,convert_to_char1024},
-	{"object", sizeof(OBJECT*), convert_from_object,convert_to_object},
-	{"delegated", (unsigned int)-1, convert_from_delegated, convert_to_delegated},
-	{"bool", sizeof(unsigned int), convert_from_boolean, convert_to_boolean},
-	{"timestamp", sizeof(int64), convert_from_timestamp_stub, convert_to_timestamp_stub},
-	{"double_array", sizeof(double), convert_from_double_array, convert_to_double_array},
-	{"complex_array", sizeof(complex), convert_from_complex_array, convert_to_complex_array},
-	{"real", sizeof(real), convert_from_real, convert_to_real},
-	{"float", sizeof(float), convert_from_float, convert_to_float},
-	{"loadshape", sizeof(loadshape), convert_from_loadshape, convert_to_loadshape, loadshape_create},
-	{"enduse",sizeof(enduse), convert_from_enduse, convert_to_enduse, enduse_create},
+	{"void", "string", 0, convert_from_void,convert_to_void},
+	{"double", "double", sizeof(double), convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double},
+	{"complex", "string", sizeof(complex), convert_from_complex,convert_to_complex},
+	{"enumeration", "string", sizeof(int32), convert_from_enumeration,convert_to_enumeration},
+	{"set", "string", sizeof(int64), convert_from_set,convert_to_set},
+	{"int16", "short", sizeof(int16), convert_from_int16,convert_to_int16},
+	{"int32", "int", sizeof(int32), convert_from_int32,convert_to_int32},
+	{"int64", "long", sizeof(int64), convert_from_int64,convert_to_int64},
+	{"char8", "string", sizeof(char8), convert_from_char8,convert_to_char8},
+	{"char32", "string", sizeof(char32), convert_from_char32,convert_to_char32},
+	{"char256", "string", sizeof(char256), convert_from_char256,convert_to_char256},
+	{"char1024", "string", sizeof(char1024), convert_from_char1024,convert_to_char1024},
+	{"object", "string", sizeof(OBJECT*), convert_from_object,convert_to_object},
+	{"delegated", "string", (unsigned int)-1, convert_from_delegated, convert_to_delegated},
+	{"bool", "string", sizeof(unsigned int), convert_from_boolean, convert_to_boolean},
+	{"timestamp", "string", sizeof(int64), convert_from_timestamp_stub, convert_to_timestamp_stub},
+	{"double_array", "string", sizeof(double), convert_from_double_array, convert_to_double_array},
+	{"complex_array", "string", sizeof(complex), convert_from_complex_array, convert_to_complex_array},
+	{"real", "string", sizeof(real), convert_from_real, convert_to_real},
+	{"float", "string", sizeof(float), convert_from_float, convert_to_float},
+	{"loadshape", "string", sizeof(loadshape), convert_from_loadshape, convert_to_loadshape, loadshape_create},
+	{"enduse", "string", sizeof(enduse), convert_from_enduse, convert_to_enduse, enduse_create},
 };
 
 PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation)
