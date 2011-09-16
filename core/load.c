@@ -243,7 +243,7 @@ typedef struct s_include_list {
 INCLUDELIST *include_list = NULL;
 INCLUDELIST *header_list = NULL;
 
-UNR_STATIC *static_list = NULL;
+//UNR_STATIC *static_list = NULL;
 
 static char *forward_slashes(char *a)
 {
