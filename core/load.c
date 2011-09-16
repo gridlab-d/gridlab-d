@@ -132,7 +132,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #include "config.h"
 #else // not a build using automake
 #define DLEXT ".dll"
-#define REALTIME_LDFLAGS "-export-all-symbols"
+#define REALTIME_LDFLAGS "-Wl,-export-all-symbols"
 #endif // HAVE_CONFIG_H
 
 #include <stdlib.h>
@@ -185,6 +185,8 @@ static unsigned int linenum=1;
 static int include_fail = 0;
 static char filename[1024];
 static time_t modtime = 0;
+static int last_good_depth = -1;
+static int current_depth = -1;
 
 static char start_ts[64];
 static char stop_ts[64];
@@ -240,6 +242,8 @@ typedef struct s_include_list {
 
 INCLUDELIST *include_list = NULL;
 INCLUDELIST *header_list = NULL;
+
+UNR_STATIC *static_list = NULL;
 
 static char *forward_slashes(char *a)
 {
@@ -699,6 +703,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 #endif
 
 				char execstr[1024];
+				char ldstr[1024];
 				char exportsyms[64] = REALTIME_LDFLAGS;
 
 				sprintf(execstr, "%s %s %s -I \"%s\" -c \"%s\" -o \"%s\"", getenv("CXX")?getenv("CXX"):"g++", getenv("CXXFLAGS")?getenv("CXXFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", global_include, cfile, ofile);
@@ -712,7 +717,10 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 				/* link new runtime module */
 				output_verbose("linking inline code from '%s'", ofile);
-				if (exec("%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile)==FAILED)
+				sprintf(ldstr, "%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile);
+				output_verbose("linking string: \"%s\"", ldstr);
+				//if (exec("%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile)==FAILED)
+				if(exec(ldstr) == FAILED)
 					return FAILED;
 
 				if (global_getvar("control_textrel_shlib_t",tbuf,63)!=NULL)
@@ -2087,7 +2095,7 @@ int time_value_datetimezone(PARSER, TIMESTAMP *t)
 		&& TERM(integer16(HERE,&dt.hour)) && LITERAL(":")
 		&& TERM(integer16(HERE,&dt.minute)) && LITERAL(":")
 		&& TERM(integer16(HERE,&dt.second)) && LITERAL(" ")
-		&& TERM(name(HERE,dt.tz,sizeof(dt.tz))) && (LITERAL("'")||LITERAL("\"")))
+		&& TERM(name(HERE,dt.tz,sizeof(dt.tz))))
 	{
 		dt.microsecond = 0;
 		dt.weekday = -1;
@@ -2102,6 +2110,7 @@ int time_value_datetimezone(PARSER, TIMESTAMP *t)
 	}
 	else
 		REJECT;
+	if (LITERAL("'")||LITERAL("\"")) ACCEPT;
 	DONE;
 }
 
@@ -3006,7 +3015,7 @@ static int class_export_function(PARSER, CLASS *oclass, char *fname, int fsize, 
 	DONE;
 }
 
-static int class_explicit_declaration(PARSER, char *type, int size)
+static int class_explicit_declaration(PARSER, char *type, int size)//, bool *is_static)
 {
 	START;
 	if WHITE ACCEPT;
@@ -3025,13 +3034,17 @@ static int class_explicit_declaration(PARSER, char *type, int size)
 		strcpy(type,"public");
 		ACCEPT;
 	}
-	else if LITERAL("static")
-	{
-		strcpy(type,"static");
-		ACCEPT;
-	}
 	else 
 		REJECT;
+	WHITE;
+/*	if LITERAL("static")
+	{
+		//strcpy(type,"static");
+		*is_static = true;
+	} else {
+		*is_static = false;
+	}
+*/
 	DONE;
 }
 
@@ -3040,9 +3053,10 @@ static int class_explicit_definition(PARSER, CLASS *oclass)
 	int startline;
 	char type[64];
 	char code[4096];
+//	bool is_static;
 	START;
 	if WHITE ACCEPT;
-	if (TERM(class_explicit_declaration(HERE,type,sizeof(type))))
+	if (TERM(class_explicit_declaration(HERE,type,sizeof(type)/*,&is_static*/)))
 	{
 		if (oclass->module==NULL)
 		{
