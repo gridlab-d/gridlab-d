@@ -49,10 +49,10 @@ static KEYWORD rng_keys[] = {
 };
 
 static KEYWORD mls_keys[] = {
-	{"INIT", MLS_INIT, rng_keys+1},			/**< main loop hasn't started yet */
-	{"RUNNING", MLS_RUNNING, rng_keys+2},	/**< main loop is running */
-	{"PAUSED", MLS_PAUSED, rng_keys+3},		/**< main loop is paused */
-	{"DONE", MLS_DONE, rng_keys+4},			/**< main loop is done */
+	{"INIT", MLS_INIT, mls_keys+1},			/**< main loop hasn't started yet */
+	{"RUNNING", MLS_RUNNING, mls_keys+2},	/**< main loop is running */
+	{"PAUSED", MLS_PAUSED, mls_keys+3},		/**< main loop is paused */
+	{"DONE", MLS_DONE, mls_keys+4},			/**< main loop is done */
 	{"LOCKED", MLS_LOCKED, NULL},			/**< main loop is locked */
 };
 
