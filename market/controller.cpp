@@ -834,7 +834,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			double ramp, range;
 			ramp = (*pMonitor > heating_setpoint0 ? heat_ramp_high : heat_ramp_low);
 			range = (*pMonitor > heating_setpoint0 ? heat_range_high : heat_range_low);
-			if(*pMonitor != cooling_setpoint0){
+			if(*pMonitor != heating_setpoint0){
 				last_p = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - heating_setpoint0) * ramp * (*pStd) / fabs(range) );
 			} else {
 				last_p = *pAvg;
