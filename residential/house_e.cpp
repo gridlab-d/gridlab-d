@@ -951,7 +951,7 @@ int house_e::init_climate()
 			pRhout = &default_humidity;
 			pSolar = &default_solar[0];
 		}
-		else if (climates->hit_count>1)
+		else if (climates->hit_count>1 && weather != 0)
 		{
 			gl_warning("house_e: %d climates found, using first one defined", climates->hit_count);
 		}
@@ -969,9 +969,12 @@ int house_e::init_climate()
 		else //climate data was found
 		{
 			// force rank of object w.r.t climate
-			OBJECT *obj = gl_find_next(climates,NULL);
+			OBJECT *obj = 0;
 			if(weather == NULL){
+				obj  = gl_find_next(climates,NULL);
 				weather = obj;
+			} else {
+				obj = weather;
 			}
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
@@ -2517,8 +2520,8 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				//if (outside_temperature < aux_cutin_temperature)
 				if (Tair < TauxOn && 
 					(auxiliary_system_type != AT_NONE) && // turn on aux if we have it
-					(auxiliary_strategy & AX_DEADBAND) && // turn aux on if deadband is set
-					(!(auxiliary_strategy & AX_LOCKOUT) || (*pTout <= aux_heat_temp_lockout))) // If the air of the house is 2x outside the deadband range, it needs AUX help
+					((auxiliary_strategy & AX_DEADBAND) || // turn aux on if deadband is set
+					 (auxiliary_strategy & AX_LOCKOUT && *pTout <= aux_heat_temp_lockout))) // If the air of the house is 2x outside the deadband range, it needs AUX help
 				{
 					last_system_mode = system_mode = SM_AUX;
 					power_state = PS_ON;
