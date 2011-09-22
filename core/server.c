@@ -1119,14 +1119,25 @@ int http_control_request(HTTP *http, char *action)
 	char buffer[1024];
 
 	if ( strcmp(action,"resume")==0 )
+	{
 		exec_mls_resume(TS_NEVER);
-	else if ( sscanf(action,"pauseat=%[-0-9 :A-Za-z]",buffer)==1 )
+		return 1;
+	}
+	else if ( sscanf(action,"pauseat=%[-0-9%:A-Za-z]",buffer)==1 )
 	{
 		TIMESTAMP ts;
 		http_decode(buffer);
 		ts = convert_to_timestamp(buffer);
 		if ( ts!=TS_INVALID )
+		{
 			exec_mls_resume(ts);
+			return 1;
+		}
+		else
+		{
+			output_error("control command '%s' has an invalid timestamp", buffer);
+			return 0;
+		}
 	}
 	return 0;
 }
