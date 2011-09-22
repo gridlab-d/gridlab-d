@@ -44,7 +44,7 @@ struct s_property_specs property_type[_PT_LAST] = {
 	{"float", "string", sizeof(float), convert_from_float, convert_to_float},
 	{"loadshape", "string", sizeof(loadshape), convert_from_loadshape, convert_to_loadshape, loadshape_create},
 	{"enduse", "string", sizeof(enduse), convert_from_enduse, convert_to_enduse, enduse_create},
-	{"random", "string", sizeof(random), convert_from_randomvar, convert_to_randomvar, randomvar_create},
+	{"random", "string", sizeof(randomvar), convert_from_randomvar, convert_to_randomvar, randomvar_create},
 };
 
 PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation)
