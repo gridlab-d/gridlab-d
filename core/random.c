@@ -20,6 +20,8 @@
 #include <stdarg.h>
 #include <time.h>
 #include <float.h>
+#include <ctype.h>
+
 #include "random.h"
 #include "find.h"
 #include "output.h"
@@ -1049,7 +1051,73 @@ static unsigned int n_randomvars = 0;
 
 int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 {
-	// TODO extract randomvar specs from string
+	randomvar *var = (randomvar*)data;
+	char buffer[1024];
+	char *token = NULL;
+
+	/* check string length before copying to buffer */
+	if (strlen(string)>sizeof(buffer)-1)
+	{
+		output_error("convert_to_randomvar(string='%-.64s...', ...) input string is too long (max is 1023)",string);
+		return 0;
+	}
+	strcpy(buffer,string);
+
+	/* parse tuples separate by semicolon*/
+	while ((token=strtok(token==NULL?buffer:NULL,";"))!=NULL)
+	{
+		/* colon separate tuple parts */
+		char *param = token;
+		char *value = strchr(token,':');
+
+		/* isolate param and token and eliminte leading whitespaces */
+		while (*param!='\0' && (isspace(*param) || iscntrl(*param))) param++;		
+		if (value==NULL)
+			value="1";
+		else
+			*value++ = '\0'; /* separate value from param */
+		while (isspace(*value) || iscntrl(*value)) value++;
+
+		// parse params
+		if (strcmp(param,"type")==0)
+		{
+		}
+		else if (strcmp(param,"min")==0)
+			var->low = atof(value);
+		else if (strcmp(param,"max")==0)
+			var->high = atof(value);
+		else if (strcmp(param,"refresh")==0)
+		{
+			char unit[256];
+			if ( sscanf(value,"%d%s",&(var->update_rate),unit)==2)
+			{
+				double dt = var->update_rate;
+				if ( !unit_convert(unit,"s",&dt) )
+				{
+					output_error("convert_to_randomvar(string='%-.64s...', ...) refresh unit '%s' is not valid",string,unit);
+					return 0;
+				}
+				else
+					var->update_rate = (int)dt;
+			}
+		}
+		else if (strcmp(param,"state")==0)
+		{
+			var->state = atoi(value);
+		}
+		else if (strcmp(param,"")!=0)
+		{
+			output_error("convert_to_randomvar(string='%-.64s...', ...) parameter '%s' is not valid",string,param);
+			return 0;
+		}
+	}
+
+	/* reinitialize the loadshape */
+	if (loadshape_init((loadshape*)data))
+		return 0;
+
+	/* everything converted ok */
+	return 1;
 }
 
 int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop)
@@ -1058,13 +1126,13 @@ int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop)
 	char spec[64] = "(invalid)";
 	
 	if ( _random_specs(var->type,var->a,var->b,spec,sizeof(spec)) )
-		return sprintf(string,"%s; min=%lf; max=%lf; refresh=%lf s; state=%d",  
+		return sprintf(string,"type: %s; min: %lf; max: %lf; refresh: %lf s; state: %d",  
 			spec, var->low, var->high, var->update_rate, var->state);
 	else
 	{
 		// return "invalid"
 		strcpy(string,spec);
-		return strlen(spec);
+		return (int)strlen(spec);
 	}
 }
 
@@ -1072,6 +1140,7 @@ int randomvar_create(randomvar *var)
 {
 	memset(var,0,sizeof(randomvar));
 	var->next = randomvar_list;
+	var->state = randwarn(NULL);
 	randomvar_list = var;
 	n_randomvars++;
 	return 1;
@@ -1079,7 +1148,10 @@ int randomvar_create(randomvar *var)
 
 int randomvar_init(randomvar *var)
 {
-	// TODO initialize random number
+	do {
+		var->value = pseudorandom_value(var->type,&(var->state),var->a,var->b);
+	} while ( var->a<var->b && !( var->a<var->value && var->value<var->b ) );
+	return 1;
 }
 
 int randomvar_initall(void)
@@ -1095,8 +1167,13 @@ int randomvar_initall(void)
 
 TIMESTAMP randomvar_sync(randomvar *var, TIMESTAMP t1)
 {
-	// TODO regenerate random number
-	return TS_NEVER;
+	if ( var->update_rate<=0 || t1%var->update_rate==0 )
+	{
+		do {
+			var->value = pseudorandom_value(var->type,&(var->state),var->a,var->b);
+		} while ( var->a<var->b && !( var->a<var->value && var->value<var->b ) );
+	}
+	return var->update_rate<=0 ? TS_NEVER : ((t1/var->update_rate)+1)*var->update_rate;
 }
 
 TIMESTAMP randomvar_syncall(TIMESTAMP t1)

@@ -63,17 +63,12 @@ extern "C" {
 
 typedef struct s_randomvar randomvar;
 struct s_randomvar {
-	union {
-		double real;			/**< random value */
-		/* add other types here */
-	} current;
+	double value;				/**< current value */
 	unsigned int state;			/**< RNG state */
 	RANDOMTYPE type;			/**< RNG distribution */
 	double a, b;				/**< RNG distribution parameters */
 	double low, high;			/**< RNG truncations limits */
 	unsigned int update_rate;	/**< RNG refresh rate in seconds */
-	TIMESTAMP next_change;		/**< time of next refresh */
-	TIMESTAMP last_change;		/**< time of last refresh */
 	/* internal parameters */
 	randomvar *next;
 };
