@@ -1044,7 +1044,7 @@ int random_test(void)
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Random Variables
 
-static random *randomvar_list = NULL;
+static randomvar *randomvar_list = NULL;
 static unsigned int n_randomvars = 0;
 
 int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
@@ -1054,7 +1054,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 
 int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop)
 {
-	random *var = (random*)data;
+	randomvar *var = (randomvar*)data;
 	char spec[64] = "(invalid)";
 	
 	if ( _random_specs(var->type,var->a,var->b,spec,sizeof(spec)) )
@@ -1068,23 +1068,23 @@ int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop)
 	}
 }
 
-int randomvar_create(random *var)
+int randomvar_create(randomvar *var)
 {
-	memset(var,0,sizeof(random));
+	memset(var,0,sizeof(randomvar));
 	var->next = randomvar_list;
 	randomvar_list = var;
 	n_randomvars++;
 	return 1;
 }
 
-int randomvar_init(random *var)
+int randomvar_init(randomvar *var)
 {
 	// TODO initialize random number
 }
 
 int randomvar_initall(void)
 {
-	random *var;
+	randomvar *var;
 	for (var=randomvar_list; var!=NULL; var=var->next)
 	{
 		if (randomvar_init(var)==1)
@@ -1093,7 +1093,7 @@ int randomvar_initall(void)
 	return SUCCESS;
 }
 
-TIMESTAMP randomvar_sync(random *var, TIMESTAMP t1)
+TIMESTAMP randomvar_sync(randomvar *var, TIMESTAMP t1)
 {
 	// TODO regenerate random number
 	return TS_NEVER;
@@ -1101,7 +1101,7 @@ TIMESTAMP randomvar_sync(random *var, TIMESTAMP t1)
 
 TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 {
-	random *var;
+	randomvar *var;
 	TIMESTAMP t2 = TS_NEVER;
 	for (var=randomvar_list; var!=NULL; var=var->next)
 	{

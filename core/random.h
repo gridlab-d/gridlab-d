@@ -61,8 +61,8 @@ extern "C" {
 }
 #endif
 
-typedef struct s_random random;
-struct s_random {
+typedef struct s_randomvar randomvar;
+struct s_randomvar {
 	union {
 		double real;			/**< random value */
 		/* add other types here */
@@ -75,13 +75,13 @@ struct s_random {
 	TIMESTAMP next_change;		/**< time of next refresh */
 	TIMESTAMP last_change;		/**< time of last refresh */
 	/* internal parameters */
-	random *next;
+	randomvar *next;
 };
 
-int randomvar_create(random *var);
-int randomvar_init(random *var);
+int randomvar_create(randomvar *var);
+int randomvar_init(randomvar *var);
 int randomvar_initall(void);
-TIMESTAMP randomvar_sync(random *var, TIMESTAMP t1);
+TIMESTAMP randomvar_sync(randomvar *var, TIMESTAMP t1);
 TIMESTAMP randomvar_syncall(TIMESTAMP t1);
 int convert_to_randomvar(char *string, void *data, PROPERTY *prop);
 int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop);
