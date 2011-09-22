@@ -60,6 +60,7 @@ public:
 	complex I_Out;
 	complex VA_Out;
 	
+	OBJECT *weather;
 	double efficiency;
 	double *pTout;
 	//double vTout;

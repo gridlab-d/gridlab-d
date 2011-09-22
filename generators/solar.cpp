@@ -100,6 +100,7 @@ solar::solar(MODULE *module)
 			PT_complex, "V_Out[V]", PADDR(V_Out),
 			PT_complex, "I_Out[A]", PADDR(I_Out),
 			PT_complex, "VA_Out[VA]", PADDR(VA_Out),
+			PT_object, "weather", PADDR(weather),
 
 			//resistances and max P, Q
 
@@ -178,22 +179,33 @@ int solar::init_climate()
 		if (climates->hit_count==0)
 		{
 			//default to mock data
-		static double tout=59.0, rhout=0.75, solar=1000;
-		pTout = &tout;
-		pRhout = &rhout;
-		pSolar = &solar;
+			static double tout=59.0, rhout=0.75, solar=1000;
+			pTout = &tout;
+			pRhout = &rhout;
+			pSolar = &solar;
 			//gl_verbose("solar init: solar data is %f", *pSolar);
-	}
+		}
 		else //climate data was found
 		{
 			//gl_verbose("solar init: climate data was found!");
 			// force rank of object w.r.t climate
-			OBJECT *obj = gl_find_next(climates,NULL);
-		if (obj->rank<=hdr->rank)
-			gl_set_dependent(obj,hdr);
-		   pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
-	       pRhout = (double*)GETADDR(obj,gl_get_property(obj,"humidity"));
-		   pSolar = (double*)GETADDR(obj,gl_get_property(obj,"solar_flux"));
+			OBJECT *obj = 0;
+			if(weather != 0){
+				if(gl_object_isa(weather, "climate") != 0){
+					// strcmp failure
+					gl_error("weather property refers to a(n) \"%s\" object and not a climate object", weather->oclass->name);
+					return 0;
+				}
+				obj = weather;
+			} else {
+				obj = gl_find_next(climates,NULL);
+				weather = obj;
+			}
+			if (obj->rank<=hdr->rank)
+				gl_set_dependent(obj,hdr);
+			pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
+			pRhout = (double*)GETADDR(obj,gl_get_property(obj,"humidity"));
+			pSolar = (double*)GETADDR(obj,gl_get_property(obj,"solar_flux"));
 			//pSolar = (double*)GETADDR(obj,gl_get_property(obj,"solar_global"));
 			//pSolar = (double*)malloc(50 * sizeof(double));
 
