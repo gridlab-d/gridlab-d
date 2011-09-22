@@ -391,6 +391,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_real,	/**< Single or double precision float ~ allows double values to be overriden */
 	PT_loadshape,	/**< Loadshapes are state machines driven by schedules */
 	PT_enduse,		/**< Enduse load data */
+	PT_random,		/**< Randomized number */
 #ifdef USE_TRIPLETS
 	PT_triple, /**< triplet of doubles (not supported) */
 	PT_triplex, /**< triplet of complexes (not supported) */

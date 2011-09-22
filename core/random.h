@@ -10,6 +10,8 @@
 #define _RANDOM_H
 
 #include "platform.h"
+#include "timestamp.h"
+#include "property.h"
 
 typedef enum {
 	RT_INVALID=-1,	/**< used to flag bad random types */
@@ -58,6 +60,32 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+typedef struct s_random random;
+struct s_random {
+	union {
+		double real;			/**< random value */
+		/* add other types here */
+	} current;
+	unsigned int state;			/**< RNG state */
+	RANDOMTYPE type;			/**< RNG distribution */
+	double a, b;				/**< RNG distribution parameters */
+	double low, high;			/**< RNG truncations limits */
+	unsigned int update_rate;	/**< RNG refresh rate in seconds */
+	TIMESTAMP next_change;		/**< time of next refresh */
+	TIMESTAMP last_change;		/**< time of last refresh */
+	/* internal parameters */
+	random *next;
+};
+
+int randomvar_create(random *var);
+int randomvar_init(random *var);
+int randomvar_initall(void);
+TIMESTAMP randomvar_sync(random *var, TIMESTAMP t1);
+TIMESTAMP randomvar_syncall(TIMESTAMP t1);
+int convert_to_randomvar(char *string, void *data, PROPERTY *prop);
+int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop);
+
 
 #endif
 

@@ -106,6 +106,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_real,	/**< Single or double precision float ~ allows double values to be overriden */
 	PT_loadshape,	/**< Loadshapes are state machines driven by schedules */
 	PT_enduse,		/**< Enduse load data */
+	PT_random,		/**< Randomized number */
 #ifdef USE_TRIPLETS
 	PT_triple, /**< triplet of doubles (not supported) */
 	PT_triplex, /**< triplet of complexes (not supported) */
@@ -167,6 +168,20 @@ typedef struct s_property_map {
 	FUNCTIONADDR notify;
 	bool notify_override;
 } PROPERTY; /**< property definition item */
+
+struct s_property_specs { /**<	the property type conversion specifications.
+										It is critical that the order of entries in this list must match 
+										the order of entries in the enumeration #PROPERTYTYPE 
+								  **/
+	char *name; /**< the property type name */
+	char *xsdname;
+	unsigned int size; /**< the size of 1 instance */
+	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
+	int (*string_to_data)(char *,void*,PROPERTY*); /**< the function to convert from a string to data */
+	int (*create)(void*); /**< the function used to create the property, if any */
+	int (*stream_in)(FILE*,void*,PROPERTY*); /**< the function to read data from a stream */
+	int (*stream_out)(FILE*,void*,PROPERTY*); /**< the function to write data to a stream */
+};
 
 PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *);
 uint32 property_size(PROPERTY *);

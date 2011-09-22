@@ -566,7 +566,8 @@ STATUS t_sync_all(PASSCONFIG pass)
 /* this function synchronizes all internal behaviors */
 TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
-	TIMESTAMP sc, ls, st, eu, t2;
+	TIMESTAMP rv, sc, ls, st, eu, t2;
+	rv = randomvar_syncall(t1);
 	sc = schedule_syncall(t1);
 	ls = loadshape_syncall(t1);// if (abs(t)<t2) t2=t;
 	st = scheduletransform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);// if (abs(t)<t2) t2=t;

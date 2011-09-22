@@ -20,21 +20,8 @@
 #include "enduse.h"
 #include "stream.h"
 
-/* IMPORTANT: this list must match PROPERTYTYPE enum in class.h */
-/* ALSO IMPORTANT: this list was copied from class.c */
-static struct s_property_specs { /**<	the property type conversion specifications.
-										It is critical that the order of entries in this list must match 
-										the order of entries in the enumeration #PROPERTYTYPE 
-								  **/
-	char *name; /**< the property type name */
-	char *xsdname;
-	unsigned int size; /**< the size of 1 instance */
-	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
-	int (*string_to_data)(char *,void*,PROPERTY*); /**< the function to convert from a string to data */
-	int (*create)(void*); /**< the function used to create the property, if any */
-	int (*stream_in)(FILE*,void*,PROPERTY*); /**< the function to read data from a stream */
-	int (*stream_out)(FILE*,void*,PROPERTY*); /**< the function to write data to a stream */
-} property_type[] = {
+/* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
+struct s_property_specs property_type[_PT_LAST] = {
 	{"void", "string", 0, convert_from_void,convert_to_void},
 	{"double", "double", sizeof(double), convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double},
 	{"complex", "string", sizeof(complex), convert_from_complex,convert_to_complex},
@@ -57,6 +44,7 @@ static struct s_property_specs { /**<	the property type conversion specification
 	{"float", "string", sizeof(float), convert_from_float, convert_to_float},
 	{"loadshape", "string", sizeof(loadshape), convert_from_loadshape, convert_to_loadshape, loadshape_create},
 	{"enduse", "string", sizeof(enduse), convert_from_enduse, convert_to_enduse, enduse_create},
+	{"random", "string", sizeof(random), convert_from_randomvar, convert_to_randomvar, randomvar_create},
 };
 
 PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation)

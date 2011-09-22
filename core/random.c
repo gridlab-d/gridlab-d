@@ -607,6 +607,47 @@ static double _random_value(RANDOMTYPE type, unsigned int *state, va_list ptr)
 	return QNAN; /* never gets here */
 }
 
+/** Convert a random distribution to a string spec
+ **/
+int _random_specs(RANDOMTYPE type, double a, double b,char *buffer,int size)
+{
+	switch ( type ) {
+	case RT_DEGENERATE:/* ... double value */
+		return sprintf(buffer,"degenerate(%lf)",a);
+	case RT_UNIFORM:		/* ... double min, double max */
+		return sprintf(buffer,"uniform(%lf,%lf)",a,b);
+	case RT_NORMAL:		/* ... double mean, double stdev */
+		return sprintf(buffer,"normal(%lf,%lf)",a,b);
+	case RT_BERNOULLI:	/* ... double p */
+		return sprintf(buffer,"bernoulli(%lf,%lf)",a,b);
+	case RT_SAMPLED: /* ... unsigned n_samples, double samples[n_samples] */
+		return sprintf(buffer,"sampled(%lf,%lf)",a,b);
+	case RT_PARETO:	/* ... double base, double gamma */
+		return sprintf(buffer,"pareto(%lf,%lf)",a,b);
+	case RT_LOGNORMAL:	/* ... double gmean, double gsigma */
+		return sprintf(buffer,"lognormal(%lf,%lf)",a,b);
+	case RT_EXPONENTIAL: /* ... double lambda */
+		return sprintf(buffer,"exponential(%lf,%lf)",a,b);
+	case RT_RAYLEIGH: /* ... double sigma */
+		return sprintf(buffer,"rayleigh(%lf,%lf)",a,b);
+	case RT_WEIBULL: /* ... double lambda, double k */
+		return sprintf(buffer,"weibull(%lf,%lf)",a,b);
+	case RT_GAMMA: /* ... double alpha, double beta */
+		return sprintf(buffer,"gamma(%lf,%lf)",a,b);
+	case RT_BETA: /* ... double alpha, double beta */
+		return sprintf(buffer,"beta(%lf,%lf)",a,b);
+	case RT_TRIANGLE: /* ... double a, double b */
+		return sprintf(buffer,"triangle(%lf,%lf)",a,b);
+	default:
+		throw_exception("_random_specs(type=%d,...); type is not valid",type);
+		/* TROUBLESHOOT
+			An attempt to describe a random number specific a distribution type that isn't recognized.
+			Check that the distribution is valid and try again.
+		 */
+	}
+	return -1; /* never gets here */
+}
+
 /** Apply a random number to property of a group of objects
 	@return the number of objects changed
  **/
@@ -999,6 +1040,77 @@ int random_test(void)
 	output_test("END: random distributions tests");
 	return failed;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// Random Variables
+
+static random *randomvar_list = NULL;
+static unsigned int n_randomvars = 0;
+
+int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
+{
+	// TODO extract randomvar specs from string
+}
+
+int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop)
+{
+	random *var = (random*)data;
+	char spec[64] = "(invalid)";
+	
+	if ( _random_specs(var->type,var->a,var->b,spec,sizeof(spec)) )
+		return sprintf(string,"%s; min=%lf; max=%lf; refresh=%lf s; state=%d",  
+			spec, var->low, var->high, var->update_rate, var->state);
+	else
+	{
+		// return "invalid"
+		strcpy(string,spec);
+		return strlen(spec);
+	}
+}
+
+int randomvar_create(random *var)
+{
+	memset(var,0,sizeof(random));
+	var->next = randomvar_list;
+	randomvar_list = var;
+	n_randomvars++;
+	return 1;
+}
+
+int randomvar_init(random *var)
+{
+	// TODO initialize random number
+}
+
+int randomvar_initall(void)
+{
+	random *var;
+	for (var=randomvar_list; var!=NULL; var=var->next)
+	{
+		if (randomvar_init(var)==1)
+			return FAILED;
+	}
+	return SUCCESS;
+}
+
+TIMESTAMP randomvar_sync(random *var, TIMESTAMP t1)
+{
+	// TODO regenerate random number
+	return TS_NEVER;
+}
+
+TIMESTAMP randomvar_syncall(TIMESTAMP t1)
+{
+	random *var;
+	TIMESTAMP t2 = TS_NEVER;
+	for (var=randomvar_list; var!=NULL; var=var->next)
+	{
+		TIMESTAMP t3 = randomvar_sync(var,t1);
+		if (t3<t2) t2 = t3;
+	}
+	return t2;
+}
+
 
 /** @} **/
 
