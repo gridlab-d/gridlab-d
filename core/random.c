@@ -1081,6 +1081,40 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 		// parse params
 		if (strcmp(param,"type")==0)
 		{
+			char *a;
+			a = strchr(value,'(');
+			if ( a )
+			{
+				int nargs;
+				*a++ = '\0';
+				var->type = random_type(value);
+				if ( var->type==RT_INVALID )
+				{
+					output_error("convert_to_randomvar(string='%-.64s...', ...) type '%s' is invalid",string,value);
+					return 0;
+				}
+				var->a = atof(a);
+				nargs = random_nargs(value);
+				if ( nargs==2 )
+				{
+					char *b = strchr(a,',');
+					if ( b )
+					{
+						*b++ = '\0';
+						var->b = atof(b);
+					}
+					else
+					{
+						output_error("convert_to_randomvar(string='%-.64s...', ...) missing second arg in type spec '%s'",string,value);
+						return 0;
+					}
+				}
+			}
+			else
+			{
+				output_error("convert_to_randomvar(string='%-.64s...', ...) missing '(' in type spec '%s'",string,value);
+				return 0;
+			}
 		}
 		else if (strcmp(param,"min")==0)
 			var->low = atof(value);
@@ -1123,17 +1157,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop)
 {
 	randomvar *var = (randomvar*)data;
-	char spec[64] = "(invalid)";
-	
-	if ( _random_specs(var->type,var->a,var->b,spec,sizeof(spec)) )
-		return sprintf(string,"type: %s; min: %lf; max: %lf; refresh: %lf s; state: %d",  
-			spec, var->low, var->high, var->update_rate, var->state);
-	else
-	{
-		// return "invalid"
-		strcpy(string,spec);
-		return (int)strlen(spec);
-	}
+	return sprintf(string,"%lf",var->value);
 }
 
 int randomvar_create(randomvar *var)
@@ -1146,11 +1170,17 @@ int randomvar_create(randomvar *var)
 	return 1;
 }
 
-int randomvar_init(randomvar *var)
+int randomvar_update(randomvar *var)
 {
 	do {
 		var->value = pseudorandom_value(var->type,&(var->state),var->a,var->b);
-	} while ( var->a<var->b && !( var->a<var->value && var->value<var->b ) );
+	} while ( var->low<var->high && !( var->low<var->value && var->value<var->high ) );
+	return 1;
+}
+
+int randomvar_init(randomvar *var)
+{
+	randomvar_update(var);
 	return 1;
 }
 
@@ -1168,11 +1198,7 @@ int randomvar_initall(void)
 TIMESTAMP randomvar_sync(randomvar *var, TIMESTAMP t1)
 {
 	if ( var->update_rate<=0 || t1%var->update_rate==0 )
-	{
-		do {
-			var->value = pseudorandom_value(var->type,&(var->state),var->a,var->b);
-		} while ( var->a<var->b && !( var->a<var->value && var->value<var->b ) );
-	}
+		randomvar_update(var);
 	return var->update_rate<=0 ? TS_NEVER : ((t1/var->update_rate)+1)*var->update_rate;
 }
 
