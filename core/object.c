@@ -1196,8 +1196,8 @@ char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
 	}
 	addr = GETADDR(obj,prop); /* warning: cast from pointer to integer of different size */
 	if(prop->ptype==PT_delegated)
-		return prop->delegation->to_string(addr,buffer,sizeof(buffer))?buffer:NULL;
-	else if(class_property_to_string(prop,addr,buffer,sizeof(buffer)))
+		return prop->delegation->to_string(addr,buffer,sz)?buffer:NULL;
+	else if(class_property_to_string(prop,addr,buffer,sz))
 	{
 		
 		return buffer;
