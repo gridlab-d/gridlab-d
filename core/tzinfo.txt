@@ -8,8 +8,8 @@
 ; IMPORTANT NOTE: year sections must be in chronological order
 ;
 
-UTC0 ; Coordinated Universal Time ~ never uss DST
-GMT0 ; Grenich Mean Time, no DST
+UTC0 ; Coordinated Universal Time ~ never uses DST
+GMT0 ; Greenwich Mean Time, no DST
 EST5 ; Eastern no DST
 CST6 ; Central no DST
 MST7 ; Mountain no DST
