@@ -31,7 +31,7 @@ typedef int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module functi
 #endif
 
 /* pass configuration */
-typedef unsigned char PASSCONFIG; /**< the pass configuration */
+typedef unsigned long PASSCONFIG; /**< the pass configuration */
 #define PC_NOSYNC 0x00					/**< used when the class requires no synchronization */
 #define PC_PRETOPDOWN 0x01				/**< used when the class requires synchronization on the first top-down pass */
 #define PC_BOTTOMUP	0x02				/**< used when the class requires synchronization on the bottom-up pass */
