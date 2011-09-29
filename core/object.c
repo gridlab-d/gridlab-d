@@ -263,6 +263,14 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 			This is most likely a bug and should be reported.
 		 */
 	}
+	if ( oclass->passconfig&PC_ABSTRACTONLY )
+	{
+		throw_exception("object_create_single(CLASS *oclass='%s'): abstract class '%s' cannot be instantiated", oclass->name);
+		/* TROUBLESHOOT
+			An attempt to create an object using an abstract class was detected.
+			Some classes may only be inherited but cannot be used directly in models.
+		*/
+	}
 
 	obj = (OBJECT*)malloc(sz + oclass->size);
 

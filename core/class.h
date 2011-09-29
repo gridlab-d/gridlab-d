@@ -39,6 +39,7 @@ typedef unsigned char PASSCONFIG; /**< the pass configuration */
 #define PC_FORCE_NAME 0x20				/**< used to indicate the this class must define names for all its objects */
 #define PC_PARENT_OVERRIDE_OMIT 0x40	/**< used to ignore parent's use of PC_UNSAFE_OVERRIDE_OMIT */
 #define PC_UNSAFE_OVERRIDE_OMIT 0x80	/**< used to flag that omitting overrides is unsafe */ 
+#define PC_ABSTRACTONLY 0x100 /**< used to flag that the class should never be instantiated itself, only inherited classes should */
 
 typedef enum {
 	NM_PREUPDATE = 0, /**< notify module before property change */
