@@ -97,9 +97,9 @@ powerflow_object::powerflow_object(MODULE *mod)
 	if (oclass==NULL)
 	{
 #ifdef SUPPORT_OUTAGES
-		oclass = gl_register_class(mod,"powerflow_object",sizeof(powerflow_object),PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
+		oclass = gl_register_class(mod,"powerflow_object",sizeof(powerflow_object),PC_ABSTRACTONLY|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
 #else
-		oclass = gl_register_class(mod,"powerflow_object",sizeof(powerflow_object),PC_NOSYNC);
+		oclass = gl_register_class(mod,"powerflow_object",sizeof(powerflow_object),PC_ABSTRACTONLY|PC_NOSYNC);
 #endif
 		if (oclass==NULL)
 			throw "unable to register class powerflow_object";
