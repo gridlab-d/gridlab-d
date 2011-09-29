@@ -12,13 +12,13 @@ module climate;
 module tape;
 
 class climate {
-	random newvar;
+	random clouds;
 } 
 
 object climate {
-	newvar "type:normal(1.0,0.5); min:0.0; max:1.0; refresh:1h;";
+	clouds "type:weibull(0.5,0.5); min:0.0; max:1.0; refresh:1h;";
 	object recorder {
-		property newvar;
+		property clouds;
 		interval 600;
 		file "random_builtin.csv";
 	};
