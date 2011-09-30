@@ -50,8 +50,7 @@ typedef struct s_instance {
 		struct {
 			int sockfd;
 		} socket;
-	} cnxinfo
-
+	} cnxinfo;
 	struct s_instance *next; 
 } instance;
 
