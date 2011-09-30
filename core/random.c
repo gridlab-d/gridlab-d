@@ -1048,6 +1048,7 @@ int random_test(void)
 
 static randomvar *randomvar_list = NULL;
 static unsigned int n_randomvars = 0;
+clock_t randomvar_synctime = 0;
 
 int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 {
@@ -1206,11 +1207,13 @@ TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 {
 	randomvar *var;
 	TIMESTAMP t2 = TS_NEVER;
+	clock_t ts = clock();
 	for (var=randomvar_list; var!=NULL; var=var->next)
 	{
 		TIMESTAMP t3 = randomvar_sync(var,t1);
 		if (t3<t2) t2 = t3;
 	}
+	randomvar_synctime += clock() - ts;
 	return t2;
 }
 
