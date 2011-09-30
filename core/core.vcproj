@@ -956,11 +956,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 			</Filter>
@@ -1431,6 +1431,43 @@
 						>
 					</File>
 				</Filter>
+			</Filter>
+			<Filter
+				Name="HTML"
+				>
+				<File
+					RelativePath=".\rt\about.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\rt\config.js"
+					>
+				</File>
+				<File
+					RelativePath=".\rt\eula.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\rt\file_dialog.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\rt\gridlabd.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\rt\gridlabd.jpg"
+					>
+				</File>
+				<File
+					RelativePath=".\rt\main.htm"
+					DeploymentContent="true"
+					>
+				</File>
 			</Filter>
 		</Filter>
 	</Files>

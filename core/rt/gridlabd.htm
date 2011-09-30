@@ -1,0 +1,131 @@
+<html>
+
+<HEAD>
+<LINK REL="stylesheet" TYPE="text/css" HREF="gridlabd.css" />
+<TITLE>GridLAB-D Server Controller</TITLE>
+</HEAD>
+
+<script language="javascript" src="config.js"></script>
+<script language="javascript" src="gridlabd.js"></script>
+
+<script language="javascript">
+window.resizeTo(590,400);
+window.moveTo(10,10);
+GLDSetGlobal("verbose",verbose);
+GLDSetGlobal("debug",debug);
+var mainwnd = null;
+var connected_to = null;
+
+/////////////////////////////////////////////////////////////////////////////
+// main window handling
+window.onload = server_connect;
+window.onunload = shutdown_server; // this ensures the server is dealt with appropriately
+window.onbeforeunload = confirm_close; // this will confirm the unload event
+var no_confirm = false; // used to block second confirm when button call window.close
+function shutdown_server()
+{
+    if ( mls!=null && !confirm("Session on "+hostname+":"+portnum+" is still active\n\nOk to keep session active?\n\n - or -\n\nCancel session?") )
+    {
+        GLDControl("shutdown");
+        mls = null;
+        shutdown.disabled = 1;
+    }
+}
+function confirm_close()
+{
+    if ( !no_confirm ) window.close();
+    if ( mainwnd ) mainwnd.close();
+}
+function server_connect(servername)
+{
+    if (servername==0) // open a new connection
+    {
+        url = GLDDialog("connect_dialog.htm",connected_to,"dialogHeight:200, dialogWidth:300, unadorned:1, status:0, resizable:1");
+        if ( url==null)
+            return;
+    }
+    if (servername==null)
+        servername = connected_to;
+    if (servername==null)
+        servername = server;
+    if ( GLDConnect(servername,heartbeat) )
+    {
+        mainwnd = window.open(main+"?server="+servername,"mainwnd","channelmode="+channelmode+";"+"directories="+directories+";"+"fullscreen="+fullscreen+";"+"location="+location+";"+"menubar="+menubar+";"+"resizable="+resizable+";"+"scrollbars="+scrollbars+";"+"titlebar="+titlebar+";"+"toolbar="+toolbar+";");
+        if ( mainwnd )
+        {
+            connected_to = servername;
+            mainwnd.moveTo(600,10);
+            mainwnd.resizeTo(900,1200);
+        }
+        else
+            alert("Unable to open window for connection to "+servername);
+    }
+    else
+    {
+        alert("Unable to open connection to "+servername);
+    }
+}
+GLDSetRefreshCallback("refresh_state();");
+
+function refresh_state()
+{
+    state.value = GLDGetGlobal("mainloop_state");
+    clock.value = GLDGetGlobal("clock");
+    model.value = GLDGetGlobal("modelname");
+}
+</script>
+
+<body>
+
+<table>
+<tr><td>
+
+<select name="server" size=10 ondblclick="server_connect(this.value);">
+<optgroup label="Active servers">
+<option value="localhost:6267" selected>Local machine (primary)</option>
+</optgroup>
+<optgroup label="Inactive servers">
+<option value="localhost:6268">Local machine (secondary)</option>
+</optgroup>
+<option value=0>(new connection)</option>
+</select>
+
+</td><td>
+
+<table>
+
+<tr><th>
+Model:
+</th><td>
+<input type=text name=model />
+</td></tr>
+
+<tr><th>
+Status:
+</th><td>
+<input type=text name=state />
+</td></tr>
+
+<tr><th>
+Clock:
+</th><td>
+<input type=text name=clock />
+</td></tr>
+
+<tr><th>
+Command:
+</th><td>
+<input type=button name=shutdown value="Shutdown" onclick="shutdown_server();" />
+</td></tr>
+
+</table>
+
+</td>
+</tr>
+
+</table>
+
+
+
+</body>
+</html>

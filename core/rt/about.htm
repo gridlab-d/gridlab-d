@@ -1,0 +1,52 @@
+<HTML>
+
+<HEAD>
+<LINK REL="stylesheet" TYPE="text/css" HREF="gridlabd.css" />
+</HEAD>
+
+<script language="javascript" src="gridlabd.js"></script>
+
+<script language=javascript>
+var server = GLDGetDialogServer(window);
+var args = GLDGetDialogArgs(window);
+if ( server!=null ) GLDConnect(server.hostname,server.portnum);
+function open_eula()
+{
+    window.open("eula.htm","eula","height=600,width=500,resizable=no,toolbar=no,status=no");
+}
+</script>
+
+<BODY class="splash">
+<IMG SRC="gridlabd.jpg" />
+<H1>GridLAB-D 
+<script language="javascript">
+    version = GLDVersion();
+    document.writeln(version);
+</script>
+</H1>
+Copyright (C) 2011, Battelle Memorial Institute<BR>
+All Rights Reserved<BR/><BR />
+<script language="javascript">
+    if ( server==null )
+        document.writeln( "Server is not connected." );
+    else
+        document.writeln( "Server http://" + hostname + ":" + portnum + "/" );
+</script>
+<HR/>
+
+By using GridLAB-D you are agreeing to the 
+<A class="eula" onclick="open_eula();" >End-User License Agreement</A>.
+<P/>
+<center><input type="button" onclick="window.close();" value="Ok"/></center>
+
+<HR />
+
+Note: if your browser's security is disrupting GridLAB-D displays, you may need to 
+allow active content to run in files on My Computer and restart the browser.
+
+<script language=javascript>
+window.focus();
+</script>
+
+</BODY>
+</HTML>

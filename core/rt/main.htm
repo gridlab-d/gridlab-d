@@ -1,0 +1,204 @@
+<HTML>
+
+<HEAD>
+<LINK REL="stylesheet" TYPE="text/css" HREF="gridlabd.css" />
+<TITLE>GridLAB-D GUI 3.0</TITLE>
+</HEAD>
+
+<body>
+
+<script language="javascript" src="gridlabd.js"></script>
+
+<script language="javascript">
+
+// standard configuration
+var hostname = "localhost";
+var portnum = "6267";
+var helpwnd = null;
+
+function do_menu(obj)
+{
+    call = obj.value;
+    obj.selectedIndex = 0;
+    eval(call);
+}
+</script>
+
+<FORM name="menu">
+
+<script language=javascript>
+function do_file_new()
+{
+    alert("This function is not implemented yet");
+}
+function do_file_open()
+{
+    GLDDialog("file_dialog.htm","gridlabd.glm","dialogHeight:200, dialogWidth:300, unadorned:1, status:0, resizable:1");
+}
+function do_file_close()
+{
+    alert("This function is not implemented yet");
+}
+function do_file_save()
+{
+    alert("This function is not implemented yet");
+}
+function do_file_saveas()
+{
+    alert("This function is not implemented yet");
+}
+function do_file_preferences()
+{
+    alert("This function is not implemented yet");
+}
+function do_file_exit()
+{
+    no_confirm=true; 
+    window.close();
+}
+
+</script>
+
+<select class="menu" name="file_menu" onchange="do_menu(this);">
+<option selected>File</option>
+<option value="do_file_new();">New</option>
+<option value="do_file_open();">Open</option>
+<option value="do_file_close();">Close</option>
+<option disabled>----</option>
+<option value="do_file_save();">Save</option>
+<option value="do_file_saveas();">Save as</option>
+<option disabled>----</option>
+<option value="do_file_preferences();">Preferences</option>
+<option disabled>----</option>
+<option value="do_file_exit();">Exit</option>
+</select>
+
+<select class="menu" name="edit_menu" onchange="do_menu(this);">
+<option selected>Edit</option>
+</select>
+
+<select class="menu" name="view_menu" onchange="do_menu(this);">
+<option selected>View</option>
+</select>
+
+<select class="menu" name="project_menu" onchange="do_menu(this);">
+<option selected>Project</option>
+</select>
+
+<select class="menu" name="run_menu" onchange="do_menu(this);">
+<option selected>Run</option>
+</select>
+
+<select class="menu" name="tools_menu" onchange="do_menu(this);">
+<option selected>Tools</option>
+</select>
+
+<select class="menu" name="window_menu" onchange="do_menu(this);">
+<option selected>Window</option>
+</select>
+
+<script language=javascript>
+function open_helpwnd(url)
+{
+    helpwnd = window.open(url,"helpwnd");
+    if ( helpwnd )
+    {
+        helpwnd.moveTo(window.screenX+window.screen.width,window.screen.Y);
+        helpwnd.resizeTo(window.screen.width,window.screen.height);
+        helpwnd.focus();
+    }
+}
+function do_help_about()
+{
+    GLDDialog("about.htm");
+}
+function do_help_index()
+{
+    open_helpwnd("http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Index");
+}
+function do_help_main()
+{
+    open_helpwnd("http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Main_Page");
+}
+function do_help_events()
+{
+    open_helpwnd("http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=gridlab-d:Current_events");
+}
+function do_help_community()
+{
+    open_helpwnd("http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=gridlab-d:Community_Portal");
+}
+function do_help_downloads()
+{
+    open_helpwnd("http://sourceforge.net/projects/gridlab-d/files/");
+}
+function do_help_documentation()
+{
+    open_helpwnd("http://www.gridlabd.org/documents/doxygen/latest_dev/index.html");
+}
+function do_help_bugreports()
+{
+    open_helpwnd("http://apps.sourceforge.net/trac/gridlab-d/");
+}
+function do_help_source()
+{
+    open_helpwnd("http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/");
+}
+function do_help_troubleshooting()
+{
+    open_helpwnd("http://gridlab-d.sourceforge.net/troubleshooting/");
+}
+function do_help_forums()
+{
+    open_helpwnd("http://sourceforge.net/projects/gridlab-d/forums");
+}
+
+</script>
+<select class="menu" name="Help_menu" onchange="do_menu(this);">
+<option selected>Help</option>
+<option value="do_help_index();">Index</option>
+<option value="do_help_main();">Main page</option>
+<option value="do_help_events();">Events</option>
+<option value="do_help_community();">Community</option>
+<option disabled>----</option>
+<option value="do_help_downloads();">Downloads</option>
+<option value="do_help_bugreports();">Bug reports</option>
+<option value="do_help_source();">Source</option>
+<option value="do_help_documentation();">Documentation</option>
+<option value="do_help_troubleshooting();">Troubleshooting</option>
+<option value="do_help_forums();">Forums</option>
+<option disabled>----</option>
+<option value="do_help_about();">About</option>
+</select>
+
+<script language=javascript>
+function open_search()
+{
+    location = "http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:Search/" + menu.search_text.value;
+    helpwnd = window.open(location,"helpwnd");
+    helpwnd.moveTo(window.screenX+screen.width,window.screenY);
+}
+function submit_search(myfield,e)
+{
+    var key;
+    if ( window.event ) key=window.event.keyCode;
+    else if ( e ) key = e.which;
+    else return true;
+    if ( key==13 )
+    {
+        open_search();
+        return false;
+    }
+    else
+        return true;
+}
+</script>
+<INPUT type=text class=menu name="search_text" value="(search key)" onblur="this.select(null);" onfocus="this.select();" onkeypress="return submit_search(this,event);" />
+<INPUT type=button class=menu name="search_button" value="Search" onclick="open_search();" />
+
+</FORM>
+
+<BODY>
+
+</BODY>
+</HTML>

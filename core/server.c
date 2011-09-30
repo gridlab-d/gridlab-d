@@ -33,6 +33,7 @@
 #include "object.h"
 #include "exec.h"
 #include "timestamp.h"
+#include "load.h"
 
 #include "legal.h"
 
@@ -77,7 +78,7 @@ int GetLastError()
 #endif
 
 void server_request(int);	// Function to handle clients' request(s)
-void http_response(SOCKET);
+void *http_response(void *ptr);
 
 /** Send the data to the client
 	@returns the number of bytes sent if successful, -1 if failed (errno is set).
@@ -106,6 +107,8 @@ static size_t recv_data(SOCKET s,char *buffer, size_t len)
 /** Main server wait loop 
     @returns a pointer to the status flag
  **/
+static unsigned int n_threads = 0;
+static pthread_t thread_id;
 static void *server_routine(void *arg)
 {
 	static int status = 0;
@@ -140,7 +143,9 @@ static void *server_routine(void *arg)
 #else
 			output_verbose("accepting incoming connection from on port %d",cli_addr.sin_port);
 #endif
-			http_response(newsockfd);
+
+			if ( pthread_create(&thread_id,NULL, http_response,(void*)newsockfd)!=0 )
+				output_error("unable to start http response thread");
 			if (global_server_quit_on_close)
 				shutdown_now();
 			else
@@ -1139,9 +1144,24 @@ int http_control_request(HTTP *http, char *action)
 			return 0;
 		}
 	}
+	else if ( strcmp(action,"shutdown")==0 )
+	{
+		output_message("server shutdown by client");
+		exit(0);
+	}
 	return 0;
 }
 
+/** Process an incoming main loop control request
+    @returns non-zero on success, 0 on failure (errno set)
+ **/
+int http_open_request(HTTP *http, char *action)
+{
+	if ( loadall(action) )
+		return 1;
+	else
+		return 0;
+}
 /** Process an incoming favicon request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
@@ -1159,8 +1179,9 @@ int http_favicon(HTTP *http)
 /** Process an incoming request
 	@returns nothing
  **/
-void http_response(SOCKET fd)
+void *http_response(void *ptr)
 {
+	SOCKET fd = (SOCKET)ptr;
 	HTTP *http = http_create(fd);
 	size_t len;
 	int content_length = 0;
@@ -1251,6 +1272,7 @@ void http_response(SOCKET fd)
 			} map[] = {
 				/* this is the map of recognize request types */
 				{"/control/",	http_control_request,	HTTP_ACCEPTED, HTTP_NOTFOUND},
+				{"/open/",		http_open_request,		HTTP_ACCEPTED, HTTP_NOTFOUND},
 				{"/xml/",		http_xml_request,		HTTP_OK, HTTP_NOTFOUND},
 				{"/gui/",		http_gui_request,		HTTP_OK, HTTP_NOTFOUND},
 				{"/output/",	http_output_request,	HTTP_OK, HTTP_NOTFOUND},
@@ -1306,6 +1328,7 @@ Next:
 	}
 	http_close(http);
 	output_verbose("socket %d closed",http->s);
+	return 0;
 }
 
 

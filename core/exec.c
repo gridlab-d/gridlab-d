@@ -688,9 +688,12 @@ static pthread_cond_t mls_signal;
 
 void exec_mls_init(void)
 {
-	sched_update(global_clock,global_mainloopstate=MLS_INIT);
 	pthread_mutex_init(&mls_lock,NULL);
 	pthread_cond_init(&mls_signal,NULL);
+	if (global_mainloopstate==MLS_PAUSED)
+		exec_mls_suspend();
+	else
+		sched_update(global_clock,global_mainloopstate);
 }
 
 void exec_mls_suspend(void)
@@ -700,7 +703,7 @@ void exec_mls_suspend(void)
 		output_warning("suspending simulation with no server active to receive resume command");
 	pthread_mutex_lock(&mls_lock);
 	sched_update(global_clock,global_mainloopstate=MLS_PAUSED);
-	while ( global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER ) 
+	while ( global_clock==TS_ZERO || (global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER) ) 
 		pthread_cond_wait(&mls_signal, &mls_lock);
 	sched_update(global_clock,global_mainloopstate=MLS_RUNNING);
 	pthread_mutex_unlock(&mls_lock);
@@ -754,6 +757,9 @@ STATUS exec_start(void)
 	OBJECT *obj;
 
 	int nObjRankList, iObjRankList;
+
+	/* initialize the main loop state control */
+	exec_mls_init();
 
 	/* check for a model */
 	if (object_get_count()==0)
@@ -909,9 +915,6 @@ STATUS exec_start(void)
 
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
 		int running; /* split into two tests to make it easier to tell what's going on */
-
-		/* initialize the main loop state control */
-		exec_mls_init();
 
 		while ( running = (sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0),
 			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 

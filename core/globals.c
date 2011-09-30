@@ -67,6 +67,9 @@ static struct s_varmap {
 	/** @todo make this list the authorative list and retire the global_* list (ticket #25) */
 	{"version.major", PT_int32, &global_version_major, PA_REFERENCE},
 	{"version.minor", PT_int32, &global_version_minor, PA_REFERENCE},
+	{"version.patch", PT_int32, &global_version_patch, PA_REFERENCE},
+	{"version.build", PT_int32, &global_version_build, PA_REFERENCE},
+	{"version.branch", PT_char32, &global_version_branch, PA_REFERENCE},
 	{"command_line", PT_char1024, &global_command_line, PA_REFERENCE},
 	{"environment", PT_char1024, &global_environment, PA_REFERENCE},
 	{"quiet", PT_int32, &global_quiet_mode, PA_PUBLIC},
@@ -137,6 +140,7 @@ static struct s_varmap {
 	{"mainloop_state", PT_enumeration, &global_mainloopstate, PA_PUBLIC, mls_keys},
 	{"pauseat", PT_timestamp, &global_mainlooppauseat, PA_PUBLIC},
 	{"infourl", PT_char1024, &global_infourl, PA_PUBLIC},
+	{"autostart_gui", PT_int32, &global_autostartgui, PA_PUBLIC},
 	/* add new global variables here */
 };
 

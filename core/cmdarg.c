@@ -193,6 +193,43 @@ static int help(int argc, char *argv[]);
  * one). A return value of -1 indicates that processing must stop immediately.
  *
  */
+
+static STATUS no_cmdargs()
+{
+	char htmlfile[1024];
+	if ( global_autostartgui && find_file("gridlabd.htm",NULL,FF_READ,htmlfile,sizeof(htmlfile)-1)!=NULL )
+	{
+		char cmd[1024];
+
+		/* enter server mode and wait */
+#ifdef WIN32
+		if ( htmlfile[2]!=':' )
+			sprintf(htmlfile,"%s\\gridlabd.htm", global_workdir);
+		output_message("opening html page '%s'", htmlfile);
+		sprintf(cmd,"start %s file:///%s", global_browser, htmlfile);
+#elif defined(MACOSX)
+		sprintf(cmd,"open -a %s file:///%s", global_browser, htmlfile);
+#else
+		sprintf(cmd,"%s 'file:///%s' & ps -p $! >/dev/null", global_browser, htmlfile);
+#endif
+		output_verbose("Starting browser using command [%s]", cmd);
+		if (system(cmd)!=0)
+		{
+			output_error("unable to start browser");
+			return FAILED;
+		}
+		else
+			output_verbose("starting interface");
+		strcpy(global_environment,"server");
+		global_mainloopstate = MLS_PAUSED;
+		return SUCCESS;
+	}
+	else
+		output_error("default html file '%s' not found (workdir='%s')", "gridlabd.htm",global_workdir);
+
+	return SUCCESS;
+}
+
 static int copyright(int argc, char *argv[])
 {
 	legal_notice();
@@ -1064,6 +1101,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 {
 	STATUS status = SUCCESS;
 
+	/* special case for no args */
+	if (argc==1)
+		return no_cmdargs();
+
+	/* process command arguments */
 	while (argv++,--argc>0)
 	{
 		int found = 0;

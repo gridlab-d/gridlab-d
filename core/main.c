@@ -64,7 +64,10 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	char *pd1, *pd2;
 	int i, pos=0;
 	char *browser = getenv("GLBROWSER");
-
+	char *buildinfo = strstr(BUILD,":");
+	
+	global_version_build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
+	strcpy(global_version_branch,BRANCH);
 	global_process_id = getpid();
 
 	if ( browser!= NULL )

@@ -47,6 +47,9 @@ void global_dump(void);
 /* MAJOR and MINOR version */
 GLOBAL unsigned global_version_major INIT(REV_MAJOR); /**< The software's major version */
 GLOBAL unsigned global_version_minor INIT(REV_MINOR); /**< The software's minor version */
+GLOBAL unsigned global_version_patch INIT(REV_PATCH); /**< The software's patch version */
+GLOBAL unsigned global_version_build INIT(0); /**< The software's build number */
+GLOBAL char global_version_branch[32] INIT(""); /**< The software's branch designator */
 
 GLOBAL char global_command_line[1024]; /**< The current command-line */
 GLOBAL char global_environment[1024] INIT("batch"); /**< The processing environment in use */
@@ -127,6 +130,8 @@ GLOBAL char global_platform[8] /**< the host operating platform */
 
 #ifdef WIN32
 	INIT("WINDOWS");
+#elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
+	INIT("MACOSX");
 #else
 	INIT("LINUX");
 #endif
@@ -180,6 +185,8 @@ GLOBAL int global_mainloopstate INIT(MLS_INIT); /**< main loop processing state 
 GLOBAL TIMESTAMP global_mainlooppauseat INIT(TS_NEVER); /** time at which to pause main loop */
 
 GLOBAL char global_infourl[1024] INIT("http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:Search/"); /** URL for info calls */
+
+GLOBAL int global_autostartgui INIT(1); /** autostart GUI when no command args are given */
 
 #ifdef __cplusplus
 }

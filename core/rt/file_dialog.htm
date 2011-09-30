@@ -1,0 +1,142 @@
+<HTML>
+
+<HEAD>
+<LINK REL="stylesheet" TYPE="text/css" HREF="gridlabd.css" />
+</HEAD>
+
+<script language="javascript" src="gridlabd.js"></script>
+
+<script language=javascript>
+var server = GLDGetDialogServer(window);
+var args = GLDGetDialogArgs(window);
+var choice;
+if ( server!=null ) GLDConnect(server.hostname,server.portnum);
+window.onload = window_init;
+function window_init()
+{
+    choose(4);
+}
+</script>
+
+<BODY class="dialog">
+
+<table>
+
+<tr><td width="100%" colspan=2>
+<script language=javascript>
+function on_folder(select)
+{
+}
+</script>
+
+<nowrap>
+&nbsp;Look in:&nbsp;<select name="folder" onchange="on_folder(this);">
+<option value="C:\">C:\</option>
+<option value="C:\GridLAB-D\">C:\GridLAB-D\</option>
+<option value="C:\GridLAB-D\trunk">C:\GridLAB-D\trunk</option>
+<option value="C:\GridLAB-D\trunk\core">C:\GridLAB-D\trunk\core</option>
+<option value="C:\GridLAB-D\trunk\core\rt" selected>C:\GridLAB-D\trunk\core\rt</option>
+</select>
+</nowrap>
+
+</td></tr>
+
+<tr><td width="20%">
+<nowrap>
+
+<script language=javascript>
+function on_location(select)
+{
+}
+</script>
+<select size=25 onchange="on_location(this);">
+<optgroup label="Local">
+<option "Drive C">Drive C</option>
+</optgroup>
+<optgroup label="Servers">
+<option value="localhost:6267" selected>localhost:6267</option>
+</optgroup>
+</select>
+
+</td><td width="80%">
+
+<script language=javascript>
+function choose(num)
+{
+    choice = num;
+    file.selectedIndex=num;
+    date.selectedIndex=num;
+//    type.selectedIndex=num;
+    size.selectedIndex=num;
+    selection.value = file.value;
+}
+function sort(field)
+{
+    choose(choice);
+}
+function on_choose(select)
+{
+    if (select.selectedIndex>0)
+        choose(select.selectedIndex);
+    else if (select.selectedIndex==0)
+        sort(select);
+}
+</script>
+
+<select size=23 name="file" onchange="on_choose(this);">
+<option value=0>Name</option>
+<option value="..">..</option>
+<option value="test">test</option>
+<option value="gridlabd.htm">gridlabd.htm</option>
+<option value="myfile.glm">myfile.glm</option>
+</select>
+<select size=23 name="date" onchange="on_choose(this);">
+<option value=0>Date</option>
+<option value=".."></option>
+<option value="test">9/15 13:20</option>
+<option value="gridlabd.htm">7:15:20 PDT</option>
+<option value="myfile.glm">9:23:48 PDT</option>
+<select size=23>
+</select>
+<!--select size=23 name="type" onchange="on_choose(this);">
+<option value=0>Type</option>
+<option value="..">Parent folder</option>
+<option value="test">Folder</option>
+<option value="gridlabd.htm">HTML file</option>
+<option value="myfile.glm">GLM file</option>
+</select-->
+<select size=23 name="size" onchange="on_choose(this);">
+<option value=0>Size</option>
+<option value="..">18 files</option>
+<option value="test">7 files</option>
+<option value="gridlabd.htm">1.2 kB</option>
+<option value="myfile.glm"> 12 kB</option>
+</select>
+
+</nowrap>
+</td></tr>
+
+<script>
+function on_open()
+{
+    window.close();
+}
+function on_cancel()
+{
+    window.close();
+}
+</script>
+<tr><td width="20%">
+<input type="button" value="Open" onclick="on_open();"/><br />
+<input type="button" value="Cancel" onclick="on_cancel();" />
+</td><td width=80%">
+<input type="text" name="selection" /> 
+</td></tr>
+</table>
+
+<script language=javascript>
+window.focus();
+</script>
+
+</BODY>
+</HTML>
