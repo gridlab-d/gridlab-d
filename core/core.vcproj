@@ -599,6 +599,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\instance.c"
+				>
+			</File>
+			<File
 				RelativePath=".\interpolate.c"
 				>
 			</File>
@@ -785,6 +789,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\instance.h"
+				>
+			</File>
+			<File
 				RelativePath=".\interpolate.h"
 				>
 			</File>
@@ -921,15 +929,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\x86\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -956,11 +964,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>
