@@ -140,6 +140,8 @@ static struct s_varmap {
 	{"mainloop_state", PT_enumeration, &global_mainloopstate, PA_PUBLIC, mls_keys},
 	{"pauseat", PT_timestamp, &global_mainlooppauseat, PA_PUBLIC},
 	{"infourl", PT_char1024, &global_infourl, PA_PUBLIC},
+	{"hostname", PT_char1024, &global_hostname, PA_PUBLIC},
+	{"hostaddr", PT_char32, &global_hostaddr, PA_PUBLIC},
 	{"autostart_gui", PT_int32, &global_autostartgui, PA_PUBLIC},
 	/* add new global variables here */
 };

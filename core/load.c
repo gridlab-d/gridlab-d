@@ -2333,6 +2333,22 @@ static int expanded_value(char *text, char *result, int size, char *delims)
 					strcpy(value,current_object?current_object->oclass->name:"");
 				else if (strcmp(varname,"gridlabd")==0)
 					strcpy(value,global_execdir);
+				else if (strcmp(varname,"hostname")==0)
+					strcpy(value,global_hostname); 
+				else if (strcmp(varname,"hostaddr")==0)
+					strcpy(value,global_hostaddr); 
+				else if (strcmp(varname,"cpu")==0)
+					sprintf(value,"%d",sched_get_cpuid()); 
+				else if (strcmp(varname,"pid")==0)
+					sprintf(value,"%d",sched_get_procid()); 
+				else if (strcmp(varname,"port")==0)
+					sprintf(value,"%d",global_server_portnum);
+				else if (strcmp(varname,"mastername")==0)
+					strcpy(value,"localhost"); /* @todo copy actual master name */
+				else if (strcmp(varname,"masteraddr")==0)
+					strcpy(value,"127.0.0.1"); /* @todo copy actual master addr */
+				else if (strcmp(varname,"masterport")==0)
+					strcpy(value,"6267"); /* @todo copy actual master port */
 				else if (strcmp(varname,"id")==0)
 				{
 					if (current_object)

@@ -873,6 +873,14 @@ typedef struct s_gldprocinfo {
 
 static GLDPROCINFO *process_map = NULL; /* global process map */
 static unsigned short my_proc=0; /* processor assigned to this process */
+unsigned short sched_get_cpuid()
+{
+	return my_proc;
+}
+unsigned short sched_get_procid()
+{
+	return process_map[my_proc].pid;
+}
 
 void sched_lock(unsigned short proc)
 {
