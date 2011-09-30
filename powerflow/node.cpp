@@ -357,16 +357,7 @@ int node::init(OBJECT *parent)
 				c_phase_to_check = (phases & (~(PHASE_D | PHASE_N)));
 
 				//May not necessarily be a failure, let's investiage
-				if ((phases & PHASE_D) && ((parNode->phases & (PHASE_A|PHASE_B|PHASE_C)) != (PHASE_A|PHASE_B|PHASE_C)))	//We're a delta
-				{
-					GL_THROW("NR: Parent and child node phases for nodes %s and %s do not match!",obj->parent->name,obj->name);
-					/*	TROUBLESHOOT
-					The implementation of parent-child connections in Newton-Raphson requires the child
-					object have the same phases as the parent.  Match the phases appropriately.  For a delta-connected
-					child, the parent must be delta connected or contain all three "normal" phases.
-					*/
-				}
-				else if ((p_phase_to_check & c_phase_to_check) != c_phase_to_check)	//Our parent is lacking, fail
+				if ((p_phase_to_check & c_phase_to_check) != c_phase_to_check)	//Our parent is lacking, fail
 				{
 					GL_THROW("NR: Parent and child node phases for nodes %s and %s do not match!",obj->parent->name,obj->name);
 					//Defined above
@@ -660,7 +651,7 @@ int node::init(OBJECT *parent)
 			*/
 
 			mean_repair_time = 0.0;	//Set to zero by default
-	}
+		}
 	}
 	else if (solver_method==SM_GS)
 	{
@@ -900,7 +891,7 @@ int node::init(OBJECT *parent)
 	if (bustype==SWING || bustype==PV)
 		busflags |= NF_HASSOURCE;
 
-	//Pre-zero non existant phases
+	//Pre-zero non existant phases - deltas handled by phase (for open delta)
 	if (has_phase(PHASE_S))	//Single phase
 	{
 		if (has_phase(PHASE_A))
@@ -941,7 +932,7 @@ int node::init(OBJECT *parent)
 
 		voltage[2] = complex(0,0);	//Ground always assumed it seems
 	}
-	else if ((has_phase(PHASE_A|PHASE_B|PHASE_C)) || (has_phase(PHASE_D)))	//three phase or delta
+	else if (has_phase(PHASE_A|PHASE_B|PHASE_C))	//three phase
 	{
 		if (voltage[0] == 0)
 		{
