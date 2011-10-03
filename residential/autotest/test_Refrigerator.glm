@@ -1,0 +1,285 @@
+// $id$
+//	Copyright (C) 2008 Battelle Memorial Institute
+
+// 4 Node Feeder: Unbalanced step-down grY-grY
+
+////////////////////////////////////////////////////////
+// BEGIN
+////////////////////////////////////////////////////////
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-03 23:00:00';
+	timezone EST+5EDT;
+}
+#set profiler=1
+#set relax_naming_rules=1
+#set savefile=dryer_test.xml
+#define TIME_INT=60
+#set randomseed=10
+#include "../Refrigerator.glm";
+
+
+module tape;
+module generators;
+module assert;
+module powerflow {
+	solver_method FBS;
+};
+module climate;
+module residential {
+	implicit_enduses NONE;
+};
+
+schedule waterdemand3 {
+     * 0-5 * * * 0;
+     0-16 6 * * * 0;
+     17-34 6 * * * 0.1;
+     35-59 6 * * * 0.6;
+     0-11 7 * * * 0.4;
+     12-59 7 * * * 0;
+     * 8-16 * * * 0;
+     * 17 * * * 1;
+     0-7 18 * * * 0.5;
+     8-59 18 * * * 0;
+     * 19-23 * * * 0;
+}
+
+object climate {
+     name "San_francisco_CA";
+     tmyfile "../CA-San_francisco.tmy2";
+     interpolate QUADRATIC;
+};
+
+object triplex_line_configuration {
+     name triplex_line_configuration_1;
+     conductor_1 object triplex_line_conductor {
+          resistance 0.97;
+          geometric_mean_radius 0.0111;
+     };
+
+     conductor_2 object triplex_line_conductor {
+          resistance 0.97;
+          geometric_mean_radius 0.0111;
+     };
+     conductor_N object triplex_line_conductor {
+          resistance 0.97;
+          geometric_mean_radius 0.0111;
+     };
+     insulation_thickness 0.08;
+     diameter 0.368;
+}
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration:300 {
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
+}
+
+object transformer_configuration:400 {
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.01;
+}
+
+object node:0 {
+	bustype SWING;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+object regulator:1210 {
+	name 617_0001406_reg;
+	phases ABCN;
+	from node:0;
+	to node:1;
+	sense_node node:2;
+	configuration regulator_configuration:1209;
+}
+
+object regulator_configuration:1209 {
+	connect_type WYE_WYE;
+	band_center 7200; 
+	band_width 100;
+	time_delay 300;
+	raise_taps 16;
+	lower_taps 16;
+	Control MANUAL;//REMOTE_NODE;
+	regulation 0.10;
+	// tap_pos_A -8;  //114 V
+	// tap_pos_B -8;
+	// tap_pos_C -8;
+	tap_pos_A 0;   //120 V
+	tap_pos_B 0;
+	tap_pos_C 0;
+}
+
+
+object node:1 {
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line:12 {
+	phases "ABCN";
+	from node:1;
+	to node:2;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node:2 {
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object transformer:23 {
+	phases "ABCN";
+	from node:2;
+	to node:3;
+	configuration transformer_configuration:400;
+
+}
+
+object node:3 {
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
+}
+
+object overhead_line:34 {
+	phases "ABCN";
+	from node:3;
+	to node:4;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object node:4 {
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
+}
+
+object transformer_configuration {
+	name AS_config;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	powerA_rating 75;
+	primary_voltage 2401;
+	secondary_voltage 120.000;
+	impedance 0.006+0.0136j;
+}
+
+object transformer {
+     name center_tap_1; 
+     phases AS; 
+     from node:4; 
+     to trip_node1; 
+     configuration AS_config;
+}
+
+object triplex_node {
+     name trip_node1; 
+     phases AS; 
+     nominal_voltage 120;
+}
+
+object triplex_line {
+     name trip_line1; 
+     phases AS; 
+     from trip_node1; 
+     to trip_meter2; 
+     length 40; 
+     configuration triplex_line_configuration_1;
+}
+
+object triplex_meter {
+     name trip_meter2; 
+     phases AS; 
+     nominal_voltage 120;
+     object recorder {
+     			property "measured_real_power,measured_reactive_power,voltage_1N.real,voltage_1N.imag";
+     			file meter_output_5.csv;
+     			interval ${TIME_INT};
+     			limit 144000;
+	};
+}
+
+object house {
+     parent trip_meter2;
+     floor_area 2500 sf;
+     heating_setpoint 70.0 degF;
+     cooling_setpoint 120.0 degF;
+     thermostat_deadband 2 degF;
+     air_temperature 65;
+     mass_temperature 65;
+
+	 // turn off everything in the house
+     heating_system_type NONE;
+	cooling_system_type NONE;
+     auxiliary_system_type NONE;
+        
+	 object refrigerator {
+           door_opening_criterion REFRIGERATOR;
+           daily_door_opening 20;          
+           state COMPRESSSOR_OFF_NORMAL;
+           energy_used 13500;
+		   defrost_criterion DOOR_OPENINGS;
+		   delay_defrost_time 600;
+		   door_opening_criterion 24;
+		   	    	
+			object recorder {
+    			file refrigerator_out.csv;
+    			interval 1;
+    			limit 10000000000000;
+    			property refrigerator_power;
+    		};
+			
+			object double_assert{
+				target "refrigerator_power";
+				within 0.1;
+		   		object player {
+					property value;
+		   		   	file ../refrigerator_out.player;
+				};
+
+    		};
+        };
+}
