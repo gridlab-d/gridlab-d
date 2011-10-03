@@ -63,8 +63,7 @@
 CLASS* refrigerator::oclass = NULL;
 CLASS *refrigerator::pclass = NULL;
 
-refrigerator::refrigerator(MODULE *module) 
-: residential_enduse(module)
+refrigerator::refrigerator(MODULE *module) : residential_enduse(module)
 {
 	// first time init
 	if (oclass == NULL)
@@ -74,13 +73,11 @@ refrigerator::refrigerator(MODULE *module)
 		// register the class definition
 		oclass = gl_register_class(module,"refrigerator",sizeof(refrigerator),PC_PRETOPDOWN | PC_BOTTOMUP);
 		if (oclass==NULL)
-			throw "unable to register class refrigerator";
+			GL_THROW("unable to register object class implemented by %s",__FILE__);
 			/* TROUBLESHOOT
 				The file that implements the lights in the residential module cannot register the class.
 				This is an internal error.  Contact support for assistance.
 			 */
-		else
-			oclass->trl = TRL_DEMONSTRATED;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
@@ -90,15 +87,50 @@ refrigerator::refrigerator(MODULE *module)
 			PT_double,"temperature[degF]",PADDR(Tair),
 			PT_double,"setpoint[degF]",PADDR(Tset),
 			PT_double,"deadband[degF]",PADDR(thermostat_deadband),
-			PT_timestamp,"next_time",PADDR(last_time),
+			PT_double,"cycle_time[s]",PADDR(cycle_time),
 			PT_double,"output",PADDR(Qr),
 			PT_double,"event_temp",PADDR(Tevent),
-			PT_double,"UA[Btu.h/degF]",PADDR(UA),
-
-			PT_enumeration,"state",PADDR(motor_state),
-				PT_KEYWORD,"OFF",S_OFF,
-				PT_KEYWORD,"ON",S_ON,
-
+			PT_double,"UA[Btu.h/degF]",PADDR(UA),					
+			PT_double,"compressor_off_normal_energy",PADDR(compressor_off_normal_energy),
+			PT_double,"compressor_off_normal_power[W]",PADDR(compressor_off_normal_power),
+			PT_double,"compressor_on_normal_energy",PADDR(compressor_on_normal_energy),
+			PT_double,"compressor_on_normal_power[W]",PADDR(compressor_on_normal_power),
+			PT_double,"defrost_energy",PADDR(defrost_energy),
+			PT_double,"defrost_power[W]",PADDR(defrost_power),
+			PT_double,"icemaking_energy",PADDR(icemaking_energy),
+			PT_double,"icemaking_power[W]",PADDR(icemaking_power),
+			PT_double,"ice_making_probability",PADDR(ice_making_probability),	
+			PT_int32,"FF_Door_Openings",PADDR(FF_Door_Openings),
+			PT_int32,"door_opening_energy",PADDR(door_opening_energy),
+			PT_int32,"door_opening_power",PADDR(door_opening_power),
+			PT_double,"DO_Thershold",PADDR(DO_Thershold),
+			PT_double,"dr_mode_double",PADDR(dr_mode_double),
+			PT_double,"energy_needed",PADDR(energy_needed),	
+			PT_double,"energy_used",PADDR(energy_used),	
+			PT_double,"refrigerator_power",PADDR(refrigerator_power),		
+			PT_bool,"icemaker_running",PADDR(icemaker_running),	
+			PT_int32,"check_DO",PADDR(check_DO),
+			PT_bool,"is_240",PADDR(is_240),
+			PT_double,"defrostDelayed",PADDR(defrostDelayed),
+			PT_bool,"long_compressor_cycle_due",PADDR(long_compressor_cycle_due),
+			PT_double,"long_compressor_cycle_time",PADDR(long_compressor_cycle_time),
+			PT_double,"long_compressor_cycle_power",PADDR(long_compressor_cycle_power),
+			PT_double,"long_compressor_cycle_energy",PADDR(long_compressor_cycle_energy),
+			PT_double,"long_compressor_cycle_threshold",PADDR(long_compressor_cycle_threshold),
+			PT_enumeration,"defrost_criterion",PADDR(defrost_criterion),
+				PT_KEYWORD,"TIMED",DC_TIMED,	
+				PT_KEYWORD,"DOOR_OPENINGS",DC_DOOR_OPENINGS,				
+				PT_KEYWORD,"COMPRESSOR_TIME",DC_COMPRESSOR_TIME,
+			PT_bool,"run_defrost",PADDR(run_defrost),
+			PT_double,"door_opening_criterion",PADDR(door_opening_criterion),	
+			PT_double,"compressor_defrost_time",PADDR(compressor_defrost_time),
+			PT_double,"delay_defrost_time",PADDR(delay_defrost_time),
+			PT_int32,"daily_door_opening",PADDR(daily_door_opening),			
+			PT_enumeration,"state",PADDR(state),
+				PT_KEYWORD,"DEFROST",RS_DEFROST,	
+				PT_KEYWORD,"COMPRESSSOR_OFF_NORMAL",RS_COMPRESSSOR_OFF_NORMAL,				
+				PT_KEYWORD,"COMPRESSSOR_ON_LONG",RS_COMPRESSSOR_ON_LONG,
+				PT_KEYWORD,"COMPRESSSOR_ON_NORMAL",RS_COMPRESSSOR_ON_NORMAL,
 			NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 	}
@@ -111,6 +143,12 @@ int refrigerator::create()
 	// name of enduse
 	load.name = oclass->name;
 
+	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.voltage_factor = 1.0;
+	load.power_factor = 0.95;
+	load.power_fraction = 1;
+	is_240 = true;	
+
 	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
 
 	return res;
@@ -122,13 +160,13 @@ int refrigerator::init(OBJECT *parent)
 	hdr->flags |= OF_SKIPSAFE;
 
 	// defaults for unset values */
-	if (size==0)				size = gl_random_uniform(RNGSTATE,20,40); // cf
-	if (thermostat_deadband==0) thermostat_deadband = gl_random_uniform(RNGSTATE,2,3);
-	if (Tset==0)				Tset = gl_random_uniform(RNGSTATE,35,39);
+	if (size==0)				size = gl_random_uniform(&hdr->rng_state,20,40); // cf
+	if (thermostat_deadband==0) thermostat_deadband = gl_random_uniform(&hdr->rng_state,2,3);
+	if (Tset==0)				Tset = gl_random_uniform(&hdr->rng_state,35,39);
 	if (UA == 0)				UA = 0.6;
-	if (UAr==0)					UAr = UA+size/40*gl_random_uniform(RNGSTATE,0.9,1.1);
-	if (UAf==0)					UAf = gl_random_uniform(RNGSTATE,0.9,1.1);
-	if (COPcoef==0)				COPcoef = gl_random_uniform(RNGSTATE,0.9,1.1);
+	if (UAr==0)					UAr = UA+size/40*gl_random_uniform(&hdr->rng_state,0.9,1.1);
+	if (UAf==0)					UAf = gl_random_uniform(&hdr->rng_state,0.9,1.1);
+	if (COPcoef==0)				COPcoef = gl_random_uniform(&hdr->rng_state,0.9,1.1);
 	if (Tout==0)				Tout = 59.0;
 	if (load.power_factor==0)		load.power_factor = 0.95;
 
@@ -141,21 +179,83 @@ int refrigerator::init(OBJECT *parent)
 	}
 
 	/* derived values */
-	Tair = gl_random_uniform(RNGSTATE,Tset-thermostat_deadband/2, Tset+thermostat_deadband/2);
+	Tair = gl_random_uniform(&hdr->rng_state,Tset-thermostat_deadband/2, Tset+thermostat_deadband/2);
 
 	// size is used to couple Cw and Qrated
 	Cf = size/10.0 * RHOWATER * CWATER;  // cf * lb/cf * BTU/lb/degF = BTU / degF
 
 	rated_capacity = BTUPHPW * size*10; // BTU/h ... 10 BTU.h / cf (34W/cf, so ~700 for a full-sized refrigerator)
 
-	// duty cycle estimate for initial condition
-	if (gl_random_bernoulli(RNGSTATE,0.1)){
-		Qr = rated_capacity;
-	} else {
-		Qr = 0;
+	start_time = 0;
+
+	if(compressor_off_normal_energy==0) compressor_off_normal_energy=15*45*60; //watt-secs
+	if(compressor_off_normal_power==0) compressor_off_normal_power=15; //watt
+
+	if(long_compressor_cycle_energy==0) long_compressor_cycle_energy=120*100*60; //watt-secs
+	if(long_compressor_cycle_power==0) long_compressor_cycle_power=120; //watt
+
+	if(compressor_on_normal_energy==0) compressor_on_normal_energy=120*35*60; //watt-secs
+	if(compressor_on_normal_power==0) compressor_on_normal_power=120; //watt
+
+	if(defrost_energy==0) defrost_energy=40*550*60; //watt-secs
+	if(defrost_power==0) defrost_power=550; //watt
+
+	if(icemaking_energy==0) icemaking_energy=300*60; //watt-secs
+	if(icemaking_power==0) icemaking_power=300; //watt
+
+	if(ice_making_probability==0) ice_making_probability=0.02; //watt
+	
+	if(DO_Thershold==0) DO_Thershold=24; 	
+	if(long_compressor_cycle_threshold==0) long_compressor_cycle_threshold=0.05;
+
+	if(FF_Door_Openings==0) FF_Door_Openings=0;
+
+	if(door_opening_power==0) door_opening_power=16;
+
+	if(delay_defrost_time==0) delay_defrost_time=28800;	
+
+	if(defrost_criterion==0) defrost_criterion=DC_TIMED;	
+	
+	refrigerator_power = 0;
+
+	return_time = 0;
+
+	no_of_defrost = 0;
+
+	total_compressor_time = 0;
+
+	if(door_open_time==0) door_open_time=7;
+	
+	long_compressor_cycle_due=false;
+	door_energy_calc = false;
+
+	ice_making_time = new double[1,2,3]; 
+
+	icemaker_running = false;
+	check_defrost = false;
+
+	switch(state){
+		case RS_DEFROST:
+			if(energy_needed==0) energy_needed = defrost_energy;
+			cycle_time = ceil((energy_needed - energy_used)/defrost_power);
+		break;
+		case RS_COMPRESSSOR_OFF_NORMAL:
+			if(energy_needed==0) energy_needed = compressor_off_normal_energy;
+			cycle_time = ceil((energy_needed - energy_used)/compressor_off_normal_power);
+		break;		
+		case RS_COMPRESSSOR_ON_NORMAL:
+			if(energy_needed==0) energy_needed = compressor_on_normal_energy;
+			cycle_time = ceil((energy_needed - energy_used)/compressor_on_normal_power);
+		break;		
 	}
 
-	// initial demand
+	run_defrost = false;
+
+	if (is_240)
+	{
+		load.config = EUC_IS220;
+	}
+
 	load.total = Qr * KWPBTUPH;
 
 	return residential_enduse::init(parent);
@@ -167,30 +267,14 @@ int refrigerator::isa(char *classname)
 }
 
 TIMESTAMP refrigerator::presync(TIMESTAMP t0, TIMESTAMP t1){
+
 	OBJECT *hdr = OBJECTHDR(this);
-	double t = 0.0, dt = 0.0;
-	double nHours = (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND;
 
-	Tout = *pTout;
-
-	if(nHours > 0 && t0 > 0){ /* skip this on TS_INIT */
-		const double COP = COPcoef*((-3.5/45)*(Tout-70)+4.5); /* come from ??? */
-
-		if(t1 == next_time){
-			/* lazy skip-ahead */
-			load.heatgain = (-((Tair - Tout) * exp(-(UAr+UAf)/Cf) + Tout - Tair) * Cf + Qr * COP) * KWPBTUPH;
-			Tair = Tevent;
-		} else {
-			/* run calculations */
-			const double C1 = Cf/(UAr+UAf);
-			const double C2 = Tout - Qr/UAr;
-			load.heatgain = (-((Tair - Tout) * exp(-(UAr+UAf)/Cf) + Tout - Tair) * Cf  + Qr * COP) * KWPBTUPH;;
-			Tair = (Tair-C2)*exp(-nHours/C1)+C2;
-		}
-		if (Tair < 32 || Tair > 55)
-			throw "refrigerator air temperature out of control";
-		last_time = t1;
-	}
+	if(start_time==0)
+	{
+		start_time = int32(t0);
+		DO_random_opening = int32(gl_random_uniform(&hdr->rng_state,0,1800));
+	}	
 
 	return TS_NEVER;
 }
@@ -199,70 +283,473 @@ TIMESTAMP refrigerator::presync(TIMESTAMP t0, TIMESTAMP t1){
 /* exclusively modifies Tevent and motor_state, nothing the reflects current properties
  * should be affected by the PLC code. */
 void refrigerator::thermostat(TIMESTAMP t0, TIMESTAMP t1){
-	const double Ton = Tset+thermostat_deadband / 2;
-	const double Toff = Tset-thermostat_deadband / 2;
 
-	// determine motor state & next internal event temperature
-	if(motor_state == S_OFF){
-		// warm enough to need cooling?
-		if(Tair >= Ton){
-			motor_state = S_ON;
-			Tevent = Toff;
-		} else {
-			Tevent = Ton;
-		}
-	} else if(motor_state == S_ON){
-		// cold enough to let be?
-		if(Tair <= Toff){
-			motor_state = S_OFF;
-			Tevent = Ton;
-		} else {
-			Tevent = Toff;
-		}
-	}
 }
 
 TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	double nHours = (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND;
-	double t = 0.0, dt = 0.0;
+		double dt0 = gl_toseconds(t0>0?t1-t0:0);
 
-	const double COP = COPcoef*((-3.5/45)*(Tout-70)+4.5);
+		// if advancing from a non-init condition
+		if (t0>TS_ZERO && t1>t0)
+		{
+			// compute the total energy usage in this interval
+			load.energy += load.total * dt0/3600.0;
+		
+		}
+			
+		double dt1 = update_refrigerator_state(dt0, t1);
 
-	// change control mode if appropriate
-	if(motor_state == S_ON){
-		Qr = rated_capacity;
-	} else if(motor_state == S_OFF){
-		Qr = 0;
-	} else{
-		throw "refrigerator motor state is ambiguous";
-	}
+		return dt1>0?-(TIMESTAMP)(dt1*TS_SECOND+t1):TS_NEVER; 	
 
-	// calculate power from motor state
-	load.power = Qr * KWPBTUPH * COP;
-
-	// compute constants
-	const double C1 = Cf/(UAr+UAf);
-	const double C2 = Tout - Qr/UAr;
-	
-	// compute time to next internal event
-	dt = t = -log((Tevent - C2)/(Tair-C2))*C1;
-
-	if(t == 0){
-		GL_THROW("refrigerator control logic error, dt = 0");
-	} else if(t < 0){
-		GL_THROW("refrigerator control logic error, dt < 0");
-	}
-
-	TIMESTAMP t2 = gl_enduse_sync(&(residential_enduse::load),t1);
-
-	// if fridge is undersized or time exceeds balance of time or external event pending
-	next_time = (TIMESTAMP)(t1 +  (t > 0 ? t : -t) * (3600.0/TS_SECOND) + 1);
-	return next_time > TS_NEVER ? TS_NEVER : -next_time;
 }
 
 TIMESTAMP refrigerator::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	
 	return TS_NEVER;
+
+}
+
+double refrigerator::update_refrigerator_state(double dt0,TIMESTAMP t1)
+{
+	OBJECT *hdr = OBJECTHDR(this);
+	
+	// accumulate the energy
+	energy_used += refrigerator_power*dt0;
+
+	if(cycle_time>0)
+	{
+		cycle_time -= dt0;
+	}	
+
+	if(defrostDelayed>0)
+	{
+		defrostDelayed -= dt0;
+	}	
+
+	if(defrostDelayed<=0){
+		if(DC_TIMED==defrost_criterion){
+			run_defrost = true;
+		}
+		else if(DC_COMPRESSOR_TIME==defrost_criterion && total_compressor_time>=compressor_defrost_time){
+			
+			run_defrost = true;
+			total_compressor_time = 0;
+			check_defrost = false;
+			
+		}
+		else if(no_of_defrost>0 && DC_DOOR_OPENINGS==defrost_criterion){
+
+			run_defrost = true;
+			FF_Door_Openings = 0;
+			check_defrost = false;
+		}
+	}
+	else{
+		if(DC_TIMED==defrost_criterion){
+			check_defrost = true;
+		}
+		else if(DC_COMPRESSOR_TIME==defrost_criterion && total_compressor_time>=compressor_defrost_time){
+			check_defrost = true;
+			
+		}
+		else if(no_of_defrost>0 && DC_DOOR_OPENINGS==defrost_criterion){
+			check_defrost = true;
+		}
+	}
+
+	
+	if(long_compressor_cycle_time>0)
+	{
+		long_compressor_cycle_time -= dt0;
+	}	
+
+	if (dr_mode_double == 0)
+		dr_mode = DM_UNKNOWN;
+	else if (dr_mode_double == 1)
+		dr_mode = DM_LOW;
+	else if (dr_mode_double == 2)
+		dr_mode = DM_NORMAL;
+	else if (dr_mode_double == 3)
+		dr_mode = DM_HIGH;
+	else if (dr_mode_double == 4)
+		dr_mode = DM_CRITICAL;
+	else
+		dr_mode = DM_UNKNOWN;	
+
+	if(door_return_time > 0){
+		door_return_time = door_return_time - dt0;
+	}
+		
+	if(door_next_open_time > 0){
+		door_next_open_time = door_next_open_time - dt0;
+	}
+
+	if(door_return_time<=0 && true==door_open){
+		door_return_time = 0;
+		door_open = false;				
+	}
+
+	if(door_next_open_time<=0 && hourly_door_opening>0){
+		door_next_open_time = 0;
+		door_open = true;
+		FF_Door_Openings++;
+		door_return_time += ceil(gl_random_uniform(&hdr->rng_state,0, door_open_time));
+		door_energy_calc = true;
+		hourly_door_opening--;	
+		
+		if(hourly_door_opening > 0){
+			door_next_open_time = int(gl_random_uniform(&hdr->rng_state,0,(3600-(t1-start_time)%3600))); // next_door_openings[hourly_door_opening-1] - ((t1-start_time)%3600);	
+			door_to_open = true;
+		}
+		else{
+			door_to_open = false;
+		}	
+
+		check_DO = FF_Door_Openings%DO_Thershold;
+
+		if(check_DO==0){ 	
+			no_of_defrost++;
+			
+		}		
+	}
+
+
+	if(((t1-start_time)%3600)==0 && start_time>0)
+	{
+		double temp_hourly_door_opening = (door_opening_criterion*daily_door_opening) - floor(door_opening_criterion*daily_door_opening);
+		if(temp_hourly_door_opening >= 0.5){
+			 hourly_door_opening = ceil(door_opening_criterion*daily_door_opening);					 
+		}
+		else{
+			 hourly_door_opening = floor(door_opening_criterion*daily_door_opening);
+		}
+
+		hourly_door_opening = floor(gl_random_normal(&hdr->rng_state,hourly_door_opening, ((hourly_door_opening)/3)));
+			
+		//Clip the hourly door openings
+		if(hourly_door_opening<0){
+			hourly_door_opening = 0;
+		}
+		else if(hourly_door_opening>2*hourly_door_opening){
+			hourly_door_opening = 2*hourly_door_opening;
+		}
+
+		if(hourly_door_opening > long_compressor_cycle_threshold*daily_door_opening)
+		{
+			long_compressor_cycle_due = true;
+			long_compressor_cycle_time = int(gl_random_uniform(&hdr->rng_state,0,(3600)));	
+		}
+
+		if(hourly_door_opening>0){	
+			door_to_open = true;
+			door_next_open_time = int(gl_random_uniform(&hdr->rng_state,0,(3600)));			
+		}
+		else{
+			door_to_open = false;
+		}
+	}
+	
+	double dt1 = 0;
+	
+	switch(state){
+
+		case RS_DEFROST:
+			
+			if ((energy_used >= energy_needed || cycle_time <= 0))
+			{				
+				state = RS_COMPRESSSOR_ON_LONG;
+				refrigerator_power = long_compressor_cycle_power;
+				energy_needed = long_compressor_cycle_energy;
+				energy_used = 0;
+
+				cycle_time = ceil((energy_needed - energy_used)/refrigerator_power);							
+			}			
+			else
+			{
+				refrigerator_power = defrost_power;
+			}
+
+		break;
+
+		case RS_COMPRESSSOR_ON_NORMAL:	
+
+			if(run_defrost==true)
+			{
+				state = RS_DEFROST;
+				refrigerator_power = defrost_power;
+				energy_needed = defrost_energy;
+				energy_used = 0;
+
+				cycle_time = ceil((energy_needed - energy_used)/refrigerator_power);
+
+				run_defrost=false;
+				no_of_defrost--;
+
+				defrostDelayed = delay_defrost_time;
+								
+			}
+			else if ((energy_used >= energy_needed || cycle_time <= 0))
+			{						
+				state = RS_COMPRESSSOR_OFF_NORMAL;
+				refrigerator_power = compressor_off_normal_power;
+				energy_needed = compressor_off_normal_energy;				 		
+				
+				energy_used = 0;
+				cycle_time = ceil((energy_needed - energy_used)/refrigerator_power);	
+				//new_running_state = true;
+			}			
+			else
+			{
+				refrigerator_power = compressor_on_normal_power;
+				total_compressor_time += dt0;
+				if(door_energy_calc==true){
+					door_energy_calc = false;
+
+					energy_needed += door_return_time*refrigerator_power;
+					cycle_time = ceil((energy_needed - energy_used)/refrigerator_power);
+				
+				}
+			}
+
+		break;
+
+		case RS_COMPRESSSOR_ON_LONG:	
+
+			if(run_defrost==true)
+			{
+				state = RS_DEFROST;
+				refrigerator_power = defrost_power;
+				energy_needed = defrost_energy;
+				energy_used = 0;
+
+				cycle_time = ceil((energy_needed - energy_used)/refrigerator_power);
+
+				run_defrost=false;
+				no_of_defrost--;
+
+				defrostDelayed = delay_defrost_time;
+								
+			}
+			else if ((energy_used >= energy_needed || cycle_time <= 0))
+			{						
+				state = RS_COMPRESSSOR_OFF_NORMAL;
+				refrigerator_power = compressor_off_normal_power;
+				energy_needed = compressor_off_normal_energy;				 		
+				
+				energy_used = 0;
+				cycle_time = ceil((energy_needed - energy_used)/refrigerator_power);	
+				//new_running_state = true;
+			}			
+			else
+			{
+				refrigerator_power = long_compressor_cycle_power;		
+				if(door_energy_calc==true){
+					door_energy_calc = false;
+
+					energy_needed += door_return_time*refrigerator_power;
+					cycle_time = ceil((energy_needed - energy_used)/refrigerator_power);
+				
+				}
+			}
+
+		break;
+
+		case RS_COMPRESSSOR_OFF_NORMAL:
+
+			if(run_defrost==true)
+			{
+				state = RS_DEFROST;
+				refrigerator_power = defrost_power;
+				energy_needed = defrost_energy;
+				energy_used = 0;
+
+				cycle_time = ceil((energy_needed - energy_used)/refrigerator_power);
+
+				run_defrost=false;
+				no_of_defrost--;
+
+				defrostDelayed = delay_defrost_time;
+								
+			}
+			else if ((energy_used >= energy_needed || cycle_time <= 0))
+			{										
+				if(long_compressor_cycle_due==true && long_compressor_cycle_time<=0)
+				{
+					state = RS_COMPRESSSOR_ON_LONG;
+					refrigerator_power = long_compressor_cycle_power;
+					energy_needed = long_compressor_cycle_energy;
+
+					long_compressor_cycle_due=false;
+					
+					energy_used = 0;
+					cycle_time = ceil((energy_needed - energy_used)/refrigerator_power);		
+				}
+				else{
+					
+					state = RS_COMPRESSSOR_ON_NORMAL;
+					refrigerator_power = compressor_on_normal_power;
+					energy_needed = compressor_on_normal_energy;	
+										
+					energy_used = 0;
+					cycle_time = ceil((energy_needed - energy_used)/refrigerator_power);
+				}
+			}			
+			else
+			{				
+				refrigerator_power = compressor_off_normal_power;	
+
+				if(door_energy_calc==true){
+					door_energy_calc = false;
+
+					energy_needed -= door_return_time*compressor_off_normal_power;
+					cycle_time = ceil((energy_needed - energy_used)/refrigerator_power);
+					
+					if(cycle_time<0)
+						cycle_time = 0;
+				}
+			}
+
+		break;		
+		
+	}
+
+	double posted_power = refrigerator_power;
+
+	//***************************
+	if(door_open==true)
+	{
+		posted_power += door_opening_power;
+	}
+	//***************************
+
+	if(check_icemaking == true)
+	{
+		posted_power += icemaking_power;
+		icemaker_running = true;
+
+		return_time = 60-dt0;
+
+		if(0==((t1-start_time)%60) || return_time<=0){			
+			
+			ice_making_no--;
+			
+			if(ice_making_no == 0)
+			{
+				check_icemaking = false;					
+			}
+
+			return_time = 60;
+		}		
+		
+	}
+	else
+	{
+		if(((t1-start_time)%60)==0) 
+		{
+			ice_making = double(gl_random_uniform(&hdr->rng_state,0,1));			
+
+			if(ice_making <=ice_making_probability)
+			{			
+				check_icemaking = true;
+
+				icemaker_running = true;
+
+			//	ice_making_no = gl_random_sampled(3,ice_making_time);
+
+				ice_making_no = 1;
+
+				posted_power += icemaking_power;
+				return_time = 60;			
+				ice_making_no--;	
+
+				if(ice_making_no == 0)
+				{
+					check_icemaking = false;
+				}
+			}
+			else
+			{
+				icemaker_running = false;
+				return_time = 60;	
+			}
+		}	
+		else
+		{
+			icemaker_running = false;
+
+		}
+	}	
+	
+	load.power.SetPowerFactor(posted_power/1000, load.power_factor);
+	load.admittance = complex(0,0,J); 
+	load.current = complex(0,0,J);		
+
+	if(true==door_open && true==door_to_open)
+	{
+		door_time = door_return_time<door_next_open_time?door_return_time:door_next_open_time;
+	}
+	else if(true==door_to_open)
+	{
+		door_time = door_next_open_time;
+	}
+	else if(true==door_open){
+		
+		door_time = door_return_time;
+
+	}
+	else if(start_time>0)
+	{
+		door_time = (3600 - ((t1-start_time)%3600));
+	}
+
+	if(0.0==return_time)
+	{
+		dt1 = cycle_time>door_time?door_time:cycle_time;		
+	}
+	else
+	{
+		if(cycle_time>return_time)
+			if(return_time>door_time)
+				if(door_time>long_compressor_cycle_time)
+					dt1 = long_compressor_cycle_time;
+				else
+					dt1 = door_time;					
+			else 
+				if(return_time>long_compressor_cycle_time)
+					dt1 = long_compressor_cycle_time;
+				else
+					dt1 = return_time;
+		else
+			if(cycle_time>door_time)
+				if(door_time>long_compressor_cycle_time)
+					dt1 = long_compressor_cycle_time;
+				else
+					dt1 = door_time;
+			else
+				if(cycle_time>long_compressor_cycle_time)
+					dt1 = long_compressor_cycle_time;
+				else
+					dt1 = cycle_time;		 
+	}
+	if(check_defrost == true){
+		if(dt1 > defrostDelayed){
+			dt1 = defrostDelayed;
+		}
+	}
+
+
+	load.total = load.power + load.current + load.admittance;
+	total_power = (load.power.Re() + (load.current.Re() + load.admittance.Re()*load.voltage_factor)*load.voltage_factor);
+
+	last_dr_mode = dr_mode;
+
+	if ((dt1 > 0) && (dt1 < 1)){
+		dt1 = 1;
+	}
+
+	return dt1;
+
 }
 
 
@@ -271,27 +758,26 @@ TIMESTAMP refrigerator::postsync(TIMESTAMP t0, TIMESTAMP t1){
 //////////////////////////////////////////////////////////////////////////
 EXPORT int create_refrigerator(OBJECT **obj, OBJECT *parent)
 {
-	try
+	
+	*obj = gl_create_object(refrigerator::oclass);
+	if (*obj!=NULL)
 	{
-		*obj = gl_create_object(refrigerator::oclass);
-		if (*obj!=NULL)
-		{
-			refrigerator *my = OBJECTDATA(*obj,refrigerator);;
-			gl_set_parent(*obj,parent);
-			my->create();
-			return 1;
-		}
-		else
-			return 0;
+		refrigerator *my = OBJECTDATA(*obj,refrigerator);;
+		gl_set_parent(*obj,parent);
+		my->create();
+		return 1;
 	}
-	CREATE_CATCHALL(refrigerator);
+	return 0;
 }
 
-EXPORT TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+EXPORT TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass,  TIMESTAMP t1)
 {
+	refrigerator *my = OBJECTDATA(obj,refrigerator);
+	TIMESTAMP next_time = TS_NEVER;
+
+	// obj->clock = 0 is legit
+
 	try {
-		refrigerator *my = OBJECTDATA(obj,refrigerator);
-		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) 
 		{
 			case PC_PRETOPDOWN:
@@ -311,19 +797,27 @@ EXPORT TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				gl_error("refrigerator::sync- invalid pass configuration");
 				t1 = TS_INVALID; // serious error in exec.c
 		}
-		return t1;
 	} 
-	SYNC_CATCHALL(refrigerator);
+	catch (char *msg)
+	{
+		gl_error("refrigerator::sync exception caught: %s", msg);
+		t1 = TS_INVALID;
+	}
+	catch (...)
+	{
+		gl_error("refrigerator::sync exception caught: no info");
+		t1 = TS_INVALID;
+	}
+		
+	return t1;
+	
+
 }
 
 EXPORT int init_refrigerator(OBJECT *obj)
 {
-	try
-	{
-		refrigerator *my = OBJECTDATA(obj,refrigerator);
-		return my->init(obj->parent);
-	}
-	INIT_CATCHALL(refrigerator);
+	refrigerator *my = OBJECTDATA(obj,refrigerator);
+	return my->init(obj->parent);
 }
 
 EXPORT int isa_refrigerator(OBJECT *obj, char *classname)
@@ -345,5 +839,6 @@ EXPORT TIMESTAMP plc_refrigerator(OBJECT *obj, TIMESTAMP t0)
 
 	return TS_NEVER;  
 }
+
 
 /**@}**/
