@@ -427,7 +427,7 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 			if (first==NULL) first=prop; else last->next=prop;
 			last=prop;
 			memcpy(prop,target,sizeof(PROPERTY));
-			if(unit) prop->unit = unit;
+			prop->unit = unit;
 			prop->next = NULL;
 		}
 		else

@@ -75,16 +75,22 @@ int convert_from_double(char *buffer, /**< pointer to the string buffer */
 
 		/* only do conversion if the target unit differs from the class's unit for that property */
 		PROPERTY *ptmp = (prop->oclass==NULL ? prop : class_find_property(prop->oclass, prop->name));
-
+		scale = *(double *)data;
 		if(prop->unit != ptmp->unit && ptmp->unit != NULL){
 			if(0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)){
 				output_error("convert_from_double(): unable to convert unit '%s' to '%s' for property '%s' (tape experiment error)", ptmp->unit->name, prop->unit->name, prop->name);
-				scale = 1.0;
+				return 0;
+			} else {
+				count = sprintf(temp, global_double_format, scale);
 			}
+		} else {
+			count = sprintf(temp, global_double_format, *(double *)data);
 		}
+	} else {
+		count = sprintf(temp, global_double_format, *(double *)data);
 	}
 
-	count = sprintf(temp, global_double_format, *(double *)data * scale);
+
 	if(count < size+1){
 		memcpy(buffer, temp, count);
 		buffer[count] = 0;

@@ -481,9 +481,7 @@ RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)
 			last = rmap;
 			rmap->obj = target_obj;
 			memcpy(&(rmap->prop), target, sizeof(PROPERTY));
-			if(unit){
-				rmap->prop.unit = unit;
-			}
+			rmap->prop.unit = unit;
 			rmap->next = NULL;
 		}
 		else
