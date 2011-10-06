@@ -123,9 +123,9 @@ solar::solar(MODULE *module)
 		Insolation = 0;
 		Rinternal = 0.05;
 		Rated_Insolation = 92.902; //W/Sf for 1000 W/m2
-	    V_Max = complex (79.34,0);  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
-		Voc = complex (91.22,0);  //taken from GEPVp-200-M-Module performance characteristics, converted to degF
-		Voc_Max = complex(91.22,0); //taken from GEPVp-200-M-Module performance characteristics,  converted to degF
+	    V_Max = complex (27.1,0);  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
+		Voc_Max = complex(34,0); //taken from GEPVp-200-M-Module performance characteristics
+		Voc = complex (34,0);  //taken from GEPVp-200-M-Module performance characteristics
 		area = 323; //sq f , 30m2
 		//Pmax_temp_coeff = -0.5 ;// taken from performance curve of GE solar modules 
         
