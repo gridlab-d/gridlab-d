@@ -82,27 +82,6 @@ struct s_schedule {
 	SCHEDULE *next;	/* next schedule in list */
 };
 
-typedef enum {
-	XS_UNKNOWN	= 0x00, 
-	XS_DOUBLE	= 0x01, 
-	XS_COMPLEX	= 0x02, 
-	XS_LOADSHAPE= 0x04, 
-	XS_ENDUSE	= 0x08, 
-	XS_SCHEDULE = 0x10,
-	XS_ALL		= 0x1f,
-	} XFORMSOURCE;
-typedef struct s_schedulexform {
-	double *source;
-	XFORMSOURCE source_type;
-	void *source_addr;
-	SCHEDULE *source_schedule;
-	double *target;
-	struct s_object_list *target_obj;
-	struct s_property_map *target_prop;
-	double scale;
-	double bias;
-	struct s_schedulexform *next;
-} SCHEDULEXFORM;
 
 #define SN_NORMAL   0x0001	/**< schedule normalization flag - normalize enabled */
 #define SN_ABSOLUTE 0x0002	/**< schedule normalization flag - use absolute values */
@@ -127,14 +106,11 @@ double schedule_value(SCHEDULE *sch, SCHEDULEINDEX index);
 int32 schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
 TIMESTAMP schedule_sync(SCHEDULE *sch, TIMESTAMP t);
 TIMESTAMP schedule_syncall(TIMESTAMP t);
-TIMESTAMP scheduletransform_syncall(TIMESTAMP t, XFORMSOURCE restrict);
 int schedule_test(void);
 void schedule_dump(SCHEDULE *sch, char *file, char *mode);
 void schedule_dumpall(char *file);
 int schedule_createwait(void);
 
-int schedule_add_xform(XFORMSOURCE stype, double *source, double *target, double scale, double bias, struct s_object_list *obj, struct s_property_map *prop, SCHEDULE *s);
-SCHEDULEXFORM *scheduletransform_getnext(SCHEDULEXFORM *xform);
 
 #ifdef __cplusplus
 }

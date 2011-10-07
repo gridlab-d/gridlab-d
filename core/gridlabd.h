@@ -84,6 +84,7 @@
 #endif
 
 #include "schedule.h"
+#include "transform.h"
 #include "object.h"
 #include "find.h"
 #include "random.h"

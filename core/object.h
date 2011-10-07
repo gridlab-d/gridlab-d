@@ -16,6 +16,7 @@
 #include "random.h"
 #include "threadpool.h"
 #include "schedule.h"
+#include "transform.h"
 #include "enduse.h"
 
 /* this must match property_type list in object.c */

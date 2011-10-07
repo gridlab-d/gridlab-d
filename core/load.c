@@ -179,6 +179,7 @@ typedef struct stat STAT;
 #include "random.h"
 #include "convert.h"
 #include "schedule.h"
+#include "transform.h"
 #include "gui.h"
 
 static unsigned int linenum=1;
@@ -994,7 +995,7 @@ static int resolve_double(UNRESOLVED *item, char *context)
 		OBJECT *obj = NULL;
 		PROPERTY *prop = NULL;
 		double **ref = NULL;
-		SCHEDULEXFORM *xform = NULL;
+		TRANSFORM *xform = NULL;
 
 		/* get and check the object */
 		obj = object_find_name(oname);
@@ -1016,7 +1017,7 @@ static int resolve_double(UNRESOLVED *item, char *context)
 		if ((item->flags&UR_TRANSFORM)==UR_TRANSFORM)
 		{
 			/* find transform that uses this target */
-			while ((xform=scheduletransform_getnext(xform))!=NULL)
+			while ((xform=transform_getnext(xform))!=NULL)
 			{
 				/* the reference is to the schedule's source */
 				if (xform==item->ref)
@@ -3506,7 +3507,7 @@ static int schedule_ref(PARSER, SCHEDULE **sch)
 		REJECT;
 	DONE;
 }
-static int property_ref(PARSER, XFORMSOURCE *xstype, void **ref, OBJECT *from)
+static int property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *from)
 {
 	FULLNAME oname;
 	PROPERTYNAME pname;
@@ -3571,7 +3572,7 @@ static int property_ref(PARSER, XFORMSOURCE *xstype, void **ref, OBJECT *from)
 	DONE;
 }
 
-static int transform_source(PARSER, XFORMSOURCE *xstype, void **source, OBJECT *from)
+static int transform_source(PARSER, TRANSFORMSOURCE *xstype, void **source, OBJECT *from)
 {
 	SCHEDULE *sch;
 	START;
@@ -3589,7 +3590,7 @@ static int transform_source(PARSER, XFORMSOURCE *xstype, void **source, OBJECT *
 	DONE;
 }
 
-static int linear_transform(PARSER, XFORMSOURCE *xstype, void **source, double *scale, double *bias, OBJECT *from)
+static int linear_transform(PARSER, TRANSFORMSOURCE *xstype, void **source, double *scale, double *bias, OBJECT *from)
 {
 	START;
 	if WHITE ACCEPT;
@@ -3662,7 +3663,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	double dval;
 	complex cval;
 	void *source=NULL;
-	XFORMSOURCE xstype = XS_UNKNOWN;
+	TRANSFORMSOURCE xstype = XS_UNKNOWN;
 	double scale=1,bias=0;
 	UNIT *unit=NULL;
 	OBJECT *subobj=NULL;
@@ -3794,7 +3795,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			double *target = (double*)((char*)(obj+1) + (int64)prop->addr);
 
 			/* add the transform list */
-			if (!schedule_add_xform(xstype,source,target,scale,bias,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))
+			if (!transform_add(xstype,source,target,scale,bias,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))
 			{
 				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 				REJECT;
@@ -3805,7 +3806,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				if (first_unresolved==source)
 
 					/* source was the unresolved entry, now it will be the transform itself */
-					first_unresolved->ref = (void*)scheduletransform_getnext(NULL);
+					first_unresolved->ref = (void*)transform_getnext(NULL);
 
 				ACCEPT;
 			}

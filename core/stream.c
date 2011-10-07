@@ -7,6 +7,7 @@
 #include "module.h"
 #include "globals.h"
 #include "schedule.h"
+#include "transform.h"
 #include "class.h"
 #include "object.h"
 
@@ -882,7 +883,7 @@ int64 stream_in_schedule(fp)
 /*******************************************************
  * TRANSFORM
  */
-int64 stream_out_transform(FILE *fp, SCHEDULEXFORM *xform)
+int64 stream_out_transform(FILE *fp, TRANSFORM *xform)
 {
 	int64 count=0;
 	OBJECT *obj = NULL;
@@ -936,7 +937,7 @@ int64 stream_in_transform(fp)
 
 	while (GETBT && B(TRANSFORM) && T(BEGIN))
 	{
-		SCHEDULEXFORM *xform = (SCHEDULEXFORM*)malloc(sizeof(SCHEDULEXFORM));
+		TRANSFORM *xform = (TRANSFORM*)malloc(sizeof(TRANSFORM));
 		OK;
 		while (GETBT && B(TRANSFORM) && !T(END))
 		{
@@ -1021,7 +1022,7 @@ int64 stream_out(FILE *fp, int flags)
 	CLASS *oclass=NULL;
 	OBJECT *obj=NULL;
 	SCHEDULE *sch=NULL;
-	SCHEDULEXFORM *xform=NULL;
+	TRANSFORM *xform=NULL;
 
 	/* stream header */
 	PUTD(STREAM_NAME,strlen(STREAM_NAME));
@@ -1052,7 +1053,7 @@ int64 stream_out(FILE *fp, int flags)
 		PUTX(object,obj);
 
 	/* transforms */
-	while ((xform=scheduletransform_getnext(xform))!=NULL)
+	while ((xform=transform_getnext(xform))!=NULL)
 		PUTX(transform,xform);
 
 	PUTT(END,END);
@@ -1064,7 +1065,7 @@ int64 stream_in(FILE *fp, int flags)
 {
 	int64 count = 0;
 	OBJECT *obj;
-	SCHEDULEXFORM *xform=NULL;
+	TRANSFORM *xform=NULL;
 	
 	{	char stream_name[] = STREAM_NAME;
 		GETD(stream_name,sizeof(stream_name));
@@ -1117,7 +1118,7 @@ Done:
 	}
 
 	// fixup transform targets
-	while ((xform=scheduletransform_getnext(xform))!=NULL)
+	while ((xform=transform_getnext(xform))!=NULL)
 	{
 		PROPERTY *p;
 		xform->target_obj = object_find_by_id(xform->target_obj);

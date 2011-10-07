@@ -64,6 +64,7 @@
 #include "random.h"	
 #include "local.h"
 #include "schedule.h"
+#include "transform.h"
 #include "loadshape.h"
 #include "enduse.h"
 #include "globals.h"
@@ -555,7 +556,7 @@ STATUS t_sync_all(PASSCONFIG pass)
 
 	/* run all non-schedule transforms */
 	{
-		TIMESTAMP st = scheduletransform_syncall(global_clock,XS_DOUBLE|XS_COMPLEX|XS_ENDUSE);// if (abs(t)<t2) t2=t;
+		TIMESTAMP st = transform_syncall(global_clock,XS_DOUBLE|XS_COMPLEX|XS_ENDUSE);// if (abs(t)<t2) t2=t;
 		if (st<sync.step_to)
 			sync.step_to = st;
 	}
@@ -570,7 +571,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	rv = randomvar_syncall(t1);
 	sc = schedule_syncall(t1);
 	ls = loadshape_syncall(t1);// if (abs(t)<t2) t2=t;
-	st = scheduletransform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);// if (abs(t)<t2) t2=t;
+	st = transform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);// if (abs(t)<t2) t2=t;
 
 	eu = enduse_syncall(t1);// if (abs(t)<t2) t2=t;
 	/* @todo add other internal syncs here */
@@ -1122,7 +1123,7 @@ STATUS exec_start(void)
 
 				/* run all non-schedule transforms */
 				{
-					TIMESTAMP st = scheduletransform_syncall(global_clock,XS_DOUBLE|XS_COMPLEX|XS_ENDUSE);// if (abs(t)<t2) t2=t;
+					TIMESTAMP st = transform_syncall(global_clock,XS_DOUBLE|XS_COMPLEX|XS_ENDUSE);// if (abs(t)<t2) t2=t;
 					if (st<sync.step_to)
 						sync.step_to = st;
 				}

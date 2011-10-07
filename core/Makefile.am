@@ -56,6 +56,7 @@ gridlabd_bin_SOURCES = main.c build.h \
 	test_framework.cpp test_framework.h \
 	threadpool.c threadpool.h \
 	timestamp.c timestamp.h \
+	transform.c transform.h \
 	unit.c unit.h \
 	version.h \
 	# xcore.cpp xcore.h 
