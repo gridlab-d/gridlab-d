@@ -17,6 +17,7 @@
 #include "object.h"
 #include "output.h"
 #include "schedule.h"
+#include "transform.h"
 #include "exception.h"
 
 #ifndef QNAN
@@ -25,7 +26,6 @@
 
 static SCHEDULE *schedule_list = NULL;
 static uint32 n_schedules = 0;
-static SCHEDULEXFORM *schedule_xformlist=NULL;
 
 #ifdef _DEBUG
 unsigned int schedule_checksum(SCHEDULE *sch)
@@ -37,37 +37,6 @@ unsigned int schedule_checksum(SCHEDULE *sch)
 	return sum;
 }
 #endif
-
-SCHEDULEXFORM *scheduletransform_getnext(SCHEDULEXFORM *xform)
-{
-	return xform?xform->next:schedule_xformlist;
-}
-
-int schedule_add_xform(XFORMSOURCE stype,	/* specifies the type of source */
-					   double *source,		/* pointer to the source value */
-					   double *target,		/* pointer to the target value */
-					   double scale,		/* transform scalar */
-					   double bias,			/* transform offset */
-					   OBJECT *obj,			/* object containing target value */
-					   PROPERTY *prop,		/* property associated with target value */
-					   SCHEDULE *sched)		/* schedule object assoicated with target value, if stype == XS_SCHEDULE */
-{
-	SCHEDULEXFORM *xform = (SCHEDULEXFORM*)malloc(sizeof(SCHEDULEXFORM));
-	if (xform==NULL)
-		return 0;
-	xform->source_type = stype;
-	xform->source = source;
-	xform->source_addr = source; /* this assumes the double is the first member of the structure */
-	xform->source_schedule = sched;
-	xform->target_obj = obj;
-	xform->target_prop = prop;
-	xform->target = target;
-	xform->scale = scale;
-	xform->bias = bias;
-	xform->next = schedule_xformlist;
-	schedule_xformlist = xform;
-	return 1;
-}
 
 /** Iterate through the schedule list
 	@return the next schedule pointer (or first schedule)
@@ -1206,33 +1175,6 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 
 	schedule_synctime += clock() - ts;
 	return t2;
-}
-
-clock_t transform_synctime = 0;
-TIMESTAMP scheduletransform_syncall(TIMESTAMP t1, XFORMSOURCE restrict)
-{
-	SCHEDULEXFORM *xform;
-	clock_t start = clock();
-	/* process the schedule transformations */
-	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
-	{	
-		if (xform->source_type&restrict){
-			if((xform->source_type == XS_SCHEDULE) && (xform->target_obj->schedule_skew != 0)){
-				TIMESTAMP t = t1 - xform->target_obj->schedule_skew; // subtract so the +12 is 'twelve seconds later', not earlier
-				if((t < xform->source_schedule->since) || (t >= xform->source_schedule->next_t)){
-					SCHEDULEINDEX index = schedule_index(xform->source_schedule,t);
-					double value = schedule_value(xform->source_schedule,index);
-					*(xform->target) = value * xform->scale + xform->bias;
-				} else {
-					*(xform->target) = *(xform->source) * xform->scale + xform->bias;
-				}
-			} else {
-				*(xform->target) = *(xform->source) * xform->scale + xform->bias;
-			}
-		}
-	}
-	transform_synctime += clock() - start;
-	return TS_NEVER;
 }
 
 int schedule_test(void)
