@@ -38,6 +38,7 @@ public:
 	set pf_phase;						//Phases for power factor monitoring to occur
 	double react_pwr;					//Reactive power quantity at the substation
 	double curr_pf;						//Current pf at the substation
+	double desired_voltage_value;		//Single voltage setting for all regulators - exposed as double so ptolomy can actually use it
 
 	volt_var_control(MODULE *mod);
 	volt_var_control(CLASS *cl=oclass):powerflow_object(cl){};

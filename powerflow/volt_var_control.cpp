@@ -55,6 +55,7 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 			PT_char1024, "minimum_voltages",PADDR(minimum_voltage_txt),PT_DESCRIPTION,"Minimum voltages allowed for feeder, separated by commas",
 			PT_char1024, "maximum_voltages",PADDR(maximum_voltage_txt),PT_DESCRIPTION,"Maximum voltages allowed for feeder, separated by commas",
 			PT_char1024, "desired_voltages",PADDR(desired_voltage_txt),PT_DESCRIPTION,"Desired operating voltages for the regulators, separated by commas",
+			PT_double,"desired_voltage_value",PADDR(desired_voltage_value),PT_DESCRIPTION,"Desired operating voltage for the regulators - single value that overrides desired_voltages_value",
 			PT_char1024, "max_vdrop",PADDR(max_vdrop_txt),PT_DESCRIPTION,"Maximum voltage drop between feeder and end measurements for each regulator, separated by commas",
 			PT_char1024, "high_load_deadband",PADDR(vbw_high_txt),PT_DESCRIPTION,"High loading case voltage deadband for each regulator, separated by commas",
 			PT_char1024, "low_load_deadband",PADDR(vbw_low_txt),PT_DESCRIPTION,"Low loading case voltage deadband for each regulator, separated by commas",
@@ -106,6 +107,7 @@ int volt_var_control::create(void)
 	TCapUpdate = 0;
 	TUpdateStatus = false;		//Flag for control_method transitions
 	pf_phase = 0;				//No phases monitored by default - will drop to link if unpopulated
+	desired_voltage_value = -1.0;	//Flagging
 	
 	first_cycle = true;		//Set up the variable
 
@@ -225,21 +227,26 @@ int volt_var_control::init(OBJECT *parent)
 	}
 	
 	//Figure out number of desired voltages specified
-	index=0;
-	num_des_volt=1;
-	while ((desired_voltage_txt[index] != '\0') && (index < 1024))
+	if (desired_voltage_value < 0.0)	//Only check if the double wasn't specified
 	{
-		if (desired_voltage_txt[index] == ',')	//Comma
-			num_des_volt++;					//increment the number of desired voltages
+		index=0;
+		num_des_volt=1;
+		while ((desired_voltage_txt[index] != '\0') && (index < 1024))
+		{
+			if (desired_voltage_txt[index] == ',')	//Comma
+				num_des_volt++;					//increment the number of desired voltages
 
-		index++;	//increment the pointer
-	}
+			index++;	//increment the pointer
+		}
 
-	//See if one is really there
-	if ((num_des_volt == 1) && (desired_voltage_txt[0] == '\0'))	//Is empty :(
-	{
-		num_des_volt = 0;	//Primarily as a flag
+		//See if one is really there
+		if ((num_des_volt == 1) && (desired_voltage_txt[0] == '\0'))	//Is empty :(
+		{
+			num_des_volt = 0;	//Primarily as a flag
+		}
 	}
+	else	//Set to 0 as the flag
+		num_des_volt = 0;
 
 	//Figure out number of vdrops specified
 	index=0;
@@ -580,9 +587,19 @@ int volt_var_control::init(OBJECT *parent)
 					}//one value for all
 					else							//Use defaults on all
 					{
-						//If default, we need the to node nominal voltage
-						nom_volt = RegToNodes[index]->nominal_voltage;
+						//Slight modification to catch "double-only" inputs for ptolomy inputs
+						if (desired_voltage_value < 0.0)
+						{
+							//If default, we need the to node nominal voltage
+							nom_volt = RegToNodes[index]->nominal_voltage;
+						}
+						else
+						{
+							//It is populated, use it as "nominal voltage"
+							nom_volt = desired_voltage_value;
+						}
 
+						//Set values based on this nominal voltage
 						minimum_voltage[index] = 0.95*nom_volt;
 						maximum_voltage[index] = 1.05*nom_volt;
 						desired_voltage[index] = nom_volt;
