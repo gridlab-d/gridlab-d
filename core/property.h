@@ -107,6 +107,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_loadshape,	/**< Loadshapes are state machines driven by schedules */
 	PT_enduse,		/**< Enduse load data */
 	PT_random,		/**< Randomized number */
+	/* add new property types here - don't forget to add them also to rt/gridlabd.h and property.c */
 #ifdef USE_TRIPLETS
 	PT_triple, /**< triplet of doubles (not supported) */
 	PT_triplex, /**< triplet of complexes (not supported) */
@@ -170,12 +171,13 @@ typedef struct s_property_map {
 } PROPERTY; /**< property definition item */
 
 struct s_property_specs { /**<	the property type conversion specifications.
-										It is critical that the order of entries in this list must match 
-										the order of entries in the enumeration #PROPERTYTYPE 
-								  **/
+								It is critical that the order of entries in this list must match 
+								the order of entries in the enumeration #PROPERTYTYPE 
+						  **/
 	char *name; /**< the property type name */
 	char *xsdname;
 	unsigned int size; /**< the size of 1 instance */
+	unsigned int csize; /**< the minimum size of a converted instance (not including '\0' or unit, 0 means a call to property_minimum_buffersize() is necessary) */ 
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
 	int (*string_to_data)(char *,void*,PROPERTY*); /**< the function to convert from a string to data */
 	int (*create)(void*); /**< the function used to create the property, if any */
@@ -186,6 +188,7 @@ struct s_property_specs { /**<	the property type conversion specifications.
 PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *);
 uint32 property_size(PROPERTY *);
 uint32 property_size_by_types(PROPERTYTYPE);
+size_t property_minimum_buffersize(PROPERTY *);
 int property_create(PROPERTY *, void *);
 
 #endif //_PROPERTY_H

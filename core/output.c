@@ -39,11 +39,33 @@
 #include "globals.h"
 #include "exception.h"
 #include "lock.h"
+#include "module.h"
 
 static unsigned long output_lock = 0;
 static char buffer[65536];
 #define CHECK 0xcdcd
 int overflow=CHECK;
+int flush = 0;
+
+static char prefix[16]="";
+void output_prefix_enable(void)
+{
+	switch ( global_multirun_mode ) {
+	case MRM_STANDALONE:
+		sprintf(prefix,"-%02d(%05d): ", sched_get_cpuid(), sched_get_procid());
+		break;
+	case MRM_MASTER:
+		flush = 1;
+		sprintf(prefix,"M%02d(%05d): ", sched_get_cpuid(), sched_get_procid());
+		break;
+	case MRM_SLAVE:
+		flush = 1;
+		sprintf(prefix,"S%02d(%05d): ", sched_get_cpuid(), sched_get_procid());
+		break;
+	default:
+		break;
+	}
+}
 
 /** output_redirect() changes where output message are sent 
 	instead of the usual stdin, stdout streams
@@ -191,6 +213,7 @@ static int default_printstd(char *format,...)
 	prep_stream();
 	va_start(ptr,format);
 	count = vfprintf(curr_stream[FS_STD],format,ptr);
+	if ( flush ) fflush(curr_stream[FS_STD]);
 	va_end(ptr);
 	return count;
 }
@@ -294,7 +317,7 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 			len = sprintf(buffer,"last fatal error message was repeated %d times", count);
 			count = 0;
 			if(format == NULL) goto Output;
-			else len += sprintf(buffer+len,"\nFATAL [%s] : ",time_context);
+			else len += sprintf(buffer+len,"\n%sFATAL [%s] : ",prefix, time_context);
 		}
 		else if (format==NULL)
 			goto Unlock;
@@ -304,9 +327,9 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 	}
 Output:
 	if (redirect.error)
-		result = fprintf(redirect.error,"FATAL [%s] : %s\n", time_context, buffer);
+		result = fprintf(redirect.error,"%sFATAL [%s] : %s\n", prefix, time_context, buffer);
 	else
-		result = (*printerr)("FATAL [%s] : %s\n", time_context, buffer);
+		result = (*printerr)("%sFATAL [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
 	unlock(&output_lock);
 	return result;
@@ -340,7 +363,7 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 			len = sprintf(buffer,"last error message was repeated %d times", count);
 			count = 0;
 			if(format == NULL) goto Output;
-			else len += sprintf(buffer+len,"\nERROR [%s] : ",time_context);
+			else len += sprintf(buffer+len,"\n%sERROR [%s] : ", prefix, time_context);
 		}
 		else if (format==NULL)
 			goto Unlock;
@@ -354,9 +377,9 @@ Output:
 		(*notify_error)();
 
 	if (redirect.error)
-		result = fprintf(redirect.error,"ERROR [%s] : %s\n",time_context, buffer);
+		result = fprintf(redirect.error,"%sERROR [%s] : %s\n", prefix, time_context, buffer);
 	else
-		result = (*printerr)("ERROR [%s] : %s\n", time_context, buffer);
+		result = (*printerr)("%sERROR [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
 	unlock(&output_lock);
 	return result;
@@ -404,9 +427,9 @@ Output:
 		(*notify_error)();
 
 	if (redirect.error)
-		result= fprintf(redirect.error,"%s\n", buffer);
+		result= fprintf(redirect.error,"%s%s\n", prefix, buffer);
 	else
-		result= (*printerr)("%s\n", buffer);
+		result= (*printerr)("%s%s\n", prefix, buffer);
 Unlock:
 	unlock(&output_lock);
 	return result;
@@ -449,6 +472,8 @@ int output_test(char *format,...) /**< \bprintf style argument list */
 		fprintf(fp,"GridLAB-D Version %s.%s\n", global_getvar("version.major", major_b, 32), global_getvar("version.minor", minor_b, 32));
 		fprintf(fp,"Test results from run started %s", asctime(localtime(&now)));
 		fprintf(fp,"Command line: %s\n", global_getvar("command_line", commandline, 255));
+		if ( global_multirun_mode!=MRM_STANDALONE )
+			fprintf(fp,"Instance: %s\n", prefix);
 	}
 
 	result = fprintf(fp,"%s\n", buffer);
@@ -488,7 +513,7 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 				len = sprintf(buffer,"last warning message was repeated %d times", count);
 				count = 0;
 				if(format == NULL) goto Output;
-				else len += sprintf(buffer+len,"\nWARNING [%s] : ", time_context);
+				else len += sprintf(buffer+len,"\n%sWARNING [%s] : ", prefix, time_context);
 			}
 			else if (format==NULL)
 				goto Unlock;
@@ -498,9 +523,9 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 		}
 Output:
 		if (redirect.warning)
-			result = fprintf(redirect.warning,"WARNING [%s] : %s\n",time_context, buffer);
+			result = fprintf(redirect.warning,"%sWARNING [%s] : %s\n", prefix, time_context, buffer);
 		else
-			result = (*printerr)("WARNING [%s] : %s\n", time_context, buffer);
+			result = (*printerr)("%sWARNING [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
 		unlock(&output_lock);
 		return result;
@@ -538,7 +563,7 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 				len = sprintf(buffer,"last debug message was repeated %d times", count);
 				count = 0;
 				if(format == 0) goto Output;
-				else len += sprintf(buffer+len,"\nDEBUG [%s] : ",time_context);
+				else len += sprintf(buffer+len,"\n%sDEBUG [%s] : ", prefix, time_context);
 			}
 			else if (format==NULL)
 				goto Unlock;
@@ -548,9 +573,9 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 		}
 Output:
 		if (redirect.debug)
-			result = fprintf(redirect.debug,"DEBUG [%s] : %s\n",time_context, buffer);
+			result = fprintf(redirect.debug,"%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
 		else
-			result = (*printerr)("DEBUG [%s] : %s\n", time_context, buffer);
+			result = (*printerr)("%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
 		unlock(&output_lock);
 		return result;
@@ -586,7 +611,7 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
 			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
-				len = sprintf(buffer,"last verbose message was repeated %d times\n   ... ",count);
+				len = sprintf(buffer,"%slast verbose message was repeated %d times\n   ... ", prefix, count);
 				count = 0;
 				if(format == 0) goto Output;
 			}
@@ -598,9 +623,9 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 		}
 Output:
 		if (redirect.verbose)
-			result = fprintf(redirect.verbose,"%s\n",buffer);
+			result = fprintf(redirect.verbose,"%s%s\n", prefix, buffer);
 		else
-			result = (*printerr)("   ... %s\n",buffer);
+			result = (*printerr)("%s   ... %s\n", prefix, buffer);
 Unlock:
 		unlock(&output_lock);
 	return result;
@@ -634,7 +659,7 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
 			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
-				len = sprintf(buffer,"last message was repeated %d times\n",count);
+				len = sprintf(buffer,"%slast message was repeated %d times\n", prefix, count);
 				count = 0;
 				if(format == NULL) goto Output;
 			}
@@ -646,9 +671,9 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 		}
 Output:
 		if (redirect.output)
-			result = fprintf(redirect.output,"%s\n",buffer);
+			result = fprintf(redirect.output,"%s%s\n", prefix, buffer);
 		else
-			result = (*printstd)("%s\n",buffer);
+			result = (*printstd)("%s%s\n", prefix, buffer);
 Unlock:
 		unlock(&output_lock);
 		return result;
@@ -668,9 +693,9 @@ int output_profile(char *format, ...) /**< /bprintf style argument list */
 	va_end(ptr);
 
 	if (redirect.profile!=NULL)
-		return fprintf(redirect.profile,"%s\n",tmp);
+		return fprintf(redirect.profile,"%s%s\n", prefix, tmp);
 	else
-		return (*printstd)("%s\n",tmp);
+		return (*printstd)("%s%s\n", prefix, tmp);
 }
 
 /** Output a progress report
@@ -686,7 +711,7 @@ int output_progress()
 		fflush(redirect.progress);
 	}
 	else if (global_keep_progress)
-		res = output_message("Processing %s...", ts);
+		res = output_message("%sProcessing %s...", prefix, ts);
 	else
 	{
 		static int len=0;
@@ -694,7 +719,7 @@ int output_progress()
 		while (i--) putchar(' ');
 		putchar('\r');
 		if (slen>len) len=slen;
-		res = output_raw("Processing %s...\r", ts);
+		res = output_raw("%sProcessing %s...\r", prefix, ts);
 	}
 	return res;
 }
@@ -717,12 +742,12 @@ int output_raw(char *format,...) /**< \bprintf style argument list */
 		va_end(ptr);
 
 			if (redirect.output)
-			{	int len = fprintf(redirect.output,"%s",buffer);
+			{	int len = fprintf(redirect.output,"%s%s", prefix, buffer);
 				fflush(redirect.output);
 				result =  len;
 			}
 			else
-				result = (*printerr)("%s",buffer);
+				result = (*printerr)("%s%s",prefix, buffer);
 		unlock(&output_lock);
 		return result;
 	}

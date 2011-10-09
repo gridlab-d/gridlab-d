@@ -56,6 +56,12 @@ static KEYWORD mls_keys[] = {
 	{"LOCKED", MLS_LOCKED, NULL},			/**< main loop is locked */
 };
 
+static KEYWORD mrm_keys[] = {
+	{"STANDALONE", MRM_STANDALONE, mrm_keys+1}, /**< run is standalone */
+	{"MASTER", MRM_MASTER, mrm_keys+2}, /**< run is a master of multirun */
+	{"SLAVE", MRM_SLAVE, NULL}, /**< run is a slave of a multirun */
+};
+
 static struct s_varmap {
 	char *name;
 	PROPERTYTYPE type;
@@ -143,6 +149,9 @@ static struct s_varmap {
 	{"hostname", PT_char1024, &global_hostname, PA_PUBLIC},
 	{"hostaddr", PT_char32, &global_hostaddr, PA_PUBLIC},
 	{"autostart_gui", PT_int32, &global_autostartgui, PA_PUBLIC},
+	{"master", PT_char1024, &global_master, PA_PUBLIC},
+	{"master_port", PT_int64, &global_master_port, PA_PUBLIC},
+	{"multirun_mode", PT_enumeration, &global_multirun_mode, PA_PUBLIC, mrm_keys},
 	/* add new global variables here */
 };
 

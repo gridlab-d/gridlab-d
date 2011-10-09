@@ -166,7 +166,11 @@ GLOBAL int technology_readiness_level INIT(0); /**< the TRL of the model (see ht
 GLOBAL int global_show_progress INIT(1);
 
 /* checkpoint globals */
-typedef enum {CPT_NONE=0, CPT_WALL=1, CPT_SIM=2} CHECKPOINTTYPE;
+typedef enum {
+	CPT_NONE=0,  /**< checkpoints is not enabled */
+	CPT_WALL=1, /**< checkpoints run on wall clock interval */
+	CPT_SIM=2,  /**< checkpoints run on sim clock interval */
+} CHECKPOINTTYPE; /**< checkpoint type determines how checkpoint intervals are used */
 GLOBAL int global_checkpoint_type INIT(CPT_NONE); /**< checkpoint type determines whether and how checkpoints are used */
 GLOBAL char global_checkpoint_file[1024] INIT(""); /**< checkpoint file name is base name used for checkpoint save files */
 GLOBAL int global_checkpoint_seqnum INIT(0); /**< checkpoint sequence file number */
@@ -177,19 +181,39 @@ GLOBAL int global_checkpoint_keepall INIT(0); /** determines whether all checkpo
 GLOBAL int global_check_version INIT(0); /**< check version flag */
 
 /* random number generator */
-typedef enum {RNG2=2, RNG3=3} RANDOMNUMBERGENERATOR;
-GLOBAL int global_randomnumbergenerator INIT(RNG2); /**< select which random number generator to use */
+typedef enum {
+	RNG2=2, /**< random numbers generated using pre-V3 method */
+	RNG3=3, /**< random numbers generated using post-V2 method */
+} RANDOMNUMBERGENERATOR; /**< identifies the type of random number generator used */
+GLOBAL int global_randomnumbergenerator INIT(RNG3); /**< select which random number generator to use */
 
-typedef enum {MLS_INIT, MLS_RUNNING, MLS_PAUSED, MLS_DONE, MLS_LOCKED} MAINLOOPSTATE;
+typedef enum {
+	MLS_INIT, /**< main loop initializing */
+	MLS_RUNNING, /**< main loop is running */
+	MLS_PAUSED, /**< main loop is paused (waiting) */
+	MLS_DONE, /**< main loop is done (steady) */
+	MLS_LOCKED, /**< main loop is locked (possible deadlock) */
+} MAINLOOPSTATE; /**< identifies the main loop state */
 GLOBAL int global_mainloopstate INIT(MLS_INIT); /**< main loop processing state */
-GLOBAL TIMESTAMP global_mainlooppauseat INIT(TS_NEVER); /** time at which to pause main loop */
+GLOBAL TIMESTAMP global_mainlooppauseat INIT(TS_NEVER); /**< time at which to pause main loop */
 
-GLOBAL char global_infourl[1024] INIT("http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:Search/"); /** URL for info calls */
+GLOBAL char global_infourl[1024] INIT("http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:Search/"); /**< URL for info calls */
 
-GLOBAL char global_hostname[1024] INIT("localhost");
-GLOBAL char global_hostaddr[32] INIT("127.0.0.1");
+GLOBAL char global_hostname[1024] INIT("localhost"); /**< machine hostname */
+GLOBAL char global_hostaddr[32] INIT("127.0.0.1"); /**< machine ip addr */
 
-GLOBAL int global_autostartgui INIT(1); /** autostart GUI when no command args are given */
+GLOBAL int global_autostartgui INIT(1); /**< autostart GUI when no command args are given */
+
+/* master/slave */
+GLOBAL char global_master[1024] INIT(""); /**< master hostname */
+GLOBAL unsigned int64 global_master_port INIT(0);	/**< master port/mmap/shmem info */
+typedef enum {
+	MRM_STANDALONE, /**< multirun is not enabled (standalone run) */
+	MRM_MASTER,     /**< multirun is enabled and this run is the master run */
+	MRM_SLAVE,      /**< multirun is enabled and this run is the slace run */
+} MULTIRUNMODE; /**< determines the type of run */
+GLOBAL MULTIRUNMODE global_multirun_mode INIT(MRM_STANDALONE);	/**< multirun mode */
+GLOBAL int global_signal_timeout INIT(5000); /**< signal timeout in milliseconds (-1 is infinite) */
 
 #ifdef __cplusplus
 }

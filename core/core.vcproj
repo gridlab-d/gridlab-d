@@ -619,6 +619,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\linkage.c"
+				>
+			</File>
+			<File
 				RelativePath=".\list.c"
 				>
 			</File>
@@ -810,6 +814,10 @@
 			</File>
 			<File
 				RelativePath=".\legal.h"
+				>
+			</File>
+			<File
+				RelativePath=".\linkage.h"
 				>
 			</File>
 			<File
@@ -1033,6 +1041,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\master.glm"
+				>
+			</File>
+			<File
 				RelativePath="..\test\input\memory_tape.glm"
 				>
 				<FileConfiguration
@@ -1142,6 +1154,10 @@
 			</File>
 			<File
 				RelativePath="..\test\input\residential_meter.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\test\slave.glm"
 				>
 			</File>
 			<File

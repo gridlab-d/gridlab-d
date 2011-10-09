@@ -24,6 +24,7 @@
 #include "random.h"
 #include "loadshape.h"
 #include "enduse.h"
+#include "instance.h"
 
 clock_t loader_time = 0;
 
@@ -190,9 +191,14 @@ static int help(int argc, char *argv[]);
  * All cmdline parsing routines must use the prototype int (*)(int,char *[])
  *
  * The return value must be the number of args processed (excluding primary 
- * one). A return value of -1 indicates that processing must stop immediately.
+ * one). A return value of CMDOK indicates that processing must stop immediately
+ * and the return status is the current status.  A return value of CMDERR indicates
+ * that processing must stop immediately and FAILED status is returned.
  *
  */
+
+#define CMDOK (-1)
+#define CMDERR (-2)
 
 static STATUS no_cmdargs()
 {
@@ -316,7 +322,7 @@ static int server_portnum(int argc, char *argv[])
 			was not followed by a valid number.  The correct syntax is
 			<b>-P <i>number</i></b> or <b>--server_portnum <i>number</i></b>.
 		 */
-		return -1;
+		return CMDERR;
 	}
 }
 static int version(int argc, char *argv[])
@@ -381,7 +387,7 @@ static int xmlstrict(int argc, char *argv[])
 static int globaldump(int argc, char *argv[])
 {
 	global_dump();
-	return -1;
+	return CMDOK;
 }
 static int relax(int argc, char *argv[])
 {
@@ -424,7 +430,7 @@ static int testall(int argc, char *argv[])
 			if was not followed by a filename containing the test
 			description file.
 		*/
-		return -1;
+		return CMDERR;
 	}
 	argc--;
 	global_test_mode=TRUE;
@@ -437,10 +443,10 @@ static int testall(int argc, char *argv[])
 			if was not followed by a valid filename containing the test
 			description file.
 		*/
-		return -1;
+		return CMDERR;
 	}
 	if(load_module_list(fd,&test_mod_num) == FAILED)
-		return -1;
+		return CMDERR;
 	return 1;
 }
 static int modhelp(int argc, char *argv[])
@@ -609,7 +615,7 @@ static int test(int argc, char *argv[])
 			if was not followed by a module specification that is valid.
 			The correct syntax is <b>gridlabd --test <i>module_name</i></b>.
 		*/
-		return -1;
+		return CMDERR;
 	}
 	return 1;
 }
@@ -634,7 +640,7 @@ static int define(int argc, char *argv[])
 			<b>-D </i>variable</i>=<i>value</i></b> or
 			<b>--define </i>variable</i>=<i>value</i></b>
 		 */
-		return -1;
+		return CMDERR;
 	}
 }
 static int globals(int argc, char *argv[])
@@ -742,6 +748,7 @@ static int libinfo(int argc, char *argv[])
 	if (argc-1>0)
 	{	argc--;
 		module_libinfo(*++argv);
+		return CMDOK;
 	}
 	else
 	{
@@ -752,7 +759,7 @@ static int libinfo(int argc, char *argv[])
 			<b>-L <i>module_name</i></b> or <b>--libinfo <i>module_name</i></b>.
 		 */
 	}
-	return -1;
+	return CMDERR;
 }
 static int threadcount(int argc, char *argv[])
 {
@@ -766,14 +773,17 @@ static int threadcount(int argc, char *argv[])
 			was not followed by a valid number.  The correct syntax is
 			<b>-T <i>number</i></b> or <b>--threadcount <i>number</i></b>.
 		 */
-		return -1;
+		return CMDERR;
 	}
 	return 1;
 }
 static int output(int argc, char *argv[])
 {
 	if (argc>1)
+	{
 		strcpy(global_savefile,(argc--,*++argv));
+		return 1;
+	}
 	else
 	{
 		output_fatal("missing output file");
@@ -782,9 +792,8 @@ static int output(int argc, char *argv[])
 			was not followed by a valid filename.  The correct syntax is
 			<b>-o <i>file</i></b> or <b>--output <i>file</i></b>.
 		 */
-		return -1;
+		return CMDERR;
 	}
-	return 1;
 }
 static int environment(int argc, char *argv[])
 {
@@ -798,7 +807,7 @@ static int environment(int argc, char *argv[])
 			was not followed by a valid environment specification.  The
 			correct syntax is <b>-e <i>keyword</i></b> or <b>--environment <i>keyword</i></b>.
 		 */
-		return -1;
+		return CMDERR;
 	}
 	return 1;
 }
@@ -827,7 +836,7 @@ static int xsd(int argc, char *argv[])
 	{
 		argc--;
 		output_xsd(*++argv);
-		return -1;
+		return CMDOK;
 	}
 	else
 	{
@@ -857,7 +866,7 @@ static int xsl(int argc, char *argv[])
 		}
 		sprintf(fname,"gridlabd-%d_%d.xsl",global_version_major,global_version_minor);
 		output_xsl(fname,n_args,p_args);
-		return -1;
+		return CMDOK;
 	}
 	else
 	{
@@ -867,7 +876,7 @@ static int xsl(int argc, char *argv[])
 			was not followed by a validlist of modules.  The
 			correct syntax is <b>--xsl <i>module1</i>[,<i>module2</i>[,...]]</b>.
 		 */
-		return -1;
+		return CMDERR;
 	}
 }
 static int stream(int argc, char *argv[])
@@ -906,7 +915,7 @@ static int pkill(int argc, char *argv[])
 			was not followed by a valid processor number.
 			The correct syntax is <b>--pkill <i>processor_number</i></b>.
 		 */
-		return -1;
+		return CMDERR;
 	}
 }
 static int info(int argc, char *argv[])
@@ -925,7 +934,7 @@ static int info(int argc, char *argv[])
 		if (system(cmd)!=0)
 		{
 			output_error("unable to start browser");
-			return -1;
+			return CMDERR;
 		}
 		else
 			output_verbose("starting interface");
@@ -939,10 +948,39 @@ static int info(int argc, char *argv[])
 			was not followed by a valid subject to lookup.
 			The correct syntax is <b>--info <i>subject</i></b>.
 		 */
-		return -1;
+		return CMDERR;
 	}
 }
-
+static int slave(int argc, char *argv[])
+{
+	if ( argc>1 )
+	{
+		char host[256], port[256];
+		if ( sscanf(argv[1],"%255[^:]:%255s",host,port)==2)
+		{
+			strncpy(global_master,host,sizeof(global_master)-1);
+			if ( strcmp(global_master,"localhost")==0 )
+				sscanf(port,"%"FMT_INT64"x",&global_master_port); /* port is actual mmap/shmem */
+			else
+				global_master_port = atoi(port);
+			if ( !instance_slave_init() )
+			{
+				output_error("slave instance init failed for master '%s' connection '%"FMT_INT64"x'", global_master, global_master_port);
+				return CMDERR;
+			}
+			else
+				output_verbose("slave instance for master '%s' using connection '%"FMT_INT64"x' started ok", global_master, global_master_port);
+		}
+		else
+			output_error("unable to parse slave parameters");
+		return 1;
+	}
+	else
+	{
+		output_error("slave connection parameters are missing");
+		return CMDERR;
+	}
+}
 /*********************************************/
 /* ADD NEW CMDARG PROCESSORS ABOVE THIS HERE */
 /* Then make the appropriate entry in the    */
@@ -1020,6 +1058,7 @@ static CMDARG main[] = {
 	{"pstatus",		NULL,	pstatus,		NULL, "Prints the process list" },
 	{"redirect",	NULL,	redirect,		"<stream>[:<file>]", "Redirects an output to stream to a file (or null)" },
 	{"server_portnum", "P", server_portnum, NULL, "Sets the server port number (default is 6267)" },
+	{"slave",		NULL,	slave,			"<master>", "Enables slave mode under master"},
 };
 
 static int help(int argc, char *argv[])
@@ -1117,11 +1156,16 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				 ( arg.lopt && strncmp(*argv,"--",2)==0 && strcmp((*argv)+2,arg.lopt)==0 ) )
 			{
 				int n = arg.call(argc,argv);
-				if ( n==-1 )
+				switch (n) {
+				case CMDOK:
 					return status;
-				found = 1;
-				argc -= n;
-				argv += n;
+				case CMDERR:
+					return FAILED;
+				default:
+					found = 1;
+					argc -= n;
+					argv += n;
+				}
 				break;
 			}
 		}

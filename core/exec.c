@@ -72,6 +72,8 @@
 #include "time.h"
 #include "lock.h"
 #include "stream.h"
+#include "instance.h"
+#include "linkage.h"
 
 #include "pthread.h"
 
@@ -449,6 +451,10 @@ static STATUS init_all(void)
 	STATUS rv = SUCCESS;
 	output_verbose("initializing objects...");
 
+	/* initialize instances */
+	if ( instance_initall()==FAILED )
+		return FAILED;
+
 	/* initialize loadshapes */
 	if (loadshape_initall()==FAILED || enduse_initall()==FAILED)
 		return FAILED;
@@ -567,19 +573,23 @@ STATUS t_sync_all(PASSCONFIG pass)
 /* this function synchronizes all internal behaviors */
 TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
-	TIMESTAMP rv, sc, ls, st, eu, t2;
+	TIMESTAMP ci, rv, sc, ls, st, eu, t2;
+
+	/* @todo add other internal syncs here */
+	ci = instance_syncall(t1);	
 	rv = randomvar_syncall(t1);
 	sc = schedule_syncall(t1);
 	ls = loadshape_syncall(t1);// if (abs(t)<t2) t2=t;
 	st = transform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);// if (abs(t)<t2) t2=t;
-
 	eu = enduse_syncall(t1);// if (abs(t)<t2) t2=t;
-	/* @todo add other internal syncs here */
+
 	t2 = TS_NEVER;
-	if(sc < t2) t2 = sc;
-	if(ls < t2) t2 = ls;
-	if(st < t2) t2 = st;
-	if(eu < t2) t2 = eu;
+	if ( sc<t2 ) t2 = sc;
+	if ( ls<t2 ) t2 = ls;
+	if ( st<t2 ) t2 = st;
+	if ( eu<t2 ) t2 = eu;
+	if ( rv<t2 ) t2 = rv;
+	if ( ci<t2 ) t2 = ci;
 	return t2;
 }
 
@@ -700,8 +710,8 @@ void exec_mls_init(void)
 void exec_mls_suspend(void)
 {
 	output_debug("pausing simulation");
-	if ( strcmp(global_environment,"server")!=0 )
-		output_warning("suspending simulation with no server active to receive resume command");
+	if ( global_multirun_mode==MRM_STANDALONE && strcmp(global_environment,"server")!=0 )
+		output_warning("suspending simulation with no server/multirun active to control mainloop state");
 	pthread_mutex_lock(&mls_lock);
 	sched_update(global_clock,global_mainloopstate=MLS_PAUSED);
 	while ( global_clock==TS_ZERO || (global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER) ) 
@@ -717,6 +727,14 @@ void exec_mls_resume(TIMESTAMP ts)
 	global_mainlooppauseat = ts;
 	pthread_mutex_unlock(&mls_lock);
 	pthread_cond_broadcast(&mls_signal);
+}
+
+void exec_mls_statewait(unsigned states)
+{
+	pthread_mutex_lock(&mls_lock);
+	while ( ((global_mainloopstate&states)|states)==0 ) 
+		pthread_cond_wait(&mls_signal, &mls_lock);
+	pthread_mutex_unlock(&mls_lock);
 }
 
 void exec_mls_done(void)
@@ -746,7 +764,7 @@ STATUS exec_start(void)
 	//pthread_t *thread_id;
 	//sjin: add some variables for pthread implementation
 	LISTITEM *ptr;
-	int iPtr, incr;
+	int incr;
 	struct arg_data *arg_data_array;
 
 	// Only setup threadpool for each object rank list at the first iteration;
@@ -754,8 +772,6 @@ STATUS exec_start(void)
 	bool setTP = true; 
 	//int n_threads; //number of thread used in the threadpool of an object rank list
 	OBJSYNCDATA *thread = NULL;
-
-	OBJECT *obj;
 
 	int nObjRankList, iObjRankList;
 
@@ -1023,8 +1039,8 @@ STATUS exec_start(void)
 							}
 							//printf("\n");
 						} else { //sjin: implement pthreads
-							int n_items,objn=0,n;
-							int n_obj = ranks[pass]->ordinal[i]->size;
+							unsigned int n_items,objn=0,n;
+							unsigned int n_obj = ranks[pass]->ordinal[i]->size;
 							/*printf("ranks[%d]->ordinal[%d]->size=%d\n",pass,i,n_obj);
 							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr=ptr->next) {
 								OBJECT *obj = ptr->data;
@@ -1044,7 +1060,7 @@ STATUS exec_start(void)
 									n_threads[iObjRankList] = (int)ceil((float) n_obj / incr);
 									n_items = incr;
 								}
-								if (n_threads[iObjRankList] > global_threadcount) {
+								if ((int)n_threads[iObjRankList] > global_threadcount) {
 									output_error("Running threads > global_threadcount");
 									exit(0);
 								}

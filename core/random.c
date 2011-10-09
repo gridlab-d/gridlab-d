@@ -137,6 +137,20 @@ int randwarn(unsigned int *state)
 	}
 }
 
+/* generate a random id number */
+unsigned int64 random_id(void)
+{
+	static unsigned int state = 0;
+	unsigned int64 rv = 0;
+	if ( state==0 ) state = (unsigned int)time(NULL);	
+	rv = randwarn(&state);
+	rv = (rv<<15) ^ randwarn(&state);
+	rv = (rv<<15) ^ randwarn(&state);
+	rv = (rv<<15) ^ randwarn(&state);
+	rv = (rv<<3) ^ randwarn(&state);
+	return rv;
+}
+
 /* uniform distribution in range (0,1( */
 double randunit(unsigned int *state)
 {

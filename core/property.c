@@ -19,32 +19,34 @@
 #include "loadshape.h"
 #include "enduse.h"
 #include "stream.h"
+#include "instance.h"
+#include "linkage.h"
 
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
 struct s_property_specs property_type[_PT_LAST] = {
-	{"void", "string", 0, convert_from_void,convert_to_void},
-	{"double", "double", sizeof(double), convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double},
-	{"complex", "string", sizeof(complex), convert_from_complex,convert_to_complex},
-	{"enumeration", "string", sizeof(int32), convert_from_enumeration,convert_to_enumeration},
-	{"set", "string", sizeof(int64), convert_from_set,convert_to_set},
-	{"int16", "short", sizeof(int16), convert_from_int16,convert_to_int16},
-	{"int32", "int", sizeof(int32), convert_from_int32,convert_to_int32},
-	{"int64", "long", sizeof(int64), convert_from_int64,convert_to_int64},
-	{"char8", "string", sizeof(char8), convert_from_char8,convert_to_char8},
-	{"char32", "string", sizeof(char32), convert_from_char32,convert_to_char32},
-	{"char256", "string", sizeof(char256), convert_from_char256,convert_to_char256},
-	{"char1024", "string", sizeof(char1024), convert_from_char1024,convert_to_char1024},
-	{"object", "string", sizeof(OBJECT*), convert_from_object,convert_to_object},
-	{"delegated", "string", (unsigned int)-1, convert_from_delegated, convert_to_delegated},
-	{"bool", "string", sizeof(unsigned int), convert_from_boolean, convert_to_boolean},
-	{"timestamp", "string", sizeof(int64), convert_from_timestamp_stub, convert_to_timestamp_stub},
-	{"double_array", "string", sizeof(double), convert_from_double_array, convert_to_double_array},
-	{"complex_array", "string", sizeof(complex), convert_from_complex_array, convert_to_complex_array},
-	{"real", "string", sizeof(real), convert_from_real, convert_to_real},
-	{"float", "string", sizeof(float), convert_from_float, convert_to_float},
-	{"loadshape", "string", sizeof(loadshape), convert_from_loadshape, convert_to_loadshape, loadshape_create},
-	{"enduse", "string", sizeof(enduse), convert_from_enduse, convert_to_enduse, enduse_create},
-	{"random", "string", sizeof(randomvar), convert_from_randomvar, convert_to_randomvar, randomvar_create},
+	{"void", "string", 0, 0, convert_from_void,convert_to_void},
+	{"double", "double", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double},
+	{"complex", "string", sizeof(complex), 48, convert_from_complex,convert_to_complex},
+	{"enumeration", "string", sizeof(int32), 32, convert_from_enumeration,convert_to_enumeration},
+	{"set", "string", sizeof(int64), 32, convert_from_set,convert_to_set},
+	{"int16", "short", sizeof(int16), 6, convert_from_int16,convert_to_int16},
+	{"int32", "int", sizeof(int32), 12, convert_from_int32,convert_to_int32},
+	{"int64", "long", sizeof(int64), 24, convert_from_int64,convert_to_int64},
+	{"char8", "string", sizeof(char8), 8, convert_from_char8,convert_to_char8},
+	{"char32", "string", sizeof(char32), 32, convert_from_char32,convert_to_char32},
+	{"char256", "string", sizeof(char256), 256, convert_from_char256,convert_to_char256},
+	{"char1024", "string", sizeof(char1024), 1024, convert_from_char1024,convert_to_char1024},
+	{"object", "string", sizeof(OBJECT*), sizeof(OBJECTNAME), convert_from_object,convert_to_object},
+	{"delegated", "string", (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
+	{"bool", "string", sizeof(unsigned int), 6, convert_from_boolean, convert_to_boolean},
+	{"timestamp", "string", sizeof(int64), 24, convert_from_timestamp_stub, convert_to_timestamp_stub},
+	{"double_array", "string", sizeof(double), 0, convert_from_double_array, convert_to_double_array},
+	{"complex_array", "string", sizeof(complex), 0, convert_from_complex_array, convert_to_complex_array},
+	{"real", "string", sizeof(real), 24, convert_from_real, convert_to_real},
+	{"float", "string", sizeof(float), 24, convert_from_float, convert_to_float},
+	{"loadshape", "string", sizeof(loadshape), 0, convert_from_loadshape, convert_to_loadshape, loadshape_create},
+	{"enduse", "string", sizeof(enduse), 0, convert_from_enduse, convert_to_enduse, enduse_create},
+	{"random", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create},
 };
 
 PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation)
@@ -150,6 +152,19 @@ int property_create(PROPERTY *prop, void *addr)
 	}
 	else
 		return 0;
+}
+
+size_t property_minimum_buffersize(PROPERTY *prop)
+{
+	size_t size = property_type[prop->ptype].csize;
+	if ( size>0 )
+		return size;
+	switch (prop->ptype) {
+	/* @todo dynamic sizing */
+	default:
+		return 0;
+	}
+	return 0;
 }
 
 // EOF

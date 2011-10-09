@@ -180,6 +180,8 @@ typedef struct stat STAT;
 #include "convert.h"
 #include "schedule.h"
 #include "transform.h"
+#include "instance.h"
+#include "linkage.h"
 #include "gui.h"
 
 static unsigned int linenum=1;
@@ -1259,6 +1261,14 @@ static int dotted_name(PARSER, char *result, int size)
 {	/* basic name */
 	START;
 	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='_' || *_p=='.') COPY(result);
+	result[_n]='\0';
+	DONE;
+}
+
+static int hostname(PARSER, char *result, int size)
+{	/* full path name */
+	START;
+	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='_' || *_p=='.' || *_p=='-' ) COPY(result);
 	result[_n]='\0';
 	DONE;
 }
@@ -4303,6 +4313,83 @@ static int schedule(PARSER)
 	DONE;
 }
 
+static int linkage_term(PARSER,instance *inst)
+{
+	int startline = linenum;
+	char fromobj[64];
+	char fromvar[64];
+	char toobj[64];
+	char tovar[64];
+	START;
+	if WHITE ACCEPT;
+	if ( TERM(name(HERE,fromobj,sizeof(fromobj))) && LITERAL(":") && TERM(name(HERE,fromvar,sizeof(fromvar))) 
+		&& WHITE,LITERAL("->") && WHITE,TERM(name(HERE,toobj,sizeof(toobj))) && LITERAL(":") && TERM(name(HERE,tovar,sizeof(tovar)))
+		&& LITERAL(";"))
+	{
+		if ( linkage_create_writer(inst,fromobj,fromvar,toobj,tovar) ) ACCEPT 
+		else {
+			output_error_raw("%s(%d): linkage to write '%s:%s' to '%s:%s' is not valid", filename, startline, fromobj, fromvar, toobj, tovar);
+			REJECT;
+		}
+		DONE;
+	}
+	OR if ( TERM(name(HERE,toobj,sizeof(toobj))) && LITERAL(":") && TERM(name(HERE,tovar,sizeof(tovar))) 
+		&& WHITE,LITERAL("<-") && WHITE,TERM(name(HERE,fromobj,sizeof(fromobj))) && LITERAL(":") && TERM(name(HERE,fromvar,sizeof(fromvar)))
+		&& LITERAL(";"))
+	{
+		if ( linkage_create_reader(inst,fromobj,fromvar,toobj,tovar) ) ACCEPT 
+		else {
+			output_error_raw("%s(%d): linkage to read '%s:%s' from '%s:%s' is not valid", filename, startline, fromobj, fromvar, toobj, tovar);
+			REJECT;
+		}
+		DONE;
+	}
+	OR if ( LITERAL("model") && WHITE && TERM(value(HERE,inst->model,sizeof(inst->model))) && WHITE,LITERAL(";"))
+	{
+		ACCEPT;
+		DONE;
+	}
+	OR if ( LITERAL("cacheid") && WHITE && TERM(integer(HERE,&(inst->cacheid))) && WHITE,LITERAL(";"))
+	{
+		ACCEPT;
+		DONE;
+	}
+	OR if ( LITERAL("}") )
+	{
+		REJECT;
+	}
+	OR
+	{
+		output_error_raw("%s(%d): unrecognized instance term at or after '%.10s...'", filename, startline, HERE);
+		REJECT;
+	}
+	DONE;
+	
+}
+static int instance_block(PARSER)
+{
+	int startline = linenum;
+	char instance_host[256];
+	START;
+	if WHITE ACCEPT;
+	if ( LITERAL("instance") && WHITE && TERM(hostname(HERE,instance_host,sizeof(instance_host))) && WHITE,LITERAL("{"))
+	{
+		instance *inst = instance_create(instance_host);
+		if ( !inst ) 
+		{ 
+			output_error_raw("%s(%d): unable to define an instance on %s", filename, startline, instance_host);
+			REJECT; 
+			DONE; 
+		}
+		ACCEPT;
+		while ( TERM(linkage_term(HERE,inst)) ) ACCEPT;
+		if ( WHITE,LITERAL("}") ) { ACCEPT; DONE }
+		else REJECT;
+	}
+	else
+		REJECT;
+	DONE;
+}
 ////////////////////////////////////////////////////////////////////////////////////
 // GUI parser
 
@@ -4682,6 +4769,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(import(HERE)) {ACCEPT; DONE; }
 	OR if TERM(library(HERE)) {ACCEPT; DONE; }
 	OR if TERM(schedule(HERE)) {ACCEPT; DONE; }
+	OR if TERM(instance_block(HERE)) {ACCEPT; DONE; }
 	OR if TERM(gui(HERE)) {ACCEPT; DONE;}
 	OR if (*(HERE)=='\0') {ACCEPT; DONE;}
 	else REJECT;

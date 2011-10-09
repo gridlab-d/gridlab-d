@@ -39,6 +39,7 @@ void exec_mls_init(void);
 void exec_mls_suspend(void);
 void exec_mls_resume(TIMESTAMP next_pause);
 void exec_mls_done(void);
+void exec_mls_statewait(unsigned states);
 
 #ifdef __cplusplus
 }
