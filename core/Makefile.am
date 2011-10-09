@@ -27,10 +27,12 @@ gridlabd_bin_SOURCES = main.c build.h \
 	gui.c gui.h \
 	http_client.c http_client.h \
 	index.c index.h \
+	instance.c instance.h \
 	interpolate.c interpolate.h \
 	kill.c kill.h \
 	kml.c kml.h \
 	legal.c legal.h \
+	linkage.c linkage.h \
 	list.c list.h \
 	load.c load.h \
 	loadshape.c loadshape.h \

@@ -89,4 +89,11 @@ TIMESTAMP instance_postsync(instance *inst, TIMESTAMP t1);
 TIMESTAMP instance_syncall(TIMESTAMP t1);
 int instance_add_linkage(instance *, linkage *);
 
+int linkage_create_reader(instance *inst, char *fromobj, char *fromvar, char *toobj, char *tovar);
+int linkage_create_writer(instance *inst, char *fromobj, char *fromvar, char *toobj, char *tovar);
+STATUS linkage_init(instance *inst, linkage *lnk);
+void linkage_master_to_slave(linkage *lnk);
+void linkage_slave_to_master(linkage *lnk);
+
+
 #endif

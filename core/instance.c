@@ -512,8 +512,8 @@ TIMESTAMP instance_syncall(TIMESTAMP t1)
 /////////////////////////////////////////////////////////////////////
 // SLAVE INSTANCE
 
-#ifdef WIN32
 static MESSAGE *slave_cache;
+#ifdef WIN32
 static HANDLE hMap;
 static HANDLE slave_eventHandle;
 static HANDLE master_eventHandle;
