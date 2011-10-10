@@ -226,6 +226,14 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 			PT_KEYWORD, "PDF",    PDF,
 			PT_KEYWORD, "PNG",    PNG,
 			PT_KEYWORD, "SVG",    SVG, 
+		PT_enumeration, "header_units", ((char*)&(my.header_units) - (char *)&my),
+			PT_KEYWORD, "DEFAULT", HU_DEFAULT,
+			PT_KEYWORD, "ALL", HU_ALL,
+			PT_KEYWORD, "NONE", HU_NONE,
+		PT_enumeration, "line_units", ((char*)&(my.line_units) - (char *)&my),
+			PT_KEYWORD, "DEFAULT", LU_DEFAULT,
+			PT_KEYWORD, "ALL", LU_ALL,
+			PT_KEYWORD, "NONE", LU_NONE,
 			NULL) < 1)
 		GL_THROW("Could not publish property output for recorder");
 

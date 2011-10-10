@@ -18,6 +18,10 @@ typedef enum {TS_INIT, TS_OPEN, TS_DONE, TS_ERROR} TAPESTATUS;
 typedef enum {FT_FILE, FT_ODBC, FT_MEMORY} FILETYPE;
 typedef enum {SCREEN, EPS, GIF, JPG, PDF, PNG, SVG} PLOTFILE;
 
+/* recorder-specific enums */
+typedef enum {HU_DEFAULT, HU_ALL, HU_NONE} HEADERUNITS;
+typedef enum {LU_DEFAULT, LU_ALL, LU_NONE} LINEUNITS;
+
 typedef struct s_tape_operations {
 	int (*open)(void *my, char *fname, char *flags);
 	char *(*read)(void *my,char *buffer,unsigned int size);
@@ -139,6 +143,7 @@ struct recorder {
 	TIMESTAMP interval;
 	int32 limit;
 	char1024 property;
+	char1024 out_property;
 	PLOTFILE output; /* {EPS|GIF|JPG|PDF|PNG|SVG} More can be added */
 	char1024 plotcommands;
 	char32 xdata;
@@ -148,6 +153,8 @@ struct recorder {
 	RECORDER_MAP *rmap;
 	TAPEOPS *ops;
 	FILETYPE type;
+	HEADERUNITS header_units;
+	LINEUNITS line_units;
 	union {
 		FILE *fp;
 		MEMORY *memory;

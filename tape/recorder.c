@@ -60,6 +60,8 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 		my->format = 0;
 		strcpy(my->plotcommands,"");
 		my->target = gl_get_property(*obj,my->property);
+		my->header_units = HU_DEFAULT;
+		my->line_units = LU_DEFAULT;
 		return 1;
 	}
 	return 0;
@@ -245,6 +247,66 @@ static int recorder_open(OBJECT *obj)
 	if(my->ops == NULL)
 		return 0;
 	set_csv_options();
+
+	// set out_property here
+	{size_t offset = 0;
+		char unit_buffer[1024];
+		char *token = 0, *prop_ptr = 0, *unit_ptr = 0;
+		char propstr[1024], unitstr[64];
+		PROPERTY *prop = 0;
+		UNIT *unit = 0;
+		int first = 1;
+		switch(my->header_units){
+			case HU_DEFAULT:
+				strcpy(my->out_property, my->property);
+				break;
+			case HU_ALL:
+				strcpy(unit_buffer, my->property);
+				for(token = strtok(unit_buffer, ","); token != NULL; token = strtok(NULL, ",")){
+					unit = 0;
+					prop = 0;
+					unitstr[0] = 0;
+					propstr[0] = 0;
+					if(2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n,\0]", propstr, unitstr)){
+						unit = gl_find_unit(unitstr);
+						if(unit == 0){
+							gl_error("recorder:%d: unable to find unit '%s' for property '%s'", obj->id, unitstr, propstr);
+							return 0;
+						}
+					}
+					prop = gl_get_property(obj->parent, propstr);
+					if(prop->unit != 0 && unit == 0){
+						unit = prop->unit;
+					}
+					// print the property, and if there is one, the unit
+					if(unit != 0){
+						sprintf(my->out_property+offset, "%s%s[%s]", (first ? "" : ","), propstr, (unitstr[0] ? unitstr : unit->name));
+						offset += strlen(propstr) + (first ? 0 : 1) + 2 + strlen(unitstr[0] ? unitstr : unit->name);
+					} else {
+						sprintf(my->out_property+offset, "%s%s", (first ? "" : ","), propstr);
+						offset += strlen(propstr) + (first ? 0 : 1);
+					}
+					first = 0;
+				}
+				break;
+			case HU_NONE:
+				strcpy(unit_buffer, my->property);
+				for(token = strtok(unit_buffer, ","); token != NULL; token = strtok(NULL, ",")){
+					if(2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n,\0]", propstr, unitstr)){
+						; // no logic change
+					}
+					// print just the property, regardless of type or explicitly declared property
+					sprintf(my->out_property+offset, "%s%s", (first ? "" : ","), propstr);
+					offset += strlen(propstr) + (first ? 0 : 1);
+					first = 0;
+				}
+				break;
+			default:
+				// error
+				break;
+		}
+	}
+
 	return my->ops->open(my, fname, flags);
 }
 
@@ -360,7 +422,7 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 	return TS_NEVER;
 }
 
-PROPERTY *link_properties(OBJECT *obj, char *property_list)
+PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list)
 {
 	char *item;
 	PROPERTY *first=NULL, *last=NULL;
@@ -428,6 +490,9 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 			last=prop;
 			memcpy(prop,target,sizeof(PROPERTY));
 			prop->unit = unit;
+			if(unit == NULL && rec->line_units == LU_ALL){
+				prop->unit = target->unit;
+			}
 			prop->next = NULL;
 		}
 		else
@@ -443,15 +508,51 @@ PROPERTY *link_properties(OBJECT *obj, char *property_list)
 	return first;
 }
 
-int read_properties(OBJECT *obj, PROPERTY *prop, char *buffer, int size)
+int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size)
 {
 	PROPERTY *p;
+	PROPERTY *p2 = 0;
+	PROPERTY fake;
 	int offset=0;
 	int count=0;
+	double value;
+	memset(&fake, 0, sizeof(PROPERTY));
+	fake.ptype = PT_double;
+	fake.unit = 0;
 	for (p=prop; p!=NULL && offset<size-33; p=p->next)
 	{
 		if (offset>0) strcpy(buffer+offset++,",");
-		offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */
+		if(p->ptype == PT_double){
+			switch(my->line_units){
+				case LU_ALL:
+					// cascade into 'default', as prop->unit should've been set, if there's a unit available.
+				case LU_DEFAULT:
+					offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */
+					break;
+				case LU_NONE:
+					// copy value into local value, use fake PROP, feed into gl_get_vaule
+					value = *gl_get_double(obj, p);
+					p2 = gl_get_property(obj, p->name);
+					if(p2 == 0){
+						gl_error("unable to locate %s.%s for LU_NONE", obj, p->name);
+						return 0;
+					}
+					if(p->unit != 0 && p2->unit != 0){
+						if(0 == gl_convert_ex(p2->unit, p->unit, &value)){
+							gl_error("unable to convert %s to %s for LU_NONE", p->unit, p2->unit);
+						} else { // converted
+							offset+=gl_get_value(obj,&value,buffer+offset,size-offset-1,&fake); /* pointer => int64 */;
+						}
+					} else {
+						offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */;
+					}
+					break;
+				default:
+					break;
+			}
+		} else {
+			offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */
+		}
 		buffer[offset]='\0';
 		count++;
 	}
@@ -484,7 +585,7 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 	/* connect to property */
 	if (my->target==NULL){
-		my->target = link_properties(obj->parent,my->property);
+		my->target = link_properties(my, obj->parent, my->property);
 	}
 	if (my->target==NULL)
 	{
@@ -507,7 +608,7 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 	/* update property value */
 	if ((my->target != NULL) && (my->interval == 0 || my->interval == -1)){	
-		if(read_properties(obj->parent,my->target,buffer,sizeof(buffer))==0)
+		if(read_properties(my, obj->parent,my->target,buffer,sizeof(buffer))==0)
 		{
 			sprintf(buffer,"unable to read property '%s' of %s %d", my->property, obj->parent->oclass->name, obj->parent->id);
 			close_recorder(my);
@@ -516,7 +617,7 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	if ((my->target != NULL) && (my->interval > 0)){
 		if((t0 >=my->last.ts + my->interval) || (t0 == my->last.ts)){
-			if(read_properties(obj->parent,my->target,buffer,sizeof(buffer))==0)
+			if(read_properties(my, obj->parent,my->target,buffer,sizeof(buffer))==0)
 			{
 				sprintf(buffer,"unable to read property '%s' of %s %d", my->property, obj->parent->oclass->name, obj->parent->id);
 				close_recorder(my);
