@@ -108,6 +108,8 @@ int volt_var_control::create(void)
 	TUpdateStatus = false;		//Flag for control_method transitions
 	pf_phase = 0;				//No phases monitored by default - will drop to link if unpopulated
 	desired_voltage_value = -1.0;	//Flagging
+	prev_desired_voltage = -1.0;	//Arbitrary
+	desired_voltage_entry = false;	//No tracking, by default
 	
 	first_cycle = true;		//Set up the variable
 
@@ -592,17 +594,30 @@ int volt_var_control::init(OBJECT *parent)
 						{
 							//If default, we need the to node nominal voltage
 							nom_volt = RegToNodes[index]->nominal_voltage;
+
+							//Set tracking variables
+							prev_desired_voltage = -1.0;	//Ensure it is still set
+							desired_voltage_entry = false;	//Same for the flag
+
+							//Set values based on this nominal voltage
+							minimum_voltage[index] = 0.95*nom_volt;
+							maximum_voltage[index] = 1.05*nom_volt;
+							desired_voltage[index] = nom_volt;
 						}
 						else
 						{
 							//It is populated, use it as "nominal voltage"
 							nom_volt = desired_voltage_value;
-						}
 
-						//Set values based on this nominal voltage
-						minimum_voltage[index] = 0.95*nom_volt;
-						maximum_voltage[index] = 1.05*nom_volt;
-						desired_voltage[index] = nom_volt;
+							//Set tracking variables
+							prev_desired_voltage = nom_volt;
+							desired_voltage_entry = true;
+
+							//Set values based on this nominal voltage - give a little more slop since this a special case
+							minimum_voltage[index] = 0.80*nom_volt;
+							maximum_voltage[index] = 1.20*nom_volt;
+							desired_voltage[index] = nom_volt;
+						}
 					}
 
 					//Make sure voltages are ok
@@ -1544,6 +1559,25 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 
 	//Start out assuming a regulator change hasn't occurred
 	Regulator_Change = false;
+
+	//Update set points and tracking variables, if necessary (player/ptolemy compatibility)
+	if (desired_voltage_entry == true)
+	{
+		if (prev_desired_voltage != desired_voltage_value)
+		{
+			//Loop the feeders
+			for (index=0; index<num_regs; index++)
+			{
+				//Set values based on this nominal voltage
+				minimum_voltage[index] = 0.80*desired_voltage_value;	//0.95*desired_voltage_value;
+				maximum_voltage[index] = 1.20*desired_voltage_value;	//1.05*desired_voltage_value;
+				desired_voltage[index] = desired_voltage_value;
+			}
+
+			//Update variable
+			prev_desired_voltage = desired_voltage_value;
+		}
+	}
 
 	//Now loop through the list - if one is over t0, then it is still changing
 	for (index=0; index<num_regs; index++)
