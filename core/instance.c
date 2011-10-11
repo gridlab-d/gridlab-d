@@ -21,6 +21,8 @@
 #include "random.h"
 #include "exec.h"
 
+clock_t instance_synctime = 0;
+
 #define MSGALLOCSZ 1024
 
 /** message_init
@@ -479,34 +481,42 @@ TIMESTAMP instance_read_slave(instance *inst)
  **/
 TIMESTAMP instance_syncall(TIMESTAMP t1)
 {
-	TIMESTAMP t2 = TS_NEVER;
-	instance *inst;
-
-	/* check to see if an instance was lost */
-	if ( instances_exited>0 )
+	/* only process if instances exist */
+	if ( instance_list )
 	{
-		output_debug("%d instance exit detected, stopping main loop", instances_exited);
+		TIMESTAMP t2 = TS_NEVER;
+		clock_t ts = clock();
+		instance *inst;
 
-		/* tell main too to stop */
-		return TS_INVALID;
+		/* check to see if an instance was lost */
+		if ( instances_exited>0 )
+		{
+			output_debug("%d instance exit detected, stopping main loop", instances_exited);
+	
+			/* tell main too to stop */
+			return TS_INVALID;
+		}
+	
+		/* send linkage to slaves */
+		for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
+			instance_write_slave(inst);
+	
+		/* signal slaves to start */
+		instance_master_done(t1);
+	
+		/* read linkages from slaves */
+		for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
+		{
+			TIMESTAMP t3 = instance_read_slave(inst);
+			if ( t3 < t2 ) t2 = t3;
+		}
+	
+		output_debug("instance sync time is %"FMT_INT64"d", t2);
+		instance_synctime += clock() - ts;
+		return t2;
 	}
-
-	/* send linkage to slaves */
-	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
-		instance_write_slave(inst);
-
-	/* signal slaves to start */
-	instance_master_done(t1);
-
-	/* read linkages from slaves */
-	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
-	{
-		TIMESTAMP t3 = instance_read_slave(inst);
-		if ( t3 < t2 ) t2 = t3;
-	}
-
-	output_debug("instance sync time is %"FMT_INT64"d", t2);
-	return t2;
+	else
+		return TS_NEVER;
 }
 
 /////////////////////////////////////////////////////////////////////

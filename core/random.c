@@ -1219,16 +1219,21 @@ TIMESTAMP randomvar_sync(randomvar *var, TIMESTAMP t1)
 
 TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 {
-	randomvar *var;
-	TIMESTAMP t2 = TS_NEVER;
-	clock_t ts = clock();
-	for (var=randomvar_list; var!=NULL; var=var->next)
+	if ( randomvar_list )
 	{
-		TIMESTAMP t3 = randomvar_sync(var,t1);
-		if (t3<t2) t2 = t3;
+		randomvar *var;
+		TIMESTAMP t2 = TS_NEVER;
+		clock_t ts = clock();
+		for (var=randomvar_list; var!=NULL; var=var->next)
+		{
+			TIMESTAMP t3 = randomvar_sync(var,t1);
+			if (t3<t2) t2 = t3;
+		}
+		randomvar_synctime += clock() - ts;
+		return t2;
 	}
-	randomvar_synctime += clock() - ts;
-	return t2;
+	else
+		return TS_NEVER;
 }
 
 
