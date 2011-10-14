@@ -800,6 +800,7 @@ void auction::record_curve(double bu, double su){
 				sprintf(tstr, "failure");
 				break;
 		}
+		fprintf(curve_file, "# marginal quantity of %f %s (%f %%)\n", cleared_frame.marginal_quantity, this->unit, cleared_frame.marginal_frac);
 		fprintf(curve_file, "# curve cleared %f at $%f with %s type\n", cleared_frame.clearing_quantity, cleared_frame.clearing_price, tstr);
 	}
 
