@@ -71,6 +71,8 @@ EXPORT int create_multi_recorder(OBJECT **obj, OBJECT *parent)
 		my->format = 0;
 		strcpy(my->plotcommands,"");
 		my->target = gl_get_property(*obj,my->property);
+		my->header_units = HU_DEFAULT;
+		my->line_units = LU_DEFAULT;
 		return 1;
 	}
 	return 0;
@@ -270,6 +272,136 @@ static int multi_recorder_open(OBJECT *obj)
 	if(my->ops == NULL)
 		return 0;
 	set_csv_options();
+
+	// set out_property here
+	{size_t offset = 0;
+		char unit_buffer[1024];
+		char *token = 0, *prop_ptr = 0, *unit_ptr = 0, *obj_ptr = 0;
+		char objstr[1024], bigpropstr[1024], propstr[1024], unitstr[64];
+		PROPERTY *prop = 0;
+		UNIT *unit = 0;
+		int first = 1;
+		OBJECT *myobj = 0;
+		switch(my->header_units){
+			case HU_DEFAULT:
+				strcpy(my->out_property, my->property);
+				break;
+			case HU_ALL:
+				strcpy(unit_buffer, my->property);
+				for(token = strtok(unit_buffer, ","); token != NULL; token = strtok(NULL, ",")){
+					unit = 0;
+					prop = 0;
+					unitstr[0] = 0;
+					propstr[0] = 0;
+					objstr[0] = 0;
+					prop_ptr = strchr(token, ':');
+					if(prop_ptr != 0){
+						unit_ptr = strchr(prop_ptr, '[');
+					} else {
+						unit_ptr = strchr(token, '[');
+					}
+					// detect if this points at a different object and split accordingly
+					if(prop_ptr == 0){
+						prop_ptr = token;
+						myobj = obj->parent;
+						strcpy(bigpropstr, token);
+					} else {
+						sscanf(token, "%[^:]:%[^\n\r\t;]", objstr, bigpropstr);
+						myobj = gl_get_object(objstr);
+						if(myobj == 0){
+							gl_error("multi_recorder:%d: unable to find object '%s'", obj->id, objstr);
+							return 0;
+						}
+					}
+					// split unit from property, if present
+					if(unit_ptr == 0){
+						// no explicit unit
+						prop = gl_get_property(myobj, bigpropstr);
+						if(prop == 0){
+							gl_error("multi_recorder:%d: unable to find property '%s' for object '%s'", obj->id, propstr, myobj->name);
+							return 0;
+						}
+
+						if(prop->ptype == PT_double){
+							strcpy(unitstr, prop->unit->name);
+						} else {
+							; // not double, no unit, nothing to do
+						}
+						strcpy(propstr, bigpropstr);
+					} else {
+						// has explicit unit
+						if(2 == sscanf(bigpropstr, "%[A-Za-z0-9_.][%[^]\n,\0]", propstr, unitstr)){
+							unit = gl_find_unit(unitstr);
+							if(unit == 0){
+								gl_error("multi_recorder:%d: unable to find unit '%s' for property '%s'", obj->id, unitstr, propstr);
+								return 0;
+							}
+							prop = gl_get_property(myobj, propstr);
+							if(prop == 0){
+								gl_error("multi_recorder:%d: unable to find property '%s' for object '%s'", obj->id, propstr, myobj->name);
+								return 0;
+							}
+						} else {
+							gl_error("oops");
+						}
+					}
+					// check if property exists in object
+					// find property
+
+/*					// breakpoint
+					if(3 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n,\0]:%[A-Za-z0-9_.][%[^]\n,\0]", objstr, propstr, unitstr)){
+						myobj = gl_get_object(objstr);
+					} else if(2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n,\0]", propstr, unitstr)){
+						unit = gl_find_unit(unitstr);
+						if(unit == 0){
+							gl_error("multi_recorder:%d: unable to find unit '%s' for property '%s'", obj->id, unitstr, propstr);
+							return 0;
+						}
+					}
+					prop = gl_get_property(obj->parent, propstr);
+					if(prop->unit != 0 && unit == 0){
+						unit = prop->unit;
+					}*/
+					// print the property, and if there is one, the unit
+					if(myobj != obj->parent){
+						// need to include target object name in string
+						if(unit != 0){
+							sprintf(my->out_property+offset, "%s%s:%s[%s]", (first ? "" : ","), myobj->name, propstr, (unitstr[0] ? unitstr : unit->name));
+							offset += strlen(propstr) + (first ? 0 : 1) + 2 + strlen(unitstr[0] ? unitstr : unit->name) + strlen(myobj->name) + 1;
+						} else {
+							sprintf(my->out_property+offset, "%s%s:%s", (first ? "" : ","), myobj->name, propstr);
+							offset += strlen(propstr) + (first ? 0 : 1 + strlen(myobj->name) + 1);
+						}
+					} else {
+						// parent object, so no explicit object name
+						if(unit != 0){
+							sprintf(my->out_property+offset, "%s%s[%s]", (first ? "" : ","), propstr, (unitstr[0] ? unitstr : unit->name));
+							offset += strlen(propstr) + (first ? 0 : 1) + 2 + strlen(unitstr[0] ? unitstr : unit->name);
+						} else {
+							sprintf(my->out_property+offset, "%s%s", (first ? "" : ","), propstr);
+							offset += strlen(propstr) + (first ? 0 : 1);
+						}
+					}
+					first = 0;
+				}
+				break;
+			case HU_NONE:
+				strcpy(unit_buffer, my->property);
+				for(token = strtok(unit_buffer, ","); token != NULL; token = strtok(NULL, ",")){
+					if(2 == sscanf(token, "%[A-Za-z0-9_:.][%[^]\n,\0]", propstr, unitstr)){
+						; // no logic change
+					}
+					// print just the property, regardless of type or explicitly declared property
+					sprintf(my->out_property+offset, "%s%s", (first ? "" : ","), propstr);
+					offset += strlen(propstr) + (first ? 0 : 1);
+					first = 0;
+				}
+				break;
+			default:
+				// error
+				break;
+		}
+	}
 	return my->ops->open(my, fname, flags);
 }
 
@@ -498,16 +630,54 @@ RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)
 	return first;
 }
 
-int read_multi_properties(OBJECT *obj, RECORDER_MAP *rmap, char *buffer, int size)
+int read_multi_properties(struct recorder *my, OBJECT *obj, RECORDER_MAP *rmap, char *buffer, int size)
 {
 	RECORDER_MAP *r;
-	int offset=0;
-	int count=0;
+	int offset = 0;
+	int count = 0;
+	double value;
+	PROPERTY *p2 = 0;
+	PROPERTY fake;
+	memset(&fake, 0, sizeof(PROPERTY));
+	fake.ptype = PT_double;
+	fake.unit = 0;
 	for(r = rmap; r != NULL && offset < size - 33; r = r->next){
 		if(offset > 0){
 			strcpy(buffer+offset++,",");
 		}
-		offset += gl_get_value(r->obj, GETADDR(r->obj, &(r->prop)), buffer + offset, size - offset - 1, &(r->prop)); /* pointer => int64 */
+//		offset += gl_get_value(r->obj, GETADDR(r->obj, &(r->prop)), buffer + offset, size - offset - 1, &(r->prop)); /* pointer => int64 */
+		if(r->prop.ptype == PT_double){
+			switch(my->line_units){
+				case LU_ALL:
+					// cascade into 'default', as prop->unit should've been set, if there's a unit available.
+				case LU_DEFAULT:
+					offset+=gl_get_value(r->obj,GETADDR(r->obj,&(r->prop)),buffer+offset,size-offset-1,&(r->prop)); /* pointer => int64 */
+					break;
+				case LU_NONE:
+					// copy value into local value, use fake PROP, feed into gl_get_vaule
+					value = *gl_get_double(r->obj, &(r->prop));
+					p2 = gl_get_property(r->obj, r->prop.name);
+					if(p2 == 0){
+						gl_error("unable to locate %s.%s for LU_NONE", r->obj, r->prop.name);
+						return 0;
+					}
+					if(r->prop.unit != 0 && p2->unit != 0){
+						if(0 == gl_convert_ex(p2->unit, r->prop.unit, &value)){
+							gl_error("unable to convert %s to %s for LU_NONE", r->prop.unit, p2->unit);
+						} else { // converted
+							offset+=gl_get_value(r->obj,&value,buffer+offset,size-offset-1,&fake); /* pointer => int64 */;
+						}
+					} else {
+						offset+=gl_get_value(r->obj,GETADDR(r->obj,&(r->prop)),buffer+offset,size-offset-1,&(r->prop)); /* pointer => int64 */;
+					}
+					break;
+				default:
+					break;
+			}
+		} else {
+		  //offset += gl_get_value(obj,    GETADDR(obj,    p),          buffer+offset, size-offset-1, p); /* pointer => int64 */
+			offset += gl_get_value(r->obj, GETADDR(r->obj, &(r->prop)), buffer+offset, size-offset-1, &(r->prop)); /* pointer => int64 */
+		}
 		buffer[offset] = '\0';
 		count++;
 	}
@@ -574,7 +744,7 @@ EXPORT TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 	/* update property value */
 	if ((my->rmap != NULL) && (my->interval == 0 || my->interval == -1)){	
-		if(read_multi_properties(obj->parent,my->rmap,buffer,sizeof(buffer))==0) // vestigal use of parent
+		if(read_multi_properties(my, obj->parent,my->rmap,buffer,sizeof(buffer))==0) // vestigal use of parent
 		{
 			//sprintf(buffer,"unable to read property '%s' of %s %d", my->property, obj->parent->oclass->name, obj->parent->id);
 			sprintf(buffer,"unable to read a property");
@@ -584,7 +754,7 @@ EXPORT TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	if ((my->rmap != NULL) && (my->interval > 0)){
 		if((t0 >=my->last.ts + my->interval) || (t0 == my->last.ts)){
-			if(read_multi_properties(obj->parent,my->rmap,buffer,sizeof(buffer))==0)
+			if(read_multi_properties(my, obj->parent,my->rmap,buffer,sizeof(buffer))==0)
 			{
 				//sprintf(buffer,"unable to read property '%s' of %s %d", my->property, obj->parent->oclass->name, obj->parent->id);
 				sprintf(buffer,"unable to read a property");
