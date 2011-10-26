@@ -18,6 +18,7 @@ public:
 	complex indiv_measured_power[3]; //individual phase power
 	double measured_demand; //< metered demand (peak of power)
 	double measured_real_power; //< metered real power
+	double last_measured_real_power; //< previous instance's metered real power
 	double measured_reactive_power; //< metered reactive power
 	complex tpmeter_power_consumption;
 	bool tpmeter_interrupted;		///< Reliability flag - goes active if the customer is in an "interrupted" state

@@ -361,13 +361,14 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			
 			if (seconds > 0)
 			{
-				hourly_acc += seconds/3600 * price * measured_real_power/1000;
+				hourly_acc += seconds/3600 * price * last_measured_real_power/1000;
 				process_bill(t1);
 			}
 
 			// Now that we've accumulated the bill for the last time period, update to the new price
 			double *pprice = (gl_get_double(power_market, price_prop));
 			last_price = price = *pprice;
+			last_measured_real_power = measured_real_power;
 
 			if (monthly_bill == previous_monthly_bill)
 			{
