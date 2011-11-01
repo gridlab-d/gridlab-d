@@ -204,7 +204,7 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 					free(list);
 					return NULL;
 				}
-				else if (pinfo->ptype==PT_double)
+				else if (pinfo->ptype==PT_double || pinfo->ptype==PT_random || pinfo->ptype==PT_loadshape )
 				{
 					if (strcmp(aggrpart,"")!=0)
 					{	/* doubles cannot have parts */
@@ -220,7 +220,7 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 					}
 					part = AP_NONE;
 				}
-				else if (pinfo->ptype==PT_complex)
+				else if (pinfo->ptype==PT_complex || pinfo->ptype==PT_enduse)
 				{	/* complex must have parts */
 					if (strcmp(aggrpart,"real")==0)
 						part = AP_REAL;
@@ -344,6 +344,7 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 
 		switch (aggr->pinfo->ptype) {
 		case PT_complex:
+		case PT_enduse:
 			pcomplex = object_get_complex(obj,aggr->pinfo);
 			if (pcomplex!=NULL)
 			{
@@ -358,6 +359,8 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 			}
 			break;
 		case PT_double:
+		case PT_loadshape:
+		case PT_random:
 			pdouble = object_get_double(obj,aggr->pinfo);
 			if (pdouble!=NULL)
 				value = *pdouble;
