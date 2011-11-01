@@ -455,7 +455,7 @@ TIMESTAMP instance_read_slave(instance *inst)
 			break;
 		}
 	}
-	ResetEvent(inst->hSlave);
+	ResetEvent(inst->hMaster);
 #else
 	// @todo linux/unix slave signalling
 #endif
