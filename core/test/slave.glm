@@ -1,0 +1,6 @@
+
+module climate;
+
+object climate {
+	name station;
+}

@@ -1,0 +1,25 @@
+
+module climate;
+
+instance localhost {
+	model "slave.glm";
+	weather1:temperature -> station:temperature;
+	weather1:humidity <- station:humidity;
+}
+
+object climate {
+	name weather1;
+}
+
+#ifdef TWO
+instance localhost {
+	model "slave.glm";
+	weather2:temperature -> station:temperature;
+	weather2:humidity <- station:humidity;
+}
+
+object climate {
+	name weather2;
+}
+#endif
+
