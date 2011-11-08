@@ -270,7 +270,8 @@ void instance_master_done(TIMESTAMP t1)
 		inst->cache->ts = t1;
 		output_debug("master signaling slave %d with timestamp %"FMT_INT64"d", inst->id, inst->cache->ts);
 #ifdef WIN32
-		SetEvent(inst->hMaster);
+		//SetEvent(inst->hMaster);
+		SetEvent(inst->hSlave);
 #else
 	// @todo linux/unix slave signalling
 #endif
@@ -546,31 +547,38 @@ void *instance_slaveproc(void *ptr)
 	while (slave_cache->ts!=TS_NEVER)
 	{
 		/* wait for master to signal slave */
+		output_debug("slave %d controller waiting", slave_id);
 		if ( !instance_slave_wait() )
 		{
 			/* stop the main loop and exit the slave controller */
+			output_error("slave %d controller wait failure, thread stopping", slave_id);
 			exec_mls_done();
 			return NULL;
 		}
 
 		/* copy inbound linkages */
+		output_debug("slave %d controller reading links", slave_id);
 		for ( lnk=master.read ; lnk!=NULL ; lnk=lnk->next )
 			linkage_master_to_slave(lnk);
 		
 		/* resume the main loop */
+		output_debug("slave %d controller resuming exec with %lli", slave_id, slave_cache->ts);
 		exec_mls_resume(slave_cache->ts);
 
 		/* wait for main loop to pause */
+		output_debug("slave %d controller waiting for main to pause", slave_id);
 		exec_mls_statewait(MLS_PAUSED);
 
 		/* @todo copy output linkages */
+		output_debug("slave %d controller writing links", slave_id);
 		for ( lnk=master.read ; lnk!=NULL ; lnk=lnk->next )
-			linkage_master_to_slave(lnk);
+			linkage_slave_to_master(lnk);
 
 		/* copy the next time stamp */
 		slave_cache->ts = global_clock;
 
 		/* signal the master */
+		output_debug("slave %d controller sending 'done' signal", slave_id);
 		instance_slave_done();
 	}
 	output_verbose("slave %d completion state reached", slave_cache->id);
@@ -690,6 +698,8 @@ int instance_slave_init(void)
 
 	global_mainloopstate = MLS_PAUSED;
 	output_verbose("opened slave end of master-slave comm channel for slave %d", slave_id);
+
+	exec_mls_create(); // need to do this before we start the thread
 
 	/* start the slave controller */
 	if ( pthread_create(&slave_tid, NULL, instance_slaveproc, NULL) )

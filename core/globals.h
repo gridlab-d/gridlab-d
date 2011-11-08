@@ -213,7 +213,7 @@ typedef enum {
 	MRM_SLAVE,      /**< multirun is enabled and this run is the slace run */
 } MULTIRUNMODE; /**< determines the type of run */
 GLOBAL MULTIRUNMODE global_multirun_mode INIT(MRM_STANDALONE);	/**< multirun mode */
-GLOBAL int global_signal_timeout INIT(5000); /**< signal timeout in milliseconds (-1 is infinite) */
+GLOBAL int32 global_signal_timeout INIT(5000); /**< signal timeout in milliseconds (-1 is infinite) */
 
 #ifdef __cplusplus
 }

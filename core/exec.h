@@ -35,6 +35,7 @@ STATUS t_setup_ranks(void);
 INDEX **exec_getranks(void);
 void exec_sleep(unsigned int usec);
 
+void exec_mls_create(void);
 void exec_mls_init(void);
 void exec_mls_suspend(void);
 void exec_mls_resume(TIMESTAMP next_pause);

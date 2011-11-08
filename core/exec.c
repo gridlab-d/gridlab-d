@@ -694,13 +694,31 @@ static void *obj_syncproc(void *ptr)
 
 /** MAIN LOOP CONTROL ******************************************************************/
 
-static pthread_mutex_t mls_lock;
-static pthread_cond_t mls_signal;
+/*static*/ pthread_mutex_t mls_lock;
+/*static*/ pthread_cond_t mls_signal;
+int mls_created = 0;
+
+void exec_mls_create(void){
+	int rv = 0;
+
+	mls_created = 1;
+
+	output_debug("exec_mls_create()");
+	rv = pthread_mutex_init(&mls_lock,NULL);
+	if(rv != 0){
+		output_error("error with pthread_mutex_init() in exec_mls_init()");
+	}
+	rv = pthread_cond_init(&mls_signal,NULL);
+	if(rv != 0){
+		output_error("error with pthread_cond_init() in exec_mls_init()");
+	}
+}
 
 void exec_mls_init(void)
 {
-	pthread_mutex_init(&mls_lock,NULL);
-	pthread_cond_init(&mls_signal,NULL);
+	if(mls_created == 0){
+		exec_mls_create();
+	}
 	if (global_mainloopstate==MLS_PAUSED)
 		exec_mls_suspend();
 	else
@@ -709,24 +727,59 @@ void exec_mls_init(void)
 
 void exec_mls_suspend(void)
 {
+	int loopctr = 10;
+	int rv = 0;
 	output_debug("pausing simulation");
 	if ( global_multirun_mode==MRM_STANDALONE && strcmp(global_environment,"server")!=0 )
 		output_warning("suspending simulation with no server/multirun active to control mainloop state");
-	pthread_mutex_lock(&mls_lock);
+	output_debug("lock_ (%x->%x)", &mls_lock, mls_lock);
+	rv = pthread_mutex_lock(&mls_lock);
+	if(0 != rv){
+		output_error("error with pthread_mutex_lock() in exec_mls_suspend()");
+		;
+	}
+	output_debug("sched update_");
 	sched_update(global_clock,global_mainloopstate=MLS_PAUSED);
-	while ( global_clock==TS_ZERO || (global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER) ) 
-		pthread_cond_wait(&mls_signal, &mls_lock);
+	output_debug("wait loop_");
+	while ( global_clock==TS_ZERO || (global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER) ) {
+		if(loopctr > 0){
+			output_debug(" * tick (%i)", --loopctr);
+		}
+		rv = pthread_cond_wait(&mls_signal, &mls_lock);
+		if(rv != 0){
+			output_error("error with pthread_cond_wait() in exec_mls_suspend()");
+		}
+	}
+	output_debug("sched update_");
 	sched_update(global_clock,global_mainloopstate=MLS_RUNNING);
-	pthread_mutex_unlock(&mls_lock);
+	output_debug("unlock_");
+	rv = pthread_mutex_unlock(&mls_lock);
+	if(rv != 0){
+		output_error("error with pthread_mutex_unlock() in exec_mls_suspend()");
+	}
 }
 
 void exec_mls_resume(TIMESTAMP ts)
 {
+	int rv = 0;
 	output_debug("resuming simulation");
-	pthread_mutex_lock(&mls_lock);
+	output_debug("lock (%x->%x)", &mls_lock, mls_lock);
+	rv = pthread_mutex_lock(&mls_lock);
+	if(rv != 0){
+		output_error("error in pthread_mutex_lock() in exec_mls_resume() (error %i)", rv);
+	}
+	output_debug("set pauseat");
 	global_mainlooppauseat = ts;
-	pthread_mutex_unlock(&mls_lock);
-	pthread_cond_broadcast(&mls_signal);
+	output_debug("unlock");
+	rv = pthread_mutex_unlock(&mls_lock);
+	if(rv != 0){
+		output_error("error in pthread_mutex_unlock() in exec_mls_resume()");
+	}
+	output_debug("broadcast");
+	rv = pthread_cond_broadcast(&mls_signal);
+	if(rv != 0){
+		output_error("error in pthread_cond_broadcast() in exec_mls_resume()");
+	}
 }
 
 void exec_mls_statewait(unsigned states)
