@@ -1162,7 +1162,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 	}
 
 	/* reinitialize the loadshape */
-	if (loadshape_init((loadshape*)data))
+	if (!randomvar_update(var))
 		return 0;
 
 	/* everything converted ok */
