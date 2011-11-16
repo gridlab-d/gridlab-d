@@ -27,6 +27,9 @@ using namespace std;
 CLASS* transformer::oclass = NULL;
 CLASS* transformer::pclass = NULL;
 
+//Default temperature for thermal aging calculations
+double default_outdoor_temperature = 74;
+
 transformer::transformer(MODULE *mod) : link(mod)
 {
 	if(oclass == NULL)
@@ -63,6 +66,7 @@ int transformer::create()
 {
 	int result = link::create();
 	configuration = NULL;
+	ptheta_A = NULL;
 	return result;
 }
 
@@ -102,6 +106,7 @@ int transformer::init(OBJECT *parent)
 	double sa_base;
 	double nt, nt_a, nt_b, nt_c, inv_nt_a, inv_nt_b, inv_nt_c;
 	complex zt, zt_a, zt_b, zt_c, z0, z1, z2, zc;
+	FINDLIST *climate_list = NULL;
 
 	config = OBJECTDATA(configuration,transformer_configuration);
 
@@ -768,12 +773,80 @@ int transformer::init(OBJECT *parent)
 		if(config->t_W<=0){
 			throw("%s: transformer_configuration winding time constant must be greater than zero",configuration->name);
 		}
-		double default_outdoor_temperature = 74;
+
 		// fetch the climate data
 		if(climate==NULL){
-			ptheta_A = &default_outdoor_temperature; // default static temperature
+			//See if a climate object exists
+			climate_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
+
+			if (climate_list==NULL)
+			{
+				//Warn
+				gl_warning("No climate data found - using static temperature");
+				/*  TROUBLESHOOT
+				While attempting to map a climate object for the transformer aging model, no climate object could be
+				found.  Static temperature data will be used instead.  Please check your code or manually specify a climate
+				object if this is not desired.
+				*/
+
+				//Nope, just use default static
+				ptheta_A = &default_outdoor_temperature; // default static temperature
+			}
+			else if (climate_list->hit_count >= 1)
+			{
+				//Link up
+				climate = gl_find_next(climate_list,NULL);
+
+				//Make sure it worked
+				if (climate==NULL)
+				{
+					//Warn
+					gl_warning("No climate data found - using static temperature");
+					//Defined above
+
+					//Nope, just use default static
+					ptheta_A = &default_outdoor_temperature; // default static temperature
+				}
+				else	//Found one, map the property
+				{
+					//Link it up
+					fetch_double(&ptheta_A, "temperature", climate);
+
+					//Make sure it worked
+					if (ptheta_A == NULL)
+					{
+						//Warn
+						gl_warning("No climate data found - using static temperature");
+						//Defined above
+
+						//Nope, just use default static
+						ptheta_A = &default_outdoor_temperature; // default static temperature
+					}
+				}
+			}
+			else	//Must not have found one
+			{
+				//Warn
+				gl_warning("No climate data found - using static temperature");
+				//Defined above
+
+				//Nope, just use default static
+				ptheta_A = &default_outdoor_temperature; // default static temperature
+			}
+
 		} else {
 			fetch_double(&ptheta_A, "temperature", climate);
+
+			//Make sure it worked
+			if (ptheta_A == NULL)
+			{
+				//Warn
+				gl_warning("No climate data found - using static temperature");
+				//Defined above
+
+				//Nope, just use default static
+				ptheta_A = &default_outdoor_temperature; // default static temperature
+			}
 		} 
 		temp_A = *ptheta_A;
 		amb_temp = (temp_A-32.0)*(5.0/9.0);
