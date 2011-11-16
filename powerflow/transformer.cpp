@@ -42,6 +42,14 @@ transformer::transformer(MODULE *mod) : link(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "link",
            	PT_object, "configuration", PADDR(configuration),
+			PT_object, "climate", PADDR(climate),
+			PT_double, "ambient_temperature[degC]", PADDR(amb_temp),
+			PT_double, "top_oil_hot_spot_temperature[degC]", PADDR(theta_TO),
+			PT_double, "winding_hot_spot_temperature[degC]", PADDR(theta_H),
+			PT_double, "percent_loss_of_life", PADDR(life_loss),
+			PT_double, "aging_constant", PADDR(B_age),
+			PT_bool, "use_thermal_model", PADDR(use_thermal_model),
+			PT_double, "aging_granularity[s]", PADDR(aging_step),
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -56,6 +64,22 @@ int transformer::create()
 	int result = link::create();
 	configuration = NULL;
 	return result;
+}
+
+void transformer::fetch_double(double **prop, char *name, OBJECT *parent){
+	OBJECT *hdr = OBJECTHDR(this);
+	*prop = gl_get_double_by_name(parent, name);
+	if(*prop == NULL){
+		char tname[32];
+		char *namestr = (hdr->name ? hdr->name : tname);
+		char msg[256];
+		sprintf(tname, "transformer:%i", hdr->id);
+		if(*name == NULL)
+			sprintf(msg, "%s: transformer unable to find property: name is NULL", namestr);
+		else
+			sprintf(msg, "%s: transformer unable to find %s", namestr, name);
+		throw(msg);
+	}
 }
 
 int transformer::init(OBJECT *parent)
@@ -79,8 +103,7 @@ int transformer::init(OBJECT *parent)
 	double nt, nt_a, nt_b, nt_c, inv_nt_a, inv_nt_b, inv_nt_c;
 	complex zt, zt_a, zt_b, zt_c, z0, z1, z2, zc;
 
-	transformer_configuration *config = OBJECTDATA(configuration,
-	                                   transformer_configuration);
+	config = OBJECTDATA(configuration,transformer_configuration);
 
 	if (config->connect_type==3)		//Flag Delta-Gwye and Split-phase for phase checks
 		SpecialLnk = DELTAGWYE;
@@ -695,9 +718,183 @@ int transformer::init(OBJECT *parent)
 	}
 #endif
 
+	//retrieve all the thermal model inputs from transformer_config
+	if(use_thermal_model && config->coolent_type!=1){
+		throw("coolent_type specified is not handled");
+	}
+	if(use_thermal_model && config->coolent_type==1){
+		if(config->core_coil_weight<=0){
+			throw("weight of the core and coil assembly for transformer configuration %s must be greater than zero",configuration->name);
+		}
+		if(config->tank_fittings_weight<=0){
+			throw("weight of the tank fittings for transformer configuration %s must be greater than zero",configuration->name);
+		}
+		if(config->oil_vol<=0){
+			throw("the oil volume for transformer configuration %s must be greater than zero",configuration->name);
+		}
+
+		if(config->cooling_type==1 || config->cooling_type==2){
+			thermal_capacity = (0.06 * config->core_coil_weight) + (0.04 * config->tank_fittings_weight) + (1.33 * config->oil_vol);
+			if(config->cooling_type==1){
+				m = n = 0.8;
+			} else if(config->cooling_type==2){
+				m = 0.8;
+				n = 0.9;
+			} else {
+				throw("cooling_type not specified for transformer configureation %s",configuration->name);
+			}
+		} else if(config->cooling_type>2){
+			thermal_capacity = (0.06 * config->core_coil_weight) + (0.06 * config->tank_fittings_weight) + (1.93 * config->oil_vol);
+			if(config->cooling_type==3 || config->cooling_type==4){
+				m = 0.8;
+				n = 0.9;
+			} else if(config->cooling_type==5 || config->cooling_type==6){
+				m = n = 1.0;
+			} else {
+				throw("cooling_type not specified for transformer configureation %s",configuration->name);
+			}
+		} else {
+			throw("cooling_type not specified for transformer configureation %s",configuration->name);
+		}
+		if(config->full_load_loss==0 && config->no_load_loss==0 && config->impedance.Re()==0 && config->shunt_impedance.Re()==0){
+			throw("full-load and no-load losses for transformer configureation %s must be nonzero",configuration->name);
+		} else if(config->full_load_loss!=0 && config->no_load_loss!=0){
+			R = config->full_load_loss/config->no_load_loss;
+		} else if(config->impedance.Re()!=0 && config->shunt_impedance.Re()!=0)
+			R = config->impedance.Re()*config->shunt_impedance.Re();
+		if(config->t_W==NULL || config->dtheta_TO_R==NULL){
+			throw("winding time constant or rated top-oil hotspot rise for transformer configuration %s must be nonzero",configuration->name);
+		}
+		if(config->t_W<=0){
+			throw("%s: transformer_configuration winding time constant must be greater than zero",configuration->name);
+		}
+		double default_outdoor_temperature = 74;
+		// fetch the climate data
+		if(climate==NULL){
+			ptheta_A = &default_outdoor_temperature; // default static temperature
+		} else {
+			fetch_double(&ptheta_A, "temperature", climate);
+		} 
+		temp_A = *ptheta_A;
+		amb_temp = (temp_A-32.0)*(5.0/9.0);
+		if(B_age==0)
+			B_age = 15000;//default value from the IEEE Std C57.91-1995
+		//default rise in temperature is zero.
+		if(theta_TO==0)
+			theta_TO = amb_temp;
+		if(theta_H==0)
+			theta_H = theta_TO;
+		if(config->dtheta_H_AR==0)
+			config->dtheta_H_AR = 80;// default for an average rise of 65 degrees C is 80 degrees C
+		
+		return_at = gl_globalclock;
+		if(aging_step<1)
+			aging_step = 300;//default granularity is 5 minutes.
+		t_TOR = thermal_capacity*(config->dtheta_TO_R)/((config->full_load_loss)*(config->kVA_rating)*1000);
+		dtheta_H_R = config->dtheta_H_AR - config->dtheta_TO_R;
+	}
+
 	return 1;
 }
 
+TIMESTAMP transformer::postsync(TIMESTAMP t0)
+{	
+	OBJECT *obj = OBJECTHDR(this);
+	double time_left;
+	TIMESTAMP trans_end;
+	if(use_thermal_model){
+		TIMESTAMP result = link::postsync(t0);
+		temp_A = *ptheta_A;
+		amb_temp = (temp_A-32.0)*(5.0/9.0);
+		if(t0 != 0 && t0 != time_before && NR_cycle){
+			if(time_before != 0){
+				dt = (double)((t0-time_before)*TS_SECOND)/3600;// calculate the change in time in hours
+
+				//calculate the loss of life
+				if(config->installed_insulation_life<=0) {
+					gl_error("%s: transformer configuraion installed insulation life must be greater than zero",configuration->name);
+					return TS_INVALID;
+				}
+				life_loss += F_AA*dt*100/config->installed_insulation_life;
+				if(life_loss >= 100){
+					gl_error("%s: The transformer has reached its opperational lifespan",obj->name);
+					return TS_INVALID;
+				}
+
+				//calculate the top-oil hot spot temperature using previous parameters from the previous timestep 
+				dtheta_TO = (dtheta_TO_U - dtheta_TO_i)*(1-exp(-dt/t_TO))+dtheta_TO_i;
+				theta_TO = last_temp + dtheta_TO;
+
+				//calculate the winding hot spot temperature
+				dtheta_H = (dtheta_H_U - dtheta_H_i)*(1-exp(-dt/config->t_W))+dtheta_H_i;
+				theta_H = last_temp + dtheta_TO + dtheta_H;
+
+				// calculate the power ratio for the current timestep, temperature asymptotes, and time constants.
+				K = power_out.Mag()/(1000*config->kVA_rating);
+
+				//calculate the inital change in hot spot temperatures.
+				dtheta_TO_i = dtheta_TO;
+				dtheta_H_i = dtheta_H;
+
+				dtheta_TO_U = (config->dtheta_TO_R)*pow(((K*K*R+1)/(R+1)),n);
+				t_TO = t_TOR*(((dtheta_TO_U/config->dtheta_TO_R)-(dtheta_TO_i/config->dtheta_TO_R))/(pow((dtheta_TO_U/config->dtheta_TO_R),(1/n)) - pow((dtheta_TO_i/config->dtheta_TO_R),(1/n))));
+				dtheta_H_U = dtheta_H_R*pow(K,2*m);
+
+				last_temp = amb_temp;
+
+			} else {
+				// calculate the power ratio for the current timestep, temperature asymptotes, and time constants.
+				K = power_out.Mag()/(1000*config->kVA_rating);
+
+				//calculate the inital change in hot spot temperatures.
+				dtheta_H_i = theta_H - theta_TO;
+				dtheta_TO_i = theta_TO - amb_temp;
+
+				dtheta_TO_U = (config->dtheta_TO_R)*pow(((K*K*R+1)/(R+1)),n);
+				t_TO = t_TOR*(((dtheta_TO_U/config->dtheta_TO_R)-(dtheta_TO_i/config->dtheta_TO_R))/(pow((dtheta_TO_U/config->dtheta_TO_R),(1/n)) - pow((dtheta_TO_i/config->dtheta_TO_R),(1/n))));
+				dtheta_H_U = dtheta_H_R*pow(K,2*m);
+
+				last_temp = amb_temp;
+			}
+			time_before = t0;
+		}
+		//figure out how much time is left before the transformer lifespan is reached
+		F_AA = exp((B_age/383.14)-(B_age/(theta_H+273.14)));
+		time_left = (config->installed_insulation_life)*(100-life_loss)/(100*F_AA)*3600;
+		if(time_left < 1){
+			gl_error("%s: The transformer has reached its opperational lifespan. The transformer has exploded.",obj->name);
+			return TS_INVALID;
+		}
+		trans_end = t0 + (TIMESTAMP)(floor(time_left+0.5));
+		// figure out when to return
+ 		if(t0>=return_at){
+			return_at += (TIMESTAMP)(floor(aging_step + 0.5));
+			if(trans_end<return_at){
+				return_at = trans_end;
+			}
+			if(return_at<t0){
+				gl_error("%s: transformer granularity is too small for the minimum timestep specified",obj->name);
+				return TS_INVALID;
+			}
+			if(result<return_at){
+				return result;
+			} else {
+				return return_at;
+			}
+		} else {
+			if(trans_end<return_at){
+				return_at = trans_end;
+			}
+			if(result<return_at){
+				return result;
+			} else {
+				return return_at;
+			}
+		}
+	} else {
+		return link::postsync(t0);
+	}
+}
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: transformer
 //////////////////////////////////////////////////////////////////////////

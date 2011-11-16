@@ -28,7 +28,18 @@ public:
 	complex shunt_impedance;		// Shunt impedance - all values are summed and reflected back to the primary
 	double no_load_loss;			// Another method of specifying transformer impedances
 	double full_load_loss;			//  -- both are defined as unit values
-	
+	double RX;						// the reactance to resistance ratio
+	// thermal model input
+	enum {MINERAL_OIL=1, DRY=2} coolent_type;
+	enum {OA=1, FA=2, NDFOA=3, NDFOW=4, DFOA=5, DFOW=6} cooling_type;
+	double core_coil_weight;		// The weight of the core and coil assembly in pounds.
+	double tank_fittings_weight;	// The weight of the tank and fittings in pounds.
+	double oil_vol;					// The number of gallons of oil in the transformer.
+	double t_W;						// The rated winding time constant in hours.
+	double dtheta_TO_R;			// top-oil hottest-spot rise over ambient temperature at rated load, degrees C.
+	double dtheta_H_AR;			// winding hottest-spot rise over ambient temperature at rated load, degrees C.
+	double installed_insulation_life;	//the normal lifetime of the transformer insulation at rated load, hours.
+
 	transformer_configuration(MODULE *mod);
 	inline transformer_configuration(CLASS *cl=oclass):powerflow_library(cl){};
 	int create(void);

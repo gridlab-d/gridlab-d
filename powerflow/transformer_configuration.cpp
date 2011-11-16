@@ -59,6 +59,18 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 				PT_KEYWORD,"POLETOP",POLETOP,
 				PT_KEYWORD,"PADMOUNT",PADMOUNT,
 				PT_KEYWORD,"VAULT",VAULT,
+			PT_enumeration,"coolent_type", PADDR(coolent_type),
+				PT_KEYWORD,"UNKNOWN", UNKNOWN,
+				PT_KEYWORD,"MINERAL_OIL", MINERAL_OIL,
+				PT_KEYWORD,"DRY",DRY,
+			PT_enumeration, "cooling_type", PADDR(cooling_type),
+				PT_KEYWORD,"UNKNOWN", UNKNOWN,
+				PT_KEYWORD,"OA", OA,
+				PT_KEYWORD,"FA", FA,
+				PT_KEYWORD,"NDFOA", NDFOA,
+				PT_KEYWORD,"NDFOW", NDFOW,
+				PT_KEYWORD,"DFOA", DFOA,
+				PT_KEYWORD,"DFOW", DFOW,
 			
 			PT_double, "primary_voltage[V]", PADDR(V_primary),
 			PT_double, "secondary_voltage[V]",PADDR(V_secondary),
@@ -78,6 +90,17 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 			PT_double, "shunt_resistance[pu.Ohm]",PADDR(shunt_impedance.Re()),
 			PT_double, "shunt_reactance[pu.Ohm]",PADDR(shunt_impedance.Im()),
 			PT_complex, "shunt_impedance[pu.Ohm]",PADDR(shunt_impedance),
+			//thermal aging model parameters
+			PT_double, "core_coil_weight[lb]", PADDR(core_coil_weight),
+			PT_double, "tank_fittings_weight[lb]", PADDR(tank_fittings_weight),
+			PT_double, "oil_volume[gal]", PADDR(oil_vol),
+			PT_double, "rated_winding_time_constant[h]", PADDR(t_W),
+			PT_double, "rated_winding_hot_spot_rise[degC]", PADDR(dtheta_H_AR),
+			PT_double, "rated_top_oil_rise[degC]", PADDR(dtheta_TO_R),
+			PT_double, "no_load_loss[pu]", PADDR(no_load_loss),
+			PT_double, "full_load_loss[pu]", PADDR(full_load_loss),
+			PT_double, "reactance_resistance_ratio", PADDR(RX),
+			PT_double, "installed_insulation_life[h]", PADDR(installed_insulation_life),
 
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -102,6 +125,7 @@ int transformer_configuration::create(void)
 	impedance = impedance1 = impedance2 = complex(0.0,0.0);	//Lossless transformer by default
 	shunt_impedance = complex(999999999,999999999);			//Very large number for infinity to approximate lossless
 	no_load_loss = full_load_loss = 0.0;
+	RX = 4.5;
 	return result;
 }
 
@@ -168,6 +192,10 @@ int transformer_configuration::init(OBJECT *parent)
 	}
 	else
 	{
+		if (no_load_loss > 0 && full_load_loss > 0){// Using Jason's equations to determine shunt and series resistances based on no-load and full-load losses
+			impedance = complex(full_load_loss,RX*full_load_loss);
+			shunt_impedance = complex(1/no_load_loss,RX/no_load_loss);
+		}
 		if ((impedance1.Re() == 0.0 && impedance1.Im() == 0.0) && (impedance2.Re() != 0.0 && impedance2.Im() != 0.0))
 		{
 			impedance1 = impedance2;
