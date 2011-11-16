@@ -1,0 +1,229 @@
+//test_transformer_thermal_model.glm tests to make sure that the thermal aging model for the transformer updates the hot spot temperature and loss of liffe of the transformer correctly.
+
+module residential {
+	implicit_enduses NONE;
+}
+module powerflow {
+	solver_method NR;
+}
+module tape;
+module climate;
+module assert;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2011-01-01 0:00:00';
+	stoptime '2011-03-01 0:00:05';
+}
+
+object climate{
+	name yakima;
+	tmyfile "../WA-Yakima.tmy2";
+}
+
+schedule transformer_load {
+	* 21-3 * * * 0.75;
+	* 4 * * * 0.80;
+	* 5 * * * 0.85;
+	* 6 * * *  0.90;
+	* 7 * * * 0.95;
+	* 8 * * * 1.00;
+	* 9-10 * * * 1.125;
+	* 11-14 * * * 0.875;
+	* 15 * * * 1.00;
+	* 16 * * * 1.25;
+	* 17 * * * 2.00;
+	* 18-19 * * * 2.50;
+	* 20 * * * 2.25;
+}
+
+object triplex_line_configuration {
+	name triplex_line_configuration_1;
+	conductor_1 object triplex_line_conductor {
+		resistance 0.97;
+		geometric_mean_radius 0.0111;
+	};
+	conductor_2 object triplex_line_conductor {
+		resistance 0.97;
+		geometric_mean_radius 0.0111;
+	};
+	conductor_N object triplex_line_conductor {
+		resistance 0.97;
+		geometric_mean_radius 0.0111;
+	};
+	insulation_thickness 0.08;
+	diameter 0.368;
+}
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration:300 {
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
+}
+
+object transformer_configuration:400 {
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.01;
+}
+
+object node:1 {
+	bustype SWING;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line:12 {
+	phases "ABCN";
+	from node:1;
+	to node:2;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node:2 {
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object transformer:23 {
+	name Transformer1;
+	phases "ABCN";
+	from node:2;
+	to node:3;
+	configuration transformer_configuration:400;
+}
+
+object node:3 {
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
+}
+
+object overhead_line:34 {
+	phases "ABCN";
+	from node:3;
+	to node:4;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object node:4 {
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
+}
+
+object transformer_configuration {
+	name AS_config;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	powerA_rating 15;
+	primary_voltage 2401;
+	secondary_voltage 120.000;
+	// impedance 0.006+0.0136j;
+	full_load_loss 0.006;
+	no_load_loss 0.003;
+	reactance_resistance_ratio 10;
+	core_coil_weight 50;
+	tank_fittings_weight 150;
+	oil_volume 4;
+	rated_winding_hot_spot_rise 80;
+	rated_top_oil_rise 30;
+	rated_winding_time_constant 24;
+	installed_insulation_life 17520;
+	coolant_type MINERAL_OIL;
+	cooling_type OA;
+}
+
+object transformer {
+	name center_tap_1; 
+	phases AS; 
+	from node:4; 
+	to trip_node1; 
+	configuration AS_config;
+	climate yakima;
+	use_thermal_model TRUE;
+	aging_granularity 300;
+	aging_constant 15000;
+	percent_loss_of_life 0;
+	object double_assert {
+		target "percent_loss_of_life";
+		in '2011-02-28 23:55:00';
+		once ONCE_TRUE;
+		value 58.9726;
+		within 0.59;// asserting to within 1%
+	};
+}
+
+object triplex_node {
+	name trip_node1; 
+	phases AS; 
+	nominal_voltage 120;
+}
+
+object triplex_line {
+	name trip_line1; 
+	phases AS; 
+	from trip_node1; 
+	to trip_meter2; 
+	length 40; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_meter {
+	nominal_voltage 120;
+	phases AS;
+	name trip_meter2;
+	object house {
+		name house1;
+		heating_system_type NONE;
+		cooling_system_type NONE;
+		auxiliary_system_type NONE;
+		fan_type NONE;
+		object ZIPload {
+			base_power transformer_load*15;
+			power_fraction 1;
+			impedance_fraction 0;
+			current_fraction 0;
+			power_pf 1;
+			current_pf 0;
+			impedance_pf 0;
+			heat_fraction 0;
+		};
+	};
+}
