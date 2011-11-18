@@ -2617,7 +2617,9 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				continue;
 			}
 			
-			complex current = ~(c->pLoad->total*1000 / *(c->pV)); 
+			//Current flow is based on the actual load, not nominal load
+			complex actual_power = c->pLoad->power + (c->pLoad->current + c->pLoad->admittance * c->pLoad->voltage_factor)* c->pLoad->voltage_factor;
+			complex current = ~(actual_power*1000 / *(c->pV)); 
 
 			// check breaker
 			if (current.Mag()>c->max_amps)
