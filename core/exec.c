@@ -147,6 +147,8 @@ int64 lock_count = 0, lock_spin = 0;
 #endif
 
 extern int stop_now;
+extern pthread_mutex_t mls_inst_lock;
+extern pthread_cond_t mls_inst_signal;
 
 //sjin: struct for pthread_create arguments
 struct arg_data {
@@ -694,8 +696,8 @@ static void *obj_syncproc(void *ptr)
 
 /** MAIN LOOP CONTROL ******************************************************************/
 
-/*static*/ pthread_mutex_t mls_lock;
-/*static*/ pthread_cond_t mls_signal;
+/*static*/ pthread_mutex_t mls_svr_lock;
+/*static*/ pthread_cond_t mls_svr_signal;
 int mls_created = 0;
 
 void exec_mls_create(void){
@@ -704,11 +706,11 @@ void exec_mls_create(void){
 	mls_created = 1;
 
 	output_debug("exec_mls_create()");
-	rv = pthread_mutex_init(&mls_lock,NULL);
+	rv = pthread_mutex_init(&mls_svr_lock,NULL);
 	if(rv != 0){
 		output_error("error with pthread_mutex_init() in exec_mls_init()");
 	}
-	rv = pthread_cond_init(&mls_signal,NULL);
+	rv = pthread_cond_init(&mls_svr_signal,NULL);
 	if(rv != 0){
 		output_error("error with pthread_cond_init() in exec_mls_init()");
 	}
@@ -732,8 +734,8 @@ void exec_mls_suspend(void)
 	output_debug("pausing simulation");
 	if ( global_multirun_mode==MRM_STANDALONE && strcmp(global_environment,"server")!=0 )
 		output_warning("suspending simulation with no server/multirun active to control mainloop state");
-	output_debug("lock_ (%x->%x)", &mls_lock, mls_lock);
-	rv = pthread_mutex_lock(&mls_lock);
+	output_debug("lock_ (%x->%x)", &mls_svr_lock, mls_svr_lock);
+	rv = pthread_mutex_lock(&mls_svr_lock);
 	if(0 != rv){
 		output_error("error with pthread_mutex_lock() in exec_mls_suspend()");
 		;
@@ -745,7 +747,7 @@ void exec_mls_suspend(void)
 		if(loopctr > 0){
 			output_debug(" * tick (%i)", --loopctr);
 		}
-		rv = pthread_cond_wait(&mls_signal, &mls_lock);
+		rv = pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
 		if(rv != 0){
 			output_error("error with pthread_cond_wait() in exec_mls_suspend()");
 		}
@@ -753,7 +755,7 @@ void exec_mls_suspend(void)
 	output_debug("sched update_");
 	sched_update(global_clock,global_mainloopstate=MLS_RUNNING);
 	output_debug("unlock_");
-	rv = pthread_mutex_unlock(&mls_lock);
+	rv = pthread_mutex_unlock(&mls_svr_lock);
 	if(rv != 0){
 		output_error("error with pthread_mutex_unlock() in exec_mls_suspend()");
 	}
@@ -762,21 +764,16 @@ void exec_mls_suspend(void)
 void exec_mls_resume(TIMESTAMP ts)
 {
 	int rv = 0;
-	output_debug("resuming simulation");
-	output_debug("lock (%x->%x)", &mls_lock, mls_lock);
-	rv = pthread_mutex_lock(&mls_lock);
+	rv = pthread_mutex_lock(&mls_svr_lock);
 	if(rv != 0){
 		output_error("error in pthread_mutex_lock() in exec_mls_resume() (error %i)", rv);
 	}
-	output_debug("set pauseat");
 	global_mainlooppauseat = ts;
-	output_debug("unlock");
-	rv = pthread_mutex_unlock(&mls_lock);
+	rv = pthread_mutex_unlock(&mls_svr_lock);
 	if(rv != 0){
 		output_error("error in pthread_mutex_unlock() in exec_mls_resume()");
 	}
-	output_debug("broadcast");
-	rv = pthread_cond_broadcast(&mls_signal);
+	rv = pthread_cond_broadcast(&mls_svr_signal);
 	if(rv != 0){
 		output_error("error in pthread_cond_broadcast() in exec_mls_resume()");
 	}
@@ -784,28 +781,28 @@ void exec_mls_resume(TIMESTAMP ts)
 
 void exec_mls_statewait(unsigned states)
 {
-	pthread_mutex_lock(&mls_lock);
+	pthread_mutex_lock(&mls_svr_lock);
 	while ( ((global_mainloopstate&states)|states)==0 ) 
-		pthread_cond_wait(&mls_signal, &mls_lock);
-	pthread_mutex_unlock(&mls_lock);
+		pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
+	pthread_mutex_unlock(&mls_svr_lock);
 }
 
 void exec_mls_done(void)
 {
 	sched_update(global_clock,global_mainloopstate=MLS_DONE);
-	pthread_mutex_destroy(&mls_lock);
-	pthread_cond_destroy(&mls_signal);
+	pthread_mutex_destroy(&mls_svr_lock);
+	pthread_cond_destroy(&mls_svr_signal);
 }
 
 /** This is the main simulation loop
 	@return STATUS is SUCCESS if the simulation reached equilibrium, 
 	and FAILED if a problem was encountered.
  **/
+struct sync_data sync = {TS_NEVER,0,SUCCESS};
 STATUS exec_start(void)
 {
 	//sjin: remove threadpool
 	//threadpool_t threadpool = INVALID_THREADPOOL;
-	struct sync_data sync = {TS_NEVER,0,SUCCESS};
 	TIMESTAMP start_time = global_clock;
 	int64 passes = 0, tsteps = 0;
 	int ptc_rv = 0;
@@ -926,6 +923,18 @@ STATUS exec_start(void)
 			global_stoptime=TS_NEVER;
 	}
 
+	/*** GET FIRST SIGNAL FROM MASTER HERE ****/
+	if(global_multirun_mode == MRM_SLAVE){
+		pthread_cond_broadcast(&mls_inst_signal); // tell slaveproc() it's time to get rolling
+		output_debug("exec_start(), slave waiting for first time signal");
+		pthread_mutex_lock(&mls_inst_lock);
+		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
+		pthread_mutex_unlock(&mls_inst_lock);
+		// will have copied data down and updated step_to with slave_cache
+//		global_clock = sync.step_to; // copy time signal to gc
+		output_debug("exec_start(), slave received first time signal of %lli", global_clock);
+	}
+	// maybe that's all we need...
 	iteration_counter = global_iteration_limit;
 	sync.step_to = global_clock;
 	sync.hard_event = 1;
@@ -986,11 +995,12 @@ STATUS exec_start(void)
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
 		int running; /* split into two tests to make it easier to tell what's going on */
 
+		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", sync.step_to, global_stoptime, sync.hard_event, stop_now);
 		while ( running = (sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0),
 			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 
 		{
 			///printf("\n!!!!!!!!!!!!!!!!!!!!!New iteration started:!!!!!!!!!!!!!!!!!!!!!!!\n\n");
-		
+			output_debug("iteration");
 			/* update the process table info */
 			sched_update(global_clock,MLS_RUNNING);
 
@@ -998,6 +1008,7 @@ STATUS exec_start(void)
 			if ( global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER )
 				exec_mls_suspend();
 
+			output_debug("checkpoint");
 			do_checkpoint();
 
 			//printf("Iteration increased!\n\n");
@@ -1035,6 +1046,9 @@ STATUS exec_start(void)
 
 			/* synchronize all internal schedules */
 			///printf("global_clock=%d\n",global_clock);
+
+			/* this will cause */
+			output_debug("syncall_internals");
 			sync.step_to = syncall_internals(global_clock);
 			if(sync.step_to!=TS_NEVER && sync.step_to <= global_clock){
 				THROW("internal property sync failure");
@@ -1238,6 +1252,17 @@ STATUS exec_start(void)
 
 				/* count number of timesteps */
 				tsteps++;
+
+				/**** LOOPED SLAVE PAUSE HERE ****/
+				if(global_multirun_mode == MRM_SLAVE){
+					output_debug("step_to = %lli", sync.step_to);
+					output_debug("exec_start(), slave waiting for looped time signal");
+					pthread_cond_broadcast(&mls_inst_signal);
+					pthread_mutex_lock(&mls_inst_lock);
+					pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
+					pthread_mutex_unlock(&mls_inst_lock);
+					output_debug("exec_start(), slave received looped time signal (%lli)", sync.step_to);
+				}
 			}
 			/* check iteration limit */
 			else if (--iteration_counter == 0)
@@ -1252,6 +1277,7 @@ STATUS exec_start(void)
 				sync.status = FAILED;
 				THROW("convergence failure");
 			}
+
 		} // end of while loop
 
 		/* disable signal handler */
@@ -1278,7 +1304,10 @@ STATUS exec_start(void)
 		 */
 	}
 	ENDCATCH
-
+	output_debug("done");
+	if(global_multirun_mode == MRM_MASTER){
+		instance_master_done(TS_NEVER); // tell everyone to pack up and go home
+	}
 	//sjin: GetMachineCycleCount
 	//mc_end_time = GetMachineCycleCount();
 	//printf("%ld\n",(mc_end_time-mc_start_time));

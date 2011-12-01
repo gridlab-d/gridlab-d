@@ -84,34 +84,64 @@ int linkage_create_reader(instance *inst, char *fromobj, char *fromvar, char *to
     Updates the instance cache for a master->slave linkage.
 	@returns 1 on success, 0 on failure
  **/
-void linkage_master_to_slave(linkage *lnk)
+STATUS linkage_master_to_slave(char *buffer, linkage *lnk)
 {
-	size_t size = property_minimum_buffersize(lnk->target.prop);
-	switch ( global_multirun_mode ) {
-	case MRM_MASTER:
-		class_property_to_string(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),lnk->addr,size);
-		break;
-	case MRM_SLAVE:
-		class_string_to_property(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),lnk->addr);
-		break;
-	default:
-		break;
+	// note, only works with shmem
+	int rv = 0;
+	size_t size = 0;
+
+	output_debug("linkage_master_to_slave");
+	// null checks
+	if(0 == buffer){
+		output_error("linkage_master_to_slave has null buffer pointer");
+		return FAILED;
 	}
+	if(0 == lnk){
+		output_error("linkage_master_to_slave has null lnk pointer");
+		return FAILED;
+	}
+	if(0 == lnk->target.obj){
+		output_error("linkage_master_to_slave has null lnk->target.obj pointer");
+		return FAILED;
+	}
+	size  = property_minimum_buffersize(lnk->target.prop);
+	switch ( global_multirun_mode ) {
+		case MRM_MASTER:
+			rv = class_property_to_string(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),(char *)((int64)lnk->addr),size);
+			output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
+			break;
+		case MRM_SLAVE:
+			//output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
+			rv = class_string_to_property(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),(char *)((int64)lnk->addr));
+			output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
+			break;
+		default:
+			break;
+	}
+	if(0 == rv){
+		output_error("linkage_master_to_slave failed for link %s.%s", lnk->target.obj->name, lnk->target.prop->name);
+		output_debug("str=%8s", (char *)((int64)lnk->addr));
+		return FAILED;
+	}
+	return SUCCESS;
 }
 
 /** linkage_slave_to_master
     Updates the instance cache for a master<-slave linkage.
 	@returns 1 on success, 0 on failure
  **/
-void linkage_slave_to_master(linkage *lnk)
+void linkage_slave_to_master(char *buffer, linkage *lnk)
 {
+	// note, only works with shmem
 	size_t size = property_minimum_buffersize(lnk->target.prop);
 	switch ( global_multirun_mode ) {
 	case MRM_MASTER:
-		class_string_to_property(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),lnk->addr);
+		class_string_to_property(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),(char *)((int64)lnk->addr));
+		output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
 		break;
 	case MRM_SLAVE:
-		class_property_to_string(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),lnk->addr,size);
+		class_property_to_string(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),(char *)((int64)lnk->addr),size);
+		output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
 		break;
 	default:
 		break;
@@ -143,14 +173,20 @@ STATUS linkage_init(instance *inst, linkage *lnk)
 	}
 
 	/* calculate buffer size */
-	lnk->size = strlen(lnk->remote.obj) + strlen(lnk->remote.prop) + 2 + property_minimum_buffersize(lnk->target.prop);
+//	lnk->size = strlen(lnk->remote.obj) + strlen(lnk->remote.prop) + 2 + property_minimum_buffersize(lnk->target.prop);
+	lnk->prop_size = property_minimum_buffersize(lnk->target.prop);
+	lnk->name_size = strlen(lnk->remote.obj) + strlen(lnk->remote.prop) + 2;
+	lnk->size = lnk->name_size + lnk->prop_size;
 
+	// punt this until we the message buffer is allocated for good
+#if 0
 	lnk->addr = message_add(&(inst->cache),lnk->size);
 	if ( lnk->addr==NULL )
 	{
 		output_error("instance %s cannot add linkage for %s:%s to message cache", inst->model, lnk->remote.obj, lnk->remote.prop);
 		return 0;
 	}
+#endif
 
 	output_verbose("initialized linkage between local %s:%s and remote %s:%s", lnk->local.obj, lnk->local.prop, lnk->remote.obj, lnk->remote.prop);
 	return SUCCESS;

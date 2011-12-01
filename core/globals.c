@@ -62,6 +62,12 @@ static KEYWORD mrm_keys[] = {
 	{"SLAVE", MRM_SLAVE, NULL}, /**< run is a slave of a multirun */
 };
 
+static KEYWORD mrc_keys[] = {
+	{"NONE", MRC_NONE, mrc_keys+1},		/**< isn't actually connected upwards */
+	{"MEMORY", MRC_MEM, mrc_keys+2},	/**< use shared mem or the like */
+	{"SOCKET", MRC_SOCKET, NULL},		/**< use a socket */
+};
+
 static struct s_varmap {
 	char *name;
 	PROPERTYTYPE type;
@@ -152,6 +158,7 @@ static struct s_varmap {
 	{"master", PT_char1024, &global_master, PA_PUBLIC},
 	{"master_port", PT_int64, &global_master_port, PA_PUBLIC},
 	{"multirun_mode", PT_enumeration, &global_multirun_mode, PA_PUBLIC, mrm_keys},
+	{"multirun_conn", PT_enumeration, &global_multirun_connection, PA_PUBLIC, mrc_keys},
 	{"signal_timeout", PT_int32, &global_signal_timeout, PA_PUBLIC},
 	/* add new global variables here */
 };

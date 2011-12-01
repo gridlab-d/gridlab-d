@@ -4354,6 +4354,11 @@ static int linkage_term(PARSER,instance *inst)
 		ACCEPT;
 		DONE;
 	}
+	OR if ( LITERAL("mode") && WHITE && TERM(value(HERE,inst->cnxtypestr,sizeof(inst->cnxtypestr))) && WHITE, LITERAL(";"))
+	{
+		ACCEPT;
+		DONE;
+	}
 	OR if ( LITERAL("}") )
 	{
 		REJECT;

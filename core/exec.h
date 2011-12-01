@@ -16,7 +16,7 @@
 
 struct sync_data {
 	TIMESTAMP step_to; /**< time to advance to */
-	int hard_event; /**< non-zero for hard events that can effect the advance step-to */
+	int32 hard_event; /**< non-zero for hard events that can effect the advance step-to */
 	STATUS status; /**< the current status */
 }; /**< the synchronization state structure */
 

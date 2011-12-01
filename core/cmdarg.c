@@ -959,20 +959,29 @@ static int slave(int argc, char *argv[])
 		if ( sscanf(argv[1],"%255[^:]:%255s",host,port)==2)
 		{
 			strncpy(global_master,host,sizeof(global_master)-1);
-			if ( strcmp(global_master,"localhost")==0 )
+			if ( strcmp(global_master,"localhost")==0 ){
 				sscanf(port,"%"FMT_INT64"x",&global_master_port); /* port is actual mmap/shmem */
+				global_multirun_connection = MRC_MEM;
+			}
 			else
+			{
 				global_master_port = atoi(port);
-			if ( !instance_slave_init() )
+				global_multirun_connection = MRC_SOCKET;
+			}
+			if ( FAILED == instance_slave_init() )
 			{
 				output_error("slave instance init failed for master '%s' connection '%"FMT_INT64"x'", global_master, global_master_port);
 				return CMDERR;
 			}
 			else
+			{
 				output_verbose("slave instance for master '%s' using connection '%"FMT_INT64"x' started ok", global_master, global_master_port);
+			}
 		}
 		else
+		{
 			output_error("unable to parse slave parameters");
+		}
 		return 1;
 	}
 	else

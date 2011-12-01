@@ -26,6 +26,8 @@ typedef struct s_linkage {
 	  remote; ///<
 	char *addr;  ///< buffer addr in MESSAGE
 	size_t size;	 ///< buffer size in MESSAGE
+	size_t name_size;
+	size_t prop_size;
 	struct s_linkage *next; ///<
 } linkage; ///<
 

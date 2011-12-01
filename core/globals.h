@@ -213,6 +213,12 @@ typedef enum {
 	MRM_SLAVE,      /**< multirun is enabled and this run is the slace run */
 } MULTIRUNMODE; /**< determines the type of run */
 GLOBAL MULTIRUNMODE global_multirun_mode INIT(MRM_STANDALONE);	/**< multirun mode */
+typedef enum {
+	MRC_NONE,	/**< isn't actually connected upwards */
+	MRC_MEM,	/**< use shared mem or the like */
+	MRC_SOCKET,	/**< use a socket */
+} MULTIRUNCONNECTION;	/**< determines the connection mode for a slave run */
+GLOBAL MULTIRUNCONNECTION global_multirun_connection INIT(MRC_NONE);	/**< multirun mode connection */
 GLOBAL int32 global_signal_timeout INIT(5000); /**< signal timeout in milliseconds (-1 is infinite) */
 
 #ifdef __cplusplus
