@@ -189,7 +189,7 @@ typedef struct s_callbacks {
 		int64 *(*int64_var)(OBJECT *obj, PROPERTY *prop);
 		double *(*double_var)(OBJECT *obj, PROPERTY *prop);
 		char *(*string_var)(OBJECT *obj, PROPERTY *prop);
-		OBJECT *(*object_var)(OBJECT *obj, PROPERTY *prop);
+		OBJECT **(*object_var)(OBJECT *obj, PROPERTY *prop);
 	} objvar;
 	struct s_objvar_name_struct {
 		complex *(*complex_var)(OBJECT *obj, char *name);
@@ -199,7 +199,7 @@ typedef struct s_callbacks {
 		int64 *(*int64_var)(OBJECT *obj, char *name);
 		double *(*double_var)(OBJECT *obj, char *name);
 		char *(*string_var)(OBJECT *obj, char *name);
-		OBJECT *(*object_var)(OBJECT *obj, char *name);
+		OBJECT **(*object_var)(OBJECT *obj, char *name);
 	} objvarname;
 	struct {
 		int (*string_to_property)(PROPERTY *prop, void *addr, char *value);
@@ -273,8 +273,8 @@ int object_get_oflags(KEYWORD **extflags);
 
 TIMESTAMP object_sync(OBJECT *obj, TIMESTAMP to,PASSCONFIG pass);
 PROPERTY *object_get_property(OBJECT *obj, PROPERTYNAME name);
-OBJECT *object_get_object(OBJECT *obj, PROPERTY *prop);
-OBJECT *object_get_object_by_name(OBJECT *obj, char *name);
+OBJECT **object_get_object(OBJECT *obj, PROPERTY *prop);
+OBJECT **object_get_object_by_name(OBJECT *obj, char *name);
 enumeration *object_get_enum(OBJECT *obj, PROPERTY *prop);
 enumeration *object_get_enum_by_name(OBJECT *obj, char *name);
 int16 *object_get_int16(OBJECT *obj, PROPERTY *prop);

@@ -453,7 +453,7 @@ void *object_get_addr(OBJECT *obj, /**< object to look in */
 	}
 }
 
-OBJECT *object_get_object(OBJECT *obj, PROPERTY *prop)
+OBJECT **object_get_object(OBJECT *obj, PROPERTY *prop)
 {
 	int64 o = (int64)obj;
 	int64 s = (int64)sizeof(OBJECT);
@@ -461,19 +461,19 @@ OBJECT *object_get_object(OBJECT *obj, PROPERTY *prop)
 	int64 i = o + s + a;
 	
 	if(object_prop_in_class(obj, prop) && prop->ptype == PT_object && prop->access != PA_PRIVATE){
-		return *(OBJECT **)i; /* warning: cast from pointer to integer of different size */
+		return i;
 	} else {	
 		errno = ENOENT;
 		return NULL;
 	}
 }
 
-OBJECT *object_get_object_by_name(OBJECT *obj, char *name)
+OBJECT **object_get_object_by_name(OBJECT *obj, char *name)
 {
 	PROPERTY *prop = class_find_property(obj->oclass, name);
 	
 	if(prop != NULL && prop->access != PA_PRIVATE && prop->ptype == PT_object){
-		return (OBJECT *)((char *)obj + sizeof(OBJECT) + (int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
+		return (OBJECT **)((char *)obj + sizeof(OBJECT) + (int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
 	} else {
 		errno = ENOENT;
 		return NULL;

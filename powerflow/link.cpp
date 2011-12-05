@@ -6760,8 +6760,14 @@ void link::fault_current_calc(complex C[7][7],unsigned int removed_phase)
 			temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
 			temp_transformer = gl_get_object(temp_branch_name);//get the transformer object
 			if(gl_object_isa(temp_transformer, "transformer", "powerflow")){ // tranformer
+				OBJECT ** tobj;
 				temp_trans_config = gl_get_property(temp_transformer,"configuration");//get pointer to the configuration property
-				temp_transformer_configuration = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
+				tobj = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
+				if(tobj != NULL){
+					temp_transformer_configuration = *tobj;
+				} else {
+					GL_THROW("fault_current_calc() :no transformer configuration detected");
+				}
 				temp_con_typ = gl_get_property(temp_transformer_configuration, "connect_type");//get pointer to the connection type
 				temp_connection_type = *(int *)gl_get_enum(temp_transformer_configuration, temp_con_typ);//get connection type
 				if(temp_connection_type == 1 || temp_connection_type == 2){//WYE_WYE or DELTA-DELTA transformer
@@ -6891,11 +6897,17 @@ void link::fault_current_calc(complex C[7][7],unsigned int removed_phase)
 	}
 	//include the last link's impedance in the thevenin impedance matrix
 	if(NR_branchdata[temp_branch_fc].lnk_type == 4){ //transformer
+		OBJECT **tobj;
 		temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
 		temp_transformer = gl_get_object(temp_branch_name);//get the transformer object
 		if(gl_object_isa(temp_transformer, "transformer", "powerflow")){ // tranformer
 			temp_trans_config = gl_get_property(temp_transformer,"configuration");//get pointer to the configuration property
-			temp_transformer_configuration = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
+			tobj = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
+			if(tobj != NULL){
+				temp_transformer_configuration = *tobj;
+			} else {
+				GL_THROW("fault_current_calc() :no transformer configuration detected");
+			}
 			temp_con_typ = gl_get_property(temp_transformer_configuration, "connect_type");//get pointer to the connection type
 			temp_connection_type = *(int *)gl_get_enum(temp_transformer_configuration, temp_con_typ);//get connection type
 			if(temp_connection_type == 1 || temp_connection_type == 2){//WYE_WYE or DELTA-DELTA transformer
@@ -7038,8 +7050,14 @@ void link::fault_current_calc(complex C[7][7],unsigned int removed_phase)
 			temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
 			temp_transformer = gl_get_object(temp_branch_name);//get the transformer object
 			if(gl_object_isa(temp_transformer, "transformer", "powerflow")){ // tranformer
+				OBJECT **tobj;
 				temp_trans_config = gl_get_property(temp_transformer,"configuration");//get pointer to the configuration property
-				temp_transformer_configuration = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
+				tobj = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
+				if(tobj != NULL){
+					temp_transformer_configuration = *tobj;
+				} else {
+					GL_THROW("fault_current_calc() :no transformer configuration detected");
+				}
 				temp_con_typ = gl_get_property(temp_transformer_configuration, "connect_type");//get pointer to the connection type
 				temp_connection_type = *(int *)gl_get_enum(temp_transformer_configuration, temp_con_typ);//get connection type
 				if(temp_connection_type == 1 || temp_connection_type == 2){//WYE_WYE or DELTA-DELTA transformer
