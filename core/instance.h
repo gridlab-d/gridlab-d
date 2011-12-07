@@ -131,8 +131,8 @@ STATUS instance_dispose();
 int linkage_create_reader(instance *inst, char *fromobj, char *fromvar, char *toobj, char *tovar);
 int linkage_create_writer(instance *inst, char *fromobj, char *fromvar, char *toobj, char *tovar);
 STATUS linkage_init(instance *inst, linkage *lnk);
-STATUS linkage_master_to_slave(instance *inst, linkage *lnk);
-void linkage_slave_to_master(instance *inst, linkage *lnk);
+STATUS linkage_master_to_slave(char *buffer, linkage *lnk);
+void linkage_slave_to_master(char *buffer, linkage *lnk);
 
 
 #endif

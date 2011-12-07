@@ -798,7 +798,7 @@ void exec_mls_done(void)
 	@return STATUS is SUCCESS if the simulation reached equilibrium, 
 	and FAILED if a problem was encountered.
  **/
-struct sync_data sync = {TS_NEVER,0,SUCCESS};
+struct sync_data sync_d = {TS_NEVER,0,SUCCESS};
 STATUS exec_start(void)
 {
 	//sjin: remove threadpool
@@ -931,13 +931,13 @@ STATUS exec_start(void)
 		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 		pthread_mutex_unlock(&mls_inst_lock);
 		// will have copied data down and updated step_to with slave_cache
-//		global_clock = sync.step_to; // copy time signal to gc
+//		global_clock = sync_d.step_to; // copy time signal to gc
 		output_debug("exec_start(), slave received first time signal of %lli", global_clock);
 	}
 	// maybe that's all we need...
 	iteration_counter = global_iteration_limit;
-	sync.step_to = global_clock;
-	sync.hard_event = 1;
+	sync_d.step_to = global_clock;
+	sync_d.hard_event = 1;
 
 	/* signal handler */
 	signal(SIGABRT, exec_sighandler);
@@ -995,8 +995,8 @@ STATUS exec_start(void)
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
 		int running; /* split into two tests to make it easier to tell what's going on */
 
-		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", sync.step_to, global_stoptime, sync.hard_event, stop_now);
-		while ( running = (sync.step_to <= global_stoptime && sync.step_to < TS_NEVER && sync.hard_event>0),
+		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", sync_d.step_to, global_stoptime, sync_d.hard_event, stop_now);
+		while ( running = (sync_d.step_to <= global_stoptime && sync_d.step_to < TS_NEVER && sync_d.hard_event>0),
 			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 
 		{
 			///printf("\n!!!!!!!!!!!!!!!!!!!!!New iteration started:!!!!!!!!!!!!!!!!!!!!!!!\n\n");
@@ -1013,9 +1013,9 @@ STATUS exec_start(void)
 
 			//printf("Iteration increased!\n\n");
 			/* set time context */
-			output_set_time_context(sync.step_to);
+			output_set_time_context(sync_d.step_to);
 
-			sync.hard_event = (global_stoptime == TS_NEVER ? 0 : 1);
+			sync_d.hard_event = (global_stoptime == TS_NEVER ? 0 : 1);
 
 			/* realtime support */
 			if (global_run_realtime>0)
@@ -1042,15 +1042,15 @@ STATUS exec_start(void)
 				output_verbose("realtime clock advancing to %d", (int)global_clock);
 			}
 			else
-				global_clock = sync.step_to;
+				global_clock = sync_d.step_to;
 
 			/* synchronize all internal schedules */
 			///printf("global_clock=%d\n",global_clock);
 
 			/* this will cause */
 			output_debug("syncall_internals");
-			sync.step_to = syncall_internals(global_clock);
-			if(sync.step_to!=TS_NEVER && sync.step_to <= global_clock){
+			sync_d.step_to = syncall_internals(global_clock);
+			if(sync_d.step_to!=TS_NEVER && sync_d.step_to <= global_clock){
 				THROW("internal property sync failure");
 				/* TROUBLESHOOT
 					An internal property such as schedule, enduse or loadshape has failed to synchronize and the simulation aborted.
@@ -1091,7 +1091,7 @@ STATUS exec_start(void)
 						for (item=ranks[pass]->ordinal[i]->first; item!=NULL; item=item->next)
 						{
 							OBJECT *obj = item->data;
-							if (exec_debug(&sync,pass,i,obj)==FAILED)
+							if (exec_debug(&sync_d,pass,i,obj)==FAILED)
 								THROW("debugger quit");
 						}
 					}
@@ -1196,7 +1196,7 @@ STATUS exec_start(void)
 
 						for (j = 0; j < thread_data->count; j++) {
 							if (thread_data->data[j].status == FAILED) {
-								sync.status = FAILED;
+								sync_d.status = FAILED;
 								THROW("synchonization failed");
 							}
 						}
@@ -1207,8 +1207,8 @@ STATUS exec_start(void)
 				/* run all non-schedule transforms */
 				{
 					TIMESTAMP st = transform_syncall(global_clock,XS_DOUBLE|XS_COMPLEX|XS_ENDUSE);// if (abs(t)<t2) t2=t;
-					if (st<sync.step_to)
-						sync.step_to = st;
+					if (st<sync_d.step_to)
+						sync_d.step_to = st;
 				}
 			}
 			setTP = false;
@@ -1216,9 +1216,9 @@ STATUS exec_start(void)
 			if (!global_debug_mode)
 			{
 				for (j = 0; j < thread_data->count; j++) {
-					sync.hard_event += thread_data->data[j].hard_event;
-					if (thread_data->data[j].step_to < sync.step_to)
-						sync.step_to = thread_data->data[j].step_to;
+					sync_d.hard_event += thread_data->data[j].hard_event;
+					if (thread_data->data[j].step_to < sync_d.step_to)
+						sync_d.step_to = thread_data->data[j].step_to;
 				}
 
 				/* report progress */
@@ -1229,10 +1229,10 @@ STATUS exec_start(void)
 			passes++;
 
 			/* check for clock advance */
-			if (sync.step_to != global_clock)
+			if (sync_d.step_to != global_clock)
 			{
 				TIMESTAMP commit_time = TS_NEVER;
-				commit_time = commit_all(global_clock, sync.step_to);
+				commit_time = commit_all(global_clock, sync_d.step_to);
 				if (commit_time <= global_clock)
 				{
 					// commit cannot force reiterations, and any event where the time is less than the global clock
@@ -1244,8 +1244,8 @@ STATUS exec_start(void)
 						the guidance for that message and try again.
 					 */
 					return FAILED;
-				} else if(commit_time < sync.step_to){
-					sync.step_to = commit_time;
+				} else if(commit_time < sync_d.step_to){
+					sync_d.step_to = commit_time;
 				}
 				/* reset iteration count */
 				iteration_counter = global_iteration_limit;
@@ -1255,13 +1255,13 @@ STATUS exec_start(void)
 
 				/**** LOOPED SLAVE PAUSE HERE ****/
 				if(global_multirun_mode == MRM_SLAVE){
-					output_debug("step_to = %lli", sync.step_to);
+					output_debug("step_to = %lli", sync_d.step_to);
 					output_debug("exec_start(), slave waiting for looped time signal");
 					pthread_cond_broadcast(&mls_inst_signal);
 					pthread_mutex_lock(&mls_inst_lock);
 					pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 					pthread_mutex_unlock(&mls_inst_lock);
-					output_debug("exec_start(), slave received looped time signal (%lli)", sync.step_to);
+					output_debug("exec_start(), slave received looped time signal (%lli)", sync_d.step_to);
 				}
 			}
 			/* check iteration limit */
@@ -1274,7 +1274,7 @@ STATUS exec_start(void)
 					the object that is causing the convergence problem and contact
 					the developer of the module that implements that object's class.
 				 */
-				sync.status = FAILED;
+				sync_d.status = FAILED;
 				THROW("convergence failure");
 			}
 
@@ -1284,7 +1284,7 @@ STATUS exec_start(void)
 		signal(SIGINT,NULL);
 
 		/* check end state */
-		if (sync.step_to==TS_NEVER)
+		if (sync_d.step_to==TS_NEVER)
 		{
 			char buffer[64];
 			output_verbose("simulation at steady state at %s", convert_from_timestamp(global_clock,buffer,sizeof(buffer))?buffer:"invalid time");
@@ -1296,7 +1296,7 @@ STATUS exec_start(void)
 	CATCH(char *msg)
 	{
 		output_error("exec halted: %s", msg);
-		sync.status = FAILED;
+		sync_d.status = FAILED;
 		/* TROUBLESHOOT
 			This indicates that the core's solver shut down.  This message
 			is usually preceded by more detailed messages.  Follow the guidance
@@ -1337,7 +1337,7 @@ STATUS exec_start(void)
 	}
 
 	/* report performance */
-	if (global_profiler && sync.status==SUCCESS)
+	if (global_profiler && sync_d.status==SUCCESS)
 	{
 		double elapsed_sim = (timestamp_to_hours(global_clock<start_time?start_time:global_clock)-timestamp_to_hours(start_time));
 		double elapsed_wall = (double)(realtime_now()-started_at+1);
@@ -1390,7 +1390,7 @@ STATUS exec_start(void)
 		output_profile("\n");
 	}
 
-	return sync.status;
+	return sync_d.status;
 }
 
 /** Starts the executive test loop 
