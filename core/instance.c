@@ -22,7 +22,7 @@
 #include "exec.h"
 
 clock_t instance_synctime = 0;
-extern struct sync_data sync;
+extern struct sync_data sync_d;
 
 // only used for passing control between slaveproc and main threads
 pthread_mutex_t mls_inst_lock;
@@ -867,7 +867,7 @@ TIMESTAMP instance_syncall(TIMESTAMP t1)
 			if ( t3 < t2 ){
 				t2 = t3;
 			}
-			sync.hard_event += inst->cache->hard_event;
+			sync_d.hard_event += inst->cache->hard_event;
 		}
 	
 		output_debug("instance sync time is %"FMT_INT64"d", t2);
@@ -1125,8 +1125,8 @@ void *instance_slaveproc(void *ptr)
 	pthread_mutex_lock(&mls_inst_lock);
 	pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 	pthread_mutex_unlock(&mls_inst_lock);
-//	sync.step_to = local_inst.cache->ts;
-//	output_debug("slave %d controller received first signal with gc=%lli", slave_id, sync.step_to);
+//	sync_d.step_to = local_inst.cache->ts;
+//	output_debug("slave %d controller received first signal with gc=%lli", slave_id, sync_d.step_to);
 	output_debug("linking properties");
 	rv = instance_slave_link_properties();
 	output_debug("reading properties");
@@ -1164,9 +1164,9 @@ void *instance_slaveproc(void *ptr)
 		// note, if TS_NEVER, we want the slave's exec loop to end normally
 		output_debug("slave %d controller resuming exec with %lli", slave_id, local_inst.cache->ts);
 //		exec_mls_resume(slave_cache->ts);
-		sync.step_to = local_inst.cache->ts;
+		sync_d.step_to = local_inst.cache->ts;
 		if(local_inst.cache->ts != TS_NEVER){
-			sync.hard_event = 1;
+			sync_d.hard_event = 1;
 		}
 		pthread_cond_broadcast(&mls_inst_signal);
 		if(local_inst.cache->ts == TS_NEVER){
@@ -1190,8 +1190,8 @@ void *instance_slaveproc(void *ptr)
 		/* copy the next time stamp */
 		//slave_cache->ts = global_clock;
 		/* how about we copy the time we want to step to and see what the master says, instead? -MH */
-		local_inst.cache->ts = sync.step_to;
-		local_inst.cache->hard_event = sync.hard_event;
+		local_inst.cache->ts = sync_d.step_to;
+		local_inst.cache->hard_event = sync_d.hard_event;
 
 		// write cache to cnx medium
 		// this works for MMAP, needs function with switches (or struct w/ func* )
@@ -1323,7 +1323,7 @@ STATUS instance_slave_init_mem(){
 	memcpy(local_inst.cache, local_inst.filemap, local_inst.cachesize);
 	messagewrapper_init(&(local_inst.message), local_inst.cache);
 
-	sync.step_to = local_inst.cache->ts;
+	sync_d.step_to = local_inst.cache->ts;
 
 	/* open slave signalling event */
 	sprintf(eventName,"GLD-%"FMT_INT64"x-S", global_master_port);
@@ -1437,7 +1437,7 @@ STATUS instance_slave_init(void)
 
 	rv = instance_slave_init_pthreads(); // starts slaveproc() thread
 
-	global_clock = sync.step_to; // copy time signal to gc, legit since it's from msg
+	global_clock = sync_d.step_to; // copy time signal to gc, legit since it's from msg
 	
 	// signal master that slave init is done
 	instance_slave_done();
