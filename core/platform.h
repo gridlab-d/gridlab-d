@@ -17,6 +17,8 @@
 #endif
 
 #ifdef WIN32
+
+/*** WINDOWS ***/
 #if 0 /* not cooperating yet, needed for GLPATH expansion in exec_init() -mh*/
 #include <Windows.h>
 #endif
@@ -42,14 +44,18 @@
 #define isfinite _finite
 #endif
 #define strlwr _strlwr
+
 #else /* !WIN32 */
+
+/*** UNIX/LINUX ***/
 #ifdef __APPLE__ /* although not advised, seems reliable enough */
 #define MACOSX
 #endif
-#if __WORDSIZE == 64
-#define int64 long int /**< standard version of 64-bit integers */
+
+#if __WORDSIZE__ == 64
+#define int64 long /**< standard 64-bit integers on 64-bit machines */
 #else
-#define int64 long long /**< standard version of 64-bit integers */
+#define int64 long long /**< standard 64-bit integers on 32-bit machines */
 #endif
 #define FMT_INT64 "ll" /**< standard version of 64-bit integer printf format string */
 #define atoi64 atoll	/**< standard version of 64-bit atoi */

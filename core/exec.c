@@ -581,9 +581,9 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	ci = instance_syncall(t1);	
 	rv = randomvar_syncall(t1);
 	sc = schedule_syncall(t1);
-	ls = loadshape_syncall(t1);// if (abs(t)<t2) t2=t;
-	st = transform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);// if (abs(t)<t2) t2=t;
-	eu = enduse_syncall(t1);// if (abs(t)<t2) t2=t;
+	ls = loadshape_syncall(t1);
+	st = transform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);
+	eu = enduse_syncall(t1);
 
 	t2 = TS_NEVER;
 	if ( sc<t2 ) t2 = sc;
