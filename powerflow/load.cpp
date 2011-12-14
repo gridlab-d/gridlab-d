@@ -127,6 +127,21 @@ int load::create(void)
     return res;
 }
 
+// Initialize, return 1 on success
+int load::init(OBJECT *parent)
+{
+	if (has_phase(PHASE_S))
+	{
+		GL_THROW("Load objects do not support triplex connections at this time!");
+		/*  TROUBLESHOOT
+		load objects are only designed to be added to the primary side of a distribution power flow.  To add loads
+		to the triplex side, please use the triplex_node object.
+		*/
+	}
+
+	return node::init(parent);
+}
+
 TIMESTAMP load::presync(TIMESTAMP t0)
 {
 	if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented node
@@ -434,7 +449,7 @@ EXPORT int init_load(OBJECT *obj)
 {
 	try {
 		load *my = OBJECTDATA(obj,load);
-		return my->init();
+		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(load);
 }

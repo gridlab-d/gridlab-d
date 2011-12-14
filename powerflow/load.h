@@ -34,6 +34,7 @@ public:
 	enum {LC_UNKNOWN=0, LC_RESIDENTIAL, LC_COMMERCIAL, LC_INDUSTRIAL, LC_AGRICULTURAL} load_class;
 
 	int create(void);
+	int init(OBJECT *parent);
 
 	load(MODULE *mod);
 	TIMESTAMP sync(TIMESTAMP t0);

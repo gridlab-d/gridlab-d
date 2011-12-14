@@ -209,10 +209,10 @@ int transformer_configuration::init(OBJECT *parent)
 		
 	}
 	// check impedance
-	if (impedance.Re()<0 || impedance1.Re()<0 || impedance2.Re()<0)
-		throw "resistance must be non-negative";
-	if (impedance.Im()<0 || impedance1.Im()<0 || impedance2.Im()<0)
-		throw "reactance must be non-negative";
+	if (impedance.Re()<=0 || impedance1.Re()<0 || impedance2.Re()<0)
+		throw "resistance must be non-negative and non-zero";
+	if (impedance.Im()<=0 || impedance1.Im()<0 || impedance2.Im()<0)
+		throw "reactance must be non-negative and non-zero";
 	if (shunt_impedance.Re()<0)
 		throw "shunt_resistance must be non-negative";
 	if (shunt_impedance.Im()<0)
