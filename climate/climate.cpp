@@ -89,7 +89,7 @@ int tmy2_reader::open(const char *file){
 
 	// read in the header (use the c code given in the manual)
 	if(fgets(buf,500,fp)){
-		return sscanf(buf,"%*s %75s %3s %d %*s %d %d %*s %d %d",data_city,data_state,&tz_offset,&lat_degrees,&lat_minutes,&long_degrees,&long_minutes);
+		return sscanf(buf,"%*s %75s %3s %d %*s %d %d %*s %d %d %d",data_city,data_state,&tz_offset,&lat_degrees,&lat_minutes,&long_degrees,&long_minutes,&elevation);
 	} else {
 		gl_error("tmy2_reader::open() -- first fgets read nothing");
 		return 0; /* fgets didn't read anything */
@@ -302,6 +302,7 @@ int climate::init(OBJECT *parent)
 {
 	char *dot = 0;
 	OBJECT *obj=OBJECTHDR(this);
+	double meter_to_feet = 1.0;
 
 	reader_type = RT_NONE;
 
@@ -375,6 +376,11 @@ int climate::init(OBJECT *parent)
 	file.header_info(NULL,NULL,&lat_deg,&lat_min,&long_deg,&long_min);
 	obj->latitude = (double)lat_deg + ((double)lat_min) / 60;
 	obj->longitude = (double)long_deg + ((double)long_min) / 60;
+	if(0 == gl_convert("m", "ft", &meter_to_feet)){
+		gl_error("climate::init unable to gl_convert() 'm' to 'ft'!");
+		return 0;
+	}
+	file.elevation *= meter_to_feet;
 	tz_meridian =  15 * abs(file.tz_offset);//std_meridians[-file.tz_offset-5];
 	while (line<8760 && file.next())
 	{

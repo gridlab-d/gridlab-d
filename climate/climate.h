@@ -72,6 +72,7 @@ private:
 	int lat_minutes;
 	int long_degrees;
 	int long_minutes;
+
 	double low_temp;
 	double high_temp;
 	double peak_solar;	
@@ -82,6 +83,8 @@ private:
 public:
 	int tz_offset;
 	tmy2_reader(){}
+
+	int elevation;
 
 	void close();
 

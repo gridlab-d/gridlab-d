@@ -53,6 +53,7 @@ public:
 	double long_deg;
 	double long_min;
 	double low_temp;
+	int32 elevation;
 	double high_temp;
 	double peak_solar;
 	char32 timefmt;

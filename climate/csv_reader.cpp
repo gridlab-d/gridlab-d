@@ -49,6 +49,7 @@ csv_reader::csv_reader(MODULE *module){
 			PT_double,"low_temp",PADDR(low_temp),PT_ACCESS,PA_REFERENCE,
 			PT_double,"high_temp",PADDR(high_temp),PT_ACCESS,PA_REFERENCE,
 			PT_double,"peak_solar",PADDR(peak_solar),PT_ACCESS,PA_REFERENCE,
+			PT_int32,"elevation",PADDR(elevation),
 			PT_enumeration,"status",PADDR(status),PT_ACCESS,PA_REFERENCE,
 				PT_KEYWORD,"INIT",CR_INIT,
 				PT_KEYWORD,"OPEN",CR_OPEN,
@@ -392,7 +393,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 		}
 		index = sample_ct - i - 1;
 
-		if(index > -1){
+		if(index > -1 && index < sample_ct){
 			*temp = samples[index]->temperature;
 			*humid = samples[index]->humidity;
 			*direct = samples[index]->solar_dir;
