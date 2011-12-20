@@ -88,14 +88,11 @@ STATUS linkage_master_to_slave(char *buffer, linkage *lnk)
 {
 	// note, only works with shmem
 	int rv = 0;
-	size_t size = 0;
+	int size = 0;
 
 	output_debug("linkage_master_to_slave");
+
 	// null checks
-	if(0 == buffer){
-		output_error("linkage_master_to_slave has null buffer pointer");
-		return FAILED;
-	}
 	if(0 == lnk){
 		output_error("linkage_master_to_slave has null lnk pointer");
 		return FAILED;
@@ -104,14 +101,13 @@ STATUS linkage_master_to_slave(char *buffer, linkage *lnk)
 		output_error("linkage_master_to_slave has null lnk->target.obj pointer");
 		return FAILED;
 	}
-	size  = property_minimum_buffersize(lnk->target.prop);
+	size = property_minimum_buffersize(lnk->target.prop);
 	switch ( global_multirun_mode ) {
 		case MRM_MASTER:
 			rv = class_property_to_string(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),(char *)((int64)lnk->addr),size);
 			output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
 			break;
 		case MRM_SLAVE:
-			//output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
 			rv = class_string_to_property(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),(char *)((int64)lnk->addr));
 			output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
 			break;

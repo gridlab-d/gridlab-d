@@ -990,6 +990,13 @@ static int slave(int argc, char *argv[])
 		return CMDERR;
 	}
 }
+
+static int slavenode(int argc, char *argv[])
+{
+	exec_slave_node();
+	return CMDOK;
+}
+
 /*********************************************/
 /* ADD NEW CMDARG PROCESSORS ABOVE THIS HERE */
 /* Then make the appropriate entry in the    */
@@ -1068,6 +1075,7 @@ static CMDARG main[] = {
 	{"redirect",	NULL,	redirect,		"<stream>[:<file>]", "Redirects an output to stream to a file (or null)" },
 	{"server_portnum", "P", server_portnum, NULL, "Sets the server port number (default is 6267)" },
 	{"slave",		NULL,	slave,			"<master>", "Enables slave mode under master"},
+	{"slavenode",	NULL,	slavenode,		NULL, "Sets a listener for a remote GridLAB-D call to run in slave mode"},
 };
 
 static int help(int argc, char *argv[])

@@ -160,6 +160,7 @@ static struct s_varmap {
 	{"multirun_mode", PT_enumeration, &global_multirun_mode, PA_PUBLIC, mrm_keys},
 	{"multirun_conn", PT_enumeration, &global_multirun_connection, PA_PUBLIC, mrc_keys},
 	{"signal_timeout", PT_int32, &global_signal_timeout, PA_PUBLIC},
+	{"slave_port", PT_int16, &global_slave_port, PA_PUBLIC},
 	/* add new global variables here */
 };
 

@@ -1257,10 +1257,13 @@ STATUS exec_start(void)
 				if(global_multirun_mode == MRM_SLAVE){
 					output_debug("step_to = %lli", sync_d.step_to);
 					output_debug("exec_start(), slave waiting for looped time signal");
+
 					pthread_cond_broadcast(&mls_inst_signal);
+
 					pthread_mutex_lock(&mls_inst_lock);
 					pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 					pthread_mutex_unlock(&mls_inst_lock);
+
 					output_debug("exec_start(), slave received looped time signal (%lli)", sync_d.step_to);
 				}
 			}
@@ -1450,6 +1453,177 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 		data->status = SUCCESS;
 	}
 	return data->status;
+}
+
+void *slave_node_proc(void *args){
+	SOCKET **args_in = (SOCKET **)args;
+	bool *done_ptr = (bool *)(args_in[0]);
+	SOCKET *sockfd_ptr = (SOCKET *)args_in[1];
+	SOCKET masterfd = (SOCKET)(args_in[2]);
+	struct sockaddr_in *addrin = (struct sockaddr_in *)(args_in[3]);
+
+	char buffer[1024];
+	char response[1024];
+	int rv = 0;
+
+	// input checks
+	if(0 == sockfd_ptr){
+		return 0;
+	}
+	if(0 == done_ptr){
+		return 0;
+	}
+	if(0 > masterfd){
+		return 0;
+	}
+	if(0 == addrin){
+		return 0;
+	}
+	// sanity checks
+	if(0 != *done_ptr){
+		// something else errored while the thread was starting
+		return 0;
+	}
+	// socket has been accept()ed
+
+	// read handshake
+	//	* design handshake
+	rv = recv(masterfd, buffer, 1023, 0);
+	if(rv < 1){
+		return 0;
+	}
+
+	sprintf(response, "why hewwo thar!");
+	// send response
+	//	* see above
+	rv = send(masterfd, response, strlen(response), 0);
+	if(rv < 1){
+		return 0;
+	}
+
+	// receive command
+	rv = recv(masterfd, buffer, 1023, 0);
+	if(1 > rv){
+		return 0;
+	}
+
+	// process command (what kinds do we expect?)
+
+	// if unable to locate model file,
+	//	* request model
+	//	* receive model file (raw or packaged)
+	// else
+	//	* receipt model file found
+
+	return NULL;
+}
+
+
+/**	exec_slave_node
+	Variant startup mode for GridLAB-D that causes the system to run a simple
+	server that will spawn new instances of GridLAB-D as requested to run as
+	remote slave nodes (see cmdarg.c:slave() )
+ **/
+void exec_slave_node(){
+	static bool node_done = FALSE;
+	static SOCKET sockfd = -1;
+	SOCKET args[4];
+	struct sockaddr_in server_addr; // probably the most used struct name ever...
+	struct sockaddr_in *inaddr;
+	int inaddrsz;
+	fd_set reader_fdset, master_fdset;
+	struct timeval timer;
+	pthread_t slave_thread;
+	int rct;
+#ifdef WIN32
+	WSADATA wsaData;
+#endif
+
+#ifdef WIN32
+	// if we're on windows, we're using WinSock2, so we need WSAStartup.
+	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
+	{
+		output_error("exec_slave_node(): socket library initialization failed: %s",strerror(GetLastError()));
+		return;	
+	}
+#endif
+
+	// init listener socket
+	sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if(INVALID_SOCKET == sockfd){
+		output_fatal("exec_slave_node(): unable to open IPv4 TCP socket");
+		return;
+	}
+
+	// bind to global_slave_port
+	//  * this port shall not be located on Tatooine.
+	memset(&server_addr, 0, sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	server_addr.sin_port = htons(global_slave_port);
+	if(0 != bind(socket, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))){
+		output_fatal("exec_slave_node(): unable to bind socket to port %d", global_slave_port);
+		close(sockfd);
+		return;
+	}
+
+	// listen
+	if( 0 != listen(sockfd, 5)){
+		output_fatal("exec_slave_node(): unable to listen to socket");
+		close(sockfd);
+		return;
+	}
+
+	// set up fd_set
+	FD_ZERO(&master_fdset);
+	FD_SET(sockfd, &master_fdset);
+	
+	args[0] = &node_done;
+	args[1] = &sockfd;
+
+	while(!node_done){
+		reader_fdset = master_fdset;
+		timer.tv_sec = 3; // check for kaputness every three (not five) seconds
+		timer.tv_usec = 0;
+		// wait for connection
+		rct = select(sockfd+1, &reader_fdset, 0, 0, &timer);
+		if(rct < 0){
+			;
+		} else if (rct == 0){
+			// Waited three seconds without any input.  Play it again, Sam.
+			;
+		} else if (rct > 0){
+			args[3] = (SOCKET *)inaddr = malloc(sizeof(struct sockaddr));
+			args[2] = accept(sockfd, inaddr, &inaddrsz);
+			if(INVALID_SOCKET == args[2]){
+				output_error("unable to accept connection");
+				node_done = TRUE;
+				closesocket(sockfd);
+				return;
+			}
+
+			// thread off connection
+			//	* include &node_done to handle 'stop' messages
+			//	* include &sock to unblock thread on stop condition
+			//	* detatch, since we don't care about it after we start it
+			//	! I have no idea if the reuse of slave_thread will fly. Change
+			//	!  this if strange things start to happen.
+			if(pthread_create(&slave_thread, NULL, slave_node_proc, (void *)args)){
+				output_error("slavenode unable to thread off connection");
+				node_done = TRUE;
+				closesocket(sockfd);
+				closesocket(args[2]);
+				return;
+			}
+			if(pthread_detach(slave_thread)){
+				output_error("slavenode unable to detach connection thread");
+				node_done = TRUE;
+				closesocket(sockfd);
+				closesocket(args[2]);
+				return;
+			}
+		} // end if rct
+	} // end while
 }
 
 /**@}*/

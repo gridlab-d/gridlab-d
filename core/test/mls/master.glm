@@ -17,6 +17,15 @@ instance localhost {
 
 object climate {
 	name weather1;
+	temperature 65;
+		humidity 75%;
+		object recorder{
+			name mls_master;
+			file master.csv;
+			property temperature,humidity;
+			interval 3600;
+			limit 24;
+	};
 }
 
 #ifdef TWO
@@ -28,14 +37,7 @@ instance localhost {
 
 object climate {
 	name weather2;
-	temperature 65;
-	humidity 75%;
-	object recorder{
-		name mls_master;
-		property temperature,humidity;
-		interval 3600;
-		limit 24;
-	};
+	
 }
 #endif
 

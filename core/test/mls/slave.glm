@@ -10,8 +10,9 @@ object climate {
 	humidity 15%;
 	object recorder{
 		name mls_slave;
+		file slave.csv;
 		property temperature,humidity;
-		interval 3600;
+		interval 2400;
 		limit 24;
 	};
 }

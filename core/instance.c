@@ -216,19 +216,116 @@ void *instance_runproc(void *ptr)
 {
 	instance *inst = (instance*)ptr;
 	char cmd[1024];
+	char sendcmd[1024];
 	int64 rc;
+	int rv;
+	size_t sent_bytes, bytes_to_send;
+	SOCKET outsockfd;
+	struct sockaddr_in outaddr;
+	struct fd_set master, listener;
+	FILE *file_to_send;
+#ifdef WIN32
+	WSADATA wsaData;
+#endif
 
-	/* run new instance */
-	if ( strcmp(inst->hostname,"localhost")==0)
+	switch(inst->cnxtype){
+		case CI_MMAP:
+#ifdef WIN32
+			/* run new instance */
+			if ( strcmp(inst->hostname,"localhost")==0){
+				/* local instance of gridlabd */
+				sprintf(cmd,"%s/gridlabd %s %s --slave %s:%"FMT_INT64"x %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_output?"--debug":"", global_hostname,inst->cacheid, inst->model);
+			} else {
+				/* @todo RPC call to remote machine instance of gridlabd */
+				sprintf(cmd,"%s/gridlabd %s %s --slave %s:%d %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_mode?"--debug":"", global_hostname,global_server_portnum, inst->model);
+			}
+			output_debug("starting new instance with command '%s'", cmd);
+			rc = system(cmd);
+			break;
+#else
+			output_error("Memory Map (mmap) instance mode only supported under Windows, please use Shared Memory (shmem) instead.");
+			rc = -1;
+			break;
+#endif
+		case CI_SHMEM:
+			break;
+		case CI_SOCKET:
+			// create socket
+			// !!! need to either ignore output, or feed output through the socket to the master
 
-		/* local instance of gridlabd */
-		sprintf(cmd,"%s/gridlabd %s %s --slave %s:%"FMT_INT64"x %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_output?"--debug":"", global_hostname,inst->cacheid, inst->model);
-	else
-		/* @todo RPC call to remote machine instance of gridlabd */
-		sprintf(cmd,"%s/gridlabd %s %s --slave %s:%d %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_mode?"--debug":"", global_hostname,global_server_portnum, inst->model);
+#ifdef WIN32
+		if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
+		{
+			output_error("socket library initialization failed: %s",strerror(GetLastError()));
+			return (void *)FAILED;	
+		}
+#endif
+			outsockfd = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
+			if(0 != outsockfd){
+				output_error("unable to open outbound socket");
+				rc = -1;
+				break;
+			}
+			// connect to slavenode on remote machine
+			memset(&outaddr, 0, sizeof(outaddr));
+			outaddr.sin_family = AF_INET;
+			outaddr.sin_addr.s_addr = inet_addr(global_hostname);
+			outaddr.sin_port = htons(global_server_portnum);
+			rv = connect(outsockfd, (const struct sockaddr *)&outaddr, sizeof(outaddr));
+			if(0 != rv){
+				output_error("unable to connect to slave at %s:%i", global_hostname, global_server_portnum);
+				rc = -1;
+				break;
+			}
 
-	output_debug("starting new instance with command '%s'", cmd);
-	rc = system(cmd);
+			// send command
+			// * come up with a messaging scheme
+			// sprintf(cmd,"%s/gridlabd %s %s --slave %s:%d %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_mode?"--debug":"", global_hostname,global_server_portnum, inst->model);
+			// "execdir/bin/gridlabd --verbose --debug --slave my.hostname.gov:6767 slaveX.glm"
+			// * probably could skip the host, extract that from the sockaddr on the far side
+			// ** inst->model contains the file name
+			// ** input files not currently recognized
+
+			
+			// ! DC says "use a shared filesystem"
+			// send file(s)
+			// * identify files to send (will require loader changes)
+			// * package files together (at least are sending GLM)
+			// * loop bite-sized pieces of package
+			bytes_to_send = 0;
+
+
+			// recv receipt of file xfer
+			// * come up with receipt message
+
+			// close socket
+			rv = closesocket(outsockfd);
+			if(rv != 0){
+				output_error("error when disconnecting from slave");
+				rc = -1;
+				break;
+			}
+
+			// open listener socket
+			//  * socket
+			//  * bind
+			//  * listen
+			//  * select
+			//  * accept
+
+			// run loop
+			//	* while (read)
+			//	* if(type == MESSAGE)
+			//	** output_raw
+			//	* if (type == DATA)
+			//	** enqueue somewhere?
+
+
+			break;
+		default:
+			output_error("unrecognized connection interface type in instance_runproc()");
+			rc = -1;
+	}
 
 	/* instance exited */
 	output_verbose("instance for model '%s' terminated with exit code %d (%s)",inst->model, rc, rc<0?strerror(errno):"gridlabd error"); 
@@ -451,6 +548,19 @@ STATUS instance_cnx_socket(instance *inst){
 	// note: this needs to thread off an accept()'ing socket in order to
 	//	handle the initialization process.  multiple slaves may introduce
 	//	'difficulties' with port use and reuse.
+
+	//// MMAP method:
+	// setup cache
+	// initialize cache
+	// copy message to cache
+	// setup signalling event
+
+	//// SOCKET method:
+	// open listener socket
+	// initialize message buffer? may not be needed
+	// bind socket
+	// listen socket
+
 	return FAILED;
 }
 
@@ -554,7 +664,7 @@ STATUS instance_init(instance *inst)
 	inst->cachesize = sizeof(MESSAGE) + (size_t)(inst->name_size + inst->prop_size);
 	inst->cache = (MESSAGE *)malloc(inst->cachesize);
 	memset(inst->cache, 0, inst->cachesize);
-	message_init(inst->cache, inst->cachesize, true, inst->name_size, inst->prop_size);
+	message_init(inst->cache, inst->cachesize, true, (size_t)inst->name_size, (size_t)inst->prop_size);
 	if(FAILED == messagewrapper_init(&(inst->message), inst->cache)){
 		return FAILED;
 	}
@@ -766,12 +876,12 @@ void instance_write_slave(instance *inst)
 
 	/* write output to instance */
 	for ( lnk=inst->write ; lnk!=NULL ; lnk=lnk->next ){
-		linkage_master_to_slave(inst, lnk);
+		linkage_master_to_slave(0, lnk);
 	}
 	// @todo "transfer data to cnx medium"
 	output_debug("copying %d bytes from %x to %x", inst->cachesize, inst->cache, inst->buffer);
 	memcpy(inst->buffer, inst->cache, inst->cachesize);
-	printcontent(inst->buffer, inst->cachesize);
+	printcontent(inst->buffer, (int)inst->cachesize);
 }
 
 /** instance_read_slaves
@@ -785,7 +895,7 @@ TIMESTAMP instance_read_slave(instance *inst)
 	// @todo "transfer data from cnx medium"
 output_debug("copying %d bytes from %x to %x", inst->cachesize, inst->buffer, inst->cache);
 	memcpy(inst->cache, inst->buffer, inst->cachesize);
-	printcontent(inst->buffer, inst->cachesize);
+	printcontent(inst->buffer, (int)inst->cachesize);
 	/* wait for slave */
 	output_debug("master waiting on slave %d", inst->id);
 #ifdef WIN32
@@ -818,7 +928,7 @@ output_debug("copying %d bytes from %x to %x", inst->cachesize, inst->buffer, in
 
 	/* @todo read input from instance */
 	for ( lnk=inst->read ; lnk!=NULL ; lnk=lnk->next ){
-		linkage_slave_to_master(inst, lnk);
+		linkage_slave_to_master(0, lnk);
 	}
 
 	/* return the next time */
@@ -1122,15 +1232,19 @@ void *instance_slaveproc(void *ptr)
 	linkage *lnk;
 	STATUS rv;
 	output_debug("slave %d controller startup in progress", slave_id);
+
 	pthread_mutex_lock(&mls_inst_lock);
 	pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 	pthread_mutex_unlock(&mls_inst_lock);
-//	sync_d.step_to = local_inst.cache->ts;
+
+	//	sync_d.step_to = local_inst.cache->ts;
 //	output_debug("slave %d controller received first signal with gc=%lli", slave_id, sync_d.step_to);
 	output_debug("linking properties");
 	rv = instance_slave_link_properties();
+
 	output_debug("reading properties");
 	rv = instance_slave_read_properties();
+	
 	output_debug("done reading properties");
 	while (global_clock!=TS_NEVER)
 	{
@@ -1140,42 +1254,45 @@ void *instance_slaveproc(void *ptr)
 		{
 			/* stop the main loop and exit the slave controller */
 			output_error("slave %d controller wait failure, thread stopping", slave_id);
-//			exec_mls_resume(TS_NEVER);
+
 			pthread_cond_broadcast(&mls_inst_signal);
-			//exec_mls_done();
+
 			break;
 		}
 
 		/* copy inbound linkages */
 		output_debug("slave %d controller reading links", slave_id);
-		//output_debug("li.read = %x", local_inst.read);
+
 		// @todo cnx exchange
 		output_debug("copying %d bytes from %x to %x", local_inst.cachesize, local_inst.filemap, local_inst.cache);
 		memcpy(local_inst.cache, local_inst.filemap, local_inst.cachesize);
 		printcontent(local_inst.filemap, local_inst.cachesize);
+
 		for ( lnk=local_inst.write ; lnk!=NULL ; lnk=lnk->next ){
 			//output_debug("reading link");
 			output_debug("reading %s.%s link (buffer %x)", lnk->target.obj->name, lnk->target.prop->name, local_inst.cache);
-			linkage_master_to_slave(&local_inst, lnk);
+			linkage_master_to_slave(0, lnk);
 		}
+
 		output_debug("continuing");
 		
 		/* resume the main loop */
 		// note, if TS_NEVER, we want the slave's exec loop to end normally
 		output_debug("slave %d controller resuming exec with %lli", slave_id, local_inst.cache->ts);
-//		exec_mls_resume(slave_cache->ts);
 		sync_d.step_to = local_inst.cache->ts;
 		if(local_inst.cache->ts != TS_NEVER){
 			sync_d.hard_event = 1;
 		}
+
 		pthread_cond_broadcast(&mls_inst_signal);
+
 		if(local_inst.cache->ts == TS_NEVER){
 			break;
 		}
 
 		/* wait for main loop to pause */
 		output_debug("slave %d controller waiting for main to complete", slave_id);
-//		exec_mls_statewait(MLS_PAUSED);
+
 		pthread_mutex_lock(&mls_inst_lock);
 		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 		pthread_mutex_unlock(&mls_inst_lock);
@@ -1183,12 +1300,11 @@ void *instance_slaveproc(void *ptr)
 		/* @todo copy output linkages */
 		output_debug("slave %d controller writing links", slave_id);
 		for ( lnk=local_inst.read ; lnk!=NULL ; lnk=lnk->next ){
-			linkage_slave_to_master(&local_inst, lnk);
+			linkage_slave_to_master(0, lnk);
 		}
 		output_debug("continuing");
 
 		/* copy the next time stamp */
-		//slave_cache->ts = global_clock;
 		/* how about we copy the time we want to step to and see what the master says, instead? -MH */
 		local_inst.cache->ts = sync_d.step_to;
 		local_inst.cache->hard_event = sync_d.hard_event;
@@ -1197,14 +1313,13 @@ void *instance_slaveproc(void *ptr)
 		// this works for MMAP, needs function with switches (or struct w/ func* )
 		output_debug("copying %d bytes from %x to %x", local_inst.cachesize, local_inst.cache, local_inst.filemap);
 		memcpy(local_inst.filemap, local_inst.cache, local_inst.cachesize);
-		printcontent(local_inst.filemap, local_inst.cachesize);
+		printcontent(local_inst.filemap, (int)local_inst.cachesize);
 
 		/* signal the master */
 		output_debug("slave %d controller sending 'done' signal with ts %lli/%lli", slave_id, local_inst.cache->ts, global_clock);
 		instance_slave_done();
 	}
 	output_verbose("slave %d completion state reached", local_inst.cache->id);
-	//return NULL;
 	pthread_exit(NULL);
 	return NULL;
 }
@@ -1387,6 +1502,7 @@ STATUS instance_slave_init_pthreads(){
 //	exec_mls_create(); // need to do this before we start the thread
 
 	/* start the slave controller */
+	// !!! &local_inst.pid causes a warning, pthread_t * -> us*__w64, but pt_t is a struct with [void * + uint], bad recast
 	if ( pthread_create(&(local_inst.pid), NULL, instance_slaveproc, NULL) )
 	{
 		output_error("unable to start slave controller for slave %d", slave_id);
