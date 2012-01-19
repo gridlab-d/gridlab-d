@@ -49,7 +49,17 @@
 #include <sys/timeb.h>
 #else
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/errno.h>
+#define SOCKET int
+#define INVALID_SOCKET (-1)
+#define closesocket close
 #endif
+
+#include "platform.h"
 #include "output.h"
 #include "exec.h"
 #include "class.h"
@@ -917,7 +927,9 @@ STATUS exec_start(void)
 	if (global_run_realtime>0)
 	{
 		char buffer[64];
-		time(&global_clock);
+		time_t gtime;
+		time(&gtime);
+		global_clock = gtime;
 		output_verbose("realtime mode requires using now (%s) as starttime", convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"invalid time");
 		if (global_stoptime<global_clock)
 			global_stoptime=TS_NEVER;
@@ -1455,7 +1467,8 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 	return data->status;
 }
 
-void *slave_node_proc(void *args){
+void *slave_node_proc(void *args)
+{
 	SOCKET **args_in = (SOCKET **)args;
 	bool *done_ptr = (bool *)(args_in[0]);
 	SOCKET *sockfd_ptr = (SOCKET *)args_in[1];

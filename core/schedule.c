@@ -19,6 +19,7 @@
 #include "schedule.h"
 #include "transform.h"
 #include "exception.h"
+#include "lock.h"
 
 #ifndef QNAN
 #define QNAN sqrt(-1)
@@ -174,11 +175,13 @@ int find_value_index (SCHEDULE *sch, /// schedule to search
 /* compiles a single schedule block and report errors
    returns 1 on success, 0 on failure 
  */
+static unsigned int scb_lock = 0;
+
 int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 {
 	char *token = NULL;
 	unsigned int minute=0;
-
+lock(&scb_lock);
 	/* check block count */
 	if (sch->block>=MAXBLOCKS)
 	{
@@ -186,6 +189,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		/* TROUBLESHOOT
 		   The schedule definition has too many blocks to compile.  Consolidate your schedule and try again.
 		 */
+unlock(&scb_lock);
 		return 0;
 	}
 
@@ -231,6 +235,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 				if(ndx > MAXVALUES-1)
 				{
 					output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, sch->block);
+unlock(&scb_lock);
 					return 0;
 				}
 				sch->data[sch->block*MAXVALUES+ndx] = value;
@@ -249,6 +254,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 				/* TROUBLESHOOT
 					The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 				*/
+unlock(&scb_lock);
 				return 0;
 			}
 		}
@@ -300,6 +306,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 									/* TROUBLESHOOT
 									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 									 */
+unlock(&scb_lock);
 									return 0;
 								}
 								else
@@ -319,6 +326,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}
 	}
 	strcpy(sch->blockname[sch->block],blockname);
+unlock(&scb_lock);
 	return 1;
 }
 

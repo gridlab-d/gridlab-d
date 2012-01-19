@@ -11,6 +11,15 @@
 #ifdef WIN32
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/errno.h>
+#define SOCKET int
+#define INVALID_SOCKET (-1)
+#define closesocket close
 #endif
 
 #include <pthread.h>

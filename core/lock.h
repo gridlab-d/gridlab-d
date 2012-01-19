@@ -73,7 +73,6 @@ static inline void lock(unsigned int *lock)
 		value = *lock;
 	} while ((value & 1) || !atomic_compare_and_swap((volatile long*)lock, value, value + 1));
 }
-
 static inline void unlock(unsigned int *lock)
 {
 	atomic_increment(lock);

@@ -907,7 +907,7 @@ int random_test(void)
 
 	/* Pareto distribution test */
 	a = 10*randunit(NULL);
-	b = randunit(NULL)*2+2;
+	b = randunit(NULL)+2.5;
 	output_test("\nPareto(base=%g, gamma=%g)",a,b);
 	for (i=0; i<count; i++)
 	{
