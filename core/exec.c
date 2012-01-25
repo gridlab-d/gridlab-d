@@ -104,9 +104,6 @@ int exec_init()
 	global_starttime = realtime_now();
 	timestamp_set_tz(NULL);
 
-	/* determine current working directory */
-	getcwd(global_workdir,1024);
-
 	/* save locale for simulation */
 	locale_push();
 

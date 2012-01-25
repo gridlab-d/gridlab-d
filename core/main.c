@@ -90,6 +90,9 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	if (pd1>pd2) *pd1='\0';
 	else if (pd2>pd1) *pd2='\0';
 
+	/* determine current working directory */
+	getcwd(global_workdir,1024);
+
 	/* capture the command line */
 	for (i=0; i<argc; i++)
 	{

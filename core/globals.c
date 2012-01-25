@@ -140,6 +140,7 @@ static struct s_varmap {
 	{"browser", PT_char1024, &global_browser, PA_PUBLIC},
 	{"server_portnum",PT_int32,&global_server_portnum, PA_PUBLIC},
 	{"server_quit_on_close",PT_int32,&global_server_quit_on_close, PA_PUBLIC},
+	{"autoclean",PT_int32,&global_autoclean, PA_PUBLIC},
 	{"technology_readiness_level", PT_enumeration, &technology_readiness_level, PA_PUBLIC, trl_keys},
 	{"show_progress",PT_int32,&global_show_progress,PA_PUBLIC},
 	{"checkpoint_type", PT_enumeration, &global_checkpoint_type, PA_PUBLIC, cpt_keys},

@@ -1040,6 +1040,10 @@ void sched_init(void)
 		return;
 	}	
 
+	/* automatic cleanup of defunct jobs */
+	if ( global_autoclean )
+		sched_clear();
+
 	/* find an available processor */
 	for ( n=0 ; n<n_procs ; n++ )
 	{
@@ -1130,6 +1134,10 @@ void sched_init(void)
 		output_warning("unable to access global process map: %s", strerror(errno));
 		return;
 	}
+
+	/* automatic cleanup of defunct jobs */
+	if ( global_autoclean )
+		sched_clear();
 
 	/* find an available processor */
 	for ( n=0 ; n<n_procs ; n++ )

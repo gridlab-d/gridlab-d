@@ -57,8 +57,8 @@ GLOBAL int global_quiet_mode INIT(FALSE); /**< The quiet mode flag */
 GLOBAL int global_warn_mode INIT(TRUE); /**< The warning mode flag */
 GLOBAL int global_debug_mode INIT(FALSE); /**< Enables the debugger */
 GLOBAL int global_test_mode INIT(FALSE); /**< The test mode flag */
-GLOBAL int global_verbose_mode INIT(FALSE); /**< The verbose mode flag */
-GLOBAL int global_debug_output INIT(FALSE); /**< Enables debug output */
+GLOBAL int global_verbose_mode INIT(TRUE); /**< The verbose mode flag */
+GLOBAL int global_debug_output INIT(TRUE); /**< Enables debug output */
 GLOBAL int global_keep_progress INIT(FALSE); /**< Flag to keep progress reports */
 GLOBAL unsigned global_iteration_limit INIT(100); /**< The global iteration limit */
 GLOBAL char global_workdir[1024] INIT("."); /**< The current working directory */
@@ -160,6 +160,7 @@ GLOBAL char global_browser[1024] /**< default browser to use for GUI */
 	INIT("firefox"); 
 #endif
 GLOBAL int global_server_quit_on_close INIT(0); /** server will quit when connection is closed */
+GLOBAL int global_autoclean INIT(1); /** server will automatically clean up defunct jobs */
 
 GLOBAL int technology_readiness_level INIT(0); /**< the TRL of the model (see http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Technology_Readiness_Levels) */
 
