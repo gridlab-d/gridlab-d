@@ -121,7 +121,7 @@ public:
 	void *UpdateYVs(OBJECT *snode, char snodeside, complex *deltaV);
 
 	// Fault current calculation functions
-	void fault_current_calc(complex C[7][7], unsigned int removed_phase); // function traces up from fault to swing bus summing up the link objects' impedances
+	void fault_current_calc(complex C[7][7], unsigned int removed_phase, double fault_type); // function traces up from fault to swing bus summing up the link objects' impedances
 											  // then calculates the fault current then passes that value back down to the faulted link objects.
 
 };

@@ -1303,9 +1303,27 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 					  PASSCONFIG pass) /**< the pass configuration */
 {
 	TIMESTAMP t2=TS_NEVER;
+	TIMESTAMP t_start = ts;
+	char namestr[65];
+	int itr = global_iteration_limit;
 	do {
 		/* don't call sync beyond valid horizon */
 		t2 = _object_sync(obj,(ts<(obj->valid_to>0?obj->valid_to:TS_NEVER)?ts:obj->valid_to),pass);
+		if(t2 == t_start){
+			--itr;
+			if(itr == 0){
+				output_fatal("mini-iteration limit reached for object %s in object_sync", object_name(obj, namestr, 64));
+				return TS_INVALID;
+			}
+		}
+		if(t2 < t_start){
+			output_error("return time is less than current time!");
+			return TS_INVALID;
+		} else {
+			t_start = t2;
+			itr = global_iteration_limit;
+		}
+		
 	} while (t2>0 && ts>(t2<0?-t2:t2) && t2<TS_NEVER);
 	return t2;
 }
