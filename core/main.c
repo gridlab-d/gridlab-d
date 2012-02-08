@@ -96,7 +96,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	/* capture the command line */
 	for (i=0; i<argc; i++)
 	{
-		if (pos<sizeof(global_command_line)-strlen(argv[i]))
+		if (pos < (int)(sizeof(global_command_line)-strlen(argv[i])))
 			pos += sprintf(global_command_line+pos,"%s%s",pos>0?" ":"",argv[i]);
 	}
 

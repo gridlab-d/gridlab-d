@@ -13,6 +13,23 @@
 #include "pthread.h"
 #include "linkage.h"
 
+#define HS_SYN		"GLDMTR"
+#define HS_ACK		"GLDSND"
+// note trailing space for CBK
+#define HS_CBK		"GLDSLV "
+#define HS_RSP		"GLDRDY"
+// note trailing space for CMD
+#define HS_CMD		"GLDCMD "
+#define HS_FAIL		"GLDFAIL"
+#define MSG_GLM		"GLDGLM"
+#define MSG_LINK	"GLDLNKS"
+#define MSG_INST	"GLDINST"
+#define MSG_DATA	"GLDDATA"
+#define MSG_OK		"GLDOKAY"
+#define MSG_START	"GLDSTART"
+#define MSG_ERR		"GLDERROR"
+#define MSG_DONE	"GLDDONE"
+
 typedef enum {
 	IST_DEFAULT = 0,
 	IST_MASTER_INIT = 1,
@@ -55,6 +72,7 @@ typedef struct s_instance {
 	// master info
 	unsigned int id;
 	char model[1024];
+	char execdir[1024];
 	pthread_t threadid;
 
 	/* linkage information */
@@ -70,7 +88,8 @@ typedef struct s_instance {
 		} caddr;
 		long laddr;
 	} addr;					///< ipaddr for instance
-	unsigned short port;	///< tcpport for instance
+	unsigned short port;	///< tcpport for instance slavenode
+	unsigned short return_port;	///< tcpport for instance to connect back to
 
 	// master info
 	/* connected process information */
@@ -87,6 +106,7 @@ typedef struct s_instance {
 	size_t cachesize;		///< cache size
 	size_t prop_size;
 	size_t name_size;
+	size_t buffer_size;
 	int16 writer_count;
 	int16 reader_count;
 
@@ -109,11 +129,27 @@ typedef struct s_instance {
 #endif
 		struct {
 			int sockfd; ///<
+			FILE *stream;
+			pthread_mutex_t sock_lock;
+			pthread_cond_t sock_signal;
+			pthread_mutex_t wait_lock;
+			pthread_cond_t wait_signal;
+			bool has_data;
 		};
 	};
 	struct s_instance *next;  ///<
 } instance; ///<
 
+typedef struct s_instance_pickle {
+	unsigned int64	cacheid;
+	int16	cachesize;
+	int16	name_size;
+	int16	prop_size;
+	int16	id;
+	TIMESTAMP		ts;
+} INSTANCE_PICKLE;
+
+STATUS messagewrapper_init(MESSAGEWRAPPER **msgwpr,	MESSAGE *msg);
 instance *instance_create(char *name);
 STATUS instance_init(instance *inst);
 STATUS instance_initall(void);
@@ -132,7 +168,8 @@ int linkage_create_reader(instance *inst, char *fromobj, char *fromvar, char *to
 int linkage_create_writer(instance *inst, char *fromobj, char *fromvar, char *toobj, char *tovar);
 STATUS linkage_init(instance *inst, linkage *lnk);
 STATUS linkage_master_to_slave(char *buffer, linkage *lnk);
-void linkage_slave_to_master(char *buffer, linkage *lnk);
+STATUS linkage_slave_to_master(char *buffer, linkage *lnk);
 
+void printcontent(char *data, size_t len);
 
 #endif

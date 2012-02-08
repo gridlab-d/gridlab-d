@@ -1268,7 +1268,7 @@ static int dotted_name(PARSER, char *result, int size)
 static int hostname(PARSER, char *result, int size)
 {	/* full path name */
 	START;
-	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='_' || *_p=='.' || *_p=='-' ) COPY(result);
+	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='_' || *_p=='.' || *_p=='-' || *_p==':' ) COPY(result);
 	result[_n]='\0';
 	DONE;
 }
@@ -4359,6 +4359,17 @@ static int linkage_term(PARSER,instance *inst)
 		ACCEPT;
 		DONE;
 	}
+	OR if ( LITERAL("execdir") && WHITE && TERM(value(HERE,inst->execdir,sizeof(inst->execdir))) && WHITE, LITERAL(";"))
+	{
+		ACCEPT;
+		DONE;
+	}
+	OR if ( LITERAL("return_port") && WHITE && TERM(integer16(HERE,&(inst->return_port))) && WHITE, LITERAL(";"))
+	{
+		output_debug("linkage_term(): return_port = %d", inst->return_port);
+		ACCEPT;
+		DONE;
+	}
 	OR if ( LITERAL("}") )
 	{
 		REJECT;
@@ -4705,7 +4716,7 @@ static int gui_entity(PARSER, GUIENTITY *parent)
 	int type;
 	START;
 	if WHITE ACCEPT;
-	if TERM(gui_entity_type(HERE,&type))
+	if TERM(gui_entity_type(HERE,(GUIENTITYTYPE *)&type))
 	{ 
 		GUIENTITY *entity = gui_create_entity();
 		gui_set_type(entity,type);

@@ -209,6 +209,7 @@ GLOBAL int global_autostartgui INIT(1); /**< autostart GUI when no command args 
 GLOBAL char global_master[1024] INIT(""); /**< master hostname */
 GLOBAL unsigned int64 global_master_port INIT(0);	/**< master port/mmap/shmem info */
 GLOBAL int16 global_slave_port INIT(6267); /**< default port for slaves to listen on. slaves will not run in server mode, but multiple slaves per node will require changing this. */
+GLOBAL unsigned int64 global_slave_id INIT(0); /**< ID number used by remote slave to identify itself when connecting to the master */
 typedef enum {
 	MRM_STANDALONE, /**< multirun is not enabled (standalone run) */
 	MRM_MASTER,     /**< multirun is enabled and this run is the master run */

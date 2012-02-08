@@ -9,6 +9,8 @@ instance localhost {
 
 object climate {
 	name weather1;
+	temperature 73;
+	humidity 0.30;
 }
 
 #ifdef TWO

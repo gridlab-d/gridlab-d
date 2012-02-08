@@ -46,6 +46,12 @@ typedef struct s_unresolved_func {
 	struct s_unresolved_func *next;
 } UNR_FUNC;
 
+typedef struct s_unresolved_static {
+	char256	member_name;
+	char256 class_name;
+	struct s_unresolved_static *next;
+} UNR_STATIC;
+
 /* I need these in gld_loadHndl. -MH */
 STATUS load_set_index(OBJECT *obj, OBJECTNUM id);
 OBJECT *load_get_index(OBJECTNUM id);

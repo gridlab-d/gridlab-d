@@ -268,7 +268,7 @@ int convert_to_enumeration(char *buffer, /**< a pointer to the string buffer */
 	{
 		if (strcmp(keys->name,buffer)==0)
 		{
-			*(uint32*)data=keys->value;
+			*(uint32*)data=(uint32)(keys->value);
 			found = true;
 			break;
 		}

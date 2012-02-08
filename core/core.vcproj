@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="xerces-c_2D.lib user32.lib pthreadVC2.lib ws2_32.lib"
-				OutputFile="$(OutDir)\$(SolutionName).exe"
+				OutputFile="$(OutDir)\gridlabd.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir);..\pthreads"
 				IgnoreDefaultLibraryNames=""
@@ -307,6 +307,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="0"
+				InlineFunctionExpansion="2"
+				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="..\third_party\cppunit-1.12.0\include;..\third_party\xerces-c-src_2_8_0\src;..\pthreads"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
@@ -332,6 +335,9 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(OutDir);..\pthreads;"
 				GenerateDebugInformation="true"
+				AssemblyDebug="1"
+				GenerateMapFile="true"
+				MapExports="true"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -603,6 +609,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\instance_cnx.c"
+				>
+			</File>
+			<File
+				RelativePath=".\instance_slave.c"
+				>
+			</File>
+			<File
 				RelativePath=".\interpolate.c"
 				>
 			</File>
@@ -777,6 +791,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\gld_sock.h"
+				>
+			</File>
+			<File
 				RelativePath=".\globals.h"
 				>
 			</File>
@@ -798,6 +816,14 @@
 			</File>
 			<File
 				RelativePath=".\instance.h"
+				>
+			</File>
+			<File
+				RelativePath=".\instance_cnx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\instance_slave.h"
 				>
 			</File>
 			<File
@@ -945,15 +971,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\x86\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -980,11 +1006,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>

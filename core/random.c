@@ -141,13 +141,16 @@ int randwarn(unsigned int *state)
 unsigned int64 random_id(void)
 {
 	static unsigned int state = 0;
-	unsigned int64 rv = 0;
+	int64 rv = 0;
 	if ( state==0 ) state = (unsigned int)time(NULL);	
 	rv = randwarn(&state);
 	rv = (rv<<15) ^ randwarn(&state);
 	rv = (rv<<15) ^ randwarn(&state);
 	rv = (rv<<15) ^ randwarn(&state);
 	rv = (rv<<3) ^ randwarn(&state);
+	if(rv < 0){
+		return -rv;
+	}
 	return rv;
 }
 

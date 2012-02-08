@@ -1,7 +1,7 @@
 // $id$
 // Copyright (C) 2008 Battelle Memorial Institute
 #ifndef _NO_CPPUNIT
-#include <stdio.h>
+/*#include <stdio.h>
 #include <stdlib.h>
 #include "test_framework.h"
 #include "gridlabd.h"
@@ -21,5 +21,5 @@ CDECL
 #ifndef WIN32
 #include <dlfcn.h>
 #endif
-
+*/
 #endif

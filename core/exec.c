@@ -1467,63 +1467,246 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 void *slave_node_proc(void *args)
 {
 	SOCKET **args_in = (SOCKET **)args;
+	SOCKET	*sockfd_ptr = (SOCKET *)args_in[1],
+			 masterfd = (SOCKET)(args_in[2]);
 	bool *done_ptr = (bool *)(args_in[0]);
-	SOCKET *sockfd_ptr = (SOCKET *)args_in[1];
-	SOCKET masterfd = (SOCKET)(args_in[2]);
 	struct sockaddr_in *addrin = (struct sockaddr_in *)(args_in[3]);
 
-	char buffer[1024];
-	char response[1024];
-	int rv = 0;
+	char buffer[1024], response[1024], addrstr[17], *paddrstr, *token_to, *params;
+	char cmd[1024], dirname[256], filename[256], filepath[256], ippath[256];
+	unsigned int64 mtr_port, id;
+//	char *tok_to;
+	char *token[5]={
+		HS_CMD,
+		"dir=\"", // CMD absorbs dir's leading whitespace
+		" file=\"",
+		" port=",
+		" id="
+	};
+	size_t token_len[] = {
+		strlen(token[0]),
+		strlen(token[1]),
+		strlen(token[2]),
+		strlen(token[3]),
+		strlen(token[4])
+	};
+	int /* rsp_port = global_server_portnum,*/ rv = 0;
+	size_t offset = 0, tok_len = 0;
+	SOCKET sockfd = *sockfd_ptr;
 
 	// input checks
 	if(0 == sockfd_ptr){
+		output_error("slave_node_proc(): no pointer to listener socket");
 		return 0;
 	}
 	if(0 == done_ptr){
+		output_error("slave_node_proc(): no pointer to stop condition");
 		return 0;
 	}
 	if(0 > masterfd){
+		output_error("slave_node_proc(): no accepted socket");
 		return 0;
 	}
 	if(0 == addrin){
+		output_error("slave_node_proc(): no address struct");
 		return 0;
 	}
 	// sanity checks
 	if(0 != *done_ptr){
 		// something else errored while the thread was starting
+		output_error("slave_node_proc(): slavenode finished while thread started");
+		closesocket(masterfd);
+		free(addrin);
 		return 0;
 	}
 	// socket has been accept()ed
 
 	// read handshake
-	//	* design handshake
 	rv = recv(masterfd, buffer, 1023, 0);
-	if(rv < 1){
+	if(rv < 0){
+		output_error("slave_node_proc(): error receiving handshake");
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	} else if(rv == 0){
+		output_error("slave_node_proc(): socket closed before receiving handshake");
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	}
+	if(0 != strcmp(buffer, HS_SYN)){
+		output_error("slave_node_proc(): received handshake mismatch (\"%s\")", buffer);
+		closesocket(masterfd);
+		free(addrin);
 		return 0;
 	}
 
-	sprintf(response, "why hewwo thar!");
+	sprintf(response, HS_ACK);
 	// send response
 	//	* see above
-	rv = send(masterfd, response, strlen(response), 0);
-	if(rv < 1){
+	rv = send(masterfd, response, (int)strlen(response), 0);
+	if(rv < 0){
+		output_error("slave_node_proc(): error sending handshake response");
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	} else if(rv == 0){
+		output_error("slave_node_proc(): socket closed before sending handshake response");
+		closesocket(masterfd);
+		free(addrin);
 		return 0;
 	}
 
 	// receive command
 	rv = recv(masterfd, buffer, 1023, 0);
-	if(1 > rv){
+	if(0 > rv){
+		output_error("slave_node_proc(): error receiving command instruction");
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	} else if(0 == rv){
+		output_error("slave_node_proc(): socket closed before receiving command instruction");
+		closesocket(masterfd);
+		free(addrin);
 		return 0;
 	}
 
 	// process command (what kinds do we expect?)
+	// HS_CMD dir file r_port cacheid profile relax debug verbose warn quiet avlbalance
+	//	the first four tokens are dir="%s" file="%s" port=%d id=%I64
+	//	subsequent toekns are as legitimate GLD cmdargs
+	//	ex: [HS_CMD]dir="C:\mytemp\mls\slave\" file="model.glm" port="6762" id="1234567890" --profile --relax --quiet
+	output_debug("cmd: \'%s\'", buffer);
+	// HS_CMD
+	if(0 != memcmp(token[0], buffer, token_len[0])){
+		output_error("slave_node_proc(): bad command instruction token");
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	}
+	offset += token_len[0];
+	// dir="%s"
+	if(0 != memcmp(token[1], buffer+offset, token_len[1])){
+		output_error("slave_node_proc(): error in command instruction dir token");
+		output_debug("t=\"%5s\" vs c=\"%5s\"", token[1], buffer+offset);
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	}
+	offset += token_len[1];
+	//tok_len = strcspn(buffer+offset, "\"\n\r\t\0"); // whitespace in path allowable
+	//tok_to = strchr(buffer+offset+1, '"');
+	//tok_len = tok_to - (buffer+offset+1) - 1; // -1 to fudge the last "
+	// strchr doesn't like when you start with a ", it seems
+	tok_len = 0;
+	while(buffer[offset+tok_len] != '"' && buffer[offset+tok_len] != 0){
+		++tok_len;
+	}
+	output_debug("tok_len = %d", tok_len);
+	if(tok_len > 0){
+		char temp[256];
+		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
+		output_debug(temp, offset, tok_len, buffer+offset);
+		memcpy(dirname, buffer+offset, (tok_len > sizeof(dirname) ? sizeof(dirname) : tok_len));
+	} else {
+		dirname[0] = 0;
+	}
+	offset += 1 + tok_len; // one for "
+	// zero-len dir is allowable
+	// file=""
+	if(0 != memcmp(token[2], buffer+offset, token_len[2])){
+		output_error("slave_node_proc(): error in command instruction file token");
+		output_debug("(%d)t=\"%7s\" vs c=\"%7s\"", offset, token[2], buffer+offset);
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	}
+	offset += token_len[2];
+	tok_len = strcspn(buffer+offset, "\"\n\r\t\0"); // whitespace in filename allowable
+	if(tok_len > 0){
+		char temp[256];
+		memcpy(filename, buffer+offset, (tok_len > sizeof(filename) ? sizeof(filename) : tok_len));
+		filename[tok_len]=0;
+		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
+		output_debug(temp, offset, tok_len, buffer+offset);
+	} else {
+		filename[0] = 0;
+	}
+	offset += 1 + tok_len;
+	// port=
+	if(0 != memcmp(token[3], buffer+offset, token_len[3])){
+		output_error("slave_node_proc(): error in command instruction port token");
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	}
+	offset += token_len[3];
+	mtr_port = strtol(buffer+offset, &token_to, 10);
+	if(mtr_port < 0){
+		output_error("slave_node_proc(): bad return port specified in command instruction");
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	} else if(mtr_port < 1024){
+		output_warning("slave_node_proc(): return port %d specified, may cause system conflicts", mtr_port);
+	}
+
+	// id=
+	if(0 != memcmp(token_to, token[4], token_len[4])){
+		output_error("slave_node_proc(): error in command instruction id token");
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	}
+	offset = token_len[4]; // not += since we updated our zero point
+	output_debug("%12s -> ???", token_to);
+	id = strtoll(token_to+offset, &token_to, 10);
+	if(id < 0){
+		output_error("slave_node_proc(): id %"FMT_INT64" specified, may cause system conflicts", id);
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	} else {
+		output_debug("id = %llu", id);
+	}
+	// then zero or more CL args
+	params = 1 + token_to;
 
 	// if unable to locate model file,
 	//	* request model
 	//	* receive model file (raw or packaged)
 	// else
 	//	* receipt model file found
+
+	// run command
+//	rsp_port = ntohs(addrin->sin_port);
+	paddrstr = inet_ntoa(addrin->sin_addr);
+	if(0 == paddrstr){
+		output_error("slave_node_proc(): unable to write address to a string");
+		closesocket(masterfd);
+		free(addrin);
+		return 0;
+	} else {
+		memcpy(addrstr, paddrstr, sizeof(addrstr));
+		output_debug("snp(): connect to %s:%d", addrstr, mtr_port);
+	}
+
+#ifdef WIN32
+	// write, system() --slave command
+	sprintf(filepath, "%s%s%s", dirname, (dirname[0] ? "\\" : ""), filename);
+	output_debug("filepath = %s", filepath);
+	sprintf(ippath, "--slave %s:%d", addrstr, mtr_port);
+	output_debug("ippath = %s", ippath);
+	sprintf(cmd, "%s%sgridlabd.exe %s --id %"FMT_INT64" %s %s",
+		(global_execdir[0] ? global_execdir : ""), (global_execdir[0] ? "\\" : ""), params, id, ippath, filepath);//addrstr, mtr_port, filepath);//,
+	output_debug("system(\"%s\")", cmd);
+
+	rv = system(cmd);
+#endif
+
+	// cleanup
+	closesocket(masterfd);
+	free(addrin);
 
 	return NULL;
 }
@@ -1537,8 +1720,8 @@ void *slave_node_proc(void *args)
 void exec_slave_node(){
 	static bool node_done = FALSE;
 	static SOCKET sockfd = -1;
-	SOCKET args[4];
-	struct sockaddr_in server_addr; // probably the most used struct name ever...
+	SOCKET *args[4];
+	struct sockaddr_in server_addr;
 	struct sockaddr_in *inaddr;
 	int inaddrsz;
 	fd_set reader_fdset, master_fdset;
@@ -1546,11 +1729,13 @@ void exec_slave_node(){
 	pthread_t slave_thread;
 	int rct;
 #ifdef WIN32
-	WSADATA wsaData;
+	static WSADATA wsaData;
 #endif
 
+	inaddrsz = sizeof(struct sockaddr_in);
 #ifdef WIN32
 	// if we're on windows, we're using WinSock2, so we need WSAStartup.
+	output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
 		output_error("exec_slave_node(): socket library initialization failed: %s",strerror(GetLastError()));
@@ -1567,46 +1752,54 @@ void exec_slave_node(){
 
 	// bind to global_slave_port
 	//  * this port shall not be located on Tatooine.
-	memset(&server_addr, 0, sizeof(server_addr));
+	memset(&server_addr, 0, inaddrsz);
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	server_addr.sin_port = htons(global_slave_port);
-	if(0 != bind(socket, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))){
+	if(0 != bind(sockfd, (struct sockaddr *)&server_addr, inaddrsz)){
 		output_fatal("exec_slave_node(): unable to bind socket to port %d", global_slave_port);
-		close(sockfd);
+		perror("bind()");
+		closesocket(sockfd);
 		return;
 	}
 
 	// listen
 	if( 0 != listen(sockfd, 5)){
 		output_fatal("exec_slave_node(): unable to listen to socket");
-		close(sockfd);
+		closesocket(sockfd);
 		return;
 	}
+	output_debug("exec_slave_node(): listening on port %d", global_slave_port);
 
 	// set up fd_set
 	FD_ZERO(&master_fdset);
 	FD_SET(sockfd, &master_fdset);
 	
-	args[0] = &node_done;
-	args[1] = &sockfd;
+	args[0] = (SOCKET *)&node_done;
+	args[1] = (SOCKET *)&sockfd;
 
+	output_debug("esn(): starting loop");
 	while(!node_done){
 		reader_fdset = master_fdset;
 		timer.tv_sec = 3; // check for kaputness every three (not five) seconds
 		timer.tv_usec = 0;
 		// wait for connection
-		rct = select(sockfd+1, &reader_fdset, 0, 0, &timer);
+		rct = select(1 + (int)sockfd, &reader_fdset, 0, 0, &timer);
 		if(rct < 0){
-			;
+			output_error("slavenode select() error");
+			return;
 		} else if (rct == 0){
 			// Waited three seconds without any input.  Play it again, Sam.
-			;
+			//output_debug("esn(): select ");
 		} else if (rct > 0){
-			args[3] = (SOCKET *)inaddr = malloc(sizeof(struct sockaddr));
-			args[2] = accept(sockfd, inaddr, &inaddrsz);
-			if(INVALID_SOCKET == args[2]){
+			args[3] = (SOCKET *)inaddr = malloc(inaddrsz);
+			//output_debug("esn(): got client");
+			memset(inaddr, 0, inaddrsz);
+			args[2] = (SOCKET *)accept(sockfd, (struct sockaddr *)inaddr, &inaddrsz);
+			output_debug("esn(): accepted client");
+			if(-1 == (int64)(args[2])){
 				output_error("unable to accept connection");
+				perror("accept()");
 				node_done = TRUE;
 				closesocket(sockfd);
 				return;
@@ -1622,16 +1815,18 @@ void exec_slave_node(){
 				output_error("slavenode unable to thread off connection");
 				node_done = TRUE;
 				closesocket(sockfd);
-				closesocket(args[2]);
+				closesocket((SOCKET)(args[2]));
 				return;
 			}
+			//output_debug("esn(): thread created");
 			if(pthread_detach(slave_thread)){
 				output_error("slavenode unable to detach connection thread");
 				node_done = TRUE;
 				closesocket(sockfd);
-				closesocket(args[2]);
+				closesocket((SOCKET)(args[2]));
 				return;
 			}
+			//output_debug("esn(): thread detached");
 		} // end if rct
 	} // end while
 }

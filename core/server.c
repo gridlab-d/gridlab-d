@@ -179,13 +179,14 @@ STATUS server_startup(int argc, char *argv[])
 	SOCKET sockfd;
 	struct sockaddr_in serv_addr;
 #ifdef WIN32
-	WSADATA wsaData;
+	static WSADATA wsaData;
 #endif
 
 	if (started)
 		return SUCCESS;
 
 #ifdef WIN32
+	output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
 		output_error("socket library initialization failed: %s",strerror(GetLastError()));

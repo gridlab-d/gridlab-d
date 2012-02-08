@@ -332,7 +332,7 @@ void gld_loadHndl::characters(const XMLCh* const chars, const unsigned int lengt
 	if(len > 0){
 		int j = 0;
 		int i = 0;
-		for(i = 0; i < len; ++i){
+		for(i = 0; i < (int)len; ++i){
 			if(isspace(buffer[i])){
 				++j;
 			}

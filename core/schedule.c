@@ -499,9 +499,11 @@ static pthread_mutex_t sc_activelock = PTHREAD_MUTEX_INITIALIZER;
 static STATUS sc_status = SUCCESS;
 static sc_running = 0;
 
-STATUS schedule_createproc(SCHEDULE *sch)
+void *schedule_createproc(void *args)
 {
-	int status = SUCCESS;
+	STATUS status = SUCCESS;
+	void *rv = 0;
+	SCHEDULE *sch = (SCHEDULE *)args;
 
 	pthread_mutex_lock(&sc_activelock);
 	while ( global_threadcount>1 && sc_running>=global_threadcount )
@@ -621,12 +623,14 @@ Done:
 	pthread_mutex_unlock(&sc_activelock);
 	if ( global_threadcount>1 )
 	{
-		if ( status==SUCCESS )
+		if ( status==SUCCESS ){
 			output_debug("deferred creation of schedule '%s' completed", sch->name);
-		else
+		}else{
 			output_error("deferred creation of schedule '%s' failed", sch->name);
+		}
 	}
-	return status;
+	rv = (void *)status;
+	return rv;
 }
 
 /** Wait for deferred schedule creations to finish 
@@ -659,6 +663,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 {
 	/* find the schedule is already defined (by name) */
 	SCHEDULE *sch = schedule_find_byname(name);
+	STATUS result;
 	if (sch!=NULL) 
 	{
 		if (definition!=NULL && strcmp(sch->definition,definition)!=0)
@@ -716,8 +721,11 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	/* singlethreaded creation */
 	if ( global_threadcount<=1 )
 	{
-		if ( schedule_createproc(sch)==SUCCESS )
+		result = (STATUS)schedule_createproc(sch);
+		if (SUCCESS == result)
+		{
 			return sch;
+		}
 		else
 		{
 			/* error message should be given by schedule_compile */

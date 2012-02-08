@@ -953,48 +953,58 @@ static int info(int argc, char *argv[])
 }
 static int slave(int argc, char *argv[])
 {
-	if ( argc>1 )
-	{
-		char host[256], port[256];
-		if ( sscanf(argv[1],"%255[^:]:%255s",host,port)==2)
-		{
-			strncpy(global_master,host,sizeof(global_master)-1);
-			if ( strcmp(global_master,"localhost")==0 ){
-				sscanf(port,"%"FMT_INT64"x",&global_master_port); /* port is actual mmap/shmem */
-				global_multirun_connection = MRC_MEM;
-			}
-			else
-			{
-				global_master_port = atoi(port);
-				global_multirun_connection = MRC_SOCKET;
-			}
-			if ( FAILED == instance_slave_init() )
-			{
-				output_error("slave instance init failed for master '%s' connection '%"FMT_INT64"x'", global_master, global_master_port);
-				return CMDERR;
-			}
-			else
-			{
-				output_verbose("slave instance for master '%s' using connection '%"FMT_INT64"x' started ok", global_master, global_master_port);
-			}
-		}
-		else
-		{
-			output_error("unable to parse slave parameters");
-		}
-		return 1;
-	}
-	else
+	char host[256], port[256];
+
+	if ( argc < 2 )
 	{
 		output_error("slave connection parameters are missing");
 		return CMDERR;
 	}
+
+	output_debug("slave()");
+	if(2 != sscanf(argv[1],"%255[^:]:%255s",host,port))
+	{
+		output_error("unable to parse slave parameters");
+	}
+
+	strncpy(global_master,host,sizeof(global_master)-1);
+	if ( strcmp(global_master,"localhost")==0 ){
+		sscanf(port,"%"FMT_INT64"x",&global_master_port); /* port is actual mmap/shmem */
+		global_multirun_connection = MRC_MEM;
+	}
+	else
+	{
+		global_master_port = atoi(port);
+		global_multirun_connection = MRC_SOCKET;
+	}
+
+	if ( FAILED == instance_slave_init() )
+	{
+		output_error("slave instance init failed for master '%s' connection '%"FMT_INT64"x'", global_master, global_master_port);
+		return CMDERR;
+	}
+
+	output_verbose("slave instance for master '%s' using connection '%"FMT_INT64"x' started ok", global_master, global_master_port);
+	return 1;
 }
 
 static int slavenode(int argc, char *argv[])
 {
 	exec_slave_node();
 	return CMDOK;
+}
+
+static int slave_id(int argc, char *argv[]){
+	if(argc < 2){
+		output_error("--id requires an ID number arguement");
+		return CMDERR;
+	}
+	if(1 != sscanf(argv[1], "%"FMT_INT64, &global_slave_id)){
+		output_error("slave_id(): unable to read ID number");
+		return CMDERR;
+	}
+	output_debug("slave using ID %"FMT_INT64, global_slave_id);
+	return 1;
 }
 
 /*********************************************/
@@ -1076,6 +1086,7 @@ static CMDARG main[] = {
 	{"server_portnum", "P", server_portnum, NULL, "Sets the server port number (default is 6267)" },
 	{"slave",		NULL,	slave,			"<master>", "Enables slave mode under master"},
 	{"slavenode",	NULL,	slavenode,		NULL, "Sets a listener for a remote GridLAB-D call to run in slave mode"},
+	{"id",			NULL,	slave_id,		"<idnum>", "Sets the ID number for the slave to inform its using to the master"},
 };
 
 static int help(int argc, char *argv[])

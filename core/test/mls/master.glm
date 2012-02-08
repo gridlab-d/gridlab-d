@@ -2,6 +2,8 @@
 module climate;
 module tape;
 
+//#define TWO=2
+
 #set signal_timeout=15000
 
 clock {
@@ -9,8 +11,11 @@ clock {
 	timezone PST+8PDT;
 }
 
-instance localhost {
+//instance localhost {
+instance 127.0.0.1:6267 {
 	model "slave.glm";
+	mode socket;
+//	return_port 6269;
 	weather1:temperature -> station:temperature;
 	weather1:humidity <- station:humidity;
 }

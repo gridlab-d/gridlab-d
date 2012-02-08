@@ -1265,6 +1265,15 @@ static int expression_list(PARSER, FINDPGM **pgm)
 	if TERM(expression(HERE,pgm)) ACCEPT;
 	if (WHITE,LITERAL(";") && TERM(expression_list(HERE,pgm))) { ACCEPT; DONE; }
 	if (WHITE,LITERAL("AND") && TERM(expression_list(HERE,pgm))) {ACCEPT; DONE; }
+#if 0
+	if (WHITE,LITERAL("OR"){
+		FINDPGM *newpgm;
+		if(TERM(expression_list(HERE,&newpgm))){
+			ACCEPT;
+			DONE;
+		}
+	}
+#endif
 	DONE;
 }
 
@@ -1321,6 +1330,9 @@ char *find_file(char *name, /**< the name of the file to find */
 		Access() is a potential security hole and should never be used.
 		-HMUG man page
 	 */
+	/* The alternative is to use stat(), which will not report whether
+		the user is able to access the requested modes for the specified
+		file. -mhauer */
 	if(access(name, mode) == 0)
 	{
 		strncpy(buffer, name, len);

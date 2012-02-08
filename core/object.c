@@ -461,7 +461,7 @@ OBJECT **object_get_object(OBJECT *obj, PROPERTY *prop)
 	int64 i = o + s + a;
 	
 	if(object_prop_in_class(obj, prop) && prop->ptype == PT_object && prop->access != PA_PRIVATE){
-		return i;
+		return (OBJECT **)i;
 	} else {	
 		errno = ENOENT;
 		return NULL;

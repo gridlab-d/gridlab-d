@@ -10,6 +10,7 @@
 #endif
 #ifdef WIN32
 #define _WIN32_WINNT 0x0400
+#include <winsock2.h>
 #include <windows.h>
 #else
 #include <sys/types.h>
@@ -25,6 +26,8 @@
 #include <pthread.h>
 
 #include "instance.h"
+#include "instance_cnx.h"
+#include "instance_slave.h"
 #include "output.h"
 #include "globals.h"
 #include "random.h"
@@ -38,12 +41,18 @@ pthread_mutex_t mls_inst_lock;
 pthread_cond_t mls_inst_signal;
 int inst_created = 0;
 
+// used to balance control between instance_master_wait_socket and instance_runproc
+//pthread_mutex_t inst_sock_lock;
+//pthread_cond_t inst_sock_signal;
+int sock_created = 0;
+
 #define MSGALLOCSZ 1024
 
-void printcontent(char *data, int len){
-	/*int i = 0;
-	char a, b;
-	char *str;
+void printcontent(char *data, size_t len){
+	// needed for debugging, but only when things are really not cooperating. -mh
+#if 0
+	size_t i = 0;
+	char *str = 0;
 
 	str = (char *)malloc(len * 2 + 1);
 	memset(str, 0, len * 2 + 1);
@@ -55,7 +64,8 @@ void printcontent(char *data, int len){
 		if(str[2*i+1] > 57)
 			str[2*i+1] += 39;
 	}
-	output_debug("content = %s", str);*/
+	output_debug("content = %s", str);
+#endif
 }
 
 /** message_init
@@ -66,7 +76,6 @@ void printcontent(char *data, int len){
  **/
 static void message_init(MESSAGE *msg, /**< pointer to the message cache */
 						 size_t size,  /**< size of the message cache */
-						 bool clear,		/**< flag to memset bytes after the struct (master only!) */
 						 int16 name_size,	/**< size of the obj.prop names to pass up to the slave */
 						 int16 data_size)	/**< size of the binary data buffer */
 {
@@ -76,21 +85,20 @@ static void message_init(MESSAGE *msg, /**< pointer to the message cache */
 	msg->hard_event = 0;
 	msg->name_size = name_size;
 	msg->data_size = data_size;
-	if(clear)
-		memset(&(msg->data),0,size);
 }
 
 STATUS messagewrapper_init(MESSAGEWRAPPER **msgwpr,
 							MESSAGE *msg){
 	MESSAGEWRAPPER *wpr;
-	size_t sz = sizeof(MESSAGE);
+	size_t sz = sizeof(MESSAGE),
+			sz2 = sizeof(MESSAGEWRAPPER);
 	int64 a, b;
 	b = (int64)msg;
 	if(msgwpr == 0){
 		output_error("messagewrapper_init(): null pointer");
 		return FAILED;
 	}
-	wpr = *msgwpr = (MESSAGEWRAPPER *)malloc(sizeof(MESSAGEWRAPPER));
+	wpr = *msgwpr = (MESSAGEWRAPPER *)malloc(sz2);
 	if(wpr == 0){
 		output_error("messagewrapper_init(): malloc failure");
 		return FAILED;
@@ -100,108 +108,14 @@ STATUS messagewrapper_init(MESSAGEWRAPPER **msgwpr,
 
 	wpr->name_size = &(msg->name_size);
 	a = b+sz;
-//	wpr->name_buffer = (char *)(msg + sz);
 	wpr->name_buffer = (char *)a;
 
 	wpr->data_size = &(msg->data_size);
-//	wpr->data_buffer = (char *)(msg + sz + msg->name_size);
 	b = a + msg->name_size;
 	wpr->data_buffer = (char *)b;
 
 	return SUCCESS;
 }
-
-/** message_new
-    Creates a new message cache for communications between master and slave.
-	This function allocated memory for a new message cache.
-	@returns a pointer to the next message cache.
-	@todo This function must be rewritten because the new cache must be placed
-	in the shared memory map and cannot be taken from heap.
- **/
-static MESSAGE *message_new(size_t size) /** size of the new message cache */
-{
-	return NULL;
-	// nuked.  -mh
-#if 0
-	MESSAGE *msg;
-	if (size==0) size = sizeof(MESSAGE)+MSGALLOCSZ;
-	msg = malloc(size);
-	if ( !msg ) return NULL;
-
-	/* initialize message */
-	message_init(msg,size,true, 0, 0);
-	output_fatal("message cache be created using existing code");
-	return msg;
-#endif
-}
-
-/** message_grow
-    Increases the size of the message cache for communications between master and slave.
-	This function create a new message cache, copy the old one and destroys the old one.
-	@return a pointer to the new message cache
-	@see message_new
-	@todo This function must be rewritten because the new cache must be placed
-	in the shared memory map and cannot be taken from heap.
- **/
-static MESSAGE *message_grow(MESSAGE *old) /**< pointer to the message cache */
-{
-	return NULL;
-	// nuked.  -mh
-#if 0
-	size_t size = old->asize+MSGALLOCSZ;
-	MESSAGE *msg = message_new(size);
-	free(old);
-	output_fatal("message cache cannot grow using existing code");
-	return msg;
-#endif
-}
-
-/** message_add
-    Add a buffer to the message buffer
-	@returns address of the message buffer, or -1 for failure
-	@note If the cache becomes too small it will grow.
-	@see message_grow
- **/
-char *message_add(MESSAGE **msg,	/**< pointer to message addr to which buffer is added (may be changed) */
-				   size_t size)	/**< size of buffer to be added */
-{
-	//size_t pos, need;
-
-	return NULL;
-	// nuked. -mh
-#if 0
-	/* create a new message if needed */
-	if ( (*msg)==NULL )
-		*msg = message_new(0);
-
-	/* if message creation failed */
-	if ( (*msg)==NULL )
-		return NULL;
-
-	/* determine position of need data */
-	pos = (*msg)->usize;
-
-	/* determine new size of message */
-	need = pos+size;
-
-	/* if size exceed allocation */
-	if ( need>(*msg)->asize )
-
-		/* grow the message buffer */
-		(*msg) = message_grow(*msg);
-
-	/* if grow failed */
-	if ( (*msg)==NULL )
-		return NULL;
-
-	/* update the buffer usage */
-	(*msg)->usize = need;
-
-	/* return the position of the new data */
-	return ((char*)(*msg))+pos;
-#endif
-}
-
 
 /////////////////////////////////////////////////////////////////////
 // MASTER INSTANCE
@@ -209,6 +123,55 @@ char *message_add(MESSAGE **msg,	/**< pointer to message addr to which buffer is
 static instance *instance_list = NULL;
 int instances_count = 0;
 int instances_exited = 0;
+
+void *instance_runproc_socket(void *ptr){
+	int running = 1;
+	int rv = 0;
+	int got_data = 0;
+	instance *inst = (instance*)ptr;
+	inst->has_data = false;
+
+	while(running){
+		rv = recv(inst->sockfd, inst->buffer, (int)(inst->buffer_size), 0);
+		output_debug("%d = recv(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, inst->buffer_size);
+		if(0 == rv){
+			output_error("instance_runproc_socket(): socket was closed before receiving data");
+			running = 0;
+		} else if(0 > rv){
+			output_error("instance_runproc_socket(): error receiving data");
+			running = 0;
+		}
+		if(0 == memcmp(inst->buffer, MSG_DATA, strlen(MSG_DATA))){
+			got_data = 1;
+			inst->has_data = TRUE;
+			output_debug("instance_runproc_socket(): found "MSG_DATA);
+			output_debug("instance_runproc_socket(): recv'd %d bytes", rv);
+		} else if(0 == memcmp(inst->buffer, MSG_ERR, strlen(MSG_ERR))){
+			output_error("instance_runproc_socket(): slave indicated an error occured"); // error occured
+			running = 0;
+		} else if(0 == memcmp(inst->buffer, MSG_DONE, strlen(MSG_DONE))){
+			output_verbose("instance_runproc_socket(): slave indicated run completion"); // other side is done and is closing down
+			running = 0;
+		} else {
+			// stdio message
+			;
+		}
+		memcpy(inst->cache, inst->buffer+strlen(MSG_DATA), sizeof(MESSAGE));
+		memcpy(inst->message->data_buffer, inst->buffer+strlen(MSG_DATA)+sizeof(MESSAGE), inst->prop_size);
+
+		/* copy to inst->somewhere */
+		//output_debug("i_rp_s(): waiting to send broadcast %d", inst->sock_signal);
+		//pthread_mutex_lock(&inst->wait_lock);
+		//pthread_cond_wait(&inst->wait_signal, &inst->wait_lock);
+		//pthread_mutex_unlock(&inst->wait_lock);
+		output_debug("i_rp_s(): sending broadcast %d", inst->sock_signal);
+		pthread_cond_broadcast(&(inst->sock_signal));
+		
+	}
+	pthread_cond_broadcast(&inst->sock_signal);
+	sock_created = 0;
+	return 0;
+}
 
 /** instance_runproc
     This function is the slave instance creation and monitoring thread.
@@ -224,31 +187,19 @@ int instances_exited = 0;
 void *instance_runproc(void *ptr)
 {
 	instance *inst = (instance*)ptr;
-	char cmd[1024];
-	char sendcmd[1024];
-	int64 rc;
-	int rv;
-	size_t sent_bytes, bytes_to_send;
-	SOCKET outsockfd;
-	struct sockaddr_in outaddr;
-	struct fd_set master, listener;
-	FILE *file_to_send;
-#ifdef WIN32
-	WSADATA wsaData;
-#endif
+	char1024 cmd;
+	int64 rc = 0;
 
+	if(0 == ptr){
+		output_error("instance_runproc(): null instance pointer provided");
+		return (void *)-1;
+	}
 	switch(inst->cnxtype){
 		case CI_MMAP:
 #ifdef WIN32
 			/* run new instance */
-			if ( strcmp(inst->hostname,"localhost")==0){
-				/* local instance of gridlabd */
-				sprintf(cmd,"%s/gridlabd %s %s --slave %s:%"FMT_INT64"x %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_output?"--debug":"", global_hostname,inst->cacheid, inst->model);
-			} else {
-				/* @todo RPC call to remote machine instance of gridlabd */
-				sprintf(cmd,"%s/gridlabd %s %s --slave %s:%d %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_mode?"--debug":"", global_hostname,global_server_portnum, inst->model);
-			}
-			output_debug("starting new instance with command '%s'", cmd);
+			sprintf(cmd,"%s/gridlabd %s %s --slave %s:%"FMT_INT64"x %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_output?"--debug":"", global_hostname,inst->cacheid, inst->model);
+			output_verbose("starting new instance with command '%s'", cmd);
 			rc = system(cmd);
 			break;
 #else
@@ -257,79 +208,15 @@ void *instance_runproc(void *ptr)
 			break;
 #endif
 		case CI_SHMEM:
+#ifdef WIN32
+			rc = -1;
+			break;
+#else
+			// shmem not written yet
+#endif
 			break;
 		case CI_SOCKET:
-			// create socket
-			// !!! need to either ignore output, or feed output through the socket to the master
-
-#ifdef WIN32
-		if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
-		{
-			output_error("socket library initialization failed: %s",strerror(GetLastError()));
-			return (void *)FAILED;	
-		}
-#endif
-			outsockfd = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
-			if(0 != outsockfd){
-				output_error("unable to open outbound socket");
-				rc = -1;
-				break;
-			}
-			// connect to slavenode on remote machine
-			memset(&outaddr, 0, sizeof(outaddr));
-			outaddr.sin_family = AF_INET;
-			outaddr.sin_addr.s_addr = inet_addr(global_hostname);
-			outaddr.sin_port = htons(global_server_portnum);
-			rv = connect(outsockfd, (const struct sockaddr *)&outaddr, sizeof(outaddr));
-			if(0 != rv){
-				output_error("unable to connect to slave at %s:%i", global_hostname, global_server_portnum);
-				rc = -1;
-				break;
-			}
-
-			// send command
-			// * come up with a messaging scheme
-			// sprintf(cmd,"%s/gridlabd %s %s --slave %s:%d %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_mode?"--debug":"", global_hostname,global_server_portnum, inst->model);
-			// "execdir/bin/gridlabd --verbose --debug --slave my.hostname.gov:6767 slaveX.glm"
-			// * probably could skip the host, extract that from the sockaddr on the far side
-			// ** inst->model contains the file name
-			// ** input files not currently recognized
-
-			
-			// ! DC says "use a shared filesystem"
-			// send file(s)
-			// * identify files to send (will require loader changes)
-			// * package files together (at least are sending GLM)
-			// * loop bite-sized pieces of package
-			bytes_to_send = 0;
-
-
-			// recv receipt of file xfer
-			// * come up with receipt message
-
-			// close socket
-			rv = closesocket(outsockfd);
-			if(rv != 0){
-				output_error("error when disconnecting from slave");
-				rc = -1;
-				break;
-			}
-
-			// open listener socket
-			//  * socket
-			//  * bind
-			//  * listen
-			//  * select
-			//  * accept
-
-			// run loop
-			//	* while (read)
-			//	* if(type == MESSAGE)
-			//	** output_raw
-			//	* if (type == DATA)
-			//	** enqueue somewhere?
-
-
+			instance_runproc_socket(ptr);
 			break;
 		default:
 			output_error("unrecognized connection interface type in instance_runproc()");
@@ -352,11 +239,15 @@ instance *instance_create(char *host)
 {
 	instance *inst;
 	
+	if(0 == host){
+		output_error("instance_create(): null host string provided");
+		return NULL;
+	}
 	/* allocate memory for new instance */
 	inst = (instance*)malloc(sizeof(instance));
 	if ( !inst )
 	{
-		output_error("unable to allocate memory for instance on %s", host);
+		output_error("instance_create(): unable to allocate memory for instance on %s", host);
 		return NULL;
 	}
 
@@ -380,6 +271,14 @@ instance *instance_create(char *host)
  **/
 int instance_add_linkage(instance *inst, linkage *lnk)
 {
+	if(0 == inst){
+		output_error("instance_add_linkage(): null inst pointer");
+		return 0;
+	}
+	if(0 == lnk){
+		output_error("instance_add_linkage(): null lnk pointer");
+		return 0;
+	}
 	if ( lnk->type==LT_MASTERTOSLAVE )
 	{
 		lnk->next = inst->write;
@@ -398,47 +297,146 @@ int instance_add_linkage(instance *inst, linkage *lnk)
 	}
 }
 
+int instance_master_wait_mmap(instance *inst){
+	int status = 0;
+	DWORD rc;
+	
+	if(0 == inst){
+		output_error("instance_master_wait_mmap(): null inst pointer");
+		return status;
+	}
+
+	rc = WaitForSingleObject(inst->hMaster,global_signal_timeout);
+	switch ( rc ) {
+		case WAIT_ABANDONED:
+			output_error("slave %d wait abandoned", inst->id);
+			break;
+		case WAIT_OBJECT_0:
+			output_debug("slave %d wait completed", inst->id);
+			status = 1;
+			break;
+		case WAIT_TIMEOUT:
+			output_error("slave %d wait timeout", inst->id);
+			break;
+		case WAIT_FAILED:
+			output_error("slave %d wait failed (error code %d)",inst->id,GetLastError());
+			break;
+		default:
+			output_error("slave %d wait return code not recognized (rc=%d)", inst->id,rc);
+			break;
+		}
+	ResetEvent(inst->hMaster);
+	// copy data to cache
+	memcpy(inst->cache, inst->buffer, inst->cachesize);
+	return status;
+}
+
+int instance_master_wait_socket(instance *inst){
+
+	if(0 == inst){
+		output_error("instance_master_wait_socket(): null inst pointer");
+		return 0;
+	}
+
+	if(sock_created){
+		// wait for message
+		if(inst->has_data){ // maybe 'while' this?
+			output_debug("instance_master_wait_socket(): already has data for %d", inst->sock_signal);
+		} else {
+			//output_debug("instance_master_wait_socket(): requesting unwait on %d", inst->sock_signal);
+			//pthread_cond_broadcast(&inst->wait_signal);
+			output_debug("instance_master_wait_socket(): waiting on %d", inst->sock_signal);
+			pthread_mutex_lock(&inst->sock_lock);
+			pthread_cond_wait(&inst->sock_signal, &inst->sock_lock);
+			pthread_mutex_unlock(&inst->sock_lock);
+		}
+		inst->has_data = FALSE;
+	} else {
+		output_debug("instance_master_wait_socket(): no socket mutexes");
+		return 0;
+	}
+	return 1;
+}
+
 /** instance_master_wait
 	Wait the master into a wait state for all the slave->master signal.
  **/
 int instance_master_wait(void)
 {
-	instance *inst;
+	instance *inst = 0;
 	int status = 0;
+
 	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
 	{
-		output_debug("master waiting on slave %d", inst->id);
+		output_verbose("master waiting on slave %d", inst->id);
 #ifdef WIN32
-		{	DWORD rc = WaitForSingleObject(inst->hMaster,global_signal_timeout);
-			switch ( rc ) {
-			case WAIT_ABANDONED:
-				output_error("slave %d wait abandoned", inst->id);
-				break;
-			case WAIT_OBJECT_0:
-				output_debug("slave %d wait completed", inst->id);
-				status = 1;
-				break;
-			case WAIT_TIMEOUT:
-				output_error("slave %d wait timeout", inst->id);
-				break;
-			case WAIT_FAILED:
-				output_error("slave %d wait failed (error code %d)",inst->id,GetLastError());
-				break;
-			default:
-				output_error("slave %d wait return code not recognized (rc=%d)", inst->id,rc);
-				break;
-			}
+		if(inst->cnxtype == CI_MMAP){
+			status = instance_master_wait_mmap(inst);
 		}
-		ResetEvent(inst->hMaster);
 #else
 	// @todo linux/unix slave signalling
 #endif
-		output_debug("master resuming");
+		if(inst->cnxtype == CI_SOCKET){
+			status = instance_master_wait_socket(inst);
+		}
+		if(status == 0)
+			break;
 	}
-//	exec_mls_resume(TS_NEVER);
-//	pthread_cond_broadcast(&mls_inst_signal);
-	
+	output_verbose("master resuming");
 	return status;
+}
+
+// simple and to the point
+void instance_master_done_mmap(instance *inst){
+	if(0 == inst){
+		output_error("instance_master_done_mmap(): null inst pointer");
+		return;
+	}
+	output_verbose("master signaling slave %d with timestamp %"FMT_INT64"d", inst->id, inst->cache->ts);
+#ifdef WIN32
+	SetEvent(inst->hSlave);
+#else
+	// @todo linux/unix slave signalling
+#endif
+}
+
+void instance_master_done_shmem(instance *inst){
+	;	// send
+}
+
+void instance_master_done_socket(instance *inst){
+	int rv = 0;
+	int sz = 0;
+	int offset = 0;
+
+	if(0 == inst){
+		output_error("instance_master_done_socket(): null inst pointer");
+		return;
+	}
+
+	// write data from cache to buffer
+	memset(inst->buffer, 0, inst->buffer_size);
+	sprintf(inst->buffer, MSG_DATA);
+	offset = (int)strlen(MSG_DATA);
+	memcpy(inst->buffer+offset, inst->cache, sizeof(MESSAGE));
+	offset += sizeof(MESSAGE);
+	memcpy(inst->buffer+offset, inst->message->data_buffer, *(inst->message->data_size));
+	offset += *(inst->message->data_size);
+
+	// send
+	//output_debug("imds(): sending %d bytes", offset);
+	rv = send(inst->sockfd, inst->buffer, offset, 0);
+	printcontent(inst->buffer, rv);
+	output_debug("%d = send(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, offset);
+	if(0 == rv){
+		// socket closed
+		output_error("instance_master_done_socket(): inst %d closed its socket", inst->id);
+		closesocket(inst->sockfd);
+	} else if(0 > rv){
+		// socket error
+		output_error("instance_master_done_socket(): error sending data to inst %d", inst->id);
+		closesocket(inst->sockfd);
+	}
 }
 
 /** instance_master_done
@@ -450,128 +448,24 @@ void instance_master_done(TIMESTAMP t1)
 	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
 	{
 		inst->cache->ts = t1;
-		output_debug("master signaling slave %d with timestamp %"FMT_INT64"d", inst->id, inst->cache->ts);
-#ifdef WIN32
-		SetEvent(inst->hSlave);
-#else
-	// @todo linux/unix slave signalling
-#endif
+		switch(inst->cnxtype){
+			case CI_MMAP:
+				instance_master_done_mmap(inst);
+				break;
+			case CI_SHMEM:
+				instance_master_done_shmem(inst);
+				break;
+			case CI_SOCKET:
+				instance_master_done_socket(inst);
+				break;
+			default:
+				// complain
+				;
+		}
 	}
 }
 
-STATUS instance_cnx_mmap(instance *inst){
-#ifdef WIN32
-		char cachename[1024];
-		char eventname[64];
-		SECURITY_ATTRIBUTES secAttr = {sizeof(SECURITY_ATTRIBUTES),(LPSECURITY_ATTRIBUTES)NULL,TRUE}; 
 
-		if(inst == 0){
-			output_error("instance_cnx_mmap: no instance provided");
-			/*	TROUBLESHOOT
-				There was an internal error that was not caught prior to attempting to construct
-				the message-passing layer without an instance for context.
-				*/
-			return FAILED;
-		}
-
-		/* setup cache */
-		sprintf(cachename,"GLD-%"FMT_INT64"x",inst->cacheid);
-		inst->hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,cachename);
-		if ( !inst->hMap )
-		{
-			inst->hMap = CreateFileMapping(INVALID_HANDLE_VALUE,&secAttr,PAGE_READWRITE|SEC_COMMIT, 0,(DWORD)inst->cachesize, cachename);
-			if ( !inst->hMap )
-			{
-				output_error("unable to create cache '%s' for instance '%s' (error code %d)", cachename, inst->model, GetLastError());
-				/* TROUBLESHOOT
-				   Error code 1314 indicates that the "SeCreateGlobalPrivilege" has not been granted by the system administrator.
-				   This privilege is required for GridLAB-D to use shared memory in multirun mode.
-				   */
-				return FAILED;
-			}
-			else
-			{
-				output_debug("cache '%s' created for instance '%s'", cachename, inst->model);
-			}
-		}
-		else
-		{
-			output_error("cache '%s' for instance '%s' already in use", cachename, inst->model);
-			return FAILED;
-		}
-		inst->buffer = (char *)MapViewOfFile(inst->hMap,FILE_MAP_ALL_ACCESS,0,0,(DWORD)inst->cachesize);
-		if ( !inst->buffer )
-		{
-			output_error("unable to map view of cache '%s' for instance '%s' already in use", cachename, inst->model);
-			return FAILED;
-		}
-		output_debug("cache '%s' map view for model '%s' ok", cachename, inst->model);
-		output_debug("resulting handle is %x", inst->buffer);
-		/* initialize slave instance cache */
-		//message_init(inst->cache,inst->cachesize,true); // I know this isn't needed here -MH
-		inst->cache->id = inst->id = instances_count;
-		output_verbose("slave %d assigned to '%s'", inst->id, inst->model);
-		output_debug("slave %d cache size is %d of %d bytes allocated", inst->id, inst->cache->usize, inst->cache->asize);
-
-		/* copy existing message buffer to cache */
-		output_debug("copying %d bytes from %x to %x", inst->cachesize, inst->cache, inst->buffer);
-		memcpy(inst->buffer, inst->cache, inst->cachesize);
-
-		/* setup master signalling event */
-		sprintf(eventname,"GLD-%"FMT_INT64"x-M", inst->cacheid);
-		inst->hMaster = CreateEvent(&secAttr,FALSE,FALSE,eventname); /* initially unsignalled */
-		if ( !(inst->hMaster) )
-		{
-			output_error("unable to create event signal '%s' for slave %d", eventname, inst->id);
-			return 1;
-		}
-		else
-		{
-			output_debug("created event signal '%s' for slave%d ", eventname, inst->id);
-		}
-
-		/* setup slave signalling event */
-		sprintf(eventname,"GLD-%"FMT_INT64"x-S", inst->cacheid);
-		inst->hSlave = CreateEvent(&secAttr,FALSE,FALSE,eventname); /* initially unsignalled */
-		if ( !(inst->hSlave) )
-		{
-			output_error("unable to create event signal '%s' for slave %d", eventname, inst->id);
-			return FAILED;
-		}
-		else
-		{
-			output_debug("created event signal '%s' for slave %d", eventname, inst->id);
-		}
-		return SUCCESS;
-#else
-	output_error("Memory Map (mmap) instance mode only supported under Windows, please use Shared Memory (shmem) instead.");
-	return FAILED;
-#endif
-}
-
-STATUS instance_cnx_shmem(instance *inst){
-	return FAILED;
-}
-
-STATUS instance_cnx_socket(instance *inst){
-	// note: this needs to thread off an accept()'ing socket in order to
-	//	handle the initialization process.  multiple slaves may introduce
-	//	'difficulties' with port use and reuse.
-
-	//// MMAP method:
-	// setup cache
-	// initialize cache
-	// copy message to cache
-	// setup signalling event
-
-	//// SOCKET method:
-	// open listener socket
-	// initialize message buffer? may not be needed
-	// bind socket
-	// listen socket
-
-	return FAILED;
-}
 
 /** instance_init
     Initialize an instance object.  This occurs on the master side for each slave instance.
@@ -580,9 +474,8 @@ STATUS instance_cnx_socket(instance *inst){
 STATUS instance_init(instance *inst)
 {
 	linkage *lnk;
-//	int16 *a, *b;
 	size_t name_offset=0, prop_offset=0;
-//	char *buffer;
+	STATUS result;
 
 	int i;
 	int cnxtypecnt = 3;
@@ -594,15 +487,19 @@ STATUS instance_init(instance *inst)
 		{"shmem", CI_SHMEM},
 		{"socket", CI_SOCKET},
 	};
+	
+	if(0 == inst){
+		output_error("instance_init(): null inst pointer");
+		return FAILED;
+	}
 
 	/* check for looping model */
 	if (strcmp(inst->model,global_modelname)==0)
 	{
-		output_error("slave instance model '%s' is the same as the master model '%'", inst->model,global_modelname);
-		return 1;
+		output_error("instance_init(): slave instance model '%s' is the same as the master model '%'", inst->model,global_modelname);
+		return FAILED;
 	}
 
-	/*** REHASH OF PSUEDOCODE AND REQUIREMENTS ***/
 	// validate cnxtype
 	if(inst->cnxtypestr[0] != 0){
 		for (i = 0; i < cnxtypecnt; ++i){
@@ -612,7 +509,7 @@ STATUS instance_init(instance *inst)
 			}
 		}
 		if(i == cnxtypecnt){ // exhausted the list without finding a match
-			output_error("unrecognized connection type '%s' for instance '%s'", inst->cnxtypestr, inst->model);
+			output_error("instance_init(): unrecognized connection type '%s' for instance '%s'", inst->cnxtypestr, inst->model);
 			return FAILED;
 		}
 	} else {
@@ -631,7 +528,7 @@ STATUS instance_init(instance *inst)
 
 	for ( lnk=inst->write ; lnk!=NULL ; lnk=lnk->next ){
 		if ( linkage_init(inst, lnk)==FAILED ){
-			output_error("linkage_init failed for inst '%s.%s' on link '%s.%s'", inst->hostname, inst->model, lnk->local.obj, lnk->local.prop);
+			output_error("instance_init(): linkage_init failed for inst '%s.%s' on link '%s.%s'", inst->hostname, inst->model, lnk->local.obj, lnk->local.prop);
 			return FAILED;
 		} else {
 			inst->cachesize += lnk->size;
@@ -642,7 +539,7 @@ STATUS instance_init(instance *inst)
 	}
 	for ( lnk=inst->read ; lnk!=NULL ; lnk=lnk->next ){
 		if ( linkage_init(inst, lnk)==FAILED ){
-			output_error("linkage_init failed for inst '%s.%s' on link '%s.%s'", inst->hostname, inst->model, lnk->local.obj, lnk->local.prop);
+			output_error("instance_init(): linkage_init failed for inst '%s.%s' on link '%s.%s'", inst->hostname, inst->model, lnk->local.obj, lnk->local.prop);
 			return FAILED;
 		} else {
 			inst->cachesize += lnk->size;
@@ -653,31 +550,16 @@ STATUS instance_init(instance *inst)
 	}
 
 	// allocate message buffer
-	/* The rationale is that there needs to be a local buffer that can be safely
-	 *	written to and read from by the local instance for a given master-slave
-	 *	relationship without needing to tangle with cross-process locking.
-	 * Furthermore, local memory is cheap and more easily allocated than shared
-	 *	memory. -MH
-	 */
-#if 0
-	inst->buffer = malloc(inst->cachesize);
-	if(inst->buffer == 0){
-		output_error("malloc failure in instance_init for message buffer ~ %d bytes for %s.%s", inst->cachesize, inst->hostname, inst->model);
-		return FAILED;
-	}
-	memset(inst->buffer, 0, /*sizeof(MESSAGE) + */ inst->cachesize);
-#endif
-	//messagewrapper_init(&(inst->message), inst->name_size, inst->prop_size);
-	//inst->cache = &(inst->message->msg);
-
-	inst->cachesize = sizeof(MESSAGE) + (size_t)(inst->name_size + inst->prop_size);
+	inst->buffer_size = inst->cachesize = sizeof(MESSAGE) + (size_t)(inst->name_size + inst->prop_size);
 	inst->cache = (MESSAGE *)malloc(inst->cachesize);
 	memset(inst->cache, 0, inst->cachesize);
-	message_init(inst->cache, inst->cachesize, true, (size_t)inst->name_size, (size_t)inst->prop_size);
+	message_init(inst->cache, inst->cachesize, (int16)inst->name_size, (int16)inst->prop_size);
 	if(FAILED == messagewrapper_init(&(inst->message), inst->cache)){
 		return FAILED;
 	}
 
+	//	initialize cache
+	inst->cache->id = inst->id = instances_count;
 
 	// write property lists
 	// properties are written into the buffer as "obj1.prop1,obj2.prop2 obj3.prop3,obj4.prop4\0".
@@ -687,7 +569,6 @@ STATUS instance_init(instance *inst)
 		lnk->addr = (char *)(inst->message->data_buffer + prop_offset);
 		name_offset += lnk->name_size;
 		prop_offset += lnk->prop_size;
-		output_debug("lnk addr %x, val %s.%s%c",lnk->addr, lnk->remote.obj, lnk->remote.prop, (lnk->next == 0 ? ' ' : ','));
 	}
 	for ( lnk=inst->read ; lnk!=NULL ; lnk=lnk->next ){
 		sprintf(inst->message->name_buffer+name_offset, "%s.%s%c", lnk->remote.obj, lnk->remote.prop, (lnk->next == 0 ? '\0' : ','));
@@ -695,7 +576,6 @@ STATUS instance_init(instance *inst)
 		name_offset += lnk->name_size;
 		prop_offset += lnk->prop_size;
 	}
-	output_debug("propstr \'%s\'", inst->message->name_buffer);
 	// note that for the first go-around, we cannot write the property values.
 	//	the system is still in init_all() and has not gotten to object
 	//	initialization, where defaults, calculated values, etc will be set.
@@ -704,146 +584,22 @@ STATUS instance_init(instance *inst)
 	// this will set inst->buffer to a pointer that can be used for data
 	//	exchange, whether it point to shmem or to a buffer that will be
 	//	fed into send()
-	switch(inst->cnxtype){
-		case CI_MMAP:
-			if(FAILED == instance_cnx_mmap(inst)){
-				output_error("unable to create memory map for instance %s.%s", inst->hostname, inst->model);
-				return FAILED;
-			}
-			break;
-		case CI_SHMEM:
-			if(FAILED == instance_cnx_shmem(inst)){
-				output_error("unable to create memory map for instance %s.%s", inst->hostname, inst->model);
-				return FAILED;
-			}
-
-			break;
-		case CI_SOCKET:
-			if(FAILED == instance_cnx_socket(inst)){
-				output_error("unable to create memory map for instance %s.%s", inst->hostname, inst->model);
-				return FAILED;
-			}
-			break;
-		default:
-			output_error("instance %s.%s contains invalid connection type", inst->hostname, inst->model);
-			return FAILED;
-			break;
+	result = instance_connect(inst);
+	if(result == FAILED){
+		output_error("instance_init(): instance_connect() failed");
+		return FAILED;
 	}
-
 	// start instance_proc thread
 	/* start the slave instance */
 	if ( pthread_create(&(inst->threadid), NULL, instance_runproc, (void*)inst) )
 	{
-		output_error("unable to starte instance slave %d", inst->id);
+		output_error("instance_init(): unable to starte instance slave %d", inst->id);
 		return FAILED;
 	}
-	else
-	{
-		output_verbose("started instance for slave %d", inst->id);
-		instances_count++;
-		return SUCCESS;
-	}
 
-	/*** END REHASH ***/
-
+	output_verbose("instance_init(): started instance for slave %d", inst->id);
+	instances_count++;
 	return SUCCESS;
-	// short circuit'ed below this point
-#if 0
-	inst->cachesize = sizeof(MESSAGE)+MSGALLOCSZ; /* @todo size instance cache dynamically from linkage list */
-	{
-#ifdef WIN32
-		char cachename[1024];
-		char eventname[64];
-		SECURITY_ATTRIBUTES secAttr = {sizeof(SECURITY_ATTRIBUTES),(LPSECURITY_ATTRIBUTES)NULL,TRUE}; 
-
-		/* setup cache */
-		sprintf(cachename,"GLD-%"FMT_INT64"x",inst->cacheid);
-		inst->hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,cachename);
-		if ( !inst->hMap )
-		{
-			inst->hMap = CreateFileMapping(INVALID_HANDLE_VALUE,&secAttr,PAGE_READWRITE|SEC_COMMIT, 0,(DWORD)inst->cachesize, cachename);
-			if ( !inst->hMap )
-			{
-				output_error("unable to create cache '%s' for instance '%s' (error code %d)", cachename, inst->model, GetLastError());
-				/* TROUBLESHOOT
-				   Error code 1314 indicates that the "SeCreateGlobalPrivilege" has not been granted by the system administrator.
-				   This privilege is required for GridLAB-D to use shared memory in multirun mode.
-				   */
-				return 1;
-			}
-			else
-				output_debug("cache '%s' created for instance '%s'", cachename, inst->model);
-		}
-		else
-		{
-			output_error("cache '%s' for instance '%s' already in use", cachename, inst->model);
-			return 1;
-		}
-		inst->cache = (void*)MapViewOfFile(inst->hMap,FILE_MAP_ALL_ACCESS,0,0,(DWORD)inst->cachesize);
-		if ( !inst->cache )
-		{
-			output_error("unable to map view of cache '%s' for instance '%s' already in use", cachename, inst->model);
-			return 1;
-		}
-		else
-			output_debug("cache '%s' map view for model '%s' ok", cachename, inst->model);
-
-		/* initialize slave instance cache */
-		message_init(inst->cache,inst->cachesize,true);
-		inst->cache->id = inst->id = instances_count;
-		output_verbose("slave %d assigned to '%s'", inst->id, inst->model);
-		output_debug("slave %d cache size is %d of %d bytes allocated", inst->id, inst->cache->usize, inst->cache->asize);
-
-		/* setup master signalling event */
-		sprintf(eventname,"GLD-%"FMT_INT64"x-M", inst->cacheid);
-		inst->hMaster = CreateEvent(&secAttr,FALSE,FALSE,eventname); /* initially unsignalled */
-		if ( !(inst->hMaster) )
-		{
-			output_error("unable to create event signal '%s' for slave %d", eventname, inst->id);
-			return 1;
-		}
-		else
-			output_debug("created event signal '%s' for slave%d ", eventname, inst->id);
-
-		/* setup master signalling event */
-		sprintf(eventname,"GLD-%"FMT_INT64"x-S", inst->cacheid);
-		inst->hSlave = CreateEvent(&secAttr,FALSE,FALSE,eventname); /* initially unsignalled */
-		if ( !(inst->hSlave) )
-		{
-			output_error("unable to create event signal '%s' for slave %d", eventname, inst->id);
-			return 1;
-		}
-		else
-			output_debug("created event signal '%s' for slave %d", eventname, inst->id);
-#else
-	// @todo linux/unix master signalling
-#endif
-	}
-
-	/* initialize linkages */
-	for ( lnk=inst->write ; lnk!=NULL ; lnk=lnk->next )
-		if ( linkage_init(inst, lnk)==FAILED )
-			return 0;
-	for ( lnk=inst->read ; lnk!=NULL ; lnk=lnk->next )
-		if ( linkage_init(inst, lnk)==FAILED )
-			return 0;
-	// TODO: write 'remote' object and property names into each instance's linkages.
-	// also need to write "coming" or "going"...
-	output_debug("linkages for slave %d initialization complete", inst->id);
-	
-	/* start the slave instance */
-	if ( pthread_create(&(inst->threadid), NULL, instance_runproc, (void*)inst) )
-	{
-		output_error("unable to starte instance slave %d", inst->id);
-		return 1;
-	}
-	else
-	{
-		output_verbose("started instance for slave %d", inst->id);
-		instances_count++;
-		return 0;
-	}
-#endif
 }
 
 /** instance_initall
@@ -854,7 +610,9 @@ STATUS instance_init(instance *inst)
  **/
 STATUS instance_initall(void)
 {
-	instance *inst;
+	instance *inst = 0;
+	int rv;
+
 	if ( instance_list ) 
 	{
 		global_multirun_mode = MRM_MASTER;
@@ -863,34 +621,50 @@ STATUS instance_initall(void)
 		pthread_mutex_lock(&mls_inst_lock);
 		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 		
+	} else {
+		return SUCCESS;
 	}
 	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
 	{
-		if ( instance_init(inst) == FAILED){
+		if ( FAILED == instance_init(inst)){
 			return FAILED;
 		}
 	}
 
 	// wait for slaves to signal init done
-	instance_master_wait();
+	rv = instance_master_wait();
+	if(0 == rv){
+		output_error("instance_initall(): final wait() failed");
+		return FAILED;
+	}
 	return SUCCESS;
 }
 
 /** instance_write_slave
     Write linkages to slaves.
  **/
-void instance_write_slave(instance *inst)
+STATUS instance_write_slave(instance *inst)
 {
 	linkage *lnk;
+	STATUS res;
 
-	/* write output to instance */
-	for ( lnk=inst->write ; lnk!=NULL ; lnk=lnk->next ){
-		linkage_master_to_slave(0, lnk);
+	if(0 == inst){
+		output_error("instance_write_slave(): null inst pointer");
+		return FAILED;
 	}
-	// @todo "transfer data to cnx medium"
-	output_debug("copying %d bytes from %x to %x", inst->cachesize, inst->cache, inst->buffer);
+	/* write output to instance */
+	output_verbose("master writing links for inst %d", inst->id);
+	for ( lnk=inst->write ; lnk!=NULL ; lnk=lnk->next ){
+		res = linkage_master_to_slave(0, lnk);
+		if(FAILED == res){
+			output_error("instance_write_slave(): linkage_master_to_slave failed");
+			return FAILED;
+		}
+	}
+	output_verbose("copying %d bytes from %x to %x", inst->cachesize, inst->cache, inst->buffer);
 	memcpy(inst->buffer, inst->cache, inst->cachesize);
-	printcontent(inst->buffer, (int)inst->cachesize);
+//	printcontent(inst->buffer, (int)inst->cachesize);
+	return SUCCESS;
 }
 
 /** instance_read_slaves
@@ -898,46 +672,25 @@ void instance_write_slave(instance *inst)
  **/
 TIMESTAMP instance_read_slave(instance *inst)
 {
-	TIMESTAMP t2 = TS_INVALID;
 	linkage *lnk;
+	TIMESTAMP t2 = TS_INVALID;
+	STATUS res;
 
-	// @todo "transfer data from cnx medium"
-output_debug("copying %d bytes from %x to %x", inst->cachesize, inst->buffer, inst->cache);
-	memcpy(inst->cache, inst->buffer, inst->cachesize);
-	printcontent(inst->buffer, (int)inst->cachesize);
-	/* wait for slave */
-	output_debug("master waiting on slave %d", inst->id);
-#ifdef WIN32
-	{	DWORD rc = WaitForSingleObject(inst->hMaster,global_signal_timeout);
-		switch ( rc ) {
-		case WAIT_ABANDONED:
-			output_error("slave %d wait abandoned", inst->id);
-			break;
-		case WAIT_OBJECT_0:
-			output_debug("slave %d wait completed", inst->id);
-			memcpy(inst->cache, inst->buffer, inst->cachesize);
-			t2 = inst->cache->ts;
-			break;
-		case WAIT_TIMEOUT:
-			output_error("slave %d wait timeout", inst->id);
-			break;
-		case WAIT_FAILED:
-			output_error("slave %d wait failed (error code %d)",inst->id,GetLastError());
-			break;
-		default:
-			output_error("slave %d wait return code not recognized (rc=%d)", inst->id,rc);
-			break;
-		}
+	if(0 == inst){
+		output_error("instance_read_slave(): null inst pointer");
+		return TS_INVALID;
 	}
-	ResetEvent(inst->hMaster);
-#else
-	// @todo linux/unix slave signalling
-#endif
-	output_debug("master resuming");
 
+//	printcontent(inst->buffer, (int)inst->cachesize);
+	t2 = inst->cache->ts;
+
+	output_debug("master reading links for inst %d", inst->id);
 	/* @todo read input from instance */
 	for ( lnk=inst->read ; lnk!=NULL ; lnk=lnk->next ){
-		linkage_slave_to_master(0, lnk);
+		res = linkage_slave_to_master(0, lnk);
+		if(FAILED == res){
+			;
+		}
 	}
 
 	/* return the next time */
@@ -956,6 +709,7 @@ output_debug("copying %d bytes from %x to %x", inst->cachesize, inst->buffer, in
  **/
 TIMESTAMP instance_syncall(TIMESTAMP t1)
 {
+	int wc = 0;
 	/* only process if instances exist */
 	if ( instance_list )
 	{
@@ -979,10 +733,17 @@ TIMESTAMP instance_syncall(TIMESTAMP t1)
 		/* signal slaves to start */
 		instance_master_done(t1);
 	
+		wc = instance_master_wait();
+		if(wc != 0){
+			;
+		}
+
 		/* read linkages from slaves */
 		for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
 		{
-			TIMESTAMP t3 = instance_read_slave(inst);
+			TIMESTAMP t3 = 0;
+			
+			t3 = instance_read_slave(inst);
 			if ( t3 < t2 ){
 				t2 = t3;
 			}
@@ -1011,561 +772,10 @@ STATUS instance_dispose(){
 		return SUCCESS;
 	}
 }
+
 /////////////////////////////////////////////////////////////////////
 // SLAVE INSTANCE
 
-static MESSAGE *slave_cache;
-#ifdef WIN32
-//static HANDLE hMap;
-//static HANDLE local_inst.hSlave;
-//static HANDLE local_inst.hMaster;
-#else
-	// @todo linux/unix slave signalling
-#endif
-unsigned int slave_id;
-pthread_t slave_tid;
-//static struct {
-//	MESSAGEWRAPPER wpr;
-//	linkage *read, *write;
-//} master;
-static instance local_inst;
+// see "instance_slave.c" -mh
 
-STATUS instance_slave_get_data(void *buffer, size_t offset, size_t sz){
-	if(offset < 0){
-		output_error("negative offset in instance_slave_get_data()");
-		return FAILED;
-	}
-	if(sz < 0){
-		output_error("negative size in instance_slave_get_data()");
-		return FAILED;
-	}
-
-	switch(global_multirun_connection){
-		case MRC_MEM:
-#if WIN32
-			if(slave_cache == 0){
-				output_error("instance_slave_get_data() called with uninitialized slave_cache");
-				return FAILED;
-			}
-			memcpy(buffer, slave_cache+offset, sz);
-#else
-			output_error("instance_slave_get_data() not ready for linux");
-			return FAILED;
-#endif
-			break;
-		default:
-			output_error("instance_slave_get_data() called while global_multirun_connection in an unrecognized state");
-			return FAILED;
-	}
-	return SUCCESS;
-}
-
-/** instance_slave_get_header()
-	Reads a MESSAGE header off the exchange medium, copies it into a temporary buffer,
-	instantiates a new full-sized message that should hold everything, then initializes
-	the values for a MESSAGEWRAPPER.
- **/
-STATUS instance_slave_get_header(){
-	// read first sizeof(MESSAGE) bytes from message buffer
-	// 1. copy data from medium to buffer (wait, is there a buffer?)
-	// 2. copy data from buffer into message/wrapper
-	// 3. validate data
-	// 4. construct prop & data buffers
-	STATUS rv;
-	MESSAGE msg;
-	rv = instance_slave_get_data(&msg, 0, sizeof(MESSAGE));
-	if(rv == FAILED){
-		return FAILED;
-	}
-	if(msg.name_size < 0){
-		return FAILED;
-	}
-	if(msg.data_size < 0){
-		return FAILED;
-	}
-	/*
-	slave_cache = (MESSAGE *)malloc(msg.asize);
-	memcpy(slave_cache, &msg, sizeof(MESSAGE));
-	master.wpr->msg = slave_cache;
-	master.wpr->name_size = &(slave_cache.name_size);
-	master.wpr->name_buffer = (char *)(slave_cache + sizeof(MESSAGE));
-	master.wpr->data_size = &(slave_cache.data_size);
-	master.wpr->data_buffer = (char *)(slave_cache + sizeof(MESSAGE) + msg.name_size);
-	*/
-	return SUCCESS;
-}
-
-STATUS instance_slave_parse_prop_list(char *line, linkage **root, LINKAGETYPE type){
-	char *token = 0;
-	char objname[64], propname[64];
-	OBJECT *obj = 0;
-	PROPERTY *prop = 0;
-	linkage *link = 0, *end = 0;
-	int tokenct = 0;
-
-	if(line == 0){
-		return FAILED;
-	}
-	if(root == 0){
-		return FAILED;
-	}
-
-	output_debug("parser list: \'%s\'", line);
-
-	token = strtok(line, ", \0\n\r");	// @todo should use strtok_r, will change later
-	while(token != 0){
-		tokenct = sscanf(token, "%[A-Za-z0-9_].%[A-Za-z0-9_]", objname, propname);
-		if(2 != tokenct){
-			// @todo check for global properties instead
-			output_error("instance_slave_link_properties: unable to parse '%s' (ct = %d)", token, tokenct);
-			return FAILED;
-		}
-		obj = object_find_name(objname);
-		if(obj == 0){
-			output_error("instance_slave_link_properties: unable to find object '%s'", objname);
-			return FAILED;
-		}
-		prop = object_get_property(obj, propname);
-		if(prop == 0){
-			output_error("instance_slave_link_properties: prop '%s' not found in object '%s'", propname, objname);
-			return FAILED;
-		}
-		output_debug("found links for %s", token);
-		// build link
-		link = (linkage *)malloc(sizeof(linkage));
-		if(0 == link){
-			output_error("instance_slave_link_properties: malloc failure for linkage");
-			return FAILED;
-		}
-		output_debug("making link for \'%s.%s\'", objname, propname);
-		strcpy(link->remote.obj, objname);
-		strcpy(link->remote.prop, propname);
-		link->target.obj = obj;
-		link->target.prop = prop;
-		link->type = type;
-		link->next = 0;
-		
-		link->prop_size = property_minimum_buffersize(link->target.prop);
-		link->name_size = strlen(token)+1; // +1 since there was a comma or space trimmed off
-		link->size = link->name_size + link->prop_size;
-
-		if(end == 0){
-			*root = end = link;
-		} else {
-			end->next = link;
-			end = link;
-		}
-
-		// repeat
-		token = strtok(NULL, ", \0\n\r");
-	}
-	return SUCCESS;
-}
-
-/** instance_slave_link_properties
- **/
-STATUS instance_slave_link_properties(){
-	char *buffer = (char *)malloc(local_inst.name_size);
-//	char *work, *write;
-	char *read;
-	OBJECT *obj = 0;
-	PROPERTY *prop = 0;
-	STATUS rv;
-	size_t offset = 0;
-	linkage *link = 0;
-	size_t maxlen = (size_t)*(local_inst.message->name_size);
-
-	// copy to preserve the original buffer
-	strcpy(buffer, local_inst.message->name_buffer);
-
-	// split the string manually
-	read = strchr(buffer, ' ');
-	*read++ = 0;
-
-	// parse writers (first half of the original string)
-	// a.b,c.d,e.f' '
-	output_debug("parsing writer list");
-	rv = instance_slave_parse_prop_list(buffer, &(local_inst.write), LT_MASTERTOSLAVE);
-
-	// parse readers (second half of the original string)
-	// a.b,c.d,e.f'\0'
-	output_debug("parsing reader list");
-	rv = instance_slave_parse_prop_list(read, &(local_inst.read), LT_SLAVETOMASTER);
-
-	// iterate through writers to determine memory offsets
-	//offset = local_inst.cache->name_size + sizeof(MESSAGE);
-	offset = 0;
-	output_debug("li.write = %x", local_inst.write);
-	for(link = local_inst.write; link != 0; link = link->next){
-		// linkage_init already done in parse_prop_list
-		//link->addr = local_inst.cache + offset;
-		//output_debug("addr %x = %x + %x", link->addr, local_inst.cache, offset);
-		link->addr = local_inst.message->data_buffer + offset;
-		output_debug("addr %x = %x + %x", link->addr, local_inst.message->data_buffer, offset);
-		offset += link->prop_size;
-		// instance incrementers
-		local_inst.prop_size += link->prop_size;
-		local_inst.name_size += link->name_size;
-		++local_inst.writer_count;
-	}
-	// iterate through readers to determine memory offsets
-	output_debug("li.read = %x", local_inst.read);
-	for(link = local_inst.read; link != 0; link = link->next){
-		link->addr = local_inst.message->data_buffer + offset;
-		output_debug("addr %x = %x + %x", link->addr, local_inst.message->data_buffer, offset);
-		offset += link->prop_size;
-		// instance incrementers
-		local_inst.prop_size += link->prop_size;
-		local_inst.name_size += link->name_size;
-		++local_inst.reader_count;
-	}
-	return SUCCESS;
-}
-
-/** instance_slave_read_properties()
- **/
-STATUS instance_slave_read_properties(){
-	linkage *link;
-	for(link = local_inst.write; link != 0; link = link->next){
-		;
-	}
-	return SUCCESS;
-}
-
-/** instance_slaveproc
-    Create main slave control loop to maintain sync with master.
-	Anything that is dependant on objects being loaded happens here.
- **/
-void *instance_slaveproc(void *ptr)
-{
-	linkage *lnk;
-	STATUS rv;
-	output_debug("slave %d controller startup in progress", slave_id);
-
-	pthread_mutex_lock(&mls_inst_lock);
-	pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-	pthread_mutex_unlock(&mls_inst_lock);
-
-	//	sync_d.step_to = local_inst.cache->ts;
-//	output_debug("slave %d controller received first signal with gc=%lli", slave_id, sync_d.step_to);
-	output_debug("linking properties");
-	rv = instance_slave_link_properties();
-
-	output_debug("reading properties");
-	rv = instance_slave_read_properties();
-	
-	output_debug("done reading properties");
-	while (global_clock!=TS_NEVER)
-	{
-		/* wait for master to signal slave */
-		output_debug("slave %d controller waiting", slave_id);
-		if ( !instance_slave_wait() )
-		{
-			/* stop the main loop and exit the slave controller */
-			output_error("slave %d controller wait failure, thread stopping", slave_id);
-
-			pthread_cond_broadcast(&mls_inst_signal);
-
-			break;
-		}
-
-		/* copy inbound linkages */
-		output_debug("slave %d controller reading links", slave_id);
-
-		// @todo cnx exchange
-		output_debug("copying %d bytes from %x to %x", local_inst.cachesize, local_inst.filemap, local_inst.cache);
-		memcpy(local_inst.cache, local_inst.filemap, local_inst.cachesize);
-		printcontent(local_inst.filemap, local_inst.cachesize);
-
-		for ( lnk=local_inst.write ; lnk!=NULL ; lnk=lnk->next ){
-			//output_debug("reading link");
-			output_debug("reading %s.%s link (buffer %x)", lnk->target.obj->name, lnk->target.prop->name, local_inst.cache);
-			linkage_master_to_slave(0, lnk);
-		}
-
-		output_debug("continuing");
-		
-		/* resume the main loop */
-		// note, if TS_NEVER, we want the slave's exec loop to end normally
-		output_debug("slave %d controller resuming exec with %lli", slave_id, local_inst.cache->ts);
-		sync_d.step_to = local_inst.cache->ts;
-		if(local_inst.cache->ts != TS_NEVER){
-			sync_d.hard_event = 1;
-		}
-
-		pthread_cond_broadcast(&mls_inst_signal);
-
-		if(local_inst.cache->ts == TS_NEVER){
-			break;
-		}
-
-		/* wait for main loop to pause */
-		output_debug("slave %d controller waiting for main to complete", slave_id);
-
-		pthread_mutex_lock(&mls_inst_lock);
-		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-		pthread_mutex_unlock(&mls_inst_lock);
-
-		/* @todo copy output linkages */
-		output_debug("slave %d controller writing links", slave_id);
-		for ( lnk=local_inst.read ; lnk!=NULL ; lnk=lnk->next ){
-			linkage_slave_to_master(0, lnk);
-		}
-		output_debug("continuing");
-
-		/* copy the next time stamp */
-		/* how about we copy the time we want to step to and see what the master says, instead? -MH */
-		local_inst.cache->ts = sync_d.step_to;
-		local_inst.cache->hard_event = sync_d.hard_event;
-
-		// write cache to cnx medium
-		// this works for MMAP, needs function with switches (or struct w/ func* )
-		output_debug("copying %d bytes from %x to %x", local_inst.cachesize, local_inst.cache, local_inst.filemap);
-		memcpy(local_inst.filemap, local_inst.cache, local_inst.cachesize);
-		printcontent(local_inst.filemap, (int)local_inst.cachesize);
-
-		/* signal the master */
-		output_debug("slave %d controller sending 'done' signal with ts %lli/%lli", slave_id, local_inst.cache->ts, global_clock);
-		instance_slave_done();
-	}
-	output_verbose("slave %d completion state reached", local_inst.cache->id);
-	pthread_exit(NULL);
-	return NULL;
-}
-
-/** instance_slave_wait
-	Place slave in wait state until master signal it to resume
-	@return 1 on success, 0 on failure.
- **/
-int instance_slave_wait(void)
-{
-	int status = 0;
-	output_debug("slave %d entering wait state", slave_id);
-#ifdef WIN32
-	{	DWORD rc = WaitForSingleObject(local_inst.hSlave,global_signal_timeout);
-		switch ( rc ) {
-		case WAIT_ABANDONED:
-			output_error("slave %d wait abandoned", slave_id);
-			break;
-		case WAIT_OBJECT_0:
-			output_debug("slave %d wait completed", slave_id);
-			status = 1;
-			break;
-		case WAIT_TIMEOUT:
-			output_error("slave %d wait timeout", slave_id);
-			break;
-		case WAIT_FAILED:
-			output_error("slave %d wait failed (error code %d)",slave_id,GetLastError());
-			break;
-		default:
-			output_error("slave %d wait return code not recognized (rc=%d)", slave_id,rc);
-			break;
-		}
-	}
-	ResetEvent(local_inst.hSlave);
-#else
-	// @todo linux/unix slave signalling
-#endif
-
-	/* signal main loop to resume with new timestamp */
-	return status;
-}
-
-/** instance_slave_done
-	Signal the master that the slave is done.
- **/
-void instance_slave_done(void)
-{
-	output_debug("slave %d signaling master", slave_id);
-#ifdef WIN32
-	SetEvent(local_inst.hMaster);
-#else
-	// @todo linux/unix slave signalling
-#endif
-}
-
-
-/** do docx here
- **/
-STATUS instance_slave_init_mem(){
-#ifdef WIN32
-	MESSAGE tmsg;
-	char eventName[256];
-	char cacheName[256];
-	int rv = 0;
-	size_t sz = sizeof(MESSAGE);
-	size_t cacheSize;
-
-	/* @todo open cache */
-	sprintf(cacheName,"GLD-%"FMT_INT64"x",global_master_port);
-	local_inst.hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,cacheName);
-	if ( 0 == local_inst.hMap )
-	{
-		output_error("unable to open cache '%s' for slave (error code %d)", cacheName, GetLastError());
-		return FAILED;
-	}
-	else
-	{
-		output_debug("cache '%s' opened for slave", cacheName);
-	}
-	local_inst.filemap = (void*)MapViewOfFile(local_inst.hMap,FILE_MAP_ALL_ACCESS,0,0,(DWORD)0); // not sure how big it is, so grab it all
-	output_debug("MapViewOfFile returned");
-	output_debug("resulting handle is %x", local_inst.filemap);
-	rv = local_inst.filemap;
-//	if ( output_debug("checking result"),0 == rv )
-//	{
-//		output_error("unable to map view of cache '%s' for slave", cacheName);
-//		return FAILED;
-//	}
-//	else
-//	{
-//		output_debug("cache '%s' map view for slave ok (cache usage is %d of %d bytes allocated)", cacheName, slave_cache->usize, slave_cache->asize);
-//	}
-
-	output_debug("copying %d bytes from map %x to local message", sz, local_inst.filemap);
-	memcpy(&tmsg, local_inst.filemap, sz);
-	
-	output_debug("data copied");
-	output_debug("namesz %d, datesz %d", tmsg.name_size, tmsg.data_size);
-	output_debug("TMSG: usize %d, asize %d, id %x, nsz %d, psz %d", tmsg.usize, tmsg.asize, tmsg.id, tmsg.name_size, tmsg.data_size);
-	if(tmsg.name_size < 0){
-		return FAILED;
-	}
-	if(tmsg.data_size < 0){
-		return FAILED;
-	}
-	
-	// initialize buffer/cache
-	local_inst.cachesize = cacheSize = tmsg.asize;
-	local_inst.buffer = (char *)malloc(local_inst.cachesize);
-	local_inst.cache = (MESSAGE *)malloc(local_inst.cachesize);
-	local_inst.id = slave_id = tmsg.id;
-
-	//message_init(inst.cache,tmsg.asize,true,tmsg.name_size,tmsg.data_size);
-
-	// THIS COPIES THE DATA
-	memcpy(local_inst.cache, local_inst.filemap, local_inst.cachesize);
-	messagewrapper_init(&(local_inst.message), local_inst.cache);
-
-	sync_d.step_to = local_inst.cache->ts;
-
-	/* open slave signalling event */
-	sprintf(eventName,"GLD-%"FMT_INT64"x-S", global_master_port);
-	local_inst.hSlave = OpenEvent(EVENT_ALL_ACCESS,FALSE,eventName);
-	if ( !local_inst.hSlave )
-	{
-		output_error("unable to open event signal '%s' for slave %d", eventName, slave_id);
-		return 0;
-	}
-	else
-	{
-		output_debug("opened event signal '%s' for slave %d", eventName, slave_id);
-	}
-
-	/* open master signalling event */
-	sprintf(eventName,"GLD-%"FMT_INT64"x-M", global_master_port);
-	local_inst.hMaster = OpenEvent(EVENT_ALL_ACCESS,FALSE,eventName);
-	if ( !local_inst.hMaster )
-	{
-		output_error("unable to open event signal '%s' for slave %d", eventName, slave_id);
-		return FAILED;
-	}
-	else
-	{
-		output_debug("opened event signal '%s' for slave %d ", eventName, slave_id);
-	}
-	return SUCCESS;
-#else
-	// @todo linux/unix slave signalling
-#endif
-}
-
-/** do docx here
- **/
-STATUS instance_slave_init_socket(){
-	// must handshake by connecting and sending 'just' a message
-	//	struct.  proper response is a message struct with the same ID
-	//	and nonzero sizes.  ack with same struct, after malloc'ing
-	//	buffer space.  response after should contain names.  responses
-	//	after that will be data messages.
-	return FAILED;
-}
-
-/** do docx here
- **/
-STATUS instance_slave_init_pthreads(){
-	int rv = 0;
-	//	global_mainloopstate = MLS_PAUSED;
-	rv = pthread_mutex_init(&mls_inst_lock,NULL);
-	if(rv != 0){
-		output_error("error with pthread_mutex_init() in instance_slave_init_pthreads()");
-		return FAILED;
-	}
-	rv = pthread_cond_init(&mls_inst_signal,NULL);
-	if(rv != 0){
-		output_error("error with pthread_cond_init() in instance_slave_init_pthreads()");
-		return FAILED;
-	}
-	output_verbose("opened slave end of master-slave comm channel for slave %d", slave_id);
-
-//	exec_mls_create(); // need to do this before we start the thread
-
-	/* start the slave controller */
-	// !!! &local_inst.pid causes a warning, pthread_t * -> us*__w64, but pt_t is a struct with [void * + uint], bad recast
-	if ( pthread_create(&(local_inst.pid), NULL, instance_slaveproc, NULL) )
-	{
-		output_error("unable to start slave controller for slave %d", slave_id);
-		return FAILED;
-	}
-	else
-	{
-		output_verbose("started slave controller for slave %d", slave_id);
-	}
-	return SUCCESS;
-}
-
-/** instance_slave_init
-	Initialize a slave instance.
-	NOTE, the associated GLM file has NOT been loaded at this point in time!
-	@returns SUCCESS on success, FAILED on failure.
- **/
-STATUS instance_slave_init(void)
-{
-	int rv = 0;
-	STATUS stat;
-	size_t cacheSize = sizeof(MESSAGE)+MSGALLOCSZ; /* @todo size instance cache dynamically from linkage list */
-
-	global_multirun_mode = MRM_SLAVE;
-	output_prefix_enable();
-
-	// this is where we open a connection, snag the first header, and initialize everything from there
-	switch(global_multirun_connection){
-		case MRC_MEM:
-			rv = instance_slave_init_mem();
-			break;
-		case MRC_SOCKET:
-			rv = instance_slave_init_socket();
-			break;
-		case MRC_NONE:
-			rv = FAILED;
-			output_error("Not running in slave mode, or multirun_connection not set (internal error)");
-			break;
-		default:
-			rv = FAILED;
-			output_error("Unrecognized multirun_connection type (internal error)");
-			break;
-	}
-	if(rv == FAILED){
-		output_error("unable to initialize communication medium");
-		return FAILED;
-	}
-
-	rv = instance_slave_init_pthreads(); // starts slaveproc() thread
-
-	global_clock = sync_d.step_to; // copy time signal to gc, legit since it's from msg
-	
-	// signal master that slave init is done
-	instance_slave_done();
-
-	return SUCCESS;
-}
+// EOF

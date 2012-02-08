@@ -73,6 +73,7 @@ struct s_randomvar {
 	randomvar *next;
 };
 
+int randomvar_update(randomvar *var);
 int randomvar_create(randomvar *var);
 int randomvar_init(randomvar *var);
 int randomvar_initall(void);
