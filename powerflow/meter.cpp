@@ -532,4 +532,13 @@ EXPORT TIMESTAMP sync_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	SYNC_CATCHALL(meter);
 }
 
+EXPORT int notify_meter(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
+	meter *n = OBJECTDATA(obj, meter);
+	int rv = 1;
+	if(NM_PREUPDATE == update_mode){
+		rv = n->notify(prop, value);
+	}
+	return rv;
+}
+
 /**@}**/

@@ -488,4 +488,12 @@ EXPORT int isa_load(OBJECT *obj, char *classname)
 	return OBJECTDATA(obj,load)->isa(classname);
 }
 
+EXPORT int notify_load(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
+	load *n = OBJECTDATA(obj, load);
+	int rv = 1;
+	if(NM_PREUPDATE == update_mode){
+		rv = n->notify(prop, value);
+	}
+	return rv;
+}
 /**@}*/

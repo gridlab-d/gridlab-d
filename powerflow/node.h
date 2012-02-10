@@ -149,6 +149,7 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);
 	int isa(char *classname);
+	int notify(PROPERTY *prop, char *value);
 
 	bool NR_mode;
 

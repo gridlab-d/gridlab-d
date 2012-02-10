@@ -225,7 +225,7 @@ EXPORT TIMESTAMP commit_complex_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	return TS_NEVER;
 }
 
-EXPORT int notify_complex_assert(OBJECT *obj, int update_mode, PROPERTY *prop){
+EXPORT int notify_complex_assert(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
 	complex_assert *ca = OBJECTDATA(obj,complex_assert);
 	if(update_mode == NM_POSTUPDATE && (ca->once == ca->ONCE_DONE) && (strcmp(prop->name, "value") == 0)){
 		ca->once = ca->ONCE_TRUE;

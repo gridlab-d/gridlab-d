@@ -195,7 +195,7 @@ EXPORT TIMESTAMP commit_double_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 
 }
 
-EXPORT int notify_double_assert(OBJECT *obj, int update_mode, PROPERTY *prop){
+EXPORT int notify_double_assert(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
 	double_assert *da = OBJECTDATA(obj,double_assert);
 	if(update_mode == NM_POSTUPDATE && (da->once == da->ONCE_DONE) && (strcmp(prop->name, "value") == 0)){
 		da->once = da->ONCE_TRUE;

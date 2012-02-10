@@ -2498,6 +2498,10 @@ int node::kmldump(FILE *fp)
 	return 0;
 }
 
+int node::notify(PROPERTY *prop, char *value){
+	return 1;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: node
 //////////////////////////////////////////////////////////////////////////
@@ -2968,4 +2972,12 @@ EXPORT int isa_node(OBJECT *obj, char *classname)
 	}
 }
 
+EXPORT int notify_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
+	node *n = OBJECTDATA(obj, node);
+	int rv = 1;
+	if(NM_PREUPDATE == update_mode){
+		rv = n->notify(prop, value);
+	}
+	return rv;
+}
 /**@}*/
