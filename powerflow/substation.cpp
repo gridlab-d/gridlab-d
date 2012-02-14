@@ -262,9 +262,9 @@ EXPORT TIMESTAMP sync_substation(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int notify_substation(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
 	substation *n = OBJECTDATA(obj, substation);
 	int rv = 1;
-	if(NM_PREUPDATE == update_mode){
-		rv = n->notify(prop, value);
-	}
+
+	rv = n->notify(update_mode, prop, value);
+
 	return rv;
 }
 

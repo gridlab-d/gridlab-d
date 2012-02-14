@@ -243,9 +243,9 @@ EXPORT int isa_triplex_node(OBJECT *obj, char *classname)
 EXPORT int notify_triplex_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
 	triplex_node *n = OBJECTDATA(obj, triplex_node);
 	int rv = 1;
-	if(NM_PREUPDATE == update_mode){
-		rv = n->notify(prop, value);
-	}
+
+	rv = n->notify(update_mode, prop, value);
+
 	return rv;
 }
 /**@}*/

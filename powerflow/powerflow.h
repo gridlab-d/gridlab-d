@@ -50,6 +50,7 @@ GLOBAL unsigned int NR_bus_count INIT(0);			/**< Newton-Raphson bus count - used
 GLOBAL unsigned int NR_branch_count INIT(0);		/**< Newton-Raphson branch count - used for determining size of branch vector */
 GLOBAL BUSDATA *NR_busdata INIT(NULL);				/**< Newton-Raphson bus data pointer array */
 GLOBAL BRANCHDATA *NR_branchdata INIT(NULL);		/**< Newton-Raphson branch data pointer array */
+GLOBAL double *deltaI_NR INIT(NULL);				/**< Newton-Raphson current differences pointer array */
 GLOBAL int NR_curr_bus INIT(-1);					/**< Newton-Raphson current bus indicator - used to populate NR_busdata */
 GLOBAL int NR_curr_branch INIT(-1);					/**< Newton-Raphson current branch indicator - used to populate NR_branchdata */
 GLOBAL int64 NR_iteration_limit INIT(500);			/**< Newton-Raphson iteration limit (per GridLAB-D iteration) */

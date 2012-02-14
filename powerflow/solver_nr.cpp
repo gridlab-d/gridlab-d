@@ -17,8 +17,6 @@
 /* access to module global variables */
 #include "powerflow.h"
 
-double *deltaI_NR;
-double *deltaV_NR;
 unsigned int size_offdiag_PQ;
 unsigned int size_diag_fixed;
 unsigned int total_variables;	//Total number of phases to be calculating (size of matrices)

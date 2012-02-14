@@ -130,6 +130,8 @@ int load::create(void)
 // Initialize, return 1 on success
 int load::init(OBJECT *parent)
 {
+	char temp_buff[128];
+	
 	if (has_phase(PHASE_S))
 	{
 		GL_THROW("Load objects do not support triplex connections at this time!");
@@ -137,6 +139,37 @@ int load::init(OBJECT *parent)
 		load objects are only designed to be added to the primary side of a distribution power flow.  To add loads
 		to the triplex side, please use the triplex_node object.
 		*/
+	}
+
+	//Update tracking flag
+	//Get server mode variable
+	gl_global_getvar("multirun_mode",temp_buff,sizeof(temp_buff));
+
+	//See if we're not in standalone
+	if (strcmp(temp_buff,"STANDALONE"))	//strcmp returns a 0 if they are the same
+	{
+		if (solver_method == SM_NR)
+		{
+			//Allocate the storage vector
+			prev_power_value = (complex *)gl_malloc(3*sizeof(complex));
+
+			//Check it
+			if (prev_power_value==NULL)
+			{
+				GL_THROW("Failure to allocate memory for power tracking array");
+				/*  TROUBLESHOOT
+				While attempting to allocate memory for the power tracking array used
+				by the master/slave functionality, an error occurred.  Please try again.
+				If the error persists, please submit your code and a bug report via the trac
+				website.
+				*/
+			}
+
+			//Populate it with zeros for now, just cause - init sets voltages in node
+			prev_power_value[0] = complex(0.0,0.0);
+			prev_power_value[1] = complex(0.0,0.0);
+			prev_power_value[2] = complex(0.0,0.0);
+		}
 	}
 
 	return node::init(parent);
@@ -411,6 +444,78 @@ TIMESTAMP load::postsync(TIMESTAMP t0)
 	return t1;
 }
 
+//Notify function
+int load::notify(int update_mode, PROPERTY *prop, char *value)
+{
+	complex diff_val;
+
+	//See if it was a power update - if it was populated
+	if (prev_power_value != NULL)
+	{
+		//See if there is a power update - phase A
+		if (strcmp(prop->name,"constant_power_A")==0)
+		{
+			if (update_mode==NM_PREUPDATE)
+			{
+				//Store the last value
+				prev_power_value[0] = constant_power[0];
+			}
+			else if (update_mode==NM_POSTUPDATE)
+			{
+				//See what the difference is - if it is above the convergence limit, send an NR update
+				diff_val = constant_power[0] - prev_power_value[0];
+
+				if (diff_val.Mag() >= maximum_voltage_error)
+				{
+					NR_retval = gl_globalclock;
+				}
+			}
+		}
+
+		//See if there is a power update - phase B
+		if (strcmp(prop->name,"constant_power_B")==0)
+		{
+			if (update_mode==NM_PREUPDATE)
+			{
+				//Store the last value
+				prev_power_value[1] = constant_power[1];
+			}
+			else if (update_mode==NM_POSTUPDATE)
+			{
+				//See what the difference is - if it is above the convergence limit, send an NR update
+				diff_val = constant_power[1] - prev_power_value[1];
+
+				if (diff_val.Mag() >= maximum_voltage_error)
+				{
+					NR_retval = gl_globalclock;
+				}
+			}
+		}
+
+		//See if there is a power update - phase C
+		if (strcmp(prop->name,"constant_power_C")==0)
+		{
+			if (update_mode==NM_PREUPDATE)
+			{
+				//Store the last value
+				prev_power_value[2] = constant_power[2];
+			}
+			else if (update_mode==NM_POSTUPDATE)
+			{
+				//See what the difference is - if it is above the convergence limit, send an NR update
+				diff_val = constant_power[2] - prev_power_value[2];
+
+				if (diff_val.Mag() >= maximum_voltage_error)
+				{
+					NR_retval = gl_globalclock;
+				}
+			}
+		}
+	}
+
+	return 1;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: load
 //////////////////////////////////////////////////////////////////////////
@@ -491,9 +596,9 @@ EXPORT int isa_load(OBJECT *obj, char *classname)
 EXPORT int notify_load(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
 	load *n = OBJECTDATA(obj, load);
 	int rv = 1;
-	if(NM_PREUPDATE == update_mode){
-		rv = n->notify(prop, value);
-	}
+
+	rv = n->notify(update_mode, prop, value);
+
 	return rv;
 }
 /**@}*/

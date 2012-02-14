@@ -23,6 +23,7 @@ public:
 	complex indiv_measured_power[3];///< metered power on each phase
 	bool meter_interrupted;			///< Reliability flag - goes active if the customer is in an "interrupted" state
 	bool meter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in an "secondary interrupted" state - i.e., momentary
+	bool meter_NR_servered;			///< Flag for NR solver, server mode (not standalone), and SWING designation
 	TIMESTAMP next_time;
 	TIMESTAMP dt;
 	TIMESTAMP last_t;

@@ -92,6 +92,8 @@ public:
 	object reference_bus;		///< reference bus from which frequency is defined */
 	static unsigned int n;		///< node count */
 	unsigned short k;			///< incidence count (number of links connecting to this node) */
+	complex *prev_voltage_value;	// Pointer for array used to store previous voltage value for Master/Slave functionality
+	complex *prev_power_value;		// Pointer for array used to store previous power value for Master/Slave functionality
 public:
 	// status
 	enum {
@@ -149,7 +151,7 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);
 	int isa(char *classname);
-	int notify(PROPERTY *prop, char *value);
+	int notify(int update_mode, PROPERTY *prop, char *value);
 
 	bool NR_mode;
 

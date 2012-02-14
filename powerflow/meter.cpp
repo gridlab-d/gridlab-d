@@ -172,12 +172,16 @@ int meter::create()
 	last_price_base = 0;
 	meter_power_consumption = complex(0,0);
 
+	meter_NR_servered = false;	//Assume we are just a normal meter at first
+
 	return result;
 }
 
 // Initialize a distribution meter, return 1 on success
 int meter::init(OBJECT *parent)
 {
+	char temp_buff[128];
+
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, "current_market.clearing_price");
 		if(price_prop == 0){
@@ -199,6 +203,40 @@ int meter::init(OBJECT *parent)
 
 	check_prices();
 	last_t = dt = 0;
+
+	//Update tracking flag
+	//Get server mode variable
+	gl_global_getvar("multirun_mode",temp_buff,sizeof(temp_buff));
+
+	//See if we're not in standalone
+	if (strcmp(temp_buff,"STANDALONE"))	//strcmp returns a 0 if they are the same
+	{
+		if ((solver_method == SM_NR) && (bustype == SWING))
+		{
+			meter_NR_servered = true;	//Set this flag for later use
+
+			//Allocate the storage vector
+			prev_voltage_value = (complex *)gl_malloc(3*sizeof(complex));
+
+			//Check it
+			if (prev_voltage_value==NULL)
+			{
+				GL_THROW("Failure to allocate memory for voltage tracking array");
+				/*  TROUBLESHOOT
+				While attempting to allocate memory for the voltage tracking array used
+				by the master/slave functionality, an error occurred.  Please try again.
+				If the error persists, please submit your code and a bug report via the trac
+				website.
+				*/
+			}
+
+			//Populate it with zeros for now, just cause - init sets voltages in node
+			prev_voltage_value[0] = complex(0.0,0.0);
+			prev_voltage_value[1] = complex(0.0,0.0);
+			prev_voltage_value[2] = complex(0.0,0.0);
+		}
+	}
+
 	return node::init(parent);
 }
 
@@ -301,6 +339,8 @@ TIMESTAMP meter::sync(TIMESTAMP t0)
 
 TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	complex temp_current;
+
 	measured_voltage[0] = voltageA;
 	measured_voltage[1] = voltageB;
 	measured_voltage[2] = voltageC;
@@ -308,6 +348,110 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	measured_voltageD[0] = voltageA - voltageB;
 	measured_voltageD[1] = voltageB - voltageC;
 	measured_voltageD[2] = voltageC - voltageA;
+
+	//Server-mode checks for NR updates - do on the solver pass since the other one updates anyways
+	if (meter_NR_servered & !NR_cycle)
+	{
+		//Zero them all out first, just cause
+		indiv_measured_power[0] = complex(0.0,0.0);
+		indiv_measured_power[1] = complex(0.0,0.0);
+		indiv_measured_power[2] = complex(0.0,0.0);
+
+		//Pull for appropriate phase configurations (just in case it isn't three-phase)
+		switch(NR_busdata[NR_node_reference].phases & 0x07) {
+			case 0x00:	//No phases - not sure how we get here
+				{
+					break;
+				}
+			case 0x01:	//Only phase C
+				{
+					//Extract phase C current
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
+
+					//Compute power
+					indiv_measured_power[2] = voltage[2]*~temp_current;
+
+					break;
+				}
+			case 0x02:	//Only phase B
+				{
+					//Extract phase B current and compute power
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
+					indiv_measured_power[1] = voltage[1]*~temp_current;
+
+					break;
+				}
+			case 0x03:	//Phase B & C
+				{
+					//Extract phase B current and compute power
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+2],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
+					indiv_measured_power[1] = voltage[1]*~temp_current;
+
+					//Extract phase C current and compute power
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+3],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1]);
+					indiv_measured_power[2] = voltage[2]*~temp_current;
+
+					break;
+				}
+			case 0x04:	//Only phase A
+				{
+					//Extract phase A current and compute power
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
+					indiv_measured_power[0] = voltage[0]*~temp_current;
+
+					break;
+				}
+			case 0x05:	//Phase A & C
+				{
+					//Extract phase A current and compute power
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+2],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
+					indiv_measured_power[0] = voltage[0]*~temp_current;
+					
+					//Extract phase C current and compute power
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+3],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1]);
+					indiv_measured_power[2] = voltage[2]*~temp_current;
+
+					break;
+				}
+			case 0x06:	//Phase A & B
+				{
+					//Extract phase A current and compute power
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+2],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
+					indiv_measured_power[0] = voltage[0]*~temp_current;
+					
+					//Extract phase B current and compute power
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+3],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1]);
+					indiv_measured_power[1] = voltage[1]*~temp_current;
+
+					break;
+				}
+			case 0x07:	//All three phases
+				{
+					//Extract phase A current and compute power
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+3],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
+					indiv_measured_power[0] = voltage[0]*~temp_current;
+					
+					//Extract phase B current and compute power
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+4],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1]);
+					indiv_measured_power[1] = voltage[1]*~temp_current;
+
+					//Extract phase C current and compute power
+					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+5],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+2]);
+					indiv_measured_power[2] = voltage[2]*~temp_current;
+
+					break;
+				}
+			default:	//Only phase C
+				{
+					GL_THROW("Unknown phase configuration in meter:%s",OBJECTHDR(this)->name);
+					/* TROUBLESHOOT
+					While attempting to perform the additional actions required for a master/slave instance of
+					GridLAB-D, the meter encountered an unknown phase configuration.  Please try again.  If the error
+					persists, please submit your code and a bug report via the trac website.
+					*/
+				}
+		}//End switch
+	}//End if
 
 	if ((solver_method == SM_NR && NR_cycle == true)||solver_method  == SM_FBS)
 	{
@@ -535,9 +679,9 @@ EXPORT TIMESTAMP sync_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int notify_meter(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
 	meter *n = OBJECTDATA(obj, meter);
 	int rv = 1;
-	if(NM_PREUPDATE == update_mode){
-		rv = n->notify(prop, value);
-	}
+
+	rv = n->notify(update_mode, prop, value);
+
 	return rv;
 }
 

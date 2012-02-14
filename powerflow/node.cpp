@@ -186,6 +186,9 @@ int node::create(void)
 	memset(power,0,sizeof(power));
 	memset(shunt,0,sizeof(shunt));
 
+	prev_voltage_value = NULL;	//NULL the pointer, just for the sake of doing so
+	prev_power_value = NULL;	//NULL the pointer, again just for the sake of doing so
+
 	return result;
 }
 
@@ -2498,7 +2501,74 @@ int node::kmldump(FILE *fp)
 	return 0;
 }
 
-int node::notify(PROPERTY *prop, char *value){
+int node::notify(int update_mode, PROPERTY *prop, char *value)
+{
+	complex diff_val;
+
+	//Only even bother with voltage updates if we're properly populated
+	if (prev_voltage_value != NULL)
+	{
+		//See if there is a voltage update - phase A
+		if (strcmp(prop->name,"voltage_A")==0)
+		{
+			if (update_mode==NM_PREUPDATE)
+			{
+				//Store the last value
+				prev_voltage_value[0] = voltage[0];
+			}
+			else if (update_mode==NM_POSTUPDATE)
+			{
+				//See what the difference is - if it is above the convergence limit, send an NR update
+				diff_val = voltage[0] - prev_voltage_value[0];
+
+				if (diff_val.Mag() >= maximum_voltage_error)
+				{
+					NR_retval = gl_globalclock;
+				}
+			}
+		}
+
+		//See if there is a voltage update - phase B
+		if (strcmp(prop->name,"voltage_B")==0)
+		{
+			if (update_mode==NM_PREUPDATE)
+			{
+				//Store the last value
+				prev_voltage_value[1] = voltage[1];
+			}
+			else if (update_mode==NM_POSTUPDATE)
+			{
+				//See what the difference is - if it is above the convergence limit, send an NR update
+				diff_val = voltage[1] - prev_voltage_value[1];
+
+				if (diff_val.Mag() >= maximum_voltage_error)
+				{
+					NR_retval = gl_globalclock;
+				}
+			}
+		}
+
+		//See if there is a voltage update - phase C
+		if (strcmp(prop->name,"voltage_C")==0)
+		{
+			if (update_mode==NM_PREUPDATE)
+			{
+				//Store the last value
+				prev_voltage_value[2] = voltage[2];
+			}
+			else if (update_mode==NM_POSTUPDATE)
+			{
+				//See what the difference is - if it is above the convergence limit, send an NR update
+				diff_val = voltage[2] - prev_voltage_value[2];
+
+				if (diff_val.Mag() >= maximum_voltage_error)
+				{
+					NR_retval = gl_globalclock;
+				}
+			}
+		}
+	}
+
 	return 1;
 }
 
@@ -2975,9 +3045,9 @@ EXPORT int isa_node(OBJECT *obj, char *classname)
 EXPORT int notify_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
 	node *n = OBJECTDATA(obj, node);
 	int rv = 1;
-	if(NM_PREUPDATE == update_mode){
-		rv = n->notify(prop, value);
-	}
+	
+	rv = n->notify(update_mode, prop, value);
+	
 	return rv;
 }
 /**@}*/

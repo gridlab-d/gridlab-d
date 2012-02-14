@@ -42,6 +42,7 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0);
 	inline load(CLASS *cl=oclass):node(cl){};
 	int isa(char *classname);
+	int notify(int update_mode, PROPERTY *prop, char *value);
 };
 
 #endif // _LOAD_H

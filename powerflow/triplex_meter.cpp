@@ -515,9 +515,9 @@ EXPORT TIMESTAMP sync_triplex_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int notify_triplex_meter(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
 	triplex_meter *n = OBJECTDATA(obj, triplex_meter);
 	int rv = 1;
-	if(NM_PREUPDATE == update_mode){
-		rv = n->notify(prop, value);
-	}
+
+	rv = n->notify(update_mode, prop, value);
+
 	return rv;
 }
 
