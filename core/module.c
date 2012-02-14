@@ -908,7 +908,10 @@ void sched_update(TIMESTAMP clock, enumeration status)
 int sched_isdefunct(int pid)
 {
 	/* signal 0 only checks process existence */
-	return kill(pid,0)==-1;
+	if(pid != 0)
+		return kill(pid,0)==-1;
+	else
+		return 0;
 }
 
 /** Unschedule process
@@ -932,7 +935,7 @@ void sched_clear(void)
 		unsigned int n;
 		for ( n=0 ; n<n_procs ; n++ )
 		{
-			if ( sched_isdefunct(process_map[n].pid) )
+			if (sched_isdefunct(process_map[n].pid) )
 			{
 				sched_lock(n);
 				process_map[n].pid = 0;
