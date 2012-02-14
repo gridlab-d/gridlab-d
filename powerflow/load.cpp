@@ -448,6 +448,7 @@ TIMESTAMP load::postsync(TIMESTAMP t0)
 int load::notify(int update_mode, PROPERTY *prop, char *value)
 {
 	complex diff_val;
+	double power_tolerance;
 
 	//See if it was a power update - if it was populated
 	if (prev_power_value != NULL)
@@ -462,10 +463,13 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 			}
 			else if (update_mode==NM_POSTUPDATE)
 			{
+				//Calculate the "power tolerance" - use 0.01% as a baseline
+				power_tolerance = constant_power[0].Mag() * 0.0001;
+
 				//See what the difference is - if it is above the convergence limit, send an NR update
 				diff_val = constant_power[0] - prev_power_value[0];
 
-				if (diff_val.Mag() >= maximum_voltage_error)
+				if (diff_val.Mag() >= power_tolerance)
 				{
 					NR_retval = gl_globalclock;
 				}
@@ -482,10 +486,13 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 			}
 			else if (update_mode==NM_POSTUPDATE)
 			{
+				//Calculate the "power tolerance" - use 0.01% as a baseline
+				power_tolerance = constant_power[1].Mag() * 0.0001;
+
 				//See what the difference is - if it is above the convergence limit, send an NR update
 				diff_val = constant_power[1] - prev_power_value[1];
 
-				if (diff_val.Mag() >= maximum_voltage_error)
+				if (diff_val.Mag() >= power_tolerance)
 				{
 					NR_retval = gl_globalclock;
 				}
@@ -502,10 +509,13 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 			}
 			else if (update_mode==NM_POSTUPDATE)
 			{
+				//Calculate the "power tolerance" - use 0.01% as a baseline
+				power_tolerance = constant_power[2].Mag() * 0.0001;
+
 				//See what the difference is - if it is above the convergence limit, send an NR update
 				diff_val = constant_power[2] - prev_power_value[2];
 
-				if (diff_val.Mag() >= maximum_voltage_error)
+				if (diff_val.Mag() >= power_tolerance)
 				{
 					NR_retval = gl_globalclock;
 				}
