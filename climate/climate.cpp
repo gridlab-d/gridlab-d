@@ -28,6 +28,73 @@ double surface_angles[] = {
 	-135,	// NW
 };
 
+//sjin: add solar elevation wrapper funcions
+EXPORT int64 calculate_solar_elevation(OBJECT *obj, double lititude, double *value)
+{
+	static SolarAngles sa; // just for the functions
+	double std_time = 0.0;
+	double solar_time = 0.0;
+	short int doy = 0;
+	DATETIME dt;
+
+	climate *cli;
+	if (obj == 0 || value == 0){
+		//throw "climate/calc_solar: null object pointer in arguement";
+		return 0;
+	}
+	cli = OBJECTDATA(obj, climate);
+	if(gl_object_isa(obj, "climate", "climate") == 0){
+		//throw "climate/calc_solar: input object is not a climate object";
+		return 0;
+	}
+	
+	gl_localtime(obj->clock, &dt);
+	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0;
+	solar_time = sa.solar_time(std_time, doy, cli->tz_meridian, obj->longitude);
+
+	double hr_ang = -(15.0 * PI_OVER_180)*(solar_time-12.0); // morning +, afternoon -
+
+    double decl = 0.409280*sin(2.0*PI*(284+doy)/365);
+
+	*value = asin(sin(decl)*sin(lititude) + cos(decl)*cos(lititude)*cos(hr_ang));
+
+    return 1;
+}
+
+//sjin: add solar azimuth wrapper funcions
+EXPORT int64 calculate_solar_azimuth(OBJECT *obj, double lititude, double *value)
+{
+	static SolarAngles sa; // just for the functions
+	double std_time = 0.0;
+	double solar_time = 0.0;
+	short int doy = 0;
+	DATETIME dt;
+
+	climate *cli;
+	if (obj == 0 || value == 0){
+		//throw "climate/calc_solar: null object pointer in arguement";
+		return 0;
+	}
+	cli = OBJECTDATA(obj, climate);
+	if(gl_object_isa(obj, "climate", "climate") == 0){
+		//throw "climate/calc_solar: input object is not a climate object";
+		return 0;
+	}
+
+	gl_localtime(obj->clock, &dt);
+	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0;
+	solar_time = sa.solar_time(std_time, doy, cli->tz_meridian, obj->longitude);
+
+	double hr_ang = -(15.0 * PI_OVER_180)*(solar_time-12.0); // morning +, afternoon -
+
+    double decl = 0.409280*sin(2.0*PI*(284+doy)/365);
+
+	double alpha = (90.0 * PI_OVER_180) - lititude + decl;
+
+	*value = acos( (sin(decl)*cos(lititude) - cos(decl)*sin(lititude)*cos(hr_ang))/cos(alpha) );
+
+    return 1;
+}
 
 EXPORT int64 calculate_solar_radiation_degrees(OBJECT *obj, double tilt, double orientation, double *value){
 	return calculate_solar_radiation_radians(obj, RAD(tilt), RAD(orientation), value);
@@ -228,6 +295,8 @@ climate::climate(MODULE *module)
 	{
 		oclass = gl_register_class(module,"climate",sizeof(climate),PC_PRETOPDOWN);
 		if (gl_publish_variable(oclass,
+			PT_double,"solar_elevation",PADDR(solar_elevation), //sjin: publish solar elevation variable
+			PT_double,"solar_azimuth",PADDR(solar_azimuth), //sjin: publish solar azimuth variable
 			PT_char32, "city", PADDR(city),
 			PT_char1024,"tmyfile",PADDR(tmyfile),
 			PT_double,"temperature[degF]",PADDR(temperature),
@@ -281,6 +350,9 @@ climate::climate(MODULE *module)
 		defaults = this;
 		gl_publish_function(oclass,	"calculate_solar_radiation_degrees", (FUNCTIONADDR)calculate_solar_radiation_degrees);
 		gl_publish_function(oclass,	"calculate_solar_radiation_radians", (FUNCTIONADDR)calculate_solar_radiation_radians);
+		//sjin: publish solar elevation and azimuth functions
+		gl_publish_function(oclass, "calculate_solar_elevation", (FUNCTIONADDR)calculate_solar_elevation);
+		gl_publish_function(oclass, "calculate_solar_azimuth", (FUNCTIONADDR)calculate_solar_azimuth);
 	}
 }
 
@@ -418,9 +490,13 @@ int climate::init(OBJECT *parent)
 			tmy[hoy].rainfall = precip;
 			tmy[hoy].snowdepth = snowdepth;
 			tmy[hoy].solar_raw = dnr;
+			
 			// calculate the solar radiation
 			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(obj->longitude));
 			double sol_rad = 0.0;
+
+			tmy[hoy].solar_elevation = sa->altitude(doy, obj->latitude, sol_time);
+			tmy[hoy].solar_azimuth = sa->azimuth(doy, obj->latitude, sol_time);
 
 			for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				if(c_point == CP_H)
@@ -563,9 +639,13 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 				solar_diffuse = tmy[hoy].dhr;
 				solar_global = tmy[hoy].ghr;
 				solar_raw = tmy[hoy].solar_raw;
+				solar_azimuth = tmy[hoy].solar_azimuth;
+				solar_elevation = tmy[hoy].solar_elevation;
 				this->wind_speed = tmy[hoy].windspeed;
 				this->rainfall = tmy[hoy].rainfall;
 				this->snowdepth = tmy[hoy].snowdepth;
+				
+				
 
 				if(memcmp(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double)))
 					memcpy(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double));
@@ -580,6 +660,8 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 				solar_direct = gl_lerp(now, hoy0, tmy[hoy].dnr, hoy1, tmy[hoy+1%8760].dnr);
 				solar_diffuse = gl_lerp(now, hoy0, tmy[hoy].dhr, hoy1, tmy[hoy+1%8760].dhr);
 				solar_global = gl_lerp(now, hoy0, tmy[hoy].ghr, hoy1, tmy[hoy+1%8760].ghr);
+				solar_azimuth = gl_lerp(now, hoy0, tmy[hoy].solar_azimuth, hoy1, tmy[hoy+1%8760].solar_azimuth);
+				solar_elevation = gl_lerp(now, hoy0, tmy[hoy].solar_elevation, hoy1, tmy[hoy+1%8760].solar_elevation);
 				wind_speed = gl_lerp(now, hoy0, tmy[hoy].windspeed, hoy1, tmy[hoy+1%8760].windspeed);
 				rainfall = gl_lerp(now, hoy0, tmy[hoy].rainfall, hoy1, tmy[hoy+1%8760].rainfall);
 				snowdepth = gl_lerp(now, hoy0, tmy[hoy].snowdepth, hoy1, tmy[hoy+1%8760].snowdepth);
@@ -599,6 +681,8 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 				solar_direct = gl_qerp(now, hoy0, tmy[hoy].dnr, hoy1, tmy[hoy+1%8760].dnr, hoy2, tmy[hoy+2%8760].dnr);
 				solar_diffuse = gl_qerp(now, hoy0, tmy[hoy].dhr, hoy1, tmy[hoy+1%8760].dhr, hoy2, tmy[hoy+2%8760].dhr);
 				solar_global = gl_qerp(now, hoy0, tmy[hoy].ghr, hoy1, tmy[hoy+1%8760].ghr, hoy2, tmy[hoy+2%8760].ghr);
+				solar_azimuth = gl_qerp(now, hoy0, tmy[hoy].solar_azimuth, hoy1, tmy[hoy+1%8760].solar_azimuth, hoy2, tmy[hoy+2%8760].solar_azimuth);
+				solar_elevation = gl_qerp(now, hoy0, tmy[hoy].solar_elevation, hoy1, tmy[hoy+1%8760].solar_elevation, hoy2, tmy[hoy+2%8760].solar_elevation);
 				wind_speed = gl_qerp(now, hoy0, tmy[hoy].windspeed, hoy1, tmy[hoy+1%8760].windspeed, hoy2, tmy[hoy+2%8760].windspeed);
 				rainfall = gl_qerp(now, hoy0, tmy[hoy].rainfall, hoy1, tmy[hoy+1%8760].rainfall, hoy2, tmy[hoy+2%8760].rainfall);
 				snowdepth = gl_qerp(now, hoy0, tmy[hoy].snowdepth, hoy1, tmy[hoy+1%8760].snowdepth, hoy2, tmy[hoy+2%8760].snowdepth);

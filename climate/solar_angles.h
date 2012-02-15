@@ -28,11 +28,14 @@ public:
     double solar_time(double std_time, short day_of_yr, double std_meridian, double longitude);     // decimal hours
     double local_time(double std_time, short day_of_yr, double std_meridian, double longitude);     // decimal hours
     double declination(short day_of_yr);                                    // radians
-    double cos_incident(double lititude, double slope, double az, double sol_time, short day_of_yr);    // unitless
-    double incident(double lititude, double slope, double az, double sol_time, short day_of_yr);        // radians
-    double zenith(short day_of_yr, double lititude, double sol_time);                   // radians
-    double altitude(short day_of_yr, double lititude, double sol_time);                 // radians
-    double hr_sunrise(short day_of_yr, double lititude);                            // decimal hours
-    double day_len(short day_of_yr, double lititude);                           // decimal hours
+    double cos_incident(double latitude, double slope, double az, double sol_time, short day_of_yr);    // unitless
+    double incident(double latitude, double slope, double az, double sol_time, short day_of_yr);        // radians
+    double zenith(short day_of_yr, double latitude, double sol_time);                   // radians
+    double altitude(short day_of_yr, double latitude, double sol_time);                 // radians
+    double hr_sunrise(short day_of_yr, double latitude);                            // decimal hours
+    double day_len(short day_of_yr, double latitude);                           // decimal hours
     short  day_of_yr(short month, short day);                               // julian days
+	//sjin: add solar elevation and azimuth funcions
+	double elevation(short day_of_yr, double latitude, double sol_time);
+	double azimuth(short day_of_yr, double latitude, double sol_time);
 };

@@ -246,3 +246,35 @@ short SolarAngles::day_of_yr(
 
     return days_thru_month[month-1] + day;
 }
+
+//sjin: add solar elevation funcion
+double SolarAngles::elevation(
+    short day_of_yr,    // day of year from Jan 1
+    double latitude,    // latitude (radians)
+    double sol_time     // solar time (decimal hours)
+)
+{
+    double hr_ang = -(15.0 * PI_OVER_180)*(sol_time-12.0); // morning +, afternoon -
+
+    double decl = declination(day_of_yr);
+
+    return asin(sin(decl)*sin(latitude) + cos(decl)*cos(latitude)*cos(hr_ang));
+}
+
+//sjin: add solar azimuth funcion
+double SolarAngles::azimuth(
+    short day_of_yr,    // day of year from Jan 1
+    double latitude,    // latitude (radians)
+    double sol_time     // solar time (decimal hours)
+)
+{
+    double hr_ang = -(15.0 * PI_OVER_180)*(sol_time-12.0); // morning +, afternoon -
+
+    double decl = declination(day_of_yr);
+
+	double alpha = (90.0 * PI_OVER_180) - latitude + decl;
+
+    return acos( (sin(decl)*cos(latitude) - cos(decl)*sin(latitude)*cos(hr_ang))/cos(alpha) );
+}
+
+
