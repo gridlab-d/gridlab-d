@@ -1059,7 +1059,8 @@ STATUS exec_start(void)
 			/* this will cause */
 			output_debug("syncall_internals");
 			sync_d.step_to = syncall_internals(global_clock);
-			if(sync_d.step_to!=TS_NEVER && sync_d.step_to <= global_clock){
+			if(sync_d.step_to!=TS_NEVER && sync_d.step_to < global_clock){
+				// must be able to force reiterations for m/s mode.
 				THROW("internal property sync failure");
 				/* TROUBLESHOOT
 					An internal property such as schedule, enduse or loadshape has failed to synchronize and the simulation aborted.
@@ -1237,6 +1238,20 @@ STATUS exec_start(void)
 			/* count number of passes */
 			passes++;
 
+			/**** LOOPED SLAVE PAUSE HERE ****/
+			if(global_multirun_mode == MRM_SLAVE){
+				output_debug("step_to = %lli", sync_d.step_to);
+				output_debug("exec_start(), slave waiting for looped time signal");
+
+				pthread_cond_broadcast(&mls_inst_signal);
+
+				pthread_mutex_lock(&mls_inst_lock);
+				pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
+				pthread_mutex_unlock(&mls_inst_lock);
+
+				output_debug("exec_start(), slave received looped time signal (%lli)", sync_d.step_to);
+			}
+
 			/* check for clock advance */
 			if (sync_d.step_to != global_clock)
 			{
@@ -1261,20 +1276,6 @@ STATUS exec_start(void)
 
 				/* count number of timesteps */
 				tsteps++;
-
-				/**** LOOPED SLAVE PAUSE HERE ****/
-				if(global_multirun_mode == MRM_SLAVE){
-					output_debug("step_to = %lli", sync_d.step_to);
-					output_debug("exec_start(), slave waiting for looped time signal");
-
-					pthread_cond_broadcast(&mls_inst_signal);
-
-					pthread_mutex_lock(&mls_inst_lock);
-					pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-					pthread_mutex_unlock(&mls_inst_lock);
-
-					output_debug("exec_start(), slave received looped time signal (%lli)", sync_d.step_to);
-				}
 			}
 			/* check iteration limit */
 			else if (--iteration_counter == 0)
