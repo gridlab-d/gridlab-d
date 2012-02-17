@@ -57,8 +57,8 @@ GLOBAL int global_quiet_mode INIT(FALSE); /**< The quiet mode flag */
 GLOBAL int global_warn_mode INIT(TRUE); /**< The warning mode flag */
 GLOBAL int global_debug_mode INIT(FALSE); /**< Enables the debugger */
 GLOBAL int global_test_mode INIT(FALSE); /**< The test mode flag */
-GLOBAL int global_verbose_mode INIT(TRUE); /**< The verbose mode flag */
-GLOBAL int global_debug_output INIT(TRUE); /**< Enables debug output */
+GLOBAL int global_verbose_mode INIT(FALSE); /**< The verbose mode flag */
+GLOBAL int global_debug_output INIT(FALSE); /**< Enables debug output */
 GLOBAL int global_keep_progress INIT(FALSE); /**< Flag to keep progress reports */
 GLOBAL unsigned global_iteration_limit INIT(100); /**< The global iteration limit */
 GLOBAL char global_workdir[1024] INIT("."); /**< The current working directory */
@@ -120,6 +120,7 @@ GLOBAL TIMESTAMP global_stoptime INIT(TS_NEVER); /**< The simulation stop time *
 
 GLOBAL char global_double_format[32] INIT("%+lg"); /**< the format to use when processing real numbers */
 GLOBAL char global_complex_format[256] INIT("%+lg%+lg%c"); /**< the format to use when processing complex numbers */
+//GLOBAL char global_complex_format[256] INIT("%+8.4f%+8.4f%c"); /**< the format to use when processing complex numbers */
 GLOBAL char global_object_format[32] INIT("%s:%d"); 
 GLOBAL char global_object_scan[32] INIT("%[^:]:%d"); /**< the format to use when scanning for object ids */
 
