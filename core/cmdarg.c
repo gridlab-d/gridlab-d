@@ -1107,6 +1107,7 @@ static CMDARG main[] = {
 	{"help",		"h",		help,		NULL, "Displays command line help" },
 	{"info",		NULL,		info,		"<subject>", "Obtain online help regarding <subject>"},
 	{"modhelp",		NULL,		modhelp,	"module[:class]", "Display structure of a class or all classes in a module" },
+	{"example",		NULL,		example,	"module:class", "Display an example of an instance of the class before init" },
 
 	{NULL,NULL,NULL,NULL, "Process control"},
 	{"pidfile",		NULL,	pidfile,		"[=<filename>]", "Set the process ID file (default is gridlabd.pid)" },
