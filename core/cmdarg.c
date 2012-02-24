@@ -996,7 +996,7 @@ static int slavenode(int argc, char *argv[])
 
 static int slave_id(int argc, char *argv[]){
 	if(argc < 2){
-		output_error("--id requires an ID number arguement");
+		output_error("--id requires an ID number argument");
 		return CMDERR;
 	}
 	if(1 != sscanf(argv[1], "%"FMT_INT64, &global_slave_id)){
@@ -1004,6 +1004,51 @@ static int slave_id(int argc, char *argv[]){
 		return CMDERR;
 	}
 	output_debug("slave using ID %"FMT_INT64, global_slave_id);
+	return 1;
+}
+static int example(int argc, char *argv[])
+{
+	MODULE *module;
+	CLASS *oclass;
+	OBJECT *object;
+	char modname[1024], classname[1024];
+	int n;
+	char buffer[65536];
+	
+	if ( argc < 2 ) 
+	{
+		output_error("--example requires a module:class argument");
+		return CMDERR;
+	}
+	
+	n = sscanf(argv[1],"%1023[A-Za-z_]:%1024[A-Za-z_0-9]",modname,classname);
+	if ( n!=2 )
+	{
+		output_error("--example: %s name is not valid",n==0?"module":"class");
+		return CMDERR;
+	}
+	module = module_load(modname,0,NULL);
+	if ( module==NULL )
+	{
+		output_error("--example: module %d is not found", modname);
+		return CMDERR;
+	}
+	oclass = class_get_class_from_classname(classname);
+	if ( oclass==NULL )
+	{
+		output_error("--example: class %d is not found", classname);
+		return CMDERR;
+	}
+	object = object_create_single(oclass);
+	if ( object==NULL )
+	{
+		output_error("--example: unable to create example object from class %s", classname);
+		return CMDERR;
+	}
+	if ( object_dump(buffer,sizeof(buffer),object)>0 )
+		output_raw("%s\n", buffer);
+	else
+		output_warning("no output generated for object");
 	return 1;
 }
 
