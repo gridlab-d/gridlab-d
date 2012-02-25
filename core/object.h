@@ -301,6 +301,7 @@ OBJECT *object_get_first();
 OBJECT *object_get_next(OBJECT *obj);
 unsigned int object_get_count(void);
 int object_dump(char *buffer, int size, OBJECT *obj);
+int object_save(char *buffer, int size, OBJECT *obj);
 int object_saveall(FILE *fp);
 int object_saveall_xml(FILE *fp);
 

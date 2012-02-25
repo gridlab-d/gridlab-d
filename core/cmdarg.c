@@ -1045,11 +1045,14 @@ static int example(int argc, char *argv[])
 		output_error("--example: unable to create example object from class %s", classname);
 		return CMDERR;
 	}
-	if ( object_dump(buffer,sizeof(buffer),object)>0 )
+	global_clock = time(NULL);
+	if ( !object_init(object) )
+		output_warning("--example: unable to initialize example object from class %s", classname);
+	if ( object_save(buffer,sizeof(buffer),object)>0 )
 		output_raw("%s\n", buffer);
 	else
 		output_warning("no output generated for object");
-	return 1;
+	return CMDOK;
 }
 
 /*********************************************/

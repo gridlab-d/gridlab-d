@@ -28,6 +28,7 @@
 #include <float.h>
 #include <math.h>
 #include <ctype.h>
+#include <errno.h>
 
 #ifdef WIN32
 #define isnan _isnan  /* map isnan to appropriate function under Windows */
@@ -1455,6 +1456,62 @@ int object_dump(char *outbuffer, /**< the destination buffer */
 		return 0;
 	}
 	
+}
+
+/** Save an object to the buffer provided
+    @return the number of bytes written to the buffer, 0 on error, with errno set
+ **/
+int object_save(char *buffer, int size, OBJECT *obj)
+{
+	char temp[65536];
+	char32 oname="";
+	PROPERTY *prop;
+	int count = sprintf(temp,"object %s:%d {\n\n\t// header properties\n", obj->oclass->name, obj->id);
+
+	/* dump header properties */
+	if(obj->parent != NULL){
+		convert_from_object(oname, sizeof(oname), &obj->parent, NULL);
+		count += sprintf(temp+count, "\tparent %s;\n", oname);
+	}
+
+	count += sprintf(temp+count, "\trank %d;\n", obj->rank);
+	if(obj->name != NULL){
+		count += sprintf(temp+count, "\tname %s;\n", obj->name);
+	}
+	count += sprintf(temp+count,"\tclock %s;\n", convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) > 0 ? buffer : "(invalid)");
+	if( !isnan(obj->latitude) ){
+		count += sprintf(temp+count, "\tlatitude %s;\n", convert_from_latitude(obj->latitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+	}
+	if( !isnan(obj->longitude) ){
+		count += sprintf(temp+count, "\tlongitude %s;\n", convert_from_longitude(obj->longitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+	}
+	count += sprintf(temp+count, "\tflags %s;\n\n\t// %s properties\n", convert_from_set(buffer, sizeof(buffer), &(obj->flags), object_flag_property()) ? buffer : "(invalid)", obj->oclass->name);
+
+	/* dump class-defined properties */
+	for ( prop=obj->oclass->pmap; prop!=NULL && prop->oclass==obj->oclass; prop=prop->next )
+	{
+		char *value = object_property_to_string(obj, prop->name, buffer, 1023);
+		if ( value!=NULL )
+		{
+			if ( prop->ptype==PT_timestamp)  // timestamps require single quotes
+				count += sprintf(temp+count, "\t%s '%s';\n", prop->name, value);
+			else if ( strcmp(value,"")==0 || ( strpbrk(value," \t") && prop->unit==NULL ) ) // double quotes needed empty strings and when white spaces are present in non-real values
+				count += sprintf(temp+count, "\t%s \"%s\";\n", prop->name, value);
+			else
+				count += sprintf(temp+count, "\t%s %s;\n", prop->name, value);
+		}
+	}
+	count += sprintf(temp+count,"}\n");
+	if ( count<size )
+	{
+		strcpy(buffer,temp);
+		return count;
+	}
+	else
+	{
+		errno = ENOMEM;
+		return 0;
+	}
 }
 
 /** Save all the objects in the model to the stream \p fp in the \p .GLM format
