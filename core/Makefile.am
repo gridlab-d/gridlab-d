@@ -22,12 +22,15 @@ gridlabd_bin_SOURCES = main.c build.h \
 	exception.c exception.h \
 	exec.c exec.h \
 	find.c find.h \
+	gld_sock.h \
 	globals.c globals.h \
 	gridlabd.h \
 	gui.c gui.h \
 	http_client.c http_client.h \
 	index.c index.h \
 	instance.c instance.h \
+	instance_cnx.c instance_cnx.h \
+	instance_slave.c instance_slave.h \
 	interpolate.c interpolate.h \
 	kill.c kill.h \
 	kml.c kml.h \
@@ -35,11 +38,12 @@ gridlabd_bin_SOURCES = main.c build.h \
 	linkage.c linkage.h \
 	list.c list.h \
 	load.c load.h \
-	loadshape.c loadshape.h \
 	load_xml.cpp load_xml.h \
 	load_xml_handle.cpp load_xml_handle.h \
+	loadshape.c loadshape.h \
 	local.c local.h \
 	lock.h \
+	main.c \
 	match.c match.h \
 	matlab.c matlab.h \
 	module.c module.h \
