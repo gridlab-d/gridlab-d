@@ -4,7 +4,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = . third_party/CBLAS third_party/superLU_MT core assert climate \
-			 commercial powerflow residential tape generators \
+			 comm commercial powerflow residential tape generators \
 			 tape_file tape_plot market reliability optimize
 
 include aminclude.am

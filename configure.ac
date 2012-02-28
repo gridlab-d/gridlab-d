@@ -196,6 +196,7 @@ AC_CONFIG_FILES([./Makefile \
 	assert/Makefile \
 	climate/Makefile \
 	climate/tmy/Makefile \
+	comm/Makefile \
 	commercial/Makefile \
 	powerflow/Makefile \
 	residential/Makefile \
