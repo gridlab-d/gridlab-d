@@ -1,5 +1,5 @@
 pkglib_LTLIBRARIES = residential.la
-residential_la_SOURCES =                       \
+residential_la_SOURCES =                            \
 	clotheswasher.cpp      clotheswasher.h      \
 	dishwasher.cpp         dishwasher.h         \
 	dryer.cpp              dryer.h              \
@@ -19,7 +19,6 @@ residential_la_SOURCES =                       \
 	residential_enduse.cpp residential_enduse.h \
 	solvers.cpp            solvers.h            \
 	thermal_storage.cpp    thermal_storage.h    \
-	washer.cpp             washer.h             \
 	waterheater.cpp        waterheater.h        \
 	zipload.cpp            zipload.h
 residential_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0
