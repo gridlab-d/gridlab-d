@@ -15,7 +15,7 @@
 #include <sys/errno.h>
 #define SOCKET int
 #define INVALID_SOCKET (-1)
-
+#define closesocket close
 #endif
 
 #include <memory.h>

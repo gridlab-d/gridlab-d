@@ -303,7 +303,7 @@ int instance_slave_wait_socket(){
 		closesocket(local_inst.sockfd);
 		return 0;
 	} else if(0 > rv){
-		output_error("instance_slave_wait_socket(): error %d when recv'ing data", WSAGetLastError());
+		output_error("instance_slave_wait_socket(): error %d when recv'ing data", rv);
 		closesocket(local_inst.sockfd);
 		return 0;
 	}

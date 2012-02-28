@@ -298,6 +298,7 @@ int instance_add_linkage(instance *inst, linkage *lnk)
 }
 
 int instance_master_wait_mmap(instance *inst){
+#ifdef WIN32
 	int status = 0;
 	DWORD rc;
 	
@@ -329,6 +330,10 @@ int instance_master_wait_mmap(instance *inst){
 	// copy data to cache
 	memcpy(inst->cache, inst->buffer, inst->cachesize);
 	return status;
+#else
+	output_error("instance_master_wait_mmap(): should not have been called outside Windows");
+	return 0;
+#endif
 }
 
 int instance_master_wait_socket(instance *inst){

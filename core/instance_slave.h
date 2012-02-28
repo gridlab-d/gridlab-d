@@ -14,6 +14,7 @@
 
 #endif
 
+
 #include <pthread.h>
 
 
@@ -26,6 +27,8 @@
 #include "random.h"
 #include "exec.h"
 #include "instance.h"
+
+#include "gld_sock.h"
 
 #endif
 

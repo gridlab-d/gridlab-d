@@ -1793,7 +1793,8 @@ void exec_slave_node(){
 			// Waited three seconds without any input.  Play it again, Sam.
 			//output_debug("esn(): select ");
 		} else if (rct > 0){
-			args[3] = (SOCKET *)inaddr = malloc(inaddrsz);
+			inaddr = malloc(inaddrsz);
+			args[3] = (SOCKET *)inaddr;
 			//output_debug("esn(): got client");
 			memset(inaddr, 0, inaddrsz);
 			args[2] = (SOCKET *)accept(sockfd, (struct sockaddr *)inaddr, &inaddrsz);
