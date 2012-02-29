@@ -1,0 +1,21 @@
+
+clock {
+     timezone PST+8PDT;
+     starttime '2000-01-01 00:00:00';
+     stoptime '2000-01-02 00:00:00';
+}
+
+
+module tape;
+module comm;
+module residential;
+
+object house{
+	name OurHouse;
+}
+
+object mpi_network{
+	name OurStreet;
+	mpi_target 1;
+	interval 900; // fifteen minutes
+}
