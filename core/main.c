@@ -7,6 +7,8 @@
  **/
 #define _MAIN_C
 
+//#define USE_MPI
+
 #include <stdlib.h>
 #include <string.h>
 #ifdef WIN32
@@ -63,6 +65,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	time_t t_load = time(NULL);
 	char *pd1, *pd2;
 	int i, pos=0;
+	
 	char *browser = getenv("GLBROWSER");
 	char *buildinfo = strstr(BUILD,":");
 	

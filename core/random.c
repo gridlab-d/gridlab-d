@@ -172,8 +172,13 @@ TryAgain:
 	if (state!=NULL && global_randomnumbergenerator==RNG2 )
 		*state = ur;
 	u = ur/(RAND_MAX+1.0);
-	if ( u<=0 || u>=1 ) 
+	if ( u<=0 || u>=1 ){
+		if(*state == 0){
+			*state = randwarn(0);
+			output_warning("randunit() introducing extra randomness to prevent state stagnation and infinite loops");
+		}
 		goto TryAgain;
+	}
 
 	if ( state==ur_state )
 		unlock(&random_lock);
