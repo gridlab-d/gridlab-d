@@ -13,6 +13,7 @@
 #include "comm.h"
 
 #include "network.h"
+#include "mpi_network.h"
 
 // default static variables here
 
@@ -26,6 +27,9 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 
 	new network(module);
 	new network_interface(module);
+#ifdef USE_MPI
+	new mpi_network(module);
+#endif
 
 	/* always return the first class registered */
 	return network::oclass;

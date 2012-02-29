@@ -6,12 +6,12 @@ module residential {
 module climate;
 module comm;
 
-#set tmp=c:/mytemp
-#setenv path=c:/mingw/bin
-#setenv INCLUDE=c:/mingw/include
-#set include=C:\Projects\GLD_Nov_2010\trunk\core
+//#setenv path=c:/mingw/bin
+//#setenv INCLUDE=c:/mingw/include
+//#set include=C:\Projects\GLD_Nov_2010\trunk\core
+#set include=../../core/
 #set suppress_repeat_messages=0
-#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+//#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 //#set minimum_timestep=60;
 #set profiler=1;
 #set relax_naming_rules=1;
@@ -19,7 +19,7 @@ module comm;
 
 clock {
 	//timezone PST+8PDT;
-	timezone PST+8EDT;
+	timezone PST+8PDT;
 	starttime '2001-01-01 00:00:00';
 	stoptime '2001-01-05 00:00:00';
 }
@@ -29,6 +29,7 @@ object climate{
 	tmyfile "WA-Seattle.tmy2";
 	interpolate QUADRATIC;
 }
+
 
 object network{
 	name house_network;

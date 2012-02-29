@@ -70,7 +70,7 @@ void network::update_latency(){
 		if(random_type != RT_INVALID){
 			latency = gl_randomvalue(random_type, latency_arg1, latency_arg2);
 			latency_last_update = gl_globalclock;
-			latency_next_update = gl_globalclock + latency_period;
+			latency_next_update = gl_globalclock + (TIMESTAMP)latency_period;
 		} else {
 			latency_next_update = TS_NEVER; // latency does not use a distribution and does not require updating
 		}
@@ -184,7 +184,7 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 		if(nif->has_outbound()){
 			for(netmsg = nif->peek_outbox(); netmsg != 0; netmsg = netmsg->next){
 				// increment message & interface counters
-				double dt = gl_globalclock - netmsg->last_update;
+				double dt = (double)(gl_globalclock - netmsg->last_update);
 				netmsg->bytes_sent += netmsg->send_rate * dt; // SR may be zero
 				netmsg->bytes_buffered += netmsg->buffer_rate * dt; // BR may be zero
 				netmsg->bytes_recv += netmsg->send_rate * dt;
@@ -330,7 +330,7 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 					//	for each message,
 					for(netmsg = nif->peek_outbox(); netmsg != 0; netmsg = netmsg->next){
 						if(netmsg->bytes_buffered > 0.0){
-							double dt = netmsg->last_update - gl_globalclock;
+							double dt = (double)(netmsg->last_update - gl_globalclock);
 							if(netmsg->bytes_buffered > bandwidth_left){
 								netmsg->buffer_rate = -bandwidth_left;
 							} else {
@@ -352,7 +352,7 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 	network_message tempmsg;
 	TIMESTAMP rv = TS_NEVER;
 	double predicted_tx_sec = 0.0;
-	TIMESTAMP next_tx_sec = 0.0;
+	TIMESTAMP next_tx_sec = 0;
 	for(nif = first_if; nif != 0; nif = nif->next){
 		if(nif->has_outbound()){
 			//	for each message,
