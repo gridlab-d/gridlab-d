@@ -6,9 +6,9 @@
  @{
  **/
 
-#ifndef USE_MPI
+//#ifndef USE_MPI
 //#define USE_MPI
-#endif
+//#endif
 
 #ifdef USE_MPI
 #ifndef _MPI_NETWORK_CLASS_H

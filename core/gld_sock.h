@@ -4,7 +4,7 @@
 #ifdef WIN32
 
 #include <winsock2.h>
-#include <Ws2def.h>
+//#include <Ws2def.h>
 #else
 
 #include <sys/types.h>

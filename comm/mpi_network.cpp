@@ -7,9 +7,9 @@
  @{
  **/
 
-#ifndef USE_MPI
-#define USE_MPI
-#endif
+//#ifndef USE_MPI
+//#define USE_MPI
+//#endif
 
 #ifdef USE_MPI
 
