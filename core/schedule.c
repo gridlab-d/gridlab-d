@@ -175,13 +175,21 @@ int find_value_index (SCHEDULE *sch, /// schedule to search
 /* compiles a single schedule block and report errors
    returns 1 on success, 0 on failure 
  */
+#ifndef MACOSX
+#define USE_SCBLOCK // lock hangs on Mac OSX
+#endif
+
+#ifdef USE_SCBLOCK
 static unsigned int scb_lock = 0;
+#endif
 
 int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 {
 	char *token = NULL;
 	unsigned int minute=0;
+#ifdef USE_SCBLOCK
 lock(&scb_lock);
+#endif
 	/* check block count */
 	if (sch->block>=MAXBLOCKS)
 	{
@@ -189,7 +197,9 @@ lock(&scb_lock);
 		/* TROUBLESHOOT
 		   The schedule definition has too many blocks to compile.  Consolidate your schedule and try again.
 		 */
+#ifdef USE_SCBLOCK
 unlock(&scb_lock);
+#endif
 		return 0;
 	}
 
@@ -235,7 +245,9 @@ unlock(&scb_lock);
 				if(ndx > MAXVALUES-1)
 				{
 					output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, sch->block);
+#ifdef USE_SCBLOCK
 unlock(&scb_lock);
+#endif
 					return 0;
 				}
 				sch->data[sch->block*MAXVALUES+ndx] = value;
@@ -254,7 +266,9 @@ unlock(&scb_lock);
 				/* TROUBLESHOOT
 					The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 				*/
+#ifdef USE_SCBLOCK
 unlock(&scb_lock);
+#endif
 				return 0;
 			}
 		}
@@ -306,7 +320,9 @@ unlock(&scb_lock);
 									/* TROUBLESHOOT
 									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 									 */
+#ifdef USE_SCBLOCK
 unlock(&scb_lock);
+#endif
 									return 0;
 								}
 								else
@@ -326,7 +342,9 @@ unlock(&scb_lock);
 		}
 	}
 	strcpy(sch->blockname[sch->block],blockname);
+#ifdef USE_SCBLOCK
 unlock(&scb_lock);
+#endif
 	return 1;
 }
 
@@ -638,6 +656,7 @@ Done:
  **/
 int schedule_createwait(void)
 {
+	if ( sc_running==0 ) return sc_status;
 	pthread_mutex_lock(&sc_activelock);
 	while ( sc_running>0 )
 	{
@@ -719,7 +738,11 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	schedule_add(sch);
 
 	/* singlethreaded creation */
+#ifdef USE_SCBLOCK
 	if ( global_threadcount<=1 )
+#else
+	if ( 1 )
+#endif
 	{
 		result = (STATUS)schedule_createproc(sch);
 		if (SUCCESS == result)

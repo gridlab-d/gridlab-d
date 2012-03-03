@@ -1,7 +1,6 @@
 // test schedule transforms
 
 #set randomseed=17
-#set threadcount=2
 
 extern "C" {
 	#define TEST
@@ -31,6 +30,11 @@ clock {
 schedule test_schedule {
 	0-29 * * * * 0
 	30-59 * * * * 1
+}
+
+schedule test_schedule_inv {
+	0-29 * * * * 1
+	30-59 * * * * 0
 }
 
 class house {
