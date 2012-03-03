@@ -4886,9 +4886,15 @@ static int extern_block(PARSER)
 		}
 		if ( TERM(name(HERE,libname,sizeof(libname))) && LITERAL(":") && TERM(namelist(HERE,fnclist,sizeof(fnclist))) )
 		{
-			// TODO
-			ACCEPT;
-			DONE;
+			if ( module_load_function_list(libname,fnclist) )
+			{
+				ACCEPT;
+				DONE;
+			}
+			else
+			{
+				REJECT;
+			}
 		}
 		REJECT;
 	}

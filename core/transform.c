@@ -30,13 +30,15 @@ int transform_add_function(TRANSFORMSOURCE stype,	/* specifies the type of sourc
 						   char *function,			/* function name */
 						   OBJECT *obj,				/* object containing target value */
 						   PROPERTY *prop,			/* property associated with target value */
-						   SCHEDULE *sched)			/* schedule object assoicated with target value, if stype == XS_SCHEDULE */
+						   SCHEDULE *sched)			/* schedule object associated with target value, if stype == XS_SCHEDULE */
 {
 	TRANSFORM *xform = (TRANSFORM*)malloc(sizeof(TRANSFORM));
 	if (xform==NULL)
 		return 0;
 	if ( (xform->function = module_load_transform_function(function))==NULL )
 	{
+		char buffer[1024];
+		output_error("transform_add_function(object='%s',property='%s',function='%s'): function is not defined (probably a missing or invalid extern directive)", object_name(obj,buffer,sizeof(buffer)),prop->name,function);
 		free(xform);
 		return 0;
 	}

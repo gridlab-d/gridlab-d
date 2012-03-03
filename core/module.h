@@ -80,6 +80,7 @@ extern "C" {
 	unsigned short sched_get_procid();
 #endif
 
+	int module_load_function_list(char *libname, char *fnclist);
 	TRANSFORMFUNCTION module_load_transform_function(char *function);
 
 #ifdef __cplusplus

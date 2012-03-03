@@ -831,10 +831,99 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
 	return 0;
 }
 
+/***************************************************************************
+ * EXTERN SUPPORT
+ ***************************************************************************/
+
+typedef struct s_exfnmap {
+	char *fname;
+	char *libname;
+	void *lib;
+	void *call;
+	struct s_exfnmap *next;
+} EXTERNALFUNCTION;
+EXTERNALFUNCTION *external_function_list = NULL;
+
+/* saves mapping - fctname will be stored in new malloc copy, libname must already be a copy in heap */
+static int add_external_function(char *fctname, char *libname, void *lib)
+{
+	EXTERNALFUNCTION *item = malloc(sizeof(EXTERNALFUNCTION));
+	if ( item==NULL ) return 0;
+	item->fname = malloc(strlen(fctname)+1);
+	if ( item->fname==NULL ) return 0;
+	strcpy(item->fname,fctname);
+	item->libname = libname;
+	item->lib = lib;
+	item->next = external_function_list;
+	external_function_list = item;
+	item->call = DLSYM(lib,fctname);
+	if ( item->call )
+		output_debug("external function '%s' added from library '%s' (lib=%8x)", fctname, libname, (int64)lib);
+	else
+		output_error("external function '%s' not found in library '%s'", fctname, libname);
+	return 1;
+}
+
+int module_load_function_list(char *libname, char *fnclist)
+{
+	char libpath[1024];
+	char *static_name = malloc(strlen(libname)+1);
+	void *lib;
+	char *s, *e;
+	
+	if ( static_name==0 ) return 0; // malloc failed
+	strcpy(static_name,libname); // use this copy to map functions
+
+	/* load the library */
+	snprintf(libpath,sizeof(libpath),"%s" DLEXT, libname);
+	lib = DLLOAD(libpath);
+	errno = GetLastError();
+	if (lib==NULL)
+	{
+#ifdef WIN32
+		LPTSTR error;
+		LPTSTR end;
+		DWORD result = FormatMessage(
+				FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+				NULL, GetLastError(), 0,
+				(LPTSTR) &error, 0, NULL);
+		if (!result)
+			error = TEXT("[FormatMessage failed]");
+		else for (end = error + strlen(error) - 1; end >= error && isspace(*end); end--)
+			*end = 0;
+#else
+		char *error = dlerror();
+#endif
+		output_error("unable to load external library '%s': %s (errno=%d)", libpath, error, errno);
+		return 0;
+	}
+
+	/* map the functions */
+	for ( s=fnclist; *s!='\0' ; s++ )
+	{
+		if ( !isspace(*s) && *s!=',' ) // start of a name
+		{
+			// span valid characters
+			char c;
+			for ( e=s; !isspace(*s) && *e!=',' && *e!='\0'; e++ );
+			c = *e; *e = '\0';
+			add_external_function(s,static_name,lib);
+			s = e;
+			if ( c=='\0' ) break;
+		}
+	}
+
+	return 1; // ok
+}
+
 TRANSFORMFUNCTION module_load_transform_function(char *function)
 {
-	// TODO find the function in the loaded function list (from extern "C" blocks in load.c)
-	output_error("unable to load transform function '%s' (code not implemented)", function);
+	EXTERNALFUNCTION *item;
+	for ( item=external_function_list; item!=NULL ; item=item->next )
+	{
+		if ( strcmp(item->fname,function)==0 )
+			return item->call;
+	}
 	errno = ENOENT;
 	return NULL;
 }

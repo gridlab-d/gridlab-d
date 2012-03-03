@@ -2,6 +2,7 @@
 
 #set randomseed=17
 
+#ifdef COMPILED
 extern "C" {
 	#define TEST
 	#include <stdlib.h>
@@ -13,8 +14,9 @@ extern "C" {
 		return 0;
 	}	
 }
-
-extern "C" extern_test: myfunction, myfunction1, myfunction2;
+#else
+extern "C" extern_test: myfunction, myfunction1, myfunction2; // only first one is defined in test_extern_function
+#endif
 
 module residential {
 	default_outdoor_temperature 70.5;
@@ -42,7 +44,7 @@ class house {
 }
 
 module tape;
-class player {
+class player {	
 	double value;
 }
 object player {
