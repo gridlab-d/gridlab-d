@@ -41,13 +41,14 @@ int transform_add_function(TRANSFORMSOURCE stype,	/* specifies the type of sourc
 		return 0;
 	}
 	xform->source_type = stype;
-	xform->source = source;
-	xform->source_dim = 1;
+	xform->prhs = source;
+	xform->nrhs = 1;
+	xform->nlhs = 1;
 	xform->source_addr = source; /* this assumes the double is the first member of the structure */
 	xform->source_schedule = sched;
 	xform->target_obj = obj;
 	xform->target_prop = prop;
-	xform->target = target;
+	xform->plhs = target;
 	xform->next = schedule_xformlist;
 	xform->function_type = XT_EXTERNAL;
 	schedule_xformlist = xform;
@@ -67,7 +68,8 @@ int transform_add( TRANSFORMSOURCE stype,	/* specifies the type of source */
 		return 0;
 	xform->source_type = stype;
 	xform->source = source;
-	xform->source_dim = 1;
+	xform->nrhs = 1;
+	xform->nlhs = 1;
 	xform->source_addr = source; /* this assumes the double is the first member of the structure */
 	xform->source_schedule = sched;
 	xform->target_obj = obj;
