@@ -9,6 +9,7 @@
 #include <float.h>
 #include "object.h"
 #include "gui.h"
+#include "transform.h"
 
 #include "test_callbacks.h"
 
@@ -78,6 +79,8 @@ extern "C" {
 	unsigned short sched_get_cpuid();
 	unsigned short sched_get_procid();
 #endif
+
+	TRANSFORMFUNCTION module_load_transform_function(char *function);
 
 #ifdef __cplusplus
 }

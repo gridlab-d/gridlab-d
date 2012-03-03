@@ -1205,6 +1205,24 @@ static int name(PARSER, char *result, int size)
 	result[_n]='\0';
 	DONE;
 }
+static int namelist(PARSER, char *result, int size)
+{	/* basic list of names */
+	START;
+	/* names cannot start with a digit */
+	if (isdigit(*_p)) return 0;
+	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p==',' || *_p==' ' || *_p=='_') COPY(result);
+	result[_n]='\0';
+	DONE;
+}
+static int variable_list(PARSER, char *result, int size)
+{	/* basic list of variable names */
+	START;
+	/* names cannot start with a digit */
+	if (isdigit(*_p)) return 0;
+	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p==',' || *_p==' ' || *_p=='.' || *_p=='_') COPY(result);
+	result[_n]='\0';
+	DONE;
+}
 
 static int unitspec(PARSER, UNIT **unit)
 {
@@ -3600,6 +3618,31 @@ static int transform_source(PARSER, TRANSFORMSOURCE *xstype, void **source, OBJE
 	DONE;
 }
 
+static int external_transform(PARSER, TRANSFORMSOURCE *xstype, void **sources, char *functionname, int namesize, OBJECT *from)
+{
+	char fncname[1024];
+	char varlist[4096];
+	// TODO
+	START;
+	if ( TERM(name(HERE,fncname,sizeof(fncname))) && WHITE,LITERAL("(") && WHITE,TERM(variable_list(HERE,varlist,sizeof(varlist))) && LITERAL(")") && WHITE,LITERAL(";") )
+	{
+		if ( strlen(fncname)<namesize )
+		{
+			strcpy(functionname,fncname);
+			// TODO map varlist to sources
+			ACCEPT;
+		}
+		else
+		{
+			REJECT;
+		}
+	}
+	else
+	{
+		REJECT;
+	}
+	DONE;
+}
 static int linear_transform(PARSER, TRANSFORMSOURCE *xstype, void **source, double *scale, double *bias, OBJECT *from)
 {
 	START;
@@ -3674,6 +3717,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	complex cval;
 	void *source=NULL;
 	TRANSFORMSOURCE xstype = XS_UNKNOWN;
+	char transformname[1024];
 	double scale=1,bias=0;
 	UNIT *unit=NULL;
 	OBJECT *subobj=NULL;
@@ -3806,6 +3850,27 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 
 			/* add the transform list */
 			if (!transform_add(xstype,source,target,scale,bias,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))
+			{
+				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
+				REJECT;
+			}
+			else
+			{
+				/* a transform is unresolved */
+				if (first_unresolved==source)
+
+					/* source was the unresolved entry, now it will be the transform itself */
+					first_unresolved->ref = (void*)transform_getnext(NULL);
+
+				ACCEPT;
+			}
+		}
+		else if (prop!=NULL && prop->ptype==PT_double && TERM(external_transform(HERE, &xstype, &source, transformname, sizeof(transformname), obj)))
+		{
+			double *target = (double*)((char*)(obj+1) + (int64)prop->addr);
+
+			/* add the transform list */
+			if (!transform_add_function(xstype,source,target,transformname,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))
 			{
 				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 				REJECT;
@@ -4770,6 +4835,66 @@ static int gui(PARSER)
 	DONE;
 }
 
+static int C_code_block(PARSER, char *buffer, int size)
+{
+	int n_curly = 0;
+	int in_quotes = 0;
+	int in_quote = 0;
+	int in_comment = 0;
+	int in_linecomment = 0;
+	char *d = buffer;
+	START;
+	do 
+	{
+		char c = *_p;
+		int skip=0;
+		int ignore_curly = in_quotes || in_quote || in_comment || in_linecomment;
+		switch (c) {
+		case '{': if (!ignore_curly) n_curly++; break;
+		case '}': if (!ignore_curly) n_curly--; break;
+		case '/': if (_p[1]=='*') skip=1, in_comment=1; else if (_p[1]=='/') skip=1, in_linecomment=1; break;
+		case '*': if (_p[1]=='/' && in_comment) skip=1, in_comment=0; break;
+		case '\n': in_linecomment=0; linenum++; break;
+		default: break;
+		}
+		*d++ = *_p;
+		if (skip) _n++,*d++=*++_p;
+	} while ( *++_p!='\0', _n++<size, n_curly>=0 );
+	*--d='\0'; _n--; // don't include the last curly
+//	output_debug("*** Begin external 'C' code ***\n%s\n *** End external 'C' code ***\n", buffer);
+	DONE;
+}
+
+static int extern_block(PARSER)
+{
+	char code[65536];
+	char libname[1024];
+	char fnclist[4096];
+
+	START;
+	if WHITE ACCEPT;
+	if ( LITERAL("extern") && WHITE,LITERAL("\"C\"") )
+	{
+		if WHITE ACCEPT;
+		if ( LITERAL("{") && TERM(C_code_block(HERE,code,sizeof(code))) && LITERAL("}") ) // C-code block
+		{
+			// TODO if ( C_compile(code)) 
+			{	
+				ACCEPT; DONE; 
+			} 
+			// TODO else { REJECT; }
+		}
+		if ( TERM(name(HERE,libname,sizeof(libname))) && LITERAL(":") && TERM(namelist(HERE,fnclist,sizeof(fnclist))) )
+		{
+			// TODO
+			ACCEPT;
+			DONE;
+		}
+		REJECT;
+	}
+	DONE;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 static int gridlabd_file(PARSER)
@@ -4787,6 +4912,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(schedule(HERE)) {ACCEPT; DONE; }
 	OR if TERM(instance_block(HERE)) {ACCEPT; DONE; }
 	OR if TERM(gui(HERE)) {ACCEPT; DONE;}
+	OR if TERM(extern_block(HERE)) {ACCEPT; DONE; }
 	OR if (*(HERE)=='\0') {ACCEPT; DONE;}
 	else REJECT;
 	DONE;

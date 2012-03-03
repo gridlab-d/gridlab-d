@@ -15,6 +15,7 @@
 #include "schedule.h"
 #include "transform.h"
 #include "exception.h"
+#include "module.h"
 
 static TRANSFORM *schedule_xformlist=NULL;
 
@@ -23,6 +24,35 @@ TRANSFORM *transform_getnext(TRANSFORM *xform)
 	return xform?xform->next:schedule_xformlist;
 }
 
+int transform_add_function(TRANSFORMSOURCE stype,	/* specifies the type of source */
+						   double *source,		    /* pointer to the source value */
+						   double *target,			/* pointer to the target value */
+						   char *function,			/* function name */
+						   OBJECT *obj,				/* object containing target value */
+						   PROPERTY *prop,			/* property associated with target value */
+						   SCHEDULE *sched)			/* schedule object assoicated with target value, if stype == XS_SCHEDULE */
+{
+	TRANSFORM *xform = (TRANSFORM*)malloc(sizeof(TRANSFORM));
+	if (xform==NULL)
+		return 0;
+	if ( (xform->function = module_load_transform_function(function))==NULL )
+	{
+		free(xform);
+		return 0;
+	}
+	xform->source_type = stype;
+	xform->source = source;
+	xform->source_dim = 1;
+	xform->source_addr = source; /* this assumes the double is the first member of the structure */
+	xform->source_schedule = sched;
+	xform->target_obj = obj;
+	xform->target_prop = prop;
+	xform->target = target;
+	xform->next = schedule_xformlist;
+	xform->function_type = XT_EXTERNAL;
+	schedule_xformlist = xform;
+	return 1;
+}
 int transform_add( TRANSFORMSOURCE stype,	/* specifies the type of source */
 				   double *source,		/* pointer to the source value */
 				   double *target,		/* pointer to the target value */
@@ -37,6 +67,7 @@ int transform_add( TRANSFORMSOURCE stype,	/* specifies the type of source */
 		return 0;
 	xform->source_type = stype;
 	xform->source = source;
+	xform->source_dim = 1;
 	xform->source_addr = source; /* this assumes the double is the first member of the structure */
 	xform->source_schedule = sched;
 	xform->target_obj = obj;
@@ -44,6 +75,7 @@ int transform_add( TRANSFORMSOURCE stype,	/* specifies the type of source */
 	xform->target = target;
 	xform->scale = scale;
 	xform->bias = bias;
+	xform->function_type = XT_LINEAR;
 	xform->next = schedule_xformlist;
 	schedule_xformlist = xform;
 	return 1;

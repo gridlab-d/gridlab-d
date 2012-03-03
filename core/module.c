@@ -831,6 +831,14 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
 	return 0;
 }
 
+TRANSFORMFUNCTION module_load_transform_function(char *function)
+{
+	// TODO find the function in the loaded function list (from extern "C" blocks in load.c)
+	output_error("unable to load transform function '%s' (code not implemented)", function);
+	errno = ENOENT;
+	return NULL;
+}
+
 /***************************************************************************
  * THREAD SCHEDULER
  *
