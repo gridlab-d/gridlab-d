@@ -19,6 +19,7 @@ extern "C" extern_test: myfunction, myfunction1, myfunction2; // only first one 
 #endif
 
 module residential {
+	implicit_enduses NONE;
 	default_outdoor_temperature 70.5;
 }
 module assert;
