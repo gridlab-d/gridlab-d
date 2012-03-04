@@ -1386,7 +1386,7 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 
 	The return value is if the function successfully completed.
  **/
-STATUS object_finalize(OBJECT *obj, TIMESTAMP t1){
+STATUS object_finalize(OBJECT *obj){
 	STATUS rv = SUCCESS;
 	if(obj->oclass->finalize != NULL){
 		rv = (STATUS)(*(obj->oclass->finalize))(obj);
