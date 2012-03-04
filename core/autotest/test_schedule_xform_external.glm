@@ -1,6 +1,7 @@
 // test schedule transforms
 
 #set randomseed=17
+#set suppress_repeat_messages=0
 
 #ifdef COMPILED
 extern "C" {
@@ -58,7 +59,7 @@ object house {
 	// transform references property in as-yet undefined object
 	cooling_setpoint House1.cooling_setpoint+1;
 	
-	// transform references property in this objecct
+	// transform references property in this object
 	heating_setpoint myfunction(this.cooling_setpoint);
 	
 	// transform references schedule

@@ -3618,29 +3618,22 @@ static int transform_source(PARSER, TRANSFORMSOURCE *xstype, void **source, OBJE
 	DONE;
 }
 
-static int external_transform(PARSER, TRANSFORMSOURCE *xstype, void **sources, char *functionname, int namesize, OBJECT *from)
+static int external_transform(PARSER, TRANSFORMSOURCE *xstype, char *sources, int srcsize, char *functionname, int namesize, OBJECT *from)
 {
 	char fncname[1024];
 	char varlist[4096];
-	// TODO
 	START;
-	if ( TERM(name(HERE,fncname,sizeof(fncname))) && WHITE,LITERAL("(") && WHITE,TERM(variable_list(HERE,varlist,sizeof(varlist))) && LITERAL(")") && WHITE,LITERAL(";") )
+	if ( TERM(name(HERE,fncname,sizeof(fncname))) && WHITE,LITERAL("(") && WHITE,TERM(variable_list(HERE,varlist,sizeof(varlist))) && LITERAL(")") )
 	{
-		if ( strlen(fncname)<namesize )
+		if ( strlen(fncname)<namesize && strlen(varlist)<srcsize )
 		{
 			strcpy(functionname,fncname);
-			// TODO map varlist to sources
+			strcpy(sources,varlist);
 			ACCEPT;
-		}
-		else
-		{
-			REJECT;
+			DONE
 		}
 	}
-	else
-	{
-		REJECT;
-	}
+	REJECT;
 	DONE;
 }
 static int linear_transform(PARSER, TRANSFORMSOURCE *xstype, void **source, double *scale, double *bias, OBJECT *from)
@@ -3718,6 +3711,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	void *source=NULL;
 	TRANSFORMSOURCE xstype = XS_UNKNOWN;
 	char transformname[1024];
+	char sources[4096];
 	double scale=1,bias=0;
 	UNIT *unit=NULL;
 	OBJECT *subobj=NULL;
@@ -3849,7 +3843,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			double *target = (double*)((char*)(obj+1) + (int64)prop->addr);
 
 			/* add the transform list */
-			if (!transform_add(xstype,source,target,scale,bias,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))
+			if (!transform_add_linear(xstype,source,target,scale,bias,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))
 			{
 				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 				REJECT;
@@ -3859,28 +3853,51 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				/* a transform is unresolved */
 				if (first_unresolved==source)
 
-					/* source was the unresolved entry, now it will be the transform itself */
+					/* source was the unresolved entry, for now it will be the transform itself */
 					first_unresolved->ref = (void*)transform_getnext(NULL);
 
 				ACCEPT;
 			}
 		}
-		else if (prop!=NULL && prop->ptype==PT_double && TERM(external_transform(HERE, &xstype, &source, transformname, sizeof(transformname), obj)))
+		else if (prop!=NULL && prop->ptype==PT_double && TERM(external_transform(HERE, &xstype, sources, sizeof(sources), transformname, sizeof(transformname), obj)))
 		{
-			double *target = (double*)((char*)(obj+1) + (int64)prop->addr);
+			// TODO handle more than one source
+			char sobj[64], sprop[64];
+			int n = sscanf(sources,"%[^.].%[^,]",sobj,sprop);
+			OBJECT *source_obj;
+			PROPERTY *source_prop;
 
-			/* add the transform list */
-			if (!transform_add_function(xstype,source,target,transformname,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))
+			/* get source object */
+			source_obj = (n==1||strcmp(sobj,"this")==0) ? obj : object_find_name(sobj);
+			if ( !source_obj )
+			{
+				output_error_raw("%s(%d): transform source object '%s' not found", filename, linenum, n==1?"this":sobj);
+				REJECT;
+				DONE;
+			}
+
+			/* get source property */
+			source_prop = object_get_property(source_obj, n==1?sobj:sprop);
+			if ( !source_prop )
+			{
+				output_error_raw("%s(%d): transform source property '%s' of object '%s' not found", filename, linenum, n==1?sobj:sprop, n==1?"this":sobj);
+				REJECT;
+				DONE;
+			}
+
+			/* add to external transform list */
+			if ( !transform_add_external(obj,prop,transformname,source_obj,source_prop) )
 			{
 				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 				REJECT;
+				DONE;
 			}
 			else
 			{
 				/* a transform is unresolved */
 				if (first_unresolved==source)
 
-					/* source was the unresolved entry, now it will be the transform itself */
+					/* source was the unresolved entry, for now it will be the transform itself */
 					first_unresolved->ref = (void*)transform_getnext(NULL);
 
 				ACCEPT;
@@ -4884,7 +4901,7 @@ static int extern_block(PARSER)
 			} 
 			// TODO else { REJECT; }
 		}
-		if ( TERM(name(HERE,libname,sizeof(libname))) && LITERAL(":") && TERM(namelist(HERE,fnclist,sizeof(fnclist))) )
+		if ( TERM(name(HERE,libname,sizeof(libname))) && LITERAL(":") && WHITE,TERM(namelist(HERE,fnclist,sizeof(fnclist))) && WHITE,LITERAL(";") )
 		{
 			if ( module_load_function_list(libname,fnclist) )
 			{

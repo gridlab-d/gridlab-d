@@ -864,6 +864,7 @@ static int add_external_function(char *fctname, char *libname, void *lib)
 	return 1;
 }
 
+/* loads the DLL and maps the comma separate function list */
 int module_load_function_list(char *libname, char *fnclist)
 {
 	char libpath[1024];
@@ -916,7 +917,8 @@ int module_load_function_list(char *libname, char *fnclist)
 	return 1; // ok
 }
 
-TRANSFORMFUNCTION module_load_transform_function(char *function)
+/* gets an external function from a module to use as a transform function */
+TRANSFORMFUNCTION module_get_transform_function(char *function)
 {
 	EXTERNALFUNCTION *item;
 	for ( item=external_function_list; item!=NULL ; item=item->next )

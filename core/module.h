@@ -81,7 +81,7 @@ extern "C" {
 #endif
 
 	int module_load_function_list(char *libname, char *fnclist);
-	TRANSFORMFUNCTION module_load_transform_function(char *function);
+	TRANSFORMFUNCTION module_get_transform_function(char *function);
 
 #ifdef __cplusplus
 }

@@ -170,7 +170,7 @@ typedef struct s_property_map {
 	bool notify_override;
 } PROPERTY; /**< property definition item */
 
-struct s_property_specs { /**<	the property type conversion specifications.
+typedef struct s_property_specs { /**<	the property type conversion specifications.
 								It is critical that the order of entries in this list must match 
 								the order of entries in the enumeration #PROPERTYTYPE 
 						  **/
@@ -183,7 +183,8 @@ struct s_property_specs { /**<	the property type conversion specifications.
 	int (*create)(void*); /**< the function used to create the property, if any */
 	int (*stream_in)(FILE*,void*,PROPERTY*); /**< the function to read data from a stream */
 	int (*stream_out)(FILE*,void*,PROPERTY*); /**< the function to write data to a stream */
-};
+} PROPERTYSPEC;
+PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
 
 PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *);
 uint32 property_size(PROPERTY *);

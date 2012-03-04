@@ -23,7 +23,7 @@
 #include "linkage.h"
 
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
-struct s_property_specs property_type[_PT_LAST] = {
+PROPERTYSPEC property_type[_PT_LAST] = {
 	{"void", "string", 0, 0, convert_from_void,convert_to_void},
 	{"double", "double", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double},
 	{"complex", "string", sizeof(complex), 48, convert_from_complex,convert_to_complex},
@@ -48,6 +48,11 @@ struct s_property_specs property_type[_PT_LAST] = {
 	{"enduse", "string", sizeof(enduse), 0, convert_from_enduse, convert_to_enduse, enduse_create},
 	{"random", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create},
 };
+
+PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)
+{
+	return &(property_type[ptype]);
+}
 
 PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation)
 {
