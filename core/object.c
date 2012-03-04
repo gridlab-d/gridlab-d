@@ -1347,6 +1347,27 @@ int object_init(OBJECT *obj){ /**< the object to initialize */
 	return 1;
 }
 
+/** Run events that should only occur at the start of a timestep.
+	The input timestamp is that of the new time that is being syncronized to.
+
+	This function should not affect other objects, and should not rely on
+	calculations that are performed by other objects in precommit, since there
+	is no order
+
+	The return value is if the function successfully completed.
+ **/
+STATUS object_precommit(OBJECT *obj, TIMESTAMP t1){
+	STATUS rv = SUCCESS;
+	if(obj->oclass->precommit != NULL){
+		rv = (STATUS)(*(obj->oclass->precommit))(obj, t1);
+	}
+	if(rv == 1){ // if 'old school' or no precommit callback,
+		return SUCCESS;
+	} else {
+		return rv;
+	}
+}
+
 TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	TIMESTAMP rv = 1;
 	if(obj->oclass->commit != NULL){
@@ -1354,6 +1375,24 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	}
 	if(rv == 1){ // if 'old school' or no commit callback,
 		return TS_NEVER;
+	} else {
+		return rv;
+	}
+}
+
+/**	Finalize is the last function callback that is made for an object.  It
+	provides an opportunity to close files, collate answers, come to
+	conclusions, and destroy network objects.
+
+	The return value is if the function successfully completed.
+ **/
+STATUS object_finalize(OBJECT *obj, TIMESTAMP t1){
+	STATUS rv = SUCCESS;
+	if(obj->oclass->finalize != NULL){
+		rv = (STATUS)(*(obj->oclass->finalize))(obj);
+	}
+	if(rv == 1){ // if 'old school' or no finalize callback,
+		return SUCCESS;
 	} else {
 		return rv;
 	}

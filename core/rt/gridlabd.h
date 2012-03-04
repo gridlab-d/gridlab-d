@@ -573,8 +573,10 @@ struct s_class_list {
 	FUNCTION *fmap;
 	FUNCTIONADDR create;
 	FUNCTIONADDR init;
+	FUNCTIONADDR precommit;
 	FUNCTIONADDR sync;
 	FUNCTIONADDR commit;
+	FUNCTIONADDR finalize;
 	FUNCTIONADDR notify;
 	FUNCTIONADDR isa;
 	FUNCTIONADDR plc;

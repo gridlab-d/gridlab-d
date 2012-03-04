@@ -502,8 +502,46 @@ static STATUS init_all(void)
 	return rv;
 }
 
+/*
+ *	STATUS precommit(t0)
+ *		This callback function allows an object to perform actions at the beginning
+ *		of a timestep, before the sync process.  This callback is only triggered
+ *		once per timestep, and will not fire between iterations.
+ */
+static STATUS precommit_all(TIMESTAMP t0){
+	OBJECT *obj = 0;
+	STATUS rv = SUCCESS;
+	STATUS curr = FAILED;
+	TRY {
+		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
+		{
+			if(obj->in_svc <= t0 && obj->out_svc >= t0){
+				curr = object_precommit(obj, t0);
+				if(curr == FAILED){
+					char *b = (char *)malloc(64);
+					memset(b, 0, 64);
+					THROW("object %s precommit failed", object_name(obj, b, 63));
+					/* TROUBLESHOOT
+						The precommit function of the named object has failed.  Make sure that the object's
+						requirements for precommit'ing are satisfied and try again.  (likely internal state aberations)
+					 */
+				}
+			}
+		}
+	} CATCH(char *msg){
+		output_error("precommit_all() failure: %s", msg);
+		/* TROUBLESHOOT
+			The precommit'ing procedure failed.  This is usually preceded 
+			by a more detailed message that explains why it failed.  Follow
+			the guidance for that message and try again.
+		 */
+		rv = FAILED;
+	} ENDCATCH;
+	return rv;
+}
+
 static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2){
-	OBJECT *obj;
+	OBJECT *obj = 0;
 	TIMESTAMP min = TS_NEVER, curr = TS_NEVER;
 	TRY {
 		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
@@ -533,6 +571,36 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2){
 		min = TS_INVALID;
 	} ENDCATCH;
 	return min;
+}
+
+static STATUS finalize_all(){
+	OBJECT *obj = 0;
+	STATUS rv = SUCCESS;
+	STATUS curr = FAILED;
+	TRY {
+		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
+		{
+			curr = object_finalize(obj);
+			if(curr == FAILED){
+				char *b = (char *)malloc(64);
+				memset(b, 0, 64);
+				THROW("object %s finalize failed", object_name(obj, b, 63));
+				/* TROUBLESHOOT
+					The finalize function of the named object has failed.  Make sure that the object's
+					requirements for finalize'ing are satisfied and try again.  (likely internal state aberations)
+				 */
+				}
+		}
+	} CATCH(char *msg){
+		output_error("finalize_all() failure: %s", msg);
+		/* TROUBLESHOOT
+			The finalize'ing procedure failed.  This is usually preceded 
+			by a more detailed message that explains why it failed.  Follow
+			the guidance for that message and try again.
+		 */
+		rv = FAILED;
+	} ENDCATCH;
+	return rv;
 }
 
 STATUS exec_test(struct sync_data *data, int pass, OBJECT *obj);
@@ -814,6 +882,8 @@ STATUS exec_start(void)
 	int64 passes = 0, tsteps = 0;
 	int ptc_rv = 0;
 	int ptj_rv = 0;
+	int pc_rv = 0;
+	STATUS fnl_rv = 0;
 	time_t started_at = realtime_now();
 	int j, k;
 
@@ -1077,6 +1147,12 @@ STATUS exec_start(void)
 				}
 			}
 
+			if(iteration_counter == global_iteration_limit){
+				pc_rv = precommit_all(global_clock);
+				if(SUCCESS != pc_rv){
+					THROW("precommit failure");
+				}
+			}
 			iObjRankList = -1;
 			/* scan the ranks of objects */
 			for (pass = 0; ranks[pass] != NULL; pass++)
@@ -1326,6 +1402,12 @@ STATUS exec_start(void)
 	//printf("%ld\n",(mc_end_time-mc_start_time));
 	cend = clock();
 	//printf("%f\n", (double)(cend - cstart) / (double)CLOCKS_PER_SEC);
+
+	fnl_rv = finalize_all();
+	if(FAILED == fnl_rv){
+		output_error("finalize_all() failed");
+		output_verbose("not that it's going to stop us");
+	}
 
 	/* deallocate threadpool */
 	if (!global_debug_mode)

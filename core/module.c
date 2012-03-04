@@ -424,8 +424,10 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		} map[] = {
 			{&c->create,"create",FALSE},
 			{&c->init,"init",TRUE},
+			{&c->precommit,"precommit",TRUE},
 			{&c->sync,"sync",TRUE},
 			{&c->commit,"commit",TRUE},
+			{&c->finalize,"finalize",TRUE},
 			{&c->notify,"notify",TRUE},
 			{&c->isa,"isa",TRUE},
 			{&c->plc,"plc",TRUE},

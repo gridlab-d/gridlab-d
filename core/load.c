@@ -225,16 +225,18 @@ char init_block[65535] = "";
 int code_used = 0;
 
 /* used to track which functions are included in runtime classes */
-#define FN_CREATE	0x0001
-#define FN_INIT		0x0002
-#define FN_NOTIFY	0x0004
-#define FN_RECALC	0x0008
-#define FN_PRESYNC	0x0010
-#define FN_SYNC		0x0020
-#define FN_POSTSYNC	0x0040
-#define FN_PLC		0x0080
-#define FN_ISA		0x0100
-#define FN_COMMIT	0x0200
+#define FN_CREATE		0x0001
+#define FN_INIT			0x0002
+#define FN_NOTIFY		0x0004
+#define FN_RECALC		0x0008
+#define FN_PRESYNC		0x0010
+#define FN_SYNC			0x0020
+#define FN_POSTSYNC		0x0040
+#define FN_PLC			0x0080
+#define FN_ISA			0x0100
+#define FN_COMMIT		0x0200
+#define FN_PRECOMMIT	0x0400
+#define FN_FINALIZE		0x0800
 
 /* used for tracking #include directives in files */
 #define BUFFERSIZE (65536*1000)
@@ -740,12 +742,14 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 				sprintf(exports+strlen(exports),"/EXPORT:create_%s ",oclass->name); /* create is required */
 				if (functions&FN_INIT) sprintf(exports+strlen(exports),"/EXPORT:init_%s ",oclass->name);
+				if (functions&FN_PRECOMMIT) sprintf(exports+strlen(exports),"/EXPORT:precommit_%s ",oclass->name);
 				if (functions&FN_PRESYNC || functions&FN_SYNC || functions&FN_POSTSYNC) sprintf(exports+strlen(exports),"/EXPORT:sync_%s ",oclass->name);
 				if (functions&FN_ISA) sprintf(exports+strlen(exports),"/EXPORT:isa_%s ",oclass->name);
 				if (functions&FN_NOTIFY) sprintf(exports+strlen(exports),"/EXPORT:notify_%s ",oclass->name);
 				if (functions&FN_PLC) sprintf(exports+strlen(exports),"/EXPORT:plc_%s ",oclass->name);
 				if (functions&FN_RECALC) sprintf(exports+strlen(exports),"/EXPORT:recalc_%s ",oclass->name);
 				if (functions&FN_COMMIT) sprintf(exports+strlen(exports),"/EXPORT:commit_%s ",oclass->name);
+				if (functions&FN_FINALIZE) sprintf(exports+strlen(exports),"/EXPORT:finalize_%s ",oclass->name);
 
 				// /Od /I "..\core" /I "..\third_party\cppunit-1.12.0\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" 
 				// /D "_TESTING" /D "_WINDLL" /D "_MBCS" /Gm /EHsc /RTC1 /MDd /Fo"Win32\Debug\powerflow\\" 
@@ -2798,6 +2802,13 @@ static int class_intrinsic_function_name(PARSER, CLASS *oclass, int64 *function,
 		*function |= FN_INIT;
 		ACCEPT;
 	}
+	else if LITERAL("precommit")
+	{
+		*ftype = "int64";
+		*fname = "precommit";
+		*function |= FN_PRECOMMIT;
+		ACCEPT;
+	}
 	else if LITERAL("presync")
 	{
 		*ftype = "TIMESTAMP";
@@ -2855,6 +2866,13 @@ static int class_intrinsic_function_name(PARSER, CLASS *oclass, int64 *function,
 		*ftype = "TIMESTAMP";
 		*fname = "commit";
 		*function |= FN_COMMIT;
+		ACCEPT;
+	}
+	else if LITERAL("finalize")
+	{
+		*ftype = "int64";
+		*fname = "finalize";
+		*function |= FN_FINALIZE;
 		ACCEPT;
 	}
 	else if TERM(name(HERE,buffer,sizeof(buffer)))
@@ -3400,9 +3418,17 @@ static int class_block(PARSER)
 				if (functions&FN_INIT) {
 					append_code("/*RESETLINE*/\n");
 					append_code("extern \"C\" int64 init_%s(OBJECT *obj, OBJECT *parent)\n{\n",oclass->name);
-					ENTERING(*obj,create);
+					ENTERING(*obj,init);
 					append_code("\tint64 ret = ((%s*)(obj+1))->init(parent);\n",oclass->name);
-					EXITING(*obj,create);
+					EXITING(*obj,init);
+					append_code("\treturn ret;\n}\n");
+				}
+				if (functions&FN_PRECOMMIT) {
+					append_code("/*RESETLINE*/\n");
+					append_code("extern \"C\" int64 precommit_%s(OBJECT *obj, TIMESTAMP t1)\n{\n",oclass->name);
+					ENTERING(*obj,precommit);
+					append_code("\tint64 ret = ((%s*)(obj+1))->precommit(t1);\n",oclass->name);
+					EXITING(*obj,precommit);
 					append_code("\treturn ret;\n}\n");
 				}
 				if (functions&FN_SYNC || functions&FN_PRESYNC || functions&FN_POSTSYNC) {
@@ -3478,6 +3504,14 @@ static int class_block(PARSER)
 					ENTERING(obj,recalc);
 					append_code("\tint ret64 = ((%s*)(obj+1))->recalc();\n",oclass->name);
 					EXITING(obj,recalc);
+					append_code("\treturn ret;\n}\n");
+				}
+				if (functions&FN_FINALIZE) {
+					append_code("/*RESETLINE*/\n");
+					append_code("extern \"C\" int64 finalize_%s(OBJECT *obj)\n{\n",oclass->name);
+					ENTERING(*obj,create);
+					append_code("\tint64 ret = ((%s*)(obj+1))->finalize();\n",oclass->name);
+					EXITING(*obj,create);
 					append_code("\treturn ret;\n}\n");
 				}
 
