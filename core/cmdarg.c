@@ -999,11 +999,11 @@ static int slave_id(int argc, char *argv[]){
 		output_error("--id requires an ID number argument");
 		return CMDERR;
 	}
-	if(1 != sscanf(argv[1], "%"FMT_INT64, &global_slave_id)){
+	if(1 != sscanf(argv[1], "%"FMT_INT64"d", &global_slave_id)){
 		output_error("slave_id(): unable to read ID number");
 		return CMDERR;
 	}
-	output_debug("slave using ID %"FMT_INT64, global_slave_id);
+	output_debug("slave using ID %"FMT_INT64"d", global_slave_id);
 	return 1;
 }
 static int example(int argc, char *argv[])

@@ -24,7 +24,7 @@
 #endif
 #define int64 __int64 /**< Win32 version of 64-bit integers */
 #define FMT_INT64 "I64" /**< Win32 version of 64-bit integer printf format string */
-//#define FMT_INT64 "llu" /**< standard version of 64-bit integer printf format string */
+//#define FMT_INT64 "ll" /**< standard version of 64-bit integer printf format string */
 #define atoi64 _atoi64 /**< Win32 version of 64-bit atoi */
 #define strtoll _strtoi64 /**< Win32 version of POSIX strtoll function */
 #include <float.h>

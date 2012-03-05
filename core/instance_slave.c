@@ -297,7 +297,7 @@ int instance_slave_wait_socket(){
 	// read socket
 	rv = recv(local_inst.sockfd, local_inst.buffer, (int)local_inst.buffer_size, 0);
 	printcontent(local_inst.buffer, rv);
-//	output_debug("instance_slave_wait_socket(): %d = recv(%d, %x, %d, 0)", rv, local_inst.sockfd, local_inst.buffer, (int)local_inst.buffer_size);
+	output_debug("instance_slave_wait_socket(): %d = recv(%d, %x, %d, 0)", rv, local_inst.sockfd, local_inst.buffer, (int)local_inst.buffer_size);
 	if(0 == rv){
 		output_error("instance_slave_wait_socket(): socket closed");
 		closesocket(local_inst.sockfd);
@@ -656,7 +656,7 @@ STATUS instance_slave_init_socket(){
 		return FAILED;
 	}
 	// handshake?
-	sprintf(cmd, HS_CBK "%"FMT_INT64, global_slave_id);
+	sprintf(cmd, HS_CBK "%"FMT_INT64"d", global_slave_id);
 	output_debug("cmd/cbk: %s", cmd);
 	rv = send(local_inst.sockfd, cmd, (int)strlen(cmd), 0);
 	if(0 == rv){
@@ -697,7 +697,7 @@ STATUS instance_slave_init_socket(){
 		;
 	}
 	memcpy(&pickle, cmd+strlen(MSG_INST), sizeof(pickle));
-	output_debug("pickle: %"FMT_INT64" %d %d %d %d %"FMT_INT64, pickle.cacheid, pickle.cachesize, pickle.name_size, pickle.prop_size, pickle.id, pickle.ts);
+	output_debug("pickle: %"FMT_INT64"d %d %d %d %d %"FMT_INT64"d", pickle.cacheid, pickle.cachesize, pickle.name_size, pickle.prop_size, pickle.id, pickle.ts);
 	if(local_inst.cacheid != pickle.cacheid){
 		; // error
 	}
