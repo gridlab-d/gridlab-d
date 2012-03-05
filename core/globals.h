@@ -225,6 +225,9 @@ typedef enum {
 GLOBAL MULTIRUNCONNECTION global_multirun_connection INIT(MRC_NONE);	/**< multirun mode connection */
 GLOBAL int32 global_signal_timeout INIT(5000); /**< signal timeout in milliseconds (-1 is infinite) */
 
+/* system call */
+GLOBAL int global_return_code INIT(0); /**< return code from last system call */
+
 #ifdef __cplusplus
 }
 #endif

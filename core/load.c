@@ -5790,6 +5790,28 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			return FALSE;
 		}
 	}
+	else if (strncmp(line,MACRO "system",7)==0)
+	{
+		char *term = strchr(line+7,' ');
+		char value[1024];
+		if (term==NULL)
+		{
+			output_error_raw("%s(%d): %ssystem missing system call",filename,linenum,MACRO);
+			strcpy(line,"\n");
+			return FALSE;
+		}
+		strcpy(value, strip_right_white(term+1));
+		output_debug("%s(%d): executing system(char *cmd='%s')", filename, linenum, value);
+		global_return_code = system(value);
+		if( global_return_code==127 || global_return_code==-1 )
+		{
+			output_error_raw("%s(%d): ERROR unable to execute '%s' (status=%d)", filename, linenum, value, global_return_code);
+			strcpy(line,"\n");
+			return FALSE;
+		}
+		else
+			return TRUE;
+	}
 	else
 	{
 		strcpy(line,"\n");

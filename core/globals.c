@@ -163,6 +163,7 @@ static struct s_varmap {
 	{"signal_timeout", PT_int32, &global_signal_timeout, PA_PUBLIC},
 	{"slave_port", PT_int16, &global_slave_port, PA_PUBLIC},
 	{"slave_id", PT_int64, &global_slave_id, PA_PUBLIC},
+	{"return_code", PT_int32, &global_return_code, PA_REFERENCE},
 	/* add new global variables here */
 };
 
