@@ -834,6 +834,147 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
 }
 
 /***************************************************************************
+ * EXTERNAL COMPILER SUPPORT
+ ***************************************************************************/
+
+#include <sys/stat.h>
+#ifdef WIN32
+#define CC "c:/mingw/bin/gcc"
+#define DL "c:/mingw/bin/dlltool"
+#define fstat _fstat
+#define stat _stat
+#else
+#define CC "/usr/bin/gcc"
+#endif
+
+#define CCFLAGS ""
+#define LDFLAGS ""
+
+static int cc_verbose=0;
+static int cc_debug=0;
+static int cc_clean=0;
+static int cc_keepwork=0;
+
+/** Get file modify time
+    @return modification time in seconds of epoch, 0 on missing file or fstat failure
+ **/
+static time_t file_modtime(char *file) /**< file name to query */
+{
+	FILE *fp = fopen(file,"r");
+	if (fp)
+	{
+		struct stat status;
+		if ( fstat(fileno(fp),&status)==0 )
+			return status.st_mtime;
+	}
+	return 0;
+}
+
+/** Execute a command using formatted strings
+    @return command return code
+ **/
+static int execf(char *format, /**< format string  */
+				 ...) /**< parameters  */
+{
+	char command[4096];
+	int rc;
+	va_list ptr;
+	va_start(ptr,format);
+	vsprintf(command,format,ptr); /* note the lack of check on buffer overrun */
+	va_end(ptr);
+	if (cc_verbose || global_verbose_mode ) output_message(command);
+	else output_debug("command: %s",command);
+	rc = system(command);
+	output_debug("return code=%d",rc);
+	return rc;
+}
+
+/** Compile C source code into a dynamic link library 
+    @return 0 on success
+ **/
+int module_compile(char *name,	/**< name of library */
+				   char *code,	/**< listing of source code */
+				   int flags,	/**< compile options (see MC_?) */
+				   char *source,/**< source file (for context) */
+				   int line)	/**< source line (for context) */
+{
+	char cfile[1024];
+	char ofile[1024];
+	char afile[1024];
+	char *cc = getenv("CC");
+	char *ccflags = getenv("CCFLAGS");
+	char *dl = getenv("DLLTOOL");
+	char *ldflags = getenv("LDFLAGS");
+	int rc;
+	size_t codesize = strlen(code), len;
+	FILE *fp;
+
+	/* set flags */
+	cc_verbose = (flags&MC_VERBOSE);
+	cc_debug = (flags&MC_DEBUG);
+	cc_clean = (flags&MC_CLEAN);
+	cc_keepwork = (flags&MC_KEEPWORK);
+
+	/* construct the file names */
+	snprintf(cfile,sizeof(cfile),"%s.c",name);
+	snprintf(ofile,sizeof(ofile),"%s.o",name);
+	snprintf(afile,sizeof(afile),"%s" DLEXT,name);
+
+	/* create the C source file */
+	if ( (fp=fopen(cfile,"wt"))==NULL)
+	{
+		output_error("unable to open '%s' for writing", cfile);
+		return -1;
+	}
+
+	/* store file/line reference */
+	if (source!=NULL) fprintf(fp,"#line %d \"%s\"\n",line,source); 
+
+	/* write C source code */
+	if ( (len=fwrite(code,1,codesize,fp))<codesize )
+	{
+		output_error("unable to write code to '%s' (%d of %d bytes written)", cfile, len, codesize);
+		return -1;
+	}
+
+	/* C file done */
+	fclose(fp);
+
+	/* compile the code */
+	if ( (rc=execf("%s %s -c \"%s\" -o \"%s\" ", cc?cc:CC, ccflags?ccflags:CCFLAGS, cfile, ofile))!=0 )
+		return rc;
+
+	/* create needed DLL files on windows */
+	if ( (rc=execf("%s -Wl,\"%s\" -shared \"%s\""
+		" -Wl"
+#ifdef WIN32
+		",--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" 
+		// ",--kill-at,-no-undefined,--enable-auto-import"
+#else
+		",--export-all-symbols"
+#endif
+		" -o \"%s\"", cc?cc:CC, ccflags?ccflags:CCFLAGS, ofile,afile))!=0 )
+		return rc;
+
+#ifdef LINUX
+	/* address SE textrel_shlib_t issue */
+	if (global_getvar("control_textrel_shlib_t",tbuf,63)!=NULL)
+	{
+		/* SE linux needs the new module marked as relocatable (textrel_shlib_t) */
+		execf("chcon -t textrel_shlib_t '%s'", afile);
+	}
+#endif
+
+	if ( !cc_keepwork )
+	{
+		unlink(cfile);
+		unlink(ofile);
+	}
+
+	return 0;
+}
+
+/***************************************************************************
  * EXTERN SUPPORT
  ***************************************************************************/
 
@@ -849,21 +990,53 @@ EXTERNALFUNCTION *external_function_list = NULL;
 /* saves mapping - fctname will be stored in new malloc copy, libname must already be a copy in heap */
 static int add_external_function(char *fctname, char *libname, void *lib)
 {
-	EXTERNALFUNCTION *item = malloc(sizeof(EXTERNALFUNCTION));
-	if ( item==NULL ) return 0;
-	item->fname = malloc(strlen(fctname)+1);
-	if ( item->fname==NULL ) return 0;
-	strcpy(item->fname,fctname);
-	item->libname = libname;
-	item->lib = lib;
-	item->next = external_function_list;
-	external_function_list = item;
-	item->call = DLSYM(lib,fctname);
-	if ( item->call )
-		output_debug("external function '%s' added from library '%s' (lib=%8x)", fctname, libname, (int64)lib);
+	if ( module_get_transform_function(fctname)==NULL )
+	{
+		int ordinal;
+		char function[1024];
+		EXTERNALFUNCTION *item = malloc(sizeof(EXTERNALFUNCTION));
+		if ( item==NULL ) 
+		{
+			output_error("add_external_function(char *fn='%s',lib='%s',...): memory allocation failed", fctname, libname);
+			return 0;
+		}
+		item->fname = malloc(strlen(fctname)+1);
+		if ( item->fname==NULL )
+		{
+			output_error("add_external_function(char *fn='%s',lib='%s',...): memory allocation failed", fctname, libname);
+			return 0;
+		}
+		item->libname = libname;
+		item->lib = lib;
+		item->next = external_function_list;
+		external_function_list = item;
+
+		/* this is to address a frequent MinGW/MSVC incompatibility with DLLs */
+		if ( sscanf(fctname,"%[^@]@%d",function,&ordinal)==2)
+		{
+#ifdef WIN32
+			item->call = DLSYM(lib,(LPCSTR)(short)ordinal);
+#else
+			item->call = DLSYM(lib,function);
+#endif
+			strcpy(item->fname,function);
+		}
+		else
+		{
+			item->call = DLSYM(lib,fctname);
+			strcpy(item->fname,fctname);
+		}
+		if ( item->call )
+			output_debug("external function '%s' added from library '%s' (lib=%8x)", item->fname, libname, (int64)lib);
+		else
+			output_warning("external function '%s' not found in library '%s'", fctname, libname);
+		return 1;
+	}
 	else
-		output_error("external function '%s' not found in library '%s'", fctname, libname);
-	return 1;
+	{
+		output_warning("external function '%s' is already defined", fctname);
+		return 1;
+	}
 }
 
 /* loads the DLL and maps the comma separate function list */
@@ -900,6 +1073,7 @@ int module_load_function_list(char *libname, char *fnclist)
 		output_error("unable to load external library '%s': %s (errno=%d)", libpath, error, errno);
 		return 0;
 	}
+	output_debug("loaded external function library '%s' ok",libname);
 
 	/* map the functions */
 	for ( s=fnclist; *s!='\0' ; s++ )

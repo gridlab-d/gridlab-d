@@ -3,21 +3,19 @@
 #set randomseed=17
 #set suppress_repeat_messages=0
 
-#ifdef COMPILED
-extern "C" {
-	#define TEST
-	#include <stdlib.h>
-	int myfunction(int nlhs, double *plhs[], int nrhs, double *prhs[])
-	{	// make sure the correct number of args are passed in
+extern "C" test_schedule_xform_external : myfunction2@1 // inline code follows
+{
+	typedef struct { void *data, *info;} DATA;
+	#define DOUBLE(X) (*((double*)(X.data)))
+	int myfunction2(int nlhs, DATA *plhs, int nrhs, DATA *prhs)
+	{	/* make sure the correct number of args are passed in */
 		if ( nlhs!=1 || nlhs!=1 ) return -1;
 		/* subtract 5 from arg */
-		*plhs[0] = *prhs[0] - 5;
+		DOUBLE(plhs[0]) = DOUBLE(prhs[0]) - 5;
 		return 0;
 	}	
-}
-#else
-extern "C" extern_test: myfunction, myfunction1, myfunction2; // only first one is defined in test_extern_function
-#endif
+} // end inline code
+extern "C" extern_test : myfunction, myfunction1; // only first one is defined in test_extern_function (tests warning)
 
 module residential {
 	implicit_enduses NONE;
@@ -60,7 +58,7 @@ object house {
 	cooling_setpoint House1.cooling_setpoint+1;
 	
 	// transform references property in this object
-	heating_setpoint myfunction(this.cooling_setpoint);
+	heating_setpoint myfunction2(this.cooling_setpoint);
 	
 	// transform references schedule
 	air_temperature test_schedule+70;

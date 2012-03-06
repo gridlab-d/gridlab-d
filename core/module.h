@@ -83,6 +83,13 @@ extern "C" {
 	int module_load_function_list(char *libname, char *fnclist);
 	TRANSFORMFUNCTION module_get_transform_function(char *function);
 
+	int module_compile(char *name, char *code, int flags, char *file, int line);
+#define MC_NONE		0x0000 /**< default module_compile options */
+#define MC_CLEAN	0x0001 /**< module_compile rebuilds everything (no object reuse/incremental link/etc.) */
+#define MC_KEEPWORK	0x0002 /**< module_compile keeps intermediate files */
+#define MC_DEBUG	0x0010 /**< module_compile builds a debug version */
+#define MC_VERBOSE	0x0020 /**< module_compile shows work */
+
 #ifdef __cplusplus
 }
 #endif

@@ -160,6 +160,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #ifdef WIN32
 #include <io.h>
 #include <process.h>
+#include <direct.h>
 typedef struct _stat STAT;
 #define FSTAT _fstat
 #define tzset _tzset
@@ -500,7 +501,7 @@ static int mkdirs(char *path)
 
 #ifdef WIN32
 #	define PATHSEP '\\'
-#	define mkdir _mkdir
+#	define mkdir(P,M) _mkdir((P)) // windows does not use mode info
 #	define access _access
 #else
 #	define PATHSEP '/'
@@ -1214,7 +1215,7 @@ static int namelist(PARSER, char *result, int size)
 	START;
 	/* names cannot start with a digit */
 	if (isdigit(*_p)) return 0;
-	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p==',' || *_p==' ' || *_p=='_') COPY(result);
+	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p==',' || *_p=='@' || *_p==' ' || *_p=='_') COPY(result);
 	result[_n]='\0';
 	DONE;
 }
@@ -3652,7 +3653,7 @@ static int transform_source(PARSER, TRANSFORMSOURCE *xstype, void **source, OBJE
 	DONE;
 }
 
-static int external_transform(PARSER, TRANSFORMSOURCE *xstype, char *sources, int srcsize, char *functionname, int namesize, OBJECT *from)
+static int external_transform(PARSER, TRANSFORMSOURCE *xstype, char *sources, size_t srcsize, char *functionname, size_t namesize, OBJECT *from)
 {
 	char fncname[1024];
 	char varlist[4096];
@@ -4926,28 +4927,54 @@ static int extern_block(PARSER)
 	if WHITE ACCEPT;
 	if ( LITERAL("extern") && WHITE,LITERAL("\"C\"") )
 	{
+		int startline=0;
 		if WHITE ACCEPT;
-		if ( LITERAL("{") && TERM(C_code_block(HERE,code,sizeof(code))) && LITERAL("}") ) // C-code block
+		if ( TERM(name(HERE,libname,sizeof(libname))) && WHITE,LITERAL(":") && WHITE,TERM(namelist(HERE,fnclist,sizeof(fnclist))) )
 		{
-			// TODO if ( C_compile(code)) 
-			{	
-				ACCEPT; DONE; 
-			} 
-			// TODO else { REJECT; }
+			ACCEPT;
 		}
-		if ( TERM(name(HERE,libname,sizeof(libname))) && LITERAL(":") && WHITE,TERM(namelist(HERE,fnclist,sizeof(fnclist))) && WHITE,LITERAL(";") )
+		else 
+		{
+			output_error_raw("%s(%d): missing library name and/or external function list", filename, linenum);
+			REJECT;
+		}
+		if ( WHITE,LITERAL("{") && (WHITE,(startline=linenum),TERM(C_code_block(HERE,code,sizeof(code)))) && LITERAL("}") ) // C-code block
+		{
+			int rc = module_compile(libname,code,MC_NONE,filename,startline-1);
+			if ( rc==0 )
+			{	
+				if ( module_load_function_list(libname,fnclist) )
+				{
+					ACCEPT;
+				}
+				else
+				{
+					output_error_raw("%s(%d): unable to load inline functions '%s' from library '%s'", filename, linenum, fnclist, libname);
+					REJECT;
+				}
+			}
+			else
+			{
+				output_error_raw("%s(%d): module_compile error encountered (rc=%d)", filename, linenum, rc);
+				REJECT;
+			}
+		}
+		else if ( WHITE,LITERAL(";")	)
 		{
 			if ( module_load_function_list(libname,fnclist) )
 			{
 				ACCEPT;
-				DONE;
 			}
 			else
 			{
+				output_error_raw("%s(%d): unable to load external functions '%s' from library '%s'", filename, linenum, fnclist, libname);
 				REJECT;
 			}
 		}
-		REJECT;
+		else
+		{
+			REJECT;
+		}
 	}
 	DONE;
 }
