@@ -48,6 +48,7 @@
 #endif
 
 #include <errno.h>
+#include "platform.h"
 #include "globals.h"
 #include "output.h"
 #include "module.h"
@@ -838,17 +839,24 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
  ***************************************************************************/
 
 #include <sys/stat.h>
+
 #ifdef WIN32
 #define CC "c:/mingw/bin/gcc"
 #define DL "c:/mingw/bin/dlltool"
+#define CCFLAGS "-DWIN32"
+#define LDFLAGS "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" 
 #define fstat _fstat
 #define stat _stat
 #else
 #define CC "/usr/bin/gcc"
+#ifdef __APPLE__
+#define CCFLAGS "-DMACOSX"
+#define LDFLAGS "-dylib"
+#else
+#define CCFLAGS "-DLINUX"
+#define LDFLAGS "--export-all-symbols"
 #endif
-
-#define CCFLAGS ""
-#define LDFLAGS ""
+#endif
 
 static int cc_verbose=0;
 static int cc_debug=0;
@@ -945,15 +953,7 @@ int module_compile(char *name,	/**< name of library */
 		return rc;
 
 	/* create needed DLL files on windows */
-	if ( (rc=execf("%s -Wl,\"%s\" -shared \"%s\""
-		" -Wl"
-#ifdef WIN32
-		",--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" 
-		// ",--kill-at,-no-undefined,--enable-auto-import"
-#else
-		",--export-all-symbols"
-#endif
-		" -o \"%s\"", cc?cc:CC, ccflags?ccflags:CCFLAGS, ofile,afile))!=0 )
+	if ( (rc=execf("%s -Wl,%s -shared \"%s\" -o \"%s\"", cc?cc:CC, ldflags?ldflags:LDFLAGS, ofile,afile))!=0 )
 		return rc;
 
 #ifdef LINUX
