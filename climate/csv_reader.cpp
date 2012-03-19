@@ -10,9 +10,9 @@
 CLASS *csv_reader::oclass = 0;
 
 EXPORT int create_csv_reader(OBJECT **obj, OBJECT *parent){
+	csv_reader *my = 0;
 	*obj = gl_create_object(csv_reader::oclass);
 	if(*obj != NULL){
-		
 		return 1;
 	}
 	//printf("create_csv_reader\n");
@@ -30,7 +30,7 @@ EXPORT TIMESTAMP sync_csv_reader(OBJECT *obj, TIMESTAMP t0){
 }
 
 csv_reader::csv_reader(){
-	;
+	memset(this, 0, sizeof(csv_reader));
 }
 
 csv_reader::csv_reader(MODULE *module){
@@ -210,6 +210,8 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 		}
 	} else if(prop->ptype == PT_char32){
 		strncpy((char *)addr, valstr, 32);
+//	} else if(prop->ptype == PT_char256){
+//		strncpy((char *)addr, valstr, 256);
 	} else {
 		gl_error("csv_reader::read_prop ~ unable to convert property \'%s\' due to type restrictions", propstr);
 		/* TROUBLESHOOTING
@@ -371,11 +373,17 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 
 	localres = gl_localtime(t0, &now); // error check
 
+	gl_debug("csv_reader::get_data start");
 	if(next_ts == 0){
 		//	initialize to the correct index & next_ts
 		DATETIME guess_dt;
 		TIMESTAMP guess_ts;
 		int i;
+#if 0
+		/*	This method worked until it was realized that if there are January entries
+		 *	at the end of a full-year would be caught by the going-backwards method.
+		 *	This led to some strange results.
+		 */
 		for(i = 0; i < sample_ct; ++i){
 			guess_dt.year = now.year;
 			guess_dt.month = samples[sample_ct-i-1]->month;
@@ -392,6 +400,25 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			}
 		}
 		index = sample_ct - i - 1;
+#endif
+		for(i = 0; i < sample_ct; ++i){
+			guess_dt.year = now.year;
+			guess_dt.month = samples[i]->month;
+			guess_dt.day = samples[i]->day;
+			guess_dt.hour = samples[i]->hour;
+			guess_dt.minute = samples[i]->minute;
+			guess_dt.second = samples[i]->second;
+			strcpy(guess_dt.tz, now.tz);
+//			strcpy(guess_dt.tz, "GMT");
+			guess_ts = (TIMESTAMP)gl_mktime(&guess_dt);
+
+			if(guess_ts >= t0){
+				i -= 1; // we want the sample *before* this one
+				break;
+			}
+		}
+
+		index = i;
 
 		if(index > -1 && index < sample_ct){
 			*temp = samples[index]->temperature;
@@ -402,7 +429,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			*wind = samples[index]->wind_speed;
 			*rain = samples[index]->rainfall;
 			*snow = samples[index]->snowdepth;
-		} else {
+		} else { // somewhere between the last and the first element
 			*temp = samples[sample_ct - 1]->temperature;
 			*humid = samples[sample_ct - 1]->humidity;
 			*direct = samples[sample_ct - 1]->solar_dir;
@@ -477,6 +504,8 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 		*/
 	}
 	
+	gl_debug("csv_reader::get_data end");
+
 	return -next_ts;
 }
 
