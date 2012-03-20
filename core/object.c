@@ -1305,12 +1305,12 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 {
 	TIMESTAMP t2=TS_NEVER;
 	TIMESTAMP t_start = ts;
-	TIMESTAMP abs_t2 = TS_NEVER;
+	TIMESTAMP abs_t2 = ts;
 	char namestr[65];
 	int itr = global_iteration_limit;
 	do {
 		/* don't call sync beyond valid horizon */
-		t2 = _object_sync(obj,(ts<(obj->valid_to>0?obj->valid_to:TS_NEVER)?ts:obj->valid_to),pass);
+		t2 = _object_sync(obj,(abs_t2<(obj->valid_to>0?obj->valid_to:TS_NEVER)?abs_t2:obj->valid_to),pass);
 		if(t2 < 0){
 			abs_t2 = -t2;
 		} else {
@@ -1330,8 +1330,7 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 			t_start = abs_t2;
 			itr = global_iteration_limit;
 		}
-		
-	} while (t2>0 && ts>(t2<0?-t2:t2) && t2<TS_NEVER);
+	} while (t2!=0 && ts>(t2<0?-t2:t2) && abs_t2<TS_NEVER);
 	return t2;
 }
 
