@@ -131,11 +131,14 @@ int csv_reader::open(const char *file){
 				has_cols = 1;
 			}
 		} else {
-			if(0 == read_line(line)){
+			int line_rv = read_line(line);
+			if(0 == line_rv){
 				gl_error("csv_reader::open ~ data line read failure on line %i", linenum);
 				return 0;
-			} else {
+			} else if (1 == line_rv){ // good read
 				++sample_ct;
+			} else if (2 == line_rv){ // read went 'backwards', line discarded.
+				;
 			}
 		}
 	}
@@ -301,22 +304,18 @@ int csv_reader::read_line(char *line){
 	int col = 0;
 	char buffer[1024];
 	char *token = 0;
-	weather *sample = new weather();
+	weather *sample = 0;
+	int64 t1, t2;
 //	OBJECT *my = 0;
 
 	strncpy(buffer, line, 1023);
 	token = strtok(buffer, " ,\t\n\r");
 
 	if(token == 0){
-		return 1; // blank line 
+		return 2; // blank line 
 	}
 
-	if(weather_root == 0){
-		weather_root = sample;
-	} else {
-		weather_last->next = sample;
-	}
-	weather_last = sample;
+	sample = new weather();
 
 	if(timefmt[0] == 0){
 		if(sscanf(token, "%d:%d:%d:%d:%d", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
@@ -325,6 +324,7 @@ int csv_reader::read_line(char *line){
 				The input timestamp could not be parsed.  Verify that all time strings are formatted
 				as 'MM:dd:hh:mm:ss', 'MM:dd:hh:mm', 'MM:dd:hh', 'MM:dd', or 'MM'.
 			*/
+			delete sample;
 			return 0;
 		}
 	} else {
@@ -334,11 +334,28 @@ int csv_reader::read_line(char *line){
 				The input timestamp could not be parsed using the specified time format.  Please
 				review the specified file's time format and input time strings.
 			*/
+			delete sample;
 			return 0;
 		}
 	}
 
-	// should gracefully discard sample if time "goes backwards"
+	if(weather_last != 0){
+		t1 = weather_last->month * 31*24*60*60 +
+			 weather_last->day * 24*60*60 +
+			 weather_last->hour * 60*60 +
+			 weather_last->minute * 60 +
+			 weather_last->second;
+		t2 = sample->month * 31*24*60*60 +
+			 sample->day * 24*60*60 +
+			 sample->hour * 60*60 +
+			 sample->minute * 60 +
+			 sample->second;
+		if(t1 >= t2){
+			gl_warning("csv_reader::read_line ~ sample does not advance in time and has been discarded");
+			delete sample;
+			return 2;
+		}
+	}
 
 	while((token=strtok(NULL, ",\n\r")) != 0 && col < column_ct){
 		if(columns[col]->ptype == PT_double){
@@ -349,11 +366,20 @@ int csv_reader::read_line(char *line){
 					The specified property value could not be parsed as a number.  Please check
 					the CSV file for non-numeric characters in the data fields on that line.
 				*/
+				delete sample;
 				return 0;
 			}
 		}
 		++col;
 	}
+
+	if(weather_root == 0){
+		weather_root = sample;
+	} else {
+		weather_last->next = sample;
+	}
+	weather_last = sample;
+
 	return 1;
 }
 
