@@ -1308,30 +1308,39 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 	TIMESTAMP abs_t2 = ts;
 	char namestr[65];
 	int itr = global_iteration_limit;
-	do {
-		/* don't call sync beyond valid horizon */
-		t2 = _object_sync(obj,(abs_t2<(obj->valid_to>0?obj->valid_to:TS_NEVER)?abs_t2:obj->valid_to),pass);
-		if(t2 < 0){
-			abs_t2 = -t2;
-		} else {
-			abs_t2 = t2;
-		}
-		if(abs_t2 == t_start){
-			--itr;
-			if(itr == 0){
-				output_fatal("mini-iteration limit reached for object %s in object_sync", object_name(obj, namestr, 64));
-				return TS_INVALID;
+	if(obj->clock == 0 || obj->valid_to >= ts){
+		// object has not started, or object's previous t2 is equal to or greater the clock + minimum timestep
+		return _object_sync(obj, ts, pass);
+	} else {
+		// object started AND it had a state change before the next minimum timestep
+		t_start = obj->clock; // where the object was
+		abs_t2 = obj->valid_to; // where the object wanted to advance to
+		do {
+			/* don't call sync beyond valid horizon */
+			t2 = _object_sync(obj,(abs_t2<(obj->valid_to>0?obj->valid_to:TS_NEVER)?abs_t2:obj->valid_to),pass);
+			if(t2 < 0){
+				abs_t2 = -t2;
+			} else {
+				abs_t2 = t2;
 			}
-		}
-		if(abs_t2 < t_start){
-			output_error("return time is less than current time!");
-			return TS_INVALID;
-		} else {
-			t_start = abs_t2;
-			itr = global_iteration_limit;
-		}
-	} while (t2!=0 && ts>(t2<0?-t2:t2) && abs_t2<TS_NEVER);
-	return t2;
+			if(abs_t2 == t_start){
+				--itr;
+				if(itr == 0){
+					output_fatal("mini-iteration limit reached for object %s in object_sync", object_name(obj));
+					return TS_INVALID;
+				}
+			}
+			if(abs_t2 < t_start){
+				output_error("return time is less than current time!");
+				return TS_INVALID;
+			} else {
+				t_start = abs_t2;
+				itr = global_iteration_limit;
+			}
+			
+		} while (t2>0 && ts>(t2<0?-t2:t2) && t2<TS_NEVER);
+		return t2;
+	}
 }
 
 /** Initialize an object.  This should not be called until
