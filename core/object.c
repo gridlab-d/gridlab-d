@@ -1273,7 +1273,7 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 	if(sync_time>TS_MAX)
 		obj->valid_to = TS_NEVER;
 	else
-		obj->valid_to = sync_time;
+		obj->valid_to = sync_time; // NOTE, this can be negative
 
 	/* do profiling, if needed */
 	if(global_profiler==1)
@@ -1314,7 +1314,12 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 	} else {
 		// object started AND it had a state change before the next minimum timestep
 		t_start = obj->clock; // where the object was
-		abs_t2 = obj->valid_to; // where the object wanted to advance to
+		if(obj->valid_to > 0){
+			abs_t2 = obj->valid_to; // where the object wanted to advance to
+		} else {
+			abs_t2 = -obj->valid_to; // soft timestep
+		}
+		
 		do {
 			/* don't call sync beyond valid horizon */
 			t2 = _object_sync(obj,(abs_t2<(obj->valid_to>0?obj->valid_to:TS_NEVER)?abs_t2:obj->valid_to),pass);
