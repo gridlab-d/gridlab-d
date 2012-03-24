@@ -691,6 +691,9 @@ int object_set_value_by_addr(OBJECT *obj, /**< the object to alter */
 			output_error("preupdate notify failure on %s in %s", prop->name, obj->name ? obj->name : "an unnamed object");
 		}
 	}
+	// this happens BEFORE the value is set, so that we can avoid values that would
+	//	put the object into an invalid state.  Also to adjust related values with
+	//	zero lag.
 	if(prop->notify){
 		if(prop->notify(obj, value) == 0){
 			output_error("property notify_%s_%s failure in %s", obj->oclass->name, prop->name, (obj->name ? obj->name : "an unnamed object"));
@@ -1331,7 +1334,7 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 			if(abs_t2 == t_start){
 				--itr;
 				if(itr == 0){
-					output_fatal("mini-iteration limit reached for object %s in object_sync", object_name(obj));
+					output_fatal("mini-iteration limit reached for object %s in object_sync", object_name(obj, namestr, 64));
 					return TS_INVALID;
 				}
 			}
