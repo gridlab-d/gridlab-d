@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include "holder.h"
 #include "gridlabd.h"
 #include "gridlabd_java.h"
 
@@ -35,9 +36,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 //		return NULL;
 //	}
 
-	;
-
-	return NULL;
+	// very nonstandard.
+	return new_holder(module);
 }
 
 EXPORT int check(){
