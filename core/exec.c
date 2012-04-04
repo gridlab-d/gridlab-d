@@ -493,7 +493,7 @@ static STATUS init_by_creation(){
 
 static STATUS init_all(void)
 {
-	OBJECT *obj;
+//	OBJECT *obj;
 	STATUS rv = SUCCESS;
 	output_verbose("initializing objects...");
 
@@ -505,7 +505,7 @@ static STATUS init_all(void)
 	if (loadshape_initall()==FAILED || enduse_initall()==FAILED)
 		return FAILED;
 
-	switch(global_init_sequece){
+	switch(global_init_sequence){
 		case IS_CREATION:
 			rv = init_by_creation();
 			break;
@@ -1310,7 +1310,7 @@ STATUS exec_start(void)
 						for (j = 0; j < thread_data->count; j++) {
 							if (thread_data->data[j].status == FAILED) {
 								sync_d.status = FAILED;
-								THROW("synchonization failed");
+								THROW("synchronization failed");
 							}
 						}
 					}
