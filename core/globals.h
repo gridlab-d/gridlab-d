@@ -110,7 +110,8 @@ GLOBAL int global_forbid_multiload INIT(0); /** flag to disable multiple GLM fil
 GLOBAL int global_skipsafe INIT(0); /** flag to allow skipping of safe syncs (see OF_SKIPSAFE) */
 typedef enum {DF_ISO=0, DF_US=1, DF_EURO=2} DATEFORMAT;
 GLOBAL int global_dateformat INIT(DF_ISO); /** date format (ISO=0, US=1, EURO=2) */
-
+typedef enum {IS_CREATION=0, IS_DEFERRED=1, IS_BOTTOMUP=2, IS_TOPDOWN=3} INITSEQ;
+GLOBAL int global_init_sequence INIT(IS_CREATION); /** initialization sequence, default is ordered-by-creation */
 #include "timestamp.h"
 #include "realtime.h"
 

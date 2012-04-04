@@ -68,6 +68,13 @@ static KEYWORD mrc_keys[] = {
 	{"SOCKET", MRC_SOCKET, NULL},		/**< use a socket */
 };
 
+static KEYWORD isc_keys[] = {
+	{"CREATION", IS_CREATION, isc_keys+1},
+	{"DEFERRED", IS_DEFERRED, isc_keys+2},
+	{"BOTTOMUP", IS_BOTTOMUP, isc_keys+3},
+	{"TOPDOWN", IS_TOPDOWN, NULL}
+};
+
 static struct s_varmap {
 	char *name;
 	PROPERTYTYPE type;
@@ -125,6 +132,7 @@ static struct s_varmap {
 	{"nolocks", PT_int32, &global_nolocks, PA_PUBLIC},
 	{"skipsafe", PT_int32, &global_skipsafe, PA_PUBLIC},
 	{"dateformat", PT_enumeration, &global_dateformat, PA_PUBLIC, df_keys},
+	{"init_sequence", PT_enumeration, &global_init_sequence, PA_PUBLIC, isc_keys},
 	{"minimum_timestep", PT_int32, &global_minimum_timestep, PA_PUBLIC},
 	{"platform",PT_char8, global_platform, PA_REFERENCE},
 	{"suppress_repeat_messages",PT_int32, &global_suppress_repeat_messages, PA_PUBLIC},

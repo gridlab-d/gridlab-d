@@ -454,20 +454,9 @@ static void *ss_do_object_sync_list(void *threadarg)
 	return NULL;
 }
 
-static STATUS init_all(void)
-{
+static STATUS init_by_creation(){
 	OBJECT *obj;
 	STATUS rv = SUCCESS;
-	output_verbose("initializing objects...");
-
-	/* initialize instances */
-	if ( instance_initall()==FAILED )
-		return FAILED;
-
-	/* initialize loadshapes */
-	if (loadshape_initall()==FAILED || enduse_initall()==FAILED)
-		return FAILED;
-
 	TRY {
 		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
 		{
@@ -499,6 +488,44 @@ static STATUS init_all(void)
 		 */
 		rv = FAILED;
 	} ENDCATCH;
+	return rv;
+}
+
+static STATUS init_all(void)
+{
+	OBJECT *obj;
+	STATUS rv = SUCCESS;
+	output_verbose("initializing objects...");
+
+	/* initialize instances */
+	if ( instance_initall()==FAILED )
+		return FAILED;
+
+	/* initialize loadshapes */
+	if (loadshape_initall()==FAILED || enduse_initall()==FAILED)
+		return FAILED;
+
+	switch(global_init_sequece){
+		case IS_CREATION:
+			rv = init_by_creation();
+			break;
+		case IS_DEFERRED:
+			output_fatal("Deferred initialization mode not yet supported");
+			rv = FAILED;
+			break;
+		case IS_BOTTOMUP:
+			output_fatal("Bottom-up rank-based initialization mode not yet supported");
+			rv = FAILED;
+			break;
+		case IS_TOPDOWN:
+			output_fatal("Top-down rank-based initialization mode not yet supported");
+			rv = FAILED;
+			break;
+		default:
+			output_fatal("Unrecognized initialization mode");
+			rv = FAILED;
+	}
+	
 	return rv;
 }
 
