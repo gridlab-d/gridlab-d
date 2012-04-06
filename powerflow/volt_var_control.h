@@ -38,7 +38,7 @@ public:
 	set pf_phase;						//Phases for power factor monitoring to occur
 	double react_pwr;					//Reactive power quantity at the substation
 	double curr_pf;						//Current pf at the substation
-	double desired_voltage_value;		//Single voltage setting for all regulators - exposed as double so ptolomy can actually use it
+	bool pf_signed;						//Flag to indicate if a signed pf value should be maintained, or just a "deadband around 1"
 
 	volt_var_control(MODULE *mod);
 	volt_var_control(CLASS *cl=oclass):powerflow_object(cl){};
@@ -62,9 +62,6 @@ private:
 	double *max_vdrop;							//Maximum allowed voltage drops
 	double *vbw_low;							//Bandwidth (deadband) for low loading
 	double *vbw_high;							//Bandwidth (deadband) for high loading
-
-	double prev_desired_voltage;				//Tracking variable for single-entry desired_voltages variable (player/ptolemy compatibility)
-	bool desired_voltage_entry;					//Tracking variable to indicate if single-entry desired_voltages should be tracked.
 
 	node ***pMeasurement_list;					//Measurement points - they are assumed to be nodes at some level
 	node **RegToNodes;							//To Node (Load side) of regulators - for voltage VO measurements

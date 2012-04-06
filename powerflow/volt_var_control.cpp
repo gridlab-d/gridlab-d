@@ -30,11 +30,8 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 	{
 		pclass = powerflow_object::oclass;
 		oclass = gl_register_class(mod,"volt_var_control",sizeof(volt_var_control),PC_PRETOPDOWN|PC_POSTTOPDOWN);
-		if (oclass==NULL)
-			throw "unable to register class volt_var_control";
-		else
-			oclass->trl = TRL_PROVEN;
-
+		if(oclass == NULL)
+			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		if(gl_publish_variable(oclass,
 			PT_enumeration, "control_method", PADDR(control_method),PT_DESCRIPTION,"IVVC activated or in standby",
 				PT_KEYWORD, "ACTIVE", ACTIVE,
@@ -55,10 +52,10 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 			PT_char1024, "minimum_voltages",PADDR(minimum_voltage_txt),PT_DESCRIPTION,"Minimum voltages allowed for feeder, separated by commas",
 			PT_char1024, "maximum_voltages",PADDR(maximum_voltage_txt),PT_DESCRIPTION,"Maximum voltages allowed for feeder, separated by commas",
 			PT_char1024, "desired_voltages",PADDR(desired_voltage_txt),PT_DESCRIPTION,"Desired operating voltages for the regulators, separated by commas",
-			PT_double,"desired_voltage_value",PADDR(desired_voltage_value),PT_DESCRIPTION,"Desired operating voltage for the regulators - single value that overrides desired_voltages_value",
 			PT_char1024, "max_vdrop",PADDR(max_vdrop_txt),PT_DESCRIPTION,"Maximum voltage drop between feeder and end measurements for each regulator, separated by commas",
 			PT_char1024, "high_load_deadband",PADDR(vbw_high_txt),PT_DESCRIPTION,"High loading case voltage deadband for each regulator, separated by commas",
 			PT_char1024, "low_load_deadband",PADDR(vbw_low_txt),PT_DESCRIPTION,"Low loading case voltage deadband for each regulator, separated by commas",
+			PT_bool, "pf_signed",PADDR(pf_signed),PT_DESCRIPTION,"Set to true to consider the sign on the power factor.  Otherwise, it just maintains the deadband of +/-desired_pf",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -107,11 +104,9 @@ int volt_var_control::create(void)
 	TCapUpdate = 0;
 	TUpdateStatus = false;		//Flag for control_method transitions
 	pf_phase = 0;				//No phases monitored by default - will drop to link if unpopulated
-	desired_voltage_value = -1.0;	//Flagging
-	prev_desired_voltage = -1.0;	//Arbitrary
-	desired_voltage_entry = false;	//No tracking, by default
 	
 	first_cycle = true;		//Set up the variable
+	pf_signed = false;		//By default, just run a "deadband"
 
 	prev_time = 0;
 
@@ -142,23 +137,66 @@ int volt_var_control::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 
 	//General error checks
-	if ((d_max <= 0.0) || (d_max > 1.0) || (d_min <= 0.0) || (d_min > 1.0))
+	if (pf_signed==true)
 	{
-		GL_THROW("volt_var_control %s: d_max and d_min must be a number between 0 and 1",obj->name);
-		/*  TROUBLESHOOT
-		The capacitor threshold values d_max and d_min represent a fraction of a capacitor's total kVA rating.
-		They must be specified greater than 0, but less than or equal to 1.
-		*/
-	}
+		if ((d_max <= 0.0) || (d_max > 1.0))
+		{
+			GL_THROW("volt_var_control %s: d_max must be a number between 0 and 1",obj->name);
+			/*  TROUBLESHOOT
+			The capacitor threshold value d_max represents a fraction of a capacitor's total kVA rating.
+			It must be specified greater than 0, but less than or equal to 1.
+			*/
+		}
 
-	if (d_min >= d_max)
-	{
-		GL_THROW("volt_var_control %s: d_min must be less than d_max",obj->name);
-		/*  TROUBLESHOOT
-		The capacitor threshold fraction for d_min must be less than d_max.  Otherwise, improper (or no) operation
-		will occur.
-		*/
+		//Check power factor range
+		if ((desired_pf <= -1) || (desired_pf > 1))
+		{
+			GL_THROW("volt_var_control %s: Desired signed power factor is outside the valid range",obj->name);
+			/*  TROUBLESHOOT
+			With a signed power factor enabled, the desired_pf must be between -1 and 1.  Valid ranges are
+			greater than -1 and less than or equal to 1 (-1 is not accepted, use 1.0 as unity power factor).
+			*/
+		}
 	}
+	else	//"Traditional" algorithm
+	{
+		if ((d_max <= 0.0) || (d_max > 1.0) || (d_min <= 0.0) || (d_min > 1.0))
+		{
+			GL_THROW("volt_var_control %s: d_max and d_min must be a number between 0 and 1",obj->name);
+			/*  TROUBLESHOOT
+			The capacitor threshold values d_max and d_min represent a fraction of a capacitor's total kVA rating.
+			They must be specified greater than 0, but less than or equal to 1.
+			*/
+		}
+
+		if (d_min >= d_max)
+		{
+			GL_THROW("volt_var_control %s: d_min must be less than d_max",obj->name);
+			/*  TROUBLESHOOT
+			The capacitor threshold fraction for d_min must be less than d_max.  Otherwise, improper (or no) operation
+			will occur.
+			*/
+		}
+
+		//Check power factor
+		if (desired_pf < 0)	//Negative - see if they meant the other mode
+		{
+			GL_THROW("volt_var_control %s: Desired power factor is negative.  Should pf_signed be set?",obj->name);
+			/*  TROUBLESHOOT
+			A negative power factor was entered in the "deadband" operation mode of the controller.  If a signed
+			power factor value was desired, set the pf_signed paramter to true to proceed.  Otherwise, correct the
+			desired power factor.
+			*/
+		}
+		else if (desired_pf > 1)	//Greater than 1, invalid
+		{
+			GL_THROW("volt_var_control %s: Desired power factor is outside the valid range",obj->name);
+			/*  TROUBLESHOOT
+			With a normal power factor enabled, the desired_pf must be between 0 and 1.  Valid ranges are
+			greater than or equal to 0 and less than or equal to 1.
+			*/
+		}
+	}//End "traditional" implementation
 
 	if (cap_time_delay < 0)
 	{
@@ -229,26 +267,21 @@ int volt_var_control::init(OBJECT *parent)
 	}
 	
 	//Figure out number of desired voltages specified
-	if (desired_voltage_value < 0.0)	//Only check if the double wasn't specified
+	index=0;
+	num_des_volt=1;
+	while ((desired_voltage_txt[index] != '\0') && (index < 1024))
 	{
-		index=0;
-		num_des_volt=1;
-		while ((desired_voltage_txt[index] != '\0') && (index < 1024))
-		{
-			if (desired_voltage_txt[index] == ',')	//Comma
-				num_des_volt++;					//increment the number of desired voltages
+		if (desired_voltage_txt[index] == ',')	//Comma
+			num_des_volt++;					//increment the number of desired voltages
 
-			index++;	//increment the pointer
-		}
-
-		//See if one is really there
-		if ((num_des_volt == 1) && (desired_voltage_txt[0] == '\0'))	//Is empty :(
-		{
-			num_des_volt = 0;	//Primarily as a flag
-		}
+		index++;	//increment the pointer
 	}
-	else	//Set to 0 as the flag
-		num_des_volt = 0;
+
+	//See if one is really there
+	if ((num_des_volt == 1) && (desired_voltage_txt[0] == '\0'))	//Is empty :(
+	{
+		num_des_volt = 0;	//Primarily as a flag
+	}
 
 	//Figure out number of vdrops specified
 	index=0;
@@ -589,35 +622,12 @@ int volt_var_control::init(OBJECT *parent)
 					}//one value for all
 					else							//Use defaults on all
 					{
-						//Slight modification to catch "double-only" inputs for ptolomy inputs
-						if (desired_voltage_value < 0.0)
-						{
-							//If default, we need the to node nominal voltage
-							nom_volt = RegToNodes[index]->nominal_voltage;
+						//If default, we need the to node nominal voltage
+						nom_volt = RegToNodes[index]->nominal_voltage;
 
-							//Set tracking variables
-							prev_desired_voltage = -1.0;	//Ensure it is still set
-							desired_voltage_entry = false;	//Same for the flag
-
-							//Set values based on this nominal voltage
-							minimum_voltage[index] = 0.95*nom_volt;
-							maximum_voltage[index] = 1.05*nom_volt;
-							desired_voltage[index] = nom_volt;
-						}
-						else
-						{
-							//It is populated, use it as "nominal voltage"
-							nom_volt = desired_voltage_value;
-
-							//Set tracking variables
-							prev_desired_voltage = nom_volt;
-							desired_voltage_entry = true;
-
-							//Set values based on this nominal voltage - give a little more slop since this a special case
-							minimum_voltage[index] = 0.80*nom_volt;
-							maximum_voltage[index] = 1.20*nom_volt;
-							desired_voltage[index] = nom_volt;
-						}
+						minimum_voltage[index] = 0.95*nom_volt;
+						maximum_voltage[index] = 1.05*nom_volt;
+						desired_voltage[index] = nom_volt;
 					}
 
 					//Make sure voltages are ok
@@ -1560,25 +1570,6 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 	//Start out assuming a regulator change hasn't occurred
 	Regulator_Change = false;
 
-	//Update set points and tracking variables, if necessary (player/ptolemy compatibility)
-	if (desired_voltage_entry == true)
-	{
-		if (prev_desired_voltage != desired_voltage_value)
-		{
-			//Loop the feeders
-			for (index=0; index<num_regs; index++)
-			{
-				//Set values based on this nominal voltage
-				minimum_voltage[index] = 0.80*desired_voltage_value;	//0.95*desired_voltage_value;
-				maximum_voltage[index] = 1.20*desired_voltage_value;	//1.05*desired_voltage_value;
-				desired_voltage[index] = desired_voltage_value;
-			}
-
-			//Update variable
-			prev_desired_voltage = desired_voltage_value;
-		}
-	}
-
 	//Now loop through the list - if one is over t0, then it is still changing
 	for (index=0; index<num_regs; index++)
 	{
@@ -2348,6 +2339,8 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 	bool allow_change;
 	capacitor::CAPSWITCH bank_status;
 	double temp_size;
+	double curr_pf_temp, react_pwr_temp, des_react_pwr_temp;
+	bool pf_add_capacitor, pf_check;	
 
 	//Grab power values and all of those related calculations
 	if ((((solver_method == SM_NR) && (NR_cycle == true)) || (solver_method != SM_NR)) && (control_method == ACTIVE) && (Regulator_Change == false))	//Accumulation cycle, or not NR - also no regulator changes in progress
@@ -2357,7 +2350,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 		if (solver_method == SM_NR)
 		{
 			//We're technically before the power calculations on link, so force them
-			//not issue with FBS because we have to be below to get votlage updates 
+			//not issue with FBS because we have to be below to get voltage updates 
 			substation_link->calculate_power();
 		}
 
@@ -2374,7 +2367,20 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 		//Populate the variables of interest
 		react_pwr = link_power_vals.Im();						//Pull in reactive power
 
-		curr_pf = link_power_vals.Re()/link_power_vals.Mag();	//Pull in power factor
+		if (pf_signed==true)
+		{
+			curr_pf_temp = fabs(link_power_vals.Re())/link_power_vals.Mag();	//Pull in power factor
+
+			//"sign" it appropriately
+			if (react_pwr<0)	//negative vars
+				curr_pf = -curr_pf_temp;
+			else				//positive (or somehow zero)
+				curr_pf = curr_pf_temp;
+		}
+		else	//Otherwise, just pull in the value
+		{
+			curr_pf = fabs(link_power_vals.Re())/link_power_vals.Mag();	//Pull in power factor
+		}
 
 		//Update "proceeding" variable
 		if (((solver_method == SM_NR) && (first_cycle==true)) || ((solver_method == SM_FBS) && (first_cycle == false)))
@@ -2382,8 +2388,83 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 		else
 			allow_change = false;
 
-		//Now check to see if this is a first pass or not
-		if ((curr_pf < desired_pf) && (allow_change==true) && (TCapUpdate <= t0))
+		if (pf_signed==true)	//Consider "signing" on the power factor
+		{
+			//Figure out the reactive part "desired" for current load
+			des_react_pwr_temp = fabs(link_power_vals.Re()*sqrt(1/(desired_pf*desired_pf)-1));
+
+			//Formulate variables so signs matter now
+			if (curr_pf < 0)	//Negative current value - implies capacitive loading
+			{
+				if (desired_pf > 0)	//Capacitve is desired, see if we can do something
+				{
+					if (-desired_pf > curr_pf)	//More capacitive desired - add one in
+					{
+						pf_add_capacitor = true;	//Add one
+
+						//Determine size (3 curr, 5 desired, -5 - (-3) = 2 more allowed
+						react_pwr_temp = -des_react_pwr_temp - react_pwr;
+					}
+					else	//Less capacitive - remove a capacitor
+					{
+						pf_add_capacitor = false;	//Remove one
+
+						//Determine size (3 curr, -1 desired, 1 + (-3) = -2 more allowed
+						react_pwr_temp = des_react_pwr_temp + react_pwr;
+					}
+				}//End desired is positive
+				else	//Inductive PF desired - remove a capacitor
+				{
+					pf_add_capacitor = false;	//Remove one
+
+					//Determine size (3 curr, -1 desired, -1  + (-3) = -4 more allowed
+					react_pwr_temp = -des_react_pwr_temp + react_pwr;
+				}//End inductive desired on capacitive system
+			}//End negative current pf value
+			else	//Positive or zero current value
+			{
+				if (desired_pf > 0)	//Capacitive is desired
+				{
+					pf_add_capacitor = true;	//Add a capacitor in
+
+					//Determine size (-1 curr, 3 desired, 3 + (1) = 4 more allowed
+					react_pwr_temp = des_react_pwr_temp + react_pwr;
+				}
+				else	//Inductive desired
+				{
+					if (-desired_pf > curr_pf)	//Less inductive wanted
+					{
+						pf_add_capacitor = true;	//Add a capacitor
+
+						//Determine size (-3 curr, -1 desired, -1 + (3) = 2 more allowed
+						react_pwr_temp = -des_react_pwr_temp + react_pwr;
+					}
+					else	//Must be less, so more inductive wanted
+					{
+						pf_add_capacitor = false;	//Remove a capacitor
+
+						//Determine size (-3 curr, -4 desired, -4 + (3) = -1 more allowed
+						react_pwr_temp = -des_react_pwr_temp + react_pwr;
+					}//End more inductive wanted
+				}//End inductive desired
+			}//End positive current pf value
+
+			//Remove the sign on the reactive power desired
+			react_pwr_temp = fabs(react_pwr_temp);
+
+			//Set flag for "traditional" method so we can get into the loop
+			pf_check = true;
+		}//End consider pf sign
+		else	//Just consider it a deadband
+		{
+			if (curr_pf < desired_pf)
+				pf_check = true;		//Outside the range, make a change
+			else
+				pf_check = false;		//Inside the deadband - don't care
+		}
+
+		//Now check to see if this is a first pass or not - always "attempt" a change for positive/negative pf - just may be no candidates
+		if ((pf_check==true) && (allow_change==true) && (TCapUpdate <= t0))
 		{
 			change_requested = false;	//Start out assuming no change
 
@@ -2398,28 +2479,96 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 				else	//Must be C, right?
 					bank_status = pCapacitor_list[index]->switchC_state;
 
-				//Now perform logic based on where it is
-				if (bank_status == capacitor::CLOSED)	//We are on
+				if (pf_signed==true)	//Consider the sign in switching operations
 				{
-					temp_size = Capacitor_size[index] * d_min;
-
-					if (react_pwr < temp_size)
+					//Now perform logic based on where it is
+					if ((bank_status == capacitor::CLOSED) && (pf_add_capacitor==false))	//We are on and need to remove someone
 					{
-						pCapacitor_list[index]->toggle_bank_status(false);	//Turn all off
-						break;	//No more loop, only one control per loop
-					}
-				}//end cap was on
-				else	//Must be false, so we're off
+						temp_size = Capacitor_size[index] * d_max; //min;
+
+						if (react_pwr_temp >= temp_size)
+						{
+							pCapacitor_list[index]->toggle_bank_status(false);	//Turn all off
+							change_requested = true;							//Flag a change
+							break;	//No more loop, only one control per loop
+						}
+					}//end cap was on
+					else if ((bank_status == capacitor::OPEN) && (pf_add_capacitor==true))	//We're off and want to turn someone on
+					{
+						temp_size = Capacitor_size[index] * d_max;
+
+						if (react_pwr_temp >= temp_size)
+						{
+							pCapacitor_list[index]->toggle_bank_status(true);	//Turn all on
+							change_requested = true;							//Flag a change
+							break;	//No more loop, only one control per loop
+						}
+					}//end cap was off and want to add
+					//defaulted else - do nothing
+				}//end consider pf sign
+				else	//Don't consider the sign, just consider it a range
 				{
-					temp_size = Capacitor_size[index] * d_max;
-
-					if (react_pwr > temp_size)
+					//Now perform logic based on where it is
+					if (bank_status == capacitor::CLOSED)	//We are on
 					{
-						pCapacitor_list[index]->toggle_bank_status(true);	//Turn all on
-						break;	//No more loop, only one control per loop
-					}
-				}//end cap was off
+						temp_size = Capacitor_size[index] * d_min;
+
+						if (react_pwr < temp_size)
+						{
+							pCapacitor_list[index]->toggle_bank_status(false);	//Turn all off
+							change_requested = true;							//Flag a change
+							break;	//No more loop, only one control per loop
+						}
+					}//end cap was on
+					else	//Must be false, so we're off
+					{
+						temp_size = Capacitor_size[index] * d_max;
+
+						if (react_pwr > temp_size)
+						{
+							pCapacitor_list[index]->toggle_bank_status(true);	//Turn all on
+							change_requested = true;							//Flag a change
+							break;	//No more loop, only one control per loop
+						}
+					}//end cap was off
+				}//End just consider pf range
 			}//End capacitor list traversion
+
+			//If we are outside our pf range and nothing went off, see if a smaller capacitor can be "prompted" to get us back in range
+			if ((change_requested == false) && (pf_signed==true))
+			{
+				//See if we're needing a capacitor action to get back in range, or just looking for more adjustments
+				if (((curr_pf > 0) && (curr_pf < -desired_pf)) || ((curr_pf < 0) && (curr_pf < desired_pf)))
+				{
+					//Parse through the capacitor list - go backwards (smallest first) - break after one operation (if any)
+					for (index=(num_caps-1); index >= 0; index--)
+					{
+						//Find the phases being watched, check their switch
+						if ((pCapacitor_list[index]->pt_phase & PHASE_A) == PHASE_A)
+							bank_status = pCapacitor_list[index]->switchA_state;
+						else if ((pCapacitor_list[index]->pt_phase & PHASE_B) == PHASE_B)
+							bank_status = pCapacitor_list[index]->switchB_state;
+						else	//Must be C, right?
+							bank_status = pCapacitor_list[index]->switchC_state;
+
+						//Now perform logic based on where it is - if anything is found to "fit" the criterion, just enact it
+						if ((bank_status == capacitor::CLOSED) && (pf_add_capacitor==false))	//We are on and need to remove someone
+						{
+							pCapacitor_list[index]->toggle_bank_status(false);	//Turn all off
+							change_requested = true;							//Flag a change
+							break;	//No more loop, only one control per loop
+						}//end cap was on
+						else if ((bank_status == capacitor::OPEN) && (pf_add_capacitor==true))	//We're off and want to turn someone on
+						{
+							pCapacitor_list[index]->toggle_bank_status(true);	//Turn all on
+							change_requested = true;							//Flag a change
+							break;	//No more loop, only one control per loop
+						}//end cap was off and want to add
+						//defaulted else - do nothing
+					}//End capacitor list traversion
+				}//End "outside acceptable range"
+			}//end change still requested
+			//Default else - change must have been requested
 
 			if (change_requested == true)	//Something changed
 			{
@@ -2659,18 +2808,26 @@ EXPORT int create_volt_var_control(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
-		else
-			return 0;
 	}
-	CREATE_CATCHALL(volt_var_control);
+	catch (const char *msg)
+	{
+		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
+		return 0;
+	}
+	return 1;
 }
 
 EXPORT int init_volt_var_control(OBJECT *obj, OBJECT *parent)
 {
 	try {
-		return OBJECTDATA(obj,volt_var_control)->init(parent);
+			return OBJECTDATA(obj,volt_var_control)->init(parent);
 	}
-	INIT_CATCHALL(volt_var_control);
+	catch (const char *msg)
+	{
+		gl_error("%s %s (id=%d): %s", obj->name?obj->name:"unnamed", obj->oclass->name, obj->id, msg);
+		return 0;
+	}
+	return 1;
 }
 
 /**
@@ -2683,8 +2840,8 @@ EXPORT int init_volt_var_control(OBJECT *obj, OBJECT *parent)
 */
 EXPORT TIMESTAMP sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
+	volt_var_control *pObj = OBJECTDATA(obj,volt_var_control);
 	try {
-		volt_var_control *pObj = OBJECTDATA(obj,volt_var_control);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -2699,7 +2856,15 @@ EXPORT TIMESTAMP sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 			throw "invalid pass request";
 		}
 	}
-	SYNC_CATCHALL(volt_var_control);
+	catch (const char *msg)
+	{
+		gl_error("volt_var_control %s (%s:%d): %s", obj->name, obj->oclass->name, obj->id, msg);
+	}
+	catch (...)
+	{
+		gl_error("volt_var_control %s (%s:%d): unknown exception", obj->name, obj->oclass->name, obj->id);
+	}
+	return TS_INVALID; /* stop the clock */
 }
 
 EXPORT int isa_volt_var_control(OBJECT *obj, char *classname)
