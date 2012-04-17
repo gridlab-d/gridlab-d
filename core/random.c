@@ -164,7 +164,7 @@ double randunit(unsigned int *state)
 	if ( state==NULL || state==ur_state )
 	{
 		state=ur_state;
-		lock(&random_lock);
+		wlock(&random_lock);
 	}
 
 TryAgain:

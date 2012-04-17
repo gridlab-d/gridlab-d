@@ -475,7 +475,7 @@ void unit_init(void)
 	char tpath[1024];
 
 	/* try only once */
-	lock(&trylock);
+	wlock(&trylock);
 	if (tried)
 	{
 		unlock(&trylock);

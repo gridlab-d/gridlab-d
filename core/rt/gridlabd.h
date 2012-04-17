@@ -982,6 +982,12 @@ typedef struct s_callbacks {
 		double (*read)(FORECAST *fc, TIMESTAMP *ts);
 		void (*save)(FORECAST *fc, TIMESTAMP *ts, int32 tstep, int n_values, double *data);
 	} forecast;
+	struct {
+		void *(*readobj)(void *local, OBJECT *obj, PROPERTY *prop);
+		void (*writeobj)(void *local, OBJECT *obj, PROPERTY *prop);
+		void *(*readvar)(void *local, GLOBALVAR *var);
+		void (*writevar)(void *local, GLOBALVAR *var);
+	} remote;
 //	unsigned long (*property_size)(PROPERTY *prop);
 } CALLBACKS; /**< core callback function table */
 

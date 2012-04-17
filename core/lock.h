@@ -65,22 +65,29 @@
 	#error "Locking is not supported on this system"
 #endif
 
-static inline void lock(unsigned int *lock)
+static inline void _lock(unsigned int *lock)
 {
 	unsigned int value;
 
 	do {
-		value = *lock;
-	} while ((value & 1) || !atomic_compare_and_swap((volatile long*)lock, value, value + 1));
+		value = (*lock);
+	} while ((value&1) || !atomic_compare_and_swap((volatile long*)lock, value, value + 1));
 }
 static inline void unlock(unsigned int *lock)
 {
-	atomic_increment(lock);
+	unsigned int value = *lock;
+	atomic_increment((volatile long*)lock);
 }
+#define rlock _lock /** @todo implement read lock */
+#define wlock _lock /** @todo implement write lock */
 
-#define LOCK(lock) lock(lock) /**< Locks an item */
+#define LOCK(X) wlock(X) /**< Locks an item */
+#define READLOCK(X) rlock(X) /**< @todo Locks an item for reading (allows other reads but blocks write) */
+#define WRITELOCK(X) wlock(X) /**< @todo Locks an item for writing (blocks all operations) */
 #define UNLOCK(lock) unlock(lock) /**< Unlocks an item */
-#define LOCK_OBJECT(obj) lock(&((obj)->lock)) /**< Locks an object */
+#define LOCK_OBJECT(obj) wlock(&((obj)->lock)) /**< Locks an object */
+#define READLOCK_OBJECT(obj) rlock(&((obj)->lock)) /**< @todo Locks an object for reading */
+#define WRITELOCK_OBJECT(obj) wlock(&((obj)->lock)) /**< @todo Locks an object for writing */
 #define UNLOCK_OBJECT(obj) unlock(&((obj)->lock)) /**< Unlocks an object */
 #define LOCKED(obj,command) (LOCK_OBJECT(obj),(command),UNLOCK_OBJECT(obj))
 

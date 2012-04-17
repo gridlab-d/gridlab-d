@@ -129,14 +129,14 @@ static int malloc_lock = 0;
 void *module_malloc(size_t size)
 {
 	void *ptr;
-	lock(&malloc_lock);
+	wlock(&malloc_lock);
 	ptr = (void*)malloc(size);
 	unlock(&malloc_lock);
 	return ptr;
 }
 void module_free(void *ptr)
 {
-	lock(&malloc_lock);
+	wlock(&malloc_lock);
 	free(ptr);
 	unlock(&malloc_lock);
 }
@@ -198,6 +198,7 @@ static CALLBACKS callbacks = {
 	{enduse_create,enduse_sync},
 	{interpolate_linear, interpolate_quadratic},
 	{forecast_create, forecast_find, forecast_read, forecast_save},
+	{object_remote_read, object_remote_write, global_remote_read, global_remote_write},
 };
 
 MODULE *first_module = NULL;
@@ -1160,7 +1161,7 @@ unsigned short sched_get_procid()
 void sched_lock(unsigned short proc)
 {
 	if ( process_map )
-		lock(&process_map[proc].lock);
+		wlock(&process_map[proc].lock);
 }
 
 void sched_unlock(unsigned short proc)

@@ -176,7 +176,7 @@ int find_value_index (SCHEDULE *sch, /// schedule to search
    returns 1 on success, 0 on failure 
  */
 #ifndef MACOSX
-#define USE_SCBLOCK // lock hangs on Mac OSX
+#define USE_SCBLOCK // @todo lock hangs on Mac OSX
 #endif
 
 #ifdef USE_SCBLOCK
@@ -188,7 +188,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 	char *token = NULL;
 	unsigned int minute=0;
 #ifdef USE_SCBLOCK
-lock(&scb_lock);
+	wlock(&scb_lock);
 #endif
 	/* check block count */
 	if (sch->block>=MAXBLOCKS)
@@ -198,7 +198,7 @@ lock(&scb_lock);
 		   The schedule definition has too many blocks to compile.  Consolidate your schedule and try again.
 		 */
 #ifdef USE_SCBLOCK
-unlock(&scb_lock);
+	unlock(&scb_lock);
 #endif
 		return 0;
 	}

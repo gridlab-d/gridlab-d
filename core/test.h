@@ -9,6 +9,8 @@
 
 STATUS test_start(int argc, char *argv[]);	
 STATUS test_end(int argc, char *argv[]);
+
+void test_lock(void);
  
 #endif
 #endif

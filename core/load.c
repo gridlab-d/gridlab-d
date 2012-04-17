@@ -4940,7 +4940,11 @@ static int extern_block(PARSER)
 		}
 		if ( WHITE,LITERAL("{") && (WHITE,(startline=linenum),TERM(C_code_block(HERE,code,sizeof(code)))) && LITERAL("}") ) // C-code block
 		{
-			int rc = module_compile(libname,code,MC_NONE,filename,startline-1);
+			int rc = module_compile(libname,code,global_module_compiler_flags,
+				"typedef struct { void *data, *info;} GLXDATA;\n"
+				"#define GLXdouble(X) (*((double*)(X.data)))\n"
+				/* TODO add external interface code before this line */,
+				filename,startline-1);
 			if ( rc==0 )
 			{	
 				if ( module_load_function_list(libname,fnclist) )

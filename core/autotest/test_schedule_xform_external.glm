@@ -1,17 +1,15 @@
 // test schedule transforms
 
 #set randomseed=17
-#set suppress_repeat_messages=0
+#set module_compiler_flags=VERBOSE|DEBUG|KEEPWORK|CLEAN
 
 extern "C" test_schedule_xform_external : myfunction2@1 // inline code follows
 {
-	typedef struct { void *data, *info;} DATA;
-	#define DOUBLE(X) (*((double*)(X.data)))
-	int myfunction2(int nlhs, DATA *plhs, int nrhs, DATA *prhs)
+	int myfunction2(int nlhs, GLXDATA *plhs, int nrhs, GLXDATA *prhs)
 	{	/* make sure the correct number of args are passed in */
 		if ( nlhs!=1 || nlhs!=1 ) return -1;
 		/* subtract 5 from arg */
-		DOUBLE(plhs[0]) = DOUBLE(prhs[0]) - 5;
+		GLXdouble(plhs[0]) = GLXdouble(prhs[0]) - 5;
 		return 0;
 	}	
 } // end inline code

@@ -229,6 +229,20 @@ GLOBAL int32 global_signal_timeout INIT(5000); /**< signal timeout in millisecon
 /* system call */
 GLOBAL int global_return_code INIT(0); /**< return code from last system call */
 
+/* remote data access */
+void *global_remote_read(void *local, GLOBALVAR *var); /** access remote global data */
+void global_remote_write(void *local, GLOBALVAR *var); /** access remote global data */
+
+/* module compile flags */
+typedef enum {
+	MC_NONE     = 0x00, /**< no module compiler flags */
+	MC_CLEAN    = 0x01, /**< clean build */
+	MC_KEEPWORK = 0x02, /**< keep intermediate files */ 
+	MC_DEBUG    = 0x04, /**< debug build */
+	MC_VERBOSE  = 0x08, /**< verbose output */
+} MODULECOMPILEFLAGS;
+GLOBAL MODULECOMPILEFLAGS global_module_compiler_flags INIT(MC_NONE); /** module compiler flags */
+
 #ifdef __cplusplus
 }
 #endif

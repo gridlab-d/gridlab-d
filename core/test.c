@@ -295,4 +295,95 @@ STATUS original_test_end(int argc, char *argv[])
 	return SUCCESS;
 }
 
+/***********************************************************************
+ * MEMORY LOCK TEST
+ */
+#include "lock.h"
+#include "pthread.h"
+#include "exec.h"
+#define TESTCOUNT (100000000/global_threadcount)
+
+static volatile unsigned int *count = NULL;
+static volatile unsigned int total = 0;
+static unsigned int key = 0;
+static volatile int done = 0;
+
+void *test_lock_proc(void *ptr)
+{
+	int id = (int)ptr;
+	int m;
+	output_test("thread %d created ok", (unsigned int)id);
+	for ( m=0 ; m<TESTCOUNT ; m++ )
+	{
+		wlock(&key);
+		count[id]++;
+		total++;
+		unlock(&key);
+	}
+	wlock(&key);
+	done++;
+	unlock(&key);
+	output_test("thread %d done ok", (unsigned int)id);
+	return (void*)0;
+}
+
+void test_lock(void)
+{
+	int n, sum=0;
+
+	count = (unsigned int*)malloc(sizeof(unsigned int*)*global_threadcount);
+	if ( !count )
+	{
+		output_test("memory allocation failed");
+		return;
+	}
+	
+	output_test("*** Begin memory locking test for %d threads", global_threadcount);
+	wlock(&key);
+	for ( n=0 ; n<global_threadcount ; n++ )
+	{
+		pthread_t pt;
+		count[n] = 0;
+		if ( pthread_create(&pt,NULL,test_lock_proc,(void*)n)!=0 )
+		{
+			output_test("thread creation failed");
+			return;
+		}
+	}
+	unlock(&key);
+	global_suppress_repeat_messages = 0;
+	for ( n=0 ; n<global_threadcount ; n++ )
+		output_raw("THREAD %2d  ", n);
+	output_message("  TOTAL     ERRORS");
+	for ( n=0 ; n<global_threadcount ; n++ )
+		output_raw("---------- ", n);
+	output_message("---------- --------");
+	while ( done<global_threadcount )
+	{
+		int c[256], t, s=0;
+		exec_sleep(1000000);
+		output_raw("\r");
+		rlock(&key);
+		for ( n=0 ; n<global_threadcount ; n++ )
+			s += (c[n]=count[n]);
+		t = total;
+		unlock(&key);
+		for ( n=0 ; n<global_threadcount ; n++ )
+			output_raw("%10d ",c[n]);
+		output_raw("%10d %8d",t,t-s);
+	}
+	output_message("");
+	for ( n=0 ; n<global_threadcount ; n++ )
+	{
+		output_test("thread %d count = %d", n, count[n]);
+		sum+=count[n];
+	}
+	output_test("total count = %d", total);
+	if ( sum!=total )
+		output_test("TEST FAILED");
+	else
+		output_test("Last key = %d", key);
+	output_test("*** End memory locking test", global_threadcount);
+}
+
 #endif

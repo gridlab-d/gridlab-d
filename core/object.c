@@ -227,8 +227,10 @@ char *object_get_unit(OBJECT *obj, char *name)
 		 */
 	}
 	
-	lock(&unitlock);
+	rlock(&unitlock);
 	if(dimless == NULL){
+		unlock(&unitlock);
+		wlock(&unitlock);
 		dimless=unit_find("1");
 	}
 	unlock(&unitlock);
@@ -2397,6 +2399,73 @@ void forecast_save(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double
 		fc->n_values = n_values;
 	}
 	memcpy(fc->values,data,n_values*sizeof(double));
+}
+
+/** remote object read **/
+void *object_remote_read(void *local, /**< local memory for data (must be correct size for property) */
+						 OBJECT *obj, /**< object from which to get data */
+						 PROPERTY *prop) /**< property from which to get data */
+{
+	int size = property_size(prop);
+	void *addr = ((char*)obj)+(int)(prop->addr);
+	
+	/* single host */
+	if ( global_multirun_mode==MRM_STANDALONE)
+	{
+		/* single thread */
+		if ( global_threadcount==1 )
+		{
+			/* no lock or fetch required */
+			memcpy(local,addr,size);
+			return local;
+		}
+
+		/* multithread */
+		else 
+		{
+			READLOCK_OBJECT(obj);
+			memcpy(local,addr,size);
+			UNLOCK_OBJECT(obj);
+			return local;
+		}
+	}
+	else
+	{
+		/* @todo remote object read for multihost */
+		return NULL;
+	}
+}
+
+/** remote object write **/
+void object_remote_write(void *local, /** local memory for data */
+						 OBJECT *obj, /** object to which data is written */
+						 PROPERTY *prop) /**< property to which data is written */
+{
+	int size = property_size(prop);
+	void *addr = ((char*)obj)+(int)(prop->addr);
+	
+	/* single host */
+	if ( global_multirun_mode==MRM_STANDALONE)
+	{
+		/* single thread */
+		if ( global_threadcount==1 )
+		{
+			/* no lock or fetch required */
+			memcpy(addr,local,size);
+		}
+
+		/* multithread */
+		else 
+		{
+			WRITELOCK_OBJECT(obj);
+			memcpy(addr,local,size);
+			UNLOCK_OBJECT(obj);
+		}
+	}
+	else
+	{
+		/* @todo remote object write for multihost */
+	}
 }
 
 /** @} **/

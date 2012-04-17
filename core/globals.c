@@ -75,6 +75,14 @@ static KEYWORD isc_keys[] = {
 	{"TOPDOWN", IS_TOPDOWN, NULL}
 };
 
+static KEYWORD mcf_keys[] = {
+	{"NONE", MC_NONE, mcf_keys+1},		/**< no module compiler flags set */
+	{"CLEAN", MC_CLEAN, mcf_keys+2},	/**< flag to rebuild everything (no reuse of previous work) */
+	{"KEEPWORK", MC_KEEPWORK, mcf_keys+3},	/**< flag to keep everything (do not delete intermediate files) */
+	{"DEBUG", MC_DEBUG, mcf_keys+4},	/**< flag to build with debugging turned on */
+	{"VERBOSE", MC_VERBOSE, NULL},		/**< flag to output commands as they are executed */
+};
+
 static struct s_varmap {
 	char *name;
 	PROPERTYTYPE type;
@@ -172,6 +180,7 @@ static struct s_varmap {
 	{"slave_port", PT_int16, &global_slave_port, PA_PUBLIC},
 	{"slave_id", PT_int64, &global_slave_id, PA_PUBLIC},
 	{"return_code", PT_int32, &global_return_code, PA_REFERENCE},
+	{"module_compiler_flags", PT_enumeration, &global_module_compiler_flags, PA_PUBLIC, mcf_keys},
 	/* add new global variables here */
 };
 
@@ -496,7 +505,7 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 			/** @todo autotype global variables when creating them (ticket #26) */
 			var = global_create(name,PT_char1024,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
 		}
-		lock(&globalvar_lock);
+		wlock(&globalvar_lock);
 		retval = class_string_to_property(var->prop,(void*)var->prop->addr,value);
 		unlock(&globalvar_lock);
 		if (retval==0){
@@ -570,6 +579,29 @@ void global_dump(void)
 			output_message("%s=%s;", var->prop->name, buffer);
 	}
 	global_suppress_repeat_messages = old;
+}
+
+/** read remote global data **/
+void *global_remote_read(void *local, /** local memory for data (must be correct size for global */
+						 GLOBALVAR *var) /** global variable from which to get data */
+{
+	/* single thread */
+
+	/* multithread */
+
+	/* multihost */
+	return NULL;
+}
+/** write remote global data **/
+void global_remote_write(void *local, /** local memory for data */
+						 GLOBALVAR *var) /** global variable to which data is written */
+{
+	/* single thread */
+
+	/* multithread */
+
+	/* multihost */
+	return;
 }
 
 /**@}**/

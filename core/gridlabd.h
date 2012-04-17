@@ -1044,11 +1044,59 @@ inline char *gl_strftime(TIMESTAMP ts, char *buffer, int size)
 #define gl_forecast_save (*callback->forecast.save)
 /**@}*/
 
+
+/******************************************************************************
+ * Init/Sync/Create catchall macros
+ */
+/** @defgroup gridlabd_h_catchall Init/Sync/Create catchall macros
+ @{
+ **/
 #define SYNC_CATCHALL(C) catch (char *msg) { gl_error("sync_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (const char *msg) { gl_error("sync_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (...) { gl_error("sync_" #C "(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed"); return TS_INVALID; }
 #define INIT_CATCHALL(C) catch (char *msg) { gl_error("init_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return 0; } catch (const char *msg) { gl_error("init_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return 0; } catch (...) { gl_error("init_" #C "(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed"); return 0; }
 #define CREATE_CATCHALL(C) catch (char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (...) { gl_error("create_" #C ": unhandled exception"); return 0; }
 #define I_CATCHALL(T,C) catch (char *msg) { gl_error(#T "_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error(#T "_" #C ": %s", msg); return 0; } catch (...) { gl_error(#T "_" #C ": unhandled exception"); return 0; }
 #define T_CATCHALL(T,C) catch (char *msg) { gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (const char *msg) { gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (...) { gl_error(#T "_" #C "(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed"); return TS_INVALID; }
+
+/******************************************************************************
+ * Remote data access
+ */
+/** @defgroup gridlabd_h_remote Remote data access
+ @{
+ **/
+
+#ifdef __cplusplus
+/** read remote object data **/
+inline void *gl_read(void *local, /**< local memory for data (must be correct size for property) */
+					 OBJECT *obj, /**< object from which to get data */
+					 PROPERTY *prop) /**< property from which to get data */
+{
+	return callback->remote.readobj(local,obj,prop);
+}
+/** write remote object data **/
+inline void gl_write(void *local, /** local memory for data */
+					 OBJECT *obj, /** object to which data is written */
+					 PROPERTY *prop) /**< property to which data is written */
+{
+	/* @todo */
+	return callback->remote.writeobj(local,obj,prop);
+}
+/** read remote global data **/
+inline void *gl_read(void *local, /** local memory for data (must be correct size for global */
+					 GLOBALVAR *var) /** global variable from which to get data */
+{
+	/* @todo */
+	return callback->remote.readvar(local,var);
+}
+/** write remote global data **/
+inline void gl_write(void *local, /** local memory for data */
+					 GLOBALVAR *var) /** global variable to which data is written */
+{
+	/* @todo */
+	return callback->remote.writevar(local,var);
+}
+#else
+#endif
+
 
 /** @} **/
 #endif

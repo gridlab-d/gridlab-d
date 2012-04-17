@@ -236,6 +236,12 @@ typedef struct s_callbacks {
 		double (*read)(FORECAST *fc, TIMESTAMP ts); /**< read the forecast value for the time ts */
 		void (*save)(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double *data);
 	} forecast;
+	struct {
+		void *(*readobj)(void *local, OBJECT *obj, PROPERTY *prop);
+		void (*writeobj)(void *local, OBJECT *obj, PROPERTY *prop);
+		void *(*readvar)(void *local, GLOBALVAR *var);
+		void (*writevar)(void *local, GLOBALVAR *var);
+	} remote;
 } CALLBACKS; /**< core callback function table */
 
 #ifdef __cplusplus
@@ -331,6 +337,10 @@ FORECAST *forecast_create(OBJECT *obj, char *specs); /**< create a forecast usin
 FORECAST *forecast_find(OBJECT *obj, char *name); /**< find the forecast for the named property, if any */
 double forecast_read(FORECAST *fc, TIMESTAMP ts); /**< read the forecast value for the time ts */
 void forecast_save(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double *data);
+
+/* remote data access */
+void *object_remote_read(void *local, OBJECT *obj, PROPERTY *prop); /** access remote object data */
+void object_remote_write(void *local, OBJECT *obj, PROPERTY *prop); /** access remote object data */
 
 #ifdef __cplusplus
 }

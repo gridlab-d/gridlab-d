@@ -301,7 +301,7 @@ int output_fatal(char *format,...) /**< \bprintf style argument list */
 	static char lastfmt[4096] = "";
 	static int count=0;
 	int result = 0;
-	lock(&output_lock);
+	wlock(&output_lock);
 	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
@@ -347,7 +347,7 @@ int output_error(char *format,...) /**< \bprintf style argument list */
 	static char lastfmt[4096] = "";
 	static int count=0;
 	int result = 0;
-	lock(&output_lock);
+	wlock(&output_lock);
 	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
@@ -397,7 +397,7 @@ int output_error_raw(char *format,...) /**< \bprintf style argument list */
 	static char lastfmt[4096] = "";
 	static int count=0;
 	int result = 0;
-	lock(&output_lock);
+	wlock(&output_lock);
 	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
@@ -450,7 +450,7 @@ int output_test(char *format,...) /**< \bprintf style argument list */
 	va_list ptr;
 
 	int result = 0;
-	lock(&output_lock);
+	wlock(&output_lock);
 
 	if(format == NULL){
 		goto Unlock;
@@ -497,7 +497,7 @@ int output_warning(char *format,...) /**< \bprintf style argument list */
 		static char lastfmt[4096] = "";
 		static int count=0;
 		int result = 0;
-		lock(&output_lock);
+		wlock(&output_lock);
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
@@ -547,7 +547,7 @@ int output_debug(char *format,...) /**< \bprintf style argument list */
 		static char lastfmt[4096] = "";
 		static int count=0;
 		int result = 0;
-		lock(&output_lock);
+		wlock(&output_lock);
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
@@ -598,7 +598,7 @@ int output_verbose(char *format,...) /**< \bprintf style argument list */
 		static char lastfmt[4096] = "";
 		static int count=0;
 		int result = 0;
-		lock(&output_lock);
+		wlock(&output_lock);
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
@@ -646,7 +646,7 @@ int output_message(char *format,...) /**< \bprintf style argument list */
 		static int count=0;
 		size_t sz = strlen(format?format:"");
 		int result = 0;
-		lock(&output_lock);
+		wlock(&output_lock);
 		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
@@ -735,7 +735,7 @@ int output_raw(char *format,...) /**< \bprintf style argument list */
 	{
 		va_list ptr;
 		int result = 0;
-		lock(&output_lock);
+		wlock(&output_lock);
 
 		va_start(ptr,format);
 		vsprintf(buffer,format,ptr); /* note the lack of check on buffer overrun */

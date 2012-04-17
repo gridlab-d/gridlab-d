@@ -714,7 +714,7 @@ char *timestamp_set_tz(char *tz_name)
 			 */
 		}
 		
-		lock(&tzlock);
+		wlock(&tzlock);
 		if (_timezone % 60 == 0){
 			sprintf(guess, "%s%d%s", _tzname[0], (int)(_timezone / 3600), _daylight?_tzname[1]:"");
 		} else {

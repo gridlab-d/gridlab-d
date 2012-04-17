@@ -25,6 +25,7 @@
 #include "loadshape.h"
 #include "enduse.h"
 #include "instance.h"
+#include "test.h"
 
 clock_t loader_time = 0;
 
@@ -1055,6 +1056,12 @@ static int example(int argc, char *argv[])
 	return CMDOK;
 }
 
+static int locktest(int argc, char *argv[])
+{
+	test_lock();
+	return CMDOK;
+}
+
 /*********************************************/
 /* ADD NEW CMDARG PROCESSORS ABOVE THIS HERE */
 /* Then make the appropriate entry in the    */
@@ -1091,6 +1098,7 @@ static CMDARG main[] = {
 	{"endusetest",	NULL,	endusetest,		NULL, "Perform enduse pseudo-object test" },
 	{"globaldump",	NULL,	globaldump,		NULL, "Perform a dump of the global variables" },
 	{"loadshapetest", NULL,	loadshapetest,	NULL, "Perform loadshape pseudo-object test" },
+	{"locktest",	NULL,	locktest,		NULL, "Perform memory locking test" },
 	{"modtest",		NULL,	modtest,		"<module>", "Perform test function provided by module" },
 	{"randtest",	NULL,	randtest,		NULL, "Perform random number generator test" },
 	{"scheduletest", NULL,	scheduletest,	NULL, "Perform schedule pseudo-object test" },	
