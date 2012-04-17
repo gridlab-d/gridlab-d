@@ -361,7 +361,7 @@ void test_lock(void)
 	while ( done<global_threadcount )
 	{
 		int c[256], t, s=0;
-		exec_sleep(1000000);
+		exec_sleep(100000);
 		output_raw("\r");
 		rlock(&key);
 		for ( n=0 ; n<global_threadcount ; n++ )
