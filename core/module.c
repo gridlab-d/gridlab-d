@@ -901,9 +901,11 @@ static int execf(char *format, /**< format string  */
 /** Compile C source code into a dynamic link library 
     @return 0 on success
  **/
+	int module_compile(char *name, char *code, int flags, char *prefix, char *file, int line);
 int module_compile(char *name,	/**< name of library */
 				   char *code,	/**< listing of source code */
 				   int flags,	/**< compile options (see MC_?) */
+                                   char *prefix, /**< file prefix */
 				   char *source,/**< source file (for context) */
 				   int line)	/**< source line (for context) */
 {

@@ -295,6 +295,8 @@ STATUS original_test_end(int argc, char *argv[])
 	return SUCCESS;
 }
 
+#endif
+
 /***********************************************************************
  * MEMORY LOCK TEST
  */
@@ -386,4 +388,3 @@ void test_lock(void)
 	output_test("*** End memory locking test", global_threadcount);
 }
 
-#endif
