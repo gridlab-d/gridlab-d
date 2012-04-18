@@ -987,9 +987,10 @@ STATUS exec_start(void)
 
 		/* set thread count equal to processor count if not passed on command-line */
 		if (global_threadcount == 0)
+		{
 			global_threadcount = processor_count();
-		output_verbose("detected %d processor(s)", processor_count());
-		output_verbose("using %d helper thread(s)", global_threadcount);
+			output_verbose("using %d helper thread(s)", global_threadcount);
+		}
 
 		//sjin: allocate arg_data_array to store pthreads creation argument
 		arg_data_array = (struct arg_data *) malloc(sizeof(struct arg_data) 
