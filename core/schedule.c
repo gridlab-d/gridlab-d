@@ -236,9 +236,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 				if(ndx > MAXVALUES-1)
 				{
 					output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, sch->block);
-#ifdef USE_SCBLOCK
-unlock(&scb_lock);
-#endif
+					unlock(&scb_lock);
 					return 0;
 				}
 				sch->data[sch->block*MAXVALUES+ndx] = value;
@@ -257,9 +255,7 @@ unlock(&scb_lock);
 				/* TROUBLESHOOT
 					The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 				*/
-#ifdef USE_SCBLOCK
-unlock(&scb_lock);
-#endif
+				unlock(&scb_lock);
 				return 0;
 			}
 		}
@@ -311,9 +307,7 @@ unlock(&scb_lock);
 									/* TROUBLESHOOT
 									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 									 */
-#ifdef USE_SCBLOCK
-unlock(&scb_lock);
-#endif
+									unlock(&scb_lock);
 									return 0;
 								}
 								else
@@ -333,9 +327,7 @@ unlock(&scb_lock);
 		}
 	}
 	strcpy(sch->blockname[sch->block],blockname);
-#ifdef USE_SCBLOCK
-unlock(&scb_lock);
-#endif
+	unlock(&scb_lock);
 	return 1;
 }
 
@@ -729,11 +721,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	schedule_add(sch);
 
 	/* singlethreaded creation */
-#ifdef USE_SCBLOCK
 	if ( global_threadcount<=1 )
-#else
-	if ( 1 )
-#endif
 	{
 		result = (STATUS)schedule_createproc(sch);
 		if (SUCCESS == result)
