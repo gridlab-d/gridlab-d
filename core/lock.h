@@ -36,11 +36,9 @@
 
 #if defined(__APPLE__)
 	#include <libkern/OSAtomic.h>
-#warning "BSD locking used"
 	#define atomic_compare_and_swap(dest, comp, xchg) OSAtomicCompareAndSwap32Barrier(comp, xchg, (volatile int32_t *) dest)
 	#define atomic_increment(ptr) OSAtomicIncrement32Barrier((volatile int32_t *) ptr)
 #elif defined(WIN32)
-#warning "MSVC locking used"
 	#include <intrin.h>
 	#pragma intrinsic(_InterlockedCompareExchange)
 	#pragma intrinsic(_InterlockedIncrement)
@@ -50,7 +48,6 @@
 		#define inline __inline
 	#endif
 #elif defined HAVE___SYNC_BOOL_COMPARE_AND_SWAP
-#warning "GCC locking used"
 	#define atomic_compare_and_swap __sync_bool_compare_and_swap
 	#ifdef HAVE___SYNC_ADD_AND_FETCH
 		#define atomic_increment(ptr) __sync_add_and_fetch(ptr, 1)
