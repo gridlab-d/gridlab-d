@@ -34,6 +34,7 @@ typedef struct s_globalvar {
 	struct s_globalvar *next;
 	uint32 flags;
 	void (*callback)(char *); // this function will be called whenever the globalvar is set
+	unsigned int lock;
 } GLOBALVAR;
 
 STATUS global_init(void);

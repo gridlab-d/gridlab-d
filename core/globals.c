@@ -581,27 +581,68 @@ void global_dump(void)
 	global_suppress_repeat_messages = old;
 }
 
-/** read remote global data **/
+/** threadsafe remote global read **/
 void *global_remote_read(void *local, /** local memory for data (must be correct size for global */
 						 GLOBALVAR *var) /** global variable from which to get data */
 {
-	/* single thread */
+	int size = property_size(var->prop);
+	void *addr = var->prop->addr;
+	
+	/* single host */
+	if ( global_multirun_mode==MRM_STANDALONE)
+	{
+		/* single thread */
+		if ( global_threadcount==1 )
+		{
+			/* no lock or fetch required */
+			memcpy(local,addr,size);
+			return local;
+		}
 
-	/* multithread */
-
-	/* multihost */
-	return NULL;
+		/* multithread */
+		else 
+		{
+			rlock(var->lock);
+			memcpy(local,addr,size);
+			unlock(var->lock);
+			return local;
+		}
+	}
+	else
+	{
+		/* @todo remote object read for multihost */
+		return NULL;
+	}
 }
-/** write remote global data **/
+/** threadsafe remote global write **/
 void global_remote_write(void *local, /** local memory for data */
 						 GLOBALVAR *var) /** global variable to which data is written */
 {
-	/* single thread */
+	int size = property_size(var->prop);
+	void *addr = var->prop->addr;
+	
+	/* single host */
+	if ( global_multirun_mode==MRM_STANDALONE)
+	{
+		/* single thread */
+		if ( global_threadcount==1 )
+		{
+			/* no lock or fetch required */
+			memcpy(addr,local,size);
+		}
 
-	/* multithread */
-
-	/* multihost */
-	return;
+		/* multithread */
+		else 
+		{
+			wlock(var->lock);
+			memcpy(addr,local,size);
+			unlock(var->lock);
+		}
+	}
+	else
+	{
+		/* @todo remote object write for multihost */
+	}
 }
 
 /**@}**/

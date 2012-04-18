@@ -273,6 +273,7 @@ TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 // Synchronize a distribution triplex_meter
 TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP rv = TS_NEVER;
 	TIMESTAMP hr = TS_NEVER;
 
@@ -297,8 +298,10 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		else
 			dt = 0;
 
+		READLOCK_OBJECT(obj);
 		measured_current[0] = current_inj[0];
 		measured_current[1] = current_inj[1];
+		UNLOCK_OBJECT(obj);
 		measured_current[2] = -(measured_current[1]+measured_current[0]);
 
 //		if (dt > 0 && last_t != dt)

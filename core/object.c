@@ -2401,7 +2401,7 @@ void forecast_save(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double
 	memcpy(fc->values,data,n_values*sizeof(double));
 }
 
-/** remote object read **/
+/** threadsafe remote object read **/
 void *object_remote_read(void *local, /**< local memory for data (must be correct size for property) */
 						 OBJECT *obj, /**< object from which to get data */
 						 PROPERTY *prop) /**< property from which to get data */
@@ -2423,9 +2423,9 @@ void *object_remote_read(void *local, /**< local memory for data (must be correc
 		/* multithread */
 		else 
 		{
-			READLOCK_OBJECT(obj);
+			rlock(obj->lock);
 			memcpy(local,addr,size);
-			UNLOCK_OBJECT(obj);
+			unlock(obj->lock);
 			return local;
 		}
 	}
@@ -2436,7 +2436,7 @@ void *object_remote_read(void *local, /**< local memory for data (must be correc
 	}
 }
 
-/** remote object write **/
+/** threadsafe remote object write **/
 void object_remote_write(void *local, /** local memory for data */
 						 OBJECT *obj, /** object to which data is written */
 						 PROPERTY *prop) /**< property to which data is written */
@@ -2457,9 +2457,9 @@ void object_remote_write(void *local, /** local memory for data */
 		/* multithread */
 		else 
 		{
-			WRITELOCK_OBJECT(obj);
+			wlock(obj->lock);
 			memcpy(addr,local,size);
-			UNLOCK_OBJECT(obj);
+			unlock(obj->lock);
 		}
 	}
 	else

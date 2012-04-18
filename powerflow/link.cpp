@@ -1735,16 +1735,13 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 				else
 					current_out[2] = 0.0;
 
-				//Lock from object for current update
-				LOCK_OBJECT(from);
-
 				//Current in is just the same
+				WRITELOCK_OBJECT(from);
 				fnode->current_inj[0] += current_in[0];
 				fnode->current_inj[1] += current_in[1];
 				fnode->current_inj[2] += current_in[2];
-
-				//Now unlock it
 				UNLOCK_OBJECT(from);
+
 			}//end normal transformers
 			else if (SpecialLnk == REGULATOR)
 			{
@@ -1819,15 +1816,11 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 				else
 					current_in[2] = 0.0;
 
-				//Lock from object for current update
-				LOCK_OBJECT(from);
-
 				//Current in is just the same
+				WRITELOCK_OBJECT(from);
 				fnode->current_inj[0] += current_in[0];
 				fnode->current_inj[1] += current_in[1];
 				fnode->current_inj[2] += current_in[2];
-
-				//Unlock it now
 				UNLOCK_OBJECT(from);
 			}
 			else if (SpecialLnk == DELTAGWYE)
@@ -1878,15 +1871,11 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 					current_in[2] = 0.0;
 				}
 
-				//Lock the from object for current injection update
-				LOCK_OBJECT(from);
-
 				//Current in is just the same
+				WRITELOCK_OBJECT(from);
 				fnode->current_inj[0] += current_in[0];
 				fnode->current_inj[1] += current_in[1];
 				fnode->current_inj[2] += current_in[2];
-
-				//Done, release it
 				UNLOCK_OBJECT(from);
 
 			}//end delta-GWYE
@@ -1894,18 +1883,13 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 			{
 				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 				{
-					itemp[0] = fnode->voltage[0]*b_mat[2][2]+
-							   tnode->voltage[0]*b_mat[2][0]+
-							   tnode->voltage[1]*b_mat[2][1];
+					current_in[0] = itemp[0] = 
+						fnode->voltage[0]*b_mat[2][2]+
+						tnode->voltage[0]*b_mat[2][0]+
+						tnode->voltage[1]*b_mat[2][1];
 
-					current_in[0] = itemp[0];
-
-					//Lock from node for current injection
-					LOCK_OBJECT(from);
-
+					WRITELOCK_OBJECT(from);
 					fnode->current_inj[0] += itemp[0];
-
-					//Unlock it
 					UNLOCK_OBJECT(from);
 
 					//calculate current out
@@ -1919,44 +1903,39 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 				}
 				else if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 				{
-					itemp[0] = fnode->voltage[1]*b_mat[2][2]+
-							   tnode->voltage[0]*b_mat[2][0]+
-							   tnode->voltage[1]*b_mat[2][1];
+					current_in[1] = itemp[0] = 
+						fnode->voltage[1]*b_mat[2][2] +
+						tnode->voltage[0]*b_mat[2][0] +
+						tnode->voltage[1]*b_mat[2][1];
 
-					current_in[1] = itemp[0];
+					itemp[0];
 
-					//Lock from for current injection update
 					LOCK_OBJECT(from);
-
 					fnode->current_inj[1] += itemp[0];
-
-					//Unlock it now
 					UNLOCK_OBJECT(from);
 
 					//calculate current out
-					current_out[0] = fnode->voltage[1]*b_mat[0][2]+
-									 tnode->voltage[0]*b_mat[0][0]+
+					current_out[0] = fnode->voltage[1]*b_mat[0][2] +
+									 tnode->voltage[0]*b_mat[0][0] +
 									 tnode->voltage[1]*b_mat[0][1];
 
-					current_out[1] = fnode->voltage[1]*b_mat[1][2]+
-									 tnode->voltage[0]*b_mat[1][0]+
+					current_out[1] = fnode->voltage[1]*b_mat[1][2] +
+									 tnode->voltage[0]*b_mat[1][0] +
 									 tnode->voltage[1]*b_mat[1][1];
 
 				}
 				else if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 				{
-					itemp[0] = fnode->voltage[2]*b_mat[2][2]+
-							   tnode->voltage[0]*b_mat[2][0]+
-							   tnode->voltage[1]*b_mat[2][1];
+					current_in[2] = itemp[0] = 
+						fnode->voltage[2]*b_mat[2][2] +
+						tnode->voltage[0]*b_mat[2][0] +
+						tnode->voltage[1]*b_mat[2][1];
 
-					current_in[2] = itemp[0];
+					itemp[0];
 
 					//Lock from object for current injection update
 					LOCK_OBJECT(from);
-
 					fnode->current_inj[2] += itemp[0];
-
-					//Unlock it
 					UNLOCK_OBJECT(from);
 
 					//calculate current out
@@ -2017,13 +1996,9 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 				current_out[2] = current_in[2];
 
 				//Lock from object for current injection update
-				LOCK_OBJECT(from);
-
-				//Current in is just the same
+				WRITELOCK_OBJECT(from);
 				fnode->current_inj[0] += current_in[0];
 				fnode->current_inj[1] += current_in[1];
-
-				//Unlock it
 				UNLOCK_OBJECT(from);
 			}
 			else
@@ -2094,20 +2069,11 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 								d_mat[2][1]*current_out[1]+
 								d_mat[2][2]*current_out[2];
 
-				////Current out is the same as current in for lines/simple devices
-				//current_out[0] = current_in[0];
-				//current_out[1] = current_in[1];
-				//current_out[2] = current_in[2];
-
-				//Lock from object for current update
-				LOCK_OBJECT(from);
-
 				//Current in is just the same
+				WRITELOCK_OBJECT(from);
 				fnode->current_inj[0] += current_in[0];
 				fnode->current_inj[1] += current_in[1];
 				fnode->current_inj[2] += current_in[2];
-
-				//Unlock it now
 				UNLOCK_OBJECT(from);
 			}
 
@@ -2122,31 +2088,39 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 			tNode->condition=fNode->condition;
 #endif
 			/* compute currents */
-			complex i;
-			current_in[0] = 
-			i = c_mat[0][0] * t->voltage[0] +
+			READLOCK_OBJECT(to);
+			complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
+			UNLOCK_OBJECT(to);
+
+			complex i0, i1, i2;
+
+			current_in[0] = i0 = 
+				c_mat[0][0] * t->voltage[0] +
 				c_mat[0][1] * t->voltage[1] +
 				c_mat[0][2] * t->voltage[2] +
-				d_mat[0][0] * t->current_inj[0] +
-				d_mat[0][1] * t->current_inj[1] +
-				d_mat[0][2] * t->current_inj[2];
-			LOCKED(from, f->current_inj[0] += i);
-			current_in[1] = 
-			i = c_mat[1][0] * t->voltage[0] +
+				d_mat[0][0] * tc[0] +
+				d_mat[0][1] * tc[1] +
+				d_mat[0][2] * tc[2];
+			current_in[1] = i1 = 
+				c_mat[1][0] * t->voltage[0] +
 				c_mat[1][1] * t->voltage[1] +
 				c_mat[1][2] * t->voltage[2] +
-				d_mat[1][0] * t->current_inj[0] +
-				d_mat[1][1] * t->current_inj[1] +
-				d_mat[1][2] * t->current_inj[2];
-			LOCKED(from, f->current_inj[1] += i);
-			current_in[2] = 
-			i = c_mat[2][0] * t->voltage[0] +
+				d_mat[1][0] * tc[0] +
+				d_mat[1][1] * tc[1] +
+				d_mat[1][2] * tc[2];
+			current_in[2] = i2 = 
+				c_mat[2][0] * t->voltage[0] +
 				c_mat[2][1] * t->voltage[1] +
 				c_mat[2][2] * t->voltage[2] +
-				d_mat[2][0] * t->current_inj[0] +
-				d_mat[2][1] * t->current_inj[1] +
-				d_mat[2][2] * t->current_inj[2];
-			LOCKED(from, f->current_inj[2] += i);
+				d_mat[2][0] * tc[0] +
+				d_mat[2][1] * tc[1] +
+				d_mat[2][2] * tc[2];
+
+			WRITELOCK_OBJECT(from);
+			f->current_inj[0] += i0;
+			f->current_inj[1] += i1;
+			f->current_inj[2] += i2;
+			UNLOCK_OBJECT(from);
 		}
 	}
 #ifdef SUPPORT_OUTAGES
@@ -2187,39 +2161,48 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		set reverse = get_flow(&f,&t);
 
 		// update published current_out values;
-		read_I_out[0] = t->current_inj[0];
-		read_I_out[1] = t->current_inj[1];
+		READLOCK_OBJECT(to);
+		complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
+		UNLOCK_OBJECT(to);
+
+		read_I_out[0] = tc[0];
+		read_I_out[1] = tc[1];
 
 		if (has_phase(PHASE_S) && (voltage_ratio != 1.0))	//Implies SPCT
-			read_I_out[2] = -t->current_inj[1] - t->current_inj[0];	//Implies ground at TP Node, so I_n is full neutral + ground
+			read_I_out[2] = -tc[1] - tc[0];	//Implies ground at TP Node, so I_n is full neutral + ground
 		else
-			read_I_out[2] = t->current_inj[2];
+			read_I_out[2] = tc[2];
 		
 		if (!is_open())
 		{
 			/* compute and update voltages */
-			complex v;
-			v = A_mat[0][0] * f->voltage[0] +
+			complex v0 = 
+				A_mat[0][0] * f->voltage[0] +
 				A_mat[0][1] * f->voltage[1] + // 
 				A_mat[0][2] * f->voltage[2] - //@todo current inj; flowing from t node
-				B_mat[0][0] * t->current_inj[0] - // current injection put into link from end mode
-				B_mat[0][1] * t->current_inj[1] -
-				B_mat[0][2] * t->current_inj[2];
-			LOCKED(to, t->voltage[0] = v);
-			v = A_mat[1][0] * f->voltage[0] +
+				B_mat[0][0] * tc[0] - // current injection put into link from end mode
+				B_mat[0][1] * tc[1] -
+				B_mat[0][2] * tc[2];
+			complex v1 = 
+				A_mat[1][0] * f->voltage[0] +
 				A_mat[1][1] * f->voltage[1] +
 				A_mat[1][2] * f->voltage[2] -
-				B_mat[1][0] * t->current_inj[0] -
-				B_mat[1][1] * t->current_inj[1] -
-				B_mat[1][2] * t->current_inj[2];
-			LOCKED(to, t->voltage[1] = v);
-			v = A_mat[2][0] * f->voltage[0] +
+				B_mat[1][0] * tc[0] -
+				B_mat[1][1] * tc[1] -
+				B_mat[1][2] * tc[2];
+			complex v2 = 
+				A_mat[2][0] * f->voltage[0] +
 				A_mat[2][1] * f->voltage[1] +
 				A_mat[2][2] * f->voltage[2] -
-				B_mat[2][0] * t->current_inj[0] -
-				B_mat[2][1] * t->current_inj[1] -
-				B_mat[2][2] * t->current_inj[2];
-			LOCKED(to, t->voltage[2] = v);
+				B_mat[2][0] * tc[0] -
+				B_mat[2][1] * tc[1] -
+				B_mat[2][2] * tc[2];
+
+			WRITELOCK_OBJECT(to);
+			t->voltage[0] = v0;
+			t->voltage[1] = v1;
+			t->voltage[2] = v2;
+			UNLOCK_OBJECT(to);
 
 #ifdef SUPPORT_OUTAGES		
 			t->condition=f->condition;
@@ -2599,6 +2582,10 @@ void link::calculate_power_splitphase()
 	}
 	else
 	{
+		READLOCK_OBJECT(to);
+		complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
+		UNLOCK_OBJECT(to);
+
 		if (SpecialLnk!=SPLITPHASE) 
 		{
 			//Original code - attempted to split so single phase matches three phase in terms of output capabilities
@@ -2610,9 +2597,9 @@ void link::calculate_power_splitphase()
 			indiv_power_in[1] = complex(-1.0) * f->voltage[1]*~current_in[1];
 			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
-			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
-			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~t->current_inj[1];
-			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
+			indiv_power_out[0] = t->voltage[0]*~tc[0];
+			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~tc[1];
+			indiv_power_out[2] = t->voltage[2]*~tc[2];
 		}
 		else  
 		{
@@ -2624,9 +2611,9 @@ void link::calculate_power_splitphase()
 			indiv_power_in[1] = f->voltage[1]*~current_in[1];
 			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
-			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
-			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~t->current_inj[1];
-			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
+			indiv_power_out[0] = t->voltage[0]*~tc[0];
+			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~tc[1];
+			indiv_power_out[2] = t->voltage[2]*~tc[2];
 		}
 	}
 	//Set direction flag.  Can be a little odd in split phase, since circulating currents.
@@ -2723,9 +2710,13 @@ void link::calculate_power()
 			indiv_power_in[1] = f->voltage[1]*~current_in[1];
 			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
-			indiv_power_out[0] = t->voltage[0]*~t->current_inj[0];
-			indiv_power_out[1] = t->voltage[1]*~t->current_inj[1];
-			indiv_power_out[2] = t->voltage[2]*~t->current_inj[2];
+			READLOCK_OBJECT(to);
+			complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
+			UNLOCK_OBJECT(to);
+
+			indiv_power_out[0] = t->voltage[0]*~tc[0];
+			indiv_power_out[1] = t->voltage[1]*~tc[1];
+			indiv_power_out[2] = t->voltage[2]*~tc[2];
 		}
 
 		power_in = indiv_power_in[0] + indiv_power_in[1] + indiv_power_in[2];

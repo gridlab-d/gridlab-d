@@ -366,9 +366,13 @@ TIMESTAMP frequency_gen::postsync(TIMESTAMP t0)
 		//Update power calculation
 		if (PerformUpdate)
 		{
-			temp_power = ParNode->voltage[0]*~ParNode->current_inj[0];
-			temp_power += ParNode->voltage[1]*~ParNode->current_inj[1];
-			temp_power += ParNode->voltage[2]*~ParNode->current_inj[2];
+			READLOCK_OBJECT(obj->parent);
+			complex pc[] = {ParNode->current_inj[0],ParNode->current_inj[1],ParNode->current_inj[2]};
+			UNLOCK_OBJECT(obj->parent);
+
+			temp_power = ParNode->voltage[0]*~pc[0];
+			temp_power += ParNode->voltage[1]*~pc[1];
+			temp_power += ParNode->voltage[2]*~pc[2];
 
 			//Store this as the desired power
 			LoadPower = temp_power.Re();

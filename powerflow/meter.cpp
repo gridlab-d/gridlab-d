@@ -339,6 +339,7 @@ TIMESTAMP meter::sync(TIMESTAMP t0)
 
 TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	OBJECT *obj = OBJECTHDR(this);
 	complex temp_current;
 
 	measured_voltage[0] = voltageA;
@@ -467,9 +468,11 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		else
 			dt = 0;
 		
+		READLOCK_OBJECT(obj);
 		measured_current[0] = current_inj[0];
 		measured_current[1] = current_inj[1];
 		measured_current[2] = current_inj[2];
+		UNLOCK_OBJECT(obj);
 
 		// compute energy use from previous cycle
 		// - everything below this can moved to commit function once tape player is collecting from commit function7

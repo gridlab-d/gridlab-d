@@ -59,6 +59,19 @@ EXPORT int64 get_market_for_time(OBJECT *obj, TIMESTAMP ts){
 	return -1;
 }
 
+/** Auction/register_participant allow an auction to interact propertly with a participating controller.
+    This makes it unnecessary to manually set the market rank high in the GLM file and avoids the use
+	of gl_set_dependent during init() of participants.
+ **/
+EXPORT int64 register_participant(OBJECT *mkt, OBJECT *part)
+{
+	/* need to promote market above rank of participant */
+	gl_set_rank(mkt,part->rank);
+
+	/* @todo other actions that may required with market participant are initialized */
+	return 1;
+}
+
 /* Class registration is only called once to register the class with the core */
 auction::auction(MODULE *module)
 {
@@ -183,6 +196,7 @@ auction::auction(MODULE *module)
 		gl_publish_function(oclass,	"submit_bid", (FUNCTIONADDR)submit_bid);
 		gl_publish_function(oclass,	"submit_bid_state", (FUNCTIONADDR)submit_bid_state);
 		gl_publish_function(oclass, "get_market_for_time", (FUNCTIONADDR)get_market_for_time);
+		gl_publish_function(oclass, "register_participant", (FUNCTIONADDR)register_participant);
 		defaults = this;
 //		immediate = 1;
 		memset(this,0,sizeof(auction));
