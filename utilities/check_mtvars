@@ -1,0 +1,27 @@
+#!/usr/bin/awk -f 
+
+BEGIN {
+	system("gridlabd --version");
+}
+
+/^class/ {
+	printf("class %s:\n", $2);
+}
+
+/^\t(double|complex|char.+|int.+|object)/ {
+	VAR=$2;
+	pos=index(VAR,"[");
+	if ( pos>0 )
+		VAR=substr(VAR,1,pos-1);
+	else
+		gsub(";","",VAR);
+	if ( system(" ( cd .. ; grep -q \'>" VAR "\' */*.cpp | sed -e 's/^/\t\t/g' ) ")==0 )
+	{
+		printf("\t%s %s:\n",$1,VAR);
+		system(" ( cd .. ; grep -l \'>" VAR "\' */*.cpp | sed -e 's/^/\t\t/g' ) ");
+	}
+}
+
+{
+}
+
