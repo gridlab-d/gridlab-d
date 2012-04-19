@@ -180,7 +180,7 @@ static struct s_varmap {
 	{"slave_port", PT_int16, &global_slave_port, PA_PUBLIC},
 	{"slave_id", PT_int64, &global_slave_id, PA_PUBLIC},
 	{"return_code", PT_int32, &global_return_code, PA_REFERENCE},
-	{"module_compiler_flags", PT_enumeration, &global_module_compiler_flags, PA_PUBLIC, mcf_keys},
+	{"module_compiler_flags", PT_set, &global_module_compiler_flags, PA_PUBLIC, mcf_keys},
 	{"init_max_defer", PT_int32, &global_init_max_defer, PA_REFERENCE},
 	/* add new global variables here */
 };
@@ -508,7 +508,7 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 		}
 		wlock(&globalvar_lock);
 		retval = class_string_to_property(var->prop,(void*)var->prop->addr,value);
-		unlock(&globalvar_lock);
+		wunlock(&globalvar_lock);
 		if (retval==0){
 			output_error("global_setvar(): unable to set %s to %s",name,value);
 			/* TROUBLESHOOT
@@ -603,9 +603,9 @@ void *global_remote_read(void *local, /** local memory for data (must be correct
 		/* multithread */
 		else 
 		{
-			rlock(var->lock);
+			rlock(&var->lock);
 			memcpy(local,addr,size);
-			unlock(var->lock);
+			runlock(&var->lock);
 			return local;
 		}
 	}
@@ -635,9 +635,9 @@ void global_remote_write(void *local, /** local memory for data */
 		/* multithread */
 		else 
 		{
-			wlock(var->lock);
+			wlock(&var->lock);
 			memcpy(addr,local,size);
-			unlock(var->lock);
+			wunlock(&var->lock);
 		}
 	}
 	else

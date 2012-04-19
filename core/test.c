@@ -320,11 +320,11 @@ void *test_lock_proc(void *ptr)
 		wlock(&key);
 		count[id]++;
 		total++;
-		unlock(&key);
+		wunlock(&key);
 	}
 	wlock(&key);
 	done++;
-	unlock(&key);
+	wunlock(&key);
 	output_test("thread %d done ok", (unsigned int)id);
 	return (void*)0;
 }
@@ -352,7 +352,7 @@ void test_lock(void)
 			return;
 		}
 	}
-	unlock(&key);
+	wunlock(&key);
 	global_suppress_repeat_messages = 0;
 	for ( n=0 ; n<global_threadcount ; n++ )
 		output_raw("THREAD %2d  ", n);
@@ -369,7 +369,7 @@ void test_lock(void)
 		for ( n=0 ; n<global_threadcount ; n++ )
 			s += (c[n]=count[n]);
 		t = total;
-		unlock(&key);
+		runlock(&key);
 		for ( n=0 ; n<global_threadcount ; n++ )
 			output_raw("%10d ",c[n]);
 		output_raw("%10d %8d",t,t-s);

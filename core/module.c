@@ -131,14 +131,14 @@ void *module_malloc(size_t size)
 	void *ptr;
 	wlock(&malloc_lock);
 	ptr = (void*)malloc(size);
-	unlock(&malloc_lock);
+	wunlock(&malloc_lock);
 	return ptr;
 }
 void module_free(void *ptr)
 {
 	wlock(&malloc_lock);
 	free(ptr);
-	unlock(&malloc_lock);
+	wunlock(&malloc_lock);
 }
 
 /* these are the core functions available to loadable modules
@@ -905,7 +905,7 @@ static int execf(char *format, /**< format string  */
 int module_compile(char *name,	/**< name of library */
 				   char *code,	/**< listing of source code */
 				   int flags,	/**< compile options (see MC_?) */
-                                   char *prefix, /**< file prefix */
+				   char *prefix, /**< file prefix */
 				   char *source,/**< source file (for context) */
 				   int line)	/**< source line (for context) */
 {
@@ -937,6 +937,9 @@ int module_compile(char *name,	/**< name of library */
 		output_error("unable to open '%s' for writing", cfile);
 		return -1;
 	}
+
+	/* store prefix code */
+	fprintf(fp,"/* automatically generated code\nSource: %s(%d)\n */\n%s\n",source,line,prefix?prefix:"");
 
 	/* store file/line reference */
 	if (source!=NULL) fprintf(fp,"#line %d \"%s\"\n",line,source); 
@@ -1169,7 +1172,7 @@ void sched_lock(unsigned short proc)
 void sched_unlock(unsigned short proc)
 {
 	if ( process_map )
-		unlock(&process_map[proc].lock);
+		wunlock(&process_map[proc].lock);
 }
 
 /** update the process info **/

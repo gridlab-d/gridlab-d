@@ -472,7 +472,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		measured_current[0] = current_inj[0];
 		measured_current[1] = current_inj[1];
 		measured_current[2] = current_inj[2];
-		UNLOCK_OBJECT(obj);
+		READUNLOCK_OBJECT(obj);
 
 		// compute energy use from previous cycle
 		// - everything below this can moved to commit function once tape player is collecting from commit function7

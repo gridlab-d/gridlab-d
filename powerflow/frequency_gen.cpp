@@ -368,7 +368,7 @@ TIMESTAMP frequency_gen::postsync(TIMESTAMP t0)
 		{
 			READLOCK_OBJECT(obj->parent);
 			complex pc[] = {ParNode->current_inj[0],ParNode->current_inj[1],ParNode->current_inj[2]};
-			UNLOCK_OBJECT(obj->parent);
+			READUNLOCK_OBJECT(obj->parent);
 
 			temp_power = ParNode->voltage[0]*~pc[0];
 			temp_power += ParNode->voltage[1]*~pc[1];

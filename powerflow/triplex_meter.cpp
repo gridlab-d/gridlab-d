@@ -301,7 +301,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		READLOCK_OBJECT(obj);
 		measured_current[0] = current_inj[0];
 		measured_current[1] = current_inj[1];
-		UNLOCK_OBJECT(obj);
+		READUNLOCK_OBJECT(obj);
 		measured_current[2] = -(measured_current[1]+measured_current[0]);
 
 //		if (dt > 0 && last_t != dt)

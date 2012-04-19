@@ -331,7 +331,7 @@ Output:
 	else
 		result = (*printerr)("%sFATAL [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
-	unlock(&output_lock);
+	wunlock(&output_lock);
 	return result;
 }
 
@@ -381,7 +381,7 @@ Output:
 	else
 		result = (*printerr)("%sERROR [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
-	unlock(&output_lock);
+	wunlock(&output_lock);
 	return result;
 }
 
@@ -431,7 +431,7 @@ Output:
 	else
 		result= (*printerr)("%s%s\n", prefix, buffer);
 Unlock:
-	unlock(&output_lock);
+	wunlock(&output_lock);
 	return result;
 }
 
@@ -478,7 +478,7 @@ int output_test(char *format,...) /**< \bprintf style argument list */
 
 	result = fprintf(fp,"%s\n", buffer);
 Unlock:
-	unlock(&output_lock);
+	wunlock(&output_lock);
 	return result;
 
 }
@@ -527,7 +527,7 @@ Output:
 		else
 			result = (*printerr)("%sWARNING [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
-		unlock(&output_lock);
+		wunlock(&output_lock);
 		return result;
 	}
 	return 0;
@@ -577,7 +577,7 @@ Output:
 		else
 			result = (*printerr)("%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
-		unlock(&output_lock);
+		wunlock(&output_lock);
 		return result;
 	}
 	return 0;
@@ -627,7 +627,7 @@ Output:
 		else
 			result = (*printerr)("%s   ... %s\n", prefix, buffer);
 Unlock:
-		unlock(&output_lock);
+		wunlock(&output_lock);
 	return result;
 	}
 	return 0;
@@ -675,7 +675,7 @@ Output:
 		else
 			result = (*printstd)("%s%s\n", prefix, buffer);
 Unlock:
-		unlock(&output_lock);
+		wunlock(&output_lock);
 		return result;
 	}
 	return 0;
@@ -748,7 +748,7 @@ int output_raw(char *format,...) /**< \bprintf style argument list */
 			}
 			else
 				result = (*printerr)("%s%s",prefix, buffer);
-		unlock(&output_lock);
+		wunlock(&output_lock);
 		return result;
 	}
 	return 0;

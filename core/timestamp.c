@@ -724,7 +724,7 @@ char *timestamp_set_tz(char *tz_name)
 			tz_name="UTC0";
 		else
 			tz_name = guess;
-		unlock(&tzlock);
+		wunlock(&tzlock);
 	}
 	
 	load_tzspecs(tz_name);

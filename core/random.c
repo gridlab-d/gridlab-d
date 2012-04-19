@@ -181,7 +181,7 @@ TryAgain:
 	}
 
 	if ( state==ur_state )
-		unlock(&random_lock);
+		wunlock(&random_lock);
 	
 	return u;
 

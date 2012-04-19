@@ -478,7 +478,7 @@ void unit_init(void)
 	wlock(&trylock);
 	if (tried)
 	{
-		unlock(&trylock);
+		wunlock(&trylock);
 		return;
 	}
 	else
@@ -512,7 +512,7 @@ void unit_init(void)
 			The unit subsystem was not able to locate the unit file in the working directoy or in the directories
 			specified in GLPATH.
 		*/
-		unlock(&trylock);
+		wunlock(&trylock);
 		return;
 	}
 
@@ -607,7 +607,7 @@ void unit_init(void)
 	/* done */
 	fclose(fp);
 	
-	unlock(&trylock);
+	wunlock(&trylock);
 	return;
 }
 

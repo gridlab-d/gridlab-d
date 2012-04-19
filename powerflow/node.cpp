@@ -1022,7 +1022,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		//Zero the accumulators for later (meters and such)
 		WRITELOCK_OBJECT(obj);
 		current_inj[0] = current_inj[1] = current_inj[2] = 0.0;
-		UNLOCK_OBJECT(obj);
+		WRITEUNLOCK_OBJECT(obj);
 
 		//If we're the swing, toggle tracking variable
 		if (bustype==SWING)
@@ -1044,7 +1044,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					parNode->house_present=true;
 				}
 
-				UNLOCK_OBJECT(SubNodeParent);	//Unlock
+				WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
 			}
 		}
 
@@ -1077,7 +1077,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			NR_curr_branch = 0;	//Pull pointer off flag so other objects know it's built
 
 			//Unlock the swing bus
-			UNLOCK_OBJECT(NR_swing_bus);
+			WRITEUNLOCK_OBJECT(NR_swing_bus);
 
 			//Populate the connectivity matrix if a restoration object is present
 			if (restoration_object != NULL)
@@ -1131,7 +1131,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		/* reset the current accumulator */
 		WRITELOCK_OBJECT(obj);
 		current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
-		UNLOCK_OBJECT(obj);
+		WRITEUNLOCK_OBJECT(obj);
 
 		/* record the last sync voltage */
 		last_voltage[0] = voltage[0];
@@ -1208,7 +1208,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			current_inj[0] += d1;
 			temp_inj[0] = current_inj[0];
 			current_inj[0] += d2;
-			UNLOCK_OBJECT(obj);
+			WRITEUNLOCK_OBJECT(obj);
 
 #ifdef SUPPORT_OUTAGES
 			}
@@ -1230,7 +1230,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			current_inj[1] += d1;
 			temp_inj[1] = current_inj[1];
 			current_inj[1] += d2;
-			UNLOCK_OBJECT(obj);
+			WRITEUNLOCK_OBJECT(obj);
 			
 #ifdef SUPPORT_OUTAGES
 			}
@@ -1248,7 +1248,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				complex d = plink->tn[0]*current_inj[0] + plink->tn[1]*current_inj[1];
 				WRITELOCK_OBJECT(obj);
 				current_inj[2] += d;
-				UNLOCK_OBJECT(obj);
+				WRITEUNLOCK_OBJECT(obj);
 			}
 			else {
 				complex d = ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
@@ -1256,7 +1256,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 									? currentN : -(temp_inj[0] + temp_inj[1]);
 				WRITELOCK_OBJECT(obj);
 				current_inj[2] += d;
-				UNLOCK_OBJECT(obj);
+				WRITEUNLOCK_OBJECT(obj);
 			}
 		}
 		else if (has_phase(PHASE_D)) 
@@ -1315,7 +1315,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			current_inj[0] += d[0];
 			current_inj[1] += d[1];
 			current_inj[2] += d[2];
-			UNLOCK_OBJECT(obj);
+			WRITEUNLOCK_OBJECT(obj);
 #endif
 		}
 		else 
@@ -1348,7 +1348,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			current_inj[0] += d[0];
 			current_inj[1] += d[1];
 			current_inj[2] += d[2];
-			UNLOCK_OBJECT(obj);
+			WRITEUNLOCK_OBJECT(obj);
 #endif
 		}
 
@@ -1392,8 +1392,8 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				pNode->current_inj[0] += current_inj[0];
 				pNode->current_inj[1] += current_inj[1];
 				pNode->current_inj[2] += current_inj[2];
-				UNLOCK_OBJECT(obj->parent);
-				UNLOCK_OBJECT(obj);
+				WRITEUNLOCK_OBJECT(obj->parent);
+				READUNLOCK_OBJECT(obj);
 			}
 			else
 				GL_THROW("Node:%d's parent does not have the proper phase connection to be a parent.",obj->id);
@@ -1948,7 +1948,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					current_inj[0] += d[0];	
 					current_inj[1] += d[1];
 					current_inj[2] += d[2];
-					UNLOCK_OBJECT(obj);
+					WRITEUNLOCK_OBJECT(obj);
 				}
 				else if (has_phase(PHASE_S))	//Split phase node
 				{
@@ -2002,7 +2002,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					WRITELOCK_OBJECT(obj);
 					current_inj[0] += d[0];
 					current_inj[1] += d[1];
-					UNLOCK_OBJECT(obj);
+					WRITEUNLOCK_OBJECT(obj);
 
 					//Get information
 					if ((Triplex_Data != NULL) && ((Triplex_Data[0] != 0.0) || (Triplex_Data[1] != 0.0)))
@@ -2010,7 +2010,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 						WRITELOCK_OBJECT(obj);
 						/* normally the calc would not be inside the lock, but it's reflexive so that's ok */
 						current_inj[2] += Triplex_Data[0]*current_inj[0] + Triplex_Data[1]*current_inj[1];
-						UNLOCK_OBJECT(obj);
+						WRITEUNLOCK_OBJECT(obj);
 					}
 					else
 					{
@@ -2019,7 +2019,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 						current_inj[2] += ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
 										   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
 											? currentN : -((current_inj[0]-temp_current[2])+(current_inj[1]-temp_current[2]));
-						UNLOCK_OBJECT(obj);
+						WRITEUNLOCK_OBJECT(obj);
 					}
 				}
 				else					//Wye connection
@@ -2036,7 +2036,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					current_inj[0] += d[0];			
 					current_inj[1] += d[1];
 					current_inj[2] += d[2];
-					UNLOCK_OBJECT(obj);
+					WRITEUNLOCK_OBJECT(obj);
 				}
 
 				//If we are a child, apply our current injection directly up to our parent (links should have accumulated before us)
@@ -2049,8 +2049,8 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					ParLoadObj->current_inj[0] += current_inj[0];
 					ParLoadObj->current_inj[1] += current_inj[1];
 					ParLoadObj->current_inj[2] += current_inj[2];
-					UNLOCK_OBJECT(SubNodeParent);
-					UNLOCK_OBJECT(obj);
+					WRITEUNLOCK_OBJECT(SubNodeParent);
+					READUNLOCK_OBJECT(obj);
 				}
 			}
 			}//end uninitialized
@@ -2321,7 +2321,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			//Zero current for below calcuations.  May mess with tape (will have values at end of Postsync)
 			WRITELOCK_OBJECT(obj);
 			current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
-			UNLOCK_OBJECT(obj);
+			WRITEUNLOCK_OBJECT(obj);
 
 			//Calculate current if it has one
 			if ((bustype==PQ) | (bustype==PV)) //PQ and PV busses need current updates
@@ -2337,7 +2337,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 					current_inj[0] = d[0];
 					current_inj[1] = d[1];
 					current_inj[2] = d[2];
-					UNLOCK_OBJECT(obj);
+					WRITEUNLOCK_OBJECT(obj);
 				}
 				else //Three phase
 				{
@@ -2368,7 +2368,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 						current_inj[0] += d[0];	
 						current_inj[1] += d[1];
 						current_inj[2] += d[2];
-						UNLOCK_OBJECT(obj);
+						WRITEUNLOCK_OBJECT(obj);
 					}
 					else					//Wye connection
 					{
@@ -2384,7 +2384,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 						current_inj[0] += d[0];			
 						current_inj[1] += d[1];
 						current_inj[2] += d[2];
-						UNLOCK_OBJECT(obj);
+						WRITEUNLOCK_OBJECT(obj);
 					}
 				}
 			}
@@ -2392,7 +2392,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			{
 				WRITELOCK_OBJECT(obj);
 				current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);	//Swing has no load current or anything else
-				UNLOCK_OBJECT(obj);
+				WRITEUNLOCK_OBJECT(obj);
 			}
 
 			//Now accumulate branch currents, so can see what "flows" passes through the node
@@ -2415,7 +2415,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 						current_inj[0] += currlink->current_in[0];
 						current_inj[1] += currlink->current_in[1];
 						current_inj[2] += currlink->current_in[2];
-						UNLOCK_OBJECT(obj);
+						WRITEUNLOCK_OBJECT(obj);
 					}
 				}
 				else if (((currlink->to)->id) == (obj->id))	//see if we are the to end
@@ -2426,7 +2426,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 						current_inj[0] -= currlink->current_out[0];
 						current_inj[1] -= currlink->current_out[1];
 						current_inj[2] -= currlink->current_out[2];
-						UNLOCK_OBJECT(obj);
+						WRITEUNLOCK_OBJECT(obj);
 					}
 				}
 			}

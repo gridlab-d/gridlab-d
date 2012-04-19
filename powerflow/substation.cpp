@@ -198,7 +198,7 @@ TIMESTAMP substation::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	distribution_current[0] = current_inj[0];
 	distribution_current[1] = current_inj[1];
 	distribution_current[2] = current_inj[2];
-	UNLOCK_OBJECT(obj);
+	READUNLOCK_OBJECT(obj);
 	distribution_power = distribution_voltage[0]*(~distribution_current[0])
 				   + distribution_voltage[1]*(~distribution_current[1])
 				   + distribution_voltage[2]*(~distribution_current[2]);

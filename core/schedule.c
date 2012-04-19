@@ -190,7 +190,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		/* TROUBLESHOOT
 		   The schedule definition has too many blocks to compile.  Consolidate your schedule and try again.
 		 */
-	unlock(&scb_lock);
+		wunlock(&scb_lock);
 		return 0;
 	}
 
@@ -236,7 +236,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 				if(ndx > MAXVALUES-1)
 				{
 					output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, sch->block);
-					unlock(&scb_lock);
+					wunlock(&scb_lock);
 					return 0;
 				}
 				sch->data[sch->block*MAXVALUES+ndx] = value;
@@ -255,7 +255,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 				/* TROUBLESHOOT
 					The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 				*/
-				unlock(&scb_lock);
+				wunlock(&scb_lock);
 				return 0;
 			}
 		}
@@ -307,7 +307,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 									/* TROUBLESHOOT
 									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 									 */
-									unlock(&scb_lock);
+									wunlock(&scb_lock);
 									return 0;
 								}
 								else
@@ -327,7 +327,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}
 	}
 	strcpy(sch->blockname[sch->block],blockname);
-	unlock(&scb_lock);
+	wunlock(&scb_lock);
 	return 1;
 }
 

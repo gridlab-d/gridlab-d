@@ -229,11 +229,13 @@ char *object_get_unit(OBJECT *obj, char *name)
 	
 	rlock(&unitlock);
 	if(dimless == NULL){
-		unlock(&unitlock);
+		runlock(&unitlock);
 		wlock(&unitlock);
 		dimless=unit_find("1");
+		wunlock(&unitlock);
 	}
-	unlock(&unitlock);
+	else 
+		runlock(&unitlock);
 	
 	if(prop->unit != NULL){
 		return prop->unit->name;
@@ -2428,9 +2430,9 @@ void *object_remote_read(void *local, /**< local memory for data (must be correc
 		/* multithread */
 		else 
 		{
-			rlock(obj->lock);
+			rlock(&obj->lock);
 			memcpy(local,addr,size);
-			unlock(obj->lock);
+			runlock(&obj->lock);
 			return local;
 		}
 	}
@@ -2462,9 +2464,9 @@ void object_remote_write(void *local, /** local memory for data */
 		/* multithread */
 		else 
 		{
-			wlock(obj->lock);
+			wlock(&obj->lock);
 			memcpy(addr,local,size);
-			unlock(obj->lock);
+			wunlock(&obj->lock);
 		}
 	}
 	else

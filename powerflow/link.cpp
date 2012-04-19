@@ -2163,7 +2163,7 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		// update published current_out values;
 		READLOCK_OBJECT(to);
 		complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-		UNLOCK_OBJECT(to);
+		READUNLOCK_OBJECT(to);
 
 		read_I_out[0] = tc[0];
 		read_I_out[1] = tc[1];
@@ -2202,7 +2202,7 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 			t->voltage[0] = v0;
 			t->voltage[1] = v1;
 			t->voltage[2] = v2;
-			UNLOCK_OBJECT(to);
+			WRITEUNLOCK_OBJECT(to);
 
 #ifdef SUPPORT_OUTAGES		
 			t->condition=f->condition;
@@ -2584,7 +2584,7 @@ void link::calculate_power_splitphase()
 	{
 		READLOCK_OBJECT(to);
 		complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-		UNLOCK_OBJECT(to);
+		READUNLOCK_OBJECT(to);
 
 		if (SpecialLnk!=SPLITPHASE) 
 		{
@@ -2712,7 +2712,7 @@ void link::calculate_power()
 
 			READLOCK_OBJECT(to);
 			complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-			UNLOCK_OBJECT(to);
+			READUNLOCK_OBJECT(to);
 
 			indiv_power_out[0] = t->voltage[0]*~tc[0];
 			indiv_power_out[1] = t->voltage[1]*~tc[1];
