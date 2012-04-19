@@ -774,6 +774,8 @@ typedef enum {
 #define OF_FOREIGN	0x0010 /**< Object flag; indicates that object was created in a DLL and memory cannot be freed by core */
 #define OF_SKIPSAFE	0x0020 /**< Object flag; indicates that skipping updates is safe */
 #define OF_FORECAST 0x0040 /**< Object flag; inidcates that the object has a valid forecast available */
+#define OF_DEFERRED	0x0080	/**< Object flag; indicates that the object started to be initialized, but requested deferral */
+#define OF_INIT		0x0100	/**< Object flag; indicates that the object has been successfully initialized */
 #define OF_RERANK	0x4000 /**< Internal use only */
 
 /******************************************************************************

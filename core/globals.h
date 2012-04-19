@@ -229,6 +229,7 @@ GLOBAL int32 global_signal_timeout INIT(5000); /**< signal timeout in millisecon
 
 /* system call */
 GLOBAL int global_return_code INIT(0); /**< return code from last system call */
+GLOBAL int global_init_max_defer INIT(64); /**< maximum number of times objects will be deferred for initialization */
 
 /* remote data access */
 void *global_remote_read(void *local, GLOBALVAR *var); /** access remote global data */

@@ -181,6 +181,7 @@ static struct s_varmap {
 	{"slave_id", PT_int64, &global_slave_id, PA_PUBLIC},
 	{"return_code", PT_int32, &global_return_code, PA_REFERENCE},
 	{"module_compiler_flags", PT_enumeration, &global_module_compiler_flags, PA_PUBLIC, mcf_keys},
+	{"init_max_defer", PT_int32, &global_init_max_defer, PA_REFERENCE},
 	/* add new global variables here */
 };
 

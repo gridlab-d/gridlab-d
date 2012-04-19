@@ -491,6 +491,137 @@ static STATUS init_by_creation(){
 	return rv;
 }
 
+static int init_by_deferral_retry(OBJECT **def_array, int def_ct){
+	OBJECT *obj;
+	int ct = 0, i = 0, obj_rv = 0;
+	OBJECT **next_arr = (OBJECT **)malloc(def_ct * sizeof(OBJECT *)), **tarray = 0;
+	int rv = SUCCESS;
+	char b[64];
+	int retry = 1, tries = 0;
+
+	if(global_init_max_defer < 1){
+		output_warning("init_max_defer is less than 1, disabling deferred initialization");
+	}
+	while(retry){
+		if(global_init_max_defer <= tries){
+			output_error("init_by_deferral_retry(): exhausted initialization attempts");
+			rv = FAILED;
+			break;
+		}
+		memset(next_arr, 0, def_ct * sizeof(OBJECT *));
+		// initialize each object in def_array
+		for(i = 0; i < def_ct; ++i){
+			obj = def_array[i];
+			LOCK_OBJECT(obj);
+			obj_rv = object_init(obj);
+			switch(obj_rv){
+				case 0:
+					rv = FAILED;
+					memset(b, 0, 64);
+					output_error("init_by_deferral_retry(): object %s initialization failed", object_name(obj, b, 63));
+					break;
+				case 1:
+					obj->flags |= OF_INIT;
+					obj->flags -= OF_DEFERRED;
+					break;
+				case 2:
+					next_arr[ct] = obj;
+					++ct;
+					break;
+				// no default
+			}
+			UNLOCK_OBJECT(obj);
+			if(rv == FAILED){
+				free(next_arr);
+				return rv;
+			}
+		}
+
+		if(ct == def_ct){
+			output_error("init_by_deferral_retry(): all uninitialized objects deferred, model is unable to initialize");
+			rv = FAILED;
+			retry = 0;
+		} else if (0 == ct){
+			rv = SUCCESS;
+			retry = 0;
+		} else {
+			++tries;
+			retry = 1;
+			tarray = next_arr;
+			next_arr = def_array;
+			def_array = tarray;
+			def_ct = ct;
+			// three-point turn to swap the 'next' and the 'old' arrays, memset 0'ing at the top.
+		}
+	}
+
+	free(next_arr);
+	return rv;
+}
+
+static int init_by_deferral(){
+	OBJECT **def_array = 0;
+	int i = 0, obj_rv = 0, def_ct = 0;
+	OBJECT *obj = 0;
+	STATUS rv = SUCCESS;
+	char b[64];
+	def_array = (OBJECT **)malloc(sizeof(OBJECT *) * object_get_count());
+	obj = object_get_first();
+	while(obj != 0){
+		LOCK_OBJECT(obj);
+		obj_rv = object_init(obj);
+		switch (obj_rv){
+			case 0:
+				rv = FAILED;
+				memset(b, 0, 64);
+				output_error("init_by_deferral(): object %s initialization failed", object_name(obj, b, 63));
+				break;
+			case 1:
+				obj->flags |= OF_INIT;
+				break;
+			case 2:
+				def_array[def_ct] = obj;
+				++def_ct;
+				obj->flags |= OF_DEFERRED;
+				break;
+			// no default
+		}
+		UNLOCK_OBJECT(obj);
+
+		if(rv == FAILED){
+			free(def_array);
+			return rv;
+		}
+
+		obj = obj->next;
+	}
+
+	// recursecursecursive
+	if(def_ct > 0){
+		rv = init_by_deferral_retry(def_array, def_ct);
+		if(rv == FAILED){ // got hung up retrying
+				free(def_array);
+				return FAILED;
+		}
+	}
+	free(def_array);
+
+	obj = object_get_first();
+	while (obj != 0){
+		if((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME){
+			if(0 == strcmp(obj->name, "")){
+				output_warning("init: object %s:%d should have a name, but doesn't", obj->oclass->name, obj->id);
+				/* TROUBLESHOOT
+				   The object indicated has been flagged by the module which implements its class as one which must be named
+				   to work properly.  Please provide the object with a name and try again.
+				 */
+			}
+		}
+		obj = obj->next;
+	}
+	return SUCCESS;
+}
+
 static STATUS init_all(void)
 {
 //	OBJECT *obj;
@@ -510,8 +641,7 @@ static STATUS init_all(void)
 			rv = init_by_creation();
 			break;
 		case IS_DEFERRED:
-			output_fatal("Deferred initialization mode not yet supported");
-			rv = FAILED;
+			rv = init_by_deferral();
 			break;
 		case IS_BOTTOMUP:
 			output_fatal("Bottom-up rank-based initialization mode not yet supported");

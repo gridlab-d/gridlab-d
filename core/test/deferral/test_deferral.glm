@@ -1,0 +1,64 @@
+#set tmp=/mytemp
+#setenv GRIDLABD=../../../core
+#set init_sequence=DEFERRED
+#set suppress_repeat_messages=0
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2001-01-02 00:00:00 PST';
+}
+
+class test {
+	object waiton;
+	intrinsic create (object parent)
+	{
+		return SUCCESS;
+	};
+	intrinsic init(object parent)
+	{
+		char str[64], str2[64];
+		gl_name(my, str, 63);
+		gl_output("initializing %s", str);
+		if(waiton != 0){
+		if((waiton->flags & OF_INIT) == OF_INIT){
+				// we're good, go!
+				return 1;
+			} else {
+				// defer initialization until the desired object has initialized
+				gl_name(waiton, str2, 63);
+				gl_output("%s is waiting on %s", str, str2);
+				return 2;
+			}
+		} else {
+			return 1;
+		}
+	};
+	intrinsic sync(TIMESTAMP t0, TIMESTAMP t1)
+	{
+		return TS_NEVER;
+	};
+}
+
+object test{
+	name obj1;
+}
+
+object test{
+	name obj2;
+}
+object test{
+	name obj3;
+	waiton obj6;
+}
+object test{
+	name obj4;
+	waiton obj3;
+}
+object test{
+	name obj5;
+	waiton obj3;
+}
+object test{
+	name obj6;
+}
