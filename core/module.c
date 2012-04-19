@@ -845,7 +845,7 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
 #define CC "c:/mingw/bin/gcc"
 #define DL "c:/mingw/bin/dlltool"
 #define CCFLAGS "-DWIN32"
-#define LDFLAGS "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" 
+#define LDFLAGS "" /* "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" */
 #define fstat _fstat
 #define stat _stat
 #else
