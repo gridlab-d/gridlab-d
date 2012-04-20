@@ -56,8 +56,8 @@ typedef struct s_tmy {
 EXPORT int64 calculate_solar_radiation_degrees(OBJECT *obj, double tilt, double orientation, double *value);
 EXPORT int64 calculate_solar_radiation_radians(OBJECT *obj, double tilt, double orientation, double *value);
 //sjin: add solar elevation and azimuth published funcions
-EXPORT int64 calculate_solar_elevation(OBJECT *obj, double lititude, double *value);
-EXPORT int64 calculate_solar_azimuth(OBJECT *obj, double lititude, double *value);
+EXPORT int64 calculate_solar_elevation(OBJECT *obj, double latitude, double *value);
+EXPORT int64 calculate_solar_azimuth(OBJECT *obj, double latitude, double *value);
 
 /**
  * This implements a Gridlab-D specific TMY2 data reader.  It was implemented
@@ -140,27 +140,30 @@ public:
 
 };
 
+class climate : protected gld_object {
+	
+	// get_/set_ accessors for classes in this module only (locks on access)
+	GL_STRING(char32,city); ///< the city
+	GL_DATA(double,temperature); ///< the termperature (degF)
+	GL_DATA(double,humidity); ///< the relative humidity (%)
+	GL_DATA(double,wind_speed); ///< wind speed (m/s)
+	GL_DATA(double,tz_meridian); ///< timezone meridian
+	GL_DATA(double,solar_global);
+	GL_DATA(double,solar_direct);
+	GL_DATA(double,solar_diffuse);
+	GL_DATA(double,ground_reflectivity); // %
 
-
-class climate {
-public:
-	char32 city; ///< the city
+	// data not shared with classes in this module (no locks)
+private:
 	char1024 tmyfile; ///< the TMY file name
 	OBJECT *reader;
-	double temperature; ///< the temperature (degF)
 	double temperature_raw; ///< the temperature (degC)
-	double humidity; ///< the relative humidity (%)
 	double solar_flux[CP_LAST]; ///< Solar flux array (W/sf) Elements are in order: [S, SE, SW, E, W, NE, NW, N, H]
-	double solar_direct;
-	double solar_diffuse;
-	double solar_global;
 	double solar_raw;
-	double wind_speed; ///< wind speed (m/s)
 	double wind_dir; ///< wind direction (0-360)
 	double wind_gust; ///< wind gusts (m/s)
 	double rainfall; // in/h
 	double snowdepth; // in
-	double ground_reflectivity; // %
 	struct {
 		double low;
 		double low_day;
@@ -170,7 +173,6 @@ public:
 	} record;
 	CLIMATE_INTERPOLATE interpolate;
 	// add some of the init() vars that are useful to capture
-	double tz_meridian;
 	//sjin: add solar elevation and azimuth variables
 	double solar_elevation;
 	double solar_azimuth;

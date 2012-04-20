@@ -84,7 +84,7 @@
    (3) if the CAS operation fails, the lock process starts over at (1)
    (4) to unlock the lock value is incremented (which clears the low bit and increments the lock count).
  */
-static inline void _lock(unsigned int *lock)
+static inline void rlock(unsigned int *lock)
 {
 	unsigned int value;
 
@@ -92,15 +92,24 @@ static inline void _lock(unsigned int *lock)
 		value = (*lock);
 	} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
 }
-static inline void _unlock(unsigned int *lock)
+static inline void wlock(unsigned int *lock)
+{
+	unsigned int value;
+
+	do {
+		value = (*lock);
+	} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
+}
+static inline void runlock(unsigned int *lock)
 {
 	unsigned int value = *lock;
 	atomic_increment(lock);
 }
-#define rlock _lock 
-#define wlock _lock 
-#define runlock _unlock
-#define wunlock _unlock
+static inline void wunlock(unsigned int *lock)
+{
+	unsigned int value = *lock;
+	atomic_increment(lock);
+}
 
 #elif defined METHOD1 
 /**********************************************************************************

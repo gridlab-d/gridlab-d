@@ -29,7 +29,7 @@ double surface_angles[] = {
 };
 
 //sjin: add solar elevation wrapper funcions
-EXPORT int64 calculate_solar_elevation(OBJECT *obj, double lititude, double *value)
+EXPORT int64 calculate_solar_elevation(OBJECT *obj, double latitude, double *value)
 {
 	static SolarAngles sa; // just for the functions
 	double std_time = 0.0;
@@ -50,19 +50,19 @@ EXPORT int64 calculate_solar_elevation(OBJECT *obj, double lititude, double *val
 	
 	gl_localtime(obj->clock, &dt);
 	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0;
-	solar_time = sa.solar_time(std_time, doy, cli->tz_meridian, obj->longitude);
+	solar_time = sa.solar_time(std_time, doy, cli->get_tz_meridian(), obj->longitude);
 
 	double hr_ang = -(15.0 * PI_OVER_180)*(solar_time-12.0); // morning +, afternoon -
 
     double decl = 0.409280*sin(2.0*PI*(284+doy)/365);
 
-	*value = asin(sin(decl)*sin(lititude) + cos(decl)*cos(lititude)*cos(hr_ang));
+	*value = asin(sin(decl)*sin(latitude) + cos(decl)*cos(latitude)*cos(hr_ang));
 
     return 1;
 }
 
 //sjin: add solar azimuth wrapper funcions
-EXPORT int64 calculate_solar_azimuth(OBJECT *obj, double lititude, double *value)
+EXPORT int64 calculate_solar_azimuth(OBJECT *obj, double latitude, double *value)
 {
 	static SolarAngles sa; // just for the functions
 	double std_time = 0.0;
@@ -83,24 +83,26 @@ EXPORT int64 calculate_solar_azimuth(OBJECT *obj, double lititude, double *value
 
 	gl_localtime(obj->clock, &dt);
 	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0;
-	solar_time = sa.solar_time(std_time, doy, cli->tz_meridian, obj->longitude);
+	solar_time = sa.solar_time(std_time, doy, cli->get_tz_meridian(), obj->longitude);
 
 	double hr_ang = -(15.0 * PI_OVER_180)*(solar_time-12.0); // morning +, afternoon -
 
     double decl = 0.409280*sin(2.0*PI*(284+doy)/365);
 
-	double alpha = (90.0 * PI_OVER_180) - lititude + decl;
+	double alpha = (90.0 * PI_OVER_180) - latitude + decl;
 
-	*value = acos( (sin(decl)*cos(lititude) - cos(decl)*sin(lititude)*cos(hr_ang))/cos(alpha) );
+	*value = acos( (sin(decl)*cos(latitude) - cos(decl)*sin(latitude)*cos(hr_ang))/cos(alpha) );
 
     return 1;
 }
 
-EXPORT int64 calculate_solar_radiation_degrees(OBJECT *obj, double tilt, double orientation, double *value){
+EXPORT int64 calculate_solar_radiation_degrees(OBJECT *obj, double tilt, double orientation, double *value)
+{
 	return calculate_solar_radiation_radians(obj, RAD(tilt), RAD(orientation), value);
 }
 
-EXPORT int64 calculate_solar_radiation_radians(OBJECT *obj, double tilt, double orientation, double *value){
+EXPORT int64 calculate_solar_radiation_radians(OBJECT *obj, double tilt, double orientation, double *value)
+{
 	static SolarAngles sa; // just for the functions
 	double ghr, dhr, dnr = 0.0;
 	double cos_incident = 0.0;
@@ -120,16 +122,16 @@ EXPORT int64 calculate_solar_radiation_radians(OBJECT *obj, double tilt, double 
 		//throw "climate/calc_solar: input object is not a climate object";
 		return 0;
 	}
-	ghr = cli->solar_global;
-	dhr = cli->solar_diffuse;
-	dnr = cli->solar_direct;
+	ghr = cli->get_solar_global();
+	dhr = cli->get_solar_diffuse();
+	dnr = cli->get_solar_direct();
 
 	gl_localtime(obj->clock, &dt);
 	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0;
-	solar_time = sa.solar_time(std_time, doy, cli->tz_meridian, obj->longitude);
+	solar_time = sa.solar_time(std_time, doy, cli->get_tz_meridian(), obj->longitude);
 	cos_incident = sa.cos_incident(RAD(obj->latitude), tilt, orientation, solar_time, doy);
 
-	*value = dnr * cos_incident + dhr * (1 + cos(tilt)) / 2 + ghr * (1 - cos(tilt)) * cli->ground_reflectivity / 2;
+	*value = dnr * cos_incident + dhr * (1 + cos(tilt)) / 2 + ghr * (1 - cos(tilt)) * cli->get_ground_reflectivity() / 2;
 
 	return 1;
 }
@@ -146,7 +148,8 @@ EXPORT int64 calculate_solar_radiation_radians(OBJECT *obj, double tilt, double 
 	http://rredc.nrel.gov/solar/pubs/tmy2/tab3-2.html
  @{
  **/
-int tmy2_reader::open(const char *file){
+int tmy2_reader::open(const char *file)
+{
 	fp = fopen(file, "r");
 
 	if(fp == NULL){
@@ -168,7 +171,8 @@ int tmy2_reader::open(const char *file){
 	Reads the next line in and stores it in a character buffer.
 */
 
-int tmy2_reader::next(){
+int tmy2_reader::next()
+{
 	// read the next line into the buffer using fgets.
 	char *val = fgets(buf,500,fp);
 
@@ -188,7 +192,8 @@ int tmy2_reader::next(){
 	@param long_deg longitude degrees
 	@param long_min longitude minutes
 */
-int tmy2_reader::header_info(char* city, char* state, int* degrees, int* minutes, int* long_deg, int* long_min){
+int tmy2_reader::header_info(char* city, char* state, int* degrees, int* minutes, int* long_deg, int* long_min)
+{
 	if(city) strcpy(city,data_city); /* potential buffer overflow */
 	if(state) strcpy(state,data_state); /* potential buffer overflow */
 	if(degrees) *degrees = lat_degrees;
@@ -210,7 +215,8 @@ int tmy2_reader::header_info(char* city, char* state, int* degrees, int* minutes
 	@param hour hour of day
 */
 
-int tmy2_reader::read_data(double *dnr, double *dhr, double *ghr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind, double *precip, double *snowDepth){
+int tmy2_reader::read_data(double *dnr, double *dhr, double *ghr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind, double *precip, double *snowDepth)
+{
 	int rct = 0;
 	int tmp_dnr, tmp_dhr, tmp_tdb, tmp_rh, tmp_ws, tmp_precip, tmp_sf, tmp_ghr;
 	//sscanf(buf, "%*2s%2d%2d%2d%*14s%4d%*2s%4d%*40s%4d%8*s%3d%*s",month,day,hour,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh);
@@ -359,7 +365,7 @@ climate::climate(MODULE *module)
 int climate::create(void)
 {
 	memcpy(this,defaults,sizeof(climate));
-	return 1;
+	return gld_object::create();
 }
 
 int climate::isa(char *classname)
@@ -373,7 +379,6 @@ int climate::isa(char *classname)
 int climate::init(OBJECT *parent)
 {
 	char *dot = 0;
-	OBJECT *obj=OBJECTHDR(this);
 	double meter_to_feet = 1.0;
 
 	reader_type = RT_NONE;
@@ -446,8 +451,8 @@ int climate::init(OBJECT *parent)
 	/* The city/state data isn't used anywhere.  -mhauer */
 	//file.header_info(cty,st,&lat_deg,&lat_min,&long_deg,&long_min);
 	file.header_info(NULL,NULL,&lat_deg,&lat_min,&long_deg,&long_min);
-	obj->latitude = (double)lat_deg + ((double)lat_min) / 60;
-	obj->longitude = (double)long_deg + ((double)long_min) / 60;
+	my->latitude = (double)lat_deg + ((double)lat_min) / 60;
+	my->longitude = (double)long_deg + ((double)long_min) / 60;
 	if(0 == gl_convert("m", "ft", &meter_to_feet)){
 		gl_error("climate::init unable to gl_convert() 'm' to 'ft'!");
 		return 0;
@@ -492,17 +497,17 @@ int climate::init(OBJECT *parent)
 			tmy[hoy].solar_raw = dnr;
 			
 			// calculate the solar radiation
-			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(obj->longitude));
+			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(my->longitude));
 			double sol_rad = 0.0;
 
-			tmy[hoy].solar_elevation = sa->altitude(doy, obj->latitude, sol_time);
-			tmy[hoy].solar_azimuth = sa->azimuth(doy, obj->latitude, sol_time);
+			tmy[hoy].solar_elevation = sa->altitude(doy, my->latitude, sol_time);
+			tmy[hoy].solar_azimuth = sa->azimuth(doy, my->latitude, sol_time);
 
 			for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				if(c_point == CP_H)
-					sol_rad = file.calc_solar(CP_E,doy,RAD(obj->latitude),sol_time,dnr,dhr,ghr,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
+					sol_rad = file.calc_solar(CP_E,doy,RAD(my->latitude),sol_time,dnr,dhr,ghr,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
 				else
-					sol_rad = file.calc_solar(c_point,doy,RAD(obj->latitude),sol_time,dnr,dhr,ghr,ground_reflectivity);//(double)dnr * cos_incident + dhr;
+					sol_rad = file.calc_solar(c_point,doy,RAD(my->latitude),sol_time,dnr,dhr,ghr,ground_reflectivity);//(double)dnr * cos_incident + dhr;
 				/* TMY2 solar radiation data is in Watt-hours per square meter. */
 				tmy[hoy].solar[c_point] = sol_rad;
 
@@ -532,18 +537,19 @@ int climate::init(OBJECT *parent)
 	presync(gl_globalclock);
 
 	/* enable forecasting if specified */
-	if ( strcmp(forecast,"")!=0 && gl_forecast_create(obj,"")==NULL )
+	if ( strcmp(forecast,"")!=0 && gl_forecast_create(my,"")==NULL )
 	{
 		char buf[1024];
-		gl_error("%s: forecast '%s' is not valid", gl_name(obj,buf,sizeof(buf))?buf:"(object?)", forecast);
+		gl_error("%s: forecast '%s' is not valid", gl_name(my,buf,sizeof(buf))?buf:"(object?)", forecast);
 		return 0;
 	}
-	else if (obj->forecast)
-	{	/* initialize the forecast data entity */
-		FORECAST *fc = obj->forecast;
-		fc->propref = gl_find_property(obj->oclass,"temperature");
-		gl_forecast_save(fc,obj->clock,3600,0,NULL);
-		obj->flags |= OF_FORECAST;
+	else if (get_forecast()!=NULL)
+	{	
+		/* initialize the forecast data entity */
+		FORECAST *fc = get_forecast();
+		fc->propref = gl_find_property(my->oclass,"temperature");
+		gl_forecast_save(fc,my->clock,3600,0,NULL);
+		my->flags |= OF_FORECAST;
 	}
 
 	return 1;
@@ -554,7 +560,6 @@ void climate::update_forecasts(TIMESTAMP t0)
 	static const int Nh = 72; /* number of hours in forecast */
 	static const int dt = 3600; /* number of seconds in forecast interval */
 
-	OBJECT *my = OBJECTHDR(this);
 	FORECAST *fc;
 	
 	for ( fc=my->forecast ; fc!=NULL ; fc=fc->next )
@@ -721,8 +726,7 @@ EXPORT int create_climate(OBJECT **obj, ///< a pointer to the OBJECT*
 		{
 			climate *my = OBJECTDATA(*obj,climate);
 			gl_set_parent(*obj,parent);
-			my->create();
-			return 1;
+			return my->create();
 		}
 		else
 			return 0;

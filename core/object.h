@@ -355,7 +355,11 @@ void object_remote_write(void *local, OBJECT *obj, PROPERTY *prop); /** access r
 #define OBJECTDATA(X,T) ((T*)((X)?((X)+1):NULL)) /**< get the object data structure */
 #define GETADDR(O,P) ((O)?((void*)((char*)((O)+1)+(unsigned int64)((P)->addr))):NULL) /**< get the addr of an object's property */
 #define OBJECTHDR(X) ((X)?(((OBJECT*)X)-1):NULL) /**< get the header from the object's data structure */
-#define MYPARENT ((((OBJECT*)this)-1)->parent) /**< get the parent from the object's data structure */
+
+#define MY (((OBJECT*)this)-1)
+#define MYPARENT (MY->parent) /**< get the parent from the object's data structure */
+#define MYCLOCK (MY->clock) /**< get an object's own clock */
+#define MYRANK (MY->rank) /**< get an object's own rank */
 
 #endif
 

@@ -1097,6 +1097,91 @@ inline void gl_write(void *local, /** local memory for data */
 #else
 #endif
 
+/**************************************************************************************
+ * GRIDLABD BASE CLASSES (as of V3.0)
+ **************************************************************************************/
+#ifdef __cplusplus
+
+#include "lock.h"
+
+class gld_module;
+class gld_class;
+class gld_property;
+class gld_unit;
+
+// accessors
+#define GL_DATA(T,X) private: T X; public: \
+	inline T get_##X(void) { rlock(); return X; runlock(); }; \
+	inline void set_##X(T p) { wlock(); X=p; wunlock(); }; 
+#define GL_STRING(T,X) 	private: T X; public: \
+	inline char* get_##X(void) { rlock(); return X; runlock(); }; \
+	inline void set_##X(char *p) { wlock(); strncpy(X,p,sizeof(X)); wunlock(); }; 
+#define GL_PTR(T,X) private: T* X; public: \
+	inline T* get_##X(void) { rlock(); return X; runlock(); }; \
+	inline void set_##X(T* p) { wlock(); X=p; wunlock(); }; 
+#define GL_ARRAY(T,X,S) private: T X S; public: \
+	inline T* get_##X(void) { rlock(); return X; runlock(); }; \
+	inline void set_##X(T* p) { wlock(); memcpy(X,p,sizeof(X)); wunlock(); }; 
+
+class gld_object {
+protected:
+	// data (internal use only)
+	OBJECT *my;
+
+public:
+	// header get accessors (no locking)
+	inline OBJECTNUM get_id(void) { return my->id; };
+	inline char* get_groupid(void) { return my->groupid; };
+	inline CLASS* get_oclass(void) { return my->oclass; };
+	inline OBJECT *get_next(void) { return my->next; };
+	inline OBJECT *get_parent(void) { return my->parent; };
+	inline OBJECTRANK get_rank(void) { return my->rank; };
+	inline TIMESTAMP get_clock(void) { return my->clock; };
+	inline TIMESTAMP get_valid_to(void) { return my->valid_to; };
+	inline TIMESTAMP get_schedule_skew(void) { return my->schedule_skew; };
+	inline FORECAST *get_forecast(void) { return my->forecast; };
+	inline double get_latitude(void) { return my->latitude; };
+	inline double get_longitude(void) { return my->longitude; };
+	inline TIMESTAMP get_in_svc(void) { return my->in_svc; };
+	inline TIMESTAMP get_out_svc(void) { return my->out_svc; };
+	inline char *get_name(void) { return my->name; };
+	inline int get_tp_affinity(void) { return my->tp_affinity; };
+	inline NAMESPACE *get_space(void) { return my->space; };
+	inline unsigned int get_lock(void) { return my->lock; };
+	inline unsigned int get_rng_state(void) { return my->rng_state; };
+	inline unsigned long get_flags(unsigned long mask=0xffffffff) { return (my->flags)&mask; };
+
+protected:
+	// header set accessors (no locking)
+	inline void set_forecast(FORECAST *fs) { my->forecast=fs; };
+
+protected:
+	// locking (self)
+	inline void rlock(void) { ::rlock(&my->lock); };
+	inline void runlock(void) { ::runlock(&my->lock); };
+	inline void wlock(void) { ::wlock(&my->lock); };
+	inline void wunlock(void) { ::wunlock(&my->lock); };
+	// locking (others)
+	inline void rlock(OBJECT *obj) { ::rlock(&obj->lock); };
+	inline void runlock(OBJECT *obj) { ::runlock(&obj->lock); };
+	inline void wlock(OBJECT *obj) { ::wlock(&obj->lock); };
+	inline void wunlock(OBJECT *obj) { ::wunlock(&obj->lock); };
+
+protected:
+	inline int create(void) { my=OBJECTHDR(this); return 1; };
+
+public:
+	// external accessors
+
+public:
+	// gridlabd core accessors
+	inline int set_dependent(OBJECT *obj) { return callback->set_dependent(my,obj); };
+	inline int set_parent(OBJECT *obj) { return callback->set_parent(my,obj); };
+	inline int set_rank(unsigned int r) { return callback->set_rank(my,r); };
+	bool isa(char *type) { return callback->object_isa(my,type) ? true : false; };
+};
+#endif
 
 /** @} **/
 #endif
+
