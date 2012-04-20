@@ -1356,7 +1356,7 @@ public: // core interface
 	inline int set_dependent(OBJECT *obj) { return callback->set_dependent(my,obj); };
 	inline int set_parent(OBJECT *obj) { return callback->set_parent(my,obj); };
 	inline int set_rank(unsigned int r) { return callback->set_rank(my,r); };
-	bool isa(char *type) { return callback->object_isa(my,type) ? true : false; };
+	inline bool isa(char *type) { return callback->object_isa(my,type) ? true : false; };
 
 public: // iterators
 	inline bool is_last(void) { return my==NULL || my->next==NULL; };
