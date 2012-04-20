@@ -1107,6 +1107,17 @@ inline void gl_write(void *local, /** local memory for data */
 #include "class.h"
 #include "property.h"
 
+class gld_rlock {
+private: OBJECT *my;
+public: gld_rlock(OBJECT *obj) : my(obj) {::rlock(&obj->lock);}; 
+public: ~gld_rlock(void) {::runlock(&my->lock);};
+};
+class gld_wlock {
+private: OBJECT *my;
+public: gld_wlock(OBJECT *obj) : my(obj) {::wlock(&obj->lock);}; 
+public: ~gld_wlock(void) {::wunlock(&my->lock);};
+};
+
 class gld_module {
 
 private: // data
@@ -1148,6 +1159,9 @@ public: // read accessors
 public: // write accessors
 	inline void set_trl(TECHNOLOGYREADINESSLEVEL t) { oclass->trl=t; };
 
+public:
+	static inline CLASS *create(MODULE *m, char *n, size_t s, unsigned int f) { return callback->register_class(m,n,(unsigned int)s,f); };
+	
 public: // iterators
 	inline bool is_last(void) { return oclass==NULL || oclass->next==NULL; };
 	inline CLASS *get_next(void) { return oclass->next; };
@@ -1288,18 +1302,22 @@ public: // iterators
 };
 
 // object data declaration/accessors
-#define GL_DATA(T,X) protected: T X; public: \
-	inline T get_##X(void) { rlock(); return X; runlock(); }; \
-	inline void set_##X(T p) { wlock(); X=p; wunlock(); }; 
+#define GL_ATOMIC(T,X) protected: T X; public: \
+	inline T get_##X(void) { return X; }; \
+	inline void set_##X(T p) { X=p; }; 
+#define GL_STRUCT(T,X) protected: T X; public: \
+	inline T get_##X(void) { gld_rlock _lock(my); return X; }; \
+	inline void set_##X(T p) { gld_wlock _lock(my); X=p; }; 
 #define GL_STRING(T,X) 	protected: T X; public: \
-	inline char* get_##X(void) { rlock(); return X; runlock(); }; \
-	inline void set_##X(char *p) { wlock(); strncpy(X,p,sizeof(X)); wunlock(); }; 
-#define GL_PTR(T,X) protected: T* X; public: \
-	inline T* get_##X(void) { rlock(); return X; runlock(); }; \
-	inline void set_##X(T* p) { wlock(); X=p; wunlock(); }; 
-#define GL_ARRAY(T,X,S) protected: T X S; public: \
-	inline T* get_##X(void) { rlock(); return X; runlock(); }; \
-	inline void set_##X(T* p) { wlock(); memcpy(X,p,sizeof(X)); wunlock(); }; 
+	inline char* get_##X(void) { gld_rlock _lock(my); return X; }; \
+	inline char get_##X(size_t n) { gld_rlock _lock(my); return X[n]; }; \
+	inline void set_##X(char *p) { gld_wlock _lock(my); strncpy(X,p,sizeof(X)); }; \
+	inline void set_##X(size_t n, char c) { gld_wlock _lock(my); X[n]=c; }; 
+#define GL_ARRAY(T,X,S) protected: T X[S]; public: \
+	inline T* get_##X(void) { gld_rlock _lock(my); return X; }; \
+	inline T get_##X(size_t n) { gld_rlock _lock(my); return X[n]; }; \
+	inline void set_##X(T* p) { gld_wlock _lock(my); memcpy(X,p,sizeof(X)); }; \
+	inline void set_##X(size_t n, T m) { gld_wlock _lock(my); X[n]=m; }; 
 
 class gld_object {
 
@@ -1307,7 +1325,7 @@ protected: // data (internal use only)
 	OBJECT *my;
 
 public: // constructors
-	// gld_object should never be constructed
+	gld_object(OBJECT *obj) : my(obj) {};
 
 public: // header read accessors (no locking)
 	inline OBJECTNUM get_id(void) { return my->id; };
@@ -1332,6 +1350,8 @@ public: // header read accessors (no locking)
 
 protected: // header write accessors (no locking)
 	inline void set_forecast(FORECAST *fs) { my->forecast=fs; };
+	inline void set_latitude(double x) { my->latitude=x; };
+	inline void set_longitude(double x) { my->longitude=x; };
 
 protected: // locking (self)
 	inline void rlock(void) { ::rlock(&my->lock); };

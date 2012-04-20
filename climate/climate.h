@@ -148,43 +148,42 @@ typedef struct {
 	double solar;
 } CLIMATERECORD;
 
-class climate : protected gld_object {
-	
-	// get_/set_ accessors for classes in this module only (locks on access)
-	GL_STRING(char32,city); ///< the city
-	GL_DATA(double,temperature); ///< the termperature (degF)
-	GL_DATA(double,humidity); ///< the relative humidity (%)
-	GL_DATA(double,wind_speed); ///< wind speed (m/s)
-	GL_DATA(double,tz_meridian); ///< timezone meridian
-	GL_DATA(double,solar_global); ///< global solar flux (W/sf)
-	GL_DATA(double,solar_direct); ///< direct solar flux (W/sf)
-	GL_DATA(double,solar_diffuse); ///< diffuse solar flux (W/sf)
-	GL_DATA(double,ground_reflectivity); // flux reflectivity of ground (W/sf)
-	GL_DATA(CLIMATERECORD,record); ///< record values (low,low_day,high,high_day,solar)
-	GL_DATA(double,rainfall); ///< rainfall rate (in/h)
-	GL_DATA(double,snowdepth); ///< snow accumulation (in)
-	GL_STRING(char1024,forecast_spec); ///< forecasting model
-
-	// data not shared with classes in this module (no locks)
-private:
-	char1024 tmyfile; ///< the TMY file name
-	OBJECT *reader;
-	double temperature_raw; ///< the temperature (degC)
-	double solar_flux[CP_LAST]; ///< Solar flux array (W/sf) Elements are in order: [S, SE, SW, E, W, NE, NW, N, H]
-	double solar_raw;
-	double wind_dir; ///< wind direction (0-360)
-	double wind_gust; ///< wind gusts (m/s)
-	CLIMATE_INTERPOLATE interpolate;
-	// add some of the init() vars that are useful to capture
-	//sjin: add solar elevation and azimuth variables
-	double solar_elevation;
-	double solar_azimuth;
-private:
-	enum READERTYPE {
+typedef	enum {
 		RT_NONE,
 		RT_TMY2,
 		RT_CSV,
-	}  reader_type;
+} READERTYPE;
+
+class climate : protected gld_object {
+	
+	// get_/set_ accessors for classes in this module only (non-atomic data need locks on access)
+	GL_STRING(char32,city); ///< the city
+	GL_ATOMIC(double,temperature); ///< the temperature (degF)
+	GL_ATOMIC(double,humidity); ///< the relative humidity (%)
+	GL_ATOMIC(double,wind_speed); ///< wind speed (m/s)
+	GL_ATOMIC(double,tz_meridian); ///< timezone meridian
+	GL_ATOMIC(double,solar_global); ///< global solar flux (W/sf)
+	GL_ATOMIC(double,solar_direct); ///< direct solar flux (W/sf)
+	GL_ATOMIC(double,solar_diffuse); ///< diffuse solar flux (W/sf)
+	GL_ATOMIC(double,ground_reflectivity); // flux reflectivity of ground (W/sf)
+	GL_STRUCT(CLIMATERECORD,record); ///< record values (low,low_day,high,high_day,solar)
+	GL_ATOMIC(double,rainfall); ///< rainfall rate (in/h)
+	GL_ATOMIC(double,snowdepth); ///< snow accumulation (in)
+	GL_STRING(char1024,forecast_spec); ///< forecasting model
+	GL_STRING(char1024,tmyfile); ///< the TMY file name
+	GL_ATOMIC(OBJECT*,reader); ///< the file reader to use when loading data
+	GL_ATOMIC(double,temperature_raw); ///< the temperature (degC)
+	GL_ARRAY(double,solar_flux,CP_LAST); ///< Solar flux array (W/sf) Elements are in order: [S, SE, SW, E, W, NE, NW, N, H]
+	GL_ATOMIC(double,solar_raw);
+	GL_ATOMIC(double,wind_dir);
+	GL_ATOMIC(double,wind_gust);
+	GL_ATOMIC(CLIMATE_INTERPOLATE,interpolate);
+	GL_ATOMIC(double,solar_elevation);
+	GL_ATOMIC(double,solar_azimuth);
+
+	// data not shared with classes in this module (no locks needed)
+private:
+	READERTYPE reader_type;
 	SolarAngles *sa;
 	tmy2_reader file;
 	weather_reader *reader_hndl;
