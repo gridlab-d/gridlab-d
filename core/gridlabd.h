@@ -1274,8 +1274,8 @@ public: // read accessors
 public: // write accessors
 
 public: // special operations
-	template <class T> inline void get(T &value) { ::rlock(obj->lock); value = *(T*)prop->get_addr(); ::runlock(obj->lock); };
-	template <class T> inline void set(T &value) { ::wlock(obj->lock); *(T*)prop->get_addr()=value; ::wunlock(obj->lock); };
+	template <class T> inline void get(T &value) { ::rlock(obj->lock); value = *(T*)(gld_property(prop).get_addr()); ::runlock(obj->lock); };
+	template <class T> inline void set(T &value) { ::wlock(obj->lock); *(T*)(gld_property(prop).get_addr())=value; ::wunlock(obj->lock); };
 
 public: // iterators
 	inline bool is_last(void) { return prop==NULL || prop->next==NULL; };
