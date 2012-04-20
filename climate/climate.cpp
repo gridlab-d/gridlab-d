@@ -337,7 +337,7 @@ climate::climate(MODULE *module)
 			PT_double,"solar_raw[W/sf]",PADDR(solar_raw),
 			PT_double,"ground_reflectivity[%]",PADDR(ground_reflectivity),
 			PT_object,"reader",PADDR(reader),
-			PT_char1024,"forecast",PADDR(forecast),PT_DESCRIPTION,"forecasting specifications",
+			PT_char1024,"forecast",PADDR(forecast_spec),PT_DESCRIPTION,"forecasting specifications",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(climate));
 		strcpy(city,"");
@@ -537,10 +537,10 @@ int climate::init(OBJECT *parent)
 	presync(gl_globalclock);
 
 	/* enable forecasting if specified */
-	if ( strcmp(forecast,"")!=0 && gl_forecast_create(my,"")==NULL )
+	if ( strcmp(get_forecast_spec(),"")!=0 && gl_forecast_create(my,get_forecast_spec())==NULL )
 	{
 		char buf[1024];
-		gl_error("%s: forecast '%s' is not valid", gl_name(my,buf,sizeof(buf))?buf:"(object?)", forecast);
+		gl_error("%s: forecast '%s' is not valid", gl_name(my,buf,sizeof(buf))?buf:"(object?)", get_forecast_spec());
 		return 0;
 	}
 	else if (get_forecast()!=NULL)
@@ -646,12 +646,9 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 				solar_raw = tmy[hoy].solar_raw;
 				solar_azimuth = tmy[hoy].solar_azimuth;
 				solar_elevation = tmy[hoy].solar_elevation;
-				this->wind_speed = tmy[hoy].windspeed;
-				this->rainfall = tmy[hoy].rainfall;
-				this->snowdepth = tmy[hoy].snowdepth;
-				
-				
-
+				wind_speed = tmy[hoy].windspeed;
+				rainfall = tmy[hoy].rainfall;
+				snowdepth = tmy[hoy].snowdepth;
 				if(memcmp(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double)))
 					memcpy(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double));
 				break;

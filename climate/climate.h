@@ -140,6 +140,13 @@ public:
 
 };
 
+typedef struct {
+	double low;
+	double low_day;
+	double high;
+	double high_day;
+	double solar;
+} CLIMATERECORD;
 class climate : protected gld_object {
 	
 	// get_/set_ accessors for classes in this module only (locks on access)
@@ -148,10 +155,14 @@ class climate : protected gld_object {
 	GL_DATA(double,humidity); ///< the relative humidity (%)
 	GL_DATA(double,wind_speed); ///< wind speed (m/s)
 	GL_DATA(double,tz_meridian); ///< timezone meridian
-	GL_DATA(double,solar_global);
-	GL_DATA(double,solar_direct);
-	GL_DATA(double,solar_diffuse);
-	GL_DATA(double,ground_reflectivity); // %
+	GL_DATA(double,solar_global); ///< global solar flux (W/sf)
+	GL_DATA(double,solar_direct); ///< direct solar flux (W/sf)
+	GL_DATA(double,solar_diffuse); ///< diffuse solar flux (W/sf)
+	GL_DATA(double,ground_reflectivity); // flux reflectivity of ground (W/sf)
+	GL_DATA(CLIMATERECORD,record); ///< record values (low,low_day,high,high_day,solar)
+	GL_DATA(double,rainfall); ///< rainfall rate (in/h)
+	GL_DATA(double,snowdepth); ///< snow accumulation (in)
+	GL_STRING(char1024,forecast_spec); ///< forecasting model
 
 	// data not shared with classes in this module (no locks)
 private:
@@ -162,15 +173,6 @@ private:
 	double solar_raw;
 	double wind_dir; ///< wind direction (0-360)
 	double wind_gust; ///< wind gusts (m/s)
-	double rainfall; // in/h
-	double snowdepth; // in
-	struct {
-		double low;
-		double low_day;
-		double high;
-		double high_day;
-		double solar;
-	} record;
 	CLIMATE_INTERPOLATE interpolate;
 	// add some of the init() vars that are useful to capture
 	//sjin: add solar elevation and azimuth variables
@@ -186,7 +188,6 @@ private:
 	tmy2_reader file;
 	weather_reader *reader_hndl;
 	TMYDATA *tmy;
-	char1024 forecast;
 public:
 	static CLASS *oclass;
 	static climate *defaults;
