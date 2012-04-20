@@ -180,9 +180,7 @@ static CALLBACKS callbacks = {
 	unit_convert, unit_convert_ex, unit_find,
 	{create_exception_handler,delete_exception_handler,throw_exception,exception_msg},
 	{global_create, global_setvar, global_getvar, global_find},
-#ifndef NOLOCKS
 	&lock_count, &lock_spin,
-#endif
 	{find_file},
 	{object_get_complex, object_get_enum, object_get_int16, object_get_int32, object_get_int64, object_get_double, object_get_string, object_get_object},
 	{object_get_complex_by_name, object_get_enum_by_name, object_get_int16_by_name, object_get_int32_by_name, object_get_int64_by_name,

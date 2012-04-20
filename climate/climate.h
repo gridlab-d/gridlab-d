@@ -147,6 +147,7 @@ typedef struct {
 	double high_day;
 	double solar;
 } CLIMATERECORD;
+
 class climate : protected gld_object {
 	
 	// get_/set_ accessors for classes in this module only (locks on access)
