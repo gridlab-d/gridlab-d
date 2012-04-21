@@ -17,7 +17,7 @@
 CLASS *enum_assert::oclass = NULL;
 enum_assert *enum_assert::defaults = NULL;
 
-enum_assert::enum_assert(MODULE *module)
+enum_assert::enum_assert(MODULE *module) : gld_object(NULL)
 {
 	if (oclass==NULL)
 	{
@@ -53,7 +53,7 @@ int enum_assert::create(void)
 {
 	memcpy(this,defaults,sizeof(*this));
 
-	return 1; /* return 1 on success, 0 on failure */
+	return gld_object::create(); /* return 1 on success, 0 on failure */
 }
 
 int enum_assert::init(OBJECT *parent)
@@ -104,9 +104,9 @@ EXPORT TIMESTAMP commit_enum_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	char buff[64];
 	enum_assert *ea = OBJECTDATA(obj,enum_assert);
 
-		int32 *x = (int32*)gl_get_int32_by_name(obj->parent,ea->target);
+		int32 *x = (int32*)gl_get_int32_by_name(obj->parent,ea->get_target());
 		if (x==NULL) {
-			gl_error("Specified target %s for %s is not valid.",ea->target,gl_name(obj->parent,buff,64));
+			gl_error("Specified target %s for %s is not valid.",ea->get_target(),gl_name(obj->parent,buff,64));
 			/*  TROUBLESHOOT
 			Check to make sure the target you are specifying is a published variable for the object
 			that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -115,12 +115,12 @@ EXPORT TIMESTAMP commit_enum_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 			*/
 			return 0;
 		}
-		else if (ea->status == ea->ASSERT_TRUE)
+		else if (ea->get_status() == ea->ASSERT_TRUE)
 		{
-			if (ea->value != *x) 
+			if (ea->get_value() != *x) 
 			{
 				gl_verbose("Assert failed on %s: %s did not match %i", 
-					gl_name(obj->parent,buff,64), ea->target, ea->value);
+					gl_name(obj->parent,buff,64), ea->get_target(), ea->get_value());
 				return 0;
 			}
 			else
@@ -130,12 +130,12 @@ EXPORT TIMESTAMP commit_enum_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 				return TS_NEVER;
 			}
 		}
-		else if (ea->status == ea->ASSERT_FALSE)
+		else if (ea->get_status() == ea->ASSERT_FALSE)
 		{
-			if (ea->value == *x)
+			if (ea->get_value() == *x)
 			{
 				gl_verbose("Assert failed on %s: %s did match %i", 
-					gl_name(obj->parent,buff,64), ea->target, ea->value);
+					gl_name(obj->parent,buff,64), ea->get_target(), ea->get_value());
 				return 0;
 			}
 			else

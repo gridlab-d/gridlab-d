@@ -11,15 +11,13 @@
 #define _isnan isnan
 #endif
 
-class enum_assert {
-
-private:
-protected:
+class enum_assert : protected gld_object {
 public:
-	enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} status; //Assert whether the target value should be
-	char1024 target;											//within the range (True), outside of a 
-	int32 value;											//range (False) or shouldn't be checked (None).
-	//double within;
+	typedef enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} ASSERTSTATUS;
+	
+	GL_ATOMIC(ASSERTSTATUS,status);
+	GL_STRING(char1024,target);
+	GL_ATOMIC(int32,value);
 
 public:
 	/* required implementations */
@@ -31,8 +29,6 @@ public:
 	static CLASS *oclass;
 	static enum_assert *defaults;
 	complex *get_complex(OBJECT *obj, char *name);
-
-
 };
 
 #endif
