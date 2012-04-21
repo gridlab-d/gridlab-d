@@ -457,7 +457,7 @@ int climate::init(OBJECT *parent)
 		gl_error("climate::init unable to gl_convert() 'm' to 'ft'!");
 		return 0;
 	}
-	file.elevation *= meter_to_feet;
+	file.elevation = (int)(file.elevation * meter_to_feet);
 	set_tz_meridian(15 * abs(file.tz_offset)); // std_meridians[-file.tz_offset-5];
 	while (line<8760 && file.next())
 	{
@@ -606,20 +606,18 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	TIMESTAMP rv = 0;
 
 	if(t0 > TS_ZERO && reader_type == RT_CSV){
-		DATETIME now;
-		gl_localtime(t0, &now);
-		//OBJECT *obj = OBJECTHDR(this);
+		gld_clock now(t0);
 		csv_reader *cr = OBJECTDATA(reader,csv_reader);
 		rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &wind_speed, &rainfall, &snowdepth);
 		// calculate the solar radiation
-		double sol_time = sa->solar_time((double)now.hour+now.minute/60.0+now.second/3600.0,now.yearday,RAD(tz_meridian),RAD(reader->longitude));
+		double sol_time = sa->solar_time((double)now.get_hour()+now.get_minute()/60.0+now.get_second()/3600.0,now.get_yearday(),RAD(tz_meridian),RAD(reader->longitude));
 		double sol_rad = 0.0;
 
 		for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 			if(c_point == CP_H)
-				sol_rad = file.calc_solar(CP_E,now.yearday,RAD(reader->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
+				sol_rad = file.calc_solar(CP_E,now.get_yearday(),RAD(reader->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
 			else
-				sol_rad = file.calc_solar(c_point,now.yearday,RAD(reader->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity);//(double)dnr * cos_incident + dhr;
+				sol_rad = file.calc_solar(c_point,now.get_yearday(),RAD(reader->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity);//(double)dnr * cos_incident + dhr;
 			/* TMY2 solar radiation data is in Watt-hours per square meter. */
 			set_solar_flux(c_point, sol_rad);
 		}
