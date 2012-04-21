@@ -1122,7 +1122,7 @@ public: // read accessors
 	inline unsigned short get_hour(void) { return dt.hour; };
 	inline unsigned short get_minute(void) { return dt.minute; };
 	inline unsigned short get_second(void) { return dt.second; };
-	inline unsigned int get_microseconds(void) { return dt.microsecond; };
+	inline unsigned int get_microsecond(void) { return dt.microsecond; };
 	inline char* get_tz(void) { return dt.tz; };
 	inline bool get_is_dst(void) { return dt.is_dst?true:false; };
 	inline unsigned short get_weekday(void) { return dt.weekday; };
