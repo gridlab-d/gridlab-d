@@ -1331,8 +1331,8 @@ public: // read accessors
 public: // write accessors
 
 public: // special operations
-	template <class T> inline void get(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
-	template <class T> inline void set(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
+	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
+	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
 
 public: // iterators
 	inline bool is_last(void) { return prop==NULL || prop->next==NULL; };
@@ -1402,7 +1402,7 @@ public: // header read accessors (no locking)
 	inline double get_longitude(void) { return my->longitude; };
 	inline TIMESTAMP get_in_svc(void) { return my->in_svc; };
 	inline TIMESTAMP get_out_svc(void) { return my->out_svc; };
-	inline char *get_name(void) { return my->name; };
+	inline char *get_name(void) { return my->name?my->name:"(unnamed)"; };
 	inline int get_tp_affinity(void) { return my->tp_affinity; };
 	inline NAMESPACE *get_space(void) { return my->space; };
 	inline unsigned int get_lock(void) { return my->lock; };
@@ -1413,6 +1413,7 @@ protected: // header write accessors (no locking)
 	inline void set_forecast(FORECAST *fs) { my->forecast=fs; };
 	inline void set_latitude(double x) { my->latitude=x; };
 	inline void set_longitude(double x) { my->longitude=x; };
+	inline void set_flags(unsigned long flags) { my->flags=flags; };
 
 protected: // locking (self)
 	inline void rlock(void) { ::rlock(&my->lock); };
@@ -1430,8 +1431,8 @@ protected: // special functions
 	inline PROPERTY* get_property(char *name) { return callback->properties.get_property(my,name); };
 
 public: // external accessors
-	template <class T> inline void get(PROPERTY &prop, T &value) { rlock(); value=*(T*)(GETADDR(my,&prop)); wunlock(); };
-	template <class T> inline void set(PROPERTY &prop, T &value) { wlock(); *(T*)(GETADDR(my,&prop))=value; wunlock(); };
+	template <class T> inline void getp(PROPERTY &prop, T &value) { rlock(); value=*(T*)(GETADDR(my,&prop)); wunlock(); };
+	template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(GETADDR(my,&prop))=value; wunlock(); };
 
 public: // core interface
 	inline int set_dependent(OBJECT *obj) { return callback->set_dependent(my,obj); };

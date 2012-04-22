@@ -23,7 +23,7 @@ typedef enum {
 	PS_ON=1
 } POWERSTATE;
 
-class residential_enduse  
+class residential_enduse : protected gld_object
 {
 public:
 	CIRCUIT *pCircuit;	// pointer to circuit data

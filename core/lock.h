@@ -239,10 +239,17 @@ static inline void wunlock(unsigned int *lock)
 
 #endif
 
+#ifdef __cplusplus
+#define READLOCK(X) ::rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
+#define WRITELOCK(X) ::wlock(X); /**< Locks an item for writing (blocks all operations) */
+#define READUNLOCK(X) ::runlock(X); /**< Unlocks an read lock */
+#define WRITEUNLOCK(X) ::wunlock(X); /**< Unlocks a write lock */
+#else
 #define READLOCK(X) rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
 #define WRITELOCK(X) wlock(X); /**< Locks an item for writing (blocks all operations) */
 #define READUNLOCK(X) runlock(X); /**< Unlocks an read lock */
 #define WRITEUNLOCK(X) wunlock(X); /**< Unlocks a write lock */
+#endif
 #define LOCK(X) WRITELOCK(X); /**< @todo this is deprecated and should not be used anymore */
 #define UNLOCK(X) WRITEUNLOCK(X); /**< @todo this is deprecated and should not be used anymore */
 

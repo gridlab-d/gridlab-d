@@ -20,13 +20,13 @@
 CLASS* residential_enduse::oclass = NULL;
 
 // the constructor registers the class and properties and sets the defaults
-residential_enduse::residential_enduse(MODULE *mod) 
+residential_enduse::residential_enduse(MODULE *mod) : gld_object(NULL)
 {
 	// first time init
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"residential_enduse",sizeof(residential_enduse),PC_BOTTOMUP);
+		oclass = gld_class::create(mod,"residential_enduse",sizeof(residential_enduse),PC_BOTTOMUP);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 			/* TROUBLESHOOT
@@ -60,29 +60,28 @@ residential_enduse::residential_enduse(MODULE *mod)
 int residential_enduse::create(bool connect_shape) 
 {
 	// attach loadshape 
-	load.end_obj = OBJECTHDR(this);
+	load.end_obj = my;
 	if (connect_shape) load.shape = &shape;
 	load.breaker_amps = 20;
 	load.config = 0;
 	load.heatgain_fraction = 1.0; /* power has no effect on heat loss */
 	re_override = OV_NORMAL;
 	power_state = PS_UNKNOWN;
-	return 1;
+	return gld_object::create();
 }
 
 int residential_enduse::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
-	hdr->flags |= OF_SKIPSAFE;
+	set_flags(get_flags()|OF_SKIPSAFE);
 	ATTACHFUNCTION attach = 0;
 
 	//	pull parent attach_enduse and attach the enduseload
-	if(parent)
-		attach = (ATTACHFUNCTION)(gl_get_function(parent, "attach_enduse"));
-	if(parent && attach)
-		pCircuit = (*attach)(parent, &load, load.breaker_amps, (load.config&EUC_IS220)!=0);
-	else if (parent)
-		gl_warning("%s (%s:%d) parent %s (%s:%d) does not export attach_enduse function so voltage response cannot be modeled", hdr->name?hdr->name:"(unnamed)", hdr->oclass->name, hdr->id, parent->name?parent->name:"(unnamed)", parent->oclass->name, parent->id);
+	if ( get_parent()!=NULL )
+		attach = (ATTACHFUNCTION)(gl_get_function(get_parent(), "attach_enduse"));
+	if ( get_parent()!=NULL && attach )
+		pCircuit = (*attach)(get_parent(), &load, load.breaker_amps, (load.config&EUC_IS220)!=0);
+	else if (get_parent()!=NULL)
+		gl_warning("%s (%s:%d) parent %s (%s:%d) does not export attach_enduse function so voltage response cannot be modeled", get_name(), get_oclass()->get_name(), get_id(), gld_object(get_parent()).get_name(), gld_object(get_parent()).get_oclass()->get_name(), gld_object(get_parent()).get_id());
 		/* TROUBLESHOOT
 			Enduses must have a voltage source from a parent object that exports an attach_enduse function.  
 			The residential_enduse object references a parent object that does not conform with this requirement.
@@ -92,7 +91,7 @@ int residential_enduse::init(OBJECT *parent)
 	if (load.shape!=NULL) {
 		if (load.shape->schedule==NULL)
 		{
-			gl_verbose("%s (%s:%d) schedule is not specified so the load may be inactive", hdr->name?hdr->name:"(unnamed)", hdr->oclass->name, hdr->id);
+			gl_verbose("%s (%s:%d) schedule is not specified so the load may be inactive", get_name(), get_oclass()->get_name(), get_id());
 			/* TROUBLESHOOT
 				The residential_enduse object requires a schedule that defines how
 				the load behaves.  Omitting this schedule effectively shuts the enduse
@@ -110,10 +109,9 @@ int residential_enduse::isa(char *classname){
 
 TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	OBJECT *obj = OBJECTHDR(this);
-	gl_debug("%s shape load = %8g", obj->name, gl_get_loadshape_value(&shape));
+	gl_debug("%s shape load = %8g", get_name(), gl_get_loadshape_value(&shape));
 	if (load.voltage_factor>1.2 || load.voltage_factor<0.8)
-		gl_verbose("%s voltage is out of normal +/- 20%% range of nominal (vf=%.2f)", obj->name, load.voltage_factor);
+		gl_verbose("%s voltage is out of normal +/- 20%% range of nominal (vf=%.2f)", get_name(), load.voltage_factor);
 		/* TROUBLESHOOTING
 		   The voltage on the enduse circuit is outside the expected range for that enduse.
 		   This is usually caused by an impropely configure circuit (e.g., 110V on 220V or vice versa).
