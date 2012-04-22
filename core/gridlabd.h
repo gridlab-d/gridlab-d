@@ -1402,7 +1402,7 @@ public: // header read accessors (no locking)
 	inline double get_longitude(void) { return my->longitude; };
 	inline TIMESTAMP get_in_svc(void) { return my->in_svc; };
 	inline TIMESTAMP get_out_svc(void) { return my->out_svc; };
-	inline char *get_name(void) { return my->name?my->name:"(unnamed)"; };
+	inline const char *get_name(void) { return my->name?my->name:"(unnamed)"; };
 	inline int get_tp_affinity(void) { return my->tp_affinity; };
 	inline NAMESPACE *get_space(void) { return my->space; };
 	inline unsigned int get_lock(void) { return my->lock; };
