@@ -1114,7 +1114,7 @@ public: // constructors
 	gld_clock(void) { callback->time.local_datetime(*(callback->global_clock),&dt); }; 
 	gld_clock(TIMESTAMP ts) { callback->time.local_datetime(ts,&dt); };
 public: // cast operators
-	inline operator TIMESTAMP (void) {return callback->time.mkdatetime(&dt); };
+	inline operator TIMESTAMP (void) { return dt.timestamp; };
 public: // read accessors
 	inline unsigned short get_year(void) { return dt.year; };
 	inline unsigned short get_month(void) { return dt.month; };
@@ -1158,67 +1158,79 @@ public: gld_wlock(OBJECT *obj) : my(obj) {::wlock(&obj->lock);};
 public: ~gld_wlock(void) {::wunlock(&my->lock);};
 };
 
+class gld_class;
 class gld_module {
 
 private: // data
+	MODULE core;
 
-public: // constructor
+public: // constructors/casts
+	inline gld_module(void) { throw "gld_module constructor not permitted"; };
+	inline operator MODULE*(void) { return &core; };
 
 public: // read accessors
-	inline char* get_name(void) { return ((MODULE*)this)->name; };
-	inline unsigned short get_major(void) { return ((MODULE*)this)->major; };
-	inline unsigned short get_minor(void) { return ((MODULE*)this)->minor; };
-	inline CLASS* get_first_class(void) { return ((MODULE*)this)->oclass; };
+	inline char* get_name(void) { return core.name; };
+	inline unsigned short get_major(void) { return core.major; };
+	inline unsigned short get_minor(void) { return core.minor; };
+	inline gld_class* get_first_class(void) { return (gld_class*)core.oclass; };
 
 public: // write accessors
 
 public: // iterators
-	inline bool is_last(void) { return ((MODULE*)this)->next==NULL; };
-	inline MODULE *get_next(void) { return ((MODULE*)this)->next; };
+	inline bool is_last(void) { return core.next==NULL; };
+	inline gld_module *get_next(void) { return (gld_module*)(core.next); };
 };
 
+class gld_property;
+class gld_function;
 class gld_class {
 
 private: // data
+	CLASS core;
 
 public: // constructors
+	inline gld_class(void) { throw "gld_class constructor not permitted"; };
+	inline operator CLASS*(void) { return &core; };
 
 public: // read accessors
-	inline char* get_name(void) { return ((CLASS*)this)->name; };
-	inline size_t get_size(void) { return ((CLASS*)this)->size; };
-	inline CLASS* get_parent(void) { return ((CLASS*)this)->parent; };
-	inline MODULE* get_module(void) { return ((CLASS*)this)->module; };
-	inline PROPERTY* get_first_property(void) { return ((CLASS*)this)->pmap; };
-	inline FUNCTION* get_first_function(void) { return ((CLASS*)this)->fmap; };
-	inline TECHNOLOGYREADINESSLEVEL getet_trl(void) { return ((CLASS*)this)->trl; };
+	inline char* get_name(void) { return core.name; };
+	inline size_t get_size(void) { return core.size; };
+	inline gld_class* get_parent(void) { return (gld_class*)core.parent; };
+	inline gld_module* get_module(void) { return (gld_module*)core.module; };
+	inline gld_property* get_first_property(void) { return (gld_property*)core.pmap; };
+	inline gld_function* get_first_function(void) { return (gld_function*)core.fmap; };
+	inline TECHNOLOGYREADINESSLEVEL get_trl(void) { return core.trl; };
 
 public: // write accessors
-	inline void set_trl(TECHNOLOGYREADINESSLEVEL t) { ((CLASS*)this)->trl=t; };
+	inline void set_trl(TECHNOLOGYREADINESSLEVEL t) { core.trl=t; };
 
-public:
+public: // special functions
 	static inline CLASS *create(MODULE *m, char *n, size_t s, unsigned int f) { return callback->register_class(m,n,(unsigned int)s,f); };
 	
 public: // iterators
-	inline bool is_last(void) { return ((CLASS*)this)->next==NULL; };
-	inline CLASS *get_next(void) { return ((CLASS*)this)->next; };
+	inline bool is_last(void) { return core.next==NULL; };
+	inline gld_class* get_next(void) { return (gld_class*)core.next; };
 };
 
 class gld_function {
 
 private: // data
+	FUNCTION core;
 
 public: // constructors
+	inline gld_function(void) { throw "gld_function constructor not permitted"; };
+	inline operator FUNCTION*(void) { return &core; };
 
 public: // read accessors
-	inline char *get_name(void) { return ((FUNCTION*)this)->name; };
-	inline CLASS* get_class(void) { return ((FUNCTION*)this)->oclass; };
-	inline FUNCTIONADDR get_addr(void) { return ((FUNCTION*)this)->addr; };
+	inline char *get_name(void) { return core.name; };
+	inline gld_class* get_class(void) { return (gld_class*)core.oclass; };
+	inline FUNCTIONADDR get_addr(void) { return core.addr; };
 
 public: // write accessors
 
 public: // iterators
-	inline bool is_last(void) { return ((FUNCTION*)this)->next==NULL; };
-	inline FUNCTION *get_next(void) { return ((FUNCTION*)this)->next; };
+	inline bool is_last(void) { return core.next==NULL; };
+	inline gld_function* get_next(void) { return (gld_function*)core.next; };
 };
 
 class gld_type {
@@ -1226,10 +1238,12 @@ class gld_type {
 private: // data
 	PROPERTYTYPE type;
 
-public: // constructors
+public: // constructors/casts
 	inline gld_type(PROPERTYTYPE t) : type(t) {};
+	inline operator PROPERTYTYPE(void) { return type; };
 
 public: // read accessors
+	// TODO size,conversions,etc...
 
 public: // write accessors
 
@@ -1242,39 +1256,48 @@ public: // iterators
 class gld_unit {
 
 private: // data
+	UNIT core;
 
-public: // constructors
+public: // constructors/casts
+	inline gld_unit(void) { throw "gld_unit constructor not permitted"; };
+	inline operator UNIT*(void) { return &core; };
 
 public: // read accessors
-	inline char* get_name(void) { return ((UNIT*)this)->name; };
-	inline double get_c(void) { return ((UNIT*)this)->c; };
-	inline double get_e(void) { return ((UNIT*)this)->e; };
-	inline double get_h(void) { return ((UNIT*)this)->h; };
-	inline double get_k(void) { return ((UNIT*)this)->k; };
-	inline double get_m(void) { return ((UNIT*)this)->m; };
-	inline double get_s(void) { return ((UNIT*)this)->s; };
-	inline double get_a(void) { return ((UNIT*)this)->a; };
-	inline double get_b(void) { return ((UNIT*)this)->b; };
-	inline int get_prec(void) { return ((UNIT*)this)->prec; };
+	inline char* get_name(void) { return core.name; };
+	inline double get_c(void) { return core.c; };
+	inline double get_e(void) { return core.e; };
+	inline double get_h(void) { return core.h; };
+	inline double get_k(void) { return core.k; };
+	inline double get_m(void) { return core.m; };
+	inline double get_s(void) { return core.s; };
+	inline double get_a(void) { return core.a; };
+	inline double get_b(void) { return core.b; };
+	inline int get_prec(void) { return core.prec; };
 
 public: // write accessors
 
 public: // iterators
-	inline UNIT* get_next(void) { return ((UNIT*)this)->next; };
+	inline bool is_last(void) { return core.next==NULL?true:false; };
+	inline gld_unit* get_next(void) { return (gld_unit*)core.next; };
 };
 
 class gld_keyword {
 
 private: // data
+	KEYWORD core;
 
-public: // constructors
+public: // constructors/casts
+	inline gld_keyword(void) { throw "gld_keyword constructor not permitted"; };
+	inline operator KEYWORD* (void) { return &core; };
 
 public: // read accessors
+	inline char* get_name(void) { return core.name; };
+	inline unsigned int64 get_value(void) { return core.value; };
 
 public: // write accessors
 
 public: // iterators
-	inline KEYWORD* get_next(void) { return ((KEYWORD*)this)->next; };
+	inline gld_keyword* get_next(void) { return (gld_keyword*)core.next; };
 };
 
 class gld_property {
@@ -1283,22 +1306,23 @@ private: // data
 	PROPERTY *prop;
 	OBJECT *obj;
 
-public: // constructors
+public: // constructors/casts
 	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), prop(p) {};
 	inline gld_property(OBJECT *o, char *n) : obj(o) { prop=callback->properties.get_property(o,n); if (!prop) throw "property not found"; };
 	inline gld_property(GLOBALVAR *v) : obj(NULL), prop(v->prop) {};
 	inline gld_property(char *n) : obj(NULL) { GLOBALVAR *v=callback->global.find(n); if (!v) throw "global not found"; prop=v->prop;  };
+	inline operator PROPERTY*(void) { return prop; };
 
 public: // read accessors
-	inline CLASS* get_class(void) { return prop->oclass; };
+	inline gld_class* get_class(void) { return (gld_class*)prop->oclass; };
 	inline char *get_name(void) { return prop->name; };
-	inline PROPERTYTYPE get_type(void) { return prop->ptype; };
+	inline gld_type get_type(void) { return gld_type(prop->ptype); };
 	inline size_t get_size(void) { return (size_t)(prop->size); };
 	inline size_t get_width(void) { return (size_t)(prop->width); };
 	inline PROPERTYACCESS get_access(void) { return prop->access; };
-	inline UNIT* get_unit(void) { return prop->unit; };
-	inline void* get_addr(void) { obj?GETADDR(obj,prop):prop->addr; };
-	inline KEYWORD* get_first_keyword(void) { return prop->keywords; };
+	inline gld_unit* get_unit(void) { return (gld_unit*)prop->unit; };
+	inline void* get_addr(void) { return obj?GETADDR(obj,prop):prop->addr; };
+	inline gld_keyword* get_first_keyword(void) { return (gld_keyword*)prop->keywords; };
 	inline char* get_description(void) { return prop->description; };
 	inline PROPERTYFLAGS get_flags(void) { return prop->flags; };
 	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(prop,get_addr(),buffer,size); };
@@ -1307,8 +1331,8 @@ public: // read accessors
 public: // write accessors
 
 public: // special operations
-	template <class T> inline void get(T &value) { ::rlock(obj->lock); value = *(T*)get_addr(); ::runlock(obj->lock); };
-	template <class T> inline void set(T &value) { ::wlock(obj->lock); *(T*)get_addr()=value; ::wunlock(obj->lock); };
+	template <class T> inline void get(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
+	template <class T> inline void set(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
 
 public: // iterators
 	inline bool is_last(void) { return prop==NULL || prop->next==NULL; };
@@ -1318,18 +1342,24 @@ public: // iterators
 class gld_global {
 
 private: // data
+	GLOBALVAR core;
 
 public: // constructors
+	inline gld_global(void) { throw "gld_global constructor not permitted"; };
+	inline operator GLOBALVAR*(void) { return &core; };
 
 public: // read accessors
-	inline PROPERTY* get_property(void) { return ((GLOBALVAR*)this)->prop; };
-	inline unsigned long get_flags(void) { return ((GLOBALVAR*)this)->flags; };
+	inline PROPERTY* get_property(void) { return core.prop; };
+	inline unsigned long get_flags(void) { return core.flags; };
 
 public: // write accessors
 
+public: // external accessors
+	// TODO
+
 public: // iterators
-	inline bool is_last(void) { return ((GLOBALVAR*)this)->next==NULL; };
-	inline GLOBALVAR* get_next(void) { return ((GLOBALVAR*)this)->next; };
+	inline bool is_last(void) { return core.next==NULL; };
+	inline gld_global* get_next(void) { return (gld_global*)core.next; };
 };
 
 // object data declaration/accessors
@@ -1361,7 +1391,7 @@ public: // constructors
 public: // header read accessors (no locking)
 	inline OBJECTNUM get_id(void) { return my->id; };
 	inline char* get_groupid(void) { return my->groupid; };
-	inline CLASS* get_oclass(void) { return my->oclass; };
+	inline gld_class* get_oclass(void) { return (gld_class*)my->oclass; };
 	inline OBJECT *get_parent(void) { return my->parent; };
 	inline OBJECTRANK get_rank(void) { return my->rank; };
 	inline TIMESTAMP get_clock(void) { return my->clock; };
