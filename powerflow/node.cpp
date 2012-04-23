@@ -954,17 +954,17 @@ int node::init(OBJECT *parent)
 	{
 		if (!has_phase(PHASE_A))
 			voltage[0]=0.0;
-		else
+		else if (voltage[0] == 0)
 			voltage[0].SetPolar(nominal_voltage,0);
 
 		if (!has_phase(PHASE_B))
 			voltage[1]=0.0;
-		else
-			voltage[2].SetPolar(nominal_voltage,-2*PI/3);
+		else if (voltage[1] == 0)
+			voltage[1].SetPolar(nominal_voltage,-2*PI/3);
 
 		if (!has_phase(PHASE_C))
 			voltage[2]=0.0;
-		else
+		else if (voltage[2] == 0)
 			voltage[2].SetPolar(nominal_voltage,2*PI/3);
 	}
 
