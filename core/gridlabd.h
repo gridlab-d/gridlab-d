@@ -1334,6 +1334,9 @@ public: // special operations
 	inline bool is_valid(void) { return prop!=NULL; }
 	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
 	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
+	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };
+	template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };
+	template <class T> inline void setp(T &value, gld_wlock&) { *(T*)get_addr()=value; };
 
 public: // iterators
 	inline bool is_last(void) { return prop==NULL || prop->next==NULL; };
@@ -1366,20 +1369,38 @@ public: // iterators
 // object data declaration/accessors
 #define GL_ATOMIC(T,X) protected: T X; public: \
 	inline T get_##X(void) { return X; }; \
-	inline void set_##X(T p) { X=p; }; 
+	inline T get_##X(gld_rlock&) { return X; }; \
+	inline T get_##X(gld_wlock&) { return X; }; \
+	inline void set_##X(T p) { X=p; }; \
+	inline void set_##X(T p, gld_wlock&) { X=p; }; 
 #define GL_STRUCT(T,X) protected: T X; public: \
 	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
-	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; 
+	inline T get_##X(gld_rlock&) { return X; }; \
+	inline T get_##X(gld_wlock&) { return X; }; \
+	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
+	inline void set_##X(T p, gld_wlock&) { X=p; }; 
 #define GL_STRING(T,X) 	protected: T X; public: \
 	inline char* get_##X(void) { gld_rlock _lock(my()); return X; }; \
+	inline char* get_##X(gld_rlock&) { return X; }; \
+	inline char* get_##X(gld_wlock&) { return X; }; \
 	inline char get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
+	inline char get_##X(size_t n, gld_rlock&) { return X[n]; }; \
+	inline char get_##X(size_t n, gld_wlock&) { return X[n]; }; \
 	inline void set_##X(char *p) { gld_wlock _lock(my()); strncpy(X,p,sizeof(X)); }; \
-	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; 
+	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
+	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
+	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; }; 
 #define GL_ARRAY(T,X,S) protected: T X[S]; public: \
 	inline T* get_##X(void) { gld_rlock _lock(my()); return X; }; \
+	inline T* get_##X(gld_rlock&) { return X; }; \
+	inline T* get_##X(gld_wlock&) { return X; }; \
 	inline T get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
+	inline T get_##X(size_t n, gld_rlock&) { return X[n]; }; \
+	inline T get_##X(size_t n, gld_wlock&) { return X[n]; }; \
 	inline void set_##X(T* p) { gld_wlock _lock(my()); memcpy(X,p,sizeof(X)); }; \
-	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; 
+	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
+	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
+	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; }; 
 
 class gld_object {
 public:
@@ -1434,6 +1455,9 @@ public: // member lookup functions
 public: // external accessors
 	template <class T> inline void getp(PROPERTY &prop, T &value) { rlock(); value=*(T*)(GETADDR(my,&prop)); wunlock(); };
 	template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(GETADDR(my,&prop))=value; wunlock(); };
+	template <class T> inline void getp(PROPERTY &prop, T &value, gld_rlock&) { value=*(T*)(GETADDR(my,&prop)); };
+	template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) { value=*(T*)(GETADDR(my,&prop)); };
+	template <class T> inline void setp(PROPERTY &prop, T &value, gld_wlock&) { *(T*)(GETADDR(my,&prop))=value; };
 
 public: // core interface
 	inline int set_dependent(OBJECT *obj) { return callback->set_dependent(my(),obj); };
