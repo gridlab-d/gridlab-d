@@ -20,7 +20,7 @@
 CLASS* residential_enduse::oclass = NULL;
 
 // the constructor registers the class and properties and sets the defaults
-residential_enduse::residential_enduse(MODULE *mod) : gld_object(NULL)
+residential_enduse::residential_enduse(MODULE *mod)
 {
 	// first time init
 	if (oclass==NULL)
@@ -60,33 +60,35 @@ residential_enduse::residential_enduse(MODULE *mod) : gld_object(NULL)
 int residential_enduse::create(bool connect_shape) 
 {
 	// attach loadshape 
-	load.end_obj = my;
+	load.end_obj = my();
 	if (connect_shape) load.shape = &shape;
 	load.breaker_amps = 20;
 	load.config = 0;
 	load.heatgain_fraction = 1.0; /* power has no effect on heat loss */
 	re_override = OV_NORMAL;
 	power_state = PS_UNKNOWN;
-	return gld_object::create();
+	return 1;
 }
 
 int residential_enduse::init(OBJECT *parent)
 {
 	set_flags(get_flags()|OF_SKIPSAFE);
-	ATTACHFUNCTION attach = 0;
+	gld_object *pParent = OBJECTDATA(parent,gld_object);
 
 	//	pull parent attach_enduse and attach the enduseload
-	if ( get_parent()!=NULL )
-		attach = (ATTACHFUNCTION)(gl_get_function(get_parent(), "attach_enduse"));
-	if ( get_parent()!=NULL && attach )
-		pCircuit = (*attach)(get_parent(), &load, load.breaker_amps, (load.config&EUC_IS220)!=0);
-	else if (get_parent()!=NULL)
-		gl_warning("%s (%s:%d) parent %s (%s:%d) does not export attach_enduse function so voltage response cannot be modeled", get_name(), get_oclass()->get_name(), get_id(), gld_object(get_parent()).get_name(), gld_object(get_parent()).get_oclass()->get_name(), gld_object(get_parent()).get_id());
-		/* TROUBLESHOOT
-			Enduses must have a voltage source from a parent object that exports an attach_enduse function.  
-			The residential_enduse object references a parent object that does not conform with this requirement.
-			Fix the parent reference and try again.
-		 */
+	if ( pParent!=NULL && pParent->is_valid() )
+	{
+		ATTACHFUNCTION attach = (ATTACHFUNCTION)pParent->get_function("attach_enduse");
+		if ( attach )
+			pCircuit = (*attach)(parent, &load, load.breaker_amps, (load.config&EUC_IS220)!=0);
+		else
+			gl_warning("%s (%s:%d) parent %s (%s:%d) does not export attach_enduse function so voltage response cannot be modeled", get_name(), get_oclass()->get_name(), get_id(), pParent->get_name(), pParent->get_oclass()->get_name(), pParent->get_id());
+			/* TROUBLESHOOT
+				Enduses must have a voltage source from a parent object that exports an attach_enduse function.  
+				The residential_enduse object references a parent object that does not conform with this requirement.
+				Fix the parent reference and try again.
+			 */
+	}
 
 	if (load.shape!=NULL) {
 		if (load.shape->schedule==NULL)

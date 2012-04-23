@@ -294,7 +294,7 @@ void tmy2_reader::close(){
 CLASS *climate::oclass = NULL;
 climate *climate::defaults = NULL;
 
-climate::climate(MODULE *module) : gld_object(NULL)
+climate::climate(MODULE *module)
 {
 	memset(this, 0, sizeof(climate));
 	if (oclass==NULL)
@@ -365,7 +365,7 @@ climate::climate(MODULE *module) : gld_object(NULL)
 int climate::create(void)
 {
 	memcpy(this,defaults,sizeof(climate));
-	return gld_object::create();
+	return 1;
 }
 
 int climate::isa(char *classname)
@@ -497,17 +497,17 @@ int climate::init(OBJECT *parent)
 			tmy[hoy].solar_raw = dnr;
 			
 			// calculate the solar radiation
-			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(my->longitude));
+			double sol_time = sa->solar_time((double)hour,doy,RAD(get_tz_meridian()),RAD(get_longitude()));
 			double sol_rad = 0.0;
 
-			tmy[hoy].solar_elevation = sa->altitude(doy, my->latitude, sol_time);
-			tmy[hoy].solar_azimuth = sa->azimuth(doy, my->latitude, sol_time);
+			tmy[hoy].solar_elevation = sa->altitude(doy, get_latitude(), sol_time);
+			tmy[hoy].solar_azimuth = sa->azimuth(doy, get_latitude(), sol_time);
 
 			for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				if(c_point == CP_H)
-					sol_rad = file.calc_solar(CP_E,doy,RAD(my->latitude),sol_time,dnr,dhr,ghr,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
+					sol_rad = file.calc_solar(CP_E,doy,RAD(get_latitude()),sol_time,dnr,dhr,ghr,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
 				else
-					sol_rad = file.calc_solar(c_point,doy,RAD(my->latitude),sol_time,dnr,dhr,ghr,ground_reflectivity);//(double)dnr * cos_incident + dhr;
+					sol_rad = file.calc_solar(c_point,doy,RAD(get_latitude()),sol_time,dnr,dhr,ghr,ground_reflectivity);//(double)dnr * cos_incident + dhr;
 				/* TMY2 solar radiation data is in Watt-hours per square meter. */
 				tmy[hoy].solar[c_point] = sol_rad;
 
@@ -537,19 +537,18 @@ int climate::init(OBJECT *parent)
 	presync(gl_globalclock);
 
 	/* enable forecasting if specified */
-	if ( strcmp(get_forecast_spec(),"")!=0 && gl_forecast_create(my,get_forecast_spec())==NULL )
+	if ( strcmp(get_forecast_spec(),"")!=0 && gl_forecast_create(my(),get_forecast_spec())==NULL )
 	{
-		char buf[1024];
-		gl_error("%s: forecast '%s' is not valid", gl_name(my,buf,sizeof(buf))?buf:"(object?)", get_forecast_spec());
+		gl_error("%s: forecast '%s' is not valid", get_name(), get_forecast_spec());
 		return 0;
 	}
 	else if (get_forecast()!=NULL)
 	{	
 		/* initialize the forecast data entity */
 		FORECAST *fc = get_forecast();
-		fc->propref = gl_find_property(my->oclass,"temperature");
-		gl_forecast_save(fc,my->clock,3600,0,NULL);
-		my->flags |= OF_FORECAST;
+		fc->propref = get_property("temperature");
+		gl_forecast_save(fc,get_clock(),3600,0,NULL);
+		set_flags(get_flags()|OF_FORECAST);
 	}
 
 	return 1;
@@ -562,7 +561,7 @@ void climate::update_forecasts(TIMESTAMP t0)
 
 	FORECAST *fc;
 	
-	for ( fc=my->forecast ; fc!=NULL ; fc=fc->next )
+	for ( fc=get_forecast() ; fc!=NULL ; fc=fc->next )
 	{
 		/* don't update forecasts that are already current */
 		if ( t0/dt==(fc->starttime/dt) ) continue;

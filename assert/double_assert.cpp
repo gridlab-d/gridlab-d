@@ -16,7 +16,7 @@
 CLASS *double_assert::oclass = NULL;
 double_assert *double_assert::defaults = NULL;
 
-double_assert::double_assert(MODULE *module) : gld_object(NULL)
+double_assert::double_assert(MODULE *module)
 {
 	if (oclass==NULL)
 	{
@@ -64,7 +64,7 @@ int double_assert::create(void)
 {
 	memcpy(this,defaults,sizeof(*this));
 
-	return gld_object::create(); /* return 1 on success, 0 on failure */
+	return 1; /* return 1 on success, 0 on failure */
 }
 
 int double_assert::init(OBJECT *parent)
@@ -122,7 +122,7 @@ EXPORT TIMESTAMP sync_double_assert(OBJECT *obj, TIMESTAMP t0)
 EXPORT TIMESTAMP commit_double_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	char buff[64];
-	LINK_OBJECT(double_assert,da,obj);
+	double_assert *da = OBJECTDATA(obj,double_assert);
 
 	// handle once mode
 	if ( da->get_once()==da->ONCE_TRUE )

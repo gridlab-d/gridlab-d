@@ -17,7 +17,7 @@
 CLASS *enum_assert::oclass = NULL;
 enum_assert *enum_assert::defaults = NULL;
 
-enum_assert::enum_assert(MODULE *module) : gld_object(NULL)
+enum_assert::enum_assert(MODULE *module)
 {
 	if (oclass==NULL)
 	{
@@ -53,7 +53,7 @@ int enum_assert::create(void)
 {
 	memcpy(this,defaults,sizeof(*this));
 
-	return gld_object::create(); /* return 1 on success, 0 on failure */
+	return 1; /* return 1 on success, 0 on failure */
 }
 
 int enum_assert::init(OBJECT *parent)
@@ -98,7 +98,7 @@ EXPORT int init_enum_assert(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP commit_enum_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	char buff[64];
-	LINK_OBJECT(enum_assert,ea,obj);
+	enum_assert *ea = OBJECTDATA(obj,enum_assert);
 
 	gld_property target(obj->parent,ea->get_target());
 	if ( !target.is_valid() || target.get_type()!=PT_enumeration ) {

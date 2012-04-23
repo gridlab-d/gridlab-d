@@ -1368,62 +1368,57 @@ public: // iterators
 	inline T get_##X(void) { return X; }; \
 	inline void set_##X(T p) { X=p; }; 
 #define GL_STRUCT(T,X) protected: T X; public: \
-	inline T get_##X(void) { gld_rlock _lock(my); return X; }; \
-	inline void set_##X(T p) { gld_wlock _lock(my); X=p; }; 
+	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
+	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; 
 #define GL_STRING(T,X) 	protected: T X; public: \
-	inline char* get_##X(void) { gld_rlock _lock(my); return X; }; \
-	inline char get_##X(size_t n) { gld_rlock _lock(my); return X[n]; }; \
-	inline void set_##X(char *p) { gld_wlock _lock(my); strncpy(X,p,sizeof(X)); }; \
-	inline void set_##X(size_t n, char c) { gld_wlock _lock(my); X[n]=c; }; 
+	inline char* get_##X(void) { gld_rlock _lock(my()); return X; }; \
+	inline char get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
+	inline void set_##X(char *p) { gld_wlock _lock(my()); strncpy(X,p,sizeof(X)); }; \
+	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; 
 #define GL_ARRAY(T,X,S) protected: T X[S]; public: \
-	inline T* get_##X(void) { gld_rlock _lock(my); return X; }; \
-	inline T get_##X(size_t n) { gld_rlock _lock(my); return X[n]; }; \
-	inline void set_##X(T* p) { gld_wlock _lock(my); memcpy(X,p,sizeof(X)); }; \
-	inline void set_##X(size_t n, T m) { gld_wlock _lock(my); X[n]=m; }; 
-
-/* use LINK_OBJECT in place of "T O=OBJECTDATA(X,T)" */ 
-#define LINK_OBJECT(T,X,O) T *X=OBJECTDATA(O,T);X->connect(O);
+	inline T* get_##X(void) { gld_rlock _lock(my()); return X; }; \
+	inline T get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
+	inline void set_##X(T* p) { gld_wlock _lock(my()); memcpy(X,p,sizeof(X)); }; \
+	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; 
 
 class gld_object {
-
-protected: // data (internal use only)
-	OBJECT *my;
+public:
+	inline OBJECT *my() { return (((OBJECT*)this)-1); }
 
 public: // constructors
-	gld_object(OBJECT *obj) : my(obj) {};
 
 public: // header read accessors (no locking)
-	inline OBJECTNUM get_id(void) { return my->id; };
-	inline char* get_groupid(void) { return my->groupid; };
-	inline gld_class* get_oclass(void) { return (gld_class*)my->oclass; };
-	inline OBJECT *get_parent(void) { return my->parent; };
-	inline OBJECTRANK get_rank(void) { return my->rank; };
-	inline TIMESTAMP get_clock(void) { return my->clock; };
-	inline TIMESTAMP get_valid_to(void) { return my->valid_to; };
-	inline TIMESTAMP get_schedule_skew(void) { return my->schedule_skew; };
-	inline FORECAST *get_forecast(void) { return my->forecast; };
-	inline double get_latitude(void) { return my->latitude; };
-	inline double get_longitude(void) { return my->longitude; };
-	inline TIMESTAMP get_in_svc(void) { return my->in_svc; };
-	inline TIMESTAMP get_out_svc(void) { return my->out_svc; };
-	inline const char *get_name(void) { return my->name?my->name:"(unnamed)"; };
-	inline int get_tp_affinity(void) { return my->tp_affinity; };
-	inline NAMESPACE *get_space(void) { return my->space; };
-	inline unsigned int get_lock(void) { return my->lock; };
-	inline unsigned int get_rng_state(void) { return my->rng_state; };
-	inline unsigned long get_flags(unsigned long mask=0xffffffff) { return (my->flags)&mask; };
+	inline OBJECTNUM get_id(void) { return my()->id; };
+	inline char* get_groupid(void) { return my()->groupid; };
+	inline gld_class* get_oclass(void) { return (gld_class*)my()->oclass; };
+	inline OBJECT *get_parent(void) { return my()->parent; };
+	inline OBJECTRANK get_rank(void) { return my()->rank; };
+	inline TIMESTAMP get_clock(void) { return my()->clock; };
+	inline TIMESTAMP get_valid_to(void) { return my()->valid_to; };
+	inline TIMESTAMP get_schedule_skew(void) { return my()->schedule_skew; };
+	inline FORECAST *get_forecast(void) { return my()->forecast; };
+	inline double get_latitude(void) { return my()->latitude; };
+	inline double get_longitude(void) { return my()->longitude; };
+	inline TIMESTAMP get_in_svc(void) { return my()->in_svc; };
+	inline TIMESTAMP get_out_svc(void) { return my()->out_svc; };
+	inline const char *get_name(void) { return my()->name?my()->name:"(unnamed)"; };
+	inline int get_tp_affinity(void) { return my()->tp_affinity; };
+	inline NAMESPACE *get_space(void) { return my()->space; };
+	inline unsigned int get_lock(void) { return my()->lock; };
+	inline unsigned int get_rng_state(void) { return my()->rng_state; };
+	inline unsigned long get_flags(unsigned long mask=0xffffffff) { return (my()->flags)&mask; };
 
 protected: // header write accessors (no locking)
-	inline void set_forecast(FORECAST *fs) { my->forecast=fs; };
-	inline void set_latitude(double x) { my->latitude=x; };
-	inline void set_longitude(double x) { my->longitude=x; };
-	inline void set_flags(unsigned long flags) { my->flags=flags; };
+	inline void set_forecast(FORECAST *fs) { my()->forecast=fs; };
+	inline void set_latitude(double x) { my()->latitude=x; };
+	inline void set_longitude(double x) { my()->longitude=x; };
+	inline void set_flags(unsigned long flags) { my()->flags=flags; };
 
 protected: // locking (self)
-	inline void rlock(void) { ::rlock(&my->lock); };
-	inline void runlock(void) { ::runlock(&my->lock); };
-	inline void wlock(void) { ::wlock(&my->lock); };
-	inline void wunlock(void) { ::wunlock(&my->lock); };
+	inline void rlock(void) { ::rlock(&my()->lock); };
+	inline void runlock(void) { ::runlock(&my()->lock); };
+	inline void wlock(void) { ::wlock(&my()->lock); };
+	inline void wunlock(void) { ::wunlock(&my()->lock); };
 protected: // locking (others)
 	inline void rlock(OBJECT *obj) { ::rlock(&obj->lock); };
 	inline void runlock(OBJECT *obj) { ::runlock(&obj->lock); };
@@ -1431,24 +1426,26 @@ protected: // locking (others)
 	inline void wunlock(OBJECT *obj) { ::wunlock(&obj->lock); };
 
 protected: // special functions
-	inline int create(void) { my=OBJECTHDR(this); return 1; };
-	inline PROPERTY* get_property(char *name) { return callback->properties.get_property(my,name); };
+
+public: // member lookup functions
+	inline PROPERTY* get_property(char *name) { return callback->properties.get_property(my(),name); };
+	inline FUNCTIONADDR get_function(char *name) { return (*callback->function.get)(my()->oclass->name,name); };
 
 public: // external accessors
 	template <class T> inline void getp(PROPERTY &prop, T &value) { rlock(); value=*(T*)(GETADDR(my,&prop)); wunlock(); };
 	template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(GETADDR(my,&prop))=value; wunlock(); };
-	inline void connect(OBJECT *obj) { my=obj; };
 
 public: // core interface
-	inline int set_dependent(OBJECT *obj) { return callback->set_dependent(my,obj); };
-	inline int set_parent(OBJECT *obj) { return callback->set_parent(my,obj); };
-	inline int set_rank(unsigned int r) { return callback->set_rank(my,r); };
-	inline bool isa(char *type) { return callback->object_isa(my,type) ? true : false; };
+	inline int set_dependent(OBJECT *obj) { return callback->set_dependent(my(),obj); };
+	inline int set_parent(OBJECT *obj) { return callback->set_parent(my(),obj); };
+	inline int set_rank(unsigned int r) { return callback->set_rank(my(),r); };
+	inline bool isa(char *type) { return callback->object_isa(my(),type) ? true : false; };
+	inline bool is_valid(void) { return my()==OBJECTHDR(this); };
 
 public: // iterators
-	inline bool is_last(void) { return my==NULL || my->next==NULL; };
+	inline bool is_last(void) { return my()==NULL || my()->next==NULL; };
 	inline bool is_last(OBJECT *obj) { return obj==NULL || obj->next==NULL; };
-	inline OBJECT *get_next(void) { return my->next; };
+	inline OBJECT *get_next(void) { return my()->next; };
 	inline OBJECT *get_next(OBJECT *obj) { return obj?obj->next:NULL; };
 };
 #endif

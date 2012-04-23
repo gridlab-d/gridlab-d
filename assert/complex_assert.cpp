@@ -17,7 +17,7 @@
 CLASS *complex_assert::oclass = NULL;
 complex_assert *complex_assert::defaults = NULL;
 
-complex_assert::complex_assert(MODULE *module) : gld_object(NULL)
+complex_assert::complex_assert(MODULE *module)
 {
 	if (oclass==NULL)
 	{
@@ -68,7 +68,7 @@ int complex_assert::create(void)
 {
 	memcpy(this,defaults,sizeof(*this));
 
-	return gld_object::create(); /* return 1 on success, 0 on failure */
+	return 1; /* return 1 on success, 0 on failure */
 }
 
 int complex_assert::init(OBJECT *parent)
@@ -122,7 +122,7 @@ EXPORT int init_complex_assert(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP commit_complex_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	char buff[64];
-	LINK_OBJECT(complex_assert,ca,obj);
+	complex_assert *ca = OBJECTDATA(obj,complex_assert);
 
 	// handle once mode
 	if(ca->get_once() == ca->ONCE_TRUE){
