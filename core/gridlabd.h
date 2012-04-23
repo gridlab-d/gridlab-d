@@ -1308,9 +1308,9 @@ private: // data
 
 public: // constructors/casts
 	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), prop(p) {};
-	inline gld_property(OBJECT *o, char *n) : obj(o) { prop=callback->properties.get_property(o,n); if (!prop) throw "property not found"; };
+	inline gld_property(OBJECT *o, char *n) : obj(o) { prop=callback->properties.get_property(o,n); };
 	inline gld_property(GLOBALVAR *v) : obj(NULL), prop(v->prop) {};
-	inline gld_property(char *n) : obj(NULL) { GLOBALVAR *v=callback->global.find(n); if (!v) throw "global not found"; prop=v->prop;  };
+	inline gld_property(char *n) : obj(NULL) { GLOBALVAR *v=callback->global.find(n); prop= (v?v->prop:NULL);  };
 	inline operator PROPERTY*(void) { return prop; };
 
 public: // read accessors
@@ -1321,7 +1321,7 @@ public: // read accessors
 	inline size_t get_width(void) { return (size_t)(prop->width); };
 	inline PROPERTYACCESS get_access(void) { return prop->access; };
 	inline gld_unit* get_unit(void) { return (gld_unit*)prop->unit; };
-	inline void* get_addr(void) { return obj?GETADDR(obj,prop):prop->addr; };
+	inline void* get_addr(void) { return obj?((void*)((char*)(obj+1)+(unsigned int64)(prop->addr))):prop->addr; };
 	inline gld_keyword* get_first_keyword(void) { return (gld_keyword*)prop->keywords; };
 	inline char* get_description(void) { return prop->description; };
 	inline PROPERTYFLAGS get_flags(void) { return prop->flags; };
@@ -1331,6 +1331,7 @@ public: // read accessors
 public: // write accessors
 
 public: // special operations
+	inline bool is_valid(void) { return prop!=NULL; }
 	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
 	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
 
@@ -1379,6 +1380,9 @@ public: // iterators
 	inline T get_##X(size_t n) { gld_rlock _lock(my); return X[n]; }; \
 	inline void set_##X(T* p) { gld_wlock _lock(my); memcpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, T m) { gld_wlock _lock(my); X[n]=m; }; 
+
+/* use LINK_OBJECT in place of "T O=OBJECTDATA(X,T)" */ 
+#define LINK_OBJECT(T,X,O) T *X=OBJECTDATA(O,T);X->connect(O);
 
 class gld_object {
 
@@ -1433,6 +1437,7 @@ protected: // special functions
 public: // external accessors
 	template <class T> inline void getp(PROPERTY &prop, T &value) { rlock(); value=*(T*)(GETADDR(my,&prop)); wunlock(); };
 	template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(GETADDR(my,&prop))=value; wunlock(); };
+	inline void connect(OBJECT *obj) { my=obj; };
 
 public: // core interface
 	inline int set_dependent(OBJECT *obj) { return callback->set_dependent(my,obj); };

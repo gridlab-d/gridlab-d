@@ -61,13 +61,9 @@ int enum_assert::init(OBJECT *parent)
 	return 1;
 }
 
-complex *enum_assert::get_complex(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
-	return (complex*)GETADDR(obj,p);
-}
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF CORE LINKAGE
+//////////////////////////////////////////////////////////////////////////
 
 EXPORT int create_enum_assert(OBJECT **obj, OBJECT *parent)
 {
@@ -102,56 +98,58 @@ EXPORT int init_enum_assert(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP commit_enum_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	char buff[64];
-	enum_assert *ea = OBJECTDATA(obj,enum_assert);
+	LINK_OBJECT(enum_assert,ea,obj);
 
-		int32 *x = (int32*)gl_get_int32_by_name(obj->parent,ea->get_target());
-		if (x==NULL) {
-			gl_error("Specified target %s for %s is not valid.",ea->get_target(),gl_name(obj->parent,buff,64));
-			/*  TROUBLESHOOT
-			Check to make sure the target you are specifying is a published variable for the object
-			that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
-			check the wiki page to determine which variables can be published within the object you
-			are pointing to with the assert function.
-			*/
+	gld_property target(obj->parent,ea->get_target());
+	if ( !target.is_valid() || target.get_type()!=PT_enumeration ) {
+		gl_error("Specified target %s for %s is not valid.",ea->get_target(),gl_name(obj->parent,buff,64));
+		/*  TROUBLESHOOT
+		Check to make sure the target you are specifying is a published variable for the object
+		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
+		check the wiki page to determine which variables can be published within the object you
+		are pointing to with the assert function.
+		*/
+		return 0;
+	}
+
+	int32 x; target.getp(x);
+	if (ea->get_status() == ea->ASSERT_TRUE)
+	{
+		if (ea->get_value() != x) 
+		{
+			gl_verbose("Assert failed on %s: %s=%g did not match %g", 
+				gl_name(obj->parent,buff,64), ea->get_target(), x, ea->get_value());
 			return 0;
-		}
-		else if (ea->get_status() == ea->ASSERT_TRUE)
-		{
-			if (ea->get_value() != *x) 
-			{
-				gl_verbose("Assert failed on %s: %s did not match %i", 
-					gl_name(obj->parent,buff,64), ea->get_target(), ea->get_value());
-				return 0;
-			}
-			else
-			{
-				gl_verbose("Assert passed on %s", 
-					gl_name(obj->parent,buff,64));
-				return TS_NEVER;
-			}
-		}
-		else if (ea->get_status() == ea->ASSERT_FALSE)
-		{
-			if (ea->get_value() == *x)
-			{
-				gl_verbose("Assert failed on %s: %s did match %i", 
-					gl_name(obj->parent,buff,64), ea->get_target(), ea->get_value());
-				return 0;
-			}
-			else
-			{
-				gl_verbose("Assert passed on %s", 
-					gl_name(obj->parent,buff,64));
-				return TS_NEVER;
-			}
 		}
 		else
 		{
-			gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
+			gl_verbose("Assert passed on %s", 
+				gl_name(obj->parent,buff,64));
 			return TS_NEVER;
 		}
-		gl_verbose("Assert passed on %s",gl_name(obj->parent,buff,64));
+	}
+	else if (ea->get_status() == ea->ASSERT_FALSE)
+	{
+		if (ea->get_value() == x)
+		{
+			gl_verbose("Assert failed on %s: %s=%g did match %g", 
+				gl_name(obj->parent,buff,64), ea->get_target(), x, ea->get_value());
+			return 0;
+		}
+		else
+		{
+			gl_verbose("Assert passed on %s", 
+				gl_name(obj->parent,buff,64));
+			return TS_NEVER;
+		}
+	}
+	else
+	{
+		gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
 		return TS_NEVER;
+	}
+	gl_verbose("Assert passed on %s",gl_name(obj->parent,buff,64));
+	return TS_NEVER;
 }
 EXPORT TIMESTAMP sync_enum_assert(OBJECT *obj, TIMESTAMP t0)
 {

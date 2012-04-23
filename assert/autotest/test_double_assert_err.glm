@@ -1,0 +1,14 @@
+// test_double_assert_err
+
+module assert;
+module climate;
+
+object climate {
+	temperature 50;
+	object double_assert {
+		target "temperature";
+		value 55;
+		within 1;
+	};
+};
+	

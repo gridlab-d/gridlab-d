@@ -1,0 +1,35 @@
+// test_double_assert
+
+module assert;
+module powerflow;
+
+object meter {
+	nominal_voltage 120;
+	phases A;
+	voltage_A 120.0;
+	object complex_assert {
+		target "voltage_A";
+		value 120.0;
+		operation MAGNITUDE;
+		within 1;
+	};
+	object complex_assert {
+		target "voltage_A";
+		value 120.0;
+		operation REAL;
+		within 1;
+	};
+	object complex_assert {
+		target "voltage_A";
+		value 0;
+		operation IMAGINARY;
+		within 1;
+	};
+	object complex_assert {
+		target "voltage_A";
+		value 0;
+		operation ANGLE;
+		within 1;
+	};
+};
+	

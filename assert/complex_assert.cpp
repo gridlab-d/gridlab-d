@@ -17,7 +17,7 @@
 CLASS *complex_assert::oclass = NULL;
 complex_assert *complex_assert::defaults = NULL;
 
-complex_assert::complex_assert(MODULE *module)
+complex_assert::complex_assert(MODULE *module) : gld_object(NULL)
 {
 	if (oclass==NULL)
 	{
@@ -68,7 +68,7 @@ int complex_assert::create(void)
 {
 	memcpy(this,defaults,sizeof(*this));
 
-	return 1; /* return 1 on success, 0 on failure */
+	return gld_object::create(); /* return 1 on success, 0 on failure */
 }
 
 int complex_assert::init(OBJECT *parent)
@@ -84,13 +84,9 @@ int complex_assert::init(OBJECT *parent)
 	return 1;
 }
 
-complex *complex_assert::get_complex(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
-	return (complex*)GETADDR(obj,p);
-}
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF CORE LINKAGE
+//////////////////////////////////////////////////////////////////////////
 
 EXPORT int create_complex_assert(OBJECT **obj, OBJECT *parent)
 {
@@ -126,92 +122,102 @@ EXPORT int init_complex_assert(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP commit_complex_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	char buff[64];
-	complex_assert *ca = OBJECTDATA(obj,complex_assert);
+	LINK_OBJECT(complex_assert,ca,obj);
 
-	if(ca->once == ca->ONCE_TRUE){
-		ca->once_value = ca->value;
-		ca->once = ca->ONCE_DONE;
-	} else if (ca->once == ca->ONCE_DONE){
-		if(ca->once_value == ca->value){
+	// handle once mode
+	if(ca->get_once() == ca->ONCE_TRUE){
+		ca->set_once_value(ca->get_value());
+		ca->set_once(ca->ONCE_DONE);
+	} else if (ca->get_once() == ca->ONCE_DONE){
+		if(ca->get_once_value() == ca->get_value()){
 			gl_verbose("Assert skipped with ONCE logic");
 			return TS_NEVER;
 		} else {
-			ca->once_value = ca->value;
+			ca->set_once_value(ca->get_value());
 		}
 	}
-	complex *x = (complex*)gl_get_complex_by_name(obj->parent,ca->target);
-	if (x==NULL) {
-		gl_error("Specified target %s for %s is not valid.",ca->target,gl_name(obj->parent,buff,64));
+
+	// get the target property
+	gld_property target(obj->parent,ca->get_target());
+	if ( !target.is_valid() || target.get_type()!=PT_complex ) {
+		gl_error("Specified target %s for %s is not valid.",ca->get_target(),gl_name(obj->parent,buff,64));
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
 		check the wiki page to determine which variables can be published within the object you
 		are pointing to with the assert function.
 		*/
+		return 0;
 	}
-	else if (ca->status == ca->ASSERT_TRUE)
+
+	// test the target value
+	complex x; target.getp(x);
+	if (ca->get_status() == ca->ASSERT_TRUE)
 	{
-		if (ca->operation == ca->FULL || ca->operation == ca->REAL || ca->operation == ca->IMAGINARY)
+		if (ca->get_operation() == ca->FULL 
+			|| ca->get_operation() == ca->REAL 
+			|| ca->get_operation() == ca->IMAGINARY
+			)
 		{	
-			complex error = *x - ca->value;
+			complex error = x - ca->get_value();
 			double real_error = error.Re();
 			double imag_error = error.Im();
 	
-			if ((_isnan(real_error) || fabs(real_error)>ca->within) && (ca->operation == ca->FULL || ca->operation == ca->REAL))
+			if ((_isnan(real_error) || fabs(real_error)>ca->get_within()) 
+				&& (ca->get_operation() == ca->FULL || ca->get_operation() == ca->REAL)
+				)
 			{
 				gl_verbose("Assert failed on %s: real part of %s %g not within %f of given value %g", 
-				gl_name(obj->parent,buff,64), ca->target, x->Re(), ca->within, ca->value.Re());
+				gl_name(obj->parent,buff,64), ca->get_target(), x.Re(), ca->get_within(), ca->get_value().Re());
 
 				return 0;
 			}
-			if ((_isnan(imag_error) || fabs(imag_error)>ca->within) && (ca->operation == ca->FULL || ca->operation == ca->IMAGINARY))
+			if ((_isnan(imag_error) || fabs(imag_error)>ca->get_within()) && (ca->get_operation() == ca->FULL || ca->get_operation() == ca->IMAGINARY))
 			{
 				gl_verbose("Assert failed on %s: imaginary part of %s %+gi not within %f of given value %+gi", 
-				gl_name(obj->parent,buff,64), ca->target, x->Im(), ca->within, ca->value.Im());
+				gl_name(obj->parent,buff,64), ca->get_target(), x.Im(), ca->get_within(), ca->get_value().Im());
 
 				return 0;
 			}
 		}
-		else if (ca->operation == ca->MAGNITUDE)
+		else if (ca->get_operation() == ca->MAGNITUDE)
 		{
-			complex val = *x;
-			double magnitude_error = val.Mag() - ca->value.Mag();
+			double magnitude_error = x.Mag() - ca->get_value().Mag();
 
-			if ( _isnan(magnitude_error) || fabs(magnitude_error) > ca->within )
+			if ( _isnan(magnitude_error) || fabs(magnitude_error) > ca->get_within() )
 			{
 				gl_verbose("Assert failed on %s: Magnitude of %s (%g) not within %f of given value %g", 
-				gl_name(obj->parent,buff,64), ca->target, val.Mag(), ca->within, ca->value.Mag());
+				gl_name(obj->parent,buff,64), ca->get_target(), x.Mag(), ca->get_within(), ca->get_value().Mag());
 
 				return 0;
 			}
 		}
-		else if (ca->operation == ca->ANGLE)
+		else if (ca->get_operation() == ca->ANGLE)
 		{
-			complex val = *x;
-			double angle_error = val.Arg() - ca->value.Arg();
+			double angle_error = x.Arg() - ca->get_value().Arg();
 
-			if ( _isnan(angle_error) || fabs(angle_error) > ca->within )
+			if ( _isnan(angle_error) || fabs(angle_error) > ca->get_within() )
 			{
 				gl_verbose("Assert failed on %s: Angle of %s (%g) not within %f of given value %g", 
-				gl_name(obj->parent,buff,64), ca->target, val.Arg(), ca->within, ca->value.Arg());
+				gl_name(obj->parent,buff,64), ca->get_target(), x.Arg(), ca->get_within(), ca->get_value().Arg());
 
 				return 0;
 			}
 		}
 	}
-	else if (ca->status == ca->ASSERT_FALSE)
+	else if (ca->get_status() == ca->ASSERT_FALSE)
 	{
-		complex error = *x - ca->value;
+		complex error = x - ca->get_value();
 		double real_error = error.Re();
 		double imag_error = error.Im();
-		if ((_isnan(real_error) || fabs(real_error)<ca->within)||(_isnan(imag_error) || fabs(imag_error)<ca->within)){
-			if (_isnan(real_error) || fabs(real_error)<ca->within) {
+		if ((_isnan(real_error) || fabs(real_error)<ca->get_within())||(_isnan(imag_error) || fabs(imag_error)<ca->get_within())){
+			if (_isnan(real_error) || fabs(real_error)<ca->get_within()) {
 				gl_verbose("Assert failed on %s: real part of %s %g is within %f of %g", 
-				gl_name(obj->parent,buff,64), ca->target, x->Re(), ca->within, ca->value.Re());
+				gl_name(obj->parent,buff,64), ca->get_target(), x.Re(), ca->get_within(), ca->get_value().Re());
 			}
-			if (_isnan(imag_error) || fabs(imag_error)<ca->within) {
+			if (_isnan(imag_error) || fabs(imag_error)<ca->get_within()) {
 				gl_verbose("Assert failed on %s: imaginary part of %s %+gi is within %f of %gi", 
-				gl_name(obj->parent,buff,64), ca->target, x->Im(), ca->within, ca->value.Im());
+				gl_name(obj->parent,buff,64), ca->get_target(), x.Im(), ca->get_within(), ca->get_value().Im());
 			}
 			return 0;
 		}
@@ -225,10 +231,12 @@ EXPORT TIMESTAMP commit_complex_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	return TS_NEVER;
 }
 
-EXPORT int notify_complex_assert(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
+EXPORT int notify_complex_assert(OBJECT *obj, int update_mode, PROPERTY *prop, char *value)
+{
 	complex_assert *ca = OBJECTDATA(obj,complex_assert);
-	if(update_mode == NM_POSTUPDATE && (ca->once == ca->ONCE_DONE) && (strcmp(prop->name, "value") == 0)){
-		ca->once = ca->ONCE_TRUE;
+	if(update_mode == NM_POSTUPDATE && (ca->get_once() == ca->ONCE_DONE) && (strcmp(prop->name, "value") == 0))
+	{
+		ca->set_once(ca->ONCE_TRUE);
 	}
 	return 1;
 }

@@ -11,7 +11,7 @@
 #define _isnan isnan
 #endif
 
-class enum_assert : protected gld_object {
+class enum_assert : public gld_object {
 public:
 	typedef enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} ASSERTSTATUS;
 	
@@ -28,7 +28,6 @@ public:
 public:
 	static CLASS *oclass;
 	static enum_assert *defaults;
-	complex *get_complex(OBJECT *obj, char *name);
 };
 
 #endif

@@ -917,6 +917,22 @@ int module_compile(char *name,	/**< name of library */
 	int rc;
 	size_t codesize = strlen(code), len;
 	FILE *fp;
+	char srcfile[1024];
+
+	/* normalize source file name */
+	if ( source )
+	{
+		char *c, *p=srcfile;
+		for ( c=source; *c!='\0'; c++ )
+		{
+			switch (*c) {
+				case '\\': *p++='/'; break;
+				default: *p++=*c; break;
+			}
+		}
+		*c='\0';
+		source = srcfile;
+	}
 
 	/* set flags */
 	cc_verbose = (flags&MC_VERBOSE);

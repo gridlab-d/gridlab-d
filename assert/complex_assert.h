@@ -11,18 +11,21 @@
 #define _isnan isnan
 #endif
 
-class complex_assert {
-
-private:
-protected:
+class complex_assert : public gld_object {
 public:
-	enum {FULL=0,REAL=1,IMAGINARY=2,MAGNITUDE=3,ANGLE=4} operation; //If you want to look at only a part of 
-	enum {ONCE_FALSE=0, ONCE_TRUE=1, ONCE_DONE=2} once;				//  the complex number.
-	complex once_value;
-	enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} status; //Assert whether the target value should be
-	char1024 target;											//within the range (True), outside of a 
-	complex value;											//range (False) or shouldn't be checked (None).
-	double within;
+	typedef enum {FULL=0,REAL=1,IMAGINARY=2,MAGNITUDE=3,ANGLE=4} OPERATION;	//If you want to look at only a part of 
+																			//  the complex number.
+	typedef enum {ONCE_FALSE=0, ONCE_TRUE=1, ONCE_DONE=2} ONCEMODE;
+	typedef enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} ASSERTSTATUS;	//Assert whether the target value should be
+																			//within the range (True), outside of a 
+																			//range (False) or shouldn't be checked (None).
+	GL_ATOMIC(ASSERTSTATUS,status);
+	GL_STRING(char1024,target);											
+	GL_ATOMIC(complex,value);											
+	GL_ATOMIC(OPERATION,operation); 
+	GL_ATOMIC(ONCEMODE,once);				
+	GL_STRUCT(complex,once_value);
+	GL_ATOMIC(double,within);
 
 public:
 	/* required implementations */
@@ -33,9 +36,6 @@ public:
 public:
 	static CLASS *oclass;
 	static complex_assert *defaults;
-	complex *get_complex(OBJECT *obj, char *name);
-
-
 };
 
 #endif

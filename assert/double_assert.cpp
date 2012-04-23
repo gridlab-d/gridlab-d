@@ -16,7 +16,7 @@
 CLASS *double_assert::oclass = NULL;
 double_assert *double_assert::defaults = NULL;
 
-double_assert::double_assert(MODULE *module)
+double_assert::double_assert(MODULE *module) : gld_object(NULL)
 {
 	if (oclass==NULL)
 	{
@@ -64,7 +64,7 @@ int double_assert::create(void)
 {
 	memcpy(this,defaults,sizeof(*this));
 
-	return 1; /* return 1 on success, 0 on failure */
+	return gld_object::create(); /* return 1 on success, 0 on failure */
 }
 
 int double_assert::init(OBJECT *parent)
@@ -79,20 +79,16 @@ int double_assert::init(OBJECT *parent)
 	return 1;
 }
 
-complex *double_assert::get_complex(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
-	return (complex*)GETADDR(obj,p);
-}
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF CORE LINKAGE
+//////////////////////////////////////////////////////////////////////////
 
 EXPORT int create_double_assert(OBJECT **obj, OBJECT *parent)
 {
 	try
 	{
 		*obj = gl_create_object(double_assert::oclass);
-		if (*obj!=NULL)
+		if ( *obj != NULL )
 		{
 			double_assert *my = OBJECTDATA(*obj,double_assert);
 			gl_set_parent(*obj,parent);
@@ -125,36 +121,33 @@ EXPORT TIMESTAMP sync_double_assert(OBJECT *obj, TIMESTAMP t0)
 
 EXPORT TIMESTAMP commit_double_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
-	//OBJECT *obj;
 	char buff[64];
-	double_assert *da = OBJECTDATA(obj,double_assert);
-	double range = 0.0;
+	LINK_OBJECT(double_assert,da,obj);
 
-	//bj = OBJECTHDR(this);
-	if(da->once == da->ONCE_TRUE){
-		da->once_value = da->value;
-		da->once = da->ONCE_DONE;
-	} else if (da->once == da->ONCE_DONE){
-		if(da->once_value == da->value){
+	// handle once mode
+	if ( da->get_once()==da->ONCE_TRUE )
+	{
+		da->set_once_value(da->get_value());
+		da->set_once(da->ONCE_DONE);
+	} 
+	else if ( da->get_once() == da->ONCE_DONE )
+	{
+		if ( da->get_once_value()==da->get_value() )
+		{
 			gl_verbose("Assert skipped with ONCE logic");
 			return TS_NEVER;
-		} else {
-			da->once_value = da->value;
+		} 
+		else 
+		{
+			da->set_once_value(da->get_value());
 		}
 	}
 		
-	double *x = (double*)gl_get_double_by_name(obj->parent,da->target);
-	if(da->within_mode == double_assert::IN_RATIO){
-		range = da->value * da->within;
-		if(range < 0.001){ // minimum bounds
-			range = 0.001;
-		}
-	} else if(da->within_mode == double_assert::IN_ABS){
-		range = da->within;
-	}
-	if (x==NULL) 
+	// get the target property
+	gld_property target(obj->parent,da->get_target());
+	if ( !target.is_valid() || target.get_type()!=PT_double ) 
 	{
-		gl_error("Specified target %s for %s is not valid.",da->target,gl_name(obj->parent,buff,64));
+		gl_error("Specified target %s for %s is not valid.",da->get_target(),gl_name(obj->parent,buff,64));
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -163,25 +156,43 @@ EXPORT TIMESTAMP commit_double_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 		*/
 		return 0;
 	}
-	else if (da->status == da->ASSERT_TRUE)
+
+	// get the within range
+	double range = 0.0;
+	if ( da->get_within_mode() == da->IN_RATIO ) 
 	{
-		double m = fabs(*x-da->value);
-		if (_isnan(m) || m>range)
+		range = da->get_value() * da->get_within();
+		if ( range<0.001 ) 
+		{	// minimum bounds
+			range = 0.001;
+		}
+	} 
+	else if ( da->get_within_mode()== da->IN_ABS ) 
+	{
+		range = da->get_within();
+	}
+
+	// test the target value
+	double x; target.getp(x);
+	if ( da->get_status() == da->ASSERT_TRUE )
+	{
+		double m = fabs(x-da->get_value());
+		if ( _isnan(m) || m>range )
 		{				
 			gl_verbose("Assert failed on %s: %s %g not within %f of given value %g", 
-				gl_name(obj->parent, buff, 64), da->target, *x, range, da->value);
+				gl_name(obj->parent, buff, 64), da->get_target(), x, range, da->get_value());
 			return 0;
 		}
 		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
 		return TS_NEVER;
 	}
-	else if (da->status == da->ASSERT_FALSE)
+	else if ( da->get_status() == da->ASSERT_FALSE )
 	{
-		double m = fabs(*x-da->value);
-		if (_isnan(m) || m<range)
+		double m = fabs(x-da->get_value());
+		if ( _isnan(m) || m<range )
 		{				
 			gl_verbose("Assert failed on %s: %s %g is within %f of given value %g", 
-				gl_name(obj->parent, buff, 64), da->target, *x, range, da->value);
+				gl_name(obj->parent, buff, 64), da->get_target(), x, range, da->get_value());
 			return 0;
 		}
 		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
@@ -195,10 +206,15 @@ EXPORT TIMESTAMP commit_double_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 
 }
 
-EXPORT int notify_double_assert(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
+EXPORT int notify_double_assert(OBJECT *obj, int update_mode, PROPERTY *prop, char *value)
+{
 	double_assert *da = OBJECTDATA(obj,double_assert);
-	if(update_mode == NM_POSTUPDATE && (da->once == da->ONCE_DONE) && (strcmp(prop->name, "value") == 0)){
-		da->once = da->ONCE_TRUE;
+	if ( ( update_mode == NM_POSTUPDATE )
+		 && ( da->get_once() == da->ONCE_DONE ) 
+		 && (strcmp(prop->name, "value") == 0)
+		 )
+	{
+		da->set_once(da->ONCE_TRUE);
 	}
 	return 1;
 }

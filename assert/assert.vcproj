@@ -509,6 +509,46 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="Test files"
+			>
+			<File
+				RelativePath=".\autotest\test_complex_assert.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_complex_assert_angle_err.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_complex_assert_imaginary_err.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_complex_assert_magnitude_err.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_complex_assert_real_err.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_double_assert.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_double_assert_err.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_enum_assert.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_enum_assert_err.glm"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

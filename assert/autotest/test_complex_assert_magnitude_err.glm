@@ -1,0 +1,17 @@
+// test_complex_assert_magnitude_err
+
+module assert;
+module powerflow;
+
+object meter {
+	voltage_A 110.0;
+	nominal_voltage 124.752;
+	phases A;
+	object complex_assert {
+		target "voltage_A";
+		value 121.0;
+		operation MAGNITUDE;
+		within 1;
+	};
+};
+	
