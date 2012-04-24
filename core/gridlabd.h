@@ -1259,7 +1259,7 @@ private: // data
 	UNIT core;
 
 public: // constructors/casts
-	inline gld_unit(void) { throw "gld_unit constructor not permitted"; };
+	inline gld_unit(char *name) { UNIT *unit=callback->unit_find(name); if (unit) memcpy(&core,unit,sizeof(UNIT)); else memset(&core,0,sizeof(UNIT)); };
 	inline operator UNIT*(void) { return &core; };
 
 public: // read accessors
@@ -1273,8 +1273,12 @@ public: // read accessors
 	inline double get_a(void) { return core.a; };
 	inline double get_b(void) { return core.b; };
 	inline int get_prec(void) { return core.prec; };
+	inline bool is_valid(void) { return core.name[0]=='\0'; };
 
-public: // write accessors
+public: // special functions
+	inline bool convert(char *name, double &value) { UNIT *unit=callback->unit_find(name); return unit&&(callback->unit_convert_ex(&core,unit,&value))?true:false; }
+	inline bool convert(UNIT *unit, double &value) { return callback->unit_convert_ex(&core,unit,&value)?true:false; }
+	inline bool convert(gld_unit &unit, double &value) { return callback->unit_convert_ex(&core,(UNIT*)unit,&value)?true:false; }
 
 public: // iterators
 	inline bool is_last(void) { return core.next==NULL?true:false; };
@@ -1468,9 +1472,7 @@ public: // core interface
 
 public: // iterators
 	inline bool is_last(void) { return my()->next==NULL; };
-	inline bool is_last(OBJECT *obj) { return obj->next==NULL; };
 	inline gld_object* get_next(void) { return OBJECTDATA(my()->next,gld_object); };
-	inline gld_object* get_next(OBJECT *obj) { return OBJECTDATA(obj->next,gld_object); };
 };
 #endif
 
