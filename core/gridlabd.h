@@ -1412,19 +1412,19 @@ public: // header read accessors (no locking)
 	inline OBJECTNUM get_id(void) { return my()->id; };
 	inline char* get_groupid(void) { return my()->groupid; };
 	inline gld_class* get_oclass(void) { return (gld_class*)my()->oclass; };
-	inline OBJECT *get_parent(void) { return my()->parent; };
+	inline gld_object* get_parent(void) { return OBJECTDATA(my()->parent,gld_object); };
 	inline OBJECTRANK get_rank(void) { return my()->rank; };
 	inline TIMESTAMP get_clock(void) { return my()->clock; };
 	inline TIMESTAMP get_valid_to(void) { return my()->valid_to; };
 	inline TIMESTAMP get_schedule_skew(void) { return my()->schedule_skew; };
-	inline FORECAST *get_forecast(void) { return my()->forecast; };
+	inline FORECAST* get_forecast(void) { return my()->forecast; };
 	inline double get_latitude(void) { return my()->latitude; };
 	inline double get_longitude(void) { return my()->longitude; };
 	inline TIMESTAMP get_in_svc(void) { return my()->in_svc; };
 	inline TIMESTAMP get_out_svc(void) { return my()->out_svc; };
-	inline const char *get_name(void) { return my()->name?my()->name:"(unnamed)"; };
+	inline const char* get_name(void) { return my()->name?my()->name:"(unnamed)"; };
 	inline int get_tp_affinity(void) { return my()->tp_affinity; };
-	inline NAMESPACE *get_space(void) { return my()->space; };
+	inline NAMESPACE* get_space(void) { return my()->space; };
 	inline unsigned int get_lock(void) { return my()->lock; };
 	inline unsigned int get_rng_state(void) { return my()->rng_state; };
 	inline unsigned long get_flags(unsigned long mask=0xffffffff) { return (my()->flags)&mask; };
@@ -1464,13 +1464,13 @@ public: // core interface
 	inline int set_parent(OBJECT *obj) { return callback->set_parent(my(),obj); };
 	inline int set_rank(unsigned int r) { return callback->set_rank(my(),r); };
 	inline bool isa(char *type) { return callback->object_isa(my(),type) ? true : false; };
-	inline bool is_valid(void) { return my()==OBJECTHDR(this); };
+	inline bool is_valid(void) { return my()!=NULL && my()==OBJECTHDR(this); };
 
 public: // iterators
-	inline bool is_last(void) { return my()==NULL || my()->next==NULL; };
-	inline bool is_last(OBJECT *obj) { return obj==NULL || obj->next==NULL; };
-	inline OBJECT *get_next(void) { return my()->next; };
-	inline OBJECT *get_next(OBJECT *obj) { return obj?obj->next:NULL; };
+	inline bool is_last(void) { return my()->next==NULL; };
+	inline bool is_last(OBJECT *obj) { return obj->next==NULL; };
+	inline gld_object* get_next(void) { return OBJECTDATA(my()->next,gld_object); };
+	inline gld_object* get_next(OBJECT *obj) { return OBJECTDATA(obj->next,gld_object); };
 };
 #endif
 

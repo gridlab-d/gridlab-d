@@ -154,7 +154,7 @@ typedef	enum {
 		RT_CSV,
 } READERTYPE;
 
-class climate : protected gld_object {
+class climate : public gld_object {
 	
 	// get_/set_ accessors for classes in this module only (non-atomic data need locks on access)
 	GL_STRING(char32,city); ///< the city
