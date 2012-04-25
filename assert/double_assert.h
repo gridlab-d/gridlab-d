@@ -2,7 +2,7 @@
 **/
 
 #ifndef _double_assert_H
-#define _doulbe_assert_H
+#define _double_assert_H
 
 #include <stdarg.h>
 #include "gridlabd.h"

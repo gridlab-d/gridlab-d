@@ -24,32 +24,34 @@ typedef struct s_class_list CLASS;
 typedef int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
 #endif
 
-/* Valid GridLAB data types */
-typedef char char1024[1025]; /**< strings up to 1024 characters */
-typedef char char256[257]; /**< strings up to 256 characters */
-typedef char char32[33]; /**< strings up to 32 characters */
-typedef char char8[9]; /** string up to 8 characters */
-
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 typedef int8_t    int8;     /* 8-bit integers */
 typedef int16_t   int16;    /* 16-bit integers */
 typedef int32_t   int32;    /* 32-bit integers */
+typedef uint16_t  uint16;	/* unsigned 16-bit integers */
 typedef uint32_t  uint32;   /* unsigned 32-bit integers */
 typedef uint64_t  uint64;   /* unsigned 64-bit integers */
-typedef uint64    set;      /* sets (each of up to 64 values may be defined) */
 #else /* no HAVE_STDINT_H */
 typedef char int8; /** 8-bit integers */
 typedef short int16; /** 16-bit integers */
 typedef int int32; /* 32-bit integers */
-typedef unsigned int64 set; /* sets (each of up to 64 values may be defined) */
+typedef unsigned short uint16;
 typedef unsigned int uint32; /* unsigned 32-bit integers */
 typedef unsigned int64 uint64;
 #endif /* HAVE_STDINT_H */
+
+/* Valid GridLAB data types */
+typedef char char1024[1025]; /**< strings up to 1024 characters */
+typedef char char256[257]; /**< strings up to 256 characters */
+typedef char char32[33]; /**< strings up to 32 characters */
+typedef char char8[9]; /** string up to 8 characters */
+typedef uint64 set;      /* sets (each of up to 64 values may be defined) */
 typedef uint32 enumeration; /* enumerations (any one of a list of values) */
 typedef struct s_object_list* object; /* GridLAB objects */
 typedef double triplet[3];
 typedef complex triplex[3];
+
 #ifdef REAL4
 typedef float real; 
 #else
@@ -170,6 +172,20 @@ typedef struct s_property_map {
 	bool notify_override;
 } PROPERTY; /**< property definition item */
 
+typedef enum { 
+	TCOP_EQ=0, 
+	TCOP_LE=1, 
+	TCOP_GE=2, 
+	TCOP_NE=3, 
+	TCOP_LT=4,
+	TCOP_GT=5,
+	TCOP_IN=6,
+	TCOP_NI=7,
+	_TCOP_LAST,
+	TCOP_ERR=-1
+} PROPERTYCOMPAREOP;
+typedef int PROPERTYCOMPAREFUNCTION(void*,void*,void*);
+
 typedef struct s_property_specs { /**<	the property type conversion specifications.
 								It is critical that the order of entries in this list must match 
 								the order of entries in the enumeration #PROPERTYTYPE 
@@ -183,6 +199,13 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 	int (*create)(void*); /**< the function used to create the property, if any */
 	int (*stream_in)(FILE*,void*,PROPERTY*); /**< the function to read data from a stream */
 	int (*stream_out)(FILE*,void*,PROPERTY*); /**< the function to write data to a stream */
+	struct {
+		PROPERTYCOMPAREOP op;
+		char str[16];
+		PROPERTYCOMPAREFUNCTION* fn;
+		int trinary;
+	} compare[_TCOP_LAST]; 
+	// @todo for greater generality this should be implemented as a linked list
 } PROPERTYSPEC;
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
 
@@ -191,6 +214,8 @@ uint32 property_size(PROPERTY *);
 uint32 property_size_by_types(PROPERTYTYPE);
 size_t property_minimum_buffersize(PROPERTY *);
 int property_create(PROPERTY *, void *);
+bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b);
+PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
 
 #endif //_PROPERTY_H
 

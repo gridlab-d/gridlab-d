@@ -1304,71 +1304,6 @@ public: // iterators
 	inline gld_keyword* get_next(void) { return (gld_keyword*)core.next; };
 };
 
-class gld_property {
-
-private: // data
-	PROPERTY *prop;
-	OBJECT *obj;
-
-public: // constructors/casts
-	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), prop(p) {};
-	inline gld_property(OBJECT *o, char *n) : obj(o) { prop=callback->properties.get_property(o,n); };
-	inline gld_property(GLOBALVAR *v) : obj(NULL), prop(v->prop) {};
-	inline gld_property(char *n) : obj(NULL) { GLOBALVAR *v=callback->global.find(n); prop= (v?v->prop:NULL);  };
-	inline operator PROPERTY*(void) { return prop; };
-
-public: // read accessors
-	inline gld_class* get_class(void) { return (gld_class*)prop->oclass; };
-	inline char *get_name(void) { return prop->name; };
-	inline gld_type get_type(void) { return gld_type(prop->ptype); };
-	inline size_t get_size(void) { return (size_t)(prop->size); };
-	inline size_t get_width(void) { return (size_t)(prop->width); };
-	inline PROPERTYACCESS get_access(void) { return prop->access; };
-	inline gld_unit* get_unit(void) { return (gld_unit*)prop->unit; };
-	inline void* get_addr(void) { return obj?((void*)((char*)(obj+1)+(unsigned int64)(prop->addr))):prop->addr; };
-	inline gld_keyword* get_first_keyword(void) { return (gld_keyword*)prop->keywords; };
-	inline char* get_description(void) { return prop->description; };
-	inline PROPERTYFLAGS get_flags(void) { return prop->flags; };
-	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(prop,get_addr(),buffer,size); };
-	inline int from_string(char *string) { return callback->convert.string_to_property(prop,get_addr(),string); };
-
-public: // write accessors
-
-public: // special operations
-	inline bool is_valid(void) { return prop!=NULL; }
-	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
-	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
-	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };
-	template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };
-	template <class T> inline void setp(T &value, gld_wlock&) { *(T*)get_addr()=value; };
-
-public: // iterators
-	inline bool is_last(void) { return prop==NULL || prop->next==NULL; };
-	inline PROPERTY* get_next(void) { return prop->next; };
-};
-
-class gld_global {
-
-private: // data
-	GLOBALVAR core;
-
-public: // constructors
-	inline gld_global(void) { throw "gld_global constructor not permitted"; };
-	inline operator GLOBALVAR*(void) { return &core; };
-
-public: // read accessors
-	inline PROPERTY* get_property(void) { return core.prop; };
-	inline unsigned long get_flags(void) { return core.flags; };
-
-public: // write accessors
-
-public: // external accessors
-	// TODO
-
-public: // iterators
-	inline bool is_last(void) { return core.next==NULL; };
-	inline gld_global* get_next(void) { return (gld_global*)core.next; };
-};
 
 // object data declaration/accessors
 #define GL_ATOMIC(T,X) protected: T X; public: \
@@ -1426,7 +1361,7 @@ public: // header read accessors (no locking)
 	inline double get_longitude(void) { return my()->longitude; };
 	inline TIMESTAMP get_in_svc(void) { return my()->in_svc; };
 	inline TIMESTAMP get_out_svc(void) { return my()->out_svc; };
-	inline const char* get_name(void) { return my()->name?my()->name:"(unnamed)"; };
+	inline const char* get_name(void) { static char _name[sizeof(CLASS)+16]; return my()->name?my()->name:(sprintf(_name,"%s:%d",my()->oclass->name,my()->id),_name); };
 	inline int get_tp_affinity(void) { return my()->tp_affinity; };
 	inline NAMESPACE* get_space(void) { return my()->space; };
 	inline unsigned int get_lock(void) { return my()->lock; };
@@ -1473,7 +1408,96 @@ public: // core interface
 public: // iterators
 	inline bool is_last(void) { return my()->next==NULL; };
 	inline gld_object* get_next(void) { return OBJECTDATA(my()->next,gld_object); };
+
+public: // exceptions
+	inline void exception(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); throw (const char*)buf;};
 };
+
+class gld_property {
+
+private: // data
+	PROPERTY *prop;
+	OBJECT *obj;
+
+public: // constructors/casts
+	inline gld_property(gld_object *o, char *n) : obj(o->my()) { prop=callback->properties.get_property(o->my(),n); };
+	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), prop(p) {};
+	inline gld_property(OBJECT *o, char *n) : obj(o) { prop=callback->properties.get_property(o,n); };
+	inline gld_property(GLOBALVAR *v) : obj(NULL), prop(v->prop) {};
+	inline gld_property(char *n) : obj(NULL) { GLOBALVAR *v=callback->global.find(n); prop= (v?v->prop:NULL);  };
+	inline operator PROPERTY*(void) { return prop; };
+
+public: // read accessors
+	inline gld_class* get_class(void) { return (gld_class*)prop->oclass; };
+	inline char *get_name(void) { return prop->name; };
+	inline gld_type get_type(void) { return gld_type(prop->ptype); };
+	inline size_t get_size(void) { return (size_t)(prop->size); };
+	inline size_t get_width(void) { return (size_t)(prop->width); };
+	inline PROPERTYACCESS get_access(void) { return prop->access; };
+	inline gld_unit* get_unit(void) { return (gld_unit*)prop->unit; };
+	inline void* get_addr(void) { return obj?((void*)((char*)(obj+1)+(unsigned int64)(prop->addr))):prop->addr; };
+	inline gld_keyword* get_first_keyword(void) { return (gld_keyword*)prop->keywords; };
+	inline char* get_description(void) { return prop->description; };
+	inline PROPERTYFLAGS get_flags(void) { return prop->flags; };
+	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(prop,get_addr(),buffer,size); };
+	inline int from_string(char *string) { return callback->convert.string_to_property(prop,get_addr(),string); };
+	inline bool compare(PROPERTYCOMPAREOP op, char *a, char *b=NULL) { char v1[1024], v2[1024]; return callback->convert.string_to_property(prop,(void*)v1,a)>0 && callback->properties.compare_basic(prop->ptype,op,get_addr(),(void*)v1,(b&&callback->convert.string_to_property(prop,(void*)v2,b)>0)?(void*)v2:NULL);};
+	inline bool compare(PROPERTYCOMPAREOP op, void *a, void *b=NULL) { return callback->properties.compare_basic(prop->ptype,op,get_addr(),a,b);};
+	inline bool compare(char *op, char *a, char *b=NULL) { PROPERTYCOMPAREOP n=callback->properties.get_compare_op(prop->ptype,op); if (n==TCOP_ERR) throw "invalid property compare operation"; return compare(n,a,b); };
+
+public: // write accessors
+
+public: // special operations
+	inline bool is_valid(void) { return prop!=NULL; }
+	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
+	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
+	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };
+	template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };
+	template <class T> inline void setp(T &value, gld_wlock&) { *(T*)get_addr()=value; };
+	inline gld_keyword* find_keyword(unsigned long value) { gld_keyword*k=get_first_keyword();while(k && k->get_value()!=value) {k=k->get_next();} return k; }; // TODO
+	inline gld_keyword* find_keyword(char *name) { gld_keyword*k=get_first_keyword();while(k && strcmp(k->get_name(),name)!=0) {k=k->get_next();} return k; }; // TODO
+
+public: // iterators
+	inline bool is_last(void) { return prop==NULL || prop->next==NULL; };
+	inline PROPERTY* get_next(void) { return prop->next; };
+
+public: // comparators
+	inline bool operator == (char* a) { return compare(TCOP_EQ,a,NULL); };
+	inline bool operator <= (char* a) { return compare(TCOP_LE,a,NULL); };
+	inline bool operator >= (char* a) { return compare(TCOP_GE,a,NULL); };
+	inline bool operator != (char* a) { return compare(TCOP_NE,a,NULL); };
+	inline bool operator < (char* a) { return compare(TCOP_LT,a,NULL); };
+	inline bool operator > (char* a) { return compare(TCOP_GT,a,NULL); };
+	inline bool inside(char* a, char* b) { return compare(TCOP_IN,a,b); };
+	inline bool outside(char* a, char* b) { return compare(TCOP_NI,a,b); };
+
+private: // exceptions
+	inline void exception(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s.%s: ",OBJECTDATA(obj,gld_object)->get_name(),prop->name),msg,ptr); va_end(ptr); throw (const char*)buf;};
+};
+
+class gld_global {
+
+private: // data
+	GLOBALVAR core;
+
+public: // constructors
+	inline gld_global(void) { throw "gld_global constructor not permitted"; };
+	inline operator GLOBALVAR*(void) { return &core; };
+
+public: // read accessors
+	inline PROPERTY* get_property(void) { return core.prop; };
+	inline unsigned long get_flags(void) { return core.flags; };
+
+public: // write accessors
+
+public: // external accessors
+	// TODO
+
+public: // iterators
+	inline bool is_last(void) { return core.next==NULL; };
+	inline gld_global* get_next(void) { return (gld_global*)core.next; };
+};
+
 #endif
 
 /** @} **/

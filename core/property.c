@@ -21,25 +21,26 @@
 #include "stream.h"
 #include "instance.h"
 #include "linkage.h"
+#include "compare.h"
 
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
 PROPERTYSPEC property_type[_PT_LAST] = {
 	{"void", "string", 0, 0, convert_from_void,convert_to_void},
-	{"double", "double", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double},
+	{"double", "double", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double,{TCOPS(double)},},
 	{"complex", "string", sizeof(complex), 48, convert_from_complex,convert_to_complex},
-	{"enumeration", "string", sizeof(int32), 32, convert_from_enumeration,convert_to_enumeration},
-	{"set", "string", sizeof(int64), 32, convert_from_set,convert_to_set},
-	{"int16", "short", sizeof(int16), 6, convert_from_int16,convert_to_int16},
-	{"int32", "int", sizeof(int32), 12, convert_from_int32,convert_to_int32},
-	{"int64", "long", sizeof(int64), 24, convert_from_int64,convert_to_int64},
-	{"char8", "string", sizeof(char8), 8, convert_from_char8,convert_to_char8},
-	{"char32", "string", sizeof(char32), 32, convert_from_char32,convert_to_char32},
-	{"char256", "string", sizeof(char256), 256, convert_from_char256,convert_to_char256},
-	{"char1024", "string", sizeof(char1024), 1024, convert_from_char1024,convert_to_char1024},
+	{"enumeration", "string", sizeof(int32), 32, convert_from_enumeration,convert_to_enumeration,NULL,NULL,NULL,{TCOPS(uint64)},},
+	{"set", "string", sizeof(int64), 32, convert_from_set,convert_to_set,NULL,NULL,NULL,{TCOPS(uint64)},},
+	{"int16", "short", sizeof(int16), 6, convert_from_int16,convert_to_int16,NULL,NULL,NULL,{TCOPS(uint16)},},
+	{"int32", "int", sizeof(int32), 12, convert_from_int32,convert_to_int32,NULL,NULL,NULL,{TCOPS(uint32)},},
+	{"int64", "long", sizeof(int64), 24, convert_from_int64,convert_to_int64,NULL,NULL,NULL,{TCOPS(uint64)},},
+	{"char8", "string", sizeof(char8), 8, convert_from_char8,convert_to_char8,NULL,NULL,NULL,{TCOPS(string)},},
+	{"char32", "string", sizeof(char32), 32, convert_from_char32,convert_to_char32,NULL,NULL,NULL,{TCOPS(string)},},
+	{"char256", "string", sizeof(char256), 256, convert_from_char256,convert_to_char256,NULL,NULL,NULL,{TCOPS(string)},},
+	{"char1024", "string", sizeof(char1024), 1024, convert_from_char1024,convert_to_char1024,NULL,NULL,NULL,{TCOPS(string)},},
 	{"object", "string", sizeof(OBJECT*), sizeof(OBJECTNAME), convert_from_object,convert_to_object},
 	{"delegated", "string", (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
-	{"bool", "string", sizeof(unsigned int), 6, convert_from_boolean, convert_to_boolean},
-	{"timestamp", "string", sizeof(int64), 24, convert_from_timestamp_stub, convert_to_timestamp_stub},
+	{"bool", "string", sizeof(unsigned int), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,NULL,{TCOPS(bool)},},
+	{"timestamp", "string", sizeof(int64), 24, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,NULL,{TCOPS(uint64)},},
 	{"double_array", "string", sizeof(double), 0, convert_from_double_array, convert_to_double_array},
 	{"complex_array", "string", sizeof(complex), 0, convert_from_complex_array, convert_to_complex_array},
 	{"real", "string", sizeof(real), 24, convert_from_real, convert_to_real},
@@ -170,6 +171,20 @@ size_t property_minimum_buffersize(PROPERTY *prop)
 		return 0;
 	}
 	return 0;
+}
+
+PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr)
+{
+	int n;
+	for ( n=0; n<_TCOP_LAST; n++)
+		if (strcmp(property_type[ptype].compare[n].str,opstr)==0)
+			return n;
+	return TCOP_ERR;
+}
+
+bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b)
+{
+	return property_type[ptype].compare[op].fn(x,a,b);
 }
 
 // EOF

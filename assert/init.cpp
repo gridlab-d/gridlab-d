@@ -8,6 +8,7 @@
 #include <math.h>
 #include "gridlabd.h"
 
+#include "assert.h"
 #include "double_assert.h"
 #include "complex_assert.h"
 #include "enum_assert.h"
@@ -20,12 +21,13 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	new g_assert(module);
 	new double_assert(module);
 	new complex_assert(module);
 	new enum_assert(module);
 
 	/* always return the first class registered */
-	return double_assert::oclass;
+	return g_assert::oclass;
 }
 
 

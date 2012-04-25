@@ -15,6 +15,7 @@ gridlabd_bin_SOURCES = \
 	build.h \
 	class.c  class.h \
 	cmdarg.c cmdarg.h \
+	compare.c compare.h \
 	complex.h \
 	convert.cpp convert.h \
 	debug.c  debug.h \

@@ -74,8 +74,7 @@ int complex_assert::create(void)
 int complex_assert::init(OBJECT *parent)
 {
 	if (within <= 0.0){
-		char *msg = "A non-positive value has been specified for within.";
-		throw msg;
+		throw "A non-positive value has been specified for within.";
 		/*  TROUBLESHOOT
 		Within is the range in which the check is being performed.  Please check to see that you have
 		specified a value for "within" and it is positive.

@@ -1,0 +1,64 @@
+// test_assert
+
+module assert;
+module climate;
+
+// double target
+object climate {
+	temperature 50;
+	object assert {
+		target "temperature";
+		relation "==";
+		value 50;
+	};
+	object assert {
+		target "temperature";
+		relation "<";
+		value 51;
+	};
+	object assert {
+		target "temperature";
+		relation ">";
+		value 49;
+	};
+	object assert {
+		target "temperature";
+		relation "<=";
+		value 51;
+	};
+	object assert {
+		target "temperature";
+		relation "<=";
+		value 50;
+	};
+	object assert {
+		target "temperature";
+		relation ">=";
+		value 49;
+	};
+	object assert {
+		target "temperature";
+		relation ">=";
+		value 50;
+	};
+	object assert {
+		target "temperature";
+		relation "inside";
+		lower 49;
+		upper 51;
+	};
+	object assert {
+		target "temperature";
+		relation "outside";
+		lower 47;
+		upper 49;
+	};
+	object assert {
+		target "temperature";
+		relation "outside";
+		lower 51;
+		upper 53;
+	};
+};
+	
+// todo complex,int16,int32,int64,string targets

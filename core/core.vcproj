@@ -561,6 +561,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\compare.c"
+				>
+			</File>
+			<File
 				RelativePath=".\convert.cpp"
 				>
 			</File>
@@ -752,6 +756,10 @@
 			</File>
 			<File
 				RelativePath=".\cmdarg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\compare.h"
 				>
 			</File>
 			<File
@@ -971,15 +979,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\x86_64\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1006,11 +1014,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>
@@ -1540,6 +1548,10 @@
 				</File>
 			</Filter>
 		</Filter>
+		<File
+			RelativePath=".\Makefile.am"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
