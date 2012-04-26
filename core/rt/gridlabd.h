@@ -832,6 +832,19 @@ static inline void unlock(unsigned int *lock)
 
 #endif
 
+typedef enum { 
+	TCOP_EQ=0, 
+	TCOP_LE=1, 
+	TCOP_GE=2, 
+	TCOP_NE=3, 
+	TCOP_LT=4,
+	TCOP_GT=5,
+	TCOP_IN=6,
+	TCOP_NI=7,
+	_TCOP_LAST,
+	TCOP_ERR=-1
+} PROPERTYCOMPAREOP;
+
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;
 	int (*output_verbose)(char *format, ...);
