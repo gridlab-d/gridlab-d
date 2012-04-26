@@ -1441,9 +1441,6 @@ public: // read accessors
 	inline PROPERTYFLAGS get_flags(void) { return prop->flags; };
 	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(prop,get_addr(),buffer,size); };
 	inline int from_string(char *string) { return callback->convert.string_to_property(prop,get_addr(),string); };
-	inline bool compare(PROPERTYCOMPAREOP op, char *a, char *b=NULL) { char v1[1024], v2[1024]; return callback->convert.string_to_property(prop,(void*)v1,a)>0 && callback->properties.compare_basic(prop->ptype,op,get_addr(),(void*)v1,(b&&callback->convert.string_to_property(prop,(void*)v2,b)>0)?(void*)v2:NULL);};
-	inline bool compare(PROPERTYCOMPAREOP op, void *a, void *b=NULL) { return callback->properties.compare_basic(prop->ptype,op,get_addr(),a,b);};
-	inline bool compare(char *op, char *a, char *b=NULL) { PROPERTYCOMPAREOP n=callback->properties.get_compare_op(prop->ptype,op); if (n==TCOP_ERR) throw "invalid property compare operation"; return compare(n,a,b); };
 
 public: // write accessors
 
@@ -1456,6 +1453,25 @@ public: // special operations
 	template <class T> inline void setp(T &value, gld_wlock&) { *(T*)get_addr()=value; };
 	inline gld_keyword* find_keyword(unsigned long value) { gld_keyword*k=get_first_keyword();while(k && k->get_value()!=value) {k=k->get_next();} return k; }; // TODO
 	inline gld_keyword* find_keyword(char *name) { gld_keyword*k=get_first_keyword();while(k && strcmp(k->get_name(),name)!=0) {k=k->get_next();} return k; }; // TODO
+	inline bool compare(char *op, char *a, char *b=NULL, char *p=NULL) { PROPERTYCOMPAREOP n=callback->properties.get_compare_op(prop->ptype,op); if (n==TCOP_ERR) throw "invalid property compare operation"; return compare(n,a,b,p); };
+	inline bool compare(PROPERTYCOMPAREOP op, char *a, char *b=NULL) 
+	{ 
+		char v1[1024], v2[1024]; 
+		return callback->convert.string_to_property(prop,(void*)v1,a)>0 && callback->properties.compare_basic(prop->ptype,op,get_addr(),(void*)v1,(b&&callback->convert.string_to_property(prop,(void*)v2,b)>0)?(void*)v2:NULL, NULL);
+	};
+	inline bool compare(PROPERTYCOMPAREOP op, char *a, char *b, char *p) 
+	{
+		double v1, v2; v1=atof(a); v2=b?atof(b):0;
+		return callback->properties.compare_basic(prop->ptype,op,get_addr(),(void*)&v1,b?(void*)&v2:NULL, p);
+	};
+	inline bool compare(PROPERTYCOMPAREOP op, double *a, double *b=NULL, char *p=NULL) 
+	{ 
+		return callback->properties.compare_basic(prop->ptype,op,get_addr(),a,b,p);
+	};
+	inline bool compare(PROPERTYCOMPAREOP op, void *a, void *b=NULL) 
+	{ 
+		return callback->properties.compare_basic(prop->ptype,op,get_addr(),a,b,NULL);
+	};
 
 public: // iterators
 	inline bool is_last(void) { return prop==NULL || prop->next==NULL; };

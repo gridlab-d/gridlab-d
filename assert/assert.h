@@ -20,6 +20,7 @@ public:
 
 	GL_ATOMIC(ASSERTSTATUS,status); 
 	GL_STRING(char1024,target);		
+	GL_STRING(char32,part);
 	GL_ATOMIC(PROPERTYCOMPAREOP,relation);
 	GL_STRING(char1024,value);
 	GL_STRING(char1024,value2);

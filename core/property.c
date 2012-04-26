@@ -10,6 +10,8 @@
  @{
  **/
 
+#include <math.h>
+
 #include "class.h"
 #include "output.h"
 #include "convert.h"
@@ -27,7 +29,7 @@
 PROPERTYSPEC property_type[_PT_LAST] = {
 	{"void", "string", 0, 0, convert_from_void,convert_to_void},
 	{"double", "double", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_in_double,stream_out_double,{TCOPS(double)},},
-	{"complex", "string", sizeof(complex), 48, convert_from_complex,convert_to_complex},
+	{"complex", "string", sizeof(complex), 48, convert_from_complex,convert_to_complex,NULL,NULL,NULL,{TCOPS(double)},complex_get_part},
 	{"enumeration", "string", sizeof(int32), 32, convert_from_enumeration,convert_to_enumeration,NULL,NULL,NULL,{TCOPS(uint64)},},
 	{"set", "string", sizeof(int64), 32, convert_from_set,convert_to_set,NULL,NULL,NULL,{TCOPS(uint64)},},
 	{"int16", "short", sizeof(int16), 6, convert_from_int16,convert_to_int16,NULL,NULL,NULL,{TCOPS(uint16)},},
@@ -45,9 +47,9 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 	{"complex_array", "string", sizeof(complex), 0, convert_from_complex_array, convert_to_complex_array},
 	{"real", "string", sizeof(real), 24, convert_from_real, convert_to_real},
 	{"float", "string", sizeof(float), 24, convert_from_float, convert_to_float},
-	{"loadshape", "string", sizeof(loadshape), 0, convert_from_loadshape, convert_to_loadshape, loadshape_create},
-	{"enduse", "string", sizeof(enduse), 0, convert_from_enduse, convert_to_enduse, enduse_create},
-	{"random", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create},
+	{"loadshape", "string", sizeof(loadshape), 0, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,NULL,{TCOPS(double)},},
+	{"enduse", "string", sizeof(enduse), 0, convert_from_enduse, convert_to_enduse, enduse_create,NULL,NULL,{TCOPS(double)},enduse_get_part},
+	{"random", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create,NULL,NULL,{TCOPS(double)},},
 };
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)
@@ -182,9 +184,37 @@ PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr)
 	return TCOP_ERR;
 }
 
-bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b)
+
+bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, char *part)
 {
-	return property_type[ptype].compare[op].fn(x,a,b);
+	if ( part==NULL )
+		return property_type[ptype].compare[op].fn(x,a,b);
+	else
+	{
+		double d = property_type[ptype].get_part ? property_type[ptype].get_part(x,part) : QNAN ;
+		if ( isfinite(d) )
+			return property_type[ptype].compare[op].fn((void*)&d,a,b);
+		else
+		{
+			output_error("part %s is not defined for type %s", part, property_type[ptype].name);
+			return 0;
+		}
+	}
 }
+
+/*********************************************************
+ * PROPERTY PARTTS
+ *********************************************************/
+double complex_get_part(void *x, char *name)
+{
+	complex *c = (complex*)x;
+	if ( strcmp(name,"real")==0) return c->r;
+	if ( strcmp(name,"imag")==0) return c->i;
+	if ( strcmp(name,"mag")==0) return complex_get_mag(*c);
+	if ( strcmp(name,"arg")==0) return complex_get_arg(*c);
+	if ( strcmp(name,"ang")==0) return (complex_get_arg(*c)*180/PI);
+	return QNAN;
+}
+
 
 // EOF

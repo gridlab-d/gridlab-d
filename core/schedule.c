@@ -21,10 +21,6 @@
 #include "exception.h"
 #include "lock.h"
 
-#ifndef QNAN
-#define QNAN sqrt(-1)
-#endif
-
 static SCHEDULE *schedule_list = NULL;
 static uint32 n_schedules = 0;
 

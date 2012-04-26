@@ -76,5 +76,7 @@
 #define NATIVE int32	/**< native integer size */
 #endif
 
+#define QNAN (sqrt(-1))
+
 #endif
 /**@}**/

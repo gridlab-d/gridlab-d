@@ -115,7 +115,7 @@ typedef struct s_callbacks {
 		char *(*get_unit)(OBJECT *, char *);
 		void *(*get_addr)(OBJECT *, char *);
 		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
-		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b);
+		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
 	} properties;
 	struct {

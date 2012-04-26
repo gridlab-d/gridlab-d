@@ -171,8 +171,6 @@ typedef struct stat STAT;
 #define FSTAT fstat
 #endif
 
-#define QNAN (sqrt(-1)) /* used to force a quiet NAN return value for bad results */
-
 #include "complex.h"
 #include "object.h"
 #include "load.h"

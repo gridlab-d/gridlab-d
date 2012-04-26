@@ -48,7 +48,6 @@ static OBJECT *first_object = NULL;
 static OBJECT *last_object = NULL;
 static OBJECTNUM object_array_size = 0;
 static OBJECT **object_array = NULL;
-#define QNAN sqrt(-1) /**< NaN quantity */
 
 /* {name, val, next} */
 KEYWORD oflags[] = {

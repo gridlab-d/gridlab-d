@@ -34,8 +34,6 @@
 #define finite _finite
 #endif
 
-#define QNAN sqrt(-1) /* quiet NaN used only for low-key failures */
-
 static unsigned int *ur_state = NULL;
 
 int random_init(void)

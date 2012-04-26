@@ -24,6 +24,33 @@
 static enduse *enduse_list = NULL;
 static unsigned int n_enduses = 0;
 
+double enduse_get_part(void *x, char *name)
+{
+	enduse *e = (enduse*)x;
+#define DO_DOUBLE(X) if ( strcmp(name,#X)==0) return e->X;
+#define DO_COMPLEX(X) \
+	if ( strcmp(name,#X".real")==0) return e->X.r; \
+	if ( strcmp(name,#X".imag")==0) return e->X.i; \
+	if ( strcmp(name,#X".mag")==0) return complex_get_mag(e->X); \
+	if ( strcmp(name,#X".arg")==0) return complex_get_arg(e->X); \
+	if ( strcmp(name,#X".ang")==0) return complex_get_arg(e->X)*180/PI;  
+	DO_COMPLEX(total);
+	DO_COMPLEX(energy);
+	DO_COMPLEX(demand);
+	DO_DOUBLE(breaker_amps);
+	DO_COMPLEX(admittance);
+	DO_COMPLEX(current);
+	DO_COMPLEX(power);
+	DO_DOUBLE(impedance_fraction);
+	DO_DOUBLE(current_fraction);
+	DO_DOUBLE(power_fraction);
+	DO_DOUBLE(power_factor);
+	DO_DOUBLE(voltage_factor);
+	DO_DOUBLE(heatgain);
+	DO_DOUBLE(heatgain_fraction);
+	return QNAN;
+}
+
 #ifdef _DEBUG
 static unsigned int enduse_magic = 0x8c3d7762;
 #endif

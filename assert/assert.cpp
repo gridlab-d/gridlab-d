@@ -32,6 +32,7 @@ g_assert::g_assert(MODULE *module)
 				PT_KEYWORD,"FALSE",AS_FALSE,
 				PT_KEYWORD,"NONE",AS_NONE,
 			PT_char1024, "target", PADDR(target),	
+			PT_char32, "part", PADDR(part),
 			PT_enumeration,"relation",PADDR(relation),
 				PT_KEYWORD,"==",TCOP_EQ,
 				PT_KEYWORD,"<",TCOP_LT,
@@ -51,8 +52,8 @@ g_assert::g_assert(MODULE *module)
 		}
 
 		defaults = this;
+		memset(this,0,sizeof(g_assert));
 		status = AS_INIT;
-		memset(value,0,sizeof(value));
 		relation=TCOP_EQ;
 	}
 }
@@ -72,7 +73,7 @@ int g_assert::init(OBJECT *parent)
 
 	gld_property target(get_parent(),get_target());
 	if ( !target.is_valid() )
-		exception("target %s does not exist in parent",get_target());
+		exception("target %s does not exist in parent %s",get_target(), get_parent()->get_name());
 
 	set_status(AS_TRUE);
 	return 1;
@@ -82,7 +83,7 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 {
 	// get the target property
 	gld_property target(get_parent()->my(),get_target());
-	if ( !target.is_valid() || target.get_type()!=PT_double ) 
+	if ( !target.is_valid() ) 
 	{
 		gl_error("Specified target %s for %s is not valid.",get_target(),get_name());
 		/*  TROUBLESHOOT
@@ -97,7 +98,7 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	// determine the relation status
 	if ( get_status()==AS_NONE ) 
 	{
-		gl_verbose("Assert test is not being run on %s", get_parent()->get_name());
+		gl_verbose("assert test is not being run on %s", get_parent()->get_name());
 		return TS_NEVER;
 	}
 	else
@@ -108,8 +109,9 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 			gld_keyword *pKeyword = relation.find_keyword(get_relation());
 			gld_property target(get_parent(),get_target());
 			char buf[1024];
-			gl_error("assert failed on %s %s.%s %s %s %s %s", get_status()==AS_TRUE?"":"NOT",
-				get_parent()->get_name(), get_target(), target.to_string(buf,sizeof(buf))?buf:"(void)", pKeyword->get_name(), get_value(), get_value2());
+			char *p = get_part();
+			gl_error("assert failed on %s %s.%s.%s %s %s %s %s", get_status()==AS_TRUE?"":"NOT",
+				get_parent()->get_name(), get_target(), get_part(),target.to_string(buf,sizeof(buf))?buf:"(void)", pKeyword->get_name(), get_value(), get_value2());
 			return 0;
 		}
 		else
@@ -124,7 +126,10 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 g_assert::ASSERTSTATUS g_assert::evaluate_status(void)
 {
 	gld_property target(get_parent(),get_target());
-	return target.compare(get_relation(),get_value(),get_value2()) ? AS_TRUE : AS_FALSE ;
+	if ( strcmp(get_part(),"")==0 )
+		return target.compare(get_relation(),get_value(),get_value2()) ? AS_TRUE : AS_FALSE ;
+	else
+		return target.compare(get_relation(),get_value(),get_value2(), get_part()) ? AS_TRUE : AS_FALSE ;
 }
 
 int g_assert::postnotify(PROPERTY *prop, char *value)
