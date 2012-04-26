@@ -27,13 +27,13 @@ g_assert::g_assert(MODULE *module)
 			oclass->trl = TRL_PROVEN;
 
 		if (gl_publish_variable(oclass,
-			PT_enumeration,"status",PADDR(status),
+			PT_enumeration,"status",PADDR(status),PT_DESCRIPTION,"desired outcome of assert test",
 				PT_KEYWORD,"TRUE",AS_TRUE,
 				PT_KEYWORD,"FALSE",AS_FALSE,
 				PT_KEYWORD,"NONE",AS_NONE,
-			PT_char1024, "target", PADDR(target),	
-			PT_char32, "part", PADDR(part),
-			PT_enumeration,"relation",PADDR(relation),
+			PT_char1024, "target", PADDR(target),PT_DESCRIPTION,"the target property to test",
+			PT_char32, "part", PADDR(part),PT_DESCRIPTION,"the target property part to test",
+			PT_enumeration,"relation",PADDR(relation),PT_DESCRIPTION,"the relation to use for the test",
 				PT_KEYWORD,"==",TCOP_EQ,
 				PT_KEYWORD,"<",TCOP_LT,
 				PT_KEYWORD,"<=",TCOP_LE,
@@ -42,9 +42,9 @@ g_assert::g_assert(MODULE *module)
 				PT_KEYWORD,"!=",TCOP_NE,
 				PT_KEYWORD,"inside",TCOP_IN,
 				PT_KEYWORD,"outside",TCOP_NI,
-			PT_char1024, "value", PADDR(value),
-			PT_char1024, "lower", PADDR(value),
-			PT_char1024, "upper", PADDR(value2),
+			PT_char1024, "value", PADDR(value),PT_DESCRIPTION,"the value to compare with for binary tests",
+			PT_char1024, "lower", PADDR(value),PT_DESCRIPTION,"the lower bound to compare with for interval tests",
+			PT_char1024, "upper", PADDR(value2),PT_DESCRIPTION,"the upper bound to compare with for interval tests",
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -58,7 +58,6 @@ g_assert::g_assert(MODULE *module)
 	}
 }
 
-/* Object creation is called once for each object that is created by the core */
 int g_assert::create(void) 
 {
 	memcpy(this,defaults,sizeof(*this));
@@ -85,7 +84,7 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	gld_property target(get_parent()->my(),get_target());
 	if ( !target.is_valid() ) 
 	{
-		gl_error("Specified target %s for %s is not valid.",get_target(),get_name());
+		gl_error("%s: target %s is not valid",get_target(),get_name());
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -98,7 +97,7 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	// determine the relation status
 	if ( get_status()==AS_NONE ) 
 	{
-		gl_verbose("assert test is not being run on %s", get_parent()->get_name());
+		gl_verbose("%s: test is not being run on %s", get_name(), get_parent()->get_name());
 		return TS_NEVER;
 	}
 	else
@@ -110,13 +109,13 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 			gld_property target(get_parent(),get_target());
 			char buf[1024];
 			char *p = get_part();
-			gl_error("assert failed on %s %s.%s.%s %s %s %s %s", get_status()==AS_TRUE?"":"NOT",
+			gl_error("%s: assert failed on %s %s.%s.%s %s %s %s %s", get_name(), get_status()==AS_TRUE?"":"NOT",
 				get_parent()->get_name(), get_target(), get_part(),target.to_string(buf,sizeof(buf))?buf:"(void)", pKeyword->get_name(), get_value(), get_value2());
 			return 0;
 		}
 		else
 		{
-			gl_verbose("Assert passed on %s", get_parent()->get_name());
+			gl_verbose("%s: assert passed on %s", get_name(), get_parent()->get_name());
 			return TS_NEVER;
 		}
 	}
