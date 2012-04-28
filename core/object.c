@@ -2484,6 +2484,7 @@ double object_get_part(void *x, char *name)
 	if ( strcmp(name,"tp_affinity")==0 ) return (double)(obj->tp_affinity);
 	if ( strcmp(name,"latitude")==0 ) return obj->latitude;
 	if ( strcmp(name,"longitude")==0 ) return obj->longitude;
+	if ( strcmp(name,"schedule_skew")==0 ) return (double)(obj->schedule_skew);
 
 	if ( sscanf(name,"%[^. ].%s",root,part)==2 ) // has part
 	{
@@ -2493,7 +2494,6 @@ double object_get_part(void *x, char *name)
 		} *p, map[]={
 			{"clock",&(obj->clock)},
 			{"valid_to",&(obj->valid_to)},
-			{"schedule_skew",&(obj->schedule_skew)},
 			{"in_svc",&(obj->in_svc)},
 			{"out_svc",&(obj->out_svc)},
 		};
