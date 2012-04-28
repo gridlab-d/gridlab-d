@@ -39,10 +39,10 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 	{"char32", "string", sizeof(char32), 32, convert_from_char32,convert_to_char32,NULL,NULL,NULL,{TCOPS(string)},},
 	{"char256", "string", sizeof(char256), 256, convert_from_char256,convert_to_char256,NULL,NULL,NULL,{TCOPS(string)},},
 	{"char1024", "string", sizeof(char1024), 1024, convert_from_char1024,convert_to_char1024,NULL,NULL,NULL,{TCOPS(string)},},
-	{"object", "string", sizeof(OBJECT*), sizeof(OBJECTNAME), convert_from_object,convert_to_object},
+	{"object", "string", sizeof(OBJECT*), sizeof(OBJECTNAME), convert_from_object,convert_to_object,NULL,NULL,NULL,{TCOPB(object)},object_get_part},
 	{"delegated", "string", (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
-	{"bool", "string", sizeof(unsigned int), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,NULL,{TCOPS(bool)},},
-	{"timestamp", "string", sizeof(int64), 24, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,NULL,{TCOPS(uint64)},},
+	{"bool", "string", sizeof(unsigned int), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,NULL,{TCOPB(bool)},},
+	{"timestamp", "string", sizeof(int64), 24, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
 	{"double_array", "string", sizeof(double), 0, convert_from_double_array, convert_to_double_array},
 	{"complex_array", "string", sizeof(complex), 0, convert_from_complex_array, convert_to_complex_array},
 	{"real", "string", sizeof(real), 24, convert_from_real, convert_to_real},
@@ -187,23 +187,29 @@ PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr)
 
 bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, char *part)
 {
-	if ( part==NULL )
+	if ( part==NULL && property_type[ptype].compare[op].fn!=NULL )
 		return property_type[ptype].compare[op].fn(x,a,b);
-	else
+	else if ( property_type[ptype].get_part!=NULL )
 	{
 		double d = property_type[ptype].get_part ? property_type[ptype].get_part(x,part) : QNAN ;
 		if ( isfinite(d) )
-			return property_type[ptype].compare[op].fn((void*)&d,a,b);
+			// parts always double (for now)
+			return property_type[PT_double].compare[op].fn((void*)&d,a,b);
 		else
 		{
 			output_error("part %s is not defined for type %s", part, property_type[ptype].name);
 			return 0;
 		}
 	}
+	else // no comparison possible
+	{
+		output_error("property type '%s' does not support comparison operations or parts", property_type[ptype].name);
+		return 0;
+	}
 }
 
 /*********************************************************
- * PROPERTY PARTTS
+ * PROPERTY PARTS
  *********************************************************/
 double complex_get_part(void *x, char *name)
 {

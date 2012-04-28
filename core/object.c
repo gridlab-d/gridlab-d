@@ -2474,4 +2474,35 @@ void object_remote_write(void *local, /** local memory for data */
 	}
 }
 
+double object_get_part(void *x, char *name)
+{
+	OBJECT *obj = (OBJECT*)x;
+	char root[64], part[64];
+
+	if ( strcmp(name,"id")==0 ) return (double)(obj->id);
+	if ( strcmp(name,"rng_state")==0 ) return (double)(obj->rng_state);
+	if ( strcmp(name,"tp_affinity")==0 ) return (double)(obj->tp_affinity);
+	if ( strcmp(name,"latitude")==0 ) return obj->latitude;
+	if ( strcmp(name,"longitude")==0 ) return obj->longitude;
+
+	if ( sscanf(name,"%[^. ].%s",root,part)==2 ) // has part
+	{
+		struct {
+			char *name;
+			TIMESTAMP *addr;
+		} *p, map[]={
+			{"clock",&(obj->clock)},
+			{"valid_to",&(obj->valid_to)},
+			{"schedule_skew",&(obj->schedule_skew)},
+			{"in_svc",&(obj->in_svc)},
+			{"out_svc",&(obj->out_svc)},
+		};
+		for ( p=map ; p<map+sizeof(map); p++ ) {
+			if ( strcmp(p->name,root)==0 )
+				return timestamp_get_part(p->addr,part);
+		}
+	}
+	return QNAN;
+}
+
 /** @} **/

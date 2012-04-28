@@ -3,6 +3,7 @@
 
 #include "timestamp.h"
 #include "property.h"
+#include "object.h"
 #include "compare.h"
 
 #define COMPAREOPI(T) COMPARE_EQI(T) COMPARE_LEI(T) COMPARE_GEI(T) COMPARE_NEI(T) COMPARE_LTI(T) COMPARE_GTI(T) COMPARE_INI(T) COMPARE_NII(T)
@@ -14,6 +15,14 @@
 #define COMPARE_GTI(T) int compare_tc_##T##_gt(void* x,void* a,void* b) { return (signed)*(T*)x>(signed)*(T*)a; }
 #define COMPARE_INI(T) int compare_tc_##T##_in(void* x,void* a,void* b) { return (signed)*(T*)a<=(signed)*(T*)x && (signed)*(T*)x<=(signed)*(T*)b; }
 #define COMPARE_NII(T) int compare_tc_##T##_ni(void* x,void* a,void* b) { return !((signed)*(T*)a<=(signed)*(T*)x && (signed)*(T*)x<=(signed)*(T*)b); }
+
+#define COMPAREOPB(T) COMPARE_EQB(T) COMPARE_NEB(T)
+#define COMPARE_EQB(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { return *(T*)x==*(T*)a; }
+#define COMPARE_NEB(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { return *(T*)x!=*(T*)a; }
+
+#define COMPAREOPO(T) COMPARE_EQO(T) COMPARE_NEO(T)
+#define COMPARE_EQO(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { return strcmp((*(OBJECT**)x)->name,(*(OBJECT**)a)->name)==0; }
+#define COMPARE_NEO(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { return strcmp((*(OBJECT**)x)->name,(*(OBJECT**)a)->name)!=0; }
 
 #define COMPAREOPF(T) COMPARE_EQF(T) COMPARE_LEF(T) COMPARE_GEF(T) COMPARE_NEF(T) COMPARE_LTF(T) COMPARE_GTF(T) COMPARE_INF(T) COMPARE_NIF(T)
 #define COMPARE_EQF(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { return *(T*)x==*(T*)a; }
@@ -41,5 +50,6 @@ COMPAREOPF(float)
 COMPAREOPI(uint16)
 COMPAREOPI(uint32)
 COMPAREOPI(uint64)
-COMPAREOPI(bool)
+COMPAREOPB(bool)
 COMPAREOPS(string)
+COMPAREOPO(object)

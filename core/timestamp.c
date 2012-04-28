@@ -965,4 +965,27 @@ int timestamp_test(void)
 	return failed;
 }
 
+double timestamp_get_part(void *x, char *name)
+{
+	TIMESTAMP ts = *(TIMESTAMP*)x;
+	DATETIME dt;
+	if ( strcmp(name,"seconds")==0 ) return (double)ts;
+	if ( strcmp(name,"minutes")==0 ) return (double)ts/60;
+	if ( strcmp(name,"hours")==0 ) return (double)ts/3600;
+	if ( strcmp(name,"days")==0 ) return (double)ts/86400;
+	if ( local_datetime(ts,&dt) )
+	{
+		if ( strcmp(name,"second")==0 ) return (double)dt.second;
+		if ( strcmp(name,"minute")==0 ) return (double)dt.minute;
+		if ( strcmp(name,"hour")==0 ) return (double)dt.hour;
+		if ( strcmp(name,"day")==0 ) return (double)dt.day;
+		if ( strcmp(name,"month")==0 ) return (double)dt.month;
+		if ( strcmp(name,"year")==0 ) return (double)dt.year;
+		if ( strcmp(name,"weekday")==0 ) return (double)dt.weekday;
+		if ( strcmp(name,"yearday")==0 ) return (double)dt.yearday;
+		if ( strcmp(name,"isdst")==0 ) return (double)dt.is_dst;
+	}
+	return QNAN;
+}
+
 /**@}*/

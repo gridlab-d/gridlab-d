@@ -279,6 +279,8 @@ int convert_to_enumeration(char *buffer, /**< a pointer to the string buffer */
 		return sscanf(buffer+2,"%x",(uint32*)data);
 	if (isdigit(*buffer))
 		return sscanf(buffer,"%d",(uint32*)data);
+	else if (strcmp(buffer,"")==0)
+		return 0; // empty string do nothing
 	output_error("keyword '%s' is not valid for property %s", buffer,prop->name);
 	return 0;
 }

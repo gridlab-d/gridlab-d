@@ -345,6 +345,8 @@ void forecast_save(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double
 void *object_remote_read(void *local, OBJECT *obj, PROPERTY *prop); /** access remote object data */
 void object_remote_write(void *local, OBJECT *obj, PROPERTY *prop); /** access remote object data */
 
+double object_get_part(void *x, char *name);
+
 #ifdef __cplusplus
 }
 #endif

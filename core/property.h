@@ -182,6 +182,7 @@ typedef enum {
 	TCOP_IN=6,
 	TCOP_NI=7,
 	_TCOP_LAST,
+	TCOP_NOP,
 	TCOP_ERR=-1
 } PROPERTYCOMPAREOP;
 typedef int PROPERTYCOMPAREFUNCTION(void*,void*,void*);

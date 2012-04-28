@@ -2,7 +2,17 @@
 
 #ifndef _COMPARE_H
 
-#define TCOPS(X) {TCOP_EQ,"==",compare_tc_##X##_eq}, \
+#define TCOPB(X) \
+	{TCOP_EQ,"==",compare_tc_##X##_eq}, \
+	{TCOP_NOP,"",NULL}, \
+	{TCOP_NOP,"",NULL}, \
+	{TCOP_NE,"!=",compare_tc_##X##_ne}, \
+	{TCOP_NOP,"",NULL}, \
+	{TCOP_NOP,"",NULL}, \
+	{TCOP_NOP,"",NULL}, \
+	{TCOP_NOP,"",NULL}
+#define TCOPS(X) \
+	{TCOP_EQ,"==",compare_tc_##X##_eq}, \
 	{TCOP_LE,"<=",compare_tc_##X##_le}, \
 	{TCOP_GE,">=",compare_tc_##X##_ge}, \
 	{TCOP_NE,"!=",compare_tc_##X##_ne}, \
@@ -10,7 +20,8 @@
 	{TCOP_GT,">",compare_tc_##X##_gt}, \
 	{TCOP_IN,"inside",compare_tc_##X##_in,1}, \
 	{TCOP_NI,"outside",compare_tc_##X##_ni,1}
-#define TCOPD(X) int compare_tc_##X##_eq(void*,void*,void*); \
+#define TCOPD(X) \
+	int compare_tc_##X##_eq(void*,void*,void*); \
 	int compare_tc_##X##_le(void*,void*,void*); \
 	int compare_tc_##X##_ge(void*,void*,void*); \
 	int compare_tc_##X##_ne(void*,void*,void*); \
@@ -26,5 +37,7 @@ TCOPD(uint32);
 TCOPD(uint64);
 TCOPD(string);
 TCOPD(bool);
+TCOPD(timestamp);
+TCOPD(object);
 
 #endif

@@ -81,6 +81,8 @@ time_t timestamp_to_local(TIMESTAMP t);
 
 int local_tzoffset(TIMESTAMP t);
 
+double timestamp_get_part(void *x, char *name);
+
 #ifdef __cplusplus
 }
 #endif
