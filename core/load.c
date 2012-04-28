@@ -236,6 +236,7 @@ int code_used = 0;
 #define FN_COMMIT		0x0200
 #define FN_PRECOMMIT	0x0400
 #define FN_FINALIZE		0x0800
+#define FN_EXPORT		0x1000
 
 /* used for tracking #include directives in files */
 #define BUFFERSIZE (65536*1000)
@@ -3229,7 +3230,7 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 	}
 	else if TERM(class_export_function(HERE, oclass,fname,sizeof(fname),arglist,sizeof(arglist),code,sizeof(code)))
 	{
-		/* TODO add to global block */
+		*functions |= FN_EXPORT;
 		ACCEPT;
 	}
 	else if (TERM(property_type(HERE,&type,&keys)) && (WHITE,(TERM(nameunit(HERE,propname,sizeof(propname),&pUnit))||TERM(name(HERE,propname,sizeof(propname))))) && (WHITE,LITERAL(";")) )
@@ -3393,7 +3394,7 @@ static int class_block(PARSER)
 		if WHITE ACCEPT;
 		if LITERAL("}")
 		{
-			if (oclass->module==NULL)
+			if ( oclass->module==NULL && functions!=0 )
 			{
 				append_code("};\n");
 #define ENTERING(OBJ,X) if (strstr(global_trace,#X)!=NULL) append_code("trace(\"call %s::%s\",("#OBJ"));",oclass->name,#X)
@@ -3516,7 +3517,7 @@ static int class_block(PARSER)
 
 				/* TODO add other intrinsics (notify, recalc, isa) */
 				if (!compile_code(oclass,functions)) REJECT;
-			} else { // if module != NULL
+			} else if ( functions!=0 ) { // if module != NULL
 				if(code_used){
 					output_error_raw("%s(%d): intrinsic functions found for compiled class", filename, linenum);
 					REJECT;
@@ -4234,29 +4235,36 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 	while (id<id2)
 	{
 		REPEAT;
+		if (oclass->create!=NULL)
+		{
 #ifdef NAMEOBJ
-		obj = &nameobj;
+			obj = &nameobj;
 #endif
-		if (oclass->create==NULL)
-		{
-			output_error_raw("%s(%d): create not implemented for objects of class %s", filename, linenum, classname);
-			REJECT;
-		}
-		else if ((*oclass->create)(&obj,parent)==0) 
-		{
-			output_error_raw("%s(%d): create failed for object %s:%d", filename, linenum, classname, id);
-			REJECT;
-		}
-		else if (obj==NULL
+			if ((*oclass->create)(&obj,parent)==0) 
+			{
+				output_error_raw("%s(%d): create failed for object %s:%d", filename, linenum, classname, id);
+				REJECT;
+			}
+			else if (obj==NULL
 #ifdef NAMEOBJ
-			|| obj==&nameobj
+				|| obj==&nameobj
 #endif
-			) 
-		{
-			output_error_raw("%s(%d): create failed name object %s:%d", filename, linenum, classname, id);
-			REJECT;
+				) 
+			{
+				output_error_raw("%s(%d): create failed name object %s:%d", filename, linenum, classname, id);
+				REJECT;
+			}
 		}
-		else if (id!=-1 && load_set_index(obj,(OBJECTNUM)id)==FAILED)
+		else // need to create object here because class has no create function 
+		{
+			obj = object_create_single(oclass);
+			if ( obj==NULL )
+			{
+				output_error_raw("%s(%d): create failed for object %s:%d", filename, linenum, classname, id);
+				REJECT;
+			}
+		}
+		if (id!=-1 && load_set_index(obj,(OBJECTNUM)id)==FAILED)
 		{
 			output_error_raw("%s(%d): unable to index object id number for %s:%d", filename, linenum, classname, id);
 			REJECT;

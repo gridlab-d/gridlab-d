@@ -3,7 +3,7 @@
 // Test to verify that duplicate function names can be detected
 
 #define force_compile=1
-#set tmp=../test_err_duplicate_function
+#set tmp=../test_exc_duplicate_function
 #setenv GLPATH=../../../core;../../core/etc
 #setenv GRIDLABD=../../../core
 #set include=../../../core
