@@ -5012,7 +5012,7 @@ static int gridlabd_file(PARSER)
 	DONE;
 }
 
-int replace_variables(char *to,char *from,int len)
+int replace_variables(char *to,char *from,int len,int warn)
 {
 	char *p, *e=from;
 	int n = 0;
@@ -5034,7 +5034,7 @@ int replace_variables(char *to,char *from,int len)
 				strncpy(to+n,env,len-n);
 				n+=(int)strlen(env);
 			}
-			else
+			else if ( warn )
 			{
 				/* this must be benign because otherwise macros that are inactive fail when they shouldn't */
 				output_warning("%s(%d): variable '%s' not found", filename, linenum, varname);
@@ -5102,7 +5102,7 @@ static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 		}
 #endif
 		/* expand variables */
-		if ((len=replace_variables(subst,line,sizeof(subst)))>=0)
+		if ((len=replace_variables(subst,line,sizeof(subst),suppress==0))>=0)
 			strcpy(line,subst);
 		else
 		{
@@ -5179,7 +5179,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 		}
 #endif
 		/* expand variables */
-		if ((len=replace_variables(subst,line,sizeof(subst)))>=0)
+		if ((len=replace_variables(subst,line,sizeof(subst),suppress==0))>=0)
 			strcpy(line,subst);
 		else
 		{
