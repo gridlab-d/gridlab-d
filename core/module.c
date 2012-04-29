@@ -328,7 +328,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		output_verbose("%s(%d): module '%s' memory allocated", __FILE__, __LINE__, file);
 
 	/* locate the module */
-	snprintf(pathname, 1024, "%s" DLEXT, file);
+	snprintf(pathname, sizeof(pathname), "%s" DLEXT, file);
 
 	if(find_file(pathname, NULL, X_OK|R_OK, tpath,sizeof(tpath)) == NULL)
 	{
@@ -436,7 +436,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		int i;
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 		{
-			snprintf(fname, 1024,"%s_%s",map[i].name,isforeign?fmod:c->name);
+			snprintf(fname, sizeof(fname) ,"%s_%s",map[i].name,isforeign?fmod:c->name);
 			if ((*(map[i].func) = (FUNCTIONADDR)DLSYM(hLib,fname))==NULL && !map[i].optional)
 			{
 				output_fatal("intrinsic %s is not defined in class %s", fname,file);

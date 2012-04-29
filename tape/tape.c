@@ -110,7 +110,7 @@ TAPEFUNCS *get_ftable(char *mode){
 		gl_error("get_ftable(char *mode='%s'): out of memory", mode);
 		return NULL; /* out of memory */
 	}
-	snprintf(modname, 1024, "tape_%s" DLEXT, mode);
+	snprintf(modname, sizeof(modname), "tape_%s" DLEXT, mode);
 	
 	if(gl_findfile(modname, NULL, 0|4, tpath,sizeof(tpath)) == NULL){
 		gl_error("unable to locate %s", modname);
