@@ -839,11 +839,11 @@ int convert_to_boolean(char *buffer, void *data, PROPERTY *prop){
 			break;
 		str[i] = toupper(str[i]);
 	}
-	if(0 == strcmp(str, "TRUE")){
+	if(0 == strcmp(str, "TRUE") || atoi(str)==1){
 		*(bool *)data = 1;
 		return 1;
 	}
-	if(0 == strcmp(str, "FALSE")){
+	if(0 == strcmp(str, "FALSE") || strcmp(str,"0")==0 ){
 		*(bool *)data = 0;
 		return 1;
 	}
