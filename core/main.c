@@ -170,29 +170,6 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	if (strcmp(global_pidfile,"")==0 && legal_notice()==FAILED)
 		exit(4);
 #endif
-
-	/* set up the test */
-	if (global_test_mode)
-	{
-#ifndef _NO_CPPUNIT
-		output_message("Entering test mode");
-		if (test_start(argc,argv)==FAILED)
-		{
-			output_fatal("shutdown after startup test failed");
-			/*	TROUBLESHOOT
-				A self-test procedure failed and the system stopped.
-				Check the output of the test stream and correct the 
-				indicated problem.  If the test stream is not redirected
-				so as to save the output, try using the <b>--redirect</b>
-				command line option.
-			 */
-			exit(3);
-		}
-		exit(0); /* There is no environment to speak of, so exit. */
-#else
-		output_message("Unit Tests not enabled.  Recompile with _NO_CPPUNIT unset");
-#endif
-	}
 	
 	/* start the processing environment */
 	output_verbose("load time: %d sec", time(NULL) - t_load);
@@ -206,19 +183,6 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 			Follow the recommendation for the indicated problem.
 		 */
 		rv = 2;
-	}
-
-	/* post process the test */
-	if (global_test_mode)
-	{
-#ifndef _NO_CPPUNIT
-		output_message("Exiting test mode");
-		if (test_end(argc,argv)==FAILED)
-		{
-			output_error("shutdown after end test failed");
-			exit(3);
-		}
-#endif
 	}
 
 	/* save the model */

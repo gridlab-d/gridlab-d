@@ -14,288 +14,83 @@
 #include "test.h"
 #include "aggregate.h"
 
-#ifndef _NO_CPPUNIT
-#include "test_callbacks.h"
+typedef struct s_testlist {
+	char name[64];
+	TESTFUNCTION call;
+	int enabled;
+	struct s_testlist *next;
+} TESTLIST;
+static TESTLIST test_list[] = {
+	{"dst",			timestamp_test,		0, test_list+1},
+	{"rand",		random_test,		0, test_list+2},
+	{"units",		unit_test,			0, test_list+3},
+	{"schedule",	schedule_test,		0, test_list+4},
+	{"loadshape",	loadshape_test,		0, test_list+5},
+	{"enduse",		enduse_test,		0, test_list+6},
+	{"lock",		test_lock,			0, NULL}, /* last test in list has no next */
+	/* add new core test routines before this line */
+}, *last_test = test_list+sizeof(test_list)/sizeof(test_list[0])-1;
 
-#ifndef WIN32
-#include <dlfcn.h>
-#endif
-
-
-TIMESTAMP get_global_clock(void)
+int test_register(char *name, TESTFUNCTION call)
 {
-	return global_clock;
+	TESTLIST *item = (TESTLIST*)malloc(sizeof(TESTLIST));
+	if ( item==NULL )
+	{
+		output_error("test_register(char *name='%s', TESTFUNCTION call=%p): memory allocation failed", name, call);
+		return FAILED;
+	}
+	last_test->next = item;
+	strncpy(item->name,name,sizeof(item->name));
+	item->call = call;
+	item->enabled = 0;
+	item->next = NULL;
+	last_test = item;
+	return SUCCESS;
 }
 
-STATUS t_setup_ranks(void);
-STATUS t_sync_all(PASSCONFIG pass);
-
-STATUS test_init(void)
+int test_request(char *name)
 {
-	OBJECT *obj;
-	output_verbose("initializing objects...");
-	for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
+	TESTLIST *item;
+	MODULE *mod;
+
+	output_verbose("running test '%s'...",name);
+
+	/* try already list ones */
+	for ( item=test_list ; item!=NULL ; item=item->next )
 	{
-		if (object_init(obj)==FAILED)
+		if ( strcmp(item->name,name)==0 )
 		{
-			char b[64];
-			output_error("object %s initialization failed", object_name(obj, b, 63));
-			return FAILED;
+			item->enabled = 1;
+			return SUCCESS;
+		}
+	}
+
+	/* try module test */
+	if ( (mod=module_load(name,0,NULL))!=NULL )
+	{
+		if ( mod->test!=NULL )
+			mod->test(0,NULL);
+		else
+			output_warning("module '%s' does not implement a test routine", name);
+		return SUCCESS;
+	}
+
+	return FAILED;
+}
+
+int test_exec(void)
+{
+	TESTLIST *item;
+	for ( item=test_list ; item!=NULL ; item=item->next )
+	{
+		if ( item->enabled!=0 )
+		{
+			item->call();
 		}
 	}
 	return SUCCESS;
 }
 
-STATUS do_sync_all(PASSCONFIG pass)
-{
-	return t_sync_all(pass);
-}
-
-static TEST_CALLBACKS callbacks = {
-	//printStuff,
-	class_get_class_from_classname,
-	get_global_clock,
-	object_sync,
-	do_sync_all,
-	test_init,
-	t_setup_ranks,
-	remove_objects
-};
-
-STATUS test_start(int argc, char *argv[])
-{
-	int mod_test_num = 1;
-	char mod_test[100];
-	char buffer[64];
-	char *mod_name;
-	int test_result = 0;
-	sprintf(mod_test,"mod_test%d",mod_test_num++);
-	mod_name = global_getvar(mod_test, buffer, 63);
-	module_load("tape",argc,argv);
-	while(mod_name != NULL)
-	{
-		MODULE *mod = module_load(mod_name,argc,argv);
-		
-		if(mod == NULL)
-		{
-			output_fatal("Invalid module name");
-			/*	TROUBLESHOOT
-				The test_start procedure was given an invalid module name.
-				Check the command line argument and/or the unit test sequence
-				to be sure the test is requested properly.
-			 */
-			return FAILED;
-		}
-
-		if (mod->module_test==NULL)
-		{
-			output_fatal("Module %s does not implement cppunit test", mod->name);
-			/*	TROUBLESHOOT
-				The test_start procedure was given the name of a module that doesn't
-				implement unit testing.
-				Check the command line argument and/or the test configuration file
-				to be sure the test is requested properly.				
-			 */
-			return FAILED;
-		}
-
-		test_result = mod->module_test(&callbacks,argc,argv);
-		
-		if(test_result == 0)
-			return FAILED;
-		sprintf(mod_test,"mod_test%d",mod_test_num++);
-		mod_name = global_getvar(mod_test, buffer, 63);
-	}
-	
-	return SUCCESS;
-
-}
-STATUS original_test_start(int argc, char *argv[])
-{
-	OBJECT *obj[6];
-	MODULE *network;
-	CLASS *node, *link;
-	MODULE *tape;
-	CLASS *player, *recorder, *collector;
-
-	network = module_load("network",argc,argv);
-	if (network==NULL)
-	{
-#ifndef WIN32
-		fprintf(stderr,"%s\n",dlerror());
-#else
-		perror("network module load failed");
-#endif
-		return FAILED;
-	}
-	output_verbose("network module loaded ok");
-
-	node = class_get_class_from_classname("node");
-	if (node==NULL)
-	{
-		output_fatal("network module does not implement class node");
-		/*	TROUBLESHOOT
-			The <b>network</b> module test can't find the <b>node</b>
-			class definition.  This is probably caused by either
-			an internal system error or a version of the network module
-			that doesn't implement node object as expected (or at all).
-		 */
-		return FAILED;
-	}
-	output_verbose("class node implementation loaded ok");
-
-	link = class_get_class_from_classname("link");
-	if (node==NULL || link==NULL)
-	{
-		output_fatal("network module does not implement class link");
-		/*	TROUBLESHOOT
-			The <b>network</b> module test can't find the <b>link</b>
-			class definition.  This is probably caused by either
-			an internal system error or a version of the network module
-			that doesn't implement link object as expected (or at all).
-		 */
-		return FAILED;
-	}
-	output_verbose("class link implementation loaded ok");
-
-	tape = module_load("tape",argc,argv);
-	if (tape==NULL)
-	{
-#ifndef WIN32
-		fprintf(stderr,"%s\n",dlerror());
-#else
-		perror("tape module load failed");
-#endif
-		return FAILED;
-	}
-
-	player = class_get_class_from_classname("player");
-	if (player==NULL)
-	{
-		output_fatal("tape module does not implement class player");
-		/*	TROUBLESHOOT
-			The <b>tape</b> module test can't find the <b>player</b>
-			class definition.  This is probably caused by either
-			an internal system error or a version of the tape module
-			that doesn't implement player object as expected (or at all).
-		 */
-		return FAILED;
-	}
-	recorder = class_get_class_from_classname("recorder");
-	if (recorder==NULL)
-	{
-		output_fatal("tape module does not implement class recorder");
-		/*	TROUBLESHOOT
-			The <b>tape</b> module test can't find the <b>recorder</b>
-			class definition.  This is probably caused by either
-			an internal system error or a version of the tape module
-			that doesn't implement recorder object as expected (or at all).
-		 */
-		return FAILED;
-	}
-	collector = class_get_class_from_classname("collector");
-	if (collector==NULL)
-	{
-		output_fatal("tape module does not implement class collector");
-		/*	TROUBLESHOOT
-			The <b>tape</b> module test can't find the <b>collector</b>
-			class definition.  This is probably caused by either
-			an internal system error or a version of the tape module
-			that doesn't implement collector object as expected (or at all).
-		 */
-		return FAILED;
-	}
-
-	if (module_import(network,"../test/pnnl2bus.cdf")<=0)
-		return FAILED;
-
-	/* tape player */
-	if ((*player->create)(&obj[3],object_get_first())==FAILED)
-	{
-		output_fatal("player creation failed");
-		/*	TROUBLESHOOT
-			The <b>tape</b> module test can't create a <b>player</b>
-			object.  This is probably caused by either
-			an internal system error or a version of the tape module
-			that doesn't implement player object as expected (or at all).
-		 */
-		return FAILED;
-	}
-	object_set_value_by_name(obj[3],"loop","3600"); /* 18000 is about 12y at 1h steps */
-	object_set_value_by_name(obj[3],"property","S");
-
-	/* tape recorder */
-	if ((*recorder->create)(&obj[4],object_get_first())==FAILED)
-	{
-		output_fatal("recorder creation failed");
-		/*	TROUBLESHOOT
-			The <b>tape</b> module test can't create a <b>recorder</b>
-			object.  This is probably caused by either
-			an internal system error or a version of the tape module
-			that doesn't implement recorder object as expected (or at all).
-		 */
-		return FAILED;
-	}
-	object_set_value_by_name(obj[4],"property","V,S");
-	object_set_value_by_name(obj[4],"interval","0");
-	object_set_value_by_name(obj[4],"limit","1000");
-
-	/* tape collector */
-	if ((*collector->create)(&obj[5],NULL)==FAILED)
-	{
-		output_fatal("collector creation failed");
-		/*	TROUBLESHOOT
-			The <b>tape</b> module test can't create a <b>collector</b>
-			object.  This is probably caused by either
-			an internal system error or a version of the tape module
-			that doesn't implement collector object as expected (or at all).
-		 */
-		return FAILED;
-	}
-	object_set_value_by_name(obj[5],"property","count(V.mag),min(V.mag),avg(V.mag),std(V.mag),max(V.mag),min(V.ang),avg(V.ang),std(V.ang),max(V.ang)");
-	object_set_value_by_name(obj[5],"interval","0");
-	object_set_value_by_name(obj[5],"limit","1000");
-	object_set_value_by_name(obj[5],"group","class=node;");
-
-	module_check(network);
-
-	return SUCCESS;
-}
-
-
-
-STATUS test_end(int argc, char *argv[])
-{
-	return SUCCESS;
-}
-
-STATUS original_test_end(int argc, char *argv[])
-{
-	FINDLIST *find = find_objects(FL_GROUP,"class=node;");
-	OBJECT *obj;
-	AGGREGATION *aggr;
-	char *exp = "class=node";
-	char *agg = "max(V.ang)";
-	char b[64];
-
-	for (obj=find_first(find); obj!=NULL; obj=find_next(find,obj))
-		output_message("object %s found", object_name(obj, b, 63));
-	free(find);
-
-	output_message("Aggregation of %s over %s...", agg,exp);
-	aggr = aggregate_mkgroup(agg,exp);
-	if (aggr)
-		output_message("Result is %lf", aggregate_value(aggr));
-	else
-		output_message("Aggregation failed!");
-
-	if (!saveall("-"))
-		perror("save failed");
-
-	return SUCCESS;
-}
-
-#endif
 
 /***********************************************************************
  * MEMORY LOCK TEST
@@ -310,9 +105,9 @@ static volatile unsigned int total = 0;
 static unsigned int key = 0;
 static volatile int done = 0;
 
-void *test_lock_proc(void *ptr)
+static void *test_lock_proc(void *ptr)
 {
-	int id = (int)ptr;
+	int id = *(int*)ptr;
 	int m;
 	output_test("thread %d created ok", (unsigned int)id);
 	for ( m=0 ; m<TESTCOUNT ; m++ )
@@ -329,7 +124,7 @@ void *test_lock_proc(void *ptr)
 	return (void*)0;
 }
 
-void test_lock(void)
+int test_lock(void)
 {
 	int n, sum=0;
 
@@ -337,7 +132,7 @@ void test_lock(void)
 	if ( !count )
 	{
 		output_test("memory allocation failed");
-		return;
+		return FAILED;
 	}
 	
 	output_test("*** Begin memory locking test for %d threads", global_threadcount);
@@ -346,10 +141,10 @@ void test_lock(void)
 	{
 		pthread_t pt;
 		count[n] = 0;
-		if ( pthread_create(&pt,NULL,test_lock_proc,(void*)n)!=0 )
+		if ( pthread_create(&pt,NULL,test_lock_proc,(void*)&n)!=0 )
 		{
 			output_test("thread creation failed");
-			return;
+			return FAILED;
 		}
 	}
 	wunlock(&key);
@@ -386,5 +181,6 @@ void test_lock(void)
 	else
 		output_test("Last key = %d", key);
 	output_test("*** End memory locking test", global_threadcount);
+	return SUCCESS;
 }
 

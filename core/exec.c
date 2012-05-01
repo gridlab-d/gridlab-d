@@ -84,6 +84,7 @@
 #include "stream.h"
 #include "instance.h"
 #include "linkage.h"
+#include "test.h"
 
 #include "pthread.h"
 
@@ -1062,12 +1063,6 @@ STATUS exec_start(void)
 	/* initialize the main loop state control */
 	exec_mls_init();
 
-	/* check for a model */
-	if (object_get_count()==0)
-
-		/* no object -> nothing to do */
-		return SUCCESS;
-
 	/* perform object initialization */
 	if (init_all() == FAILED)
 	{
@@ -1221,6 +1216,16 @@ STATUS exec_start(void)
 		pthread_cond_init(&start[k], NULL);
 		pthread_cond_init(&done[k], NULL);
 	}
+
+	// global test mode
+	if ( global_test_mode==TRUE )
+		return test_exec();
+
+	/* check for a model */
+	if (object_get_count()==0)
+
+		/* no object -> nothing to do */
+		return SUCCESS;
 
 	//sjin: GetMachineCycleCount
 	//mc_start_time = GetMachineCycleCount();

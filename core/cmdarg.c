@@ -597,28 +597,15 @@ static int modtest(int argc, char *argv[])
 }
 static int test(int argc, char *argv[])
 {
-	int test_mod_num = 1;
-	global_test_mode=TRUE;
-	global_strictnames = FALSE;
-	output_debug("disabling strict naming for tests");
-	if (argc>1)
+	int n=0;
+	global_test_mode = TRUE;
+	while (argc>1)
 	{
-		char mod_test[100];
-		sprintf(mod_test,"mod_test%d=%s",test_mod_num++,*++argv);
-		if (global_setvar(mod_test)==SUCCESS)
-			argc--;
+		test_request(*++argv);
+		argc--;
+		n++;
 	}
-	else
-	{
-		output_fatal("test module name is missing");
-		/*	TROUBLESHOOT
-			The <b>--test</b> parameter was found on the command line, but
-			if was not followed by a module specification that is valid.
-			The correct syntax is <b>gridlabd --test <i>module_name</i></b>.
-		*/
-		return CMDERR;
-	}
-	return 1;
+	return n;
 }
 static int define(int argc, char *argv[])
 {

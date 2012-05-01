@@ -5,12 +5,14 @@
 
 #ifndef _TEST_H
 #define _TEST_H
-#ifndef _NO_CPPUNIT
 
-STATUS test_start(int argc, char *argv[]);	
-STATUS test_end(int argc, char *argv[]);
+typedef int (*TESTFUNCTION)(void);
 
-void test_lock(void);
+/* general testing API */
+int test_register(char *name, TESTFUNCTION call);
+int test_request(char *name);
+int test_exec(void);
+
+int test_lock(void);
  
-#endif
 #endif
