@@ -1,0 +1,30 @@
+// $Id$
+
+module assert;
+
+global complex test_complex[kV] 12+1j kV; // default 0+0j unit kVA description "Test value";
+object assert {
+	target "test_complex";
+	relation "==";
+	value "12000+0d V";
+	within "100 V";
+}
+
+global double test_double[degC] 0.0;
+object assert {
+	target "test_double";
+	relation "==";
+	value "32 degF";
+	within 0.01;
+}
+
+module residential {
+	implicit_enduses NONE;
+	default_outdoor_temperature 0.0 degC;
+}
+object assert {
+	target "residential::default_outdoor_temperature";
+	relation "==";
+	value "32 degF";
+	within 0.01;
+}
