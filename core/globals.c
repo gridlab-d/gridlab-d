@@ -506,6 +506,15 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 
 			/** @todo autotype global variables when creating them (ticket #26) */
 			var = global_create(name,PT_char1024,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
+			if ( var==NULL )
+			{
+				output_error("unable to implicitly create the global variable '%s'", name);
+				/* TROUBLESHOOT
+					An attempt to create the global variable indicated failed.  
+					This is an internal error and should be reported to the software developers.
+				 */
+				return FAILED;
+			}
 		}
 		wlock(&globalvar_lock);
 		retval = class_string_to_property(var->prop,(void*)var->prop->addr,value);

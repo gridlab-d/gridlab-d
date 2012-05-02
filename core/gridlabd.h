@@ -139,13 +139,13 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
  **/
 /** The PUBLISH_STRUCT macro is used to publish a member of a structure.
  **/
-#define PUBLISH_STRUCT(C,T,N) {struct C _t;if (gl_publish_variable(C##_class,PT_##T,#N,(char*)&_t.N-(char*)&_t,NULL)<1) return NULL;}
+#define PUBLISH_STRUCT(C,T,N) {struct C *_t=NULL;if (gl_publish_variable(C##_class,PT_##T,#N,(char*)&(_t->N)-(char*)_t,NULL)<1) return NULL;}
 /** The PUBLISH_CLASS macro is used to publish a member of a class (C++ only).
  **/
-#define PUBLISH_CLASS(C,T,N) {class C _t;if (gl_publish_variable(C##_class,PT_##T,#N,(char*)&_t.N-(char*)&_t,NULL)<1) return NULL;}
+#define PUBLISH_CLASS(C,T,N) {class C *_t=NULL;if (gl_publish_variable(C##_class,PT_##T,#N,(char*)&(_t->N)-(char*)_t,NULL)<1) return NULL;}
 /** The PUBLISH_CLASSX macro is used to publish a member of a class (C++ only) using a different name from the member name.
  **/
-#define PUBLISH_CLASSX(C,T,N,V) {class C _t;if (gl_publish_variable(C##_class,PT_##T,V,(char*)&_t.N-(char*)&_t,NULL)<1) return NULL;}
+#define PUBLISH_CLASSX(C,T,N,V) {class C *_t=NULL;if (gl_publish_variable(C##_class,PT_##T,V,(char*)&(_t->N)-(char*)_t,NULL)<1) return NULL;}
 
 /** The PUBLISH_CLASS_UNT macros is used to publish a member of a class (C++ only) including a unit specification.
 **/
@@ -153,7 +153,7 @@ CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 /** The PUBLISH_DELEGATED macro is used to publish a variable that uses a delegated type.
 
 **/
-#define PUBLISH_DELEGATED(C,T,N) {class C _t;if (gl_publish_variable(C##_class,PT_delegated,T,#N,(char*)&_t.N-(char*)&_t,NULL)<1) return NULL;}
+#define PUBLISH_DELEGATED(C,T,N) {class C *_t=NULL;if (gl_publish_variable(C##_class,PT_delegated,T,#N,(char*)&(_t->N)-(char*)_t,NULL)<1) return NULL;}
 
 /** The PUBLISH_ENUM(C,N,E) macro is used to define a keyword for an enumeration variable
  **/

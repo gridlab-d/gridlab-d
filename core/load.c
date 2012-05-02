@@ -132,7 +132,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #include "config.h"
 #else // not a build using automake
 #define DLEXT ".dll"
-#define REALTIME_LDFLAGS "-Wl,-export-all-symbols"
+#define REALTIME_LDFLAGS ""
 #endif // HAVE_CONFIG_H
 
 #include <stdlib.h>
@@ -710,8 +710,15 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				char execstr[1024];
 				char ldstr[1024];
 				char exportsyms[64] = REALTIME_LDFLAGS;
+				char mopt[8]="";
+				char *libs = "-lstdc++";
+#ifdef WIN32
+				snprintf(mopt,sizeof(mopt),"-m%d",sizeof(void*)*8);
+				libs = "";
+#endif
 
-				sprintf(execstr, "%s %s %s -I \"%s\" -c \"%s\" -o \"%s\"", getenv("CXX")?getenv("CXX"):"g++", getenv("CXXFLAGS")?getenv("CXXFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", global_include, cfile, ofile);
+				sprintf(execstr, "%s %s -w %s %s -I \"%s\" -c \"%s\" -o \"%s\"", getenv("CXX")?getenv("CXX"):"g++", 
+					getenv("CXXFLAGS")?getenv("CXXFLAGS"):EXTRA_CXXFLAGS, mopt, global_debug_output?"-g -O0":"", global_include, cfile, ofile);
 				output_verbose("compile string: \"%s\"", execstr);
 				//if (exec("g++ %s -I\"%s\" -c \"%s\" -o \"%s\"", global_debug_output?"-g -O0":"", global_include, cfile, ofile)==FAILED)
 				if(exec(execstr)==FAILED)
@@ -722,7 +729,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 				/* link new runtime module */
 				output_verbose("linking inline code from '%s'", ofile);
-				sprintf(ldstr, "%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile);
+				sprintf(ldstr, "%s %s %s %s %s -shared -Wl,\"%s\" -o \"%s\" -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , mopt, getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile);
 				output_verbose("linking string: \"%s\"", ldstr);
 				//if (exec("%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile)==FAILED)
 				if(exec(ldstr) == FAILED)

@@ -910,14 +910,19 @@ int module_compile(char *name,	/**< name of library */
 	char cfile[1024];
 	char ofile[1024];
 	char afile[1024];
-	char *cc = getenv("CC");
-	char *ccflags = getenv("CCFLAGS");
-	char *dl = getenv("DLLTOOL");
-	char *ldflags = getenv("LDFLAGS");
+	char *cc = getenv("CC")?getenv("CC"):CC;
+	char *ccflags = getenv("CCFLAGS")?getenv("CCFLAGS"):CCFLAGS;
+	char *ldflags = getenv("LDFLAGS")?getenv("LDFLAGS"):LDFLAGS;
 	int rc;
 	size_t codesize = strlen(code), len;
 	FILE *fp;
 	char srcfile[1024];
+	char mopt[8] = "";
+	char *libs = "-lstdc++";
+#ifdef WIN32
+	snprintf(mopt,sizeof(mopt),"-m%d",sizeof(void*)*8);
+	libs = "";
+#endif
 
 	/* normalize source file name */
 	if ( source )
@@ -969,11 +974,11 @@ int module_compile(char *name,	/**< name of library */
 	fclose(fp);
 
 	/* compile the code */
-	if ( (rc=execf("%s %s -c \"%s\" -o \"%s\" ", cc?cc:CC, ccflags?ccflags:CCFLAGS, cfile, ofile))!=0 )
+	if ( (rc=execf("%s %s %s -c \"%s\" -o \"%s\" ", cc, mopt, ccflags, cfile, ofile))!=0 )
 		return rc;
 
 	/* create needed DLL files on windows */
-	if ( (rc=execf("%s -Wl,%s -shared \"%s\" -o \"%s\"", cc?cc:CC, ldflags?ldflags:LDFLAGS, ofile,afile))!=0 )
+	if ( (rc=execf("%s %s -Wl%s%s -shared \"%s\" -o \"%s\"", cc, mopt, ((ldflags[0]==0)?"":","), ldflags, ofile,afile))!=0 )
 		return rc;
 
 #ifdef LINUX
