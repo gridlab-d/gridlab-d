@@ -4996,6 +4996,48 @@ static int extern_block(PARSER)
 	DONE;
 }
 
+static int global_declaration(PARSER)
+{
+	START;
+	if ( WHITE,LITERAL("global") )
+	{
+		char proptype[256];
+		char varname[256];
+		char pvalue[1024];
+		if ( (WHITE,TERM(name(HERE,proptype,sizeof(proptype)))) 
+			&& (WHITE,TERM(name(HERE,varname,sizeof(varname))))
+			)
+		{
+			UNIT *pUnit = NULL;
+			if ( (WHITE,LITERAL("[")) && (WHITE,TERM(unitspec(HERE,&pUnit))) && (WHITE,LITERAL("]")) )
+			{
+			}
+			else
+				pUnit = NULL;
+			if ( (WHITE,TERM(value(HERE,pvalue,sizeof(pvalue)))) )
+			{
+				PROPERTYTYPE ptype = property_get_type(proptype);
+				GLOBALVAR *var = global_create(varname,ptype,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
+				if ( var==NULL )
+				{
+					output_error_raw("%s(%d): global '%s %s' cannot be defined", filename, linenum, proptype, varname);
+					REJECT;
+				}
+				var->prop->unit = pUnit;
+				if ( class_string_to_property(var->prop, var->prop->addr,pvalue)==0 )
+				{
+					output_error_raw("%s(%d): global '%s %s' cannot be set to '%s'", filename, linenum, proptype, varname, pvalue);
+					REJECT;
+				}
+			}
+		}
+		ACCEPT;
+		DONE;
+	}
+	else
+		REJECT;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 static int gridlabd_file(PARSER)
@@ -5014,6 +5056,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(instance_block(HERE)) {ACCEPT; DONE; }
 	OR if TERM(gui(HERE)) {ACCEPT; DONE;}
 	OR if TERM(extern_block(HERE)) {ACCEPT; DONE; }
+	OR if TERM(global_declaration(HERE)) {ACCEPT; DONE; }
 	OR if (*(HERE)=='\0') {ACCEPT; DONE;}
 	else REJECT;
 	DONE;

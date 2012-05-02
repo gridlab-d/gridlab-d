@@ -218,6 +218,7 @@ size_t property_minimum_buffersize(PROPERTY *);
 int property_create(PROPERTY *, void *);
 bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, char *part);
 PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
+PROPERTYTYPE property_get_type(char *name);
 
 #endif //_PROPERTY_H
 

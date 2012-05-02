@@ -198,17 +198,18 @@ int convert_to_complex(char *buffer, /**< a pointer to the string buffer */
 					   PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
 	complex *v = (complex*)data;
+	char unit[256];
 	char notation[2]={'\0','\0'}; /* force detection invalid complex number */
 	int n;
 	double a=0, b=0; 
 	if(buffer[0] == 0){
 		/* empty string */
-		v->SetRect(0.0, 0.0);
+		v->SetRect(0.0, 0.0,v->Notation());
 		return 1;
 	}
-	n = sscanf(buffer,"%lg%lg%1[ijdr]",&a,&b,notation);
+	n = sscanf(buffer,"%lg%lg%1[ijdr]%s",&a,&b,notation,unit);
 	if (n==1) /* only real part */
-		v->SetRect(a,0);
+		v->SetRect(a,0,v->Notation());
 	else if (n < 3 || strchr("ijdr",notation[0])==NULL) /* incomplete imaginary part or missing notation */
 	{
 		output_error("convert_to_complex('%s',%s): complex number format is not valid", buffer,prop->name);
@@ -220,13 +221,31 @@ int convert_to_complex(char *buffer, /**< a pointer to the string buffer */
 	}
 	/* appears ok */
 	else if (notation[0]==A) /* polar degrees */
-		v->SetPolar(a,b*PI/180.0); 
+		v->SetPolar(a,b*PI/180.0,v->Notation()); 
 	else if (notation[0]==R) /* polar radians */
-		v->SetPolar(a,b); 
+		v->SetPolar(a,b,v->Notation()); 
 	else 
-		v->SetRect(a,b); /* rectangular */
+		v->SetRect(a,b,v->Notation()); /* rectangular */
 	if (v->Notation()==I) /* only override notation when property is using I */
 		v->Notation() = (CNOTATION)notation[0];
+
+	if ( n>3 && prop->unit!=NULL ) /* unit given and unit allowed */
+	{
+		UNIT *from = unit_find(unit);
+		double scale=1.0;
+		if ( from != prop->unit && unit_convert_ex(from,prop->unit,&scale)==0)
+		{
+			output_error("convert_to_double(char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): unit conversion failed", buffer, sizeof(void*), data, prop->name);
+			/* TROUBLESHOOT 
+			   This error is caused by an attempt to convert a value from a unit that is
+			   incompatible with the unit of the target property.  Check your units and
+			   try again.
+		     */
+			return 0;
+		}
+		v->Re() *= scale;
+		v->Im() *= scale;
+	}
 	return 1;
 }
 

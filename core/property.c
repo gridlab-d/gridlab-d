@@ -208,6 +208,17 @@ bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, v
 	}
 }
 
+PROPERTYTYPE property_get_type(char *name)
+{
+	PROPERTYTYPE ptype;
+	for ( ptype = _PT_FIRST+1 ; ptype<_PT_LAST ; ptype++ )
+	{
+		if ( strcmp(property_type[ptype].name,name)==0)
+			return ptype;
+	}
+	return PT_void;
+}
+
 /*********************************************************
  * PROPERTY PARTS
  *********************************************************/
