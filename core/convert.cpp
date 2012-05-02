@@ -109,7 +109,23 @@ int convert_to_double(char *buffer, /**< a pointer to the string buffer */
 					  void *data, /**< a pointer to the data */
 					  PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	return sscanf(buffer,"%lg",data);
+	char unit[256];
+	int n = sscanf(buffer,"%lg%s",data,unit);
+	if ( n>1 && prop->unit!=NULL ) /* unit given and unit allowed */
+	{
+		UNIT *from = unit_find(unit);
+		if ( from != prop->unit && unit_convert_ex(from,prop->unit,(double*)data)==0)
+		{
+			output_error("convert_to_double(char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): unit conversion failed", buffer, sizeof(void*), data, prop->name);
+			/* TROUBLESHOOT 
+			   This error is caused by an attempt to convert a value from a unit that is
+			   incompatible with the unit of the target property.  Check your units and
+			   try again.
+		     */
+			return 0;
+		}
+	}
+	return n;
 }
 
 /** Convert from a complex
@@ -127,7 +143,8 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 	complex *v = (complex*)data;
 
 	double scale = 1.0;
-	if(prop->unit != NULL){
+	if ( prop->unit!=NULL )
+	{
 
 		/* only do conversion if the target unit differs from the class's unit for that property */
 		PROPERTY *ptmp = (prop->oclass==NULL ? prop : class_find_property(prop->oclass, prop->name));

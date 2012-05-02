@@ -1351,7 +1351,7 @@ public: // header read accessors (no locking)
 	inline OBJECTNUM get_id(void) { return my()->id; };
 	inline char* get_groupid(void) { return my()->groupid; };
 	inline gld_class* get_oclass(void) { return (gld_class*)my()->oclass; };
-	inline gld_object* get_parent(void) { return OBJECTDATA(my()->parent,gld_object); };
+	inline gld_object* get_parent(void) { return my()->parent?OBJECTDATA(my()->parent,gld_object):NULL; };
 	inline OBJECTRANK get_rank(void) { return my()->rank; };
 	inline TIMESTAMP get_clock(void) { return my()->clock; };
 	inline TIMESTAMP get_valid_to(void) { return my()->valid_to; };
@@ -1420,11 +1420,12 @@ private: // data
 	OBJECT *obj;
 
 public: // constructors/casts
-	inline gld_property(gld_object *o, char *n) : obj(o->my()) { prop=callback->properties.get_property(o->my(),n); };
+	inline gld_property(gld_object *o, char *n) : obj(o->my()) { if (o) prop=callback->properties.get_property(o->my(),n); else {GLOBALVAR *v=callback->global.find(n); prop= (v?v->prop:NULL);} };
 	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), prop(p) {};
-	inline gld_property(OBJECT *o, char *n) : obj(o) { prop=callback->properties.get_property(o,n); };
+	inline gld_property(OBJECT *o, char *n) : obj(o) { if (o) prop=callback->properties.get_property(o,n); else {GLOBALVAR *v=callback->global.find(n); prop= (v?v->prop:NULL);} };
 	inline gld_property(GLOBALVAR *v) : obj(NULL), prop(v->prop) {};
 	inline gld_property(char *n) : obj(NULL) { GLOBALVAR *v=callback->global.find(n); prop= (v?v->prop:NULL);  };
+	inline gld_property(char *m, char *n) : obj(NULL) { char1024 vn; sprintf(vn,"%s::%s",m,n); GLOBALVAR *v=callback->global.find(vn); prop= (v?v->prop:NULL);  };
 	inline operator PROPERTY*(void) { return prop; };
 
 public: // read accessors

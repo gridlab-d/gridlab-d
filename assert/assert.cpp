@@ -43,6 +43,7 @@ g_assert::g_assert(MODULE *module)
 				PT_KEYWORD,"inside",TCOP_IN,
 				PT_KEYWORD,"outside",TCOP_NI,
 			PT_char1024, "value", PADDR(value),PT_DESCRIPTION,"the value to compare with for binary tests",
+			PT_char1024, "within", PADDR(value2),PT_DESCRIPTION,"the bounds within which the value must bed compared",
 			PT_char1024, "lower", PADDR(value),PT_DESCRIPTION,"the lower bound to compare with for interval tests",
 			PT_char1024, "upper", PADDR(value2),PT_DESCRIPTION,"the upper bound to compare with for interval tests",
 			NULL)<1){
@@ -67,12 +68,9 @@ int g_assert::create(void)
 
 int g_assert::init(OBJECT *parent)
 {
-	if ( get_parent()==NULL )
-		exception("no parent object was specified");
-
 	gld_property target(get_parent(),get_target());
 	if ( !target.is_valid() )
-		exception("target %s does not exist in parent %s",get_target(), get_parent()->get_name());
+		exception("target %s property %s does not", get_parent()?get_parent()->get_name():"global",get_target());
 
 	set_status(AS_TRUE);
 	return 1;
@@ -81,7 +79,7 @@ int g_assert::init(OBJECT *parent)
 TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 {
 	// get the target property
-	gld_property target(get_parent()->my(),get_target());
+	gld_property target(get_parent(),get_target());
 	if ( !target.is_valid() ) 
 	{
 		gl_error("%s: target %s is not valid",get_target(),get_name());
@@ -110,12 +108,12 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 			char buf[1024];
 			char *p = get_part();
 			gl_error("%s: assert failed on %s %s.%s.%s %s %s %s %s", get_name(), get_status()==AS_TRUE?"":"NOT",
-				get_parent()->get_name(), get_target(), get_part(),target.to_string(buf,sizeof(buf))?buf:"(void)", pKeyword->get_name(), get_value(), get_value2());
+				get_parent()?get_parent()->get_name():"global variable", get_target(), get_part(),target.to_string(buf,sizeof(buf))?buf:"(void)", pKeyword->get_name(), get_value(), get_value2());
 			return 0;
 		}
 		else
 		{
-			gl_verbose("%s: assert passed on %s", get_name(), get_parent()->get_name());
+			gl_verbose("%s: assert passed on %s", get_name(), get_parent()?get_parent()->get_name():"global variable");
 			return TS_NEVER;
 		}
 	}

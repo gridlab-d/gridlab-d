@@ -979,15 +979,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\x86\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1014,11 +1014,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>
@@ -1243,6 +1243,10 @@
 				</File>
 				<File
 					RelativePath=".\autotest\test_exc_duplicate_function.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_global_unit_convert.glm"
 					>
 				</File>
 				<File

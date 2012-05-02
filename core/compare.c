@@ -1,6 +1,7 @@
 /** $Id
  **/
 
+#include <math.h>
 #include "timestamp.h"
 #include "property.h"
 #include "object.h"
@@ -25,10 +26,10 @@
 #define COMPARE_NEO(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { return strcmp((*(OBJECT**)x)->name,(*(OBJECT**)a)->name)!=0; }
 
 #define COMPAREOPF(T) COMPARE_EQF(T) COMPARE_LEF(T) COMPARE_GEF(T) COMPARE_NEF(T) COMPARE_LTF(T) COMPARE_GTF(T) COMPARE_INF(T) COMPARE_NIF(T)
-#define COMPARE_EQF(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { return *(T*)x==*(T*)a; }
+#define COMPARE_EQF(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { if (b==NULL) return *(T*)x==*(T*)a; else return fabs((*(T*)x)-(*(T*)a))<=(*(T*)b); }
 #define COMPARE_LEF(T) int compare_tc_##T##_le(void* x,void* a,void* b) { return *(T*)x<=*(T*)a; }
 #define COMPARE_GEF(T) int compare_tc_##T##_ge(void* x,void* a,void* b) { return *(T*)x>=*(T*)a; }
-#define COMPARE_NEF(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { return *(T*)x!=*(T*)a; }
+#define COMPARE_NEF(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { if (b==NULL) return *(T*)x!=*(T*)a; else return fabs((*(T*)x)-(*(T*)a))>(*(T*)b); }
 #define COMPARE_LTF(T) int compare_tc_##T##_lt(void* x,void* a,void* b) { return *(T*)x<*(T*)a; }
 #define COMPARE_GTF(T) int compare_tc_##T##_gt(void* x,void* a,void* b) { return *(T*)x>*(T*)a; }
 #define COMPARE_INF(T) int compare_tc_##T##_in(void* x,void* a,void* b) { return *(T*)a<=*(T*)x && *(T*)x<=*(T*)b; }
