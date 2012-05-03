@@ -1571,6 +1571,22 @@ CDECL int dllkill() { do_kill(NULL); }
 	T_CATCHALL(X,commit); return 1; }
 #define EXPORT_NOTIFY(X) EXPORT_NOTIFY_C(X,X)
 
+#define EXPORT_SYNC_C(X,C) EXPORT TIMESTAMP sync_##X(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) { \
+	try { TIMESTAMP t1=TS_NEVER; C *p=OBJECTDATA(obj,C); \
+	switch (pass) { \
+	case PC_PRETOPDOWN: t1 = p->presync(t0); break; \
+	case PC_BOTTOMUP: t1 = p->sync(t0); break; \
+	case PC_POSTTOPDOWN: t1 = p->postsync(t0); break; \
+	default: throw "invalid pass request"; break; } \
+	if ( (obj->oclass->passconfig&(PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN)&(~pass)) <= pass ) obj->clock = t0; \
+	return t1; } \
+	SYNC_CATCHALL(X); }
+#define EXPORT_SYNC(X) EXPORT_SYNC_C(X,X)
+
+#define EXPORT_ISA_C(X,C) EXPORT int isa_##X(OBJECT *obj, char *name) { \
+	return ( obj!=0 && name!=0 ) ? OBJECTDATA(obj,C)->isa(name) : 0; }
+#define EXPORT_ISA(X) EXPORT_ISA_C(X,X)
+
 #endif
 
 // TODO add other linkages as needed

@@ -9,8 +9,13 @@
 #include <errno.h>
 #include <math.h>
 
+#include "gridlabd.h"
 #include "climate.h"
-#include "timestamp.h"
+
+EXPORT_CREATE(climate)
+EXPORT_INIT(climate)
+EXPORT_SYNC(climate)
+EXPORT_ISA(climate)
 
 #define RAD(x) (x*PI)/180
                          //ET,CT,MT ,PT ,AT, HT
@@ -707,68 +712,6 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 		return -(t0+(3600*TS_SECOND-t0%(3600 *TS_SECOND))); /// negative means soft event
 	}
 	return TS_NEVER;
-}
-
-//////////////////////////////////////////////////////////////////////////
-// IMPLEMENTATION OF CORE LINKAGE: climate
-//////////////////////////////////////////////////////////////////////////
-
-/// Create a climate object
-EXPORT int create_climate(OBJECT **obj, ///< a pointer to the OBJECT*
-						  OBJECT *parent) ///< a pointer to the parent OBJECT
-{
-	try
-	{
-		*obj = gl_create_object(climate::oclass);
-		if (*obj!=NULL)
-		{
-			climate *my = OBJECTDATA(*obj,climate);
-			gl_set_parent(*obj,parent);
-			return my->create();
-		}
-		else
-			return 0;
-	}
-	CREATE_CATCHALL(climate);
-}
-
-EXPORT int isa_climate(OBJECT *obj, char *classname)
-{
-	if(obj != 0 && classname != 0)
-		return OBJECTDATA(obj,climate)->isa(classname);
-	else
-		return 0;
-}
-
-/// Initialize the climate object
-EXPORT int init_climate(OBJECT *obj, /// a pointer to the OBJECT
-						OBJECT *parent) /// a poitner to the parent OBJECT
-{
-	try
-	{
-		if (obj!=NULL)
-		{
-			climate *my = OBJECTDATA(obj,climate);
-			return my->init(parent);
-		}
-		else
-			return 0;
-	}
-	INIT_CATCHALL(climate);
-}
-
-/// Synchronize the cliamte object
-EXPORT TIMESTAMP sync_climate(OBJECT *obj, /// a pointer to the OBJECT
-							  TIMESTAMP t0) /// the time to which the OBJECT's clock should advance
-{
-	TIMESTAMP t1 = TS_NEVER;
-	try
-	{
-		t1 = OBJECTDATA(obj,climate)->presync(t0); // presync really
-	}
-	SYNC_CATCHALL(climate);
-	obj->clock = t0;
-	return t1;
 }
 
 /**@}**/
