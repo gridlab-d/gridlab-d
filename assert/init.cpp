@@ -31,7 +31,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 }
 
 
-CDECL int do_kill()
+EXPORT int do_kill(void*)
 {
 	/* if global memory needs to be released, this is a good time to do it */
 	return 0;

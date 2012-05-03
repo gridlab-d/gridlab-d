@@ -1524,6 +1524,27 @@ public: // iterators
 ////////////////////////////////////////////////////////////////////////////////////
 // Module-Core Linkage Export Macros
 ////////////////////////////////////////////////////////////////////////////////////
+
+#define MAJOR 3
+#define MINOR 0
+
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#ifdef DLMAIN
+#include <windows.h>
+int major=MAJOR, minor=MINOR; 
+EXPORT int do_kill(void*);
+BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
+#endif // DLMAIN
+#else // !WIN32
+#ifdef DLMAIN
+CDECL int dllinit() __attribute__((constructor));
+CDECL int dllkill() __attribute__((destructor));
+CDECL int dllinit() { return 0; }
+CDECL int dllkill() { do_kill(NULL); }
+#endif // DLMAIN
+#endif // !WIN32
+
 #define EXPORT_CREATE_C(X,C) EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \
 {	try { *obj = gl_create_object(C::oclass); \
 	if ( *obj != NULL ) { C *my = OBJECTDATA(*obj,C); \
