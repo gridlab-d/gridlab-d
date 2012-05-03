@@ -12,6 +12,11 @@
 
 #include "assert.h"
 
+EXPORT_CREATE_C(assert,g_assert);
+EXPORT_INIT_C(assert,g_assert);
+EXPORT_COMMIT_C(assert,g_assert);
+EXPORT_NOTIFY_C(assert,g_assert);
+
 CLASS *g_assert::oclass = NULL;
 g_assert *g_assert::defaults = NULL;
 
@@ -26,14 +31,15 @@ g_assert::g_assert(MODULE *module)
 		else
 			oclass->trl = TRL_PROVEN;
 
+		defaults = this;
 		if (gl_publish_variable(oclass,
-			PT_enumeration,"status",PADDR(status),PT_DESCRIPTION,"desired outcome of assert test",
+			PT_enumeration,"status",get_status_offset(),PT_DESCRIPTION,"desired outcome of assert test",
 				PT_KEYWORD,"TRUE",AS_TRUE,
 				PT_KEYWORD,"FALSE",AS_FALSE,
 				PT_KEYWORD,"NONE",AS_NONE,
-			PT_char1024, "target", PADDR(target),PT_DESCRIPTION,"the target property to test",
-			PT_char32, "part", PADDR(part),PT_DESCRIPTION,"the target property part to test",
-			PT_enumeration,"relation",PADDR(relation),PT_DESCRIPTION,"the relation to use for the test",
+			PT_char1024, "target", get_target_offset(),PT_DESCRIPTION,"the target property to test",
+			PT_char32, "part", get_part_offset(),PT_DESCRIPTION,"the target property part to test",
+			PT_enumeration,"relation",get_relation_offset(),PT_DESCRIPTION,"the relation to use for the test",
 				PT_KEYWORD,"==",TCOP_EQ,
 				PT_KEYWORD,"<",TCOP_LT,
 				PT_KEYWORD,"<=",TCOP_LE,
@@ -42,17 +48,16 @@ g_assert::g_assert(MODULE *module)
 				PT_KEYWORD,"!=",TCOP_NE,
 				PT_KEYWORD,"inside",TCOP_IN,
 				PT_KEYWORD,"outside",TCOP_NI,
-			PT_char1024, "value", PADDR(value),PT_DESCRIPTION,"the value to compare with for binary tests",
-			PT_char1024, "within", PADDR(value2),PT_DESCRIPTION,"the bounds within which the value must bed compared",
-			PT_char1024, "lower", PADDR(value),PT_DESCRIPTION,"the lower bound to compare with for interval tests",
-			PT_char1024, "upper", PADDR(value2),PT_DESCRIPTION,"the upper bound to compare with for interval tests",
+			PT_char1024, "value", get_value_offset(),PT_DESCRIPTION,"the value to compare with for binary tests",
+			PT_char1024, "within", get_value2_offset(),PT_DESCRIPTION,"the bounds within which the value must bed compared",
+			PT_char1024, "lower", get_value_offset(),PT_DESCRIPTION,"the lower bound to compare with for interval tests",
+			PT_char1024, "upper", get_value2_offset(),PT_DESCRIPTION,"the upper bound to compare with for interval tests",
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
 		}
 
-		defaults = this;
 		memset(this,0,sizeof(g_assert));
 		status = AS_INIT;
 		relation=TCOP_EQ;
@@ -132,79 +137,5 @@ g_assert::ASSERTSTATUS g_assert::evaluate_status(void)
 int g_assert::postnotify(PROPERTY *prop, char *value)
 {
 	// TODO notify handler for changed value
-	return 1;
-}
-
-
-//////////////////////////////////////////////////////////////////////////
-// IMPLEMENTATION OF CORE LINKAGE
-//////////////////////////////////////////////////////////////////////////
-
-EXPORT int create_assert(OBJECT **obj, OBJECT *parent)
-{
-	try
-	{
-		*obj = gl_create_object(g_assert::oclass);
-		if ( *obj != NULL )
-		{
-			g_assert *my = OBJECTDATA(*obj,g_assert);
-			gl_set_parent(*obj,parent);
-			return my->create();
-		}
-		else
-			return 0;
-	}
-	CREATE_CATCHALL(assert);
-}
-
-
-
-EXPORT int init_assert(OBJECT *obj, OBJECT *parent) 
-{
-	try 
-	{
-		if (obj!=NULL)
-			return OBJECTDATA(obj,g_assert)->init(parent);
-		else
-			return 0;
-	}
-	INIT_CATCHALL(assert);
-}
-
-EXPORT TIMESTAMP sync_assert(OBJECT *obj, TIMESTAMP t0)
-{
-	return TS_NEVER;
-}
-
-EXPORT TIMESTAMP commit_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
-{
-	g_assert *da = OBJECTDATA(obj,g_assert);
-	try {
-		if ( obj!=NULL )
-			return da->commit(t1,t2);
-		else
-			return TS_NEVER;
-	}
-	T_CATCHALL(g_assert,commit);
-}
-
-EXPORT int notify_assert(OBJECT *obj, int update_mode, PROPERTY *prop, char *value)
-{
-	g_assert *da = OBJECTDATA(obj,g_assert);
-	try {
-		if ( obj!=NULL )
-		{
-			switch (update_mode) {
-			case NM_POSTUPDATE:
-				return da->postnotify(prop,value);
-			case NM_PREUPDATE:
-			default:
-				return 1;
-			}
-		}
-		else
-			return 0;
-	}
-	T_CATCHALL(assert,commit);
 	return 1;
 }

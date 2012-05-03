@@ -83,6 +83,8 @@
 #define EXPORT CDECL
 #endif
 
+#include <stdarg.h>
+#include "platform.h"
 #include "schedule.h"
 #include "transform.h"
 #include "object.h"
@@ -1307,18 +1309,21 @@ public: // iterators
 
 // object data declaration/accessors
 #define GL_ATOMIC(T,X) protected: T X; public: \
+	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(void) { return X; }; \
 	inline T get_##X(gld_rlock&) { return X; }; \
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { X=p; }; \
 	inline void set_##X(T p, gld_wlock&) { X=p; }; 
 #define GL_STRUCT(T,X) protected: T X; public: \
+	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
 	inline T get_##X(gld_rlock&) { return X; }; \
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
 	inline void set_##X(T p, gld_wlock&) { X=p; }; 
 #define GL_STRING(T,X) 	protected: T X; public: \
+	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline char* get_##X(void) { gld_rlock _lock(my()); return X; }; \
 	inline char* get_##X(gld_rlock&) { return X; }; \
 	inline char* get_##X(gld_wlock&) { return X; }; \
@@ -1330,6 +1335,7 @@ public: // iterators
 	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
 	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; }; 
 #define GL_ARRAY(T,X,S) protected: T X[S]; public: \
+	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T* get_##X(void) { gld_rlock _lock(my()); return X; }; \
 	inline T* get_##X(gld_rlock&) { return X; }; \
 	inline T* get_##X(gld_wlock&) { return X; }; \
@@ -1515,7 +1521,38 @@ public: // iterators
 	inline gld_global* get_next(void) { return (gld_global*)core.next; };
 };
 
+////////////////////////////////////////////////////////////////////////////////////
+// Module-Core Linkage Export Macros
+////////////////////////////////////////////////////////////////////////////////////
+#define EXPORT_CREATE_C(X,C) EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \
+{	try { *obj = gl_create_object(C::oclass); \
+	if ( *obj != NULL ) { C *my = OBJECTDATA(*obj,C); \
+		gl_set_parent(*obj,parent); return my->create(); \
+	} else return 0; } CREATE_CATCHALL(X); }
+#define EXPORT_CREATE(X) EXPORT_CREATE_C(X,X)
+
+#define EXPORT_INIT_C(X,C) EXPORT int init_##X(OBJECT *obj, OBJECT *parent) \
+{	try { if (obj!=NULL) return OBJECTDATA(obj,C)->init(parent); else return 0; } \
+	INIT_CATCHALL(X); }
+#define EXPORT_INIT(X) EXPORT_INIT_C(X,X)
+
+#define EXPORT_COMMIT_C(X,C) EXPORT TIMESTAMP commit_##X(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) \
+{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->commit(t1,t2) : TS_NEVER; } \
+	T_CATCHALL(C,commit); }
+#define EXPORT_COMMIT(X) EXPORT_COMMIT_C(X,X)
+
+#define EXPORT_NOTIFY_C(X,C) EXPORT int notify_##X(OBJECT *obj, int notice, PROPERTY *prop, char *value) \
+{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+	switch (notice) { \
+	case NM_POSTUPDATE: return my->postnotify(prop,value); \
+	case NM_PREUPDATE: return my->prenotify(prop,value); \
+	default: return 0; } } else return 0; } \
+	T_CATCHALL(X,commit); return 1; }
+#define EXPORT_NOTIFY(X) EXPORT_NOTIFY_C(X,X)
+
 #endif
+
+// TODO add other linkages as needed
 
 /** @} **/
 #endif

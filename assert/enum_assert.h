@@ -24,6 +24,7 @@ public:
 	enum_assert(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
+	TIMESTAMP commit(TIMESTAMP t1, TIMESTAMP t2);
 
 public:
 	static CLASS *oclass;

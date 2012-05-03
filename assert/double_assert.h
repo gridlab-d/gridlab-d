@@ -22,9 +22,7 @@ public:
 	GL_ATOMIC(double,value);
 	GL_ATOMIC(ONCESTATUS,once);
 	GL_ATOMIC(double,once_value);
-	GL_ATOMIC(WITHINMODE,within_mode);	//Assert whether the target value should be
-										//within the range (True), outside of a 
-										//range (False) or shouldn't be checked (None).
+	GL_ATOMIC(WITHINMODE,within_mode);
 	GL_ATOMIC(double,within);
 
 public:
@@ -32,7 +30,9 @@ public:
 	double_assert(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
-
+	TIMESTAMP commit(TIMESTAMP t1, TIMESTAMP t2);
+	int postnotify(PROPERTY *prop, char *value);
+	inline int prenotify(PROPERTY*,char*) { return 1; };
 public:
 	static CLASS *oclass;
 	static double_assert *defaults;

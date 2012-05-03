@@ -13,6 +13,11 @@
 
 #include "double_assert.h"
 
+EXPORT_CREATE(double_assert);
+EXPORT_INIT(double_assert);
+EXPORT_COMMIT(double_assert);
+EXPORT_NOTIFY(double_assert);
+
 CLASS *double_assert::oclass = NULL;
 double_assert *double_assert::defaults = NULL;
 
@@ -29,20 +34,20 @@ double_assert::double_assert(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			// TO DO:  publish your variables here
-			PT_enumeration,"status",PADDR(status),
+			PT_enumeration,"status",get_status_offset(),
 				PT_KEYWORD,"ASSERT_TRUE",ASSERT_TRUE,
 				PT_KEYWORD,"ASSERT_FALSE",ASSERT_FALSE,
 				PT_KEYWORD,"ASSERT_NONE",ASSERT_NONE,
-			PT_enumeration, "once", PADDR(once),
+			PT_enumeration, "once", get_once_offset(),
 				PT_KEYWORD,"ONCE_FALSE",ONCE_FALSE,
 				PT_KEYWORD,"ONCE_TRUE",ONCE_TRUE,
 				PT_KEYWORD,"ONCE_DONE",ONCE_DONE,
-			PT_enumeration, "within_mode", PADDR(within_mode),
+			PT_enumeration, "within_mode", get_within_mode_offset(),
 				PT_KEYWORD,"WITHIN_VALUE",IN_ABS,
 				PT_KEYWORD,"WITHIN_RATIO",IN_RATIO,
-			PT_double, "value", PADDR(value),
-			PT_double, "within", PADDR(within),
-			PT_char1024, "target", PADDR(target),			
+			PT_double, "value", get_value_offset(),
+			PT_double, "within", get_within_offset(),
+			PT_char1024, "target", get_target_offset(),			
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -79,75 +84,32 @@ int double_assert::init(OBJECT *parent)
 	return 1;
 }
 
-//////////////////////////////////////////////////////////////////////////
-// IMPLEMENTATION OF CORE LINKAGE
-//////////////////////////////////////////////////////////////////////////
-
-EXPORT int create_double_assert(OBJECT **obj, OBJECT *parent)
+TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 {
-	try
-	{
-		*obj = gl_create_object(double_assert::oclass);
-		if ( *obj != NULL )
-		{
-			double_assert *my = OBJECTDATA(*obj,double_assert);
-			gl_set_parent(*obj,parent);
-			return my->create();
-		}
-		else
-			return 0;
-	}
-	CREATE_CATCHALL(double_assert);
-}
-
-
-
-EXPORT int init_double_assert(OBJECT *obj, OBJECT *parent) 
-{
-	try 
-	{
-		if (obj!=NULL)
-			return OBJECTDATA(obj,double_assert)->init(parent);
-		else
-			return 0;
-	}
-	INIT_CATCHALL(double_assert);
-}
-
-EXPORT TIMESTAMP sync_double_assert(OBJECT *obj, TIMESTAMP t0)
-{
-	return TS_NEVER;
-}
-
-EXPORT TIMESTAMP commit_double_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
-{
-	char buff[64];
-	double_assert *da = OBJECTDATA(obj,double_assert);
-
 	// handle once mode
-	if ( da->get_once()==da->ONCE_TRUE )
+	if ( get_once()==ONCE_TRUE )
 	{
-		da->set_once_value(da->get_value());
-		da->set_once(da->ONCE_DONE);
+		set_once_value(get_value());
+		set_once(ONCE_DONE);
 	} 
-	else if ( da->get_once() == da->ONCE_DONE )
+	else if ( get_once() == ONCE_DONE )
 	{
-		if ( da->get_once_value()==da->get_value() )
+		if ( get_once_value()==get_value() )
 		{
 			gl_verbose("Assert skipped with ONCE logic");
 			return TS_NEVER;
 		} 
 		else 
 		{
-			da->set_once_value(da->get_value());
+			set_once_value(get_value());
 		}
 	}
 		
 	// get the target property
-	gld_property target(obj->parent,da->get_target());
+	gld_property target(get_parent(),get_target());
 	if ( !target.is_valid() || target.get_type()!=PT_double ) 
 	{
-		gl_error("Specified target %s for %s is not valid.",da->get_target(),gl_name(obj->parent,buff,64));
+		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -159,62 +121,58 @@ EXPORT TIMESTAMP commit_double_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 
 	// get the within range
 	double range = 0.0;
-	if ( da->get_within_mode() == da->IN_RATIO ) 
+	if ( get_within_mode() == IN_RATIO ) 
 	{
-		range = da->get_value() * da->get_within();
+		range = get_value() * get_within();
 		if ( range<0.001 ) 
 		{	// minimum bounds
 			range = 0.001;
 		}
 	} 
-	else if ( da->get_within_mode()== da->IN_ABS ) 
+	else if ( get_within_mode()== IN_ABS ) 
 	{
-		range = da->get_within();
+		range = get_within();
 	}
 
 	// test the target value
 	double x; target.getp(x);
-	if ( da->get_status() == da->ASSERT_TRUE )
+	if ( get_status() == ASSERT_TRUE )
 	{
-		double m = fabs(x-da->get_value());
+		double m = fabs(x-get_value());
 		if ( _isnan(m) || m>range )
 		{				
 			gl_verbose("Assert failed on %s: %s %g not within %f of given value %g", 
-				gl_name(obj->parent, buff, 64), da->get_target(), x, range, da->get_value());
+				get_parent()->get_name(), get_target(), x, range, get_value());
 			return 0;
 		}
-		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+		gl_verbose("Assert passed on %s", get_parent()->get_name());
 		return TS_NEVER;
 	}
-	else if ( da->get_status() == da->ASSERT_FALSE )
+	else if ( get_status() == ASSERT_FALSE )
 	{
-		double m = fabs(x-da->get_value());
+		double m = fabs(x-get_value());
 		if ( _isnan(m) || m<range )
 		{				
 			gl_verbose("Assert failed on %s: %s %g is within %f of given value %g", 
-				gl_name(obj->parent, buff, 64), da->get_target(), x, range, da->get_value());
+				get_parent()->get_name(), get_target(), x, range, get_value());
 			return 0;
 		}
-		gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+		gl_verbose("Assert passed on %s", get_parent()->get_name());
 		return TS_NEVER;
 	}
 	else
 	{
-		gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
+		gl_verbose("Assert test is not being run on %s", get_parent()->get_name());
 		return TS_NEVER;
 	}
 
 }
 
-EXPORT int notify_double_assert(OBJECT *obj, int update_mode, PROPERTY *prop, char *value)
+int double_assert::postnotify(PROPERTY *prop, char *value)
 {
-	double_assert *da = OBJECTDATA(obj,double_assert);
-	if ( ( update_mode == NM_POSTUPDATE )
-		 && ( da->get_once() == da->ONCE_DONE ) 
-		 && (strcmp(prop->name, "value") == 0)
-		 )
+	if ( get_once()==ONCE_DONE && strcmp(prop->name, "value")==0 )
 	{
-		da->set_once(da->ONCE_TRUE);
+		set_once(ONCE_TRUE);
 	}
 	return 1;
 }

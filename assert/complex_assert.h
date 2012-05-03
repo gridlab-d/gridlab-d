@@ -13,12 +13,10 @@
 
 class complex_assert : public gld_object {
 public:
-	typedef enum {FULL=0,REAL=1,IMAGINARY=2,MAGNITUDE=3,ANGLE=4} OPERATION;	//If you want to look at only a part of 
-																			//  the complex number.
+	typedef enum {FULL=0,REAL=1,IMAGINARY=2,MAGNITUDE=3,ANGLE=4} OPERATION;	
 	typedef enum {ONCE_FALSE=0, ONCE_TRUE=1, ONCE_DONE=2} ONCEMODE;
-	typedef enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} ASSERTSTATUS;	//Assert whether the target value should be
-																			//within the range (True), outside of a 
-																			//range (False) or shouldn't be checked (None).
+	typedef enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} ASSERTSTATUS;
+
 	GL_ATOMIC(ASSERTSTATUS,status);
 	GL_STRING(char1024,target);											
 	GL_ATOMIC(complex,value);											
@@ -32,6 +30,9 @@ public:
 	complex_assert(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
+	TIMESTAMP commit(TIMESTAMP t1, TIMESTAMP t2);
+	int postnotify(PROPERTY *prop, char *value);
+	inline int prenotify(PROPERTY*,char*) { return 1; };
 
 public:
 	static CLASS *oclass;

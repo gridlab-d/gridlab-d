@@ -4,15 +4,10 @@
 
  **/
 
-#ifndef _g_assert_H
-#define _g_assert_H
+#ifndef _ASSERT_H
+#define _ASSERT_H
 
-#include <stdarg.h>
 #include "gridlabd.h"
-
-#ifndef _isnan
-#define _isnan isnan
-#endif
 
 class g_assert : public gld_object {
 public:
@@ -35,9 +30,10 @@ public:
 	int init(OBJECT *parent);
 	TIMESTAMP commit(TIMESTAMP t1, TIMESTAMP t2);
 	int postnotify(PROPERTY *prop, char *value);
+	inline int prenotify(PROPERTY *prop, char *value) { return 1; };
 
 public:
 	static CLASS *oclass;
 	static g_assert *defaults;
 };
-#endif
+#endif // _ASSERT_H

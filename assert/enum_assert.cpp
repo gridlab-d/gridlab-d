@@ -14,6 +14,10 @@
 
 #include "enum_assert.h"
 
+EXPORT_CREATE(enum_assert);
+EXPORT_INIT(enum_assert);
+EXPORT_COMMIT(enum_assert);
+
 CLASS *enum_assert::oclass = NULL;
 enum_assert *enum_assert::defaults = NULL;
 
@@ -30,12 +34,12 @@ enum_assert::enum_assert(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			// TO DO:  publish your variables here
-			PT_enumeration,"status",PADDR(status),
+			PT_enumeration,"status",get_status_offset(),
 				PT_KEYWORD,"ASSERT_TRUE",ASSERT_TRUE,
 				PT_KEYWORD,"ASSERT_FALSE",ASSERT_FALSE,
 				PT_KEYWORD,"ASSERT_NONE",ASSERT_NONE,
-			PT_int32, "value", PADDR(value),
-			PT_char1024, "target", PADDR(target),	
+			PT_int32, "value", get_value_offset(),
+			PT_char1024, "target", get_target_offset(),	
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -61,48 +65,13 @@ int enum_assert::init(OBJECT *parent)
 	return 1;
 }
 
-//////////////////////////////////////////////////////////////////////////
-// IMPLEMENTATION OF CORE LINKAGE
-//////////////////////////////////////////////////////////////////////////
-
-EXPORT int create_enum_assert(OBJECT **obj, OBJECT *parent)
+TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 {
-	try
+
+	gld_property target(get_parent(),get_target());
+	if ( !target.is_valid() || target.get_type()!=PT_enumeration ) 
 	{
-		*obj = gl_create_object(enum_assert::oclass);
-		if (*obj!=NULL)
-		{
-			enum_assert *my = OBJECTDATA(*obj,enum_assert);
-			gl_set_parent(*obj,parent);
-			return my->create();
-		}
-		else
-			return 0;
-	}
-	CREATE_CATCHALL(enum_assert);
-}
-
-
-
-EXPORT int init_enum_assert(OBJECT *obj, OBJECT *parent) 
-{
-	try 
-	{
-		if (obj!=NULL)
-			return OBJECTDATA(obj,enum_assert)->init(parent);
-		else
-			return 0;
-	}
-	INIT_CATCHALL(enum_assert);
-}
-EXPORT TIMESTAMP commit_enum_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
-{
-	char buff[64];
-	enum_assert *ea = OBJECTDATA(obj,enum_assert);
-
-	gld_property target(obj->parent,ea->get_target());
-	if ( !target.is_valid() || target.get_type()!=PT_enumeration ) {
-		gl_error("Specified target %s for %s is not valid.",ea->get_target(),gl_name(obj->parent,buff,64));
+		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -113,45 +82,40 @@ EXPORT TIMESTAMP commit_enum_assert(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	}
 
 	int32 x; target.getp(x);
-	if (ea->get_status() == ea->ASSERT_TRUE)
+	if (get_status() == ASSERT_TRUE)
 	{
-		if (ea->get_value() != x) 
+		if (get_value() != x) 
 		{
 			gl_verbose("Assert failed on %s: %s=%g did not match %g", 
-				gl_name(obj->parent,buff,64), ea->get_target(), x, ea->get_value());
+				get_parent()->get_name(), get_target(), x, get_value());
 			return 0;
 		}
 		else
 		{
-			gl_verbose("Assert passed on %s", 
-				gl_name(obj->parent,buff,64));
+			gl_verbose("Assert passed on %s", get_parent()->get_name());
 			return TS_NEVER;
 		}
 	}
-	else if (ea->get_status() == ea->ASSERT_FALSE)
+	else if (get_status() == ASSERT_FALSE)
 	{
-		if (ea->get_value() == x)
+		if (get_value() == x)
 		{
 			gl_verbose("Assert failed on %s: %s=%g did match %g", 
-				gl_name(obj->parent,buff,64), ea->get_target(), x, ea->get_value());
+				get_parent()->get_name(), get_target(), x, get_value());
 			return 0;
 		}
 		else
 		{
-			gl_verbose("Assert passed on %s", 
-				gl_name(obj->parent,buff,64));
+			gl_verbose("Assert passed on %s", get_parent()->get_name());
 			return TS_NEVER;
 		}
 	}
 	else
 	{
-		gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
+		gl_verbose("Assert test is not being run on %s", get_parent()->get_name());
 		return TS_NEVER;
 	}
-	gl_verbose("Assert passed on %s",gl_name(obj->parent,buff,64));
+	gl_verbose("Assert passed on %s",get_parent()->get_name());
 	return TS_NEVER;
 }
-EXPORT TIMESTAMP sync_enum_assert(OBJECT *obj, TIMESTAMP t0)
-{
-	return TS_NEVER;
-}
+
