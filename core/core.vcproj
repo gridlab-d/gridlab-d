@@ -333,7 +333,7 @@
 				AdditionalDependencies="xerces-c_2.lib pthreadVC2.lib ws2_32.lib"
 				OutputFile="$(OutDir)\$(SolutionName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(OutDir);..\pthreads;"
+				AdditionalLibraryDirectories="&quot;$(OutDir&quot;);..\pthreads"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				GenerateMapFile="true"
@@ -979,15 +979,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\x86_64\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1014,11 +1014,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 			</Filter>

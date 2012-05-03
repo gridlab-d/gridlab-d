@@ -313,7 +313,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="CBLAS.lib pthreadVC2.lib superLU_MT.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;../pthreads"
 				IgnoreDefaultLibraryNames="LIBCMT.lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
