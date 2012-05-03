@@ -11,6 +11,7 @@
 #set tmp=../test_opt_commit
 #setenv GRIDLABD=../../../core
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+#set force_compile=1
 
 module tape;
 module assert;

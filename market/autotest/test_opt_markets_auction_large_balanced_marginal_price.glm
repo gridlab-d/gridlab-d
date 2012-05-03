@@ -10,6 +10,7 @@
 
 #set tmp=../test_opt_markets_auction_large_balanced_marginal_price
 #setenv GRIDLABD=../../../core
+#set force_compile=1
 
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 

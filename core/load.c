@@ -729,7 +729,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 				/* link new runtime module */
 				output_verbose("linking inline code from '%s'", ofile);
-				sprintf(ldstr, "%s %s %s %s %s -shared -Wl,\"%s\" -o \"%s\" -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , mopt, getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile);
+				sprintf(ldstr, "%s %s %s %s %s -shared -Wl,\"%s\" -o \"%s\" %s", getenv("CXX")?getenv("CXX"):"g++" , mopt, getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile,libs);
 				output_verbose("linking string: \"%s\"", ldstr);
 				//if (exec("%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile)==FAILED)
 				if(exec(ldstr) == FAILED)

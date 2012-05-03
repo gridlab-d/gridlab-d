@@ -3,6 +3,7 @@
 
 #set tmp=../test_opt_core_pc_and_fn
 #setenv GRIDLABD=../../../core
+#set force_compile=1
 
 module market;
 module tape;

@@ -2,6 +2,7 @@
 
 #set randomseed=17
 #set module_compiler_flags=VERBOSE|DEBUG|KEEPWORK|CLEAN
+#set force_compile=1
 
 extern "C" test_schedule_xform_external : myfunction2@1 // inline code follows
 {

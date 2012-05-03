@@ -1,5 +1,6 @@
 #set tmp=../test_opt_runtime_exercise_3_1_1
 #setenv GRIDLABD=../../../core
+#set force_compile=1
 
 clock {
 	timezone PST+8PDT;

@@ -6,6 +6,7 @@
 
 #set tmp=../test_opt_alternate_syntax
 #setenv GRIDLABD=../../../core
+#set force_compile=1
 
 class test {
 	enumeration {NO=0, YES=1} value;
