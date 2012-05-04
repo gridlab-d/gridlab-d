@@ -126,7 +126,8 @@ typedef struct s_zonedata {
 	CONTROLS control;			/**< controllers */
 } ZONEDATA;
 
-class office {
+class office : public gld_object {
+	GL_STRUCT(ZONEDATA,zone);
 public:
 	static double warn_low_temp;
 	static double warn_high_temp;
@@ -139,7 +140,6 @@ public:
 	char occupied[24];		/**< internal bitmap buffer for occupancy schedule */
 	complex *pVoltage;
 	complex *pCurrent;
-	ZONEDATA zone;
 private:
 	double TcoolOn, TcoolOff; // hvac cooling on, off temperature [degF]
 	double TheatOn, TheatOff; // hvac heating on, off temperature [degF]
@@ -149,8 +149,8 @@ private:
 	double r1, r2, k1, k2;
 	double c1, c2, c3, c4, c5, c6, c7, dTi;
 	void update_control_setpoints();
-	TIMESTAMP update_lighting(TIMESTAMP t0,TIMESTAMP t1);
-	TIMESTAMP update_plugs(TIMESTAMP t0,TIMESTAMP t1);
+	TIMESTAMP update_lighting(TIMESTAMP t1);
+	TIMESTAMP update_plugs(TIMESTAMP t1);
 	double update_hvac();
 public:
 	static CLASS *oclass;
@@ -158,10 +158,10 @@ public:
 	office(MODULE *module);
 	int create();
 	int init(OBJECT *parent);
-	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP plc(TIMESTAMP t0, TIMESTAMP t1);
+	TIMESTAMP presync(TIMESTAMP t1);
+	TIMESTAMP sync(TIMESTAMP t1);
+	inline TIMESTAMP postsync(TIMESTAMP t1) { return TS_NEVER; };
+	TIMESTAMP plc(TIMESTAMP t1);
 
 	friend class multizone;
 };

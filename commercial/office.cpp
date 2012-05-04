@@ -75,6 +75,11 @@
 #include "office.h"
 #include "../climate/climate.h"
 
+EXPORT_CREATE(office)
+EXPORT_INIT(office)
+EXPORT_SYNC(office)
+EXPORT_PLC(office)
+
 /* module globals */
 double office::warn_low_temp = 50.0;
 double office::warn_high_temp = 90.0;
@@ -97,11 +102,11 @@ office::office(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"office",sizeof(office),passconfig); 
+		oclass = gld_class::create(module,"office",sizeof(office),passconfig); 
 		if (oclass==NULL)
 			throw "unable to register class office";
-		else
-			oclass->trl = TRL_DEMONSTRATED;
+		oclass->trl = TRL_DEMONSTRATED;
+		defaults = this;
 
 		if (gl_publish_variable(oclass,
 			PT_double, "floor_area[sf]", PADDR(zone.design.floor_area),
@@ -204,7 +209,6 @@ office::office(MODULE *module)
 			PT_double, "ACH", PADDR(zone.hvac.minimum_ach),
 
 			NULL)<1) throw("unable to publish properties in "__FILE__);
-		defaults = this;
 		memset(defaults,0,sizeof(office));
 
 		/* set default power factors */
@@ -423,8 +427,9 @@ int office::init(OBJECT *parent)
 }
 
 /* Sync is called when the clock needs to advance on the bottom-up pass */
-TIMESTAMP office::presync(TIMESTAMP t0, TIMESTAMP t1) 
+TIMESTAMP office::presync(TIMESTAMP t1) 
 {
+	TIMESTAMP t0 = get_clock();
 	DATETIME dt;
 
 	/* reset the multizone heat transfer */
@@ -451,11 +456,13 @@ TIMESTAMP office::presync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 /* Sync is called when the clock needs to advance on the bottom-up pass */
-TIMESTAMP office::sync(TIMESTAMP t0, TIMESTAMP t1) 
-{	
+TIMESTAMP office::sync(TIMESTAMP t1) 
+{
+	TIMESTAMP t0 = get_clock();
+
 	/* load calculations */
-	update_lighting(t0,t1);
-	update_plugs(t0,t1);
+	update_lighting(t1);
+	update_plugs(t1);
 	
 	/* local aliases */
 	const double &Tout = (*(zone.current.pTemperature));
@@ -661,8 +668,10 @@ void office::update_control_setpoints()
 	zone.control.ventilation_fraction = zone.current.occupancy>0 ? zone.hvac.minimum_ach : 0;
 }
 
-TIMESTAMP office::update_lighting(TIMESTAMP t0, TIMESTAMP t1)
+TIMESTAMP office::update_lighting(TIMESTAMP t1)
 {
+	TIMESTAMP t0 = get_clock();
+
 	// power calculation
 	zone.lights.enduse.power.SetPowerFactor(zone.lights.capacity *
 		zone.lights.fraction, zone.lights.enduse.power_factor, J);
@@ -675,8 +684,10 @@ TIMESTAMP office::update_lighting(TIMESTAMP t0, TIMESTAMP t1)
 	return TS_NEVER;
 }
 
-TIMESTAMP office::update_plugs(TIMESTAMP t0, TIMESTAMP t1)
+TIMESTAMP office::update_plugs(TIMESTAMP t1)
 {
+	TIMESTAMP t0 = get_clock();
+
 	//power calculation
 	zone.plugs.enduse.power.SetPowerFactor(zone.plugs.capacity * 
 		zone.plugs.fraction, zone.plugs.enduse.power_factor, J);
@@ -774,8 +785,10 @@ double office::update_hvac()
 	return Qvent + Qactive;
 }
 
-TIMESTAMP office::plc(TIMESTAMP t0, TIMESTAMP t1)
+TIMESTAMP office::plc(TIMESTAMP t1)
 {
+	TIMESTAMP t0 = get_clock();
+
 	const double &Tout = *(zone.current.pTemperature);
 	const double &Tair = zone.current.air_temperature;
 	const double &Tmass = zone.current.mass_temperature;
@@ -833,86 +846,6 @@ TIMESTAMP office::plc(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	return TS_NEVER;
-}
-
-//////////////////////////////////////////////////////////////////////////
-// IMPLEMENTATION OF CORE LINKAGE
-//////////////////////////////////////////////////////////////////////////
-
-EXPORT int create_office(OBJECT **obj, OBJECT *parent) 
-{
-	try 
-	{
-		*obj = gl_create_object(office::oclass);
-		if (*obj!=NULL)
-		{
-			office *my = OBJECTDATA(*obj,office);
-			gl_set_parent(*obj,parent);
-			return my->create();
-		}
-		else
-			return 0;
-	} 
-	CREATE_CATCHALL(office);
-}
-
-EXPORT int init_office(OBJECT *obj, OBJECT *parent) 
-{
-	try 
-	{
-		if (obj!=NULL)
-			return OBJECTDATA(obj,office)->init(parent);
-		else
-			return 0;
-	} 
-	INIT_CATCHALL(office);
-}
-
-EXPORT TIMESTAMP sync_office(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
-{
-	try 
-	{
-		TIMESTAMP t2 = TS_NEVER;
-		office *my = OBJECTDATA(obj,office);
-		switch (pass) {
-		case PC_PRETOPDOWN:
-			t2 = my->presync(obj->clock,t1);
-			break;
-		case PC_BOTTOMUP:
-			t2 = my->sync(obj->clock,t1);
-			break;
-		default:
-			throw("invalid pass request");
-			break;
-		}
-		if (pass==clockpass)
-			obj->clock = t1;		
-		return t2;
-	} 
-	SYNC_CATCHALL(office);
-}
-
-EXPORT TIMESTAMP plc_office(OBJECT *obj, TIMESTAMP t1)
-{
-	try 
-	{
-		return OBJECTDATA(obj,office)->plc(obj->clock,t1);
-	} 
-	catch (char *msg) 
-	{
-		gl_error("plc_%s(obj=%d;%s): %s", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed", msg);
-		return TS_INVALID;
-	} 
-	catch (const char *msg) 
-	{
-		gl_error("plc_%s(obj=%d;%s): %s", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed", msg);
-		return TS_INVALID;
-	}
-	catch (...) 
-	{
-		gl_error("plc_%s(obj=%d;%s): unhandled exception", obj->oclass->name, obj->id, obj->name?obj->name:"unnamed");
-		return TS_INVALID;
-	}
 }
 
 /**@}*/
