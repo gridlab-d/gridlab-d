@@ -13,7 +13,7 @@
 #include "auction.h"
 #include "gridlabd.h"
 
-class double_controller
+class double_controller : public gld_object
 {
 public:
 	double_controller(MODULE *);

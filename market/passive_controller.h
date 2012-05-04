@@ -13,7 +13,7 @@
 #include "auction.h"
 #include "gridlabd.h"
 
-class passive_controller {
+class passive_controller : public gld_object {
 public:
 	passive_controller(MODULE *);
 	int create();

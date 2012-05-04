@@ -5,7 +5,7 @@
 #include "gridlabd.h"
 #include "auction.h"
 
-class stub_bidder {
+class stub_bidder : public gld_object {
 public:
 	stub_bidder(MODULE *);
 	int create(void);

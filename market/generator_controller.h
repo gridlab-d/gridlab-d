@@ -11,7 +11,7 @@
 
 #include "auction.h"
 
-class generator_controller
+class generator_controller : public gld_object 
 {
 public:
 	static CLASS *oclass;

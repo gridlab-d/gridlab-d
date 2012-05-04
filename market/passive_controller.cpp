@@ -80,7 +80,7 @@ static double tc_erf(double x)
 passive_controller::passive_controller(MODULE *mod)
 {
 	if(oclass == NULL){
-		oclass = gl_register_class(mod,"passive_controller",sizeof(passive_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		oclass = gl_register_class(mod,"passive_controller",sizeof(passive_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class passive_controller";
 		else

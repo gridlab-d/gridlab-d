@@ -13,7 +13,7 @@
 #include <stdarg.h>
 #include "gridlabd.h"
 
-class stubauction {
+class stubauction : public gld_object {
 public:
 	bool verbose;
 protected:

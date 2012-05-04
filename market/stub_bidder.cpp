@@ -6,7 +6,7 @@ stub_bidder::stub_bidder(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"stub_bidder",sizeof(stub_bidder),PC_BOTTOMUP);
+		oclass = gl_register_class(module,"stub_bidder",sizeof(stub_bidder),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 

@@ -13,7 +13,7 @@
 #include "auction.h"
 #include "gridlabd.h"
 
-class controller {
+class controller : public gld_object {
 public:
 	controller(MODULE *);
 	int create(void);
