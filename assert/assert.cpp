@@ -126,11 +126,11 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 
 g_assert::ASSERTSTATUS g_assert::evaluate_status(void)
 {
-	gld_property target(get_parent(),target);
+	gld_property target_prop(get_parent(),target);
 	if ( strcmp(part,"")==0 )
-		return target.compare(relation,value,value2) ? AS_TRUE : AS_FALSE ;
+		return target_prop.compare(relation,value,value2) ? AS_TRUE : AS_FALSE ;
 	else
-		return target.compare(relation,value,value2,part) ? AS_TRUE : AS_FALSE ;
+		return target_prop.compare(relation,value,value2,part) ? AS_TRUE : AS_FALSE ;
 }
 
 int g_assert::postnotify(PROPERTY *prop, char *value)
