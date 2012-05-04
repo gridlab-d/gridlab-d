@@ -16,7 +16,7 @@
 
 typedef enum {OG_EXTREMUM, OG_MINIMUM, OG_MAXIMUM} OBJECTIVEGOAL;
 
-class simple {
+class simple : public gld_object {
 protected:
 	OBJECTIVEGOAL goal; // objective goal description
 	char1024 objective; // objective variable name
