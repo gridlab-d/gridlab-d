@@ -84,7 +84,7 @@ public:
 
 #include "machine.h"
 
-class comm {
+class comm : public gld_object {
 public:
 	double bitrate;				///< bit rate of message delivery [b/s]
 	char256 latency;			///< latency distribution (random functional)

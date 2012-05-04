@@ -14,7 +14,7 @@
 #include "../powerflow/node.h"
 #include "gridlabd.h"
 
-class diesel_dg
+class diesel_dg : public gld_object
 {
 private:
 	/* TODO: put private variables here */

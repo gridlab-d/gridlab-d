@@ -30,7 +30,7 @@ rectifier::rectifier(MODULE *module)
 {	
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"rectifier",sizeof(rectifier),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		oclass = gl_register_class(module,"rectifier",sizeof(rectifier),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class rectifier";
 		else

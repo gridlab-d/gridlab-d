@@ -15,7 +15,7 @@
 #include "gridlabd.h"
 
 
-class microturbine
+class microturbine : public gld_object
 {
 private:
 	/* TODO: put private variables here */

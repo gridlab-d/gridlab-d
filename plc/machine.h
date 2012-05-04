@@ -22,7 +22,7 @@ typedef struct {
 typedef int (*PLCCODE)(void*,double,PLCDEV*);
 extern int load_library(char *, PLCCODE*, PLCINIT*, PLCDATA*);
 
-class machine {
+class machine : gld_object {
 private:
 	PLCDATA _data;	///< machine data block
 	PLCINIT _init;	///< machine init code

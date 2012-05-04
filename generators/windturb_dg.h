@@ -26,7 +26,7 @@
 */
 
 	
-class windturb_dg
+class windturb_dg : public gld_object
 {
 private:
 	/* TODO: put private variables here */

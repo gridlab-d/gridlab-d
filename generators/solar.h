@@ -14,7 +14,7 @@
 //#include "../powerflow/node.h"
 #include "gridlabd.h"
 
-class solar
+class solar : public gld_object
 {
 private:
 	/* TODO: put private variables here */

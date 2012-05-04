@@ -31,7 +31,7 @@ dc_dc_converter::dc_dc_converter(MODULE *module)
 {	
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"dc_dc_converter",sizeof(dc_dc_converter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		oclass = gl_register_class(module,"dc_dc_converter",sizeof(dc_dc_converter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class dc_dc_converter";
 		else

@@ -14,7 +14,7 @@
 //#include "../powerflow/node.h"
 #include "gridlabd.h"
 
-class energy_storage
+class energy_storage : public gld_object
 {
 private:
 	/* TODO: put private variables here */

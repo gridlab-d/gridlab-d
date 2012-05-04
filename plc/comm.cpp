@@ -132,7 +132,7 @@ comm::comm(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"comm",sizeof(comm),PC_PRETOPDOWN);
+		oclass = gl_register_class(mod,"comm",sizeof(comm),PC_PRETOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class comm";
 		else

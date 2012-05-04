@@ -21,7 +21,7 @@
 	implementation classes, the inverter (dc to ac), dc converter (dc to dc), and rectifier (ac to dc).
 */
 
-class power_electronics
+class power_electronics : public gld_object
 {
 private:
 	/* TODO: put private variables here */

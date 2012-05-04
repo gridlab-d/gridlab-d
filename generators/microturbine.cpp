@@ -31,7 +31,7 @@ microturbine::microturbine(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"microturbine",sizeof(microturbine),passconfig);
+		oclass = gl_register_class(module,"microturbine",sizeof(microturbine),passconfig|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class microturbine";
 		else
