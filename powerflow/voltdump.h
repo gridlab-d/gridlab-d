@@ -12,7 +12,7 @@ typedef enum {
 	VDM_POLAR
 } VDMODE;
 
-class voltdump
+class voltdump : public gld_object
 {
 public:
 	TIMESTAMP runtime;

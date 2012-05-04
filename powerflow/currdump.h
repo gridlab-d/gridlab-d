@@ -12,7 +12,7 @@ typedef enum {
 	CDM_POLAR
 } CDMODE;
 
-class currdump
+class currdump : public gld_object
 {
 public:
 	TIMESTAMP runtime;

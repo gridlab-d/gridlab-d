@@ -624,6 +624,30 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="Autotest"
+			>
+			<File
+				RelativePath=".\autotest\diesel_brake_hp.player"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\solar_Vout.player"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_diesel_dg.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_Vout_PV.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\WA-Seattle.tmy2"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

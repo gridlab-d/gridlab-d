@@ -53,7 +53,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 		pclass = triplex_node::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,"triplex_meter",sizeof(triplex_meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
+		oclass = gl_register_class(mod,"triplex_meter",sizeof(triplex_meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class triplex_meter";
 		else
@@ -298,10 +298,10 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		else
 			dt = 0;
 
-		READLOCK_OBJECT(obj);
+		//READLOCK_OBJECT(obj);
 		measured_current[0] = current_inj[0];
 		measured_current[1] = current_inj[1];
-		READUNLOCK_OBJECT(obj);
+		//READUNLOCK_OBJECT(obj);
 		measured_current[2] = -(measured_current[1]+measured_current[0]);
 
 //		if (dt > 0 && last_t != dt)

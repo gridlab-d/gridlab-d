@@ -49,7 +49,7 @@ substation::substation(MODULE *mod) : node(mod)
 		pclass = node::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,"substation",sizeof(substation),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
+		oclass = gl_register_class(mod,"substation",sizeof(substation),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class substation";
 		else
@@ -167,7 +167,7 @@ TIMESTAMP substation::presync(TIMESTAMP t0, TIMESTAMP t1)
 		angle_adjustment /=-2.0;	// 1_/ -120d
 
 		//Update voltages - both Wye and Delta
-		LOCK_OBJECT(hdr);
+		//LOCK_OBJECT(hdr);
 		voltage[0] = NonPU_Voltage;
 		voltage[1] = NonPU_Voltage * angle_adjustment;
 		voltage[2] = NonPU_Voltage * ~angle_adjustment;
@@ -176,7 +176,7 @@ TIMESTAMP substation::presync(TIMESTAMP t0, TIMESTAMP t1)
 		voltaged[1]=voltage[1]-voltage[2];
 		voltaged[2]=voltage[2]-voltage[0];
 
-		UNLOCK_OBJECT(hdr);
+		//UNLOCK_OBJECT(hdr);
 
 	/**********************************************/
 	/*			End temp algorithm				  */
@@ -194,11 +194,11 @@ TIMESTAMP substation::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	distribution_voltage[0] = voltageA;
 	distribution_voltage[1] = voltageB;
 	distribution_voltage[2] = voltageC;
-	READLOCK_OBJECT(obj);
+	//READLOCK_OBJECT(obj);
 	distribution_current[0] = current_inj[0];
 	distribution_current[1] = current_inj[1];
 	distribution_current[2] = current_inj[2];
-	READUNLOCK_OBJECT(obj);
+	//READUNLOCK_OBJECT(obj);
 	distribution_power = distribution_voltage[0]*(~distribution_current[0])
 				   + distribution_voltage[1]*(~distribution_current[1])
 				   + distribution_voltage[2]*(~distribution_current[2]);

@@ -88,7 +88,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 	if(oclass == NULL)
 	{
 		pclass = powerflow_object::oclass;
-		oclass = gl_register_class(mod,"node",sizeof(node),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
+		oclass = gl_register_class(mod,"node",sizeof(node),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class node";
 		else
@@ -1020,9 +1020,9 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	if (solver_method==SM_NR)
 	{
 		//Zero the accumulators for later (meters and such)
-		WRITELOCK_OBJECT(obj);
+		//WRITELOCK_OBJECT(obj);
 		current_inj[0] = current_inj[1] = current_inj[2] = 0.0;
-		WRITEUNLOCK_OBJECT(obj);
+		//WRITEUNLOCK_OBJECT(obj);
 
 		//If we're the swing, toggle tracking variable
 		if (bustype==SWING)
@@ -1050,7 +1050,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 
 		if (NR_busdata==NULL || NR_branchdata==NULL)	//First time any NR in (this should be the swing bus doing this)
 		{
-			WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+			if ( NR_swing_bus!=obj) WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
 
 			NR_busdata = (BUSDATA *)gl_malloc(NR_bus_count * sizeof(BUSDATA));
 			if (NR_busdata==NULL)
@@ -1077,7 +1077,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			NR_curr_branch = 0;	//Pull pointer off flag so other objects know it's built
 
 			//Unlock the swing bus
-			WRITEUNLOCK_OBJECT(NR_swing_bus);
+			if ( NR_swing_bus!=obj) WRITEUNLOCK_OBJECT(NR_swing_bus);
 
 			//Populate the connectivity matrix if a restoration object is present
 			if (restoration_object != NULL)
@@ -1129,9 +1129,9 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		}
 #endif
 		/* reset the current accumulator */
-		WRITELOCK_OBJECT(obj);
+		//WRITELOCK_OBJECT(obj);
 		current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
-		WRITEUNLOCK_OBJECT(obj);
+		//WRITEUNLOCK_OBJECT(obj);
 
 		/* record the last sync voltage */
 		last_voltage[0] = voltage[0];
@@ -1204,20 +1204,20 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			complex d1 = (voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ? (current1 + temp_curr_val[0]) : (current1 + ~(power1/voltage1) + voltage1*shunt1 + temp_curr_val[0]);
 			complex d2 = ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? (current12 + temp_curr_val[2]) : (current12 + ~(power12/(voltage1+voltage2)) + (voltage1+voltage2)*shunt12 + temp_curr_val[2]);
 			
-			WRITELOCK_OBJECT(obj);
+			//WRITELOCK_OBJECT(obj);
 			current_inj[0] += d1;
 			temp_inj[0] = current_inj[0];
 			current_inj[0] += d2;
-			WRITEUNLOCK_OBJECT(obj);
+			//WRITEUNLOCK_OBJECT(obj);
 
 #ifdef SUPPORT_OUTAGES
 			}
 			else
 			{
 				temp_inj[0] = 0.0;
-				WRITELOCK_OBJECT(obj);
+				//WRITELOCK_OBJECT(obj);
 				current_inj[0]=0.0;
-				UNLOCK_OBJECT(obj);
+				//UNLOCK_OBJECT(obj);
 			}
 
 			if (voltage[1]!=0)
@@ -1226,37 +1226,37 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			d1 = (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero())) ? (-current2 - temp_curr_val[1]) : (-current2 - ~(power2/voltage2) - voltage2*shunt2 - temp_curr_val[1]);
 			d2 = ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? (-current12 - temp_curr_val[2]) : (-current12 - ~(power12/(voltage1+voltage2)) - (voltage1+voltage2)*shunt12 - temp_curr_val[2]);
 
-			WRITELOCK_OBJECT(obj);
+			//WRITELOCK_OBJECT(obj);
 			current_inj[1] += d1;
 			temp_inj[1] = current_inj[1];
 			current_inj[1] += d2;
-			WRITEUNLOCK_OBJECT(obj);
+			//WRITEUNLOCK_OBJECT(obj);
 			
 #ifdef SUPPORT_OUTAGES
 			}
 			else
 			{
 				temp_inj[0] = 0.0;
-				WRITELOCK_OBJECT(obj);
+				//WRITELOCK_OBJECT(obj);
 				current_inj[1] = 0.0;
-				UNLOCK_OBJECT(obj);
+				//UNLOCK_OBJECT(obj);
 			}
 #endif
 
 			if (obj->parent!=NULL && gl_object_isa(obj->parent,"triplex_line","powerflow")) {
 				link *plink = OBJECTDATA(obj->parent,link);
 				complex d = plink->tn[0]*current_inj[0] + plink->tn[1]*current_inj[1];
-				WRITELOCK_OBJECT(obj);
+				//WRITELOCK_OBJECT(obj);
 				current_inj[2] += d;
-				WRITEUNLOCK_OBJECT(obj);
+				//WRITEUNLOCK_OBJECT(obj);
 			}
 			else {
 				complex d = ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
 								   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
 									? currentN : -(temp_inj[0] + temp_inj[1]);
-				WRITELOCK_OBJECT(obj);
+				//WRITELOCK_OBJECT(obj);
 				current_inj[2] += d;
-				WRITEUNLOCK_OBJECT(obj);
+				//WRITEUNLOCK_OBJECT(obj);
 			}
 		}
 		else if (has_phase(PHASE_D)) 
@@ -1295,15 +1295,15 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			{
 				if (voltaged[kphase]==0.0)
 				{
-					WRITELOCK_OBJECT(obj);
+					//WRITELOCK_OBJECT(obj);
 					current_inj[kphase] = 0.0;
-					UNLOCK_OBJECT(obj);
+					//UNLOCK_OBJECT(obj);
 				}
 				else
 				{
-					WRITELOCK_OBJECT(obj);
+					//WRITELOCK_OBJECT(obj);
 					current_inj[kphase] += delta_current[kphase] + power_current[kphase] + delta_shunt_curr[kphase];
-					UNLOCK_OBJECT(obj);
+					//UNLOCK_OBJECT(obj);
 				}
 			}
 #else
@@ -1311,11 +1311,11 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				delta_current[0] + power_current[0] + delta_shunt_curr[0],
 				delta_current[1] + power_current[1] + delta_shunt_curr[1],
 				delta_current[2] + power_current[2] + delta_shunt_curr[2]};
-			WRITELOCK_OBJECT(obj);
+			//WRITELOCK_OBJECT(obj);
 			current_inj[0] += d[0];
 			current_inj[1] += d[1];
 			current_inj[2] += d[2];
-			WRITEUNLOCK_OBJECT(obj);
+			//WRITEUNLOCK_OBJECT(obj);
 #endif
 		}
 		else 
@@ -1326,16 +1326,16 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			{
 				if (voltage[kphase]==0.0)
 				{
-					WRITELOCK_OBJECT(obj);
+					//WRITELOCK_OBJECT(obj);
 					current_inj[kphase] = 0.0;
-					UNLOCK_OBJECT(obj);
+					//UNLOCK_OBJECT(obj);
 				}
 				else
 				{
 					complex d = ((voltage[kphase]==0.0) || ((power[kphase] == 0) && shunt[kphase].IsZero())) ? current[kphase] : current[kphase] + ~(power[kphase]/voltage[kphase]) + voltage[kphase]*shunt[kphase];
-					WRITELOCK_OBJECT(obj);
+					//WRITELOCK_OBJECT(obj);
 					current_inj[kphase] += d;
-					UNLOCK_OBJECT(obj);
+					//UNLOCK_OBJECT(obj);
 				}
 			}
 #else
@@ -1344,11 +1344,11 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				(voltageB.IsZero() || (powerB.IsZero() && shuntB.IsZero())) ? currentB : currentB + ~(powerB/voltageB) + voltageB*shuntB,
 				(voltageC.IsZero() || (powerC.IsZero() && shuntC.IsZero())) ? currentC : currentC + ~(powerC/voltageC) + voltageC*shuntC,
 			};
-			WRITELOCK_OBJECT(obj);
+			//WRITELOCK_OBJECT(obj);
 			current_inj[0] += d[0];
 			current_inj[1] += d[1];
 			current_inj[2] += d[2];
-			WRITEUNLOCK_OBJECT(obj);
+			//WRITEUNLOCK_OBJECT(obj);
 #endif
 		}
 
@@ -1387,13 +1387,13 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			if (((pNode->phases & phases) & (!(PHASE_D | PHASE_N))) == (phases & (!(PHASE_D | PHASE_N))))
 			{
 				// add the injections on this node to the parent
-				READLOCK_OBJECT(obj);
+				//READLOCK_OBJECT(obj);
 				WRITELOCK_OBJECT(obj->parent);
 				pNode->current_inj[0] += current_inj[0];
 				pNode->current_inj[1] += current_inj[1];
 				pNode->current_inj[2] += current_inj[2];
 				WRITEUNLOCK_OBJECT(obj->parent);
-				READUNLOCK_OBJECT(obj);
+				//READUNLOCK_OBJECT(obj);
 			}
 			else
 				GL_THROW("Node:%d's parent does not have the proper phase connection to be a parent.",obj->id);
@@ -1433,14 +1433,14 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		}
 
 		//Pull voltages and admittance into temporary variable
-		LOCK_OBJECT(obj);
+		//LOCK_OBJECT(obj);
 		Vtemp[0]=voltage[0];
 		Vtemp[1]=voltage[1];
 		Vtemp[2]=voltage[2];
 		YVsTemp[0] = YVs[0];
 		YVsTemp[1] = YVs[1];
 		YVsTemp[2] = YVs[2];
-		UNLOCK_OBJECT(obj);
+		//UNLOCK_OBJECT(obj);
 
 		//init dV as zero
 		dV[0] = dV[1] = dV[2] = complex(0,0);
@@ -1685,14 +1685,14 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		}
 
 		//Update voltages and admittances back into proper place
-		LOCK_OBJECT(obj);
+		//LOCK_OBJECT(obj);
 		voltage[0] = Vtemp[0];
 		voltage[1] = Vtemp[1];
 		voltage[2] = Vtemp[2];
 		//YVs[0] = YVsTemp[0];
 		//YVs[1] = YVsTemp[1];
 		//YVs[2] = YVsTemp[2];
-		UNLOCK_OBJECT(obj);
+		//UNLOCK_OBJECT(obj);
 
 		//See if we've converged
 		if ((dV[0].Mag()>maximum_voltage_error) | (dV[1].Mag()>maximum_voltage_error) | (dV[2].Mag()>maximum_voltage_error))
@@ -1944,11 +1944,11 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 						delta_shunt[1]-delta_shunt[0] + delta_current[1]-delta_current[0] + current[1]-current[0],
 						delta_shunt[2]-delta_shunt[1] + delta_current[2]-delta_current[1] + current[2]-current[1],
 					};
-					WRITELOCK_OBJECT(obj);
+					//WRITELOCK_OBJECT(obj);
 					current_inj[0] += d[0];	
 					current_inj[1] += d[1];
 					current_inj[2] += d[2];
-					WRITEUNLOCK_OBJECT(obj);
+					//WRITEUNLOCK_OBJECT(obj);
 				}
 				else if (has_phase(PHASE_S))	//Split phase node
 				{
@@ -1999,27 +1999,27 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 						temp_current[0] + temp_current[2],
 						-temp_current[1] - temp_current[2],
 					};
-					WRITELOCK_OBJECT(obj);
+					//WRITELOCK_OBJECT(obj);
 					current_inj[0] += d[0];
 					current_inj[1] += d[1];
-					WRITEUNLOCK_OBJECT(obj);
+					//WRITEUNLOCK_OBJECT(obj);
 
 					//Get information
 					if ((Triplex_Data != NULL) && ((Triplex_Data[0] != 0.0) || (Triplex_Data[1] != 0.0)))
 					{
-						WRITELOCK_OBJECT(obj);
+						//WRITELOCK_OBJECT(obj);
 						/* normally the calc would not be inside the lock, but it's reflexive so that's ok */
 						current_inj[2] += Triplex_Data[0]*current_inj[0] + Triplex_Data[1]*current_inj[1];
-						WRITEUNLOCK_OBJECT(obj);
+						//WRITEUNLOCK_OBJECT(obj);
 					}
 					else
 					{
-						WRITELOCK_OBJECT(obj);
+						//WRITELOCK_OBJECT(obj);
 						/* normally the calc would not be inside the lock, but it's reflexive so that's ok */
 						current_inj[2] += ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
 										   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
 											? currentN : -((current_inj[0]-temp_current[2])+(current_inj[1]-temp_current[2]));
-						WRITEUNLOCK_OBJECT(obj);
+						//WRITEUNLOCK_OBJECT(obj);
 					}
 				}
 				else					//Wye connection
@@ -2032,11 +2032,11 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 						((voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1])) + voltage[1]*shunt[1] + current[1],
 						((voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2])) + voltage[2]*shunt[2] + current[2],
 					};
-					WRITELOCK_OBJECT(obj);
+					//WRITELOCK_OBJECT(obj);
 					current_inj[0] += d[0];			
 					current_inj[1] += d[1];
 					current_inj[2] += d[2];
-					WRITEUNLOCK_OBJECT(obj);
+					//WRITEUNLOCK_OBJECT(obj);
 				}
 
 				//If we are a child, apply our current injection directly up to our parent (links should have accumulated before us)
@@ -2044,13 +2044,13 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				{
 					node *ParLoadObj=OBJECTDATA(SubNodeParent,node);
 
-					READLOCK_OBJECT(obj);
+					//READLOCK_OBJECT(obj);
 					WRITELOCK_OBJECT(SubNodeParent);
 					ParLoadObj->current_inj[0] += current_inj[0];
 					ParLoadObj->current_inj[1] += current_inj[1];
 					ParLoadObj->current_inj[2] += current_inj[2];
 					WRITEUNLOCK_OBJECT(SubNodeParent);
-					READUNLOCK_OBJECT(obj);
+					//READUNLOCK_OBJECT(obj);
 				}
 			}
 			}//end uninitialized
@@ -2145,7 +2145,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		complex dVCA = voltageC - voltageA;
 
 		/* phase-phase contact */
-		WRITELOCK_OBJECT(obj);
+		//WRITELOCK_OBJECT(obj);
 		if (is_contact(PHASE_A|PHASE_B|PHASE_C))
 			/** @todo calculate three-way contact fault current */
 			throw "three-way contact not supported yet";
@@ -2163,7 +2163,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			current_inj[1] = voltageB / fault_Z;
 		if (is_contact(PHASE_C|PHASE_N) || is_contact(PHASE_C|GROUND))
 			current_inj[2] = voltageC / fault_Z;
-		UNLOCK_OBJECT(obj);
+		//UNLOCK_OBJECT(obj);
 	}
 
 	/* record the power in for posterity */
@@ -2232,15 +2232,21 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	//Update appropriate "other" voltages
 	if (phases&PHASE_S) 
 	{	// split-tap voltage diffs are different
-		LOCKED(obj, voltage12 = voltage1 + voltage2);
-		LOCKED(obj, voltage1N = voltage1 - voltageN);
-		LOCKED(obj, voltage2N = voltage2 - voltageN);
+		//LOCKED(obj, 
+		voltage12 = voltage1 + voltage2;
+		//LOCKED(obj, 
+		voltage1N = voltage1 - voltageN;
+		//LOCKED(obj, 
+		voltage2N = voltage2 - voltageN;
 	}
 	else
 	{	// compute 3phase voltage differences
-		LOCKED(obj, voltageAB = voltageA - voltageB);
-		LOCKED(obj, voltageBC = voltageB - voltageC);
-		LOCKED(obj, voltageCA = voltageC - voltageA);
+		//LOCKED(obj, 
+		voltageAB = voltageA - voltageB;
+		//LOCKED(obj, 
+		voltageBC = voltageB - voltageC;
+		//LOCKED(obj,
+		voltageCA = voltageC - voltageA;
 	}
 
 	if (solver_method==SM_FBS)
@@ -2250,23 +2256,32 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		{
 			// copy the voltage from the parent - check for mismatch handled earlier
 			node *pNode = OBJECTDATA(obj->parent,node);
-			LOCKED(obj, voltage[0] = pNode->voltage[0]);
-			LOCKED(obj, voltage[1] = pNode->voltage[1]);
-			LOCKED(obj, voltage[2] = pNode->voltage[2]);
+			//LOCKED(obj, 
+			voltage[0] = pNode->voltage[0];
+			//LOCKED(obj, 
+			voltage[1] = pNode->voltage[1];
+			//LOCKED(obj,
+			voltage[2] = pNode->voltage[2];
 
 			//Re-update our Delta or single-phase equivalents since we now have a new voltage
 			//Update appropriate "other" voltages
 			if (phases&PHASE_S) 
 			{	// split-tap voltage diffs are different
-				LOCKED(obj, voltage12 = voltage1 + voltage2);
-				LOCKED(obj, voltage1N = voltage1 - voltageN);
-				LOCKED(obj, voltage2N = voltage2 - voltageN);
+				//LOCKED(obj, 
+				voltage12 = voltage1 + voltage2;
+				//LOCKED(obj, 
+				voltage1N = voltage1 - voltageN;
+				//LOCKED(obj, 
+				voltage2N = voltage2 - voltageN;
 			}
 			else
 			{	// compute 3phase voltage differences
-				LOCKED(obj, voltageAB = voltageA - voltageB);
-				LOCKED(obj, voltageBC = voltageB - voltageC);
-				LOCKED(obj, voltageCA = voltageC - voltageA);
+				//LOCKED(obj, 
+				voltageAB = voltageA - voltageB;
+				//LOCKED(obj, 
+				voltageBC = voltageB - voltageC;
+				//LOCKED(obj,
+				voltageCA = voltageC - voltageA;
 			}
 		}
 	}
@@ -2306,22 +2321,28 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 				//Update single phase/delta computations as necessary
 				if (phases&PHASE_S) 
 				{	// split-tap voltage diffs are different
-					LOCKED(obj, voltage12 = voltage1 + voltage2);
-					LOCKED(obj, voltage1N = voltage1 - voltageN);
-					LOCKED(obj, voltage2N = voltage2 - voltageN);
+					//LOCKED(obj, 
+					voltage12 = voltage1 + voltage2;
+					//LOCKED(obj, 
+					voltage1N = voltage1 - voltageN;
+					//LOCKED(obj, 
+					voltage2N = voltage2 - voltageN;
 				}
 				else
 				{	// compute 3phase voltage differences
-					LOCKED(obj, voltageAB = voltageA - voltageB);
-					LOCKED(obj, voltageBC = voltageB - voltageC);
-					LOCKED(obj, voltageCA = voltageC - voltageA);
+					//LOCKED(obj, 
+					voltageAB = voltageA - voltageB;
+					//LOCKED(obj, 
+					voltageBC = voltageB - voltageC;
+					//LOCKED(obj, 
+					voltageCA = voltageC - voltageA;
 				}
 			}
 
 			//Zero current for below calcuations.  May mess with tape (will have values at end of Postsync)
-			WRITELOCK_OBJECT(obj);
+			//WRITELOCK_OBJECT(obj);
 			current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
-			WRITEUNLOCK_OBJECT(obj);
+			//WRITEUNLOCK_OBJECT(obj);
 
 			//Calculate current if it has one
 			if ((bustype==PQ) | (bustype==PV)) //PQ and PV busses need current updates
@@ -2333,11 +2354,11 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 						(voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1]),
 						(voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2]),
 					};
-					WRITELOCK_OBJECT(obj);
+					//WRITELOCK_OBJECT(obj);
 					current_inj[0] = d[0];
 					current_inj[1] = d[1];
 					current_inj[2] = d[2];
-					WRITEUNLOCK_OBJECT(obj);
+					//WRITEUNLOCK_OBJECT(obj);
 				}
 				else //Three phase
 				{
@@ -2364,11 +2385,11 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 							delta_shunt[1]-delta_shunt[0] + delta_current[1]-delta_current[0] + current[1]-current[0],
 							delta_shunt[2]-delta_shunt[1] + delta_current[2]-delta_current[1] + current[2]-current[1],
 						};
-						WRITELOCK_OBJECT(obj);
+						//WRITELOCK_OBJECT(obj);
 						current_inj[0] += d[0];	
 						current_inj[1] += d[1];
 						current_inj[2] += d[2];
-						WRITEUNLOCK_OBJECT(obj);
+						//WRITEUNLOCK_OBJECT(obj);
 					}
 					else					//Wye connection
 					{
@@ -2380,19 +2401,19 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 							((voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1])) + voltage[1]*shunt[1] + current[1],
 							((voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2])) + voltage[2]*shunt[2] + current[2],
 						};
-						WRITELOCK_OBJECT(obj);
+						//WRITELOCK_OBJECT(obj);
 						current_inj[0] += d[0];			
 						current_inj[1] += d[1];
 						current_inj[2] += d[2];
-						WRITEUNLOCK_OBJECT(obj);
+						//WRITEUNLOCK_OBJECT(obj);
 					}
 				}
 			}
 			else	//Swing bus - just make sure it is zero
 			{
-				WRITELOCK_OBJECT(obj);
+				//WRITELOCK_OBJECT(obj);
 				current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);	//Swing has no load current or anything else
-				WRITEUNLOCK_OBJECT(obj);
+				//WRITEUNLOCK_OBJECT(obj);
 			}
 
 			//Now accumulate branch currents, so can see what "flows" passes through the node
@@ -2411,22 +2432,22 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 				{
 					if  ((currlink->power_in.Mag()) > (currlink->power_out.Mag()))	//Make sure current flowing right direction
 					{
-						WRITELOCK_OBJECT(obj);
+						//WRITELOCK_OBJECT(obj);
 						current_inj[0] += currlink->current_in[0];
 						current_inj[1] += currlink->current_in[1];
 						current_inj[2] += currlink->current_in[2];
-						WRITEUNLOCK_OBJECT(obj);
+						//WRITEUNLOCK_OBJECT(obj);
 					}
 				}
 				else if (((currlink->to)->id) == (obj->id))	//see if we are the to end
 				{
 					if ((currlink->power_in.Mag()) < (currlink->power_out.Mag()))	//Current is reversed, so this is a from to
 					{
-						WRITELOCK_OBJECT(obj);
+						//WRITELOCK_OBJECT(obj);
 						current_inj[0] -= currlink->current_out[0];
 						current_inj[1] -= currlink->current_out[1];
 						current_inj[2] -= currlink->current_out[2];
-						WRITEUNLOCK_OBJECT(obj);
+						//WRITEUNLOCK_OBJECT(obj);
 					}
 				}
 			}
@@ -2976,11 +2997,11 @@ int *node::NR_populate(void)
 		OBJECT *me = OBJECTHDR(this);
 
 		//Lock the SWING for global operations
-		LOCK_OBJECT(NR_swing_bus);
+		if ( NR_swing_bus!=me ) LOCK_OBJECT(NR_swing_bus);
 
 		NR_node_reference = NR_curr_bus;	//Grab the current location and keep it as our own
 		NR_curr_bus++;					//Increment the current bus pointer for next variable
-		UNLOCK_OBJECT(NR_swing_bus);	//All done playing with globals, unlock the swing so others can proceed
+		if ( NR_swing_bus!=me ) UNLOCK_OBJECT(NR_swing_bus);	//All done playing with globals, unlock the swing so others can proceed
 
 		//Quick check to see if there problems
 		if (NR_node_reference == -1)

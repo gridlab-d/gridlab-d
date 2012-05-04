@@ -46,7 +46,7 @@ pqload::pqload(MODULE *mod) : load(mod)
 	if(oclass == NULL){
 		pclass = load::oclass;
 
-		oclass = gl_register_class(mod, "pqload", sizeof(pqload), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_UNSAFE_OVERRIDE_OMIT);
+		oclass = gl_register_class(mod, "pqload", sizeof(pqload), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class pqload";
 		else

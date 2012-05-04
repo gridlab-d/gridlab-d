@@ -23,7 +23,7 @@ frequency_gen::frequency_gen(MODULE *mod) : powerflow_object(mod)
 	if(oclass == NULL)
 	{
 		pclass = powerflow_object::oclass;
-		oclass = gl_register_class(mod,"frequency_gen",sizeof(frequency_gen),PC_PRETOPDOWN|PC_POSTTOPDOWN);
+		oclass = gl_register_class(mod,"frequency_gen",sizeof(frequency_gen),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class frequency_gen";
 		else

@@ -86,7 +86,7 @@
    Add object specific modes to the appropriate objects 
    */
 
-class powerflow_object
+class powerflow_object : public gld_object
 {
 public:
 	set phases;				/**< device phases (see PHASE codes) */

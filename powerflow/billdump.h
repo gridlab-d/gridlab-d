@@ -9,7 +9,7 @@
 #include "triplex_meter.h"
 #include "meter.h"
 
-class billdump
+class billdump : public gld_object
 {
 public:
 	TIMESTAMP runtime;

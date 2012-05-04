@@ -11,7 +11,7 @@
 
 #include "gridlabd.h"
 
-class powerflow_library
+class powerflow_library : public gld_object
 {
 public:
 	static CLASS *oclass; 

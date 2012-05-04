@@ -51,7 +51,7 @@ meter::meter(MODULE *mod) : node(mod)
 		pclass = node::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,"meter",sizeof(meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
+		oclass = gl_register_class(mod,"meter",sizeof(meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class meter";
 		else
@@ -468,11 +468,11 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		else
 			dt = 0;
 		
-		READLOCK_OBJECT(obj);
+		//READLOCK_OBJECT(obj);
 		measured_current[0] = current_inj[0];
 		measured_current[1] = current_inj[1];
 		measured_current[2] = current_inj[2];
-		READUNLOCK_OBJECT(obj);
+		//READUNLOCK_OBJECT(obj);
 
 		// compute energy use from previous cycle
 		// - everything below this can moved to commit function once tape player is collecting from commit function7

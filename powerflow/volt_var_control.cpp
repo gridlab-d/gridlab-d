@@ -29,7 +29,7 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 	if(oclass == NULL)
 	{
 		pclass = powerflow_object::oclass;
-		oclass = gl_register_class(mod,"volt_var_control",sizeof(volt_var_control),PC_PRETOPDOWN|PC_POSTTOPDOWN);
+		oclass = gl_register_class(mod,"volt_var_control",sizeof(volt_var_control),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if(oclass == NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		if(gl_publish_variable(oclass,

@@ -27,7 +27,7 @@ billdump::billdump(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"billdump",sizeof(billdump),PC_BOTTOMUP);
+		oclass = gl_register_class(mod,"billdump",sizeof(billdump),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class billdump";
 		else
