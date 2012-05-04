@@ -76,7 +76,7 @@ auction::auction(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"auction",sizeof(auction),passconfig);
+		oclass = gl_register_class(module,"auction",sizeof(auction),passconfig|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class auction";
 		else
@@ -908,7 +908,7 @@ void auction::clear_market(void)
 					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", capacity_reference_property->name, capacity_reference_property->unit->name, unit);
 					throw msg;
 				} else {
-					submit(OBJECTHDR(this), max_capacity_reference_bid_quantity, capacity_reference_bid_price, -1, BS_ON);
+					submit_nolock(OBJECTHDR(this), max_capacity_reference_bid_quantity, capacity_reference_bid_price, -1, BS_ON);
 					if (verbose) gl_output("Capacity reference object: %s bids %.2f at %.2f", capacity_reference_object->name, max_capacity_reference_bid_quantity, capacity_reference_bid_price);
 				}
 			}
@@ -1429,6 +1429,11 @@ void auction::record_bid(OBJECT *from, double quantity, double real_price, BIDDE
 
 KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, BIDDERSTATE state)
 {
+	gld_wlock lock(my());
+	return submit_nolock(from,quantity,real_price,key,state);
+}
+KEY auction::submit_nolock(OBJECT *from, double quantity, double real_price, KEY key, BIDDERSTATE state)
+{
 	char myname[64];
 	TIMESTAMP submit_time = gl_globalclock;
 	DATETIME dt;
@@ -1436,7 +1441,6 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 	gl_localtime(submit_time,&dt);
 	char buffer[256];
 	BIDDEF biddef;
-	OBJECT *self = OBJECTHDR(this);
 
 	/* suppress demand bidding until market stabilizes */
 	unsigned int sph24 = (unsigned int)(3600/period*24);
@@ -1466,7 +1470,6 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 		translate_bid(biddef, key);
 	}
 
-	LOCK_OBJECT(self);
 	if (biddef.market > market_id)
 	{	// future market
 		gl_error("bidding into future markets is not yet supported");
@@ -1492,7 +1495,6 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 			;
 		}
 		record_bid(from, quantity, real_price, state);
-		UNLOCK_OBJECT(self);
 		return biddef.raw;
 	}
 	else if (biddef.market < 0 || biddef.bid_type == BID_UNKNOWN){
@@ -1512,7 +1514,6 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 		} else {
 			char name[64];
 			gl_debug("zero quantity bid from %s is ignored", gl_name(from,name,sizeof(name)));
-			UNLOCK_OBJECT(self);
 			return -1;
 		}
 		biddef.bid = (int16)out;
@@ -1522,7 +1523,6 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 		// interject transaction log file writing here
 		record_bid(from, quantity, real_price, state);
 		biddef.raw = out;
-		UNLOCK_OBJECT(self);
 		return biddef.raw;
 	} else { // key between cleared market and 'market_id' ~ points to an old market
 		if(verbose){
@@ -1532,10 +1532,8 @@ KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, B
 				gl_name(OBJECTHDR(this),myname,sizeof(myname)),quantity<0?"ask":"offer",
 				gl_name(from,biddername,sizeof(biddername)));
 		}
-		UNLOCK_OBJECT(self);
 		return 0;
 	}
-	UNLOCK_OBJECT(self);
 	return 0;
 }
 

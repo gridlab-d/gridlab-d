@@ -51,7 +51,7 @@ typedef enum {
 	AM_PROB=2
 } MARGINMODE;
 
-class auction {
+class auction : public gld_object {
 public:
 	bool verbose;
 	bool use_future_mean_price;
@@ -150,7 +150,11 @@ private:
 	int64 curve_log_count;
 public:
 	KEY submit(OBJECT *from, double quantity, double real_price, KEY key=-1, BIDDERSTATE state=BS_UNKNOWN);
+private:
+	KEY submit_nolock(OBJECT *from, double quantity, double real_price, KEY key=-1, BIDDERSTATE state=BS_UNKNOWN);
+public:
 	TIMESTAMP nextclear() const;
+private:
 	void clear_market(void);
 public:
 	/* required implementations */
