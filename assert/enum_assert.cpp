@@ -26,7 +26,7 @@ enum_assert::enum_assert(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gl_register_class(module,"enum_assert",sizeof(enum_assert),0x00);
+		oclass = gl_register_class(module,"enum_assert",sizeof(enum_assert),PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class enum_assert";
 		else
@@ -68,10 +68,10 @@ int enum_assert::init(OBJECT *parent)
 TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 {
 
-	gld_property target(get_parent(),get_target());
-	if ( !target.is_valid() || target.get_type()!=PT_enumeration ) 
+	gld_property target_prop(get_parent(),target);
+	if ( !target_prop.is_valid() || target_prop.get_type()!=PT_enumeration ) 
 	{
-		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());
+		gl_error("Specified target %s for %s is not valid.",target,get_parent()->get_name());
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -81,13 +81,13 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		return 0;
 	}
 
-	int32 x; target.getp(x);
-	if (get_status() == ASSERT_TRUE)
+	int32 x; target_prop.getp(x);
+	if (status == ASSERT_TRUE)
 	{
-		if (get_value() != x) 
+		if (value != x) 
 		{
 			gl_verbose("Assert failed on %s: %s=%g did not match %g", 
-				get_parent()->get_name(), get_target(), x, get_value());
+				get_parent()->get_name(), target, x, value);
 			return 0;
 		}
 		else
@@ -96,12 +96,12 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 			return TS_NEVER;
 		}
 	}
-	else if (get_status() == ASSERT_FALSE)
+	else if (status == ASSERT_FALSE)
 	{
-		if (get_value() == x)
+		if (value == x)
 		{
 			gl_verbose("Assert failed on %s: %s=%g did match %g", 
-				get_parent()->get_name(), get_target(), x, get_value());
+				get_parent()->get_name(), target, x, value);
 			return 0;
 		}
 		else

@@ -26,7 +26,7 @@ double_assert::double_assert(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gl_register_class(module,"double_assert",sizeof(double_assert),0x00);
+		oclass = gl_register_class(module,"double_assert",sizeof(double_assert),PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class double_assert";
 		else
@@ -87,29 +87,29 @@ int double_assert::init(OBJECT *parent)
 TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 {
 	// handle once mode
-	if ( get_once()==ONCE_TRUE )
+	if ( once==ONCE_TRUE )
 	{
-		set_once_value(get_value());
-		set_once(ONCE_DONE);
+		once_value = value;
+		once = ONCE_DONE;
 	} 
-	else if ( get_once() == ONCE_DONE )
+	else if ( once == ONCE_DONE )
 	{
-		if ( get_once_value()==get_value() )
+		if ( once_value==value )
 		{
 			gl_verbose("Assert skipped with ONCE logic");
 			return TS_NEVER;
 		} 
 		else 
 		{
-			set_once_value(get_value());
+			once_value = value;
 		}
 	}
 		
 	// get the target property
-	gld_property target(get_parent(),get_target());
-	if ( !target.is_valid() || target.get_type()!=PT_double ) 
+	gld_property target_prop(get_parent(),target);
+	if ( !target_prop.is_valid() || target_prop.get_type()!=PT_double ) 
 	{
-		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());
+		gl_error("Specified target %s for %s is not valid.",target,get_parent()->get_name());
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -121,40 +121,40 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 
 	// get the within range
 	double range = 0.0;
-	if ( get_within_mode() == IN_RATIO ) 
+	if ( within_mode == IN_RATIO ) 
 	{
-		range = get_value() * get_within();
+		range = value * within;
 		if ( range<0.001 ) 
 		{	// minimum bounds
 			range = 0.001;
 		}
 	} 
-	else if ( get_within_mode()== IN_ABS ) 
+	else if ( within_mode== IN_ABS ) 
 	{
-		range = get_within();
+		range = within;
 	}
 
 	// test the target value
-	double x; target.getp(x);
-	if ( get_status() == ASSERT_TRUE )
+	double x; target_prop.getp(x);
+	if ( status == ASSERT_TRUE )
 	{
-		double m = fabs(x-get_value());
+		double m = fabs(x-value);
 		if ( _isnan(m) || m>range )
 		{				
 			gl_verbose("Assert failed on %s: %s %g not within %f of given value %g", 
-				get_parent()->get_name(), get_target(), x, range, get_value());
+				get_parent()->get_name(), target, x, range, value);
 			return 0;
 		}
 		gl_verbose("Assert passed on %s", get_parent()->get_name());
 		return TS_NEVER;
 	}
-	else if ( get_status() == ASSERT_FALSE )
+	else if ( status == ASSERT_FALSE )
 	{
-		double m = fabs(x-get_value());
+		double m = fabs(x-value);
 		if ( _isnan(m) || m<range )
 		{				
 			gl_verbose("Assert failed on %s: %s %g is within %f of given value %g", 
-				get_parent()->get_name(), get_target(), x, range, get_value());
+				get_parent()->get_name(), target, x, range, value);
 			return 0;
 		}
 		gl_verbose("Assert passed on %s", get_parent()->get_name());
@@ -170,9 +170,9 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 
 int double_assert::postnotify(PROPERTY *prop, char *value)
 {
-	if ( get_once()==ONCE_DONE && strcmp(prop->name, "value")==0 )
+	if ( once==ONCE_DONE && strcmp(prop->name, "value")==0 )
 	{
-		set_once(ONCE_TRUE);
+		once = ONCE_TRUE;
 	}
 	return 1;
 }
