@@ -665,6 +665,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\lock.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\main.c"
 				>
 			</File>
@@ -979,15 +983,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\x86\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1014,11 +1018,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>
@@ -1230,15 +1234,43 @@
 				Name="Autotest"
 				>
 				<File
-					RelativePath=".\autotest\test_alternate_syntax.glm"
-					>
-				</File>
-				<File
 					RelativePath=".\autotest\test_bare_class.glm"
 					>
 				</File>
 				<File
-					RelativePath=".\autotest\test_err_duplicate_function.glm"
+					RelativePath=".\autotest\test_core_4blocks_schedule.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_core_4blocks_schedule.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_core_5blocks_schedule_exc.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_core_63_schedule.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_core_63_schedule.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_core_64_schedule_exc.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_core_player_schedule_1.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_core_player_schedule_1.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_core_player_schedule_2.player"
 					>
 				</File>
 				<File
@@ -1250,7 +1282,35 @@
 					>
 				</File>
 				<File
-					RelativePath=".\autotest\test_group_opt.glm"
+					RelativePath=".\autotest\test_groupid.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_loadshape_exercise_2_3_3.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_opt_alternate_syntax.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_opt_commit.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_opt_core_pc_and_fn.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_opt_core_runtime_class.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_opt_runtime_exercise_3_1_1.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_quoted_value.glm"
 					>
 				</File>
 				<File
@@ -1259,6 +1319,10 @@
 				</File>
 				<File
 					RelativePath=".\autotest\test_schedule_xform_external.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_simple_schedule.glm"
 					>
 				</File>
 			</Filter>

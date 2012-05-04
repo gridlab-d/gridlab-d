@@ -15,7 +15,6 @@
 #include "gridlabd.h"
 #include "auction.h"
 #include "stubauction.h"
-#include "lock.h"
 
 CLASS *auction::oclass = NULL;
 auction *auction::defaults = NULL;

@@ -7,7 +7,6 @@
 #ifndef _NODE_H
 #define _NODE_H
 
-#include "lock.h"
 #include "powerflow.h"
 
 #define I_INJ(V, S, Z, I) (I_S(S, V) + ((Z.IsFinite()) ? I_Z(Z, V) : complex(0.0)) + I_I(I))

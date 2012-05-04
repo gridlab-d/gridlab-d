@@ -25,7 +25,7 @@ g_assert::g_assert(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gld_class::create(module,"assert",sizeof(g_assert),0x00);
+		oclass = gld_class::create(module,"assert",sizeof(g_assert),PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class assert";
 		else
@@ -84,10 +84,10 @@ int g_assert::init(OBJECT *parent)
 TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 {
 	// get the target property
-	gld_property target(get_parent(),get_target());
-	if ( !target.is_valid() ) 
+	gld_property target_prop(get_parent(),target);
+	if ( !target_prop.is_valid() ) 
 	{
-		gl_error("%s: target %s is not valid",get_target(),get_name());
+		gl_error("%s: target %s is not valid",target,get_name());
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -98,7 +98,7 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	}
 
 	// determine the relation status
-	if ( get_status()==AS_NONE ) 
+	if ( status==AS_NONE ) 
 	{
 		gl_verbose("%s: test is not being run on %s", get_name(), get_parent()->get_name());
 		return TS_NEVER;
@@ -107,13 +107,12 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	{
 		if ( evaluate_status() != get_status() )
 		{
-			gld_property relation(my(),"relation");
-			gld_keyword *pKeyword = relation.find_keyword(get_relation());
-			gld_property target(get_parent(),get_target());
+			gld_property relation_prop(my(),"relation");
+			gld_keyword *pKeyword = relation_prop.find_keyword(relation);
 			char buf[1024];
-			char *p = get_part();
-			gl_error("%s: assert failed on %s %s.%s.%s %s %s %s %s", get_name(), get_status()==AS_TRUE?"":"NOT",
-				get_parent()?get_parent()->get_name():"global variable", get_target(), get_part(),target.to_string(buf,sizeof(buf))?buf:"(void)", pKeyword->get_name(), get_value(), get_value2());
+			char *p = part;
+			gl_error("%s: assert failed on %s %s.%s.%s %s %s %s %s", get_name(), status==AS_TRUE?"":"NOT",
+				get_parent()?get_parent()->get_name():"global variable", target, part, target_prop.to_string(buf,sizeof(buf))?buf:"(void)", pKeyword->get_name(), value, value2);
 			return 0;
 		}
 		else
@@ -127,11 +126,11 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 
 g_assert::ASSERTSTATUS g_assert::evaluate_status(void)
 {
-	gld_property target(get_parent(),get_target());
-	if ( strcmp(get_part(),"")==0 )
-		return target.compare(get_relation(),get_value(),get_value2()) ? AS_TRUE : AS_FALSE ;
+	gld_property target(get_parent(),target);
+	if ( strcmp(part,"")==0 )
+		return target.compare(relation,value,value2) ? AS_TRUE : AS_FALSE ;
 	else
-		return target.compare(get_relation(),get_value(),get_value2(), get_part()) ? AS_TRUE : AS_FALSE ;
+		return target.compare(relation,value,value2,part) ? AS_TRUE : AS_FALSE ;
 }
 
 int g_assert::postnotify(PROPERTY *prop, char *value)

@@ -514,7 +514,7 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct){
 		// initialize each object in def_array
 		for(i = 0; i < def_ct; ++i){
 			obj = def_array[i];
-			LOCK_OBJECT(obj);
+			wlock(&obj->lock);
 			obj_rv = object_init(obj);
 			switch(obj_rv){
 				case 0:
@@ -532,7 +532,7 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct){
 					break;
 				// no default
 			}
-			UNLOCK_OBJECT(obj);
+			wunlock(&obj->lock);
 			if(rv == FAILED){
 				free(next_arr);
 				return rv;
@@ -570,7 +570,7 @@ static int init_by_deferral(){
 	def_array = (OBJECT **)malloc(sizeof(OBJECT *) * object_get_count());
 	obj = object_get_first();
 	while(obj != 0){
-		LOCK_OBJECT(obj);
+		wlock(&obj->lock);
 		obj_rv = object_init(obj);
 		switch (obj_rv){
 			case 0:
@@ -588,7 +588,7 @@ static int init_by_deferral(){
 				break;
 			// no default
 		}
-		UNLOCK_OBJECT(obj);
+		wunlock(&obj->lock);
 
 		if(rv == FAILED){
 			free(def_array);

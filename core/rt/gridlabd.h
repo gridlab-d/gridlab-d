@@ -945,7 +945,10 @@ typedef struct s_callbacks {
 		char *(*getvar)(char *name, char *buffer, int size);
 		GLOBALVAR *(*find)(char *name);
 	} global;
-	int64 *lock_count, *lock_spin;
+	struct {
+		void (*read)(unsigned int *);
+		void (*write)(unsigned int *);
+	} lock, unlock;
 	struct {
 		char *(*find_file)(char *name, char *path, int mode);
 	} file;

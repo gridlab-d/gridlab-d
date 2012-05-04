@@ -116,7 +116,6 @@
 #include <math.h>
 #include "solvers.h"
 #include "house_a.h"
-#include "lock.h"
 	
 EXPORT CIRCUIT *attach_enduse_house_a(OBJECT *obj, enduse *target, double breaker_amps, int is220)
 {

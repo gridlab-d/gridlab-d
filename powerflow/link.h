@@ -4,7 +4,6 @@
 #ifndef _LINK_H
 #define _LINK_H
 
-#include "lock.h"
 #include "powerflow.h"
 
 EXPORT int isa_link(OBJECT *obj, char *classname);

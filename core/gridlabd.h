@@ -1096,15 +1096,44 @@ inline void gl_write(void *local, /** local memory for data */
 	/* @todo */
 	return callback->remote.writevar(local,var);
 }
-#else
 #endif
+
+// locking functions 
+#ifdef __cplusplus
+#define READLOCK(X) ::rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
+#define WRITELOCK(X) ::wlock(X); /**< Locks an item for writing (blocks all operations) */
+#define READUNLOCK(X) ::runlock(X); /**< Unlocks an read lock */
+#define WRITEUNLOCK(X) ::wunlock(X); /**< Unlocks a write lock */
+
+inline void rlock(unsigned int* lock) { callback->lock.read(lock); }
+inline void wlock(unsigned int* lock) { callback->lock.write(lock); }
+inline void runlock(unsigned int* lock) { callback->unlock.read(lock); }
+inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
+
+#else
+#define READLOCK(X) rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
+#define WRITELOCK(X) wlock(X); /**< Locks an item for writing (blocks all operations) */
+#define READUNLOCK(X) runlock(X); /**< Unlocks an read lock */
+#define WRITEUNLOCK(X) wunlock(X); /**< Unlocks a write lock */
+#endif
+#define LOCK(X) WRITELOCK(X); /**< @todo this is deprecated and should not be used anymore */
+#define UNLOCK(X) WRITEUNLOCK(X); /**< @todo this is deprecated and should not be used anymore */
+
+#define READLOCK_OBJECT(X) READLOCK(&((X)->lock)) /**< Locks an object for reading */
+#define WRITELOCK_OBJECT(X) WRITELOCK(&((X)->lock)) /**< Locks an object for writing */
+#define READUNLOCK_OBJECT(X) READUNLOCK(&((X)->lock)) /**< Unlocks an object */
+#define WRITEUNLOCK_OBJECT(X) WRITEUNLOCK(&((X)->lock)) /**< Unlocks an object */
+#define LOCK_OBJECT(X) WRITELOCK_OBJECT(X); /**< @todo this is deprecated and should not be used anymore */
+#define UNLOCK_OBJECT(X) WRITEUNLOCK_OBJECT(X); /**< @todo this is deprecated and should not be used anymore */
+
+#define LOCKED(X,C) {WRITELOCK_OBJECT(X);(C);WRITEUNLOCK_OBJECT(X);} /**< @todo this is deprecated and should not be used anymore */
+
 
 #ifdef __cplusplus
 /**************************************************************************************
  * GRIDLABD BASE CLASSES (Version 3.0 and later)
  **************************************************************************************/
 
-#include "lock.h"
 #include "module.h"
 #include "class.h"
 #include "property.h"

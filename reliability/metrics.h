@@ -12,7 +12,6 @@
 
 #include <stdarg.h>
 #include "gridlabd.h"
-#include "lock.h"
 
 typedef struct s_indices {
 	char256 MetricName;			//Name of metric from metric_of_interest

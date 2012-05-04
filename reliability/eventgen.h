@@ -12,7 +12,6 @@
 #include "gridlabd.h"
 #include "reliability.h"
 #include "metrics.h"
-#include "lock.h"
 
 //Random distribution types - stolen from random.h
 //SAMPLE removed since it won't fit well with how this goes

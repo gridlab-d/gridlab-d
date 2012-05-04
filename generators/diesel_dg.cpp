@@ -14,7 +14,6 @@
 //#include "C:\_FY08\Projects-SVN\source\residential\solvers.h"
 
 #include "diesel_dg.h"
-#include "lock.h"
 
 CLASS *diesel_dg::oclass = NULL;
 diesel_dg *diesel_dg::defaults = NULL;

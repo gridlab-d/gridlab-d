@@ -84,7 +84,6 @@
 #include <math.h>
 #include "solvers.h"
 #include "house_e.h"
-#include "lock.h"
 #include "complex.h"
 
 #ifndef WIN32

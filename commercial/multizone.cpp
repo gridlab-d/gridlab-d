@@ -18,7 +18,6 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "lock.h"
 #include "office.h"
 #include "multizone.h"
 

@@ -40,7 +40,7 @@ typedef unsigned long PASSCONFIG; /**< the pass configuration */
 #define PC_PARENT_OVERRIDE_OMIT 0x40	/**< used to ignore parent's use of PC_UNSAFE_OVERRIDE_OMIT */
 #define PC_UNSAFE_OVERRIDE_OMIT 0x80	/**< used to flag that omitting overrides is unsafe */ 
 #define PC_ABSTRACTONLY 0x100 /**< used to flag that the class should never be instantiated itself, only inherited classes should */
-#define PC_NOAUTOWLOCK 0x200 /**< used to flag that sync operations should not be automatically write locked */
+#define PC_AUTOLOCK 0x200 /**< used to flag that sync operations should not be automatically write locked */
 
 typedef enum {
 	NM_PREUPDATE = 0, /**< notify module before property change */

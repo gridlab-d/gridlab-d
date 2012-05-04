@@ -51,7 +51,6 @@
 #include <errno.h>
 #include <math.h>
 #include "network.h"
-#include "lock.h"
 
 //////////////////////////////////////////////////////////////////////////
 // link CLASS FUNCTIONS
