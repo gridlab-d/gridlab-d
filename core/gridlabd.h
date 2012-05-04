@@ -1558,18 +1558,18 @@ public: // iterators
 #define MINOR 0
 
 #ifdef DLMAIN
+EXPORT int do_kill(void*);
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 int major=MAJOR, minor=MINOR; 
 BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
 #else // !WIN32
-#endif // !WIN32
-EXPORT int do_kill(void*);
 CDECL int dllinit() __attribute__((constructor));
 CDECL int dllkill() __attribute__((destructor));
 CDECL int dllinit() { return 0; }
 CDECL int dllkill() { do_kill(NULL); }
+#endif // !WIN32
 #endif // DLMAIN
 
 #define EXPORT_CREATE_C(X,C) EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \
