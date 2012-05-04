@@ -151,7 +151,8 @@ static unsigned int pass;
 int iteration_counter = 0;   /* number of redos completed */
 
 #ifndef NOLOCKS
-int64 lock_count = 0, lock_spin = 0;
+int64 rlock_count = 0, rlock_spin = 0;
+int64 wlock_count = 0, wlock_spin = 0;
 #endif
 
 extern int stop_now;
@@ -1641,7 +1642,8 @@ STATUS exec_start(void)
 		output_profile("Time steps completed    %8d timesteps", tsteps);
 		output_profile("Convergence efficiency  %8.02lf passes/timestep", (double)passes/tsteps);
 #ifndef NOLOCKS
-		output_profile("Memory lock contention  %7.01lf%%", (lock_spin>0 ? (1-(double)lock_count/(double)lock_spin)*100 : 0));
+		output_profile("Read lock contention    %7.01lf%%", (rlock_spin>0 ? (1-(double)rlock_count/(double)rlock_spin)*100 : 0));
+		output_profile("Write lock contention   %7.01lf%%", (wlock_spin>0 ? (1-(double)wlock_count/(double)wlock_spin)*100 : 0));
 #endif
 		output_profile("Average timestep        %7.0lf seconds/timestep", (double)(global_clock<start_time?0:global_clock-start_time)/tsteps);
 		output_profile("Simulation rate         %7.0lf x realtime", (double)(global_clock<start_time?0:global_clock-start_time)/elapsed_wall);

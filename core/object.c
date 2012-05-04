@@ -1221,6 +1221,7 @@ char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
 		return "";
 }
 
+// #define AUTOWLOCK // use this to enable automatic write lock of sync operations
 
 TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 					  TIMESTAMP ts, /**< the desire clock to sync to */
@@ -1262,16 +1263,36 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 	/* call recalc if recalc bit is set */
 	if( (obj->flags&OF_RECALC) && obj->oclass->recalc!=NULL)
 	{
+#ifdef AUTOWLOCK
+		wlock(obj);
+#endif
 		oclass->recalc(obj);
+#ifdef AUTOWLOCK
+		wunlock(obj);
+#endif
 		obj->flags &= ~OF_RECALC;
 	}
 
 	/* call PLC code on bottom-up, if any */
-	if( !(obj->flags&OF_HASPLC) && oclass->plc!=NULL && pass==PC_BOTTOMUP ) 
+	if( !(obj->flags&OF_HASPLC) && oclass->plc!=NULL && pass==PC_BOTTOMUP )
+	{
+#ifdef AUTOWLOCK
+		wlock(obj);
+#endif
 		plc_time = oclass->plc(obj,ts);
+#ifdef AUTOWLOCK
+		wunlock(obj);
+#endif
+	}
 
 	/* call sync */
+#ifdef AUTOWLOCK
+	wlock(obj);
+#endif
 	sync_time = (*obj->oclass->sync)(obj,ts,pass);
+#ifdef AUTOWLOCK
+	wunlock(obj);
+#endif
 	if(plc_time<sync_time)
 		sync_time = plc_time;
 

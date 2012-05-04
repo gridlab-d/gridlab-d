@@ -30,6 +30,8 @@
 #ifndef _LOCK_H
 #define _LOCK_H
 
+#define MAXSPIN 1000000
+
 #define METHOD0 /* use new locking method as of 3.0 */
 
 #ifdef HAVE_CONFIG_H
@@ -87,17 +89,35 @@
 static inline void rlock(unsigned int *lock)
 {
 	unsigned int value;
-
+	unsigned int timeout = MAXSPIN;
+	//extern NATIVE rlock_count, rlock_spin;
+	//atomic_increment(rlock_count);
 	do {
 		value = (*lock);
+		//atomic_increment(&rlock_spin);
+		if ( timeout--==0 )
+#ifdef __cplusplus
+			throw "read lock timeout";
+#else
+			throw_exception("read lock timeout");
+#endif
 	} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
 }
 static inline void wlock(unsigned int *lock)
 {
 	unsigned int value;
-
+	//extern NATIVE wlock_count, wlock_spin;
+	//atomic_increment(&wlock_count);
+	unsigned int timeout = MAXSPIN;
 	do {
 		value = (*lock);
+		//atomic_increment(&wlock_spin);
+		if ( timeout--==0 ) 
+#ifdef __cplusplus
+			throw "write lock timeout";
+#else
+			throw_exception("write lock timeout");
+#endif
 	} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
 }
 static inline void runlock(unsigned int *lock)
