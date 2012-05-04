@@ -41,7 +41,7 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 		pclass = residential_enduse::oclass;
 		
 		// register the class definition
-		oclass = gl_register_class(module,"dryer",sizeof(dryer),PC_PRETOPDOWN|PC_BOTTOMUP);
+		oclass = gl_register_class(module,"dryer",sizeof(dryer),PC_PRETOPDOWN|PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 

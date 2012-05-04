@@ -70,7 +70,7 @@ freezer::freezer(MODULE *module) : residential_enduse(module)
 	// first time init
 	if (oclass == NULL)
 	{
-		oclass = gl_register_class(module,"freezer",sizeof(freezer),PC_PRETOPDOWN | PC_BOTTOMUP);
+		oclass = gl_register_class(module,"freezer",sizeof(freezer),PC_PRETOPDOWN | PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class freezer";
 		else

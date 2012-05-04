@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include "gridlabd.h"
 #include "metrics.h"
 
 CLASS *metrics::oclass = NULL;
@@ -24,7 +25,7 @@ metrics::metrics(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"metrics",sizeof(metrics),PC_POSTTOPDOWN);
+		oclass = gl_register_class(module,"metrics",sizeof(metrics),PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class metrics";
 		else

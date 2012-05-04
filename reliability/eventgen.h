@@ -51,7 +51,7 @@ typedef struct s_relevantstruct {
 	struct s_relevantstruct *next;	//Link to next item
 } RELEVANTSTRUCT;	//"off-key" event structure
 
-class eventgen {
+class eventgen : public gld_object {
 private:
 	double curr_fail_dist_params[2];	/**< Current parameters of failure_dist - used to track changes */
 	double curr_rest_dist_params[2];	/**< Current parameters of restore_dist - used to track changes */

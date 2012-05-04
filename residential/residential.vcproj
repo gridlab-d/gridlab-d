@@ -695,7 +695,123 @@
 				Name="Autotest"
 				>
 				<File
+					RelativePath=".\autotest\appliance_schedules.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\AZ-Phoenix.tmy2"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\CA-San_francisco.tmy2"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\clotheswasher.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\clotheswasher_out.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\clotheswasher_output.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\Dishwasher.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\dishwasher_output.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\dr_mode_normal.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\Dryer.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\dryer_output.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\FL-Miami.tmy2"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\generic_demand.glt"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\generic_fail_demand(range0-1).glt"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\IL-Chicago.tmy2"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\lights_power.m"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\Olympia.tmy2"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\plugload_demand_range_bounds.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\plugload_enduse_load.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\plugload_energy_meter.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\plugload_internal_gains.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\plugload_internal_gains_hf.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\Range.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\range_output.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\Refrigerator.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\refrigerator_out.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\setpoint_schedule.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_clotheswasher.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_clotheswasher_explicit_energy_swd.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_clotheswasher_explicit_energy_swd_opt.glm"
 					>
 				</File>
 				<File
@@ -703,7 +819,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_clotheswasher_explicit_energy_swy_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_clotheswasher_explicit_energy_wwd.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_clotheswasher_explicit_energy_wwd_opt.glm"
 					>
 				</File>
 				<File
@@ -711,7 +835,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_clotheswasher_explicit_energy_wwy_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_clotheswasher_implicit.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_dishwasher.glm"
 					>
 				</File>
 				<File
@@ -719,7 +851,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_dishwasher_explicit_power1_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_dishwasher_explicit_power2.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_dishwasher_explicit_power2_opt.glm"
 					>
 				</File>
 				<File
@@ -727,7 +867,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_dryer.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_dryer_explicit_energy_swd.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_dryer_explicit_energy_swd_opt.glm"
 					>
 				</File>
 				<File
@@ -735,11 +883,23 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_dryer_explicit_energy_swy_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_dryer_explicit_energy_wwd.glm"
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_dryer_explicit_energy_wwd_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_dryer_explicit_energy_wwy.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_dryer_explicit_energy_wwy_opt.glm"
 					>
 				</File>
 				<File
@@ -751,7 +911,47 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_freezer_deadband_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_freezer_implicit.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_freezer_implicit_opt.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_generic_limit_demand(range0-1).glt"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_generic_limit_demand.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_HVAC_balance.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_HVAC_common_cool.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_HVAC_common_heat.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_HVAC_peak_cool.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_HVAC_peak_heat.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_lights_exp.glm"
 					>
 				</File>
 				<File
@@ -759,7 +959,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_lights_explicit_power1.player"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_lights_explicit_power2.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_lights_explicit_power2.player"
 					>
 				</File>
 				<File
@@ -767,7 +975,19 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_lights_explicit_power3.player"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_lights_explicit_power4.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_lights_explicit_power4.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_lights_imp.glm"
 					>
 				</File>
 				<File
@@ -803,7 +1023,23 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_microwave_demand_limits_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_microwave_energy.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_energy.glt"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_energy.m"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_energy.player"
 					>
 				</File>
 				<File
@@ -811,7 +1047,23 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_microwave_energy_accumulation.m"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_energy_accumulation.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_energy_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_microwave_explicit_swd.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_explicit_swd_opt.glm"
 					>
 				</File>
 				<File
@@ -819,11 +1071,23 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_microwave_explicit_swy_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_microwave_explicit_wwd.glm"
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_microwave_explicit_wwd_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_microwave_explicit_wwy.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_explicit_wwy_opt.glm"
 					>
 				</File>
 				<File
@@ -835,7 +1099,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_microwave_implicit_swd_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_microwave_implicit_swy.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_implicit_swy_opt.glm"
 					>
 				</File>
 				<File
@@ -843,7 +1115,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_microwave_implicit_wwd_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_microwave_implicit_wwy.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_implicit_wwy_opt.glm"
 					>
 				</File>
 				<File
@@ -851,7 +1131,27 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_microwave_internal_gains_0.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_internal_gains_1.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_internal_gains_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_microwave_standby_power_limits.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_standby_power_limits.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_microwave_standby_power_limits_opt.glm"
 					>
 				</File>
 				<File
@@ -863,11 +1163,47 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_plugload_demand_range_bounds_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_plugload_enduse_load.glm"
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_plugload_enduse_load_swd.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_enduse_load_swy.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_enduse_load_wwy.player"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_plugload_energy_meter.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_energy_meter_opt.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_energy_swd.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_energy_swy.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_energy_wwd.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_energy_wwy.player"
 					>
 				</File>
 				<File
@@ -883,7 +1219,27 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_plugload_explicit_wwd_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_plugload_explicit_wwy.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_heatgain_swd.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_heatgain_swy.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_heatgain_wwd.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_heatgain_wwy.player"
 					>
 				</File>
 				<File
@@ -891,7 +1247,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_plugload_implicit_swd_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_plugload_implicit_swy.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_implicit_swy_opt.glm"
 					>
 				</File>
 				<File
@@ -899,7 +1263,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_plugload_implicit_wwd_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_plugload_implicit_wwy.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_plugload_implicit_wwy_opt.glm"
 					>
 				</File>
 				<File
@@ -911,7 +1283,19 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_plugload_internal_gains_opt.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_range.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_range_explicit_energy1.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_range_explicit_energy1_opt.glm"
 					>
 				</File>
 				<File
@@ -919,7 +1303,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_range_explicit_energy2_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_range_explicit_energy3.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_range_explicit_energy3_opt.glm"
 					>
 				</File>
 				<File
@@ -927,7 +1319,15 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_range_explicit_energy4_opt.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_range_implicit.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_range_implicit_opt.glm"
 					>
 				</File>
 				<File
@@ -935,7 +1335,23 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_range_power.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_range_power_opt.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_Refrigerator.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_refrigerator_implicit.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_residential_exercise_5_2_1.glm"
 					>
 				</File>
 				<File
@@ -947,11 +1363,55 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_thermal_storage_autotest.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_thermal_storage_energy.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_thermal_storage_SOC.player"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_waterheater_implicit.glm"
 					>
 				</File>
 				<File
 					RelativePath=".\autotest\test_waterheater_standalone.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_zipload_pow_en_hg.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\TN-Nashville.tmy2"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\WA-Yakima.tmy2"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\water_schedule.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\waterheater_demand_waveform_sawtooth1.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\waterheater_demand_waveform_sawtooth2.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\waterheater_demand_waveform_sine.player"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\waterheater_demand_waveform_square.player"
 					>
 				</File>
 			</Filter>

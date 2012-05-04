@@ -543,7 +543,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 	if (oclass==NULL)  
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"house",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		oclass = gl_register_class(mod,"house",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class house";
 		else
@@ -2290,7 +2290,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		// compute line currents and post to meter
 		if (obj->parent != NULL)
-			LOCK_OBJECT(obj->parent);
+			wlock(obj->parent);
 
 		//Post accumulations up to parent meter/node
 		//Update power
@@ -2310,7 +2310,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		pShunt[2] += load_values[2][2];
 
 		if (obj->parent != NULL)
-			UNLOCK_OBJECT(obj->parent);
+			wunlock(obj->parent);
 
 		return Off_Return;
 	}
@@ -2323,7 +2323,7 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// compute line currents and post to meter
 	if (obj->parent != NULL)
-		LOCK_OBJECT(obj->parent);
+		wlock(obj->parent);
 
 	//Post accumulations up to parent meter/node
 	//Update power
@@ -2343,7 +2343,7 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	pShunt[2] -= load_values[2][2];
 
 	if (obj->parent != NULL)
-		UNLOCK_OBJECT(obj->parent);
+		wunlock(obj->parent);
 
 	return TS_NEVER;
 }
@@ -2699,7 +2699,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 	// compute line currents and post to meter
 	if (obj->parent != NULL)
-		LOCK_OBJECT(obj->parent);
+		wlock(obj->parent);
 
 	//Post accumulations up to parent meter/node
 	//Update power
@@ -2719,7 +2719,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	pShunt[2] += load_values[2][2];
 
 	if (obj->parent != NULL)
-		UNLOCK_OBJECT(obj->parent);
+		wunlock(obj->parent);
 
 	return t2;
 }

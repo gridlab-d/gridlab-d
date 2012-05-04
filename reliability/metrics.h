@@ -25,7 +25,7 @@ typedef struct s_custarray {
 	bool *CustInterrupted_Secondary;	//Pointer to secondary customer "interrupted" flag - may or may not be used
 } CUSTARRAY;
 
-class metrics {
+class metrics : public gld_object {
 //declaring the reliability indexes
 public:
 private:

@@ -85,24 +85,15 @@ double office::warn_low_temp = 50.0;
 double office::warn_high_temp = 90.0;
 bool office::warn_control = true;
 
-/* the object class definition */
 CLASS *office::oclass = NULL;
-
-/* the static default object properties */
 office *office::defaults = NULL;
-
-/* specify passes that are needed */
-static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_BOTTOMUP;
-
-/* specify pass that advances the clock  */
-static PASSCONFIG clockpass = PC_BOTTOMUP;
 
 /* Class registration is only called once to register the class with the core */
 office::office(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gld_class::create(module,"office",sizeof(office),passconfig); 
+		oclass = gld_class::create(module,"office",sizeof(office),PC_PRETOPDOWN|PC_BOTTOMUP|PC_AUTOLOCK); 
 		if (oclass==NULL)
 			throw "unable to register class office";
 		oclass->trl = TRL_DEMONSTRATED;

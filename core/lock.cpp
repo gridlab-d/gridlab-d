@@ -94,7 +94,8 @@ extern "C" void rlock(unsigned int *lock)
 	do {
 		value = (*lock);
 		atomic_increment(&rlock_spin);
-		if ( timeout--==0 ) throw_exception("read lock timeout");
+		if ( timeout--==0 ) 
+			throw_exception("read lock timeout");
 	} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
 }
 extern "C" void wlock(unsigned int *lock)
@@ -106,7 +107,8 @@ extern "C" void wlock(unsigned int *lock)
 	do {
 		value = (*lock);
 		atomic_increment(&wlock_spin);
-		if ( timeout--==0 ) throw_exception("write lock timeout");
+		if ( timeout--==0 ) 
+			throw_exception("write lock timeout");
 	} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
 }
 extern "C" void runlock(unsigned int *lock)

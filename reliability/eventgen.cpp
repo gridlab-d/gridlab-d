@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-
+#include "gridlabd.h"
 #include "eventgen.h"
 
 CLASS *eventgen::oclass = NULL;			/**< a pointer to the CLASS definition in GridLAB-D's core */
@@ -36,7 +36,7 @@ eventgen::eventgen(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"eventgen",sizeof(eventgen),PC_PRETOPDOWN|PC_POSTTOPDOWN);
+		oclass = gl_register_class(module,"eventgen",sizeof(eventgen),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class eventgen";
 		else
@@ -745,7 +745,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 
 				//Lock metrics event
-				LOCK_OBJECT(metrics_obj_hdr);
+				wlock(metrics_obj_hdr);
 
 				//Call the event updater - call relevant version
 				if (*secondary_interruption_cnt == true)
@@ -758,7 +758,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 
 				//All done, unlock it
-				UNLOCK_OBJECT(metrics_obj_hdr);
+				wunlock(metrics_obj_hdr);
 
 				//If in random mode, update the failure values
 				if (fault_implement_mode == false)
@@ -923,7 +923,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 
 					//Lock metrics event
-					LOCK_OBJECT(metrics_obj_hdr);
+					wlock(metrics_obj_hdr);
 
 					//Call the event updater - call relevant version
 					if (*secondary_interruption_cnt == true)
@@ -936,7 +936,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 
 					//All done, unlock it
-					UNLOCK_OBJECT(metrics_obj_hdr);
+					wunlock(metrics_obj_hdr);
 
 					//Event is done, remove it from the structure
 					//Go to our previous

@@ -31,7 +31,7 @@ occupantload::occupantload(MODULE *module) : residential_enduse(module)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(module,"occupantload",sizeof(occupantload),PC_BOTTOMUP);
+		oclass = gl_register_class(module,"occupantload",sizeof(occupantload),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class occupantload";
 		else
