@@ -103,9 +103,6 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 			pos += sprintf(global_command_line+pos,"%s%s",pos>0?" ":"",argv[i]);
 	}
 
-	/* initialize scheduler */
-	sched_init();
-
 	/* main initialization */
 	if (!output_init(argc,argv) || !exec_init())
 		exit(6);
@@ -127,6 +124,9 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 		 */
 		exit(1);
 	}
+
+	/* initialize scheduler */
+	sched_init();
 
 	/* recheck threadcount in case user set it 0 */
 	if (global_threadcount == 0)

@@ -1368,7 +1368,7 @@ void sched_init(void)
 	atexit(sched_finish);
 
 	/* set processor affinity */
-	if ( SetProcessAffinityMask(hProc,(DWORD_PTR)(1<<n))==0 )
+	if ( global_threadcount==1 && SetProcessAffinityMask(hProc,(DWORD_PTR)(1<<n))==0 )
 	{
 		unsigned long  err = GetLastError();
 		output_warning("unable to set current process affinity mask, err code %d", err);
