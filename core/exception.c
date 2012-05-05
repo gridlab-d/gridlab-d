@@ -108,12 +108,14 @@ void throw_exception(char *format, /**< the format string */
 	if (handlers)
 	{
 		strncpy(handlers->msg,buffer,sizeof(handlers->msg));
-		output_warning("%s", buffer);
+		// do not use output_* because they use functions that can throw exception
+		fprintf(stderr,"EXCEPTION: %s\n", buffer);
 		longjmp(handlers->buf,handlers->id);
 	}
 	else
 	{
-		output_fatal("unhandled exception: %s", buffer);
+		// do not use output_* because they use functions that can throw exception
+		fprintf(stderr,"UNHANDLED EXCEPTION: %s\n", buffer);
 		/*	TROUBLESHOOT
 			An exception was generated that can't be handled by
 			the system.  This usually occurs because some part

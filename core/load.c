@@ -4187,7 +4187,6 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 		}
 	}
 
-
 	//if WHITE ACCEPT;
 	if TERM(object_name_id_range(HERE,classname,&id,&id2))
 	{
@@ -6190,6 +6189,16 @@ STATUS loadall(char *file){
 		load_status = loadall_xml(filename);
 	else
 		output_error("%s: unable to load unknown file type", filename, ext);
+
+	/* objects should not be started until all deferred schedules are done */
+	if ( global_threadcount>1 )
+	{
+		if ( schedule_createwait()==FAILED )
+		{
+			output_error_raw("%s(%d): load failed on schedule error", filename, linenum);
+			return FAILED;
+		}
+	}
 
 	/* handle new objects */
 //	new_obj_count = object_get_count();

@@ -172,13 +172,11 @@ int find_value_index (SCHEDULE *sch, /// schedule to search
    returns 1 on success, 0 on failure 
  */
 
-static unsigned int scb_lock = 0;
-
 int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 {
 	char *token = NULL;
 	unsigned int minute=0;
-	wlock(&scb_lock);
+
 	/* check block count */
 	if (sch->block>=MAXBLOCKS)
 	{
@@ -186,7 +184,6 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		/* TROUBLESHOOT
 		   The schedule definition has too many blocks to compile.  Consolidate your schedule and try again.
 		 */
-		wunlock(&scb_lock);
 		return 0;
 	}
 
@@ -232,7 +229,6 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 				if(ndx > MAXVALUES-1)
 				{
 					output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, sch->block);
-					wunlock(&scb_lock);
 					return 0;
 				}
 				sch->data[sch->block*MAXVALUES+ndx] = value;
@@ -251,7 +247,6 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 				/* TROUBLESHOOT
 					The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 				*/
-				wunlock(&scb_lock);
 				return 0;
 			}
 		}
@@ -303,7 +298,6 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 									/* TROUBLESHOOT
 									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 									 */
-									wunlock(&scb_lock);
 									return 0;
 								}
 								else
@@ -323,7 +317,6 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}
 	}
 	strcpy(sch->blockname[sch->block],blockname);
-	wunlock(&scb_lock);
 	return 1;
 }
 
@@ -494,7 +487,7 @@ int schedule_compile(SCHEDULE *sch)
 static pthread_cond_t sc_active = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t sc_activelock = PTHREAD_MUTEX_INITIALIZER;
 static STATUS sc_status = SUCCESS;
-static sc_running = 0;
+static sc_running=0, sc_started=0, sc_done=0;
 
 void *schedule_createproc(void *args)
 {
@@ -503,14 +496,13 @@ void *schedule_createproc(void *args)
 	SCHEDULE *sch = (SCHEDULE *)args;
 
 	pthread_mutex_lock(&sc_activelock);
-	while ( global_threadcount>1 && sc_running>=global_threadcount )
+	while ( sc_running>=global_threadcount )
 	{
 		output_debug("schedule '%s' creation waiting (%d of %d active)", sch->name, sc_running, global_threadcount); 
 		pthread_cond_wait(&sc_active,&sc_activelock);
 	}
 	sc_running++;
-	if ( global_threadcount>1 )
-		output_debug("deferred schedule '%s' creation starting (%d of %d active)", sch->name, sc_running, global_threadcount); 
+	output_debug("deferred schedule '%s' creation starting (%d of %d active)", sch->name, sc_running, global_threadcount); 
 	pthread_cond_broadcast(&sc_active);
 	pthread_mutex_unlock(&sc_activelock);
 
@@ -615,16 +607,17 @@ void *schedule_createproc(void *args)
 Done:
 	pthread_mutex_lock(&sc_activelock);
 	sc_running--;
-	sc_status=status;
+	sc_done++;
+	if ( status==FAILED ) sc_status=status;
 	pthread_cond_broadcast(&sc_active);
 	pthread_mutex_unlock(&sc_activelock);
-	if ( global_threadcount>1 )
+	if ( status==SUCCESS )
 	{
-		if ( status==SUCCESS ){
-			output_debug("deferred creation of schedule '%s' completed", sch->name);
-		}else{
-			output_error("deferred creation of schedule '%s' failed", sch->name);
-		}
+		output_debug("deferred creation of schedule '%s' completed", sch->name);
+	}
+	else
+	{
+		output_error("deferred creation of schedule '%s' failed", sch->name);
 	}
 	rv = (void *)status;
 	return rv;
@@ -635,9 +628,9 @@ Done:
  **/
 int schedule_createwait(void)
 {
-	if ( sc_running==0 ) return sc_status;
+	if ( sc_running==0 && sc_done==sc_started ) return sc_status;
 	pthread_mutex_lock(&sc_activelock);
-	while ( sc_running>0 )
+	while ( sc_running>0 || sc_done<sc_started )
 	{
 		output_debug("waiting for deferred schedule creations to complete (%d of %d active)", sc_running, global_threadcount);
 		pthread_cond_wait(&sc_active,&sc_activelock);
@@ -743,6 +736,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 			output_warning("schedule_createproc failed, schedule '%s' created inline instead", sch->name);
 			return schedule_createproc(sch) ? sch : NULL;
 		}
+		sc_started++;
 		return sch;
 	}
 }

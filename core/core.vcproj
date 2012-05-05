@@ -983,15 +983,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\x86\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1018,11 +1018,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 			</Filter>
@@ -1619,6 +1619,26 @@
 					>
 				</File>
 			</Filter>
+		</Filter>
+		<Filter
+			Name="Validation"
+			>
+			<File
+				RelativePath="..\validate.py"
+				>
+			</File>
+			<File
+				RelativePath="..\validate_dev.py"
+				>
+			</File>
+			<File
+				RelativePath="..\validate_win32.py"
+				>
+			</File>
+			<File
+				RelativePath="..\validate_x64.py"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\Makefile.am"
