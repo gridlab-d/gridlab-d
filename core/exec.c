@@ -1633,11 +1633,11 @@ STATUS exec_start(void)
 		output_profile("  Model time            %8.1f seconds/thread (%.1f%%)", sync_time,sync_time/elapsed_wall*100);
 		output_profile("Simulation time         %8.0f days", elapsed_sim/24);
 		if (sim_speed>10.0)
-			output_profile("Simulation speed        %7.0lfk object.hours/second", sim_speed);
+			output_profile("Simulation speed         %7.0lfk object.hours/second", sim_speed);
 		else if (sim_speed>1.0)
-			output_profile("Simulation speed        %7.1lfk object.hours/second", sim_speed);
+			output_profile("Simulation speed         %7.1lfk object.hours/second", sim_speed);
 		else
-			output_profile("Simulation speed        %7.0lf object.hours/second", sim_speed*1000);
+			output_profile("Simulation speed         %7.0lf object.hours/second", sim_speed*1000);
 		output_profile("Syncs completed         %8d passes", passes);
 		output_profile("Time steps completed    %8d timesteps", tsteps);
 		output_profile("Convergence efficiency  %8.02lf passes/timestep", (double)passes/tsteps);

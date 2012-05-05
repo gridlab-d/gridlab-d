@@ -287,7 +287,7 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 
 	memset(obj, 0, sz + oclass->size);
 
-	obj->tp_affinity = 0; /* tp_next++; // @todo use tp_next once threadpool is supported during object creation */
+	obj->synctime[0] = obj->synctime[1] = obj->synctime[2] = 0;
 	tp_next %= tp_count;
 
 	obj->id = next_object_id++;
@@ -329,14 +329,8 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	To use this function you must set \p obj->oclass before calling.  All other properties 
 	will be cleared and you must set them after the call is completed.
  **/
-OBJECT *object_create_foreign(OBJECT *obj){ /**< a pointer to the OBJECT data structure */
-	/* @todo support threadpool during object creation by calling this malloc from the appropriate thread */
-	static int tp_next = 0;
-	static int tp_count = 0;
-	
-	if(tp_count == 0){
-		tp_count = processor_count();
-	}
+OBJECT *object_create_foreign(OBJECT *obj) /**< a pointer to the OBJECT data structure */
+{	
 
 	if(obj == NULL){
 		throw_exception("object_create_foreign(OBJECT *obj=NULL): object is NULL");
@@ -360,8 +354,7 @@ OBJECT *object_create_foreign(OBJECT *obj){ /**< a pointer to the OBJECT data st
 			This is most likely a bug and should be reported.
 		 */
 
-	obj->tp_affinity = 0; /* tp_next++; // @todo use tp_next once threadpool is supported during object creation */
-	tp_next %= tp_count;
+	obj->synctime[0] = obj->synctime[1] = obj->synctime[2] = 0;
 
 	obj->id = next_object_id++;
 	obj->next = NULL;
@@ -1290,10 +1283,19 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 		obj->valid_to = sync_time; // NOTE, this can be negative
 
 	/* do profiling, if needed */
-	if(global_profiler==1)
+	if ( global_profiler==1 )
 	{
+		clock_t dt = clock()-t;
+		switch ( pass ) {
+		case PC_PRETOPDOWN : obj->synctime[0] += dt; break;
+		case PC_BOTTOMUP : obj->synctime[1] += dt; break;
+		case PC_POSTTOPDOWN : obj->synctime[2] += dt; break;
+		default: break;
+		}
+		wlock(&obj->oclass->profiler.lock);
 		obj->oclass->profiler.count++;
-		obj->oclass->profiler.clocks += clock()-t;
+		obj->oclass->profiler.clocks += dt;
+		wunlock(&obj->oclass->profiler.lock);
 	}
 
 #ifndef WIN32
@@ -2421,7 +2423,7 @@ void *object_remote_read(void *local, /**< local memory for data (must be correc
 						 PROPERTY *prop) /**< property from which to get data */
 {
 	int size = property_size(prop);
-	void *addr = ((char*)obj)+(int)(prop->addr);
+	void *addr = ((char*)obj)+(size_t)(prop->addr);
 	
 	/* single host */
 	if ( global_multirun_mode==MRM_STANDALONE)
@@ -2456,7 +2458,7 @@ void object_remote_write(void *local, /** local memory for data */
 						 PROPERTY *prop) /**< property to which data is written */
 {
 	int size = property_size(prop);
-	void *addr = ((char*)obj)+(int)(prop->addr);
+	void *addr = ((char*)obj)+(size_t)(prop->addr);
 	
 	/* single host */
 	if ( global_multirun_mode==MRM_STANDALONE)
@@ -2489,7 +2491,6 @@ double object_get_part(void *x, char *name)
 
 	if ( strcmp(name,"id")==0 ) return (double)(obj->id);
 	if ( strcmp(name,"rng_state")==0 ) return (double)(obj->rng_state);
-	if ( strcmp(name,"tp_affinity")==0 ) return (double)(obj->tp_affinity);
 	if ( strcmp(name,"latitude")==0 ) return obj->latitude;
 	if ( strcmp(name,"longitude")==0 ) return obj->longitude;
 	if ( strcmp(name,"schedule_skew")==0 ) return (double)(obj->schedule_skew);

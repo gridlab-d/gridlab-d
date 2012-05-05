@@ -82,6 +82,7 @@ typedef enum {
 typedef struct s_module_list MODULE;
 struct s_class_list {
 	CLASSMAGIC magic;
+	int id;
 	CLASSNAME name;
 	unsigned int size;
 	MODULE *module; 
@@ -100,6 +101,7 @@ struct s_class_list {
 	FUNCTIONADDR recalc;
 	CLASS *parent;			/**< parent class from which properties should be inherited */
 	struct {
+		unsigned int lock;
 		int32 numobjs;
 		int64 clocks;
 		int32 count;

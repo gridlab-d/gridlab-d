@@ -245,6 +245,8 @@ typedef enum {
 } MODULECOMPILEFLAGS;
 GLOBAL MODULECOMPILEFLAGS global_module_compiler_flags INIT(MC_NONE); /** module compiler flags */
 
+/* multithread performance optimization analysis */
+GLOBAL unsigned int global_mt_analysis INIT(0); /**< perform multithread analysis (requires profiler) */
 #ifdef __cplusplus
 }
 #endif

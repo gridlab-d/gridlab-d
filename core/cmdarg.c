@@ -293,6 +293,32 @@ static int profile(int argc, char *argv[])
 	global_profiler = !global_profiler;
 	return 0;
 }
+static int mt_profile(int argc, char *argv[])
+{
+	if ( argc>1 )
+	{
+		global_profiler = 1;
+		global_mt_analysis = atoi(*++argv);
+		argc--;
+		if ( global_threadcount>1 )
+			output_warning("--mt_profile forces threadcount=1");
+		if ( global_mt_analysis<2 )
+		{
+			output_error("--mt_profile <n-threads> value must be 2 or greater");
+			return CMDERR;
+		}
+		else
+		{
+			global_threadcount = 1;
+			return 1;
+		}
+	}
+	else
+	{
+		output_fatal("missing mt_profile thread count");
+		return CMDERR;
+	}
+}
 static int pause(int argc, char *argv[])
 {
 	global_pauseatexit = !global_pauseatexit;
@@ -1065,8 +1091,9 @@ static CMDARG main[] = {
 	{"debug",		NULL,	debug,			NULL, "Toggles display of debug messages" },
 	{"debugger",	NULL,	debugger,		NULL, "Enables the debugger" },
 	{"dumpall",		NULL,	dumpall,		NULL, "Dumps the global variable list" },
+	{"mt_profile",	NULL,	mt_profile,		"<n-threads>", "Analyses multithreaded performance profile" },
+	{"profile",		NULL,	profile,		NULL, "Toggles performance profiling of core and modules while simulation runs" },
 	{"quiet",		"q",	quiet,			NULL, "Toggles suppression of all but error and fatal messages" },
-	{"profile",		NULL,	profile,		NULL, "Toggles performance profiling of core and modules while simulation run" },
 	{"verbose",		"v",	verbose,		NULL, "Toggles output of verbose messages" },
 	{"warn",		"w",	warn,			NULL, "Toggles display of warning messages" },
 	

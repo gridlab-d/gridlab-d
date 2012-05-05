@@ -1474,4 +1474,87 @@ void sched_init(void)
 }
 #endif
 
+#include "class.h"
+
+void module_profiles(void)
+{
+	if ( global_mt_analysis>0 )
+	{
+		OBJECT *obj;
+		unsigned int n_ranks = 0;
+		struct s_rankdata {
+			int64 t_presync, t_sync, t_postsync;
+			int64 n_presync, n_sync, n_postsync;
+			double total;
+		} *rankdata;
+		unsigned int n, r;
+
+		output_profile("Multithreading analysis");
+		output_profile("=======================\n");
+		
+		/* analysis assumes data was collected during a single threaded run */
+		if ( global_threadcount>1 )
+		{
+			output_profile("thread count must be 1 to complete analysis");
+			return;
+		}
+
+		/* determine number of ranks used */
+		for ( obj=object_get_first(); obj!=NULL ; obj=obj->next )
+		{
+			if ( n_ranks < obj->rank + 1 )
+				n_ranks = obj->rank + 1;
+		}
+		n_ranks;
+
+		/* allocate working buffers */
+		rankdata = (struct s_rankdata*)malloc(n_ranks*sizeof(struct s_rankdata));
+		memset(rankdata,0,n_ranks*sizeof(struct s_rankdata));
+
+		/* gather rank data */
+		for ( obj=object_get_first(); obj!=NULL ; obj=obj->next )
+		{
+			struct s_rankdata *rank = &rankdata[obj->rank];
+			if ( obj->oclass->passconfig&PC_PRETOPDOWN )
+			{
+				rank->t_presync += obj->synctime[0];
+				rank->n_presync++;
+			}
+			if ( obj->oclass->passconfig&PC_BOTTOMUP )
+			{
+				rank->t_sync += obj->synctime[1];
+				rank->n_sync++;
+			}
+			if ( obj->oclass->passconfig&PC_POSTTOPDOWN )
+			{
+				rank->t_postsync += obj->synctime[2];
+				rank->n_postsync++;
+			}
+		}
+
+		for ( n=1 ; n<=(unsigned int)global_mt_analysis ; n*=2 )
+		{
+			static double total1 = 0;
+			double total = 0;
+			for ( r=0 ; r<n_ranks ; r++ )
+			{
+				struct s_rankdata *rank = &rankdata[r];
+				rank->total = rank->n_presync==0 ? 0 : (double)rank->t_presync/(double)CLOCKS_PER_SEC/(double)rank->n_presync * (double)( rank->n_presync/n + rank->n_presync%n );
+				rank->total += rank->n_sync==0 ? 0 : (double)rank->t_sync/(double)CLOCKS_PER_SEC/(double)rank->n_sync * (double)( rank->n_sync/n + rank->n_sync%n );
+				rank->total += rank->n_postsync==0 ? 0 : (double)rank->t_postsync/(double)CLOCKS_PER_SEC/(double)rank->n_postsync * (double)( rank->n_postsync/n + rank->n_postsync%n );
+				total += rank->total;
+			}
+			if ( n==1 ) 
+			{
+				total1 = total;
+				output_profile("%2d thread model time    %.1f s (actual time)", n, total);
+			}
+			else
+				output_profile("%2d thread model time    %.1f s (%+.0f%% est.)", n, total,(total-total1)/total1*100);
+		}
+		output_profile("");
+	}
+}
+
+
 /**@}*/

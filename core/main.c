@@ -208,7 +208,10 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 
 	/* profile results */
 	if (global_profiler)
+	{
 		class_profiles();
+		module_profiles();
+	}
 
 #ifdef DUMP_SCHEDULES
 	/* dump a copy of the schedules for reference */

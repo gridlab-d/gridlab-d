@@ -84,6 +84,7 @@ extern "C" {
 	TRANSFORMFUNCTION module_get_transform_function(char *function);
 
 	int module_compile(char *name, char *code, int flags, char *prefix, char *file, int line);
+	void module_profiles(void);
 
 #ifdef __cplusplus
 }

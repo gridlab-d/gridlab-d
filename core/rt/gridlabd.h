@@ -626,7 +626,7 @@ struct s_object_list {
 	TIMESTAMP in_svc, /**< time at which object begin's operating */
 		out_svc; /**< time at which object ceases operating */
 	OBJECTNAME name;
-	int tp_affinity; /**< threadpool processor affinity */
+	clock_t synctime[3]; /**< total sync time used by this object */
 	NAMESPACE *space; /**< namespace of object */
 	unsigned int lock; /**< object lock */
 	unsigned int rng_state; /**< random number generator state */

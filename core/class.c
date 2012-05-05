@@ -415,7 +415,7 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 		{
 			strcat(value+rv," ");
 			strcat(value+rv+1,prop->unit->name);
-			rv += 1+strlen(prop->unit->name);
+			rv += (int)(1+strlen(prop->unit->name));
 		}
 	}
 	else
@@ -481,6 +481,7 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 	}
 	memset(oclass,0,sizeof(CLASS));
 	oclass->magic = CLASSVALID;
+	oclass->id = 	class_count++;
 	oclass->module = module;
 	strncpy(oclass->name,name,sizeof(oclass->name));
 	oclass->size = size;
@@ -494,7 +495,6 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 		last_class->next = oclass;
 	last_class = oclass;
 	output_verbose("class %s registered ok", name);
-	class_count++;
 	return oclass;
 }
 
