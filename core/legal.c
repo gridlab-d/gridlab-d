@@ -51,9 +51,9 @@
 	Coyote			Version 1.3 originated at PNNL June 2008, not released
 	Diablo			Version 2.0 originated at PNNL August 2008
 	Eldorado		Version 2.1 originated at PNNL September 2009
-	Four Corners		Version 2.2 originated at PNNL November 2010
-	Grizzly
-	Hassyampa
+	Four Corners	Version 2.2 originated at PNNL November 2010
+	Grizzly			Version 2.3 originated at PNNL November 2011
+	Hassyampa		Version 3.0 originated at PNNL November 2011
 	Hatwai
 	Jojoba
 	Keeler
@@ -185,59 +185,91 @@ STATUS legal_license(void)
 
  **************************************************************************************/
 #include <pthread.h>
+#include <ctype.h>
 
 #include "http_client.h"
 
 static pthread_t check_version_thread_id;
 
+#define CV_NOINFO 0x0001
+#define CV_BADURL 0x0002
+#define CV_NODATA 0x0004
+#define CV_NEWVER 0x0008
+#define CV_NEWPATCH 0x0010
+#define CV_NEWBUILD 0x0020
+
 void *check_version_proc(void *ptr)
 {
 	int patch, build;
-#ifdef DEBUG
-	char *url = "http://www.gridlabd.org/versions.txt";
-#else
-	char *url = "file://versions.txt";
-#endif
+	char *url = "http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/versions.txt";
 	HTTPRESULT *result = http_read(url);
 	char target[32];
-	char *pv = NULL;
+	char *pv = NULL, *nv = NULL;
+	int rc = 0;
+	int mypatch = REV_PATCH;
+	int mybuild = atoi(BUILD);
 
 	/* if result not found */
 	if ( result==NULL || result->body.size==0 )
 	{
 		output_warning("check_version: unable to read %s", url);
-		return (void*)1;
+		rc=CV_NOINFO;
+		goto Done;
 	}
 
 	/** @todo check the version against latest available **/
 	if ( result->status>0 && result->status<400 )
 	{
 		output_warning("check_version: '%s' error %d", url, result->status);
-		return (void*)2;
+		rc=CV_BADURL;
+		goto Done;
 	}
 
 	/* read version data */
-	sprintf(target,"%d:%d:",REV_MAJOR,REV_MINOR);
+	sprintf(target,"%d.%d:",REV_MAJOR,REV_MINOR);
 	pv = strstr(result->body.data,target);
 	if ( pv==NULL )
 	{
-		output_warning("check_version: '%s' has not entry for version %d.%d", url, REV_MAJOR, REV_MINOR);
-		return (void*)3;
+		output_warning("check_version: '%s' has no entry for version %d.%d", url, REV_MAJOR, REV_MINOR);
+		rc=CV_NODATA;
+		goto Done;
 	}
-	if ( sscanf(pv,"%*d:%*d:%d:%d", &patch, &build)!=2 )
+	if ( sscanf(pv,"%*d.%*d:%d:%d", &patch, &build)!=2 )
 	{
-		output_warning("check_version: '%s' entry for version %d.%d", url, REV_MAJOR, REV_MINOR);
-		return (void*)4;
-	}
-	if ( REV_PATCH<patch )
-	{
-		output_warning("check_version: a newer version of %s (%d.%d.%d-%d) is available", BRANCH, REV_MAJOR, REV_MINOR, patch, build);
-		return (void*)4;
+		output_warning("check_version: '%s' entry for version %d.%d is bad", url, REV_MAJOR, REV_MINOR);
+		rc=CV_NODATA;
+		goto Done;
 	}
 
+	nv = strchr(pv,'\n');
+	if ( nv!=NULL )
+	{
+		while ( *nv!='\0' && isspace(*nv) ) nv++;
+		if ( *nv!='\0' )
+		{
+			output_warning("check_version: newer versions than %s (Version %d.%d) are available", BRANCH, REV_MAJOR, REV_MINOR);
+			rc|=CV_NEWVER;
+		}
+		/* not done yet */
+	}
+	if ( mypatch<patch )
+	{
+		output_warning("check_version: a newer patch of %s (Version %d.%d.%d-%d) is available", BRANCH, REV_MAJOR, REV_MINOR, patch, build);
+		rc|=CV_NEWPATCH;
+		/* not done yet */
+	}
+	if ( mybuild>0 && mybuild<build )
+	{
+		output_warning("check_version: a newer build of %s (Version %d.%d.%d-%d) is available", BRANCH, REV_MAJOR, REV_MINOR, patch, build);
+		rc|=CV_NEWBUILD;
+	}
+	if ( rc==0 )
+		output_verbose("this version is current");
+
 	/* done */
+Done:
 	http_delete_result(result);
-	return (void*)0;
+	return (void*)rc;
 }
 
 void check_version(int mt)
