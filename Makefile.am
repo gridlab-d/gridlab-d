@@ -88,7 +88,7 @@ check validate:
 	python validate.py
 
 scratchdir = scratch
-XERCES_TARNAME = xerces-c-src_2_8_0
+XERCES_TARNAME = xerces-c-3.1.1
 XERCESCROOT = $(CURDIR)/$(scratchdir)/$(XERCES_TARNAME)
 
 $(scratchdir)/.xerces.stamp: third_party/$(XERCES_TARNAME).tar.gz
@@ -97,8 +97,8 @@ $(scratchdir)/.xerces.stamp: third_party/$(XERCES_TARNAME).tar.gz
 	test -d $(@D) || mkdir -p $(@D)
 	tar -xzf $< -C $(@D)
 	export XERCESCROOT=$(CURDIR)/$(@D)/$(XERCES_TARNAME) && \
-		cd $(@D)/$(XERCES_TARNAME)/src/xercesc && \
-		./runConfigure -p macosx && make
+		cd $(@D)/$(XERCES_TARNAME) && \
+		autoreconf -isf && ./configure && make
 	touch $@
 
 $(scratchdir)/pkg: $(scratchdir)/.xerces.stamp distdir
