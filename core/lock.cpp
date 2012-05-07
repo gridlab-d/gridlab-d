@@ -213,7 +213,7 @@ static inline void wunlock(unsigned int *lock)
 	} while (!atomic_compare_and_swap(lock, test, test & RBITS));
 }
 
-#elif define METHOD3
+#elif defined METHOD3
 /**********************************************************************************
  * SEQLOCK METHOD
  **********************************************************************************/
