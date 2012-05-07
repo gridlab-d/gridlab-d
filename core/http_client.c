@@ -12,6 +12,7 @@
 	#include <arpa/inet.h>
 	#include <unistd.h>
 	#include <sys/errno.h>
+	#include <netdb.h>
 	#define SOCKET int
 	#define INVALID_SOCKET (-1)
 #endif
@@ -87,7 +88,7 @@ HTTP* hopen(char *url, int maxlen)
 	/* extract server address */
 	memset(&serv_addr,0,sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
-	memcpy(&serv_addr.sin_addr.s_addr,server->h_addr,server->h_length);
+	memcpy((char*)&serv_addr.sin_addr.s_addr,(char*)server->h_addr,server->h_length);
 	serv_addr.sin_port = htons(80);
 
 	/* open connection */
