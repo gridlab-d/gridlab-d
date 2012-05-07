@@ -1375,6 +1375,12 @@ public: // iterators
 	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
 	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; }; 
+#define GL_BOOLEAN(X) // TODO
+#define GL_BITFLAG(X) // TODO
+
+inline void setbits(unsigned long &flags, unsigned int bits) { flags|=bits; }; 
+inline void clearbits(unsigned long &flags, unsigned int bits) { flags&=~bits; }; 
+inline bool hasbits(unsigned long flags, unsigned int bits) { return (flags&bits) ? true : false; };
 
 class gld_object {
 public:

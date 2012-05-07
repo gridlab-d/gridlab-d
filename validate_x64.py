@@ -135,7 +135,7 @@ def run_tests(argv):
 		#print("NOTICE:  Running \'"+xfile+"\'")
 		sys.stdout.flush()
 		start_time = time.time();
-		rv = subprocess.call(["gridlabd",xfile],stdout=outfile,stderr=errfile)
+		rv = subprocess.call(["gridlabd","-T","2",xfile],stdout=outfile,stderr=errfile)
 		end_time = time.time();
 		dt = end_time - start_time
 		outfile.close()
