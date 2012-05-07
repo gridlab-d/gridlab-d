@@ -1,6 +1,6 @@
 
 WORKDIR=..\third_party
-XERCES=xerces-c-src_2_8_0
+XERCES=xerces-c-3.1.1
 
 all: $(WORKDIR)\$(XERCES)\credits.txt
 	"$(VCTOOLSDIR)vcbuild.exe" /nologo /platform:$(PLATFORM) xerces-lib.vcproj $(CONFIG)
