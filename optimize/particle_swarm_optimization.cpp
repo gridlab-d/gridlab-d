@@ -36,10 +36,6 @@ particle_swarm_optimization::particle_swarm_optimization(MODULE *module)
 			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
-			PT_char1024, "variable1", PADDR(variable1), PT_DESCRIPTION, "First optimization decision variable",
-			PT_char1024, "variable2", PADDR(variable2), PT_DESCRIPTION, "Second optimization decision variable",
-			PT_char1024, "variable3", PADDR(variable3), PT_DESCRIPTION, "Third optimization decision variable",
-
 			
 			PT_double, "no_particles", PADDR(no_particles), PT_DESCRIPTION, "The number of agents (particles) in a swarm.", //this might not work if it isn't specified in input
 			PT_double, "C1", PADDR(C1), PT_DESCRIPTION, "Hookes’s coefficients", //
