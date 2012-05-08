@@ -25,11 +25,6 @@
 class particle_swarm_optimization {
 protected:
 	OBJECTIVEGOAL goal; // objective goal description
-	OPTIMIZERTYPE optimizer; //which type of optimizer to use
-	char1024 variable1; // first decision variable name
-	char1024 variable2; // second decision variable name
-	char1024 variable3; // second decision variable name
-
 	double no_particles; // The number of agents (particles) in a swarm
 	double max_iterations; //Total number of iterations
 	int gbest_index;
