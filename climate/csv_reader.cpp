@@ -131,13 +131,13 @@ int csv_reader::open(const char *file){
 				has_cols = 1;
 			}
 		} else {
-			int line_rv = read_line(line);
+			int line_rv = read_line(line, linenum);
 			if(0 == line_rv){
 				gl_error("csv_reader::open ~ data line read failure on line %i", linenum);
 				return 0;
 			} else if (1 == line_rv){ // good read
 				++sample_ct;
-			} else if (2 == line_rv){ // read went 'backwards', line discarded.
+			} else if (2 == line_rv){ // read went 'backwards' or was blank, line discarded.
 				;
 			}
 		}
@@ -299,7 +299,7 @@ int csv_reader::read_header(char *line){
 	return 1;
 }
 
-int csv_reader::read_line(char *line){
+int csv_reader::read_line(char *line, int linenum){
 	int done = 0;
 	int col = 0;
 	char buffer[1024];
@@ -351,7 +351,7 @@ int csv_reader::read_line(char *line){
 			 sample->minute * 60 +
 			 sample->second;
 		if(t1 >= t2){
-			gl_warning("csv_reader::read_line ~ sample does not advance in time and has been discarded");
+			gl_warning("csv_reader::read_line ~ sample on line %i does not advance in time and has been discarded", linenum);
 			delete sample;
 			return 2;
 		}
