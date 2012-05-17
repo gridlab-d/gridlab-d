@@ -1624,9 +1624,26 @@ CDECL int dllkill() { do_kill(NULL); }
 	T_CATCHALL(plc,X); }
 #define EXPORT_PLC(X) EXPORT_PLC_C(X,X)
 
+// TODO add other linkages as needed
+#define EXPORT_PRECOMMIT_C(X,C) EXPORT TIMESTAMP precommit_##X(OBJECT *obj, TIMESTAMP t1) \
+{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->precommit(t1) : TS_NEVER; } \
+	T_CATCHALL(C,precommit); }
+#define EXPORT_PRECOMMIT(X) EXPORT_PRECOMMIT_C(X,X)
+
+#define EXPORT_FINALIZE_C(X,C) EXPORT TIMESTAMP precommit_##X(OBJECT *obj) \
+{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->finalize() : TS_NEVER; } \
+	T_CATCHALL(C,finalize); }
+#define EXPORT_FINALIZE(X) EXPORT_FINALIZE_C(X,X)
+
+#define EXPORT_NOTIFY_C_P(X,C,P) EXPORT int notify_##X_##P(OBJECT *obj, char *value) \
+{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+	return my->notify_##P(value); \
+	} else return 0; } \
+	T_CATCHALL(X,notify_##P); return 1; }
+#define EXPORT_NOTIFY_PROP(X,P) EXPORT_NOTIFY_C_P(X,X,P)
+
 #endif
 
-// TODO add other linkages as needed
 
 /** @} **/
 #endif
