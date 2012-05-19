@@ -14,7 +14,9 @@ extern "C" test_schedule_xform_external : myfunction2@1 // inline code follows
 		return 0;
 	}	
 } // end inline code
-extern "C" extern_test : myfunction, myfunction1; // only first one is defined in test_extern_function (tests warning)
+
+// DPC: removed because validate.py does not handle such external dependencies well
+// extern "C" extern_test : myfunction, myfunction1; // only first one is defined in test_extern_function (tests warning)
 
 module residential {
 	implicit_enduses NONE;
