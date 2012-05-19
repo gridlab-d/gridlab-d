@@ -68,7 +68,7 @@ case "$host_os" in
 darwin*)
      export LIBTOOL=`which glibtool`
      export LIBTOOLIZE=`which glibtoolize`
-     GLRT_LDFLAGS="-bundle"
+     GLRT_LDFLAGS=""
      LIBEXT=.so
 	 march=""
      ;;
