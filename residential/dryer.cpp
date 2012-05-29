@@ -137,6 +137,8 @@ int dryer::create()
 	load.power_fraction = 1;
 	is_240 = true;
 
+	coil_power[0] = -1;
+
 	state = DRYER_STOPPED;
 	
 	energy_used = 0;	
