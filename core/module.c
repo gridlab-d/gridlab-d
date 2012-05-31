@@ -432,6 +432,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			{&c->isa,"isa",TRUE},
 			{&c->plc,"plc",TRUE},
 			{&c->recalc,"recalc",TRUE},
+			{&c->heartbeat,"heartbeat",TRUE},
 		};
 		int i;
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)

@@ -304,6 +304,7 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	obj->space = object_current_namespace();
 	obj->flags = OF_NONE;
 	obj->rng_state = randwarn(NULL);
+	obj->heartbeat = 0;
 
 	for (prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)))
 		property_create(prop,(void*)((char *)(obj+1)+(int64)(prop->addr)));
@@ -1367,6 +1368,11 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 		t2 = _object_sync(obj,(ts<(obj->valid_to>0?obj->valid_to:TS_NEVER)?ts:obj->valid_to),pass);	
 	} while (t2>0 && ts>(t2<0?-t2:t2) && t2<TS_NEVER);
 	return t2;
+}
+
+TIMESTAMP object_heartbeat(OBJECT *obj)
+{
+	return obj->oclass->heartbeat ? obj->oclass->heartbeat(obj) : TS_NEVER;
 }
 
 /** Initialize an object.  This should not be called until

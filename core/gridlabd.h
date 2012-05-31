@@ -1406,6 +1406,7 @@ public: // header read accessors (no locking)
 	inline NAMESPACE* get_space(void) { return my()->space; };
 	inline unsigned int get_lock(void) { return my()->lock; };
 	inline unsigned int get_rng_state(void) { return my()->rng_state; };
+	inline TIMESTAMP get_heartbeat(void) { return my()->heartbeat; };
 	inline unsigned long get_flags(unsigned long mask=0xffffffff) { return (my()->flags)&mask; };
 
 protected: // header write accessors (no locking)

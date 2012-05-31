@@ -624,9 +624,13 @@ static int init_by_deferral(){
 	return SUCCESS;
 }
 
+OBJECT **object_heartbeats = NULL;
+unsigned int n_object_heartbeats = 0;
+unsigned int max_object_heartbeats = 0;
+
 static STATUS init_all(void)
 {
-//	OBJECT *obj;
+	OBJECT *obj;
 	STATUS rv = SUCCESS;
 	output_verbose("initializing objects...");
 
@@ -656,6 +660,32 @@ static STATUS init_all(void)
 		default:
 			output_fatal("Unrecognized initialization mode");
 			rv = FAILED;
+	}
+
+	/* collect heartbeat objects */
+	for ( obj=object_get_first(); obj!=NULL ; obj=obj->next )
+	{
+		/* this is a heartbeat object */
+		if ( obj->heartbeat>0 )
+		{
+			/* need more space */
+			if ( n_object_heartbeats>=max_object_heartbeats )
+			{
+				OBJECT **bigger;
+				int size = ( max_object_heartbeats==0 ? 256 : (max_object_heartbeats*2) );
+				bigger = malloc(size);
+				if ( max_object_heartbeats>0 )
+				{
+					memcpy(bigger,object_heartbeats,max_object_heartbeats*sizeof(OBJECT));
+					free(object_heartbeats);
+				}
+				object_heartbeats = bigger;
+				n_object_heartbeats = max_object_heartbeats;
+			}
+
+			/* add this one */
+			object_heartbeats[n_object_heartbeats++] = obj;
+		}
 	}
 	
 	return rv;
@@ -806,6 +836,18 @@ STATUS t_sync_all(PASSCONFIG pass)
 	return SUCCESS;
 }
 
+TIMESTAMP sync_heartbeats(void)
+{
+	TIMESTAMP t1 = TS_NEVER;
+	unsigned int n;
+	for ( n=0 ; n<n_object_heartbeats ; n++ )
+	{
+		TIMESTAMP t2 = object_heartbeat(&object_heartbeats[n]);
+		if ( t2 < t1 ) t2 = t1;
+	}
+	return t1;
+}
+
 /* this function synchronizes all internal behaviors */
 TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
@@ -819,7 +861,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	st = transform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);
 	eu = enduse_syncall(t1);
 
-	t2 = TS_NEVER;
+	t2 = sync_heartbeats();
 	if ( sc<t2 ) t2 = sc;
 	if ( ls<t2 ) t2 = ls;
 	if ( st<t2 ) t2 = st;

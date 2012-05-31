@@ -99,6 +99,7 @@ struct s_class_list {
 	FUNCTIONADDR plc;
 	PASSCONFIG passconfig;
 	FUNCTIONADDR recalc;
+	FUNCTIONADDR heartbeat;
 	CLASS *parent;			/**< parent class from which properties should be inherited */
 	struct {
 		unsigned int lock;

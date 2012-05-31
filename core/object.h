@@ -73,6 +73,7 @@ typedef struct s_object_list {
 	NAMESPACE *space; /**< namespace of object */
 	unsigned int lock; /**< object lock */
 	unsigned int rng_state; /**< random number generator state */
+	TIMESTAMP heartbeat; /**< heartbeat call interval (in sim-seconds) */
 	uint32 flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 } OBJECT; /**< Object header structure */
@@ -349,6 +350,7 @@ void *object_remote_read(void *local, OBJECT *obj, PROPERTY *prop); /** access r
 void object_remote_write(void *local, OBJECT *obj, PROPERTY *prop); /** access remote object data */
 
 double object_get_part(void *x, char *name);
+TIMESTAMP object_heartbeat(OBJECT *obj);
 
 #ifdef __cplusplus
 }
