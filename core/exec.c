@@ -845,7 +845,9 @@ TIMESTAMP sync_heartbeats(void)
 		TIMESTAMP t2 = object_heartbeat(&object_heartbeats[n]);
 		if ( t2 < t1 ) t2 = t1;
 	}
-	return t1;
+
+	/* heartbeats are always soft updates */
+	return t1<TS_NEVER ? -t1 : TS_NEVER;
 }
 
 /* this function synchronizes all internal behaviors */
