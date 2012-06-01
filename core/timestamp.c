@@ -988,11 +988,15 @@ double timestamp_get_part(void *x, char *name)
 	return QNAN;
 }
 
+/** Compute the absolute timestamp (removes soft/hard time distinction)
+ **/
 TIMESTAMP absolute_timestamp(TIMESTAMP t)
 {
-	return (t==TS_NEVER) ? TS_NEVER : ( t<0 ? -t : t);
+	/* only valid soft times are converted */
+	return (t>=-TS_MAX && t<0 ? -t : t);
 }
-
+/** Determine which timestamp reflects the earliest time
+ **/
 TIMESTAMP earliest_timestamp(TIMESTAMP t, ...)
 {
 	TIMESTAMP t1 = t, t2;
