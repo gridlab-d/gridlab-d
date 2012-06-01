@@ -864,13 +864,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	eu = enduse_syncall(t1);
 
 	t2 = sync_heartbeats();
-	if ( sc<t2 ) t2 = sc;
-	if ( ls<t2 ) t2 = ls;
-	if ( st<t2 ) t2 = st;
-	if ( eu<t2 ) t2 = eu;
-	if ( rv<t2 ) t2 = rv;
-	if ( ci<t2 ) t2 = ci;
-	return t2;
+	return earliest_timestamp(ci,rv,sc,ls,st,eu,t2,NULL);
 }
 
 void exec_sleep(unsigned int usec)

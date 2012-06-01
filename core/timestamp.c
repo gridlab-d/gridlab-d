@@ -988,4 +988,28 @@ double timestamp_get_part(void *x, char *name)
 	return QNAN;
 }
 
+TIMESTAMP absolute_timestamp(TIMESTAMP t)
+{
+	return (t==TS_NEVER) ? TS_NEVER : ( t<0 ? -t : t);
+}
+
+TIMESTAMP earliest_timestamp(TIMESTAMP t, ...)
+{
+	TIMESTAMP t1 = t, t2;
+	TIMESTAMP at1 = absolute_timestamp(t1), at2;
+	va_list ptr;
+	va_start(ptr,t);
+	while ( (t2=va_arg(ptr,TIMESTAMP)) != 0 ) 
+	{
+		at2 = absolute_timestamp(t2);
+		if ( at2<at1 ) 
+		{
+			t1 = t2;
+			at1 = at2;
+		}
+	};
+	va_end(ptr);
+	return t1;
+}
+
 /**@}*/
