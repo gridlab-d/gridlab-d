@@ -184,6 +184,7 @@ static struct s_varmap {
 	{"module_compiler_flags", PT_set, &global_module_compiler_flags, PA_PUBLIC, "module compiler flags", mcf_keys},
 	{"init_max_defer", PT_int32, &global_init_max_defer, PA_REFERENCE, "deferred initialization limit"},
 	{"mt_analysis", PT_int32, &global_mt_analysis, PA_PUBLIC, "perform multithread profile optimization analysis"},
+	{"inline_block_size", PT_int32, &global_inline_block_size, PA_PUBLIC, "inline code block size"},
 	/* add new global variables here */
 };
 

@@ -218,10 +218,72 @@ static char *strip_right_white(char *b){
 }
 
 /* inline source code support */
-char code_block[65536] = "";
-char global_block[65536] = "";
-char init_block[65535] = "";
+char *code_block = NULL;
+char *global_block = NULL;
+char *init_block = NULL;
 int code_used = 0;
+
+int inline_code_init(void)
+{
+	if ( code_block==NULL )
+	{
+		code_block = malloc(global_inline_block_size);
+		if ( code_block==NULL ) {
+			output_error("code_block malloc failed (inline_block_size=%d)", global_inline_block_size);
+			/* TROUBLESHOOTING
+			   The memory allocation for the inline code block failed.
+			   Try freeing up memory or reducing the size of the inline blocks (inline_block_size global variable).
+			 */
+			return 0;
+		}
+	}
+	if ( global_block==NULL )
+	{
+		global_block = malloc(global_inline_block_size);
+		if ( global_block==NULL ) {
+			output_error("global_block malloc failed (inline_block_size=%d)", global_inline_block_size);
+			/* TROUBLESHOOTING
+			   The memory allocation for the inline global code block failed.
+			   Try freeing up memory or reducing the size of the inline blocks (inline_block_size global variable).
+			 */
+			return 0;
+		}
+	}
+	if ( init_block==NULL )
+	{
+		init_block = malloc(global_inline_block_size);
+		if ( init_block==NULL ) {
+			output_error("init_block malloc failed (inline_block_size=%d)", global_inline_block_size);
+			/* TROUBLESHOOTING
+			   The memory allocation for the inline init block failed.
+			   Try freeing up memory or reducing the size of the inline blocks (inline_block_size global variable).
+			 */
+			return 0;
+		}
+	}
+	return 1;
+}
+
+void inline_code_term(void)
+{
+	if ( code_block!=NULL )
+	{
+		free(code_block);
+		code_block = NULL;
+	}
+	if ( global_block!=NULL )
+	{
+		free(global_block);
+		global_block = NULL;
+	}
+	if ( init_block!=NULL )
+	{
+		free(init_block);
+		init_block = NULL;
+	}
+	return;
+}
+
 
 /* used to track which functions are included in runtime classes */
 #define FN_CREATE		0x0001
@@ -320,7 +382,7 @@ static int append_init(char* format,...)
 	vsprintf(code,format,ptr);
 	va_end(ptr);
 
-	if (strlen(init_block)+strlen(code)>sizeof(init_block))
+	if (strlen(init_block)+strlen(code)>global_inline_block_size)
 	{
 		output_fatal("insufficient buffer space to compile init code");
 		/*	TROUBLESHOOT
@@ -343,7 +405,7 @@ static int append_code(char* format,...)
 	vsprintf(code,format,ptr);
 	va_end(ptr);
 
-	if (strlen(code_block)+strlen(code)>sizeof(code_block))
+	if (strlen(code_block)+strlen(code)>global_inline_block_size)
 	{
 		output_fatal("insufficient buffer space to compile source code");
 		/*	TROUBLESHOOT
@@ -366,7 +428,7 @@ static int append_global(char* format,...)
 	vsprintf(code,format,ptr);
 	va_end(ptr);
 
-	if (strlen(global_block)+strlen(code)>sizeof(global_block))
+	if (strlen(global_block)+strlen(code)>global_inline_block_size)
 	{
 		output_fatal("insufficient buffer space to compile global code");
 		/*	TROUBLESHOOT
@@ -6123,6 +6185,8 @@ STATUS loadall(char *file){
 	static int loaded_files = 0;
 	STATUS load_status = FAILED;
 
+	if ( !inline_code_init() ) return FAILED;
+
 	if(old_obj_count > 1 && global_forbid_multiload){
 		output_error("loadall: only one file load is supported at this time.");
 		return FAILED; /* not what they expected--do not proceed */
@@ -6209,6 +6273,9 @@ STATUS loadall(char *file){
 //	}
 
 	calculate_trl();
+
+	/* destroy inline code buffers */
+	inline_code_term();
 
 	loaded_files++;
 	return load_status;

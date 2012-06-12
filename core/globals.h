@@ -247,6 +247,9 @@ GLOBAL MODULECOMPILEFLAGS global_module_compiler_flags INIT(MC_NONE); /** module
 
 /* multithread performance optimization analysis */
 GLOBAL unsigned int global_mt_analysis INIT(0); /**< perform multithread analysis (requires profiler) */
+
+/* inline code block size */
+GLOBAL unsigned int global_inline_block_size INIT(16*65536); /**< inline code block size */
 #ifdef __cplusplus
 }
 #endif
