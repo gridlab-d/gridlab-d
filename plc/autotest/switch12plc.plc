@@ -1,0 +1,25 @@
+BEGIN_DATA
+	ENUM(status) 
+END_DATA
+
+typedef enum{OPEN=0,CLOSED=1} STATUS;
+
+#define status DATA(STATUS,0)
+
+INIT 
+{
+	return 0;
+}
+
+CODE(dt,dev)
+{
+	static int tries=10;
+	if (dt>0 && tries--<0)
+		return NEVER;
+		
+	if (TIME%300==0)
+		status = (status==OPEN?CLOSED:OPEN);
+	return TIME%300 + 300;
+    
+}
+

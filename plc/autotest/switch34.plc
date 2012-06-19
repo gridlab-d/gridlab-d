@@ -1,0 +1,39 @@
+BEGIN_DATA
+	ENUM(status) 
+END_DATA
+
+typedef enum{OPEN=0,CLOSED=1} STATUS;
+
+#define status DATA(STATUS,0)
+
+INIT 
+{
+	return 0;
+}
+
+CODE(dt,dev)
+{
+	/* clock has advanced */
+	if (dt>0)
+	{
+		/* maximum 10 operations */
+		static int tries=10;
+		
+		/* tries limit reached */
+		if (tries--<0)
+		
+			/* never return */
+			return NEVER;
+			
+		/* 5 minute interval complete */
+		if (TIME%300==0)
+		
+			/* change status */
+			status = (status==OPEN?CLOSED:OPEN);
+	}
+	
+	/* next 5 min interval */
+	return TIME%300 + 300;
+    
+}
+
