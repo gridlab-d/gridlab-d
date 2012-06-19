@@ -1281,7 +1281,6 @@ STATUS exec_start(void)
 			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 
 		{
 			///printf("\n!!!!!!!!!!!!!!!!!!!!!New iteration started:!!!!!!!!!!!!!!!!!!!!!!!\n\n");
-			output_debug("iteration");
 			/* update the process table info */
 			sched_update(global_clock,MLS_RUNNING);
 
@@ -1289,7 +1288,6 @@ STATUS exec_start(void)
 			if ( global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER )
 				exec_mls_suspend();
 
-			output_debug("checkpoint");
 			do_checkpoint();
 
 			//printf("Iteration increased!\n\n");
@@ -1329,7 +1327,6 @@ STATUS exec_start(void)
 			///printf("global_clock=%d\n",global_clock);
 
 			/* this will cause */
-			output_debug("syncall_internals");
 			sync_d.step_to = syncall_internals(global_clock);
 			if(sync_d.step_to!=TS_NEVER && sync_d.step_to < global_clock){
 				// must be able to force reiterations for m/s mode.

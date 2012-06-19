@@ -1626,13 +1626,13 @@ CDECL int dllkill() { do_kill(NULL); }
 #define EXPORT_PLC(X) EXPORT_PLC_C(X,X)
 
 // TODO add other linkages as needed
-#define EXPORT_PRECOMMIT_C(X,C) EXPORT TIMESTAMP precommit_##X(OBJECT *obj, TIMESTAMP t1) \
-{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->precommit(t1) : TS_NEVER; } \
+#define EXPORT_PRECOMMIT_C(X,C) EXPORT int precommit_##X(OBJECT *obj, TIMESTAMP t1) \
+{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->precommit(t1) : 0; } \
 	T_CATCHALL(C,precommit); }
 #define EXPORT_PRECOMMIT(X) EXPORT_PRECOMMIT_C(X,X)
 
-#define EXPORT_FINALIZE_C(X,C) EXPORT TIMESTAMP precommit_##X(OBJECT *obj) \
-{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->finalize() : TS_NEVER; } \
+#define EXPORT_FINALIZE_C(X,C) EXPORT int finalize_##X(OBJECT *obj) \
+{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->finalize() : 0; } \
 	T_CATCHALL(C,finalize); }
 #define EXPORT_FINALIZE(X) EXPORT_FINALIZE_C(X,X)
 

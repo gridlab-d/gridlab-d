@@ -211,14 +211,22 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 } PROPERTYSPEC;
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *);
 uint32 property_size(PROPERTY *);
-uint32 property_size_by_types(PROPERTYTYPE);
+uint32 property_size_by_type(PROPERTYTYPE);
 size_t property_minimum_buffersize(PROPERTY *);
 int property_create(PROPERTY *, void *);
 bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, char *part);
 PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
 PROPERTYTYPE property_get_type(char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_PROPERTY_H
 

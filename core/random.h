@@ -61,6 +61,8 @@ extern "C" {
 }
 #endif
 
+#define RNF_INTEGRATE 0x0001 /**< RNG flag for integral number, e.g., random walk */
+
 typedef struct s_randomvar randomvar;
 struct s_randomvar {
 	double value;				/**< current value */
@@ -69,6 +71,7 @@ struct s_randomvar {
 	double a, b;				/**< RNG distribution parameters */
 	double low, high;			/**< RNG truncations limits */
 	unsigned int update_rate;	/**< RNG refresh rate in seconds */
+	unsigned int flags;			/**< RNG flags */
 	/* internal parameters */
 	randomvar *next;
 };

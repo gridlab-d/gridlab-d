@@ -1091,7 +1091,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 		char *param = token;
 		char *value = strchr(token,':');
 
-		/* isolate param and token and eliminte leading whitespaces */
+		/* isolate param and token and eliminate leading whitespaces */
 		while (*param!='\0' && (isspace(*param) || iscntrl(*param))) param++;		
 		if (value==NULL)
 			value="1";
@@ -1160,6 +1160,10 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 		{
 			var->state = atoi(value);
 		}
+		else if (strcmp(param,"integrate")==0)
+		{
+			var->flags |= RNF_INTEGRATE;
+		}
 		else if (strcmp(param,"")!=0)
 		{
 			output_error("convert_to_randomvar(string='%-.64s...', ...) parameter '%s' is not valid",string,param);
@@ -1194,7 +1198,11 @@ int randomvar_create(randomvar *var)
 int randomvar_update(randomvar *var)
 {
 	do {
-		var->value = pseudorandom_value(var->type,&(var->state),var->a,var->b);
+		double v = pseudorandom_value(var->type,&(var->state),var->a,var->b);
+		if ( var->flags&RNF_INTEGRATE )
+			var->value += v;
+		else
+			var->value = v;
 	} while ( var->low<var->high && !( var->low<var->value && var->value<var->high ) );
 	return 1;
 }
