@@ -9,9 +9,9 @@ typedef void (*SENDFN)(void *src,char *to,void *msg,unsigned int sz);
 typedef int (*RECVFN)(void *dst,char *from,void *data, unsigned int sz);
 #define INTEGER(N) {#N,DT_INTEGER,0},
 #define DOUBLE(N) {#N,DT_DOUBLE,0},
-#define ENUM(N) {#N,DT_ENUM,0),
-#define SET(N) {#N,DT_SET,0),
-#define BOOL(N) {#N,DT_BOOL,0),
+#define ENUM(N) {#N,DT_ENUM,0},
+#define SET(N) {#N,DT_SET,0},
+#define BOOL(N) {#N,DT_BOOL,0},
 #define END_DATA {0}};
 #define DATA(T,N) (*(T*)(data[N].addr))
 #define INIT int init(void)
