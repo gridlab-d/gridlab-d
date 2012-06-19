@@ -569,6 +569,22 @@
 				RelativePath=".\test\to.plc"
 				>
 			</File>
+			<Filter
+				Name="Autotest"
+				>
+				<File
+					RelativePath=".\autotest\switch12plc.plc"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\switch34.plc"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_feeder_plc.glm"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Runtime Files"
