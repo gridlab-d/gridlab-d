@@ -902,16 +902,110 @@ int convert_to_timestamp_stub(char *buffer, void *data, PROPERTY *prop){
 	Converts a \e double_array data type reference to a string.  
 	@return the number of character written to the string
  **/
-int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop){
-	int i = 0;
-	return 0;
+int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop)
+{
+	double_array *a = (double_array*)data;
+	unsigned int n,m;
+	unsigned int p = 0;
+	for ( m=0 ; m<a->m ; m++ )
+	{
+		for ( n=0 ; n<a->n ; n++ )
+		{
+			if ( a->x[n][m]!=NULL && isfinite(*(a->x[n][m])) )
+				p += sprintf(buffer+p,global_double_format,*(a->x[n][m]));
+			else
+				p += sprintf(buffer+p,"%s","NAN");
+			if ( n<a->n-1 ) strcpy(buffer+p++," ");
+		}
+		if ( m<a->m-1 ) strcpy(buffer+p++,";");
+	}
+	return p;
 }
 
 /** Convert to a \e double_array data type
 	Converts a string to a \e double_array data type property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_double_array(char *buffer, void *data, PROPERTY *prop){
+int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
+{
+	double_array *a=(double_array*)data;
+	unsigned n=0, m=0;
+	char *p = buffer;
+	
+	/* new array */
+	/* parse input */
+	for ( p=buffer ; *p!='\0' ; )
+	{
+		char value[256];
+		char objectname[64], propertyname[64];
+		while ( *p!='\0' && isspace(*p) ) p++; /* skip spaces */
+		if ( *p!='\0' && sscanf(p,"%s",value)==1 )
+		{
+
+			if ( *p==';' ) /* end row */
+			{
+				if ( m==0 )
+					a->n = n;
+				else if ( a->n!=n )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): row m=%d has an incorrect number of values (found %d, expected %d)", buffer,m,n,a->n);
+					return 0;
+				}
+				m++;
+				n=0;
+				p++;
+				continue;
+			}
+			else if ( strnicmp(p,"NAN",3)==0 ) /* NULL value */
+			{
+				if ( a->x[n][m]!=NULL )
+					free(a->x[n][m]);
+				a->x[n][m] = NULL;
+				n++;
+			}
+			else if ( isdigit(*p) || *p=='.' || *p=='-' || *p=='+' ) /* probably real value */
+			{
+				if ( a->x[n][m]==NULL)
+					a->x[n][m] = (double*)malloc(sizeof(double));
+				*(a->x[n][m]) = atof(p);
+				n++;
+			}
+			else if ( sscanf(value,"%[^.].%[^; \t]",objectname,propertyname)==2 ) /* object property */
+			{
+				OBJECT *obj = object_find_name(objectname);
+				PROPERTY *prop;
+				if ( obj==NULL )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d object '%s' not found", buffer,n,m,objectname);
+					return 0;
+				}
+				prop = object_get_property(obj,propertyname);
+				if ( prop==NULL )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d property '%s' not found in object '%s'", buffer,n,m,propertyname,objectname);
+					return 0;
+				}
+				if ( (a->x[n][m] = object_get_double(obj,prop))==NULL )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d property '%s' in object '%s' is not accessible", buffer,n,m,propertyname,objectname);
+					return 0;
+				}
+				n++;
+			}
+			else /* not a valid entry */
+			{
+				output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d is not valid (value='%10s')", buffer,n,m,p);
+				return 0;
+			}
+			if ( n==a->max || m==a->max ) goto TooBig;
+			while ( *p!='\0' && !isspace(*p) && *p!=';' ) p++; /* skip characters just parsed */
+		}
+	}
+	if ( a->n==0 ) a->n = n;	
+	a->m = m+1;
+	return 1;
+TooBig:
+	output_error("convert_to_double_array(char *buffer='%10s...',...): data exceeds maximum size of %d x %d array ", buffer,a->max,a->max);
 	return 0;
 }
 

@@ -51,6 +51,17 @@ typedef uint32 enumeration; /* enumerations (any one of a list of values) */
 typedef struct s_object_list* object; /* GridLAB objects */
 typedef double triplet[3];
 typedef complex triplex[3];
+typedef struct {
+	unsigned int n, m; /** n rows, m cols */
+	unsigned int max; /** current allocation size max x max */
+	double ***x; /** pointer to 2D array of pointers to double values */
+} double_array;
+typedef struct {
+	unsigned int n, m;
+	unsigned int max; /** current allocation size max x max */
+	complex ***x; /** pointer to 2D array of pointers to complex values */
+} complex_array;
+/* ADD NEW CORE TYPES HERE */
 
 #ifdef REAL4
 typedef float real; 
@@ -223,6 +234,14 @@ int property_create(PROPERTY *, void *);
 bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, char *part);
 PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
 PROPERTYTYPE property_get_type(char *name);
+
+/* double array */
+int double_array_create(double_array*a);
+double get_double_array_value(double_array*,unsigned int n, unsigned int m);
+void set_double_array_value(double_array*,unsigned int n, unsigned int m, double x);
+double *get_double_array_ref(double_array*,unsigned int n, unsigned int m);
+double double_array_get_part(void *x, char *name);
+
 
 #ifdef __cplusplus
 }

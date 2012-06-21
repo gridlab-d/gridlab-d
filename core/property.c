@@ -43,7 +43,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 	{"delegated", "string", (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
 	{"bool", "string", sizeof(unsigned int), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,NULL,{TCOPB(bool)},},
 	{"timestamp", "string", sizeof(int64), 24, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
-	{"double_array", "string", sizeof(double), 0, convert_from_double_array, convert_to_double_array},
+	{"double_array", "string", sizeof(double), 0, convert_from_double_array, convert_to_double_array,double_array_create,NULL,NULL,{TCNONE},double_array_get_part},
 	{"complex_array", "string", sizeof(complex), 0, convert_from_complex_array, convert_to_complex_array},
 	{"real", "string", sizeof(real), 24, convert_from_real, convert_to_real},
 	{"float", "string", sizeof(float), 24, convert_from_float, convert_to_float},
@@ -230,6 +230,60 @@ double complex_get_part(void *x, char *name)
 	if ( strcmp(name,"mag")==0) return complex_get_mag(*c);
 	if ( strcmp(name,"arg")==0) return complex_get_arg(*c);
 	if ( strcmp(name,"ang")==0) return (complex_get_arg(*c)*180/PI);
+	return QNAN;
+}
+
+/*********************************************************
+ * DOUBLE ARRAYS
+ *********************************************************/
+#define MAXDASZ 16
+int double_array_create(double_array*a)
+{
+	int n;
+	a->n = a->m = 0;
+	a->x = (double***)malloc(sizeof(double***)*MAXDASZ);
+	if ( a->x==NULL )
+		return 0;
+	for (n=0 ; n<MAXDASZ ; n++)
+	{
+		a->x[n] = (double**)malloc(sizeof(double**)*MAXDASZ);
+		if ( a->x[n]==NULL )
+			return 0;
+		memset(a->x[n],0,sizeof(double**)*MAXDASZ);
+	}
+	a->max = MAXDASZ;
+	return 1;
+}
+double get_double_array_value(double_array*a,unsigned int n, unsigned int m)
+{
+	if ( a->n>n && a->m>m )
+		return *(a->x[n][m]);
+	else
+		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+}
+void set_double_array_value(double_array*a,unsigned int n, unsigned int m, double x)
+{
+	if ( a->n>n && a->m>m )
+		*(a->x[n][m])=x;
+	else
+		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+}
+double *get_double_array_ref(double_array*a,unsigned int n, unsigned int m)
+{
+	if ( a->n>n && a->m>m )
+		return a->x[n][m];
+	else
+		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+}
+double double_array_get_part(void *x, char *name)
+{
+	int n,m;
+	if (sscanf(name,"%d.%d",&n,&m)==2)
+	{
+		double_array *a = (double_array*)x;
+		if ( n<a->n && m<a->m && a->x[n][m]!=NULL )
+			return *(a->x[n][m]);
+	}
 	return QNAN;
 }
 

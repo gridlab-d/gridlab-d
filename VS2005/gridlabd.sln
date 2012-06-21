@@ -103,6 +103,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "optimize", "..\optimize\opt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_extern_function", "..\core\test\test_extern_function\test_extern_function.vcproj", "{3AF2C433-FF0D-4B34-98DD-5DC5F4FCA9A5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "control", "..\control\control.vcproj", "{055F53BA-D011-4193-9AE7-7134580028A8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -494,6 +496,22 @@ Global
 		{3AF2C433-FF0D-4B34-98DD-5DC5F4FCA9A5}.Release|Win32.Build.0 = Release|Win32
 		{3AF2C433-FF0D-4B34-98DD-5DC5F4FCA9A5}.Release|x64.ActiveCfg = Release|x64
 		{3AF2C433-FF0D-4B34-98DD-5DC5F4FCA9A5}.Release|x64.Build.0 = Release|x64
+		{055F53BA-D011-4193-9AE7-7134580028A8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{055F53BA-D011-4193-9AE7-7134580028A8}.Debug|Win32.Build.0 = Debug|Win32
+		{055F53BA-D011-4193-9AE7-7134580028A8}.Debug|x64.ActiveCfg = Debug|x64
+		{055F53BA-D011-4193-9AE7-7134580028A8}.Debug|x64.Build.0 = Debug|x64
+		{055F53BA-D011-4193-9AE7-7134580028A8}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{055F53BA-D011-4193-9AE7-7134580028A8}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{055F53BA-D011-4193-9AE7-7134580028A8}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{055F53BA-D011-4193-9AE7-7134580028A8}.MatlabDebug|x64.Build.0 = Debug|x64
+		{055F53BA-D011-4193-9AE7-7134580028A8}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{055F53BA-D011-4193-9AE7-7134580028A8}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{055F53BA-D011-4193-9AE7-7134580028A8}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{055F53BA-D011-4193-9AE7-7134580028A8}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{055F53BA-D011-4193-9AE7-7134580028A8}.Release|Win32.ActiveCfg = Release|Win32
+		{055F53BA-D011-4193-9AE7-7134580028A8}.Release|Win32.Build.0 = Release|Win32
+		{055F53BA-D011-4193-9AE7-7134580028A8}.Release|x64.ActiveCfg = Release|x64
+		{055F53BA-D011-4193-9AE7-7134580028A8}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -2,6 +2,15 @@
 
 #ifndef _COMPARE_H
 
+#define TCNONE \
+	{TCOP_NOP,"",NULL},\
+	{TCOP_NOP,"",NULL},\
+	{TCOP_NOP,"",NULL},\
+	{TCOP_NOP,"",NULL},\
+	{TCOP_NOP,"",NULL},\
+	{TCOP_NOP,"",NULL},\
+	{TCOP_NOP,"",NULL},\
+	{TCOP_NOP,"",NULL}
 #define TCOPB(X) \
 	{TCOP_EQ,"==",compare_tc_##X##_eq}, \
 	{TCOP_NOP,"",NULL}, \
