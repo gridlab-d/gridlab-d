@@ -236,6 +236,7 @@ int inline_code_init(void)
 			 */
 			return 0;
 		}
+		memset(code_block,0,global_inline_block_size);
 	}
 	if ( global_block==NULL )
 	{
@@ -248,6 +249,7 @@ int inline_code_init(void)
 			 */
 			return 0;
 		}
+		memset(global_block,0,global_inline_block_size);
 	}
 	if ( init_block==NULL )
 	{
@@ -260,6 +262,7 @@ int inline_code_init(void)
 			 */
 			return 0;
 		}
+		memset(init_block,0,global_inline_block_size);
 	}
 	return 1;
 }
