@@ -67,13 +67,47 @@ public:
 	inline void set_m(unsigned int i) { m=i; };
 	inline unsigned int get_max(void) { return max; };
 	inline unsigned int set_max(unsigned int i) { max=i; /* TODO resize */ };
-	inline void grow_to(unsigned int c, unsigned int r) { if (m<=c) m=c+1; if (n<=r) n=r+1; };
-	inline bool is_valid(unsigned int c, unsigned int r) { return r<m && c<n; };
+	inline void grow_to(unsigned int c, unsigned int r) 
+	{ 
+		if (m<=c) m=c+1; 
+		if (n<=r) n=r+1; 
+	};
+	inline bool is_valid(unsigned int c, unsigned int r) { return r<n && c<m; };
 	inline bool is_nan(unsigned int c, unsigned int r) { return ! ( is_valid(c,r) && x[r][c]!=NULL && isfinite(*(x[r][c])) ); };
-	inline void clr_at(unsigned int c, unsigned int r) { if ( is_valid(c,r) ) { free(x[r][c]); x[r][c]=NULL; } };
+	inline void clr_at(unsigned int c, unsigned int r) { 
+		if ( is_valid(c,r) ) 
+		{ 
+			free(x[r][c]); x[r][c]=NULL; 
+		} 
+	};
 	inline double get_at(unsigned int c, unsigned int r) { return is_nan(c,r) ? QNAN : *(x[r][c]) ; };
-	inline void set_at(unsigned int c, unsigned int r, double v) { if ( is_valid(c,r) ) { if ( x[r][c]==NULL ) x[r][c]=(double*)malloc(sizeof(double)); else *(x[r][c]) = v; } } ;
-	inline void set_at(unsigned int c, unsigned int r, double *v) { if ( is_valid(c,r) ) { if ( v!=NULL && x[r][c]==NULL ) x[r][c]=(double*)malloc(sizeof(double)); else if (v==NULL && x[r][c]!=NULL) clr_at(c,r); else *(x[r][c]) = *v; } } ;
+	inline void set_at(unsigned int c, unsigned int r, double v) 
+	{ 
+		if ( is_valid(c,r) ) 
+		{ 
+			if ( x[r][c]==NULL ) 
+				x[r][c]=(double*)malloc(sizeof(double)); 
+			else 
+				*(x[r][c]) = v; 
+		} 
+	};
+	inline void set_at(unsigned int c, unsigned int r, double *v) 
+	{ 
+		if ( is_valid(c,r) ) 
+		{ 
+			if ( v==NULL ) 
+			{
+				if ( x[r][c]!=NULL ) 
+					clr_at(c,r);
+			}
+			else 
+			{
+				if ( x[r][c]==NULL ) 
+					x[r][c]=(double*)malloc(sizeof(double)); 
+				*(x[r][c]) = *v; 
+			}
+		} 
+	} ;
 };
 class complex_array {
 public:

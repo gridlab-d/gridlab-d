@@ -1000,15 +1000,11 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 				output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d is not valid (value='%10s')", buffer,n,m,p);
 				return 0;
 			}
-			if ( !a->is_valid(n,m) ) goto TooBig;
+			a->grow_to(n,m);
 			while ( *p!='\0' && !isspace(*p) && *p!=';' ) p++; /* skip characters just parsed */
 		}
 	}
-	a->grow_to(n,m);
 	return 1;
-TooBig:
-	output_error("convert_to_double_array(char *buffer='%10s...',...): data exceeds maximum size of %d x %d array ", buffer,a->get_max(),a->get_max());
-	return 0;
 }
 
 /** Convert from a \e complex_array data type

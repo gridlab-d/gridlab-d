@@ -864,7 +864,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	eu = enduse_syncall(t1);
 
 	t2 = sync_heartbeats();
-	return earliest_timestamp(ci,rv,sc,ls,st,eu,t2,NULL);
+	return earliest_timestamp(ci,rv,sc,ls,st,eu,t2,TS_ZERO);
 }
 
 void exec_sleep(unsigned int usec)
