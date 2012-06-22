@@ -51,16 +51,51 @@ typedef uint32 enumeration; /* enumerations (any one of a list of values) */
 typedef struct s_object_list* object; /* GridLAB objects */
 typedef double triplet[3];
 typedef complex triplex[3];
+
+#ifdef __cplusplus
+#include <math.h>
+
+class double_array {
+private:
+	unsigned int n, m; /** n rows, m cols */
+	unsigned int max; /** current allocation size max x max */
+	double ***x; /** pointer to 2D array of pointers to double values */
+public:
+	inline unsigned int get_n(void) { return n; };
+	inline void set_n(unsigned int i) { n=i; };
+	inline unsigned int get_m(void) { return m; };
+	inline void set_m(unsigned int i) { m=i; };
+	inline unsigned int get_max(void) { return max; };
+	inline unsigned int set_max(unsigned int i) { max=i; /* TODO resize */ };
+	inline void grow_to(unsigned int c, unsigned int r) { if (m<=c) m=c+1; if (n<=r) n=r+1; };
+	inline bool is_valid(unsigned int c, unsigned int r) { return r<m && c<n; };
+	inline bool is_nan(unsigned int c, unsigned int r) { return ! ( is_valid(c,r) && x[r][c]!=NULL && isfinite(*(x[r][c])) ); };
+	inline void clr_at(unsigned int c, unsigned int r) { if ( is_valid(c,r) ) { free(x[r][c]); x[r][c]=NULL; } };
+	inline double get_at(unsigned int c, unsigned int r) { return is_nan(c,r) ? QNAN : *(x[r][c]) ; };
+	inline void set_at(unsigned int c, unsigned int r, double v) { if ( is_valid(c,r) ) { if ( x[r][c]==NULL ) x[r][c]=(double*)malloc(sizeof(double)); else *(x[r][c]) = v; } } ;
+	inline void set_at(unsigned int c, unsigned int r, double *v) { if ( is_valid(c,r) ) { if ( v!=NULL && x[r][c]==NULL ) x[r][c]=(double*)malloc(sizeof(double)); else if (v==NULL && x[r][c]!=NULL) clr_at(c,r); else *(x[r][c]) = *v; } } ;
+};
+class complex_array {
+public:
+	unsigned int n, m;
+	unsigned int max; /** current allocation size max x max */
+	complex ***x; /** pointer to 2D array of pointers to complex values */
+};
+#else
 typedef struct {
+	/* KEEP THIS CONSISTENT WITH "class double_array" */
 	unsigned int n, m; /** n rows, m cols */
 	unsigned int max; /** current allocation size max x max */
 	double ***x; /** pointer to 2D array of pointers to double values */
 } double_array;
 typedef struct {
+	/* KEEP THIS CONSISTENT WITH "class complex_array" */
 	unsigned int n, m;
 	unsigned int max; /** current allocation size max x max */
 	complex ***x; /** pointer to 2D array of pointers to complex values */
 } complex_array;
+#endif
+
 /* ADD NEW CORE TYPES HERE */
 
 #ifdef REAL4

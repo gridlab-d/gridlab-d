@@ -907,17 +907,17 @@ int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop
 	double_array *a = (double_array*)data;
 	unsigned int n,m;
 	unsigned int p = 0;
-	for ( m=0 ; m<a->m ; m++ )
+	for ( m=0 ; m<a->get_m() ; m++ )
 	{
-		for ( n=0 ; n<a->n ; n++ )
+		for ( n=0 ; n<a->get_n() ; n++ )
 		{
-			if ( a->x[n][m]!=NULL && isfinite(*(a->x[n][m])) )
-				p += sprintf(buffer+p,global_double_format,*(a->x[n][m]));
-			else
+			if ( a->is_nan(n,m) )
 				p += sprintf(buffer+p,"%s","NAN");
-			if ( n<a->n-1 ) strcpy(buffer+p++," ");
+			else
+				p += sprintf(buffer+p,global_double_format,a->get_at(n,m));
+			if ( n<a->get_n()-1 ) strcpy(buffer+p++," ");
 		}
-		if ( m<a->m-1 ) strcpy(buffer+p++,";");
+		if ( m<a->get_m()-1 ) strcpy(buffer+p++,";");
 	}
 	return p;
 }
@@ -945,10 +945,13 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 			if ( *p==';' ) /* end row */
 			{
 				if ( m==0 )
-					a->n = n;
-				else if ( a->n!=n )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): row m=%d has an incorrect number of values (found %d, expected %d)", buffer,m,n,a->n);
+					a->grow_to(n,m);
+					a->set_n(n);
+				}
+				else if ( a->get_n()!=n )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): row m=%d has an incorrect number of values (found %d, expected %d)", buffer,m,n,a->get_n());
 					return 0;
 				}
 				m++;
@@ -958,16 +961,14 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 			}
 			else if ( strnicmp(p,"NAN",3)==0 ) /* NULL value */
 			{
-				if ( a->x[n][m]!=NULL )
-					free(a->x[n][m]);
-				a->x[n][m] = NULL;
+				a->grow_to(n,m);
+				a->clr_at(n,m);
 				n++;
 			}
 			else if ( isdigit(*p) || *p=='.' || *p=='-' || *p=='+' ) /* probably real value */
 			{
-				if ( a->x[n][m]==NULL)
-					a->x[n][m] = (double*)malloc(sizeof(double));
-				*(a->x[n][m]) = atof(p);
+				a->grow_to(n,m);
+				a->set_at(n,m,atof(p));
 				n++;
 			}
 			else if ( sscanf(value,"%[^.].%[^; \t]",objectname,propertyname)==2 ) /* object property */
@@ -985,7 +986,9 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 					output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d property '%s' not found in object '%s'", buffer,n,m,propertyname,objectname);
 					return 0;
 				}
-				if ( (a->x[n][m] = object_get_double(obj,prop))==NULL )
+				a->grow_to(n,m);
+				a->set_at(n,m,object_get_double(obj,prop));
+				if ( a->is_nan(n,m) )
 				{
 					output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d property '%s' in object '%s' is not accessible", buffer,n,m,propertyname,objectname);
 					return 0;
@@ -997,15 +1000,14 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 				output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d is not valid (value='%10s')", buffer,n,m,p);
 				return 0;
 			}
-			if ( n==a->max || m==a->max ) goto TooBig;
+			if ( !a->is_valid(n,m) ) goto TooBig;
 			while ( *p!='\0' && !isspace(*p) && *p!=';' ) p++; /* skip characters just parsed */
 		}
 	}
-	if ( a->n==0 ) a->n = n;	
-	a->m = m+1;
+	a->grow_to(n,m);
 	return 1;
 TooBig:
-	output_error("convert_to_double_array(char *buffer='%10s...',...): data exceeds maximum size of %d x %d array ", buffer,a->max,a->max);
+	output_error("convert_to_double_array(char *buffer='%10s...',...): data exceeds maximum size of %d x %d array ", buffer,a->get_max(),a->get_max());
 	return 0;
 }
 
