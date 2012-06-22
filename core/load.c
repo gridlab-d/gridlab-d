@@ -5102,6 +5102,27 @@ static int global_declaration(PARSER)
 		REJECT;
 }
 
+static int link_declaration(PARSER)
+{
+	START;
+	if ( WHITE,LITERAL("link") )
+	{
+		char path[1024];
+		if ( (WHITE,TERM(value(HERE,path,sizeof(path)))) && LITERAL(";") )
+		{
+			if ( !link_create(path) )
+			{
+				output_error_raw("%s(%d): unable to link '%s'", filename,linenum,path);
+				REJECT;
+			}
+		}
+		ACCEPT;
+		DONE;
+	}
+	else
+		REJECT;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 static int gridlabd_file(PARSER)
@@ -5121,6 +5142,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(gui(HERE)) {ACCEPT; DONE;}
 	OR if TERM(extern_block(HERE)) {ACCEPT; DONE; }
 	OR if TERM(global_declaration(HERE)) {ACCEPT; DONE; }
+	OR if TERM(link_declaration(HERE)) { ACCEPT; DONE; }
 	OR if (*(HERE)=='\0') {ACCEPT; DONE;}
 	else REJECT;
 	DONE;

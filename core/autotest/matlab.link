@@ -1,0 +1,40 @@
+# $Id$
+# 
+# Test matlab link control file
+#
+
+target matlab
+
+#
+# Specify the program executable to call
+#
+command c:\program files\Matlab\R2011a\bin\matlab.exe
+
+#
+# Share the clock
+# If none are listed, all global will be available
+#
+global clock
+
+#
+# Object filters
+# If none are listed, the entire object list is published
+#
+objects class=test
+
+#
+# Specify the function call 
+# This must return a timestamp
+#
+function mytest
+
+#
+# Specify the values to pass to the function 
+# If none are listed, only the sync time is passed
+#
+argument test.x
+argument test.y
+
+#
+# end of file
+#

@@ -39,6 +39,7 @@ gridlabd_bin_SOURCES = \
 	legal.c legal.h \
 	linkage.c linkage.h \
 	list.c list.h \
+	link.cpp link.h \
 	load.c load.h \
 	load_xml.cpp load_xml.h \
 	load_xml_handle.cpp load_xml_handle.h \

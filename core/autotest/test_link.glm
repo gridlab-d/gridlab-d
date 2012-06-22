@@ -1,0 +1,26 @@
+// $Id$
+//
+link matlab.link;
+
+clock {
+	starttime '2001-01-01 0:00:00';
+	stoptime '2001-01-02 0:00:00';
+}
+
+class test {
+	random x;
+	random y;
+	random z;
+}
+
+module tape;
+object test {
+	x "type:uniform(0,1); refresh:1min";
+	y "type:normal(0,1); refresh:1min";
+	z "type:normal(0,1); integrate; refresh:1min";
+	object recorder {
+		file "test_w.csv";
+		property "x,y,z";
+		interval 60;
+	};
+}

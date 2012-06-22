@@ -1,0 +1,144 @@
+
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow {
+	require_voltage_control TRUE;
+}
+module tape;
+
+object overhead_line_conductor {
+	name OLC100;
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor {
+	name OLC101;
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing {
+	name LS200;
+	distance_AB 2.5 in;
+	distance_BC 4.5 in;
+	distance_AC 7.0 in;
+	distance_AN 5.656854 in;
+	distance_BN 4.272002 in;
+	distance_CN 5.0 in;
+}
+
+object line_configuration {
+	name LC300;
+	conductor_A OLC100;
+	conductor_B OLC100;
+	conductor_C OLC100;
+	conductor_N OLC101;
+	spacing LS200;
+}
+
+object transformer_configuration {
+	name TC400;
+	connect_type 1;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object node {
+	name Node1;
+	phases "ABCN";
+	bustype SWING;
+	
+	voltage_A +12470.777+0.000j;
+	voltage_B -7000.889-2080.000j;
+	voltage_C -7000.889+2080.000j;
+     nominal_voltage 12470.777;
+
+
+}
+
+object overhead_line {
+    name Line12;
+	phases "ABCN";
+	from Node1;
+	to Node2;
+	length 2000;
+	configuration LC300;
+}
+
+object node {
+    name Node2;
+	phases "ABCN";
+	nominal_voltage 12470.777;
+}
+
+object transformer {
+	name xfrm1;
+	phases "ABCN";
+	from Node2;
+	to Node3;
+	configuration TC400;
+}
+
+object node {
+    name Node3;
+	phases "ABCN";
+}
+
+object switch {
+	name Switch34;
+	phases "ABCN";
+	from DummyNode4;
+	to Node4;
+	status CLOSED;
+     nominal_voltage 12470.777;
+
+}
+
+object node {
+	name DummyNode4;
+phases ABCN;
+nominal_voltage 4160.777;	
+
+
+}
+
+object overhead_line {
+	name Line34;
+	phases "ABCN";
+	from Node3;
+	to DummyNode4;
+	length 2000;
+	configuration LC300;
+}
+
+object load {
+    name Node4;
+	phases ABCN;
+	nominal_voltage 4160.777;	
+      
+}
+
+object recorder {
+	parent Node2;
+	property voltage_A,voltage_B,voltage_C;
+	interval 300;
+	file node2.csv;
+	limit 20;
+}
+
+object recorder {
+	parent Switch34;
+	property status;
+	interval 300;
+	file switch12.csv;
+	limit 20;
+}
+
