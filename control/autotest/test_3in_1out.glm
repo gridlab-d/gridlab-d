@@ -6,23 +6,19 @@ clock {
 	stoptime '2000-01-02 00:00:00 PST';
 }
 
-
 class test {
 	random x;
-	random y;
-	random z;
-	double w;
+	double u;
+	double y;
 };
 
 module tape;
 object test {
 	name test;
 	x "type:normal(0,1); integrate; refresh:1min";
-	y "type:normal(0,1); integrate; refresh:1min";
-	z "type:normal(0,1); integrate; refresh:1min";
 	object recorder {
 		file "test_w.csv";
-		property "x,y,z,w";
+		property "x,u,y";
 		interval 60;
 	};
 }
@@ -32,9 +28,9 @@ module control;
 object ss_model {
 	form OCF;
 	timestep 1 min;
-	Y "0.1 0.2 0.05";
-	U "0.25 0.6 0.15";
-	x "0 0 0";
-	u "test.x test.y test.z";
-	y "test.w";
+	Y "1 1";
+	U "1 1";
+	x "0 0";
+	u "test.x test.u";
+	y "test.y";
 }

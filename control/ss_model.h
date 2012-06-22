@@ -30,6 +30,8 @@ public:
 	GL_STRING(char1024,C);
 	GL_STRING(char1024,D);
 
+	GL_STRUCT(double_array,Q);
+
 private:
 	struct s_dimensions {
 		unsigned int n; // size of x
