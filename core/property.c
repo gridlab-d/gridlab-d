@@ -236,22 +236,15 @@ double complex_get_part(void *x, char *name)
 /*********************************************************
  * DOUBLE ARRAYS
  *********************************************************/
-#define MAXDASZ 16
 int double_array_create(double_array*a)
 {
 	int n;
 	a->n = a->m = 0;
-	a->x = (double***)malloc(sizeof(double***)*MAXDASZ);
+	a->max = 1;
+	a->x = (double***)malloc(sizeof(double***)*a->max);
 	if ( a->x==NULL )
 		return 0;
-	for (n=0 ; n<MAXDASZ ; n++)
-	{
-		a->x[n] = (double**)malloc(sizeof(double**)*MAXDASZ);
-		if ( a->x[n]==NULL )
-			return 0;
-		memset(a->x[n],0,sizeof(double**)*MAXDASZ);
-	}
-	a->max = MAXDASZ;
+	memset(a->x,0,sizeof(double***)*a->max);
 	return 1;
 }
 double get_double_array_value(double_array*a,unsigned int n, unsigned int m)

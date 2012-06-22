@@ -944,16 +944,6 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 
 			if ( *p==';' ) /* end row */
 			{
-				if ( m==0 )
-				{
-					a->grow_to(n,m);
-					a->set_n(n);
-				}
-				else if ( a->get_n()!=n )
-				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): row m=%d has an incorrect number of values (found %d, expected %d)", buffer,m,n,a->get_n());
-					return 0;
-				}
 				m++;
 				n=0;
 				p++;

@@ -60,21 +60,56 @@ private:
 	unsigned int n, m; /** n rows, m cols */
 	unsigned int max; /** current allocation size max x max */
 	double ***x; /** pointer to 2D array of pointers to double values */
+	inline void set_n(unsigned int i) { n=i; };
+	inline void set_m(unsigned int i) { m=i; };
 public:
 	inline unsigned int get_n(void) { return n; };
-	inline void set_n(unsigned int i) { n=i; };
 	inline unsigned int get_m(void) { return m; };
-	inline void set_m(unsigned int i) { m=i; };
 	inline unsigned int get_max(void) { return max; };
-	inline unsigned int set_max(unsigned int i) { max=i; /* TODO resize */ };
+	inline void set_max(unsigned int size) 
+	{
+		if ( size<=max ) throw "cannot shrink double_array";
+		unsigned int r;
+		double ***z = (double***)malloc(sizeof(double***)*size);
+		// create new rows
+		for ( r=0 ; r<max ; r++ )
+		{
+			if ( x[r]!=NULL )
+			{
+				double **y = (double**)malloc(sizeof(double**)*size);
+				if ( y==NULL ) throw "unable to expand double_array";
+				memcpy(y,x[r],sizeof(double**)*max);
+				memset(y+max,0,sizeof(double**)*(size-max));
+				free(x[r]);
+				z[r] = y;
+			}
+			else
+				z[r] = NULL;
+		}
+		memset(z+max,0,sizeof(double***)*(size-max));
+		free(x);
+		x = z;
+		max=size; /* TODO resize */ 
+	};
 	inline void grow_to(unsigned int c, unsigned int r) 
 	{ 
+		if ( c>=max || r>=max ) set_max(max*2);
+		// add rows
+		while ( n<=r ) 
+		{
+			if ( x[n]==NULL ) 
+			{
+				x[n] = (double**)malloc(sizeof(double**)*max);
+				memset(x[n],0,sizeof(double**)*max);
+			}
+			n++;
+		}
 		if (m<=c) m=c+1; 
-		if (n<=r) n=r+1; 
 	};
 	inline bool is_valid(unsigned int c, unsigned int r) { return r<n && c<m; };
 	inline bool is_nan(unsigned int c, unsigned int r) { return ! ( is_valid(c,r) && x[r][c]!=NULL && isfinite(*(x[r][c])) ); };
-	inline void clr_at(unsigned int c, unsigned int r) { 
+	inline void clr_at(unsigned int c, unsigned int r) 
+	{ 
 		if ( is_valid(c,r) ) 
 		{ 
 			free(x[r][c]); x[r][c]=NULL; 
