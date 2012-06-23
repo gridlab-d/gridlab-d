@@ -6,58 +6,96 @@
 #include "output.h"
 #include "find.h"
 #include "link.h"
+#include "platform.h"
+
+#ifdef WIN32
+#define PREFIX ""
+#define DLEXT "dll"
+#else
+#define PREFIX "lib"
+#define DLEXT "so"
+#endif
 
 typedef struct s_linklist {
 	void *ptr;
 	struct s_linklist *next;
 } LINKLIST;
 
-// returns the next head of the list to which the item was added
-LINKLIST *list_add(LINKLIST*lst,void*val)
-{
-	LINKLIST *item = new LINKLIST;
-	item->next = lst;
-	item->ptr = val;
-	return item;
-}
-
-typedef enum { 
-	LT_NONE=0, 
-	LT_MATLAB, 
-	// TODO: add other targets here
-} LINKTARGET;
-
 class link {
 private:
 	LINKLIST *globals;
 	LINKLIST *objects;
 	char command[1024];
-	union {
-		struct {
-			char function[1024];
-			LINKLIST *arguments;
-		} matlab;
-	} specs;
+	char function[1024];
+	LINKLIST *arguments;
+
 private:
-	LINKTARGET target; ///< specify which target app
-	char cmd[1024]; ///< command to start target app
+	void *handle;
+	bool (*settag)(char *,char*);
+	bool (*init)(void);
+	TIMESTAMP (*sync)(TIMESTAMP t0);
+	bool (*term)(void);
+
+private:
 	class link *next; ///< pointer to next link target
+	static class link *first; ///< pointer for link target
+
+public:
+	inline static class link *get_first() { return first; }
+	inline class link *get_next() { return next; };
+
 public:
 	link(char *file);
 	~link(void);
+
+private:
+	void add_global(void *var);
+	void add_object(void *obj);
+	void set_command(char *cmd);
+	void set_function(char *cmd);
+	void add_argument(char *arg);
+
 private:
 	bool set_target(char *data);
 
-	// MATLAB
-	bool matlab_tag(char *tag, char *data);
-	bool matlab_init(void);
 	TIMESTAMP matlab_sync(TIMESTAMP t0);
 	
 	// TODO: add other target handlers here
 };
 
-static link *linklist = NULL;
+// MATLAB
+extern "C" {
+	bool matlab_tag(char *tag, char *data);
+	bool matlab_init(void);
+}
 
+link *link::first = NULL;
+
+void link::add_global(void*val)
+{
+	LINKLIST *item = new LINKLIST;
+	item->next = globals;
+	item->ptr = val;
+	globals = item;
+}
+
+void link::add_object(void*val)
+{
+	LINKLIST *item = new LINKLIST;
+	item->next = objects;
+	item->ptr = val;
+	objects = item;
+}
+
+void link::add_argument(char*val)
+{
+	LINKLIST *item = new LINKLIST;
+	item->next = arguments;
+	item->ptr = val;
+	arguments = item;
+}
+
+/* create a link module */
 int link_create(char *file)
 {
 	try {
@@ -76,8 +114,13 @@ int link_create(char *file)
 	}
 }
 
+/* initialize modules */
 int link_init(void)
 {
+	link *mod;
+	for ( mod=link::get_first() ; mod!=NULL ; mod=mod->get_next() )
+	{
+	}
 	return 1;
 }
 
@@ -87,10 +130,17 @@ TIMESTAMP link_sync(TIMESTAMP t0)
 }
 
 link::link(char *filename)
-: target(LT_NONE)
 {
 	globals = NULL;
 	objects = NULL;
+	arguments = NULL;
+	memset(command,0,sizeof(command));
+	memset(function,0,sizeof(function));
+	handle = NULL;
+	settag = NULL;
+	init = NULL;
+	sync = NULL;
+	term = NULL;
 
 	FILE *fp = fopen(filename,"r");
 	if ( fp==NULL )
@@ -107,87 +157,89 @@ link::link(char *filename)
 		if ( sscanf(line,"%s %[^\n]",tag,data)==2 )
 		{
 			output_debug("%s(%d): %s %s", filename, linenum, tag,data);
-			if ( strcmp(tag,"global")==0 )
+			if ( settag!=NULL )
 			{
-				GLOBALVAR *var = global_find(data);
-				if ( var )
-					globals = list_add(globals,var);
-				else
-					output_error("%s(%d): global variable '%s' not found", filename, linenum, data);
-			}
-			else if ( strcmp(tag,"objects")==0 )
-			{
-				char *find = (char*)malloc(strlen(data)+1);
-				strcpy(find,data);
-				objects = list_add(objects,data);
-			}
-			else if ( target==LT_MATLAB )
-			{
-				if ( !matlab_tag(tag,data) )
+				if ( strcmp(tag,"global")==0 )
+				{
+					GLOBALVAR *var = global_find(data);
+					if ( var )
+						add_global(var);
+					else
+						output_error("%s(%d): global variable '%s' not found", filename, linenum, data);
+				}
+				else if ( strcmp(tag,"objects")==0 )
+				{
+					char *find = (char*)malloc(strlen(data)+1);
+					strcpy(find,data);
+					add_object(find);
+				}
+				else if ( strcmp(tag,"command")==0 )
+				{
+					strcpy(command,data);
+				}
+				else if ( strcmp(tag,"function")==0 )
+				{
+					strcpy(function,data);
+				}
+				else if ( strcmp(tag,"argument")==0 )
+				{
+					// TODO link arg data
+					char *arg = (char*)malloc(strlen(data)+1);
+					strcpy(arg,data);
+					add_argument(arg);
+				}
+				else if ( !(*settag)(tag,data) )
 					output_error("%s(%d): tag '%s' not accepted", filename, linenum, tag);
 			}
-			// TODO: add other targets here
 			else if ( strcmp(tag,"target")==0)
 			{
 				if ( !set_target(data) )
 					output_error("%s(%d): target '%s' is not valid", filename, linenum, data);
 			}
 			else
-				output_warning("%s(%d): tag '%s' cannot be processed until tag 'target' is given", filename, linenum, tag);
+				output_warning("%s(%d): tag '%s' cannot be processed until target module is loaded", filename, linenum, tag);
 		}
 	}
 
 	fclose(fp);
 
 	// append to link list
-	this->next = linklist;
-	linklist = this;
+	next = first;
+	first = this;
 
 	output_verbose("link '%s' ok", filename);
 }
 
 bool link::set_target(char *data)
 {
-	if ( strcmp(data,"matlab")==0 )
+	char libname[1024];
+	char path[1024];
+	sprintf(libname,"%sglx%s.%s",PREFIX,data,DLEXT);
+	if ( find_file(libname,NULL,2,path,sizeof(path))!=NULL )
 	{
-		target=LT_MATLAB;
-		return 1;
+		settag = &matlab_tag;
+		return true;
 	}
-	return 0;
+	else
+	{
+		output_error("target library '%s' not found", libname);
+		return false;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // MATLAB LINKAGE
 ///////////////////////////////////////////////////////////////////////////////
 
-bool link::matlab_tag(char *tag, char *data)
+#include <engine.h>
+
+bool matlab_tag(char *tag, char *data)
 {
-	if ( strcmp(tag,"command")==0 )
-	{
-		strcpy(command,data);
-		return true;
-	}
-	if ( strcmp(tag,"function")==0 )
-	{
-		strcpy(specs.matlab.function,data);
-		return true;
-	}
-	else if ( strcmp(tag,"argument")==0 )
-	{
-		// TODO link arg data
-		char *arg = (char*)malloc(strlen(data)+1);
-		strcpy(arg,data);
-		specs.matlab.arguments = list_add(specs.matlab.arguments,arg);
-		return true;
-	}
-	else
-	{
-		output_error("tag '%s' not valid for matlab target", tag);
-		return false;
-	}
+	output_error("tag '%s' not valid for matlab target", tag);
+	return false;
 }
 
-bool link::matlab_init()
+bool matlab_init()
 {
 	char data[] = "TODO";
 	char objname[256], propertyname[64];
