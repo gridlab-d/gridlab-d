@@ -170,7 +170,7 @@ Retry:
 	if (result[0]=='#' || result[0]=='\n') /* ignore comments and blank lines */
 		goto Retry;
 
-	if(sscanf(result, "%[^,],%[^\n\r]", tbuf, valbuf) == 2){
+	if(sscanf(result, "%[^,],%[^\n\r;]", tbuf, valbuf) == 2){
 		trim(tbuf, timebuf);
 		trim(valbuf, value);
 		if (sscanf(timebuf,"%d-%d-%d %d:%d:%d %4s",&Y,&m,&d,&H,&M,&S, tz)==7){
