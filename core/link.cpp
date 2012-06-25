@@ -1,98 +1,76 @@
 /* $Id$
  */
 
-#include <stdio.h>
 #include "gridlabd.h"
+#include <stdio.h>
+#include "platform.h"
 #include "output.h"
 #include "find.h"
+#include "timestamp.h"
+
 #include "link.h"
-#include "platform.h"
 
-#ifdef WIN32
-#define PREFIX ""
-#define DLEXT "dll"
-#else
-#define PREFIX "lib"
-#define DLEXT "so"
+#if defined WIN32 && ! defined MINGW
+	#define _WIN32_WINNT 0x0400
+	#undef int64 // wtypes.h also used int64
+	#include <windows.h>
+	#define int64 _int64
+	#define PREFIX ""
+	#ifndef DLEXT
+		#define DLEXT ".dll"
+	#endif
+	#define DLLOAD(P) LoadLibrary(P)
+	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
+	#define snprintf _snprintf
+#else /* ANSI */
+#ifndef MINGW
+	#include "dlfcn.h"
 #endif
-
-typedef struct s_linklist {
-	void *ptr;
-	struct s_linklist *next;
-} LINKLIST;
-
-class link {
-private:
-	LINKLIST *globals;
-	LINKLIST *objects;
-	char command[1024];
-	char function[1024];
-	LINKLIST *arguments;
-
-private:
-	void *handle;
-	bool (*settag)(char *,char*);
-	bool (*init)(void);
-	TIMESTAMP (*sync)(TIMESTAMP t0);
-	bool (*term)(void);
-
-private:
-	class link *next; ///< pointer to next link target
-	static class link *first; ///< pointer for link target
-
-public:
-	inline static class link *get_first() { return first; }
-	inline class link *get_next() { return next; };
-
-public:
-	link(char *file);
-	~link(void);
-
-private:
-	void add_global(void *var);
-	void add_object(void *obj);
-	void set_command(char *cmd);
-	void set_function(char *cmd);
-	void add_argument(char *arg);
-
-private:
-	bool set_target(char *data);
-
-	TIMESTAMP matlab_sync(TIMESTAMP t0);
-	
-	// TODO: add other target handlers here
-};
-
-// MATLAB
-extern "C" {
-	bool matlab_tag(char *tag, char *data);
-	bool matlab_init(void);
-}
+	#define PREFIX "lib"
+	#ifndef DLEXT
+		#define DLEXT ".so"
+	#endif
+#ifndef MINGW
+	#define DLLOAD(P) dlopen(P,RTLD_LAZY)
+#else
+	#define DLLOAD(P) dlopen(P)
+#endif
+	#define DLSYM(H,S) dlsym(H,S)
+#endif
 
 link *link::first = NULL;
 
-void link::add_global(void*val)
+LINKLIST * link::add_global(char *name)
 {
 	LINKLIST *item = new LINKLIST;
 	item->next = globals;
-	item->ptr = val;
+	item->data = NULL;
+	item->name = new char(strlen(name)+1);
+	strcpy(item->name,name);
 	globals = item;
+	return item;
 }
 
-void link::add_object(void*val)
+LINKLIST * link::add_object(char *name)
 {
 	LINKLIST *item = new LINKLIST;
 	item->next = objects;
-	item->ptr = val;
+	item->data = NULL;
+	item->name = new char(strlen(name)+1);
+	strcpy(item->name,name);
 	objects = item;
+	return item;
 }
 
-void link::add_argument(char*val)
+LINKLIST * link::add_argument(char *name)
 {
 	LINKLIST *item = new LINKLIST;
 	item->next = arguments;
-	item->ptr = val;
+	item->data = NULL;
+	item->name = new char(strlen(name)+1);
+	strcpy(item->name,name);
 	arguments = item;
+	return item;
 }
 
 /* create a link module */
@@ -115,22 +93,75 @@ int link_create(char *file)
 }
 
 /* initialize modules */
-int link_init(void)
+int link_initall(void)
 {
 	link *mod;
 	for ( mod=link::get_first() ; mod!=NULL ; mod=mod->get_next() )
 	{
+		// set default global list (if needed)
+		if ( mod->get_globals()==NULL )
+		{
+			GLOBALVAR *var = NULL;
+			while ( var=global_getnext(var) )
+			{
+				LINKLIST *item = mod->add_global(var->prop->name);
+				item->data = (void*)var;
+			}
+		}
+		else
+		{
+			LINKLIST *item;
+
+			// link global variables
+			for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
+			{
+				item->data = (void*)global_find(item->name);
+				if ( item->data==NULL)
+					output_error("global '%s' is not found", item->name);
+			}
+		}
+
+		// link objects
+
+		// link arguments
+
+		// initialize link module
+		if ( !mod->do_init() )
+		{
+			link_termall();
+			return 0;
+		}
 	}
 	return 1;
 }
 
-TIMESTAMP link_sync(TIMESTAMP t0)
+TIMESTAMP link_syncall(TIMESTAMP t0)
 {
-	return TS_NEVER;
+	TIMESTAMP t1 = TS_NEVER;
+	link *mod;
+	for ( mod=link::get_first() ; mod!=NULL ; mod=mod->get_next() )
+	{
+		TIMESTAMP t2 = mod->do_sync(t0);
+		if ( absolute_timestamp(t2)<absolute_timestamp(t1) ) t1 = t2;
+	}
+	return t1;
 }
+
+int link_termall()
+{
+	bool ok = true;
+	link *mod;
+	for ( mod=link::get_first() ; mod!=NULL ; mod=mod->get_next() )
+	{
+		if ( !mod->do_term() ) ok = false;
+	}
+	return ok;
+}
+
 
 link::link(char *filename)
 {
+	bool ok = true;
 	globals = NULL;
 	objects = NULL;
 	arguments = NULL;
@@ -161,40 +192,34 @@ link::link(char *filename)
 			{
 				if ( strcmp(tag,"global")==0 )
 				{
-					GLOBALVAR *var = global_find(data);
-					if ( var )
-						add_global(var);
-					else
-						output_error("%s(%d): global variable '%s' not found", filename, linenum, data);
+					add_global(data);
 				}
 				else if ( strcmp(tag,"objects")==0 )
 				{
-					char *find = (char*)malloc(strlen(data)+1);
-					strcpy(find,data);
-					add_object(find);
+					add_object(data);
 				}
 				else if ( strcmp(tag,"command")==0 )
 				{
-					strcpy(command,data);
+					set_command(data);
 				}
 				else if ( strcmp(tag,"function")==0 )
 				{
-					strcpy(function,data);
+					set_function(data);
 				}
 				else if ( strcmp(tag,"argument")==0 )
 				{
-					// TODO link arg data
-					char *arg = (char*)malloc(strlen(data)+1);
-					strcpy(arg,data);
-					add_argument(arg);
+					add_argument(data);
 				}
-				else if ( !(*settag)(tag,data) )
+				else if ( !(*settag)(this,tag,data) )
 					output_error("%s(%d): tag '%s' not accepted", filename, linenum, tag);
 			}
 			else if ( strcmp(tag,"target")==0)
 			{
 				if ( !set_target(data) )
+				{
 					output_error("%s(%d): target '%s' is not valid", filename, linenum, data);
+					ok = false;
+				}
 			}
 			else
 				output_warning("%s(%d): tag '%s' cannot be processed until target module is loaded", filename, linenum, tag);
@@ -207,62 +232,43 @@ link::link(char *filename)
 	next = first;
 	first = this;
 
-	output_verbose("link '%s' ok", filename);
+	if ( ok )
+		output_verbose("link '%s' ok", filename);
+	else
+		throw "cannot establish link";
 }
 
-bool link::set_target(char *data)
+bool link::set_target(char *name)
 {
 	char libname[1024];
 	char path[1024];
-	sprintf(libname,"%sglx%s.%s",PREFIX,data,DLEXT);
+	sprintf(libname,PREFIX "glx%s" DLEXT,name);
 	if ( find_file(libname,NULL,2,path,sizeof(path))!=NULL )
 	{
-		settag = &matlab_tag;
+		// load library
+		handle = DLLOAD(path);
+		if ( handle==NULL )
+		{
+			output_error("unable to load '%s' for target '%s'", path,name);
+			return false;
+		}
+
+		// attach functions
+		settag = (bool(*)(link*,char*,char*))DLSYM(handle,"settag");
+		init = (bool(*)(link*))DLSYM(handle,"init");
+		sync = (TIMESTAMP(*)(link*,TIMESTAMP))DLSYM(handle,"sync");
+		term = (bool(*)(link*))DLSYM(handle,"term");
+
+		// call create routine
+		bool (*create)(link*,CALLBACKS*) = (bool(*)(link*,CALLBACKS*))DLSYM(handle,"create");
+		create(this,module_callbacks());
+
 		return true;
 	}
 	else
 	{
-		output_error("target library '%s' not found", libname);
+		output_error("library '%s' for target '%s' not found", libname, name);
 		return false;
 	}
 }
-
-///////////////////////////////////////////////////////////////////////////////
-// MATLAB LINKAGE
-///////////////////////////////////////////////////////////////////////////////
-
-#include <engine.h>
-
-bool matlab_tag(char *tag, char *data)
-{
-	output_error("tag '%s' not valid for matlab target", tag);
-	return false;
-}
-
-bool matlab_init()
-{
-	char data[] = "TODO";
-	char objname[256], propertyname[64];
-	if ( sscanf(data,"%[^.].%s",objname,propertyname)!=2 )
-	{
-		output_error("argument '%s' is not a valid object.property specification", data);
-		return false;
-	}
-
-	OBJECT *obj = object_find_name(objname);
-	if ( obj==NULL )
-	{
-		output_error("object '%s' not found", objname);
-		return false;
-	}
-	
-	PROPERTY *prop = class_find_property(obj->oclass,propertyname);
-	if ( prop==NULL )
-	{
-		output_error("property '%s' not found in object '%s'", propertyname, objname);
-		return false;
-	}
-	return true;
-}
-// TODO: add other tag handler implementations here
 

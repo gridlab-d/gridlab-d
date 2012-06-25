@@ -198,6 +198,7 @@ static CALLBACKS callbacks = {
 	{forecast_create, forecast_find, forecast_read, forecast_save},
 	{object_remote_read, object_remote_write, global_remote_read, global_remote_write},
 };
+CALLBACKS *module_callbacks(void) { return &callbacks; }
 
 MODULE *first_module = NULL;
 MODULE *last_module = NULL;

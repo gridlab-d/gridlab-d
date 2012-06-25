@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="glxmatlab"
-	ProjectGUID="{6D36D21D-E1ED-4AA6-8D91-C7C4FBADE851}"
+	ProjectGUID="{48DEDABB-85C9-4417-9A60-F74C30991D4D}"
 	RootNamespace="glxmatlab"
 	>
 	<Platforms>
@@ -95,7 +95,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="..\..\..\VS2005\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="2"
@@ -119,7 +119,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;"
+				AdditionalIncludeDirectories="..\..\..\core;c:\program files\matlab\r2011a\extern\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -139,8 +139,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="libeng.lib libmx.lib"
+				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="$(OutDir)"
+				AdditionalLibraryDirectories="$(OutDir);&quot;c:\program files\matlab\r2011a\extern\lib\win64\microsoft\&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"

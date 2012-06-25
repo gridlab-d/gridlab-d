@@ -85,6 +85,7 @@ extern "C" {
 
 	int module_compile(char *name, char *code, int flags, char *prefix, char *file, int line);
 	void module_profiles(void);
+	CALLBACKS *module_callbacks(void);
 
 #ifdef __cplusplus
 }

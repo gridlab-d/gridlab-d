@@ -85,6 +85,7 @@
 #include "instance.h"
 #include "linkage.h"
 #include "test.h"
+#include "link.h"
 
 #include "pthread.h"
 
@@ -687,6 +688,9 @@ static STATUS init_all(void)
 			object_heartbeats[n_object_heartbeats++] = obj;
 		}
 	}
+
+	/* initialize external links */
+	link_initall();
 	
 	return rv;
 }
@@ -853,7 +857,10 @@ TIMESTAMP sync_heartbeats(void)
 /* this function synchronizes all internal behaviors */
 TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
-	TIMESTAMP ci, rv, sc, ls, st, eu, t2;
+	TIMESTAMP ci, rv, sc, ls, st, eu, t2, tx;
+
+	/* external link must be first */
+	tx = link_syncall(t1);
 
 	/* @todo add other internal syncs here */
 	ci = instance_syncall(t1);	
@@ -864,7 +871,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	eu = enduse_syncall(t1);
 
 	t2 = sync_heartbeats();
-	return earliest_timestamp(ci,rv,sc,ls,st,eu,t2,TS_ZERO);
+	return earliest_timestamp(ci,rv,sc,ls,st,eu,t2,tx,TS_ZERO);
 }
 
 void exec_sleep(unsigned int usec)
@@ -1685,6 +1692,8 @@ STATUS exec_start(void)
 		output_profile("\n");
 	}
 
+	/* terminate links */
+	link_termall();
 	return sync_d.status;
 }
 

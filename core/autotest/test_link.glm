@@ -1,5 +1,7 @@
 // $Id$
 //
+
+#setenv PATH=C:\Program files\Matlab\R2011a\bin\win64
 link matlab.link;
 
 clock {

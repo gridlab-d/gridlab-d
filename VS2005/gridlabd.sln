@@ -105,6 +105,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_extern_function", "..\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "control", "..\control\control.vcproj", "{055F53BA-D011-4193-9AE7-7134580028A8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glxmatlab", "..\core\link\matlab\matlab.vcproj", "{48DEDABB-85C9-4417-9A60-F74C30991D4D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -512,6 +514,22 @@ Global
 		{055F53BA-D011-4193-9AE7-7134580028A8}.Release|Win32.Build.0 = Release|Win32
 		{055F53BA-D011-4193-9AE7-7134580028A8}.Release|x64.ActiveCfg = Release|x64
 		{055F53BA-D011-4193-9AE7-7134580028A8}.Release|x64.Build.0 = Release|x64
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.Debug|Win32.Build.0 = Debug|Win32
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.Debug|x64.ActiveCfg = Debug|x64
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.Debug|x64.Build.0 = Debug|x64
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.MatlabDebug|x64.Build.0 = Debug|x64
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.Release|Win32.ActiveCfg = Release|Win32
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.Release|Win32.Build.0 = Release|Win32
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.Release|x64.ActiveCfg = Release|x64
+		{48DEDABB-85C9-4417-9A60-F74C30991D4D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

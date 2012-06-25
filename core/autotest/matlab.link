@@ -11,10 +11,18 @@ target matlab
 command c:\program files\Matlab\R2011a\bin\matlab.exe
 
 #
+# Matlab link options
+#
+visible 1
+on_init clear all;
+#on_sync disp('syncing...');
+#on_term disp('quitting...');
+
+#
 # Share the clock
 # If none are listed, all global will be available
 #
-global clock
+# global clock
 
 #
 # Object filters
