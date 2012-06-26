@@ -136,11 +136,12 @@ EXPORT bool init(link *mod)
 
 	// build gridlabd data
 	mwSize dims[] = {1,1};
-	mxArray *gridlabd = mxCreateStructArray(2,dims,0,NULL);
+	mxArray *gridlabd_struct = mxCreateStructArray(2,dims,0,NULL);
 
+	///////////////////////////////////////////////////////////////////////////
 	// build global data
 	LINKLIST *item;
-	mxArray *globals = mxCreateStructArray(2,dims,0,NULL);
+	mxArray *global_struct = mxCreateStructArray(2,dims,0,NULL);
 	for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
 	{
 		char *name = mod->get_name(item);
@@ -151,20 +152,21 @@ EXPORT bool init(link *mod)
 		if ( var!=NULL && strchr(var->prop->name,':')==0 && strchr(var->prop->name,'.')==0 )
 		{
 			gld_property prop(var);
-			mwIndex field = mxAddField(globals,prop.get_name());
-			mxArray *value = create_mxproperty(&prop);
-			if ( value!=NULL )
+			mwIndex var_index = mxAddField(global_struct,prop.get_name());
+			mxArray *var_struct = create_mxproperty(&prop);
+			if ( var_struct!=NULL )
 			{
-				mod->add_copyto(var->prop->addr,mxGetData(value));
-				mxSetFieldByNumber(globals,0,field,value);
+				mod->add_copyto(var->prop->addr,mxGetData(var_struct));
+				mxSetFieldByNumber(global_struct,0,var_index,var_struct);
 			}
 		}
 	}
 
 	// add globals structure to gridlabd structure
-	int field = mxAddField(gridlabd,"global");
-	mxSetFieldByNumber(gridlabd,0,field,globals);
+	mwIndex gridlabd_index = mxAddField(gridlabd_struct,"global");
+	mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,global_struct);
 
+	///////////////////////////////////////////////////////////////////////////
 	// build the object data
 	dims[0] = 0;
 	for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
@@ -172,7 +174,7 @@ EXPORT bool init(link *mod)
 	dims[1] = 1;
 	const char *objfields[] = {"id","name","class","parent","rank","clock","valid_to","schedule_skew",
 		"latitude","longitude","in","out","rng_state","heartbeat","lock","flags"};
-	mxArray *objects = mxCreateStructArray(2,dims,sizeof(objfields)/sizeof(objfields[0]),objfields);
+	mxArray *object_struct = mxCreateStructArray(2,dims,sizeof(objfields)/sizeof(objfields[0]),objfields);
 	for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
 	{
 		OBJECT *obj = mod->get_object(item);
@@ -180,96 +182,70 @@ EXPORT bool init(link *mod)
 		const char *objname[] = {obj->name&&isdigit(obj->name[0])?NULL:obj->name};
 		const char *oclassname[] = {obj->oclass->name};
 
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,0,mxCreateDoubleScalar((double)obj->id+1));
-		if (obj->name) mxSetFieldByNumber(objects,(mwIndex)obj->id,1,mxCreateCharMatrixFromStrings(mwSize(1),objname));
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,2,mxCreateCharMatrixFromStrings(mwSize(1),oclassname));
-		if (obj->parent) mxSetFieldByNumber(objects,(mwIndex)obj->id,3,mxCreateDoubleScalar((double)obj->parent->id+1));
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,4,mxCreateDoubleScalar((double)obj->rank));
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,5,mxCreateDoubleScalar((double)obj->clock));
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,6,mxCreateDoubleScalar((double)obj->valid_to));
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,7,mxCreateDoubleScalar((double)obj->schedule_skew));
-		if ( isfinite(obj->latitude) ) mxSetFieldByNumber(objects,(mwIndex)obj->id,8,mxCreateDoubleScalar((double)obj->latitude));
-		if ( isfinite(obj->longitude) ) mxSetFieldByNumber(objects,(mwIndex)obj->id,9,mxCreateDoubleScalar((double)obj->longitude));
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,10,mxCreateDoubleScalar((double)obj->in_svc));
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,11,mxCreateDoubleScalar((double)obj->out_svc));
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,12,mxCreateDoubleScalar((double)obj->rng_state));
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,13,mxCreateDoubleScalar((double)obj->heartbeat));
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,14,mxCreateDoubleScalar((double)obj->lock));
-		mxSetFieldByNumber(objects,(mwIndex)obj->id,15,mxCreateDoubleScalar((double)obj->flags));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,0,mxCreateDoubleScalar((double)obj->id+1));
+		if (obj->name) mxSetFieldByNumber(object_struct,(mwIndex)obj->id,1,mxCreateCharMatrixFromStrings(mwSize(1),objname));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,2,mxCreateCharMatrixFromStrings(mwSize(1),oclassname));
+		if (obj->parent) mxSetFieldByNumber(object_struct,(mwIndex)obj->id,3,mxCreateDoubleScalar((double)obj->parent->id+1));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,4,mxCreateDoubleScalar((double)obj->rank));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,5,mxCreateDoubleScalar((double)obj->clock));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,6,mxCreateDoubleScalar((double)obj->valid_to));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,7,mxCreateDoubleScalar((double)obj->schedule_skew));
+		if ( isfinite(obj->latitude) ) mxSetFieldByNumber(object_struct,(mwIndex)obj->id,8,mxCreateDoubleScalar((double)obj->latitude));
+		if ( isfinite(obj->longitude) ) mxSetFieldByNumber(object_struct,(mwIndex)obj->id,9,mxCreateDoubleScalar((double)obj->longitude));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,10,mxCreateDoubleScalar((double)obj->in_svc));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,11,mxCreateDoubleScalar((double)obj->out_svc));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,12,mxCreateDoubleScalar((double)obj->rng_state));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,13,mxCreateDoubleScalar((double)obj->heartbeat));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,14,mxCreateDoubleScalar((double)obj->lock));
+		mxSetFieldByNumber(object_struct,(mwIndex)obj->id,15,mxCreateDoubleScalar((double)obj->flags));
 	}
-	field = mxAddField(gridlabd,"object");
-	mxSetFieldByNumber(gridlabd,0,field,objects);
+	gridlabd_index = mxAddField(gridlabd_struct,"object");
+	mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,object_struct);
 
-	// build module data
+	///////////////////////////////////////////////////////////////////////////
+	// build class data
 	dims[0] = dims[1] = 1;
-	mxArray *modules = mxCreateStructArray(2,dims,0,NULL);
+	mxArray *class_struct = mxCreateStructArray(2,dims,0,NULL);
+	gridlabd_index = mxAddField(gridlabd_struct,"class");
+	mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,class_struct);
 
-	// add runtime classes
-	field = mxAddField(modules,"runtime");
-	mxArray *runtime = mxCreateStructArray(2,dims,0,NULL);
+	// add classes
 	for ( CLASS *oclass = callback->class_getfirst() ; oclass!=NULL ; oclass=oclass->next )
 	{
-		if ( oclass->module==NULL )
-		{
-			// add class to runtime list
-			mwIndex field = mxAddField(runtime,oclass->name);
-			mxArray *classes = mxCreateStructArray(2,dims,0,NULL);
-			mxSetFieldByNumber(runtime,0,field,classes);
+		mxArray *runtime_struct = mxCreateStructArray(2,dims,0,NULL);
 
-			// add properties to classes
-			mxArray *properties = mxCreateStructArray(2,dims,0,NULL);
-			for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
-			{
-				mwIndex field = mxAddField(classes,prop->name);
-				mxSetFieldByNumber(classes,0,field,properties);
-			}
+		// add class 
+		mwIndex class_index = mxAddField(class_struct,oclass->name);
+		mxSetFieldByNumber(class_struct,0,class_index,runtime_struct);
+
+		// add properties to classes
+		for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
+		{
+			mxArray *property_struct = mxCreateStructArray(2,dims,0,NULL);
+			mwIndex runtime_index = mxAddField(runtime_struct,prop->name);
+			mxSetFieldByNumber(runtime_struct,0,runtime_index,property_struct);
 		}
 	}
-	mxSetFieldByNumber(modules,0,field,runtime);
+
+	///////////////////////////////////////////////////////////////////////////
+	// build module data
+	dims[0] = dims[1] = 1;
+	mxArray *module_struct = mxCreateStructArray(2,dims,0,NULL);
 
 	// add modules
 	for ( MODULE *module = callback->module.getfirst() ; module!=NULL ; module=module->next )
 	{
-		mwIndex field = mxAddField(modules,module->name);
-
-		// add module classes
-		mxArray *classes = mxCreateStructArray(2,dims,0,NULL);
-		for ( CLASS *oclass = callback->class_getfirst() ; oclass!=NULL ; oclass=oclass->next )
-		{
-			if ( oclass->module==module ) 
-			{
-				mwIndex field = mxAddField(classes,oclass->name);
-			}
-		}
-		mxSetFieldByNumber(modules,0,field,classes);
+		mxArray *module_data = mxCreateStructArray(2,dims,0,NULL);
+		mwIndex module_index = mxAddField(module_struct,module->name);
+		mxSetFieldByNumber(module_struct,0,module_index,module_data);
 	}
-	field = mxAddField(gridlabd,"module");
-	mxSetFieldByNumber(gridlabd,0,field,modules);
+	gridlabd_index = mxAddField(gridlabd_struct,"module");
+	mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,module_struct);
 
+	///////////////////////////////////////////////////////////////////////////
 	// post the gridlabd structure
-	engPutVariable(matlab->engine,"gridlabd",gridlabd);
+	engPutVariable(matlab->engine,"gridlabd",gridlabd_struct);
 
-//	char data[] = "TODO";
-//	char objname[256], propertyname[64];
-//	if ( sscanf(data,"%[^.].%s",objname,propertyname)!=2 )
-//	{
-//		gl_output("argument '%s' is not a valid object.property specification", data);
-//		return false;
-//	}
-
-//	OBJECT *obj = object_find_name(objname);
-//	if ( obj==NULL )
-//	{
-//		gl_output("object '%s' not found", objname);
-//		return false;
-//	}
-	
-//	PROPERTY *prop = class_find_property(obj->oclass,propertyname);
-//	if ( prop==NULL )
-//	{
-//		gl_output("property '%s' not found in object '%s'", propertyname, objname);
-//		return false;
-//	}
 	return true;
 }
 
