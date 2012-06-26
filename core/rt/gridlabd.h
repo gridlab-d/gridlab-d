@@ -862,6 +862,7 @@ typedef struct s_callbacks {
 		OBJECT *(*foreign)(OBJECT *obj);
 	} create;
 	int (*define_map)(CLASS*,...);
+	CLASS *(*class_getfirst)(void);
 	CLASS *(*class_getname)(char*);
 	struct {
 		FUNCTION *(*define)(CLASS*,FUNCTIONNAME,FUNCTIONADDR);
@@ -898,8 +899,11 @@ typedef struct s_callbacks {
 	void (*free)(void*);
 	struct s_aggregate *(*create_aggregate)(char *aggregator, char *group_expression);
 	double (*run_aggregate)(struct s_aggregate *aggregate);
-	double *(*get_module_var)(MODULE *module, char *varname);
-	int (*depends)(char *name, unsigned char major, unsigned char minor, unsigned short build);
+	struct {
+		void *(*getvar)(MODULE *module, char *varname);
+		MODULE *(*getfirst)(void);
+		int (*depends)(char *name, unsigned char major, unsigned char minor, unsigned short build);
+	} module;
 	struct {
 		double (*uniform)(unsigned int *rng, double a, double b);
 		double (*normal)(unsigned int *rng, double m, double s);

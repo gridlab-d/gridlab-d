@@ -14,6 +14,7 @@ typedef struct s_linklist {
 
 class link {
 private: // target data link
+	char target[64]; ///< name of target
 	LINKLIST *globals; ///< list of globals to export to target
 	LINKLIST *objects; ///< list of objects to export to target
 	char command[1024]; ///< OS command to load target
@@ -50,6 +51,7 @@ public: // construction/destruction
 
 public: // 
 	bool set_target(char *data);
+	inline char *get_target(void) { return target; };
 	LINKLIST *add_global(char *name);
 	LINKLIST * add_object(char *name);
 	inline void set_command(char *cmd) { strncpy(command,cmd,sizeof(command)); };

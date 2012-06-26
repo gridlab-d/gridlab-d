@@ -117,12 +117,43 @@ int link_initall(void)
 			{
 				item->data = (void*)global_find(item->name);
 				if ( item->data==NULL)
-					output_error("global '%s' is not found", item->name);
+					output_error("link_initall(target='%s'): global '%s' is not found", mod->get_target(), item->name);
 			}
 		}
 
 		// link objects
+		if ( mod->get_objects()==NULL )
+		{
+			// set default object list
+			OBJECT *obj = NULL;
+			for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
+			{
+				// only add named objects
+				LINKLIST *item = NULL;
+				if ( obj->name!=NULL )
+					item = mod->add_object(obj->name);
+				else
+				{
+					char id[256];
+					sprintf(id,"%s:%d",obj->oclass->name,obj->id);
+					item = mod->add_object(id);
+				}
+				item->data = (void*)obj;
+			}
+		}
+		else 
+		{
+			LINKLIST *item;
 
+			// link global variables
+			for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+			{
+				OBJECT *obj = NULL;
+				item->data = (void*)object_find_name(item->name);
+				if ( item->data==NULL)
+					output_error("link_initall(target='%s'): object '%s' is not found", mod->get_target(), item->name);
+			}
+		}
 		// link arguments
 
 		// initialize link module
@@ -194,7 +225,7 @@ link::link(char *filename)
 				{
 					add_global(data);
 				}
-				else if ( strcmp(tag,"objects")==0 )
+				else if ( strcmp(tag,"object")==0 )
 				{
 					add_object(data);
 				}
@@ -262,7 +293,7 @@ bool link::set_target(char *name)
 		// call create routine
 		bool (*create)(link*,CALLBACKS*) = (bool(*)(link*,CALLBACKS*))DLSYM(handle,"create");
 		create(this,module_callbacks());
-
+		strcpy(target,name);
 		return true;
 	}
 	else

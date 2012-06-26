@@ -3,6 +3,9 @@
 
 #setenv PATH=C:\Program files\Matlab\R2011a\bin\win64
 link matlab.link;
+//#set pauseatexit=TRUE
+
+global complex test_complex 1+2j;
 
 clock {
 	starttime '2001-01-01 0:00:00';
@@ -16,12 +19,14 @@ class test {
 }
 
 module tape;
-object test {
+object test:..5 {
+	name `my_test{id}`;
+	latitude 48N30:0;
 	x "type:uniform(0,1); refresh:1min";
 	y "type:normal(0,1); refresh:1min";
 	z "type:normal(0,1); integrate; refresh:1min";
 	object recorder {
-		file "test_w.csv";
+		file `test_w{id}.csv`;
 		property "x,y,z";
 		interval 60;
 	};

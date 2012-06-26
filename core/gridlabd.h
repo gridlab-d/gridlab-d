@@ -326,7 +326,7 @@ inline void GL_THROW(char *format, ...)
 /** Provides access to a global module variable.
 	@see global_getvar(), global_setvar()
  **/
-#define gl_get_module_var (*callback->get_module_var)
+#define gl_get_module_var (*callback->module.getvar)
 
 /** Provide file search function
 	@see find_file()
@@ -347,10 +347,11 @@ inline int gl_module_depends(char *name, /**< module name */
 							 unsigned char minor=0, /**< minor version, if any required (module must be greater or equal) */
 							 unsigned short build=0) /**< build number, if any required (module must be greater or equal) */
 {
-	return (*callback->depends)(name,major,minor,build);
+	return (*callback->module.depends)(name,major,minor,build);
 }
 #else
-#define gl_module_depends (*callback->depends)
+#define gl_module_getfirst (*callback->module.getfirst)
+#define gl_module_depends (*callback->module.depends)
 #endif
 
 
@@ -1196,7 +1197,7 @@ private: // data
 	MODULE core;
 
 public: // constructors/casts
-	inline gld_module(void) { throw "gld_module constructor not permitted"; };
+	inline gld_module(void) { MODULE *m = callback->module.getfirst(); if (m) core=*m; else throw "no modules loaded";};
 	inline operator MODULE*(void) { return &core; };
 
 public: // read accessors
@@ -1209,7 +1210,7 @@ public: // write accessors
 
 public: // iterators
 	inline bool is_last(void) { return core.next==NULL; };
-	inline gld_module *get_next(void) { return (gld_module*)(core.next); };
+	inline void get_next(void) { core = *(core.next); };
 };
 
 class gld_property;

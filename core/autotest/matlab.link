@@ -14,21 +14,21 @@ command c:\program files\Matlab\R2011a\bin\matlab.exe
 # Matlab link options
 #
 visible 1
-on_init clear all;
+#on_init clear all;
 #on_sync disp('syncing...');
 #on_term disp('quitting...');
 
 #
 # Share the clock
-# If none are listed, all global will be available
+# If none are listed, all globals are copied
 #
-# global clock
+#global clock
+#global test_complex
 
 #
-# Object filters
-# If none are listed, the entire object list is published
+# Object list
+# If none are listed, all named objects are copied
 #
-objects class=test
 
 #
 # Specify the function call 

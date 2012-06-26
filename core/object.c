@@ -1785,7 +1785,7 @@ int convert_from_latitude(double v, void *buffer, int bufsize){
 		return 0;
 	}
 	
-	return sprintf(buffer, "%.0f%c%.0f'%.2f\"", d, ns, m, s);
+	return sprintf(buffer, "%.0f%c%.0f:%.2fs", d, ns, m, s);
 }
 
 int convert_from_longitude(double v, void *buffer, int bufsize){
@@ -1799,7 +1799,7 @@ int convert_from_longitude(double v, void *buffer, int bufsize){
 		return 0;
 	}
 
-	return sprintf(buffer, "%.0f%c%.0f'%.2f\"", d, ns, m, s);
+	return sprintf(buffer, "%.0f%c%.0f:%.2f", d, ns, m, s);
 }
 
 double convert_to_latitude(char *buffer){
@@ -1807,7 +1807,7 @@ double convert_to_latitude(char *buffer){
 	double s = 0;
 	char ns;
 	
-	if(sscanf(buffer, "%d%c%d'%lf\"", &d, &ns, &m, &s) > 1){	
+	if(sscanf(buffer, "%d%c%d:%lf", &d, &ns, &m, &s) > 1){	
 		double v = (double)d + (double)m / 60.0 + s / 3600.0;
 		if(v >= 0.0 || v <= 90.0){
 			if(ns == 'S'){
@@ -1826,7 +1826,7 @@ double convert_to_longitude(char *buffer){
 	double s = 0;
 	char ns;
 
-	if(sscanf(buffer, "%d%c%d'%lf\"", &d, &ns, &m, &s) > 1){	
+	if(sscanf(buffer, "%d%c%d:%lf", &d, &ns, &m, &s) > 1){	
 		double v = (double)d + (double)m / 60.0 + s / 3600.0;
 		if(v >= 0.0 || v <= 90.0){
 			if(ns == 'W'){

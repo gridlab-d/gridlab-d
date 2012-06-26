@@ -2242,15 +2242,14 @@ int time_value_datetimezone(PARSER, TIMESTAMP *t)
 
 double load_latitude(char *buffer)
 {
-	int32 d, m=0;
-	double s=0;
+	double d=0, m=0, s=0;
 	char ns;
 	if((strcmp(buffer, "none") == 0) || (strcmp(buffer, "NONE") == 0)){
 		return QNAN;
 	}
-	if (sscanf(buffer,"%d%c%d'%lf\"",&d,&ns,&m,&s)>1)
+	if (sscanf(buffer,"%lf%c%lf:%lf",&d,&ns,&m,&s)>1)
 	{
-		double v = (double)d+(double)m/60+s/3600;
+		double v = d+m/60+s/3600;
 		if (v>=0 && v<=90)
 		{
 			if (ns=='S')
@@ -2265,13 +2264,12 @@ double load_latitude(char *buffer)
 
 double load_longitude(char *buffer)
 {
-	int32 d, m=0;
-	double s=0;
+	double d=0, m=0, s=0;
 	char ns;
 	if((strcmp(buffer, "none") == 0) || (strcmp(buffer, "NONE") == 0)){
 		return QNAN;
 	}
-	if (sscanf(buffer,"%d%c%d'%lf\"",&d,&ns,&m,&s)>1)
+	if (sscanf(buffer,"%lf%c%lf:%lf",&d,&ns,&m,&s)>1)
 	{
 		double v = (double)d+(double)m/60+s/3600;
 		if (v>=0 && v<=180)
