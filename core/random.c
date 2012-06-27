@@ -1076,6 +1076,9 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 	char buffer[1024];
 	char *token = NULL;
 
+	/* clean memory */
+	memset(var,0,sizeof(randomvar));
+
 	/* check string length before copying to buffer */
 	if (strlen(string)>sizeof(buffer)-1)
 	{
@@ -1164,6 +1167,12 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 		{
 			var->flags |= RNF_INTEGRATE;
 		}
+		/* fixed value */
+		else if (param[0]=='-' || param[0]=='+' || isdigit(param[0]) || param[0]=='.')
+		{
+			var->type = RT_DEGENERATE;
+			var->a = atof(param);
+		}
 		else if (strcmp(param,"")!=0)
 		{
 			output_error("convert_to_randomvar(string='%-.64s...', ...) parameter '%s' is not valid",string,param);
@@ -1171,7 +1180,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 		}
 	}
 
-	/* reinitialize the loadshape */
+	/* reinitialize the randomvar */
 	if (!randomvar_update(var))
 		return 0;
 

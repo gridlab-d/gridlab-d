@@ -1569,7 +1569,7 @@ EXPORT int do_kill(void*);
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-int major=MAJOR, minor=MINOR; 
+EXPORT int major=MAJOR, minor=MINOR; 
 BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
 #else // !WIN32
 CDECL int dllinit() __attribute__((constructor));

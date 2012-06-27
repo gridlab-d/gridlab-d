@@ -1693,7 +1693,6 @@ STATUS exec_start(void)
 	}
 
 	/* terminate links */
-	link_termall();
 	return sync_d.status;
 }
 

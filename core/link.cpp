@@ -43,33 +43,41 @@ link *link::first = NULL;
 LINKLIST * link::add_global(char *name)
 {
 	LINKLIST *item = new LINKLIST;
+	if ( item==NULL ) return NULL;
 	item->next = globals;
 	item->data = NULL;
-	item->name = new char(strlen(name)+1);
+	item->name = (char*)malloc(strlen(name)+1);
+	item->addr = NULL;
+	item->size = 0;
+	if ( item->name==NULL ) return NULL;
 	strcpy(item->name,name);
 	globals = item;
 	return item;
 }
 
-LINKLIST * link::add_object(char *name)
+LINKLIST * link::add_export(char *name)
 {
 	LINKLIST *item = new LINKLIST;
-	item->next = objects;
+	item->next = exports;
 	item->data = NULL;
-	item->name = new char(strlen(name)+1);
+	item->name = (char*)malloc(strlen(name)+1);
+	item->addr = NULL;
+	item->size = 0;
 	strcpy(item->name,name);
-	objects = item;
+	exports = item;
 	return item;
 }
 
-LINKLIST * link::add_argument(char *name)
+LINKLIST * link::add_import(char *name)
 {
 	LINKLIST *item = new LINKLIST;
-	item->next = arguments;
+	item->next = imports;
 	item->data = NULL;
-	item->name = new char(strlen(name)+1);
+	item->name = (char*)malloc(strlen(name)+1);
+	item->addr = NULL;
+	item->size = 0;
 	strcpy(item->name,name);
-	arguments = item;
+	imports = item;
 	return item;
 }
 
@@ -95,17 +103,29 @@ int link_create(char *file)
 /* initialize modules */
 int link_initall(void)
 {
+	output_debug("link_initall(): link startup in progress...");
 	link *mod;
 	for ( mod=link::get_first() ; mod!=NULL ; mod=mod->get_next() )
 	{
+
+		output_debug("link_initall(): setting up %s link", mod->get_target());
+
 		// set default global list (if needed)
 		if ( mod->get_globals()==NULL )
 		{
 			GLOBALVAR *var = NULL;
-			while ( var=global_getnext(var) )
+			while ( (var=global_getnext(var))!=NULL )
 			{
-				LINKLIST *item = mod->add_global(var->prop->name);
-				item->data = (void*)var;
+				if ( var->prop!=NULL && var->prop->name!=NULL )
+				{
+					LINKLIST *item = mod->add_global(var->prop->name);
+					if ( item!=NULL )
+						item->data = (void*)var;
+					else
+						output_error("link_initall(): unable to link %s", var->prop->name);
+				}
+				else
+					output_warning("link_initall(): a variable property definition is null"); 
 			}
 		}
 		else
@@ -122,7 +142,7 @@ int link_initall(void)
 		}
 
 		// link objects
-		if ( mod->get_objects()==NULL )
+		if ( mod->get_exports()==NULL )
 		{
 			// set default object list
 			OBJECT *obj = NULL;
@@ -131,12 +151,12 @@ int link_initall(void)
 				// only add named objects
 				LINKLIST *item = NULL;
 				if ( obj->name!=NULL )
-					item = mod->add_object(obj->name);
+					item = mod->add_export(obj->name);
 				else
 				{
 					char id[256];
 					sprintf(id,"%s:%d",obj->oclass->name,obj->id);
-					item = mod->add_object(id);
+					item = mod->add_export(id);
 				}
 				item->data = (void*)obj;
 			}
@@ -146,7 +166,7 @@ int link_initall(void)
 			LINKLIST *item;
 
 			// link global variables
-			for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+			for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
 			{
 				OBJECT *obj = NULL;
 				item->data = (void*)object_find_name(item->name);
@@ -154,15 +174,17 @@ int link_initall(void)
 					output_error("link_initall(target='%s'): object '%s' is not found", mod->get_target(), item->name);
 			}
 		}
-		// link arguments
 
 		// initialize link module
 		if ( !mod->do_init() )
 		{
+			output_error("link_initall(): link startup failed");
 			link_termall();
 			return 0;
 		}
 	}
+	output_debug("link_initall(): link startup done ok");
+	atexit((void(*)(void))link_termall);
 	return 1;
 }
 
@@ -178,12 +200,13 @@ TIMESTAMP link_syncall(TIMESTAMP t0)
 	return t1;
 }
 
-int link_termall()
+int link_termall(void)
 {
 	bool ok = true;
 	link *mod;
 	for ( mod=link::get_first() ; mod!=NULL ; mod=mod->get_next() )
 	{
+		output_debug("link_initall(): terminating %s link...",mod->get_target());
 		if ( !mod->do_term() ) ok = false;
 	}
 	return ok;
@@ -194,10 +217,8 @@ link::link(char *filename)
 {
 	bool ok = true;
 	globals = NULL;
-	objects = NULL;
-	arguments = NULL;
-	memset(command,0,sizeof(command));
-	memset(function,0,sizeof(function));
+	imports = NULL;
+	exports = NULL;
 	handle = NULL;
 	settag = NULL;
 	init = NULL;
@@ -225,21 +246,13 @@ link::link(char *filename)
 				{
 					add_global(data);
 				}
-				else if ( strcmp(tag,"object")==0 )
+				else if ( strcmp(tag,"export")==0 )
 				{
-					add_object(data);
+					add_export(data);
 				}
-				else if ( strcmp(tag,"command")==0 )
+				else if ( strcmp(tag,"import")==0 )
 				{
-					set_command(data);
-				}
-				else if ( strcmp(tag,"function")==0 )
-				{
-					set_function(data);
-				}
-				else if ( strcmp(tag,"argument")==0 )
-				{
-					add_argument(data);
+					add_import(data);
 				}
 				else if ( !(*settag)(this,tag,data) )
 					output_error("%s(%d): tag '%s' not accepted", filename, linenum, tag);

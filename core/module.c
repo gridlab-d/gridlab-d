@@ -399,9 +399,6 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	mod->setvar = (int(*)(const char*,char*))DLSYM(hLib,"setvar");
 	mod->getvar = (void*(*)(const char*,char*,unsigned int))DLSYM(hLib,"getvar");
 	mod->check = (int(*)())DLSYM(hLib,"check");
-#ifndef _NO_CPPUNIT
-	mod->module_test = (int(*)(TEST_CALLBACKS*,int,char*[]))DLSYM(hLib,"module_test");
-#endif
 	mod->cmdargs = (int(*)(int,char**))DLSYM(hLib,"cmdargs");
 	mod->kmldump = (int(*)(FILE*,OBJECT*))DLSYM(hLib,"kmldump");
 	mod->subload = (MODULE *(*)(char *, MODULE **, CLASS **, int, char **))DLSYM(hLib, "subload");
@@ -790,9 +787,6 @@ void module_libinfo(const char *module_name)
 		if (mod->export_file!=NULL) output_raw("export_file ");
 		if (mod->check!=NULL) output_raw("check ");
 		if (mod->kmldump!=NULL) output_raw("kmldump ");
-#ifndef _NO_CPPUNIT
-		if (mod->module_test!=NULL) output_raw("module_test ");
-#endif
 		output_raw("\nGlobals........... ");
 		for (p=mod->globals; p!=NULL; p=p->next)
 			output_raw("%s ", p->name);

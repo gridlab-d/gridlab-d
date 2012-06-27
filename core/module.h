@@ -24,9 +24,6 @@ struct s_module_list {
 	int (*import_file)(const char *file);
 	int (*export_file)(const char *file);
 	int (*check)();
-#ifndef _NO_CPPUNIT
-	int (*module_test)(TEST_CALLBACKS *callbacks,int argc,char* argv[]);
-#endif
 	int (*cmdargs)(int,char**);
 	int (*kmldump)(FILE*fp,OBJECT*);
 	void (*test)(int argc, char *argv[]);	
