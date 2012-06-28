@@ -7,46 +7,54 @@ target matlab
 
 #
 # Matlab window disposition (hide, show, keep)
+# Default is 'hide'
 #
-window show
+window keep
 
 #
 # Matlab command on init
+#   ans is GLD_OK when init succeeds
+#   and is GLD_ERROR when init fails
 #
-#on_init sync_num = 0; % initialize sync count
-on_init uigetfiles
+on_init ans=GLD_ERROR; % init is ok
 
 #
 # Matlab command on sync
+#   ans is timestamp of next needed sync event
+#   ans is TS_NEVER if no sync event needed
+#   ass is TS_ERROR if an error occurred
 #
-on_sync sync_num = sync_num+1; % increment sync count
+on_sync ans=TS_NEVER; % sync is ok with no future sync to schedule
 
 #
 # Matlab command on term
-#
-on_term sync_num = - sync_num; % mark sync count done by making it negative
+#   ans is GLD_OK when term succeeds
+#   ans is GLD_ERROR when term fails
+on_term ans=GLD_OK; % term is ok
 
 #
 # Matlab root variable name for published data
+# Default is 'gridlabd'
 #
 root gld
 
 #
 # Global variables to publish (readonly)
-# If none are listed, all globals are copied
+# Default is all globals
 #
 global clock
 global test_complex
 
 #
 # Objects to publish (readonly)
-# If none are listed, all named objects are copied
+# Default is all objects
 #
 object my_test0
 object my_test3
 
 #
 # Variables to export/import to workspace (by name)
+# Default is none are exported or imported
 #
 export my_test6.x x
 export my_test9.y y

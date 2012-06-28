@@ -120,6 +120,7 @@ int link_initall(void)
 	link *mod;
 	for ( mod=link::get_first() ; mod!=NULL ; mod=mod->get_next() )
 	{
+		LINKLIST *item;
 
 		output_debug("link_initall(): setting up %s link", mod->get_target());
 
@@ -143,8 +144,6 @@ int link_initall(void)
 		}
 		else
 		{
-			LINKLIST *item;
-
 			// link global variables
 			for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
 			{
@@ -155,21 +154,21 @@ int link_initall(void)
 		}
 
 		// link objects
-		if ( mod->get_exports()==NULL )
+		if ( mod->get_objects()==NULL )
 		{
 			// set default object list
 			OBJECT *obj = NULL;
 			for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
 			{
-				// only add named objects
+				// add named objects
 				LINKLIST *item = NULL;
 				if ( obj->name!=NULL )
-					item = mod->add_export(obj->name);
+					item = mod->add_object(obj->name);
 				else
 				{
 					char id[256];
 					sprintf(id,"%s:%d",obj->oclass->name,obj->id);
-					item = mod->add_export(id);
+					item = mod->add_object(id);
 				}
 				item->data = (void*)obj;
 			}
@@ -179,13 +178,65 @@ int link_initall(void)
 			LINKLIST *item;
 
 			// link global variables
-			for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+			for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
 			{
 				OBJECT *obj = NULL;
 				item->data = (void*)object_find_name(item->name);
 				if ( item->data==NULL)
 					output_error("link_initall(target='%s'): object '%s' is not found", mod->get_target(), item->name);
 			}
+		}
+
+		// link exports
+		for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+		{
+			char objname[64], propname[64], varname[64];
+			if ( sscanf(item->name,"%[^.].%s %s",objname,propname,varname)==3 )
+			{
+				OBJECTPROPERTY *objprop = (OBJECTPROPERTY*)malloc(sizeof(OBJECTPROPERTY));
+				objprop->obj = object_find_name(objname);
+				if ( objprop->obj )
+				{
+					objprop->prop = class_find_property(objprop->obj->oclass,propname);
+					if ( objprop->prop==NULL )
+						output_error("link_initall(target='%s'): export '%s' property not found", mod->get_target(), item->name);
+					else
+					{
+						item->data = objprop;
+						strcpy(item->name,varname);
+					}
+				}
+				else
+					output_error("link_initall(target='%s'): export '%s' object not found", mod->get_target(), item->name);
+			}
+			else
+				output_error("link_initall(target='%s'): '%s' is not a valid export specification", mod->get_target(), item->name);
+		}
+
+		// link imports
+		for ( item=mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
+		{
+			char objname[64], propname[64], varname[64];
+			if ( sscanf(item->name,"%[^.].%s %s",objname,propname,varname)==3 )
+			{
+				OBJECTPROPERTY *objprop = (OBJECTPROPERTY*)malloc(sizeof(OBJECTPROPERTY));
+				objprop->obj = object_find_name(objname);
+				if ( objprop->obj )
+				{
+					objprop->prop = class_find_property(objprop->obj->oclass,propname);
+					if ( objprop->prop==NULL )
+						output_error("link_initall(target='%s'): import '%s' property not found", mod->get_target(), item->name);
+					else
+					{
+						item->data = objprop;
+						strcpy(item->name,varname);
+					}
+				}
+				else
+					output_error("link_initall(target='%s'): import '%s' object not found", mod->get_target(), item->name);
+			}
+			else
+				output_error("link_initall(target='%s'): '%s' is not a valid import specification", mod->get_target(), item->name);
 		}
 
 		// initialize link module
@@ -232,6 +283,7 @@ link::link(char *filename)
 	globals = NULL;
 	imports = NULL;
 	exports = NULL;
+	objects = NULL;
 	handle = NULL;
 	settag = NULL;
 	init = NULL;

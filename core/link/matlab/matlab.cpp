@@ -245,7 +245,7 @@ EXPORT bool settag(link *mod, char *tag, char *data)
 	else if ( strcmp(tag,"root")==0 )
 	{
 		if ( strlen(data)<sizeof(matlab->rootname) )
-			strcpy(matlab->rootname,data);
+			sscanf(data,"%s",matlab->rootname);
 		else
 			gl_error("root name is too long (max is %d)", sizeof(matlab->rootname));
 	}
@@ -429,7 +429,7 @@ EXPORT bool init(link *mod)
 	{
 		// count objects in this class
 		mwIndex dims[] = {0,1};
-		for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+		for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
 		{
 			OBJECT *obj = mod->get_object(item);
 			if ( obj==NULL || obj->oclass!=oclass ) continue;
@@ -452,7 +452,7 @@ EXPORT bool init(link *mod)
 		}
 
 		// add objects to class
-		for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+		for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
 		{
 			OBJECT *obj = mod->get_object(item);
 			if ( obj==NULL || obj->oclass!=oclass ) continue;
@@ -475,7 +475,7 @@ EXPORT bool init(link *mod)
 	///////////////////////////////////////////////////////////////////////////
 	// build the object data
 	dims[0] = 0;
-	for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+	for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
 	{
 		if ( mod->get_object(item)!=NULL ) dims[0]++;
 	}
@@ -485,7 +485,7 @@ EXPORT bool init(link *mod)
 		"latitude","longitude","in","out","rng_state","heartbeat","lock","flags"};
 	mxArray *object_struct = mxCreateStructArray(2,dims,sizeof(objfields)/sizeof(objfields[0]),objfields);
 	mwIndex n=0;
-	for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+	for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
 	{
 		OBJECT *obj = mod->get_object(item);
 		if ( obj==NULL ) continue;
@@ -520,13 +520,56 @@ EXPORT bool init(link *mod)
 	matlab->root = gridlabd_struct;
 	engPutVariable(matlab->engine,matlab->rootname,matlab->root);
 
+	///////////////////////////////////////////////////////////////////////////
+	// build the import/export data
+	for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+	{
+		OBJECTPROPERTY *objprop = mod->get_export(item);
+		if ( objprop==NULL ) continue;
+
+		// add to published items
+		gld_property prop(objprop->obj,objprop->prop);
+		item->addr = (mxArray*)create_mxproperty(&prop);
+		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
+	}
+	for ( item=mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
+	{
+		OBJECTPROPERTY *objprop = mod->get_import(item);
+		if ( objprop==NULL ) continue;
+
+		// check that not already in export list
+		LINKLIST *export_item;
+		bool found=false;
+		for ( export_item=mod->get_exports() ; export_item!=NULL ; export_item=mod->get_next(export_item) )
+		{
+			OBJECTPROPERTY *other = mod->get_export(item);
+			if ( memcmp(objprop,other,sizeof(OBJECTPROPERTY)) )
+				found=true;
+		}
+		if ( !found )
+		{
+			gld_property prop(objprop->obj,objprop->prop);
+			item->addr = (mxArray*)create_mxproperty(&prop);
+			engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
+		}
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	// special values needed by matlab
+	mxArray *ts_never = mxCreateDoubleScalar((double)(TIMESTAMP)TS_NEVER);
+	engPutVariable(matlab->engine,"TS_NEVER",ts_never);
+	mxArray *ts_error = mxCreateDoubleScalar((double)(TIMESTAMP)TS_INVALID);
+	engPutVariable(matlab->engine,"TS_ERROR",ts_error);
+	mxArray *gld_ok = mxCreateDoubleScalar((double)(bool)true);
+	engPutVariable(matlab->engine,"GLD_OK",gld_ok);
+	mxArray *gld_err = mxCreateDoubleScalar((double)(bool)false);
+	engPutVariable(matlab->engine,"GLD_ERROR",gld_err);
+
 	return true;
 }
 
 bool copy_exports(link *mod)
 {
-	return true;
-
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	LINKLIST *item;
 
@@ -543,8 +586,11 @@ bool copy_exports(link *mod)
 		}
 	}
 
-	// update exports
-	for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+	// update classes
+	// TODO
+
+	// update objects
+	for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
 	{
 		OBJECT *obj = mod->get_object(item);
 		if ( obj==NULL ) continue;
@@ -561,17 +607,33 @@ bool copy_exports(link *mod)
 		}
 	}
 
+	// update exports
+	for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+	{
+		OBJECTPROPERTY *objprop = mod->get_export(item);
+		if ( objprop==NULL ) continue;
+		gld_property prop(objprop->obj,objprop->prop);
+		item->addr = set_mxproperty((mxArray*)item->addr,&prop);
+		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
+	}
+
+	// update imports
+	for ( item=mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
+	{
+		OBJECTPROPERTY *objprop = mod->get_import(item);
+		if ( objprop==NULL ) continue;
+		gld_property prop(objprop->obj,objprop->prop);
+		item->addr = set_mxproperty((mxArray*)item->addr,&prop);
+		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
+	}
+
 	engPutVariable(matlab->engine,matlab->rootname,matlab->root);
 	return true;
 }
 
 bool copy_imports(link *mod)
 {
-	return true;
-
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
-	mxDestroyArray(matlab->root);
-	matlab->root = engGetVariable(matlab->engine,matlab->rootname);
 	LINKLIST *item;
 
 	// update globals
@@ -590,19 +652,12 @@ bool copy_imports(link *mod)
 	// update imports
 	for ( item=mod->get_imports()==NULL?mod->get_exports():mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
 	{
-		OBJECT *obj = mod->get_object(item);
-		if ( obj==NULL ) continue;
-		mwIndex index = mod->get_index(item);
-		mxArray *runtime_struct = (mxArray*)mod->get_addr(item); 
-		
-		// add properties to class
-		CLASS *oclass = obj->oclass;
-		for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
-		{
-			gld_property p(obj,prop);
-			mxArray *data = mxGetField(runtime_struct,index,prop->name);
-			get_mxproperty(data,&p);
-		}
+		OBJECTPROPERTY *objprop = mod->get_import(item);
+		if ( objprop==NULL ) continue;
+		gld_property prop(objprop->obj,objprop->prop);
+		mxArray *data = engGetVariable(matlab->engine,item->name);
+		get_mxproperty(data,&prop);
+		mxDestroyArray(data);
 	}
 
 	return true;
@@ -622,6 +677,7 @@ EXPORT TIMESTAMP sync(link* mod,TIMESTAMP t0)
 	{
 		double *pVal = (double*)mxGetData(ans);
 		if ( pVal!=NULL ) t1 = floor(*pVal);
+		if ( t1<TS_INVALID ) t1=TS_NEVER;
 	}
 
 	if ( !copy_imports(mod) )
