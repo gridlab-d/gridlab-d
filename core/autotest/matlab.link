@@ -9,14 +9,14 @@ target matlab
 # Matlab window disposition (hide, show, keep)
 # Default is 'hide'
 #
-window keep
+window hide
 
 #
 # Matlab command on init
 #   ans is GLD_OK when init succeeds
 #   and is GLD_ERROR when init fails
 #
-on_init ans=GLD_ERROR; % init is ok
+on_init q=zeros(1000,1); n=1; ans=GLD_OK; % init is ok
 
 #
 # Matlab command on sync
@@ -24,13 +24,13 @@ on_init ans=GLD_ERROR; % init is ok
 #   ans is TS_NEVER if no sync event needed
 #   ass is TS_ERROR if an error occurred
 #
-on_sync ans=TS_NEVER; % sync is ok with no future sync to schedule
+on_sync if (n<=1000) q(n)=z; n=n+1; end; ans=TS_NEVER; % sync is ok with no future sync to schedule
 
 #
 # Matlab command on term
 #   ans is GLD_OK when term succeeds
 #   ans is GLD_ERROR when term fails
-on_term ans=GLD_OK; % term is ok
+on_term saveas(plot(q),'c:/temp/q.png'); ans=GLD_OK; % term is ok
 
 #
 # Matlab root variable name for published data
