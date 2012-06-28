@@ -30,6 +30,7 @@ typedef struct {
 	char *sync;
 	char *term;
 	int status;
+	char rootname[64];
 	mxArray *root;
 } MATLABLINK;
 
@@ -92,7 +93,7 @@ static mxArray* set_mxproperty(mxArray *value, gld_property *prop)
 	case PT_loadshape:
 		{
 			double *ptr = mxGetPr(value);
-			*ptr = *(double*)prop->get_addr();
+			if (ptr) *ptr = *(double*)prop->get_addr();
 		}
 		break;
 	case PT_complex:
@@ -100,40 +101,40 @@ static mxArray* set_mxproperty(mxArray *value, gld_property *prop)
 			double *r = mxGetPr(value);
 			double *i = mxGetPi(value);
 			complex *v = (complex*)prop->get_addr();
-			*r = v->Re();
-			*i = v->Im();
+			if (r) *r = v->Re();
+			if (i) *i = v->Im();
 		}
 		break;
 	case PT_int16:
 		{
 			double *ptr = mxGetPr(value);
-			*ptr = (double)*(int16*)prop->get_addr();
+			if (ptr) *ptr = (double)*(int16*)prop->get_addr();
 		}
 		break;
 	case PT_enumeration:
 	case PT_int32:
 		{
 			double *ptr = mxGetPr(value);
-			*ptr = (double)*(int32*)prop->get_addr();
+			if (ptr) *ptr = (double)*(int32*)prop->get_addr();
 		}
 		break;
 	case PT_set:
 	case PT_int64:
 		{
 			double *ptr = mxGetPr(value);
-			*ptr = (double)*(int64*)prop->get_addr();
+			if (ptr) *ptr = (double)*(int64*)prop->get_addr();
 		}
 		break;
 	case PT_timestamp:
 		{
 			double *ptr = mxGetPr(value);
-			*ptr = (double)*(TIMESTAMP*)prop->get_addr();
+			if (ptr) *ptr = (double)*(TIMESTAMP*)prop->get_addr();
 		}
 		break;
 	case PT_bool:
 		{
 			double *ptr = mxGetPr(value);
-			*ptr = (double)*(bool*)prop->get_addr();
+			if (ptr) *ptr = (double)*(bool*)prop->get_addr();
 		}
 		break;
 	case PT_char8:
@@ -165,40 +166,40 @@ static mxArray* get_mxproperty(mxArray *value, gld_property *prop)
 			double *r = mxGetPr(value);
 			double *i = mxGetPi(value);
 			complex *v = (complex*)prop->get_addr();
-			v->Re() = *r;
-			v->Im() = *i;
+			if (r) v->Re() = *r;
+			if (i) v->Im() = *i;
 		}
 		break;
 	case PT_int16:
 		{
 			double *ptr = mxGetPr(value);
-			*(int16*)prop->get_addr() = (int16)*ptr;
+			if (ptr) *(int16*)prop->get_addr() = (int16)*ptr;
 		}
 		break;
 	case PT_enumeration:
 	case PT_int32:
 		{
 			double *ptr = mxGetPr(value);
-			*(int32*)prop->get_addr() = (int32)*ptr;
+			if (ptr) *(int32*)prop->get_addr() = (int32)*ptr;
 		}
 		break;
 	case PT_set:
 	case PT_int64:
 		{
 			double *ptr = mxGetPr(value);
-			*(int64*)prop->get_addr() = (int64)*ptr;
+			if (ptr) *(int64*)prop->get_addr() = (int64)*ptr;
 		}
 		break;
 	case PT_timestamp:
 		{
 			double *ptr = mxGetPr(value);
-			*(TIMESTAMP*)prop->get_addr() = (TIMESTAMP)*ptr;
+			if (ptr) *(TIMESTAMP*)prop->get_addr() = (TIMESTAMP)*ptr;
 		}
 		break;
 	case PT_bool:
 		{
 			double *ptr = mxGetPr(value);
-			*(bool*)prop->get_addr() = (bool)*ptr;
+			if (ptr) *(bool*)prop->get_addr() = (bool)*ptr;
 		}
 		break;
 	case PT_char8:
@@ -218,6 +219,7 @@ EXPORT bool create(link *mod, CALLBACKS *fntable)
 	callback = fntable;
 	MATLABLINK *matlab = new MATLABLINK;
 	memset(matlab,0,sizeof(MATLABLINK));
+	strcpy(matlab->rootname,"gridlabd");
 	mod->set_data(matlab);
 	return true;
 }
@@ -239,6 +241,13 @@ EXPORT bool settag(link *mod, char *tag, char *data)
 			matlab->window = MWD_KEEP;
 		else
 			gl_error("'%s' is not a valid matlab window disposition", data);
+	}
+	else if ( strcmp(tag,"root")==0 )
+	{
+		if ( strlen(data)<sizeof(matlab->rootname) )
+			strcpy(matlab->rootname,data);
+		else
+			gl_error("root name is too long (max is %d)", sizeof(matlab->rootname));
 	}
 	else if ( strcmp(tag,"on_init")==0 )
 	{
@@ -509,13 +518,15 @@ EXPORT bool init(link *mod)
 	///////////////////////////////////////////////////////////////////////////
 	// post the gridlabd structure
 	matlab->root = gridlabd_struct;
-	engPutVariable(matlab->engine,"gridlabd",matlab->root);
+	engPutVariable(matlab->engine,matlab->rootname,matlab->root);
 
 	return true;
 }
 
 bool copy_exports(link *mod)
 {
+	return true;
+
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	LINKLIST *item;
 
@@ -550,15 +561,17 @@ bool copy_exports(link *mod)
 		}
 	}
 
-	engPutVariable(matlab->engine,"gridlabd",matlab->root);
+	engPutVariable(matlab->engine,matlab->rootname,matlab->root);
 	return true;
 }
 
 bool copy_imports(link *mod)
 {
+	return true;
+
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	mxDestroyArray(matlab->root);
-	matlab->root = engGetVariable(matlab->engine,"gridlabd");
+	matlab->root = engGetVariable(matlab->engine,matlab->rootname);
 	LINKLIST *item;
 
 	// update globals
@@ -574,7 +587,7 @@ bool copy_imports(link *mod)
 		}
 	}
 
-	// update exports
+	// update imports
 	for ( item=mod->get_imports()==NULL?mod->get_exports():mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
 	{
 		OBJECT *obj = mod->get_object(item);

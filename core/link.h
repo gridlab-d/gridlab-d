@@ -6,21 +6,27 @@
 
 #ifdef __cplusplus
 
+typedef struct {
+	OBJECT *obj;
+	PROPERTY *prop;
+} OBJECTPROPERTY;
+
 typedef struct s_linklist {
-	char *name;
-	void *data;
-	void *addr;
-	size_t size;
-	size_t index;
+	char *name; // spec for link
+	void *data; // local data
+	void *addr; // remote data
+	size_t size; // size of data
+	size_t index; // index to data
 	struct s_linklist *next;
 } LINKLIST;
 
 class link {
 private: // target data link
 	char target[64]; ///< name of target
-	LINKLIST *globals; ///< list of globals to export to target
-	LINKLIST *exports; ///< list of objects to export to target
-	LINKLIST *imports; ///< list of objects to import from target
+	LINKLIST *globals; ///< list of globals to publish  
+	LINKLIST *objects; ///< list of objects to publish  
+	LINKLIST *exports; ///< list of objects to export
+	LINKLIST *imports; ///< list of objects to import  
 	void *data;	///< other data associated with this link
 
 private: // target function link
@@ -29,8 +35,6 @@ private: // target function link
 	bool (*init)(link *mod);
 	TIMESTAMP (*sync)(link *mod, TIMESTAMP t0);
 	bool (*term)(link *mod);
-	LINKLIST *copyto; // list of items to copy to target
-	LINKLIST *copyfrom; // list of items to copy from target
 
 public:
 	void *get_handle();
@@ -50,29 +54,58 @@ public: // construction/destruction
 	link(char *file);
 	~link(void);
 
-public: // 
+public: // accessors
 	bool set_target(char *data);
 	inline char *get_target(void) { return target; };
 	LINKLIST *add_global(char *name);
-	LINKLIST * add_export(char *name);
-	LINKLIST * add_import(char *name);
+	LINKLIST *add_object(char *name);
+	LINKLIST *add_export(char *name);
+	LINKLIST *add_import(char *name);
 	inline void set_data(void *ptr) { data=ptr; };
 	void *get_data(void) { return data; };
-public:
-	inline LINKLIST *get_globals(void) { return globals; };
-	inline LINKLIST *get_imports(void) { return imports; };
-	inline LINKLIST *get_exports(void) { return exports; };
-	inline void *get_data(LINKLIST *item) { return item->data; };
-	inline GLOBALVAR *get_globalvar(LINKLIST *item) { return (GLOBALVAR*)item->data; };
-	inline OBJECT *get_object(LINKLIST *item) { return (OBJECT*)item->data; };
+
+	// linklist accessors
 	inline char *get_name(LINKLIST *item) { return (char*)item->name; }; 
 	inline LINKLIST *get_next(LINKLIST *item) { return item->next; };
+	inline void *get_data(LINKLIST *item) { return item->data; };
+	inline void set_data(LINKLIST *item, void *ptr) { item->data=ptr; };
 	inline void set_addr(LINKLIST *item,void*ptr) { item->addr = ptr; };
 	inline void *get_addr(LINKLIST *item) { return item->addr; };
 	inline void set_size(LINKLIST *item, size_t size) { item->size = size; };
 	inline size_t get_size(LINKLIST *item) { return item->size; };
 	inline void set_index(LINKLIST *item, size_t index) { item->index = index; };
 	inline size_t get_index(LINKLIST *item) { return item->index; };
+
+	inline LINKLIST *get_globals(void) { return globals; };
+	inline GLOBALVAR *get_globalvar(LINKLIST *item) { return (GLOBALVAR*)item->data; };
+	inline void set_globalvar(LINKLIST *item, GLOBALVAR *var) { item->data=(void*)var; };
+
+	inline LINKLIST *get_objects(void) { return objects; };
+	inline OBJECT *get_object(LINKLIST *item) { return (OBJECT*)item->data; };
+	inline void set_object(LINKLIST *item, OBJECT *var) { item->data=(void*)var; };
+
+	inline LINKLIST *get_imports(void) { return imports; };
+	inline OBJECTPROPERTY *get_import(LINKLIST *item) { return (OBJECTPROPERTY*)item->data; };
+	inline void set_import(LINKLIST *item, OBJECT *obj, PROPERTY *prop) 
+	{
+		OBJECTPROPERTY *var = (OBJECTPROPERTY*)malloc(sizeof(OBJECTPROPERTY));
+		var->obj = obj;
+		var->prop = prop;
+		if ( item->data!=NULL ) free(item->data);
+		item->data=(void*)var; 
+	};
+	
+	inline LINKLIST *get_exports(void) { return exports; };
+	inline OBJECTPROPERTY *get_export(LINKLIST *item) { return (OBJECTPROPERTY*)item->data; };
+	inline void set_export(LINKLIST *item, OBJECT *obj, PROPERTY *prop) 
+	{
+		OBJECTPROPERTY *var = (OBJECTPROPERTY*)malloc(sizeof(OBJECTPROPERTY));
+		var->obj = obj;
+		var->prop = prop;
+		if ( item->data!=NULL ) free(item->data);
+		item->data=(void*)var; 
+	};
+	
 };
 
 extern "C" {

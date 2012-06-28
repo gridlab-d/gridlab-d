@@ -1,33 +1,53 @@
 # $Id$
 # 
-# Test matlab link control file
+# Test Matlab link control file
 #
 
 target matlab
 
 #
-# Matlab link options
+# Matlab window disposition (hide, show, keep)
 #
+window show
 
-# matlab window disposition (hide, show, keep)
-window keep
-# matlab command on init
-on_init sync_num = 0; % initialize sync count
-# matlab command on sync
+#
+# Matlab command on init
+#
+#on_init sync_num = 0; % initialize sync count
+on_init uigetfiles
+
+#
+# Matlab command on sync
+#
 on_sync sync_num = sync_num+1; % increment sync count
-# matlab command on term
+
+#
+# Matlab command on term
+#
 on_term sync_num = - sync_num; % mark sync count done by making it negative
 
 #
-# Share the clock
+# Matlab root variable name for published data
+#
+root gld
+
+#
+# Global variables to publish (readonly)
 # If none are listed, all globals are copied
 #
 global clock
 global test_complex
 
 #
-# Object import/export list
+# Objects to publish (readonly)
 # If none are listed, all named objects are copied
 #
-export my_test0
-export my_test3
+object my_test0
+object my_test3
+
+#
+# Variables to export/import to workspace (by name)
+#
+export my_test6.x x
+export my_test9.y y
+import my_test12.z z

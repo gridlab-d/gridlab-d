@@ -55,6 +55,19 @@ LINKLIST * link::add_global(char *name)
 	return item;
 }
 
+LINKLIST * link::add_object(char *name)
+{
+	LINKLIST *item = new LINKLIST;
+	item->next = objects;
+	item->data = NULL;
+	item->name = (char*)malloc(strlen(name)+1);
+	item->addr = NULL;
+	item->size = 0;
+	strcpy(item->name,name);
+	objects = item;
+	return item;
+}
+
 LINKLIST * link::add_export(char *name)
 {
 	LINKLIST *item = new LINKLIST;
@@ -245,6 +258,10 @@ link::link(char *filename)
 				if ( strcmp(tag,"global")==0 )
 				{
 					add_global(data);
+				}
+				else if ( strcmp(tag,"object")==0 )
+				{
+					add_object(data);
 				}
 				else if ( strcmp(tag,"export")==0 )
 				{
