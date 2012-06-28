@@ -48,13 +48,13 @@ int sock_created = 0;
 
 #define MSGALLOCSZ 1024
 
-void printcontent(char *data, size_t len){
+void printcontent(unsigned char *data, size_t len){
 	// needed for debugging, but only when things are really not cooperating. -mh
 #if 0
 	size_t i = 0;
-	char *str = 0;
+	unsigned char *str = 0;
 
-	str = (char *)malloc(len * 2 + 1);
+	str = (unsigned char *)malloc(len * 2 + 1);
 	memset(str, 0, len * 2 + 1);
 	for(i = 0; i < len; ++i){
 		str[2*i] = data[i]/16 + 48;
@@ -133,7 +133,7 @@ void *instance_runproc_socket(void *ptr){
 
 	while(running){
 		rv = recv(inst->sockfd, inst->buffer, (int)(inst->buffer_size), 0);
-		output_debug("%d = recv(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, inst->buffer_size);
+		//output_debug("%d = recv(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, inst->buffer_size);
 		if(0 == rv){
 			output_error("instance_runproc_socket(): socket was closed before receiving data");
 			running = 0;
@@ -144,8 +144,8 @@ void *instance_runproc_socket(void *ptr){
 		if(0 == memcmp(inst->buffer, MSG_DATA, strlen(MSG_DATA))){
 			got_data = 1;
 			inst->has_data = TRUE;
-			output_debug("instance_runproc_socket(): found "MSG_DATA);
-			output_debug("instance_runproc_socket(): recv'd %d bytes", rv);
+			//output_debug("instance_runproc_socket(): found "MSG_DATA);
+			//output_debug("instance_runproc_socket(): recv'd %d bytes", rv);
 		} else if(0 == memcmp(inst->buffer, MSG_ERR, strlen(MSG_ERR))){
 			output_error("instance_runproc_socket(): slave indicated an error occured"); // error occured
 			running = 0;
@@ -164,7 +164,7 @@ void *instance_runproc_socket(void *ptr){
 		//pthread_mutex_lock(&inst->wait_lock);
 		//pthread_cond_wait(&inst->wait_signal, &inst->wait_lock);
 		//pthread_mutex_unlock(&inst->wait_lock);
-		output_debug("i_rp_s(): sending broadcast %d", inst->sock_signal);
+		//output_debug("i_rp_s(): sending broadcast %d", inst->sock_signal);
 		pthread_cond_broadcast(&(inst->sock_signal));
 		
 	}
@@ -386,6 +386,7 @@ int instance_master_wait(void)
 		}
 		if(status == 0)
 			break;
+//		output_verbose("slave %d resumed with t2=%lli (%x)", inst->id, inst->cache->ts, (&inst->cache->ts-inst->cache));
 	}
 	output_verbose("master resuming");
 	return status;
@@ -397,7 +398,9 @@ void instance_master_done_mmap(instance *inst){
 		output_error("instance_master_done_mmap(): null inst pointer");
 		return;
 	}
-	output_verbose("master signaling slave %d with timestamp %"FMT_INT64"d", inst->id, inst->cache->ts);
+	//output_verbose("master signaling slave %d with timestamp %lli", inst->id, inst->cache->ts);
+	
+	
 #ifdef WIN32
 	SetEvent(inst->hSlave);
 #else
@@ -432,7 +435,7 @@ void instance_master_done_socket(instance *inst){
 	//output_debug("imds(): sending %d bytes", offset);
 	rv = send(inst->sockfd, inst->buffer, offset, 0);
 	printcontent(inst->buffer, rv);
-	output_debug("%d = send(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, offset);
+	//output_debug("%d = send(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, offset);
 	if(0 == rv){
 		// socket closed
 		output_error("instance_master_done_socket(): inst %d closed its socket", inst->id);
@@ -452,6 +455,8 @@ void instance_master_done(TIMESTAMP t1)
 	instance *inst;
 	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
 	{
+		//output_debug("master setting slave %d controller c->ts from %lli to t1 %lli", inst->cache->id, inst->cache->ts, t1);
+		// needs to be done in instance_write_slave, this is too late
 		inst->cache->ts = t1;
 		switch(inst->cnxtype){
 			case CI_MMAP:
@@ -562,9 +567,11 @@ STATUS instance_init(instance *inst)
 	if(FAILED == messagewrapper_init(&(inst->message), inst->cache)){
 		return FAILED;
 	}
-
+	
 	//	initialize cache
 	inst->cache->id = inst->id = instances_count;
+
+	//output_verbose("inst_init(): slave %d cache at %x, ts at %x", instances_count, inst->cache, &(inst->cache->ts));
 
 	// write property lists
 	// properties are written into the buffer as "obj1.prop1,obj2.prop2 obj3.prop3,obj4.prop4\0".
@@ -657,8 +664,10 @@ STATUS instance_write_slave(instance *inst)
 		output_error("instance_write_slave(): null inst pointer");
 		return FAILED;
 	}
+	/* update buffer header */
+
 	/* write output to instance */
-	output_verbose("master writing links for inst %d", inst->id);
+	//output_verbose("master writing links for inst %d", inst->id);
 	for ( lnk=inst->write ; lnk!=NULL ; lnk=lnk->next ){
 		res = linkage_master_to_slave(0, lnk);
 		if(FAILED == res){
@@ -666,9 +675,9 @@ STATUS instance_write_slave(instance *inst)
 			return FAILED;
 		}
 	}
-	output_verbose("copying %d bytes from %x to %x", inst->cachesize, inst->cache, inst->buffer);
+	//output_verbose("copying %d bytes from %x to %x (%lli)", inst->cachesize, inst->cache, inst->buffer, inst->cache->ts);
 	memcpy(inst->buffer, inst->cache, inst->cachesize);
-//	printcontent(inst->buffer, (int)inst->cachesize);
+	printcontent(inst->buffer, (int)inst->cachesize);
 	return SUCCESS;
 }
 
@@ -689,7 +698,7 @@ TIMESTAMP instance_read_slave(instance *inst)
 //	printcontent(inst->buffer, (int)inst->cachesize);
 	t2 = inst->cache->ts;
 
-	output_debug("master reading links for inst %d", inst->id);
+	//output_debug("master reading links for inst %d", inst->id);
 	/* @todo read input from instance */
 	for ( lnk=inst->read ; lnk!=NULL ; lnk=lnk->next ){
 		res = linkage_slave_to_master(0, lnk);
@@ -732,8 +741,10 @@ TIMESTAMP instance_syncall(TIMESTAMP t1)
 		}
 	
 		/* send linkage to slaves */
-		for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
+		for ( inst=instance_list ; inst!=NULL ; inst=inst->next ){
+			inst->cache->ts = t1;
 			instance_write_slave(inst);
+		}
 	
 		/* signal slaves to start */
 		instance_master_done(t1);

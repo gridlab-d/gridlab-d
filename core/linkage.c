@@ -89,7 +89,7 @@ STATUS linkage_master_to_slave(char *buffer, linkage *lnk)
 	int rv = 0;
 	int size = 0;
 
-	output_debug("linkage_master_to_slave");
+	//output_debug("linkage_master_to_slave");
 
 	// null checks
 	if(0 == lnk){

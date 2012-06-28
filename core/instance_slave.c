@@ -245,8 +245,12 @@ STATUS instance_slave_link_properties(){
 
 int instance_slave_wait_mmap(){
 	int status = 0;
+	MESSAGE *tc = 0;
 #ifdef WIN32
-	DWORD rc = WaitForSingleObject(local_inst.hSlave,global_signal_timeout);
+	DWORD rc = 0;
+	tc = (MESSAGE *)(local_inst.filemap);
+	output_verbose("wait_mmap: started wait with with fmap ts = %lli", tc->ts);
+	rc = WaitForSingleObject(local_inst.hSlave,global_signal_timeout);
 	switch ( rc ) {
 		case WAIT_ABANDONED:
 			output_error("instance_slave_wait_mmap(): slave %d wait abandoned", slave_id);
@@ -266,6 +270,10 @@ int instance_slave_wait_mmap(){
 			break;
 	}
 	ResetEvent(local_inst.hSlave);
+	// copy the data from the mmap to the cache
+	memcpy(local_inst.cache, local_inst.filemap, local_inst.cachesize);
+	printcontent(local_inst.cache, local_inst.cachesize);
+	output_verbose("wait_mmap: resumed with fmap ts = %lli", tc->ts);
 #else
 	// fatal error
 #endif
@@ -332,7 +340,7 @@ int instance_slave_wait_socket(){
 int instance_slave_wait(void)
 {
 	int status = 0;
-	output_verbose("instance_slave_wait(): slave %d entering wait state", slave_id);
+	output_verbose("instance_slave_wait(): slave %d entering wait state with t2=%lli (%x)", slave_id, local_inst.cache->ts, (&local_inst.cache->ts-local_inst.cache));
 	if(local_inst.cnxtype == CI_MMAP){
 #ifdef WIN32
 		status = instance_slave_wait_mmap();
@@ -474,7 +482,9 @@ void *instance_slaveproc(void *ptr)
 		
 		/* resume the main loop */
 		// note, if TS_NEVER, we want the slave's exec loop to end normally
-		output_debug("slave %d controller resuming exec with %lli", slave_id, local_inst.cache->ts);
+		//output_debug("slave %d controller resuming exec with %lli", slave_id, local_inst.cache->ts);
+		output_debug("slave %d controller resuming exec with %lli", local_inst.cache->id, local_inst.cache->ts);
+		output_debug("slave %d controller setting step_to %lli to cache->ts %lli", local_inst.cache->id, sync_d.step_to, local_inst.cache->ts);
 		sync_d.step_to = local_inst.cache->ts;
 		if(local_inst.cache->ts != TS_NEVER){
 			sync_d.hard_event = 1;
@@ -529,6 +539,7 @@ STATUS instance_slave_init_mem(){
 	size_t sz = sizeof(MESSAGE);
 	size_t cacheSize;
 
+	output_debug("instance_slave_init_mem()");
 	/* @todo open cache */
 	local_inst.cacheid = global_master_port;
 	sprintf(cacheName,"GLD-%"FMT_INT64"x",global_master_port);
@@ -848,13 +859,16 @@ STATUS instance_slave_init(void)
 //	STATUS stat;
 	size_t cacheSize = sizeof(MESSAGE)+MSGALLOCSZ; /* @todo size instance cache dynamically from linkage list */
 
+	output_debug("instance_slave_init()");
+
 //	memset(&local_inst, 0, sizeof(local_inst));
 	local_inst.cacheid = global_slave_id;
 	global_multirun_mode = MRM_SLAVE;
-//	output_debug("slave %"FMT_INT64" setting prefixes", local_inst.cacheid);
+	output_debug("slave %lli setting prefixes", local_inst.cacheid);
 	output_prefix_enable();
 	
 
+	output_debug("slave %lli initializing connection", local_inst.cacheid);
 	// this is where we open a connection, snag the first header, and initialize everything from there
 	switch(global_multirun_connection){
 		case MRC_MEM:
@@ -883,13 +897,13 @@ STATUS instance_slave_init(void)
 		return FAILED;
 	}
 
-	output_debug("li: %"FMT_INT64" %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
+	output_debug("li: %llx %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
 //	output_debug("slave %"FMT_INT64" entering init_pthreads()", local_inst.cacheid);
 	rv = instance_slave_init_pthreads(); // starts slaveproc() thread
 //	output_debug("slave %"FMT_INT64" exited init_pthreads()", local_inst.cacheid);
 //	output_debug("li: %"FMT_INT64" %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
 	global_clock = sync_d.step_to; // copy time signal to gc, legit since it's from msg
-	
+	output_debug("inst_slave_init(): gc = %lli", global_clock);
 	// signal master that slave init is done
 //	instance_slave_done();
 	// punt this until after first inst_signal sent
