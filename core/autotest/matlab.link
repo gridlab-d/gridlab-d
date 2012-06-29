@@ -6,10 +6,23 @@
 target matlab
 
 #
+# Matlab working directory
+# The workdir is automatically created if it doesn't exist
+# If omitted, the current working directory is used
+#
+workdir temp
+
+#
 # Matlab window disposition (hide, show, keep)
 # Default is 'hide'
 #
-window hide
+window show
+
+#
+# Matlab output buffer size for verbose output
+# If omitted, output is not displayed when verbose is enabled
+#
+output 65536
 
 #
 # Matlab command on init
@@ -30,7 +43,7 @@ on_sync if (n<=1000) q(n)=z; n=n+1; end; ans=TS_NEVER; % sync is ok with no futu
 # Matlab command on term
 #   ans is GLD_OK when term succeeds
 #   ans is GLD_ERROR when term fails
-on_term saveas(plot(q),'c:/temp/q.png'); ans=GLD_OK; % term is ok
+on_term saveas(plot(q),'q.png'); ans=GLD_OK; % term is ok
 
 #
 # Matlab root variable name for published data
@@ -41,6 +54,8 @@ root gld
 #
 # Global variables to publish (readonly)
 # Default is all globals
+# Listing "global" all by itself once will cause no globals to be published
+# 
 #
 global clock
 global test_complex
@@ -48,6 +63,7 @@ global test_complex
 #
 # Objects to publish (readonly)
 # Default is all objects
+# Listing "object" all by itself once will cause no objects to be published
 #
 object my_test0
 object my_test3

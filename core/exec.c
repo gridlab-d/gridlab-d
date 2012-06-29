@@ -690,9 +690,7 @@ static STATUS init_all(void)
 	}
 
 	/* initialize external links */
-	link_initall();
-	
-	return rv;
+	return link_initall();
 }
 
 /*

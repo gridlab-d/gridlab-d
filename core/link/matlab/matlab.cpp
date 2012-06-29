@@ -2,6 +2,7 @@
 // Copyright (C) 2012 Battelle Memorial Institute
 
 #include <stdlib.h>
+#include <direct.h>
 #include <ctype.h>
 
 // you must have matlab installed and ensure matlab/extern/include is in include path
@@ -31,10 +32,27 @@ typedef struct {
 	char *term;
 	int status;
 	char rootname[64];
+	char workdir[1024];
+	size_t output_size;
+	char *output_buffer;
 	mxArray *root;
 } MATLABLINK;
 
-static mxArray* create_mxproperty(gld_property *prop)
+static mxArray* matlab_exec(MATLABLINK *matlab, char *format, ...)
+{
+	char cmd[4096];
+	va_list ptr;
+	va_start(ptr,format);
+	vsprintf(cmd,format,ptr);
+	va_end(ptr);
+	engEvalString(matlab->engine,cmd);
+	if ( matlab->output_buffer && strcmp(matlab->output_buffer,"")!=0 )
+		gl_verbose( "%s", matlab->output_buffer );
+	mxArray *ans = engGetVariable(matlab->engine,"ans");
+	return ans; // failed
+}
+
+static mxArray* matlab_create_value(gld_property *prop)
 {
 	mxArray *value=NULL;
 	switch ( prop->get_type() ) {
@@ -84,7 +102,7 @@ static mxArray* create_mxproperty(gld_property *prop)
 	}
 	return value;
 }
-static mxArray* set_mxproperty(mxArray *value, gld_property *prop)
+static mxArray* matlab_set_value(mxArray *value, gld_property *prop)
 {
 	switch ( prop->get_type() ) {
 	case PT_double:
@@ -149,7 +167,7 @@ static mxArray* set_mxproperty(mxArray *value, gld_property *prop)
 	}
 	return value;
 }
-static mxArray* get_mxproperty(mxArray *value, gld_property *prop)
+static mxArray* matlab_get_value(mxArray *value, gld_property *prop)
 {
 	switch ( prop->get_type() ) {
 	case PT_double:
@@ -242,6 +260,18 @@ EXPORT bool settag(link *mod, char *tag, char *data)
 		else
 			gl_error("'%s' is not a valid matlab window disposition", data);
 	}
+	else if ( strcmp(tag,"output")==0 )
+	{
+		matlab->output_size = atoi(data);
+		if ( matlab->output_size>0 )
+			matlab->output_buffer = (char*)malloc(matlab->output_size);
+		else
+			gl_error("'%s' is not a valid output buffer size", data);
+	}
+	else if ( strcmp(tag,"workdir")==0 )
+	{
+		strcpy(matlab->workdir,data);
+	}
 	else if ( strcmp(tag,"root")==0 )
 	{
 		if ( strlen(data)<sizeof(matlab->rootname) )
@@ -319,11 +349,44 @@ EXPORT bool init(link *mod)
 	if ( matlab->engine==NULL )
 		return false;
 
+	// set the output buffer
+	if ( matlab->output_buffer!=NULL )
+		engOutputBuffer(matlab->engine,matlab->output_buffer,(int)matlab->output_size);
+
 	gl_debug("matlab link is open");
+
+	///////////////////////////////////////////////////////////////////////////
+	// special values needed by matlab
+	mxArray *ts_never = mxCreateDoubleScalar((double)(TIMESTAMP)TS_NEVER);
+	engPutVariable(matlab->engine,"TS_NEVER",ts_never);
+	mxArray *ts_error = mxCreateDoubleScalar((double)(TIMESTAMP)TS_INVALID);
+	engPutVariable(matlab->engine,"TS_ERROR",ts_error);
+	mxArray *gld_ok = mxCreateDoubleScalar((double)(bool)true);
+	engPutVariable(matlab->engine,"GLD_OK",gld_ok);
+	mxArray *gld_err = mxCreateDoubleScalar((double)(bool)false);
+	engPutVariable(matlab->engine,"GLD_ERROR",gld_err);
 
 	// setup matlab engine
 	engSetVisible(matlab->engine,window_show(matlab));
-	if ( matlab->init ) engEvalString(matlab->engine,matlab->init);
+	if ( matlab->init )
+	{
+		mxArray *ans = matlab_exec(matlab,"%s",matlab->init);
+		if ( ans && mxIsDouble(ans) && (bool)*mxGetPr(ans)==false )
+		{
+			gl_error("matlab init failed");
+			return false;
+		}
+	}
+
+	// set the workdir
+	if ( strcmp(matlab->workdir,"")!=0 )
+	{
+		mkdir(matlab->workdir);
+		if ( matlab->workdir[0]=='/' )
+			matlab_exec(matlab,"cd '%s'", matlab->workdir);
+		else
+			matlab_exec(matlab,"cd '%s/%s'", _getcwd(NULL,0),matlab->workdir);
+	}
 
 	// build gridlabd data
 	mwSize dims[] = {1,1};
@@ -353,7 +416,7 @@ EXPORT bool init(link *mod)
 			{
 				gld_property prop(var);
 				var_index = mxAddField(global_struct,prop.get_name());
-				var_struct = create_mxproperty(&prop);
+				var_struct = matlab_create_value(&prop);
 				if ( var_struct!=NULL )
 				{
 					//mod->add_copyto(var->prop->addr,mxGetData(var_struct));
@@ -365,7 +428,7 @@ EXPORT bool init(link *mod)
 		{
 			gld_property prop(var);
 			var_index = mxAddField(global_struct,prop.get_name());
-			var_struct = create_mxproperty(&prop);
+			var_struct = matlab_create_value(&prop);
 			if ( var_struct!=NULL )
 			{
 				//mod->add_copyto(var->prop->addr,mxGetData(var_struct));
@@ -462,7 +525,7 @@ EXPORT bool init(link *mod)
 			for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
 			{
 				gld_property p(obj,prop);
-				mxArray *data = create_mxproperty(&p);
+				mxArray *data = matlab_create_value(&p);
 				mxSetField(runtime_struct,index,prop->name,data);
 			}
 
@@ -529,7 +592,7 @@ EXPORT bool init(link *mod)
 
 		// add to published items
 		gld_property prop(objprop->obj,objprop->prop);
-		item->addr = (mxArray*)create_mxproperty(&prop);
+		item->addr = (mxArray*)matlab_create_value(&prop);
 		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
 	}
 	for ( item=mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
@@ -549,21 +612,10 @@ EXPORT bool init(link *mod)
 		if ( !found )
 		{
 			gld_property prop(objprop->obj,objprop->prop);
-			item->addr = (mxArray*)create_mxproperty(&prop);
+			item->addr = (mxArray*)matlab_create_value(&prop);
 			engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
 		}
 	}
-
-	///////////////////////////////////////////////////////////////////////////
-	// special values needed by matlab
-	mxArray *ts_never = mxCreateDoubleScalar((double)(TIMESTAMP)TS_NEVER);
-	engPutVariable(matlab->engine,"TS_NEVER",ts_never);
-	mxArray *ts_error = mxCreateDoubleScalar((double)(TIMESTAMP)TS_INVALID);
-	engPutVariable(matlab->engine,"TS_ERROR",ts_error);
-	mxArray *gld_ok = mxCreateDoubleScalar((double)(bool)true);
-	engPutVariable(matlab->engine,"GLD_OK",gld_ok);
-	mxArray *gld_err = mxCreateDoubleScalar((double)(bool)false);
-	engPutVariable(matlab->engine,"GLD_ERROR",gld_err);
 
 	return true;
 }
@@ -582,7 +634,7 @@ bool copy_exports(link *mod)
 			mwIndex var_index = (mwIndex)mod->get_index(item);
 			GLOBALVAR *var = mod->get_globalvar(item);
 			gld_property prop(var);
-			set_mxproperty(var_struct,&prop);
+			matlab_set_value(var_struct,&prop);
 		}
 	}
 
@@ -603,7 +655,7 @@ bool copy_exports(link *mod)
 		{
 			gld_property p(obj,prop);
 			mxArray *data = mxGetField(runtime_struct,index,prop->name);
-			set_mxproperty(data,&p);
+			matlab_set_value(data,&p);
 		}
 	}
 
@@ -613,7 +665,7 @@ bool copy_exports(link *mod)
 		OBJECTPROPERTY *objprop = mod->get_export(item);
 		if ( objprop==NULL ) continue;
 		gld_property prop(objprop->obj,objprop->prop);
-		item->addr = set_mxproperty((mxArray*)item->addr,&prop);
+		item->addr = matlab_set_value((mxArray*)item->addr,&prop);
 		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
 	}
 
@@ -623,7 +675,7 @@ bool copy_exports(link *mod)
 		OBJECTPROPERTY *objprop = mod->get_import(item);
 		if ( objprop==NULL ) continue;
 		gld_property prop(objprop->obj,objprop->prop);
-		item->addr = set_mxproperty((mxArray*)item->addr,&prop);
+		item->addr = matlab_set_value((mxArray*)item->addr,&prop);
 		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
 	}
 
@@ -645,7 +697,7 @@ bool copy_imports(link *mod)
 			mwIndex var_index = (mwIndex)mod->get_index(item);
 			GLOBALVAR *var = mod->get_globalvar(item);
 			gld_property prop(var);
-			get_mxproperty(var_struct,&prop);
+			matlab_get_value(var_struct,&prop);
 		}
 	}
 
@@ -656,7 +708,10 @@ bool copy_imports(link *mod)
 		if ( objprop==NULL ) continue;
 		gld_property prop(objprop->obj,objprop->prop);
 		mxArray *data = engGetVariable(matlab->engine,item->name);
-		get_mxproperty(data,&prop);
+		if ( data )
+			matlab_get_value(data,&prop);
+		else
+			gl_warning("unable to read '%s' from matlab", item->name);
 		mxDestroyArray(data);
 	}
 
@@ -671,26 +726,37 @@ EXPORT TIMESTAMP sync(link* mod,TIMESTAMP t0)
 	if ( !copy_exports(mod) )
 		return TS_INVALID; // error
 
-	if ( matlab->sync ) engEvalString(matlab->engine,matlab->sync);
-	mxArray *ans = engGetVariable(matlab->engine,"ans");
-	if ( ans && mxIsDouble(ans) )
+	if ( matlab->sync )
 	{
-		double *pVal = (double*)mxGetData(ans);
-		if ( pVal!=NULL ) t1 = floor(*pVal);
-		if ( t1<TS_INVALID ) t1=TS_NEVER;
+		mxArray *ans = matlab_exec(matlab,"%s",matlab->sync);
+		if ( ans && mxIsDouble(ans) )
+		{
+				
+			double *pVal = (double*)mxGetData(ans);
+			if ( pVal!=NULL ) t1 = floor(*pVal);
+			if ( t1<TS_INVALID ) t1=TS_NEVER;
+		}
 	}
 
 	if ( !copy_imports(mod) )
 		return TS_INVALID; // error
 
-	return TS_NEVER;
+	return t1;
 }
 
 EXPORT bool term(link* mod)
 {
 	// close matlab engine
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
-	if ( matlab->term ) engEvalString(matlab->engine,matlab->term);
+	if ( matlab->term ) 
+	{
+		mxArray *ans = matlab_exec(matlab,"%s",matlab->term);
+		if ( ans && mxIsDouble(ans) && (bool)*mxGetPr(ans)==false )
+		{
+			gl_error("matlab term failed");
+			return false;
+		}
+	}
 	if ( window_kill(matlab) ) engClose(matlab->engine)==0;
 	return true;
 }

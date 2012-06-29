@@ -142,13 +142,14 @@ int link_initall(void)
 					output_warning("link_initall(): a variable property definition is null"); 
 			}
 		}
-		else
+		else 
 		{
 			// link global variables
 			for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
 			{
+				if ( strcmp(item->name,"")==0 ) continue;
 				item->data = (void*)global_find(item->name);
-				if ( item->data==NULL)
+				if ( item->data==NULL )
 					output_error("link_initall(target='%s'): global '%s' is not found", mod->get_target(), item->name);
 			}
 		}
@@ -173,13 +174,14 @@ int link_initall(void)
 				item->data = (void*)obj;
 			}
 		}
-		else 
+		else
 		{
 			LINKLIST *item;
 
 			// link global variables
 			for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
 			{
+				if ( strcmp(item->name,"")==0 ) continue;
 				OBJECT *obj = NULL;
 				item->data = (void*)object_find_name(item->name);
 				if ( item->data==NULL)
@@ -301,8 +303,8 @@ link::link(char *filename)
 	{
 		linenum++;
 		if ( line[0]=='#' ) continue;
-		char tag[64], data[1024];
-		if ( sscanf(line,"%s %[^\n]",tag,data)==2 )
+		char tag[64], data[1024]="";
+		if ( sscanf(line,"%s %[^\n]",tag,data)>0 )
 		{
 			output_debug("%s(%d): %s %s", filename, linenum, tag,data);
 			if ( settag!=NULL )
