@@ -3,25 +3,25 @@
 	@file timestamp.c
 	@addtogroup timestamp Time management
 	@ingroup core
-	
+
 	Time function handle time calculations and daylight saving time (DST).
 
-	DST rules are recorded in the file \p tzinfo.txt. The file loaded 
+	DST rules are recorded in the file \p tzinfo.txt. The file loaded
 	is the first found according the following search sequence:
 	-	The current directory
 	-	The same directory as the executable \p gridlabd.exe
 	-	The path in the \p GLPATH environment variable
 
-	DST rules are recorded in the Posix-compliant format for the \p TZ 
+	DST rules are recorded in the Posix-compliant format for the \p TZ
 	environment variable:
 	@code
 		STZ[hh[:mm][DTZ][,M#[#].#.#/hh:mm,M#[#].#.#/hh:mm]]
 	@endcode
 
-	
+
  @{
  **/
- 
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -88,7 +88,7 @@ int timestamp_year(TIMESTAMP ts, TIMESTAMP *remainder)
 	unsigned int year = (unsigned int)(ts/86400/365.24); /* estimate the year */
 #endif
 	int tsyear = 0;
-	
+
 	if (tszero[0] == -1){	/* need to initialize tszero array */
 		TIMESTAMP ts = 0;
 		int year0 = YEAR0;
@@ -100,19 +100,19 @@ int timestamp_year(TIMESTAMP ts, TIMESTAMP *remainder)
 			n = (ISLEAPYEAR(year0) ? 366 : 365) * DAY; /* n ticks is next year */
 		}
 	}
-	
+
 	while(year > 0 && ts < tszero[year]){
-		year--; 
+		year--;
 	}
-	
+
 	while(year < MAXYEAR-YEAR0-1 && ts > tszero[year+1]){
 		year++;
 	}
-	
+
 	if(remainder){
 		*remainder = ts - tszero[year];
 	}
-	
+
 	if((year + YEAR0) < 0){
 		output_error("timestamp_year: the year has rolled over or become negative!");
 		/*	TROUBLESHOOT
@@ -120,7 +120,7 @@ int timestamp_year(TIMESTAMP ts, TIMESTAMP *remainder)
 			insufficiently documented from earlier code.
 		*/
 	}
-	
+
 	return year + YEAR0;
 }
 
@@ -129,7 +129,7 @@ int timestamp_year(TIMESTAMP ts, TIMESTAMP *remainder)
 int isdst(TIMESTAMP t)
 {
 	int year = timestamp_year(t + tzoffset, NULL) - YEAR0;
-	
+
 	return dststart>=0 && dststart[year] <= t && t < dstend[year];
 }
 
@@ -152,7 +152,7 @@ int local_tzoffset(TIMESTAMP t)
 }
 
 /** Converts a GMT timestamp to local datetime struct
-	Adjusts to TZ if possible 
+	Adjusts to TZ if possible
  **/
 int local_datetime(TIMESTAMP ts, DATETIME *dt)
 {
@@ -161,7 +161,7 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	TIMESTAMP rem = 0;
 	TIMESTAMP local;
 	int tsyear;
-	
+
 #ifdef USE_TS_CACHE
 	/* allow caching */
 	static TIMESTAMP old_ts =0;
@@ -189,15 +189,15 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 		/* THROW("local_datetime(TIMESTAMP=%"FMT_INT64"d, DATETIME *dt={...}): unable to determine local time %"FMT_INT64"ds", ts, rem); */
 		THROW("local_datetime(...): unable to determine localtime; did you forget to initialize the clock?");
 		/*	TROUBLESHOOT
-			Though the associated message is casual, the simulation will generally not start up in a 
+			Though the associated message is casual, the simulation will generally not start up in a
 			stable configuration if the clock is not given an initial value.
 		*/
 	}
-	
+
 
 	if(ts < TS_ZERO && ts > TS_MAX) /* timestamp out of range */
 		return 0;
-	
+
 	if(ts == TS_NEVER)
 		return 0;
 
@@ -228,7 +228,7 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 		if(n < 86400 * 28){ /**/
 			output_fatal("Breaking an infinite loop in local_datetime! (ts = %"FMT_INT64"ds", ts);
 			/*	TROUBLESHOOT
-				An internal protection against infinite loops in the time calculation 
+				An internal protection against infinite loops in the time calculation
 				module has encountered a critical problem.  This is often caused by
 				an incorrectly initialized timezone system, a missing timezone specification before
 				a timestamp was used, or a missing timezone localization in your system.
@@ -257,7 +257,7 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 
 	/* compute microsecond */
 	dt->microsecond = (unsigned int)rem;
-	
+
 	/* determine timezone */
 	strncpy(dt->tz, tzvalid ? (dt->is_dst ? tzdst : tzstd) : "GMT", sizeof(dt->tz));
 
@@ -301,7 +301,7 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 			return TS_INVALID;
 		}
 	}
-	
+
 	/* add month */
 	for (n=1; n<dt->month; n++){
 		if(ISLEAPYEAR(dt->year) && n == 2){
@@ -310,7 +310,7 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 			ts += (daysinmonth[n - 1]) * DAY;
 		}
 		// ts += (daysinmonth[n - 1] + (n == 2 && ISLEAPYEAR(dt->year) ? 1 : 0)) * DAY;
-	}	
+	}
 
 	if(dt->hour < 0 || dt->hour > 23 || dt->minute < 0 || dt->minute > 60 || dt->second < 0 || dt->second > 62){
 		output_fatal("Invalid time of day provided in datetime");
@@ -348,12 +348,12 @@ int strdatetime(DATETIME *t, char *buffer, int size){
 		output_error("strdatetime: null DATETIME pointer passed in");
 		return 0;
 	}
-	
+
 	if(buffer == NULL){
 		output_error("strdatetime: null string buffer passed in");
 		return 0;
 	}
-	
+
 	/* choose best format */
 	if(global_dateformat == DF_ISO){
 		if(t->microsecond != 0){
@@ -372,12 +372,12 @@ int strdatetime(DATETIME *t, char *buffer, int size){
 	} else {
 		THROW("global_dateformat=%d is not valid", global_dateformat);
 		/* TROUBLESHOOT
-			The value of the global variable 'global_dateformat' is not valid.  
+			The value of the global variable 'global_dateformat' is not valid.
 			Check for attempts to set this variable and make sure that is one of the valid
 			values (e.g., DF_ISO, DF_US, DF_EURO)
 		 */
 	}
-	
+
 	if(len < size){
 		strncpy(buffer, tbuffer, len+1);
 		return len;
@@ -403,9 +403,9 @@ TIMESTAMP compute_dstevent(int year, SPEC *spec, time_t offset){
 		output_error("compute_dstevent: null SPEC* pointer passed in");
 		return -1;
 	}
-	
+
 	/* check values */
-	if (spec->day<0 || spec->day>7 
+	if (spec->day<0 || spec->day>7
 		|| spec->hour<0 || spec->hour>23
 		|| spec->minute<0 || spec->minute>59
 		|| spec->month<0 || spec->month>11
@@ -418,21 +418,21 @@ TIMESTAMP compute_dstevent(int year, SPEC *spec, time_t offset){
 	for (y = YEAR0; y < year; y++){
 		ndays += 365 + (ISLEAPYEAR(y) ? 1 : 0);
 	}
-	
+
 	for (m = 0; m < spec->month - 1; m++){
 		ndays += daysinmonth[m] + ((m==1&&ISLEAPYEAR(y))?1:0);
 	}
-	
+
 	day1 = (ndays + DOW0+7)%7; /* weekday of first day of month */
 	d = ((7 - day1)%7+1 + (spec->nth - 1) * 7);
-	
+
 	while(d > daysinmonth[m] + ((m == 1 && ISLEAPYEAR(y)) ? 1 : 0)){
 		d -= 7;
 	}
-	
+
 	ndays += d-1;
 	t = (ndays * 86400 + spec->hour * 3600 + spec->minute * 60);
-	
+
 	return t * TS_SECOND + tzoffset;
 }
 
@@ -441,52 +441,59 @@ TIMESTAMP compute_dstevent(int year, SPEC *spec, time_t offset){
 int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset){
 	int hours = 0, minutes = 0;
 	char buf1[32], buf2[32];
+	int rv = 0;
 	memset(buf1,0,sizeof(buf1));
 	memset(buf2,0,sizeof(buf2));
-	
-	if ((strchr(tzspec, ':') != NULL && sscanf(tzspec, "%[A-Z]%d:%d%[A-Z]", buf1, &hours, &minutes, buf2) < 3)
-			|| sscanf(tzspec, "%[A-Z]%d%[A-Z]", buf1, &hours, buf2) < 2){
+
+
+	if ((strchr(tzspec, ':') != NULL ) && (sscanf(tzspec, "%[A-Z]%d:%d%[A-Z]", buf1, &hours, &minutes, buf2) < 3)){
 		output_error("tz_info: \'%s\' not a timezone-format string", tzspec);
 		return 0;
 	}
-	
+
+	rv =  sscanf(tzspec, "%[A-Z]%d%[A-Z]", buf1, &hours, buf2);
+	if(rv < 2){
+		output_error("tz_info: \'%s\' not a timezone-format string", tzspec);
+		return 0;
+	}
+
 	if (hours < -12 || hours > 12){
 		output_error("timezone %s (%s) has out-of-bounds hour offset of %i", tzname, std, hours);
 		return 0;
 	}
-	
+
 	if (minutes < 0 || minutes > 59){
 		output_error("timezone %s (%s) has out-of-bounds minutes offset of %i", tzname, std, minutes);
 		return 0;
 	}
-	
+
 	if(std){
 		strcpy(std, buf1);
 	}
-	
+
 	if(dst){
 		strcpy(dst, buf2);
 	}
-	
+
 	if(minutes == 0) {
 		if(tzname){
-			sprintf(tzname, "%s%d%s", buf1, hours, buf2);
+			sprintf(tzname, "%s%d%s", buf1, hours, (rv == 2 ? "" : buf2));
 		}
-		
+
 		if(offset){
 			*offset = hours * 3600;
 		}
-		
+
 		return 1;
 	} else {
 		if(tzname){
 			sprintf(tzname, "%s%d:%02d%s", buf1, hours, minutes, buf2);
 		}
-		
+
 		if(offset){
 			*offset = hours * 3600 + minutes * 60;
 		}
-		
+
 		return 2;
 	}
 }
@@ -496,7 +503,7 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset){
  **/
 char *tz_name(char *tzspec){
 	static char name[32] = "GMT";
-	
+
 	if(tz_info(tzspec, name, NULL, NULL, NULL)){
 		return name;
 	} else {
@@ -513,7 +520,7 @@ char *tz_name(char *tzspec){
  **/
 time_t tz_offset(char *tzspec){
 	time_t offset;
-	
+
 	if(tz_info(tzspec, NULL, NULL, NULL, &offset)){
 		return offset;
 	} else {
@@ -526,7 +533,7 @@ time_t tz_offset(char *tzspec){
  **/
 char *tz_std(char *tzspec){
 	static char std[32] = "GMT";
-	
+
 	if(tz_info(tzspec, NULL, std, NULL, NULL)){
 		return std;
 	} else {
@@ -539,7 +546,7 @@ char *tz_std(char *tzspec){
  **/
 char *tz_dst(char *tzspec){
 	static char dst[32]="GMT";
-	
+
 	if(tz_info(tzspec,NULL,NULL,dst,NULL)){
 		return dst;
 	} else {
@@ -562,11 +569,11 @@ void set_tzspec(int year, char *tzname, SPEC *pStart, SPEC *pEnd){
 			dstend[y] = compute_dstevent(y + YEAR0, pEnd, tzoffset);
 		}
 		else
-			dststart[y] = dstend[y] = -1; 
+			dststart[y] = dstend[y] = -1;
 	}
 }
 
-/** Load a timezone from the timezone info file 
+/** Load a timezone from the timezone info file
  **/
 void load_tzspecs(char *tz){
 	char filepath[1024];
@@ -585,7 +592,7 @@ void load_tzspecs(char *tz){
 	if(pTzname == 0){
 		THROW("timezone '%s' was not understood by tz_name.", tz);
 		/* TROUBLESHOOT
-			The specific timezone is not valid.  
+			The specific timezone is not valid.
 			Try using a valid timezone or add the desired timezone to the timezone file <code>.../etc/tzinfo.txt</code> and try again.
 		 */
 	}
@@ -604,7 +611,7 @@ void load_tzspecs(char *tz){
 	}
 
 	fp = fopen(filepath,"r");
-	
+
 	if(fp == NULL){
 		THROW("%s: access denied: %s", filepath, strerror(errno));
 		/* TROUBLESHOOT
@@ -622,19 +629,19 @@ void load_tzspecs(char *tz){
 		char tzname[32];
 		SPEC start, end;
 		int form = -1;
-		
+
 		linenum++;
 
 		/* wipe comments */
 		p = strchr(buffer,';');
-		
+
 		if(p != NULL){
 			*p = '\0';
 		}
 
 		/* remove trailing whitespace */
 		p = buffer + strlen(buffer) - 1;
-		
+
 		while (iswspace(*p) && p > buffer){
 			*p-- = '\0';
 		}
@@ -650,13 +657,13 @@ void load_tzspecs(char *tz){
 		}
 
 		/* TZ spec */
-		form = sscanf(buffer, "%[^,],M%d.%d.%d/%d:%d,M%d.%d.%d/%d:%d", tzname, 
+		form = sscanf(buffer, "%[^,],M%d.%d.%d/%d:%d,M%d.%d.%d/%d:%d", tzname,
 			&start.month, &start.nth, &start.day, &start.hour, &start.minute,
 			&end.month, &end.nth, &end.day, &end.hour, &end.minute);
 
 		/* load only TZ requested */
 		pTzname = tz_name(tzname);
-		
+
 		if (tz != NULL && pTzname != NULL && strcmp(pTzname,current_tzname) != 0){
 			continue;
 		}
@@ -670,7 +677,7 @@ void load_tzspecs(char *tz){
 		} else {
 			THROW("%s(%d): %s is not a valid timezone spec", filepath, linenum, buffer);
 			/* TROUBLESHOOT
-				The timezone specification is not valid.  Verify the syntax of the timezone spec and that it is defined in the timezone file 
+				The timezone specification is not valid.  Verify the syntax of the timezone spec and that it is defined in the timezone file
 				<code>.../etc/tzinfo.txt</code> or add it, and try again.
 			 */
 		}
@@ -698,7 +705,7 @@ char *timestamp_set_tz(char *tz_name)
 	if (tz_name == NULL){
 		tz_name=getenv("TZ");
 	}
-	
+
 	if(tz_name == NULL)
 	{
 		static char guess[64];
@@ -713,7 +720,7 @@ char *timestamp_set_tz(char *tz_name)
 
 			 */
 		}
-		
+
 		wlock(&tzlock);
 		if (_timezone % 60 == 0){
 			sprintf(guess, "%s%d%s", _tzname[0], (int)(_timezone / 3600), _daylight?_tzname[1]:"");
@@ -726,9 +733,9 @@ char *timestamp_set_tz(char *tz_name)
 			tz_name = guess;
 		wunlock(&tzlock);
 	}
-	
+
 	load_tzspecs(tz_name);
-	
+
 	return current_tzname;
 }
 
@@ -757,19 +764,19 @@ int convert_from_timestamp(TIMESTAMP ts, char *buffer, int size)
 				len=sprintf(temp,"%s","NEVER");
 		}
 	}
-	else if (ts>=DAY) 
+	else if (ts>=DAY)
 		len=sprintf(temp,"%lfd",(double)ts/DAY);
-	else if (ts>=HOUR) 
+	else if (ts>=HOUR)
 		len=sprintf(temp,"%lfh",(double)ts/HOUR);
-	else if (ts>=MINUTE) 
+	else if (ts>=MINUTE)
 		len=sprintf(temp,"%lfm",(double)ts/MINUTE);
-	else if (ts>=SECOND) 
+	else if (ts>=SECOND)
 		len=sprintf(temp,"%lfs",(double)ts/SECOND);
 	else if (ts==0)
 		len=sprintf(temp,"%s","INIT");
 	else
 		len=sprintf(temp,"%"FMT_INT64"d",ts);
-	if (len<size) 
+	if (len<size)
 	{
 		if(ts == TS_NEVER){
 			strcpy(buffer, "NEVER");
@@ -1003,10 +1010,10 @@ TIMESTAMP earliest_timestamp(TIMESTAMP t, ...)
 	TIMESTAMP at1 = absolute_timestamp(t1), at2;
 	va_list ptr;
 	va_start(ptr,t);
-	while ( (t2=va_arg(ptr,TIMESTAMP)) != 0 ) 
+	while ( (t2=va_arg(ptr,TIMESTAMP)) != 0 )
 	{
 		at2 = absolute_timestamp(t2);
-		if ( at2<at1 ) 
+		if ( at2<at1 )
 		{
 			t1 = t2;
 			at1 = at2;
