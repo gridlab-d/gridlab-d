@@ -340,7 +340,7 @@ int instance_slave_wait_socket(){
 int instance_slave_wait(void)
 {
 	int status = 0;
-	output_verbose("instance_slave_wait(): slave %d entering wait state with t2=%lli (%x)", slave_id, local_inst.cache->ts, (&local_inst.cache->ts-local_inst.cache));
+	output_verbose("instance_slave_wait(): slave %d entering wait state with t2=%lli (%x)", slave_id, local_inst.cache->ts, ((char*)&local_inst.cache->ts-(char*)local_inst.cache));
 	if(local_inst.cnxtype == CI_MMAP){
 #ifdef WIN32
 		status = instance_slave_wait_mmap();
