@@ -3,6 +3,7 @@
 
 #setenv PATH=C:\Program files\Matlab\R2011a\bin\win64
 //#set pauseatexit=TRUE
+//#set verbose=TRUE
 
 // link with matlab
 link matlab_plot.link;

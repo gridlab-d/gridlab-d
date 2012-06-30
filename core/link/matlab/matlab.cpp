@@ -31,7 +31,7 @@ typedef struct {
 	char *sync;
 	char *term;
 	int status;
-	char rootname[64];
+	char *rootname;
 	char workdir[1024];
 	size_t output_size;
 	char *output_buffer;
@@ -237,7 +237,7 @@ EXPORT bool create(link *mod, CALLBACKS *fntable)
 	callback = fntable;
 	MATLABLINK *matlab = new MATLABLINK;
 	memset(matlab,0,sizeof(MATLABLINK));
-	strcpy(matlab->rootname,"gridlabd");
+	matlab->rootname="gridlabd";
 	mod->set_data(matlab);
 	return true;
 }
@@ -274,10 +274,13 @@ EXPORT bool settag(link *mod, char *tag, char *data)
 	}
 	else if ( strcmp(tag,"root")==0 )
 	{
-		if ( strlen(data)<sizeof(matlab->rootname) )
-			sscanf(data,"%s",matlab->rootname);
-		else
-			gl_error("root name is too long (max is %d)", sizeof(matlab->rootname));
+		if ( strcmp(data,"")==0 ) // no root
+			matlab->rootname=NULL;
+		else 
+		{
+			matlab->rootname = (char*)malloc(strlen(data)+1);
+			sscanf(data,"%s",matlab->rootname); // use scanf to avoid spaces in root name
+		}
 	}
 	else if ( strcmp(tag,"on_init")==0 )
 	{
@@ -389,31 +392,45 @@ EXPORT bool init(link *mod)
 		}
 	}
 
-	// build gridlabd data
-	mwSize dims[] = {1,1};
-	mxArray *gridlabd_struct = mxCreateStructArray(2,dims,0,NULL);
-
-	///////////////////////////////////////////////////////////////////////////
-	// build global data
-	LINKLIST *item;
-	mxArray *global_struct = mxCreateStructArray(2,dims,0,NULL);
-	for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
+	if ( matlab->rootname!=NULL )
 	{
-		char *name = mod->get_name(item);
-		GLOBALVAR *var = mod->get_globalvar(item);
-		mxArray *var_struct = NULL;
-		mwIndex var_index;
-		if ( var==NULL ) continue;
+		// build gridlabd data
+		mwSize dims[] = {1,1};
+		mxArray *gridlabd_struct = mxCreateStructArray(2,dims,0,NULL);
 
-		// do not map module or structured globals
-		if ( strchr(var->prop->name,':')!=NULL )
+		///////////////////////////////////////////////////////////////////////////
+		// build global data
+		LINKLIST *item;
+		mxArray *global_struct = mxCreateStructArray(2,dims,0,NULL);
+		for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
 		{
-			// ignore module globals here
-		}
-		else if ( strchr(var->prop->name,'.')!=NULL )
-		{
-			char struct_name[256];
-			if ( sscanf(var->prop->name,"%[^.]",struct_name)==0 )
+			char *name = mod->get_name(item);
+			GLOBALVAR *var = mod->get_globalvar(item);
+			mxArray *var_struct = NULL;
+			mwIndex var_index;
+			if ( var==NULL ) continue;
+
+			// do not map module or structured globals
+			if ( strchr(var->prop->name,':')!=NULL )
+			{
+				// ignore module globals here
+			}
+			else if ( strchr(var->prop->name,'.')!=NULL )
+			{
+				char struct_name[256];
+				if ( sscanf(var->prop->name,"%[^.]",struct_name)==0 )
+				{
+					gld_property prop(var);
+					var_index = mxAddField(global_struct,prop.get_name());
+					var_struct = matlab_create_value(&prop);
+					if ( var_struct!=NULL )
+					{
+						//mod->add_copyto(var->prop->addr,mxGetData(var_struct));
+						mxSetFieldByNumber(global_struct,0,var_index,var_struct);
+					}
+				}
+			}
+			else // simple data
 			{
 				gld_property prop(var);
 				var_index = mxAddField(global_struct,prop.get_name());
@@ -424,169 +441,158 @@ EXPORT bool init(link *mod)
 					mxSetFieldByNumber(global_struct,0,var_index,var_struct);
 				}
 			}
-		}
-		else // simple data
-		{
-			gld_property prop(var);
-			var_index = mxAddField(global_struct,prop.get_name());
-			var_struct = matlab_create_value(&prop);
+
+			// update export list
 			if ( var_struct!=NULL )
 			{
-				//mod->add_copyto(var->prop->addr,mxGetData(var_struct));
-				mxSetFieldByNumber(global_struct,0,var_index,var_struct);
+				mod->set_addr(item,(void*)var_struct);
+				mod->set_index(item,(size_t)var_index);
 			}
 		}
 
-		// update export list
-		if ( var_struct!=NULL )
+		// add globals structure to gridlabd structure
+		mwIndex gridlabd_index = mxAddField(gridlabd_struct,"global");
+		mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,global_struct);
+
+		///////////////////////////////////////////////////////////////////////////
+		// build module data
+		dims[0] = dims[1] = 1;
+		mxArray *module_struct = mxCreateStructArray(2,dims,0,NULL);
+
+		// add modules
+		for ( MODULE *module = callback->module.getfirst() ; module!=NULL ; module=module->next )
 		{
-			mod->set_addr(item,(void*)var_struct);
-			mod->set_index(item,(size_t)var_index);
-		}
-	}
-
-	// add globals structure to gridlabd structure
-	mwIndex gridlabd_index = mxAddField(gridlabd_struct,"global");
-	mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,global_struct);
-
-	///////////////////////////////////////////////////////////////////////////
-	// build module data
-	dims[0] = dims[1] = 1;
-	mxArray *module_struct = mxCreateStructArray(2,dims,0,NULL);
-
-	// add modules
-	for ( MODULE *module = callback->module.getfirst() ; module!=NULL ; module=module->next )
-	{
-		// create module info struct
-		mwIndex dims[] = {1,1};
-		mxArray *module_data = mxCreateStructArray(2,dims,0,NULL);
-		mwIndex module_index = mxAddField(module_struct,module->name);
-		mxSetFieldByNumber(module_struct,0,module_index,module_data);
-		
-		// create version info struct
-		const char *version_fields[] = {"major","minor"};
-		mxArray *version_data = mxCreateStructArray(2,dims,sizeof(version_fields)/sizeof(version_fields[0]),version_fields);
-		mxArray *major_data = mxCreateDoubleScalar((double)module->major);
-		mxArray *minor_data = mxCreateDoubleScalar((double)module->minor);
-		mxSetFieldByNumber(version_data,0,0,major_data);
-		mxSetFieldByNumber(version_data,0,1,minor_data);
-
-		// attach version info to module info
-		mwIndex version_index = mxAddField(module_data,"version");
-		mxSetFieldByNumber(module_data,0,version_index,version_data);
-
-	}
-	gridlabd_index = mxAddField(gridlabd_struct,"module");
-	mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,module_struct);
-
-	///////////////////////////////////////////////////////////////////////////
-	// build class data
-	dims[0] = dims[1] = 1;
-	mxArray *class_struct = mxCreateStructArray(2,dims,0,NULL);
-	gridlabd_index = mxAddField(gridlabd_struct,"class");
-	mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,class_struct);
-	mwIndex class_id[1024]; // index into class struct
-	memset(class_id,0,sizeof(class_id));
-
-	// add classes
-	for ( CLASS *oclass = callback->class_getfirst() ; oclass!=NULL ; oclass=oclass->next )
-	{
-		// count objects in this class
-		mwIndex dims[] = {0,1};
-		for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
-		{
-			OBJECT *obj = mod->get_object(item);
-			if ( obj==NULL || obj->oclass!=oclass ) continue;
-			dims[0]++;
-		}
-		if ( dims[0]==0 ) continue;
-		mxArray *runtime_struct = mxCreateStructArray(2,dims,0,NULL);
-
-		// add class 
-		mwIndex class_index = mxAddField(class_struct,oclass->name);
-		mxSetFieldByNumber(class_struct,0,class_index,runtime_struct);
-
-		// add properties to class
-		for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
-		{
+			// create module info struct
 			mwIndex dims[] = {1,1};
-			mxArray *property_struct = mxCreateStructArray(2,dims,0,NULL);
-			mwIndex runtime_index = mxAddField(runtime_struct,prop->name);
-			mxSetFieldByNumber(runtime_struct,0,runtime_index,property_struct);
-		}
-
-		// add objects to class
-		for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
-		{
-			OBJECT *obj = mod->get_object(item);
-			if ( obj==NULL || obj->oclass!=oclass ) continue;
-			mwIndex index = class_id[obj->oclass->id]++;
+			mxArray *module_data = mxCreateStructArray(2,dims,0,NULL);
+			mwIndex module_index = mxAddField(module_struct,module->name);
+			mxSetFieldByNumber(module_struct,0,module_index,module_data);
 			
+			// create version info struct
+			const char *version_fields[] = {"major","minor"};
+			mxArray *version_data = mxCreateStructArray(2,dims,sizeof(version_fields)/sizeof(version_fields[0]),version_fields);
+			mxArray *major_data = mxCreateDoubleScalar((double)module->major);
+			mxArray *minor_data = mxCreateDoubleScalar((double)module->minor);
+			mxSetFieldByNumber(version_data,0,0,major_data);
+			mxSetFieldByNumber(version_data,0,1,minor_data);
+
+			// attach version info to module info
+			mwIndex version_index = mxAddField(module_data,"version");
+			mxSetFieldByNumber(module_data,0,version_index,version_data);
+
+		}
+		gridlabd_index = mxAddField(gridlabd_struct,"module");
+		mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,module_struct);
+
+		///////////////////////////////////////////////////////////////////////////
+		// build class data
+		dims[0] = dims[1] = 1;
+		mxArray *class_struct = mxCreateStructArray(2,dims,0,NULL);
+		gridlabd_index = mxAddField(gridlabd_struct,"class");
+		mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,class_struct);
+		mwIndex class_id[1024]; // index into class struct
+		memset(class_id,0,sizeof(class_id));
+
+		// add classes
+		for ( CLASS *oclass = callback->class_getfirst() ; oclass!=NULL ; oclass=oclass->next )
+		{
+			// count objects in this class
+			mwIndex dims[] = {0,1};
+			for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+			{
+				OBJECT *obj = mod->get_object(item);
+				if ( obj==NULL || obj->oclass!=oclass ) continue;
+				dims[0]++;
+			}
+			if ( dims[0]==0 ) continue;
+			mxArray *runtime_struct = mxCreateStructArray(2,dims,0,NULL);
+
+			// add class 
+			mwIndex class_index = mxAddField(class_struct,oclass->name);
+			mxSetFieldByNumber(class_struct,0,class_index,runtime_struct);
+
 			// add properties to class
 			for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
 			{
-				gld_property p(obj,prop);
-				mxArray *data = matlab_create_value(&p);
-				mxSetField(runtime_struct,index,prop->name,data);
+				mwIndex dims[] = {1,1};
+				mxArray *property_struct = mxCreateStructArray(2,dims,0,NULL);
+				mwIndex runtime_index = mxAddField(runtime_struct,prop->name);
+				mxSetFieldByNumber(runtime_struct,0,runtime_index,property_struct);
 			}
 
-			// update export list
-			mod->set_addr(item,(void*)runtime_struct);
-			mod->set_index(item,(size_t)index);
+			// add objects to class
+			for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+			{
+				OBJECT *obj = mod->get_object(item);
+				if ( obj==NULL || obj->oclass!=oclass ) continue;
+				mwIndex index = class_id[obj->oclass->id]++;
+				
+				// add properties to class
+				for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
+				{
+					gld_property p(obj,prop);
+					mxArray *data = matlab_create_value(&p);
+					mxSetField(runtime_struct,index,prop->name,data);
+				}
+
+				// update export list
+				mod->set_addr(item,(void*)runtime_struct);
+				mod->set_index(item,(size_t)index);
+			}
 		}
+
+		///////////////////////////////////////////////////////////////////////////
+		// build the object data
+		dims[0] = 0;
+		for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+		{
+			if ( mod->get_object(item)!=NULL ) dims[0]++;
+		}
+		dims[1] = 1;
+		memset(class_id,0,sizeof(class_id));
+		const char *objfields[] = {"name","class","id","parent","rank","clock","valid_to","schedule_skew",
+			"latitude","longitude","in","out","rng_state","heartbeat","lock","flags"};
+		mxArray *object_struct = mxCreateStructArray(2,dims,sizeof(objfields)/sizeof(objfields[0]),objfields);
+		mwIndex n=0;
+		for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+		{
+			OBJECT *obj = mod->get_object(item);
+			if ( obj==NULL ) continue;
+			class_id[obj->oclass->id]++; // index into class struct
+
+			const char *objname[] = {obj->name&&isdigit(obj->name[0])?NULL:obj->name};
+			const char *oclassname[] = {obj->oclass->name};
+
+			if (obj->name) mxSetFieldByNumber(object_struct,n,0,mxCreateCharMatrixFromStrings(mwSize(1),objname));
+			mxSetFieldByNumber(object_struct,n,1,mxCreateCharMatrixFromStrings(mwSize(1),oclassname));
+			mxSetFieldByNumber(object_struct,n,2,mxCreateDoubleScalar((double)class_id[obj->oclass->id]));
+			if (obj->parent) mxSetFieldByNumber(object_struct,n,3,mxCreateDoubleScalar((double)obj->parent->id+1));
+			mxSetFieldByNumber(object_struct,n,4,mxCreateDoubleScalar((double)obj->rank));
+			mxSetFieldByNumber(object_struct,n,5,mxCreateDoubleScalar((double)obj->clock));
+			mxSetFieldByNumber(object_struct,n,6,mxCreateDoubleScalar((double)obj->valid_to));
+			mxSetFieldByNumber(object_struct,n,7,mxCreateDoubleScalar((double)obj->schedule_skew));
+			if ( isfinite(obj->latitude) ) mxSetFieldByNumber(object_struct,n,8,mxCreateDoubleScalar((double)obj->latitude));
+			if ( isfinite(obj->longitude) ) mxSetFieldByNumber(object_struct,n,9,mxCreateDoubleScalar((double)obj->longitude));
+			mxSetFieldByNumber(object_struct,n,10,mxCreateDoubleScalar((double)obj->in_svc));
+			mxSetFieldByNumber(object_struct,n,11,mxCreateDoubleScalar((double)obj->out_svc));
+			mxSetFieldByNumber(object_struct,n,12,mxCreateDoubleScalar((double)obj->rng_state));
+			mxSetFieldByNumber(object_struct,n,13,mxCreateDoubleScalar((double)obj->heartbeat));
+			mxSetFieldByNumber(object_struct,n,14,mxCreateDoubleScalar((double)obj->lock));
+			mxSetFieldByNumber(object_struct,n,15,mxCreateDoubleScalar((double)obj->flags));
+			n++;
+		}
+		gridlabd_index = mxAddField(gridlabd_struct,"object");
+		mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,object_struct);
+
+		///////////////////////////////////////////////////////////////////////////
+		// post the gridlabd structure
+		matlab->root = gridlabd_struct;
+		engPutVariable(matlab->engine,matlab->rootname,matlab->root);
 	}
-
-	///////////////////////////////////////////////////////////////////////////
-	// build the object data
-	dims[0] = 0;
-	for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
-	{
-		if ( mod->get_object(item)!=NULL ) dims[0]++;
-	}
-	dims[1] = 1;
-	memset(class_id,0,sizeof(class_id));
-	const char *objfields[] = {"name","class","id","parent","rank","clock","valid_to","schedule_skew",
-		"latitude","longitude","in","out","rng_state","heartbeat","lock","flags"};
-	mxArray *object_struct = mxCreateStructArray(2,dims,sizeof(objfields)/sizeof(objfields[0]),objfields);
-	mwIndex n=0;
-	for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
-	{
-		OBJECT *obj = mod->get_object(item);
-		if ( obj==NULL ) continue;
-		class_id[obj->oclass->id]++; // index into class struct
-
-		const char *objname[] = {obj->name&&isdigit(obj->name[0])?NULL:obj->name};
-		const char *oclassname[] = {obj->oclass->name};
-
-		if (obj->name) mxSetFieldByNumber(object_struct,n,0,mxCreateCharMatrixFromStrings(mwSize(1),objname));
-		mxSetFieldByNumber(object_struct,n,1,mxCreateCharMatrixFromStrings(mwSize(1),oclassname));
-		mxSetFieldByNumber(object_struct,n,2,mxCreateDoubleScalar((double)class_id[obj->oclass->id]));
-		if (obj->parent) mxSetFieldByNumber(object_struct,n,3,mxCreateDoubleScalar((double)obj->parent->id+1));
-		mxSetFieldByNumber(object_struct,n,4,mxCreateDoubleScalar((double)obj->rank));
-		mxSetFieldByNumber(object_struct,n,5,mxCreateDoubleScalar((double)obj->clock));
-		mxSetFieldByNumber(object_struct,n,6,mxCreateDoubleScalar((double)obj->valid_to));
-		mxSetFieldByNumber(object_struct,n,7,mxCreateDoubleScalar((double)obj->schedule_skew));
-		if ( isfinite(obj->latitude) ) mxSetFieldByNumber(object_struct,n,8,mxCreateDoubleScalar((double)obj->latitude));
-		if ( isfinite(obj->longitude) ) mxSetFieldByNumber(object_struct,n,9,mxCreateDoubleScalar((double)obj->longitude));
-		mxSetFieldByNumber(object_struct,n,10,mxCreateDoubleScalar((double)obj->in_svc));
-		mxSetFieldByNumber(object_struct,n,11,mxCreateDoubleScalar((double)obj->out_svc));
-		mxSetFieldByNumber(object_struct,n,12,mxCreateDoubleScalar((double)obj->rng_state));
-		mxSetFieldByNumber(object_struct,n,13,mxCreateDoubleScalar((double)obj->heartbeat));
-		mxSetFieldByNumber(object_struct,n,14,mxCreateDoubleScalar((double)obj->lock));
-		mxSetFieldByNumber(object_struct,n,15,mxCreateDoubleScalar((double)obj->flags));
-		n++;
-	}
-	gridlabd_index = mxAddField(gridlabd_struct,"object");
-	mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,object_struct);
-
-	///////////////////////////////////////////////////////////////////////////
-	// post the gridlabd structure
-	matlab->root = gridlabd_struct;
-	engPutVariable(matlab->engine,matlab->rootname,matlab->root);
 
 	///////////////////////////////////////////////////////////////////////////
 	// build the import/export data
-	for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+	for ( LINKLIST *item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
 	{
 		OBJECTPROPERTY *objprop = mod->get_export(item);
 		if ( objprop==NULL ) continue;
@@ -596,7 +602,7 @@ EXPORT bool init(link *mod)
 		item->addr = (mxArray*)matlab_create_value(&prop);
 		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
 	}
-	for ( item=mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
+	for ( LINKLIST *item=mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
 	{
 		OBJECTPROPERTY *objprop = mod->get_import(item);
 		if ( objprop==NULL ) continue;
@@ -626,38 +632,44 @@ bool copy_exports(link *mod)
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	LINKLIST *item;
 
-	// update globals
-	for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
+	if ( matlab->rootname!=NULL )
 	{
-		mxArray *var_struct = (mxArray*)mod->get_addr(item);
-		if ( var_struct!=NULL )
+		// update globals
+		for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
 		{
-			mwIndex var_index = (mwIndex)mod->get_index(item);
-			GLOBALVAR *var = mod->get_globalvar(item);
-			gld_property prop(var);
-			matlab_set_value(var_struct,&prop);
+			mxArray *var_struct = (mxArray*)mod->get_addr(item);
+			if ( var_struct!=NULL )
+			{
+				mwIndex var_index = (mwIndex)mod->get_index(item);
+				GLOBALVAR *var = mod->get_globalvar(item);
+				gld_property prop(var);
+				matlab_set_value(var_struct,&prop);
+			}
 		}
-	}
 
-	// update classes
-	// TODO
+		// update classes
+		// TODO
 
-	// update objects
-	for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
-	{
-		OBJECT *obj = mod->get_object(item);
-		if ( obj==NULL ) continue;
-		mwIndex index = mod->get_index(item);
-		mxArray *runtime_struct = (mxArray*)mod->get_addr(item); 
-		
-		// add properties to class
-		CLASS *oclass = obj->oclass;
-		for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
+		// update objects
+		for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
 		{
-			gld_property p(obj,prop);
-			mxArray *data = mxGetField(runtime_struct,index,prop->name);
-			matlab_set_value(data,&p);
+			OBJECT *obj = mod->get_object(item);
+			if ( obj==NULL ) continue;
+			mwIndex index = mod->get_index(item);
+			mxArray *runtime_struct = (mxArray*)mod->get_addr(item); 
+			
+			// add properties to class
+			CLASS *oclass = obj->oclass;
+			for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
+			{
+				gld_property p(obj,prop);
+				mxArray *data = mxGetField(runtime_struct,index,prop->name);
+				matlab_set_value(data,&p);
+			}
 		}
+
+		// update root data
+		engPutVariable(matlab->engine,matlab->rootname,matlab->root);
 	}
 
 	// update exports
@@ -680,7 +692,6 @@ bool copy_exports(link *mod)
 		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
 	}
 
-	engPutVariable(matlab->engine,matlab->rootname,matlab->root);
 	return true;
 }
 
@@ -689,16 +700,19 @@ bool copy_imports(link *mod)
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	LINKLIST *item;
 
-	// update globals
-	for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
+	if ( matlab->rootname!=NULL )
 	{
-		mxArray *var_struct = (mxArray*)mod->get_addr(item);
-		if ( var_struct!=NULL )
+		// update globals
+		for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
 		{
-			mwIndex var_index = (mwIndex)mod->get_index(item);
-			GLOBALVAR *var = mod->get_globalvar(item);
-			gld_property prop(var);
-			matlab_get_value(var_struct,&prop);
+			mxArray *var_struct = (mxArray*)mod->get_addr(item);
+			if ( var_struct!=NULL )
+			{
+				mwIndex var_index = (mwIndex)mod->get_index(item);
+				GLOBALVAR *var = mod->get_globalvar(item);
+				gld_property prop(var);
+				matlab_get_value(var_struct,&prop);
+			}
 		}
 	}
 
