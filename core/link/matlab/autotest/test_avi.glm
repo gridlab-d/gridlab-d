@@ -3,9 +3,10 @@
 
 #setenv PATH=C:\Program files\Matlab\R2011a\bin\win64
 //#set pauseatexit=TRUE
+#set verbose=TRUE
 
 // link with matlab
-link matlab.link;
+link matlab_avi.link;
 
 // public a complex global variable
 global complex test_complex 1+2j;

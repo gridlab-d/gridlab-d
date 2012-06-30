@@ -353,9 +353,11 @@ EXPORT bool init(link *mod)
 	if ( matlab->output_buffer!=NULL )
 		engOutputBuffer(matlab->engine,matlab->output_buffer,(int)matlab->output_size);
 
+	// setup matlab engine
+	engSetVisible(matlab->engine,window_show(matlab));
+
 	gl_debug("matlab link is open");
 
-	///////////////////////////////////////////////////////////////////////////
 	// special values needed by matlab
 	mxArray *ts_never = mxCreateDoubleScalar((double)(TIMESTAMP)TS_NEVER);
 	engPutVariable(matlab->engine,"TS_NEVER",ts_never);
@@ -366,18 +368,6 @@ EXPORT bool init(link *mod)
 	mxArray *gld_err = mxCreateDoubleScalar((double)(bool)false);
 	engPutVariable(matlab->engine,"GLD_ERROR",gld_err);
 
-	// setup matlab engine
-	engSetVisible(matlab->engine,window_show(matlab));
-	if ( matlab->init )
-	{
-		mxArray *ans = matlab_exec(matlab,"%s",matlab->init);
-		if ( ans && mxIsDouble(ans) && (bool)*mxGetPr(ans)==false )
-		{
-			gl_error("matlab init failed");
-			return false;
-		}
-	}
-
 	// set the workdir
 	if ( strcmp(matlab->workdir,"")!=0 )
 	{
@@ -386,6 +376,17 @@ EXPORT bool init(link *mod)
 			matlab_exec(matlab,"cd '%s'", matlab->workdir);
 		else
 			matlab_exec(matlab,"cd '%s/%s'", _getcwd(NULL,0),matlab->workdir);
+	}
+
+	// run the initialization command(s)
+	if ( matlab->init )
+	{
+		mxArray *ans = matlab_exec(matlab,"%s",matlab->init);
+		if ( ans && mxIsDouble(ans) && (bool)*mxGetPr(ans)==false )
+		{
+			gl_error("matlab init failed");
+			return false;
+		}
 	}
 
 	// build gridlabd data

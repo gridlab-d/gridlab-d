@@ -484,6 +484,26 @@
 	<References>
 	</References>
 	<Files>
+		<Filter
+			Name="Autotest"
+			>
+			<File
+				RelativePath=".\autotest\matlab_avi.link"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\matlab_plot.link"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_avi.glm"
+				>
+			</File>
+			<File
+				RelativePath=".\autotest\test_plot.glm"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath="matlab.cpp"
 			>
