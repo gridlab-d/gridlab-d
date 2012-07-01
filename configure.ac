@@ -145,6 +145,18 @@ GLD_CHECK_BUILTIN(
 	[HAVE_SYNC_ADD_AND_FETCH=yes],
 	[HAVE_SYNC_ADD_AND_FETCH=no])
 
+# Check for Matlab
+if ( matlab -e ); then
+	MATLAB=$(matlab -e | grep ^MATLAB= | cut -f2 -d=)
+	HAVE_MATLAB=yes
+	CFLAGS="$CFLAGS -DHAVE_MATLAB -I$MATLAB/extern/include"
+	CPPFLAGS="$CPPFLAGS -DHAVE_MATLAB -I$MATLAB/extern/include"
+	LIBS="$LIBS -leng"
+	AC_MSG_RESULT([matlab was found])
+else
+	HAVE_MATLAB=no
+fi
+
 # Check for CppUnit
 AM_PATH_CPPUNIT([1.12], [HAVE_CPPUNIT=yes], [HAVE_CPPUNIT=no])
 if test x"$HAVE_CPPUNIT" = xyes; then
@@ -210,6 +222,7 @@ AC_CONFIG_FILES([./Makefile \
 	third_party/CBLAS/Makefile \
 	third_party/superLU_MT/Makefile \
 	gridlabd.spec \
+	core/link/matlab/Makefile \
 	])
 
 AM_CONDITIONAL([MISSING_XERCES], [test x$HAVE_XERCES != xyes])
@@ -239,6 +252,7 @@ AC_MSG_RESULT([
     Doxygen: .................... $HAVE_DOXYGEN
     libcppunit: ................. $HAVE_CPPUNIT
     libxerces-c: ................ $HAVE_XERCES
+    matlab: ..................... $HAVE_MATLAB
 
   Atomic Builtins:
 

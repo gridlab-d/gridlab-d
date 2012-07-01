@@ -1,6 +1,8 @@
 // $Id: matlab.cpp
 // Copyright (C) 2012 Battelle Memorial Institute
 
+#ifdef HAVE_MATLAB
+
 #include <stdlib.h>
 #include <direct.h>
 #include <ctype.h>
@@ -775,3 +777,5 @@ EXPORT bool term(link* mod)
 	if ( window_kill(matlab) ) engClose(matlab->engine)==0;
 	return true;
 }
+
+#endif // HAVE_MATLAB

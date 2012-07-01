@@ -292,7 +292,7 @@ link::link(char *filename)
 	sync = NULL;
 	term = NULL;
 
-	FILE *fp = fopen(filename,"r");
+	FILE *fp = fopen(filename,"rt");
 	if ( fp==NULL )
 		throw "file open failed";
 	output_debug("opened link '%s'", filename);
@@ -304,7 +304,7 @@ link::link(char *filename)
 		linenum++;
 		if ( line[0]=='#' ) continue;
 		char tag[64], data[1024]="";
-		if ( sscanf(line,"%s %[^\n]",tag,data)>0 )
+		if ( sscanf(line,"%s %[^\r\n]",tag,data)>0 )
 		{
 			output_debug("%s(%d): %s %s", filename, linenum, tag,data);
 			if ( settag!=NULL )
