@@ -786,6 +786,7 @@ EXPORT bool glx_term(glxlink* mod)
 
 EXPORT bool glx_create(glxlink *mod, CALLBACKS *fntable)
 {
+	callback=fntable;
 	gl_error("matlab link was not built on system that had matlab installed");
 	return false;
 }
