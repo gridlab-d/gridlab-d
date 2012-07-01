@@ -26,7 +26,7 @@
 #ifndef MINGW
 	#include "dlfcn.h"
 #endif
-	#define PREFIX "lib"
+	#define PREFIX ""
 	#ifndef DLEXT
 		#define DLEXT ".so"
 	#endif

@@ -147,12 +147,18 @@ GLD_CHECK_BUILTIN(
 
 # Check for Matlab
 if ( matlab -e ); then
-	MATLAB=$(matlab -e | grep ^MATLAB= | cut -f2 -d=)
 	HAVE_MATLAB=yes
+	AC_MSG_RESULT([matlab was found])
+	MATLAB=$(matlab -e | grep ^MATLAB= | cut -f2 -d=)
+	AC_MSG_RESULT([matlab path is $MATLAB])
+	MATLAB_LDPATH=$(matlab -e | grep ^LD_LIBRARY_PATH= | cut -f2 -d=)
+	if test x"$MATLAB_LDPATH" = x ; then
+		MATLAB_LDPATH=$(matlab -e | grep ^DYLD_LIBRARY_PATH= | cut -f2 -d=)
+	fi
+	AC_MSG_RESULT([matlab libraries in $MATLAB_LDPATH])
 	CFLAGS="$CFLAGS -DHAVE_MATLAB -I$MATLAB/extern/include"
 	CPPFLAGS="$CPPFLAGS -DHAVE_MATLAB -I$MATLAB/extern/include"
-	LIBS="$LIBS -leng"
-	AC_MSG_RESULT([matlab was found])
+	LIBS="$LIBS -L${MATLAB_LDPATH//:/ -L} -lmx -leng"
 else
 	HAVE_MATLAB=no
 fi
@@ -235,7 +241,7 @@ DOCDIR=`eval echo $(eval echo $docdir)`
 test -n "$DX_DOXYGEN" && HAVE_DOXYGEN="$DX_DOXYGEN" || HAVE_DOXYGEN=no
 if test x"$HAVE_XERCES" = xyes; then
 	CONFIG_RESULT=OK
-	test -z "$XERCES_VERSION" || expr "$XERCES_VERSION" \< 3 >/dev/null || AC_MSG_WARN([libxerces-c version may not be suitable for building $PACKAGE: $XERCES_VERSION])
+	test -z "$XERCES_VERSION" || expr "$XERCES_VERSION" \< 3 >/dev/null || AC_MSG_WARN([libxerces-c version $XERCES_VERSION may not be suitable for building $PACKAGE])
 else
 	CONFIG_RESULT=failed
 	HAVE_XERCES="$HAVE_XERCES (required)"

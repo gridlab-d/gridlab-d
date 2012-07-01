@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #ifdef WIN32
 #include <direct.h>
+#define getcwd _getcwd
 #else
 #include <unistd.h>
+#include <sys/stat.h>
 #endif
 #include <ctype.h>
 
@@ -380,11 +382,15 @@ EXPORT bool glx_init(glxlink *mod)
 	// set the workdir
 	if ( strcmp(matlab->workdir,"")!=0 )
 	{
+#ifdef WIN32
 		mkdir(matlab->workdir);
+#else
+		mkdir(matlab->workdir,0x750);
+#endif
 		if ( matlab->workdir[0]=='/' )
 			matlab_exec(matlab,"cd '%s'", matlab->workdir);
 		else
-			matlab_exec(matlab,"cd '%s/%s'", _getcwd(NULL,0),matlab->workdir);
+			matlab_exec(matlab,"cd '%s/%s'", getcwd(NULL,0),matlab->workdir);
 	}
 
 	// run the initialization command(s)

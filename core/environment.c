@@ -94,12 +94,13 @@ UseGui:
 		if (server_startup(argc,argv) && gui_startup(argc,argv))
 		{
 			STATUS result = exec_start();
+			if ( result!=SUCCESS ) return result;
 			GUIENTITY *gui = gui_get_root();
-			if ( result==SUCCESS && gui->hold )
-			{
-				result = server_join();
-			}
-			return result;
+			if ( gui==NULL ) return FAILED;
+			if ( gui->hold )
+				return server_join();
+			else
+				return FAILED;
 		}
 		else
 			return FAILED;
