@@ -375,10 +375,17 @@ bool glxlink::set_target(char *name)
 		term = (bool(*)(glxlink*))DLSYM(handle,"glx_term");
 
 		// call create routine
-		bool (*create)(glxlink*,CALLBACKS*) = (bool(*)(glxlink*,CALLBACKS*))DLSYM(handle,"create");
-		create(this,module_callbacks());
-		strcpy(target,name);
-		return true;
+		bool (*create)(glxlink*,CALLBACKS*) = (bool(*)(glxlink*,CALLBACKS*))DLSYM(handle,"glx_create");
+		if ( create!=NULL && create(this,module_callbacks()) )
+		{
+			strcpy(target,name);
+			return true;
+		}
+		else
+		{
+			output_error("library '%s' for target '%s' does not define/export glx_create properly", path,name);
+			return false;
+		}
 	}
 	else
 	{
