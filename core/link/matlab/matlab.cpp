@@ -356,9 +356,22 @@ EXPORT bool glx_init(glxlink *mod)
 
 	// initialize matlab engine
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
+	matlab->status = 0;
+#ifdef WIN32
 	matlab->engine = engOpenSingleUse(NULL,NULL,&matlab->status);
 	if ( matlab->engine==NULL )
+	{
+		gl_error("matlab engine start failed, status code is '%d'", matlab->status);
 		return false;
+	}
+#else
+	matlab->engine = engOpen(NULL);
+	if ( matlab->engine==NULL )
+	{
+		gl_error("matlab engine start failed");
+		return false;
+	}
+#endif
 
 	// set the output buffer
 	if ( matlab->output_buffer!=NULL )
@@ -775,16 +788,19 @@ EXPORT bool glx_term(glxlink* mod)
 {
 	// close matlab engine
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
-	if ( matlab->term ) 
+	if ( matlab && matlab->engine )
 	{
-		mxArray *ans = matlab_exec(matlab,"%s",matlab->term);
-		if ( ans && mxIsDouble(ans) && (bool)*mxGetPr(ans)==false )
+		if ( matlab->term ) 
 		{
-			gl_error("matlab term failed");
-			return false;
+			mxArray *ans = matlab_exec(matlab,"%s",matlab->term);
+			if ( ans && mxIsDouble(ans) && (bool)*mxGetPr(ans)==false )
+			{
+				gl_error("matlab term failed");
+				return false;
+			}
 		}
+		if ( window_kill(matlab) ) engClose(matlab->engine)==0;
 	}
-	if ( window_kill(matlab) ) engClose(matlab->engine)==0;
 	return true;
 }
 
