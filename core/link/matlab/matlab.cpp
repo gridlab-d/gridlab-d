@@ -1,21 +1,25 @@
 // $Id: matlab.cpp
 // Copyright (C) 2012 Battelle Memorial Institute
 
-#ifdef HAVE_MATLAB
-
 #include <stdlib.h>
+#ifdef WIN32
 #include <direct.h>
+#else
+#include <unistd.h>
+#endif
 #include <ctype.h>
 
-// you must have matlab installed and ensure matlab/extern/include is in include path
-#include <matrix.h>
-#include <engine.h>
-
 // you must have gridlabd installed and ensure core is in include path
-#include <gridlabd.h>
-#include <link.h>
+#include "gridlabd.h"
+#include "link.h"
 
 CALLBACKS *callback = NULL;
+
+#ifdef HAVE_MATLAB
+
+// you must have matlab installed and ensure matlab/extern/include is in include path
+#include "matrix.h"
+#include "engine.h"
 
 typedef enum {
 	MWD_HIDE, // never show window
@@ -234,7 +238,7 @@ static mxArray* matlab_get_value(mxArray *value, gld_property *prop)
 	}
 	return value;
 }
-EXPORT bool create(link *mod, CALLBACKS *fntable)
+EXPORT bool glx_create(glxlink *mod, CALLBACKS *fntable)
 {
 	callback = fntable;
 	MATLABLINK *matlab = new MATLABLINK;
@@ -244,7 +248,7 @@ EXPORT bool create(link *mod, CALLBACKS *fntable)
 	return true;
 }
 
-EXPORT bool settag(link *mod, char *tag, char *data)
+EXPORT bool glx_settag(glxlink *mod, char *tag, char *data)
 {
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	if ( strcmp(tag,"window")==0 )
@@ -344,7 +348,7 @@ bool window_kill(MATLABLINK *matlab)
 	}
 }
 
-EXPORT bool init(link *mod)
+EXPORT bool glx_init(glxlink *mod)
 {
 	gl_verbose("initialization matlab link");
 
@@ -629,7 +633,7 @@ EXPORT bool init(link *mod)
 	return true;
 }
 
-bool copy_exports(link *mod)
+bool copy_exports(glxlink *mod)
 {
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	LINKLIST *item;
@@ -697,7 +701,7 @@ bool copy_exports(link *mod)
 	return true;
 }
 
-bool copy_imports(link *mod)
+bool copy_imports(glxlink *mod)
 {
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	LINKLIST *item;
@@ -735,7 +739,7 @@ bool copy_imports(link *mod)
 	return true;
 }
 
-EXPORT TIMESTAMP sync(link* mod,TIMESTAMP t0)
+EXPORT TIMESTAMP glx_sync(glxlink* mod,TIMESTAMP t0)
 {
 	TIMESTAMP t1 = TS_NEVER;
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
@@ -761,7 +765,7 @@ EXPORT TIMESTAMP sync(link* mod,TIMESTAMP t0)
 	return t1;
 }
 
-EXPORT bool term(link* mod)
+EXPORT bool glx_term(glxlink* mod)
 {
 	// close matlab engine
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
@@ -778,4 +782,31 @@ EXPORT bool term(link* mod)
 	return true;
 }
 
+#else
+
+EXPORT bool glx_create(glxlink *mod, CALLBACKS *fntable)
+{
+	gl_error("matlab link was not built on system that had matlab installed");
+	return false;
+}
+EXPORT bool glx_settag(glxlink *mod, char *tag, char *data)
+{
+	gl_error("matlab link was not built on system that had matlab installed");
+	return false;
+}
+EXPORT bool glx_init(glxlink *mod)
+{
+	gl_error("matlab link was not built on system that had matlab installed");
+	return false;
+}
+EXPORT TIMESTAMP glx_sync(glxlink* mod,TIMESTAMP t0)
+{
+	gl_error("matlab link was not built on system that had matlab installed");
+	return TS_INVALID;
+}
+EXPORT bool glx_term(glxlink* mod)
+{
+	gl_error("matlab link was not built on system that had matlab installed");
+	return false;
+}
 #endif // HAVE_MATLAB

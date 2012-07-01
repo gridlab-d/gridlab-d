@@ -4,8 +4,6 @@
 #ifndef _LINK_H
 #define _LINK_H
 
-#ifdef __cplusplus
-
 typedef struct {
 	OBJECT *obj;
 	PROPERTY *prop;
@@ -20,22 +18,26 @@ typedef struct s_linklist {
 	struct s_linklist *next;
 } LINKLIST;
 
-class link {
+#ifdef __cplusplus
+class glxlink {
 private: // target data link
+#else
+typedef struct s_glxlink {
+#define glxlink struct s_glxlink
+#endif
 	char target[64]; ///< name of target
 	LINKLIST *globals; ///< list of globals to publish  
 	LINKLIST *objects; ///< list of objects to publish  
 	LINKLIST *exports; ///< list of objects to export
 	LINKLIST *imports; ///< list of objects to import  
 	void *data;	///< other data associated with this link
-
-private: // target function link
 	void *handle;
-	bool (*settag)(link *mod, char *,char*);
-	bool (*init)(link *mod);
-	TIMESTAMP (*sync)(link *mod, TIMESTAMP t0);
-	bool (*term)(link *mod);
+	bool (*settag)(glxlink *mod, char *,char*);
+	bool (*init)(glxlink *mod);
+	TIMESTAMP (*sync)(glxlink *mod, TIMESTAMP t0);
+	bool (*term)(glxlink *mod);
 
+#ifdef __cplusplus
 public:
 	void *get_handle();
 	inline bool do_init() { return init==NULL ? false : (*init)(this); };
@@ -43,16 +45,16 @@ public:
 	inline bool do_term(void) { return term==NULL ? true : (*term)(this); };
 
 private: // link list
-	class link *next; ///< pointer to next link target
-	static class link *first; ///< pointer for link target
+	class glxlink *next; ///< pointer to next link target
+	static class glxlink *first; ///< pointer for link target
 
 public: // link list accessors
-	inline static class link *get_first() { return first; }
-	inline class link *get_next() { return next; };
+	inline static class glxlink *get_first() { return first; }
+	inline class glxlink *get_next() { return next; };
 
 public: // construction/destruction
-	link(char *file);
-	~link(void);
+	glxlink(char *file);
+	~glxlink(void);
 
 public: // accessors
 	bool set_target(char *data);
@@ -105,10 +107,11 @@ public: // accessors
 		if ( item->data!=NULL ) free(item->data);
 		item->data=(void*)var; 
 	};
-	
 };
-
 extern "C" {
+#else // __cplusplus
+#undef glxlink
+} glxlink;
 #endif
 
 int link_create(char *name);

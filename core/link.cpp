@@ -38,9 +38,9 @@
 	#define DLSYM(H,S) dlsym(H,S)
 #endif
 
-link *link::first = NULL;
+glxlink *glxlink::first = NULL;
 
-LINKLIST * link::add_global(char *name)
+LINKLIST * glxlink::add_global(char *name)
 {
 	LINKLIST *item = new LINKLIST;
 	if ( item==NULL ) return NULL;
@@ -55,7 +55,7 @@ LINKLIST * link::add_global(char *name)
 	return item;
 }
 
-LINKLIST * link::add_object(char *name)
+LINKLIST * glxlink::add_object(char *name)
 {
 	LINKLIST *item = new LINKLIST;
 	item->next = objects;
@@ -68,7 +68,7 @@ LINKLIST * link::add_object(char *name)
 	return item;
 }
 
-LINKLIST * link::add_export(char *name)
+LINKLIST * glxlink::add_export(char *name)
 {
 	LINKLIST *item = new LINKLIST;
 	item->next = exports;
@@ -81,7 +81,7 @@ LINKLIST * link::add_export(char *name)
 	return item;
 }
 
-LINKLIST * link::add_import(char *name)
+LINKLIST * glxlink::add_import(char *name)
 {
 	LINKLIST *item = new LINKLIST;
 	item->next = imports;
@@ -98,7 +98,7 @@ LINKLIST * link::add_import(char *name)
 int link_create(char *file)
 {
 	try {
-		link *lt = new link(file);
+		glxlink *lt = new glxlink(file);
 		return 1;
 	}
 	catch (char *msg)
@@ -117,8 +117,8 @@ int link_create(char *file)
 int link_initall(void)
 {
 	output_debug("link_initall(): link startup in progress...");
-	link *mod;
-	for ( mod=link::get_first() ; mod!=NULL ; mod=mod->get_next() )
+	glxlink *mod;
+	for ( mod=glxlink::get_first() ; mod!=NULL ; mod=mod->get_next() )
 	{
 		LINKLIST *item;
 
@@ -257,8 +257,8 @@ int link_initall(void)
 TIMESTAMP link_syncall(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = TS_NEVER;
-	link *mod;
-	for ( mod=link::get_first() ; mod!=NULL ; mod=mod->get_next() )
+	glxlink *mod;
+	for ( mod=glxlink::get_first() ; mod!=NULL ; mod=mod->get_next() )
 	{
 		TIMESTAMP t2 = mod->do_sync(t0);
 		if ( absolute_timestamp(t2)<absolute_timestamp(t1) ) t1 = t2;
@@ -269,8 +269,8 @@ TIMESTAMP link_syncall(TIMESTAMP t0)
 int link_termall(void)
 {
 	bool ok = true;
-	link *mod;
-	for ( mod=link::get_first() ; mod!=NULL ; mod=mod->get_next() )
+	glxlink *mod;
+	for ( mod=glxlink::get_first() ; mod!=NULL ; mod=mod->get_next() )
 	{
 		output_debug("link_initall(): terminating %s link...",mod->get_target());
 		if ( !mod->do_term() ) ok = false;
@@ -279,7 +279,7 @@ int link_termall(void)
 }
 
 
-link::link(char *filename)
+glxlink::glxlink(char *filename)
 {
 	bool ok = true;
 	globals = NULL;
@@ -353,7 +353,7 @@ link::link(char *filename)
 		throw "cannot establish link";
 }
 
-bool link::set_target(char *name)
+bool glxlink::set_target(char *name)
 {
 	char libname[1024];
 	char path[1024];
@@ -369,13 +369,13 @@ bool link::set_target(char *name)
 		}
 
 		// attach functions
-		settag = (bool(*)(link*,char*,char*))DLSYM(handle,"settag");
-		init = (bool(*)(link*))DLSYM(handle,"init");
-		sync = (TIMESTAMP(*)(link*,TIMESTAMP))DLSYM(handle,"sync");
-		term = (bool(*)(link*))DLSYM(handle,"term");
+		settag = (bool(*)(glxlink*,char*,char*))DLSYM(handle,"glx_settag");
+		init = (bool(*)(glxlink*))DLSYM(handle,"glx_init");
+		sync = (TIMESTAMP(*)(glxlink*,TIMESTAMP))DLSYM(handle,"glx_sync");
+		term = (bool(*)(glxlink*))DLSYM(handle,"glx_term");
 
 		// call create routine
-		bool (*create)(link*,CALLBACKS*) = (bool(*)(link*,CALLBACKS*))DLSYM(handle,"create");
+		bool (*create)(glxlink*,CALLBACKS*) = (bool(*)(glxlink*,CALLBACKS*))DLSYM(handle,"create");
 		create(this,module_callbacks());
 		strcpy(target,name);
 		return true;
