@@ -33,6 +33,7 @@ typedef enum {
 
 typedef struct {
 	Engine *engine;
+	char *command;
 	MATLABWINDOWDISPOSITION window;
 	int keep_onerror;
 	char *init;
@@ -253,7 +254,12 @@ EXPORT bool glx_create(glxlink *mod, CALLBACKS *fntable)
 EXPORT bool glx_settag(glxlink *mod, char *tag, char *data)
 {
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
-	if ( strcmp(tag,"window")==0 )
+	if ( strcmp(tag,"command")==0 )
+	{
+		matlab->command = (char*)malloc(strlen(data)+1);
+		strcpy(matlab->command,data);
+	}
+	else if ( strcmp(tag,"window")==0 )
 	{
 		if ( strcmp(data,"show")==0 )
 			matlab->window = MWD_SHOW;
@@ -365,7 +371,7 @@ EXPORT bool glx_init(glxlink *mod)
 		return false;
 	}
 #else
-	matlab->engine = engOpen(NULL);
+	matlab->engine = engOpen(matlab->command);
 	if ( matlab->engine==NULL )
 	{
 		gl_error("matlab engine start failed");
