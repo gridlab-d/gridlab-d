@@ -434,7 +434,7 @@ EXPORT bool glx_init(glxlink *mod)
 #ifdef WIN32
 		mkdir(matlab->workdir);
 #else
-		mkdir(matlab->workdir,0x750);
+		mkdir(matlab->workdir,0750);
 #endif
 		if ( matlab->workdir[0]=='/' )
 			matlab_exec(matlab,"cd '%s'", matlab->workdir);
