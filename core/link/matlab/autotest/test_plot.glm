@@ -1,7 +1,9 @@
 // $Id$
 //
 
+#ifdef WIN32
 #setenv PATH=C:\Program files\Matlab\R2011a\bin\win64
+#endif
 //#set pauseatexit=TRUE
 //#set verbose=TRUE
 

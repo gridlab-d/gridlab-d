@@ -385,7 +385,8 @@ bool window_kill(MATLABLINK *matlab)
 
 EXPORT bool glx_init(glxlink *mod)
 {
-	gl_verbose("initialization matlab link");
+	gl_verbose("initializing matlab link");
+	gl_verbose("PATH=%s", getenv("PATH"));
 
 	// initialize matlab engine
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();

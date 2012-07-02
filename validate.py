@@ -146,7 +146,7 @@ def run_tests(argv):
 				autotestfiles.append((path, file))
 				test_count += 1
 				
-	print("NOTICE:  Found "+str(test_count)+" test files")
+#	print("NOTICE:  Found "+str(test_count)+" test files")
 	
 #	for path, file in autotestfiles:
 #		print("Found file: \'"+file+"\'")
@@ -190,7 +190,7 @@ def run_tests(argv):
 			#run file with:
 			outfile = open(os.path.join(xpath,"outfile.txt"), "w")
 			errfile = open(os.path.join(xpath,"errfile.txt"), "w")
-			print("NOTICE:  Running \'"+xfile+"\'")
+#			print("NOTICE:  Running \'"+xfile+"\'")
 			start_time = time.time();
 			rv = subprocess.call(["gridlabd",xfile],stdout=outfile,stderr=errfile)
 			end_time = time.time();

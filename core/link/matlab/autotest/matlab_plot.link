@@ -4,6 +4,7 @@
 #
 
 target matlab
+#command ./runmatlab
 
 #
 # Matlab working directory
