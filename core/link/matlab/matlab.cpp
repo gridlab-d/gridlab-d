@@ -105,6 +105,27 @@ static mxArray* matlab_create_value(gld_property *prop)
 			value = mxCreateCharMatrixFromStrings(mwSize(1),str); 
 		}
 		break;
+	case PT_double_array:
+		{
+			double_array *data = (double_array*)prop->get_addr();
+			int m=data->get_m(), n=data->get_n();
+			value = mxCreateDoubleMatrix(0,0,mxREAL);
+			double *copy = (double*)mxMalloc(m*n);
+			for ( int c=0 ; c<m ; c++ )
+			{
+				for ( int r=0 ; r<n ; r++ )
+				{
+					copy[c*m+r] = data->get_at(c,r);
+				}
+			}
+			mxSetPr(value,copy);
+			mxSetM(value,m);
+			mxSetN(value,n);
+		}
+		break;
+	case PT_complex_array:
+		// TODO
+		break;
 	default:
 		value = NULL;
 		break;
@@ -168,6 +189,12 @@ static mxArray* matlab_set_value(mxArray *value, gld_property *prop)
 	case PT_char32:
 	case PT_char256:
 	case PT_char1024:
+		// TODO
+		break;
+	case PT_double_array:
+		// TODO
+		break;
+	case PT_complex_array:
 		// TODO
 		break;
 	default:
@@ -364,7 +391,10 @@ EXPORT bool glx_init(glxlink *mod)
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	matlab->status = 0;
 #ifdef WIN32
-	matlab->engine = engOpenSingleUse(NULL,NULL,&matlab->status);
+	if ( matlab->command )
+		matlab->engine = engOpen(matlab->command);
+	else
+		matlab->engine = engOpenSingleUse(NULL,NULL,&matlab->status);
 	if ( matlab->engine==NULL )
 	{
 		gl_error("matlab engine start failed, status code is '%d'", matlab->status);
