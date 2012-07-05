@@ -50,21 +50,29 @@ int flush = 0;
 static char prefix[16]="";
 void output_prefix_enable(void)
 {
+	unsigned short cpuid, procid;
+	sched_init();
+	output_debug("reading cpuid()");
+	cpuid = sched_get_cpuid();
+	output_debug("reading procid()");
+	procid = sched_get_procid();
+	output_debug("sprintf'ing m/s name");
 	switch ( global_multirun_mode ) {
 	case MRM_STANDALONE:
-		sprintf(prefix,"-%02d(%05d): ", sched_get_cpuid(), sched_get_procid());
+		sprintf(prefix,"-%02d(%05d): ", cpuid, procid);
 		break;
 	case MRM_MASTER:
 		flush = 1;
-		sprintf(prefix,"M%02d(%05d): ", sched_get_cpuid(), sched_get_procid());
+		sprintf(prefix,"M%02d(%05d): ", cpuid, procid);
 		break;
 	case MRM_SLAVE:
 		flush = 1;
-		sprintf(prefix,"S%02d(%05d): ", sched_get_cpuid(), sched_get_procid());
+		sprintf(prefix,"S%02d(%05d): ", cpuid, procid);
 		break;
 	default:
 		break;
 	}
+	output_debug("exiting output_prefix_enable");
 }
 
 /** output_redirect() changes where output message are sent 
