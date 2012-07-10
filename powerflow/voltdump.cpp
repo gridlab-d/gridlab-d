@@ -35,7 +35,8 @@ voltdump::voltdump(MODULE *mod)
 		if (gl_publish_variable(oclass,
 			PT_char32,"group",PADDR(group),PT_DESCRIPTION,"the group ID to output data for (all nodes if empty)",
 			PT_timestamp,"runtime",PADDR(runtime),PT_DESCRIPTION,"the time to check voltage data",
-			PT_char256,"filename",PADDR(filename),PT_DESCRIPTION,"the file to dump the voltage data into",
+			PT_char256,"filename",PADDR(filename),PT_DESCRIPTION,"the file to dump the voltage data into", // must keep this for compatibility
+			PT_char256,"file",PADDR(filename),PT_DESCRIPTION,"the file to dump the voltage data into", // added 2012-07-10, adds convenience
 			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
 			PT_enumeration, "mode", PADDR(mode),
 				PT_KEYWORD, "rect", VDM_RECT,
