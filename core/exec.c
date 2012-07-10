@@ -675,6 +675,11 @@ static STATUS init_all(void)
 				OBJECT **bigger;
 				int size = ( max_object_heartbeats==0 ? 256 : (max_object_heartbeats*2) );
 				bigger = malloc(size);
+				if ( bigger==NULL )
+				{
+					output_error("unsufficient memory to allocate hearbeat object list");
+					return FAILED;
+				}
 				if ( max_object_heartbeats>0 )
 				{
 					memcpy(bigger,object_heartbeats,max_object_heartbeats*sizeof(OBJECT));
