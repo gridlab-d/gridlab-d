@@ -145,6 +145,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #include <sys/stat.h>
 #include <math.h>
 #include "stream.h"
+#include "http_client.h"
 
 /* define this to use # for comment and % for macros (the way Version 1.x works) */
 /* #define OLDSTYLE	*/
@@ -5507,6 +5508,36 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	return count;
 }
 
+/** @return 1 if the variable is autodefined */
+int is_autodef(char *value)
+{
+#ifdef WIN32
+	if ( strcmp(value,"WINDOWS")==0 ) return 1;
+#elif defined APPLE
+	if ( strcmp(value,"APPLE")==0 ) return 1;
+#elif defined LINUX
+	if ( strcmp(value,"LINUX")==0 ) return 1;
+#endif
+
+#ifdef _DEBUG
+	if ( strcmp(value,"DEBUG")==0 ) return 1;
+#endif
+
+#ifdef HAVE_MATLAB
+	if ( strcmp(value,"MATLAB")==0 ) return 1;
+#endif
+
+#ifdef HAVE_XERCES
+	if ( strcmp(value,"XERCES")==0 ) return 1;
+#endif
+
+#ifdef HAVE_CPPUNIT
+	if ( strcmp(value,"CPPUNIT")==0 ) return 1;
+#endif
+
+	return 0;
+}
+
 /** @return TRUE/SUCCESS for a successful macro read, FALSE/FAILED on parse error (which halts the loader) */
 static int process_macro(char *line, int size, char *_filename, int linenum)
 {
@@ -5555,7 +5586,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, buffer, 63)==NULL && getenv(value)==NULL)
 		strcpy(value, strip_right_white(term+1));
-		if (global_getvar(value, buffer, 63)==NULL && getenv(value)==NULL)
+		if ( !is_autodef(value) && global_getvar(value, buffer, 63)==NULL && getenv(value)==NULL)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
 		nesting++;
@@ -5689,11 +5720,67 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			/* C include file */
 			output_verbose("added C include for \"%s\", value");
 			append_code(value);
-		} else
+			strcpy(line,"");
+			return TRUE;
+		}
+		else if ( sscanf(term, "[%[^]]]", value)==1 )
+		{
+			/* HTTP include */
+			int len=0;
+			char *p;
+			FILE *fp;
+			HTTPRESULT *http = http_read(value);
+			char tmpname[1024];
+			if ( http==NULL )
+			{
+				output_error("%s(%d): unable to include [%s]", filename, linenum, value);
+				return FALSE;
+			}
+			
+			/* local cache file name */
+			len = sprintf(line,"@%s;%d\n",value,0);
+			size -= len; line += len;
+			strcpy(tmpname,value);
+			for ( p=tmpname ; *p!='\0' ; p++ )
+			{
+				if ( isalnum(*p) || *p=='.' || *p=='-' || *p==',' || *p=='_' ) continue;
+				*p = '_';
+			}
+
+			/* copy to local file - TODO check time stamps */
+			if ( access(tmpname,R_OK)!=0 )
+			{
+				fp = fopen(tmpname,"wt");
+				if ( fp==NULL )
+				{
+					output_error("%s(%d): unable to write temp file '%s'", filename, linenum, tmpname);
+					return FALSE;
+				}
+				fwrite(http->body.data,1,http->body.size,fp);
+				fclose(fp);
+			}
+
+			/* load temp file */
+			strcpy(oldfile,filename);
+			strcpy(filename,tmpname);
+			len = (int)include_file(tmpname,line,size,linenum);
+			strcpy(filename,oldfile);
+			if ( len<0 )
+			{
+				output_error("%s(%d): unable to include load [%s] from temp file '%s'", filename, linenum, value,tmpname);
+				return FALSE;
+			}
+			else
+			{
+				sprintf(line+len,"@%s;%d\n",filename,linenum);
+				return TRUE;
+			}
+		}
+		else
 		{
 			output_error_raw("%s(%d): #include failed",filename,linenum);
-				strcpy(line,"\n");
-				return FALSE;
+			strcpy(line,"\n");
+			return FALSE;
 		}
 	}
 	else if (strncmp(line,MACRO "setenv",7)==0)
