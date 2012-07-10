@@ -445,83 +445,98 @@ TIMESTAMP load::postsync(TIMESTAMP t0)
 }
 
 //Notify function
+//NOTE: The NR-based notify stuff may no longer be needed after NR is "flattened", since it will
+//      effectively be like FBS at that point.
 int load::notify(int update_mode, PROPERTY *prop, char *value)
 {
 	complex diff_val;
 	double power_tolerance;
 
-	//See if it was a power update - if it was populated
-	if (prev_power_value != NULL)
+	if (solver_method == SM_NR)
 	{
-		//See if there is a power update - phase A
-		if (strcmp(prop->name,"constant_power_A")==0)
+		//See if it was a power update - if it was populated
+		if (prev_power_value != NULL)
 		{
-			if (update_mode==NM_PREUPDATE)
+			//See if there is a power update - phase A
+			if (strcmp(prop->name,"constant_power_A")==0)
 			{
-				//Store the last value
-				prev_power_value[0] = constant_power[0];
-			}
-			else if (update_mode==NM_POSTUPDATE)
-			{
-				//Calculate the "power tolerance" - use 0.01% as a baseline
-				power_tolerance = constant_power[0].Mag() * 0.0001;
-
-				//See what the difference is - if it is above the convergence limit, send an NR update
-				diff_val = constant_power[0] - prev_power_value[0];
-
-				if (diff_val.Mag() >= power_tolerance)
+				if (update_mode==NM_PREUPDATE)
 				{
-					NR_retval = gl_globalclock;
+					//Store the last value
+					prev_power_value[0] = constant_power[0];
+				}
+				else if (update_mode==NM_POSTUPDATE)
+				{
+					if (NR_cycle==false)	//Technically true cycle, but it is the begining before the toggle
+					{
+						//Calculate the "power tolerance"
+						power_tolerance = constant_power[0].Mag() * default_maximum_power_error;
+
+						//See what the difference is - if it is above the convergence limit, send an NR update
+						diff_val = constant_power[0] - prev_power_value[0];
+
+						if (diff_val.Mag() >= power_tolerance)
+						{
+							NR_retval = gl_globalclock;	//Force a reiteration
+						}
+					}
+				}
+			}
+
+			//See if there is a power update - phase B
+			if (strcmp(prop->name,"constant_power_B")==0)
+			{
+				if (update_mode==NM_PREUPDATE)
+				{
+					//Store the last value
+					prev_power_value[1] = constant_power[1];
+				}
+				else if (update_mode==NM_POSTUPDATE)
+				{
+					if (NR_cycle==false)	//Technically true cycle, but it is the begining before the toggle
+					{
+						//Calculate the "power tolerance"
+						power_tolerance = constant_power[1].Mag() * default_maximum_power_error;
+
+						//See what the difference is - if it is above the convergence limit, send an NR update
+						diff_val = constant_power[1] - prev_power_value[1];
+
+						if (diff_val.Mag() >= power_tolerance)
+						{
+							NR_retval = gl_globalclock;	//Force a reiteration
+						}
+					}
+				}
+			}
+
+			//See if there is a power update - phase C
+			if (strcmp(prop->name,"constant_power_C")==0)
+			{
+				if (update_mode==NM_PREUPDATE)
+				{
+					//Store the last value
+					prev_power_value[2] = constant_power[2];
+				}
+				else if (update_mode==NM_POSTUPDATE)
+				{
+					if (NR_cycle==false)	//Technically true cycle, but it is the begining before the toggle
+					{
+						//Calculate the "power tolerance"
+						power_tolerance = constant_power[2].Mag() * default_maximum_power_error;
+
+						//See what the difference is - if it is above the convergence limit, send an NR update
+						diff_val = constant_power[2] - prev_power_value[2];
+
+						if (diff_val.Mag() >= power_tolerance)
+						{
+							NR_retval = gl_globalclock;	//Force a reiteration
+						}
+					}
 				}
 			}
 		}
-
-		//See if there is a power update - phase B
-		if (strcmp(prop->name,"constant_power_B")==0)
-		{
-			if (update_mode==NM_PREUPDATE)
-			{
-				//Store the last value
-				prev_power_value[1] = constant_power[1];
-			}
-			else if (update_mode==NM_POSTUPDATE)
-			{
-				//Calculate the "power tolerance" - use 0.01% as a baseline
-				power_tolerance = constant_power[1].Mag() * 0.0001;
-
-				//See what the difference is - if it is above the convergence limit, send an NR update
-				diff_val = constant_power[1] - prev_power_value[1];
-
-				if (diff_val.Mag() >= power_tolerance)
-				{
-					NR_retval = gl_globalclock;
-				}
-			}
-		}
-
-		//See if there is a power update - phase C
-		if (strcmp(prop->name,"constant_power_C")==0)
-		{
-			if (update_mode==NM_PREUPDATE)
-			{
-				//Store the last value
-				prev_power_value[2] = constant_power[2];
-			}
-			else if (update_mode==NM_POSTUPDATE)
-			{
-				//Calculate the "power tolerance" - use 0.01% as a baseline
-				power_tolerance = constant_power[2].Mag() * 0.0001;
-
-				//See what the difference is - if it is above the convergence limit, send an NR update
-				diff_val = constant_power[2] - prev_power_value[2];
-
-				if (diff_val.Mag() >= power_tolerance)
-				{
-					NR_retval = gl_globalclock;
-				}
-			}
-		}
-	}
+	}//End NR
+	//Default else - FBS doesn't really need any special code for it's handling
 
 	return 1;
 }

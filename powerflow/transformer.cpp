@@ -210,7 +210,7 @@ int transformer::init(OBJECT *parent)
 					//d_mat[2][2] = (zt_c + zc) / ( complex(nt_c,0) * zc);
 				}
 			}
-			else if ((solver_method==SM_GS) || (solver_method==SM_NR))
+			else if (solver_method==SM_NR)
 			{
 				complex Izt = complex(1,0) / zt;
 				
@@ -289,7 +289,7 @@ int transformer::init(OBJECT *parent)
 				B_mat[0][0] = B_mat[1][1] = zt;
 				B_mat[2][0] = B_mat[2][1] = -zt;
 			}
-			else if ((solver_method==SM_GS) || (solver_method==SM_NR))
+			else if (solver_method==SM_NR)
 			{
 				//Calculate admittance matrix
 				complex Izt = complex(1,0) / zt;
@@ -353,7 +353,7 @@ int transformer::init(OBJECT *parent)
 					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = zt;
 				}
 			}
-			else if ((solver_method==SM_GS) || (solver_method==SM_NR))
+			else if (solver_method==SM_NR)
 			{
 				SpecialLnk = DELTAGWYE;
 

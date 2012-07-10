@@ -341,6 +341,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	complex temp_current;
+	TIMESTAMP tretval;
 
 	measured_voltage[0] = voltageA;
 	measured_voltage[1] = voltageB;
@@ -349,110 +350,6 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	measured_voltageD[0] = voltageA - voltageB;
 	measured_voltageD[1] = voltageB - voltageC;
 	measured_voltageD[2] = voltageC - voltageA;
-
-	//Server-mode checks for NR updates - do on the solver pass since the other one updates anyways
-	if (meter_NR_servered & !NR_cycle)
-	{
-		//Zero them all out first, just cause
-		indiv_measured_power[0] = complex(0.0,0.0);
-		indiv_measured_power[1] = complex(0.0,0.0);
-		indiv_measured_power[2] = complex(0.0,0.0);
-
-		//Pull for appropriate phase configurations (just in case it isn't three-phase)
-		switch(NR_busdata[NR_node_reference].phases & 0x07) {
-			case 0x00:	//No phases - not sure how we get here
-				{
-					break;
-				}
-			case 0x01:	//Only phase C
-				{
-					//Extract phase C current
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
-
-					//Compute power
-					indiv_measured_power[2] = voltage[2]*~temp_current;
-
-					break;
-				}
-			case 0x02:	//Only phase B
-				{
-					//Extract phase B current and compute power
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
-					indiv_measured_power[1] = voltage[1]*~temp_current;
-
-					break;
-				}
-			case 0x03:	//Phase B & C
-				{
-					//Extract phase B current and compute power
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+2],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
-					indiv_measured_power[1] = voltage[1]*~temp_current;
-
-					//Extract phase C current and compute power
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+3],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1]);
-					indiv_measured_power[2] = voltage[2]*~temp_current;
-
-					break;
-				}
-			case 0x04:	//Only phase A
-				{
-					//Extract phase A current and compute power
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
-					indiv_measured_power[0] = voltage[0]*~temp_current;
-
-					break;
-				}
-			case 0x05:	//Phase A & C
-				{
-					//Extract phase A current and compute power
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+2],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
-					indiv_measured_power[0] = voltage[0]*~temp_current;
-					
-					//Extract phase C current and compute power
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+3],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1]);
-					indiv_measured_power[2] = voltage[2]*~temp_current;
-
-					break;
-				}
-			case 0x06:	//Phase A & B
-				{
-					//Extract phase A current and compute power
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+2],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
-					indiv_measured_power[0] = voltage[0]*~temp_current;
-					
-					//Extract phase B current and compute power
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+3],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1]);
-					indiv_measured_power[1] = voltage[1]*~temp_current;
-
-					break;
-				}
-			case 0x07:	//All three phases
-				{
-					//Extract phase A current and compute power
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+3],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc]);
-					indiv_measured_power[0] = voltage[0]*~temp_current;
-					
-					//Extract phase B current and compute power
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+4],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+1]);
-					indiv_measured_power[1] = voltage[1]*~temp_current;
-
-					//Extract phase C current and compute power
-					temp_current=-complex(deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+5],deltaI_NR[NR_busdata[NR_node_reference].Matrix_Loc+2]);
-					indiv_measured_power[2] = voltage[2]*~temp_current;
-
-					break;
-				}
-			default:	//Only phase C
-				{
-					GL_THROW("Unknown phase configuration in meter:%s",OBJECTHDR(this)->name);
-					/* TROUBLESHOOT
-					While attempting to perform the additional actions required for a master/slave instance of
-					GridLAB-D, the meter encountered an unknown phase configuration.  Please try again.  If the error
-					persists, please submit your code and a bug report via the trac website.
-					*/
-				}
-		}//End switch
-	}//End if
 
 	if ((solver_method == SM_NR && NR_cycle == true)||solver_method  == SM_FBS)
 	{
@@ -468,11 +365,9 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		else
 			dt = 0;
 		
-		//READLOCK_OBJECT(obj);
 		measured_current[0] = current_inj[0];
 		measured_current[1] = current_inj[1];
 		measured_current[2] = current_inj[2];
-		//READUNLOCK_OBJECT(obj);
 
 		// compute energy use from previous cycle
 		// - everything below this can moved to commit function once tape player is collecting from commit function7
@@ -563,7 +458,19 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
-	return node::postsync(t1);
+	tretval = node::postsync(t1);
+
+	//Multi run (for now) updates to power values
+	//Note - this probably won't be needed once NR gets flattened permanately.
+	if ((NR_cycle==false) && meter_NR_servered)
+	{
+		// compute demand power
+		indiv_measured_power[0] = voltage[0]*(~current_inj[0]);
+		indiv_measured_power[1] = voltage[1]*(~current_inj[1]);
+		indiv_measured_power[2] = voltage[2]*(~current_inj[2]);
+	}
+
+	return tretval;
 }
 
 double meter::process_bill(TIMESTAMP t1){

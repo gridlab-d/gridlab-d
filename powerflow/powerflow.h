@@ -45,7 +45,6 @@ GLOBAL EXT_LU_FXN_CALLS LUSolverFcns;				/**< links to external LU solver functi
 GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodology */
 GLOBAL bool use_line_cap INIT(false);				/**< Flag to include line capacitance quantities */
 GLOBAL MATRIXSOLVERMETHOD matrix_solver_method INIT(MM_SUPERLU);	/**< Newton-Raphson uses superLU as the default solver */
-GLOBAL bool GS_all_converged INIT(false);			/**< Gauss-Seidel convergence indicator (for post-convergence calculations */
 GLOBAL unsigned int NR_bus_count INIT(0);			/**< Newton-Raphson bus count - used for determining size of bus vector */
 GLOBAL unsigned int NR_branch_count INIT(0);		/**< Newton-Raphson branch count - used for determining size of branch vector */
 GLOBAL BUSDATA *NR_busdata INIT(NULL);				/**< Newton-Raphson bus data pointer array */
@@ -59,7 +58,7 @@ GLOBAL bool NR_admit_change INIT(true);				/**< Newton-Raphson admittance matrix
 GLOBAL int NR_superLU_procs INIT(1);				/**< Newton-Raphson related - superLU MT processor count to request - separate from thread_count */
 GLOBAL TIMESTAMP NR_retval INIT(TS_NEVER);			/**< Newton-Raphson current return value - if t0 objects know we aren't going anywhere */
 GLOBAL OBJECT *NR_swing_bus INIT(NULL);				/**< Newton-Raphson swing bus */
-GLOBAL double acceleration_factor INIT(1.4);		/**< Acceleration factor for Gauss-Seidel to increase convergence speed */
+GLOBAL bool FBS_swing_set INIT(false);				/**< Forward-Back Sweep swing assignment variable */
 GLOBAL bool show_matrix_values INIT(false);			/**< flag to enable dumping matrix calculations as they occur */
 GLOBAL double primary_voltage_ratio INIT(60.0);		/**< primary voltage ratio (@todo explain primary_voltage_ratio in powerflow (ticket #131) */
 GLOBAL double nominal_frequency INIT(60.0);			/**< nomimal operating frequencty */
@@ -73,6 +72,7 @@ GLOBAL bool require_voltage_control INIT(false);	/**< flag to enable voltage con
 GLOBAL double geographic_degree INIT(0.0);			/**< topological degree factor */
 GLOBAL complex fault_Z INIT(complex(1e-6,0));		/**< fault impedance */
 GLOBAL double default_maximum_voltage_error INIT(1e-6);	/**< default sync voltage convergence limit [puV] */
+GLOBAL double default_maximum_power_error INIT(0.0001);	/**< default power convergence limit for multirun */
 GLOBAL OBJECT *restoration_object INIT(NULL);		/**< restoration object of the system */
 GLOBAL OBJECT *fault_check_object INIT(NULL);		/**< fault_check object of the system */
 

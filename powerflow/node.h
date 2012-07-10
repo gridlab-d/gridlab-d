@@ -59,13 +59,6 @@
 #define shunt2 shunt[1]			/// phase 2 constant admittance load
 #define shunt12 shunt[2]		/// phase 1-2 constant admittance load
 
-typedef struct s_linkconnected {
-	OBJECT *connectedlink; /// Link attached to a particular node
-	OBJECT *fnodeconnected; /// From node of connected link
-	OBJECT *tnodeconnected; /// To node of connected link
-	struct s_linkconnected *next; /// next link connected to the node
-} LINKCONNECTED; /// connected link definition
-
 typedef enum {
 		NONE=0,			///< defines not a child node
 		CHILD=1,		///< defines is a child node
@@ -78,14 +71,11 @@ typedef enum {
 class node : public powerflow_object
 {
 private:
-	LINKCONNECTED nodelinks;
 	complex last_voltage[3];		///< voltage at last pass
 	complex current_inj[3];			///< current injection (total of current+shunt+power)
 	TIMESTAMP prev_NTime;			///< Previous timestep - used for propogating child properties
 	complex last_child_power[3][3];	///< Previous power values - used for child object propogation
 	complex last_child_current12;	///< Previous current value - used for child object propogation (namely triplex)
-	bool GS_converged;				///< Flag for if we are converged
-	void *GS_P_C_NodeChecks(TIMESTAMP t0, TIMESTAMP t1, OBJECT *obj, LINKCONNECTED *linktable);	///< Subfunction for parent child checks in sync.  Used to clean up code
 public:
 	double frequency;			///< frequency (only valid on reference bus) */
 	object reference_bus;		///< reference bus from which frequency is defined */
@@ -121,15 +111,14 @@ public:
 	complex current[3];		/// bus current injection (positive = in)
 	complex power[3];		/// bus power injection (positive = in)
 	complex shunt[3];		/// bus shunt admittance 
-	complex Ys[3][3];		/// Self-admittance for GS
-	complex YVs[3];			/// "Current" accumulator for GS
 	complex current12;		/// Used for phase 1-2 current injections in triplex
 	complex nom_res_curr[3];/// Used for the inclusion of nominal residential currents (for angle adjustments)
 	bool house_present;		/// Indicator flag for a house being attached (NR primarily)
 	complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
 	complex *Extra_Data;	/// Link to extra data information (NR)
 	unsigned int NR_connected_links[2];	/// Counter for number of connected links in the system
-	int *NR_link_table;		/// Pointer to link list table
+	unsigned int NR_number_child_nodes[2];	/// Counter for number of childed nodes we have (for later NR linking)
+	node **NR_child_nodes;	/// Pointer to childed nodes list
 	
 	double mean_repair_time;	/// Node's mean repair time - mainly for swing at this point
 
@@ -153,10 +142,11 @@ public:
 	int notify(int update_mode, PROPERTY *prop, char *value);
 
 	bool NR_mode;
+	bool current_accumulated;
 
-	LINKCONNECTED *attachlink(OBJECT *obj);
-	int *NR_populate(void);
-	object SubNodeParent;	/// Child node's original parent or child of parent
+	int NR_populate(void);
+	OBJECT *SubNodeParent;	/// Child node's original parent or child of parent
+	int NR_current_update(bool postpass, bool parentcall);
 
 	friend class link;
 	friend class meter;	// needs access to current_inj

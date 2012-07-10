@@ -65,6 +65,7 @@ public: /// @todo make this private and create interfaces to control values
 public:
 	bool status;	///< link status (open disconnect nodes)
 	bool prev_status;	///< Previous link status (used for recalculation detection)
+	bool current_accumulated;	///< Flag to indicate if NR current has been "handled" yet
 
 	OBJECT *from;			///< from_node - source node
 	OBJECT *to;				///< to_node - load node
@@ -117,7 +118,8 @@ public:
 
 	int kmldump(FILE *fp);
 
-	void *UpdateYVs(OBJECT *snode, char snodeside, complex *deltaV);
+	//Current injection calculation function - so it can be called remotely
+	int CurrentCalculation(int nodecall);
 
 	// Fault current calculation functions
 	void fault_current_calc(complex C[7][7], unsigned int removed_phase, double fault_type); // function traces up from fault to swing bus summing up the link objects' impedances
@@ -125,6 +127,7 @@ public:
 
 };
 
+//Macros
 void inverse(complex in[3][3], complex out[3][3]);
 void multiply(double a, complex b[3][3], complex c[3][3]);
 void multiply(complex a[3][3], complex b[3][3], complex c[3][3]);

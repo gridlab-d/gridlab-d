@@ -199,6 +199,8 @@ int link::create(void)
 
 	mean_repair_time = 0.0;
 
+	current_accumulated = false;
+
 	return result;
 }
 
@@ -281,18 +283,13 @@ int link::init(OBJECT *parent)
 		break;
 	case SM_GS: /* Gauss-Seidel */
 		{
-		if (obj->parent==NULL) 
-			/* automatically use from as parent node */
-			obj->parent = from;
-
-		node *fNode = OBJECTDATA(from,node);
-		node *tNode = OBJECTDATA(to,node);
-		
-		if (fNode!=NULL)
-			fNode->attachlink(OBJECTHDR(this));
-
-		if (tNode!=NULL)
-			tNode->attachlink(OBJECTHDR(this));
+			GL_THROW("Gauss_Seidel is a deprecated solver and has been removed");
+			/*  TROUBLESHOOT 
+			The Gauss-Seidel solver implementation has been removed as of version 3.0.
+			It was never fully functional and has not been updated in a couple versions.  The source
+			code still exists in older repositories, so if you have an interest in that implementation, please
+			try an older subversion number.
+			*/
 
 		break;
 		}
@@ -446,6 +443,8 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 
 	if (solver_method==SM_NR)
 	{
+		current_accumulated = false;	//Reset the flag
+
 		if (prev_LTime==0)	//First run, build up the pointer matrices
 		{
 			node *fnode = OBJECTDATA(from,node);
@@ -596,6 +595,9 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 
 				//Link the name
 				NR_branchdata[NR_branch_reference].name = obj->name;
+
+				//Link to ourselves
+				NR_branchdata[NR_branch_reference].obj = obj;
 
 				//Populate phases property
 				NR_branchdata[NR_branch_reference].phases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
@@ -1110,511 +1112,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 		{
 			prev_LTime=t0;
 		}
-	}
-	else if ((solver_method==SM_GS) & (is_closed()) & (prev_LTime!=t0))	//Initial YVs calculations
-	{
-		node *fnode = OBJECTDATA(from,node);
-		node *tnode = OBJECTDATA(to,node);
-		if (fnode==NULL || tnode==NULL)
-			return TS_NEVER;
-		
-		complex Ytot[3][3];
-		complex Ylinecharge[3][3];
-		complex Y[3][3];
-		complex Yc[3][3];
-		complex Ifrom[3];
-		complex Ito[3];
-		complex Ys[3][3];
-		complex Yto[3][3];
-		complex Yfrom[3][3];
-		complex Ylefttemp[3][3];
-		complex Yrighttemp[3][3];
-		complex outcurrent[3];
-		complex tempvar[3];
-		double invratio;
-		char jindex, kindex;
-		char zerosum = 0;
-
-		//Update t0 variable
-		prev_LTime=t0;
-
-		//Reset global convergence variable
-		GS_all_converged=false;
-
-		for (jindex=0;jindex<3;jindex++)	//Check to see if b_mat is all zeros (0 length line)
-		{
-			for (kindex=0;kindex<3;kindex++)
-			{
-				if (b_mat[jindex][kindex]==0)
-				{
-					zerosum++;
-				}
-			}
-		}
-
-		if ((zerosum==9)) // && (fnode->bustype!=2)) //Zero length line & from is not the swing bus
-		{
-			//put some values in the matrices first - these need to be fixed to get accurate power flow...but it's length 0!?!
-			b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = fault_Z;
-			d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = 1.0;
-			A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = 1.0;
-			B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = fault_Z;
-
-			//Remove ourselves from from and to node's linked lists, otherwise it may reference itself
-			
-			//Grab the linked list from the from object
-			LINKCONNECTED *parlink = &fnode->nodelinks;
-
-			LINKCONNECTED *prevlink = (LINKCONNECTED *)gl_malloc(sizeof(LINKCONNECTED));
-			if (prevlink==NULL)
-			{
-				gl_error("GS: memory allocation failure zero length");
-				/*  TROUBLESHOOT
-				This is a bug.  Gauss-Seidel attempted to allocate memory for a zero-length substitution and failed.
-				Please submit a bug report and your model files.
-				*/
-				return 0;
-			}
-
-			while (parlink->next!=NULL)		//Parse through the linked list
-			{
-				prevlink = parlink;
-				parlink = parlink->next;
-				
-				if ((parlink->fnodeconnected==from) & (parlink->tnodeconnected==to)) //this is us
-				{
-					prevlink->next=parlink->next;
-				}
-			}
-			
-			prevlink = NULL;
-			parlink = &tnode->nodelinks;
-
-			if (parlink->next->next!=NULL)	//Was the only line in, so just get rid of us
-			{
-				while (parlink->next!=NULL)
-				{
-					prevlink = parlink;
-					parlink = parlink->next;
-					
-					if ((parlink->fnodeconnected==from) & (parlink->tnodeconnected==to)) //this is us
-					{
-						prevlink->next=parlink->next;
-					}
-				}
-			}
-			else
-				parlink->next=NULL;
-
-			prevlink=NULL;
-			gl_free(prevlink);
-
-			OBJECT *obj = OBJECTHDR(this);
-
-			//Essentially setting from as parent - follow basic idea of node:init
-
-			//See if it is a node/load/meter
-			if (!(gl_object_isa(from,"load") | gl_object_isa(from,"node") | gl_object_isa(from,"meter")))
-				GL_THROW("GS: Attempt to substitue 0 length line %d failed: from is not a node device!",obj->id);
-				/*  TROUBLESHOOT
-				The from end of a line is not a node, load, or meter.  Gauss-Seidel has failed to do a zero line
-				substitution as a result.  Check the from connection of the link.
-				*/
-
-			//Make sure our phases align, otherwise become angry
-			if (fnode->phases!=tnode->phases)
-				GL_THROW("GS: Attempt to substitue 0 length line %d failed: endpoint phases do not match!",obj->id);
-				/*  TROUBLESHOOT
-				Gauss-Seidel attempted to substitute a 0 length line with a parent-child relationship.  However, the parent and child
-				phases do not explicitly match.  Set them the same to enable the parent child relationship.
-				*/
-
-			//Additional check not needed in node - make sure To isn't a parent (no easy way to fix this, if multiple children gets wonky)
-			if (tnode->SubNode==(SUBNODETYPE)3)
-			{
-				//Reference its child
-				node *SubNodeObj = OBJECTDATA(tnode->SubNodeParent,node);
-				gl_warning("0 Length Line %d has child-linked object as the end.  If more than one child existed, earlier children have been lost!",obj->id);
-				/*  TROUBLESHOOT
-				The end link of a system was attached to a node that already had a parent-child relationship.  If more than one child was connected to
-				this end node, other children may have lost their connection and no longer be connected to the system.
-				*/
-			
-				//Now have to handle based on what the from node of the line is
-				if (fnode->SubNode==(SUBNODETYPE)2)	//From node is another child
-				{
-					GL_THROW("GS: Attempt to substitute 0 length line %d failed: Would result in great-grandchilren nesting which is unsupported in GS!",obj->id);
-					/*  TROUBLESHOOT
-					Gauss-Seidel is only set to implement "grandchildren" relationships.  That is, parent-child connections
-					may only be nested two-deep.  Any further nesting is not supported.
-					*/
-				}
-				else	//From node is unchilded
-				{
-					//Set appropriate flags (store parent name and flag from & to)
-					tnode->SubNode = (SUBNODETYPE)2;
-					tnode->SubNodeParent = from;
-					
-					fnode->SubNode = (SUBNODETYPE)3;
-					fnode->SubNodeParent = to;
-
-					//Set to's subnode (or the one we found) to from node as well
-					SubNodeObj->SubNodeParent = from;
-				}
-			}
-			else	//Normal To node
-			{
-				if (fnode->SubNode==(SUBNODETYPE)2)	//From node is another child
-				{
-					//Set appropriate flags (store parent name and flag)
-					tnode->SubNode = (SUBNODETYPE)2;
-					tnode->SubNodeParent = fnode->SubNodeParent;
-				}
-				else	//From node is unchilded
-				{
-					//Set appropriate flags (store parent name and flag from & to)
-					tnode->SubNode = (SUBNODETYPE)2;
-					tnode->SubNodeParent = from;
-					
-					fnode->SubNode = (SUBNODETYPE)3;
-					fnode->SubNodeParent = to;
-				}
-			}
-
-			for (jindex=0;jindex<3;jindex++)	//zero out load tracking matrix (just in case) (do both in case to was parent too)
-			{
-				for (kindex=0;kindex<3;kindex++)
-				{
-					fnode->last_child_power[jindex][kindex]=0.0;
-					tnode->last_child_power[jindex][kindex]=0.0;
-				}
-			}
-
-		}
-		else	//normal b_mat (or at least, not all zeros)
-		{
-			//Ensure have zeroed out the Y at first
-			for (jindex=0;jindex<3;jindex++)
-			{
-				for (kindex=0;kindex<3;kindex++)
-				{
-					Y[jindex][kindex] = 0.0;
-				}
-			}
-
-			// compute admittance - invert b matrix - special circumstances given different methods
-			if (has_phase(PHASE_S)) //Triplexy
-			{
-				inverse(b_mat,Y);
-			}
-			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-				Y[0][0] = complex(1.0) / b_mat[0][0];
-			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-				Y[1][1] = complex(1.0) / b_mat[1][1];
-			else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-				Y[2][2] = complex(1.0) / b_mat[2][2];
-			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
-			{
-				complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
-
-				Y[0][0] = b_mat[2][2] / detvalue;
-				Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
-				Y[2][0] = b_mat[2][0] * -1.0 / detvalue;
-				Y[2][2] = b_mat[0][0] / detvalue;
-			}
-			else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
-			{
-				complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
-
-				Y[0][0] = b_mat[1][1] / detvalue;
-				Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
-				Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
-				Y[1][1] = b_mat[0][0] / detvalue;
-			}
-			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
-			{
-				complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
-
-				Y[1][1] = b_mat[2][2] / detvalue;
-				Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
-				Y[2][1] = b_mat[2][1] * -1.0 / detvalue;
-				Y[2][2] = b_mat[1][1] / detvalue;
-			}
-			else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
-				inverse(b_mat,Y);
-			// defaulted else - No phases (e.g., the line does not exist) - just = 0
-
-			//Compute total self admittance - include line charging capacitance
-			equalm(a_mat,Ylinecharge);
-			Ylinecharge[0][0]-=1;
-			Ylinecharge[1][1]-=1;
-			Ylinecharge[2][2]-=1;
-			multiply(2,Ylinecharge,Ylefttemp);
-			multiply(Y,Ylefttemp,Ylinecharge);
-
-			addition(Ylinecharge,Y,Ytot);
-			
-			if ((voltage_ratio!=1) | (SpecialLnk!=NORMAL))	//Handle transformers slightly different
-			{
-				invratio=1.0/voltage_ratio;
-
-				if (SpecialLnk==DELTAGWYE)	//Delta-Gwye implementation
-				{
-					complex tempImped;
-
-					//Pre-admittancized matrix
-					equalm(b_mat,Yto);
-
-					//Adjust for To_Y
-					multiply(Yto,c_mat,To_Y);
-
-					//Scale to other size
-					multiply(invratio,Yto,Ylefttemp);
-					multiply(invratio,Ylefttemp,Yfrom);
-
-					//Adjust for From_Y
-					multiply(B_mat,Yto,From_Y);
-
-					//Fix what I broke
-					for(jindex=0;jindex<3;jindex++)
-					{
-						for(kindex=0;kindex<3;kindex++)
-						{
-							c_mat[jindex][kindex]=0.0;
-							B_mat[jindex][kindex]=0.0;
-						}
-					}
-
-					tempImped = complex(1.0) / b_mat[0][0];
-					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = tempImped;
-
-					//Calculate YVs terms
-					Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
-							 From_Y[0][1]*tnode->voltage[1]+
-							 From_Y[0][2]*tnode->voltage[2];
-					Ifrom[1]=From_Y[1][0]*tnode->voltage[0]+
-							 From_Y[1][1]*tnode->voltage[1]+
-							 From_Y[1][2]*tnode->voltage[2];
-					Ifrom[2]=From_Y[2][0]*tnode->voltage[0]+
-							 From_Y[2][1]*tnode->voltage[1]+
-							 From_Y[2][2]*tnode->voltage[2];
-					Ito[0] = To_Y[0][0]*fnode->voltage[0]+
-							 To_Y[0][1]*fnode->voltage[1]+
-							 To_Y[0][2]*fnode->voltage[2];
-					Ito[1] = To_Y[1][0]*fnode->voltage[0]+
-							 To_Y[1][1]*fnode->voltage[1]+
-							 To_Y[1][2]*fnode->voltage[2];
-					Ito[2] = To_Y[2][0]*fnode->voltage[0]+
-							 To_Y[2][1]*fnode->voltage[1]+
-							 To_Y[2][2]*fnode->voltage[2];
-
-				}
-				else if (SpecialLnk==REGULATOR)	//Regulator
-				{
-					GL_THROW("GS: Regulator not implemented in Gauss-Seidel Solver yet!");
-					/*  TROUBLESHOOT
-					Regulators are not coded into the Gauss-Seidel solver at this time.  Please
-					use a different solver method or find a way to remove the regulator from your model.
-					*/
-
-					equalm(b_mat,Yto);	//Initial code.  Very untested
-					equalm(c_mat,Yfrom);
-
-					equalm(Yto,To_Y);
-
-					To_Y[0][0] *= B_mat[0][0];
-					To_Y[0][1] *= B_mat[0][1];
-					To_Y[0][2] *= B_mat[0][2];
-					To_Y[1][0] *= B_mat[1][0];
-					To_Y[1][1] *= B_mat[1][1];
-					To_Y[1][2] *= B_mat[1][2];
-					To_Y[2][0] *= B_mat[2][0];
-					To_Y[2][1] *= B_mat[2][1];
-					To_Y[2][2] *= B_mat[2][2];
-
-					equalm(Yfrom,From_Y);
-
-					From_Y[0][0] = (B_mat[0][0]==0.0) ? 0.0 : From_Y[0][0]*B_mat[0][0];
-					From_Y[0][1] = (B_mat[0][1]==0.0) ? 0.0 : From_Y[0][1]*B_mat[0][1];
-					From_Y[0][2] = (B_mat[0][2]==0.0) ? 0.0 : From_Y[0][2]*B_mat[0][2];
-					From_Y[1][0] = (B_mat[1][0]==0.0) ? 0.0 : From_Y[1][0]*B_mat[1][0];
-					From_Y[1][1] = (B_mat[1][1]==0.0) ? 0.0 : From_Y[1][1]*B_mat[1][1];
-					From_Y[1][2] = (B_mat[1][2]==0.0) ? 0.0 : From_Y[1][2]*B_mat[1][2];
-					From_Y[2][0] = (B_mat[2][0]==0.0) ? 0.0 : From_Y[2][0]*B_mat[2][0];
-					From_Y[2][1] = (B_mat[2][1]==0.0) ? 0.0 : From_Y[2][1]*B_mat[2][1];
-					From_Y[2][2] = (B_mat[2][2]==0.0) ? 0.0 : From_Y[2][2]*B_mat[2][2];
-
-					//Zero the used matrices
-					b_mat[0][0] = b_mat[0][1] = b_mat[0][2] = complex(0,0);
-					b_mat[1][0] = b_mat[1][1] = b_mat[1][2] = complex(0,0);
-					b_mat[2][0] = b_mat[2][1] = b_mat[2][2] = complex(0,0);
-
-					equalm(b_mat,c_mat);
-					equalm(b_mat,B_mat);
-
-					Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
-							 From_Y[0][1]*tnode->voltage[1]+
-							 From_Y[0][2]*tnode->voltage[2];
-					Ifrom[1]=From_Y[1][0]*tnode->voltage[0]+
-							 From_Y[1][1]*tnode->voltage[1]+
-							 From_Y[1][2]*tnode->voltage[2];
-					Ifrom[2]=From_Y[2][0]*tnode->voltage[0]+
-							 From_Y[2][1]*tnode->voltage[1]+
-							 From_Y[2][2]*tnode->voltage[2];
-					Ito[0] = To_Y[0][0]*fnode->voltage[0]+
-							 To_Y[0][1]*fnode->voltage[1]+
-							 To_Y[0][2]*fnode->voltage[2];
-					Ito[1] = To_Y[1][0]*fnode->voltage[0]+
-							 To_Y[1][1]*fnode->voltage[1]+
-							 To_Y[1][2]*fnode->voltage[2];
-					Ito[2] = To_Y[2][0]*fnode->voltage[0]+
-							 To_Y[2][1]*fnode->voltage[1]+
-							 To_Y[2][2]*fnode->voltage[2];
-				}
-				else if (SpecialLnk==SPLITPHASE)	//Split phase - non working
-				{
-					equalm(b_mat,Yto);
-					equalm(c_mat,Yfrom);
-
-					for (jindex=0;jindex<3;jindex++)
-					{
-						for (kindex=0;kindex<3;kindex++)
-						{
-							c_mat[jindex][kindex] = 0.0;
-						}
-					}
-
-/*					Old version - works?? - fixing assignments so can generalize
-					equalm(b_mat,Yto);
-					Yto[2][0] = Yto[2][1] = 0.0;
-
-					equalm(b_mat,Ylefttemp);
-					Ylefttemp[1][0] = Ylefttemp[1][1];
-					Ylefttemp[1][1] = 0.0;
-					multiply(invratio,Ylefttemp,To_Y);
-
-					equalm(c_mat,Yfrom);
-					equalm(c_mat,From_Y);
-					Yfrom[0][0] = Yfrom[2][2];
-					Yfrom[2][2] = Yfrom[0][1] = 0.0;
-
-					c_mat[0][0] = c_mat[0][1] = c_mat[2][2] = 0.0;*/
-
-					//multiply(invratio,Yfrom,From_Y);
-
-					Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
-							 From_Y[0][1]*tnode->voltage[1]+
-							 From_Y[0][2]*tnode->voltage[2];
-					Ifrom[1]=From_Y[1][0]*tnode->voltage[0]+
-							 From_Y[1][1]*tnode->voltage[1]+
-							 From_Y[1][2]*tnode->voltage[2];
-					Ifrom[2]=From_Y[2][0]*tnode->voltage[0]+
-							 From_Y[2][1]*tnode->voltage[1]+
-							 From_Y[2][2]*tnode->voltage[2];
-					Ito[0] = To_Y[0][0]*fnode->voltage[0]+
-							 To_Y[0][1]*fnode->voltage[1]+
-							 To_Y[0][2]*fnode->voltage[2];
-					Ito[1] = To_Y[1][0]*fnode->voltage[0]+
-							 To_Y[1][1]*fnode->voltage[1]+
-							 To_Y[1][2]*fnode->voltage[2];
-					Ito[2] = To_Y[2][0]*fnode->voltage[0]+
-							 To_Y[2][1]*fnode->voltage[1]+
-							 To_Y[2][2]*fnode->voltage[2];
-
-				}
-				else	//Other xformers
-				{
-					//Pre-admittancized matrix
-					equalm(b_mat,Yto);
-
-					multiply(invratio,Yto,Ylefttemp);		//Scale from admittance by turns ratio
-					multiply(invratio,Ylefttemp,Yfrom);
-
-					multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
-					multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
-
-					Ifrom[0]=From_Y[0][0]*tnode->voltage[0]+
-							 From_Y[0][1]*tnode->voltage[1]+
-							 From_Y[0][2]*tnode->voltage[2];
-					Ifrom[1]=From_Y[1][0]*tnode->voltage[0]+
-							 From_Y[1][1]*tnode->voltage[1]+
-							 From_Y[1][2]*tnode->voltage[2];
-					Ifrom[2]=From_Y[2][0]*tnode->voltage[0]+
-							 From_Y[2][1]*tnode->voltage[1]+
-							 From_Y[2][2]*tnode->voltage[2];
-					Ito[0] = To_Y[0][0]*fnode->voltage[0]+
-							 To_Y[0][1]*fnode->voltage[1]+
-							 To_Y[0][2]*fnode->voltage[2];
-					Ito[1] = To_Y[1][0]*fnode->voltage[0]+
-							 To_Y[1][1]*fnode->voltage[1]+
-							 To_Y[1][2]*fnode->voltage[2];
-					Ito[2] = To_Y[2][0]*fnode->voltage[0]+
-							 To_Y[2][1]*fnode->voltage[1]+
-							 To_Y[2][2]*fnode->voltage[2];
-
-
-				}
-
-				LOCK_OBJECT(from);
-				addition(fnode->Ys,Yfrom,fnode->Ys);
-				fnode->YVs[0] += Ifrom[0];
-				fnode->YVs[1] += Ifrom[1];
-				fnode->YVs[2] += Ifrom[2];
-				UNLOCK_OBJECT(from);
-
-				LOCK_OBJECT(to);
-				addition(tnode->Ys,Yto,tnode->Ys);
-				tnode->YVs[0] += Ito[0];
-				tnode->YVs[1] += Ito[1];
-				tnode->YVs[2] += Ito[2];
-				UNLOCK_OBJECT(to);
-			
-			}
-			else					//Simple lines
-			{
-				//Compute "currents"
-				//Individual phases
-				Ifrom[0]=Ytot[0][0]*tnode->voltage[0]+
-						 Ytot[0][1]*tnode->voltage[1]+
-						 Ytot[0][2]*tnode->voltage[2];
-				Ifrom[1]=Ytot[1][0]*tnode->voltage[0]+
-						 Ytot[1][1]*tnode->voltage[1]+
-						 Ytot[1][2]*tnode->voltage[2];
-				Ifrom[2]=Ytot[2][0]*tnode->voltage[0]+
-						 Ytot[2][1]*tnode->voltage[1]+
-						 Ytot[2][2]*tnode->voltage[2];
-				Ito[0] = Ytot[0][0]*fnode->voltage[0]+
-						 Ytot[0][1]*fnode->voltage[1]+
-						 Ytot[0][2]*fnode->voltage[2];
-				Ito[1] = Ytot[1][0]*fnode->voltage[0]+
-						 Ytot[1][1]*fnode->voltage[1]+
-						 Ytot[1][2]*fnode->voltage[2];
-				Ito[2] = Ytot[2][0]*fnode->voltage[0]+
-						 Ytot[2][1]*fnode->voltage[1]+
-						 Ytot[2][2]*fnode->voltage[2];
-			
-				//Update admittance tracking - separate matrices (transformer support)
-				equalm(Ytot,To_Y);
-				equalm(Ytot,From_Y);
-
-				//Update from node YVs
-				LOCK_OBJECT(from);
-				addition(fnode->Ys,Ytot,fnode->Ys);
-				fnode->YVs[0] += Ifrom[0];
-				fnode->YVs[1] += Ifrom[1];
-				fnode->YVs[2] += Ifrom[2];
-				UNLOCK_OBJECT(from);
-
-				//Update to node YVs
-				LOCK_OBJECT(to);
-				addition(tnode->Ys,Ytot,tnode->Ys);
-				tnode->YVs[0] += Ito[0];
-				tnode->YVs[1] += Ito[1];
-				tnode->YVs[2] += Ito[2];
-				UNLOCK_OBJECT(to);
-			}
-		}
-	}
+	}//End NR Solver
 
 	return t1;
 }
@@ -1627,458 +1125,28 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 	fNode=OBJECTDATA(from,node);
 	tNode=OBJECTDATA(to,node);
 #endif
+	int result;
+	OBJECT *obj = OBJECTHDR(this);
 
+	if ((solver_method==SM_NR) && (NR_cycle==true))	//Accumulation cycle
+	{
+		//Call the current injection calculation - flag as a non-node call
+		result=CurrentCalculation(-1);
+
+		//See if it worked, just in case this gets added in the future
+		if (result != 1)
+		{
+			GL_THROW("Attempt to update current on link:%s failed!",obj->name);
+			/*  TROUBLESHOOT
+			While attempting to update the current on link object, an error was encountered.  Please try again.  If the error persists,
+			please submit your code and a bug report via the trac website.
+			*/
+		}
+	}
+	
 	if (is_closed())
 	{
-		if ((solver_method==SM_NR) && (NR_cycle==true))	//Accumulation cycle
-		{
-			//Solve current equations to get current injections
-			node *fnode = OBJECTDATA(from,node);
-			node *tnode = OBJECTDATA(to,node);
-			complex vtemp[3];
-			complex itemp[3];
-			complex current_temp[3];
-			complex invsquared;
-
-			if ((voltage_ratio!=1.0) && (SpecialLnk != DELTAGWYE) && (SpecialLnk != SPLITPHASE) && (SpecialLnk != REGULATOR))
-			{
-				invsquared = 1.0 / (voltage_ratio * voltage_ratio);
-				//(-a*Vout+Vin)
-				vtemp[0] = fnode->voltage[0]-
-						   A_mat[0][0]*tnode->voltage[0]-
-						   A_mat[0][1]*tnode->voltage[1]-
-						   A_mat[0][2]*tnode->voltage[2];
-
-				vtemp[1] = fnode->voltage[1]-
-						   A_mat[1][0]*tnode->voltage[0]-
-						   A_mat[1][1]*tnode->voltage[1]-
-						   A_mat[1][2]*tnode->voltage[2];
-
-				vtemp[2] = fnode->voltage[2]-
-						   A_mat[2][0]*tnode->voltage[0]-
-						   A_mat[2][1]*tnode->voltage[1]-
-						   A_mat[2][2]*tnode->voltage[2];
-
-				//Put across admittance
-				itemp[0] = b_mat[0][0]*vtemp[0]+
-						   b_mat[0][1]*vtemp[1]+
-						   b_mat[0][2]*vtemp[2];
-
-				itemp[1] = b_mat[1][0]*vtemp[0]+
-						   b_mat[1][1]*vtemp[1]+
-						   b_mat[1][2]*vtemp[2];
-
-				itemp[2] = b_mat[2][0]*vtemp[0]+
-						   b_mat[2][1]*vtemp[1]+
-						   b_mat[2][2]*vtemp[2];
-
-				//Scale the "b_mat" value by the inverse (make it high-side impedance)
-				//Post values based on phases (reliability related)
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
-					current_in[0] = itemp[0]*invsquared;
-				else
-					current_in[0] = 0.0;
-
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
-					current_in[1] = itemp[1]*invsquared;
-				else
-					current_in[1] = 0.0;
-
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
-					current_in[2] = itemp[2]*invsquared;
-				else
-					current_in[2] = 0.0;
-
-				//Calculate current out
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
-				{
-					current_out[0] = A_mat[0][0]*current_in[0]+
-									 A_mat[0][1]*current_in[1]+
-									 A_mat[0][2]*current_in[2];
-
-					//Apply additional change
-					if (a_mat[0][0] != 0)
-					{
-						current_out[0] -= tnode->voltage[0]/a_mat[0][0]*voltage_ratio;
-					}
-				}
-				else
-					current_out[0] = 0.0;
-
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
-				{
-					current_out[1] = A_mat[1][0]*current_in[0]+
-									 A_mat[1][1]*current_in[1]+
-									 A_mat[1][2]*current_in[2];
-
-					//Apply additional update
-					if (a_mat[1][1] != 0)
-					{
-						current_out[1] -= tnode->voltage[1]/a_mat[1][1]*voltage_ratio;
-					}
-				}
-				else
-					current_out[1] = 0.0;
-
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
-				{
-					current_out[2] = A_mat[2][0]*current_in[0]+
-									 A_mat[2][1]*current_in[1]+
-									 A_mat[2][2]*current_in[2];
-
-					//Apply additional update
-					if (a_mat[2][2] != 0)
-					{
-						current_out[2] -= tnode->voltage[2]/a_mat[2][2]*voltage_ratio;
-					}
-				}
-				else
-					current_out[2] = 0.0;
-
-				//Current in is just the same
-				WRITELOCK_OBJECT(from);
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += current_in[2];
-				UNLOCK_OBJECT(from);
-
-			}//end normal transformers
-			else if (SpecialLnk == REGULATOR)
-			{
-				//(-a*Vout+Vin)
-				vtemp[0] = fnode->voltage[0]-
-						   a_mat[0][0]*tnode->voltage[0]-
-						   a_mat[0][1]*tnode->voltage[1]-
-						   a_mat[0][2]*tnode->voltage[2];
-
-				vtemp[1] = fnode->voltage[1]-
-						   a_mat[1][0]*tnode->voltage[0]-
-						   a_mat[1][1]*tnode->voltage[1]-
-						   a_mat[1][2]*tnode->voltage[2];
-
-				vtemp[2] = fnode->voltage[2]-
-						   a_mat[2][0]*tnode->voltage[0]-
-						   a_mat[2][1]*tnode->voltage[1]-
-						   a_mat[2][2]*tnode->voltage[2];
-
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
-				{
-					current_out[0] = From_Y[0][0]*vtemp[0]+
-									 From_Y[0][1]*vtemp[1]+
-									 From_Y[0][2]*vtemp[2];
-				}
-				else
-					current_out[0] = 0.0;
-
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
-				{
-					current_out[1] = From_Y[1][0]*vtemp[0]+
-									 From_Y[1][1]*vtemp[1]+
-									 From_Y[1][2]*vtemp[2];
-				}
-				else
-					current_out[1] = 0.0;
-
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
-				{
-					current_out[2] = From_Y[2][0]*vtemp[0]+
-									From_Y[2][1]*vtemp[1]+
-									From_Y[2][2]*vtemp[2];
-				}
-				else
-					current_out[2] = 0.0;
-
-				//Calculate current_in based on current_out (backwards, isn't it?)
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
-				{
-					current_in[0] = d_mat[0][0]*current_out[0]+
-									d_mat[0][1]*current_out[1]+
-									d_mat[0][2]*current_out[2];
-				}
-				else
-					current_in[0] = 0.0;
-
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
-				{
-					current_in[1] = d_mat[1][0]*current_out[0]+
-									d_mat[1][1]*current_out[1]+
-									d_mat[1][2]*current_out[2];
-				}
-				else
-					current_in[1] = 0.0;
-
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
-				{
-					current_in[2] = d_mat[2][0]*current_out[0]+
-									d_mat[2][1]*current_out[1]+
-									d_mat[2][2]*current_out[2];
-				}
-				else
-					current_in[2] = 0.0;
-
-				//Current in is just the same
-				WRITELOCK_OBJECT(from);
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += current_in[2];
-				UNLOCK_OBJECT(from);
-			}
-			else if (SpecialLnk == DELTAGWYE)
-			{
-				vtemp[0]=fnode->voltage[0]*a_mat[0][0]+
-						 fnode->voltage[1]*a_mat[0][1]+
-						 fnode->voltage[2]*a_mat[0][2]-
-						 tnode->voltage[0];
-
-				vtemp[1]=fnode->voltage[0]*a_mat[1][0]+
-						 fnode->voltage[1]*a_mat[1][1]+
-						 fnode->voltage[2]*a_mat[1][2]-
-						 tnode->voltage[1];
-
-				vtemp[2]=fnode->voltage[0]*a_mat[2][0]+
-						 fnode->voltage[1]*a_mat[2][1]+
-						 fnode->voltage[2]*a_mat[2][2]-
-						 tnode->voltage[2];
-
-				//Get low side current (current out) - for now, oh grand creator (me) mandates D-GWye are three phase or nothing
-				if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x07)	//ABC
-				{
-					current_out[0] = vtemp[0] * b_mat[0][0];
-					current_out[1] = vtemp[1] * b_mat[1][1];
-					current_out[2] = vtemp[2] * b_mat[2][2];
-
-					//Translate back to high-side
-					current_in[0] = d_mat[0][0]*current_out[0]+
-									d_mat[0][1]*current_out[1]+
-									d_mat[0][2]*current_out[2];
-
-					current_in[1] = d_mat[1][0]*current_out[0]+
-									d_mat[1][1]*current_out[1]+
-									d_mat[1][2]*current_out[2];
-
-					current_in[2] = d_mat[2][0]*current_out[0]+
-									d_mat[2][1]*current_out[1]+
-									d_mat[2][2]*current_out[2];
-				}
-				else
-				{
-					current_out[0] = 0.0;
-					current_out[1] = 0.0;
-					current_out[2] = 0.0;
-
-					current_in[0] = 0.0;
-					current_in[1] = 0.0;
-					current_in[2] = 0.0;
-				}
-
-				//Current in is just the same
-				WRITELOCK_OBJECT(from);
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += current_in[2];
-				UNLOCK_OBJECT(from);
-
-			}//end delta-GWYE
-			else if (SpecialLnk == SPLITPHASE)	//Split phase, center tapped xformer
-			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
-				{
-					current_in[0] = itemp[0] = 
-						fnode->voltage[0]*b_mat[2][2]+
-						tnode->voltage[0]*b_mat[2][0]+
-						tnode->voltage[1]*b_mat[2][1];
-
-					WRITELOCK_OBJECT(from);
-					fnode->current_inj[0] += itemp[0];
-					UNLOCK_OBJECT(from);
-
-					//calculate current out
-					current_out[0] = fnode->voltage[0]*b_mat[0][2]+
-									 tnode->voltage[0]*b_mat[0][0]+
-									 tnode->voltage[1]*b_mat[0][1];
-
-					current_out[1] = fnode->voltage[0]*b_mat[1][2]+
-									 tnode->voltage[0]*b_mat[1][0]+
-									 tnode->voltage[1]*b_mat[1][1];
-				}
-				else if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
-				{
-					current_in[1] = itemp[0] = 
-						fnode->voltage[1]*b_mat[2][2] +
-						tnode->voltage[0]*b_mat[2][0] +
-						tnode->voltage[1]*b_mat[2][1];
-
-					itemp[0];
-
-					LOCK_OBJECT(from);
-					fnode->current_inj[1] += itemp[0];
-					UNLOCK_OBJECT(from);
-
-					//calculate current out
-					current_out[0] = fnode->voltage[1]*b_mat[0][2] +
-									 tnode->voltage[0]*b_mat[0][0] +
-									 tnode->voltage[1]*b_mat[0][1];
-
-					current_out[1] = fnode->voltage[1]*b_mat[1][2] +
-									 tnode->voltage[0]*b_mat[1][0] +
-									 tnode->voltage[1]*b_mat[1][1];
-
-				}
-				else if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
-				{
-					current_in[2] = itemp[0] = 
-						fnode->voltage[2]*b_mat[2][2] +
-						tnode->voltage[0]*b_mat[2][0] +
-						tnode->voltage[1]*b_mat[2][1];
-
-					itemp[0];
-
-					//Lock from object for current injection update
-					LOCK_OBJECT(from);
-					fnode->current_inj[2] += itemp[0];
-					UNLOCK_OBJECT(from);
-
-					//calculate current out
-					current_out[0] = fnode->voltage[2]*b_mat[0][2]+
-									 tnode->voltage[0]*b_mat[0][0]+
-									 tnode->voltage[1]*b_mat[0][1];
-
-					current_out[1] = fnode->voltage[2]*b_mat[1][2]+
-									 tnode->voltage[0]*b_mat[1][0]+
-									 tnode->voltage[1]*b_mat[1][1];
-				}
-				else	//No phases valid
-				{
-					current_out[0] = 0.0;
-					current_out[1] = 0.0;
-					//2 is generalized below - no sense doing twice
-					current_in[0] = 0.0;
-					current_in[1] = 0.0;
-					current_in[2] = 0.0;
-				}
-
-				//Find neutral
-				current_out[2] = -(current_out[0] + current_out[1]);
-
-			}//end split-phase, center tapped xformer
-			else if (has_phase(PHASE_S))	//Split-phase line
-			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)	//Split-phase valid
-				{
-					//(-a*Vout+Vin)
-					vtemp[0] = fnode->voltage[0]-
-							   a_mat[0][0]*tnode->voltage[0]-
-							   a_mat[0][1]*tnode->voltage[1];
-
-					vtemp[1] = fnode->voltage[1]-
-							   a_mat[1][0]*tnode->voltage[0]-
-							   a_mat[1][1]*tnode->voltage[1];
-
-					current_in[0] = From_Y[0][0]*vtemp[0]+
-									From_Y[0][1]*vtemp[1];
-
-					current_in[1] = From_Y[1][0]*vtemp[0]+
-									From_Y[1][1]*vtemp[1];
-
-					//Calculate neutral current
-					current_in[2] = tn[0]*current_in[0] + tn[1]*current_in[1];
-				}
-				else	//Not valid
-				{
-					current_in[0] = 0.0;
-					current_in[1] = 0.0;
-					current_in[2] = 0.0;
-				}
-
-				//Cuurent out is the same as current in for triplex (simple lines)
-				current_out[0] = current_in[0];
-				current_out[1] = current_in[1];
-				current_out[2] = current_in[2];
-
-				//Lock from object for current injection update
-				WRITELOCK_OBJECT(from);
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				UNLOCK_OBJECT(from);
-			}
-			else
-			{
-				//(-a*Vout+Vin)
-				vtemp[0] = fnode->voltage[0]-
-						   a_mat[0][0]*tnode->voltage[0]-
-						   a_mat[0][1]*tnode->voltage[1]-
-						   a_mat[0][2]*tnode->voltage[2];
-
-				vtemp[1] = fnode->voltage[1]-
-						   a_mat[1][0]*tnode->voltage[0]-
-						   a_mat[1][1]*tnode->voltage[1]-
-						   a_mat[1][2]*tnode->voltage[2];
-
-				vtemp[2] = fnode->voltage[2]-
-						   a_mat[2][0]*tnode->voltage[0]-
-						   a_mat[2][1]*tnode->voltage[1]-
-						   a_mat[2][2]*tnode->voltage[2];
-
-				//See if phases are valid
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
-				{
-					current_out[0] = From_Y[0][0]*vtemp[0]+
-									From_Y[0][1]*vtemp[1]+
-									From_Y[0][2]*vtemp[2];
-				}
-				else
-					current_out[0] = 0.0;
-
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
-				{
-					current_out[1] = From_Y[1][0]*vtemp[0]+
-									From_Y[1][1]*vtemp[1]+
-									From_Y[1][2]*vtemp[2];
-				}
-				else
-					current_out[1] = 0.0;
-
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
-				{
-					current_out[2] = From_Y[2][0]*vtemp[0]+
-								From_Y[2][1]*vtemp[1]+
-								From_Y[2][2]*vtemp[2];
-				}
-				else
-					current_out[2] = 0.0;
-
-				//Now calculate current_in
-				current_in[0] = c_mat[0][0]*tnode->voltage[0]+
-								c_mat[0][1]*tnode->voltage[1]+
-								c_mat[0][2]*tnode->voltage[2]+
-								d_mat[0][0]*current_out[0]+
-								d_mat[0][1]*current_out[1]+
-								d_mat[0][2]*current_out[2];
-
-				current_in[1] = c_mat[1][0]*tnode->voltage[0]+
-								c_mat[1][1]*tnode->voltage[1]+
-								c_mat[1][2]*tnode->voltage[2]+
-								d_mat[1][0]*current_out[0]+
-								d_mat[1][1]*current_out[1]+
-								d_mat[1][2]*current_out[2];
-
-				current_in[2] = c_mat[2][0]*tnode->voltage[0]+
-								c_mat[2][1]*tnode->voltage[1]+
-								c_mat[2][2]*tnode->voltage[2]+
-								d_mat[2][0]*current_out[0]+
-								d_mat[2][1]*current_out[1]+
-								d_mat[2][2]*current_out[2];
-
-				//Current in is just the same
-				WRITELOCK_OBJECT(from);
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += current_in[2];
-				UNLOCK_OBJECT(from);
-			}
-
-		}
-		else if (solver_method==SM_FBS)
+		if (solver_method==SM_FBS)
 		{
 			node *f;
 			node *t;
@@ -2120,7 +1188,7 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 			f->current_inj[0] += i0;
 			f->current_inj[1] += i1;
 			f->current_inj[2] += i2;
-			UNLOCK_OBJECT(from);
+			WRITEUNLOCK_OBJECT(from);
 		}
 	}
 #ifdef SUPPORT_OUTAGES
@@ -2240,96 +1308,8 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 		}
 #endif
 
-	}
-	else if ((!is_open()) && (solver_method==SM_GS) && GS_all_converged)
-	{
-		node *fnode = OBJECTDATA(from,node);
-		node *tnode = OBJECTDATA(to,node);
-		complex current_temp[3];
-		complex Binv[3][3];
-		char jindex, kindex;
+	}//End FBS
 
-		for (jindex=0; jindex<3; jindex++)
-			for (kindex=0; kindex<3; kindex++)
-				Binv[jindex][kindex] = 0.0;
-
-		// invert B matrix - special circumstances given different methods
-		if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-			Binv[0][0] = complex(1.0) / B_mat[0][0];
-		else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-			Binv[1][1] = complex(1.0) / B_mat[1][1];
-		else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-			Binv[2][2] = complex(1.0) / B_mat[2][2];
-		else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
-		{
-			complex detvalue = B_mat[0][0]*B_mat[2][2] - B_mat[0][2]*B_mat[2][0];
-
-			Binv[0][0] = B_mat[2][2] / detvalue;
-			Binv[0][2] = B_mat[0][2] * -1.0 / detvalue;
-			Binv[2][0] = B_mat[2][0] * -1.0 / detvalue;
-			Binv[2][2] = B_mat[0][0] / detvalue;
-		}
-		else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
-		{
-			complex detvalue = B_mat[0][0]*B_mat[1][1] - B_mat[0][1]*B_mat[1][0];
-
-			Binv[0][0] = B_mat[1][1] / detvalue;
-			Binv[0][1] = B_mat[0][1] * -1.0 / detvalue;
-			Binv[1][0] = B_mat[1][0] * -1.0 / detvalue;
-			Binv[1][1] = B_mat[0][0] / detvalue;
-		}
-		else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
-			inverse(B_mat,Binv);
-		// defaulted else - No phases (e.g., the line does not exist) - just = 0
-
-		//Calculate output currents
-		current_temp[0] = A_mat[0][0]*fnode->voltage[0]+
-						  A_mat[0][1]*fnode->voltage[1]+
-						  A_mat[0][2]*fnode->voltage[2]-
-						  tnode->voltage[0];
-		current_temp[1] = A_mat[1][0]*fnode->voltage[0]+
-						  A_mat[1][1]*fnode->voltage[1]+
-						  A_mat[1][2]*fnode->voltage[2]-
-						  tnode->voltage[1];
-		current_temp[2] = A_mat[2][0]*fnode->voltage[0]+
-						  A_mat[2][1]*fnode->voltage[1]+
-						  A_mat[2][2]*fnode->voltage[2]-
-						  tnode->voltage[2];
-
-		current_out[0] = Binv[0][0]*current_temp[0]+
-						 Binv[0][1]*current_temp[1]+
-						 Binv[0][2]*current_temp[2];
-		current_out[1] = Binv[1][0]*current_temp[0]+
-						 Binv[1][1]*current_temp[1]+
-						 Binv[1][2]*current_temp[2];
-		current_out[2] = Binv[2][0]*current_temp[0]+
-						 Binv[2][1]*current_temp[1]+
-						 Binv[2][2]*current_temp[2];
-
-		//Calculate input currents
-		current_in[0] = c_mat[0][0]*tnode->voltage[0]+
-						c_mat[0][1]*tnode->voltage[1]+
-						c_mat[0][2]*tnode->voltage[2]+
-						d_mat[0][0]*current_out[0]+
-						d_mat[0][1]*current_out[1]+
-						d_mat[0][2]*current_out[2];
-		current_in[1] = c_mat[1][0]*tnode->voltage[0]+
-						c_mat[1][1]*tnode->voltage[1]+
-						c_mat[1][2]*tnode->voltage[2]+
-						d_mat[1][0]*current_out[0]+
-						d_mat[1][1]*current_out[1]+
-						d_mat[1][2]*current_out[2];
-		current_in[2] = c_mat[2][0]*tnode->voltage[0]+
-						c_mat[2][1]*tnode->voltage[1]+
-						c_mat[2][2]*tnode->voltage[2]+
-						d_mat[2][0]*current_out[0]+
-						d_mat[2][1]*current_out[1]+
-						d_mat[2][2]*current_out[2];
-
-		//Compute magnitude of power output
-		power_in = ((fnode->voltage[0]*~current_in[0]).Mag() + (fnode->voltage[1]*~current_in[1]).Mag() + (fnode->voltage[2]*~current_in[2]).Mag());
-		power_out = ((tnode->voltage[0]*~current_out[0]).Mag() + (tnode->voltage[1]*~current_out[1]).Mag() + (tnode->voltage[2]*~current_out[2]).Mag());
-	}
 	 // updates published current_in variable
 		read_I_in[0] = current_in[0];
 		read_I_in[1] = current_in[1];
@@ -2534,13 +1514,795 @@ EXPORT int isa_link(OBJECT *obj, char *classname)
 }
 
 /**
-* UpdateYVs is called by node functions when their voltage changes to update the "current"
-* for future nodes.
+* CurrentCalculation will perform the Newton-Raphson accumulation of
+* current injections - functionalized for Master/Slave use
+* nodecall is set by calling nodes - indicates the NR reference (for locking issues)
 *
-* @param snode is the object to update
-* @param snodeside is the type the calling node is (1=from, 2=to)
-* @param deltaV the voltage update to apply to YVs terms
+* This function may supercede "calc_currents" for the restoration module - quite honestly, I don't know if
+*      that function even calculates proper values anymore.
+*
+* Locking not needed on various fnode/tnode voltage reads - rank separation prevents contention
+*     For normal operation, only from nodes need locking - this is an assumption holdover from FBS days - it may need revisiting
 */
+int link::CurrentCalculation(int nodecall)
+{
+	if (current_accumulated==false)	//Only update if we haven't done so yet
+	{
+		if (is_closed())	//Only compute this if the overall link is "in service"
+		{
+			//Solve current equations to get current injections
+			node *fnode = NULL;
+			node *tnode = NULL;
+			node *ofnode = NULL;
+			OBJECT *fobjval = NULL;
+			OBJECT *tobjval = NULL;
+			complex vtemp[3];
+			complex itemp[3];
+			complex current_temp[3];
+			complex invsquared;
+			bool flock;	//Flags to know if from side needs locking
+
+			//Check our in-pass - see who called us - children will never call us, so checking "from" explicitly is unnecessary (error it)
+			if (nodecall==-1)	//We called ourselves, full locking needed
+			{
+				flock=true;
+			}
+			else if (nodecall==NR_branchdata[NR_branch_reference].from)
+			{
+				flock=false;	//From node called us, so trying lock it would be futile
+			}
+			else if (nodecall==NR_branchdata[NR_branch_reference].to)
+			{
+				flock=true;		//To node called us, so lock the from to make sure nobody squashes us
+			}
+			else	//Defaulted else catch - better be a good reason ourselves or someone not connected to us is calling us
+			{
+				gl_error("Unexpected link current update call from %s",NR_busdata[nodecall].name);
+				/*  TROUBLESHOOT
+				While attempting to perform the current injection updates for a link, an unexpected object
+				called the current update.  Please try again.  If the error persists, please submit your code
+				and a bug report via the trac website.
+				*/
+				return 0;	//Failure
+			}
+
+			//Populate fnode and tnode differently - bypasses issue with children getting current accumulations they shouldn't
+			fobjval = NR_busdata[NR_branchdata[NR_branch_reference].from].obj;
+			tobjval = NR_busdata[NR_branchdata[NR_branch_reference].to].obj;
+
+			//Map these into the old framework - will bypass childed objects this way
+			fnode = OBJECTDATA(fobjval,node);
+			tnode = OBJECTDATA(tobjval,node);
+
+			//See if the from node is childed - it will have a different name address if it is
+			if ((&from->name) != (&fobjval->name))
+			{
+				//Link up the "other from" node - 
+				ofnode = OBJECTDATA(from,node);
+			}
+			else
+				ofnode = NULL;	//Ensure it's blanked
+
+			if ((voltage_ratio!=1.0) && (SpecialLnk != DELTAGWYE) && (SpecialLnk != SPLITPHASE) && (SpecialLnk != REGULATOR))
+			{
+				invsquared = 1.0 / (voltage_ratio * voltage_ratio);
+				//(-a*Vout+Vin)
+				vtemp[0] = fnode->voltage[0]-
+						   A_mat[0][0]*tnode->voltage[0]-
+						   A_mat[0][1]*tnode->voltage[1]-
+						   A_mat[0][2]*tnode->voltage[2];
+
+				vtemp[1] = fnode->voltage[1]-
+						   A_mat[1][0]*tnode->voltage[0]-
+						   A_mat[1][1]*tnode->voltage[1]-
+						   A_mat[1][2]*tnode->voltage[2];
+
+				vtemp[2] = fnode->voltage[2]-
+						   A_mat[2][0]*tnode->voltage[0]-
+						   A_mat[2][1]*tnode->voltage[1]-
+						   A_mat[2][2]*tnode->voltage[2];
+
+				//Put across admittance
+				itemp[0] = b_mat[0][0]*vtemp[0]+
+						   b_mat[0][1]*vtemp[1]+
+						   b_mat[0][2]*vtemp[2];
+
+				itemp[1] = b_mat[1][0]*vtemp[0]+
+						   b_mat[1][1]*vtemp[1]+
+						   b_mat[1][2]*vtemp[2];
+
+				itemp[2] = b_mat[2][0]*vtemp[0]+
+						   b_mat[2][1]*vtemp[1]+
+						   b_mat[2][2]*vtemp[2];
+
+				//Scale the "b_mat" value by the inverse (make it high-side impedance)
+				//Post values based on phases (reliability related)
+				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+					current_in[0] = itemp[0]*invsquared;
+				else
+					current_in[0] = 0.0;
+
+				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+					current_in[1] = itemp[1]*invsquared;
+				else
+					current_in[1] = 0.0;
+
+				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+					current_in[2] = itemp[2]*invsquared;
+				else
+					current_in[2] = 0.0;
+
+				//Calculate current out
+				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+				{
+					current_out[0] = A_mat[0][0]*current_in[0]+
+									 A_mat[0][1]*current_in[1]+
+									 A_mat[0][2]*current_in[2];
+
+					//Apply additional change
+					if (a_mat[0][0] != 0)
+					{
+						current_out[0] -= tnode->voltage[0]/a_mat[0][0]*voltage_ratio;
+					}
+				}
+				else
+					current_out[0] = 0.0;
+
+				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+				{
+					current_out[1] = A_mat[1][0]*current_in[0]+
+									 A_mat[1][1]*current_in[1]+
+									 A_mat[1][2]*current_in[2];
+
+					//Apply additional update
+					if (a_mat[1][1] != 0)
+					{
+						current_out[1] -= tnode->voltage[1]/a_mat[1][1]*voltage_ratio;
+					}
+				}
+				else
+					current_out[1] = 0.0;
+
+				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+				{
+					current_out[2] = A_mat[2][0]*current_in[0]+
+									 A_mat[2][1]*current_in[1]+
+									 A_mat[2][2]*current_in[2];
+
+					//Apply additional update
+					if (a_mat[2][2] != 0)
+					{
+						current_out[2] -= tnode->voltage[2]/a_mat[2][2]*voltage_ratio;
+					}
+				}
+				else
+					current_out[2] = 0.0;
+
+				//See if our nature requires a lock
+				if (flock)
+				{
+					//Lock the from side for current dispersion
+					WRITELOCK_OBJECT(fobjval);
+				}
+
+				//Current in is just the same
+				fnode->current_inj[0] += current_in[0];
+				fnode->current_inj[1] += current_in[1];
+				fnode->current_inj[2] += current_in[2];
+
+				//If we locked our from node, be sure to let it go
+				if (flock)
+				{
+					//Unlock the from side so others can play
+					WRITEUNLOCK_OBJECT(fobjval);
+				}
+
+				//Replicate to the "original parent" if needed
+				if (ofnode != NULL)
+				{
+					//See if our nature requires a lock
+					if (flock)
+					{
+						//Lock the from side for current dispersion
+						WRITELOCK_OBJECT(from);
+					}
+
+					//Apply current injection updates to child as well
+					ofnode->current_inj[0] += current_in[0];
+					ofnode->current_inj[1] += current_in[1];
+					ofnode->current_inj[2] += current_in[2];
+
+					//If we locked our from node, be sure to let it go
+					if (flock)
+					{
+						//Unlock the from side so others can play
+						WRITEUNLOCK_OBJECT(from);
+					}
+				}
+			}//end normal transformers
+			else if (SpecialLnk == REGULATOR)
+			{
+				//(-a*Vout+Vin)
+				vtemp[0] = fnode->voltage[0]-
+						   a_mat[0][0]*tnode->voltage[0]-
+						   a_mat[0][1]*tnode->voltage[1]-
+						   a_mat[0][2]*tnode->voltage[2];
+
+				vtemp[1] = fnode->voltage[1]-
+						   a_mat[1][0]*tnode->voltage[0]-
+						   a_mat[1][1]*tnode->voltage[1]-
+						   a_mat[1][2]*tnode->voltage[2];
+
+				vtemp[2] = fnode->voltage[2]-
+						   a_mat[2][0]*tnode->voltage[0]-
+						   a_mat[2][1]*tnode->voltage[1]-
+						   a_mat[2][2]*tnode->voltage[2];
+
+				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+				{
+					current_out[0] = From_Y[0][0]*vtemp[0]+
+									 From_Y[0][1]*vtemp[1]+
+									 From_Y[0][2]*vtemp[2];
+				}
+				else
+					current_out[0] = 0.0;
+
+				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+				{
+					current_out[1] = From_Y[1][0]*vtemp[0]+
+									 From_Y[1][1]*vtemp[1]+
+									 From_Y[1][2]*vtemp[2];
+				}
+				else
+					current_out[1] = 0.0;
+
+				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+				{
+					current_out[2] = From_Y[2][0]*vtemp[0]+
+									From_Y[2][1]*vtemp[1]+
+									From_Y[2][2]*vtemp[2];
+				}
+				else
+					current_out[2] = 0.0;
+
+				//Calculate current_in based on current_out (backwards, isn't it?)
+				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+				{
+					current_in[0] = d_mat[0][0]*current_out[0]+
+									d_mat[0][1]*current_out[1]+
+									d_mat[0][2]*current_out[2];
+				}
+				else
+					current_in[0] = 0.0;
+
+				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+				{
+					current_in[1] = d_mat[1][0]*current_out[0]+
+									d_mat[1][1]*current_out[1]+
+									d_mat[1][2]*current_out[2];
+				}
+				else
+					current_in[1] = 0.0;
+
+				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+				{
+					current_in[2] = d_mat[2][0]*current_out[0]+
+									d_mat[2][1]*current_out[1]+
+									d_mat[2][2]*current_out[2];
+				}
+				else
+					current_in[2] = 0.0;
+
+				//See if our nature requires a lock
+				if (flock)
+				{
+					//Lock the from side for current dispersion
+					WRITELOCK_OBJECT(fobjval);
+				}
+
+				//Current in is just the same
+				fnode->current_inj[0] += current_in[0];
+				fnode->current_inj[1] += current_in[1];
+				fnode->current_inj[2] += current_in[2];
+
+				//If we locked our from node, be sure to let it go
+				if (flock)
+				{
+					//Unlock the from side so others can play
+					WRITEUNLOCK_OBJECT(fobjval);
+				}
+
+				//Replicate to the "original parent" if needed
+				if (ofnode != NULL)
+				{
+					//See if our nature requires a lock
+					if (flock)
+					{
+						//Lock the from side for current dispersion
+						WRITELOCK_OBJECT(from);
+					}
+
+					//Apply current injection updates to child
+					ofnode->current_inj[0] += current_in[0];
+					ofnode->current_inj[1] += current_in[1];
+					ofnode->current_inj[2] += current_in[2];
+
+					//If we locked our from node, be sure to let it go
+					if (flock)
+					{
+						//Unlock the from side so others can play
+						WRITEUNLOCK_OBJECT(from);
+					}
+				}
+
+			}//End regulators
+			else if (SpecialLnk == DELTAGWYE)
+			{
+				vtemp[0]=fnode->voltage[0]*a_mat[0][0]+
+						 fnode->voltage[1]*a_mat[0][1]+
+						 fnode->voltage[2]*a_mat[0][2]-
+						 tnode->voltage[0];
+
+				vtemp[1]=fnode->voltage[0]*a_mat[1][0]+
+						 fnode->voltage[1]*a_mat[1][1]+
+						 fnode->voltage[2]*a_mat[1][2]-
+						 tnode->voltage[1];
+
+				vtemp[2]=fnode->voltage[0]*a_mat[2][0]+
+						 fnode->voltage[1]*a_mat[2][1]+
+						 fnode->voltage[2]*a_mat[2][2]-
+						 tnode->voltage[2];
+
+				//Get low side current (current out) - for now, oh grand creator (me) mandates D-GWye are three phase or nothing
+				if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x07)	//ABC
+				{
+					current_out[0] = vtemp[0] * b_mat[0][0];
+					current_out[1] = vtemp[1] * b_mat[1][1];
+					current_out[2] = vtemp[2] * b_mat[2][2];
+
+					//Translate back to high-side
+					current_in[0] = d_mat[0][0]*current_out[0]+
+									d_mat[0][1]*current_out[1]+
+									d_mat[0][2]*current_out[2];
+
+					current_in[1] = d_mat[1][0]*current_out[0]+
+									d_mat[1][1]*current_out[1]+
+									d_mat[1][2]*current_out[2];
+
+					current_in[2] = d_mat[2][0]*current_out[0]+
+									d_mat[2][1]*current_out[1]+
+									d_mat[2][2]*current_out[2];
+				}
+				else
+				{
+					current_out[0] = 0.0;
+					current_out[1] = 0.0;
+					current_out[2] = 0.0;
+
+					current_in[0] = 0.0;
+					current_in[1] = 0.0;
+					current_in[2] = 0.0;
+				}
+
+				//See if our nature requires a lock
+				if (flock)
+				{
+					//Lock the from side for current dispersion
+					WRITELOCK_OBJECT(fobjval);
+				}
+
+				//Current in is just the same
+				fnode->current_inj[0] += current_in[0];
+				fnode->current_inj[1] += current_in[1];
+				fnode->current_inj[2] += current_in[2];
+
+				//If we locked our from node, be sure to let it go
+				if (flock)
+				{
+					//Unlock the from side so others can play
+					WRITEUNLOCK_OBJECT(fobjval);
+				}
+
+				//Replicate to the "original parent" if needed
+				if (ofnode != NULL)
+				{
+					//See if our nature requires a lock
+					if (flock)
+					{
+						//Lock the from side for current dispersion
+						WRITELOCK_OBJECT(from);
+					}
+
+					//Apply updates to child object
+					ofnode->current_inj[0] += current_in[0];
+					ofnode->current_inj[1] += current_in[1];
+					ofnode->current_inj[2] += current_in[2];
+
+					//If we locked our from node, be sure to let it go
+					if (flock)
+					{
+						//Unlock the from side so others can play
+						WRITEUNLOCK_OBJECT(from);
+					}
+				}
+			}//end delta-GWYE
+			else if (SpecialLnk == SPLITPHASE)	//Split phase, center tapped xformer
+			{
+				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+				{
+					current_in[0] = itemp[0] = 
+						fnode->voltage[0]*b_mat[2][2]+
+						tnode->voltage[0]*b_mat[2][0]+
+						tnode->voltage[1]*b_mat[2][1];
+
+					//See if our nature requires a lock
+					if (flock)
+					{
+						//Lock the from side for current dispersion
+						WRITELOCK_OBJECT(fobjval);
+					}
+
+					//Accumulate injection
+					fnode->current_inj[0] += itemp[0];
+
+					//If we locked our from node, be sure to let it go
+					if (flock)
+					{
+						//Unlock the from side so others can play
+						WRITEUNLOCK_OBJECT(fobjval);
+					}
+
+					//Replicate to the "original parent" if needed
+					if (ofnode != NULL)
+					{
+						//See if our nature requires a lock
+						if (flock)
+						{
+							//Lock the from side for current dispersion
+							WRITELOCK_OBJECT(from);
+						}
+
+						//Apply update to child
+						ofnode->current_inj[0] += itemp[0];
+
+						//If we locked our from node, be sure to let it go
+						if (flock)
+						{
+							//Unlock the from side so others can play
+							WRITEUNLOCK_OBJECT(from);
+						}
+					}
+
+					//calculate current out
+					current_out[0] = fnode->voltage[0]*b_mat[0][2]+
+									 tnode->voltage[0]*b_mat[0][0]+
+									 tnode->voltage[1]*b_mat[0][1];
+
+					current_out[1] = fnode->voltage[0]*b_mat[1][2]+
+									 tnode->voltage[0]*b_mat[1][0]+
+									 tnode->voltage[1]*b_mat[1][1];
+				}
+				else if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+				{
+					current_in[1] = itemp[0] = 
+						fnode->voltage[1]*b_mat[2][2] +
+						tnode->voltage[0]*b_mat[2][0] +
+						tnode->voltage[1]*b_mat[2][1];
+
+					//See if our nature requires a lock
+					if (flock)
+					{
+						//Lock the from side for current dispersion
+						WRITELOCK_OBJECT(fobjval);
+					}
+
+					//Accumulate the injection
+					fnode->current_inj[1] += itemp[0];
+
+					//If we locked our from node, be sure to let it go
+					if (flock)
+					{
+						//Unlock the from side so others can play
+						WRITEUNLOCK_OBJECT(fobjval);
+					}
+
+					//Replicate to the "original parent" if needed
+					if (ofnode != NULL)
+					{
+						//See if our nature requires a lock
+						if (flock)
+						{
+							//Lock the from side for current dispersion
+							WRITELOCK_OBJECT(from);
+						}
+
+						//Apply updates to child
+						ofnode->current_inj[1] += itemp[1];
+
+						//If we locked our from node, be sure to let it go
+						if (flock)
+						{
+							//Unlock the from side so others can play
+							WRITEUNLOCK_OBJECT(from);
+						}
+					}
+
+					//calculate current out
+					current_out[0] = fnode->voltage[1]*b_mat[0][2] +
+									 tnode->voltage[0]*b_mat[0][0] +
+									 tnode->voltage[1]*b_mat[0][1];
+
+					current_out[1] = fnode->voltage[1]*b_mat[1][2] +
+									 tnode->voltage[0]*b_mat[1][0] +
+									 tnode->voltage[1]*b_mat[1][1];
+
+				}
+				else if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+				{
+					current_in[2] = itemp[0] = 
+						fnode->voltage[2]*b_mat[2][2] +
+						tnode->voltage[0]*b_mat[2][0] +
+						tnode->voltage[1]*b_mat[2][1];
+
+					//See if our nature requires a lock
+					if (flock)
+					{
+						//Lock the from side for current dispersion
+						WRITELOCK_OBJECT(fobjval);
+					}
+
+					//Accumulate the injection
+					fnode->current_inj[2] += itemp[0];
+
+					//If we locked our from node, be sure to let it go
+					if (flock)
+					{
+						//Unlock the from side so others can play
+						WRITEUNLOCK_OBJECT(fobjval);
+					}
+
+					//Replicate to the "original parent" if needed
+					if (ofnode != NULL)
+					{
+						//See if our nature requires a lock
+						if (flock)
+						{
+							//Lock the from side for current dispersion
+							WRITELOCK_OBJECT(from);
+						}
+
+						//Apply updates to child
+						ofnode->current_inj[2] += itemp[2];
+
+						//If we locked our from node, be sure to let it go
+						if (flock)
+						{
+							//Unlock the from side so others can play
+							WRITEUNLOCK_OBJECT(from);
+						}
+					}
+
+					//calculate current out
+					current_out[0] = fnode->voltage[2]*b_mat[0][2]+
+									 tnode->voltage[0]*b_mat[0][0]+
+									 tnode->voltage[1]*b_mat[0][1];
+
+					current_out[1] = fnode->voltage[2]*b_mat[1][2]+
+									 tnode->voltage[0]*b_mat[1][0]+
+									 tnode->voltage[1]*b_mat[1][1];
+				}
+				else	//No phases valid
+				{
+					current_out[0] = 0.0;
+					current_out[1] = 0.0;
+					//2 is generalized below - no sense doing twice
+					current_in[0] = 0.0;
+					current_in[1] = 0.0;
+					current_in[2] = 0.0;
+				}
+
+				//Find neutral
+				current_out[2] = -(current_out[0] + current_out[1]);
+
+			}//end split-phase, center tapped xformer
+			else if (has_phase(PHASE_S))	//Split-phase line
+			{
+				if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)	//Split-phase valid
+				{
+					//(-a*Vout+Vin)
+					vtemp[0] = fnode->voltage[0]-
+							   a_mat[0][0]*tnode->voltage[0]-
+							   a_mat[0][1]*tnode->voltage[1];
+
+					vtemp[1] = fnode->voltage[1]-
+							   a_mat[1][0]*tnode->voltage[0]-
+							   a_mat[1][1]*tnode->voltage[1];
+
+					current_in[0] = From_Y[0][0]*vtemp[0]+
+									From_Y[0][1]*vtemp[1];
+
+					current_in[1] = From_Y[1][0]*vtemp[0]+
+									From_Y[1][1]*vtemp[1];
+
+					//Calculate neutral current
+					current_in[2] = tn[0]*current_in[0] + tn[1]*current_in[1];
+				}
+				else	//Not valid
+				{
+					current_in[0] = 0.0;
+					current_in[1] = 0.0;
+					current_in[2] = 0.0;
+				}
+
+				//Cuurent out is the same as current in for triplex (simple lines)
+				current_out[0] = current_in[0];
+				current_out[1] = current_in[1];
+				current_out[2] = current_in[2];
+
+				//See if our nature requires a lock
+				if (flock)
+				{
+					//Lock the from side for current dispersion
+					WRITELOCK_OBJECT(fobjval);
+				}
+
+				//Current in values go to the injection
+				fnode->current_inj[0] += current_in[0];
+				fnode->current_inj[1] += current_in[1];
+
+				//If we locked our from node, be sure to let it go
+				if (flock)
+				{
+					//Unlock the from side so others can play
+					WRITEUNLOCK_OBJECT(fobjval);
+				}
+
+				//Replicate to the "original parent" if needed
+				if (ofnode != NULL)
+				{
+					//See if our nature requires a lock
+					if (flock)
+					{
+						//Lock the from side for current dispersion
+						WRITELOCK_OBJECT(from);
+					}
+
+					//Apply current injections to child
+					ofnode->current_inj[0] += current_in[0];
+					ofnode->current_inj[1] += current_in[1];
+
+					//If we locked our from node, be sure to let it go
+					if (flock)
+					{
+						//Unlock the from side so others can play
+						WRITEUNLOCK_OBJECT(from);
+					}
+				}
+			}//End split phase line
+			else
+			{
+				//(-a*Vout+Vin)
+				vtemp[0] = fnode->voltage[0]-
+						   a_mat[0][0]*tnode->voltage[0]-
+						   a_mat[0][1]*tnode->voltage[1]-
+						   a_mat[0][2]*tnode->voltage[2];
+
+				vtemp[1] = fnode->voltage[1]-
+						   a_mat[1][0]*tnode->voltage[0]-
+						   a_mat[1][1]*tnode->voltage[1]-
+						   a_mat[1][2]*tnode->voltage[2];
+
+				vtemp[2] = fnode->voltage[2]-
+						   a_mat[2][0]*tnode->voltage[0]-
+						   a_mat[2][1]*tnode->voltage[1]-
+						   a_mat[2][2]*tnode->voltage[2];
+
+				//See if phases are valid
+				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+				{
+					current_out[0] = From_Y[0][0]*vtemp[0]+
+									From_Y[0][1]*vtemp[1]+
+									From_Y[0][2]*vtemp[2];
+				}
+				else
+					current_out[0] = 0.0;
+
+				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+				{
+					current_out[1] = From_Y[1][0]*vtemp[0]+
+									From_Y[1][1]*vtemp[1]+
+									From_Y[1][2]*vtemp[2];
+				}
+				else
+					current_out[1] = 0.0;
+
+				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+				{
+					current_out[2] = From_Y[2][0]*vtemp[0]+
+								From_Y[2][1]*vtemp[1]+
+								From_Y[2][2]*vtemp[2];
+				}
+				else
+					current_out[2] = 0.0;
+
+				//Now calculate current_in
+				current_in[0] = c_mat[0][0]*tnode->voltage[0]+
+								c_mat[0][1]*tnode->voltage[1]+
+								c_mat[0][2]*tnode->voltage[2]+
+								d_mat[0][0]*current_out[0]+
+								d_mat[0][1]*current_out[1]+
+								d_mat[0][2]*current_out[2];
+
+				current_in[1] = c_mat[1][0]*tnode->voltage[0]+
+								c_mat[1][1]*tnode->voltage[1]+
+								c_mat[1][2]*tnode->voltage[2]+
+								d_mat[1][0]*current_out[0]+
+								d_mat[1][1]*current_out[1]+
+								d_mat[1][2]*current_out[2];
+
+				current_in[2] = c_mat[2][0]*tnode->voltage[0]+
+								c_mat[2][1]*tnode->voltage[1]+
+								c_mat[2][2]*tnode->voltage[2]+
+								d_mat[2][0]*current_out[0]+
+								d_mat[2][1]*current_out[1]+
+								d_mat[2][2]*current_out[2];
+
+				//See if our nature requires a lock
+				if (flock)
+				{
+					//Lock the from side for current dispersion
+					WRITELOCK_OBJECT(fobjval);
+				}
+
+				//Current in is just the same
+				fnode->current_inj[0] += current_in[0];
+				fnode->current_inj[1] += current_in[1];
+				fnode->current_inj[2] += current_in[2];
+
+				//If we locked our from node, be sure to let it go
+				if (flock)
+				{
+					//Unlock the from side so others can play
+					WRITEUNLOCK_OBJECT(fobjval);
+				}
+
+				//Replicate to the "original parent" if needed
+				if (ofnode != NULL)
+				{
+					//See if our nature requires a lock
+					if (flock)
+					{
+						//Lock the from side for current dispersion
+						WRITELOCK_OBJECT(from);
+					}
+
+					//Apply current injections to childed object
+					ofnode->current_inj[0] += current_in[0];
+					ofnode->current_inj[1] += current_in[1];
+					ofnode->current_inj[2] += current_in[2];
+
+					//If we locked our from node, be sure to let it go
+					if (flock)
+					{
+						//Unlock the from side so others can play
+						WRITEUNLOCK_OBJECT(from);
+					}
+				}
+			}//End "normal" lines
+		}//End is closed
+		else	//Open, so no current
+		{
+			current_in[0] = current_in[1] = current_in[2] = 0.0;
+			current_out[0] = current_out[1] = current_out[2] = 0.0;
+		}
+
+		//Flag us as done
+		current_accumulated = true;
+	}//End current not accumulated yet
+
+	return 1;	//Assume it's always successful now
+}
+
 void link::calculate_power_splitphase()
 {
 
@@ -2870,84 +2632,6 @@ void link::calculate_power()
 			//Only three-phase portion of individual powers calculated right now
 
 }
-void *link::UpdateYVs(OBJECT *snode, char snodeside, complex *deltaV)
-{
-	complex YVsNew[3];
-	node *worknode = OBJECTDATA(snode,node);
-
-	//Zero the accumulator
-	YVsNew[0] = YVsNew[1] = YVsNew[2] = 0.0;
-
-	//Calculate YVs update - gets done regardless of who we are
-	if (snodeside==1)		//From node
-	{
-		if (deltaV[0]!=0.0)	//Non-zero
-		{
-			YVsNew[0] = To_Y[0][0]*deltaV[0];
-			YVsNew[1] = To_Y[1][0]*deltaV[0];
-			YVsNew[2] = To_Y[2][0]*deltaV[0];
-		}
-
-		if (deltaV[1]!=0.0)	//Non-zero
-		{
-			YVsNew[0] += To_Y[0][1]*deltaV[1];
-			YVsNew[1] += To_Y[1][1]*deltaV[1];
-			YVsNew[2] += To_Y[2][1]*deltaV[1];
-		}
-
-		if (deltaV[2]!=0.0)	//Non-zero
-		{
-			YVsNew[0] += To_Y[0][2]*deltaV[2];
-			YVsNew[1] += To_Y[1][2]*deltaV[2];
-			YVsNew[2] += To_Y[2][2]*deltaV[2];
-		}
-	}
-	else if (snodeside==2)		//To node
-	{
-		if (deltaV[0]!=0.0)	//Non-zero
-		{
-			YVsNew[0] = From_Y[0][0]*deltaV[0];
-			YVsNew[1] = From_Y[1][0]*deltaV[0];
-			YVsNew[2] = From_Y[2][0]*deltaV[0];
-		}
-
-		if (deltaV[1]!=0.0)	//Non-zero
-		{
-			YVsNew[0] += From_Y[0][1]*deltaV[1];
-			YVsNew[1] += From_Y[1][1]*deltaV[1];
-			YVsNew[2] += From_Y[2][1]*deltaV[1];
-		}
-
-		if (deltaV[2]!=0.0)	//Non-zero
-		{
-			YVsNew[0] += From_Y[0][2]*deltaV[2];
-			YVsNew[1] += From_Y[1][2]*deltaV[2];
-			YVsNew[2] += From_Y[2][2]*deltaV[2];
-		}
-	}
-
-	//Check to see if we are a subnode (fixes backpostings)
-	if (worknode->SubNode!=1)
-	{
-		LOCK_OBJECT(snode);
-		worknode->YVs[0] += YVsNew[0];
-		worknode->YVs[1] += YVsNew[1];
-		worknode->YVs[2] += YVsNew[2];
-		UNLOCK_OBJECT(snode);
-	}
-	else	//Child update
-	{
-		OBJECT *newnode = worknode->SubNodeParent;
-		node *newworknode = OBJECTDATA(newnode,node);
-
-		LOCK_OBJECT(newnode);
-		newworknode->YVs[0] += YVsNew[0];
-		newworknode->YVs[1] += YVsNew[1];
-		newworknode->YVs[2] += YVsNew[2];
-		UNLOCK_OBJECT(newnode);
-	}
-	return 0;
-}
 
 //Function to calculate current values for use by restoration module
 void link::calc_currents(complex *Current_Vals)
@@ -3180,7 +2864,6 @@ int link::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented
 	}
 	C_mat[0][0]=C_mat[1][1]=C_mat[2][2]=complex(1,0);
 	
-
 	//Default switch_val - special case
 	switch_val = false;
 
