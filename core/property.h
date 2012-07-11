@@ -249,11 +249,18 @@ typedef char CLASSNAME[64]; /**< the name a GridLAB class */
 typedef void* PROPERTYADDR; /**< the offset of a property from the end of the OBJECT header */
 typedef char PROPERTYNAME[64]; /**< the name of a property */
 typedef char FUNCTIONNAME[64]; /**< the name of a function (not used) */
+
+/* property access rights (R/W apply to modules only, core always has all rights) */
+#define PA_N 0x00 /**< no access permitted */
+#define PA_R 0x01 /**< read access--modules can read the property */
+#define PA_W 0x02 /**< write access--modules can write the property */
+#define PA_S 0x04 /**< save access--property is saved to output */
+#define PA_L 0x08 /**< load access--property is loaded from input */
 typedef enum {
-	PA_PUBLIC, /**< property is public (visible, saved, and loaded) */
-	PA_REFERENCE, /**< property is FYI (visible and saved, but not loaded */
-	PA_PROTECTED, /**< property is semipublic (visible, but not saved or loaded) */
-	PA_PRIVATE, /**< property is nonpublic (not-visible, saved or loaded) */
+	PA_PUBLIC = (PA_R|PA_W|PA_S|PA_L), /**< property is public (readable, writable, saved, and loaded) */
+	PA_REFERENCE = (PA_R|PA_W|PA_S), /**< property is FYI (readable, writable and saved, but not loaded */
+	PA_PROTECTED = (PA_R), /**< property is semipublic (readable, but not saved or loaded) */
+	PA_PRIVATE = (PA_N), /**< property is nonpublic (not visible, saved or loaded) */
 } PROPERTYACCESS; /**< property access rights */
 
 typedef struct s_keyword {

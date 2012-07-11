@@ -117,7 +117,7 @@ GLOBAL int global_init_sequence INIT(IS_CREATION); /** initialization sequence, 
 #include "realtime.h"
 
 GLOBAL TIMESTAMP global_clock INIT(TS_ZERO); /**< The main clock timestamp */
-GLOBAL TIMESTAMP global_starttime INIT(0); /**< The simulation starting time */
+GLOBAL TIMESTAMP global_starttime INIT(946684800); /**< The simulation starting time */
 GLOBAL TIMESTAMP global_stoptime INIT(TS_NEVER); /**< The simulation stop time */
 
 GLOBAL char global_double_format[32] INIT("%+lg"); /**< the format to use when processing real numbers */
