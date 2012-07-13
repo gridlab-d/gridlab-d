@@ -6,7 +6,7 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = . third_party/CBLAS third_party/superLU_MT core assert climate \
 			 commercial powerflow residential tape generators \
 			 tape_file tape_plot market reliability optimize \
-			core/link/matlab
+			core/link/matlab core/solvers
 
 include aminclude.am
 

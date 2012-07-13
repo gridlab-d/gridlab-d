@@ -211,6 +211,8 @@ GLD_GET_NPROCS
 AC_CONFIG_FILES([./Makefile \
 	core/Makefile \
 	core/rt/Makefile \
+	core/solvers/Makefile \
+	core/link/matlab/Makefile \
 	assert/Makefile \
 	climate/Makefile \
 	climate/tmy/Makefile \
@@ -228,7 +230,6 @@ AC_CONFIG_FILES([./Makefile \
 	third_party/CBLAS/Makefile \
 	third_party/superLU_MT/Makefile \
 	gridlabd.spec \
-	core/link/matlab/Makefile \
 	])
 
 AM_CONDITIONAL([MISSING_XERCES], [test x$HAVE_XERCES != xyes])
