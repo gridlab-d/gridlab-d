@@ -1129,6 +1129,8 @@ inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
 
 #define LOCKED(X,C) {WRITELOCK_OBJECT(X);(C);WRITEUNLOCK_OBJECT(X);} /**< @todo this is deprecated and should not be used anymore */
 
+static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
+#define NaN (*(double*)&_nan)
 
 #ifdef __cplusplus
 /**************************************************************************************
@@ -1646,6 +1648,96 @@ CDECL int dllkill() { do_kill(NULL); }
 
 #endif
 
+/****************************************
+ * GENERAL SOLVERS 
+ ****************************************/
+#ifdef USE_GLSOLVERS
+
+#if defined WIN32 && ! defined MINGW
+	#define _WIN32_WINNT 0x0400
+	#undef int64 // wtypes.h also used int64
+	#include <windows.h>
+	#define int64 _int64
+	#define PREFIX ""
+	#ifndef DLEXT
+		#define DLEXT ".dll"
+	#endif
+	#define DLLOAD(P) LoadLibrary(P)
+	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
+	#define snprintf _snprintf
+#else /* ANSI */
+#ifndef MINGW
+	#include "dlfcn.h"
+#endif
+	#define PREFIX ""
+	#ifndef DLEXT
+		#define DLEXT ".so"
+	#endif
+#ifndef MINGW
+	#define DLLOAD(P) dlopen(P,RTLD_LAZY)
+#else
+	#define DLLOAD(P) dlopen(P)
+#endif
+	#define DLSYM(H,S) dlsym(H,S)
+#endif
+
+class glsolver {
+public:
+	int (*init)(void*);
+	int (*solve)(void*);
+	int (*set)(char*,...);
+	int (*get)(char*,...);
+private:
+	inline void exception(char *fmt,...)
+	{
+		static char buffer[1024]="";
+		va_list ptr;
+		va_start(ptr,fmt);
+		vsprintf(buffer,fmt,ptr);
+		va_end(ptr);
+		throw (const char*)buffer;
+	};
+public:
+	inline glsolver(char *name, char *lib="glsolvers" DLEXT)
+	{
+		char path[1024];
+		if ( callback->file.find_file(lib,NULL,2,path,sizeof(path))!=NULL )
+		{
+			void* handle = DLLOAD(path);
+			if ( handle==NULL )
+				exception("glsolver(char *name='%s'): load of '%s' failed",name,path);
+			else
+			{
+				char fname[64];
+				struct {
+					char *part;
+					void **func;
+				} map[] = {
+					{"init", (void**)&init},
+					{"solve", (void**)&solve},
+					{"set", (void**)&set},
+					{"get", (void**)&get},
+				};
+				int n;
+				for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
+				{
+					strcpy(fname,name);
+					strcat(fname,"_");
+					strcat(fname,map[n].part);
+					*(map[n].func) = (void*)DLSYM(handle,fname);
+					if ( *(map[n].func)==NULL )
+						exception("glsolver(char *name='%s'): function '%s' not found in '%s'",name,fname,path);
+				}
+				if ( !(*init)(callback) )
+					exception("glsolver(char *name='%s'): init failed",name);
+			}
+		}
+		else
+			exception("glsolver(char *name='%s'): solver library '%s' not found", name, lib);
+	};
+};
+
+#endif // __cplusplus
 
 /** @} **/
 #endif

@@ -10,8 +10,6 @@
 #include "gridlabd.h"
 #include "solvers.h"
 
-static uint32 _nan[2] = {0xffffffff,0x7fffffff};
-static double NaN = *(double*)&_nan;
 #define EVAL(t,a,n,b,m,c) (a*exp(n*t) + b*exp(m*t) + c)
 /** solve an equation of the form $f[ ae^{nt} + be^{mt} + c = 0 $f]
 	@returns the solution in $f[ t $f], or etp::NaN if none found

@@ -8,7 +8,7 @@
 //#set verbose=TRUE
 
 // link with matlab
-link matlab_avi.link;
+link ../matlab_avi.link;
 
 // public a complex global variable
 global complex test_complex 1+2j;
