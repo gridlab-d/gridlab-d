@@ -147,7 +147,7 @@ static struct s_varmap {
 	{"platform",PT_char8, global_platform, PA_REFERENCE, "operating platform"},
 #ifdef WIN32
 	{"WINDOWS",PT_bool,&global_true,PA_REFERENCE,"flag indicating the current platform is a windows machine"},
-#elseif defined __APPLE__
+#elif defined __APPLE__
 	{"APPLE",PT_bool,&global_true,PA_REFERENCE,"flag indicating the current platform is an Apple MacOS X machine"},
 #else
 	{"LINUX",PT_bool,&global_true,PA_REFERENCE,"flag indicating the current platform is a linux machine"},

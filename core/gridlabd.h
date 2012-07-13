@@ -1695,18 +1695,18 @@ private:
 		va_start(ptr,fmt);
 		int len = vsprintf(buffer,fmt,ptr);
 		va_end(ptr);
-#ifdef WIN32
-#else
-		sprintf(buffer+len," (%s)", strerror(errno));
-#endif
+		if ( errno!=0 )
+			sprintf(buffer+len," (%s)", strerror(errno));
 		throw (const char*)buffer;
 	};
 public:
 	inline glsolver(char *name, char *lib="glsolvers" DLEXT)
 	{
 		char path[1024];
+		errno = 0;
 		if ( callback->file.find_file(lib,NULL,2,path,sizeof(path))!=NULL )
 		{
+			errno = 0;
 			void* handle = DLLOAD(path);
 			if ( handle==NULL )
 				exception("glsolver(char *name='%s'): load of '%s' failed",name,path);
@@ -1728,10 +1728,12 @@ public:
 					strcpy(fname,name);
 					strcat(fname,"_");
 					strcat(fname,map[n].part);
+					errno = 0;
 					*(map[n].func) = (void*)DLSYM(handle,fname);
 					if ( *(map[n].func)==NULL )
 						exception("glsolver(char *name='%s'): function '%s' not found in '%s'",name,fname,path);
 				}
+				errno = 0;
 				if ( !(*init)(callback) )
 					exception("glsolver(char *name='%s'): init failed",name);
 			}
