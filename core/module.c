@@ -1175,6 +1175,7 @@ unsigned short sched_get_cpuid()
 }
 unsigned short sched_get_procid()
 {
+	output_debug("proc_map %x, myproc %ui", process_map, my_proc);
 	return process_map[my_proc].pid;
 }
 
@@ -1297,11 +1298,19 @@ void sched_print(void)
  **/
 void sched_init(void)
 {
+	static int has_run = 0;
 	SYSTEM_INFO info;
 	unsigned short pid = (unsigned short)GetCurrentProcessId();
 	HANDLE hProc, hMap;
 	unsigned long mapsize = sizeof(GLDPROCINFO)*65536;
 	int n;
+
+	if(has_run == 0){
+		has_run = 1;
+	} else {
+		output_verbose("sched_init(): second call, short-circuiting gracefully");
+		return;
+	}
 
 	/* get total number of processors */
 	GetSystemInfo(&info);
@@ -1388,6 +1397,7 @@ struct thread_affinity_policy policy;
 
 void sched_init(void)
 {
+	static int has_run = 0;
 	char *mfile = "/tmp/gridlabd-pmap";
 	unsigned long mapsize;
 	int fd = open(mfile,O_CREAT,0666);
@@ -1399,6 +1409,13 @@ void sched_init(void)
 	/* get total number of processors */
 	n_procs = sysconf(_SC_NPROCESSORS_ONLN);
 	mapsize = sizeof(GLDPROCINFO)*n_procs;
+
+	if(has_run == 0){
+		has_run = 1;
+	} else {
+		output_verbose("sched_init(): second call, short-circuiting gracefully");
+		return;
+	}
 
 	/* check key */
 	if ( shmkey==-1 )
