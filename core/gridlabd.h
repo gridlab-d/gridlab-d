@@ -1693,8 +1693,12 @@ private:
 		static char buffer[1024]="";
 		va_list ptr;
 		va_start(ptr,fmt);
-		vsprintf(buffer,fmt,ptr);
+		int len = vsprintf(buffer,fmt,ptr);
 		va_end(ptr);
+#ifdef WIN32
+#else
+		sprintf(buffer+len," (%s)", strerror(errno));
+#endif
 		throw (const char*)buffer;
 	};
 public:
