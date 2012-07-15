@@ -5,11 +5,23 @@
 #include <stdlib.h>
 #include "gridlabd.h"
 
-static int64 default_etp_iterations = 100;
+static unsigned int version = 1;
+static unsigned int default_etp_iterations = 100;
 #define EVAL(t,a,n,b,m,c) (a*exp(n*t) + b*exp(m*t) + c)
 
-EXPORT int etp_init(void *arg)
+typedef struct s_etpsolver {
+	double t; ///< time
+	double a,n; ///< a e^n
+	double b,m; ///< b e^m
+	double c; /// constant
+	double p; /// precision (default is 1e-8)
+	double e; /// error (p/dfdt)
+	unsigned int i; /// maximum iterations (default is 100)
+} ETPDATA;
+
+EXPORT int etp_init(CALLBACKS *fntable)
 {
+	callback=fntable;
 	return 1;
 }
 
@@ -22,10 +34,10 @@ EXPORT int etp_set(char *param, ...)
 	while ( tag!=NULL )
 	{
 		if ( strcmp(param,"max_iterations")==0 )
-			default_etp_iterations = va_arg(arg,int64);
+			default_etp_iterations = va_arg(arg,unsigned int);
 		else
 		{
-			gl_error("etp_config(char *param='%s',...): tag '%s' is not recognized");
+			gl_error("etp_set(char *param='%s',...): tag '%s' is not recognized",param,tag);
 			return n;
 		}
 		tag = va_arg(arg,char*);
@@ -43,10 +55,20 @@ EXPORT int etp_get(char *param, ...)
 	while ( tag!=NULL )
 	{
 		if ( strcmp(param,"max_iterations")==0 )
-			*va_arg(arg,int64*) = default_etp_iterations;
+			*va_arg(arg,unsigned int*) = default_etp_iterations;
+		else if ( strcmp(param,"version")==0 )
+			*va_arg(arg,unsigned int*) = version;
+		else if ( strcmp(param,"init")==0 )
+		{
+			ETPDATA *data = va_arg(arg,ETPDATA*);
+			data->a = data->b = data->n = data->n = data->c = 0;
+			data->p = 1e-8;
+			data->e = 0;
+			data->i = default_etp_iterations;
+		}
 		else
 		{
-			gl_error("etp_config(char *param='%s',...): tag '%s' is not recognized");
+			gl_error("etp_get(char *param='%s',...): tag '%s' is not recognized",param,tag);
 			return n;
 		}
 		tag = va_arg(arg,char*);
@@ -58,10 +80,7 @@ EXPORT int etp_get(char *param, ...)
 /** solve an equation of the form $f[ ae^{nt} + be^{mt} + c = 0 $f]
 	@returns 1 = t is set ok, 0 if not converged; t is NaN if no solution found
  **/
-typedef struct s_etpsolver {
-	double t,a,n,b,m,c,p,*e;
-} ETPSOLVER;
-EXPORT int etp_solve(ETPSOLVER *etp)
+EXPORT int etp_solve(ETPDATA *etp)
 {
 	const double &a = etp->a;
 	const double &n = etp->n;
@@ -69,7 +88,8 @@ EXPORT int etp_solve(ETPSOLVER *etp)
 	const double &m = etp->m;
 	const double &c = etp->c;
 	const double &p = etp->p;
-	double *e = etp->e;
+	const unsigned int &max_iterations = etp->i;
+	double &e = etp->e;
 	double &t= etp->t;
 	double f = EVAL(t,a,n,b,m,c);
 
@@ -141,7 +161,7 @@ EXPORT int etp_solve(ETPSOLVER *etp)
 	}
 
 	// solve using Newton's method
-	int64 iter = default_etp_iterations;
+	unsigned int iter = max_iterations;
 	if (t!=0) // initial t changed to inflexion point
 		double f = EVAL(t,a,n,b,m,c);
 	double dfdt = EVAL(t,a*n,n,b*m,m,0); 
@@ -157,8 +177,7 @@ EXPORT int etp_solve(ETPSOLVER *etp)
 		t = NaN;	// failed to catch limit condition above
 		return 2;
 	}
-	if (e!=NULL)
-		*e = p/dfdt;
+	e = p/dfdt;
 	if (t<=0) t = NaN;
 	return 1;
 }

@@ -62,6 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\glsolvers.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
@@ -497,6 +498,10 @@
 		</File>
 		<File
 			RelativePath=".\Makefile.am"
+			>
+		</File>
+		<File
+			RelativePath=".\newton_method.cpp"
 			>
 		</File>
 	</Files>
