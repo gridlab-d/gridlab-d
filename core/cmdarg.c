@@ -319,7 +319,7 @@ static int mt_profile(int argc, char *argv[])
 		return CMDERR;
 	}
 }
-static int pause(int argc, char *argv[])
+static int pauseatexit(int argc, char *argv[])
 {
 	global_pauseatexit = !global_pauseatexit;
 	return 0;
@@ -1145,7 +1145,7 @@ static CMDARG main[] = {
 	{"compile",		"C",	compile,		NULL, "Toggles compile-only flags" },
 	{"environment",	"e",	environment,	"<appname>", "Set the application to use for run environment" },
 	{"output",		"o",	output,			"<file>", "Enables save of output to a file (default is gridlabd.glm)" },
-	{"pause",		NULL,	pause,			NULL, "Toggles pause-at-exit feature" },
+	{"pause",		NULL,	pauseatexit,			NULL, "Toggles pause-at-exit feature" },
 	{"relax",		NULL,	relax,			NULL, "Allows implicit variable definition when assignments are made" },
 
 	{NULL,NULL,NULL,NULL, "Server mode"},

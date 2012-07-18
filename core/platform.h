@@ -39,7 +39,7 @@
 #ifndef R_OK
 #define R_OK (4)
 #define W_OK (2)
-#define X_OK (0)
+#define X_OK (1)
 #define F_OK (0)
 #endif /* !defined R_OK */
 #ifndef isfinite
@@ -53,6 +53,8 @@
 #ifdef __APPLE__ /* although not advised, seems reliable enough */
 #define MACOSX
 #endif
+
+#include <sys/unistd.h>
 
 #if __WORDSIZE__ == 64
 #define int64 long /**< standard 64-bit integers on 64-bit machines */
