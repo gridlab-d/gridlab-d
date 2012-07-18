@@ -484,7 +484,7 @@ void unit_init(void)
 	else
 		tried = 1;
 	
-	if(find_file(filepath, NULL, 4, tpath,sizeof(tpath)) != NULL)
+	if(find_file(filepath, NULL, R_OK, tpath,sizeof(tpath)) != NULL)
 		fp = fopen(tpath, "r");
 
 	/* locate unit file on GLPATH if not found locally */

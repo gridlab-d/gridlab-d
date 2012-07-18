@@ -90,7 +90,7 @@ STATUS legal_notice(void)
 	while ((end = strchr(copyright,'\n'))!=NULL) {
 		*end = ' ';
 	}
-	if (find_file(copyright,NULL,FF_EXIST,path,sizeof(path))==NULL)
+	if (find_file(copyright,NULL,R_OK,path,sizeof(path))==NULL)
 	{
 		int build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
 		if (build>0)

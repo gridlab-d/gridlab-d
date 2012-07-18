@@ -5612,7 +5612,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			sscanf(value, "\"%[^\"\n]", stripbuf);
 			strcpy(value, stripbuf);
 		}
-		if (find_file(value, NULL, 0, path,sizeof(path))==NULL)
+		if (find_file(value, NULL, F_OK, path,sizeof(path))==NULL)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
 		nesting++;

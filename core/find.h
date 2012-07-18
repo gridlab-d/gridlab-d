@@ -89,11 +89,5 @@ FINDPGM *find_make_invariant(FINDPGM *pgm, int mode);
 #define FL_NEW (FINDLIST*)(0)
 #define FL_GROUP (FINDLIST*)(-1)
 
-/* find file support */
-#define FF_EXIST (0x00)
-#define FF_WRITE (0x02)
-#define FF_READ (0x04)
-#define FF_RW (FF_WRITE|FF_READ)
-
 #endif
 

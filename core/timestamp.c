@@ -602,7 +602,7 @@ void load_tzspecs(char *tz){
 	strncpy(tzstd, tz_std(current_tzname), sizeof(tzstd));
 	strncpy(tzdst, tz_dst(current_tzname), sizeof(tzdst));
 
-	if(find_file(TZFILE, NULL, FF_READ,filepath,sizeof(filepath)) == NULL){
+	if(find_file(TZFILE, NULL, R_OK,filepath,sizeof(filepath)) == NULL){
 		THROW("timezone specification file %s not found in GLPATH=%s: %s", TZFILE, getenv("GLPATH"), strerror(errno));
 		/* TROUBLESHOOT
 			The system could not locate the timezone file <code>tzinfo.txt</code>.
