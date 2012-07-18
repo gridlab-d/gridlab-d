@@ -305,7 +305,7 @@ int instance_slave_wait_socket(){
 	// read socket
 	rv = recv(local_inst.sockfd, local_inst.buffer, (int)local_inst.buffer_size, 0);
 	printcontent(local_inst.buffer, rv);
-	output_debug("instance_slave_wait_socket(): %d = recv(%d, %x, %d, 0)", rv, local_inst.sockfd, local_inst.buffer, (int)local_inst.buffer_size);
+//	output_debug("instance_slave_wait_socket(): %d = recv(%d, %x, %d, 0)", rv, local_inst.sockfd, local_inst.buffer, (int)local_inst.buffer_size);
 	if(0 == rv){
 		output_error("instance_slave_wait_socket(): socket closed");
 		closesocket(local_inst.sockfd);
@@ -374,7 +374,7 @@ int instance_slave_done_socket(){
 	size_t offset = 0;
 	int rv = 0;
 	
-	output_debug("instance_slave_done_socket(): enter");
+//	output_debug("instance_slave_done_socket(): enter");
 	if(0 == local_inst.buffer){
 		local_inst.buffer_size = 1 + local_inst.prop_size + sizeof(MESSAGE) + strlen(MSG_DATA);
 		local_inst.buffer = (char *)malloc(local_inst.buffer_size);
@@ -394,7 +394,7 @@ int instance_slave_done_socket(){
 	// feed through socket
 	rv = send(local_inst.sockfd, local_inst.buffer, (int)offset, 0);
 	printcontent(local_inst.buffer, rv);
-	output_debug("instance_slave_done_socket(): %d = send(%d, %x, %d, 0)", rv, local_inst.sockfd, local_inst.buffer, offset);
+//	output_debug("instance_slave_done_socket(): %d = send(%d, %x, %d, 0)", rv, local_inst.sockfd, local_inst.buffer, offset);
 	if(rv < 0){
 		output_error("instance_slave_done_socket(): error when sending data");
 		closesocket(local_inst.sockfd);
@@ -404,7 +404,7 @@ int instance_slave_done_socket(){
 		closesocket(local_inst.sockfd);
 		return -1;
 	}
-	output_debug("instance_slave_done_socket(): exiting");
+//	output_debug("instance_slave_done_socket(): exiting");
 	return 0;
 }
 

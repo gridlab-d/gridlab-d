@@ -12,6 +12,7 @@
 #include "timestamp.h"
 #include "pthread.h"
 #include "linkage.h"
+#include "lock.h"
 
 #define HS_SYN		"GLDMTR"
 #define HS_ACK		"GLDSND"
@@ -134,7 +135,8 @@ typedef struct s_instance {
 			pthread_cond_t sock_signal;
 			pthread_mutex_t wait_lock;
 			pthread_cond_t wait_signal;
-			bool has_data;
+			int has_data;
+			int has_data_lock;
 		};
 	};
 	struct s_instance *next;  ///<

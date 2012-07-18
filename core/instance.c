@@ -129,11 +129,11 @@ void *instance_runproc_socket(void *ptr){
 	int rv = 0;
 	int got_data = 0;
 	instance *inst = (instance*)ptr;
-	inst->has_data = false;
+	inst->has_data = 0;
 
 	while(running){
 		rv = recv(inst->sockfd, inst->buffer, (int)(inst->buffer_size), 0);
-		//output_debug("%d = recv(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, inst->buffer_size);
+//		output_debug("%d = recv(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, inst->buffer_size);
 		if(0 == rv){
 			output_error("instance_runproc_socket(): socket was closed before receiving data");
 			running = 0;
@@ -141,9 +141,12 @@ void *instance_runproc_socket(void *ptr){
 			output_error("instance_runproc_socket(): error receiving data");
 			running = 0;
 		}
+		pthread_mutex_lock(&inst->sock_lock);
 		if(0 == memcmp(inst->buffer, MSG_DATA, strlen(MSG_DATA))){
 			got_data = 1;
-			inst->has_data = TRUE;
+//			wlock(&inst->has_data_lock);
+			inst->has_data += 1;
+//			wunlock(&inst->has_data_lock);
 			//output_debug("instance_runproc_socket(): found "MSG_DATA);
 			//output_debug("instance_runproc_socket(): recv'd %d bytes", rv);
 		} else if(0 == memcmp(inst->buffer, MSG_ERR, strlen(MSG_ERR))){
@@ -162,10 +165,15 @@ void *instance_runproc_socket(void *ptr){
 		/* copy to inst->somewhere */
 		//output_debug("i_rp_s(): waiting to send broadcast %d", inst->sock_signal);
 		//pthread_mutex_lock(&inst->wait_lock);
-		//pthread_cond_wait(&inst->wait_signal, &inst->wait_lock);
-		//pthread_mutex_unlock(&inst->wait_lock);
-		//output_debug("i_rp_s(): sending broadcast %d", inst->sock_signal);
+//		pthread_mutex_lock(&inst->sock_lock);
+//		pthread_cond_wait(&inst->wait_signal, &inst->wait_lock);
+//		pthread_cond_wait(&inst->wait_signal, &inst->sock_lock);
+		output_debug("inst %d sending signal 0x%x", inst->id, &(inst->sock_signal));
 		pthread_cond_broadcast(&(inst->sock_signal));
+//		pthread_mutex_unlock(&inst->wait_lock);
+		pthread_mutex_unlock(&inst->sock_lock);
+		//output_debug("i_rp_s(): sending broadcast %d", inst->sock_signal);
+		
 		
 	}
 	pthread_cond_broadcast(&inst->sock_signal);
@@ -345,17 +353,28 @@ int instance_master_wait_socket(instance *inst){
 
 	if(sock_created){
 		// wait for message
-		if(inst->has_data){ // maybe 'while' this?
-			output_debug("instance_master_wait_socket(): already has data for %d", inst->sock_signal);
+//		wlock(&inst->has_data_lock);
+		pthread_mutex_lock(&inst->sock_lock);
+		if(inst->has_data > 0){ // maybe 'while' this?
+//			wunlock(&inst->has_data_lock);
+			output_debug("instance_master_wait_socket(): already has data for %d", inst->id);
 		} else {
+			//wunlock(&inst->has_data_lock);
 			//output_debug("instance_master_wait_socket(): requesting unwait on %d", inst->sock_signal);
+			output_debug("instance_master_wait_socket(): inst %d waiting on %x", inst->id, &inst->sock_signal);
 			//pthread_cond_broadcast(&inst->wait_signal);
-			output_debug("instance_master_wait_socket(): waiting on %d", inst->sock_signal);
-			pthread_mutex_lock(&inst->sock_lock);
+			
+//			pthread_mutex_lock(&inst->sock_lock);
+//			pthread_cond_broadcast(&inst->wait_signal);
+			output_debug("inst %d waiting on signal 0x%x", inst->id, &(inst->sock_signal));
 			pthread_cond_wait(&inst->sock_signal, &inst->sock_lock);
 			pthread_mutex_unlock(&inst->sock_lock);
+			
 		}
-		inst->has_data = FALSE;
+//		wlock(&inst->has_data_lock);
+		inst->has_data -= 1;
+//		wunlock(&inst->has_data_lock);
+		pthread_mutex_unlock(&inst->sock_lock);
 	} else {
 		output_debug("instance_master_wait_socket(): no socket mutexes");
 		return 0;
