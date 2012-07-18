@@ -69,7 +69,7 @@ void currdump::dump(TIMESTAMP t){
 	FINDLIST *links = NULL;
 	OBJECT *obj = NULL;
 	FILE *outfile = NULL;
-	link *plink;
+	link_object *plink;
 //	CLASS *nodeclass = NULL;
 //	PROPERTY *vA, *vB, *vC;
 
@@ -111,7 +111,7 @@ void currdump::dump(TIMESTAMP t){
 	obj = 0;
 	while (obj=gl_find_next(links,obj)){
 		if(gl_object_isa(obj, "link", "powerflow")){
-			plink = OBJECTDATA(obj,link);
+			plink = OBJECTDATA(obj,link_object);
 			if(obj->name == NULL){
 				sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
 			}

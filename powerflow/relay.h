@@ -11,7 +11,7 @@
 #include "powerflow.h"
 #include "link.h"
 
-class relay : public link
+class relay : public link_object
 {
 private:
 	TIMESTAMP reclose_time;
@@ -37,7 +37,7 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);
 	relay(MODULE *mod);
-	inline relay(CLASS *cl=oclass):link(cl){};
+	inline relay(CLASS *cl=oclass):link_object(cl){};
 	int isa(char *classname);
 
 	friend class relay_tests;

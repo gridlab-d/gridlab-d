@@ -23,7 +23,7 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 {
 	if(oclass == NULL)
 	{
-		pclass = link::oclass;
+		pclass = link_object::oclass;
 
 		oclass = gl_register_class(mod,"recloser",sizeof(recloser),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
         if(oclass == NULL)
@@ -47,7 +47,7 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 
 int recloser::isa(char *classname)
 {
-	return strcmp(classname,"recloser")==0 || link::isa(classname);
+	return strcmp(classname,"recloser")==0 || link_object::isa(classname);
 }
 
 int recloser::create()

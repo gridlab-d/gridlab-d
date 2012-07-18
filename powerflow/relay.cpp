@@ -23,11 +23,11 @@
 CLASS* relay::oclass = NULL;
 CLASS* relay::pclass = NULL;
 
-relay::relay(MODULE *mod) : link(mod)
+relay::relay(MODULE *mod) : link_object(mod)
 {
 	if(oclass == NULL)
 	{
-		pclass = link::oclass;
+		pclass = link_object::oclass;
 		
 		oclass = gl_register_class(mod,"relay",sizeof(relay),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
@@ -48,12 +48,12 @@ relay::relay(MODULE *mod) : link(mod)
 
 int relay::isa(char *classname)
 {
-	return strcmp(classname,"relay")==0 || link::isa(classname);
+	return strcmp(classname,"relay")==0 || link_object::isa(classname);
 }
 
 int relay::create()
 {
-	int result = link::create();
+	int result = link_object::create();
 	recloser_delay = 0;
 	recloser_tries = 0;
 	recloser_limit = 0;
@@ -68,7 +68,7 @@ int relay::create()
 
 int relay::init(OBJECT *parent)
 {
-	int result = link::init(parent);
+	int result = link_object::init(parent);
 
 	if (recloser_limit == 0)
 	{
@@ -97,9 +97,9 @@ int relay::init(OBJECT *parent)
 		*/
 	}
 	
-	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = (link::is_closed() && has_phase(PHASE_A) ? 1.0 : 0.0);
-	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = (link::is_closed() && has_phase(PHASE_B) ? 1.0 : 0.0);
-	a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = (link::is_closed() && has_phase(PHASE_C) ? 1.0 : 0.0);
+	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = (link_object::is_closed() && has_phase(PHASE_A) ? 1.0 : 0.0);
+	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = (link_object::is_closed() && has_phase(PHASE_B) ? 1.0 : 0.0);
+	a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = (link_object::is_closed() && has_phase(PHASE_C) ? 1.0 : 0.0);
 
 	b_mat[0][0] = c_mat[0][0] = B_mat[0][0] = 0.0;
 	b_mat[1][1] = c_mat[1][1] = B_mat[1][1] = 0.0;
@@ -251,14 +251,14 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 	}
 #endif
 
-	TIMESTAMP t2=link::sync(t0);
+	TIMESTAMP t2=link_object::sync(t0);
 
 	return t1<t2?t1:t2;
 }
 
 TIMESTAMP relay::postsync(TIMESTAMP t0)
 {
-	return link::postsync(t0);
+	return link_object::postsync(t0);
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -148,7 +148,7 @@ public:
 	OBJECT *SubNodeParent;	/// Child node's original parent or child of parent
 	int NR_current_update(bool postpass, bool parentcall);
 
-	friend class link;
+	friend class link_object;
 	friend class meter;	// needs access to current_inj
 	friend class substation; //needs access to current_inj
 	friend class triplex_meter; // needs access to current_inj

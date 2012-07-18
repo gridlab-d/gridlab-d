@@ -54,10 +54,10 @@ CLASS* line::oclass = NULL;
 CLASS* line::pclass = NULL;
 CLASS *line_class = NULL;
 
-line::line(MODULE *mod) : link(mod) {
+line::line(MODULE *mod) : link_object(mod) {
 	if(oclass == NULL)
 	{
-		pclass = link::oclass;
+		pclass = link_object::oclass;
 		
 		line_class = oclass = gl_register_class(mod,"line",sizeof(line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
@@ -75,7 +75,7 @@ line::line(MODULE *mod) : link(mod) {
 
 int line::create()
 {
-	int result = link::create();
+	int result = link_object::create();
 
 	configuration = NULL;
 	length = 0;
@@ -85,7 +85,7 @@ int line::create()
 
 int line::init(OBJECT *parent)
 {
-	int result = link::init(parent);
+	int result = link_object::init(parent);
 	
 
 	node *pFrom = OBJECTDATA(from,node);
@@ -103,7 +103,7 @@ int line::init(OBJECT *parent)
 
 int line::isa(char *classname)
 {
-	return strcmp(classname,"line")==0 || link::isa(classname);
+	return strcmp(classname,"line")==0 || link_object::isa(classname);
 }
 
 

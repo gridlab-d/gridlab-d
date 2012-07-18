@@ -95,20 +95,20 @@
 #include "node.h"
 #include "restoration.h"
 
-CLASS* link::oclass = NULL;
-CLASS* link::pclass = NULL;
+CLASS* link_object::oclass = NULL;
+CLASS* link_object::pclass = NULL;
 
 /**
 * constructor.  Class registration is only called once to register the class with the core.
 * @param mod the module struct that this class is registering in
 */
-link::link(MODULE *mod) : powerflow_object(mod)
+link_object::link_object(MODULE *mod) : powerflow_object(mod)
 {
 	// first time init
 	if (oclass==NULL)
 	{
 		pclass = powerflow_object::oclass;
-		oclass = gl_register_class(mod,"link",sizeof(link),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"link",sizeof(link_object),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class link";
 		else
@@ -162,12 +162,12 @@ link::link(MODULE *mod) : powerflow_object(mod)
 	}
 }
 
-int link::isa(char *classname)
+int link_object::isa(char *classname)
 {
 	return strcmp(classname,"link")==0 || powerflow_object::isa(classname);
 }
 
-int link::create(void)
+int link_object::create(void)
 {
 	int result = powerflow_object::create();
 
@@ -204,7 +204,7 @@ int link::create(void)
 	return result;
 }
 
-int link::init(OBJECT *parent)
+int link_object::init(OBJECT *parent)
 {
 	OBJECT *obj = GETOBJECT(this);
 
@@ -411,19 +411,19 @@ int link::init(OBJECT *parent)
 	return 1;
 }
 
-node *link::get_from(void) const
+node *link_object::get_from(void) const
 {
 	node *from;
 	get_flow(&from,NULL);
 	return from;
 }
-node *link::get_to(void) const
+node *link_object::get_to(void) const
 {
 	node *to;
 	get_flow(NULL,&to);
 	return to;
 }
-set link::get_flow(node **fn, node **tn) const
+set link_object::get_flow(node **fn, node **tn) const
 {
 	node *f = OBJECTDATA(from, node);
 	node *t = OBJECTDATA(to, node);
@@ -437,7 +437,7 @@ set link::get_flow(node **fn, node **tn) const
 	return reverse;
 }
 
-TIMESTAMP link::presync(TIMESTAMP t0)
+TIMESTAMP link_object::presync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = powerflow_object::presync(t0); 
 
@@ -1117,7 +1117,7 @@ TIMESTAMP link::presync(TIMESTAMP t0)
 	return t1;
 }
 
-TIMESTAMP link::sync(TIMESTAMP t0)
+TIMESTAMP link_object::sync(TIMESTAMP t0)
 {
 #ifdef SUPPORT_OUTAGES
 	node *fNode;
@@ -1218,7 +1218,7 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 	return TS_NEVER;
 }
 
-TIMESTAMP link::postsync(TIMESTAMP t0)
+TIMESTAMP link_object::postsync(TIMESTAMP t0)
 {
 	TIMESTAMP TRET=TS_NEVER;
 
@@ -1336,7 +1336,7 @@ TIMESTAMP link::postsync(TIMESTAMP t0)
 	return TRET;
 }
 
-int link::kmldump(FILE *fp)
+int link_object::kmldump(FILE *fp)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	if (isnan(from->latitude) || isnan(to->latitude) || isnan(from->longitude) || isnan(to->longitude))
@@ -1450,10 +1450,10 @@ EXPORT int create_link(OBJECT **obj, OBJECT *parent)
 {
 	try
 	{
-		*obj = gl_create_object(link::oclass);
+		*obj = gl_create_object(link_object::oclass);
 		if (*obj!=NULL)
 		{
-			link *my = OBJECTDATA(*obj,link);
+			link_object *my = OBJECTDATA(*obj,link_object);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -1472,7 +1472,7 @@ EXPORT int create_link(OBJECT **obj, OBJECT *parent)
 EXPORT int init_link(OBJECT *obj)
 {
 	try {
-		link *my = OBJECTDATA(obj,link);
+		link_object *my = OBJECTDATA(obj,link_object);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(link);
@@ -1490,7 +1490,7 @@ EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try 
 	{
-		link *pObj = OBJECTDATA(obj,link);
+		link_object *pObj = OBJECTDATA(obj,link_object);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -1510,7 +1510,7 @@ EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_link(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,link)->isa(classname);
+	return OBJECTDATA(obj,link_object)->isa(classname);
 }
 
 /**
@@ -1524,7 +1524,7 @@ EXPORT int isa_link(OBJECT *obj, char *classname)
 * Locking not needed on various fnode/tnode voltage reads - rank separation prevents contention
 *     For normal operation, only from nodes need locking - this is an assumption holdover from FBS days - it may need revisiting
 */
-int link::CurrentCalculation(int nodecall)
+int link_object::CurrentCalculation(int nodecall)
 {
 	if (current_accumulated==false)	//Only update if we haven't done so yet
 	{
@@ -2303,7 +2303,7 @@ int link::CurrentCalculation(int nodecall)
 	return 1;	//Assume it's always successful now
 }
 
-void link::calculate_power_splitphase()
+void link_object::calculate_power_splitphase()
 {
 
 	node *f = OBJECTDATA(from, node);
@@ -2420,7 +2420,7 @@ void link::calculate_power_splitphase()
 	power_loss = indiv_power_loss[0] + indiv_power_loss[1] + indiv_power_loss[2];
 }
 
-void link::set_flow_directions(void)
+void link_object::set_flow_directions(void)
 {
 	int i;
 	flow_direction = FD_UNKNOWN; // clear the flows
@@ -2438,7 +2438,7 @@ void link::set_flow_directions(void)
 	}
 }
 
-void link::calculate_power()
+void link_object::calculate_power()
 {
 		node *f = OBJECTDATA(from, node);
 		node *t = OBJECTDATA(to, node);
@@ -2634,7 +2634,7 @@ void link::calculate_power()
 }
 
 //Function to calculate current values for use by restoration module
-void link::calc_currents(complex *Current_Vals)
+void link_object::calc_currents(complex *Current_Vals)
 {
 	node *fnode = OBJECTDATA(from,node);
 	node *tnode = OBJECTDATA(to,node);
@@ -2794,7 +2794,7 @@ void link::calc_currents(complex *Current_Vals)
 }
 
 //Retrieve value of a double
-double *link::get_double(OBJECT *obj, char *name)
+double *link_object::get_double(OBJECT *obj, char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==NULL || p->ptype!=PT_double)
@@ -2837,7 +2837,7 @@ double *link::get_double(OBJECT *obj, char *name)
 // 30 - FUS-AC or FUS-CA - Fuse action CA
 // 31 - FUS-ABC - Fuse action ABC
 // 32 - TLL - all lines fault - phases A, B, and C
-int link::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
+int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
 {
 	unsigned char phase_remove = 0x00;	//Default is no phases removed
 	unsigned char rand_phases,temp_phases, work_phases;			//Working variable
@@ -5405,7 +5405,7 @@ int link::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented
 }
 
 //Function to remove enacted fault on link - use same list as above (link_fault_on)
-int link::link_fault_off(int *implemented_fault, char *imp_fault_name, void *Extra_Data)
+int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, void *Extra_Data)
 {
 	unsigned char phase_restore = 0x00;	//Default is no phases restored
 	unsigned char temp_phases, temp_phases_B, work_phases;			//Working variable
@@ -6405,7 +6405,7 @@ int link::link_fault_off(int *implemented_fault, char *imp_fault_name, void *Ext
 }
 //adding function to calculate the fault current seen at the swing bus then distribut that current down to fault path to the faulted line
 //right now it is assumed that all faults occur at the to end of the faulted link object.
-void link::fault_current_calc(complex C[7][7],unsigned int removed_phase, double fault_type)
+void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase, double fault_type)
 {
 	int temp_branch_fc, temp_node, current_branch, temp_connection_type;;
 	unsigned int temp_table_loc;

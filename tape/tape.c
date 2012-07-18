@@ -308,7 +308,7 @@ EXPORT int check(void)
 		while ((obj=gl_find_next(players,obj))!=NULL)
 		{
 			struct player *pData = OBJECTDATA(obj,struct player);
-			if (gl_findfile(pData->file,NULL,FF_EXIST,fpath,sizeof(fpath))==NULL)
+			if (gl_findfile(pData->file,NULL,F_OK,fpath,sizeof(fpath))==NULL)
 			{
 				errcount++;
 				gl_error("player %s (id=%d) uses the file '%s', which cannot be found", obj->name?obj->name:"(unnamed)", obj->id, pData->file);
@@ -322,7 +322,7 @@ EXPORT int check(void)
 		while ((obj=gl_find_next(shapers,obj))!=NULL)
 		{
 			struct shaper *pData = OBJECTDATA(obj,struct shaper);
-			if (gl_findfile(pData->file,NULL,FF_EXIST,fpath,sizeof(fpath))==NULL)
+			if (gl_findfile(pData->file,NULL,F_OK,fpath,sizeof(fpath))==NULL)
 			{
 				errcount++;
 				gl_error("shaper %s (id=%d) uses the file '%s', which cannot be found", obj->name?obj->name:"(unnamed)", obj->id, pData->file);

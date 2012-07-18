@@ -25,11 +25,11 @@ CLASS* fuse::pclass = NULL;
 // fuse CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-fuse::fuse(MODULE *mod) : link(mod)
+fuse::fuse(MODULE *mod) : link_object(mod)
 {
 	if(oclass == NULL)
 	{
-		pclass = link::oclass;
+		pclass = link_object::oclass;
 		
 		oclass = gl_register_class(mod,"fuse",sizeof(fuse),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
@@ -70,12 +70,12 @@ fuse::fuse(MODULE *mod) : link(mod)
 
 int fuse::isa(char *classname)
 {
-	return strcmp(classname,"fuse")==0 || link::isa(classname);
+	return strcmp(classname,"fuse")==0 || link_object::isa(classname);
 }
 
 int fuse::create()
 {
-	int result = link::create();
+	int result = link_object::create();
 
 	prev_full_status = 0x00;		//Flag as all open initially
 	phase_A_state = GOOD;			//All fuses good by default
@@ -127,7 +127,7 @@ int fuse::init(OBJECT *parent)
 	//Special flag moved to be universal for all solvers - mainly so phase checks catch it now
 	SpecialLnk = SWITCH;
 
-	int result = link::init(parent);
+	int result = link_object::init(parent);
 
 	//Check current limit
 	if (current_limit < 0.0)
@@ -363,7 +363,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 		fuse_sync_function();
 
 		//Call overlying link sync
-		t2=link::sync(t0);
+		t2=link_object::sync(t0);
 
 		//See if we're in the proper cycle - NR only for now
 		if ((NR_cycle == true) && (solver_method == SM_NR))
@@ -601,7 +601,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 		}//End NR call
 	}//End NR-only reliability calls
 	else	//FBS
-		t2 = link::sync(t0);
+		t2 = link_object::sync(t0);
 
 	if (t2==TS_NEVER)
 		return(t2);
@@ -679,7 +679,7 @@ TIMESTAMP fuse::postsync(TIMESTAMP t0)
 			Ret_Val[2] = TS_NEVER;		//No phase A, make us really big
 
 		//Normal link update
-		t1 = link::postsync(t0);
+		t1 = link_object::postsync(t0);
 		
 		//Find the minimum timestep and return it
 		for (jindex=0;jindex<3;jindex++)
@@ -690,7 +690,7 @@ TIMESTAMP fuse::postsync(TIMESTAMP t0)
 	}
 	else	//Other solvers
 	{
-		t1 = link::postsync(t0);
+		t1 = link_object::postsync(t0);
 	}
 
 	if (t1 != TS_NEVER)
@@ -1102,7 +1102,7 @@ EXPORT TIMESTAMP commit_fuse(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	{
 		if (solver_method==SM_FBS)
 		{
-			link *plink = OBJECTDATA(obj,link);
+			link_object *plink = OBJECTDATA(obj,link_object);
 			plink->calculate_power();
 			
 			return (fsr->fuse_state(obj->parent) ? TS_NEVER : 0);

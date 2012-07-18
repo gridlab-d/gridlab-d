@@ -25,11 +25,11 @@
 CLASS* series_reactor::oclass = NULL;
 CLASS* series_reactor::pclass = NULL;
 
-series_reactor::series_reactor(MODULE *mod) : link(mod)
+series_reactor::series_reactor(MODULE *mod) : link_object(mod)
 {
 	if(oclass == NULL)
 	{
-		pclass = link::oclass;
+		pclass = link_object::oclass;
 
 		oclass = gl_register_class(mod,"series_reactor",sizeof(series_reactor),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
@@ -55,12 +55,12 @@ series_reactor::series_reactor(MODULE *mod) : link(mod)
 
 int series_reactor::isa(char *classname)
 {
-	return strcmp(classname,"series_reactor")==0 || link::isa(classname);
+	return strcmp(classname,"series_reactor")==0 || link_object::isa(classname);
 }
 
 int series_reactor::create()
 {
-	int result = link::create();
+	int result = link_object::create();
 	phase_A_impedance = phase_B_impedance = phase_C_impedance = 0.0;
 
 	return result;
@@ -68,7 +68,7 @@ int series_reactor::create()
 
 int series_reactor::init(OBJECT *parent)
 {
-	int result = link::init(parent);
+	int result = link_object::init(parent);
 
 	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = (has_phase(PHASE_A)) ? 1.0 : 0.0;
 	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = (has_phase(PHASE_B)) ? 1.0 : 0.0;

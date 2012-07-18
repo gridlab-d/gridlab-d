@@ -75,7 +75,7 @@ EXPORT int kmldump(FILE *fp, OBJECT *obj)
 	else if (gl_object_isa(obj,"node"))
 		return OBJECTDATA(obj,node)->kmldump(fp);
 	else if (gl_object_isa(obj,"link"))
-		return OBJECTDATA(obj,link)->kmldump(fp);
+		return OBJECTDATA(obj,link_object)->kmldump(fp);
 	else
 		return 0; 
 }

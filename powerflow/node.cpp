@@ -1184,7 +1184,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 #endif
 
 			if (obj->parent!=NULL && gl_object_isa(obj->parent,"triplex_line","powerflow")) {
-				link *plink = OBJECTDATA(obj->parent,link);
+				link_object *plink = OBJECTDATA(obj->parent,link_object);
 				complex d = plink->tn[0]*current_inj[0] + plink->tn[1]*current_inj[1];
 				current_inj[2] += d;
 			}
@@ -2225,7 +2225,7 @@ int node::NR_populate(void)
 int node::NR_current_update(bool postpass, bool parentcall)
 {
 	unsigned int table_index;
-	link *temp_link;
+	link_object *temp_link;
 	int temp_result;
 	OBJECT *obj = OBJECTHDR(this);
 	complex temp_current_inj[3];
@@ -2449,7 +2449,7 @@ int node::NR_current_update(bool postpass, bool parentcall)
 			for (table_index=0; table_index<NR_busdata[NR_node_reference].Link_Table_Size; table_index++)
 			{
 				//Extract that link
-				temp_link = OBJECTDATA(NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj,link);
+				temp_link = OBJECTDATA(NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj,link_object);
 
 				//Make sure it worked
 				if (temp_link == NULL)

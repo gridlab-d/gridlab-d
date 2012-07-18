@@ -12,7 +12,7 @@
 #define tap_B tap[1]
 #define tap_C tap[2]
 
-class regulator : public link
+class regulator : public link_object
 {
 public:
 	double VtapChange;
@@ -49,7 +49,7 @@ public:
 public:
 	OBJECT *configuration;
 	regulator(MODULE *mod);
-	inline regulator(CLASS *cl=oclass):link(cl){};
+	inline regulator(CLASS *cl=oclass):link_object(cl){};
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP presync(TIMESTAMP t0);

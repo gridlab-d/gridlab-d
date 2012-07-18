@@ -14,7 +14,7 @@
 #include "powerflow.h"
 #include "link.h"
 
-class switch_object : public link
+class switch_object : public link_object
 {
 public:
 	static CLASS *oclass;
@@ -29,7 +29,7 @@ public:
 	int init(OBJECT *parent);
 	TIMESTAMP sync(TIMESTAMP t0);
 	switch_object(MODULE *mod);
-	inline switch_object(CLASS *cl=oclass):link(cl){};
+	inline switch_object(CLASS *cl=oclass):link_object(cl){};
 	int isa(char *classname);
 
 	void set_switch(bool desired_status);

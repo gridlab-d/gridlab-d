@@ -160,12 +160,12 @@ int capacitor::init(OBJECT *parent)
 			if ((gl_object_isa(RemoteSensor,"node","powerflow")) && (gl_object_isa(SecondaryRemote,"link","powerflow")))	//Node in 1, link in 2
 			{
 				RNode = OBJECTDATA(RemoteSensor,node);
-				RLink = OBJECTDATA(SecondaryRemote,link);
+				RLink = OBJECTDATA(SecondaryRemote,link_object);
 			}
 			else if ((gl_object_isa(RemoteSensor,"link","powerflow")) && (gl_object_isa(SecondaryRemote,"node","powerflow")))	//link in 1, node in 2
 			{
 				RNode = OBJECTDATA(SecondaryRemote,node);
-				RLink = OBJECTDATA(RemoteSensor,link);
+				RLink = OBJECTDATA(RemoteSensor,link_object);
 			}
 			else
 			{
@@ -179,7 +179,7 @@ int capacitor::init(OBJECT *parent)
 	}
 	else if (((control==VARVOLT) || (control==CURRENT)) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && gl_object_isa(RemoteSensor,"link","powerflow"))	//VAR-VOLT scheme, one sensor defined
 	{
-		RLink = OBJECTDATA(RemoteSensor,link);
+		RLink = OBJECTDATA(RemoteSensor,link_object);
 	}
 	else if (SecondaryRemote != NULL)	//Should only be populated for VARVOLT scheme,
 	{
@@ -198,7 +198,7 @@ int capacitor::init(OBJECT *parent)
 		}
 		else if (gl_object_isa(RemoteSensor,"link","powerflow"))
 		{
-			RLink = OBJECTDATA(RemoteSensor,link);	//Get remote link information
+			RLink = OBJECTDATA(RemoteSensor,link_object);	//Get remote link information
 		}
 	}
 

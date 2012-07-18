@@ -30,11 +30,11 @@ CLASS* transformer::pclass = NULL;
 //Default temperature for thermal aging calculations
 double default_outdoor_temperature = 74;
 
-transformer::transformer(MODULE *mod) : link(mod)
+transformer::transformer(MODULE *mod) : link_object(mod)
 {
 	if(oclass == NULL)
 	{
-		pclass = link::oclass;
+		pclass = link_object::oclass;
 		
 		oclass = gl_register_class(mod,"transformer",sizeof(transformer),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
@@ -59,12 +59,12 @@ transformer::transformer(MODULE *mod) : link(mod)
 
 int transformer::isa(char *classname)
 {
-	return strcmp(classname,"transformer")==0 || link::isa(classname);
+	return strcmp(classname,"transformer")==0 || link_object::isa(classname);
 }
 
 int transformer::create()
 {
-	int result = link::create();
+	int result = link_object::create();
 	configuration = NULL;
 	ptheta_A = NULL;
 	return result;
@@ -115,7 +115,7 @@ int transformer::init(OBJECT *parent)
 	else if (config->connect_type==5)
 		SpecialLnk = SPLITPHASE;
 
-	link::init(parent);
+	link_object::init(parent);
 	OBJECT *obj = OBJECTHDR(this);
 
 	V_base = config->V_secondary;
@@ -876,7 +876,7 @@ TIMESTAMP transformer::postsync(TIMESTAMP t0)
 	double time_left;
 	TIMESTAMP trans_end;
 	if(use_thermal_model){
-		TIMESTAMP result = link::postsync(t0);
+		TIMESTAMP result = link_object::postsync(t0);
 		temp_A = *ptheta_A;
 		amb_temp = (temp_A-32.0)*(5.0/9.0);
 		if(t0 != 0 && t0 != time_before && NR_cycle){
@@ -965,7 +965,7 @@ TIMESTAMP transformer::postsync(TIMESTAMP t0)
 			}
 		}
 	} else {
-		return link::postsync(t0);
+		return link_object::postsync(t0);
 	}
 }
 //////////////////////////////////////////////////////////////////////////

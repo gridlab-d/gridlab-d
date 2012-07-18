@@ -51,7 +51,7 @@ public:
 
 private:
 	VOLTVARSTATE prev_mode;						//Previous mode of Volt-VAr controller - used to transitions
-	link *substation_link;						//Object to obtain power-factor measurments
+	link_object *substation_link;						//Object to obtain power-factor measurments
 	regulator **pRegulator_list;				//Regulators
 	regulator_configuration **pRegulator_configs;	//Regulator configurations
 	capacitor **pCapacitor_list;				//Capacitors to monitor

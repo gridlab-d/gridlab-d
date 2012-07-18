@@ -23,7 +23,7 @@ sectionalizer::sectionalizer(MODULE *mod) : switch_object(mod)
 	if (oclass==NULL)
 	{
 		// link to parent class (used by isa)
-		pclass = link::oclass;
+		pclass = link_object::oclass;
 
 		// register the class definition
 		oclass = gl_register_class(mod,"sectionalizer",sizeof(sectionalizer),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
@@ -46,7 +46,7 @@ sectionalizer::sectionalizer(MODULE *mod) : switch_object(mod)
 
 int sectionalizer::isa(char *classname)
 {
-	return strcmp(classname,"sectionalizer")==0 || link::isa(classname);
+	return strcmp(classname,"sectionalizer")==0 || link_object::isa(classname);
 }
 
 //Creation run

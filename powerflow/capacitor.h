@@ -71,7 +71,7 @@ private:
 	double CurrentVals[3];			// Current magnitude values recorded (due to nature of how it's recorded, it has to be in here)
 	bool NotFirstIteration;			// Checks to see if this is the first iteration of the system.
 	node *RNode;					// Remote node to sense voltage measurements (if desired) for VOLT controls
-	link *RLink;					// Remote link to sense power measurements for VAR controls
+	link_object *RLink;					// Remote link to sense power measurements for VAR controls
 	TIMESTAMP Return_Time;			// Newton-Raphson variable to handle time returns for "off" iterations
 	bool Iteration_Toggle;			// "Off" iteration tracker
 

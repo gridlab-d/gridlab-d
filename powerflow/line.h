@@ -26,7 +26,7 @@ extern bool show_matrix_values;
 #include "triplex_line_configuration.h"
 #include "triplex_line_conductor.h"
 
-class line : public link
+class line : public link_object
 {
 public:
 	static CLASS *oclass;
@@ -35,7 +35,7 @@ public:
 	OBJECT *configuration;
 	double length;     // length of line in feet
 	line(MODULE *mod);
-	inline line(CLASS *cl=oclass):link(cl){};
+	inline line(CLASS *cl=oclass):link_object(cl){};
 	int init(OBJECT *parent);
 	int isa(char *classname);
     int create(void);

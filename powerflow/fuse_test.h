@@ -55,7 +55,7 @@ class fuse_tests : public powerflow_test_helper
 	}
 
 	//void test_three_phase_ganged_switch_ABC_open() {
-	//	test_three_phase_ganged_switch(link::LS_OPEN, PHASE_ABC);
+	//	test_three_phase_ganged_switch(link_object::LS_OPEN, PHASE_ABC);
 	//}
 
 	void test_three_phase_ganged_switch_A_closed() {
@@ -63,7 +63,7 @@ class fuse_tests : public powerflow_test_helper
 	}
 
 	//void test_three_phase_ganged_switch_A_open() {
-	//	test_three_phase_ganged_switch(link::LS_OPEN, PHASE_A);
+	//	test_three_phase_ganged_switch(link_object::LS_OPEN, PHASE_A);
 	//}
 
 	void test_three_phase_ganged_switch_B_closed() {
@@ -71,7 +71,7 @@ class fuse_tests : public powerflow_test_helper
 	}
 
 	//void test_three_phase_ganged_switch_B_open() {
-	//	test_three_phase_ganged_switch(link::LS_OPEN, PHASE_B);
+	//	test_three_phase_ganged_switch(link_object::LS_OPEN, PHASE_B);
 	//}
 
 	void test_three_phase_ganged_switch_C_closed() {
@@ -79,7 +79,7 @@ class fuse_tests : public powerflow_test_helper
 	}
 
 	//void test_three_phase_ganged_switch_C_open() {
-	//	test_three_phase_ganged_switch(link::LS_OPEN, PHASE_C);
+	//	test_three_phase_ganged_switch(link_object::LS_OPEN, PHASE_C);
 	//}
 
 	/*

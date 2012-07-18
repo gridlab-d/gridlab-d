@@ -10,7 +10,7 @@
 #include "powerflow.h"
 #include "link.h"
 
-class fuse : public link
+class fuse : public link_object
 {
 public:
 	static CLASS *oclass;
@@ -28,7 +28,7 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);	//Legacy FBS coding in here - may not be needed in future
 	fuse(MODULE *mod);
-	inline fuse(CLASS *cl=oclass):link(cl){};
+	inline fuse(CLASS *cl=oclass):link_object(cl){};
 	int isa(char *classname);
 
 	//Legacy FBS code - will change when reliability makes its way in there

@@ -8,7 +8,7 @@
 #include "link.h"
 #include "transformer_configuration.h"
 
-class transformer : public link
+class transformer : public link_object
 {
 public:
 	OBJECT *configuration;
@@ -60,7 +60,7 @@ public:
 	int isa(char *classname);
 
 	transformer(MODULE *mod);
-	inline transformer(CLASS *cl=oclass):link(cl){};
+	inline transformer(CLASS *cl=oclass):link_object(cl){};
 
 private:
 	void fetch_double(double **prop, char *name, OBJECT *parent);

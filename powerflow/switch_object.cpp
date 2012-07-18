@@ -22,11 +22,11 @@
 CLASS* switch_object::oclass = NULL;
 CLASS* switch_object::pclass = NULL;
 
-switch_object::switch_object(MODULE *mod) : link(mod)
+switch_object::switch_object(MODULE *mod) : link_object(mod)
 {
 	if(oclass == NULL)
 	{
-		pclass = link::oclass;
+		pclass = link_object::oclass;
 
 		oclass = gl_register_class(mod,"switch",sizeof(switch_object),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
@@ -65,12 +65,12 @@ switch_object::switch_object(MODULE *mod) : link(mod)
 
 int switch_object::isa(char *classname)
 {
-	return strcmp(classname,"switch")==0 || link::isa(classname);
+	return strcmp(classname,"switch")==0 || link_object::isa(classname);
 }
 
 int switch_object::create()
 {
-	int result = link::create();
+	int result = link_object::create();
 
 	prev_full_status = 0x00;		//Flag as all open initially
 	switch_banked_mode = BANKED_SW;	//Assume operates in banked mode normally
@@ -98,7 +98,7 @@ int switch_object::init(OBJECT *parent)
 	//Special flag moved to be universal for all solvers - mainly so phase checks catch it now
 	SpecialLnk = SWITCH;
 
-	int result = link::init(parent);
+	int result = link_object::init(parent);
 
 	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = (is_closed() && has_phase(PHASE_A) ? 1.0 : 0.0);
 	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = (is_closed() && has_phase(PHASE_B) ? 1.0 : 0.0);
@@ -346,7 +346,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 	}
 
 	//Call overlying link sync
-	TIMESTAMP t2=link::sync(t0);
+	TIMESTAMP t2=link_object::sync(t0);
 
 	//See if we're in the proper cycle - NR only for now
 	if ((solver_method == SM_NR) && (work_phases_pre != work_phases_post))

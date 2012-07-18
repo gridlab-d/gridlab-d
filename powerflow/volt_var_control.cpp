@@ -824,7 +824,7 @@ int volt_var_control::init(OBJECT *parent)
 	else	//It is defined
 	{
 		//Link it up
-		substation_link = OBJECTDATA(substation_lnk_obj,link);
+		substation_link = OBJECTDATA(substation_lnk_obj,link_object);
 	}
 
 	//Determine how many capacitors we have to play with

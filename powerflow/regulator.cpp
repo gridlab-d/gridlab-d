@@ -21,12 +21,12 @@ using namespace std;
 CLASS* regulator::oclass = NULL;
 CLASS* regulator::pclass = NULL;
 
-regulator::regulator(MODULE *mod) : link(mod)
+regulator::regulator(MODULE *mod) : link_object(mod)
 {
 	if (oclass==NULL)
 	{
 		// link to parent class (used by isa)
-		pclass = link::oclass;
+		pclass = link_object::oclass;
 
 		// register the class definition
 		oclass = gl_register_class(mod,"regulator",sizeof(regulator),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
@@ -49,12 +49,12 @@ regulator::regulator(MODULE *mod) : link(mod)
 
 int regulator::isa(char *classname)
 {
-	return strcmp(classname,"regulator")==0 || link::isa(classname);
+	return strcmp(classname,"regulator")==0 || link_object::isa(classname);
 }
 
 int regulator::create()
 {
-	int result = link::create();
+	int result = link_object::create();
 	configuration = NULL;
 	tap_A = tap_B = tap_C = -999;
 	offnominal_time = false;
@@ -65,7 +65,7 @@ int regulator::init(OBJECT *parent)
 {
 	bool TapInitialValue[3];
 	char jindex;
-	int result = link::init(parent);
+	int result = link_object::init(parent);
 
 	if (!configuration)
 		throw "no regulator configuration specified.";
@@ -668,7 +668,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 			break;
 	}
 		
-	TIMESTAMP t1 = link::presync(t0);
+	TIMESTAMP t1 = link_object::presync(t0);
 	
 	if (solver_method == SM_NR)
 	{
@@ -748,7 +748,7 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
 	node *pTo = OBJECTDATA(to, node);
 
-	TIMESTAMP t1 = link::postsync(t0);
+	TIMESTAMP t1 = link_object::postsync(t0);
 	
 	if ((solver_method == SM_NR && NR_cycle==true) || solver_method == SM_FBS)
 	{		

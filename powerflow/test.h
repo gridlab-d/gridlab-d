@@ -20,7 +20,7 @@
 class powerflow_test_helper : public test_helper
 {
 protected:
-	static void test_powerflow_link(class link *test_link, double tolerance,
+	static void test_powerflow_link(class link_object *test_link, double tolerance,
 			set phases1, set phases2, const complex bs_V2_in[3],
 			const complex bs_I2_in[3], const complex bs_I1_out[3],
 			const complex fs_V1_in[3], const complex fs_I2_in[3],

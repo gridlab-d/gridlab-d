@@ -11,7 +11,7 @@
 #include "powerflow.h"
 #include "link.h"
 
-class series_reactor : public link
+class series_reactor : public link_object
 {
 public:
 	static CLASS *oclass;
@@ -21,7 +21,7 @@ public:
 	int create(void);
 	int init(OBJECT *parent);
 	series_reactor(MODULE *mod);
-	inline series_reactor(CLASS *cl=oclass):link(cl){};
+	inline series_reactor(CLASS *cl=oclass):link_object(cl){};
 	int isa(char *classname);
 	
 	complex phase_A_impedance;	//Phase A impedance of the reactor

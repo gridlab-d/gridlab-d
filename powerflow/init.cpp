@@ -77,7 +77,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new powerflow_object(module);
 	new powerflow_library(module);
 	new node(module);
-	new link(module);
+	new link_object(module);
 	new capacitor(module);
 	new fuse(module);
 	new meter(module);
@@ -147,7 +147,7 @@ EXPORT int check()
 
 	GLOBALVAR *gvroot = NULL;
 	PFLIST anchor, *tlist = NULL;
-	link **linklist = NULL,
+	link_object **linklist = NULL,
 		 **linkqueue = NULL;
 
 	objct = gl_get_object_count();
@@ -157,13 +157,13 @@ EXPORT int check()
 	nodemap = (int *)malloc((size_t)(objct*sizeof(int)));
 	linkmap = (int *)malloc((size_t)(objct*sizeof(int)));
 	tomap = (int *)malloc((size_t)(objct*sizeof(int)));
-	linkqueue = (link **)malloc((size_t)(objct*sizeof(link *)));
-	linklist = (link **)malloc((size_t)(objct*sizeof(link *)));
+	linkqueue = (link_object **)malloc((size_t)(objct*sizeof(link_object *)));
+	linklist = (link_object **)malloc((size_t)(objct*sizeof(link_object *)));
 	memset(nodemap, 0, objct*sizeof(int));
 	memset(linkmap, 0, objct*sizeof(int));
 	memset(tomap, 0, objct*sizeof(int));
-	memset(linkqueue, 0, objct*sizeof(link *));
-	memset(linklist, 0, objct*sizeof(link *));
+	memset(linkqueue, 0, objct*sizeof(link_object *));
+	memset(linklist, 0, objct*sizeof(link_object *));
 	/* per-object checks */
 
 	/* check from/to info on links */
@@ -184,7 +184,7 @@ EXPORT int check()
 		}
 		else if (gl_object_isa(obj,"link"))
 		{
-			link *pLink = OBJECTDATA(obj,link);
+			link_object *pLink = OBJECTDATA(obj,link_object);
 			OBJECT *from = pLink->from;
 			OBJECT *to = pLink->to;
 			node *tNode = OBJECTDATA(to, node);
@@ -338,10 +338,10 @@ EXPORT int check()
 		while(front != NULL){
 			// find all links from the node
 			for(OBJECT *now=gl_find_next(list, NULL); now != NULL; now = gl_find_next(list, now)){
-				link *l;
+				link_object *l;
 				if(!gl_object_isa(now, "link"))
 					continue;
-				l = OBJECTDATA(now, link);
+				l = OBJECTDATA(now, link_object);
 				if((l->from != front->ptr) && (l->to != front->ptr)){
 					continue;
 				} else if(rankmap[l->from->id]<objct && rankmap[l->to->id]<objct){

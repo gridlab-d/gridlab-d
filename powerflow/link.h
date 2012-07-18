@@ -20,7 +20,7 @@ typedef enum {
 		SWITCH=4			///< defines the link is a switch
 } SPECIAL_LINK;
 
-// flow directions (see link::flow_direction)
+// flow directions (see link_object::flow_direction)
 #define FD_UNKNOWN		0x000	///< Flow is undetermined
 #define FD_A_MASK		0x00f	///< mask to isolate phase A flow information
 #define FD_A_NORMAL		0x001	///< Flow over phase A is normal
@@ -35,7 +35,7 @@ typedef enum {
 #define FD_C_REVERSE	0x200	///< Flow over phase C is reversed
 #define FD_C_NONE		0x300	///< No flow over of phase C 
 
-class link : public powerflow_object
+class link_object : public powerflow_object
 {
 public: /// @todo make this private and create interfaces to control values
 	complex a_mat[3][3];	// a_mat - 3x3 matrix, 'a' matrix
@@ -89,8 +89,8 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);
-	link(MODULE *mod);
-	link(CLASS *cl=oclass):powerflow_object(cl){};
+	link_object(MODULE *mod);
+	link_object(CLASS *cl=oclass):powerflow_object(cl){};
 	static CLASS *oclass;
 	static CLASS *pclass;
 	int isa(char *classname);
