@@ -241,10 +241,10 @@ int double_array_create(double_array*a)
 	int n;
 	a->n = a->m = 0;
 	a->max = 1;
-	a->x = (double***)malloc(sizeof(double***)*a->max);
+	a->x = (double***)malloc(sizeof(double**)*a->max);
 	if ( a->x==NULL )
 		return 0;
-	memset(a->x,0,sizeof(double***)*a->max);
+	memset(a->x,0,sizeof(double**)*a->max);
 	return 1;
 }
 double get_double_array_value(double_array*a,unsigned int n, unsigned int m)

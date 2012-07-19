@@ -70,23 +70,23 @@ public:
 	{
 		if ( size<=max ) throw "cannot shrink double_array";
 		unsigned int r;
-		double ***z = (double***)malloc(sizeof(double***)*size);
+		double ***z = (double***)malloc(sizeof(double**)*size);
 		// create new rows
 		for ( r=0 ; r<max ; r++ )
 		{
 			if ( x[r]!=NULL )
 			{
-				double **y = (double**)malloc(sizeof(double**)*size);
+				double **y = (double**)malloc(sizeof(double*)*size);
 				if ( y==NULL ) throw "unable to expand double_array";
-				memcpy(y,x[r],sizeof(double**)*max);
-				memset(y+max,0,sizeof(double**)*(size-max));
+				memcpy(y,x[r],sizeof(double*)*max);
+				memset(y+max,0,sizeof(double*)*(size-max));
 				free(x[r]);
 				z[r] = y;
 			}
 			else
 				z[r] = NULL;
 		}
-		memset(z+max,0,sizeof(double***)*(size-max));
+		memset(z+max,0,sizeof(double**)*(size-max));
 		free(x);
 		x = z;
 		max=size; /* TODO resize */ 
@@ -99,8 +99,8 @@ public:
 		{
 			if ( x[n]==NULL ) 
 			{
-				x[n] = (double**)malloc(sizeof(double**)*max);
-				memset(x[n],0,sizeof(double**)*max);
+				x[n] = (double**)malloc(sizeof(double*)*max);
+				memset(x[n],0,sizeof(double*)*max);
 			}
 			n++;
 		}
