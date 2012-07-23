@@ -554,24 +554,61 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 	}
 }
 
+static int guid_first=1;
 char *global_guid(char *buffer, int size)
 {
-	static int first=1;
-	if ( size>32 )
+	if ( size>36 )
 	{
-		if ( first )
+		if ( guid_first )
 		{
 			srand((unsigned int)time(NULL));
-			first = 0;
+			guid_first = 0;
 		}
 		// TODO this is a pseudo-GUID - implement a proper GUID
 		sprintf(buffer,"%04x%04x-%04x-%04x-%04x-%04x%04x%04x",
-			rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand());
+			rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff);
 		return buffer;
 	}
 	else
 	{
 		output_error("global_guid(...): buffer too small");
+		return NULL;
+	}
+}
+char *global_run(char *buffer, int size)
+{
+	static char value[37]="";
+	if ( value[0]=='\0' )
+	{
+		if ( guid_first )
+		{
+			srand((unsigned int)time(NULL));
+			guid_first = 0;
+		}
+		// TODO this is a pseudo-GUID - implement a proper GUID
+		sprintf(value,"%04x%04x-%04x-%04x-%04x-%04x%04x%04x",
+			rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff);
+	}
+	if ( size>36 )
+	{
+		strcpy(buffer,value);
+		return buffer;
+	}
+	else
+		return NULL;
+}
+char *global_now(char *buffer, int size)
+{
+	if ( size>32 )
+	{
+		time_t now = time(NULL);
+		struct tm *tmbuf = localtime(&now);
+		strftime(buffer,size,"%Y%m%d-%H%M%S%z",tmbuf);
+		return buffer;
+	}
+	else
+	{
+		output_error("global_now(...): buffer too small");
 		return NULL;
 	}
 }
@@ -582,11 +619,20 @@ char *global_guid(char *buffer, int size)
 
 	This function searches global, user-defined, and module variables for a match.
 **/
-char *global_getvar(char *name, char *buffer, int size){
-	//static char local_buff[1024];
+char *global_getvar(char *name, char *buffer, int size)
+{
 	char temp[1024];
 	int len = 0;
 	GLOBALVAR *var = NULL;
+	struct {
+		char *name;
+		char *(*call)(char *buffer,int size);
+	} map[] = {
+		{"GUID",global_guid},
+		{"NOW",global_now},
+		{"RUN",global_run},
+	};
+	int i;	
 	if(buffer == NULL){
 		output_error("global_getvar: buffer not supplied");
 		return 0;
@@ -601,9 +647,11 @@ char *global_getvar(char *name, char *buffer, int size){
 	}
 
 	/* special variables names */
-	if ( strcmp(name,"GUID")==0 )
-		return global_guid(buffer,size);
-
+	for ( i=0 ; i<sizeof(map)/sizeof(map[0]) ; i++ )
+	{
+		if ( strcmp(name,map[i].name)==0 )
+			return map[i].call(buffer,size);
+	}
 	var = global_find(name);
 	if(var == NULL)
 		return NULL;
