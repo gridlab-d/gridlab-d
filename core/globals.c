@@ -554,6 +554,28 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 	}
 }
 
+char *global_guid(char *buffer, int size)
+{
+	static int first=1;
+	if ( size>32 )
+	{
+		if ( first )
+		{
+			srand((unsigned int)time(NULL));
+			first = 0;
+		}
+		// TODO this is a pseudo-GUID - implement a proper GUID
+		sprintf(buffer,"%04x%04x-%04x-%04x-%04x-%04x%04x%04x",
+			rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand());
+		return buffer;
+	}
+	else
+	{
+		output_error("global_guid(...): buffer too small");
+		return NULL;
+	}
+}
+
 /** Get the value of a global variable in a safer fashion
 	@return a \e char * pointer to the buffer holding the buffer where we wrote the data,
 		\p NULL if insufficient buffer space or if the \p name was not found.
@@ -577,6 +599,11 @@ char *global_getvar(char *name, char *buffer, int size){
 		output_error("global_getvar: invalid buffer size");
 		return NULL; /* user error ... could force it, but that's asking for trouble. */
 	}
+
+	/* special variables names */
+	if ( strcmp(name,"GUID")==0 )
+		return global_guid(buffer,size);
+
 	var = global_find(name);
 	if(var == NULL)
 		return NULL;
