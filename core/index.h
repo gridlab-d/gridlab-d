@@ -14,7 +14,7 @@
 
 typedef struct s_index {
 	unsigned int id;	/**< the index id */
-	LIST **ordinal;		/**< the list of ordinals */
+	GLLIST **ordinal;		/**< the list of ordinals */
 	int first_ordinal;	/**< the first ordinal in the list */
 	int last_ordinal;	/**< the last ordinal in the list */
 	int last_used;		/**< the last ordinal in use */

@@ -270,7 +270,7 @@ threadpool_t tp_alloc(int *count, void (*run)(int thread, void *item))
 }
 
 
-void tp_exec(threadpool_t pool, LIST *list)
+void tp_exec(threadpool_t pool, GLLIST *list)
 {
 	struct threadpool *tp = (struct threadpool *) pool;
 
@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
 		{ (void *) "sleep 1   # 14", NULL, NULL },
 		{ NULL, NULL, NULL},
 	};
-	LIST list = {0, NULL, NULL};
+	GLLIST list = {0, NULL, NULL};
 	int thread_count = 4;
 	struct threadpool *tp = (struct threadpool *) tp_alloc(&thread_count, my_run);
 

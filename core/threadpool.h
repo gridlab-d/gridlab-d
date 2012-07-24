@@ -16,7 +16,7 @@ typedef const void * threadpool_t;
 
 int processor_count(void);
 threadpool_t tp_alloc(int *count, void (*run)(int thread, void *item));
-void tp_exec(threadpool_t pool, LIST *list);
+void tp_exec(threadpool_t pool, GLLIST *list);
 void tp_release(threadpool_t pool);
 
 #endif /* _THREADPOOL_H */

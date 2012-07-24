@@ -19,12 +19,12 @@ typedef struct s_list {
 	unsigned int size;
 	LISTITEM *first;
 	LISTITEM *last;
-} LIST;
+} GLLIST;
 
-LIST *list_create(void);
-void list_destroy(LIST *list);
-LISTITEM *list_append(LIST *list, void *data);
-void list_shuffle(LIST *list);
+GLLIST *list_create(void);
+void list_destroy(GLLIST *list);
+LISTITEM *list_append(GLLIST *list, void *data);
+void list_shuffle(GLLIST *list);
 
 #endif
 

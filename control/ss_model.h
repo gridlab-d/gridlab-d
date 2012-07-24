@@ -4,8 +4,8 @@
 
  **/
 
-#ifndef _ASSERT_H
-#define _ASSERT_H
+#ifndef _SSMODEL_H
+#define _SSMODEL_H
 
 #include "gridlabd.h"
 

@@ -32,7 +32,7 @@ INDEX *index_create(int first_ordinal, /**< the first ordinal */
 			errno = EINVAL;
 			goto Undo;
 		}
-		index->ordinal = malloc(sizeof(LIST*)*size);
+		index->ordinal = malloc(sizeof(GLLIST*)*size);
 		if (index->ordinal==NULL)
 		{
 			errno = ENOMEM;
@@ -41,7 +41,7 @@ INDEX *index_create(int first_ordinal, /**< the first ordinal */
 		index->id = next_index_id++;
 		index->first_ordinal = first_ordinal;
 		index->last_ordinal = last_ordinal;
-		memset(index->ordinal,0,sizeof(LIST*)*size);
+		memset(index->ordinal,0,sizeof(GLLIST*)*size);
 		output_verbose("creating index %d", index->id);
 	}
 	else
@@ -89,10 +89,10 @@ STATUS index_insert(INDEX *index,	/**< the index to which the item is added */
 	{	
 		int oldsize = index->last_ordinal - index->first_ordinal;
 		int newsize = oldsize;
-		LIST **newblock = NULL;
+		GLLIST **newblock = NULL;
 		while (ordinal >= index->first_ordinal + newsize)
 			newsize *= 2;	/* double until it fits */
-		newblock = malloc(sizeof(LIST*)*newsize);
+		newblock = malloc(sizeof(GLLIST*)*newsize);
 		if (newblock==NULL)
 		{
 			output_fatal("unable to grow index %d: %s",index->id, strerror(errno));
@@ -104,8 +104,8 @@ STATUS index_insert(INDEX *index,	/**< the index to which the item is added */
 			return FAILED;
 		}
 		output_verbose("growing index %d to %d ordinals", index->id, newsize);
-		memset(newblock,0,sizeof(LIST*)*newsize);
-		memcpy(newblock,index->ordinal,sizeof(LIST*)*oldsize);
+		memset(newblock,0,sizeof(GLLIST*)*newsize);
+		memcpy(newblock,index->ordinal,sizeof(GLLIST*)*oldsize);
 		free(index->ordinal);
 		index->ordinal = newblock;
 		index->last_ordinal = index->first_ordinal + newsize;
