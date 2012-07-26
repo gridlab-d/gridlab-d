@@ -4,6 +4,7 @@
 ; 
 ; Entries in this file follow the Posix standard for TZ
 ; The years specify which TZ rules go into effect that year
+; Cities must be listed immediately after the timezone in which they are located
 ;
 ; IMPORTANT NOTE: year sections must be in chronological order
 ;
@@ -13,6 +14,7 @@ GMT0 ; Greenwich Mean Time, no DST
 EST5 ; Eastern no DST
 CST6 ; Central no DST
 MST7 ; Mountain no DST
+ USA/AZ/Phoenix
 PST8 ; Pacific no DST
 AST9 ; Alaska no DST
 HST10; Hawaii no DST
@@ -20,9 +22,17 @@ HST10; Hawaii no DST
 [1970] ; Rules as of 1967
 GMT0GMT,M3.5.0/02:00,M10.5.0/2:00 ; GMT, DST last Sun/Mar to last Sun/Oct
 EST+5EDT,M4.5.0/02:00,M10.5.0/02:00 ; Eastern, DST last Sun/Apr to last Sun/Oct
+ USA/DC/Washington
+ USA/NY/New York
+ USA/MA/Boston
+ USA/MD/Baltimore
 CST+6CDT,M4.5.0/02:00,M10.5.0/02:00 ; Central, DST last Sun/Apr to last Sun/Oct
 MST+7MDT,M4.5.0/02:00,M10.5.0/02:00 ; Mountain, DST last Sun/Apr to last Sun/Oct
 PST+8PDT,M4.5.0/02:00,M10.5.0/02:00 ; Pacific, DST last Sun/Apr to last Sun/Oct
+ USA/CA/Los Angeles
+ USA/CA/San Francisco
+ USA/OR/Portland
+ USA/WA/Seattle
 AST+9ADT,M4.5.0/02:00,M10.5.0/02:00 ; Alaska DST last Sun/Apr to last Sun/Oct
 HST+10HDT,M4.5.0/02:00,M10.5.0/02:00 ; Hawaii DST last Sun/Apr to last Sun/Oct
 
@@ -41,4 +51,3 @@ MST+7MDT,M3.2.0/02:00,M11.1.0/02:00 ; Mountain, DST second Sun/Mar to first Sun/
 PST+8PDT,M3.2.0/02:00,M11.1.0/02:00 ; Pacific, DST second Sun/Mar to first Sun/Nov
 AST+9ADT,M3.2.0/02:00,M11.1.0/02:00 ; Alaska, DST second Sun/Mar to first Sun/Nov
 HST+10HDT,M3.2.0/02:00,M11.1.0/02:00 ; Hawaii, DST second Sun/Mar to first Sun/Nov
-

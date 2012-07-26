@@ -1464,6 +1464,7 @@ private: // data
 	OBJECT *obj;
 
 public: // constructors/casts
+	inline gld_property(void) : obj(NULL), prop(NULL) {};
 	inline gld_property(gld_object *o, char *n) : obj(o->my()) { if (o) prop=callback->properties.get_property(o->my(),n); else {GLOBALVAR *v=callback->global.find(n); prop= (v?v->prop:NULL);} };
 	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), prop(p) {};
 	inline gld_property(OBJECT *o, char *n) : obj(o) { if (o) prop=callback->properties.get_property(o,n); else {GLOBALVAR *v=callback->global.find(n); prop= (v?v->prop:NULL);} };
@@ -1488,6 +1489,10 @@ public: // read accessors
 	inline int from_string(char *string) { return callback->convert.string_to_property(prop,get_addr(),string); };
 
 public: // write accessors
+	inline void set_object(OBJECT *o) { obj=o; };
+	inline void set_object(gld_object *o) { obj=o->my(); };
+	inline void set_property(char *n) { prop=callback->properties.get_property(obj,n); };
+	inline void set_property(PROPERTY *p) { prop=p; };
 
 public: // special operations
 	inline bool is_valid(void) { return prop!=NULL; }
