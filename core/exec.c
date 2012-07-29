@@ -466,11 +466,13 @@ static STATUS init_by_creation(){
 			if (object_init(obj)==FAILED){
 				char *b = (char *)malloc(64);
 				memset(b, 0, 64);
-				THROW("init_all(): object %s initialization failed", object_name(obj, b, 63));
+				output_error("init_all(): object %s initialization failed", object_name(obj, b, 63));
 				/* TROUBLESHOOT
 					The initialization of the named object has failed.  Make sure that the object's
 					requirements for initialization are satisfied and try again.
 				 */
+				rv = FAILED;
+				break;
 			}
 			if((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME){
 				if(0 == strcmp(obj->name, "")){
@@ -662,6 +664,8 @@ static STATUS init_all(void)
 			output_fatal("Unrecognized initialization mode");
 			rv = FAILED;
 	}
+	errno = EINVAL;
+	if ( rv==FAILED) return FAILED;
 
 	/* collect heartbeat objects */
 	for ( obj=object_get_first(); obj!=NULL ; obj=obj->next )
@@ -716,11 +720,13 @@ static STATUS precommit_all(TIMESTAMP t0){
 				if(curr == FAILED){
 					char *b = (char *)malloc(64);
 					memset(b, 0, 64);
-					THROW("object %s precommit failed", object_name(obj, b, 63));
+					output_error("object %s precommit failed", object_name(obj, b, 63));
 					/* TROUBLESHOOT
 						The precommit function of the named object has failed.  Make sure that the object's
 						requirements for precommit'ing are satisfied and try again.  (likely internal state aberations)
 					 */
+					rv = FAILED;
+					break;
 				}
 			}
 		}
@@ -744,14 +750,16 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2){
 		{
 			if(obj->in_svc <= t0 && obj->out_svc >= t0){
 				curr = object_commit(obj, t0, t2);
-				if(curr == FAILED){
+				if(curr == TS_INVALID){
 					char *b = (char *)malloc(64);
 					memset(b, 0, 64);
-					THROW("commit_all(): object %s commit failed", object_name(obj, b, 63));
+					output_error("commit_all(): object %s commit failed", object_name(obj, b, 63));
 					/* TROUBLESHOOT
 						The commit function of the named object has failed.  Make sure that the object's
 						requirements for commit'ing are satisfied and try again.  (likely internal state aberations)
 					 */
+					min = TS_INVALID;
+					break;
 				} else if(curr < min){
 					min = curr;
 				}
@@ -780,11 +788,13 @@ static STATUS finalize_all(){
 			if(curr == FAILED){
 				char *b = (char *)malloc(64);
 				memset(b, 0, 64);
-				THROW("object %s finalize failed", object_name(obj, b, 63));
+				output_error("object %s finalize failed", object_name(obj, b, 63));
 				/* TROUBLESHOOT
 					The finalize function of the named object has failed.  Make sure that the object's
 					requirements for finalize'ing are satisfied and try again.  (likely internal state aberations)
 				 */
+				rv = FAILED;
+				break;
 				}
 		}
 	} CATCH(char *msg){
@@ -849,7 +859,7 @@ TIMESTAMP sync_heartbeats(void)
 	unsigned int n;
 	for ( n=0 ; n<n_object_heartbeats ; n++ )
 	{
-		TIMESTAMP t2 = object_heartbeat(&object_heartbeats[n]);
+		TIMESTAMP t2 = object_heartbeat(object_heartbeats[n]);
 		if ( t2 < t1 ) t2 = t1;
 	}
 
@@ -1076,11 +1086,101 @@ void exec_mls_done(void)
 	pthread_cond_destroy(&mls_svr_signal);
 }
 
+/******************************************************************
+ Synchronization time handling functions
+
+ * Hard sync is a sync time that should always be considered
+
+ * Soft sync is a sync time should only be considered when
+   the hard sync is not TS_NEVER
+
+ * Status is SUCCESS if the sync time is valid
+
+*******************************************************************/
+struct sync_data sync_d = {TS_NEVER,0,SUCCESS};
+#ifdef NEWSYNCDATA
+/** Reset the sync time data structure **/
+void reset_synctime(struct sync_data *d) /**< sync data to reset **/
+{
+	if ( d==NULL ) d=&sync_d;
+	d->hard = d->soft = TS_NEVER;
+}
+/** Merge the sync data structure **/
+void merge_syncdata(struct sync_data *to, /**< sync data to merge to **/
+					struct sync_data *from) /**< sync data to merge from */
+{
+	if ( to==NULL ) to = &sync_d;
+	if ( from->hard<to->hard ) to->hard=from->hard;
+	if ( from->soft<to->soft ) to->soft=from->soft;
+}
+/** Update the sync data structure **/
+void set_synctime(struct sync_data *d, /**< sync data to update */
+				  TIMESTAMP t)/**< timestamp to update with (negative time means soft event, 0 means failure) */
+{
+	if ( d==NULL ) d=&sync_d;
+
+	// this is a soft sync
+	if ( t<0 && ( d->soft==TS_NEVER || -t<=d->soft ) )
+		d->soft = -t;
+
+	// this is a hard sync
+	else if ( t>0 && ( d->hard==TS_NEVER || d->hard>=t ) )
+		d->hard = t;
+
+	// this is a sync failure
+	else
+	{
+		d->hard = d->soft = TS_INVALID;
+	}
+}
+/** Get the current sync time **/
+TIMESTAMP get_synctime(struct sync_data *d) /**< Sync data to get sync time from */
+{
+	if ( d==NULL ) d=&sync_d;
+	if ( is_hardsync(d) ) 
+		return d->hard;
+	else if ( is_softsync(d) )
+		return d->soft;
+	else if ( is_never(d) )
+		return TS_NEVER;
+	else
+		return TS_INVALID;
+}
+/** Determine whether the current sync data is a hard sync **/
+int is_hardsync(struct sync_data *d) /**< Sync data to read hard sync status from */
+{
+	if ( d==NULL ) d=&sync_d;
+	return ( d->hard>TS_INVALID && d->hard<TS_NEVER );
+}
+/** Determine whether the current sync data is a soft sync **/
+int is_softsync(struct sync_data *d) /**< Sync data to read soft sync status from */
+{
+	if ( d==NULL ) d=&sync_d;
+	return ( d->hard==TS_NEVER && d->soft>TS_INVALID && d->soft<TS_NEVER );
+}
+/** Determine whether the current sync data time is never **/
+int is_never(struct sync_data *d) /**< Sync data to read never sync status from */
+{
+	if ( d==NULL ) d=&sync_d;
+	return d->hard==TS_NEVER && d->soft==TS_NEVER;
+}
+/** Determine whether the currenet sync time is invalid **/
+int is_invalid(struct sync_data *d) /**< Sync data to read invalid sync status from */
+{
+	if ( d==NULL ) d=&sync_d;
+	return d->hard==TS_INVALID || d->soft==TS_INVALID;
+}
+/** Determine the current sync status */
+STATUS get_syncstatus(struct sync_data *d) /**< Sync data to read sync status from */
+{
+	if ( d==NULL ) d=&sync_d;
+	return is_invalid(d) ? FAILED : SUCCESS;
+}
+#endif
 /** This is the main simulation loop
 	@return STATUS is SUCCESS if the simulation reached equilibrium, 
 	and FAILED if a problem was encountered.
  **/
-struct sync_data sync_d = {TS_NEVER,0,SUCCESS};
 STATUS exec_start(void)
 {
 	//sjin: remove threadpool
