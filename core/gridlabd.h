@@ -1161,6 +1161,9 @@ public: // read accessors
 	inline bool get_is_dst(void) { return dt.is_dst?true:false; };
 	inline unsigned short get_weekday(void) { return dt.weekday; };
 	inline unsigned short get_yearday(void) { return dt.yearday; };
+	inline int get_tzoffset(void) { return dt.tzoffset; };
+	inline TIMESTAMP get_timestamp(void) { return dt.timestamp; };
+	inline TIMESTAMP get_localtimestamp(void) { return dt.timestamp - dt.tzoffset; };
 public: // write accessors
 	inline TIMESTAMP set_year(unsigned short y) { dt.year=y; return callback->time.mkdatetime(&dt); };
 	inline TIMESTAMP set_month(unsigned short m) { dt.month=m; return callback->time.mkdatetime(&dt); };

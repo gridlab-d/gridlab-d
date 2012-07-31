@@ -55,6 +55,7 @@ typedef struct s_datetime {
 	unsigned short weekday; /**< 0=Sunday */
 	unsigned short yearday; /**< 0=Jan 1 */
 	TIMESTAMP timestamp; /**< GMT timestamp */
+	int tzoffset; /**< time zone offset in seconds (-43200 - 43200) */
 } DATETIME; /**< the s_datetime structure */
 
 #ifdef __cplusplus

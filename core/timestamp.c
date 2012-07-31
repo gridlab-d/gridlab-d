@@ -263,6 +263,9 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	/* determine timezone */
 	strncpy(dt->tz, tzvalid ? (dt->is_dst ? tzdst : tzstd) : "GMT", sizeof(dt->tz));
 
+	/* timezone offset in seconds */
+	dt->tzoffset = tzoffset - (isdst(dt->timestamp)?3600:0);
+
 #ifdef USE_TS_CACHE
 	/* cache result */
 	old_ts = ts;

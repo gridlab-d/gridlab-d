@@ -672,6 +672,7 @@ typedef struct s_datetime { ///< The s_datetime structure
 	unsigned short weekday; /**< 0=Sunday */
 	unsigned short yearday; /**< 0=Jan 1 */
 	TIMESTAMP timestamp; /**< GMT timestamp */
+	int tzoffset; /**< time zone offset in seconds (-43200 - 43200) */
 } DATETIME; ///< A typedef for struct s_datetime
 
 struct s_schedule {
