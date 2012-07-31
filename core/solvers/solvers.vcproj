@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="solvers"
+	Name="glsolvers"
 	ProjectGUID="{9FC21883-FA66-495E-B72D-BBEE5AF1FF54}"
 	RootNamespace="solvers"
 	>
@@ -174,7 +174,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="..\..\VS2005\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			UseOfMFC="1"
