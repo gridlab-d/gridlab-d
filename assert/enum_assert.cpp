@@ -86,13 +86,13 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	{
 		if (value != x) 
 		{
-			gl_verbose("Assert failed on %s: %s=%g did not match %g", 
+			gl_error("Assert failed on %s: %s=%g did not match %g", 
 				get_parent()->get_name(), target, x, value);
 			return 0;
 		}
 		else
 		{
-			gl_verbose("Assert passed on %s", get_parent()->get_name());
+			gl_error("Assert passed on %s", get_parent()->get_name());
 			return TS_NEVER;
 		}
 	}
@@ -100,7 +100,7 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	{
 		if (value == x)
 		{
-			gl_verbose("Assert failed on %s: %s=%g did match %g", 
+			gl_error("Assert failed on %s: %s=%g did match %g", 
 				get_parent()->get_name(), target, x, value);
 			return 0;
 		}

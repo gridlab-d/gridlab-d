@@ -135,7 +135,7 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 				&& ( operation==FULL || operation==REAL )
 				)
 			{
-				gl_verbose("Assert failed on %s: real part of %s %g not within %f of given value %g", 
+				gl_error("Assert failed on %s: real part of %s %g not within %f of given value %g", 
 					get_parent()->get_name(), target, x.Re(), within, value.Re());
 				return 0;
 			}
@@ -143,7 +143,7 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 				&& ( operation==FULL || operation==IMAGINARY )
 				)
 			{
-				gl_verbose("Assert failed on %s: imaginary part of %s %+gi not within %f of given value %+gi", 
+				gl_error("Assert failed on %s: imaginary part of %s %+gi not within %f of given value %+gi", 
 					get_parent()->get_name(), target, x.Im(), within, value.Im());
 				return 0;
 			}
@@ -153,7 +153,7 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 			double magnitude_error = x.Mag() - value.Mag();
 			if ( _isnan(magnitude_error) || fabs(magnitude_error)>within )
 			{
-				gl_verbose("Assert failed on %s: Magnitude of %s (%g) not within %f of given value %g", 
+				gl_error("Assert failed on %s: Magnitude of %s (%g) not within %f of given value %g", 
 					get_parent()->get_name(), target, x.Mag(), within, value.Mag());
 				return 0;
 			}
@@ -163,7 +163,7 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 			double angle_error = x.Arg() - value.Arg();
 			if ( _isnan(angle_error) || fabs(angle_error)>within )
 			{
-				gl_verbose("Assert failed on %s: Angle of %s (%g) not within %f of given value %g", 
+				gl_error("Assert failed on %s: Angle of %s (%g) not within %f of given value %g", 
 					get_parent()->get_name(), target, x.Arg(), within, value.Arg());
 				return 0;
 			}
@@ -180,11 +180,11 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		{
 			if ( _isnan(real_error) || fabs(real_error)<within ) 
 			{
-				gl_verbose("Assert failed on %s: real part of %s %g is within %f of %g", 
+				gl_error("Assert failed on %s: real part of %s %g is within %f of %g", 
 					get_parent()->get_name(), target, x.Re(), within, value.Re());
 			}
 			if ( _isnan(imag_error) || fabs(imag_error)<within ) {
-				gl_verbose("Assert failed on %s: imaginary part of %s %+gi is within %f of %gi", 
+				gl_error("Assert failed on %s: imaginary part of %s %+gi is within %f of %gi", 
 					get_parent()->get_name(), target, x.Im(), within, value.Im());
 			}
 			return 0;

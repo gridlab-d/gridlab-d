@@ -141,7 +141,7 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		double m = fabs(x-value);
 		if ( _isnan(m) || m>range )
 		{				
-			gl_verbose("Assert failed on %s: %s %g not within %f of given value %g", 
+			gl_error("Assert failed on %s: %s %g not within %f of given value %g", 
 				get_parent()->get_name(), target, x, range, value);
 			return 0;
 		}
@@ -153,7 +153,7 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		double m = fabs(x-value);
 		if ( _isnan(m) || m<range )
 		{				
-			gl_verbose("Assert failed on %s: %s %g is within %f of given value %g", 
+			gl_error("Assert failed on %s: %s %g is within %f of given value %g", 
 				get_parent()->get_name(), target, x, range, value);
 			return 0;
 		}
