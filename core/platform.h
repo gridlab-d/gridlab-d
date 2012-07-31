@@ -78,7 +78,8 @@
 #define NATIVE int32	/**< native integer size */
 #endif
 
-#define QNAN (sqrt(-1.0))
+static int64 _qnan = 0xffffffffffffffffLL;
+#define QNAN (*(double*)&_qnan)
 
 #endif
 /**@}**/

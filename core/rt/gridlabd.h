@@ -545,14 +545,12 @@ struct s_module_list {
 	int (*import_file)(char *file);
 	int (*export_file)(char *file);
 	int (*check)();
-#ifndef _NO_CPPUNIT
-	int (*module_test)(void *callbacks,int argc,char* argv[]);
-#endif
 	int (*cmdargs)(int,char**);
 	int (*kmldump)(FILE*fp,OBJECT*);
 	void (*test)(int argc, char *argv[]);
 	MODULE *(*subload)(char *, MODULE **, CLASS **, int, char **);
 	PROPERTY *globals;
+	void (*term)(void);
 	MODULE *next;
 };
 
@@ -590,6 +588,7 @@ struct s_class_list {
 	FUNCTIONADDR plc;
 	PASSCONFIG passconfig;
 	FUNCTIONADDR recalc;
+	FUNCTIONADDR heartbeat;
 	CLASS *parent;			/**< parent class from which properties should be inherited */
 	struct {
 		int32 numobjs;
@@ -617,6 +616,18 @@ typedef struct s_forecast {
 	struct s_forecast *next; /**< next forecast data block (NULL for last) */
 } FORECAST; /**< Forecast data block */
 
+typedef enum {
+	OPI_PRESYNC,
+	OPI_SYNC,
+	OPI_POSTSYNC,
+	OPI_INIT,
+	OPI_HEARTBEAT,
+	OPI_PRECOMMIT,
+	OPI_COMMIT,
+	OPI_FINALIZE,
+	/* add profile items here */
+	_OPI_NUMITEMS,
+} OBJECTPROFILEITEM;
 struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
 	char32 groupid;
@@ -632,7 +643,7 @@ struct s_object_list {
 	TIMESTAMP in_svc, /**< time at which object begin's operating */
 		out_svc; /**< time at which object ceases operating */
 	OBJECTNAME name;
-	clock_t synctime[3]; /**< total sync time used by this object */
+	clock_t synctime[_OPI_NUMITEMS]; /**< total time used by this object */
 	NAMESPACE *space; /**< namespace of object */
 	unsigned int lock; /**< object lock */
 	unsigned int rng_state; /**< random number generator state */

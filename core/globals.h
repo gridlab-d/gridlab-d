@@ -101,7 +101,7 @@ GLOBAL int global_process_id INIT(0); /**< the main process id */
 GLOBAL char global_execname[1024] INIT(""); /**< the main program full path */
 GLOBAL char global_tmp[1024] /**< location for temp files */
 #ifdef WIN32
-							INIT("C:\\WINDOWS\\TEMP"); 
+							INIT("C:\\WINDOWS\\TEMP");
 #else
 							INIT("/tmp"); 
 #endif
@@ -117,8 +117,8 @@ GLOBAL int global_init_sequence INIT(IS_CREATION); /** initialization sequence, 
 #include "realtime.h"
 
 GLOBAL TIMESTAMP global_clock INIT(TS_ZERO); /**< The main clock timestamp */
-GLOBAL TIMESTAMP global_starttime INIT(946684800); /**< The simulation starting time */
-GLOBAL TIMESTAMP global_stoptime INIT(TS_NEVER); /**< The simulation stop time */
+GLOBAL TIMESTAMP global_starttime INIT(946684800); /**< The simulation starting time (default is 2000-01-01 0:00) */
+GLOBAL TIMESTAMP global_stoptime INIT(TS_NEVER); /**< The simulation stop time (default is 1 year after start time) */
 
 GLOBAL char global_double_format[32] INIT("%+lg"); /**< the format to use when processing real numbers */
 GLOBAL char global_complex_format[256] INIT("%+lg%+lg%c"); /**< the format to use when processing complex numbers */

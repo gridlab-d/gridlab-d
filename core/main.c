@@ -69,10 +69,15 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	char *browser = getenv("GLBROWSER");
 	char *buildinfo = strstr(BUILD,":");
 	
+	/* set the default timezone */
+	timestamp_set_tz(NULL);
+
+	/* set the version info */
 	global_version_build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
 	strcpy(global_version_branch,BRANCH);
 	global_process_id = getpid();
 
+	/* specify the default browser */
 	if ( browser!= NULL )
 		strncpy(global_browser,browser,sizeof(global_browser)-1);
 
@@ -202,6 +207,9 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	/* KML output */
 	if (strcmp(global_kmlfile,"")!=0)
 		kml_dump(global_kmlfile);
+
+	/* terminate */
+	module_termall();
 
 	/* wrap up */
 	output_verbose("shutdown complete");

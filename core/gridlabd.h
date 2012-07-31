@@ -1293,6 +1293,7 @@ private: // data
 	UNIT core;
 
 public: // constructors/casts
+	inline gld_unit(void) { memset(&core,0,sizeof(core)); };
 	inline gld_unit(char *name) { UNIT *unit=callback->unit_find(name); if (unit) memcpy(&core,unit,sizeof(UNIT)); else memset(&core,0,sizeof(UNIT)); };
 	inline operator UNIT*(void) { return &core; };
 
@@ -1307,7 +1308,10 @@ public: // read accessors
 	inline double get_a(void) { return core.a; };
 	inline double get_b(void) { return core.b; };
 	inline int get_prec(void) { return core.prec; };
-	inline bool is_valid(void) { return core.name[0]=='\0'; };
+	inline bool is_valid(void) { return core.name[0]!='\0'; };
+
+public: // write accessors
+	inline bool set_unit(char *name){ UNIT *unit=callback->unit_find(name); if (unit) {memcpy(&core,unit,sizeof(UNIT));return true;} else {memset(&core,0,sizeof(UNIT));return false;} };
 
 public: // special functions
 	inline bool convert(char *name, double &value) { UNIT *unit=callback->unit_find(name); return unit&&(callback->unit_convert_ex(&core,unit,&value))?true:false; }
@@ -1413,6 +1417,8 @@ public: // header read accessors (no locking)
 	inline unsigned long get_flags(unsigned long mask=0xffffffff) { return (my()->flags)&mask; };
 
 protected: // header write accessors (no locking)
+	inline void set_clock(TIMESTAMP ts=0) { my()->clock=(ts?ts:gl_globalclock); };
+	inline void set_heartbeat(TIMESTAMP dt) { my()->heartbeat=dt; };
 	inline void set_forecast(FORECAST *fs) { my()->forecast=fs; };
 	inline void set_latitude(double x) { my()->latitude=x; };
 	inline void set_longitude(double x) { my()->longitude=x; };
@@ -1474,6 +1480,8 @@ public: // constructors/casts
 	inline operator PROPERTY*(void) { return prop; };
 
 public: // read accessors
+	inline OBJECT *get_object(void) { return obj; };
+	inline PROPERTY *get_property(void) { return prop; };
 	inline gld_class* get_class(void) { return (gld_class*)prop->oclass; };
 	inline char *get_name(void) { return prop->name; };
 	inline gld_type get_type(void) { return gld_type(prop->ptype); };
@@ -1487,6 +1495,7 @@ public: // read accessors
 	inline PROPERTYFLAGS get_flags(void) { return prop->flags; };
 	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(prop,get_addr(),buffer,size); };
 	inline int from_string(char *string) { return callback->convert.string_to_property(prop,get_addr(),string); };
+	inline double get_part(char *part) { return callback->properties.get_part(obj,prop,part); };
 
 public: // write accessors
 	inline void set_object(OBJECT *o) { obj=o; };
@@ -1496,6 +1505,10 @@ public: // write accessors
 
 public: // special operations
 	inline bool is_valid(void) { return prop!=NULL; }
+	inline bool is_double(void) { switch(prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return true; default: return false;} };
+	inline bool is_integer(void) { switch(prop->ptype) { case PT_int16: case PT_int32: case PT_int64: return true; default: return false;} };
+	inline double get_double(void) { switch(prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return *(double*)get_addr(); default: return 0;} };
+	inline int64 get_integer(void) { switch(prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: return 0;} };
 	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
 	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
 	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };

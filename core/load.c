@@ -3318,7 +3318,7 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 			{
 				if (pUnit != NULL)
 				{
-					if (type==PT_double || type==PT_complex)
+					if (type==PT_double || type==PT_complex || type==PT_random)
 						prop = class_add_extended_property(oclass,propname,type,pUnit->name);
 					else
 					{

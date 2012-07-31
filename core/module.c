@@ -164,7 +164,7 @@ static CALLBACKS callbacks = {
 	object_set_dependent,
 	object_set_parent,
 	object_set_rank,
-	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr,class_string_to_propertytype,property_compare_basic,property_compare_op},
+	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr,class_string_to_propertytype,property_compare_basic,property_compare_op,property_get_part},
 	{find_objects,find_next,findlist_copy,findlist_add,findlist_del,findlist_clear},
 	class_find_property,
 	module_malloc,
@@ -404,6 +404,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	mod->subload = (MODULE *(*)(char *, MODULE **, CLASS **, int, char **))DLSYM(hLib, "subload");
 	mod->test = (void(*)(int,char*[]))DLSYM(hLib,"test");
 	mod->globals = NULL;
+	mod->term = (void(*)(void))DLSYM(hLib,"term");
 	strcpy(mod->name,file);
 	mod->next = NULL;
 
@@ -828,6 +829,16 @@ int module_depends(char *name, unsigned char major, unsigned char minor, unsigne
 	}
 	return 0;
 }
+
+void module_termall(void)
+{
+	MODULE *mod;
+	for (mod=first_module; mod!=NULL; mod=mod->next)
+	{
+		if ( mod->term ) mod->term();
+	}
+}
+
 
 /***************************************************************************
  * EXTERNAL COMPILER SUPPORT

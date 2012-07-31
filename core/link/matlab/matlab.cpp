@@ -686,6 +686,9 @@ EXPORT bool glx_init(glxlink *mod)
 		}
 	}
 
+	static int32 matlab_flag = 1;
+	gl_global_create("MATLAB",PT_int32,&matlab_flag,PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"indicates that MATLAB is available",NULL);
+
 	return true;
 }
 

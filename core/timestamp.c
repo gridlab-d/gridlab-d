@@ -147,7 +147,7 @@ int local_tzoffset(TIMESTAMP t)
 	}
 	return old_tzoffset;
 #else
-	return tzoffset + isdst(t)?3600:0;
+	return tzoffset + (isdst(t)?3600:0);
 #endif
 }
 
@@ -184,14 +184,16 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	tsyear = timestamp_year(local, &rem);
 
 	if (rem < 0){
-		/* THROW("local_datetime(TIMESTAMP=%"FMT_INT64"d, DATETIME *dt={...}): unable to determine local time %"FMT_INT64"ds %s", ts, rem, tzvalid?(dt->is_dst ? tzdst : tzstd) : "GMT",sizeof(dt->tz)); */
-		/* dt may not be initialized! -mh */
-		/* THROW("local_datetime(TIMESTAMP=%"FMT_INT64"d, DATETIME *dt={...}): unable to determine local time %"FMT_INT64"ds", ts, rem); */
-		THROW("local_datetime(...): unable to determine localtime; did you forget to initialize the clock?");
+		// DPC: note that as of 3.0, the clock is initialized by default, so this error can only
+		//      occur when an invalid timestamp is being converted to local time.  It should no
+		//      longer occur as a result of a missing clock directive.
+		//THROW("local_datetime(ts=%lli, ...): invalid timestamp cannot be converted to local time", ts);
 		/*	TROUBLESHOOT
-			Though the associated message is casual, the simulation will generally not start up in a
-			stable configuration if the clock is not given an initial value.
+			This is the result of an internal core or module coding error which resulted in an
+			invalid UTC clock time being converted to local time.
 		*/
+		rem = 0;
+		output_warning("local_datetime(ts=%lli,...): time before epoch truncated",ts);
 	}
 
 

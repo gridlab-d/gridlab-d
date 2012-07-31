@@ -345,6 +345,7 @@ int property_create(PROPERTY *, void *);
 bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, char *part);
 PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
 PROPERTYTYPE property_get_type(char *name);
+double property_get_part(void *obj, PROPERTY *prop, char *part);
 
 /* double array */
 int double_array_create(double_array*a);

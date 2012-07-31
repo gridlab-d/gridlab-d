@@ -53,7 +53,18 @@ typedef struct s_forecast {
 	TIMESTAMP (*external)(void *obj, void *fc); /**< external forecast update call */
 	struct s_forecast *next; /**< next forecast data block (NULL for last) */
 } FORECAST; /**< Forecast data block */
-
+typedef enum {
+	OPI_PRESYNC,
+	OPI_SYNC,
+	OPI_POSTSYNC,
+	OPI_INIT,
+	OPI_HEARTBEAT,
+	OPI_PRECOMMIT,
+	OPI_COMMIT,
+	OPI_FINALIZE,
+	/* add profile items here */
+	_OPI_NUMITEMS,
+} OBJECTPROFILEITEM;
 typedef struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
 	char32 groupid;
@@ -69,7 +80,7 @@ typedef struct s_object_list {
 	TIMESTAMP in_svc, /**< time at which object begin's operating */
 		out_svc; /**< time at which object ceases operating */
 	OBJECTNAME name;
-	clock_t synctime[3]; /**< total sync time used by this object */
+	clock_t synctime[_OPI_NUMITEMS]; /**< total time used by this object */
 	NAMESPACE *space; /**< namespace of object */
 	unsigned int lock; /**< object lock */
 	unsigned int rng_state; /**< random number generator state */
@@ -119,6 +130,7 @@ typedef struct s_callbacks {
 		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
 		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
+		double (*get_part)(OBJECT*,PROPERTY*,char*);
 	} properties;
 	struct {
 		struct s_findlist *(*objects)(struct s_findlist *,...);

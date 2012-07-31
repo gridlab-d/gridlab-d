@@ -18,7 +18,6 @@
 #include "module.h"
 #include "lock.h"
 
-static int global_true = 1;
 static GLOBALVAR *global_varlist = NULL, *lastvar = NULL;
 
 static KEYWORD df_keys[] = {
@@ -145,13 +144,6 @@ static struct s_varmap {
 	{"init_sequence", PT_enumeration, &global_init_sequence, PA_PUBLIC, "initialization sequence control flag", isc_keys},
 	{"minimum_timestep", PT_int32, &global_minimum_timestep, PA_PUBLIC, "minimum timestep"},
 	{"platform",PT_char8, global_platform, PA_REFERENCE, "operating platform"},
-#ifdef WIN32
-	{"WINDOWS",PT_bool,&global_true,PA_REFERENCE,"flag indicating the current platform is a windows machine"},
-#elif defined __APPLE__
-	{"APPLE",PT_bool,&global_true,PA_REFERENCE,"flag indicating the current platform is an Apple MacOS X machine"},
-#else
-	{"LINUX",PT_bool,&global_true,PA_REFERENCE,"flag indicating the current platform is a linux machine"},
-#endif
 	{"suppress_repeat_messages",PT_int32, &global_suppress_repeat_messages, PA_PUBLIC, "suppress repeated messages enable flag"},
 	{"maximum_synctime",PT_int32, &global_maximum_synctime, PA_PUBLIC, "maximum sync time for deltamode"},
 	{"run_realtime",PT_bool, &global_run_realtime, PA_PUBLIC, "realtime enable flag"},
@@ -602,10 +594,20 @@ char *global_now(char *buffer, int size)
 	if ( size>32 )
 	{
 		time_t now = time(NULL);
-		struct tm *tmbuf = localtime(&now);
-		strftime(buffer,size,"%Y%m%d-%H%M%S%z",tmbuf);
+		struct tm *tmbuf = gmtime(&now);
+		strftime(buffer,size,"%Y%m%d-%H%M%S",tmbuf);
 		return buffer;
 	}
+	else
+	{
+		output_error("global_now(...): buffer too small");
+		return NULL;
+	}
+}
+char *global_true(char *buffer, int size)
+{
+	if ( size>1 )
+		return strcpy(buffer,"1");
 	else
 	{
 		output_error("global_now(...): buffer too small");
@@ -631,6 +633,13 @@ char *global_getvar(char *name, char *buffer, int size)
 		{"GUID",global_guid},
 		{"NOW",global_now},
 		{"RUN",global_run},
+#if defined WIN32
+		{"WINDOWS",global_true},
+#elif defined __APPLE__
+		{"APPLE",global_true},
+#else
+		{"LINUX",global_true},
+#endif
 	};
 	int i;	
 	if(buffer == NULL){

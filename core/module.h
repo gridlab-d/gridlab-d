@@ -29,6 +29,7 @@ struct s_module_list {
 	void (*test)(int argc, char *argv[]);	
 	MODULE *(*subload)(char *, MODULE **, CLASS **, int, char **);
 	PROPERTY *globals;
+	void (*term)(void);
 	struct s_module_list *next;
 }; /* MODULE */
 
@@ -83,6 +84,7 @@ extern "C" {
 	int module_compile(char *name, char *code, int flags, char *prefix, char *file, int line);
 	void module_profiles(void);
 	CALLBACKS *module_callbacks(void);
+	void module_termall(void);
 
 #ifdef __cplusplus
 }

@@ -287,7 +287,6 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 
 	memset(obj, 0, sz + oclass->size);
 
-	obj->synctime[0] = obj->synctime[1] = obj->synctime[2] = 0;
 	tp_next %= tp_count;
 
 	obj->id = next_object_id++;
@@ -355,7 +354,7 @@ OBJECT *object_create_foreign(OBJECT *obj) /**< a pointer to the OBJECT data str
 			This is most likely a bug and should be reported.
 		 */
 
-	obj->synctime[0] = obj->synctime[1] = obj->synctime[2] = 0;
+	memset(obj->synctime,0,sizeof(obj->synctime));
 
 	obj->id = next_object_id++;
 	obj->next = NULL;
@@ -1215,11 +1214,23 @@ char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
 		return "";
 }
 
+void object_profile(OBJECT *obj, OBJECTPROFILEITEM pass, clock_t t)
+{
+	if ( global_profiler==1 )
+	{
+		clock_t dt = clock()-t;
+		obj->synctime[pass] += dt;
+		wlock(&obj->oclass->profiler.lock);
+		obj->oclass->profiler.count++;
+		obj->oclass->profiler.clocks += dt;
+		wunlock(&obj->oclass->profiler.lock);
+	}
+}
+
 TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 					  TIMESTAMP ts, /**< the desire clock to sync to */
 					  PASSCONFIG pass) /**< the pass configuration */
 {
-	clock_t t=clock();
 	CLASS *oclass = obj->oclass;
 	register TIMESTAMP plc_time=TS_NEVER, sync_time;
 	TIMESTAMP effective_valid_to = min(obj->clock+global_skipsafe,obj->valid_to);
@@ -1283,22 +1294,6 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 	else
 		obj->valid_to = sync_time; // NOTE, this can be negative
 
-	/* do profiling, if needed */
-	if ( global_profiler==1 )
-	{
-		clock_t dt = clock()-t;
-		switch ( pass ) {
-		case PC_PRETOPDOWN : obj->synctime[0] += dt; break;
-		case PC_BOTTOMUP : obj->synctime[1] += dt; break;
-		case PC_POSTTOPDOWN : obj->synctime[2] += dt; break;
-		default: break;
-		}
-		wlock(&obj->oclass->profiler.lock);
-		obj->oclass->profiler.count++;
-		obj->oclass->profiler.clocks += dt;
-		wunlock(&obj->oclass->profiler.lock);
-	}
-
 #ifndef WIN32
 	/* clear lockup alarm */
 	alarm(0);
@@ -1320,6 +1315,7 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 					  TIMESTAMP ts, /**< the desire clock to sync to */
 					  PASSCONFIG pass) /**< the pass configuration */
 {
+	clock_t t=clock();
 	TIMESTAMP t2=TS_NEVER;
 	//TIMESTAMP t_start = ts;
 	//TIMESTAMP abs_t2 = ts;
@@ -1367,12 +1363,27 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 		/* don't call sync beyond valid horizon */
 		t2 = _object_sync(obj,(ts<(obj->valid_to>0?obj->valid_to:TS_NEVER)?ts:obj->valid_to),pass);	
 	} while (t2>0 && ts>(t2<0?-t2:t2) && t2<TS_NEVER);
+
+	/* do profiling, if needed */
+	if ( global_profiler==1 )
+	{
+		switch (pass) {
+		case PC_PRETOPDOWN: object_profile(obj,OPI_PRESYNC,t);break;
+		case PC_BOTTOMUP: object_profile(obj,OPI_SYNC,t);break;
+		case PC_POSTTOPDOWN: object_profile(obj,OPI_POSTSYNC,t);break;
+		default: break;
+		}
+	}
+
 	return t2;
 }
 
 TIMESTAMP object_heartbeat(OBJECT *obj)
 {
-	return obj->oclass->heartbeat ? obj->oclass->heartbeat(obj) : TS_NEVER;
+	clock_t t=clock();
+	TIMESTAMP t1 = obj->oclass->heartbeat ? obj->oclass->heartbeat(obj) : TS_NEVER;
+	object_profile(obj,OPI_HEARTBEAT,t);
+	return t1;
 }
 
 /** Initialize an object.  This should not be called until
@@ -1380,11 +1391,15 @@ TIMESTAMP object_heartbeat(OBJECT *obj)
 
 	@return 1 on success; 0 on failure
  **/
-int object_init(OBJECT *obj){ /**< the object to initialize */
-	if(obj->oclass->init != NULL){
-		return (int)(*(obj->oclass->init))(obj, obj->parent);
-	}
-	return 1;
+int object_init(OBJECT *obj) /**< the object to initialize */
+{
+	clock_t t=clock();
+	int rv = 1;
+	obj->clock = global_starttime;
+	if(obj->oclass->init != NULL)
+		rv = (int)(*(obj->oclass->init))(obj, obj->parent);
+	object_profile(obj,OPI_INIT,t);
+	return rv;
 }
 
 /** Run events that should only occur at the start of a timestep.
@@ -1396,28 +1411,32 @@ int object_init(OBJECT *obj){ /**< the object to initialize */
 
 	The return value is if the function successfully completed.
  **/
-STATUS object_precommit(OBJECT *obj, TIMESTAMP t1){
+STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
+{
+	clock_t t=clock();
 	STATUS rv = SUCCESS;
 	if(obj->oclass->precommit != NULL){
 		rv = (STATUS)(*(obj->oclass->precommit))(obj, t1);
 	}
 	if(rv == 1){ // if 'old school' or no precommit callback,
-		return SUCCESS;
-	} else {
-		return rv;
+		rv = SUCCESS;
 	}
+	object_profile(obj,OPI_PRECOMMIT,t);
+	return rv;
 }
 
-TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
+TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
+{
+	clock_t t=clock();
 	TIMESTAMP rv = 1;
 	if(obj->oclass->commit != NULL){
 		rv = (TIMESTAMP)(*(obj->oclass->commit))(obj, t1, t2);
 	}
 	if(rv == 1){ // if 'old school' or no commit callback,
-		return TS_NEVER;
-	} else {
-		return rv;
-	}
+		rv =TS_NEVER;
+	} 
+	object_profile(obj,OPI_COMMIT,t);
+	return rv;
 }
 
 /**	Finalize is the last function callback that is made for an object.  It
@@ -1426,16 +1445,18 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 
 	The return value is if the function successfully completed.
  **/
-STATUS object_finalize(OBJECT *obj){
+STATUS object_finalize(OBJECT *obj)
+{
+	clock_t t=clock();
 	STATUS rv = SUCCESS;
 	if(obj->oclass->finalize != NULL){
 		rv = (STATUS)(*(obj->oclass->finalize))(obj);
 	}
 	if(rv == 1){ // if 'old school' or no finalize callback,
-		return SUCCESS;
-	} else {
-		return rv;
+		rv = SUCCESS;
 	}
+	object_profile(obj,OPI_FINALIZE,t);
+	return rv;
 }
 
 /** Tests the type of an object

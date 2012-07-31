@@ -1077,7 +1077,9 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 	char *token = NULL;
 
 	/* clean memory */
+	randomvar *next = var->next;
 	memset(var,0,sizeof(randomvar));
+	var->next = next;
 
 	/* check string length before copying to buffer */
 	if (strlen(string)>sizeof(buffer)-1)
@@ -1250,10 +1252,10 @@ TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 		for (var=randomvar_list; var!=NULL; var=var->next)
 		{
 			TIMESTAMP t3 = randomvar_sync(var,t1);
-			if (t3<t2) t2 = t3;
+			if ( absolute_timestamp(t3)<absolute_timestamp(t2) ) t2 = t3;
 		}
 		randomvar_synctime += clock() - ts;
-		return t2;
+		return -absolute_timestamp(t2);
 	}
 	else
 		return TS_NEVER;

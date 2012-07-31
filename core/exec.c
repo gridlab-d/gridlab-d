@@ -102,9 +102,19 @@ int exec_init()
 #endif
 
 	size_t glpathlen=0;
+
 	/* setup clocks */
-	global_starttime = realtime_now();
-	timestamp_set_tz(NULL);
+	if ( global_starttime==0 )
+		global_starttime = realtime_now();
+
+	/* set the start time */
+	global_clock = global_starttime + local_tzoffset(global_starttime);
+
+	/* if stoptime not already set */
+	if ( global_stoptime==TS_NEVER )
+
+		/* set it to 1 year after start time */
+		global_stoptime = global_clock + 86400*365;
 
 	/* save locale for simulation */
 	locale_push();
@@ -690,7 +700,7 @@ static STATUS init_all(void)
 					free(object_heartbeats);
 				}
 				object_heartbeats = bigger;
-				n_object_heartbeats = max_object_heartbeats;
+				max_object_heartbeats = size;
 			}
 
 			/* add this one */
@@ -817,7 +827,6 @@ STATUS t_setup_ranks(void){
 STATUS t_sync_all(PASSCONFIG pass)
 {
 	struct sync_data sync = {TS_NEVER,0,SUCCESS};
-	TIMESTAMP start_time = global_clock;
 	int pass_index = ((int)(pass/2)); /* 1->0, 2->1, 4->2; NB: if a fourth pass is added this won't work right */
 
 	/* scan the ranks of objects */
@@ -860,11 +869,11 @@ TIMESTAMP sync_heartbeats(void)
 	for ( n=0 ; n<n_object_heartbeats ; n++ )
 	{
 		TIMESTAMP t2 = object_heartbeat(object_heartbeats[n]);
-		if ( t2 < t1 ) t2 = t1;
+		if ( absolute_timestamp(t2) < absolute_timestamp(t1) ) t1 = t2;
 	}
 
 	/* heartbeats are always soft updates */
-	return t1<TS_NEVER ? -t1 : TS_NEVER;
+	return t1<TS_NEVER ? -absolute_timestamp(t1) : TS_NEVER;
 }
 
 /* this function synchronizes all internal behaviors */
@@ -1183,9 +1192,6 @@ STATUS get_syncstatus(struct sync_data *d) /**< Sync data to read sync status fr
  **/
 STATUS exec_start(void)
 {
-	//sjin: remove threadpool
-	//threadpool_t threadpool = INVALID_THREADPOOL;
-	TIMESTAMP start_time = global_clock;
 	int64 passes = 0, tsteps = 0;
 	int ptc_rv = 0;
 	int ptj_rv = 0;
@@ -1193,10 +1199,6 @@ STATUS exec_start(void)
 	STATUS fnl_rv = 0;
 	time_t started_at = realtime_now();
 	int j, k;
-
-	//sjin: implement pthreads
-	//pthread_t *thread_id;
-	//sjin: add some variables for pthread implementation
 	LISTITEM *ptr;
 	int incr;
 	struct arg_data *arg_data_array;
@@ -1235,10 +1237,6 @@ STATUS exec_start(void)
 		 */
 		return FAILED;
 	}
-
-	//sjin: print out obj information
-	//for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
-	//	printf("obj id: %d, rank = %d\n", obj->id, obj->rank);
 
 	/* run checks */
 	if (global_runchecks)
@@ -1377,9 +1375,8 @@ STATUS exec_start(void)
 		return SUCCESS;
 
 	//sjin: GetMachineCycleCount
-	//mc_start_time = GetMachineCycleCount();
 	cstart = clock();
-	//thread_id = (pthread_t *) malloc(global_threadcount * sizeof(pthread_t));
+
 	/* main loop exception handler */
 	TRY {
 
@@ -1387,10 +1384,9 @@ STATUS exec_start(void)
 		int running; /* split into two tests to make it easier to tell what's going on */
 
 		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", sync_d.step_to, global_stoptime, sync_d.hard_event, stop_now);
-		while ( running = (sync_d.step_to <= global_stoptime && sync_d.step_to < TS_NEVER && sync_d.hard_event>0),
+		while ( running = ( absolute_timestamp(sync_d.step_to) <= global_stoptime && sync_d.step_to<TS_NEVER && sync_d.hard_event>0),
 			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 
 		{
-			///printf("\n!!!!!!!!!!!!!!!!!!!!!New iteration started:!!!!!!!!!!!!!!!!!!!!!!!\n\n");
 			/* update the process table info */
 			sched_update(global_clock,MLS_RUNNING);
 
@@ -1400,9 +1396,8 @@ STATUS exec_start(void)
 
 			do_checkpoint();
 
-			//printf("Iteration increased!\n\n");
 			/* set time context */
-			output_set_time_context(sync_d.step_to);
+			output_set_time_context(global_clock);
 
 			sync_d.hard_event = (global_stoptime == TS_NEVER ? 0 : 1);
 
@@ -1431,14 +1426,13 @@ STATUS exec_start(void)
 				output_verbose("realtime clock advancing to %d", (int)global_clock);
 			}
 			else
-				global_clock = sync_d.step_to;
+				global_clock = absolute_timestamp(sync_d.step_to);
 
 			/* synchronize all internal schedules */
-			///printf("global_clock=%d\n",global_clock);
-
-			/* this will cause */
+			output_debug("global_clock=%d\n",global_clock);
 			sync_d.step_to = syncall_internals(global_clock);
-			if(sync_d.step_to!=TS_NEVER && sync_d.step_to < global_clock){
+			if( sync_d.step_to!=TS_NEVER && absolute_timestamp(sync_d.step_to)<global_clock )
+			{
 				// must be able to force reiterations for m/s mode.
 				THROW("internal property sync failure");
 				/* TROUBLESHOOT
@@ -1468,8 +1462,6 @@ STATUS exec_start(void)
 			{
 				int i;
 
-				///printf("\npass %d::::::::::::::::::::::::::::::::::::\n",pass);
-
 				/* process object in order of rank using index */
 				for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
 				{
@@ -1478,7 +1470,6 @@ STATUS exec_start(void)
 						continue;
 
 					iObjRankList ++;
-					///printf("\nProcessing object rank list %d:..................\n", iObjRankList);
 
 					if (global_debug_mode)
 					{
@@ -1503,11 +1494,7 @@ STATUS exec_start(void)
 						} else { //sjin: implement pthreads
 							unsigned int n_items,objn=0,n;
 							unsigned int n_obj = ranks[pass]->ordinal[i]->size;
-							/*printf("ranks[%d]->ordinal[%d]->size=%d\n",pass,i,n_obj);
-							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr=ptr->next) {
-								OBJECT *obj = ptr->data;
-								printf("%d %s %d\n", obj->id, obj->name, obj->rank);
-							}*/
+
 							// Only create threadpool for each object rank list at the first iteration. 
 							// Reuse the threadppol of each object rank list at all other iterations.
 							if (setTP == true) { 
@@ -1526,8 +1513,7 @@ STATUS exec_start(void)
 									output_error("Running threads > global_threadcount");
 									exit(0);
 								}
-								///printf("incr=%d,n_threads=%d,n_items=%d\n",incr,n_threads[iObjRankList],n_items);
-								///printf("\nn_threads[%d]=%d, n_items=%d\n",iObjRankList,n_threads[iObjRankList],n_items);
+
 								// allocate thread list
 								thread = (OBJSYNCDATA*)malloc(sizeof(OBJSYNCDATA)*n_threads[iObjRankList]);
 								memset(thread,0,sizeof(OBJSYNCDATA)*n_threads[iObjRankList]);
@@ -1543,15 +1529,8 @@ STATUS exec_start(void)
 								}
 								// create threads
 								for (n=0; n<n_threads[iObjRankList]; n++) {
-									//printf("thread %d: *********************\n",n);
 									thread[n].ok = true;
 									thread[n].i = iObjRankList;
-									/*for (ptr = thread[n].ls, k=0; ptr != NULL, k<thread[n].nObj; ptr=ptr->next, k++) {
-										OBJECT *obj = ptr->data;
-										printf("%d %s %d\n", obj->id, obj->name, obj->rank);
-									}*/
-									/*obj = thread[n].ls->data;
-									printf("%d %s %d\n", obj->id, obj->name, obj->rank);*/
 									if (pthread_create(&(thread[n].pt),NULL,obj_syncproc,&(thread[n]))!=0) {
 										output_fatal("obj_sync thread creation failed");
 										thread[n].ok = false;
@@ -1566,13 +1545,13 @@ STATUS exec_start(void)
 							
 							// initialize wait count
 							donecount[iObjRankList] = n_threads[iObjRankList];
-							///printf("donecount[%d]=%d\n",iObjRankList,donecount[iObjRankList]);
 
 							// lock access to start condition
 							pthread_mutex_lock(&startlock[iObjRankList]);
+
 							// update start condition
 							next_t1[iObjRankList] ++;
-							///printf("next_t1[%d]=%d\n",iObjRankList,next_t1[iObjRankList]);
+
 							// signal all the threads
 							pthread_cond_broadcast(&start[iObjRankList]);
 							// unlock access to start count
@@ -1583,11 +1562,7 @@ STATUS exec_start(void)
 								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
 							// unlock done count
 							pthread_mutex_unlock(&donelock[iObjRankList]);
-						
-							///printf("Done!\n");
 						}
-
-						//Sleep(5);		
 
 						for (j = 0; j < thread_data->count; j++) {
 							if (thread_data->data[j].status == FAILED) {
@@ -1602,7 +1577,7 @@ STATUS exec_start(void)
 				/* run all non-schedule transforms */
 				{
 					TIMESTAMP st = transform_syncall(global_clock,XS_DOUBLE|XS_COMPLEX|XS_ENDUSE);// if (abs(t)<t2) t2=t;
-					if (st<sync_d.step_to)
+					if ( absolute_timestamp(st)<absolute_timestamp(sync_d.step_to) )
 						sync_d.step_to = st;
 				}
 			}
@@ -1612,7 +1587,7 @@ STATUS exec_start(void)
 			{
 				for (j = 0; j < thread_data->count; j++) {
 					sync_d.hard_event += thread_data->data[j].hard_event;
-					if (thread_data->data[j].step_to < sync_d.step_to)
+					if ( absolute_timestamp(thread_data->data[j].step_to) < absolute_timestamp(sync_d.step_to) )
 						sync_d.step_to = thread_data->data[j].step_to;
 				}
 
@@ -1638,11 +1613,11 @@ STATUS exec_start(void)
 			}
 
 			/* check for clock advance */
-			if (sync_d.step_to != global_clock)
+			if ( absolute_timestamp(sync_d.step_to) != global_clock)
 			{
 				TIMESTAMP commit_time = TS_NEVER;
-				commit_time = commit_all(global_clock, sync_d.step_to);
-				if (commit_time <= global_clock)
+				commit_time = commit_all(global_clock, absolute_timestamp(sync_d.step_to));
+				if ( absolute_timestamp(commit_time) <= global_clock)
 				{
 					// commit cannot force reiterations, and any event where the time is less than the global clock
 					//  indicates that the object is reporting a failure
@@ -1653,7 +1628,7 @@ STATUS exec_start(void)
 						the guidance for that message and try again.
 					 */
 					return FAILED;
-				} else if(commit_time < sync_d.step_to){
+				} else if( absolute_timestamp(commit_time) < absolute_timestamp(sync_d.step_to) ){
 					sync_d.step_to = commit_time;
 				}
 				/* reset iteration count */
@@ -1706,11 +1681,9 @@ STATUS exec_start(void)
 	if(global_multirun_mode == MRM_MASTER){
 		instance_master_done(TS_NEVER); // tell everyone to pack up and go home
 	}
+
 	//sjin: GetMachineCycleCount
-	//mc_end_time = GetMachineCycleCount();
-	//printf("%ld\n",(mc_end_time-mc_start_time));
 	cend = clock();
-	//printf("%f\n", (double)(cend - cstart) / (double)CLOCKS_PER_SEC);
 
 	fnl_rv = finalize_all();
 	if(FAILED == fnl_rv){
@@ -1721,8 +1694,6 @@ STATUS exec_start(void)
 	/* deallocate threadpool */
 	if (!global_debug_mode)
 	{
-		//sjin: remove threadpool
-		//tp_release(threadpool);
 		free(thread_data);
 
 #ifdef NEVER
@@ -1743,7 +1714,7 @@ STATUS exec_start(void)
 	/* report performance */
 	if (global_profiler && sync_d.status==SUCCESS)
 	{
-		double elapsed_sim = (timestamp_to_hours(global_clock<start_time?start_time:global_clock)-timestamp_to_hours(start_time));
+		double elapsed_sim = timestamp_to_hours(global_clock)-timestamp_to_hours(global_starttime);
 		double elapsed_wall = (double)(realtime_now()-started_at+1);
 		double sync_time = 0;
 		double sim_speed = object_get_count()/1000.0*elapsed_sim/elapsed_wall;
@@ -1783,15 +1754,15 @@ STATUS exec_start(void)
 			output_profile("Simulation speed         %7.1lfk object.hours/second", sim_speed);
 		else
 			output_profile("Simulation speed         %7.0lf object.hours/second", sim_speed*1000);
-		output_profile("Syncs completed         %8d passes", passes);
+		output_profile("Passes completed        %8d passes", passes);
 		output_profile("Time steps completed    %8d timesteps", tsteps);
 		output_profile("Convergence efficiency  %8.02lf passes/timestep", (double)passes/tsteps);
 #ifndef NOLOCKS
 		output_profile("Read lock contention    %7.01lf%%", (rlock_spin>0 ? (1-(double)rlock_count/(double)rlock_spin)*100 : 0));
 		output_profile("Write lock contention   %7.01lf%%", (wlock_spin>0 ? (1-(double)wlock_count/(double)wlock_spin)*100 : 0));
 #endif
-		output_profile("Average timestep        %7.0lf seconds/timestep", (double)(global_clock<start_time?0:global_clock-start_time)/tsteps);
-		output_profile("Simulation rate         %7.0lf x realtime", (double)(global_clock<start_time?0:global_clock-start_time)/elapsed_wall);
+		output_profile("Average timestep        %7.0lf seconds/timestep", (double)(global_clock-global_starttime)/tsteps);
+		output_profile("Simulation rate         %7.0lf x realtime", (double)(global_clock-global_starttime)/elapsed_wall);
 		output_profile("\n");
 	}
 

@@ -219,6 +219,17 @@ PROPERTYTYPE property_get_type(char *name)
 	return PT_void;
 }
 
+double property_get_part(OBJECT *obj, PROPERTY *prop, char *part)
+{
+	PROPERTYSPEC *spec = property_getspec(prop->ptype);
+	if ( spec && spec->get_part )
+	{
+		return spec->get_part(GETADDR(obj,prop),part);
+	}
+	else
+		return QNAN;
+}
+
 /*********************************************************
  * PROPERTY PARTS
  *********************************************************/
