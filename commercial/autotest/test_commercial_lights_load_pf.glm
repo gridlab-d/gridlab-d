@@ -29,7 +29,7 @@ object office {
 	lights.capacity 1000;
 	lights.fraction 1;
 	object player {
-		file ../generic_demand_pf.glt;
+		file "../generic_demand_pf.glt";
 		property lights.power_factor;
 	};
 	object complex_assert {
@@ -44,6 +44,6 @@ object office {
 		file "commercial_lights_usage.csv";
 		interval 3600;
 		limit 24;
-		property lights.fraction,lights.load;
+		property "lights.fraction,lights.load";
 	};
 }
