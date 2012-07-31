@@ -72,6 +72,7 @@ int stubauction::init(OBJECT *parent)
 	OBJECT *obj=OBJECTHDR(this);
 	market_id = 0;
 	if(period == 0) period = 300;
+	clearat = nextclear();
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -95,10 +96,6 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	int64 j = 0;
 	DATETIME dt;
 	
-	if(t0 == 0){
-		clearat = nextclear();
-	}
-
 	retry = 0;
 
 	if (t1>=clearat)
