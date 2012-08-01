@@ -24,14 +24,6 @@
 #include "substation.h"
 #include "timestamp.h"
 
-// substation reset function
-EXPORT int64 substation_reset(OBJECT *obj)
-{
-	substation *pSubstation = OBJECTDATA(obj,substation);
-	pSubstation->distribution_demand = 0;
-	return 0;
-}
-
 //////////////////////////////////////////////////////////////////////////
 // SUBSTATION CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -58,29 +50,33 @@ substation::substation(MODULE *mod) : node(mod)
 		// publish the class properties - based around meter object
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "node",
-			/// @todo three-phase meter should meter Q also (required complex)
-			PT_double, "distribution_energy[Wh]", PADDR(distribution_energy),
-			PT_complex, "distribution_power[VA]", PADDR(distribution_power),
-			PT_double, "distribution_demand[W]", PADDR(distribution_demand),
-			
-			// added to record last voltage/current
-			PT_complex, "distribution_voltage_A[V]", PADDR(distribution_voltage[0]),
-			PT_complex, "distribution_voltage_B[V]", PADDR(distribution_voltage[1]),
-			PT_complex, "distribution_voltage_C[V]", PADDR(distribution_voltage[2]),
-			PT_complex, "distribution_current_A[A]", PADDR(distribution_current[0]),
-			PT_complex, "distribution_current_B[A]", PADDR(distribution_current[1]),
-			PT_complex, "distribution_current_C[A]", PADDR(distribution_current[2]),
-
-			// Information on Network solver connection
-			PT_double, "Network_Node_Base_Power[MVA]", PADDR(Network_Node_Base_Power),
-			PT_double, "Network_Node_Base_Voltage[V]", PADDR(Network_Node_Base_Voltage),
-
+			//inputs
+			PT_complex, "zero_sequence_voltage[V]", PADDR(seq_mat[0]), PT_DESCRIPTION, "The zero sequence representation of the voltage for the substation object.",
+			PT_complex, "positive_sequence_voltage[V]", PADDR(seq_mat[1]), PT_DESCRIPTION, "The positive sequence representation of the voltage for the substation object.",
+			PT_complex, "negative_sequence_voltage[V]", PADDR(seq_mat[2]), PT_DESCRIPTION, "The negative sequence representation of the voltage for the substation object.",
+			PT_enumeration, "reference_phase", PADDR(reference_phase), PT_DESCRIPTION, "The reference phase for the positive sequence voltage.",
+				PT_KEYWORD, "PHASE_A", R_PHASE_A,
+				PT_KEYWORD, "PHASE_B", R_PHASE_B,
+				PT_KEYWORD, "PHASE_C", R_PHASE_C,
+			PT_complex, "average_transmission_power_load[VA]", PADDR(average_transmission_power_load), PT_DESCRIPTION, "the average constant power load to be posted directly to the pw_load object.",
+			PT_complex, "average_transmission_current_load[VA]", PADDR(average_transmission_current_load), PT_DESCRIPTION, "the average constant current load to be posted directly to the pw_load object.",
+			PT_complex, "average_transmission_impedance_load[VA]", PADDR(average_transmission_impedance_load), PT_DESCRIPTION, "the average constant impedance load to be posted directly to the pw_load object.",
+			PT_complex, "average_distribution_load[VA]", PADDR(average_distribution_load), PT_DESCRIPTION, "The average of the loads on all three phases at the substation object.",
+			PT_complex, "distribution_power_A[VA]", PADDR(distribution_power_A),
+			PT_complex, "distribution_power_B[VA]", PADDR(distribution_power_B),
+			PT_complex, "distribution_power_C[VA]", PADDR(distribution_power_C),
+			PT_complex, "distribution_voltage_A[V]", PADDR(voltageA),
+			PT_complex, "distribution_voltage_B[V]", PADDR(voltageB),
+			PT_complex, "distribution_voltage_C[V]", PADDR(voltageC),
+			PT_complex, "distribution_voltage_AB[V]", PADDR(voltageAB),
+			PT_complex, "distribution_voltage_BC[V]", PADDR(voltageBC),
+			PT_complex, "distribution_voltage_CA[V]", PADDR(voltageCA),
+			PT_complex, "distribution_current_A[A]", PADDR(current_inj[0]),
+			PT_complex, "distribution_current_B[A]", PADDR(current_inj[1]),
+			PT_complex, "distribution_current_C[A]", PADDR(current_inj[2]),
+			PT_double, "distribution_real_energy[Wh]", PADDR(distribution_real_energy),
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
-
-		// publish meter reset function
-		if (gl_publish_function(oclass,"reset",(FUNCTIONADDR)substation_reset)==NULL)
-			GL_THROW("unable to publish substation_reset function in %s",__FILE__);
 		}
 }
 
@@ -93,118 +89,152 @@ int substation::isa(char *classname)
 int substation::create()
 {
 	int result = node::create();
-	
-	distribution_voltage[0] = distribution_voltage[1] = distribution_voltage[2] = complex(0,0,A);
-	distribution_current[0] = distribution_current[1] = distribution_current[2] = complex(0,0,J);
-	distribution_energy = 0.0;
-	distribution_power = complex(0,0,J);
-	distribution_demand = 0.0;
-
+	reference_phase = R_PHASE_A;
+	has_parent = 0;
+	seq_mat[0] = 0;
+	seq_mat[1] = 0;
+	seq_mat[2] = 0;
 	return result;
+}
+
+void substation::fetch_complex(complex **prop, char *name, OBJECT *parent){
+	OBJECT *hdr = OBJECTHDR(this);
+	*prop = gl_get_complex_by_name(parent, name);
+	if(*prop == NULL){
+		char tname[32];
+		char *namestr = (hdr->name ? hdr->name : tname);
+		char msg[256];
+		sprintf(tname, "substation:%i", hdr->id);
+		if(*name == NULL)
+			sprintf(msg, "%s: substation unable to find property: name is NULL", namestr);
+		else
+			sprintf(msg, "%s: substation unable to find %s", namestr, name);
+		throw(msg);
+	}
 }
 
 // Initialize a distribution meter, return 1 on success
 int substation::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
+	int i,n;
 	
-	if (hdr->parent==NULL)	//Make sure we have a parent
-		GL_THROW("You must specify a parent network node for a substation");
-	
-	if (hdr->oclass->module==hdr->parent->oclass->module)	//Make sure modules aren't the same
-		GL_THROW("Parent object is from same module.  Substations bridge the network and powerflow solvers.");
-	
-	if (!(gl_object_isa(hdr->parent,"node","network")))
-		GL_THROW("Parent object must be a node of the network module");
+	//make sure the substation is the swing bus if it's parent is a pw_load object
+	if(parent != NULL && gl_object_isa(parent,"pw_load")){
+		if(bustype != SWING){
+			gl_error("Substation connected to pw_load must be the swing bus.");
+			return 0;
+		}
+		
+		has_parent = 1;
 
+		//create the pointers to the needed properties in pw_load
+		fetch_complex(&pPositiveSequenceVoltage,"load_voltage",parent);
+		fetch_complex(&pConstantPowerLoad,"load_power",parent);
+		fetch_complex(&pConstantCurrentLoad,"load_current",parent);
+		fetch_complex(&pConstantImpedanceLoad,"load_impedance",parent);
+	} else if(parent != NULL && (seq_mat[0] != 0 || seq_mat[1] != 0 || seq_mat[2] != 0)){
+		gl_warning("substation:%i is not the swing bus. Ignoring sequence voltage inputs.", hdr->id); 
+	} else if(parent != NULL){
+		has_parent = 2;
+	} else {
+		if(bustype != SWING){
+			gl_error("Substation connected to pw_load must be the swing bus.");
+			return 0;
+		}
+	}
+	//set the reference phase number to shift the phase voltages appropriatly with the positive sequence voltage
+	if(reference_phase == R_PHASE_A){
+		reference_number.SetPolar(1,0);
+	} else if(reference_phase == R_PHASE_B){
+		reference_number.SetPolar(1,2*PI/3);
+	} else if(reference_phase == R_PHASE_C){
+		reference_number.SetPolar(1,-2*PI/3);
+	}
+
+	//create the sequence to phase transformation matrix
+	for(i=0; i<3; i++){
+		for(n=0; n<3; n++){
+			if((i==1 && n==1) || (i==2 && n==2)){
+				transformation_matrix[i][n].SetPolar(1,-2*PI/3);
+			} else if((i==2 && n==1) || (i==1 && n==2)){
+				transformation_matrix[i][n].SetPolar(1,2*PI/3);
+			} else {
+				transformation_matrix[i][n].SetPolar(1,0);
+			}
+		}
+	}
+	
 	return node::init(parent);
 }
 
 // Synchronize a distribution meter
 TIMESTAMP substation::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	complex PU_Power, NonPU_Voltage;
-	complex *NetNodePower;
-	complex *NetNodeVoltage;
-	complex angle_adjustment;
-	OBJECT *hdr = OBJECTHDR(this);
-	OBJECT *nethdr = hdr->parent;
+	double dt = 0;
+	double total_load;
+	//calculate the energy used
 
-	//Find power and voltage settings
-	PROPERTY *power_S = gl_get_property(nethdr,"S");
-	PROPERTY *voltage_V = gl_get_property(nethdr,"V");
-
-	NetNodePower = (complex*)GETADDR(nethdr,power_S);
-	NetNodeVoltage = (complex*)GETADDR(nethdr,voltage_V);
-
-	// compute demand power
-	if (distribution_power>distribution_demand) 
-		distribution_demand=distribution_power.Mag();
-
-	// compute energy use
-	if (t0>0)
-		distribution_energy += distribution_power.Mag() * (t1 - t0)*3600;
-
-	//Update connected node.  Give it our power, take its voltage
-	
-	/**********************************************/
-	/* Temporary algorithm for object testing     */
-	/**********************************************/
-		
-		//Scale power
-		PU_Power = distribution_power / (Network_Node_Base_Power * 1000000.0);	//Scale to MVA
-
-		LOCK_OBJECT(nethdr);	//Lock network solver object just in case
-		//Scale voltage
-		NonPU_Voltage = *NetNodeVoltage*Network_Node_Base_Voltage;
-
-		//Put our power on the network node (one phases worth)
-		*NetNodePower = complex(PU_Power.Re() / 3.0, PU_Power.Im() / 3.0, J);
-		UNLOCK_OBJECT(nethdr);
-
-		//Put network node's voltage as our own (balanced offsets)
-		angle_adjustment = complex(1,sqrt(3.0));
-		angle_adjustment /=-2.0;	// 1_/ -120d
-
-		//Update voltages - both Wye and Delta
-		//LOCK_OBJECT(hdr);
-		voltage[0] = NonPU_Voltage;
-		voltage[1] = NonPU_Voltage * angle_adjustment;
-		voltage[2] = NonPU_Voltage * ~angle_adjustment;
-
-		voltaged[0]=voltage[0]-voltage[1];
-		voltaged[1]=voltage[1]-voltage[2];
-		voltaged[2]=voltage[2]-voltage[0];
-
-		//UNLOCK_OBJECT(hdr);
-
-	/**********************************************/
-	/*			End temp algorithm				  */
-	/**********************************************/
-
-	return node::presync(t1);
+	if(t1 != t0 && t0 != 0 && (last_real_power_A != 0 && last_real_power_B != 0 && last_real_power_C != 0) && NR_cycle == TRUE){
+		total_load = last_real_power_C + last_real_power_C + last_real_power_C;
+		dt = ((double)(t1 - t0))/(3600 * TS_SECOND);
+		distribution_real_energy += total_load*dt;
+	}
+	//set up the phase voltages for the three different cases
+	if((solver_method == SM_NR && NR_cycle == false) || solver_method == SM_FBS){
+		if(has_parent == 1){//has a pw_load as a parent
+			seq_mat[1] = *pPositiveSequenceVoltage;
+			if(has_phase(PHASE_A)){
+				voltageA = seq_mat[1] * reference_number;
+			}
+			if(has_phase(PHASE_B)){
+				voltageB = (transformation_matrix[1][1] * seq_mat[1]) * reference_number;
+			}
+			if(has_phase(PHASE_B)){
+				voltageB = (transformation_matrix[2][1] * seq_mat[1]) *reference_number;
+			}
+			return node::presync(t1);
+		} else {
+			if(has_parent == 0){
+				if(seq_mat[0] == 0 && seq_mat[1] == 0 && seq_mat[2] == 0){
+					return node::presync(t1);
+				} else {
+					voltageA = (seq_mat[0] + seq_mat[1] + seq_mat[2]) * reference_number;
+					voltageB = (seq_mat[0] + transformation_matrix[1][1] * seq_mat[1] + transformation_matrix[1][2] * seq_mat[2]) * reference_number;
+					voltageC = (seq_mat[0] + transformation_matrix[2][1] * seq_mat[1] + transformation_matrix[2][2] * seq_mat[2]) * reference_number;
+					return node::presync(t1);
+				}
+			} else {
+				return node::presync(t1);
+			}
+		}
+	} else {
+		return node::presync(t1);
+	}
 }
-
-TIMESTAMP substation::postsync(TIMESTAMP t0, TIMESTAMP t1)
+TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP result;
-
-	result = node::postsync(t1);
-	distribution_voltage[0] = voltageA;
-	distribution_voltage[1] = voltageB;
-	distribution_voltage[2] = voltageC;
-	//READLOCK_OBJECT(obj);
-	distribution_current[0] = current_inj[0];
-	distribution_current[1] = current_inj[1];
-	distribution_current[2] = current_inj[2];
-	//READUNLOCK_OBJECT(obj);
-	distribution_power = distribution_voltage[0]*(~distribution_current[0])
-				   + distribution_voltage[1]*(~distribution_current[1])
-				   + distribution_voltage[2]*(~distribution_current[2]);
-	return result;
+	TIMESTAMP t2;
+	t2 = node::sync(t1);
+	if((solver_method == SM_NR && NR_cycle == true && NR_admit_change == false) || solver_method == SM_FBS){
+		distribution_power_A = voltageA * (~current_inj[0]);
+		distribution_power_B = voltageB * (~current_inj[1]);
+		distribution_power_C = voltageC * (~current_inj[2]);
+		last_real_power_A = distribution_power_A.Re();
+		last_real_power_B = distribution_power_B.Re();
+		last_real_power_C = distribution_power_C.Re();
+		if(has_parent == 1){
+			*pConstantCurrentLoad = ((voltageA + voltageB + voltageC) * (~average_transmission_current_load)) / (3 * 1000000);
+			if(average_transmission_impedance_load.Mag() > 0){
+				*pConstantImpedanceLoad = (((voltageA * voltageA) + (voltageB * voltageB) + (voltageC * voltageC)) / (average_transmission_impedance_load)) / ( 3 * 1000000);
+			} else {
+				*pConstantImpedanceLoad = 0;
+			}
+			*pConstantPowerLoad = (average_transmission_power_load + ((distribution_power_A + distribution_power_B + distribution_power_C) / 3)) / 1000000;
+		}
+	}
+	return t2;
 }
-
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
@@ -249,9 +279,9 @@ EXPORT TIMESTAMP sync_substation(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		case PC_PRETOPDOWN:
 			return pObj->presync(obj->clock,t0);
 		case PC_BOTTOMUP:
-			return pObj->sync(t0);
+			return pObj->sync(obj->clock,t0);
 		case PC_POSTTOPDOWN:
-			t1 = pObj->postsync(obj->clock,t0);
+			t1 = pObj->postsync(t0);
 			obj->clock = t0;
 			return t1;
 		default:
