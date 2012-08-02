@@ -92,7 +92,7 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		}
 		else
 		{
-			gl_error("Assert passed on %s", get_parent()->get_name());
+			gl_verbose("Assert passed on %s", get_parent()->get_name());
 			return TS_NEVER;
 		}
 	}
