@@ -1,0 +1,13 @@
+#set verbose=TRUE
+
+module mysql;
+
+object database {
+	name testdb;
+	schema gld-${GUID};
+}
+
+object player {
+	connection testdb;
+}
+

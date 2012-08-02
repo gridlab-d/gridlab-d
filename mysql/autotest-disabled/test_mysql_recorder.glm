@@ -1,0 +1,29 @@
+
+//#set verbose=TRUE
+//#set profiler=TRUE
+
+module mysql;
+object database {
+	// use defaults as though replacing a tape module
+	on_init "../test_mysql_recorder_init.sql";
+	on_sync "../test_mysql_recorder_sync.sql";
+	on_term "../test_mysql_recorder_term.sql";
+	sync_interval 1 day;
+	options NEWDB;
+}
+
+class test {
+	random x[h];
+}
+
+object test:..2 {
+	x "type:normal(0,1); refresh:1min";
+	object recorder {
+		file `test{id}.csv`;
+		property x[min];
+		interval 30s;
+		limit 1000;
+		trigger >50;
+	};
+}
+

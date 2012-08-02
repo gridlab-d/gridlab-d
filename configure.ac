@@ -163,6 +163,23 @@ else
 	HAVE_MATLAB=no
 fi
 
+# Check for mysql
+if test -f /usr/local/mysql-connector-c/include/mysql.h ; then
+	HAVE_MYSQL=yes
+	AC_MSG_RESULT([mysql connector was found])
+	MYSQL=/usr/local/mysql-connector-c
+	AC_MSG_RESULT([mysql connector c path is $MYSQL])
+	if test -d $MYSQL/lib ; then
+		MYSQL_LDPATH=$MYSQL/lib
+	fi
+	AC_MSG_RESULT([mysql connector c libraries in $MYSQL_LDPATH])
+	CFLAGS="$CFLAGS -DHAVE_MYSQL -I$MYSQL/include"
+	CPPFLAGS="$CPPFLAGS -DHAVE_MYSQL -I$MYSQL/include"
+	LIBS="$LIBS -L$MYSQL_LDPATH -lmysqlclient"
+else
+	HAVE_MYSQL=no
+fi
+
 # Check for CppUnit
 AM_PATH_CPPUNIT([1.12], [HAVE_CPPUNIT=yes], [HAVE_CPPUNIT=no])
 if test x"$HAVE_CPPUNIT" = xyes; then
@@ -229,6 +246,7 @@ AC_CONFIG_FILES([./Makefile \
 	optimize/Makefile \
 	third_party/CBLAS/Makefile \
 	third_party/superLU_MT/Makefile \
+	mysql/Makefile \
 	gridlabd.spec \
 	])
 
@@ -260,6 +278,7 @@ AC_MSG_RESULT([
     libcppunit: ................. $HAVE_CPPUNIT
     libxerces-c: ................ $HAVE_XERCES
     matlab: ..................... $HAVE_MATLAB
+    mysql-connector-c: .......... $HAVE_MYSQL
 
   Atomic Builtins:
 
