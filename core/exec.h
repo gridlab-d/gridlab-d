@@ -43,6 +43,15 @@ void exec_mls_done(void);
 void exec_mls_statewait(unsigned states);
 void exec_slave_node();
 
+void reset_synctime(struct sync_data *d);
+void merge_syncdata(struct sync_data *to, struct sync_data *from);
+void set_synctime(struct sync_data *d, TIMESTAMP t);
+TIMESTAMP get_synctime(struct sync_data *d);
+int is_hardsync(struct sync_data *d);
+int is_never(struct sync_data *d);
+int is_invalid(struct sync_data *d);
+STATUS get_syncstatus(struct sync_data *d);
+
 #ifdef __cplusplus
 }
 #endif

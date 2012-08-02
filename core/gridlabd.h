@@ -1147,6 +1147,13 @@ private: // data
 public: // constructors
 	gld_clock(void) { callback->time.local_datetime(*(callback->global_clock),&dt); }; 
 	gld_clock(TIMESTAMP ts) { callback->time.local_datetime(ts,&dt); };
+	gld_clock(char *str) { from_string(str); };
+	gld_clock(unsigned short y, unsigned short m=0, unsigned short d=0, unsigned short H=0, unsigned short M=0, unsigned short S=0, unsigned short int ms=0, char *tz=NULL, int dst=-1)
+	{
+		dt.year = y; dt.month=m; dt.day=d; dt.hour=H; dt.minute=M; dt.second=S; dt.microsecond=ms;
+		if ( dst>=0 ) dt.is_dst=dst;
+		if ( tz!=NULL ) set_tz(tz); else callback->time.mkdatetime(&dt);
+	}
 public: // cast operators
 	inline operator TIMESTAMP (void) { return dt.timestamp; };
 public: // read accessors
@@ -1173,7 +1180,7 @@ public: // write accessors
 	inline TIMESTAMP set_second(unsigned short s) { dt.second=s; return callback->time.mkdatetime(&dt); };
 	inline TIMESTAMP set_microsecond(unsigned int u) { dt.microsecond=u; return callback->time.mkdatetime(&dt); };
 	inline TIMESTAMP set_tz(char* t) { strncpy(dt.tz,t,sizeof(dt.tz)); return callback->time.mkdatetime(&dt); };
-	inline TIMESTAMP set_is_set(bool i) { dt.is_dst=i; return callback->time.mkdatetime(&dt); };
+	inline TIMESTAMP set_is_dst(bool i) { dt.is_dst=i; return callback->time.mkdatetime(&dt); };
 public: // special functions
 	inline bool from_string(char *str) { return callback->time.local_datetime(callback->time.convert_to_timestamp(str),&dt)?true:false; };
 	inline unsigned int to_string(char *str, int size) {return callback->time.convert_from_timestamp(dt.timestamp,str,size); };
@@ -1350,6 +1357,7 @@ public: // iterators
 #define GL_ATOMIC(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(void) { return X; }; \
+	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
 	inline T get_##X(gld_rlock&) { return X; }; \
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { X=p; }; \
@@ -1357,6 +1365,7 @@ public: // iterators
 #define GL_STRUCT(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
+	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
 	inline T get_##X(gld_rlock&) { return X; }; \
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
@@ -1364,6 +1373,7 @@ public: // iterators
 #define GL_STRING(T,X) 	protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline char* get_##X(void) { gld_rlock _lock(my()); return X; }; \
+	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
 	inline char* get_##X(gld_rlock&) { return X; }; \
 	inline char* get_##X(gld_wlock&) { return X; }; \
 	inline char get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
@@ -1375,6 +1385,7 @@ public: // iterators
 	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; }; 
 #define GL_ARRAY(T,X,S) protected: T X[S]; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
+	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
 	inline T* get_##X(void) { gld_rlock _lock(my()); return X; }; \
 	inline T* get_##X(gld_rlock&) { return X; }; \
 	inline T* get_##X(gld_wlock&) { return X; }; \
@@ -1497,6 +1508,7 @@ public: // read accessors
 	inline char* get_description(void) { return prop->description; };
 	inline PROPERTYFLAGS get_flags(void) { return prop->flags; };
 	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(prop,get_addr(),buffer,size); };
+	inline char *get_string(size_t sz=1024) { char *buffer=(char*)malloc(sz); if ( !buffer ) return NULL; int len=to_string(buffer,(int)sz); return len>0 ? buffer : (free(buffer),NULL); };
 	inline int from_string(char *string) { return callback->convert.string_to_property(prop,get_addr(),string); };
 	inline double get_part(char *part) { return callback->properties.get_part(obj,prop,part); };
 
@@ -1560,24 +1572,35 @@ private: // exceptions
 class gld_global {
 
 private: // data
-	GLOBALVAR core;
+	GLOBALVAR *var;
 
 public: // constructors
-	inline gld_global(void) { throw "gld_global constructor not permitted"; };
-	inline operator GLOBALVAR*(void) { return &core; };
+	inline gld_global(void) : var(NULL) {};
+	inline gld_global(GLOBALVAR *v) : var(v) {};
+	inline gld_global(char *n) { var=callback->global.find(n); };
 
 public: // read accessors
-	inline PROPERTY* get_property(void) { return core.prop; };
-	inline unsigned long get_flags(void) { return core.flags; };
+	inline operator GLOBALVAR*(void) { return var; };
+	inline bool is_valid(void) { return var!=NULL; };
+	inline PROPERTY* get_property(void) { if (!var) return NULL; return var->prop; };
+	inline unsigned long get_flags(void) { if (!var) return -1; return var->flags; };
+	inline size_t to_string(char *bp, size_t sz) { if (!var) return -1; gld_property p(var); return p.to_string(bp,(int)sz); };
+	inline char *get_string(void) { char *buffer = (char*)malloc(1024); if ( !buffer || to_string(buffer,1024)<0 ) return NULL; else return buffer; }; 
+	inline int16 get_int16(void) { if ( var->prop->ptype!=PT_int16 ) return 0; return *(int16*)(var->prop->addr); };
+	inline int32 get_int32(void) { if ( var->prop->ptype!=PT_int32 ) return 0; return *(int32*)(var->prop->addr); };
+	inline int64 get_int64(void) { if ( var->prop->ptype!=PT_int64 ) return 0; return *(int64*)(var->prop->addr); };
+	inline double get_double(void) { if ( var->prop->ptype!=PT_double ) return 0; return *(double*)(var->prop->addr); };
+	inline TIMESTAMP get_timestamp(void) { if ( var->prop->ptype!=PT_timestamp ) return 0; return *(TIMESTAMP*)(var->prop->addr); };
 
 public: // write accessors
+	inline size_t from_string(char *bp) { if (!var) return -1; gld_property p(var); return p.from_string(bp); };
 
 public: // external accessors
 	// TODO
 
 public: // iterators
-	inline bool is_last(void) { return core.next==NULL; };
-	inline gld_global* get_next(void) { return (gld_global*)core.next; };
+	inline bool is_last(void) { if (!var) return NULL; else return (var->next==NULL); };
+	inline GLOBALVAR* get_next(void) { if (!var) return NULL; else return var->next; };
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
