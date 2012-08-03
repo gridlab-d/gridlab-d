@@ -1393,4 +1393,160 @@ char *find_file(char *name, /**< the name of the file to find */
 	return NULL;
 }
 
+/***********************************************************************************
+ * Object list handling (new in V3.0)
+ ***********************************************************************************/
+#define INITSIZE 256
+
+OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, char *part, char *match_op, void *match_value1, void *match_value2 )
+{
+	OBJLIST *list = malloc(sizeof(OBJLIST));
+	
+	/* check parameters */
+	if ( !list ) return output_error("find_create(): memory allocation failed"),NULL;
+	
+	/* setup object list structure */
+	list->asize = INITSIZE;
+	list->size = 0;
+	list->objlist = malloc(sizeof(OBJECT*)*INITSIZE);
+	if ( !list->objlist ) return output_error("find_create(): memory allocation failed"),free(list),NULL;
+	list->data = malloc(sizeof(void*)*INITSIZE);
+	if ( !list->data ) return output_error("find_create(): memory allocation failed"),free(list->objlist),free(list),NULL;
+	list->oclass = oclass;
+
+	/* perform search */
+	objlist_add(list,match_property,part,match_op,match_value1,match_value2);
+	return list;
+}
+void objlist_destroy(OBJLIST *list)
+{
+	free(list->objlist);
+	free(list);
+}
+
+size_t objlist_add(OBJLIST *list, PROPERTY *match, char *match_part, char *match_op, void *match_value1, void *match_value2)
+{
+	OBJECT *obj;
+	PROPERTYCOMPAREOP op = property_compare_op(match->ptype, match_op);
+	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
+	{
+		void *x = GETADDR(obj,match);
+		if ( obj->oclass!=list->oclass ) continue;
+		if ( property_compare_basic(match->ptype,op,x,match_value1,match_value2,match_part) )
+		{
+			if ( list->size==list->asize )
+			{	// grow the list
+				OBJECT **larger = (OBJECT*)malloc(sizeof(OBJECT*)*list->asize*2);
+				memcpy(larger,list->objlist,sizeof(OBJECT*)*list->asize);
+				memset(larger+list->asize,0,sizeof(OBJECT*)*list->asize);
+				list->asize*=2;
+				free(list->objlist);
+				list->objlist = larger;
+			}
+			list->objlist[list->size++] = obj;
+		}
+	}
+	return list->size;
+}
+
+size_t objlist_del(OBJLIST *list, PROPERTY *match, char *match_part, char *match_op, void *match_value1, void *match_value2)
+{
+	PROPERTYCOMPAREOP op = property_compare_op(match->ptype, match_op);
+	int n, m;
+
+	// scan list and mark objects to be removed
+	for ( n=0 ; n<list->size ; n++ )
+	{
+		OBJECT *obj = list->objlist[n];
+		void *x = (void*)((char*)(obj+1) + (int64)match->addr);
+		if ( obj->oclass!=list->oclass ) continue;
+		if ( property_compare_basic(match->ptype,op,x,match_value1,match_value2,match_part) )
+			list->objlist[n] = NULL; // marked for deletion
+	}
+
+	// compress list
+	for ( n=0,m=0 ; n<list->size ; n++ )
+	{
+		if ( list->objlist[n]==NULL ) continue;
+		if ( n>m ) list->objlist[m++] = list->objlist[n];
+	}
+	list->size = m;
+	return list->size;
+}
+size_t objlist_size(OBJLIST *list)
+{
+	return list->size;
+}
+struct s_object_list *objlist_get(OBJLIST *list,size_t n)
+{
+	return (n<list->size)?list->objlist[n]:NULL;
+}
+
+/** Apply the function to each object in the object list.
+
+	The function must accept an object pointer as first argument,
+	a pointer to additional data structure as second argument, and
+	the third argument is a position indicator.
+	For the last call the object pointer is NULL and the position indicate is -1. 
+
+	The function's return value must indicate success (non-zero) or failure (zero).
+
+	@example The following example illustrates how to use #objlist_apply by performing
+	a log mean calculation on a property of objects in a particular:
+	
+	// define the arg structure passed to the logmean function
+	struct s_arg {
+		size_t addr; // object property addr of value used by logmean 
+		double sum;		// accumulator for sum
+		unsigned int n;	// accumulator for count
+		double ans;  // storage for answer	
+	};
+	int logmean(OBJECT *obj,void *arg)
+	{
+		if ( obj ) // normal call
+		{
+			double x = *(double*)GETADDR(obj,arg->addr);
+			arg->sum += log(x);
+			arg->n++;
+		} // last call
+		else
+		{
+			arg->ans = arg->sum / arg->n;
+		}
+		return 1;
+	}
+
+	double example(char *classname, char *propertyname) 
+	{
+		struct s_arg arg = {0,0.0,00.0};
+		CLASS *oclass = class_get_class_from_classname(classname);
+		PROPERTY *prop = oclass?class_find_property(oclass,propertyname):NULL;
+		double zero=0;
+		if ( prop==NULL ) return QNAN;
+		OBJLIST *list = objlist_create(oclass,prop,NULL,">",&zero,NULL);
+		if ( list==NULL ) return QNAN;
+		arg.addr = prop->addr;
+		return objlist_apply(list,&arg,logmean);
+	}
+
+	@returns a positive value if successful, zero or negative if failed 
+	(negative value indicate how many objects were successfully processed before failure).
+ **/
+int objlist_apply(OBJLIST *list, /**< object list */
+				  void *arg, /**< pointer to additional data given to function */
+				  int (*function)(OBJECT *,void *,int)) /**< function to call */
+{
+	int n;
+	for ( n=0 ; n<list->size ; n++ )
+	{
+		OBJECT *obj = list->objlist[n];
+		if ( function(obj,arg,n)==0 )
+			return -n;
+	}
+	if ( function(NULL,arg,-1)==0 )
+		return -n;
+	else
+		return n;
+}
+
 /**@}*/

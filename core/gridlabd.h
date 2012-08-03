@@ -1603,6 +1603,44 @@ public: // iterators
 	inline GLOBALVAR* get_next(void) { if (!var) return NULL; else return var->next; };
 };
 
+class gld_objlist {
+private:
+	struct s_objlist *list;
+public:
+	inline operator OBJLIST*() { return list; }
+public:
+	inline gld_objlist(void) : list(NULL) {};
+	inline gld_objlist(CLASS *c, PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { list=callback->objlist.create(c,m,p,o,a,b); };
+	inline gld_objlist(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL) 
+	{ 
+		CLASS *c=callback->class_getname(cn); if (!c) exception("gld_objlist(): class '%s' is not found",cn); 
+		PROPERTY *m=callback->find_property(c,mn); if (!m) exception("gld_objlist(): property '%s' is not found in class '%s'",mn,cn);
+		list=callback->objlist.create(c,m,p,o,a,b); 
+	};
+	inline ~gld_objlist(void) { callback->objlist.destroy(list); };
+public:
+	inline size_t add(PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { return callback->objlist.add(list,m,p,o,a,b); };
+	inline size_t del(PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { return callback->objlist.add(list,m,p,o,a,b); };
+	inline size_t add(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL) 
+	{
+		CLASS *c=callback->class_getname(cn); if (!c) exception("gld_objlist(): class '%s' is not found",cn); 
+		PROPERTY *m=callback->find_property(c,mn); if (!m) exception("gld_objlist(): property '%s' is not found in class '%s'",mn,cn);
+		return callback->objlist.add(list,m,p,o,a,b); 
+	};
+	inline size_t del(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL) 
+	{ 
+		CLASS *c=callback->class_getname(cn); if (!c) exception("gld_objlist(): class '%s' is not found",cn); 
+		PROPERTY *m=callback->find_property(c,mn); if (!m) exception("gld_objlist(): property '%s' is not found in class '%s'",mn,cn);
+		return callback->objlist.add(list,m,p,o,a,b); 
+	};
+public:
+	inline bool is_valid(void) { return list!=NULL; };
+	inline size_t get_size(void) { return list->size; };
+	inline OBJECT *get(size_t n) { return list->objlist[n]; };
+	inline int apply(void *arg, int (*function)(OBJECT *,void*,int)) { return callback->objlist.apply(list,arg,function);};
+	inline void exception(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf,msg,ptr); va_end(ptr); throw (const char*)buf;};
+};
+
 ////////////////////////////////////////////////////////////////////////////////////
 // Module-Core Linkage Export Macros
 ////////////////////////////////////////////////////////////////////////////////////

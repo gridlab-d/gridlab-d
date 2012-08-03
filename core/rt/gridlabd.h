@@ -1034,7 +1034,15 @@ typedef struct s_callbacks {
 		void *(*readvar)(void *local, GLOBALVAR *var);
 		void (*writevar)(void *local, GLOBALVAR *var);
 	} remote;
-//	unsigned long (*property_size)(PROPERTY *prop);
+	struct {
+		struct s_objlist *(*create)(CLASS *oclass, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+		void (*destroy)(struct s_objlist *list);
+		size_t (*add)(struct s_objlist *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+		size_t (*del)(struct s_objlist *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+		size_t (*size)(struct s_objlist *list);
+		struct s_object_list *(*get)(struct s_objlist *list,size_t n);
+		int (*apply)(struct s_objlist *list, void *arg, int (*function)(struct s_object_list *,void *,int pos));
+	} objlist;
 } CALLBACKS; /**< core callback function table */
 
 extern CALLBACKS *callback;

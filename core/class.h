@@ -146,11 +146,6 @@ FUNCTIONADDR class_get_function(char *classname, char *functionname);
 DELEGATEDTYPE *class_register_type(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));
 int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...);
 
-//uint32 property_size(PROPERTY *prop);
-//uint32 property_size_by_type(PROPERTYTYPE type);
-//int property_create(PROPERTY *prop, void *addr);
-//PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation);
-
 #ifdef __cplusplus
 }
 #endif

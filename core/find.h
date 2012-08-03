@@ -89,5 +89,29 @@ FINDPGM *find_make_invariant(FINDPGM *pgm, int mode);
 #define FL_NEW (FINDLIST*)(0)
 #define FL_GROUP (FINDLIST*)(-1)
 
+/* advanced find */
+typedef struct s_objlist {
+	CLASS *oclass;		/**< class of object */
+	size_t asize;		/**< size of arrays */
+	size_t size;		/**< number of items in list */
+	struct s_object_list **objlist;	/**< pointer to array of objects that match */
+} OBJLIST;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+void objlist_destroy(OBJLIST *list);
+size_t objlist_add(OBJLIST *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+size_t objlist_del(OBJLIST *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+size_t objlist_size(OBJLIST *list);
+struct s_object_list *objlist_get(OBJLIST *list,size_t n);
+int objlist_apply(OBJLIST *list, void *arg, int (*function)(struct s_object_list *,void *,int pos));
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 

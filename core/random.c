@@ -171,7 +171,7 @@ TryAgain:
 		*state = ur;
 	u = ur/(RAND_MAX+1.0);
 	if ( u<=0 || u>=1 ){
-		if(*state == 0){
+		if( state!=0 && *state == 0){
 			*state = randwarn(0);
 			output_warning("randunit() introducing extra randomness to prevent state stagnation and infinite loops");
 		}
