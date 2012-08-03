@@ -1607,7 +1607,7 @@ class gld_objlist {
 private:
 	struct s_objlist *list;
 public:
-	inline operator OBJLIST*() { return list; }
+	inline operator OBJLIST*() { return list; };
 public:
 	inline gld_objlist(void) : list(NULL) {};
 	inline gld_objlist(CLASS *c, PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { list=callback->objlist.create(c,m,p,o,a,b); };

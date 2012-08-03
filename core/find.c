@@ -1410,8 +1410,6 @@ OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, char *part, cha
 	list->size = 0;
 	list->objlist = malloc(sizeof(OBJECT*)*INITSIZE);
 	if ( !list->objlist ) return output_error("find_create(): memory allocation failed"),free(list),NULL;
-	list->data = malloc(sizeof(void*)*INITSIZE);
-	if ( !list->data ) return output_error("find_create(): memory allocation failed"),free(list->objlist),free(list),NULL;
 	list->oclass = oclass;
 
 	/* perform search */
@@ -1420,8 +1418,11 @@ OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, char *part, cha
 }
 void objlist_destroy(OBJLIST *list)
 {
-	free(list->objlist);
-	free(list);
+	if ( list )
+	{
+		if ( list->objlist ) free(list->objlist);
+		free(list);
+	}
 }
 
 size_t objlist_add(OBJLIST *list, PROPERTY *match, char *match_part, char *match_op, void *match_value1, void *match_value2)
