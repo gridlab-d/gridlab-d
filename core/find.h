@@ -102,6 +102,7 @@ extern "C" {
 #endif
 
 OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+OBJLIST *objlist_search(char *group);
 void objlist_destroy(OBJLIST *list);
 size_t objlist_add(OBJLIST *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
 size_t objlist_del(OBJLIST *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);

@@ -119,7 +119,7 @@ typedef struct s_callbacks {
 	int (*set_parent)(OBJECT*,OBJECT*);
 	int (*set_rank)(OBJECT*,unsigned int);
 	struct {
-		PROPERTY *(*get_property)(OBJECT*,PROPERTYNAME);
+		PROPERTY *(*get_property)(OBJECT*,PROPERTYNAME,PROPERTYSTRUCT*);
 		int (*set_value_by_addr)(OBJECT *, void*, char*,PROPERTY*);
 		int (*get_value_by_addr)(OBJECT *, void*, char*, int size,PROPERTY*);
 		int (*set_value_by_name)(OBJECT *, char*, char*);
@@ -267,6 +267,7 @@ typedef struct s_callbacks {
 	} remote;
 	struct {
 		struct s_objlist *(*create)(CLASS *oclass, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+		struct s_objlist *(*search)(char *group);
 		void (*destroy)(struct s_objlist *list);
 		size_t (*add)(struct s_objlist *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
 		size_t (*del)(struct s_objlist *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
@@ -291,7 +292,7 @@ STATUS object_finalize(OBJECT *obj);
 int object_set_dependent(OBJECT *obj, OBJECT *dependent);
 int object_set_parent(OBJECT *obj, OBJECT *parent);
 void *object_get_addr(OBJECT *obj, char *name);
-PROPERTY *object_get_property(OBJECT *obj, PROPERTYNAME name);
+PROPERTY *object_get_property(OBJECT *obj, PROPERTYNAME name, PROPERTYSTRUCT *part);
 PROPERTY *object_prop_in_class(OBJECT *obj, PROPERTY *prop);
 int object_set_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value);
 int object_set_value_by_addr(OBJECT *obj, void *addr, char *value, PROPERTY *prop);
@@ -313,7 +314,6 @@ int object_locate_property(void *addr, OBJECT **pObj, PROPERTY **pProp);
 int object_get_oflags(KEYWORD **extflags);
 
 TIMESTAMP object_sync(OBJECT *obj, TIMESTAMP to,PASSCONFIG pass);
-PROPERTY *object_get_property(OBJECT *obj, PROPERTYNAME name);
 OBJECT **object_get_object(OBJECT *obj, PROPERTY *prop);
 OBJECT **object_get_object_by_name(OBJECT *obj, char *name);
 enumeration *object_get_enum(OBJECT *obj, PROPERTY *prop);

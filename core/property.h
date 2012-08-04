@@ -294,6 +294,11 @@ typedef struct s_property_map {
 	bool notify_override;
 } PROPERTY; /**< property definition item */
 
+typedef struct s_property_struct {
+	PROPERTY *prop;
+	PROPERTYNAME part;
+} PROPERTYSTRUCT;
+
 typedef enum { 
 	TCOP_EQ=0, 
 	TCOP_LE=1, 

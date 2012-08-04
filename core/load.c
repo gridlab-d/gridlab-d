@@ -493,7 +493,7 @@ static char *setup_class(CLASS *oclass)
 	len += sprintf(buffer+len,"\toclass->size = sizeof(%s);\n", oclass->name);
 	for (prop=oclass->pmap; prop!=NULL; prop=prop->next)
 	{
-		len += sprintf(buffer+len,"\t(*(callback->properties.get_property))(&obj,\"%s\")->addr = (PROPERTYADDR)((char*)&(t->%s) - (char*)t);\n",prop->name,prop->name);
+		len += sprintf(buffer+len,"\t(*(callback->properties.get_property))(&obj,\"%s\",NULL)->addr = (PROPERTYADDR)((char*)&(t->%s) - (char*)t);\n",prop->name,prop->name);
 #ifdef NEVER
 		if (prop->unit==NULL)
 			len += sprintf(buffer+len,"\t\tPT_%s,\"%s\",(char*)&(t->%s)-(char*)t,\n",
@@ -1085,7 +1085,7 @@ static int resolve_double(UNRESOLVED *item, char *context)
 		}
 
 		/* get and check the property */
-		prop = object_get_property(obj,pname);
+		prop = object_get_property(obj,pname,NULL);
 		if (prop==NULL)
 		{
 			output_error_raw("%s(%d): property '%s' not found", filename, item->line, pname);
@@ -3661,7 +3661,7 @@ static int property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fro
 		}
 		else 
 		{
-			PROPERTY *prop = object_get_property(obj,pname);
+			PROPERTY *prop = object_get_property(obj,pname,NULL);
 			if (prop==NULL)
 			{
 				output_error_raw("%s(%d): property '%s' of object '%s' not found", filename, linenum, oname,pname);
@@ -3982,7 +3982,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			}
 
 			/* get source property */
-			source_prop = object_get_property(source_obj, n==1?sobj:sprop);
+			source_prop = object_get_property(source_obj, n==1?sobj:sprop,NULL);
 			if ( !source_prop )
 			{
 				output_error_raw("%s(%d): transform source property '%s' of object '%s' not found", filename, linenum, n==1?sobj:sprop, n==1?"this":sobj);

@@ -1058,7 +1058,7 @@ Retry:
 			{
 				if (strcmp(wpval,"")!=0)
 				{
-					PROPERTY *prop = object_get_property(obj,wpval);
+					PROPERTY *prop = object_get_property(obj,wpval,NULL);
 					if (prop==NULL)
 						output_error("object %s does not have a property named '%s'", wptype,wpval);
 					/* TROUBLESHOOT
@@ -1172,7 +1172,7 @@ Retry:
 							converted to the type required for the property.  Check the command
 							syntax and try again.
 						 */
-					else if (!object_get_property(obj,propname))
+					else if (!object_get_property(obj,propname,NULL))
 						output_error("invalid property for object %s",objname);
 						/* TROUBLESHOOT
 							This error should not occur and in harmless.  

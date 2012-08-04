@@ -970,7 +970,7 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 					output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d object '%s' not found", buffer,n,m,objectname);
 					return 0;
 				}
-				prop = object_get_property(obj,propertyname);
+				prop = object_get_property(obj,propertyname,NULL);
 				if ( prop==NULL )
 				{
 					output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d property '%s' not found in object '%s'", buffer,n,m,propertyname,objectname);

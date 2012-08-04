@@ -175,7 +175,7 @@ static int compare_property_alt(OBJECT *obj, char *propname, FINDOP op, void *va
 	int16 *int16_target = NULL;
 	int32 *int32_target = NULL;
 	int64 *int64_target = NULL;
-	PROPERTY *prop = object_get_property(obj, propname);
+	PROPERTY *prop = object_get_property(obj, propname,NULL);
 
 	if(prop == NULL){
 		/* property not found in object ~ normal operation */
@@ -1218,7 +1218,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			(*pgm)->constflags |= CF_CLOCK;
 			ACCEPT; DONE;
 		}
-		else if (strcmp(pname, "insvc") == 0)	/* format? */
+		else if ( strcmp(pname,"insvc")==0 || strcmp(pname,"in")==0 )	/* format? */
 		{
 			FINDVALUE v;
 			v.integer = convert_to_timestamp(pvalue);
@@ -1229,7 +1229,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			(*pgm)->constflags |= CF_INSVC;
 			ACCEPT; DONE;
 		}
-		else if (strcmp(pname, "outsvc") == 0)	/* format? */
+		else if ( strcmp(pname,"outsvc")==0 || strcmp(pname,"out")==0 )	/* format? */
 		{
 			FINDVALUE v;
 			v.integer = convert_to_timestamp(pvalue);
@@ -1265,6 +1265,7 @@ static int expression_list(PARSER, FINDPGM **pgm)
 	if TERM(expression(HERE,pgm)) ACCEPT;
 	if (WHITE,LITERAL(";") && TERM(expression_list(HERE,pgm))) { ACCEPT; DONE; }
 	if (WHITE,LITERAL("AND") && TERM(expression_list(HERE,pgm))) {ACCEPT; DONE; }
+	if (WHITE,LITERAL("and") && TERM(expression_list(HERE,pgm))) {ACCEPT; DONE; }
 #if 0
 	if (WHITE,LITERAL("OR"){
 		FINDPGM *newpgm;
@@ -1416,6 +1417,33 @@ OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, char *part, cha
 	objlist_add(list,match_property,part,match_op,match_value1,match_value2);
 	return list;
 }
+OBJLIST *objlist_search(char *group)
+{
+	FINDLIST *result;
+	OBJECT *obj;
+	OBJLIST *list;
+	int n;
+	FINDPGM *pgm = find_mkpgm(group);
+	if ( pgm==NULL ) 
+	{
+		return NULL;
+	}
+	result=find_runpgm(NULL,pgm);
+	if ( result==NULL ) 
+	{
+		return NULL;
+	}
+	list = malloc(sizeof(OBJLIST));
+	if ( !list ) return NULL;
+	list->oclass = NULL;
+	list->asize = list->size = result->hit_count;
+	list->objlist = malloc(sizeof(OBJECT*)*result->hit_count);
+	if ( !list->objlist ) return NULL;
+	for ( obj=find_first(result),n=0 ; obj!=NULL ; obj=find_next(result,obj),n++ )
+		list->objlist[n] = obj;
+	return list;
+}
+
 void objlist_destroy(OBJLIST *list)
 {
 	if ( list )
@@ -1460,7 +1488,7 @@ size_t objlist_del(OBJLIST *list, PROPERTY *match, char *match_part, char *match
 	{
 		OBJECT *obj = list->objlist[n];
 		void *x = (void*)((char*)(obj+1) + (int64)match->addr);
-		if ( obj->oclass!=list->oclass ) continue;
+		if ( list->oclass!=NULL && obj->oclass!=list->oclass ) continue;
 		if ( property_compare_basic(match->ptype,op,x,match_value1,match_value2,match_part) )
 			list->objlist[n] = NULL; // marked for deletion
 	}

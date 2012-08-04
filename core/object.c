@@ -109,18 +109,50 @@ unsigned int object_get_count(){
 
 /** Get a named property of an object.  
 
-	Note that you
-	must use object_get_value_by_name to retrieve the value of
-	the property.
+	Note that you must use object_get_value_by_name to retrieve the value of
+	the property.  If part is specified, failed searches for given name will
+	be parsed for a part.
 
 	@return a pointer to the PROPERTY structure
  **/
 PROPERTY *object_get_property(OBJECT *obj, /**< a pointer to the object */
-							  PROPERTYNAME name){ /**< the name of the property */
+							  PROPERTYNAME name, /**< the name of the property */
+							  PROPERTYSTRUCT *pstruct) /** buffer in which to store part info, if found */
+{ 
 	if(obj == NULL){
 		return NULL;
 	} else {
-		return class_find_property(obj->oclass, name);
+		char *part;
+		PROPERTYNAME root;
+		PROPERTY *prop = class_find_property(obj->oclass, name);
+		PROPERTYSPEC *spec;
+		if ( pstruct ) { pstruct->prop=prop; pstruct->part[0]='\0'; }
+		if ( prop ) return prop;
+
+		/* property not found, but part structure was not requested either */
+		if ( pstruct==NULL ) return NULL;
+
+		/* possible part specified, so search for it */
+		strcpy(root,name);
+		part = strrchr(root,'.');
+		if ( !part ) return NULL; /* no part, no result */
+		
+		/* part is apparently valid */
+		*part++='\0';
+
+		/* check the root */
+		prop = class_find_property(obj->oclass, root);
+		if ( !prop ) return NULL; /* root isn't valid either */
+
+		/* check part directly (note this fails if the part is valid but the double is NaN) */
+		spec = property_getspec(prop->ptype);
+		if ( spec->get_part==NULL || spec->get_part(obj,part)==QNAN ) return NULL;
+		
+		/* part is valid */
+		pstruct->prop = prop;
+		strncpy(pstruct->part,part,sizeof(pstruct->part));
+
+		return prop;
 	}
 }
 
@@ -213,7 +245,7 @@ char *object_get_unit(OBJECT *obj, char *name)
 {
 	static UNIT *dimless = NULL;
 	unsigned int unitlock = 0;
-	PROPERTY *prop = object_get_property(obj, name);
+	PROPERTY *prop = object_get_property(obj, name,NULL);
 	
 	if(prop == NULL){
 		char *buffer = (char *)malloc(64);

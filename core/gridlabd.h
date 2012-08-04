@@ -510,8 +510,9 @@ inline int gl_set_rank(OBJECT *obj, /**< object to change rank */
  **/
 #ifdef __cplusplus
 inline PROPERTY *gl_get_property(OBJECT *obj, /**< a pointer to the object */
-								 PROPERTYNAME name) /**< the name of the property */
-{ return (*callback->properties.get_property)(obj,name); }
+								 PROPERTYNAME name, /**< the name of the property */
+								 PROPERTYSTRUCT *part=NULL) /**< part info */
+{ return (*callback->properties.get_property)(obj,name,part); }
 #else
 #define gl_get_property (*callback->properties.get_property)
 #endif
@@ -1406,8 +1407,11 @@ inline bool hasbits(unsigned long flags, unsigned int bits) { return (flags&bits
 class gld_object {
 public:
 	inline OBJECT *my() { return (((OBJECT*)this)-1); }
+public:
+	inline gld_object &operator=(gld_object&o) { exception("copy constructor is forbidden on gld_object"); };
 
 public: // constructors
+	inline static gld_object *find_object(char *n) { OBJECT *obj = callback->get_object(n); if (obj) return (gld_object*)(obj+1); else return NULL; };
 
 public: // header read accessors (no locking)
 	inline OBJECTNUM get_id(void) { return my()->id; };
@@ -1452,7 +1456,7 @@ protected: // locking (others)
 protected: // special functions
 
 public: // member lookup functions
-	inline PROPERTY* get_property(char *name) { return callback->properties.get_property(my(),name); };
+	inline PROPERTY* get_property(char *name, PROPERTYSTRUCT *pstruct=NULL) { return callback->properties.get_property(my(),name,pstruct); };
 	inline FUNCTIONADDR get_function(char *name) { return (*callback->function.get)(my()->oclass->name,name); };
 
 public: // external accessors
@@ -1476,84 +1480,136 @@ public: // iterators
 public: // exceptions
 	inline void exception(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); throw (const char*)buf;};
 };
+//operator gld_object*(OBJECT*x) { return (gld_object*)(x+1); };
+static inline gld_object* get_object(OBJECT*obj)
+{
+	return obj ? (gld_object*)(obj+1) : NULL;
+}
+static inline gld_object* get_object(char *n)
+{
+	OBJECT *obj = callback->get_object(n);
+	return get_object(obj);
+}
 
+static PROPERTYSTRUCT nullpstruct;
 class gld_property {
 
 private: // data
-	PROPERTY *prop;
+	PROPERTYSTRUCT pstruct;
 	OBJECT *obj;
 
 public: // constructors/casts
-	inline gld_property(void) : obj(NULL), prop(NULL) {};
-	inline gld_property(gld_object *o, char *n) : obj(o->my()) { if (o) prop=callback->properties.get_property(o->my(),n); else {GLOBALVAR *v=callback->global.find(n); prop= (v?v->prop:NULL);} };
-	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), prop(p) {};
-	inline gld_property(OBJECT *o, char *n) : obj(o) { if (o) prop=callback->properties.get_property(o,n); else {GLOBALVAR *v=callback->global.find(n); prop= (v?v->prop:NULL);} };
-	inline gld_property(GLOBALVAR *v) : obj(NULL), prop(v->prop) {};
-	inline gld_property(char *n) : obj(NULL) { GLOBALVAR *v=callback->global.find(n); prop= (v?v->prop:NULL);  };
-	inline gld_property(char *m, char *n) : obj(NULL) { char1024 vn; sprintf(vn,"%s::%s",m,n); GLOBALVAR *v=callback->global.find(vn); prop= (v?v->prop:NULL);  };
-	inline operator PROPERTY*(void) { return prop; };
+	inline gld_property(void) : obj(NULL), pstruct(nullpstruct) {};
+	inline gld_property(gld_object *o, char *n) : obj(o->my()), pstruct(nullpstruct)  
+	{ 
+		if (o) 
+			callback->properties.get_property(o->my(),n,&pstruct); 
+		else 
+		{
+			GLOBALVAR *v=callback->global.find(n); 
+			pstruct.prop= (v?v->prop:NULL);
+		} 
+	};
+	inline gld_property(OBJECT *o, char *n) : obj(o), pstruct(nullpstruct)  
+	{ 
+		if (o) 
+			callback->properties.get_property(o,n,&pstruct); 
+		else 
+		{
+			GLOBALVAR *v=callback->global.find(n); 
+			pstruct.prop= (v?v->prop:NULL);
+		} 
+	};
+	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), pstruct(nullpstruct) { pstruct.prop=p; };
+	inline gld_property(GLOBALVAR *v) : obj(NULL), pstruct(nullpstruct) { pstruct.prop=v->prop; };
+	inline gld_property(char *n) : obj(NULL), pstruct(nullpstruct) 
+	{ 
+		GLOBALVAR *v=callback->global.find(n); 
+		pstruct.prop = (v?v->prop:NULL);  
+	};
+	inline gld_property(char *m, char *n) : obj(NULL), pstruct(nullpstruct) 
+	{ 
+		char1024 vn; 
+		sprintf(vn,"%s::%s",m,n); 
+		GLOBALVAR *v=callback->global.find(vn); 
+		pstruct.prop= (v?v->prop:NULL);  
+	};
+	inline operator PROPERTY*(void) { return pstruct.prop; };
 
 public: // read accessors
 	inline OBJECT *get_object(void) { return obj; };
-	inline PROPERTY *get_property(void) { return prop; };
-	inline gld_class* get_class(void) { return (gld_class*)prop->oclass; };
-	inline char *get_name(void) { return prop->name; };
-	inline gld_type get_type(void) { return gld_type(prop->ptype); };
-	inline size_t get_size(void) { return (size_t)(prop->size); };
-	inline size_t get_width(void) { return (size_t)(prop->width); };
-	inline PROPERTYACCESS get_access(void) { return prop->access; };
-	inline gld_unit* get_unit(void) { return (gld_unit*)prop->unit; };
-	inline void* get_addr(void) { return obj?((void*)((char*)(obj+1)+(unsigned int64)(prop->addr))):prop->addr; };
-	inline gld_keyword* get_first_keyword(void) { return (gld_keyword*)prop->keywords; };
-	inline char* get_description(void) { return prop->description; };
-	inline PROPERTYFLAGS get_flags(void) { return prop->flags; };
-	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(prop,get_addr(),buffer,size); };
+	inline PROPERTY *get_property(void) { return pstruct.prop; };
+	inline gld_class* get_class(void) { return (gld_class*)pstruct.prop->oclass; };
+	inline char *get_name(void) { return pstruct.prop->name; };
+	inline gld_type get_type(void) { return gld_type(pstruct.prop->ptype); };
+	inline size_t get_size(void) { return (size_t)(pstruct.prop->size); };
+	inline size_t get_width(void) { return (size_t)(pstruct.prop->width); };
+	inline PROPERTYACCESS get_access(void) { return pstruct.prop->access; };
+	inline gld_unit* get_unit(void) { return (gld_unit*)pstruct.prop->unit; };
+	inline void* get_addr(void) { return obj?((void*)((char*)(obj+1)+(unsigned int64)(pstruct.prop->addr))):pstruct.prop->addr; };
+	inline gld_keyword* get_first_keyword(void) { return (gld_keyword*)pstruct.prop->keywords; };
+	inline char* get_description(void) { return pstruct.prop->description; };
+	inline PROPERTYFLAGS get_flags(void) { return pstruct.prop->flags; };
+	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(pstruct.prop,get_addr(),buffer,size); };
 	inline char *get_string(size_t sz=1024) { char *buffer=(char*)malloc(sz); if ( !buffer ) return NULL; int len=to_string(buffer,(int)sz); return len>0 ? buffer : (free(buffer),NULL); };
-	inline int from_string(char *string) { return callback->convert.string_to_property(prop,get_addr(),string); };
-	inline double get_part(char *part) { return callback->properties.get_part(obj,prop,part); };
+	inline int from_string(char *string) { return callback->convert.string_to_property(pstruct.prop,get_addr(),string); };
+	inline char *get_partname(void) { return pstruct.part; };
+	inline double get_part(char *part=NULL) { return callback->properties.get_part(obj,pstruct.prop,part?part:pstruct.part); };
 
 public: // write accessors
 	inline void set_object(OBJECT *o) { obj=o; };
 	inline void set_object(gld_object *o) { obj=o->my(); };
-	inline void set_property(char *n) { prop=callback->properties.get_property(obj,n); };
-	inline void set_property(PROPERTY *p) { prop=p; };
+	inline void set_property(char *n) { callback->properties.get_property(obj,n,&pstruct); };
+	inline void set_property(PROPERTY *p) { pstruct.prop=p; };
 
 public: // special operations
-	inline bool is_valid(void) { return prop!=NULL; }
-	inline bool is_double(void) { switch(prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return true; default: return false;} };
-	inline bool is_integer(void) { switch(prop->ptype) { case PT_int16: case PT_int32: case PT_int64: return true; default: return false;} };
-	inline double get_double(void) { switch(prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return *(double*)get_addr(); default: return 0;} };
-	inline int64 get_integer(void) { switch(prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: return 0;} };
+	inline bool is_valid(void) { return pstruct.prop!=NULL; }
+	inline bool has_part(void) { return pstruct.part[0]!='\0'; };
+	inline bool is_double(void) { switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return true; default: return false;} };
+	inline bool is_integer(void) { switch(pstruct.prop->ptype) { case PT_int16: case PT_int32: case PT_int64: return true; default: return false;} };
+	inline double get_double(void) { switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return *(double*)get_addr(); default: return 0;} };
+	inline int64 get_integer(void) { switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: return 0;} };
 	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
 	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
 	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };
 	template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };
 	template <class T> inline void setp(T &value, gld_wlock&) { *(T*)get_addr()=value; };
 	inline gld_keyword* find_keyword(unsigned long value) { gld_keyword*k=get_first_keyword();while(k && k->get_value()!=value) {k=k->get_next();} return k; }; // TODO
-	inline gld_keyword* find_keyword(char *name) { gld_keyword*k=get_first_keyword();while(k && strcmp(k->get_name(),name)!=0) {k=k->get_next();} return k; }; // TODO
-	inline bool compare(char *op, char *a, char *b=NULL, char *p=NULL) { PROPERTYCOMPAREOP n=callback->properties.get_compare_op(prop->ptype,op); if (n==TCOP_ERR) throw "invalid property compare operation"; return compare(n,a,b,p); };
+	inline gld_keyword* find_keyword(char *name) 
+	{ 
+		gld_keyword *k = get_first_keyword();
+		while ( k && strcmp(k->get_name(),name)!=0 ) 
+			k=k->get_next();
+		return k; 
+	};
+	inline bool compare(char *op, char *a, char *b=NULL, char *p=NULL) 
+	{ 
+		PROPERTYCOMPAREOP n = callback->properties.get_compare_op(pstruct.prop->ptype,op); 
+		if (n==TCOP_ERR) throw "invalid property compare operation"; 
+		return compare(n,a,b,p); 
+	};
 	inline bool compare(PROPERTYCOMPAREOP op, char *a, char *b=NULL) 
 	{ 
 		char v1[1024], v2[1024]; 
-		return callback->convert.string_to_property(prop,(void*)v1,a)>0 && callback->properties.compare_basic(prop->ptype,op,get_addr(),(void*)v1,(b&&callback->convert.string_to_property(prop,(void*)v2,b)>0)?(void*)v2:NULL, NULL);
+		return callback->convert.string_to_property(pstruct.prop,(void*)v1,a)>0 && callback->properties.compare_basic(pstruct.prop->ptype,op,get_addr(),(void*)v1,(b&&callback->convert.string_to_property(pstruct.prop,(void*)v2,b)>0)?(void*)v2:NULL, NULL);
 	};
 	inline bool compare(PROPERTYCOMPAREOP op, char *a, char *b, char *p) 
 	{
 		double v1, v2; v1=atof(a); v2=b?atof(b):0;
-		return callback->properties.compare_basic(prop->ptype,op,get_addr(),(void*)&v1,b?(void*)&v2:NULL, p);
+		return callback->properties.compare_basic(pstruct.prop->ptype,op,get_addr(),(void*)&v1,b?(void*)&v2:NULL, p);
 	};
 	inline bool compare(PROPERTYCOMPAREOP op, double *a, double *b=NULL, char *p=NULL) 
 	{ 
-		return callback->properties.compare_basic(prop->ptype,op,get_addr(),a,b,p);
+		return callback->properties.compare_basic(pstruct.prop->ptype,op,get_addr(),a,b,p);
 	};
 	inline bool compare(PROPERTYCOMPAREOP op, void *a, void *b=NULL) 
 	{ 
-		return callback->properties.compare_basic(prop->ptype,op,get_addr(),a,b,NULL);
+		return callback->properties.compare_basic(pstruct.prop->ptype,op,get_addr(),a,b,NULL);
 	};
 
 public: // iterators
-	inline bool is_last(void) { return prop==NULL || prop->next==NULL; };
-	inline PROPERTY* get_next(void) { return prop->next; };
+	inline bool is_last(void) { return pstruct.prop==NULL || pstruct.prop->next==NULL; };
+	inline PROPERTY* get_next(void) { return pstruct.prop->next; };
 
 public: // comparators
 	inline bool operator == (char* a) { return compare(TCOP_EQ,a,NULL); };
@@ -1566,7 +1622,15 @@ public: // comparators
 	inline bool outside(char* a, char* b) { return compare(TCOP_NI,a,b); };
 
 private: // exceptions
-	inline void exception(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s.%s: ",OBJECTDATA(obj,gld_object)->get_name(),prop->name),msg,ptr); va_end(ptr); throw (const char*)buf;};
+	inline void exception(char *msg, ...) 
+	{ 
+		static char buf[1024]; 
+		va_list ptr; 
+		va_start(ptr,msg); 
+		vsprintf(buf+sprintf(buf,"%s.%s: ",OBJECTDATA(obj,gld_object)->get_name(),pstruct.prop->name),msg,ptr); 
+		va_end(ptr); 
+		throw (const char*)buf;
+	};
 };
 
 class gld_global {
@@ -1610,6 +1674,7 @@ public:
 	inline operator OBJLIST*() { return list; };
 public:
 	inline gld_objlist(void) : list(NULL) {};
+	inline gld_objlist(char *group) { list=callback->objlist.search(group); };
 	inline gld_objlist(CLASS *c, PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { list=callback->objlist.create(c,m,p,o,a,b); };
 	inline gld_objlist(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL) 
 	{ 
@@ -1619,6 +1684,7 @@ public:
 	};
 	inline ~gld_objlist(void) { callback->objlist.destroy(list); };
 public:
+	inline size_t set(char *group) { if ( list ) callback->objlist.destroy(list); list=callback->objlist.search(group); return list->size; };
 	inline size_t add(PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { return callback->objlist.add(list,m,p,o,a,b); };
 	inline size_t del(PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { return callback->objlist.add(list,m,p,o,a,b); };
 	inline size_t add(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL) 

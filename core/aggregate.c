@@ -452,4 +452,5 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 		return numerator/denominator * scale;
 	}
 }
+
 /**@}**/

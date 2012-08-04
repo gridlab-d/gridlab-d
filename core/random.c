@@ -1261,6 +1261,16 @@ TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 		return TS_NEVER;
 }
 
+double random_get_part(void *x, char *name)
+{
+	randomvar *v = (randomvar*)x;
+	if ( strcmp(name,"a")==0 ) return v->a;
+	if ( strcmp(name,"b")==0 ) return v->b;
+	if ( strcmp(name,"high")==0 ) return v->high;
+	if ( strcmp(name,"low")==0 ) return v->low;
+	return QNAN;
+}
+
 
 /** @} **/
 

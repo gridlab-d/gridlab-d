@@ -110,7 +110,7 @@ STATUS instance_slave_parse_prop_list(char *line, linkage **root, LINKAGETYPE ty
 			output_error("instance_slave_link_properties(): unable to find object '%s'", objname);
 			return FAILED;
 		}
-		prop = object_get_property(obj, propname);
+		prop = object_get_property(obj, propname,NULL);
 		if(prop == 0){
 			output_error("instance_slave_link_properties(): prop '%s' not found in object '%s'", propname, objname);
 			return FAILED;

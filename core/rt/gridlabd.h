@@ -513,6 +513,11 @@ struct s_property_map {
 	bool notify_override;
 }; /**< property definition item */
 
+typedef struct s_property_struct {
+	PROPERTY *prop;
+	PROPERTYNAME part;
+} PROPERTYSTRUCT;
+
 struct s_unit {
 	char name[64];		/**< the name of the unit */
 	double c,e,h,k,m,s,a,b; /**< the unit parameters */
@@ -892,7 +897,7 @@ typedef struct s_callbacks {
 	int (*set_parent)(OBJECT*,OBJECT*);
 	int (*set_rank)(OBJECT*,unsigned int);
 	struct {
-		PROPERTY *(*get_property)(OBJECT*,PROPERTYNAME);
+		PROPERTY *(*get_property)(OBJECT*,PROPERTYNAME,PROPERTYSTRUCT*);
 		int (*set_value_by_addr)(OBJECT *, void*, char*,PROPERTY*);
 		int (*get_value_by_addr)(OBJECT *, void*, char*, int size,PROPERTY*);
 		int (*set_value_by_name)(OBJECT *, char*, char*);
@@ -1036,6 +1041,7 @@ typedef struct s_callbacks {
 	} remote;
 	struct {
 		struct s_objlist *(*create)(CLASS *oclass, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+		struct s_objlist *(*search)(char *group);
 		void (*destroy)(struct s_objlist *list);
 		size_t (*add)(struct s_objlist *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
 		size_t (*del)(struct s_objlist *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);

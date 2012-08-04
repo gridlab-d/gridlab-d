@@ -59,7 +59,7 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 		my->trigger[0]='\0';
 		my->format = 0;
 		strcpy(my->plotcommands,"");
-		my->target = gl_get_property(*obj,my->property);
+		my->target = gl_get_property(*obj,my->property,NULL);
 		my->header_units = HU_DEFAULT;
 		my->line_units = LU_DEFAULT;
 		return 1;
@@ -274,7 +274,7 @@ static int recorder_open(OBJECT *obj)
 							return 0;
 						}
 					}
-					prop = gl_get_property(obj->parent, propstr);
+					prop = gl_get_property(obj->parent, propstr,NULL);
 					if(prop->unit != 0 && unit == 0){
 						unit = prop->unit;
 					}
@@ -474,7 +474,7 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 			}
 		}
 
-		target = gl_get_property(obj,item);
+		target = gl_get_property(obj,item,NULL);
 
 		if (prop!=NULL && target!=NULL)
 		{
@@ -532,7 +532,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 				case LU_NONE:
 					// copy value into local value, use fake PROP, feed into gl_get_vaule
 					value = *gl_get_double(obj, p);
-					p2 = gl_get_property(obj, p->name);
+					p2 = gl_get_property(obj, p->name,NULL);
 					if(p2 == 0){
 						gl_error("unable to locate %s.%s for LU_NONE", obj, p->name);
 						return 0;

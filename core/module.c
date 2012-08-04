@@ -197,7 +197,7 @@ static CALLBACKS callbacks = {
 	{interpolate_linear, interpolate_quadratic},
 	{forecast_create, forecast_find, forecast_read, forecast_save},
 	{object_remote_read, object_remote_write, global_remote_read, global_remote_write},
-	{objlist_create,objlist_destroy,objlist_add,objlist_del,objlist_size,objlist_get,objlist_apply},
+	{objlist_create,objlist_search,objlist_destroy,objlist_add,objlist_del,objlist_size,objlist_get,objlist_apply},
 };
 CALLBACKS *module_callbacks(void) { return &callbacks; }
 

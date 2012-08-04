@@ -215,7 +215,7 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			}
 			for ( ;(item=gl_find_next(object_list,item))!=NULL; n++)
 			{
-				PROPERTY *prop=gl_get_property(item,my->property);
+				PROPERTY *prop=gl_get_property(item,my->property,NULL);
 				if (prop!=NULL)
 				{
 					if (prop->ptype==PT_double)

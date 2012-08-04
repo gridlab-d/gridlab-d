@@ -64,7 +64,7 @@ EXPORT int create_player(OBJECT **obj, OBJECT *parent)
 		my->loopnum = 0;
 		my->loop = 0;
 		my->status = TS_INIT;
-		my->target = gl_get_property(*obj,my->property);
+		my->target = gl_get_property(*obj,my->property,NULL);
 		return 1;
 	}
 	return 0;
@@ -269,7 +269,7 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 		/* get local target if remote is not used and "value" is defined by the user at runtime */
 		if (my->target==NULL && obj->parent == NULL)
-			my->target = gl_get_property(obj,"value");
+			my->target = gl_get_property(obj,"value",NULL);
 
 		if(player_open(obj) == 0)
 		{
@@ -283,7 +283,7 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	while (my->status==TS_OPEN && t1<=t0)
 	{	/* post this value */
 		if (my->target==NULL)
-			my->target = gl_get_property(obj->parent,my->property);
+			my->target = gl_get_property(obj->parent,my->property,NULL);
 		if (my->target==NULL){
 			gl_error("sync_player: Unable to find property \"%s\" in object %s", my->property, obj->name?obj->name:"(anon)");
 			my->status = TS_ERROR;

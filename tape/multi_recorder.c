@@ -70,7 +70,7 @@ EXPORT int create_multi_recorder(OBJECT **obj, OBJECT *parent)
 		my->trigger[0]='\0';
 		my->format = 0;
 		strcpy(my->plotcommands,"");
-		my->target = gl_get_property(*obj,my->property);
+		my->target = gl_get_property(*obj,my->property,NULL);
 		my->header_units = HU_DEFAULT;
 		my->line_units = LU_DEFAULT;
 		return 1;
@@ -316,7 +316,7 @@ static int multi_recorder_open(OBJECT *obj)
 					// split unit from property, if present
 					if(unit_ptr == 0){
 						// no explicit unit
-						prop = gl_get_property(myobj, bigpropstr);
+						prop = gl_get_property(myobj, bigpropstr,NULL);
 						if(prop == 0){
 							gl_error("multi_recorder:%d: unable to find property '%s' for object '%s'", obj->id, propstr, myobj->name);
 							return 0;
@@ -336,7 +336,7 @@ static int multi_recorder_open(OBJECT *obj)
 								gl_error("multi_recorder:%d: unable to find unit '%s' for property '%s'", obj->id, unitstr, propstr);
 								return 0;
 							}
-							prop = gl_get_property(myobj, propstr);
+							prop = gl_get_property(myobj, propstr,NULL);
 							if(prop == 0){
 								gl_error("multi_recorder:%d: unable to find property '%s' for object '%s'", obj->id, propstr, myobj->name);
 								return 0;
@@ -593,7 +593,7 @@ RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)
 			}
 		}
 
-		target = gl_get_property(target_obj,item);
+		target = gl_get_property(target_obj,item,NULL);
 
 		if (rmap != NULL && target != NULL)
 		{
@@ -656,7 +656,7 @@ int read_multi_properties(struct recorder *my, OBJECT *obj, RECORDER_MAP *rmap, 
 				case LU_NONE:
 					// copy value into local value, use fake PROP, feed into gl_get_vaule
 					value = *gl_get_double(r->obj, &(r->prop));
-					p2 = gl_get_property(r->obj, r->prop.name);
+					p2 = gl_get_property(r->obj, r->prop.name,NULL);
 					if(p2 == 0){
 						gl_error("unable to locate %s.%s for LU_NONE", r->obj, r->prop.name);
 						return 0;
