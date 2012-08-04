@@ -303,6 +303,6 @@ int ss_model::precommit(TIMESTAMP t0)
 
 TIMESTAMP ss_model::sync(TIMESTAMP t0)
 {
-	return ((t0/(int)timestep)+1)*timestep;
+	return (TIMESTAMP)(((t0/(int)timestep)+1)*timestep);
 }
 
