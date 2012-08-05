@@ -3,11 +3,25 @@
 module mysql;
 
 object database {
-	name testdb;
-	schema gld-${GUID};
 }
 
+class test {
+	random x;
+}
+
+object test {
+	name test;
+	x type:normal(0,0.72);
+}
+object test:..10 {
+	x type:normal(0,1);
+}
 object collector {
-	connection testdb;
+	property "mean(x),sum(x),count(x)";
+	group "class=test";
+	mode "w";
+	file "test.csv";
+	interval 1h;
+	limit 1000;
 }
 

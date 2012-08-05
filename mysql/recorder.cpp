@@ -129,7 +129,7 @@ int recorder::init(OBJECT *parent)
 		// drop table if exists and drop specified
 		if ( db->table_exists(get_table()) )
 		{
-			if ( get_options()&MO_DROPTABLES && !db->query("DROP TABLE IF EXISTS %s", get_table()) )
+			if ( get_options()&MO_DROPTABLES && !db->query("DROP TABLE IF EXISTS `%s`", get_table()) )
 				exception("unable to drop table '%s'", get_table());
 		}
 		
