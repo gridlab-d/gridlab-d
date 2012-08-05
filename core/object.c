@@ -608,7 +608,7 @@ double *object_get_double_quick(OBJECT *obj, PROPERTY *prop)
 
 double *object_get_double(OBJECT *obj, PROPERTY *prop)
 {
-	if(object_prop_in_class(obj, prop) && prop->ptype==PT_double && prop->access != PA_PRIVATE)
+	if(object_prop_in_class(obj, prop) && (prop->ptype==PT_double||prop->ptype==PT_random) && prop->access != PA_PRIVATE)
 		return (double*)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
 	errno = ENOENT;
 	return NULL;

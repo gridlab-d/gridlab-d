@@ -144,9 +144,10 @@ typedef struct s_callbacks {
 	/* void *(*malloc)(unsigned int); */
 	void *(*malloc)(size_t);
 	void (*free)(void*);
-	struct s_aggregate *(*create_aggregate)(char *aggregator, char *group_expression);
-	//struct s_aggregate *(*create_aggregate_zwei)(char *aggregator, struct s_aggregate *aggr);
-	double (*run_aggregate)(struct s_aggregate *aggregate);
+	struct {
+		struct s_aggregate *(*create)(char *aggregator, char *group_expression);
+		double (*refresh)(struct s_aggregate *aggregate);
+	} aggregate;
 	struct {
 		void *(*getvar)(MODULE *module, char *varname);
 		MODULE *(*getfirst)(void);

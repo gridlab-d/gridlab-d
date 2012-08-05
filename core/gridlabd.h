@@ -700,12 +700,12 @@ inline char *gl_getvalue(OBJECT *obj,
 /** Create an aggregate property from a find list
 	@see aggregate_mkgroup()
  **/
-#define gl_create_aggregate (*callback->create_aggregate)
+#define gl_create_aggregate (*callback->aggregate.create)
 
 /** Evaluate an aggregate property
 	@see aggregate_value()
  **/
-#define gl_run_aggregate (*callback->run_aggregate)
+#define gl_run_aggregate (*callback->aggregate.refresh)
 /** @} **/
 
 /******************************************************************************
@@ -1567,8 +1567,8 @@ public: // special operations
 	inline bool has_part(void) { return pstruct.part[0]!='\0'; };
 	inline bool is_double(void) { switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return true; default: return false;} };
 	inline bool is_integer(void) { switch(pstruct.prop->ptype) { case PT_int16: case PT_int32: case PT_int64: return true; default: return false;} };
-	inline double get_double(void) { switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return *(double*)get_addr(); default: return 0;} };
-	inline int64 get_integer(void) { switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: return 0;} };
+	inline double get_double(void) { errno=0; switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return has_part() ? get_part() : *(double*)get_addr(); default: errno=EINVAL; return NaN;} };
+	inline int64 get_integer(void) { errno=0; switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: errno=EINVAL; return 0;} };
 	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
 	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
 	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };
@@ -1665,6 +1665,18 @@ public: // external accessors
 public: // iterators
 	inline bool is_last(void) { if (!var) return NULL; else return (var->next==NULL); };
 	inline GLOBALVAR* get_next(void) { if (!var) return NULL; else return var->next; };
+};
+
+class gld_aggregate {
+private:
+	AGGREGATION *aggr;
+public:
+	inline gld_aggregate(void) { aggr=NULL; };
+	inline gld_aggregate(char *spec, char *group) { set_aggregate(spec,group); };
+public:
+	inline bool set_aggregate(char *spec, char *group) { aggr=callback->aggregate.create(spec,group); return aggr!=NULL; };
+	inline bool is_valid(void) { return aggr!=NULL; };
+	inline double get_value(void) { if (!aggr) throw "null aggregate"; return callback->aggregate.refresh(aggr); };
 };
 
 class gld_objlist {

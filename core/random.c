@@ -1255,7 +1255,7 @@ TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 			if ( absolute_timestamp(t3)<absolute_timestamp(t2) ) t2 = t3;
 		}
 		randomvar_synctime += clock() - ts;
-		return -absolute_timestamp(t2);
+		return t2!=TS_NEVER ? -absolute_timestamp(t2) : TS_NEVER;
 	}
 	else
 		return TS_NEVER;
