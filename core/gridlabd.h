@@ -1551,7 +1551,15 @@ public: // read accessors
 	inline char* get_description(void) { return pstruct.prop->description; };
 	inline PROPERTYFLAGS get_flags(void) { return pstruct.prop->flags; };
 	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(pstruct.prop,get_addr(),buffer,size); };
-	inline char *get_string(size_t sz=1024) { char *buffer=(char*)malloc(sz); if ( !buffer ) return NULL; int len=to_string(buffer,(int)sz); return len>0 ? buffer : (free(buffer),NULL); };
+	inline char *get_string(int sz=1024) ///< you must free the string returned by this call 
+	{ 	
+		char *buffer=(char*)malloc(sz); 
+		if ( !buffer ) return NULL; 
+		if ( to_string(buffer,sz)>0 )
+			return buffer;
+		free(buffer);
+		return NULL;
+	};
 	inline int from_string(char *string) { return callback->convert.string_to_property(pstruct.prop,get_addr(),string); };
 	inline char *get_partname(void) { return pstruct.part; };
 	inline double get_part(char *part=NULL) { return callback->properties.get_part(obj,pstruct.prop,part?part:pstruct.part); };
@@ -1649,7 +1657,15 @@ public: // read accessors
 	inline PROPERTY* get_property(void) { if (!var) return NULL; return var->prop; };
 	inline unsigned long get_flags(void) { if (!var) return -1; return var->flags; };
 	inline size_t to_string(char *bp, size_t sz) { if (!var) return -1; gld_property p(var); return p.to_string(bp,(int)sz); };
-	inline char *get_string(void) { char *buffer = (char*)malloc(1024); if ( !buffer || to_string(buffer,1024)<0 ) return NULL; else return buffer; }; 
+	inline char *get_string(int sz=1024) ///< you must free the string returned by this call
+	{ 
+		char *buffer = (char*)malloc(sz); 
+		if ( !buffer ) return NULL;
+		if ( to_string(buffer,1024)>0 ) 
+			return buffer;
+		free(buffer);
+		return NULL; 
+	}; 
 	inline int16 get_int16(void) { if ( var->prop->ptype!=PT_int16 ) return 0; return *(int16*)(var->prop->addr); };
 	inline int32 get_int32(void) { if ( var->prop->ptype!=PT_int32 ) return 0; return *(int32*)(var->prop->addr); };
 	inline int64 get_int64(void) { if ( var->prop->ptype!=PT_int64 ) return 0; return *(int64*)(var->prop->addr); };
