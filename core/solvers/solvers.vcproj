@@ -501,6 +501,10 @@
 			>
 		</File>
 		<File
+			RelativePath=".\modified_euler.cpp"
+			>
+		</File>
+		<File
 			RelativePath=".\newton_method.cpp"
 			>
 		</File>
