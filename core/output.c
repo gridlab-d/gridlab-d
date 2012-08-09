@@ -303,7 +303,7 @@ char *output_get_time_context(void)
 	Error messages are always preceded by the string "FATAL: " 
 	and a newline is always appended to the message.
  **/
-int output_fatal(char *format,...) /**< \bprintf style argument list */
+int output_fatal(const char *format,...) /**< \bprintf style argument list */
 {
 	/* check for repeated message */
 	static char lastfmt[4096] = "";
@@ -349,7 +349,7 @@ Unlock:
 	Error messages are always preceded by the string "ERROR: " 
 	and a newline is always appended to the message.
  **/
-int output_error(char *format,...) /**< \bprintf style argument list */
+int output_error(const char *format,...) /**< \bprintf style argument list */
 {
 	/* check for repeated message */
 	static char lastfmt[4096] = "";
@@ -399,7 +399,7 @@ Unlock:
 	Error messages are always preceded by the string "ERROR: " 
 	and a newline is always appended to the message.
  **/
-int output_error_raw(char *format,...) /**< \bprintf style argument list */
+int output_error_raw(const char *format,...) /**< \bprintf style argument list */
 {
 	/* check for repeated message */
 	static char lastfmt[4096] = "";
@@ -449,7 +449,7 @@ Unlock:
 	variable \p global_testoutputfile.
 	A newline is always appended to the message. 
  **/
-int output_test(char *format,...) /**< \bprintf style argument list */
+int output_test(const char *format,...) /**< \bprintf style argument list */
 {
 	static FILE *fp = NULL;
 	char minor_b[32], major_b[32];
@@ -497,7 +497,7 @@ Unlock:
 	\p global_warn_mode variable is not \b 0.  Warning messages are always preceded by
 	the string "WARNING: " and a newline is always appended to the message.
  **/
-int output_warning(char *format,...) /**< \bprintf style argument list */
+int output_warning(const char *format,...) /**< \bprintf style argument list */
 {
 	if (global_warn_mode)
 	{
@@ -547,7 +547,7 @@ Unlock:
 	\p global_debug_output variable is not \b 0.  Debug messages are always preceded by
 	the string "DEBUG: " and a newline is always appended to the message.
  **/
-int output_debug(char *format,...) /**< \bprintf style argument list */
+int output_debug(const char *format,...) /**< \bprintf style argument list */
 {
 	if (global_debug_output)
 	{
@@ -598,7 +598,7 @@ Unlock:
 	leading spaces and an ellipsis printed before the string, and 
 	a newline is always appended to the message.
  **/
-int output_verbose(char *format,...) /**< \bprintf style argument list */
+int output_verbose(const char *format,...) /**< \bprintf style argument list */
 {
 	if (global_verbose_mode)
 	{
@@ -645,7 +645,7 @@ Unlock:
 	output_message() will produce output to the standard output stream only when the
 	\p global_quiet_mode variable is not \b 0.  A newline is always appended to the message.
  **/
-int output_message(char *format,...) /**< \bprintf style argument list */
+int output_message(const char *format,...) /**< \bprintf style argument list */
 {
 	if (!global_quiet_mode)
 	{
@@ -691,7 +691,7 @@ Unlock:
 
 /** Output a profiler message
  **/
-int output_profile(char *format, ...) /**< /bprintf style argument list */
+int output_profile(const char *format, ...) /**< /bprintf style argument list */
 {
 	char tmp[1024];
 	va_list ptr;
@@ -737,7 +737,7 @@ int output_progress()
 	output_raw() will produce output to the standard output stream only when the
 	\p global_quiet_mode variable is not \b 0.  
  **/
-int output_raw(char *format,...) /**< \bprintf style argument list */
+int output_raw(const char *format,...) /**< \bprintf style argument list */
 {
 	if (!global_quiet_mode)
 	{

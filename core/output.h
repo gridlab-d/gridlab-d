@@ -33,17 +33,17 @@ void output_both_stdout();
 FILE *output_set_stream(FILESTREAM fs, FILE *newfp);
 FILE* output_redirect(char *name, char *path);
 FILE* output_redirect_stream(char *name, FILE *fp);
-int output_fatal(char *format,...);
-int output_error(char *format,...);
-int output_error_raw(char *format,...);
-int output_warning(char *format,...);
-int output_debug(char *format,...);
-int output_verbose(char *format,...);
-int output_message(char *format,...);
-int output_raw(char *format,...);
-int output_test(char *format,...);
+int output_fatal(const char *format,...);
+int output_error(const char *format,...);
+int output_error_raw(const char *format,...);
+int output_warning(const char *format,...);
+int output_debug(const char *format,...);
+int output_verbose(const char *format,...);
+int output_message(const char *format,...);
+int output_raw(const char *format,...);
+int output_test(const char *format,...);
 int output_progress(void);
-int output_profile(char *format,...);
+int output_profile(const char *format,...);
 
 int output_notify_error(void (*)(void));
 

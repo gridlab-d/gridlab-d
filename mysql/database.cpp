@@ -5,7 +5,11 @@
 
 #ifdef HAVE_MYSQL
 
+#ifdef WIN32
 #include <io.h>
+#else
+#include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>

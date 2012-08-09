@@ -14,6 +14,7 @@
 #include <winsock2.h>
 #define int64 _int64
 #else
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
