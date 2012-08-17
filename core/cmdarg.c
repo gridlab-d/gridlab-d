@@ -932,6 +932,11 @@ static int pkill(int argc, char *argv[])
 		return CMDERR;
 	}
 }
+static int pcontrol(int argc, char *argv[])
+{
+	sched_controller();
+	return 0;
+}
 static int info(int argc, char *argv[])
 {
 	if ( argc>1 )
@@ -1150,8 +1155,10 @@ static CMDARG main[] = {
 
 	{NULL,NULL,NULL,NULL, "Server mode"},
 	{"server",		NULL,	server,			NULL, "Enables the server"},
-	{"clearmap",	NULL,	clearmap,		NULL, "Clears the process map of defunct jobs" },
-	{"pkill",	NULL,	pkill,			"<procnum>", "Kills a run on a processor" },
+	{"clearmap",	NULL,	clearmap,		NULL, "Clears the process map of defunct jobs (deprecated form)" },
+	{"pclear",		NULL,	clearmap,		NULL, "Clears the process map of defunct jobs" },
+	{"pcontrol",	NULL,	pcontrol,		NULL, "Enters process controller" },
+	{"pkill",		NULL,	pkill,			"<procnum>", "Kills a run on a processor" },
 	{"pstatus",		NULL,	pstatus,		NULL, "Prints the process list" },
 	{"redirect",	NULL,	redirect,		"<stream>[:<file>]", "Redirects an output to stream to a file (or null)" },
 	{"server_portnum", "P", server_portnum, NULL, "Sets the server port number (default is 6267)" },

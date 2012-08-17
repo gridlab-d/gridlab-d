@@ -16,7 +16,7 @@
 
 struct sync_data {
 	TIMESTAMP step_to; /**< time to advance to */
-	int32 hard_event; /**< non-zero for hard events that can effect the advance step-to */
+	unsigned int hard_event; /**< non-zero for hard events that can effect the advance step-to */
 	STATUS status; /**< the current status */
 }; /**< the synchronization state structure */
 
@@ -43,14 +43,15 @@ void exec_mls_done(void);
 void exec_mls_statewait(unsigned states);
 void exec_slave_node();
 
-void reset_synctime(struct sync_data *d);
-void merge_syncdata(struct sync_data *to, struct sync_data *from);
-void set_synctime(struct sync_data *d, TIMESTAMP t);
-TIMESTAMP get_synctime(struct sync_data *d);
-int is_hardsync(struct sync_data *d);
-int is_never(struct sync_data *d);
-int is_invalid(struct sync_data *d);
-STATUS get_syncstatus(struct sync_data *d);
+void exec_sync_reset(struct sync_data *d);
+void exec_sync_merge(struct sync_data *to, struct sync_data *from);
+void exec_sync_set(struct sync_data *d, TIMESTAMP t);
+TIMESTAMP exec_sync_get(struct sync_data *d);
+unsigned int exec_sync_getevents(struct sync_data *d);
+int exec_sync_ishard(struct sync_data *d);
+int exec_sync_isnever(struct sync_data *d);
+int exec_sync_isinvalid(struct sync_data *d);
+STATUS exec_sync_getstatus(struct sync_data *d);
 
 #ifdef __cplusplus
 }

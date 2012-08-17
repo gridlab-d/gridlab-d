@@ -893,9 +893,12 @@ typedef struct s_callbacks {
 	} function;
 	int (*define_enumeration_member)(CLASS*,char*,char*,enumeration);
 	int (*define_set_member)(CLASS*,char*,char*,uint32);
-	int (*set_dependent)(OBJECT*,OBJECT*);
-	int (*set_parent)(OBJECT*,OBJECT*);
-	int (*set_rank)(OBJECT*,unsigned int);
+	struct {
+		OBJECT *(*get_first)(void);
+		int (*set_dependent)(OBJECT*,OBJECT*);
+		int (*set_parent)(OBJECT*,OBJECT*);
+		int (*set_rank)(OBJECT*,unsigned int);
+	} object;
 	struct {
 		PROPERTY *(*get_property)(OBJECT*,PROPERTYNAME,PROPERTYSTRUCT*);
 		int (*set_value_by_addr)(OBJECT *, void*, char*,PROPERTY*);
@@ -1119,7 +1122,7 @@ inline OBJECT *gl_create_foreign(OBJECT *obj) {return (*callback->create.foreign
 inline int gl_set_parent(OBJECT *obj, ///< the object whose parent is being set
 						 OBJECT *parent) ///< the parent that is being set
 {
-	return (*callback->set_parent)(obj,parent);
+	return (*callback->object.set_parent)(obj,parent);
 }
 
 /// Promote an object to a higher rank
@@ -1127,7 +1130,7 @@ inline int gl_set_parent(OBJECT *obj, ///< the object whose parent is being set
 inline int gl_set_rank(OBJECT* obj, ///< the object whose rank is being set
 					   unsigned int rank) ///< the new rank of the object
 {
-	return (*callback->set_rank)(obj,rank);
+	return (*callback->object.set_rank)(obj,rank);
 }
 
 /// Get a pointer to the data of an object property (by name)

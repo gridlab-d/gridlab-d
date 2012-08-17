@@ -161,9 +161,7 @@ static CALLBACKS callbacks = {
 	{class_define_function,class_get_function},
 	class_define_enumeration_member,
 	class_define_set_member,
-	object_set_dependent,
-	object_set_parent,
-	object_set_rank,
+	{object_get_first,object_set_dependent,object_set_parent,object_set_rank,},
 	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr,class_string_to_propertytype,property_compare_basic,property_compare_op,property_get_part},
 	{find_objects,find_next,findlist_copy,findlist_add,findlist_del,findlist_clear},
 	class_find_property,
@@ -1254,7 +1252,7 @@ void sched_clear(void)
 }
 void sched_pkill(int pid)
 {
-	if ( process_map[pid].pid!=0 )
+	if ( process_map!=NULL && process_map[pid].pid!=0 )
 	{
 		kill(process_map[pid].pid, SIGINT);
 	}
@@ -1577,6 +1575,160 @@ void module_profiles(void)
 				output_profile("%2d thread model time    %.1f s (%+.0f%% est.)", n, total,(total-total1)/total1*100);
 		}
 		output_profile("");
+	}
+}
+
+typedef struct s_args {
+	size_t n; /* number of args found */
+	size_t a; /* size of arg list */
+	char **arg; /* argument list */
+} ARGS;
+ARGS* get_args(char *line)
+{
+	int n=0;
+	char *p, *tag;
+	enum {P_INIT, P_SPACE, P_TEXT, P_QUOTE, P_QUOTES} state = P_INIT;
+	ARGS *args = (ARGS*)malloc(sizeof(ARGS));
+
+	/* prepare args structure */
+	if ( args==NULL ) 
+	{
+		output_fatal("memory allocation error");
+		return NULL;
+	}
+	memset(args,0,sizeof(args));
+
+	/* determine maximum number of args needed */
+	for ( p=line ; *p!='\0' ; p++ )
+		if ( isspace(*p) ) n++;
+	args->a = n;
+	args->arg = (char**)malloc(sizeof(char*)*n);
+
+	/* extract arguments */
+	for ( p=line ; *p!='\0' ; p++ )
+	{
+		switch (state) {
+		case P_INIT:
+		case P_SPACE:			
+			if ( !isspace(*p) )
+			{
+				state = P_TEXT;
+				tag = p;
+			}
+			break;
+		case P_TEXT:
+			if ( isspace(*p) )
+			{
+				int len = p-tag;
+				args->arg[args->n] = (char*)malloc(sizeof(char)*(len+1));
+				strncpy(args->arg[args->n],tag,len);
+				args->arg[args->n][len] = '\0';
+				args->n++;
+				state = P_SPACE;
+			}
+			else if ( *p=='\'' )
+				state = P_QUOTE;
+			else if ( *p=='"' )
+				state = P_QUOTES;
+			break;
+		case P_QUOTE:
+			if ( *p=='\'')
+				state = P_TEXT;
+			break;
+		case P_QUOTES:
+			if ( *p=='"')
+				state = P_TEXT;
+			break;
+		default:
+			output_fatal("get_args(char *line='%s'): unknown parser state '%d'", line, state);
+			break;
+		}
+	}
+	return args;
+}
+void free_args(ARGS *args)
+{
+	int n;
+	for ( n=0 ; n<args->n ; n++ )
+		free(args->arg[n]);
+	free(args->arg);
+	free(args);
+}
+
+#ifdef WIN32
+BOOL WINAPI sched_signal(DWORD type)
+{
+	if ( type==CTRL_C_EVENT )
+	{
+#else
+void sched_signal(int sig)
+{
+#endif
+		/* purge input stream */
+		while ( !feof(stdin) ) getchar();
+
+		/* print a friendly message */
+		printf("\n*** SIGINT ***\n");
+
+		/* restart command processing */
+		sched_controller();
+#ifdef WIN32
+		return TRUE;
+	}
+	return FALSE;
+#endif
+}
+
+void sched_controller(void)
+{
+	char command[1024];
+
+	global_suppress_repeat_messages = 0;
+#ifdef WIN32
+	if ( !SetConsoleCtrlHandler(sched_signal,TRUE) )
+		output_warning("unable to suppress console Ctrl-C handler");
+#else
+	signal(SIGINT,sched_signal);
+#endif
+	sched_init();
+
+	printf("Gridlabd process controller starting");
+	while ( printf("\ngridlabd>> "), fgets(command,sizeof(command),stdin)!=NULL )
+	{
+		ARGS *args = get_args(command);
+		if ( args!=NULL && args->n>0 )
+		{
+			char *cmd = args->arg[0];
+			int argc = args->n - 1;
+			char **argv = args->arg + 1;
+			if ( strcmp(cmd,"quit")==0 )
+				exit(0);
+			else if ( strcmp(cmd,"exit")==0 )
+				exit(argc>0 ? atoi(argv[0]) : 0);
+			else if ( strcmp(cmd,"list")==0 )
+				sched_print();
+			else if ( strcmp(cmd,"clear")==0 )
+				sched_clear();
+			else if ( strcmp(cmd,"kill")==0 )
+			{
+				if ( argc>0 )
+					sched_pkill(atoi(argv[0]));
+				else
+					output_error("missing process id");
+			}
+			else if ( strcmp(cmd,"help")==0 )
+			{
+				printf("Process controller help:\n");
+				printf("  clear     clear process map\n");
+				printf("  exit <n>  exit with status <n>\n");
+				printf("  kill <n>  kill process <n>\n");
+				printf("  list      list process map\n");
+				printf("  quit      exit with status 0\n");
+			}
+			else
+				output_error("command '%s' not found",cmd);
+			free_args(args);
+		}
 	}
 }
 

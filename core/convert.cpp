@@ -353,7 +353,7 @@ int convert_from_set(char *buffer, /**< pointer to the string buffer */
 			int len = (int)strlen(keys->name);
 
 			/* remove the key from the copied values */
-			value -= keys->value;
+			value &= ~(keys->value);
 
 			/* if there's room for it in the buffer */
 			if (size>count+len+1)

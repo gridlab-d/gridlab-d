@@ -1424,7 +1424,9 @@ OBJLIST *objlist_search(char *group)
 	OBJLIST *list;
 	int n;
 	FINDPGM *pgm = find_mkpgm(group);
-	if ( pgm==NULL ) 
+	
+	// a null group  should return all objects
+	if ( pgm==NULL && strcmp(group,"")!=0 ) 
 	{
 		return NULL;
 	}

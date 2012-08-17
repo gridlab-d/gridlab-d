@@ -101,11 +101,10 @@ int database::create(void)
 
 int database::init(OBJECT *parent)
 {
-	char *flags = get_clientflags_property().get_string();
+	gld_string flags = get_clientflags_property().get_string();
 	
 	gl_verbose("mysql_connect(hostname='%s',username='%s',password='%s',schema='%s',port=%u,socketname='%s',clientflags=0x%016llx[%s])",
-		hostname,username,password,schema,port,socketname,get_clientflags(),flags);
-	free(flags);
+		hostname,username,password,schema,port,socketname,get_clientflags(),(const char*)flags);
 
 	mysql = mysql_real_connect(mysql_client,hostname,username,strcpy(password,"")?password:NULL,NULL,port,socketname,(unsigned long)clientflags);
 	if ( mysql==NULL )

@@ -63,7 +63,7 @@ extern "C" {
 #endif
 	int module_cmdargs(int argc, char **argv);
 	int module_saveobj_xml(FILE *fp, MODULE *mod);
-	MODULE *module_get_first();
+	MODULE *module_get_first(void);
 	void *module_malloc(size_t size);
 	void module_free(void *ptr);
 
@@ -74,6 +74,7 @@ extern "C" {
 	void sched_print(void);
 	void sched_update(TIMESTAMP clock, enumeration status);
 	void sched_pkill(int pid);
+	void sched_controller(void);
 	unsigned short sched_get_cpuid();
 	unsigned short sched_get_procid();
 #endif

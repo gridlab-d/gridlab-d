@@ -445,9 +445,9 @@ inline FUNCTIONADDR gl_get_function(OBJECT *obj, char *name)
 #ifdef __cplusplus
 inline int gl_set_dependent(OBJECT *obj, /**< object to set dependency */
 							OBJECT *dep) /**< object dependent on */
-{ return (*callback->set_dependent)(obj,dep);}
+{ return (*callback->object.set_dependent)(obj,dep);}
 #else
-#define gl_set_dependent (*callback->set_dependent)
+#define gl_set_dependent (*callback->object.set_dependent)
 #endif
 
 /** Establishes the rank of an object relative to another object (it's parent).
@@ -461,9 +461,9 @@ inline int gl_set_dependent(OBJECT *obj, /**< object to set dependency */
 #ifdef __cplusplus
 inline int gl_set_parent(OBJECT *obj, /**< object to set parent of */
 						 OBJECT *parent) /**< parent object */
-{ return (*callback->set_parent)(obj,parent);}
+{ return (*callback->object.set_parent)(obj,parent);}
 #else
-#define gl_set_parent (*callback->set_parent)
+#define gl_set_parent (*callback->object.set_parent)
 #endif
 
 /** Adjusts the rank of an object relative to another object (it's parent).
@@ -477,9 +477,9 @@ inline int gl_set_parent(OBJECT *obj, /**< object to set parent of */
 #ifdef __cplusplus
 inline int gl_set_rank(OBJECT *obj, /**< object to change rank */
 					   int rank)	/**< new rank of object */
-{ return (*callback->set_rank)(obj,rank);}
+{ return (*callback->object.set_rank)(obj,rank);}
 #else
-#define gl_set_rank (*callback->set_rank)
+#define gl_set_rank (*callback->object.set_rank)
 #endif
 
 /** @} **/
@@ -1134,13 +1134,113 @@ static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
 #define NaN (*(double*)&_nan)
 
 #ifdef __cplusplus
+
+inline size_t nextpow2(register size_t x)
+{
+	if (x<0) return 0;
+	x--;
+	x|=x>>1;
+	x|=x>>2;
+	x|=x>>4;
+	x|=x>>8;
+	x|=x>>16;
+	// won't work for anything over 2^30
+	return x+1;
+}
+
 /**************************************************************************************
  * GRIDLABD BASE CLASSES (Version 3.0 and later)
  **************************************************************************************/
 
+#include <ctype.h>
 #include "module.h"
 #include "class.h"
 #include "property.h"
+
+class gld_string {
+private: // data
+	typedef struct strbuf {
+		unsigned int lock; // TODO implement locking
+		size_t len;
+		unsigned int nrefs;
+		char *str;
+	} STRBUF;
+	STRBUF *buf;
+public: // construction/destructor
+	inline gld_string(void) : buf(NULL) { init(); };
+	inline gld_string(gld_string&s) : buf(NULL) { init(); link(s); };
+	inline gld_string(const char *s) : buf(NULL) { init(); copy(s); };
+	inline gld_string(const char *s, size_t n) : buf(NULL) { init(); copy(s,n); };
+	inline ~gld_string(void) { unlink(); };
+public: // copy
+	inline gld_string &operator=(const char *s) { copy(s); return *this; }; 
+	inline gld_string &operator=(gld_string&s) { link(s); return *this; };
+public: // casts
+	inline operator const char*(void) { return buf->str; };
+	inline operator size_t(void) { return buf->len; };
+	inline operator STRBUF *(void) { return buf; };
+private: // internals
+	inline void init(void) { buf=(STRBUF*)malloc(sizeof(STRBUF)); memset(buf,0,sizeof(STRBUF)); }; 
+	inline void lock(void) { if ( buf ) ::wlock(&buf->lock); };
+	inline void unlock(void) { if ( buf ) ::wunlock(&buf->lock); };
+	inline void fit(size_t n) { if ( buf==NULL || n>buf->len) alloc(n); };
+	inline void alloc(size_t n) 
+	{
+		size_t len = nextpow2(n);
+		if ( len<sizeof(NATIVE) ) 
+			len=sizeof(NATIVE); 
+		char *newstr=(char*)malloc(len);
+		if ( buf->str!=NULL )
+		{
+			strcpy(newstr,buf->str);
+			free(buf->str);
+		}
+		else
+			buf->nrefs=1;
+		buf->str = newstr;
+		buf->len = len;
+	};
+	inline void copy(const char *s) { fit(strlen(s)+1); strcpy(buf->str,s); };
+	inline void copy(const char *s, size_t n) { fit(n+1); strncpy(buf->str,s,n); };
+	inline void link(gld_string&s) { unlink(); buf=(STRBUF*)s; buf->nrefs++;};
+	inline void unlink() { if ( buf->nrefs<=1 ) {free(buf->str); free(buf);} else buf->nrefs--; };
+public: // status accessors
+	inline bool is_valid(void) { return buf!=NULL; };
+	inline bool is_null(void) { return is_valid() && buf->str==NULL; };
+public: // read accessors
+	inline const char* get_string(void) { return buf ? buf->str : NULL; };
+	inline size_t get_length(void) { return buf ? buf->len : -1; };
+public: // write accessors
+	inline void set_string(const char *s) { copy(s); };
+	inline void set_size(size_t n) { fit(n); };
+	inline size_t format(const char *fmt,...) { va_list ptr; va_start(ptr,fmt); int len=vsnprintf(buf->str,buf->len,fmt,ptr); va_end(ptr); return len;};
+	inline size_t format(size_t len,const char *fmt,...) { fit(len); va_list ptr; va_start(ptr,fmt); int rv=vsnprintf(buf->str,buf->len,fmt,ptr); va_end(ptr); return rv;};
+public: // compare ops
+	inline bool operator<(const char*s) { return strcmp(buf->str,s)<0; };
+	inline bool operator<=(const char*s) { return strcmp(buf->str,s)<=0; };
+	inline bool operator==(const char*s) { return strcmp(buf->str,s)==0; };
+	inline bool operator>=(const char*s) { return strcmp(buf->str,s)>=0; };
+	inline bool operator>(const char*s) { return strcmp(buf->str,s)>0; };
+	inline bool operator!=(const char*s) { return strcmp(buf->str,s)!=0; };
+public: // manipulation
+	// TODO trim left/right
+	inline void trimleft(void) { if ( is_null() ) return; size_t n=0; while (buf->str[n]!='\0'&&isspace(*buf->str)) n++; strcpy(buf->str,buf->str+n); };
+	inline void trimright(void) { if ( is_null() ) return; size_t n=strlen(buf->str); while (n>0&&isspace(buf->str[n-1])) buf->str[--n]='\0'; };
+	inline gld_string left(size_t n) { if ( is_null() ) return gld_string(); return gld_string(buf->str,n); };
+	inline gld_string right(size_t n) { if ( is_null() ) return gld_string(); return gld_string(buf->str+buf->len-n); };
+	inline gld_string mid(size_t n, size_t m) { if ( is_null() ) return gld_string(); return gld_string(buf->str+buf->len-n,m); };
+	inline size_t findstr(const char *s) { if ( is_null() ) return -1; char *p=strstr(buf->str,s); return p==NULL ? -1 : (p-buf->str); };
+	inline size_t findchr(char c) { if ( is_null() ) return -1; char *p=strchr(buf->str,c); return p==NULL ? -1 : (p-buf->str); };
+	inline size_t split(gld_string *&list, const char *delim=" ") 
+	{
+		if ( is_null() ) return 0;
+		return 0;
+	}
+	inline gld_string merge(gld_string *&list, size_t n, const char *delim=" ")
+	{
+		return gld_string();
+	}
+};
 
 class gld_clock {
 private: // data
@@ -1157,6 +1257,15 @@ public: // constructors
 	}
 public: // cast operators
 	inline operator TIMESTAMP (void) { return dt.timestamp; };
+public: // comparison operators
+	inline bool operator > (TIMESTAMP t) { return dt.timestamp>t; };
+	inline bool operator >= (TIMESTAMP t) { return dt.timestamp>=t; };
+	inline bool operator < (TIMESTAMP t) { return dt.timestamp<t; };
+	inline bool operator <= (TIMESTAMP t) { return dt.timestamp<=t; };
+	inline bool operator == (TIMESTAMP t) { return dt.timestamp==t; };
+	inline bool operator != (TIMESTAMP t) { return dt.timestamp!=t; };
+	inline bool is_valid(void) { return dt.timestamp>0; };
+	inline bool is_never(void) { return dt.timestamp==TS_NEVER; };
 public: // read accessors
 	inline unsigned short get_year(void) { return dt.year; };
 	inline unsigned short get_month(void) { return dt.month; };
@@ -1397,8 +1506,16 @@ public: // iterators
 	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
 	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; }; 
-#define GL_BOOLEAN(X) // TODO
-#define GL_BITFLAG(X) // TODO
+#define GL_BITFLAGS(T,X) protected: T X; public: \
+	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
+	inline T get_##X(T mask=-1) { return X&mask; }; \
+	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
+	inline T get_##X(gld_rlock&) { return X; }; \
+	inline T get_##X(gld_wlock&) { return X; }; \
+	inline void set_##X(T p) { X=p; }; \
+	inline void set_##X##_bits(T p) { gld_rlock _lock(my()); (X)|=(p); }; \
+	inline void clr_##X##_bits(T p) { gld_rlock _lock(my()); (X)&=~(p); }; \
+	inline void set_##X(T p, gld_wlock&) { X=p; }; 
 
 inline void setbits(unsigned long &flags, unsigned int bits) { flags|=bits; }; 
 inline void clearbits(unsigned long &flags, unsigned int bits) { flags&=~bits; }; 
@@ -1441,6 +1558,8 @@ protected: // header write accessors (no locking)
 	inline void set_latitude(double x) { my()->latitude=x; };
 	inline void set_longitude(double x) { my()->longitude=x; };
 	inline void set_flags(unsigned long flags) { my()->flags=flags; };
+	inline void set_flags_bits(unsigned long bits) { my()->flags|=bits; };
+	inline void unset_flags_bits(unsigned long bits) { my()->flags&=~bits; };
 
 protected: // locking (self)
 	inline void rlock(void) { ::rlock(&my()->lock); };
@@ -1467,14 +1586,15 @@ public: // external accessors
 	template <class T> inline void setp(PROPERTY &prop, T &value, gld_wlock&) { *(T*)(GETADDR(my(),&prop))=value; };
 
 public: // core interface
-	inline int set_dependent(OBJECT *obj) { return callback->set_dependent(my(),obj); };
-	inline int set_parent(OBJECT *obj) { return callback->set_parent(my(),obj); };
-	inline int set_rank(unsigned int r) { return callback->set_rank(my(),r); };
+	inline int set_dependent(OBJECT *obj) { return callback->object.set_dependent(my(),obj); };
+	inline int set_parent(OBJECT *obj) { return callback->object.set_parent(my(),obj); };
+	inline int set_rank(unsigned int r) { return callback->object.set_rank(my(),r); };
 	inline bool isa(char *type) { return callback->object_isa(my(),type) ? true : false; };
 	inline bool is_valid(void) { return my()!=NULL && my()==OBJECTHDR(this); };
 
 public: // iterators
 	inline bool is_last(void) { return my()->next==NULL; };
+	inline static gld_object *get_first(void) { OBJECT *o=callback->object.get_first(); return OBJECTDATA(o,gld_object);};
 	inline gld_object* get_next(void) { return OBJECTDATA(my()->next,gld_object); };
 
 public: // exceptions
@@ -1551,14 +1671,16 @@ public: // read accessors
 	inline char* get_description(void) { return pstruct.prop->description; };
 	inline PROPERTYFLAGS get_flags(void) { return pstruct.prop->flags; };
 	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(pstruct.prop,get_addr(),buffer,size); };
-	inline char *get_string(int sz=1024) ///< you must free the string returned by this call 
-	{ 	
-		char *buffer=(char*)malloc(sz); 
-		if ( !buffer ) return NULL; 
-		if ( to_string(buffer,sz)>0 )
-			return buffer;
-		free(buffer);
-		return NULL;
+	inline gld_string get_string(const int sz=1024)
+	{
+		gld_string res;
+		char *buf = (char*)malloc(sz);
+		if ( to_string(buf,sz)>=0 )
+		{
+			res = buf;
+			free(buf);
+		}
+		return res;
 	};
 	inline int from_string(char *string) { return callback->convert.string_to_property(pstruct.prop,get_addr(),string); };
 	inline char *get_partname(void) { return pstruct.part; };
@@ -1657,20 +1779,24 @@ public: // read accessors
 	inline PROPERTY* get_property(void) { if (!var) return NULL; return var->prop; };
 	inline unsigned long get_flags(void) { if (!var) return -1; return var->flags; };
 	inline size_t to_string(char *bp, size_t sz) { if (!var) return -1; gld_property p(var); return p.to_string(bp,(int)sz); };
-	inline char *get_string(int sz=1024) ///< you must free the string returned by this call
-	{ 
-		char *buffer = (char*)malloc(sz); 
-		if ( !buffer ) return NULL;
-		if ( to_string(buffer,1024)>0 ) 
-			return buffer;
-		free(buffer);
-		return NULL; 
-	}; 
-	inline int16 get_int16(void) { if ( var->prop->ptype!=PT_int16 ) return 0; return *(int16*)(var->prop->addr); };
-	inline int32 get_int32(void) { if ( var->prop->ptype!=PT_int32 ) return 0; return *(int32*)(var->prop->addr); };
-	inline int64 get_int64(void) { if ( var->prop->ptype!=PT_int64 ) return 0; return *(int64*)(var->prop->addr); };
-	inline double get_double(void) { if ( var->prop->ptype!=PT_double ) return 0; return *(double*)(var->prop->addr); };
-	inline TIMESTAMP get_timestamp(void) { if ( var->prop->ptype!=PT_timestamp ) return 0; return *(TIMESTAMP*)(var->prop->addr); };
+	inline gld_string get_string(const int sz=1024)
+	{
+		gld_string res;
+		char *buf = (char*)malloc(sz);
+		if ( to_string(buf,sz)>=0 )
+		{
+			res = buf;
+			free(buf);
+		}
+		return res;
+	};
+	inline bool get_bool(void) { return *(bool*)(var->prop->addr); };
+	inline int16 get_int16(void) { return *(int16*)(var->prop->addr); };
+	inline int32 get_int32(void) { return *(int32*)(var->prop->addr); };
+	inline int64 get_int64(void) { return *(int64*)(var->prop->addr); };
+	inline double get_double(void) { return *(double*)(var->prop->addr); };
+	inline complex get_complex(void) { return *(complex*)(var->prop->addr); };
+	inline TIMESTAMP get_timestamp(void) { return *(TIMESTAMP*)(var->prop->addr); };
 
 public: // write accessors
 	inline size_t from_string(char *bp) { if (!var) return -1; gld_property p(var); return p.from_string(bp); };
@@ -1712,7 +1838,7 @@ public:
 	};
 	inline ~gld_objlist(void) { callback->objlist.destroy(list); };
 public:
-	inline size_t set(char *group) { if ( list ) callback->objlist.destroy(list); list=callback->objlist.search(group); return list->size; };
+	inline size_t set(char *group) { if ( list ) callback->objlist.destroy(list); list=callback->objlist.search(group); return list?list->size:-1; };
 	inline size_t add(PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { return callback->objlist.add(list,m,p,o,a,b); };
 	inline size_t del(PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { return callback->objlist.add(list,m,p,o,a,b); };
 	inline size_t add(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL) 

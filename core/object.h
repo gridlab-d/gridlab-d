@@ -115,9 +115,12 @@ typedef struct s_callbacks {
 	} function;
 	int (*define_enumeration_member)(CLASS*,char*,char*,enumeration);
 	int (*define_set_member)(CLASS*,char*,char*,unsigned int64);
-	int (*set_dependent)(OBJECT*,OBJECT*);
-	int (*set_parent)(OBJECT*,OBJECT*);
-	int (*set_rank)(OBJECT*,unsigned int);
+	struct {
+		OBJECT *(*get_first)(void);
+		int (*set_dependent)(OBJECT*,OBJECT*);
+		int (*set_parent)(OBJECT*,OBJECT*);
+		int (*set_rank)(OBJECT*,unsigned int);
+	} object;
 	struct {
 		PROPERTY *(*get_property)(OBJECT*,PROPERTYNAME,PROPERTYSTRUCT*);
 		int (*set_value_by_addr)(OBJECT *, void*, char*,PROPERTY*);
@@ -339,7 +342,7 @@ char *object_get_unit(OBJECT *obj, char *name);
 int object_set_rank(OBJECT *obj, OBJECTRANK rank);
 
 OBJECT *object_find_by_id(OBJECTNUM id);
-OBJECT *object_get_first();
+OBJECT *object_get_first(void);
 OBJECT *object_get_next(OBJECT *obj);
 unsigned int object_get_count(void);
 int object_dump(char *buffer, int size, OBJECT *obj);

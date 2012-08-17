@@ -250,6 +250,9 @@ GLOBAL unsigned int global_mt_analysis INIT(0); /**< perform multithread analysi
 
 /* inline code block size */
 GLOBAL unsigned int global_inline_block_size INIT(16*65536); /**< inline code block size */
+
+/* runaway clock time */
+GLOBAL TIMESTAMP global_runaway_time INIT(2209017600); /**< signal runaway clock on 1/1/2040 */
 #ifdef __cplusplus
 }
 #endif

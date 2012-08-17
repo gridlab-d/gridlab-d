@@ -168,10 +168,11 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	static DATETIME old_dt;
 #endif
 
-	if(dt == NULL){
+	if( dt==NULL || ts<TS_ZERO || ts>TS_MAX ) /* no buffer or timestamp out of range */
+	{
+		output_error("local_datetime(ts=%lli,...): invalid local_datetime request",ts);
 		return 0;
 	}
-
 #ifdef USE_TS_CACHE
 	/* check cache */
 	if (old_ts == ts && old_ts!=0)
@@ -183,7 +184,8 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	local = LOCALTIME(ts);
 	tsyear = timestamp_year(local, &rem);
 
-	if (rem < 0){
+	if (rem < 0)
+	{
 		// DPC: note that as of 3.0, the clock is initialized by default, so this error can only
 		//      occur when an invalid timestamp is being converted to local time.  It should no
 		//      longer occur as a result of a missing clock directive.
@@ -192,13 +194,10 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 			This is the result of an internal core or module coding error which resulted in an
 			invalid UTC clock time being converted to local time.
 		*/
-		rem = 0;
-		output_warning("local_datetime(ts=%lli,...): time before epoch truncated",ts);
+		output_error("local_datetime(ts=%lli,...): invalid local_datetime request",ts);
+		return 0;
 	}
 
-
-	if(ts < TS_ZERO && ts > TS_MAX) /* timestamp out of range */
-		return 0;
 
 	if(ts == TS_NEVER)
 		return 0;

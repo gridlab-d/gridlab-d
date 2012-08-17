@@ -1105,87 +1105,136 @@ void exec_mls_done(void)
 
  * Status is SUCCESS if the sync time is valid
 
-*******************************************************************/
+ Sync logic table:
+
+ hard t
+ ======
+ sync_to	t==INVALID	t<sync_to	t==sync_to	sync_to<t<NEVER	t==NEVER
+ ----------	-----------	-----------	-----------	---------------	----------
+ INVALID	INVALID		INVALID		INVALID		INVALID			INVALID
+ soft 		INVALID		t			t			sync_to			sync_to
+ hard 		INVALID		t			sync_to		sync_to			sync_to
+ NEVER		INVALID		t			sync_to		sync_to			NEVER
+
+ soft t
+ ======
+ sync_to	t==INVALID	t<sync_to	t==sync_to	sync_to<t<NEVER	t==NEVER
+ ----------	-----------	-----------	-----------	---------------	----------
+ INVALID	INVALID		INVALID		INVALID		INVALID			INVALID
+ soft 		INVALID		t			t			sync_to			sync_to
+ hard 		INVALID		t+			t+			sync_to			sync_to
+ NEVER		INVALID		t			sync_to		sync_to			NEVER
+
+ + indicates soft event is made hard
+
+ *******************************************************************/
 struct sync_data sync_d = {TS_NEVER,0,SUCCESS};
-#ifdef NEWSYNCDATA
+
 /** Reset the sync time data structure **/
-void reset_synctime(struct sync_data *d) /**< sync data to reset **/
+void exec_sync_reset(struct sync_data *d) /**< sync data to reset (NULL to reset main)  **/
 {
 	if ( d==NULL ) d=&sync_d;
-	d->hard = d->soft = TS_NEVER;
+	d->step_to = TS_NEVER;
+	d->hard_event = 0;
+	d->status = SUCCESS;
 }
 /** Merge the sync data structure **/
-void merge_syncdata(struct sync_data *to, /**< sync data to merge to **/
+void exec_sync_merge(struct sync_data *to, /**< sync data to merge to (NULL to update main)  **/
 					struct sync_data *from) /**< sync data to merge from */
 {
 	if ( to==NULL ) to = &sync_d;
-	if ( from->hard<to->hard ) to->hard=from->hard;
-	if ( from->soft<to->soft ) to->soft=from->soft;
+	if ( exec_sync_getstatus(to)==FAILED ) 
+		exec_sync_set(to,0);
+	else if ( exec_sync_isnever(from) ) 
+		{} /* do nothing */	
+	else 
+		exec_sync_set(to,exec_sync_get(from));
 }
 /** Update the sync data structure **/
-void set_synctime(struct sync_data *d, /**< sync data to update */
+void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update main) */
 				  TIMESTAMP t)/**< timestamp to update with (negative time means soft event, 0 means failure) */
 {
 	if ( d==NULL ) d=&sync_d;
-
-	// this is a soft sync
-	if ( t<0 && ( d->soft==TS_NEVER || -t<=d->soft ) )
-		d->soft = -t;
-
-	// this is a hard sync
-	else if ( t>0 && ( d->hard==TS_NEVER || d->hard>=t ) )
-		d->hard = t;
-
-	// this is a sync failure
-	else
+	if ( t==TS_NEVER ) return; /* nothing to do */
+	if ( t==TS_INVALID )
 	{
-		d->hard = d->soft = TS_INVALID;
+		d->status = FAILED;
+		return;
+	}
+	if ( t<=-TS_MAX || t>TS_MAX ) throw_exception("set_synctime(struct sync_data *d={TIMESTAMP step_to=%lli,int32 hard_event=%d, STATUS=%s}, TIMESTAMP t=%lli): timestamp is not valid", d->step_to, d->hard_event, d->status==SUCCESS?"SUCCESS":"FAILED", t);
+	if ( d->step_to==TS_NEVER )
+	{
+		if ( t<TS_NEVER && t>0 )
+		{
+			d->step_to=t;
+			d->hard_event++;
+		}
+		else if ( t<0 )
+			d->step_to=t;
+		else 
+			d->status = FAILED;
+	}
+	else if ( t>0 ) /* hard event */
+	{
+		d->hard_event++;
+		if ( d->step_to > t )
+			d->step_to = t;
+	}
+	else if ( t<0 ) /* soft event */
+	{
+		/* only record it if it's more recent than a hard event */
+		if ( d->step_to>t )
+//			d->step_to = t;
+			d->step_to = -t;
+	}
+	else // t==0 -> invalid
+	{
+		d->status = FAILED;
 	}
 }
 /** Get the current sync time **/
-TIMESTAMP get_synctime(struct sync_data *d) /**< Sync data to get sync time from */
+TIMESTAMP exec_sync_get(struct sync_data *d) /**< Sync data to get sync time from (NULL to read main)  */
 {
 	if ( d==NULL ) d=&sync_d;
-	if ( is_hardsync(d) ) 
-		return d->hard;
-	else if ( is_softsync(d) )
-		return d->soft;
-	else if ( is_never(d) )
-		return TS_NEVER;
-	else
-		return TS_INVALID;
+	if ( exec_sync_isnever(d) ) return TS_NEVER;
+	if ( exec_sync_isinvalid(d) ) return TS_INVALID;
+	return absolute_timestamp(d->step_to);
+}
+/** Get the current hard event count **/
+unsigned int exec_sync_getevents(struct sync_data *d) /**< Sync data to get sync events from (NULL to read main)  */
+{
+	if ( d==NULL ) d=&sync_d;
+	return d->hard_event;
 }
 /** Determine whether the current sync data is a hard sync **/
-int is_hardsync(struct sync_data *d) /**< Sync data to read hard sync status from */
+int exec_sync_ishard(struct sync_data *d) /**< Sync data to read hard sync status from (NULL to read main)  */
 {
 	if ( d==NULL ) d=&sync_d;
-	return ( d->hard>TS_INVALID && d->hard<TS_NEVER );
-}
-/** Determine whether the current sync data is a soft sync **/
-int is_softsync(struct sync_data *d) /**< Sync data to read soft sync status from */
-{
-	if ( d==NULL ) d=&sync_d;
-	return ( d->hard==TS_NEVER && d->soft>TS_INVALID && d->soft<TS_NEVER );
+	return d->hard_event>0;
 }
 /** Determine whether the current sync data time is never **/
-int is_never(struct sync_data *d) /**< Sync data to read never sync status from */
+int exec_sync_isnever(struct sync_data *d) /**< Sync data to read never sync status from (NULL to read main)  */
 {
 	if ( d==NULL ) d=&sync_d;
-	return d->hard==TS_NEVER && d->soft==TS_NEVER;
+	return d->step_to==TS_NEVER;
 }
-/** Determine whether the currenet sync time is invalid **/
-int is_invalid(struct sync_data *d) /**< Sync data to read invalid sync status from */
+/** Determine whether the currenet sync time is invalid (NULL to read main)  **/
+int exec_sync_isinvalid(struct sync_data *d) /**< Sync data to read invalid sync status from */
 {
 	if ( d==NULL ) d=&sync_d;
-	return d->hard==TS_INVALID || d->soft==TS_INVALID;
+	return exec_sync_getstatus(d)==FAILED;
 }
 /** Determine the current sync status */
-STATUS get_syncstatus(struct sync_data *d) /**< Sync data to read sync status from */
+STATUS exec_sync_getstatus(struct sync_data *d) /**< Sync data to read sync status from (NULL to read main)  */
 {
 	if ( d==NULL ) d=&sync_d;
-	return is_invalid(d) ? FAILED : SUCCESS;
+	return d->status;
 }
-#endif
+
+/******************************************************************
+ *  MAIN EXEC LOOP
+ ******************************************************************/
+
 /** This is the main simulation loop
 	@return STATUS is SUCCESS if the simulation reached equilibrium, 
 	and FAILED if a problem was encountered.
@@ -1315,8 +1364,9 @@ STATUS exec_start(void)
 	}
 	// maybe that's all we need...
 	iteration_counter = global_iteration_limit;
-	sync_d.step_to = global_clock;
-	sync_d.hard_event = 1;
+	//sync_d.step_to = global_clock;
+	//sync_d.hard_event = 1;
+	exec_sync_set(NULL,global_clock);
 
 	/* signal handler */
 	signal(SIGABRT, exec_sighandler);
@@ -1383,8 +1433,10 @@ STATUS exec_start(void)
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
 		int running; /* split into two tests to make it easier to tell what's going on */
 
-		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", sync_d.step_to, global_stoptime, sync_d.hard_event, stop_now);
-		while ( running = ( absolute_timestamp(sync_d.step_to) <= global_stoptime && sync_d.step_to<TS_NEVER && sync_d.hard_event>0),
+//		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", sync_d.step_to, global_stoptime, sync_d.hard_event, stop_now);
+//		while ( running = ( absolute_timestamp(sync_d.step_to) <= global_stoptime && sync_d.step_to<TS_NEVER && sync_d.hard_event>0),
+		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), stop_now);
+		while ( running = ( exec_sync_get(NULL)<=global_stoptime && !exec_sync_isnever(NULL) && exec_sync_ishard(NULL) ),
 			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 
 		{
 			/* update the process table info */
@@ -1400,6 +1452,8 @@ STATUS exec_start(void)
 			output_set_time_context(global_clock);
 
 			sync_d.hard_event = (global_stoptime == TS_NEVER ? 0 : 1);
+			//exec_sync_reset(NULL);
+			//exec_sync_set(NULL,global_stoptime);
 
 			/* realtime support */
 			if (global_run_realtime>0)
@@ -1426,11 +1480,17 @@ STATUS exec_start(void)
 				output_verbose("realtime clock advancing to %d", (int)global_clock);
 			}
 			else
-				global_clock = absolute_timestamp(sync_d.step_to);
+				//global_clock = absolute_timestamp(sync_d.step_to);
+				global_clock = exec_sync_get(NULL);
 
 			/* synchronize all internal schedules */
-			output_debug("global_clock=%d\n",global_clock);
+			if ( global_clock < 0 )
+				throw_exception("clock time is negative (global_clock=%lli)", global_clock);
+			else
+				output_debug("global_clock=%d\n",global_clock);
+
 			sync_d.step_to = syncall_internals(global_clock);
+			// exec_sync_set(NULL,syncall_internals(global_clock));
 			if( sync_d.step_to!=TS_NEVER && absolute_timestamp(sync_d.step_to)<global_clock )
 			{
 				// must be able to force reiterations for m/s mode.
@@ -1449,6 +1509,10 @@ STATUS exec_start(void)
 					thread_data->data[j].step_to = TS_NEVER;
 				}
 			}
+#ifdef _DEBUG
+			if ( global_clock>=global_runaway_time ) 
+				throw_exception("running clock detected");
+#endif
 
 			if(iteration_counter == global_iteration_limit){
 				pc_rv = precommit_all(global_clock);
