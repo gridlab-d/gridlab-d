@@ -1702,7 +1702,7 @@ void sched_continuous(void)
 				//printf("\n[getchar()=%d]\n", getchar());
 				//return;
 			//}
-			usleep(10000);
+			exec_sleep(10000);
 		}	
 	}
 	sched_stop = 0;
@@ -1711,6 +1711,7 @@ void sched_continuous(void)
 void sched_controller(void)
 {
 	char command[1024];
+	ARGS *last = NULL;
 
 	global_suppress_repeat_messages = 0;
 #ifdef WIN32
@@ -1721,7 +1722,6 @@ void sched_controller(void)
 #endif
 
 	printf("Gridlabd process controller starting");
-	ARGS *last = NULL;
 	while ( sched_stop==0 )
 	{
 		ARGS *args;
