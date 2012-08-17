@@ -1305,7 +1305,7 @@ void sched_print(void)
 	that is responsible to keep thread from migrating once
 	they are committed to a particular processor.
  **/
-void sched_init(void)
+void sched_init(int readonly)
 {
 	static int has_run = 0;
 	SYSTEM_INFO info;
@@ -1361,6 +1361,9 @@ void sched_init(void)
 	if ( global_autoclean )
 		sched_clear();
 
+	/* readonly means don't record this job */
+	if ( readonly ) return;
+
 	/* find an available processor */
 	for ( n=0 ; n<n_procs ; n++ )
 	{
@@ -1404,7 +1407,7 @@ struct thread_affinity_policy policy;
 #include <sys/mman.h>
 #include <sys/shm.h>
 
-void sched_init(void)
+void sched_init(int readonly)
 {
 	static int has_run = 0;
 	char *mfile = "/tmp/gridlabd-pmap";
@@ -1463,6 +1466,10 @@ void sched_init(void)
 	/* automatic cleanup of defunct jobs */
 	if ( global_autoclean )
 		sched_clear();
+
+	/* readonly means don't record this job */
+	if ( readonly )
+		return;
 
 	/* find an available processor */
 	for ( n=0 ; n<n_procs ; n++ )
@@ -1690,7 +1697,6 @@ void sched_controller(void)
 #else
 	signal(SIGINT,sched_signal);
 #endif
-	sched_init();
 
 	printf("Gridlabd process controller starting");
 	while ( printf("\ngridlabd>> "), fgets(command,sizeof(command),stdin)!=NULL )

@@ -131,7 +131,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	}
 
 	/* initialize scheduler */
-	sched_init();
+	sched_init(0);
 
 	/* recheck threadcount in case user set it 0 */
 	if (global_threadcount == 0)
