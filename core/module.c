@@ -1257,7 +1257,7 @@ void sched_pkill(int pid)
 		kill(process_map[pid].pid, SIGINT);
 	}
 }
-void sched_print(void)
+void sched_print(int flags)
 {
 	if ( process_map!=NULL )
 	{
@@ -1265,6 +1265,8 @@ void sched_print(void)
 		int first=1;
 		int old = global_suppress_repeat_messages;
 		global_suppress_repeat_messages = 0;
+		if ( flags==1 )
+			output_message("PROC   PID STATE   CLOCK                    MODEL");
 		for ( n=0 ; n<n_procs ; n++ )
 		{
 			char *status;
@@ -1279,21 +1281,26 @@ void sched_print(void)
 			case MLS_LOCKED: status = "Locked"; break;
 			default: status = "Unknown"; break;
 			}
-			if ( process_map[n].pid!=0 )
+			if ( process_map[n].pid!=0 || flags==1 )
 			{
-				if ( sched_isdefunct(process_map[n].pid) )
-					status = "Defunct";
-				strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S %Z",tm);
-				if ( first )
+				if ( process_map[n].pid==0 )
+					output_message("%4d",n);
+				else
 				{
-					output_message("PROC   PID STATE   CLOCK                    MODEL");
-					first=0;
-				} 
-				output_message("%4d %5d %.7s %.24s %s", n, process_map[n].pid, status, process_map[n].progress==TS_ZERO?"INIT":ts, process_map[n].model);
+					if ( sched_isdefunct(process_map[n].pid) )
+						status = "Defunct";
+					strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S %Z",tm);
+					if ( first && flags==0 )
+					{
+						output_message("PROC   PID STATE   CLOCK                    MODEL");
+						first=0;
+					} 
+					output_message("%4d %5d %.7s %.24s %s", n, process_map[n].pid, status, process_map[n].progress==TS_ZERO?"INIT":ts, process_map[n].model);
+				}
 			}
 			sched_unlock(n);
 		}
-		global_suppress_repeat_messages = 1;
+		global_suppress_repeat_messages = old;
 	}
 }
 
@@ -1692,9 +1699,23 @@ void sched_continuous(void)
 	while ( sched_stop==0 )
 	{
 		int n=100;
+#ifdef WIN32
+		COORD home={0,0};
+		HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_SCREEN_BUFFER_INFO cbsi;
+		DWORD size;
+		DWORD done;
+		GetConsoleScreenBufferInfo(console,&cbsi);
+		size = cbsi.dwSize.X * cbsi.dwSize.Y;
+		FillConsoleOutputCharacter(console,(TCHAR)' ',size,home,&done);
+		GetConsoleScreenBufferInfo(console,&cbsi);
+		FillConsoleOutputAttribute(console,cbsi.wAttributes,size,home,&done);
+		SetConsoleCursorPosition(console,home);
+#else
 		printf("\033[1;1H\033[2J");
+#endif
 		printf("Hit Ctrl-C to stop\n\n");
-		sched_print();
+		sched_print(1);
 		while ( n-->0 && sched_stop==0 )
 		{
 			//if ( !feof(stdin) )
@@ -1740,7 +1761,7 @@ void sched_controller(void)
 			else if ( strnicmp(cmd,"exit",strlen(cmd))==0 )
 				exit(argc>0 ? atoi(argv[0]) : 0);
 			else if ( strnicmp(cmd,"list",strlen(cmd))==0 )
-				sched_print();
+				sched_print(1);
 			else if ( strnicmp(cmd,"continuous",strlen(cmd))==0)
 				sched_continuous();
 			else if ( strnicmp(cmd,"clear",strlen(cmd))==0 )

@@ -71,7 +71,7 @@ extern "C" {
 	// added in module.c because it has WIN32 API
 	void sched_init(int readonly);
 	void sched_clear(void);
-	void sched_print(void);
+	void sched_print(int flags);
 	void sched_update(TIMESTAMP clock, enumeration status);
 	void sched_pkill(int pid);
 	void sched_controller(void);
