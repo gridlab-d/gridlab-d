@@ -1699,30 +1699,33 @@ void sched_controller(void)
 #endif
 
 	printf("Gridlabd process controller starting");
+	ARGS *last = NULL;
 	while ( printf("\ngridlabd>> "), fgets(command,sizeof(command),stdin)!=NULL )
 	{
 		ARGS *args = get_args(command);
-		if ( args!=NULL && args->n>0 )
+		if ( args->n==0 ) { free_args(args); args=NULL; }
+		if ( args==NULL && last!=NULL ) { args=last; printf("gridlabd>> %s\n", last->arg[0]); }
+		if ( args!=NULL )
 		{
 			char *cmd = args->arg[0];
 			int argc = args->n - 1;
 			char **argv = args->arg + 1;
-			if ( strcmp(cmd,"quit")==0 )
+			if ( strnicmp(cmd,"quit",strlen(cmd))==0 )
 				exit(0);
-			else if ( strcmp(cmd,"exit")==0 )
+			else if ( strnicmp(cmd,"exit",strlen(cmd))==0 )
 				exit(argc>0 ? atoi(argv[0]) : 0);
-			else if ( strcmp(cmd,"list")==0 )
+			else if ( strnicmp(cmd,"list",strlen(cmd))==0 )
 				sched_print();
-			else if ( strcmp(cmd,"clear")==0 )
+			else if ( strnicmp(cmd,"clear",strlen(cmd))==0 )
 				sched_clear();
-			else if ( strcmp(cmd,"kill")==0 )
+			else if ( strnicmp(cmd,"kill",strlen(cmd))==0 )
 			{
 				if ( argc>0 )
 					sched_pkill(atoi(argv[0]));
 				else
 					output_error("missing process id");
 			}
-			else if ( strcmp(cmd,"help")==0 )
+			else if ( strnicmp(cmd,"help",strlen(cmd))==0 )
 			{
 				printf("Process controller help:\n");
 				printf("  clear     clear process map\n");
@@ -1733,7 +1736,9 @@ void sched_controller(void)
 			}
 			else
 				output_error("command '%s' not found",cmd);
-			free_args(args);
+			if ( last!=NULL && last!=args )
+				free_args(last);
+			last = args;
 		}
 	}
 }
