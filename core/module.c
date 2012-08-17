@@ -1173,7 +1173,7 @@ typedef struct s_gldprocinfo {
 	unsigned short pid;
 	TIMESTAMP progress;
 	enumeration status;
-	char cmdline[64];
+	char model[64];
 } GLDPROCINFO;
 
 static GLDPROCINFO *process_map = NULL; /* global process map */
@@ -1286,10 +1286,10 @@ void sched_print(void)
 				strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S %Z",tm);
 				if ( first )
 				{
-					output_message("PROC   PID STATE                      CLOCK COMMAND");
+					output_message("PROC   PID STATE   CLOCK                    MODEL");
 					first=0;
 				} 
-				output_message("%4d %5d %.7s %24.24s %s", n, process_map[n].pid, status, process_map[n].progress==TS_ZERO?"INIT":ts, process_map[n].cmdline);
+				output_message("%4d %5d %.7s %.24s %s", n, process_map[n].pid, status, process_map[n].progress==TS_ZERO?"INIT":ts, process_map[n].model);
 			}
 			sched_unlock(n);
 		}
@@ -1380,7 +1380,7 @@ void sched_init(int readonly)
 	}
 	my_proc = n;
 	process_map[n].pid = pid;
-	strncpy(process_map[n].cmdline,global_command_line,sizeof(process_map[n].cmdline)-1);
+	strncpy(process_map[n].model,global_modelname,sizeof(process_map[n].model)-1);
 	sched_unlock(n);
 	atexit(sched_finish);
 
@@ -1487,7 +1487,7 @@ void sched_init(int readonly)
 	}
 	my_proc = n;
 	process_map[n].pid = pid;
-	strncpy(process_map[n].cmdline,global_command_line,sizeof(process_map[n].cmdline)-1);
+	strncpy(process_map[n].model,global_modelname,sizeof(process_map[n].model)-1);
 	sched_unlock(n);
 	atexit(sched_finish);
 
@@ -1662,6 +1662,7 @@ void free_args(ARGS *args)
 	free(args);
 }
 
+static int sched_stop = 0;
 #ifdef WIN32
 BOOL WINAPI sched_signal(DWORD type)
 {
@@ -1672,18 +1673,39 @@ void sched_signal(int sig)
 {
 #endif
 		/* purge input stream */
-		while ( !feof(stdin) ) getchar();
+		//while ( !feof(stdin) ) getchar();
 
 		/* print a friendly message */
 		printf("\n*** SIGINT ***\n");
 
-		/* restart command processing */
-		sched_controller();
+		/* stop processing */
+		sched_stop = 1;
 #ifdef WIN32
 		return TRUE;
 	}
 	return FALSE;
 #endif
+}
+
+void sched_continuous(void)
+{
+	while ( sched_stop==0 )
+	{
+		int n=100;
+		printf("\033[1;1H\033[2J");
+		printf("Hit Ctrl-C to stop\n\n");
+		sched_print();
+		while ( n-->0 && sched_stop==0 )
+		{
+			//if ( !feof(stdin) )
+			//{
+				//printf("\n[getchar()=%d]\n", getchar());
+				//return;
+			//}
+			usleep(10000);
+		}	
+	}
+	sched_stop = 0;
 }
 
 void sched_controller(void)
@@ -1700,9 +1722,12 @@ void sched_controller(void)
 
 	printf("Gridlabd process controller starting");
 	ARGS *last = NULL;
-	while ( printf("\ngridlabd>> "), fgets(command,sizeof(command),stdin)!=NULL )
+	while ( sched_stop==0 )
 	{
-		ARGS *args = get_args(command);
+		ARGS *args;
+		sched_stop = 0;
+		while ( printf("\ngridlabd>> "), fgets(command,sizeof(command),stdin)==NULL );
+ 		args = get_args(command);
 		if ( args->n==0 ) { free_args(args); args=NULL; }
 		if ( args==NULL && last!=NULL ) { args=last; printf("gridlabd>> %s\n", last->arg[0]); }
 		if ( args!=NULL )
@@ -1716,6 +1741,8 @@ void sched_controller(void)
 				exit(argc>0 ? atoi(argv[0]) : 0);
 			else if ( strnicmp(cmd,"list",strlen(cmd))==0 )
 				sched_print();
+			else if ( strnicmp(cmd,"continuous",strlen(cmd))==0)
+				sched_continuous();
 			else if ( strnicmp(cmd,"clear",strlen(cmd))==0 )
 				sched_clear();
 			else if ( strnicmp(cmd,"kill",strlen(cmd))==0 )
