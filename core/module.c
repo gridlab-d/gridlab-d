@@ -9,6 +9,7 @@
 #if defined WIN32 && ! defined MINGW
 #include <io.h>
 #else
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -270,6 +271,10 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			if(child_mod == NULL)
 			{	/* failure */
 				output_error("module_load(file='%s::%s'): subload failed", fmod, modname);
+				/* TROUBLESHOOT
+				   A module is unable to load a submodule require for operation.
+				   Check that the indicated submodule is installed and try again.
+				 */
 				return NULL;
 			}
 			if (mod != NULL)
@@ -1250,7 +1255,7 @@ extern int kill(unsigned short,int); /* defined in kill.c */
 static unsigned char procs[65536]; /* processor map */
 static unsigned char n_procs=0; /* number of processors */
 
-#define MAPNAME "gridlabd-pmap.2" /* TODO: change the pmap number each time the structure changes */
+#define MAPNAME "gridlabd-pmap-2" /* TODO: change the pmap number each time the structure changes */
 typedef struct s_gldprocinfo {
 	unsigned long lock;		/* field lock */
 	pid_t pid;				/* process id */
@@ -1343,15 +1348,34 @@ void sched_pkill(pid_t pid)
 }
 void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous listing */
 {
-#define HEADING \
-	"PROC PID   TIME       STATE   CLOCK                    MODEL\n" \
-	"---- ----- ---------- ------- ------------------------ ----------------------------------------------------------------\n"
+	char HEADING[] = 
+	"PROC PID   TIME       STATE   CLOCK                    MODEL\n" 
+	"---- ----- ---------- ------- ------------------------ ";
+	int width = 80, namesize;
+	static char *name=NULL;
+#ifdef WIN32
+#else
+	struct winsize ws;
+	if ( ioctl(1,TIOCGWINSZ,&ws)!=-1 )
+		width = ws.ws_col;
+#endif
+	namesize = width - (strstr(HEADING,"MODEL")-HEADING);
+	if ( namesize<8 ) namesize=8;
+	if ( namesize>1024 ) namesize=1024;
+	if ( name!=NULL ) free(name);
+	name = (char*)malloc(namesize+1);
 	if ( process_map!=NULL )
 	{
 		unsigned int n;
 		int first=1;
 		if ( flags==1 )
+		{
+			int i;
 			printf(HEADING);
+			for ( i=0 ; i<namesize ; i++ )
+				putchar('-');
+			putchar('\n');
+		}
 		for ( n=0 ; n<n_procs ; n++ )
 		{
 			char *status;
@@ -1372,19 +1396,21 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 					printf("%4d    -\n",n);
 				else
 				{
-					char name[65];
 					int len = strlen(process_map[n].model);
-					char t[64];
-					time_t s = (time(NULL)-process_map[n].start);
-					int h = 0;
-					int m = 0;
+					char t[64]="(na)";
+					if ( process_map[n].start>0 )
+					{
+						time_t s = (time(NULL)-process_map[n].start);
+						int h = 0;
+						int m = 0;
 
-					/* compute elapsed time */
-					h = s/3600; s=s%3600;
-					m = s/60; s=s%60;
-					if ( h>0 ) sprintf(t,"%4d:%02d:%02d ",h,m,s);
-					else if ( m>0 ) sprintf(t,"     %2d:%02d ",m,s);
-					else sprintf(t,"        %2ds", s);
+						/* compute elapsed time */
+						h = s/3600; s=s%3600;
+						m = s/60; s=s%60;
+						if ( h>0 ) sprintf(t,"%4d:%02d:%02d",h,m,s);
+						else if ( m>0 ) sprintf(t,"     %2d:%02d",m,s);
+						else sprintf(t,"       %2ds", s);
+					}
 
 					/* check for defunct process */
 					if ( sched_isdefunct(process_map[n].pid) )
@@ -1394,24 +1420,29 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 					strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S",tm);
 					if ( first && flags==0 )
 					{
+						int i;
 						printf(HEADING);
+						for ( i=0 ; i<namesize ; i++ )
+							putchar('-');
+						putchar('\n');
 						first=0;
 					}
 
 					/* rewrite model name to fit length limit */
-					if ( len<sizeof(name) ) strcpy(name,process_map[n].model);
+					if ( len<namesize ) 
+						strcpy(name,process_map[n].model);
 					else
 					{
 						/* remove the middle */
 						char *s = process_map[n].model;
-						int mid=sizeof(name)/2 - 3;
+						int mid=namesize/2 - 3;
 						strncpy(name,s,mid+1);
 						strcpy(name+mid+1," ... ");
 						strcat(name,s+len-mid);
 					}
 
 					/* print info */
-					printf("%4d %5d %10s %-7s %-24s %.64s\n", n, process_map[n].pid, t, status, process_map[n].progress==TS_ZERO?"INIT":ts, name);
+					printf("%4d %5d %10s %-7s %-24s %s\n", n, process_map[n].pid, t, status, process_map[n].progress==TS_ZERO?"INIT":ts, name);
 				}
 			}
 			sched_unlock(n);
@@ -1433,7 +1464,7 @@ void sched_init(int readonly)
 	SYSTEM_INFO info;
 	pid_t pid = (unsigned short)GetCurrentProcessId();
 	HANDLE hProc, hMap;
-	unsigned long mapsize = sizeof(GLDPROCINFO)*65536;
+	unsigned long mapsize;
 	int n;
 
 	if(has_run == 0){
@@ -1446,6 +1477,7 @@ void sched_init(int readonly)
 	/* get total number of processors */
 	GetSystemInfo(&info);
 	n_procs = (unsigned char)info.dwNumberOfProcessors;
+	mapsize = sizeof(GLDPROCINFO)*n_procs;
 
 	/* get global process map */
 	hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, MAPNAME);
@@ -1454,10 +1486,10 @@ void sched_init(int readonly)
 		/** @todo implement locking before creating the global process map */
 
 		/* create global process map */
-		hMap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, mapsize, "gridlabd-pmap");
+		hMap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, mapsize, MAPNAME);
 		if ( hMap==NULL )
 		{
-			output_warning("unable to create global process map, error code %d", GetLastError());
+			output_warning("unable to create global process map, error code %d--job not added to process map", GetLastError());
 			return;
 		}
 	}
@@ -1466,7 +1498,7 @@ void sched_init(int readonly)
 	process_map = (GLDPROCINFO*) MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS,0,0,mapsize);
 	if ( process_map==NULL )
 	{
-		output_warning("unable to access global process map, error code %d", GetLastError());
+		output_warning("unable to access global process map, error code %d--job not added to process map", GetLastError());
 		return;
 	}
 
@@ -1475,7 +1507,7 @@ void sched_init(int readonly)
 	if ( hProc==NULL )
 	{
 		unsigned long  err = GetLastError();
-		output_warning("unable to access current process, err code %d", err);
+		output_warning("unable to access current process info, err code %d--job not added to process map", err);
 		return;
 	}	
 
@@ -1497,13 +1529,13 @@ void sched_init(int readonly)
 	if ( n==n_procs )
 	{
 		/** @todo wait for a processor to free up before running */
-		output_warning("no processor available to avoid overloading");
+		output_warning("no processor available to avoid overloading--job not added to process map");
 		return;
 	}
 	my_proc = n;
 	process_map[n].pid = pid;
 	strncpy(process_map[n].model,global_modelname,sizeof(process_map[n].model)-1);
-	time(&process_map[n].start);
+	process_map[n].start = time(NULL);
 	sched_unlock(n);
 	atexit(sched_finish);
 
@@ -1511,7 +1543,7 @@ void sched_init(int readonly)
 	if ( global_threadcount==1 && SetProcessAffinityMask(hProc,(DWORD_PTR)(1<<n))==0 )
 	{
 		unsigned long  err = GetLastError();
-		output_warning("unable to set current process affinity mask, err code %d", err);
+		output_error("unable to set current process affinity mask, err code %d", err);
 	}
 	CloseHandle(hProc);
 }
@@ -1533,7 +1565,7 @@ struct thread_affinity_policy policy;
 void sched_init(int readonly)
 {
 	static int has_run = 0;
-	char *mfile = MAPNAME;
+	char *mfile = "/tmp/" MAPNAME;
 	unsigned long mapsize;
 	int fd = open(mfile,O_CREAT,0666);
 	key_t shmkey = ftok(mfile,sizeof(GLDPROCINFO));
@@ -1555,7 +1587,7 @@ void sched_init(int readonly)
 	/* check key */
 	if ( shmkey==-1 )
 	{
-		output_warning("error generating key to global process map: %s", strerror(errno));
+		output_error("error generating key to global process map: %s", strerror(errno));
 		return;
 	}
 	else
@@ -1565,15 +1597,33 @@ void sched_init(int readonly)
 	shmid = shmget(shmkey,mapsize,IPC_CREAT|0666);
 	if ( shmid<0 ) 
 	{
-		output_warning("unable to create global process map: %s", strerror(errno));
+		output_error("unable to create global process map: %s", strerror(errno));
 		switch ( errno ) {
-		case EACCES: output_warning("access to global process map %s is denied", mfile); break;
-		case EEXIST: output_warning("global process map already exists"); break;
-		case EINVAL: output_warning("size of existing process map is not %d bytes or map size exceed system limit for shared memory", mapsize); break;
-		case ENOENT: output_warning("process map %s not found", mfile); break;
-		case ENOMEM: output_warning("process map too big"); break;
-		case ENOSPC: output_warning("shared memory limit exceeded"); break;
-		default: output_warning("unknown shmget error");
+		case EACCES: output_error("access to global process map %s is denied", mfile); break;
+		/* TROUBLESHOOT
+		   Access to the process map is denied.  Consult with the system administrator
+		   to obtain access to the process map.
+		 */
+		case EEXIST: output_error("global process map already exists"); break;
+		case EINVAL: output_error("size of existing process map is not %d bytes or map size exceed system limit for shared memory", mapsize); break;
+		/* TROUBLESHOOT
+		   The process map changed size or it is too big for the limits on shared memory.
+		   Reboot your system to clear the old process map.  If the problem persists,
+		   consult your system's manuals to learn how to increase the size of shared memory.
+		 */
+		case ENOENT: output_error("process map %s not found", mfile); break;
+		case ENOMEM: output_error("process map too big"); break;
+		/* TROUBLESHOOT
+		   The process map is too big for the resources available.
+		   Try freeing up resources.  If the problem persists,
+		   consult your system's manuals to learn how to reserve more shared memory.
+		 */
+		case ENOSPC: output_error("shared memory limit exceeded (need %.1fkB)",mapsize/1000.0); break;
+		/* TROUBLESHOOT
+		   The process map is too big for the limits on shared memory.
+		   Consult your system's manuals to learn how to increase the size of shared memory.
+		 */
+		default: output_error("unknown shmget error");
 		}
 		return;
 	}
@@ -1582,7 +1632,7 @@ void sched_init(int readonly)
 	process_map = (GLDPROCINFO*) shmat(shmid,NULL,0);
 	if ( process_map==NULL )
 	{
-		output_warning("unable to access global process map: %s", strerror(errno));
+		output_error("unable to access global process map: %s", strerror(errno));
 		return;
 	}
 
@@ -1605,12 +1655,13 @@ void sched_init(int readonly)
 	if ( n==n_procs )
 	{
 		/** @todo wait for a processor to free up before running */
-		output_warning("no processor available to avoid overloading");
+		output_warning("no processor available to avoid overloading--job not added to process map");
 		return;
 	}
 	my_proc = n;
 	process_map[n].pid = pid;
 	strncpy(process_map[n].model,global_modelname,sizeof(process_map[n].model)-1);
+	process_map[n].start = time(NULL);
 	sched_unlock(n);
 	atexit(sched_finish);
 
@@ -1757,11 +1808,11 @@ void sched_continuous(void)
 		sched_print(1);
 		while ( n-->0 && sched_stop==0 )
 		{
-			//if ( !feof(stdin) )
-			//{
-				//printf("\n[getchar()=%d]\n", getchar());
-				//return;
-			//}
+			if ( !feof(stdin) )
+			{
+				printf("\n[getchar()=%d]\n", getchar());
+				return;
+			}
 			exec_sleep(10000);
 		}	
 	}
@@ -1800,7 +1851,7 @@ void sched_controller(void)
 			else if ( strnicmp(cmd,"exit",strlen(cmd))==0 )
 				exit(argc>0 ? atoi(argv[0]) : 0);
 			else if ( strnicmp(cmd,"list",strlen(cmd))==0 )
-				sched_print(1);
+				sched_print(0);
 			else if ( strnicmp(cmd,"continuous",strlen(cmd))==0)
 				sched_continuous();
 			else if ( strnicmp(cmd,"clear",strlen(cmd))==0 )
