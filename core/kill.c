@@ -58,7 +58,7 @@ void kill_starthandler(void)
 
 /** Send a kill signal to a windows version of GridLAB-D
  **/
-int kill(unsigned short pid,	/**< the window process id */
+int kill(pid_t pid,	/**< the window process id */
 		 int sig)				/**< the signal id (see signal.h) */
 {
 	char name[32];

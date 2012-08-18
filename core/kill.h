@@ -7,7 +7,7 @@
 #ifdef WIN32
 void kill_starthandler(void);
 void kill_stophandler(void);
-int kill(unsigned short pid, int sig);
+int kill(pid_t pid, int sig);
 #endif
 
 #endif

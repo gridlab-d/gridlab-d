@@ -46,6 +46,7 @@
 #define isfinite _finite
 #endif
 #define strlwr _strlwr
+typedef int pid_t;
 
 #else /* !WIN32 */
 

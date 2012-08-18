@@ -1170,7 +1170,7 @@ static unsigned char n_procs=0; /* number of processors */
 
 typedef struct s_gldprocinfo {
 	unsigned long lock;
-	unsigned short pid;
+	pid_t pid;
 	TIMESTAMP progress;
 	enumeration status;
 	char model[64];
@@ -1211,7 +1211,7 @@ void sched_update(TIMESTAMP clock, enumeration status)
 		sched_unlock(my_proc);
 	}
 }
-int sched_isdefunct(int pid)
+int sched_isdefunct(pid_t pid)
 {
 	/* signal 0 only checks process existence */
 	if(pid != 0)
@@ -1250,7 +1250,7 @@ void sched_clear(void)
 		}
 	}
 }
-void sched_pkill(int pid)
+void sched_pkill(pid_t pid)
 {
 	if ( process_map!=NULL && process_map[pid].pid!=0 )
 	{
@@ -1316,7 +1316,7 @@ void sched_init(int readonly)
 {
 	static int has_run = 0;
 	SYSTEM_INFO info;
-	unsigned short pid = (unsigned short)GetCurrentProcessId();
+	pid_t pid = (unsigned short)GetCurrentProcessId();
 	HANDLE hProc, hMap;
 	unsigned long mapsize = sizeof(GLDPROCINFO)*65536;
 	int n;
@@ -1421,7 +1421,7 @@ void sched_init(int readonly)
 	unsigned long mapsize;
 	int fd = open(mfile,O_CREAT,0666);
 	key_t shmkey = ftok(mfile,sizeof(GLDPROCINFO));
-	unsigned short pid = (unsigned short)getpid();
+	pid_t pid = getpid();
 	int shmid;
 	int n;
 
