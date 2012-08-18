@@ -1136,6 +1136,88 @@ TRANSFORMFUNCTION module_get_transform_function(char *function)
 	return NULL;
 }
 
+#include "class.h"
+
+void module_profiles(void)
+{
+	if ( global_mt_analysis>0 )
+	{
+		OBJECT *obj;
+		unsigned int n_ranks = 0;
+		struct s_rankdata {
+			int64 t_presync, t_sync, t_postsync;
+			int64 n_presync, n_sync, n_postsync;
+			double total;
+		} *rankdata;
+		unsigned int n, r;
+
+		output_profile("Multithreading analysis");
+		output_profile("=======================\n");
+		
+		/* analysis assumes data was collected during a single threaded run */
+		if ( global_threadcount>1 )
+		{
+			output_profile("thread count must be 1 to complete analysis");
+			return;
+		}
+
+		/* determine number of ranks used */
+		for ( obj=object_get_first(); obj!=NULL ; obj=obj->next )
+		{
+			if ( n_ranks < obj->rank + 1 )
+				n_ranks = obj->rank + 1;
+		}
+		n_ranks;
+
+		/* allocate working buffers */
+		rankdata = (struct s_rankdata*)malloc(n_ranks*sizeof(struct s_rankdata));
+		memset(rankdata,0,n_ranks*sizeof(struct s_rankdata));
+
+		/* gather rank data */
+		for ( obj=object_get_first(); obj!=NULL ; obj=obj->next )
+		{
+			struct s_rankdata *rank = &rankdata[obj->rank];
+			if ( obj->oclass->passconfig&PC_PRETOPDOWN )
+			{
+				rank->t_presync += obj->synctime[0];
+				rank->n_presync++;
+			}
+			if ( obj->oclass->passconfig&PC_BOTTOMUP )
+			{
+				rank->t_sync += obj->synctime[1];
+				rank->n_sync++;
+			}
+			if ( obj->oclass->passconfig&PC_POSTTOPDOWN )
+			{
+				rank->t_postsync += obj->synctime[2];
+				rank->n_postsync++;
+			}
+		}
+
+		for ( n=1 ; n<=(unsigned int)global_mt_analysis ; n*=2 )
+		{
+			static double total1 = 0;
+			double total = 0;
+			for ( r=0 ; r<n_ranks ; r++ )
+			{
+				struct s_rankdata *rank = &rankdata[r];
+				rank->total = rank->n_presync==0 ? 0 : (double)rank->t_presync/(double)CLOCKS_PER_SEC/(double)rank->n_presync * (double)( rank->n_presync/n + rank->n_presync%n );
+				rank->total += rank->n_sync==0 ? 0 : (double)rank->t_sync/(double)CLOCKS_PER_SEC/(double)rank->n_sync * (double)( rank->n_sync/n + rank->n_sync%n );
+				rank->total += rank->n_postsync==0 ? 0 : (double)rank->t_postsync/(double)CLOCKS_PER_SEC/(double)rank->n_postsync * (double)( rank->n_postsync/n + rank->n_postsync%n );
+				total += rank->total;
+			}
+			if ( n==1 ) 
+			{
+				total1 = total;
+				output_profile("%2d thread model time    %.1f s (actual time)", n, total);
+			}
+			else
+				output_profile("%2d thread model time    %.1f s (%+.0f%% est.)", n, total,(total-total1)/total1*100);
+		}
+		output_profile("");
+	}
+}
+
 /***************************************************************************
  * THREAD SCHEDULER
  *
@@ -1168,12 +1250,14 @@ extern int kill(unsigned short,int); /* defined in kill.c */
 static unsigned char procs[65536]; /* processor map */
 static unsigned char n_procs=0; /* number of processors */
 
+#define MAPNAME "gridlabd-pmap.2" /* TODO: change the pmap number each time the structure changes */
 typedef struct s_gldprocinfo {
-	unsigned long lock;
-	pid_t pid;
-	TIMESTAMP progress;
-	enumeration status;
-	char model[64];
+	unsigned long lock;		/* field lock */
+	pid_t pid;				/* process id */
+	TIMESTAMP progress;		/* current simtime */
+	enumeration status;		/* current status */
+	char1024 model;			/* model name */
+	time_t start;			/* wall time of start */
 } GLDPROCINFO;
 
 static GLDPROCINFO *process_map = NULL; /* global process map */
@@ -1257,16 +1341,17 @@ void sched_pkill(pid_t pid)
 		kill(process_map[pid].pid, SIGINT);
 	}
 }
-void sched_print(int flags)
+void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous listing */
 {
+#define HEADING \
+	"PROC PID   TIME       STATE   CLOCK                    MODEL\n" \
+	"---- ----- ---------- ------- ------------------------ ----------------------------------------------------------------\n"
 	if ( process_map!=NULL )
 	{
 		unsigned int n;
 		int first=1;
-		int old = global_suppress_repeat_messages;
-		global_suppress_repeat_messages = 0;
 		if ( flags==1 )
-			output_message("PROC   PID STATE   CLOCK                    MODEL");
+			printf(HEADING);
 		for ( n=0 ; n<n_procs ; n++ )
 		{
 			char *status;
@@ -1284,23 +1369,53 @@ void sched_print(int flags)
 			if ( process_map[n].pid!=0 || flags==1 )
 			{
 				if ( process_map[n].pid==0 )
-					output_message("%4d",n);
+					printf("%4d    -\n",n);
 				else
 				{
+					char name[65];
+					int len = strlen(process_map[n].model);
+					char t[64];
+					time_t s = (time(NULL)-process_map[n].start);
+					int h = 0;
+					int m = 0;
+
+					/* compute elapsed time */
+					h = s/3600; s=s%3600;
+					m = s/60; s=s%60;
+					if ( h>0 ) sprintf(t,"%4d:%02d:%02d ",h,m,s);
+					else if ( m>0 ) sprintf(t,"     %2d:%02d ",m,s);
+					else sprintf(t,"        %2ds", s);
+
+					/* check for defunct process */
 					if ( sched_isdefunct(process_map[n].pid) )
 						status = "Defunct";
+
+					/* format clock (without localization) */
 					strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S",tm);
 					if ( first && flags==0 )
 					{
-						output_message("PROC   PID STATE   CLOCK                    MODEL");
+						printf(HEADING);
 						first=0;
-					} 
-					output_message("%4d %5d %-7s %-24s %s", n, process_map[n].pid, status, process_map[n].progress==TS_ZERO?"INIT":ts, process_map[n].model);
+					}
+
+					/* rewrite model name to fit length limit */
+					if ( len<sizeof(name) ) strcpy(name,process_map[n].model);
+					else
+					{
+						/* remove the middle */
+						char *s = process_map[n].model;
+						int mid=sizeof(name)/2 - 3;
+						strncpy(name,s,mid+1);
+						strcpy(name+mid+1," ... ");
+						strcat(name,s+len-mid);
+					}
+
+					/* print info */
+					printf("%4d %5d %10s %-7s %-24s %.64s\n", n, process_map[n].pid, t, status, process_map[n].progress==TS_ZERO?"INIT":ts, name);
 				}
 			}
 			sched_unlock(n);
 		}
-		global_suppress_repeat_messages = old;
 	}
 }
 
@@ -1333,7 +1448,7 @@ void sched_init(int readonly)
 	n_procs = (unsigned char)info.dwNumberOfProcessors;
 
 	/* get global process map */
-	hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, "gridlabd-pmap");
+	hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, MAPNAME);
 	if ( hMap==NULL ) 
 	{
 		/** @todo implement locking before creating the global process map */
@@ -1388,6 +1503,7 @@ void sched_init(int readonly)
 	my_proc = n;
 	process_map[n].pid = pid;
 	strncpy(process_map[n].model,global_modelname,sizeof(process_map[n].model)-1);
+	time(&process_map[n].start);
 	sched_unlock(n);
 	atexit(sched_finish);
 
@@ -1417,7 +1533,7 @@ struct thread_affinity_policy policy;
 void sched_init(int readonly)
 {
 	static int has_run = 0;
-	char *mfile = "/tmp/gridlabd-pmap-1"; /* change the number anytime the process map structure changes */
+	char *mfile = MAPNAME;
 	unsigned long mapsize;
 	int fd = open(mfile,O_CREAT,0666);
 	key_t shmkey = ftok(mfile,sizeof(GLDPROCINFO));
@@ -1510,87 +1626,9 @@ void sched_init(int readonly)
 }
 #endif
 
-#include "class.h"
-
-void module_profiles(void)
-{
-	if ( global_mt_analysis>0 )
-	{
-		OBJECT *obj;
-		unsigned int n_ranks = 0;
-		struct s_rankdata {
-			int64 t_presync, t_sync, t_postsync;
-			int64 n_presync, n_sync, n_postsync;
-			double total;
-		} *rankdata;
-		unsigned int n, r;
-
-		output_profile("Multithreading analysis");
-		output_profile("=======================\n");
-		
-		/* analysis assumes data was collected during a single threaded run */
-		if ( global_threadcount>1 )
-		{
-			output_profile("thread count must be 1 to complete analysis");
-			return;
-		}
-
-		/* determine number of ranks used */
-		for ( obj=object_get_first(); obj!=NULL ; obj=obj->next )
-		{
-			if ( n_ranks < obj->rank + 1 )
-				n_ranks = obj->rank + 1;
-		}
-		n_ranks;
-
-		/* allocate working buffers */
-		rankdata = (struct s_rankdata*)malloc(n_ranks*sizeof(struct s_rankdata));
-		memset(rankdata,0,n_ranks*sizeof(struct s_rankdata));
-
-		/* gather rank data */
-		for ( obj=object_get_first(); obj!=NULL ; obj=obj->next )
-		{
-			struct s_rankdata *rank = &rankdata[obj->rank];
-			if ( obj->oclass->passconfig&PC_PRETOPDOWN )
-			{
-				rank->t_presync += obj->synctime[0];
-				rank->n_presync++;
-			}
-			if ( obj->oclass->passconfig&PC_BOTTOMUP )
-			{
-				rank->t_sync += obj->synctime[1];
-				rank->n_sync++;
-			}
-			if ( obj->oclass->passconfig&PC_POSTTOPDOWN )
-			{
-				rank->t_postsync += obj->synctime[2];
-				rank->n_postsync++;
-			}
-		}
-
-		for ( n=1 ; n<=(unsigned int)global_mt_analysis ; n*=2 )
-		{
-			static double total1 = 0;
-			double total = 0;
-			for ( r=0 ; r<n_ranks ; r++ )
-			{
-				struct s_rankdata *rank = &rankdata[r];
-				rank->total = rank->n_presync==0 ? 0 : (double)rank->t_presync/(double)CLOCKS_PER_SEC/(double)rank->n_presync * (double)( rank->n_presync/n + rank->n_presync%n );
-				rank->total += rank->n_sync==0 ? 0 : (double)rank->t_sync/(double)CLOCKS_PER_SEC/(double)rank->n_sync * (double)( rank->n_sync/n + rank->n_sync%n );
-				rank->total += rank->n_postsync==0 ? 0 : (double)rank->t_postsync/(double)CLOCKS_PER_SEC/(double)rank->n_postsync * (double)( rank->n_postsync/n + rank->n_postsync%n );
-				total += rank->total;
-			}
-			if ( n==1 ) 
-			{
-				total1 = total;
-				output_profile("%2d thread model time    %.1f s (actual time)", n, total);
-			}
-			else
-				output_profile("%2d thread model time    %.1f s (%+.0f%% est.)", n, total,(total-total1)/total1*100);
-		}
-		output_profile("");
-	}
-}
+/*********************************************************************
+ * INTERACTIVE PROCESS CONTROLLER
+ *********************************************************************/
 
 typedef struct s_args {
 	size_t n; /* number of args found */
@@ -1715,6 +1753,7 @@ void sched_continuous(void)
 		printf("\033[1;1H\033[2J");
 #endif
 		printf("Hit Ctrl-C to stop\n\n");
+		sched_clear();
 		sched_print(1);
 		while ( n-->0 && sched_stop==0 )
 		{

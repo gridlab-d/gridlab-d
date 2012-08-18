@@ -8,6 +8,7 @@
  **/
 
 #ifdef WIN32
+#include "errno.h"
 #include "windows.h"
 #include "output.h"
 #include "signal.h"
@@ -57,6 +58,7 @@ void kill_starthandler(void)
 #endif
 
 /** Send a kill signal to a windows version of GridLAB-D
+    @return 0 on successfull completion, -1 on error (e.g., no such signal, no such process)
  **/
 int kill(pid_t pid,	/**< the window process id */
 		 int sig)				/**< the signal id (see signal.h) */
@@ -72,26 +74,28 @@ int kill(pid_t pid,	/**< the window process id */
 		if ( hEvent!=NULL )
 		{
 			CloseHandle(hEvent);
-			return 1;
+			return 0;
 		}
 		else
 		{
-			return 0;
+			errno = ESRCH;
+			return -1;
 		}
 	}
 
 	/* valid signal needs to be sent */
 	else if (hEvent==NULL)
 	{
+		errno = EINVAL; // TODO distinguish between bad signal and bad pid
 		output_error("unable to signal gridlabd process %d with signal %d (error %d)", pid, sig, GetLastError());
-		return 0;
+		return -1;
 	}
 	else 
 	{
 		SetEvent(hEvent);
 		output_verbose("signal %d sent to gridlabd process %d", sig, pid);
 		CloseHandle(hEvent);
-		return 1;
+		return 0;
 	}
 }
 #endif
