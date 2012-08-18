@@ -1289,13 +1289,13 @@ void sched_print(int flags)
 				{
 					if ( sched_isdefunct(process_map[n].pid) )
 						status = "Defunct";
-					strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S %Z",tm);
+					strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S",tm);
 					if ( first && flags==0 )
 					{
 						output_message("PROC   PID STATE   CLOCK                    MODEL");
 						first=0;
 					} 
-					output_message("%4d %5d %.7s %.24s %s", n, process_map[n].pid, status, process_map[n].progress==TS_ZERO?"INIT":ts, process_map[n].model);
+					output_message("%4d %5d %-7s %-24s %s", n, process_map[n].pid, status, process_map[n].progress==TS_ZERO?"INIT":ts, process_map[n].model);
 				}
 			}
 			sched_unlock(n);
