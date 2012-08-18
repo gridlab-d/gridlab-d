@@ -1354,6 +1354,13 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 	int width = 80, namesize;
 	static char *name=NULL;
 #ifdef WIN32
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	if ( console )
+	{
+		CONSOLE_SCREEN_BUFFER_INFO cbsi;
+		GetConsoleScreenBufferInfo(console,&cbsi);
+		width = cbsi.dwSize.X;
+	}
 #else
 	struct winsize ws;
 	if ( ioctl(1,TIOCGWINSZ,&ws)!=-1 )
@@ -1808,11 +1815,11 @@ void sched_continuous(void)
 		sched_print(1);
 		while ( n-->0 && sched_stop==0 )
 		{
-			if ( !feof(stdin) )
-			{
-				printf("\n[getchar()=%d]\n", getchar());
-				return;
-			}
+			//if ( !feof(stdin) )
+			//{
+			//	printf("\n[getchar()=%d]\n", getchar());
+			//	return;
+			//}
 			exec_sleep(10000);
 		}	
 	}
