@@ -1417,7 +1417,7 @@ struct thread_affinity_policy policy;
 void sched_init(int readonly)
 {
 	static int has_run = 0;
-	char *mfile = "/tmp/gridlabd-pmap";
+	char *mfile = "/tmp/gridlabd-pmap-1"; /* change the number anytime the process map structure changes */
 	unsigned long mapsize;
 	int fd = open(mfile,O_CREAT,0666);
 	key_t shmkey = ftok(mfile,sizeof(GLDPROCINFO));
