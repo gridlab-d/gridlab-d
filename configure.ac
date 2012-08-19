@@ -54,7 +54,7 @@ AC_ARG_ENABLE([optimization],
 				  	 *) AC_MSG_ERROR([bad value ${enableval} for --enable-optimization]) ;;
 				  	esac], [optimization=0])
 
-GLFLAGS="$GLFLAGS -I`pwd`/core"
+GLFLAGS="$GLFLAGS -I`pwd`/core -lcurses"
 if [[ "$debug" = "true" ]]; then
 	GLFLAGS="$GLFLAGS -g"
 fi
@@ -219,7 +219,7 @@ AC_FUNC_MKTIME
 AC_FUNC_REALLOC
 AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([isfinite atexit getcwd memset pow putenv sqrt strchr strerror strrchr tzset])
+AC_CHECK_FUNCS([isfinite atexit getcwd memset pow putenv sqrt strchr strerror strrchr tzset getch])
 ACX_PTHREAD
 GLD_GET_NPROCS
 #GCC_CT_FEATURES

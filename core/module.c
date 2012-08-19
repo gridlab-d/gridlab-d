@@ -9,6 +9,7 @@
 #if defined WIN32 && ! defined MINGW
 #include <io.h>
 #else
+#include <curses.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1346,11 +1347,122 @@ void sched_pkill(pid_t pid)
 		kill(process_map[pid].pid, SIGINT);
 	}
 }
+
+static char HEADING[] = "PROC PID   RUNTIME    STATE   CLOCK                   MODEL" ;
+int sched_getinfo(int n,char *buf, size_t sz)
+{
+	char *status;
+	char ts[64];
+	struct tm *tm;
+	time_t ptime;
+	int width = 80, namesize;
+	static char *name=NULL;
+#ifdef WIN32
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	if ( console )
+	{
+		CONSOLE_SCREEN_BUFFER_INFO cbsi;
+		GetConsoleScreenBufferInfo(console,&cbsi);
+		width = cbsi.dwSize.X;
+	}
+#else
+	struct winsize ws;
+	if ( ioctl(1,TIOCGWINSZ,&ws)!=-1 )
+		width = ws.ws_col;
+#endif
+	namesize = width - (strstr(HEADING,"MODEL")-HEADING);
+	if ( namesize<8 ) namesize=8;
+	if ( namesize>1024 ) namesize=1024;
+	if ( name!=NULL ) free(name);
+	name = (char*)malloc(namesize+1);
+
+	if ( n==-1 ) /* heading string */
+	{
+		strncpy(buf,HEADING,sz);
+		return strlen(buf);		
+	}
+	else if ( n==-2 ) /* heading underlines */
+	{
+		for ( n=0 ; n<width ; n++ )
+		{
+			if ( n>0 && n<sizeof(HEADING)-1 && HEADING[n]==' ' && HEADING[n+1]!=' ' )
+				buf[n] = ' ';
+			else
+				buf[n]='-';
+		}
+		buf[n]='\0';
+		return width;
+	}
+	else if ( n==-3 ) /* bottom underline */
+	{	for ( n=0 ; n<width ; n++ )
+			buf[n] = '-';
+		buf[n]='\0';
+		return width;
+	}
+
+	if ( process_map==NULL )
+		return -1;
+
+	sched_lock(n);
+	ptime = (time_t)process_map[n].progress;
+	tm = gmtime(&ptime);
+	switch ( process_map[n].status ) {
+	case MLS_INIT: status = "Init"; break;
+	case MLS_RUNNING: status = "Running"; break;
+	case MLS_PAUSED: status = "Paused"; break;
+	case MLS_DONE: status = "Done"; break;
+	case MLS_LOCKED: status = "Locked"; break;
+	default: status = "Unknown"; break;
+	}
+	if ( process_map[n].pid!=0 )
+	{
+		int len = strlen(process_map[n].model);
+		char t[64]="(na)";
+		if ( process_map[n].start>0 )
+		{
+			time_t s = (time(NULL)-process_map[n].start);
+			int h = 0;
+			int m = 0;
+
+			/* compute elapsed time */
+			h = s/3600; s=s%3600;
+			m = s/60; s=s%60;
+			if ( h>0 ) sprintf(t,"%4d:%02d:%02d",h,m,(int)s);
+			else if ( m>0 ) sprintf(t,"     %2d:%02d",m,(int)s);
+			else sprintf(t,"       %2ds", (int)s);
+		}
+
+		/* check for defunct process */
+		if ( sched_isdefunct(process_map[n].pid) )
+			status = "Defunct";
+
+		/* format clock (without localization) */
+		strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S UTC",tm);
+
+		/* rewrite model name to fit length limit */
+		if ( len<namesize )
+			strcpy(name,process_map[n].model);
+		else
+		{
+			/* remove the middle */
+			char *s = process_map[n].model;
+			int mid=namesize/2 - 3;
+			strncpy(name,s,mid+1);
+			strcpy(name+mid+1," ... ");
+			strcat(name,s+len-mid);
+		}
+
+		/* print info */
+		sz = sprintf(buf,"%4d %5d %10s %-7s %-23s %s\n", n, process_map[n].pid, t, status, process_map[n].progress==TS_ZERO?"INIT":ts, name);
+	}
+	else
+		sz = sprintf(buf,"%4d   -", n);
+	sched_unlock(n);
+	return sz;
+}
+
 void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous listing */
 {
-	char HEADING[] = 
-	"PROC PID   TIME       STATE   CLOCK                    MODEL\n" 
-	"---- ----- ---------- ------- ------------------------ ";
 	int width = 80, namesize;
 	static char *name=NULL;
 #ifdef WIN32
@@ -1790,41 +1902,120 @@ void sched_signal(int sig)
 #endif
 }
 
+#ifdef WIN32
 void sched_continuous(void)
 {
+	/* get console handle */
+	COORD home={0,0};
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO cbsi;
+	DWORD size;
+	DWORD done;
 	while ( sched_stop==0 )
 	{
-		int n=100;
-#ifdef WIN32
-		COORD home={0,0};
-		HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
-		CONSOLE_SCREEN_BUFFER_INFO cbsi;
-		DWORD size;
-		DWORD done;
+		int n=200;
 		GetConsoleScreenBufferInfo(console,&cbsi);
 		size = cbsi.dwSize.X * cbsi.dwSize.Y;
 		FillConsoleOutputCharacter(console,(TCHAR)' ',size,home,&done);
 		GetConsoleScreenBufferInfo(console,&cbsi);
 		FillConsoleOutputAttribute(console,cbsi.wAttributes,size,home,&done);
 		SetConsoleCursorPosition(console,home);
-#else
-		printf("\033[1;1H\033[2J");
-#endif
-		printf("Hit Ctrl-C to stop\n\n");
 		sched_clear();
 		sched_print(1);
+		printf("Ctrl-C to stop\n");
+		printf("> ");
+		fflush(stdout);
 		while ( n-->0 && sched_stop==0 )
 		{
-			//if ( !feof(stdin) )
-			//{
-			//	printf("\n[getchar()=%d]\n", getchar());
-			//	return;
-			//}
-			exec_sleep(10000);
+			/* TODO read keys */
+			exec_sleep(5000);
 		}	
 	}
 	sched_stop = 0;
 }
+#else
+void sched_continuous(void)
+{
+	char message[1024]="Ready.";
+	int sel=0;
+	unsigned int refresh_count=10;
+	unsigned int refresh=0;
+
+	sched_init(1);
+
+	initscr();
+	cbreak();
+	echo();
+	intrflush(stdscr,TRUE);
+	keypad(stdscr,TRUE);
+	refresh();
+	halfdelay(1);
+
+	while ( sel>=0 && !sched_stop )
+	{
+		char ts[64];
+		struct tm *tb;
+		time_t now = time(NULL);
+		if ( refresh++%refresh_count==0 )
+		{
+			int n;
+			char line[1024];
+			clear();
+			sched_getinfo(-1,line,sizeof(line));
+			mvprintw(0,0,"%s",line);
+			sched_getinfo(-2,line,sizeof(line));
+			mvprintw(1,0,"%s",line);
+			for ( n=0 ; n<n_procs ; n++ )
+			{
+				if ( sched_getinfo(n,line,sizeof(line))<0 )
+					sprintf(message,"ERROR: unable to read process %d", n);
+				if ( n==sel ) attron(A_BOLD);
+				mvprintw(n+2,0,"%s",line);
+				if ( n==sel ) attroff(A_BOLD);
+			}
+			sched_getinfo(-3,line,sizeof(line));
+			mvprintw(n_procs+2,0,"%s",line);
+		}
+		tb = localtime(&now);
+		strftime(ts,sizeof(ts),"%Y/%m/%d %H:%M:%S",tb);
+		mvprintw(n_procs+3,0,"%s: %s",ts,message);
+		mvprintw(n_procs+4,0,"C to clear defunct, Up/Down to select, K to kill, Q to quit: ");
+		
+		int c = wgetch(stdscr);
+		switch (c) {
+		case KEY_UP:
+			if ( sel>0 ) sel--;
+			sprintf(message,"Process %d selected", sel);
+			refresh=0;
+			break;
+		case KEY_DOWN:
+			if ( sel<n_procs-1 ) sel++;
+			refresh=0;
+			sprintf(message,"Process %d selected", sel);
+			break;
+		case 'q':
+		case 'Q':
+			sel = -1;
+			break;
+		case 'k':
+		case 'K':
+			sched_pkill(sel);
+			sprintf(message,"Kill signal sent to process %d",sel);
+			refresh=0;
+			break;
+		case 'c':
+		case 'C':
+			sched_clear();
+			sprintf(message,"Defunct processes cleared ok");
+			refresh=0;
+			break;
+		default:
+			break;
+		}
+	}
+	endwin();
+}
+#endif
 
 void sched_controller(void)
 {
@@ -1836,6 +2027,8 @@ void sched_controller(void)
 	if ( !SetConsoleCtrlHandler(sched_signal,TRUE) )
 		output_warning("unable to suppress console Ctrl-C handler");
 #else
+	sched_continuous();
+	return;
 	signal(SIGINT,sched_signal);
 #endif
 
