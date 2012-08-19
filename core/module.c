@@ -1365,12 +1365,12 @@ int sched_getinfo(int n,char *buf, size_t sz)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO cbsi;
 		GetConsoleScreenBufferInfo(console,&cbsi);
-		width = cbsi.dwSize.X;
+		width = cbsi.dwSize.X-1;
 	}
 #else
 	struct winsize ws;
 	if ( ioctl(1,TIOCGWINSZ,&ws)!=-1 )
-		width = ws.ws_col;
+		width = ws.ws_col-1;
 #endif
 	namesize = width - (strstr(HEADING,"MODEL")-HEADING);
 	if ( namesize<8 ) namesize=8;
@@ -1455,7 +1455,7 @@ int sched_getinfo(int n,char *buf, size_t sz)
 		}
 
 		/* print info */
-		sz = sprintf(buf,"%4d %5d %10s %-7s %-23s %s\n", n, process_map[n].pid, t, status, process_map[n].progress==TS_ZERO?"INIT":ts, name);
+		sz = sprintf(buf,"%4d %5d %10s %-7s %-23s %s", n, process_map[n].pid, t, status, process_map[n].progress==TS_ZERO?"INIT":ts, name);
 	}
 	else
 		sz = sprintf(buf,"%4d   -", n);
@@ -1465,6 +1465,7 @@ int sched_getinfo(int n,char *buf, size_t sz)
 
 void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous listing */
 {
+	char line[1024];
 	int width = 80, namesize;
 	static char *name=NULL;
 #ifdef WIN32
@@ -1473,7 +1474,7 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 	{
 		CONSOLE_SCREEN_BUFFER_INFO cbsi;
 		GetConsoleScreenBufferInfo(console,&cbsi);
-		width = cbsi.dwSize.X;
+		width = cbsi.dwSize.X-1;
 	}
 #else
 	struct winsize ws;
@@ -1492,81 +1493,20 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 		if ( flags==1 )
 		{
 			int i;
-			printf(HEADING);
-			for ( i=0 ; i<namesize ; i++ )
-				putchar('-');
-			putchar('\n');
+			sched_getinfo(-1,line,sizeof(line));
+			printf("%s\n",line);
+			sched_getinfo(-2,line,sizeof(line));
+			printf("%s\n",line);
 		}
 		for ( n=0 ; n<n_procs ; n++ )
 		{
-			char *status;
-			char ts[64];
-			struct tm *tm = localtime(&process_map[n].progress);
-			sched_lock(n);
-			switch ( process_map[n].status ) {
-			case MLS_INIT: status = "Init"; break;
-			case MLS_RUNNING: status = "Running"; break;
-			case MLS_PAUSED: status = "Paused"; break;
-			case MLS_DONE: status = "Done"; break;
-			case MLS_LOCKED: status = "Locked"; break;
-			default: status = "Unknown"; break;
-			}
 			if ( process_map[n].pid!=0 || flags==1 )
 			{
-				if ( process_map[n].pid==0 )
-					printf("%4d    -\n",n);
+				if ( sched_getinfo(n,line,sizeof(line))>0 )
+					printf("%s\n",line);
 				else
-				{
-					int len = strlen(process_map[n].model);
-					char t[64]="(na)";
-					if ( process_map[n].start>0 )
-					{
-						time_t s = (time(NULL)-process_map[n].start);
-						int h = 0;
-						int m = 0;
-
-						/* compute elapsed time */
-						h = s/3600; s=s%3600;
-						m = s/60; s=s%60;
-						if ( h>0 ) sprintf(t,"%4d:%02d:%02d",h,m,s);
-						else if ( m>0 ) sprintf(t,"     %2d:%02d",m,s);
-						else sprintf(t,"       %2ds", s);
-					}
-
-					/* check for defunct process */
-					if ( sched_isdefunct(process_map[n].pid) )
-						status = "Defunct";
-
-					/* format clock (without localization) */
-					strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S",tm);
-					if ( first && flags==0 )
-					{
-						int i;
-						printf(HEADING);
-						for ( i=0 ; i<namesize ; i++ )
-							putchar('-');
-						putchar('\n');
-						first=0;
-					}
-
-					/* rewrite model name to fit length limit */
-					if ( len<namesize ) 
-						strcpy(name,process_map[n].model);
-					else
-					{
-						/* remove the middle */
-						char *s = process_map[n].model;
-						int mid=namesize/2 - 3;
-						strncpy(name,s,mid+1);
-						strcpy(name+mid+1," ... ");
-						strcat(name,s+len-mid);
-					}
-
-					/* print info */
-					printf("%4d %5d %10s %-7s %-24s %s\n", n, process_map[n].pid, t, status, process_map[n].progress==TS_ZERO?"INIT":ts, name);
-				}
+					printf("%4d (error)\n",n);
 			}
-			sched_unlock(n);
 		}
 	}
 }
@@ -1904,44 +1844,141 @@ void sched_signal(int sig)
 #endif
 }
 
+/* simulate needed curses functions in Windows */
 #ifdef WIN32
-void sched_continuous(void)
+HANDLE console = NULL;
+HANDLE keyboard = NULL;
+#define stdscr console
+#define ERR -1
+#define A_BOLD FOREGROUND_INTENSITY
+#define KEY_UP VK_UP
+#define KEY_DOWN VK_DOWN
+int attr = 0;
+void initscr(void)
 {
-	/* get console handle */
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	DWORD mode;
+
+	console = GetStdHandle(STD_OUTPUT_HANDLE);
+	GetConsoleScreenBufferInfo(console,&info);
+	info.wAttributes &= ~FOREGROUND_INTENSITY;
+	SetConsoleTextAttribute(console,info.wAttributes);
+
+	keyboard = GetStdHandle(STD_INPUT_HANDLE);
+	GetConsoleMode(keyboard,&mode);
+	mode &= ~ENABLE_LINE_INPUT;
+	SetConsoleMode(keyboard,mode);
+}
+void cbreak(void)
+{
+	/* nothing to do - Windows already does this by default */
+}
+void echo(void)
+{
+	/* doesn't work with ENABLE_LINE_INPUT off so it's done manually in wgetch */
+}
+void refresh(void)
+{
+	/* currently unbuffered output */
+}
+void clear(void)
+{
 	COORD home={0,0};
-	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO cbsi;
 	DWORD size;
 	DWORD done;
-	while ( sched_stop==0 )
-	{
-		int n=200;
-		GetConsoleScreenBufferInfo(console,&cbsi);
-		size = cbsi.dwSize.X * cbsi.dwSize.Y;
-		FillConsoleOutputCharacter(console,(TCHAR)' ',size,home,&done);
-		GetConsoleScreenBufferInfo(console,&cbsi);
-		FillConsoleOutputAttribute(console,cbsi.wAttributes,size,home,&done);
-		SetConsoleCursorPosition(console,home);
-		sched_clear();
-		sched_print(1);
-		printf("Ctrl-C to stop\n");
-		printf("> ");
-		fflush(stdout);
-		while ( n-->0 && sched_stop==0 )
-		{
-			/* TODO read keys */
-			exec_sleep(5000);
-		}	
-	}
-	sched_stop = 0;
+	GetConsoleScreenBufferInfo(console,&cbsi);
+	size = cbsi.dwSize.X * cbsi.dwSize.Y;
+	FillConsoleOutputCharacter(console,(TCHAR)' ',size,home,&done);
+	GetConsoleScreenBufferInfo(console,&cbsi);
+	FillConsoleOutputAttribute(console,cbsi.wAttributes,size,home,&done);
+	SetConsoleCursorPosition(console,home);
 }
-#else
+void intrflush(HANDLE *w, BOOL bf)
+{
+	/* nothing to do - Windows already does this by default */
+}
+void keypad(HANDLE *w, BOOL bf)
+{
+}
+#include <sys/timeb.h>
+int delay=0;
+int halfdelay(int t)
+{
+	delay = t;
+}
+void mvprintw(int y, int x, char *fmt, ...)
+{
+	va_list ptr;
+	COORD pos={x,y};
+	SetConsoleCursorPosition(console,pos);
+	va_start(ptr,fmt);
+	vfprintf(stdout,fmt,ptr);
+	va_end(ptr);
+}
+int wgetch(HANDLE *w)
+{
+	struct timeb t0, t1;
+	double dt=0;
+	long n=-1;
+
+	ftime(&t0); t1=t0;
+Retry:
+	while ( GetNumberOfConsoleInputEvents(keyboard,&n) && n==0 )
+	{
+		Sleep(20);
+		ftime(&t1);
+		dt = ((double)t1.time+(double)t1.millitm/1e3) - ((double)t0.time+(double)t0.millitm/1e3);
+		if ( dt*10>=delay )
+			return ERR;
+	}
+	if ( n>0 )
+	{
+		INPUT_RECORD input;
+		n=-1;
+		if ( !ReadConsoleInput(keyboard,&input,1,&n,NULL) ) goto Error;
+		if ( n>0 && input.EventType==KEY_EVENT ) 
+		{
+			KEY_EVENT_RECORD key = input.Event.KeyEvent;
+			return key.wVirtualKeyCode;
+		}
+		else
+			goto Retry;
+	}
+	else if ( n==0 )
+		return ERR;
+	else
+	{
+Error:
+		output_fatal("keyboard read error: code=%d", GetLastError());
+		exit(1);
+	}
+}
+void endwin(void)
+{
+}
+void attron(int n)
+{
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	GetConsoleScreenBufferInfo(console,&info);
+	info.wAttributes |= n;
+	SetConsoleTextAttribute(console,info.wAttributes);
+}
+void attroff(int n)
+{
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	GetConsoleScreenBufferInfo(console,&info);
+	info.wAttributes &= ~n;
+	SetConsoleTextAttribute(console,info.wAttributes);
+}
+#endif
+
 void sched_continuous(void)
 {
 	char message[1024]="Ready.";
 	int sel=0;
-	unsigned int refresh_count=10;
-	unsigned int refresh=0;
+	unsigned int refresh_mod=10;
+	unsigned int refresh_count=0;
 
 	sched_init(1);
 
@@ -1955,44 +1992,45 @@ void sched_continuous(void)
 
 	while ( sel>=0 && !sched_stop )
 	{
+		int c;
 		char ts[64];
 		struct tm *tb;
 		time_t now = time(NULL);
-		if ( refresh++%refresh_count==0 )
+		if ( refresh_count++%refresh_mod==0 )
 		{
 			int n;
 			char line[1024];
 			clear();
+			mvprintw(0,0,"GridLAB-D Process Control - Version %d.%d.%d-%d (%s)",REV_MAJOR,REV_MINOR,REV_PATCH,BUILDNUM,BRANCH);
 			sched_getinfo(-1,line,sizeof(line));
-			mvprintw(0,0,"%s",line);
+			mvprintw(2,0,"%s",line);
 			sched_getinfo(-2,line,sizeof(line));
-			mvprintw(1,0,"%s",line);
+			mvprintw(3,0,"%s",line);
 			for ( n=0 ; n<n_procs ; n++ )
 			{
 				if ( sched_getinfo(n,line,sizeof(line))<0 )
 					sprintf(message,"ERROR: unable to read process %d", n);
 				if ( n==sel ) attron(A_BOLD);
-				mvprintw(n+2,0,"%s",line);
+				mvprintw(n+4,0,"%s",line);
 				if ( n==sel ) attroff(A_BOLD);
 			}
 			sched_getinfo(-3,line,sizeof(line));
-			mvprintw(n_procs+2,0,"%s",line);
+			mvprintw(n_procs+5,0,"%s",line);
+			tb = localtime(&now);
+			strftime(ts,sizeof(ts),"%Y/%m/%d %H:%M:%S",tb);
+			mvprintw(n_procs+7,0,"%s: %s",ts,message);
+			mvprintw(n_procs+8,0,"C to clear defunct, Up/Down to select, K to kill, Q to quit: ");
 		}
-		mvprintw(n_procs+3,0,"GridLAB-D Version %d.%d.%d-%d (%s)",REV_MAJOR,REV_MINOR,REV_PATCH,BUILDNUM,BRANCH);
-		tb = localtime(&now);
-		strftime(ts,sizeof(ts),"%Y/%m/%d %H:%M:%S",tb);
-		mvprintw(n_procs+5,0,"%s: %s",ts,message);
-		mvprintw(n_procs+6,0,"C to clear defunct, Up/Down to select, K to kill, Q to quit: ");
-		int c = wgetch(stdscr);
+		c = wgetch(stdscr);
 		switch (c) {
 		case KEY_UP:
 			if ( sel>0 ) sel--;
 			sprintf(message,"Process %d selected", sel);
-			refresh=0;
+			refresh_count=0;
 			break;
 		case KEY_DOWN:
 			if ( sel<n_procs-1 ) sel++;
-			refresh=0;
+			refresh_count=0;
 			sprintf(message,"Process %d selected", sel);
 			break;
 		case 'q':
@@ -2003,13 +2041,13 @@ void sched_continuous(void)
 		case 'K':
 			sched_pkill(sel);
 			sprintf(message,"Kill signal sent to process %d",sel);
-			refresh=0;
+			refresh_count=0;
 			break;
 		case 'c':
 		case 'C':
 			sched_clear();
 			sprintf(message,"Defunct processes cleared ok");
-			refresh=0;
+			refresh_count=0;
 			break;
 		default:
 			break;
@@ -2017,20 +2055,20 @@ void sched_continuous(void)
 	}
 	endwin();
 }
-#endif
 
 void sched_controller(void)
 {
 	char command[1024];
 	ARGS *last = NULL;
 
+	sched_continuous();
+	return;
+
 	global_suppress_repeat_messages = 0;
 #ifdef WIN32
 	if ( !SetConsoleCtrlHandler(sched_signal,TRUE) )
 		output_warning("unable to suppress console Ctrl-C handler");
 #else
-	sched_continuous();
-	return;
 	signal(SIGINT,sched_signal);
 #endif
 
