@@ -12,6 +12,7 @@
 #else
 #include "build.h"
 #endif
+#define BUILDNUM (atoi(BUILD+11))
 #define BRANCH "Hassayampa" 
 
 #endif

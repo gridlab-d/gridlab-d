@@ -6,6 +6,8 @@
  @{
  **/
 
+#include "version.h"
+
 #if defined WIN32 && ! defined MINGW
 #include <io.h>
 #else
@@ -1976,11 +1978,11 @@ void sched_continuous(void)
 			sched_getinfo(-3,line,sizeof(line));
 			mvprintw(n_procs+2,0,"%s",line);
 		}
+		mvprintw(n_procs+3,0,"GridLAB-D Version %d.%d.%d-%d (%s)",REV_MAJOR,REV_MINOR,REV_PATCH,BUILDNUM,BRANCH);
 		tb = localtime(&now);
 		strftime(ts,sizeof(ts),"%Y/%m/%d %H:%M:%S",tb);
-		mvprintw(n_procs+3,0,"%s: %s",ts,message);
-		mvprintw(n_procs+4,0,"C to clear defunct, Up/Down to select, K to kill, Q to quit: ");
-		
+		mvprintw(n_procs+5,0,"%s: %s",ts,message);
+		mvprintw(n_procs+6,0,"C to clear defunct, Up/Down to select, K to kill, Q to quit: ");
 		int c = wgetch(stdscr);
 		switch (c) {
 		case KEY_UP:
