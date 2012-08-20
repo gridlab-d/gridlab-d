@@ -1418,7 +1418,8 @@ int sched_getinfo(int n,char *buf, size_t sz)
 	}
 	if ( process_map[n].pid!=0 )
 	{
-		int len = strlen(process_map[n].model);
+		char *modelname = process_map[n].model;
+		int len;
 		char t[64]="(na)";
 		if ( process_map[n].start>0 )
 		{
@@ -1441,17 +1442,24 @@ int sched_getinfo(int n,char *buf, size_t sz)
 		/* format clock (without localization) */
 		strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S UTC",tm);
 
+		/* truncate path if match with cwd */
+		if ( strnicmp(global_workdir,modelname,strlen(global_workdir))==0 )
+		{
+			modelname+=strlen(global_workdir);
+			if ( modelname[0]=='/' || modelname[0]=='\\' ) modelname++; /* truncate remaining / */
+		}
+		
 		/* rewrite model name to fit length limit */
+		len = strlen(modelname);
 		if ( len<namesize )
-			strcpy(name,process_map[n].model);
+			strcpy(name,modelname);
 		else
 		{
 			/* remove the middle */
-			char *s = process_map[n].model;
 			int mid=namesize/2 - 3;
-			strncpy(name,s,mid+1);
+			strncpy(name,modelname,mid+1);
 			strcpy(name+mid+1," ... ");
-			strcat(name,s+len-mid);
+			strcat(name,modelname+len-mid);
 		}
 
 		/* print info */
