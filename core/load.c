@@ -388,7 +388,7 @@ static int append_init(char* format,...)
 
 	if (strlen(init_block)+strlen(code)>global_inline_block_size)
 	{
-		output_fatal("insufficient buffer space to compile init code");
+		output_fatal("insufficient buffer space to compile init code (inline_block_size=%d)", global_inline_block_size);
 		/*	TROUBLESHOOT
 			The loader creates a buffer in which it can temporarily hold source
 			initialization code from your GLM file.  This error occurs when the buffer space
@@ -411,7 +411,7 @@ static int append_code(char* format,...)
 
 	if (strlen(code_block)+strlen(code)>global_inline_block_size)
 	{
-		output_fatal("insufficient buffer space to compile source code");
+		output_fatal("insufficient buffer space to compile init code (inline_block_size=%d)", global_inline_block_size);
 		/*	TROUBLESHOOT
 			The loader creates a buffer in which it can temporarily hold source
 			runtime code from your GLM file.  This error occurs when the buffer space
@@ -434,7 +434,7 @@ static int append_global(char* format,...)
 
 	if (strlen(global_block)+strlen(code)>global_inline_block_size)
 	{
-		output_fatal("insufficient buffer space to compile global code");
+		output_fatal("insufficient buffer space to compile init code (inline_block_size=%d)", global_inline_block_size);
 		/*	TROUBLESHOOT
 			The loader creates a buffer in which it can temporarily hold source
 			global code from your GLM file.  This error occurs when the buffer space
@@ -3085,7 +3085,7 @@ static int class_intrinsic_function(PARSER, CLASS *oclass, int64 *functions, cha
 	char *fname = NULL;
 	char *ftype = NULL;
 	char arglist[1024];
-	char source[4096];
+	char source[65536];
 	int startline;
 	START;
 	if WHITE ACCEPT;
