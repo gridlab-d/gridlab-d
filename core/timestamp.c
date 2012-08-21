@@ -502,15 +502,67 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset){
 	}
 }
 
+char *tz_locale(char *country, char *province, char *city)
+{
+	extern char *tz_name(char *tzspec);
+	static char tzname[256]="";
+	char filepath[1024];
+	FILE *fp = NULL;
+	char buffer[1024];
+	char target[256];
+	int len = sprintf(target,"%s/%s/%s",country,province,city);
+
+	if(find_file(TZFILE, NULL, R_OK,filepath,sizeof(filepath)) == NULL){
+		THROW("timezone specification file %s not found in GLPATH=%s: %s", TZFILE, getenv("GLPATH"), strerror(errno));
+		/* TROUBLESHOOT
+			The system could not locate the timezone file <code>tzinfo.txt</code>.
+			Check that the <code>etc</code> folder is included in the '''GLPATH''' environment variable and try again.
+		 */
+	}
+	fp = fopen(filepath,"r");
+	if(fp == NULL){
+		THROW("%s: access denied: %s", filepath, strerror(errno));
+		/* TROUBLESHOOT
+			The system was unable to read the timezone file.  Check that the file has the correct permissions and try again.
+		 */
+	}
+	while( fgets(buffer,sizeof(buffer),fp)!=NULL )
+	{
+		char *locale = buffer;
+		if ( locale[0]==';' || locale[0]=='\0' ) continue;
+		if ( iswspace(locale[0]) )
+		{
+			while ( iswspace(locale[0]) && locale[0]!='\0' ) locale++; /* trim left white */
+			if ( strnicmp(locale,target,len)==0 )
+			{
+				fclose(fp);
+				return tz_name(tzname);
+			}
+		}
+		else
+			sscanf(buffer, "%[^,]", tzname);
+	}
+	THROW("tz_locale(char *country='%s', char *province='%s', char *city='%s'): not tzinfo entry found", country, province, city);
+	return NULL;
+}
+
 /** Converts a timezone spec into a standard timezone name
 	Populate tzspec if provided, otherwise returns a static buffer
  **/
-char *tz_name(char *tzspec){
+char *tz_name(char *tzspec)
+{
 	static char name[32] = "GMT";
+	char country[64], province[64], city[64];
 
-	if(tz_info(tzspec, name, NULL, NULL, NULL)){
+	if ( sscanf(tzspec,"%[^/]/%[^/]/%[^/]",country,province,city)==3 )
+		return tz_locale(country,province,city);
+
+	if(tz_info(tzspec, name, NULL, NULL, NULL))
+	{
 		return name;
-	} else {
+	} 
+	else 
+	{
 		//output_error("unable to find timezone name for tzspec \'%s\'", tzspec);
 		/*	don'tTROUBLESHOOT
 			The timezone specification was not found in the timezone subsystem.  Double-check the spelling and format of the specification.
