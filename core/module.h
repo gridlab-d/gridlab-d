@@ -75,7 +75,7 @@ extern "C" {
 	void sched_update(TIMESTAMP clock, enumeration status);
 	void sched_pkill(int pid);
 	void sched_controller(void);
-	unsigned short sched_get_cpuid();
+	unsigned short sched_get_cpuid(unsigned short n);
 	unsigned short sched_get_procid();
 #endif
 

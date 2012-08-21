@@ -1256,7 +1256,7 @@ extern int kill(unsigned short,int); /* defined in kill.c */
 #include "gui.h"
 
 static unsigned char procs[65536]; /* processor map */
-static unsigned char n_procs=0; /* number of processors */
+static unsigned char n_procs=0; /* number of processors in map */
 
 #define MAPNAME "gridlabd-pmap-2" /* TODO: change the pmap number each time the structure changes */
 typedef struct s_gldprocinfo {
@@ -1267,17 +1267,25 @@ typedef struct s_gldprocinfo {
 	char1024 model;			/* model name */
 	time_t start;			/* wall time of start */
 } GLDPROCINFO;
-
 static GLDPROCINFO *process_map = NULL; /* global process map */
-static unsigned short my_proc=0; /* processor assigned to this process */
-unsigned short sched_get_cpuid()
+
+typedef struct {
+	unsigned short n_procs; /* number of processors used by this process */
+	unsigned short *list; /* list of processors assigned to this process */
+} MYPROCINFO;
+static MYPROCINFO *my_proc=NULL; /* processors assigned to this process */
+#define PROCERR ((unsigned short)-1)
+
+unsigned short sched_get_cpuid(unsigned short n)
 {
-	return my_proc;
+	if ( my_proc==NULL || my_proc->list[n]==NULL || n<0 || n>=my_proc->n_procs )
+		return PROCERR;
+	return my_proc->list[n];
 }
 unsigned short sched_get_procid()
 {
-	output_debug("proc_map %x, myproc %ui", process_map, my_proc);
-	return process_map[my_proc].pid;
+	output_debug("proc_map %x, myproc %ui", process_map, sched_get_cpuid(0));
+	return process_map[sched_get_cpuid(0)].pid;
 }
 
 void sched_lock(unsigned short proc)
@@ -1295,12 +1303,14 @@ void sched_unlock(unsigned short proc)
 /** update the process info **/
 void sched_update(TIMESTAMP clock, enumeration status)
 {
-	if ( my_proc>=0 && my_proc<n_procs )
+	/* TODO iterate through my_proc.list */
+	unsigned short proc = sched_get_cpuid(0);
+	if ( proc!=PROCERR )
 	{
-		sched_lock(my_proc);
-		process_map[my_proc].status = status;
-		process_map[my_proc].progress = clock;
-		sched_unlock(my_proc);
+		sched_lock(proc);
+		process_map[proc].status = status;
+		process_map[proc].progress = clock;
+		sched_unlock(proc);
 	}
 }
 int sched_isdefunct(pid_t pid)
@@ -1316,11 +1326,13 @@ int sched_isdefunct(pid_t pid)
  **/
 void sched_finish(void)
 {
-	if ( my_proc>=0 && my_proc<n_procs )
+	int t;
+	for ( t=0 ; t<my_proc->n_procs ; t++ )
 	{
-		sched_lock(my_proc);
-		process_map[my_proc].pid = 0;
-		sched_unlock(my_proc);
+		int n = my_proc->list[t];
+		sched_lock(n);
+		process_map[n].pid = 0;
+		sched_unlock(n);
 	}
 }
 
@@ -1519,6 +1531,63 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 	}
 }
 
+MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
+{
+	int t;
+	/* get process info */
+	HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS,FALSE,pid);
+	if ( hProc==NULL )
+	{
+		unsigned long  err = GetLastError();
+		output_warning("unable to access current process info, err code %d--job not added to process map", err);
+		return;
+	}	
+
+	if ( n_threads==0 ) n_threads = n_procs;
+	my_proc = malloc(sizeof(MYPROCINFO));
+	my_proc->list = malloc(sizeof(unsigned short)*n_threads);
+	my_proc->n_procs = n_threads;
+	for ( t=0 ; t<n_threads ; t++ )
+	{
+		int n;
+		for ( n=0 ; n<n_procs ; n++ )
+		{
+			sched_lock(n);
+			if ( process_map[n].pid==0 )
+				break;
+			sched_unlock(n);
+		}
+		if ( n==n_procs )
+		{
+			goto Error;
+			/** @todo wait for a processor to free up before running */
+		}
+		my_proc->list[t] = n;
+		process_map[n].pid = pid;
+		strncpy(process_map[n].model,global_modelname,sizeof(process_map[n].model)-1);
+		process_map[n].start = time(NULL);
+		sched_unlock(n);
+
+		/* set processor affinity */
+		if ( global_threadcount==1 && SetProcessAffinityMask(hProc,(DWORD_PTR)(1<<n))==0 )
+		{
+			unsigned long  err = GetLastError();
+			output_error("unable to set current process affinity mask, err code %d", err);
+		}
+
+	}
+	CloseHandle(hProc);
+	return my_proc;
+Error:
+	if ( my_proc!=NULL )
+	{
+		if ( my_proc->list!=NULL ) free(my_proc->list);
+		free(my_proc);
+	}
+	CloseHandle(hProc);
+	return NULL;
+}
+
 #ifdef WIN32
 
 /** Initialize the processor scheduling system
@@ -1532,7 +1601,7 @@ void sched_init(int readonly)
 	static int has_run = 0;
 	SYSTEM_INFO info;
 	pid_t pid = (unsigned short)GetCurrentProcessId();
-	HANDLE hProc, hMap;
+	HANDLE hMap;
 	unsigned long mapsize;
 	int n;
 
@@ -1571,15 +1640,6 @@ void sched_init(int readonly)
 		return;
 	}
 
-	/* get process info */
-	hProc = OpenProcess(PROCESS_ALL_ACCESS,FALSE,pid);
-	if ( hProc==NULL )
-	{
-		unsigned long  err = GetLastError();
-		output_warning("unable to access current process info, err code %d--job not added to process map", err);
-		return;
-	}	
-
 	/* automatic cleanup of defunct jobs */
 	if ( global_autoclean )
 		sched_clear();
@@ -1588,33 +1648,13 @@ void sched_init(int readonly)
 	if ( readonly ) return;
 
 	/* find an available processor */
-	for ( n=0 ; n<n_procs ; n++ )
+	my_proc = sched_allocate_procs(global_threadcount,pid);
+	if ( my_proc==NULL )
 	{
-		sched_lock(n);
-		if ( process_map[n].pid==0 )
-			break;
-		sched_unlock(n);
-	}
-	if ( n==n_procs )
-	{
-		/** @todo wait for a processor to free up before running */
 		output_warning("no processor available to avoid overloading--job not added to process map");
 		return;
 	}
-	my_proc = n;
-	process_map[n].pid = pid;
-	strncpy(process_map[n].model,global_modelname,sizeof(process_map[n].model)-1);
-	process_map[n].start = time(NULL);
-	sched_unlock(n);
 	atexit(sched_finish);
-
-	/* set processor affinity */
-	if ( global_threadcount==1 && SetProcessAffinityMask(hProc,(DWORD_PTR)(1<<n))==0 )
-	{
-		unsigned long  err = GetLastError();
-		output_error("unable to set current process affinity mask, err code %d", err);
-	}
-	CloseHandle(hProc);
 }
 
 #else
@@ -1944,7 +1984,7 @@ Retry:
 	{
 		INPUT_RECORD input;
 		n=-1;
-		if ( !ReadConsoleInput(keyboard,&input,1,&n,NULL) ) goto Error;
+		if ( !ReadConsoleInput(keyboard,&input,(DWORD)1,&n) ) goto Error;
 		if ( n>0 && input.EventType==KEY_EVENT ) 
 		{
 			KEY_EVENT_RECORD key = input.Event.KeyEvent;

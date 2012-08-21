@@ -2442,7 +2442,7 @@ static int expanded_value(char *text, char *result, int size, char *delims)
 				else if (strcmp(varname,"hostaddr")==0)
 					strcpy(value,global_hostaddr); 
 				else if (strcmp(varname,"cpu")==0)
-					sprintf(value,"%d",sched_get_cpuid()); 
+					sprintf(value,"%d",sched_get_cpuid(0)); 
 				else if (strcmp(varname,"pid")==0)
 					sprintf(value,"%d",sched_get_procid()); 
 				else if (strcmp(varname,"port")==0)

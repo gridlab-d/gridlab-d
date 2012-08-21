@@ -53,7 +53,7 @@ void output_prefix_enable(void)
 	unsigned short cpuid, procid;
 	sched_init(0);
 	output_debug("reading cpuid()");
-	cpuid = sched_get_cpuid();
+	cpuid = sched_get_cpuid(0);
 	output_debug("reading procid()");
 	procid = sched_get_procid();
 	output_debug("sprintf'ing m/s name");
