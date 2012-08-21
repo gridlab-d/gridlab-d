@@ -1,0 +1,3 @@
+clock {
+	timezone USA/CA/Los Angeles;
+}
