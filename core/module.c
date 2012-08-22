@@ -1531,6 +1531,8 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 	}
 }
 
+#ifdef WIN32
+
 MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 {
 	int t;
@@ -1587,8 +1589,6 @@ Error:
 	CloseHandle(hProc);
 	return NULL;
 }
-
-#ifdef WIN32
 
 /** Initialize the processor scheduling system
 
