@@ -94,12 +94,12 @@ typedef struct s_object_list {
  */
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;
-	int (*output_verbose)(char *format, ...);
-	int (*output_message)(char *format, ...);
-	int (*output_warning)(char *format, ...);
-	int (*output_error)(char *format, ...);
-	int (*output_debug)(char *format, ...);
-	int (*output_test)(char *format, ...);
+	int (*output_verbose)(const char *format, ...);
+	int (*output_message)(const char *format, ...);
+	int (*output_warning)(const char *format, ...);
+	int (*output_error)(const char *format, ...);
+	int (*output_debug)(const char *format, ...);
+	int (*output_test)(const char *format, ...);
 	CLASS *(*register_class)(MODULE *,CLASSNAME,unsigned int,PASSCONFIG);
 	struct {
 		OBJECT *(*single)(CLASS*);
@@ -152,9 +152,9 @@ typedef struct s_callbacks {
 		double (*refresh)(struct s_aggregate *aggregate);
 	} aggregate;
 	struct {
-		void *(*getvar)(MODULE *module, char *varname);
+		void *(*getvar)(MODULE *module, const char *varname);
 		MODULE *(*getfirst)(void);
-		int (*depends)(char *name, unsigned char major, unsigned char minor, unsigned short build);
+		int (*depends)(const char *name, unsigned char major, unsigned char minor, unsigned short build);
 	} module;
 	struct {
 		double (*uniform)(unsigned int *rng, double a, double b);

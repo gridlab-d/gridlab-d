@@ -823,7 +823,7 @@ int module_cmdargs(int argc, char **argv)
 	return 0;
 }
 
-int module_depends(char *name, unsigned char major, unsigned char minor, unsigned short build)
+int module_depends(const char *name, unsigned char major, unsigned char minor, unsigned short build)
 {
 	MODULE *mod;
 	for (mod=first_module; mod!=NULL; mod=mod->next)
@@ -1260,8 +1260,8 @@ static unsigned char n_procs=0; /* number of processors in map */
 
 #define MAPNAME "gridlabd-pmap-2" /* TODO: change the pmap number each time the structure changes */
 typedef struct s_gldprocinfo {
-	unsigned long lock;		/* field lock */
-	pid_t pid;				/* process id */
+	unsigned int lock;		/* field lock */
+	pid_t pid;			/* process id */
 	TIMESTAMP progress;		/* current simtime */
 	enumeration status;		/* current status */
 	char1024 model;			/* model name */
@@ -1278,7 +1278,7 @@ static MYPROCINFO *my_proc=NULL; /* processors assigned to this process */
 
 unsigned short sched_get_cpuid(unsigned short n)
 {
-	if ( my_proc==NULL || my_proc->list[n]==NULL || n<0 || n>=my_proc->n_procs )
+	if ( my_proc==NULL || my_proc->list==NULL || n>=my_proc->n_procs )
 		return PROCERR;
 	return my_proc->list[n];
 }
@@ -1541,7 +1541,9 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 {
 	int t;
 
-#ifdef WIN32
+#if defined WIN32
+	int cpu;
+
 	/* get process info */
 	HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS,FALSE,pid);
 	if ( hProc==NULL )
@@ -1549,7 +1551,11 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		unsigned long  err = GetLastError();
 		output_warning("unable to access current process info, err code %d--job not added to process map", err);
 		return;
-	}	
+	}
+#elif defined MACOSX
+	int cpu;
+#else
+	cpu_set_t *cpuset = CPU_ALLOC(n_procs);
 #endif
 
 	if ( n_threads==0 ) n_threads = n_procs;
@@ -1578,23 +1584,34 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		sched_unlock(n);
 
 #ifdef WIN32
-		/* set processor affinity */
-		if ( global_threadcount==1 && SetProcessAffinityMask(hProc,(DWORD_PTR)(1<<n))==0 )
-		{
-			unsigned long  err = GetLastError();
-			output_error("unable to set current process affinity mask, err code %d", err);
-		}
+		// TODO add this cpu to affinity
+		cpu = n;
 #elif defined MACOSX
-	policy.affinity_tag = n;
-	if ( thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, &policy, THREAD_AFFINITY_POLICY_COUNT)!=KERN_SUCCESS )
-		output_warning("unable to set thread policy: %s", strerror(errno));
+		// TODO add this cpu to affinity
+		cpu = n;
 #else /* linux */
-	if ( sched_setaffinity(pid,1<<n)==0 )
-		output_warning("unable to set current process affinity mask: %s", strerror(errno));
+		CPU_SET_S(n,CPU_ALLOC_SIZE(n_procs),cpuset);	
 #endif
 	}
 #ifdef WIN32
+	// TODO set mp affinity
+	if ( global_threadcount==1 && SetProcessAffinityMask(hProc,(DWORD_PTR)(1<<cpu))==0 )
+	{
+		unsigned long  err = GetLastError();
+		output_error("unable to set current process affinity mask, err code %d", err);
+	}
 	CloseHandle(hProc);
+#elif defined MACOSX
+	// TODO set mp affinity
+	if ( global_threadcount==1 )
+	{
+		policy.affinity_tag = cpu;
+		if ( thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, &policy, THREAD_AFFINITY_POLICY_COUNT)!=KERN_SUCCESS )
+			output_warning("unable to set thread policy: %s", strerror(errno));
+	}
+#else
+	if ( sched_setaffinity(pid,CPU_ALLOC_SIZE(n_procs),cpuset)==0 )
+		output_warning("unable to set current process affinity mask: %s", strerror(errno));
 #endif
 	return my_proc;
 Error:
@@ -1768,35 +1785,13 @@ void sched_init(int readonly)
 		return;
 
 	/* find an available processor */
-	for ( n=0 ; n<n_procs ; n++ )
+	my_proc = sched_allocate_procs(global_threadcount,pid);
+	if ( my_proc==NULL )
 	{
-		sched_lock(n);
-		if ( process_map[n].pid==0 )
-			break;
-		sched_unlock(n);
-	}
-	if ( n==n_procs )
-	{
-		/** @todo wait for a processor to free up before running */
 		output_warning("no processor available to avoid overloading--job not added to process map");
 		return;
 	}
-	my_proc = n;
-	process_map[n].pid = pid;
-	strncpy(process_map[n].model,global_modelname,sizeof(process_map[n].model)-1);
-	process_map[n].start = time(NULL);
-	sched_unlock(n);
 	atexit(sched_finish);
-
-	/* set processor affinity */
-#ifdef MACOSX
-	policy.affinity_tag = n;
-	if ( thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, &policy, THREAD_AFFINITY_POLICY_COUNT)!=KERN_SUCCESS )
-		output_warning("unable to set thread policy: %s", strerror(errno));
-#else
-	if ( sched_setaffinity(pid,1<<n)==0 )
-		output_warning("unable to set current process affinity mask: %s", strerror(errno));
-#endif
 }
 #endif
 
