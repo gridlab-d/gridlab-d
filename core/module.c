@@ -1531,11 +1531,17 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 	}
 }
 
-#ifdef WIN32
+#ifdef MACOSX
+#include <mach/mach_init.h>
+#include <mach/thread_policy.h>
+struct thread_affinity_policy policy;
+#endif
 
 MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 {
 	int t;
+
+#ifdef WIN32
 	/* get process info */
 	HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS,FALSE,pid);
 	if ( hProc==NULL )
@@ -1544,6 +1550,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		output_warning("unable to access current process info, err code %d--job not added to process map", err);
 		return;
 	}	
+#endif
 
 	if ( n_threads==0 ) n_threads = n_procs;
 	my_proc = malloc(sizeof(MYPROCINFO));
@@ -1570,15 +1577,25 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		process_map[n].start = time(NULL);
 		sched_unlock(n);
 
+#ifdef WIN32
 		/* set processor affinity */
 		if ( global_threadcount==1 && SetProcessAffinityMask(hProc,(DWORD_PTR)(1<<n))==0 )
 		{
 			unsigned long  err = GetLastError();
 			output_error("unable to set current process affinity mask, err code %d", err);
 		}
-
+#elif defined MACOSX
+	policy.affinity_tag = n;
+	if ( thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, &policy, THREAD_AFFINITY_POLICY_COUNT)!=KERN_SUCCESS )
+		output_warning("unable to set thread policy: %s", strerror(errno));
+#else /* linux */
+	if ( sched_setaffinity(pid,1<<n)==0 )
+		output_warning("unable to set current process affinity mask: %s", strerror(errno));
+#endif
 	}
+#ifdef WIN32
 	CloseHandle(hProc);
+#endif
 	return my_proc;
 Error:
 	if ( my_proc!=NULL )
@@ -1586,7 +1603,9 @@ Error:
 		if ( my_proc->list!=NULL ) free(my_proc->list);
 		free(my_proc);
 	}
+#ifdef WIN32
 	CloseHandle(hProc);
+#endif
 	return NULL;
 }
 
@@ -1596,6 +1615,7 @@ Error:
 	that is responsible to keep thread from migrating once
 	they are committed to a particular processor.
  **/
+#ifdef WIN32
 void sched_init(int readonly)
 {
 	static int has_run = 0;
@@ -1658,12 +1678,6 @@ void sched_init(int readonly)
 }
 
 #else
-
-#ifdef MACOSX
-#include <mach/mach_init.h>
-#include <mach/thread_policy.h>
-struct thread_affinity_policy policy;
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
