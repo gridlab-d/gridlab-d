@@ -6,6 +6,12 @@
  @{
  **/
 
+/* absolutely nothing must be placed before this per feature_test_macros(7) man page */
+#if ! defined WIN32 && ! defined MACOSX
+#define _GNU_SOURCE
+#include <features.h>
+#endif
+
 #include "version.h"
 
 #if defined WIN32 && ! defined MINGW
@@ -1251,6 +1257,14 @@ void module_profiles(void)
 extern int kill(unsigned short,int); /* defined in kill.c */
 #else
 #include <signal.h>
+#ifdef MACOSX
+#include <mach/mach_init.h>
+#include <mach/thread_policy.h>
+struct thread_affinity_policy policy;
+#else /* linux */
+#include <sched.h>
+#endif
+
 #endif
 
 #include "gui.h"
@@ -1530,12 +1544,6 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 		}
 	}
 }
-
-#ifdef MACOSX
-#include <mach/mach_init.h>
-#include <mach/thread_policy.h>
-struct thread_affinity_policy policy;
-#endif
 
 MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 {
