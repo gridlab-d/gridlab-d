@@ -7,9 +7,11 @@
  **/
 
 /* absolutely nothing must be placed before this per feature_test_macros(7) man page */
-#if ! defined WIN32 && ! defined MACOSX
+#ifndef WIN32
+#ifndef MACOSX
 #define _GNU_SOURCE
 #include <features.h>
+#endif
 #endif
 
 #include "version.h"
