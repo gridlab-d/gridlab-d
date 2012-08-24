@@ -1319,14 +1319,15 @@ void sched_unlock(unsigned short proc)
 /** update the process info **/
 void sched_update(TIMESTAMP clock, enumeration status)
 {
-	/* TODO iterate through my_proc.list */
-	unsigned short proc = sched_get_cpuid(0);
-	if ( proc!=PROCERR )
+	int t;
+	if ( my_proc==NULL || my_proc->list==NULL ) return;
+	for ( t=0 ; t<my_proc->n_procs ; t++ )
 	{
-		sched_lock(proc);
-		process_map[proc].status = status;
-		process_map[proc].progress = clock;
-		sched_unlock(proc);
+		int n = my_proc->list[t];
+		sched_lock(n);
+		process_map[n].status = status;
+		process_map[n].progress = clock;
+		sched_unlock(n);
 	}
 }
 int sched_isdefunct(pid_t pid)
@@ -1343,6 +1344,7 @@ int sched_isdefunct(pid_t pid)
 void sched_finish(void)
 {
 	int t;
+	if ( my_proc==NULL || my_proc->list==NULL ) return;
 	for ( t=0 ; t<my_proc->n_procs ; t++ )
 	{
 		int n = my_proc->list[t];
