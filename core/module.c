@@ -8,7 +8,7 @@
 
 /* absolutely nothing must be placed before this per feature_test_macros(7) man page */
 #ifndef WIN32
-#ifndef MACOSX
+#ifndef __APPLE__
 #define _GNU_SOURCE
 #include <features.h>
 #endif
