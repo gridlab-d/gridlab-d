@@ -20,6 +20,7 @@ def do_help():
 	print("    -r, --recompile-dll    delete all DLLs, forcing them to be recompiled")
 	print("    -s, --suppress-opt     suppress output of summary of failing optional tests") 
 	print("    -v, --verbose          display additional message for each file that passes")
+	print("    -T=N                   use N threads")
 	print("")
 	print("With no DIRECTORY, all directories in the current directory are searched for directories named 'autotest'. Within each 'autotest' directory, files starting with 'test_' and ending with '.glm' are located. GridLAB-D is run on each file found, and the number of files not behaving as expected is returned.")
 	print("")
@@ -44,6 +45,7 @@ def run_tests(argv):
 	recompile = 0
 	verbose = 0
 	debug = 0
+	threads = "1"
 	suppress = 0
 	plat_spec = 0
 	there_dir = os.getcwd()
@@ -64,7 +66,7 @@ def run_tests(argv):
 	try:
 		# process arguments Single character options with arguments are followed by :
 		# Multi-character options with arguments are followed by =
-		opts, args = getopt.getopt(argv[1:], "i:hcrvds",["idir=",'help','clean','recompile-dll','verbose','debug','suppress-opt','32'])
+		opts, args = getopt.getopt(argv[1:], "i:hcrvdsT:",["idir=",'help','clean','recompile-dll','verbose','debug','suppress-opt','32','threads='])
 				
 		for o,a in opts:
 			if o in ("-h", "--help"):
@@ -84,6 +86,8 @@ def run_tests(argv):
 				suppress = 1
 			elif o == "--32":
 				plat_spec = 32
+			elif o in ("-T", "--threads"):
+				threads = a
 		
 		for arg in args:
 			there_dir = arg
@@ -146,7 +150,8 @@ def run_tests(argv):
 				autotestfiles.append((path, file))
 				test_count += 1
 				
-#	print("NOTICE:  Found "+str(test_count)+" test files")
+	if debug==1:
+		print("NOTICE:  Found "+str(test_count)+" test files")
 	
 #	for path, file in autotestfiles:
 #		print("Found file: \'"+file+"\'")
@@ -190,9 +195,13 @@ def run_tests(argv):
 			#run file with:
 			outfile = open(os.path.join(xpath,"outfile.txt"), "w")
 			errfile = open(os.path.join(xpath,"errfile.txt"), "w")
-			print("NOTICE:  Running \'"+xfile+"\'")
+			if verbose==1:
+				print("NOTICE:  Running \'"+xfile+"\'")
 			start_time = time.time();
-			rv = subprocess.call(["gridlabd","-T","2",xfile],stdout=outfile,stderr=errfile)
+			if debug==1 :
+				rv = subprocess.call(["gridlabd","--debug","-T",threads,xfile],stdout=outfile,stderr=errfile)
+			else :
+				rv = subprocess.call(["gridlabd","-T",threads,xfile],stdout=outfile,stderr=errfile)
 			end_time = time.time();
 			dt = end_time - start_time
 			outfile.close()

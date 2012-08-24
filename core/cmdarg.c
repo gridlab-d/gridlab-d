@@ -1075,6 +1075,21 @@ static int example(int argc, char *argv[])
 		output_warning("no output generated for object");
 	return CMDOK;
 }
+static int validate(int argc, char *argv[])
+{
+	char buffer[1024]="python validate.py";
+	if ( global_threadcount!=1 )
+		sprintf(buffer,"python validate.py -T %d", global_threadcount);
+	if ( global_verbose_mode ) strcat(buffer," -v");
+	if ( global_debug_mode ) strcat(buffer," -d");
+	if ( global_force_compile ) strcat(buffer,"-r");
+	/* TODO pass through remaining args */
+	output_verbose("executing system('%s')", buffer);
+	if ( system(buffer)==0 )
+		return 0;
+	else
+		return CMDERR;
+}
 
 static int locktest(int argc, char *argv[])
 {
@@ -1123,9 +1138,10 @@ static CMDARG main[] = {
 	{"modtest",		NULL,	modtest,		"<module>", "Perform test function provided by module" },
 	{"randtest",	NULL,	randtest,		NULL, "Perform random number generator test" },
 	{"scheduletest", NULL,	scheduletest,	NULL, "Perform schedule pseudo-object test" },	
-	{"unitstest",	NULL,	unitstest,		NULL, "Perform unit conversion system test" },
 	{"test",		NULL,	test,			"<module>", "Perform unit test of module (deprecated)" },
 	{"testall",		NULL,	testall,		"=<filename>", "Perform tests of modules listed in file" },
+	{"unitstest",	NULL,	unitstest,		NULL, "Perform unit conversion system test" },
+	{"validate",	NULL,	validate,		NULL, "Perform model validation check" },
 
 	{NULL,NULL,NULL,NULL, "File and I/O Formatting"},
 	{"kml",			NULL,	kml,			"[=<filename>]", "Output to KML (Google Earth) file of model (only supported by some modules)" },
