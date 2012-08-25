@@ -8,57 +8,134 @@
 ;
 ; IMPORTANT NOTE: year sections must be in chronological order
 ;
+; Version 3.0 Time Zone Information from www.worldtimezone.com
+; Version 3.0 Country/Regions codes from ISO Std 3166-2
+; Last Updated August 2012
+;
+
+;;; General Rules
+;
+; Note: some zones are coded without start years because the historical rules
+;       could not be found in an authoritative/comprehensive source
 
 UTC0 ; Coordinated Universal Time ~ never uses DST
 GMT0 ; Greenwich Mean Time, no DST
+ EU/IS/Reykyavik
+
+; Asia
+CET-2CEST,M3.5.0/01:00,M10.5.0/01:00 ; Central European Time, Summer Time 1am last Sun/Mar to last Sun/Oct
+ AS/TR/Nicosia
+
+; Europe
+MSK-4MSKS,M3.5.0/01:00,M10.5.0/01:00 ; Moscow Time, Summer Time 1am last Sun/Mar to last Sun/Oct
+ EU/RU/Moscow
+ EU/RU/St Petersburg
+ EU/GE/Tbilisi
+ EU/RU/Samara
+ EU/RU/Izhevsk
+EET-3 ; Eastern Europe Time (no Summer Time)
+EET-3EEST,M3.5.0/01:00,M10.5.0/01:00 ; Eastern European Time, Summer Time 1am last Sun/Mar to last Sun/Oct
+ EU/BY/Minsk
+ EU/RU/Kaliningrad
+CET-2CEST,M3.5.0/01:00,M10.5.0/01:00 ; Central European Time, Summer Time 1am last Sun/Mar to last Sun/Oct
+ EU/BG/Sofia
+ EU/CY/Kyrenia
+ EU/EE/Tallinn
+ EU/FI/Helsinki
+ EU/GR/Athens
+ EU/LV/Riga
+ EU/LT/Vilnius
+ EU/UA/Kiev
+WET-1WEST,M3.5.0/01:00,M10.5.0/01:00 ; Western European Time, Summer Time 1am last Sun/Mar to last Sun/Oct
+ EU/AL/Tirana
+ EU/AD/Andorra la Vella
+ EU/BE/Brussels
+ EU/BA/Sarajevo
+ EU/HR/Zagreb
+ EU/CZ/Prague
+ EU/DK/Copenhagen
+ EU/MK/Skopje
+ EU/FR/Paris
+ EU/DE/Berlin
+ EU/GI/Gibraltar
+ EU/HU/Budapest
+ EU/IT/Rome
+ EU/LI/Vaduz
+ EU/LU/Luxemburg
+ EU/MT/Malta
+ EU/MC/Monaco
+ EU/NL/Amsterdam
+ EU/NO/Oslo
+ EU/PL/Warsaw
+ EU/SM/San Marino
+ EU/RS/Belgrade
+ EU/ME/Podgorica
+ EU/SK/Bratislava
+ EU/SI/Ljubljana
+ EU/ES/Madrid
+ EU/SE/Stockholm
+ EU/VA/Vatican City
+GMT0BST,M3.5.0/01:00,M10.5.0/01:00 ; Greenwich Mean Time, Summer Time 1am last Sun/Mar to Last Sun/Oct
+ EU/GB/London
+ EU/IE/Dublin
+ EU/PT/Lisbon
+
+; North America
 EST5 ; Eastern no DST
 CST6 ; Central no DST
 MST7 ; Mountain no DST
- USA/AZ/Phoenix
+ US/AZ/Phoenix
 PST8 ; Pacific no DST
 AST9 ; Alaska no DST
 HST10; Hawaii no DST
 
-[1970] ; Rules as of 1967
-GMT0GMT,M3.5.0/02:00,M10.5.0/2:00 ; GMT, DST last Sun/Mar to last Sun/Oct
-EST+5EDT,M4.5.0/02:00,M10.5.0/02:00 ; Eastern, DST last Sun/Apr to last Sun/Oct
- Canada/QC/Montreal
- Canada/ON/Ottowa
- USA/DC/Washington
- USA/GA/Atlanta
- USA/MA/Boston
- USA/MD/Baltimore
- USA/NY/New York
-CST+6CDT,M4.5.0/02:00,M10.5.0/02:00 ; Central, DST last Sun/Apr to last Sun/Oct
- USA/IL/Chicago
- USA/LA/New Orleans
- USA/MO/St Louis
-MST+7MDT,M4.5.0/02:00,M10.5.0/02:00 ; Mountain, DST last Sun/Apr to last Sun/Oct
- Canada/AB/Calgary
- USA/CO/Denver
-PST+8PDT,M4.5.0/02:00,M10.5.0/02:00 ; Pacific, DST last Sun/Apr to last Sun/Oct
- Canada/BC/Vancouver
- USA/CA/Los Angeles
- USA/CA/San Francisco
- USA/OR/Portland
- USA/WA/Seattle
-AST+9ADT,M4.5.0/02:00,M10.5.0/02:00 ; Alaska DST last Sun/Apr to last Sun/Oct
- USA/AK/Anchorage
-HST+10HDT,M4.5.0/02:00,M10.5.0/02:00 ; Hawaii DST last Sun/Apr to last Sun/Oct
- USA/HI/Honolulu
+[1970] ; Rules as of 1970
+; DPC: this rule is suspicious -- no locale uses it and the spec doesn't differentiate seasons
+GMT0GMT,M3.5.0/02:00,M10.5.0/2:00 ; GMT, DST 2am last Sun/Mar to last Sun/Oct
+
+; North America
+EST+5EDT,M4.5.0/02:00,M10.5.0/02:00 ; Eastern, DST 2am last Sun/Apr to last Sun/Oct
+ CA/QC/Montreal
+ CA/ON/Ottowa
+ US/DC/Washington
+ US/GA/Atlanta
+ US/MA/Boston
+ US/MD/Baltimore
+ US/NY/New York
+CST+6CDT,M4.5.0/02:00,M10.5.0/02:00 ; Central, DST 2am last Sun/Apr to last Sun/Oct
+ US/IL/Chicago
+ US/LA/New Orleans
+ US/MO/St Louis
+MST+7MDT,M4.5.0/02:00,M10.5.0/02:00 ; Mountain, DST 2am last Sun/Apr to last Sun/Oct
+ CA/AB/Calgary
+ US/CO/Denver
+PST+8PDT,M4.5.0/02:00,M10.5.0/02:00 ; Pacific, DST 2am last Sun/Apr to last Sun/Oct
+ CA/BC/Vancouver
+ US/CA/Los Angeles
+ US/CA/San Francisco
+ US/OR/Portland
+ US/WA/Seattle
+AST+9ADT,M4.5.0/02:00,M10.5.0/02:00 ; Alaska DST 2am last Sun/Apr to last Sun/Oct
+ US/AK/Anchorage
+HST+10HDT,M4.5.0/02:00,M10.5.0/02:00 ; Hawaii DST 2am last Sun/Apr to last Sun/Oct
+ US/HI/Honolulu
 
 [1986] ; Rules as of 1986
-EST+5EDT,M4.1.0/02:00,M10.5.0/02:00 ; Eastern, DST first Sun/Apr to last Sun/Oct
-CST+6CDT,M4.1.0/02:00,M10.5.0/02:00 ; Central, DST first Sun/Apr to last Sun/Oct
-MST+7MDT,M4.1.0/02:00,M10.5.0/02:00 ; Mountain, DST first Sun/Apr to last Sun/Oct
-PST+8PDT,M4.1.0/02:00,M10.5.0/02:00 ; Pacific, DST first Sun/Apr to last Sun/Oct
-AST+9ADT,M4.1.0/02:00,M10.5.0/02:00 ; Alaska, DST first Sun/Apr to last Sun/Oct
-HST+10HDT,M4.1.0/02:00,M10.5.0/02:00 ; Hawaii, DST first Sun/Apr to last Sun/Oct
+
+; North America
+EST+5EDT,M4.1.0/02:00,M10.5.0/02:00 ; Eastern, DST 2am first Sun/Apr to last Sun/Oct
+CST+6CDT,M4.1.0/02:00,M10.5.0/02:00 ; Central, DST 2am first Sun/Apr to last Sun/Oct
+MST+7MDT,M4.1.0/02:00,M10.5.0/02:00 ; Mountain, DST 2am first Sun/Apr to last Sun/Oct
+PST+8PDT,M4.1.0/02:00,M10.5.0/02:00 ; Pacific, DST 2am first Sun/Apr to last Sun/Oct
+AST+9ADT,M4.1.0/02:00,M10.5.0/02:00 ; Alaska, DST 2am first Sun/Apr to last Sun/Oct
+HST+10HDT,M4.1.0/02:00,M10.5.0/02:00 ; Hawaii, DST 2am first Sun/Apr to last Sun/Oct
 
 [2007] ; Rules as of 2007
-EST+5EDT,M3.2.0/02:00,M11.1.0/02:00 ; Eastern, DST second Sun/Mar to first Sun/Nov
-CST+6CDT,M3.2.0/02:00,M11.1.0/02:00 ; Central, DST second Sun/Mar to first Sun/Nov
-MST+7MDT,M3.2.0/02:00,M11.1.0/02:00 ; Mountain, DST second Sun/Mar to first Sun/Nov
-PST+8PDT,M3.2.0/02:00,M11.1.0/02:00 ; Pacific, DST second Sun/Mar to first Sun/Nov
-AST+9ADT,M3.2.0/02:00,M11.1.0/02:00 ; Alaska, DST second Sun/Mar to first Sun/Nov
-HST+10HDT,M3.2.0/02:00,M11.1.0/02:00 ; Hawaii, DST second Sun/Mar to first Sun/Nov
+
+; North America
+EST+5EDT,M3.2.0/02:00,M11.1.0/02:00 ; Eastern, DST 2am second Sun/Mar to first Sun/Nov
+CST+6CDT,M3.2.0/02:00,M11.1.0/02:00 ; Central, DST 2am second Sun/Mar to first Sun/Nov
+MST+7MDT,M3.2.0/02:00,M11.1.0/02:00 ; Mountain, DST 2am second Sun/Mar to first Sun/Nov
+PST+8PDT,M3.2.0/02:00,M11.1.0/02:00 ; Pacific, DST 2am second Sun/Mar to first Sun/Nov
+AST+9ADT,M3.2.0/02:00,M11.1.0/02:00 ; Alaska, DST 2am second Sun/Mar to first Sun/Nov
+HST+10HDT,M3.2.0/02:00,M11.1.0/02:00 ; Hawaii, DST 2am second Sun/Mar to first Sun/Nov
