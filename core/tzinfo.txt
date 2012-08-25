@@ -26,6 +26,30 @@ GMT0 ; Greenwich Mean Time, no DST
 CET-2CEST,M3.5.0/01:00,M10.5.0/01:00 ; Central European Time, Summer Time 1am last Sun/Mar to last Sun/Oct
  AS/TR/Nicosia
 
+; Australia
+AWST-8
+WAST-8
+WST-8
+ AU/WA/Perth
+ACST-9.5
+CAST-9.5
+SAST-9.5
+ AU/NT/Darwin
+ AU/NT/Alice Springs
+ AU/NSW/Broken Hill
+ AU/SA/Adelaide
+AEST-10
+AES-10
+EAST-10
+EST-10
+ AU/NSW/Canberra
+ AU/NSW/Sydney
+ AU/NSW/Melbourne
+ AU/TA/Hobart
+ AU/QLD/Brisbane
+LHST-10.5
+ AU/Island/Lord Howe
+
 ; Europe
 MSK-4MSKS,M3.5.0/01:00,M10.5.0/01:00 ; Moscow Time, Summer Time 1am last Sun/Mar to last Sun/Oct
  EU/RU/Moscow
