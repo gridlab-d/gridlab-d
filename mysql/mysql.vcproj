@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\MySQL\MySQL Connector C 6.0.2\include&quot;;..\core;"
+				AdditionalIncludeDirectories="..\core;&quot;C:\Program Files\MySQL\MySQL Connector C\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_TESTING;HAVE_MYSQL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -68,7 +68,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="libmysql.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="$(OutDir);&quot;C:\Program Files\MySQL\MySQL Connector C 6.0.2\lib\opt&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;c:\Program Files\MySQL\MySQL Connector C\lib\opt&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -125,7 +125,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;&quot;C:\Program Files\MySQL\MySQL Connector C\include&quot;"
+				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_TESTING;HAVE_MYSQL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -149,7 +149,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="libmysql.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;C:\Program Files\MySQL\MySQL Connector C\lib\debug&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;C:\Program Files\MySQL\MySQL Connector C\lib\opt&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -206,7 +206,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\core;&quot;C:\Program Files\MySQL\MySQL Connector C 6.0.2\include&quot;"
+				AdditionalIncludeDirectories="..\core;&quot;C:\Program Files\MySQL\MySQL Connector C\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT;HAVE_MYSQL"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -228,7 +228,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="libmysql.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(OutDir);&quot;C:\Program Files\MySQL\MySQL Connector C 6.0.2\lib\opt&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;c:\Program Files\MySQL\MySQL Connector C\lib\opt&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -426,6 +426,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories=""
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
