@@ -1300,8 +1300,13 @@ unsigned short sched_get_cpuid(unsigned short n)
 }
 unsigned short sched_get_procid()
 {
+	unsigned short cpuid = sched_get_cpuid(0);
+	if(PROCERR == cpuid){
+		output_warning("proc_map %x, myproc not assigned", process_map, sched_get_cpuid(0));
+		return 0;
+	}
 	output_debug("proc_map %x, myproc %ui", process_map, sched_get_cpuid(0));
-	return process_map[sched_get_cpuid(0)].pid;
+	return process_map[cpuid].pid;
 }
 
 void sched_lock(unsigned short proc)
