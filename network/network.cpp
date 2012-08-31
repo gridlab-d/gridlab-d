@@ -55,27 +55,27 @@
 #include "network.h"
 
 #ifdef _DEBUG
-EXPORT int cmdargs(int argc, char *argv[])
-{
-	int n=0;
-	int i;
-	for (i=0; i<argc; i++)
-	{
-		if (strncmp(argv[i],"--debug_node=",13)==0)
-		{
-			debug_node = atoi(argv[i]+13);
-			n++;
-		}
-		else if (strncmp(argv[i],"--debug_link=",13)==0)
-		{
-			debug_link = atoi(argv[i]+13);
-			n++;
-		}
-	}
-	if (debug_node>0) gl_debug("network node debugging mode %d", debug_node);
-	if (debug_link>0) gl_debug("network link debugging mode %d", debug_link);
-	return n;
-}
+//EXPORT int cmdargs(int argc, char *argv[])
+//{
+//	int n=0;
+//	int i;
+//	for (i=0; i<argc; i++)
+//	{
+//		if (strncmp(argv[i],"--debug_node=",13)==0)
+//		{
+//			debug_node = atoi(argv[i]+13);
+//			n++;
+//		}
+//		else if (strncmp(argv[i],"--debug_link=",13)==0)
+//		{
+//			debug_link = atoi(argv[i]+13);
+//			n++;
+//		}
+//	}
+//	if (debug_node>0) gl_debug("network node debugging mode %d", debug_node);
+//	if (debug_link>0) gl_debug("network link debugging mode %d", debug_link);
+//	return n;
+//}
 #endif // _DEBUG
 
 /*
@@ -114,7 +114,7 @@ int generator_state_to_string(void *addr, char *value, int size)
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
 #ifdef _DEBUG
-	cmdargs(argc,argv);
+	//cmdargs(argc,argv);
 #endif // _DEBUG
 
 	if (set_callback(fntable)==NULL)
@@ -122,38 +122,39 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		errno = EINVAL;
 		return NULL;
 	}
-	if (gl_global_create("network::acceleration_factor",PT_double,&acceleration_factor,NULL)==NULL){
-		gl_error( "network could not create global 'network::acceleration_factor'");
-		return NULL;
-	} if (gl_global_create("network::convergence_limit",PT_double,&convergence_limit,NULL)==NULL){
-		gl_error( "network could not create global 'network::convergence_limit'");
-		return NULL;
-	} if (gl_global_create("network::mvabase",PT_double,&mvabase,NULL)==NULL){
-		gl_error( "network could not create global 'network::mvabase'");
-		return NULL;
-	} if (gl_global_create("network::kvbase",PT_double,&kvbase,NULL)==NULL){
-		gl_error( "network could not create global 'network::kvbase'");
-		return NULL;
-	} if (gl_global_create("network::model_year",PT_int16,&model_year,NULL)==NULL){
-		gl_error( "network could not create global 'network::model_year'");
-		return NULL;
-	} if (gl_global_create("network::model_case",PT_char8,model_case,NULL)==NULL){
-		gl_error( "network could not create global 'network::model_case'");
-		return NULL;
-	} if (gl_global_create("network::model_name",PT_char32,model_name,NULL)==NULL){
-		gl_error( "network could not create global 'network::model_name'");
-		return NULL;
-	} 
-	CLASS *first = (new node(module))->oclass;
-	new link(module);
-	new capbank(module);
-	new fuse(module);
-	new relay(module);
-	new regulator(module);
-	new transformer(module);
-	new meter(module);
-	new generator(module);
-
+	//if (gl_global_create("network::acceleration_factor",PT_double,&acceleration_factor,NULL)==NULL){
+	//	gl_error( "network could not create global 'network::acceleration_factor'");
+	//	return NULL;
+	//} if (gl_global_create("network::convergence_limit",PT_double,&convergence_limit,NULL)==NULL){
+	//	gl_error( "network could not create global 'network::convergence_limit'");
+	//	return NULL;
+	//} if (gl_global_create("network::mvabase",PT_double,&mvabase,NULL)==NULL){
+	//	gl_error( "network could not create global 'network::mvabase'");
+	//	return NULL;
+	//} if (gl_global_create("network::kvbase",PT_double,&kvbase,NULL)==NULL){
+	//	gl_error( "network could not create global 'network::kvbase'");
+	//	return NULL;
+	//} if (gl_global_create("network::model_year",PT_int16,&model_year,NULL)==NULL){
+	//	gl_error( "network could not create global 'network::model_year'");
+	//	return NULL;
+	//} if (gl_global_create("network::model_case",PT_char8,model_case,NULL)==NULL){
+	//	gl_error( "network could not create global 'network::model_case'");
+	//	return NULL;
+	//} if (gl_global_create("network::model_name",PT_char32,model_name,NULL)==NULL){
+	//	gl_error( "network could not create global 'network::model_name'");
+	//	return NULL;
+	//} 
+//	CLASS *first = (new node(module))->oclass;
+//	new link(module);
+//	new capbank(module);
+//	new fuse(module);
+//	new relay(module);
+//	new regulator(module);
+//	new transformer(module);
+//	new meter(module);
+//	new generator(module);
+	CLASS *first = (new pw_model(module))->oclass;
+	new pw_load(module);
 	/* always return the first class registered */
 	return first;
 }
