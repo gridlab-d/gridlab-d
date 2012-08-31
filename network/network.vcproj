@@ -507,43 +507,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\capbank.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\check.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\export.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\fuse.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\generator.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\globals.c"
-				>
-			</File>
-			<File
-				RelativePath=".\import.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\link.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\main.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\meter.cpp"
 				>
 			</File>
 			<File
@@ -551,23 +515,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\node.cpp"
+				RelativePath=".\pw_load.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\regulator.cpp"
+				RelativePath=".\pw_model.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\relay.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\transformer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\varmap.c"
+				RelativePath=".\pw_recorder.cpp"
 				>
 			</File>
 		</Filter>
@@ -577,47 +533,19 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\capbank.h"
-				>
-			</File>
-			<File
-				RelativePath=".\fuse.h"
-				>
-			</File>
-			<File
-				RelativePath=".\generator.h"
-				>
-			</File>
-			<File
-				RelativePath=".\link.h"
-				>
-			</File>
-			<File
-				RelativePath="..\core\lock.h"
-				>
-			</File>
-			<File
-				RelativePath=".\meter.h"
-				>
-			</File>
-			<File
 				RelativePath=".\network.h"
 				>
 			</File>
 			<File
-				RelativePath=".\node.h"
+				RelativePath=".\pw_load.h"
 				>
 			</File>
 			<File
-				RelativePath=".\regulator.h"
+				RelativePath=".\pw_model.h"
 				>
 			</File>
 			<File
-				RelativePath=".\relay.h"
-				>
-			</File>
-			<File
-				RelativePath=".\transformer.h"
+				RelativePath=".\pw_recorder.h"
 				>
 			</File>
 		</Filter>
@@ -642,6 +570,10 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\..\..\Program Files (x86)\PowerWorld\Simulator16\pwrworld.exe"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
