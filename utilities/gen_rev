@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # obtain rev number to release
-BUILD=`echo $(svn -R info "." | grep Revision | cut -f2 -d: | /usr/bin/sort -ur | head -n 1)`
+BUILD=`echo $(svn -R info "." | grep Revision | cut -f2 -d: | /usr/bin/sort -ur | head -n 1|sed 's/ *$//g')`
 BUILD=`expr $BUILD + 1228`
 
 echo "BUILD=$BUILD" > REV

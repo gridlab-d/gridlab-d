@@ -64,7 +64,12 @@ if [ -f VERSION ]; then
 			echo "#define REV_MINOR $MINOR" >>.tmp.$$
 			echo "#define REV_PATCH $PATCH" >>.tmp.$$
 			echo "#define COPYRIGHT \"Copyright (C) 2004-$(date +'%Y')\\nBattelle Memorial Institute\\nAll Rights Reserved\"" >>.tmp.$$
+			echo "#ifdef WIN32 " >>.tmp.$$
 			echo "#define BUILD \"\$Revision: $BUILD \$\"" >>.tmp.$$
+			echo "#else" >>.tmp.$$
+			echo "#include \"build.h\"">>.tmp.$$
+			echo "#endif" >>.tmp.$$
+			echo "#define BUILDNUM (atoi(BUILD+11))" >>.tmp.$$
 			grep BRANCH core/version.h >>.tmp.$$
 			mv .tmp.$$ core/version.h
 			echo "done"
