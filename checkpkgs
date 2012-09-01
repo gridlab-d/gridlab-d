@@ -70,7 +70,8 @@ if [ -f VERSION ]; then
 			echo "#include \"build.h\"">>.tmp.$$
 			echo "#endif" >>.tmp.$$
 			echo "#define BUILDNUM (atoi(BUILD+11))" >>.tmp.$$
-			grep BRANCH core/version.h >>.tmp.$$
+			echo "#define BRANCH \"$NAME\"" >>.tmp.$$
+#			grep BRANCH core/version.h >>.tmp.$$
 			mv .tmp.$$ core/version.h
 			echo "done"
 		fi
