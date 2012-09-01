@@ -60,6 +60,10 @@ if [ -f VERSION ]; then
 		else
 			echo -n "Updating core/version.h with VERSION info... "
 			echo "/* automatically created by $0 */" >.tmp.$$
+			echo "" >>.tmp.$$
+			echo "#ifndef _GRIDLABD_VERSION_H" >>.tmp.$$
+			echo "#define _GRIDLABD_VERSION_H" >>.tmp.$$
+			echo "" >>.tmp.$$
 			echo "#define REV_MAJOR $MAJOR" >>.tmp.$$
 			echo "#define REV_MINOR $MINOR" >>.tmp.$$
 			echo "#define REV_PATCH $PATCH" >>.tmp.$$
@@ -71,6 +75,8 @@ if [ -f VERSION ]; then
 			echo "#endif" >>.tmp.$$
 			echo "#define BUILDNUM (atoi(BUILD+11))" >>.tmp.$$
 			echo "#define BRANCH \"$NAME\"" >>.tmp.$$
+			echo "" >>.tmp.$$
+			echo "#endif" >>.tmp.$$
 #			grep BRANCH core/version.h >>.tmp.$$
 			mv .tmp.$$ core/version.h
 			echo "done"
