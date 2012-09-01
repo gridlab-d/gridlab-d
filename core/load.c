@@ -4333,6 +4333,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 				output_error_raw("%s(%d): create failed for object %s:%d", filename, linenum, classname, id);
 				REJECT;
 			}
+			object_set_parent(obj,parent);
 		}
 		if (id!=-1 && load_set_index(obj,(OBJECTNUM)id)==FAILED)
 		{
