@@ -1298,7 +1298,7 @@ unsigned short sched_get_cpuid(unsigned short n)
 		return PROCERR;
 	return my_proc->list[n];
 }
-unsigned short sched_get_procid()
+pid_t sched_get_procid()
 {
 	unsigned short cpuid = sched_get_cpuid(0);
 	if(PROCERR == cpuid){
