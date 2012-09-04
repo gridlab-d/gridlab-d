@@ -712,6 +712,7 @@ static STATUS init_all(void)
 	return link_initall();
 }
 
+
 /*
  *	STATUS precommit(t0)
  *		This callback function allows an object to perform actions at the beginning
@@ -724,6 +725,7 @@ typedef struct s_simplelinklist {
 } SIMPLELINKLIST;
 static STATUS precommit_all(TIMESTAMP t0)
 {
+	STATUS rv=SUCCESS;
 	static int first=1;
 	/* TODO implement this multithreaded */
 	static SIMPLELINKLIST *precommit_list = NULL;
@@ -768,21 +770,22 @@ static STATUS precommit_all(TIMESTAMP t0)
 						The precommit function of the named object has failed.  Make sure that the object's
 						requirements for precommit'ing are satisfied and try again.  (likely internal state aberations)
 					 */
-					return FAILED;
+					rv=FAILED;
+					break;
 				}
 			}
 		}
-		return SUCCESS;
 	} 
-	CATCH(char *msg){
+	CATCH(const char *msg){
 		output_error("precommit_all() failure: %s", msg);
 		/* TROUBLESHOOT
 			The precommit'ing procedure failed.  This is usually preceded 
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
-		return FAILED;
+		rv=FAILED;
 	} ENDCATCH;
+	return rv;
 }
 
 static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
@@ -833,26 +836,29 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 						The commit function of the named object has failed.  Make sure that the object's
 						requirements for committing are satisfied and try again.  (likely internal state aberations)
 					 */
-					return TS_INVALID;
+					result=TS_INVALID;
+					break;
 				}
 				if ( next<result ) result = next;
 			}
 		}
 		return result;
 	} 
-	CATCH(char *msg){
+	CATCH(const char *msg){
 		output_error("commit_all() failure: %s", msg);
 		/* TROUBLESHOOT
 			The commit'ing procedure failed.  This is usually preceded 
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
-		return TS_INVALID;
+		result=TS_INVALID;
 	} ENDCATCH;
+	return FAILED;
 }
 
 static STATUS finalize_all()
 {
+	STATUS rv=SUCCESS;
 	static int first=1;
 	/* TODO implement this multithreaded */
 	static SIMPLELINKLIST *finalize_list = NULL;
@@ -895,20 +901,21 @@ static STATUS finalize_all()
 					The finalize function of the named object has failed.  Make sure that the object's
 					requirements for finalizing are satisfied and try again.  (likely internal state aberations)
 				 */
-				return FAILED;
+				rv=FAILED;
+				break;
 			}
 		}
-		return SUCCESS;
 	} 
-	CATCH(char *msg){
+	CATCH(const char *msg){
 		output_error("finalize_all() failure: %s", msg);
 		/* TROUBLESHOOT
 			The finalizing procedure failed.  This is usually preceded 
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
-		return FAILED;
+		rv=FAILED;
 	} ENDCATCH;
+	return rv;
 }
 
 STATUS exec_test(struct sync_data *data, int pass, OBJECT *obj);
