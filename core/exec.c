@@ -718,105 +718,197 @@ static STATUS init_all(void)
  *		of a timestep, before the sync process.  This callback is only triggered
  *		once per timestep, and will not fire between iterations.
  */
-static STATUS precommit_all(TIMESTAMP t0){
-	OBJECT *obj = 0;
-	STATUS rv = SUCCESS;
-	STATUS curr = FAILED;
-	TRY {
-		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
+typedef struct s_simplelinklist { 
+	void *data;
+	struct s_simplelinklist *next;
+} SIMPLELINKLIST;
+static STATUS precommit_all(TIMESTAMP t0)
+{
+	static int first=1;
+	/* TODO implement this multithreaded */
+	static SIMPLELINKLIST *precommit_list = NULL;
+	SIMPLELINKLIST *item;
+	if ( first )
+	{
+		OBJECT *obj;
+		for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
 		{
-			if(obj->in_svc <= t0 && obj->out_svc >= t0){
-				curr = object_precommit(obj, t0);
-				if(curr == FAILED){
-					char *b = (char *)malloc(64);
-					memset(b, 0, 64);
-					output_error("object %s precommit failed", object_name(obj, b, 63));
+			if ( obj->oclass->precommit!=NULL )
+			{
+				item = (SIMPLELINKLIST*)malloc(sizeof(SIMPLELINKLIST));
+				if ( item==NULL )
+				{
+					char name[64];
+					output_error("object %s precommit memory allocation failed", object_name(obj,name,sizeof(name)-1));
+					/* TROUBLESHOOT
+					   Insufficient memory remains to perform the precommit operation.
+					   Free up memory and try again.
+					 */
+					return FAILED;
+				}
+				item->data = (void*)obj;
+				item->next = precommit_list;
+				precommit_list = item;
+			}
+		}
+		first = 0;
+	}
+
+	TRY {
+		for ( item=precommit_list ; item!=NULL ; item=item->next )
+		{
+			OBJECT *obj = (OBJECT*)item->data;
+			if(obj->in_svc <= t0 && obj->out_svc >= t0)
+			{
+				if ( object_precommit(obj, t0)==FAILED )
+				{
+					char name[64];
+					output_error("object %s precommit failed", object_name(obj,name,sizeof(name)-1));
 					/* TROUBLESHOOT
 						The precommit function of the named object has failed.  Make sure that the object's
 						requirements for precommit'ing are satisfied and try again.  (likely internal state aberations)
 					 */
-					rv = FAILED;
-					break;
+					return FAILED;
 				}
 			}
 		}
-	} CATCH(char *msg){
+		return SUCCESS;
+	} 
+	CATCH(char *msg){
 		output_error("precommit_all() failure: %s", msg);
 		/* TROUBLESHOOT
 			The precommit'ing procedure failed.  This is usually preceded 
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
-		rv = FAILED;
+		return FAILED;
 	} ENDCATCH;
-	return rv;
 }
 
-static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2){
-	OBJECT *obj = 0;
-	TIMESTAMP min = TS_NEVER, curr = TS_NEVER;
-	TRY {
-		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
+static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
+{
+	TIMESTAMP result = TS_NEVER;
+	static int first=1;
+	/* TODO implement this multithreaded */
+	static SIMPLELINKLIST *commit_list = NULL;
+	SIMPLELINKLIST *item;
+	if ( first )
+	{
+		OBJECT *obj;
+		for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
 		{
-			if(obj->in_svc <= t0 && obj->out_svc >= t0){
-				curr = object_commit(obj, t0, t2);
-				if(curr == TS_INVALID){
-					char *b = (char *)malloc(64);
-					memset(b, 0, 64);
-					output_error("commit_all(): object %s commit failed", object_name(obj, b, 63));
+			if ( obj->oclass->commit!=NULL )
+			{
+				item = (SIMPLELINKLIST*)malloc(sizeof(SIMPLELINKLIST));
+				if ( item==NULL )
+				{
+					char name[64];
+					output_error("object %s commit memory allocation failed", object_name(obj,name,sizeof(name)-1));
 					/* TROUBLESHOOT
-						The commit function of the named object has failed.  Make sure that the object's
-						requirements for commit'ing are satisfied and try again.  (likely internal state aberations)
+					   Insufficient memory remains to perform the commit operation.
+					   Free up memory and try again.
 					 */
-					min = TS_INVALID;
-					break;
-				} else if(curr < min){
-					min = curr;
+					return TS_INVALID;
 				}
+				item->data = (void*)obj;
+				item->next = commit_list;
+				commit_list = item;
 			}
 		}
-	} CATCH(char *msg){
-		output_error("commit() failure: %s", msg);
+		first = 0;
+	}
+
+	TRY {
+		for ( item=commit_list ; item!=NULL ; item=item->next )
+		{
+			OBJECT *obj = (OBJECT*)item->data;
+			if(obj->in_svc <= t0 && obj->out_svc >= t0)
+			{
+				TIMESTAMP next = object_commit(obj,t0,t2);
+				if ( next==TS_INVALID )
+				{
+					char name[64];
+					output_error("object %s commit failed", object_name(obj,name,sizeof(name)-1));
+					/* TROUBLESHOOT
+						The commit function of the named object has failed.  Make sure that the object's
+						requirements for committing are satisfied and try again.  (likely internal state aberations)
+					 */
+					return TS_INVALID;
+				}
+				if ( next<result ) result = next;
+			}
+		}
+		return result;
+	} 
+	CATCH(char *msg){
+		output_error("commit_all() failure: %s", msg);
 		/* TROUBLESHOOT
 			The commit'ing procedure failed.  This is usually preceded 
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
-		min = TS_INVALID;
+		return TS_INVALID;
 	} ENDCATCH;
-	return min;
 }
 
-static STATUS finalize_all(){
-	OBJECT *obj = 0;
-	STATUS rv = SUCCESS;
-	STATUS curr = FAILED;
-	TRY {
-		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
+static STATUS finalize_all()
+{
+	static int first=1;
+	/* TODO implement this multithreaded */
+	static SIMPLELINKLIST *finalize_list = NULL;
+	SIMPLELINKLIST *item;
+	if ( first )
+	{
+		OBJECT *obj;
+		for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
 		{
-			curr = object_finalize(obj);
-			if(curr == FAILED){
-				char *b = (char *)malloc(64);
-				memset(b, 0, 64);
-				output_error("object %s finalize failed", object_name(obj, b, 63));
+			if ( obj->oclass->finalize!=NULL )
+			{
+				item = (SIMPLELINKLIST*)malloc(sizeof(SIMPLELINKLIST));
+				if ( item==NULL )
+				{
+					char name[64];
+					output_error("object %s finalize memory allocation failed", object_name(obj,name,sizeof(name)-1));
+					/* TROUBLESHOOT
+					   Insufficient memory remains to perform the finalize operation.
+					   Free up memory and try again.
+					 */
+					return FAILED;
+				}
+				item->data = (void*)obj;
+				item->next = finalize_list;
+				finalize_list = item;
+			}
+		}
+		first = 0;
+	}
+
+	TRY {
+		for ( item=finalize_list ; item!=NULL ; item=item->next )
+		{
+			OBJECT *obj = (OBJECT*)item->data;
+			if ( object_finalize(obj)==FAILED )
+			{
+				char name[64];
+				output_error("object %s finalize failed", object_name(obj,name,sizeof(name)-1));
 				/* TROUBLESHOOT
 					The finalize function of the named object has failed.  Make sure that the object's
-					requirements for finalize'ing are satisfied and try again.  (likely internal state aberations)
+					requirements for finalizing are satisfied and try again.  (likely internal state aberations)
 				 */
-				rv = FAILED;
-				break;
-				}
+				return FAILED;
+			}
 		}
-	} CATCH(char *msg){
+		return SUCCESS;
+	} 
+	CATCH(char *msg){
 		output_error("finalize_all() failure: %s", msg);
 		/* TROUBLESHOOT
-			The finalize'ing procedure failed.  This is usually preceded 
+			The finalizing procedure failed.  This is usually preceded 
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
-		rv = FAILED;
+		return FAILED;
 	} ENDCATCH;
-	return rv;
 }
 
 STATUS exec_test(struct sync_data *data, int pass, OBJECT *obj);
