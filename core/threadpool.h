@@ -1,16 +1,44 @@
-/*  $Id: threadpool.h 1182 2008-12-22 22:08:36Z dchassin $
- *  Copyright (C) 2008 Battelle Memorial Institute
- *
- *  @file threadpool.h
- *  @addtogroup mti Multi-threaded Iteration
- *  @ingroup core
- *  Threadpool types, structures, and operations.
- *
- *  Author: Brandon Carpenter <brandon.carpenter@pnl.gov>
- *  Overhaul by DP Chassin Sept 2012
- *
- * @{
- */
+/** $Id: threadpool.h 1182 2008-12-22 22:08:36Z dchassin $
+    Copyright (C) 2008 Battelle Memorial Institute
+  
+@file threadpool.h
+@addtogroup mti Multi-threaded Iteration
+@ingroup core
+
+@author David P. Chassin (PNNL) 
+
+Multi-threaded iterators (MTIs) can be used to convert single-threaded
+for loops into iterators that take advantage of multiple core
+when available.
+
+The general scheme for implementing an MTI is as follows:
+
+Step 1 - Define functions that provide the key operations required during
+an MTI pass.  These are:
+
+* Data get operation (#MTIGETFN) - This function gets items in the iteration list
+* Iterator call (#MTICALLFN) - This function performs the iterated operation
+* Data set operation (#MTISETFN) - This function set data for items
+* Data compare operation (#MTICOMPFN) - This function compares data for items
+* Data gather operation (#MTIGATHERFN) - This function gathers data for items
+* Iterator reject test (#MTIREJECTFN) - This function allows for contingent rejection of iteration based on data
+
+Step 2 - Initialize the iterator using #mti_init()
+
+The iterator should be initialized only once and then it can be used repeatedly.
+Aside from giving the iterator all the functions it should use, the iterator must
+also be given a name (which is used by mti_debug output) and a minimum number of
+items needed before a thread is created.
+
+Step 3 - Call the iterator using #mti_run()
+
+If the #mti_run() call succeeds or no iterations is needed, it returns 1.  If it
+fails it returns 0 and a single threaded iteration should be performed by the caller
+instead.
+
+An example of how this is done is implemented in exec.c for commit_all().
+
+@{**/
 
 #ifndef _THREADPOOL_H
 #define _THREADPOOL_H
@@ -134,5 +162,5 @@ int mti_run(MTIDATA result,   /**< result of iterator */
             MTI *iterator,    /**< pointer return by mti_init */
             MTIDATA input);   /**< data to send to iterator call function */
 
-#endif /* _THREADPOOL_H  @} */
+#endif /**@} _THREADPOOL_H */
 
