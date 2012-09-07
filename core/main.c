@@ -64,10 +64,11 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	int rv = 0;
 	char *pd1, *pd2;
 	int i, pos=0;
-	realtime_starttime(); /* mark start */
 	
 	char *browser = getenv("GLBROWSER");
 	char *buildinfo = strstr(BUILD,":");
+
+	realtime_starttime(); /* mark start */
 	
 	/* set the default timezone */
 	timestamp_set_tz(NULL);
