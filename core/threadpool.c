@@ -1,9 +1,10 @@
 /*  $Id: threadpool.c 1182 2008-12-22 22:08:36Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
+ *  Copyright (C) 2008 Battelle Memorial Institute
  *
  *  Threadpool implementation.
  *
  *  Author: Brandon Carpenter <brandon.carpenter@pnl.gov>
+ *  Overhaul by DP Chassin Sept 2012
  */
 
 #ifdef HAVE_CONFIG_H
@@ -19,7 +20,26 @@
 #include <windows.h>
 #endif
 
+#include "globals.h"
 #include "threadpool.h"
+
+static int mti_debug_mode = 0;
+int mti_debug(MTI *mti, char *fmt, ...)
+{
+	if ( mti_debug_mode )
+	{
+		int len = 0;
+		char ts[64];
+		va_list ptr;
+		va_start(ptr,fmt);
+		len += fprintf(stderr,"MTIDEBUG [%s] %s : ",convert_from_timestamp(global_clock,ts,sizeof(ts))?ts:"???", mti?mti->name:"(init)");
+		len += vfprintf(stderr,fmt,ptr);
+		len += fprintf(stderr,"%s","\n");
+		va_end(ptr);
+		return len;
+	}
+	return 0;
+}
 
 #ifdef HAVE_GET_NPROCS
 #include <sys/sysinfo.h>
@@ -50,20 +70,244 @@ int processor_count(void)
 }
 #endif /* HAVE_GET_NPROCS */
 
-static MTICODE iterator_proc(MTI *arg)
+static MTICODE iterator_proc(MTIPROC *tp)
 {
-	/* TODO */
-	return NULL;
+	MTI *mti = tp->mti;
+
+	/* create the final result */
+	MTIDATA final = mti->set(NULL,NULL);
+
+	/* loop as long as enabled */
+	while ( tp->enabled )
+	{
+		size_t n;
+
+		/* create the itermediate result */
+		MTIDATA result = mti->set(NULL,NULL);
+		
+		/* lock access to the start condition */
+		pthread_mutex_lock(mti->start.lock);
+
+		/* wait for the start condition to be satisfied */
+		mti_debug(mti,"iterator %d waiting for start condition",tp->id);
+		while ( mti->compare(tp->data,mti->input)==0 )
+			pthread_cond_wait(mti->start.cond,mti->start.lock);
+
+		/* unlock access to the start condition */
+		pthread_mutex_unlock(mti->start.lock);
+
+		/* reset the final result */
+		mti->set(final,NULL);
+
+		/* process each item in the list */
+		mti_debug(mti,"iterator %d started", tp->id);
+		tp->active = TRUE;
+		for ( n=0 ; n<tp->n_items ; n++ )
+		{
+			/* reset the itermediate result */
+			mti->set(result,NULL);
+
+			/* make the call */
+			mti->call(result,tp->item[n],mti->input);
+
+			/* gather result */
+			mti->gather(final,result);
+		}
+		tp->active = FALSE;
+		mti_debug(mti,"iterator %d completed", tp->id);
+
+		/* update the current data */
+		mti->set(tp->data,mti->input);
+
+		/* lock the stop condition */
+		pthread_mutex_lock(mti->stop.lock);
+
+		/* decrement the stop counter */
+		mti->stop.count--;
+
+		/* gather output */
+		mti->gather(mti->output,final);
+
+		/* notify all of stop condition */
+		pthread_cond_broadcast(mti->stop.cond);
+
+		/* unlock stop condition */
+		pthread_mutex_unlock(mti->stop.lock);
+
+		/* free the itermediate result */
+		free(result);
+	}
+
+	/* free the final result */
+	free(final);
+
+	/* exit */
+	return (MTICODE)0;
 }
 
-MTI *mti_iterator_init(MTIGETFN get, MTICALLFN call, MTIRETFN ret)
+MTI *mti_init(const char *name, MTIGETFN get, MTICALLFN call, MTISETFN set, MTICOMPFN compare, MTIGATHERFN gather, MTIREJECTFN reject, size_t minitems)
 {
-	/* TODO */
-	return NULL;
+	pthread_cond_t new_cond = PTHREAD_COND_INITIALIZER;
+	pthread_mutex_t new_mutex = PTHREAD_MUTEX_INITIALIZER;
+	MTI *mti = NULL;
+	size_t nitems=0, items_per_process=0;
+	MTIITEM item = NULL;
+	char buffer[16];
+
+	/* single threaded only possible */
+	if ( global_threadcount==1 )
+		return NULL;
+
+	/* handle special debug mode */
+	mti_debug_mode = global_getvar("mti_debug",buffer,sizeof(buffer))?atoi(buffer):0;
+	mti_debug(mti,"MTI init started for %s", name);
+
+	/* sizing pass */
+	while ( (item=get(item))!=NULL ) nitems++;
+	if ( nitems==0 ) return NULL;
+
+	/* construct MTI */
+	mti = (MTI*)malloc(sizeof(MTI));
+	if ( mti==NULL ) return NULL;
+	mti->name = name;
+	mti->start.cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
+	memcpy(mti->start.cond,&new_cond,sizeof(new_cond));
+	mti->start.lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+	memcpy(mti->start.lock,&new_mutex,sizeof(new_mutex));
+	mti->start.count = 0;
+	mti->stop.cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
+	memcpy(mti->stop.cond,&new_cond,sizeof(new_cond));
+	mti->stop.lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+	memcpy(mti->stop.lock,&new_mutex,sizeof(new_mutex));
+	mti->stop.count = 0;
+	mti->input = set(NULL,NULL);
+	mti->output = set(NULL,NULL);
+	mti->runtime = 0;
+	mti->get = get;
+	mti->call = call;
+	mti->set = set;
+	mti->compare = compare;
+	mti->gather = gather;
+	mti->reject = reject;
+
+	/* compute number of threads */
+	mti->n_processes = global_threadcount;
+	if ( nitems<mti->n_processes*minitems )
+		mti->n_processes = nitems/minitems;
+	if ( mti->n_processes==0 )
+		mti->n_processes = 1;
+	items_per_process = nitems/mti->n_processes;
+	mti->n_processes = nitems/items_per_process;
+	if ( mti->n_processes*items_per_process<nitems )
+		mti->n_processes++;
+	mti_debug(mti,"nitems = %d", nitems);
+	mti_debug(mti,"nprocs = %d", mti->n_processes);
+	mti_debug(mti,"items/proc = %d", items_per_process);
+
+	/* construct process info if needed */
+	if ( mti->n_processes>1 )
+	{
+		int p;
+
+		/* get first item */
+		MTIITEM item = get(NULL);
+
+		/* allocate/clear/init process list */
+		mti_debug(mti,"preparing %d processes", mti->n_processes);
+		mti->process = (MTIPROC*)malloc(sizeof(MTIPROC)*mti->n_processes);
+		if ( mti->process==NULL )
+		{
+			output_error("mti_init memory allocation failed");
+			/* TROUBLESHOOT
+			   Memory allocation failed initialize a multithreaded
+			   iterator.  Free up memory and try again.
+			 */
+			return NULL;
+		}
+		memset(mti->process,0,sizeof(MTIPROC)*mti->n_processes);
+		for ( p=0 ; p<mti->n_processes ; p++ )
+		{
+			MTIPROC *proc = &mti->process[p];
+			proc->mti = mti;
+			proc->active = FALSE;
+			proc->data = set(NULL,NULL);
+			proc->item = (MTIITEM*)malloc(sizeof(MTIITEM)*items_per_process);
+			proc->n_items = 0;
+			proc->id = p;
+
+			/* index the items to be processed */
+			while ( item!=NULL && proc->n_items<items_per_process )
+			{
+				proc->item[proc->n_items++] = item;
+				item = get(item);
+			}
+
+			/* create thread to handle the list */
+			proc->enabled  = ( pthread_create(&proc->thread_id,NULL,iterator_proc,proc)==0 );
+			mti_debug(mti,"proc=%d; enabled=%d, nitems=%d", p, proc->enabled, proc->n_items);
+		}
+	}
+	else
+		mti->process = NULL;	
+	
+	return mti;
 }
 
-MTIDATA mti_iterator_run(MTI *iterator, MTIDATA data)
+int mti_run(MTIDATA result, MTI *mti, MTIDATA input)
 {
-	/* TODO */
-	return NULL;
+	clock_t t0 = clock();
+	mti->set(result,NULL);
+
+	/* no update required */
+	if ( mti->reject(mti,input) )
+	{
+		mti_debug(mti,"no iteration update required");
+		mti->set(result,mti->output); 
+		return 1;
+	}
+
+	/* singled threaded update */
+	if ( mti->n_processes<2 )
+	{
+		mti_debug(mti,"iterating single threaded");
+		return 0;
+	}
+
+	/* multi threaded update */
+	else
+	{
+		mti_debug(mti,"starting %d iterators", mti->n_processes);
+
+		/* lock access to stop condition */
+		pthread_mutex_lock(mti->stop.lock);
+
+		/* reset the stop condition */
+		mti->stop.count = mti->n_processes;
+
+		/* lock access to the start condition */
+		pthread_mutex_lock(mti->start.lock);
+
+		/* set start condition */
+		mti->set(mti->input,input);
+		mti->set(mti->output,NULL);
+
+		/* broadcast start condition */
+		pthread_cond_broadcast(mti->start.cond);
+
+		/* unlock access to start condition */
+		pthread_mutex_unlock(mti->start.lock);
+
+		/* wait for stop condition */
+		while ( mti->stop.count>0 )
+			pthread_cond_wait(mti->stop.cond,mti->stop.lock);
+
+		/* unlock access to stop condition */
+		pthread_mutex_unlock(mti->stop.lock);
+
+		/* gather result */
+		mti->gather(result,mti->output);
+		mti_debug(mti,"%d iterators completed", mti->n_processes);
+	}
+	mti->runtime += clock() - t0;
+	return 1;
 }

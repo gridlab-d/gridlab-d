@@ -325,7 +325,7 @@ int output_fatal(const char *format,...) /**< \bprintf style argument list */
 			len = sprintf(buffer,"last fatal error message was repeated %d times", count);
 			count = 0;
 			if(format == NULL) goto Output;
-			else len += sprintf(buffer+len,"\n%sFATAL [%s] : ",prefix, time_context);
+			else len += sprintf(buffer+len,"\n%sFATAL    [%s] : ",prefix, time_context);
 		}
 		else if (format==NULL)
 			goto Unlock;
@@ -335,9 +335,9 @@ int output_fatal(const char *format,...) /**< \bprintf style argument list */
 	}
 Output:
 	if (redirect.error)
-		result = fprintf(redirect.error,"%sFATAL [%s] : %s\n", prefix, time_context, buffer);
+		result = fprintf(redirect.error,"%sFATAL    [%s] : %s\n", prefix, time_context, buffer);
 	else
-		result = (*printerr)("%sFATAL [%s] : %s\n", prefix, time_context, buffer);
+		result = (*printerr)("%sFATAL    [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
 	wunlock(&output_lock);
 	return result;
@@ -371,7 +371,7 @@ int output_error(const char *format,...) /**< \bprintf style argument list */
 			len = sprintf(buffer,"last error message was repeated %d times", count);
 			count = 0;
 			if(format == NULL) goto Output;
-			else len += sprintf(buffer+len,"\n%sERROR [%s] : ", prefix, time_context);
+			else len += sprintf(buffer+len,"\n%sERROR    [%s] : ", prefix, time_context);
 		}
 		else if (format==NULL)
 			goto Unlock;
@@ -385,9 +385,9 @@ Output:
 		(*notify_error)();
 
 	if (redirect.error)
-		result = fprintf(redirect.error,"%sERROR [%s] : %s\n", prefix, time_context, buffer);
+		result = fprintf(redirect.error,"%sERROR    [%s] : %s\n", prefix, time_context, buffer);
 	else
-		result = (*printerr)("%sERROR [%s] : %s\n", prefix, time_context, buffer);
+		result = (*printerr)("%sERROR    [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
 	wunlock(&output_lock);
 	return result;
@@ -521,7 +521,7 @@ int output_warning(const char *format,...) /**< \bprintf style argument list */
 				len = sprintf(buffer,"last warning message was repeated %d times", count);
 				count = 0;
 				if(format == NULL) goto Output;
-				else len += sprintf(buffer+len,"\n%sWARNING [%s] : ", prefix, time_context);
+				else len += sprintf(buffer+len,"\n%sWARNING  [%s] : ", prefix, time_context);
 			}
 			else if (format==NULL)
 				goto Unlock;
@@ -531,9 +531,9 @@ int output_warning(const char *format,...) /**< \bprintf style argument list */
 		}
 Output:
 		if (redirect.warning)
-			result = fprintf(redirect.warning,"%sWARNING [%s] : %s\n", prefix, time_context, buffer);
+			result = fprintf(redirect.warning,"%sWARNING  [%s] : %s\n", prefix, time_context, buffer);
 		else
-			result = (*printerr)("%sWARNING [%s] : %s\n", prefix, time_context, buffer);
+			result = (*printerr)("%sWARNING  [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
 		wunlock(&output_lock);
 		return result;

@@ -62,9 +62,9 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 		 char *argv[]) /**< a list of pointers to the command-line arguments */
 {
 	int rv = 0;
-	time_t t_load = time(NULL);
 	char *pd1, *pd2;
 	int i, pos=0;
+	realtime_starttime(); /* mark start */
 	
 	char *browser = getenv("GLBROWSER");
 	char *buildinfo = strstr(BUILD,":");
@@ -177,7 +177,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 #endif
 	
 	/* start the processing environment */
-	output_verbose("load time: %d sec", time(NULL) - t_load);
+	output_verbose("load time: %d sec", realtime_runtime());
 	output_verbose("starting up %s environment", global_environment);
 	if (environment_start(argc,argv)==FAILED)
 	{

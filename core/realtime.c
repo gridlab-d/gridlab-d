@@ -11,9 +11,16 @@ time_t realtime_now(void)
 {
 	return time(NULL);
 }
+static time_t starttime = 0;
+time_t realtime_starttime(void)
+{
+	if ( starttime==0 )
+		starttime = realtime_now();
+	return starttime;
+}
 time_t realtime_runtime(void)
 {
-	return realtime_now() - global_starttime;
+	return realtime_now() - starttime;
 }
 
 /****************************************************************/
