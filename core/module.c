@@ -1256,7 +1256,7 @@ void module_profiles(void)
 #ifdef WIN32
 /* WIN32 requires use of the compatibility kill implementation */
 #include "signal.h"
-extern int kill(unsigned short,int); /* defined in kill.c */
+extern int kill(pid_t,int); /* defined in kill.c */
 #else
 #include <signal.h>
 #ifdef MACOSX
@@ -1567,7 +1567,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 	{
 		unsigned long  err = GetLastError();
 		output_warning("unable to access current process info, err code %d--job not added to process map", err);
-		return;
+		return NULL;
 	}
 #elif defined MACOSX
 	int cpu;
@@ -1657,7 +1657,6 @@ void sched_init(int readonly)
 	pid_t pid = (unsigned short)GetCurrentProcessId();
 	HANDLE hMap;
 	unsigned long mapsize;
-	int n;
 
 	if(has_run == 0){
 		has_run = 1;
@@ -1886,7 +1885,7 @@ ARGS* get_args(char *line)
 }
 void free_args(ARGS *args)
 {
-	int n;
+	unsigned int n;
 	for ( n=0 ; n<args->n ; n++ )
 		free(args->arg[n]);
 	free(args->arg);
@@ -2158,7 +2157,7 @@ void sched_controller(void)
 		if ( args!=NULL )
 		{
 			char *cmd = args->arg[0];
-			int argc = args->n - 1;
+			size_t argc = args->n - 1;
 			char **argv = args->arg + 1;
 			if ( strnicmp(cmd,"quit",strlen(cmd))==0 )
 				exit(0);
