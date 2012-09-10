@@ -796,6 +796,28 @@ static STATUS precommit_all(TIMESTAMP t0)
  ** COMMIT ITERATOR
  **************************************************************************/
 static SIMPLELINKLIST *commit_list = NULL;
+/* initialize commit_list - must be called only once */
+static int commit_init(void)
+{
+	int n_commits = 0;
+	OBJECT *obj;
+	SIMPLELINKLIST *item;
+	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
+	{
+		if ( obj->oclass->commit!=NULL )
+		{
+			item = (SIMPLELINKLIST*)malloc(sizeof(SIMPLELINKLIST));
+			if ( item==NULL ) 
+				throw_exception("commit_init memory allocation failure");
+			item->data = (void*)obj;
+			item->next = commit_list;
+			commit_list = item;
+			n_commits++;
+		}
+	}
+	return n_commits;
+}
+/* commit_list iterator */
 static MTIITEM commit_get(MTIITEM item)
 {
 	if ( item==NULL )
@@ -803,6 +825,7 @@ static MTIITEM commit_get(MTIITEM item)
 	else
 		return (MTIITEM)(((SIMPLELINKLIST*)item)->next);
 }
+/* commit function call */
 static void commit_call(MTIDATA output, MTIITEM item, MTIDATA input)
 {
 	OBJECT *obj = (OBJECT*)(((SIMPLELINKLIST*)item)->data);
@@ -813,6 +836,7 @@ static void commit_call(MTIDATA output, MTIITEM item, MTIDATA input)
 	else
 		*t2 = TS_NEVER;
 }
+/* commit data set accessor */
 static MTIDATA commit_set(MTIDATA to, MTIDATA from)
 {
 	/* allocation request */
@@ -826,6 +850,7 @@ static MTIDATA commit_set(MTIDATA to, MTIDATA from)
 
 	return to;
 }
+/* commit data compare accessor */
 static int commit_compare(MTIDATA a, MTIDATA b)
 {
 	TIMESTAMP t0 = (a?*(TIMESTAMP*)a:TS_NEVER);
@@ -834,6 +859,7 @@ static int commit_compare(MTIDATA a, MTIDATA b)
 	if ( t0<t1 ) return -1;
 	return 0;
 }
+/* commit data gather accessor */
 static void commit_gather(MTIDATA a, MTIDATA b)
 {
 	TIMESTAMP *t0 = (TIMESTAMP*)a;
@@ -841,85 +867,78 @@ static void commit_gather(MTIDATA a, MTIDATA b)
 	if ( a==NULL || b==NULL ) return;
 	if ( *t1<*t0 ) *t0 = *t1;
 }
+/* commit iterator reject test */
 static int commit_reject(MTI *mti, MTIDATA value)
 {
 	TIMESTAMP *t1 = (TIMESTAMP*)value;
 	TIMESTAMP *t2 = (TIMESTAMP*)mti->output;
 	if ( value==NULL ) return 0;
-	return ( t2>t1 && t2<TS_NEVER ) ? 1 : 0;
+	return ( *t2>*t1 && *t2<TS_NEVER ) ? 1 : 0;
 }
+/* single threaded version of commit_all */
+static TIMESTAMP commit_all_st(TIMESTAMP t0, TIMESTAMP t2)
+{
+	TIMESTAMP result = TS_NEVER;
+	SIMPLELINKLIST *item;
+	for ( item=commit_list ; item!=NULL ; item=item->next )
+	{
+		OBJECT *obj = (OBJECT*)item->data;
+		if ( obj->in_svc<=t0 && obj->out_svc>=t0 )
+		{
+			TIMESTAMP next = object_commit(obj,t0,t2);
+			if ( next==TS_INVALID )
+			{
+				char name[64];
+				throw_exception("object %s commit failed", object_name(obj,name,sizeof(name)-1));
+				/* TROUBLESHOOT
+					The commit function of the named object has failed.  Make sure that the object's
+					requirements for committing are satisfied and try again.  (likely internal state aberations)
+				 */
+			}
+			if ( next<result ) result = next;
+		}
+	}
+	return result;
+}
+/* multi-threaded version of commit_all */
 static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 {
 	static int n_commits = -1;
 	static MTI *mti = NULL;
+	static int init_tried = FALSE;
 	MTIDATA input = (MTIDATA)&t0;
 	MTIDATA output = (MTIDATA)&t2;
-	SIMPLELINKLIST *item;
 	TIMESTAMP result = TS_NEVER;
 
-	/* build commit list */
-	if ( n_commits==-1 ) 
-	{
-		OBJECT *obj;
-		n_commits = 0;
-		for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
+	TRY {
+		/* build commit list */
+		if ( n_commits==-1 ) n_commits = commit_init();
+
+		/* if no commits found, stop here */
+		if ( n_commits==0 ) return TS_NEVER;
+		
+		/* initialize MTI */
+		if ( mti==NULL && global_threadcount!=1 && !init_tried )
 		{
-			if ( obj->oclass->commit!=NULL )
+			/* build mti */
+			static MTIFUNCTIONS fns = {
+				commit_get, commit_call, commit_set,
+				commit_compare, commit_gather, commit_reject,
+			};
+			mti = mti_init("commit",&fns,8);
+			if ( mti==NULL )
 			{
-				item = (SIMPLELINKLIST*)malloc(sizeof(SIMPLELINKLIST));
-				if ( item==NULL ) 
-				{
-					output_warning("commit_all multi-threaded iterator memory allocation failed - using single-threaded iterator as fallback");
-					n_commits = 0;
-					break;
-				}
-				item->data = (void*)obj;
-				item->next = commit_list;
-				commit_list = item;
-				n_commits++;
+				output_warning("commit_all multi-threaded iterator initialization failed - using single-threaded iterator as fallback");
+				init_tried = TRUE;
 			}
 		}
-	}
 
-	/* if no commits found, stop here */
-	else if ( n_commits==0 )
-		return TS_NEVER;
-		
-	/* initialize MTI */
-	if ( mti==NULL && global_threadcount!=1 )
-	{
-		/* build mti */
-		mti = mti_init("commit",commit_get,commit_call,commit_set,commit_compare,commit_gather,commit_reject,2);
-		if ( mti==NULL )
-			output_warning("commit_all multi-threaded iterator initialization failed - using single-threaded iterator as fallback");
-	}
-
-	TRY {
 		/* attempt to run multithreaded iterator */
 		if ( mti!=NULL && mti_run(output,mti,input) )
-			return *(TIMESTAMP*)output;
+			result = *(TIMESTAMP*)output;
 
 		/* resort to single threaded iterator */
-		for ( item=commit_list ; item!=NULL ; item=item->next )
-		{
-			OBJECT *obj = (OBJECT*)item->data;
-			if ( obj->in_svc<=t0 && obj->out_svc>=t0 )
-			{
-				TIMESTAMP next = object_commit(obj,t0,t2);
-				if ( next==TS_INVALID )
-				{
-					char name[64];
-					output_error("object %s commit failed", object_name(obj,name,sizeof(name)-1));
-					/* TROUBLESHOOT
-						The commit function of the named object has failed.  Make sure that the object's
-						requirements for committing are satisfied and try again.  (likely internal state aberations)
-					 */
-					result=TS_INVALID;
-					break;
-				}
-				if ( next<result ) result = next;
-			}
-		}
+		result = commit_all_st(t0,t2);
 	}
 	CATCH(const char *msg)
 	{
@@ -929,7 +948,7 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
-		result=TS_INVALID;
+		result = TS_INVALID;
 	}
 	ENDCATCH;
 	return result;

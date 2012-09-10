@@ -75,7 +75,7 @@ static MTICODE iterator_proc(MTIPROC *tp)
 	MTI *mti = tp->mti;
 
 	/* create the final result */
-	MTIDATA final = mti->set(NULL,NULL);
+	MTIDATA final = mti->fn->set(NULL,NULL);
 
 	/* loop as long as enabled */
 	while ( tp->enabled )
@@ -83,21 +83,21 @@ static MTICODE iterator_proc(MTIPROC *tp)
 		size_t n;
 
 		/* create the itermediate result */
-		MTIDATA result = mti->set(NULL,NULL);
+		MTIDATA result = mti->fn->set(NULL,NULL);
 		
 		/* lock access to the start condition */
 		pthread_mutex_lock(mti->start.lock);
 
 		/* wait for the start condition to be satisfied */
 		mti_debug(mti,"iterator %d waiting for start condition",tp->id);
-		while ( mti->compare(tp->data,mti->input)==0 )
+		while ( mti->fn->compare(tp->data,mti->input)==0 )
 			pthread_cond_wait(mti->start.cond,mti->start.lock);
 
 		/* unlock access to the start condition */
 		pthread_mutex_unlock(mti->start.lock);
 
 		/* reset the final result */
-		mti->set(final,NULL);
+		mti->fn->set(final,NULL);
 
 		/* process each item in the list */
 		mti_debug(mti,"iterator %d started", tp->id);
@@ -105,19 +105,19 @@ static MTICODE iterator_proc(MTIPROC *tp)
 		for ( n=0 ; n<tp->n_items ; n++ )
 		{
 			/* reset the itermediate result */
-			mti->set(result,NULL);
+			mti->fn->set(result,NULL);
 
 			/* make the call */
-			mti->call(result,tp->item[n],mti->input);
+			mti->fn->call(result,tp->item[n],mti->input);
 
 			/* gather result */
-			mti->gather(final,result);
+			mti->fn->gather(final,result);
 		}
 		tp->active = FALSE;
 		mti_debug(mti,"iterator %d completed", tp->id);
 
 		/* update the current data */
-		mti->set(tp->data,mti->input);
+		mti->fn->set(tp->data,mti->input);
 
 		/* lock the stop condition */
 		pthread_mutex_lock(mti->stop.lock);
@@ -126,7 +126,7 @@ static MTICODE iterator_proc(MTIPROC *tp)
 		mti->stop.count--;
 
 		/* gather output */
-		mti->gather(mti->output,final);
+		mti->fn->gather(mti->output,final);
 
 		/* notify all of stop condition */
 		pthread_cond_broadcast(mti->stop.cond);
@@ -145,7 +145,7 @@ static MTICODE iterator_proc(MTIPROC *tp)
 	return (MTICODE)0;
 }
 
-MTI *mti_init(const char *name, MTIGETFN get, MTICALLFN call, MTISETFN set, MTICOMPFN compare, MTIGATHERFN gather, MTIREJECTFN reject, size_t minitems)
+MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 {
 	pthread_cond_t new_cond = PTHREAD_COND_INITIALIZER;
 	pthread_mutex_t new_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -163,7 +163,7 @@ MTI *mti_init(const char *name, MTIGETFN get, MTICALLFN call, MTISETFN set, MTIC
 	mti_debug(mti,"MTI init started for %s", name);
 
 	/* sizing pass */
-	while ( (item=get(item))!=NULL ) nitems++;
+	while ( (item=fn->get(item))!=NULL ) nitems++;
 	if ( nitems==0 ) return NULL;
 
 	/* construct MTI */
@@ -180,15 +180,10 @@ MTI *mti_init(const char *name, MTIGETFN get, MTICALLFN call, MTISETFN set, MTIC
 	mti->stop.lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
 	memcpy(mti->stop.lock,&new_mutex,sizeof(new_mutex));
 	mti->stop.count = 0;
-	mti->input = set(NULL,NULL);
-	mti->output = set(NULL,NULL);
+	mti->input = fn->set(NULL,NULL);
+	mti->output = fn->set(NULL,NULL);
 	mti->runtime = 0;
-	mti->get = get;
-	mti->call = call;
-	mti->set = set;
-	mti->compare = compare;
-	mti->gather = gather;
-	mti->reject = reject;
+	mti->fn = fn;
 
 	/* compute number of threads */
 	mti->n_processes = global_threadcount;
@@ -210,7 +205,7 @@ MTI *mti_init(const char *name, MTIGETFN get, MTICALLFN call, MTISETFN set, MTIC
 		int p;
 
 		/* get first item */
-		MTIITEM item = get(NULL);
+		MTIITEM item = fn->get(NULL);
 
 		/* allocate/clear/init process list */
 		mti_debug(mti,"preparing %d processes", mti->n_processes);
@@ -230,7 +225,7 @@ MTI *mti_init(const char *name, MTIGETFN get, MTICALLFN call, MTISETFN set, MTIC
 			MTIPROC *proc = &mti->process[p];
 			proc->mti = mti;
 			proc->active = FALSE;
-			proc->data = set(NULL,NULL);
+			proc->data = fn->set(NULL,NULL);
 			proc->item = (MTIITEM*)malloc(sizeof(MTIITEM)*items_per_process);
 			proc->n_items = 0;
 			proc->id = p;
@@ -239,11 +234,11 @@ MTI *mti_init(const char *name, MTIGETFN get, MTICALLFN call, MTISETFN set, MTIC
 			while ( item!=NULL && proc->n_items<items_per_process )
 			{
 				proc->item[proc->n_items++] = item;
-				item = get(item);
+				item = fn->get(item);
 			}
 
 			/* create thread to handle the list */
-			proc->enabled  = ( pthread_create(&proc->thread_id,NULL,iterator_proc,proc)==0 );
+			proc->enabled  = ( pthread_create(&proc->thread_id,NULL,(void*(*)(void*))iterator_proc,proc)==0 );
 			mti_debug(mti,"proc=%d; enabled=%d, nitems=%d", p, proc->enabled, proc->n_items);
 		}
 	}
@@ -256,13 +251,13 @@ MTI *mti_init(const char *name, MTIGETFN get, MTICALLFN call, MTISETFN set, MTIC
 int mti_run(MTIDATA result, MTI *mti, MTIDATA input)
 {
 	clock_t t0 = clock();
-	mti->set(result,NULL);
+	mti->fn->set(result,NULL);
 
 	/* no update required */
-	if ( mti->reject(mti,input) )
+	if ( mti->fn->reject(mti,input) )
 	{
 		mti_debug(mti,"no iteration update required");
-		mti->set(result,mti->output); 
+		mti->fn->set(result,mti->output); 
 		return 1;
 	}
 
@@ -288,8 +283,8 @@ int mti_run(MTIDATA result, MTI *mti, MTIDATA input)
 		pthread_mutex_lock(mti->start.lock);
 
 		/* set start condition */
-		mti->set(mti->input,input);
-		mti->set(mti->output,NULL);
+		mti->fn->set(mti->input,input);
+		mti->fn->set(mti->output,NULL);
 
 		/* broadcast start condition */
 		pthread_cond_broadcast(mti->start.cond);
@@ -305,7 +300,7 @@ int mti_run(MTIDATA result, MTI *mti, MTIDATA input)
 		pthread_mutex_unlock(mti->stop.lock);
 
 		/* gather result */
-		mti->gather(result,mti->output);
+		mti->fn->gather(result,mti->output);
 		mti_debug(mti,"%d iterators completed", mti->n_processes);
 	}
 	mti->runtime += clock() - t0;
