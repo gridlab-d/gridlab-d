@@ -15,7 +15,6 @@
 #endif
 
 #include "version.h"
-#include "exec.h"
 
 #if defined WIN32 && ! defined MINGW
 #include <io.h>
@@ -75,6 +74,7 @@
 #include "lock.h"
 #endif
 #include "schedule.h"
+#include "exec.h"
 
 #include "matlab.h"
 

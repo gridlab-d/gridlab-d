@@ -1079,11 +1079,6 @@ static int example(int argc, char *argv[])
 #ifdef WIN32
 static int validate(int argc, char *argv[])
 {
-	if ( validate(argc,argv) )
-		return 0;
-	else
-		return CMDERR;
-
 	char buffer[1024]="python validate.py";
 	if ( global_threadcount!=1 )
 		sprintf(buffer,"python validate.py -T %d", global_threadcount);
