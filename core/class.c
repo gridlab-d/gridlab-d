@@ -44,6 +44,7 @@
  @{
  **/
 
+#include "exec.h"
 #include "property.h"
 #include "class.h"
 #include "output.h"
@@ -452,7 +453,7 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 			caused by an error in a GLM file but is most likely caused by a bug in a module
 			or incorrectly defined class.
 		 */
-		exit(-1);
+		exit(XC_EXCEPTION);
 	}
 	if (oclass!=NULL)
 	{
