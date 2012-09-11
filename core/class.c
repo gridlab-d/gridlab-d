@@ -452,7 +452,7 @@ CLASS *class_register(MODULE *module,			/**< the module that implements the clas
 			caused by an error in a GLM file but is most likely caused by a bug in a module
 			or incorrectly defined class.
 		 */
-		exit(1);
+		exit(-1);
 	}
 	if (oclass!=NULL)
 	{

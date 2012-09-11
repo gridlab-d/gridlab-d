@@ -53,6 +53,26 @@ int exec_sync_isnever(struct sync_data *d);
 int exec_sync_isinvalid(struct sync_data *d);
 STATUS exec_sync_getstatus(struct sync_data *d);
 
+/* Exit codes */
+#define XC_SUCCESS 0 /* per system(3) */
+#define XC_EXFAILED -1 /* exec/wait failure - per system(3) */
+#define XC_ARGERR 1 /* error processing command line arguments */
+#define XC_ENVERR 2 /* bad environment startup */
+#define XC_TSTERR 3 /* test failed */
+#define XC_USRERR 4 /* user reject terms of use */
+#define XC_RUNERR 5 /* simulation did not complete as desired */
+#define XC_INIERR 6 /* initialization failed */
+#define XC_PRCERR 7 /* process control error */
+#define XC_SVRKLL 8 /* server killed */
+#define XC_IOERR 9 /* I/O error */
+#define XC_SHFAILED 127 /* shell failure - per system(3) */
+#define XC_SIGNAL 128 /* signal caught - must be or'd with SIG value if known */
+#define XC_SIGINT (XC_SIGNAL|SIGINT) /* SIGINT caught */
+#define XC_EXCEPTION 255 /* exception caught */
+
+int exec_setexitcode(int);
+int exec_getexitcode(void);
+
 #ifdef __cplusplus
 }
 #endif

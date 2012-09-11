@@ -52,9 +52,8 @@ SOCKET sockfd = (SOCKET)0; /**< socket on which incomming connections are accept
  **/
 static void shutdown_now(void)
 {
-	extern int stop_now;
 	output_verbose("server shutdown on exit in progress...");
-	stop_now = 1;
+	exec_setexitcode(XC_SVRKLL);
 	shutdown_server = 1;
 	if (sockfd!=(SOCKET)0)
 #ifdef WIN32
@@ -1148,7 +1147,7 @@ int http_control_request(HTTP *http, char *action)
 	else if ( strcmp(action,"shutdown")==0 )
 	{
 		output_message("server shutdown by client");
-		exit(0);
+		exit(XC_SUCCESS);
 	}
 	return 0;
 }

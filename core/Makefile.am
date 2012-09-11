@@ -17,6 +17,7 @@ gridlabd_bin_SOURCES = \
 	cmdarg.c cmdarg.h \
 	compare.c compare.h \
 	complex.h \
+	console.h \
 	convert.cpp convert.h \
 	debug.c  debug.h \
 	enduse.c enduse.h \
@@ -67,6 +68,7 @@ gridlabd_bin_SOURCES = \
 	timestamp.c timestamp.h \
 	transform.c transform.h \
 	unit.c unit.h \
+	validate.cpp validate.h \
 	version.h \
 	# xcore.cpp xcore.h 
 EXTRA_gridlabd_bin_SOURCES = \

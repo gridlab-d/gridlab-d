@@ -247,7 +247,6 @@ static char *get_objname(OBJECT *obj)
 static int debug_active = 1; /**< flag indicating that the debugger is currently active */
 static int error_caught = 0; /**< flag indicating that the debugger has seen an error */
 static int watch_sync = 0; /**< flag indicating that sync times should be reported */
-int stop_now = 0; /**< flag indicating that main loop needs to be step (and debugger activated if allowed) */
 static int sigint_caught = 0; /**< flag indicating that \p SIGINT has been caught */
 static int sigterm_caught = 0; /**< flag indicating that \p SIGTERM has been caught */
 static int list_details = 0; /**< flag indicating that listing includes details */
@@ -289,7 +288,7 @@ void exec_sighandler(int sig) /**< the signal number, see \p <signal.h> */
 			If it is not intentional, make sure that the signal is not being
 			raised accidentally by another application.
 		 */
-		exit(1);
+		exit(XC_SIGNAL|SIGTERM);
 	}
 	else if (sig==SIGABRT)
 	{
@@ -300,7 +299,7 @@ void exec_sighandler(int sig) /**< the signal number, see \p <signal.h> */
 			If it is not intentional, make sure that the signal is not being
 			raised accidentally by another application.
 		 */
-		exit(1);
+		exit(XC_SIGNAL|SIGABRT);
 	}
 	else if (sig==SIGINT)
 	{
@@ -320,7 +319,7 @@ void exec_sighandler(int sig) /**< the signal number, see \p <signal.h> */
 			}
 		}
 		else
-			stop_now=1;
+			exec_setexitcode(XC_SIGINT);
 	}
 	else
 		output_error("ignored signal %d", sig);

@@ -8,7 +8,6 @@ extern struct sync_data sync_d;
 extern pthread_mutex_t mls_inst_lock;
 extern pthread_cond_t mls_inst_signal;
 extern int inst_created;
-extern int stop_now;
 
 #define MSGALLOCSZ 1024
 
@@ -398,10 +397,12 @@ int instance_slave_done_socket(){
 	if(rv < 0){
 		output_error("instance_slave_done_socket(): error when sending data");
 		closesocket(local_inst.sockfd);
+		// TODO this should be a valid exitcode (see exec.c XC_*)
 		return -1;
 	} else if(0 == rv){
 		output_error("instance_slave_done_socket(): socket was closed before data sent");
 		closesocket(local_inst.sockfd);
+		// TODO this should be a valid exitcode (see exec.c XC_*)
 		return -1;
 	}
 //	output_debug("instance_slave_done_socket(): exiting");
@@ -435,7 +436,7 @@ void instance_slave_done(void)
 	// check rv, 0 is okay
 	if(0 != rv){
 		output_error("instance_slave_done(): unable to signal master");
-		stop_now = 1;
+		exec_setexitcode(rv);
 	}
 }
 
@@ -464,7 +465,7 @@ void *instance_slaveproc(void *ptr)
 		{
 			/* stop the main loop and exit the slave controller */
 			output_error("instance_slaveproc(): slave %d controller wait failure, thread stopping", slave_id);
-			stop_now = 1;
+			exec_setexitcode(XC_PRCERR);
 			pthread_cond_broadcast(&mls_inst_signal);
 			break;
 		}

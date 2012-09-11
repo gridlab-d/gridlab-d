@@ -15,6 +15,7 @@
 #endif
 
 #include "version.h"
+#include "exec.h"
 
 #if defined WIN32 && ! defined MINGW
 #include <io.h>
@@ -2024,7 +2025,7 @@ Retry:
 	{
 Error:
 		output_fatal("keyboard read error: code=%d", GetLastError());
-		exit(1);
+		exit(XC_IOERR);
 	}
 }
 void endwin(void)
@@ -2160,7 +2161,7 @@ void sched_controller(void)
 			size_t argc = args->n - 1;
 			char **argv = args->arg + 1;
 			if ( strnicmp(cmd,"quit",strlen(cmd))==0 )
-				exit(0);
+				exit(XC_SUCCESS);
 			else if ( strnicmp(cmd,"exit",strlen(cmd))==0 )
 				exit(argc>0 ? atoi(argv[0]) : 0);
 			else if ( strnicmp(cmd,"list",strlen(cmd))==0 )

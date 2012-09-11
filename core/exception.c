@@ -53,6 +53,7 @@
  **/
 
 #include <string.h>
+#include "exec.h"
 #include "exception.h"
 #include "output.h"
 
@@ -122,7 +123,7 @@ void throw_exception(char *format, /**< the format string */
 			of a module or external library isn't properly
 			compiled or linked.
 		*/
-		exit(-1);
+		exit(XC_EXCEPTION);
 	}
 }
 

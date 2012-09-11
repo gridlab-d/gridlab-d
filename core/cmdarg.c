@@ -1075,8 +1075,15 @@ static int example(int argc, char *argv[])
 		output_warning("no output generated for object");
 	return CMDOK;
 }
+
+#ifdef WIN32
 static int validate(int argc, char *argv[])
 {
+	if ( validate(argc,argv) )
+		return 0;
+	else
+		return CMDERR;
+
 	char buffer[1024]="python validate.py";
 	if ( global_threadcount!=1 )
 		sprintf(buffer,"python validate.py -T %d", global_threadcount);
@@ -1090,6 +1097,9 @@ static int validate(int argc, char *argv[])
 	else
 		return CMDERR;
 }
+#else
+#include "validate.h"
+#endif
 
 static int locktest(int argc, char *argv[])
 {

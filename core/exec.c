@@ -89,6 +89,22 @@
 
 #include "pthread.h"
 
+/** Set/get exit code **/
+static int exit_code = XC_SUCCESS;
+int exec_setexitcode(int xc)
+{
+	int oldxc = exit_code;
+	if ( oldxc!=XC_SUCCESS )
+		output_warning("new exitcode %d overwrites existing exitcode %d", xc,oldxc);
+	exit_code = xc;
+	output_debug("exit code %d", xc);
+	return oldxc;
+}
+int exec_getexitcode(void)
+{
+	return exit_code;
+}
+
 /** The main system initialization sequence
 	@return 1 on success, 0 on failure
  **/
@@ -166,7 +182,6 @@ int64 rlock_count = 0, rlock_spin = 0;
 int64 wlock_count = 0, wlock_spin = 0;
 #endif
 
-extern int stop_now;
 extern pthread_mutex_t mls_inst_lock;
 extern pthread_cond_t mls_inst_signal;
 
@@ -1633,11 +1648,11 @@ STATUS exec_start(void)
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
 		int running; /* split into two tests to make it easier to tell what's going on */
 
-//		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", sync_d.step_to, global_stoptime, sync_d.hard_event, stop_now);
+//		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", sync_d.step_to, global_stoptime, sync_d.hard_event, exec_getexitcode());
 //		while ( running = ( absolute_timestamp(sync_d.step_to) <= global_stoptime && sync_d.step_to<TS_NEVER && sync_d.hard_event>0),
-		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), stop_now);
+		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
 		while ( running = ( exec_sync_get(NULL)<=global_stoptime && !exec_sync_isnever(NULL) && exec_sync_ishard(NULL) ),
-			iteration_counter>0 && ( running || global_run_realtime>0) && !stop_now ) 
+			iteration_counter>0 && ( running || global_run_realtime>0) && exec_getexitcode() ) 
 		{
 			/* update the process table info */
 			sched_update(global_clock,MLS_RUNNING);

@@ -49,19 +49,11 @@ void delete_pidfile(void)
 }
 
 /** The main entry point of GridLAB-D
- Exit codes
- - \b 0 run completed ok
- - \b 1 command-line processor stopped
- - \b 2 environment startup failed
- - \b 3 test procedure failed
- - \b 4 user rejects conditions of use
- - \b 5 simulation stopped before completing
- - \b 6 initialization failed
+    @returns Exit codes XC_SUCCESS, etc. (see gridlabd.h)
  **/
 int main(int argc, /**< the number entries on command-line argument list \p argv */
 		 char *argv[]) /**< a list of pointers to the command-line arguments */
 {
-	int rv = 0;
 	char *pd1, *pd2;
 	int i, pos=0;
 	
@@ -111,7 +103,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 
 	/* main initialization */
 	if (!output_init(argc,argv) || !exec_init())
-		exit(6);
+		exit(XC_INIERR);
 
 	/* set thread count equal to processor count if not passed on command-line */
 	if (global_threadcount == 0)
@@ -128,7 +120,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 			complete its startup procedure.  Correct the problem
 			with the command line and try again.
 		 */
-		exit(1);
+		exit(XC_ARGERR);
 	}
 
 	/* initialize scheduler */
@@ -160,7 +152,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 				the location indicated in the message.  Create and/or
 				modify access rights to the path for that file and try again.
 			 */
-			exit(1);
+			exit(XC_PRCERR);
 		}
 #ifdef WIN32
 #define getpid _getpid
@@ -174,7 +166,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	/* do legal stuff */
 #ifdef LEGAL_NOTICE
 	if (strcmp(global_pidfile,"")==0 && legal_notice()==FAILED)
-		exit(4);
+		exit(XC_USRERR);
 #endif
 	
 	/* start the processing environment */
@@ -188,7 +180,8 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 			follows a more specific message regarding the startup problem.
 			Follow the recommendation for the indicated problem.
 		 */
-		rv = 2;
+		if ( exec_getexitcode()==XC_SUCCESS )
+			exec_setexitcode(XC_ENVERR);
 	}
 
 	/* save the model */
@@ -233,7 +226,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	/* compute elapsed runtime */
 	output_verbose("elapsed runtime %d seconds", realtime_runtime());
 
-	exit(rv);
+	exit(exec_getexitcode());
 }
 
 /** @} **/
