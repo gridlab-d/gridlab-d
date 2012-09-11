@@ -60,6 +60,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	char *browser = getenv("GLBROWSER");
 	char *buildinfo = strstr(BUILD,":");
 
+	exec_clock(); /* initialize the wall clock */
 	realtime_starttime(); /* mark start */
 	
 	/* set the default timezone */
@@ -225,7 +226,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 
 	/* compute elapsed runtime */
 	output_verbose("elapsed runtime %d seconds", realtime_runtime());
-
+	output_verbose("exit code %d", exec_getexitcode());
 	exit(exec_getexitcode());
 }
 

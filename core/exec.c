@@ -42,11 +42,11 @@
 #include <signal.h>
 #include <ctype.h>
 #include <string.h>
+#include <sys/timeb.h>
 #ifdef WIN32
 #include <windows.h>
 #include <winbase.h>
 #include <direct.h>
-#include <sys/timeb.h>
 #else
 #include <unistd.h>
 #include <sys/types.h>
@@ -103,6 +103,21 @@ int exec_setexitcode(int xc)
 int exec_getexitcode(void)
 {
 	return exit_code;
+}
+
+/** Elapsed wallclock **/
+int64 exec_clock(void)
+{
+	static struct timeb t0;
+	struct timeb t1={0,0,0,0};
+	if ( t0.time==0 )
+	{
+		ftime(&t0);
+		t1 = t0;
+	}
+	else
+		ftime(&t1);
+	return (t1.time-t0.time)*CLOCKS_PER_SEC + (t1.millitm-t0.millitm)*CLOCKS_PER_SEC/1000;
 }
 
 /** The main system initialization sequence

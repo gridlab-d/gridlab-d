@@ -73,6 +73,8 @@ STATUS exec_sync_getstatus(struct sync_data *d);
 int exec_setexitcode(int);
 int exec_getexitcode(void);
 
+int64 exec_clock(void);
+
 #ifdef __cplusplus
 }
 #endif

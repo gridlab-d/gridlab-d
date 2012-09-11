@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
-#include <copyfile.h>
 #include <errno.h>
 #include <sys/stat.h>
 
@@ -32,7 +31,7 @@ public:
 	unsigned int get_nexceptions(void) { return n_exceptions; };
 	void inc_files(char *name) 
 	{
-		output_verbose("processing %s", name);
+		output_debug("processing %s", name);
 		n_files++;
 	};
 	void inc_success(char *name) 
@@ -53,52 +52,92 @@ public:
 	void print(void) 
 	{
 		unsigned int n_ok = n_files-n_success-n_failed-n_exceptions;
-		output_message("Validation report");
-		output_message("%d files performed",n_files);
-		output_message("%d unexpected successes",n_success); 
-		output_message("%d unexpected failures",n_failed); 
-		output_message("%d unexpected exceptions",n_exceptions); 
+		output_message("Validation report:");
+		output_message("%d models tested",n_files);
+		output_verbose("%d unexpected successes",n_success); 
+		output_verbose("%d unexpected failures",n_failed); 
+		output_verbose("%d unexpected exceptions",n_exceptions); 
 		output_message("%d tests succeeded",n_ok);
 		output_message("%.0f%% success rate", 100.0*n_ok/n_files);
 	};
 };
 
-int vsystem(const char *fmt, ...)
+static char validate_cmdargs[1024];
+
+static int vsystem(const char *fmt, ...)
 {
 	char command[1024];
 	va_list ptr;
 	va_start(ptr,fmt);
 	vsprintf(command,fmt,ptr);
 	va_end(ptr);
-	return system(command);
+	output_debug("calling system('%s')",command);
+	int rc = system(command);
+	output_debug("system('%s') returns %d", command, rc);
+	return rc;
 }
 
-bool destroy_dir(char *name)
+static bool destroy_dir(char *name)
 {
 	DIR *dirp = opendir(name);
 	if ( dirp==NULL ) return true; // directory does not exist
 	struct dirent *dp;
+	output_debug("destroying contents of '%s'", name);
 	while ( dirp!=NULL && (dp=readdir(dirp))!=NULL )
 	{
-		if ( strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0 ) // && unlink(dp->d_name)!=0 )
-output_verbose("removing %s", dp->d_name); if ( false )
+		if ( strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0 )
 		{
-			output_error("destroy_dir(char *name='%s'): %s", name, strerror(errno));
+			char file[1024];
+			sprintf(file,"%s/%s",name,dp->d_name);
+			if ( unlink(file)!=0 )
+			{
+				output_error("destroy_dir(char *name='%s'): unlink('%s') returned '%s'", name, dp->d_name,strerror(errno));
+				closedir(dirp);
+				return false;
+			}
+			else
+				output_debug("deleted %s", dp->d_name);
+		}
+	}
+	closedir(dirp);
+	return true;
+}
+static bool copyfile(char *from, char *to)
+{
+	output_debug("copying '%s' to '%s'", from, to);
+	FILE *in = fopen(from,"r");
+	if ( in==NULL )
+	{
+		output_error("copyfile(char *from='%s', char *to='%s'): unable to open '%s' for reading - %s", from,to,from,strerror(errno));
+		return false; 
+	}
+	FILE *out = fopen(to,"w");
+	if ( out==NULL )
+	{
+		output_error("copyfile(char *from='%s', char *to='%s'): unable to open '%s' for writing - %s", from,to,to,strerror(errno));
+		fclose(in);
+		return false; 
+	}
+	char buffer[65536];
+	size_t len;
+	while ( (len=fread(buffer,1,sizeof(buffer),in))>0 )
+	{
+		if ( fwrite(buffer,1,len,out)!=len )
+		{
+			output_error("copyfile(char *from='%s', char *to='%s'): unable to write to '%s' - %s", from,to,to,strerror(errno));
+			fclose(in);
+			fclose(out);
 			return false;
 		}
 	}
-	return true;
-}
-bool copy_file(char *file, char *dir)
-{
-	copyfile_state_t s = copyfile_state_alloc();
-	copyfile(file,dir,s,COPYFILE_DATA);
-	copyfile_state_free(s);
+	fclose(in);
+	fclose(out);
 	return true;
 }
 
 static counters run_test(char *file)
 {
+	output_debug("run_test(char *file='%s') starting", file);
 	counters result;
 	bool is_err = strstr(file,"_err")==0;
 	bool is_opt = strstr(file,"_opt")==0;
@@ -117,43 +156,70 @@ static counters run_test(char *file)
 	getcwd(cwd,sizeof(cwd));	
 	if ( !destroy_dir(dir) )
 	{
-		output_error("run_test(char *file='%s'): unable to destroy test folder", file);
+		output_error("run_test(char *file='%s'): unable to destroy test folder", dir);
 		return result;
 	}
-	mkdir(dir,0750);
-	if ( !copy_file(file,dir) )
+	if ( !mkdir(dir,0750) )
+	{
+		output_error("run_test(char *file='%s'): unable to create test folder", dir);
+		return result;
+	}
+	else
+		output_debug("created test folder '%s'", dir);
+	char out[1024];
+	sprintf(out,"%s/%s.glm",dir,name);
+	if ( !copyfile(file,out) )
 	{
 		output_error("run_test(char *file='%s'): unable to copy to test folder %s", file, dir);
 		return result;
 	}
+	output_debug("changing to directory '%s'", dir);
 	chdir(dir);
-	clock_t t0 = clock();
-	int code = vsystem("gridlabd %s.glm 1>&outfile.txt 2>&1", name);
-	clock_t dt = clock() - t0;
-	output_message("%s.glm returns code %d in %.1f seconds", name, code, (double)dt/CLOCKS_PER_SEC);
-	output_verbose("return code is %d", code);
-	chdir(cwd);
+	int64 dt = exec_clock();
 	result.inc_files(file);
-	if ( code==XC_SIGINT ) // ctrl-c caught
-		return result;
-	else if ( is_opt ) {} // no expected outcome
-	else if ( is_exc && code==XC_EXCEPTION ) {} // expected exception
-	else if ( is_err && code!=XC_SUCCESS ) {} // expected error
-	else if ( code==XC_SUCCESS ) {} // expected success
-	else if ( code==XC_EXCEPTION ) 
-		result.inc_exceptions(file);
-	else if ( code==XC_SUCCESS  )
-		result.inc_success(file);
-	else if ( code!=XC_SUCCESS ) 
-		result.inc_failed(file); 
+	if ( global_verbose_mode==0 && global_debug_mode==0 ) {	putchar('.'); fflush(stdout); }
+	int code = vsystem("gridlabd %s %s.glm ", validate_cmdargs, name);
+	dt = exec_clock() - dt;
+	output_verbose("%s completed in %.1f seconds", out, (double)dt/(double)CLOCKS_PER_SEC);
+	output_debug("returning to directory '%s'", cwd);
+	chdir(cwd);
+	bool exited = WIFEXITED(code);
+	if ( exited )
+	{
+		code = WEXITSTATUS(code);
+		output_debug("exit code %d received from %s", code, name);
+		if ( code==XC_SIGINT ) // ctrl-c caught
+			return result;
+		else if ( is_opt ) {} // no expected outcome
+		else if ( is_exc && code==XC_EXCEPTION ) {} // expected exception
+		else if ( is_err && code!=XC_SUCCESS ) {} // expected error
+		else if ( code==XC_SUCCESS ) {} // expected success
+		else if ( code==XC_EXCEPTION ) 
+			result.inc_exceptions(file);
+		else if ( code==XC_SUCCESS  )
+			result.inc_success(file);
+		else if ( code!=XC_SUCCESS ) 
+			result.inc_failed(file);
+	}
+	else // signaled
+	{
+		code = WTERMSIG(code);
+		output_debug("signal %d received from %s", code, name);
+		if ( is_opt ) {} // no expected outcome
+		else if ( is_exc ) {} // expected exception
+		else result.inc_exceptions(file);
+	} 
+	output_debug("run_test(char *file='%s') done", file);
 	return result;
 }
 
 static counters process_dir(const char *path, bool runglms=false)
 {
+	output_debug("processing directory '%s' with run of GLMs %s", path, runglms?"enabled":"disabled");
 	counters result;
 	struct dirent *dp;
 	DIR *dirp = opendir(path);
+	if ( dirp==NULL ) return result; // nothing to do
 	while ( (dp=readdir(dirp))!=NULL )
 	{
 		char item[1024];
@@ -174,11 +240,21 @@ static counters process_dir(const char *path, bool runglms=false)
 
 int validate(int argc, char *argv[])
 {
+	int i;
+	int redirect_found = 0;
+	strcpy(validate_cmdargs,"");
+	for ( i=1 ; i<argc ; i++ )
+	{
+		if ( strcmp(argv[i],"--redirect")==0 ) redirect_found = 1;
+		strcat(validate_cmdargs,argv[i]);
+		strcat(validate_cmdargs," ");
+	}
+	if ( !redirect_found )
+		strcat(validate_cmdargs," --redirect all");
+	output_debug("starting validation with cmdargs '%s'", validate_cmdargs);
 	global_suppress_repeat_messages = 0;
-	clock_t t0 = clock();
 	counters result = process_dir(".");
 	result.print();
-	clock_t dt = clock() - t0;
-	output_message("total validation elapsed time is %.1f seconds", (double)dt/CLOCKS_PER_SEC);
-	return 0;
+	output_message("Total validation elapsed time is %.1f", (double)exec_clock()/(double)CLOCKS_PER_SEC);
+	return argc;
 }

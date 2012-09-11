@@ -696,7 +696,9 @@ static int redirect(int argc, char *argv[])
 	{
 		char buffer[1024]; char *p;
 		strcpy(buffer,*++argv); argc--;
-		if (strcmp(buffer,"all")==0)
+		if (strcmp(buffer,"none")==0)
+		{} /* used by validate to block default --redirect all behavior */
+		else if (strcmp(buffer,"all")==0)
 		{
 			if (output_redirect("output",NULL)==NULL ||
 				output_redirect("error",NULL)==NULL ||
