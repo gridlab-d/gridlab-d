@@ -9,6 +9,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 #include "globals.h"
 #include "output.h"
