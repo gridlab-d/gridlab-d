@@ -18,6 +18,7 @@
 #include "lock.h"
 #include "threadpool.h"
 
+/** validating result counter */
 class counters {
 private:
 	unsigned int n_files; // number of tests completed
@@ -32,26 +33,10 @@ public:
 	unsigned int get_nsuccess(void) { return n_success; };
 	unsigned int get_nfailed(void) { return n_failed; };
 	unsigned int get_nexceptions(void) { return n_exceptions; };
-	void inc_files(char *name) 
-	{
-		output_debug("processing %s", name);
-		n_files++;
-	};
-	void inc_success(char *name) 
-	{
-		output_error("%s success unexpected",name);
-		n_success++; 
-	};
-	void inc_failed(char *name) 
-	{
-		output_error("%s failure unexpected",name); 
-		n_failed++; 
-	};
-	void inc_exceptions(char *name) 
-	{
-		output_error("%s exception unexpected",name); 
-		n_exceptions; 
-	};
+	void inc_files(char *name) { output_debug("processing %s", name); n_files++; };
+	void inc_success(char *name) { output_error("%s success unexpected",name); n_success++; };
+	void inc_failed(char *name) { output_error("%s failure unexpected",name); n_failed++; };
+	void inc_exceptions(char *name) { output_error("%s exception unexpected",name); n_exceptions; };
 	void print(void) 
 	{
 		unsigned int n_ok = n_files-n_success-n_failed-n_exceptions;
@@ -66,8 +51,10 @@ public:
 	bool get_nerrors(void) { return n_success+n_failed+n_exceptions; };
 };
 
+/** command line arguments that are passed to test runs */
 static char validate_cmdargs[1024];
 
+/** variable arg system call */
 static int vsystem(const char *fmt, ...)
 {
 	char command[1024];
@@ -81,6 +68,7 @@ static int vsystem(const char *fmt, ...)
 	return rc;
 }
 
+/** routine to destroy the contents of a directory */
 static bool destroy_dir(char *name)
 {
 	DIR *dirp = opendir(name);
@@ -106,6 +94,8 @@ static bool destroy_dir(char *name)
 	closedir(dirp);
 	return true;
 }
+
+/** copyfile routine */
 static bool copyfile(char *from, char *to)
 {
 	output_debug("copying '%s' to '%s'", from, to);
@@ -139,6 +129,7 @@ static bool copyfile(char *from, char *to)
 	return true;
 }
 
+/** routine to run a validation test */
 static counters run_test(char *file)
 {
 	output_debug("run_test(char *file='%s') starting", file);
@@ -255,6 +246,7 @@ void *(run_test_proc)(void *arg)
 	DIRLIST *item;
 	while ( (item=popdir())!=NULL )
 	{
+		output_debug("process %d picked up '%s'", id, item->name);
 		counters result = run_test(item->name);
 		wlock(&countlock);
 		final += result;
@@ -263,6 +255,7 @@ void *(run_test_proc)(void *arg)
 	return NULL;
 }
 
+/** routine to process a directory for autotests */
 static void process_dir(const char *path, bool runglms=false)
 {
 	output_debug("processing directory '%s' with run of GLMs %s", path, runglms?"enabled":"disabled");
@@ -288,6 +281,7 @@ static void process_dir(const char *path, bool runglms=false)
 	return;
 }
 
+/** main validation routine */
 int validate(int argc, char *argv[])
 {
 	size_t i;
@@ -306,14 +300,19 @@ int validate(int argc, char *argv[])
 	process_dir(".");
 	
 	int n_procs = global_threadcount;
-	if ( n_procs==0 ) n_procs = 1; //processor_count();
+	if ( n_procs==0 ) n_procs = processor_count();
 	pthread_t *pid = new pthread_t[n_procs];
 	output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
 	for ( i=0 ; i<n_procs ; i++ )
 		pthread_create(&pid[i],NULL,run_test_proc,(void*)i);
 	void *rc;
+	output_debug("begin waiting process");
 	for ( i=0 ; i<n_procs ; i++ )
+	{
 		pthread_join(pid[i],&rc);
+		output_debug("process %d done", i);
+	}
+	delete [] pid;
 	final.print();
 	output_message("Total validation elapsed time is %.1f", (double)exec_clock()/(double)CLOCKS_PER_SEC);
 	if ( final.get_nerrors()==0 )

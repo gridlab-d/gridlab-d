@@ -47,8 +47,6 @@ An example of how this is done is implemented in exec.c for commit_all().
 #include "timestamp.h"
 #include <pthread.h>
 
-int processor_count(void);
-
 typedef struct s_mtiteratorlist MTI;
 
 /** Iterator data */
@@ -129,6 +127,10 @@ struct s_mtiteratorlist {
     MTIPROC *process;           /**< list of iterator processes */
 }; /** iterator list structure */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Multithread iterator initialization
 
     Call this function to create a multithread iterator (MTI).
@@ -154,6 +156,11 @@ MTI *mti_init(const char *name, /**< name of iterator */
 int mti_run(MTIDATA result,   /**< result of iterator */
             MTI *iterator,    /**< pointer return by mti_init */
             MTIDATA input);   /**< data to send to iterator call function */
+
+int processor_count(void);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /**@} _THREADPOOL_H */
 
