@@ -14,6 +14,8 @@
 #include "output.h"
 #include "validate.h"
 #include "exec.h"
+#include "lock.h"
+#include "threadpool.h"
 
 class counters {
 private:
@@ -60,6 +62,7 @@ public:
 		output_message("%d tests succeeded",n_ok);
 		output_message("%.0f%% success rate", 100.0*n_ok/n_files);
 	};
+	bool get_nerrors(void) { return n_success+n_failed+n_exceptions; };
 };
 
 static char validate_cmdargs[1024];
@@ -213,13 +216,59 @@ static counters run_test(char *file)
 	return result;
 }
 
-static counters process_dir(const char *path, bool runglms=false)
+/* simple stack to handle directories that need to be processed */
+typedef struct s_dirstack {
+	char name[1024];
+	struct s_dirstack *next;
+} DIRLIST;
+static DIRLIST *dirstack = NULL;
+static unsigned int dirlock = 0;
+static void pushdir(char *dir)
+{
+	output_debug("adding %s to process stack", dir);
+	DIRLIST *item = (DIRLIST*)malloc(sizeof(DIRLIST));
+	strncpy(item->name,dir,sizeof(item->name)-1);
+	wlock(&dirlock);
+	item->next = dirstack;
+	dirstack = item;
+	wunlock(&dirlock);
+}
+/* popped item must be freed after no longer needed */
+static DIRLIST *popdir(void)
+{
+	rlock(&dirlock);
+	DIRLIST *item = dirstack;
+	if ( dirstack ) dirstack = dirstack->next;
+	runlock(&dirlock);
+	output_debug("pulling %s from process stack", item->name);
+	return item;
+}
+
+/* global counter */
+static counters final;
+static unsigned int countlock = 0;
+void *(run_test_proc)(void *arg)
+{
+	size_t id = (size_t)arg;
+	output_debug("starting run_test_proc id %d", id);
+	DIRLIST *item;
+	while ( (item=popdir())!=NULL )
+	{
+		counters result = run_test(item->name);
+		wlock(&countlock);
+		final += result;
+		wunlock(&countlock);
+	}
+	return NULL;
+}
+
+static void process_dir(const char *path, bool runglms=false)
 {
 	output_debug("processing directory '%s' with run of GLMs %s", path, runglms?"enabled":"disabled");
 	counters result;
 	struct dirent *dp;
 	DIR *dirp = opendir(path);
-	if ( dirp==NULL ) return result; // nothing to do
+	if ( dirp==NULL ) return; // nothing to do
 	while ( (dp=readdir(dirp))!=NULL )
 	{
 		char item[1024];
@@ -228,19 +277,19 @@ static counters process_dir(const char *path, bool runglms=false)
 		if ( ext==NULL ) continue;
 		if ( strcmp(dp->d_name,".")==0 || strcmp(dp->d_name,"..")==0 ) continue;
 		if ( strcmp(dp->d_name,"autotest")==0 )
-			result += process_dir(item,true);
+			process_dir(item,true);
 		else if ( dp->d_type==DT_DIR )
-			result += process_dir(item);
+			process_dir(item);
 		else if ( runglms==true && strcmp(ext,".glm")==0 )
-			result += run_test(item);
+			pushdir(item);
 	}
 	closedir(dirp);
-	return result;
+	return;
 }
 
 int validate(int argc, char *argv[])
 {
-	int i;
+	size_t i;
 	int redirect_found = 0;
 	strcpy(validate_cmdargs,"");
 	for ( i=1 ; i<argc ; i++ )
@@ -251,10 +300,24 @@ int validate(int argc, char *argv[])
 	}
 	if ( !redirect_found )
 		strcat(validate_cmdargs," --redirect all");
-	output_debug("starting validation with cmdargs '%s'", validate_cmdargs);
 	global_suppress_repeat_messages = 0;
-	counters result = process_dir(".");
-	result.print();
+	output_debug("starting scan for autotest folders");
+	process_dir(".");
+	
+	int n_procs = global_threadcount;
+	if ( n_procs==0 ) n_procs = 1; //processor_count();
+	pthread_t *pid = new pthread_t[n_procs];
+	output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
+	for ( i=0 ; i<n_procs ; i++ )
+		pthread_create(&pid[i],NULL,run_test_proc,(void*)i);
+	void *rc;
+	for ( i=0 ; i<n_procs ; i++ )
+		pthread_join(pid[i],&rc);
+	final.print();
 	output_message("Total validation elapsed time is %.1f", (double)exec_clock()/(double)CLOCKS_PER_SEC);
+	if ( final.get_nerrors()==0 )
+		exec_setexitcode(XC_SUCCESS);
+	else
+		exec_setexitcode(XC_TSTERR);
 	return argc;
 }
