@@ -60,12 +60,12 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	char *browser = getenv("GLBROWSER");
 	char *buildinfo = strstr(BUILD,":");
 
-	exec_clock(); /* initialize the wall clock */
-	realtime_starttime(); /* mark start */
-	
 	/* set the default timezone */
 	timestamp_set_tz(NULL);
 
+	exec_clock(); /* initialize the wall clock */
+	realtime_starttime(); /* mark start */
+	
 	/* set the version info */
 	global_version_build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
 	strcpy(global_version_branch,BRANCH);
