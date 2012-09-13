@@ -5655,12 +5655,12 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		if (strcmp(op,"<")==0) { if (!strcmp(value,val)<0) suppress|=(1<<nesting); }
-		else if (strcmp(op,">")==0) { if (!strcmp(value,val)>0) suppress|=(1<<nesting); }
-		else if (strcmp(op,">=")==0) { if (!strcmp(value,val)>=0) suppress|=(1<<nesting); }
-		else if (strcmp(op,"<=")==0) { if (!strcmp(value,val)<=0) suppress|=(1<<nesting); }
-		else if (strcmp(op,"==")==0) { if (!strcmp(value,val)==0) suppress|=(1<<nesting); }
-		else if (strcmp(op,"!=")==0) { if (!strcmp(value,val)!=0) suppress|=(1<<nesting); }
+		if (strcmp(op,"<")==0) { if (!(strcmp(value,val)<0)) suppress|=(1<<nesting); }
+		else if (strcmp(op,">")==0) { if (!(strcmp(value,val)>0)) suppress|=(1<<nesting); }
+		else if (strcmp(op,">=")==0) { if (!(strcmp(value,val)>=0)) suppress|=(1<<nesting); }
+		else if (strcmp(op,"<=")==0) { if (!(strcmp(value,val)<=0)) suppress|=(1<<nesting); }
+		else if (strcmp(op,"==")==0) { if (!(strcmp(value,val)==0)) suppress|=(1<<nesting); }
+		else if (strcmp(op,"!=")==0) { if (!(strcmp(value,val)!=0)) suppress|=(1<<nesting); }
 		else
 		{
 			output_error_raw("%s(%d): operator %s is not recognized", filename,linenum,op);
