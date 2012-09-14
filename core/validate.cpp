@@ -102,7 +102,7 @@ const char *GetLastErrorMsg(void)
 	char *p;
 	while ( (p=strchr((char*)lpMsgBuf,'\n'))!=NULL ) *p=' ';
 	while ( (p=strchr((char*)lpMsgBuf,'\r'))!=NULL ) *p=' ';
-    wsprintf(szBuf, "%s (error code %d)", lpMsgBuf, dw); 
+    sprintf(szBuf, "%s (error code %d)", lpMsgBuf, dw); 
  
     LocalFree(lpMsgBuf);
 	return szBuf;
