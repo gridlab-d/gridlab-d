@@ -411,7 +411,7 @@ static void process_dir(const char *path, bool runglms=false)
 		size_t len = sprintf(item,"%s/%s",path,dp->d_name);
 		char *ext = strrchr(item,'.');
 		if ( dp->d_name[0]=='.' ) continue;
-		if ( strcmp(dp->d_name,"autotest")==0 )
+		if ( dp->d_type==DT_DIR && strcmp(dp->d_name,"autotest")==0 )
 			process_dir(item,true);
 		else if ( dp->d_type==DT_DIR )
 			process_dir(item);
