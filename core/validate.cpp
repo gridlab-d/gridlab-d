@@ -24,6 +24,54 @@
 #include "lock.h"
 #include "threadpool.h"
 
+/** validating result counter */
+class counters {
+private:
+	unsigned int _lock;
+	unsigned int n_files; // number of tests completed
+	unsigned int n_success; // unexpected successes
+	unsigned int n_failed; // unexpected failures
+	unsigned int n_exceptions; // unexpected exceptions
+	unsigned int n_access; // folder access failure
+private:
+	void wlock(void) { ::wlock(&_lock); };
+	void wunlock(void) { ::wunlock(&_lock); };
+	void rlock(void) { ::rlock(&_lock); };
+	void runlock(void) { ::runlock(&_lock); };
+public:
+	counters(void) { n_files=n_success=n_failed=n_exceptions=n_access=0; };
+	counters operator+(counters a) { wlock(); n_files+=a.get_nfiles(); n_success+=a.get_nsuccess(); n_failed+=a.get_nfailed(); n_exceptions+=get_nexceptions(); wunlock(); return *this;};
+	counters operator+=(counters a) { *this = *this+a; return *this; };
+	unsigned int get_nfiles(void) { return n_files; };
+	unsigned int get_nsuccess(void) { return n_success; };
+	unsigned int get_nfailed(void) { return n_failed; };
+	unsigned int get_nexceptions(void) { return n_exceptions; };
+	unsigned int get_naccess(void) { return n_access; };
+	void inc_files(const char *name) { output_debug("processing %s", name); wlock(); n_files++; wunlock(); };
+	void inc_access(const char *name) { output_debug("%s folder access failure", name); wlock(); n_access++; wunlock(); };
+	void inc_success(const char *name) { output_error("%s success unexpected",name); wlock(); n_success++; wunlock(); };
+	void inc_failed(const char *name) { output_error("%s failure unexpected",name); wlock(); n_failed++; wunlock(); };
+	void inc_exceptions(const char *name) { output_error("%s exception unexpected",name); wlock(); n_exceptions++; wunlock(); };
+	void print(void) 
+	{
+		rlock();
+		unsigned int n_ok = n_files-n_success-n_failed-n_exceptions;
+		output_message("Validation report:");
+		output_message("%d directory access failures", n_access);
+		output_message("%d models tested",n_files);
+		output_verbose("%d unexpected successes",n_success); 
+		output_verbose("%d unexpected failures",n_failed); 
+		output_verbose("%d unexpected exceptions",n_exceptions); 
+		output_message("%d tests succeeded",n_ok);
+		output_message("%.0f%% success rate", 100.0*n_ok/n_files);
+		runlock();
+	};
+	bool get_nerrors(void) { return n_success+n_failed+n_exceptions; };
+};
+
+/* global counter */
+static counters final;
+
 /* Windows implementation of opendir/readdir/closedir */
 #ifdef WIN32
 struct dirent {
@@ -36,6 +84,29 @@ typedef struct {
 	struct dirent *next;
 } DIR;
 #define DT_DIR 0x01
+const char *GetLastErrorMsg(void)
+{
+    static TCHAR szBuf[256]; 
+    LPVOID lpMsgBuf;
+    DWORD dw = GetLastError(); 
+
+    FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+        FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,
+        dw,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPTSTR) &lpMsgBuf,
+        0, NULL );
+
+	char *p;
+	while ( (p=strchr((char*)lpMsgBuf,'\n'))!=NULL ) *p=' ';
+	while ( (p=strchr((char*)lpMsgBuf,'\r'))!=NULL ) *p=' ';
+    wsprintf(szBuf, "%s (error code %d)", lpMsgBuf, dw); 
+ 
+    LocalFree(lpMsgBuf);
+	return szBuf;
+}
 DIR *opendir(const char *dirname)
 {
 	WIN32_FIND_DATA fd;
@@ -44,7 +115,8 @@ DIR *opendir(const char *dirname)
 	HANDLE dh = FindFirstFile(search,&fd);
 	if ( dh==INVALID_HANDLE_VALUE )
 	{
-		output_error("opendir(const char *dirname='%s'): error code %d", dirname, GetLastError());
+		output_error("opendir(const char *dirname='%s'): %s", dirname, GetLastErrorMsg());
+		final.inc_access(dirname);
 		return NULL;
 	}
 	DIR *dirp = new DIR;
@@ -59,14 +131,16 @@ DIR *opendir(const char *dirname)
 		struct dirent *dp = (struct dirent*)malloc(sizeof(struct dirent));
 		if ( dp==NULL )
 		{
-			output_error("opendir(const char *dirname='%s'): error code %d", dirname, GetLastError());
+			output_error("opendir(const char *dirname='%s'): %s", dirname, GetLastErrorMsg());
+			final.inc_access(dirname);
 			return NULL;
 		}
 		dp->d_type = (fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) ? DT_DIR : 0;
 		dp->d_name = (char*)malloc(strlen(fd.cFileName)+10);
 		if ( dp->d_name==NULL )
 		{
-			output_error("opendir(const char *dirname='%s'): error code %d", dirname, GetLastError());
+			output_error("opendir(const char *dirname='%s'): %s", dirname, GetLastErrorMsg());
+			final.inc_access(dirname);
 			return NULL;
 		}
 		strcpy(dp->d_name,fd.cFileName);
@@ -75,7 +149,10 @@ DIR *opendir(const char *dirname)
 		last = dp;
 	}
 	if ( GetLastError()!=ERROR_NO_MORE_FILES )
-		output_error("opendir(const char *dirname='%s'): error code %d", dirname, GetLastError());
+	{
+		output_error("opendir(const char *dirname='%s'): %s", dirname, GetLastErrorMsg());
+		final.inc_access(dirname);
+	}
 	FindClose(dh);
 	return dirp;
 }
@@ -102,39 +179,6 @@ int closedir(DIR *dirp)
 #define WEXITSTATUS(X) X
 #define WTERMSIG(X) 0
 #endif
-
-/** validating result counter */
-class counters {
-private:
-	unsigned int n_files; // number of tests completed
-	unsigned int n_success; // unexpected successes
-	unsigned int n_failed; // unexpected failures
-	unsigned int n_exceptions; // unexpected exceptions
-public:
-	counters(void) { n_files=n_success=n_failed=n_exceptions=0; };
-	counters operator+(counters a) { n_files+=a.get_nfiles(); n_success+=a.get_nsuccess(); n_failed+=a.get_nfailed(); n_exceptions+=get_nexceptions(); return *this;};
-	counters operator+=(counters a) { *this = *this+a; return *this; };
-	unsigned int get_nfiles(void) { return n_files; };
-	unsigned int get_nsuccess(void) { return n_success; };
-	unsigned int get_nfailed(void) { return n_failed; };
-	unsigned int get_nexceptions(void) { return n_exceptions; };
-	void inc_files(char *name) { output_debug("processing %s", name); n_files++; };
-	void inc_success(char *name) { output_error("%s success unexpected",name); n_success++; };
-	void inc_failed(char *name) { output_error("%s failure unexpected",name); n_failed++; };
-	void inc_exceptions(char *name) { output_error("%s exception unexpected",name); n_exceptions; };
-	void print(void) 
-	{
-		unsigned int n_ok = n_files-n_success-n_failed-n_exceptions;
-		output_message("Validation report:");
-		output_message("%d models tested",n_files);
-		output_verbose("%d unexpected successes",n_success); 
-		output_verbose("%d unexpected failures",n_failed); 
-		output_verbose("%d unexpected exceptions",n_exceptions); 
-		output_message("%d tests succeeded",n_ok);
-		output_message("%.0f%% success rate", 100.0*n_ok/n_files);
-	};
-	bool get_nerrors(void) { return n_success+n_failed+n_exceptions; };
-};
 
 /** command line arguments that are passed to test runs */
 static char validate_cmdargs[1024];
@@ -219,9 +263,9 @@ static counters run_test(char *file)
 {
 	output_debug("run_test(char *file='%s') starting", file);
 	counters result;
-	bool is_err = strstr(file,"_err")==0;
-	bool is_opt = strstr(file,"_opt")==0;
-	bool is_exc = strstr(file,"_exc")==0;
+	bool is_err = strstr(file,"_err")!=NULL;
+	bool is_opt = strstr(file,"_opt")!=NULL;
+	bool is_exc = strstr(file,"_exc")!=NULL;
 	char dir[1024];
 	strcpy(dir,file);
 	char *ext = strrchr(dir,'.');
@@ -237,6 +281,7 @@ static counters run_test(char *file)
 	if ( !destroy_dir(dir) )
 	{
 		output_error("run_test(char *file='%s'): unable to destroy test folder", dir);
+		result.inc_access(file);
 		return result;
 	}
 #ifdef WIN32
@@ -246,6 +291,7 @@ static counters run_test(char *file)
 #endif
 	{
 		output_error("run_test(char *file='%s'): unable to create test folder", dir);
+		result.inc_access(file);
 		return result;
 	}
 	else
@@ -255,13 +301,14 @@ static counters run_test(char *file)
 	if ( !copyfile(file,out) )
 	{
 		output_error("run_test(char *file='%s'): unable to copy to test folder %s", file, dir);
+		result.inc_access(file);
 		return result;
 	}
 	output_debug("changing to directory '%s'", dir);
 	chdir(dir);
 	int64 dt = exec_clock();
 	result.inc_files(file);
-	if ( global_verbose_mode==0 && global_debug_mode==0 ) {	putchar('.'); fflush(stdout); }
+	//if ( global_verbose_mode==0 && global_debug_mode==0 ) {	putchar('.'); fflush(stdout); }
 	int code = vsystem("%s %s %s.glm ", 
 #ifdef WIN32
 		_pgmptr,
@@ -270,7 +317,7 @@ static counters run_test(char *file)
 #endif
 		validate_cmdargs, name);
 	dt = exec_clock() - dt;
-	output_verbose("%s completed in %.1f seconds", out, (double)dt/(double)CLOCKS_PER_SEC);
+	output_verbose("%s completed with exit code %d in %.1f seconds", out, code, (double)dt/(double)CLOCKS_PER_SEC);
 	output_debug("returning to directory '%s'", cwd);
 	chdir(cwd);
 	bool exited = WIFEXITED(code);
@@ -280,15 +327,19 @@ static counters run_test(char *file)
 		output_debug("exit code %d received from %s", code, name);
 		if ( code==XC_SIGINT ) // ctrl-c caught
 			return result;
-		else if ( is_opt ) {} // no expected outcome
-		else if ( is_exc && code==XC_EXCEPTION ) {} // expected exception
-		else if ( is_err && code!=XC_SUCCESS ) {} // expected error
-		else if ( code==XC_SUCCESS ) {} // expected success
-		else if ( code==XC_EXCEPTION ) 
+		else if ( is_opt ) // no expected outcome
+			output_verbose("%s result optional", name);
+		else if ( is_exc && code==XC_EXCEPTION ) // expected exception
+			output_verbose("%s exception was expected", name);
+		else if ( is_err && code!=XC_SUCCESS ) // expected error
+			output_verbose("%s error was expected", name);
+		else if ( code==XC_SUCCESS ) // expected success
+			output_verbose("%s success was expected", name);
+		else if ( code==XC_EXCEPTION ) // unexpected exception
 			result.inc_exceptions(file);
-		else if ( code==XC_SUCCESS  )
+		else if ( code==XC_SUCCESS  ) // unexpected success
 			result.inc_success(file);
-		else if ( code!=XC_SUCCESS ) 
+		else if ( code!=XC_SUCCESS ) // unexpected failure
 			result.inc_failed(file);
 	}
 	else // signaled
@@ -331,9 +382,6 @@ static DIRLIST *popdir(void)
 	return item;
 }
 
-/* global counter */
-static counters final;
-static unsigned int countlock = 0;
 void *(run_test_proc)(void *arg)
 {
 	size_t id = (size_t)arg;
@@ -343,9 +391,7 @@ void *(run_test_proc)(void *arg)
 	{
 		output_debug("process %d picked up '%s'", id, item->name);
 		counters result = run_test(item->name);
-		wlock(&countlock);
 		final += result;
-		wunlock(&countlock);
 	}
 	return NULL;
 }
