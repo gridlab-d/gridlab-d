@@ -40,7 +40,7 @@ private:
 	void runlock(void) { ::runlock(&_lock); };
 public:
 	counters(void) { n_files=n_success=n_failed=n_exceptions=n_access=0; };
-	counters operator+(counters a) { wlock(); n_files+=a.get_nfiles(); n_success+=a.get_nsuccess(); n_failed+=a.get_nfailed(); n_exceptions+=get_nexceptions(); wunlock(); return *this;};
+	counters operator+(counters a) { wlock(); n_files+=a.get_nfiles(); n_success+=a.get_nsuccess(); n_failed+=a.get_nfailed(); n_exceptions+=a.get_nexceptions(); wunlock(); return *this;};
 	counters operator+=(counters a) { *this = *this+a; return *this; };
 	unsigned int get_nfiles(void) { return n_files; };
 	unsigned int get_nsuccess(void) { return n_success; };
@@ -175,9 +175,9 @@ int closedir(DIR *dirp)
 	}
 	return 0;
 }
-#define WIFEXITED(X) true
-#define WEXITSTATUS(X) X
-#define WTERMSIG(X) 0
+#define WIFEXITED(X) (X>=0&&X<128)
+#define WEXITSTATUS(X) (X&127)
+#define WTERMSIG(X) (X&127)
 #endif
 
 /** command line arguments that are passed to test runs */
@@ -309,7 +309,7 @@ static counters run_test(char *file)
 	int64 dt = exec_clock();
 	result.inc_files(file);
 	//if ( global_verbose_mode==0 && global_debug_mode==0 ) {	putchar('.'); fflush(stdout); }
-	int code = vsystem("%s %s %s.glm ", 
+	unsigned int code = vsystem("%s %s %s.glm ", 
 #ifdef WIN32
 		_pgmptr,
 #else
@@ -348,7 +348,8 @@ static counters run_test(char *file)
 		output_debug("signal %d received from %s", code, name);
 		if ( is_opt ) {} // no expected outcome
 		else if ( is_exc ) {} // expected exception
-		else result.inc_exceptions(file);
+		else 
+			result.inc_exceptions(file);
 	} 
 	output_debug("run_test(char *file='%s') done", file);
 	return result;
@@ -409,7 +410,7 @@ static void process_dir(const char *path, bool runglms=false)
 		char item[1024];
 		size_t len = sprintf(item,"%s/%s",path,dp->d_name);
 		char *ext = strrchr(item,'.');
-		if ( strcmp(dp->d_name,".")==0 || strcmp(dp->d_name,"..")==0 ) continue;
+		if ( dp->d_name[0]=='.' ) continue;
 		if ( strcmp(dp->d_name,"autotest")==0 )
 			process_dir(item,true);
 		else if ( dp->d_type==DT_DIR )
@@ -437,7 +438,8 @@ int validate(int argc, char *argv[])
 		strcat(validate_cmdargs," --redirect all");
 	global_suppress_repeat_messages = 0;
 	output_debug("starting scan for autotest folders");
-	process_dir(".");
+	
+	process_dir(global_workdir);
 	
 	int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();

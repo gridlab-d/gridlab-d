@@ -1084,6 +1084,23 @@ static int locktest(int argc, char *argv[])
 	return CMDOK;
 }
 
+static int workdir(int argc, char *argv[])
+{
+	if ( argc<2 )
+	{
+		output_error("--workdir requires a directory argument");
+		return CMDERR;
+	}
+	strcpy(global_workdir,argv[1]);
+	if ( chdir(global_workdir)!=0 )
+	{
+		output_error("%s is not a valid workdir", global_workdir);
+		return CMDERR;
+	}
+	output_verbose("working directory is '%s'", getcwd(global_workdir,sizeof(global_workdir)));
+	return 1;
+}
+
 #include "validate.h"
 
 /*********************************************/
@@ -1107,6 +1124,7 @@ static CMDARG main[] = {
 	{"quiet",		"q",	quiet,			NULL, "Toggles suppression of all but error and fatal messages" },
 	{"verbose",		"v",	verbose,		NULL, "Toggles output of verbose messages" },
 	{"warn",		"w",	warn,			NULL, "Toggles display of warning messages" },
+	{"workdir",		"W",	workdir,		NULL, "Sets the working directory" },
 	
 	{NULL,NULL,NULL,NULL, "Global and module control"},
 	{"define",		"D",	define,			"<name>=[<module>:]<value>", "Defines or sets a global (or module) variable" },
