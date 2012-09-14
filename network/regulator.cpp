@@ -21,6 +21,7 @@
 CLASS* regulator::oclass = NULL;
 CLASS* regulator::pclass = NULL;
 regulator *regulator::defaults = NULL;
+CLASS *regulator_class = (NULL);
 
 regulator::regulator(MODULE *mod) : link(mod)
 {

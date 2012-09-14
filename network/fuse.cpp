@@ -20,6 +20,7 @@
 CLASS* fuse::oclass = NULL;
 CLASS* fuse::pclass = NULL;
 fuse *fuse::defaults = NULL;
+CLASS *fuse_class = (NULL);
 
 fuse::fuse(MODULE *mod) : link(mod)
 {

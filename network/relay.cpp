@@ -48,6 +48,8 @@ CLASS* relay::oclass = NULL;
 CLASS* relay::pclass = NULL;
 relay *relay::defaults = NULL;
 
+CLASS *relay_class = (NULL);
+
 relay::relay(MODULE *mod) : link(mod)
 {
 	// first time init

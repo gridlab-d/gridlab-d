@@ -65,7 +65,23 @@ int check_COM_output_load(_variant_t output){
 // DC's magic GLD smoke jars.  Don't breathe this!
 EXPORT_CREATE(pw_load);
 EXPORT_INIT(pw_load);
-EXPORT_SYNC(pw_load);
+//EXPORT_SYNC(pw_load);
+
+EXPORT TIMESTAMP sync_pw_load(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) { 
+	pw_load *p;
+	try {
+			TIMESTAMP t1=TS_NEVER; p=OBJECTDATA(obj,pw_load); 
+		switch (pass) { 
+		case PC_PRETOPDOWN: t1 = p->presync(t0); break; 
+		case PC_BOTTOMUP: t1 = p->sync(t0); break; 
+		case PC_POSTTOPDOWN: t1 = p->postsync(t0); break; 
+		default: throw "invalid pass request"; break; } 
+		if ( (obj->oclass->passconfig&(PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN)&(~pass)) <= pass ) obj->clock = t0; 
+		return t1; 
+	} 
+	SYNC_CATCHALL(pw_load); }
+
+
 EXPORT_ISA(pw_load);
 
 CLASS *pw_load::oclass = NULL;
@@ -116,8 +132,6 @@ pw_load::pw_load(MODULE *module)
 int pw_load::create(){
 	return 1;
 }
-
-#include <iostream>
 
 // it would be faster to cache some of these in the object rather than re-allocating them each iteration. -mh
 /**
@@ -177,8 +191,10 @@ int pw_load::get_powerworld_voltage(){
 		if (FAILED(hr)){
 			throw _com_error(hr);
 		}
-		
-		pvariant[0] = this->powerworld_bus_num;
+		char pbn_str[32];
+		sprintf(pbn_str, "%i", powerworld_bus_num);
+		//pvariant[0] = this->powerworld_bus_num;
+		pvariant[0] = _com_util::ConvertStringToBSTR(pbn_str);
 		pvariant[1] = tempbstr = _com_util::ConvertStringToBSTR(this->powerworld_load_id);
 		pvariant[2] = _variant_t();
 		pvariant[3] = _variant_t();
@@ -239,6 +255,9 @@ int pw_load::get_powerworld_voltage(){
 		// @TODO this needs to be a gl_error, but err.ErrorMessage returns a TCHAR*
 		std::cout << "!!! " << err.ErrorMessage() << "\n";
 		return 1; // failure
+	}
+	catch(...){
+		std::cout << "Unknown excetpion in get_pwd_voltage!";
 	}
 	return 0; // success
 }
@@ -342,10 +361,10 @@ int pw_load::init(OBJECT *parent){
 	_variant_t plist;
 	_variant_t vlist;
 	_variant_t output;
-	SAFEARRAYBOUND bounds[1];
-	_variant_t plistNames, vlistNames;
-	LPSAFEARRAY plistArray, vlistArray;
-	VARIANT *plistNameArray, *vlistNameArray; // slightly inaccurate nomenclature but aiming for consistency
+//	SAFEARRAYBOUND bounds[1];
+//	_variant_t plistNames, vlistNames;
+//	LPSAFEARRAY plistArray, vlistArray;
+//	VARIANT *plistNameArray, *vlistNameArray; // slightly inaccurate nomenclature but aiming for consistency
 
 	// defer on model object
 	if(0 == model){
@@ -359,7 +378,7 @@ int pw_load::init(OBJECT *parent){
 
 	if(!gl_object_isa(model, "pw_model")){
 		char objname[256], modelname[256];
-		gl_error("pw_load::init(): object \'%s\' specifies a model object \'%s\' that is not a pw_model object", gl_name(model, objname, 255), gl_name(model, objname, 255));
+		gl_error("pw_load::init(): object \'%s\' specifies a model object \'%s\' that is not a pw_model object", gl_name(model, objname, 255), gl_name(model, modelname, 255));
 		/* TROUBLESHOOT
 			pw_load objects require that the specified model object refers to a pw_model object.  Other types are not supported.
 		 */
@@ -397,7 +416,7 @@ int pw_load::init(OBJECT *parent){
 		gl_error("pw_load::init(): unable to get PowerWorld bus voltage from Bus #%i, Load ID %s, for the pw_load \'%s\'", powerworld_bus_num, powerworld_load_id, gl_name(OBJECTHDR(this), objname, 255));
 		/* TROUBLESHOOT
 			An error occured while calling the function that retrieves data from PowerWorld.  The Bus/Load pair may be incorrect, there may have
-			been a COM error with SimAuto,
+			been a COM error with SimAuto, or other unexpected results may have occured.
 		 */
 		return 0;
 	}
@@ -416,6 +435,10 @@ int pw_load::init(OBJECT *parent){
 	@return TS_NEVER on success, TS_INVALID if unable to retrieve the bus voltage
  **/
 TIMESTAMP pw_load::presync(TIMESTAMP t1){
+	if(0 == cModel){
+		gl_error("pw_load::presync(): cModel is null (is deferred initialization enabled?)");
+		return TS_INVALID;
+	}
 	if(!cModel->get_valid_flag()){
 		gl_verbose("not fetching voltage due to invalid model state");
 	} else {

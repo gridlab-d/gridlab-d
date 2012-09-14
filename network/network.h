@@ -63,6 +63,7 @@
 //#include "generator.h"
 #include "pw_model.h"
 #include "pw_load.h"
+#include "pw_recorder.h"
 
 //int check_COM_output(_variant_t output);
 

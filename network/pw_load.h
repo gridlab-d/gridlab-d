@@ -11,6 +11,8 @@
 #include "gridlabd.h"
 #include "network.h"
 
+#include <iostream>
+
 class pw_model;
 
 class pw_load : public gld_object {

@@ -69,7 +69,9 @@
 CLASS* node::oclass = NULL;
 CLASS* node::pclass = NULL;
 node *node::defaults = NULL;
-//CLASS *node_class = NULL;
+
+CLASS *node_class = (NULL);
+OBJECT *last_node = (NULL);
 
 node::node(MODULE *mod) 
 {

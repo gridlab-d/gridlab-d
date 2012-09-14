@@ -19,6 +19,7 @@
 CLASS *capbank::oclass = NULL;
 CLASS *capbank::pclass = NULL;
 capbank *capbank::defaults = NULL;
+CLASS *capbank_class = NULL;
 
 capbank::capbank(MODULE *mod) : link(mod)
 {

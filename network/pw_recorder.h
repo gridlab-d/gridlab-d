@@ -7,7 +7,25 @@
 #ifndef _PW_RECORDER_H_
 #define _PW_RECORDER_H_
 
+
+#ifdef int64
+#undef int64
+#endif
+
+#include <WTypes.h>
+#include <comutil.h>
+
+// variation on core/platform.h!
+#ifndef int64
+#ifdef WIN32
+#define int64 __int64
+#endif
+#endif
+
 #include "gridlabd.h"
+#include "network.h"
+#include "pw_model.h"
+
 
 class pw_recorder : public gld_object {
 public:
@@ -24,10 +42,32 @@ public:
 	TIMESTAMP commit(TIMESTAMP t1, TIMESTAMP t2);
 	int isa(char *classname);
 
+	int build_keys();
+	int get_pw_values();
+	int GPSE();
+	int write_header();
+	
 public:
 	GL_ATOMIC(OBJECT *, model);
 	GL_STRING(char1024, outfile_name);
-	
+	GL_STRING(char256, obj_classname);
+	GL_STRING(char1024, key_strings);
+	GL_STRING(char1024, key_values);
+	GL_STRING(char1024, properties);
+	GL_STRING(char1024, line_output);
+	GL_ATOMIC(int64, interval);
+	GL_ATOMIC(int64, limit);
+private:
+	pw_model *cModel;
+	FILE *outfile;
+	int key_count;
+	int prop_count;
+	char1024 key_strings_copy, key_values_copy, props_copy;
+	BSTR type_bstr;
+	SAFEARRAYBOUND bounds[1];
+	_variant_t fields, values;
+	char **out_values; // char [prop_ct][64] in practice
+	bool is_ready;
 };
 
 #endif // _PW_RECORDER_H_

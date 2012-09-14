@@ -59,6 +59,8 @@
 CLASS* link::oclass = NULL;
 CLASS* link::pclass = NULL;
 link *link::defaults = NULL;
+CLASS *link_class = (NULL);
+OBJECT *last_link = (NULL);
 
 link::link(MODULE *mod) 
 {

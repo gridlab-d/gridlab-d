@@ -155,6 +155,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 //	new generator(module);
 	CLASS *first = (new pw_model(module))->oclass;
 	new pw_load(module);
+	new pw_recorder(module);
 	/* always return the first class registered */
 	return first;
 }

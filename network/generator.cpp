@@ -53,6 +53,9 @@ CLASS* generator::oclass = NULL;
 CLASS* generator::pclass = NULL;
 generator *generator::defaults = NULL;
 
+CLASS *generator_class = (NULL);
+OBJECT *last_generator = (NULL);
+
 generator::generator(MODULE *mod)
 {
 	// first time init

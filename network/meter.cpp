@@ -23,6 +23,8 @@ meter *meter::defaults = NULL;
 CLASS* meter::pclass = NULL;
 //CLASS *meter_class = NULL;
 
+CLASS *meter_class = (NULL);
+
 meter::meter(MODULE *mod) : node(mod)
 {
 	// first time init

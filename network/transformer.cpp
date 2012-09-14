@@ -23,6 +23,8 @@ CLASS* transformer::oclass = NULL;
 CLASS* transformer::pclass = NULL;
 transformer *transformer::defaults = NULL;
 
+CLASS *transformer_class = (NULL);
+
 transformer::transformer(MODULE *mod) : link(mod)
 {
 	// first time init
