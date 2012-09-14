@@ -1078,31 +1078,13 @@ static int example(int argc, char *argv[])
 	return CMDOK;
 }
 
-#ifdef WIN32
-static int validate(int argc, char *argv[])
-{
-	char buffer[1024]="python validate.py";
-	if ( global_threadcount!=1 )
-		sprintf(buffer,"python validate.py -T %d", global_threadcount);
-	if ( global_verbose_mode ) strcat(buffer," -v");
-	if ( global_debug_mode ) strcat(buffer," -d");
-	if ( global_force_compile ) strcat(buffer,"-r");
-	/* TODO pass through remaining args */
-	output_verbose("executing system('%s')", buffer);
-	if ( system(buffer)==0 )
-		return 0;
-	else
-		return CMDERR;
-}
-#else
-#include "validate.h"
-#endif
-
 static int locktest(int argc, char *argv[])
 {
 	test_lock();
 	return CMDOK;
 }
+
+#include "validate.h"
 
 /*********************************************/
 /* ADD NEW CMDARG PROCESSORS ABOVE THIS HERE */

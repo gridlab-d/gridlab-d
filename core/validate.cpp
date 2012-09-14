@@ -2,11 +2,17 @@
 // Copyright (C) 2012 Battelle Memorial Institute
 //
 
+#ifdef WIN32
+#include <windows.h>
+#include <direct.h>
+#else
 #include <unistd.h>
+#include <dirent.h>
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <dirent.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <signal.h>
@@ -17,6 +23,85 @@
 #include "exec.h"
 #include "lock.h"
 #include "threadpool.h"
+
+/* Windows implementation of opendir/readdir/closedir */
+#ifdef WIN32
+struct dirent {
+	unsigned char  d_type;	/* file type, see below */
+	char *d_name;			/* name must be no longer than this */
+	struct dirent *next;	/* next entry */
+};
+typedef struct {
+	struct dirent *first;
+	struct dirent *next;
+} DIR;
+#define DT_DIR 0x01
+DIR *opendir(const char *dirname)
+{
+	WIN32_FIND_DATA fd;
+	char search[MAX_PATH];
+	sprintf(search,"%s/*",dirname);
+	HANDLE dh = FindFirstFile(search,&fd);
+	if ( dh==INVALID_HANDLE_VALUE )
+	{
+		output_error("opendir(const char *dirname='%s'): error code %d", dirname, GetLastError());
+		return NULL;
+	}
+	DIR *dirp = new DIR;
+	dirp->first = dirp->next = new struct dirent;
+	dirp->first->d_type = (fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) ? DT_DIR : 0;
+	dirp->first->d_name = new char(strlen(fd.cFileName)+1);
+	strcpy(dirp->first->d_name,fd.cFileName);
+	dirp->first->next = NULL;
+	struct dirent *last = dirp->first;
+	while ( FindNextFile(dh,&fd)!=0 )
+	{
+		struct dirent *dp = (struct dirent*)malloc(sizeof(struct dirent));
+		if ( dp==NULL )
+		{
+			output_error("opendir(const char *dirname='%s'): error code %d", dirname, GetLastError());
+			return NULL;
+		}
+		dp->d_type = (fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) ? DT_DIR : 0;
+		dp->d_name = (char*)malloc(strlen(fd.cFileName)+10);
+		if ( dp->d_name==NULL )
+		{
+			output_error("opendir(const char *dirname='%s'): error code %d", dirname, GetLastError());
+			return NULL;
+		}
+		strcpy(dp->d_name,fd.cFileName);
+		dp->next = NULL;
+		last->next = dp;
+		last = dp;
+	}
+	if ( GetLastError()!=ERROR_NO_MORE_FILES )
+		output_error("opendir(const char *dirname='%s'): error code %d", dirname, GetLastError());
+	FindClose(dh);
+	return dirp;
+}
+struct dirent *readdir(DIR *dirp)
+{
+	struct dirent *dp = dirp->next;
+	if ( dp ) dirp->next = dp->next;
+	return dp;
+}
+int closedir(DIR *dirp)
+{
+	struct dirent *dp = dirp->first; 
+	while ( dp!=NULL )
+	{
+		struct dirent *del = dp;
+		dp = dp->next;
+// TODO fix this memory leak
+//		free(del->d_name);
+//		free(del);
+	}
+	return 0;
+}
+#define WIFEXITED(X) true
+#define WEXITSTATUS(X) X
+#define WTERMSIG(X) 0
+#endif
 
 /** validating result counter */
 class counters {
@@ -154,7 +239,11 @@ static counters run_test(char *file)
 		output_error("run_test(char *file='%s'): unable to destroy test folder", dir);
 		return result;
 	}
+#ifdef WIN32
+	if ( !mkdir(dir) )
+#else
 	if ( !mkdir(dir,0750) )
+#endif
 	{
 		output_error("run_test(char *file='%s'): unable to create test folder", dir);
 		return result;
@@ -173,7 +262,13 @@ static counters run_test(char *file)
 	int64 dt = exec_clock();
 	result.inc_files(file);
 	if ( global_verbose_mode==0 && global_debug_mode==0 ) {	putchar('.'); fflush(stdout); }
-	int code = vsystem("gridlabd %s %s.glm ", validate_cmdargs, name);
+	int code = vsystem("%s %s %s.glm ", 
+#ifdef WIN32
+		_pgmptr,
+#else
+		"gridlabd",
+#endif
+		validate_cmdargs, name);
 	dt = exec_clock() - dt;
 	output_verbose("%s completed in %.1f seconds", out, (double)dt/(double)CLOCKS_PER_SEC);
 	output_debug("returning to directory '%s'", cwd);
@@ -268,7 +363,6 @@ static void process_dir(const char *path, bool runglms=false)
 		char item[1024];
 		size_t len = sprintf(item,"%s/%s",path,dp->d_name);
 		char *ext = strrchr(item,'.');
-		if ( ext==NULL ) continue;
 		if ( strcmp(dp->d_name,".")==0 || strcmp(dp->d_name,"..")==0 ) continue;
 		if ( strcmp(dp->d_name,"autotest")==0 )
 			process_dir(item,true);

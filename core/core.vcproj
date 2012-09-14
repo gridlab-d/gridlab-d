@@ -748,6 +748,10 @@
 				RelativePath=".\unit.c"
 				>
 			</File>
+			<File
+				RelativePath=".\validate.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -975,6 +979,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\validate.h"
+				>
+			</File>
+			<File
 				RelativePath=".\version.h"
 				>
 			</File>
@@ -991,15 +999,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\x86\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1026,11 +1034,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>
