@@ -47,7 +47,16 @@ public:
 	unsigned int get_nfailed(void) { return n_failed; };
 	unsigned int get_nexceptions(void) { return n_exceptions; };
 	unsigned int get_naccess(void) { return n_access; };
-	void inc_files(const char *name) { output_debug("processing %s", name); wlock(); n_files++; wunlock(); };
+	void inc_files(const char *name) 
+	{
+		if ( global_debug_mode || global_verbose_mode )
+			output_debug("processing %s", name); 
+		else
+			printf("Processing %-32s...           \r",name); 
+		wlock(); 
+		n_files++; 
+		wunlock(); 
+	};
 	void inc_access(const char *name) { output_debug("%s folder access failure", name); wlock(); n_access++; wunlock(); };
 	void inc_success(const char *name, int code, double t) { output_error("%s success unexpected, code %d in %.1f seconds",name, code, t); wlock(); n_success++; wunlock(); };
 	void inc_failed(const char *name, int code, double t) { output_error("%s failure unexpected, code %d in %.1f seconds",name, code, t); wlock(); n_failed++; wunlock(); };
@@ -307,7 +316,6 @@ static counters run_test(char *file)
 	chdir(dir);
 	int64 dt = exec_clock();
 	result.inc_files(file);
-	//if ( global_verbose_mode==0 && global_debug_mode==0 ) {	putchar('.'); fflush(stdout); }
 	unsigned int code = vsystem("%s %s %s.glm ", 
 #ifdef WIN32
 		_pgmptr,
@@ -329,7 +337,7 @@ static counters run_test(char *file)
 		else if ( is_opt ) // no expected outcome
 		{
 			if ( code==XC_SUCCESS ) 
-				output_verbose("optiona; test %s succeeded, code %d in %.1f seconds", name, code, t);
+				output_verbose("optional test %s succeeded, code %d in %.1f seconds", name, code, t);
 			else if ( code==XC_EXCEPTION )
 				output_warning("optional test %s exception, code %d in %.1f seconds", name, code, t);
 			else 
