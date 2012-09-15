@@ -52,9 +52,15 @@ public:
 		if ( global_debug_mode || global_verbose_mode )
 			output_debug("processing %s", name); 
 		else
-			printf("Processing %-32s...           \r",name); 
+		{
+			static size_t len = 0;
+			char blank[1024];
+			memset(blank,32,len);
+			blank[len]='\0';
+			len = output_raw("%s\rProcessing %s...\r",blank,name)-len; 
+		}
 		wlock(); 
-		n_files++; 
+		n_files++;
 		wunlock(); 
 	};
 	void inc_access(const char *name) { output_debug("%s folder access failure", name); wlock(); n_access++; wunlock(); };
@@ -95,6 +101,8 @@ typedef struct {
 #define DT_DIR 0x01
 const char *GetLastErrorMsg(void)
 {
+	static unsigned int lock = 0;
+	wlock(&lock);
     static TCHAR szBuf[256]; 
     LPVOID lpMsgBuf;
     DWORD dw = GetLastError(); 
@@ -114,6 +122,7 @@ const char *GetLastErrorMsg(void)
     sprintf(szBuf, "%s (error code %d)", lpMsgBuf, dw); 
  
     LocalFree(lpMsgBuf);
+	wunlock(&lock);
 	return szBuf;
 }
 DIR *opendir(const char *dirname)
@@ -312,21 +321,21 @@ static counters run_test(char *file)
 		result.inc_access(file);
 		return result;
 	}
-	output_debug("changing to directory '%s'", dir);
-	chdir(dir);
+	//output_debug("changing to directory '%s'", dir);
+	//chdir(dir);
 	int64 dt = exec_clock();
 	result.inc_files(file);
-	unsigned int code = vsystem("%s %s %s.glm ", 
+	unsigned int code = vsystem("%s -W %s %s %s.glm ", 
 #ifdef WIN32
 		_pgmptr,
 #else
 		"gridlabd",
 #endif
-		validate_cmdargs, name);
+		dir,validate_cmdargs, name);
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)CLOCKS_PER_SEC;
-	output_debug("returning to directory '%s'", cwd);
-	chdir(cwd);
+	//output_debug("returning to directory '%s'", cwd);
+	//chdir(cwd);
 	bool exited = WIFEXITED(code);
 	if ( exited )
 	{
