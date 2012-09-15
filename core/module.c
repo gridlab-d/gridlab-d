@@ -1355,7 +1355,7 @@ void sched_finish(void)
 	{
 		int n = my_proc->list[t];
 		sched_lock(n);
-		process_map[n].pid = 0;
+		process_map[n].status = MLS_DONE;
 		sched_unlock(n);
 	}
 }
