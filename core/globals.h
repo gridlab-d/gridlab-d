@@ -9,6 +9,7 @@
 
 #include "version.h"
 #include "class.h"
+#include "validate.h"
 
 #ifdef _MAIN_C
 #define GLOBAL 
@@ -253,6 +254,9 @@ GLOBAL unsigned int global_inline_block_size INIT(16*65536); /**< inline code bl
 
 /* runaway clock time */
 GLOBAL TIMESTAMP global_runaway_time INIT(2209017600); /**< signal runaway clock on 1/1/2040 */
+
+GLOBAL set global_validateoptions INIT(VO_TSTSTD|VO_RPTALL); /**< validation options */
+
 #ifdef __cplusplus
 }
 #endif

@@ -82,6 +82,18 @@ static KEYWORD mcf_keys[] = {
 	{"DEBUG", MC_DEBUG, mcf_keys+4},	/**< flag to build with debugging turned on */
 	{"VERBOSE", MC_VERBOSE, NULL},		/**< flag to output commands as they are executed */
 };
+static KEYWORD vo_keys[] = {
+	{"NONE", VO_NONE, vo_keys+1},
+	{"TSTD", VO_TSTSTD, vo_keys+2},
+	{"TALL", VO_TSTALL, vo_keys+3},
+	{"TRUN", VO_TSTRUN, vo_keys+4},
+	{"TERR", VO_TSTERR, vo_keys+5},
+	{"TEXC", VO_TSTEXC, vo_keys+6},
+	{"TOPT", VO_TSTOPT, vo_keys+7},
+	{"RALL", VO_RPTALL, vo_keys+8},
+	{"RDIR", VO_RPTDIR, vo_keys+9},
+	{"RGLM", VO_RPTGLM, NULL},
+};
 
 static struct s_varmap {
 	char *name;
@@ -99,7 +111,7 @@ static struct s_varmap {
 	{"version.build", PT_int32, &global_version_build, PA_REFERENCE, "build number"},
 	{"version.branch", PT_char32, &global_version_branch, PA_REFERENCE, "branch name"},
 	{"command_line", PT_char1024, &global_command_line, PA_REFERENCE, "command line"},
-	{"environment", PT_char1024, &global_environment, PA_REFERENCE, "operating environment"},
+	{"environment", PT_char1024, &global_environment, PA_PUBLIC, "operating environment"},
 	{"quiet", PT_bool, &global_quiet_mode, PA_PUBLIC, "quiet output status flag"},
 	{"warn", PT_bool, &global_warn_mode, PA_PUBLIC, "warning output status flag"},
 	{"debugger", PT_bool, &global_debug_mode, PA_PUBLIC, "debugger enable flag"},
@@ -185,6 +197,7 @@ static struct s_varmap {
 	{"init_max_defer", PT_int32, &global_init_max_defer, PA_REFERENCE, "deferred initialization limit"},
 	{"mt_analysis", PT_bool, &global_mt_analysis, PA_PUBLIC, "perform multithread profile optimization analysis"},
 	{"inline_block_size", PT_int32, &global_inline_block_size, PA_PUBLIC, "inline code block size"},
+	{"validate", PT_set, &global_validateoptions, PA_PUBLIC, "validation test options",vo_keys},
 	/* add new global variables here */
 };
 

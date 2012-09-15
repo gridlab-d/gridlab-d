@@ -26,8 +26,37 @@
 
 /** validating result counter */
 class counters {
+public:
+	counters(void) { n_scanned=n_tested=n_passed=n_files=n_success=n_failed=n_exceptions=n_access=0; };
+	counters operator+(counters a) 
+	{ 
+		wlock(); 
+		n_scanned += a.get_scanned();
+		n_tested += a.get_tested();
+		n_passed += a.get_passed();
+		n_files += a.get_nfiles(); 
+		n_success += a.get_nsuccess(); 
+		n_failed += a.get_nfailed(); 
+		n_exceptions += a.get_nexceptions(); 
+		wunlock(); 
+		return *this;
+	};
+	counters operator+=(counters a) { *this = *this+a; return *this; };
 private:
 	unsigned int _lock;
+	// directories
+	unsigned int n_scanned; // number of directories scanned
+	unsigned int n_tested; // number of autotest directories tested
+	unsigned int n_passed; // number of autotest directories that passed
+public:
+	unsigned int get_scanned() { return n_scanned; };
+	unsigned int get_tested() { return n_tested; };
+	unsigned int get_passed() { return n_passed; };
+	void inc_scanned() { wlock(); n_scanned++; wunlock(); };
+	void inc_tested() { wlock(); n_tested++; wunlock(); };
+	void inc_passed() { wlock(); n_passed++; wunlock(); };
+private:
+	// files
 	unsigned int n_files; // number of tests completed
 	unsigned int n_success; // unexpected successes
 	unsigned int n_failed; // unexpected failures
@@ -39,9 +68,7 @@ private:
 	void rlock(void) { ::rlock(&_lock); };
 	void runlock(void) { ::runlock(&_lock); };
 public:
-	counters(void) { n_files=n_success=n_failed=n_exceptions=n_access=0; };
-	counters operator+(counters a) { wlock(); n_files+=a.get_nfiles(); n_success+=a.get_nsuccess(); n_failed+=a.get_nfailed(); n_exceptions+=a.get_nexceptions(); wunlock(); return *this;};
-	counters operator+=(counters a) { *this = *this+a; return *this; };
+public:
 	unsigned int get_nfiles(void) { return n_files; };
 	unsigned int get_nsuccess(void) { return n_success; };
 	unsigned int get_nfailed(void) { return n_failed; };
@@ -65,7 +92,7 @@ public:
 	};
 	void inc_access(const char *name) { output_debug("%s folder access failure", name); wlock(); n_access++; wunlock(); };
 	void inc_success(const char *name, int code, double t) { output_error("%s success unexpected, code %d in %.1f seconds",name, code, t); wlock(); n_success++; wunlock(); };
-	void inc_failed(const char *name, int code, double t) { output_error("%s failure unexpected, code %d in %.1f seconds",name, code, t); wlock(); n_failed++; wunlock(); };
+	void inc_failed(const char *name, int code, double t) { output_error("%s error unexpected, code %d in %.1f seconds",name, code, t); wlock(); n_failed++; wunlock(); };
 	void inc_exceptions(const char *name, int code, double t) { output_error("%s exception unexpected, code %d in %.1f seconds",name, code, t); wlock(); n_exceptions++; wunlock(); };
 	void print(void) 
 	{
@@ -75,7 +102,7 @@ public:
 		if ( n_access ) output_message("%d directory access failures", n_access);
 		output_message("%d models tested",n_files);
 		if ( n_success ) output_message("%d unexpected successes",n_success); 
-		if ( n_failed ) output_message("%d unexpected failures",n_failed); 
+		if ( n_failed ) output_message("%d unexpected errors",n_failed); 
 		if ( n_exceptions ) output_message("%d unexpected exceptions",n_exceptions); 
 		output_message("%d tests succeeded",n_ok);
 		output_message("%.0f%% success rate", 100.0*n_ok/n_files);
@@ -86,6 +113,7 @@ public:
 
 static counters final; // global counter
 static bool clean = false; // set to true to force purge of test directories
+FILE *report_fp = NULL;
 
 /* Windows implementation of opendir/readdir/closedir */
 #ifdef WIN32
@@ -280,9 +308,18 @@ static counters run_test(char *file)
 {
 	output_debug("run_test(char *file='%s') starting", file);
 	counters result;
-	bool is_err = strstr(file,"_err")!=NULL;
-	bool is_opt = strstr(file,"_opt")!=NULL;
-	bool is_exc = strstr(file,"_exc")!=NULL;
+
+	bool is_err = strstr(file,"_err.")!=NULL || strstr(file,"_err_")!=NULL;
+	if ( is_err && (global_validateoptions&VO_TSTERR)==0 ) return result;
+
+	bool is_exc = strstr(file,"_exc.")!=NULL || strstr(file,"_exc_")!=NULL;
+	if ( is_exc && (global_validateoptions&VO_TSTEXC)==0 ) return result;
+
+	bool is_opt = strstr(file,"_opt.")!=NULL || strstr(file,"_opt_")!=NULL;
+	if ( is_opt && (global_validateoptions&VO_TSTOPT)==0 ) return result;
+
+	if ( !is_err && !is_opt && !is_exc && (global_validateoptions&VO_TSTRUN)==0 ) return result;
+
 	char dir[1024];
 	strcpy(dir,file);
 	char *ext = strrchr(dir,'.');
@@ -321,8 +358,6 @@ static counters run_test(char *file)
 		result.inc_access(file);
 		return result;
 	}
-	//output_debug("changing to directory '%s'", dir);
-	//chdir(dir);
 	int64 dt = exec_clock();
 	result.inc_files(file);
 	unsigned int code = vsystem("%s -W %s %s %s.glm ", 
@@ -334,8 +369,6 @@ static counters run_test(char *file)
 		dir,validate_cmdargs, name);
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)CLOCKS_PER_SEC;
-	//output_debug("returning to directory '%s'", cwd);
-	//chdir(cwd);
 	bool exited = WIFEXITED(code);
 	if ( exited )
 	{
@@ -350,7 +383,7 @@ static counters run_test(char *file)
 			else if ( code==XC_EXCEPTION )
 				output_warning("optional test %s exception, code %d in %.1f seconds", name, code, t);
 			else 
-				output_warning("optional test %s failure, code %d in %.1f seconds", name, code, t);
+				output_warning("optional test %s error, code %d in %.1f seconds", name, code, t);
 		}
 		else if ( is_exc && code==XC_EXCEPTION ) // expected exception
 			output_verbose("%s exception was expected, code %d in %.1f seconds", name, code, t);
@@ -362,7 +395,7 @@ static counters run_test(char *file)
 			result.inc_exceptions(file,code,t);
 		else if ( code==XC_SUCCESS  ) // unexpected success
 			result.inc_success(file,code,t);
-		else if ( code!=XC_SUCCESS ) // unexpected failure
+		else if ( code!=XC_SUCCESS ) // unexpected error
 			result.inc_failed(file,code,t);
 	}
 	else // signaled
@@ -413,43 +446,65 @@ void *(run_test_proc)(void *arg)
 	size_t id = (size_t)arg;
 	output_debug("starting run_test_proc id %d", id);
 	DIRLIST *item;
+	bool passed = true;
 	while ( (item=popdir())!=NULL )
 	{
 		output_debug("process %d picked up '%s'", id, item->name);
 		counters result = run_test(item->name);
+		if ( result.get_nerrors()>0 ) passed=false;
+		if ( global_validateoptions&VO_RPTGLM && report_fp )
+		{
+			char *flag = "";
+			if ( result.get_nerrors() ) flag="E";
+			if ( result.get_nsuccess() ) flag="S";
+			if ( result.get_nexceptions() ) flag="X";
+			fprintf(report_fp,",%s,%s\n",flag,item->name);
+		}
 		final += result;
 	}
+	if ( passed ) final.inc_passed();
 	return NULL;
 }
 
 /** routine to process a directory for autotests */
-static void process_dir(const char *path, bool runglms=false)
+static size_t process_dir(const char *path, bool runglms=false)
 {
+	size_t count = 0;
 	output_debug("processing directory '%s' with run of GLMs %s", path, runglms?"enabled":"disabled");
 	counters result;
+	final.inc_scanned();
+	if ( runglms ) final.inc_tested();
 	struct dirent *dp;
 	DIR *dirp = opendir(path);
-	if ( dirp==NULL ) return; // nothing to do
+	if ( dirp==NULL ) return 0; // nothing to do
 	while ( (dp=readdir(dirp))!=NULL )
 	{
 		char item[1024];
 		size_t len = sprintf(item,"%s/%s",path,dp->d_name);
 		char *ext = strrchr(item,'.');
-		if ( dp->d_name[0]=='.' ) continue;
+		if ( dp->d_name[0]=='.' ) continue; // ignore anything that starts with a dot
 		if ( dp->d_type==DT_DIR && strcmp(dp->d_name,"autotest")==0 )
-			process_dir(item,true);
+		{
+			count+=process_dir(item,true);
+			if ( global_validateoptions&VO_RPTDIR && report_fp ) 
+				fprintf(report_fp,",%d,%s\n",count,item);
+		}
 		else if ( dp->d_type==DT_DIR )
-			process_dir(item);
+			count+=process_dir(item);
 		else if ( runglms==true && strstr(item,"/test_")!=0 && strcmp(ext,".glm")==0 )
+		{
 			pushdir(item);
+			count++;
+		}
 	}
 	closedir(dirp);
-	return;
+	return count;
 }
 
 /** main validation routine */
 int validate(int argc, char *argv[])
 {
+	char *validate_report = "validate.csv";
 	size_t i;
 	int redirect_found = 0;
 	strcpy(validate_cmdargs,"");
@@ -466,8 +521,37 @@ int validate(int argc, char *argv[])
 	char var[64];
 	if ( global_getvar("clean",var,sizeof(var))!=NULL && atoi(var)!=0 ) clean = true;
 
+	report_fp = fopen(validate_report,"w");
+	if ( report_fp==NULL )
+		output_warning("unable to open '%s' for writing", validate_report);
+	else
+	{
+		fprintf(report_fp,"GridLAB-D %d.%d.%d-%d (%s)\n", global_version_major, global_version_minor, global_version_patch, global_version_build, global_version_branch);
+		fprintf(report_fp,"Validation Test Report\n");
+		char tbuf[64];
+		time_t now = time(NULL);
+		struct tm *dt = localtime(&now);
+		fprintf(report_fp,"\nTEST CONFIGURATION\n");
+		fprintf(report_fp,",Date,%s\n",strftime(tbuf,sizeof(tbuf),"%Y-%m-%d %H:%M:%S %z",dt)?tbuf:"???");
+		char *user=getenv("USER"); if ( !user ) user=getenv("USERNAME");
+		fprintf(report_fp,",User,%s\n",user?user:"(NA)");
+		char *host=getenv("HOST"); if ( !host ) host=getenv("HOSTNAME");
+		fprintf(report_fp,",Host,%s\n",host?host:"(NA)");
+		fprintf(report_fp,",Platform,%s\n",global_platform);
+		fprintf(report_fp,",Workdir,%s\n",global_workdir);
+		fprintf(report_fp,",Arguments,%s\n",validate_cmdargs);
+		fprintf(report_fp,",Clean,%s\n",clean?"TRUE":"FALSE");
+		fprintf(report_fp,",Threads,%d\n",global_threadcount);
+		char options[1024];
+		fprintf(report_fp,",Options,%s\n",global_getvar("validate",options,sizeof(options))?options:"(NA)");
+	}
+
+	if ( global_validateoptions&VO_RPTDIR && report_fp ) 
+		fprintf(report_fp,"\nDIRECTORY SCAN RESULTS\n");
 	process_dir(global_workdir);
 	
+	if ( report_fp )
+		fprintf(report_fp,"\nFILE TEST RESULTS\n");
 	int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
 	pthread_t *pid = new pthread_t[n_procs];
@@ -483,10 +567,38 @@ int validate(int argc, char *argv[])
 	}
 	delete [] pid;
 	final.print();
-	output_message("Total validation elapsed time: %.1f seconds", (double)exec_clock()/(double)CLOCKS_PER_SEC);
+	double dt = (double)exec_clock()/(double)CLOCKS_PER_SEC;
+	output_message("Total validation elapsed time: %.1f seconds", dt);
+	if ( report_fp ) output_message("See '%s/%s' for details", global_workdir, validate_report);
 	if ( final.get_nerrors()==0 )
 		exec_setexitcode(XC_SUCCESS);
 	else
 		exec_setexitcode(XC_TSTERR);
+
+	if ( report_fp!=NULL ) 
+	{
+		fprintf(report_fp,"\nOVERALL RESULTS\n");
+		char *flag="!!!";
+		fprintf(report_fp,",Directory results\n");
+		fprintf(report_fp,",,Scanned,%d\n",final.get_scanned());
+		fprintf(report_fp,"%s,,Denied,%d\n",final.get_naccess()?flag:"",final.get_naccess());
+		fprintf(report_fp,",,Tested,%d\n",final.get_tested());
+		int n_failed = final.get_tested()-final.get_passed();
+		fprintf(report_fp,"%s,,Failed,%d\n",n_failed?flag:"",n_failed);
+
+		fprintf(report_fp,",File results\n");
+		fprintf(report_fp,",,Tested,%d\n",final.get_nfiles());
+		fprintf(report_fp,",,Passed,%d\n", final.get_nfiles()-final.get_nerrors());
+		fprintf(report_fp,"%s,,Failed,%d\n",final.get_nerrors()?flag:"",final.get_nerrors());
+		fprintf(report_fp,",Unexpected results\n");
+		fprintf(report_fp,"%s,,Successes,%d\n", final.get_nsuccess()?flag:"",final.get_nsuccess());
+		fprintf(report_fp,"%s,,Errors,%d\n", final.get_nfailed()?flag:"",final.get_nfailed());
+		fprintf(report_fp,"%s,,Exceptions,%d\n", final.get_nexceptions()?flag:"",final.get_nexceptions());
+
+		fprintf(report_fp,",Runtime,%.1f s\n", dt);
+
+		fprintf(report_fp,"\nEND TEST REPORT\n");
+		fclose(report_fp);
+	}
 	exit(final.get_nerrors()==0 ? XC_SUCCESS : XC_TSTERR);
 }
