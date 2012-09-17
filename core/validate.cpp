@@ -113,7 +113,107 @@ public:
 
 static counters final; // global counter
 static bool clean = false; // set to true to force purge of test directories
-FILE *report_fp = NULL;
+
+/* report generation functions */
+static FILE *report_fp = NULL;
+static char report_file[1024] = "validate.csv";
+static const char *report_ext = NULL;
+static const char *report_col="    ";
+static const char *report_eol="\n";
+static const char *report_eot="\f";
+static unsigned int report_cols=0;
+static unsigned int report_rows=0;
+static unsigned int report_lock=0;
+static bool report_open(void)
+{
+	wlock(&report_lock);
+
+	global_getvar("validate_report",report_file,sizeof(report_file));
+	if ( report_fp==NULL )
+	{
+		report_ext = strrchr(report_file,'.');
+		if ( strcmp(report_ext,".csv")==0 ) 
+		{
+			report_col = ",";
+			report_eot = "\n";
+		}
+		else if ( strcmp(report_ext,".txt")==0) 
+		{
+			report_col = "\t";
+			report_eot = "\n";
+		}
+		report_fp = fopen(report_file,"w");
+	}
+	wunlock(&report_lock);
+	return report_fp!=NULL;
+}
+static int report_title(const char *fmt,...)
+{
+	int len = 0;
+	if ( report_fp )
+	{
+		wlock(&report_lock);
+		if ( report_cols++>0 )
+			len = fprintf(report_fp,"%s",report_eol);
+		va_list ptr;
+		va_start(ptr,fmt);
+		len = +vfprintf(report_fp,fmt,ptr);
+		va_end(ptr);
+		wunlock(&report_lock);
+	}
+	return len;
+}
+static int report_data(const char *fmt="",...)
+{
+	int len = 0;
+	if ( report_fp )
+	{
+		wlock(&report_lock);
+		if ( report_cols++>0 )
+			len = fprintf(report_fp,"%s",report_col);
+		va_list ptr;
+		va_start(ptr,fmt);
+		len = +vfprintf(report_fp,fmt,ptr);
+		va_end(ptr);
+		wunlock(&report_lock);
+	}
+	return len;
+}
+static int report_newrow(void)
+{
+	int len = 0;
+	if ( report_fp )
+	{
+		wlock(&report_lock);
+		report_cols=0;
+		report_rows++;
+		wunlock(&report_lock);
+		len = fprintf(report_fp,"%s",report_eol);
+	}
+	return len;
+}
+static int report_newtable(const char *table)
+{
+	int len = 0;
+	if ( report_fp )
+	{
+		wlock(&report_lock);
+		report_rows++;
+		if ( report_cols>0 ) len += fprintf(report_fp,"%",report_eol);
+		report_cols=0;
+		len = fprintf(report_fp,"%s%s%s",report_eot,table,report_eol);
+		wunlock(&report_lock);
+	}
+	return len;
+}
+static int report_close(void)
+{
+	wlock(&report_lock);
+	if ( report_fp ) fclose(report_fp);
+	report_fp = NULL;
+	wunlock(&report_lock);
+	return report_rows;
+}
 
 /* Windows implementation of opendir/readdir/closedir */
 #ifdef WIN32
@@ -452,13 +552,16 @@ void *(run_test_proc)(void *arg)
 		output_debug("process %d picked up '%s'", id, item->name);
 		counters result = run_test(item->name);
 		if ( result.get_nerrors()>0 ) passed=false;
-		if ( global_validateoptions&VO_RPTGLM && report_fp )
+		if ( global_validateoptions&VO_RPTGLM )
 		{
 			char *flag = "";
 			if ( result.get_nerrors() ) flag="E";
 			if ( result.get_nsuccess() ) flag="S";
 			if ( result.get_nexceptions() ) flag="X";
-			fprintf(report_fp,",%s,%s\n",flag,item->name);
+			report_data();
+			report_data("%s",flag);
+			report_data("%s",item->name);
+			report_newrow();
 		}
 		final += result;
 	}
@@ -486,8 +589,13 @@ static size_t process_dir(const char *path, bool runglms=false)
 		if ( dp->d_type==DT_DIR && strcmp(dp->d_name,"autotest")==0 )
 		{
 			count+=process_dir(item,true);
-			if ( global_validateoptions&VO_RPTDIR && report_fp ) 
-				fprintf(report_fp,",%d,%s\n",count,item);
+			if ( global_validateoptions&VO_RPTDIR )
+			{
+				report_data();
+				report_data("%d",count);
+				report_data("%s",item);
+				report_newrow();
+			}
 		}
 		else if ( dp->d_type==DT_DIR )
 			count+=process_dir(item);
@@ -504,7 +612,6 @@ static size_t process_dir(const char *path, bool runglms=false)
 /** main validation routine */
 int validate(int argc, char *argv[])
 {
-	char *validate_report = "validate.csv";
 	size_t i;
 	int redirect_found = 0;
 	strcpy(validate_cmdargs,"");
@@ -521,37 +628,71 @@ int validate(int argc, char *argv[])
 	char var[64];
 	if ( global_getvar("clean",var,sizeof(var))!=NULL && atoi(var)!=0 ) clean = true;
 
-	report_fp = fopen(validate_report,"w");
+	report_open();
 	if ( report_fp==NULL )
-		output_warning("unable to open '%s' for writing", validate_report);
-	else
-	{
-		fprintf(report_fp,"GridLAB-D %d.%d.%d-%d (%s)\n", global_version_major, global_version_minor, global_version_patch, global_version_build, global_version_branch);
-		fprintf(report_fp,"Validation Test Report\n");
-		char tbuf[64];
-		time_t now = time(NULL);
-		struct tm *dt = localtime(&now);
-		fprintf(report_fp,"\nTEST CONFIGURATION\n");
-		fprintf(report_fp,",Date,%s\n",strftime(tbuf,sizeof(tbuf),"%Y-%m-%d %H:%M:%S %z",dt)?tbuf:"???");
-		char *user=getenv("USER"); if ( !user ) user=getenv("USERNAME");
-		fprintf(report_fp,",User,%s\n",user?user:"(NA)");
-		char *host=getenv("HOST"); if ( !host ) host=getenv("HOSTNAME");
-		fprintf(report_fp,",Host,%s\n",host?host:"(NA)");
-		fprintf(report_fp,",Platform,%s\n",global_platform);
-		fprintf(report_fp,",Workdir,%s\n",global_workdir);
-		fprintf(report_fp,",Arguments,%s\n",validate_cmdargs);
-		fprintf(report_fp,",Clean,%s\n",clean?"TRUE":"FALSE");
-		fprintf(report_fp,",Threads,%d\n",global_threadcount);
-		char options[1024];
-		fprintf(report_fp,",Options,%s\n",global_getvar("validate",options,sizeof(options))?options:"(NA)");
-	}
+		output_warning("unable to open '%s' for writing", report_file);
+	report_title("VALIDATION TEST REPORT");
+	report_title("GridLAB-D %d.%d.%d-%d (%s)", global_version_major, global_version_minor, global_version_patch, global_version_build, global_version_branch);
+	
+	report_newrow();
+	report_newtable("TEST CONFIGURATION");
+	
+	char tbuf[64];
+	time_t now = time(NULL);
+	struct tm *ts = localtime(&now);
+	report_data();
+	report_data("Date");
+	report_data("%s",strftime(tbuf,sizeof(tbuf),"%Y-%m-%d %H:%M:%S %z",ts)?tbuf:"???");
+	report_newrow();
+	
+	char *user=getenv("USER"); if ( !user ) user=getenv("USERNAME");
+	report_data();
+	report_data("User");
+	report_data("%s",user?user:"(NA)");
 
-	if ( global_validateoptions&VO_RPTDIR && report_fp ) 
-		fprintf(report_fp,"\nDIRECTORY SCAN RESULTS\n");
+	char *host=getenv("HOST"); if ( !host ) host=getenv("HOSTNAME");
+	report_data();
+	report_data("Host");
+	report_data("%s",host?host:"(NA)");
+	report_newrow();
+	
+	report_data();
+	report_data("Platform");
+	report_data("%s",global_platform);
+	report_newrow();
+	
+	report_data();
+	report_data("Workdir");
+	report_data("%s",global_workdir);
+	report_newrow();
+	
+	report_data();
+	report_data("Arguments");
+	report_data("%s",validate_cmdargs);
+	report_newrow();
+	
+	report_data();
+	report_data("Clean");
+	report_data("%s",clean?"TRUE":"FALSE");
+	
+	report_newrow();
+	report_data();
+	report_data("Threads");
+	report_data("%d",global_threadcount);
+	report_newrow();
+	
+	char options[1024];
+	report_data();
+	report_data("Options");
+	report_data("%s",global_getvar("validate",options,sizeof(options))?options:"(NA)");
+	report_newrow();
+	
+	if ( global_validateoptions&VO_RPTDIR ) 
+		report_newtable("DIRECTORY SCAN RESULTS");
 	process_dir(global_workdir);
 	
-	if ( report_fp )
-		fprintf(report_fp,"\nFILE TEST RESULTS\n");
+	if ( global_validateoptions&VO_RPTGLM )
+		report_newtable("FILE TEST RESULTS");
 	int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
 	pthread_t *pid = new pthread_t[n_procs];
@@ -569,36 +710,96 @@ int validate(int argc, char *argv[])
 	final.print();
 	double dt = (double)exec_clock()/(double)CLOCKS_PER_SEC;
 	output_message("Total validation elapsed time: %.1f seconds", dt);
-	if ( report_fp ) output_message("See '%s/%s' for details", global_workdir, validate_report);
+	if ( report_fp ) output_message("See '%s/%s' for details", global_workdir, report_file);
 	if ( final.get_nerrors()==0 )
 		exec_setexitcode(XC_SUCCESS);
 	else
 		exec_setexitcode(XC_TSTERR);
 
-	if ( report_fp!=NULL ) 
-	{
-		fprintf(report_fp,"\nOVERALL RESULTS\n");
-		char *flag="!!!";
-		fprintf(report_fp,",Directory results\n");
-		fprintf(report_fp,",,Scanned,%d\n",final.get_scanned());
-		fprintf(report_fp,"%s,,Denied,%d\n",final.get_naccess()?flag:"",final.get_naccess());
-		fprintf(report_fp,",,Tested,%d\n",final.get_tested());
-		int n_failed = final.get_tested()-final.get_passed();
-		fprintf(report_fp,"%s,,Failed,%d\n",n_failed?flag:"",n_failed);
+	report_newtable("OVERALL RESULTS");
 
-		fprintf(report_fp,",File results\n");
-		fprintf(report_fp,",,Tested,%d\n",final.get_nfiles());
-		fprintf(report_fp,",,Passed,%d\n", final.get_nfiles()-final.get_nerrors());
-		fprintf(report_fp,"%s,,Failed,%d\n",final.get_nerrors()?flag:"",final.get_nerrors());
-		fprintf(report_fp,",Unexpected results\n");
-		fprintf(report_fp,"%s,,Successes,%d\n", final.get_nsuccess()?flag:"",final.get_nsuccess());
-		fprintf(report_fp,"%s,,Errors,%d\n", final.get_nfailed()?flag:"",final.get_nfailed());
-		fprintf(report_fp,"%s,,Exceptions,%d\n", final.get_nexceptions()?flag:"",final.get_nexceptions());
+	char *flag="!!!";
+	report_data();
+	report_data("Directory results");
+	report_newrow();
 
-		fprintf(report_fp,",Runtime,%.1f s\n", dt);
+	report_data();
+	report_data();
+	report_data("Scanned");
+	report_data("%d",final.get_scanned());
+	report_newrow();
 
-		fprintf(report_fp,"\nEND TEST REPORT\n");
-		fclose(report_fp);
-	}
+	report_data("%s",final.get_naccess()?flag:"");
+	report_data();
+	report_data("Denied");
+	report_data("%d",final.get_naccess());
+	report_newrow();
+
+	report_data();
+	report_data();
+	report_data("Tested");
+	report_data("%d",final.get_tested());
+	report_newrow();
+
+	int n_failed = final.get_tested()-final.get_passed();
+	report_data("%s",n_failed?flag:"");
+	report_data();
+	report_data("Failed");
+	report_data("%d",n_failed);
+	report_newrow();
+
+	report_data();
+	report_data("File results");
+	report_newrow();
+
+	report_data();
+	report_data();
+	report_data("Tested");
+	report_data("%d",final.get_nfiles());
+	report_newrow();
+
+	report_data();
+	report_data();
+	report_data("Passed");
+	report_data("%d", final.get_nfiles()-final.get_nerrors());
+	report_newrow();
+
+	report_data("%s",final.get_nerrors()?flag:"");
+	report_data();
+	report_data("Failed");
+	report_data("%d",final.get_nerrors());
+	report_newrow();
+
+	report_data();
+	report_data("Unexpected results");
+	report_newrow();
+
+	report_data("%s",final.get_nsuccess()?flag:"");
+	report_data("Successes");
+	report_data("%d",final.get_nsuccess());
+	report_newrow();
+
+	report_data("%s",final.get_nfailed()?flag:"");
+	report_data();
+	report_data("Errors");
+	report_data("%d",final.get_nfailed());
+	report_newrow();
+
+	report_data("%s",final.get_nexceptions()?flag:"");
+	report_data();
+	report_data("Exceptions");
+	report_data("%d",final.get_nexceptions());
+	report_newrow();
+
+	report_data();
+	report_data("Runtime");
+	report_data("%.1f s", dt);
+	report_newrow();
+
+	report_newrow();
+	report_title("END TEST REPORT");
+
+	fclose(report_fp);
+
 	exit(final.get_nerrors()==0 ? XC_SUCCESS : XC_TSTERR);
 }
