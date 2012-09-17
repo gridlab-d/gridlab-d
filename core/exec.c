@@ -1667,7 +1667,7 @@ STATUS exec_start(void)
 //		while ( running = ( absolute_timestamp(sync_d.step_to) <= global_stoptime && sync_d.step_to<TS_NEVER && sync_d.hard_event>0),
 		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
 		while ( running = ( exec_sync_get(NULL)<=global_stoptime && !exec_sync_isnever(NULL) && exec_sync_ishard(NULL) ),
-			iteration_counter>0 && ( running || global_run_realtime>0) && exec_getexitcode() ) 
+			iteration_counter>0 && ( running || global_run_realtime>0) && exec_getexitcode()==XC_SUCCESS ) 
 		{
 			/* update the process table info */
 			sched_update(global_clock,MLS_RUNNING);
