@@ -199,7 +199,7 @@ static int report_newtable(const char *table)
 	{
 		wlock(&report_lock);
 		report_rows++;
-		if ( report_cols>0 ) len += fprintf(report_fp,"%",report_eol);
+		if ( report_cols>0 ) len += fprintf(report_fp,"%s",report_eol);
 		report_cols=0;
 		len = fprintf(report_fp,"%s%s%s",report_eot,table,report_eol);
 		wunlock(&report_lock);
@@ -649,6 +649,7 @@ int validate(int argc, char *argv[])
 	report_data();
 	report_data("User");
 	report_data("%s",user?user:"(NA)");
+	report_newrow();
 
 	char *host=getenv("HOST"); if ( !host ) host=getenv("HOSTNAME");
 	report_data();
@@ -686,6 +687,12 @@ int validate(int argc, char *argv[])
 	report_data("Options");
 	report_data("%s",global_getvar("validate",options,sizeof(options))?options:"(NA)");
 	report_newrow();
+
+	char mailto[1024];
+	report_data();
+	report_data("Mailto");
+	report_data("%s",global_getvar("mailto",mailto,sizeof(mailto))?mailto:"(NA)");
+	report_newrow();
 	
 	if ( global_validateoptions&VO_RPTDIR ) 
 		report_newtable("DIRECTORY SCAN RESULTS");
@@ -697,7 +704,7 @@ int validate(int argc, char *argv[])
 	if ( n_procs==0 ) n_procs = processor_count();
 	pthread_t *pid = new pthread_t[n_procs];
 	output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
-	for ( i=0 ; i<n_procs ; i++ )
+	for ( i=0 ; i<min(final.get_tested(),n_procs) ; i++ )
 		pthread_create(&pid[i],NULL,run_test_proc,(void*)i);
 	void *rc;
 	output_debug("begin waiting process");
@@ -775,6 +782,7 @@ int validate(int argc, char *argv[])
 	report_newrow();
 
 	report_data("%s",final.get_nsuccess()?flag:"");
+	report_data();
 	report_data("Successes");
 	report_data("%d",final.get_nsuccess());
 	report_newrow();
@@ -800,6 +808,20 @@ int validate(int argc, char *argv[])
 	report_title("END TEST REPORT");
 
 	fclose(report_fp);
+
+#ifndef WIN32
+#ifdef __APPLE__
+#define MAILER "/usr/bin/mail"
+#else
+#define MAILER "/bin/mail"
+#endif
+	if ( global_getvar("mailto",mailto,sizeof(mailto))!=NULL 
+		&& vsystem(MAILER " -s 'GridLAB-D Validation Report (%d errors)' %s <%s", 
+			final.get_nerrors(), mailto, report_file)==0 )
+		output_verbose("Mail message send to %s",mailto);
+	else
+		output_error("Error sending notification to %s", mailto);
+#endif
 
 	exit(final.get_nerrors()==0 ? XC_SUCCESS : XC_TSTERR);
 }
