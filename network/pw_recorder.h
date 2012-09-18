@@ -8,6 +8,11 @@
 #define _PW_RECORDER_H_
 
 
+#include "gridlabd.h"
+#include "network.h"
+#include "pw_model.h"
+
+
 #ifdef int64
 #undef int64
 #endif
@@ -21,10 +26,6 @@
 #define int64 __int64
 #endif
 #endif
-
-#include "gridlabd.h"
-#include "network.h"
-#include "pw_model.h"
 
 
 class pw_recorder : public gld_object {

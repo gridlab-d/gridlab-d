@@ -65,23 +65,7 @@ int check_COM_output_load(_variant_t output){
 // DC's magic GLD smoke jars.  Don't breathe this!
 EXPORT_CREATE(pw_load);
 EXPORT_INIT(pw_load);
-//EXPORT_SYNC(pw_load);
-
-EXPORT TIMESTAMP sync_pw_load(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) { 
-	pw_load *p;
-	try {
-			TIMESTAMP t1=TS_NEVER; p=OBJECTDATA(obj,pw_load); 
-		switch (pass) { 
-		case PC_PRETOPDOWN: t1 = p->presync(t0); break; 
-		case PC_BOTTOMUP: t1 = p->sync(t0); break; 
-		case PC_POSTTOPDOWN: t1 = p->postsync(t0); break; 
-		default: throw "invalid pass request"; break; } 
-		if ( (obj->oclass->passconfig&(PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN)&(~pass)) <= pass ) obj->clock = t0; 
-		return t1; 
-	} 
-	SYNC_CATCHALL(pw_load); }
-
-
+EXPORT_SYNC(pw_load);
 EXPORT_ISA(pw_load);
 
 CLASS *pw_load::oclass = NULL;
