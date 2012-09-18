@@ -404,7 +404,7 @@ static bool copyfile(char *from, char *to)
 }
 
 /** routine to run a validation test */
-static counters run_test(char *file)
+static counters run_test(char *file, double *elapsed_time=NULL)
 {
 	output_debug("run_test(char *file='%s') starting", file);
 	counters result;
@@ -469,6 +469,7 @@ static counters run_test(char *file)
 		dir,validate_cmdargs, name);
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)CLOCKS_PER_SEC;
+	if ( elapsed_time!=NULL ) *elapsed_time = t;
 	bool exited = WIFEXITED(code);
 	if ( exited )
 	{
@@ -550,7 +551,8 @@ void *(run_test_proc)(void *arg)
 	while ( (item=popdir())!=NULL )
 	{
 		output_debug("process %d picked up '%s'", id, item->name);
-		counters result = run_test(item->name);
+		double dt;
+		counters result = run_test(item->name,&dt);
 		if ( result.get_nerrors()>0 ) passed=false;
 		if ( global_validateoptions&VO_RPTGLM )
 		{
@@ -558,8 +560,8 @@ void *(run_test_proc)(void *arg)
 			if ( result.get_nerrors() ) flag="E";
 			if ( result.get_nsuccess() ) flag="S";
 			if ( result.get_nexceptions() ) flag="X";
-			report_data();
 			report_data("%s",flag);
+			report_data("%.1f",dt);
 			report_data("%s",item->name);
 			report_newrow();
 		}
