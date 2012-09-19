@@ -689,6 +689,8 @@ static int globals(int argc, char *argv[])
 	{
 		char buffer[1024];
 		var = global_find(list[i]);
+		if ( (var->prop->access&PA_HIDDEN)==PA_HIDDEN )
+			continue;
 		printf("%s=%s;",var->prop->name,global_getvar(var->prop->name,buffer,sizeof(buffer))?buffer:"(error)");
 		if (var->prop->description || var->prop->flags&PF_DEPRECATED)
 			printf(" // %s%s", (var->prop->flags&PF_DEPRECATED)?"DEPRECATED ":"", var->prop->description?var->prop->description:"");
