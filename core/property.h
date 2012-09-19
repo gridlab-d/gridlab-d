@@ -256,11 +256,13 @@ typedef char FUNCTIONNAME[64]; /**< the name of a function (not used) */
 #define PA_W 0x02 /**< write access--modules can write the property */
 #define PA_S 0x04 /**< save access--property is saved to output */
 #define PA_L 0x08 /**< load access--property is loaded from input */
+#define PA_H 0x10 /**< hidden access--property is not revealed by modhelp */
 typedef enum {
 	PA_PUBLIC = (PA_R|PA_W|PA_S|PA_L), /**< property is public (readable, writable, saved, and loaded) */
-	PA_REFERENCE = (PA_R|PA_W|PA_S), /**< property is FYI (readable, writable and saved, but not loaded */
+	PA_REFERENCE = (PA_R|PA_S|PA_L), /**< property is FYI (readable, saved, and loaded */
 	PA_PROTECTED = (PA_R), /**< property is semipublic (readable, but not saved or loaded) */
-	PA_PRIVATE = (PA_N), /**< property is nonpublic (not visible, saved or loaded) */
+	PA_PRIVATE = (PA_S|PA_L), /**< property is nonpublic (not accessible, but saved and loaded) */
+	PA_HIDDEN = (PA_PUBLIC|PA_H), /**< property is not visible  */
 } PROPERTYACCESS; /**< property access rights */
 
 typedef struct s_keyword {
