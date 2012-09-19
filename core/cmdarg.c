@@ -129,8 +129,11 @@ void print_class_d(CLASS *oclass, int tabdepth){
 	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 	{
 		char *propname = class_get_property_typename(prop->ptype);
-		if (propname!=NULL){
-			if(prop->unit != NULL)
+		if (propname!=NULL)
+		{
+			if ( (prop->access&PA_HIDDEN)==PA_HIDDEN )
+				continue;
+			if (prop->unit != NULL)
 			{
 				printf("%s\t%s %s[%s];", tabs, propname, prop->name, prop->unit->name);
 			}
@@ -507,10 +510,13 @@ static int modhelp(int argc, char *argv[])
 			{
 				PROPERTY *prop = var->prop;
 				char *proptype = class_get_property_typename(prop->ptype);
-				if (strncmp(var->prop->name,mod->name,strlen(mod->name))!=0)
+				if ( strncmp(var->prop->name,mod->name,strlen(mod->name))!=0 )
 					continue;
-				if (proptype!=NULL){
-					if(prop->unit != NULL)
+				if ( (prop->access&PA_HIDDEN)==PA_HIDDEN )
+					continue;
+				if (proptype!=NULL)
+				{
+					if ( prop->unit!=NULL )
 					{
 						printf("\t%s %s[%s];", proptype, strrchr(prop->name,':')+1, prop->unit->name);
 					}

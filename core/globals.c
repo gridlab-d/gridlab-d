@@ -387,6 +387,7 @@ GLOBALVAR *global_create(char *name, ...){
 					case PA_REFERENCE:
 					case PA_PROTECTED:
 					case PA_PRIVATE:
+					case PA_HIDDEN:
 						prop->access = pa;
 						break;
 					default:

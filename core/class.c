@@ -212,6 +212,11 @@ PROPERTY *class_find_property_rec(CLASS *oclass, PROPERTYNAME name, CLASS *pclas
 
 }
 
+static PROPERTY *find_header_property(CLASS *oclass, PROPERTYNAME name)
+{
+	PROPERTY *prop = NULL;
+	return prop;
+}
 /** Find the named property in the class
 
 	@return a pointer to the PROPERTY, or \p NULL if the property is not found.
@@ -219,7 +224,8 @@ PROPERTY *class_find_property_rec(CLASS *oclass, PROPERTYNAME name, CLASS *pclas
 PROPERTY *class_find_property(CLASS *oclass,		/**< the object class */
 							  PROPERTYNAME name)	/**< the property name */
 {
-	PROPERTY *prop;
+	PROPERTY *prop = find_header_property(oclass,name);
+	if ( prop ) return prop;
 
 	if(oclass == NULL)
 		return NULL;
@@ -818,6 +824,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				case PA_PROTECTED:
 				case PA_PRIVATE:
 				case PA_REFERENCE:
+				case PA_HIDDEN:
 					prop->access = pa;
 					break;
 				default:
