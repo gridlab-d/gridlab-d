@@ -160,9 +160,8 @@ TIMESTAMP pw_recorder::presync(TIMESTAMP t1){
 	if(!cModel->get_valid_flag()){
 		gl_verbose("not fetching voltage due to invalid model state");
 	} else {
-		//if(0 != get_powerworld_voltage()){
-		if(0){
-			gl_error("pw_load::presync(): get_powerworld_voltage failed");
+		if(0 == GPSE()){
+			gl_error("pw_load::presync(): GPSE failed");
 			/*	TROUBLESHOOT
 			 */
 			return TS_INVALID;
@@ -369,7 +368,8 @@ int pw_recorder::build_keys(){
 /**
 	GPSE
 	Wrapper for SimAuto's GetParameterSingleElement.  Fetches a stack of properties
-	and 
+	and writes the results to the specified output file.
+	@return 0 on error, 1 on success
  **/
 int pw_recorder::GPSE(){
 	_variant_t HUGEP *pResults, HUGEP *pData;
