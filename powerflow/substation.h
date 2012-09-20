@@ -35,6 +35,9 @@ private:
 	double last_real_power_A;
 	double last_real_power_B;
 	double last_real_power_C;
+	complex volt_A;
+	complex volt_B;
+	complex volt_C;
 	complex *pPositiveSequenceVoltage;
 	complex *pConstantPowerLoad;
 	complex *pConstantCurrentLoad;

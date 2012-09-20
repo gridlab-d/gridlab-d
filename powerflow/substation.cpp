@@ -59,8 +59,8 @@ substation::substation(MODULE *mod) : node(mod)
 				PT_KEYWORD, "PHASE_B", R_PHASE_B,
 				PT_KEYWORD, "PHASE_C", R_PHASE_C,
 			PT_complex, "average_transmission_power_load[VA]", PADDR(average_transmission_power_load), PT_DESCRIPTION, "the average constant power load to be posted directly to the pw_load object.",
-			PT_complex, "average_transmission_current_load[VA]", PADDR(average_transmission_current_load), PT_DESCRIPTION, "the average constant current load to be posted directly to the pw_load object.",
-			PT_complex, "average_transmission_impedance_load[VA]", PADDR(average_transmission_impedance_load), PT_DESCRIPTION, "the average constant impedance load to be posted directly to the pw_load object.",
+			PT_complex, "average_transmission_current_load[A]", PADDR(average_transmission_current_load), PT_DESCRIPTION, "the average constant current load to be posted directly to the pw_load object.",
+			PT_complex, "average_transmission_impedance_load[Ohms]", PADDR(average_transmission_impedance_load), PT_DESCRIPTION, "the average constant impedance load to be posted directly to the pw_load object.",
 			PT_complex, "average_distribution_load[VA]", PADDR(average_distribution_load), PT_DESCRIPTION, "The average of the loads on all three phases at the substation object.",
 			PT_complex, "distribution_power_A[VA]", PADDR(distribution_power_A),
 			PT_complex, "distribution_power_B[VA]", PADDR(distribution_power_B),
@@ -94,6 +94,9 @@ int substation::create()
 	seq_mat[0] = 0;
 	seq_mat[1] = 0;
 	seq_mat[2] = 0;
+	volt_A = 0;
+	volt_B = 0;
+	volt_C = 0;
 	return result;
 }
 
@@ -164,6 +167,16 @@ int substation::init(OBJECT *parent)
 			}
 		}
 	}
+
+	if(has_phase(PHASE_A)){
+		volt_A.SetPolar(nominal_voltage,0);
+	}
+	if(has_phase(PHASE_B)){
+		volt_B.SetPolar(nominal_voltage,-PI*2/3);
+	}
+	if(has_phase(PHASE_C)){
+		volt_C.SetPolar(nominal_voltage,PI*2/3);
+	}
 	
 	return node::init(parent);
 }
@@ -174,12 +187,16 @@ TIMESTAMP substation::presync(TIMESTAMP t0, TIMESTAMP t1)
 	double dt = 0;
 	double total_load;
 	//calculate the energy used
-
 	if(t1 != t0 && t0 != 0 && (last_real_power_A != 0 && last_real_power_B != 0 && last_real_power_C != 0) && NR_cycle == TRUE){
 		total_load = last_real_power_C + last_real_power_C + last_real_power_C;
 		dt = ((double)(t1 - t0))/(3600 * TS_SECOND);
 		distribution_real_energy += total_load*dt;
 	}
+	return node::presync(t1);
+}
+TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
+{
+	TIMESTAMP t2;
 	//set up the phase voltages for the three different cases
 	if((solver_method == SM_NR && NR_cycle == false) || solver_method == SM_FBS){
 		if(has_parent == 1){//has a pw_load as a parent
@@ -190,31 +207,19 @@ TIMESTAMP substation::presync(TIMESTAMP t0, TIMESTAMP t1)
 			if(has_phase(PHASE_B)){
 				voltageB = (transformation_matrix[1][1] * seq_mat[1]) * reference_number;
 			}
-			if(has_phase(PHASE_B)){
-				voltageB = (transformation_matrix[2][1] * seq_mat[1]) *reference_number;
+			if(has_phase(PHASE_C)){
+				voltageC = (transformation_matrix[2][1] * seq_mat[1]) *reference_number;
 			}
-			return node::presync(t1);
 		} else {
 			if(has_parent == 0){
-				if(seq_mat[0] == 0 && seq_mat[1] == 0 && seq_mat[2] == 0){
-					return node::presync(t1);
-				} else {
+				if(seq_mat[0] != 0 || seq_mat[1] != 0 || seq_mat[2] != 0){
 					voltageA = (seq_mat[0] + seq_mat[1] + seq_mat[2]) * reference_number;
 					voltageB = (seq_mat[0] + transformation_matrix[1][1] * seq_mat[1] + transformation_matrix[1][2] * seq_mat[2]) * reference_number;
 					voltageC = (seq_mat[0] + transformation_matrix[2][1] * seq_mat[1] + transformation_matrix[2][2] * seq_mat[2]) * reference_number;
-					return node::presync(t1);
 				}
-			} else {
-				return node::presync(t1);
 			}
 		}
-	} else {
-		return node::presync(t1);
 	}
-}
-TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
-{
-	TIMESTAMP t2;
 	t2 = node::sync(t1);
 	if((solver_method == SM_NR && NR_cycle == true && NR_admit_change == false) || solver_method == SM_FBS){
 		distribution_power_A = voltageA * (~current_inj[0]);
@@ -224,9 +229,9 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 		last_real_power_B = distribution_power_B.Re();
 		last_real_power_C = distribution_power_C.Re();
 		if(has_parent == 1){
-			*pConstantCurrentLoad = ((voltageA + voltageB + voltageC) * (~average_transmission_current_load)) / (3 * 1000000);
+			*pConstantCurrentLoad = ((volt_A + volt_B + volt_C) * (~average_transmission_current_load)) / (3 * 1000000);
 			if(average_transmission_impedance_load.Mag() > 0){
-				*pConstantImpedanceLoad = (((voltageA * voltageA) + (voltageB * voltageB) + (voltageC * voltageC)) / (average_transmission_impedance_load)) / ( 3 * 1000000);
+				*pConstantImpedanceLoad = (((volt_A * volt_A) + (volt_B * volt_B) + (volt_C * volt_C)) / (average_transmission_impedance_load)) / ( 3 * 1000000);
 			} else {
 				*pConstantImpedanceLoad = 0;
 			}
