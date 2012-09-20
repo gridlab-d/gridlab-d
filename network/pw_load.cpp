@@ -286,11 +286,11 @@ int pw_load::post_powerworld_current(){
 		pvariant[0] = "BusNum";
 		pvariant[1] = "LoadID";
 		pvariant[2] = "LoadSMW";
-		pvariant[3] = "LoadSMVA";
+		pvariant[3] = "LoadSMVR";
 		pvariant[4] = "LoadIMW";
-		pvariant[5] = "LoadIMVA";
+		pvariant[5] = "LoadIMVR";
 		pvariant[6] = "LoadZMW";
-		pvariant[7] = "LoadZMVA";
+		pvariant[7] = "LoadZMVR";
 		SafeArrayUnaccessData(fields.parray);
 
 		hr = SafeArrayAccessData(values.parray, (void HUGEP **)&pvariant);
