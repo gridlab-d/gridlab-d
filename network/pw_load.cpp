@@ -453,9 +453,9 @@ TIMESTAMP pw_load::sync(TIMESTAMP t1){
 	p_diff = load_impedance.Mag() - last_load_impedance.Mag();
 	power_diff = fabs(z_diff) + fabs(i_diff) + fabs(p_diff);
 	// @TODO once we hook the substation up, need to verify that the flag isn't set for adequately small changes
-	//if(power_diff > power_threshold){
+	if(power_diff > power_threshold){
 		cModel->set_update_flag(true, gld_wlock(model));
-	//}
+	}
 	return TS_NEVER;
 }
 
