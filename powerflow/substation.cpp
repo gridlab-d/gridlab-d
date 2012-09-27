@@ -60,7 +60,7 @@ substation::substation(MODULE *mod) : node(mod)
 				PT_KEYWORD, "PHASE_C", R_PHASE_C,
 			PT_complex, "average_transmission_power_load[VA]", PADDR(average_transmission_power_load), PT_DESCRIPTION, "the average constant power load to be posted directly to the pw_load object.",
 			PT_complex, "average_transmission_current_load[A]", PADDR(average_transmission_current_load), PT_DESCRIPTION, "the average constant current load to be posted directly to the pw_load object.",
-			PT_complex, "average_transmission_impedance_load[Ohms]", PADDR(average_transmission_impedance_load), PT_DESCRIPTION, "the average constant impedance load to be posted directly to the pw_load object.",
+			PT_complex, "average_transmission_impedance_load[Ohm]", PADDR(average_transmission_impedance_load), PT_DESCRIPTION, "the average constant impedance load to be posted directly to the pw_load object.",
 			PT_complex, "average_distribution_load[VA]", PADDR(average_distribution_load), PT_DESCRIPTION, "The average of the loads on all three phases at the substation object.",
 			PT_complex, "distribution_power_A[VA]", PADDR(distribution_power_A),
 			PT_complex, "distribution_power_B[VA]", PADDR(distribution_power_B),
