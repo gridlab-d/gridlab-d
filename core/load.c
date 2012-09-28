@@ -3043,7 +3043,7 @@ static int source_code(PARSER, char *code, int size)
 			if (c1=='*' && c2=='/')
 			{
 				if (!global_debug_output && global_getvar("noglmrefs",buffer,63)==NULL)
-					sprintf(code+strlen(code),"#line %d \"%c\"\n", linenum,forward_slashes(filename));
+					sprintf(code+strlen(code),"#line %d \"%s\"\n", linenum,forward_slashes(filename));
 				state = CODE;
 			}
 			break;
@@ -5124,6 +5124,31 @@ static int link_declaration(PARSER)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
+static int script_directive(PARSER)
+{
+	START;
+	if ( WHITE,LITERAL("script") )
+	{
+		char command[1024];
+		if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+		{
+			int rc;
+			output_verbose("running command [%s]", command);
+			rc = system(command);
+			if ( rc!=0 )
+			{
+				output_error_raw("%s(%d): script failed - return code %d", filename, linenum, rc);
+				REJECT;
+			}
+		}
+		ACCEPT;
+		DONE;
+	}
+	else
+		REJECT;
+}
+
+////////////////////////////////////////////////////////////////////////////////////
 
 static int gridlabd_file(PARSER)
 {
@@ -5143,6 +5168,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(extern_block(HERE)) {ACCEPT; DONE; }
 	OR if TERM(global_declaration(HERE)) {ACCEPT; DONE; }
 	OR if TERM(link_declaration(HERE)) { ACCEPT; DONE; }
+	OR if TERM(script_directive(HERE)) { ACCEPT; DONE; }
 	OR if (*(HERE)=='\0') {ACCEPT; DONE;}
 	else REJECT;
 	DONE;

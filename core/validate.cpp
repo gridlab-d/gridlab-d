@@ -116,7 +116,7 @@ static bool clean = false; // set to true to force purge of test directories
 
 /* report generation functions */
 static FILE *report_fp = NULL;
-static char report_file[1024] = "validate.csv";
+static char report_file[1024] = "validate.txt";
 static const char *report_ext = NULL;
 static const char *report_col="    ";
 static const char *report_eol="\n";
