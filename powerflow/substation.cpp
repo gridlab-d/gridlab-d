@@ -54,6 +54,7 @@ substation::substation(MODULE *mod) : node(mod)
 			PT_complex, "zero_sequence_voltage[V]", PADDR(seq_mat[0]), PT_DESCRIPTION, "The zero sequence representation of the voltage for the substation object.",
 			PT_complex, "positive_sequence_voltage[V]", PADDR(seq_mat[1]), PT_DESCRIPTION, "The positive sequence representation of the voltage for the substation object.",
 			PT_complex, "negative_sequence_voltage[V]", PADDR(seq_mat[2]), PT_DESCRIPTION, "The negative sequence representation of the voltage for the substation object.",
+			PT_double, "base_power[VA]", PADDR(base_power), PT_DESCRIPTION, "The 3 phase VA power rating of the substation.",
 			PT_enumeration, "reference_phase", PADDR(reference_phase), PT_DESCRIPTION, "The reference phase for the positive sequence voltage.",
 				PT_KEYWORD, "PHASE_A", R_PHASE_A,
 				PT_KEYWORD, "PHASE_B", R_PHASE_B,
@@ -97,6 +98,7 @@ int substation::create()
 	volt_A = 0;
 	volt_B = 0;
 	volt_C = 0;
+	base_power = 0;
 	return result;
 }
 
@@ -146,6 +148,10 @@ int substation::init(OBJECT *parent)
 			return 0;
 		}
 	}
+	if(base_power <= 0){
+		gl_warning("substation:%i is using the default base power of 100 VA. This could cause instability on your system.", hdr->id);
+		base_power = 100;//default gives a max power error of 1 VA.
+	}
 	//set the reference phase number to shift the phase voltages appropriatly with the positive sequence voltage
 	if(reference_phase == R_PHASE_A){
 		reference_number.SetPolar(1,0);
@@ -187,8 +193,8 @@ TIMESTAMP substation::presync(TIMESTAMP t0, TIMESTAMP t1)
 	double dt = 0;
 	double total_load;
 	//calculate the energy used
-	if(t1 != t0 && t0 != 0 && (last_real_power_A != 0 && last_real_power_B != 0 && last_real_power_C != 0) && NR_cycle == TRUE){
-		total_load = last_real_power_C + last_real_power_C + last_real_power_C;
+	if(t1 != t0 && t0 != 0 && (last_power_A.Re() != 0 && last_power_B.Re() != 0 && last_power_C.Re() != 0) && NR_cycle == TRUE){
+		total_load = last_power_A.Re() + last_power_B.Re() + last_power_C.Re();
 		dt = ((double)(t1 - t0))/(3600 * TS_SECOND);
 		distribution_real_energy += total_load*dt;
 	}
@@ -197,6 +203,9 @@ TIMESTAMP substation::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2;
+	double dist_power_A_diff = 0;
+	double dist_power_B_diff = 0;
+	double dist_power_C_diff = 0;
 	//set up the phase voltages for the three different cases
 	if((solver_method == SM_NR && NR_cycle == false) || solver_method == SM_FBS){
 		if(has_parent == 1){//has a pw_load as a parent
@@ -225,17 +234,22 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 		distribution_power_A = voltageA * (~current_inj[0]);
 		distribution_power_B = voltageB * (~current_inj[1]);
 		distribution_power_C = voltageC * (~current_inj[2]);
-		last_real_power_A = distribution_power_A.Re();
-		last_real_power_B = distribution_power_B.Re();
-		last_real_power_C = distribution_power_C.Re();
-		if(has_parent == 1){
-			*pConstantCurrentLoad = ((volt_A + volt_B + volt_C) * (~average_transmission_current_load)) / (3 * 1000000);
-			if(average_transmission_impedance_load.Mag() > 0){
-				*pConstantImpedanceLoad = (((volt_A * volt_A) + (volt_B * volt_B) + (volt_C * volt_C)) / (average_transmission_impedance_load)) / ( 3 * 1000000);
-			} else {
-				*pConstantImpedanceLoad = 0;
+		dist_power_A_diff = distribution_power_A.Mag() - last_power_A.Mag();
+		dist_power_B_diff = distribution_power_B.Mag() - last_power_B.Mag();
+		dist_power_C_diff = distribution_power_C.Mag() - last_power_C.Mag();
+		last_power_A = distribution_power_A;
+		last_power_B = distribution_power_B;
+		last_power_C = distribution_power_C;
+		if((abs(dist_power_A_diff) + abs(dist_power_B_diff) + abs(dist_power_C_diff)) <= (base_power*0.01)){
+			if(has_parent == 1){
+				*pConstantCurrentLoad = ((volt_A + volt_B + volt_C) * (~average_transmission_current_load)) / (3 * 1000000);
+				if(average_transmission_impedance_load.Mag() > 0){
+					*pConstantImpedanceLoad = (((volt_A * volt_A) + (volt_B * volt_B) + (volt_C * volt_C)) / (average_transmission_impedance_load)) / ( 3 * 1000000);
+				} else {
+					*pConstantImpedanceLoad = 0;
+				}
+				*pConstantPowerLoad = (average_transmission_power_load + ((distribution_power_A + distribution_power_B + distribution_power_C) / 3)) / 1000000;
 			}
-			*pConstantPowerLoad = (average_transmission_power_load + ((distribution_power_A + distribution_power_B + distribution_power_C) / 3)) / 1000000;
 		}
 	}
 	return t2;

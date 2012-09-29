@@ -28,13 +28,14 @@ public:
 	complex distribution_power_C;	
 	complex seq_mat[3];								///<The matrix containing the sequence voltages
 	double distribution_real_energy;
+	double base_power;
 	int has_parent;
 private:
 	complex reference_number;						///<The angle to shift the sequence voltages by to shift the matrix by
 	complex transformation_matrix[3][3];			///<the transformation matrix that converts sequence voltages to phase voltages
-	double last_real_power_A;
-	double last_real_power_B;
-	double last_real_power_C;
+	complex last_power_A;
+	complex last_power_B;
+	complex last_power_C;
 	complex volt_A;
 	complex volt_B;
 	complex volt_C;
