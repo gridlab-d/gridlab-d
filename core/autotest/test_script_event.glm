@@ -1,0 +1,12 @@
+script on_create "echo create done";
+script on_init "echo init done";
+script on_sync "echo sync done";
+script on_term "echo term done";
+
+class test {
+	random x;
+}
+object test {
+	x "type:normal(0,1); refresh:1h";
+}
+	

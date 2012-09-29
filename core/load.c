@@ -5130,7 +5130,75 @@ static int script_directive(PARSER)
 	if ( WHITE,LITERAL("script") )
 	{
 		char command[1024];
-		if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+		if WHITE { ACCEPT; }
+		if ( LITERAL("on_create") )
+		{	if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+			{
+				if ( exec_add_createscript(command)==0 )
+				{
+					output_error_raw("%s(%d): unable to add on_create script '%s'", filename,linenum,command);
+					REJECT;
+				}
+				else
+				{
+					ACCEPT; DONE;
+				}
+			}
+			else
+				REJECT;
+		}
+		if ( LITERAL("on_init") )
+		{	
+			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+			{
+				if ( exec_add_initscript(command)==0 )
+				{
+					output_error_raw("%s(%d): unable to add on_init script '%s'", filename,linenum,command);
+					REJECT;
+				}
+				else
+				{
+					ACCEPT; DONE;
+				}
+			}
+			else
+				REJECT;
+		}
+		if ( LITERAL("on_sync") )
+		{	
+			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+			{
+				if ( exec_add_syncscript(command)==0 )
+				{
+					output_error_raw("%s(%d): unable to add on_sync script '%s'", filename,linenum,command);
+					REJECT;
+				}
+				else
+				{
+					ACCEPT; DONE;
+				}
+			}
+			else
+				REJECT;
+		}
+		if ( LITERAL("on_term") )
+		{
+			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+			{
+				if ( exec_add_termscript(command)==0 )
+				{
+					output_error_raw("%s(%d): unable to add on_term script '%s'", filename,linenum,command);
+					REJECT;
+				}
+				else
+				{
+					ACCEPT; DONE;
+				}
+			}
+			else
+				REJECT;
+		}
+		if ( TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
 		{
 			int rc;
 			output_verbose("running command [%s]", command);
@@ -5140,9 +5208,15 @@ static int script_directive(PARSER)
 				output_error_raw("%s(%d): script failed - return code %d", filename, linenum, rc);
 				REJECT;
 			}
+			else
+			{
+				ACCEPT; DONE;
+			}
 		}
-		ACCEPT;
-		DONE;
+		else
+		{
+			REJECT;
+		}
 	}
 	else
 		REJECT;

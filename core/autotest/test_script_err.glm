@@ -1,0 +1,5 @@
+#ifdef WINDOWS
+// TODO call something that fails in windows
+#else
+script "false";
+#endif

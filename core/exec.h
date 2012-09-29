@@ -54,6 +54,7 @@ int exec_sync_isinvalid(struct sync_data *d);
 STATUS exec_sync_getstatus(struct sync_data *d);
 
 /* Exit codes */
+typedef int EXITCODE;
 #define XC_SUCCESS 0 /* per system(3) */
 #define XC_EXFAILED -1 /* exec/wait failure - per system(3) */
 #define XC_ARGERR 1 /* error processing command line arguments */
@@ -70,8 +71,16 @@ STATUS exec_sync_getstatus(struct sync_data *d);
 #define XC_SIGINT (XC_SIGNAL|SIGINT) /* SIGINT caught */
 #define XC_EXCEPTION 255 /* exception caught */
 
-int exec_setexitcode(int);
-int exec_getexitcode(void);
+EXITCODE exec_setexitcode(EXITCODE);
+EXITCODE exec_getexitcode(void);
+
+int exec_add_createscript(const char *file);
+int exec_add_initscript(const char *file);
+int exec_add_syncscript(const char *file);
+int exec_add_termscript(const char *file);
+EXITCODE exec_run_initscripts(void);
+EXITCODE exec_run_syncscripts(void);
+EXITCODE exec_run_termscripts(void);
 
 int64 exec_clock(void);
 

@@ -1490,6 +1490,13 @@ STATUS exec_start(void)
 
 	int nObjRankList, iObjRankList;
 
+	/* run create scripts, if any */
+	if ( exec_run_createscripts()!=XC_SUCCESS )
+	{
+		output_error("create script(s) failed");
+		return FAILED;
+	}
+
 	/* initialize the main loop state control */
 	exec_mls_init();
 
@@ -1567,6 +1574,13 @@ STATUS exec_start(void)
 	{
 		output_debug("debug mode running single threaded");
 		output_message("GridLAB-D entering debug mode");
+	}
+
+	/* run init scripts, if any */
+	if ( exec_run_initscripts()!=XC_SUCCESS )
+	{
+		output_error("init script(s) failed");
+		return FAILED;
 	}
 
 	/* realtime startup */
@@ -1931,6 +1945,7 @@ STATUS exec_start(void)
 				/* count number of timesteps */
 				tsteps++;
 			}
+
 			/* check iteration limit */
 			else if (--iteration_counter == 0)
 			{
@@ -1944,6 +1959,14 @@ STATUS exec_start(void)
 				sync_d.status = FAILED;
 				THROW("convergence failure");
 			}
+
+			/* run sync scripts, if any */
+			if ( exec_run_syncscripts()!=XC_SUCCESS )
+			{
+				output_error("sync script(s) failed");
+				return FAILED;
+			}
+
 
 		} // end of while loop
 
@@ -1983,6 +2006,13 @@ STATUS exec_start(void)
 	if(FAILED == fnl_rv){
 		output_error("finalize_all() failed");
 		output_verbose("not that it's going to stop us");
+	}
+
+	/* run term scripts, if any */
+	if ( exec_run_termscripts()!=XC_SUCCESS )
+	{
+		output_error("term script(s) failed");
+		return FAILED;
 	}
 
 	/* deallocate threadpool */
@@ -2491,4 +2521,80 @@ void exec_slave_node(){
 	} // end while
 }
 
+/*************************************
+ * Script support
+ *************************************/
+
+typedef struct s_simplelist {
+	char *data;
+	struct s_simplelist *next;
+} SIMPLELIST;
+SIMPLELIST *create_scripts = NULL;
+SIMPLELIST *init_scripts = NULL;
+SIMPLELIST *sync_scripts = NULL;
+SIMPLELIST *term_scripts = NULL;
+
+static int add_script(SIMPLELIST **list, const char *file)
+{
+	SIMPLELIST *item = (SIMPLELIST*)malloc(sizeof(SIMPLELIST));
+	if ( !item ) return 0;
+	item->data = (void*)malloc(strlen(file)+1);
+	strcpy(item->data,file);
+	item->next = *list;
+	*list = item;
+	return 1;
+}
+static EXITCODE run_scripts(SIMPLELIST *list)
+{
+	SIMPLELIST *item;
+	for ( item=list ; item!=NULL ; item=item->next )
+	{
+		EXITCODE rc = system(item->data);
+		if ( rc!=XC_SUCCESS )
+		{
+			output_error("script '%s' return with exit code %d", item->data,rc);
+			return rc;
+		}
+		else
+			output_verbose("script '%s'' returned ok", item->data);
+	}
+	return XC_SUCCESS;
+}
+
+int exec_add_createscript(const char *file)
+{
+	output_debug("adding create script '%s'", file);
+	return add_script(&create_scripts,file);
+}
+int exec_add_initscript(const char *file)
+{
+	output_debug("adding init script '%s'", file);
+	return add_script(&init_scripts,file);
+}
+int exec_add_syncscript(const char *file)
+{
+	output_debug("adding sync script '%s'", file);
+	return add_script(&sync_scripts,file);
+}
+int exec_add_termscript(const char *file)
+{
+	output_debug("adding term script '%s'", file);
+	return add_script(&term_scripts,file);
+}
+int exec_run_createscripts(void)
+{
+	return run_scripts(create_scripts);
+}
+int exec_run_initscripts(void)
+{
+	return run_scripts(init_scripts);
+}
+int exec_run_syncscripts(void)
+{
+	return run_scripts(sync_scripts);
+}
+int exec_run_termscripts(void)
+{
+	return run_scripts(term_scripts);
+}
 /**@}*/
