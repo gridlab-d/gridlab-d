@@ -949,7 +949,8 @@ int module_compile(char *name,	/**< name of library */
 	if ( source )
 	{
 		char *c, *p=srcfile;
-		for ( c=source; *c!='\0'; c++ )
+		strcpy(srcfile,source);
+		for ( c=srcfile; *c!='\0'; c++ )
 		{
 			switch (*c) {
 				case '\\': *p++='/'; break;
@@ -959,6 +960,7 @@ int module_compile(char *name,	/**< name of library */
 		*c='\0';
 		source = srcfile;
 	}
+
 
 	/* set flags */
 	cc_verbose = (flags&MC_VERBOSE);
