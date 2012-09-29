@@ -441,7 +441,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 #ifdef WIN32
 	if ( !mkdir(dir) && clean )
 #else
-	if ( !mkdir(dir,0750) && !clean )
+	if ( !mkdir(dir,0750) && clean )
 #endif
 	{
 		output_error("run_test(char *file='%s'): unable to create test folder", dir);

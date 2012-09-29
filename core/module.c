@@ -875,7 +875,7 @@ void module_termall(void)
 #define LDFLAGS "-dylib"
 #else
 #define CCFLAGS "-DLINUX"
-#define LDFLAGS "--export-all-symbols"
+#define LDFLAGS "" /* --export-all-symbols" */
 #endif
 #endif
 
@@ -921,7 +921,6 @@ static int execf(char *format, /**< format string  */
 /** Compile C source code into a dynamic link library 
     @return 0 on success
  **/
-	int module_compile(char *name, char *code, int flags, char *prefix, char *file, int line);
 int module_compile(char *name,	/**< name of library */
 				   char *code,	/**< listing of source code */
 				   int flags,	/**< compile options (see MC_?) */
@@ -1098,7 +1097,11 @@ int module_load_function_list(char *libname, char *fnclist)
 	strcpy(static_name,libname); // use this copy to map functions
 
 	/* load the library */
-	snprintf(libpath,sizeof(libpath),"%s" DLEXT, libname);
+	if ( strchr(libname,'/')==NULL )
+		snprintf(libpath,sizeof(libpath),"./%s" DLEXT, libname);
+	else
+		snprintf(libpath,sizeof(libpath),"%s" DLEXT, libname);
+
 	lib = DLLOAD(libpath);
 	errno = GetLastError();
 	if (lib==NULL)
