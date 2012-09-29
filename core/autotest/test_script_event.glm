@@ -3,6 +3,10 @@ script on_init "echo init done";
 script on_sync "echo sync done";
 script on_term "echo term done";
 
+clock {
+	starttime '2000-01-01 00:00:00';
+	stoptime '2000-01-01 00:01:00';
+}
 class test {
 	random x;
 }
