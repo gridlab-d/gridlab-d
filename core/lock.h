@@ -14,6 +14,8 @@ void wlock(unsigned int *lock);
 void runlock(unsigned int *lock);
 void wunlock(unsigned int *lock);
 
+void register_lock(const char *name, unsigned int *lock);
+
 #ifdef __cplusplus
 }
 #endif

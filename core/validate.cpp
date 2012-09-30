@@ -27,7 +27,7 @@
 /** validating result counter */
 class counters {
 public:
-	counters(void) { n_scanned=n_tested=n_passed=n_files=n_success=n_failed=n_exceptions=n_access=0; };
+	counters(void) { _lock=0; n_scanned=n_tested=n_passed=n_files=n_success=n_failed=n_exceptions=n_access=0; };
 	counters operator+(counters a) 
 	{ 
 		wlock(); 

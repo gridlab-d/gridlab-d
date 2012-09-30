@@ -28,7 +28,9 @@
 
 #include "lock.h"
 #include "exception.h"
+#include <stdio.h>
 
+//#define LOCKTRACE // enable this to trace locking events back to variables
 #define MAXSPIN 1000000000
 
 #define METHOD0 /* locking method as of 3.0 */
@@ -73,6 +75,75 @@
 	#error "Locking is not supported on this system"
 #endif
 
+#ifdef LOCKTRACE // this code should only be used in care is mystery lock timeouts
+typedef struct s_locklist {
+	const char *name;
+	unsigned int *lock;
+	unsigned int last_value;
+	struct s_locklist *next;
+} LOCKLIST;
+LOCKLIST *locklist = NULL;
+void register_lock(const char *name, unsigned int *lock)
+{
+	LOCKLIST *item = (LOCKLIST*)malloc(sizeof(LOCKLIST));
+	item->name = name;
+	item->lock = lock;
+	item->last_value = *lock;
+	if ( *lock!=0 )
+		printf("%s lock initial value not zero (%d)\n", name, *lock);
+	item->next = locklist;
+	locklist = item;
+}
+void check_lock(unsigned int *lock, bool write, bool unlock)
+{
+	LOCKLIST *item;
+
+	// lock locklist
+	static unsigned int check_lock=0;
+	unsigned int timeout = MAXSPIN;
+	unsigned int value;
+	do {
+		value = check_lock;
+		if ( timeout--==0 ) 
+			throw_exception("check lock timeout");
+	} while ((value&1) || !atomic_compare_and_swap(&check_lock, value, value + 1));
+
+	for ( item=locklist ; item!=NULL ; item=item->next )
+	{
+		if ( item->lock==lock )
+			break;
+	}
+	if ( item==NULL )
+	{
+		printf("%s %slock(%p) = %d (unregistered)\n", 
+			write?"write":"read ", 
+			unlock?"un":"  ",
+			lock,
+			*lock);
+		register_lock("unregistered",lock);
+	}
+	else 
+	{
+		bool no_lock = unlock&&((*lock&1)!=1);
+//		bool damage = abs(item->last_value-*lock)>1;
+//		if ( damage ) // found a registered lock that was damaged
+//			printf("%s %slock(%p) = %d (%s) - possible damage (last=%d)\n", write?"write":"read ", unlock?"un":"  ",lock,*lock,item->name, item->last_value);
+		if ( no_lock ) // found a registered lock that was not locked
+			printf("%s %slock(%p) = %d (%s) - no lock detected (last=%d)\n", write?"write":"read ", unlock?"un":"  ",lock,*lock,item->name, item->last_value);
+		item->last_value = *lock;
+	}
+
+	// unlock locklist
+	atomic_increment(&check_lock);
+}
+#else
+#define check_lock(X,Y,Z)
+void register_lock(unsigned int *lock)
+{
+	// do nothing
+}
+#endif
+
 #if defined METHOD0 
 /**********************************************************************************
  * SINGLE LOCK METHOD
@@ -87,9 +158,10 @@
  */
 extern "C" void rlock(unsigned int *lock)
 {
-	unsigned int value;
 	unsigned int timeout = MAXSPIN;
+	unsigned int value;
 	extern unsigned int rlock_count, rlock_spin;
+	check_lock(lock,false,false);
 	atomic_increment(&rlock_count);
 	do {
 		value = (*lock);
@@ -100,10 +172,11 @@ extern "C" void rlock(unsigned int *lock)
 }
 extern "C" void wlock(unsigned int *lock)
 {
+	unsigned int timeout = MAXSPIN;
 	unsigned int value;
 	extern unsigned int wlock_count, wlock_spin;
+	check_lock(lock,true,false);
 	atomic_increment(&wlock_count);
-	unsigned int timeout = MAXSPIN;
 	do {
 		value = (*lock);
 		atomic_increment(&wlock_spin);
@@ -114,11 +187,13 @@ extern "C" void wlock(unsigned int *lock)
 extern "C" void runlock(unsigned int *lock)
 {
 	unsigned int value = *lock;
+	check_lock(lock,false,true);
 	atomic_increment(lock);
 }
 extern "C" void wunlock(unsigned int *lock)
 {
 	unsigned int value = *lock;
+	check_lock(lock,true,true);
 	atomic_increment(lock);
 }
 
