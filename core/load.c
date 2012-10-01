@@ -1380,7 +1380,11 @@ static int delim_value(PARSER, char *result, int size, char *delims)
 		*_p++;
 		size--;
 	}
-	while (size>1 && *_p!='\0' && ((quote&&*_p!='"') || strchr(delims,*_p)==NULL) && *_p!='\n') COPY(result);
+	while (size>1 && *_p!='\0' && ((quote&&*_p!='"') || strchr(delims,*_p)==NULL) && *_p!='\n') 
+	{
+		if ( _p[0]=='\\' && _p[1]!='\0' ) _p++; 
+		COPY(result);
+	}
 	result[_n]='\0';
 	return (int)(_p - start);
 }
@@ -1393,7 +1397,11 @@ static int value(PARSER, char *result, int size)
 	START;
 	while (size>1 && *_p!='\0' && !(*_p==delim && quote == 0) && *_p!='\n') 
 	{
-		if (*_p=='"')
+		if ( _p[0]=='\\' && _p[1]!='\0' )
+		{
+			_p++; COPY(result);
+		}
+		else if (*_p=='"')
 		{
 			*_p++;
 			size--;
