@@ -2529,6 +2529,36 @@ typedef struct s_simplelist {
 	char *data;
 	struct s_simplelist *next;
 } SIMPLELIST;
+
+SIMPLELIST *script_exports = NULL;
+int exec_add_scriptexport(const char *name)
+{
+	SIMPLELIST *item = (SIMPLELIST*)malloc(sizeof(SIMPLELIST));
+	if ( !item ) return 0;
+	item->data = (void*)malloc(strlen(name)+1);
+	strcpy(item->data,name);
+	item->next = script_exports;
+	script_exports = item;
+	return 1;
+}
+static int update_exports(void)
+{
+	SIMPLELIST *item;
+	for ( item=script_exports ; item!=NULL ; item=item->next )
+	{
+		char *name = item->data;
+		char value[1024];
+		if ( global_getvar(name,value,sizeof(value)) )
+		{
+			char env[2048];
+			sprintf(env,"%s=%s",name,value);
+			if ( putenv(env)!=0 )
+				output_warning("unable to update script export '%s' with value '%s'", name, value);
+		}
+	}
+	return 1;
+}
+
 SIMPLELIST *create_scripts = NULL;
 SIMPLELIST *init_scripts = NULL;
 SIMPLELIST *sync_scripts = NULL;
@@ -2547,6 +2577,7 @@ static int add_script(SIMPLELIST **list, const char *file)
 static EXITCODE run_scripts(SIMPLELIST *list)
 {
 	SIMPLELIST *item;
+	update_exports();
 	for ( item=list ; item!=NULL ; item=item->next )
 	{
 		EXITCODE rc = system(item->data);
@@ -2560,7 +2591,6 @@ static EXITCODE run_scripts(SIMPLELIST *list)
 	}
 	return XC_SUCCESS;
 }
-
 int exec_add_createscript(const char *file)
 {
 	output_debug("adding create script '%s'", file);

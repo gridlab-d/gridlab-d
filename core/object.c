@@ -878,11 +878,25 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 		/* flags should be ignored */
 		return SUCCESS;
 	}
+	else if ( strcmp(name,"heartbeat")==0 )
+	{
+		TIMESTAMP t = convert_to_timestamp(value);
+		if(t == TS_INVALID)
+		{
+			output_error("object %s:%d out_svc timestamp '%s' is invalid", obj->oclass->name, obj->id, value);
+			return FAILED;
+		}
+		else
+		{
+			obj->heartbeat = t;
+			return SUCCESS;
+		}
+	}
 	else {
 		output_error("object %s:%d called set_header_value() for invalid field '%s'", name);
 		/*	TROUBLESHOOT
 			The valid header fields are "name", "parent", "rank", "clock", "valid_to", "latitude",
-			"longitude", "in_svc", "out_svc", and "flags".
+			"longitude", "in_svc", "out_svc", "heartbeat", and "flags".
 		*/
 		return FAILED;
 	}
@@ -2564,6 +2578,7 @@ double object_get_part(void *x, char *name)
 			{"valid_to",&(obj->valid_to)},
 			{"in_svc",&(obj->in_svc)},
 			{"out_svc",&(obj->out_svc)},
+			{"heartbeat",&(obj->heartbeat)},
 		};
 		for ( p=map ; p<map+sizeof(map); p++ ) {
 			if ( strcmp(p->name,root)==0 )

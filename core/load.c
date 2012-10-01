@@ -4080,6 +4080,11 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					else
 						ACCEPT;
 				}
+				else if ( strcmp(propname,"heartbeat")==0 )
+				{
+					obj->heartbeat = convert_to_timestamp(propval);
+					ACCEPT;
+				}
 				else if (strcmp(propname,"groupid")==0){
 					strncpy(obj->groupid, propval, sizeof(obj->groupid));
 				}
@@ -5188,6 +5193,23 @@ static int script_directive(PARSER)
 				if ( exec_add_termscript(command)==0 )
 				{
 					output_error_raw("%s(%d): unable to add on_term script '%s'", filename,linenum,command);
+					REJECT;
+				}
+				else
+				{
+					ACCEPT; DONE;
+				}
+			}
+			else
+				REJECT;
+		}
+		if ( LITERAL("export") )
+		{
+			if ( WHITE,TERM(name(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+			{
+				if ( exec_add_scriptexport(command)==0 )
+				{
+					output_error_raw("%s(%d): unable to export '%s'", filename,linenum,command);
 					REJECT;
 				}
 				else

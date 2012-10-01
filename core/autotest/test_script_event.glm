@@ -1,6 +1,12 @@
+script export clock;
+
 script on_create "echo create done";
 script on_init "echo init done";
-script on_sync "echo sync done";
+#ifdef WINDOWS
+script on_sync "echo sync done at %clock%";
+#else
+script on_sync "echo sync done at $clock";
+#endif
 script on_term "echo term done";
 
 clock {
